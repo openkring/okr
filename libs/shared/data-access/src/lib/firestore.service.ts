@@ -28,7 +28,7 @@ import { arrayRemove, collection, deleteDoc, doc, getDoc, getDocs, query, runTra
 import { collectionData, docData } from 'rxfire/firestore';
 import { catchError, defer, delay, firstValueFrom, from, MonoTypeOperatorFunction, Observable, of, ReplaySubject, retry, share, tap, timer } from 'rxjs';
 
-import { AUTH, ensureAppCheckToken, ENV, FIRESTORE, isFirestoreInitializedCheck } from '@okr/shared-config';
+import { attestAppCheck, AUTH, ENV, FIRESTORE, isAttested, isFirestoreInitializedCheck, type AppCheckOutcome } from '@okr/shared-config';
 import { OkrModel, CommentCollection, CommentModel, DbQuery, PersonCollection, PersonModel, UserModel } from "@okr/shared-models";
 import { debugData, debugMessage, generateRandomString, getDeletePatch, getFullName, getQuery, isBrowser, removeKeyFromOkrModel, removeUndefinedFields } from '@okr/shared-util-core';
 import { TOAST_LENGTH } from '@okr/shared-constants';
@@ -159,10 +159,10 @@ export class FirestoreService {
             // rejected — and the retry goes out with it unchanged. The cache is valid by the
             // client's own clock (or the SDK would have refreshed it), so only a forced
             // attestation can actually change the outcome.
-            return from(ensureAppCheckToken(undefined, true)).pipe(
-              tap((refreshed) => {
-                if (refreshed) {
-                  console.debug(`FirestoreService.${context}: listener denied, App Check token refreshed, retrying (attempt ${attempts}).`);
+            return from(attestAppCheck(undefined, true)).pipe(
+              tap((outcome) => {
+                if (isAttested(outcome)) {
+                  console.debug(`FirestoreService.${context}: listener denied, App Check token ${outcome}, retrying (attempt ${attempts}).`);
                 } else {
                   // NOT a refresh. Saying "refreshing the token" here sent a real investigation
                   // down the wrong path: bka-app was missing `registerAppCheck()` in its main.ts,
@@ -208,9 +208,9 @@ export class FirestoreService {
       // Sentry report — the ONLY trace a suppressed write leaves — did not record which case it was.
       // SCS-8M sat unclassifiable for that reason: its rules were verified to ALLOW the payload, so
       // the denial was attestation all along, but nothing in the ticket could say so.
-      const attested = await ensureAppCheckToken(undefined, true);
-      if (attested) {
-        console.debug(`FirestoreService.${context}: write denied, App Check token refreshed, retrying once.`);
+      const outcome = await attestAppCheck(undefined, true);
+      if (isAttested(outcome)) {
+        console.debug(`FirestoreService.${context}: write denied, App Check token ${outcome}, retrying once.`);
       } else {
         console.warn(`FirestoreService.${context}: write denied and App Check could NOT attest — no token was obtained. App Check is unregistered (registerAppCheck() missing in main.ts), blocked by the browser, or the attestation timed out.`);
       }
@@ -220,7 +220,7 @@ export class FirestoreService {
         // Carry the attestation outcome to `reportSilentWriteFailure`, which is the only observer
         // left once the toast is suppressed.
         if (retryEx && typeof retryEx === 'object') {
-          (retryEx as { appCheckAttested?: boolean }).appCheckAttested = attested;
+          (retryEx as { appCheckOutcome?: AppCheckOutcome }).appCheckOutcome = outcome;
         }
         throw retryEx;
       }
@@ -244,6 +244,11 @@ export class FirestoreService {
    * write means App Check (ENFORCED on Firestore here) rejected the request, typically because a
    * backgrounded tab woke with an expired token; `unavailable` means transport.
    *
+   * Not every such failure is a ticket, though: {@link isReportableWriteFailure} keeps the ones we
+   * can act on and drops the resume-time App Check denials, which repair themselves. And the title
+   * is stripped of the document id ({@link groupingTitle}) so the survivors group into one issue
+   * per call site instead of one per document.
+   *
    * Writes that DO toast are deliberately not reported: the user sees them and can report them,
    * and mirroring every one into Sentry would drown the silent ones this exists for.
    * @param context the call site, e.g. `createModel(sessions/abc)`
@@ -251,19 +256,54 @@ export class FirestoreService {
    */
   private reportSilentWriteFailure(context: string, ex: unknown): void {
     const code = (ex as { code?: string } | null)?.code ?? 'unknown';
-    // `appCheck` splits the two causes a permission-denied write can have, which are
-    // indistinguishable in the error itself: `unavailable` means the forced attestation in
-    // `writeWithTokenDenialRetry` produced no token at all (unregistered / blocked / timed out —
-    // a client or bootstrap fault), `refreshed` means the backend rejected a freshly minted token
-    // and the denial is therefore about the rules or the payload. `n/a` is a denial that never
-    // reached the retry, or a different error code entirely.
-    const attested = (ex as { appCheckAttested?: boolean } | null)?.appCheckAttested;
-    const appCheck = attested === undefined ? 'n/a' : attested ? 'refreshed' : 'unavailable';
-    captureMessage(`FirestoreService.${context} failed silently: ${code}`, {
+    // What the forced attestation in `writeWithTokenDenialRetry` actually did — see
+    // {@link AppCheckOutcome}. `n/a` is a denial that never reached the retry, or a different
+    // error code entirely.
+    const appCheck = (ex as { appCheckOutcome?: AppCheckOutcome } | null)?.appCheckOutcome ?? 'n/a';
+    if (!FirestoreService.isReportableWriteFailure(code, appCheck)) {
+      console.debug(`FirestoreService.${context}: write denied, App Check ${appCheck} — not reported (self-healing).`);
+      return;
+    }
+    captureMessage(`FirestoreService.${FirestoreService.groupingTitle(context)} failed silently: ${code}`, {
       level: 'warning',
       tags: { firestoreCode: code, appCheck },
       extra: { context, detail: (ex as Error | null)?.message },
     });
+  }
+
+  /**
+   * Is this silent write failure worth a Sentry issue?
+   *
+   * A `permission-denied` write has two very different causes and only one of them is a bug we can
+   * act on. When the forced attestation could not mint a token (`unavailable`) or never ran
+   * (`cooldown`, `cached`, `n/a`), the denial is App Check enforcement on a tab that woke from
+   * suspension without network or without a timer — the browser's doing, not ours, and every
+   * caller on this path writes state that the next write or a server-side sweep repairs. Those
+   * produced a steady drip of unactionable tickets (SCS-8M, ignored after 32 events; SCS-9W and
+   * KWA-4, which were triaged as rules defects and were not).
+   *
+   * What stays reportable:
+   * - `refreshed` — the backend rejected a token minted seconds earlier, so the rules or the
+   *   payload really are wrong.
+   * - `unregistered` — `registerAppCheck()` is missing from that app's main.ts. Silencing this one
+   *   would hide a bootstrap fault that denies EVERY write, which is exactly how bka-app shipped.
+   * - any other Firestore error code (`unavailable`, `not-found`, …): unrelated to attestation.
+   */
+  private static isReportableWriteFailure(code: string, appCheck: AppCheckOutcome | 'n/a'): boolean {
+    if (code !== 'permission-denied') return true;
+    return appCheck === 'refreshed' || appCheck === 'unregistered';
+  }
+
+  /**
+   * Strip the document id out of the issue title so one failing call site is ONE Sentry issue.
+   *
+   * The title carries the full path (`updateModel(sessions/gh1rp9ew6jjnkf60s0cn)`), and Sentry
+   * fingerprints a `captureMessage` by its text — so a per-session-id path opened a brand-new
+   * issue per occurrence (three separate `createModel(sessions/…)` tickets in 20 days, plus
+   * SCS-9W and KWA-4 for the update half). The full path stays in `extra.context`.
+   */
+  private static groupingTitle(context: string): string {
+    return context.replace(/\(([^/()]+)\/[^()]+\)/, '($1/…)');
   }
 
   private okrError(toastController: ToastController | undefined, message: string, isDebugMode = false): undefined {

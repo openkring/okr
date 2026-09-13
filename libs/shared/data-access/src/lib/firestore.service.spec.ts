@@ -60,13 +60,15 @@ const captureMessageMock = vi.hoisted(() => vi.fn());
 vi.mock('@sentry/angular', () => ({ captureMessage: captureMessageMock }));
 
 // App Check attestation is a network round trip; the service awaits it before re-attaching a
-// denied listener, so the tests drive it directly.
-const ensureAppCheckTokenMock = vi.hoisted(() => vi.fn(async () => true));
+// denied listener, so the tests drive it directly. It answers with an AppCheckOutcome — which of
+// the five the attestation was decides both the retry and whether the failure is worth a ticket.
+const attestAppCheckMock = vi.hoisted(() => vi.fn(async (): Promise<string> => 'refreshed'));
 
-// Keep the real ENV/FIRESTORE injection tokens; only force the init guard true.
+// Keep the real ENV/FIRESTORE injection tokens (and the real `isAttested`, which is a pure
+// projection of the outcome); only force the init guard true.
 vi.mock('@okr/shared-config', async (orig) => {
   const actual = await (orig() as Promise<Record<string, unknown>>);
-  return { ...actual, isFirestoreInitializedCheck: () => true, ensureAppCheckToken: ensureAppCheckTokenMock };
+  return { ...actual, isFirestoreInitializedCheck: () => true, attestAppCheck: attestAppCheckMock };
 });
 
 import { doc, runTransaction, setDoc, updateDoc } from 'firebase/firestore';
@@ -196,7 +198,7 @@ describe('FirestoreService.searchData', () => {
     const rows = await firstValueFrom(svc.searchData('sessions', QUERY, 'startedAt', 'desc'));
 
     expect(rows).toHaveLength(1);
-    expect(ensureAppCheckTokenMock).toHaveBeenCalledTimes(1);
+    expect(attestAppCheckMock).toHaveBeenCalledTimes(1);
     expect(error).not.toHaveBeenCalled();   // recovered, so nothing to report
     error.mockRestore();
   });
@@ -210,7 +212,7 @@ describe('FirestoreService.searchData', () => {
     const rows = await firstValueFrom(svc.searchData('sessions', QUERY, 'startedAt', 'desc'));
 
     expect(rows).toEqual([]);
-    expect(ensureAppCheckTokenMock).toHaveBeenCalledTimes(2);   // DENIAL_RETRIES
+    expect(attestAppCheckMock).toHaveBeenCalledTimes(2);   // DENIAL_RETRIES
     expect(error).toHaveBeenCalled();
     error.mockRestore();
   });
@@ -253,7 +255,7 @@ describe('FirestoreService.searchData', () => {
     const rows = await firstValueFrom(svc.searchData('sessions', QUERY, 'startedAt', 'desc'));
 
     expect(rows).toEqual([]);
-    expect(ensureAppCheckTokenMock).not.toHaveBeenCalled();
+    expect(attestAppCheckMock).not.toHaveBeenCalled();
   });
 
   // Transport failures are the SDK's to retry; refreshing an App Check token does nothing for them.
@@ -266,7 +268,7 @@ describe('FirestoreService.searchData', () => {
 
     await firstValueFrom(svc.searchData('sessions', QUERY, 'startedAt', 'desc'));
 
-    expect(ensureAppCheckTokenMock).not.toHaveBeenCalled();
+    expect(attestAppCheckMock).not.toHaveBeenCalled();
     error.mockRestore();
   });
 });
@@ -301,7 +303,7 @@ describe('FirestoreService.readModel', () => {
     const user = await firstValueFrom(svc.readModel('users', 'u1'));
 
     expect(user).toEqual({ okey: 'u1' });
-    expect(ensureAppCheckTokenMock).toHaveBeenCalledTimes(1);
+    expect(attestAppCheckMock).toHaveBeenCalledTimes(1);
   });
 
   it('recovers to undefined when the stream errors asynchronously', async () => {
@@ -318,7 +320,7 @@ describe('FirestoreService.createModel', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     TestBed.resetTestingModule();
-    ensureAppCheckTokenMock.mockResolvedValue(true);
+    attestAppCheckMock.mockResolvedValue('refreshed');
     docExists.value = false;                          // the id is free unless a test says otherwise
     docMock.mockReturnValue({ id: 'a1' } as never);   // createModel returns ref.id
   });
@@ -380,7 +382,7 @@ describe('FirestoreService.createModel', () => {
 
     expect(key).toBeDefined();
     expect(setDocMock).toHaveBeenCalledTimes(1);
-    expect(ensureAppCheckTokenMock).not.toHaveBeenCalled();
+    expect(attestAppCheckMock).not.toHaveBeenCalled();
   });
 
   // Root cause of SCS-8N: App Check is ENFORCED on Firestore, and a cached token the backend no
@@ -398,7 +400,7 @@ describe('FirestoreService.createModel', () => {
 
     expect(key).toBeDefined();
     expect(setDocMock).toHaveBeenCalledTimes(2);
-    expect(ensureAppCheckTokenMock).toHaveBeenCalledWith(undefined, true);   // forced, not the cache
+    expect(attestAppCheckMock).toHaveBeenCalledWith(undefined, true);   // forced, not the cache
     expect(captureMessageMock).not.toHaveBeenCalled();                       // recovered, so no ticket
     debug.mockRestore();
   });
@@ -428,7 +430,7 @@ describe('FirestoreService.createModel', () => {
     const debug = vi.spyOn(console, 'debug').mockImplementation(() => undefined);
     const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     setDocMock.mockRejectedValue(permissionDenied());
-    ensureAppCheckTokenMock.mockResolvedValue(true);
+    attestAppCheckMock.mockResolvedValue('refreshed');
     const svc = makeService();
 
     await svc.createModel('activities', { okey: 'a1', tenants: ['scs'] } as never,
@@ -441,21 +443,83 @@ describe('FirestoreService.createModel', () => {
     error.mockRestore();
   });
 
-  // The recovery is a no-op when App Check cannot attest at all (unregistered / blocked / timed
-  // out). Claiming a refresh here is what sent an earlier investigation down the wrong path.
-  it('tags a surviving denial as `unavailable` when attestation produced no token', async () => {
+  // A denial that survives an attestation which produced NO token is App Check enforcement on a
+  // tab that woke without network — the browser's doing, not a bug of ours, and every caller on
+  // this path is best-effort. It stays in the console and out of Sentry (SCS-8M was ignored after
+  // 32 such events; SCS-9W reported exactly this outcome and was triaged as a rules defect).
+  it('does not report a denial when attestation produced no token', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const debug = vi.spyOn(console, 'debug').mockImplementation(() => undefined);
     const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     setDocMock.mockRejectedValue(permissionDenied());
-    ensureAppCheckTokenMock.mockResolvedValue(false);
+    attestAppCheckMock.mockResolvedValue('unavailable');
     const svc = makeService();
 
     await svc.createModel('activities', { okey: 'a1', tenants: ['scs'] } as never,
       undefined, undefined, undefined, true);
 
-    expect(captureMessageMock.mock.calls[0][1].tags).toMatchObject({ appCheck: 'unavailable' });
+    expect(captureMessageMock).not.toHaveBeenCalled();
     expect(warn).toHaveBeenCalled();     // and the log says so, instead of claiming a refresh
+    expect(debug).toHaveBeenCalled();    // …including the fact that it was not reported
     warn.mockRestore();
+    debug.mockRestore();
+    error.mockRestore();
+  });
+
+  // The cooldown answers from ANOTHER caller's refresh, so this write attested nothing — it is not
+  // evidence that a fresh token was rejected, and must not open a ticket claiming it was (KWA-4).
+  it('does not report a denial that only reached the attestation cooldown', async () => {
+    const debug = vi.spyOn(console, 'debug').mockImplementation(() => undefined);
+    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    setDocMock.mockRejectedValue(permissionDenied());
+    attestAppCheckMock.mockResolvedValue('cooldown');
+    const svc = makeService();
+
+    await svc.createModel('activities', { okey: 'a1', tenants: ['scs'] } as never,
+      undefined, undefined, undefined, true);
+
+    expect(captureMessageMock).not.toHaveBeenCalled();
+    debug.mockRestore();
+    error.mockRestore();
+  });
+
+  // The one App-Check-shaped denial that IS ours: no registerAppCheck() in that app's main.ts
+  // denies every single write, and bka-app shipped exactly that. It must never be silenced.
+  it('reports a denial when App Check was never registered', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    setDocMock.mockRejectedValue(permissionDenied());
+    attestAppCheckMock.mockResolvedValue('unregistered');
+    const svc = makeService();
+
+    await svc.createModel('activities', { okey: 'a1', tenants: ['scs'] } as never,
+      undefined, undefined, undefined, true);
+
+    expect(captureMessageMock.mock.calls[0][1].tags).toMatchObject({ appCheck: 'unregistered' });
+    warn.mockRestore();
+    error.mockRestore();
+  });
+
+  // Sentry fingerprints a captureMessage by its text, so a document id in the title opened a NEW
+  // issue per document — three `createModel(sessions/…)` tickets in 20 days. The id belongs in
+  // `extra`, where it is still there to look up.
+  it('groups the report by call site, keeping the document id in extra', async () => {
+    const debug = vi.spyOn(console, 'debug').mockImplementation(() => undefined);
+    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    setDocMock.mockRejectedValue(permissionDenied());
+    attestAppCheckMock.mockResolvedValue('refreshed');
+    const svc = makeService();
+
+    // the doc() stub fixes the id, so the id under test is the one the report carries
+    await svc.createModel('sessions', { okey: 'gh1rp9ew6jjnkf60s0cn', tenants: ['scs'] } as never,
+      undefined, undefined, undefined, true);
+    const reportedId = (docMock.mock.results[0].value as { id: string }).id;
+
+    expect(captureMessageMock.mock.calls[0][0])
+      .toBe('FirestoreService.createModel(sessions/…) failed silently: permission-denied');
+    expect(captureMessageMock.mock.calls[0][1].extra)
+      .toMatchObject({ context: `createModel(sessions/${reportedId})` });
+    debug.mockRestore();
     error.mockRestore();
   });
 
@@ -469,7 +533,7 @@ describe('FirestoreService.createModel', () => {
       undefined, undefined, undefined, true);
 
     expect(setDocMock).toHaveBeenCalledTimes(1);
-    expect(ensureAppCheckTokenMock).not.toHaveBeenCalled();
+    expect(attestAppCheckMock).not.toHaveBeenCalled();
     error.mockRestore();
   });
 });
@@ -484,7 +548,7 @@ describe('FirestoreService.updateModel', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     TestBed.resetTestingModule();
-    ensureAppCheckTokenMock.mockResolvedValue(true);
+    attestAppCheckMock.mockResolvedValue('refreshed');
     docMock.mockReturnValue({ id: 'a1' } as never);
   });
 
@@ -497,7 +561,7 @@ describe('FirestoreService.updateModel', () => {
 
     expect(key).toBe('a1');
     expect(updateDocMock).toHaveBeenCalledTimes(1);
-    expect(ensureAppCheckTokenMock).not.toHaveBeenCalled();
+    expect(attestAppCheckMock).not.toHaveBeenCalled();
   });
 
   it('retries a denied update once after forcing a fresh App Check token', async () => {
@@ -510,7 +574,7 @@ describe('FirestoreService.updateModel', () => {
 
     expect(key).toBe('a1');
     expect(updateDocMock).toHaveBeenCalledTimes(2);
-    expect(ensureAppCheckTokenMock).toHaveBeenCalledWith(undefined, true);   // forced, not the cache
+    expect(attestAppCheckMock).toHaveBeenCalledWith(undefined, true);   // forced, not the cache
     expect(captureMessageMock).not.toHaveBeenCalled();                       // recovered, so no ticket
     debug.mockRestore();
   });
@@ -558,7 +622,7 @@ describe('FirestoreService.updateModel', () => {
       false, undefined, undefined, undefined, true);
 
     expect(updateDocMock).toHaveBeenCalledTimes(1);
-    expect(ensureAppCheckTokenMock).not.toHaveBeenCalled();
+    expect(attestAppCheckMock).not.toHaveBeenCalled();
     error.mockRestore();
   });
 });

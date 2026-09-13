@@ -19,6 +19,21 @@ import { getToken, type AppCheck } from 'firebase/app-check';
  * context and not reachable from a lib. So main.ts hands the instance here via
  * `registerAppCheck()`, and libs await `ensureAppCheckToken()` before a resume-time write.
  */
+/**
+ * What an attestation attempt actually did. Five outcomes, three of which leave a usable token:
+ *
+ * - `refreshed`    — a forced round trip minted a new token. A denial that survives this one is
+ *                    genuinely about the rules or the payload.
+ * - `cached`       — the SDK's cached token was still valid, so nothing was attested. The backend
+ *                    may still reject it (a suspended tab's token, clock skew).
+ * - `cooldown`     — answered from a forced refresh that succeeded moments ago, in another caller.
+ *                    Usable, but this call attested nothing and proves nothing about the token.
+ * - `unavailable`  — attestation ran and failed: reCAPTCHA blocked, offline, or timed out.
+ * - `unregistered` — `registerAppCheck()` was never called (a main.ts bootstrap fault, the bug
+ *                    that made bka-app's recovery a silent no-op).
+ */
+export type AppCheckOutcome = 'refreshed' | 'cached' | 'cooldown' | 'unavailable' | 'unregistered';
+
 let appCheckInstance: AppCheck | undefined;
 
 /**
@@ -29,7 +44,7 @@ let appCheckInstance: AppCheck | undefined;
  * that is ~20 concurrent attestations for one and the same token — a self-inflicted thundering
  * herd that reCAPTCHA answers with throttling, which produces more denials.
  */
-let pendingForcedRefresh: Promise<boolean> | undefined;
+let pendingForcedRefresh: Promise<AppCheckOutcome> | undefined;
 
 /**
  * When the last forced attestation SUCCEEDED. Denials of a single incident do not arrive at the
@@ -77,34 +92,54 @@ export function registerAppCheck(instance: AppCheck): void {
  * @return true when a valid token is cached, false when App Check is unregistered, blocked or slow
  */
 export async function ensureAppCheckToken(timeoutMs = 5000, forceRefresh = false): Promise<boolean> {
-  if (!appCheckInstance) return false;
+  return isAttested(await attestAppCheck(timeoutMs, forceRefresh));
+}
+
+/**
+ * The same attestation as {@link ensureAppCheckToken}, but reporting WHICH of the five outcomes
+ * it was instead of collapsing them into a boolean.
+ *
+ * The distinction is not cosmetic: it is the whole diagnosis of a PERMISSION_DENIED write. The
+ * boolean said `true` for both `refreshed` and `cooldown`, so a denial that followed a cooldown
+ * answer — no attestation had actually run — was reported to Sentry as "fresh token, backend still
+ * said no", i.e. as a rules defect. KWA-4 was triaged that way and was not one.
+ */
+export async function attestAppCheck(timeoutMs = 5000, forceRefresh = false): Promise<AppCheckOutcome> {
+  if (!appCheckInstance) return 'unregistered';
 
   // The cached path is a local lookup in the SDK, so it needs no coalescing.
   if (!forceRefresh) return attest(appCheckInstance, false, timeoutMs);
 
   if (pendingForcedRefresh) return pendingForcedRefresh;
-  if (Date.now() - lastForcedRefreshAt < FORCE_REFRESH_COOLDOWN_MS) return true;
+  // A token minted moments ago is the freshest answer available — but it is NOT this call's own
+  // attestation, and a denial that follows it says nothing about the token.
+  if (Date.now() - lastForcedRefreshAt < FORCE_REFRESH_COOLDOWN_MS) return 'cooldown';
 
   pendingForcedRefresh = attest(appCheckInstance, true, timeoutMs)
-    .then((attested) => {
-      if (attested) lastForcedRefreshAt = Date.now();
-      return attested;
+    .then((outcome) => {
+      if (isAttested(outcome)) lastForcedRefreshAt = Date.now();
+      return outcome;
     })
     .finally(() => { pendingForcedRefresh = undefined; });
   return pendingForcedRefresh;
 }
 
+/** True for every outcome that leaves a usable token in the SDK's cache. */
+export function isAttested(outcome: AppCheckOutcome): boolean {
+  return outcome === 'refreshed' || outcome === 'cached' || outcome === 'cooldown';
+}
+
 /** One bounded attestation round trip. Never throws — see the contract above. */
-async function attest(instance: AppCheck, forceRefresh: boolean, timeoutMs: number): Promise<boolean> {
+async function attest(instance: AppCheck, forceRefresh: boolean, timeoutMs: number): Promise<AppCheckOutcome> {
   try {
     await Promise.race([
       getToken(instance, forceRefresh),
       new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error('App Check getToken timed out')), timeoutMs)),
     ]);
-    return true;
+    return forceRefresh ? 'refreshed' : 'cached';
   } catch (ex) {
     console.warn('ensureAppCheckToken: App Check attestation unavailable:', ex);
-    return false;
+    return 'unavailable';
   }
 }

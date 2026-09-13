@@ -5,7 +5,7 @@ const getTokenMock = vi.hoisted(() => vi.fn());
 vi.mock('firebase/app-check', () => ({ getToken: getTokenMock }));
 
 // Imported after the mock so the module under test binds to the stubbed getToken.
-const { ensureAppCheckToken, registerAppCheck } = await import('./app-check');
+const { attestAppCheck, ensureAppCheckToken, isAttested, registerAppCheck } = await import('./app-check');
 
 const INSTANCE = {} as AppCheck;
 
@@ -99,5 +99,65 @@ describe('ensureAppCheckToken', () => {
     await expect(ensureAppCheckToken(undefined, true)).resolves.toBe(false);
     await expect(ensureAppCheckToken(undefined, true)).resolves.toBe(true);
     expect(getTokenMock).toHaveBeenCalledTimes(2);
+  });
+});
+
+// The boolean above collapses five very different outcomes into one bit, and the write path
+// reports that bit to Sentry as the diagnosis of a PERMISSION_DENIED. `cooldown` in particular
+// used to read as `refreshed` — "the backend rejected a freshly minted token", i.e. a rules
+// defect — when in truth this call had attested nothing at all (KWA-4).
+describe('attestAppCheck', () => {
+  beforeEach(() => {
+    getTokenMock.mockReset();
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.useRealTimers();
+    registerAppCheck(undefined as unknown as AppCheck);
+  });
+
+  it('reports unregistered when registerAppCheck was never called', async () => {
+    await expect(attestAppCheck()).resolves.toBe('unregistered');
+    expect(getTokenMock).not.toHaveBeenCalled();
+  });
+
+  it('reports cached for the non-forced path', async () => {
+    registerAppCheck(INSTANCE);
+    getTokenMock.mockResolvedValue({ token: 'abc' });
+    await expect(attestAppCheck()).resolves.toBe('cached');
+  });
+
+  it('reports refreshed when a forced round trip actually minted a token', async () => {
+    registerAppCheck(INSTANCE);
+    getTokenMock.mockResolvedValue({ token: 'abc' });
+    await expect(attestAppCheck(undefined, true)).resolves.toBe('refreshed');
+  });
+
+  // The case the old boolean mislabelled: usable token, but nothing was attested HERE.
+  it('reports cooldown, not refreshed, when answered from a just-succeeded refresh', async () => {
+    registerAppCheck(INSTANCE);
+    getTokenMock.mockResolvedValue({ token: 'abc' });
+
+    await expect(attestAppCheck(undefined, true)).resolves.toBe('refreshed');
+    await expect(attestAppCheck(undefined, true)).resolves.toBe('cooldown');
+    expect(getTokenMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('reports unavailable when attestation is blocked', async () => {
+    registerAppCheck(INSTANCE);
+    getTokenMock.mockRejectedValue(new Error('recaptcha blocked'));
+    await expect(attestAppCheck(undefined, true)).resolves.toBe('unavailable');
+  });
+
+  // `ensureAppCheckToken` is now a projection of these outcomes and must keep its old contract:
+  // every outcome that leaves a usable token in the SDK cache is still `true`.
+  it('maps outcomes back onto the boolean contract', () => {
+    expect(isAttested('refreshed')).toBe(true);
+    expect(isAttested('cached')).toBe(true);
+    expect(isAttested('cooldown')).toBe(true);
+    expect(isAttested('unavailable')).toBe(false);
+    expect(isAttested('unregistered')).toBe(false);
   });
 });
