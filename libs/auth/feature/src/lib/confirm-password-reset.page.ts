@@ -24,12 +24,29 @@ import { AuthStore } from './auth.store';
     .title { text-align: center; font-size: 2rem; padding: 20px; }
     .logo { max-width: 150px; text-align: center; display: block; margin-left: auto; margin-right: auto; width: 50%; z-index: 10; padding: 20px; }
     .button-container { margin: 20px; }
+    /*
+      The screens sit on a blurred, 70%-opaque photo. Without a ground of their own the labels,
+      helper texts and the clear/outline buttons were drawn straight onto that photo and their
+      contrast depended on whichever part of the tenant's banner happened to be underneath.
+      A translucent panel keeps the photo visible but gives every text a defined background.
+      --ion-background-color-rgb follows the light/dark theme; the shadow separates the panel
+      from the image at the edges.
+    */
+    .login-form {
+      background: rgba(var(--ion-background-color-rgb, 255, 255, 255), 0.88);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      color: var(--ion-text-color);
+      border-radius: 16px;
+      padding: 4px 12px 12px;
+      box-shadow: 0 10px 30px rgb(0 0 0 / 30%);
+    }
     @media (width <= 600px) {
       .login-form { width: 100%; text-align: center; z-index: 5; }
       .login-container { display: flex; height: 100%; padding: 10px; }
     }
     @media (width > 600px) {
-      .login-form { border-radius: 10px; max-width: 600px; width: 90%; text-align: center; z-index: 5; }
+      .login-form { max-width: 600px; width: 90%; text-align: center; z-index: 5; }
       .login-container { display: flex; align-items: center; justify-content: center; height: 100%; padding: 20px; margin: 20px; }
     }
   `,

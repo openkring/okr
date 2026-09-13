@@ -653,15 +653,19 @@ export const AppStore = signalStore(
         if (appName.length > 0) store.title.setTitle(appName);
       });
 
-      // Active UI language. Applies the signed-in user's saved preference (userLanguage),
-      // and seeds from the browser language before login / for users without a saved pref.
-      // currentUser is a LIVE Firestore stream, so this effect also handles apply-on-save:
-      // saving a new language in the profile re-emits the user doc here and switches the UI
-      // immediately (Transloco reRenderOnLangChange). AvailableLanguages is index-aligned with
-      // the Language enum (GE=0 → 'de', …); undefined language (browser seed) falls back to 'de'.
+      // Active UI language. Applies the signed-in user's saved preference (userLanguage); before
+      // login, and for users without a saved pref, the app language is the default (German), NOT
+      // the browser language. The browser seed used to win here, which meant an English or French
+      // browser met the login and password-reset screens in a language the tenant never chose —
+      // and the UI then switched to German the moment the user signed in. currentUser is a LIVE
+      // Firestore stream, so this effect also handles apply-on-save: saving a new language in the
+      // profile re-emits the user doc here and switches the UI immediately (Transloco
+      // reRenderOnLangChange). AvailableLanguages is index-aligned with the Language enum
+      // (GE=0 → 'de', …). A tenant that disabled the default still gets a language it enabled:
+      // setActiveLang → selectLanguage falls back within enabledLanguageCodes().
       effect(() => {
         const user = store.currentUser();
-        const code = user ? AvailableLanguages[user.userLanguage ?? DefaultLanguage] : undefined;
+        const code = AvailableLanguages[user?.userLanguage ?? DefaultLanguage];
         store.i18nService.setActiveLang(code, DefaultLanguageCode, store.enabledLanguageCodes());
       });
 
