@@ -110,6 +110,9 @@
       "save": "Salva",
       "header": "Nuova cartella",
       "placeholder": "Nome della cartella"
+    },
+    "upload": {
+      "failed": "«{name}» non è stato caricato. Controlla la connessione e riprova."
     }
   },
   "article": {

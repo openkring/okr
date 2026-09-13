@@ -110,6 +110,9 @@
       "save": "Save",
       "header": "New folder",
       "placeholder": "Folder name"
+    },
+    "upload": {
+      "failed": "«{name}» could not be uploaded. Check your connection and try again."
     }
   },
   "article": {

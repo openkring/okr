@@ -110,6 +110,9 @@
       "save": "Guardar",
       "header": "Nueva carpeta",
       "placeholder": "Nombre de la carpeta"
+    },
+    "upload": {
+      "failed": "«{name}» no se ha podido subir. Comprueba tu conexión e inténtalo de nuevo."
     }
   },
   "article": {

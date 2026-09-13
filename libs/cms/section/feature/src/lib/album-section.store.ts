@@ -216,7 +216,16 @@ export const AlbumStore = signalStore(
         // original name is not lost: it goes into doc.title below, which is what the UI shows.
         const fullPath = buildAlbumUploadPath(basePath, file.name);
         const downloadUrl = await store.uploadService.uploadFile(file, fullPath, file.name);
-        if (!downloadUrl) continue;
+        if (!downloadUrl) {
+          // Ein fehlgeschlagener Upload wurde bisher wortlos übersprungen: das Modal zeigte
+          // kurz einen roten Balken, schloss sich, und das Bild fehlte einfach. Wer nicht genau
+          // hinsah, hielt den Upload für erfolgreich. Sentry erfährt den Grund in
+          // `UploadTaskModal.report`; hier bekommt die Person, die hochlädt, überhaupt erst
+          // eine Rückmeldung. `continue`, damit die übrigen Dateien einer Mehrfachauswahl
+          // weiterlaufen — genau wie bei der Video-Prüfung oben.
+          await showToast(store.toastController, fill(store.i18n.album_upload_failed(), { name: file.name }));
+          continue;
+        }
 
         const doc = await store.documentService.getDocumentFromFile(file, fullPath);
         doc.url = downloadUrl;

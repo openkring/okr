@@ -6,7 +6,7 @@ import { FilePicker } from "@capawesome/capacitor-file-picker";
 import { ModalController } from "@ionic/angular/standalone";
 import { firstValueFrom } from "rxjs";
 
-import { ENV } from "@okr/shared-config";
+import { attestAppCheck, ENV, isAttested } from "@okr/shared-config";
 import { DocumentModel, DocumentModelName, IMAGE_STYLE_SHAPE, UserModel } from "@okr/shared-models";
 import { error } from "@okr/shared-util-angular";
 import { extractCredit, getImgixJsonUrl, ImageCreditMetaData, isPhotoCancellation, sanitizeFileName, warn } from "@okr/shared-util-core";
@@ -70,6 +70,7 @@ export class UploadService {
    * @returns array of download URLs (undefined entries for failed uploads)
    */
   public async uploadFiles(uploads: UploadEntry[], title: string): Promise<(string | undefined)[] | undefined> {
+    await this.attestBeforeUpload();
     const modal = await this.modalController.create({
       component: UploadTaskModal,
       cssClass: 'upload-modal',
@@ -85,6 +86,37 @@ export class UploadService {
       error(undefined, 'UploadService.uploadFiles -> ERROR: ' + JSON.stringify(ex));
     }
     return undefined;
+  }
+
+  /**
+   * Refresh the App Check token before a Storage upload.
+   *
+   * App Check is ENFORCED on Storage, and its token is kept alive by a TIMER. A backgrounded
+   * WebKit view does not get timers — the same fact `FirestoreService` documents at length for
+   * listeners — so an app that has been suspended wakes holding an expired token.
+   *
+   * Firestore reads and writes already recover from that on their own (a forced re-attestation
+   * plus a retry on `permission-denied`), and so do `SessionService` and `ActivityService`.
+   * The Storage upload path was the ONE write path in the app with no equivalent: it went
+   * straight to `uploadBytesResumable` with whatever token happened to be cached, got
+   * `storage/unauthorized` back, and — because the failure was silent (see
+   * `UploadTaskModal.report`) — dropped the file without a word.
+   *
+   * That gap is why this reproduces on iPhone and essentially nowhere else. iOS freezes a
+   * home-screen PWA hard, and the picture the user wants to upload is exactly the thing that
+   * makes them return to a long-suspended app. Everything else on screen still works, because
+   * everything else self-heals; only the upload does not.
+   *
+   * A forced refresh, not the cached token: the cached one is precisely the token the backend
+   * is about to reject. Failure is deliberately NOT fatal — App Check can be unregistered (dev
+   * builds) or unreachable, and refusing to upload in those cases would turn a degraded
+   * attestation into a broken feature. We attest, then upload and let the rules decide.
+   */
+  private async attestBeforeUpload(): Promise<void> {
+    const outcome = await attestAppCheck(undefined, true);
+    if (!isAttested(outcome)) {
+      warn(`UploadService.uploadFiles: App Check not attested (${outcome}) — uploading anyway`);
+    }
   }
 
   /**

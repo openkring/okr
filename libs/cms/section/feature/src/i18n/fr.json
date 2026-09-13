@@ -110,6 +110,9 @@
       "save": "Enregistrer",
       "header": "Nouveau dossier",
       "placeholder": "Nom du dossier"
+    },
+    "upload": {
+      "failed": "«{name}» n'a pas pu être téléversé. Vérifie ta connexion et réessaie."
     }
   },
   "article": {

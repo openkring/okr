@@ -5,8 +5,11 @@ import {
 } from '@ionic/angular/standalone';
 import { UploadTask, getDownloadURL } from 'firebase/storage';
 
+import { captureMessage } from '@sentry/angular';
+
 import { uploadToFirebaseStorage } from '@okr/shared-config';
-import { dismissOverlay, error } from '@okr/shared-util-angular';
+import { dismissOverlay } from '@okr/shared-util-angular';
+import { describeUploadError } from '@okr/shared-util-core';
 
 import { Header } from './header';
 import { SvgIconPipe } from '@okr/shared-pipes';
@@ -137,7 +140,7 @@ export class UploadTaskModal implements OnInit {
           });
         },
         (ex) => {
-          error(undefined, `UploadTask[${index}]: ERROR: ${JSON.stringify(ex)}`);
+          this.report('upload', entry, ex);
           this.uploadStates.update(states => {
             const updated = [...states];
             updated[index] = { ...updated[index], state: 'error' };
@@ -161,7 +164,7 @@ export class UploadTaskModal implements OnInit {
               });
             })
             .catch((ex) => {
-              error(undefined, `UploadTask[${index}]: getDownloadURL ERROR: ${JSON.stringify(ex)}`);
+              this.report('getDownloadURL', entry, ex);
               this.uploadStates.update(states => {
                 const updated = [...states];
                 updated[index] = { ...updated[index], state: 'error' };
@@ -176,6 +179,36 @@ export class UploadTaskModal implements OnInit {
             });
         }
       );
+    });
+  }
+
+  /**
+   * Report a failed upload to Sentry.
+   *
+   * Until now BOTH failure paths called `error(undefined, ...)`, and `error()` with no
+   * ToastController and the default `isDebugMode = false` does literally nothing — no console
+   * line, no toast, no Sentry event (see `alert.util.ts`). The message it did not print was
+   * `JSON.stringify(ex)`, which on a `FirebaseError` is `{}` anyway. A failed upload was
+   * therefore invisible end to end: the modal flashed a red bar, dismissed, `addFiles` saw
+   * `!downloadUrl` and silently skipped the file. That is why an iPhone user could report
+   * "I cannot upload photos" and there was nothing whatsoever to look at.
+   *
+   * `captureMessage`, not `captureException`: an upload that fails on a rules denial or a dead
+   * mobile connection is a normal outcome of a hostile network, not a crash — and the SDK's
+   * error object carries no useful stack (it is constructed, not thrown from our code).
+   */
+  private report(stage: 'upload' | 'getDownloadURL', entry: UploadEntry, ex: unknown): void {
+    const { code, message } = describeUploadError(ex);
+    captureMessage(`Upload failed (${stage}): ${code}`, {
+      level: 'error',
+      tags: { uploadStage: stage, uploadErrorCode: code },
+      extra: {
+        fullPath: entry.fullPath,
+        fileName: entry.file.name,
+        fileSize: entry.file.size,
+        fileType: entry.file.type || '(empty)',
+        message,
+      },
     });
   }
 
