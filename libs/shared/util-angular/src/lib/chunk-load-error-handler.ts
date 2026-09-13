@@ -21,8 +21,14 @@ const STALE_CHUNK_RE =
 /** sessionStorage key recording when we last auto-reloaded to recover a stale chunk. */
 export const STALE_CHUNK_RELOAD_KEY = 'okr-stale-chunk-reload-at';
 
+/** sessionStorage key recording when we last escalated a stale chunk to a full cache teardown. */
+export const STALE_CHUNK_FORCE_KEY = 'okr-stale-chunk-force-at';
+
 /** Never auto-reload twice within this window — guards against a reload loop. */
 const RELOAD_MIN_INTERVAL_MS = 60 * 1000; // 1 minute
+
+/** Escalate to a cache teardown at most once within this window. */
+const FORCE_MIN_INTERVAL_MS = 10 * 60 * 1000; // 10 minutes
 
 /** True when the error is a failed dynamic import of a (now-stale) lazy chunk. */
 export function isStaleChunkError(error: unknown): boolean {
@@ -51,11 +57,19 @@ export function isStaleChunkRecoveryInFlight(): boolean {
  * Recover from a stale lazy-chunk failure by reloading once, which fetches the current
  * deployment instead of leaving the user on a broken page (SCS-19).
  *
- * Returns true only when `error` was a stale-chunk failure AND the reload was triggered
- * — i.e. the caller may drop the error. Returns false for unrelated errors and for a
- * repeat failure suppressed by the loop guard (the chunk is *still* missing right after
- * a reload, i.e. a genuinely broken deploy rather than merely a stale client), so that
- * actionable case stays reportable.
+ * A plain reload only helps a client that is stale by accident. When the chunk is STILL
+ * missing right after that reload, the client is pinned to the old build by something a
+ * reload cannot clear — in practice ngsw, which re-serves the very index.html/asset set
+ * that lacks the chunk (SCS-1A: a client on a 6-week-old release kept failing the day
+ * after a deploy). So the repeat failure escalates ONCE to `forceBootRecovery()`, which
+ * unregisters the service worker and drops its caches before reloading. That is the same
+ * teardown the boot-error screen offers the user by hand; here it runs unattended, because
+ * a failed lazy route leaves no screen to press anything on.
+ *
+ * Returns true only when `error` was a stale-chunk failure AND a recovery (reload or
+ * teardown) was triggered — i.e. the caller may drop the error. Returns false for
+ * unrelated errors and for a failure that survived BOTH steps, so that genuinely broken
+ * deploy stays reportable.
  *
  * VersionCheckService already reloads when the *service worker* declares its state
  * unrecoverable, but that path can't fire before the SW takes control
@@ -63,10 +77,25 @@ export function isStaleChunkRecoveryInFlight(): boolean {
  */
 export function recoverFromStaleChunk(error: unknown): boolean {
   if (!isStaleChunkError(error)) return false;
-  if (typeof window === 'undefined' || typeof sessionStorage === 'undefined') return false;
-  const lastReloadAt = Number(sessionStorage.getItem(STALE_CHUNK_RELOAD_KEY) ?? 0);
-  if (Date.now() - lastReloadAt < RELOAD_MIN_INTERVAL_MS) return false;
-  sessionStorage.setItem(STALE_CHUNK_RELOAD_KEY, String(Date.now()));
+  if (typeof window === 'undefined') return false;
+  const now = Date.now();
+  try {
+    // Every storage access sits inside the try: Chrome throws a SecurityError on the mere
+    // property lookup when site data is blocked for the origin (see recoverFromBootFailure).
+    if (typeof sessionStorage === 'undefined') return false;
+    const lastReloadAt = Number(sessionStorage.getItem(STALE_CHUNK_RELOAD_KEY) ?? 0);
+    if (now - lastReloadAt >= RELOAD_MIN_INTERVAL_MS) {
+      sessionStorage.setItem(STALE_CHUNK_RELOAD_KEY, String(now));
+    } else {
+      // The reload already happened and the chunk is still gone — escalate, once.
+      const lastForceAt = Number(sessionStorage.getItem(STALE_CHUNK_FORCE_KEY) ?? 0);
+      if (now - lastForceAt < FORCE_MIN_INTERVAL_MS) return false;
+      sessionStorage.setItem(STALE_CHUNK_FORCE_KEY, String(now));
+      recoveryInFlight = true;
+      void forceBootRecovery();
+      return true;
+    }
+  } catch { return false; }
   recoveryInFlight = true;
   window.location.reload();
   return true;
@@ -143,6 +172,9 @@ export function recoverFromBootFailure(): boolean {
 /**
  * User-initiated retry from the boot-error screen: tear down the caching layers that can pin a
  * client to a broken build, then reload.
+ *
+ * Also the escalation step of `recoverFromStaleChunk` (SCS-1A), where a failed lazy route leaves
+ * no screen to press anything on. That caller carries its own one-shot guard.
  *
  * Unlike `recoverFromBootFailure` this is NOT rate-limited — the user asked for it — and it goes
  * further than a plain reload because the failure survives one by definition (the automatic retry

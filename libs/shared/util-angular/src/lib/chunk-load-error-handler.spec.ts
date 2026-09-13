@@ -1,6 +1,6 @@
 import { ErrorHandler } from '@angular/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { BOOT_FAILURE_RELOAD_KEY, ChunkLoadErrorHandler, STALE_CHUNK_RELOAD_KEY, forceBootRecovery, isStaleChunkError, recoverFromBootFailure, registerStaleChunkRecovery } from './chunk-load-error-handler';
+import { BOOT_FAILURE_RELOAD_KEY, ChunkLoadErrorHandler, STALE_CHUNK_FORCE_KEY, STALE_CHUNK_RELOAD_KEY, forceBootRecovery, isStaleChunkError, recoverFromBootFailure, registerStaleChunkRecovery } from './chunk-load-error-handler';
 
 describe('isStaleChunkError', () => {
   it('matches the per-browser dynamic-import failure messages', () => {
@@ -53,15 +53,54 @@ describe('ChunkLoadErrorHandler', () => {
     expect(sessionStorage.getItem(STALE_CHUNK_RELOAD_KEY)).not.toBeNull();
   });
 
-  it('does not reload a second time within the guard window; forwards the repeat to the delegate', () => {
+  it('escalates the repeat failure to a cache teardown instead of a second plain reload (SCS-1A)', async () => {
+    const unregister = vi.fn().mockResolvedValue(true);
+    Object.defineProperty(navigator, 'serviceWorker', {
+      value: { getRegistrations: vi.fn().mockResolvedValue([{ unregister }]) },
+      configurable: true,
+    });
+    const cacheDelete = vi.fn().mockResolvedValue(true);
+    Object.defineProperty(window, 'caches', {
+      value: { keys: vi.fn().mockResolvedValue(['ngsw:1']), delete: cacheDelete },
+      configurable: true,
+    });
+
+    const handler = new ChunkLoadErrorHandler(delegate);
+    const err = new Error('Failed to fetch dynamically imported module: https://x/src-AB12.js');
+    handler.handleError(err); // plain reload
+    handler.handleError(err); // still missing → the client is pinned by ngsw
+
+    expect(sessionStorage.getItem(STALE_CHUNK_FORCE_KEY)).not.toBeNull();
+    // The teardown is async; the reload comes after the unregister/cache drops resolve.
+    await vi.waitFor(() => expect(unregister).toHaveBeenCalledTimes(1));
+    expect(cacheDelete).toHaveBeenCalledWith('ngsw:1');
+    expect(reload).toHaveBeenCalledTimes(2);
+    // We are recovering from it, so it is not a Sentry event.
+    expect(delegate.handleError).not.toHaveBeenCalled();
+  });
+
+  it('forwards a failure that survived both the reload and the teardown', () => {
+    sessionStorage.setItem(STALE_CHUNK_RELOAD_KEY, String(Date.now()));
+    sessionStorage.setItem(STALE_CHUNK_FORCE_KEY, String(Date.now()));
     const handler = new ChunkLoadErrorHandler(delegate);
     const err = new Error('Failed to fetch dynamically imported module: https://x/src-AB12.js');
     handler.handleError(err);
-    handler.handleError(err);
-    expect(reload).toHaveBeenCalledTimes(1);
-    // The second (post-reload) failure is a genuinely broken deploy → Sentry should see it.
+    // Neither step helped → a genuinely broken deploy, which Sentry must see.
+    expect(reload).not.toHaveBeenCalled();
     expect(delegate.handleError).toHaveBeenCalledTimes(1);
     expect(delegate.handleError).toHaveBeenCalledWith(err);
+  });
+
+  it('degrades to forwarding when sessionStorage access is denied', () => {
+    const spy = vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw new DOMException('Access is denied for this document.', 'SecurityError');
+    });
+    const handler = new ChunkLoadErrorHandler(delegate);
+    const err = new Error('Importing a module script failed.');
+    handler.handleError(err);
+    expect(reload).not.toHaveBeenCalled();
+    expect(delegate.handleError).toHaveBeenCalledWith(err);
+    spy.mockRestore();
   });
 
   it('forwards non-chunk errors to the delegate and never reloads', () => {
