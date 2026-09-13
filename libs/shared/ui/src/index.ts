@@ -45,6 +45,7 @@ export * from './lib/image-config';
 export * from './lib/image-detail.modal';
 export * from './lib/image-url-input';
 export * from './lib/image-view.modal';
+export * from './lib/pinch-zoom';
 export * from './lib/image-slider.modal';
 export * from './lib/img';
 export * from './lib/label';

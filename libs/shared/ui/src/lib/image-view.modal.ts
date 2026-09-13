@@ -9,13 +9,14 @@ import { buildOverlayText, getImgixUrl } from '@okr/shared-util-core';
 import { downloadToBrowser } from '@okr/shared-util-angular';
 
 import { Header } from './header';
+import { PinchZoom } from './pinch-zoom';
 import { ImageDetailModal } from './image-detail.modal';
 
 @Component({
   selector: 'okr-image-view-modal',
   standalone: true,
   imports: [
-    Header, SvgIconPipe,
+    Header, SvgIconPipe, PinchZoom,
     IonContent, IonButton, IonIcon
   ],
   providers: [
@@ -34,12 +35,25 @@ import { ImageDetailModal } from './image-detail.modal';
       justify-content: center;
       background: #000;
     }
-    .image-container img {
+    /* The pinch surface spans the whole viewer so a gesture can start anywhere on the black
+       backdrop, and its 'touch-action: none' (set by okrPinchZoom) keeps the BROWSER from
+       turning the pinch into a page zoom of the fixed Ionic shell. */
+    .zoom-surface {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .zoom-surface img {
       width: auto;
       height: auto;
       max-width: 100%;
       max-height: 85dvh;
       object-fit: contain;
+      user-select: none;
+      -webkit-user-drag: none;
     }
     .nav-button {
       position: absolute;
@@ -101,7 +115,9 @@ import { ImageDetailModal } from './image-detail.modal';
                 <ion-icon slot="icon-only" src="{{ 'chevron-back' | svgIcon }}" />
               </ion-button>
             }
-            <img [src]="imgixUrl()" [alt]="currentAltText()" />
+            <div class="zoom-surface" [okrPinchZoom]="image" [resetKey]="imgixUrl()">
+              <img #image [src]="imgixUrl()" [alt]="currentAltText()" />
+            </div>
             @if (caption(); as caption) {
               <div class="caption">{{ caption }}</div>
             }
@@ -193,6 +209,16 @@ export class ImageViewModal {
   protected prev(): void {
     const count = this.gallery().length;
     this.currentIndex.set((this.currentIndex() - 1 + count) % count);
+  }
+
+  /**
+   * Last line of defence against the browser zooming the PAGE: `okrPinchZoom` already covers the
+   * image surface, this catches a pinch that starts on the header/caption. WebKit-only event.
+   */
+  @HostListener('gesturestart', ['$event'])
+  @HostListener('gesturechange', ['$event'])
+  protected onGesture(event: Event): void {
+    event.preventDefault();
   }
 
   @HostListener('document:keydown', ['$event'])

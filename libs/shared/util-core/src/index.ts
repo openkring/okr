@@ -15,6 +15,7 @@ export * from './lib/export.util';
 export * from './lib/file.util';
 export * from './lib/icon.util';
 export * from './lib/img.util';
+export * from './lib/zoom.util';
 export * from './lib/index-by';
 export * from './lib/invitation.util';
 export * from './lib/log.util';
