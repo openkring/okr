@@ -37,6 +37,13 @@ export class MatrixMessageService {
   private readonly receipts$ = new Map<string, BehaviorSubject<Map<string, MatrixReadReceipt[]>>>();
   // C-3: roomIds with a load in progress, so concurrent subscriptions don't double-load.
   private readonly loadingRooms = new Set<string>();
+  /**
+   * Rooms whose live timeline was reset WHILE a load was in flight, so the load must run
+   * again on the fresh timeline. Without this, `handleTimelineReset` hits the
+   * `loadingRooms` guard, returns silently, and the in-flight load emits a message list
+   * built from a timeline the SDK has already discarded — see `loadMessagesForRoom`.
+   */
+  private readonly pendingReload = new Set<string>();
   // C-4: edits whose original message isn't in the list yet (edit arrived before the
   // original on the live timeline). Keyed by original eventId → latest edit event; replayed
   // by handleNewMessage when the original is added. Cleared on disconnect.
@@ -63,6 +70,7 @@ export class MatrixMessageService {
   clearTransient(): void {
     this.receipts$.clear();
     this.loadingRooms.clear();
+    this.pendingReload.clear();
     this.pendingEdits.clear();
   }
 
@@ -114,6 +122,14 @@ export class MatrixMessageService {
   public handleTimelineReset(room: Room): void {
     if (!this.messages$.has(room.roomId)) return;
     debugMessage(`MatrixMessageService: Timeline reset for room ${room.roomId} — rebuilding message list from fresh timeline`, this.appStore.currentUser());
+    // A reset that lands DURING a load must not be dropped by the load guard: that load is
+    // filling a timeline the SDK just discarded, so its result is the post-gap window alone
+    // (on iOS, after a resume: today's messages and nothing else). Remember it instead and
+    // let the running load re-run itself against the fresh timeline when it finishes.
+    if (this.loadingRooms.has(room.roomId)) {
+      this.pendingReload.add(room.roomId);
+      return;
+    }
     this.loadMessagesForRoom(room.roomId);
   }
 
@@ -264,7 +280,7 @@ export class MatrixMessageService {
     // empty room — see emitMessagesFromTimeline's `keepNullWhenEmpty`.
     let paginationFailed = false;
     try {
-      const timeline = room.getLiveTimeline();
+      let timeline = room.getLiveTimeline();
       const events = timeline.getEvents();
 
       debugMessage(`MatrixMessageService: Loading messages for room ${roomId}, found ${events.length} events in timeline`, this.appStore.currentUser());
@@ -279,6 +295,15 @@ export class MatrixMessageService {
       // resumes discards the live timeline), which is where the "I only see yesterday" reports
       // come from. Scroll-up pagination stays the path for going further back.
       for (let round = 0; round < MatrixMessageService.MAX_INITIAL_PAGINATIONS; round++) {
+        // Re-read the live timeline every round. A `limited` sync arriving mid-load (the
+        // normal case when an iOS PWA resumes) makes the SDK call room.resetLiveTimeline(),
+        // and the object captured above is then detached: paginating it fills a timeline
+        // nobody reads, while emitMessagesFromTimeline re-reads the FRESH one — which holds
+        // only the events since the gap. The user is left with today's messages, and because
+        // that list is non-empty it is never re-loaded (getMessagesForRoom) and never
+        // scrollable (a viewport that does not overflow fires no scroll event), so the room
+        // stays that way until the app restarts.
+        timeline = room.getLiveTimeline();
         const visible = this.countRenderableEvents(timeline.getEvents());
         if (visible >= MatrixMessageService.MIN_VISIBLE_MESSAGES) break;
         if (!timeline.getPaginationToken(EventTimeline.BACKWARDS)) break; // start of room reached
@@ -306,6 +331,13 @@ export class MatrixMessageService {
       console.error('MatrixMessageService: Error loading messages for room:', error);
     } finally {
       this.loadingRooms.delete(roomId);
+      // A timeline reset arrived while this load was running — redo it against the fresh
+      // timeline. Cheap when the back-fill already reached the target: the loop's first
+      // check breaks immediately and no /messages request is made.
+      if (this.pendingReload.delete(roomId)) {
+        debugMessage(`MatrixMessageService: re-loading room ${roomId} after a timeline reset during the load`, this.appStore.currentUser());
+        void this.loadMessagesForRoom(roomId);
+      }
     }
   }
 
@@ -705,8 +737,13 @@ export class MatrixMessageService {
     for (const event of responses) {
       const sender = event.getSender();
       if (!sender) continue;
+      // An EMPTY answer list is a valid response, not a malformed one: MSC3381 calls it a
+      // spoiled vote, and it is exactly what the client sends when somebody unticks their
+      // last remaining selection. Skipping it here left the previous, non-empty response as
+      // the sender's latest — so the tick reappeared and a vote could never be withdrawn,
+      // only changed. It must supersede like any other response; the counting loop below
+      // then contributes nothing for it.
       const answerIds: string[] = event.getContent()?.['org.matrix.msc3381.poll.response']?.answers ?? [];
-      if (!answerIds.length) continue;
       const ts = event.getTs();
       const prev = latestByUser.get(sender);
       if (!prev || ts > prev.ts) {

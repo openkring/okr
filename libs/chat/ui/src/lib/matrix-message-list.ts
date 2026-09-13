@@ -638,6 +638,16 @@ export class MatrixMessageList {
   protected readonly brokenImages = signal<ReadonlySet<string>>(new Set());
   /** Scroll height captured when loadOlder fired, to restore the viewport after prepend. */
   private prevScrollHeight = 0;
+  /**
+   * Event id of the last rendered message, to tell an APPEND from an in-place PATCH.
+   *
+   * The message list is re-emitted as a fresh array for both, but only one of them should
+   * move the viewport. A poll vote, a reaction or an edit rewrites one entry and leaves the
+   * tail alone — re-anchoring to the bottom then throws the reader out of the very message
+   * they are interacting with (voting in a poll halfway up the room jumped to the newest
+   * message). A prepend of older history keeps the tail too, and is anchored separately.
+   */
+  private lastTailEventId = '';
 
   groupedMessages = computed(() => {
     const messages = this.messages();
@@ -668,6 +678,7 @@ export class MatrixMessageList {
     effect(() => {
       const msgs = this.messages(); // scroll whenever messages change
       if (msgs.length > 0) {
+        const tail = msgs[msgs.length - 1].eventId;
         setTimeout(() => {
           const container = this.messagesContainer()?.nativeElement;
           if (!container) return;
@@ -676,9 +687,12 @@ export class MatrixMessageList {
             // message the user was looking at instead of jumping to the bottom.
             container.scrollTop += container.scrollHeight - this.prevScrollHeight;
             this.loadingOlder.set(false);
-          } else {
+          } else if (tail !== this.lastTailEventId) {
+            // A genuinely new message at the end — follow it down, as before.
             container.scrollTop = container.scrollHeight;
           }
+          this.lastTailEventId = tail;
+          this.autoLoadOlderWhenNotScrollable(container);
         }, 50);
       }
     });
@@ -695,6 +709,30 @@ export class MatrixMessageList {
     if (!this.hasMoreHistory() || this.loadingOlder()) return;
     const container = this.messagesContainer()?.nativeElement;
     if (!container || container.scrollTop > 80) return;
+    this.requestOlder(container);
+  }
+
+  /**
+   * Scrolling up is the ONLY way to reach older history, and a container that does not
+   * overflow never fires a scroll event — so a room that rendered too few bubbles to fill
+   * the viewport is unreachable: no gesture can trigger the load, and there is no button.
+   * That is not a corner case. `MatrixMessageService` counts RENDERABLE events, so a room
+   * whose recent window is dominated by invisible events (the Instruktoren room: 33
+   * consecutive poll votes behind two messages) legitimately renders a near-empty list.
+   *
+   * So whenever the rendered history is shorter than the viewport and history remains, ask
+   * for more directly. This terminates: each load emits a new list, which re-runs this
+   * effect, until either the viewport overflows or `hasMoreHistory` goes false at the start
+   * of the room.
+   */
+  private autoLoadOlderWhenNotScrollable(container: HTMLElement): void {
+    if (!this.hasMoreHistory() || this.loadingOlder()) return;
+    if (container.scrollHeight > container.clientHeight + 80) return;
+    this.requestOlder(container);
+  }
+
+  /** Emit `loadOlder`, remembering the scroll height so the viewport can be re-anchored. */
+  private requestOlder(container: HTMLElement): void {
     this.prevScrollHeight = container.scrollHeight;
     this.loadingOlder.set(true);
     this.loadOlder.emit();
