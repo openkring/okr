@@ -25,4 +25,14 @@ describe('joinBotToRoom', () => {
     vi.stubGlobal('fetch', async () => new Response('no such room', { status: 404 }));
     await expect(joinBotToRoom('!x:y', '@bot:y', 't')).rejects.toThrow(/no such room/);
   });
+
+  // An ask room is per person and persists, so from the second report onwards the bot is
+  // already a member. Synapse answers 403 M_FORBIDDEN — the desired end-state, not a failure.
+  it('tolerates an already-joined bot', async () => {
+    vi.stubGlobal('fetch', async () => new Response(
+      JSON.stringify({ errcode: 'M_FORBIDDEN', error: '@okrbot:example.org is already in the room.' }),
+      { status: 403 },
+    ));
+    await expect(joinBotToRoom('!x:y', '@okrbot:y', 't')).resolves.toBeUndefined();
+  });
 });

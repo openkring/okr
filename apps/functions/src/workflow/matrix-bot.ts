@@ -153,7 +153,13 @@ export async function sendBotDirectMessage(matrixUserId: string, body: string, t
  * Ask rooms are created with the ADMIN token and hold the group plus the requester; the bot is
  * a separate account and would get a 403 on send. The Synapse admin join is the same move
  * `requestGroupRoomAccess` makes for the requester (matrix-simple/rooms.ts, step 6).
- * Already-joined is a no-op on Synapse's side, so this is safe to call before every post.
+ *
+ * Already-joined is NOT a no-op on Synapse's side: it answers M_FORBIDDEN
+ * "<user> is already in the room." That is the desired end-state, not a failure, so it is
+ * tolerated here — the same way `forceJoinUserToRoom` (matrix-simple/shared.ts) tolerates it.
+ * Without this the FIRST report into an ask room succeeds and every later one throws before
+ * the message is sent: an ask room is per person and persists, so the bot is already in it.
+ * That silently swallowed 3 of the first 12 Logbuch damage/bug reports (2026-08/09).
  */
 export async function joinBotToRoom(roomId: string, botUserId: string, adminToken: string): Promise<void> {
   const resp = await fetch(
@@ -164,7 +170,11 @@ export async function joinBotToRoom(roomId: string, botUserId: string, adminToke
       body: JSON.stringify({ user_id: botUserId }),
     },
   );
-  if (!resp.ok) throw new Error(`matrix bot join failed: ${await resp.text()}`);
+  if (!resp.ok) {
+    const errText = await resp.text();
+    if (errText.includes('already in the room')) return;
+    throw new Error(`matrix bot join failed: ${errText}`);
+  }
 }
 
 /**
