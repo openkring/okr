@@ -388,6 +388,62 @@ export const listBkUsers = functions.onCall(
   }
 );
 
+/**
+ * Tenants the CALLER can actually log in to.
+ *
+ * The app switcher must not offer a tenant the person merely *exists* in: `persons` is a shared
+ * document whose `tenants[]` grows whenever data is delivered to another tenant, while a login
+ * needs a `users/{uid}` document (single-tenant, doc id = Firebase uid) AND an enabled Firebase
+ * Auth account. Neither question is answerable client-side — the rules deny a cross-tenant `list`
+ * on /users, and Auth's `disabled` flag is not in Firestore at all.
+ *
+ * Self-scoped: it only ever reports on the caller's own person, so it needs no admin role.
+ */
+export const listMyLoginTenants = functions.onCall(
+  {
+    region: 'europe-west6',
+    enforceAppCheck: true,
+  },
+  async (request: functions.CallableRequest): Promise<{ tenants: string[] }> => {
+    const CF_NAME = 'listMyLoginTenants';
+    checkAppCheckToken(request as any, CF_NAME);
+    checkAuthentication(request as any, CF_NAME);
+
+    const uid = request.auth?.uid ?? '';
+    const db = getFirestore();
+    const ownSnap = await db.collection('users').doc(uid).get();
+    const personKey = (ownSnap.data()?.['personKey'] as string) ?? '';
+    if (!personKey) {
+      logger.info(`${CF_NAME}: caller ${uid} has no personKey — no switchable tenants`);
+      return { tenants: [] };
+    }
+
+    const snap = await db
+      .collection('users')
+      .where('personKey', '==', personKey)
+      .where('isArchived', '==', false)
+      .get();
+
+    const tenants = new Set<string>();
+    await Promise.all(snap.docs.map(async doc => {
+      // The caller's own account is signed in right now — no need to ask Auth about it.
+      if (doc.id !== uid) {
+        try {
+          const authUser = await getAuth().getUser(doc.id);
+          if (authUser.disabled) return;
+        } catch {
+          // No Firebase Auth account (or deleted) → that user doc cannot be logged into.
+          return;
+        }
+      }
+      ((doc.data()['tenants'] as string[]) ?? []).forEach(t => { if (t) tenants.add(t); });
+    }));
+
+    logger.info(`${CF_NAME}: person ${personKey} can log in to [${[...tenants].join(', ')}]`);
+    return { tenants: [...tenants].sort() };
+  }
+);
+
 export const deleteFirebaseAuthUser = functions.onCall(
   { region: 'europe-west6', enforceAppCheck: true },
   async (request: functions.CallableRequest<{ uid: string }>): Promise<void> => {

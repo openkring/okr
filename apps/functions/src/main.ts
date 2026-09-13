@@ -85,6 +85,7 @@ export const setPassword = Auth.setPassword; // uid, password
 export const updateFirebaseUser = Auth.updateFirebaseUser; // uid, email, displayName, emailVerified, disabled, phone, photoUrl
 export const listFirebaseUsers = Auth.listFirebaseUsers;
 export const listBkUsers = Auth.listBkUsers;
+export const listMyLoginTenants = Auth.listMyLoginTenants;
 export const deleteFirebaseAuthUser = Auth.deleteFirebaseAuthUser;
 export const sendEmail = Auth.sendEmail;
 

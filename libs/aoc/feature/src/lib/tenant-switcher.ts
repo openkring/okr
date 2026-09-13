@@ -1,7 +1,9 @@
 import { Component, computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { combineLatest, of } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { combineLatest, from, of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
+import { getApp } from 'firebase/app';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import { IonButton, IonContent, IonIcon, IonPopover } from '@ionic/angular/standalone';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
@@ -9,6 +11,7 @@ import { browse } from '@okr/shared-ui';
 import { I18nService } from '@okr/shared-i18n';
 import { AppStore } from '@okr/shared-feature';
 import { AppConfigService } from '@okr/shared-data-access';
+import { resourceParams } from '@okr/shared-util-angular';
 import {
   buildSwitcherEntries,
   TenantConfigMeta,
@@ -54,11 +57,29 @@ export class TenantSwitcher {
 
   private readonly currentTenantId = computed(() => this.appStore.env.tenantId);
   protected readonly imgixBaseUrl = computed(() => this.appStore.env.services.imgixBaseUrl);
-  private readonly tenantIds = computed(() => this.appStore.currentPerson()?.tenants ?? []);
 
-  // Read every membership tenant's app-config doc (world-readable) into a metadata map.
+  // The tenants the signed-in person can actually LOG IN to — NOT person.tenants. The person doc is
+  // shared and collects a tenant id as soon as data is delivered there (a contact in someone else's
+  // tenant), which would offer a tile to an app that only ever shows a login wall. A login needs a
+  // users/{uid} doc plus an enabled Firebase Auth account; neither is readable client-side, hence
+  // the self-scoped callable.
+  private readonly loginTenantsResource = rxResource({
+    params: resourceParams(() => ({ uid: this.appStore.currentUser()?.okey ?? '' })),
+    stream: ({ params }) => {
+      if (!params.uid) return of([] as string[]);
+      const fn = httpsCallable<void, { tenants: string[] }>(
+        getFunctions(getApp(), 'europe-west6'), 'listMyLoginTenants');
+      return from(fn().then((result) => result.data.tenants ?? [])).pipe(
+        // A failed lookup hides the switcher rather than guessing from person.tenants.
+        catchError(() => of([] as string[])),
+      );
+    },
+  });
+  private readonly tenantIds = computed(() => this.loginTenantsResource.value() ?? []);
+
+  // Read every login tenant's app-config doc (world-readable) into a metadata map.
   private readonly configsResource = rxResource({
-    params: () => ({ ids: this.tenantIds() }),
+    params: resourceParams(() => ({ ids: this.tenantIds() })),
     stream: ({ params }) => {
       const ids = params.ids;
       if (!ids.length) return of(new Map<string, TenantConfigMeta>());
