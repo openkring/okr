@@ -193,6 +193,39 @@ export function filterRoomsOfTenant<T extends {
 }
 
 /**
+ * Whether a room can be placed in a tenant YET, i.e. whether `MatrixRoom.stateLoaded` may be
+ * reported as `true` for it.
+ *
+ * `m.room.create` proves the room's STATE arrived. It does not prove that the data DM
+ * classification hangs on arrived: `m.direct` is global account data and the counterpart comes
+ * from (lazily loaded) member state, both of which land later than the room-state events that
+ * already trigger a room-list rebuild during the initial sync.
+ *
+ * A DM built inside that window therefore carries no marker (DMs never do), no alias, no
+ * `m.room.name` and no `directUserId` — and `filterRoomsOfTenant` rule 5 keeps exactly that
+ * shape in EVERY tenant. That is the "a 1:1 chat from the other tenant shows for a few seconds
+ * after login, then disappears" report: the room is not unclassifiable, it is
+ * **not classifiable yet**, and it comes back correctly placed at PREPARED.
+ *
+ * So before the initial sync completes, a room is only emitted when it identifies itself —
+ * marker, alias, name, or a resolved DM counterpart. Afterwards the historic rule applies again,
+ * so a genuinely unclassifiable room (an ad-hoc room, a DM whose counterpart never resolves) is
+ * still kept rather than lost.
+ */
+export function isRoomClassifiable(room: {
+  hasCreateEvent: boolean;
+  syncPrepared: boolean;
+  hasTenantMarker: boolean;
+  hasAlias: boolean;
+  hasRoomName: boolean;
+  hasDirectUserId: boolean;
+}): boolean {
+  if (!room.hasCreateEvent) return false;
+  if (room.syncPrepared) return true;
+  return room.hasTenantMarker || room.hasAlias || room.hasRoomName || room.hasDirectUserId;
+}
+
+/**
  * Find the tenant's support room among the user's rooms.
  *
  * Identified by its immutable canonical alias (`MatrixRoom.topic` carries

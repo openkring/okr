@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildReceiptAriaLabel, filterRoomsOfTenant, findSupportRoom, isBridgeGhost, hashUserIdToColor, formatReceiptTime, isRenderableChatEvent, linkifyText, resolveMatrixDisplayName, canPostWithPower, groupRoomAliasLocalpart, groupKeyFromRoomAlias, isRoomGoneError } from './chat.util';
+import { buildReceiptAriaLabel, filterRoomsOfTenant, isRoomClassifiable, findSupportRoom, isBridgeGhost, hashUserIdToColor, formatReceiptTime, isRenderableChatEvent, linkifyText, resolveMatrixDisplayName, canPostWithPower, groupRoomAliasLocalpart, groupKeyFromRoomAlias, isRoomGoneError } from './chat.util';
 
 describe('buildReceiptAriaLabel', () => {
   it('returns empty string for no receipts', () => {
@@ -123,6 +123,39 @@ describe('filterRoomsOfTenant', () => {
   it('treats an absent stateLoaded flag as loaded, keeping the historic fallback', () => {
     expect(filterRoomsOfTenant([{ roomId: '!m:hs' }], groups, personKeys, 'p13').map(r => r.roomId))
       .toEqual(['!m:hs']);
+  });
+});
+
+describe('isRoomClassifiable', () => {
+  const base = {
+    hasCreateEvent: true, syncPrepared: false, hasTenantMarker: false,
+    hasAlias: false, hasRoomName: false, hasDirectUserId: false,
+  };
+
+  it('holds back a DM whose counterpart has not resolved during the initial sync', () => {
+    // The leak: m.direct account data and the member state both land after the room-state
+    // events that already rebuilt the list, so this shape is a DM that cannot be placed yet.
+    // Reported as stateLoaded:true it falls through to filterRoomsOfTenant's "keep" rule and
+    // shows another tenant's 1:1 chat for a few seconds after login.
+    expect(isRoomClassifiable(base)).toBe(false);
+  });
+
+  it('emits a room that identifies itself even before the sync is prepared', () => {
+    expect(isRoomClassifiable({ ...base, hasTenantMarker: true })).toBe(true);
+    expect(isRoomClassifiable({ ...base, hasAlias: true })).toBe(true);
+    expect(isRoomClassifiable({ ...base, hasRoomName: true })).toBe(true);
+    expect(isRoomClassifiable({ ...base, hasDirectUserId: true })).toBe(true);
+  });
+
+  it('keeps a genuinely unclassifiable room once the sync is prepared', () => {
+    // Ad-hoc room, or a DM whose counterpart never resolves: hiding it would lose a
+    // conversation, so the historic "keep" behaviour must come back at PREPARED.
+    expect(isRoomClassifiable({ ...base, syncPrepared: true })).toBe(true);
+  });
+
+  it('never reports a room whose state has not arrived at all', () => {
+    expect(isRoomClassifiable({ ...base, hasCreateEvent: false, syncPrepared: true })).toBe(false);
+    expect(isRoomClassifiable({ ...base, hasCreateEvent: false, hasTenantMarker: true })).toBe(false);
   });
 });
 

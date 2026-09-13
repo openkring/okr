@@ -6,7 +6,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { MatrixMessage, MatrixRoom, TypingNotification } from '@okr/shared-models';
 import { AppStore } from '@okr/shared-feature';
 import { debugMessage } from '@okr/shared-util-core';
-import { MATRIX_FAVOURITE_TAG, OKR_TENANT_EVENT } from '@okr/chat-util';
+import { isRoomClassifiable, MATRIX_FAVOURITE_TAG, OKR_TENANT_EVENT } from '@okr/chat-util';
 import { AvatarService } from '@okr/avatar-data-access';
 
 import { isServiceAccount, mxcAvatarHttpUrl, personAvatarUrl } from './matrix-helpers';
@@ -308,7 +308,7 @@ export class MatrixRoomListService {
           tenants: this.getRoomTenants(room),
           directUserId,
           isFavourite: this.isFavouriteRoom(room),
-          stateLoaded: this.isRoomStateLoaded(room),
+          stateLoaded: this.isRoomStateLoaded(room, directUserId),
         };
       })
       .sort((a, b) => {
@@ -378,9 +378,24 @@ export class MatrixRoomListService {
    * This matters because updateRoomsList() runs on room/timeline events during the INITIAL sync,
    * before PREPARED. A room built in that window has no tenant marker and no alias, so the tenant
    * filter cannot place it and used to keep it — briefly showing another tenant's group room.
+   *
+   * `m.room.create` alone is not enough, though: it proves the room STATE arrived, while DM
+   * classification also needs `m.direct` (global account data) and the counterpart's member
+   * event, both of which land later. A DM built in that window looks exactly like an
+   * unclassifiable room and used to be shown in every tenant until PREPARED — see
+   * {@link isRoomClassifiable}, which decides the whole question.
    */
-  private isRoomStateLoaded(room: Room): boolean {
+  private isRoomStateLoaded(room: Room, directUserId: string | undefined): boolean {
     const state = room.getLiveTimeline().getState(EventTimeline.FORWARDS);
-    return !!state?.getStateEvents('m.room.create', '');
+    return isRoomClassifiable({
+      hasCreateEvent: !!state?.getStateEvents('m.room.create', ''),
+      // markRoomsLoaded() flips this at PREPARED, i.e. once account data and room state have
+      // both arrived. Every rebuild before that runs on partial data.
+      syncPrepared: this.roomsLoaded$.value,
+      hasTenantMarker: !!this.getRoomTenants(room),
+      hasAlias: !!room.getCanonicalAlias(),
+      hasRoomName: this.dm.roomHasName(room),
+      hasDirectUserId: !!directUserId,
+    });
   }
 }
