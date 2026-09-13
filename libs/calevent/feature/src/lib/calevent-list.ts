@@ -165,7 +165,8 @@ type CalEventSortField = 'date' | 'topic' | 'location' | 'organiser';
                    autoHide=false so the button is not auto-removed on mobile, where users need it -->
               <ion-buttons slot="start" class="ion-hide-lg-up"><ion-menu-button [autoHide]="false" /></ion-buttons>
             }
-            <ion-title>{{ filteredCalEventsCount()}}/{{calEventsCount()}} {{ store.i18n.calevents() }}</ion-title>
+            <!-- ion-hide-sm-down: on phones the toolbar needs the room for the buttons; the title is dropped in both views -->
+            <ion-title class="ion-hide-sm-down">{{ filteredCalEventsCount()}}/{{calEventsCount()}} {{ store.i18n.calevents() }}</ion-title>
             <ion-buttons slot="end">
               <ion-button (click)="store.showInfo()" [title]="store.i18n.info_open()">
                 <ion-icon slot="icon-only" src="{{'info-circle' | svgIcon }}" />
