@@ -272,10 +272,56 @@ const COMPOSE = async ({ dataUri, size, bg }) => {
   const mx = mask.getContext('2d');
   mx.fillStyle = backdrop;
   mx.fillRect(0, 0, N, N);
-  const inner = framed
-    ? { x: x0 + thick, y: y0 + thick, w: bw - 2 * thick, h: bh - 2 * thick }
-    : { x: x0, y: y0, w: bw, h: bh };
-  const ms = (N * 0.72) / Math.max(inner.w, inner.h); // 72% keeps clear of every mask shape
+  // Place only the MARK when the master is framed. Such a master drags its own
+  // rounded outline into the crop, where it reads as a ghost rectangle against
+  // the fill. The mark is whatever differs from the backdrop and is NOT
+  // connected to the artwork's border: the outline touches that border, a
+  // centred mark never does. (Flooding from the canvas corners does not work —
+  // they are already backdrop, so the flood stops before reaching the arcs.)
+  let mark = null;
+  if (framed) {
+    const bd = mid.exact;
+    const isMark = (x, y) => {
+      const i = (y * N + x) * 4;
+      return (
+        D[i + 3] > 200 &&
+        Math.abs(D[i] - bd[0]) + Math.abs(D[i + 1] - bd[1]) + Math.abs(D[i + 2] - bd[2]) > 40
+      );
+    };
+    const edgeConnected = new Uint8Array(N * N);
+    const st = [];
+    for (let x = x0; x <= x1; x++) st.push(x + y0 * N, x + y1 * N);
+    for (let y = y0; y <= y1; y++) st.push(x0 + y * N, x1 + y * N);
+    while (st.length) {
+      const idx = st.pop();
+      if (edgeConnected[idx]) continue;
+      const x = idx % N;
+      const y = (idx - x) / N;
+      if (x < x0 || x > x1 || y < y0 || y > y1) continue;
+      if (!isMark(x, y)) continue; // spread only through non-backdrop pixels
+      edgeConnected[idx] = 1;
+      st.push(idx - 1, idx + 1, idx - N, idx + N);
+    }
+    let a0 = x1, b0 = y1, a1 = x0, b1 = y0;
+    for (let y = y0; y <= y1; y++)
+      for (let x = x0; x <= x1; x++) {
+        if (edgeConnected[x + y * N] || !isMark(x, y)) continue;
+        if (x < a0) a0 = x;
+        if (x > a1) a1 = x;
+        if (y < b0) b0 = y;
+        if (y > b1) b1 = y;
+      }
+    if (a1 > a0 && b1 > b0) mark = { x: a0, y: b0, w: a1 - a0 + 1, h: b1 - b0 + 1 };
+  }
+
+  const inner =
+    mark ||
+    (framed
+      ? { x: x0 + thick, y: y0 + thick, w: bw - 2 * thick, h: bh - 2 * thick }
+      : { x: x0, y: y0, w: bw, h: bh });
+  // A tight mark crop is scaled smaller than a whole panel: its bbox corners sit
+  // closer to the safe-zone edge once centred.
+  const ms = (N * (mark ? 0.62 : 0.72)) / Math.max(inner.w, inner.h);
   mx.drawImage(
     src, inner.x, inner.y, inner.w, inner.h,
     (N - inner.w * ms) / 2, (N - inner.h * ms) / 2, inner.w * ms, inner.h * ms,
@@ -291,10 +337,9 @@ const COMPOSE = async ({ dataUri, size, bg }) => {
   fx.fillStyle = backdrop;
   fx.fillRect(0, 0, F, F);
   if (framed) {
-    const iw = bw - 2 * thick;
-    const ih = bh - 2 * thick;
-    const fs2 = F / Math.max(iw, ih);
-    fx.drawImage(src, x0 + thick, y0 + thick, iw, ih, (F - iw * fs2) / 2, (F - ih * fs2) / 2, iw * fs2, ih * fs2);
+    const fi = mark || { x: x0 + thick, y: y0 + thick, w: bw - 2 * thick, h: bh - 2 * thick };
+    const fs2 = (F * (mark ? 0.78 : 1)) / Math.max(fi.w, fi.h);
+    fx.drawImage(src, fi.x, fi.y, fi.w, fi.h, (F - fi.w * fs2) / 2, (F - fi.h * fs2) / 2, fi.w * fs2, fi.h * fs2);
   } else if (padded) {
     const fs2 = (F * 0.86) / Math.max(bw, bh);
     fx.drawImage(src, x0, y0, bw, bh, (F - bw * fs2) / 2, (F - bh * fs2) / 2, bw * fs2, bh * fs2);
