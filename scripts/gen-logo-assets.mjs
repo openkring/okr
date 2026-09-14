@@ -281,9 +281,31 @@ const COMPOSE = async ({ svg, size, bg }) => {
     (N - inner.w * ms) / 2, (N - inner.h * ms) / 2, inner.w * ms, inner.h * ms,
   );
 
+  // ── favicon — small, square, mark as large as the mode allows ─────────────
+  // Websites keep this as a LOCAL asset rather than an imgix URL: versioned with
+  // the deploy, no CDN round-trip, and immune both to the SVG path-cache trap and
+  // to a bucket cleanup removing the file underneath a live site.
+  const F = 96;
+  const fav = mk(F);
+  const fx = fav.getContext('2d');
+  fx.fillStyle = backdrop;
+  fx.fillRect(0, 0, F, F);
+  if (framed) {
+    const iw = bw - 2 * thick;
+    const ih = bh - 2 * thick;
+    const fs2 = F / Math.max(iw, ih);
+    fx.drawImage(src, x0 + thick, y0 + thick, iw, ih, (F - iw * fs2) / 2, (F - ih * fs2) / 2, iw * fs2, ih * fs2);
+  } else if (padded) {
+    const fs2 = (F * 0.86) / Math.max(bw, bh);
+    fx.drawImage(src, x0, y0, bw, bh, (F - bw * fs2) / 2, (F - bh * fs2) / 2, bw * fs2, bh * fs2);
+  } else {
+    fx.drawImage(src, 0, 0, F, F);
+  }
+
   return {
     mode,
     thick,
+    favicon: fav.toDataURL('image/png'),
     bbox: `${bw}x${bh}`,
     backdrop,
     edgeShare: +edge.share.toFixed(2),
@@ -397,6 +419,36 @@ function rewriteIndexHtml(appDir, links) {
   return true;
 }
 
+/**
+ * Websites get a LOCAL favicon, not an imgix URL. Six of the eight already work
+ * that way; p13 was the lone CDN holdout, and bka/scs had none at all —
+ * `brunokaiser.ch` served no icon link and no /favicon.ico, so the tab was blank.
+ */
+function websiteIconLinks(masterBytes) {
+  const links = [];
+  if (masterBytes && masterBytes <= SVG_FAVICON_MAX) {
+    links.push('<link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />');
+  }
+  links.push('<link rel="icon" type="image/png" sizes="96x96" href="assets/favicon.png" />');
+  return links;
+}
+
+function rewriteWebsitePage(file, links) {
+  let html = fs.readFileSync(file, 'utf8');
+  const original = html;
+  html = html.replace(
+    /^[ \t]*<link[^>]*\brel="(?:icon|apple-touch-icon|mask-icon|shortcut icon)"[^>]*>\s*\n/gim,
+    '',
+  );
+  const indent = (html.match(/^([ \t]*)<title/im) || [, '  '])[1];
+  const block = links.map((l) => `${indent}${l}`).join('\n') + '\n';
+  if (/<\/title>\s*\n/i.test(html)) html = html.replace(/(<\/title>\s*\n)/i, `$1${block}`);
+  else html = html.replace(/(<\/head>)/i, `${block}$1`);
+  if (html === original) return false;
+  if (!DRY) fs.writeFileSync(file, html);
+  return true;
+}
+
 // ── main ────────────────────────────────────────────────────────────────────
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 1200, height: 1200 } });
@@ -438,6 +490,7 @@ for (const tenant of tenants) {
   let generatedPrimary = false;
   let resolvedMaster = null;
   let resolvedBytes = 0;
+  let lastFavicon = null;
 
   for (const variant of VARIANTS) {
     const srcPath = variant.suffix === '' ? masterPath : sibling(variant.suffix);
@@ -479,6 +532,8 @@ for (const tenant of tenants) {
         (r.mode === 'framed' ? `  border=${r.thick}px` : ''),
     );
 
+    if (suffix === '') lastFavicon = r.favicon;
+
     const outputs = [
       [`logo-master${suffix}.png`, r.master],
       [`logo-round${suffix}.png`, r.round],
@@ -518,6 +573,30 @@ for (const tenant of tenants) {
   console.log(
     `   ${path.relative(appDir, mPath)} ${m ? 'rewritten' : 'unchanged'} · index.html ${h ? 'rewritten' : 'unchanged'}`,
   );
+
+  await doWebsite();
+
+  async function doWebsite() {
+    const webDir = path.join(ROOT, 'apps', `${tenant}-website`);
+    if (!fs.existsSync(webDir)) return;
+    const assets = path.join(webDir, 'assets');
+    if (!fs.existsSync(assets)) return;
+
+    if (!DRY) {
+      fs.writeFileSync(path.join(assets, 'favicon.png'), Buffer.from(lastFavicon.split(',')[1], 'base64'));
+      if (resolvedBytes && resolvedBytes <= SVG_FAVICON_MAX) {
+        const [mb] = await bucket.file(resolvedMaster).download();
+        fs.writeFileSync(path.join(assets, 'favicon.svg'), mb);
+      }
+    }
+    const links = websiteIconLinks(resolvedBytes);
+    const pages = fs.readdirSync(webDir).filter((f) => f.endsWith('.html'));
+    const changed = pages.filter((f) => rewriteWebsitePage(path.join(webDir, f), links));
+    console.log(
+      `   website: assets/favicon.png${resolvedBytes <= SVG_FAVICON_MAX ? ' + favicon.svg' : ''}` +
+        ` · ${changed.length}/${pages.length} page(s) rewritten`,
+    );
+  }
 }
 
 await browser.close();
