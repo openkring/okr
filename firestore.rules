@@ -556,7 +556,7 @@ service cloud.firestore {
       allow create: if (hasRole('treasurer') || isAdmin()) && tenantCreateOrDetach()
                     && request.resource.data.status in ['unmapped', 'mapped']
                     && request.resource.data.bookingKey == '';
-      allow update: if (hasRole('treasurer') || isAdmin()) && canWriteTenant(resource.data)
+      allow update: if (hasRole('treasurer') || isAdmin()) && tenantUpdate()
                     && resource.data.status != 'posted'
                     && request.resource.data.status in ['unmapped', 'mapped']
                     && request.resource.data.bookingKey == '';
