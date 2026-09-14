@@ -129,6 +129,8 @@ export const DEFAULT_COUNTRY = 'CH';
 export const DEFAULT_ORDER = 1;
 export const DEFAULT_ADDRESS_CHANNEL = 'email';
 export const DEFAULT_ADDRESS_USAGE = 'home';
+/** Bank CSV statements. `.csv` is included because Safari sends an empty type for CSV files. */
+export const BANK_CSV_MIMETYPES = ['text/csv', 'text/plain', 'application/vnd.ms-excel', '.csv'];
 export const IMAGE_MIMETYPES = [
     'image/png',
     'image/jpg',
