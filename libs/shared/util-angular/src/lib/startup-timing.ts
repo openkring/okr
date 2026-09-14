@@ -4,7 +4,7 @@
 // `const rootSpan = activeSpan && getRootSpan(activeSpan); if (rootSpan) {…}`, so without an
 // active span it never recorded anything either. The numbers it used to carry (total, first
 // script) now travel on the breadcrumb, which does report.
-import { addBreadcrumb } from '@sentry/angular';
+import { addBreadcrumb, captureMessage } from '@sentry/angular';
 
 /**
  * Startup instrumentation, reported to the console and as a Sentry breadcrumb.
@@ -55,43 +55,11 @@ export function reportStartupTiming(reason: string): void {
   // from the first mark's atMs. Big value => asset-delivery problem, not a Firebase one.
   const firstScriptMs = entries.length ? Math.round(entries[0][1]) : 0;
 
-  // Display mode: separates an installed/standalone PWA from a normal browser tab so the two
-  // can be compared in Sentry. navigator.standalone is the iOS-only signal; the media query
-  // covers desktop/Android installs.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const nav = navigator as any;
-  const displayMode: string =
-    (typeof matchMedia !== 'undefined' && matchMedia('(display-mode: standalone)').matches) || nav.standalone === true
-      ? 'standalone'
-      : 'browser';
-
-  // Network conditions (Chromium-only API; undefined on Safari, which is itself a signal).
-  // rttMs/downlink tell us whether the ~3s user-doc read is network-bound or long-poll setup.
-  const conn = nav.connection ?? {};
-  const net = {
-    effectiveType: conn.effectiveType as string | undefined,
-    downlinkMbps: conn.downlink as number | undefined,
-    rttMs: conn.rtt as number | undefined,
-    saveData: conn.saveData as boolean | undefined,
-  };
-
-  // Is THIS load served by the ngsw service worker? controller===null means the SW isn't in
-  // charge (first visit, or it failed/was evicted), so every asset came off the network — the
-  // prime suspect for a large firstScriptMs on repeat Safari/PWA loads.
-  const swControlled = typeof navigator !== 'undefined' && !!navigator.serviceWorker?.controller;
-
-  // storage.persisted() tells us whether the ngsw Cache Storage is protected from Safari's ITP
-  // eviction. If false on a repeat load with a large firstScriptMs, the cache was likely evicted
-  // and the app re-downloaded — pointing the fix at shrinking the cached footprint.
-  const persistedP: Promise<boolean | undefined> =
-    typeof navigator !== 'undefined' && nav.storage?.persisted
-      ? nav.storage.persisted().catch(() => undefined)
-      : Promise.resolve(undefined);
+  const { displayMode, net, swControlled, persistedP } = probeEnvironment();
 
   persistedP.then((storagePersisted: boolean | undefined) => {
     const context = { reason, totalMs, firstScriptMs, displayMode, swControlled, storagePersisted, net, marks, rows };
 
-    // eslint-disable-next-line no-console
     console.log(`[startup-timing] mode=${displayMode} reason=${reason} total=${totalMs}ms firstScript=${firstScriptMs}ms sw=${swControlled} persisted=${storagePersisted}`, context);
 
     // `data` carries the phase marks plus the two aggregates that used to be emitted as span
@@ -101,6 +69,88 @@ export function reportStartupTiming(reason: string): void {
       level: 'info',
       message: `startup-timing mode=${displayMode} reason=${reason} total=${totalMs}ms`,
       data: { ...marks, 'startup.total_ms': totalMs, 'startup.first_script_ms': firstScriptMs },
+    });
+  });
+}
+
+/**
+ * Everything about the delivery environment that a timing number alone cannot explain.
+ * Shared by the success report and the stall report below — a stalled boot needs exactly the
+ * same context (was the service worker in charge? was the cache evicted? what network?), and
+ * duplicating it is how the two would drift apart.
+ *
+ * - displayMode separates an installed/standalone PWA from a normal browser tab.
+ *   navigator.standalone is the iOS-only signal; the media query covers desktop/Android.
+ * - net is Chromium-only (undefined on Safari, which is itself a signal).
+ * - swControlled === false means the ngsw service worker was NOT in charge (first visit, or it
+ *   failed/was evicted), so every asset came off the network — the prime suspect for a large
+ *   firstScriptMs.
+ * - storagePersisted === false means the Cache Storage is unprotected from Safari's ITP
+ *   eviction, i.e. the app may have been re-downloaded in full.
+ */
+function probeEnvironment() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const nav = navigator as any;
+  const displayMode: string =
+    (typeof matchMedia !== 'undefined' && matchMedia('(display-mode: standalone)').matches) || nav.standalone === true
+      ? 'standalone'
+      : 'browser';
+  const conn = nav.connection ?? {};
+  const net = {
+    effectiveType: conn.effectiveType as string | undefined,
+    downlinkMbps: conn.downlink as number | undefined,
+    rttMs: conn.rtt as number | undefined,
+    saveData: conn.saveData as boolean | undefined,
+  };
+  const swControlled = typeof navigator !== 'undefined' && !!navigator.serviceWorker?.controller;
+  const persistedP: Promise<boolean | undefined> =
+    typeof navigator !== 'undefined' && nav.storage?.persisted
+      ? nav.storage.persisted().catch(() => undefined)
+      : Promise.resolve(undefined);
+  return { displayMode, net, swControlled, persistedP };
+}
+
+/**
+ * How long the app may stay not-ready before the stall reports itself.
+ *
+ * Deliberately longer than READINESS_TIMEOUT_MS (10 s, the point at which the readiness
+ * watchdog unblocks navigation): a boot that the watchdog rescues is slow, not stuck, and
+ * would otherwise open a ticket on every slow phone.
+ */
+export const STARTUP_STALL_MS = 12_000;
+
+let stallReported = false;
+
+/**
+ * Report a boot that never became ready.
+ *
+ * This exists because the success path could not see this class of failure at all.
+ * `reportStartupTiming` only runs WHEN the app becomes ready, and it writes a breadcrumb —
+ * which reaches Sentry only if some later error carries it. A boot that simply hangs produces
+ * no error, so it produced no breadcrumb, no issue, no data: the user sees a spinner forever
+ * and we learn nothing. Hence `captureMessage`, which opens an issue in its own right.
+ *
+ * @param gate which readiness gate was still open — the one thing the marks alone don't say.
+ */
+export function reportStartupStall(gate: string): void {
+  if (stallReported || reported || typeof performance === 'undefined') return;
+  // A backgrounded tab is not a stalled boot: timers are throttled there and the user is not
+  // looking at a spinner. Reporting those would bury the real ones.
+  if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return;
+  stallReported = true;
+
+  const marks: Record<string, number> = {};
+  for (const [label, t] of startupMarks) marks[label] = Math.round(t);
+  const { displayMode, net, swControlled, persistedP } = probeEnvironment();
+  const elapsedMs = Math.round(performance.now());
+
+  persistedP.then((storagePersisted: boolean | undefined) => {
+    const context = { gate, elapsedMs, displayMode, swControlled, storagePersisted, net, marks };
+    console.warn(`[startup-stall] gate=${gate} after ${elapsedMs}ms`, context);
+    captureMessage(`startup stalled at ${gate}`, {
+      level: 'warning',
+      tags: { startupGate: gate, displayMode, swControlled: String(swControlled) },
+      extra: context,
     });
   });
 }

@@ -470,8 +470,8 @@
     "later": "Plus tard"
   },
   "boot": {
-    "degraded1": "Votre profil n’a pas pu être entièrement chargé en raison d’une connexion réseau lente.",
-    "degraded2": "Veuillez vérifier votre connexion internet et réessayer.",
+    "degraded1": "L’application n’a pas pu être entièrement chargée en raison d’une connexion lente.",
+    "degraded2": "Vérifie ta connexion internet et réessaie.",
     "retry": "Réessayer"
   }
 }

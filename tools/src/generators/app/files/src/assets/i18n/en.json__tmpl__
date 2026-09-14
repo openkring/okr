@@ -470,7 +470,7 @@
     "later": "Later"
   },
   "boot": {
-    "degraded1": "Your profile could not be fully loaded because of a slow network connection.",
+    "degraded1": "The app could not be fully loaded because of a slow connection.",
     "degraded2": "Please check your internet connection and try again.",
     "retry": "Try again"
   }

@@ -11,7 +11,9 @@ import { AUTH, ENV, FIRESTORE } from '@okr/shared-config';
 import { AppConfigService, FirestoreService } from '@okr/shared-data-access';
 import { AddressDirectoryCollection, AddressDirectoryModel, AppConfig, AvailableLanguages, CategoryCollection, CategoryItemModel, CategoryListModel, DefaultLanguage, DefaultLanguageCode, GroupCollection, GroupModel, InvitationCollection, InvitationModel, OrgCollection, OrgModel, PersonCollection, PersonModel, PrivacySettings, privacyUsageToAccessor, ResourceCollection, ResourceModel, ResourceModelName, stricterAccessor, TagCollection, TagModel, TaskCollection, TaskModel, UserCollection, UserModel } from '@okr/shared-models';
 import { die, getSystemQuery, indexBy, openInvitationsOf, pickForTenant, replacePlaceholders, sortPersons } from '@okr/shared-util-core';
-import { AppNavigationService, isBrowser, markStartup, reportStartupTiming, VersionCheckService, resourceParams } from '@okr/shared-util-angular';
+import { AppNavigationService, isBrowser, markStartup, reportStartupStall, reportStartupTiming, STARTUP_STALL_MS, VersionCheckService, resourceParams } from '@okr/shared-util-angular';
+
+import { authPhase, isDegradedBoot, openBootGate, type BootState } from './boot-readiness.util';
 import { I18nService } from '@okr/shared-i18n';
 
 import { SessionService} from '@okr/session-data-access';
@@ -38,6 +40,9 @@ export type AppState = {
   // Watchdog flag: set true when an authenticated user's UserModel hasn't loaded within
   // READINESS_TIMEOUT_MS, so navigation is unblocked instead of hanging on the spinner.
   readinessTimedOut: boolean;
+  // Set true when auth itself never settled within READINESS_TIMEOUT_MS — see the second
+  // watchdog in onInit. Unlike readinessTimedOut this does NOT unblock navigation.
+  authRestoreTimedOut: boolean;
 };
 
 /**
@@ -72,7 +77,8 @@ const initialState: AppState = {
     nxCloudAccessToken: '',
     imgixBaseUrl: ''
   },
-  readinessTimedOut: false
+  readinessTimedOut: false,
+  authRestoreTimedOut: false
 };
 
 export const AppStore = signalStore(
@@ -442,15 +448,32 @@ export const AppStore = signalStore(
     // in the DOM — destroying the outlet mid-transition crashes Ionic's StackController
     // ("can't access property 'commit'").
     isAppReady: computed(() => store.isDataReady() || store.readinessTimedOut()),
-    // Authenticated, but the UserModel never loaded and the readiness watchdog has since
-    // fired — i.e. the users/{uid} read stalled rather than returning. In practice this is a
-    // slow/blocked network (e.g. Firefox under strict tracking protection forcing long-polling).
-    // Surface a "slow network, please retry" state instead of silently dropping the user into a
-    // role-less, data-less shell that looks like an app bug. Scoped to the timeout path only: a
-    // fast missing-doc / permission-denied read settles isDataReady WITHOUT firing the watchdog,
-    // so that genuinely-broken-account case never shows the (misleading) slow-network message.
-    // Self-healing: if the read finally resolves, currentUser is set and this flips back to false.
-    isDegradedSession: computed(() => store.readinessTimedOut() && !!store.fbUser() && !store.currentUser()),
+    // The two ways a boot can stall long enough that the user deserves an explanation and a way
+    // out, instead of a spinner that never ends:
+    //
+    //   1. Authenticated, but the UserModel never loaded and the readiness watchdog has since
+    //      fired — the users/{uid} read stalled rather than returning. In practice a slow or
+    //      blocked network (e.g. Firefox under strict tracking protection forcing long-polling).
+    //      Scoped to the timeout path only: a fast missing-doc / permission-denied read settles
+    //      isDataReady WITHOUT firing the watchdog, so that genuinely-broken-account case never
+    //      shows the (misleading) slow-network message.
+    //   2. Auth never settled at all — fbUser is still undefined, i.e. onAuthStateChanged has
+    //      not emitted even once. This window used to have NO upper bound whatsoever: the
+    //      readiness watchdog arms only while `authed` is true, and during auth restore it is
+    //      false, so isAppReady stayed false forever and only a reload helped. It is deliberately
+    //      NOT unblocked the way case 1 is — letting navigation through while auth is unknown
+    //      would run the role guards against an apparently-anonymous user and bounce a
+    //      signed-in one to the login page. Offering the reload is the honest exit.
+    //
+    // Both are self-healing: if the pending read or the auth restore finally resolves, the
+    // underlying signal changes and this flips back to false.
+    isDegradedSession: computed(() => isDegradedBoot({
+      phase: authPhase(store.fbUser()),
+      hasCurrentUser: !!store.currentUser(),
+      categoriesLoading: store.categoriesResource.isLoading(),
+      readinessTimedOut: store.readinessTimedOut(),
+      authRestoreTimedOut: store.authRestoreTimedOut(),
+    })),
   })),
 
   withMethods((store) => {
@@ -688,6 +711,23 @@ export const AppStore = signalStore(
         }
       });
 
+      // Which readiness gate is still holding navigation. Only meaningful while the app is not
+      // ready; it is the one thing the startup marks cannot say by themselves, because every
+      // gate looks identical from the outside — a spinner.
+      const bootState = (): BootState => ({
+        phase: authPhase(store.fbUser()),
+        hasCurrentUser: !!store.currentUser(),
+        categoriesLoading: store.categoriesResource.isLoading(),
+        readinessTimedOut: store.readinessTimedOut(),
+        authRestoreTimedOut: store.authRestoreTimedOut(),
+      });
+
+      // Make a stalled boot report itself. Nothing else can see this failure: reportStartupTiming
+      // runs only when the app BECOMES ready, and writes a breadcrumb that needs a later error to
+      // carry it — so a boot that simply hangs produced no error, no breadcrumb and no issue. The
+      // user stared at a spinner and we had nothing to look at afterwards.
+      setTimeout(() => { if (!store.isAppReady()) reportStartupStall(openBootGate(bootState())); }, STARTUP_STALL_MS);
+
       // Readiness watchdog: if an authenticated user's UserModel hasn't loaded within
       // READINESS_TIMEOUT_MS (e.g. a hung users/{uid} read), stop blocking navigation so
       // they don't sit on the spinner forever. Fast missing-doc / permission-denied cases
@@ -701,6 +741,27 @@ export const AppStore = signalStore(
           return;
         }
         const handle = setTimeout(() => { markStartup('watchdog:fired'); patchState(store, { readinessTimedOut: true }); }, READINESS_TIMEOUT_MS);
+        onCleanup(() => clearTimeout(handle));
+      });
+
+      // Auth-restore watchdog — the gap the watchdog above cannot close.
+      //
+      // `fbUser` is tri-state, and `undefined` (onAuthStateChanged has not emitted yet) made
+      // BOTH gates above pass it by: isDataReady returns false for it, and the readiness
+      // watchdog arms only when `authed` is true. So the one window with no data to wait for
+      // was also the one window with no time limit: isAppReady stayed false indefinitely and
+      // the user sat on the boot spinner until they reloaded the page by hand.
+      //
+      // This timer does not unblock navigation (see isDegradedSession for why); it turns the
+      // endless spinner into the same "slow network — reload" panel the other stall shows.
+      effect((onCleanup) => {
+        if (store.fbUser() !== undefined) {
+          patchState(store, { authRestoreTimedOut: false });
+          return;
+        }
+        const handle = setTimeout(
+          () => { markStartup('auth-watchdog:fired'); patchState(store, { authRestoreTimedOut: true }); },
+          READINESS_TIMEOUT_MS);
         onCleanup(() => clearTimeout(handle));
       });
 

@@ -470,8 +470,8 @@
     "later": "Später"
   },
   "boot": {
-    "degraded1": "Ihr Profil konnte wegen langsamer Netzwerkverbindung nicht vollständig geladen werden.",
-    "degraded2": "Bitte prüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.",
+    "degraded1": "Die App konnte wegen einer langsamen Verbindung nicht vollständig geladen werden.",
+    "degraded2": "Prüfe deine Internetverbindung und versuche es nochmals.",
     "retry": "Erneut versuchen"
   }
 }

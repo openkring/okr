@@ -470,8 +470,8 @@
     "later": "Più tardi"
   },
   "boot": {
-    "degraded1": "Non è stato possibile caricare completamente il suo profilo a causa di una connessione di rete lenta.",
-    "degraded2": "Verificare la connessione a internet e riprovare.",
+    "degraded1": "Non è stato possibile caricare completamente l’app a causa di una connessione lenta.",
+    "degraded2": "Controlla la tua connessione a internet e riprova.",
     "retry": "Riprovare"
   }
 }
