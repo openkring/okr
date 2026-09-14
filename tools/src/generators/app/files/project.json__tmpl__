@@ -302,6 +302,21 @@
           },
           {
             "glob": "*.json",
+            "input": "libs/finance/bank-import/util/src/i18n",
+            "output": "./assets/i18n/finance/bank-import/util"
+          },
+          {
+            "glob": "*.json",
+            "input": "libs/finance/bank-profile/util/src/i18n",
+            "output": "./assets/i18n/finance/bank-profile/util"
+          },
+          {
+            "glob": "*.json",
+            "input": "libs/finance/bank-rule/util/src/i18n",
+            "output": "./assets/i18n/finance/bank-rule/util"
+          },
+          {
+            "glob": "*.json",
             "input": "libs/finance/bill/data-access/src/i18n",
             "output": "./assets/i18n/finance/bill/data-access"
           },
@@ -726,7 +741,10 @@
           ],
           "optimization": {
             "scripts": true,
-            "styles": { "minify": true, "inlineCritical": false },
+            "styles": {
+              "minify": true,
+              "inlineCritical": false
+            },
             "fonts": true
           },
           "outputHashing": "all",
