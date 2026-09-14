@@ -88,9 +88,12 @@ export function mayJoinOpenCalevent(
 }
 
 /**
- * An invitation state expressed in the narrower attendee vocabulary. The schedule poll only ever
- * cycles pending -> accepted -> declined (see {@link nextInvitationState}), so 'maybe' is
- * unreachable from there; it is folded into 'invited' rather than silently dropped.
+ * An invitation state expressed in the narrower attendee vocabulary.
+ *
+ * Everything that is not a clear yes or no becomes 'invited', i.e. unanswered. That covers
+ * 'pending' and the retired 'maybe': the answer was binary in every user-facing path long before
+ * the state was removed from the model (2026-09-14), but legacy documents still carry it and must
+ * keep reading as «has not answered» rather than falling out of the list.
  */
 export function toAttendeeState(state: InvitationState): Attendee['state'] {
   if (state === 'accepted') return 'accepted';
@@ -143,7 +146,7 @@ export function mergeAttendee(
  * - every other answer is written in place: neither 'declined' nor 'invited' occupies a seat, so
  *   moving them would churn the order for nothing.
  *
- * An answer reset to 'pending' (and 'maybe', which has no attendee equivalent) becomes 'invited',
+ * An answer reset to 'pending' (and the retired 'maybe' on legacy documents) becomes 'invited',
  * i.e. unanswered — the person is NOT removed. Dropping them would take a still-invited guest out
  * of the participant list and out of the recipients of a cancellation, which is exactly the person
  * who would otherwise turn up uninformed. That is the difference to {@link mergeAttendee}, which
@@ -333,7 +336,7 @@ export function formatScheduleCloseMessage(
   return lines.join('\n');
 }
 
-/** Cell cycle in the poll table: no answer -> yes -> no -> no answer. 'maybe' is unused here. */
+/** Cell cycle in the poll table: no answer -> yes -> no -> no answer. */
 export function nextInvitationState(state: InvitationState): InvitationState {
   if (state === 'accepted') return 'declined';
   if (state === 'declined') return 'pending';
@@ -417,6 +420,30 @@ export function addInvitedAttendee(attendees: Attendee[] | undefined, person: Av
   const all = attendees ?? [];
   if (all.some(attendee => attendee.person.key === person.key)) return all;
   return [...all, { person, state: 'invited' }];
+}
+
+/**
+ * Takes a person off the attendee list — but only while their entry is still the unanswered
+ * 'invited' one that an invitation put there.
+ *
+ * This is the counterpart of {@link addInvitedAttendee} and runs when an invitation is withdrawn:
+ * without it the event keeps an 'invited' attendee whose invitation no longer exists, and that
+ * ghost stays in the participant list AND in the recipients of a cancellation
+ * (`reachableAttendeeKeys` reads every state except 'declined').
+ *
+ * An entry the person answered themselves is deliberately left alone. Once somebody has accepted
+ * or declined, that answer is their act, not the inviter's — deleting the ask must not delete the
+ * answer. Taking an answered person off the event is an explicit admin action instead.
+ *
+ * Pure and non-mutating.
+ *
+ * @param attendees `calevent.attendees`; undefined on a legacy document
+ * @param personKey the invitee whose unanswered entry should go
+ */
+export function removeInvitedAttendee(attendees: Attendee[] | undefined, personKey: string): Attendee[] {
+  const all = attendees ?? [];
+  if (personKey.length === 0) return all;
+  return all.filter(attendee => !(attendee.person.key === personKey && attendee.state === 'invited'));
 }
 
 /** An attendee list split into the three blocks the attendees accordion renders. */

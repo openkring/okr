@@ -25,7 +25,6 @@ export const INVITATION_I18N_KEYS = {
   accept:                           PFX + 'accept',
   accepted:                         PFX + 'accepted',
   decline:                          PFX + 'decline',
-  maybe:                            PFX + 'maybe',
   resend:                           PFX + 'resend',
 
   lock:                             PFX + 'lock.label',
@@ -78,7 +77,6 @@ export const INVITATION_I18N_KEYS = {
   state:                            PFX + 'invitation_state.label',
   state_pending_label:              PFX + 'invitation_state.pending.label',
   state_accepted_label:             PFX + 'invitation_state.accepted.label',
-  state_maybe_label:                PFX + 'invitation_state.maybe.label',
   state_declined_label:             PFX + 'invitation_state.declined.label',
 
   date:                            '@date',

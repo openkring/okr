@@ -32,7 +32,7 @@ export const invitationValidations = staticSuite((model: InvitationModel, field?
   dateValidations('date', model.date);
 
   // invitation details
-  stringValidations('state', model.state, WORD_LENGTH); // tbd: invitation state validation: pending, accepted, declined, maybe
+  stringValidations('state', model.state, WORD_LENGTH); // tbd: invitation state validation: pending, accepted, declined
   stringValidations('role', model.role, WORD_LENGTH); // tbd: invitation role validation: required, optional, info
 
   // sentAt/respondedAt are StoreDateTime (yyyyMMddHHmmss), not StoreDate — see InvitationModel

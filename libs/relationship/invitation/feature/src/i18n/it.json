@@ -24,7 +24,6 @@
   },
   "accept": "Partecipo",
   "accepted": "inviti accettati",
-  "maybe": "Forse",
   "decline": "Non posso partecipare",
   "resend": "Invia di nuovo l'invito",
   "subscribe": "Partecipo",
@@ -89,10 +88,6 @@
     "declined": {
       "label": "Rifiutato",
       "description": "L'invito è stato rifiutato."
-    },
-    "maybe": {
-      "label": "Forse",
-      "description": "All'invito è stata data risposta con 'Forse'."
     }
   },
   "invitation_role": {

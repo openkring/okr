@@ -194,7 +194,7 @@ export const InvitationStore = signalStore(
        * Answer an invitation. `respond` stamps respondedAt and appends the answer as a comment;
        * a locked invitation is refused and the user is told why instead of silently doing nothing.
        */
-      async changeState(invitation: InvitationModel, newState: 'pending' | 'accepted' | 'declined' | 'maybe'): Promise<void> {
+      async changeState(invitation: InvitationModel, newState: 'pending' | 'accepted' | 'declined'): Promise<void> {
         if (invitation.isLocked) {
           await notify(store.alertController, store.i18n.locked_title(), store.i18n.locked_hint(), store.i18n.ok());
           return;

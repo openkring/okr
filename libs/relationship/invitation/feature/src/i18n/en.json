@@ -24,7 +24,6 @@
   },
   "accept": "I'm in",
   "accepted": "accepted invitations",
-  "maybe": "Maybe",
   "decline": "I can't attend",
   "resend": "Resend invitation",
   "subscribe": "I'll attend",
@@ -89,10 +88,6 @@
     "declined": {
       "label": "Declined",
       "description": "The invitation was declined."
-    },
-    "maybe": {
-      "label": "Maybe",
-      "description": "The invitation was answered with 'Maybe'."
     }
   },
   "invitation_role": {

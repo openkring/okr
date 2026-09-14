@@ -328,7 +328,7 @@ export const CalendarStore = signalStore(
        * Answer an invitation from the calendar section. Routed through InvitationService so the
        * answer is stamped and commented like everywhere else; a locked invitation is refused.
        */
-      async changeInvitationState(invitation: InvitationModel, newState: 'pending' | 'accepted' | 'declined' | 'maybe'): Promise<void> {
+      async changeInvitationState(invitation: InvitationModel, newState: 'pending' | 'accepted' | 'declined'): Promise<void> {
         const currentUser = store.currentUser();
         if (!currentUser) return;
         if (invitation.isLocked) {

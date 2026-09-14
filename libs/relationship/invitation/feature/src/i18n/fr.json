@@ -24,7 +24,6 @@
   },
   "accept": "Je participe",
   "accepted": "invitations acceptées",
-  "maybe": "Peut-être",
   "decline": "Je ne peux pas participer",
   "resend": "Renvoyer l'invitation",
   "subscribe": "Je participe",
@@ -89,10 +88,6 @@
     "declined": {
       "label": "Refusée",
       "description": "L'invitation a été refusée."
-    },
-    "maybe": {
-      "label": "Peut-être",
-      "description": "L'invitation a reçu la réponse « Peut-être »."
     }
   },
   "invitation_role": {

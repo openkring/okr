@@ -1299,7 +1299,7 @@ export const CalEventStore = signalStore(
        * `calevent.attendees`. Den Eintrag dorthin schreibt `InvitationService.respond` selbst —
        * dort, wo jede Antwort ohnehin durchlaeuft, statt in jedem Store einzeln.
        */
-      async changeInvitationState(invitation: InvitationModel, newState: 'pending' | 'accepted' | 'declined' | 'maybe'): Promise<void> {
+      async changeInvitationState(invitation: InvitationModel, newState: 'pending' | 'accepted' | 'declined'): Promise<void> {
         const currentUser = store.currentUser();
         if (!currentUser) return;
         if (invitation.isLocked) {

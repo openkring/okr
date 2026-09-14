@@ -83,7 +83,7 @@ export function toPartstat(state: string | undefined): string | undefined {
   switch (state) {
     case 'accepted': return 'ACCEPTED';
     case 'declined': return 'DECLINED';
-    case 'maybe':    return 'TENTATIVE';
+    case 'maybe':    return 'TENTATIVE';   // legacy: 'maybe' left InvitationState on 2026-09-14
     case 'pending':  return 'NEEDS-ACTION';
     default:         return undefined;
   }

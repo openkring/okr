@@ -181,7 +181,7 @@ export const InvitationSectionStore = signalStore(
        * Answer an invitation from the invitations widget. `respond` stamps respondedAt and writes
        * the answer comment; a locked invitation is refused and the user is told why.
        */
-      async changeState(invitation: InvitationModel, newState: 'pending' | 'accepted' | 'declined' | 'maybe'): Promise<void> {
+      async changeState(invitation: InvitationModel, newState: 'pending' | 'accepted' | 'declined'): Promise<void> {
         if (invitation.isLocked) {
           await notify(store.alertController, store.i18n.invitation_locked_title(), store.i18n.invitation_locked_hint(), store.i18n.ok());
           return;

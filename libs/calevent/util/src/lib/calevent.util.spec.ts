@@ -1,7 +1,7 @@
-import { Attendee, AvatarInfo, CalEventModel } from '@okr/shared-models';
+import { Attendee, AvatarInfo, CalEventModel, InvitationState } from '@okr/shared-models';
 import * as coreUtils from '@okr/shared-util-core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { addInvitedAttendee, applyInvitationAnswer, bestScheduleColumn, buildCalEventLink, canAttendCalevent, buildSchedulePollLink, convertCalEventToFullCalendar, formatDurationLabel, formatScheduleCloseMessage, formatSchedulePollInviteMessage, getCalEventCssClass, getSeriesUpdateFields, isCalEvent, isFullDayEvent, isPastCalevent, isPersonalCalendarName, isPersonalCalevent, isCaleventFull, isSchedulePoll, resolveCalendars, mayJoinOpenCalevent, mergeAttendee, nextInvitationState, planSeriesReconcile, splitAttendees, toAttendeeState, toInvitationState } from './calevent.util';
+import { addInvitedAttendee, removeInvitedAttendee, applyInvitationAnswer, bestScheduleColumn, buildCalEventLink, canAttendCalevent, buildSchedulePollLink, convertCalEventToFullCalendar, formatDurationLabel, formatScheduleCloseMessage, formatSchedulePollInviteMessage, getCalEventCssClass, getSeriesUpdateFields, isCalEvent, isFullDayEvent, isPastCalevent, isPersonalCalendarName, isPersonalCalevent, isCaleventFull, isSchedulePoll, resolveCalendars, mayJoinOpenCalevent, mergeAttendee, nextInvitationState, planSeriesReconcile, splitAttendees, toAttendeeState, toInvitationState } from './calevent.util';
 
 // Mock shared utility functions
 vi.mock('@okr/shared-util-core', async importOriginal => {
@@ -13,6 +13,13 @@ vi.mock('@okr/shared-util-core', async importOriginal => {
     isType: vi.fn(),
   };
 });
+
+/**
+ * 'maybe' left InvitationState on 2026-09-14 (no user-facing path ever offered it). Documents
+ * written before that still hold it, so the folding behaviour stays under test — the cast is the
+ * point, not an oversight.
+ */
+const LEGACY_MAYBE = 'maybe' as InvitationState;
 
 describe('CalEvent Utils', () => {
   const mockGetTodayStr = vi.mocked(coreUtils.getTodayStr);
@@ -298,7 +305,8 @@ describe('attendee state mapping', () => {
     expect(toAttendeeState('accepted')).toBe('accepted');
     expect(toAttendeeState('declined')).toBe('declined');
     expect(toAttendeeState('pending')).toBe('invited');
-    expect(toAttendeeState('maybe')).toBe('invited');
+    // 'maybe' was removed from InvitationState on 2026-09-14; legacy documents still carry it
+    expect(toAttendeeState(LEGACY_MAYBE)).toBe('invited');
   });
 
   it('widens it back, with invited reading as pending', () => {
@@ -405,8 +413,8 @@ describe('nextInvitationState', () => {
     expect(nextInvitationState('accepted')).toBe('declined');
     expect(nextInvitationState('declined')).toBe('pending');
   });
-  it('treats maybe like pending', () => {
-    expect(nextInvitationState('maybe')).toBe('accepted');
+  it('treats the retired maybe of a legacy document like pending', () => {
+    expect(nextInvitationState(LEGACY_MAYBE)).toBe('accepted');
   });
 });
 
@@ -573,6 +581,39 @@ describe('addInvitedAttendee', () => {
     addInvitedAttendee(existing, person('p2'));
     expect(existing).toHaveLength(1);
   });
+
+  it('removes the unanswered entry again when the invitation is withdrawn', () => {
+    const existing: Attendee[] = [{ person: person('p1'), state: 'invited' }];
+    expect(removeInvitedAttendee(existing, 'p1')).toEqual([]);
+  });
+
+  it('leaves an answer the person gave themselves — deleting the ask is not deleting the answer', () => {
+    const accepted: Attendee[] = [{ person: person('p1'), state: 'accepted' }];
+    const declined: Attendee[] = [{ person: person('p1'), state: 'declined' }];
+    expect(removeInvitedAttendee(accepted, 'p1')).toEqual(accepted);
+    expect(removeInvitedAttendee(declined, 'p1')).toEqual(declined);
+  });
+
+  it('touches nobody else and keeps the order', () => {
+    const existing: Attendee[] = [
+      { person: person('p1'), state: 'accepted' },
+      { person: person('p2'), state: 'invited' },
+      { person: person('p3'), state: 'invited' },
+    ];
+    expect(removeInvitedAttendee(existing, 'p2').map(a => a.person.key)).toEqual(['p1', 'p3']);
+  });
+
+  it('copes with a legacy document and with an empty key', () => {
+    expect(removeInvitedAttendee(undefined, 'p1')).toEqual([]);
+    const existing: Attendee[] = [{ person: person('p1'), state: 'invited' }];
+    expect(removeInvitedAttendee(existing, '')).toEqual(existing);
+  });
+
+  it('does not mutate the array it was given', () => {
+    const existing: Attendee[] = [{ person: person('p1'), state: 'invited' }];
+    removeInvitedAttendee(existing, 'p1');
+    expect(existing).toHaveLength(1);
+  });
 });
 
 describe('applyInvitationAnswer', () => {
@@ -587,9 +628,9 @@ describe('applyInvitationAnswer', () => {
       .toEqual([{ person: person('p1'), state: 'accepted' }]);
   });
 
-  it('maps pending and maybe onto the unanswered state', () => {
+  it('maps pending and the retired maybe onto the unanswered state', () => {
     expect(stateOf(applyInvitationAnswer([], person('p1'), 'pending'), 'p1')).toBe('invited');
-    expect(stateOf(applyInvitationAnswer([], person('p1'), 'maybe'), 'p1')).toBe('invited');
+    expect(stateOf(applyInvitationAnswer([], person('p1'), LEGACY_MAYBE), 'p1')).toBe('invited');
   });
 
   it('moves somebody accepting from a non-accepted state to the END of the queue', () => {

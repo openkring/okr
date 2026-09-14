@@ -8,7 +8,7 @@ import { I18nService } from '@okr/shared-i18n';
 import { AvatarInfo, CalEventCollection, CalEventModel, CommentCollection, InvitationCollection, InvitationModel, InvitationModelName, InvitationState, PersonModelName, UserModel } from '@okr/shared-models';
 import { DateFormat, findByKey, getFullName, getSystemQuery, getTodayStr, removeKeyFromOkrModel } from '@okr/shared-util-core';
 
-import { applyInvitationAnswer } from '@okr/calevent-util';
+import { applyInvitationAnswer, removeInvitedAttendee } from '@okr/calevent-util';
 import { createComment } from '@okr/comment-util';
 import { getInvitationIndex, getLockCommentKey, getResponseComment, normaliseInvitation } from '@okr/relationship-invitation-util';
 
@@ -173,11 +173,38 @@ export class InvitationService {
   /**
    * Hard-delete an existing invitation relationship (admin only, see InvitationList).
    * An invitation is never shared across tenants, so there is nothing to detach or archive.
+   *
+   * Deleting the ask also takes the unanswered attendee entry off the event. Inviting writes BOTH
+   * documents (`CalEventStore.invitePersons`), so deleting only one of them left a ghost behind:
+   * an 'invited' attendee whose invitation no longer exists, still counted in the participant list
+   * and still in the recipients of a cancellation. An answer the person gave themselves survives —
+   * see `removeInvitedAttendee`.
+   *
    * @param invitation the invitation to delete
    * @returns a promise that resolves when the invitation is deleted
    */
   public async delete(invitation: InvitationModel): Promise<void> {
+    await this.removeInviteeFromCalevent(invitation);
     await this.firestoreService.deleteObject(InvitationCollection, invitation.okey, this.i18n.delete_conf());
+  }
+
+  /**
+   * Takes the invitee's unanswered attendee entry off the event — the second half of withdrawing an
+   * invitation, mirroring `recordAnswerOnCalevent`.
+   *
+   * A transaction for the same reason: `attendees` is one array field several people write
+   * independently. Best-effort in the same way too — an event that is already gone is skipped
+   * rather than blocking the deletion of the invitation that outlived it.
+   */
+  private async removeInviteeFromCalevent(invitation: InvitationModel): Promise<void> {
+    if (!invitation.caleventKey || !invitation.inviteeKey) return;
+    const ref = doc(this.firestoreService.firestore, `${CalEventCollection}/${invitation.caleventKey}`);
+    await runTransaction(this.firestoreService.firestore, async (transaction) => {
+      const snapshot = await transaction.get(ref);
+      if (!snapshot.exists()) return;
+      const attendees = (snapshot.data() as CalEventModel).attendees ?? [];
+      transaction.update(ref, { attendees: removeInvitedAttendee(attendees, invitation.inviteeKey) });
+    });
   }
 
   /*-------------------------- LIST  --------------------------------*/

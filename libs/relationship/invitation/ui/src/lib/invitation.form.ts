@@ -119,9 +119,9 @@ export class InvitationForm {
   protected roleI18n        = computed(() => ({ name: 'role',  label: this.i18n().role_label(), helper: this.i18n().role_helper() } as StringSelectI18n));
 
   // option values (model types) and their translated labels, in the same order
-  protected readonly stateList = ['pending', 'accepted', 'declined', 'maybe'];
+  protected readonly stateList = ['pending', 'accepted', 'declined'];
   protected readonly roleList = ['required', 'optional', 'info'];
-  protected stateLabels = computed(() => [this.i18n().state_pending_label(), this.i18n().state_accepted_label(), this.i18n().state_declined_label(), this.i18n().state_maybe_label()]);
+  protected stateLabels = computed(() => [this.i18n().state_pending_label(), this.i18n().state_accepted_label(), this.i18n().state_declined_label()]);
   protected roleLabels = computed(() => [this.i18n().role_required_label(), this.i18n().role_optional_label(), this.i18n().role_info_label()]);
 
   // inputs

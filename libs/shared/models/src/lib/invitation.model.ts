@@ -2,7 +2,17 @@ import { DEFAULT_DATETIME, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NOTES, DEFAULT_TA
 
 import { OkrModel, NamedModel, SearchableModel, TaggedModel } from './base.model';
 
-export type InvitationState = 'pending' | 'accepted' | 'declined' | 'maybe';
+/**
+ * The answer to an invitation. Binary plus «not yet»: 'maybe' was removed on 2026-09-14 because no
+ * user-facing path ever offered it — the action sheets, the invitations section and the schedule
+ * poll all cycle pending -> accepted -> declined, and only the admin edit form could set it.
+ *
+ * Legacy documents may still carry 'maybe'. They are read as unanswered (`toAttendeeState` in
+ * calevent-util folds every non-answer into 'invited'), and the comment key
+ * `@relationship/invitation/feature.comment.maybe` stays in the i18n bundles so that old answer
+ * comments keep rendering.
+ */
+export type InvitationState = 'pending' | 'accepted' | 'declined';
 export type InvitationRole = 'required' | 'optional' | 'info';
 export const DEFAULT_INVITATION_STATE: InvitationState = 'pending';
 export const DEFAULT_INVITATION_ROLE: InvitationRole = 'info';

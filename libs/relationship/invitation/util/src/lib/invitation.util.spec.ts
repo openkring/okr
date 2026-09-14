@@ -104,7 +104,7 @@ describe('invitation.util', () => {
     });
 
     it('ignores a note that is only whitespace', () => {
-      expect(getResponseComment('maybe', '   ')).toBe('@relationship/invitation/feature.comment.maybe');
+      expect(getResponseComment('pending', '   ')).toBe('@relationship/invitation/feature.comment.pending');
     });
   });
 
@@ -127,7 +127,7 @@ describe('invitation.util', () => {
     it('puts answered invitations first, oldest response first', () => {
       const late = inv({ okey: 'late', state: 'accepted', respondedAt: '20260301090000' });
       const early = inv({ okey: 'early', state: 'declined', respondedAt: '20260101080000' });
-      const middle = inv({ okey: 'middle', state: 'maybe', respondedAt: '20260201100000' });
+      const middle = inv({ okey: 'middle', state: 'declined', respondedAt: '20260201100000' });
       expect(sortInvitees([late, early, middle]).map(i => i.okey)).toEqual(['early', 'middle', 'late']);
     });
 
