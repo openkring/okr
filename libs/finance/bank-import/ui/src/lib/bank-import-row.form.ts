@@ -5,7 +5,7 @@ import { DecimalPipe } from '@angular/common';
 
 import { AccountModel, BankImportRowModel, VatCodeModel } from '@okr/shared-models';
 import { StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
-import { coerceBoolean } from '@okr/shared-util-core';
+import { coerceBoolean, convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
 import { validateVestTree } from '@okr/shared-util-angular';
 
 import { AccountSelect, AccountSelectI18n } from '@okr/finance-account-ui';
@@ -29,7 +29,11 @@ import { BankImportI18n, bankImportRowValidations } from '@okr/finance-bank-impo
           <ion-card-content class="ion-no-padding">
             <ion-item lines="full">
               <ion-label>
-                {{ formData().date }} · {{ formData().payee || formData().rawText }} ·
+                {{ dateLabel() }}
+                @if (formData().payee) {
+                  · {{ formData().payee }}
+                }
+                · {{ formData().rawText }} ·
                 {{ formData().amount.amount / 100 | number:'1.2-2' }} {{ formData().amount.currency }}
               </ion-label>
             </ion-item>
@@ -75,6 +79,7 @@ export class BankImportRowForm {
   }
 
   protected readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()));
+  protected readonly dateLabel = computed(() => convertDateFormatToString(this.formData()?.date, DateFormat.StoreDate, DateFormat.ViewDate, false));
   protected readonly title = computed(() => this.formData()?.title ?? '');
   protected readonly accountKey = computed(() => this.formData()?.accountKey ?? '');
   protected readonly vatCodeKey = computed(() => this.formData()?.vatCodeKey ?? '');

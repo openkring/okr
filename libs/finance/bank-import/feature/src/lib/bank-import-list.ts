@@ -31,6 +31,7 @@ const STATUS_FILTERS: BankImportStatusFilter[] = ['open', 'all', 'unmapped', 'ma
     IonSelect, IonSelectOption, IonItem, IonLabel,
   ],
   providers: [BankImportStore, BankProfileStore, BankRuleStore],
+  styles: [`.medium { color: var(--ion-color-medium); }`],
   template: `
     <ion-header>
       <ion-toolbar color="secondary">
