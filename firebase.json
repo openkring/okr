@@ -1312,6 +1312,35 @@
           ]
         }
       ]
+    },
+    {
+      "comment": "Redirect-only site: glp-staefa.ch + www -> bezirkmeilen.glp.swiss/staefa/. No content of its own; see apps/glps-website/README.md.",
+      "site": "glps-website-54aef",
+      "public": "dist/apps/glps-website",
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        "**/node_modules/**"
+      ],
+      "redirects": [
+        {
+          "comment": "Still 302 on purpose - flip to 301 once the live redirect is verified, because browsers cache a 301 indefinitely.",
+          "source": "**",
+          "destination": "https://bezirkmeilen.glp.swiss/staefa/",
+          "type": 302
+        }
+      ],
+      "headers": [
+        {
+          "source": "**",
+          "headers": [
+            {
+              "key": "Content-Security-Policy",
+              "value": "default-src 'self'; script-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'none'"
+            }
+          ]
+        }
+      ]
     }
   ],
   "firestore": {
