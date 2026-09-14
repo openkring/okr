@@ -1324,10 +1324,10 @@
       ],
       "redirects": [
         {
-          "comment": "Still 302 on purpose - flip to 301 once the live redirect is verified, because browsers cache a 301 indefinitely.",
+          "comment": "301 (permanent): the destination is verified live. Changing it later means every browser that ever hit this host keeps the old target until its cache expires - deploy a new destination only together with a short 302 window.",
           "source": "**",
           "destination": "https://bezirkmeilen.glp.swiss/staefa/",
-          "type": 302
+          "type": 301
         }
       ],
       "headers": [
