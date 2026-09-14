@@ -82,6 +82,17 @@ export function normalizeRuleForSave(rule: BankRuleModel): BankRuleModel {
   return { ...rule, term, title: (rule.title ?? '').trim(), priority: Number(rule.priority) || 0 };
 }
 
+/**
+ * Merges a partial seed (e.g. proposed by the import flow from a statement row) into a freshly
+ * constructed rule, WITHOUT letting the seed override the tenant-scoping fields the constructor
+ * just set: `tenants`, `accountingTenantId`, `okey`. A seed is untrusted proposal data — it must
+ * never be able to re-tenant or re-key the rule it is seeding.
+ */
+export function seedBankRule(rule: BankRuleModel, seed?: Partial<BankRuleModel>): BankRuleModel {
+  const { tenants: _tenants, accountingTenantId: _accountingTenantId, okey: _okey, ...safeSeed } = seed ?? {};
+  return { ...rule, ...safeSeed };
+}
+
 function isOneOff(row: BankImportRowModel): boolean {
   return (row.ruleKey ?? '') === '' && (row.accountKey ?? '') !== '';
 }

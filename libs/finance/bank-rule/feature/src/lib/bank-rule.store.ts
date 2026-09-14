@@ -14,7 +14,7 @@ import { AccountingStore } from '@okr/finance-accounting-feature';
 import { leafAccounts } from '@okr/finance-account-util';
 import { VatCodeService } from '@okr/finance-vat-code-data-access';
 import { BankRuleService } from '@okr/finance-bank-rule-data-access';
-import { BANK_RULE_I18N_KEYS, normalizeRuleForSave } from '@okr/finance-bank-rule-util';
+import { BANK_RULE_I18N_KEYS, normalizeRuleForSave, seedBankRule } from '@okr/finance-bank-rule-util';
 
 export const BankRuleStore = signalStore(
   withState({}),
@@ -72,7 +72,7 @@ export const BankRuleStore = signalStore(
     },
 
     async openCreate(seed?: Partial<BankRuleModel>): Promise<BankRuleModel | undefined> {
-      const rule = Object.assign(new BankRuleModel(store.appStore.tenantId(), store.accountingStore.accountingTenantId()), seed ?? {});
+      const rule = seedBankRule(new BankRuleModel(store.appStore.tenantId(), store.accountingStore.accountingTenantId()), seed);
       return await this.openEdit(rule, false);
     },
 

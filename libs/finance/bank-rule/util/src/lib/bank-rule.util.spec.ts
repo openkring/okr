@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { BankImportRowModel, BankRuleModel } from '@okr/shared-models';
 
-import { applyRules, matchRule, normalizeRuleForSave, normalizeText } from './bank-rule.util';
+import { applyRules, matchRule, normalizeRuleForSave, normalizeText, seedBankRule } from './bank-rule.util';
 
 function rule(p: Partial<BankRuleModel>): BankRuleModel {
   return { ...new BankRuleModel('t1', 'acc1'), okey: 'r', accountKey: 'a1', title: 'T', ...p };
@@ -82,6 +82,27 @@ describe('normalizeRuleForSave', () => {
 
   it('trims the title', () => {
     expect(normalizeRuleForSave(rule({ title: '  Google Cloud  ' })).title).toBe('Google Cloud');
+  });
+});
+
+describe('seedBankRule', () => {
+  it('does not let the seed override tenants, accountingTenantId or okey', () => {
+    const fresh = new BankRuleModel('t1', 'acc1');
+    const seeded = seedBankRule(fresh, { tenants: ['x'], accountingTenantId: 'z', okey: 'y' } as Partial<BankRuleModel>);
+    expect(seeded.tenants).toEqual(['t1']);
+    expect(seeded.accountingTenantId).toBe('acc1');
+    expect(seeded.okey).toBe(fresh.okey);
+  });
+
+  it('applies the rest of the seed', () => {
+    const fresh = new BankRuleModel('t1', 'acc1');
+    const seeded = seedBankRule(fresh, { term: 'google', title: 'Google', condition: 'contains' });
+    expect(seeded).toMatchObject({ term: 'google', title: 'Google', condition: 'contains' });
+  });
+
+  it('returns the fresh rule unchanged when no seed is given', () => {
+    const fresh = new BankRuleModel('t1', 'acc1');
+    expect(seedBankRule(fresh)).toEqual(fresh);
   });
 });
 
