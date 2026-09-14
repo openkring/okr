@@ -11,10 +11,12 @@ export const chatSectionValidations = staticSuite((model: ChatSection, field?: s
 
   baseSectionValidations(model, field);
 
-    stringValidations('id', model.properties?.id, WORD_LENGTH);
-    stringValidations('name', model.properties?.name, NAME_LENGTH);
-    stringValidations('url', model.properties?.url, URL_LENGTH);
-    stringValidations('description', model.properties?.description, DESCRIPTION_LENGTH);
-    stringValidations('type', model.properties?.type, WORD_LENGTH);
+  // Prefixed with 'chat.': plain 'name' and 'type' would collide with the base section's own
+  // name/type, and both fields would then show each other's errors.
+  stringValidations('chat.id', model.properties?.id, NAME_LENGTH);
+  stringValidations('chat.name', model.properties?.name, NAME_LENGTH);
+  stringValidations('chat.url', model.properties?.url, URL_LENGTH);
+  stringValidations('chat.description', model.properties?.description, DESCRIPTION_LENGTH);
+  stringValidations('chat.type', model.properties?.type, WORD_LENGTH);
 
 });

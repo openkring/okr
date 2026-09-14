@@ -15,6 +15,6 @@ describe('chatSectionValidations', () => {
 
   it('flags a non-string chat url', () => {
     const model = { ...CHAT_SECTION_SHAPE, properties: { ...CHAT_SECTION_SHAPE.properties, url: 123 } } as unknown as ChatSection;
-    expect(chatSectionValidations(model).hasErrors('url')).toBe(true);
+    expect(chatSectionValidations(model).hasErrors('chat.url')).toBe(true);
   });
 });

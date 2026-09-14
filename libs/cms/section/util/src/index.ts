@@ -29,3 +29,4 @@ export * from './lib/orgchart-cycle.util';
 export * from './lib/weather-section.validations';
 export * from './lib/modal-registry';
 export * from './lib/list-reservation.util';
+export * from './lib/section-errors';

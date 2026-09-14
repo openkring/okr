@@ -2,7 +2,8 @@ import { Component, computed, input, linkedSignal, model, Signal } from '@angula
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonNote, IonRow } from '@ionic/angular/standalone';
 
 import { ImageActions } from '@okr/shared-categories';
-import { CategoryOld, CategoryOldI18n, Checkbox, CheckboxI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { CategoryOld, CategoryOldI18n, Checkbox, CheckboxI18n, ErrorNote, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { SectionErrors, getFieldErrors } from '@okr/cms-section-util';
 import { ImageActionType, ImageStyle, Slot } from '@okr/shared-models';
 
 interface ImageStyleConfigI18n {
@@ -45,7 +46,9 @@ interface ImageStyleConfigI18n {
 @Component({
   selector: 'okr-image-style',
   standalone: true,
-  imports: [IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonNote, Checkbox, TextInput, StringSelect, CategoryOld, NumberInput],
+  imports: [IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonNote, Checkbox, TextInput, StringSelect, CategoryOld, NumberInput,
+    ErrorNote
+  ],
   styles: [
     `
       @media (width <= 600px) {
@@ -68,34 +71,44 @@ interface ImageStyleConfigI18n {
           <ion-row>
             <ion-col size="12" size-md="6">
               <okr-text-input [i18n]="widthI18n()" [value]="width()" (valueChange)="onFieldChange('width', $event)" [readOnly]="readOnly()" />
+              <okr-error-note [errors]="errorsFor('width')" />
             </ion-col>
             <ion-col size="12" size-md="6">
               <okr-text-input [i18n]="heightI18n()" [value]="height()" (valueChange)="onFieldChange('height', $event)" [readOnly]="readOnly()" />
+              <okr-error-note [errors]="errorsFor('height')" />
             </ion-col>
             <ion-col size="12" size-md="6">
               <okr-checkbox [i18n]="fillI18n()" [checked]="fill()" (checkedChange)="onFieldChange('fill', $event)" [readOnly]="readOnly()" />
+              <okr-error-note [errors]="errorsFor('fill')" />
             </ion-col>
             @if(showAdvanced()) {
               <ion-col size="12">
                 <okr-text-input [i18n]="imgIxParamsI18n()" [value]="imgIxParams()" (valueChange)="onFieldChange('imgIxParams', $event)" [readOnly]="readOnly()" [showHelper]="true" />
+                <okr-error-note [errors]="errorsFor('imgIxParams')" />
               </ion-col>
               <ion-col size="12" size-md="6">
                 <okr-text-input [i18n]="sizesI18n()" [value]="sizes()" (valueChange)="onFieldChange('sizes', $event)" [readOnly]="readOnly()" [showHelper]="true" />
+                <okr-error-note [errors]="errorsFor('sizes')" />
               </ion-col>
               <ion-col size="12" size-md="6">
                 <okr-text-input [i18n]="borderI18n()" [value]="border()" (valueChange)="onFieldChange('border', $event)" [readOnly]="readOnly()" [showHelper]="true" />
+                <okr-error-note [errors]="errorsFor('border')" />
               </ion-col>
               <ion-col size="12" size-md="6">
                 <okr-text-input [i18n]="borderRadiusI18n()" [value]="borderRadius()" (valueChange)="onFieldChange('borderRadius', $event)" [readOnly]="readOnly()" [showHelper]="true" />
+                <okr-error-note [errors]="errorsFor('borderRadius')" />
               </ion-col>
               <ion-col size="12" size-md="6">
                 <okr-checkbox [i18n]="isThumbnailI18n()" [checked]="isThumbnail()" (checkedChange)="onFieldChange('isThumbnail', $event)" [readOnly]="readOnly()" />
+                <okr-error-note [errors]="errorsFor('isThumbnail')" />
               </ion-col>
               <ion-col size="12" size-md="6">
                 <okr-string-select [i18n]="slotI18n()" [selectedString]="slot()" (selectedStringChange)="onFieldChange('slot', $event)" [readOnly]="readOnly()" [stringList]="stringList" />
+                <okr-error-note [errors]="errorsFor('slot')" />
               </ion-col>
               <ion-col size="12" size-md="6">
                 <okr-checkbox [i18n]="hasPriorityI18n()" [checked]="hasPriority()" (checkedChange)="onFieldChange('hasPriority', $event)" [readOnly]="readOnly()" />
+                <okr-error-note [errors]="errorsFor('hasPriority')" />
               </ion-col>
               <ion-col size="12" size-md="6">
                 <okr-checkbox [i18n]="showTitleI18n()" [checked]="showTitle()" (checkedChange)="onFieldChange('showTitle', $event)" [readOnly]="readOnly()" />
@@ -105,9 +118,11 @@ interface ImageStyleConfigI18n {
               </ion-col>
               <ion-col size="12" size-md="6">
                 <okr-category-old [i18n]="imageActionI18n()" [value]="action()" (valueChange)="onFieldChange('action', $event)" [readOnly]="readOnly()" [categories]="imageActions" />
+                <okr-error-note [errors]="errorsFor('action')" />
               </ion-col>
               <ion-col size="12" size-md="6">
                 <okr-number-input [i18n]="zoomFactorI18n()" [value]="zoomFactor()" (valueChange)="onFieldChange('zoomFactor', $event)" [readOnly]="readOnly()" [showHelper]="true" />
+                <okr-error-note [errors]="errorsFor('zoomFactor')" />
               </ion-col>
             }
           </ion-row>
@@ -118,6 +133,9 @@ interface ImageStyleConfigI18n {
 })
 export class ImageStyleConfiguration {
   // inputs
+  /** vest field name -> messages of the running section suite (see section.form.ts) */
+  public readonly errors = input<SectionErrors>({});
+
   public formData = model.required<ImageStyle>();
   public intro = input<string>();
   public readonly readOnly = input(true);
@@ -246,5 +264,10 @@ export class ImageStyleConfiguration {
 
   protected onFieldChange(fieldName: string, fieldValue: string | boolean | ImageActionType | Slot): void {
     this.formData.update(vm => ({ ...vm, [fieldName]: fieldValue }));
+  }
+
+/** messages of a single field, for the inline <okr-error-note> */
+  protected errorsFor(field: string): string[] {
+    return getFieldErrors(this.errors(), field);
   }
 }

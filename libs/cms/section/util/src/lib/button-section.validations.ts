@@ -2,7 +2,7 @@ import { only, staticSuite } from 'vest';
 
 import { ButtonAction, ButtonSection, ColorIonic } from '@okr/shared-models';
 import { categoryValidations, numberValidations, stringValidations } from '@okr/shared-util-core';
-import { LONG_NAME_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@okr/shared-constants';
+import { COMMENT_LENGTH, LONG_NAME_LENGTH, NAME_LENGTH, URL_LENGTH, WORD_LENGTH } from '@okr/shared-constants';
 
 import { baseSectionValidations } from './base-section.validations';
 
@@ -12,18 +12,18 @@ export const buttonSectionValidations = staticSuite((model: ButtonSection, field
     baseSectionValidations(model, field);
 
     // guard nested config objects with ?. — older stored sections may lack icon/style/action
-    stringValidations('icon.name', model.properties?.icon?.name, SHORT_NAME_LENGTH);
+    stringValidations('icon.name', model.properties?.icon?.name, NAME_LENGTH);
     numberValidations('icon.size', model.properties?.icon?.size, true, 0);   // icon size in px (IconConfig.size is a number)
     stringValidations('icon.slot', model.properties?.icon?.slot, WORD_LENGTH);   // tbd check icon.slot for start, end, icon-only
 
     stringValidations('style.label', model.properties?.style?.label, LONG_NAME_LENGTH);
     stringValidations('style.shape', model.properties?.style?.shape, WORD_LENGTH);  // tbd: test style.shape  for round or default
     stringValidations('style.fill', model.properties?.style?.fill, WORD_LENGTH);   // tbd: test  style.shape for solid, outline, clear
-    stringValidations('style.width', model.properties?.style?.width, WORD_LENGTH);
-    stringValidations('style.height', model.properties?.style?.height, WORD_LENGTH);
+    stringValidations('style.width', model.properties?.style?.width, NAME_LENGTH);
+    stringValidations('style.height', model.properties?.style?.height, NAME_LENGTH);
     categoryValidations('style.color', model.properties?.style?.color, ColorIonic);
 
     categoryValidations('action.type', model.properties?.action?.type, ButtonAction);
-    stringValidations('action.url', model.properties?.action?.url, LONG_NAME_LENGTH);
-    stringValidations('action.altText', model.properties?.action?.altText, LONG_NAME_LENGTH);
+    stringValidations('action.url', model.properties?.action?.url, URL_LENGTH);
+    stringValidations('action.altText', model.properties?.action?.altText, COMMENT_LENGTH);
  });

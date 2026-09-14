@@ -1,7 +1,8 @@
 import { Component, computed, inject, input, linkedSignal, model, Signal } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
-import { Checkbox, CheckboxI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n } from '@okr/shared-ui';
+import { Checkbox, CheckboxI18n, ErrorNote, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n } from '@okr/shared-ui';
+import { SectionErrors, getFieldErrors } from '@okr/cms-section-util';
 import { TrackerConfig } from '@okr/shared-models';
 import { coerceBoolean } from '@okr/shared-util-core';
 
@@ -25,7 +26,8 @@ interface TrackerConfigI18n {
   standalone: true,
   imports: [
     IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonCardHeader, IonCardTitle,
-    Checkbox, NumberInput, StringSelect
+    Checkbox, NumberInput, StringSelect,
+    ErrorNote
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
@@ -38,18 +40,23 @@ interface TrackerConfigI18n {
             <ion-row>
                 <ion-col size="12" size-md="6">
                   <okr-checkbox [i18n]="autostartI18n()" [checked]="autostart()" (checkedChange)="onFieldChange('autostart', $event)" [showHelper]="true" [readOnly]="readOnly()" />
+                  <okr-error-note [errors]="errorsFor('autostart')" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
                   <okr-number-input [i18n]="intervalInSecondsI18n()" [value]="intervalInSeconds()" (valueChange)="onFieldChange('intervalInSeconds', $event)" [maxLength]=11 [readOnly]="isReadOnly()" [showHelper]=true />
+                  <okr-error-note [errors]="errorsFor('intervalInSeconds')" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
                   <okr-checkbox [i18n]="enableHighAccuracyI18n()" [checked]="enableHighAccuracy()" (checkedChange)="onFieldChange('enableHighAccuracy', $event)" [showHelper]="true" [readOnly]="readOnly()" />
+                  <okr-error-note [errors]="errorsFor('enableHighAccuracy')" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
                   <okr-number-input [i18n]="maximumAgeI18n()" [value]="maximumAge()" (valueChange)="onFieldChange('maximumAge', $event)" [maxLength]=6 [readOnly]="isReadOnly()" [showHelper]=true />
+                  <okr-error-note [errors]="errorsFor('maximumAge')" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
                   <okr-string-select [i18n]="exportFormatI18n()" [selectedString]="exportFormat()" (selectedStringChange)="onFieldChange('exportFormat', $event)" [readOnly]="readOnly()" [stringList]="['kmz', 'json', 'csv']" />
+                  <okr-error-note [errors]="errorsFor('exportFormat')" />
                 </ion-col>
             </ion-row>
           </ion-grid>
@@ -59,6 +66,9 @@ interface TrackerConfigI18n {
 })
 export class TrackerConfiguration {
   // inputs
+  /** vest field name -> messages of the running section suite (see section.form.ts) */
+  public readonly errors = input<SectionErrors>({});
+
   public formData = model.required<TrackerConfig>();
   public readonly readOnly = input(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
@@ -101,5 +111,10 @@ export class TrackerConfiguration {
   /************************************** actions *********************************************** */
   protected onFieldChange(fieldName: string, fieldValue: string | number | boolean): void {
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
+  }
+
+  /** messages of a single field, for the inline <okr-error-note> */
+  protected errorsFor(field: string): string[] {
+    return getFieldErrors(this.errors(), field);
   }
 }

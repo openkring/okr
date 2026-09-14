@@ -2,17 +2,18 @@ import { Component, computed, input, linkedSignal, model, Signal, signal } from 
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
 import { AlbumConfig, CategoryListModel } from '@okr/shared-models';
-import { CategoryOld, CategoryOldI18n, CategorySelect, Checkbox, CheckboxI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { CategoryOld, CategoryOldI18n, CategorySelect, Checkbox, CheckboxI18n, ErrorNote, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { GalleryEffects } from '@okr/shared-categories';
 
-import { SectionI18n } from '@okr/cms-section-util';
+import { getFieldErrors, SectionErrors, SectionI18n } from '@okr/cms-section-util';
 
 @Component({
   selector: 'okr-album-config',
   standalone: true,
   imports: [
     TextInput, CategoryOld, CategorySelect, Checkbox,
-    IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonRow, IonCol
+    IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonRow, IonCol,
+    ErrorNote
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
@@ -30,23 +31,29 @@ import { SectionI18n } from '@okr/cms-section-util';
           <ion-row>
             <ion-col size="12">
               <okr-text-input [i18n]="folderI18n()" [value]="folder()" (valueChange)="onFieldChange('folder', $event)"  [readOnly]="readOnly()" [showHelper]=true />
+              <okr-error-note [errors]="errorsFor('folder')" />
             </ion-col>
             <ion-col size="12" size-md="6">
               @if(albumStyles().items.length > 0) {
                 <okr-cat-select [category]="albumStyles()" [selectedItemName]="albumStyle()" (selectedItemNameChange)="onFieldChange('albumStyle', $event)" [withAll]="false" [readOnly]="readOnly()" />
+                <okr-error-note [errors]="errorsFor('albumStyle')" />
               }
             </ion-col>
             <ion-col size="12" size-md="6">
               <okr-checkbox [i18n]="showVideosI18n()" [checked]="showVideos()" (checkedChange)="onFieldChange('showVideos', $event)" [showHelper]="true" [readOnly]="readOnly()" />
+              <okr-error-note [errors]="errorsFor('showVideos')" />
             </ion-col>
             <ion-col size="12" size-md="6">
               <okr-checkbox [i18n]="showStreamingVideosI18n()" [checked]="showStreamingVideos()" (checkedChange)="onFieldChange('showStreamingVideos', $event)" [showHelper]="true" [readOnly]="readOnly()" />
+              <okr-error-note [errors]="errorsFor('showStreamingVideos')" />
             </ion-col>
             <ion-col size="12" size-md="6">
               <okr-checkbox [i18n]="showDocsI18n()" [checked]="showDocs()" (checkedChange)="onFieldChange('showDocs', $event)" [showHelper]="true" [readOnly]="readOnly()" />
+              <okr-error-note [errors]="errorsFor('showDocs')" />
             </ion-col>
             <ion-col size="12" size-md="6">
               <okr-checkbox [i18n]="showPdfsI18n()" [checked]="showPdfs()" (checkedChange)="onFieldChange('showPdfs', $event)" [showHelper]="true" [readOnly]="readOnly()" />
+              <okr-error-note [errors]="errorsFor('showPdfs')" />
             </ion-col>
             <ion-col size="12" size-md="6">
               <okr-category-old [i18n]="effectI18n()" [value]="effect()" (valueChange)="onFieldChange('effect', $event)" [categories]="galleryEffects" [readOnly]="readOnly()" />
@@ -59,6 +66,9 @@ import { SectionI18n } from '@okr/cms-section-util';
 })
 export class AlbumConfiguration {
   // inputs
+  /** vest field name -> messages of the running section suite (see section.form.ts) */
+  public readonly errors = input<SectionErrors>({});
+
   public formData = model.required<AlbumConfig>();
   public intro = input<string>();
   public readonly readOnly = input(true);
@@ -113,5 +123,10 @@ export class AlbumConfiguration {
   /******************************* actions *************************************** */
   protected onFieldChange(fieldName: string, $event: string | string[] | number | boolean): void {
     this.formData.update((vm) => ({ ...vm, [fieldName]: $event }));
+  }
+
+  /** messages of a single field, for the inline <okr-error-note> */
+  protected errorsFor(field: string): string[] {
+    return getFieldErrors(this.errors(), field);
   }
 }

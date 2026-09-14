@@ -2,7 +2,7 @@ import { only, staticSuite } from 'vest';
 
 import { IframeSection } from '@okr/shared-models';
 import { stringValidations } from '@okr/shared-util-core';
-import { LONG_NAME_LENGTH, NAME_LENGTH } from '@okr/shared-constants';
+import { COMMENT_LENGTH, URL_LENGTH } from '@okr/shared-constants';
 
 import { baseSectionValidations } from './base-section.validations';
 
@@ -11,6 +11,7 @@ export const iframeSectionValidations = staticSuite((model: IframeSection, field
 
   baseSectionValidations(model, field);
 
-  stringValidations('style', model.properties?.style, NAME_LENGTH);
-  stringValidations('url', model.properties?.url, LONG_NAME_LENGTH);
+  // caps mirror the maxLength of the fields in iframe-configuration (okr-text-input / okr-url)
+  stringValidations('style', model.properties?.style, COMMENT_LENGTH);
+  stringValidations('url', model.properties?.url, URL_LENGTH);
 });

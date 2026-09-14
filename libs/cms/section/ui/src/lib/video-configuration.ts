@@ -1,10 +1,10 @@
 import { Component, computed, inject, input, linkedSignal, model, Signal } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
-import { TextInput, TextInputI18n } from '@okr/shared-ui';
+import { ErrorNote, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { VideoConfig } from '@okr/shared-models';
 import { coerceBoolean } from '@okr/shared-util-core';
-import { SectionI18n } from '@okr/cms-section-util';
+import { getFieldErrors, SectionErrors, SectionI18n } from '@okr/cms-section-util';
 
 @Component({
   selector: 'okr-video-config',
@@ -12,6 +12,7 @@ import { SectionI18n } from '@okr/cms-section-util';
   imports: [
     IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonCardHeader, IonCardTitle,
     TextInput,
+    ErrorNote
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
@@ -24,18 +25,23 @@ import { SectionI18n } from '@okr/cms-section-util';
             <ion-row>
               <ion-col size="12">
                 <okr-text-input [i18n]="youtubeIdI18n()" [value]="url()" (valueChange)="onFieldChange('url', $event)" [maxLength]=11 [readOnly]="isReadOnly()" [showHelper]=true />
+                <okr-error-note [errors]="errorsFor('url')" />
               </ion-col>
               <ion-col size="12">
                 <okr-text-input [i18n]="widthI18n()" [value]="width()" (valueChange)="onFieldChange('width', $event)" [maxLength]=11 [readOnly]="isReadOnly()" [showHelper]=true />
+                <okr-error-note [errors]="errorsFor('width')" />
               </ion-col>
               <ion-col size="12">
                 <okr-text-input [i18n]="heightI18n()" [value]="height()" (valueChange)="onFieldChange('height', $event)" [maxLength]=11 [readOnly]="isReadOnly()" [showHelper]=true />
+                <okr-error-note [errors]="errorsFor('height')" />
               </ion-col>
               <ion-col size="12">
                 <okr-text-input [i18n]="frameborderI18n()" [value]="frameborder()" (valueChange)="onFieldChange('frameborder', $event)" [maxLength]=4 [readOnly]="isReadOnly()" [showHelper]=true />
+                <okr-error-note [errors]="errorsFor('frameborder')" />
               </ion-col>
               <ion-col size="12">
                 <okr-text-input [i18n]="baseUrlI18n()" [value]="baseUrl()" (valueChange)="onFieldChange('baseUrl', $event)" [maxLength]=100 [readOnly]="isReadOnly()" [showHelper]=true />
+                <okr-error-note [errors]="errorsFor('baseUrl')" />
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -45,6 +51,9 @@ import { SectionI18n } from '@okr/cms-section-util';
 })
 export class VideoConfiguration {
   // inputs
+  /** vest field name -> messages of the running section suite (see section.form.ts) */
+  public readonly errors = input<SectionErrors>({});
+
   public formData = model.required<VideoConfig>();
   public title = input<string>();
   public readonly readOnly = input(true);
@@ -97,5 +106,10 @@ export class VideoConfiguration {
   /************************************** actions *********************************************** */
   protected onFieldChange(fieldName: string, fieldValue: string | number | boolean): void {
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
+  }
+
+  /** messages of a single field, for the inline <okr-error-note> */
+  protected errorsFor(field: string): string[] {
+    return getFieldErrors(this.errors(), field);
   }
 }

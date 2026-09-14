@@ -1,7 +1,8 @@
 import { Component, computed, input, linkedSignal, model, Signal } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonLabel, IonRow } from '@ionic/angular/standalone';
 
-import { Checkbox, CheckboxI18n, NumberInput, NumberInputI18n } from '@okr/shared-ui';
+import { Checkbox, CheckboxI18n, ErrorNote, NumberInput, NumberInputI18n } from '@okr/shared-ui';
+import { SectionErrors, getFieldErrors } from '@okr/cms-section-util';
 import { MapConfig } from '@okr/shared-models';
 import { coerceBoolean } from '@okr/shared-util-core';
 
@@ -26,7 +27,8 @@ interface MapConfigI18n {
   standalone: true,
   imports: [
     IonGrid, IonRow, IonCol, IonLabel, IonCard, IonCardHeader, IonCardTitle, IonCardContent,
-    NumberInput, Checkbox
+    NumberInput, Checkbox,
+    ErrorNote
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
@@ -49,15 +51,19 @@ interface MapConfigI18n {
             <ion-row>
               <ion-col size="12" size-md="6">
                 <okr-number-input [i18n]="latitudeI18n()" [value]="centerLatitude()" (valueChange)="onFieldChange('centerLatitude', $event)" [maxLength]=8 [showHelper]=true [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="errorsFor('centerLatitude')" />
               </ion-col>
               <ion-col size="12" size-md="6">
                 <okr-number-input [i18n]="longitudeI18n()" [value]="centerLongitude()" (valueChange)="onFieldChange('centerLongitude', $event)" [maxLength]=7 [showHelper]=true [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="errorsFor('centerLongitude')" />
               </ion-col>
               <ion-col size="12" size-md="6">
                 <okr-number-input [i18n]="zoomFactorI18n()" [value]="zoom()" (valueChange)="onFieldChange('zoom', $event)" [maxLength]=2 [showHelper]=true [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="errorsFor('zoom')" />
               </ion-col>
               <ion-col size="12" size-md="6">
                 <okr-checkbox [i18n]="useCurrentLocationAsCenterI18n()" [checked]="useCurrentLocationAsCenter()" (checkedChange)="onFieldChange('useCurrentLocationAsCenter', $event)" [showHelper]="true" [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="errorsFor('useCurrentLocationAsCenter')" />
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -67,6 +73,9 @@ interface MapConfigI18n {
 })
 export class MapConfiguration {
   // inputs
+  /** vest field name -> messages of the running section suite (see section.form.ts) */
+  public readonly errors = input<SectionErrors>({});
+
   public i18n = input.required<MapConfigI18n>();
 
   // derived
@@ -95,5 +104,10 @@ export class MapConfiguration {
   /************************************** actions *********************************************** */
   protected onFieldChange(fieldName: string, fieldValue: string | number | boolean): void {
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
+  }
+
+  /** messages of a single field, for the inline <okr-error-note> */
+  protected errorsFor(field: string): string[] {
+    return getFieldErrors(this.errors(), field);
   }
 }

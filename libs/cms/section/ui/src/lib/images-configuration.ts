@@ -1,4 +1,4 @@
-import { Component, inject, input, model } from '@angular/core';
+import { Component, computed, inject, input, model } from '@angular/core';
 import {
   ActionSheetController, ActionSheetOptions,
   IonButton, IonButtons, IonCard, IonCardContent, IonCardHeader, IonCardTitle,
@@ -11,12 +11,12 @@ import { getDownloadURL, ref } from 'firebase/storage';
 import { ENV, STORAGE } from '@okr/shared-config';
 import { IMAGE_MIMETYPES } from '@okr/shared-constants';
 import { ImageConfig, ImageType, UserModel } from '@okr/shared-models';
-import { ImageDetailModal, UploadEntry } from '@okr/shared-ui';
+import { ErrorNote, ImageDetailModal, UploadEntry } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, downloadToBrowser } from '@okr/shared-util-angular';
 import { IMGIX_THUMBNAIL_PARAMS, sanitizeFileName } from '@okr/shared-util-core';
 import { UploadService } from '@okr/avatar-data-access';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { SectionI18n } from '@okr/cms-section-util';
+import { getImageErrors, SectionErrors, SectionI18n } from '@okr/cms-section-util';
 
 import { ImageEditModal } from './image-edit.modal';
 
@@ -28,6 +28,7 @@ import { ImageEditModal } from './image-edit.modal';
     IonCard, IonCardHeader, IonCardTitle, IonCardContent,
     IonList, IonItem, IonLabel, IonButtons, IonButton, IonIcon,
     IonThumbnail, IonImg, IonReorderGroup, IonReorder,
+    ErrorNote
   ],
   styles: [`
     @media (width <= 600px) { ion-card { margin: 5px; } }
@@ -76,6 +77,8 @@ import { ImageEditModal } from './image-edit.modal';
             </ion-reorder-group>
           }
         </ion-list>
+        <!-- image errors carry an images[i] index, so they are listed under the list they belong to -->
+        <okr-error-note [errors]="imageErrors()" />
       </ion-card-content>
     </ion-card>
   `
@@ -93,6 +96,11 @@ export class ImagesConfiguration {
   public currentUser = input<UserModel | undefined>();
   public readOnly = input(true);
   public readonly i18n = input.required<SectionI18n>();
+  /** vest field name -> messages of the running section suite (see section.form.ts) */
+  public readonly errors = input<SectionErrors>({});
+
+  // computed
+  protected readonly imageErrors = computed(() => getImageErrors(this.errors()));
 
   // constants
   private imgixBaseUrl = this.env.services.imgixBaseUrl;

@@ -2,10 +2,10 @@ import { Component, computed, input, linkedSignal, model, Signal } from '@angula
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 
 import { CategoryListModel, RoleName, SectionModel, UserModel } from '@okr/shared-models';
-import { ButtonCopy, ButtonCopyI18n, CategorySelect, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { ButtonCopy, ButtonCopyI18n, CategorySelect, ErrorNote, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
-import { LONG_NAME_LENGTH } from '@okr/shared-constants';
-import { SectionI18n } from '@okr/cms-section-util';
+import { LONG_NAME_LENGTH, NAME_LENGTH } from '@okr/shared-constants';
+import { getFieldErrors, SectionErrors, SectionI18n } from '@okr/cms-section-util';
 
 export const PFX = '@cms/section/feature.';
 
@@ -14,7 +14,8 @@ export const PFX = '@cms/section/feature.';
   standalone: true,
   imports: [
     IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonLabel, IonItem,
-    TextInput, CategorySelect, ButtonCopy
+    TextInput, CategorySelect, ButtonCopy,
+    ErrorNote
   ],
   template: `
     <ion-card>
@@ -43,14 +44,17 @@ export const PFX = '@cms/section/feature.';
         <ion-row>
           @if(showAdvanced()) {
             <ion-col size="12">
-              <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [readOnly]="isReadOnly()" />
+              <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]="nameMaxLength" [readOnly]="isReadOnly()" />
+              <okr-error-note [errors]="errorsFor('name')" />
             </ion-col>
           }
           <ion-col size="12">
             <okr-text-input [i18n]="titleI18n()" [value]="title()" (valueChange)="onFieldChange('title', $event)" [maxLength]="maxLength" [readOnly]="isReadOnly()" />
+            <okr-error-note [errors]="errorsFor('title')" />
           </ion-col>
           <ion-col size="12">
             <okr-text-input [i18n]="subTitleI18n()" [value]="subTitle()" (valueChange)="onFieldChange('subTitle', $event)" [maxLength]="maxLength" [readOnly]="isReadOnly()" />
+            <okr-error-note [errors]="errorsFor('subTitle')" />
           </ion-col>
           @if(showAdvanced()) {
             <ion-col size="12">
@@ -81,6 +85,9 @@ export const PFX = '@cms/section/feature.';
 })
 export class SectionConfiguration {
   // inputs
+  /** vest field name -> messages of the running section suite (see section.form.ts) */
+  public readonly errors = input<SectionErrors>({});
+
   public formData = model.required<SectionModel>();
   public currentUser = input<UserModel | undefined>();
   public readonly roles = input.required<CategoryListModel>();
@@ -102,7 +109,10 @@ export class SectionConfiguration {
   protected colSize = linkedSignal(() => this.formData().colSize ?? '12');
   protected headerTitle2 = computed(() => this.headerTitle() ?? this.i18n().form_title);
 
+  // both caps must stay in sync with baseSectionValidations, otherwise the character
+  // counter invites input that the vest suite then rejects as 'tooLong'
   protected maxLength = LONG_NAME_LENGTH;
+  protected nameMaxLength = NAME_LENGTH;
   protected readonly buttonCopyI18n = computed(() => ({ copy_conf: this.i18n().copy_conf() } as ButtonCopyI18n));
 
   protected nameI18n = computed(() => ({
@@ -139,5 +149,10 @@ export class SectionConfiguration {
 
   protected hasRole(role: RoleName): boolean {
     return hasRole(role, this.currentUser());
+  }
+
+  /** messages of a single field, for the inline <okr-error-note> */
+  protected errorsFor(field: string): string[] {
+    return getFieldErrors(this.errors(), field);
   }
 }

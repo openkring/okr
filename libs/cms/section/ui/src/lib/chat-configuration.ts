@@ -2,7 +2,8 @@ import { Component, computed, input, linkedSignal, model, Signal } from '@angula
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
 import { ChatConfig } from '@okr/shared-models';
-import { Checkbox, CheckboxI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { Checkbox, CheckboxI18n, ErrorNote, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { SectionErrors, getFieldErrors } from '@okr/cms-section-util';
 import { DEFAULT_ID, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_URL } from '@okr/shared-constants';
 
 interface ChatConfigI18n {
@@ -31,8 +32,9 @@ interface ChatConfigI18n {
   standalone: true,
   imports: [
     TextInput, Checkbox, StringSelect,
-    IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonRow, IonCol, IonCardSubtitle
-],
+    IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonRow, IonCol, IonCardSubtitle,
+    ErrorNote
+  ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
 
@@ -52,12 +54,15 @@ interface ChatConfigI18n {
           <ion-row>
             <ion-col size="12">
               <okr-text-input [i18n]="idI18n()" [value]="id()" (valueChange)="onFieldChange('id', $event)" [readOnly]="readOnly()" />
+              <okr-error-note [errors]="errorsFor('chat.id')" />
             </ion-col>
             <ion-col size="12">
               <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [readOnly]="readOnly()" />
+              <okr-error-note [errors]="errorsFor('chat.name')" />
             </ion-col>
             <ion-col size="12" size-md="6">
               <okr-string-select [i18n]="typeI18n()" [selectedString]="type()" (selectedStringChange)="onFieldChange('type', $event)" [readOnly]="readOnly()" [stringList]="['messaging', 'ai', 'livestream', 'team', 'gaming']" />
+              <okr-error-note [errors]="errorsFor('chat.type')" />
               <small>
                 <div [innerHTML]="typeDescription()"></div>
               </small>
@@ -67,9 +72,11 @@ interface ChatConfigI18n {
             </ion-col>
             <ion-col size="12">
               <okr-text-input [i18n]="urlI18n()" [value]="url()" (valueChange)="onFieldChange('url', $event)" [readOnly]="readOnly()" [maxLength]="400" />
+              <okr-error-note [errors]="errorsFor('chat.url')" />
             </ion-col>
             <ion-col size="12">
               <okr-text-input [i18n]="descriptionI18n()" [value]="description()" (valueChange)="onFieldChange('description', $event)" [maxLength]="400" [readOnly]="readOnly()" />
+              <okr-error-note [errors]="errorsFor('chat.description')" />
             </ion-col>
           </ion-row>
         </ion-grid>
@@ -79,6 +86,9 @@ interface ChatConfigI18n {
 })
 export class ChatConfiguration {
   // inputs
+  /** vest field name -> messages of the running section suite (see section.form.ts) */
+  public readonly errors = input<SectionErrors>({});
+
   public formData = model.required<ChatConfig>();
   public intro = input<string>();
   public readonly readOnly = input(true);
@@ -131,5 +141,10 @@ export class ChatConfiguration {
 
   protected onFieldChange(fieldName: string, $event: string | boolean): void {
     this.formData.update((vm) => ({ ...vm, [fieldName]: $event }));
+  }
+
+  /** messages of a single field, for the inline <okr-error-note> */
+  protected errorsFor(field: string): string[] {
+    return getFieldErrors(this.errors(), field);
   }
 }

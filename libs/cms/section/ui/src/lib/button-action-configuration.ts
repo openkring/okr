@@ -3,7 +3,8 @@ import { FormsModule } from '@angular/forms';
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
 import { ButtonAction, ButtonActionConfig } from '@okr/shared-models';
-import { CategoryOld, CategoryOldI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { CategoryOld, CategoryOldI18n, ErrorNote, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { SectionErrors, getFieldErrors } from '@okr/cms-section-util';
 import { DEFAULT_LABEL, DEFAULT_URL } from '@okr/shared-constants';
 import { ButtonActions } from '@okr/shared-categories';
 
@@ -26,8 +27,9 @@ interface ButtonActionI18n {
   imports: [
     FormsModule,
     TextInput, CategoryOld,
-    IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonRow, IonCol, IonCardSubtitle
-],
+    IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonRow, IonCol, IonCardSubtitle,
+    ErrorNote
+  ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
     <ion-card>
@@ -50,10 +52,12 @@ interface ButtonActionI18n {
             @if(type() !== BA.None) {
               <ion-col size="12" size-md="6">
                 <okr-text-input [i18n]="actionUrlI18n()" [value]="url()" (valueChange)="onFieldChange('url', $event)" [readOnly]="readOnly()" [maxLength]=400 />
+                <okr-error-note [errors]="errorsFor('action.url')" />
               </ion-col>
             }
             <ion-col size="12" size-md="6">
               <okr-text-input [i18n]="altTextI18n()" [value]="altText()" (valueChange)="onFieldChange('altText', $event)" [readOnly]="readOnly()" [maxLength]=400 />
+              <okr-error-note [errors]="errorsFor('action.altText')" />
             </ion-col>
           </ion-row>
         </ion-grid>
@@ -62,6 +66,9 @@ interface ButtonActionI18n {
   `
 })
 export class ButtonActionConfiguration {
+  /** vest field name -> messages of the running section suite (see section.form.ts) */
+  public readonly errors = input<SectionErrors>({});
+
 
   // inputs
   public formData = model.required<ButtonActionConfig>();
@@ -100,5 +107,10 @@ export class ButtonActionConfiguration {
 
   protected onFieldChange(fieldName: string, $event: string | string[] | number): void {
     this.formData.update((vm) => ({ ...vm, [fieldName]: $event }));
+  }
+
+  /** messages of a single field, for the inline <okr-error-note> */
+  protected errorsFor(field: string): string[] {
+    return getFieldErrors(this.errors(), field);
   }
 }

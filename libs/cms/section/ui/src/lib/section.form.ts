@@ -8,7 +8,7 @@ import { ModelSelectService } from '@okr/shared-feature';
 import { UploadService } from '@okr/avatar-data-access';
 import { confirm } from '@okr/shared-util-angular';
 import { AlertController, IonItem, IonToggle } from '@ionic/angular/standalone';
-import { ChartOption, SectionI18n, validateSection } from '@okr/cms-section-util';
+import { ChartOption, getInlineErrorFields, getRemainingErrors, SectionErrors, SectionI18n, validateSection } from '@okr/cms-section-util';
 
 import { SectionConfiguration } from './section-configuration';
 import { EditorConfiguration } from './editor-configuration';
@@ -72,6 +72,7 @@ import { TimelineConfiguration } from './timeline-configuration';
         [readOnly]="isReadOnly()"
         [i18n]="i18n()"
         [showAdvanced]="showAdvanced()"
+        [errors]="errors()"
       />
 
       @switch (formData().type) {
@@ -82,6 +83,7 @@ import { TimelineConfiguration } from './timeline-configuration';
               [readOnly]="isReadOnly()"
               [i18n]="i18n()"
               [albumStyles]="albumStyles()"
+              [errors]="errors()"
             />
           }
         }
@@ -101,6 +103,7 @@ import { TimelineConfiguration } from './timeline-configuration';
             [currentUser]="currentUser()"
             [readOnly]="isReadOnly()"
             [i18n]="i18n()"
+            [errors]="errors()"
           />
           @if(showAdvanced()) {
             @if(imageStyle(); as imageStyle) {
@@ -109,6 +112,7 @@ import { TimelineConfiguration } from './timeline-configuration';
                 [readOnly]="isReadOnly()"
                 [i18n]="i18n()"
                 [showAdvanced]="showAdvanced()"
+                [errors]="errors()"
               />
             }
           }
@@ -129,6 +133,7 @@ import { TimelineConfiguration } from './timeline-configuration';
                 [formData]="buttonActionConfig" (formDataChange)="onButtonActionChange($event)"
                 [readOnly]="isReadOnly()"
                 [i18n]="i18n()"
+                [errors]="errors()"
               />
             }
             @if(iconConfig(); as iconConfig) {
@@ -136,6 +141,7 @@ import { TimelineConfiguration } from './timeline-configuration';
                 [formData]="iconConfig" (formDataChange)="onIconConfigChange($event)"
                 [readOnly]="isReadOnly()"
                 [i18n]="i18n()"
+                [errors]="errors()"
               />
             }
             @if(buttonStyle(); as buttonStyle) {
@@ -143,6 +149,7 @@ import { TimelineConfiguration } from './timeline-configuration';
                 [formData]="buttonStyle" (formDataChange)="onButtonStyleChange($event)"
                 [readOnly]="isReadOnly()"
                 [i18n]="i18n()"
+                [errors]="errors()"
               />
             }
             @if(imageStyle(); as imageStyle) {
@@ -151,6 +158,7 @@ import { TimelineConfiguration } from './timeline-configuration';
                 [readOnly]="isReadOnly()"
                 [i18n]="i18n()"
                 [showAdvanced]="showAdvanced()"
+                [errors]="errors()"
               />
             }
           }
@@ -179,6 +187,7 @@ import { TimelineConfiguration } from './timeline-configuration';
               [formData]="chatConfig" (formDataChange)="onChatConfigChange($event)"
               [readOnly]="isReadOnly()"
               [i18n]="i18n()"
+              [errors]="errors()"
             />
           }
         }
@@ -228,6 +237,7 @@ import { TimelineConfiguration } from './timeline-configuration';
                 [readOnly]="isReadOnly()"
                 [i18n]="i18n()"
                 [showAdvanced]="showAdvanced()"
+                [errors]="errors()"
               />
             }
           }
@@ -248,6 +258,7 @@ import { TimelineConfiguration } from './timeline-configuration';
               [formData]="iframeConfig" (formDataChange)="onIframeConfigChange($event)"
               [readOnly]="isReadOnly()"
               [i18n]="i18n()"
+              [errors]="errors()"
             />
           }
         }
@@ -257,6 +268,7 @@ import { TimelineConfiguration } from './timeline-configuration';
               [formData]="mapConfig" (formDataChange)="onMapConfigChange($event)"
               [readOnly]="isReadOnly()"
               [i18n]="i18n()"
+              [errors]="errors()"
             />
           }
         }
@@ -290,7 +302,8 @@ import { TimelineConfiguration } from './timeline-configuration';
               [storagePath]="storagePath()"
               [currentUser]="currentUser()"
               [i18n]="i18n()"
-              [readOnly]="isReadOnly()" />
+              [readOnly]="isReadOnly()"
+              [errors]="errors()" />
           }
           @if(showAdvanced()) {
             @if(imageStyle(); as imageStyle) {
@@ -299,6 +312,7 @@ import { TimelineConfiguration } from './timeline-configuration';
                 [i18n]="i18n()"
                 [readOnly]="isReadOnly()"
                 [showAdvanced]="showAdvanced()"
+                [errors]="errors()"
               />
             }
           }
@@ -342,6 +356,7 @@ import { TimelineConfiguration } from './timeline-configuration';
               [formData]="trackerConfig" (formDataChange)="onTrackerConfigChange($event)"
               [i18n]="i18n()"
               [readOnly]="isReadOnly()"
+              [errors]="errors()"
             />
           }
         }
@@ -351,6 +366,7 @@ import { TimelineConfiguration } from './timeline-configuration';
               [formData]="videoConfig" (formDataChange)="onVideoConfigChange($event)"
               [i18n]="i18n()"
               [readOnly]="isReadOnly()"
+              [errors]="errors()"
             />
           }
         }
@@ -430,9 +446,14 @@ import { TimelineConfiguration } from './timeline-configuration';
         }
       }
 
-      <!-- validation errors (per-type vest suite); shown only for invalid fields -->
-      @if(!isReadOnly() && validationErrors().length > 0) {
-        @for(error of validationErrors(); track error.field) {
+      <!--
+        Fallback list: every field the configuration components render shows its own error
+        inline (see getInlineErrorFields). What is left here are generated fields (okey,
+        index), fields hidden behind the advanced toggle, and fields a suite validates but
+        the form does not offer for editing — they would otherwise fail silently.
+      -->
+      @if(!isReadOnly() && remainingErrors().length > 0) {
+        @for(error of remainingErrors(); track error.field) {
           <okr-error-note [errors]="error.messages" />
         }
       }
@@ -463,8 +484,11 @@ export class SectionForm {
 
   // validation (per-type suite, picked from formData().type)
   private readonly validationResult = computed(() => validateSection(this.formData()));
-  protected readonly validationErrors = computed(() =>
-    Object.entries(this.validationResult().getErrors()).map(([field, messages]) => ({ field, messages: messages as string[] }))
+  /** handed to every configuration child so each field can show its own error note */
+  protected readonly errors = computed(() => this.validationResult().getErrors() as SectionErrors);
+  /** errors of fields that no child renders — shown at the end of the form */
+  protected readonly remainingErrors = computed(() =>
+    getRemainingErrors(this.errors(), getInlineErrorFields(this.formData().type, this.showAdvanced()))
   );
 
   constructor() {

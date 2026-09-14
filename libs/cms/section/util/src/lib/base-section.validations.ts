@@ -1,6 +1,6 @@
 import { only, staticSuite } from 'vest';
 
-import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@okr/shared-constants';
+import { DESCRIPTION_LENGTH, LONG_NAME_LENGTH, NAME_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@okr/shared-constants';
 import { ColorIonic, SectionModel } from '@okr/shared-models';
 import { booleanValidations, categoryValidations, stringValidations } from '@okr/shared-util-core';
 
@@ -8,7 +8,9 @@ export const baseSectionValidations = staticSuite((model: SectionModel, field?: 
   if (field) only(field);
 
   stringValidations('okey', model.okey, SHORT_NAME_LENGTH);
-  stringValidations('name', model.name, SHORT_NAME_LENGTH);
+  // Caps must match the maxLength the form actually offers, otherwise the counter invites
+  // input that the suite then rejects as 'tooLong'. okr-text-input defaults to NAME_LENGTH.
+  stringValidations('name', model.name, NAME_LENGTH);
   stringValidations('type', model.type, WORD_LENGTH);
   // tbd: tagValidations('tags', model.tags);
   // `index` is generated (get<Model>Index) and the service overwrites it at save time, AFTER
@@ -29,8 +31,9 @@ export const baseSectionValidations = staticSuite((model: SectionModel, field?: 
   // whole edit form, exactly the way an unknown tag does.
   stringValidations('roleNeeded', model.roleNeeded, WORD_LENGTH);
   categoryValidations('color', model.color, ColorIonic);
-  stringValidations('title', model.title, SHORT_NAME_LENGTH);
-  stringValidations('subTitle', model.subTitle, SHORT_NAME_LENGTH);
+  // title/subTitle are rendered with [maxLength]=LONG_NAME_LENGTH in section-configuration.
+  stringValidations('title', model.title, LONG_NAME_LENGTH);
+  stringValidations('subTitle', model.subTitle, LONG_NAME_LENGTH);
   // tbd: content: ContentConfig
 
 });

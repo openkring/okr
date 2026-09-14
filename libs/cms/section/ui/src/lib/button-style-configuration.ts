@@ -3,7 +3,8 @@ import { FormsModule } from '@angular/forms';
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
 import { ButtonStyle, ColorIonic } from '@okr/shared-models';
-import { CategoryOld, CategoryOldI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { CategoryOld, CategoryOldI18n, ErrorNote, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { SectionErrors, getFieldErrors } from '@okr/cms-section-util';
 import { DEFAULT_LABEL, ICON_SIZE } from '@okr/shared-constants';
 import { ColorsIonic } from '@okr/shared-categories';
 
@@ -31,8 +32,9 @@ interface ButtonStyleI18n {
     FormsModule,
     TextInput, CategoryOld,
     StringSelect,
-    IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonRow, IonCol, IonCardSubtitle
-],
+    IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonRow, IonCol, IonCardSubtitle,
+    ErrorNote
+  ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
       <ion-card>
@@ -50,18 +52,23 @@ interface ButtonStyleI18n {
           <ion-row>
               <ion-col size="12">
                   <okr-text-input [i18n]="labelI18n()" [value]="label()" (valueChange)="onFieldChange('label', $event)" [readOnly]="readOnly()" />
+                  <okr-error-note [errors]="errorsFor('style.label')" />
               </ion-col>
               <ion-col size="12" size-md="6">
                   <okr-string-select [i18n]="shapeI18n()" [selectedString]="shape()" (selectedStringChange)="onFieldChange('shape', $event)" [readOnly]="readOnly()" [stringList]="['round', 'default']" />
+                  <okr-error-note [errors]="errorsFor('style.shape')" />
               </ion-col>
               <ion-col size="12" size-md="6">
                   <okr-string-select [i18n]="fillI18n()" [selectedString]="fill()" (selectedStringChange)="onFieldChange('fill', $event)" [readOnly]="readOnly()" [stringList]="['clear', 'outline', 'solid']" />
+                  <okr-error-note [errors]="errorsFor('style.fill')" />
               </ion-col>
               <ion-col size="12">
                   <okr-text-input [i18n]="widthI18n()" [value]="width()" (valueChange)="onFieldChange('width', $event)" [readOnly]="readOnly()" />
+                  <okr-error-note [errors]="errorsFor('style.width')" />
               </ion-col>
               <ion-col size="12">
                   <okr-text-input [i18n]="heightI18n()" [value]="height()" (valueChange)="onFieldChange('height', $event)" [readOnly]="readOnly()" />
+                  <okr-error-note [errors]="errorsFor('style.height')" />
               </ion-col>
               <ion-col size="12">
                   <okr-category-old [i18n]="colorI18n()" [value]="color()" (valueChange)="onFieldChange('color', $event)" [categories]="colors" [readOnly]="readOnly()" />
@@ -74,6 +81,9 @@ interface ButtonStyleI18n {
 })
 export class ButtonStyleConfiguration {
   // inputs
+  /** vest field name -> messages of the running section suite (see section.form.ts) */
+  public readonly errors = input<SectionErrors>({});
+
   public formData = model.required<ButtonStyle>();
   public intro = input<string>();
   public readonly readOnly = input(true);
@@ -116,5 +126,10 @@ export class ButtonStyleConfiguration {
 
   protected onFieldChange(fieldName: string, $event: string | string[] | number): void {
     this.formData.update((vm) => ({ ...vm, [fieldName]: $event }));
+  }
+
+  /** messages of a single field, for the inline <okr-error-note> */
+  protected errorsFor(field: string): string[] {
+    return getFieldErrors(this.errors(), field);
   }
 }

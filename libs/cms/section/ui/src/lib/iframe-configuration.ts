@@ -1,7 +1,8 @@
 import { Component, computed, input, linkedSignal, model, Signal } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
-import { TextInput, TextInputI18n, UrlInput, UrlInputI18n } from '@okr/shared-ui';
+import { ErrorNote, TextInput, TextInputI18n, UrlInput, UrlInputI18n } from '@okr/shared-ui';
+import { SectionErrors, getFieldErrors } from '@okr/cms-section-util';
 import { IframeConfig } from '@okr/shared-models';
 
 interface IframeConfigI18n {
@@ -19,7 +20,8 @@ interface IframeConfigI18n {
   standalone: true,
   imports: [
     IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid,
-    TextInput, UrlInput
+    TextInput, UrlInput,
+    ErrorNote
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
@@ -37,9 +39,11 @@ interface IframeConfigI18n {
             <ion-row>
               <ion-col size="12">
                 <okr-url [i18n]="urlI18n()" [value]="url()" (valueChange)="onFieldChange('url', $event)" [readOnly]="readOnly()" />
+                <okr-error-note [errors]="errorsFor('url')" />
               </ion-col>
               <ion-col size="12">
                 <okr-text-input [i18n]="styleI18n()" [value]="style()" (valueChange)="onFieldChange('style', $event)" [readOnly]="readOnly()" [maxLength]=200 />
+                <okr-error-note [errors]="errorsFor('style')" />
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -49,6 +53,9 @@ interface IframeConfigI18n {
 })
 export class IframeConfiguration {
   // inputs
+  /** vest field name -> messages of the running section suite (see section.form.ts) */
+  public readonly errors = input<SectionErrors>({});
+
   public formData = model.required<IframeConfig>();
   public intro = input<string>();
   public readonly readOnly = input(true);
@@ -73,5 +80,10 @@ export class IframeConfiguration {
 
   protected onFieldChange(fieldName: string, $event: string): void {
     this.formData.update((vm) => ({ ...vm, [fieldName]: $event }));
+  }
+
+  /** messages of a single field, for the inline <okr-error-note> */
+  protected errorsFor(field: string): string[] {
+    return getFieldErrors(this.errors(), field);
   }
 }
