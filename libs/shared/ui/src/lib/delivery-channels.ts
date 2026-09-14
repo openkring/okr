@@ -30,10 +30,15 @@ export interface DeliveryChannelsI18n {
     <ion-item lines="none">
       <ion-label>{{ i18n().label }}</ion-label>
     </ion-item>
+    @if (i18n().helper.length > 0) {
+      <ion-item lines="none">
+        <ion-note>{{ i18n().helper }}</ion-note>
+      </ion-item>
+    }
     <ion-grid class="ion-no-padding">
-      <ion-row>
-        @for (channel of channels; track channel.value) {
-          <ion-col size="12" size-md="4">
+      @for (channel of channels; track channel.value) {
+        <ion-row>
+          <ion-col size="12">
             <okr-checkbox
               [checked]="isChecked(channel.value)"
               (checkedChange)="onToggle(channel.value, $event)"
@@ -42,14 +47,9 @@ export interface DeliveryChannelsI18n {
               [readOnly]="isReadOnly()"
             />
           </ion-col>
-        }
-      </ion-row>
+        </ion-row>
+      }
     </ion-grid>
-    @if (i18n().helper.length > 0) {
-      <ion-item lines="none">
-        <ion-note>{{ i18n().helper }}</ion-note>
-      </ion-item>
-    }
   `,
 })
 export class DeliveryChannelsControl {
