@@ -19,6 +19,7 @@ import * as Vectorize from './vectorize';
 import * as Video from './video';
 import * as Expense from './expense';
 import * as Booking from './booking';
+import * as BankImport from './bank-import';
 import * as Email from './email';
 import * as Bexio from './bexio';
 import * as Gateway from './_gateway';
@@ -238,6 +239,8 @@ export const onExpenseTaskWritten = Expense.onExpenseTaskWritten;
 export const reviewBooking = Booking.reviewBooking;
 // manual journal entries (create/update/delete) — same reason: bookings are CF-write-only
 export const writeBooking = Booking.writeBooking;
+// bank import: the only write path from bank-import-rows into the ledger (spec 1.60 §7)
+export const postBankImport = BankImport.postBankImport;
 
 // address
 export const generateQrBill = Address.generateQrBill;
