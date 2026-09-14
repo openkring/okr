@@ -16,7 +16,7 @@ const MODEL: SignatureModel = {
     name: 'Seeclub Stäfa',
     addressLine: '8712 Stäfa, SWITZERLAND',
     websiteUrl: 'https://www.seeclub-staefa.ch',
-    logoUrl: 'https://bkaiser.imgix.net/tenant/scs/logo/google-touch-icon.png?w=96&h=96&fit=clip&dpr=2',
+    logoUrl: 'https://bkaiser.imgix.net/tenant/scs/logo/logo-master.png?w=96&h=96&fit=clip&dpr=2',
   },
 };
 

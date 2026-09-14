@@ -26,8 +26,8 @@ describe('resolveTenantAppUrl', () => {
 
 describe('buildSwitcherEntries', () => {
   const configs = new Map<string, TenantConfigMeta>([
-    ['scs', { appName: 'Seeclub Stäfa', logoUrl: 'tenant/scs/logo/logo_round.svg' }],
-    ['acme', { appName: 'Acme', logoUrl: 'tenant/acme/logo/logo_round.svg', appDomain: 'acme.example.com' }],
+    ['scs', { appName: 'Seeclub Stäfa', logoUrl: 'tenant/scs/logo/scs-logo.svg' }],
+    ['acme', { appName: 'Acme', logoUrl: 'tenant/acme/logo/acme-logo.svg', appDomain: 'acme.example.com' }],
   ]);
 
   it('marks the current tenant and lists it first', () => {
@@ -42,7 +42,7 @@ describe('buildSwitcherEntries', () => {
     expect(entries[0]).toMatchObject({
       tenantId: 'acme',
       label: 'Acme',
-      logoUrl: 'tenant/acme/logo/logo_round.svg',
+      logoUrl: 'tenant/acme/logo/acme-logo.svg',
       url: 'https://acme.example.com',
       isCurrent: false,
     });
