@@ -1,1 +1,64 @@
-{}
+{
+  "singular": "Bankzeile",
+  "plural": "Bankzeilen",
+  "empty": "Noch keine Bankzeilen importiert. Wähle im Menü «Datei importieren» und öffne einen CSV-Kontoauszug deiner Bank.",
+  "loading": "Bankzeilen werden geladen…",
+  "status": { "unmapped": "offen", "mapped": "zugeordnet", "posted": "gebucht", "error": "Fehler", "all": "alle", "open": "nicht gebucht" },
+  "header": { "date": "Datum", "title": "Buchungstext", "payee": "Gegenpartei", "amount": "Betrag" },
+  "import": {
+    "file": "Datei importieren",
+    "summary": {
+      "title": "Import abgeschlossen",
+      "parsed": "Zeilen in der Datei",
+      "new": "neu übernommen",
+      "duplicates": "bereits vorhanden, übersprungen",
+      "mapped": "mit Regel zugeordnet",
+      "unmapped": "ohne Regel, offen",
+      "warnings": "Hinweise"
+    },
+    "cancelled": "Der Import wurde abgebrochen. Es wurde nichts gespeichert."
+  },
+  "error": {
+    "unknownFormat": "Diese Datei wurde nicht erkannt. Unterstützt sind CSV-Exporte von PostFinance und ZKB. Erste Zeile:",
+    "noIban": "In der Datei steht keine Kontonummer (IBAN).",
+    "formatNotImplemented": "Dieses Bankformat ist noch nicht unterstützt:",
+    "emptyFile": "Die Datei ist leer."
+  },
+  "warning": {
+    "lineSkipped": "Zeile übersprungen, Datum oder Betrag nicht lesbar",
+    "saldoMismatch": "Saldo stimmt nicht (erwartet/gelesen in Rappen)",
+    "ibanMismatch": "Zeile mit anderer Kontonummer übersprungen",
+    "currencyMismatch": "Die Währung der Spalten weicht von der Kontowährung ab",
+    "ruleRegexInvalid": "Eine Regel hat einen ungültigen regulären Ausdruck und wurde übersprungen"
+  },
+  "post": {
+    "label": "Buchen",
+    "summary": { "title": "Buchen abgeschlossen", "posted": "gebucht", "failed": "nicht gebucht" },
+    "nothing": "Es gibt keine zugeordneten Zeilen, die gebucht werden könnten.",
+    "error": {
+      "notMapped": "Die Zeile ist nicht zugeordnet.",
+      "periodLocked": "Die Buchungsperiode ist gesperrt.",
+      "accountInvalid": "Das Gegenkonto fehlt oder ist kein Buchungskonto.",
+      "profileMissing": "Das Bankprofil dieser Zeile wurde nicht gefunden.",
+      "unbalanced": "Die Buchung ist nicht ausgeglichen.",
+      "unknown": "Die Zeile konnte nicht gebucht werden."
+    }
+  },
+  "applyRules": { "label": "Regeln anwenden", "conf": "Die Regeln wurden auf alle offenen Zeilen angewendet." },
+  "as": {
+    "title": "Aktion wählen",
+    "createRule": "Regel erstellen",
+    "assign": "Konto zuweisen",
+    "delete": "Zeile löschen",
+    "openBooking": "Buchung öffnen"
+  },
+  "cancel": { "label": "Abbrechen" },
+  "delete": { "conf": "Die Zeile wurde gelöscht.", "error": "Die Zeile konnte nicht gelöscht werden." },
+  "update": { "conf": "Die Zeile wurde gespeichert.", "error": "Die Zeile konnte nicht gespeichert werden." },
+  "create": { "error": "Die Zeilen konnten nicht gespeichert werden." },
+  "assign": { "title": "Konto zuweisen" },
+  "title": { "label": "Buchungstext", "placeholder": "z.B. Google Cloud GCP, Dublin", "helper": "So erscheint die Buchung im Journal." },
+  "account": { "label": "Gegenkonto", "helper": "Das Aufwand- oder Ertragskonto für diese eine Zeile. Es wird keine Regel erstellt." },
+  "vat": { "label": "MwSt-Code (optional)", "helper": "Wird auf der Gegenkonto-Zeile vermerkt." },
+  "changeConfirmation": { "cancel": "Verwerfen", "ok": "Speichern" }
+}

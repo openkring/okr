@@ -1,1 +1,64 @@
-{}
+{
+  "singular": "Bank line",
+  "plural": "Bank lines",
+  "empty": "No bank lines imported yet. Choose «Import file» in the menu and open a CSV statement from your bank.",
+  "loading": "Loading bank lines…",
+  "status": { "unmapped": "open", "mapped": "mapped", "posted": "posted", "error": "Error", "all": "all", "open": "not posted" },
+  "header": { "date": "Date", "title": "Booking text", "payee": "Payee", "amount": "Amount" },
+  "import": {
+    "file": "Import file",
+    "summary": {
+      "title": "Import complete",
+      "parsed": "lines in the file",
+      "new": "newly added",
+      "duplicates": "already present, skipped",
+      "mapped": "matched to a rule",
+      "unmapped": "without a rule, open",
+      "warnings": "Notices"
+    },
+    "cancelled": "The import was cancelled. Nothing was saved."
+  },
+  "error": {
+    "unknownFormat": "This file was not recognized. Supported are CSV exports from PostFinance and ZKB. First line:",
+    "noIban": "The file does not contain an account number (IBAN).",
+    "formatNotImplemented": "This bank format is not supported yet:",
+    "emptyFile": "The file is empty."
+  },
+  "warning": {
+    "lineSkipped": "Line skipped, date or amount not readable",
+    "saldoMismatch": "Balance does not match (expected/read in cents)",
+    "ibanMismatch": "Line with a different account number skipped",
+    "currencyMismatch": "The column currency differs from the account currency",
+    "ruleRegexInvalid": "A rule has an invalid regular expression and was skipped"
+  },
+  "post": {
+    "label": "Post",
+    "summary": { "title": "Posting complete", "posted": "posted", "failed": "not posted" },
+    "nothing": "There are no matched lines that could be posted.",
+    "error": {
+      "notMapped": "The line is not matched.",
+      "periodLocked": "The accounting period is locked.",
+      "accountInvalid": "The counter account is missing or is not a booking account.",
+      "profileMissing": "The bank profile for this line was not found.",
+      "unbalanced": "The entry is not balanced.",
+      "unknown": "The line could not be posted."
+    }
+  },
+  "applyRules": { "label": "Apply rules", "conf": "The rules were applied to all open lines." },
+  "as": {
+    "title": "Choose an action",
+    "createRule": "Create rule",
+    "assign": "Assign account",
+    "delete": "Delete line",
+    "openBooking": "Open entry"
+  },
+  "cancel": { "label": "Cancel" },
+  "delete": { "conf": "The line was deleted.", "error": "The line could not be deleted." },
+  "update": { "conf": "The line was saved.", "error": "The line could not be saved." },
+  "create": { "error": "The lines could not be saved." },
+  "assign": { "title": "Assign account" },
+  "title": { "label": "Booking text", "placeholder": "e.g. Google Cloud GCP, Dublin", "helper": "This is how the entry appears in the journal." },
+  "account": { "label": "Counter account", "helper": "The expense or income account for this one line. No rule is created." },
+  "vat": { "label": "VAT code (optional)", "helper": "Noted on the counter account line." },
+  "changeConfirmation": { "cancel": "Discard", "ok": "Save" }
+}

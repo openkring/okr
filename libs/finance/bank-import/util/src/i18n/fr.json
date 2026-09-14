@@ -1,1 +1,64 @@
-{}
+{
+  "singular": "Ligne bancaire",
+  "plural": "Lignes bancaires",
+  "empty": "Aucune ligne bancaire importée pour l'instant. Choisis «Importer un fichier» dans le menu et ouvre un relevé CSV de ta banque.",
+  "loading": "Chargement des lignes bancaires…",
+  "status": { "unmapped": "ouverte", "mapped": "attribuée", "posted": "comptabilisée", "error": "Erreur", "all": "toutes", "open": "non comptabilisée" },
+  "header": { "date": "Date", "title": "Texte de comptabilisation", "payee": "Contrepartie", "amount": "Montant" },
+  "import": {
+    "file": "Importer un fichier",
+    "summary": {
+      "title": "Import terminé",
+      "parsed": "lignes dans le fichier",
+      "new": "nouvellement reprises",
+      "duplicates": "déjà présentes, ignorées",
+      "mapped": "attribuées à une règle",
+      "unmapped": "sans règle, ouvertes",
+      "warnings": "Remarques"
+    },
+    "cancelled": "L'import a été annulé. Rien n'a été enregistré."
+  },
+  "error": {
+    "unknownFormat": "Ce fichier n'a pas été reconnu. Les exports CSV de PostFinance et de la ZKB sont pris en charge. Première ligne:",
+    "noIban": "Le fichier ne contient pas de numéro de compte (IBAN).",
+    "formatNotImplemented": "Ce format bancaire n'est pas encore pris en charge:",
+    "emptyFile": "Le fichier est vide."
+  },
+  "warning": {
+    "lineSkipped": "Ligne ignorée, date ou montant illisible",
+    "saldoMismatch": "Le solde ne correspond pas (attendu/lu en centimes)",
+    "ibanMismatch": "Ligne avec un autre numéro de compte ignorée",
+    "currencyMismatch": "La devise des colonnes diffère de la devise du compte",
+    "ruleRegexInvalid": "Une règle contient une expression régulière invalide et a été ignorée"
+  },
+  "post": {
+    "label": "Comptabiliser",
+    "summary": { "title": "Comptabilisation terminée", "posted": "comptabilisées", "failed": "non comptabilisées" },
+    "nothing": "Il n'y a aucune ligne attribuée qui pourrait être comptabilisée.",
+    "error": {
+      "notMapped": "La ligne n'est pas attribuée.",
+      "periodLocked": "La période comptable est verrouillée.",
+      "accountInvalid": "Le compte de contrepartie est manquant ou n'est pas un compte de comptabilisation.",
+      "profileMissing": "Le profil bancaire de cette ligne est introuvable.",
+      "unbalanced": "L'écriture n'est pas équilibrée.",
+      "unknown": "La ligne n'a pas pu être comptabilisée."
+    }
+  },
+  "applyRules": { "label": "Appliquer les règles", "conf": "Les règles ont été appliquées à toutes les lignes ouvertes." },
+  "as": {
+    "title": "Choisir une action",
+    "createRule": "Créer une règle",
+    "assign": "Attribuer un compte",
+    "delete": "Supprimer la ligne",
+    "openBooking": "Ouvrir l'écriture"
+  },
+  "cancel": { "label": "Annuler" },
+  "delete": { "conf": "La ligne a été supprimée.", "error": "La ligne n'a pas pu être supprimée." },
+  "update": { "conf": "La ligne a été enregistrée.", "error": "La ligne n'a pas pu être enregistrée." },
+  "create": { "error": "Les lignes n'ont pas pu être enregistrées." },
+  "assign": { "title": "Attribuer un compte" },
+  "title": { "label": "Texte de comptabilisation", "placeholder": "p.ex. Google Cloud GCP, Dublin", "helper": "C'est ainsi que l'écriture apparaît dans le journal." },
+  "account": { "label": "Compte de contrepartie", "helper": "Le compte de charge ou de produit pour cette seule ligne. Aucune règle n'est créée." },
+  "vat": { "label": "Code TVA (facultatif)", "helper": "Indiqué sur la ligne du compte de contrepartie." },
+  "changeConfirmation": { "cancel": "Annuler", "ok": "Enregistrer" }
+}

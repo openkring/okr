@@ -1,1 +1,64 @@
-{}
+{
+  "singular": "Riga bancaria",
+  "plural": "Righe bancarie",
+  "empty": "Non sono ancora state importate righe bancarie. Scegli «Importa file» nel menu e apri un estratto conto CSV della tua banca.",
+  "loading": "Caricamento delle righe bancarie…",
+  "status": { "unmapped": "aperta", "mapped": "assegnata", "posted": "registrata", "error": "Errore", "all": "tutte", "open": "non registrata" },
+  "header": { "date": "Data", "title": "Testo di registrazione", "payee": "Controparte", "amount": "Importo" },
+  "import": {
+    "file": "Importa file",
+    "summary": {
+      "title": "Importazione completata",
+      "parsed": "righe nel file",
+      "new": "riprese come nuove",
+      "duplicates": "già presenti, saltate",
+      "mapped": "assegnate a una regola",
+      "unmapped": "senza regola, aperte",
+      "warnings": "Avvisi"
+    },
+    "cancelled": "L'importazione è stata annullata. Non è stato salvato nulla."
+  },
+  "error": {
+    "unknownFormat": "Questo file non è stato riconosciuto. Sono supportati gli export CSV di PostFinance e ZKB. Prima riga:",
+    "noIban": "Il file non contiene un numero di conto (IBAN).",
+    "formatNotImplemented": "Questo formato bancario non è ancora supportato:",
+    "emptyFile": "Il file è vuoto."
+  },
+  "warning": {
+    "lineSkipped": "Riga saltata, data o importo non leggibile",
+    "saldoMismatch": "Il saldo non corrisponde (previsto/letto in centesimi)",
+    "ibanMismatch": "Riga con un altro numero di conto saltata",
+    "currencyMismatch": "La valuta delle colonne differisce dalla valuta del conto",
+    "ruleRegexInvalid": "Una regola contiene un'espressione regolare non valida ed è stata saltata"
+  },
+  "post": {
+    "label": "Registra",
+    "summary": { "title": "Registrazione completata", "posted": "registrate", "failed": "non registrate" },
+    "nothing": "Non ci sono righe assegnate che potrebbero essere registrate.",
+    "error": {
+      "notMapped": "La riga non è assegnata.",
+      "periodLocked": "Il periodo contabile è bloccato.",
+      "accountInvalid": "Il conto di contropartita manca o non è un conto di registrazione.",
+      "profileMissing": "Il profilo bancario di questa riga non è stato trovato.",
+      "unbalanced": "La registrazione non è bilanciata.",
+      "unknown": "La riga non ha potuto essere registrata."
+    }
+  },
+  "applyRules": { "label": "Applica regole", "conf": "Le regole sono state applicate a tutte le righe aperte." },
+  "as": {
+    "title": "Scegli un'azione",
+    "createRule": "Crea regola",
+    "assign": "Assegna conto",
+    "delete": "Elimina riga",
+    "openBooking": "Apri registrazione"
+  },
+  "cancel": { "label": "Annulla" },
+  "delete": { "conf": "La riga è stata eliminata.", "error": "La riga non ha potuto essere eliminata." },
+  "update": { "conf": "La riga è stata salvata.", "error": "La riga non ha potuto essere salvata." },
+  "create": { "error": "Le righe non hanno potuto essere salvate." },
+  "assign": { "title": "Assegna conto" },
+  "title": { "label": "Testo di registrazione", "placeholder": "p.es. Google Cloud GCP, Dublino", "helper": "Così appare la registrazione nel giornale." },
+  "account": { "label": "Conto di contropartita", "helper": "Il conto di costo o ricavo per questa singola riga. Non viene creata alcuna regola." },
+  "vat": { "label": "Codice IVA (opzionale)", "helper": "Annotato sulla riga del conto di contropartita." },
+  "changeConfirmation": { "cancel": "Scarta", "ok": "Salva" }
+}

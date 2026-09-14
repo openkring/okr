@@ -1,1 +1,64 @@
-{}
+{
+  "singular": "Línea bancaria",
+  "plural": "Líneas bancarias",
+  "empty": "Todavía no se han importado líneas bancarias. Elige «Importar archivo» en el menú y abre un extracto CSV de tu banco.",
+  "loading": "Cargando líneas bancarias…",
+  "status": { "unmapped": "abierta", "mapped": "asignada", "posted": "contabilizada", "error": "Error", "all": "todas", "open": "no contabilizada" },
+  "header": { "date": "Fecha", "title": "Texto de contabilización", "payee": "Contraparte", "amount": "Importe" },
+  "import": {
+    "file": "Importar archivo",
+    "summary": {
+      "title": "Importación completada",
+      "parsed": "líneas en el archivo",
+      "new": "incorporadas de nuevo",
+      "duplicates": "ya existentes, omitidas",
+      "mapped": "asignadas a una regla",
+      "unmapped": "sin regla, abiertas",
+      "warnings": "Avisos"
+    },
+    "cancelled": "La importación se canceló. No se guardó nada."
+  },
+  "error": {
+    "unknownFormat": "Este archivo no fue reconocido. Se admiten exportaciones CSV de PostFinance y ZKB. Primera línea:",
+    "noIban": "El archivo no contiene un número de cuenta (IBAN).",
+    "formatNotImplemented": "Este formato bancario aún no está soportado:",
+    "emptyFile": "El archivo está vacío."
+  },
+  "warning": {
+    "lineSkipped": "Línea omitida, fecha o importe no legible",
+    "saldoMismatch": "El saldo no coincide (esperado/leído en céntimos)",
+    "ibanMismatch": "Línea con otro número de cuenta omitida",
+    "currencyMismatch": "La moneda de las columnas difiere de la moneda de la cuenta",
+    "ruleRegexInvalid": "Una regla tiene una expresión regular no válida y fue omitida"
+  },
+  "post": {
+    "label": "Contabilizar",
+    "summary": { "title": "Contabilización completada", "posted": "contabilizadas", "failed": "no contabilizadas" },
+    "nothing": "No hay líneas asignadas que se puedan contabilizar.",
+    "error": {
+      "notMapped": "La línea no está asignada.",
+      "periodLocked": "El período contable está bloqueado.",
+      "accountInvalid": "Falta la cuenta de contrapartida o no es una cuenta contable.",
+      "profileMissing": "No se encontró el perfil bancario de esta línea.",
+      "unbalanced": "El asiento no está equilibrado.",
+      "unknown": "La línea no pudo ser contabilizada."
+    }
+  },
+  "applyRules": { "label": "Aplicar reglas", "conf": "Las reglas se aplicaron a todas las líneas abiertas." },
+  "as": {
+    "title": "Elegir una acción",
+    "createRule": "Crear regla",
+    "assign": "Asignar cuenta",
+    "delete": "Eliminar línea",
+    "openBooking": "Abrir asiento"
+  },
+  "cancel": { "label": "Cancelar" },
+  "delete": { "conf": "La línea fue eliminada.", "error": "La línea no pudo ser eliminada." },
+  "update": { "conf": "La línea fue guardada.", "error": "La línea no pudo ser guardada." },
+  "create": { "error": "Las líneas no pudieron ser guardadas." },
+  "assign": { "title": "Asignar cuenta" },
+  "title": { "label": "Texto de contabilización", "placeholder": "p.ej. Google Cloud GCP, Dublín", "helper": "Así aparecerá el asiento en el diario." },
+  "account": { "label": "Cuenta de contrapartida", "helper": "La cuenta de gasto o ingreso para esta única línea. No se crea ninguna regla." },
+  "vat": { "label": "Código de IVA (opcional)", "helper": "Se anota en la línea de la cuenta de contrapartida." },
+  "changeConfirmation": { "cancel": "Descartar", "ok": "Guardar" }
+}
