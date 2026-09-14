@@ -101,7 +101,7 @@ const bucket = getStorage().bucket();
  *             that touch the canvas edge are not amputated.
  *   bleed   — already full-bleed. A plain crop is correct; leave it alone.
  */
-const COMPOSE = async ({ svg, size, bg }) => {
+const COMPOSE = async ({ dataUri, size, bg }) => {
   const N = size;
   const load = (s) =>
     new Promise((res, rej) => {
@@ -151,7 +151,7 @@ const COMPOSE = async ({ svg, size, bg }) => {
     };
   }
 
-  const img = await load('data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg))));
+  const img = await load(dataUri);
 
   // A master must be square. Anything markedly wider or taller is a wordmark or
   // a lockup, and squeezing it into an icon makes it unreadable — refuse rather
@@ -306,6 +306,7 @@ const COMPOSE = async ({ svg, size, bg }) => {
     mode,
     thick,
     favicon: fav.toDataURL('image/png'),
+    natural: { w: nw, h: nh },
     bbox: `${bw}x${bh}`,
     backdrop,
     edgeShare: +edge.share.toFixed(2),
@@ -347,11 +348,11 @@ function manifestIcons(base, dir, sfx) {
  */
 const SVG_FAVICON_MAX = 32 * 1024;
 
-function iconLinks(base, dir, masterSvgPath, masterBytes) {
+function iconLinks(base, dir, masterSvgPath, masterBytes, masterIsSvg) {
   const m = `${dir}/logo-master.png`;
   const k = `${dir}/logo-maskable.png`;
   const links = [];
-  if (masterBytes && masterBytes <= SVG_FAVICON_MAX) {
+  if (masterIsSvg && masterBytes && masterBytes <= SVG_FAVICON_MAX) {
     links.push(`<link rel="icon" type="image/svg+xml" sizes="any" href="${base}/${masterSvgPath}" />`);
   }
   links.push(
@@ -424,9 +425,9 @@ function rewriteIndexHtml(appDir, links) {
  * that way; p13 was the lone CDN holdout, and bka/scs had none at all —
  * `brunokaiser.ch` served no icon link and no /favicon.ico, so the tab was blank.
  */
-function websiteIconLinks(masterBytes) {
+function websiteIconLinks(masterBytes, masterIsSvg) {
   const links = [];
-  if (masterBytes && masterBytes <= SVG_FAVICON_MAX) {
+  if (masterIsSvg && masterBytes && masterBytes <= SVG_FAVICON_MAX) {
     links.push('<link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />');
   }
   links.push('<link rel="icon" type="image/png" sizes="96x96" href="assets/favicon.png" />');
@@ -491,6 +492,7 @@ for (const tenant of tenants) {
   let resolvedMaster = null;
   let resolvedBytes = 0;
   let lastFavicon = null;
+  let resolvedIsSvg = false;
 
   for (const variant of VARIANTS) {
     const srcPath = variant.suffix === '' ? masterPath : sibling(variant.suffix);
@@ -512,20 +514,40 @@ for (const tenant of tenants) {
 
   async function generate(srcPath, suffix) {
     const [buf] = await bucket.file(srcPath).download();
-    if (suffix === '') resolvedBytes = buf.length;
-    let svg = buf.toString('utf8');
+    const [meta] = await bucket.file(srcPath).getMetadata();
+    const isSvg = /svg/i.test(meta.contentType || '') || /\.svg$/i.test(srcPath);
 
-    // Editor exports carry a root `transform` that the viewBox already handles.
-    // Left in place it shrinks the artwork into a corner of the canvas.
-    if (/<svg[^>]*\stransform=/i.test(svg)) {
-      svg = svg.replace(/(<svg[^>]*?)\stransform="[^"]*"/i, '$1');
-      console.warn(`   ${path.basename(srcPath)}: stripped a root transform (export artefact)`);
+    // An SVG master is preferred but not required — a sufficiently large raster
+    // works too. Read it as BYTES either way: decoding a PNG as UTF-8 corrupts it,
+    // and the data URI has to carry the real media type or the image never loads.
+    let dataUri;
+    if (isSvg) {
+      let svg = buf.toString('utf8');
+      // Editor exports carry a root `transform` that the viewBox already handles.
+      // Left in place it shrinks the artwork into a corner of the canvas.
+      if (/<svg[^>]*\stransform=/i.test(svg)) {
+        svg = svg.replace(/(<svg[^>]*?)\stransform="[^"]*"/i, '$1');
+        console.warn(`   ${path.basename(srcPath)}: stripped a root transform (export artefact)`);
+      }
+      dataUri = 'data:image/svg+xml;base64,' + Buffer.from(svg, 'utf8').toString('base64');
+    } else {
+      dataUri = `data:${meta.contentType || 'image/png'};base64,${buf.toString('base64')}`;
+    }
+    if (suffix === '') {
+      resolvedBytes = buf.length;
+      resolvedIsSvg = isSvg;
     }
 
-    const r = await page.evaluate(COMPOSE, { svg, size: RASTER, bg });
+    const r = await page.evaluate(COMPOSE, { dataUri, size: RASTER, bg });
     if (r.reject) {
       console.warn(`   ${path.basename(srcPath)}: ${r.reject} — skipped`);
       return false;
+    }
+    if (!isSvg && r.natural && Math.min(r.natural.w, r.natural.h) < RASTER) {
+      console.warn(
+        `   ${path.basename(srcPath)}: raster master is only ${r.natural.w}x${r.natural.h}; ` +
+          `upscaled to ${RASTER}. An SVG master would stay sharp at every size.`,
+      );
     }
     console.log(
       `   ${path.basename(srcPath).padEnd(18)} ${r.mode.padEnd(7)} bbox=${r.bbox.padEnd(9)} bg=${r.backdrop}` +
@@ -569,7 +591,7 @@ for (const tenant of tenants) {
   const masterSvg = resolvedMaster;
   const mPath = manifestPath(appDir);
   const m = rewriteManifest(appDir, manifestIcons(base, dir, ''));
-  const h = rewriteIndexHtml(appDir, iconLinks(base, dir, masterSvg, resolvedBytes));
+  const h = rewriteIndexHtml(appDir, iconLinks(base, dir, masterSvg, resolvedBytes, resolvedIsSvg));
   console.log(
     `   ${path.relative(appDir, mPath)} ${m ? 'rewritten' : 'unchanged'} · index.html ${h ? 'rewritten' : 'unchanged'}`,
   );
@@ -584,16 +606,16 @@ for (const tenant of tenants) {
 
     if (!DRY) {
       fs.writeFileSync(path.join(assets, 'favicon.png'), Buffer.from(lastFavicon.split(',')[1], 'base64'));
-      if (resolvedBytes && resolvedBytes <= SVG_FAVICON_MAX) {
+      if (resolvedIsSvg && resolvedBytes && resolvedBytes <= SVG_FAVICON_MAX) {
         const [mb] = await bucket.file(resolvedMaster).download();
         fs.writeFileSync(path.join(assets, 'favicon.svg'), mb);
       }
     }
-    const links = websiteIconLinks(resolvedBytes);
+    const links = websiteIconLinks(resolvedBytes, resolvedIsSvg);
     const pages = fs.readdirSync(webDir).filter((f) => f.endsWith('.html'));
     const changed = pages.filter((f) => rewriteWebsitePage(path.join(webDir, f), links));
     console.log(
-      `   website: assets/favicon.png${resolvedBytes <= SVG_FAVICON_MAX ? ' + favicon.svg' : ''}` +
+      `   website: assets/favicon.png${resolvedIsSvg && resolvedBytes <= SVG_FAVICON_MAX ? ' + favicon.svg' : ''}` +
         ` · ${changed.length}/${pages.length} page(s) rewritten`,
     );
   }
