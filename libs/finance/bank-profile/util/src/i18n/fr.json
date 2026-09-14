@@ -1,1 +1,16 @@
-{}
+{
+  "singular": "Profil bancaire", "plural": "Profils bancaires",
+  "empty": "Pas encore de profil bancaire. Lors du premier import d'un fichier bancaire, un profil est proposé automatiquement.",
+  "create": { "label": "Créer un profil bancaire", "conf": "Le profil bancaire a été créé.", "error": "Le profil bancaire n'a pas pu être créé." },
+  "update": { "label": "Modifier le profil bancaire", "conf": "Le profil bancaire a été enregistré.", "error": "Le profil bancaire n'a pas pu être enregistré." },
+  "delete": { "label": "Supprimer le profil bancaire", "conf": "Le profil bancaire a été supprimé.", "error": "Le profil bancaire n'a pas pu être supprimé." },
+  "view": { "label": "Voir le profil bancaire" }, "cancel": { "label": "Annuler" }, "save": { "label": "Enregistrer" },
+  "format": { "label": "Banque", "helper": "Détermine comment le fichier CSV est lu.", "postfinance": "PostFinance", "zkb": "Zürcher Kantonalbank", "vz": "VZ Depotbank", "gkb": "Graubündner Kantonalbank" },
+  "iban": { "label": "IBAN", "placeholder": "CH00 0000 0000 0000 0000 0", "helper": "L'IBAN permet de retrouver le profil correspondant lors de l'import." },
+  "bankName": { "label": "Désignation", "placeholder": "p. ex. Compte professionnel PostFinance", "helper": "" },
+  "account": { "label": "Compte bancaire dans la comptabilité", "helper": "Le compte de la classe 1 sur lequel les mouvements du compte sont comptabilisés." },
+  "currency": { "label": "Monnaie", "helper": "" },
+  "notes": { "label": "Notes", "placeholder": "" },
+  "as": { "title": "Choisir une action", "edit": "Modifier le profil bancaire", "delete": "Supprimer le profil bancaire" },
+  "changeConfirmation": { "cancel": "Ignorer", "ok": "Enregistrer" }
+}

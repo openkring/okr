@@ -10,6 +10,7 @@
     "@okr/shared-models": "*",
     "@okr/shared-config": "*",
     "@okr/shared-util-core": "*",
-    "@okr/shared-data-access": "*"
+    "@okr/shared-data-access": "*",
+    "@okr/finance-bank-profile-util": "*"
   }
 }
