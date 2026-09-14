@@ -1,6 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { IonButton, IonCol, IonContent, IonGrid, IonImg, IonLabel, IonRow } from '@ionic/angular/standalone';
+import { IonButton, IonCol, IonContent, IonGrid, IonImg, IonLabel, IonRow, IonSpinner } from '@ionic/angular/standalone';
 
 import { AuthCredentials } from '@okr/shared-models';
 import { Header } from '@okr/shared-ui';
@@ -19,7 +19,7 @@ import { AuthStore } from './auth.store';
   providers: [AuthStore],
   imports: [
     Header, LoginForm, PwdResetSent,
-    IonContent, IonImg, IonLabel, IonGrid, IonRow, IonCol, IonButton
+    IonContent, IonImg, IonLabel, IonGrid, IonRow, IonCol, IonButton, IonSpinner
   ],
   styles: `
   .background-image { filter: blur(8px); -webkit-filter: blur(8px); position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.7; z-index: 1;}
@@ -44,6 +44,7 @@ import { AuthStore } from './auth.store';
     box-shadow: 0 10px 30px rgb(0 0 0 / 30%);
   }
   .reset-button { --color: var(--ion-color-primary); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+  .reset-button ion-spinner { margin-inline-end: 8px; }
   @media (width <= 600px) {
      .login-form { width: 100%; text-align: center; z-index: 5; }
      .login-container {  display: flex; height: 100%; padding: 10px; }
@@ -70,6 +71,7 @@ import { AuthStore } from './auth.store';
               [i18n]="store.i18n"
               [email]="currentCredentials().loginEmail ?? ''"
               [resent]="linkResent()"
+              [sending]="isSending()"
               (resend)="sendPasswordLink(true)"
               (useOther)="backToForm()"
             />
@@ -88,10 +90,24 @@ import { AuthStore } from './auth.store';
                 </ion-row>
                 <ion-row>
                   <ion-col>
-                    <!-- Needs the address, nothing else: enabled as soon as the email field is valid. -->
+                    <!--
+                      Needs the address, nothing else: enabled as soon as the email field is valid.
+
+                      Sending runs through a Cloud Function and regularly takes a few seconds. The
+                      button used to be merely disabled for that time, which on a phone is next to
+                      invisible: the screen looked exactly as before the tap, so people tapped
+                      again. Spinner plus a label that names what is happening.
+                    -->
                     <ion-button class="reset-button" fill="clear" color="primary"
                       [disabled]="!emailIsValid() || isSending()"
-                      (click)="sendPasswordLink(false)">{{ store.i18n.pwdreset_cta() }}</ion-button>
+                      (click)="sendPasswordLink(false)">
+                      @if (isSending()) {
+                        <ion-spinner name="dots" slot="start" aria-hidden="true" />
+                        {{ store.i18n.pwdreset_sending() }}
+                      } @else {
+                        {{ store.i18n.pwdreset_cta() }}
+                      }
+                    </ion-button>
                   </ion-col>
                 </ion-row>
               </ion-grid>

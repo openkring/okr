@@ -24,6 +24,9 @@ export const AUTH_I18N_KEYS = {
   // The call to action on the login screen. Separate from pwdreset_title (the page heading)
   // because the two have to read differently: one names a destination, the other offers a way out.
   pwdreset_cta:             PFX + 'pwdreset.cta',
+  // The label while the request is in flight. Sending goes through a Cloud Function and can take
+  // a few seconds; without a label the screen looked unchanged and people pressed again.
+  pwdreset_sending:         PFX + 'pwdreset.sending',
   // The state the login screen switches to once the mail is on its way.
   sent_title:               PFX + 'pwdreset.sent.title',
   sent_body:                PFX + 'pwdreset.sent.body',

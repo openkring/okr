@@ -34,6 +34,7 @@
     "requestNewLink": "Demander un nouveau lien",
     "gotoLogin": "Aller à la connexion",
     "cta": "Pas encore de mot de passe ? En définir un par e-mail",
+    "sending": "Envoi en cours …",
     "sent": {
       "title": "Regarde dans ta boîte mail",
       "body": "Nous venons d'envoyer un lien à {email}. Touche-le et tu pourras définir ton mot de passe. Le lien est valable une heure.",

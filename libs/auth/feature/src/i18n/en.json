@@ -34,6 +34,7 @@
     "requestNewLink": "Request a new link",
     "gotoLogin": "Go to sign-in",
     "cta": "No password yet? Set one by email",
+    "sending": "Sending …",
     "sent": {
       "title": "Check your mailbox",
       "body": "We have just sent a link to {email}. Tap it and you can set your password. The link is valid for one hour.",

@@ -1,5 +1,5 @@
 import { Component, computed, input, output } from '@angular/core';
-import { IonButton, IonIcon } from '@ionic/angular/standalone';
+import { IonButton, IonIcon, IonSpinner } from '@ionic/angular/standalone';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { fill } from '@okr/shared-util-core';
@@ -22,7 +22,7 @@ import { AuthI18n } from '@okr/auth-util';
 @Component({
   selector: 'okr-pwdreset-sent',
   standalone: true,
-  imports: [SvgIconPipe, IonButton, IonIcon],
+  imports: [SvgIconPipe, IonButton, IonIcon, IonSpinner],
   styles: `
     :host { display: block; }
     .panel { display: flex; flex-direction: column; gap: 14px; text-align: left; padding: 4px 8px 8px; }
@@ -32,6 +32,7 @@ import { AuthI18n } from '@okr/auth-util';
     .muted { color: var(--ion-color-medium); font-size: 0.8125rem; }
     .actions { display: flex; flex-direction: column; gap: 10px; padding-top: 4px; }
     ion-icon { font-size: 40px; color: var(--ion-color-primary); }
+    .actions ion-spinner { margin-inline-end: 8px; }
   `,
   template: `
     <div class="panel">
@@ -40,7 +41,15 @@ import { AuthI18n } from '@okr/auth-util';
       <p>{{ body() }}</p>
       <p class="muted">{{ i18n().sent_spam() }}</p>
       <div class="actions">
-        <ion-button expand="block" fill="outline" (click)="resend.emit()">{{ i18n().sent_resend() }}</ion-button>
+        <!-- Same reason as on the login screen: the send takes seconds, so it has to say so. -->
+        <ion-button expand="block" fill="outline" [disabled]="sending()" (click)="resend.emit()">
+          @if (sending()) {
+            <ion-spinner name="dots" slot="start" aria-hidden="true" />
+            {{ i18n().pwdreset_sending() }}
+          } @else {
+            {{ i18n().sent_resend() }}
+          }
+        </ion-button>
         <ion-button expand="block" fill="clear" (click)="useOther.emit()">{{ i18n().sent_other() }}</ion-button>
       </div>
       <p class="muted">{{ i18n().sent_help() }}</p>
@@ -53,6 +62,8 @@ export class PwdResetSent {
   public readonly email = input.required<string>();
   /** True after the user asked for the link a second time — the text acknowledges that. */
   public readonly resent = input(false);
+  /** True while a send is in flight, so the resend button shows it instead of looking inert. */
+  public readonly sending = input(false);
 
   // outputs
   public readonly resend = output<void>();

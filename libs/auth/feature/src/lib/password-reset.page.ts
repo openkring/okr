@@ -1,6 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { IonButton, IonCol, IonContent, IonGrid, IonImg, IonLabel, IonRow } from '@ionic/angular/standalone';
+import { IonButton, IonCol, IonContent, IonGrid, IonImg, IonLabel, IonRow, IonSpinner } from '@ionic/angular/standalone';
 
 import { Header } from '@okr/shared-ui';
 import { getImgixUrlWithAutoParams } from '@okr/shared-util-core';
@@ -16,13 +16,14 @@ import { AuthStore } from './auth.store';
   providers: [AuthStore],
   imports: [
     Header, LoginForm, PwdResetSent,
-    IonContent, IonImg, IonLabel, IonGrid, IonRow, IonCol, IonButton
+    IonContent, IonImg, IonLabel, IonGrid, IonRow, IonCol, IonButton, IonSpinner
   ],
   styles: `
       .background-image { filter: blur(8px); -webkit-filter: blur(8px); position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.7; z-index: 1;}
       .title { text-align: center; font-size: 2rem; padding: 20px; }
       .logo { max-width: 150px; text-align: center; display: block; margin-left: auto; margin-right: auto; width: 50%; z-index: 10; padding: 20px; }
       .button-container { margin: 20px; }
+      .button-container ion-spinner { margin-inline-end: 8px; }
       /*
         The screens sit on a blurred, 70%-opaque photo. Without a ground of their own the labels,
         helper texts and the clear/outline buttons were drawn straight onto that photo and their
@@ -61,6 +62,7 @@ import { AuthStore } from './auth.store';
               [i18n]="store.i18n"
               [email]="currentCredentials().loginEmail ?? ''"
               [resent]="linkResent()"
+              [sending]="isSending()"
               (resend)="resetPassword(true)"
               (useOther)="backToForm()"
             />
@@ -82,7 +84,14 @@ import { AuthStore } from './auth.store';
                     <ion-button expand="block" fill="outline" (click)="store.gotoHome()">{{ store.i18n.cancel() }}</ion-button>
                   </ion-col>
                   <ion-col size="6">
-                    <ion-button expand="block" [disabled]="!formIsValid() || isSending()" (click)="resetPassword(false)">{{ store.i18n.pwdreset_cta() }}</ion-button>
+                    <ion-button expand="block" [disabled]="!formIsValid() || isSending()" (click)="resetPassword(false)">
+                      @if (isSending()) {
+                        <ion-spinner name="dots" slot="start" aria-hidden="true" />
+                        {{ store.i18n.pwdreset_sending() }}
+                      } @else {
+                        {{ store.i18n.pwdreset_cta() }}
+                      }
+                    </ion-button>
                   </ion-col>
                 </ion-row>
               </ion-grid>

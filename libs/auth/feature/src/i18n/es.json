@@ -34,6 +34,7 @@
     "requestNewLink": "Solicitar un enlace nuevo",
     "gotoLogin": "Ir al inicio de sesión",
     "cta": "¿Aún sin contraseña? Establécela por correo",
+    "sending": "Enviando …",
     "sent": {
       "title": "Mira en tu buzón",
       "body": "Acabamos de enviar un enlace a {email}. Tócalo y podrás establecer tu contraseña. El enlace vale una hora.",

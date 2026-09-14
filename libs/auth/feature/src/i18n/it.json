@@ -34,6 +34,7 @@
     "requestNewLink": "Richiedi un nuovo link",
     "gotoLogin": "Vai all'accesso",
     "cta": "Non hai ancora una password? Impostala via e-mail",
+    "sending": "Invio in corso …",
     "sent": {
       "title": "Guarda nella tua casella",
       "body": "Abbiamo appena inviato un link a {email}. Toccalo e potrai impostare la tua password. Il link vale un'ora.",
