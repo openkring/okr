@@ -31,7 +31,7 @@
   "account": { "label": "Counter account", "helper": "The bank account comes from the bank profile; here you choose the expense or income account." },
   "vat": { "label": "VAT code (optional)", "helper": "Recorded on the counter-account line." },
   "priority": { "label": "Priority", "helper": "When several rules match, the higher number wins." },
-  "active": { "label": "Active" },
+  "active": { "label": "Active", "helper": "Inactive rules are skipped when matching automatically." },
   "notes": { "label": "Notes", "placeholder": "Remarks about this rule" },
   "as": { "title": "Choose an action", "edit": "Edit rule", "delete": "Delete rule" },
   "changeConfirmation": { "cancel": "Discard", "ok": "Save" }

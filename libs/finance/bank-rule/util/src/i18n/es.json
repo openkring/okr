@@ -31,7 +31,7 @@
   "account": { "label": "Contracuenta", "helper": "La cuenta bancaria proviene del perfil bancario; aquí eliges la cuenta de gasto o ingreso." },
   "vat": { "label": "Código de IVA (opcional)", "helper": "Se anota en la línea de la contracuenta." },
   "priority": { "label": "Prioridad", "helper": "Si varias reglas coinciden, gana el número más alto." },
-  "active": { "label": "Activa" },
+  "active": { "label": "Activa", "helper": "Las reglas inactivas se omiten al asignar automáticamente." },
   "notes": { "label": "Notas", "placeholder": "Observaciones sobre esta regla" },
   "as": { "title": "Elegir una acción", "edit": "Editar regla", "delete": "Eliminar regla" },
   "changeConfirmation": { "cancel": "Descartar", "ok": "Guardar" }

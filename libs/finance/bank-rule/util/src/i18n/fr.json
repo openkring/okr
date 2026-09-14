@@ -31,7 +31,7 @@
   "account": { "label": "Contre-compte", "helper": "Le compte bancaire provient du profil bancaire ; ici tu choisis le compte de charge ou de produit." },
   "vat": { "label": "Code TVA (facultatif)", "helper": "Enregistré sur la ligne du contre-compte." },
   "priority": { "label": "Priorité", "helper": "Si plusieurs règles correspondent, le chiffre le plus élevé l'emporte." },
-  "active": { "label": "Active" },
+  "active": { "label": "Active", "helper": "Les règles inactives sont ignorées lors de l'attribution automatique." },
   "notes": { "label": "Notes", "placeholder": "Remarques sur cette règle" },
   "as": { "title": "Choisir une action", "edit": "Modifier la règle", "delete": "Supprimer la règle" },
   "changeConfirmation": { "cancel": "Abandonner", "ok": "Enregistrer" }

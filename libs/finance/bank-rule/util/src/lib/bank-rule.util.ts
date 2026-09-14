@@ -76,6 +76,12 @@ export function matchRule(rawText: string, rules: BankRuleModel[]): MatchOutcome
   };
 }
 
+/** Store contains/startsWith/endsWith terms pre-normalized; a regex term is stored as typed. */
+export function normalizeRuleForSave(rule: BankRuleModel): BankRuleModel {
+  const term = rule.condition === 'regex' ? (rule.term ?? '').trim() : normalizeText(rule.term ?? '');
+  return { ...rule, term, title: (rule.title ?? '').trim(), priority: Number(rule.priority) || 0 };
+}
+
 function isOneOff(row: BankImportRowModel): boolean {
   return (row.ruleKey ?? '') === '' && (row.accountKey ?? '') !== '';
 }

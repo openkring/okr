@@ -31,7 +31,7 @@
   "account": { "label": "Gegenkonto", "helper": "Das Bankkonto kommt aus dem Bankprofil, hier wählst du das Aufwand- oder Ertragskonto." },
   "vat": { "label": "MwSt-Code (optional)", "helper": "Wird auf der Gegenkonto-Zeile vermerkt." },
   "priority": { "label": "Priorität", "helper": "Bei mehreren passenden Regeln gewinnt die höhere Zahl." },
-  "active": { "label": "Aktiv" },
+  "active": { "label": "Aktiv", "helper": "Inaktive Regeln werden beim automatischen Zuordnen übersprungen." },
   "notes": { "label": "Notizen", "placeholder": "Bemerkungen zu dieser Regel" },
   "as": { "title": "Aktion wählen", "edit": "Regel bearbeiten", "delete": "Regel löschen" },
   "changeConfirmation": { "cancel": "Verwerfen", "ok": "Speichern" }

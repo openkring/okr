@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { BankImportRowModel, BankRuleModel } from '@okr/shared-models';
 
-import { applyRules, matchRule, normalizeText } from './bank-rule.util';
+import { applyRules, matchRule, normalizeRuleForSave, normalizeText } from './bank-rule.util';
 
 function rule(p: Partial<BankRuleModel>): BankRuleModel {
   return { ...new BankRuleModel('t1', 'acc1'), okey: 'r', accountKey: 'a1', title: 'T', ...p };
@@ -63,6 +63,25 @@ describe('matchRule', () => {
   it('carries account and vat code into the result', () => {
     const r = rule({ term: 'google', accountKey: '6500', vatCodeKey: 'VST_81' });
     expect(matchRule(text, [r]).result).toEqual({ ruleKey: 'r', title: 'T', accountKey: '6500', vatCodeKey: 'VST_81' });
+  });
+});
+
+describe('normalizeRuleForSave', () => {
+  it('normalizes a contains/startsWith/endsWith term', () => {
+    expect(normalizeRuleForSave(rule({ term: ' Google  CLOUD ', condition: 'contains' })).term).toBe('google cloud');
+  });
+
+  it('leaves a regex term untouched apart from trimming', () => {
+    expect(normalizeRuleForSave(rule({ term: ' Goo(gle) ', condition: 'regex' })).term).toBe('Goo(gle)');
+  });
+
+  it('coerces priority to a number', () => {
+    expect(normalizeRuleForSave(rule({ priority: '3' as never })).priority).toBe(3);
+    expect(normalizeRuleForSave(rule({ priority: undefined as never })).priority).toBe(0);
+  });
+
+  it('trims the title', () => {
+    expect(normalizeRuleForSave(rule({ title: '  Google Cloud  ' })).title).toBe('Google Cloud');
   });
 });
 

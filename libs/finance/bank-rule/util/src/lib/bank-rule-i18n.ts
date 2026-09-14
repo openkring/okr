@@ -42,6 +42,7 @@ export const BANK_RULE_I18N_KEYS = {
   priority_label:      PFX + 'priority.label',
   priority_helper:     PFX + 'priority.helper',
   active_label:        PFX + 'active.label',
+  active_helper:       PFX + 'active.helper',
   notes_label:         PFX + 'notes.label',
   notes_placeholder:   PFX + 'notes.placeholder',
 
