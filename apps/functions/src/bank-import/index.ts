@@ -16,7 +16,7 @@ const CONFIG_COLLECTION = 'accounting-configs';
 const PERIOD_COLLECTION = 'periods';
 const BOOKING_COLLECTION = 'bookings';
 const BOOKING_LINE_COLLECTION = 'booking-lines';
-const MAX_ROWS = 500;
+const MAX_ROWS = 100;
 
 interface PostBankImportData { accountingTenantId: string; rowKeys?: string[]; }
 interface Failure { rowKey: string; reason: string; }
@@ -73,7 +73,7 @@ export const postBankImport = onCall(
 
           const profileSnap = await tx.get(db.collection(PROFILE_COLLECTION).doc(row.bankProfileKey));
           const profile = profileSnap.data() as ProfileDoc | undefined;
-          if (!profile || profile.accountingTenantId !== accountingTenantId || !profile.accountKey) throw new RowError('profile-missing');
+          if (!profile || profile.accountingTenantId !== accountingTenantId || !profile.accountKey || profile.isArchived === true) throw new RowError('profile-missing');
 
           const accountSnap = await tx.get(db.collection(ACCOUNT_COLLECTION).doc(row.accountKey));
           const account = accountSnap.data();
@@ -100,6 +100,9 @@ export const postBankImport = onCall(
             throw new RowError('unbalanced');
           }
           const year = Number(row.date.substring(0, 4));
+          // Follow-up: this reads the whole ledger of the accounting tenant per row to compute
+          // nextBookingNo. MAX_ROWS=100 is the mitigation for now; the real fix is a narrow read
+          // (`orderBy bookingNo desc limit 1`, backed by an index) instead of the full scan.
           const ledger = await tx.get(db.collection(BOOKING_COLLECTION).where('accountingTenantId', '==', accountingTenantId));
           const bookingNo = nextBookingNo(ledger.docs.map(s => s.data() as { date?: string; bookingNo?: number }), year);
 

@@ -610,6 +610,7 @@ single_cases = [
     ("treasurer T CREATE bank-import-rows with status posted -> DENY", False, POST, "bank-import-rows?documentId=rowBad", T,
      body({"tenants": ["t1"], "isArchived": False, "accountingTenantId": "t1", "importKey": "rowBad", "status": "posted", "bookingKey": ""}), None),
     ("treasurer T PATCH rowOpen.bookingKey -> DENY", False, PATCH, "bank-import-rows/rowOpen", T, body({"bookingKey": "bank-x"}), ["bookingKey"]),
+    ("treasurer T PATCH rowOpen.status=error -> DENY", False, PATCH, "bank-import-rows/rowOpen", T, body({"status": "error"}), ["status"]),
     ("treasurer T PATCH rowOpen.title -> ALLOW", True, PATCH, "bank-import-rows/rowOpen", T, body({"title": "X"}), ["title"]),
     ("treasurer T PATCH rowOpen.tenants -> ['t2'] -> DENY", False, PATCH, "bank-import-rows/rowOpen", T, body({"tenants": ["t2"]}), ["tenants"]),
     ("treasurer T PATCH rowPosted.title -> DENY", False, PATCH, "bank-import-rows/rowPosted", T, body({"title": "X"}), ["title"]),

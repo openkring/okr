@@ -8,7 +8,7 @@ import { BankImportRowModel, BankRuleModel } from '@okr/shared-models';
  */
 export function normalizeText(raw: string): string {
   return (raw ?? '')
-    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
     .replace(/\s+/g, ' ')
     .trim();

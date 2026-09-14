@@ -5,7 +5,7 @@ export interface RowDoc {
   amountFx?: { amount: number; currency: string } | null;
   status: string; bankProfileKey: string; accountingTenantId: string; tenants: string[];
 }
-export interface ProfileDoc { accountKey: string; accountingTenantId: string; }
+export interface ProfileDoc { accountKey: string; accountingTenantId: string; isArchived?: boolean; }
 
 /** Fiscal year containing a StoreDate; `fiscalYearStart` 1..12 (1 = calendar year). */
 export function fiscalYear(storeDate: string, fiscalYearStart: number): number {

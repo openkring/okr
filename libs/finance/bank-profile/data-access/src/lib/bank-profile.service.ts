@@ -5,6 +5,7 @@ import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { BankProfileCollection, BankProfileModel, UserModel } from '@okr/shared-models';
 import { getSystemQuery } from '@okr/shared-util-core';
+import { I18nService } from '@okr/shared-i18n';
 
 import { BANK_PROFILE_I18N_KEYS } from '@okr/finance-bank-profile-util';
 
@@ -12,21 +13,32 @@ import { BANK_PROFILE_I18N_KEYS } from '@okr/finance-bank-profile-util';
 export class BankProfileService {
   private readonly env = inject(ENV);
   private readonly firestoreService = inject(FirestoreService);
+  private readonly i18nService = inject(I18nService);
   private readonly tenantId = this.env.tenantId;
+
+  // i18n
+  protected readonly i18n = this.i18nService.translateAll({
+    create_conf: BANK_PROFILE_I18N_KEYS.create_conf,
+    create_error: BANK_PROFILE_I18N_KEYS.create_error,
+    update_conf: BANK_PROFILE_I18N_KEYS.update_conf,
+    update_error: BANK_PROFILE_I18N_KEYS.update_error,
+    delete_conf: BANK_PROFILE_I18N_KEYS.delete_conf,
+    delete_error: BANK_PROFILE_I18N_KEYS.delete_error,
+  });
 
   public async create(profile: BankProfileModel, currentUser?: UserModel): Promise<string | undefined> {
     return await this.firestoreService.createModel<BankProfileModel>(BankProfileCollection, profile,
-      BANK_PROFILE_I18N_KEYS.create_conf, BANK_PROFILE_I18N_KEYS.create_error, currentUser);
+      this.i18n.create_conf(), this.i18n.create_error(), currentUser);
   }
 
   public async update(profile: BankProfileModel, currentUser?: UserModel): Promise<string | undefined> {
     return await this.firestoreService.updateModel<BankProfileModel>(BankProfileCollection, profile, false,
-      BANK_PROFILE_I18N_KEYS.update_conf, BANK_PROFILE_I18N_KEYS.update_error, currentUser);
+      this.i18n.update_conf(), this.i18n.update_error(), currentUser);
   }
 
   public async delete(profile: BankProfileModel, currentUser?: UserModel): Promise<string | undefined> {
     return await this.firestoreService.deleteModel<BankProfileModel>(BankProfileCollection, profile,
-      BANK_PROFILE_I18N_KEYS.delete_conf, BANK_PROFILE_I18N_KEYS.delete_error, currentUser);
+      this.i18n.delete_conf(), this.i18n.delete_error(), currentUser);
   }
 
   private query(accountingTenantId: string) {

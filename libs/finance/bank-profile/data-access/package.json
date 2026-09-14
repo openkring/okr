@@ -11,6 +11,7 @@
     "@okr/shared-config": "*",
     "@okr/shared-util-core": "*",
     "@okr/shared-data-access": "*",
-    "@okr/finance-bank-profile-util": "*"
+    "@okr/finance-bank-profile-util": "*",
+    "@okr/shared-i18n": "*"
   }
 }

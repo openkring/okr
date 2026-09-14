@@ -158,7 +158,14 @@ export const BankImportStore = signalStore(
       const fresh = all.filter(r => !existing.has(r.importKey));
       const rules = await store.ruleService.listOnce(accountingTenantId);
       const { rows: mapped, invalidRuleKeys } = applyRules(fresh, rules);
-      if (mapped.length > 0) await store.rowService.createMany(mapped);
+      if (mapped.length > 0) {
+        const ok = await store.rowService.createMany(mapped);
+        if (!ok) {
+          store.rowsResource.reload();
+          await store.alertService.confirm(store.i18n.create_error());
+          return;
+        }
+      }
       store.rowsResource.reload();
 
       const warnings = [...statement.warnings, ...invalidRuleKeys.map(k => ({ code: 'rule-regex-invalid' as const, lineNo: 0, detail: k }))];
@@ -175,32 +182,45 @@ export const BankImportStore = signalStore(
 
     /** "Regeln anwenden": re-run the rules over every open row of the tenant and persist the changes. */
     async applyRulesToOpenRows(): Promise<void> {
-      const rules = await store.ruleService.listOnce(store.accountingTenantId());
-      const open = store.rows().filter(r => r.status === 'unmapped' || r.status === 'mapped');
-      const { rows } = applyRules(open, rules);
-      const changed = rows.filter((r, i) => r.status !== open[i].status || r.ruleKey !== open[i].ruleKey || r.title !== open[i].title || r.accountKey !== open[i].accountKey);
-      for (const r of changed) await store.rowService.update(r);
-      store.rowsResource.reload();
-      await store.alertService.showToast(store.i18n.apply_rules_conf());
+      try {
+        const rules = await store.ruleService.listOnce(store.accountingTenantId());
+        const open = store.rows().filter(r => r.status === 'unmapped' || r.status === 'mapped');
+        const { rows } = applyRules(open, rules);
+        const changed = rows.filter((r, i) => r.status !== open[i].status || r.ruleKey !== open[i].ruleKey || r.title !== open[i].title || r.accountKey !== open[i].accountKey);
+        const ok = changed.length === 0 ? true : await store.rowService.updateMany(changed);
+        store.rowsResource.reload();
+        if (!ok) { await store.alertService.confirm(store.i18n.update_error()); return; }
+        await store.alertService.showToast(store.i18n.apply_rules_conf());
+      } catch (ex) {
+        console.error('BankImportStore.applyRulesToOpenRows -> ERROR:', ex);
+        store.rowsResource.reload();
+        await store.alertService.confirm(store.errorText('unknown'));
+      }
     },
 
-    /** "Buchen": all mapped rows of the current filter, or the given keys; chunked at 500. */
+    /** "Buchen": all mapped rows of the current filter, or the given keys; chunked at 100. */
     async post(rowKeys?: string[]): Promise<void> {
       const keys = rowKeys ?? store.filtered().filter(r => r.status === 'mapped').map(r => r.okey);
       if (keys.length === 0) { await store.alertService.confirm(store.i18n.post_nothing()); return; }
-      const total: PostBankImportResult = { posted: 0, failed: [] };
-      for (let i = 0; i < keys.length; i += 500) {
-        const res = await store.rowService.postViaFunction({ accountingTenantId: store.accountingTenantId(), rowKeys: keys.slice(i, i + 500) });
-        total.posted += res.posted;
-        total.failed.push(...res.failed);
+      try {
+        const total: PostBankImportResult = { posted: 0, failed: [] };
+        for (let i = 0; i < keys.length; i += 100) {
+          const res = await store.rowService.postViaFunction({ accountingTenantId: store.accountingTenantId(), rowKeys: keys.slice(i, i + 100) });
+          total.posted += res.posted;
+          total.failed.push(...res.failed);
+        }
+        store.rowsResource.reload();
+        const lines = [
+          `${store.i18n.post_summary_posted()}: ${total.posted}`,
+          `${store.i18n.post_summary_failed()}: ${total.failed.length}`,
+          ...total.failed.map(f => `${f.rowKey.slice(0, 8)}… ${store.errorText(f.reason)}`),
+        ];
+        await store.alertService.confirm(`${store.i18n.post_summary_title()}\n${lines.join('\n')}`);
+      } catch (ex) {
+        console.error('BankImportStore.post -> ERROR:', ex);
+        store.rowsResource.reload();
+        await store.alertService.confirm(store.errorText('unknown'));
       }
-      store.rowsResource.reload();
-      const lines = [
-        `${store.i18n.post_summary_posted()}: ${total.posted}`,
-        `${store.i18n.post_summary_failed()}: ${total.failed.length}`,
-        ...total.failed.map(f => `${f.rowKey.slice(0, 8)}… ${store.errorText(f.reason)}`),
-      ];
-      await store.alertService.confirm(`${store.i18n.post_summary_title()}\n${lines.join('\n')}`);
     },
 
     /** "Regel erstellen": propose a rule from the row (§5.3); on save re-apply rules to open rows. */
