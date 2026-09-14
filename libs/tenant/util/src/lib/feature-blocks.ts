@@ -1450,8 +1450,8 @@ const finance: FeatureBlock = {
     ] },
     { key: 'bank-import-context', name: 'bank-import-context', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
       { key: 'bank-import-file', name: 'bank-import-file', url: 'import', action: 'call', roleNeeded: 'treasurer', icon: 'download', label: '@item.bank-import-file' },
-      { key: 'bank-import-apply-rules', name: 'bank-import-apply-rules', url: 'applyRules', action: 'call', roleNeeded: 'treasurer', icon: 'refresh', label: '@item.bank-import-apply-rules' },
-      { key: 'bank-import-post', name: 'bank-import-post', url: 'post', action: 'call', roleNeeded: 'treasurer', icon: 'checkmark-circle', label: '@item.bank-import-post' },
+      { key: 'bank-import-apply-rules', name: 'bank-import-apply-rules', url: 'applyRules', action: 'call', roleNeeded: 'treasurer', icon: 'sync', label: '@item.bank-import-apply-rules' },
+      { key: 'bank-import-post', name: 'bank-import-post', url: 'post', action: 'call', roleNeeded: 'treasurer', icon: 'checkmark', label: '@item.bank-import-post' },
     ] },
     { key: 'bank-rule-context', name: 'bank-rule-context', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
       { key: 'bank-rule-add', name: 'bank-rule-add', url: 'add', action: 'call', roleNeeded: 'treasurer', icon: 'add-circle', label: '@item.bank-rule-add' },
