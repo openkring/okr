@@ -220,6 +220,20 @@ async function releaseApp(app) {
   const stamped = isApp && stampNgswVersion(app, next);
 
   try {
+    // 2c. Logo assets — regenerate every rendition from the tenant's single master and
+    //     rewrite the manifest + index.html icon links. Must run BEFORE the build so the
+    //     rewritten files are bundled. Non-fatal: if it fails (no ADC, master missing) the
+    //     committed icons are still valid, so warn rather than abort a whole release.
+    //     Websites have no manifest and no app icons.
+    if (isApp) {
+      console.log(`\n[2c/7] Logo assets for ${app}…`);
+      try {
+        run('node', ['scripts/gen-logo-assets.mjs', app]);
+      } catch {
+        console.log('  ⚠ Logo generation failed — continuing with the committed icons.');
+      }
+    }
+
     // 3. prod build (source .env so FIREBASE_WEBAPP_CONFIG is set for the prod config target)
     //    --skip-nx-cache is mandatory: a version bump is meant to bust the cache via the config
     //    target's input hash, but that has proven unreliable (the nx Cloud remote cache restored
