@@ -825,6 +825,21 @@ const finance: BlockRoutes = {
       canActivate: [isTreasurerGuard],
       loadComponent: () => import('@okr/finance-ocr-rule-feature').then(m => m.OcrRuleList),
     },
+    {
+      path: 'accounting-bank-import/:accountingTenantId/:contextMenuName',
+      canActivate: [isTreasurerGuard],
+      loadComponent: () => import('@okr/finance-bank-import-feature').then(m => m.BankImportList),
+    },
+    {
+      path: 'accounting-bank-rules/:accountingTenantId/:contextMenuName',
+      canActivate: [isTreasurerGuard],
+      loadComponent: () => import('@okr/finance-bank-rule-feature').then(m => m.BankRuleList),
+    },
+    {
+      path: 'accounting-bank-profiles/:accountingTenantId/:contextMenuName',
+      canActivate: [isTreasurerGuard],
+      loadComponent: () => import('@okr/finance-bank-profile-feature').then(m => m.BankProfileList),
+    },
   ],
 };
 

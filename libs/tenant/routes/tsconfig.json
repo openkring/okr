@@ -126,6 +126,15 @@
       "path": "../../content/document/feature/tsconfig.lib.json"
     },
     {
+      "path": "../../finance/bank-import/feature/tsconfig.lib.json"
+    },
+    {
+      "path": "../../finance/bank-rule/feature/tsconfig.lib.json"
+    },
+    {
+      "path": "../../finance/bank-profile/feature/tsconfig.lib.json"
+    },
+    {
       "path": "../../content/meeting/feature/tsconfig.lib.json"
     }
   ]

@@ -4,7 +4,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DecimalPipe } from '@angular/common';
 import {
   ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonChip, IonCol, IonContent, IonGrid,
-  IonHeader, IonIcon, IonItem, IonLabel, IonNote, IonPopover, IonRow, IonSelect, IonSelectOption, IonTitle, IonToolbar,
+  IonHeader, IonIcon, IonItem, IonNote, IonPopover, IonRow, IonSelect, IonSelectOption, IonTitle, IonToolbar,
 } from '@ionic/angular/standalone';
 
 import { BankImportRowModel } from '@okr/shared-models';
@@ -28,7 +28,7 @@ const STATUS_FILTERS: BankImportStatusFilter[] = ['open', 'all', 'unmapped', 'ma
     SvgIconPipe, Menu, Spinner, EmptyList, ListFilter, DecimalPipe,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonIcon, IonPopover,
     IonContent, IonGrid, IonRow, IonCol, IonChip, IonNote,
-    IonSelect, IonSelectOption, IonItem, IonLabel,
+    IonSelect, IonSelectOption, IonItem,
   ],
   providers: [BankImportStore, BankProfileStore, BankRuleStore],
   styles: [`.medium { color: var(--ion-color-medium); }`],
