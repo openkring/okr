@@ -245,8 +245,15 @@ seed("aliasEvents/ev1", {"tenants": ["t1"], "isArchived": False,
 seed("diaries/diA", {"tenants": ["t1"], "authorKey": "uidA", "date": "20260101"})
 seed("diaryImports/impA", {"tenants": ["t1"], "authorKey": "uidA", "phase": "done"})
 
+# bank import (spec 1.60): treasurer config + client-written staging rows
+seed("users/uidT", {"tenants": ["t1"], "roles": {"treasurer": True}, "firstName": "T", "personKey": "pT"})
+seed("bank-import-rows/rowOpen",   {"tenants": ["t1"], "isArchived": False, "accountingTenantId": "t1", "importKey": "rowOpen", "status": "mapped", "bookingKey": ""})
+seed("bank-import-rows/rowPosted", {"tenants": ["t1"], "isArchived": False, "accountingTenantId": "t1", "importKey": "rowPosted", "status": "posted", "bookingKey": "bank-rowPosted"})
+seed("bank-rules/ruleA",           {"tenants": ["t1"], "isArchived": False, "accountingTenantId": "t1", "term": "google", "active": True})
+
 A, B, C, D = jwt("uidA"), jwt("uidB"), jwt("uidC"), jwt("uidD")
 E, M, P = jwt("uidE"), jwt("uidM"), jwt("uidP")
+T = jwt("uidT")
 GET, PATCH, POST, DELETE = "GET", "PATCH", "POST", "DELETE"
 
 
@@ -596,6 +603,21 @@ single_cases = [
     ("userP(privileged t1) GET aliasEvents -> ALLOW", True, GET, "aliasEvents/ev1", P, None, None),
     ("userP(privileged) PATCH aliasStats -> DENY (CF-written)", False,
      PATCH, "aliasStats/t1__qr__ab3x4y__2026-08-22", P, body({"count": 999}), ["count"]),
+    # bank import (spec 1.60): treasurer config + client-written staging rows;
+    # only the postBankImport callable (admin SDK) may set status 'posted' / bookingKey.
+    ("treasurer T CREATE bank-import-rows (mapped, no bookingKey) -> ALLOW", True, POST, "bank-import-rows?documentId=rowNew", T,
+     body({"tenants": ["t1"], "isArchived": False, "accountingTenantId": "t1", "importKey": "rowNew", "status": "mapped", "bookingKey": ""}), None),
+    ("treasurer T CREATE bank-import-rows with status posted -> DENY", False, POST, "bank-import-rows?documentId=rowBad", T,
+     body({"tenants": ["t1"], "isArchived": False, "accountingTenantId": "t1", "importKey": "rowBad", "status": "posted", "bookingKey": ""}), None),
+    ("treasurer T PATCH rowOpen.bookingKey -> DENY", False, PATCH, "bank-import-rows/rowOpen", T, body({"bookingKey": "bank-x"}), ["bookingKey"]),
+    ("treasurer T PATCH rowOpen.title -> ALLOW", True, PATCH, "bank-import-rows/rowOpen", T, body({"title": "X"}), ["title"]),
+    ("treasurer T PATCH rowPosted.title -> DENY", False, PATCH, "bank-import-rows/rowPosted", T, body({"title": "X"}), ["title"]),
+    ("treasurer T DELETE rowPosted -> DENY", False, DELETE, "bank-import-rows/rowPosted", T, None, None),
+    ("member A PATCH rowOpen.title -> DENY", False, PATCH, "bank-import-rows/rowOpen", A, body({"title": "X"}), ["title"]),
+    ("admin B (t2) GET bank-rules/ruleA -> DENY", False, GET, "bank-rules/ruleA", B, None, None),
+    ("treasurer T GET bank-rules/ruleA -> ALLOW", True, GET, "bank-rules/ruleA", T, None, None),
+    ("treasurer T CREATE bank-rules -> ALLOW", True, POST, "bank-rules?documentId=ruleNew", T,
+     body({"tenants": ["t1"], "isArchived": False, "accountingTenantId": "t1", "term": "tesla", "active": True}), None),
 ]
 
 # (label, expect_allow, collection, tenant, token)

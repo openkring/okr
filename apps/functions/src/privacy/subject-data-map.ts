@@ -1293,6 +1293,10 @@ export async function resolveDocs(entry: SubjectDataEntry, ctx: SubjectCtx): Pro
 //   role addresses published on purpose, never a data subject's contact details
 // not personal data: asset-categories — depreciation categories
 // not personal data: asset-movements — asset postings, reference assets and accounts only
+// not personal data: bank-profiles — the tenant's own bank account (IBAN + ledger account
+//   and CSV format), organisation config, no subject
+// not personal data: bank-rules — statement-text → title/account mapping rules authored
+//   by the treasurer
 // not personal data: boat-targets — one document per tenant (id = tenantId) holding the
 //   Bootseinteilung grid: target counts per year/usage/type, per-season budgets, and slot
 //   labels. No person field and no createdBy. `labels[].text` is free text, but it is a
@@ -1337,3 +1341,6 @@ export async function resolveDocs(entry: SubjectDataEntry, ctx: SubjectCtx): Pro
 //   correlationKey → expenses. Reachable transitively once the expense row is erased.
 // gap: expense-documents — OCR metadata for an expense receipt, linked only by
 //   expenseKey. Same transitive path as ocr-results.
+// gap: bank-import-rows — counterparty name extracted from a bank statement line (payee,
+//   rawText), no subject link (no personKey); the same name lands on the posted booking's
+//   counterparty, so erasure/anonymisation follows the bookings row (spec 1.60)

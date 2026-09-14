@@ -544,6 +544,25 @@ service cloud.firestore {
     match /ocr-results/{id} { allow read: if tenantRead(); allow write: if false; }
     match /ocr-rules/{id}   { allow read: if tenantRead(); allow create, update: if (hasRole('treasurer') || isAdmin()) && tenantCreateOrDetach(); allow delete: if (hasRole('treasurer') || isAdmin()) && canWriteTenant(resource.data); }
 
+    // ============================================================================
+    //  Bank import (spec 1.60) — profiles and rules are treasurer config; the staging
+    //  rows are client-written but a client may never mark one posted: only the
+    //  postBankImport callable (admin SDK) sets status 'posted' / bookingKey.
+    // ============================================================================
+    match /bank-profiles/{id} { allow read: if tenantRead(); allow create, update: if (hasRole('treasurer') || isAdmin()) && tenantCreateOrDetach(); allow delete: if (hasRole('treasurer') || isAdmin()) && canWriteTenant(resource.data); }
+    match /bank-rules/{id}    { allow read: if tenantRead(); allow create, update: if (hasRole('treasurer') || isAdmin()) && tenantCreateOrDetach(); allow delete: if (hasRole('treasurer') || isAdmin()) && canWriteTenant(resource.data); }
+    match /bank-import-rows/{id} {
+      allow read: if tenantRead();
+      allow create: if (hasRole('treasurer') || isAdmin()) && tenantCreateOrDetach()
+                    && request.resource.data.status in ['unmapped', 'mapped']
+                    && request.resource.data.bookingKey == '';
+      allow update: if (hasRole('treasurer') || isAdmin()) && canWriteTenant(resource.data)
+                    && resource.data.status != 'posted'
+                    && request.resource.data.status in ['unmapped', 'mapped']
+                    && request.resource.data.bookingKey == '';
+      allow delete: if (hasRole('treasurer') || isAdmin()) && canWriteTenant(resource.data) && resource.data.status != 'posted';
+    }
+
     // Reference data that may have an admin authoring UI — allow privileged writes.
     match /assets/{id}             { allow read: if tenantRead(); allow create, update: if isPrivileged() && tenantCreateOrDetach(); allow delete: if isPrivileged() && tenantDelete(); }
     match /asset-categories/{id}   { allow read: if tenantRead(); allow create, update: if isPrivileged() && tenantCreateOrDetach(); allow delete: if isPrivileged() && tenantDelete(); }
