@@ -1,1 +1,38 @@
-{}
+{
+  "singular": "Regla bancaria",
+  "plural": "Reglas bancarias",
+  "empty": "Todavía no hay reglas bancarias. Al importar un archivo bancario, puedes crear una regla a partir de cualquier línea.",
+  "inactive": "inactiva",
+  "create": { "label": "Crear regla bancaria", "conf": "La regla bancaria se ha creado.", "error": "La regla bancaria no se ha podido crear." },
+  "update": { "label": "Editar regla bancaria", "conf": "La regla bancaria se ha guardado.", "error": "La regla bancaria no se ha podido guardar." },
+  "delete": { "label": "Eliminar regla bancaria", "conf": "La regla bancaria se ha eliminado.", "error": "La regla bancaria no se ha podido eliminar." },
+  "view": { "label": "Ver regla bancaria" },
+  "cancel": { "label": "Cancelar" },
+  "save": { "label": "Guardar" },
+  "condition": {
+    "label": "Condición",
+    "helper": "Cómo se busca el término en el texto de la transacción.",
+    "contains": "contiene",
+    "startsWith": "empieza por",
+    "endsWith": "termina en",
+    "regex": "expresión regular"
+  },
+  "term": {
+    "label": "Término",
+    "placeholder": "p. ej. Google Cloud",
+    "helper": "Las mayúsculas/minúsculas y los acentos no importan.",
+    "storedAs": "se guarda como:"
+  },
+  "title": {
+    "label": "Texto de la transacción",
+    "placeholder": "p. ej. Google Cloud GCP, Dublín",
+    "helper": "Así aparecerá la transacción en el diario. En una expresión regular puedes usar $1 a $9 para las partes encontradas."
+  },
+  "account": { "label": "Contracuenta", "helper": "La cuenta bancaria proviene del perfil bancario; aquí eliges la cuenta de gasto o ingreso." },
+  "vat": { "label": "Código de IVA (opcional)", "helper": "Se anota en la línea de la contracuenta." },
+  "priority": { "label": "Prioridad", "helper": "Si varias reglas coinciden, gana el número más alto." },
+  "active": { "label": "Activa" },
+  "notes": { "label": "Notas", "placeholder": "Observaciones sobre esta regla" },
+  "as": { "title": "Elegir una acción", "edit": "Editar regla", "delete": "Eliminar regla" },
+  "changeConfirmation": { "cancel": "Descartar", "ok": "Guardar" }
+}

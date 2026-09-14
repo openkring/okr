@@ -1,1 +1,38 @@
-{}
+{
+  "singular": "Bank rule",
+  "plural": "Bank rules",
+  "empty": "No bank rules yet. When you import a bank file, you can create a rule from any row.",
+  "inactive": "inactive",
+  "create": { "label": "Create bank rule", "conf": "The bank rule was created.", "error": "The bank rule could not be created." },
+  "update": { "label": "Edit bank rule", "conf": "The bank rule was saved.", "error": "The bank rule could not be saved." },
+  "delete": { "label": "Delete bank rule", "conf": "The bank rule was deleted.", "error": "The bank rule could not be deleted." },
+  "view": { "label": "View bank rule" },
+  "cancel": { "label": "Cancel" },
+  "save": { "label": "Save" },
+  "condition": {
+    "label": "Condition",
+    "helper": "How the term is searched for in the booking text.",
+    "contains": "contains",
+    "startsWith": "starts with",
+    "endsWith": "ends with",
+    "regex": "regular expression"
+  },
+  "term": {
+    "label": "Term",
+    "placeholder": "e.g. Google Cloud",
+    "helper": "Upper/lower case and accents do not matter.",
+    "storedAs": "stored as:"
+  },
+  "title": {
+    "label": "Booking text",
+    "placeholder": "e.g. Google Cloud GCP, Dublin",
+    "helper": "This is how the booking appears in the journal. For a regular expression, you can use $1 to $9 for the matched parts."
+  },
+  "account": { "label": "Counter account", "helper": "The bank account comes from the bank profile; here you choose the expense or income account." },
+  "vat": { "label": "VAT code (optional)", "helper": "Recorded on the counter-account line." },
+  "priority": { "label": "Priority", "helper": "When several rules match, the higher number wins." },
+  "active": { "label": "Active" },
+  "notes": { "label": "Notes", "placeholder": "Remarks about this rule" },
+  "as": { "title": "Choose an action", "edit": "Edit rule", "delete": "Delete rule" },
+  "changeConfirmation": { "cancel": "Discard", "ok": "Save" }
+}

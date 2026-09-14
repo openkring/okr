@@ -1,1 +1,38 @@
-{}
+{
+  "singular": "Bankregel",
+  "plural": "Bankregeln",
+  "empty": "Noch keine Bankregeln erfasst. Beim Import einer Bankdatei kannst du aus jeder Zeile eine Regel erstellen.",
+  "inactive": "inaktiv",
+  "create": { "label": "Bankregel erstellen", "conf": "Die Bankregel wurde erstellt.", "error": "Die Bankregel konnte nicht erstellt werden." },
+  "update": { "label": "Bankregel bearbeiten", "conf": "Die Bankregel wurde gespeichert.", "error": "Die Bankregel konnte nicht gespeichert werden." },
+  "delete": { "label": "Bankregel löschen", "conf": "Die Bankregel wurde gelöscht.", "error": "Die Bankregel konnte nicht gelöscht werden." },
+  "view": { "label": "Bankregel ansehen" },
+  "cancel": { "label": "Abbrechen" },
+  "save": { "label": "Speichern" },
+  "condition": {
+    "label": "Bedingung",
+    "helper": "Wie der Begriff im Buchungstext gesucht wird.",
+    "contains": "enthält",
+    "startsWith": "beginnt mit",
+    "endsWith": "endet mit",
+    "regex": "regulärer Ausdruck"
+  },
+  "term": {
+    "label": "Begriff",
+    "placeholder": "z.B. Google Cloud",
+    "helper": "Gross- und Kleinschreibung sowie Umlaute spielen keine Rolle.",
+    "storedAs": "wird gespeichert als:"
+  },
+  "title": {
+    "label": "Buchungstext",
+    "placeholder": "z.B. Google Cloud GCP, Dublin",
+    "helper": "So erscheint die Buchung im Journal. Bei einem regulären Ausdruck kannst du $1 bis $9 für gefundene Teile verwenden."
+  },
+  "account": { "label": "Gegenkonto", "helper": "Das Bankkonto kommt aus dem Bankprofil, hier wählst du das Aufwand- oder Ertragskonto." },
+  "vat": { "label": "MwSt-Code (optional)", "helper": "Wird auf der Gegenkonto-Zeile vermerkt." },
+  "priority": { "label": "Priorität", "helper": "Bei mehreren passenden Regeln gewinnt die höhere Zahl." },
+  "active": { "label": "Aktiv" },
+  "notes": { "label": "Notizen", "placeholder": "Bemerkungen zu dieser Regel" },
+  "as": { "title": "Aktion wählen", "edit": "Regel bearbeiten", "delete": "Regel löschen" },
+  "changeConfirmation": { "cancel": "Verwerfen", "ok": "Speichern" }
+}

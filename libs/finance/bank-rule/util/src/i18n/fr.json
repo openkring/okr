@@ -1,1 +1,38 @@
-{}
+{
+  "singular": "Règle bancaire",
+  "plural": "Règles bancaires",
+  "empty": "Aucune règle bancaire pour le moment. Lors de l'import d'un fichier bancaire, tu peux créer une règle à partir de n'importe quelle ligne.",
+  "inactive": "inactive",
+  "create": { "label": "Créer une règle bancaire", "conf": "La règle bancaire a été créée.", "error": "La règle bancaire n'a pas pu être créée." },
+  "update": { "label": "Modifier la règle bancaire", "conf": "La règle bancaire a été enregistrée.", "error": "La règle bancaire n'a pas pu être enregistrée." },
+  "delete": { "label": "Supprimer la règle bancaire", "conf": "La règle bancaire a été supprimée.", "error": "La règle bancaire n'a pas pu être supprimée." },
+  "view": { "label": "Afficher la règle bancaire" },
+  "cancel": { "label": "Annuler" },
+  "save": { "label": "Enregistrer" },
+  "condition": {
+    "label": "Condition",
+    "helper": "Comment le terme est recherché dans le texte de la transaction.",
+    "contains": "contient",
+    "startsWith": "commence par",
+    "endsWith": "se termine par",
+    "regex": "expression régulière"
+  },
+  "term": {
+    "label": "Terme",
+    "placeholder": "p. ex. Google Cloud",
+    "helper": "La casse et les accents n'ont pas d'importance.",
+    "storedAs": "enregistré comme :"
+  },
+  "title": {
+    "label": "Texte de la transaction",
+    "placeholder": "p. ex. Google Cloud GCP, Dublin",
+    "helper": "C'est ainsi que la transaction apparaît dans le journal. Pour une expression régulière, tu peux utiliser $1 à $9 pour les parties trouvées."
+  },
+  "account": { "label": "Contre-compte", "helper": "Le compte bancaire provient du profil bancaire ; ici tu choisis le compte de charge ou de produit." },
+  "vat": { "label": "Code TVA (facultatif)", "helper": "Enregistré sur la ligne du contre-compte." },
+  "priority": { "label": "Priorité", "helper": "Si plusieurs règles correspondent, le chiffre le plus élevé l'emporte." },
+  "active": { "label": "Active" },
+  "notes": { "label": "Notes", "placeholder": "Remarques sur cette règle" },
+  "as": { "title": "Choisir une action", "edit": "Modifier la règle", "delete": "Supprimer la règle" },
+  "changeConfirmation": { "cancel": "Abandonner", "ok": "Enregistrer" }
+}

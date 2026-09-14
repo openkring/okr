@@ -1,1 +1,38 @@
-{}
+{
+  "singular": "Regola bancaria",
+  "plural": "Regole bancarie",
+  "empty": "Non ci sono ancora regole bancarie. Quando importi un file bancario, puoi creare una regola da qualsiasi riga.",
+  "inactive": "inattiva",
+  "create": { "label": "Crea regola bancaria", "conf": "La regola bancaria è stata creata.", "error": "Non è stato possibile creare la regola bancaria." },
+  "update": { "label": "Modifica regola bancaria", "conf": "La regola bancaria è stata salvata.", "error": "Non è stato possibile salvare la regola bancaria." },
+  "delete": { "label": "Elimina regola bancaria", "conf": "La regola bancaria è stata eliminata.", "error": "Non è stato possibile eliminare la regola bancaria." },
+  "view": { "label": "Visualizza regola bancaria" },
+  "cancel": { "label": "Annulla" },
+  "save": { "label": "Salva" },
+  "condition": {
+    "label": "Condizione",
+    "helper": "Come viene cercato il termine nel testo della transazione.",
+    "contains": "contiene",
+    "startsWith": "inizia con",
+    "endsWith": "finisce con",
+    "regex": "espressione regolare"
+  },
+  "term": {
+    "label": "Termine",
+    "placeholder": "p.es. Google Cloud",
+    "helper": "Maiuscole/minuscole e accenti non hanno importanza.",
+    "storedAs": "salvato come:"
+  },
+  "title": {
+    "label": "Testo della transazione",
+    "placeholder": "p.es. Google Cloud GCP, Dublino",
+    "helper": "È così che la transazione appare nel giornale. Con un'espressione regolare puoi usare $1 fino a $9 per le parti trovate."
+  },
+  "account": { "label": "Contro-conto", "helper": "Il conto bancario proviene dal profilo bancario; qui scegli il conto di costo o di ricavo." },
+  "vat": { "label": "Codice IVA (facoltativo)", "helper": "Viene annotato sulla riga del contro-conto." },
+  "priority": { "label": "Priorità", "helper": "Se più regole corrispondono, vince il numero più alto." },
+  "active": { "label": "Attiva" },
+  "notes": { "label": "Note", "placeholder": "Osservazioni su questa regola" },
+  "as": { "title": "Scegli un'azione", "edit": "Modifica regola", "delete": "Elimina regola" },
+  "changeConfirmation": { "cancel": "Annulla", "ok": "Salva" }
+}
