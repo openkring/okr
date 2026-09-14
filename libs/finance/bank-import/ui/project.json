@@ -1,0 +1,24 @@
+{
+  "name": "finance-bank-import-ui",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/finance/bank-import/ui/src",
+  "prefix": "okr",
+  "projectType": "library",
+  "tags": ["type:ui", "scope:finance", "platform:mobile", "platform:web"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/finance/bank-import/ui",
+        "main": "libs/finance/bank-import/ui/src/index.ts",
+        "tsConfig": "libs/finance/bank-import/ui/tsconfig.lib.json",
+        "assets": ["libs/finance/bank-import/ui/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

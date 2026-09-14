@@ -1,0 +1,22 @@
+{
+  "name": "finance-bank-rule-data-access",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/finance/bank-rule/data-access/src",
+  "prefix": "okr",
+  "projectType": "library",
+  "tags": ["type:data-access", "scope:finance", "platform:mobile", "platform:web"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/finance/bank-rule/data-access",
+        "main": "libs/finance/bank-rule/data-access/src/index.ts",
+        "tsConfig": "libs/finance/bank-rule/data-access/tsconfig.lib.json",
+        "assets": ["libs/finance/bank-rule/data-access/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": { "executor": "@nx/eslint:lint" }
+  }
+}

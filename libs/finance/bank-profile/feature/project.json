@@ -1,0 +1,22 @@
+{
+  "name": "finance-bank-profile-feature",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/finance/bank-profile/feature/src",
+  "prefix": "okr",
+  "projectType": "library",
+  "tags": ["type:feature", "scope:finance", "platform:mobile", "platform:web"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/finance/bank-profile/feature",
+        "main": "libs/finance/bank-profile/feature/src/index.ts",
+        "tsConfig": "libs/finance/bank-profile/feature/tsconfig.lib.json",
+        "assets": ["libs/finance/bank-profile/feature/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": { "executor": "@nx/eslint:lint" }
+  }
+}
