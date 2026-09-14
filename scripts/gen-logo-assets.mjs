@@ -2,8 +2,8 @@
 /**
  * gen-logo-assets.mjs — every logo rendition for a tenant, from one master.
  *
- * One hand-authored master per tenant (`tenant/<id>/logo/logo.svg`, square and
- * full-bleed). This script rasterizes it once and uploads the raster; imgix
+ * One hand-authored master per tenant, named by `app-config.logoUrl` and square
+ * and full-bleed. This script rasterizes it once and uploads the raster; imgix
  * produces every size from there. See the `logo` skill for the full contract.
  *
  * Why a local rasterization step at all: imgix does not accept SVG as a source
@@ -11,7 +11,10 @@
  * no-op, not an error. So exactly one rasterization happens here, and
  * everything downstream is imgix.
  *
- *   logo.svg  --Playwright-->  logo-master.png (1024)  --upload-->  imgix
+ *   <logoUrl>.svg  --Playwright-->  logo-master.png (1024)  --upload-->  imgix
+ *
+ * The master keeps whatever name it has; the generated PNGs always land beside
+ * it under fixed names, so manifest and index.html never need to know it.
  *
  * Generated per master (1024x1024 PNG):
  *   logo-master.png    plain rasterization, transparency preserved
@@ -47,11 +50,15 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const BUCKET = 'bkaiser-org.appspot.com';
 const RASTER = 1024; // master raster size; imgix scales down from here
 
-/** Master file name -> suffix on the generated raster. */
+/**
+ * Optional companion masters, named after the master itself:
+ * `bka-logo.svg` -> `bka-logo-inverse.svg`, `bka-logo-mono.svg`.
+ * When absent the normal rasterizations stand in — callers fall back, not 404.
+ */
 const VARIANTS = [
-  { file: 'logo.svg', suffix: '', required: true },
-  { file: 'logo-inverse.svg', suffix: '-inverse', required: false },
-  { file: 'logo-mono.svg', suffix: '-mono', required: false },
+  { suffix: '', required: true },
+  { suffix: '-inverse', required: false },
+  { suffix: '-mono', required: false },
 ];
 
 // ── args ────────────────────────────────────────────────────────────────────
@@ -113,7 +120,16 @@ const COMPOSE = async ({ svg, size, bg }) => {
   const dist = (a, b) => Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1]) + Math.abs(a[2] - b[2]);
   const rgb = (v) => `rgb(${v[0]},${v[1]},${v[2]})`;
 
-  /** Most common opaque colour in a pixel set, plus how dominant/opaque it is. */
+  /**
+   * Most common opaque colour in a pixel set.
+   *
+   * Colours are bucketed coarsely (16 levels/channel) so that antialiasing and
+   * gradients still agree on one dominant colour — but the bucket centre is NOT
+   * the colour to paint with. bka's background is #f5f6f8, which buckets to
+   * rgb(240,240,240); filling with that leaves a visible seam where the artwork
+   * meets the backdrop. So we also average the true pixels of the winning
+   * bucket and return that as `exact`, which is what gets painted.
+   */
   function modal(px) {
     const m = new Map();
     let opaque = 0;
@@ -121,11 +137,18 @@ const COMPOSE = async ({ svg, size, bg }) => {
       if (a < 200) continue;
       opaque++;
       const k = key(r, g, b);
-      m.set(k, (m.get(k) || 0) + 1);
+      let e = m.get(k);
+      if (!e) m.set(k, (e = { n: 0, r: 0, g: 0, b: 0 }));
+      e.n++; e.r += r; e.g += g; e.b += b;
     }
-    if (!m.size) return { rgb: [255, 255, 255], share: 0, opq: 0 };
-    const best = [...m.entries()].sort((x, y) => y[1] - x[1])[0];
-    return { rgb: best[0].split(',').map(Number), share: best[1] / px.length, opq: opaque / px.length };
+    if (!m.size) return { rgb: [255, 255, 255], exact: [255, 255, 255], share: 0, opq: 0 };
+    const [k, e] = [...m.entries()].sort((x, y) => y[1].n - x[1].n)[0];
+    return {
+      rgb: k.split(',').map(Number),                                   // bucket, for comparisons
+      exact: [Math.round(e.r / e.n), Math.round(e.g / e.n), Math.round(e.b / e.n)], // for painting
+      share: e.n / px.length,
+      opq: opaque / px.length,
+    };
   }
 
   const img = await load('data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg))));
@@ -202,7 +225,7 @@ const COMPOSE = async ({ svg, size, bg }) => {
   }
 
   /** Background behind the opaque renditions. */
-  const backdrop = framed || (mode === 'bleed' && edge.opq > 0.9) ? rgb(mid.rgb) : bg;
+  const backdrop = framed || (mode === 'bleed' && edge.opq > 0.9) ? rgb(mid.exact) : bg;
 
   // ── logo-master.png — plain, transparency preserved ───────────────────────
   const plain = mk(N);
@@ -237,7 +260,7 @@ const COMPOSE = async ({ svg, size, bg }) => {
     const tw = Math.max(3, thick * (N / bw));
     rx.beginPath();
     rx.arc(R, R, R - tw / 2, 0, Math.PI * 2);
-    rx.strokeStyle = rgb(edge.rgb);
+    rx.strokeStyle = rgb(edge.exact);
     rx.lineWidth = tw;
     rx.stroke();
   }
@@ -286,16 +309,34 @@ function manifestIcons(base, dir, sfx) {
   ];
 }
 
-/** Canonical icon links. `mask-icon` is deliberately absent — Safari-pinned-tab
- *  only, was present for just five tenants, and kwa's was the wrong aspect. */
-function iconLinks(base, dir, masterSvgPath) {
+/** Canonical icon links.
+ *
+ *  `mask-icon` is deliberately absent — Safari-pinned-tab only, was present for
+ *  just five tenants, and kwa's was the wrong aspect.
+ *
+ *  The SVG favicon is only emitted for a small master, for two reasons:
+ *   1. imgix serves SVG unprocessed and caches it on the path alone. Replacing a
+ *      master in place keeps serving the OLD bytes, and query params do not bust
+ *      it (verified: `logo.svg?v=…` still returned the previous file). A stale
+ *      favicon would linger with no way to force a refresh short of an imgix purge.
+ *   2. Some masters are far too heavy to be a favicon — bka's portrait is 614 KB.
+ *  The PNG favicon has neither problem: it is derived from `logo-master.png`, a
+ *  path that is rewritten on every run, so it is always fresh.
+ */
+const SVG_FAVICON_MAX = 32 * 1024;
+
+function iconLinks(base, dir, masterSvgPath, masterBytes) {
   const m = `${dir}/logo-master.png`;
   const k = `${dir}/logo-maskable.png`;
-  return [
-    `<link rel="icon" type="image/svg+xml" sizes="any" href="${base}/${masterSvgPath}" />`,
+  const links = [];
+  if (masterBytes && masterBytes <= SVG_FAVICON_MAX) {
+    links.push(`<link rel="icon" type="image/svg+xml" sizes="any" href="${base}/${masterSvgPath}" />`);
+  }
+  links.push(
     `<link rel="icon" type="image/png" sizes="32x32" href="${png(base, m, 'w=32&h=32')}" />`,
     `<link rel="apple-touch-icon" href="${png(base, k, 'w=180&h=180')}" />`,
-  ];
+  );
+  return links;
 }
 
 // ── file rewriting ──────────────────────────────────────────────────────────
@@ -327,8 +368,25 @@ function rewriteIndexHtml(appDir, links) {
   let html = fs.readFileSync(p, 'utf8');
   const original = html;
   // Drop every existing icon link; they are generated, not hand-maintained.
+  // A comment sitting directly above them describes those links, so it goes too —
+  // otherwise it is left stranded above unrelated markup, documenting tags that
+  // no longer exist. The replacement block carries its own rationale.
+  // `[\s\S]*?` is NOT safe here: when the lookahead fails the engine backtracks
+  // past the first `-->` into the next comment, swallowing whatever sits between
+  // them — which deleted the `<link rel="manifest">`. The tempered body below
+  // cannot contain `-->`, so it matches exactly one comment and never spans a tag.
+  html = html.replace(
+    /^[ \t]*<!--(?:(?!-->)[\s\S])*-->[ \t]*\n(?=[ \t]*<link[^>]*\brel="(?:icon|apple-touch-icon|mask-icon)")/gim,
+    '',
+  );
   html = html.replace(/^[ \t]*<link[^>]*\brel="(?:icon|apple-touch-icon|mask-icon)"[^>]*>\s*\n/gim, '');
-  const block = links.map((l) => `    ${l}`).join('\n') + '\n';
+  const banner =
+    '    <!-- Generated by scripts/gen-logo-assets.mjs from the tenant\'s single master.\n' +
+    '         Do not edit by hand; the next `pnpm logo:gen` overwrites this block.\n' +
+    '         A PNG favicon is always emitted: Safari (macOS and iOS) has never supported an\n' +
+    '         SVG in `rel="icon"` — it silently shows nothing and falls back to /favicon.ico,\n' +
+    '         which we do not serve. The SVG favicon is added only for a small master. -->\n';
+  const block = banner + links.map((l) => `    ${l}`).join('\n') + '\n';
   if (/<link[^>]*\brel="manifest"[^>]*>\s*\n/i.test(html)) {
     html = html.replace(/(<link[^>]*\brel="manifest"[^>]*>\s*\n)/i, `$1${block}`);
   } else {
@@ -365,46 +423,43 @@ for (const tenant of tenants) {
     (hasApp && JSON.parse(fs.readFileSync(path.join(appDir, 'src/assets/manifest.json'), 'utf8')).background_color) ||
     '#ffffff';
 
+  // The master is whatever `app-config.logoUrl` points at. That field already
+  // exists to name the tenant's logo, so the generator does not also impose a
+  // fixed filename — one pointer, one place to change it.
+  const masterPath = (cfg.logoUrl || '').replace(/^\//, '');
+  if (!masterPath) {
+    console.error(`   app-config/${tenant}.logoUrl is empty — nothing to generate from`);
+    failures++;
+    continue;
+  }
+  /** `bka-logo.svg` + `-inverse` -> `bka-logo-inverse.svg` */
+  const sibling = (suffix) => masterPath.replace(/(\.[^./]+)$/, `${suffix}$1`);
+
   let generatedPrimary = false;
   let resolvedMaster = null;
+  let resolvedBytes = 0;
 
   for (const variant of VARIANTS) {
-    if (variant.required) {
-      // Candidate chain, best first. `logo_square.svg` is the square master
-      // under its pre-rename name; app-config's `logoUrl` comes last because
-      // for five tenants it still points at the ROUND badge. A candidate that
-      // is rejected (e.g. scs/bka/bkg still keep a wordmark at logo.svg) falls
-      // through to the next rather than failing the tenant.
-      const candidates = [
-        `${dir}/logo.svg`,
-        `${dir}/logo_square.svg`,
-        (cfg.logoUrl || '').replace(/^\//, ''),
-      ].filter((c, i, arr) => c && arr.indexOf(c) === i);
-
-      for (const cand of candidates) {
-        const [ok] = await bucket.file(cand).exists();
-        if (!ok) continue;
-        if (cand !== `${dir}/logo.svg`) console.warn(`   using ${cand} (logo.svg not usable yet)`);
-        if (await generate(cand, variant.suffix)) {
-          generatedPrimary = true;
-          resolvedMaster = cand;
-          break;
-        }
-      }
-      if (!generatedPrimary) {
-        console.error(`   no usable square master among: ${candidates.join(', ')}`);
+    const srcPath = variant.suffix === '' ? masterPath : sibling(variant.suffix);
+    const [exists] = await bucket.file(srcPath).exists();
+    if (!exists) {
+      if (variant.required) {
+        console.error(`   logoUrl points at ${srcPath}, which is not in the bucket`);
         failures++;
       }
       continue;
     }
-
-    const srcPath = `${dir}/${variant.file}`;
-    const [exists] = await bucket.file(srcPath).exists();
-    if (exists) await generate(srcPath, variant.suffix);
+    if (await generate(srcPath, variant.suffix) && variant.required) {
+      generatedPrimary = true;
+      resolvedMaster = srcPath;
+    } else if (variant.required) {
+      failures++;
+    }
   }
 
   async function generate(srcPath, suffix) {
     const [buf] = await bucket.file(srcPath).download();
+    if (suffix === '') resolvedBytes = buf.length;
     let svg = buf.toString('utf8');
 
     // Editor exports carry a root `transform` that the viewBox already handles.
@@ -459,7 +514,7 @@ for (const tenant of tenants) {
   const masterSvg = resolvedMaster;
   const mPath = manifestPath(appDir);
   const m = rewriteManifest(appDir, manifestIcons(base, dir, ''));
-  const h = rewriteIndexHtml(appDir, iconLinks(base, dir, masterSvg));
+  const h = rewriteIndexHtml(appDir, iconLinks(base, dir, masterSvg, resolvedBytes));
   console.log(
     `   ${path.relative(appDir, mPath)} ${m ? 'rewritten' : 'unchanged'} · index.html ${h ? 'rewritten' : 'unchanged'}`,
   );
