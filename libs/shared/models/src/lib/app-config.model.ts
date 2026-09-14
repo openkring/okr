@@ -248,7 +248,12 @@ export class AppConfig {
    * below. It is deliberately not retained as a field; see the class doc comment.
    */
   constructor(tenantId: string) {
-    this.logoUrl = `tenant/${tenantId}/logo/logo_round.svg`;
+    // The tenant's ONE hand-authored icon master: square, full-bleed, opaque. `pnpm logo:gen`
+    // reads this path and derives logo-master / logo-round / logo-maskable next to it, so the
+    // filename is free — but a NEW tenant must not default to the retired round badge: a round
+    // master inside the OS's own circular mask renders as a circle in a circle. See
+    // .claude/skills/logo.
+    this.logoUrl = `tenant/${tenantId}/logo/${tenantId}-logo.svg`;
     this.welcomeBannerUrl = `tenant/${tenantId}/app/welcome.jpg`;
     this.notfoundBannerUrl = `tenant/${tenantId}/app/not-found.jpg`;
     this.ownerUserId = `owner_${tenantId}`;
