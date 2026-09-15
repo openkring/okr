@@ -1,4 +1,5 @@
-import { Component, computed, inject, input } from '@angular/core';
+import { Component, computed, inject, input, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { ActionSheetController, ActionSheetOptions, IonBackdrop, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 import { AccountModel, RoleName } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
@@ -42,7 +43,7 @@ import { AccountStore } from './account.store';
           <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
             <ng-template>
               <ion-content>
-                <okr-menu [menuName]="contextMenuName()" />
+                <okr-menu [menuName]="contextMenuName()" [toggleStates]="{ toggleEditMode: editMode() }" />
               </ion-content>
             </ng-template>
           </ion-popover>
@@ -69,7 +70,7 @@ import { AccountStore } from './account.store';
     } @else {
       <ion-list lines="inset">
         @for(node of visibleNodes(); track node.account.okey) {
-          <ion-item (click)="showActions(node)" [style.padding-inline-start.px]="node.depth * 16">
+          <ion-item button [detail]="false" (click)="onItemClick(node)" [style.padding-inline-start.px]="node.depth * 16">
             <ion-icon
               slot="start"
               [src]="expandIconName(node) | svgIcon"
@@ -89,7 +90,13 @@ export class AccountList {
   protected store = inject(AccountStore);
   private actionSheetController = inject(ActionSheetController);
 
+  private router = inject(Router);
+
   public contextMenuName = input.required<string>();
+
+  // The context-menu 'toggleEditMode' action flips this: in edit mode a row opens its action sheet,
+  // in view mode a group row expands/collapses and a leaf row opens the journal filtered by that account.
+  protected readonly editMode = signal(false);
 
   protected popupId = computed(() => 'c_accounts');
   protected isLoading = computed(() => this.store.isLoading());
@@ -109,12 +116,26 @@ export class AccountList {
     const selectedMethod = $event.detail.data;
     if (!selectedMethod) return; // dismissed without choosing an item (backdrop/escape) — not an error
     switch (selectedMethod) {
+      case 'toggleEditMode': this.editMode.update(v => !v); break;
       case 'create': await this.store.addRoot(); break;
       case 'import': await this.store.importPlan(); break;
       case 'export': await this.store.exportPlan(); break;
       // Deleting a whole chart of accounts (root) is now done via that root row's action sheet,
       // since there is no longer a selected root at the toolbar level.
       default: error(undefined, `AccountList.onPopoverDismiss: unknown method ${selectedMethod}`);
+    }
+  }
+
+  /*-------------------------- row click --------------------------------*/
+  protected async onItemClick(node: FlatAccountNode): Promise<void> {
+    if (this.editMode()) {
+      await this.showActions(node);
+    } else if (node.account.type !== 'leaf') {
+      this.store.toggleExpand(node.account.okey);
+    } else {
+      await this.router.navigate(
+        ['/accounting', this.store.accountingStore.accountingTenantId(), 'journal', 'c-journal'],
+        { queryParams: { accountKey: node.account.okey } });
     }
   }
 

@@ -17,7 +17,7 @@
     "root": "Kontoplan wählen",
     "hint": "Bitte zuerst einen Kontoplan wählen."
   },
-  "update": "Konto editieren",
+  "update": "Konto ändern",
   "view": "Konto Details ansehen",
   "okey": {
     "label": "okey",

@@ -1439,6 +1439,8 @@ const finance: FeatureBlock = {
       { key: 'bill-export-raw', name: 'bill-export-raw', url: 'exportRaw', action: 'call', roleNeeded: 'treasurer', icon: 'download', label: '@item.bill-export-raw' },
     ] },
     { key: 'c-account', name: 'c-account', url: '', action: 'context', roleNeeded: 'treasurer', icon: 'help-circle', label: '', children: [
+      // Shared leaf (see `c-contentpage`): view mode navigates, edit mode opens the row's action sheet.
+      { key: 'editmode-toggle', name: 'editmode-toggle', url: 'toggleEditMode', action: 'toggle', roleNeeded: 'registered', icon: 'edit', label: '@item.editmode-toggle' },
       { key: 'account-create', name: 'account-create', url: 'create', action: 'call', roleNeeded: 'treasurer', icon: 'edit', label: '@item.account-create' },
       { key: 'account-import', name: 'account-import', url: 'import', action: 'call', roleNeeded: 'treasurer', icon: 'upload', label: '@item.account-import' },
       { key: 'account-export', name: 'account-export', url: 'export', action: 'call', roleNeeded: 'treasurer', icon: 'download', label: '@item.account-export' },

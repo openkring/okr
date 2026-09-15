@@ -43,7 +43,7 @@ export type { BookingI18n };
 const ALL_YEARS = 99;   // sentinel emitted by okr-year-select for "all years"
 
 export const BookingStore = signalStore(
-  withState({ searchTerm: '', selectedYear: getYear(), selectedStatus: 'all' }),
+  withState({ searchTerm: '', selectedYear: getYear(), selectedStatus: 'all', accountKey: '' }),
   withProps(() => ({
     bookingService: inject(BookingService),
     bookingLineService: inject(BookingLineService),
@@ -78,6 +78,11 @@ export const BookingStore = signalStore(
     accountingTenantId: computed(() => store.accountingStore.accountingTenantId()),
     isReadOnly: computed(() => store.accountingStore.isExternallyManaged()),
     tenantId: computed(() => store.appStore.tenantId()),
+    // "<id> <name>" of the account the journal is filtered on, '' when unfiltered.
+    accountLabel: computed(() => {
+      const account = (store.accountsResource.value() ?? []).find(a => a.okey === store.accountKey());
+      return account ? `${account.id} ${account.name}` : '';
+    }),
     accountIdByKey: computed(() => {
       const map = new Map<string, string>();
       for (const a of store.accountsResource.value() ?? []) map.set(a.okey, a.id);
@@ -118,7 +123,10 @@ export const BookingStore = signalStore(
       const year = store.selectedYear();
       const term = store.searchTerm();
       const status = store.selectedStatus();
+      const accountKey = store.accountKey();
+      const linesByBooking = store.linesByBooking();
       return store.journalRows()
+        .filter(r => !accountKey || (linesByBooking.get(r.okey) ?? []).some(l => l.accountKey === accountKey))
         .filter(r => year === ALL_YEARS || r.year === year)
         .filter(r => status === 'all' || r.booking.status === status)
         .filter(r => matchesJournalSearch(r, term));
@@ -139,6 +147,10 @@ export const BookingStore = signalStore(
 
     setSelectedStatus(selectedStatus: string): void {
       patchState(store, { selectedStatus });
+    },
+
+    setAccountKey(accountKey: string): void {
+      patchState(store, { accountKey });
     },
 
     async export(): Promise<void> {

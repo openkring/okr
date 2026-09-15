@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonBackdrop, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { BookingLineModel, BookingModel, RoleName } from '@okr/shared-models';
@@ -38,6 +38,9 @@ function parseAmount(amount: string): number {
       <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
       <ion-title>
         {{ filteredCount() }}/{{ count() }} {{ store.i18n.list_title() }}
+        @if(store.accountLabel(); as accountLabel) {
+          <span class="account-badge">{{ accountLabel }}</span>
+        }
         @if(forReviewCount() > 0) {
           <span class="review-badge">{{ forReviewCount() }} {{ store.i18n.review_badge() }}</span>
         }
@@ -112,6 +115,12 @@ function parseAmount(amount: string): number {
   `,
   styles: [`
     .clickable { cursor: pointer; user-select: none; }
+    .account-badge {
+      margin-left: 0.5rem; padding: 0.1rem 0.45rem;
+      border-radius: 0.75rem; font-size: 0.7rem; font-weight: 600;
+      background: var(--ion-color-light); color: var(--ion-color-light-contrast);
+      vertical-align: middle;
+    }
     .review-badge {
       margin-left: 0.5rem; padding: 0.1rem 0.45rem;
       border-radius: 0.75rem; font-size: 0.7rem; font-weight: 600;
@@ -128,6 +137,11 @@ export class BookingList {
   private readonly imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 
   public readonly contextMenuName = input.required<string>();
+  // `?accountKey=<okey>` (query param, bound by withComponentInputBinding): show only bookings with a
+  // line on that account — the account list navigates here from a leaf account in view mode.
+  public readonly accountKey = input<string | undefined>();
+
+  private readonly syncAccountKey = effect(() => this.store.setAccountKey(this.accountKey() ?? ''));
 
   protected readonly popupId = computed(() => 'c_bookings');
   protected readonly isLoading = computed(() => this.store.isLoading());
