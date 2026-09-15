@@ -11,7 +11,6 @@ import { I18nService } from '@okr/shared-i18n';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { ListFilter } from '@okr/shared-ui';
 import { AlertService, copyToClipboard } from '@okr/shared-util-angular';
-import { fill } from '@okr/shared-util-core';
 import type { CategoryListModel, FeatureRolloutModel, MenuItemModel } from '@okr/shared-models';
 import {
   FEATURE_BLOCKS, FEATURE_BUNDLES, FEATURE_PICKER_I18N_KEYS, FEATURE_PROFILES, effectiveFeatures,
@@ -140,8 +139,21 @@ type PickerSegment = 'blocks' | 'rows';
                 @for (block of group.blocks; track block.id) {
                   <ion-item [class.highlighted]="isHighlighted(block)">
                     <ion-icon slot="start" src="{{ block.icon | svgIcon }}" />
-                    <ion-label class="ion-text-wrap">{{ blockLabels[block.id]?.() || block.id }}</ion-label>
-                    <ion-note slot="end" class="ion-text-wrap">{{ noteOf(block) }}</ion-note>
+                    <ion-label class="ion-text-wrap">
+                      {{ blockLabels[block.id]?.() || block.id }}
+                      <p>{{ metaOf(block) }}</p>
+                      @if (blockState(block) === 'required') {
+                        <p>{{ i18n.required_intro() }}</p>
+                        <ul class="holders">
+                          @for (holder of holderLabels(block); track holder) {
+                            <li>{{ holder }}</li>
+                          }
+                        </ul>
+                        <p>{{ i18n.required_outro() }}</p>
+                      } @else if (detailOf(block); as detail) {
+                        <p>{{ detail }}</p>
+                      }
+                    </ion-label>
                     @switch (blockState(block)) {
                       @case ('off') {
                         <ion-button slot="end" fill="outline" (click)="onEnable(block)">
@@ -280,6 +292,19 @@ type PickerSegment = 'blocks' | 'rows';
   styles: [`
     .highlighted { --background: var(--ion-color-warning-tint); }
     .active { --background: var(--ion-color-light-shade); }
+
+    /* Everything a block has to say lives UNDER its label as secondary lines, never in the
+       item's end slot: a wrapping ion-note in the end slot grows into a block that pushes
+       the label out of the row and leaves a screen of whitespace (7.31.0 screenshots). The
+       holder list is a real list so eight block names read as eight items, not one run. */
+    ion-label p { white-space: normal; }
+    .holders {
+      margin: 2px 0 2px 1.2em;
+      padding: 0;
+      font-size: 0.875rem;
+      color: var(--ion-color-medium);
+    }
+    .holders li { line-height: 1.4; }
 
     /* Segment 2 renders a three-column table. Below the md breakpoint the columns stack, and a
        plain stack of untitled cells is unreadable — every row becomes an anonymous run of words
@@ -534,29 +559,34 @@ export class FeaturePicker {
     return this.storedBlocks().has(block.id) && this.liveBlocks().has(block.id) ? 'on' : 'off';
   }
 
-  /** Bundle, block id, and — where relevant — the reason a block has no button at all. */
-  protected noteOf(block: FeatureBlock): string {
-    const parts = [this.bundleLabels[block.bundle]?.() || block.bundle, block.id];
+  /** Bundle and block id — the first secondary line of every row. */
+  protected metaOf(block: FeatureBlock): string {
+    return `${this.bundleLabels[block.bundle]?.() || block.bundle} · ${block.id}`;
+  }
+
+  /** The running blocks that hold this one, as labels — the bullet list of a `required` row. */
+  protected holderLabels(block: FeatureBlock): string[] {
+    return this.holders(block).map(id => this.blockLabels[id]?.() || id);
+  }
+
+  /**
+   * The one sentence a row adds below its meta line, or `''` when it has nothing to say:
+   * why a block has no button at all (`core`, `withheld`) or the catalogue's remark on it.
+   * A `required` row is rendered by the template as intro → holder list → outro instead.
+   */
+  protected detailOf(block: FeatureBlock): string {
     switch (this.blockState(block)) {
       case 'core':
-        parts.push(this.i18n.core_note());
-        break;
+        return this.i18n.core_note();
       case 'withheld': {
         const verdict = this.availability().get(block.id);
-        parts.push(verdict && verdict.reason.length > 0 ? verdict.reason : this.i18n.unavailable_reason_fallback());
-        break;
+        return verdict && verdict.reason.length > 0 ? verdict.reason : this.i18n.unavailable_reason_fallback();
       }
       case 'required':
-        parts.push(fill(this.i18n.required_note(), {
-          blocks: this.holders(block).map(id => this.blockLabels[id]?.() || id).join(', '),
-        }));
-        break;
-      default: {
-        const remark = this.blockRemarks[block.id]?.();
-        if (remark) parts.push(remark);
-      }
+        return '';
+      default:
+        return this.blockRemarks[block.id]?.() || '';
     }
-    return parts.join(' · ');
   }
 
   /** The block's own menu outline, filtered to the rows already reachable in this tenant's
