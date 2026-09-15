@@ -7,10 +7,10 @@
   "view": { "label": "View bank profile" }, "cancel": { "label": "Cancel" }, "save": { "label": "Save" },
   "format": { "label": "Bank", "helper": "Determines how the file is read (CSV export or Swissquote PDF).", "postfinance": "PostFinance", "zkb": "Zürcher Kantonalbank", "yuh": "Yuh", "vz": "VZ Depotbank", "gkb": "Graubündner Kantonalbank", "swissquote": "Swissquote" },
   "iban": { "label": "IBAN", "placeholder": "CH00 0000 0000 0000 0000 0", "helper": "The IBAN is used to find the matching profile during import." },
-  "bankName": { "label": "Name", "placeholder": "e.g. PostFinance business account", "helper": "" },
+  "bankName": { "label": "Name", "placeholder": "e.g. PostFinance business account", "helper": "A name of your choice so you can recognise this account in the app." },
   "account": { "label": "Bank account in the accounting", "helper": "The class-1 account that account movements are booked against." },
-  "currency": { "label": "Currency", "helper": "" },
-  "notes": { "label": "Notes", "placeholder": "" },
+  "currency": { "label": "Currency", "helper": "The currency in which the bank holds this account." },
+  "notes": { "label": "Notes", "placeholder": "Notes on this bank profile" },
   "as": { "title": "Choose an action", "edit": "Edit bank profile", "delete": "Delete bank profile" },
   "changeConfirmation": { "cancel": "Discard", "ok": "Save" }
 }

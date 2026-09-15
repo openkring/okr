@@ -7,10 +7,10 @@
   "view": { "label": "Bankprofil ansehen" }, "cancel": { "label": "Abbrechen" }, "save": { "label": "Speichern" },
   "format": { "label": "Bank", "helper": "Bestimmt, wie die Datei gelesen wird (CSV-Export oder Swissquote-PDF).", "postfinance": "PostFinance", "zkb": "Zürcher Kantonalbank", "yuh": "Yuh", "vz": "VZ Depotbank", "gkb": "Graubündner Kantonalbank", "swissquote": "Swissquote" },
   "iban": { "label": "IBAN", "placeholder": "CH00 0000 0000 0000 0000 0", "helper": "Über die IBAN wird beim Import das passende Profil gefunden." },
-  "bankName": { "label": "Bezeichnung", "placeholder": "z.B. PostFinance Geschäftskonto", "helper": "" },
+  "bankName": { "label": "Bezeichnung", "placeholder": "z.B. PostFinance Geschäftskonto", "helper": "Frei wählbarer Name, unter dem du dieses Konto in der App wiedererkennst." },
   "account": { "label": "Bankkonto in der Buchhaltung", "helper": "Das Konto der Klasse 1, gegen das die Kontobewegungen gebucht werden." },
-  "currency": { "label": "Währung", "helper": "" },
-  "notes": { "label": "Notizen", "placeholder": "" },
+  "currency": { "label": "Währung", "helper": "Die Währung, in der die Bank dieses Konto führt." },
+  "notes": { "label": "Notizen", "placeholder": "Bemerkungen zu diesem Bankprofil" },
   "as": { "title": "Aktion wählen", "edit": "Bankprofil bearbeiten", "delete": "Bankprofil löschen" },
   "changeConfirmation": { "cancel": "Verwerfen", "ok": "Speichern" }
 }
