@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { BankImportRowModel, BankRuleModel } from '@okr/shared-models';
 
-import { applyRules, matchRule, normalizeRuleForSave, normalizeText, seedBankRule } from './bank-rule.util';
+import { applyRules, matchRule, normalizeRuleForSave, normalizeText, proposeBankRule, seedBankRule } from './bank-rule.util';
 
 function rule(p: Partial<BankRuleModel>): BankRuleModel {
   return { ...new BankRuleModel('t1', 'acc1'), okey: 'r', accountKey: 'a1', title: 'T', ...p };
@@ -103,6 +103,32 @@ describe('seedBankRule', () => {
   it('returns the fresh rule unchanged when no seed is given', () => {
     const fresh = new BankRuleModel('t1', 'acc1');
     expect(seedBankRule(fresh)).toEqual(fresh);
+  });
+});
+
+describe('proposeBankRule', () => {
+  it('uses the payee as term and title when the payee occurs in the bank text', () => {
+    expect(proposeBankRule(row({ rawText: 'Gutschrift HANS MUSTER', payee: 'HANS MUSTER' })))
+      .toEqual({ condition: 'contains', term: 'HANS MUSTER', title: 'Hans Muster' });
+  });
+
+  it('falls back to the bank text when the payee is a synthesized name that never occurs in it (GKB, VZ, Swissquote)', () => {
+    // a 'contains gkb' rule could never match 'Zinsbelastung' — the matcher only sees rawText
+    expect(proposeBankRule(row({ rawText: 'Zinsbelastung', payee: 'GKB' })))
+      .toEqual({ condition: 'contains', term: 'Zinsbelastung', title: 'Zinsbelastung' });
+    expect(proposeBankRule(row({ rawText: 'Gebühr Bankpaket', payee: 'VZ' })))
+      .toEqual({ condition: 'contains', term: 'Gebühr Bankpaket', title: 'Gebühr Bankpaket' });
+  });
+
+  it('compares payee and text after normalization (case, diacritics)', () => {
+    expect(proposeBankRule(row({ rawText: 'Miete ZKB Schrankfach', payee: 'ZKB' })).term).toBe('ZKB');
+    expect(proposeBankRule(row({ rawText: 'Gutschrift MÜLLER AG', payee: 'Muller AG' })).term).toBe('Muller AG');
+  });
+
+  it('takes the first three words of the bank text when there is no payee; an all-caps text is title-cased', () => {
+    expect(proposeBankRule(row({ rawText: 'KAUF/ONLINE-SHOPPING VOM 01.12.2025 KARTEN NR. XXXX1434', payee: '' })))
+      .toEqual({ condition: 'contains', term: 'KAUF/ONLINE-SHOPPING VOM 01.12.2025', title: 'Kauf/online-shopping Vom 01.12.2025' });
+    expect(proposeBankRule(row({ rawText: 'Netflix Amsterdam, NL', payee: '' })).title).toBe('Netflix Amsterdam, NL');
   });
 });
 

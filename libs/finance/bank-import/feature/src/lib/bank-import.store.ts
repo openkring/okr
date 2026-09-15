@@ -22,7 +22,7 @@ import { BankProfileService } from '@okr/finance-bank-profile-data-access';
 import { BankProfileStore } from '@okr/finance-bank-profile-feature';
 import { BankRuleService } from '@okr/finance-bank-rule-data-access';
 import { BankRuleStore } from '@okr/finance-bank-rule-feature';
-import { applyRules } from '@okr/finance-bank-rule-util';
+import { applyRules, proposeBankRule } from '@okr/finance-bank-rule-util';
 import { VatCodeService } from '@okr/finance-vat-code-data-access';
 
 import { extractPdfLines } from './pdf-text.util';
@@ -241,18 +241,20 @@ export const BankImportStore = signalStore(
 
     /** "Regel erstellen": propose a rule from the row (§5.3); on save re-apply rules to open rows. */
     async createRuleFrom(row: BankImportRowModel): Promise<void> {
-      const term = row.payee || row.rawText.split(' ').slice(0, 3).join(' ');
-      const title = term.toLowerCase().replace(/(^|\s)\S/g, s => s.toUpperCase());
-      const saved: BankRuleModel | undefined = await store.ruleStore.openCreate({ condition: 'contains', term, title });
+      const saved: BankRuleModel | undefined = await store.ruleStore.openCreate(proposeBankRule(row));
       if (saved) await this.applyRulesToOpenRows();
     },
 
-    /** "Konto zuweisen": one-off title/account/VAT on this row, no rule. */
+    /**
+     * "Konto zuweisen": one-off title/account/VAT on this row, no rule. The title starts as the bank's
+     * own text (what the list shows as Buchungstext) so it is kept unless the treasurer rewords it.
+     */
     async assign(row: BankImportRowModel): Promise<void> {
       const { BankImportRowEditModal } = await import('@okr/finance-bank-import-ui');
+      const seeded: BankImportRowModel = { ...row, title: row.title || row.rawText };
       const modal = await store.modalController.create({
         component: BankImportRowEditModal,
-        componentProps: { row, accounts: store.accounts(), vatCodes: store.vatCodes(), currentUser: store.currentUser() },
+        componentProps: { row: seeded, accounts: store.accounts(), vatCodes: store.vatCodes(), currentUser: store.currentUser() },
       });
       await modal.present();
       const { data, role } = await modal.onDidDismiss();

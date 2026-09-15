@@ -93,6 +93,28 @@ export function seedBankRule(rule: BankRuleModel, seed?: Partial<BankRuleModel>)
   return { ...rule, ...safeSeed };
 }
 
+function toTitleCase(text: string): string {
+  return text.toLowerCase().replace(/(^|\s)\S/g, s => s.toUpperCase());
+}
+
+/**
+ * "Regel erstellen" proposal from a statement row (spec §5.3). The term must be something the
+ * matcher can actually find: it tests `rawText` only. A payee is therefore used only when it occurs
+ * in the bank text; an adapter-synthesized payee ('GKB' on `Zinsbelastung`, 'VZ' on
+ * `Gebühr Bankpaket`, 'Swissquote' on `Zinsen`) would yield a rule that never matches and a title that
+ * throws the bank's wording away. Otherwise the first three words of the bank text are the term,
+ * and the title keeps that wording (title-cased only when the bank shouts in capitals, as ZKB does).
+ */
+export function proposeBankRule(row: BankImportRowModel): Pick<BankRuleModel, 'condition' | 'term' | 'title'> {
+  const rawText = row.rawText ?? '';
+  const payee = (row.payee ?? '').trim();
+  if (payee && normalizeText(rawText).includes(normalizeText(payee))) {
+    return { condition: 'contains', term: payee, title: toTitleCase(payee) };
+  }
+  const term = rawText.split(' ').slice(0, 3).join(' ');
+  return { condition: 'contains', term, title: term === term.toUpperCase() ? toTitleCase(term) : term };
+}
+
 function isOneOff(row: BankImportRowModel): boolean {
   return (row.ruleKey ?? '') === '' && (row.accountKey ?? '') !== '';
 }
