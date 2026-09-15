@@ -32,7 +32,12 @@ export const MENU_TOKENS: Record<string, (ctx: MenuTokenContext) => string> = {
   '@REPO_URL@': (ctx) => ctx.repoUrl ?? '',
   // Same '@TID@' spelling `pages.sections` and `feature-catalogue.ts`'s `id: 'news_@TID@'`
   // already use, so one convention covers page ids, section keys and menu urls.
-  '@TID@': (ctx) => ctx.tenantId ?? ''
+  '@TID@': (ctx) => ctx.tenantId ?? '',
+  // Upper-cased tenant id for a TRANSLATED label — e.g. the catalogued accounting sub-menu
+  // whose title reads "SCS Buchhaltung" / "SCS accounting". The token sits inside the i18n
+  // VALUE (`item.accounting-menu`), not in the stored label, so the label stays a plain
+  // translation key and `MenuStore.translatedMenuLabel` expands the token after translating.
+  '@TID_UPPER@': (ctx) => (ctx.tenantId ?? '').toUpperCase()
   // future: '@TENANT_NAME@', '@USER_NAME@', ...
 };
 

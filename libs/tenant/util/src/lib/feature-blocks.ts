@@ -1320,19 +1320,21 @@ const mobility: FeatureBlock = {
  * settled "no edge" case, identical to `chat` and to the folder-service finding now
  * recorded on the `document` block.
  *
- * EXCLUDED, not modelled — the whole double-entry accounting nav, verified against Firestore:
- *  - `scsf_fibu` ("SCS Buchhaltung") and `gssf_fibu` ("GSS Buchhaltung"), both `action: sub`,
- *    both `tenants: ['scs']`, and ALL 24 of their `scsf_*`/`gssf_*` children. Every one of
- *    those children hardcodes an accounting-tenant key in its url (`/accounting/scs/journal/
- *    c-journal`, `/accounting/gss/bill/all/c-bill`, ...). This is STRUCTURAL, not sloppy
- *    authoring: the route is `accounting/:accountingTenantId/...`, so a `navigate` entry into
- *    accounting is *by construction* specific to one legal entity's books (SCS the club vs.
- *    GSS the supporters' association) — there is no generic url to catalogue. Consequence,
- *    stated plainly rather than hidden: a fresh tenant enabling `finance` gets the accounting
- *    ROUTES and every context wrapper below, but must author its own `<x>f_fibu` submenu with
- *    its own accounting-tenant key. Same for `ocr-rules` (`accounting-ocr-rules/scs/
- *    ocr-rule-context`, a child of `scsf_fibu`) and `invoice-my` (`/accounting/scs/invoice/my/
- *    c-invoice`, a child of `finance-menu`).
+ * CATALOGUED since 2026-09-15 — the double-entry accounting nav, as `accounting-menu`:
+ *    the live `scsf_fibu` ("SCS Buchhaltung") / `gssf_fibu` ("GSS Buchhaltung") submenus and
+ *    their `scsf_*`/`gssf_*` children stay EXCLUDED (tenant-bespoke: every url hardcodes one
+ *    legal entity's accounting-tenant key, `/accounting/scs/...` vs `/accounting/gss/...`).
+ *    The generic shape is the `@TID@` url token (same precedent as `album`): the route is
+ *    `accounting/:accountingTenantId/...` and for the DEFAULT books the accounting tenant IS
+ *    the okr tenant, so `/accounting/@TID@/journal/c-journal` is one shared document instead
+ *    of a hand-authored fork per tenant. The submenu label is the i18n value
+ *    "@TID_UPPER@ Buchhaltung", expanded AFTER translation by `MenuStore.translatedMenuLabel`,
+ *    so `scs` reads "SCS Buchhaltung" like its bespoke original. Every row is `treasurer`.
+ *    A second legal entity (GSS) keeps needing a hand-authored submenu — there is exactly one
+ *    `@TID@` per tenant. `scs` therefore gets `accounting-menu` NEXT TO `scsf_fibu` on the
+ *    first picker save; retiring the bespoke copy is its own decision.
+ *    Still excluded: `invoice-my` (`/accounting/scs/invoice/my/c-invoice`, a child of
+ *    `finance-menu`) and `scsf_memberfees` (`/scsmemberfees/c-scsfees`, an scs-only route).
  *  - `finance-menu`'s four remaining live children `f_fees`, `f_pay`, `f_gss`,
  *    `f_versicherung` — all `/private/<id>/c-contentpage` CMS content pages authored by
  *    `scs`, already covered generically by the core `cms` block's route; and `finance-docs`,
@@ -1459,6 +1461,29 @@ const finance: FeatureBlock = {
     { key: 'bank-profile-context', name: 'bank-profile-context', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
       { key: 'bank-profile-add', name: 'bank-profile-add', url: 'add', action: 'call', roleNeeded: 'treasurer', icon: 'add-circle', label: '@item.bank-profile-add' },
     ] },
+    // The generic accounting submenu (see the block comment). Order mirrors the live
+    // `scsf_fibu`, with the three bank-import lists appended — they had no navigate row
+    // anywhere before. `@TID@` is expanded by `resolveMenuUrl` at select time.
+    {
+      key: 'accounting-menu', name: 'accounting-menu', url: '', action: 'sub',
+      roleNeeded: 'treasurer', icon: 'money', label: '@item.accounting-menu', children: [
+        { key: 'accounting-accounts', name: 'accounting-accounts', url: '/accounting/@TID@/account/c-account', action: 'navigate', roleNeeded: 'treasurer', icon: 'account', label: '@item.accounting-accounts' },
+        { key: 'accounting-journal', name: 'accounting-journal', url: '/accounting/@TID@/journal/c-journal', action: 'navigate', roleNeeded: 'treasurer', icon: 'list', label: '@item.accounting-journal' },
+        { key: 'accounting-bills', name: 'accounting-bills', url: '/accounting/@TID@/bill/all/c-bill', action: 'navigate', roleNeeded: 'treasurer', icon: 'invoice', label: '@item.accounting-bills' },
+        { key: 'accounting-invoices', name: 'accounting-invoices', url: '/accounting/@TID@/invoice/all/c-invoice', action: 'navigate', roleNeeded: 'treasurer', icon: 'invoice', label: '@item.accounting-invoices' },
+        { key: 'accounting-periods', name: 'accounting-periods', url: '/accounting/@TID@/periods', action: 'navigate', roleNeeded: 'treasurer', icon: 'calendar', label: '@item.accounting-periods' },
+        { key: 'accounting-balance', name: 'accounting-balance', url: '/accounting/@TID@/balance', action: 'navigate', roleNeeded: 'treasurer', icon: 'chart', label: '@item.accounting-balance' },
+        { key: 'accounting-income-statement', name: 'accounting-income-statement', url: '/accounting/@TID@/income-statement', action: 'navigate', roleNeeded: 'treasurer', icon: 'chart', label: '@item.accounting-income-statement' },
+        { key: 'accounting-cash-flow', name: 'accounting-cash-flow', url: '/accounting/@TID@/cash-flow', action: 'navigate', roleNeeded: 'treasurer', icon: 'chart', label: '@item.accounting-cash-flow' },
+        { key: 'accounting-assets', name: 'accounting-assets', url: '/accounting/@TID@/assets', action: 'navigate', roleNeeded: 'treasurer', icon: 'cube', label: '@item.accounting-assets' },
+        { key: 'accounting-depreciation-run', name: 'accounting-depreciation-run', url: '/accounting/@TID@/depreciation-run', action: 'navigate', roleNeeded: 'treasurer', icon: 'arrow-down-circle', label: '@item.accounting-depreciation-run' },
+        { key: 'accounting-payments', name: 'accounting-payments', url: '/accounting/@TID@/payments', action: 'navigate', roleNeeded: 'treasurer', icon: 'wallet', label: '@item.accounting-payments' },
+        { key: 'accounting-ocr-rules', name: 'accounting-ocr-rules', url: '/accounting-ocr-rules/@TID@/ocr-rule-context', action: 'navigate', roleNeeded: 'treasurer', icon: 'scan', label: '@item.accounting-ocr-rules' },
+        { key: 'accounting-bank-import', name: 'accounting-bank-import', url: '/accounting-bank-import/@TID@/bank-import-context', action: 'navigate', roleNeeded: 'treasurer', icon: 'download', label: '@item.accounting-bank-import' },
+        { key: 'accounting-bank-rules', name: 'accounting-bank-rules', url: '/accounting-bank-rules/@TID@/bank-rule-context', action: 'navigate', roleNeeded: 'treasurer', icon: 'sync', label: '@item.accounting-bank-rules' },
+        { key: 'accounting-bank-profiles', name: 'accounting-bank-profiles', url: '/accounting-bank-profiles/@TID@/bank-profile-context', action: 'navigate', roleNeeded: 'treasurer', icon: 'business', label: '@item.accounting-bank-profiles' },
+      ],
+    },
   ],
 };
 

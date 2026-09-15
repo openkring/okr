@@ -24,6 +24,14 @@ describe('expandMenuTokens', () => {
   it('returns a token-free label unchanged', () => {
     expect(expandMenuTokens('Home', ctx)).toBe('Home');
   });
+
+  it('replaces @TID_UPPER@ with the upper-cased tenant id (accounting sub-menu title)', () => {
+    expect(expandMenuTokens('@TID_UPPER@ Buchhaltung', { ...ctx, tenantId: 'scs' })).toBe('SCS Buchhaltung');
+  });
+
+  it('expands @TID_UPPER@ to nothing when no tenant is in scope', () => {
+    expect(expandMenuTokens('@TID_UPPER@ Buchhaltung', ctx)).toBe(' Buchhaltung');
+  });
 });
 
 describe('resolveMenuLabelKey', () => {

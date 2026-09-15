@@ -738,11 +738,17 @@ const finance: BlockRoutes = {
     },
     {
       // `:accountingTenantId` is the LEGAL ENTITY whose books are shown (scs, gss, ...), not
-      // the okr tenant — which is why every live navigate entry into this subtree is
-      // necessarily tenant-authored and therefore excluded from the `finance` block's menu.
-      // See the block comment in `@okr/tenant-util`'s `feature-blocks.ts`.
+      // the okr tenant. The catalogued `accounting-menu` reaches the DEFAULT books through the
+      // `@TID@` url token; a second entity (gss) still needs a tenant-authored submenu. See
+      // the `finance` block comment in `@okr/tenant-util`'s `feature-blocks.ts`.
+      //
+      // `isTreasurerGuard` since 2026-09-15 (was `isPrivilegedGuard`): `hasRole('privileged')`
+      // is `privileged | admin` — a plain treasurer could see every accounting row (all live
+      // `scsf_*` docs declare `treasurer`) and have the navigation silently cancelled. The
+      // sibling `accounting-ocr-rules`/`accounting-bank-*` routes were treasurer-gated
+      // already; the menu-role-resolution spec is what caught the shell.
       path: 'accounting/:accountingTenantId',
-      canActivate: [isPrivilegedGuard],
+      canActivate: [isTreasurerGuard],
       loadComponent: () => import('@okr/finance-accounting-feature').then(m => m.AccountingShell),
       children: [
         {

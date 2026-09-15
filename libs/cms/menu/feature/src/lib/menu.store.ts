@@ -14,7 +14,7 @@ import { die, fill, nameMatches, safeStructuredClone, warn } from '@okr/shared-u
 import { AlertService, AppNavigationService, dismissOverlay, isInSplitPane, lazyService, navigateByUrl, VersionCheckService, resourceParams } from '@okr/shared-util-angular';
 import { I18nService } from '@okr/shared-i18n';
 
-import { getRepoUrl, MENU_I18N_KEYS, MenuTokenContext, resolveMenuLabelKey, resolveMenuUrl } from '@okr/cms-menu-util';
+import { expandMenuTokens, getRepoUrl, MENU_I18N_KEYS, MenuTokenContext, resolveMenuLabelKey, resolveMenuUrl } from '@okr/cms-menu-util';
 
 import { MenuItemsStore } from './menu-items.store';
 
@@ -152,7 +152,13 @@ export const _MenuStore = signalStore(
         const useAlt = item?.action === 'toggle' && store.toggleActive();
         const menuLabel = (useAlt ? (item?.labelAlt ?? item?.label) : item?.label) ?? '';
         return resolveMenuLabelKey(menuLabel, { version: store.versionService.getCurrentVersion() });
-      })).pipe(switchMap(key => store.i18nService.translate(key))),
+      })).pipe(
+        switchMap(key => store.i18nService.translate(key)),
+        // A translation VALUE may carry a token too (`item.accounting-menu` = "@TID_UPPER@
+        // Buchhaltung"), so expand once more on the translated text. Token-free text passes
+        // through unchanged.
+        map(text => expandMenuTokens(text, { version: store.versionService.getCurrentVersion(), tenantId: store.appStore.tenantId() })),
+      ),
       { initialValue: '' }
     ),
   })),
