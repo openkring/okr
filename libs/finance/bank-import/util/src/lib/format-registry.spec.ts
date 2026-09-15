@@ -56,3 +56,18 @@ describe('GKB layout', () => {
     expect(s.warnings).toEqual([{ code: 'saldo-mismatch', lineNo: 13, detail: '2188905/2188906' }]);
   });
 });
+
+describe('VZ layout', () => {
+  const vz = readFileSync(join(__dirname, 'fixtures/vz-sample.csv'), 'utf8');
+  it('is detected as vz and passes the saldo check newest-first', () => {
+    expect(detectFormat(vz)).toBe('vz');
+    const s = parseStatement(vz);
+    expect(s).toMatchObject({ format: 'vz', iban: 'CH9300762011623852957', currency: 'CHF' });
+    expect(s.rows.length).toBe(12);
+    expect(s.warnings).toEqual([]);
+  });
+  it('flags a corrupted saldo on the right line', () => {
+    const s = parseStatement(vz.replace(",CHF --10'000.00,CHF 4'222.55", ",CHF --10'000.00,CHF 4'222.56"));
+    expect(s.warnings).toEqual([{ code: 'saldo-mismatch', lineNo: 2, detail: '422255/422256' }]);
+  });
+});
