@@ -27,7 +27,8 @@ export class ReportingService {
       ...getSystemQuery(this.tenantId),
       { key: 'accountingTenantId', operator: '==' as const, value: accountingTenantId },
     ];
-    return this.firestoreService.searchData<BookingLineModel>(BookingLineCollection, query);
+    // 'none': a line has no `name` — the default orderBy('name') would drop every document
+    return this.firestoreService.searchData<BookingLineModel>(BookingLineCollection, query, 'none');
   }
 
   public async getAccountBalances(accountingTenantId: string): Promise<AccountBalanceEntry[]> {
