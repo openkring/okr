@@ -662,5 +662,8 @@
   "recurring": {
     "label": "Se repite",
     "helper": "El evento se repite con regularidad. La periodicidad y la fecha final aparecen debajo."
+  },
+  "activity": {
+    "unseen": "Comentarios o documentos nuevos desde la última vez que abriste la cita"
   }
 }

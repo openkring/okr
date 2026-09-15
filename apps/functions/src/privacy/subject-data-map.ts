@@ -232,6 +232,20 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     retention: LOG_12M,
   },
   {
+    // `SeenCollection`: the subcollection `users/{uid}/seen/{parentKey}` (SeenModel) — "I have
+    // opened this event", a count per parent key. Same shape and fate as fcmTokens: pinned to
+    // the uid, no tenant dimension, and it would outlive a deleted users doc without this row.
+    collection: 'seen',
+    dataClass: 'log',
+    tier: 'T1',
+    onTenantExit: 'retain',
+    find: (c: SubjectCtx) => db().collection('users').doc(c.uid).collection('seen'),
+    tenantScope: 'none',
+    onExport: 'none',             // which events a member opened is a UI convenience, not a record
+    onErasure: 'delete',
+    retention: LOG_12M,
+  },
+  {
     collection: 'avatars',
     dataClass: 'identity',
     tier: 'T2',   // a picture is voluntary (spec §3) — erasable while the membership runs

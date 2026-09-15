@@ -662,5 +662,8 @@
   "recurring": {
     "label": "Se répète",
     "helper": "L'événement se répète régulièrement. La périodicité et la date de fin apparaissent ci-dessous."
+  },
+  "activity": {
+    "unseen": "Nouveaux commentaires ou documents depuis ta dernière ouverture du rendez-vous"
   }
 }

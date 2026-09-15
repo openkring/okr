@@ -26,6 +26,7 @@
     "@okr/system-alias-data-access": "*",
     "tslib": "^2.8.1",
     "@okr/relationship-invitation-ui": "*",
-    "@okr/relationship-invitation-util": "*"
+    "@okr/relationship-invitation-util": "*",
+    "@okr/user-data-access": "*"
   }
 }

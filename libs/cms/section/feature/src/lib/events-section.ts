@@ -1,6 +1,6 @@
 import { AsyncPipe } from '@angular/common';
 import { CUSTOM_ELEMENTS_SCHEMA, Component, OnInit, PLATFORM_ID, computed, effect, inject, input, untracked } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonCard, IonCardContent, IonLabel, ModalController } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonBadge, IonCard, IonCardContent, IonLabel, ModalController } from '@ionic/angular/standalone';
 import { Browser } from '@capacitor/browser';
 
 import { CalEventModel, EventsConfig, EventsSection } from '@okr/shared-models';
@@ -41,7 +41,7 @@ const ICS_FUNCTION_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/ge
   imports: [
     SvgIconPipe, PrettyDatePipe, WeekdayPipe, TranslatePipe, AsyncPipe,
     OptionalCardHeader, Spinner, MoreButton,
-    IonCard, IonCardContent, IonLabel
+    IonBadge, IonCard, IonCardContent, IonLabel
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
@@ -60,6 +60,9 @@ const ICS_FUNCTION_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/ge
               <ion-item (click)="showActions(event)">
                 <ion-icon src="{{ getIcon(event) | svgIcon }}" color="{{ getIconColor(event) }}" slot="start" />
                 <ion-label>{{ event.startDate | weekday | translate | async }} {{ event.startDate | prettyDate:false }} {{event.name}}</ion-label>
+                @if(store.unseen(event); as unseen) {
+                  <ion-badge slot="end" color="primary" [title]="caleventI18n.activity_unseen()">{{ unseen }}</ion-badge>
+                }
               </ion-item>
             }
           </ion-list>
@@ -99,7 +102,7 @@ export class EventsSectionComponent implements OnInit {
   private modalController = inject(ModalController);
 
   /** Only the label of the info button — the explainer itself lives in the calevent domain. */
-  protected readonly caleventI18n = inject(I18nService).translateAll({ info_open: CALEVENT_I18N_KEYS.info_open });
+  protected readonly caleventI18n = inject(I18nService).translateAll({ info_open: CALEVENT_I18N_KEYS.info_open, activity_unseen: CALEVENT_I18N_KEYS.activity_unseen });
 
   /** Opens the shared 'Kalender & Einladungen' explainer. */
   protected async showInfo(): Promise<void> {

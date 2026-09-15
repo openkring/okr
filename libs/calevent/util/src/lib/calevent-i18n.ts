@@ -60,6 +60,8 @@ export const CALEVENT_I18N_KEYS = {
   locked_title:                PFX + 'locked.title',
   locked_hint:                 PFX + 'locked.hint',
   locked_banner:               PFX + 'locked.banner',
+  // tooltip on the unseen-activity badge (list + dashboard)
+  activity_unseen:             PFX + 'activity.unseen',
 
   // «Teilnehmende benachrichtigen» — the short-notice broadcast to the participants of an event
   notify_label:               PFX + 'notify.label',

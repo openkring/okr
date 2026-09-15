@@ -2,11 +2,17 @@
   "extends": "../../../tsconfig.base.json",
   "compilerOptions": {
     "noEmit": true,
-    "types": ["vitest", "node"],
+    "types": [
+      "vitest",
+      "node"
+    ],
     "declaration": true,
     "module": "preserve",
     "moduleResolution": "bundler",
-    "lib": ["dom", "es2022"]
+    "lib": [
+      "dom",
+      "es2022"
+    ]
   },
   "angularCompilerOptions": {
     "strictTemplates": true,
@@ -14,8 +20,14 @@
     "disableTypeScriptVersionCheck": true,
     "compileNonExportedClasses": true
   },
-  "include": ["src/**/*", "**/*.spec.ts", "**/*.test.ts"],
-  "exclude": ["dist/**/*"],
+  "include": [
+    "src/**/*",
+    "**/*.spec.ts",
+    "**/*.test.ts"
+  ],
+  "exclude": [
+    "dist/**/*"
+  ],
   "references": [
     {
       "path": "../../relationship/invitation/util/tsconfig.lib.json"
@@ -67,6 +79,9 @@
     },
     {
       "path": "../../chat/data-access/tsconfig.lib.json"
+    },
+    {
+      "path": "../../user/data-access/tsconfig.lib.json"
     }
   ]
 }

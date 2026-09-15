@@ -307,6 +307,12 @@ service cloud.firestore {
       match /fcmTokens/{tokenId} {
         allow read, write: if signedIn() && request.auth.uid == userId;
       }
+
+      // "I have looked at this" markers (SeenModel): one doc per parent key, e.g.
+      // seen/calevent.<okey> — the unseen-activity badge on events. Owned by the user.
+      match /seen/{parentKey} {
+        allow read, write: if signedIn() && request.auth.uid == userId;
+      }
     }
 
     // Geheime ICS-Abo-Tokens. Bewusst NICHT auf dem users-Dokument: dieses darf jeder

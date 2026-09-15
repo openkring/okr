@@ -135,9 +135,6 @@
       "path": "../../../chat/data-access/tsconfig.lib.json"
     },
     {
-      "path": "../../../user/data-access/tsconfig.lib.json"
-    },
-    {
       "path": "../../../relationship/reservation/feature/tsconfig.lib.json"
     },
     {
@@ -169,6 +166,9 @@
     },
     {
       "path": "../../../geo/location/data-access/tsconfig.lib.json"
+    },
+    {
+      "path": "../../../user/data-access/tsconfig.lib.json"
     }
   ]
 }

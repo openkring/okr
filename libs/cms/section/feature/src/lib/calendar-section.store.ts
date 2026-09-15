@@ -11,6 +11,8 @@ import { getAttendanceStates, getAttendee, getAvatarInfoForCurrentUser, getInvit
 import { notify, resourceParams } from '@okr/shared-util-angular';
 
 import { CalEventService } from '@okr/calevent-data-access';
+import { seenKeyFor, toSeenCounts, unseenActivity } from '@okr/calevent-util';
+import { SeenService } from '@okr/user-data-access';
 import { getVisibleGroupKeys } from '@okr/subject-group-util';
 
 import { InvitationService } from '@okr/relationship-invitation-data-access';
@@ -40,6 +42,7 @@ export const CalendarStore = signalStore(
     calEventService: inject(CalEventService),
     invitationService: inject(InvitationService),
     alertController: inject(AlertController),
+    seenService: inject(SeenService),
     i18n: inject(I18nService).translateAll(SECTION_I18N_KEYS),
   })),
   withProps((store) => ({
@@ -54,6 +57,12 @@ export const CalendarStore = signalStore(
         if (!personKey) return of([]);
         return store.membershipService.listOrgsOfMember(personKey, 'person');
       }
+    }),
+
+    // the user's "seen" markers — with the events' activityCount they make the unseen badge
+    seenResource: rxResource({
+      params: resourceParams(() => ({ uid: store.appStore.currentUser()?.okey })),
+      stream: ({ params }) => store.seenService.list(params.uid),
     }),
 
     invitationsForCurrentUserResource: rxResource({
@@ -204,6 +213,7 @@ export const CalendarStore = signalStore(
       invitationStates: computed(() => getInvitationStates(state.caleventsResource.value() ?? [], state.invitationsForCurrentUserResource.value() ?? [])),
       isLoading: computed(() => state.caleventsResource.isLoading() || state.calendarsForCurrentUserResource.isLoading() || state.membershipsForCurrentUserResource.isLoading() || state.visibleGroupsResource.isLoading()),
       currentUser: computed(() => state.appStore.currentUser()),
+      seenCounts: computed(() => toSeenCounts(state.seenResource.value() ?? [])),
     }
   }),
 
@@ -240,7 +250,20 @@ export const CalendarStore = signalStore(
         return store.appStore.appConfig().locale;
       },
 
+      /** Comments/documents on the event the user has not looked at yet — the widget badge. */
+      unseen(calevent: CalEventModel): number {
+        return unseenActivity(calevent, store.seenCounts());
+      },
+
+      /** Same contract as CalEventStore.markSeen: opening either modal counts as having looked. */
+      markSeen(calevent: CalEventModel): void {
+        if (!calevent.okey) return;
+        store.seenService.markSeen(store.appStore.currentUser()?.okey, seenKeyFor(calevent.okey), calevent.activityCount ?? 0)
+          .catch((ex: unknown) => console.warn(`CalendarStore.markSeen -> ${ex}`));
+      },
+
       async edit(calevent: CalEventModel, isNew = false, readOnly = true, initialDirty = false): Promise<boolean> {
+        if (!isNew) this.markSeen(calevent);
         // dynamic import: keeps @okr/calevent-feature (and FullCalendar) out of the eager graph
         const { CalEventEditModal } = await import('@okr/calevent-feature');
         const modal = await store.modalController.create({
@@ -270,6 +293,7 @@ export const CalendarStore = signalStore(
       },
 
       async view(calevent: CalEventModel): Promise<void> {
+        this.markSeen(calevent);
         // dynamic import: keeps @okr/calevent-feature (and FullCalendar) out of the eager graph
         const { CalEventViewModal } = await import('@okr/calevent-feature');
         const modal = await store.modalController.create({

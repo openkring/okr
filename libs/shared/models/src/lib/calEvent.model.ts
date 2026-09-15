@@ -1,4 +1,4 @@
-import { DEFAULT_CALENDARS, DEFAULT_CALEVENT_TYPE, DEFAULT_DATE, DEFAULT_ID, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PERIODICITY, DEFAULT_TAGS, DEFAULT_TENANTS, DEFAULT_TIME, DEFAULT_URL } from '@okr/shared-constants';
+import { DEFAULT_CALENDARS, DEFAULT_CALEVENT_TYPE, DEFAULT_DATE, DEFAULT_DATETIME, DEFAULT_ID, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PERIODICITY, DEFAULT_TAGS, DEFAULT_TENANTS, DEFAULT_TIME, DEFAULT_URL } from '@okr/shared-constants';
 import { AvatarInfo } from './avatar-info';
 import { OkrModel, NamedModel, SearchableModel, TaggedModel } from './base.model';
 
@@ -71,6 +71,16 @@ export class CalEventModel implements OkrModel, NamedModel, SearchableModel, Tag
    *   re-expanded by planSeriesReconcile.
    */
   public pollMultiSelect = false;
+  /**
+   * Activity on the event: comments, documents and broadcast records, counted by the Cloud
+   * Function triggers (`calendar/activity.ts`) — the client never writes these two fields
+   * directly and must reset them on every copy of an event (`resetActivity`), or a new
+   * occurrence would inherit the template's count. `activityCount − seen.count` (the user's
+   * marker under `users/{uid}/seen/calevent.<okey>`) is the "new since you last opened it"
+   * badge on the list and the dashboard. Optional on read: legacy events lack both — `?? 0`.
+   */
+  public activityCount = 0;
+  public lastActivityAt = DEFAULT_DATETIME; // StoreDateTime of the latest comment/document, '' when none
 
   constructor(tenantId: string) {
     this.tenants = [tenantId];

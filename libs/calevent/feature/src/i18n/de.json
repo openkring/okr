@@ -662,5 +662,8 @@
   "recurring": {
     "label": "Wiederholt sich",
     "helper": "Der Termin wiederholt sich regelmässig. Periodizität und Enddatum erscheinen darunter."
+  },
+  "activity": {
+    "unseen": "Neue Kommentare oder Dokumente seit du den Termin zuletzt geöffnet hast"
   }
 }

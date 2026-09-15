@@ -17,6 +17,8 @@
 
 import { onDocumentCreated } from 'firebase-functions/v2/firestore';
 import { logger } from 'firebase-functions/v2';
+import { FieldValue, getFirestore } from 'firebase-admin/firestore';
+import { DateFormat, getTodayStr } from '@okr/shared-util-core';
 
 import { pushToPersons } from '../srv/push';
 import {
@@ -55,6 +57,26 @@ interface DocumentDoc {
   title?: string;
   fullPath?: string;
   isArchived?: boolean;
+}
+
+/**
+ * Count the activity on the event (`activityCount`, `lastActivityAt` on the calevent doc).
+ *
+ * The badge on the list and the dashboard is this counter minus the user's seen marker
+ * (`users/{uid}/seen/calevent.<okey>`) — so the client never loads comments to know how many
+ * are new. Broadcast records count too: they are the announcement the participant most wants
+ * to find on the event, even though they are not pushed a second time.
+ */
+async function recordActivity(caleventKey: string, context: string): Promise<void> {
+  try {
+    await getFirestore().collection('calevents').doc(caleventKey).update({
+      activityCount: FieldValue.increment(1),
+      lastActivityAt: getTodayStr(DateFormat.StoreDateTime),
+    });
+  } catch (err) {
+    // a comment on a deleted event, or a transient failure: the badge is a convenience
+    logger.warn(`${context}: could not count activity on ${caleventKey}:`, err);
+  }
 }
 
 /** Deliver one calendar-activity push. Shared by both triggers. */
@@ -104,7 +126,8 @@ export const onCalEventCommentCreated = onDocumentCreated(
 
     const caleventKey = caleventKeyFromParent(comment.parentKey);
     if (!caleventKey) return;                                  // a comment on something else
-    if (hasTag(comment.tags, BROADCAST_TAG)) return;           // the broadcast's own record
+    await recordActivity(caleventKey, 'onCalEventCommentCreated');
+    if (hasTag(comment.tags, BROADCAST_TAG)) return;           // the broadcast's own record: counted, not pushed again
 
     const author = comment.authorName ?? '';
     const body = author ? `${author}: ${shorten(comment.description)}` : shorten(comment.description);
@@ -121,6 +144,7 @@ export const onCalEventDocumentCreated = onDocumentCreated(
 
     const caleventKey = caleventKeyFromFolders(document.folderKeys);
     if (!caleventKey) return;
+    await recordActivity(caleventKey, 'onCalEventDocumentCreated');
 
     const name = document.title || document.description || (document.fullPath ?? '').split('/').pop() || '';
     const author = document.authorName ?? '';

@@ -662,5 +662,8 @@
   "recurring": {
     "label": "Si ripete",
     "helper": "L'evento si ripete regolarmente. Periodicità e data finale appaiono qui sotto."
+  },
+  "activity": {
+    "unseen": "Nuovi commenti o documenti da quando hai aperto l'appuntamento l'ultima volta"
   }
 }

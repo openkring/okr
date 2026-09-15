@@ -237,10 +237,11 @@ describe('find() query shapes', () => {
   });
 
   it('targets the collection its row is named after', () => {
-    // the four documented exceptions: two subcollections reached via a parent doc, and
-    // the esignAudit collection group whose leaf name differs from the row name
+    // the documented exceptions: subcollections reached via a parent doc, and the
+    // esignAudit collection group whose leaf name differs from the row name
     const exceptions: Record<string, string> = {
       'users/fcmTokens': 'users',
+      seen: 'users',
       stats_members: 'stats_members',
       esignAudit: 'deletions',
     };

@@ -34,6 +34,7 @@ export * from './lib/category-list.model';
 export * from './lib/category.model';
 export * from './lib/chat.model';
 export * from './lib/comment.model';
+export * from './lib/seen.model';
 export * from './lib/competition-level.model';
 export * from './lib/db-query.model';
 export * from './lib/dimensions.model';

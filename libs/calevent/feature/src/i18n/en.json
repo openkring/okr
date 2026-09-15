@@ -662,5 +662,8 @@
   "recurring": {
     "label": "Repeats",
     "helper": "The event repeats regularly. Periodicity and end date appear below."
+  },
+  "activity": {
+    "unseen": "New comments or documents since you last opened the event"
   }
 }

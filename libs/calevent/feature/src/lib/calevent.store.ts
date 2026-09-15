@@ -25,7 +25,8 @@ import { LocationService } from '@okr/location-data-access';
 
 import { CalEventService } from '@okr/calevent-data-access';
 import { AliasMintService } from '@okr/system-alias-data-access';
-import { addInvitedAttendee, applyInvitationAnswer, toAttendeeState, CALEVENT_I18N_KEYS, CalEventNotifyFormData, findConflictingCalEvents, newCalEventNotifyFormData, buildCalEventLink, buildSchedulePollLink, formatSchedulePollInviteMessage, formatScheduleCloseMessage, getCaleventIndex, getSeriesUpdateFields, isCalEvent, isCaleventFull, isPersonalCalendarName, isPersonalCalevent, mergeAttendee, planSeriesReconcile, resolveCalendars, SchedulePollFormData, SchedulePollRow } from '@okr/calevent-util';
+import { SeenService } from '@okr/user-data-access';
+import { addInvitedAttendee, applyInvitationAnswer, toAttendeeState, CALEVENT_I18N_KEYS, resetActivity, seenKeyFor, toSeenCounts, unseenActivity, CalEventNotifyFormData, findConflictingCalEvents, newCalEventNotifyFormData, buildCalEventLink, buildSchedulePollLink, formatSchedulePollInviteMessage, formatScheduleCloseMessage, getCaleventIndex, getSeriesUpdateFields, isCalEvent, isCaleventFull, isPersonalCalendarName, isPersonalCalevent, mergeAttendee, planSeriesReconcile, resolveCalendars, SchedulePollFormData, SchedulePollRow } from '@okr/calevent-util';
 import { CalEventNotifyModal, RegressionSelectionModal, showCalEventInfo } from '@okr/calevent-ui';
 
 /**
@@ -91,7 +92,8 @@ export const CalEventStore = signalStore(
     matrixChatService: lazyService(inject(Injector), () =>
       import('@okr/chat-data-access').then(m => m.MatrixChatService)),
     invitationService: inject(InvitationService),
-    aliasMintService: inject(AliasMintService)
+    aliasMintService: inject(AliasMintService),
+    seenService: inject(SeenService)
   })),
   withProps((store) => ({
     i18n: store.i18nService.translateAll(CALEVENT_I18N_KEYS),
@@ -115,6 +117,12 @@ export const CalEventStore = signalStore(
       stream: ({ params }) => params.currentUser ? store.locationService.list() : of([]),
     }),
 
+    // the user's "seen" markers — with the events' activityCount they make the unseen badge
+    seenResource: rxResource({
+      params: () => ({ uid: store.appStore.currentUser()?.okey }),
+      stream: ({ params }) => store.seenService.list(params.uid),
+    }),
+
     invitationsForCurrentUserResource: rxResource({
       params: () => ({
         personKey: store.appStore.currentUser()?.personKey
@@ -131,6 +139,7 @@ export const CalEventStore = signalStore(
 
   withComputed((state) => {
     return {
+      seenCounts: computed(() => toSeenCounts(state.seenResource.value() ?? [])),
       // `startDaysOffset` is signed: negative reaches into the past, positive into the future,
       // and 0 is today. `addDuration` expresses all three directly — the previous three-branch
       // form only existed to route the negative case through `subDuration`, which used to add.
@@ -760,6 +769,7 @@ export const CalEventStore = signalStore(
       },
 
       async edit(calevent: CalEventModel, isNew: boolean, readOnly = true, initialDirty = false, skipReload = false): Promise<CalEventModel | undefined> {
+        if (!isNew) this.markSeen(calevent);
         const { CalEventEditModal } = await import('./calevent-edit.modal');
         const modal = await store.modalController.create({
           component: CalEventEditModal,
@@ -869,7 +879,23 @@ export const CalEventStore = signalStore(
         await showToast(store.toastController, store.i18n.copy_link_conf());
       },
 
+      /** Comments/documents on the event the user has not looked at yet — the list badge. */
+      unseen(calevent: CalEventModel): number {
+        return unseenActivity(calevent, store.seenCounts());
+      },
+
+      /**
+       * Both modals mount the comment and document cards, so opening either IS looking at the
+       * activity. Fire-and-forget: the marker is a convenience, never a reason to block a modal.
+       */
+      markSeen(calevent: CalEventModel): void {
+        if (!calevent.okey) return;   // a new, unsaved event has nothing to have seen
+        store.seenService.markSeen(store.appStore.currentUser()?.okey, seenKeyFor(calevent.okey), calevent.activityCount ?? 0)
+          .catch((ex: unknown) => warn(`CalEventStore.markSeen -> ${ex}`));
+      },
+
       async view(calevent: CalEventModel): Promise<void> {
+        this.markSeen(calevent);
         const { CalEventViewModal } = await import('./calevent-view.modal');
         const modal = await store.modalController.create({
           component: CalEventViewModal,
@@ -1015,7 +1041,7 @@ export const CalEventStore = signalStore(
         let index = 0;
         for (const date of dates) {
           const okey = calevent.seriesId + pad(index, 2);
-          const inst = { ...structuredClone(calevent), startDate: date, okey, attendees: [] };
+          const inst = { ...structuredClone(calevent), startDate: date, okey, attendees: [], ...resetActivity() };
           await store.calEventService.create(inst, store.currentUser());
           index++;
         }
@@ -1037,7 +1063,7 @@ export const CalEventStore = signalStore(
         let index = 1;
         for (const date of dates.slice(1)) { // dates[0] is the original event's own date
           const okey = calevent.seriesId + pad(index, 2);
-          await store.calEventService.create({ ...structuredClone(calevent), startDate: date, okey, attendees: [] }, store.currentUser());
+          await store.calEventService.create({ ...structuredClone(calevent), startDate: date, okey, attendees: [], ...resetActivity() }, store.currentUser());
           index++;
         }
         store.calEventService.logSeriesActivity('series-create',
@@ -1101,7 +1127,7 @@ export const CalEventStore = signalStore(
           while (taken.has(calevent.seriesId + pad(index, 2))) index++;
           const okey = calevent.seriesId + pad(index, 2);
           taken.add(okey);
-          await store.calEventService.create({ ...structuredClone(calevent), startDate: date, okey, attendees: [], isArchived: false }, store.currentUser());
+          await store.calEventService.create({ ...structuredClone(calevent), startDate: date, okey, attendees: [], ...resetActivity(), isArchived: false }, store.currentUser());
         }
       },
 

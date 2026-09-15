@@ -1,5 +1,5 @@
 import { Component, ComponentRef, computed, CUSTOM_ELEMENTS_SCHEMA, DestroyRef, effect, inject, Injector, input, linkedSignal, OnInit, PLATFORM_ID, signal, untracked, viewChild, ViewContainerRef } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, AlertController, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTextarea, IonTitle, IonToolbar, ModalController } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, AlertController, IonBadge, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTextarea, IonTitle, IonToolbar, ModalController } from '@ionic/angular/standalone';
 import { Browser } from '@capacitor/browser';
 import { Router } from '@angular/router';
 import { format } from 'date-fns';
@@ -18,7 +18,7 @@ import { Menu } from '@okr/cms-menu-feature';
 import { AvatarDisplay } from '@okr/avatar-ui';
 import { isAdminMember } from '@okr/subject-group-util';
 
-import { CalEventDurationPipe, canAttendCalevent, countPollAcceptances, countPollResponses, formatDateTimeLabel, getCalEventCssClass, isPastCalevent, isPersonalCalendarName, isPersonalCalevent, mayJoinOpenCalevent, resolveCalendars, upcomingOccurrences } from '@okr/calevent-util';
+import { CalEventDurationPipe, canAttendCalevent, countPollAcceptances, countPollResponses, formatDateTimeLabel, getCalEventCssClass, isPastCalevent, isPersonalCalendarName, isPersonalCalevent, mayJoinOpenCalevent, resetActivity, resolveCalendars, upcomingOccurrences } from '@okr/calevent-util';
 import { showCalendarSync } from '@okr/calevent-ui';
 import type { OrganiserContactAction, OrganiserContactResult } from '@okr/calevent-ui';
 import { browseUrl } from '@okr/subject-address-util';
@@ -37,7 +37,7 @@ type CalEventSortField = 'date' | 'topic' | 'location' | 'organiser';
     imports: [
       CalEventDurationPipe, SvgIconPipe, PartPipe,
       Spinner, EmptyList, AvatarDisplay, Menu, ListFilter,
-      IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon, IonTextarea,
+      IonHeader, IonToolbar, IonButtons, IonBadge, IonButton, IonTitle, IonMenuButton, IonIcon, IonTextarea,
       IonGrid, IonRow, IonCol, IonLabel, IonContent, IonItem, IonList, IonPopover
     ],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],
@@ -301,6 +301,9 @@ type CalEventSortField = 'date' | 'topic' | 'location' | 'organiser';
                 <ion-label class="ion-hide-md-down">{{ event.locationKey | part:true }}</ion-label>
                 @if(showMenu()) {
                 <ion-label class="ion-hide-md-down"><okr-avatar-display [avatars]="event.responsiblePersons" /></ion-label>
+                }
+                @if(store.unseen(event); as unseen) {
+                  <ion-badge slot="end" color="primary" [title]="store.i18n.activity_unseen()">{{ unseen }}</ion-badge>
                 }
                 @if(event.isLocked) {
                   <ion-icon slot="end" color="medium" src="{{ 'lock-closed' | svgIcon }}" [title]="store.i18n.locked_banner()" />
@@ -1035,7 +1038,7 @@ export class CalEventList implements OnInit {
           // series (or, with a repeat-until date already passed, create nothing at all).
           // The user can still turn the copy into a series in the modal.
           // The edit modal deep-clones its input, so a shallow copy is enough here.
-          const copy: CalEventModel = { ...calEvent, okey: '', seriesId: '', attendees: [], periodicity: 'once', repeatUntilDate: DEFAULT_DATE };
+          const copy: CalEventModel = { ...calEvent, okey: '', seriesId: '', attendees: [], periodicity: 'once', repeatUntilDate: DEFAULT_DATE, ...resetActivity() };
           const created = await this.store.edit(copy, true, false, true, isGrid);
           if (isGrid && created) this.navigateCalendarTo(created.startDate, viewType);
           break;

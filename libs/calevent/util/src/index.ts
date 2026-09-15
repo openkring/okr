@@ -9,3 +9,4 @@ export * from './lib/schedule-poll.validations';
 export * from './lib/calevent.validations';
 export * from './lib/calevent-notify.model';
 export * from './lib/calevent-notify.validations';
+export * from './lib/calevent-activity.util';
