@@ -8,9 +8,11 @@ import { AssetStore } from './asset.store';
   selector: 'okr-depreciation-run-page',
   standalone: true,
   imports: [
-    FormsModule, 
+    FormsModule,
     IonHeader, IonToolbar, IonTitle, IonContent, IonList, IonItem, IonLabel, IonNote, IonButton, IonInput
   ],
+  // the page is a route target of its own (not a child of AssetList), so it must provide the store itself
+  providers: [AssetStore],
   template: `
     <ion-header>
       <ion-toolbar>
