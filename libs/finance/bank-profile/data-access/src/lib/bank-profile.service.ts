@@ -59,9 +59,17 @@ export class BankProfileService {
     return matches.length === 1 ? matches[0] : undefined;
   }
 
-  /** The profile for a normalized IBAN, or undefined — one-shot read, used by the import. */
-  public async findByIban(accountingTenantId: string, iban: string): Promise<BankProfileModel | undefined> {
-    const all = await this.listOnce(accountingTenantId);
-    return all.find(p => p.iban === iban);
+  /**
+   * The profile for a normalized IBAN, or undefined — one-shot read, used by the import. With a currency,
+   * the profile of that currency wins (a multi-currency statement such as Swissquote maps one IBAN to one
+   * profile per currency); a tenant with a single profile on the IBAN keeps matching without one.
+   */
+  public async findByIban(accountingTenantId: string, iban: string, currency?: string): Promise<BankProfileModel | undefined> {
+    const matches = (await this.listOnce(accountingTenantId)).filter(p => p.iban === iban);
+    if (currency) {
+      const exact = matches.find(p => p.currency === currency);
+      if (exact) return exact;
+    }
+    return matches.length === 1 ? matches[0] : undefined;
   }
 }

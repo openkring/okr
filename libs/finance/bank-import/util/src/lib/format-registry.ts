@@ -4,6 +4,7 @@ import { splitLines, stripBom } from './csv.util';
 import { matchesGkbHeader, parseGkb } from './gkb.adapter';
 import { matchesPostfinanceHeader, parsePostfinance } from './postfinance.adapter';
 import { checkSaldo } from './saldo.util';
+import { matchesSwissquoteHeader, parseSwissquote } from './swissquote.adapter';
 import { BankImportError, ParsedStatement } from './types';
 import { matchesYuhHeader, parseYuh } from './yuh.adapter';
 import { matchesZkbHeader, parseZkb } from './zkb.adapter';
@@ -27,6 +28,7 @@ const ADAPTERS: Record<BankFormat, Adapter> = {
   yuh:         { matchesHeader: matchesYuhHeader, parse: parseYuh, newestFirst: false },
   vz:          notImplemented('vz'),
   gkb:         { matchesHeader: matchesGkbHeader, parse: parseGkb, newestFirst: true },
+  swissquote:  { matchesHeader: matchesSwissquoteHeader, parse: parseSwissquote, newestFirst: false },
 };
 
 export function detectFormat(text: string): BankFormat | undefined {

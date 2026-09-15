@@ -4,7 +4,7 @@ import { OkrModel } from './base.model';
 import { CurrencyCode } from './money.model';
 
 /** The bank CSV layouts the import understands. One adapter per value (finance-bank-import-util). */
-export type BankFormat = 'postfinance' | 'zkb' | 'yuh' | 'vz' | 'gkb';
+export type BankFormat = 'postfinance' | 'zkb' | 'yuh' | 'vz' | 'gkb' | 'swissquote';
 
 /**
  * One bank account (IBAN) of an accounting tenant, as seen by the CSV import (spec 1.60 §3.1).

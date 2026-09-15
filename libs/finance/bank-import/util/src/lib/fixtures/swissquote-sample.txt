@@ -1,0 +1,410 @@
+Transaktionsaufstellung
+01.01.2025 bis 14.09.2026 - Erstellt am 15.09.2026
+Max Muster
+Musterweg 1
+Referenzwährung Schweizer Franken
+8000, Zürich
+IBAN CH12 0878 1000 0000 1234 5
+Anfangssaldo 85’641.05 CHF
+Kunde 1234567
+SWIFT SWQBCHZZ XXX
+Endsaldo -21’003.31 CHF
+Endsaldo und prozentuale Aufteilung auf alle Währungen
+Dieses gedruckte Dokument dient nur zu Informationszwecken und darf nicht für offizielle Zwecke verwendet werden. Im Falle von
+Unstimmigkeiten sind Ihr gewöhnlicher Kontoauszug oder Ihre Vermögensaufstellung massgebend. Die Swissquote Bank AG übernimmt keine
+Haftung für inkorrekte Darstellungen, die auf Schreibfehlern, technischen oder ähnlichen Fehlern beruhen, und behält sich das Recht vor, diese
+Fehler zu korrigieren.
+Alle
+Swissquote Bank AG, 33 chemin de la Crétaux, CH-1196 Gland - Customer Care : +41 44 825 88 88 1 / 8
+
+Max Muster
+Transaktionsaufstellung in CHF
+IBAN: CH12 0878 1000 0000 1234 5 (CHF)
+01.01.2025 bis 14.09.2026 - Erstellt am 15.09.2026
+Anfangssaldo Einzahlung Auszahlung Endsaldo
+60’431.00 CHF 228’974.67 CHF 287’386.06 CHF 2’019.61 CHF
+Gebühren und
+Datum Referenz Information Betrag Valuta-Datum Saldo
+Steuern
+01.01.2025 743667086 Zinsen +0.79 CHF 31.12.2024 60’431.79 CHF
+17.01.2025 760840885 Manuelle Forex-Überweisung CHF an USD -27’618.21 CHF 21.01.2025 32’813.58 CHF
+Wechselkurs: 1 CHF = 1.096569 USD
+Betrag: 30000.00 USD
+24.01.2025 766047297 Einzahlung für Max Muster -20’000.00 CHF 24.01.2025 12’813.58 CHF
+IBAN: CH9800700110000000001
+BIC/SWIFT: ZKBKCHZZ80A
+27.01.2025 768954566 Wertpapierleihe 0.49 CHF +0.41 CHF 27.01.2025 12’813.99 CHF
+27.01.2025 769368287 Manuelle Forex-Überweisung CHF an USD -10’000.00 CHF 29.01.2025 2’813.99 CHF
+Wechselkurs: 1 CHF = 1.108887 USD
+Betrag: 10984.55 USD
+14.03.2025 806518707 Eingehende Zahlung +30’000.00 CHF 14.03.2025 32’813.99 CHF
+Muster, Max Peter
+Musterweg,1
+8000,Zürich
+CH
+IBAN: CH5009000000000000001
+BIC/SWIFT: POFICHBEXXX
+14.03.2025 807106577 Manuelle Forex-Überweisung CHF an USD -32’000.00 CHF 18.03.2025 813.99 CHF
+Wechselkurs: 1 CHF = 1.130295 USD
+Betrag: 35829.09 USD
+18.03.2025 808933941 Wertpapierleihe 0.05 CHF +0.05 CHF 18.03.2025 814.04 CHF
+31.03.2025 817023304 Depotgebühren -54.05 CHF 31.03.2025 759.99 CHF
+28.04.2025 836650564 Wertpapierleihe 0.4 CHF +0.34 CHF 28.04.2025 760.33 CHF
+21.05.2025 851765163 Wertpapierleihe 0.25 CHF +0.23 CHF 21.05.2025 760.56 CHF
+16.06.2025 867446901 Einzahlung für Max Muster -10’000.00 CHF 16.06.2025 -9’239.44 CHF
+IBAN: CH9800700110000000001
+BIC/SWIFT: ZKBKCHZZ80A
+30.06.2025 877458573 Depotgebühren -54.05 CHF 30.06.2025 -9’293.49 CHF
+30.06.2025 877956500 Wertpapierleihe 0.1 CHF +0.07 CHF 30.06.2025 -9’293.42 CHF
+14.07.2025 887561206 Manuelle Forex-Überweisung USD an CHF +10’000.00 CHF 16.07.2025 706.58 CHF
+Wechselkurs: 1 USD = 0.79772 CHF
+Betrag: 12655.95 USD
+15.07.2025 888227832 Wertpapierleihe 0.15 CHF +0.12 CHF 15.07.2025 706.70 CHF
+21.08.2025 915838817 Wertpapierleihe 0.3 CHF +0.26 CHF 21.08.2025 706.96 CHF
+25.09.2025 940558842 Manuelle Forex-Überweisung CHF an USD -45’735.03 CHF 29.09.2025 -45’028.07 CHF
+Wechselkurs: 1 CHF = 1.258139 USD
+Betrag: 57000.00 USD
+30.09.2025 945143151 Depotgebühren -54.05 CHF 30.09.2025 -45’082.12 CHF
+17.12.2025 997795482 Manuelle Forex-Überweisung USD an CHF +188’972.40 CHF 19.12.2025 143’890.28 CHF
+Wechselkurs: 1 USD = 0.79496 CHF
+Betrag: 240000.00 USD
+19.12.2025 999138762 Manuelle Forex-Überweisung CHF an USD -96’380.52 CHF 23.12.2025 47’509.76 CHF
+Wechselkurs: 1 CHF = 1.256905 USD
+Betrag: 120000.00 USD
+Dieses gedruckte Dokument dient nur zu Informationszwecken und darf nicht für offizielle Zwecke verwendet werden. Im Falle von
+Unstimmigkeiten sind Ihr gewöhnlicher Kontoauszug oder Ihre Vermögensaufstellung massgebend. Die Swissquote Bank AG übernimmt keine
+Haftung für inkorrekte Darstellungen, die auf Schreibfehlern, technischen oder ähnlichen Fehlern beruhen, und behält sich das Recht vor, diese
+Fehler zu korrigieren.
+Alle
+Swissquote Bank AG, 33 chemin de la Crétaux, CH-1196 Gland - Customer Care : +41 44 825 88 88 2 / 8
+
+Max Muster
+Transaktionsaufstellung in CHF
+IBAN: CH12 0878 1000 0000 1234 5 (CHF)
+01.01.2025 bis 14.09.2026 - Erstellt am 15.09.2026
+Gebühren und
+Datum Referenz Information Betrag Valuta-Datum Saldo
+Steuern
+31.12.2025 1006838119 Depotgebühren -54.05 CHF 31.12.2025 47’455.71 CHF
+01.01.2026 1009694917 Zinsen -328.00 CHF 01.01.2026 47’127.71 CHF
+07.01.2026 1017489030 Manuelle Forex-Überweisung CHF an USD -45’000.00 CHF 09.01.2026 2’127.71 CHF
+Wechselkurs: 1 CHF = 1.255178 USD
+Betrag: 55951.92 USD
+31.03.2026 1070365943 Depotgebühren -54.05 CHF 31.03.2026 2’073.66 CHF
+30.06.2026 1127727341 Depotgebühren -54.05 CHF 30.06.2026 2’019.61 CHF
+Dieses gedruckte Dokument dient nur zu Informationszwecken und darf nicht für offizielle Zwecke verwendet werden. Im Falle von
+Unstimmigkeiten sind Ihr gewöhnlicher Kontoauszug oder Ihre Vermögensaufstellung massgebend. Die Swissquote Bank AG übernimmt keine
+Haftung für inkorrekte Darstellungen, die auf Schreibfehlern, technischen oder ähnlichen Fehlern beruhen, und behält sich das Recht vor, diese
+Fehler zu korrigieren.
+Alle
+Swissquote Bank AG, 33 chemin de la Crétaux, CH-1196 Gland - Customer Care : +41 44 825 88 88 3 / 8
+
+Max Muster
+Transaktionsaufstellung in EUR
+IBAN: CH12 0878 1000 0000 1234 5 (CHF)
+01.01.2025 bis 14.09.2026 - Erstellt am 15.09.2026
+Anfangssaldo Einzahlung Auszahlung Endsaldo
+1’767.43 EUR 0.00 EUR 9.31 EUR 1’758.12 EUR
+Gebühren und
+Datum Referenz Information Betrag Valuta-Datum Saldo
+Steuern
+01.01.2025 746632737 Zinsen -9.31 EUR 31.12.2024 1’758.12 EUR
+Dieses gedruckte Dokument dient nur zu Informationszwecken und darf nicht für offizielle Zwecke verwendet werden. Im Falle von
+Unstimmigkeiten sind Ihr gewöhnlicher Kontoauszug oder Ihre Vermögensaufstellung massgebend. Die Swissquote Bank AG übernimmt keine
+Haftung für inkorrekte Darstellungen, die auf Schreibfehlern, technischen oder ähnlichen Fehlern beruhen, und behält sich das Recht vor, diese
+Fehler zu korrigieren.
+Alle
+Swissquote Bank AG, 33 chemin de la Crétaux, CH-1196 Gland - Customer Care : +41 44 825 88 88 4 / 8
+
+Max Muster
+Transaktionsaufstellung in USD
+IBAN: CH12 0878 1000 0000 1234 5 (CHF)
+01.01.2025 bis 14.09.2026 - Erstellt am 15.09.2026
+Anfangssaldo Einzahlung Auszahlung Endsaldo
+26’303.11 USD 805’916.71 USD 862’417.55 USD -30’197.73 USD
+Gebühren und
+Datum Referenz Information Betrag Valuta-Datum Saldo
+Steuern
+01.01.2025 745722446 Zinsen -336.54 USD 31.12.2024 25’966.57 USD
+17.01.2025 760784559 Kaufen - SOFI TECHNOLOGIES ORD 80.0 USD -16’524.63 USD 21.01.2025 9’441.94 USD
+Börse: NASDAQ Kommission
+ISIN: US83406F1021 24.63 USD
+Anzahl: 1,000 Abgabe (Eidg.
+Stückpreis: 16.42 USD Stempelsteuer)
+Betrag: 16629.26 USD
+17.01.2025 760784663 Kaufen - PALANTIR TECHNOLOGIES CL A ORD 135.0 USD -35’648.19 USD 21.01.2025 -26’206.25 USD
+Börse: NASDAQ Kommission
+ISIN: US69608A1088 53.19 USD
+Anzahl: 500 Abgabe (Eidg.
+Stückpreis: 70.92 USD Stempelsteuer)
+Betrag: 35836.38 USD
+17.01.2025 760840885 Manuelle Forex-Überweisung CHF an USD +30’000.00 USD 21.01.2025 3’793.75 USD
+Wechselkurs: 1 CHF = 1.096569 USD
+Betrag: 27618.21 CHF
+27.01.2025 769367712 Kryptos kaufen - Ether 23.74 USD -3’189.64 USD 27.01.2025 604.11 USD
+Symbol: ETH
+Anzahl: 1
+Stückpreis: 3165.9 USD
+Betrag: 3213.38 USD
+27.01.2025 769367699 Kryptos kaufen - Ether 213.7 USD -28’707.70 USD 27.01.2025 -28’103.59 USD
+Symbol: ETH
+Anzahl: 9
+Stückpreis: 3166 USD
+Betrag: 28921.40 USD
+27.01.2025 769368287 Manuelle Forex-Überweisung CHF an USD +10’984.55 USD 29.01.2025 -17’119.04 USD
+Wechselkurs: 1 CHF = 1.108887 USD
+Betrag: 10000.00 CHF
+19.02.2025 788176947 Verkaufen - PALANTIR TECHNOLOGIES CL A 55.0 USD +14’362.61 USD 20.02.2025 -2’756.43 USD
+ORD Kommission
+Börse: NASDAQ 21.66 USD
+ISIN: US69608A1088 Abgabe (Eidg.
+Anzahl: 126 Stempelsteuer)
+Stückpreis: 114.6 USD 0.33 USD
+Betrag: 14439.60 USD Börsengebühren
+19.02.2025 788176950 Verkaufen - PALANTIR TECHNOLOGIES CL A 25.0 USD +1’119.15 USD 20.02.2025 -1’637.28 USD
+ORD Kommission
+Börse: NASDAQ 1.72 USD
+ISIN: US69608A1088 Abgabe (Eidg.
+Anzahl: 10 Stempelsteuer)
+Stückpreis: 114.59 USD 0.03 USD
+Betrag: 1145.90 USD Börsengebühren
+19.02.2025 788176953 Verkaufen - PALANTIR TECHNOLOGIES CL A 10.65 USD +7’093.15 USD 20.02.2025 5’455.87 USD
+ORD Abgabe (Eidg.
+Börse: NASDAQ Stempelsteuer)
+ISIN: US69608A1088 0.16 USD
+Anzahl: 62 Börsengebühren
+Stückpreis: 114.58 USD
+Betrag: 7103.96 USD
+19.02.2025 788176955 Verkaufen - PALANTIR TECHNOLOGIES CL A 55.0 USD +11’273.12 USD 20.02.2025 16’728.99 USD
+ORD Kommission
+Börse: NASDAQ 17.02 USD
+ISIN: US69608A1088 Abgabe (Eidg.
+Anzahl: 99 Stempelsteuer)
+Stückpreis: 114.6 USD 0.26 USD
+Betrag: 11345.40 USD Börsengebühren
+19.02.2025 788176959 Verkaufen - PALANTIR TECHNOLOGIES CL A 55.0 USD +23’173.37 USD 20.02.2025 39’902.36 USD
+ORD Kommission
+Börse: NASDAQ 34.9 USD
+ISIN: US69608A1088 Abgabe (Eidg.
+Anzahl: 203 Stempelsteuer)
+Stückpreis: 114.6 USD 0.81 USD
+Betrag: 23263.80 USD Börsengebühren
+Dieses gedruckte Dokument dient nur zu Informationszwecken und darf nicht für offizielle Zwecke verwendet werden. Im Falle von
+Unstimmigkeiten sind Ihr gewöhnlicher Kontoauszug oder Ihre Vermögensaufstellung massgebend. Die Swissquote Bank AG übernimmt keine
+Haftung für inkorrekte Darstellungen, die auf Schreibfehlern, technischen oder ähnlichen Fehlern beruhen, und behält sich das Recht vor, diese
+Fehler zu korrigieren.
+Alle
+Swissquote Bank AG, 33 chemin de la Crétaux, CH-1196 Gland - Customer Care : +41 44 825 88 88 5 / 8
+
+Max Muster
+Transaktionsaufstellung in USD
+IBAN: CH12 0878 1000 0000 1234 5 (CHF)
+01.01.2025 bis 14.09.2026 - Erstellt am 15.09.2026
+Gebühren und
+Datum Referenz Information Betrag Valuta-Datum Saldo
+Steuern
+19.02.2025 788176984 Berichtigung Börsengeb. -0.28 USD 20.02.2025 39’902.08 USD
+24.02.2025 791486553 Kaufen - TESLA ORD 190.0 USD -66’290.84 USD 25.02.2025 -26’388.76 USD
+Börse: NASDAQ Kommission
+ISIN: US88160R1014 99.0 USD
+Anzahl: 200 Abgabe (Eidg.
+Stückpreis: 330.0092 USD Stempelsteuer)
+Betrag: 66579.84 USD
+14.03.2025 807106577 Manuelle Forex-Überweisung CHF an USD +35’829.09 USD 18.03.2025 9’440.33 USD
+Wechselkurs: 1 CHF = 1.130295 USD
+Betrag: 32000.00 CHF
+19.03.2025 809648011 Kaufen - TESLA ORD 135.0 USD -47’690.23 USD 20.03.2025 -38’249.90 USD
+Börse: NASDAQ Kommission
+ISIN: US88160R1014 71.23 USD
+Anzahl: 200 Abgabe (Eidg.
+Stückpreis: 237.42 USD Stempelsteuer)
+Betrag: 47896.46 USD
+26.03.2025 813416843 Verkaufen - TESLA ORD 190.0 USD +53’729.76 USD 27.03.2025 15’479.86 USD
+Börse: NASDAQ Kommission
+ISIN: US88160R1014 81.0 USD
+Anzahl: 200 Abgabe (Eidg.
+Stückpreis: 270.01 USD Stempelsteuer)
+Betrag: 54002.00 USD 1.5 USD
+Börsengebühren
+26.03.2025 813416855 Berichtigung Börsengeb. -0.26 USD 27.03.2025 15’479.60 USD
+14.07.2025 887443876 Verkaufen - SOFI TECHNOLOGIES ORD 30.0 USD +6’095.66 USD 15.07.2025 21’575.26 USD
+Börse: NASDAQ Kommission
+ISIN: US83406F1021 9.2 USD
+Anzahl: 300 Abgabe (Eidg.
+Stückpreis: 20.45 USD Stempelsteuer)
+Betrag: 6135.00 USD 0.14 USD
+Börsengebühren
+14.07.2025 887443879 Verkaufen - SOFI TECHNOLOGIES ORD 25.0 USD +4’056.78 USD 15.07.2025 25’632.04 USD
+Börse: NASDAQ Kommission
+ISIN: US83406F1021 6.13 USD
+Anzahl: 200 Abgabe (Eidg.
+Stückpreis: 20.44 USD Stempelsteuer)
+Betrag: 4088.00 USD 0.09 USD
+Börsengebühren
+14.07.2025 887443883 Verkaufen - SOFI TECHNOLOGIES ORD 25.0 USD +6’093.16 USD 15.07.2025 31’725.20 USD
+Börse: NASDAQ Kommission
+ISIN: US83406F1021 9.2 USD
+Anzahl: 300 Abgabe (Eidg.
+Stückpreis: 20.425 USD Stempelsteuer)
+Betrag: 6127.50 USD 0.14 USD
+Börsengebühren
+14.07.2025 887443886 Verkaufen - SOFI TECHNOLOGIES ORD 3.06 USD +2’039.39 USD 15.07.2025 33’764.59 USD
+Börse: NASDAQ Abgabe (Eidg.
+ISIN: US83406F1021 Stempelsteuer)
+Anzahl: 100 0.05 USD
+Stückpreis: 20.425 USD Börsengebühren
+Betrag: 2042.50 USD
+14.07.2025 887443887 Verkaufen - SOFI TECHNOLOGIES ORD 2.17 USD +1’447.98 USD 15.07.2025 35’212.57 USD
+Börse: NASDAQ Abgabe (Eidg.
+ISIN: US83406F1021 Stempelsteuer)
+Anzahl: 71 0.03 USD
+Stückpreis: 20.425 USD Börsengebühren
+Betrag: 1450.18 USD
+14.07.2025 887443888 Verkaufen - SOFI TECHNOLOGIES ORD 0.89 USD +591.41 USD 15.07.2025 35’803.98 USD
+Börse: NASDAQ Abgabe (Eidg.
+ISIN: US83406F1021 Stempelsteuer)
+Anzahl: 29 -0.45 USD
+Stückpreis: 20.425 USD Börsengebühren
+Betrag: 592.32 USD
+14.07.2025 887444169 Berichtigung Börsengeb. +0.47 USD 15.07.2025 35’804.45 USD
+14.07.2025 887561206 Manuelle Forex-Überweisung USD an CHF -12’655.95 USD 16.07.2025 23’148.50 USD
+Wechselkurs: 1 USD = 0.79772 CHF
+Betrag: 10000.00 CHF
+Dieses gedruckte Dokument dient nur zu Informationszwecken und darf nicht für offizielle Zwecke verwendet werden. Im Falle von
+Unstimmigkeiten sind Ihr gewöhnlicher Kontoauszug oder Ihre Vermögensaufstellung massgebend. Die Swissquote Bank AG übernimmt keine
+Haftung für inkorrekte Darstellungen, die auf Schreibfehlern, technischen oder ähnlichen Fehlern beruhen, und behält sich das Recht vor, diese
+Fehler zu korrigieren.
+Alle
+Swissquote Bank AG, 33 chemin de la Crétaux, CH-1196 Gland - Customer Care : +41 44 825 88 88 6 / 8
+
+Max Muster
+Transaktionsaufstellung in USD
+IBAN: CH12 0878 1000 0000 1234 5 (CHF)
+01.01.2025 bis 14.09.2026 - Erstellt am 15.09.2026
+Gebühren und
+Datum Referenz Information Betrag Valuta-Datum Saldo
+Steuern
+31.07.2025 900436781 Kryptos kaufen 148.86 USD -19’996.63 USD 31.07.2025 3’151.87 USD
+Symbol: BTC
+Anzahl: 0.168
+Stückpreis: 118444 USD
+Betrag: 20145.49 USD
+16.09.2025 934456325 Verkaufen - TESLA ORD 190.0 USD +82’424.00 USD 17.09.2025 85’575.87 USD
+Börse: NASDAQ Kommission
+ISIN: US88160R1014 124.11 USD
+Anzahl: 197 Abgabe (Eidg.
+Stückpreis: 420.0 USD Stempelsteuer)
+Betrag: 82740.00 USD 1.89 USD
+Börsengebühren
+16.09.2025 934456327 Verkaufen - TESLA ORD 64.89 USD +43’194.11 USD 17.09.2025 128’769.98 USD
+Börse: NASDAQ Abgabe (Eidg.
+ISIN: US88160R1014 Stempelsteuer)
+Anzahl: 103 -1.89 USD
+Stückpreis: 420.0 USD Börsengebühren
+Betrag: 43260.00 USD
+16.09.2025 934456482 Berichtigung Börsengeb. +2.89 USD 17.09.2025 128’772.87 USD
+16.09.2025 934465157 Kryptos kaufen - Ether 300.17 USD -40’322.27 USD 16.09.2025 88’450.60 USD
+Symbol: ETH
+Anzahl: 9
+Stückpreis: 4446.9 USD
+Betrag: 40622.44 USD
+16.09.2025 934465251 Kryptos kaufen - Ether 33.35 USD -4’480.05 USD 16.09.2025 83’970.55 USD
+Symbol: ETH
+Anzahl: 1
+Stückpreis: 4446.7 USD
+Betrag: 4513.40 USD
+24.09.2025 940179910 Kryptos kaufen - Ether 20.85 USD -4’191.35 USD 24.09.2025 79’779.20 USD
+Symbol: ETH
+Anzahl: 1
+Stückpreis: 4170.5 USD
+Betrag: 4212.20 USD
+24.09.2025 940179915 Kryptos kaufen - Ether 187.67 USD -37’722.17 USD 24.09.2025 42’057.03 USD
+Symbol: ETH
+Anzahl: 9
+Stückpreis: 4170.5 USD
+Betrag: 37909.84 USD
+24.09.2025 940179921 Kryptos kaufen - Ether 20.85 USD -4’191.35 USD 24.09.2025 37’865.68 USD
+Symbol: ETH
+Anzahl: 1
+Stückpreis: 4170.5 USD
+Betrag: 4212.20 USD
+24.09.2025 940179922 Kryptos kaufen - Ether 187.67 USD -37’722.17 USD 24.09.2025 143.51 USD
+Symbol: ETH
+Anzahl: 9
+Stückpreis: 4170.5 USD
+Betrag: 37909.84 USD
+25.09.2025 940557566 Kryptos kaufen 418.91 USD -56’273.41 USD 25.09.2025 -56’129.90 USD
+Symbol: BTC
+Anzahl: 0.5
+Stückpreis: 111709 USD
+Betrag: 56692.32 USD
+25.09.2025 940558842 Manuelle Forex-Überweisung CHF an USD +57’000.00 USD 29.09.2025 870.10 USD
+Wechselkurs: 1 CHF = 1.258139 USD
+Betrag: 45735.03 CHF
+17.12.2025 997732007 Verkaufen - TESLA ORD 190.85 USD +239’448.64 USD 18.12.2025 240’318.74 USD
+Börse: NASDAQ Kommission
+ISIN: US88160R1014 360.01 USD
+Anzahl: 500 Abgabe (Eidg.
+Stückpreis: 480.01 USD Stempelsteuer)
+Betrag: 240005.00 USD
+17.12.2025 997732019 Berichtigung Börsengeb. +5.50 USD 18.12.2025 240’324.24 USD
+17.12.2025 997795482 Manuelle Forex-Überweisung USD an CHF -240’000.00 USD 19.12.2025 324.24 USD
+Wechselkurs: 1 USD = 0.79496 CHF
+Betrag: 188972.40 CHF
+Dieses gedruckte Dokument dient nur zu Informationszwecken und darf nicht für offizielle Zwecke verwendet werden. Im Falle von
+Unstimmigkeiten sind Ihr gewöhnlicher Kontoauszug oder Ihre Vermögensaufstellung massgebend. Die Swissquote Bank AG übernimmt keine
+Haftung für inkorrekte Darstellungen, die auf Schreibfehlern, technischen oder ähnlichen Fehlern beruhen, und behält sich das Recht vor, diese
+Fehler zu korrigieren.
+Alle
+Swissquote Bank AG, 33 chemin de la Crétaux, CH-1196 Gland - Customer Care : +41 44 825 88 88 7 / 8
+
+Max Muster
+Transaktionsaufstellung in USD
+IBAN: CH12 0878 1000 0000 1234 5 (CHF)
+01.01.2025 bis 14.09.2026 - Erstellt am 15.09.2026
+Gebühren und
+Datum Referenz Information Betrag Valuta-Datum Saldo
+Steuern
+19.12.2025 999138762 Manuelle Forex-Überweisung CHF an USD +120’000.00 USD 23.12.2025 120’324.24 USD
+Wechselkurs: 1 CHF = 1.256905 USD
+Betrag: 96380.52 CHF
+19.12.2025 999181551 Kryptos kaufen - Ether 26.37 USD -2’955.62 USD 19.12.2025 117’368.62 USD
+Symbol: ETH
+Anzahl: 0.993
+Stückpreis: 2949.9 USD
+Betrag: 2981.99 USD
+19.12.2025 999182683 Kryptos kaufen - Ether 238.96 USD -26’789.86 USD 19.12.2025 90’578.76 USD
+Symbol: ETH
+Anzahl: 9
+Stückpreis: 2950.1 USD
+Betrag: 27028.82 USD
+19.12.2025 999182684 Kryptos kaufen - Ether 790.93 USD -88’671.95 USD 19.12.2025 1’906.81 USD
+Symbol: ETH
+Anzahl: 29.782
+Stückpreis: 2950.8 USD
+Betrag: 89462.88 USD
+01.01.2026 1008547737 Zinsen -402.71 USD 01.01.2026 1’504.10 USD
+07.01.2026 1017488920 Kaufen - TESLA ORD 190.85 USD -87’653.75 USD 08.01.2026 -86’149.65 USD
+Börse: NASDAQ Kommission
+ISIN: US88160R1014 131.0 USD
+Anzahl: 200 Abgabe (Eidg.
+Stückpreis: 436.6595 USD Stempelsteuer)
+Betrag: 87975.60 USD
+07.01.2026 1017489030 Manuelle Forex-Überweisung CHF an USD +55’951.92 USD 09.01.2026 -30’197.73 USD
+Wechselkurs: 1 CHF = 1.255178 USD
+Betrag: 45000.00 CHF
+Vertriebsentschädigungen
+Die Swissquote Bank AG («Swissquote») nimmt im Rahmen ihrer Vertriebstätigkeit für Finanzprodukte und der Durchführung von
+Vermögensverwaltungsmandaten im Zusammenhang mit ePrivate-Banking-Konten periodisch Vertriebsentschädigungen oder andere
+Retrozessionen von bestimmten Werbenden oder Emittenten von Finanzprodukten entgegen und behält diese ein.
+Bitte lesen Sie die Hinweise zu Vertriebsentschädigungen und anderen Retrozessionen, die Sie auf unserer Website unter
+https://swissquote.com/distribution-feesfinden und die nähere Informationen zum Thema enthalten. Diese Hinweise können jederzeit an
+veränderte Umstände angepasst werden und sind integraler Bestandteil Ihres Vertragsverhältnisses mit Swissquote.
+Gemäss Artikel 37 unserer Allgemeinen Geschäftsbedingungen gilt, dass Sie auf das Recht auf Rückerstattung von Vertriebsentschädigungen und
+anderen Arten von Retrozessionen, die Swissquote in Zukunft erhalten wird, verzichtet haben.
+Dieses gedruckte Dokument dient nur zu Informationszwecken und darf nicht für offizielle Zwecke verwendet werden. Im Falle von
+Unstimmigkeiten sind Ihr gewöhnlicher Kontoauszug oder Ihre Vermögensaufstellung massgebend. Die Swissquote Bank AG übernimmt keine
+Haftung für inkorrekte Darstellungen, die auf Schreibfehlern, technischen oder ähnlichen Fehlern beruhen, und behält sich das Recht vor, diese
+Fehler zu korrigieren.
+Alle
+Swissquote Bank AG, 33 chemin de la Crétaux, CH-1196 Gland - Customer Care : +41 44 825 88 88 8 / 8

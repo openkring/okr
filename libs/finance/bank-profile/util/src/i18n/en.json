@@ -5,7 +5,7 @@
   "update": { "label": "Edit bank profile", "conf": "The bank profile was saved.", "error": "The bank profile could not be saved." },
   "delete": { "label": "Delete bank profile", "conf": "The bank profile was deleted.", "error": "The bank profile could not be deleted." },
   "view": { "label": "View bank profile" }, "cancel": { "label": "Cancel" }, "save": { "label": "Save" },
-  "format": { "label": "Bank", "helper": "Determines how the CSV file is read.", "postfinance": "PostFinance", "zkb": "Zürcher Kantonalbank", "yuh": "Yuh", "vz": "VZ Depotbank", "gkb": "Graubündner Kantonalbank" },
+  "format": { "label": "Bank", "helper": "Determines how the file is read (CSV export or Swissquote PDF).", "postfinance": "PostFinance", "zkb": "Zürcher Kantonalbank", "yuh": "Yuh", "vz": "VZ Depotbank", "gkb": "Graubündner Kantonalbank", "swissquote": "Swissquote" },
   "iban": { "label": "IBAN", "placeholder": "CH00 0000 0000 0000 0000 0", "helper": "The IBAN is used to find the matching profile during import." },
   "bankName": { "label": "Name", "placeholder": "e.g. PostFinance business account", "helper": "" },
   "account": { "label": "Bank account in the accounting", "helper": "The class-1 account that account movements are booked against." },

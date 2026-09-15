@@ -98,6 +98,7 @@ export class BankProfileList {
       case 'yuh': return this.store.i18n.format_yuh();
       case 'vz': return this.store.i18n.format_vz();
       case 'gkb': return this.store.i18n.format_gkb();
+      case 'swissquote': return this.store.i18n.format_swissquote();
       default: return format;
     }
   }

@@ -8,12 +8,14 @@ import { BankImportError } from './types';
 const pf = readFileSync(join(__dirname, 'fixtures/postfinance-sample.csv'), 'utf8');
 const zkb = readFileSync(join(__dirname, 'fixtures/zkb-sample.csv'), 'utf8');
 const yuh = readFileSync(join(__dirname, 'fixtures/yuh-sample.csv'), 'utf8');
+const sq = readFileSync(join(__dirname, 'fixtures/swissquote-sample.txt'), 'utf8');
 
 describe('format registry', () => {
   it('detects the fixtures and rejects garbage', () => {
     expect(detectFormat(pf)).toBe('postfinance');
     expect(detectFormat(zkb)).toBe('zkb');
     expect(detectFormat(yuh)).toBe('yuh');
+    expect(detectFormat(sq)).toBe('swissquote');
     expect(detectFormat('hello;world\n1;2')).toBeUndefined();
     expect(detectFormat('')).toBeUndefined();
   });
@@ -21,6 +23,7 @@ describe('format registry', () => {
     expect(parseStatement(pf).format).toBe('postfinance');
     expect(parseStatement(zkb).rows.length).toBe(17);
     expect(parseStatement(yuh)).toMatchObject({ format: 'yuh', iban: '', warnings: [] });
+    expect(parseStatement(sq)).toMatchObject({ format: 'swissquote', iban: 'CH1208781000000012345', currency: 'CHF', warnings: [] });
     expect(() => parseStatement('nope')).toThrowError(BankImportError);
     try { parseStatement('nope'); } catch (e) { expect((e as BankImportError).code).toBe('unknown-format'); }
   });

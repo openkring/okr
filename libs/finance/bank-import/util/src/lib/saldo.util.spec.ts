@@ -13,6 +13,9 @@ describe('checkSaldo', () => {
   it('newest-first: saldo[i] === saldo[i+1] + amount[i]', () => {
     expect(checkSaldo([r(1, 100, 1100), r(2, -50, 1000), r(3, 20, 1050)])).toEqual([]);
   });
+  it('does not compare a pair in two currencies (section boundary of a multi-currency statement)', () => {
+    expect(checkSaldo([{ ...r(1, 100, 1100), currency: 'CHF' }, { ...r(2, -50, 999), currency: 'USD' }])).toEqual([]);
+  });
   it('reports exactly the mismatching line with expected and actual', () => {
     expect(checkSaldo([r(1, 100, 1200), r(2, -50, 1000)])).toEqual([{ code: 'saldo-mismatch', lineNo: 1, detail: '1100/1200' }]);
   });
