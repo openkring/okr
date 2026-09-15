@@ -60,7 +60,7 @@ import { AuthStore } from './auth.store';
           @if (linkSent()) {
             <okr-pwdreset-sent
               [i18n]="store.i18n"
-              [email]="currentCredentials().loginEmail ?? ''"
+              [email]="currentCredentials().loginEmail"
               [resent]="linkResent()"
               [sending]="isSending()"
               (resend)="resetPassword(true)"
