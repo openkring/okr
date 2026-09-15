@@ -116,6 +116,9 @@ describe('proposeBankRule', () => {
     // a 'contains gkb' rule could never match 'Zinsbelastung' — the matcher only sees rawText
     expect(proposeBankRule(row({ rawText: 'Zinsbelastung', payee: 'GKB' })))
       .toEqual({ condition: 'contains', term: 'Zinsbelastung', title: 'Zinsbelastung' });
+    // the account number varies per mortgage tranche — a term carrying it would match one tranche only
+    expect(proposeBankRule(row({ rawText: 'Zinsbelastung 10 384.747.204', payee: 'GKB' })))
+      .toEqual({ condition: 'contains', term: 'Zinsbelastung', title: 'Zinsbelastung' });
     expect(proposeBankRule(row({ rawText: 'Gebühr Bankpaket', payee: 'VZ' })))
       .toEqual({ condition: 'contains', term: 'Gebühr Bankpaket', title: 'Gebühr Bankpaket' });
   });
@@ -127,8 +130,12 @@ describe('proposeBankRule', () => {
 
   it('takes the first three words of the bank text when there is no payee; an all-caps text is title-cased', () => {
     expect(proposeBankRule(row({ rawText: 'KAUF/ONLINE-SHOPPING VOM 01.12.2025 KARTEN NR. XXXX1434', payee: '' })))
-      .toEqual({ condition: 'contains', term: 'KAUF/ONLINE-SHOPPING VOM 01.12.2025', title: 'Kauf/online-shopping Vom 01.12.2025' });
+      .toEqual({ condition: 'contains', term: 'KAUF/ONLINE-SHOPPING VOM', title: 'Kauf/online-shopping Vom' });
     expect(proposeBankRule(row({ rawText: 'Netflix Amsterdam, NL', payee: '' })).title).toBe('Netflix Amsterdam, NL');
+  });
+
+  it('keeps the numeric words when nothing else is left', () => {
+    expect(proposeBankRule(row({ rawText: '4711 0815', payee: '' })).term).toBe('4711 0815');
   });
 });
 
