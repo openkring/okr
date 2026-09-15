@@ -22,3 +22,17 @@ describe('format registry', () => {
     try { parseStatement('nope'); } catch (e) { expect((e as BankImportError).code).toBe('unknown-format'); }
   });
 });
+
+describe('legacy ZKB layout', () => {
+  const legacy = readFileSync(join(__dirname, 'fixtures/zkb-legacy-sample.csv'), 'utf8');
+  it('is detected as zkb and passes the saldo check oldest-first', () => {
+    expect(detectFormat(legacy)).toBe('zkb');
+    const s = parseStatement(legacy);
+    expect(s.rows.length).toBe(51);
+    expect(s.warnings).toEqual([]);
+  });
+  it('flags a corrupted saldo on the right line when the file is oldest-first', () => {
+    const s = parseStatement(legacy.replace('"20432.17"', '"20432.18"'));
+    expect(s.warnings).toEqual([{ code: 'saldo-mismatch', lineNo: 53, detail: '2043217/2043218' }]);
+  });
+});

@@ -23,13 +23,14 @@ export interface ParsedRow {
 
 export interface ParsedStatement {
   format: BankFormat;
-  iban: string;                  // normalized
+  iban: string;                  // normalized; '' when the file carries no account number (legacy ZKB)
   currency: string;
   bankName: string;
   dateFrom: string;              // yyyymmdd or ''
   dateTo: string;
   rows: ParsedRow[];             // file order
   warnings: ParsedWarning[];
+  newestFirst?: boolean;         // row order in the file; the adapter's default applies when absent
 }
 
 export type BankImportErrorCode = 'unknown-format' | 'no-iban' | 'format-not-implemented' | 'empty-file';

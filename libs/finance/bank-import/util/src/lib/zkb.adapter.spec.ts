@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { splitLines } from './csv.util';
+import { checkSaldo } from './saldo.util';
 import { extractZkbPayee, matchesZkbHeader, parseZkb } from './zkb.adapter';
 
 const text = readFileSync(join(__dirname, 'fixtures/zkb-sample.csv'), 'utf8');
@@ -55,5 +56,56 @@ describe('extractZkbPayee', () => {
     expect(extractZkbPayee('Belastung aus Lastschrift mit Widerspruch: CORNERCARD SWITZERLAND, VIA CANOVA')).toBe('CORNERCARD SWITZERLAND');
     expect(extractZkbPayee('Miete ZKB Schrankfach Periode vom 01.07.2025 bis 30.09.2025')).toBe('ZKB');
     expect(extractZkbPayee('IHR NOTEN ANKAUF')).toBe('');
+  });
+});
+
+describe('parseZkb — legacy layout (Saldo CHF, ZKB-Referenz, dateless Sammelbuchung details)', () => {
+  const legacy = readFileSync(join(__dirname, 'fixtures/zkb-legacy-sample.csv'), 'utf8');
+  const s = parseZkb(legacy);
+
+  it('detects the legacy header and reports no IBAN, oldest-first order', () => {
+    expect(matchesZkbHeader(splitLines(legacy))).toBe(true);
+    expect(s).toMatchObject({ format: 'zkb', iban: '', currency: 'CHF', bankName: 'Zürcher Kantonalbank', newestFirst: false });
+    expect(s.warnings).toEqual([]);
+  });
+
+  it('yields one booking per dated row, plus one per Sammelbuchung detail instead of the collective header', () => {
+    expect(s.rows).toHaveLength(51);
+    expect(s.rows.find(r => r.lineNo === 10)).toBeUndefined();
+    const details = s.rows.filter(r => r.lineNo === 11 || r.lineNo === 12);
+    expect(details).toHaveLength(2);
+    expect(details[0]).toMatchObject({ date: '20250103', amount: -302920, currency: 'CHF', bankReference: 'Z250037176589', payee: 'STWEG Rainstrasse 1' });
+    expect(details[0].rawText).toBe('Belastungen eBanking Mobile (2) STWEG Rainstrasse 1, Rainstrasse 1, CH-8712 Stäfa');
+    expect(details[1]).toMatchObject({ date: '20250103', amount: -10000, bankReference: 'Z250037176589', payee: 'Muster Anna oder Muster Beat' });
+    expect(details[1].rawText).toContain('Sponsoring Rudern');
+  });
+
+  it('carries the bank reference and the saldo in minor units; Zahlungszweck is part of rawText', () => {
+    expect(s.rows[0]).toMatchObject({ date: '20250101', amount: -2530, saldo: 2437917, bankReference: 'L115B1118W797Y8X-1', lineNo: 2 });
+    const tax = s.rows.find(r => r.rawText.startsWith('Gutschrift Auftraggeber: Kanton Graubuenden'))!;
+    expect(tax).toMatchObject({ amount: 115510, saldo: 2082942, payee: 'Kanton Graubuenden' });
+    expect(tax.rawText).toContain('Auszahlung Steuern');
+  });
+
+  it('gives the Sammelbuchung details a running saldo so the oldest-first saldo check passes end to end', () => {
+    expect(checkSaldo(s.rows, false)).toEqual([]);
+    expect(s.rows.find(r => r.lineNo === 12)!.saldo).toBe(2093507);
+    expect(s.rows.find(r => r.lineNo === 11)!.saldo).toBe(2093507 + 10000);
+  });
+
+  it('keeps the collective header as one booking and warns when the details do not add up', () => {
+    const broken = legacy.replace('"CHF";"100.00"', '"CHF";"99.00"');
+    const b = parseZkb(broken);
+    expect(b.rows).toHaveLength(50);
+    expect(b.rows.find(r => r.lineNo === 10)).toMatchObject({ amount: -312920, saldo: 2093507, payee: '' });
+    expect(b.warnings).toEqual([{ code: 'line-skipped', lineNo: 10, detail: 'Sammelbuchung 312820/312920' }]);
+  });
+
+  it('skips a dateless detail row that has no preceding dated row', () => {
+    const lines = splitLines(legacy);
+    lines.splice(1, 0, '"";"Orphan AG, Rainstrasse 1, CH-8712 Stäfa";"CHF";"12.00";"";"";"";"";"";"";"";""');
+    const o = parseZkb(lines.join('\n'));
+    expect(o.rows).toHaveLength(51);
+    expect(o.warnings).toEqual([{ code: 'line-skipped', lineNo: 2, detail: 'Sammelbuchung' }]);
   });
 });

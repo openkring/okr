@@ -36,6 +36,6 @@ export function parseStatement(text: string): ParsedStatement {
   if (!format) throw new BankImportError('unknown-format', splitLines(stripBom(text ?? ''))[0]?.slice(0, 80) ?? '');
   const adapter = ADAPTERS[format];
   const statement = adapter.parse(text);
-  statement.warnings.push(...checkSaldo(statement.rows, adapter.newestFirst));
+  statement.warnings.push(...checkSaldo(statement.rows, statement.newestFirst ?? adapter.newestFirst));
   return statement;
 }

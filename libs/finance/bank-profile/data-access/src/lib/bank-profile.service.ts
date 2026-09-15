@@ -3,7 +3,7 @@ import { Observable } from 'rxjs';
 
 import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
-import { BankProfileCollection, BankProfileModel, UserModel } from '@okr/shared-models';
+import { BankFormat, BankProfileCollection, BankProfileModel, UserModel } from '@okr/shared-models';
 import { getSystemQuery } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
 
@@ -51,6 +51,12 @@ export class BankProfileService {
 
   public listOnce(accountingTenantId: string): Promise<BankProfileModel[]> {
     return this.firestoreService.getDataOnce<BankProfileModel>(BankProfileCollection, this.query(accountingTenantId), 'bankName', 'asc');
+  }
+
+  /** The tenant's only profile of a format, or undefined when there is none or more than one — for files without an IBAN. */
+  public async findSingleByFormat(accountingTenantId: string, format: BankFormat): Promise<BankProfileModel | undefined> {
+    const matches = (await this.listOnce(accountingTenantId)).filter(p => p.format === format);
+    return matches.length === 1 ? matches[0] : undefined;
   }
 
   /** The profile for a normalized IBAN, or undefined — one-shot read, used by the import. */

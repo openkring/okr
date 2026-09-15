@@ -137,8 +137,11 @@ export const BankImportStore = signalStore(
         return;
       }
 
-      // profile by IBAN, or create one
-      let profile = await store.profileService.findByIban(accountingTenantId, statement.iban);
+      // profile by IBAN, or create one. A file without an account number (legacy ZKB layout) maps to the
+      // tenant's only profile of that format; with none or several, the treasurer picks/enters the IBAN.
+      let profile = statement.iban
+        ? await store.profileService.findByIban(accountingTenantId, statement.iban)
+        : await store.profileService.findSingleByFormat(accountingTenantId, statement.format);
       if (!profile) {
         const proposal = new BankProfileModel(tenantId, accountingTenantId);
         proposal.format = statement.format;
@@ -150,7 +153,8 @@ export const BankImportStore = signalStore(
       }
 
       // keys, rows, rules, duplicates
-      const keys = await computeImportKeys(statement.rows.map(r => ({ iban: statement.iban, date: r.date, amount: r.amount, bankReference: r.bankReference, rawText: r.rawText })));
+      const iban = statement.iban || profile.iban;
+      const keys = await computeImportKeys(statement.rows.map(r => ({ iban, date: r.date, amount: r.amount, bankReference: r.bankReference, rawText: r.rawText })));
       const ctx = { tenantId, accountingTenantId, bankProfileKey: profile.okey, sourceFileName: file.name,
         importedBy: store.currentUser()?.okey ?? '', importedAt: getTodayStr(DateFormat.StoreDateTime) };
       const all = toImportRows(statement, keys, ctx);
