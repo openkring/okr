@@ -25,6 +25,7 @@ export const BANK_PROFILE_I18N_KEYS = {
   format_helper:       PFX + 'format.helper',
   format_postfinance:  PFX + 'format.postfinance',
   format_zkb:          PFX + 'format.zkb',
+  format_yuh:          PFX + 'format.yuh',
   format_vz:           PFX + 'format.vz',
   format_gkb:          PFX + 'format.gkb',
   iban_label:          PFX + 'iban.label',

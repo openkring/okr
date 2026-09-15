@@ -33,6 +33,8 @@ describe('csv.util', () => {
   it('parseDdMmYyyy converts to StoreDate and rejects garbage', () => {
     expect(parseDdMmYyyy('31.12.2025')).toBe('20251231');
     expect(parseDdMmYyyy('1.2.2025')).toBe('20250201');
+    expect(parseDdMmYyyy('15/03/2025')).toBe('20250315');
+    expect(parseDdMmYyyy('15/03.2025')).toBe('20250315');
     expect(parseDdMmYyyy('2025-12-31')).toBeUndefined();
     expect(parseDdMmYyyy('')).toBeUndefined();
   });

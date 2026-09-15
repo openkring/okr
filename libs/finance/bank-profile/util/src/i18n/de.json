@@ -5,7 +5,7 @@
   "update": { "label": "Bankprofil bearbeiten", "conf": "Das Bankprofil wurde gespeichert.", "error": "Das Bankprofil konnte nicht gespeichert werden." },
   "delete": { "label": "Bankprofil löschen", "conf": "Das Bankprofil wurde gelöscht.", "error": "Das Bankprofil konnte nicht gelöscht werden." },
   "view": { "label": "Bankprofil ansehen" }, "cancel": { "label": "Abbrechen" }, "save": { "label": "Speichern" },
-  "format": { "label": "Bank", "helper": "Bestimmt, wie die CSV-Datei gelesen wird.", "postfinance": "PostFinance", "zkb": "Zürcher Kantonalbank", "vz": "VZ Depotbank", "gkb": "Graubündner Kantonalbank" },
+  "format": { "label": "Bank", "helper": "Bestimmt, wie die CSV-Datei gelesen wird.", "postfinance": "PostFinance", "zkb": "Zürcher Kantonalbank", "yuh": "Yuh", "vz": "VZ Depotbank", "gkb": "Graubündner Kantonalbank" },
   "iban": { "label": "IBAN", "placeholder": "CH00 0000 0000 0000 0000 0", "helper": "Über die IBAN wird beim Import das passende Profil gefunden." },
   "bankName": { "label": "Bezeichnung", "placeholder": "z.B. PostFinance Geschäftskonto", "helper": "" },
   "account": { "label": "Bankkonto in der Buchhaltung", "helper": "Das Konto der Klasse 1, gegen das die Kontobewegungen gebucht werden." },

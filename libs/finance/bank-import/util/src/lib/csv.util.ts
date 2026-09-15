@@ -41,11 +41,11 @@ export function parseAmountMinor(value: string): number | undefined {
   return Math.round(Number(cleaned) * 100);
 }
 
-/** dd.mm.yyyy (day/month may be unpadded) → yyyymmdd; undefined for anything else. */
+/** dd.mm.yyyy or dd/mm/yyyy (day/month may be unpadded) → yyyymmdd; undefined for anything else. */
 export function parseDdMmYyyy(value: string): string | undefined {
   const v = (value ?? '').trim();
-  if (!/^\d{1,2}\.\d{1,2}\.\d{4}$/.test(v)) return undefined;
-  const [d, m, y] = v.split('.');
+  if (!/^\d{1,2}[./]\d{1,2}[./]\d{4}$/.test(v)) return undefined;
+  const [d, m, y] = v.split(/[./]/);
   const padded = `${d.padStart(2, '0')}.${m.padStart(2, '0')}.${y}`;
   const result = convertDateFormatToString(padded, DateFormat.ViewDate, DateFormat.StoreDate, false);
   return result.length === 8 ? result : undefined;

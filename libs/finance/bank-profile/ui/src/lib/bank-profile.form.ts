@@ -11,7 +11,7 @@ import { validateVestTree } from '@okr/shared-util-angular';
 import { AccountSelect, AccountSelectI18n } from '@okr/finance-account-ui';
 import { BankProfileI18n, bankProfileValidations } from '@okr/finance-bank-profile-util';
 
-const FORMATS: BankFormat[] = ['postfinance', 'zkb', 'vz', 'gkb'];
+const FORMATS: BankFormat[] = ['postfinance', 'zkb', 'yuh', 'vz', 'gkb'];
 const CURRENCIES = ['CHF', 'EUR', 'USD', 'GBP'];
 
 @Component({
@@ -90,7 +90,7 @@ export class BankProfileForm {
   protected readonly notes = computed(() => this.formData()?.notes ?? DEFAULT_NOTES);
 
   protected readonly formatLabels = computed(() => [
-    this.i18n().format_postfinance(), this.i18n().format_zkb(), this.i18n().format_vz(), this.i18n().format_gkb(),
+    this.i18n().format_postfinance(), this.i18n().format_zkb(), this.i18n().format_yuh(), this.i18n().format_vz(), this.i18n().format_gkb(),
   ]);
   protected readonly formatI18n = computed(() => ({ name: 'format', label: this.i18n().format_label(), helper: this.i18n().format_helper() } as StringSelectI18n));
   protected readonly ibanI18n = computed(() => ({ name: 'iban', label: this.i18n().iban_label(), placeholder: this.i18n().iban_placeholder(), helper: this.i18n().iban_helper() } as IbanInputI18n));

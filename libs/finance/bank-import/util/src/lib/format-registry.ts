@@ -1,9 +1,11 @@
 import { BankFormat } from '@okr/shared-models';
 
 import { splitLines, stripBom } from './csv.util';
+import { matchesGkbHeader, parseGkb } from './gkb.adapter';
 import { matchesPostfinanceHeader, parsePostfinance } from './postfinance.adapter';
 import { checkSaldo } from './saldo.util';
 import { BankImportError, ParsedStatement } from './types';
+import { matchesYuhHeader, parseYuh } from './yuh.adapter';
 import { matchesZkbHeader, parseZkb } from './zkb.adapter';
 
 interface Adapter {
@@ -18,12 +20,13 @@ const notImplemented = (format: BankFormat): Adapter => ({
   newestFirst: true,
 });
 
-/** One entry per BankFormat. VZ and GKB are stubs until a real export exists (spec §4.7). */
+/** One entry per BankFormat. VZ is a stub until a real export exists (spec §4.10). */
 const ADAPTERS: Record<BankFormat, Adapter> = {
   postfinance: { matchesHeader: matchesPostfinanceHeader, parse: parsePostfinance, newestFirst: true },
   zkb:         { matchesHeader: matchesZkbHeader, parse: parseZkb, newestFirst: true },
+  yuh:         { matchesHeader: matchesYuhHeader, parse: parseYuh, newestFirst: false },
   vz:          notImplemented('vz'),
-  gkb:         notImplemented('gkb'),
+  gkb:         { matchesHeader: matchesGkbHeader, parse: parseGkb, newestFirst: true },
 };
 
 export function detectFormat(text: string): BankFormat | undefined {

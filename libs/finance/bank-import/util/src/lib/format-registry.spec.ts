@@ -7,17 +7,20 @@ import { BankImportError } from './types';
 
 const pf = readFileSync(join(__dirname, 'fixtures/postfinance-sample.csv'), 'utf8');
 const zkb = readFileSync(join(__dirname, 'fixtures/zkb-sample.csv'), 'utf8');
+const yuh = readFileSync(join(__dirname, 'fixtures/yuh-sample.csv'), 'utf8');
 
 describe('format registry', () => {
-  it('detects both fixtures and rejects garbage', () => {
+  it('detects the fixtures and rejects garbage', () => {
     expect(detectFormat(pf)).toBe('postfinance');
     expect(detectFormat(zkb)).toBe('zkb');
+    expect(detectFormat(yuh)).toBe('yuh');
     expect(detectFormat('hello;world\n1;2')).toBeUndefined();
     expect(detectFormat('')).toBeUndefined();
   });
   it('parseStatement dispatches and throws a typed error for unknown input', () => {
     expect(parseStatement(pf).format).toBe('postfinance');
     expect(parseStatement(zkb).rows.length).toBe(17);
+    expect(parseStatement(yuh)).toMatchObject({ format: 'yuh', iban: '', warnings: [] });
     expect(() => parseStatement('nope')).toThrowError(BankImportError);
     try { parseStatement('nope'); } catch (e) { expect((e as BankImportError).code).toBe('unknown-format'); }
   });
@@ -34,5 +37,19 @@ describe('legacy ZKB layout', () => {
   it('flags a corrupted saldo on the right line when the file is oldest-first', () => {
     const s = parseStatement(legacy.replace('"20432.17"', '"20432.18"'));
     expect(s.warnings).toEqual([{ code: 'saldo-mismatch', lineNo: 53, detail: '2043217/2043218' }]);
+  });
+});
+
+describe('GKB layout', () => {
+  const gkb = readFileSync(join(__dirname, 'fixtures/gkb-sample.csv'), 'utf8');
+  it('is detected as gkb and passes the saldo check newest-first', () => {
+    expect(detectFormat(gkb)).toBe('gkb');
+    const s = parseStatement(gkb);
+    expect(s.rows.length).toBe(20);
+    expect(s.warnings).toEqual([]);
+  });
+  it('flags a corrupted saldo on the right line', () => {
+    const s = parseStatement(gkb.replace(';27469.05;', ';27469.06;'));
+    expect(s.warnings).toEqual([{ code: 'saldo-mismatch', lineNo: 13, detail: '2746905/2746906' }]);
   });
 });

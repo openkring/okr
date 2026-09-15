@@ -95,6 +95,7 @@ export class BankProfileList {
     switch (format) {
       case 'postfinance': return this.store.i18n.format_postfinance();
       case 'zkb': return this.store.i18n.format_zkb();
+      case 'yuh': return this.store.i18n.format_yuh();
       case 'vz': return this.store.i18n.format_vz();
       case 'gkb': return this.store.i18n.format_gkb();
       default: return format;

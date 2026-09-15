@@ -5,7 +5,7 @@
   "update": { "label": "Modifica profilo bancario", "conf": "Il profilo bancario è stato salvato.", "error": "Non è stato possibile salvare il profilo bancario." },
   "delete": { "label": "Elimina profilo bancario", "conf": "Il profilo bancario è stato eliminato.", "error": "Non è stato possibile eliminare il profilo bancario." },
   "view": { "label": "Visualizza profilo bancario" }, "cancel": { "label": "Annulla" }, "save": { "label": "Salva" },
-  "format": { "label": "Banca", "helper": "Determina come viene letto il file CSV.", "postfinance": "PostFinance", "zkb": "Zürcher Kantonalbank", "vz": "VZ Depotbank", "gkb": "Graubündner Kantonalbank" },
+  "format": { "label": "Banca", "helper": "Determina come viene letto il file CSV.", "postfinance": "PostFinance", "zkb": "Zürcher Kantonalbank", "yuh": "Yuh", "vz": "VZ Depotbank", "gkb": "Graubündner Kantonalbank" },
   "iban": { "label": "IBAN", "placeholder": "CH00 0000 0000 0000 0000 0", "helper": "L'IBAN permette di trovare il profilo corrispondente durante l'import." },
   "bankName": { "label": "Denominazione", "placeholder": "p.es. Conto aziendale PostFinance", "helper": "" },
   "account": { "label": "Conto bancario nella contabilità", "helper": "Il conto di classe 1 sul quale vengono registrati i movimenti del conto." },
