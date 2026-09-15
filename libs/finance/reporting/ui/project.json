@@ -1,0 +1,22 @@
+{
+  "name": "finance-reporting-ui",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/finance/reporting/ui/src",
+  "prefix": "okr",
+  "projectType": "library",
+  "tags": ["type:ui", "scope:finance", "platform:mobile", "platform:web"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/finance/reporting/ui",
+        "main": "libs/finance/reporting/ui/src/index.ts",
+        "tsConfig": "libs/finance/reporting/ui/tsconfig.lib.json",
+        "assets": ["libs/finance/reporting/ui/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": { "executor": "@nx/eslint:lint" }
+  }
+}

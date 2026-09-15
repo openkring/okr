@@ -788,12 +788,20 @@ const finance: BlockRoutes = {
           loadComponent: () => import('@okr/finance-vat-code-feature').then(m => m.VatCodeList),
         },
         {
+          // Bilanz / Erfolgsrechnung carry the `c-report` context menu (CSV export, zero-account toggle).
+          // Older live `accounting-balance` / `accounting-income-statement` docs point at the bare path.
           path: 'balance',
-          loadComponent: () => import('@okr/finance-reporting-feature').then(m => m.BalanceSheetPage),
+          children: [
+            { path: '', pathMatch: 'full', redirectTo: 'c-report' },
+            { path: ':contextMenuName', loadComponent: () => import('@okr/finance-reporting-feature').then(m => m.BalanceSheetPage) },
+          ],
         },
         {
           path: 'income-statement',
-          loadComponent: () => import('@okr/finance-reporting-feature').then(m => m.IncomeStatementPage),
+          children: [
+            { path: '', pathMatch: 'full', redirectTo: 'c-report' },
+            { path: ':contextMenuName', loadComponent: () => import('@okr/finance-reporting-feature').then(m => m.IncomeStatementPage) },
+          ],
         },
         {
           path: 'cash-flow',

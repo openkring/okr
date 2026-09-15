@@ -1,10 +1,45 @@
 {
-  "balance": { "title": "Bilan" },
-  "income": { "title": "Compte de résultat" },
-  "cashflow": { "title": "Tableau des flux de trésorerie" },
-  "export": { "csv": "Exporter en CSV" },
+  "balance": {
+    "title": "Bilan"
+  },
+  "income": {
+    "title": "Compte de résultat"
+  },
+  "cashflow": {
+    "title": "Tableau des flux de trésorerie"
+  },
+  "export": {
+    "csv": "Exporter en CSV",
+    "conf": "Le rapport a été enregistré en CSV."
+  },
   "loading": "Chargement …",
+  "empty": "Aucune écriture dans cet exercice.",
   "debit": "Débit",
   "credit": "Crédit",
-  "net": "Solde"
+  "net": "Solde",
+  "col": {
+    "account": "Compte",
+    "name": "Désignation"
+  },
+  "section": {
+    "assets": "Actifs",
+    "liabilities": "Passifs",
+    "revenue": "Produits",
+    "expense": "Charges",
+    "resultClasses": "Autre résultat"
+  },
+  "total": {
+    "assets": "Total des actifs",
+    "liabilities": "Total des passifs",
+    "revenue": "Total des produits",
+    "expense": "Total des charges"
+  },
+  "result": {
+    "profit": "Bénéfice de l'exercice",
+    "loss": "Perte de l'exercice"
+  },
+  "zero": {
+    "show": "Afficher les comptes à zéro",
+    "hide": "Masquer les comptes à zéro"
+  }
 }

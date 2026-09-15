@@ -1,46 +1,100 @@
-import { Component, inject } from '@angular/core';
-import { rxResource } from '@angular/core/rxjs-interop';
-import { from } from 'rxjs';
-import { IonContent, IonHeader, IonItem, IonLabel,
-  IonList, IonNote, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { Component, computed, inject, input } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import {
+  IonBackdrop, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonLabel, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar,
+} from '@ionic/angular/standalone';
 
-import { I18nService } from '@okr/shared-i18n';
-import { AccountingStore } from '@okr/finance-accounting-feature';
-import { ReportingService } from '@okr/finance-reporting-data-access';
-import { REPORTING_I18N_KEYS, ReportingI18n } from '@okr/finance-reporting-util';
+import { SvgIconPipe } from '@okr/shared-pipes';
+import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
+import { AlertService } from '@okr/shared-util-angular';
 
+import { Menu } from '@okr/cms-menu-feature';
+import { ReportTable } from '@okr/finance-reporting-ui';
+
+import { ReportingStore } from './reporting.store';
+
+/**
+ * Erfolgsrechnung of the accounting tenant in the URL: Ertrag, Aufwand and übriger Erfolg of the
+ * selected fiscal year, previous year alongside, closed by the Jahresergebnis.
+ */
 @Component({
   selector: 'okr-income-statement-page',
   standalone: true,
-  imports: [IonHeader, IonToolbar, IonTitle, IonContent, IonList, IonItem, IonLabel, IonNote],
+  imports: [
+    SvgIconPipe, Menu, Spinner, EmptyList, ListFilter, ReportTable,
+    IonHeader, IonToolbar, IonButtons, IonButton, IonMenuButton, IonTitle, IonIcon, IonPopover,
+    IonContent, IonBackdrop, IonGrid, IonRow, IonCol, IonLabel,
+  ],
+  providers: [ReportingStore],
   template: `
     <ion-header>
-      <ion-toolbar>
-        <ion-title>{{ i18n.income_title() }}</ion-title>
+      <ion-toolbar color="secondary">
+        <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
+        <ion-title>{{ store.i18n.income_title() }} {{ store.currentFy().label }}</ion-title>
+        <ion-buttons slot="end">
+          <ion-button id="{{ popupId() }}">
+            <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />
+          </ion-button>
+          <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true"
+            [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
+            <ng-template>
+              <ion-content><okr-menu [menuName]="contextMenuName()" /></ion-content>
+            </ng-template>
+          </ion-popover>
+        </ion-buttons>
+      </ion-toolbar>
+      <okr-list-filter
+        (searchTermChanged)="store.setSearchTerm($event)"
+        (yearChanged)="store.setSelectedYear($event)" [years]="store.years()" [selectedYear]="store.year()"
+      />
+      <ion-toolbar color="primary">
+        <ion-grid>
+          <ion-row>
+            <ion-col size-md="2" class="ion-hide-sm-down"><ion-label><strong>{{ store.i18n.col_account() }}</strong></ion-label></ion-col>
+            <ion-col size="6" size-md="6"><ion-label><strong>{{ store.i18n.col_name() }}</strong></ion-label></ion-col>
+            <ion-col size="3" size-md="2" class="ion-text-end"><ion-label><strong>{{ store.currentFy().label }}</strong></ion-label></ion-col>
+            <ion-col size="3" size-md="2" class="ion-text-end"><ion-label><strong>{{ store.previousFy().label }}</strong></ion-label></ion-col>
+          </ion-row>
+        </ion-grid>
       </ion-toolbar>
     </ion-header>
     <ion-content>
-      @if (linesResource.isLoading()) {
-        <p>{{ i18n.loading() }}</p>
+      @if (store.isLoading()) {
+        <okr-spinner />
+        <ion-backdrop />
+      } @else if (store.bookings().length === 0) {
+        <okr-empty-list [message]="store.i18n.empty()" />
       } @else {
-        <ion-list>
-          @for (entry of linesResource.value() ?? []; track entry.accountKey) {
-            <ion-item>
-              <ion-label>{{ entry.accountKey }}</ion-label>
-              <ion-note slot="end">{{ i18n.net() }}: {{ entry.net }}</ion-note>
-            </ion-item>
-          }
-        </ion-list>
+        <okr-report-table [rows]="store.incomeRows()" (groupToggled)="store.toggleExpand($event)" />
       }
     </ion-content>
   `,
 })
 export class IncomeStatementPage {
-  protected readonly i18n = inject(I18nService).translateAll(REPORTING_I18N_KEYS) as ReportingI18n;
-  private readonly accountingStore = inject(AccountingStore);
-  private readonly reportingService = inject(ReportingService);
+  protected readonly store = inject(ReportingStore);
+  private readonly route = inject(ActivatedRoute);
+  private readonly alertService = inject(AlertService);
 
-  protected readonly linesResource = rxResource({
-    stream: () => from(this.reportingService.getAccountBalances(this.accountingStore.accountingTenantId())),
-  });
+  /** Name of the DB menu document loaded into the header context menu (route `:contextMenuName`). */
+  public readonly contextMenuName = input.required<string>();
+  protected readonly popupId = computed(() => `c_income_${this.contextMenuName()}`);
+
+  constructor() {
+    this.route.params.pipe(takeUntilDestroyed()).subscribe(params => {
+      const id = params['accountingTenantId'] as string;
+      if (id) this.store.setAccountingTenant(id);
+    });
+  }
+
+  /** Context-menu actions: DB `call` items whose `url` is the method name. */
+  public async onPopoverDismiss($event: CustomEvent): Promise<void> {
+    const method = $event.detail.data;
+    if (!method) return;
+    switch (method) {
+      case 'exportCsv': await this.store.exportCsv('income'); break;
+      case 'toggleZero': this.store.toggleZero(); break;
+      default: this.alertService.error(`IncomeStatementPage.onPopoverDismiss: unknown method ${method}`);
+    }
+  }
 }

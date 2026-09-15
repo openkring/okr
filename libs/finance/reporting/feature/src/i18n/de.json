@@ -1,10 +1,45 @@
 {
-  "balance": { "title": "Bilanz" },
-  "income": { "title": "Erfolgsrechnung" },
-  "cashflow": { "title": "Geldflussrechnung" },
-  "export": { "csv": "CSV exportieren" },
+  "balance": {
+    "title": "Bilanz"
+  },
+  "income": {
+    "title": "Erfolgsrechnung"
+  },
+  "cashflow": {
+    "title": "Geldflussrechnung"
+  },
+  "export": {
+    "csv": "CSV exportieren",
+    "conf": "Der Bericht wurde als CSV gespeichert."
+  },
   "loading": "Wird geladen …",
+  "empty": "Keine Buchungen in diesem Geschäftsjahr.",
   "debit": "Soll",
   "credit": "Haben",
-  "net": "Saldo"
+  "net": "Saldo",
+  "col": {
+    "account": "Konto",
+    "name": "Bezeichnung"
+  },
+  "section": {
+    "assets": "Aktiven",
+    "liabilities": "Passiven",
+    "revenue": "Ertrag",
+    "expense": "Aufwand",
+    "resultClasses": "Übriger Erfolg"
+  },
+  "total": {
+    "assets": "Total Aktiven",
+    "liabilities": "Total Passiven",
+    "revenue": "Total Ertrag",
+    "expense": "Total Aufwand"
+  },
+  "result": {
+    "profit": "Jahresgewinn",
+    "loss": "Jahresverlust"
+  },
+  "zero": {
+    "show": "Nullkonten anzeigen",
+    "hide": "Nullkonten ausblenden"
+  }
 }

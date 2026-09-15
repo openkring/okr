@@ -13,6 +13,13 @@
     "@okr/shared-feature": "*",
     "@okr/finance-accounting-feature": "*",
     "@okr/finance-reporting-data-access": "*",
-    "@okr/finance-reporting-util": "*"
+    "@okr/finance-reporting-util": "*",
+    "@okr/shared-ui": "*",
+    "@okr/shared-pipes": "*",
+    "@okr/shared-util-angular": "*",
+    "@okr/shared-util-core": "*",
+    "@okr/cms-menu-feature": "*",
+    "@okr/finance-account-data-access": "*",
+    "@okr/finance-reporting-ui": "*"
   }
 }

@@ -582,6 +582,8 @@
     "accounting-periods": "Perioden",
     "accounting-balance": "Bilanz",
     "accounting-income-statement": "Erfolgsrechnung",
+    "report-export-csv": "CSV exportieren",
+    "report-toggle-zero": "Nullkonten ein-/ausblenden",
     "accounting-cash-flow": "Geldfluss",
     "accounting-assets": "Anlagen",
     "accounting-depreciation-run": "Abschreibungen",

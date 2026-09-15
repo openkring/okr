@@ -582,6 +582,8 @@
     "accounting-periods": "Períodos",
     "accounting-balance": "Balance",
     "accounting-income-statement": "Cuenta de resultados",
+    "report-export-csv": "Exportar CSV",
+    "report-toggle-zero": "Mostrar/ocultar cuentas a cero",
     "accounting-cash-flow": "Flujo de caja",
     "accounting-assets": "Activos fijos",
     "accounting-depreciation-run": "Amortizaciones",

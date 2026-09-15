@@ -1,10 +1,45 @@
 {
-  "balance": { "title": "Balance sheet" },
-  "income": { "title": "Income statement" },
-  "cashflow": { "title": "Cash flow statement" },
-  "export": { "csv": "Export CSV" },
+  "balance": {
+    "title": "Balance sheet"
+  },
+  "income": {
+    "title": "Income statement"
+  },
+  "cashflow": {
+    "title": "Cash flow statement"
+  },
+  "export": {
+    "csv": "Export CSV",
+    "conf": "The report was saved as CSV."
+  },
   "loading": "Loading …",
+  "empty": "No postings in this fiscal year.",
   "debit": "Debit",
   "credit": "Credit",
-  "net": "Net"
+  "net": "Net",
+  "col": {
+    "account": "Account",
+    "name": "Name"
+  },
+  "section": {
+    "assets": "Assets",
+    "liabilities": "Liabilities and equity",
+    "revenue": "Revenue",
+    "expense": "Expenses",
+    "resultClasses": "Other result"
+  },
+  "total": {
+    "assets": "Total assets",
+    "liabilities": "Total liabilities and equity",
+    "revenue": "Total revenue",
+    "expense": "Total expenses"
+  },
+  "result": {
+    "profit": "Profit for the year",
+    "loss": "Loss for the year"
+  },
+  "zero": {
+    "show": "Show zero accounts",
+    "hide": "Hide zero accounts"
+  }
 }

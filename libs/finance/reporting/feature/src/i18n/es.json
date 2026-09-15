@@ -1,10 +1,45 @@
 {
-  "balance": { "title": "Balance de situación" },
-  "income": { "title": "Cuenta de resultados" },
-  "cashflow": { "title": "Estado de flujos de efectivo" },
-  "export": { "csv": "Exportar CSV" },
+  "balance": {
+    "title": "Balance"
+  },
+  "income": {
+    "title": "Cuenta de resultados"
+  },
+  "cashflow": {
+    "title": "Estado de flujos de efectivo"
+  },
+  "export": {
+    "csv": "Exportar CSV",
+    "conf": "El informe se guardó como CSV."
+  },
   "loading": "Cargando …",
+  "empty": "No hay asientos en este ejercicio.",
   "debit": "Debe",
   "credit": "Haber",
-  "net": "Saldo"
+  "net": "Saldo",
+  "col": {
+    "account": "Cuenta",
+    "name": "Denominación"
+  },
+  "section": {
+    "assets": "Activo",
+    "liabilities": "Pasivo",
+    "revenue": "Ingresos",
+    "expense": "Gastos",
+    "resultClasses": "Otro resultado"
+  },
+  "total": {
+    "assets": "Total activo",
+    "liabilities": "Total pasivo",
+    "revenue": "Total ingresos",
+    "expense": "Total gastos"
+  },
+  "result": {
+    "profit": "Beneficio del ejercicio",
+    "loss": "Pérdida del ejercicio"
+  },
+  "zero": {
+    "show": "Mostrar cuentas a cero",
+    "hide": "Ocultar cuentas a cero"
+  }
 }

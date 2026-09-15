@@ -133,6 +133,7 @@
       "@okr/finance-period-util": ["libs/finance/period/util/src/index.ts"],
       "@okr/finance-reporting-data-access": ["libs/finance/reporting/data-access/src/index.ts"],
       "@okr/finance-reporting-feature": ["libs/finance/reporting/feature/src/index.ts"],
+      "@okr/finance-reporting-ui": ["libs/finance/reporting/ui/src/index.ts"],
       "@okr/finance-reporting-util": ["libs/finance/reporting/util/src/index.ts"],
       "@okr/finance-vat-code-data-access": ["libs/finance/vat-code/data-access/src/index.ts"],
       "@okr/finance-vat-code-feature": ["libs/finance/vat-code/feature/src/index.ts"],

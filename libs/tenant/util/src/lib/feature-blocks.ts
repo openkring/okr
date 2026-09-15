@@ -1466,6 +1466,11 @@ const finance: FeatureBlock = {
     { key: 'bank-profile-context', name: 'bank-profile-context', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
       { key: 'bank-profile-add', name: 'bank-profile-add', url: 'add', action: 'call', roleNeeded: 'treasurer', icon: 'add-circle', label: '@item.bank-profile-add' },
     ] },
+    // Bilanz + Erfolgsrechnung share one context menu; `url` is the page method name (`onPopoverDismiss`).
+    { key: 'c-report', name: 'c-report', url: '', action: 'context', roleNeeded: 'treasurer', icon: 'help-circle', label: '', children: [
+      { key: 'report-export-csv', name: 'report-export-csv', url: 'exportCsv', action: 'call', roleNeeded: 'treasurer', icon: 'download', label: '@item.report-export-csv' },
+      { key: 'report-toggle-zero', name: 'report-toggle-zero', url: 'toggleZero', action: 'call', roleNeeded: 'treasurer', icon: 'eye-on', label: '@item.report-toggle-zero' },
+    ] },
     // The generic accounting submenu (see the block comment). Order mirrors the live
     // `scsf_fibu`, with the three bank-import lists appended — they had no navigate row
     // anywhere before. `@TID@` is expanded by `resolveMenuUrl` at select time.
@@ -1477,8 +1482,8 @@ const finance: FeatureBlock = {
         { key: 'accounting-bills', name: 'accounting-bills', url: '/accounting/@TID@/bill/all/c-bill', action: 'navigate', roleNeeded: 'treasurer', icon: 'invoice', label: '@item.accounting-bills' },
         { key: 'accounting-invoices', name: 'accounting-invoices', url: '/accounting/@TID@/invoice/all/c-invoice', action: 'navigate', roleNeeded: 'treasurer', icon: 'invoice', label: '@item.accounting-invoices' },
         { key: 'accounting-periods', name: 'accounting-periods', url: '/accounting/@TID@/periods/c-period', action: 'navigate', roleNeeded: 'treasurer', icon: 'calendar', label: '@item.accounting-periods' },
-        { key: 'accounting-balance', name: 'accounting-balance', url: '/accounting/@TID@/balance', action: 'navigate', roleNeeded: 'treasurer', icon: 'chart', label: '@item.accounting-balance' },
-        { key: 'accounting-income-statement', name: 'accounting-income-statement', url: '/accounting/@TID@/income-statement', action: 'navigate', roleNeeded: 'treasurer', icon: 'chart', label: '@item.accounting-income-statement' },
+        { key: 'accounting-balance', name: 'accounting-balance', url: '/accounting/@TID@/balance/c-report', action: 'navigate', roleNeeded: 'treasurer', icon: 'chart', label: '@item.accounting-balance' },
+        { key: 'accounting-income-statement', name: 'accounting-income-statement', url: '/accounting/@TID@/income-statement/c-report', action: 'navigate', roleNeeded: 'treasurer', icon: 'chart', label: '@item.accounting-income-statement' },
         { key: 'accounting-cash-flow', name: 'accounting-cash-flow', url: '/accounting/@TID@/cash-flow', action: 'navigate', roleNeeded: 'treasurer', icon: 'chart', label: '@item.accounting-cash-flow' },
         { key: 'accounting-assets', name: 'accounting-assets', url: '/accounting/@TID@/assets', action: 'navigate', roleNeeded: 'treasurer', icon: 'cube', label: '@item.accounting-assets' },
         { key: 'accounting-depreciation-run', name: 'accounting-depreciation-run', url: '/accounting/@TID@/depreciation-run', action: 'navigate', roleNeeded: 'treasurer', icon: 'arrow-down-circle', label: '@item.accounting-depreciation-run' },
