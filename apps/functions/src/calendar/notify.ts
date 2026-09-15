@@ -27,7 +27,7 @@ import { getCallerRoles, requireParam, requireUserPersonKey, checkRateLimit, ser
 import { OutboxDoc, WorkflowOutboxCollection } from '../workflow/outbox';
 import { pushToPersons } from '../srv/push';
 import { BROADCAST_TAG } from './activity';
-import { CalEventNotifyDoc, NotifyScope, resolveCalEventRecipients, shorten, todayStoreDate } from './recipients';
+import { CalEventNotifyDoc, NotifyScope, caleventDeepLink, resolveCalEventRecipients, shorten, todayStoreDate } from './recipients';
 
 const REGION = 'europe-west6';
 const CF_NAME = 'notifyCalEventParticipants';
@@ -206,9 +206,10 @@ export const notifyCalEventParticipants = onCall(
       personKeys,
       {
         type: 'calevent',
+        tenantId,
         title: event.name ?? '',
         body: shorten(message, 160),
-        url: `/calevent/${caleventKey}`,
+        url: caleventDeepLink(caleventKey),
         channelId: `calevent.${caleventKey}`,
       },
       CF_NAME,

@@ -20,6 +20,7 @@ import { logger } from 'firebase-functions/v2';
 
 import { pushToPersons } from '../srv/push';
 import {
+  caleventDeepLink,
   caleventKeyFromFolders,
   caleventKeyFromParent,
   hasTag,
@@ -74,14 +75,20 @@ async function notifyAboutEvent(
   // A cancelled event still gets its activity through: "wir treffen uns trotzdem" is exactly
   // the kind of message that follows a cancellation.
   if (event.isArchived || personKeys.length === 0) return;
+  const tenantId = event.tenants?.[0] ?? '';
+  if (!tenantId) {
+    logger.warn(`${context}: calevent ${caleventKey} has no tenant`);
+    return;
+  }
 
   await pushToPersons(
     personKeys,
     {
       type: 'calevent',
+      tenantId,
       title: event.name ?? '',
       body,
-      url: `/calevent/${caleventKey}`,
+      url: caleventDeepLink(caleventKey),
       channelId: `calevent.${caleventKey}`,
     },
     context,

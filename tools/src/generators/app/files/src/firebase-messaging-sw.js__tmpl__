@@ -16,6 +16,21 @@ const messaging = firebase.messaging();
 messaging.onBackgroundMessage(payload => {
   console.log('[firebase-messaging-sw.js] Received background message:', payload);
 
+  // One person may hold accounts in several tenants and have several of our apps installed.
+  // The sender picks the account of the tenant it speaks for, so a push for another tenant
+  // should never reach this worker — but if one does (an old sender, a token registered
+  // under the wrong account), a banner for an event this app cannot open is worse than
+  // none. `okrTenantId` comes from the generated firebase-config.js; a push without a
+  // tenantId (chat via the Matrix push gateway) is shown as before.
+  {
+    const pushTenant = payload.data?.tenantId;
+    const ownTenant = typeof okrTenantId === 'string' ? okrTenantId : '';
+    if (pushTenant && ownTenant && pushTenant !== ownTenant) {
+      console.log(`[firebase-messaging-sw.js] Dropped push for tenant ${pushTenant} (this app is ${ownTenant})`);
+      return;
+    }
+  }
+
   // Set the app icon badge (PWA Badging API — supported on iOS 16.4+ and Android Chrome).
   // badgeCount is sent by the Cloud Function as the total number of pending items
   // (unread chat messages + open tasks, etc.). A count of 0 clears the badge — do NOT
@@ -46,7 +61,9 @@ messaging.onBackgroundMessage(payload => {
     icon: '/assets/icons/icon-192x192.png',
     badge: '/assets/icons/badge-72x72.png',
     data: payload.data,
-    tag: isVideoCall ? 'video-call' : (payload.data?.channelId || 'default'),
+    // Per-room tag: a shared tag makes a second sender's message REPLACE the first one's
+    // banner instead of stacking, so one of the two is never seen.
+    tag: isVideoCall ? 'video-call' : (payload.data?.roomId || payload.data?.channelId || 'default'),
     ...(supportsActions && {
       requireInteraction: isVideoCall,
       actions: isVideoCall

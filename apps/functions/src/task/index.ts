@@ -76,7 +76,7 @@ export const onTaskWritten = onDocumentWritten(
     // open count. Every calendar sender omits it — see the head of `srv/push.ts`.
     const result = await pushToPersons(
       [assigneeKey],
-      { type: 'task', title, body, url: '/task/my/all', badgeCount },
+      { type: 'task', tenantId, title, body, url: '/task/my/all', badgeCount },
       'onTaskWritten',
     );
 

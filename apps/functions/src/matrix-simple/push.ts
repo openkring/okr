@@ -16,7 +16,9 @@ import {
   requireMatrixLocalpart,
   requireProvisionedUser,
   checkRateLimit,
+  getUserTenants,
 } from './shared';
+import { appNameFor, collectTokens, withAppName } from '../srv/push';
 
 /**
  * Send an FCM push notification to all room members when a video call is started.
@@ -48,24 +50,15 @@ export const sendCallNotification = onCall(
       return { sent: 0 };
     }
 
-    const db = getFirestore();
-
-    // Collect { uid, token } pairs for all callees
-    const tokenEntries: { uid: string; token: string }[] = [];
-
-    for (const matrixUserId of calleeMatrixUserIds) {
-      // @personKey:homeserver → personKey
-      const personKey = matrixUserId.replace(/^@/, '').split(':')[0];
-      const usersSnap = await db.collection('users').where('personKey', '==', personKey).limit(1).get();
-      if (usersSnap.empty) continue;
-
-      const uid = usersSnap.docs[0].id;
-      const tokensSnap = await db.collection('users').doc(uid).collection('fcmTokens').get();
-      for (const tokenDoc of tokensSnap.docs) {
-        const token = tokenDoc.data()['token'] as string | undefined;
-        if (token) tokenEntries.push({ uid, token });
-      }
-    }
+    // The callees' accounts in the CALLER's tenant: the call is placed from one app, and a
+    // callee who is also a member elsewhere must ring in that same app, not in whichever of
+    // their accounts happens to sort first (see the head of `srv/push.ts`).
+    const tenantId = (await getUserTenants(request.auth.uid))[0] ?? '';
+    if (!tenantId) return { sent: 0 };
+    const tokenEntries = await collectTokens(
+      calleeMatrixUserIds.map((matrixUserId) => matrixUserId.replace(/^@/, '').split(':')[0]),
+      tenantId,
+    );
 
     if (tokenEntries.length === 0) return { sent: 0 };
 
@@ -83,6 +76,8 @@ export const sendCallNotification = onCall(
       ? `/private/${roomKey}_chat?selectedRoom=${encodeURIComponent(roomId)}`
       : `/private/chat?selectedRoom=${encodeURIComponent(roomId)}`;
 
+    const appName = await appNameFor(tenantId);
+    const title = withAppName(appName, `📹 Video-Anruf von ${callerName}`);
     const tokens = tokenEntries.map(e => e.token);
     // Data-only message (no notification field): ensures the service worker's
     // onBackgroundMessage handler is always called on web. When notification is
@@ -91,7 +86,8 @@ export const sendCallNotification = onCall(
       tokens,
       data: {
         type: 'video-call',
-        title: `📹 Video-Anruf von ${callerName}`,
+        tenantId,
+        title,
         body: roomName ? `In ${roomName}` : 'Eingehender Video-Anruf',
         roomId,
         roomName: roomName ?? '',
@@ -112,7 +108,7 @@ export const sendCallNotification = onCall(
         payload: {
           aps: {
             alert: {
-              title: `📹 Video-Anruf von ${callerName}`,
+              title,
               body: roomName ? `In ${roomName}` : 'Eingehender Video-Anruf',
             },
             badge: 1,
@@ -127,10 +123,9 @@ export const sendCallNotification = onCall(
     const staleTokenDeletions: Promise<unknown>[] = [];
     response.responses.forEach((r, i) => {
       if (!r.success && r.error?.code === 'messaging/registration-token-not-registered') {
-        const { uid, token } = tokenEntries[i];
-        const tokenDocId = token.substring(0, 128);
+        const { uid, docId } = tokenEntries[i];
         staleTokenDeletions.push(
-          db.collection('users').doc(uid).collection('fcmTokens').doc(tokenDocId).delete()
+          getFirestore().collection('users').doc(uid).collection('fcmTokens').doc(docId).delete()
             .catch(err => console.warn('sendCallNotification: Failed to delete stale token:', err))
         );
       }

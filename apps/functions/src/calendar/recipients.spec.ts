@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   reachableAttendeeKeys,
   caleventKeyFromFolders,
+  caleventDeepLink,
   caleventKeyFromParent,
   hasTag,
   shorten,
@@ -157,5 +158,11 @@ describe('shorten', () => {
 
   it('tolerates undefined', () => {
     expect(shorten(undefined)).toBe('');
+  });
+});
+
+describe('caleventDeepLink', () => {
+  it('targets the list route that opens the event — a bare /calevent/<okey> matches no route', () => {
+    expect(caleventDeepLink('e1')).toBe('/calevent/all/c-calevents?event=e1');
   });
 });
