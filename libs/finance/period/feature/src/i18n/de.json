@@ -11,5 +11,12 @@
   },
   "unlock": {
     "action": "Periode entsperren"
+  },
+  "create": {
+    "action": "Periode erstellen",
+    "prompt": "Für welches Jahr soll eine Periode erstellt werden?",
+    "placeholder": "Jahr, z.B. 2026",
+    "invalid": "Bitte gib ein gültiges Jahr ein.",
+    "exists": "Für dieses Jahr gibt es bereits eine Periode."
   }
 }

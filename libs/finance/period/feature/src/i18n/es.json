@@ -11,5 +11,12 @@
   },
   "unlock": {
     "action": "Desbloquear período"
+  },
+  "create": {
+    "action": "Crear período",
+    "prompt": "¿Para qué año quieres crear un período?",
+    "placeholder": "Año, p. ej. 2026",
+    "invalid": "Introduce un año válido.",
+    "exists": "Ya existe un período para este año."
   }
 }

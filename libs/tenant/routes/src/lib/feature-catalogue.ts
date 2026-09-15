@@ -775,7 +775,11 @@ const finance: BlockRoutes = {
         },
         {
           path: 'periods',
-          loadComponent: () => import('@okr/finance-period-feature').then(m => m.PeriodList),
+          children: [
+            // Older live `accounting-periods` docs still point at `/periods` without a context menu.
+            { path: '', pathMatch: 'full', redirectTo: 'c-period' },
+            { path: ':contextMenuName', loadComponent: () => import('@okr/finance-period-feature').then(m => m.PeriodList) },
+          ],
         },
         {
           // No live `menuItems` doc navigates here (verified: no `/accounting/scs/vat-codes`

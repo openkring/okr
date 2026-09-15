@@ -1445,6 +1445,9 @@ const finance: FeatureBlock = {
       { key: 'account-import', name: 'account-import', url: 'import', action: 'call', roleNeeded: 'treasurer', icon: 'upload', label: '@item.account-import' },
       { key: 'account-export', name: 'account-export', url: 'export', action: 'call', roleNeeded: 'treasurer', icon: 'download', label: '@item.account-export' },
     ] },
+    { key: 'c-period', name: 'c-period', url: '', action: 'context', roleNeeded: 'treasurer', icon: 'help-circle', label: '', children: [
+      { key: 'period-create', name: 'period-create', url: 'create', action: 'call', roleNeeded: 'treasurer', icon: 'add', label: '@item.period-create' },
+    ] },
     // Not named `c-…` — the live doc really is `ocr-rule-context` (same naming outlier class
     // as `forms-context`/`contextMenuChat`). Copied verbatim; renaming it would orphan the
     // live doc.
@@ -1473,7 +1476,7 @@ const finance: FeatureBlock = {
         { key: 'accounting-journal', name: 'accounting-journal', url: '/accounting/@TID@/journal/c-journal', action: 'navigate', roleNeeded: 'treasurer', icon: 'list', label: '@item.accounting-journal' },
         { key: 'accounting-bills', name: 'accounting-bills', url: '/accounting/@TID@/bill/all/c-bill', action: 'navigate', roleNeeded: 'treasurer', icon: 'invoice', label: '@item.accounting-bills' },
         { key: 'accounting-invoices', name: 'accounting-invoices', url: '/accounting/@TID@/invoice/all/c-invoice', action: 'navigate', roleNeeded: 'treasurer', icon: 'invoice', label: '@item.accounting-invoices' },
-        { key: 'accounting-periods', name: 'accounting-periods', url: '/accounting/@TID@/periods', action: 'navigate', roleNeeded: 'treasurer', icon: 'calendar', label: '@item.accounting-periods' },
+        { key: 'accounting-periods', name: 'accounting-periods', url: '/accounting/@TID@/periods/c-period', action: 'navigate', roleNeeded: 'treasurer', icon: 'calendar', label: '@item.accounting-periods' },
         { key: 'accounting-balance', name: 'accounting-balance', url: '/accounting/@TID@/balance', action: 'navigate', roleNeeded: 'treasurer', icon: 'chart', label: '@item.accounting-balance' },
         { key: 'accounting-income-statement', name: 'accounting-income-statement', url: '/accounting/@TID@/income-statement', action: 'navigate', roleNeeded: 'treasurer', icon: 'chart', label: '@item.accounting-income-statement' },
         { key: 'accounting-cash-flow', name: 'accounting-cash-flow', url: '/accounting/@TID@/cash-flow', action: 'navigate', roleNeeded: 'treasurer', icon: 'chart', label: '@item.accounting-cash-flow' },

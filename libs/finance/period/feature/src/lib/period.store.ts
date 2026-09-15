@@ -5,6 +5,7 @@ import { signalStore, withComputed, withMethods, withProps, withState } from '@n
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { PeriodModel } from '@okr/shared-models';
+import { AlertService } from '@okr/shared-util-angular';
 
 import { AccountingStore } from '@okr/finance-accounting-feature';
 import { PeriodService } from '@okr/finance-period-data-access';
@@ -17,6 +18,7 @@ export const PeriodStore = signalStore(
     accountingStore: inject(AccountingStore),
     appStore: inject(AppStore),
     i18nService: inject(I18nService),
+    alertService: inject(AlertService),
   })),
   withProps(store => ({
     i18n: store.i18nService.translateAll(PERIOD_I18N_KEYS),
@@ -52,6 +54,23 @@ export const PeriodStore = signalStore(
       const period = new PeriodModel(tenantId, accountingTenantId, year, month);
       await store.periodService.create(period, store.currentUser());
       store.periodsResource.reload();
+    },
+    /** Context-menu `create`: asks for a year and creates the annual period (monthly ones are created on first booking). */
+    async createFromPrompt(): Promise<void> {
+      if (store.isReadOnly()) return;
+      const proposed = String(new Date().getFullYear());
+      const answer = await store.alertService.okrPrompt(store.i18n.create_prompt(), store.i18n.create_placeholder(), proposed);
+      if (answer === undefined) return;
+      const year = Number(answer.trim());
+      if (!Number.isInteger(year) || year < 1900 || year > 2200) {
+        await store.alertService.showToast(store.i18n.create_invalid());
+        return;
+      }
+      if (store.periods().some(p => p.year === year && p.month === 0)) {
+        await store.alertService.showToast(store.i18n.create_exists());
+        return;
+      }
+      await this.create(year);
     },
   }))
 );

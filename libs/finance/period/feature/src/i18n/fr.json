@@ -11,5 +11,12 @@
   },
   "unlock": {
     "action": "Déverrouiller la période"
+  },
+  "create": {
+    "action": "Créer une période",
+    "prompt": "Pour quelle année veux-tu créer une période ?",
+    "placeholder": "Année, p. ex. 2026",
+    "invalid": "Merci de saisir une année valide.",
+    "exists": "Une période existe déjà pour cette année."
   }
 }
