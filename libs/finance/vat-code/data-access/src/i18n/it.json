@@ -1,0 +1,14 @@
+{
+  "create": {
+    "conf": "Il codice IVA è stato salvato.",
+    "error": "Il codice IVA non è stato salvato."
+  },
+  "update": {
+    "conf": "Il codice IVA è stato modificato.",
+    "error": "Il codice IVA non è stato modificato."
+  },
+  "delete": {
+    "conf": "Il codice IVA è stato eliminato.",
+    "error": "Il codice IVA non è stato eliminato."
+  }
+}

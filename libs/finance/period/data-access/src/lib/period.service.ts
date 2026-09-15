@@ -3,6 +3,7 @@ import { Observable } from 'rxjs';
 
 import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
+import { I18nService } from '@okr/shared-i18n';
 import { PeriodCollection, PeriodModel, UserModel } from '@okr/shared-models';
 import { convertDateFormatToString, DateFormat, getTodayStr, getSystemQuery } from '@okr/shared-util-core';
 
@@ -12,19 +13,25 @@ import { PFX } from './scope';
 export class PeriodService {
   private readonly env = inject(ENV);
   private readonly firestoreService = inject(FirestoreService);
+  private readonly i18n = inject(I18nService).translateAll({
+    create_conf: PFX + 'create.conf',
+    create_error: PFX + 'create.error',
+    update_conf: PFX + 'update.conf',
+    update_error: PFX + 'update.error',
+  });
   private readonly tenantId = this.env.tenantId;
 
   public async create(period: PeriodModel, currentUser?: UserModel): Promise<string | undefined> {
     return await this.firestoreService.createModel<PeriodModel>(
       PeriodCollection, period,
-      PFX + 'create.conf', PFX + 'create.error', currentUser
+      this.i18n.create_conf(), this.i18n.create_error(), currentUser
     );
   }
 
   public async update(period: PeriodModel, currentUser?: UserModel): Promise<string | undefined> {
     return await this.firestoreService.updateModel<PeriodModel>(
       PeriodCollection, period, false,
-      PFX + 'update.conf', PFX + 'update.error', currentUser
+      this.i18n.update_conf(), this.i18n.update_error(), currentUser
     );
   }
 

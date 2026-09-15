@@ -7,11 +7,12 @@
   "private": true,
   "dependencies": {
     "tslib": "^2.8.1",
-    "@okr/shared-models": "*",
+    "@okr/finance-vat-code-util": "*",
     "@okr/shared-config": "*",
     "@okr/shared-constants": "*",
-    "@okr/shared-util-core": "*",
     "@okr/shared-data-access": "*",
-    "@okr/finance-vat-code-util": "*"
+    "@okr/shared-i18n": "*",
+    "@okr/shared-models": "*",
+    "@okr/shared-util-core": "*"
   }
 }

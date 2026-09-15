@@ -1,0 +1,22 @@
+{
+  "payment": {
+    "create": {
+      "conf": "Die Zahlung wurde gespeichert.",
+      "error": "Die Zahlung konnte nicht gespeichert werden."
+    },
+    "update": {
+      "conf": "Die Zahlung wurde geändert.",
+      "error": "Die Zahlung konnte nicht geändert werden."
+    }
+  },
+  "order": {
+    "create": {
+      "conf": "Der Zahlungsauftrag wurde gespeichert.",
+      "error": "Der Zahlungsauftrag konnte nicht gespeichert werden."
+    },
+    "update": {
+      "conf": "Der Zahlungsauftrag wurde geändert.",
+      "error": "Der Zahlungsauftrag konnte nicht geändert werden."
+    }
+  }
+}

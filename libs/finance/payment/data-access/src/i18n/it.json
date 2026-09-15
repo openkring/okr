@@ -1,0 +1,22 @@
+{
+  "payment": {
+    "create": {
+      "conf": "Il pagamento è stato salvato.",
+      "error": "Il pagamento non è stato salvato."
+    },
+    "update": {
+      "conf": "Il pagamento è stato modificato.",
+      "error": "Il pagamento non è stato modificato."
+    }
+  },
+  "order": {
+    "create": {
+      "conf": "L'ordine di pagamento è stato salvato.",
+      "error": "L'ordine di pagamento non è stato salvato."
+    },
+    "update": {
+      "conf": "L'ordine di pagamento è stato modificato.",
+      "error": "L'ordine di pagamento non è stato modificato."
+    }
+  }
+}

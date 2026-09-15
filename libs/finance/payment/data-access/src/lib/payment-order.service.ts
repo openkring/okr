@@ -3,6 +3,7 @@ import { Observable } from 'rxjs';
 
 import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
+import { I18nService } from '@okr/shared-i18n';
 import { PaymentOrderCollection, PaymentOrderModel, UserModel } from '@okr/shared-models';
 import { findByKey, getSystemQuery } from '@okr/shared-util-core';
 
@@ -12,12 +13,18 @@ import { PFX } from './scope';
 export class PaymentOrderService {
   private readonly env = inject(ENV);
   private readonly firestoreService = inject(FirestoreService);
+  private readonly i18n = inject(I18nService).translateAll({
+    create_conf: PFX + 'order.create.conf',
+    create_error: PFX + 'order.create.error',
+    update_conf: PFX + 'order.update.conf',
+    update_error: PFX + 'order.update.error',
+  });
   private readonly tenantId = this.env.tenantId;
 
   public async create(order: PaymentOrderModel, currentUser?: UserModel): Promise<string | undefined> {
     return await this.firestoreService.createModel<PaymentOrderModel>(
       PaymentOrderCollection, order,
-      PFX + 'create.conf', PFX + 'create.error', currentUser
+      this.i18n.create_conf(), this.i18n.create_error(), currentUser
     );
   }
 
@@ -28,7 +35,7 @@ export class PaymentOrderService {
   public async update(order: PaymentOrderModel, currentUser?: UserModel): Promise<void> {
     await this.firestoreService.updateModel<PaymentOrderModel>(
       PaymentOrderCollection, order, false,
-      PFX + 'update.conf', PFX + 'update.error', currentUser
+      this.i18n.update_conf(), this.i18n.update_error(), currentUser
     );
   }
 

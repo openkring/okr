@@ -1,0 +1,22 @@
+{
+  "payment": {
+    "create": {
+      "conf": "The payment was saved.",
+      "error": "The payment could not be saved."
+    },
+    "update": {
+      "conf": "The payment was changed.",
+      "error": "The payment could not be changed."
+    }
+  },
+  "order": {
+    "create": {
+      "conf": "The payment order was saved.",
+      "error": "The payment order could not be saved."
+    },
+    "update": {
+      "conf": "The payment order was changed.",
+      "error": "The payment order could not be changed."
+    }
+  }
+}

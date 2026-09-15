@@ -1,0 +1,36 @@
+{
+  "asset": {
+    "create": {
+      "conf": "El activo se ha guardado.",
+      "error": "El activo no se ha podido guardar."
+    },
+    "update": {
+      "conf": "El activo se ha modificado.",
+      "error": "El activo no se ha podido modificar."
+    },
+    "delete": {
+      "conf": "El activo se ha eliminado.",
+      "error": "El activo no se ha podido eliminar."
+    }
+  },
+  "category": {
+    "create": {
+      "conf": "La categoría de activo se ha guardado.",
+      "error": "La categoría de activo no se ha podido guardar."
+    },
+    "update": {
+      "conf": "La categoría de activo se ha modificado.",
+      "error": "La categoría de activo no se ha podido modificar."
+    },
+    "delete": {
+      "conf": "La categoría de activo se ha eliminado.",
+      "error": "La categoría de activo no se ha podido eliminar."
+    }
+  },
+  "movement": {
+    "create": {
+      "conf": "El movimiento de activo se ha guardado.",
+      "error": "El movimiento de activo no se ha podido guardar."
+    }
+  }
+}

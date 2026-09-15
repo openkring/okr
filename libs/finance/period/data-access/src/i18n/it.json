@@ -1,0 +1,10 @@
+{
+  "create": {
+    "conf": "Il periodo è stato salvato.",
+    "error": "Il periodo non è stato salvato."
+  },
+  "update": {
+    "conf": "Il periodo è stato modificato.",
+    "error": "Il periodo non è stato modificato."
+  }
+}

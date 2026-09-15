@@ -1,0 +1,14 @@
+{
+  "create": {
+    "conf": "Der MWST-Code wurde gespeichert.",
+    "error": "Der MWST-Code konnte nicht gespeichert werden."
+  },
+  "update": {
+    "conf": "Der MWST-Code wurde geändert.",
+    "error": "Der MWST-Code konnte nicht geändert werden."
+  },
+  "delete": {
+    "conf": "Der MWST-Code wurde gelöscht.",
+    "error": "Der MWST-Code konnte nicht gelöscht werden."
+  }
+}

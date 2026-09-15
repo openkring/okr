@@ -3,6 +3,7 @@ import { Observable } from 'rxjs';
 
 import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
+import { I18nService } from '@okr/shared-i18n';
 import { OcrRuleCollection, OcrRuleModel, UserModel } from '@okr/shared-models';
 import { findByKey, getSystemQuery } from '@okr/shared-util-core';
 
@@ -12,12 +13,20 @@ import { PFX } from './scope';
 export class OcrRuleService {
   private readonly env = inject(ENV);
   private readonly firestoreService = inject(FirestoreService);
+  private readonly i18n = inject(I18nService).translateAll({
+    create_conf: PFX + 'create.conf',
+    create_error: PFX + 'create.error',
+    update_conf: PFX + 'update.conf',
+    update_error: PFX + 'update.error',
+    delete_conf: PFX + 'delete.conf',
+    delete_error: PFX + 'delete.error',
+  });
   private readonly tenantId = this.env.tenantId;
 
   public async create(rule: OcrRuleModel, currentUser?: UserModel): Promise<string | undefined> {
     return await this.firestoreService.createModel<OcrRuleModel>(
       OcrRuleCollection, rule,
-      PFX + 'create.conf', PFX + 'create.error', currentUser,
+      this.i18n.create_conf(), this.i18n.create_error(), currentUser,
     );
   }
 
@@ -28,14 +37,14 @@ export class OcrRuleService {
   public async update(rule: OcrRuleModel, currentUser?: UserModel): Promise<string | undefined> {
     return await this.firestoreService.updateModel<OcrRuleModel>(
       OcrRuleCollection, rule, false,
-      PFX + 'update.conf', PFX + 'update.error', currentUser,
+      this.i18n.update_conf(), this.i18n.update_error(), currentUser,
     );
   }
 
   public async delete(rule: OcrRuleModel, currentUser?: UserModel): Promise<string | undefined> {
     return await this.firestoreService.deleteModel<OcrRuleModel>(
       OcrRuleCollection, rule,
-      PFX + 'delete.conf', PFX + 'delete.error', currentUser,
+      this.i18n.delete_conf(), this.i18n.delete_error(), currentUser,
     );
   }
 

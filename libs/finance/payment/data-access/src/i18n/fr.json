@@ -1,0 +1,22 @@
+{
+  "payment": {
+    "create": {
+      "conf": "Le paiement a été enregistré.",
+      "error": "Le paiement n'a pas pu être enregistré."
+    },
+    "update": {
+      "conf": "Le paiement a été modifié.",
+      "error": "Le paiement n'a pas pu être modifié."
+    }
+  },
+  "order": {
+    "create": {
+      "conf": "L'ordre de paiement a été enregistré.",
+      "error": "L'ordre de paiement n'a pas pu être enregistré."
+    },
+    "update": {
+      "conf": "L'ordre de paiement a été modifié.",
+      "error": "L'ordre de paiement n'a pas pu être modifié."
+    }
+  }
+}

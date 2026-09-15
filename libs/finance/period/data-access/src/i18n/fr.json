@@ -1,0 +1,10 @@
+{
+  "create": {
+    "conf": "La période a été enregistrée.",
+    "error": "La période n'a pas pu être enregistrée."
+  },
+  "update": {
+    "conf": "La période a été modifiée.",
+    "error": "La période n'a pas pu être modifiée."
+  }
+}

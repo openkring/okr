@@ -1,0 +1,22 @@
+{
+  "payment": {
+    "create": {
+      "conf": "El pago se ha guardado.",
+      "error": "El pago no se ha podido guardar."
+    },
+    "update": {
+      "conf": "El pago se ha modificado.",
+      "error": "El pago no se ha podido modificar."
+    }
+  },
+  "order": {
+    "create": {
+      "conf": "La orden de pago se ha guardado.",
+      "error": "La orden de pago no se ha podido guardar."
+    },
+    "update": {
+      "conf": "La orden de pago se ha modificado.",
+      "error": "La orden de pago no se ha podido modificar."
+    }
+  }
+}

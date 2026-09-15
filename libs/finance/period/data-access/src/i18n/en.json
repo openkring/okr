@@ -1,0 +1,10 @@
+{
+  "create": {
+    "conf": "The period was saved.",
+    "error": "The period could not be saved."
+  },
+  "update": {
+    "conf": "The period was changed.",
+    "error": "The period could not be changed."
+  }
+}

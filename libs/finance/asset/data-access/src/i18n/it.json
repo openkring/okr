@@ -1,0 +1,36 @@
+{
+  "asset": {
+    "create": {
+      "conf": "Il cespite è stato salvato.",
+      "error": "Il cespite non è stato salvato."
+    },
+    "update": {
+      "conf": "Il cespite è stato modificato.",
+      "error": "Il cespite non è stato modificato."
+    },
+    "delete": {
+      "conf": "Il cespite è stato eliminato.",
+      "error": "Il cespite non è stato eliminato."
+    }
+  },
+  "category": {
+    "create": {
+      "conf": "La categoria di cespiti è stata salvata.",
+      "error": "La categoria di cespiti non è stata salvata."
+    },
+    "update": {
+      "conf": "La categoria di cespiti è stata modificata.",
+      "error": "La categoria di cespiti non è stata modificata."
+    },
+    "delete": {
+      "conf": "La categoria di cespiti è stata eliminata.",
+      "error": "La categoria di cespiti non è stata eliminata."
+    }
+  },
+  "movement": {
+    "create": {
+      "conf": "Il movimento del cespite è stato salvato.",
+      "error": "Il movimento del cespite non è stato salvato."
+    }
+  }
+}

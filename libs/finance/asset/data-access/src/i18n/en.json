@@ -1,0 +1,36 @@
+{
+  "asset": {
+    "create": {
+      "conf": "The asset was saved.",
+      "error": "The asset could not be saved."
+    },
+    "update": {
+      "conf": "The asset was changed.",
+      "error": "The asset could not be changed."
+    },
+    "delete": {
+      "conf": "The asset was deleted.",
+      "error": "The asset could not be deleted."
+    }
+  },
+  "category": {
+    "create": {
+      "conf": "The asset category was saved.",
+      "error": "The asset category could not be saved."
+    },
+    "update": {
+      "conf": "The asset category was changed.",
+      "error": "The asset category could not be changed."
+    },
+    "delete": {
+      "conf": "The asset category was deleted.",
+      "error": "The asset category could not be deleted."
+    }
+  },
+  "movement": {
+    "create": {
+      "conf": "The asset movement was saved.",
+      "error": "The asset movement could not be saved."
+    }
+  }
+}

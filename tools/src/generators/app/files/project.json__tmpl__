@@ -297,6 +297,11 @@
           },
           {
             "glob": "*.json",
+            "input": "libs/finance/asset/data-access/src/i18n",
+            "output": "./assets/i18n/finance/asset/data-access"
+          },
+          {
+            "glob": "*.json",
             "input": "libs/finance/asset/feature/src/i18n",
             "output": "./assets/i18n/finance/asset/feature"
           },
@@ -367,8 +372,18 @@
           },
           {
             "glob": "*.json",
+            "input": "libs/finance/payment/data-access/src/i18n",
+            "output": "./assets/i18n/finance/payment/data-access"
+          },
+          {
+            "glob": "*.json",
             "input": "libs/finance/payment/feature/src/i18n",
             "output": "./assets/i18n/finance/payment/feature"
+          },
+          {
+            "glob": "*.json",
+            "input": "libs/finance/period/data-access/src/i18n",
+            "output": "./assets/i18n/finance/period/data-access"
           },
           {
             "glob": "*.json",
@@ -379,6 +394,11 @@
             "glob": "*.json",
             "input": "libs/finance/reporting/feature/src/i18n",
             "output": "./assets/i18n/finance/reporting/feature"
+          },
+          {
+            "glob": "*.json",
+            "input": "libs/finance/vat-code/data-access/src/i18n",
+            "output": "./assets/i18n/finance/vat-code/data-access"
           },
           {
             "glob": "*.json",

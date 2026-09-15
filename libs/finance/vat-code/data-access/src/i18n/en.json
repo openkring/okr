@@ -1,0 +1,14 @@
+{
+  "create": {
+    "conf": "The VAT code was saved.",
+    "error": "The VAT code could not be saved."
+  },
+  "update": {
+    "conf": "The VAT code was changed.",
+    "error": "The VAT code could not be changed."
+  },
+  "delete": {
+    "conf": "The VAT code was deleted.",
+    "error": "The VAT code could not be deleted."
+  }
+}

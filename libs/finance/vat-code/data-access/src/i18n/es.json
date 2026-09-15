@@ -1,0 +1,14 @@
+{
+  "create": {
+    "conf": "El código de IVA se ha guardado.",
+    "error": "El código de IVA no se ha podido guardar."
+  },
+  "update": {
+    "conf": "El código de IVA se ha modificado.",
+    "error": "El código de IVA no se ha podido modificar."
+  },
+  "delete": {
+    "conf": "El código de IVA se ha eliminado.",
+    "error": "El código de IVA no se ha podido eliminar."
+  }
+}

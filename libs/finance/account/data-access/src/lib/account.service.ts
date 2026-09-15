@@ -32,7 +32,7 @@ export class AccountService {
   /*-------------------------- CRUD operations --------------------------------*/
   public async create(account: AccountModel, currentUser?: UserModel): Promise<string | undefined> {
     account.index = getAccountIndex(account);
-    return await this.firestoreService.createModel<AccountModel>(AccountCollection, account, PFX + 'create.conf', PFX + 'create.error', currentUser);
+    return await this.firestoreService.createModel<AccountModel>(AccountCollection, account, this.i18n.create_conf(), this.i18n.create_error(), currentUser);
   }
 
   public read(key: string, accountingTenantId: string): Observable<AccountModel | undefined> {
@@ -41,11 +41,11 @@ export class AccountService {
 
   public async update(account: AccountModel, currentUser?: UserModel): Promise<string | undefined> {
     account.index = getAccountIndex(account);
-    return await this.firestoreService.updateModel<AccountModel>(AccountCollection, account, false, PFX + 'update.conf', PFX + 'update.error', currentUser);
+    return await this.firestoreService.updateModel<AccountModel>(AccountCollection, account, false, this.i18n.update_conf(), this.i18n.update_error(), currentUser);
   }
 
   public async delete(account: AccountModel, currentUser?: UserModel): Promise<void> {
-    await this.firestoreService.deleteModel<AccountModel>(AccountCollection, account, PFX + 'delete.conf', PFX + 'delete.error', currentUser);
+    await this.firestoreService.deleteModel<AccountModel>(AccountCollection, account, this.i18n.delete_conf(), this.i18n.delete_error(), currentUser);
   }
 
   /**
@@ -86,7 +86,7 @@ export class AccountService {
    */
   public async seedChartOfAccounts(tenantId: string, accountingTenantId: string): Promise<boolean> {
     const accounts = buildChartOfAccounts(tenantId, accountingTenantId);
-    return await this.firestoreService.createModels<AccountModel>(AccountCollection, accounts, PFX + 'create.error');
+    return await this.firestoreService.createModels<AccountModel>(AccountCollection, accounts, this.i18n.create_error());
   }
 
   /**
@@ -94,7 +94,7 @@ export class AccountService {
    * @returns true if the chart was written.
    */
   public async importChartOfAccounts(accounts: AccountModel[]): Promise<boolean> {
-    return await this.firestoreService.createModels<AccountModel>(AccountCollection, accounts, PFX + 'create.error');
+    return await this.firestoreService.createModels<AccountModel>(AccountCollection, accounts, this.i18n.create_error());
   }
 
   /*-------------------------- LIST / QUERY / FILTER --------------------------------*/

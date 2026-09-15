@@ -1,0 +1,14 @@
+{
+  "create": {
+    "conf": "Le code TVA a été enregistré.",
+    "error": "Le code TVA n'a pas pu être enregistré."
+  },
+  "update": {
+    "conf": "Le code TVA a été modifié.",
+    "error": "Le code TVA n'a pas pu être modifié."
+  },
+  "delete": {
+    "conf": "Le code TVA a été supprimé.",
+    "error": "Le code TVA n'a pas pu être supprimé."
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "asset": {
+    "create": {
+      "conf": "Das Aktivum wurde gespeichert.",
+      "error": "Das Aktivum konnte nicht gespeichert werden."
+    },
+    "update": {
+      "conf": "Das Aktivum wurde geändert.",
+      "error": "Das Aktivum konnte nicht geändert werden."
+    },
+    "delete": {
+      "conf": "Das Aktivum wurde gelöscht.",
+      "error": "Das Aktivum konnte nicht gelöscht werden."
+    }
+  },
+  "category": {
+    "create": {
+      "conf": "Die Anlagekategorie wurde gespeichert.",
+      "error": "Die Anlagekategorie konnte nicht gespeichert werden."
+    },
+    "update": {
+      "conf": "Die Anlagekategorie wurde geändert.",
+      "error": "Die Anlagekategorie konnte nicht geändert werden."
+    },
+    "delete": {
+      "conf": "Die Anlagekategorie wurde gelöscht.",
+      "error": "Die Anlagekategorie konnte nicht gelöscht werden."
+    }
+  },
+  "movement": {
+    "create": {
+      "conf": "Die Anlagebewegung wurde gespeichert.",
+      "error": "Die Anlagebewegung konnte nicht gespeichert werden."
+    }
+  }
+}

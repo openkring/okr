@@ -1,0 +1,10 @@
+{
+  "create": {
+    "conf": "El período se ha guardado.",
+    "error": "El período no se ha podido guardar."
+  },
+  "update": {
+    "conf": "El período se ha modificado.",
+    "error": "El período no se ha podido modificar."
+  }
+}
