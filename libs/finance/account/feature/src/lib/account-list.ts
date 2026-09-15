@@ -110,6 +110,7 @@ export class AccountList {
     if (!selectedMethod) return; // dismissed without choosing an item (backdrop/escape) — not an error
     switch (selectedMethod) {
       case 'create': await this.store.addRoot(); break;
+      case 'import': await this.store.importPlan(); break;
       case 'export': await this.store.exportPlan(); break;
       // Deleting a whole chart of accounts (root) is now done via that root row's action sheet,
       // since there is no longer a selected root at the toolbar level.

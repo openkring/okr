@@ -3,6 +3,15 @@
   "empty": "Aucun compte trouvé.",
   "create": "Ouvrir un nouveau compte",
   "seed": "Créer le plan comptable PME standard",
+  "import": {
+    "prompt": "Nom du plan comptable",
+    "placeholder": "p. ex. plan comptable privé",
+    "done": "comptes importés.",
+    "orphans": "Sans compte parent valide (placés directement sous le plan comptable) :",
+    "duplicates": "Numéros de compte en double (seul le premier a été repris) :",
+    "empty": "Le fichier ne contient aucun compte.",
+    "invalid": "Le fichier n'a pas le format attendu. Colonnes attendues : Nummer, Name, Gruppe et Kontoart."
+  },
   "delete": "Supprimer le compte",
   "select": {
     "root": "Sélectionner le plan comptable",

@@ -3,6 +3,15 @@
   "empty": "No accounts found.",
   "create": "Open a new account",
   "seed": "Create standard SME chart of accounts",
+  "import": {
+    "prompt": "Name of the chart of accounts",
+    "placeholder": "e.g. private chart of accounts",
+    "done": "accounts imported.",
+    "orphans": "Without a valid parent account (placed directly under the chart):",
+    "duplicates": "Duplicate account numbers (only the first was kept):",
+    "empty": "The file contains no accounts.",
+    "invalid": "The file does not have the expected format. Expected columns: Nummer, Name, Gruppe and Kontoart."
+  },
   "delete": "Delete account",
   "select": {
     "root": "Select chart of accounts",

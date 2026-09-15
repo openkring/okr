@@ -3,6 +3,15 @@
   "empty": "No se han encontrado cuentas.",
   "create": "Abrir una nueva cuenta",
   "seed": "Crear el plan contable estándar para pymes",
+  "import": {
+    "prompt": "Nombre del plan contable",
+    "placeholder": "p. ej. plan contable privado",
+    "done": "cuentas importadas.",
+    "orphans": "Sin cuenta principal válida (colocadas directamente bajo el plan contable):",
+    "duplicates": "Números de cuenta duplicados (solo se conservó el primero):",
+    "empty": "El archivo no contiene cuentas.",
+    "invalid": "El archivo no tiene el formato esperado. Columnas esperadas: Nummer, Name, Gruppe y Kontoart."
+  },
   "delete": "Eliminar cuenta",
   "select": {
     "root": "Seleccionar plan contable",

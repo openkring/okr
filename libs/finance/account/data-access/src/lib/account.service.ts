@@ -89,6 +89,14 @@ export class AccountService {
     return await this.firestoreService.createModels<AccountModel>(AccountCollection, accounts, PFX + 'create.error');
   }
 
+  /**
+   * Stores an imported chart of accounts (root + accounts, okeys preset by the import) in one batched write.
+   * @returns true if the chart was written.
+   */
+  public async importChartOfAccounts(accounts: AccountModel[]): Promise<boolean> {
+    return await this.firestoreService.createModels<AccountModel>(AccountCollection, accounts, PFX + 'create.error');
+  }
+
   /*-------------------------- LIST / QUERY / FILTER --------------------------------*/
   public list(accountingTenantId: string, orderBy = 'id', sortOrder = 'asc'): Observable<AccountModel[]> {
     const query = [

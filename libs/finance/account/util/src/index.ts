@@ -2,3 +2,4 @@ export * from './lib/account-i18n';
 export * from './lib/account.util';
 export * from './lib/account.validations';
 export * from './lib/chart-of-accounts';
+export * from './lib/chart-of-accounts-csv';

@@ -4,15 +4,32 @@ import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { of } from 'rxjs';
 
+import { UploadService } from '@okr/avatar-data-access';
+import { BANK_CSV_MIMETYPES } from '@okr/shared-constants';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { AccountModel } from '@okr/shared-models';
+import { AlertService, exportCsv } from '@okr/shared-util-angular';
+import { generateRandomString } from '@okr/shared-util-core';
 
 import { AccountService } from '@okr/finance-account-data-access';
-import { ACCOUNT_I18N_KEYS, AccountI18n, flattenAccountForest, getDefaultExpandedKeys, isAccount } from '@okr/finance-account-util';
+import {
+  ACCOUNT_I18N_KEYS, AccountI18n, buildImportedChartOfAccounts, chartOfAccountsToRows, ChartOfAccountsCsvError,
+  flattenAccountForest, getDefaultExpandedKeys, isAccount, parseChartOfAccountsCsv
+} from '@okr/finance-account-util';
 import { AccountingStore } from '@okr/finance-accounting-feature';
 
 export type { AccountI18n };
+
+/**
+ * Read the file as UTF-8; if that yields replacement characters (a Windows-1252 export from an older
+ * accounting program), decode it again as Windows-1252.
+ */
+async function readTextFile(file: File): Promise<string> {
+  const buffer = await file.arrayBuffer();
+  const utf8 = new TextDecoder('utf-8').decode(buffer);
+  return utf8.includes('\uFFFD') ? new TextDecoder('windows-1252').decode(buffer) : utf8;
+}
 
 export type AccountListState = {
   // null = the user hasn't toggled anything yet -> the default 2-tier expansion is used.
@@ -31,6 +48,8 @@ export const AccountStore = signalStore(
     accountingStore: inject(AccountingStore),
     modalController: inject(ModalController),
     i18nService: inject(I18nService),
+    uploadService: inject(UploadService),
+    alertService: inject(AlertService),
   })),
   withProps(store => ({
     i18n: store.i18nService.translateAll(ACCOUNT_I18N_KEYS),
@@ -142,8 +161,54 @@ export const AccountStore = signalStore(
       store.accountsResource.reload();
     },
 
+    /**
+     * Imports a chart of accounts from a CSV file (Nummer, Name, Gruppe, Kontoart) as a NEW root next
+     * to the existing ones. The user names the chart; the file name is proposed.
+     */
+    async importPlan(): Promise<void> {
+      if (store.isReadOnly()) return;
+      const file = await store.uploadService.pickFile(BANK_CSV_MIMETYPES);
+      if (!file) return;
+      let rows;
+      try {
+        rows = parseChartOfAccountsCsv(await readTextFile(file));
+      } catch (e) {
+        const key = e instanceof ChartOfAccountsCsvError && e.code === 'empty' ? 'import_empty' : 'import_invalid';
+        await store.alertService.confirm(store.i18n[key]());
+        return;
+      }
+      const proposedName = file.name.replace(/\.[^.]+$/, '');
+      const rootName = await store.alertService.okrPrompt(store.i18n.import_prompt(), store.i18n.import_placeholder(), proposedName);
+      if (!rootName) return;
+
+      const rootKey = `${store.accountingStore.accountingTenantId()}-${generateRandomString(8)}`;
+      const result = buildImportedChartOfAccounts(rows, store.appStore.tenantId(), store.accountingStore.accountingTenantId(), rootKey, rootName);
+      const ok = await store.accountService.importChartOfAccounts(result.accounts);
+      if (!ok) return;
+      store.accountsResource.reload();
+      patchState(store, { userExpandedKeys: null });
+
+      const notes: string[] = [];
+      if (result.orphans.length > 0) notes.push(`${store.i18n.import_orphans()} ${result.orphans.join(', ')}`);
+      if (result.duplicates.length > 0) notes.push(`${store.i18n.import_duplicates()} ${result.duplicates.join(', ')}`);
+      const summary = `${result.accounts.length - 1} ${store.i18n.import_done()}`;
+      if (notes.length > 0) {
+        await store.alertService.confirm([summary, ...notes].join('<br/>'));
+      } else {
+        await store.alertService.showToast(summary);
+      }
+    },
+
+    /** Exports every chart of accounts of the accounting tenant as CSV (Nummer, Name, Gruppe, Kontoart). */
     async exportPlan(): Promise<void> {
-      console.log('AccountStore.exportPlan is not yet implemented.');
+      const accounts = store.accounts();
+      const roots = accounts.filter(a => a.type === 'root');
+      if (roots.length === 0) {
+        await store.alertService.showToast(store.i18n.empty());
+        return;
+      }
+      const fileName = roots.length === 1 ? roots[0].name : 'kontoplan';
+      await exportCsv(chartOfAccountsToRows(accounts, roots), `${fileName}.csv`);
     },
 
     getTitleLabel(readOnly: boolean, key?: string): string {

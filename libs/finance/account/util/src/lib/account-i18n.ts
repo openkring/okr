@@ -8,6 +8,13 @@ export const ACCOUNT_I18N_KEYS = {
 
   create:               PFX + 'create',
   seed:                 PFX + 'seed',
+  import_prompt:        PFX + 'import.prompt',
+  import_placeholder:   PFX + 'import.placeholder',
+  import_done:          PFX + 'import.done',
+  import_orphans:       PFX + 'import.orphans',
+  import_duplicates:    PFX + 'import.duplicates',
+  import_empty:         PFX + 'import.empty',
+  import_invalid:       PFX + 'import.invalid',
   delete:               PFX + 'delete',
   select_root:          PFX + 'select.root',
   select_hint:          PFX + 'select.hint',

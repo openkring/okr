@@ -3,6 +3,15 @@
   "empty": "Nessun conto trovato.",
   "create": "Aprire un nuovo conto",
   "seed": "Crea il piano dei conti standard PMI",
+  "import": {
+    "prompt": "Nome del piano dei conti",
+    "placeholder": "ad es. piano dei conti privato",
+    "done": "conti importati.",
+    "orphans": "Senza conto principale valido (inseriti direttamente sotto il piano dei conti):",
+    "duplicates": "Numeri di conto duplicati (è stato mantenuto solo il primo):",
+    "empty": "Il file non contiene conti.",
+    "invalid": "Il file non ha il formato previsto. Colonne previste: Nummer, Name, Gruppe e Kontoart."
+  },
   "delete": "Elimina conto",
   "select": {
     "root": "Seleziona piano dei conti",

@@ -3,6 +3,15 @@
   "empty": "Keine Konti gefunden.",
   "create": "Neues Konto eröffnen",
   "seed": "Standard-Kontenrahmen KMU erstellen",
+  "import": {
+    "prompt": "Name des Kontoplans",
+    "placeholder": "z.B. Kontoplan privat",
+    "done": "Konten importiert.",
+    "orphans": "Ohne gültiges Hauptkonto (direkt unter dem Kontoplan eingeordnet):",
+    "duplicates": "Doppelte Kontonummern (nur die erste wurde übernommen):",
+    "empty": "Die Datei enthält keine Konten.",
+    "invalid": "Die Datei hat nicht das erwartete Format. Erwartet werden die Spalten Nummer, Name, Gruppe und Kontoart."
+  },
   "delete": "Konto löschen",
   "select": {
     "root": "Kontoplan wählen",

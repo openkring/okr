@@ -1441,6 +1441,7 @@ const finance: FeatureBlock = {
     { key: 'c-account', name: 'c-account', url: '', action: 'context', roleNeeded: 'treasurer', icon: 'help-circle', label: '', children: [
       { key: 'account-create', name: 'account-create', url: 'create', action: 'call', roleNeeded: 'treasurer', icon: 'edit', label: '@item.account-create' },
       { key: 'account-delete', name: 'account-delete', url: 'delete', action: 'call', roleNeeded: 'treasurer', icon: 'trash', label: '@item.account-delete' },
+      { key: 'account-import', name: 'account-import', url: 'import', action: 'call', roleNeeded: 'treasurer', icon: 'upload', label: '@item.account-import' },
       { key: 'account-export', name: 'account-export', url: 'export', action: 'call', roleNeeded: 'treasurer', icon: 'download', label: '@item.account-export' },
     ] },
     // Not named `c-…` — the live doc really is `ocr-rule-context` (same naming outlier class
