@@ -3,6 +3,7 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular
 
 import { CategoryListModel, AccountModel, RoleName, UserModel } from '@okr/shared-models';
 import { CategorySelect, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { NAME_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 
 import { AccountI18n, accountValidations } from '@okr/finance-account-util';
@@ -37,14 +38,14 @@ export type { AccountI18n };
                   <okr-error-note [errors]="idErrors()" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
-                  <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [copyable]="true" [readOnly]="isReadOnly()" />
+                  <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]="nameMaxLength" [copyable]="true" [readOnly]="isReadOnly()" />
                   <okr-error-note [errors]="nameErrors()" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
                   <okr-cat-select [category]="types()!" [selectedItemName]="type()" (selectedItemNameChange)="onFieldChange('type', $event)" [readOnly]="isReadOnly()" [withAll]="false" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
-                  <okr-text-input [i18n]="labelI18n()" [value]="label()" (valueChange)="onFieldChange('label', $event)" [readOnly]="isReadOnly()" />
+                  <okr-text-input [i18n]="labelI18n()" [value]="label()" (valueChange)="onFieldChange('label', $event)" [maxLength]="labelMaxLength" [readOnly]="isReadOnly()" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
                   <okr-text-input [i18n]="parentIdI18n()" [value]="parentId()" (valueChange)="onFieldChange('parentId', $event)" [readOnly]="isReadOnly()" />
@@ -70,6 +71,9 @@ export class AccountForm {
   public readonly readOnly = input(true);
   public readonly i18n = input.required<AccountI18n>();
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
+  // Same caps as accountValidations, so the input counter and the Vest suite never disagree.
+  protected readonly nameMaxLength = NAME_LENGTH;
+  protected readonly labelMaxLength = SHORT_NAME_LENGTH;
 
   protected okeyI18n = computed(() => ({
     name: 'okey', label: this.i18n().okey(), placeholder: this.i18n().okey_placeholder(), helper: this.i18n().okey_helper()
