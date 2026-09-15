@@ -3,7 +3,7 @@ import { Capacitor } from '@capacitor/core';
 import { PushNotifications } from '@capacitor/push-notifications';
 import { getApp } from 'firebase/app';
 import { getMessaging, getToken, onMessage, isSupported as isMessagingSupported, Messaging } from 'firebase/messaging';
-import { getFirestore, doc, setDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
+import { getFirestore, doc, setDoc, deleteDoc, serverTimestamp, collection, query, where, documentId, getDocs, writeBatch } from 'firebase/firestore';
 import { Observable, from, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
@@ -222,5 +222,37 @@ export class FcmService {
       { token, updatedAt: serverTimestamp() },
       { merge: true }
     );
+    await this.removeSupersededTokens(db, uid, token, tokenDocId);
+  }
+
+  /**
+   * Drop the earlier tokens of THIS installation.
+   *
+   * A web token is `<app-instance-id>:<credential>`; FCM rotates the credential (service-worker
+   * reinstall, storage eviction) but keeps the instance id, and the old token is not reported
+   * as unregistered for a long time. Nothing else ever deleted them, so one device piled up a
+   * tail of dead tokens (11 for one installation, 2026-09-15) and every push fanned out to all
+   * of them. Doc ids start with the token, so a range query on the id prefix finds the siblings
+   * without reading anything else. Best effort — a failure here must not fail the registration.
+   */
+  private async removeSupersededTokens(db: ReturnType<typeof getFirestore>, uid: string, token: string, keepDocId: string): Promise<void> {
+    const colon = token.indexOf(':');
+    if (colon <= 0) return;                      // native APNs tokens carry no instance id
+    const prefix = token.substring(0, colon + 1);
+    try {
+      const siblings = await getDocs(query(
+        collection(db, 'users', uid, 'fcmTokens'),
+        where(documentId(), '>=', prefix),
+        where(documentId(), '<', prefix + '\uf8ff'),
+      ));
+      const stale = siblings.docs.filter((d) => d.id !== keepDocId);
+      if (stale.length === 0) return;
+      const batch = writeBatch(db);
+      for (const d of stale) batch.delete(d.ref);
+      await batch.commit();
+      console.log(`FcmService: removed ${stale.length} superseded token(s) of this installation`);
+    } catch (error) {
+      console.warn('FcmService.removeSupersededTokens: failed (ignored):', error);
+    }
   }
 }
