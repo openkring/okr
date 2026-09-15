@@ -7,6 +7,7 @@ import { ArticleSection, BlogLayoutType, ButtonSection, RoleName, SectionModel }
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { createActionSheetButton, createActionSheetOptions, error } from '@okr/shared-util-angular';
 import { hasRole, replaceSubstring } from '@okr/shared-util-core';
+import { fragmentScrollTop } from '@okr/cms-page-util';
 
 import { Menu } from '@okr/cms-menu-feature';
 import { SectionStore } from '@okr/cms-section-feature';
@@ -122,6 +123,7 @@ export class BlogPage {
   private readonly meta = inject(Meta);
   private actionSheetController = inject(ActionSheetController);
   private route = inject(ActivatedRoute);
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private ionContent = viewChild(IonContent);
   private printRoot = viewChild('printRoot', { read: ElementRef });
   private routeFragment = toSignal(this.route.fragment);
@@ -147,13 +149,17 @@ export class BlogPage {
       const sections = this.sections();
       if (!fragment || sections.length === 0) return;
       setTimeout(async () => {
-        const el = document.getElementById(fragment);
+        // Look up inside THIS page only: ion-router-outlet keeps the previous (hidden) pages in
+        // the DOM, and a global getElementById would match a same-keyed section there first.
+        const pageEl = this.host.nativeElement;
+        const el = pageEl.querySelector<HTMLElement>(`#${CSS.escape(fragment)}`);
         const content = this.ionContent();
         if (!el || !content) return;
         const scrollEl = await content.getScrollElement();
-        const filterBar = document.querySelector<HTMLElement>('.filter-bar');
+        const filterBar = pageEl.querySelector<HTMLElement>('.filter-bar');
         const stickyOffset = filterBar ? filterBar.offsetHeight + 70 : 0;
-        const top = el.getBoundingClientRect().top + scrollEl.scrollTop - stickyOffset;
+        const top = fragmentScrollTop(
+          el.getBoundingClientRect().top, scrollEl.getBoundingClientRect().top, scrollEl.scrollTop, stickyOffset);
         content.scrollToPoint(0, top, 400);
       }, 100);
     });

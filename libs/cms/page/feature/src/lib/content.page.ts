@@ -8,6 +8,7 @@ import { DEFAULT_ACCEPT_ATTRIBUTE } from '@okr/shared-constants';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { createActionSheetButton, createActionSheetOptions, error, getColSizes } from '@okr/shared-util-angular';
 import { hasRole } from '@okr/shared-util-core';
+import { fragmentScrollTop } from '@okr/cms-page-util';
 
 import { Menu } from '@okr/cms-menu-feature';
 import { SectionDispatcher, SectionStore } from '@okr/cms-section-feature';
@@ -217,6 +218,7 @@ export class ContentPage {
   private readonly meta = inject(Meta);
   private actionSheetController = inject(ActionSheetController);
   private route = inject(ActivatedRoute);
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private ionContent = viewChild(IonContent);
   // `#printRoot` is on <ion-content> (a component), so we must read the host
   // element explicitly — otherwise viewChild returns the IonContent instance
@@ -331,11 +333,12 @@ export class ContentPage {
       const sections = this.visibleSections();
       if (!fragment || sections.length === 0) return;
       setTimeout(async () => {
-        const el = document.getElementById(fragment);
+        // Scoped to this page: ion-router-outlet keeps hidden previous pages in the DOM.
+        const el = this.host.nativeElement.querySelector<HTMLElement>(`#${CSS.escape(fragment)}`);
         const content = this.ionContent();
         if (!el || !content) return;
         const scrollEl = await content.getScrollElement();
-        const top = el.getBoundingClientRect().top + scrollEl.scrollTop;
+        const top = fragmentScrollTop(el.getBoundingClientRect().top, scrollEl.getBoundingClientRect().top, scrollEl.scrollTop);
         content.scrollToPoint(0, top, 400);
       }, 100);
     });
