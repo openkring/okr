@@ -19,7 +19,7 @@
     "cancelled": "L'importazione è stata annullata. Non è stato salvato nulla."
   },
   "error": {
-    "unknownFormat": "Questo file non è stato riconosciuto. Sono supportati gli export CSV di PostFinance e ZKB. Prima riga:",
+    "unknownFormat": "Questo file non è stato riconosciuto. Sono supportati gli export CSV di PostFinance, ZKB, Yuh e GKB e l'estratto delle transazioni Swissquote in PDF. Prima riga:",
     "noIban": "Il file non contiene un numero di conto (IBAN).",
     "formatNotImplemented": "Questo formato bancario non è ancora supportato:",
     "emptyFile": "Il file è vuoto."

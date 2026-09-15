@@ -5,7 +5,7 @@ import { Router } from '@angular/router';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { of } from 'rxjs';
 
-import { BANK_CSV_MIMETYPES } from '@okr/shared-constants';
+import { BANK_IMPORT_MIMETYPES } from '@okr/shared-constants';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { BankImportRowModel, BankImportRowStatus, BankProfileModel, BankRuleModel } from '@okr/shared-models';
@@ -17,13 +17,15 @@ import { AccountService } from '@okr/finance-account-data-access';
 import { AccountingStore } from '@okr/finance-accounting-feature';
 import { leafAccounts } from '@okr/finance-account-util';
 import { BankImportRowService, PostBankImportResult } from '@okr/finance-bank-import-data-access';
-import { BANK_IMPORT_I18N_KEYS, BankImportError, computeImportKeys, parseStatement, ParsedWarning, toImportRows } from '@okr/finance-bank-import-util';
+import { BANK_IMPORT_I18N_KEYS, BankImportError, computeImportKeys, isPdfFile, parseStatement, ParsedWarning, toImportRows } from '@okr/finance-bank-import-util';
 import { BankProfileService } from '@okr/finance-bank-profile-data-access';
 import { BankProfileStore } from '@okr/finance-bank-profile-feature';
 import { BankRuleService } from '@okr/finance-bank-rule-data-access';
 import { BankRuleStore } from '@okr/finance-bank-rule-feature';
 import { applyRules } from '@okr/finance-bank-rule-util';
 import { VatCodeService } from '@okr/finance-vat-code-data-access';
+
+import { extractPdfLines } from './pdf-text.util';
 
 export type BankImportStatusFilter = BankImportRowStatus | 'all' | 'open';
 
@@ -123,13 +125,14 @@ export const BankImportStore = signalStore(
      * §6.2. The file dialog must open inside the user gesture — no await before pickFile().
      */
     async importFile(): Promise<void> {
-      const file = await store.uploadService.pickFile(BANK_CSV_MIMETYPES);
+      const file = await store.uploadService.pickFile(BANK_IMPORT_MIMETYPES);
       if (!file) return;
       const accountingTenantId = store.accountingTenantId();
       const tenantId = store.appStore.tenantId();
       let statement;
       try {
-        statement = parseStatement(await file.text());
+        // a PDF (Swissquote) is turned into one text line per visual line first; CSV is read as is
+        statement = parseStatement(isPdfFile(file) ? await extractPdfLines(await file.arrayBuffer()) : await file.text());
       } catch (e) {
         const code = e instanceof BankImportError ? e.code : 'unknown-format';
         const detail = e instanceof BankImportError ? e.detail : '';

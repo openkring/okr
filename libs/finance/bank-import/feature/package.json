@@ -7,6 +7,7 @@
   "private": true,
   "dependencies": {
     "tslib": "^2.8.1",
+    "pdfjs-dist": "*",
     "@okr/shared-models": "*",
     "@okr/shared-config": "*",
     "@okr/shared-constants": "*",

@@ -131,6 +131,8 @@ export const DEFAULT_ADDRESS_CHANNEL = 'email';
 export const DEFAULT_ADDRESS_USAGE = 'home';
 /** Bank CSV statements. `.csv` is included because Safari sends an empty type for CSV files. */
 export const BANK_CSV_MIMETYPES = ['text/csv', 'text/plain', 'application/vnd.ms-excel', '.csv'];
+/** Bank import picker: CSV exports plus the Swissquote PDF statement (parsed from its text in the browser). */
+export const BANK_IMPORT_MIMETYPES = [...BANK_CSV_MIMETYPES, 'application/pdf', '.pdf'];
 export const IMAGE_MIMETYPES = [
     'image/png',
     'image/jpg',
