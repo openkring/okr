@@ -21,7 +21,7 @@ describe('authPhase', () => {
 
 describe('openBootGate', () => {
   it('names the auth restore while it is still running', () => {
-    expect(openBootGate({ ...base, phase: 'restoring' })).toBe('auth-restore');
+    expect(openBootGate({ ...base, phase: 'restoring' })).toBe('session-restore');
   });
 
   it('names the user-doc read for a signed-in user without a UserModel', () => {
@@ -33,8 +33,8 @@ describe('openBootGate', () => {
       .toBe('categories');
   });
 
-  it('reports auth-restore ahead of everything else — it is the outermost gate', () => {
-    expect(openBootGate({ ...base, phase: 'restoring', categoriesLoading: true })).toBe('auth-restore');
+  it('reports session-restore ahead of everything else — it is the outermost gate', () => {
+    expect(openBootGate({ ...base, phase: 'restoring', categoriesLoading: true })).toBe('session-restore');
   });
 
   it('falls back to unknown when no gate explains the stall', () => {

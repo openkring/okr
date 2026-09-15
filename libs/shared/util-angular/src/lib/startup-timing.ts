@@ -119,6 +119,54 @@ function probeEnvironment() {
  */
 export const STARTUP_STALL_MS = 12_000;
 
+/**
+ * A stall timer that fires later than this many times its own delay did not measure a stall,
+ * it measured a suspend: the tab was discarded, the laptop lid was closed, the phone slept.
+ * Firestore and the auth SDK reconnect AFTER such a wake-up, so judging readiness at the very
+ * moment the throttled timer finally runs reports a boot that is about to finish (SCS-AR: a
+ * 12 s timer that ran after 41 minutes, with auth long restored and the user doc one reconnect
+ * away).
+ */
+export const STARTUP_STALL_OVERSHOOT_FACTOR = 2;
+
+/** How often an overshooting timer is re-armed before the stall is reported regardless. */
+export const STARTUP_STALL_MAX_REARMS = 3;
+
+/**
+ * Arm the stall check: after STARTUP_STALL_MS, report the open gate unless the app is ready.
+ *
+ * Wall-clock aware. If the timer fires far later than it was scheduled (see
+ * STARTUP_STALL_OVERSHOOT_FACTOR) the boot was suspended, not stalled, and the check is
+ * re-armed for another full window so the SDKs get their reconnect before we judge. A bounded
+ * number of re-arms keeps a genuinely stuck boot from hiding behind repeated throttling.
+ *
+ * @param isReady the readiness signal, read at fire time
+ * @param openGate names the gate still holding navigation, read only when reporting
+ * @param now injectable clock for tests; defaults to Date.now
+ */
+export function armStartupStallCheck(
+  isReady: () => boolean,
+  openGate: () => string,
+  now: () => number = Date.now,
+): void {
+  let rearms = 0;
+  const arm = (): void => {
+    const armedAt = now();
+    setTimeout(() => {
+      if (isReady()) return;
+      const overshot = now() - armedAt > STARTUP_STALL_MS * STARTUP_STALL_OVERSHOOT_FACTOR;
+      if (overshot && rearms < STARTUP_STALL_MAX_REARMS) {
+        rearms++;
+        markStartup(`stall-check:rearmed:${rearms}`);
+        arm();
+        return;
+      }
+      reportStartupStall(openGate());
+    }, STARTUP_STALL_MS);
+  };
+  arm();
+}
+
 let stallReported = false;
 
 /**

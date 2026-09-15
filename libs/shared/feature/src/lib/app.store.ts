@@ -11,7 +11,7 @@ import { AUTH, ENV, FIRESTORE } from '@okr/shared-config';
 import { AppConfigService, FirestoreService } from '@okr/shared-data-access';
 import { AddressDirectoryCollection, AddressDirectoryModel, AppConfig, AvailableLanguages, CategoryCollection, CategoryItemModel, CategoryListModel, DefaultLanguage, DefaultLanguageCode, GroupCollection, GroupModel, InvitationCollection, InvitationModel, OrgCollection, OrgModel, PersonCollection, PersonModel, PrivacySettings, privacyUsageToAccessor, ResourceCollection, ResourceModel, ResourceModelName, stricterAccessor, TagCollection, TagModel, TaskCollection, TaskModel, UserCollection, UserModel } from '@okr/shared-models';
 import { die, getSystemQuery, indexBy, openInvitationsOf, pickForTenant, replacePlaceholders, sortPersons } from '@okr/shared-util-core';
-import { AppNavigationService, isBrowser, markStartup, reportStartupStall, reportStartupTiming, STARTUP_STALL_MS, VersionCheckService, resourceParams } from '@okr/shared-util-angular';
+import { AppNavigationService, armStartupStallCheck, isBrowser, markStartup, reportStartupTiming, VersionCheckService, resourceParams } from '@okr/shared-util-angular';
 
 import { authPhase, isDegradedBoot, openBootGate, type BootState } from './boot-readiness.util';
 import { I18nService } from '@okr/shared-i18n';
@@ -726,7 +726,9 @@ export const AppStore = signalStore(
       // runs only when the app BECOMES ready, and writes a breadcrumb that needs a later error to
       // carry it — so a boot that simply hangs produced no error, no breadcrumb and no issue. The
       // user stared at a spinner and we had nothing to look at afterwards.
-      setTimeout(() => { if (!store.isAppReady()) reportStartupStall(openBootGate(bootState())); }, STARTUP_STALL_MS);
+      // Wall-clock aware: a timer that fires long after its deadline saw a suspend, not a stall,
+      // and is re-armed instead of reported (see armStartupStallCheck).
+      armStartupStallCheck(() => store.isAppReady(), () => openBootGate(bootState()));
 
       // Readiness watchdog: if an authenticated user's UserModel hasn't loaded within
       // READINESS_TIMEOUT_MS (e.g. a hung users/{uid} read), stop blocking navigation so
@@ -760,7 +762,9 @@ export const AppStore = signalStore(
           return;
         }
         const handle = setTimeout(
-          () => { markStartup('auth-watchdog:fired'); patchState(store, { authRestoreTimedOut: true }); },
+          // Label deliberately avoids "auth": Sentry's server-side scrubber nulls any extra whose
+          // key or value contains it, which is how this mark arrived as null on SCS-AQ.
+          () => { markStartup('restore-watchdog:fired'); patchState(store, { authRestoreTimedOut: true }); },
           READINESS_TIMEOUT_MS);
         onCleanup(() => clearTimeout(handle));
       });

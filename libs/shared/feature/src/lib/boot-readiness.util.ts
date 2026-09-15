@@ -35,15 +35,21 @@ export type BootState = {
   authRestoreTimedOut: boolean;
 };
 
-/** Which gate is still holding navigation. Only meaningful while the app is not ready. */
-export type BootGate = 'auth-restore' | 'user-doc' | 'categories' | 'unknown';
+/**
+ * Which gate is still holding navigation. Only meaningful while the app is not ready.
+ *
+ * `session-restore`, not `auth-restore`: the gate name travels to Sentry as an extra, and
+ * Sentry's server-side scrubber replaces any value containing "auth" with "[Filtered]"
+ * (seen on SCS-AQ). Tags survive scrubbing, extras do not.
+ */
+export type BootGate = 'session-restore' | 'user-doc' | 'categories' | 'unknown';
 
 /**
  * Name the open gate for the stall report. From the outside every gate looks the same — a
  * spinner — so without this the report would say "slow" and nothing more.
  */
 export function openBootGate(state: BootState): BootGate {
-  if (state.phase === 'restoring') return 'auth-restore';
+  if (state.phase === 'restoring') return 'session-restore';
   if (state.phase === 'signedIn' && !state.hasCurrentUser) return 'user-doc';
   if (state.categoriesLoading) return 'categories';
   return 'unknown';
