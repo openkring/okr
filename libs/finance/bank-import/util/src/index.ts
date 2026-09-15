@@ -7,6 +7,7 @@ export * from './lib/yuh.adapter';
 export * from './lib/gkb.adapter';
 export * from './lib/vz.adapter';
 export * from './lib/swissquote.adapter';
+export * from './lib/bexio-journal.adapter';
 export * from './lib/pdf-lines.util';
 export * from './lib/saldo.util';
 export * from './lib/format-registry';

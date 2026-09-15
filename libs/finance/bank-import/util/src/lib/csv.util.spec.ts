@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { collapseWhitespace, normalizeIban, parseAmountMinor, parseCsvLine, parseDdMmYyyy, splitLines, stripBom } from './csv.util';
+import { collapseWhitespace, normalizeIban, parseAmountMinor, parseCsvLine, parseCsvRecords, parseDdMmYyyy, splitLines, stripBom } from './csv.util';
 
 describe('csv.util', () => {
   it('stripBom removes a leading UTF-8 BOM only', () => {
@@ -43,5 +43,20 @@ describe('csv.util', () => {
     expect(collapseWhitespace('  a   b \t c ')).toBe('a b c');
     expect(normalizeIban('CH98 0070 0112 9000 6934 5')).toBe('CH9800700112900069345');
     expect(normalizeIban(' ch51 0900 ')).toBe('CH510900');
+  });
+});
+
+describe('parseCsvRecords', () => {
+  it('splits records across quoted newlines and reports the line a record starts on', () => {
+    const text = '"\n  Id\n","\n  Datum\n"\n1,"a\nb",c\r\n\n2,x,"y ""z"""';
+    expect(parseCsvRecords(text, ',')).toEqual([
+      { fields: ['Id', 'Datum'], lineNo: 1 },
+      { fields: ['1', 'a\nb', 'c'], lineNo: 6 },
+      { fields: ['2', 'x', 'y "z"'], lineNo: 9 },
+    ]);
+  });
+  it('trims fields, strips a BOM and drops blank records', () => {
+    expect(parseCsvRecords('﻿a; b ;c\n\n', ';')).toEqual([{ fields: ['a', 'b', 'c'], lineNo: 1 }]);
+    expect(parseCsvRecords('', ';')).toEqual([]);
   });
 });

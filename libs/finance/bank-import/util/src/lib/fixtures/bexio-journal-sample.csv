@@ -1,0 +1,91 @@
+"
+          Id
+        ","
+          Datum
+        ","
+          Referenz
+        ","
+          Soll
+        ","
+          Haben
+        ","
+          Beschreibung
+        ","
+          Betrag
+        ","
+          BuchungswÃ¤hrung
+        ","
+          Umrechnungsfaktor
+        ","
+          Betrag in BasiswÃ¤hrung
+        ","
+          WÃ¤hrung in BasiswÃ¤hrung
+        ","
+          MWST
+        "
+621,01.01.2023,ErÃ¶ffnungsbuchung 621,9100 - ErÃ¶ffnungsbilanz,2850 - VermÃ¶gen,Saldovortrag 1.1.2023,3244664.89,CHF,1,3244664.89,CHF,
+620,01.01.2023,ErÃ¶ffnungsbuchung 620        ,2602 - STEG Musterstrasse Renofonds,9100 - ErÃ¶ffnungsbilanz,Saldovortrag 1.1.2023,13499.45,CHF,1,13499.45,CHF,
+619,01.01.2023,"
+          ErÃ¶ffnungsbuchung 619
+        ","1902 - Immobilie Musterstr. 1, StÃ¤fa",9100 - ErÃ¶ffnungsbilanz,Saldovortrag 1.1.2023,2150000.00,CHF,1,2150000.00,CHF,
+618,01.01.2023,"
+          ErÃ¶ffnungsbuchung 618
+        ",1020 - ZKB priv CHF,9100 - ErÃ¶ffnungsbilanz,Saldovortrag 1.1.2023,26791.43,CHF,1,26791.43,CHF,
+592,31.12.2022,"
+          Manuelle Buchung 354 ()
+        ",6720 - Misc - Unbekannt,2064 - VISA Cashback,Saldo-Korrektur,1423.61,CHF,1,1423.61,CHF,
+588,31.12.2022,"
+          Manuelle Buchung 350 ()
+        ",6720 - Misc - Unbekannt,2050 - MC WWF,,5807.90,CHF,1,5807.90,CHF,
+587,31.12.2022,"
+          Manuelle Buchung 349 ()
+        ",9200 - Jahresgewinn oder Jahresverlust,2850 - VermÃ¶gen,Jahresgewinn,129954.76,CHF,1,129954.76,CHF,
+586,31.12.2022,"
+          Manuelle Buchung 348 ()
+        ",1807 - GKB SÃ¤ule3 Max,3250 - Zinsertrag,"
+          Zins SÃ¤ule 3 Max
+        ",18.50,CHF,1,18.50,CHF,
+385,"
+          30.12.2022
+        ","
+          Manuelle Buchung 155 ()
+        ",1020 - ZKB priv CHF,1010 - PF Max CHF,Ãbertrag PF Max -> ZKB priv,5000.00,CHF,1,5000.00,CHF,
+510,30.11.2022,"
+          Manuelle Buchung 280 ()
+        ",6282 - Transport: misc,2060 - VISA PF Platinum,"
+          Vueling Sitzplatzreservation EUR 8.99
+        ",9.16,CHF,1,9.16,CHF,
+407,30.11.2022,"
+          Manuelle Buchung 177 ()
+        ","
+          4230 - Office - Repair
+        ",1020 - ZKB priv CHF,"
+          Office Repair (5)
+        ",360.00,CHF,1,360.00,CHF,
+489,30.11.2022,"
+          Manuelle Buchung 259 ()
+        ",1010 - PF Max CHF,"
+          3419 - Lohn diverse
+        ","
+          Lohn (5)
+        ",66279.36,CHF,1,66279.36,CHF,
+475,30.11.2022,"
+          Manuelle Buchung 245 ()
+        ",4210 - Office - Software,2062 - VZ VISA Gold,"
+          Ionos Studio (14)
+        ",121.28,CHF,1,121.28,CHF,UN81
+500,15.10.2022,"
+          Manuelle Buchung 270 ()
+        ",5822 - Rec: Lodging,2060 - VISA PF Platinum,"Hotel, Madrid",147.80,EUR,0.9823,145.18,CHF,
+528,01.01.2022,"
+          ErÃ¶ffnungsbuchung 528
+        ",9100 - ErÃ¶ffnungsbilanz,2850 - VermÃ¶gen,Saldovortrag 1.1.2022,3114710.13,CHF,1,3114710.13,CHF,
+526,01.01.2022,"
+          ErÃ¶ffnungsbuchung 526
+        ",9100 - ErÃ¶ffnungsbilanz,2500 - Darlehen,Saldovortrag 1.1.2022,0.00,CHF,1,0.00,CHF,
+318,31.12.2018,"
+          SaldoÃ¼bernahme 318
+        ",9200 - Jahresgewinn oder Jahresverlust,9901 - SaldoÃ¼bernahme,SaldoÃ¼bernahme per 31.12.2018,36383.46,CHF,1,36383.46,CHF,
+193,31.12.2018,"
+          SaldoÃ¼bernahme 193
+        ",1000 - Kassenkonto Kasse CHF,9901 - SaldoÃ¼bernahme,SaldoÃ¼bernahme per 31.12.2018,915.89,CHF,1,915.89,CHF,

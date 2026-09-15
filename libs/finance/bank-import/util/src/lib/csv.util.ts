@@ -58,3 +58,50 @@ export function collapseWhitespace(value: string): string {
 export function normalizeIban(value: string): string {
   return (value ?? '').replace(/\s+/g, '').toUpperCase();
 }
+
+export interface CsvRecord {
+  fields: string[];
+  lineNo: number;   // 1-based line the record starts on
+}
+
+/**
+ * RFC-4180 parser over the whole text for exports whose quoted cells span lines (bexio pads header and
+ * cells with newlines). CRLF/CR are normalized first; fields are trimmed; a record whose every field is
+ * empty is dropped. `parseCsvLine` stays the per-line splitter for the bank statement formats.
+ */
+export function parseCsvRecords(text: string, separator: string): CsvRecord[] {
+  const src = stripBom(text ?? '').replace(/\r\n?/g, '\n');
+  const out: CsvRecord[] = [];
+  let fields: string[] = [];
+  let field = '';
+  let inQuotes = false;
+  let line = 1;
+  let recordStart = 1;
+  const endRecord = (): void => {
+    fields.push(field.trim());
+    if (fields.some(f => f.length > 0)) out.push({ fields, lineNo: recordStart });
+    fields = []; field = '';
+  };
+  for (let i = 0; i < src.length; i++) {
+    const ch = src[i];
+    if (ch === '\n') line++;
+    if (inQuotes) {
+      if (ch === '"') {
+        if (src[i + 1] === '"') { field += '"'; i++; } else { inQuotes = false; }
+      } else {
+        field += ch;
+      }
+    } else if (ch === '"') {
+      inQuotes = true;
+    } else if (ch === separator) {
+      fields.push(field.trim()); field = '';
+    } else if (ch === '\n') {
+      endRecord();
+      recordStart = line;
+    } else {
+      field += ch;
+    }
+  }
+  endRecord();
+  return out;
+}
