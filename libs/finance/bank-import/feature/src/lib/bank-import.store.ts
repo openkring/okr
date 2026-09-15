@@ -137,27 +137,36 @@ export const BankImportStore = signalStore(
         return;
       }
 
-      // profile by IBAN, or create one. A file without an account number (legacy ZKB layout) maps to the
-      // tenant's only profile of that format; with none or several, the treasurer picks/enters the IBAN.
-      let profile = statement.iban
-        ? await store.profileService.findByIban(accountingTenantId, statement.iban)
-        : await store.profileService.findSingleByFormat(accountingTenantId, statement.format);
-      if (!profile) {
-        const proposal = new BankProfileModel(tenantId, accountingTenantId);
-        proposal.format = statement.format;
-        proposal.iban = statement.iban;
-        proposal.bankName = statement.bankName;
-        proposal.currency = statement.currency;
-        profile = await store.profileStore.openEdit(proposal, false);
-        if (!profile?.okey) { await store.alertService.confirm(store.i18n.import_cancelled()); return; }
+      // One profile per currency: a CSV carries one currency, a Swissquote PDF one section per currency
+      // under the same IBAN, each needing its own ledger account (spec §4.10).
+      const currencies = [...new Set(statement.rows.map(r => r.currency || statement.currency))];
+      const all: BankImportRowModel[] = [];
+      for (const currency of currencies.length ? currencies : [statement.currency]) {
+        const rows = statement.rows.filter(r => (r.currency || statement.currency) === currency);
+        // profile by IBAN (and currency), or create one. A file without an account number (legacy ZKB
+        // layout, Yuh, GKB) maps to the tenant's only profile of that format; with none or several, the
+        // treasurer picks/enters the IBAN.
+        let profile = statement.iban
+          ? await store.profileService.findByIban(accountingTenantId, statement.iban, currency)
+          : await store.profileService.findSingleByFormat(accountingTenantId, statement.format);
+        if (!profile) {
+          const proposal = new BankProfileModel(tenantId, accountingTenantId);
+          proposal.format = statement.format;
+          proposal.iban = statement.iban;
+          proposal.bankName = statement.bankName;
+          proposal.currency = currency;
+          profile = await store.profileStore.openEdit(proposal, false);
+          if (!profile?.okey) { await store.alertService.confirm(store.i18n.import_cancelled()); return; }
+        }
+        const iban = statement.iban || profile.iban;
+        const keys = await computeImportKeys(rows.map(r => ({ iban, date: r.date, amount: r.amount, bankReference: r.bankReference, rawText: r.rawText })));
+        const ctx = { tenantId, accountingTenantId, bankProfileKey: profile.okey, sourceFileName: file.name,
+          importedBy: store.currentUser()?.okey ?? '', importedAt: getTodayStr(DateFormat.StoreDateTime) };
+        all.push(...toImportRows({ ...statement, rows }, keys, ctx));
       }
 
-      // keys, rows, rules, duplicates
-      const iban = statement.iban || profile.iban;
-      const keys = await computeImportKeys(statement.rows.map(r => ({ iban, date: r.date, amount: r.amount, bankReference: r.bankReference, rawText: r.rawText })));
-      const ctx = { tenantId, accountingTenantId, bankProfileKey: profile.okey, sourceFileName: file.name,
-        importedBy: store.currentUser()?.okey ?? '', importedAt: getTodayStr(DateFormat.StoreDateTime) };
-      const all = toImportRows(statement, keys, ctx);
+      // rules, duplicates
+      const keys = all.map(r => r.importKey);
       const existing = await store.rowService.existingKeys(accountingTenantId, keys);
       const fresh = all.filter(r => !existing.has(r.importKey));
       const rules = await store.ruleService.listOnce(accountingTenantId);
