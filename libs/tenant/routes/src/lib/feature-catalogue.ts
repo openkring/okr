@@ -768,8 +768,7 @@ const finance: BlockRoutes = {
           children: [{ path: ':contextMenuName', loadComponent: () => import('@okr/finance-account-feature').then(m => m.AccountList) }],
         },
         {
-          // Account links (default expense / employee payables account) of this accounting tenant.
-          // Reachable by typed URL today, like `vat-codes` — no live `menuItems` doc navigates here.
+          // Account links and fiscal year start of this accounting tenant (`accounting-settings` row).
           path: 'settings',
           loadComponent: () => import('@okr/finance-accounting-feature').then(m => m.AccountingSettingsPage),
         },

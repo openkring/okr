@@ -12,6 +12,11 @@
     "payablesAccount": {
       "label": "Cuenta a pagar a empleados",
       "helper": "Cuenta contra la que se contabiliza el reembolso a un empleado."
+    },
+    "fiscalYearStart": {
+      "label": "Inicio del ejercicio",
+      "placeholder": "Mes 1–12",
+      "helper": "Mes en que empieza el ejercicio. 1 = año natural. Determina a qué período se asigna un asiento."
     }
   }
 }

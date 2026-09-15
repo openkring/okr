@@ -12,6 +12,11 @@
     "payablesAccount": {
       "label": "Kreditorenkonto Mitarbeitende",
       "helper": "Konto, gegen das die Rückerstattung an Mitarbeitende gebucht wird."
+    },
+    "fiscalYearStart": {
+      "label": "Beginn des Geschäftsjahres",
+      "placeholder": "Monat 1–12",
+      "helper": "Monat, in dem das Geschäftsjahr beginnt. 1 = Kalenderjahr. Bestimmt, welcher Periode eine Buchung zugeordnet wird."
     }
   }
 }

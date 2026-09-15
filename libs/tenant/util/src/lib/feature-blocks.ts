@@ -1487,6 +1487,7 @@ const finance: FeatureBlock = {
         { key: 'accounting-bank-import', name: 'accounting-bank-import', url: '/accounting-bank-import/@TID@/bank-import-context', action: 'navigate', roleNeeded: 'treasurer', icon: 'download', label: '@item.accounting-bank-import' },
         { key: 'accounting-bank-rules', name: 'accounting-bank-rules', url: '/accounting-bank-rules/@TID@/bank-rule-context', action: 'navigate', roleNeeded: 'treasurer', icon: 'sync', label: '@item.accounting-bank-rules' },
         { key: 'accounting-bank-profiles', name: 'accounting-bank-profiles', url: '/accounting-bank-profiles/@TID@/bank-profile-context', action: 'navigate', roleNeeded: 'treasurer', icon: 'business', label: '@item.accounting-bank-profiles' },
+        { key: 'accounting-settings', name: 'accounting-settings', url: '/accounting/@TID@/settings', action: 'navigate', roleNeeded: 'treasurer', icon: 'settings', label: '@item.accounting-settings' },
       ],
     },
   ],

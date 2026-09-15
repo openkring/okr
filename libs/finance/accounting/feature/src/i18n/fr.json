@@ -12,6 +12,11 @@
     "payablesAccount": {
       "label": "Compte créanciers employés",
       "helper": "Compte utilisé pour le remboursement d'un employé."
+    },
+    "fiscalYearStart": {
+      "label": "Début de l’exercice",
+      "placeholder": "Mois 1–12",
+      "helper": "Mois où commence l’exercice. 1 = année civile. Détermine à quelle période une écriture est rattachée."
     }
   }
 }

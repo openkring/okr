@@ -18,6 +18,15 @@ describe('accountingConfigValidations', () => {
     expect(result.isValid()).toBe(true);
   });
 
+  it('accepts a fiscal year starting in July', () => {
+    expect(accountingConfigValidations(config({ fiscalYearStart: 7 }), 'tenant-1', '').isValid()).toBe(true);
+  });
+
+  it('rejects a fiscal year start outside 1..12', () => {
+    expect(accountingConfigValidations(config({ fiscalYearStart: 0 }), 'tenant-1', '').getErrors('fiscalYearStart').length).toBeGreaterThan(0);
+    expect(accountingConfigValidations(config({ fiscalYearStart: 13 }), 'tenant-1', '').getErrors('fiscalYearStart').length).toBeGreaterThan(0);
+  });
+
   it('rejects a missing accounting tenant', () => {
     const result = accountingConfigValidations(config({ accountingTenantId: '' }), 'tenant-1', '');
     expect(result.getErrors('accountingTenantId').length).toBeGreaterThan(0);

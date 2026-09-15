@@ -2,7 +2,7 @@ import { only, staticSuite } from 'vest';
 
 import { SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { AccountingConfigModel } from '@okr/shared-models';
-import { baseValidations, stringValidations } from '@okr/shared-util-core';
+import { baseValidations, numberValidations, stringValidations } from '@okr/shared-util-core';
 
 export const accountingConfigValidations = staticSuite(
   (model: AccountingConfigModel, tenants: string, tags: string, field?: string) => {
@@ -13,4 +13,5 @@ export const accountingConfigValidations = staticSuite(
     // Both account links are optional (empty = not linked yet), but must stay account okeys.
     stringValidations('defaultExpenseAccountKey', model.defaultExpenseAccountKey, SHORT_NAME_LENGTH);
     stringValidations('employeePayablesAccountKey', model.employeePayablesAccountKey, SHORT_NAME_LENGTH);
+    numberValidations('fiscalYearStart', model.fiscalYearStart, true, 1, 12);
   });

@@ -12,6 +12,11 @@
     "payablesAccount": {
       "label": "Conto debiti verso dipendenti",
       "helper": "Conto su cui viene registrato il rimborso a un dipendente."
+    },
+    "fiscalYearStart": {
+      "label": "Inizio dell’esercizio",
+      "placeholder": "Mese 1–12",
+      "helper": "Mese in cui inizia l’esercizio. 1 = anno civile. Determina a quale periodo viene assegnata una registrazione."
     }
   }
 }

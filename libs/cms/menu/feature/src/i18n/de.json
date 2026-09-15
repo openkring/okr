@@ -589,7 +589,8 @@
     "accounting-ocr-rules": "OCR-Regeln",
     "accounting-bank-import": "Bankimport",
     "accounting-bank-rules": "Bankregeln",
-    "accounting-bank-profiles": "Bankprofile"
+    "accounting-bank-profiles": "Bankprofile",
+    "accounting-settings": "Einstellungen"
   },
   "ownership": {
     "fork_confirm": "«{name}» gehört zum Feature-Katalog ({blocks}).\n\nBeim Speichern wird eine eigene Kopie «{forkKey}» für diesen Mandanten angelegt und der Mandant vom gemeinsamen Original abgehängt. Künftige Katalog-Korrekturen (URL, Aktion, Berechtigung) erreichen diesen Eintrag dann nicht mehr.\n\nTrotzdem speichern?",

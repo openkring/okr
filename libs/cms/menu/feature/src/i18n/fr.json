@@ -589,7 +589,8 @@
     "accounting-ocr-rules": "Règles OCR",
     "accounting-bank-import": "Import bancaire",
     "accounting-bank-rules": "Règles bancaires",
-    "accounting-bank-profiles": "Profils bancaires"
+    "accounting-bank-profiles": "Profils bancaires",
+    "accounting-settings": "Paramètres"
   },
   "ownership": {
     "fork_confirm": "« {name} » appartient au catalogue de fonctionnalités ({blocks}).\n\nL'enregistrement crée une copie propre au locataire « {forkKey} » et détache ce locataire de l'original partagé. Les corrections futures du catalogue (URL, action, rôle) n'atteindront plus cette entrée.\n\nEnregistrer quand même ?",

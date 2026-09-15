@@ -589,7 +589,8 @@
     "accounting-ocr-rules": "OCR rules",
     "accounting-bank-import": "Bank import",
     "accounting-bank-rules": "Bank rules",
-    "accounting-bank-profiles": "Bank profiles"
+    "accounting-bank-profiles": "Bank profiles",
+    "accounting-settings": "Settings"
   },
   "ownership": {
     "fork_confirm": "«{name}» belongs to the feature catalogue ({blocks}).\n\nSaving creates a tenant-private copy «{forkKey}» and detaches this tenant from the shared original. Future catalogue corrections (url, action, role) will no longer reach this entry.\n\nSave anyway?",

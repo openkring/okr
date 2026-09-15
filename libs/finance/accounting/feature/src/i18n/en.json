@@ -12,6 +12,11 @@
     "payablesAccount": {
       "label": "Employee payables account",
       "helper": "Account a reimbursement to an employee is booked against."
+    },
+    "fiscalYearStart": {
+      "label": "Start of fiscal year",
+      "placeholder": "Month 1–12",
+      "helper": "Month in which the fiscal year starts. 1 = calendar year. Decides which period a booking is assigned to."
     }
   }
 }

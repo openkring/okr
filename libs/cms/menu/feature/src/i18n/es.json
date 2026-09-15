@@ -589,7 +589,8 @@
     "accounting-ocr-rules": "Reglas OCR",
     "accounting-bank-import": "Importación bancaria",
     "accounting-bank-rules": "Reglas bancarias",
-    "accounting-bank-profiles": "Perfiles bancarios"
+    "accounting-bank-profiles": "Perfiles bancarios",
+    "accounting-settings": "Configuración"
   },
   "ownership": {
     "fork_confirm": "«{name}» pertenece al catálogo de funciones ({blocks}).\n\nAl guardar se crea una copia propia del inquilino «{forkKey}» y se desvincula este inquilino del original compartido. Las futuras correcciones del catálogo (URL, acción, rol) ya no llegarán a esta entrada.\n\n¿Guardar de todos modos?",
