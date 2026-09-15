@@ -40,10 +40,10 @@ export function newPartnerModel(tenantId: string): PartnerModel {
 
 /** Icons per status, by the same convention as the booking status category. */
 const STATUS_ICONS: Record<PartnerStatus, string> = {
-  prospect: 'create',
-  active: 'checkmark-circle',
+  prospect: 'edit',
+  active: 'checkbox-circle',
   suspended: 'alert-circle',
-  terminated: 'close-circle',
+  terminated: 'cancel-circle',
 };
 
 /**

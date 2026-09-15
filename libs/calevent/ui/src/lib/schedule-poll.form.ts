@@ -95,7 +95,7 @@ import { bestScheduleColumn, CaleventI18n, DEFAULT_POLL_TIME, MAX_SCHEDULE_POLL_
                         @if (formData().isDraft) {
                           <ion-button fill="clear" size="small" [attr.aria-label]="i18n().schedule_column_remove()"
                             (click)="removeColumn(column.id)">
-                            <ion-icon src="{{ 'close-circle' | svgIcon }}" />
+                            <ion-icon src="{{ 'cancel-circle' | svgIcon }}" />
                           </ion-button>
                         }
                         @if (canClose() && !column.columnLabel) {

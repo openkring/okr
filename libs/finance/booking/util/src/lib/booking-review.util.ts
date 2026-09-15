@@ -17,10 +17,10 @@ export function canReviewBooking(booking: BookingModel, currentUser: UserModel |
 export const BOOKING_STATUSES: BookingStatus[] = ['draft', 'forReview', 'posted', 'cancelled'];
 
 const STATUS_ICONS: Record<BookingStatus, string> = {
-  draft:     'create',
+  draft:     'edit',
   forReview: 'alert-circle',
-  posted:    'checkmark-circle',
-  cancelled: 'close-circle',
+  posted:    'checkbox-circle',
+  cancelled: 'cancel-circle',
 };
 
 /**

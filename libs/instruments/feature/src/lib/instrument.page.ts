@@ -27,7 +27,7 @@ import { InstrumentStore } from './instrument.store';
       <ion-toolbar>
         <ion-buttons slot="end">
           <ion-button (click)="editInstrument()">
-            <ion-icon src="{{ 'create' | svgIcon }}" slot="start" />
+            <ion-icon src="{{ 'edit' | svgIcon }}" slot="start" />
             {{ store.i18n.update() }}
           </ion-button>
         </ion-buttons>

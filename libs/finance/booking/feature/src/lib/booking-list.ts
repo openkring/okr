@@ -207,9 +207,9 @@ export class BookingList {
   private addActionSheetButtons(options: ActionSheetOptions, actions: BookingAction[], booking: BookingModel): void {
     // Treasurer decision on an OCR-proposed booking comes first — it is why the row was opened.
     if (this.store.canReview(booking)) {
-      options.buttons.push(createActionSheetButton('booking.approve', this.store.i18n.review_approve(), this.imgixBaseUrl, 'checkmark-circle'));
+      options.buttons.push(createActionSheetButton('booking.approve', this.store.i18n.review_approve(), this.imgixBaseUrl, 'checkbox-circle'));
       options.buttons.push(createActionSheetButton('booking.review',  this.store.i18n.review_correct(), this.imgixBaseUrl, 'edit'));
-      options.buttons.push(createActionSheetButton('booking.reject',  this.store.i18n.review_reject(),  this.imgixBaseUrl, 'close-circle'));
+      options.buttons.push(createActionSheetButton('booking.reject',  this.store.i18n.review_reject(),  this.imgixBaseUrl, 'cancel-circle'));
       options.buttons.push(createActionSheetDivider());
     }
     if (this.readOnly()) {

@@ -40,7 +40,7 @@ import { WhiteboardStore } from './whiteboard.store';
         @if (!readOnly() && board(); as b) {
           <ion-buttons slot="end">
             <ion-button (click)="store.editMeta(b, false)" [title]="store.i18n.edit_label()">
-              <ion-icon slot="icon-only" src="{{ 'create' | svgIcon }}" />
+              <ion-icon slot="icon-only" src="{{ 'edit' | svgIcon }}" />
             </ion-button>
           </ion-buttons>
         }

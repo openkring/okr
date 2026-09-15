@@ -47,7 +47,7 @@ import { ExpenseStore } from './expense.store';
         @if (canEdit()) {
           <ion-buttons slot="end">
             <ion-button (click)="edit()">
-              <ion-icon slot="start" src="{{ 'create' | svgIcon }}" />
+              <ion-icon slot="start" src="{{ 'edit' | svgIcon }}" />
               {{ store.i18n.action_edit() }}
             </ion-button>
           </ion-buttons>
