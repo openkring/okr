@@ -49,7 +49,7 @@ describe('GKB layout', () => {
     expect(s.warnings).toEqual([]);
   });
   it('flags a corrupted saldo on the right line', () => {
-    const s = parseStatement(gkb.replace(';27469.05;', ';27469.06;'));
-    expect(s.warnings).toEqual([{ code: 'saldo-mismatch', lineNo: 13, detail: '2746905/2746906' }]);
+    const s = parseStatement(gkb.replace(';21889.05;', ';21889.06;'));
+    expect(s.warnings).toEqual([{ code: 'saldo-mismatch', lineNo: 13, detail: '2188905/2188906' }]);
   });
 });

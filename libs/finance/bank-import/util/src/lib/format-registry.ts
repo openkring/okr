@@ -20,7 +20,7 @@ const notImplemented = (format: BankFormat): Adapter => ({
   newestFirst: true,
 });
 
-/** One entry per BankFormat. VZ is a stub until a real export exists (spec §4.10). */
+/** One entry per BankFormat. VZ is a stub until a real export exists (spec §4.7). */
 const ADAPTERS: Record<BankFormat, Adapter> = {
   postfinance: { matchesHeader: matchesPostfinanceHeader, parse: parsePostfinance, newestFirst: true },
   zkb:         { matchesHeader: matchesZkbHeader, parse: parseZkb, newestFirst: true },
