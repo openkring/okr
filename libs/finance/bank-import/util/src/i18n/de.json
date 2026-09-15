@@ -60,5 +60,15 @@
   "title": { "label": "Buchungstext", "placeholder": "z.B. Google Cloud GCP, Dublin", "helper": "So erscheint die Buchung im Journal." },
   "account": { "label": "Gegenkonto", "helper": "Das Aufwand- oder Ertragskonto für diese eine Zeile. Es wird keine Regel erstellt." },
   "vat": { "label": "MwSt-Code (optional)", "helper": "Wird auf der Gegenkonto-Zeile vermerkt." },
-  "changeConfirmation": { "cancel": "Verwerfen", "ok": "Speichern" }
+  "changeConfirmation": { "cancel": "Verwerfen", "ok": "Speichern" },
+  "journal": {
+    "label": "bexio-Journal importieren",
+    "title": "bexio-Konten zuordnen",
+    "intro": "Jede bexio-Kontonummer muss auf ein Konto deines Kontenplans zeigen. Grüne Zeilen wurden über die Kontonummer gefunden, leere Zeilen musst du zuordnen oder das Konto zuerst im Kontenplan anlegen.",
+    "match": {"matched": "gefunden", "missing": "kein Konto mit dieser Nummer", "group": "Nummer gehört zu einer Kontogruppe", "ambiguous": "mehrere Konten mit dieser Nummer"},
+    "unresolved": "Es sind noch nicht alle Konten zugeordnet.",
+    "nothing": "Die Datei enthält keine Buchungen, die importiert werden könnten (Eröffnungs- und Abschlussbuchungen werden übersprungen).",
+    "summary": {"title": "Journal-Import abgeschlossen", "rows": "Zeilen in der Datei", "skipped": "übersprungen (Eröffnung, Abschluss, Nullbeträge)", "posted": "gebucht", "replayed": "bereits vorhanden", "failed": "nicht gebucht", "diff": "Abweichung je Konto (Datei / Journal in Rappen)", "diffOk": "Die Summen je Konto stimmen mit der Datei überein."},
+    "error": {"accountInvalid": "Ein Konto fehlt oder ist kein Buchungskonto.", "zeroAmount": "Der Betrag ist null.", "dateInvalid": "Das Datum ist ungültig."}
+  }
 }

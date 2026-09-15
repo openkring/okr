@@ -155,6 +155,7 @@ export class BankImportList {
     if (!selectedMethod) return; // dismissed without choosing (backdrop/escape) — not an error
     switch (selectedMethod) {
       case 'import': await this.store.importFile(); break;
+      case 'importJournal': await this.store.importJournalFile(); break;
       case 'applyRules': await this.store.applyRulesToOpenRows(); break;
       case 'post': await this.store.post(); break;
       default: this.alertService.error(`BankImportList.onPopoverDismiss: unknown method ${selectedMethod}`);

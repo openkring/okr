@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildBankBookingHeader, buildBankBookingLines, fiscalYear, periodKeyFor, RowDoc } from './bank-import.util';
+import { buildBankBookingHeader, buildBankBookingLines, buildJournalBookingHeader, buildJournalBookingLines, fiscalYear, JournalEntry, periodKeyFor, RowDoc } from './bank-import.util';
 
 const row = (p: Partial<RowDoc>): RowDoc => ({
   importKey: 'k', date: '20250714', rawText: 'KAUF BEXIO AG', payee: 'BEXIO AG', title: 'Bexio', accountKey: '6570', vatCodeKey: 'VST',
@@ -50,5 +50,30 @@ describe('buildBankBookingHeader', () => {
   });
   it('no payee → no counterparty', () => {
     expect(buildBankBookingHeader(row({ payee: '' }), 'bkg', 'bkg-2025')).not.toHaveProperty('counterparty');
+  });
+});
+
+describe('journal import builders', () => {
+  const entry: JournalEntry = { id: '592', date: '20221231', title: 'Saldo-Korrektur', reference: 'Manuelle Buchung 354 ()',
+    debitAccountKey: 'a6720', creditAccountKey: 'a2064', amount: 142361, currency: 'CHF', amountBase: 142361, baseCurrency: 'CHF' };
+
+  it('debit line first, credit line second, no amountFx in the base currency', () => {
+    expect(buildJournalBookingLines(entry, 'bka', 'bka', 'journal-bka-592')).toEqual([
+      { tenants: ['bka'], isArchived: false, bookingKey: 'journal-bka-592', accountingTenantId: 'bka', accountKey: 'a6720', debitAmount: { amount: 142361, currency: 'CHF', periodicity: 'one-time' } },
+      { tenants: ['bka'], isArchived: false, bookingKey: 'journal-bka-592', accountingTenantId: 'bka', accountKey: 'a2064', creditAmount: { amount: 142361, currency: 'CHF', periodicity: 'one-time' } },
+    ]);
+  });
+  it('a foreign-currency entry books the base amount and carries the booking currency as amountFx on both lines', () => {
+    const lines = buildJournalBookingLines({ ...entry, amount: 14780, currency: 'EUR', amountBase: 14518 }, 'bka', 'bka', 'k');
+    expect(lines[0]).toMatchObject({ debitAmount: { amount: 14518, currency: 'CHF' }, amountFx: { amount: 14780, currency: 'EUR' } });
+    expect(lines[1]).toMatchObject({ creditAmount: { amount: 14518, currency: 'CHF' }, amountFx: { amount: 14780, currency: 'EUR' } });
+  });
+  it('header: posted, tagged, reference in the notes, title falls back to the reference then the key', () => {
+    expect(buildJournalBookingHeader(entry, 'bka', 'bka', 'bka-2022', 'journal-bka-592')).toEqual({
+      title: 'Saldo-Korrektur', date: '20221231', notes: 'Manuelle Buchung 354 ()', periodKey: 'bka-2022', documentKey: '', tags: 'journal-import', index: '',
+      status: 'posted', accountingTenantId: 'bka', tenants: ['bka'], isArchived: false,
+    });
+    expect(buildJournalBookingHeader({ ...entry, title: '' }, 'bka', 'bka', 'p', 'k').title).toBe('Manuelle Buchung 354 ()');
+    expect(buildJournalBookingHeader({ ...entry, title: '', reference: '' }, 'bka', 'bka', 'p', 'k').title).toBe('k');
   });
 });

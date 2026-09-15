@@ -1457,6 +1457,7 @@ const finance: FeatureBlock = {
     ] },
     { key: 'bank-import-context', name: 'bank-import-context', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
       { key: 'bank-import-file', name: 'bank-import-file', url: 'import', action: 'call', roleNeeded: 'treasurer', icon: 'download', label: '@item.bank-import-file' },
+      { key: 'bank-import-journal', name: 'bank-import-journal', url: 'importJournal', action: 'call', roleNeeded: 'treasurer', icon: 'download', label: '@item.bank-import-journal' },
       { key: 'bank-import-apply-rules', name: 'bank-import-apply-rules', url: 'applyRules', action: 'call', roleNeeded: 'treasurer', icon: 'sync', label: '@item.bank-import-apply-rules' },
       { key: 'bank-import-post', name: 'bank-import-post', url: 'post', action: 'call', roleNeeded: 'treasurer', icon: 'checkmark', label: '@item.bank-import-post' },
     ] },

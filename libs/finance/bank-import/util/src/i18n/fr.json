@@ -60,5 +60,15 @@
   "title": { "label": "Texte de comptabilisation", "placeholder": "p.ex. Google Cloud GCP, Dublin", "helper": "C'est ainsi que l'écriture apparaît dans le journal." },
   "account": { "label": "Compte de contrepartie", "helper": "Le compte de charge ou de produit pour cette seule ligne. Aucune règle n'est créée." },
   "vat": { "label": "Code TVA (facultatif)", "helper": "Indiqué sur la ligne du compte de contrepartie." },
-  "changeConfirmation": { "cancel": "Annuler", "ok": "Enregistrer" }
+  "changeConfirmation": { "cancel": "Annuler", "ok": "Enregistrer" },
+  "journal": {
+    "label": "Importer le journal bexio",
+    "title": "Associer les comptes bexio",
+    "intro": "Chaque numéro de compte bexio doit correspondre à un compte de ton plan comptable. Les lignes vertes ont été trouvées par numéro ; les lignes vides sont à choisir, ou crée d'abord le compte dans le plan comptable.",
+    "match": {"matched": "trouvé", "missing": "aucun compte avec ce numéro", "group": "le numéro appartient à un groupe de comptes", "ambiguous": "plusieurs comptes avec ce numéro"},
+    "unresolved": "Tous les comptes ne sont pas encore associés.",
+    "nothing": "Le fichier ne contient aucune écriture à importer (les écritures d'ouverture et de clôture sont ignorées).",
+    "summary": {"title": "Import du journal terminé", "rows": "lignes dans le fichier", "skipped": "ignorées (ouverture, clôture, montants nuls)", "posted": "comptabilisées", "replayed": "déjà présentes", "failed": "non comptabilisées", "diff": "écart par compte (fichier / journal en centimes)", "diffOk": "Les totaux par compte correspondent au fichier."},
+    "error": {"accountInvalid": "Un compte manque ou n'est pas un compte imputable.", "zeroAmount": "Le montant est nul.", "dateInvalid": "La date est invalide."}
+  }
 }

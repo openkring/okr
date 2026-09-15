@@ -8,6 +8,8 @@ export * from './lib/gkb.adapter';
 export * from './lib/vz.adapter';
 export * from './lib/swissquote.adapter';
 export * from './lib/bexio-journal.adapter';
+export * from './lib/journal-import.util';
+export * from './lib/journal-account-map.validations';
 export * from './lib/pdf-lines.util';
 export * from './lib/saldo.util';
 export * from './lib/format-registry';

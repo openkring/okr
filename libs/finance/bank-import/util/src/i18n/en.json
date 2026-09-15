@@ -60,5 +60,15 @@
   "title": { "label": "Booking text", "placeholder": "e.g. Google Cloud GCP, Dublin", "helper": "This is how the entry appears in the journal." },
   "account": { "label": "Counter account", "helper": "The expense or income account for this one line. No rule is created." },
   "vat": { "label": "VAT code (optional)", "helper": "Noted on the counter account line." },
-  "changeConfirmation": { "cancel": "Discard", "ok": "Save" }
+  "changeConfirmation": { "cancel": "Discard", "ok": "Save" },
+  "journal": {
+    "label": "Import bexio journal",
+    "title": "Map bexio accounts",
+    "intro": "Every bexio account number must point to an account of your chart of accounts. Green rows were found by number; empty rows need your choice, or create the account in the chart first.",
+    "match": {"matched": "found", "missing": "no account with this number", "group": "number belongs to an account group", "ambiguous": "several accounts with this number"},
+    "unresolved": "Not every account is mapped yet.",
+    "nothing": "The file holds no entries to import (opening and closing entries are skipped).",
+    "summary": {"title": "Journal import finished", "rows": "rows in the file", "skipped": "skipped (opening, closing, zero amounts)", "posted": "posted", "replayed": "already present", "failed": "not posted", "diff": "difference per account (file / ledger in cents)", "diffOk": "The per-account sums match the file."},
+    "error": {"accountInvalid": "An account is missing or is not a bookable account.", "zeroAmount": "The amount is zero.", "dateInvalid": "The date is invalid."}
+  }
 }

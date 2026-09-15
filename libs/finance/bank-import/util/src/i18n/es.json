@@ -60,5 +60,15 @@
   "title": { "label": "Texto de contabilización", "placeholder": "p.ej. Google Cloud GCP, Dublín", "helper": "Así aparecerá el asiento en el diario." },
   "account": { "label": "Cuenta de contrapartida", "helper": "La cuenta de gasto o ingreso para esta única línea. No se crea ninguna regla." },
   "vat": { "label": "Código de IVA (opcional)", "helper": "Se anota en la línea de la cuenta de contrapartida." },
-  "changeConfirmation": { "cancel": "Descartar", "ok": "Guardar" }
+  "changeConfirmation": { "cancel": "Descartar", "ok": "Guardar" },
+  "journal": {
+    "label": "Importar diario bexio",
+    "title": "Asignar cuentas bexio",
+    "intro": "Cada número de cuenta bexio debe apuntar a una cuenta de tu plan contable. Las filas verdes se encontraron por número; las vacías debes asignarlas o crear primero la cuenta en el plan contable.",
+    "match": {"matched": "encontrada", "missing": "ninguna cuenta con este número", "group": "el número pertenece a un grupo de cuentas", "ambiguous": "varias cuentas con este número"},
+    "unresolved": "Aún no están asignadas todas las cuentas.",
+    "nothing": "El archivo no contiene asientos importables (los asientos de apertura y cierre se omiten).",
+    "summary": {"title": "Importación del diario terminada", "rows": "filas en el archivo", "skipped": "omitidas (apertura, cierre, importes cero)", "posted": "contabilizadas", "replayed": "ya existentes", "failed": "no contabilizadas", "diff": "diferencia por cuenta (archivo / libro en céntimos)", "diffOk": "Los totales por cuenta coinciden con el archivo."},
+    "error": {"accountInvalid": "Falta una cuenta o no es una cuenta contabilizable.", "zeroAmount": "El importe es cero.", "dateInvalid": "La fecha no es válida."}
+  }
 }

@@ -47,3 +47,29 @@ export function buildBankBookingHeader(row: RowDoc, tenantId: string, periodKey:
     status: 'posted', accountingTenantId: row.accountingTenantId, tenants: [tenantId], isArchived: false,
   };
 }
+
+/*-------------------------- journal import (spec 1.60 §12) --------------------------------*/
+export interface JournalEntry {
+  id: string; date: string; title: string; reference: string;
+  debitAccountKey: string; creditAccountKey: string;
+  amount: number; currency: string; amountBase: number; baseCurrency: string;
+}
+
+/** Ledger amount = base currency; the booking currency rides along as amountFx when it differs. */
+export function buildJournalBookingLines(entry: JournalEntry, tenantId: string, accountingTenantId: string, bookingKey: string): Record<string, unknown>[] {
+  const amt = money(entry.amountBase, entry.baseCurrency || 'CHF');
+  const fx = entry.currency && entry.currency !== (entry.baseCurrency || 'CHF') ? { amountFx: money(entry.amount, entry.currency) } : {};
+  const base = { tenants: [tenantId], isArchived: false, bookingKey, accountingTenantId };
+  return [
+    { ...base, accountKey: entry.debitAccountKey, debitAmount: amt, ...fx },
+    { ...base, accountKey: entry.creditAccountKey, creditAmount: amt, ...fx },
+  ];
+}
+
+export function buildJournalBookingHeader(entry: JournalEntry, tenantId: string, accountingTenantId: string, periodKey: string, bookingKey: string): Record<string, unknown> {
+  const title = (entry.title ?? '').trim() || (entry.reference ?? '').trim() || bookingKey;
+  return {
+    title, date: entry.date, notes: (entry.reference ?? '').trim(), periodKey, documentKey: '', tags: 'journal-import', index: '',
+    status: 'posted', accountingTenantId, tenants: [tenantId], isArchived: false,
+  };
+}

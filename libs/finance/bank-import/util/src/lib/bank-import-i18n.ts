@@ -78,6 +78,27 @@ export const BANK_IMPORT_I18N_KEYS = {
   vat_helper:           PFX + 'vat.helper',
   changeConfirmation_cancel: PFX + 'changeConfirmation.cancel',
   changeConfirmation_ok:     PFX + 'changeConfirmation.ok',
+
+  journal_label:        PFX + 'journal.label',
+  journal_title:        PFX + 'journal.title',
+  journal_intro:        PFX + 'journal.intro',
+  journal_match_matched: PFX + 'journal.match.matched',
+  journal_match_missing: PFX + 'journal.match.missing',
+  journal_match_group:  PFX + 'journal.match.group',
+  journal_match_ambiguous: PFX + 'journal.match.ambiguous',
+  journal_unresolved:   PFX + 'journal.unresolved',
+  journal_nothing:      PFX + 'journal.nothing',
+  journal_summary_title: PFX + 'journal.summary.title',
+  journal_summary_rows: PFX + 'journal.summary.rows',
+  journal_summary_skipped: PFX + 'journal.summary.skipped',
+  journal_summary_posted: PFX + 'journal.summary.posted',
+  journal_summary_replayed: PFX + 'journal.summary.replayed',
+  journal_summary_failed: PFX + 'journal.summary.failed',
+  journal_summary_diff: PFX + 'journal.summary.diff',
+  journal_summary_diff_ok: PFX + 'journal.summary.diffOk',
+  journal_error_account_invalid: PFX + 'journal.error.accountInvalid',
+  journal_error_zero_amount: PFX + 'journal.error.zeroAmount',
+  journal_error_date_invalid: PFX + 'journal.error.dateInvalid',
 } satisfies Record<string, string>;
 
 export type BankImportI18n = { [K in keyof typeof BANK_IMPORT_I18N_KEYS]: Signal<string> };

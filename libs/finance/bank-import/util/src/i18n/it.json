@@ -60,5 +60,15 @@
   "title": { "label": "Testo di registrazione", "placeholder": "p.es. Google Cloud GCP, Dublino", "helper": "Così appare la registrazione nel giornale." },
   "account": { "label": "Conto di contropartita", "helper": "Il conto di costo o ricavo per questa singola riga. Non viene creata alcuna regola." },
   "vat": { "label": "Codice IVA (opzionale)", "helper": "Annotato sulla riga del conto di contropartita." },
-  "changeConfirmation": { "cancel": "Scarta", "ok": "Salva" }
+  "changeConfirmation": { "cancel": "Scarta", "ok": "Salva" },
+  "journal": {
+    "label": "Importa giornale bexio",
+    "title": "Associa i conti bexio",
+    "intro": "Ogni numero di conto bexio deve corrispondere a un conto del tuo piano dei conti. Le righe verdi sono state trovate per numero; le righe vuote vanno scelte da te, oppure crea prima il conto nel piano dei conti.",
+    "match": {"matched": "trovato", "missing": "nessun conto con questo numero", "group": "il numero appartiene a un gruppo di conti", "ambiguous": "più conti con questo numero"},
+    "unresolved": "Non tutti i conti sono ancora associati.",
+    "nothing": "Il file non contiene registrazioni da importare (le registrazioni di apertura e chiusura vengono saltate).",
+    "summary": {"title": "Importazione del giornale completata", "rows": "righe nel file", "skipped": "saltate (apertura, chiusura, importi zero)", "posted": "registrate", "replayed": "già presenti", "failed": "non registrate", "diff": "differenza per conto (file / giornale in centesimi)", "diffOk": "I totali per conto corrispondono al file."},
+    "error": {"accountInvalid": "Manca un conto o non è un conto registrabile.", "zeroAmount": "L'importo è zero.", "dateInvalid": "La data non è valida."}
+  }
 }

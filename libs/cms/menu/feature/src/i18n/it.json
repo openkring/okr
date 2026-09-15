@@ -527,6 +527,7 @@
     "invoice-my": "Le mie fatture",
     "ocr-rule-add": "Nuova regola OCR",
     "bank-import-file": "Importa file",
+    "bank-import-journal": "Importa giornale bexio",
     "bank-import-apply-rules": "Applica regole",
     "bank-import-post": "Registra",
     "bank-rule-add": "Nuova regola bancaria",

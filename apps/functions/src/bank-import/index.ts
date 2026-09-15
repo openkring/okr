@@ -129,3 +129,5 @@ export const postBankImport = onCall(
     return { posted, failed };
   },
 );
+
+export { postJournalImport } from './post-journal-import';

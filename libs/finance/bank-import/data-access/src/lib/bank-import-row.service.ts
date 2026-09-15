@@ -10,7 +10,7 @@ import { BankImportRowCollection, BankImportRowModel, UserModel } from '@okr/sha
 import { getSystemQuery, removeKeyFromOkrModel, removeUndefinedFields } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
 
-import { BANK_IMPORT_I18N_KEYS } from '@okr/finance-bank-import-util';
+import { BANK_IMPORT_I18N_KEYS, PostJournalImportPayload, PostJournalImportResult } from '@okr/finance-bank-import-util';
 
 export interface PostBankImportPayload { accountingTenantId: string; rowKeys?: string[]; }
 export interface PostBankImportResult { posted: number; failed: { rowKey: string; reason: string }[]; }
@@ -96,5 +96,12 @@ export class BankImportRowService {
     const fn = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'postBankImport');
     const result = await fn(payload);
     return result.data as PostBankImportResult;
+  }
+
+  /** Spec §12.3: mapped bexio journal entries → bookings; ≤ 100 entries per call, the store chunks. */
+  public async postJournalViaFunction(payload: PostJournalImportPayload): Promise<PostJournalImportResult> {
+    const fn = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'postJournalImport');
+    const result = await fn(payload);
+    return result.data as PostJournalImportResult;
   }
 }
