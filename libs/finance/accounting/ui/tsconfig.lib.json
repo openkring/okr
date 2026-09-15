@@ -18,6 +18,7 @@
     { "path": "../../account/ui/tsconfig.lib.json" },
     { "path": "../util/tsconfig.lib.json" },
     { "path": "../../../shared/models/tsconfig.lib.json" },
+    { "path": "../../../shared/ui/tsconfig.lib.json" },
     { "path": "../../../shared/util-core/tsconfig.lib.json" }
   ]
 }

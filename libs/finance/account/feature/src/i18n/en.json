@@ -15,7 +15,9 @@
   "delete": "Delete account",
   "select": {
     "root": "Select chart of accounts",
-    "hint": "Please select a chart of accounts first."
+    "hint": "Please select a chart of accounts first.",
+    "search": "Enter account number or name",
+    "notFound": "No account found."
   },
   "update": "Edit account",
   "view": "View account details",

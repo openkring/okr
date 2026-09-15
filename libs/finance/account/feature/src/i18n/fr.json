@@ -15,7 +15,9 @@
   "delete": "Supprimer le compte",
   "select": {
     "root": "Sélectionner le plan comptable",
-    "hint": "Veuillez d'abord sélectionner un plan comptable."
+    "hint": "Veuillez d'abord sélectionner un plan comptable.",
+    "search": "Saisis le numéro ou le nom du compte",
+    "notFound": "Aucun compte trouvé."
   },
   "update": "Modifier le compte",
   "view": "Afficher les détails du compte",

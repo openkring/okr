@@ -15,7 +15,9 @@
   "delete": "Konto löschen",
   "select": {
     "root": "Kontoplan wählen",
-    "hint": "Bitte zuerst einen Kontoplan wählen."
+    "hint": "Bitte zuerst einen Kontoplan wählen.",
+    "search": "Kontonummer oder Name eingeben",
+    "notFound": "Kein Konto gefunden."
   },
   "update": "Konto ändern",
   "view": "Konto Details ansehen",

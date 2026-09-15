@@ -15,7 +15,9 @@
   "delete": "Elimina conto",
   "select": {
     "root": "Seleziona piano dei conti",
-    "hint": "Selezionare prima un piano dei conti."
+    "hint": "Selezionare prima un piano dei conti.",
+    "search": "Digita il numero o il nome del conto",
+    "notFound": "Nessun conto trovato."
   },
   "update": "Modifica conto",
   "view": "Visualizza dettagli del conto",

@@ -18,6 +18,8 @@ export const ACCOUNT_I18N_KEYS = {
   delete:               PFX + 'delete',
   select_root:          PFX + 'select.root',
   select_hint:          PFX + 'select.hint',
+  select_search:        PFX + 'select.search',
+  select_notFound:      PFX + 'select.notFound',
   update:               PFX + 'update',
   view:                 PFX + 'view',
 
