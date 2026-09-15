@@ -4,7 +4,7 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonNote, IonRow } fr
 
 import { DEFAULT_NOTES } from '@okr/shared-constants';
 import { AccountModel, BankRuleCondition, BankRuleModel, RoleName, UserModel, VatCodeModel } from '@okr/shared-models';
-import { Checkbox, CheckboxI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { Checkbox, CheckboxI18n, ErrorNote, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 import { validateVestTree } from '@okr/shared-util-angular';
 
@@ -16,7 +16,7 @@ const CONDITIONS: BankRuleCondition[] = ['contains', 'startsWith', 'endsWith', '
 @Component({
   selector: 'okr-bank-rule-form',
   standalone: true,
-  imports: [TextInput, NumberInput, NotesInput, Checkbox, StringSelect, AccountSelect, IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonItem, IonNote],
+  imports: [TextInput, NumberInput, NotesInput, Checkbox, StringSelect, AccountSelect, ErrorNote, IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonItem, IonNote],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
     @if (showForm()) {
@@ -28,10 +28,12 @@ const CONDITIONS: BankRuleCondition[] = ['contains', 'startsWith', 'endsWith', '
                 <ion-col size="12" size-md="6">
                   <okr-string-select [i18n]="conditionI18n()" [stringList]="conditions" [labels]="conditionLabels()"
                     [selectedString]="condition()" (selectedStringChange)="onFieldChange('condition', $event)" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="conditionErrors()" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
                   <okr-text-input [i18n]="termI18n()" [value]="term()" (valueChange)="onFieldChange('term', $event)"
                     [autofocus]="true" [maxLength]="200" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="termErrors()" />
                   <ion-item lines="none">
                     <ion-note>{{ i18n().term_stored_as() }} {{ storedTerm() }}</ion-note>
                   </ion-item>
@@ -41,10 +43,12 @@ const CONDITIONS: BankRuleCondition[] = ['contains', 'startsWith', 'endsWith', '
                 <ion-col size="12" size-md="6">
                   <okr-text-input [i18n]="titleI18n()" [value]="title()" (valueChange)="onFieldChange('title', $event)"
                     [maxLength]="100" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="titleErrors()" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
                   <okr-account-select [i18n]="accountI18n()" [accounts]="accounts()" [allowEmpty]="false"
                     [selectedKey]="accountKey()" (selectedKeyChange)="onFieldChange('accountKey', $event)" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="accountKeyErrors()" />
                 </ion-col>
               </ion-row>
               <ion-row>
@@ -55,6 +59,7 @@ const CONDITIONS: BankRuleCondition[] = ['contains', 'startsWith', 'endsWith', '
                 <ion-col size="12" size-md="6">
                   <okr-number-input [i18n]="priorityI18n()" [value]="priority()" (valueChange)="onFieldChange('priority', $event)"
                     [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="priorityErrors()" />
                 </ion-col>
               </ion-row>
               <ion-row>
@@ -91,6 +96,13 @@ export class BankRuleForm {
   constructor() {
     effect(() => this.valid.emit(this.bankRuleForm().valid()));
   }
+
+  /** Vest messages of the field, shown in red right under it (the bar alone never said why it left) */
+  protected readonly conditionErrors = computed(() => this.bankRuleForm.condition().errors().map(e => e.message ?? ''));
+  protected readonly termErrors = computed(() => this.bankRuleForm.term().errors().map(e => e.message ?? ''));
+  protected readonly titleErrors = computed(() => this.bankRuleForm.title().errors().map(e => e.message ?? ''));
+  protected readonly accountKeyErrors = computed(() => this.bankRuleForm.accountKey().errors().map(e => e.message ?? ''));
+  protected readonly priorityErrors = computed(() => this.bankRuleForm.priority().errors().map(e => e.message ?? ''));
 
   protected readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   protected readonly condition = computed(() => this.formData()?.condition ?? 'contains');

@@ -4,7 +4,7 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonRow } f
 import { DecimalPipe } from '@angular/common';
 
 import { AccountModel, BankImportRowModel, VatCodeModel } from '@okr/shared-models';
-import { StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { ErrorNote, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
 import { validateVestTree } from '@okr/shared-util-angular';
 
@@ -20,7 +20,7 @@ import { BankImportI18n, bankImportRowValidations } from '@okr/finance-bank-impo
 @Component({
   selector: 'okr-bank-import-row-form',
   standalone: true,
-  imports: [TextInput, StringSelect, AccountSelect, IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonItem, IonLabel, DecimalPipe],
+  imports: [TextInput, StringSelect, AccountSelect, ErrorNote, IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonItem, IonLabel, DecimalPipe],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
     @if (showForm()) {
@@ -42,12 +42,14 @@ import { BankImportI18n, bankImportRowValidations } from '@okr/finance-bank-impo
                 <ion-col size="12" size-md="6">
                   <okr-text-input [i18n]="titleI18n()" [value]="title()" (valueChange)="onFieldChange('title', $event)"
                     [autofocus]="true" [maxLength]="100" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="titleErrors()" />
                 </ion-col>
               </ion-row>
               <ion-row>
                 <ion-col size="12" size-md="6">
                   <okr-account-select [i18n]="accountI18n()" [accounts]="accounts()" [allowEmpty]="false"
                     [selectedKey]="accountKey()" (selectedKeyChange)="onFieldChange('accountKey', $event)" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="accountKeyErrors()" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
                   <okr-string-select [i18n]="vatCodeI18n()" [stringList]="vatCodeKeys()" [labels]="vatCodeLabels()"
@@ -77,6 +79,10 @@ export class BankImportRowForm {
   constructor() {
     effect(() => this.valid.emit(this.bankImportRowForm().valid()));
   }
+
+  /** Vest messages of the field, shown in red right under it (the bar alone never said why it left) */
+  protected readonly titleErrors = computed(() => this.bankImportRowForm.title().errors().map(e => e.message ?? ''));
+  protected readonly accountKeyErrors = computed(() => this.bankImportRowForm.accountKey().errors().map(e => e.message ?? ''));
 
   protected readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   protected readonly dateLabel = computed(() => convertDateFormatToString(this.formData()?.date, DateFormat.StoreDate, DateFormat.ViewDate, false));

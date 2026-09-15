@@ -1,6 +1,5 @@
 import { only, staticSuite, test, enforce } from 'vest';
 
-import { SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { BankProfileModel } from '@okr/shared-models';
 import { baseValidations, stringValidations } from '@okr/shared-util-core';
 
@@ -9,7 +8,7 @@ export const bankProfileValidations = staticSuite(
     if (field) only(field);
     baseValidations(model, tenants, tags, field);
     stringValidations('iban', model.iban, 34, 15, true);
-    stringValidations('bankName', model.bankName, SHORT_NAME_LENGTH, 1, true);
+    stringValidations('bankName', model.bankName, 50, 1, true);   // 50 = the form's maxLength
     stringValidations('accountKey', model.accountKey, 50, 1, true);
     stringValidations('currency', model.currency, 3, 3, true);
     test('format', 'bankProfile.format.invalid', () => {
