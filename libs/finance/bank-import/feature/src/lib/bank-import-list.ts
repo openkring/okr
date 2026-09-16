@@ -31,7 +31,7 @@ const STATUS_FILTERS: BankImportStatusFilter[] = ['open', 'all', 'unmapped', 'ma
     IonSelect, IonSelectOption, IonItem,
   ],
   providers: [BankImportStore, BankProfileStore, BankRuleStore],
-  styles: [`.medium { color: var(--ion-color-medium); }`],
+  styles: [`.medium { color: var(--ion-color-medium); } ion-note.fee { display: block; font-size: 0.8em; }`],
   template: `
     <ion-header>
       <ion-toolbar color="secondary">
@@ -91,6 +91,11 @@ const STATUS_FILTERS: BankImportStatusFilter[] = ['open', 'all', 'unmapped', 'ma
               <ion-col size="12" size-md="3" class="ion-hide-md-down">{{ row.payee }}</ion-col>
               <ion-col size="12" size-md="3" class="ion-text-end" [style.color]="row.amount.amount < 0 ? 'var(--ion-color-danger)' : null">
                 {{ row.amount.amount / 100 | number:'1.2-2' }} {{ row.amount.currency }}
+                @if (row.fee?.amount) {
+                  <!-- gross stays the headline; the processor fee and what actually arrives read underneath -->
+                  <ion-note class="fee">./. {{ store.i18n.fee_label() }} {{ row.fee!.amount / 100 | number:'1.2-2' }}
+                    → {{ store.i18n.fee_net_label() }} {{ (row.amount.amount - row.fee!.amount) / 100 | number:'1.2-2' }}</ion-note>
+                }
                 <ion-chip>{{ statusLabel(row.status) }}</ion-chip>
                 @if (row.status === 'error') {
                   <ion-note color="danger">{{ store.errorText(row.error) }}</ion-note>

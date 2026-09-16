@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildBankBookingHeader, buildBankBookingLines, buildJournalBookingHeader, buildJournalBookingLines, fiscalYear, JournalEntry, periodKeyFor, RowDoc } from './bank-import.util';
+import { buildBankBookingHeader, buildBankBookingLines, feeAmountOf, hasFeeLine, buildJournalBookingHeader, buildJournalBookingLines, fiscalYear, JournalEntry, periodKeyFor, RowDoc } from './bank-import.util';
 
 const row = (p: Partial<RowDoc>): RowDoc => ({
   importKey: 'k', date: '20250714', rawText: 'KAUF BEXIO AG', payee: 'BEXIO AG', title: 'Bexio', accountKey: '6570', vatCodeKey: 'VST',
@@ -16,6 +16,67 @@ describe('fiscalYear / periodKeyFor', () => {
   it('a start month other than January assigns earlier months to the previous fiscal year', () => {
     expect(fiscalYear('20250301', 7)).toBe(2024);
     expect(fiscalYear('20250701', 7)).toBe(2025);
+  });
+});
+
+const raisenowProfile = { accountKey: '1102', feeAccountKey: '6941', accountingTenantId: 'scs' };
+const raisenowRow = (p: Partial<RowDoc> = {}): RowDoc => row({
+  rawText: 'RaiseNow SCS Twint JB twint_qr_payments twint', payee: 'Anna Muster', title: 'Twint Jugendboot',
+  accountKey: '3200', vatCodeKey: '', accountingTenantId: 'scs', tenants: ['scs'],
+  amount: { amount: 9300, currency: 'CHF' }, fee: { amount: 233, currency: 'CHF' }, ...p,
+});
+
+describe('buildBankBookingLines with a processor fee (spec 1.62 §5)', () => {
+  it('splits a Gutschrift into net on the clearing account, fee on the fee account, gross on the revenue account', () => {
+    const lines = buildBankBookingLines(raisenowRow(), raisenowProfile, 'scs', 'bank-k');
+    expect(lines).toHaveLength(3);
+    expect(lines[0]).toMatchObject({ accountKey: '1102', debitAmount: { amount: 9067, currency: 'CHF', periodicity: 'one-time' } });
+    expect(lines[1]).toMatchObject({ accountKey: '6941', debitAmount: { amount: 233, currency: 'CHF', periodicity: 'one-time' } });
+    expect(lines[2]).toMatchObject({ accountKey: '3200', creditAmount: { amount: 9300, currency: 'CHF', periodicity: 'one-time' } });
+    const debit = lines.reduce((sum, l) => sum + ((l['debitAmount'] as { amount: number } | undefined)?.amount ?? 0), 0);
+    const credit = lines.reduce((sum, l) => sum + ((l['creditAmount'] as { amount: number } | undefined)?.amount ?? 0), 0);
+    expect(debit).toBe(credit);
+  });
+
+  it('a covered fee books exactly like a deducted one', () => {
+    const lines = buildBankBookingLines(raisenowRow({ amount: { amount: 256, currency: 'CHF' }, fee: { amount: 6, currency: 'CHF' } }), raisenowProfile, 'scs', 'bank-k');
+    expect(lines[0]).toMatchObject({ accountKey: '1102', debitAmount: { amount: 250 } });
+    expect(lines[1]).toMatchObject({ accountKey: '6941', debitAmount: { amount: 6 } });
+    expect(lines[2]).toMatchObject({ accountKey: '3200', creditAmount: { amount: 256 } });
+  });
+
+  it('a refund mirrors all three lines', () => {
+    const lines = buildBankBookingLines(raisenowRow({ amount: { amount: -9300, currency: 'CHF' } }), raisenowProfile, 'scs', 'bank-k');
+    expect(lines[0]).toMatchObject({ accountKey: '3200', debitAmount: { amount: 9300 } });
+    expect(lines[1]).toMatchObject({ accountKey: '1102', creditAmount: { amount: 9067 } });
+    expect(lines[2]).toMatchObject({ accountKey: '6941', creditAmount: { amount: 233 } });
+  });
+
+  it('never puts the VAT code or amountFx on the fee line', () => {
+    const lines = buildBankBookingLines(raisenowRow({ vatCodeKey: 'UST', amountFx: { amount: 8500, currency: 'EUR' } }), raisenowProfile, 'scs', 'bank-k');
+    expect(lines[1]).not.toHaveProperty('vatCodeKey');
+    expect(lines[1]).not.toHaveProperty('amountFx');
+    expect(lines[2]).toMatchObject({ vatCodeKey: 'UST', amountFx: { amount: 8500, currency: 'EUR' } });
+  });
+
+  it('REGRESSION: without a fee, or without a fee account, it is the same two lines as before', () => {
+    expect(buildBankBookingLines(raisenowRow({ fee: { amount: 0, currency: 'CHF' } }), raisenowProfile, 'scs', 'bank-k')).toHaveLength(2);
+    expect(buildBankBookingLines(raisenowRow(), { ...raisenowProfile, feeAccountKey: '' }, 'scs', 'bank-k')).toHaveLength(2);
+    expect(buildBankBookingLines(row({}), profile, 'bkg', 'bank-k')).toHaveLength(2);
+    // and the clearing/bank line then carries the full amount again
+    expect(buildBankBookingLines(raisenowRow(), { ...raisenowProfile, feeAccountKey: '' }, 'scs', 'bank-k')[0])
+      .toMatchObject({ accountKey: '1102', debitAmount: { amount: 9300 } });
+  });
+});
+
+describe('feeAmountOf / hasFeeLine', () => {
+  it('reads the fee as a magnitude and needs an account to become a line', () => {
+    expect(feeAmountOf(raisenowRow())).toBe(233);
+    expect(feeAmountOf(raisenowRow({ fee: { amount: -233, currency: 'CHF' } }))).toBe(233);
+    expect(feeAmountOf(row({}))).toBe(0);
+    expect(hasFeeLine(raisenowRow(), raisenowProfile)).toBe(true);
+    expect(hasFeeLine(raisenowRow(), { ...raisenowProfile, feeAccountKey: '' })).toBe(false);
+    expect(hasFeeLine(row({}), profile)).toBe(false);
   });
 });
 

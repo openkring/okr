@@ -12,7 +12,8 @@ export interface ParsedRow {
   date: string;                  // yyyymmdd
   rawText: string;               // whitespace-collapsed bank text
   payee: string;                 // '' when no pattern hit
-  amount: number;                // signed minor units
+  amount: number;                // signed minor units; the GROSS amount when the format states a fee
+  fee?: number;                  // payment-processor fee in minor units, ≥ 0, same currency as `amount`
   currency: string;
   amountFx?: { amount: number; currency: string };
   fxRate?: number;

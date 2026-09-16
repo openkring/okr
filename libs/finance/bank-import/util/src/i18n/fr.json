@@ -5,6 +5,7 @@
   "loading": "Chargement des lignes bancaires…",
   "status": { "unmapped": "ouverte", "mapped": "attribuée", "posted": "comptabilisée", "error": "Erreur", "all": "toutes", "open": "non comptabilisée" },
   "header": { "date": "Date", "title": "Texte de comptabilisation", "payee": "Contrepartie", "amount": "Montant" },
+  "fee": { "label": "Frais", "netLabel": "net" },
   "import": {
     "file": "Importer un fichier",
     "summary": {
@@ -41,6 +42,7 @@
       "accountInvalid": "Le compte de contrepartie est manquant ou n'est pas un compte de comptabilisation.",
       "profileMissing": "Le profil bancaire de cette ligne est introuvable.",
       "unbalanced": "L'écriture n'est pas équilibrée.",
+      "feeExceedsAmount": "Les frais sont égaux ou supérieurs au montant — la ligne n'a pas été comptabilisée.",
       "unknown": "La ligne n'a pas pu être comptabilisée."
     }
   },

@@ -3,6 +3,7 @@ import { BankFormat } from '@okr/shared-models';
 import { splitLines, stripBom } from './csv.util';
 import { matchesGkbHeader, parseGkb } from './gkb.adapter';
 import { matchesPostfinanceHeader, parsePostfinance } from './postfinance.adapter';
+import { matchesRaisenowHeader, parseRaisenow } from './raisenow.adapter';
 import { checkSaldo } from './saldo.util';
 import { matchesSwissquoteHeader, parseSwissquote } from './swissquote.adapter';
 import { BankImportError, ParsedStatement } from './types';
@@ -24,6 +25,7 @@ const ADAPTERS: Record<BankFormat, Adapter> = {
   vz:          { matchesHeader: matchesVzHeader, parse: parseVz, newestFirst: true },
   gkb:         { matchesHeader: matchesGkbHeader, parse: parseGkb, newestFirst: true },
   swissquote:  { matchesHeader: matchesSwissquoteHeader, parse: parseSwissquote, newestFirst: false },
+  raisenow:    { matchesHeader: matchesRaisenowHeader, parse: parseRaisenow, newestFirst: true },
 };
 
 export function detectFormat(text: string): BankFormat | undefined {

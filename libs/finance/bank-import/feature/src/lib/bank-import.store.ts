@@ -106,7 +106,7 @@ export const BankImportStore = signalStore(
         'format-not-implemented': store.i18n.error_format_not_implemented, 'empty-file': store.i18n.error_empty_file,
         'not-mapped': store.i18n.post_error_not_mapped, 'period-locked': store.i18n.post_error_period_locked,
         'account-invalid': store.i18n.post_error_account_invalid, 'profile-missing': store.i18n.post_error_profile_missing,
-        'unbalanced': store.i18n.post_error_unbalanced,
+        'unbalanced': store.i18n.post_error_unbalanced, 'fee-exceeds-amount': store.i18n.post_error_fee_exceeds_amount,
       };
       return (map[code] ?? store.i18n.post_error_unknown)();
     },

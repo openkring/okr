@@ -11,7 +11,7 @@ import { validateVestTree } from '@okr/shared-util-angular';
 import { AccountSelect, AccountSelectI18n } from '@okr/finance-account-ui';
 import { BankProfileI18n, bankProfileValidations } from '@okr/finance-bank-profile-util';
 
-const FORMATS: BankFormat[] = ['postfinance', 'zkb', 'yuh', 'vz', 'gkb', 'swissquote'];
+const FORMATS: BankFormat[] = ['postfinance', 'zkb', 'yuh', 'vz', 'gkb', 'swissquote', 'raisenow'];
 const CURRENCIES = ['CHF', 'EUR', 'USD', 'GBP'];
 
 @Component({
@@ -50,10 +50,15 @@ const CURRENCIES = ['CHF', 'EUR', 'USD', 'GBP'];
                 </ion-col>
               </ion-row>
               <ion-row>
-                <ion-col size="12">
+                <ion-col size="12" size-md="6">
                   <okr-account-select [i18n]="accountI18n()" [accounts]="accounts()" [allowEmpty]="false"
                     [selectedKey]="accountKey()" (selectedKeyChange)="onFieldChange('accountKey', $event)" [readOnly]="isReadOnly()" />
                   <okr-error-note [errors]="accountKeyErrors()" />
+                </ion-col>
+                <ion-col size="12" size-md="6">
+                  <okr-account-select [i18n]="feeAccountI18n()" [accounts]="accounts()" [allowEmpty]="true"
+                    [selectedKey]="feeAccountKey()" (selectedKeyChange)="onFieldChange('feeAccountKey', $event)" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="feeAccountKeyErrors()" />
                 </ion-col>
               </ion-row>
             </ion-grid>
@@ -92,6 +97,7 @@ export class BankProfileForm {
   protected readonly bankNameErrors = computed(() => this.bankProfileForm.bankName().errors().map(e => e.message ?? ''));
   protected readonly currencyErrors = computed(() => this.bankProfileForm.currency().errors().map(e => e.message ?? ''));
   protected readonly accountKeyErrors = computed(() => this.bankProfileForm.accountKey().errors().map(e => e.message ?? ''));
+  protected readonly feeAccountKeyErrors = computed(() => this.bankProfileForm.feeAccountKey().errors().map(e => e.message ?? ''));
 
   protected readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   protected readonly format = computed(() => this.formData()?.format ?? 'postfinance');
@@ -99,16 +105,18 @@ export class BankProfileForm {
   protected readonly bankName = computed(() => this.formData()?.bankName ?? '');
   protected readonly currency = computed(() => this.formData()?.currency ?? 'CHF');
   protected readonly accountKey = computed(() => this.formData()?.accountKey ?? '');
+  protected readonly feeAccountKey = computed(() => this.formData()?.feeAccountKey ?? '');
   protected readonly notes = computed(() => this.formData()?.notes ?? DEFAULT_NOTES);
 
   protected readonly formatLabels = computed(() => [
-    this.i18n().format_postfinance(), this.i18n().format_zkb(), this.i18n().format_yuh(), this.i18n().format_vz(), this.i18n().format_gkb(), this.i18n().format_swissquote(),
+    this.i18n().format_postfinance(), this.i18n().format_zkb(), this.i18n().format_yuh(), this.i18n().format_vz(), this.i18n().format_gkb(), this.i18n().format_swissquote(), this.i18n().format_raisenow(),
   ]);
   protected readonly formatI18n = computed(() => ({ name: 'format', label: this.i18n().format_label(), helper: this.i18n().format_helper() } as StringSelectI18n));
   protected readonly ibanI18n = computed(() => ({ name: 'iban', label: this.i18n().iban_label(), placeholder: this.i18n().iban_placeholder(), helper: this.i18n().iban_helper() } as IbanInputI18n));
   protected readonly bankNameI18n = computed(() => ({ name: 'bankName', label: this.i18n().bankName_label(), placeholder: this.i18n().bankName_placeholder(), helper: this.i18n().bankName_helper() } as TextInputI18n));
   protected readonly currencyI18n = computed(() => ({ name: 'currency', label: this.i18n().currency_label(), helper: this.i18n().currency_helper() } as StringSelectI18n));
   protected readonly accountI18n = computed(() => ({ name: 'accountKey', label: this.i18n().account_label(), helper: this.i18n().account_helper() } as AccountSelectI18n));
+  protected readonly feeAccountI18n = computed(() => ({ name: 'feeAccountKey', label: this.i18n().feeAccount_label(), helper: this.i18n().feeAccount_helper() } as AccountSelectI18n));
   protected readonly notesI18n = computed(() => ({ name: 'notes', label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder() } as NotesInputI18n));
 
   protected normalizeIban(value: string): string {

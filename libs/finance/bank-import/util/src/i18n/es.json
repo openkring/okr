@@ -5,6 +5,7 @@
   "loading": "Cargando líneas bancarias…",
   "status": { "unmapped": "abierta", "mapped": "asignada", "posted": "contabilizada", "error": "Error", "all": "todas", "open": "no contabilizada" },
   "header": { "date": "Fecha", "title": "Texto de contabilización", "payee": "Contraparte", "amount": "Importe" },
+  "fee": { "label": "Comisión", "netLabel": "neto" },
   "import": {
     "file": "Importar archivo",
     "summary": {
@@ -41,6 +42,7 @@
       "accountInvalid": "Falta la cuenta de contrapartida o no es una cuenta contable.",
       "profileMissing": "No se encontró el perfil bancario de esta línea.",
       "unbalanced": "El asiento no está equilibrado.",
+      "feeExceedsAmount": "La comisión es igual o superior al importe: la línea no se ha contabilizado.",
       "unknown": "La línea no pudo ser contabilizada."
     }
   },

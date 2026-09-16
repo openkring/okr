@@ -5,6 +5,7 @@
   "loading": "Loading bank lines…",
   "status": { "unmapped": "open", "mapped": "mapped", "posted": "posted", "error": "Error", "all": "all", "open": "not posted" },
   "header": { "date": "Date", "title": "Booking text", "payee": "Payee", "amount": "Amount" },
+  "fee": { "label": "Fee", "netLabel": "net" },
   "import": {
     "file": "Import file",
     "summary": {
@@ -41,6 +42,7 @@
       "accountInvalid": "The counter account is missing or is not a booking account.",
       "profileMissing": "The bank profile for this line was not found.",
       "unbalanced": "The entry is not balanced.",
+      "feeExceedsAmount": "The fee is equal to or higher than the amount — the row was not posted.",
       "unknown": "The line could not be posted."
     }
   },

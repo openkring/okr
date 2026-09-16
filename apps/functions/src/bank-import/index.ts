@@ -5,7 +5,7 @@ import { getFirestore, Transaction } from 'firebase-admin/firestore';
 import { checkAppCheckToken, checkAuthentication, checkRoles, getCallerTenantId, isBalanced, nextBookingNo } from '@okr/shared-util-functions';
 import { DateFormat, getTodayStr } from '@okr/shared-util-core';
 
-import { buildBankBookingHeader, buildBankBookingLines, periodKeyFor, ProfileDoc, RowDoc } from './bank-import.util';
+import { buildBankBookingHeader, buildBankBookingLines, feeAmountOf, hasFeeLine, periodKeyFor, ProfileDoc, RowDoc } from './bank-import.util';
 
 const REGION = 'europe-west6';
 const CF_NAME = 'postBankImport';
@@ -80,6 +80,19 @@ export const postBankImport = onCall(
           if (!account || account['accountingTenantId'] !== accountingTenantId || row.accountKey === profile.accountKey) throw new RowError('account-invalid');
           const children = await tx.get(db.collection(ACCOUNT_COLLECTION).where('parentKey', '==', row.accountKey).limit(1));
           if (!children.empty) throw new RowError('account-invalid');
+
+          // Processor fee (spec 1.62 §5): its account is validated like the counter-account, and the
+          // fee can never swallow the whole transaction — that would be a silent mis-booking.
+          if (hasFeeLine(row, profile)) {
+            if (feeAmountOf(row) >= Math.abs(row.amount.amount)) throw new RowError('fee-exceeds-amount');
+            const feeAccountKey = profile.feeAccountKey as string;
+            if (feeAccountKey === profile.accountKey || feeAccountKey === row.accountKey) throw new RowError('account-invalid');
+            const feeSnap = await tx.get(db.collection(ACCOUNT_COLLECTION).doc(feeAccountKey));
+            const feeAccount = feeSnap.data();
+            if (!feeAccount || feeAccount['accountingTenantId'] !== accountingTenantId) throw new RowError('account-invalid');
+            const feeChildren = await tx.get(db.collection(ACCOUNT_COLLECTION).where('parentKey', '==', feeAccountKey).limit(1));
+            if (!feeChildren.empty) throw new RowError('account-invalid');
+          }
 
           const periodKey = periodKeyFor(accountingTenantId, row.date, fiscalYearStart);
           const periodRef = db.collection(PERIOD_COLLECTION).doc(periodKey);

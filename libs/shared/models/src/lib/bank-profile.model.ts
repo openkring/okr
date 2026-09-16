@@ -4,7 +4,7 @@ import { OkrModel } from './base.model';
 import { CurrencyCode } from './money.model';
 
 /** The bank CSV layouts the import understands. One adapter per value (finance-bank-import-util). */
-export type BankFormat = 'postfinance' | 'zkb' | 'yuh' | 'vz' | 'gkb' | 'swissquote';
+export type BankFormat = 'postfinance' | 'zkb' | 'yuh' | 'vz' | 'gkb' | 'swissquote' | 'raisenow';
 
 /**
  * One bank account (IBAN) of an accounting tenant, as seen by the CSV import (spec 1.60 §3.1).
@@ -21,6 +21,7 @@ export class BankProfileModel implements OkrModel {
   public iban = '';                       // normalized: no spaces, upper case
   public bankName = '';
   public accountKey = '';                 // ref AccountModel (leaf bank account)
+  public feeAccountKey = '';              // ref AccountModel: expense account for the processor fee; '' = no fee line (spec 1.62 §3.1)
   public currency: CurrencyCode = 'CHF';
   public accountingTenantId = '';
 

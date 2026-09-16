@@ -5,6 +5,7 @@
   "loading": "Bankzeilen werden geladen…",
   "status": { "unmapped": "offen", "mapped": "zugeordnet", "posted": "gebucht", "error": "Fehler", "all": "alle", "open": "nicht gebucht" },
   "header": { "date": "Datum", "title": "Buchungstext", "payee": "Gegenpartei", "amount": "Betrag" },
+  "fee": { "label": "Gebühr", "netLabel": "netto" },
   "import": {
     "file": "Datei importieren",
     "summary": {
@@ -41,6 +42,7 @@
       "accountInvalid": "Das Gegenkonto fehlt oder ist kein Buchungskonto.",
       "profileMissing": "Das Bankprofil dieser Zeile wurde nicht gefunden.",
       "unbalanced": "Die Buchung ist nicht ausgeglichen.",
+      "feeExceedsAmount": "Die Gebühr ist gleich hoch wie der Betrag oder höher — die Zeile wurde nicht gebucht.",
       "unknown": "Die Zeile konnte nicht gebucht werden."
     }
   },

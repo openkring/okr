@@ -5,6 +5,7 @@
   "loading": "Caricamento delle righe bancarie…",
   "status": { "unmapped": "aperta", "mapped": "assegnata", "posted": "registrata", "error": "Errore", "all": "tutte", "open": "non registrata" },
   "header": { "date": "Data", "title": "Testo di registrazione", "payee": "Controparte", "amount": "Importo" },
+  "fee": { "label": "Commissione", "netLabel": "netto" },
   "import": {
     "file": "Importa file",
     "summary": {
@@ -41,6 +42,7 @@
       "accountInvalid": "Il conto di contropartita manca o non è un conto di registrazione.",
       "profileMissing": "Il profilo bancario di questa riga non è stato trovato.",
       "unbalanced": "La registrazione non è bilanciata.",
+      "feeExceedsAmount": "La commissione è pari o superiore all'importo: la riga non è stata registrata.",
       "unknown": "La riga non ha potuto essere registrata."
     }
   },

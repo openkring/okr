@@ -23,6 +23,7 @@ export function toImportRows(s: ParsedStatement, keys: string[], ctx: ImportCont
     row.rawText = r.rawText;
     row.payee = r.payee;
     row.amount = new MoneyModel(r.amount, r.currency);
+    row.fee = new MoneyModel(r.fee ?? 0, r.currency);
     row.amountFx = r.amountFx ? new MoneyModel(r.amountFx.amount, r.amountFx.currency) : undefined;
     row.fxRate = r.fxRate ?? 0;
     row.bankReference = r.bankReference;

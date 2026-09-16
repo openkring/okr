@@ -21,7 +21,8 @@ export class BankImportRowModel implements OkrModel {
   public date = DEFAULT_DATE;             // StoreDate yyyymmdd
   public rawText = '';
   public payee = '';
-  public amount: MoneyModel = new MoneyModel(0, 'CHF');   // signed: + Gutschrift, − Lastschrift
+  public amount: MoneyModel = new MoneyModel(0, 'CHF');   // signed GROSS amount: + Gutschrift, − Lastschrift
+  public fee: MoneyModel = new MoneyModel(0, 'CHF');      // ≥ 0, payment-processor fee in the currency of `amount`; net = amount − fee (spec 1.62 §3.2)
   public amountFx: MoneyModel | undefined;
   public fxRate = 0;
   public bankReference = '';

@@ -20,6 +20,8 @@ export const BANK_IMPORT_I18N_KEYS = {
   header_title:         PFX + 'header.title',
   header_payee:         PFX + 'header.payee',
   header_amount:        PFX + 'header.amount',
+  fee_label:            PFX + 'fee.label',
+  fee_net_label:        PFX + 'fee.netLabel',
 
   import_file:          PFX + 'import.file',
   import_summary_title: PFX + 'import.summary.title',
@@ -51,6 +53,7 @@ export const BANK_IMPORT_I18N_KEYS = {
   post_error_account_invalid: PFX + 'post.error.accountInvalid',
   post_error_profile_missing: PFX + 'post.error.profileMissing',
   post_error_unbalanced: PFX + 'post.error.unbalanced',
+  post_error_fee_exceeds_amount: PFX + 'post.error.feeExceedsAmount',
   post_error_unknown:   PFX + 'post.error.unknown',
 
   apply_rules:          PFX + 'applyRules.label',
