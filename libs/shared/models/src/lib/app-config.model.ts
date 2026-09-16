@@ -153,6 +153,35 @@ export class AppConfig {
   public enabledFeatures?: string[];
 
   /**
+   * Catalogue menu keys this tenant suppresses even though the owning block is ENABLED —
+   * the per-row opt-out, and the fourth visibility gate next to `tenants[]`, feature block
+   * and role (see `MenuStore.isVisible`).
+   *
+   * WHY IT LIVES HERE AND NOT ON THE MENU DOCUMENT. Every data-level way of suppressing a
+   * single row is undone by the next picker save of the owning block, because `planMenuOps`
+   * is additive: removing the tenant from the row's `tenants[]` is re-added by
+   * `needsTenant`, trimming the name out of the parent's `menuItems[]` is re-appended by
+   * `missingChildren`, and archiving the document is reverted by its `isArchived` branch.
+   * None of that needs `replayStructure`. Worse, the first of the three does not even
+   * suppress the row in the meantime — the parent still names the child, so `<okr-menu>`
+   * renders the yellow «Missing:» placeholder instead of hiding it, which is exactly the
+   * 67 dangling references found fleet-wide on 2026-09-16.
+   *
+   * A key held HERE is immune to all of that: the seeder never writes `app-config`, so it
+   * cannot revert the opt-out, and the gate is evaluated at render time. The document is
+   * still seeded and still carries this tenant — only the rendering is suppressed — so
+   * un-hiding is a one-field write with nothing to re-seed.
+   *
+   * Absent on every existing document, and `undefined` is read as "nothing hidden", so this
+   * changes no behaviour until a tenant sets it. Unlike `enabledFeatures` above, `[]` and
+   * `undefined` mean the same thing here, so the no-initializer rule is followed for
+   * consistency rather than to preserve a distinction.
+   *
+   * See `planning/specs/2026-09-16-menu-tenant-sentinel-design.md` §7.1 and §9.5.
+   */
+  public hiddenMenuKeys?: string[];
+
+  /**
    * Hours between two weather fetches per location (default 4). The scheduled function runs
    * hourly and skips any location whose `fetchedAt` is younger than this, so the interval is
    * changeable without a functions deploy — a cron expression would not be.

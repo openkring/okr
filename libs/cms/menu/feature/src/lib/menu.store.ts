@@ -77,7 +77,22 @@ export const _MenuStore = signalStore(
     // be "ANY owner effective", not just the first — else disabling `aoc` alone would also
     // hide `user`/`security`'s own, still-effective menu entries (task 12 review round 3).
     // `[]` (no owners) means a tenant-authored menu entry — those always render.
+    // Gate 4, the per-row opt-out: `app-config.hiddenMenuKeys` suppresses a single row while
+    // its owning block stays ENABLED. Checked FIRST and applied to every key, including a
+    // tenant-authored one (`owners.length === 0`) — "always render" above means "no block
+    // gates it", not "nothing may gate it", and an admin who hides a row means it.
+    //
+    // This is the only suppression that sticks. The three data-level ones are all reverted by
+    // the next picker save of the block (`planMenuOps` is additive: `needsTenant`,
+    // `missingChildren`, and the `isArchived` branch), and removing the tenant from the row's
+    // `tenants[]` does not even hide it meanwhile — it renders the yellow «Missing:»
+    // placeholder, which is what the 67 dangling references of 2026-09-16 are. `app-config`
+    // is never written by the seeder, so a key held there survives every save.
+    //
+    // Filtering happens on the NAME list (see `menuItem` below), so a hidden key never
+    // reaches the renderer and cannot produce a «Missing:» placeholder of its own.
     isVisible: (key: string): boolean => {
+      if (store.featureStore.hiddenMenuKeys().has(key)) return false;
       const owners = blockOwnersOfMenuKey(FEATURE_BLOCKS, key);
       return owners.length === 0 || owners.some(id => store.featureStore.effective().has(id));
     },

@@ -280,3 +280,51 @@ describe('filterMenuRows', () => {
     expect(filterMenuRows(rows, 'task-add', 'navigate')).toEqual([]);
   });
 });
+
+describe('hiddenKeys — the per-row opt-out (gate 4)', () => {
+  const tree = (hiddenKeys?: ReadonlySet<string>) => buildMenuTree({
+    rootKey: 'main_scs',
+    existing: new Map<string, MenuItemModel>([
+      ['main_scs', doc('main_scs', ['event-menu'])],
+      ['event-menu', doc('event-menu', ['calevent-all', 'calevent-my'])],
+      ['calevent-all', doc('calevent-all')],
+      ['calevent-my', doc('calevent-my')],
+    ]),
+    drift: [] as MenuStructureDrift[],
+    enabledBlocks: [CALEVENT],
+    hiddenKeys,
+  });
+
+  const rowFor = (name: string, hidden?: ReadonlySet<string>) =>
+    tree(hidden).find(r => r.name === name);
+
+  it('marks a hidden row', () => {
+    expect(rowFor('calevent-my', new Set(['calevent-my']))?.hidden).toBe(true);
+  });
+
+  it('leaves every other row unhidden', () => {
+    expect(rowFor('calevent-all', new Set(['calevent-my']))?.hidden).toBe(false);
+  });
+
+  // The field is absent on every pre-existing app-config document, so the omitted argument
+  // must behave exactly as before this feature existed.
+  it('treats an omitted set as nothing hidden', () => {
+    expect(tree().every(r => r.hidden === false)).toBe(true);
+  });
+
+  // `hidden` is orthogonal to `state` on purpose: an admin must be able to see that a hidden
+  // row still diverges from the catalogue, rather than having to choose between the two facts.
+  it('keeps the row state intact so drift is still reported', () => {
+    const row = rowFor('calevent-my', new Set(['calevent-my']));
+    expect(row?.hidden).toBe(true);
+    expect(row?.state).toBe('equal');
+  });
+
+  // Hiding a parent must not silently mark its children hidden — a child reachable from a
+  // second parent stays visible there.
+  it('does not cascade to children', () => {
+    const rows = tree(new Set(['event-menu']));
+    expect(rows.find(r => r.name === 'event-menu')?.hidden).toBe(true);
+    expect(rows.find(r => r.name === 'calevent-all')?.hidden).toBe(false);
+  });
+});

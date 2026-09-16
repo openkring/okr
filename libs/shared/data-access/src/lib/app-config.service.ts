@@ -54,6 +54,26 @@ export class AppConfigService {
   }
 
   /**
+   * Write ONLY `hiddenMenuKeys` — the per-row menu opt-out (the fourth visibility gate).
+   *
+   * Deliberately a single-field `updateDoc` rather than {@link update}, which writes the whole
+   * document back: the caller holds an `AppConfig` hydrated from a live stream, and writing all
+   * of it would push whatever else that snapshot happens to carry. Here exactly one field moves.
+   *
+   * Client-writable on purpose. `firestore.rules` lets a privileged user of their OWN tenant
+   * update `app-config` as long as `enabledFeatures` is untouched, because that field is the
+   * billing boundary. `hiddenMenuKeys` is not: it can only hide rows of blocks the tenant has
+   * already enabled, never enable anything. So this needs no callable and no functions deploy.
+   *
+   * @param tenantId the tenant whose config to patch — the doc id IS the tenantId
+   * @param keys the complete next list; build it with `withHiddenKey` / `withoutHiddenKey`
+   */
+  public async setHiddenMenuKeys(tenantId: string, keys: string[]): Promise<string | undefined> {
+    return await this.firestoreService.updateObject<Partial<AppConfig>>(
+      AppConfigCollection, tenantId, { hiddenMenuKeys: keys }, false, this.i18n.update_conf());
+  }
+
+  /**
    * We are not actually deleting an AppConfig. We are just archiving it.
    * @param key the document id of the AppConfig
    * @returns a Promise that resolves when the operation is complete 

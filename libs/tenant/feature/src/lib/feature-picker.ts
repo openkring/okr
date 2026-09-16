@@ -6,6 +6,7 @@ import {
   IonTitle, IonToolbar, ModalController,
 } from '@ionic/angular/standalone';
 
+import { AppConfigService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { SvgIconPipe } from '@okr/shared-pipes';
@@ -14,8 +15,9 @@ import { AlertService, copyToClipboard } from '@okr/shared-util-angular';
 import type { CategoryListModel, FeatureRolloutModel, MenuItemModel } from '@okr/shared-models';
 import {
   FEATURE_BLOCKS, FEATURE_BUNDLES, FEATURE_PICKER_I18N_KEYS, FEATURE_PROFILES, effectiveFeatures,
-  findStructuralDrift, holdersOf, indexMenuDocsByName, isEmptyPlan, menuOutlineOf, pinnedFieldsOf,
-  resolveAvailability, resolveWithDeps, summarizePlanConsequences,
+  findStructuralDrift, hiddenKeySet, holdersOf, indexMenuDocsByName, isEmptyPlan, menuOutlineOf,
+  pinnedFieldsOf, resolveAvailability, resolveWithDeps, summarizePlanConsequences, withHiddenKey,
+  withoutHiddenKey,
 } from '@okr/tenant-util';
 import type {
   ApplyFeatureResponse, ApplyPlanPreview, AvailabilityVerdict, FeatureBlock, FeatureProfile,
@@ -209,7 +211,7 @@ type PickerSegment = 'blocks' | 'rows';
               <ion-col size-md="3"><strong>{{ i18n.rows_col_action() }}</strong></ion-col>
             </ion-row>
             @for (row of filteredRows(); track row.name) {
-              <ion-row class="data-row" [style.opacity]="isDimmed(row) ? 0.6 : 1">
+              <ion-row class="data-row" [style.opacity]="isRowDimmed(row) ? 0.6 : 1">
                 <ion-col size="12" size-md="6" class="col-name" [style.padding-inline-start.rem]="row.depth * 1.5">
                   @if (row.state !== 'absent') {
                     <ion-button fill="clear" size="small" (click)="onCompare(row)">
@@ -242,6 +244,16 @@ type PickerSegment = 'blocks' | 'rows';
                   }
                 </ion-col>
                 <ion-col size="12" size-md="3" class="col-action">
+                  @if (row.hidden) {
+                    <span class="state-word">{{ i18n.rows_state_hidden() }}</span>
+                    <ion-button size="small" fill="clear" (click)="onUnhide(row)">
+                      {{ i18n.rows_unhide_button() }}
+                    </ion-button>
+                  } @else if (row.state !== 'absent') {
+                    <ion-button size="small" fill="clear" (click)="onHide(row)">
+                      {{ i18n.rows_hide_button() }}
+                    </ion-button>
+                  }
                   @switch (row.state) {
                     @case ('drifted') {
                       <ion-button size="small" fill="outline" (click)="onApply(row)">
@@ -344,6 +356,7 @@ export class FeaturePicker {
   private readonly i18nService = inject(I18nService);
   private readonly alertService = inject(AlertService);
   private readonly menuService = inject(MenuService);
+  private readonly appConfigService = inject(AppConfigService);
   private readonly modalController = inject(ModalController);
 
   protected readonly catalogue: FeatureBlock[] = FEATURE_BLOCKS;
@@ -469,7 +482,12 @@ export class FeaturePicker {
     existing: this.menuByName(),
     drift: this.menuDrift(),
     enabledBlocks: this.enabledBlockObjs(),
+    hiddenKeys: this.hiddenKeys(),
   }));
+
+  /** The tenant's per-row opt-out set, straight off the live app-config (gate 4). */
+  private readonly hiddenKeys = computed<ReadonlySet<string>>(() =>
+    hiddenKeySet(this.appStore.appConfig()?.hiddenMenuKeys));
 
   /** What the table actually renders — `rows()` narrowed by the toolbar. A match keeps its
    *  ancestors, so the indentation still reads as a tree rather than as a flat run. */
@@ -668,6 +686,11 @@ export class FeaturePicker {
   }
 
   // ── Segment 2 (Menüzeilen) — actions ─────────────────────────────────────────────────
+  /** A hidden row is dimmed like an inactive one — it does not render in the app. */
+  protected isRowDimmed(row: MenuTreeRow): boolean {
+    return row.hidden || this.isDimmed(row);
+  }
+
   protected isDimmed(row: MenuTreeRow): boolean {
     return row.state === 'absent' || row.state === 'tenant-authored';
   }
@@ -730,6 +753,42 @@ export class FeaturePicker {
       (field, options) => this.featureSelectionService.unpinField(this.tenantId(), row.docId, field, options),
       this.i18n.rows_unpin_toast(),
     );
+  }
+
+  /**
+   * «Ausblenden» / «Einblenden» — the per-row opt-out (gate 4).
+   *
+   * Writes ONE field on `app-config/{tenantId}`, nothing on the menu document. That is the
+   * whole point: the three document-level suppressions are all undone by the next picker save
+   * of the owning block, because `planMenuOps` is additive (`needsTenant` re-adds the tenant,
+   * `missingChildren` re-appends the name to the parent, and the `isArchived` branch
+   * reactivates the document). `app-config` is never written by the seeder, so this sticks.
+   *
+   * Consequently there is NO dry run and no plan confirmation here, unlike every other row
+   * action on this screen: those go through the callable and can cascade, this one cannot. It
+   * is a single reversible field write, so the confirmation would be noise. The row keeps its
+   * `state`, so a hidden row still reports its drift.
+   */
+  protected async onHide(row: MenuTreeRow): Promise<void> {
+    await this.setHidden(row, withHiddenKey(this.appStore.appConfig()?.hiddenMenuKeys, row.name),
+      this.i18n.rows_hide_toast());
+  }
+
+  /** «Einblenden» — release the opt-out; the row renders again on the next menu read. */
+  protected async onUnhide(row: MenuTreeRow): Promise<void> {
+    await this.setHidden(row, withoutHiddenKey(this.appStore.appConfig()?.hiddenMenuKeys, row.name),
+      this.i18n.rows_unhide_toast());
+  }
+
+  private async setHidden(row: MenuTreeRow, next: string[], toast: string): Promise<void> {
+    const tenantId = this.tenantId();
+    if (!tenantId) return;
+    try {
+      await this.appConfigService.setHiddenMenuKeys(tenantId, next);
+      await this.alertService.showToast(toast);
+    } catch (error) {
+      this.alertService.error(`FeaturePicker.setHidden(${row.name}): ${error}`);
+    }
   }
 
   /**

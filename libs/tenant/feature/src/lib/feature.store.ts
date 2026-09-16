@@ -3,7 +3,7 @@ import { signalStore, withComputed, withProps } from '@ngrx/signals';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { AppStore } from '@okr/shared-feature';
 import { FeatureRolloutService } from '@okr/tenant-data-access';
-import { FEATURE_BLOCKS, effectiveFeatures } from '@okr/tenant-util';
+import { FEATURE_BLOCKS, effectiveFeatures, hiddenKeySet } from '@okr/tenant-util';
 
 /**
  * The runtime answer to "is this block on for this tenant?" — catalogue ∩ rollout ∩
@@ -96,5 +96,17 @@ export const FeatureStore = signalStore(
   })),
   withComputed(store => ({
     isEnabled: computed(() => (blockId: string): boolean => store.effective().has(blockId)),
+    /**
+     * The tenant's per-row opt-out set — catalogue menu keys suppressed even though the
+     * owning block is enabled (`app-config.hiddenMenuKeys`, the fourth visibility gate).
+     *
+     * Coalescing an absent field to an empty set is correct here and is NOT the D-BB-10 trap
+     * above: `undefined` and `[]` both mean "nothing hidden", so there is no third state to
+     * preserve. Pre-settle it is empty, i.e. this gate fails OPEN — a hidden row may flash
+     * for one change-detection pass on a cold start, which is the same direction
+     * `effective()` already fails for a switched-off `ga` block and is strictly safer than
+     * hiding a row the tenant never opted out of.
+     */
+    hiddenMenuKeys: computed(() => hiddenKeySet(store._appStore.appConfig()?.hiddenMenuKeys)),
   })),
 );

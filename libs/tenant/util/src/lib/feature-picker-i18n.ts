@@ -112,12 +112,20 @@ export const FEATURE_PICKER_I18N_KEYS = {
   rows_state_equal: PFX + 'picker.rows_state_equal',
   rows_state_pinned: PFX + 'picker.rows_state_pinned',
   rows_state_tenant: PFX + 'picker.rows_state_tenant',
+  /** Gate 4, the per-row opt-out (`app-config.hiddenMenuKeys`). Offered on every row that
+   *  the tenant actually has — including a `tenant-authored` one — and NOT on an `absent`
+   *  row, where there is nothing to suppress yet. */
+  rows_hide_button: PFX + 'picker.rows_hide_button',
+  rows_unhide_button: PFX + 'picker.rows_unhide_button',
+  rows_state_hidden: PFX + 'picker.rows_state_hidden',
   /** The filter toolbar found nothing — distinct from `segment_rows_placeholder`, which
    *  means "no block is on yet". */
   rows_filter_empty: PFX + 'picker.rows_filter_empty',
   rows_apply_toast: PFX + 'picker.rows_apply_toast',
   rows_pin_toast: PFX + 'picker.rows_pin_toast',
   rows_unpin_toast: PFX + 'picker.rows_unpin_toast',
+  rows_hide_toast: PFX + 'picker.rows_hide_toast',
+  rows_unhide_toast: PFX + 'picker.rows_unhide_toast',
   rows_add_toast: PFX + 'picker.rows_add_toast',
   /** «Katalog anpassen» writes nothing and needs no confirmation — this is the toast alone. */
   rows_adjust_catalogue_toast: PFX + 'picker.rows_adjust_catalogue_toast',

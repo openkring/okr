@@ -18,6 +18,16 @@ export interface MenuTreeRow {
   otherDrift: string[];   // 'url' | 'action' that also differ — rendered as a ≠ badge
   blockId: string;        // '' for tenant-authored rows
   forked: boolean;
+  /**
+   * Suppressed by `app-config.hiddenMenuKeys` — the per-row opt-out (gate 4).
+   *
+   * ORTHOGONAL TO `state`, deliberately, exactly like `forked`. Hiding says nothing about
+   * whether the document matches the catalogue, so a row can be `equal` and hidden, or
+   * `drifted` and hidden, and the table must keep reporting the drift either way. Folding
+   * this into `RowState` would make an admin choose between seeing the drift and seeing the
+   * opt-out.
+   */
+  hidden: boolean;
   /** The live document's `action` (the catalogue spec's when absent) — drives the type filter. */
   action: string;
   /**
@@ -63,8 +73,11 @@ export function buildMenuTree(input: {
   existing: Map<string, MenuItemModel>;
   drift: MenuStructureDrift[];
   enabledBlocks: FeatureBlock[];
+  /** `app-config.hiddenMenuKeys` as a set — gate 4. Omitted means nothing is hidden. */
+  hiddenKeys?: ReadonlySet<string>;
 }): MenuTreeRow[] {
   const { rootKey, existing, drift, enabledBlocks } = input;
+  const hiddenKeys = input.hiddenKeys ?? new Set<string>();
 
   const driftByName = new Map(drift.map(d => [d.name, d]));
 
@@ -125,6 +138,7 @@ export function buildMenuTree(input: {
         name, docId: item.okey, depth, state: 'tenant-authored',
         roleNeededLive: liveRoleNeeded, roleNeededCatalogue: '',
         otherDrift: [], blockId: '', forked, action, groupKeys: [],
+        hidden: hiddenKeys.has(name),
       };
     }
 
@@ -154,7 +168,7 @@ export function buildMenuTree(input: {
     return {
       name, docId: item.okey, depth, state,
       roleNeededLive, roleNeededCatalogue, otherDrift, blockId: ownerBlockId, forked,
-      action, groupKeys: [],
+      action, groupKeys: [], hidden: hiddenKeys.has(name),
     };
   };
 
@@ -162,7 +176,7 @@ export function buildMenuTree(input: {
     name: spec.name, docId: '', depth, state: 'absent',
     roleNeededLive: '', roleNeededCatalogue: spec.roleNeeded,
     otherDrift: [], blockId: blockIdBySpecName.get(spec.name) ?? '', forked: false,
-    action: spec.action, groupKeys: [],
+    action: spec.action, groupKeys: [], hidden: hiddenKeys.has(spec.name),
   });
 
   // ── The walk ───────────────────────────────────────────────────────────────────────────
