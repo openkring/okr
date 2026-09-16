@@ -8,7 +8,7 @@ import { coerceBoolean } from '@okr/shared-util-core';
 import { validateVestTree } from '@okr/shared-util-angular';
 
 import { AccountSelect, AccountSelectI18n } from '@okr/finance-account-ui';
-import { BankImportI18n, JournalAccountMap, JournalAccountMapping, journalAccountMapValidations } from '@okr/finance-bank-import-util';
+import { BANK_IMPORT_I18N_KEYS, BankImportI18n, JournalAccountMap, JournalAccountMapping, journalAccountMapValidations } from '@okr/finance-bank-import-util';
 
 /**
  * The mapping table of a bexio journal import (spec 1.60 §12.2): one row per bexio account used by
@@ -71,7 +71,8 @@ export class JournalAccountMapForm {
 
   protected readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   protected readonly entries = computed(() => this.formData()?.entries ?? []);
-  protected readonly entriesErrors = computed(() => this.mapForm().valid() ? [] : [this.i18n().journal_unresolved()]);
+  /** okr-error-note resolves i18n keys itself (a plain string would be looked up under `validation.`). */
+  protected readonly entriesErrors = computed(() => this.mapForm().valid() ? [] : [BANK_IMPORT_I18N_KEYS.journal_unresolved]);
   protected readonly accountI18n = computed(() => ({ name: 'accountKey', label: this.i18n().account_label(), helper: '' } as AccountSelectI18n));
 
   protected matchLabel(entry: JournalAccountMapping): string {
