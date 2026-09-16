@@ -130,7 +130,8 @@
     "notes": {
       "label": "Note",
       "placeholder": "Osservazioni sulla registrazione"
-    }
+    },
+    "swap": "Scambia dare e avere"
   },
   "validation": {
     "date": "Inserisci una data valida.",

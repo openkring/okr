@@ -81,8 +81,9 @@ import { BookingFormData, BookingI18n, BookingPair, bookingValidations, emptyBoo
             <ion-grid>
               <ion-row class="line-header ion-hide-sm-down">
                 <ion-col size-md="4">{{ i18n().form_debit_label() }}</ion-col>
+                <ion-col size-md="1"></ion-col>
                 <ion-col size-md="4">{{ i18n().form_credit_label() }}</ion-col>
-                <ion-col size-md="3">{{ i18n().form_amount_label() }}</ion-col>
+                <ion-col size-md="2">{{ i18n().form_amount_label() }}</ion-col>
                 <ion-col size-md="1"></ion-col>
               </ion-row>
               @for (pair of pairs(); track $index; let i = $index) {
@@ -91,11 +92,18 @@ import { BookingFormData, BookingI18n, BookingPair, bookingValidations, emptyBoo
                     <okr-account-select [i18n]="debitI18n()" [accounts]="accounts()" [allowEmpty]="false" [compact]="true"
                       [selectedKey]="pair.debitAccountKey" (selectedKeyChange)="onPairChange(i, 'debitAccountKey', $event)" [readOnly]="isReadOnly()" />
                   </ion-col>
+                  <ion-col size="12" size-md="1" class="ion-text-center">
+                    @if (!isReadOnly()) {
+                      <ion-button fill="clear" size="small" (click)="swapAccounts(i)" [title]="i18n().form_swap()">
+                        <ion-icon slot="icon-only" src="{{ 'swap-horizontal' | svgIcon }}" />
+                      </ion-button>
+                    }
+                  </ion-col>
                   <ion-col size="12" size-md="4">
                     <okr-account-select [i18n]="creditI18n()" [accounts]="accounts()" [allowEmpty]="false" [compact]="true"
                       [selectedKey]="pair.creditAccountKey" (selectedKeyChange)="onPairChange(i, 'creditAccountKey', $event)" [readOnly]="isReadOnly()" />
                   </ion-col>
-                  <ion-col size="8" size-md="3">
+                  <ion-col size="8" size-md="2">
                     <okr-amount-input [i18n]="amountI18n()" [value]="pair.amount" (valueChange)="onPairChange(i, 'amount', $event)" [readOnly]="isReadOnly()" />
                   </ion-col>
                   <ion-col size="4" size-md="1">
@@ -113,7 +121,7 @@ import { BookingFormData, BookingI18n, BookingPair, bookingValidations, emptyBoo
                 </ion-row>
                 @if (isExpanded(i)) {
                   <ion-row class="details-row ion-align-items-center">
-                    <ion-col size="12" size-md="4">
+                    <ion-col size="12" size-md="5">
                       <okr-amount-input [i18n]="fxAmountI18n()" [value]="pair.amountFx" (valueChange)="onPairChange(i, 'amountFx', $event)" [readOnly]="isReadOnly()" />
                     </ion-col>
                     <ion-col size="12" size-md="4">
@@ -210,6 +218,14 @@ export class BookingForm {
   protected onPairChange(index: number, field: keyof BookingPair, value: string | number): void {
     this.dirty.emit(true);
     this.formData.update((vm) => ({ ...vm, pairs: vm.pairs.map((p, i) => i === index ? { ...p, [field]: value } : p) }));
+  }
+
+  /** Soll ↔ Haben of one row; a booking entered the wrong way round is fixed in one click. */
+  protected swapAccounts(index: number): void {
+    this.dirty.emit(true);
+    this.formData.update((vm) => ({ ...vm, pairs: vm.pairs.map((p, i) => i === index
+      ? { ...p, debitAccountKey: p.creditAccountKey, creditAccountKey: p.debitAccountKey, vatSide: p.vatSide === 'debit' ? 'credit' : 'debit' }
+      : p) }));
   }
 
   protected addPair(): void {

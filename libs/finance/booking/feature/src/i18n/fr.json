@@ -130,7 +130,8 @@
     "notes": {
       "label": "Notes",
       "placeholder": "Remarques sur l'écriture"
-    }
+    },
+    "swap": "Échanger débit et crédit"
   },
   "validation": {
     "date": "Merci de saisir une date valide.",

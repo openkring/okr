@@ -130,7 +130,8 @@
     "notes": {
       "label": "Notes",
       "placeholder": "Remarks on the booking"
-    }
+    },
+    "swap": "Swap debit and credit"
   },
   "validation": {
     "date": "Please enter a valid date.",

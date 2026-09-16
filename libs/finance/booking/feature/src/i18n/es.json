@@ -130,7 +130,8 @@
     "notes": {
       "label": "Notas",
       "placeholder": "Observaciones sobre el asiento"
-    }
+    },
+    "swap": "Intercambiar debe y haber"
   },
   "validation": {
     "date": "Introduce una fecha válida.",
