@@ -10,13 +10,14 @@ import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { AccountModel } from '@okr/shared-models';
 import { AlertService, exportCsv } from '@okr/shared-util-angular';
-import { generateRandomString } from '@okr/shared-util-core';
+import { fill, generateRandomString } from '@okr/shared-util-core';
 
 import { AccountService } from '@okr/finance-account-data-access';
 import {
-  ACCOUNT_I18N_KEYS, AccountI18n, buildImportedChartOfAccounts, chartOfAccountsToRows, ChartOfAccountsCsvError,
+  ACCOUNT_I18N_KEYS, AccountI18n, accountSubtree, buildImportedChartOfAccounts, chartOfAccountsToRows, ChartOfAccountsCsvError,
   flattenAccountForest, getDefaultExpandedKeys, isAccount, parseChartOfAccountsCsv
 } from '@okr/finance-account-util';
+import { BookingLineService } from '@okr/finance-booking-data-access';
 import { AccountingStore } from '@okr/finance-accounting-feature';
 
 export type { AccountI18n };
@@ -44,6 +45,7 @@ export const AccountStore = signalStore(
   withState(initialState),
   withProps(() => ({
     accountService: inject(AccountService),
+    bookingLineService: inject(BookingLineService),
     appStore: inject(AppStore),
     accountingStore: inject(AccountingStore),
     modalController: inject(ModalController),
@@ -95,10 +97,17 @@ export const AccountStore = signalStore(
     },
 
     /*-------------------------- actions --------------------------------*/
-    async addRoot(): Promise<void> {
+    /**
+     * The toolbar's "new" action. It opens a normal account (Konto/Kontogruppe) whose Hauptkonto
+     * the user picks in the form. Only while the accounting tenant has no chart of accounts at all
+     * does it create the root itself — there would be no parent to pick, and the alternatives
+     * (import, standard chart) may not be what the user wants.
+     */
+    async addAccount(): Promise<void> {
       const account = new AccountModel(store.appStore.tenantId());
       account.accountingTenantId = store.accountingStore.accountingTenantId();
-      account.type = 'root';
+      const hasRoot = store.accounts().some(a => a.type === 'root');
+      account.type = hasRoot ? 'leaf' : 'root';
       await this.edit(account, false);
     },
 
@@ -143,14 +152,32 @@ export const AccountStore = signalStore(
     },
 
     /**
-     * Deleting any node (leaf, group, root) cascades to all its descendants.
-     * @param account
-     * @param readOnly
-     * @returns
+     * Deleting any node (leaf, group, root) cascades to all its descendants — a group takes its
+     * whole subtree with it. Two gates before that happens:
+     *   1. booked-on accounts are never deleted. The booking lines would keep pointing at an
+     *      archived account that no longer resolves anywhere in the journal or the reports.
+     *   2. the user confirms, and the question names how many accounts go along.
+     * @param account the node the user picked in the tree
+     * @param readOnly no deletion at all in a read-only (externally managed) chart
      */
     async delete(account: AccountModel, readOnly = true): Promise<void> {
       if (readOnly) return;
-      await store.accountService.deleteTree(account.okey, store.accountingStore.accountingTenantId(), store.currentUser());
+      const accountingTenantId = store.accountingStore.accountingTenantId();
+      const subtree = accountSubtree(store.accounts(), account.okey);
+
+      const usedLines = await store.bookingLineService.countByAccountKeys(accountingTenantId, subtree.map(a => a.okey));
+      if (usedLines > 0) {
+        await store.alertService.confirm(fill(store.i18n.delete_inUse(), { name: account.name, count: usedLines }));
+        return;
+      }
+
+      const children = subtree.length - 1;
+      const question = children > 0
+        ? fill(store.i18n.delete_conf_tree(), { name: account.name, count: children })
+        : fill(store.i18n.delete_conf_one(), { name: account.name });
+      if (!await store.alertService.confirm(question, true)) return;
+
+      await store.accountService.deleteTree(account.okey, accountingTenantId, store.currentUser());
       store.accountsResource.reload();
     },
 

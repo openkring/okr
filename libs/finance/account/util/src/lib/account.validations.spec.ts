@@ -28,3 +28,52 @@ describe('accountValidations', () => {
     expect(result.getErrors('name')).toContain('required');
   });
 });
+
+describe('accountValidations — duplicate account number', () => {
+  function numbered(id: string): AccountModel {
+    const a = account('Kasse');
+    a.id = id;
+    return a;
+  }
+
+  it('rejects a number that another account of the chart already carries', () => {
+    const result = accountValidations(numbered('1000'), 'scs', '', ['1000', '1020']);
+    expect(result.getErrors('id')).toContain('@finance/account/feature.id.duplicate');
+  });
+
+  it('accepts a free number', () => {
+    const result = accountValidations(numbered('1010'), 'scs', '', ['1000', '1020']);
+    expect(result.getErrors('id')).toEqual([]);
+  });
+
+  it('accepts an account without a number (a chart of accounts)', () => {
+    const result = accountValidations(numbered(''), 'scs', '', ['1000']);
+    expect(result.getErrors('id')).toEqual([]);
+  });
+
+  it('does not check duplicates when no numbers are given', () => {
+    const result = accountValidations(numbered('1000'), 'scs', '');
+    expect(result.getErrors('id')).toEqual([]);
+  });
+});
+
+describe('accountValidations — Hauptkonto', () => {
+  it('requires a parent on a normal account', () => {
+    const result = accountValidations(account('Kasse'), 'scs', '');
+    expect(result.getErrors('parentKey')).toContain('required');
+  });
+
+  it('accepts a normal account that hangs in a group', () => {
+    const a = account('Kasse');
+    a.parentKey = 'g10';
+    const result = accountValidations(a, 'scs', '');
+    expect(result.getErrors('parentKey')).toEqual([]);
+  });
+
+  it('does not require a parent on a chart of accounts', () => {
+    const a = account('Kontoplan');
+    a.type = 'root';
+    const result = accountValidations(a, 'scs', '');
+    expect(result.getErrors('parentKey')).toEqual([]);
+  });
+});

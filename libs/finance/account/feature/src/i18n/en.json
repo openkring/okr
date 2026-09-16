@@ -12,7 +12,6 @@
     "empty": "The file contains no accounts.",
     "invalid": "The file does not have the expected format. Expected columns: Nummer, Name, Gruppe and Kontoart."
   },
-  "delete": "Delete account",
   "select": {
     "root": "Select chart of accounts",
     "hint": "Please select a chart of accounts first.",
@@ -29,7 +28,8 @@
   "id": {
     "label": "Account no.",
     "placeholder": "nnnn",
-    "helper": "The unique number of the account."
+    "helper": "The unique number of the account.",
+    "duplicate": "This account number is already used in the chart of accounts."
   },
   "name": {
     "label": "Account name",
@@ -74,19 +74,22 @@
       "description": "An account of another type."
     }
   },
-  "label": {
-    "label": "Label",
-    "placeholder": "Label",
-    "error": "The label is mandatory and must consist of alphanumeric characters.",
-    "helper": "This text is shown to the user."
-  },
-  "parentId": {
-    "label": "Parent account",
-    "placeholder": "nnnn",
-    "helper": "The number of the parent account. The parent account groups several accounts and thus forms the hierarchy in the chart of accounts."
-  },
   "notes": {
     "label": "Notes",
     "placeholder": "Free notes on the account."
+  },
+  "parentKey": {
+    "label": "Parent account",
+    "helper": "The parent account is the group this account belongs to. It decides where the account appears in the chart of accounts."
+  },
+  "kind": {
+    "label": "Account kind",
+    "helper": "The account kind follows from the parent account and is written to the export."
+  },
+  "delete": "Delete account",
+  "deleteConf": {
+    "one": "Really delete the account «{name}»?",
+    "tree": "Really delete «{name}» and the {count} accounts below it?",
+    "inUse": "«{name}» cannot be deleted: this account (or one below it) is already booked on — {count} booking lines. Please reassign those bookings first."
   }
 }

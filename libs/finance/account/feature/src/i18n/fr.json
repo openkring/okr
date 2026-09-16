@@ -12,7 +12,6 @@
     "empty": "Le fichier ne contient aucun compte.",
     "invalid": "Le fichier n'a pas le format attendu. Colonnes attendues : Nummer, Name, Gruppe et Kontoart."
   },
-  "delete": "Supprimer le compte",
   "select": {
     "root": "Sélectionner le plan comptable",
     "hint": "Veuillez d'abord sélectionner un plan comptable.",
@@ -29,7 +28,8 @@
   "id": {
     "label": "N° de compte",
     "placeholder": "nnnn",
-    "helper": "Le numéro unique du compte."
+    "helper": "Le numéro unique du compte.",
+    "duplicate": "Ce numéro de compte est déjà utilisé dans le plan comptable."
   },
   "name": {
     "label": "Nom du compte",
@@ -74,19 +74,22 @@
       "description": "Un compte d'un autre type."
     }
   },
-  "label": {
-    "label": "Désignation",
-    "placeholder": "Désignation",
-    "error": "La désignation est obligatoire et doit être composée de caractères alphanumériques.",
-    "helper": "Ce texte est affiché à l'utilisateur."
-  },
-  "parentId": {
-    "label": "Compte principal",
-    "placeholder": "nnnn",
-    "helper": "Le numéro du compte principal. Le compte principal regroupe plusieurs comptes et forme ainsi la hiérarchie du plan comptable."
-  },
   "notes": {
     "label": "Notes",
     "placeholder": "Notes libres sur le compte."
+  },
+  "parentKey": {
+    "label": "Compte principal",
+    "helper": "Le compte principal est le groupe auquel appartient ce compte. Il détermine où le compte apparaît dans le plan comptable."
+  },
+  "kind": {
+    "label": "Catégorie de compte",
+    "helper": "La catégorie découle du compte principal et est reprise dans l'export."
+  },
+  "delete": "Supprimer le compte",
+  "deleteConf": {
+    "one": "Supprimer vraiment le compte «{name}» ?",
+    "tree": "Supprimer vraiment «{name}» et les {count} comptes en dessous ?",
+    "inUse": "«{name}» ne peut pas être supprimé : ce compte (ou un compte en dessous) est déjà utilisé par des écritures — {count} lignes. Merci de réaffecter ces écritures au préalable."
   }
 }

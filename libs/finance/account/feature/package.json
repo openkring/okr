@@ -16,6 +16,7 @@
     "@okr/shared-util-core": "*",
     "@okr/finance-accounting-feature": "*",
     "@okr/finance-account-data-access": "*",
+    "@okr/finance-booking-data-access": "*",
     "@okr/finance-account-ui": "*",
     "@okr/finance-account-util": "*",
     "@okr/cms-menu-feature": "*"

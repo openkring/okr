@@ -108,3 +108,43 @@ export function getDefaultExpandedKeys(
   }
   return keys;
 }
+
+/*-------------------------- parent selection --------------------------------*/
+/** Every key below `okey` (children, grandchildren, …) — the accounts that may never become its parent. */
+export function accountDescendantKeys(accounts: AccountModel[], okey: string): string[] {
+  const keys: string[] = [];
+  function walk(parentKey: string): void {
+    for (const child of accounts.filter(a => a.parentKey === parentKey)) {
+      keys.push(child.okey);
+      walk(child.okey);
+    }
+  }
+  if (okey) walk(okey);
+  return keys;
+}
+
+/**
+ * The accounts that may be picked as the Hauptkonto of `account`: the charts of accounts (root)
+ * and the groups — a leaf is booked on, it never carries children. The account itself and its
+ * descendants are excluded, otherwise the tree could be bent into a cycle and would vanish from
+ * the list (flattenAccountForest only walks down from the roots).
+ */
+export function parentCandidates(accounts: AccountModel[], account: AccountModel): AccountModel[] {
+  const blocked = new Set([account.okey, ...accountDescendantKeys(accounts, account.okey)]);
+  return accounts
+    .filter(a => (a.type === 'root' || a.type === 'group') && !blocked.has(a.okey))
+    .sort((a, b) => a.id.localeCompare(b.id));
+}
+
+/** The account itself plus every account below it — exactly what a delete cascades over. */
+export function accountSubtree(accounts: AccountModel[], okey: string): AccountModel[] {
+  const keys = new Set([okey, ...accountDescendantKeys(accounts, okey)]);
+  return accounts.filter(a => keys.has(a.okey));
+}
+
+/** The account numbers already taken within the chart, ignoring the account being edited. */
+export function usedAccountIds(accounts: AccountModel[], account: AccountModel): string[] {
+  return accounts
+    .filter(a => a.okey !== account.okey && a.id.length > 0)
+    .map(a => a.id);
+}

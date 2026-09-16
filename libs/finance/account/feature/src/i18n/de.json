@@ -12,7 +12,6 @@
     "empty": "Die Datei enthält keine Konten.",
     "invalid": "Die Datei hat nicht das erwartete Format. Erwartet werden die Spalten Nummer, Name, Gruppe und Kontoart."
   },
-  "delete": "Konto löschen",
   "select": {
     "root": "Kontoplan wählen",
     "hint": "Bitte zuerst einen Kontoplan wählen.",
@@ -29,7 +28,8 @@
   "id": {
     "label": "Konto Nr.",
     "placeholder": "nnnn",
-    "helper": "Die eindeutige Nummer des Kontos."
+    "helper": "Die eindeutige Nummer des Kontos.",
+    "duplicate": "Diese Kontonummer ist im Kontoplan bereits vergeben."
   },
   "name": {
     "label": "Konto Name",
@@ -74,19 +74,22 @@
       "description": "Ein Konto eines anderen Typs."
     }
   },
-  "label": {
-    "label": "Bezeichnung",
-    "placeholder": "Bezeichnung",
-    "error": "Die Bezeichnung ist obligatorisch und muss aus alphanumerischen Zeichen bestehen.",
-    "helper": "Dieser Text wird dem User gezeigt."
-  },
-  "parentId": {
-    "label": "Hauptkonto",
-    "placeholder": "nnnn",
-    "helper": "Die Nummer des Hauptkontos. Das Hauptkonto gruppiert mehrere Konti und formiert so die Hierarchie im Kontoplan."
-  },
   "notes": {
     "label": "Notizen",
     "placeholder": "Freie Notizen zum Konto."
+  },
+  "parentKey": {
+    "label": "Hauptkonto",
+    "helper": "Das Hauptkonto ist die Gruppe, in der dieses Konto steht. Es bestimmt, wo das Konto im Kontoplan erscheint."
+  },
+  "kind": {
+    "label": "Kontoart",
+    "helper": "Die Kontoart ergibt sich aus dem Hauptkonto und wird beim Export mitgegeben."
+  },
+  "delete": "Konto löschen",
+  "deleteConf": {
+    "one": "Konto «{name}» wirklich löschen?",
+    "tree": "«{name}» und die {count} Konten darunter wirklich löschen?",
+    "inUse": "«{name}» kann nicht gelöscht werden: auf dieses Konto (oder eines darunter) wurde bereits gebucht — {count} Buchungszeilen. Bitte zuerst die Buchungen umbuchen."
   }
 }

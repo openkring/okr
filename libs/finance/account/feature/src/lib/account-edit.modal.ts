@@ -29,6 +29,7 @@ import { AccountStore } from './account.store';
           (formDataChange)="onFormDataChange($event)"
           [currentUser]="currentUser()"
           [types]="types()"
+          [accounts]="store.accounts()"
           [tenantId]="tenantId()"
           [readOnly]="isReadOnly()"
           [i18n]="store.i18n"

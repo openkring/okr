@@ -12,7 +12,6 @@
     "empty": "El archivo no contiene cuentas.",
     "invalid": "El archivo no tiene el formato esperado. Columnas esperadas: Nummer, Name, Gruppe y Kontoart."
   },
-  "delete": "Eliminar cuenta",
   "select": {
     "root": "Seleccionar plan contable",
     "hint": "Seleccione primero un plan contable.",
@@ -29,7 +28,8 @@
   "id": {
     "label": "N.º de cuenta",
     "placeholder": "nnnn",
-    "helper": "El número único de la cuenta."
+    "helper": "El número único de la cuenta.",
+    "duplicate": "Este número de cuenta ya está en uso en el plan contable."
   },
   "name": {
     "label": "Nombre de la cuenta",
@@ -74,19 +74,22 @@
       "description": "Una cuenta de otro tipo."
     }
   },
-  "label": {
-    "label": "Denominación",
-    "placeholder": "Denominación",
-    "error": "La denominación es obligatoria y debe estar compuesta por caracteres alfanuméricos.",
-    "helper": "Este texto se muestra al usuario."
-  },
-  "parentId": {
-    "label": "Cuenta principal",
-    "placeholder": "nnnn",
-    "helper": "El número de la cuenta principal. La cuenta principal agrupa varias cuentas y forma así la jerarquía del plan contable."
-  },
   "notes": {
     "label": "Notas",
     "placeholder": "Notas libres sobre la cuenta."
+  },
+  "parentKey": {
+    "label": "Cuenta principal",
+    "helper": "La cuenta principal es el grupo al que pertenece esta cuenta. Determina dónde aparece la cuenta en el plan contable."
+  },
+  "kind": {
+    "label": "Categoría de cuenta",
+    "helper": "La categoría se deriva de la cuenta principal y se incluye en la exportación."
+  },
+  "delete": "Eliminar cuenta",
+  "deleteConf": {
+    "one": "¿Eliminar realmente la cuenta «{name}»?",
+    "tree": "¿Eliminar realmente «{name}» y las {count} cuentas que contiene?",
+    "inUse": "«{name}» no se puede eliminar: en esta cuenta (o en una inferior) ya se ha contabilizado — {count} líneas de asiento. Primero reasigna esos asientos."
   }
 }

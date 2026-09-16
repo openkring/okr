@@ -16,6 +16,9 @@ export const ACCOUNT_I18N_KEYS = {
   import_empty:         PFX + 'import.empty',
   import_invalid:       PFX + 'import.invalid',
   delete:               PFX + 'delete',
+  delete_conf_one:      PFX + 'deleteConf.one',
+  delete_conf_tree:     PFX + 'deleteConf.tree',
+  delete_inUse:         PFX + 'deleteConf.inUse',
   select_root:          PFX + 'select.root',
   select_hint:          PFX + 'select.hint',
   select_search:        PFX + 'select.search',
@@ -30,18 +33,17 @@ export const ACCOUNT_I18N_KEYS = {
   id:                   PFX + 'id.label',
   id_placeholder:       PFX + 'id.placeholder',
   id_helper:            PFX + 'id.helper',
+  id_duplicate:         PFX + 'id.duplicate',
 
   name:                 PFX + 'name.label',
   name_placeholder:     PFX + 'name.placeholder',
   name_helper:          PFX + 'name.helper',
 
-  label:                PFX + 'label.label',
-  label_placeholder:    PFX + 'label.placeholder',
-  label_helper:         PFX + 'label.helper',
+  kind:                 PFX + 'kind.label',
+  kind_helper:          PFX + 'kind.helper',
 
-  parentId:             PFX + 'parentId.label',
-  parentId_placeholder: PFX + 'parentId.placeholder',
-  parentId_helper:      PFX + 'parentId.helper',
+  parentKey:            PFX + 'parentKey.label',
+  parentKey_helper:     PFX + 'parentKey.helper',
 
   notes:                PFX + 'notes.label',
   notes_placeholder:    PFX + 'notes.placeholder',

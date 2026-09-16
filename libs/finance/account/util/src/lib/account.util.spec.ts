@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { AccountModel } from '@okr/shared-models';
 import * as coreUtils from '@okr/shared-util-core';
-import { flattenAccountForest, flattenAccountTree, getAccountIndex, getDefaultExpandedKeys, isAccount, leafAccounts } from './account.util';
+import { accountDescendantKeys, accountSubtree, flattenAccountForest, flattenAccountTree, getAccountIndex, getDefaultExpandedKeys, isAccount, leafAccounts, parentCandidates, usedAccountIds } from './account.util';
 
 vi.mock('@okr/shared-util-core', async importOriginal => {
   const actual = await importOriginal<typeof coreUtils>();
@@ -190,5 +190,58 @@ describe('leafAccounts', () => {
   });
   it('handles an empty list', () => {
     expect(leafAccounts([])).toEqual([]);
+  });
+});
+
+describe('parentCandidates / usedAccountIds', () => {
+  function acc(okey: string, id: string, type: string, parentKey = ''): AccountModel {
+    const a = new AccountModel('scs');
+    a.okey = okey; a.id = id; a.type = type; a.parentKey = parentKey; a.name = id;
+    return a;
+  }
+
+  // root(1) → group(10) → leaf(1000), plus a second group(14) under the root
+  const accounts = [
+    acc('r', '', 'root'),
+    acc('g10', '10', 'group', 'r'),
+    acc('l1000', '1000', 'leaf', 'g10'),
+    acc('g14', '14', 'group', 'r'),
+  ];
+
+  it('offers roots and groups, never leaves', () => {
+    const keys = parentCandidates(accounts, accounts[2]).map(a => a.okey);
+    expect(keys).toEqual(['r', 'g10', 'g14']);
+  });
+
+  it('excludes the account itself and its descendants', () => {
+    const keys = parentCandidates(accounts, accounts[1]).map(a => a.okey);
+    expect(keys).toEqual(['r', 'g14']);
+  });
+
+  it('collects every descendant key', () => {
+    expect(accountDescendantKeys(accounts, 'r')).toEqual(['g10', 'l1000', 'g14']);
+    expect(accountDescendantKeys(accounts, 'l1000')).toEqual([]);
+  });
+
+  it('lists the taken numbers without the edited account and without the numberless root', () => {
+    expect(usedAccountIds(accounts, accounts[1])).toEqual(['1000', '14']);
+  });
+});
+
+describe('accountSubtree', () => {
+  function acc(okey: string, parentKey = ''): AccountModel {
+    const a = new AccountModel('scs');
+    a.okey = okey; a.parentKey = parentKey; a.type = 'leaf';
+    return a;
+  }
+  const tree = [acc('r'), acc('g10', 'r'), acc('l1000', 'g10'), acc('g14', 'r')];
+
+  it('returns the node and everything below it', () => {
+    expect(accountSubtree(tree, 'g10').map(a => a.okey)).toEqual(['g10', 'l1000']);
+    expect(accountSubtree(tree, 'r').map(a => a.okey)).toEqual(['r', 'g10', 'l1000', 'g14']);
+  });
+
+  it('returns just the node for a leaf', () => {
+    expect(accountSubtree(tree, 'l1000').map(a => a.okey)).toEqual(['l1000']);
   });
 });

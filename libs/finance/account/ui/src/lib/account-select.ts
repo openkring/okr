@@ -18,7 +18,8 @@ export interface AccountSelectI18n {
  * Picks an account of the chart of accounts. The selected value is the account's `okey` — that is
  * what every account link in the data model stores (`VatCodeModel.accountKey`,
  * `AccountingConfigModel.defaultExpenseAccountKey`, ...), never the account number.
- * Only leaf accounts are offered: groups and roots cannot be booked on.
+ * Only leaf accounts are offered: groups and roots cannot be booked on. The one exception is
+ * `[leavesOnly]="false"`, which offers the given list unfiltered (the Hauptkonto field).
  *
  * The list is shown in a modal with a searchbar (focused on open), so a bookkeeper can simply
  * type the account number — the search matches the number as a prefix and the name as a
@@ -135,9 +136,16 @@ export class AccountSelect {
   public allowEmpty = input(true);
   /** number + name-note instead of a labelled input; for table-like rows whose header names the column */
   public compact = input(false);
+  /**
+   * true (default): only bookable leaf accounts are offered. false: the given list is offered as
+   * it is — used by the account form's Hauptkonto field, which must offer exactly the opposite
+   * (roots and groups) and has already narrowed the list down to the valid parents.
+   */
+  public leavesOnly = input(true);
 
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   protected isCompact = computed(() => coerceBoolean(this.compact()));
+  protected isLeavesOnly = computed(() => coerceBoolean(this.leavesOnly()));
 
   protected isOpen = signal(false);
   protected searchTerm = signal('');
@@ -151,8 +159,10 @@ export class AccountSelect {
   protected readonly notFoundLabel = this.ownI18n.notFound;
 
   /** only leaf accounts can be booked on; sorted by account number so a number search reads naturally */
-  protected selectableAccounts = computed(() =>
-    [...leafAccounts(this.accounts())].sort((a, b) => a.id.localeCompare(b.id)));
+  protected selectableAccounts = computed(() => {
+    const _accounts = this.isLeavesOnly() ? leafAccounts(this.accounts()) : this.accounts();
+    return [..._accounts].sort((a, b) => a.id.localeCompare(b.id));
+  });
 
   protected readonly selectedAccount = computed(() => this.selectableAccounts().find((a) => a.okey === this.selectedKey()));
   protected readonly displayValue = computed(() => {
