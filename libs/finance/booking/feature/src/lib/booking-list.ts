@@ -39,7 +39,10 @@ function parseAmount(amount: string): number {
       <ion-title>
         {{ filteredCount() }}/{{ count() }} {{ store.i18n.list_title() }}
         @if(store.accountLabel(); as accountLabel) {
-          <span class="account-badge">{{ accountLabel }}</span>
+          <span class="account-badge">
+            {{ accountLabel }}
+            <ion-icon class="badge-clear" src="{{ 'cancel' | svgIcon }}" (click)="store.clearAccountFilter()" [attr.aria-label]="store.i18n.cancel()" />
+          </span>
         }
         @if(forReviewCount() > 0) {
           <span class="review-badge">{{ forReviewCount() }} {{ store.i18n.review_badge() }}</span>
@@ -127,6 +130,7 @@ function parseAmount(amount: string): number {
       background: var(--ion-color-light); color: var(--ion-color-light-contrast);
       vertical-align: middle;
     }
+    .badge-clear { font-size: 0.9rem; vertical-align: middle; margin-left: 0.2rem; cursor: pointer; }
     .review-badge {
       margin-left: 0.5rem; padding: 0.1rem 0.45rem;
       border-radius: 0.75rem; font-size: 0.7rem; font-weight: 600;

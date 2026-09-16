@@ -202,6 +202,12 @@ export const BookingStore = signalStore(
       await store.router.navigate(['/accounting', store.accountingTenantId(), 'journal', 'c-journal'], { queryParams: { accountKey } });
     },
 
+    /** The account badge's cancel: back to the unfiltered journal; year, status and search stay as they are. */
+    async clearAccountFilter(): Promise<void> {
+      patchState(store, { accountKey: '' });
+      await store.router.navigate(['/accounting', store.accountingTenantId(), 'journal', 'c-journal']);
+    },
+
     /** "Gegenpartei anzeigen": a person opens its page; an org opens its edit modal read-only. */
     async showCounterparty(booking: BookingModel): Promise<void> {
       const cp = booking.counterparty;
