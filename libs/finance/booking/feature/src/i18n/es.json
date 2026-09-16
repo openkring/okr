@@ -1,10 +1,14 @@
 {
   "list": {
-    "title": "Asientos"
+    "title": "Diario"
   },
   "empty": "No se encontraron asientos.",
   "as": {
-    "title": "Asiento"
+    "title": "Asiento",
+    "showCredit": "Mostrar cuenta de haber",
+    "showDebit": "Mostrar cuenta de debe",
+    "showCounterparty": "Mostrar contraparte",
+    "noCounterparty": "Este asiento no tiene contraparte."
   },
   "cancel": {
     "label": "Cancelar"
@@ -70,5 +74,67 @@
   "counterparty": {
     "title": "Contraparte",
     "select": "seleccionar"
+  },
+  "modal": {
+    "create": "Nuevo asiento",
+    "edit": "Editar asiento",
+    "view": "Asiento"
+  },
+  "changeConfirmation": {
+    "cancel": "Cancelar",
+    "ok": "Guardar"
+  },
+  "form": {
+    "date": {
+      "label": "Fecha",
+      "placeholder": "DD.MM.AAAA"
+    },
+    "name": {
+      "label": "Nombre",
+      "placeholder": "p. ej. alquiler enero",
+      "helper": "Así aparece el asiento en el diario."
+    },
+    "counterparty": {
+      "label": "Contraparte"
+    },
+    "credit": {
+      "label": "Cuenta de haber"
+    },
+    "debit": {
+      "label": "Cuenta de debe"
+    },
+    "amount": {
+      "label": "Importe",
+      "placeholder": "0.00"
+    },
+    "total": {
+      "label": "Total"
+    },
+    "fxAmount": {
+      "label": "Importe en moneda extranjera",
+      "placeholder": "0.00"
+    },
+    "fxCurrency": {
+      "label": "Moneda extranjera"
+    },
+    "vat": {
+      "label": "Código IVA"
+    },
+    "details": {
+      "toggle": "Moneda extranjera e IVA"
+    },
+    "line": {
+      "add": "Añadir línea",
+      "remove": "Quitar línea"
+    },
+    "notes": {
+      "label": "Notas",
+      "placeholder": "Observaciones sobre el asiento"
+    }
+  },
+  "validation": {
+    "date": "Introduce una fecha válida.",
+    "pairsEmpty": "Un asiento necesita al menos una línea.",
+    "pairsIncomplete": "Cada línea necesita una cuenta de debe, otra cuenta de haber y un importe mayor que cero."
   }
 }

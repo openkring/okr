@@ -1,6 +1,7 @@
 import { computed, inject, Injector } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
+import { Router } from '@angular/router';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { firstValueFrom } from 'rxjs';
 import { take } from 'rxjs/operators';
@@ -13,6 +14,7 @@ import { exportCsv } from '@okr/shared-util-angular';
 
 import { AccountingStore } from '@okr/finance-accounting-feature';
 import { AccountService } from '@okr/finance-account-data-access';
+import { VatCodeService } from '@okr/finance-vat-code-data-access';
 import { BookingLineService, BookingService, ReviewBookingLine } from '@okr/finance-booking-data-access';
 import {
   BOOKING_ACTIONS,
@@ -59,6 +61,8 @@ export const BookingStore = signalStore(
     docGenerationService: inject(DocGenerationService),
     toastController: inject(ToastController),
     injector: inject(Injector),
+    router: inject(Router),
+    vatCodeService: inject(VatCodeService),
   })),
   withProps(store => ({
     i18n: store.i18nService.translateAll(BOOKING_I18N_KEYS),
@@ -70,6 +74,9 @@ export const BookingStore = signalStore(
     }),
     accountsResource: rxResource({
       stream: () => store.accountService.list(store.accountingStore.accountingTenantId(), 'id', 'asc'),
+    }),
+    vatCodesResource: rxResource({
+      stream: () => store.vatCodeService.list(store.accountingStore.accountingTenantId()),
     }),
   })),
   withComputed(store => ({
@@ -89,6 +96,12 @@ export const BookingStore = signalStore(
       for (const a of store.accountsResource.value() ?? []) map.set(a.okey, a.id);
       return map;
     }),
+    accountNameByKey: computed(() => {
+      const map = new Map<string, string>();
+      for (const a of store.accountsResource.value() ?? []) map.set(a.okey, a.name);
+      return map;
+    }),
+    locale: computed(() => store.appStore.appConfig()?.locale || 'de-ch'),
     linesByBooking: computed(() => {
       const map = new Map<string, BookingLineModel[]>();
       for (const line of store.linesResource.value() ?? []) {
@@ -103,9 +116,10 @@ export const BookingStore = signalStore(
     // Flattened journal rows for display, newest booking first.
     journalRows: computed<JournalRow[]>(() => {
       const accountIdByKey = store.accountIdByKey();
+      const accountNameByKey = store.accountNameByKey();
       const linesByBooking = store.linesByBooking();
       return store.bookings()
-        .map(b => toJournalRow(b, linesByBooking.get(b.okey) ?? [], accountIdByKey))
+        .map(b => toJournalRow(b, linesByBooking.get(b.okey) ?? [], accountIdByKey, accountNameByKey))
         .sort((a, b) => (b.booking.date ?? '').localeCompare(a.booking.date ?? '') || b.booking.bookingNo - a.booking.bookingNo);
     }),
     // Distinct booking years (desc), always including the current year for the filter.
@@ -174,6 +188,41 @@ export const BookingStore = signalStore(
       await exportCsv(data, `journal-${getTodayStr()}`);
     },
 
+    /** Everything the edit modal needs beyond the booking: leaf accounts, VAT codes, the locale of the date input. */
+    modalProps(booking: BookingModel, lines: BookingLineModel[], readOnly: boolean): Record<string, unknown> {
+      return {
+        booking, lines, readOnly, currentUser: store.currentUser(),
+        accounts: store.accountsResource.value() ?? [], vatCodes: store.vatCodesResource.value() ?? [], locale: store.locale(),
+      };
+    },
+
+    /** "Soll-/Haben-Konto anzeigen": the journal filtered on that account (the account's ledger view). */
+    async showAccount(accountKey: string): Promise<void> {
+      if (!accountKey) return;
+      await store.router.navigate(['/accounting', store.accountingTenantId(), 'journal', 'c-journal'], { queryParams: { accountKey } });
+    },
+
+    /** "Gegenpartei anzeigen": a person opens its page; an org opens its edit modal read-only. */
+    async showCounterparty(booking: BookingModel): Promise<void> {
+      const cp = booking.counterparty;
+      if (!cp?.key) { await this.toast(store.i18n.as_no_counterparty()); return; }
+      if (cp.modelType === 'person') {
+        await store.router.navigate(['/person', cp.key]);
+        return;
+      }
+      if (cp.modelType === 'org') {
+        const org = await firstValueFrom(store.orgService.read(cp.key).pipe(take(1)));
+        if (!org) { await this.toast(store.i18n.action_failed()); return; }
+        const { OrgEditModal } = await import('@okr/subject-org-feature');
+        const modal = await store.modalController.create({
+          component: OrgEditModal,
+          componentProps: { org, currentUser: store.currentUser(), tags: '', readOnly: true },
+        });
+        await modal.present();
+        await modal.onDidDismiss();
+      }
+    },
+
     async openCreate(): Promise<void> {
       if (store.isReadOnly()) return;
       const tenantId = store.tenantId();
@@ -185,7 +234,8 @@ export const BookingStore = signalStore(
     async openEdit(booking: BookingModel, lines: BookingLineModel[], readOnly = true): Promise<void> {
       const modal = await store.modalController.create({
         component: BookingEditModal,
-        componentProps: { booking, lines, readOnly, currentUser: store.currentUser() },
+        componentProps: this.modalProps(booking, lines, readOnly),
+        cssClass: 'wide-modal',
       });
       await modal.present();
       const { data, role } = await modal.onDidDismiss<{ booking: BookingModel; lines: BookingLineModel[] }>();
@@ -251,7 +301,8 @@ export const BookingStore = signalStore(
     async openReview(booking: BookingModel, lines: BookingLineModel[]): Promise<void> {
       const modal = await store.modalController.create({
         component: BookingEditModal,
-        componentProps: { booking, lines, readOnly: false, currentUser: store.currentUser() },
+        componentProps: this.modalProps(booking, lines, false),
+        cssClass: 'wide-modal',
       });
       await modal.present();
       const { data, role } = await modal.onDidDismiss<{ booking: BookingModel; lines: BookingLineModel[] }>();

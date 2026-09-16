@@ -1,10 +1,14 @@
 {
   "list": {
-    "title": "Écritures"
+    "title": "Journal"
   },
   "empty": "Aucune écriture trouvée.",
   "as": {
-    "title": "Écriture"
+    "title": "Écriture",
+    "showCredit": "Afficher le compte crédit",
+    "showDebit": "Afficher le compte débit",
+    "showCounterparty": "Afficher la contrepartie",
+    "noCounterparty": "Cette écriture n'a pas de contrepartie."
   },
   "cancel": {
     "label": "Annuler"
@@ -70,5 +74,67 @@
   "counterparty": {
     "title": "Contrepartie",
     "select": "sélectionner"
+  },
+  "modal": {
+    "create": "Nouvelle écriture",
+    "edit": "Modifier l'écriture",
+    "view": "Écriture"
+  },
+  "changeConfirmation": {
+    "cancel": "Annuler",
+    "ok": "Enregistrer"
+  },
+  "form": {
+    "date": {
+      "label": "Date",
+      "placeholder": "JJ.MM.AAAA"
+    },
+    "name": {
+      "label": "Nom",
+      "placeholder": "p.ex. loyer janvier",
+      "helper": "C'est ainsi que l'écriture apparaît dans le journal."
+    },
+    "counterparty": {
+      "label": "Contrepartie"
+    },
+    "credit": {
+      "label": "Compte crédit"
+    },
+    "debit": {
+      "label": "Compte débit"
+    },
+    "amount": {
+      "label": "Montant",
+      "placeholder": "0.00"
+    },
+    "total": {
+      "label": "Total"
+    },
+    "fxAmount": {
+      "label": "Montant en devise étrangère",
+      "placeholder": "0.00"
+    },
+    "fxCurrency": {
+      "label": "Devise étrangère"
+    },
+    "vat": {
+      "label": "Code TVA"
+    },
+    "details": {
+      "toggle": "Devise étrangère et TVA"
+    },
+    "line": {
+      "add": "Ajouter une ligne",
+      "remove": "Supprimer la ligne"
+    },
+    "notes": {
+      "label": "Notes",
+      "placeholder": "Remarques sur l'écriture"
+    }
+  },
+  "validation": {
+    "date": "Merci de saisir une date valide.",
+    "pairsEmpty": "Une écriture a besoin d’au moins une ligne.",
+    "pairsIncomplete": "Chaque ligne a besoin d’un compte débit, d’un compte crédit différent et d’un montant supérieur à zéro."
   }
 }

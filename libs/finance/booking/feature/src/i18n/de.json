@@ -1,10 +1,14 @@
 {
   "list": {
-    "title": "Buchungen"
+    "title": "Journal"
   },
   "empty": "Keine Buchungen gefunden.",
   "as": {
-    "title": "Buchung"
+    "title": "Buchung",
+    "showCredit": "Haben-Konto anzeigen",
+    "showDebit": "Soll-Konto anzeigen",
+    "showCounterparty": "Gegenpartei anzeigen",
+    "noCounterparty": "Diese Buchung hat keine Gegenpartei."
   },
   "cancel": {
     "label": "Abbrechen"
@@ -70,5 +74,67 @@
   "counterparty": {
     "title": "Gegenpartei",
     "select": "auswählen"
+  },
+  "modal": {
+    "create": "Neue Buchung",
+    "edit": "Buchung ändern",
+    "view": "Buchung"
+  },
+  "changeConfirmation": {
+    "cancel": "Abbrechen",
+    "ok": "Speichern"
+  },
+  "form": {
+    "date": {
+      "label": "Datum",
+      "placeholder": "TT.MM.JJJJ"
+    },
+    "name": {
+      "label": "Name",
+      "placeholder": "z.B. Miete Januar",
+      "helper": "So erscheint die Buchung im Journal."
+    },
+    "counterparty": {
+      "label": "Gegenpartei"
+    },
+    "credit": {
+      "label": "Haben-Konto"
+    },
+    "debit": {
+      "label": "Soll-Konto"
+    },
+    "amount": {
+      "label": "Betrag",
+      "placeholder": "0.00"
+    },
+    "total": {
+      "label": "Total"
+    },
+    "fxAmount": {
+      "label": "Betrag in Fremdwährung",
+      "placeholder": "0.00"
+    },
+    "fxCurrency": {
+      "label": "Fremdwährung"
+    },
+    "vat": {
+      "label": "MWST-Code"
+    },
+    "details": {
+      "toggle": "Fremdwährung und MWST"
+    },
+    "line": {
+      "add": "Zeile hinzufügen",
+      "remove": "Zeile entfernen"
+    },
+    "notes": {
+      "label": "Notizen",
+      "placeholder": "Bemerkungen zur Buchung"
+    }
+  },
+  "validation": {
+    "date": "Bitte ein gültiges Datum eingeben.",
+    "pairsEmpty": "Eine Buchung braucht mindestens eine Zeile.",
+    "pairsIncomplete": "Jede Zeile braucht ein Soll-Konto, ein anderes Haben-Konto und einen Betrag grösser als null."
   }
 }

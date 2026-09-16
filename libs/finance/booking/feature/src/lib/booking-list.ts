@@ -1,5 +1,5 @@
 import { Component, computed, effect, inject, input, signal } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonBackdrop, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonBackdrop, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonNote, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { BookingLineModel, BookingModel, RoleName } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
@@ -29,7 +29,7 @@ function parseAmount(amount: string): number {
     Spinner, EmptyList, Menu, ListFilter, ReadOnlyBanner,
     IonHeader, IonToolbar, IonTitle, IonContent,
     IonList, IonItem, IonLabel, IonIcon, IonButton, IonButtons, IonMenuButton,
-    IonPopover, IonBackdrop, IonGrid, IonRow, IonCol,
+    IonPopover, IonBackdrop, IonGrid, IonRow, IonCol, IonNote,
   ],
   providers: [BookingStore],
   template: `
@@ -101,8 +101,14 @@ function parseAmount(amount: string): number {
                   }
                   {{ row.date }}
                 </ion-col>
-                <ion-col size-md="2" class="ion-hide-sm-down">{{ row.creditAccount }}</ion-col>
-                <ion-col size-md="2" class="ion-hide-sm-down">{{ row.debitAccount }}</ion-col>
+                <ion-col size-md="2" class="ion-hide-sm-down">
+                  {{ row.creditAccount }}
+                  @if (row.creditAccountName) { <br /><ion-note class="account-name">{{ row.creditAccountName }}</ion-note> }
+                </ion-col>
+                <ion-col size-md="2" class="ion-hide-sm-down">
+                  {{ row.debitAccount }}
+                  @if (row.debitAccountName) { <br /><ion-note class="account-name">{{ row.debitAccountName }}</ion-note> }
+                </ion-col>
                 <ion-col size="5" size-md="4">{{ row.accountName }}</ion-col>
                 <ion-col size="4" size-md="2" class="ion-text-end">{{ row.amount }}</ion-col>
               </ion-row>
@@ -128,6 +134,7 @@ function parseAmount(amount: string): number {
       vertical-align: middle;
     }
     .review-icon { font-size: 1rem; vertical-align: text-bottom; color: var(--ion-color-warning-shade); }
+    .account-name { font-size: 0.75rem; }
     ion-item.for-review { --background: rgba(var(--ion-color-warning-rgb), 0.12); }
   `],
 })
@@ -206,6 +213,13 @@ export class BookingList {
   }
 
   private addActionSheetButtons(options: ActionSheetOptions, actions: BookingAction[], booking: BookingModel): void {
+    // Where the money went: the two accounts and the counterparty, before anything that changes the booking.
+    options.buttons.push(createActionSheetButton('booking.showCredit', this.store.i18n.as_show_credit(), this.imgixBaseUrl, 'eye-on'));
+    options.buttons.push(createActionSheetButton('booking.showDebit', this.store.i18n.as_show_debit(), this.imgixBaseUrl, 'eye-on'));
+    if (booking.counterparty?.key) {
+      options.buttons.push(createActionSheetButton('booking.showCounterparty', this.store.i18n.as_show_counterparty(), this.imgixBaseUrl, 'person'));
+    }
+    options.buttons.push(createActionSheetDivider());
     // Treasurer decision on an OCR-proposed booking comes first — it is why the row was opened.
     if (this.store.canReview(booking)) {
       options.buttons.push(createActionSheetButton('booking.approve', this.store.i18n.review_approve(), this.imgixBaseUrl, 'checkbox-circle'));
@@ -236,6 +250,9 @@ export class BookingList {
     const { data } = await actionSheet.onDidDismiss();
     if (!data) return;
     const action: string = data.action;
+    if (action === 'booking.showCredit') { await this.store.showAccount(lines.find(l => l.creditAmount)?.accountKey ?? ''); return; }
+    if (action === 'booking.showDebit') { await this.store.showAccount(lines.find(l => l.debitAmount)?.accountKey ?? ''); return; }
+    if (action === 'booking.showCounterparty') { await this.store.showCounterparty(booking); return; }
     if (action === 'booking.approve') { await this.store.approve(booking); return; }
     if (action === 'booking.review')  { await this.store.openReview(booking, lines); return; }
     if (action === 'booking.reject')  { await this.store.reject(booking); return; }

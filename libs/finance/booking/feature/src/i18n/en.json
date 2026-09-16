@@ -1,10 +1,14 @@
 {
   "list": {
-    "title": "Bookings"
+    "title": "Journal"
   },
   "empty": "No bookings found.",
   "as": {
-    "title": "Booking"
+    "title": "Booking",
+    "showCredit": "Show credit account",
+    "showDebit": "Show debit account",
+    "showCounterparty": "Show counterparty",
+    "noCounterparty": "This booking has no counterparty."
   },
   "cancel": {
     "label": "Cancel"
@@ -70,5 +74,67 @@
   "counterparty": {
     "title": "Counterparty",
     "select": "select"
+  },
+  "modal": {
+    "create": "New booking",
+    "edit": "Edit booking",
+    "view": "Booking"
+  },
+  "changeConfirmation": {
+    "cancel": "Cancel",
+    "ok": "Save"
+  },
+  "form": {
+    "date": {
+      "label": "Date",
+      "placeholder": "DD.MM.YYYY"
+    },
+    "name": {
+      "label": "Name",
+      "placeholder": "e.g. rent January",
+      "helper": "This is how the booking appears in the journal."
+    },
+    "counterparty": {
+      "label": "Counterparty"
+    },
+    "credit": {
+      "label": "Credit account"
+    },
+    "debit": {
+      "label": "Debit account"
+    },
+    "amount": {
+      "label": "Amount",
+      "placeholder": "0.00"
+    },
+    "total": {
+      "label": "Total"
+    },
+    "fxAmount": {
+      "label": "Amount in foreign currency",
+      "placeholder": "0.00"
+    },
+    "fxCurrency": {
+      "label": "Foreign currency"
+    },
+    "vat": {
+      "label": "VAT code"
+    },
+    "details": {
+      "toggle": "Foreign currency and VAT"
+    },
+    "line": {
+      "add": "Add line",
+      "remove": "Remove line"
+    },
+    "notes": {
+      "label": "Notes",
+      "placeholder": "Remarks on the booking"
+    }
+  },
+  "validation": {
+    "date": "Please enter a valid date.",
+    "pairsEmpty": "A booking needs at least one line.",
+    "pairsIncomplete": "Every line needs a debit account, a different credit account and an amount greater than zero."
   }
 }

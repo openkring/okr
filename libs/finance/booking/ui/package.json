@@ -9,6 +9,12 @@
     "tslib": "^2.8.1",
     "@okr/shared-models": "*",
     "@okr/shared-i18n": "*",
-    "@okr/shared-util-core": "*"
+    "@okr/shared-util-core": "*",
+    "@okr/shared-pipes": "*",
+    "@okr/shared-ui": "*",
+    "@okr/shared-util-angular": "*",
+    "@okr/avatar-ui": "*",
+    "@okr/finance-account-ui": "*",
+    "@okr/finance-booking-util": "*"
   }
 }

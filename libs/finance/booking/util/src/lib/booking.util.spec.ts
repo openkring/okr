@@ -1,8 +1,15 @@
 import { describe, it, expect } from 'vitest';
 import { BookingLineModel, BookingModel } from '@okr/shared-models';
+import { bookingValidations } from './booking.validations';
 import {
   bookingYear,
+  emptyBookingPair,
   formatMinorAmount,
+  linesToPairs,
+  pairsToLines,
+  pairsTotal,
+  toBookingFormData,
+  type BookingFormData,
   generateBookingNo,
   journalToRows,
   matchesJournalSearch,
@@ -111,6 +118,8 @@ describe('matchesJournalSearch', () => {
     year: 2026,
     creditAccount: '1020',
     debitAccount: '6000',
+    creditAccountName: '',
+    debitAccountName: '',
     accountName: 'Mitgliederbeitrag',
     amount: '100.00',
     currency: 'CHF',
@@ -137,7 +146,7 @@ describe('journalToRows', () => {
     const row: JournalRow = {
       booking: makeBooking(),
       okey: 'b1', date: '15.03.2026', year: 2026,
-      creditAccount: '1020', debitAccount: '6000',
+      creditAccount: '1020', debitAccount: '6000', creditAccountName: '', debitAccountName: '',
       accountName: 'Mitgliederbeitrag', amount: '100.00', currency: 'CHF',
     };
     const rows = journalToRows([row], { date: 'Datum', credit: 'Haben', debit: 'Soll', name: 'Text', amount: 'Betrag' });
@@ -151,5 +160,68 @@ describe('generateBookingNo', () => {
     expect(generateBookingNo(2026, 1)).toBe('2026-000001');
     expect(generateBookingNo(2026, 999)).toBe('2026-000999');
     expect(generateBookingNo(2026, 1000000)).toBe('2026-1000000');
+  });
+});
+
+describe('linesToPairs / pairsToLines', () => {
+  const line = (accountKey: string, side: 'debit' | 'credit', amount: number, extra: Partial<BookingLineModel> = {}): BookingLineModel => {
+    const l = new BookingLineModel('bka', 'bka');
+    l.accountKey = accountKey;
+    if (side === 'debit') l.debitAmount = { amount, currency: 'CHF', periodicity: 'one-time' };
+    else l.creditAmount = { amount, currency: 'CHF', periodicity: 'one-time' };
+    return Object.assign(l, extra);
+  };
+
+  it('a two-line booking is one pair carrying fx and vat', () => {
+    const lines = [line('a6000', 'debit', 10000, { vatCodeKey: 'VST', amountFx: { amount: 9000, currency: 'EUR', periodicity: 'one-time' } }), line('a1020', 'credit', 10000)];
+    expect(linesToPairs(lines)).toEqual([{ debitAccountKey: 'a6000', creditAccountKey: 'a1020', amount: 10000, amountFx: 9000, fxCurrency: 'EUR', vatCodeKey: 'VST', vatSide: 'debit' }]);
+  });
+  it('a split booking is one pair per credit; an unbalanced one leaves an open pair', () => {
+    expect(linesToPairs([line('a1020', 'debit', 10000), line('a3000', 'credit', 6000), line('a3001', 'credit', 4000)])).toEqual([
+      { debitAccountKey: 'a1020', creditAccountKey: 'a3000', amount: 6000, amountFx: 0, fxCurrency: 'EUR', vatCodeKey: '', vatSide: 'debit' },
+      { debitAccountKey: 'a1020', creditAccountKey: 'a3001', amount: 4000, amountFx: 0, fxCurrency: 'EUR', vatCodeKey: '', vatSide: 'debit' },
+    ]);
+    expect(linesToPairs([line('a1020', 'debit', 10000), line('a3000', 'credit', 6000)])).toEqual([
+      { debitAccountKey: 'a1020', creditAccountKey: 'a3000', amount: 6000, amountFx: 0, fxCurrency: 'EUR', vatCodeKey: '', vatSide: 'debit' },
+      { debitAccountKey: 'a1020', creditAccountKey: '', amount: 4000, amountFx: 0, fxCurrency: 'EUR', vatCodeKey: '', vatSide: 'debit' },
+    ]);
+  });
+  it('pairsToLines merges the same account and side, debit lines first', () => {
+    const lines = pairsToLines([
+      { debitAccountKey: 'a1020', creditAccountKey: 'a3000', amount: 6000, amountFx: 0, fxCurrency: 'EUR', vatCodeKey: '', vatSide: 'debit' },
+      { debitAccountKey: 'a1020', creditAccountKey: 'a3001', amount: 4000, amountFx: 0, fxCurrency: 'EUR', vatCodeKey: 'UST', vatSide: 'credit' },
+    ], 'bka', 'bka', 'b1');
+    expect(lines.map(l => [l.accountKey, l.debitAmount?.amount, l.creditAmount?.amount, l.vatCodeKey, l.bookingKey])).toEqual([
+      ['a1020', 10000, undefined, '', 'b1'], ['a3000', undefined, 6000, '', 'b1'], ['a3001', undefined, 4000, 'UST', 'b1'],
+    ]);
+    expect(lines[0].amountFx).toBeUndefined();
+  });
+  it('round-trips a booking with fx', () => {
+    const original = [line('a6000', 'debit', 10000, { amountFx: { amount: 9000, currency: 'EUR', periodicity: 'one-time' } }), line('a1020', 'credit', 10000, { amountFx: { amount: 9000, currency: 'EUR', periodicity: 'one-time' } })];
+    const back = pairsToLines(linesToPairs(original), 'bka', 'bka', 'k');
+    expect(back.map(l => [l.accountKey, l.debitAmount?.amount ?? l.creditAmount?.amount, l.amountFx?.amount])).toEqual([['a6000', 10000, 9000], ['a1020', 10000, 9000]]);
+  });
+  it('toBookingFormData seeds one empty pair for a new booking; pairsTotal sums', () => {
+    const b = new BookingModel('bka', 'bka');
+    expect(toBookingFormData(b, []).pairs).toEqual([emptyBookingPair()]);
+    expect(pairsTotal([{ ...emptyBookingPair(), amount: 100 }, { ...emptyBookingPair(), amount: 250 }])).toBe(350);
+  });
+  it('toJournalRow carries the account names when given', () => {
+    const b = new BookingModel('bka', 'bka'); b.date = '20260101'; b.title = 'x';
+    const row = toJournalRow(b, [line('a6000', 'debit', 100), line('a1020', 'credit', 100)], new Map([['a6000', '6000'], ['a1020', '1020']]), new Map([['a6000', 'Miete'], ['a1020', 'ZKB']]));
+    expect(row).toMatchObject({ creditAccount: '1020', debitAccount: '6000', creditAccountName: 'ZKB', debitAccountName: 'Miete' });
+  });
+});
+
+describe('bookingValidations', () => {
+  const ok: BookingFormData = { okey: '', title: 'Miete', date: '20260101', notes: '', counterparty: undefined,
+    pairs: [{ debitAccountKey: 'a', creditAccountKey: 'b', amount: 100, amountFx: 0, fxCurrency: 'EUR', vatCodeKey: '', vatSide: 'debit' }] };
+  it('accepts a complete booking and rejects a bad date, no pairs, an incomplete pair', () => {
+    expect(bookingValidations(ok, '', '').isValid()).toBe(true);
+    expect(bookingValidations({ ...ok, date: '2026-01-01' }, '', '').isValid()).toBe(false);
+    expect(bookingValidations({ ...ok, pairs: [] }, '', '').isValid()).toBe(false);
+    expect(bookingValidations({ ...ok, pairs: [{ ...ok.pairs[0], creditAccountKey: 'a' }] }, '', '').isValid()).toBe(false);
+    expect(bookingValidations({ ...ok, pairs: [{ ...ok.pairs[0], amount: 0 }] }, '', '').isValid()).toBe(false);
+    expect(bookingValidations({ ...ok, title: '' }, '', '').isValid()).toBe(false);
   });
 });

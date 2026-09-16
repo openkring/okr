@@ -1,10 +1,14 @@
 {
   "list": {
-    "title": "Registrazioni"
+    "title": "Giornale"
   },
   "empty": "Nessuna registrazione trovata.",
   "as": {
-    "title": "Registrazione"
+    "title": "Registrazione",
+    "showCredit": "Mostra conto avere",
+    "showDebit": "Mostra conto dare",
+    "showCounterparty": "Mostra controparte",
+    "noCounterparty": "Questa registrazione non ha una controparte."
   },
   "cancel": {
     "label": "Annulla"
@@ -70,5 +74,67 @@
   "counterparty": {
     "title": "Controparte",
     "select": "selezionare"
+  },
+  "modal": {
+    "create": "Nuova registrazione",
+    "edit": "Modifica registrazione",
+    "view": "Registrazione"
+  },
+  "changeConfirmation": {
+    "cancel": "Annulla",
+    "ok": "Salva"
+  },
+  "form": {
+    "date": {
+      "label": "Data",
+      "placeholder": "GG.MM.AAAA"
+    },
+    "name": {
+      "label": "Nome",
+      "placeholder": "p.es. affitto gennaio",
+      "helper": "Così appare la registrazione nel giornale."
+    },
+    "counterparty": {
+      "label": "Controparte"
+    },
+    "credit": {
+      "label": "Conto avere"
+    },
+    "debit": {
+      "label": "Conto dare"
+    },
+    "amount": {
+      "label": "Importo",
+      "placeholder": "0.00"
+    },
+    "total": {
+      "label": "Totale"
+    },
+    "fxAmount": {
+      "label": "Importo in valuta estera",
+      "placeholder": "0.00"
+    },
+    "fxCurrency": {
+      "label": "Valuta estera"
+    },
+    "vat": {
+      "label": "Codice IVA"
+    },
+    "details": {
+      "toggle": "Valuta estera e IVA"
+    },
+    "line": {
+      "add": "Aggiungi riga",
+      "remove": "Rimuovi riga"
+    },
+    "notes": {
+      "label": "Note",
+      "placeholder": "Osservazioni sulla registrazione"
+    }
+  },
+  "validation": {
+    "date": "Inserisci una data valida.",
+    "pairsEmpty": "Una registrazione richiede almeno una riga.",
+    "pairsIncomplete": "Ogni riga richiede un conto dare, un conto avere diverso e un importo maggiore di zero."
   }
 }
