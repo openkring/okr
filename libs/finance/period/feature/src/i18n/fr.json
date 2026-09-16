@@ -12,6 +12,18 @@
   "unlock": {
     "action": "Déverrouiller la période"
   },
+  "bookings": {
+    "label": "écritures"
+  },
+  "showBookings": {
+    "action": "Afficher les écritures"
+  },
+  "showBalance": {
+    "action": "Afficher le bilan"
+  },
+  "showIncomeStatement": {
+    "action": "Afficher le compte de résultat"
+  },
   "create": {
     "action": "Créer une période",
     "prompt": "Pour quelle année veux-tu créer une période ?",

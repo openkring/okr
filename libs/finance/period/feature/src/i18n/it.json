@@ -12,6 +12,18 @@
   "unlock": {
     "action": "Sblocca periodo"
   },
+  "bookings": {
+    "label": "registrazioni"
+  },
+  "showBookings": {
+    "action": "Mostra registrazioni"
+  },
+  "showBalance": {
+    "action": "Mostra bilancio"
+  },
+  "showIncomeStatement": {
+    "action": "Mostra conto economico"
+  },
   "create": {
     "action": "Crea periodo",
     "prompt": "Per quale anno vuoi creare un periodo?",

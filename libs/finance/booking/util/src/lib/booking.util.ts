@@ -22,6 +22,12 @@ export function bookingYear(booking: BookingModel): number {
   return d.length >= 4 ? Number(d.substring(0, 4)) : 0;
 }
 
+/** Extract the month (1-12) from a booking's yyyymmdd StoreDate (0 if unset). */
+export function bookingMonth(booking: BookingModel): number {
+  const d = booking.date ?? '';
+  return d.length >= 6 ? Number(d.substring(4, 6)) : 0;
+}
+
 /** Format a minor-unit amount (e.g. Rappen) as a Swiss-formatted major-unit string. */
 export function formatMinorAmount(minor: number): string {
   return (minor / 100).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });

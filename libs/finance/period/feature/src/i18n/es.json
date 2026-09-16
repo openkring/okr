@@ -12,6 +12,18 @@
   "unlock": {
     "action": "Desbloquear período"
   },
+  "bookings": {
+    "label": "asientos"
+  },
+  "showBookings": {
+    "action": "Mostrar asientos"
+  },
+  "showBalance": {
+    "action": "Mostrar balance"
+  },
+  "showIncomeStatement": {
+    "action": "Mostrar cuenta de resultados"
+  },
   "create": {
     "action": "Crear período",
     "prompt": "¿Para qué año quieres crear un período?",

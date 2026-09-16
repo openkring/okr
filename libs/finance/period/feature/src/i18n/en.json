@@ -12,6 +12,18 @@
   "unlock": {
     "action": "Unlock period"
   },
+  "bookings": {
+    "label": "bookings"
+  },
+  "showBookings": {
+    "action": "Show bookings"
+  },
+  "showBalance": {
+    "action": "Show balance sheet"
+  },
+  "showIncomeStatement": {
+    "action": "Show income statement"
+  },
   "create": {
     "action": "Create period",
     "prompt": "For which year should a period be created?",

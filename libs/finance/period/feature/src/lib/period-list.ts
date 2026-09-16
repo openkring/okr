@@ -1,11 +1,12 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonBadge, IonButton, IonButtons, IonContent, IonHeader, IonIcon,
-  IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+  IonItem, IonLabel, IonList, IonMenuButton, IonNote, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { PeriodModel, RoleName } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, Spinner } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@okr/shared-util-angular';
+import { formatMinorAmount } from '@okr/finance-booking-util';
 import { hasRole } from '@okr/shared-util-core';
 
 import { Menu } from '@okr/cms-menu-feature';
@@ -20,7 +21,7 @@ import { PeriodStore } from './period.store';
   imports: [
     SvgIconPipe, Spinner, EmptyList, Menu, ReadOnlyBanner,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
-    IonContent, IonList, IonItem, IonLabel, IonBadge, IonPopover,
+    IonContent, IonList, IonItem, IonLabel, IonBadge, IonNote, IonPopover,
   ],
   providers: [PeriodStore],
   template: `
@@ -57,7 +58,11 @@ import { PeriodStore } from './period.store';
             <ion-item button [detail]="false" (click)="showActions(period)">
               <ion-icon slot="start" src="{{ (period.isLocked ? 'lock-closed' : 'lock-open') | svgIcon }}" />
               <ion-label>
-                <h2>{{ periodLabel(period) }}</h2>
+                <h2>
+                  {{ periodLabel(period) }}
+                  <ion-note class="count">{{ bookingCount(period) }} {{ store.i18n.bookings_label() }}</ion-note>
+                  <span class="result" [class.loss]="result(period) < 0">{{ resultLabel(period) }}</span>
+                </h2>
               </ion-label>
               @if (period.isLocked) {
                 <ion-badge slot="end" color="warning">{{ store.i18n.locked_label() }}</ion-badge>
@@ -68,6 +73,11 @@ import { PeriodStore } from './period.store';
       }
     </ion-content>
   `,
+  styles: [`
+    .count { margin-left: 0.75rem; font-size: 0.8rem; }
+    .result { margin-left: 0.75rem; font-size: 0.8rem; font-weight: 600; color: var(--ion-color-success); }
+    .result.loss { color: var(--ion-color-danger); }
+  `],
 })
 export class PeriodList {
   protected readonly store = inject(PeriodStore);
@@ -83,6 +93,20 @@ export class PeriodList {
   protected readonly currentUser = computed(() => this.store.currentUser());
   // Locking and creating periods is a treasurer task; an externally managed accounting is read-only for everyone.
   protected readonly canChange = computed(() => !this.store.isReadOnly() && this.hasRole('treasurer'));
+
+  /** Number of bookings dated in the period (drafts included — the journal shows them too). */
+  protected bookingCount(period: PeriodModel): number {
+    return this.store.statsByPeriod().get(period.okey)?.bookingCount ?? 0;
+  }
+
+  /** Jahresgewinn of the period in minor units; negative = Verlust (shown red, with its minus sign). */
+  protected result(period: PeriodModel): number {
+    return this.store.statsByPeriod().get(period.okey)?.result ?? 0;
+  }
+
+  protected resultLabel(period: PeriodModel): string {
+    return formatMinorAmount(this.result(period));
+  }
 
   protected periodLabel(period: PeriodModel): string {
     return period.month > 0 ? `${period.year}-${String(period.month).padStart(2, '0')}` : String(period.year);
@@ -106,6 +130,10 @@ export class PeriodList {
   }
 
   private addActionSheetButtons(options: ActionSheetOptions, period: PeriodModel): void {
+    // Everyone who may see the period list may also look at its bookings — reading is not a treasurer task.
+    options.buttons.push(createActionSheetButton('period.showBookings', this.store.i18n.show_bookings_action(), this.imgixBaseUrl, 'booking'));
+    options.buttons.push(createActionSheetButton('period.showBalance', this.store.i18n.show_balance_action(), this.imgixBaseUrl, 'chart'));
+    options.buttons.push(createActionSheetButton('period.showIncomeStatement', this.store.i18n.show_income_statement_action(), this.imgixBaseUrl, 'chart'));
     if (this.canChange()) {
       if (period.isLocked) {
         options.buttons.push(createActionSheetButton('period.unlock', this.store.i18n.unlock_action(), this.imgixBaseUrl, 'lock-open'));
@@ -126,6 +154,9 @@ export class PeriodList {
     switch (data.action) {
       case 'period.lock':   await this.store.lock(period); break;
       case 'period.unlock': await this.store.unlock(period); break;
+      case 'period.showBookings': await this.store.showBookings(period); break;
+      case 'period.showBalance': await this.store.showReport(period, 'balance'); break;
+      case 'period.showIncomeStatement': await this.store.showReport(period, 'income-statement'); break;
     }
   }
 

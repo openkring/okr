@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { BookingLineModel, BookingModel } from '@okr/shared-models';
 import { bookingValidations } from './booking.validations';
 import {
+  bookingMonth,
   bookingYear,
   copyBooking,
   emptyBookingPair,
@@ -66,6 +67,17 @@ describe('bookingYear', () => {
   it('returns 0 when the date is empty/too short', () => {
     expect(bookingYear(makeBooking({ date: '' }))).toBe(0);
     expect(bookingYear(makeBooking({ date: '202' }))).toBe(0);
+  });
+});
+
+describe('bookingMonth', () => {
+  it('extracts the month from a yyyymmdd StoreDate', () => {
+    expect(bookingMonth(makeBooking({ date: '20260315' }))).toBe(3);
+    expect(bookingMonth(makeBooking({ date: '20261201' }))).toBe(12);
+  });
+  it('returns 0 when the date is empty/too short', () => {
+    expect(bookingMonth(makeBooking({ date: '' }))).toBe(0);
+    expect(bookingMonth(makeBooking({ date: '2026' }))).toBe(0);
   });
 });
 

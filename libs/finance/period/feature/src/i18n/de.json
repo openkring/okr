@@ -12,6 +12,18 @@
   "unlock": {
     "action": "Periode entsperren"
   },
+  "bookings": {
+    "label": "Buchungen"
+  },
+  "showBookings": {
+    "action": "Buchungen anzeigen"
+  },
+  "showBalance": {
+    "action": "Bilanz anzeigen"
+  },
+  "showIncomeStatement": {
+    "action": "ER anzeigen"
+  },
   "create": {
     "action": "Periode erstellen",
     "prompt": "Für welches Jahr soll eine Periode erstellt werden?",

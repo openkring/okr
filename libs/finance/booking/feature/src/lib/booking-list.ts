@@ -44,6 +44,12 @@ function parseAmount(amount: string): number {
             <ion-icon class="badge-clear" src="{{ 'cancel' | svgIcon }}" (click)="store.clearAccountFilter()" [attr.aria-label]="store.i18n.cancel()" />
           </span>
         }
+        @if(store.monthLabel(); as monthLabel) {
+          <span class="account-badge">
+            {{ monthLabel }}
+            <ion-icon class="badge-clear" src="{{ 'cancel' | svgIcon }}" (click)="store.clearMonthFilter()" [attr.aria-label]="store.i18n.cancel()" />
+          </span>
+        }
         @if(forReviewCount() > 0) {
           <span class="review-badge">{{ forReviewCount() }} {{ store.i18n.review_badge() }}</span>
         }
@@ -151,8 +157,18 @@ export class BookingList {
   // `?accountKey=<okey>` (query param, bound by withComponentInputBinding): show only bookings with a
   // line on that account — the account list navigates here from a leaf account in view mode.
   public readonly accountKey = input<string | undefined>();
+  // `?year=<yyyy>&month=<1-12>` (query params): the period list navigates here to show one period's
+  // bookings. `month` is omitted for an annual period.
+  public readonly year = input<string | undefined>();
+  public readonly month = input<string | undefined>();
 
   private readonly syncAccountKey = effect(() => this.store.setAccountKey(this.accountKey() ?? ''));
+  private readonly syncPeriod = effect(() => {
+    const year = Number(this.year());
+    if (Number.isInteger(year) && year > 0) this.store.setSelectedYear(year);
+    const month = Number(this.month());
+    this.store.setSelectedMonth(Number.isInteger(month) && month >= 1 && month <= 12 ? month : 0);
+  });
 
   protected readonly popupId = computed(() => 'c_bookings');
   protected readonly isLoading = computed(() => this.store.isLoading());

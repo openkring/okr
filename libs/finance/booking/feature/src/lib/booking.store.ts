@@ -22,6 +22,7 @@ import {
   BOOKING_I18N_KEYS,
   BookingI18n,
   bookingStatusCategory,
+  bookingMonth,
   bookingYear,
   buildReceiptPayload,
   canReviewBooking,
@@ -46,7 +47,7 @@ export type { BookingI18n };
 const ALL_YEARS = 99;   // sentinel emitted by okr-year-select for "all years"
 
 export const BookingStore = signalStore(
-  withState({ searchTerm: '', selectedYear: getYear(), selectedStatus: 'all', accountKey: '' }),
+  withState({ searchTerm: '', selectedYear: getYear(), selectedStatus: 'all', accountKey: '', selectedMonth: 0 }),
   withProps(() => ({
     bookingService: inject(BookingService),
     bookingLineService: inject(BookingLineService),
@@ -91,6 +92,11 @@ export const BookingStore = signalStore(
     accountLabel: computed(() => {
       const account = (store.accountsResource.value() ?? []).find(a => a.okey === store.accountKey());
       return account ? `${account.id} ${account.name}` : '';
+    }),
+    // "mm.yyyy" of the month the journal is narrowed to, '' when the whole year is shown.
+    monthLabel: computed(() => {
+      const month = store.selectedMonth();
+      return month > 0 ? `${String(month).padStart(2, '0')}.${store.selectedYear()}` : '';
     }),
     accountIdByKey: computed(() => {
       const map = new Map<string, string>();
@@ -140,10 +146,12 @@ export const BookingStore = signalStore(
       const term = store.searchTerm();
       const status = store.selectedStatus();
       const accountKey = store.accountKey();
+      const month = store.selectedMonth();
       const linesByBooking = store.linesByBooking();
       return store.journalRows()
         .filter(r => !accountKey || (linesByBooking.get(r.okey) ?? []).some(l => l.accountKey === accountKey))
         .filter(r => year === ALL_YEARS || r.year === year)
+        .filter(r => month === 0 || bookingMonth(r.booking) === month)
         .filter(r => status === 'all' || r.booking.status === status)
         .filter(r => matchesJournalSearch(r, term));
     }),
@@ -163,6 +171,11 @@ export const BookingStore = signalStore(
 
     setSelectedStatus(selectedStatus: string): void {
       patchState(store, { selectedStatus });
+    },
+
+    /** `?month=<1-12>`: narrows the journal to one month of the selected year; 0 = whole year. */
+    setSelectedMonth(selectedMonth: number): void {
+      patchState(store, { selectedMonth });
     },
 
     setAccountKey(accountKey: string): void {
@@ -201,6 +214,13 @@ export const BookingStore = signalStore(
     async showAccount(accountKey: string): Promise<void> {
       if (!accountKey) return;
       await store.router.navigate(['/accounting', store.accountingTenantId(), 'journal', 'c-journal'], { queryParams: { accountKey } });
+    },
+
+    /** The month badge's cancel: back to the whole selected year; status, search and account stay as they are. */
+    async clearMonthFilter(): Promise<void> {
+      patchState(store, { selectedMonth: 0 });
+      await store.router.navigate(['/accounting', store.accountingTenantId(), 'journal', 'c-journal'],
+        { queryParams: { accountKey: store.accountKey() || null, year: store.selectedYear() } });
     },
 
     /** The account badge's cancel: back to the unfiltered journal; year, status and search stay as they are. */
