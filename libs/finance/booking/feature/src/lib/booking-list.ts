@@ -76,8 +76,8 @@ function parseAmount(amount: string): number {
       <ion-grid>
         <ion-row>
           <ion-col size="3" size-md="2" class="clickable" (click)="setSort('date')"><ion-label><strong>{{ store.i18n.col_date() }}{{ sortIcon('date') }}</strong></ion-label></ion-col>
-          <ion-col size-md="2" class="ion-hide-sm-down clickable" (click)="setSort('haben')"><ion-label><strong>{{ store.i18n.col_credit() }}{{ sortIcon('haben') }}</strong></ion-label></ion-col>
           <ion-col size-md="2" class="ion-hide-sm-down clickable" (click)="setSort('soll')"><ion-label><strong>{{ store.i18n.col_debit() }}{{ sortIcon('soll') }}</strong></ion-label></ion-col>
+          <ion-col size-md="2" class="ion-hide-sm-down clickable" (click)="setSort('haben')"><ion-label><strong>{{ store.i18n.col_credit() }}{{ sortIcon('haben') }}</strong></ion-label></ion-col>
           <ion-col size="5" size-md="4" class="clickable" (click)="setSort('text')"><ion-label><strong>{{ store.i18n.col_name() }}{{ sortIcon('text') }}</strong></ion-label></ion-col>
           <ion-col size="4" size-md="2" class="ion-text-end clickable" (click)="setSort('amount')"><ion-label><strong>{{ store.i18n.col_amount() }}{{ sortIcon('amount') }}</strong></ion-label></ion-col>
         </ion-row>
@@ -105,12 +105,12 @@ function parseAmount(amount: string): number {
                   {{ row.date }}
                 </ion-col>
                 <ion-col size-md="2" class="ion-hide-sm-down">
-                  {{ row.creditAccount }}
-                  @if (row.creditAccountName) { <br /><ion-note class="account-name">{{ row.creditAccountName }}</ion-note> }
-                </ion-col>
-                <ion-col size-md="2" class="ion-hide-sm-down">
                   {{ row.debitAccount }}
                   @if (row.debitAccountName) { <br /><ion-note class="account-name">{{ row.debitAccountName }}</ion-note> }
+                </ion-col>
+                <ion-col size-md="2" class="ion-hide-sm-down">
+                  {{ row.creditAccount }}
+                  @if (row.creditAccountName) { <br /><ion-note class="account-name">{{ row.creditAccountName }}</ion-note> }
                 </ion-col>
                 <ion-col size="5" size-md="4">{{ row.accountName }}</ion-col>
                 <ion-col size="4" size-md="2" class="ion-text-end">{{ row.amount }}</ion-col>

@@ -1,14 +1,13 @@
 import { Component, computed, effect, input, model, output, signal } from '@angular/core';
 import { form } from '@angular/forms/signals';
-import { IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonRow } from '@ionic/angular/standalone';
+import { IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonNote, IonRow } from '@ionic/angular/standalone';
 
 import { AccountModel, AvatarInfo, RoleName, UserModel, VatCodeModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { DateInput, DateInputI18n, ErrorNote, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { AmountInput, AmountInputI18n, DateInput, DateInputI18n, ErrorNote, NotesInput, NotesInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { validateVestTree } from '@okr/shared-util-angular';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 
-import { AvatarSelect } from '@okr/avatar-ui';
 import { AccountSelect, AccountSelectI18n } from '@okr/finance-account-ui';
 import { BookingFormData, BookingI18n, BookingPair, bookingValidations, emptyBookingPair, formatMinorAmount, pairsTotal } from '@okr/finance-booking-util';
 
@@ -22,8 +21,8 @@ import { BookingFormData, BookingI18n, BookingPair, bookingValidations, emptyBoo
   selector: 'okr-booking-form',
   standalone: true,
   imports: [
-    SvgIconPipe, DateInput, TextInput, NumberInput, StringSelect, NotesInput, ErrorNote, AvatarSelect, AccountSelect,
-    IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonButton, IonIcon,
+    SvgIconPipe, DateInput, TextInput, AmountInput, StringSelect, NotesInput, ErrorNote, AccountSelect,
+    IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonButton, IonIcon, IonItem, IonLabel, IonNote,
   ],
   styles: [`
     @media (width <= 600px) { ion-card { margin: 5px;} }
@@ -33,6 +32,8 @@ import { BookingFormData, BookingI18n, BookingPair, bookingValidations, emptyBoo
     .line-tools ion-icon { font-size: 1.3rem; }
     .details-row { background: rgba(var(--ion-color-light-rgb), 0.5); }
     .total { text-align: end; font-weight: 600; padding: 0.5rem 1rem; }
+    .counterparty { --min-height: 44px; }
+    .counterparty ion-note { font-size: 0.75rem; }
   `],
   template: `
     @if (showForm()) {
@@ -52,9 +53,23 @@ import { BookingFormData, BookingI18n, BookingPair, bookingValidations, emptyBoo
               </ion-row>
               <ion-row>
                 <ion-col size="12">
-                  <okr-avatar-select name="counterparty" [title]="i18n().form_counterparty_label()" [selectLabel]="i18n().counterparty_select()"
-                    [avatar]="counterparty()" [clearable]="true" [readOnly]="isReadOnly()"
-                    (selectClicked)="counterpartySelect.emit()" (clearClicked)="onFieldChange('counterparty', undefined)" />
+                  <!-- the counterparty is optional and rarely edited: one quiet line, not a card -->
+                  <ion-item lines="none" class="counterparty">
+                    <ion-label>
+                      <ion-note>{{ i18n().form_counterparty_label() }}</ion-note>
+                      <div>{{ counterpartyName() || '—' }}</div>
+                    </ion-label>
+                    @if (!isReadOnly()) {
+                      @if (counterparty()) {
+                        <ion-button slot="end" fill="clear" size="small" (click)="onFieldChange('counterparty', undefined)">
+                          <ion-icon slot="icon-only" src="{{ 'cancel' | svgIcon }}" />
+                        </ion-button>
+                      }
+                      <ion-button slot="end" fill="clear" size="small" (click)="counterpartySelect.emit()">
+                        <ion-icon slot="icon-only" src="{{ 'person' | svgIcon }}" />
+                      </ion-button>
+                    }
+                  </ion-item>
                 </ion-col>
               </ion-row>
             </ion-grid>
@@ -65,23 +80,23 @@ import { BookingFormData, BookingI18n, BookingPair, bookingValidations, emptyBoo
           <ion-card-content class="ion-no-padding">
             <ion-grid>
               <ion-row class="line-header ion-hide-sm-down">
-                <ion-col size-md="4">{{ i18n().form_credit_label() }}</ion-col>
                 <ion-col size-md="4">{{ i18n().form_debit_label() }}</ion-col>
+                <ion-col size-md="4">{{ i18n().form_credit_label() }}</ion-col>
                 <ion-col size-md="3">{{ i18n().form_amount_label() }}</ion-col>
                 <ion-col size-md="1"></ion-col>
               </ion-row>
               @for (pair of pairs(); track $index; let i = $index) {
                 <ion-row class="ion-align-items-center">
                   <ion-col size="12" size-md="4">
-                    <okr-account-select [i18n]="creditI18n()" [accounts]="accounts()" [allowEmpty]="false"
-                      [selectedKey]="pair.creditAccountKey" (selectedKeyChange)="onPairChange(i, 'creditAccountKey', $event)" [readOnly]="isReadOnly()" />
-                  </ion-col>
-                  <ion-col size="12" size-md="4">
-                    <okr-account-select [i18n]="debitI18n()" [accounts]="accounts()" [allowEmpty]="false"
+                    <okr-account-select [i18n]="debitI18n()" [accounts]="accounts()" [allowEmpty]="false" [compact]="true"
                       [selectedKey]="pair.debitAccountKey" (selectedKeyChange)="onPairChange(i, 'debitAccountKey', $event)" [readOnly]="isReadOnly()" />
                   </ion-col>
+                  <ion-col size="12" size-md="4">
+                    <okr-account-select [i18n]="creditI18n()" [accounts]="accounts()" [allowEmpty]="false" [compact]="true"
+                      [selectedKey]="pair.creditAccountKey" (selectedKeyChange)="onPairChange(i, 'creditAccountKey', $event)" [readOnly]="isReadOnly()" />
+                  </ion-col>
                   <ion-col size="8" size-md="3">
-                    <okr-number-input [i18n]="amountI18n()" [value]="pair.amount / 100" (valueChange)="onPairChange(i, 'amount', toMinor($event))" [readOnly]="isReadOnly()" />
+                    <okr-amount-input [i18n]="amountI18n()" [value]="pair.amount" (valueChange)="onPairChange(i, 'amount', $event)" [readOnly]="isReadOnly()" />
                   </ion-col>
                   <ion-col size="4" size-md="1">
                     <div class="line-tools">
@@ -99,7 +114,7 @@ import { BookingFormData, BookingI18n, BookingPair, bookingValidations, emptyBoo
                 @if (isExpanded(i)) {
                   <ion-row class="details-row ion-align-items-center">
                     <ion-col size="12" size-md="4">
-                      <okr-number-input [i18n]="fxAmountI18n()" [value]="pair.amountFx / 100" (valueChange)="onPairChange(i, 'amountFx', toMinor($event))" [readOnly]="isReadOnly()" />
+                      <okr-amount-input [i18n]="fxAmountI18n()" [value]="pair.amountFx" (valueChange)="onPairChange(i, 'amountFx', $event)" [readOnly]="isReadOnly()" />
                     </ion-col>
                     <ion-col size="12" size-md="4">
                       <okr-text-input [i18n]="fxCurrencyI18n()" [value]="pair.fxCurrency" (valueChange)="onPairChange(i, 'fxCurrency', $event.toUpperCase())" [maxLength]="3" [readOnly]="isReadOnly()" />
@@ -161,6 +176,7 @@ export class BookingForm {
   protected readonly title = computed(() => this.formData()?.title ?? '');
   protected readonly notes = computed(() => this.formData()?.notes ?? '');
   protected readonly counterparty = computed(() => this.formData()?.counterparty);
+  protected readonly counterpartyName = computed(() => { const c = this.counterparty(); return c ? (c.label || `${c.name1} ${c.name2}`.trim()) : ''; });
   protected readonly pairs = computed(() => this.formData()?.pairs ?? []);
   protected readonly total = computed(() => formatMinorAmount(pairsTotal(this.pairs())));
 
@@ -175,8 +191,8 @@ export class BookingForm {
   protected readonly nameI18n = computed(() => ({ name: 'title', label: this.i18n().form_name_label(), placeholder: this.i18n().form_name_placeholder(), helper: this.i18n().form_name_helper() } as TextInputI18n));
   protected readonly creditI18n = computed(() => ({ name: 'creditAccountKey', label: this.i18n().form_credit_label(), helper: '' } as AccountSelectI18n));
   protected readonly debitI18n = computed(() => ({ name: 'debitAccountKey', label: this.i18n().form_debit_label(), helper: '' } as AccountSelectI18n));
-  protected readonly amountI18n = computed(() => ({ name: 'amount', label: this.i18n().form_amount_label(), placeholder: this.i18n().form_amount_placeholder(), helper: '' } as NumberInputI18n));
-  protected readonly fxAmountI18n = computed(() => ({ name: 'amountFx', label: this.i18n().form_fx_amount_label(), placeholder: this.i18n().form_fx_amount_placeholder(), helper: '' } as NumberInputI18n));
+  protected readonly amountI18n = computed(() => ({ name: 'amount', placeholder: this.i18n().form_amount_placeholder() } as AmountInputI18n));
+  protected readonly fxAmountI18n = computed(() => ({ name: 'amountFx', label: this.i18n().form_fx_amount_label(), placeholder: this.i18n().form_fx_amount_placeholder() } as AmountInputI18n));
   protected readonly fxCurrencyI18n = computed(() => ({ name: 'fxCurrency', label: this.i18n().form_fx_currency_label(), placeholder: 'EUR', helper: '' } as TextInputI18n));
   protected readonly vatI18n = computed(() => ({ name: 'vatCodeKey', label: this.i18n().form_vat_label(), helper: '' } as StringSelectI18n));
   protected readonly notesI18n = computed(() => ({ name: 'notes', label: this.i18n().form_notes_label(), placeholder: this.i18n().form_notes_placeholder() } as NotesInputI18n));
@@ -185,7 +201,6 @@ export class BookingForm {
   protected toggleDetails(i: number): void {
     this.expanded.update(set => { const next = new Set(set); if (next.has(i)) next.delete(i); else next.add(i); return next; });
   }
-  protected toMinor(value: number): number { return Math.round((Number(value) || 0) * 100); }
 
   protected onFieldChange(fieldName: 'date' | 'title' | 'notes' | 'counterparty', fieldValue: string | AvatarInfo | undefined): void {
     this.dirty.emit(true);

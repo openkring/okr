@@ -13,7 +13,6 @@
     "@okr/shared-pipes": "*",
     "@okr/shared-ui": "*",
     "@okr/shared-util-angular": "*",
-    "@okr/avatar-ui": "*",
     "@okr/finance-account-ui": "*",
     "@okr/finance-booking-util": "*"
   }

@@ -35,6 +35,7 @@ export interface AccountSelectI18n {
   ],
   styles: [`
     ion-item.helper { --min-height: 0; }
+    ion-label.compact ion-note { font-size: 0.75rem; }
     ion-modal.account {
       --width: 92%;
       --max-width: 520px;
@@ -59,20 +60,28 @@ export interface AccountSelectI18n {
   `],
   template: `
     <ion-item lines="none" [button]="!isReadOnly()" [detail]="false" (click)="open()">
-      <ion-input
-        [name]="i18n().name"
-        type="text"
-        label="{{ i18n().label }}"
-        labelPlacement="floating"
-        [value]="displayValue()"
-        [readonly]="true"
-        [clearInput]="false"
-      />
+      @if (isCompact()) {
+        <!-- number on the line, name as a small note below — the journal's own way of showing an account -->
+        <ion-label class="compact">
+          <div>{{ selectedAccount()?.id || '—' }}</div>
+          <ion-note>{{ selectedAccount()?.name || i18n().label }}</ion-note>
+        </ion-label>
+      } @else {
+        <ion-input
+          [name]="i18n().name"
+          type="text"
+          label="{{ i18n().label }}"
+          labelPlacement="floating"
+          [value]="displayValue()"
+          [readonly]="true"
+          [clearInput]="false"
+        />
+      }
       @if (!isReadOnly()) {
         <ion-icon slot="end" src="{{ 'chevron-expand' | svgIcon }}" aria-hidden="true" />
       }
     </ion-item>
-    @if (i18n().helper) {
+    @if (i18n().helper && !isCompact()) {
       <ion-item lines="none" class="helper" [button]="false">
         <ion-note style="white-space: pre-line">{{ i18n().helper }}</ion-note>
       </ion-item>
@@ -124,8 +133,11 @@ export class AccountSelect {
   public accounts = input.required<AccountModel[]>();
   public readOnly = input(true);
   public allowEmpty = input(true);
+  /** number + name-note instead of a labelled input; for table-like rows whose header names the column */
+  public compact = input(false);
 
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
+  protected isCompact = computed(() => coerceBoolean(this.compact()));
 
   protected isOpen = signal(false);
   protected searchTerm = signal('');
