@@ -179,6 +179,15 @@ export function buildSentryOptions(
       // a genuine IndexedDB failure (quota, blocked upgrade, corrupt store) carries a different
       // message and still reports.
       /The database connection is closing/i,
+      // Storage purge, not a defect (SCS-AV): WebKit rejects every pending request on an
+      // IndexedDB that is deleted underneath an open connection with exactly this message —
+      // the user cleared the site's data, or iOS evicted it under storage pressure / ITP. On
+      // iOS Firestore runs memory-only, so the only holders are the Firebase Auth persistence
+      // poll and the Matrix store, and both self-heal: Auth re-reads on the next tick or next
+      // load, matrix-js-sdk degrades the store to memory and pays one full sync. Arrives as an
+      // onunhandledrejection carrying a bare DOMException (no stack). The message is
+      // WebKit-internal and unique to the purge path, so no first-party failure can hide in it.
+      /Database deleted by request of the user/i,
     ],
 
     // Crashes inside third-party scripts we load but don't own. reCAPTCHA (pulled in by
