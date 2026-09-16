@@ -52,12 +52,13 @@ function menuServiceMock(list: unknown[] = [], menuDoc?: unknown) {
 }
 
 /**
- * `FeatureStore.effective` is a `Set<string>` of block ids offered to the tenant right now.
- * A plain `signal()` stands in for the real computed — `MenuStore` only ever calls it, never
- * cares that it isn't derived from rollouts/app-config.
+ * `FeatureStore.effective` is a `Set<string>` of block ids offered to the tenant right now,
+ * `hiddenMenuKeys` the per-row opt-out (gate 4, `app-config.hiddenMenuKeys`). Plain `signal()`s
+ * stand in for the real computeds — `MenuStore` only ever calls them, never cares that they
+ * aren't derived from rollouts/app-config.
  */
-function featureStoreMock(effectiveIds: string[] = []) {
-  return { effective: signal(new Set(effectiveIds)) };
+function featureStoreMock(effectiveIds: string[] = [], hiddenKeys: string[] = []) {
+  return { effective: signal(new Set(effectiveIds)), hiddenMenuKeys: signal(new Set(hiddenKeys)) };
 }
 
 function makeStore(
@@ -212,6 +213,19 @@ describe('MenuStore', () => {
         featureStoreMock([]) // nothing effective
       );
       store.setMenuName('main_p13');
+      await TestBed.inject(ApplicationRef).whenStable();
+      expect(store.menu()?.menuItems).toEqual(['my-custom-link']);
+    });
+
+    // Gate 4, the per-row opt-out (`app-config.hiddenMenuKeys`): a single row is suppressed
+    // while its owning block stays enabled — and a hidden key is filtered off the NAME list,
+    // so it can never surface as a yellow «Missing:» placeholder either.
+    it('drops a child listed in hiddenMenuKeys even though its owning block is effective', async () => {
+      store = makeStore(
+        menuServiceMock([], { okey: 'aoc-menu', name: 'aoc-menu', menuItems: ['aoc-storage', 'my-custom-link'] }),
+        featureStoreMock(['aoc'], ['aoc-storage'])
+      );
+      store.setMenuName('aoc-menu');
       await TestBed.inject(ApplicationRef).whenStable();
       expect(store.menu()?.menuItems).toEqual(['my-custom-link']);
     });
