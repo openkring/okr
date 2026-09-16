@@ -29,6 +29,9 @@
   "create": {
     "label": "Buchung erstellen"
   },
+  "copy": {
+    "label": "Buchung kopieren"
+  },
   "delete": {
     "label": "Buchung löschen"
   },

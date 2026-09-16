@@ -235,6 +235,7 @@ export class BookingList {
       options.buttons.push(createActionSheetButton('booking.view', this.store.i18n.view(), this.imgixBaseUrl, 'eye-on'));
     } else {
       options.buttons.push(createActionSheetButton('booking.edit', this.store.i18n.edit(), this.imgixBaseUrl, 'edit'));
+      options.buttons.push(createActionSheetButton('booking.copy', this.store.i18n.copy(), this.imgixBaseUrl, 'copy'));
       if (this.hasRole('admin')) {
         options.buttons.push(createActionSheetButton('booking.delete', this.store.i18n.delete(), this.imgixBaseUrl, 'trash'));
       }
@@ -262,6 +263,7 @@ export class BookingList {
     if (action === 'booking.reject')  { await this.store.reject(booking); return; }
     if (action === 'booking.view')   { await this.store.openEdit(booking, lines, true); return; }
     if (action === 'booking.edit')   { await this.store.openEdit(booking, lines, this.readOnly()); return; }
+    if (action === 'booking.copy')   { await this.store.openCopy(booking, lines); return; }
     if (action === 'booking.delete') { await this.store.delete(booking); return; }
     if (action.startsWith('booking.receipt.')) {
       const idx = Number(action.substring('booking.receipt.'.length));

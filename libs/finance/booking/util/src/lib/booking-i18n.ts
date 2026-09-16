@@ -15,6 +15,7 @@ export const BOOKING_I18N_KEYS = {
   view:                        PFX + 'view.label',
   edit:                        PFX + 'edit.label',
   create:                      PFX + 'create.label',
+  copy:                        PFX + 'copy.label',
   delete:                      PFX + 'delete.label',
   action_createReceipt:        PFX + 'action.createReceipt',
   action_counterpartyRequired: PFX + 'action.counterpartyRequired',

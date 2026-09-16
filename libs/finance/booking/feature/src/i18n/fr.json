@@ -29,6 +29,9 @@
   "create": {
     "label": "Créer une écriture"
   },
+  "copy": {
+    "label": "Copier l'écriture"
+  },
   "delete": {
     "label": "Supprimer l'écriture"
   },

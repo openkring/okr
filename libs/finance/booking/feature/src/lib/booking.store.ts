@@ -25,6 +25,7 @@ import {
   bookingYear,
   buildReceiptPayload,
   canReviewBooking,
+  copyBooking,
   isForReview,
   JournalRow,
   journalToRows,
@@ -235,6 +236,17 @@ export const BookingStore = signalStore(
       const accountingTenantId = store.accountingTenantId();
       // bookingNo is assigned by the writeBooking CF inside its transaction (never pre-computed here).
       await this.openEdit(new BookingModel(tenantId, accountingTenantId), [], false);
+    },
+
+    /**
+     * "Buchung kopieren": opens the create modal pre-filled from `booking`, dated today. The copy is
+     * a new, unsaved booking — no key, no booking number, and no Belege or comments (those hang on
+     * the original's key). Saving it goes through the normal create path.
+     */
+    async openCopy(booking: BookingModel, lines: BookingLineModel[]): Promise<void> {
+      if (store.isReadOnly()) return;
+      const copy = copyBooking(booking, lines, getTodayStr());
+      await this.openEdit(copy.booking, copy.lines, false);
     },
 
     async openEdit(booking: BookingModel, lines: BookingLineModel[], readOnly = true): Promise<void> {

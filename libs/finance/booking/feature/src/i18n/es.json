@@ -29,6 +29,9 @@
   "create": {
     "label": "Crear asiento"
   },
+  "copy": {
+    "label": "Copiar asiento"
+  },
   "delete": {
     "label": "Eliminar asiento"
   },

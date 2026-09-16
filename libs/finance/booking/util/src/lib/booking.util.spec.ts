@@ -3,6 +3,7 @@ import { BookingLineModel, BookingModel } from '@okr/shared-models';
 import { bookingValidations } from './booking.validations';
 import {
   bookingYear,
+  copyBooking,
   emptyBookingPair,
   formatMinorAmount,
   linesToPairs,
@@ -223,5 +224,69 @@ describe('bookingValidations', () => {
     expect(bookingValidations({ ...ok, pairs: [{ ...ok.pairs[0], creditAccountKey: 'a' }] }, '', '').isValid()).toBe(false);
     expect(bookingValidations({ ...ok, pairs: [{ ...ok.pairs[0], amount: 0 }] }, '', '').isValid()).toBe(false);
     expect(bookingValidations({ ...ok, title: '' }, '', '').isValid()).toBe(false);
+  });
+});
+
+describe('copyBooking', () => {
+  function source(): { booking: BookingModel; lines: BookingLineModel[] } {
+    const booking = new BookingModel('scs', 'gss');
+    booking.okey = 'b1';
+    booking.title = 'Mitgliederbeitrag';
+    booking.date = '20250301';
+    booking.notes = 'Notiz';
+    booking.tags = 'spende';
+    booking.bookingNo = 42;
+    booking.status = 'posted';
+    booking.documentKey = 'doc1';
+    booking.periodKey = 'p2025';
+    booking.counterparty = { key: 'p1', modelType: 'person', name1: 'Hans', name2: 'Muster', type: '', subType: '', label: 'Hans Muster' };
+    const debit = new BookingLineModel('scs', 'gss');
+    debit.okey = 'l1';
+    debit.bookingKey = 'b1';
+    debit.accountKey = 'a-bank';
+    debit.debitAmount = { amount: 5000, currency: 'CHF' } as BookingLineModel['debitAmount'];
+    debit.vatCodeKey = 'v1';
+    const credit = new BookingLineModel('scs', 'gss');
+    credit.okey = 'l2';
+    credit.bookingKey = 'b1';
+    credit.accountKey = 'a-revenue';
+    credit.creditAmount = { amount: 5000, currency: 'CHF' } as BookingLineModel['creditAmount'];
+    return { booking, lines: [debit, credit] };
+  }
+
+  it('keeps the text, counterparty and lines but dates the copy today', () => {
+    const { booking, lines } = source();
+    const copy = copyBooking(booking, lines, '20250916');
+    expect(copy.booking.title).toBe('Mitgliederbeitrag');
+    expect(copy.booking.notes).toBe('Notiz');
+    expect(copy.booking.tags).toBe('spende');
+    expect(copy.booking.counterparty).toEqual(booking.counterparty);
+    expect(copy.booking.accountingTenantId).toBe('gss');
+    expect(copy.booking.tenants).toEqual(['scs']);
+    expect(copy.booking.date).toBe('20250916');
+    expect(copy.lines.map(l => l.accountKey)).toEqual(['a-bank', 'a-revenue']);
+    expect(copy.lines[0].debitAmount).toEqual({ amount: 5000, currency: 'CHF' });
+    expect(copy.lines[1].creditAmount).toEqual({ amount: 5000, currency: 'CHF' });
+    expect(copy.lines[0].vatCodeKey).toBe('v1');
+  });
+
+  it('drops everything that belongs to the original booking', () => {
+    const { booking, lines } = source();
+    const copy = copyBooking(booking, lines, '20250916');
+    expect(copy.booking.okey).toBe('');
+    expect(copy.booking.bookingNo).toBe(0);
+    expect(copy.booking.status).toBe('draft');
+    expect(copy.booking.documentKey).toBe('');   // no Beleg on the copy
+    expect(copy.booking.periodKey).toBe('');
+    expect(copy.lines.every(l => l.okey === '')).toBe(true);
+    expect(copy.lines.every(l => l.bookingKey === '')).toBe(true);
+  });
+
+  it('leaves the original untouched', () => {
+    const { booking, lines } = source();
+    copyBooking(booking, lines, '20250916');
+    expect(booking.okey).toBe('b1');
+    expect(booking.date).toBe('20250301');
+    expect(lines[0].bookingKey).toBe('b1');
   });
 });

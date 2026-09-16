@@ -221,3 +221,37 @@ export function toBookingFormData(booking: BookingModel, lines: BookingLineModel
 export function pairsTotal(pairs: BookingPair[]): number {
   return pairs.reduce((sum, p) => sum + (p.amount || 0), 0);
 }
+
+/**
+ * "Buchung kopieren": a fresh, unsaved booking with the same text, counterparty and lines, dated
+ * today. Everything that belongs to the original stays behind — its key and booking number, the
+ * voucher (`documentKey`) and period, the review status, and — because they hang on the original's
+ * key — its Belege and comments. The copy starts as a `draft`; the `writeBooking` CF assigns the
+ * booking number when it is saved.
+ */
+export function copyBooking(
+  booking: BookingModel,
+  lines: BookingLineModel[],
+  date: string,
+): { booking: BookingModel; lines: BookingLineModel[] } {
+  const tenantId = booking.tenants[0] ?? '';
+  const copy = new BookingModel(tenantId, booking.accountingTenantId);
+  copy.title = booking.title;
+  copy.date = date;
+  copy.notes = booking.notes ?? '';
+  copy.tags = booking.tags ?? '';
+  copy.counterparty = booking.counterparty;
+  return {
+    booking: copy,
+    lines: lines.map(line => {
+      const copiedLine = new BookingLineModel(tenantId, booking.accountingTenantId);
+      copiedLine.accountKey = line.accountKey;
+      copiedLine.debitAmount = line.debitAmount;
+      copiedLine.creditAmount = line.creditAmount;
+      copiedLine.amountFx = line.amountFx;
+      copiedLine.exchangeRateKey = line.exchangeRateKey;
+      copiedLine.vatCodeKey = line.vatCodeKey;
+      return copiedLine;
+    }),
+  };
+}

@@ -29,6 +29,9 @@
   "create": {
     "label": "Create booking"
   },
+  "copy": {
+    "label": "Copy booking"
+  },
   "delete": {
     "label": "Delete booking"
   },
