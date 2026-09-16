@@ -129,19 +129,29 @@ export const STARTUP_STALL_MS = 12_000;
  */
 export const STARTUP_STALL_OVERSHOOT_FACTOR = 2;
 
-/** How often an overshooting timer is re-armed before the stall is reported regardless. */
+/** How often the timer is re-armed (suspend or progress) before the stall is reported regardless. */
 export const STARTUP_STALL_MAX_REARMS = 3;
 
 /**
  * Arm the stall check: after STARTUP_STALL_MS, report the open gate unless the app is ready.
  *
- * Wall-clock aware. If the timer fires far later than it was scheduled (see
- * STARTUP_STALL_OVERSHOOT_FACTOR) the boot was suspended, not stalled, and the check is
- * re-armed for another full window so the SDKs get their reconnect before we judge. A bounded
- * number of re-arms keeps a genuinely stuck boot from hiding behind repeated throttling.
+ * The window belongs to a GATE, not to the page load. Two things therefore re-arm it instead
+ * of reporting:
+ *
+ *  - **Suspend.** A timer that fires far later than it was scheduled (see
+ *    STARTUP_STALL_OVERSHOOT_FACTOR) did not measure a stall; the tab was discarded or the
+ *    phone slept, and the SDKs reconnect after the wake-up (SCS-AR).
+ *  - **Progress.** The gate that is open at fire time is not the one that was open when the
+ *    window was armed, so the boot moved forward during it. Without this the timer simply
+ *    blamed whichever gate happened to be open at 12 s: on SCS-AW a 6–9 s App Check
+ *    attestation ate the whole budget, auth settled at ~11.6 s, and `categories` was reported
+ *    as stalled after 1.5 s of loading. Each gate now gets a full window of its own.
+ *
+ * A bounded number of re-arms keeps a genuinely stuck boot from hiding behind repeated
+ * throttling — or behind a boot that keeps inching forward without ever becoming ready.
  *
  * @param isReady the readiness signal, read at fire time
- * @param openGate names the gate still holding navigation, read only when reporting
+ * @param openGate names the gate still holding navigation; read when arming and when firing
  * @param now injectable clock for tests; defaults to Date.now
  */
 export function armStartupStallCheck(
@@ -150,21 +160,23 @@ export function armStartupStallCheck(
   now: () => number = Date.now,
 ): void {
   let rearms = 0;
-  const arm = (): void => {
+  const arm = (gateAtArm: string): void => {
     const armedAt = now();
     setTimeout(() => {
       if (isReady()) return;
+      const gate = openGate();
       const overshot = now() - armedAt > STARTUP_STALL_MS * STARTUP_STALL_OVERSHOOT_FACTOR;
-      if (overshot && rearms < STARTUP_STALL_MAX_REARMS) {
+      const progressed = gate !== gateAtArm;
+      if ((overshot || progressed) && rearms < STARTUP_STALL_MAX_REARMS) {
         rearms++;
-        markStartup(`stall-check:rearmed:${rearms}`);
-        arm();
+        markStartup(`stall-check:rearmed:${rearms}:${progressed ? 'progress' : 'suspend'}`);
+        arm(gate);
         return;
       }
-      reportStartupStall(openGate());
+      reportStartupStall(gate);
     }, STARTUP_STALL_MS);
   };
-  arm();
+  arm(openGate());
 }
 
 let stallReported = false;

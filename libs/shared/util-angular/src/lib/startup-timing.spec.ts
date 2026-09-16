@@ -75,6 +75,25 @@ describe('armStartupStallCheck', () => {
     expect(captureMessage).not.toHaveBeenCalled();
   });
 
+  it('re-arms instead of reporting when the open gate moved on (progress, SCS-AW)', async () => {
+    let gate = 'session-restore';
+    mod.armStartupStallCheck(() => false, () => gate, clock);
+    gate = 'categories'; // auth restored + user doc read while the window was running
+    await fire(mod.STARTUP_STALL_MS);
+    expect(captureMessage).not.toHaveBeenCalled();
+    expect(vi.getTimerCount()).toBe(1);
+  });
+
+  it('reports the gate that stayed open for a full window of its own', async () => {
+    let gate = 'session-restore';
+    mod.armStartupStallCheck(() => false, () => gate, clock);
+    gate = 'categories';
+    await fire(mod.STARTUP_STALL_MS);
+    await fire(mod.STARTUP_STALL_MS);
+    expect(captureMessage).toHaveBeenCalledTimes(1);
+    expect(captureMessage.mock.calls[0][0]).toBe('startup stalled at categories');
+  });
+
   it('gives up re-arming after the cap so a throttled tab cannot hide a stall forever', async () => {
     mod.armStartupStallCheck(() => false, () => 'categories', clock);
     for (let i = 0; i <= mod.STARTUP_STALL_MAX_REARMS; i++) await fire(10 * mod.STARTUP_STALL_MS);
