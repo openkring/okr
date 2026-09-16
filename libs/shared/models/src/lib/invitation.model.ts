@@ -11,6 +11,10 @@ import { OkrModel, NamedModel, SearchableModel, TaggedModel } from './base.model
  * calevent-util folds every non-answer into 'invited'), and the comment key
  * `@relationship/invitation/feature.comment.maybe` stays in the i18n bundles so that old answer
  * comments keep rendering.
+ *
+ * The shared `categories/invitation_state` document is the one place that also listed 'maybe':
+ * the list filter builds `invitation_state.<item>.label` for every item, so the item had to go
+ * from the document as well (removed 2026-09-16, Sentry SCS-AT). No code path re-creates it.
  */
 export type InvitationState = 'pending' | 'accepted' | 'declined';
 export type InvitationRole = 'required' | 'optional' | 'info';
