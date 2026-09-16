@@ -30,6 +30,8 @@
     "@okr/content-pdf-template-data-access": "*",
     "@okr/avatar-ui": "*",
     "@okr/finance-bank-import-feature": "*",
-    "@okr/subject-org-feature": "*"
+    "@okr/subject-org-feature": "*",
+    "@okr/comment-feature": "*",
+    "@okr/content-document-feature": "*"
   }
 }

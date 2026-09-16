@@ -16,6 +16,8 @@
   "exclude": ["**/*.spec.ts", "**/*.spec2.ts", "**/test-setup.ts", "vite.config.ts"],
   "references": [
     { "path": "../../../cms/menu/feature/tsconfig.lib.json" },
+    { "path": "../../../comment/feature/tsconfig.lib.json" },
+    { "path": "../../../content/document/feature/tsconfig.lib.json" },
     { "path": "../../../content/pdf-template/data-access/tsconfig.lib.json" },
     { "path": "../../account/data-access/tsconfig.lib.json" },
     { "path": "../../accounting/feature/tsconfig.lib.json" },

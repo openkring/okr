@@ -1,25 +1,27 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
-import { ActionSheetController, IonContent, ModalController } from '@ionic/angular/standalone';
+import { ActionSheetController, IonAccordionGroup, IonCard, IonCardContent, IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { ModelSelectService } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
-import { AccountModel, AvatarInfo, BookingLineModel, BookingModel, UserModel, VatCodeModel } from '@okr/shared-models';
+import { AccountModel, AvatarInfo, BookingLineModel, BookingModel, BookingModelName, UserModel, VatCodeModel } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
 import { dismissOverlay } from '@okr/shared-util-angular';
 import { coerceBoolean, safeStructuredClone } from '@okr/shared-util-core';
 
+import { CommentsAccordion } from '@okr/comment-feature';
+import { DocumentsAccordion } from '@okr/content-document-feature';
 import { BookingForm } from '@okr/finance-booking-ui';
 import { BOOKING_I18N_KEYS, BookingFormData, BookingI18n, pairsToLines, toBookingFormData } from '@okr/finance-booking-util';
 
 /**
- * Header + change-confirmation + the booking form. Lives in the feature lib because picking a
- * counterparty needs ModelSelectService. Dismisses with `{ booking, lines }` on confirm: the
+ * Header + change-confirmation + the booking form, then the Belege (documents) and comments of a
+ * saved booking. Lives in the feature lib because picking a counterparty needs ModelSelectService. Dismisses with `{ booking, lines }` on confirm: the
  * form's pairs are turned back into lines here, so the store's contract is unchanged.
  */
 @Component({
   selector: 'okr-booking-edit-modal',
   standalone: true,
-  imports: [Header, ChangeConfirmation, BookingForm, IonContent],
+  imports: [Header, ChangeConfirmation, BookingForm, DocumentsAccordion, CommentsAccordion, IonContent, IonAccordionGroup, IonCard, IonCardContent],
   template: `
     <okr-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
     @if (showConfirmation()) {
@@ -42,6 +44,17 @@ import { BOOKING_I18N_KEYS, BookingFormData, BookingI18n, pairsToLines, toBookin
           (counterpartySelect)="selectCounterparty()"
         />
       }
+      <!-- Belege and comments hang on the booking's key, so they appear once the booking is saved -->
+      @if (booking().okey) {
+        <ion-card>
+          <ion-card-content class="ion-no-padding">
+            <ion-accordion-group value="documents" [multiple]="true">
+              <okr-documents-accordion [parentKey]="parentKey()" [title]="i18n.form_documents_label()" [readOnly]="isReadOnly()" />
+              <okr-comments-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()" />
+            </ion-accordion-group>
+          </ion-card-content>
+        </ion-card>
+      }
     </ion-content>
   `,
 })
@@ -61,6 +74,7 @@ export class BookingEditModal {
   public readonly locale = input('de-ch');
 
   protected readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()));
+  protected readonly parentKey = computed(() => `${BookingModelName}.${this.booking().okey}`);
   protected formDirty = signal(false);
   protected formValid = signal(false);
   public formData = linkedSignal<BookingFormData>(() => safeStructuredClone(toBookingFormData(this.booking(), this.lines())) as BookingFormData);

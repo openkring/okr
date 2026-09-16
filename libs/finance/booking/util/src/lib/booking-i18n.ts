@@ -70,6 +70,7 @@ export const BOOKING_I18N_KEYS = {
   form_details_toggle:         PFX + 'form.details.toggle',
   form_line_add:               PFX + 'form.line.add',
   form_swap:                   PFX + 'form.swap',
+  form_documents_label:        PFX + 'form.documents.label',
   form_line_remove:            PFX + 'form.line.remove',
   form_notes_label:            PFX + 'form.notes.label',
   form_notes_placeholder:      PFX + 'form.notes.placeholder',

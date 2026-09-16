@@ -131,7 +131,10 @@
       "label": "Notes",
       "placeholder": "Remarques sur l'écriture"
     },
-    "swap": "Échanger débit et crédit"
+    "swap": "Échanger débit et crédit",
+    "documents": {
+      "label": "Justificatifs"
+    }
   },
   "validation": {
     "date": "Merci de saisir une date valide.",

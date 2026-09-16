@@ -131,7 +131,10 @@
       "label": "Notas",
       "placeholder": "Observaciones sobre el asiento"
     },
-    "swap": "Intercambiar debe y haber"
+    "swap": "Intercambiar debe y haber",
+    "documents": {
+      "label": "Comprobantes"
+    }
   },
   "validation": {
     "date": "Introduce una fecha válida.",

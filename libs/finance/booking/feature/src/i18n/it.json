@@ -131,7 +131,10 @@
       "label": "Note",
       "placeholder": "Osservazioni sulla registrazione"
     },
-    "swap": "Scambia dare e avere"
+    "swap": "Scambia dare e avere",
+    "documents": {
+      "label": "Giustificativi"
+    }
   },
   "validation": {
     "date": "Inserisci una data valida.",
