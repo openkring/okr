@@ -28,6 +28,7 @@
     "@okr/subject-org-data-access": "*",
     "@okr/subject-address-data-access": "*",
     "@okr/content-pdf-template-data-access": "*",
-    "@okr/avatar-ui": "*"
+    "@okr/avatar-ui": "*",
+    "@okr/finance-bank-import-feature": "*"
   }
 }

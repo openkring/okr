@@ -17,7 +17,7 @@ import { AccountService } from '@okr/finance-account-data-access';
 import { AccountingStore } from '@okr/finance-accounting-feature';
 import { leafAccounts } from '@okr/finance-account-util';
 import { BankImportRowService, PostBankImportResult } from '@okr/finance-bank-import-data-access';
-import { BANK_IMPORT_I18N_KEYS, BankImportError, compareJournalSums, computeImportKeys, importableJournalRows, isPdfFile, journalAccountSums, JournalAccountMap, matchesBexioJournalHeader, parseBexioJournal, parseStatement, ParsedWarning, PostJournalImportResult, resolveJournalAccounts, toImportRows, toJournalEntries } from '@okr/finance-bank-import-util';
+import { BANK_IMPORT_I18N_KEYS, BankImportError, computeImportKeys, isPdfFile, parseStatement, ParsedWarning, toImportRows } from '@okr/finance-bank-import-util';
 import { BankProfileService } from '@okr/finance-bank-profile-data-access';
 import { BankProfileStore } from '@okr/finance-bank-profile-feature';
 import { BankRuleService } from '@okr/finance-bank-rule-data-access';
@@ -194,86 +194,6 @@ export const BankImportStore = signalStore(
         ...(warnings.length ? [`${store.i18n.import_summary_warnings()}:`, ...warnings.map(w => store.warningText(w))] : []),
       ].join('\n');
       await store.alertService.confirm(`${store.i18n.import_summary_title()}\n${summary}`);
-    },
-
-    /**
-     * "bexio-Journal importieren" (spec §12): parse the journal, map its account numbers onto the
-     * chart of accounts, confirm the mapping, post the entries in chunks of 100 and compare the
-     * per-account sums with the file. The journal never enters the staging list.
-     */
-    async importJournalFile(): Promise<void> {
-      const file = await store.uploadService.pickFile(BANK_IMPORT_MIMETYPES);
-      if (!file) return;
-      const accountingTenantId = store.accountingTenantId();
-      const text = await file.text();
-      if (!matchesBexioJournalHeader(text)) {
-        await store.alertService.confirm(`${store.errorText('unknown-format')} ${text.split('\n')[0]?.slice(0, 80) ?? ''}`.trim());
-        return;
-      }
-      let journal;
-      try {
-        journal = parseBexioJournal(text);
-      } catch (e) {
-        const code = e instanceof BankImportError ? e.code : 'unknown-format';
-        await store.alertService.confirm(`${store.errorText(code)} ${e instanceof BankImportError ? e.detail : ''}`.trim());
-        return;
-      }
-      const rows = importableJournalRows(journal);
-      if (rows.length === 0) { await store.alertService.confirm(store.i18n.journal_nothing()); return; }
-
-      // mapping: by number against the leaf accounts; the treasurer confirms (and completes) it once
-      const accounts = store.accountsResource.value() ?? [];
-      const proposal: JournalAccountMap = { entries: resolveJournalAccounts(rows, accounts) };
-      const { JournalAccountMapModal } = await import('@okr/finance-bank-import-ui');
-      const modal = await store.modalController.create({
-        component: JournalAccountMapModal,
-        componentProps: { mapping: proposal, accounts: leafAccounts(accounts) },
-      });
-      await modal.present();
-      const { data, role } = await modal.onDidDismiss();
-      if (role !== 'confirm' || !data) { await store.alertService.confirm(store.i18n.import_cancelled()); return; }
-      const mapping = (data as JournalAccountMap).entries;
-
-      // post in chunks; the callable is idempotent per bexio id
-      const entries = toJournalEntries(rows, mapping);
-      const total: PostJournalImportResult = { posted: 0, replayed: 0, failed: [], sums: {} };
-      try {
-        for (let i = 0; i < entries.length; i += 100) {
-          const res = await store.rowService.postJournalViaFunction({ accountingTenantId, entries: entries.slice(i, i + 100) });
-          total.posted += res.posted;
-          total.replayed += res.replayed;
-          total.failed.push(...res.failed);
-          for (const [key, sum] of Object.entries(res.sums ?? {})) total.sums[key] = (total.sums[key] ?? 0) + sum;
-        }
-      } catch (ex) {
-        console.error('BankImportStore.importJournalFile -> ERROR:', ex);
-        await store.alertService.confirm(store.errorText('unknown'));
-        return;
-      }
-
-      // post-check: the file's own per-account sums against what the ledger now holds for this file
-      const diffs = compareJournalSums(journalAccountSums(rows), mapping, total.sums);
-      const errorLabel = (reason: string): string => {
-        switch (reason) {
-          case 'account-invalid': return store.i18n.journal_error_account_invalid();
-          case 'zero-amount': return store.i18n.journal_error_zero_amount();
-          case 'date-invalid': return store.i18n.journal_error_date_invalid();
-          default: return store.errorText(reason);
-        }
-      };
-      const lines = [
-        `${store.i18n.journal_summary_rows()}: ${journal.rows.length}`,
-        `${store.i18n.journal_summary_skipped()}: ${journal.rows.length - rows.length}`,
-        `${store.i18n.journal_summary_posted()}: ${total.posted}`,
-        `${store.i18n.journal_summary_replayed()}: ${total.replayed}`,
-        `${store.i18n.journal_summary_failed()}: ${total.failed.length}`,
-        ...total.failed.map(f => `${f.id}: ${errorLabel(f.reason)}`),
-        ...(diffs.length
-          ? [`${store.i18n.journal_summary_diff()}:`, ...diffs.map(d => `${d.no}: ${d.file} / ${d.ledger}`)]
-          : [store.i18n.journal_summary_diff_ok()]),
-        ...(journal.warnings.length ? [`${store.i18n.import_summary_warnings()}:`, ...journal.warnings.map(w => store.warningText(w))] : []),
-      ];
-      await store.alertService.confirm(`${store.i18n.journal_summary_title()}\n${lines.join('\n')}`);
     },
 
     /** "Regeln anwenden": re-run the rules over every open row of the tenant and persist the changes. */

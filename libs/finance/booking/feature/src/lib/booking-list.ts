@@ -190,6 +190,7 @@ export class BookingList {
     switch (selectedMethod) {
       case 'add':    await this.store.openCreate(); break;
       case 'export': await this.store.export(); break;
+      case 'importBexio': await this.store.importBexioJournal(); break;
       default: error(undefined, `BookingList.onPopoverDismiss: unknown method ${selectedMethod}`);
     }
   }

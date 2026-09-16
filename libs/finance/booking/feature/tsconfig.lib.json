@@ -20,6 +20,7 @@
     { "path": "../../../content/pdf-template/data-access/tsconfig.lib.json" },
     { "path": "../../account/data-access/tsconfig.lib.json" },
     { "path": "../../accounting/feature/tsconfig.lib.json" },
+    { "path": "../../bank-import/feature/tsconfig.lib.json" },
     { "path": "../data-access/tsconfig.lib.json" },
     { "path": "../util/tsconfig.lib.json" },
     { "path": "../../vat-code/data-access/tsconfig.lib.json" },

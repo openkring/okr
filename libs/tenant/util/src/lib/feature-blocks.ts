@@ -1428,6 +1428,7 @@ const finance: FeatureBlock = {
     { key: 'c-journal', name: 'c-journal', url: '', action: 'context', roleNeeded: 'treasurer', icon: 'help-circle', label: '', children: [
       { key: 'journal-add', name: 'journal-add', url: 'add', action: 'call', roleNeeded: 'treasurer', icon: 'add', label: '@item.journal-add' },
       { key: 'journal-export', name: 'journal-export', url: 'export', action: 'call', roleNeeded: 'treasurer', icon: 'download', label: '@item.journal-export' },
+      { key: 'journal-import-bexio', name: 'journal-import-bexio', url: 'importBexio', action: 'call', roleNeeded: 'treasurer', icon: 'download', label: '@item.journal-import-bexio' },
     ] },
     { key: 'c-invoice', name: 'c-invoice', url: '', action: 'context', roleNeeded: 'treasurer', icon: 'help-circle', label: '', children: [
       { key: 'invoice-add', name: 'invoice-add', url: 'add', action: 'call', roleNeeded: 'treasurer', icon: 'add-circle', label: '@item.invoice-add' },
@@ -1457,7 +1458,6 @@ const finance: FeatureBlock = {
     ] },
     { key: 'bank-import-context', name: 'bank-import-context', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
       { key: 'bank-import-file', name: 'bank-import-file', url: 'import', action: 'call', roleNeeded: 'treasurer', icon: 'download', label: '@item.bank-import-file' },
-      { key: 'bank-import-journal', name: 'bank-import-journal', url: 'importJournal', action: 'call', roleNeeded: 'treasurer', icon: 'download', label: '@item.bank-import-journal' },
       { key: 'bank-import-apply-rules', name: 'bank-import-apply-rules', url: 'applyRules', action: 'call', roleNeeded: 'treasurer', icon: 'sync', label: '@item.bank-import-apply-rules' },
       { key: 'bank-import-post', name: 'bank-import-post', url: 'post', action: 'call', roleNeeded: 'treasurer', icon: 'checkmark', label: '@item.bank-import-post' },
     ] },

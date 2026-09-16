@@ -1,4 +1,4 @@
-import { computed, inject } from '@angular/core';
+import { computed, inject, Injector } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
@@ -58,6 +58,7 @@ export const BookingStore = signalStore(
     addressService: inject(AddressService),
     docGenerationService: inject(DocGenerationService),
     toastController: inject(ToastController),
+    injector: inject(Injector),
   })),
   withProps(store => ({
     i18n: store.i18nService.translateAll(BOOKING_I18N_KEYS),
@@ -151,6 +152,15 @@ export const BookingStore = signalStore(
 
     setAccountKey(accountKey: string): void {
       patchState(store, { accountKey });
+    },
+
+    /**
+     * "bexio-Journal importieren": hands off to the bank-import feature's JournalImportStore
+     * (spec 1.60 §12). Loaded on demand so the journal page does not carry the bank-import libs.
+     */
+    async importBexioJournal(): Promise<void> {
+      const { JournalImportStore } = await import('@okr/finance-bank-import-feature');
+      await store.injector.get(JournalImportStore).importFile();
     },
 
     async export(): Promise<void> {
