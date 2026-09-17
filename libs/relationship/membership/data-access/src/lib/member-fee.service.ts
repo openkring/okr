@@ -4,8 +4,8 @@ import { Observable } from 'rxjs';
 import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
-import { CategoryListModel, MembershipModel, MemberFeeCollection, MemberFeeModel, UserModel } from '@okr/shared-models';
-import { getBirthYear, getCategoryAttribute, getFullName, getSystemQuery, getTodayStr, DateFormat, getYear } from '@okr/shared-util-core';
+import { MemberFeeCollection, MemberFeeModel, UserModel } from '@okr/shared-models';
+import { getSystemQuery, getTodayStr, DateFormat } from '@okr/shared-util-core';
 import { ActivityService } from '@okr/activity-data-access';
 import { BEXIO_INVOICE_TEMPLATES } from '@okr/relationship-membership-util';
 
@@ -58,58 +58,6 @@ export class MemberFeeService {
   }
 }
 
-/**
- * Convert a MembershipModel into a MemberFeeModel using the given category lists,
- * locker ownership information, and current year.
- */
-export function convertMembershipToFee(
-  membership: MembershipModel,
-  srvMembership: MembershipModel | undefined,
-  hasLocker: boolean,
-  mcatScs: CategoryListModel | undefined,
-  mcatSrv: CategoryListModel | undefined,
-  tenantId: string
-): MemberFeeModel {
-  const fee = new MemberFeeModel(tenantId);
-
-  fee.tenants = membership.tenants;
-  fee.isArchived = membership.isArchived;
-  fee.index = membership.index;
-  fee.tags = membership.tags;
-  fee.notes = membership.notes;
-  fee.templateId = getTemplateId(membership.category);
-
-  fee.member = {
-    key: membership.memberKey,
-    name1: membership.memberName1,
-    name2: membership.memberName2,
-    modelType: membership.memberModelType,
-    type: membership.memberType,
-    subType: '',
-    label: getFullName(membership.memberName1, membership.memberName2),
-  };
-  fee.memberBirthYear = membership.memberBirthYear;
-  fee.memberBexioId = membership.memberBexioId;
-  fee.dateOfEntry = membership.dateOfEntry;
-  fee.category = membership.category;
-  fee.rebate = membership.rebate ?? 0;
-  fee.rebateReason = membership.rebateReason ?? '';
-
-  fee.jb = mcatScs ? (getCategoryAttribute(mcatScs, membership.category, 'price') as number || 0) : 0;
-  fee.srv = (srvMembership && mcatSrv)
-    ? (getCategoryAttribute(mcatSrv, srvMembership.category, 'price') as number || 0)
-    : 0;
-  fee.bev = 0;
-  fee.entryFee = getEntryFee(membership);
-  fee.locker = hasLocker ? 20 : 0;
-  fee.hallenTraining = 0;
-  fee.skiff = 0;
-  fee.skiffInsurance = 0;
-
-  fee.state = 'initial';
-  return fee;
-}
-
 // tbd: this is a hardcoded interim workaround. It should be replaced with a user selection and dynamic template download from Bexio
 export function getTemplateId(mcat: string): string {
   if (mcat === 'passive') {
@@ -117,28 +65,6 @@ export function getTemplateId(mcat: string): string {
   } else {
     return BEXIO_INVOICE_TEMPLATES[1].id;
   }
-}
-
-export function getEntryFee(membership: MembershipModel): number {
-  const currentYear = getYear();
-  const entryYear = parseInt(membership.dateOfEntry.substring(0, 4));
-  const birthYear = parseInt(membership.dateOfEntry.substring(0, 4));
-  // tbd: we also need to check for entries in the last year that did not yet pay the entry fee
-  // tbd: we also need to check for re-entries, e.g. 19940101:A1,20251231:X,20260215:P does not have to pay
-  if (entryYear === currentYear && (currentYear - birthYear) > 25) return 750;
-  return 0;
-}
-
-export function getFeeTotal(fee: MemberFeeModel): number {
-  return ((fee.jb ?? 0) + 
-    (fee.srv ?? 0) + 
-    (fee.bev ?? 0) + 
-    (fee.entryFee ?? 0) + 
-    (fee.locker ?? 0) + 
-    (fee.hallenTraining ?? 0) + 
-    (fee.skiff ?? 0) + 
-    (fee.skiffInsurance ?? 0) - 
-    (fee.rebate ?? 0));
 }
 
 export function getFeeIndex(fee: MemberFeeModel): string {

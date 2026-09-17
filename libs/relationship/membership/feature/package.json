@@ -19,6 +19,7 @@
     "@okr/shared-util-angular": "*",
     "@okr/shared-util-core": "*",
     "@okr/subject-person-ui": "*",
+    "@okr/finance-accounting-data-access": "*",
     "@okr/relationship-membership-data-access": "*",
     "@okr/relationship-membership-ui": "*",
     "@okr/relationship-membership-util": "*",
