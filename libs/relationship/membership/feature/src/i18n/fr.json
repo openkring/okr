@@ -187,7 +187,10 @@
       "placeholder": "nnn",
       "helper": "Remise de formation ou de famille."
     },
-    "total": "Total"
+    "total": "Total",
+    "invoice": {
+      "conf": "Les factures ont été créées."
+    }
   },
   "list": {
     "header": {

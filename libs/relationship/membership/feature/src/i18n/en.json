@@ -187,7 +187,10 @@
       "placeholder": "nnn",
       "helper": "Training or family discount."
     },
-    "total": "Total"
+    "total": "Total",
+    "invoice": {
+      "conf": "The invoices were created."
+    }
   },
   "list": {
     "header": {

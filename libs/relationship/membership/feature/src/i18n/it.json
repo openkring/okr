@@ -187,7 +187,10 @@
       "placeholder": "nnn",
       "helper": "Sconto per formazione o famiglia."
     },
-    "total": "Totale"
+    "total": "Totale",
+    "invoice": {
+      "conf": "Le fatture sono state create."
+    }
   },
   "list": {
     "header": {

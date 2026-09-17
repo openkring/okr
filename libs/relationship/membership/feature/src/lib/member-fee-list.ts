@@ -321,7 +321,7 @@ export class MemberFees {
         await this.editFee(fee);
         break;
       case 'invoice.upload':
-        await this.store.uploadToBexio(fee);
+        await this.store.invoice(fee);
         break;
       case 'invoice.download':
         await this.store.downloadPdf(fee);

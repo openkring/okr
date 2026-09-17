@@ -385,6 +385,21 @@ export const _MemberFeesStore = signalStore(
     },
 
     /**
+     * Post every 'ready' fee record of this tenant as a real in-house invoice by calling the
+     * postMemberFees Cloud Function (the 'native' accountingBackend counterpart to uploadToBexio).
+     */
+    async postMemberFees(): Promise<void> {
+      const accountingTenantId = store.appStore.defaultOrg()?.okey ?? store.appStore.tenantId();
+      const fn = httpsCallable<
+        { tenantId: string; accountingTenantId: string },
+        { processed: number; invoiced: number }
+      >(store.functions, 'postMemberFees');
+      await fn({ tenantId: store.appStore.tenantId(), accountingTenantId });
+      patchState(store, { version: store.version() + 1 });
+      await showToast(store.toastController, store.i18n.memberFee_invoice_conf());
+    },
+
+    /**
      * Download a Bexio invoice PDF for a fee record.
      * If invoiceBexioId is not yet stored, prompts the user to enter it and persists it first.
      */
@@ -444,6 +459,24 @@ export const _MemberFeesStore = signalStore(
         },
       });
       await modal.present();
+    },
+  })),
+
+  withMethods((store) => ({
+    /**
+     * Route a fee's invoicing action by the tenant's accountingBackend selector
+     * (AccountingConfigModel.accountingBackend). A tenant whose books live in Bexio keeps the
+     * existing per-fee upload flow unchanged; every other backend ('native'/'datev' today only
+     * 'native' is implemented) posts the fee natively via the bulk postMemberFees callable — the
+     * screen needs no second setting, and never both paths for the same tenant.
+     */
+    async invoice(fee: MemberFeeModel): Promise<void> {
+      const backend = store.accountingConfigResource.value()?.accountingBackend ?? 'native';
+      if (backend === 'bexio') {
+        await store.uploadToBexio(fee);
+        return;
+      }
+      await store.postMemberFees();
     },
   })),
 );

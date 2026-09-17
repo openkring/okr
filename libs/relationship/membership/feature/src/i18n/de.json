@@ -187,7 +187,10 @@
       "placeholder": "nnn",
       "helper": "Ausbildungs- oder Familienrabatt."
     },
-    "total": "Total"
+    "total": "Total",
+    "invoice": {
+      "conf": "Die Rechnungen wurden erstellt."
+    }
   },
   "list": {
     "header": {

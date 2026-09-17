@@ -187,7 +187,10 @@
       "placeholder": "nnn",
       "helper": "Descuento de formación o familiar."
     },
-    "total": "Total"
+    "total": "Total",
+    "invoice": {
+      "conf": "Las facturas se han creado."
+    }
   },
   "list": {
     "header": {
