@@ -50,6 +50,8 @@ export function buildPositions(
   schedule: FeeScheduleEntry,
   ctx: FeeContext,
 ): MemberFeePosition[] {
+  // `bexioAccountId` is spread in only when the rule carries one: an explicit `undefined` field
+  // is rejected by Firestore on write, and an unseeded schedule simply has no Bexio id yet.
   return schedule.positions.map(rule => ({
     key: rule.key,
     usage: rule.usage,
@@ -58,6 +60,7 @@ export function buildPositions(
     amount: amountOf(rule, membership, ctx),
     accountKey: rule.accountKey ?? '',
     vatCodeKey: rule.vatCodeKey ?? '',
+    ...(rule.bexioAccountId === undefined ? {} : { bexioAccountId: rule.bexioAccountId }),
   }));
 }
 

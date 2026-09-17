@@ -39,7 +39,8 @@ export interface FeePositionRule {
   flag?: FeeFlag;         // source 'flag'
   rule?: FeeRule;         // source 'rule'
   amount?: number;        // source 'flag' | 'rule'; default for 'manual'
-  accountKey?: string;
+  accountKey?: string;    // revenue account (AccountModel) for the native posting path
+  bexioAccountId?: number; // the same revenue account's id in Bexio — see MemberFeePosition
   vatCodeKey?: string;
 }
 

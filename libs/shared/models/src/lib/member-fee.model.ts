@@ -12,8 +12,13 @@ export interface MemberFeePosition {
   type: string; // invoice_position_type ('fix' | 'rebate' | …)
   label: string; // grid column header and invoice position name
   amount: number;
-  accountKey: string; // revenue account (AccountModel)
+  accountKey: string; // revenue account (AccountModel) — the NATIVE posting path
   vatCodeKey: string;
+  // The Bexio account id of the same revenue account. A separate field on purpose: `accountKey`
+  // is an AccountModel okey and is not numeric, so the Bexio upload cannot derive an account id
+  // from it. The two backends identify accounts differently; conflating them uploaded every
+  // position with account_id 0.
+  bexioAccountId?: number;
 }
 
 /**

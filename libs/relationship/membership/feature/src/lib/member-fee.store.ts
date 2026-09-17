@@ -347,7 +347,9 @@ export const _MemberFeesStore = signalStore(
         return;
       }
 
-      const positions = buildBexioPositions(fee);
+      // The mcat list resolves the member's category to its human label for the position text.
+      const resolveCategoryLabel = await store.i18nService.createLabelResolver(store.mcatCategory());
+      const positions = buildBexioPositions(fee, resolveCategoryLabel(fee.category));
       if (fee.templateId?.length === 0) {
           fee.templateId = getTemplateId(fee.category);
       }
@@ -536,14 +538,24 @@ function deriveFee(
 /**
  * Build the Bexio invoice positions from a fee's `positions[]`. A rebate position is sent as a
  * negative unit price; a zero amount is left out of the invoice entirely.
+ *
+ * `account_id` comes from `bexioAccountId`, NOT from `accountKey`: the latter is an AccountModel
+ * okey and is not numeric, so `Number(accountKey)` yielded 0 for every position and the whole
+ * invoice landed on Bexio's fallback account. A schedule position without a seeded
+ * `bexioAccountId` still sends 0 — the same value the old code sent for an unmapped column — but
+ * a seeded one now reaches Bexio unchanged.
+ *
+ * `categoryLabel` reproduces the old position text: the membership-fee line carried the member's
+ * category ("SCS Jahresbeitrag Aktiv A1"), every other line was its plain label. Without it a
+ * Bexio invoice no longer says which membership category it bills.
  */
-function buildBexioPositions(fee: MemberFeeModel): { text: string; unit_price: number; account_id: number; amount: number }[] {
+function buildBexioPositions(fee: MemberFeeModel, categoryLabel = ''): { text: string; unit_price: number; account_id: number; amount: number }[] {
   return (fee.positions ?? [])
     .filter(p => p.amount !== 0)
     .map(p => ({
-      text: p.label,
+      text: p.usage === 'membershipFee' ? `${p.label} ${categoryLabel}`.trim() : p.label,
       unit_price: p.type === 'rebate' ? -p.amount : p.amount,
-      account_id: Number(p.accountKey) || 0,
+      account_id: p.bexioAccountId ?? 0,
       amount: 1,
     }));
 }
