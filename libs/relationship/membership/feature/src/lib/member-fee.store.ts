@@ -9,20 +9,21 @@ import { of } from 'rxjs';
 
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
-import { ExportFormat, INVOICE_STATE, MembershipCollection, MembershipModel, OwnershipCollection, OwnershipModel, MemberFeeCollection, MemberFeeModel } from '@okr/shared-models';
+import { AccountingConfigModel, ExportFormat, FeeScheduleEntry, INVOICE_STATE, MembershipCollection, MembershipModel, OwnershipCollection, OwnershipModel, MemberFeeCollection, MemberFeeModel } from '@okr/shared-models';
 import { confirm, exportCsv, showToast } from '@okr/shared-util-angular';
-import { DateFormat, debugListLoaded, generateRandomString, getDataRow, getSystemQuery, getTodayStr, getYear, isAfterDate, nameMatches } from '@okr/shared-util-core';
+import { DateFormat, debugListLoaded, generateRandomString, getDataRow, getFullName, getSystemQuery, getTodayStr, getYear, isAfterDate, nameMatches } from '@okr/shared-util-core';
 import { ExportFormats } from '@okr/shared-categories';
 import { I18nService } from '@okr/shared-i18n';
 
 import { ActivityService } from '@okr/activity-data-access';
-import { MemberFeeService, convertMembershipToFee, getFeeTotal, getTemplateId } from '@okr/relationship-membership-data-access';
+import { AccountingConfigService } from '@okr/finance-accounting-data-access';
+import { MemberFeeService, getTemplateId } from '@okr/relationship-membership-data-access';
 
 import { MembershipEditModal } from './membership-edit.modal';
 import { MemberFeeInvoiceIdModal } from './member-fee-invoice-id.modal';
 import { MemberFeeUploadModal } from './member-fee-upload.modal';
 import { MemberFeesTotalsModal } from './member-fee-totals.modal';
-import { MEMBERSHIP_I18N_KEYS } from '@okr/relationship-membership-util';
+import { buildPositions, getFeeTotal, MEMBERSHIP_I18N_KEYS } from '@okr/relationship-membership-util';
 
 export type MemberFeesState = {
   searchTerm: string;
@@ -48,6 +49,7 @@ export const _MemberFeesStore = signalStore(
     }
     return {
       memberFeeService: inject(MemberFeeService),
+      accountingConfigService: inject(AccountingConfigService),
       appStore,
       firestoreService: inject(FirestoreService),
       activityService: inject(ActivityService),
@@ -94,6 +96,20 @@ export const _MemberFeesStore = signalStore(
       },
     }),
 
+    // The accounting config of the default org — carries the year-versioned `feeSchedule`
+    // that drives the fee derivation (buildPositions).
+    accountingConfigResource: rxResource({
+      params: () => ({
+        currentUser: store.appStore.currentUser(),
+        accountingTenantId: store.appStore.defaultOrg()?.okey ?? store.appStore.tenantId(),
+        version: store.version(),
+      }),
+      stream: ({ params }) => {
+        if (!params.currentUser || !params.accountingTenantId) return of(undefined);
+        return store.accountingConfigService.read(params.accountingTenantId);
+      },
+    }),
+
     // Persisted fee records from member-fees collection
     feeRecordsResource: rxResource({
       params: () => ({
@@ -111,6 +127,7 @@ export const _MemberFeesStore = signalStore(
     isLoading: computed(() =>
       store.allMembershipsResource.isLoading() ||
       store.allLockerOwnershipsResource.isLoading() ||
+      store.accountingConfigResource.isLoading() ||
       store.feeRecordsResource.isLoading()
     ),
     currentUser: computed(() => store.appStore.currentUser()),
@@ -126,18 +143,6 @@ export const _MemberFeesStore = signalStore(
         isAfterDate(m.dateOfExit, today) &&
         (m.state === 'active' || m.state === 'passive')
       ) ?? [];
-    }),
-
-    // SRV memberships indexed by memberKey
-    srvMembershipsByKey: computed(() => {
-      const today = getTodayStr();
-      const map = new Map<string, MembershipModel>();
-      store.allMembershipsResource.value()?.filter((m: MembershipModel) => 
-        m.orgKey === 'srv' &&
-        m.orgModelType === 'org' &&
-        isAfterDate(m.dateOfExit, today)
-      ).forEach((m: MembershipModel) => map.set(m.memberKey, m));
-      return map;
     }),
 
     // locker ownerships active today, indexed by ownerKey
@@ -159,33 +164,42 @@ export const _MemberFeesStore = signalStore(
       return map;
     }),
 
-    mcatScs: computed(() => store.appStore.allCategories()?.find(c => c.name === 'mcat_scs')),
-    mcatSrv: computed(() => store.appStore.allCategories()?.find(c => c.name === 'mcat_srv')),
+    // Every category list flattened to `listName -> category -> price`, which is the shape
+    // `FeeContext.categoryLists` expects. A list without prices simply contributes an empty map.
+    categoryLists: computed((): Record<string, Record<string, number>> => {
+      const lists: Record<string, Record<string, number>> = {};
+      store.appStore.allCategories()?.forEach(list => {
+        const prices: Record<string, number> = {};
+        list.items?.forEach(item => { prices[item.name] = item.price ?? 0; });
+        lists[list.name] = prices;
+      });
+      return lists;
+    }),
+
+    // The price list of the running year. A tenant without a schedule for this year derives
+    // an empty position list — never a wrong amount.
+    feeSchedule: computed((): FeeScheduleEntry => {
+      const year = getYear();
+      const config: AccountingConfigModel | undefined = store.accountingConfigResource.value();
+      return config?.feeSchedule?.find(e => e.year === year) ?? { year, positions: [] };
+    }),
+
     mcatScsCategory: computed(() => store.appStore.allCategories()?.find(c => c.name === 'mcat_scs')),
   })),
 
   withComputed((store) => ({
     // Merged list: persisted records take priority; generated models fill in the rest
     allFees: computed((): MemberFeeModel[] => {
-      const currentYear = getTodayStr(DateFormat.Year);
       const tenantId = store.tenantId();
-      const srvMap = store.srvMembershipsByKey();
       const lockerKeys = store.lockerOwnerKeys();
       const feeMap = store.feeRecordsByMemberKey();
-      const mcatScs = store.mcatScs();
-      const mcatSrv = store.mcatSrv();
+      const schedule = store.feeSchedule();
+      const categoryLists = store.categoryLists();
 
       return store.defaultOrgMemberships().map((membership: MembershipModel) => {
         const existing = feeMap.get(membership.memberKey);
         if (existing) return existing;
-        return convertMembershipToFee(
-          membership,
-          srvMap.get(membership.memberKey),
-          lockerKeys.has(membership.memberKey),
-          mcatScs,
-          mcatSrv,
-          tenantId
-        );
+        return deriveFee(membership, schedule, categoryLists, lockerKeys, tenantId);
       });
     }),
 
@@ -225,7 +239,7 @@ export const _MemberFeesStore = signalStore(
     },
 
     getTotal(fee: MemberFeeModel): number {
-      return getFeeTotal(fee);
+      return getFeeTotal(fee.positions ?? []);
     },
 
     /**
@@ -244,23 +258,15 @@ export const _MemberFeesStore = signalStore(
       if (!confirmed) return;
 
       const tenantId = store.tenantId();
-      const srvMap = store.srvMembershipsByKey();
       const lockerKeys = store.lockerOwnerKeys();
       const feeMap = store.feeRecordsByMemberKey();
-      const mcatScs = store.mcatScs();
-      const mcatSrv = store.mcatSrv();
+      const schedule = store.feeSchedule();
+      const categoryLists = store.categoryLists();
       const currentUser = store.appStore.currentUser() ?? undefined;
 
       const members = store.defaultOrgMemberships().filter((m: MembershipModel) => !feeMap.has(m.memberKey));
       const saves = members.map((m: MembershipModel) => {
-          const fee = convertMembershipToFee(
-            m,
-            srvMap.get(m.memberKey),
-            lockerKeys.has(m.memberKey),
-            mcatScs,
-            mcatSrv,
-            tenantId
-          );
+          const fee = deriveFee(m, schedule, categoryLists, lockerKeys, tenantId);
           return store.memberFeeService.save(fee, currentUser, false);
       });
       const msg = 'generated ' + members.length + ' scs member fees.';
@@ -341,7 +347,7 @@ export const _MemberFeesStore = signalStore(
         return;
       }
 
-      const positions = bPFXldBexioPositions(fee);
+      const positions = buildBexioPositions(fee);
       if (fee.templateId?.length === 0) {
           fee.templateId = getTemplateId(fee.category);
       }
@@ -443,37 +449,62 @@ export const _MemberFeesStore = signalStore(
 );
 
 /**
- * BPFXld Bexio invoice positions from a MemberFeeModel.
+ * Build one member's fee record from the year's schedule. The eight hardcoded columns are gone;
+ * every amount now comes from `buildPositions`, so a tenant's price list is data, not code.
  */
-function bPFXldBexioPositions(fee: MemberFeeModel): { text: string; unit_price: number; account_id: number; amount: number }[] {
-  const positions: { text: string; unit_price: number; account_id: number; amount: number }[] = [];
-  const addPos = (text: string, unit_price: number, account_id: number) => {
-    if (unit_price !== 0) positions.push({ text, unit_price, account_id, amount: 1 });
+function deriveFee(
+  membership: MembershipModel,
+  schedule: FeeScheduleEntry,
+  categoryLists: Record<string, Record<string, number>>,
+  lockerOwnerKeys: Set<string>,
+  tenantId: string,
+): MemberFeeModel {
+  const fee = new MemberFeeModel(tenantId);
+
+  fee.tenants = membership.tenants;
+  fee.isArchived = membership.isArchived;
+  fee.index = membership.index;
+  fee.tags = membership.tags;
+  fee.notes = membership.notes;
+  fee.templateId = getTemplateId(membership.category);
+
+  fee.member = {
+    key: membership.memberKey,
+    name1: membership.memberName1,
+    name2: membership.memberName2,
+    modelType: membership.memberModelType,
+    type: membership.memberType,
+    subType: '',
+    label: getFullName(membership.memberName1, membership.memberName2),
   };
+  fee.memberBirthYear = membership.memberBirthYear;
+  fee.memberBexioId = membership.memberBexioId;
+  fee.dateOfEntry = membership.dateOfEntry;
+  fee.category = membership.category;
 
-  let mcat: string;
-  switch (fee.category) {
-    case 'active': mcat = 'Aktiv A1'; break;
-    case 'active2': mcat = 'Aktiv A2'; break;
-    case 'active3': mcat = 'Aktiv A3'; break;
-    case 'free': mcat = 'Freimitglied'; break;
-    case 'junior': mcat = 'Jugendliche'; break;
-    case 'honorary': mcat = 'Ehrenmitglied'; break;
-    case 'candidate':  mcat = 'Kandidierende'; break;
-    case 'passive': mcat = 'Passive'; break;
-    default: mcat = ''; break;
-  }
+  fee.positions = buildPositions(membership, schedule, {
+    hasLocker: lockerOwnerKeys.has(membership.memberKey),
+    currentYear: schedule.year,
+    categoryLists,
+  });
 
-  addPos('SCS Jahresbeitrag ' + mcat, fee.jb, 159);
-  addPos('SRV Verbandsbeitrag', fee.srv, 284);
-  addPos('Getränke 2025', fee.bev, 306);
-  addPos('Einmalige Eintrittsgebühr', fee.entryFee, 158);
-  addPos('Miete Garderobenkasten', fee.locker, 286);
-  addPos('Hallentraining', fee.hallenTraining, 289);
-  addPos('Miete Skiff Lagerplatz', fee.skiff, 286);
-  addPos('Anteil Skiff-Versicherung', fee.skiffInsurance, 165);
-  if (fee.rebate > 0) addPos(`Rabatt (${fee.rebateReason})`, -fee.rebate, 159);
-  return positions;
+  fee.state = 'initial';
+  return fee;
+}
+
+/**
+ * Build the Bexio invoice positions from a fee's `positions[]`. A rebate position is sent as a
+ * negative unit price; a zero amount is left out of the invoice entirely.
+ */
+function buildBexioPositions(fee: MemberFeeModel): { text: string; unit_price: number; account_id: number; amount: number }[] {
+  return (fee.positions ?? [])
+    .filter(p => p.amount !== 0)
+    .map(p => ({
+      text: p.label,
+      unit_price: p.type === 'rebate' ? -p.amount : p.amount,
+      account_id: Number(p.accountKey) || 0,
+      amount: 1,
+    }));
 }
 
 @Injectable({ providedIn: 'root' })
