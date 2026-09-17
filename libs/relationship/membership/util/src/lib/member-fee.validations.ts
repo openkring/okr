@@ -1,9 +1,9 @@
 import { enforce, only, staticSuite, test } from 'vest';
 
-import { ScsMemberFeesModel } from '@okr/shared-models';
+import { MemberFeeModel } from '@okr/shared-models';
 import { baseValidations, numberValidations } from '@okr/shared-util-core';
 
-export const scsMemberFeeValidations = staticSuite((model: ScsMemberFeesModel, tenants: string, tags: string, field?: string) => {
+export const memberFeeValidations = staticSuite((model: MemberFeeModel, tenants: string, tags: string, field?: string) => {
   if (field) only(field);
 
   baseValidations(model, tenants, tags, field);

@@ -9,36 +9,36 @@ import { of } from 'rxjs';
 
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
-import { ExportFormat, INVOICE_STATE, MembershipCollection, MembershipModel, OwnershipCollection, OwnershipModel, ScsMemberFeesCollection, ScsMemberFeesModel } from '@okr/shared-models';
+import { ExportFormat, INVOICE_STATE, MembershipCollection, MembershipModel, OwnershipCollection, OwnershipModel, MemberFeeCollection, MemberFeeModel } from '@okr/shared-models';
 import { confirm, exportCsv, showToast } from '@okr/shared-util-angular';
 import { DateFormat, debugListLoaded, generateRandomString, getDataRow, getSystemQuery, getTodayStr, getYear, isAfterDate, nameMatches } from '@okr/shared-util-core';
 import { ExportFormats } from '@okr/shared-categories';
 import { I18nService } from '@okr/shared-i18n';
 
 import { ActivityService } from '@okr/activity-data-access';
-import { ScsMemberFeeService, convertMembershipToFee, getFeeTotal, getTemplateId } from '@okr/relationship-membership-data-access';
+import { MemberFeeService, convertMembershipToFee, getFeeTotal, getTemplateId } from '@okr/relationship-membership-data-access';
 
 import { MembershipEditModal } from './membership-edit.modal';
-import { ScsMemberFeeInvoiceIdModal } from './scs-member-fee-invoice-id.modal';
-import { ScsMemberFeeUploadModal } from './scs-member-fee-upload.modal';
-import { ScsMemberFeesTotalsModal } from './scs-member-fees-totals.modal';
+import { MemberFeeInvoiceIdModal } from './member-fee-invoice-id.modal';
+import { MemberFeeUploadModal } from './member-fee-upload.modal';
+import { MemberFeesTotalsModal } from './member-fee-totals.modal';
 import { MEMBERSHIP_I18N_KEYS } from '@okr/relationship-membership-util';
 
-export type ScsMemberFeesState = {
+export type MemberFeesState = {
   searchTerm: string;
   selectedMcat: string;
   selectedState: string;
   version: number;
 };
 
-const initialState: ScsMemberFeesState = {
+const initialState: MemberFeesState = {
   searchTerm: '',
   selectedMcat: 'all',
   selectedState: 'all',
   version: 0,
 };
 
-export const _ScsMemberFeesStore = signalStore(
+export const _MemberFeesStore = signalStore(
   withState(initialState),
   withProps(() => {
     const appStore = inject(AppStore);
@@ -47,7 +47,7 @@ export const _ScsMemberFeesStore = signalStore(
       connectFunctionsEmulator(functions, 'localhost', 5001);
     }
     return {
-      scsMemberFeeService: inject(ScsMemberFeeService),
+      memberFeeService: inject(MemberFeeService),
       appStore,
       firestoreService: inject(FirestoreService),
       activityService: inject(ActivityService),
@@ -73,7 +73,7 @@ export const _ScsMemberFeesStore = signalStore(
         const query = getSystemQuery(store.appStore.tenantId());
         query.push({ key: 'memberModelType', operator: '==', value: 'person' });
         return store.firestoreService.searchData<MembershipModel>(MembershipCollection, query, 'memberName2', 'asc').pipe(
-          debugListLoaded('ScsMemberFeesStore.allMemberships', params.currentUser)
+          debugListLoaded('MemberFeesStore.allMemberships', params.currentUser)
         );
       },
     }),
@@ -89,12 +89,12 @@ export const _ScsMemberFeesStore = signalStore(
         const query = getSystemQuery(store.appStore.tenantId());
         query.push({ key: 'resourceType', operator: '==', value: 'locker' });
         return store.firestoreService.searchData<OwnershipModel>(OwnershipCollection, query, 'ownerName2', 'asc').pipe(
-          debugListLoaded('ScsMemberFeesStore.allLockerOwnerships', params.currentUser)
+          debugListLoaded('MemberFeesStore.allLockerOwnerships', params.currentUser)
         );
       },
     }),
 
-    // Persisted fee records from scs-memberfees collection
+    // Persisted fee records from member-fees collection
     feeRecordsResource: rxResource({
       params: () => ({
         currentUser: store.appStore.currentUser(),
@@ -102,7 +102,7 @@ export const _ScsMemberFeesStore = signalStore(
       }),
       stream: ({ params }) => {
         if (!params.currentUser) return of([]);
-        return store.scsMemberFeeService.list();
+        return store.memberFeeService.list();
       },
     }),
   })),
@@ -152,8 +152,8 @@ export const _ScsMemberFeesStore = signalStore(
 
     // persisted fee records indexed by member key
     feeRecordsByMemberKey: computed(() => {
-      const map = new Map<string, ScsMemberFeesModel>();
-      store.feeRecordsResource.value()?.forEach((f: ScsMemberFeesModel) => {
+      const map = new Map<string, MemberFeeModel>();
+      store.feeRecordsResource.value()?.forEach((f: MemberFeeModel) => {
         if (f.member?.key) map.set(f.member.key, f);
       });
       return map;
@@ -166,7 +166,7 @@ export const _ScsMemberFeesStore = signalStore(
 
   withComputed((store) => ({
     // Merged list: persisted records take priority; generated models fill in the rest
-    allFees: computed((): ScsMemberFeesModel[] => {
+    allFees: computed((): MemberFeeModel[] => {
       const currentYear = getTodayStr(DateFormat.Year);
       const tenantId = store.tenantId();
       const srvMap = store.srvMembershipsByKey();
@@ -200,7 +200,7 @@ export const _ScsMemberFeesStore = signalStore(
 
   withComputed((store) => ({
       filteredFees: computed(() => {
-        return store.allFees()?.filter((fee: ScsMemberFeesModel) => 
+        return store.allFees()?.filter((fee: MemberFeeModel) => 
           nameMatches(fee.index, store.searchTerm()) &&
           nameMatches(fee.category, store.selectedMcat()) &&
           nameMatches(fee.state, store.selectedState()))
@@ -224,15 +224,15 @@ export const _ScsMemberFeesStore = signalStore(
       patchState(store, { version: store.version() + 1 });
     },
 
-    getTotal(fee: ScsMemberFeesModel): number {
+    getTotal(fee: MemberFeeModel): number {
       return getFeeTotal(fee);
     },
 
     /**
      * Save an edited fee record to Firestore and reload.
      */
-    async saveFee(fee: ScsMemberFeesModel): Promise<void> {
-      await store.scsMemberFeeService.save(fee, store.appStore.currentUser() ?? undefined);
+    async saveFee(fee: MemberFeeModel): Promise<void> {
+      await store.memberFeeService.save(fee, store.appStore.currentUser() ?? undefined);
       patchState(store, { version: store.version() + 1 });
     },
 
@@ -240,7 +240,7 @@ export const _ScsMemberFeesStore = signalStore(
      * Generate and persist fee records for all default org members that don't have one yet.
      */
     async generateFees(): Promise<void> {
-      const confirmed = await confirm(store.alertController, store.i18n.scsMemberFee_generate_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
+      const confirmed = await confirm(store.alertController, store.i18n.memberFee_generate_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
       if (!confirmed) return;
 
       const tenantId = store.tenantId();
@@ -261,19 +261,19 @@ export const _ScsMemberFeesStore = signalStore(
             mcatSrv,
             tenantId
           );
-          return store.scsMemberFeeService.save(fee, currentUser, false);
+          return store.memberFeeService.save(fee, currentUser, false);
       });
       const msg = 'generated ' + members.length + ' scs member fees.';
       store.activityService.log('membership', 'create', currentUser, msg);
 
       await Promise.all(saves);
       patchState(store, { version: store.version() + 1 });
-      await showToast(store.toastController, store.i18n.scsMemberFee_generate_conf());
+      await showToast(store.toastController, store.i18n.memberFee_generate_conf());
     },
 
     async showTotals(): Promise<void> {
       const modal = await store.modalController.create({
-        component: ScsMemberFeesTotalsModal,
+        component: MemberFeesTotalsModal,
         componentProps: {
           fees: store.filteredFees(),
         },
@@ -282,62 +282,62 @@ export const _ScsMemberFeesStore = signalStore(
     },
 
     async archive(): Promise<void> {
-      const confirmed = await confirm(store.alertController, store.i18n.scsMemberFee_archive_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
+      const confirmed = await confirm(store.alertController, store.i18n.memberFee_archive_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
       if (!confirmed) return;
 
       const fees = store.filteredFees();
       const batch = store.firestoreService.getBatch();
       for (const fee of fees) {
         if (!fee.okey) continue;
-        const ref = doc(store.firestoreService.firestore, `${ScsMemberFeesCollection}/${fee.okey}`);
+        const ref = doc(store.firestoreService.firestore, `${MemberFeeCollection}/${fee.okey}`);
         batch.update(ref, { isArchived: true });
       }
       await batch.commit();
       patchState(store, { version: store.version() + 1 });
-      await showToast(store.toastController, store.i18n.scsMemberFee_archive_conf());
+      await showToast(store.toastController, store.i18n.memberFee_archive_conf());
     },
 
     async export(type: string): Promise<void> {
       if (type === 'raw') {
         const fees = store.filteredFees();
-        let keys: (keyof ScsMemberFeesModel)[] = [];
+        let keys: (keyof MemberFeeModel)[] = [];
         const table: string[][] = [];
         const fn = generateRandomString(10) + '.' + ExportFormats[ExportFormat.XLSX].abbreviation;
         let tableName = '';
-        keys = Object.keys(new ScsMemberFeesModel(store.appStore.tenantId())) as (keyof ScsMemberFeesModel)[];
+        keys = Object.keys(new MemberFeeModel(store.appStore.tenantId())) as (keyof MemberFeeModel)[];
         table.push(keys);
         for (const fee of fees) {
-          table.push(getDataRow<ScsMemberFeesModel>(fee, keys));
+          table.push(getDataRow<MemberFeeModel>(fee, keys));
         }
-        exportCsv(table, fn, store.i18n.scsMemberFee_export_title());
+        exportCsv(table, fn, store.i18n.memberFee_export_title());
       }
     },
 
     /**
      * Delete a fee record (only those already persisted).
      */
-    async deleteFee(fee: ScsMemberFeesModel): Promise<void> {
+    async deleteFee(fee: MemberFeeModel): Promise<void> {
       if (!fee.okey) return;
       const confirmed = await confirm(store.alertController, store.i18n.delete_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
       if (!confirmed) return;
-      await store.scsMemberFeeService.delete(fee, store.appStore.currentUser() ?? undefined);
+      await store.memberFeeService.delete(fee, store.appStore.currentUser() ?? undefined);
       patchState(store, { version: store.version() + 1 });
     },
 
-    async setStatus(fee: ScsMemberFeesModel, status: INVOICE_STATE): Promise<void> {
+    async setStatus(fee: MemberFeeModel, status: INVOICE_STATE): Promise<void> {
       if (!fee.okey) return;
-      const updated: ScsMemberFeesModel = { ...fee, state: status };
-      await store.scsMemberFeeService.save(updated, store.appStore.currentUser() ?? undefined);
+      const updated: MemberFeeModel = { ...fee, state: status };
+      await store.memberFeeService.save(updated, store.appStore.currentUser() ?? undefined);
       patchState(store, { version: store.version() + 1 });
-      await showToast(store.toastController, store.i18n.scsMemberFee_update_conf());
+      await showToast(store.toastController, store.i18n.memberFee_update_conf());
     },
 
     /**
      * Upload a fee record to Bexio by calling the createBexioInvoice Cloud Function.
      */
-    async uploadToBexio(fee: ScsMemberFeesModel): Promise<void> {
+    async uploadToBexio(fee: MemberFeeModel): Promise<void> {
       if (!fee.memberBexioId) {
-        await showToast(store.toastController, store.i18n.scsMemberFee_upload_noBexioId());
+        await showToast(store.toastController, store.i18n.memberFee_upload_noBexioId());
         return;
       }
 
@@ -346,7 +346,7 @@ export const _ScsMemberFeesStore = signalStore(
           fee.templateId = getTemplateId(fee.category);
       }
       const modal = await store.modalController.create({
-        component: ScsMemberFeeUploadModal,
+        component: MemberFeeUploadModal,
         componentProps: { fee, positions },
       });
       await modal.present();
@@ -372,30 +372,30 @@ export const _ScsMemberFeesStore = signalStore(
       });
 
       // Mark as uploaded and store the Bexio invoice ID
-      const updated: ScsMemberFeesModel = { ...fee, state: 'uploaded', invoiceBexioId: String(result.data.id) };
-      await store.scsMemberFeeService.save(updated, store.appStore.currentUser() ?? undefined);
+      const updated: MemberFeeModel = { ...fee, state: 'uploaded', invoiceBexioId: String(result.data.id) };
+      await store.memberFeeService.save(updated, store.appStore.currentUser() ?? undefined);
       patchState(store, { version: store.version() + 1 });
-      await showToast(store.toastController, store.i18n.scsMemberFee_upload_conf());
+      await showToast(store.toastController, store.i18n.memberFee_upload_conf());
     },
 
     /**
      * Download a Bexio invoice PDF for a fee record.
      * If invoiceBexioId is not yet stored, prompts the user to enter it and persists it first.
      */
-    async downloadPdf(fee: ScsMemberFeesModel): Promise<void> {
+    async downloadPdf(fee: MemberFeeModel): Promise<void> {
       let invoiceBexioId = fee.invoiceBexioId;
 
       if (!invoiceBexioId) {
         const modal = await store.modalController.create({
-          component: ScsMemberFeeInvoiceIdModal,
+          component: MemberFeeInvoiceIdModal,
           componentProps: { fee },
         });
         await modal.present();
         const { data, role } = await modal.onWillDismiss<{ invoiceId: string }>();
         if (role !== 'confirm' || !data?.invoiceId) return;
         invoiceBexioId = data.invoiceId;
-        const updated: ScsMemberFeesModel = { ...fee, invoiceBexioId };
-        await store.scsMemberFeeService.save(updated, store.appStore.currentUser() ?? undefined);
+        const updated: MemberFeeModel = { ...fee, invoiceBexioId };
+        await store.memberFeeService.save(updated, store.appStore.currentUser() ?? undefined);
         patchState(store, { version: store.version() + 1 });
       }
 
@@ -417,7 +417,7 @@ export const _ScsMemberFeesStore = signalStore(
     /**
      * Open the MembershipEditModal for the membership of a fee record.
      */
-    async editMembership(fee: ScsMemberFeesModel, readOnly = false): Promise<void> {
+    async editMembership(fee: MemberFeeModel, readOnly = false): Promise<void> {
       const memberKey = fee.member?.key;
       if (!memberKey) return;
       const membership = store.membershipsByMemberKey().get(memberKey);
@@ -443,9 +443,9 @@ export const _ScsMemberFeesStore = signalStore(
 );
 
 /**
- * BPFXld Bexio invoice positions from a ScsMemberFeesModel.
+ * BPFXld Bexio invoice positions from a MemberFeeModel.
  */
-function bPFXldBexioPositions(fee: ScsMemberFeesModel): { text: string; unit_price: number; account_id: number; amount: number }[] {
+function bPFXldBexioPositions(fee: MemberFeeModel): { text: string; unit_price: number; account_id: number; amount: number }[] {
   const positions: { text: string; unit_price: number; account_id: number; amount: number }[] = [];
   const addPos = (text: string, unit_price: number, account_id: number) => {
     if (unit_price !== 0) positions.push({ text, unit_price, account_id, amount: 1 });
@@ -477,6 +477,6 @@ function bPFXldBexioPositions(fee: ScsMemberFeesModel): { text: string; unit_pri
 }
 
 @Injectable({ providedIn: 'root' })
-export class ScsMemberFeesStore extends _ScsMemberFeesStore {
+export class MemberFeesStore extends _MemberFeesStore {
   constructor() { super(); }
 }

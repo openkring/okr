@@ -2,14 +2,14 @@ import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core
 import { FormsModule } from '@angular/forms';
 import { IonButton, IonButtons, IonContent, IonFooter, IonInput, IonItem, IonToolbar, ModalController } from '@ionic/angular/standalone';
 
-import { ScsMemberFeesModel } from '@okr/shared-models';
+import { MemberFeeModel } from '@okr/shared-models';
 import { Header } from '@okr/shared-ui';
 import { I18nService } from '@okr/shared-i18n';
 import { MEMBERSHIP_I18N_KEYS } from '@okr/relationship-membership-util';
 import { dismissOverlay } from '@okr/shared-util-angular';
 
 @Component({
-  selector: 'okr-scs-member-fee-invoice-id-modal',
+  selector: 'okr-member-fee-invoice-id-modal',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
@@ -44,14 +44,14 @@ import { dismissOverlay } from '@okr/shared-util-angular';
     </ion-footer>
   `
 })
-export class ScsMemberFeeInvoiceIdModal {
+export class MemberFeeInvoiceIdModal {
   private readonly modalController = inject(ModalController);
   protected readonly i18n = inject(I18nService).translateAll({
     cancel: '@cancel',
-    title: MEMBERSHIP_I18N_KEYS.scsMemberFee_download_enterInvoiceId,
+    title: MEMBERSHIP_I18N_KEYS.memberFee_download_enterInvoiceId,
   });
 
-  public fee = input.required<ScsMemberFeesModel>();
+  public fee = input.required<MemberFeeModel>();
 
   protected invoiceId = '';
 

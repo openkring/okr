@@ -140,7 +140,7 @@ describe('anonymizePatch', () => {
   // model, and a quasi-identifier that would survive as a pseudonym instead of being
   // cleared.
   it('clears the quasi-identifiers on a member fee, not just the name', () => {
-    const e = mapRow('scs-memberfees');
+    const e = mapRow('member-fees');
     const doc = snap('f1', {
       member: { key: 'p1', name1: 'Ann', name2: 'Müller' },
       memberBexioId: '4711', invoiceBexioId: '99', memberBirthYear: '1963', amount: 250,

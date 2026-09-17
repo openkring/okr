@@ -7,7 +7,7 @@ import { AvatarInfo } from './avatar-info';
  * to prepare the yearly membership invoices.
  * The entries of this list are deleted when creating the invoice in Bexio (upload of the data to Bexio)
  */
-export class ScsMemberFeesModel implements OkrModel, SearchableModel, TaggedModel {
+export class MemberFeeModel implements OkrModel, SearchableModel, TaggedModel {
   public okey = DEFAULT_KEY;
   public tenants: string[] = DEFAULT_TENANTS;
   public isArchived = false;
@@ -46,8 +46,8 @@ export class ScsMemberFeesModel implements OkrModel, SearchableModel, TaggedMode
   }
 }
 
-export const ScsMemberFeesCollection = 'scs-memberfees';
-export const ScsMemberFeesModelName = 'scs-member-fee';
+export const MemberFeeCollection = 'member-fees';
+export const MemberFeeModelName = 'member-fee';
 
 export type INVOICE_STATE = 'initial' | 'review' | 'ready' | 'uploaded' | 'sent' | 'paid' | 'cancelled';
 export const INVOICE_STATE_VALUES = ['initial', 'review', 'ready', 'uploaded', 'sent', 'paid', 'cancelled'] as const satisfies INVOICE_STATE[];

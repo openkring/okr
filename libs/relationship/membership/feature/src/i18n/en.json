@@ -110,7 +110,7 @@
       "helper": "The current status of this membership."
     }
   },
-  "scsMemberFee": {
+  "memberFee": {
     "archive": {
       "confirm": "The invoice run is completed and all invoices are set to archived.",
       "conf": "All invoices have been archived. You are ready for a new invoice generation."

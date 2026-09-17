@@ -113,7 +113,7 @@ export const _MembershipStore = signalStore(
       stream: ({params}) => {
         // Gate on an authenticated user: memberships is a protected collection. Without this,
         // a logout while a membership view is still mounted reloads the resource with no user
-        // and queries memberships → permission-denied. (Matches ScsMemberFeesStore.)
+        // and queries memberships → permission-denied. (Matches MemberFeesStore.)
         if (!params.currentUser) return of([]);
         return store.firestoreService.searchData<MembershipModel>(MembershipCollection, getSystemQuery(store.appStore.tenantId()), 'memberName2', 'asc').pipe(
           debugListLoaded('MembershipStore.allMemberships', params.currentUser)

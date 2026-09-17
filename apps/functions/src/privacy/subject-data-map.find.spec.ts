@@ -140,7 +140,7 @@ describe('find() query shapes', () => {
       ['bookings', 'counterparty.modelType'],
       ['invoices', 'receiver.modelType'],
       ['bills', 'vendor.modelType'],
-      ['scs-memberfees', 'member.modelType'],
+      ['member-fees', 'member.modelType'],
       ['reservations', 'reserver.modelType'],
       // I12: responsibleAvatar / delegateAvatar are "Person or Group"
       ['responsibilities', 'responsibleAvatar.modelType'],

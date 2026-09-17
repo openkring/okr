@@ -1,14 +1,14 @@
 import { ChangeDetectionStrategy, Component, computed, effect, input, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 
-import { CategoryListModel, INVOICE_STATE_VALUES, REBATE_REASON_VALUES, ScsMemberFeesModel, UserModel } from '@okr/shared-models';
+import { CategoryListModel, INVOICE_STATE_VALUES, REBATE_REASON_VALUES, MemberFeeModel, UserModel } from '@okr/shared-models';
 import { NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n , ErrorNote} from '@okr/shared-ui';
 import { getAgeFromBirthYear } from '@okr/shared-util-core';
 
-import { MembershipI18n, scsMemberFeeValidations } from '@okr/relationship-membership-util';
+import { MembershipI18n, memberFeeValidations } from '@okr/relationship-membership-util';
 
 @Component({
-  selector: 'okr-scs-member-fee-edit-form',
+  selector: 'okr-member-fee-edit-form',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
@@ -104,15 +104,15 @@ import { MembershipI18n, scsMemberFeeValidations } from '@okr/relationship-membe
     }
   `
 })
-export class ScsMemberFeeEditForm {
+export class MemberFeeEditForm {
   // i18n — all translations come from the i18n input
-  protected jbI18n             = computed(() => ({ name: 'jb',             label: this.i18n().scsMemberFee_jb(),             placeholder: this.i18n().scsMemberFee_jb_placeholder(),             helper: this.i18n().scsMemberFee_jb_helper()             } as NumberInputI18n));
-  protected srvI18n            = computed(() => ({ name: 'jbp',            label: this.i18n().scsMemberFee_jbp(),            placeholder: this.i18n().scsMemberFee_jbp_placeholder(),            helper: this.i18n().scsMemberFee_jbp_helper()            } as NumberInputI18n));
-  protected bevI18n            = computed(() => ({ name: 'bev',            label: this.i18n().scsMemberFee_bev(),            placeholder: this.i18n().scsMemberFee_bev_placeholder(),            helper: this.i18n().scsMemberFee_bev_helper()            } as NumberInputI18n));
-  protected entryFeeI18n       = computed(() => ({ name: 'entryFee',       label: this.i18n().scsMemberFee_entryFee(),       placeholder: this.i18n().scsMemberFee_entryFee_placeholder(),       helper: this.i18n().scsMemberFee_entryFee_helper()       } as NumberInputI18n));
-  protected lockerI18n         = computed(() => ({ name: 'locker',         label: this.i18n().scsMemberFee_locker(),         placeholder: this.i18n().scsMemberFee_locker_placeholder(),         helper: this.i18n().scsMemberFee_locker_helper()         } as NumberInputI18n));
-  protected skiffI18n          = computed(() => ({ name: 'skiff',          label: this.i18n().scsMemberFee_skiff(),          placeholder: this.i18n().scsMemberFee_skiff_placeholder(),          helper: this.i18n().scsMemberFee_skiff_helper()          } as NumberInputI18n));
-  protected skiffInsuranceI18n = computed(() => ({ name: 'skiffInsurance', label: this.i18n().scsMemberFee_skiffInsurance(), placeholder: this.i18n().scsMemberFee_skiffInsurance_placeholder(), helper: this.i18n().scsMemberFee_skiffInsurance_helper() } as NumberInputI18n));
+  protected jbI18n             = computed(() => ({ name: 'jb',             label: this.i18n().memberFee_jb(),             placeholder: this.i18n().memberFee_jb_placeholder(),             helper: this.i18n().memberFee_jb_helper()             } as NumberInputI18n));
+  protected srvI18n            = computed(() => ({ name: 'jbp',            label: this.i18n().memberFee_jbp(),            placeholder: this.i18n().memberFee_jbp_placeholder(),            helper: this.i18n().memberFee_jbp_helper()            } as NumberInputI18n));
+  protected bevI18n            = computed(() => ({ name: 'bev',            label: this.i18n().memberFee_bev(),            placeholder: this.i18n().memberFee_bev_placeholder(),            helper: this.i18n().memberFee_bev_helper()            } as NumberInputI18n));
+  protected entryFeeI18n       = computed(() => ({ name: 'entryFee',       label: this.i18n().memberFee_entryFee(),       placeholder: this.i18n().memberFee_entryFee_placeholder(),       helper: this.i18n().memberFee_entryFee_helper()       } as NumberInputI18n));
+  protected lockerI18n         = computed(() => ({ name: 'locker',         label: this.i18n().memberFee_locker(),         placeholder: this.i18n().memberFee_locker_placeholder(),         helper: this.i18n().memberFee_locker_helper()         } as NumberInputI18n));
+  protected skiffI18n          = computed(() => ({ name: 'skiff',          label: this.i18n().memberFee_skiff(),          placeholder: this.i18n().memberFee_skiff_placeholder(),          helper: this.i18n().memberFee_skiff_helper()          } as NumberInputI18n));
+  protected skiffInsuranceI18n = computed(() => ({ name: 'skiffInsurance', label: this.i18n().memberFee_skiffInsurance(), placeholder: this.i18n().memberFee_skiffInsurance_placeholder(), helper: this.i18n().memberFee_skiffInsurance_helper() } as NumberInputI18n));
   protected rebateI18n         = computed(() => ({ name: 'rebate',         label: this.i18n().rebate_label(),         placeholder: this.i18n().rebate_placeholder(),         helper: this.i18n().rebate_helper()         } as NumberInputI18n));
   protected notesI18n          = computed(() => ({ name: 'notes',          label: this.i18n().notes_label(),          placeholder: this.i18n().notes_placeholder()                                                        } as NotesInputI18n));
   protected rebateReasonI18n   = computed(() => ({ name: 'rebateReason',   label: this.i18n().rebate_reason()                                                                                                        } as StringSelectI18n));
@@ -120,7 +120,7 @@ export class ScsMemberFeeEditForm {
 
   // inputs
   public readonly i18n = input.required<MembershipI18n>();
-  public formData = input<ScsMemberFeesModel | undefined>(undefined);
+  public formData = input<MemberFeeModel | undefined>(undefined);
   public currentUser = input<UserModel | undefined>(undefined);
   public showForm = input(true);
   public readOnly = input(false);
@@ -129,7 +129,7 @@ export class ScsMemberFeeEditForm {
   // signals
   public dirty = output<boolean>();
   public valid = output<boolean>();
-  public formDataChange = output<ScsMemberFeesModel>();
+  public formDataChange = output<MemberFeeModel>();
 
   // computed
   protected age = computed(() => {
@@ -142,7 +142,7 @@ export class ScsMemberFeeEditForm {
 
   private readonly validationResult = computed(() => {
     const fd = this.formData();
-    return fd ? scsMemberFeeValidations(fd, '', '') : null;
+    return fd ? memberFeeValidations(fd, '', '') : null;
   });
   protected bevErrors = computed(() => this.validationResult()?.getErrors('bev') ?? []);
   protected entryFeeErrors = computed(() => this.validationResult()?.getErrors('entryFee') ?? []);
@@ -159,7 +159,7 @@ export class ScsMemberFeeEditForm {
     effect(() => this.valid.emit(this.validationResult()?.isValid() ?? true));
   }
 
-  protected onFieldChange(field: keyof ScsMemberFeesModel, value: unknown, fd: ScsMemberFeesModel): void {
+  protected onFieldChange(field: keyof MemberFeeModel, value: unknown, fd: MemberFeeModel): void {
     this.dirty.emit(true);
     this.formDataChange.emit({ ...fd, [field]: value });
   }
