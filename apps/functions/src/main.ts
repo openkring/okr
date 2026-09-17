@@ -335,6 +335,10 @@ export { resyncVaultReplicas } from './person/resync-vault-replicas';
 // mirror the tenants a person holds an account in (spec 2026-09-06 open events, decision 9)
 export { onUserWritten, backfillAccountTenants } from './person/account-mirror';
 
+// member-fees generic positions (2026-09-17): one-time migration of the eight legacy fee
+// columns + rebate/rebateReason into positions[]
+export { migrateMemberFees } from './member-fee/migrate-member-fees';
+
 // delivery-channels 2026-09-07: one-time rewrite of users.newsDelivery/.invoiceDelivery
 // from the legacy numeric DeliveryType to DeliveryChannel[], run once per tenant after release
 export { migrateDeliveryChannels } from './user/migrate-delivery-channels';
