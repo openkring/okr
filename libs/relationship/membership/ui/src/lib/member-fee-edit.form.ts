@@ -1,11 +1,19 @@
 import { ChangeDetectionStrategy, Component, computed, effect, input, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 
-import { CategoryListModel, INVOICE_STATE_VALUES, REBATE_REASON_VALUES, MemberFeeModel, UserModel } from '@okr/shared-models';
+import { CategoryListModel, INVOICE_STATE_VALUES, MemberFeeModel, MemberFeePosition, UserModel } from '@okr/shared-models';
 import { NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n , ErrorNote} from '@okr/shared-ui';
 import { getAgeFromBirthYear } from '@okr/shared-util-core';
 
-import { MembershipI18n, memberFeeValidations } from '@okr/relationship-membership-util';
+import { MembershipI18n, getFeeTotal, memberFeeValidations, positionAmountField } from '@okr/relationship-membership-util';
+
+/** One rendered fee line: the position itself plus the i18n object and errors belonging to it. */
+interface PositionRow {
+  index: number;
+  amount: number;
+  i18n: NumberInputI18n;
+  errors: string[];
+}
 
 @Component({
   selector: 'okr-member-fee-edit-form',
@@ -35,65 +43,36 @@ import { MembershipI18n, memberFeeValidations } from '@okr/relationship-membersh
                 </ion-col>
               </ion-row>
 
-              <!-- fee amounts -->
+              <!-- fee positions: one line per position the fee schedule produced -->
               <ion-row>
-                <ion-col size="6" size-md="4">
-                  <okr-number-input [i18n]="jbI18n()" [value]="fd.jb" (valueChange)="onFieldChange('jb', $event, fd)" [readOnly]="readOnly()" />
-                  <okr-error-note [errors]="jbErrors()" />
-                </ion-col>
-                <ion-col size="6" size-md="4">
-                  <okr-number-input [i18n]="srvI18n()" [value]="fd.srv" (valueChange)="onFieldChange('srv', $event, fd)" [readOnly]="readOnly()" />
-                  <okr-error-note [errors]="srvErrors()" />
-                </ion-col>
-              </ion-row>
-              <ion-row>
-                <ion-col size="6" size-md="4">
-                  <okr-number-input [i18n]="bevI18n()" [value]="fd.bev" (valueChange)="onFieldChange('bev', $event, fd)" [readOnly]="readOnly()" />
-                  <okr-error-note [errors]="bevErrors()" />
-                </ion-col>
-                <ion-col size="6" size-md="4">
-                  <okr-number-input [i18n]="entryFeeI18n()" [value]="fd.entryFee" (valueChange)="onFieldChange('entryFee', $event, fd)" [readOnly]="readOnly()" />
-                  <okr-error-note [errors]="entryFeeErrors()" />
-                </ion-col>
-                <ion-col size="6" size-md="4">
-                  <okr-number-input [i18n]="lockerI18n()" [value]="fd.locker" (valueChange)="onFieldChange('locker', $event, fd)" [readOnly]="readOnly()" />
-                  <okr-error-note [errors]="lockerErrors()" />
-                </ion-col>
-              </ion-row>
-              <ion-row>
-                <ion-col size="6" size-md="4">
-                  <okr-number-input [i18n]="skiffI18n()" [value]="fd.skiff" (valueChange)="onFieldChange('skiff', $event, fd)" [readOnly]="readOnly()" />
-                  <okr-error-note [errors]="skiffErrors()" />
-                </ion-col>
-                <ion-col size="6" size-md="4">
-                  <okr-number-input [i18n]="skiffInsuranceI18n()" [value]="fd.skiffInsurance" (valueChange)="onFieldChange('skiffInsurance', $event, fd)" [readOnly]="readOnly()" />
-                  <okr-error-note [errors]="skiffInsuranceErrors()" />
-                </ion-col>
+                @for (row of positionRows(); track row.index) {
+                  <ion-col size="12" size-md="6">
+                    <okr-number-input [i18n]="row.i18n" [value]="row.amount"
+                      (valueChange)="onPositionAmountChange(row.index, $event, fd)"
+                      [readOnly]="readOnly()" />
+                    <okr-error-note [errors]="row.errors" />
+                  </ion-col>
+                }
               </ion-row>
 
-              <!-- rebate -->
+              <!-- total -->
               <ion-row>
-                <ion-col size="6" size-md="4">
-                  <okr-number-input [i18n]="rebateI18n()" [value]="fd.rebate" (valueChange)="onFieldChange('rebate', $event, fd)" [readOnly]="readOnly()" />
-                  <okr-error-note [errors]="rebateErrors()" />
-                </ion-col>
-                <ion-col size="6" size-md="4">
-                  <okr-string-select [i18n]="rebateReasonI18n()"
-                    [selectedString]="fd.rebateReason"
-                    (selectedStringChange)="onFieldChange('rebateReason', $event, fd)"
-                    [readOnly]="readOnly()"
-                    [stringList]="rebateReasonList" />
+                <ion-col size="12">
+                  <ion-item lines="none">
+                    <ion-label class="ion-text-end">{{ total() }}</ion-label>
+                  </ion-item>
                 </ion-col>
               </ion-row>
 
               <!-- invoice state -->
               <ion-row>
-                <ion-col size="6" size-md="4">
+                <ion-col size="12" size-md="6">
                   <okr-string-select [i18n]="invoiceStateI18n()"
                     [selectedString]="fd.state"
                     (selectedStringChange)="onFieldChange('state', $event, fd)"
                     [readOnly]="readOnly()"
                     [stringList]="invoiceStateList" />
+                  <okr-error-note [errors]="stateErrors()" />
                 </ion-col>
               </ion-row>
             </ion-grid>
@@ -106,17 +85,8 @@ import { MembershipI18n, memberFeeValidations } from '@okr/relationship-membersh
 })
 export class MemberFeeEditForm {
   // i18n — all translations come from the i18n input
-  protected jbI18n             = computed(() => ({ name: 'jb',             label: this.i18n().memberFee_jb(),             placeholder: this.i18n().memberFee_jb_placeholder(),             helper: this.i18n().memberFee_jb_helper()             } as NumberInputI18n));
-  protected srvI18n            = computed(() => ({ name: 'jbp',            label: this.i18n().memberFee_jbp(),            placeholder: this.i18n().memberFee_jbp_placeholder(),            helper: this.i18n().memberFee_jbp_helper()            } as NumberInputI18n));
-  protected bevI18n            = computed(() => ({ name: 'bev',            label: this.i18n().memberFee_bev(),            placeholder: this.i18n().memberFee_bev_placeholder(),            helper: this.i18n().memberFee_bev_helper()            } as NumberInputI18n));
-  protected entryFeeI18n       = computed(() => ({ name: 'entryFee',       label: this.i18n().memberFee_entryFee(),       placeholder: this.i18n().memberFee_entryFee_placeholder(),       helper: this.i18n().memberFee_entryFee_helper()       } as NumberInputI18n));
-  protected lockerI18n         = computed(() => ({ name: 'locker',         label: this.i18n().memberFee_locker(),         placeholder: this.i18n().memberFee_locker_placeholder(),         helper: this.i18n().memberFee_locker_helper()         } as NumberInputI18n));
-  protected skiffI18n          = computed(() => ({ name: 'skiff',          label: this.i18n().memberFee_skiff(),          placeholder: this.i18n().memberFee_skiff_placeholder(),          helper: this.i18n().memberFee_skiff_helper()          } as NumberInputI18n));
-  protected skiffInsuranceI18n = computed(() => ({ name: 'skiffInsurance', label: this.i18n().memberFee_skiffInsurance(), placeholder: this.i18n().memberFee_skiffInsurance_placeholder(), helper: this.i18n().memberFee_skiffInsurance_helper() } as NumberInputI18n));
-  protected rebateI18n         = computed(() => ({ name: 'rebate',         label: this.i18n().rebate_label(),         placeholder: this.i18n().rebate_placeholder(),         helper: this.i18n().rebate_helper()         } as NumberInputI18n));
-  protected notesI18n          = computed(() => ({ name: 'notes',          label: this.i18n().notes_label(),          placeholder: this.i18n().notes_placeholder()                                                        } as NotesInputI18n));
-  protected rebateReasonI18n   = computed(() => ({ name: 'rebateReason',   label: this.i18n().rebate_reason()                                                                                                        } as StringSelectI18n));
-  protected invoiceStateI18n   = computed(() => ({ name: 'invoiceState',   label: this.i18n().invoice_state()                                                                                                        } as StringSelectI18n));
+  protected notesI18n        = computed(() => ({ name: 'notes',        label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder() } as NotesInputI18n));
+  protected invoiceStateI18n = computed(() => ({ name: 'invoiceState', label: this.i18n().invoice_state()                                           } as StringSelectI18n));
 
   // inputs
   public readonly i18n = input.required<MembershipI18n>();
@@ -139,20 +109,35 @@ export class MemberFeeEditForm {
   protected category = computed(() => this.formData()?.category ?? '');
   protected bexioId = computed(() => this.formData()?.memberBexioId ?? '');
   protected notes = computed(() => this.formData()?.notes ?? '');
+  protected positions = computed((): MemberFeePosition[] => this.formData()?.positions ?? []);
+  protected total = computed(() => getFeeTotal(this.positions()).toFixed(2));
 
   private readonly validationResult = computed(() => {
     const fd = this.formData();
     return fd ? memberFeeValidations(fd, '', '') : null;
   });
-  protected bevErrors = computed(() => this.validationResult()?.getErrors('bev') ?? []);
-  protected entryFeeErrors = computed(() => this.validationResult()?.getErrors('entryFee') ?? []);
-  protected jbErrors = computed(() => this.validationResult()?.getErrors('jb') ?? []);
-  protected lockerErrors = computed(() => this.validationResult()?.getErrors('locker') ?? []);
-  protected rebateErrors = computed(() => this.validationResult()?.getErrors('rebate') ?? []);
-  protected skiffErrors = computed(() => this.validationResult()?.getErrors('skiff') ?? []);
-  protected skiffInsuranceErrors = computed(() => this.validationResult()?.getErrors('skiffInsurance') ?? []);
-  protected srvErrors = computed(() => this.validationResult()?.getErrors('srv') ?? []);
-  protected readonly rebateReasonList = [...REBATE_REASON_VALUES];
+  protected stateErrors = computed(() => this.validationResult()?.getErrors('state') ?? []);
+
+  /**
+   * The suite files a position's failures under `positions[<i>].amount`, so each note has to read
+   * its own indexed name — a plain `getErrors('positions')` would always be empty and the missing
+   * banner would be the only symptom.
+   */
+  protected positionRows = computed((): PositionRow[] => {
+    const allErrors = this.validationResult()?.getErrors() ?? {};
+    return this.positions().map((position, index) => {
+      const field = positionAmountField(index);
+      return {
+        index,
+        amount: position.amount,
+        i18n: { name: field, label: position.label, placeholder: position.label, helper: '' } as NumberInputI18n,
+        errors: Object.entries(allErrors)
+          .filter(([name]) => name === field)
+          .flatMap(([, messages]) => messages),
+      };
+    });
+  });
+
   protected readonly invoiceStateList = [...INVOICE_STATE_VALUES];
 
   constructor() {
@@ -162,5 +147,12 @@ export class MemberFeeEditForm {
   protected onFieldChange(field: keyof MemberFeeModel, value: unknown, fd: MemberFeeModel): void {
     this.dirty.emit(true);
     this.formDataChange.emit({ ...fd, [field]: value });
+  }
+
+  /** Never mutate the array in place — a new array is what makes the computeds (and the banner) refresh. */
+  protected onPositionAmountChange(index: number, value: number, fd: MemberFeeModel): void {
+    this.dirty.emit(true);
+    const positions = (fd.positions ?? []).map((p, i) => i === index ? { ...p, amount: Number(value) } : p);
+    this.formDataChange.emit({ ...fd, positions });
   }
 }

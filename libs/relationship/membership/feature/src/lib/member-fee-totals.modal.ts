@@ -5,6 +5,8 @@ import { MemberFeeModel } from '@okr/shared-models';
 import { Header } from '@okr/shared-ui';
 import { dismissOverlay } from '@okr/shared-util-angular';
 
+import { getFeeTotal } from '@okr/relationship-membership-util';
+
 import { MemberFeesStore } from './member-fee.store';
 
 const CHF = new Intl.NumberFormat('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -29,43 +31,17 @@ const CHF = new Intl.NumberFormat('de-CH', { minimumFractionDigits: 2, maximumFr
     <okr-header [i18n]="{ title: store.i18n.memberFee_totals_label() }" [isModal]="true" />
     <ion-content class="ion-padding">
       <ion-grid>
-        <ion-row>
-          <ion-col size="6"><ion-label>{{ store.i18n.memberFee_jb() }}</ion-label></ion-col>
-          <ion-col size="6"><ion-label class="amount">{{ fmt(totals().jb) }}</ion-label></ion-col>
-        </ion-row>
-        <ion-row>
-          <ion-col size="6"><ion-label>{{ store.i18n.memberFee_jbp() }}</ion-label></ion-col>
-          <ion-col size="6"><ion-label class="amount">{{ fmt(totals().srv) }}</ion-label></ion-col>
-        </ion-row>
-        <ion-row>
-          <ion-col size="6"><ion-label>{{ store.i18n.memberFee_entryFee() }}</ion-label></ion-col>
-          <ion-col size="6"><ion-label class="amount">{{ fmt(totals().entryFee) }}</ion-label></ion-col>
-        </ion-row>
-        <ion-row>
-          <ion-col size="6"><ion-label>{{ store.i18n.memberFee_locker() }}</ion-label></ion-col>
-          <ion-col size="6"><ion-label class="amount">{{ fmt(totals().locker) }}</ion-label></ion-col>
-        </ion-row>
-        <ion-row>
-          <ion-col size="6"><ion-label>{{ store.i18n.memberFee_skiff() }}</ion-label></ion-col>
-          <ion-col size="6"><ion-label class="amount">{{ fmt(totals().skiff) }}</ion-label></ion-col>
-        </ion-row>
-        <ion-row>
-          <ion-col size="6"><ion-label>{{ store.i18n.memberFee_skiffInsurance() }}</ion-label></ion-col>
-          <ion-col size="6"><ion-label class="amount">{{ fmt(totals().skiffInsurance) }}</ion-label></ion-col>
-        </ion-row>
-        <ion-row>
-          <ion-col size="6"><ion-label>{{ store.i18n.memberFee_bev() }}</ion-label></ion-col>
-          <ion-col size="6"><ion-label class="amount">{{ fmt(totals().bev) }}</ion-label></ion-col>
-        </ion-row>
-        <ion-row>
-          <ion-col size="6"><ion-label>{{ store.i18n.rebate_label() }}</ion-label></ion-col>
-          <ion-col size="6"><ion-label class="amount">{{ fmt(totals().rebate) }}</ion-label></ion-col>
-        </ion-row>
+        @for (row of totals(); track row.key) {
+          <ion-row>
+            <ion-col size="6"><ion-label>{{ row.label }}</ion-label></ion-col>
+            <ion-col size="6"><ion-label class="amount">{{ fmt(row.amount) }}</ion-label></ion-col>
+          </ion-row>
+        }
 
         <!-- total -->
         <ion-row class="divider">
           <ion-col size="6"><ion-label class="label">{{ store.i18n.memberFee_total() }}</ion-label></ion-col>
-          <ion-col size="6"><ion-label class="amount">{{ fmt(totals().total) }}</ion-label></ion-col>
+          <ion-col size="6"><ion-label class="amount">{{ fmt(grandTotal()) }}</ion-label></ion-col>
         </ion-row>
 
         <!-- status overview -->
@@ -126,22 +102,25 @@ export class MemberFeesTotalsModal {
 
   public fees = input.required<MemberFeeModel[]>();
 
-  protected totals = computed(() => {
-    const fees = this.fees();
-    const sum = (field: keyof Pick<MemberFeeModel, 'jb' | 'srv' | 'entryFee' | 'locker' | 'skiff' | 'skiffInsurance' | 'bev' | 'rebate'>) =>
-      fees.reduce((acc, f) => acc + (f[field] ?? 0), 0);
-
-    const jb = sum('jb');
-    const srv = sum('srv');
-    const entryFee = sum('entryFee');
-    const locker = sum('locker');
-    const skiff = sum('skiff');
-    const skiffInsurance = sum('skiffInsurance');
-    const bev = sum('bev');
-    const rebate = sum('rebate');
-    const total = jb + srv + entryFee + locker + skiff + skiffInsurance + bev - rebate;
-    return { jb, srv, entryFee, locker, skiff, skiffInsurance, bev, rebate, total };
+  /**
+   * One row per position key the fee schedule actually produced — no fixed set of eight columns
+   * any more. A `rebate` position subtracts, exactly as `getFeeTotal` treats it.
+   */
+  protected totals = computed((): { key: string; label: string; amount: number }[] => {
+    const rows = new Map<string, { key: string; label: string; amount: number }>();
+    for (const fee of this.fees()) {
+      for (const position of fee.positions ?? []) {
+        const key = position.key || position.usage;
+        const row = rows.get(key) ?? { key, label: position.label || key, amount: 0 };
+        row.amount += position.type === 'rebate' ? -position.amount : position.amount;
+        rows.set(key, row);
+      }
+    }
+    return [...rows.values()];
   });
+
+  protected grandTotal = computed(() =>
+    this.fees().reduce((sum, fee) => sum + getFeeTotal(fee.positions ?? []), 0));
 
   protected statusCounts = computed(() => {
     const fees = this.fees();

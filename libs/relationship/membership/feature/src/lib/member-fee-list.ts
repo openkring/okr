@@ -8,7 +8,7 @@ import { hasRole } from '@okr/shared-util-core';
 
 import { AvatarPipe } from '@okr/avatar-ui';
 
-import { getFeeTotal } from '@okr/relationship-membership-data-access';
+import { getFeeTotal } from '@okr/relationship-membership-util';
 
 import { MemberFeesStore } from './member-fee.store';
 import { MemberFeeEditModal } from './member-fee-edit.modal';
@@ -70,38 +70,12 @@ import { Menu } from '@okr/cms-menu-feature';
               <strong>Name</strong>
               @if (sortCol() === 'name') { <ion-icon [src]="sortDir() === 'asc' ? ('chevron-up' | svgIcon) : ('chevron-down' | svgIcon)" /> }
             </ion-col>
-            <ion-col class="ion-hide-md-down sortable" size="1" (click)="sortBy('jb')">
-              <strong>JB</strong>
-              @if (sortCol() === 'jb') { <ion-icon [src]="sortDir() === 'asc' ? ('chevron-up' | svgIcon) : ('chevron-down' | svgIcon)" /> }
-            </ion-col>
-            <ion-col class="ion-hide-md-down sortable" size="1" (click)="sortBy('srv')">
-              <strong>SRV</strong>
-              @if (sortCol() === 'srv') { <ion-icon [src]="sortDir() === 'asc' ? ('chevron-up' | svgIcon) : ('chevron-down' | svgIcon)" /> }
-            </ion-col>
-            <ion-col class="ion-hide-md-down sortable" size="1" (click)="sortBy('entryFee')">
-              <strong>Entry</strong>
-              @if (sortCol() === 'entryFee') { <ion-icon [src]="sortDir() === 'asc' ? ('chevron-up' | svgIcon) : ('chevron-down' | svgIcon)" /> }
-            </ion-col>
-            <ion-col class="ion-hide-md-down sortable" size="1" (click)="sortBy('locker')">
-              <strong>Gard.</strong>
-              @if (sortCol() === 'locker') { <ion-icon [src]="sortDir() === 'asc' ? ('chevron-up' | svgIcon) : ('chevron-down' | svgIcon)" /> }
-            </ion-col>
-            <ion-col class="ion-hide-md-down sortable" size="1" (click)="sortBy('skiff')">
-              <strong>Skiff</strong>
-              @if (sortCol() === 'skiff') { <ion-icon [src]="sortDir() === 'asc' ? ('chevron-up' | svgIcon) : ('chevron-down' | svgIcon)" /> }
-            </ion-col>
-            <ion-col class="ion-hide-md-down sortable" size="1" (click)="sortBy('skiffInsurance')">
-              <strong>Vers.</strong>
-              @if (sortCol() === 'skiffInsurance') { <ion-icon [src]="sortDir() === 'asc' ? ('chevron-up' | svgIcon) : ('chevron-down' | svgIcon)" /> }
-            </ion-col>
-            <ion-col class="ion-hide-md-down sortable" size="1" (click)="sortBy('bev')">
-              <strong>Getr.</strong>
-              @if (sortCol() === 'bev') { <ion-icon [src]="sortDir() === 'asc' ? ('chevron-up' | svgIcon) : ('chevron-down' | svgIcon)" /> }
-            </ion-col>
-            <ion-col class="ion-hide-md-down sortable" size="1" (click)="sortBy('rebate')">
-              <strong>Rabatt</strong>
-              @if (sortCol() === 'rebate') { <ion-icon [src]="sortDir() === 'asc' ? ('chevron-up' | svgIcon) : ('chevron-down' | svgIcon)" /> }
-            </ion-col>
+            @for (col of columns(); track col.key) {
+              <ion-col class="ion-hide-md-down sortable" size="1" (click)="sortBy(col.key)">
+                <strong>{{ col.label }}</strong>
+                @if (sortCol() === col.key) { <ion-icon [src]="sortDir() === 'asc' ? ('chevron-up' | svgIcon) : ('chevron-down' | svgIcon)" /> }
+              </ion-col>
+            }
             <ion-col size="3" size-md="1" class="sortable" (click)="sortBy('total')">
               <strong>Total</strong>
               @if (sortCol() === 'total') { <ion-icon [src]="sortDir() === 'asc' ? ('chevron-up' | svgIcon) : ('chevron-down' | svgIcon)" /> }
@@ -136,46 +110,13 @@ import { Menu } from '@okr/cms-menu-feature';
                   <ion-label class="name">{{ fee.member?.name2 }} {{ fee.member?.name1 }}</ion-label>
                   </ion-item>
                 </ion-col>
-                <ion-col class="ion-hide-md-down" size="1">
-                  <ion-item lines="none">
-                    <ion-label class="ion-text-end">{{fee.jb}}</ion-label>
-                  </ion-item>
-                </ion-col>
-                <ion-col class="ion-hide-md-down" size="1">
-                  <ion-item lines="none">
-                    <ion-label class="ion-text-end">{{fee.srv}}</ion-label>
-                  </ion-item>
-                </ion-col>
-                <ion-col class="ion-hide-md-down" size="1">
-                  <ion-item lines="none">
-                    <ion-label class="ion-text-end">{{fee.entryFee}}</ion-label>
-                  </ion-item>
-                </ion-col>
-                <ion-col class="ion-hide-md-down" size="1">
-                  <ion-item lines="none">
-                    <ion-label class="ion-text-end">{{fee.locker}}</ion-label>
-                </ion-item>
-              </ion-col>
-                <ion-col class="ion-hide-md-down" size="1">
-                  <ion-item lines="none">
-                    <ion-label class="ion-text-end">{{fee.skiff}}</ion-label>
-                  </ion-item>
-                </ion-col>
-                <ion-col class="ion-hide-md-down" size="1">
-                  <ion-item lines="none">
-                    <ion-label class="ion-text-end">{{fee.skiffInsurance}}</ion-label>
-                  </ion-item>
-                </ion-col>
-                <ion-col class="ion-hide-md-down" size="1">
-                  <ion-item lines="none">
-                    <ion-label class="ion-text-end">{{(fee.bev).toFixed(2)}}</ion-label>
-                  </ion-item>
-                </ion-col>
-                <ion-col class="ion-hide-md-down" size="1">
-                  <ion-item lines="none">
-                    <ion-label class="ion-text-end">{{fee.rebate}}</ion-label>
-                  </ion-item>
-                </ion-col>
+                @for (col of columns(); track col.key) {
+                  <ion-col class="ion-hide-md-down" size="1">
+                    <ion-item lines="none">
+                      <ion-label class="ion-text-end">{{ getAmount(fee, col.key).toFixed(2) }}</ion-label>
+                    </ion-item>
+                  </ion-col>
+                }
                 <ion-col size="3" size-md="1">
                   <ion-item lines="none">
                     <ion-label class="total">{{ getTotal(fee).toFixed(2) }}</ion-label>
@@ -210,6 +151,24 @@ export class MemberFees {
   // computed
   protected isLoading = computed(() => this.store.isLoading());
   protected allFees = computed(() => this.store.allFees());
+
+  /**
+   * The grid columns are the position keys the fee schedule actually produced, in first-seen
+   * order — no fixed set of eight any more. The label comes from the position itself.
+   */
+  protected columns = computed((): { key: string; label: string }[] => {
+    const columns: { key: string; label: string }[] = [];
+    const seen = new Set<string>();
+    for (const fee of this.allFees()) {
+      for (const position of fee.positions ?? []) {
+        const key = position.key || position.usage;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        columns.push({ key, label: position.label || key });
+      }
+    }
+    return columns;
+  });
   protected currentUser = computed(() => this.store.currentUser());
   protected sortedFees = computed(() => {
     const fees = [...this.store.filteredFees()];
@@ -223,11 +182,14 @@ export class MemberFees {
         av = `${a.member?.name2 ?? ''}${a.member?.name1 ?? ''}`;
         bv = `${b.member?.name2 ?? ''}${b.member?.name1 ?? ''}`;
       } else if (col === 'total') {
-        av = getFeeTotal(a);
-        bv = getFeeTotal(b);
+        av = getFeeTotal(a.positions ?? []);
+        bv = getFeeTotal(b.positions ?? []);
+      } else if (col === 'state') {
+        av = a.state;
+        bv = b.state;
       } else {
-        av = (a as unknown as Record<string, number>)[col] ?? 0;
-        bv = (b as unknown as Record<string, number>)[col] ?? 0;
+        av = this.getAmount(a, col);
+        bv = this.getAmount(b, col);
       }
       return av < bv ? -dir : av > bv ? dir : 0;
     });
@@ -263,6 +225,13 @@ export class MemberFees {
   /******************************* helpers *************************************** */
   protected getTotal(fee: MemberFeeModel): number {
     return this.store.getTotal(fee);
+  }
+
+  /** The amount of one position of this fee; a rebate counts negative, a missing position is 0. */
+  protected getAmount(fee: MemberFeeModel, key: string): number {
+    const position = (fee.positions ?? []).find(p => (p.key || p.usage) === key);
+    if (!position) return 0;
+    return position.type === 'rebate' ? -position.amount : position.amount;
   }
 
   protected stateClass(fee: MemberFeeModel): string {
