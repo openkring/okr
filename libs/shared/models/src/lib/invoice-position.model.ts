@@ -12,6 +12,7 @@ export class InvoicePositionModel implements OkrModel, NamedModel, SearchableMod
   public personKey = DEFAULT_KEY;
   public firstName = DEFAULT_NAME;
   public lastName = DEFAULT_NAME;
+  public invoiceKey = DEFAULT_KEY; // ref to InvoiceModel.okey
   public invoicePositionType = DEFAULT_INVOICE_POSITION_TYPE;
   public invoicePositionUsage = DEFAULT_INVOICE_POSITION_USAGE;
   public year = 0;

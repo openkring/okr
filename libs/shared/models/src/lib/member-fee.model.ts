@@ -37,7 +37,8 @@ export class MemberFeeModel implements OkrModel, SearchableModel, TaggedModel {
 
   public positions: MemberFeePosition[] = [];
   public templateId = '';
-  public invoiceBexioId = '';
+  public invoiceBexioId = ''; // set when uploaded to Bexio (accountingBackend 'bexio')
+  public invoiceKey = '';     // ref to InvoiceModel.okey, set when posted natively (accountingBackend != 'bexio')
 
   public state: INVOICE_STATE = 'initial';
 
@@ -54,5 +55,5 @@ export class MemberFeeModel implements OkrModel, SearchableModel, TaggedModel {
 export const MemberFeeCollection = 'member-fees';
 export const MemberFeeModelName = 'member-fee';
 
-export type INVOICE_STATE = 'initial' | 'review' | 'ready' | 'uploaded' | 'sent' | 'paid' | 'cancelled';
-export const INVOICE_STATE_VALUES = ['initial', 'review', 'ready', 'uploaded', 'sent', 'paid', 'cancelled'] as const satisfies INVOICE_STATE[];
+export type INVOICE_STATE = 'initial' | 'review' | 'ready' | 'uploaded' | 'invoiced' | 'sent' | 'paid' | 'cancelled';
+export const INVOICE_STATE_VALUES = ['initial', 'review', 'ready', 'uploaded', 'invoiced', 'sent', 'paid', 'cancelled'] as const satisfies INVOICE_STATE[];

@@ -18,6 +18,24 @@ export function getInvoiceIndex(invoice: InvoiceModel): string {
   return index;
 }
 
+/**
+ * Compute the next `invoiceNo` for one (accountingTenantId, fiscal year) sequence, given the
+ * `invoiceNo`s already used by that tenant. `invoiceNo` encodes the year in its leading digits
+ * (`year * 100000 + n`), so filtering by `Math.floor(no / 100000) === year` isolates this year's
+ * numbers before taking the max.
+ *
+ * This is the ONE allocator for invoice numbers — both `InvoiceService.nextInvoiceNo` (client,
+ * Angular) and the `postMemberFees` Cloud Function (admin SDK) call this pure function after
+ * fetching the existing `invoiceNo`s their own way, so there is never a second, independent
+ * sequence that could hand out a duplicate number.
+ */
+export function getNextInvoiceNo(invoiceNos: number[], year: number): number {
+  const maxNo = invoiceNos
+    .filter(no => Math.floor(no / 100000) === year)
+    .reduce((max, n) => Math.max(max, n), 0);
+  return maxNo > 0 ? maxNo + 1 : year * 100000 + 1;
+}
+
 export function getInvoiceExportData(invoices: InvoiceModel[]): string[][] {
   const headers = ['okey', 'invoiceId', 'title', 'invoiceDate', 'dueDate', 'amount', 'currency', 'state', 'paymentDate', 'receiver'];
   const rows = invoices.map(inv => [

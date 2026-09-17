@@ -8,7 +8,7 @@ import { InvoiceCollection, InvoiceModel, UserModel } from '@okr/shared-models';
 import { findByKey, getSystemQuery } from '@okr/shared-util-core';
 import { ActivityService } from '@okr/activity-data-access';
 
-import { getInvoiceIndex } from '@okr/finance-invoice-util';
+import { getInvoiceIndex, getNextInvoiceNo } from '@okr/finance-invoice-util';
 const PFX = '@finance/invoice/data-access.';
 
 @Injectable({
@@ -53,12 +53,10 @@ export class InvoiceService {
 
   public async nextInvoiceNo(year: number, accountingTenantId: string): Promise<number> {
     const all = await this.firestoreService.getDataOnce<InvoiceModel>(InvoiceCollection, getSystemQuery(this.env.tenantId), 'invoiceDate', 'desc');
-    const maxNo = all
+    const invoiceNos = all
       .filter(inv => inv.accountingTenantId === accountingTenantId)
-      .map(inv => inv.invoiceNo ?? 0)
-      .filter(no => Math.floor(no / 100000) === year)
-      .reduce((max, n) => Math.max(max, n), 0);
-    return maxNo > 0 ? maxNo + 1 : year * 100000 + 1;
+      .map(inv => inv.invoiceNo ?? 0);
+    return getNextInvoiceNo(invoiceNos, year);
   }
 
   private list(): Observable<InvoiceModel[]> {

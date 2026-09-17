@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { InvoiceModel } from '@okr/shared-models';
 
-import { getInvoiceExportData, getInvoiceIndex, newInvoice } from './invoice.util';
+import { getInvoiceExportData, getInvoiceIndex, getNextInvoiceNo, newInvoice } from './invoice.util';
 
 describe('invoice.util', () => {
   describe('newInvoice', () => {
@@ -41,6 +41,20 @@ describe('invoice.util', () => {
       const inv = newInvoice('scs');
       inv.title = 'Jahresbeitrag 2025';
       expect(getInvoiceIndex(inv)).toContain('t:Jahresbeitrag 2025');
+    });
+  });
+
+  describe('getNextInvoiceNo', () => {
+    it('starts a new year at year * 100000 + 1', () => {
+      expect(getNextInvoiceNo([], 2026)).toBe(202600001);
+    });
+
+    it('ignores invoiceNos from other years', () => {
+      expect(getNextInvoiceNo([202500042], 2026)).toBe(202600001);
+    });
+
+    it('increments the max invoiceNo of the given year', () => {
+      expect(getNextInvoiceNo([202600001, 202600002, 202500099], 2026)).toBe(202600003);
     });
   });
 

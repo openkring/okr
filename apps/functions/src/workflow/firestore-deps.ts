@@ -266,8 +266,9 @@ export function createFirestoreDeps(): WorkflowDeps {
       const invoice = doc.data() as Record<string, unknown> | undefined;
       if (!invoice || invoice['isArchived'] === true) return undefined;
       if (!((invoice['tenants'] as string[]) ?? []).includes(tenantId)) return undefined;
-      // InvoicePositionModel does not (yet) declare an invoiceKey field — this query is
-      // forward-compatible but returns an empty list on today's schema.
+      // InvoicePositionModel.invoiceKey (added for postMemberFees, 2026-09-17) links a position
+      // back to its invoice; Bexio-sourced invoices have no local positions, so this can still
+      // return an empty list for them.
       const posSnap = await db.collection('invoice-positions').where('invoiceKey', '==', okey).get();
       const positions = posSnap.docs
         .map((d) => d.data() as Record<string, unknown>)

@@ -339,6 +339,11 @@ export { onUserWritten, backfillAccountTenants } from './person/account-mirror';
 // columns + rebate/rebateReason into positions[]
 export { migrateMemberFees } from './member-fee/migrate-member-fees';
 
+// member-fees generic positions (2026-09-17): 'native' accountingBackend counterpart to
+// uploadToBexio/createBexioInvoice — posts 'ready' member-fees as real InvoiceModel +
+// InvoicePositionModel documents
+export { postMemberFees } from './member-fee/post-member-fees';
+
 // delivery-channels 2026-09-07: one-time rewrite of users.newsDelivery/.invoiceDelivery
 // from the legacy numeric DeliveryType to DeliveryChannel[], run once per tenant after release
 export { migrateDeliveryChannels } from './user/migrate-delivery-channels';
