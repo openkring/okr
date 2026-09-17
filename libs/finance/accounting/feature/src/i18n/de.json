@@ -18,5 +18,76 @@
       "placeholder": "Monat 1–12",
       "helper": "Monat, in dem das Geschäftsjahr beginnt. 1 = Kalenderjahr. Bestimmt, welcher Periode eine Buchung zugeordnet wird."
     }
+  },
+  "feeSchedule": {
+    "title": "Gebührenplan",
+    "year": {
+      "label": "Jahr"
+    },
+    "action": {
+      "addPosition": "Position hinzufügen",
+      "deletePosition": "Position löschen",
+      "copyYear": "Jahr kopieren"
+    },
+    "deletePosition": {
+      "confirm": "Möchtest du diese Position wirklich löschen? Das lässt sich nicht rückgängig machen."
+    },
+    "position": {
+      "key": {
+        "label": "Kürzel",
+        "placeholder": "z. B. jb",
+        "helper": "Ein kurzer interner code für diese Position. Er hilft dir, sie in Listen und Auswertungen wiederzuerkennen."
+      },
+      "usage": {
+        "label": "Verwendung",
+        "placeholder": "Verwendung wählen",
+        "helper": "Wofür diese Position steht, zum Beispiel Mitgliederbeitrag oder Aufnahmegebühr."
+      },
+      "type": {
+        "label": "Berechnungsart",
+        "placeholder": "Berechnungsart wählen",
+        "helper": "Wie der Betrag dieser Position zustande kommt, zum Beispiel als fixer Betrag."
+      },
+      "label": {
+        "label": "Bezeichnung",
+        "placeholder": "z. B. Jahresbeitrag",
+        "helper": "Der Text, den ein Mitglied auf seiner Rechnung für diese Position sieht."
+      },
+      "source": {
+        "label": "Herkunft des Betrags",
+        "placeholder": "Herkunft wählen",
+        "helper": "Legt fest, woher der Betrag dieser Position stammt: aus einer Kategorie-Preisliste, einem Merkmal, einer Regel oder von dir von Hand erfasst."
+      },
+      "categoryList": {
+        "label": "Kategorie-Preisliste",
+        "placeholder": "Preisliste wählen",
+        "helper": "Die Preisliste, aus der die Höhe des Betrags je Mitgliederkategorie stammt. Nur nötig, wenn die Herkunft «Kategorie» ist."
+      },
+      "flag": {
+        "label": "Merkmal",
+        "placeholder": "Merkmal wählen",
+        "helper": "Das Merkmal eines Mitglieds, das diese Position auslöst, zum Beispiel ein Schrankplatz. Nur nötig, wenn die Herkunft «Merkmal» ist."
+      },
+      "rule": {
+        "label": "Regel",
+        "placeholder": "Regel wählen",
+        "helper": "Die hinterlegte Regel, die diese Position auslöst, zum Beispiel ein Eintritt über 25 Jahre. Nur nötig, wenn die Herkunft «Regel» ist."
+      },
+      "amount": {
+        "label": "Betrag",
+        "placeholder": "0.00",
+        "helper": "Der Betrag in Franken für diese Position."
+      },
+      "accountKey": {
+        "label": "Buchungskonto",
+        "placeholder": "Konto wählen",
+        "helper": "Das Konto, auf das diese Position gebucht wird."
+      },
+      "vatCodeKey": {
+        "label": "MWST-Code",
+        "placeholder": "MWST-Code wählen",
+        "helper": "Der Mehrwertsteuer-Code, der für diese Position gilt."
+      }
+    }
   }
 }

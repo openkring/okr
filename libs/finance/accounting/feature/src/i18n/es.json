@@ -18,5 +18,76 @@
       "placeholder": "Mes 1–12",
       "helper": "Mes en que empieza el ejercicio. 1 = año natural. Determina a qué período se asigna un asiento."
     }
+  },
+  "feeSchedule": {
+    "title": "Tarifa de cuotas",
+    "year": {
+      "label": "Año"
+    },
+    "action": {
+      "addPosition": "Añadir posición",
+      "deletePosition": "Eliminar posición",
+      "copyYear": "Copiar año"
+    },
+    "deletePosition": {
+      "confirm": "¿Seguro que quieres eliminar esta posición? No se puede deshacer."
+    },
+    "position": {
+      "key": {
+        "label": "Código",
+        "placeholder": "p. ej. jb",
+        "helper": "Un código interno corto para esta posición. Te ayuda a reconocerla en listas e informes."
+      },
+      "usage": {
+        "label": "Uso",
+        "placeholder": "Elegir uso",
+        "helper": "Para qué sirve esta posición, por ejemplo una cuota de socio o una cuota de admisión."
+      },
+      "type": {
+        "label": "Tipo de cálculo",
+        "placeholder": "Elegir tipo de cálculo",
+        "helper": "Cómo se calcula el importe de esta posición, por ejemplo como un importe fijo."
+      },
+      "label": {
+        "label": "Etiqueta",
+        "placeholder": "p. ej. Cuota anual",
+        "helper": "El texto que un socio ve para esta posición en su factura."
+      },
+      "source": {
+        "label": "Origen del importe",
+        "placeholder": "Elegir origen",
+        "helper": "Determina de dónde procede el importe de esta posición: de una tarifa por categoría, de un atributo, de una regla, o introducido por ti mismo."
+      },
+      "categoryList": {
+        "label": "Tarifa por categoría",
+        "placeholder": "Elegir tarifa",
+        "helper": "La tarifa de la que procede el importe según la categoría del socio. Solo necesario si el origen es «Categoría»."
+      },
+      "flag": {
+        "label": "Atributo",
+        "placeholder": "Elegir atributo",
+        "helper": "El atributo de un socio que activa esta posición, por ejemplo un armario. Solo necesario si el origen es «Atributo»."
+      },
+      "rule": {
+        "label": "Regla",
+        "placeholder": "Elegir regla",
+        "helper": "La regla guardada que activa esta posición, por ejemplo un ingreso con más de 25 años. Solo necesario si el origen es «Regla»."
+      },
+      "amount": {
+        "label": "Importe",
+        "placeholder": "0.00",
+        "helper": "El importe en francos para esta posición."
+      },
+      "accountKey": {
+        "label": "Cuenta contable",
+        "placeholder": "Elegir cuenta",
+        "helper": "La cuenta en la que se contabiliza esta posición."
+      },
+      "vatCodeKey": {
+        "label": "Código de IVA",
+        "placeholder": "Elegir código de IVA",
+        "helper": "El código de IVA aplicable a esta posición."
+      }
+    }
   }
 }

@@ -18,5 +18,76 @@
       "placeholder": "Mese 1–12",
       "helper": "Mese in cui inizia l’esercizio. 1 = anno civile. Determina a quale periodo viene assegnata una registrazione."
     }
+  },
+  "feeSchedule": {
+    "title": "Tariffario delle quote",
+    "year": {
+      "label": "Anno"
+    },
+    "action": {
+      "addPosition": "Aggiungi posizione",
+      "deletePosition": "Elimina posizione",
+      "copyYear": "Copia anno"
+    },
+    "deletePosition": {
+      "confirm": "Vuoi davvero eliminare questa posizione? L’operazione non può essere annullata."
+    },
+    "position": {
+      "key": {
+        "label": "Codice",
+        "placeholder": "es. jb",
+        "helper": "Un breve codice interno per questa posizione. Ti aiuta a riconoscerla in elenchi e report."
+      },
+      "usage": {
+        "label": "Utilizzo",
+        "placeholder": "Scegli l’utilizzo",
+        "helper": "A cosa serve questa posizione, per esempio una quota sociale o una tassa d’ammissione."
+      },
+      "type": {
+        "label": "Tipo di calcolo",
+        "placeholder": "Scegli il tipo di calcolo",
+        "helper": "Come viene calcolato l’importo di questa posizione, per esempio come importo fisso."
+      },
+      "label": {
+        "label": "Etichetta",
+        "placeholder": "es. Quota annuale",
+        "helper": "Il testo che un socio vede per questa posizione sulla sua fattura."
+      },
+      "source": {
+        "label": "Origine dell’importo",
+        "placeholder": "Scegli l’origine",
+        "helper": "Stabilisce da dove proviene l’importo di questa posizione: da un tariffario per categoria, da un attributo, da una regola, oppure inserito manualmente da te."
+      },
+      "categoryList": {
+        "label": "Tariffario per categoria",
+        "placeholder": "Scegli il tariffario",
+        "helper": "Il tariffario da cui proviene l’importo in base alla categoria del socio. Necessario solo se l’origine è «Categoria»."
+      },
+      "flag": {
+        "label": "Attributo",
+        "placeholder": "Scegli l’attributo",
+        "helper": "L’attributo di un socio che attiva questa posizione, per esempio un armadietto. Necessario solo se l’origine è «Attributo»."
+      },
+      "rule": {
+        "label": "Regola",
+        "placeholder": "Scegli la regola",
+        "helper": "La regola salvata che attiva questa posizione, per esempio un ingresso oltre i 25 anni. Necessario solo se l’origine è «Regola»."
+      },
+      "amount": {
+        "label": "Importo",
+        "placeholder": "0.00",
+        "helper": "L’importo in franchi per questa posizione."
+      },
+      "accountKey": {
+        "label": "Conto contabile",
+        "placeholder": "Scegli il conto",
+        "helper": "Il conto su cui viene registrata questa posizione."
+      },
+      "vatCodeKey": {
+        "label": "Codice IVA",
+        "placeholder": "Scegli il codice IVA",
+        "helper": "Il codice IVA applicabile a questa posizione."
+      }
+    }
   }
 }

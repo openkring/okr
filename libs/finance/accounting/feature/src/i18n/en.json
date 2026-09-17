@@ -18,5 +18,76 @@
       "placeholder": "Month 1–12",
       "helper": "Month in which the fiscal year starts. 1 = calendar year. Decides which period a booking is assigned to."
     }
+  },
+  "feeSchedule": {
+    "title": "Fee schedule",
+    "year": {
+      "label": "Year"
+    },
+    "action": {
+      "addPosition": "Add position",
+      "deletePosition": "Delete position",
+      "copyYear": "Copy year"
+    },
+    "deletePosition": {
+      "confirm": "Do you really want to delete this position? This cannot be undone."
+    },
+    "position": {
+      "key": {
+        "label": "Short code",
+        "placeholder": "e.g. jb",
+        "helper": "A short internal code for this position. It helps you recognize it in lists and reports."
+      },
+      "usage": {
+        "label": "Usage",
+        "placeholder": "Choose usage",
+        "helper": "What this position is for, for example a membership fee or an admission fee."
+      },
+      "type": {
+        "label": "Calculation type",
+        "placeholder": "Choose calculation type",
+        "helper": "How the amount of this position is calculated, for example as a fixed amount."
+      },
+      "label": {
+        "label": "Label",
+        "placeholder": "e.g. Annual fee",
+        "helper": "The text a member sees for this position on their invoice."
+      },
+      "source": {
+        "label": "Source of the amount",
+        "placeholder": "Choose source",
+        "helper": "Decides where the amount of this position comes from: a category price list, a flag, a rule, or entered by you by hand."
+      },
+      "categoryList": {
+        "label": "Category price list",
+        "placeholder": "Choose price list",
+        "helper": "The price list the amount is taken from, per membership category. Only needed when the source is 'Category'."
+      },
+      "flag": {
+        "label": "Flag",
+        "placeholder": "Choose flag",
+        "helper": "The member flag that triggers this position, for example a locker. Only needed when the source is 'Flag'."
+      },
+      "rule": {
+        "label": "Rule",
+        "placeholder": "Choose rule",
+        "helper": "The stored rule that triggers this position, for example joining at over 25. Only needed when the source is 'Rule'."
+      },
+      "amount": {
+        "label": "Amount",
+        "placeholder": "0.00",
+        "helper": "The amount in francs for this position."
+      },
+      "accountKey": {
+        "label": "Booking account",
+        "placeholder": "Choose account",
+        "helper": "The account this position is booked to."
+      },
+      "vatCodeKey": {
+        "label": "VAT code",
+        "placeholder": "Choose VAT code",
+        "helper": "The VAT code that applies to this position."
+      }
+    }
   }
 }

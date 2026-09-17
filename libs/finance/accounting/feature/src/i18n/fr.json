@@ -18,5 +18,76 @@
       "placeholder": "Mois 1–12",
       "helper": "Mois où commence l’exercice. 1 = année civile. Détermine à quelle période une écriture est rattachée."
     }
+  },
+  "feeSchedule": {
+    "title": "Barème des cotisations",
+    "year": {
+      "label": "Année"
+    },
+    "action": {
+      "addPosition": "Ajouter une position",
+      "deletePosition": "Supprimer la position",
+      "copyYear": "Copier l’année"
+    },
+    "deletePosition": {
+      "confirm": "Veux-tu vraiment supprimer cette position ? Cette action est irréversible."
+    },
+    "position": {
+      "key": {
+        "label": "Code",
+        "placeholder": "p. ex. jb",
+        "helper": "Un court code interne pour cette position. Il t’aide à la reconnaître dans les listes et les rapports."
+      },
+      "usage": {
+        "label": "Utilisation",
+        "placeholder": "Choisir l’utilisation",
+        "helper": "Ce à quoi correspond cette position, par exemple une cotisation ou une taxe d’admission."
+      },
+      "type": {
+        "label": "Mode de calcul",
+        "placeholder": "Choisir le mode de calcul",
+        "helper": "La façon dont le montant de cette position est calculé, par exemple un montant fixe."
+      },
+      "label": {
+        "label": "Libellé",
+        "placeholder": "p. ex. Cotisation annuelle",
+        "helper": "Le texte qu’un membre voit pour cette position sur sa facture."
+      },
+      "source": {
+        "label": "Origine du montant",
+        "placeholder": "Choisir l’origine",
+        "helper": "Définit d’où provient le montant de cette position : d’un barème par catégorie, d’un attribut, d’une règle, ou saisi par toi-même."
+      },
+      "categoryList": {
+        "label": "Barème par catégorie",
+        "placeholder": "Choisir le barème",
+        "helper": "Le barème dont provient le montant selon la catégorie de membre. Nécessaire seulement si l’origine est « Catégorie »."
+      },
+      "flag": {
+        "label": "Attribut",
+        "placeholder": "Choisir l’attribut",
+        "helper": "L’attribut d’un membre qui déclenche cette position, par exemple un casier. Nécessaire seulement si l’origine est « Attribut »."
+      },
+      "rule": {
+        "label": "Règle",
+        "placeholder": "Choisir la règle",
+        "helper": "La règle enregistrée qui déclenche cette position, par exemple une entrée après 25 ans. Nécessaire seulement si l’origine est « Règle »."
+      },
+      "amount": {
+        "label": "Montant",
+        "placeholder": "0.00",
+        "helper": "Le montant en francs pour cette position."
+      },
+      "accountKey": {
+        "label": "Compte comptable",
+        "placeholder": "Choisir le compte",
+        "helper": "Le compte sur lequel cette position est comptabilisée."
+      },
+      "vatCodeKey": {
+        "label": "Code TVA",
+        "placeholder": "Choisir le code TVA",
+        "helper": "Le code de TVA applicable à cette position."
+      }
+    }
   }
 }
