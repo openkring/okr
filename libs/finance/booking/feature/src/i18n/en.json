@@ -18,7 +18,11 @@
     "credit": "Credit",
     "debit": "Debit",
     "name": "Text",
-    "amount": "Amount"
+    "amount": "Amount",
+    "saldo": "Balance"
+  },
+  "saldo": {
+    "needsAccount": "A balance belongs to a single account — pick an account first (via “Show debit/credit account” in the journal, or from the chart of accounts)."
   },
   "view": {
     "label": "Show booking details"

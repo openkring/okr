@@ -1427,6 +1427,8 @@ const finance: FeatureBlock = {
     // the `c-` prefix). Same precedent as `c-yearlyevents` on the `calevent` block.
     { key: 'c-journal', name: 'c-journal', url: '', action: 'context', roleNeeded: 'treasurer', icon: 'help-circle', label: '', children: [
       { key: 'journal-add', name: 'journal-add', url: 'add', action: 'call', roleNeeded: 'treasurer', icon: 'add', label: '@item.journal-add' },
+      { key: 'journal-saldo', name: 'journal-saldo', url: 'toggleSaldo', action: 'toggle', roleNeeded: 'treasurer', icon: 'eye-on', iconAlt: 'eye-off', label: '@item.journal-saldo', labelAlt: '@item.journal-saldo_alt' },
+      { key: 'journal-month-groups', name: 'journal-month-groups', url: 'toggleMonthGroups', action: 'toggle', roleNeeded: 'treasurer', icon: 'calendar', iconAlt: 'calendar', label: '@item.journal-month-groups', labelAlt: '@item.journal-month-groups_alt' },
       { key: 'journal-divider', name: 'journal-divider', url: '', action: 'divider', roleNeeded: 'treasurer', icon: 'help-circle', label: '' },
       { key: 'journal-export', name: 'journal-export', url: 'export', action: 'call', roleNeeded: 'treasurer', icon: 'download', label: '@item.journal-export' },
       { key: 'journal-import-bexio', name: 'journal-import-bexio', url: 'importBexio', action: 'call', roleNeeded: 'treasurer', icon: 'upload', label: '@item.journal-import-bexio' },

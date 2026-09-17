@@ -18,7 +18,11 @@
     "credit": "Haben",
     "debit": "Soll",
     "name": "Text",
-    "amount": "Betrag"
+    "amount": "Betrag",
+    "saldo": "Saldo"
+  },
+  "saldo": {
+    "needsAccount": "Der Saldo gilt für ein einzelnes Konto — wähle zuerst ein Konto aus (im Journal über «Soll-/Haben-Konto anzeigen» oder aus dem Kontenplan)."
   },
   "view": {
     "label": "Buchungsdetails anzeigen"

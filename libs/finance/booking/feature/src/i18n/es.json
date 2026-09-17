@@ -18,7 +18,11 @@
     "credit": "Haber",
     "debit": "Debe",
     "name": "Texto",
-    "amount": "Importe"
+    "amount": "Importe",
+    "saldo": "Saldo"
+  },
+  "saldo": {
+    "needsAccount": "El saldo corresponde a una sola cuenta — elige primero una cuenta (con «Mostrar cuenta de debe/haber» en el diario o desde el plan contable)."
   },
   "view": {
     "label": "Mostrar detalles del asiento"

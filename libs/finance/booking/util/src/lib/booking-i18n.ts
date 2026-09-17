@@ -12,6 +12,8 @@ export const BOOKING_I18N_KEYS = {
   col_debit:                   PFX + 'col.debit',
   col_name:                    PFX + 'col.name',
   col_amount:                  PFX + 'col.amount',
+  col_saldo:                   PFX + 'col.saldo',
+  saldo_needsAccount:          PFX + 'saldo.needsAccount',
   view:                        PFX + 'view.label',
   edit:                        PFX + 'edit.label',
   create:                      PFX + 'create.label',

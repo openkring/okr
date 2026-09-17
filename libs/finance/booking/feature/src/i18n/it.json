@@ -18,7 +18,11 @@
     "credit": "Avere",
     "debit": "Dare",
     "name": "Testo",
-    "amount": "Importo"
+    "amount": "Importo",
+    "saldo": "Saldo"
+  },
+  "saldo": {
+    "needsAccount": "Il saldo riguarda un solo conto — scegli prima un conto (con «Mostra conto dare/avere» nel giornale o dal piano dei conti)."
   },
   "view": {
     "label": "Mostra dettagli della registrazione"

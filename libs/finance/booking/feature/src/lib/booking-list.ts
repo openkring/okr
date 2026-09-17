@@ -1,5 +1,5 @@
 import { Component, computed, effect, inject, input, signal } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonBackdrop, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonNote, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonBackdrop, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonItemDivider, IonLabel, IonList, IonMenuButton, IonNote, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { BookingLineModel, BookingModel, RoleName } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
@@ -28,7 +28,7 @@ function parseAmount(amount: string): number {
     SvgIconPipe,
     Spinner, EmptyList, Menu, ListFilter, ReadOnlyBanner,
     IonHeader, IonToolbar, IonTitle, IonContent,
-    IonList, IonItem, IonLabel, IonIcon, IonButton, IonButtons, IonMenuButton,
+    IonList, IonItem, IonItemDivider, IonLabel, IonIcon, IonButton, IonButtons, IonMenuButton,
     IonPopover, IonBackdrop, IonGrid, IonRow, IonCol, IonNote,
   ],
   providers: [BookingStore],
@@ -62,7 +62,7 @@ function parseAmount(amount: string): number {
           <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
             <ng-template>
               <ion-content>
-                <okr-menu [menuName]="contextMenuName()" />
+                <okr-menu [menuName]="contextMenuName()" [toggleStates]="{ toggleSaldo: store.showSaldo(), toggleMonthGroups: store.groupByMonth() }" />
               </ion-content>
             </ng-template>
           </ion-popover>
@@ -84,8 +84,11 @@ function parseAmount(amount: string): number {
           <ion-col size="3" size-md="2" class="clickable" (click)="setSort('date')"><ion-label><strong>{{ store.i18n.col_date() }}{{ sortIcon('date') }}</strong></ion-label></ion-col>
           <ion-col size-md="2" class="ion-hide-sm-down clickable" (click)="setSort('soll')"><ion-label><strong>{{ store.i18n.col_debit() }}{{ sortIcon('soll') }}</strong></ion-label></ion-col>
           <ion-col size-md="2" class="ion-hide-sm-down clickable" (click)="setSort('haben')"><ion-label><strong>{{ store.i18n.col_credit() }}{{ sortIcon('haben') }}</strong></ion-label></ion-col>
-          <ion-col size="5" size-md="4" class="clickable" (click)="setSort('text')"><ion-label><strong>{{ store.i18n.col_name() }}{{ sortIcon('text') }}</strong></ion-label></ion-col>
+          <ion-col size="5" [sizeMd]="textSizeMd()" class="clickable" (click)="setSort('text')"><ion-label><strong>{{ store.i18n.col_name() }}{{ sortIcon('text') }}</strong></ion-label></ion-col>
           <ion-col size="4" size-md="2" class="ion-text-end clickable" (click)="setSort('amount')"><ion-label><strong>{{ store.i18n.col_amount() }}{{ sortIcon('amount') }}</strong></ion-label></ion-col>
+          @if(store.showSaldo()) {
+            <ion-col size-md="2" class="ion-text-end ion-hide-sm-down"><ion-label><strong>{{ store.i18n.col_saldo() }}</strong></ion-label></ion-col>
+          }
         </ion-row>
       </ion-grid>
     </ion-toolbar>
@@ -100,7 +103,11 @@ function parseAmount(amount: string): number {
       <okr-empty-list [message]="store.i18n.empty()" />
     } @else {
       <ion-list lines="inset">
-        @for(row of filtered(); track row.okey) {
+        @for(entry of visibleRows(); track entry.row.okey) {
+          @if(entry.divider) {
+            <ion-item-divider color="light"><ion-label>{{ entry.divider }}</ion-label></ion-item-divider>
+          }
+          @let row = entry.row;
           <ion-item button [detail]="false" (click)="showActions(row)" [class.for-review]="isForReview(row)">
             <ion-grid>
               <ion-row>
@@ -118,8 +125,15 @@ function parseAmount(amount: string): number {
                   {{ row.creditAccount }}
                   @if (row.creditAccountName) { <br /><ion-note class="account-name">{{ row.creditAccountName }}</ion-note> }
                 </ion-col>
-                <ion-col size="5" size-md="4">{{ row.accountName }}</ion-col>
-                <ion-col size="4" size-md="2" class="ion-text-end">{{ row.amount }}</ion-col>
+                <ion-col size="5" [sizeMd]="textSizeMd()">{{ row.accountName }}</ion-col>
+                <ion-col size="4" size-md="2" class="ion-text-end">
+                  {{ row.amount }}
+                  <!-- no room for a sixth column on a phone: the saldo rides under the amount there -->
+                  @if(store.showSaldo()) { <br /><ion-note class="saldo ion-hide-md-up">{{ store.saldoOf(row.booking) || '–' }}</ion-note> }
+                </ion-col>
+                @if(store.showSaldo()) {
+                  <ion-col size-md="2" class="ion-text-end ion-hide-sm-down">{{ store.saldoOf(row.booking) || '–' }}</ion-col>
+                }
               </ion-row>
             </ion-grid>
           </ion-item>
@@ -145,6 +159,8 @@ function parseAmount(amount: string): number {
     }
     .review-icon { font-size: 1rem; vertical-align: text-bottom; color: var(--ion-color-warning-shade); }
     .account-name { font-size: 0.75rem; }
+    .saldo { font-size: 0.75rem; font-weight: 600; }
+    ion-item-divider { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; }
     ion-item.for-review { --background: rgba(var(--ion-color-warning-rgb), 0.12); }
   `],
 })
@@ -188,6 +204,24 @@ export class BookingList {
                            ((a.booking.date ?? '').localeCompare(b.booking.date ?? '') || (a.booking.bookingNo ?? 0) - (b.booking.bookingNo ?? 0))
     ));
   });
+  /**
+   * The rows as rendered: with "Monatlich gruppieren" on, the first row of each month carries the
+   * divider label. The month is read off the row itself, so the grouping follows whatever sort the
+   * user picked — under the default date sort that is one divider per month.
+   */
+  protected readonly visibleRows = computed<{ row: JournalRow; divider: string }[]>(() => {
+    const rows = this.filtered();
+    if (!this.store.groupByMonth()) return rows.map(row => ({ row, divider: '' }));
+    let previous = '';
+    return rows.map(row => {
+      const key = this.store.monthGroupOf(row.booking);
+      const divider = key && key !== previous ? this.store.monthGroupLabelOf(key) : '';
+      previous = key;
+      return { row, divider };
+    });
+  });
+  /** The text column gives up half its width on md+ when the saldo column is shown. */
+  protected readonly textSizeMd = computed(() => this.store.showSaldo() ? '2' : '4');
   protected readonly filteredCount = computed(() => this.filtered().length);
   protected readonly count = computed(() => this.store.bookings().length);
   protected readonly years = computed(() => this.store.years());
@@ -218,6 +252,8 @@ export class BookingList {
       case 'add':    await this.store.openCreate(); break;
       case 'export': await this.store.export(); break;
       case 'importBexio': await this.store.importBexioJournal(); break;
+      case 'toggleSaldo': await this.store.toggleSaldo(); break;
+      case 'toggleMonthGroups': this.store.toggleMonthGroups(); break;
       default: error(undefined, `BookingList.onPopoverDismiss: unknown method ${selectedMethod}`);
     }
   }

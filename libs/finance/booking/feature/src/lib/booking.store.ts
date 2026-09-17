@@ -16,6 +16,7 @@ import { AccountingStore } from '@okr/finance-accounting-feature';
 import { AccountService } from '@okr/finance-account-data-access';
 import { VatCodeService } from '@okr/finance-vat-code-data-access';
 import { BookingLineService, BookingService, ReviewBookingLine } from '@okr/finance-booking-data-access';
+import { fiscalYear } from '@okr/finance-reporting-util';
 import {
   BOOKING_ACTIONS,
   BookingAction,
@@ -29,10 +30,14 @@ import {
   copyBooking,
   isForReview,
   JournalRow,
+  formatMinorAmount,
   journalToRows,
   matchActions,
   matchesJournalSearch,
+  monthGroupKey,
+  monthGroupLabel,
   ReceiptParty,
+  runningSaldoByBooking,
   toJournalRow,
 } from '@okr/finance-booking-util';
 import { PersonService } from '@okr/subject-person-data-access';
@@ -47,7 +52,9 @@ export type { BookingI18n };
 const ALL_YEARS = 99;   // sentinel emitted by okr-year-select for "all years"
 
 export const BookingStore = signalStore(
-  withState({ searchTerm: '', selectedYear: getYear(), selectedStatus: 'all', accountKey: '', selectedMonth: 0 }),
+  // showSaldo / groupByMonth are the two journal context-menu toggles (`toggleSaldo`,
+  // `toggleMonthGroups`): a running balance column, and month dividers between the rows.
+  withState({ searchTerm: '', selectedYear: getYear(), selectedStatus: 'all', accountKey: '', selectedMonth: 0, showSaldo: false, groupByMonth: false }),
   withProps(() => ({
     bookingService: inject(BookingService),
     bookingLineService: inject(BookingLineService),
@@ -159,6 +166,24 @@ export const BookingStore = signalStore(
     forReviewCount: computed<number>(() => store.bookings().filter(isForReview).length),
     // Status filter options for okr-list-filter, built from the BookingStatus union.
     statusCategory: computed(() => bookingStatusCategory(store.tenantId())),
+    // First day of the selected fiscal year (StoreDate), '' while "all years" is selected. It is
+    // where the running saldo of an Erfolgsrechnungskonto restarts; balance-sheet accounts ignore it.
+    periodFrom: computed<string>(() => {
+      const year = store.selectedYear();
+      if (year === ALL_YEARS) return '';
+      return fiscalYear(year, store.accountingStore.config()?.fiscalYearStart ?? 1).from;
+    }),
+  })),
+  withComputed(store => ({
+    // "Saldo anzeigen": running balance of the filtered account after each posted booking, keyed by
+    // booking okey. Empty while no account is selected — a balance needs exactly one account.
+    saldoByBooking: computed<Map<string, number>>(() => runningSaldoByBooking(
+      store.bookings(),
+      store.linesByBooking(),
+      store.accountKey(),
+      store.accountIdByKey().get(store.accountKey()) ?? '',
+      store.periodFrom(),
+    )),
   })),
   withMethods(store => ({
     setSearchTerm(term: string): void {
@@ -178,8 +203,43 @@ export const BookingStore = signalStore(
       patchState(store, { selectedMonth });
     },
 
+    // Dropping the account filter also drops the saldo column: without an account every row would
+    // show a dash, and the header would promise a balance the list cannot compute.
     setAccountKey(accountKey: string): void {
-      patchState(store, { accountKey });
+      patchState(store, { accountKey, showSaldo: accountKey ? store.showSaldo() : false });
+    },
+
+    /**
+     * "Saldo anzeigen" (context menu toggle `toggleSaldo`): adds the running balance column.
+     * Only meaningful on a journal filtered to one account, so without one it explains itself
+     * instead of showing a column of dashes.
+     */
+    async toggleSaldo(): Promise<void> {
+      if (!store.showSaldo() && !store.accountKey()) {
+        await this.toast(store.i18n.saldo_needsAccount());
+        return;
+      }
+      patchState(store, { showSaldo: !store.showSaldo() });
+    },
+
+    /** "Monatlich gruppieren" (context menu toggle `toggleMonthGroups`): month dividers between rows. */
+    toggleMonthGroups(): void {
+      patchState(store, { groupByMonth: !store.groupByMonth() });
+    },
+
+    /** Saldo after this booking, formatted; '' when it has none (not posted, or no account filter). */
+    saldoOf(booking: BookingModel): string {
+      const saldo = store.saldoByBooking().get(booking.okey);
+      return saldo === undefined ? '' : formatMinorAmount(saldo);
+    },
+
+    /** 'yyyymm' group of a booking, and the divider label that heads it ('Juni 2026'). */
+    monthGroupOf(booking: BookingModel): string {
+      return monthGroupKey(booking);
+    },
+
+    monthGroupLabelOf(key: string): string {
+      return monthGroupLabel(key, store.locale());
     },
 
     /**

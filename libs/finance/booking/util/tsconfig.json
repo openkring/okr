@@ -5,6 +5,7 @@
   "include": ["src/**/*", "**/*.spec.ts", "**/*.test.ts"],
   "exclude": ["dist/**/*"],
   "references": [
+    {"path": "../../reporting/util/tsconfig.lib.json"},
     {"path": "../../../shared/models/tsconfig.lib.json"},
     {"path": "../../../shared/constants/tsconfig.lib.json"},
     {"path": "../../../shared/util-core/tsconfig.lib.json"}

@@ -18,7 +18,11 @@
     "credit": "Crédit",
     "debit": "Débit",
     "name": "Texte",
-    "amount": "Montant"
+    "amount": "Montant",
+    "saldo": "Solde"
+  },
+  "saldo": {
+    "needsAccount": "Le solde concerne un seul compte — choisis d’abord un compte (via « Afficher le compte débit/crédit » dans le journal, ou depuis le plan comptable)."
   },
   "view": {
     "label": "Afficher les détails de l'écriture"
