@@ -84,36 +84,6 @@ export const MEMBERSHIP_I18N_KEYS = {
   memberFee_export_title:      PFX + 'memberFee.export.title',
   memberFee_list_title:        PFX + 'memberFee.list.title',
   memberFee_list_empty:        PFX + 'memberFee.list.empty',
-
-  memberFee_jb:                PFX + 'memberFee.jb.label',
-  memberFee_jb_placeholder:    PFX + 'memberFee.jb.placeholder',
-  memberFee_jb_helper:         PFX + 'memberFee.jb.helper',
-
-  memberFee_jbp:               PFX + 'memberFee.jbp.label',
-  memberFee_jbp_placeholder:   PFX + 'memberFee.jbp.placeholder',
-  memberFee_jbp_helper:        PFX + 'memberFee.jbp.helper',
-
-  memberFee_bev:               PFX + 'memberFee.bev.label',
-  memberFee_bev_placeholder:   PFX + 'memberFee.bev.placeholder',
-  memberFee_bev_helper:        PFX + 'memberFee.bev.helper',
-
-  memberFee_entryFee:          PFX + 'memberFee.entryFee.label',
-  memberFee_entryFee_placeholder: PFX + 'memberFee.entryFee.placeholder',
-  memberFee_entryFee_helper:   PFX + 'memberFee.entryFee.helper',
-
-  memberFee_locker:            PFX + 'memberFee.locker.label',
-  memberFee_locker_placeholder: PFX + 'memberFee.locker.placeholder',
-  memberFee_locker_helper:     PFX + 'memberFee.locker.helper',
-
-  memberFee_skiff:             PFX + 'memberFee.skiff.label',
-  memberFee_skiff_placeholder: PFX + 'memberFee.skiff.placeholder',
-  memberFee_skiff_helper:      PFX + 'memberFee.skiff.helper',
-
-  memberFee_skiffInsurance:    PFX + 'memberFee.skiffInsurance.label',
-  memberFee_skiffInsurance_placeholder:   PFX + 'memberFee.skiffInsurance.placeholder',
-  memberFee_skiffInsurance_helper:PFX + 'memberFee.skiffInsurance.helper',
-
-  memberFee_rebate:            PFX + 'memberFee.rebate.label',
   memberFee_total:             PFX + 'memberFee.total',
 
   memberId_label:                 PFX + 'memberId.label',

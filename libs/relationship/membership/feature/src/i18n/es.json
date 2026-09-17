@@ -147,46 +147,6 @@
       "title": "Cuotas de miembros",
       "empty": "No se han encontrado entradas"
     },
-    "jb": {
-      "label": "Cuota anual",
-      "placeholder": "nnn",
-      "helper": "La cuota anual a la propia organización."
-    },
-    "jbp": {
-      "label": "Cuota de la federación",
-      "placeholder": "nnn",
-      "helper": "La cuota anual a la organización paraguas."
-    },
-    "bev": {
-      "label": "Bebidas 2025",
-      "placeholder": "nnn",
-      "helper": "Consumiciones del año pasado"
-    },
-    "entryFee": {
-      "label": "Cuota de ingreso única",
-      "placeholder": "nnn",
-      "helper": "Cuota de ingreso única"
-    },
-    "locker": {
-      "label": "Alquiler de taquilla",
-      "placeholder": "nn",
-      "helper": "Alquiler anual de una taquilla."
-    },
-    "skiff": {
-      "label": "Alquiler de plaza de almacenamiento de skiff",
-      "placeholder": "nnn",
-      "helper": "Alquiler anual de una plaza de almacenamiento."
-    },
-    "skiffInsurance": {
-      "label": "Parte del seguro del skiff",
-      "placeholder": "nn",
-      "helper": "Facturación proporcional de los costes del seguro."
-    },
-    "rebate": {
-      "label": "Descuento",
-      "placeholder": "nnn",
-      "helper": "Descuento de formación o familiar."
-    },
     "total": "Total",
     "invoice": {
       "conf": "Las facturas se han creado.",

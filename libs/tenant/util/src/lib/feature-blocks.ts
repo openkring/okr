@@ -1350,7 +1350,9 @@ const mobility: FeatureBlock = {
  *    `@TID@` per tenant. `scs` therefore gets `accounting-menu` NEXT TO `scsf_fibu` on the
  *    first picker save; retiring the bespoke copy is its own decision.
  *    Still excluded: `invoice-my` (`/accounting/scs/invoice/my/c-invoice`, a child of
- *    `finance-menu`) and `scsf_memberfees` (`/scsmemberfees/c-scsfees`, an scs-only route).
+ *    `finance-menu`). The old scs-only `scsf_memberfees` (`/scsmemberfees/c-scsfees`) is no
+ *    longer an exclusion: the generalized member-fee screen has its own `member-fee` block
+ *    below, which ships `memberfees` (`/memberfees/c-memberfees`) under `accounting-menu`.
  *  - `finance-menu`'s four remaining live children `f_fees`, `f_pay`, `f_gss`,
  *    `f_versicherung` — all `/private/<id>/c-contentpage` CMS content pages authored by
  *    `scs`, already covered generically by the core `cms` block's route; and `finance-docs`,
@@ -1516,7 +1518,7 @@ const finance: FeatureBlock = {
 
 /**
  * `libs/relationship/membership/{data-access,feature,ui,util}` — the generalized member-fee
- * screen (`MemberFees`, `relationship/memberfees/:contextMenuName`), reworked from the
+ * screen (`MemberFees`, `/memberfees/:contextMenuName`), reworked from the
  * scs-only `scsf_memberfees`/`c-scsfees` original per
  * `planning/specs/2026-09-17-member-fees-generic-design.md`.
  *

@@ -147,46 +147,6 @@
       "title": "Quote dei membri",
       "empty": "Nessuna voce trovata"
     },
-    "jb": {
-      "label": "Quota annuale",
-      "placeholder": "nnn",
-      "helper": "La quota annuale alla propria organizzazione."
-    },
-    "jbp": {
-      "label": "Quota della federazione",
-      "placeholder": "nnn",
-      "helper": "La quota annuale all'organizzazione mantello."
-    },
-    "bev": {
-      "label": "Bevande 2025",
-      "placeholder": "nnn",
-      "helper": "Consumazioni dell'anno scorso"
-    },
-    "entryFee": {
-      "label": "Quota d'ingresso una tantum",
-      "placeholder": "nnn",
-      "helper": "Quota d'ingresso una tantum"
-    },
-    "locker": {
-      "label": "Affitto armadietto",
-      "placeholder": "nn",
-      "helper": "Affitto annuale di un armadietto."
-    },
-    "skiff": {
-      "label": "Affitto posto di deposito per skiff",
-      "placeholder": "nnn",
-      "helper": "Affitto annuale di un posto di deposito."
-    },
-    "skiffInsurance": {
-      "label": "Quota di assicurazione skiff",
-      "placeholder": "nn",
-      "helper": "Fatturazione proporzionale dei costi assicurativi."
-    },
-    "rebate": {
-      "label": "Sconto",
-      "placeholder": "nnn",
-      "helper": "Sconto per formazione o famiglia."
-    },
     "total": "Totale",
     "invoice": {
       "conf": "Le fatture sono state create.",

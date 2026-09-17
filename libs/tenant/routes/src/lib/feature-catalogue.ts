@@ -586,15 +586,12 @@ const relationship: BlockRoutes = {
     },
     {
       // Route ships to every tenant enabling `relationship` (copied verbatim from
-      // app.routes.ts, no tenant gating in the route table itself), but the live menu is
-      // deliberately NOT modelled: `scsf_memberfees` (nav, /scsmemberfees/c-scsfees) and its
-      // wrapper `c-scsfees` (roleNeeded treasurer, children scsfees-reload/-export/-totals/
-      // -archive) exist on the `scs` tenant only — same tenant-bespoke-content exclusion as
-      // `member-menu`/`membership-menu` above, just silent there before this fix (fix round 1,
-      // review). `MemberFees` is being generalized for any club to use — see
-      // planning/specs/2026-09-17-member-fees-generic-design.md. The route stays cheap to ship
-      // (lazy-loaded, unreachable without a menu entry or typed URL); only the menu is
-      // excluded.
+      // app.routes.ts, no tenant gating in the route table itself). The menu is NOT modelled
+      // here any more: since the generalization (planning/specs/2026-09-17-member-fees-generic-
+      // design.md) `memberfees` (nav, /memberfees/c-memberfees) and its context wrapper
+      // `c-memberfees` belong to the `member-fee` feature block in libs/tenant/util/src/lib/
+      // feature-blocks.ts, which ships them to every tenant that enables the block. The route
+      // stays cheap to ship (lazy-loaded, unreachable without a menu entry or typed URL).
       path: 'memberfees',
       canActivate: [isAuthenticatedGuard],
       children: [{ path: ':contextMenuName', loadComponent: () => import('@okr/relationship-membership-feature').then(m => m.MemberFees) }],
@@ -686,9 +683,9 @@ const mobility: BlockRoutes = {
 };
 
 /**
- * Four top-level paths, all copied verbatim from `app.routes.ts`. `scsmemberfees` sits
+ * Four top-level paths, all copied verbatim from `app.routes.ts`. `memberfees` sits
  * between `expense` and `accounting` in the live file but belongs to `relationship` (already
- * catalogued above), and `invoice-aging` sits between `icon` and `scsmemberfees`.
+ * catalogued above), and `invoice-aging` sits between `icon` and `memberfees`.
  *
  * `isTreasurerGuard` (on `accounting-ocr-rules`) is a plain `CanActivateFn`, NOT a factory —
  * it stays UNCALLED, like `isAuthenticatedGuard`/`isPrivilegedGuard`. Only `isAdminGuard`,

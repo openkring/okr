@@ -147,46 +147,6 @@
       "title": "Member fees",
       "empty": "No entries found"
     },
-    "jb": {
-      "label": "Annual fee",
-      "placeholder": "nnn",
-      "helper": "The annual fee to your own organization."
-    },
-    "jbp": {
-      "label": "Association fee",
-      "placeholder": "nnn",
-      "helper": "The annual fee to the umbrella organization."
-    },
-    "bev": {
-      "label": "Beverages 2025",
-      "placeholder": "nnn",
-      "helper": "Consumption in the past year"
-    },
-    "entryFee": {
-      "label": "One-time entry fee",
-      "placeholder": "nnn",
-      "helper": "One-time entry fee"
-    },
-    "locker": {
-      "label": "Locker rental",
-      "placeholder": "nn",
-      "helper": "Annual rental of a locker."
-    },
-    "skiff": {
-      "label": "Skiff storage rental",
-      "placeholder": "nnn",
-      "helper": "Annual rental of a storage space."
-    },
-    "skiffInsurance": {
-      "label": "Skiff insurance share",
-      "placeholder": "nn",
-      "helper": "Proportional charge of the insurance costs."
-    },
-    "rebate": {
-      "label": "Discount",
-      "placeholder": "nnn",
-      "helper": "Training or family discount."
-    },
     "total": "Total",
     "invoice": {
       "conf": "The invoices were created.",

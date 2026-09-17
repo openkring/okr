@@ -147,46 +147,6 @@
       "title": "Cotisations des membres",
       "empty": "Aucune entrée trouvée"
     },
-    "jb": {
-      "label": "Cotisation annuelle",
-      "placeholder": "nnn",
-      "helper": "La cotisation annuelle à votre propre organisation."
-    },
-    "jbp": {
-      "label": "Cotisation de la fédération",
-      "placeholder": "nnn",
-      "helper": "La cotisation annuelle à l'organisation faîtière."
-    },
-    "bev": {
-      "label": "Boissons 2025",
-      "placeholder": "nnn",
-      "helper": "Consommations de l'année écoulée"
-    },
-    "entryFee": {
-      "label": "Frais d'entrée uniques",
-      "placeholder": "nnn",
-      "helper": "Frais d'entrée uniques"
-    },
-    "locker": {
-      "label": "Location de casier de vestiaire",
-      "placeholder": "nn",
-      "helper": "Location annuelle d'un casier de vestiaire."
-    },
-    "skiff": {
-      "label": "Location d'emplacement pour skiff",
-      "placeholder": "nnn",
-      "helper": "Location annuelle d'un emplacement de stockage."
-    },
-    "skiffInsurance": {
-      "label": "Part d'assurance skiff",
-      "placeholder": "nn",
-      "helper": "Facturation proportionnelle des coûts d'assurance."
-    },
-    "rebate": {
-      "label": "Remise",
-      "placeholder": "nnn",
-      "helper": "Remise de formation ou de famille."
-    },
     "total": "Total",
     "invoice": {
       "conf": "Les factures ont été créées.",
