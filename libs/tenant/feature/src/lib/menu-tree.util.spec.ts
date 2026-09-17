@@ -328,3 +328,93 @@ describe('hiddenKeys — the per-row opt-out (gate 4)', () => {
     expect(rows.find(r => r.name === 'calevent-all')?.hidden).toBe(false);
   });
 });
+
+/**
+ * `detached` — the one place identity alone got it wrong. A top-level `sub`/`navigate`
+ * document the tenant owns but has unhooked from `main_<tenantId>` is unreachable, yet it
+ * reported `equal` and offered «Ausblenden» (hide what nobody can see) while «Ins Menü», the
+ * button that repairs it, was gated on `absent`. Live case: `scs` retiring `scsf_fibu` and
+ * removing `accounting-menu` from its root array along the way.
+ */
+describe('buildMenuTree — detached', () => {
+  it('marks a top-level sub the tenant owns but the root menu does not list', () => {
+    const existing = new Map([
+      ['main_scs', doc('main_scs', [])],
+      ['event-menu', doc('event-menu', ['calevent-all', 'calevent-my'])],
+      ['calevent-all', doc('calevent-all')],
+      ['calevent-my', doc('calevent-my')],
+    ]);
+    const rows = base(existing);
+    // The document is there and matches the catalogue — `state` must keep saying so.
+    expect(rows.find(r => r.name === 'event-menu'))
+      .toMatchObject({ state: 'equal', detached: true, groupKeys: ['event-menu'] });
+  });
+
+  it('does not mark a row reachable through a hand-made parent', () => {
+    // The false positive the shared reachability test exists to prevent: an admin who nested
+    // a catalogue row under their own submenu has it in the menu, and appending it to the
+    // root as well would only duplicate it — `planRootMenuOp` declines for the same reason.
+    const existing = new Map([
+      ['main_scs', doc('main_scs', ['my-parent'])],
+      ['my-parent', doc('my-parent', ['event-menu'])],
+      ['event-menu', doc('event-menu', ['calevent-all', 'calevent-my'])],
+      ['calevent-all', doc('calevent-all')],
+      ['calevent-my', doc('calevent-my')],
+    ]);
+    const rows = base(existing);
+    expect(rows.find(r => r.name === 'event-menu')).toMatchObject({ detached: false, groupKeys: [] });
+  });
+
+  it('never marks a nested row, however unreachable it is', () => {
+    // `calevent-all` is a child spec: it is reached through `event-menu`, never through the
+    // root array, so attaching the parent is the whole repair.
+    const existing = new Map([
+      ['main_scs', doc('main_scs', [])],
+      ['event-menu', doc('event-menu', ['calevent-all', 'calevent-my'])],
+      ['calevent-all', doc('calevent-all')],
+      ['calevent-my', doc('calevent-my')],
+    ]);
+    const rows = base(existing);
+    expect(rows.filter(r => r.depth > 0).every(r => !r.detached)).toBe(true);
+  });
+
+  it('never marks a context menu or its actions', () => {
+    // The original defect, in the other direction: a context menu is resolved from a url and
+    // is not a `sub`/`navigate` spec, so it can never be a root entry to begin with.
+    const existing = new Map([
+      ['main_scs', doc('main_scs', [])],
+      ['task-all', doc('task-all')],
+      ['c-tasks', doc('c-tasks', ['task-add'])],
+      ['task-add', doc('task-add')],
+    ]);
+    const rows = buildMenuTree({ rootKey: 'main_scs', existing, drift: [], enabledBlocks: [TASK] });
+    expect(rows.map(r => [r.name, r.detached])).toEqual([
+      ['task-all', true], ['c-tasks', false], ['task-add', false],
+    ]);
+  });
+
+  it('carries absent descendants along in the group', () => {
+    const existing = new Map([
+      ['main_scs', doc('main_scs', [])],
+      ['event-menu', doc('event-menu', ['calevent-all'])],
+      ['calevent-all', doc('calevent-all')],
+    ]);
+    const rows = base(existing);
+    expect(rows[0]).toMatchObject({ name: 'event-menu', detached: true });
+    expect(rows[0].groupKeys).toEqual(['event-menu', 'calevent-my']);
+  });
+
+  it('marks every owned top-level row when the tenant has no root document yet', () => {
+    // A tenant before its first picker save: `planRootMenuOp`'s create branch is what
+    // attaches these, and this is the screen that has to offer it.
+    const existing = new Map([['event-menu', doc('event-menu', [])]]);
+    const rows = base(existing);
+    expect(rows.find(r => r.name === 'event-menu')).toMatchObject({ detached: true });
+  });
+
+  it('leaves an absent row detached-free — `absent` already routes it to the same button', () => {
+    const existing = new Map([['main_scs', doc('main_scs', [])]]);
+    const rows = base(existing);
+    expect(rows.every(r => r.state === 'absent' && !r.detached)).toBe(true);
+  });
+});

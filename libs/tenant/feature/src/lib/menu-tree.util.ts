@@ -1,4 +1,5 @@
 import type { MenuItemModel } from '@okr/shared-models';
+import { nestedMenuKeys } from '@okr/tenant-util';
 import type { FeatureBlock, MenuSpec, MenuStructureDrift, StructuralField } from '@okr/tenant-util';
 
 /**
@@ -28,13 +29,28 @@ export interface MenuTreeRow {
    * opt-out.
    */
   hidden: boolean;
+  /**
+   * The document exists for this tenant but hangs nowhere below `main_<tenantId>` — the
+   * tenant HAS the row and cannot reach it.
+   *
+   * ORTHOGONAL TO `state`, for the same reason as `hidden` and `forked`: attachment says
+   * nothing about whether the fields match the catalogue, so a row can be `drifted` AND
+   * detached, and the table must keep reporting both. This is the one case the
+   * identity-not-reachability rule below gets wrong on its own — see its doc comment.
+   *
+   * Only ever true for a row the root menu could actually carry: a TOP-LEVEL catalogue spec
+   * with `action` `sub` or `navigate`, i.e. exactly `rootNavKeys`' membership test. A nested
+   * row is reached through its parent, and a context menu through a url — neither is ever a
+   * child of the root array, and flagging them was the original defect.
+   */
+  detached: boolean;
   /** The live document's `action` (the catalogue spec's when absent) — drives the type filter. */
   action: string;
   /**
-   * This row plus every `absent` row in its own subtree — the argument for a single
-   * «Ins Menü» that attaches a page together with its context menu and that menu's actions
-   * (the "small feature" grouping). Empty when there is nothing left to add, which is what
-   * decides whether the row offers a button at all.
+   * This row (when `absent` or `detached`) plus every `absent` row in its own subtree — the
+   * argument for a single «Ins Menü» that attaches a page together with its context menu and
+   * that menu's actions (the "small feature" grouping). Empty when there is nothing left to
+   * add, which is what decides whether the row offers a button at all.
    */
   groupKeys: string[];
 }
@@ -62,6 +78,26 @@ export interface MenuTreeRow {
  * an ABSENT row if it does not. `visited` is both the cycle guard (menu data is user-editable
  * and A → B → A is one bad save away) and "already accounted for", so a name that turns up in
  * two places is reported once.
+ *
+ * WHERE IDENTITY IS NOT ENOUGH — `detached` (the one exception, added after `scs` retired its
+ * bespoke `scsf_fibu` submenu). Identity is the right test for whether the tenant OWNS a row.
+ * It is not the right test for whether a TOP-LEVEL `sub`/`navigate` row is in the menu: those
+ * are reachable only as entries of the root array (or nested under a parent that is), so a
+ * document the admin unhooked from `main_<tenantId>` still reported `equal` and offered
+ * «Ausblenden» — hide a row that is already unreachable — while «Ins Menü», the one button
+ * that would repair it, is gated on `absent` and never appeared. The row was lying again,
+ * just in the other direction.
+ *
+ * `detached` is therefore computed from the SAME reachability test the server appends with
+ * (`nestedMenuKeys` + the root array, i.e. `planRootMenuOp`'s own dedupe), so the button can
+ * never be offered for a key the callable would then decline to attach — nor withheld for one
+ * it would. A row deliberately nested under a hand-made parent stays reachable and is NOT
+ * detached, which is the false positive that test exists to prevent.
+ *
+ * KNOWN GAP (accepted): a TENANT-AUTHORED document that is detached is not reported at all —
+ * with no catalogue spec and no path from the root, the walk never reaches it. `addMenuRows`
+ * refuses a key with no owning block anyway, so there is nothing this screen could offer;
+ * the sitemap (`graph` page) is where an orphan like that shows up.
  *
  * GROUPING: a `context` spec named by a `navigate` spec's url is re-parented under that
  * navigate spec, so a page, its context menu and that menu's actions read as one small
@@ -124,12 +160,31 @@ export function buildMenuTree(input: {
     childrenByParent.set(parent, [...(childrenByParent.get(parent) ?? []), spec]);
   }
 
+  // ── Root reachability (for `detached`) ─────────────────────────────────────────────────
+  // The root's own entries plus everything nested below them — `planRootMenuOp`'s dedupe set,
+  // shared rather than reimplemented so the button and the write can never disagree. A tenant
+  // with no root document at all (a brand-new one, before the first picker save) reaches
+  // nothing, which is exactly right: every catalogue row it already owns IS detached, and the
+  // create branch of `planRootMenuOp` is what attaches them.
+  const reachable = new Set<string>([
+    ...(existing.get(rootKey)?.menuItems ?? []),
+    ...nestedMenuKeys(rootKey, existing),
+  ]);
+
+  /** `rootNavKeys`' membership test, per name: a top-level spec the root array can carry. */
+  const isRootAttachable = (name: string): boolean => {
+    const spec = specByName.get(name);
+    if (!spec || (spec.action !== 'sub' && spec.action !== 'navigate')) return false;
+    return (declaredParent.get(name) ?? '') === '';
+  };
+
   // ── Row factories ──────────────────────────────────────────────────────────────────────
   const makeLiveRow = (name: string, item: MenuItemModel, depth: number): MenuTreeRow => {
     const ownerBlockId = blockIdBySpecName.get(name);
     const forked = (item.forkedFrom ?? '').length > 0;
     const liveRoleNeeded = String(item.roleNeeded ?? '');
     const action = String(item.action ?? specByName.get(name)?.action ?? '');
+    const detached = isRootAttachable(name) && !reachable.has(name);
 
     if (!ownerBlockId) {
       // No block declares this name — nothing the catalogue does can drift it, so it is
@@ -138,7 +193,7 @@ export function buildMenuTree(input: {
         name, docId: item.okey, depth, state: 'tenant-authored',
         roleNeededLive: liveRoleNeeded, roleNeededCatalogue: '',
         otherDrift: [], blockId: '', forked, action, groupKeys: [],
-        hidden: hiddenKeys.has(name),
+        hidden: hiddenKeys.has(name), detached,
       };
     }
 
@@ -168,15 +223,17 @@ export function buildMenuTree(input: {
     return {
       name, docId: item.okey, depth, state,
       roleNeededLive, roleNeededCatalogue, otherDrift, blockId: ownerBlockId, forked,
-      action, groupKeys: [], hidden: hiddenKeys.has(name),
+      action, groupKeys: [], hidden: hiddenKeys.has(name), detached,
     };
   };
 
+  // `detached: false` — an absent row has no document to be detached FROM, and `absent`
+  // already routes it to the same «Ins Menü».
   const makeAbsentRow = (spec: MenuSpec, depth: number): MenuTreeRow => ({
     name: spec.name, docId: '', depth, state: 'absent',
     roleNeededLive: '', roleNeededCatalogue: spec.roleNeeded,
     otherDrift: [], blockId: blockIdBySpecName.get(spec.name) ?? '', forked: false,
-    action: spec.action, groupKeys: [], hidden: hiddenKeys.has(spec.name),
+    action: spec.action, groupKeys: [], hidden: hiddenKeys.has(spec.name), detached: false,
   });
 
   // ── The walk ───────────────────────────────────────────────────────────────────────────
@@ -213,8 +270,12 @@ export function buildMenuTree(input: {
   // A row's subtree is exactly the following rows with a greater depth, so the flat list is
   // its own index — no second traversal, and the group can never disagree with what the
   // table shows below the row.
+  // A detached row carries its OWN name for the same reason an absent one does: that name is
+  // what `addMenuRows` must be handed for `planRootMenuOp` to append it. Its absent
+  // descendants ride along unchanged — `planRowsByKey` skips any key whose ancestor was
+  // requested in the same call, so the parent's own subtree covers them.
   return rows.map((row, i) => {
-    const groupKeys = row.state === 'absent' ? [row.name] : [];
+    const groupKeys = row.state === 'absent' || row.detached ? [row.name] : [];
     for (let j = i + 1; j < rows.length && rows[j].depth > row.depth; j++) {
       if (rows[j].state === 'absent') groupKeys.push(rows[j].name);
     }

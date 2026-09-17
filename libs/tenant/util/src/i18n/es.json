@@ -171,6 +171,7 @@
     "rows_state_equal": "al día",
     "rows_state_pinned": "fijado",
     "rows_state_tenant": "tu propia entrada",
+    "rows_state_detached": "no está en el menú",
     "rows_hide_button": "Ocultar",
     "rows_unhide_button": "Mostrar",
     "rows_state_hidden": "oculta",

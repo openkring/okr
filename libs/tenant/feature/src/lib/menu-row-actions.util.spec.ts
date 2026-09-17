@@ -9,7 +9,8 @@ function makeRow(overrides: Partial<MenuTreeRow> = {}): MenuTreeRow {
   return {
     name: 'sport-menu', docId: 'sport-menu', depth: 0, state: 'drifted',
     roleNeededLive: 'registered', roleNeededCatalogue: 'registered',
-    otherDrift: [], blockId: 'sport', forked: false, hidden: false, action: 'sub', groupKeys: [],
+    otherDrift: [], blockId: 'sport', forked: false, hidden: false, detached: false,
+    action: 'sub', groupKeys: [],
     ...overrides,
   };
 }

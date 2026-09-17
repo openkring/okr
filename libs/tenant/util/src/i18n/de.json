@@ -171,6 +171,7 @@
     "rows_state_equal": "aktuell",
     "rows_state_pinned": "fixiert",
     "rows_state_tenant": "eigener Eintrag",
+    "rows_state_detached": "nicht im Menü",
     "rows_hide_button": "Ausblenden",
     "rows_unhide_button": "Einblenden",
     "rows_state_hidden": "ausgeblendet",

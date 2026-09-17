@@ -171,6 +171,7 @@
     "rows_state_equal": "aggiornato",
     "rows_state_pinned": "fissato",
     "rows_state_tenant": "la tua voce",
+    "rows_state_detached": "non nel menu",
     "rows_hide_button": "Nascondi",
     "rows_unhide_button": "Mostra",
     "rows_state_hidden": "nascosta",

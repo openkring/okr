@@ -171,6 +171,7 @@
     "rows_state_equal": "à jour",
     "rows_state_pinned": "fixé",
     "rows_state_tenant": "ta propre entrée",
+    "rows_state_detached": "absent du menu",
     "rows_hide_button": "Masquer",
     "rows_unhide_button": "Afficher",
     "rows_state_hidden": "masquée",

@@ -171,6 +171,7 @@
     "rows_state_equal": "up to date",
     "rows_state_pinned": "pinned",
     "rows_state_tenant": "your own entry",
+    "rows_state_detached": "not in the menu",
     "rows_hide_button": "Hide",
     "rows_unhide_button": "Show",
     "rows_state_hidden": "hidden",

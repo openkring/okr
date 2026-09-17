@@ -112,6 +112,11 @@ export const FEATURE_PICKER_I18N_KEYS = {
   rows_state_equal: PFX + 'picker.rows_state_equal',
   rows_state_pinned: PFX + 'picker.rows_state_pinned',
   rows_state_tenant: PFX + 'picker.rows_state_tenant',
+  /** `MenuTreeRow.detached` — the tenant HAS the document but it hangs nowhere below the
+   *  main menu. Same words as `rows_absent` on purpose (to the admin the two are the same
+   *  fact: the row is not in the menu), but a key of its own, because the two are reached
+   *  from different states and may want to read differently later. */
+  rows_state_detached: PFX + 'picker.rows_state_detached',
   /** Gate 4, the per-row opt-out (`app-config.hiddenMenuKeys`). Offered on every row that
    *  the tenant actually has — including a `tenant-authored` one — and NOT on an `absent`
    *  row, where there is nothing to suppress yet. */

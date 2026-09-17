@@ -249,10 +249,13 @@ type PickerSegment = 'blocks' | 'rows';
                     <ion-button size="small" fill="clear" (click)="onUnhide(row)">
                       {{ i18n.rows_unhide_button() }}
                     </ion-button>
-                  } @else if (row.state !== 'absent') {
+                  } @else if (row.state !== 'absent' && !row.detached) {
                     <ion-button size="small" fill="clear" (click)="onHide(row)">
                       {{ i18n.rows_hide_button() }}
                     </ion-button>
+                  }
+                  @if (row.detached) {
+                    <span class="state-word">{{ i18n.rows_state_detached() }}</span>
                   }
                   @switch (row.state) {
                     @case ('drifted') {
@@ -290,7 +293,7 @@ type PickerSegment = 'blocks' | 'rows';
                   }
                   @if (row.state !== 'absent' && row.groupKeys.length > 0) {
                     <ion-button size="small" fill="outline" (click)="onAddToMenu(row)">
-                      {{ i18n.rows_add_group_button() }}
+                      {{ row.groupKeys.length > 1 ? i18n.rows_add_group_button() : i18n.rows_add_button() }}
                     </ion-button>
                   }
                 </ion-col>
@@ -686,9 +689,10 @@ export class FeaturePicker {
   }
 
   // ── Segment 2 (Menüzeilen) — actions ─────────────────────────────────────────────────
-  /** A hidden row is dimmed like an inactive one — it does not render in the app. */
+  /** A hidden row is dimmed like an inactive one — it does not render in the app. So is a
+   *  detached one, for the same reason: the document exists, but nothing reaches it. */
   protected isRowDimmed(row: MenuTreeRow): boolean {
-    return row.hidden || this.isDimmed(row);
+    return row.hidden || row.detached || this.isDimmed(row);
   }
 
   protected isDimmed(row: MenuTreeRow): boolean {
@@ -805,6 +809,12 @@ export class FeaturePicker {
    * that answers "es gibt nichts zu übernehmen" on a row that was never missing in the first
    * place — that was `buildMenuTree` reporting every context menu as absent (see its doc
    * comment), not a plan that came back empty.
+   *
+   * It is also the repair path for a `detached` row (a document the tenant owns that hangs
+   * nowhere below the root, e.g. `accounting-menu` after `scs` unhooked it when retiring
+   * `scsf_fibu`). Nothing special is needed here: `planRowsByKey` locates the top-level spec,
+   * finds no catalogue parent, and hands the key to `planRootMenuOp`, which appends it at the
+   * tail — the same write an enable would have planned.
    */
   protected async onAddToMenu(row: MenuTreeRow): Promise<void> {
     const tenantId = this.tenantId();
