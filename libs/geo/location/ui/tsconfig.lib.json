@@ -17,6 +17,7 @@
   "references": [
     { "path": "../util/tsconfig.lib.json" },
     { "path": "../../../shared/config/tsconfig.lib.json" },
+    { "path": "../../../shared/constants/tsconfig.lib.json" },
     { "path": "../../../shared/models/tsconfig.lib.json" },
     { "path": "../../../shared/ui/tsconfig.lib.json" },
     { "path": "../../../shared/util-core/tsconfig.lib.json" }
