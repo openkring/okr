@@ -1,4 +1,4 @@
-import { Component, computed, inject, linkedSignal, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { IonContent } from '@ionic/angular/standalone';
 import { of } from 'rxjs';
@@ -30,7 +30,7 @@ import { ReadOnlyBanner } from './read-only-banner';
     }
     <ion-content class="ion-no-padding">
       <okr-read-only-banner />
-      @if (formData(); as config) {
+      @if (store.configLoaded() && formData(); as config) {
         <okr-accounting-config-form [formData]="config" (formDataChange)="formData.set($event)"
           [accounts]="accounts()" [tenantId]="store.tenantId()" [i18n]="store.i18n"
           [readOnly]="store.isExternallyManaged()" [showForm]="showForm()"
@@ -50,15 +50,31 @@ export class AccountingSettingsPage {
   });
   protected readonly accounts = computed(() => this.accountsResource.value() ?? []);
 
-  // A tenant may have no config document yet — edit a fresh one and create it on save.
+  // A tenant may have no config document yet — edit a fresh one and create it on save. Only
+  // meaningful once `configLoaded()` is true; before that `store.config()` is merely unread.
   private readonly config = computed(() =>
     this.store.config() ?? new AccountingConfigModel(this.store.tenantId(), this.store.accountingTenantId()));
-  public formData = linkedSignal(() => safeStructuredClone(this.config()));
+  public formData = signal<AccountingConfigModel | undefined>(undefined);
 
   protected formDirty = signal(false);
   protected formValid = signal(false);
   protected showForm = signal(true);
-  protected showConfirmation = computed(() => this.formValid() && this.formDirty() && !this.store.isExternallyManaged());
+
+  // Seeded, not derived: a `linkedSignal` over the config recomputes whenever the underlying
+  // resource re-emits or restarts, which silently threw away whatever the user had typed (and,
+  // when the restart also blanked `config()`, replaced it with an empty default model). Seeding
+  // only while the form is untouched keeps live updates flowing without clobbering edits.
+  private readonly seedFormData = effect(() => {
+    if (!this.store.configLoaded()) return;
+    const config = this.config();
+    untracked(() => {
+      if (this.formDirty()) return;
+      this.formData.set(safeStructuredClone(config));
+    });
+  });
+
+  protected showConfirmation = computed(() =>
+    this.store.configLoaded() && this.formValid() && this.formDirty() && !this.store.isExternallyManaged());
 
   protected headerI18n = computed(() => ({ title: this.store.i18n.settings_title() } as HeaderI18n));
   protected changeConfirmationI18n = computed(() => ({
@@ -67,7 +83,10 @@ export class AccountingSettingsPage {
 
   public async save(): Promise<void> {
     const config = this.formData();
-    if (!config) return;
+    // Never write from an unresolved read: `store.config()` is undefined both when no document
+    // exists and when the read has not answered, and taking the second for the first sends an
+    // empty default model into createModel (SCS-AY).
+    if (!config || !this.store.configLoaded()) return;
     if (this.store.config()) {
       await this.store.updateConfig(config);
     } else {
