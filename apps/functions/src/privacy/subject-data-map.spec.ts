@@ -613,3 +613,30 @@ describe('resolveDocs', () => {
     }
   });
 });
+
+describe('subject-data-map — collection names are constants, not literals', () => {
+  // A renamed collection must not silently drop out of erasure coverage. Every `collection`
+  // value in the map has to be a string some `*Collection` constant also exports, so a rename
+  // that misses this file fails here instead of in production.
+  const exportedCollections = new Set(
+    Object.entries(models)
+      .filter(([name, value]) => name.endsWith('Collection') && typeof value === 'string')
+      .map(([, value]) => value as string),
+  );
+
+  // Collections addressed by literal because no `*Collection` constant models them. Each entry
+  // needs a reason: this list is deliberate friction, so that a MODEL collection can never be
+  // renamed out of erasure coverage by quietly appending to it.
+  const NON_MODEL_COLLECTIONS = new Set([
+    'users/fcmTokens', // subcollection path, not a top-level collection
+    'stats_members', // derived stats, written by a scheduled function, no model
+  ]);
+
+  it('every entry resolves to an exported collection constant', () => {
+    const unknown = SUBJECT_DATA_MAP
+      .map(entry => entry.collection)
+      .filter(collection => !exportedCollections.has(collection))
+      .filter(collection => !NON_MODEL_COLLECTIONS.has(collection));
+    expect(unknown).toEqual([]);
+  });
+});
