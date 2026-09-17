@@ -4,7 +4,7 @@
  * run directly against production Firestore (no AppCheck/auth ceremony needed):
  *
  *   memberships.memberBirthYear                      <- vault 'dob' address (YYYY)
- *   scs-memberfees.memberBirthYear                   <- vault 'dob' address (YYYY)
+ *   member-fees.memberBirthYear                   <- vault 'dob' address (YYYY)
  *   persons.isDeceased / deathYear                   <- vault 'dod' address
  *   memberships.memberIsDeceased / memberDeathYear   <- vault 'dod' address
  *
@@ -92,7 +92,7 @@ async function main() {
 
   // index the relation collections once — one full scan beats 658 * 2 queries
   const membershipsSnap = await db.collection('memberships').get();
-  const feesSnap = await db.collection('scs-memberfees').get();
+  const feesSnap = await db.collection('member-fees').get();
   const membershipsByPerson = new Map();
   for (const doc of membershipsSnap.docs) {
     const m = doc.data();
