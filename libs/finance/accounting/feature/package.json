@@ -13,6 +13,10 @@
     "@okr/shared-util-core": "*",
     "@okr/shared-util-angular": "*",
     "@okr/shared-feature": "*",
-    "@okr/finance-accounting-data-access": "*"
+    "@okr/finance-accounting-data-access": "*",
+    "@okr/shared-ui": "*",
+    "@okr/finance-account-data-access": "*",
+    "@okr/finance-vat-code-data-access": "*",
+    "@okr/finance-accounting-ui": "*"
   }
 }
