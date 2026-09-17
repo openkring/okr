@@ -3,8 +3,9 @@ import { isPlatformBrowser } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, ActivatedRouteSnapshot, NavigationEnd, Router } from '@angular/router';
 import { filter, map, startWith } from 'rxjs/operators';
-import { IonApp, IonButtons, IonContent, IonHeader, IonItem, IonLabel, IonMenu, IonRouterOutlet, IonSplitPane, IonToolbar, ModalController } from '@ionic/angular/standalone';
+import { IonApp, IonButton, IonButtons, IonContent, IonHeader, IonItem, IonLabel, IonMenu, IonRouterOutlet, IonSplitPane, IonToolbar, ModalController } from '@ionic/angular/standalone';
 
+import { I18nService } from '@okr/shared-i18n';
 import { AppStore } from '@okr/shared-feature';
 import { RoleName } from '@okr/shared-models';
 import { BootError, Spinner, ConnectionStatusButton, AvatarUser } from '@okr/shared-ui';
@@ -19,7 +20,7 @@ import { ConsentService } from '@okr/consent-data-access';
 @Component({
   imports: [
     Menu, AuthInfo, BootError, Spinner, ConnectionStatusButton, AvatarUser, CookieBanner,
-    IonApp, IonSplitPane, IonMenu, IonHeader, IonContent, IonToolbar, IonRouterOutlet, IonButtons,
+    IonApp, IonSplitPane, IonMenu, IonHeader, IonContent, IonToolbar, IonRouterOutlet, IonButton, IonButtons,
     IonLabel, IonItem
 ],
   selector: 'okr-root',
@@ -90,6 +91,17 @@ import { ConsentService } from '@okr/consent-data-access';
         align-items: center;
         justify-content: center;
         background: var(--ion-background-color, #fff);
+      }
+      /* Slow-network / stalled-profile message shown when the readiness watchdog fires. */
+      .degraded-message {
+        max-width: 340px;
+        padding: 24px;
+        text-align: center;
+        color: var(--ion-text-color, #000);
+      }
+      .degraded-message p {
+        margin: 0 0 12px;
+        line-height: 1.4;
       }
     `,
   ],
@@ -170,7 +182,15 @@ import { ConsentService } from '@okr/consent-data-access';
             outlet during the not-ready window.
           -->
           <ion-router-outlet />
-          @if (!isAppReady()) {
+          @if (isDegradedSession()) {
+            <div class="app-ready-overlay">
+              <div class="degraded-message">
+                <p>{{ i18n.degraded1() }}</p>
+                <p>{{ i18n.degraded2() }}</p>
+                <ion-button (click)="reload()">{{ i18n.retry() }}</ion-button>
+              </div>
+            </div>
+          } @else if (!isAppReady()) {
             <div class="app-ready-overlay">
               <okr-spinner />
             </div>
@@ -197,6 +217,10 @@ import { ConsentService } from '@okr/consent-data-access';
 })
 export class OkrRoot {
   protected appStore = inject(AppStore);
+  // Main-bundle keys: in memory at startup, unlike a lazily-fetched scope.
+  protected readonly i18n = inject(I18nService).translateAll({
+    degraded1: '@boot.degraded1', degraded2: '@boot.degraded2', retry: '@boot.retry',
+  });
   private readonly modalController = inject(ModalController);
   protected readonly consentService = inject(ConsentService);
   private readonly route = inject(ActivatedRoute);
@@ -266,9 +290,14 @@ export class OkrRoot {
   // isUserSessionReady gates the menu spinner; isAppReady gates the outlet overlay.
   protected isUserSessionReady = this.appStore.isUserSessionReady;
   protected isAppReady = this.appStore.isAppReady;
+  protected isDegradedSession = this.appStore.isDegradedSession;
 
   protected hasRole(role: RoleName | undefined): boolean {
     return hasRole(role, this.appStore.currentUser());
+  }
+
+  protected reload(): void {
+    window.location.reload();
   }
 
   protected openCookieSettings(): void {
