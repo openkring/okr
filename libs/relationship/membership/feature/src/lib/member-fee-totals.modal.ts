@@ -73,6 +73,11 @@ const CHF = new Intl.NumberFormat('de-CH', { minimumFractionDigits: 2, maximumFr
           <ion-col size="3"><ion-label class="amount">{{ statusCounts().uploaded.pct }}</ion-label></ion-col>
         </ion-row>
         <ion-row class="status-row">
+          <ion-col size="6"><ion-label>invoiced</ion-label></ion-col>
+          <ion-col size="3"><ion-label class="amount">{{ statusCounts().invoiced.n }}</ion-label></ion-col>
+          <ion-col size="3"><ion-label class="amount">{{ statusCounts().invoiced.pct }}</ion-label></ion-col>
+        </ion-row>
+        <ion-row class="status-row">
           <ion-col size="6"><ion-label>sent</ion-label></ion-col>
           <ion-col size="3"><ion-label class="amount">{{ statusCounts().sent.n }}</ion-label></ion-col>
           <ion-col size="3"><ion-label class="amount">{{ statusCounts().sent.pct }}</ion-label></ion-col>
@@ -132,6 +137,10 @@ export class MemberFeesTotalsModal {
       review: entry('review'),
       ready: entry('ready'),
       uploaded: entry('uploaded'),
+      // 'invoiced' is what the native postMemberFees path sets. Without a row of its own those
+      // fees counted in the Total but in no status line, and the percentages stopped summing
+      // to 100. Every value of INVOICE_STATE needs a line here.
+      invoiced: entry('invoiced'),
       sent: entry('sent'),
       paid: entry('paid'),
       cancelled: entry('cancelled')
