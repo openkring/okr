@@ -1,6 +1,6 @@
 import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 
-import { NAME_LENGTH, WORD_LENGTH } from '@okr/shared-constants';
+import { DESCRIPTION_LENGTH, NAME_LENGTH, WORD_LENGTH } from '@okr/shared-constants';
 import { AliasModel } from '@okr/shared-models';
 import { baseValidations, numberValidations, stringValidations } from '@okr/shared-util-core';
 
@@ -22,7 +22,7 @@ export const aliasValidations = staticSuite(
     stringValidations('space', model.space, WORD_LENGTH);
     stringValidations('alias', model.alias, WORD_LENGTH);
     stringValidations('original', model.original, NAME_LENGTH);
-    stringValidations('notes', model.notes, NAME_LENGTH);
+    stringValidations('notes', model.notes, DESCRIPTION_LENGTH);
     numberValidations('maxUses', model.maxUses, true, 0, 1_000_000);
 
     test('space', 'Ein Space muss gewählt sein.', () => {

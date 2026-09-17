@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, effect, input, output } f
 import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 
 import { CategoryListModel, INVOICE_STATE_VALUES, REBATE_REASON_VALUES, ScsMemberFeesModel, UserModel } from '@okr/shared-models';
-import { NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n } from '@okr/shared-ui';
+import { NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n , ErrorNote} from '@okr/shared-ui';
 import { getAgeFromBirthYear } from '@okr/shared-util-core';
 
 import { MembershipI18n, scsMemberFeeValidations } from '@okr/relationship-membership-util';
@@ -12,6 +12,7 @@ import { MembershipI18n, scsMemberFeeValidations } from '@okr/relationship-membe
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    ErrorNote,
     NumberInput, StringSelect, NotesInput,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonItem, IonLabel,
   ],
@@ -38,28 +39,35 @@ import { MembershipI18n, scsMemberFeeValidations } from '@okr/relationship-membe
               <ion-row>
                 <ion-col size="6" size-md="4">
                   <okr-number-input [i18n]="jbI18n()" [value]="fd.jb" (valueChange)="onFieldChange('jb', $event, fd)" [readOnly]="readOnly()" />
+                  <okr-error-note [errors]="jbErrors()" />
                 </ion-col>
                 <ion-col size="6" size-md="4">
                   <okr-number-input [i18n]="srvI18n()" [value]="fd.srv" (valueChange)="onFieldChange('srv', $event, fd)" [readOnly]="readOnly()" />
+                  <okr-error-note [errors]="srvErrors()" />
                 </ion-col>
               </ion-row>
               <ion-row>
                 <ion-col size="6" size-md="4">
                   <okr-number-input [i18n]="bevI18n()" [value]="fd.bev" (valueChange)="onFieldChange('bev', $event, fd)" [readOnly]="readOnly()" />
+                  <okr-error-note [errors]="bevErrors()" />
                 </ion-col>
                 <ion-col size="6" size-md="4">
                   <okr-number-input [i18n]="entryFeeI18n()" [value]="fd.entryFee" (valueChange)="onFieldChange('entryFee', $event, fd)" [readOnly]="readOnly()" />
+                  <okr-error-note [errors]="entryFeeErrors()" />
                 </ion-col>
                 <ion-col size="6" size-md="4">
                   <okr-number-input [i18n]="lockerI18n()" [value]="fd.locker" (valueChange)="onFieldChange('locker', $event, fd)" [readOnly]="readOnly()" />
+                  <okr-error-note [errors]="lockerErrors()" />
                 </ion-col>
               </ion-row>
               <ion-row>
                 <ion-col size="6" size-md="4">
                   <okr-number-input [i18n]="skiffI18n()" [value]="fd.skiff" (valueChange)="onFieldChange('skiff', $event, fd)" [readOnly]="readOnly()" />
+                  <okr-error-note [errors]="skiffErrors()" />
                 </ion-col>
                 <ion-col size="6" size-md="4">
                   <okr-number-input [i18n]="skiffInsuranceI18n()" [value]="fd.skiffInsurance" (valueChange)="onFieldChange('skiffInsurance', $event, fd)" [readOnly]="readOnly()" />
+                  <okr-error-note [errors]="skiffInsuranceErrors()" />
                 </ion-col>
               </ion-row>
 
@@ -67,6 +75,7 @@ import { MembershipI18n, scsMemberFeeValidations } from '@okr/relationship-membe
               <ion-row>
                 <ion-col size="6" size-md="4">
                   <okr-number-input [i18n]="rebateI18n()" [value]="fd.rebate" (valueChange)="onFieldChange('rebate', $event, fd)" [readOnly]="readOnly()" />
+                  <okr-error-note [errors]="rebateErrors()" />
                 </ion-col>
                 <ion-col size="6" size-md="4">
                   <okr-string-select [i18n]="rebateReasonI18n()"
@@ -135,6 +144,14 @@ export class ScsMemberFeeEditForm {
     const fd = this.formData();
     return fd ? scsMemberFeeValidations(fd, '', '') : null;
   });
+  protected bevErrors = computed(() => this.validationResult()?.getErrors('bev') ?? []);
+  protected entryFeeErrors = computed(() => this.validationResult()?.getErrors('entryFee') ?? []);
+  protected jbErrors = computed(() => this.validationResult()?.getErrors('jb') ?? []);
+  protected lockerErrors = computed(() => this.validationResult()?.getErrors('locker') ?? []);
+  protected rebateErrors = computed(() => this.validationResult()?.getErrors('rebate') ?? []);
+  protected skiffErrors = computed(() => this.validationResult()?.getErrors('skiff') ?? []);
+  protected skiffInsuranceErrors = computed(() => this.validationResult()?.getErrors('skiffInsurance') ?? []);
+  protected srvErrors = computed(() => this.validationResult()?.getErrors('srv') ?? []);
   protected readonly rebateReasonList = [...REBATE_REASON_VALUES];
   protected readonly invoiceStateList = [...INVOICE_STATE_VALUES];
 

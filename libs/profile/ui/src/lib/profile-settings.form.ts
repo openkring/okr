@@ -9,6 +9,7 @@ import { coerceBoolean, hasRole, isValidForFields, toEditableChannels } from "@o
 
 import { userValidations } from "@okr/user-util";
 import { ProfileI18n } from "@okr/profile-util";
+import { SHORT_NAME_LENGTH } from '@okr/shared-constants';
 
 /** The user fields this accordion renders as editable — the ones its `valid` output may gate on. */
 const EDITED_FIELDS = [
@@ -50,20 +51,25 @@ const EDITED_FIELDS = [
               @if(hasRole('admin')) {
                 <ion-col size="12" size-md="6">
                   <okr-checkbox [i18n]="showDebugInfoI18n()" [checked]="showDebugInfo()" (checkedChange)="onFieldChange('showDebugInfo', $event)" [showHelper]="showHelper()" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="showDebugInfoErrors()" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
                   <okr-checkbox [i18n]="showArchivedDataI18n()" [checked]="showArchivedData()" (checkedChange)="onFieldChange('showArchivedData', $event)" [readOnly]="isReadOnly()" [showHelper]="showHelper()" />
+                  <okr-error-note [errors]="showArchivedDataErrors()" />
                 </ion-col>
               }
               <ion-col size="12" size-md="6">
                 <okr-checkbox [i18n]="showHelpersI18n()" [checked]="showHelpers()" (checkedChange)="onFieldChange('showHelpers', $event)" [showHelper]="showHelper()" [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="showHelpersErrors()" />
               </ion-col>
               @if(hasRole('admin')) {
                 <ion-col size="12" size-md="6">
                   <okr-checkbox [i18n]="useTouchIdI18n()" [checked]="useTouchId()" (checkedChange)="onFieldChange('useTouchId', $event)" [showHelper]="showHelper()" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="useTouchIdErrors()" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
                   <okr-checkbox [i18n]="useFaceIdI18n()" [checked]="useFaceId()" (checkedChange)="onFieldChange('useFaceId', $event)" [showHelper]="showHelper()" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="useFaceIdErrors()" />
                 </ion-col>
               }
             </ion-row>
@@ -73,7 +79,7 @@ const EDITED_FIELDS = [
               </ion-col>
               @if(avatarUsage() === avatarUsageEnum.GravatarFirst || avatarUsage() === avatarUsageEnum.PhotoFirst) {
                 <ion-col size="12" size-md="6">
-                  <okr-text-input [i18n]="gravatarEmailI18n()" [value]="gravatarEmail()" (valueChange)="onFieldChange('gravatarEmail', $event)" [showHelper]="showHelper()" [copyable]=true [readOnly]="isReadOnly()" />
+                  <okr-text-input [i18n]="gravatarEmailI18n()" [value]="gravatarEmail()" (valueChange)="onFieldChange('gravatarEmail', $event)" [showHelper]="showHelper()" [copyable]=true [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
                   <okr-error-note [errors]="gravatarEmailErrors()" />                                                 
                 </ion-col>
               }
@@ -125,6 +131,8 @@ const EDITED_FIELDS = [
   `,
 })
 export class ProfileSettingsAccordion {
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly shortNameLength = SHORT_NAME_LENGTH;
   protected readonly modalController = inject(ModalController);
   protected readonly fcmService = inject(FcmService);
   protected gravatarEmailI18n = computed(() => ({
@@ -185,6 +193,11 @@ export class ProfileSettingsAccordion {
     invoiceDelivery: toEditableChannels(this.formData().invoiceDelivery),
   }));
   private readonly validationResult = computed(() => userValidations(this.validatedData(), this.tenantId(), this.tags()));
+  protected showArchivedDataErrors = computed(() => this.validationResult().getErrors('showArchivedData'));
+  protected showDebugInfoErrors = computed(() => this.validationResult().getErrors('showDebugInfo'));
+  protected showHelpersErrors = computed(() => this.validationResult().getErrors('showHelpers'));
+  protected useFaceIdErrors = computed(() => this.validationResult().getErrors('useFaceId'));
+  protected useTouchIdErrors = computed(() => this.validationResult().getErrors('useTouchId'));
   protected gravatarEmailErrors = computed(() => this.validationResult().getErrors('gravatarEmail'));
   protected newsDeliveryErrors = computed(() => this.validationResult().getErrors('newsDelivery'));
   protected invoiceDeliveryErrors = computed(() => this.validationResult().getErrors('invoiceDelivery'));

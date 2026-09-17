@@ -1,6 +1,6 @@
 import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 
-import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@okr/shared-constants';
+import { BEXIO_ID_LENGTH, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { OrgModel } from '@okr/shared-models';
 import { dateValidations, isAfterDate, stringValidations } from '@okr/shared-util-core';
 
@@ -8,13 +8,13 @@ export const orgValidations = staticSuite((model: OrgModel, tenants: string, tag
   if (field) only(field);
 
   stringValidations('name', model.name, SHORT_NAME_LENGTH, 3, true);
-  stringValidations('type', model.type, WORD_LENGTH);
+  stringValidations('type', model.type);
   dateValidations('dateOfFoundation', model.dateOfFoundation);
   dateValidations('dateOfLiquidation', model.dateOfLiquidation);
   stringValidations('taxId', model.taxId, SHORT_NAME_LENGTH);
   stringValidations('notes', model.notes, DESCRIPTION_LENGTH);
   //tagValidations('tags', model.tags);
-  stringValidations('bexioId', model.bexioId, 6);
+  stringValidations('bexioId', model.bexioId, BEXIO_ID_LENGTH);
 
   // cross field validations
   omitWhen(model.dateOfLiquidation === '' || model.dateOfFoundation === '', () => {

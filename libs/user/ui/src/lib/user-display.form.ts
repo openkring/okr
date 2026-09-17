@@ -3,7 +3,7 @@ import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, 
 
 import { AvatarUsages, Languages, NameDisplays, PersonSortCriterias } from "@okr/shared-categories";
 import { AvatarUsage, Language, NameDisplay, UserModel } from "@okr/shared-models";
-import { CategoryOld, CategoryOldI18n, Checkbox, CheckboxI18n } from "@okr/shared-ui";
+import { CategoryOld, CategoryOldI18n, Checkbox, CheckboxI18n, ErrorNote } from "@okr/shared-ui";
 import { coerceBoolean } from "@okr/shared-util-core";
 
 import { USER_DISPLAY_FORM_SHAPE, UserDisplayFormModel, userDisplayFormValidations, UserI18n } from "@okr/user-util";
@@ -12,6 +12,7 @@ import { USER_DISPLAY_FORM_SHAPE, UserDisplayFormModel, userDisplayFormValidatio
   selector: 'okr-user-display-form',
   standalone: true,
   imports: [
+    ErrorNote,
     CategoryOld, Checkbox,
     IonCard, IonCardHeader, IonCardContent, IonCardTitle, IonCardSubtitle, IonGrid, IonRow, IonCol
   ],
@@ -40,12 +41,15 @@ import { USER_DISPLAY_FORM_SHAPE, UserDisplayFormModel, userDisplayFormValidatio
               </ion-col>
               <ion-col size="12" size-md="6">
                 <okr-checkbox [i18n]="showArchivedDataI18n()" [checked]="showArchivedData()" (checkedChange)="onFieldChange('showArchivedData', $event)" [showHelper]="showHelpers()"  [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="showArchivedDataErrors()" />
               </ion-col>
               <ion-col size="12" size-md="6">
                 <okr-checkbox [i18n]="showDebugInfoI18n()" [checked]="showDebugInfo()" (checkedChange)="onFieldChange('showDebugInfo', $event)" [showHelper]="showHelpers()"  [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="showDebugInfoErrors()" />
               </ion-col>
               <ion-col size="12" size-md="6">
                 <okr-checkbox [i18n]="showHelpersI18n()" [checked]="showHelpers()" (checkedChange)="onFieldChange('showHelpers', $event)" [showHelper]="showHelpers()"  [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="showHelpersErrors()" />
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -78,6 +82,9 @@ export class UserDisplayForm {
   protected readonly shape = USER_DISPLAY_FORM_SHAPE;
   private readonly validationResult = computed(() => userDisplayFormValidations(this.formData()));
 
+  protected showArchivedDataErrors = computed(() => this.validationResult().getErrors('showArchivedData'));
+  protected showDebugInfoErrors = computed(() => this.validationResult().getErrors('showDebugInfo'));
+  protected showHelpersErrors = computed(() => this.validationResult().getErrors('showHelpers'));
   // fields
   protected avatarUsage = linkedSignal(() => this.formData().avatarUsage);
   protected personSortCriteria = linkedSignal(() => this.formData().personSortCriteria);

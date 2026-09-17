@@ -1,6 +1,6 @@
 import { only, staticSuite } from 'vest';
 
-import { LONG_NAME_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
+import { LONG_NAME_LENGTH } from '@okr/shared-constants';
 import { MeetingModel } from '@okr/shared-models';
 import { avatarValidations, baseValidations, dateValidations, stringValidations, stringsValidations, timeValidations } from '@okr/shared-util-core';
 
@@ -11,8 +11,8 @@ export const meetingValidations = staticSuite((model: MeetingModel, tenants: str
 
   baseValidations(model, tenants, tags, field);
   stringValidations('name', model.name, LONG_NAME_LENGTH, 1, true);
-  stringValidations('groupKey', model.groupKey, SHORT_NAME_LENGTH);
-  stringValidations('locationKey', model.locationKey, LONG_NAME_LENGTH);
+  stringValidations('groupKey', model.groupKey);
+  stringValidations('locationKey', model.locationKey);
   stringsValidations('state', model.state, MEETING_STATES);
   dateValidations('meetingDate', model.meetingDate);
   timeValidations('startTime', model.startTime);

@@ -1,8 +1,8 @@
 import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonInput, IonItem, IonRow } from '@ionic/angular/standalone';
-import { DEFAULT_CURRENCY, DEFAULT_LABEL, DEFAULT_LOCALE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PRICE, DEFAULT_TAGS, DEFAULT_TRANSFER_STATE, DEFAULT_TRANSFER_TYPE, NAME_LENGTH } from '@okr/shared-constants';
+import { DEFAULT_CURRENCY, DEFAULT_LABEL, DEFAULT_LOCALE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PRICE, DEFAULT_TAGS, DEFAULT_TRANSFER_STATE, DEFAULT_TRANSFER_TYPE, DESCRIPTION_LENGTH, NAME_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { AvatarInfo, CategoryListModel, RoleName, TransferModel, UserModel } from '@okr/shared-models';
-import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n , ErrorNote} from '@okr/shared-ui';
 import { coerceBoolean, getTodayStr, hasRole } from '@okr/shared-util-core';
 
 import { Avatars } from '@okr/avatar-ui';
@@ -12,6 +12,7 @@ import { transferValidations, TransferI18n } from '@okr/relationship-transfer-ut
   selector: 'okr-transfer-form',
   standalone: true,
   imports: [
+    ErrorNote,
     DateInput, TextInput, NotesInput, NumberInput, Avatars, CategorySelect, Chips,
     IonGrid, IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonItem, IonInput, IonButton
   ],
@@ -63,16 +64,19 @@ import { transferValidations, TransferI18n } from '@okr/relationship-transfer-ut
               <ion-grid>
                 <ion-row>
                   <ion-col size="12">
-                    <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]="nameLength" [readOnly]="isReadOnly()" />
+                    <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
+                    <okr-error-note [errors]="nameErrors()" />
                   </ion-col>
 
                   <ion-col size="12" size-md="6">
                     <okr-cat-select [category]="types()!" [selectedItemName]="type()" (selectedItemNameChange)="onFieldChange('type', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
+                    <okr-error-note [errors]="typeErrors()" />
                   </ion-col>
 
                   @if(type() === 'custom') {
                   <ion-col size="12" size-md="6">
-                    <okr-text-input [i18n]="labelI18n()" [value]="label()" (valueChange)="onFieldChange('label', $event)" [maxLength]="nameLength" [readOnly]="isReadOnly()" />
+                    <okr-text-input [i18n]="labelI18n()" [value]="label()" (valueChange)="onFieldChange('label', $event)" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
+                    <okr-error-note [errors]="labelErrors()" />
                   </ion-col>
                   }
 
@@ -82,6 +86,7 @@ import { transferValidations, TransferI18n } from '@okr/relationship-transfer-ut
 
                   <ion-col size="12" size-md="6">
                     <okr-date-input [i18n]="dateOfTransferI18n()" [storeDate]="dateOfTransfer()" (storeDateChange)="onFieldChange('dateOfTransfer', $event)" [locale]="locale()" [readOnly]="isReadOnly()" />
+                    <okr-error-note [errors]="dateOfTransferErrors()" />
                   </ion-col>
                 </ion-row>
               </ion-grid>
@@ -97,14 +102,17 @@ import { transferValidations, TransferI18n } from '@okr/relationship-transfer-ut
                 <ion-row>
                   <ion-col size="12" size-md="6">
                     <okr-number-input [i18n]="priceI18n()" [value]="price()" (valueChange)="onFieldChange('price', $event)" [maxLength]="6" [readOnly]="isReadOnly()" />
+                    <okr-error-note [errors]="priceErrors()" />
                   </ion-col>
 
                   <ion-col size="12" size-md="6">
-                    <okr-text-input [i18n]="currencyI18n()" [value]="currency()" (valueChange)="onFieldChange('currency', $event)" [maxLength]="20" [readOnly]="isReadOnly()" />
+                    <okr-text-input [i18n]="currencyI18n()" [value]="currency()" (valueChange)="onFieldChange('currency', $event)" [readOnly]="isReadOnly()" />
+                    <okr-error-note [errors]="currencyErrors()" />
                   </ion-col>
 
                   <ion-col size="12" size-md="6">
                     <okr-cat-select [category]="periodicities()!" [selectedItemName]="periodicity()" (selectedItemNameChange)="onFieldChange('periodicity', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
+                    <okr-error-note [errors]="periodicityErrors()" />
                   </ion-col>
                 </ion-row>
               </ion-grid>
@@ -116,7 +124,7 @@ import { transferValidations, TransferI18n } from '@okr/relationship-transfer-ut
           } 
           
           @if(hasRole('admin')) {
-            <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
+            <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="notesErrors()" />
           }
         }
       </form>
@@ -124,6 +132,10 @@ import { transferValidations, TransferI18n } from '@okr/relationship-transfer-ut
   `,
 })
 export class TransferForm {
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly shortNameLength = SHORT_NAME_LENGTH;
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly descriptionLength = DESCRIPTION_LENGTH;
   // inputs
   public readonly i18n = input.required<TransferI18n>();
   public readonly formData = model.required<TransferModel>();
@@ -148,6 +160,13 @@ export class TransferForm {
 
   // validation and errors
   private readonly validationResult = computed(() => transferValidations(this.formData(), this.tenantId(), this.allTags()));
+  protected dateOfTransferErrors = computed(() => this.validationResult().getErrors('dateOfTransfer'));
+  protected periodicityErrors = computed(() => this.validationResult().getErrors('periodicity'));
+  protected typeErrors = computed(() => this.validationResult().getErrors('type'));
+  protected currencyErrors = computed(() => this.validationResult().getErrors('currency'));
+  protected labelErrors = computed(() => this.validationResult().getErrors('label'));
+  protected notesErrors = computed(() => this.validationResult().getErrors('notes'));
+  protected priceErrors = computed(() => this.validationResult().getErrors('price'));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
 
   // fields

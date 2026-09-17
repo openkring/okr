@@ -4,7 +4,7 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular
 
 import { MatrixRoom, UserModel } from '@okr/shared-models';
 import { Checkbox, CheckboxI18n, ErrorNote, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n, UrlInput, UrlInputI18n } from '@okr/shared-ui';
-import { DEFAULT_NAME, DEFAULT_URL } from '@okr/shared-constants';
+import { DEFAULT_NAME, DEFAULT_URL, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { validateVestTree } from '@okr/shared-util-angular';
 
 import { roomValidations } from '@okr/chat-util';
@@ -54,13 +54,15 @@ export interface RoomEditFormI18n {
             <ion-row>
               <ion-col size="12" size-md="6">
                 <okr-text-input [i18n]="roomIdI18n()" [value]="roomId()" (valueChange)="onFieldChange('roomId', $event)" [readOnly]="true" />
+                <okr-error-note [errors]="roomIdErrors()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [readOnly]="false" [autofocus]="true" [maxLength]=30 />
+                <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [readOnly]="false" [autofocus]="true" [maxLength]="shortNameLength" />
                 <okr-error-note [errors]="nameErrors()" />
               </ion-col>
               <ion-col size="12" size-md="6">
                 <okr-checkbox [i18n]="isDirectI18n()" [checked]="isDirect()" (checkedChange)="onFieldChange('isDirect', $event)" [showHelper]="true" [readOnly]="false" />
+                <okr-error-note [errors]="isDirectErrors()" />
               </ion-col>
               <ion-col size="12">
                 <okr-url [i18n]="avatarI18n()" [value]="avatar()" (valueChange)="onFieldChange('avatar', $event)" [readOnly]="false" />
@@ -68,16 +70,21 @@ export interface RoomEditFormI18n {
               </ion-col>
               <ion-col size="12" size-md="6">
                 <okr-number-input [i18n]="unreadCountI18n()" [value]="unreadCount()" (valueChange)="onFieldChange('unreadCount', $event)" [readOnly]="true" />
+                <okr-error-note [errors]="unreadCountErrors()" />
               </ion-col>
             </ion-row>
           </ion-grid>
         </ion-card-content>
       </ion-card>
-      <okr-notes-input [i18n]="topicI18n()" [value]="topic()" (valueChange)="onFieldChange('topic', $event)" [readOnly]="false" />
+      <okr-notes-input [i18n]="topicI18n()" [value]="topic()" (valueChange)="onFieldChange('topic', $event)" [maxLength]="descriptionLength" [readOnly]="false" [errors]="topicErrors()" />
     </form>
   `
 })
 export class RoomEditForm {
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly shortNameLength = SHORT_NAME_LENGTH;
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly descriptionLength = DESCRIPTION_LENGTH;
   // inputs
   public readonly i18n = input.required<RoomEditFormI18n>();
   public formData = model.required<MatrixRoom>();
@@ -93,6 +100,10 @@ export class RoomEditForm {
     validateVestTree(path, roomValidations),
   );
   private readonly validationResult = computed(() => roomValidations(this.formData()));
+  protected isDirectErrors = computed(() => this.validationResult().getErrors('isDirect'));
+  protected roomIdErrors = computed(() => this.validationResult().getErrors('roomId'));
+  protected topicErrors = computed(() => this.validationResult().getErrors('topic'));
+  protected unreadCountErrors = computed(() => this.validationResult().getErrors('unreadCount'));
 
   constructor() {
     effect(() => this.valid.emit(this.roomForm().valid()));

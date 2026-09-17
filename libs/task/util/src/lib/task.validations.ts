@@ -1,6 +1,6 @@
 import { only, staticSuite } from 'vest';
 
-import { DESCRIPTION_LENGTH, WORD_LENGTH } from '@okr/shared-constants';
+import { DESCRIPTION_LENGTH } from '@okr/shared-constants';
 import { TaskModel } from '@okr/shared-models';
 import { avatarValidations, baseValidations, dateValidations, stringValidations } from '@okr/shared-util-core';
 
@@ -13,11 +13,11 @@ export const taskValidations = staticSuite((model: TaskModel, tenants: string, t
   avatarValidations('author', model.author);
   avatarValidations('assignee', model.assignee);
 
-  stringValidations('state', model.state, WORD_LENGTH);
+  stringValidations('state', model.state);
   dateValidations('dueDate', model.dueDate);  // may be empty
   dateValidations('completionDate', model.completionDate); // may be empty
-  stringValidations('priority', model.priority, WORD_LENGTH);
-  stringValidations('importance', model.importance, WORD_LENGTH);
+  stringValidations('priority', model.priority);
+  stringValidations('importance', model.importance);
 
   // calendars are not validated here
 });

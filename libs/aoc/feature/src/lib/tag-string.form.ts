@@ -3,11 +3,12 @@ import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
 import { AvailableLanguages } from '@okr/shared-models';
-import { TextInput, TextInputI18n } from '@okr/shared-ui';
+import { ErrorNote, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { coerceBoolean } from '@okr/shared-util-core';
 import { validateVestTree } from '@okr/shared-util-angular';
 
 import { TagStringFormData, tagStringValidations } from '@okr/aoc-util';
+import { SHORT_NAME_LENGTH } from '@okr/shared-constants';
 
 /**
  * One tag string of a tag definition plus its label per supported language.
@@ -21,6 +22,7 @@ import { TagStringFormData, tagStringValidations } from '@okr/aoc-util';
   selector: 'okr-tag-string-form',
   standalone: true,
   imports: [
+    ErrorNote,
     TextInput,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent
   ],
@@ -34,7 +36,8 @@ import { TagStringFormData, tagStringValidations } from '@okr/aoc-util';
               <ion-row>
                 <ion-col size="12">
                   <okr-text-input [i18n]="keyI18n()" [value]="key()" (valueChange)="onFieldChange('key', $event)"
-                    [autofocus]="true" [maxLength]="50" [readOnly]="isReadOnly()" />
+                    [autofocus]="true" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="keyErrors()" />
                 </ion-col>
               </ion-row>
               @if (showLabels()) {
@@ -56,6 +59,8 @@ import { TagStringFormData, tagStringValidations } from '@okr/aoc-util';
   `
 })
 export class TagStringForm {
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly shortNameLength = SHORT_NAME_LENGTH;
   // inputs
   public formData = model.required<TagStringFormData>();
   public readonly showLabels = input(true);
@@ -72,6 +77,11 @@ export class TagStringForm {
     validateVestTree(path, tagStringValidations as any),
   );
 
+
+  // per-field Vest errors for the notes under each field. validateVestTree calls the suite
+  // with the model alone, so this mirrors exactly what drives the form's validity.
+  private readonly validationResult = computed(() => tagStringValidations(this.formData() as any));
+  protected keyErrors = computed(() => this.validationResult().getErrors('key'));
   constructor() {
     effect(() => this.valid.emit(this.tagStringForm().valid()));
   }

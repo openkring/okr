@@ -1,7 +1,7 @@
 
 import { only, staticSuite } from 'vest';
 
-import { DESCRIPTION_LENGTH, NAME_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@okr/shared-constants';
+import { DESCRIPTION_LENGTH, NAME_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { ReservationApplyModel } from '@okr/shared-models';
 import { avatarValidations, booleanValidations, dateValidations, stringValidations } from '@okr/shared-util-core';
 
@@ -18,7 +18,7 @@ export const reservationApplyValidations = staticSuite((model: ReservationApplyM
   dateValidations('endDate', model.endDate);
   stringValidations('participants', model.participants, SHORT_NAME_LENGTH);
   stringValidations('area', model.area, SHORT_NAME_LENGTH);
-  stringValidations('reason', model.reason, WORD_LENGTH);
+  stringValidations('reason', model.reason);
   stringValidations('description', model.description, DESCRIPTION_LENGTH);
   
   booleanValidations('usesTent', model.usesTent);

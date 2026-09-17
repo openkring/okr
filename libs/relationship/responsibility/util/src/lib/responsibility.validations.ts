@@ -1,6 +1,5 @@
 import { only, staticSuite } from 'vest';
 
-import { SHORT_NAME_LENGTH, WORD_LENGTH } from '@okr/shared-constants';
 import { ResponsibilityModel } from '@okr/shared-models';
 import { avatarValidations, baseValidations, dateValidations, stringValidations } from '@okr/shared-util-core';
 

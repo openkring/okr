@@ -1,9 +1,9 @@
 import { Component, computed, effect, input, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
-import { DEFAULT_NOTES, DEFAULT_TAGS } from '@okr/shared-constants';
+import { DEFAULT_NOTES, DEFAULT_TAGS, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { InvoiceModel, UserModel } from '@okr/shared-models';
-import { Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n , ErrorNote} from '@okr/shared-ui';
 import { coerceBoolean } from '@okr/shared-util-core';
 
 import { InvoiceI18n, invoiceValidations } from '@okr/finance-invoice-util';
@@ -15,6 +15,7 @@ const VAT_TYPES = ['included', 'excluded', 'exempt'];
   selector: 'okr-invoice-edit-form',
   standalone: true,
   imports: [
+    ErrorNote,
     TextInput, DateInput, NumberInput,
     StringSelect, NotesInput, Chips,
     IonCard, IonCardContent, IonGrid, IonRow, IonCol,
@@ -30,19 +31,23 @@ const VAT_TYPES = ['included', 'excluded', 'exempt'];
               <ion-row>
                 <ion-col size="4">
                   <okr-text-input [i18n]="invoiceIdI18n()" [value]="invoiceId()" (valueChange)="onFieldChange('invoiceId', $event)"
-                    [maxLength]="30" [readOnly]="isReadOnly() || !isNew()" />
+                    [maxLength]="shortNameLength" [readOnly]="isReadOnly() || !isNew()" />
+                  <okr-error-note [errors]="invoiceIdErrors()" />
                 </ion-col>
                 <ion-col size="8">
                   <okr-text-input [i18n]="titleI18n()" [value]="title()" (valueChange)="onFieldChange('title', $event)"
-                    [maxLength]="100" [readOnly]="isReadOnly()" />
+                    [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="titleErrors()" />
                 </ion-col>
               </ion-row>
               <ion-row>
                 <ion-col size="6">
                   <okr-date-input [i18n]="invoiceDateI18n()" [storeDate]="invoiceDate()" (storeDateChange)="onFieldChange('invoiceDate', $event)" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="invoiceDateErrors()" />
                 </ion-col>
                 <ion-col size="6">
                   <okr-date-input [i18n]="dueDateI18n()" [storeDate]="dueDate()" (storeDateChange)="onFieldChange('dueDate', $event)" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="dueDateErrors()" />
                 </ion-col>
               </ion-row>
               <ion-row>
@@ -62,6 +67,7 @@ const VAT_TYPES = ['included', 'excluded', 'exempt'];
                 </ion-col>
                 <ion-col size="6">
                   <okr-date-input [i18n]="paymentDateI18n()" [storeDate]="paymentDate()" (storeDateChange)="onFieldChange('paymentDate', $event)" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="paymentDateErrors()" />
                 </ion-col>
               </ion-row>
               <ion-row>
@@ -83,6 +89,8 @@ const VAT_TYPES = ['included', 'excluded', 'exempt'];
   `
 })
 export class InvoiceEditForm {
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly shortNameLength = SHORT_NAME_LENGTH;
   public readonly formData = input.required<InvoiceModel>();
   public readonly currentUser = input<UserModel | undefined>();
   public readonly allTags = input(DEFAULT_TAGS);
@@ -121,6 +129,11 @@ export class InvoiceEditForm {
   private readonly validationResult = computed(() =>
     invoiceValidations(this.formData(), '', this.allTags())
   );
+  protected dueDateErrors = computed(() => this.validationResult().getErrors('dueDate'));
+  protected invoiceDateErrors = computed(() => this.validationResult().getErrors('invoiceDate'));
+  protected paymentDateErrors = computed(() => this.validationResult().getErrors('paymentDate'));
+  protected invoiceIdErrors = computed(() => this.validationResult().getErrors('invoiceId'));
+  protected titleErrors = computed(() => this.validationResult().getErrors('title'));
 
   constructor() {
     effect(() => this.valid.emit(this.validationResult().isValid()));

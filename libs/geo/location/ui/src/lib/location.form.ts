@@ -7,6 +7,7 @@ import { CategorySelect, Chips, ErrorNote, NotesInput, NotesInputI18n, NumberInp
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 
 import { locationValidations } from '@okr/location-util';
+import { DESCRIPTION_LENGTH, NAME_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 
 export interface LocationFormI18n {
   okey_label:           Signal<string>;
@@ -70,23 +71,28 @@ export interface LocationFormI18n {
                 --------------------------------------------------->
               <ion-row>
                 <ion-col size="12" size-md="6">
-                  <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [autofocus]="true" [copyable]="true" [readOnly]="isReadOnly()" />
+                  <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [autofocus]="true" [copyable]="true" [maxLength]="nameLength" [readOnly]="isReadOnly()" />
                   <okr-error-note [errors]="nameErrors()" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
                   <okr-cat-select [category]="types()!" [selectedItemName]="locationType()" (selectedItemNameChange)="onFieldChange('type', $event)" [readOnly]="isReadOnly()" [withAll]=false />
+                  <okr-error-note [errors]="typeErrors()" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
                   <okr-text-input [i18n]="latitudeI18n()" [value]="latitude()" (valueChange)="onFieldChange('latitude', $event)" [mask]="latitudeMask" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="latitudeErrors()" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
                   <okr-text-input [i18n]="longitudeI18n()" [value]="longitude()" (valueChange)="onFieldChange('longitude', $event)" [mask]="longitudeMask" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="longitudeErrors()" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
                   <okr-text-input [i18n]="placeIdI18n()" [value]="placeId()" (valueChange)="onFieldChange('placeId', $event)" [copyable]="true" [mask]="caseInsensitiveWordMask" [readOnly]="isReadOnly()" [showHelper]=true />
+                  <okr-error-note [errors]="placeIdErrors()" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
-                  <okr-text-input [i18n]="what3wordsI18n()" [value]="what3words()" (valueChange)="onFieldChange('what3words', $event)" [copyable]="true" [mask]="what3wordMask" [readOnly]="isReadOnly()" [showHelper]=true />
+                  <okr-text-input [i18n]="what3wordsI18n()" [value]="what3words()" (valueChange)="onFieldChange('what3words', $event)" [copyable]="true" [mask]="what3wordMask" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" [showHelper]=true />
+                  <okr-error-note [errors]="what3wordsErrors()" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
                   <okr-number-input [i18n]="seaLevelI18n()" [value]="seaLevel()" [maxLength]=4 [showHelper]=true [readOnly]="isReadOnly()" />
@@ -96,6 +102,7 @@ export interface LocationFormI18n {
                 </ion-col>
                 <ion-col size="12" size-md="6">
                   <okr-number-input [i18n]="directionI18n()" [value]="direction()" (valueChange)="onFieldChange('direction', $event)" [maxLength]=4 [readOnly]="isReadOnly()" [showHelper]=true />
+                  <okr-error-note [errors]="directionErrors()" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
                   <okr-number-input [i18n]="distanceI18n()" [value]="distance()" (valueChange)="onFieldChange('distance', $event)" [maxLength]=6 [readOnly]="isReadOnly()" [showHelper]=true />
@@ -113,13 +120,19 @@ export interface LocationFormI18n {
         }
 
         @if(hasRole('admin')) {
-          <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
+          <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="notesErrors()" />
         }
       </form>
     }
 `
 })
 export class LocationForm {
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly nameLength = NAME_LENGTH;
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly shortNameLength = SHORT_NAME_LENGTH;
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly descriptionLength = DESCRIPTION_LENGTH;
   // inputs
   public readonly formData = model.required<LocationModel>();
   public readonly currentUser = input<UserModel | undefined>();
@@ -139,6 +152,13 @@ export class LocationForm {
 
   // validation and errors
   private readonly validationResult = computed(() => locationValidations(this.formData(), this.tenantId(), this.allTags()));
+  protected typeErrors = computed(() => this.validationResult().getErrors('type'));
+  protected directionErrors = computed(() => this.validationResult().getErrors('direction'));
+  protected latitudeErrors = computed(() => this.validationResult().getErrors('latitude'));
+  protected longitudeErrors = computed(() => this.validationResult().getErrors('longitude'));
+  protected notesErrors = computed(() => this.validationResult().getErrors('notes'));
+  protected placeIdErrors = computed(() => this.validationResult().getErrors('placeId'));
+  protected what3wordsErrors = computed(() => this.validationResult().getErrors('what3words'));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
 
   // fields

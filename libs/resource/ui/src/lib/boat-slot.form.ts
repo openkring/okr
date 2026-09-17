@@ -3,17 +3,19 @@ import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
 import { BOAT_SLOT_COLORS, BOAT_STRATEGY_TYPES, BoatSlotLabel, DEFAULT_SWISSLOS_PERCENT } from '@okr/shared-models';
-import { Checkbox, CheckboxI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { Checkbox, CheckboxI18n, ErrorNote, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { coerceBoolean } from '@okr/shared-util-core';
 import { validateVestTree } from '@okr/shared-util-angular';
 
 import { boatSlotValidations, ResourceI18n } from '@okr/resource-util';
+import { SHORT_NAME_LENGTH } from '@okr/shared-constants';
 
 /** Free slot of the Bootseinteilung grid: a planning note plus an optional background color. */
 @Component({
   selector: 'okr-boat-slot-form',
   standalone: true,
   imports: [
+    ErrorNote,
     TextInput, StringSelect, Checkbox, NumberInput,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent
   ],
@@ -31,7 +33,8 @@ import { boatSlotValidations, ResourceI18n } from '@okr/resource-util';
                     <okr-text-input [i18n]="boatNameI18n()" [value]="boatName()" [readOnly]="true" />
                   } @else {
                     <okr-text-input [i18n]="textI18n()" [value]="text()" (valueChange)="onFieldChange('text', $event)"
-                      [autofocus]="true" [maxLength]="50" [readOnly]="isReadOnly()" />
+                      [autofocus]="true" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
+                    <okr-error-note [errors]="textErrors()" />
                   }
                 </ion-col>
               </ion-row>
@@ -47,6 +50,7 @@ import { boatSlotValidations, ResourceI18n } from '@okr/resource-util';
                   <okr-checkbox [i18n]="strategyI18n()" [checked]="isStrategyRelevant()"
                     (checkedChange)="onBooleanChange('isStrategyRelevant', $event)"
                     [showHelper]="true" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="isStrategyRelevantErrors()" />
                 </ion-col>
               </ion-row>
               @if (isStrategyRelevant()) {
@@ -87,6 +91,8 @@ import { boatSlotValidations, ResourceI18n } from '@okr/resource-util';
   `
 })
 export class BoatSlotForm {
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly shortNameLength = SHORT_NAME_LENGTH;
   // inputs
   public readonly i18n = input.required<ResourceI18n>();
   public formData = model.required<BoatSlotLabel>();
@@ -107,6 +113,12 @@ export class BoatSlotForm {
     validateVestTree(path, boatSlotValidations as any),
   );
 
+
+  // per-field Vest errors for the notes under each field. validateVestTree calls the suite
+  // with the model alone, so this mirrors exactly what drives the form's validity.
+  private readonly validationResult = computed(() => boatSlotValidations(this.formData() as any));
+  protected isStrategyRelevantErrors = computed(() => this.validationResult().getErrors('isStrategyRelevant'));
+  protected textErrors = computed(() => this.validationResult().getErrors('text'));
   constructor() {
     effect(() => this.valid.emit(this.slotForm().valid()));
   }

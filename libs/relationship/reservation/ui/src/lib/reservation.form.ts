@@ -1,8 +1,8 @@
 import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
-import { DEFAULT_CURRENCY, DEFAULT_DATE, DEFAULT_KEY, DEFAULT_PERIODICITY, DEFAULT_RES_REASON, DEFAULT_RES_STATE, DEFAULT_TIME } from '@okr/shared-constants';
+import { DEFAULT_CURRENCY, DEFAULT_DATE, DEFAULT_KEY, DEFAULT_PERIODICITY, DEFAULT_RES_REASON, DEFAULT_RES_STATE, DEFAULT_TIME, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { CategoryListModel, MoneyModel, ReservationModel, RoleName, UserModel } from '@okr/shared-models';
-import { CategorySelect, Checkbox, CheckboxI18n, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n, TimeInput, TimeInputI18n } from '@okr/shared-ui';
+import { CategorySelect, Checkbox, CheckboxI18n, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n, TimeInput, TimeInputI18n , ErrorNote} from '@okr/shared-ui';
 import { coerceBoolean, getAvatarName, hasRole } from '@okr/shared-util-core';
 
 import { reservationValidations, ReservationI18n } from '@okr/relationship-reservation-util';
@@ -12,6 +12,7 @@ import { AvatarPipe } from '@okr/avatar-ui';
   selector: 'okr-reservation-form',
   standalone: true,
   imports: [
+    ErrorNote,
     AvatarPipe,
     TextInput, NumberInput, Chips, NotesInput, CategorySelect, DateInput, Checkbox, TimeInput,
     IonGrid, IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonItem, IonAvatar, IonImg, IonLabel, IonButton
@@ -89,6 +90,7 @@ import { AvatarPipe } from '@okr/avatar-ui';
               <ion-row>
                 <ion-col size="12" size-md="6" size-lg="4">
                   <okr-date-input [i18n]="startDateI18n()" [storeDate]="startDate()" (storeDateChange)="onFieldChange('startDate', $event)" [locale]="locale()" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="startDateErrors()" />
                 </ion-col>
                 <ion-col size="12" size-md="6" size-lg="4">
                   <okr-time-input [i18n]="startTimeI18n()" [value]="startTime()" (valueChange)="onFieldChange('startTime', $event)" [locale]="locale()" [readOnly]="isReadOnly()" />
@@ -101,9 +103,11 @@ import { AvatarPipe } from '@okr/avatar-ui';
               <ion-row>
                 <ion-col size="12" size-md="6">
                   <okr-date-input [i18n]="startDateI18n()" [storeDate]="startDate()" (storeDateChange)="onFieldChange('startDate', $event)" [locale]="locale()" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="startDateErrors()" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
                   <okr-date-input [i18n]="endDateI18n()" [storeDate]="endDate()" (storeDateChange)="onFieldChange('endDate', $event)" [locale]="locale()" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="endDateErrors()" />
                 </ion-col>
               </ion-row>
             }
@@ -125,18 +129,22 @@ import { AvatarPipe } from '@okr/avatar-ui';
             <ion-row>
               <ion-col size="12" size-md="6">
                 <okr-cat-select [category]="reasons()" [selectedItemName]="reason()" (selectedItemNameChange)="onFieldChange('reason', $event)" [withAll]=false [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="reasonErrors()" />
               </ion-col>
 
               <ion-col size="12" size-md="6">
-                <okr-text-input [i18n]="participantsI18n()" [value]="participants()" (valueChange)="onFieldChange('participants', $event)" [readOnly]="isReadOnly()" />
+                <okr-text-input [i18n]="participantsI18n()" [value]="participants()" (valueChange)="onFieldChange('participants', $event)" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="participantsErrors()" />
               </ion-col>
 
               <ion-col size="12" size-md="6">
-                <okr-text-input [i18n]="areaI18n()" [value]="area()" (valueChange)="onFieldChange('area', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />
+                <okr-text-input [i18n]="areaI18n()" [value]="area()" (valueChange)="onFieldChange('area', $event)" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="areaErrors()" />
               </ion-col>
 
               <ion-col size="12" size-md="6">
-                <okr-text-input [i18n]="resrefI18n()" [value]="ref()" (valueChange)="onFieldChange('ref', $event)" [maxLength]=30 [readOnly]="isReadOnly()" />
+                <okr-text-input [i18n]="resrefI18n()" [value]="ref()" (valueChange)="onFieldChange('ref', $event)" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="refErrors()" />
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -152,6 +160,7 @@ import { AvatarPipe } from '@okr/avatar-ui';
             <ion-row>
               <ion-col size="12">
                 <okr-cat-select [category]="states()" [selectedItemName]="state()" (selectedItemNameChange)="onFieldChange('state', $event)" [withAll]=false [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="stateErrors()" />
               </ion-col>
 
               <ion-col size="12" size-md="6">
@@ -163,7 +172,7 @@ import { AvatarPipe } from '@okr/avatar-ui';
         </ion-card-content>
       </ion-card>
 
-      <okr-notes-input [i18n]="descriptionI18n()" [value]="description()" (valueChange)="onFieldChange('description', $event)" [readOnly]="isReadOnly()" />
+      <okr-notes-input [i18n]="descriptionI18n()" [value]="description()" (valueChange)="onFieldChange('description', $event)" [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="descriptionErrors()" />
 
       @if(hasRole('privileged') || hasRole('eventAdmin')) {
         <okr-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
@@ -177,6 +186,10 @@ import { AvatarPipe } from '@okr/avatar-ui';
   `
 })
 export class ReservationForm {
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly shortNameLength = SHORT_NAME_LENGTH;
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly descriptionLength = DESCRIPTION_LENGTH;
   // inputs
   public readonly i18n = input.required<ReservationI18n>();
   public formData = model.required<ReservationModel>();
@@ -215,6 +228,14 @@ export class ReservationForm {
 
   // validation and errors
   private readonly validationResult = computed(() => reservationValidations(this.formData(), this.tenantId(), this.allTags()));
+  protected endDateErrors = computed(() => this.validationResult().getErrors('endDate'));
+  protected reasonErrors = computed(() => this.validationResult().getErrors('reason'));
+  protected startDateErrors = computed(() => this.validationResult().getErrors('startDate'));
+  protected stateErrors = computed(() => this.validationResult().getErrors('state'));
+  protected areaErrors = computed(() => this.validationResult().getErrors('area'));
+  protected descriptionErrors = computed(() => this.validationResult().getErrors('description'));
+  protected participantsErrors = computed(() => this.validationResult().getErrors('participants'));
+  protected refErrors = computed(() => this.validationResult().getErrors('ref'));
 
   // fields
   protected reserverAvatar = linkedSignal(() => this.formData().reserver);

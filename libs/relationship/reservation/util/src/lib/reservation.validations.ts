@@ -1,7 +1,7 @@
 
 import { only, staticSuite } from 'vest';
 
-import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@okr/shared-constants';
+import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { ReservationModel } from '@okr/shared-models';
 import { avatarValidations, baseValidations, dateValidations, moneyValidations, numberValidations, stringValidations } from '@okr/shared-util-core';
 
@@ -19,8 +19,8 @@ export const reservationValidations = staticSuite((model: ReservationModel, tena
   stringValidations('participants', model.participants, SHORT_NAME_LENGTH);
   stringValidations('area', model.area, SHORT_NAME_LENGTH);
   stringValidations('ref', model.ref, SHORT_NAME_LENGTH);
-  stringValidations('state', model.state, WORD_LENGTH);
-  stringValidations('reason', model.reason, WORD_LENGTH);
+  stringValidations('state', model.state);
+  stringValidations('reason', model.reason);
   numberValidations('order', model.order, true, 0, 10);
 
   // Reasons that take a resource out of normal use ('maintenance'/'blocked') must say WHY in

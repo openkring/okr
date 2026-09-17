@@ -3,11 +3,12 @@ import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonRow, IonSelect, IonSelectOption } from '@ionic/angular/standalone';
 
 import { InstrumentTopic } from '@okr/shared-models';
-import { NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { coerceBoolean } from '@okr/shared-util-core';
 import { validateVestTree } from '@okr/shared-util-angular';
 
 import { InstrumentI18n, topicValidations } from '@okr/instruments-util';
+import { DESCRIPTION_LENGTH, LONG_NAME_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 
 /**
  * Pure form for editing a single topic card (label, description, typed score). Signal Forms + Vest,
@@ -18,6 +19,7 @@ import { InstrumentI18n, topicValidations } from '@okr/instruments-util';
   selector: 'okr-topic-form',
   standalone: true,
   imports: [
+    ErrorNote,
     TextInput, NotesInput,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonItem, IonSelect, IonSelectOption,
   ],
@@ -31,11 +33,12 @@ import { InstrumentI18n, topicValidations } from '@okr/instruments-util';
               <ion-row>
                 <ion-col size="12">
                   <okr-text-input [i18n]="labelI18n()" [value]="label()" (valueChange)="onFieldChange('label', $event)"
-                    [autofocus]="true" [maxLength]="60" [readOnly]="isReadOnly()" />
+                    [autofocus]="true" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="labelErrors()" />
                 </ion-col>
                 <ion-col size="12">
                   <okr-notes-input [i18n]="descriptionI18n()" [value]="description()" (valueChange)="onFieldChange('description', $event)"
-                    [readOnly]="isReadOnly()" />
+                    [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="descriptionErrors()" />
                 </ion-col>
                 @if (showScore()) {
                   <ion-col size="12" size-md="6">
@@ -70,6 +73,12 @@ import { InstrumentI18n, topicValidations } from '@okr/instruments-util';
   `,
 })
 export class TopicForm {
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly descriptionLength = DESCRIPTION_LENGTH;
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly shortNameLength = SHORT_NAME_LENGTH;
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly longNameLength = LONG_NAME_LENGTH;
   public readonly i18n = input.required<InstrumentI18n>();
   public formData = model.required<InstrumentTopic>();
   public readonly readOnly = input(true);
@@ -83,6 +92,12 @@ export class TopicForm {
     validateVestTree(path, topicValidations as any),
   );
 
+
+  // per-field Vest errors for the notes under each field. validateVestTree calls the suite
+  // with the model alone, so this mirrors exactly what drives the form's validity.
+  private readonly validationResult = computed(() => topicValidations(this.formData() as any));
+  protected descriptionErrors = computed(() => this.validationResult().getErrors('description'));
+  protected labelErrors = computed(() => this.validationResult().getErrors('label'));
   constructor() {
     effect(() => this.valid.emit(this.topicForm().valid()));
   }

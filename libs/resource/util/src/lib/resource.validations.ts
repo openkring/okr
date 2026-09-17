@@ -20,7 +20,7 @@ export const resourceValidations = staticSuite((model: ResourceModel, tenants: s
   stringValidations('index', model.index);
   //tagValidations('tags', model.tags);
   stringValidations('description', model.description, DESCRIPTION_LENGTH);
-  stringValidations('type', model.type, WORD_LENGTH);
+  stringValidations('type', model.type);
   numberValidations('currentValue', model.currentValue, true, 0, 100000);
   stringValidations('load', model.load, SHORT_NAME_LENGTH);
   numberValidations('weight', model.weight, true, 0, 10000);
@@ -39,20 +39,23 @@ export const resourceValidations = staticSuite((model: ResourceModel, tenants: s
     });
   });
 
+  // These used to sit inside an outer `test('boatType', ...)` wrapper. Nesting test() inside a
+  // test callback files the failures under the INNER field name anyway, so the wrapper only hid
+  // which field was at fault — and the wrapper itself always passed, because its callback
+  // enforces nothing.
   omitWhen(model.type !== 'rboat', () => {
-    test('boatType', '@boatSubType', () => {
-      stringValidations('subType', model.subType, WORD_LENGTH, 3, true);
-      stringValidations('usage', model.usage, WORD_LENGTH);
-    });
+    stringValidations('subType', model.subType, undefined, 0, true);
+    // Uncapped on purpose: `usage` is not a word the user types, it is the generated multi-season
+    // allocation string ('bs,2026:ls1,2027:ls1,...', see setUsageFromYear, which writes one entry
+    // per season of the PLANNING_WINDOW and keeps the historical ones). It blew past WORD_LENGTH
+    // the moment a boat had more than one season, which silently invalidated the WHOLE form and
+    // made the change-confirmation banner disappear for every edit on that boat.
+    stringValidations('usage', model.usage);
   });
   omitWhen(model.type !== 'locker', () => {
-    test('gender', '@genderSubType', () => {
-      stringValidations('subType', model.subType, WORD_LENGTH, 4, true); // gender 
-    });
+    stringValidations('subType', model.subType, undefined, 0, true); // gender
   });
   omitWhen(model.type !== 'car', () => {
-    test('carType', '@gcarSubType', () => {
-      stringValidations('subType', model.subType, WORD_LENGTH, 3, true);
-    });
+    stringValidations('subType', model.subType, undefined, 0, true);
   });
 });

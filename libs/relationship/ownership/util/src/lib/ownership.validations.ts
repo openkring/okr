@@ -11,7 +11,7 @@ export const ownershipValidations = staticSuite((model: OwnershipModel, tenants:
   baseValidations(model, tenants, tags, field);
 
   // owner
-  stringValidations('ownerKey', model.ownerKey, SHORT_NAME_LENGTH);
+  stringValidations('ownerKey', model.ownerKey);
   stringValidations('ownerName1', model.ownerName1, SHORT_NAME_LENGTH);
   stringValidations('ownerName2', model.ownerName2, SHORT_NAME_LENGTH);
   // tbd: test ownerModelType to be either Person or Org
@@ -23,7 +23,7 @@ export const ownershipValidations = staticSuite((model: OwnershipModel, tenants:
   });
 
   // resource
-  stringValidations('resourceKey', model.resourceKey, SHORT_NAME_LENGTH);
+  stringValidations('resourceKey', model.resourceKey);
   stringValidations('resourceName', model.resourceName, SHORT_NAME_LENGTH);
 
   // tbd: test resourceModelType to be either Resource or Account
@@ -46,8 +46,8 @@ export const ownershipValidations = staticSuite((model: OwnershipModel, tenants:
       enforce(isAfterDate(model.validTo, model.validFrom)).isTruthy();
     });
   });
-  stringValidations('type', model.type, SHORT_NAME_LENGTH, 3, true);
-  stringValidations('state', model.state, SHORT_NAME_LENGTH, 3, true);
+  stringValidations('type', model.type, undefined, 0, true);
+  stringValidations('state', model.state, undefined, 0, true);
 
   stringValidations('count', model.count, ABBREVIATION_LENGTH);
   numberValidations('order', model.order, true, 0, 100);

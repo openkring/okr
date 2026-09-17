@@ -2,9 +2,9 @@ import { Component, computed, effect, inject, input, linkedSignal, model, output
 import { IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonRow, ToastController } from '@ionic/angular/standalone';
 
 import { CategoryListModel, DocumentModel, RoleName, UserModel } from '@okr/shared-models';
-import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, TextInput, TextInputI18n , ErrorNote} from '@okr/shared-ui';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
-import { DEFAULT_DATE, DEFAULT_NOTES, DEFAULT_TAGS } from '@okr/shared-constants';
+import { DEFAULT_DATE, DEFAULT_NOTES, DEFAULT_TAGS, LONG_NAME_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { FileLogoPipe, SvgIconPipe, ThumbnailUrlPipe } from '@okr/shared-pipes';
 import { copyToClipboard, showToast } from '@okr/shared-util-angular';
 import { ENV } from '@okr/shared-config';
@@ -15,6 +15,7 @@ import { DocumentI18n, documentValidations } from '@okr/content-document-util';
   selector: 'okr-document-form',
   standalone: true,
   imports: [
+    ErrorNote,
     SvgIconPipe, ThumbnailUrlPipe, FileLogoPipe,
     TextInput, DateInput, CategorySelect, Chips, NotesInput,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonIcon, IonItem
@@ -45,13 +46,16 @@ import { DocumentI18n, documentValidations } from '@okr/content-document-util';
               <ion-col size="12" >
                   <ion-icon src="{{ 'download' | svgIcon }}" slot="start" (click)="download()" />
                   <okr-text-input [i18n]="fullPathI18n()" [value]="fullPath()" (valueChange)="onFieldChange('fullPath', $event)" [maxLength]=300 [readOnly]="true" [copyable]="true"/>
+                  <okr-error-note [errors]="fullPathErrors()" />
               </ion-col>
               <ion-col size="12">
-                <okr-text-input [i18n]="titleI18n()" [value]="title()" (valueChange)="onFieldChange('title', $event)" [autofocus]="true" [maxLength]=50 [readOnly]="isReadOnly()" />
+                <okr-text-input [i18n]="titleI18n()" [value]="title()" (valueChange)="onFieldChange('title', $event)" [autofocus]="true" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="titleErrors()" />
               </ion-col>
 
               <ion-col size="12">
-                <okr-text-input [i18n]="altTextI18n()" [value]="altText()" (valueChange)="onFieldChange('altText', $event)" [maxLength]=100 [readOnly]="isReadOnly()" />
+                <okr-text-input [i18n]="altTextI18n()" [value]="altText()" (valueChange)="onFieldChange('altText', $event)" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="altTextErrors()" />
               </ion-col>
 
               <ion-col size="12">
@@ -77,47 +81,56 @@ import { DocumentI18n, documentValidations } from '@okr/content-document-util';
               }
 
               <ion-col size="12">
-                <okr-text-input [i18n]="mimeTypeI18n()" [value]="mimeType()" (valueChange)="onFieldChange('mimeType', $event)" [maxLength]=50 [readOnly]="isReadOnly()" />
+                <okr-text-input [i18n]="mimeTypeI18n()" [value]="mimeType()" (valueChange)="onFieldChange('mimeType', $event)" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="mimeTypeErrors()" />
               </ion-col>
 
               <ion-col size="12" size-md="6">
-                <okr-text-input [i18n]="authorKeyI18n()" [value]="authorKey()" (valueChange)="onFieldChange('authorKey', $event)" [maxLength]=50 [readOnly]="isReadOnly()" />
+                <okr-text-input [i18n]="authorKeyI18n()" [value]="authorKey()" (valueChange)="onFieldChange('authorKey', $event)" [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="authorKeyErrors()" />
               </ion-col>
 
               <ion-col size="12" size-md="6">
-                <okr-text-input [i18n]="authorNameI18n()" [value]="authorName()" (valueChange)="onFieldChange('authorName', $event)" [maxLength]=50 [readOnly]="isReadOnly()" />
+                <okr-text-input [i18n]="authorNameI18n()" [value]="authorName()" (valueChange)="onFieldChange('authorName', $event)" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="authorNameErrors()" />
               </ion-col>
             </ion-row>
 
             <ion-row>
               <ion-col size="12" size-md="6">
                 <okr-date-input [i18n]="dateOfDocCreationI18n()" [storeDate]="dateOfDocCreation()" (storeDateChange)="onFieldChange('dateOfDocCreation', $event)" [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="dateOfDocCreationErrors()" />
               </ion-col>
 
               <ion-col size="12" size-md="6">
                 <okr-date-input [i18n]="dateOfDocLastUpdateI18n()" [storeDate]="dateOfDocLastUpdate()" (storeDateChange)="onFieldChange('dateOfDocLastUpdate', $event)" [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="dateOfDocLastUpdateErrors()" />
               </ion-col>
             </ion-row>
 
             @if(hasRole('privileged') || !isReadOnly()) {
               <ion-row>
                 <ion-col size="12">
-                  <okr-text-input [i18n]="locationKeyI18n()" [value]="locationKey()" (valueChange)="onFieldChange('locationKey', $event)" [autofocus]="true" [maxLength]=20 [readOnly]="isReadOnly()" [copyable]="true" />
+                  <okr-text-input [i18n]="locationKeyI18n()" [value]="locationKey()" (valueChange)="onFieldChange('locationKey', $event)" [autofocus]="true" [readOnly]="isReadOnly()" [copyable]="true" />
+                  <okr-error-note [errors]="locationKeyErrors()" />
                 </ion-col>
 
                 <ion-col size="12">
-                  <okr-text-input [i18n]="hashI18n()" [value]="hash()" (valueChange)="onFieldChange('hash', $event)" [maxLength]=100 [readOnly]="isReadOnly()" [copyable]="true" />
+                  <okr-text-input [i18n]="hashI18n()" [value]="hash()" (valueChange)="onFieldChange('hash', $event)" [maxLength]="longNameLength" [readOnly]="isReadOnly()" [copyable]="true" />
+                  <okr-error-note [errors]="hashErrors()" />
                 </ion-col>
 
                 <ion-col size="12">
                   <ion-item lines="none">
                     <ion-icon src="{{'link' | svgIcon }}" slot="start" (click)="showPriorVersion()" />
-                    <okr-text-input [i18n]="priorVersionKeyI18n()" [value]="priorVersionKey()" (valueChange)="onFieldChange('priorVersionKey', $event)" [maxLength]=20 [readOnly]="isReadOnly()" [showHelper]=true />
+                    <okr-text-input [i18n]="priorVersionKeyI18n()" [value]="priorVersionKey()" (valueChange)="onFieldChange('priorVersionKey', $event)" [readOnly]="isReadOnly()" [showHelper]=true />
+                    <okr-error-note [errors]="priorVersionKeyErrors()" />
                   </ion-item>
                 </ion-col>
 
                 <ion-col size="12">
-                  <okr-text-input [i18n]="versionI18n()" [value]="version()" (valueChange)="onFieldChange('version', $event)" [maxLength]=20 [readOnly]="isReadOnly()" [showHelper]=true />
+                  <okr-text-input [i18n]="versionI18n()" [value]="version()" (valueChange)="onFieldChange('version', $event)" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" [showHelper]=true />
+                  <okr-error-note [errors]="versionErrors()" />
                 </ion-col>
               </ion-row>
             }
@@ -136,6 +149,10 @@ import { DocumentI18n, documentValidations } from '@okr/content-document-util';
   `
 })
 export class DocumentForm {
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly longNameLength = LONG_NAME_LENGTH;
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly shortNameLength = SHORT_NAME_LENGTH;
   private toastController = inject(ToastController);
   private env = inject(ENV);
 
@@ -159,6 +176,18 @@ export class DocumentForm {
 
   // validations and errors
   private readonly validationResult = computed(() => documentValidations(this.formData(), this.env.tenantId, this.allTags()));
+  protected dateOfDocCreationErrors = computed(() => this.validationResult().getErrors('dateOfDocCreation'));
+  protected dateOfDocLastUpdateErrors = computed(() => this.validationResult().getErrors('dateOfDocLastUpdate'));
+  protected altTextErrors = computed(() => this.validationResult().getErrors('altText'));
+  protected authorKeyErrors = computed(() => this.validationResult().getErrors('authorKey'));
+  protected authorNameErrors = computed(() => this.validationResult().getErrors('authorName'));
+  protected fullPathErrors = computed(() => this.validationResult().getErrors('fullPath'));
+  protected hashErrors = computed(() => this.validationResult().getErrors('hash'));
+  protected locationKeyErrors = computed(() => this.validationResult().getErrors('locationKey'));
+  protected mimeTypeErrors = computed(() => this.validationResult().getErrors('mimeType'));
+  protected priorVersionKeyErrors = computed(() => this.validationResult().getErrors('priorVersionKey'));
+  protected titleErrors = computed(() => this.validationResult().getErrors('title'));
+  protected versionErrors = computed(() => this.validationResult().getErrors('version'));
 
   // fields
   protected fullPath = linkedSignal(() => this.formData().fullPath ?? '');

@@ -1,6 +1,6 @@
 import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 
-import { LONG_NAME_LENGTH, MAX_DATES_PER_SERIES, NAME_LENGTH, WORD_LENGTH } from '@okr/shared-constants';
+import { LONG_NAME_LENGTH, MAX_DATES_PER_SERIES, NAME_LENGTH } from '@okr/shared-constants';
 import { CalEventModel } from '@okr/shared-models';
 import { baseValidations, calculateRecurringDates, dateValidations, isAfterOrEqualDate, numberValidations, stringValidations } from '@okr/shared-util-core';
 
@@ -18,7 +18,7 @@ export const calEventValidations = staticSuite((model: CalEventModel, tenants: s
   // Repeating the call with isMandatory=true is the idiom used by meeting/room/topic and ~15 other
   // suites; it adds 'required' (isNotBlank, so a name of blanks is rejected too) and 'tooLong'.
   stringValidations('name', model.name, NAME_LENGTH, 1, true);
-  stringValidations('type', model.type, WORD_LENGTH);
+  stringValidations('type', model.type);
   dateValidations('startDate', model.startDate);
   numberValidations('durationMinutes', model.durationMinutes, true, 0, 1440);
   // 0 = unrestricted; the upper bound only keeps a typo (a pasted phone number) out of the field
@@ -26,8 +26,8 @@ export const calEventValidations = staticSuite((model: CalEventModel, tenants: s
   // LONG_NAME_LENGTH: locationKey holds a 'name@okey' tuple (a 20-char autoid plus the place
   // name) or free text. 63 live scs events already exceed the old 30-cap
   // ('Bootshaus - Kafipause in OST Rapperswil'), and a tuple can pass 50 as well.
-  stringValidations('locationKey', model.locationKey, LONG_NAME_LENGTH);
-  stringValidations('periodicity', model.periodicity, WORD_LENGTH);
+  stringValidations('locationKey', model.locationKey);
+  stringValidations('periodicity', model.periodicity);
   dateValidations('repeatUntilDate', model.repeatUntilDate);
   // tbd: responsiblePersons: AvatarInfo[] - not yet implemented
 
@@ -65,7 +65,7 @@ export const calEventValidations = staticSuite((model: CalEventModel, tenants: s
   // seriesId is assigned by the store at save time (createEventSeries / convertEventToSeries),
   // never by the user -- the form shows it read-only. Requiring it here made every NEW recurring
   // event invalid on an invisible, unfixable field: no change-confirmation bar, no way to save.
-  stringValidations('seriesId', model.seriesId ?? '', WORD_LENGTH);
+  stringValidations('seriesId', model.seriesId ?? '');
 });
 
 // tbd: cross the locationKey to reference into locations

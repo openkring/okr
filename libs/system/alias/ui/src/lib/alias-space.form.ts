@@ -2,7 +2,7 @@ import { Component, computed, effect, input, model, output } from '@angular/core
 import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
-import { DEFAULT_NOTES, DEFAULT_TAGS } from '@okr/shared-constants';
+import { DEFAULT_NOTES, DEFAULT_TAGS, DESCRIPTION_LENGTH, NAME_LENGTH, WORD_LENGTH } from '@okr/shared-constants';
 import { AliasSpaceModel, RoleName, UserModel } from '@okr/shared-models';
 import {
   CategorySelect, Checkbox, CheckboxI18n, ErrorNote, NotesInput, NotesInputI18n,
@@ -44,13 +44,14 @@ import {
                 <ion-col size="12" size-md="6">
                   <okr-text-input [i18n]="nameI18n()" [value]="name()"
                     (valueChange)="onFieldChange('name', $event)"
-                    [autofocus]="!hasAliases()" [maxLength]="20" [readOnly]="isNameLocked()" />
+                    [autofocus]="!hasAliases()" [maxLength]="wordLength" [readOnly]="isNameLocked()" />
                   <okr-error-note [errors]="nameErrors()" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
                   <okr-text-input [i18n]="labelI18n()" [value]="label()"
                     (valueChange)="onFieldChange('label', $event)"
-                    [maxLength]="50" [readOnly]="isReadOnly()" />
+                    [maxLength]="nameLength" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="labelErrors()" />
                 </ion-col>
               </ion-row>
 
@@ -76,7 +77,7 @@ import {
                 <ion-col size="12" size-md="6">
                   <okr-text-input [i18n]="roleNeededI18n()" [value]="roleNeeded()"
                     (valueChange)="onFieldChange('roleNeeded', $event)"
-                    [maxLength]="20" [readOnly]="isReadOnly()" />
+ [readOnly]="isReadOnly()" />
                 </ion-col>
               </ion-row>
 
@@ -114,13 +115,19 @@ import {
              unterschieden, nicht ueber einen eigenen Space und nicht ueber Tags. -->
         @if (hasRole('admin')) {
           <okr-notes-input [i18n]="notesI18n()" [value]="notes()"
-            (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
+            (valueChange)="onFieldChange('notes', $event)" [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="notesErrors()" />
         }
       </form>
     }
   `,
 })
 export class AliasSpaceForm {
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly wordLength = WORD_LENGTH;
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly descriptionLength = DESCRIPTION_LENGTH;
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly nameLength = NAME_LENGTH;
   public readonly i18n = input.required<AliasI18n>();
   public formData = model.required<AliasSpaceModel>();
   public readonly currentUser = input<UserModel | undefined>();
@@ -222,6 +229,8 @@ export class AliasSpaceForm {
   private readonly validationResult = computed(() =>
     aliasSpaceValidations(this.formData(), this.tenantId(), (this.allTags() ?? '') as string),
   );
+  protected labelErrors = computed(() => this.validationResult().getErrors('label'));
+  protected notesErrors = computed(() => this.validationResult().getErrors('notes'));
   protected readonly nameErrors = computed(() => this.validationResult().getErrors('name'));
   protected readonly lengthErrors = computed(() => this.validationResult().getErrors('length'));
   protected readonly retentionErrors = computed(() => this.validationResult().getErrors('retentionDays'));

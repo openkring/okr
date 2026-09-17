@@ -6,6 +6,7 @@ import { Checkbox, CheckboxI18n, EmailInput, EmailInputI18n, ErrorNote, PhoneInp
 import { coerceBoolean } from "@okr/shared-util-core";
 
 import { FIREBASE_USER_SHAPE, firebaseUserFormValidations, UserI18n } from "@okr/user-util";
+import { EMAIL_LENGTH, NAME_LENGTH, PHONE_LENGTH, URL_LENGTH } from '@okr/shared-constants';
 
 @Component({
   selector: 'okr-fbuser-form',
@@ -27,9 +28,11 @@ import { FIREBASE_USER_SHAPE, firebaseUserFormValidations, UserI18n } from "@okr
             <ion-row>
               <ion-col size="12" size-md="6">
                 <okr-text-input [i18n]="uidI18n()" [value]="uid()" (valueChange)="onFieldChange('uid', $event)" [readOnly]="isReadOnly()" [copyable]=true />
+                <okr-error-note [errors]="uidErrors()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <okr-text-input [i18n]="displayNameI18n()" [readOnly]="isReadOnly()" [value]="displayName()" (valueChange)="onFieldChange('displayName', $event)" [copyable]=true />
+                <okr-text-input [i18n]="displayNameI18n()" [maxLength]="nameLength" [readOnly]="isReadOnly()" [value]="displayName()" (valueChange)="onFieldChange('displayName', $event)" [copyable]=true />
+                <okr-error-note [errors]="displayNameErrors()" />
               </ion-col>
               <ion-col size="12" size-md="6">
                 <okr-email
@@ -37,7 +40,7 @@ import { FIREBASE_USER_SHAPE, firebaseUserFormValidations, UserI18n } from "@okr
                   [value]="email()"
                   (valueChange)="onFieldChange('email', $event)"
                   [readOnly]="isReadOnly()"
-                />
+                [maxLength]="emailLength" />
                 <okr-error-note [errors]="emailError()" />
               </ion-col>
               <ion-col size="12" size-md="6">
@@ -46,17 +49,20 @@ import { FIREBASE_USER_SHAPE, firebaseUserFormValidations, UserI18n } from "@okr
                   [value]="phone()"
                   (valueChange)="onFieldChange('phone', $event)"
                   [readOnly]="isReadOnly()"
-                />
+                [maxLength]="phoneLength" />
                 <okr-error-note [errors]="phoneError()" />                                                                                                                     
               </ion-col>
               <ion-col size="12" size-md="6">
                 <okr-checkbox [i18n]="emailVerifiedI18n()" [checked]="emailVerified()" (checkedChange)="onFieldChange('emailVerified', $event)" [showHelper]="true"  [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="emailVerifiedErrors()" />
               </ion-col>
               <ion-col size="12" size-md="6">
                 <okr-checkbox [i18n]="disabledI18n()" [checked]="disabled()" (checkedChange)="onFieldChange('disabled', $event)" [showHelper]="true"  [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="disabledErrors()" />
               </ion-col>
               <ion-col size="12">
-                <okr-text-input [i18n]="photoUrlI18n()" [readOnly]="isReadOnly()" [value]="photoUrl()" (valueChange)="onFieldChange('photoUrl', $event)" [copyable]=true />
+                <okr-text-input [i18n]="photoUrlI18n()" [maxLength]="urlLength" [readOnly]="isReadOnly()" [value]="photoUrl()" (valueChange)="onFieldChange('photoUrl', $event)" [copyable]=true />
+                <okr-error-note [errors]="photoUrlErrors()" />
               </ion-col>
             </ion-row>
             <ion-row>
@@ -68,6 +74,14 @@ import { FIREBASE_USER_SHAPE, firebaseUserFormValidations, UserI18n } from "@okr
   `
 })
 export class FbuserForm {
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly phoneLength = PHONE_LENGTH;
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly emailLength = EMAIL_LENGTH;
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly nameLength = NAME_LENGTH;
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly urlLength = URL_LENGTH;
   // inputs
   public readonly i18n = input.required<UserI18n>();
   public formData = model.required<FirebaseUserModel>();
@@ -99,6 +113,11 @@ export class FbuserForm {
   // validation and errors
   protected readonly shape = FIREBASE_USER_SHAPE;
   private readonly validationResult = computed(() => firebaseUserFormValidations(this.formData()));
+  protected disabledErrors = computed(() => this.validationResult().getErrors('disabled'));
+  protected emailVerifiedErrors = computed(() => this.validationResult().getErrors('emailVerified'));
+  protected displayNameErrors = computed(() => this.validationResult().getErrors('displayName'));
+  protected photoUrlErrors = computed(() => this.validationResult().getErrors('photoUrl'));
+  protected uidErrors = computed(() => this.validationResult().getErrors('uid'));
   protected emailError = computed(() => this.validationResult().getErrors('email'));
   protected phoneError = computed(() => this.validationResult().getErrors('phone'));
 

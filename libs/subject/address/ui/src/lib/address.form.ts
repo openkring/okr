@@ -4,7 +4,7 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular
 import { AddressModel, CategoryListModel, City, RoleName, UserModel } from '@okr/shared-models';
 import { CategorySelect, Checkbox, CheckboxI18n, Chips, CountrySelect, CountrySelectI18n, EmailInput, EmailInputI18n, ErrorNote, IbanInput, IbanInputI18n, NotesInput, NotesInputI18n, PhoneInput, PhoneInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
-import { DEFAULT_ADDRESS_CHANNEL, DEFAULT_COUNTRY, DEFAULT_NOTES, DEFAULT_TAGS } from '@okr/shared-constants';
+import { CITY_LENGTH, DEFAULT_ADDRESS_CHANNEL, DEFAULT_COUNTRY, DEFAULT_NOTES, DEFAULT_TAGS, EMAIL_LENGTH, NAME_LENGTH, NUMBER_LENGTH, PHONE_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 
 import { CitySearch } from '@okr/subject-swisscities-ui';
 import { addressValidations, AddressesI18n } from '@okr/subject-address-util';
@@ -38,11 +38,12 @@ import { addressValidations, AddressesI18n } from '@okr/subject-address-util';
           <ion-row>
             <ion-col size="12" size-md="6">
               <okr-cat-select [category]="addressChannels()!" [selectedItemName]="addressChannel()" (selectedItemNameChange)="onFieldChange('addressChannel', $event)" [withAll]="false" [showHelper]="true" [readOnly]="isReadOnly()" />
+              <okr-error-note [errors]="addressChannelErrors()" />
             </ion-col>
 
             @if(addressChannel() === 'custom') {
               <ion-col size="12" size-md="6">
-                <okr-text-input [i18n]="addressChannelLabelI18n()" [value]="addressChannelLabel()" (valueChange)="onFieldChange('addressChannelLabel', $event)" [showHelper]="true" [readOnly]="isReadOnly()" />
+                <okr-text-input [i18n]="addressChannelLabelI18n()" [value]="addressChannelLabel()" (valueChange)="onFieldChange('addressChannelLabel', $event)" [showHelper]="true" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
                 <okr-error-note [errors]="channelLabelError()" />                                                                                                                     
               </ion-col>
             }
@@ -51,11 +52,12 @@ import { addressValidations, AddressesI18n } from '@okr/subject-address-util';
           <ion-row>
             <ion-col size="12" size-md="6">
               <okr-cat-select [category]="addressUsages()!" [selectedItemName]="addressUsage()" (selectedItemNameChange)="onFieldChange('addressUsage', $event)" [withAll]="false" [showHelper]="true" [readOnly]="isReadOnly()" />
+              <okr-error-note [errors]="addressUsageErrors()" />
             </ion-col>
 
             @if(addressUsage() === 'custom') {
               <ion-col size="12" size-md="6">
-                <okr-text-input [i18n]="addressUsageLabelI18n()" [value]="addressUsageLabel()" (valueChange)="onFieldChange('addressUsageLabel', $event)" [showHelper]="true" [readOnly]="isReadOnly()" />
+                <okr-text-input [i18n]="addressUsageLabelI18n()" [value]="addressUsageLabel()" (valueChange)="onFieldChange('addressUsageLabel', $event)" [showHelper]="true" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
                 <okr-error-note [errors]="usageLabelError()" />                                                                                                                     
               </ion-col>
             }
@@ -65,7 +67,7 @@ import { addressValidations, AddressesI18n } from '@okr/subject-address-util';
             @case ('email') {
               <ion-row>
                 <ion-col size="12">
-                  <okr-email [i18n]="emailI18n()" [value]="email()" (valueChange)="onFieldChange('email', $event)" [readOnly]="isReadOnly()" />
+                  <okr-email [i18n]="emailI18n()" [value]="email()" (valueChange)="onFieldChange('email', $event)" [maxLength]="emailLength" [readOnly]="isReadOnly()" />
                   <okr-error-note [errors]="emailError()" />                                                                                                                     
                 </ion-col>
               </ion-row>
@@ -73,7 +75,7 @@ import { addressValidations, AddressesI18n } from '@okr/subject-address-util';
             @case ('phone') {
               <ion-row>
                 <ion-col size="12"> 
-                  <okr-phone [i18n]="phoneI18n()" [value]="phone()" (valueChange)="onFieldChange('phone', $event)" [readOnly]="isReadOnly()" />
+                  <okr-phone [i18n]="phoneI18n()" [value]="phone()" (valueChange)="onFieldChange('phone', $event)" [maxLength]="phoneLength" [readOnly]="isReadOnly()" />
                   <okr-error-note [errors]="phoneError()" />                                                                                                                     
                 </ion-col>
               </ion-row>
@@ -81,16 +83,17 @@ import { addressValidations, AddressesI18n } from '@okr/subject-address-util';
             @case ('postal') {
               <ion-row>
                 <ion-col size="8" size-md="9">
-                  <okr-text-input [i18n]="streetNameI18n()" [value]="streetName()" (valueChange)="onFieldChange('streetName', $event)" [readOnly]="isReadOnly()" autocomplete="street-address" />
+                  <okr-text-input [i18n]="streetNameI18n()" [value]="streetName()" (valueChange)="onFieldChange('streetName', $event)" [maxLength]="nameLength" [readOnly]="isReadOnly()" autocomplete="street-address" />
                   <okr-error-note [errors]="streetNameError()" />                                                                                                                     
                 </ion-col>
                 <ion-col size="4" size-md="3">
-                  <okr-text-input [i18n]="streetNumberI18n()" [value]="streetNumber()" (valueChange)="onFieldChange('streetNumber', $event)" [readOnly]="isReadOnly()" />
+                  <okr-text-input [i18n]="streetNumberI18n()" [value]="streetNumber()" (valueChange)="onFieldChange('streetNumber', $event)" [maxLength]="numberLength" [readOnly]="isReadOnly()" />
                   <okr-error-note [errors]="streetNumberError()" />                                                                                                                     
                 </ion-col>
 
                 <ion-col size="12">
-                  <okr-text-input [i18n]="addressValue2I18n()" [value]="addressValue2()" (valueChange)="onFieldChange('addressValue2', $event)" [readOnly]="isReadOnly()" />
+                  <okr-text-input [i18n]="addressValue2I18n()" [value]="addressValue2()" (valueChange)="onFieldChange('addressValue2', $event)" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="addressValue2Errors()" />
                 </ion-col>
               </ion-row>
               
@@ -106,10 +109,12 @@ import { addressValidations, AddressesI18n } from '@okr/subject-address-util';
 
                 <ion-col size="12" size-md="3">
                   <okr-text-input [i18n]="zipCodeI18n()" [value]="zipCode()" (valueChange)="onFieldChange('zipCode', $event)" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="zipCodeErrors()" />
                 </ion-col>
                 
                 <ion-col size="12" size-md="6">
-                  <okr-text-input [i18n]="cityI18n()" [value]="city()" (valueChange)="onFieldChange('city', $event)" [readOnly]="isReadOnly()" />
+                  <okr-text-input [i18n]="cityI18n()" [value]="city()" (valueChange)="onFieldChange('city', $event)" [maxLength]="cityLength" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="cityErrors()" />
                 </ion-col>
               </ion-row>
             }
@@ -146,12 +151,14 @@ import { addressValidations, AddressesI18n } from '@okr/subject-address-util';
             @if(isFavorable()) {
               <ion-col size="12" size-md="6">
                 <okr-checkbox [i18n]="isFavoriteI18n()" [checked]="isFavorite()" (checkedChange)="onFieldChange('isFavorite', $event)" [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="isFavoriteErrors()" />
               </ion-col>  
             }
 
             @if(isFavorite() === false && addressChannel() === 'email') {
               <ion-col size="12" size-md="6">
                 <okr-checkbox [i18n]="isCcI18n()" [checked]="isCc()" (checkedChange)="onFieldChange('isCc', $event)" [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="isCcErrors()" />
               </ion-col>  
             }
           </ion-row>
@@ -171,6 +178,18 @@ import { addressValidations, AddressesI18n } from '@okr/subject-address-util';
 ` 
 })
 export class AddressForm {
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly phoneLength = PHONE_LENGTH;
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly emailLength = EMAIL_LENGTH;
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly shortNameLength = SHORT_NAME_LENGTH;
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly nameLength = NAME_LENGTH;
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly numberLength = NUMBER_LENGTH;
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly cityLength = CITY_LENGTH;
   protected okeyI18n              = computed(() => ({ name: 'okey',              label: this.i18n().okey_label(),              placeholder: this.i18n().okey_placeholder(),              helper: this.i18n().okey_helper()              } as TextInputI18n));
   protected addressChannelLabelI18n = computed(() => ({ name: 'addressChannelLabel', label: this.i18n().channel_label(), placeholder: this.i18n().channel_placeholder(), helper: this.i18n().channel_helper() } as TextInputI18n));
   protected addressUsageLabelI18n = computed(() => ({ name: 'addressUsageLabel', label: this.i18n().usage_label(), placeholder: this.i18n().usage_placeholder(), helper: this.i18n().usage_helper() } as TextInputI18n));
@@ -216,6 +235,13 @@ export class AddressForm {
 
   // validation and errors
   private readonly validationResult = computed(() => addressValidations(this.formData(), this.tenantId(), this.allTags()));
+  protected addressChannelErrors = computed(() => this.validationResult().getErrors('addressChannel'));
+  protected addressUsageErrors = computed(() => this.validationResult().getErrors('addressUsage'));
+  protected isCcErrors = computed(() => this.validationResult().getErrors('isCc'));
+  protected isFavoriteErrors = computed(() => this.validationResult().getErrors('isFavorite'));
+  protected addressValue2Errors = computed(() => this.validationResult().getErrors('addressValue2'));
+  protected cityErrors = computed(() => this.validationResult().getErrors('city'));
+  protected zipCodeErrors = computed(() => this.validationResult().getErrors('zipCode'));
   protected channelLabelError = computed(() => this.validationResult().getErrors('addressChannelLabel'));
   protected usageLabelError = computed(() => this.validationResult().getErrors('addressUsageLabel'));
   protected emailError = computed(() => this.validationResult().getErrors('email'));

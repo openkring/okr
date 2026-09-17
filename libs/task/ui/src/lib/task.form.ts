@@ -90,6 +90,7 @@ import { getRelatedIcon, getRelatedModelType, getRelatedRoute, TaskI18n, taskVal
               <ion-row>
                 <ion-col size="12" size-md="6">
                   <okr-date-input [i18n]="dueDateI18n()" [storeDate]="dueDate()" (storeDateChange)="onFieldChange('dueDate', $event)" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="dueDateErrors()" />
                 </ion-col>
               </ion-row>
             }
@@ -99,10 +100,12 @@ import { getRelatedIcon, getRelatedModelType, getRelatedRoute, TaskI18n, taskVal
                   <ion-item lines="none">
                     <ion-label>{{ i18n().state_label() }}:</ion-label>
                     <okr-cat-select [category]="states()!" [selectedItemName]="state()" (selectedItemNameChange)="onFieldChange('state', $event)" [readOnly]="isReadOnly()" [withAll]="false" />
+                    <okr-error-note [errors]="stateErrors()" />
                   </ion-item>
                 </ion-col>
                 <ion-col size="12" size-md="6">
                   <okr-date-input [i18n]="completionDateI18n()" [storeDate]="completionDate()" (storeDateChange)="onFieldChange('completionDate', $event)" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="completionDateErrors()" />
                 </ion-col>
               </ion-row>
               <ion-row>
@@ -110,12 +113,14 @@ import { getRelatedIcon, getRelatedModelType, getRelatedRoute, TaskI18n, taskVal
                   <ion-item lines="none">
                     <ion-label>{{ i18n().priority() }}:</ion-label>
                     <okr-cat-select [category]="priorities()!" [selectedItemName]="priority()" (selectedItemNameChange)="onFieldChange('priority', $event)" [readOnly]="isReadOnly()" [withAll]="false" />
+                    <okr-error-note [errors]="priorityErrors()" />
                   </ion-item>
                 </ion-col>
                 <ion-col size="12" size-md="6">
                   <ion-item lines="none">
                     <ion-label>{{ i18n().importance() }}:</ion-label>
                     <okr-cat-select [category]="importances()!" [selectedItemName]="importance()" (selectedItemNameChange)="onFieldChange('importance', $event)" [readOnly]="isReadOnly()" [withAll]="false" />
+                    <okr-error-note [errors]="importanceErrors()" />
                   </ion-item>
                 </ion-col>
               </ion-row>
@@ -157,6 +162,11 @@ export class TaskForm {
 
   // validation and errors
   private readonly validationResult = computed(() => taskValidations(this.formData(), this.tenantId(), this.allTags()));
+  protected completionDateErrors = computed(() => this.validationResult().getErrors('completionDate'));
+  protected dueDateErrors = computed(() => this.validationResult().getErrors('dueDate'));
+  protected importanceErrors = computed(() => this.validationResult().getErrors('importance'));
+  protected priorityErrors = computed(() => this.validationResult().getErrors('priority'));
+  protected stateErrors = computed(() => this.validationResult().getErrors('state'));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
 
   // fields

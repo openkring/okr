@@ -37,7 +37,7 @@ import { validateVestTree } from '@okr/shared-util-angular';
                 <ion-col size="12">
                   <okr-notes-input [i18n]="messageI18n()" [value]="message()"
                     (valueChange)="onFieldChange('message', $event)"
-                    [maxLength]="maxLength" [rows]="4" [embedded]="true" [readOnly]="isReadOnly()" />
+                    [maxLength]="maxLength" [rows]="4" [embedded]="true" [readOnly]="isReadOnly()" [errors]="messageErrors()" />
                   <!-- the confidentiality hint the spec requires (§1.3): NotesInputI18n has no
                        helper field, so it is rendered here rather than smuggled into the label -->
                   <ion-item lines="none">

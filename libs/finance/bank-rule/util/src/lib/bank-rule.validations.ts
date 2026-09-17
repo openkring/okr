@@ -12,7 +12,7 @@ export const bankRuleValidations = staticSuite(
     // 100 = the form's maxLength for the Buchungstext. A cap below what the input accepts
     // invalidates the form with no visible error.
     stringValidations('title', model.title, 100, 1, true);
-    stringValidations('accountKey', model.accountKey, 50, 1, true);
+    stringValidations('accountKey', model.accountKey, undefined, 1, true);
     numberValidations('priority', model.priority, true, -1000, 1000);
     test('condition', 'bankRule.condition.invalid', () => {
       enforce(['contains', 'startsWith', 'endsWith', 'regex'].includes(model.condition)).isTruthy();

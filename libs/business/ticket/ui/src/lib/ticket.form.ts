@@ -3,11 +3,11 @@ import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
 import { TicketModel, UserModel } from '@okr/shared-models';
-import {
-  CategorySelect, NotesInput, NotesInputI18n, TextInput, TextInputI18n,
-} from '@okr/shared-ui';
+import { CategorySelect, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { coerceBoolean } from '@okr/shared-util-core';
 import { validateVestTree } from '@okr/shared-util-angular';
+
+import { SHORT_NAME_LENGTH } from '@okr/shared-constants';
 
 import {
   TicketI18n, ticketClassificationCategory, ticketSeverityCategory, ticketValidations,
@@ -35,6 +35,7 @@ import {
   selector: 'okr-ticket-form',
   standalone: true,
   imports: [
+    ErrorNote,
     TextInput, NotesInput, CategorySelect,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonCardHeader, IonCardSubtitle,
   ],
@@ -109,14 +110,15 @@ import {
               <ion-row>
                 <ion-col size="12">
                   <okr-notes-input [i18n]="reasonI18n()" [value]="classificationReason()"
-                    (valueChange)="onFieldChange('classificationReason', $event)" [readOnly]="isReadOnly()" />
+                    (valueChange)="onFieldChange('classificationReason', $event)" [readOnly]="isReadOnly()" [errors]="classificationReasonErrors()" />
                 </ion-col>
               </ion-row>
               <ion-row>
                 <ion-col size="12" size-md="6">
                   <okr-text-input [i18n]="fixVersionI18n()" [value]="fixVersion()"
                     (valueChange)="onFieldChange('fixVersion', $event)"
-                    [maxLength]="20" [readOnly]="isReadOnly()" />
+                    [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="fixVersionErrors()" />
                 </ion-col>
               </ion-row>
             </ion-grid>
@@ -127,6 +129,8 @@ import {
   `,
 })
 export class TicketForm {
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly shortNameLength = SHORT_NAME_LENGTH;
   // inputs
   public readonly i18n = input.required<TicketI18n>();
   public formData = model.required<TicketModel>();
@@ -143,6 +147,12 @@ export class TicketForm {
     validateVestTree(path, ticketValidations as any),
   );
 
+
+  // per-field Vest errors for the notes under each field. validateVestTree calls the suite
+  // with the model alone, so this mirrors exactly what drives the form's validity.
+  private readonly validationResult = computed(() => ticketValidations(this.formData() as any, this.tenantId(), ''));
+  protected classificationReasonErrors = computed(() => this.validationResult().getErrors('classificationReason'));
+  protected fixVersionErrors = computed(() => this.validationResult().getErrors('fixVersion'));
   constructor() {
     effect(() => this.valid.emit(this.ticketForm().valid()));
   }

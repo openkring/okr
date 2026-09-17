@@ -2,7 +2,7 @@ import { Component, computed, effect, input, linkedSignal, model, output } from 
 import { IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 
 import { CategoryListModel, UserModel } from '@okr/shared-models';
-import { CategorySelect, DateInput, DateInputI18n } from '@okr/shared-ui';
+import { CategorySelect, DateInput, DateInputI18n, ErrorNote } from '@okr/shared-ui';
 import { DEFAULT_DATE, DEFAULT_NAME } from '@okr/shared-constants';
 import { coerceBoolean } from '@okr/shared-util-core';
 
@@ -13,6 +13,7 @@ import { SvgIconPipe } from '@okr/shared-pipes';
   selector: 'okr-category-change-form',
   standalone: true,
   imports: [
+    ErrorNote,
     SvgIconPipe,
     DateInput, CategorySelect,
     IonGrid, IonRow, IonCol, IonItem, IonLabel, IonIcon, IonCard, IonCardContent
@@ -36,6 +37,7 @@ import { SvgIconPipe } from '@okr/shared-pipes';
                 <ion-col size="5">
                   <ion-item lines="none">
                     <okr-cat-select [category]="membershipCategory()" [selectedItemName]="newCategory()" (selectedItemNameChange)="onFieldChange('membershipCategoryNew', $event)" [readOnly]="isReadOnly()" />
+                    <okr-error-note [errors]="membershipCategoryNewErrors()" />
                   </ion-item>
                 </ion-col>
               </ion-row>
@@ -49,6 +51,7 @@ import { SvgIconPipe } from '@okr/shared-pipes';
               <ion-row>
                 <ion-col size="12">
                   <okr-date-input [i18n]="dateOfChangeI18n()" [storeDate]="dateOfChange()" (storeDateChange)="onFieldChange('dateOfChange', $event)" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="dateOfChangeErrors()" />
                 </ion-col>
                 <ion-col size="12">
                   <ion-item lines="none">
@@ -86,6 +89,8 @@ export class CategoryChangeForm {
   // validation and errors
   private readonly validationResult = computed(() => categoryChangeFormValidations(this.formData()));
 
+  protected dateOfChangeErrors = computed(() => this.validationResult().getErrors('dateOfChange'));
+  protected membershipCategoryNewErrors = computed(() => this.validationResult().getErrors('membershipCategoryNew'));
   // fields
   protected name = computed(() => this.formData().memberName ?? DEFAULT_NAME); 
   protected orgName = computed(() => this.formData().orgName ?? DEFAULT_NAME);

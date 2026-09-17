@@ -5,7 +5,7 @@ import { BexioIdMask, ChSsnMask } from '@okr/shared-config';
 import { CategoryListModel, City, RoleName, UserModel } from '@okr/shared-models';
 import { CategorySelect, Checkbox, CheckboxI18n, Chips, CountrySelect, CountrySelectI18n, DateInput, DateInputI18n, EmailInput, EmailInputI18n, ErrorNote, NotesInput, NotesInputI18n, PhoneInput, PhoneInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, getTodayStr, hasRole } from '@okr/shared-util-core';
-import { DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, DEFAULT_LOCALE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PHONE, DEFAULT_TAGS, DEFAULT_URL } from '@okr/shared-constants';
+import { CITY_LENGTH, DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, DEFAULT_LOCALE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PHONE, DEFAULT_TAGS, DEFAULT_URL, DESCRIPTION_LENGTH, EMAIL_LENGTH, NUMBER_LENGTH, PHONE_LENGTH, SHORT_NAME_LENGTH, ZIP_LENGTH } from '@okr/shared-constants';
 import { AhvFormat, formatAhv } from '@okr/shared-util-angular';
 
 import { AvatarPipe } from '@okr/avatar-ui';
@@ -40,7 +40,7 @@ import { PersonLookup } from './person-lookup';
                   [i18n]="firstNameI18n()"
                   [value]="firstName()" (valueChange)="onFieldChange('firstName', $event)"
                   autocomplete="given-name"
-                  [readOnly]="isReadOnly()"
+                  [maxLength]="shortNameLength" [readOnly]="isReadOnly()"
                   [autofocus]="true"
                   [clearInput]="false"
                   [maxLength]=30
@@ -55,8 +55,7 @@ import { PersonLookup } from './person-lookup';
                   autocomplete="family-name"
                   [readOnly]="isReadOnly()"
                   [clearInput]="false"
-                  [maxLength]=30
-                />
+                  [maxLength]="shortNameLength" />
                 <okr-error-note [errors]="lastNameErrors()" />
               </ion-col>
             </ion-row>
@@ -76,16 +75,19 @@ import { PersonLookup } from './person-lookup';
             <ion-row>
               <ion-col size="12" size-md="6">
                 <okr-cat-select [category]="genders()!" [selectedItemName]="gender()" (selectedItemNameChange)="onFieldChange('gender', $event)" [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="genderErrors()" />
               </ion-col>
             </ion-row>
 
             <ion-row>
               <ion-col size="12" size-md="6">
                 <okr-date-input [i18n]="dateOfBirthI18n()" [storeDate]="dateOfBirth()" (storeDateChange)="onFieldChange('dateOfBirth', $event)" [locale]="locale()" [readOnly]="isReadOnly()" autocomplete="bday" [allowPartial]="true" />
+                <okr-error-note [errors]="dateOfBirthErrors()" />
               </ion-col>
 
               <ion-col size="12" size-md="6">
                 <okr-date-input [i18n]="dateOfDeathI18n()" [storeDate]="dateOfDeath()" (storeDateChange)="onFieldChange('dateOfDeath', $event)" [locale]="locale()" [readOnly]="isReadOnly()" [allowPartial]="true" />
+                <okr-error-note [errors]="dateOfDeathErrors()" />
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -107,7 +109,7 @@ import { PersonLookup } from './person-lookup';
                     [value]="streetName()" (valueChange)="onFieldChange('streetName', $event)"
                     autocomplete="street-address"
                     [clearInput]="false"
-                    [readOnly]="isReadOnly()"
+                    [maxLength]="shortNameLength" [readOnly]="isReadOnly()"
                   />
                   <okr-error-note [errors]="streetNameErrors()" />
                 </ion-col>
@@ -116,7 +118,7 @@ import { PersonLookup } from './person-lookup';
                     [i18n]="streetNumberI18n()"
                     [value]="streetNumber()" (valueChange)="onFieldChange('streetNumber', $event)"
                     [clearInput]="false"
-                    [readOnly]="isReadOnly()"
+                    [maxLength]="numberLength" [readOnly]="isReadOnly()"
                   />
                   <okr-error-note [errors]="streetNumberErrors()" />
                 </ion-col>
@@ -138,8 +140,9 @@ import { PersonLookup } from './person-lookup';
                     [i18n]="zipCodeI18n()"
                     [value]="zipCode()" (valueChange)="onFieldChange('zipCode', $event)"
                     [clearInput]="false"
-                    [readOnly]="isReadOnly()"
+                    [maxLength]="zipLength" [readOnly]="isReadOnly()"
                   />
+                  <okr-error-note [errors]="zipCodeErrors()" />
                 </ion-col>
 
                 <ion-col size="12" size-md="6">
@@ -147,8 +150,9 @@ import { PersonLookup } from './person-lookup';
                     [i18n]="cityI18n()"
                     [value]="city()" (valueChange)="onFieldChange('city', $event)"
                     [clearInput]="false"
-                    [readOnly]="isReadOnly()"
+                    [maxLength]="cityLength" [readOnly]="isReadOnly()"
                   />
+                  <okr-error-note [errors]="cityErrors()" />
                 </ion-col>
               </ion-row>
 
@@ -159,7 +163,7 @@ import { PersonLookup } from './person-lookup';
                     [value]="phone()" (valueChange)="onFieldChange('phone', $event)"
                     [clearInput]="false"
                     [readOnly]="isReadOnly()"
-                  />
+                  [maxLength]="phoneLength" />
                   <okr-error-note [errors]="phoneErrors()" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
@@ -168,7 +172,7 @@ import { PersonLookup } from './person-lookup';
                     [value]="email()" (valueChange)="onFieldChange('email', $event)"
                     [clearInput]="false"
                     [readOnly]="isReadOnly()"
-                  />
+                  [maxLength]="emailLength" />
                   <okr-error-note [errors]="emailErrors()" />                                                                                                                     
                 </ion-col>
                   <ion-col size="12" size-md="6">
@@ -176,7 +180,7 @@ import { PersonLookup } from './person-lookup';
                     [i18n]="webI18n()"
                     [value]="web()" (valueChange)="onFieldChange('web', $event)"
                     [clearInput]="false"
-                    [readOnly]="isReadOnly()"
+                    [maxLength]="shortNameLength" [readOnly]="isReadOnly()"
                   />
                   <okr-error-note [errors]="webErrors()" />
                 </ion-col>
@@ -209,11 +213,12 @@ import { PersonLookup } from './person-lookup';
                 <okr-text-input
                   [i18n]="bexioIdI18n()"
                   [value]="bexioId()" (valueChange)="onFieldChange('bexioId', $event)"
-                  [maxLength]=6
+                  [maxLength]="shortNameLength"
                   [mask]="bexioMask"
                   [showHelper]=true
                   [readOnly]="isReadOnly()"
                 />
+                <okr-error-note [errors]="bexioIdErrors()" />
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -252,9 +257,11 @@ import { PersonLookup } from './person-lookup';
               <ion-row>
                 <ion-col size="12">
                   <okr-cat-select [category]="membershipCategories()" [selectedItemName]="currentMembershipCategoryItem()" (selectedItemNameChange)="onFieldChange('membershipCategory', $event)" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="membershipCategoryErrors()" />
                 </ion-col>
                 <ion-col size="12">
                   <okr-date-input [i18n]="dateOfEntryI18n()" [storeDate]="dateOfEntry()" (storeDateChange)="onFieldChange('dateOfEntry', $event)" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="dateOfEntryErrors()" />
                 </ion-col>      
               </ion-row>
             }
@@ -265,12 +272,26 @@ import { PersonLookup } from './person-lookup';
 
       <okr-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
       @if(hasRole('admin')) {
-        <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
+        <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="notesErrors()" />
       }
     </form>
   `
 })
 export class PersonNewForm {
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly emailLength = EMAIL_LENGTH;
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly phoneLength = PHONE_LENGTH;
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly shortNameLength = SHORT_NAME_LENGTH;
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly numberLength = NUMBER_LENGTH;
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly zipLength = ZIP_LENGTH;
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly cityLength = CITY_LENGTH;
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly descriptionLength = DESCRIPTION_LENGTH;
   // inputs
   public readonly i18n = input.required<PersonI18n>();
   public readonly formData = model.required<PersonNewFormModel>();
@@ -319,6 +340,15 @@ export class PersonNewForm {
 
  // validation and errors
   private readonly validationResult = computed(() => personNewFormValidations(this.formData()));
+  protected dateOfBirthErrors = computed(() => this.validationResult().getErrors('dateOfBirth'));
+  protected dateOfDeathErrors = computed(() => this.validationResult().getErrors('dateOfDeath'));
+  protected dateOfEntryErrors = computed(() => this.validationResult().getErrors('dateOfEntry'));
+  protected genderErrors = computed(() => this.validationResult().getErrors('gender'));
+  protected membershipCategoryErrors = computed(() => this.validationResult().getErrors('membershipCategory'));
+  protected bexioIdErrors = computed(() => this.validationResult().getErrors('bexioId'));
+  protected cityErrors = computed(() => this.validationResult().getErrors('city'));
+  protected notesErrors = computed(() => this.validationResult().getErrors('notes'));
+  protected zipCodeErrors = computed(() => this.validationResult().getErrors('zipCode'));
   protected firstNameErrors = computed(() => this.validationResult().getErrors('firstName'));
   protected lastNameErrors = computed(() => this.validationResult().getErrors('lastName'));
   protected streetNameErrors = computed(() => this.validationResult().getErrors('streetName'));

@@ -109,8 +109,9 @@ export class PropertyList {
       if (getIndexOfKey(properties, this.newKey()) !== -1) {
         return;
       }
-      properties.push({ key: this.newKey(), value: this.newValue() });
-      this.properties.set(properties);
+      // a NEW array: pushing into the existing one and setting the same reference back is
+      // Object.is-equal, so the model output never fires and the parent never learns of the add
+      this.properties.set([...properties, { key: this.newKey(), value: this.newValue() }]);
       this.resetInput();
     }
   }
@@ -121,7 +122,9 @@ export class PropertyList {
   }
 
   protected remove(propertyKey: string): void {
-    this.properties.set(this.properties().splice(getIndexOfKey(this.properties(), propertyKey), 1));
+    // splice() returns the REMOVED items — setting that kept exactly the one property the user
+    // asked to delete and dropped all the others
+    this.properties.set(this.properties().filter((property) => property.key !== propertyKey));
   }
 
 /**

@@ -2,7 +2,7 @@ import { Component, computed, effect, input, model, output } from '@angular/core
 import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
-import { DEFAULT_NOTES, DEFAULT_TAGS } from '@okr/shared-constants';
+import { DEFAULT_NOTES, DEFAULT_TAGS, DESCRIPTION_LENGTH, NAME_LENGTH, WORD_LENGTH } from '@okr/shared-constants';
 import { AliasModel, RoleName, UserModel } from '@okr/shared-models';
 import {
   CategorySelect, Checkbox, CheckboxI18n, Chips, DateInput, DateInputI18n, ErrorNote, NotesInput,
@@ -44,13 +44,13 @@ import {
                 <ion-col size="12" size-md="6">
                   <okr-text-input [i18n]="spaceI18n()" [value]="space()"
                     (valueChange)="onFieldChange('space', $event)"
-                    [autofocus]="isNew()" [maxLength]="20" [readOnly]="isLocked()" />
+                    [autofocus]="isNew()" [maxLength]="wordLength" [readOnly]="isLocked()" />
                   <okr-error-note [errors]="spaceErrors()" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
                   <okr-text-input [i18n]="aliasI18n()" [value]="alias()"
                     (valueChange)="onFieldChange('alias', $event)"
-                    [maxLength]="20" [readOnly]="isLocked()" [copyable]="!isNew()" />
+                    [maxLength]="wordLength" [readOnly]="isLocked()" [copyable]="!isNew()" />
                   <okr-error-note [errors]="aliasErrors()" />
                 </ion-col>
               </ion-row>
@@ -73,7 +73,7 @@ import {
                   <ion-col size="12" size-md="6">
                     <okr-text-input [i18n]="targetKeyI18n()" [value]="targetKey()"
                       (valueChange)="onFieldChange('targetKey', $event)"
-                      [maxLength]="60" [readOnly]="isReadOnly()" />
+ [readOnly]="isReadOnly()" />
                     <okr-error-note [errors]="targetKeyErrors()" />
                   </ion-col>
                 }
@@ -115,13 +115,19 @@ import {
         }
         @if (hasRole('privileged')) {
           <okr-notes-input [i18n]="notesI18n()" [value]="notes()"
-            (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
+            (valueChange)="onFieldChange('notes', $event)" [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="notesErrors()" />
         }
       </form>
     }
   `,
 })
 export class AliasForm {
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly wordLength = WORD_LENGTH;
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly descriptionLength = DESCRIPTION_LENGTH;
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly nameLength = NAME_LENGTH;
   // inputs
   public readonly i18n = input.required<AliasI18n>();
   public formData = model.required<AliasModel>();
@@ -222,6 +228,7 @@ export class AliasForm {
   private readonly validationResult = computed(() =>
     aliasValidations(this.formData(), this.tenantId(), (this.allTags() ?? '') as string),
   );
+  protected notesErrors = computed(() => this.validationResult().getErrors('notes'));
   protected readonly spaceErrors = computed(() => this.validationResult().getErrors('space'));
   protected readonly aliasErrors = computed(() => this.validationResult().getErrors('alias'));
   protected readonly targetUrlErrors = computed(() => this.validationResult().getErrors('targetUrl'));

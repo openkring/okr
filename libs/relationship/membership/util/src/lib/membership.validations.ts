@@ -1,7 +1,7 @@
 
 import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 
-import { ABBREVIATION_LENGTH, BEXIO_ID_LENGTH, CURRENCY_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH, ZIP_LENGTH } from '@okr/shared-constants';
+import { ABBREVIATION_LENGTH, BEXIO_ID_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH, ZIP_LENGTH } from '@okr/shared-constants';
 import { MembershipModel } from '@okr/shared-models';
 import { baseValidations, booleanValidations, dateValidations, isAfterDate, numberValidations, stringValidations } from '@okr/shared-util-core';
 
@@ -11,7 +11,7 @@ export const membershipValidations = staticSuite((model: MembershipModel, tenant
   baseValidations(model, tenants, tags, field);
 
   // subject
-  stringValidations('memberKey', model.memberKey, SHORT_NAME_LENGTH);
+  stringValidations('memberKey', model.memberKey);
   stringValidations('memberName1', model.memberName1, SHORT_NAME_LENGTH);
   stringValidations('memberName2', model.memberName2, SHORT_NAME_LENGTH);
   stringValidations('memberModelType', model.memberModelType, WORD_LENGTH); // tbd: if Person: gender, else orgType
@@ -30,14 +30,14 @@ export const membershipValidations = staticSuite((model: MembershipModel, tenant
   stringValidations('memberBexioId', model.memberBexioId, BEXIO_ID_LENGTH);
 
   // membership organization
-  stringValidations('orgKey', model.orgKey, SHORT_NAME_LENGTH);
+  stringValidations('orgKey', model.orgKey);
   stringValidations('orgName', model.orgName, SHORT_NAME_LENGTH);
 
   // relationship
   stringValidations('memberId', model.memberId, SHORT_NAME_LENGTH);
   dateValidations('dateOfEntry', model.dateOfEntry);
   dateValidations('dateOfExit', model.dateOfExit);
-  stringValidations('membershipCategory', model.category, SHORT_NAME_LENGTH, 4, true); 
+  stringValidations('membershipCategory', model.category, undefined, 0, true); 
   stringValidations('membershipState', model.state, SHORT_NAME_LENGTH, 4, true); 
   stringValidations('orgFunction', model.orgFunction, SHORT_NAME_LENGTH);
 

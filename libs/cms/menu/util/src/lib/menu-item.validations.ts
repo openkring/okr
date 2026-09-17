@@ -6,17 +6,17 @@ import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 // strings live. An '@'-prefixed message is instead looked up as a TOP-LEVEL bundle key
 // and silently misses — that is what rendered these four as empty error notes.
 
-import { DESCRIPTION_LENGTH, LONG_NAME_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@okr/shared-constants';
+import { DESCRIPTION_LENGTH, LONG_NAME_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { MenuItemModel } from '@okr/shared-models';
 import { booleanValidations, isArrayOfBaseProperties, isArrayOfStrings, numberValidations, stringValidations, urlValidations } from '@okr/shared-util-core';
 
 export const menuItemValidations = staticSuite((model: MenuItemModel, tenants: string, tags: string, field?: string) => {
   if (field) only(field);
 
-  stringValidations('okey', model.okey, SHORT_NAME_LENGTH);
+  stringValidations('okey', model.okey);
   stringValidations('name', model.name, SHORT_NAME_LENGTH);
 //  tenantValidations(model.tenants);
-  stringValidations('action', model.action, WORD_LENGTH, 3, true);
+  stringValidations('action', model.action, undefined, 0, true);
   // url needs to be validated as string, because it can contain a function name
   stringValidations('url', model.url, LONG_NAME_LENGTH);
   // `index` is generated (get<Model>Index) and the service overwrites it at save time, AFTER
@@ -28,8 +28,8 @@ export const menuItemValidations = staticSuite((model: MenuItemModel, tenants: s
   //tagValidations(_tags, 'tags', model.tags);
   stringValidations('description', model.description, DESCRIPTION_LENGTH);
   stringValidations('label', model.label, SHORT_NAME_LENGTH);
-  stringValidations('icon', model.icon, SHORT_NAME_LENGTH);
-  stringValidations('roleNeeded', model.roleNeeded, WORD_LENGTH, 4, true);
+  stringValidations('icon', model.icon);
+  stringValidations('roleNeeded', model.roleNeeded, undefined, 0, true);
 
   omitWhen(model.data === undefined, () => {
     test('data', 'menuDataProperty', () => {

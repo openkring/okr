@@ -1,6 +1,6 @@
 import { enforce, only, staticSuite, test } from 'vest';
 
-import { DESCRIPTION_LENGTH, NAME_LENGTH, WORD_LENGTH } from '@okr/shared-constants';
+import { DESCRIPTION_LENGTH, NAME_LENGTH } from '@okr/shared-constants';
 import { PageModel } from '@okr/shared-models';
 import { baseValidations, isArrayOfStrings, stringValidations } from '@okr/shared-util-core';
 
@@ -11,8 +11,8 @@ export const pageValidations = staticSuite((model: PageModel, tenants: string, t
 
   stringValidations('title', model.title, NAME_LENGTH);
   // meta: MetaTag[] = [];        // meta tags for SEO
-  stringValidations('type', model.type, WORD_LENGTH);
-  stringValidations('state', model.state, WORD_LENGTH);
+  stringValidations('type', model.type);
+  stringValidations('state', model.state);
   stringValidations('notes', model.notes, DESCRIPTION_LENGTH);
   // sections: string[] = []; // section.okey, section.name
 

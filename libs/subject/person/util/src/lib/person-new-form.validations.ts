@@ -1,6 +1,6 @@
 import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 
-import { CITY_LENGTH, COUNTRY_LENGTH, DESCRIPTION_LENGTH, EMAIL_LENGTH, NUMBER_LENGTH, PHONE_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH, ZIP_LENGTH } from '@okr/shared-constants';
+import { CITY_LENGTH, DESCRIPTION_LENGTH, EMAIL_LENGTH, NUMBER_LENGTH, PHONE_LENGTH, SHORT_NAME_LENGTH, ZIP_LENGTH } from '@okr/shared-constants';
 import { classifyStoreDate, dateValidations, getYear, isFutureDate, isStoreDateOrderValid, partialDateValidations, stringValidations } from '@okr/shared-util-core';
 
 import { PersonNewFormModel } from './person-new-form.model';
@@ -11,7 +11,7 @@ export const personNewFormValidations = staticSuite((model: PersonNewFormModel, 
 
   stringValidations('firstName', model.firstName, SHORT_NAME_LENGTH);
   stringValidations('lastName', model.lastName, SHORT_NAME_LENGTH, 2, true);
-  stringValidations('gender', model.gender, WORD_LENGTH);
+  stringValidations('gender', model.gender);
   // dob/dod may be partial: year only ('19850000') or a birthday without a year ('00000415')
   partialDateValidations('dateOfBirth', model.dateOfBirth);
   partialDateValidations('dateOfDeath', model.dateOfDeath);
@@ -22,14 +22,14 @@ export const personNewFormValidations = staticSuite((model: PersonNewFormModel, 
   stringValidations('streetNumber', model.streetNumber, NUMBER_LENGTH);
   stringValidations('zipCode', model.zipCode, ZIP_LENGTH);
   stringValidations('city', model.city, CITY_LENGTH);
-  stringValidations('countryCode', model.countryCode, COUNTRY_LENGTH);
+  stringValidations('countryCode', model.countryCode);
   stringValidations('phone', model.phone, PHONE_LENGTH);
   stringValidations('email', model.email, EMAIL_LENGTH);
   stringValidations('web', model.web, SHORT_NAME_LENGTH);
 
-  stringValidations('orgKey', model.orgKey, SHORT_NAME_LENGTH);
+  stringValidations('orgKey', model.orgKey);
   stringValidations('orgName', model.orgName, SHORT_NAME_LENGTH);
-  stringValidations('membershipCategory', model.membershipCategory, SHORT_NAME_LENGTH);
+  stringValidations('membershipCategory', model.membershipCategory);
   stringValidations('membershipCategoryAbbreviation', model.membershipCategoryAbbreviation, 2);
   dateValidations('dateOfEntry', model.dateOfEntry);
 

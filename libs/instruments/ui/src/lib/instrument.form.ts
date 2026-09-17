@@ -2,9 +2,9 @@ import { Component, computed, effect, input, model, output } from '@angular/core
 import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
-import { DEFAULT_NOTES } from '@okr/shared-constants';
+import { DEFAULT_NOTES, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { InstrumentModel } from '@okr/shared-models';
-import { NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { coerceBoolean } from '@okr/shared-util-core';
 import { validateVestTree } from '@okr/shared-util-angular';
 
@@ -18,7 +18,8 @@ import { InstrumentI18n, instrumentValidations } from '@okr/instruments-util';
 @Component({
   selector: 'okr-instrument-form',
   standalone: true,
-  imports: [TextInput, NotesInput, IonGrid, IonRow, IonCol, IonCard, IonCardContent],
+  imports: [
+    ErrorNote,TextInput, NotesInput, IonGrid, IonRow, IonCol, IonCard, IonCardContent],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px; } }`],
   template: `
     @if (showForm()) {
@@ -29,11 +30,12 @@ import { InstrumentI18n, instrumentValidations } from '@okr/instruments-util';
               <ion-row>
                 <ion-col size="12">
                   <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)"
-                    [autofocus]="true" [maxLength]="50" [readOnly]="isReadOnly()" />
+                    [autofocus]="true" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="nameErrors()" />
                 </ion-col>
                 <ion-col size="12">
                   <okr-notes-input [i18n]="descriptionI18n()" [value]="description()" (valueChange)="onFieldChange('description', $event)"
-                    [readOnly]="isReadOnly()" />
+                    [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="descriptionErrors()" />
                 </ion-col>
               </ion-row>
             </ion-grid>
@@ -44,6 +46,10 @@ import { InstrumentI18n, instrumentValidations } from '@okr/instruments-util';
   `,
 })
 export class InstrumentForm {
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly descriptionLength = DESCRIPTION_LENGTH;
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly shortNameLength = SHORT_NAME_LENGTH;
   public readonly i18n = input.required<InstrumentI18n>();
   public formData = model.required<InstrumentModel>();
   public readonly readOnly = input(true);
@@ -56,6 +62,12 @@ export class InstrumentForm {
     validateVestTree(path, instrumentValidations as any),
   );
 
+
+  // per-field Vest errors for the notes under each field. validateVestTree calls the suite
+  // with the model alone, so this mirrors exactly what drives the form's validity.
+  private readonly validationResult = computed(() => instrumentValidations(this.formData() as any, '', ''));
+  protected descriptionErrors = computed(() => this.validationResult().getErrors('description'));
+  protected nameErrors = computed(() => this.validationResult().getErrors('name'));
   constructor() {
     effect(() => this.valid.emit(this.instrumentForm().valid()));
   }

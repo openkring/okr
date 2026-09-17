@@ -1,6 +1,5 @@
 import { enforce, only, staticSuite, test } from 'vest';
 
-import { SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { CommentModel } from '@okr/shared-models';
 import { baseValidations, dateValidations, stringValidations } from '@okr/shared-util-core';
 
@@ -8,9 +7,9 @@ export const commentValidations = staticSuite((model: CommentModel, tenants: str
   if (field) only(field);
 
   baseValidations(model, tenants, tags, field);
-  stringValidations('authorKey', model.authorKey, SHORT_NAME_LENGTH, 5, true);
+  stringValidations('authorKey', model.authorKey, undefined, 5, true);
   dateValidations('creationDateTime', model.creationDateTime);
-  stringValidations('parentKey', model.parentKey, SHORT_NAME_LENGTH, 5, true);
+  stringValidations('parentKey', model.parentKey, undefined, 5, true);
   
   // check the parentCollection to be a supported collection: subject, resource, membership, ownership
   

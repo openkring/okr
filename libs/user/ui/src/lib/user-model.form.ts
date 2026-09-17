@@ -2,15 +2,17 @@ import { Component, computed, effect, input, linkedSignal, model, output } from 
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonRow } from "@ionic/angular/standalone";
 
 import { RoleName, UserModel } from "@okr/shared-models";
-import { EmailInput, EmailInputI18n, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from "@okr/shared-ui";
+import { EmailInput, EmailInputI18n, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from "@okr/shared-ui";
 import { coerceBoolean, hasRole } from "@okr/shared-util-core";
 
 import { USER_FORM_SHAPE, UserI18n, UserModelFormModel, userModelFormValidations } from "@okr/user-util";
+import { DESCRIPTION_LENGTH, NAME_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 
 @Component({
   selector: 'okr-user-model-form',
   standalone: true,
   imports: [
+    ErrorNote,
     EmailInput, NotesInput, TextInput,
     IonCard, IonCardHeader, IonCardContent, IonCardTitle, IonGrid, IonRow, IonCol, IonCardSubtitle
   ],
@@ -27,21 +29,27 @@ import { USER_FORM_SHAPE, UserI18n, UserModelFormModel, userModelFormValidations
             <ion-row>
               <ion-col size="12" size-md="6">
                 <okr-text-input [i18n]="okeyI18n()" [value]="okey()" (valueChange)="onFieldChange('okey', $event)" [readOnly]="true" [copyable]=true />
+                <okr-error-note [errors]="okeyErrors()" />
               </ion-col>
               <ion-col size="12" size-md="6">
                 <okr-text-input [i18n]="personKeyI18n()" [value]="personKey()" (valueChange)="onFieldChange('personKey', $event)" [readOnly]="isReadOnly()" [copyable]=true />
+                <okr-error-note [errors]="personKeyErrors()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <okr-text-input [i18n]="firstNameI18n()" [value]="firstName()" (valueChange)="onFieldChange('firstName', $event)" [copyable]=true [readOnly]="isReadOnly()" />
+                <okr-text-input [i18n]="firstNameI18n()" [value]="firstName()" (valueChange)="onFieldChange('firstName', $event)" [copyable]=true [maxLength]="nameLength" [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="firstNameErrors()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <okr-text-input [i18n]="lastNameI18n()" [value]="lastName()" (valueChange)="onFieldChange('lastName', $event)" [copyable]=true [readOnly]="isReadOnly()" />
+                <okr-text-input [i18n]="lastNameI18n()" [value]="lastName()" (valueChange)="onFieldChange('lastName', $event)" [copyable]=true [maxLength]="nameLength" [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="lastNameErrors()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <okr-email [i18n]="loginEmailI18n()" [value]="loginEmail()" (valueChange)="onFieldChange('loginEmail', $event)" [readOnly]="isReadOnly()" />
+                <okr-email [i18n]="loginEmailI18n()" [value]="loginEmail()" (valueChange)="onFieldChange('loginEmail', $event)" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="loginEmailErrors()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <okr-email [i18n]="gravatarEmailI18n()" [value]="gravatarEmail()" (valueChange)="onFieldChange('gravatarEmail', $event)" [readOnly]="isReadOnly()" />
+                <okr-email [i18n]="gravatarEmailI18n()" [value]="gravatarEmail()" (valueChange)="onFieldChange('gravatarEmail', $event)" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="gravatarEmailErrors()" />
               </ion-col>
               <ion-col size="12" size-md="6">
                 <okr-text-input [i18n]="tenantsI18n()" [value]="tenants()" (valueChange)="onFieldChange('tenants', $event)" [readOnly]="isReadOnly()" [copyable]=true />
@@ -51,12 +59,18 @@ import { USER_FORM_SHAPE, UserI18n, UserModelFormModel, userModelFormValidations
         </ion-card-content>
       </ion-card>
       @if(hasRole('admin')) {
-        <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
+        <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="notesErrors()" />
       }
     </form>
   `
 })
 export class UserModelForm {
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly shortNameLength = SHORT_NAME_LENGTH;
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly nameLength = NAME_LENGTH;
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly descriptionLength = DESCRIPTION_LENGTH;
   // inputs
   public readonly i18n = input.required<UserI18n>();
   public formData = model.required<UserModelFormModel>();
@@ -100,6 +114,13 @@ export class UserModelForm {
   // validation and errors
   protected readonly shape = USER_FORM_SHAPE;
   private readonly validationResult = computed(() => userModelFormValidations(this.formData()));
+  protected gravatarEmailErrors = computed(() => this.validationResult().getErrors('gravatarEmail'));
+  protected loginEmailErrors = computed(() => this.validationResult().getErrors('loginEmail'));
+  protected firstNameErrors = computed(() => this.validationResult().getErrors('firstName'));
+  protected lastNameErrors = computed(() => this.validationResult().getErrors('lastName'));
+  protected notesErrors = computed(() => this.validationResult().getErrors('notes'));
+  protected okeyErrors = computed(() => this.validationResult().getErrors('okey'));
+  protected personKeyErrors = computed(() => this.validationResult().getErrors('personKey'));
 
   // fields
   protected okey = linkedSignal(() => this.formData().okey);

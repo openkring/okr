@@ -29,7 +29,7 @@ import { LowercaseWordMask } from '@okr/shared-config';
             <ion-row>
              <ion-col size="12" size-md="6">
                 @if(isNew()) {
-                  <okr-text-input [i18n]="okeyI18n()" [value]="okey()" (valueChange)="onFieldChange('okey', $event)" [maxLength]="maxWordLength" [mask]="mask" [showHelper]=true [readOnly]="false" />
+                  <okr-text-input [i18n]="okeyI18n()" [value]="okey()" (valueChange)="onFieldChange('okey', $event)" [mask]="mask" [showHelper]=true [readOnly]="false" />
                 } @else {
                   <ion-item lines="none">
                     <ion-label>ID: {{ okey() }}</ion-label>
@@ -70,9 +70,11 @@ import { LowercaseWordMask } from '@okr/shared-config';
               </ion-col>
               <ion-col size="12" size-md="6">
                 <okr-date-input [i18n]="validFromI18n()" [storeDate]="validFrom()" (storeDateChange)="onFieldChange('validFrom', $event)" [locale]="locale()" [readOnly]="false" />
+                <okr-error-note [errors]="validFromErrors()" />
               </ion-col>
               <ion-col size="12" size-md="6">
                 <okr-date-input [i18n]="validToI18n()" [storeDate]="validTo()" (storeDateChange)="onFieldChange('validTo', $event)" [locale]="locale()" [readOnly]="false" />
+                <okr-error-note [errors]="validToErrors()" />
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -99,9 +101,11 @@ import { LowercaseWordMask } from '@okr/shared-config';
               @if(formData().delegateAvatar) {
                 <ion-col size="12" size-md="6">
                   <okr-date-input [i18n]="delegateValidFromI18n()" [storeDate]="delegateValidFrom()" (storeDateChange)="onFieldChange('delegateValidFrom', $event)" [locale]="locale()" [readOnly]="false" />
+                  <okr-error-note [errors]="delegateValidFromErrors()" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
                   <okr-date-input [i18n]="delegateValidToI18n()" [storeDate]="delegateValidTo()" (storeDateChange)="onFieldChange('delegateValidTo', $event)" [locale]="locale()" [readOnly]="false" />
+                  <okr-error-note [errors]="delegateValidToErrors()" />
                 </ion-col>
                 @if(delegateExpired()) {
                   <ion-row>
@@ -150,6 +154,10 @@ export class ResponsibilityForm {
 
   // validation and errors
   private readonly validationResult = computed(() => responsibilityValidations(this.formData(), this.tenantId()));
+  protected delegateValidFromErrors = computed(() => this.validationResult().getErrors('delegateValidFrom'));
+  protected delegateValidToErrors = computed(() => this.validationResult().getErrors('delegateValidTo'));
+  protected validFromErrors = computed(() => this.validationResult().getErrors('validFrom'));
+  protected validToErrors = computed(() => this.validationResult().getErrors('validTo'));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
   protected okeyErrors = computed(() => this.validationResult().getErrors('okey'));
 

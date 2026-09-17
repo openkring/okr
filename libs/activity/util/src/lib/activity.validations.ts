@@ -9,8 +9,8 @@ export const activityValidations = staticSuite((model: ActivityModel, tenants: s
 
   dateTimeValidations('timestamp', model.timestamp);
   stringValidations('scope', model.scope, WORD_LENGTH);
-  stringValidations('action', model.action, WORD_LENGTH);
-  stringValidations('roleNeeded', model.roleNeeded, WORD_LENGTH);
+  stringValidations('action', model.action);
+  stringValidations('roleNeeded', model.roleNeeded);
   stringValidations('payload', model.payload, 500);
   avatarValidations('author', model.author);
 });

@@ -3,7 +3,7 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular
 
 import { CategoryListModel, AccountModel, RoleName, UserModel } from '@okr/shared-models';
 import { CategorySelect, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
-import { NAME_LENGTH } from '@okr/shared-constants';
+import { DESCRIPTION_LENGTH, NAME_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 
 import { ACCOUNT_KIND_GROUP, AccountI18n, accountValidations, getAccountKind, parentCandidates, usedAccountIds } from '@okr/finance-account-util';
@@ -41,7 +41,7 @@ const SELECTABLE_TYPES = ['leaf', 'group'];
               }
               <ion-row>
                 <ion-col size="12" size-md="6">
-                  <okr-text-input [i18n]="idI18n()" [value]="id()" (valueChange)="onFieldChange('id', $event)" [autofocus]="true" [copyable]="true" [readOnly]="isReadOnly()" />
+                  <okr-text-input [i18n]="idI18n()" [value]="id()" (valueChange)="onFieldChange('id', $event)" [autofocus]="true" [copyable]="true" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
                   <okr-error-note [errors]="idErrors()" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
@@ -50,6 +50,7 @@ const SELECTABLE_TYPES = ['leaf', 'group'];
                 </ion-col>
                 <ion-col size="12" size-md="6">
                   <okr-cat-select [category]="selectableTypes()" [selectedItemName]="type()" (selectedItemNameChange)="onFieldChange('type', $event)" [readOnly]="isReadOnly() || isRoot()" [withAll]="false" />
+                  <okr-error-note [errors]="typeErrors()" />
                 </ion-col>
                 <!-- a chart of accounts has no parent; every other account hangs in a group or under a chart -->
                 @if(!isRoot()) {
@@ -69,13 +70,17 @@ const SELECTABLE_TYPES = ['leaf', 'group'];
         </ion-card>
 
         @if(hasRole('admin')) {
-          <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
+          <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="notesErrors()" />
         }
       </form>
     }
   `
 })
 export class AccountForm {
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly shortNameLength = SHORT_NAME_LENGTH;
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly descriptionLength = DESCRIPTION_LENGTH;
   public readonly formData = model.required<AccountModel>();
   public readonly currentUser = input<UserModel | undefined>();
   public showForm = input(true);
@@ -118,6 +123,8 @@ export class AccountForm {
 
   private readonly validationResult = computed(() =>
     accountValidations(this.formData(), this.tenantId(), '', usedAccountIds(this.accounts(), this.formData())));
+  protected typeErrors = computed(() => this.validationResult().getErrors('type'));
+  protected notesErrors = computed(() => this.validationResult().getErrors('notes'));
   protected idErrors = computed(() => this.validationResult().getErrors('id'));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
   protected parentErrors = computed(() => this.validationResult().getErrors('parentKey'));

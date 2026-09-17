@@ -3,16 +3,17 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular
 
 import { BexioIdMask, ChSsnMask } from '@okr/shared-config';
 import { CategoryListModel, PrivacyAccessor, PrivacySettings, RoleName, UserModel } from '@okr/shared-models';
-import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, TextInput, TextInputI18n , ErrorNote} from '@okr/shared-ui';
 import { areNotesVisible, areTagsVisible, coerceBoolean, hasRole, isVaultFieldVisible, isVisibleToUser } from '@okr/shared-util-core';
 import { PersonFormModel, personValidations, PersonI18n } from '@okr/subject-person-util';
-import { DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS } from '@okr/shared-constants';
+import { BEXIO_ID_LENGTH, DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { AhvFormat, formatAhv } from '@okr/shared-util-angular';
 
 @Component({
   selector: 'okr-person-form',
   standalone: true,
   imports: [
+    ErrorNote,
     TextInput, DateInput, CategorySelect, Chips, NotesInput,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent
   ],
@@ -33,11 +34,13 @@ import { AhvFormat, formatAhv } from '@okr/shared-util-angular';
             }
             <ion-row>
               <ion-col size="12" size-md="6">
-                <okr-text-input [i18n]="firstNameI18n()" [value]="firstName()" (valueChange)="onFieldChange('firstName', $event)" autocomplete="given-name" [autofocus]="true" [maxLength]=30 [readOnly]="isReadOnly()" />
+                <okr-text-input [i18n]="firstNameI18n()" [value]="firstName()" (valueChange)="onFieldChange('firstName', $event)" autocomplete="given-name" [autofocus]="true" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="firstNameErrors()" />
               </ion-col>
 
               <ion-col size="12" size-md="6">
-                <okr-text-input [i18n]="lastNameI18n()" [value]="lastName()" (valueChange)="onFieldChange('lastName', $event)" autocomplete="family-name" [maxLength]=30 [readOnly]="isReadOnly()" />
+                <okr-text-input [i18n]="lastNameI18n()" [value]="lastName()" (valueChange)="onFieldChange('lastName', $event)" autocomplete="family-name" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="lastNameErrors()" />
               </ion-col>
             </ion-row>
 
@@ -46,12 +49,14 @@ import { AhvFormat, formatAhv } from '@okr/shared-util-angular';
                 @if(isVaultFieldVisible('dob')) {
                   <ion-col size="12" size-md="6"> 
                     <okr-date-input [i18n]="dateOfBirthI18n()" [storeDate]="dateOfBirth()" (storeDateChange)="onFieldChange('dateOfBirth', $event)" autocomplete="bday" [readOnly]="isReadOnly()" [allowPartial]="true" />
+                    <okr-error-note [errors]="dateOfBirthErrors()" />
                   </ion-col>
                 }
 
                 @if(isDeathDateVisible()) {
                   <ion-col size="12" size-md="6">
                     <okr-date-input [i18n]="dateOfDeathI18n()" [storeDate]="dateOfDeath()" (storeDateChange)="onFieldChange('dateOfDeath', $event)" [readOnly]="isReadOnly()" [allowPartial]="true" />
+                    <okr-error-note [errors]="dateOfDeathErrors()" />
                   </ion-col>
                 }
               </ion-row>
@@ -61,17 +66,20 @@ import { AhvFormat, formatAhv } from '@okr/shared-util-angular';
               @if(isVisibleToUser('gender', priv().showGender)) {
                 <ion-col size="12" size-md="6">
                   <okr-cat-select [category]="genders()!" [selectedItemName]="gender()" (selectedItemNameChange)="onFieldChange('gender', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="genderErrors()" />
                 </ion-col>
               }
       
               @if(isVaultFieldVisible('ssn')) {
                 <ion-col size="12" size-md="6">
                   <okr-text-input [i18n]="ssnIdI18n()" [value]="ssnId()" (valueChange)="onFieldChange('ssnId', $event)" [maxLength]=16 [mask]="ssnMask" [showHelper]=true [copyable]=true [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="ssnIdErrors()" />
                 </ion-col>
               }
               @if(isVisibleToUser('bexioId', priv().showBexioId)) {
                 <ion-col size="12" size-md="6">
-                  <okr-text-input [i18n]="bexioIdI18n()" [value]="bexioId()" (valueChange)="onFieldChange('bexioId', $event)" [maxLength]=6 [mask]="bexioMask" [showHelper]=true [readOnly]="isReadOnly()" />
+                  <okr-text-input [i18n]="bexioIdI18n()" [value]="bexioId()" (valueChange)="onFieldChange('bexioId', $event)" [maxLength]="bexioIdLength" [mask]="bexioMask" [showHelper]=true [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="bexioIdErrors()" />
                 </ion-col>
               }
             </ion-row>
@@ -84,13 +92,19 @@ import { AhvFormat, formatAhv } from '@okr/shared-util-angular';
       }
       
       @if(hasRole('admin')) {
-        <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
+        <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="notesErrors()" />
       }
     </form>
   }
   `
 })
 export class PersonForm {
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly bexioIdLength = BEXIO_ID_LENGTH;
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly shortNameLength = SHORT_NAME_LENGTH;
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly descriptionLength = DESCRIPTION_LENGTH;
   public readonly i18n = input.required<PersonI18n>();
   protected okeyI18n = computed(() => ({ name: 'okey', label: this.i18n().okey_label(), placeholder: this.i18n().okey_placeholder(), helper: this.i18n().okey_helper() } as TextInputI18n));
   protected firstNameI18n = computed(() => ({ name: 'firstName', label: this.i18n().firstName_label(), placeholder: this.i18n().firstName_placeholder(), helper: this.i18n().firstName_helper() } as TextInputI18n));
@@ -120,6 +134,13 @@ export class PersonForm {
 
   // validation and errors
   private readonly validationResult = computed(() => personValidations(this.formData(), this.tenantId(), this.allTags()));
+  protected dateOfBirthErrors = computed(() => this.validationResult().getErrors('dateOfBirth'));
+  protected dateOfDeathErrors = computed(() => this.validationResult().getErrors('dateOfDeath'));
+  protected genderErrors = computed(() => this.validationResult().getErrors('gender'));
+  protected bexioIdErrors = computed(() => this.validationResult().getErrors('bexioId'));
+  protected firstNameErrors = computed(() => this.validationResult().getErrors('firstName'));
+  protected notesErrors = computed(() => this.validationResult().getErrors('notes'));
+  protected ssnIdErrors = computed(() => this.validationResult().getErrors('ssnId'));
   protected lastNameErrors = computed(() => this.validationResult().getErrors('lastName'));
 
   // fields

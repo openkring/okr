@@ -5,7 +5,7 @@ import { BexioIdMask, ChSsnMask } from '@okr/shared-config';
 import { CategoryListModel, City, RoleName, UserModel } from '@okr/shared-models';
 import { CategorySelect, Chips, DateInput, DateInputI18n, EmailInput, EmailInputI18n, ErrorNote, NotesInput, NotesInputI18n, PhoneInput, PhoneInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, getTodayStr, hasRole } from '@okr/shared-util-core';
-import { DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, DEFAULT_LOCALE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PHONE, DEFAULT_TAGS, DEFAULT_URL } from '@okr/shared-constants';
+import { CITY_LENGTH, DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, DEFAULT_LOCALE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PHONE, DEFAULT_TAGS, DEFAULT_URL, DESCRIPTION_LENGTH, EMAIL_LENGTH, NUMBER_LENGTH, PHONE_LENGTH, SHORT_NAME_LENGTH, ZIP_LENGTH } from '@okr/shared-constants';
 import { AhvFormat, formatAhv } from '@okr/shared-util-angular';
 
 import { AvatarPipe } from '@okr/avatar-ui';
@@ -35,12 +35,12 @@ import { MembershipI18n, MemberNewFormModel, memberNewFormValidations } from '@o
           <ion-grid>
             <ion-row> 
               <ion-col size="12" size-md="6">
-                <okr-text-input [i18n]="firstNameI18n()" [value]="firstName()" (valueChange)="onFieldChange('firstName', $event)" autocomplete="given-name" [readOnly]="isReadOnly()" [autofocus]="true" [maxLength]=30 />
+                <okr-text-input [i18n]="firstNameI18n()" [value]="firstName()" (valueChange)="onFieldChange('firstName', $event)" autocomplete="given-name" [readOnly]="isReadOnly()" [autofocus]="true" [maxLength]="shortNameLength" />
                 <okr-error-note [errors]="firstNameErrors()" />
               </ion-col>
 
               <ion-col size="12" size-md="6">
-                <okr-text-input [i18n]="lastNameI18n()" [value]="lastName()" (valueChange)="onFieldChange('lastName', $event)" autocomplete="family-name" [readOnly]="isReadOnly()" [maxLength]=30 />
+                <okr-text-input [i18n]="lastNameI18n()" [value]="lastName()" (valueChange)="onFieldChange('lastName', $event)" autocomplete="family-name" [readOnly]="isReadOnly()" [maxLength]="shortNameLength" />
                 <okr-error-note [errors]="lastNameErrors()" />
               </ion-col>
             </ion-row>
@@ -48,16 +48,19 @@ import { MembershipI18n, MemberNewFormModel, memberNewFormValidations } from '@o
             <ion-row>
               <ion-col size="12" size-md="6">
                 <okr-cat-select [category]="genders()!" [selectedItemName]="gender()" (selectedItemNameChange)="onFieldChange('gender', $event)" [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="genderErrors()" />
               </ion-col>
             </ion-row>
 
             <ion-row>
               <ion-col size="12" size-md="6">
                 <okr-date-input [i18n]="dateOfBirthI18n()" [storeDate]="dateOfBirth()" (storeDateChange)="onFieldChange('dateOfBirth', $event)" [locale]="locale()" [readOnly]="isReadOnly()" autocomplete="bday" [allowPartial]="true" />
+                <okr-error-note [errors]="dateOfBirthErrors()" />
               </ion-col>
 
               <ion-col size="12" size-md="6">
                 <okr-date-input [i18n]="dateOfDeathI18n()" [storeDate]="dateOfDeath()" (storeDateChange)="onFieldChange('dateOfDeath', $event)" [locale]="locale()" [readOnly]="isReadOnly()" [allowPartial]="true" />
+                <okr-error-note [errors]="dateOfDeathErrors()" />
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -74,11 +77,11 @@ import { MembershipI18n, MemberNewFormModel, memberNewFormValidations } from '@o
             <ion-grid>
               <ion-row>
                 <ion-col size="9">
-                  <okr-text-input [i18n]="streetNameI18n()" [value]="streetName()" (valueChange)="onFieldChange('streetName', $event)" autocomplete="street-address" [readOnly]="isReadOnly()" />
+                  <okr-text-input [i18n]="streetNameI18n()" [value]="streetName()" (valueChange)="onFieldChange('streetName', $event)" autocomplete="street-address" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
                   <okr-error-note [errors]="streetNameErrors()" />
                 </ion-col>
                 <ion-col size="3">
-                  <okr-text-input [i18n]="streetNumberI18n()" [value]="streetNumber()" (valueChange)="onFieldChange('streetNumber', $event)" [readOnly]="isReadOnly()" />
+                  <okr-text-input [i18n]="streetNumberI18n()" [value]="streetNumber()" (valueChange)="onFieldChange('streetNumber', $event)" [maxLength]="numberLength" [readOnly]="isReadOnly()" />
                   <okr-error-note [errors]="streetNumberErrors()" />
                 </ion-col>
               </ion-row>
@@ -88,28 +91,31 @@ import { MembershipI18n, MemberNewFormModel, memberNewFormValidations } from '@o
               <ion-row>
                 <ion-col size="12" size-md="3">
                   <okr-text-input [i18n]="countryCodeI18n()" [value]="countryCode()" (valueChange)="onFieldChange('countryCode', $event)" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="countryCodeErrors()" />
                 </ion-col>
 
                 <ion-col size="12" size-md="3">
-                  <okr-text-input [i18n]="zipCodeI18n()" [value]="zipCode()" (valueChange)="onFieldChange('zipCode', $event)" [readOnly]="isReadOnly()" />
+                  <okr-text-input [i18n]="zipCodeI18n()" [value]="zipCode()" (valueChange)="onFieldChange('zipCode', $event)" [maxLength]="zipLength" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="zipCodeErrors()" />
                 </ion-col>
 
                 <ion-col size="12" size-md="6">
-                  <okr-text-input [i18n]="cityI18n()" [value]="city()" (valueChange)="onFieldChange('city', $event)" [readOnly]="isReadOnly()" />
+                  <okr-text-input [i18n]="cityI18n()" [value]="city()" (valueChange)="onFieldChange('city', $event)" [maxLength]="cityLength" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="cityErrors()" />
                 </ion-col>
               </ion-row>
 
               <ion-row>
                 <ion-col size="12" size-md="6"> 
-                  <okr-phone [i18n]="phoneI18n()" [value]="phone()" (valueChange)="onFieldChange('phone', $event)" [readOnly]="isReadOnly()" />
+                  <okr-phone [i18n]="phoneI18n()" [value]="phone()" (valueChange)="onFieldChange('phone', $event)" [maxLength]="phoneLength" [readOnly]="isReadOnly()" />
                   <okr-error-note [errors]="phoneErrors()" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
-                  <okr-email [i18n]="emailI18n()" [value]="email()" (valueChange)="onFieldChange('email', $event)" [readOnly]="isReadOnly()" />
+                  <okr-email [i18n]="emailI18n()" [value]="email()" (valueChange)="onFieldChange('email', $event)" [maxLength]="emailLength" [readOnly]="isReadOnly()" />
                   <okr-error-note [errors]="emailErrors()" />                                                                                                                     
                 </ion-col>
                 <ion-col size="12" size-md="6">
-                  <okr-text-input [i18n]="webI18n()" [value]="web()" (valueChange)="onFieldChange('web', $event)" [readOnly]="isReadOnly()" />
+                  <okr-text-input [i18n]="webI18n()" [value]="web()" (valueChange)="onFieldChange('web', $event)" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
                   <okr-error-note [errors]="webErrors()" />                                                                                                                     
                 </ion-col>
               </ion-row>
@@ -130,7 +136,8 @@ import { MembershipI18n, MemberNewFormModel, memberNewFormValidations } from '@o
                 <okr-text-input [i18n]="ssnIdI18n()" [value]="ssnId()" (valueChange)="onFieldChange('ssnId', $event)" [maxLength]=16 [mask]="ssnMask" [showHelper]=true [readOnly]="isReadOnly()" [copyable]=true />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <okr-text-input [i18n]="bexioIdI18n()" [value]="bexioId()" (valueChange)="onFieldChange('bexioId', $event)" [maxLength]=6 [mask]="bexioMask" [showHelper]=true [readOnly]="isReadOnly()" />                                        
+                <okr-text-input [i18n]="bexioIdI18n()" [value]="bexioId()" (valueChange)="onFieldChange('bexioId', $event)" [maxLength]="shortNameLength" [mask]="bexioMask" [showHelper]=true [readOnly]="isReadOnly()" />                                        
+                <okr-error-note [errors]="bexioIdErrors()" />
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -162,9 +169,11 @@ import { MembershipI18n, MemberNewFormModel, memberNewFormValidations } from '@o
               <ion-row>
                 <ion-col size="12">
                   <okr-cat-select [category]="membershipCategories()" [selectedItemName]="currentMembershipCategoryItem()" (selectedItemNameChange)="onFieldChange('category', $event)" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="categoryErrors()" />
                 </ion-col>
                 <ion-col size="12">
                   <okr-date-input [i18n]="dateOfEntryI18n()" [storeDate]="dateOfEntry()" (storeDateChange)="onFieldChange('dateOfEntry', $event)" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="dateOfEntryErrors()" />
                 </ion-col>      
               </ion-row>
           </ion-grid>
@@ -173,12 +182,26 @@ import { MembershipI18n, MemberNewFormModel, memberNewFormValidations } from '@o
     
       <okr-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
       @if(hasRole('admin')) {
-        <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
+        <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="notesErrors()" />
       }
     </form>
   `
 })
 export class MemberNewForm {
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly emailLength = EMAIL_LENGTH;
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly phoneLength = PHONE_LENGTH;
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly shortNameLength = SHORT_NAME_LENGTH;
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly numberLength = NUMBER_LENGTH;
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly zipLength = ZIP_LENGTH;
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly cityLength = CITY_LENGTH;
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly descriptionLength = DESCRIPTION_LENGTH;
   // inputs
   public readonly i18n = input.required<MembershipI18n>();
   public readonly formData = model.required<MemberNewFormModel>();
@@ -199,6 +222,16 @@ export class MemberNewForm {
 
  // validation and errors
   private readonly validationResult = computed(() => memberNewFormValidations(this.formData()));
+  protected categoryErrors = computed(() => this.validationResult().getErrors('category'));
+  protected dateOfBirthErrors = computed(() => this.validationResult().getErrors('dateOfBirth'));
+  protected dateOfDeathErrors = computed(() => this.validationResult().getErrors('dateOfDeath'));
+  protected dateOfEntryErrors = computed(() => this.validationResult().getErrors('dateOfEntry'));
+  protected genderErrors = computed(() => this.validationResult().getErrors('gender'));
+  protected bexioIdErrors = computed(() => this.validationResult().getErrors('bexioId'));
+  protected cityErrors = computed(() => this.validationResult().getErrors('city'));
+  protected countryCodeErrors = computed(() => this.validationResult().getErrors('countryCode'));
+  protected notesErrors = computed(() => this.validationResult().getErrors('notes'));
+  protected zipCodeErrors = computed(() => this.validationResult().getErrors('zipCode'));
   protected firstNameErrors = computed(() => this.validationResult().getErrors('firstName'));
   protected lastNameErrors = computed(() => this.validationResult().getErrors('lastName'));
   protected streetNameErrors = computed(() => this.validationResult().getErrors('streetName'));

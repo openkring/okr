@@ -2,9 +2,9 @@ import { Component, computed, effect, input, model, output } from '@angular/core
 import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
-import { DEFAULT_NOTES, DEFAULT_TAGS } from '@okr/shared-constants';
+import { DEFAULT_NOTES, DEFAULT_TAGS, LONG_NAME_LENGTH } from '@okr/shared-constants';
 import { AgendaItem, MeetingModel, RoleName, UserModel } from '@okr/shared-models';
-import { Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, TextInput, TextInputI18n, TimeInput, TimeInputI18n } from '@okr/shared-ui';
+import { Chips, DateInput, DateInputI18n, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n, TimeInput, TimeInputI18n } from '@okr/shared-ui';
 import { validateVestTree } from '@okr/shared-util-angular';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 
@@ -16,6 +16,7 @@ import { AttendeeList } from './attendee-list';
   selector: 'okr-meeting-form',
   standalone: true,
   imports: [
+    ErrorNote,
     TextInput, DateInput, TimeInput, NotesInput, Chips,
     AgendaList, AttendeeList,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent
@@ -31,21 +32,25 @@ import { AttendeeList } from './attendee-list';
               <ion-row>
                 <ion-col size="12" size-md="6">
                   <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)"
-                    [autofocus]="true" [maxLength]="100" [readOnly]="isReadOnly()" />
+                    [autofocus]="true" [maxLength]="longNameLength" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="nameErrors()" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
                   <okr-text-input [i18n]="locationKeyI18n()" [value]="locationKey()" (valueChange)="onFieldChange('locationKey', $event)"
-                    [maxLength]="100" [readOnly]="isReadOnly()" />
+ [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="locationKeyErrors()" />
                 </ion-col>
               </ion-row>
               <ion-row>
                 <ion-col size="12" size-md="6">
                   <okr-date-input [i18n]="meetingDateI18n()" [storeDate]="meetingDate()"
                     (storeDateChange)="onFieldChange('meetingDate', $event)" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="meetingDateErrors()" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
                   <okr-time-input [i18n]="startTimeI18n()" [value]="startTime()"
                     (valueChange)="onFieldChange('startTime', $event)" [locale]="locale()" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="startTimeErrors()" />
                 </ion-col>
               </ion-row>
             </ion-grid>
@@ -73,6 +78,8 @@ import { AttendeeList } from './attendee-list';
   `
 })
 export class MeetingForm {
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly longNameLength = LONG_NAME_LENGTH;
   // inputs
   public readonly i18n = input.required<MeetingI18n>();
   public formData = model.required<MeetingModel>();
@@ -94,6 +101,14 @@ export class MeetingForm {
     validateVestTree(path, meetingValidations as any),
   );
 
+
+  // per-field Vest errors for the notes under each field. validateVestTree calls the suite
+  // with the model alone, so this mirrors exactly what drives the form's validity.
+  private readonly validationResult = computed(() => meetingValidations(this.formData() as any, '', this.allTags()));
+  protected meetingDateErrors = computed(() => this.validationResult().getErrors('meetingDate'));
+  protected startTimeErrors = computed(() => this.validationResult().getErrors('startTime'));
+  protected locationKeyErrors = computed(() => this.validationResult().getErrors('locationKey'));
+  protected nameErrors = computed(() => this.validationResult().getErrors('name'));
   constructor() {
     effect(() => this.valid.emit(this.meetingForm().valid()));
   }

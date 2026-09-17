@@ -6,10 +6,10 @@ import { IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, 
 import { TranslatePipe } from '@okr/shared-i18n';
 import { CategoryListModel, RoleName, UserModel, WorkflowActionStep, WorkflowRuleModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { CategorySelect, Chips, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { CategorySelect, Chips, ErrorNote, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, getItemLabel, hasRole } from '@okr/shared-util-core';
 import { validateVestTree } from '@okr/shared-util-angular';
-import { DEFAULT_NOTES, DEFAULT_TAGS, NAME_LENGTH } from '@okr/shared-constants';
+import { DEFAULT_NOTES, DEFAULT_TAGS, LONG_NAME_LENGTH, NAME_LENGTH } from '@okr/shared-constants';
 
 import { ResponsibilityOption, WRITE_BACK_OPTIONS, WorkflowI18n, actionNeedsArg, addWorkflowStep, getWorkflowStepSummary, getWorkflowSteps, isApprovalAction, isWorkflowStepComplete, patchWorkflowStep, probeNeedsArg, removeWorkflowStep, setWorkflowStepAction, workflowRuleValidations } from '@okr/system-workflow-util';
 
@@ -31,6 +31,7 @@ import { ResponsibilityOption, WRITE_BACK_OPTIONS, WorkflowI18n, actionNeedsArg,
   selector: 'okr-workflow-rule-form',
   standalone: true,
   imports: [
+    ErrorNote,
     AsyncPipe, TranslatePipe, SvgIconPipe,
     TextInput, NumberInput, NotesInput, Chips, CategorySelect,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonItem, IonLabel, IonNote, IonSelect, IonSelectOption,
@@ -85,7 +86,8 @@ import { ResponsibilityOption, WRITE_BACK_OPTIONS, WorkflowI18n, actionNeedsArg,
               <ion-row>
                 <ion-col size="12">
                   <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)"
-                    [autofocus]="true" [maxLength]="50" [readOnly]="isReadOnly()" />
+                    [autofocus]="true" [maxLength]="nameLength" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="nameErrors()" />
                 </ion-col>
               </ion-row>
               <ion-row>
@@ -93,11 +95,13 @@ import { ResponsibilityOption, WRITE_BACK_OPTIONS, WorkflowI18n, actionNeedsArg,
                   <div class="cat-label">{{ i18n().event_label() }}</div>
                   <okr-cat-select [category]="eventCategory()" [selectedItemName]="event()"
                     (selectedItemNameChange)="onFieldChange('event', $event)" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="eventErrors()" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
                   <div class="cat-label">{{ i18n().probe_label() }}</div>
                   <okr-cat-select [category]="probeCategory()" [selectedItemName]="probe()"
                     (selectedItemNameChange)="onFieldChange('probe', $event)" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="probeErrors()" />
                 </ion-col>
               </ion-row>
               @if (needsProbeArg()) {
@@ -105,6 +109,7 @@ import { ResponsibilityOption, WRITE_BACK_OPTIONS, WorkflowI18n, actionNeedsArg,
                   <ion-col size="12">
                     <okr-text-input [i18n]="probeArgI18n()" [value]="probeArg()" (valueChange)="onFieldChange('probeArg', $event)"
                       [maxLength]="probeArgLength" [readOnly]="isReadOnly()" />
+                    <okr-error-note [errors]="probeArgErrors()" />
                   </ion-col>
                 </ion-row>
               }
@@ -240,6 +245,10 @@ import { ResponsibilityOption, WRITE_BACK_OPTIONS, WorkflowI18n, actionNeedsArg,
   `
 })
 export class WorkflowRuleForm {
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly longNameLength = LONG_NAME_LENGTH;
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly nameLength = NAME_LENGTH;
   // inputs. The three categories are passed IN rather than read from AppStore: a `type:ui`
   // lib may not depend on `type:feature`, and the store that opens the modal already has them.
   public readonly i18n = input.required<WorkflowI18n>();
@@ -263,6 +272,14 @@ export class WorkflowRuleForm {
     validateVestTree(path, workflowRuleValidations as any),
   );
 
+
+  // per-field Vest errors for the notes under each field. validateVestTree calls the suite
+  // with the model alone, so this mirrors exactly what drives the form's validity.
+  private readonly validationResult = computed(() => workflowRuleValidations(this.formData() as any, '', this.allTags()));
+  protected eventErrors = computed(() => this.validationResult().getErrors('event'));
+  protected probeErrors = computed(() => this.validationResult().getErrors('probe'));
+  protected nameErrors = computed(() => this.validationResult().getErrors('name'));
+  protected probeArgErrors = computed(() => this.validationResult().getErrors('probeArg'));
   constructor() {
     effect(() => this.valid.emit(this.ruleForm().valid()));
   }

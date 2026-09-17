@@ -1,13 +1,13 @@
 import { only, staticSuite } from 'vest';
 
-import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@okr/shared-constants';
+import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { GroupModel } from '@okr/shared-models';
 import { booleanValidations, stringValidations } from '@okr/shared-util-core';
 
 export const groupValidations = staticSuite((model: GroupModel, tenants: string, tags: string, field?: string) => {
   if (field) only(field);
 
-  stringValidations('okey', model.okey, SHORT_NAME_LENGTH);
+  stringValidations('okey', model.okey);
   stringValidations('name', model.name, SHORT_NAME_LENGTH, 3, true);
   stringValidations('notes', model.notes, DESCRIPTION_LENGTH);
   //tagValidations('tags', model.tags);
@@ -17,8 +17,8 @@ export const groupValidations = staticSuite((model: GroupModel, tenants: string,
   booleanValidations('hasTasks', model.hasTasks);
   booleanValidations('hasFiles', model.hasFiles);
   booleanValidations('hasMembers', model.hasMembers);
-  stringValidations('parentKey', model.parentKey, SHORT_NAME_LENGTH);
+  stringValidations('parentKey', model.parentKey);
   stringValidations('parentName', model.parentName, SHORT_NAME_LENGTH);
-  stringValidations('parentModelType', model.parentModelType, WORD_LENGTH);
+  stringValidations('parentModelType', model.parentModelType);
 
 });

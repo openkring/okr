@@ -9,18 +9,18 @@ export const documentValidations = staticSuite((model: DocumentModel, tenants: s
 
   baseValidations(model, tenants, tags, field);
   stringValidations('docType', model.type, WORD_LENGTH);
-  stringValidations('fullPath', model.fullPath, LONG_NAME_LENGTH);
+  stringValidations('fullPath', model.fullPath);
   stringValidations('mimeType', model.mimeType, SHORT_NAME_LENGTH);
   numberValidations('size', model.size, true, 0, 1000000000);
   stringValidations('title', model.title, SHORT_NAME_LENGTH);
   stringValidations('altText', model.altText, SHORT_NAME_LENGTH);
-  stringValidations('authorKey', model.authorKey, SHORT_NAME_LENGTH);
+  stringValidations('authorKey', model.authorKey);
   stringValidations('authorName', model.authorName, SHORT_NAME_LENGTH);
   dateValidations('dateOfDocCreation', model.dateOfDocCreation);
   dateValidations('dateOfDocLastUpdate', model.dateOfDocLastUpdate);
-  stringValidations('locationKey', model.locationKey, SHORT_NAME_LENGTH);
+  stringValidations('locationKey', model.locationKey);
   stringValidations('hash', model.hash, LONG_NAME_LENGTH);
-  stringValidations('priorVersionKey', model.priorVersionKey, SHORT_NAME_LENGTH);
+  stringValidations('priorVersionKey', model.priorVersionKey);
   stringValidations('version', model.version, SHORT_NAME_LENGTH);
 
   // cross validations

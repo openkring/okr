@@ -1,29 +1,29 @@
 
 import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 
-import { CURRENCY_LENGTH, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@okr/shared-constants';
+import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@okr/shared-constants';
 import { WorkrelModel } from '@okr/shared-models';
 import { dateValidations, isAfterOrEqualDate, numberValidations, stringValidations } from '@okr/shared-util-core';
 
 export const workrelValidations = staticSuite((model: WorkrelModel, tenants: string, tags: string, field?: string) => {
   if (field) only(field);
 
-  stringValidations('okey', model.okey, SHORT_NAME_LENGTH);
+  stringValidations('okey', model.okey);
  // tagValidations('tags', model.tags);
   stringValidations('notes', model.notes, DESCRIPTION_LENGTH);
 
   // subject
-  stringValidations('subjectKey', model.subjectKey, SHORT_NAME_LENGTH);
+  stringValidations('subjectKey', model.subjectKey);
   stringValidations('subjectName1', model.subjectName1, SHORT_NAME_LENGTH);
   stringValidations('subjectName2', model.subjectName2, SHORT_NAME_LENGTH);
   stringValidations('subjectType', model.subjectType, WORD_LENGTH);
 
   // object
-  stringValidations('objectKey', model.objectKey, SHORT_NAME_LENGTH);
+  stringValidations('objectKey', model.objectKey);
   stringValidations('objectName', model.objectName, SHORT_NAME_LENGTH);
   stringValidations('objectType', model.objectType, WORD_LENGTH);
 
-  stringValidations('type', model.type, WORD_LENGTH);
+  stringValidations('type', model.type);
   stringValidations('label', model.label, SHORT_NAME_LENGTH);
   dateValidations('validFrom', model.validFrom);
   dateValidations('validTo', model.validTo);
@@ -36,10 +36,10 @@ export const workrelValidations = staticSuite((model: WorkrelModel, tenants: str
   });
 
   numberValidations('price', model.price, true, 0, 1000000);
-  stringValidations('currency', model.currency, CURRENCY_LENGTH);
-  stringValidations('periodicity', model.periodicity, WORD_LENGTH);
+  stringValidations('currency', model.currency);
+  stringValidations('periodicity', model.periodicity);
   numberValidations('order', model.order, true, 0, 100);
-  stringValidations('state', model.state, WORD_LENGTH);
+  stringValidations('state', model.state);
 });
 
 

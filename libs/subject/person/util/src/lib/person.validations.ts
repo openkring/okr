@@ -1,6 +1,6 @@
 import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 
-import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@okr/shared-constants';
+import { BEXIO_ID_LENGTH, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { PrivacyUsage } from '@okr/shared-models';
 import { baseValidations, categoryValidations, isStoreDateOrderValid, partialDateValidations, stringValidations } from '@okr/shared-util-core';
 
@@ -19,12 +19,12 @@ export const personValidations = staticSuite((model: PersonFormModel, tenants: s
   stringValidations('index', model.index);
   stringValidations('firstName', model.firstName, SHORT_NAME_LENGTH);
   stringValidations('lastName', model.lastName, SHORT_NAME_LENGTH);
-  stringValidations('gender', model.gender, WORD_LENGTH);
+  stringValidations('gender', model.gender);
   ssnValidations('ssnId', model.ssnId ?? '');
   // dob/dod may be partial: year only ('19850000') or a birthday without a year ('00000415')
   partialDateValidations('dateOfBirth', model.dateOfBirth ?? '');
   partialDateValidations('dateOfDeath', model.dateOfDeath ?? '');
-  stringValidations('bexioId', model.bexioId, 6);
+  stringValidations('bexioId', model.bexioId, BEXIO_ID_LENGTH);
   stringValidations('notes', model.notes, DESCRIPTION_LENGTH);
   //tagValidations('tags', model.tags);
 

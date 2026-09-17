@@ -8,9 +8,9 @@ import { MatrixRoom } from '@okr/shared-models';
 export const roomValidations = staticSuite((model: MatrixRoom, field?: string) => {
   if (field) only(field);
 
-  stringValidations('roomId', model.roomId, SHORT_NAME_LENGTH);
+  stringValidations('roomId', model.roomId);
   stringValidations('name', model.name, SHORT_NAME_LENGTH, 4, true);
-  stringValidations('avatar', model.avatar, SHORT_NAME_LENGTH);
+  stringValidations('avatar', model.avatar);
   stringValidations('topic', model.topic, DESCRIPTION_LENGTH);
   booleanValidations('isDirect', model.isDirect);
   numberValidations('unreadCount', model.unreadCount, true, 0);

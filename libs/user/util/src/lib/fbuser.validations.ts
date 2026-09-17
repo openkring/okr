@@ -17,7 +17,7 @@ import { DEFAULT_EMAIL, DEFAULT_ID, DEFAULT_NAME, DEFAULT_PHONE, DEFAULT_URL, EM
 export const firebaseUserFormValidations = staticSuite((model: FirebaseUserModel, field?: string) => {
   only(field);
 
-  stringValidations('uid', model.uid, NAME_LENGTH);
+  stringValidations('uid', model.uid);
   stringValidations('email', model.email, EMAIL_LENGTH);
   stringValidations('displayName', model.displayName, NAME_LENGTH);
   booleanValidations('emailVerified', model.emailVerified);

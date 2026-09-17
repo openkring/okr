@@ -3,11 +3,11 @@ import { Component, computed, effect, inject, input, linkedSignal, model, output
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonNote, IonRow, ModalController } from '@ionic/angular/standalone';
 
 import { BexioIdMask } from '@okr/shared-config';
-import { DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, DEFAULT_MSTATE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORG_TYPE, DEFAULT_TAGS, END_FUTURE_DATE_STR } from '@okr/shared-constants';
+import { ABBREVIATION_LENGTH, BEXIO_ID_LENGTH, DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, DEFAULT_MSTATE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORG_TYPE, DEFAULT_TAGS, END_FUTURE_DATE_STR, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { AppStore, OrgSelectModal, PersonSelectModal, PersonSelectResult } from '@okr/shared-feature';
 import { CategoryListModel, MembershipModel, PersonModel, PrivacySettings, RoleName, UserModel, REBATE_REASON_VALUES } from '@okr/shared-models';
 import { TranslatePipe } from '@okr/shared-i18n';
-import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n , ErrorNote} from '@okr/shared-ui';
 import { areTagsVisible, coerceBoolean, getFullName, getItemLabel, hasRole, isOrg, isPerson } from '@okr/shared-util-core';
 
 import { MembershipI18n, membershipValidations } from '@okr/relationship-membership-util';
@@ -17,6 +17,7 @@ import { AvatarPipe } from '@okr/avatar-ui';
   selector: 'okr-membership-form',
   standalone: true,
   imports: [
+    ErrorNote,
     AsyncPipe, TranslatePipe,
     AvatarPipe,
     TextInput, DateInput,
@@ -78,6 +79,7 @@ import { AvatarPipe } from '@okr/avatar-ui';
                     }
                     <ion-col size="12">
                       <okr-date-input [i18n]="dateOfEntryI18n()" [storeDate]="dateOfEntry()" (storeDateChange)="onFieldChange('dateOfEntry', $event)" [locale]="locale()" [readOnly]="isReadOnly()" />
+                      <okr-error-note [errors]="dateOfEntryErrors()" />
                     </ion-col>
                   </ion-row>
                 </ion-grid>
@@ -94,11 +96,13 @@ import { AvatarPipe } from '@okr/avatar-ui';
                   <ion-row>
                     <ion-col size="12" size-md="6">
                       <okr-date-input [i18n]="dateOfEntryI18n()" [storeDate]="dateOfEntry()" (storeDateChange)="onFieldChange('dateOfEntry', $event)" [readOnly]="isReadOnly()" />
+                      <okr-error-note [errors]="dateOfEntryErrors()" />
                     </ion-col>
 
                     @if(dateOfExit() && dateOfExit().length > 0 && dateOfExit() !== endFutureDate) {
                       <ion-col size="12" size-md="6">
                         <okr-date-input [i18n]="dateOfExitI18n()" [storeDate]="dateOfExit()" (storeDateChange)="onFieldChange('dateOfExit', $event)" [readOnly]="isReadOnly()" />
+                        <okr-error-note [errors]="dateOfExitErrors()" />
                       </ion-col>
                     }
                   </ion-row>
@@ -140,7 +144,8 @@ import { AvatarPipe } from '@okr/avatar-ui';
                   <!-- memberAdmin maintains the memberId; everyone else only sees it once it is set, read-only -->
                   @if(hasRole('memberAdmin')) {
                     <ion-col size="12" size-md="6">
-                      <okr-text-input [i18n]="memberIdI18n()" [value]="memberId()" (valueChange)="onFieldChange('memberId', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />
+                      <okr-text-input [i18n]="memberIdI18n()" [value]="memberId()" (valueChange)="onFieldChange('memberId', $event)" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
+                      <okr-error-note [errors]="memberIdErrors()" />
                     </ion-col>
                   } @else if(memberId().length > 0) {
                     <ion-col size="12" size-md="6">
@@ -150,14 +155,16 @@ import { AvatarPipe } from '@okr/avatar-ui';
 
                   @if(canSeeFinancials()) {
                     <ion-col size="12" size-md="6">
-                      <okr-text-input [i18n]="memberBexioIdI18n()" [value]="memberBexioId()" (valueChange)="onFieldChange('memberBexioId', $event)" [maxLength]=6 [mask]="bexioMask" [readOnly]="isReadOnly()" />
+                      <okr-text-input [i18n]="memberBexioIdI18n()" [value]="memberBexioId()" (valueChange)="onFieldChange('memberBexioId', $event)" [maxLength]="bexioIdLength" [mask]="bexioMask" [readOnly]="isReadOnly()" />
+                      <okr-error-note [errors]="memberBexioIdErrors()" />
                     </ion-col>
                   }
 
                   <!-- same as memberId: maintained by memberAdmin, read-only and only shown when set for everyone else -->
                   @if(hasRole('memberAdmin')) {
                     <ion-col size="12" size-md="6">
-                      <okr-text-input [i18n]="memberAbbreviationI18n()" [value]="memberAbbreviation()" (valueChange)="onFieldChange('memberAbbreviation', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />
+                      <okr-text-input [i18n]="memberAbbreviationI18n()" [value]="memberAbbreviation()" (valueChange)="onFieldChange('memberAbbreviation', $event)" [maxLength]="abbreviationLength" [readOnly]="isReadOnly()" />
+                      <okr-error-note [errors]="memberAbbreviationErrors()" />
                     </ion-col>
                   } @else if(memberAbbreviation().length > 0) {
                     <ion-col size="12" size-md="6">
@@ -167,11 +174,13 @@ import { AvatarPipe } from '@okr/avatar-ui';
 
                   @if(hasRole('memberAdmin')) {
                   <ion-col size="12" size-md="6">
-                    <okr-text-input [i18n]="memberNickNameI18n()" [value]="memberNickName()" (valueChange)="onFieldChange('memberNickName', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />
+                    <okr-text-input [i18n]="memberNickNameI18n()" [value]="memberNickName()" (valueChange)="onFieldChange('memberNickName', $event)" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
+                    <okr-error-note [errors]="memberNickNameErrors()" />
                   </ion-col>
 
                   <ion-col size="12" size-md="6">
-                    <okr-text-input [i18n]="orgFunctionI18n()" [value]="orgFunction()" (valueChange)="onFieldChange('orgFunction', $event)" [maxLength]=30 [readOnly]="isReadOnly()" />
+                    <okr-text-input [i18n]="orgFunctionI18n()" [value]="orgFunction()" (valueChange)="onFieldChange('orgFunction', $event)" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
+                    <okr-error-note [errors]="orgFunctionErrors()" />
                   </ion-col>
                   }
                 </ion-row>
@@ -191,6 +200,12 @@ import { AvatarPipe } from '@okr/avatar-ui';
   `
 })
 export class MembershipForm {
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly bexioIdLength = BEXIO_ID_LENGTH;
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly shortNameLength = SHORT_NAME_LENGTH;
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly abbreviationLength = ABBREVIATION_LENGTH;
   private readonly modalController = inject(ModalController);
   private readonly appStore = inject(AppStore);
 
@@ -226,6 +241,13 @@ export class MembershipForm {
 
   // validation and errors
   private readonly validationResult = computed(() => membershipValidations(this.formData(), this.appStore.env.tenantId, this.allTags()));
+  protected dateOfEntryErrors = computed(() => this.validationResult().getErrors('dateOfEntry'));
+  protected dateOfExitErrors = computed(() => this.validationResult().getErrors('dateOfExit'));
+  protected memberAbbreviationErrors = computed(() => this.validationResult().getErrors('memberAbbreviation'));
+  protected memberBexioIdErrors = computed(() => this.validationResult().getErrors('memberBexioId'));
+  protected memberIdErrors = computed(() => this.validationResult().getErrors('memberId'));
+  protected memberNickNameErrors = computed(() => this.validationResult().getErrors('memberNickName'));
+  protected orgFunctionErrors = computed(() => this.validationResult().getErrors('orgFunction'));
 
   // fields
   protected isNew = computed(() => !this.formData().okey);

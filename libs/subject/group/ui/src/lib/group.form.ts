@@ -2,16 +2,18 @@ import { Component, computed, effect, input, linkedSignal, model, output, signal
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonRow, IonToggle } from '@ionic/angular/standalone';
 
 import { AvatarInfo, GroupModel, RoleName, UserModel } from '@okr/shared-models';
-import { ButtonCopy, ButtonCopyI18n, Checkbox, CheckboxI18n, Chips, IconInput, NotesInput, NotesInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { ButtonCopy, ButtonCopyI18n, Checkbox, CheckboxI18n, Chips, IconInput, NotesInput, NotesInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n , ErrorNote} from '@okr/shared-ui';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 
 import { Avatars } from '@okr/avatar-ui';
 import { getGroupKeyFromName, groupValidations, GroupI18n } from '@okr/subject-group-util';
+import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 
 @Component({
   selector: 'okr-group-form',
   standalone: true,
   imports: [
+    ErrorNote,
     TextInput, Chips, NotesInput, Checkbox, ButtonCopy, StringSelect, Avatars, IconInput,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonLabel, IonItem, IonToggle
   ],
@@ -65,10 +67,11 @@ import { getGroupKeyFromName, groupValidations, GroupI18n } from '@okr/subject-g
               <ion-col size="12" size-md="6">
                 <okr-text-input
                   [i18n]="nameI18n()"
-                  [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]=50
+                  [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]="shortNameLength"
                   [readOnly]="isReadOnly()"
                   [showHelper]="true"
                 />
+                <okr-error-note [errors]="nameErrors()" />
               </ion-col>
               @if(enhancedMode()) {
                 <ion-col size="12" size-md="6">
@@ -108,6 +111,7 @@ import { getGroupKeyFromName, groupValidations, GroupI18n } from '@okr/subject-g
                   [showHelper]="true"
                   [readOnly]="isReadOnly()"
                 />
+                <okr-error-note [errors]="hasContentErrors()" />
               </ion-col>
               <ion-col size="12" size-md="6">
                 <okr-checkbox [i18n]="hasChatI18n()"
@@ -115,6 +119,7 @@ import { getGroupKeyFromName, groupValidations, GroupI18n } from '@okr/subject-g
                   [showHelper]="true"
                   [readOnly]="isReadOnly()"
                 />
+                <okr-error-note [errors]="hasChatErrors()" />
               </ion-col>
               <ion-col size="12" size-md="6">
                 <okr-checkbox [i18n]="hasCalendarI18n()"
@@ -122,6 +127,7 @@ import { getGroupKeyFromName, groupValidations, GroupI18n } from '@okr/subject-g
                   [showHelper]="true"
                   [readOnly]="isReadOnly()"
                 />
+                <okr-error-note [errors]="hasCalendarErrors()" />
               </ion-col>
               <ion-col size="12" size-md="6">
                 <okr-checkbox [i18n]="hasTasksI18n()"
@@ -129,6 +135,7 @@ import { getGroupKeyFromName, groupValidations, GroupI18n } from '@okr/subject-g
                   [showHelper]="true"
                   [readOnly]="isReadOnly()"
                 />
+                <okr-error-note [errors]="hasTasksErrors()" />
               </ion-col>
               <ion-col size="12" size-md="6">
                 <okr-checkbox [i18n]="hasFilesI18n()"
@@ -136,6 +143,7 @@ import { getGroupKeyFromName, groupValidations, GroupI18n } from '@okr/subject-g
                   [showHelper]="true"
                   [readOnly]="isReadOnly()"
                 />
+                <okr-error-note [errors]="hasFilesErrors()" />
               </ion-col>
               <ion-col size="12" size-md="6">
                 <okr-checkbox [i18n]="hasMembersI18n()"
@@ -143,6 +151,7 @@ import { getGroupKeyFromName, groupValidations, GroupI18n } from '@okr/subject-g
                   [showHelper]="true"
                   [readOnly]="isReadOnly()"
                 />
+                <okr-error-note [errors]="hasMembersErrors()" />
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -205,14 +214,18 @@ import { getGroupKeyFromName, groupValidations, GroupI18n } from '@okr/subject-g
       @if(enhancedMode() && hasRole('admin')) {
         <okr-notes-input [i18n]="notesI18n()"
           [value]="notes()" (valueChange)="onFieldChange('notes', $event)"
-          [readOnly]="isReadOnly()"
-        />
+          [maxLength]="descriptionLength" [readOnly]="isReadOnly()"
+        [errors]="notesErrors()" />
       }
     </form>
   }
   `
 })
 export class GroupForm {
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly shortNameLength = SHORT_NAME_LENGTH;
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly descriptionLength = DESCRIPTION_LENGTH;
   protected readonly buttonCopyI18n = computed(() => ({ copy_conf: this.i18n().copy_conf() } as ButtonCopyI18n));
   protected okeyI18n      = computed(() => ({ name: 'okey',       label: this.i18n().okey_label(),       placeholder: this.i18n().okey_placeholder(),       helper: this.i18n().okey_helper()       } as TextInputI18n));
   protected groupIdI18n   = computed(() => ({ name: 'groupId',    label: this.i18n().id_label(),    placeholder: this.i18n().id_placeholder(),    helper: this.i18n().id_helper()    } as TextInputI18n));
@@ -255,6 +268,13 @@ export class GroupForm {
 
   // validation and errors
   private readonly validationResult = computed(() => groupValidations(this.formData(), this.tenantId(), this.allTags()));
+  protected hasCalendarErrors = computed(() => this.validationResult().getErrors('hasCalendar'));
+  protected hasChatErrors = computed(() => this.validationResult().getErrors('hasChat'));
+  protected hasContentErrors = computed(() => this.validationResult().getErrors('hasContent'));
+  protected hasFilesErrors = computed(() => this.validationResult().getErrors('hasFiles'));
+  protected hasMembersErrors = computed(() => this.validationResult().getErrors('hasMembers'));
+  protected hasTasksErrors = computed(() => this.validationResult().getErrors('hasTasks'));
+  protected notesErrors = computed(() => this.validationResult().getErrors('notes'));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
   protected okeyErrors = computed(() => this.validationResult().getErrors('okey'));
 

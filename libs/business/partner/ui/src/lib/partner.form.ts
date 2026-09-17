@@ -2,12 +2,9 @@ import { Component, computed, effect, input, model, output } from '@angular/core
 import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
-import { DEFAULT_NOTES, DEFAULT_TAGS } from '@okr/shared-constants';
+import { DEFAULT_NOTES, DEFAULT_TAGS, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { PartnerModel, RoleName, UserModel } from '@okr/shared-models';
-import {
-  CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, TextInput,
-  TextInputI18n,
-} from '@okr/shared-ui';
+import { CategorySelect, Chips, DateInput, DateInputI18n, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 import { validateVestTree } from '@okr/shared-util-angular';
 
@@ -24,6 +21,7 @@ import { PartnerI18n, partnerStatusCategory, partnerValidations } from '@okr/bus
   selector: 'okr-partner-form',
   standalone: true,
   imports: [
+    ErrorNote,
     TextInput, NotesInput, DateInput, Chips, CategorySelect,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent,
   ],
@@ -38,7 +36,8 @@ import { PartnerI18n, partnerStatusCategory, partnerValidations } from '@okr/bus
               <ion-row>
                 <ion-col size="12" size-md="6">
                   <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)"
-                    [autofocus]="true" [maxLength]="50" [readOnly]="isReadOnly()" />
+                    [autofocus]="true" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="nameErrors()" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
                   <!-- a select, not a text field: a typo'd status is a partner no code branches on -->
@@ -50,11 +49,13 @@ import { PartnerI18n, partnerStatusCategory, partnerValidations } from '@okr/bus
               <ion-row>
                 <ion-col size="12" size-md="6">
                   <okr-text-input [i18n]="orgKeyI18n()" [value]="orgKey()" (valueChange)="onFieldChange('orgKey', $event)"
-                    [maxLength]="50" [readOnly]="isReadOnly()" />
+ [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="orgKeyErrors()" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
                   <okr-text-input [i18n]="serviceUidI18n()" [value]="serviceUid()" (valueChange)="onFieldChange('serviceUid', $event)"
-                    [maxLength]="50" [readOnly]="isReadOnly()" />
+                    [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="serviceUidErrors()" />
                 </ion-col>
               </ion-row>
               <ion-row>
@@ -85,6 +86,8 @@ import { PartnerI18n, partnerStatusCategory, partnerValidations } from '@okr/bus
   `,
 })
 export class PartnerForm {
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly shortNameLength = SHORT_NAME_LENGTH;
   // inputs
   public readonly i18n = input.required<PartnerI18n>();
   public formData = model.required<PartnerModel>();
@@ -102,6 +105,13 @@ export class PartnerForm {
     validateVestTree(path, partnerValidations as any),
   );
 
+
+  // per-field Vest errors for the notes under each field. validateVestTree calls the suite
+  // with the model alone, so this mirrors exactly what drives the form's validity.
+  private readonly validationResult = computed(() => partnerValidations(this.formData() as any, this.tenantId(), this.allTags()));
+  protected nameErrors = computed(() => this.validationResult().getErrors('name'));
+  protected orgKeyErrors = computed(() => this.validationResult().getErrors('orgKey'));
+  protected serviceUidErrors = computed(() => this.validationResult().getErrors('serviceUid'));
   constructor() {
     effect(() => this.valid.emit(this.partnerForm().valid()));
   }

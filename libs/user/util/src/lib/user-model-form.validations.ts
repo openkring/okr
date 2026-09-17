@@ -8,8 +8,8 @@ import { UserModelFormModel } from './user-model-form.model';
 export const userModelFormValidations = staticSuite((model: UserModelFormModel, field?: string) => {
   only(field);
 
-  stringValidations('okey', model.okey, SHORT_NAME_LENGTH);
-  stringValidations('personKey', model.personKey, SHORT_NAME_LENGTH);
+  stringValidations('okey', model.okey);
+  stringValidations('personKey', model.personKey);
   stringValidations('firstName', model.firstName, NAME_LENGTH);
   stringValidations('lastName', model.lastName, NAME_LENGTH);
   stringValidations('loginEmail', model.loginEmail, SHORT_NAME_LENGTH);

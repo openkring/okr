@@ -1,6 +1,6 @@
 import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 
-import { DESCRIPTION_LENGTH, NAME_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@okr/shared-constants';
+import { DESCRIPTION_LENGTH, NAME_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { AccountModel } from '@okr/shared-models';
 import { baseValidations, stringValidations } from '@okr/shared-util-core';
 
@@ -17,9 +17,9 @@ export const accountValidations = staticSuite((model: AccountModel, tenants: str
   // puts on every NamedModel; a lower value here made names of 31–50 characters fail silently.
   stringValidations('name', model.name, NAME_LENGTH, 1, true);
   stringValidations('id', model.id, SHORT_NAME_LENGTH);
-  stringValidations('type', model.type, WORD_LENGTH, 1, true);
+  stringValidations('type', model.type, undefined, 0, true);
   stringValidations('label', model.label, SHORT_NAME_LENGTH);
-  stringValidations('parentKey', model.parentKey, SHORT_NAME_LENGTH);
+  stringValidations('parentKey', model.parentKey);
   stringValidations('notes', model.notes, DESCRIPTION_LENGTH);
 
   // Only a root (a whole chart of accounts) stands on its own; every other account hangs in one.

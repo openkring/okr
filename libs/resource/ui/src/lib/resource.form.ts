@@ -1,10 +1,10 @@
 import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
-import { CategoryListModel, ResourceModel, RoleName, UserModel } from '@okr/shared-models';
+import { BaseProperty, CategoryListModel, ResourceModel, RoleName, UserModel } from '@okr/shared-models';
 import { CategorySelect, Chips, Color, ErrorNote, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, PropertyList, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, getYear, hasRole } from '@okr/shared-util-core';
-import { DEFAULT_CAR_TYPE, DEFAULT_GENDER, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PET_TYPE, DEFAULT_PRICE, DEFAULT_RBOAT_TYPE, DEFAULT_RBOAT_USAGE, DEFAULT_TAGS } from '@okr/shared-constants';
+import { DEFAULT_CAR_TYPE, DEFAULT_GENDER, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PET_TYPE, DEFAULT_PRICE, DEFAULT_RBOAT_TYPE, DEFAULT_RBOAT_USAGE, DEFAULT_TAGS, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 
 import { getUsageForYear, ResourceI18n, resourceValidations, getKeyNr, getLockerNr, setUsageFromYear } from '@okr/resource-util';
 
@@ -38,18 +38,20 @@ import { getUsageForYear, ResourceI18n, resourceValidations, getKeyNr, getLocker
                   }
                   <ion-row>
                     <ion-col size="12">
-                      <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />
+                      <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
                       <okr-error-note [errors]="nameErrors()" />
                     </ion-col>
                     <ion-col size="12">
                       <okr-cat-select [category]="subTypes()!" [selectedItemName]="subType()" (selectedItemNameChange)="onFieldChange('subType', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
+                      <okr-error-note [errors]="subTypeErrors()" />
                     </ion-col>
                     <ion-col size="12">
                       <!-- shows THIS season's allocation, not the raw multi-year string — see onUsageChange -->
                       <okr-cat-select [category]="usages()!" [selectedItemName]="usage()" (selectedItemNameChange)="onUsageChange($event)" [withAll]="false" [readOnly]="isReadOnly()" />
+                      <okr-error-note [errors]="usageErrors()" />
                     </ion-col>
                     <ion-col size="12" size-md="6">
-                      <okr-text-input [i18n]="loadI18n()" [value]="load()" (valueChange)="onFieldChange('load', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />
+                      <okr-text-input [i18n]="loadI18n()" [value]="load()" (valueChange)="onFieldChange('load', $event)" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
                       <okr-error-note [errors]="loadErrors()" />
                     </ion-col>
                     <ion-col size="12" size-md="6">
@@ -83,15 +85,16 @@ import { getUsageForYear, ResourceI18n, resourceValidations, getKeyNr, getLocker
                   }
                   <ion-row>
                     <ion-col size="12">
-                      <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />
+                      <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
                       <okr-error-note [errors]="nameErrors()" />
                     </ion-col>
 <!--                   tbd. boat subtype and category
                     <ion-col size="12">
                       <okr-cat-select [category]="subTypes()!" [selectedItemName]="subType()" (selectedItemNameChange)="onFieldChange('subType', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
+                      <okr-error-note [errors]="subTypeErrors()" />
                     </ion-col> -->
                     <ion-col size="12" size-md="6">
-                      <okr-text-input [i18n]="loadI18n()" [value]="load()" (valueChange)="onFieldChange('load', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />
+                      <okr-text-input [i18n]="loadI18n()" [value]="load()" (valueChange)="onFieldChange('load', $event)" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
                       <okr-error-note [errors]="loadErrors()" />
                     </ion-col>
                     <ion-col size="12" size-md="6">
@@ -125,14 +128,15 @@ import { getUsageForYear, ResourceI18n, resourceValidations, getKeyNr, getLocker
                   }
                   <ion-row>
                     <ion-col size="12">
-                      <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]=30 [readOnly]="isReadOnly()" />
+                      <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
                       <okr-error-note [errors]="nameErrors()" />
                     </ion-col>
                     <ion-col size="12">
                       <okr-cat-select [category]="subTypes()!" [selectedItemName]="subType()" (selectedItemNameChange)="onFieldChange('subType', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
+                      <okr-error-note [errors]="subTypeErrors()" />
                     </ion-col>
                     <ion-col size="12" size-md="6">
-                      <okr-text-input [i18n]="loadI18n()" [value]="load()" (valueChange)="onFieldChange('load', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />
+                      <okr-text-input [i18n]="loadI18n()" [value]="load()" (valueChange)="onFieldChange('load', $event)" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
                       <okr-error-note [errors]="loadErrors()" />
                     </ion-col>
                     <ion-col size="12" size-md="6">
@@ -176,6 +180,7 @@ import { getUsageForYear, ResourceI18n, resourceValidations, getKeyNr, getLocker
                     </ion-col>
                     <ion-col size="12">
                       <okr-cat-select [category]="subTypes()!" [selectedItemName]="subType()" (selectedItemNameChange)="onFieldChange('subType', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
+                      <okr-error-note [errors]="subTypeErrors()" />
                     </ion-col>
                   </ion-row>
                 </ion-grid>
@@ -226,14 +231,15 @@ import { getUsageForYear, ResourceI18n, resourceValidations, getKeyNr, getLocker
                   }
                   <ion-row>
                     <ion-col size="12">
-                      <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]=30 [readOnly]="isReadOnly()" />
+                      <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
                       <okr-error-note [errors]="nameErrors()" />
                     </ion-col>
                   <ion-col size="12">
                       <okr-cat-select [category]="subTypes()!" [selectedItemName]="subType()" (selectedItemNameChange)="onFieldChange('subType', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
+                      <okr-error-note [errors]="subTypeErrors()" />
                     </ion-col>
                     <ion-col size="12" size-md="6">
-                      <okr-color [label]="colorLabel()" [hexColor]="hexColor()" (hexColorChange)="onFieldChange('hexColor', $event)" [readOnly]="isReadOnly()" />
+                      <okr-color [label]="colorLabel()" [hexColor]="hexColor()" (hexColorChange)="onFieldChange('color', $event)" [readOnly]="isReadOnly()" />
                       <okr-error-note [errors]="hexColorErrors()" />
                     </ion-col>
                   </ion-row>
@@ -259,7 +265,7 @@ import { getUsageForYear, ResourceI18n, resourceValidations, getKeyNr, getLocker
                   }
                   <ion-row>
                     <ion-col size="12">
-                      <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]=30 [readOnly]="isReadOnly()" />
+                      <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
                       <okr-error-note [errors]="nameErrors()" />
                     </ion-col>
                     <ion-col size="12" size-md="6">
@@ -289,12 +295,12 @@ import { getUsageForYear, ResourceI18n, resourceValidations, getKeyNr, getLocker
                   }
                   <ion-row >
                     <ion-col size="12">
-                      <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]=30 [readOnly]="isReadOnly()" />
+                      <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
                       <okr-error-note [errors]="nameErrors()" />
                     </ion-col>
 
                     <ion-col size="12" size-md="6">
-                      <okr-text-input [i18n]="loadI18n()" [value]="load()" (valueChange)="onFieldChange('load', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />
+                      <okr-text-input [i18n]="loadI18n()" [value]="load()" (valueChange)="onFieldChange('load', $event)" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
                       <okr-error-note [errors]="loadErrors()" />
                     </ion-col>
 
@@ -303,7 +309,7 @@ import { getUsageForYear, ResourceI18n, resourceValidations, getKeyNr, getLocker
                       <okr-error-note [errors]="currentValueErrors()" />
                     </ion-col>
                     <ion-col size="12" size-md="6">
-                      <okr-color [label]="colorLabel()" [hexColor]="hexColor()" (hexColorChange)="onFieldChange('hexColor', $event)" [readOnly]="isReadOnly()" />
+                      <okr-color [label]="colorLabel()" [hexColor]="hexColor()" (hexColorChange)="onFieldChange('color', $event)" [readOnly]="isReadOnly()" />
                       <okr-error-note [errors]="hexColorErrors()" />
                     </ion-col>
                   </ion-row>
@@ -313,7 +319,10 @@ import { getUsageForYear, ResourceI18n, resourceValidations, getKeyNr, getLocker
           }
         }
 
-        <okr-property-list [(properties)]="data" name="resourceData" />
+        <!-- one-way + explicit write-back: a two-way binding onto the local 'data' linkedSignal
+             never reached formData and never marked the form dirty, so adding or removing a
+             property silently did nothing. -->
+        <okr-property-list [properties]="data()" (propertiesChange)="onFieldChange('data', $event)" />
 
         @if(hasRole('privileged') || hasRole('resourceAdmin')) {
           <okr-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
@@ -323,13 +332,17 @@ import { getUsageForYear, ResourceI18n, resourceValidations, getKeyNr, getLocker
         }
 
         @if(hasRole('admin')) {
-          <okr-notes-input [i18n]="descriptionI18n()" [value]="description()" (valueChange)="onFieldChange('description', $event)" [readOnly]="isReadOnly()" />
+          <okr-notes-input [i18n]="descriptionI18n()" [value]="description()" (valueChange)="onFieldChange('description', $event)" [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="descriptionErrors()" />
         }
     </form>
   }
   `
 })
 export class ResourceForm {
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly shortNameLength = SHORT_NAME_LENGTH;
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly descriptionLength = DESCRIPTION_LENGTH;
   // inputs
   public readonly i18n = input.required<ResourceI18n>();
   public formData = model.required<ResourceModel>();
@@ -350,11 +363,14 @@ export class ResourceForm {
 
   // validation and errors
   private readonly validationResult = computed(() => resourceValidations(this.formData(), this.tenantId(), this.allTags()));
+  protected descriptionErrors = computed(() => this.validationResult().getErrors('description'));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
   protected loadErrors = computed(() => this.validationResult().getErrors('load'));
   protected currentValueErrors = computed(() => this.validationResult().getErrors('currentValue'));
-  protected hexColorErrors = computed(() => this.validationResult().getErrors('hexColor'));
-  protected boatNameErrors = computed(() => this.validationResult().getErrors('boatName'));
+  /** the model field is `color`; 'hexColor' is only the name of the input primitive */
+  protected hexColorErrors = computed(() => this.validationResult().getErrors('color'));
+  protected subTypeErrors = computed(() => this.validationResult().getErrors('subType'));
+  protected usageErrors = computed(() => this.validationResult().getErrors('usage'));
   protected keyNrErrors = computed(() => this.validationResult().getErrors('keyNr'));
   protected lockerNrErrors = computed(() => this.validationResult().getErrors('lockerNr'));
   protected errors = computed(() => this.validationResult().getErrors());
@@ -454,7 +470,7 @@ export class ResourceForm {
     this.formData.update((vm) => ({ ...vm, usage: setUsageFromYear(vm.usage, getYear(), usage) }));
   }
 
-  protected onFieldChange(fieldName: string, fieldValue: string | number | boolean): void {
+  protected onFieldChange(fieldName: string, fieldValue: string | number | boolean | string[] | BaseProperty[]): void {
     this.dirty.emit(true);
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
   }

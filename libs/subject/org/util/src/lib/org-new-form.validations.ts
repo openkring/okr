@@ -1,6 +1,6 @@
 import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 
-import { CITY_LENGTH, COUNTRY_LENGTH, DESCRIPTION_LENGTH, EMAIL_LENGTH, NAME_LENGTH, NUMBER_LENGTH, PHONE_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH, ZIP_LENGTH } from '@okr/shared-constants';
+import { CITY_LENGTH, DESCRIPTION_LENGTH, EMAIL_LENGTH, NAME_LENGTH, NUMBER_LENGTH, PHONE_LENGTH, SHORT_NAME_LENGTH, ZIP_LENGTH } from '@okr/shared-constants';
 import { dateValidations, isAfterDate, stringValidations } from '@okr/shared-util-core';
 
 import { OrgNewFormModel } from './org-new-form.model';
@@ -9,21 +9,21 @@ export const orgNewFormValidations = staticSuite((model: OrgNewFormModel, field?
   if (field) only(field);
 
   stringValidations('name', model.name, NAME_LENGTH, 3, true);
-  stringValidations('type', model.type, WORD_LENGTH);
+  stringValidations('type', model.type);
   dateValidations('dateOfFoundation', model.dateOfFoundation);
   dateValidations('dateOfLiquidation', model.dateOfLiquidation);
   stringValidations('streetName', model.streetName, SHORT_NAME_LENGTH);
   stringValidations('streetNumber', model.streetNumber, NUMBER_LENGTH);
   stringValidations('zipCode', model.zipCode, ZIP_LENGTH);
   stringValidations('city', model.city, CITY_LENGTH);
-  stringValidations('countryCode', model.countryCode, COUNTRY_LENGTH);
+  stringValidations('countryCode', model.countryCode);
   stringValidations('phone', model.phone, PHONE_LENGTH);
   stringValidations('email', model.email, EMAIL_LENGTH);
   stringValidations('url', model.url, SHORT_NAME_LENGTH);
   stringValidations('taxId', model.taxId, SHORT_NAME_LENGTH);
   stringValidations('notes', model.notes, DESCRIPTION_LENGTH);
   stringValidations('bexioId', model.bexioId, SHORT_NAME_LENGTH);
-  stringValidations('membershipCategoryKey', model.membershipCategoryKey, SHORT_NAME_LENGTH); // tbd: check whether it is valid
+  stringValidations('membershipCategoryKey', model.membershipCategoryKey); // tbd: check whether it is valid
 
   //tagValidations('tags', model.tags);
 

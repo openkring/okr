@@ -1,16 +1,18 @@
 import { Component, computed, effect, input, linkedSignal, output, signal } from '@angular/core';
 import { IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonList, IonRow } from '@ionic/angular/standalone';
 
-import { DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n , ErrorNote} from '@okr/shared-ui';
 import { coerceBoolean } from '@okr/shared-util-core';
 import { SvgIconPipe } from '@okr/shared-pipes';
 
 import { BexioInvoiceFormModel, BexioInvoicePosition, BexioTemplates, DefaultInvoicePositions, bexioInvoiceValidations, defaultInvoicePositionToBexio, InvoiceI18n } from '@okr/finance-invoice-util';
+import { SHORT_NAME_LENGTH } from '@okr/shared-constants';
 
 @Component({
   selector: 'okr-bexio-invoice-new-form',
   standalone: true,
   imports: [
+    ErrorNote,
     SvgIconPipe,
     TextInput, DateInput, NumberInput, NotesInput, StringSelect,
     IonCard, IonCardContent, IonGrid, IonRow, IonCol,
@@ -28,12 +30,14 @@ import { BexioInvoiceFormModel, BexioInvoicePosition, BexioTemplates, DefaultInv
                 <ion-col size="8">
                   <okr-text-input [i18n]="titleI18n()" [value]="title()"
                     (valueChange)="onFieldChange('title', $event)"
-                    [maxLength]="100" [readOnly]="isReadOnly()" />
+                    [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="titleErrors()" />
                 </ion-col>
                 <ion-col size="4">
                   <okr-text-input [i18n]="bexioIdI18n()" [value]="bexioId()"
                     (valueChange)="onFieldChange('bexioId', $event)"
-                    [maxLength]="30" [readOnly]="isReadOnly()" />
+                    [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="bexioIdErrors()" />
                 </ion-col>
               </ion-row>
               <ion-row>
@@ -41,11 +45,13 @@ import { BexioInvoiceFormModel, BexioInvoicePosition, BexioTemplates, DefaultInv
                   <okr-date-input [i18n]="validFromI18n()" [storeDate]="validFrom()"
                     (storeDateChange)="onFieldChange('validFrom', $event)"
                     [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="validFromErrors()" />
                 </ion-col>
                 <ion-col size="6">
                   <okr-date-input [i18n]="validToI18n()" [storeDate]="validTo()"
                     (storeDateChange)="onFieldChange('validTo', $event)"
                     [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="validToErrors()" />
                 </ion-col>
               </ion-row>
               <ion-row>
@@ -142,6 +148,8 @@ import { BexioInvoiceFormModel, BexioInvoicePosition, BexioTemplates, DefaultInv
   `
 })
 export class BexioInvoiceNewForm {
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly shortNameLength = SHORT_NAME_LENGTH;
   public readonly formData = input.required<BexioInvoiceFormModel>();
   public readonly readOnly = input(false);
   public readonly showForm = input(true);
@@ -190,6 +198,10 @@ export class BexioInvoiceNewForm {
 
   protected readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   private readonly validationResult = computed(() => bexioInvoiceValidations(this.formData()));
+  protected validFromErrors = computed(() => this.validationResult().getErrors('validFrom'));
+  protected validToErrors = computed(() => this.validationResult().getErrors('validTo'));
+  protected bexioIdErrors = computed(() => this.validationResult().getErrors('bexioId'));
+  protected titleErrors = computed(() => this.validationResult().getErrors('title'));
 
   constructor() {
     effect(() => this.valid.emit(this.validationResult().isValid()));

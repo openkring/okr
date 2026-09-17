@@ -68,6 +68,7 @@ export interface IconEditFormI18n {
                 <!-- index: editable list of words, e.g. 'create edit new' -->
                 <okr-text-input [i18n]="indexI18n()" [value]="index()" (valueChange)="onFieldChange('index', $event)"
                   [showHelper]="true" [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="indexErrors()" />
               </ion-col>
             </ion-row>
             <ion-row>

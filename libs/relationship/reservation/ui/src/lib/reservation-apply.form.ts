@@ -1,8 +1,8 @@
 import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonRow } from '@ionic/angular/standalone';
-import { DEFAULT_DATE, DEFAULT_KEY, DEFAULT_RES_REASON, DEFAULT_TIME, NAME_LENGTH } from '@okr/shared-constants';
+import { DEFAULT_DATE, DEFAULT_KEY, DEFAULT_RES_REASON, DEFAULT_TIME, DESCRIPTION_LENGTH, NAME_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { CategoryListModel, ReservationApplyModel, RoleName, UserModel } from '@okr/shared-models';
-import { CategorySelect, Checkbox, CheckboxI18n, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n, TimeInput, TimeInputI18n } from '@okr/shared-ui';
+import { CategorySelect, Checkbox, CheckboxI18n, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n, TimeInput, TimeInputI18n , ErrorNote} from '@okr/shared-ui';
 import { getAvatarName, hasRole } from '@okr/shared-util-core';
 
 import { reservationApplyValidations, ReservationI18n } from '@okr/relationship-reservation-util';
@@ -11,6 +11,7 @@ import { reservationApplyValidations, ReservationI18n } from '@okr/relationship-
   selector: 'okr-reservation-apply-form',
   standalone: true,
   imports: [
+    ErrorNote,
     TextInput,
     NumberInput, NotesInput, CategorySelect, DateInput, Checkbox, TimeInput,
     IonGrid, IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonItem
@@ -37,6 +38,7 @@ import { reservationApplyValidations, ReservationI18n } from '@okr/relationship-
               <ion-row>
                 <ion-col size="12" size-md="6" size-lg="4">
                   <okr-date-input [i18n]="startDateI18n()" [storeDate]="startDate()" (storeDateChange)="onFieldChange('startDate', $event)" [locale]="locale()" [readOnly]="false" />
+                  <okr-error-note [errors]="startDateErrors()" />
                 </ion-col>
                 <ion-col size="12" size-md="6" size-lg="4">
                   <okr-time-input [i18n]="startTimeI18n()" [value]="startTime()" (valueChange)="onFieldChange('startTime', $event)" [locale]="locale()" [readOnly]="false" />
@@ -49,9 +51,11 @@ import { reservationApplyValidations, ReservationI18n } from '@okr/relationship-
               <ion-row>
                 <ion-col size="12" size-md="6">
                   <okr-date-input [i18n]="startDateI18n()" [storeDate]="startDate()" (storeDateChange)="onFieldChange('startDate', $event)" [locale]="locale()" [readOnly]="false" />
+                  <okr-error-note [errors]="startDateErrors()" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
                   <okr-date-input [i18n]="endDateI18n()" [storeDate]="endDate()" (storeDateChange)="onFieldChange('endDate', $event)" [locale]="locale()" [readOnly]="false" />
+                  <okr-error-note [errors]="endDateErrors()" />
                 </ion-col>
               </ion-row>
             }
@@ -68,25 +72,29 @@ import { reservationApplyValidations, ReservationI18n } from '@okr/relationship-
             <ion-row>
               <ion-col size="12">
                 <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]="NAME_LENGTH" [autofocus]="true" [readOnly]="false" />
+                <okr-error-note [errors]="nameErrors()" />
               </ion-col>
             </ion-row>
             <ion-row>
               <ion-col size="12" size-md="6">
                 <okr-cat-select [category]="reasons()" [selectedItemName]="reason()" (selectedItemNameChange)="onFieldChange('reason', $event)" [withAll]=false [readOnly]="false" />
+                <okr-error-note [errors]="reasonErrors()" />
               </ion-col>
 
               <ion-col size="12" size-md="6">
-                <okr-text-input [i18n]="participantsI18n()" [value]="participants()" (valueChange)="onFieldChange('participants', $event)" [readOnly]="false" />
+                <okr-text-input [i18n]="participantsI18n()" [value]="participants()" (valueChange)="onFieldChange('participants', $event)" [maxLength]="shortNameLength" [readOnly]="false" />
+                <okr-error-note [errors]="participantsErrors()" />
               </ion-col>
 
               <ion-col size="12" size-md="6">
-                <okr-text-input [i18n]="areaI18n()" [value]="area()" (valueChange)="onFieldChange('area', $event)" [maxLength]=20 [readOnly]="false" />
+                <okr-text-input [i18n]="areaI18n()" [value]="area()" (valueChange)="onFieldChange('area', $event)" [maxLength]="shortNameLength" [readOnly]="false" />
+                <okr-error-note [errors]="areaErrors()" />
               </ion-col>
             </ion-row>
           </ion-grid>
         </ion-card-content>
       </ion-card>
-      <okr-notes-input [i18n]="descriptionI18n()" [value]="description()" (valueChange)="onFieldChange('description', $event)" [readOnly]="false" />
+      <okr-notes-input [i18n]="descriptionI18n()" [value]="description()" (valueChange)="onFieldChange('description', $event)" [maxLength]="descriptionLength" [readOnly]="false" [errors]="descriptionErrors()" />
 
       <ion-card>
         <ion-card-header>
@@ -162,6 +170,7 @@ zukünftige Veranstaltungen zu sperren.
             </ion-card-header>
         <ion-card-content class="ion-no-padding">
           <okr-checkbox [i18n]="isConfirmedI18n()" [checked]="isConfirmed()" (checkedChange)="onFieldChange('isConfirmed', $event)" [showHelper]="false" [readOnly]="false" />
+          <okr-error-note [errors]="isConfirmedErrors()" />
         </ion-card-content>
       </ion-card>
 
@@ -169,6 +178,10 @@ zukünftige Veranstaltungen zu sperren.
   `
 })
 export class ReservationApplyForm {
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly shortNameLength = SHORT_NAME_LENGTH;
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly descriptionLength = DESCRIPTION_LENGTH;
   // inputs
   public readonly i18n = input.required<ReservationI18n>();
   public formData = model.required<ReservationApplyModel>();
@@ -200,6 +213,14 @@ export class ReservationApplyForm {
   
   // validation and errors
   private readonly validationResult = computed(() => reservationApplyValidations(this.formData()));
+  protected endDateErrors = computed(() => this.validationResult().getErrors('endDate'));
+  protected isConfirmedErrors = computed(() => this.validationResult().getErrors('isConfirmed'));
+  protected reasonErrors = computed(() => this.validationResult().getErrors('reason'));
+  protected startDateErrors = computed(() => this.validationResult().getErrors('startDate'));
+  protected areaErrors = computed(() => this.validationResult().getErrors('area'));
+  protected descriptionErrors = computed(() => this.validationResult().getErrors('description'));
+  protected nameErrors = computed(() => this.validationResult().getErrors('name'));
+  protected participantsErrors = computed(() => this.validationResult().getErrors('participants'));
 
   // fields
   protected reserverAvatar = linkedSignal(() => this.formData().reserver);

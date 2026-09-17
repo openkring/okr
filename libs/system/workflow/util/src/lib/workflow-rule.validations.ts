@@ -26,7 +26,7 @@ export const workflowRuleValidations = staticSuite((model: WorkflowRuleModel, te
   // [maxLength] of the probeArg field in workflow-rule.form.ts, or the input accepts values
   // the suite silently rejects.
   stringValidations('probeArg', model.probeArg, NAME_LENGTH, 0, probeNeedsArg(model.probe));
-  stringValidations('responsibilityKey', model.responsibilityKey, SHORT_NAME_LENGTH, 0, true);
+  stringValidations('responsibilityKey', model.responsibilityKey, undefined, 0, true);
 
   const steps = model.steps ?? [];
   // a rule with no consequence is a rule that does nothing — the engine logs and skips it

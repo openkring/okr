@@ -2,9 +2,9 @@ import { Component, computed, effect, input, linkedSignal, model, output } from 
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 import { CategoryListModel, PersonalRelModel, RoleName, UserModel } from '@okr/shared-models';
 import { FullNamePipe } from '@okr/shared-pipes';
-import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, TextInput, TextInputI18n , ErrorNote} from '@okr/shared-ui';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
-import { DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PERSONAL_REL, DEFAULT_TAGS } from '@okr/shared-constants';
+import { DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PERSONAL_REL, DEFAULT_TAGS, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 
 import { AvatarPipe } from '@okr/avatar-ui';
 import { personalRelValidations, PersonalRelI18n } from '@okr/relationship-personal-rel-util';
@@ -13,6 +13,7 @@ import { personalRelValidations, PersonalRelI18n } from '@okr/relationship-perso
   selector: 'okr-personal-rel-form',
   standalone: true,
   imports: [
+    ErrorNote,
     AvatarPipe, FullNamePipe,
     DateInput, Chips, NotesInput, CategorySelect,
     IonGrid, IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonItem, IonAvatar, IonImg, IonLabel, IonButton,
@@ -54,10 +55,12 @@ import { personalRelValidations, PersonalRelI18n } from '@okr/relationship-perso
             <ion-row>
               <ion-col size="12" size-md="6"> 
                 <okr-cat-select [category]="types()!" [selectedItemName]="type()" (selectedItemNameChange)="onFieldChange('type', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="typeErrors()" />
               </ion-col>
               @if(type() === 'custom') {
                 <ion-col size="12" size-md="6">
-                    <okr-text-input [i18n]="labelI18n()" [value]="label()" (valueChange)="onFieldChange('label', $event)" [readOnly]="isReadOnly()" />
+                    <okr-text-input [i18n]="labelI18n()" [value]="label()" (valueChange)="onFieldChange('label', $event)" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
+                    <okr-error-note [errors]="labelErrors()" />
                 </ion-col>
               }
             </ion-row>
@@ -89,9 +92,11 @@ import { personalRelValidations, PersonalRelI18n } from '@okr/relationship-perso
             <ion-row>
               <ion-col size="12" size-md="6">
                 <okr-date-input [i18n]="validFromI18n()" [storeDate]="validFrom()" (storeDateChange)="onFieldChange('validFrom', $event)" [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="validFromErrors()" />
               </ion-col>
               <ion-col size="12" size-md="6">
                 <okr-date-input [i18n]="validToI18n()" [storeDate]="validTo()" (storeDateChange)="onFieldChange('validTo', $event)" [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="validToErrors()" />
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -103,13 +108,17 @@ import { personalRelValidations, PersonalRelI18n } from '@okr/relationship-perso
       }
 
       @if(hasRole('admin')) {
-        <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
+        <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="notesErrors()" />
       }
     </form>
   }
   `
 })
 export class PersonalRelForm {
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly shortNameLength = SHORT_NAME_LENGTH;
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly descriptionLength = DESCRIPTION_LENGTH;
   protected okeyI18n = computed(() => ({ name: 'okey', label: this.i18n().okey_label(), placeholder: this.i18n().okey_placeholder(), helper: this.i18n().okey_helper() } as TextInputI18n));
   protected labelI18n = computed(() => ({ name: 'label', label: this.i18n().label_label(), placeholder: this.i18n().label_placeholder(), helper: this.i18n().label_helper() } as TextInputI18n));
   protected notesI18n = computed(() => ({ name: 'notes', label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder() } as NotesInputI18n));
@@ -135,6 +144,11 @@ export class PersonalRelForm {
 
   // validation and errors
   private readonly validationResult = computed(() => personalRelValidations(this.formData(), this.tenants(), this.allTags()));
+  protected typeErrors = computed(() => this.validationResult().getErrors('type'));
+  protected validFromErrors = computed(() => this.validationResult().getErrors('validFrom'));
+  protected validToErrors = computed(() => this.validationResult().getErrors('validTo'));
+  protected labelErrors = computed(() => this.validationResult().getErrors('label'));
+  protected notesErrors = computed(() => this.validationResult().getErrors('notes'));
 
   // fields
   protected subjectKey = linkedSignal(() => this.formData().subjectKey ?? DEFAULT_KEY);

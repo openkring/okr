@@ -8,23 +8,23 @@ import { dateValidations, isAfterOrEqualDate, stringValidations } from '@okr/sha
 export const personalRelValidations = staticSuite((model: PersonalRelModel, tenants: string, tags: string, field?: string) => {
   if (field) only(field);
 
-  stringValidations('okey', model.okey, SHORT_NAME_LENGTH);
+  stringValidations('okey', model.okey);
   //tagValidations('tags', model.tags);
   stringValidations('notes', model.notes, DESCRIPTION_LENGTH);
 
   // subject
-  stringValidations('subjectKey', model.subjectKey, SHORT_NAME_LENGTH);
+  stringValidations('subjectKey', model.subjectKey);
   stringValidations('subjectFirstName', model.subjectFirstName, SHORT_NAME_LENGTH);
   stringValidations('subjectLastName', model.subjectLastName, SHORT_NAME_LENGTH);
   stringValidations('subjectGender', model.subjectGender, WORD_LENGTH);
 
   // object
-  stringValidations('objectKey', model.objectKey, SHORT_NAME_LENGTH);
+  stringValidations('objectKey', model.objectKey);
   stringValidations('objectFirstName', model.objectFirstName, SHORT_NAME_LENGTH);
   stringValidations('objectLastName', model.objectLastName, SHORT_NAME_LENGTH);
   stringValidations('objectGender', model.objectGender, WORD_LENGTH);
 
-  stringValidations('type', model.type, WORD_LENGTH);
+  stringValidations('type', model.type);
   stringValidations('label', model.label, SHORT_NAME_LENGTH);
   dateValidations('validFrom', model.validFrom);
   dateValidations('validTo', model.validTo);

@@ -3,15 +3,17 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular
 
 import { BexioIdMask, ChVatMask } from '@okr/shared-config';
 import { CategoryListModel, OrgModel, RoleName, UserModel } from '@okr/shared-models';
-import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, TextInput, TextInputI18n , ErrorNote} from '@okr/shared-ui';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 
 import { OrgI18n, orgValidations } from '@okr/subject-org-util';
+import { BEXIO_ID_LENGTH, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 
 @Component({
   selector: 'okr-org-form',
   standalone: true,
   imports: [
+    ErrorNote,
     CategorySelect, DateInput, TextInput, Chips, NotesInput,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent
   ],
@@ -34,30 +36,36 @@ import { OrgI18n, orgValidations } from '@okr/subject-org-util';
               <ion-row>
                 <ion-col size="12" size-md="6">
                   <okr-cat-select [category]="types()!" [selectedItemName]="type()" (selectedItemNameChange)="onFieldChange('type', $event)" [readOnly]="isOrgTypeReadOnly()" />
+                  <okr-error-note [errors]="typeErrors()" />
                 </ion-col>
               </ion-row>
             }
             <ion-row> 
               <ion-col size="12">
-                <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" autocomplete="organization" [maxLength]=50 [readOnly]="isReadOnly()" />
+                <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" autocomplete="organization" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="nameErrors()" />
               </ion-col>
             </ion-row>
             <ion-row>
               <ion-col size="12" size-md="6">
                 <okr-date-input [i18n]="dateOfFoundationI18n()" [storeDate]="dateOfFoundation()" (storeDateChange)="onFieldChange('dateOfFoundation', $event)" [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="dateOfFoundationErrors()" />
               </ion-col>
 
               <ion-col size="12" size-md="6">
                 <okr-date-input [i18n]="dateOfLiquidationI18n()" [storeDate]="dateOfLiquidation()" (storeDateChange)="onFieldChange('dateOfLiquidation', $event)" [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="dateOfLiquidationErrors()" />
               </ion-col>
             </ion-row>
             <ion-row>
               <ion-col size="12" size-md="6">
-                <okr-text-input [i18n]="taxIdI18n()" [value]="taxId()" (valueChange)="onFieldChange('taxId', $event)" [mask]="vatMask" [showHelper]=true [readOnly]="isReadOnly()" />
+                <okr-text-input [i18n]="taxIdI18n()" [value]="taxId()" (valueChange)="onFieldChange('taxId', $event)" [mask]="vatMask" [showHelper]=true [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="taxIdErrors()" />
               </ion-col>
               @if(hasRole('admin')) { 
                 <ion-col size="12" size-md="6">
-                  <okr-text-input [i18n]="bexioIdI18n()" [value]="bexioId()" (valueChange)="onFieldChange('bexioId', $event)" [maxLength]=6 [mask]="bexioMask" [showHelper]=true [readOnly]="isReadOnly()" />
+                  <okr-text-input [i18n]="bexioIdI18n()" [value]="bexioId()" (valueChange)="onFieldChange('bexioId', $event)" [maxLength]="bexioIdLength" [mask]="bexioMask" [showHelper]=true [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="bexioIdErrors()" />
                 </ion-col>
               }
             </ion-row>
@@ -70,13 +78,19 @@ import { OrgI18n, orgValidations } from '@okr/subject-org-util';
       }
 
       @if(hasRole('admin')) { 
-        <okr-notes-input [i18n]="notesI18n()" [readOnly]="isReadOnly()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" />
+        <okr-notes-input [i18n]="notesI18n()" [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [errors]="notesErrors()" />
       }
     </form>
   }
   `
 })
 export class OrgForm {
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly bexioIdLength = BEXIO_ID_LENGTH;
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly shortNameLength = SHORT_NAME_LENGTH;
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly descriptionLength = DESCRIPTION_LENGTH;
   public readonly i18n = input.required<OrgI18n>();
   protected okeyI18n   = computed(() => ({ name: 'okey',   label: this.i18n().okey_label(),   placeholder: this.i18n().okey_placeholder(),   helper: this.i18n().okey_helper()   } as TextInputI18n));
   protected nameI18n   = computed(() => ({ name: 'name',   label: this.i18n().name_label(),   placeholder: this.i18n().name_placeholder(),   helper: this.i18n().name_helper()   } as TextInputI18n));
@@ -106,6 +120,12 @@ export class OrgForm {
 
   // validation and errors
   private readonly validationResult = computed(() => orgValidations(this.formData(), this.tenantId(), this.allTags()));
+  protected dateOfFoundationErrors = computed(() => this.validationResult().getErrors('dateOfFoundation'));
+  protected dateOfLiquidationErrors = computed(() => this.validationResult().getErrors('dateOfLiquidation'));
+  protected typeErrors = computed(() => this.validationResult().getErrors('type'));
+  protected bexioIdErrors = computed(() => this.validationResult().getErrors('bexioId'));
+  protected notesErrors = computed(() => this.validationResult().getErrors('notes'));
+  protected taxIdErrors = computed(() => this.validationResult().getErrors('taxId'));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
 
   // fields

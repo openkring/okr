@@ -5,7 +5,7 @@ import { BexioIdMask, ChVatMask } from '@okr/shared-config';
 import { CategoryListModel, City, RoleName, UserModel } from '@okr/shared-models';
 import { CategorySelect, Chips, CountrySelect, CountrySelectI18n, DateInput, DateInputI18n, EmailInput, EmailInputI18n, ErrorNote, NotesInput, NotesInputI18n, PhoneInput, PhoneInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
-import { DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_ID, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORG_TYPE, DEFAULT_PHONE, DEFAULT_TAGS, DEFAULT_URL } from '@okr/shared-constants';
+import { CITY_LENGTH, DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_ID, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORG_TYPE, DEFAULT_PHONE, DEFAULT_TAGS, DEFAULT_URL, DESCRIPTION_LENGTH, EMAIL_LENGTH, NAME_LENGTH, NUMBER_LENGTH, PHONE_LENGTH, SHORT_NAME_LENGTH, ZIP_LENGTH } from '@okr/shared-constants';
 
 import { CitySearch } from '@okr/subject-swisscities-ui';
 import { OrgI18n, OrgNewFormModel, orgNewFormValidations } from '@okr/subject-org-util';
@@ -36,13 +36,14 @@ import { ZefixLookup } from './zefix-lookup';
               <ion-row>
                 <ion-col size="12" size-md="6">
                   <okr-cat-select [category]="types()" [selectedItemName]="type()" (selectedItemNameChange)="onFieldChange('type', $event)" [withAll]="false" [readOnly]="isOrgTypeReadOnly() || isReadOnly()" />
+                  <okr-error-note [errors]="typeErrors()" />
                 </ion-col>
               </ion-row>
             }
 
             <ion-row class="ion-align-items-center">
               <ion-col [size]="isLegalEntity() ? 10 : 12">
-                <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" autocomplete="organization" [maxLength]=50 [readOnly]="isReadOnly()" />
+                <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" autocomplete="organization" [maxLength]="nameLength" [readOnly]="isReadOnly()" />
                 <okr-error-note [errors]="nameErrors()" />
               </ion-col>
               @if (isLegalEntity()) {
@@ -55,10 +56,12 @@ import { ZefixLookup } from './zefix-lookup';
             <ion-row>
               <ion-col size="12" size-md="6">
                 <okr-date-input [i18n]="dateOfFoundationI18n()" [storeDate]="dateOfFoundation()" (storeDateChange)="onFieldChange('dateOfFoundation', $event)" [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="dateOfFoundationErrors()" />
               </ion-col>
 
               <ion-col size="12" size-md="6">
                 <okr-date-input [i18n]="dateOfLiquidationI18n()" [storeDate]="dateOfLiquidation()" (storeDateChange)="onFieldChange('dateOfLiquidation', $event)" [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="dateOfLiquidationErrors()" />
               </ion-col>
             </ion-row>
 
@@ -67,11 +70,11 @@ import { ZefixLookup } from './zefix-lookup';
             --------------------------------------------------->
             <ion-row>
               <ion-col size="10">
-                <okr-text-input [i18n]="streetNameI18n()" [value]="streetName()" (valueChange)="onFieldChange('streetName', $event)" autocomplete="street-address" [readOnly]="isReadOnly()" />
+                <okr-text-input [i18n]="streetNameI18n()" [value]="streetName()" (valueChange)="onFieldChange('streetName', $event)" autocomplete="street-address" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
                 <okr-error-note [errors]="streetNameErrors()" />                                                                                                                     
               </ion-col>
               <ion-col size="2">
-                <okr-text-input [i18n]="streetNumberI18n()" [value]="streetNumber()" (valueChange)="onFieldChange('streetNumber', $event)" [readOnly]="isReadOnly()" />
+                <okr-text-input [i18n]="streetNumberI18n()" [value]="streetNumber()" (valueChange)="onFieldChange('streetNumber', $event)" [maxLength]="numberLength" [readOnly]="isReadOnly()" />
                 <okr-error-note [errors]="streetNumberErrors()" />                                                                                                                     
               </ion-col>
             </ion-row>
@@ -84,24 +87,26 @@ import { ZefixLookup } from './zefix-lookup';
               </ion-col>
       
               <ion-col size="12" size-md="3">
-                <okr-text-input [i18n]="zipCodeI18n()" [value]="zipCode()" (valueChange)="onFieldChange('zipCode', $event)" [readOnly]="isReadOnly()" />
+                <okr-text-input [i18n]="zipCodeI18n()" [value]="zipCode()" (valueChange)="onFieldChange('zipCode', $event)" [maxLength]="zipLength" [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="zipCodeErrors()" />
               </ion-col>
               
               <ion-col size="12" size-md="6">
-                <okr-text-input [i18n]="cityI18n()" [value]="city()" (valueChange)="onFieldChange('city', $event)" [readOnly]="isReadOnly()" />
+                <okr-text-input [i18n]="cityI18n()" [value]="city()" (valueChange)="onFieldChange('city', $event)" [maxLength]="cityLength" [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="cityErrors()" />
               </ion-col>
             </ion-row>
             <ion-row>
               <ion-col size="12" size-md="6"> 
-                <okr-phone [i18n]="phoneI18n()" [value]="phone()" (valueChange)="onFieldChange('phone', $event)" [readOnly]="isReadOnly()" />
+                <okr-phone [i18n]="phoneI18n()" [value]="phone()" (valueChange)="onFieldChange('phone', $event)" [maxLength]="phoneLength" [readOnly]="isReadOnly()" />
                 <okr-error-note [errors]="phoneErrors()" />
               </ion-col>
               <ion-col size="12">
-                <okr-email [i18n]="emailI18n()" [value]="email()" (valueChange)="onFieldChange('email', $event)" [readOnly]="isReadOnly()" />
+                <okr-email [i18n]="emailI18n()" [value]="email()" (valueChange)="onFieldChange('email', $event)" [maxLength]="emailLength" [readOnly]="isReadOnly()" />
                 <okr-error-note [errors]="emailErrors()" />                                                                                                                     
               </ion-col>
               <ion-col size="12">
-                <okr-text-input [i18n]="urlI18n()" [value]="url()" (valueChange)="onFieldChange('url', $event)" [readOnly]="isReadOnly()" />
+                <okr-text-input [i18n]="urlI18n()" [value]="url()" (valueChange)="onFieldChange('url', $event)" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
                 <okr-error-note [errors]="urlErrors()" />                                                                                                                     
               </ion-col>
             </ion-row>
@@ -110,13 +115,15 @@ import { ZefixLookup } from './zefix-lookup';
             
             <ion-row>
               <ion-col size="12" size-md="6">
-                <okr-text-input [i18n]="taxIdI18n()" [value]="taxId()" (valueChange)="onFieldChange('taxId', $event)" [mask]="vatMask" [showHelper]=true [readOnly]="isReadOnly()" />
+                <okr-text-input [i18n]="taxIdI18n()" [value]="taxId()" (valueChange)="onFieldChange('taxId', $event)" [mask]="vatMask" [showHelper]=true [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="taxIdErrors()" />
               </ion-col>
             </ion-row>
             @if(hasRole('admin')) {
               <ion-row>
                 <ion-col size="12">
-                  <okr-text-input [i18n]="bexioIdI18n()" [value]="bexioId()" (valueChange)="onFieldChange('bexioId', $event)" [maxLength]=6 [mask]="bexioMask" [showHelper]=true [readOnly]="isReadOnly()" />
+                  <okr-text-input [i18n]="bexioIdI18n()" [value]="bexioId()" (valueChange)="onFieldChange('bexioId', $event)" [maxLength]="shortNameLength" [mask]="bexioMask" [showHelper]=true [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="bexioIdErrors()" />
                 </ion-col>
               </ion-row>
             }
@@ -129,13 +136,29 @@ import { ZefixLookup } from './zefix-lookup';
       }
 
       @if(hasRole('admin')) { 
-        <okr-notes-input [i18n]="notesI18n()" [readOnly]="isReadOnly()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" />
+        <okr-notes-input [i18n]="notesI18n()" [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [errors]="notesErrors()" />
       }
     </form>
   }
   `
 })
 export class OrgNewForm {
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly emailLength = EMAIL_LENGTH;
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly phoneLength = PHONE_LENGTH;
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly nameLength = NAME_LENGTH;
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly shortNameLength = SHORT_NAME_LENGTH;
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly numberLength = NUMBER_LENGTH;
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly zipLength = ZIP_LENGTH;
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly cityLength = CITY_LENGTH;
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly descriptionLength = DESCRIPTION_LENGTH;
   public readonly i18n = input.required<OrgI18n>();
   protected nameI18n        = computed(() => ({ name: 'name',        label: this.i18n().name_label(),        placeholder: this.i18n().name_placeholder(),        helper: this.i18n().name_helper()        } as TextInputI18n));
   protected streetNameI18n  = computed(() => ({ name: 'streetName',  label: this.i18n().streetName_label(),  placeholder: this.i18n().streetName_placeholder(),  helper: this.i18n().streetName_helper()  } as TextInputI18n));
@@ -172,6 +195,14 @@ export class OrgNewForm {
 
   // validation and errors
   private readonly validationResult = computed(() => orgNewFormValidations(this.formData()));
+  protected dateOfFoundationErrors = computed(() => this.validationResult().getErrors('dateOfFoundation'));
+  protected dateOfLiquidationErrors = computed(() => this.validationResult().getErrors('dateOfLiquidation'));
+  protected typeErrors = computed(() => this.validationResult().getErrors('type'));
+  protected bexioIdErrors = computed(() => this.validationResult().getErrors('bexioId'));
+  protected cityErrors = computed(() => this.validationResult().getErrors('city'));
+  protected notesErrors = computed(() => this.validationResult().getErrors('notes'));
+  protected taxIdErrors = computed(() => this.validationResult().getErrors('taxId'));
+  protected zipCodeErrors = computed(() => this.validationResult().getErrors('zipCode'));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
   protected streetNameErrors = computed(() => this.validationResult().getErrors('streetName'));
   protected streetNumberErrors = computed(() => this.validationResult().getErrors('streetNumber'));

@@ -1,7 +1,7 @@
 import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
-import { DEFAULT_MENU_ACTION, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ROLE, DEFAULT_TAGS, DEFAULT_URL, NAME_LENGTH } from '@okr/shared-constants';
+import { DEFAULT_MENU_ACTION, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ROLE, DEFAULT_TAGS, DEFAULT_URL, DESCRIPTION_LENGTH, LONG_NAME_LENGTH, NAME_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { BaseProperty, CategoryListModel, MenuItemModel, RoleName, UserModel } from '@okr/shared-models';
 import { CategorySelect, Chips, ErrorNote, NotesInput, NotesInputI18n, StringList, TextInput, TextInputI18n, UrlInput, UrlInputI18n, IconInput } from '@okr/shared-ui';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
@@ -26,12 +26,13 @@ import { MenuI18n, menuItemValidations } from '@okr/cms-menu-util';
           <ion-grid>
             <ion-row>
               <ion-col size="12" size-md="6">
-                <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [autofocus]="true" [maxLength]="nameLength" [readOnly]="isReadOnly()" [showHelper]=true />
+                <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [autofocus]="true" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" [showHelper]=true />
                 <okr-error-note [errors]="nameErrors()" />
               </ion-col>
 
               <ion-col size="12" size-md="6">
                 <okr-cat-select [category]="types()!" [selectedItemName]="menuAction()" (selectedItemNameChange)="onFieldChange('action', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="actionErrors()" />
               </ion-col>
             </ion-row>
 
@@ -42,7 +43,7 @@ import { MenuI18n, menuItemValidations } from '@okr/cms-menu-util';
                 </ion-col>
 
                 <ion-col size="12" size-md="6">
-                  <okr-text-input [i18n]="labelI18n()" [value]="label()" (valueChange)="onFieldChange('label', $event)" [showHelper]=true [readOnly]="isReadOnly()" />
+                  <okr-text-input [i18n]="labelI18n()" [value]="label()" (valueChange)="onFieldChange('label', $event)" [showHelper]=true [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
                   <okr-error-note [errors]="labelErrors()" />
                 </ion-col>
 
@@ -61,7 +62,7 @@ import { MenuI18n, menuItemValidations } from '@okr/cms-menu-util';
                   <okr-url [i18n]="urlI18n()"
                     [value]="url()" (valueChange)="onFieldChange('url', $event)"
                     [readOnly]="isReadOnly()"
-                  />
+                  [maxLength]="longNameLength" />
                   <okr-error-note [errors]="urlErrors()" />
                 </ion-col>
               </ion-row>
@@ -70,7 +71,7 @@ import { MenuI18n, menuItemValidations } from '@okr/cms-menu-util';
             @if(menuAction() === 'sub') {
               <ion-row>
                 <ion-col size="12">
-                  <okr-text-input [i18n]="labelI18n()" [value]="label()" (valueChange)="onFieldChange('label', $event)" [showHelper]=true [readOnly]="isReadOnly()" />
+                  <okr-text-input [i18n]="labelI18n()" [value]="label()" (valueChange)="onFieldChange('label', $event)" [showHelper]=true [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
                   <okr-error-note [errors]="labelErrors()" />
                 </ion-col>
               </ion-row>
@@ -80,6 +81,7 @@ import { MenuI18n, menuItemValidations } from '@okr/cms-menu-util';
               <ion-row>
                 <ion-col size="12">
                   <okr-cat-select [category]="roles()!" [selectedItemName]="roleNeeded()" (selectedItemNameChange)="onFieldChange('roleNeeded', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="roleNeededErrors()" />
                 </ion-col>
               </ion-row>
             }
@@ -108,13 +110,19 @@ import { MenuI18n, menuItemValidations } from '@okr/cms-menu-util';
       }
 
       @if(hasRole('contentAdmin')) {
-        <okr-notes-input [i18n]="descriptionI18n()" [value]="description()" (valueChange)="onFieldChange('description', $event)" [readOnly]="isReadOnly()" />
+        <okr-notes-input [i18n]="descriptionI18n()" [value]="description()" (valueChange)="onFieldChange('description', $event)" [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="descriptionErrors()" />
       }
     </form>
   }
 `
 })
 export class MenuForm {
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly longNameLength = LONG_NAME_LENGTH;
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly shortNameLength = SHORT_NAME_LENGTH;
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly descriptionLength = DESCRIPTION_LENGTH;
   // inputs
   public readonly formData = model.required<MenuItemModel>();
   public readonly types = input.required<CategoryListModel>();
@@ -167,6 +175,9 @@ export class MenuForm {
 
   // validation and errors
   private readonly validationResult = computed(() => menuItemValidations(this.formData(), this.tenantId(), this.allTags()));
+  protected actionErrors = computed(() => this.validationResult().getErrors('action'));
+  protected roleNeededErrors = computed(() => this.validationResult().getErrors('roleNeeded'));
+  protected descriptionErrors = computed(() => this.validationResult().getErrors('description'));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
   protected iconErrors = computed(() => this.validationResult().getErrors('icon'));
   protected labelErrors = computed(() => this.validationResult().getErrors('label'));

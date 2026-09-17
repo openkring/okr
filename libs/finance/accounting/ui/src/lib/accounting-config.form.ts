@@ -1,7 +1,7 @@
 import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
-import { NumberInput, NumberInputI18n } from '@okr/shared-ui';
+import { NumberInput, NumberInputI18n , ErrorNote} from '@okr/shared-ui';
 
 import { AccountingConfigModel, AccountModel } from '@okr/shared-models';
 import { coerceBoolean } from '@okr/shared-util-core';
@@ -21,7 +21,8 @@ export type { AccountingI18n };
 @Component({
   selector: 'okr-accounting-config-form',
   standalone: true,
-  imports: [AccountSelect, NumberInput, IonGrid, IonRow, IonCol, IonCard, IonCardContent],
+  imports: [
+    ErrorNote,AccountSelect, NumberInput, IonGrid, IonRow, IonCol, IonCard, IonCardContent],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px; } }`],
   template: `
     @if (showForm()) {
@@ -49,6 +50,7 @@ export type { AccountingI18n };
                     (valueChange)="onFieldChange('fiscalYearStart', $event)"
                     [integer]="true" [min]="1" [max]="12" [maxLength]="2" [inputMode]="'numeric'"
                     [showHelper]="true" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="fiscalYearStartErrors()" />
                 </ion-col>
               </ion-row>
             </ion-grid>
@@ -90,6 +92,7 @@ export class AccountingConfigForm {
   } as NumberInputI18n));
 
   private readonly validationResult = computed(() => accountingConfigValidations(this.formData(), this.tenantId(), ''));
+  protected fiscalYearStartErrors = computed(() => this.validationResult().getErrors('fiscalYearStart'));
 
   constructor() {
     effect(() => this.valid.emit(this.validationResult().isValid()));

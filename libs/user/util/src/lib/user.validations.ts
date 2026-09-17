@@ -9,7 +9,7 @@ export const userValidations = staticSuite((model: UserModel, tenants: string, t
 
   baseValidations(model, tenants, tags, field);
   stringValidations('loginEmail', model.loginEmail, SHORT_NAME_LENGTH);
-  stringValidations('personKey', model.personKey, SHORT_NAME_LENGTH);
+  stringValidations('personKey', model.personKey);
   stringValidations('firstName', model.firstName, SHORT_NAME_LENGTH);
   stringValidations('lastName', model.lastName, SHORT_NAME_LENGTH);
   booleanValidations('useTouchId', model.useTouchId);

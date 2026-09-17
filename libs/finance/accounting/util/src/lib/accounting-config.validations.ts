@@ -11,7 +11,7 @@ export const accountingConfigValidations = staticSuite(
     baseValidations(model, tenants, tags, field);  // okey, tenants, isArchived
     stringValidations('accountingTenantId', model.accountingTenantId, SHORT_NAME_LENGTH, 1, true);
     // Both account links are optional (empty = not linked yet), but must stay account okeys.
-    stringValidations('defaultExpenseAccountKey', model.defaultExpenseAccountKey, SHORT_NAME_LENGTH);
-    stringValidations('employeePayablesAccountKey', model.employeePayablesAccountKey, SHORT_NAME_LENGTH);
+    stringValidations('defaultExpenseAccountKey', model.defaultExpenseAccountKey);
+    stringValidations('employeePayablesAccountKey', model.employeePayablesAccountKey);
     numberValidations('fiscalYearStart', model.fiscalYearStart, true, 1, 12);
   });

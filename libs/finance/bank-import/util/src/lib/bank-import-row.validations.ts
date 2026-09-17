@@ -2,6 +2,7 @@ import { only, staticSuite } from 'vest';
 
 import { BankImportRowModel } from '@okr/shared-models';
 import { stringValidations } from '@okr/shared-util-core';
+import { SHORT_NAME_LENGTH } from '@okr/shared-constants';
 
 /**
  * Validates only the fields the assignment form (title/account) can actually edit — a staging
@@ -18,5 +19,5 @@ export const bankImportRowValidations = staticSuite(
     if (field) only(field);
 
     stringValidations('title', model.title, 100, 1, true);
-    stringValidations('accountKey', model.accountKey, 50, 1, true);
+    stringValidations('accountKey', model.accountKey, undefined, 1, true);
   });

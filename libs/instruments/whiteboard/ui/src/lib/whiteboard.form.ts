@@ -2,9 +2,9 @@ import { Component, computed, effect, input, model, output } from '@angular/core
 import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonRow, IonSelect, IonSelectOption } from '@ionic/angular/standalone';
 
-import { DEFAULT_NOTES, DEFAULT_TAGS } from '@okr/shared-constants';
+import { DEFAULT_NOTES, DEFAULT_TAGS, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { RoleName, UserModel, WhiteboardModel } from '@okr/shared-models';
-import { Chips, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { Chips, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { validateVestTree } from '@okr/shared-util-angular';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 
@@ -22,6 +22,7 @@ export interface WhiteboardTemplateOption { key: string; label: string; }
   selector: 'okr-whiteboard-form',
   standalone: true,
   imports: [
+    ErrorNote,
     TextInput, NotesInput, Chips,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonItem, IonLabel, IonSelect, IonSelectOption,
   ],
@@ -35,7 +36,8 @@ export interface WhiteboardTemplateOption { key: string; label: string; }
               <ion-row>
                 <ion-col size="12" size-md="6">
                   <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)"
-                    [autofocus]="true" [maxLength]="50" [readOnly]="isReadOnly()" />
+                    [autofocus]="true" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="nameErrors()" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
                   <ion-item lines="none">
@@ -57,13 +59,17 @@ export interface WhiteboardTemplateOption { key: string; label: string; }
           <okr-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
         }
         @if (hasRole('contentAdmin')) {
-          <okr-notes-input [i18n]="descriptionI18n()" [value]="description()" (valueChange)="onFieldChange('description', $event)" [readOnly]="isReadOnly()" />
+          <okr-notes-input [i18n]="descriptionI18n()" [value]="description()" (valueChange)="onFieldChange('description', $event)" [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="descriptionErrors()" />
         }
       </form>
     }
   `,
 })
 export class WhiteboardForm {
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly descriptionLength = DESCRIPTION_LENGTH;
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly shortNameLength = SHORT_NAME_LENGTH;
   public readonly i18n = input.required<WhiteboardI18n>();
   public formData = model.required<WhiteboardModel>();
   public readonly currentUser = input<UserModel | undefined>();
@@ -79,6 +85,12 @@ export class WhiteboardForm {
     validateVestTree(path, whiteboardValidations as any),
   );
 
+
+  // per-field Vest errors for the notes under each field. validateVestTree calls the suite
+  // with the model alone, so this mirrors exactly what drives the form's validity.
+  private readonly validationResult = computed(() => whiteboardValidations(this.formData() as any, '', this.allTags()));
+  protected descriptionErrors = computed(() => this.validationResult().getErrors('description'));
+  protected nameErrors = computed(() => this.validationResult().getErrors('name'));
   constructor() {
     effect(() => this.valid.emit(this.whiteboardForm().valid()));
   }

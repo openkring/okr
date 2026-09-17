@@ -12,9 +12,9 @@ export const buttonSectionValidations = staticSuite((model: ButtonSection, field
     baseSectionValidations(model, field);
 
     // guard nested config objects with ?. — older stored sections may lack icon/style/action
-    stringValidations('icon.name', model.properties?.icon?.name, NAME_LENGTH);
+    stringValidations('icon.name', model.properties?.icon?.name);
     numberValidations('icon.size', model.properties?.icon?.size, true, 0);   // icon size in px (IconConfig.size is a number)
-    stringValidations('icon.slot', model.properties?.icon?.slot, WORD_LENGTH);   // tbd check icon.slot for start, end, icon-only
+    stringValidations('icon.slot', model.properties?.icon?.slot);   // tbd check icon.slot for start, end, icon-only
 
     stringValidations('style.label', model.properties?.style?.label, LONG_NAME_LENGTH);
     stringValidations('style.shape', model.properties?.style?.shape, WORD_LENGTH);  // tbd: test style.shape  for round or default

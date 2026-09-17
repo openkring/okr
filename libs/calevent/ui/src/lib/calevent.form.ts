@@ -86,11 +86,12 @@ const DEFAULT_RECURRING_PERIODICITY = 'weekly';
           <ion-row>
             <ion-col size="12">
               <okr-cat-select [category]="types()!" [selectedItemName]="type()" (selectedItemNameChange)="onFieldChange('type', $event)" [withAll]="false" [fieldStyle]="true" [label]="i18n().type_label()" [readOnly]="isReadOnly()" />
+              <okr-error-note [errors]="typeErrors()" />
             </ion-col>
           </ion-row>
           <ion-row>
             <ion-col size="12">
-              <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [autofocus]="true" [readOnly]="isReadOnly()" />
+              <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [autofocus]="true" [maxLength]="nameLength" [readOnly]="isReadOnly()" />
               <okr-error-note [errors]="nameErrors()" />
             </ion-col>
           </ion-row>
@@ -123,6 +124,7 @@ const DEFAULT_RECURRING_PERIODICITY = 'weekly';
             <ion-row>
               <ion-col size="12" size-md="6" size-lg="4">
                 <okr-date-input [i18n]="startDateI18n()" [storeDate]="startDate()" (storeDateChange)="onFieldChange('startDate', $event)" [locale]="locale()" [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="startDateErrors()" />
                 @if (startWeekday()) { <ion-note class="weekday">{{ startWeekday() }}</ion-note> }
               </ion-col>
               <ion-col size="12" size-md="6" size-lg="4">
@@ -131,12 +133,14 @@ const DEFAULT_RECURRING_PERIODICITY = 'weekly';
               <ion-col size="12" size-md="6" size-lg="4">
                 <!-- the field keeps the duration in minutes; the helper spells it out ('1 h 30 min') -->
                 <okr-number-input [i18n]="durationMinutesI18n()" [value]="durationMinutes()" (valueChange)="onFieldChange('durationMinutes', $event)" [showHelper]="true" [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="durationMinutesErrors()" />
               </ion-col>
             </ion-row>
           } @else {
             <ion-row>
               <ion-col size="12" size-md="6">
                 <okr-date-input [i18n]="startDateI18n()" [storeDate]="startDate()" (storeDateChange)="onFieldChange('startDate', $event)" [locale]="locale()" [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="startDateErrors()" />
                 @if (startWeekday()) { <ion-note class="weekday">{{ startWeekday() }}</ion-note> }
               </ion-col>
               <ion-col size="12" size-md="6">
@@ -161,6 +165,7 @@ const DEFAULT_RECURRING_PERIODICITY = 'weekly';
               <ion-row class="revealed">
                 <ion-col size="12" size-md="6">
                   <okr-cat-select [category]="periodicities()!" [selectedItemName]="periodicity()" (selectedItemNameChange)="onFieldChange('periodicity', $event)" [readOnly]="isReadOnly() || isPollSeries()" [withAll]="false" [fieldStyle]="true" [label]="i18n().periodicity_label()" />
+                  <okr-error-note [errors]="periodicityErrors()" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
                   <okr-date-input [i18n]="repeatUntilDateI18n()" [storeDate]="repeatUntilDate()" (storeDateChange)="onFieldChange('repeatUntilDate', $event)" [locale]="locale()" [mask]="chFutureDate" [readOnly]="isReadOnly()" />
@@ -348,6 +353,10 @@ export class CalEventForm {
 
   // validation and errors
   private readonly validationResult = computed(() => calEventValidations(this.formData(), this.tenantId(), this.allTags()));
+  protected periodicityErrors = computed(() => this.validationResult().getErrors('periodicity'));
+  protected startDateErrors = computed(() => this.validationResult().getErrors('startDate'));
+  protected typeErrors = computed(() => this.validationResult().getErrors('type'));
+  protected durationMinutesErrors = computed(() => this.validationResult().getErrors('durationMinutes'));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
   protected repeatUntilDateErrors = computed(() => this.validationResult().getErrors('repeatUntilDate'));
   protected locationKeyErrors = computed(() => this.validationResult().getErrors('locationKey'));

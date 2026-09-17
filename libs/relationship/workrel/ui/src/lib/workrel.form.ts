@@ -1,9 +1,9 @@
 import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 import { CategoryListModel, RoleName, UserModel, WorkrelModel } from '@okr/shared-models';
-import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n , ErrorNote} from '@okr/shared-ui';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
-import { DEFAULT_CURRENCY, DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORDER, DEFAULT_ORG_TYPE, DEFAULT_PRICE, DEFAULT_TAGS, DEFAULT_WORKREL_STATE, DEFAULT_WORKREL_TYPE } from '@okr/shared-constants';
+import { DEFAULT_CURRENCY, DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORDER, DEFAULT_ORG_TYPE, DEFAULT_PRICE, DEFAULT_TAGS, DEFAULT_WORKREL_STATE, DEFAULT_WORKREL_TYPE, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { FullNamePipe } from '@okr/shared-pipes';
 import { AvatarPipe } from '@okr/avatar-ui';
 import { workrelValidations, WorkrelI18n } from '@okr/relationship-workrel-util';
@@ -12,6 +12,7 @@ import { workrelValidations, WorkrelI18n } from '@okr/relationship-workrel-util'
   selector: 'okr-workrel-form',
   standalone: true,
   imports: [
+    ErrorNote,
     AvatarPipe, FullNamePipe,
     DateInput, Chips, NotesInput, CategorySelect, NumberInput,
     IonGrid, IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonItem, IonAvatar, IonImg, IonLabel, IonButton,
@@ -53,10 +54,12 @@ import { workrelValidations, WorkrelI18n } from '@okr/relationship-workrel-util'
             <ion-row>
               <ion-col size="12" size-md="6"> 
                 <okr-cat-select [category]="types()!" [selectedItemName]="type()" (selectedItemNameChange)="onFieldChange('type', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="typeErrors()" />
               </ion-col>
               @if(type() === 'custom') {
                 <ion-col size="12" size-md="6">
-                    <okr-text-input [i18n]="labelI18n()" [value]="label()" (valueChange)="onFieldChange('label', $event)" [readOnly]="isReadOnly()" />
+                    <okr-text-input [i18n]="labelI18n()" [value]="label()" (valueChange)="onFieldChange('label', $event)" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
+                    <okr-error-note [errors]="labelErrors()" />
                 </ion-col>
               }
             </ion-row>
@@ -88,15 +91,19 @@ import { workrelValidations, WorkrelI18n } from '@okr/relationship-workrel-util'
             <ion-row>
               <ion-col size="12" size-md="6">
                 <okr-date-input [i18n]="validFromI18n()" [storeDate]="validFrom()" (storeDateChange)="onFieldChange('validFrom', $event)" [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="validFromErrors()" />
               </ion-col>
               <ion-col size="12" size-md="6">
                 <okr-date-input [i18n]="validToI18n()" [storeDate]="validTo()" (storeDateChange)="onFieldChange('validTo', $event)" [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="validToErrors()" />
               </ion-col>
               <ion-col size="12" size-md="6">
                 <okr-number-input [i18n]="orderI18n()" [value]="order()" (valueChange)="onFieldChange('order', $event)" [showHelper]=true [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="orderErrors()" />
               </ion-col>
               <ion-col size="12" size-md="6">
                 <okr-cat-select [category]="states()!" [selectedItemName]="state()" (selectedItemNameChange)="onFieldChange('state', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="stateErrors()" />
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -112,12 +119,15 @@ import { workrelValidations, WorkrelI18n } from '@okr/relationship-workrel-util'
             <ion-row>
               <ion-col size="12" size-md="6">
               <okr-number-input [i18n]="priceI18n()" [value]="price()" (valueChange)="onFieldChange('price', $event)" [showHelper]=true [readOnly]="isReadOnly()" />
+              <okr-error-note [errors]="priceErrors()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-              <okr-text-input [i18n]="currencyI18n()" [value]="currency()" (valueChange)="onFieldChange('currency', $event)" [maxLength]="3" [readOnly]="isReadOnly()" />
+              <okr-text-input [i18n]="currencyI18n()" [value]="currency()" (valueChange)="onFieldChange('currency', $event)" [readOnly]="isReadOnly()" />
+              <okr-error-note [errors]="currencyErrors()" />
               </ion-col>
               <ion-col size="12" size-md="6">
                 <okr-cat-select [category]="periodicities()!" [selectedItemName]="periodicity()" (selectedItemNameChange)="onFieldChange('periodicity', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="periodicityErrors()" />
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -129,13 +139,17 @@ import { workrelValidations, WorkrelI18n } from '@okr/relationship-workrel-util'
       }
 
       @if(hasRole('admin')) {
-        <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
+        <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="notesErrors()" />
       }
     </form>
   }
   `
 })
 export class WorkrelForm {
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly shortNameLength = SHORT_NAME_LENGTH;
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly descriptionLength = DESCRIPTION_LENGTH;
   // inputs
   public readonly i18n = input.required<WorkrelI18n>();
   public formData = model.required<WorkrelModel>();
@@ -167,6 +181,16 @@ export class WorkrelForm {
 
   // validation and errors
   private readonly validationResult = computed(() => workrelValidations(this.formData(), this.tenantId(), this.allTags()));
+  protected periodicityErrors = computed(() => this.validationResult().getErrors('periodicity'));
+  protected stateErrors = computed(() => this.validationResult().getErrors('state'));
+  protected typeErrors = computed(() => this.validationResult().getErrors('type'));
+  protected validFromErrors = computed(() => this.validationResult().getErrors('validFrom'));
+  protected validToErrors = computed(() => this.validationResult().getErrors('validTo'));
+  protected currencyErrors = computed(() => this.validationResult().getErrors('currency'));
+  protected labelErrors = computed(() => this.validationResult().getErrors('label'));
+  protected notesErrors = computed(() => this.validationResult().getErrors('notes'));
+  protected orderErrors = computed(() => this.validationResult().getErrors('order'));
+  protected priceErrors = computed(() => this.validationResult().getErrors('price'));
 
   // fields
   protected subjectKey = computed(() => this.formData().subjectKey ?? DEFAULT_KEY);

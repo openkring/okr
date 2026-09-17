@@ -12,7 +12,7 @@ export const invoiceValidations = staticSuite((model: InvoiceModel, tenants: str
   stringValidations('invoiceId', model.invoiceId, SHORT_NAME_LENGTH);
   dateValidations('invoiceDate', model.invoiceDate);
   dateValidations('dueDate', model.dueDate);
-  stringValidations('state', model.state, SHORT_NAME_LENGTH, 4, true);
+  stringValidations('state', model.state, undefined, 0, true);
 
   omitWhen(!model.paymentDate, () => {
     dateValidations('paymentDate', model.paymentDate);

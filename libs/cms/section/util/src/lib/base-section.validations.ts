@@ -1,17 +1,17 @@
 import { only, staticSuite } from 'vest';
 
-import { DESCRIPTION_LENGTH, LONG_NAME_LENGTH, NAME_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@okr/shared-constants';
+import { DESCRIPTION_LENGTH, LONG_NAME_LENGTH, NAME_LENGTH } from '@okr/shared-constants';
 import { ColorIonic, SectionModel } from '@okr/shared-models';
 import { booleanValidations, categoryValidations, stringValidations } from '@okr/shared-util-core';
 
 export const baseSectionValidations = staticSuite((model: SectionModel, field?: string) => {
   if (field) only(field);
 
-  stringValidations('okey', model.okey, SHORT_NAME_LENGTH);
+  stringValidations('okey', model.okey);
   // Caps must match the maxLength the form actually offers, otherwise the counter invites
   // input that the suite then rejects as 'tooLong'. okr-text-input defaults to NAME_LENGTH.
   stringValidations('name', model.name, NAME_LENGTH);
-  stringValidations('type', model.type, WORD_LENGTH);
+  stringValidations('type', model.type);
   // tbd: tagValidations('tags', model.tags);
   // `index` is generated (get<Model>Index) and the service overwrites it at save time, AFTER
   // this suite runs — a cap here can only reject a value the user cannot see or edit, so the
@@ -29,7 +29,7 @@ export const baseSectionValidations = staticSuite((model: SectionModel, field?: 
   // Adding one for real needs a runtime list of RoleName (the type is a pure TS union today) and
   // an audit of the roleNeeded values already stored — an unknown value would invalidate the
   // whole edit form, exactly the way an unknown tag does.
-  stringValidations('roleNeeded', model.roleNeeded, WORD_LENGTH);
+  stringValidations('roleNeeded', model.roleNeeded);
   categoryValidations('color', model.color, ColorIonic);
   // title/subTitle are rendered with [maxLength]=LONG_NAME_LENGTH in section-configuration.
   stringValidations('title', model.title, LONG_NAME_LENGTH);

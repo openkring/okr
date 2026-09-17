@@ -16,6 +16,6 @@ export const partnerValidations = staticSuite(
 
     baseValidations(model, tenants, tags, field);
     stringValidations('name', model.name, SHORT_NAME_LENGTH);
-    stringValidations('orgKey', model.orgKey, SHORT_NAME_LENGTH);
+    stringValidations('orgKey', model.orgKey);
     stringValidations('serviceUid', model.serviceUid, SHORT_NAME_LENGTH);
   });

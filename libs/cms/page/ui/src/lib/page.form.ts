@@ -5,7 +5,7 @@ import { CaseInsensitiveWordMask } from '@okr/shared-config';
 import { CategoryListModel, PageModel, RoleName, UserModel } from '@okr/shared-models';
 import { ButtonCopy, ButtonCopyI18n, CategorySelect, Chips, ErrorNote, NotesInput, NotesInputI18n, StringList, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
-import { DEFAULT_BLOG_TYPE, DEFAULT_CONTENT_STATE, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PAGE_TYPE, DEFAULT_TAGS, DEFAULT_TITLE } from '@okr/shared-constants';
+import { DEFAULT_BLOG_TYPE, DEFAULT_CONTENT_STATE, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PAGE_TYPE, DEFAULT_TAGS, DEFAULT_TITLE, DESCRIPTION_LENGTH, NAME_LENGTH } from '@okr/shared-constants';
 
 import { PageI18n, pageValidations } from '@okr/cms-page-util';
 
@@ -44,14 +44,16 @@ import { PageI18n, pageValidations } from '@okr/cms-page-util';
                 <okr-error-note [errors]="nameErrors()" />
               </ion-col>
               <ion-col size="12">
-                <okr-text-input [i18n]="titleI18n()" [value]="title()" (valueChange)="onFieldChange('title', $event)" [readOnly]="isReadOnly()" />
+                <okr-text-input [i18n]="titleI18n()" [value]="title()" (valueChange)="onFieldChange('title', $event)" [maxLength]="nameLength" [readOnly]="isReadOnly()" />
                 <okr-error-note [errors]="titleErrors()" />
               </ion-col>
               <ion-col size="12" size-md="6">
                 <okr-cat-select [category]="types()!" [selectedItemName]="type()" (selectedItemNameChange)="onFieldChange('type', $event)" [readOnly]="isReadOnly()" [withAll]="false" />
+                <okr-error-note [errors]="typeErrors()" />
               </ion-col>
               <ion-col size="12" size-md="6">
                 <okr-cat-select [category]="states()!" [selectedItemName]="state()" (selectedItemNameChange)="onFieldChange('state', $event)" [readOnly]="isReadOnly()" [withAll]="false" />
+                <okr-error-note [errors]="stateErrors()" />
               </ion-col>
               @if(type() === 'blog') {
                 <ion-col size="12" size-md="6">
@@ -78,13 +80,17 @@ import { PageI18n, pageValidations } from '@okr/cms-page-util';
         <okr-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [readOnly]="isReadOnly()" [allChips]="allTags()" />
       }
       @if(hasRole('admin')) {
-        <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
+        <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="notesErrors()" />
       }
     </form>
     }
   `
 })
 export class PageForm {
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly nameLength = NAME_LENGTH;
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly descriptionLength = DESCRIPTION_LENGTH;
   // inputs
   public readonly i18n = input.required<PageI18n>();
   public readonly formData = model.required<PageModel>();
@@ -103,6 +109,9 @@ export class PageForm {
 
   // validation and errors
   private readonly validationResult = computed(() => pageValidations(this.formData(), this.tenantId(), this.allTags()));
+  protected stateErrors = computed(() => this.validationResult().getErrors('state'));
+  protected typeErrors = computed(() => this.validationResult().getErrors('type'));
+  protected notesErrors = computed(() => this.validationResult().getErrors('notes'));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
   protected titleErrors = computed(() => this.validationResult().getErrors('title'));
 

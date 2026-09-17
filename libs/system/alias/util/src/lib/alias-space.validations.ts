@@ -1,6 +1,6 @@
 import { enforce, only, staticSuite, test } from 'vest';
 
-import { NAME_LENGTH, WORD_LENGTH } from '@okr/shared-constants';
+import { DESCRIPTION_LENGTH, NAME_LENGTH, WORD_LENGTH } from '@okr/shared-constants';
 import { AliasSpaceModel } from '@okr/shared-models';
 import { baseValidations, numberValidations, stringValidations } from '@okr/shared-util-core';
 
@@ -23,7 +23,7 @@ export const aliasSpaceValidations = staticSuite(
 
     stringValidations('name', model.name, WORD_LENGTH);
     stringValidations('label', model.label, NAME_LENGTH);
-    stringValidations('notes', model.notes, NAME_LENGTH);
+    stringValidations('notes', model.notes, DESCRIPTION_LENGTH);
     // 4 ist die untere Grenze, ab der ein 'base32-safe'-Code nicht trivial erratbar ist;
     // 32 die obere, ab der er als QR keinen Vorteil mehr gegenüber der langen URL hat.
     numberValidations('length', model.length, true, 4, 32);

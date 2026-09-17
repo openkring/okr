@@ -1,6 +1,6 @@
 import { only, staticSuite } from 'vest';
 
-import { LONG_NAME_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
+import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { InstrumentTopic } from '@okr/shared-models';
 import { stringValidations } from '@okr/shared-util-core';
 
@@ -12,5 +12,5 @@ export const topicValidations = staticSuite((model: InstrumentTopic, field?: str
   if (field) only(field);
 
   stringValidations('label', model.label, SHORT_NAME_LENGTH, 1, true);
-  stringValidations('description', model.description, LONG_NAME_LENGTH);
+  stringValidations('description', model.description, DESCRIPTION_LENGTH);
 });

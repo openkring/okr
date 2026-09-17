@@ -5,7 +5,7 @@ import { CategoryI18n, categoryListValidations } from '@okr/category-util';
 import { CategoryItemModel, CategoryListModel, RoleName, UserModel } from '@okr/shared-models';
 import { CategoryItems, Checkbox, CheckboxI18n, Chips, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, debugFormModel, hasRole } from '@okr/shared-util-core';
-import { DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS } from '@okr/shared-constants';
+import { DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS, DESCRIPTION_LENGTH, NAME_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 
 @Component({
   selector: 'okr-category-list-form',
@@ -29,17 +29,18 @@ import { DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS } from '@okr/shared-constants
                 </ion-col>
               }
               <ion-col size="12" size-md="6">
-                <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)"  [autofocus]="true" [copyable]="true" [readOnly]="isReadOnly()" />
+                <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)"  [autofocus]="true" [copyable]="true" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
                 <okr-error-note [errors]="nameErrors()" />
               </ion-col>
             </ion-row>
             <ion-row>
               <ion-col size="12" size-md="6">
-                <okr-text-input [i18n]="i18nScopeI18n()" [value]="i18nScope()" (valueChange)="onFieldChange('i18n', $event)" [showHelper]="true" [readOnly]="isReadOnly()" />
+                <okr-text-input [i18n]="i18nScopeI18n()" [value]="i18nScope()" (valueChange)="onFieldChange('i18n', $event)" [showHelper]="true" [maxLength]="nameLength" [readOnly]="isReadOnly()" />
                 <okr-error-note [errors]="i18nScopeErrors()" />
               </ion-col>
               <ion-col size="12" size-md="6">
                 <okr-checkbox [i18n]="translateItemsI18n()" [checked]="translateItems()" (checkedChange)="onFieldChange('translateItems', $event)" [showHelper]="true" [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="translateItemsErrors()" />
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -57,13 +58,19 @@ import { DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS } from '@okr/shared-constants
       }
 
       @if(hasRole('admin')) {
-        <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
+        <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="notesErrors()" />
       }
     </form>
   }
 `
 })
 export class CategoryListForm {
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly shortNameLength = SHORT_NAME_LENGTH;
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly nameLength = NAME_LENGTH;
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly descriptionLength = DESCRIPTION_LENGTH;
   // inputs
   public readonly i18n = input.required<CategoryI18n>();
   public formData = model.required<CategoryListModel>();
@@ -85,6 +92,8 @@ export class CategoryListForm {
 
   // validation and errors
   private readonly validationResult = computed(() => categoryListValidations(this.formData(), this.tenants(), this.allTags()));
+  protected translateItemsErrors = computed(() => this.validationResult().getErrors('translateItems'));
+  protected notesErrors = computed(() => this.validationResult().getErrors('notes'));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
   protected i18nScopeErrors = computed(() => this.validationResult().getErrors('i18n'));
 

@@ -4,7 +4,7 @@ import { IonAvatar, IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonImg,
 import { AvatarPipe } from '@okr/avatar-ui';
 import { AppStore, OrgSelectModal, PersonSelectModal, PersonSelectResult, ResourceSelectModal } from '@okr/shared-feature';
 import { OwnershipModel, OwnershipModelName, ResourceModelName, UserModel } from '@okr/shared-models';
-import { DateInput, DateInputI18n } from '@okr/shared-ui';
+import { DateInput, DateInputI18n, ErrorNote } from '@okr/shared-ui';
 import { coerceBoolean, getAvatarKey, getCategoryIcon, getFullName, getTodayStr, isOrg, isPerson, isResource } from '@okr/shared-util-core';
 
 import { ownershipValidations } from '@okr/relationship-ownership-util';
@@ -16,6 +16,7 @@ import { OwnershipStore } from './ownership.store';
   standalone: true,
   providers: [OwnershipStore],
   imports: [
+    ErrorNote,
     AvatarPipe,
     DateInput,
     IonGrid, IonRow, IonCol, IonItem, IonLabel, IonAvatar, IonImg, IonButton, IonCard, IonCardContent
@@ -66,6 +67,7 @@ import { OwnershipStore } from './ownership.store';
             <ion-row>
               <ion-col size="12">
                 <okr-date-input [i18n]="validFromI18n()" [storeDate]="validFrom()" (storeDateChange)="onFieldChange('validFrom', $event)" [locale]="locale()" [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="validFromErrors()" />
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -95,6 +97,7 @@ export class OwnershipNewForm {
   // validation and errors
   private readonly validationResult = computed(() => ownershipValidations(this.formData(), this.appStore.tenantId(), this.appStore.getTags(OwnershipModelName)));
 
+  protected validFromErrors = computed(() => this.validationResult().getErrors('validFrom'));
   // fields
   protected ownerKey = computed(() => this.formData().ownerKey ?? '');
   protected ownerName = computed(() => getFullName(this.formData().ownerName1, this.formData().ownerName2, this.currentUser()?.nameDisplay));

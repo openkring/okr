@@ -3,10 +3,10 @@ import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
 import { FolderModel, RoleName, UserModel } from '@okr/shared-models';
-import { Checkbox, CheckboxI18n, Chips, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { Checkbox, CheckboxI18n, Chips, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 import { validateVestTree } from '@okr/shared-util-angular';
-import { DEFAULT_NOTES, DEFAULT_TAGS } from '@okr/shared-constants';
+import { DEFAULT_NOTES, DEFAULT_TAGS, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 
 import { FolderI18n, folderValidations, hasPublicFolderTag, isPublicFolderKey, setFolderPublicTag } from '@okr/content-folder-util';
 
@@ -14,6 +14,7 @@ import { FolderI18n, folderValidations, hasPublicFolderTag, isPublicFolderKey, s
   selector: 'okr-folder-form',
   standalone: true,
   imports: [
+    ErrorNote,
     TextInput, NotesInput, Chips, Checkbox,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent
   ],
@@ -28,11 +29,13 @@ import { FolderI18n, folderValidations, hasPublicFolderTag, isPublicFolderKey, s
               <ion-row>
                 <ion-col size="12" size-md="6">
                   <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)"
-                    [autofocus]="true" [maxLength]="50" [readOnly]="isReadOnly()" />
+                    [autofocus]="true" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="nameErrors()" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
                   <okr-text-input [i18n]="titleI18n()" [value]="title()" (valueChange)="onFieldChange('title', $event)"
-                    [maxLength]="50" [readOnly]="isReadOnly()" />
+                    [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="titleErrors()" />
                 </ion-col>
               </ion-row>
               <ion-row>
@@ -64,13 +67,17 @@ import { FolderI18n, folderValidations, hasPublicFolderTag, isPublicFolderKey, s
           <okr-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
         }
         @if (hasRole('contentAdmin')) {
-          <okr-notes-input [i18n]="descriptionI18n()" [value]="description()" (valueChange)="onFieldChange('description', $event)" [readOnly]="isReadOnly()" />
+          <okr-notes-input [i18n]="descriptionI18n()" [value]="description()" (valueChange)="onFieldChange('description', $event)" [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="descriptionErrors()" />
         }
       </form>
     }
   `
 })
 export class FolderForm {
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly descriptionLength = DESCRIPTION_LENGTH;
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly shortNameLength = SHORT_NAME_LENGTH;
   // inputs
   public readonly i18n = input.required<FolderI18n>();
   public formData = model.required<FolderModel>();
@@ -88,6 +95,13 @@ export class FolderForm {
     validateVestTree(path, folderValidations as any),
   );
 
+
+  // per-field Vest errors for the notes under each field. validateVestTree calls the suite
+  // with the model alone, so this mirrors exactly what drives the form's validity.
+  private readonly validationResult = computed(() => folderValidations(this.formData() as any, '', this.allTags()));
+  protected descriptionErrors = computed(() => this.validationResult().getErrors('description'));
+  protected nameErrors = computed(() => this.validationResult().getErrors('name'));
+  protected titleErrors = computed(() => this.validationResult().getErrors('title'));
   constructor() {
     effect(() => this.valid.emit(this.folderForm().valid()));
   }

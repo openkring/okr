@@ -1,6 +1,6 @@
 import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 
-import { CITY_LENGTH, COUNTRY_LENGTH, EMAIL_LENGTH, LONG_NAME_LENGTH, NAME_LENGTH, NUMBER_LENGTH, PHONE_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
+import { CITY_LENGTH, DESCRIPTION_LENGTH, EMAIL_LENGTH, NAME_LENGTH, NUMBER_LENGTH, PHONE_LENGTH, SHORT_NAME_LENGTH, ZIP_LENGTH } from '@okr/shared-constants';
 import { AddressModel } from '@okr/shared-models';
 import { baseValidations, booleanValidations, stringValidations, urlValidations } from '@okr/shared-util-core';
 import { isPhoneNumberValid } from '@okr/shared-util-angular';
@@ -29,7 +29,7 @@ export const addressValidations = staticSuite((model: AddressModel, tenants: str
   stringValidations('addressValue2', model.addressValue2, SHORT_NAME_LENGTH);
   stringValidations('zipCode', model.zipCode, zipMaxLength(model.countryCode));
   stringValidations('city', model.city, CITY_LENGTH);
-  stringValidations('countryCode', model.countryCode, COUNTRY_LENGTH);
+  stringValidations('countryCode', model.countryCode);
   urlValidations('url', model.url);
 
   booleanValidations('isFavorite', model.isFavorite);
@@ -37,8 +37,8 @@ export const addressValidations = staticSuite((model: AddressModel, tenants: str
   booleanValidations('isValidated', model.isValidated);
 
   //tagValidations('tags', model.tags);
-  stringValidations('notes', model.notes, LONG_NAME_LENGTH);
-  stringValidations('parentKey', model.parentKey, NAME_LENGTH, 0, true);
+  stringValidations('notes', model.notes, DESCRIPTION_LENGTH);
+  stringValidations('parentKey', model.parentKey, undefined, 0, true);
 
   // cross validations
   omitWhen(model.addressChannel !== 'custom', () => {

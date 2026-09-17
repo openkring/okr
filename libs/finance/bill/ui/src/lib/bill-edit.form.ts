@@ -1,9 +1,9 @@
 import { Component, computed, effect, input, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
-import { DEFAULT_NOTES, DEFAULT_TAGS } from '@okr/shared-constants';
+import { DEFAULT_NOTES, DEFAULT_TAGS, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { BillModel, UserModel } from '@okr/shared-models';
-import { DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n , ErrorNote} from '@okr/shared-ui';
 import { coerceBoolean } from '@okr/shared-util-core';
 
 import { BillI18n, billValidations } from '@okr/finance-bill-util';
@@ -14,6 +14,7 @@ const BILL_STATES = ['draft', 'todo', 'paid', 'overdue'];
   selector: 'okr-bill-edit-form',
   standalone: true,
   imports: [
+    ErrorNote,
     TextInput, DateInput, NumberInput,
     StringSelect, NotesInput,
     IonCard, IonCardContent, IonGrid, IonRow, IonCol,
@@ -28,19 +29,23 @@ const BILL_STATES = ['draft', 'todo', 'paid', 'overdue'];
               <ion-row>
                 <ion-col size="4">
                   <okr-text-input [i18n]="billIdI18n()" [value]="billId()" (valueChange)="onFieldChange('billId', $event)"
-                    [autofocus]="true" [maxLength]="30" [readOnly]="isReadOnly() || !isNew()" />
+                    [autofocus]="true" [maxLength]="shortNameLength" [readOnly]="isReadOnly() || !isNew()" />
+                  <okr-error-note [errors]="billIdErrors()" />
                 </ion-col>
                 <ion-col size="8">
                   <okr-text-input [i18n]="titleI18n()" [value]="title()" (valueChange)="onFieldChange('title', $event)"
-                    [maxLength]="100" [readOnly]="isReadOnly()" />
+                    [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="titleErrors()" />
                 </ion-col>
               </ion-row>
               <ion-row>
                 <ion-col size="6">
                   <okr-date-input [i18n]="billDateI18n()" [storeDate]="billDate()" (storeDateChange)="onFieldChange('billDate', $event)" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="billDateErrors()" />
                 </ion-col>
                 <ion-col size="6">
                   <okr-date-input [i18n]="dueDateI18n()" [storeDate]="dueDate()" (storeDateChange)="onFieldChange('dueDate', $event)" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="dueDateErrors()" />
                 </ion-col>
               </ion-row>
               <ion-row>
@@ -56,6 +61,7 @@ const BILL_STATES = ['draft', 'todo', 'paid', 'overdue'];
               <ion-row>
                 <ion-col size="6">
                   <okr-date-input [i18n]="paymentDateI18n()" [storeDate]="paymentDate()" (storeDateChange)="onFieldChange('paymentDate', $event)" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="paymentDateErrors()" />
                 </ion-col>
               </ion-row>
               <ion-row>
@@ -71,6 +77,8 @@ const BILL_STATES = ['draft', 'todo', 'paid', 'overdue'];
   `
 })
 export class BillEditForm {
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly shortNameLength = SHORT_NAME_LENGTH;
   public readonly formData = input.required<BillModel>();
   public readonly currentUser = input<UserModel | undefined>();
   public readonly allTags = input(DEFAULT_TAGS);
@@ -108,6 +116,11 @@ export class BillEditForm {
   private readonly validationResult = computed(() =>
     billValidations(this.formData(), '', this.allTags())
   );
+  protected billDateErrors = computed(() => this.validationResult().getErrors('billDate'));
+  protected dueDateErrors = computed(() => this.validationResult().getErrors('dueDate'));
+  protected paymentDateErrors = computed(() => this.validationResult().getErrors('paymentDate'));
+  protected billIdErrors = computed(() => this.validationResult().getErrors('billId'));
+  protected titleErrors = computed(() => this.validationResult().getErrors('title'));
 
   constructor() {
     effect(() => this.valid.emit(this.validationResult().isValid()));

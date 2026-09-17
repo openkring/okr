@@ -11,7 +11,7 @@ import {
 } from '@okr/shared-ui';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 import { validateVestTree } from '@okr/shared-util-angular';
-import { DEFAULT_TAGS } from '@okr/shared-constants';
+import { DEFAULT_TAGS, LONG_NAME_LENGTH } from '@okr/shared-constants';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { Avatars } from '@okr/avatar-ui';
 
@@ -37,13 +37,14 @@ import {
               <ion-row>
                 <ion-col size="12">
                   <okr-notes-input [i18n]="textI18n()" [value]="text()" (valueChange)="onFieldChange('text', $event)"
-                    [readOnly]="isReadOnly()" />
+                    [readOnly]="isReadOnly()" [errors]="textErrors()" />
                 </ion-col>
               </ion-row>
               <ion-row>
                 <ion-col size="12" size-md="6">
                   <okr-text-input [i18n]="titleI18n()" [value]="title()" (valueChange)="onFieldChange('title', $event)"
-                    [autofocus]="true" [maxLength]="100" [readOnly]="isReadOnly()" />
+                    [autofocus]="true" [maxLength]="longNameLength" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="titleErrors()" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
                   <ion-item lines="none">
@@ -106,7 +107,8 @@ import {
                 <ion-col size="12" size-md="6">
                   @if (!formData().location) {
                     <okr-text-input [i18n]="customLocationI18n()" [value]="customLocationLabel()"
-                      (valueChange)="onFieldChange('customLocationLabel', $event)" [maxLength]="100" [readOnly]="isReadOnly()" />
+                      (valueChange)="onFieldChange('customLocationLabel', $event)" [maxLength]="longNameLength" [readOnly]="isReadOnly()" />
+                    <okr-error-note [errors]="customLocationLabelErrors()" />
                   }
                 </ion-col>
               </ion-row>
@@ -172,6 +174,8 @@ import {
   `,
 })
 export class DiaryForm {
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly longNameLength = LONG_NAME_LENGTH;
   public readonly i18n = input.required<DiaryI18n>();
   public formData = model.required<DiaryModel>();
   public readonly currentUser = input<UserModel | undefined>();
@@ -217,6 +221,9 @@ export class DiaryForm {
   private readonly validationResult = computed(() =>
     diaryValidations(this.formData(), (this.tenantId() ?? '') as string, (this.allTags() ?? '') as string),
   );
+  protected customLocationLabelErrors = computed(() => this.validationResult().getErrors('customLocationLabel'));
+  protected textErrors = computed(() => this.validationResult().getErrors('text'));
+  protected titleErrors = computed(() => this.validationResult().getErrors('title'));
   protected readonly dateErrors = computed(() => this.validationResult().getErrors('date'));
 
   protected readonly csvToList = csvToList;

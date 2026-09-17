@@ -33,7 +33,7 @@ const CURRENCIES = ['CHF', 'EUR', 'USD', 'GBP'];
                 </ion-col>
                 <ion-col size="12" size-md="6">
                   <okr-iban [i18n]="ibanI18n()" [value]="iban()" (valueChange)="onFieldChange('iban', normalizeIban($event))"
-                    [readOnly]="isReadOnly()" />
+                    [maxLength]="34" [readOnly]="isReadOnly()" />
                   <okr-error-note [errors]="ibanErrors()" />
                 </ion-col>
               </ion-row>
