@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, input } from '@an
 import { FormsModule } from '@angular/forms';
 import { IonButton, IonButtons, IonCol, IonContent, IonFooter, IonGrid, IonItem, IonLabel, IonRow, IonTextarea, IonToolbar, ModalController } from '@ionic/angular/standalone';
 
-import { ScsMemberFeesModel } from '@okr/shared-models';
+import { MemberFeeModel } from '@okr/shared-models';
 import { Header } from '@okr/shared-ui';
 import { I18nService } from '@okr/shared-i18n';
 import { getAccountDescription, MEMBERSHIP_I18N_KEYS } from '@okr/relationship-membership-util';
@@ -18,7 +18,7 @@ export interface BexioPosition {
 const DEFAULT_FOOTER = '<span>Vielen Dank f&uuml;r die Bezahlung der Rechnung innert 30 Tagen auf unser Konto bei der Z&uuml;rcher Kantonalbank IBAN CH67 0070 0110 4044 7417 6.<br /><br />Bitte verwende den QR-Code Einzahlungsschein auf der n&auml;chste Seite oder &uuml;berweise direkt auf die IBAN Nummer.<br /><br />Herzliche Gr&uuml;sse<br /><br />Seeclub St&auml;fa, Finanzen<br />Bruno Kaiser</span>';
 
 @Component({
-  selector: 'okr-scs-member-fee-upload-modal',
+  selector: 'okr-member-fee-upload-modal',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
@@ -103,14 +103,14 @@ const DEFAULT_FOOTER = '<span>Vielen Dank f&uuml;r die Bezahlung der Rechnung in
     </ion-footer>
   `
 })
-export class ScsMemberFeeUploadModal {
+export class MemberFeeUploadModal {
   private readonly modalController = inject(ModalController);
   protected readonly i18n = inject(I18nService).translateAll({
     cancel: '@cancel',
-    title: MEMBERSHIP_I18N_KEYS.scsMemberFee_upload_label,
+    title: MEMBERSHIP_I18N_KEYS.memberFee_upload_label,
   });
 
-  public fee = input.required<ScsMemberFeesModel>();
+  public fee = input.required<MemberFeeModel>();
   public positions = input.required<BexioPosition[]>();
 
   protected name = computed(() => this.fee().member?.label ?? '');

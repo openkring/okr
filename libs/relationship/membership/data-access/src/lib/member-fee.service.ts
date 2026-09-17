@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
-import { CategoryListModel, MembershipModel, ScsMemberFeesCollection, ScsMemberFeesModel, UserModel } from '@okr/shared-models';
+import { CategoryListModel, MembershipModel, MemberFeeCollection, MemberFeeModel, UserModel } from '@okr/shared-models';
 import { getBirthYear, getCategoryAttribute, getFullName, getSystemQuery, getTodayStr, DateFormat, getYear } from '@okr/shared-util-core';
 import { ActivityService } from '@okr/activity-data-access';
 import { BEXIO_INVOICE_TEMPLATES } from '@okr/relationship-membership-util';
@@ -14,7 +14,7 @@ const PFX = '@relationship/membership/data-access.';
 @Injectable({
   providedIn: 'root'
 })
-export class ScsMemberFeeService {
+export class MemberFeeService {
   private readonly env = inject(ENV);
   private readonly firestoreService = inject(FirestoreService);
   private readonly activityService = inject(ActivityService);
@@ -28,38 +28,38 @@ export class ScsMemberFeeService {
     fee_delete_error: PFX + 'fee.delete.error',
   });
 
-  public list(): Observable<ScsMemberFeesModel[]> {
-    return this.firestoreService.searchData<ScsMemberFeesModel>(
-      ScsMemberFeesCollection,
+  public list(): Observable<MemberFeeModel[]> {
+    return this.firestoreService.searchData<MemberFeeModel>(
+      MemberFeeCollection,
       getSystemQuery(this.env.tenantId),
       'index',
       'asc'
     );
   }
 
-  public async save(fee: ScsMemberFeesModel, currentUser?: UserModel, addActivity = true): Promise<string | undefined> {
+  public async save(fee: MemberFeeModel, currentUser?: UserModel, addActivity = true): Promise<string | undefined> {
 
     if (fee.okey && fee.okey.length > 0) {
-      const key = await this.firestoreService.updateModel<ScsMemberFeesModel>(ScsMemberFeesCollection, fee, false, this.i18n.fee_update_conf(), this.i18n.fee_update_error(), currentUser);
-      void this.activityService.log('scs-member-fee', 'update', currentUser, fee.index);
+      const key = await this.firestoreService.updateModel<MemberFeeModel>(MemberFeeCollection, fee, false, this.i18n.fee_update_conf(), this.i18n.fee_update_error(), currentUser);
+      void this.activityService.log('member-fee', 'update', currentUser, fee.index);
       return key;
     } else {
-      const key = await this.firestoreService.createModel<ScsMemberFeesModel>(ScsMemberFeesCollection, fee, this.i18n.fee_create_conf(), this.i18n.fee_create_error(), currentUser);
+      const key = await this.firestoreService.createModel<MemberFeeModel>(MemberFeeCollection, fee, this.i18n.fee_create_conf(), this.i18n.fee_create_error(), currentUser);
       if (addActivity) {
-        void this.activityService.log('scs-member-fee', 'create', currentUser, fee.index);
+        void this.activityService.log('member-fee', 'create', currentUser, fee.index);
       }
       return key;
     }
   }
 
-  public async delete(fee: ScsMemberFeesModel, currentUser?: UserModel): Promise<void> {
-    await this.firestoreService.deleteModel<ScsMemberFeesModel>(ScsMemberFeesCollection, fee, this.i18n.fee_delete_conf(), this.i18n.fee_delete_error(), currentUser);
-    void this.activityService.log('scs-member-fee', 'delete', currentUser, fee.index);
+  public async delete(fee: MemberFeeModel, currentUser?: UserModel): Promise<void> {
+    await this.firestoreService.deleteModel<MemberFeeModel>(MemberFeeCollection, fee, this.i18n.fee_delete_conf(), this.i18n.fee_delete_error(), currentUser);
+    void this.activityService.log('member-fee', 'delete', currentUser, fee.index);
   }
 }
 
 /**
- * Convert a MembershipModel into a ScsMemberFeesModel using the given category lists,
+ * Convert a MembershipModel into a MemberFeeModel using the given category lists,
  * locker ownership information, and current year.
  */
 export function convertMembershipToFee(
@@ -69,8 +69,8 @@ export function convertMembershipToFee(
   mcatScs: CategoryListModel | undefined,
   mcatSrv: CategoryListModel | undefined,
   tenantId: string
-): ScsMemberFeesModel {
-  const fee = new ScsMemberFeesModel(tenantId);
+): MemberFeeModel {
+  const fee = new MemberFeeModel(tenantId);
 
   fee.tenants = membership.tenants;
   fee.isArchived = membership.isArchived;
@@ -129,7 +129,7 @@ export function getEntryFee(membership: MembershipModel): number {
   return 0;
 }
 
-export function getFeeTotal(fee: ScsMemberFeesModel): number {
+export function getFeeTotal(fee: MemberFeeModel): number {
   return ((fee.jb ?? 0) + 
     (fee.srv ?? 0) + 
     (fee.bev ?? 0) + 
@@ -141,7 +141,7 @@ export function getFeeTotal(fee: ScsMemberFeesModel): number {
     (fee.rebate ?? 0));
 }
 
-export function getFeeIndex(fee: ScsMemberFeesModel): string {
+export function getFeeIndex(fee: MemberFeeModel): string {
   return fee.member
     ? `n:${fee.member.name2} n:${fee.member.name1}`
     : getTodayStr(DateFormat.StoreDate);

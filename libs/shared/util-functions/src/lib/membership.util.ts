@@ -1,9 +1,9 @@
-import { MembershipCollection, MembershipModel, ScsMemberFeesCollection, ScsMemberFeesModel } from '@okr/shared-models';
+import { MembershipCollection, MembershipModel, MemberFeeCollection, MemberFeeModel } from '@okr/shared-models';
 import { Firestore } from 'firebase-admin/firestore';
 import { searchData } from './search.util';
 
 /**
- * Retrieves all pending member-fee entries of a person. `scs-memberfees` is a
+ * Retrieves all pending member-fee entries of a person. `member-fees` is a
  * working list for the yearly invoice run (entries are removed once uploaded to
  * Bexio), and it carries `memberBirthYear` — a dob replica that decides the junior
  * cut-off — so it must be kept in sync with the vault like memberships are.
@@ -14,8 +14,8 @@ import { searchData } from './search.util';
  * @param memberId the person key to retrieve the fee entries for
  * @returns an array of member-fee entries for the given person.
  */
-export async function getAllMemberFeesOfMember(firestore: Firestore, memberId: string): Promise<ScsMemberFeesModel[]> {
-  const fees = await searchData<ScsMemberFeesModel>(firestore, ScsMemberFeesCollection,
+export async function getAllMemberFeesOfMember(firestore: Firestore, memberId: string): Promise<MemberFeeModel[]> {
+  const fees = await searchData<MemberFeeModel>(firestore, MemberFeeCollection,
     [{ key: 'member.key', operator: '==', value: memberId }], '');
   return fees.filter((fee) => fee.member?.modelType === 'person');
 }

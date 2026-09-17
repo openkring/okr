@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, inject, input, signal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonChip, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
-import { INVOICE_STATE_VALUES, RoleName, ScsMemberFeesModel, UserModel } from '@okr/shared-models';
+import { INVOICE_STATE_VALUES, RoleName, MemberFeeModel, UserModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error } from '@okr/shared-util-angular';
@@ -10,12 +10,12 @@ import { AvatarPipe } from '@okr/avatar-ui';
 
 import { getFeeTotal } from '@okr/relationship-membership-data-access';
 
-import { ScsMemberFeesStore } from './scs-member-fees.store';
-import { ScsMemberFeeEditModal } from './scs-member-fee-edit.modal';
+import { MemberFeesStore } from './member-fee.store';
+import { MemberFeeEditModal } from './member-fee-edit.modal';
 import { Menu } from '@okr/cms-menu-feature';
 
 @Component({
-  selector: 'okr-scs-member-fees',
+  selector: 'okr-member-fees',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
@@ -38,7 +38,7 @@ import { Menu } from '@okr/cms-menu-feature';
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
         <ion-title>
           {{ sortedFees().length }}/{{ allFees().length }}
-          {{ store.i18n.scsMemberFee_list_title() }}
+          {{ store.i18n.memberFee_list_title() }}
         </ion-title>
         @if(hasRole('treasurer')) {
           <ion-buttons slot="end">
@@ -120,7 +120,7 @@ import { Menu } from '@okr/cms-menu-feature';
         <okr-spinner />
       } @else {
         @if (sortedFees().length === 0) {
-          <okr-empty-list [message]="store.i18n.scsMemberFee_list_empty()" />
+          <okr-empty-list [message]="store.i18n.memberFee_list_empty()" />
         } @else {
           <ion-grid>
             @for (fee of sortedFees(); track $index) {
@@ -192,8 +192,8 @@ import { Menu } from '@okr/cms-menu-feature';
     </ion-content>
   `
 })
-export class ScsMemberFees {
-  protected readonly store = inject(ScsMemberFeesStore);
+export class MemberFees {
+  protected readonly store = inject(MemberFeesStore);
   private readonly actionSheetController = inject(ActionSheetController);
   private readonly cdr = inject(ChangeDetectorRef);
 
@@ -261,11 +261,11 @@ export class ScsMemberFees {
   }
 
   /******************************* helpers *************************************** */
-  protected getTotal(fee: ScsMemberFeesModel): number {
+  protected getTotal(fee: MemberFeeModel): number {
     return this.store.getTotal(fee);
   }
 
-  protected stateClass(fee: ScsMemberFeesModel): string {
+  protected stateClass(fee: MemberFeeModel): string {
     if (fee.state === 'review') return 'state-review';
     if (fee.state === 'uploaded' || fee.state === 'sent') return 'state-uploaded';
     return '';
@@ -284,17 +284,17 @@ export class ScsMemberFees {
       case 'export': await this.store.export("raw"); break;
       case 'totals': await this.store.showTotals(); break;
       case 'archive': await this.store.archive(); break;
-      default: error(undefined, `ScsMemberFeesList.onPopoverDismiss: unknown method ${selectedMethod}`);
+      default: error(undefined, `MemberFeesList.onPopoverDismiss: unknown method ${selectedMethod}`);
     }
     this.cdr.markForCheck();
   }
 
-  protected async editFee(fee: ScsMemberFeesModel): Promise<void> {
+  protected async editFee(fee: MemberFeeModel): Promise<void> {
     const mcat = this.store.mcatCategory();
     const currentUser = this.currentUser();
     if (!currentUser) return;
     const modal = await this.store['modalController'].create({
-      component: ScsMemberFeeEditModal,
+      component: MemberFeeEditModal,
       componentProps: {
         fee: { ...fee },
         currentUser,
@@ -303,7 +303,7 @@ export class ScsMemberFees {
       },
     });
     await modal.present();
-    const { data, role } = await modal.onWillDismiss<ScsMemberFeesModel>();
+    const { data, role } = await modal.onWillDismiss<MemberFeeModel>();
     if (role === 'confirm' && data) {
       await this.store.saveFee(data);
     }
@@ -315,13 +315,13 @@ export class ScsMemberFees {
     this.cdr.markForCheck();
   }
 
-  protected async showActions(fee: ScsMemberFeesModel): Promise<void> {
+  protected async showActions(fee: MemberFeeModel): Promise<void> {
     const actionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
     this.addButtons(actionSheetOptions, fee);
     await this.executeActions(actionSheetOptions, fee);
   }
 
-  private addButtons(opts: ActionSheetOptions, fee: ScsMemberFeesModel): void {
+  private addButtons(opts: ActionSheetOptions, fee: MemberFeeModel): void {
     const imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 
     if (this.canChange()) {
@@ -340,7 +340,7 @@ export class ScsMemberFees {
     opts.buttons.push(createActionSheetButton('cancel', imgixBaseUrl, 'cancel', this.store.i18n.cancel()));
   }
 
-  private async executeActions(opts: ActionSheetOptions, fee: ScsMemberFeesModel): Promise<void> {
+  private async executeActions(opts: ActionSheetOptions, fee: MemberFeeModel): Promise<void> {
     if (opts.buttons.length === 0) return;
     const actionSheet = await this.actionSheetController.create(opts);
     await actionSheet.present();
@@ -373,7 +373,7 @@ export class ScsMemberFees {
         await this.store.editMembership(fee, !this.canChange());
         break;
       default:
-        error(undefined, `ScsMemberFees.executeActions: unknown action ${data.action}`);
+        error(undefined, `MemberFees.executeActions: unknown action ${data.action}`);
     }
     this.cdr.markForCheck();
   }

@@ -110,7 +110,7 @@
       "helper": "Lo stato attuale di questa adesione."
     }
   },
-  "scsMemberFee": {
+  "memberFee": {
     "archive": {
       "confirm": "L'esecuzione della fatturazione viene completata e tutte le fatture vengono impostate come archiviate.",
       "conf": "Tutte le fatture sono state archiviate. Sei pronto per una nuova generazione di fatture."

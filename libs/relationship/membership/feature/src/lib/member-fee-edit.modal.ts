@@ -1,24 +1,24 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
-import { CategoryListModel, ScsMemberFeesModel, UserModel } from '@okr/shared-models';
+import { CategoryListModel, MemberFeeModel, UserModel } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
 import { getFullName, safeStructuredClone } from '@okr/shared-util-core';
 
 import { AvatarToolbar } from '@okr/avatar-feature';
 
-import { ScsMemberFeeEditForm } from '@okr/relationship-membership-ui';
+import { MemberFeeEditForm } from '@okr/relationship-membership-ui';
 import { dismissOverlay } from '@okr/shared-util-angular';
-import { ScsMemberFeesStore } from './scs-member-fees.store';
+import { MemberFeesStore } from './member-fee.store';
 
 
 @Component({
-  selector: 'okr-scs-member-fee-edit-modal',
+  selector: 'okr-member-fee-edit-modal',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  providers: [ScsMemberFeesStore],
+  providers: [MemberFeesStore],
   imports: [
-    ScsMemberFeeEditForm, Header, ChangeConfirmation, AvatarToolbar,
+    MemberFeeEditForm, Header, ChangeConfirmation, AvatarToolbar,
     IonContent,
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px; } }`],
@@ -34,7 +34,7 @@ import { ScsMemberFeesStore } from './scs-member-fees.store';
         modelType="person"
         [readOnly]="true"
       />
-      <okr-scs-member-fee-edit-form
+      <okr-member-fee-edit-form
         [formData]="formData()"
         [currentUser]="currentUser()"
         [membershipCategories]="mcat()"
@@ -48,12 +48,12 @@ import { ScsMemberFeesStore } from './scs-member-fees.store';
     </ion-content>
   `
 })
-export class ScsMemberFeeEditModal {
+export class MemberFeeEditModal {
   private readonly modalController = inject(ModalController);
-  protected readonly store = inject(ScsMemberFeesStore);
+  protected readonly store = inject(MemberFeesStore);
 
   // inputs
-  public fee = input.required<ScsMemberFeesModel>();
+  public fee = input.required<MemberFeeModel>();
   public currentUser = input.required<UserModel>();
   public mcat = input<CategoryListModel | undefined>(undefined);
   public readOnly = input(false);

@@ -3,7 +3,7 @@ import { onCall } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
 import { getFirestore, FieldValue, Query, DocumentData } from 'firebase-admin/firestore';
 
-import { AddressCollection, MembershipCollection, PersonCollection, ScsMemberFeesCollection } from '@okr/shared-models';
+import { AddressCollection, MembershipCollection, PersonCollection, MemberFeeCollection } from '@okr/shared-models';
 import { getBirthYear, getStoreDateYear } from '@okr/shared-util-core';
 import { checkAppCheckToken, checkAuthentication, checkAdminRole } from '@okr/shared-util-functions';
 
@@ -70,7 +70,7 @@ async function upsertScalar(
 /**
  * One-time, idempotent backfill for spec 1.19 Phase 3. Admin-only.
  * Copies persons.ssnId/dateOfBirth into the addresses vault (ssn/dob channels) and
- * backfills memberBirthYear on memberships + scs-memberfees. Safe to re-run: every
+ * backfills memberBirthYear on memberships + member-fees. Safe to re-run: every
  * write is skipped when the target already matches. Does NOT strip source fields
  * (that is Phase 4).
  */
@@ -100,11 +100,11 @@ export const migrateSensitiveData = onCall(
       }
     });
 
-    // 3. scs-memberfees → memberBirthYear
-    result.memberfees = await forEachDoc(db.collection(ScsMemberFeesCollection), async (id, f) => {
+    // 3. member-fees → memberBirthYear
+    result.memberfees = await forEachDoc(db.collection(MemberFeeCollection), async (id, f) => {
       const year = getBirthYear(f.memberDateOfBirth);
       if (year && f.memberBirthYear !== year) {
-        await db.collection(ScsMemberFeesCollection).doc(id).update({ memberBirthYear: year });
+        await db.collection(MemberFeeCollection).doc(id).update({ memberBirthYear: year });
       }
     });
 

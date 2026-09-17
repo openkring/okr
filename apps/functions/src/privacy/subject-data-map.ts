@@ -1,6 +1,6 @@
 import { FieldPath, Filter, getFirestore } from 'firebase-admin/firestore';
 import type { DocumentSnapshot, QueryDocumentSnapshot } from 'firebase-admin/firestore';
-import { PROSPECT_PARENT_PREFIX } from '@okr/shared-models';
+import { MemberFeeCollection, PROSPECT_PARENT_PREFIX } from '@okr/shared-models';
 import type { AvatarInfo } from '@okr/shared-models';
 import type { Blocker, SubjectCtx, SubjectDataEntry } from './types';
 
@@ -565,11 +565,11 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     retention: RETAIN_10Y,
   },
   {
-    collection: 'scs-memberfees',
+    collection: MemberFeeCollection,
     dataClass: 'financial',
     tier: 'T3',
     onTenantExit: 'anonymize',
-    find: (c: SubjectCtx) => db().collection('scs-memberfees')
+    find: (c: SubjectCtx) => db().collection(MemberFeeCollection)
       .where('member.key', '==', c.personKey)
       .where('member.modelType', '==', 'person'),
     tenantScope: 'tenantsArray',
@@ -585,7 +585,7 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     retention: RETAIN_10Y,
     // No blocksErasure: a memberfee row is the *preparation* record for the yearly
     // invoice, not a debt. Its `state` only ever advances to 'uploaded' (the store
-    // write in scs-member-fees.store.ts) — nothing writes 'paid' back from Bexio, so
+    // write in member-fee.store.ts) — nothing writes 'paid' back from Bexio, so
     // gating on it blocked every member who was ever invoiced, forever. The debt is
     // the invoice it produced, and the `invoices` entry above already gates on that
     // (paymentDate, synced from Bexio).

@@ -1,7 +1,7 @@
 import { Firestore } from 'firebase-admin/firestore';
 import * as logger from 'firebase-functions/logger';
 
-import { AddressCollection, AddressModel, MembershipCollection, PersonCollection, ScsMemberFeesCollection } from '@okr/shared-models';
+import { AddressCollection, AddressModel, MembershipCollection, PersonCollection, MemberFeeCollection } from '@okr/shared-models';
 import { getBirthYear, getStoreDateYear } from '@okr/shared-util-core';
 
 import { getScalarChannelValue } from './address.util';
@@ -122,12 +122,12 @@ export async function syncBirthYearReplicas(firestore: Firestore, personId: stri
     written++;
   }
 
-  // scs-memberfees carries the same replica and drives the junior cut-off of the
+  // member-fees carries the same replica and drives the junior cut-off of the
   // yearly invoice run — a dob correction has to reach the pending entries too.
   const fees = await getAllMemberFeesOfMember(firestore, personId);
   for (const fee of fees) {
     if (fee.memberBirthYear === birthYear || (keep && fee.memberBirthYear)) continue;
-    await firestore.doc(`${ScsMemberFeesCollection}/${fee.okey}`).update({ memberBirthYear: birthYear });
+    await firestore.doc(`${MemberFeeCollection}/${fee.okey}`).update({ memberBirthYear: birthYear });
     logger.info(`Synced memberBirthYear for member fee ${fee.okey} of person ${personId}`);
     written++;
   }

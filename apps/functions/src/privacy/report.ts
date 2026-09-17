@@ -1,4 +1,5 @@
 import Handlebars from 'handlebars';
+import { MemberFeeCollection } from '@okr/shared-models';
 import type { IndexRow, SubjectDataBundle } from './gather';
 
 /**
@@ -54,7 +55,7 @@ interface IndexSection {
  * `SUBJECT_DATA_MAP` with `onExport: 'full' | 'index'` — enforced by
  * `report.spec.ts`'s "labels every exported collection" test, which walks the map and
  * fails the moment a new exported row has no entry here. Without that guard a raw
- * Firestore collection name (`scs-memberfees`, `personal-rels`, …) leaks into an
+ * Firestore collection name (`member-fees`, `personal-rels`, …) leaks into an
  * otherwise all-German legal document as soon as someone adds a row upstream and
  * forgets this file exists.
  *
@@ -99,7 +100,7 @@ export const COLLECTION_LABELS: Record<string, string> = {
   // form; "Rechnungsposition(en)" is the term the invoice feature already uses for
   // this exact concept (libs/finance/invoice/feature/src/i18n/de.json).
   'invoice-positions': 'Rechnungspositionen',
-  'scs-memberfees': 'Mitgliedergebühren', // libs/relationship/membership/feature/src/i18n/de.json: scsMemberFee.list.title
+  [MemberFeeCollection]: 'Mitgliedergebühren', // libs/relationship/membership/feature/src/i18n/de.json: member-fee.list.title
   bills: 'Kreditoren-Rechnungen', // libs/finance/bill/feature/src/i18n/de.json: list.title
   expenses: 'Spesen',
   'payment-orders': 'Zahlungsaufträge',
