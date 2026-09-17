@@ -457,7 +457,9 @@ export const CalEventStore = signalStore(
       },
 
       /******************************* CRUD on single event  *************************************** */
-      async add(readOnly = true, startDate?: string, startTime?: string, skipReload = false): Promise<CalEventModel | undefined> {
+      /** `patch` prefills fields the caller already knows — a drag-selected duration or a
+       *  multi-day full-day span. Applied after the defaults, so it always wins. */
+      async add(readOnly = true, startDate?: string, startTime?: string, skipReload = false, patch?: Partial<CalEventModel>): Promise<CalEventModel | undefined> {
         const cal = store.calendarName();
         const personal = isPersonalCalendarName(cal);
         // 'Termin erfassen' is offered to every registered user, because on a personal calendar
@@ -482,6 +484,7 @@ export const CalEventStore = signalStore(
         }
         const untilDate = addMonths(new Date(), 3);
         newCalevent.repeatUntilDate = format(untilDate, DateFormat.StoreDate);
+        Object.assign(newCalevent, patch ?? {});
         return await this.edit(newCalevent, true, false, false, skipReload);
       },
 

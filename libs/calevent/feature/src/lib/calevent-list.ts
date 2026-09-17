@@ -1,10 +1,10 @@
-import { Component, ComponentRef, computed, CUSTOM_ELEMENTS_SCHEMA, DestroyRef, effect, inject, Injector, input, linkedSignal, OnInit, PLATFORM_ID, signal, untracked, viewChild, ViewContainerRef } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, AlertController, IonBadge, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTextarea, IonTitle, IonToolbar, ModalController } from '@ionic/angular/standalone';
+import { Component, ComponentRef, computed, CUSTOM_ELEMENTS_SCHEMA, DestroyRef, effect, ElementRef, inject, Injector, input, linkedSignal, OnInit, PLATFORM_ID, signal, untracked, viewChild, ViewContainerRef } from '@angular/core';
+import { ActionSheetController, ActionSheetOptions, AlertController, createGesture, Gesture, IonBadge, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTextarea, IonTitle, IonToolbar, ModalController } from '@ionic/angular/standalone';
 import { Browser } from '@capacitor/browser';
 import { Router } from '@angular/router';
 import { format } from 'date-fns';
 
-import type { EventInput } from '@fullcalendar/core';
+import type { DateSelectArg, EventInput } from '@fullcalendar/core';
 import type { CaleventFullcalendarView } from './calevent-fullcalendar-view';
 import { DEFAULT_DATE } from '@okr/shared-constants';
 import { AvatarInfo, CalEventModel, LocationModel, PersonModel, RoleName } from '@okr/shared-models';
@@ -25,6 +25,18 @@ import { browseUrl } from '@okr/subject-address-util';
 import { CalEventStore } from './calevent.store';
 
 const ICS_FUNCTION_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/generateCalendarICS';
+
+/** Swipe navigation (touch only): a gesture must travel this far before it counts as prev/next. */
+const SWIPE_MIN_DISTANCE_PX = 60;
+/** Dead zone at the left screen edge, reserved for Ionic's swipe-back gesture. */
+const SWIPE_EDGE_GUARD_PX = 40;
+/** How far the grid follows the finger, so the swipe is visibly picked up. */
+const SWIPE_MAX_FOLLOW_PX = 40;
+
+/** Press-and-hold before a touch drag starts selecting slots. Below ~400ms it fights scrolling. */
+const SELECT_LONG_PRESS_MS = 500;
+/** One `slotDuration`. A selection this short came from a plain click, not a deliberate drag. */
+const SINGLE_SLOT_MINUTES = 30;
 
 type AttendanceState = 'accepted' | 'declined' | 'invited';
 type AttendanceFilter = AttendanceState | 'all';
@@ -271,7 +283,7 @@ type CalEventSortField = 'date' | 'topic' | 'location' | 'organiser';
              is laid over it so the user keeps the toolbar and can still create an event. -->
         <ion-card>
           <ion-card-content>
-            <div class="calendar-host" [style.display]="'block'">
+            <div class="calendar-host" #calendarSwipe [style.display]="'block'">
               <div #calendarHost></div>
               @if(filteredCalEventsCount() === 0) {
                 <div class="calendar-empty-overlay">
@@ -335,6 +347,8 @@ export class CalEventList implements OnInit {
   private readonly matrixChatService = lazyService(this.injector, () =>
     import('@okr/chat-data-access').then(m => m.MatrixChatService));
   private calendarHost = viewChild('calendarHost', { read: ViewContainerRef });
+  /** Wrapper around the grid — carries the swipe gesture and the follow-the-finger transform. */
+  private calendarSwipeHost = viewChild('calendarSwipe', { read: ElementRef<HTMLElement> });
   protected calendarRef = signal<ComponentRef<CaleventFullcalendarView> | undefined>(undefined);
   /** Guards against a second mount while the chunk is still in flight. A signal, so that the
    *  mount effect re-runs once the flight ends — needed when the host was swapped meanwhile. */
@@ -548,6 +562,14 @@ export class CalEventList implements OnInit {
     weekNumbers: true,
     editable: true,
     dateClick: (arg: any) => { this.onDateClick(arg); },
+    // Long-press (touch) or click-drag (mouse) across empty slots to create an event of exactly
+    // that length — the standard "block 10:00-11:30 with your finger" gesture. `select` is the
+    // ONLY creation path: on a mouse a plain click fires `select` too (selectMinDistance 0), so
+    // leaving creation in `dateClick` as well would open two modals.
+    selectable: this.canChange(),
+    selectMirror: true,
+    selectLongPressDelay: SELECT_LONG_PRESS_MS,
+    select: (arg: DateSelectArg) => { this.onDateSelect(arg); },
     eventClick: (arg: any) => { this.onEventClick(arg); },
     eventDrop: (arg: any) => { this.onEventDrop(arg); },
     eventResize: (arg: any) => { this.onEventResize(arg); },
@@ -585,6 +607,11 @@ export class CalEventList implements OnInit {
   private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 
   private readonly platformId = inject(PLATFORM_ID);
+
+  /** Coarse pointer = finger/stylus, i.e. phones and tablets. A touch laptop gets the swipe too,
+   *  which is harmless — it keeps the toolbar arrows either way. */
+  private readonly isTouchDevice = isBrowser(this.platformId) && window.matchMedia('(pointer: coarse)').matches;
+  private swipeGesture?: Gesture;
 
   // filter row: shown by default from Ionic's sm breakpoint (576px), hidden on smaller screens.
   // Toggled via the context-menu 'toggleFilter' action.
@@ -641,6 +668,45 @@ export class CalEventList implements OnInit {
       if (ref) ref.setInput('options', options);
     });
     inject(DestroyRef).onDestroy(() => this.calendarRef()?.destroy());
+
+    // Calendar view on touch devices: swipe left/right to move one view interval — a week in
+    // timeGridWeek, a month in dayGridMonth, a day in timeGridDay. `next()`/`prev()` already step by
+    // the active view's interval, so this is the same navigation as the toolbar arrows.
+    // Touch only: on a mouse a horizontal drag belongs to FullCalendar's event editing, and the
+    // toolbar arrows are the obvious control there. FullCalendar requires a long press before it
+    // starts a touch drag, so a quick swipe never steals an event drag.
+    effect(() => {
+      const el = this.calendarSwipeHost()?.nativeElement;
+      // The host is inside `@if(isListView() === false)`: it disappears on every switch to the
+      // list view, and the gesture bound to the dead element must go with it.
+      this.swipeGesture?.destroy();
+      this.swipeGesture = undefined;
+      if (!el || !this.isTouchDevice) return;
+      const gesture = createGesture({
+        el,
+        gestureName: 'calevent-calendar-swipe',
+        direction: 'x',
+        threshold: 15,
+        // Leave the left edge to Ionic's swipe-back gesture.
+        canStart: (detail) => detail.startX > SWIPE_EDGE_GUARD_PX,
+        onMove: (detail) => {
+          const follow = Math.max(-SWIPE_MAX_FOLLOW_PX, Math.min(SWIPE_MAX_FOLLOW_PX, detail.deltaX));
+          el.style.transition = 'none';
+          el.style.transform = `translateX(${follow}px)`;
+        },
+        onEnd: (detail) => {
+          el.style.transition = 'transform 150ms ease-out';
+          el.style.transform = '';
+          if (Math.abs(detail.deltaX) < SWIPE_MIN_DISTANCE_PX) return;
+          const api = this.calendarRef()?.instance.getApi();
+          if (detail.deltaX < 0) api?.next();
+          else api?.prev();
+        },
+      });
+      gesture.enable(true);
+      this.swipeGesture = gesture;
+    });
+    inject(DestroyRef).onDestroy(() => this.swipeGesture?.destroy());
 
     // List view: scroll to the first event that is today or in the future.
     effect(() => {
@@ -1275,8 +1341,13 @@ export class CalEventList implements OnInit {
     }
   }
 
+  /**
+   * Tap/click on empty grid. Navigation only — creating an event is `onDateSelect`'s job.
+   * Keeping creation here would (a) open two modals on a mouse click, which also fires `select`,
+   * and (b) swallow the second tap, so the drill-down below could never run for a user who may edit.
+   */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  protected async onDateClick(arg: any): Promise<void> {
+  protected onDateClick(arg: any): void {
     const now = Date.now();
     const dateStr = arg.dateStr as string;
     const calApi = this.calendarRef()?.instance.getApi();
@@ -1294,14 +1365,42 @@ export class CalEventList implements OnInit {
 
     this.lastClickDateStr = dateStr;
     this.lastClickTime = now;
+  }
 
-    if (this.canChange()) {
-      const startDate = format(arg.date as Date, DateFormat.StoreDate);
-      const startTime = format(arg.date as Date, 'HH:mm');
-      const viewType = currentView;
-      const created = await this.store.add(false, startDate, startTime, true);
+  /**
+   * A span drag-selected on empty grid — long press then drag on touch, click-drag with a mouse.
+   * Opens the create modal prefilled with exactly that span, so the length is expressed with the
+   * finger instead of in the form.
+   */
+  protected async onDateSelect(arg: DateSelectArg): Promise<void> {
+    const calApi = this.calendarRef()?.instance.getApi();
+    const viewType = calApi?.view.type;
+    // Drop the highlight now: the modal covers the grid, and a stale selection would survive it.
+    calApi?.unselect();
+    if (!this.canChange()) return;
+
+    const { start, end } = arg;
+    const startDate = format(start, DateFormat.StoreDate);
+
+    if (arg.allDay) {
+      // dayGridMonth: `end` is exclusive — the day AFTER the last selected one. The span lives in
+      // `endDate`; `durationMinutes` stays 1440, because its Vest validation caps it at one day.
+      const lastDay = new Date(end.getFullYear(), end.getMonth(), end.getDate() - 1);
+      const created = await this.store.add(false, startDate, undefined, true, {
+        fullDay: true,
+        endDate: format(lastDay, DateFormat.StoreDate),
+        durationMinutes: 1440,
+      });
       this.navigateCalendarTo(created?.startDate ?? startDate, viewType);
+      return;
     }
+
+    // A one-slot span is a plain click, not a drag — keep the model's 60min default rather than
+    // silently shrinking every click-created event to the 30min slot height.
+    const minutes = Math.round((end.getTime() - start.getTime()) / 60000);
+    const patch = minutes > SINGLE_SLOT_MINUTES ? { durationMinutes: Math.min(minutes, 1440) } : undefined;
+    const created = await this.store.add(false, startDate, format(start, 'HH:mm'), true, patch);
+    this.navigateCalendarTo(created?.startDate ?? startDate, viewType);
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
