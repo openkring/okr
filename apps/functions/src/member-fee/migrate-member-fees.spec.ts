@@ -18,4 +18,9 @@ describe('toPositions', () => {
   it('returns nothing for an all-zero legacy document', () => {
     expect(toPositions({ jb: 0, srv: 0 })).toEqual([]);
   });
+
+  it('keeps a rebate reason even when the amount is zero', () => {
+    const positions = toPositions({ jb: 600, rebate: 0, rebateReason: 'custom' });
+    expect(positions.at(-1)).toMatchObject({ type: 'rebate', label: 'custom', amount: 0 });
+  });
 });

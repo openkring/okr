@@ -52,9 +52,10 @@ export function toPositions(legacy: Record<string, unknown>): MemberFeePosition[
     .map(c => ({ key: c.key, usage: c.usage, type: 'fix', label: c.label,
       amount: Number(legacy[c.field]), accountKey: '', vatCodeKey: '' }));
   const rebate = Number(legacy['rebate'] ?? 0);
-  if (rebate !== 0) {
+  const rebateReason = String(legacy['rebateReason'] ?? '');
+  if (rebate !== 0 || rebateReason.length > 0) {
     positions.push({ key: 'rebate', usage: 'other', type: 'rebate',
-      label: String(legacy['rebateReason'] ?? 'Rabatt'), amount: rebate,
+      label: rebateReason || 'Rabatt', amount: rebate,
       accountKey: '', vatCodeKey: '' });
   }
   return positions;
