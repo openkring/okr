@@ -860,6 +860,15 @@ const finance: BlockRoutes = {
   ],
 };
 
+const memberFee: BlockRoutes = {
+  // No route of its own — `memberfees/:contextMenuName` is a child of `relationship`'s route
+  // fragment above (`MemberFees`, `@okr/relationship-membership-feature`), because the screen
+  // reads memberships. This entry exists only so `feature-catalogue.sync.spec.ts` finds a
+  // route-side id matching the `member-fee` metadata block (see `feature-blocks.ts`).
+  id: 'member-fee',
+  routes: (): Route[] => [],
+};
+
 const esign: BlockRoutes = {
   id: 'esign',
   routes: (): Route[] => [{
@@ -1284,7 +1293,7 @@ export const FEATURE_ROUTES: BlockRoutes[] = [
   auth, cms, user, profile, session, security, i18n, avatar, category, comment, geo, trip, consent,
   subject, relationship, vcard,
   resource, mobility,
-  finance, esign, pdfTemplate,
+  finance, memberFee, esign, pdfTemplate,
   documentBlock, meeting, diary,
   chat, socialFeed, forms,
   business, alias, weather,

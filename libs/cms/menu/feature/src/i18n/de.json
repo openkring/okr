@@ -597,6 +597,11 @@
     "accounting-bank-import": "Bankimport",
     "accounting-bank-rules": "Bankregeln",
     "accounting-bank-profiles": "Bankprofile",
+    "memberfees": "Mitgliederbeiträge",
+    "memberfees-reload": "Daten für Rechnungslauf laden",
+    "memberfees-totals": "Totale anzeigen",
+    "memberfees-export": "Export",
+    "memberfees-archive": "Daten archivieren",
     "accounting-settings": "Einstellungen"
   },
   "ownership": {

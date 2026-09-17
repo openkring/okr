@@ -86,6 +86,9 @@
     "finance": {
       "label": "Finanze e contabilità"
     },
+    "member-fee": {
+      "label": "Quote associative"
+    },
     "esign": {
       "label": "Firma elettronica"
     },

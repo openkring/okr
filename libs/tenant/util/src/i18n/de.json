@@ -86,6 +86,9 @@
     "finance": {
       "label": "Finanzen & Buchhaltung"
     },
+    "member-fee": {
+      "label": "Mitgliederbeiträge"
+    },
     "esign": {
       "label": "E-Signatur"
     },

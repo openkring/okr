@@ -106,6 +106,22 @@ function resourceMenuParent(children: MenuSpec[]): MenuSpec {
   };
 }
 
+/**
+ * `accounting-menu` was declared inline on `finance` (task 12-era) because at the time no
+ * second block owned any of its children — see the note on the `finance` block. That premise
+ * changed with `member-fee`: the member-fee screen READS memberships (`relationship`) and
+ * WRITES invoices (`finance`), so it gets its own block with `dependsOn: ['relationship',
+ * 'finance']`, and its one menu row nests under this SAME shared parent, same pattern as
+ * `cmsMenuParent`/`aocMenuParent`/`subjectsMenuParent` above. `finance` keeps owning the
+ * parent's full live children list; `member-fee` passes only its own row.
+ */
+function accountingMenuParent(children: MenuSpec[]): MenuSpec {
+  return {
+    key: 'accounting-menu', name: 'accounting-menu', url: '', action: 'sub',
+    roleNeeded: 'treasurer', icon: 'money', label: '@item.accounting-menu', children,
+  };
+}
+
 const calevent: FeatureBlock = {
   id: 'calevent',
   bundle: 'events',
@@ -1394,10 +1410,9 @@ const finance: FeatureBlock = {
     // `finance-menu` is a live root child of `main_scs` (`action: sub`, `roleNeeded:
     // registered`, label `@main.finance.title`) whose own name/url/label carry no tenant key —
     // so unlike `scsf_fibu`/`gssf_fibu` it IS catalogued, with only its two generic children.
-    // Declared inline rather than via a `financeMenuParent()` helper because, unlike
-    // `cms-menu`/`aoc-menu`/`subjects-menu`/`resource-menu`, no second block owns any of its
-    // children — every other live child is excluded (see the block comment). Children are
-    // APPENDED, never replaced (`planMenuOps`), so scs's existing six extra children survive.
+    // Every other live child of `finance-menu` is excluded (see the block comment). Children
+    // are APPENDED, never replaced (`planMenuOps`), so scs's existing six extra children
+    // survive.
     {
       key: 'finance-menu', name: 'finance-menu', url: '', action: 'sub',
       roleNeeded: 'registered', icon: 'help-circle', label: '@main.finance.title', children: [
@@ -1478,9 +1493,7 @@ const finance: FeatureBlock = {
     // The generic accounting submenu (see the block comment). Order mirrors the live
     // `scsf_fibu`, with the three bank-import lists appended — they had no navigate row
     // anywhere before. `@TID@` is expanded by `resolveMenuUrl` at select time.
-    {
-      key: 'accounting-menu', name: 'accounting-menu', url: '', action: 'sub',
-      roleNeeded: 'treasurer', icon: 'money', label: '@item.accounting-menu', children: [
+    accountingMenuParent([
         { key: 'accounting-accounts', name: 'accounting-accounts', url: '/accounting/@TID@/account/c-account', action: 'navigate', roleNeeded: 'treasurer', icon: 'account', label: '@item.accounting-accounts' },
         { key: 'accounting-journal', name: 'accounting-journal', url: '/accounting/@TID@/journal/c-journal', action: 'navigate', roleNeeded: 'treasurer', icon: 'list', label: '@item.accounting-journal' },
         { key: 'accounting-bills', name: 'accounting-bills', url: '/accounting/@TID@/bill/all/c-bill', action: 'navigate', roleNeeded: 'treasurer', icon: 'invoice', label: '@item.accounting-bills' },
@@ -1497,8 +1510,44 @@ const finance: FeatureBlock = {
         { key: 'accounting-bank-rules', name: 'accounting-bank-rules', url: '/accounting-bank-rules/@TID@/bank-rule-context', action: 'navigate', roleNeeded: 'treasurer', icon: 'sync', label: '@item.accounting-bank-rules' },
         { key: 'accounting-bank-profiles', name: 'accounting-bank-profiles', url: '/accounting-bank-profiles/@TID@/bank-profile-context', action: 'navigate', roleNeeded: 'treasurer', icon: 'business', label: '@item.accounting-bank-profiles' },
         { key: 'accounting-settings', name: 'accounting-settings', url: '/accounting/@TID@/settings', action: 'navigate', roleNeeded: 'treasurer', icon: 'settings', label: '@item.accounting-settings' },
-      ],
-    },
+    ]),
+  ],
+};
+
+/**
+ * `libs/relationship/membership/{data-access,feature,ui,util}` — the generalized member-fee
+ * screen (`MemberFees`, `relationship/memberfees/:contextMenuName`), reworked from the
+ * scs-only `scsf_memberfees`/`c-scsfees` original per
+ * `planning/specs/2026-09-17-member-fees-generic-design.md`.
+ *
+ * Its own block, not folded into `relationship` or `finance`: the screen READS memberships
+ * (owned by `relationship`) and WRITES invoices (owned by `finance`). Attaching it to either
+ * block alone would be dishonest — a tenant with `relationship` but not `finance` would get a
+ * menu row that cannot work — so `dependsOn: ['relationship', 'finance']` instead.
+ *
+ * Menu: one `navigate` row nested under the SAME shared `accounting-menu` parent `finance`
+ * declares (`accountingMenuParent()` — see that helper's doc comment), plus its own
+ * `c-memberfees` context-menu wrapper (`reload`/`totals`/`export`/`archive`), same pattern as
+ * `finance`'s other `c-*` wrappers.
+ */
+const memberFee: FeatureBlock = {
+  id: 'member-fee',
+  bundle: 'finance',
+  label: '@tenant/util.feature.member-fee.label',
+  icon: 'invoice',
+  defaultAvailability: 'ga',
+  dependsOn: ['relationship', 'finance'],
+  collections: ['member-fees'],
+  menu: [
+    accountingMenuParent([
+      { key: 'memberfees', name: 'memberfees', url: '/memberfees/c-memberfees', action: 'navigate', roleNeeded: 'treasurer', icon: 'invoice', label: '@item.memberfees' },
+    ]),
+    { key: 'c-memberfees', name: 'c-memberfees', url: '', action: 'context', roleNeeded: 'treasurer', icon: 'help-circle', label: '', children: [
+      { key: 'memberfees-reload', name: 'memberfees-reload', url: 'reload', action: 'call', roleNeeded: 'treasurer', icon: 'sync', label: '@item.memberfees-reload' },
+      { key: 'memberfees-totals', name: 'memberfees-totals', url: 'totals', action: 'call', roleNeeded: 'treasurer', icon: 'chart', label: '@item.memberfees-totals' },
+      { key: 'memberfees-export', name: 'memberfees-export', url: 'export', action: 'call', roleNeeded: 'treasurer', icon: 'download', label: '@item.memberfees-export' },
+      { key: 'memberfees-archive', name: 'memberfees-archive', url: 'archive', action: 'call', roleNeeded: 'treasurer', icon: 'trash', label: '@item.memberfees-archive' },
+    ] },
   ],
 };
 
@@ -2551,7 +2600,7 @@ export const FEATURE_BLOCKS: FeatureBlock[] = [
   auth, cms, user, profile, session, security, i18n, avatar, category, comment, geo, trip, consent,
   subject, relationship, vcard,
   resource, mobility,
-  finance, esign, pdfTemplate,
+  finance, memberFee, esign, pdfTemplate,
   documentBlock, meeting, diary,
   chat, socialFeed, forms,
   business, alias, weather,

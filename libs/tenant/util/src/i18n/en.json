@@ -86,6 +86,9 @@
     "finance": {
       "label": "Finance & accounting"
     },
+    "member-fee": {
+      "label": "Membership fees"
+    },
     "esign": {
       "label": "E-signature"
     },

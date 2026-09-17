@@ -220,6 +220,11 @@ const KNOWN_WEAKER_THAN_MENU: readonly string[] = [
   'calevent-all', 'invitation-all',
   // treasurer
   'expenses-all',
+  // `memberfees`: the route (`memberfees/:contextMenuName`, part of `relationship`'s route
+  // fragment) sits behind `isAuthenticatedGuard` only — same class as `expenses-all` above,
+  // not a new pattern. The screen gates its own treasurer-only actions via the context menu's
+  // own `roleNeeded`; the list itself is no more sensitive than the memberships it reads.
+  'memberfees',
   // contentAdmin on the row, member-reachable route — BY DESIGN, and the same reasoning R-7
   // recorded for `document-all`: `roleNeeded` here is a MENU-VISIBILITY choice, not a security
   // boundary. Both point at screens whose data is tenant-readable anyway (`pages` and

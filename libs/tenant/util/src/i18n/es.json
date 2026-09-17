@@ -86,6 +86,9 @@
     "finance": {
       "label": "Finanzas y contabilidad"
     },
+    "member-fee": {
+      "label": "Cuotas de socios"
+    },
     "esign": {
       "label": "Firma electrónica"
     },

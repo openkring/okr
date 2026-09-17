@@ -86,6 +86,9 @@
     "finance": {
       "label": "Finances et comptabilité"
     },
+    "member-fee": {
+      "label": "Cotisations des membres"
+    },
     "esign": {
       "label": "Signature électronique"
     },

@@ -597,6 +597,11 @@
     "accounting-bank-import": "Importazione bancaria",
     "accounting-bank-rules": "Regole bancarie",
     "accounting-bank-profiles": "Profili bancari",
+    "memberfees": "Quote associative",
+    "memberfees-reload": "Carica i dati per la fatturazione",
+    "memberfees-totals": "Mostra totali",
+    "memberfees-export": "Esporta",
+    "memberfees-archive": "Archivia dati",
     "accounting-settings": "Impostazioni"
   },
   "ownership": {
