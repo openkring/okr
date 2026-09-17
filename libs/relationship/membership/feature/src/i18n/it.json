@@ -190,6 +190,14 @@
     "total": "Totale",
     "invoice": {
       "conf": "Le fatture sono state create."
+    },
+    "invoiceAll": {
+      "label": "Fatturare tutte le quote pronte",
+      "confirm": "Questa azione non fattura solo la riga scelta: tutte le {count} voci nello stato «ready» diventano fatture. Vuoi farlo adesso?",
+      "none": "Non ci sono voci nello stato «ready» da fatturare."
+    },
+    "config": {
+      "loading": "Le impostazioni contabili si stanno ancora caricando. Riprova tra un istante."
     }
   },
   "list": {

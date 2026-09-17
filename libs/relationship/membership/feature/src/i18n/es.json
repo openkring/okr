@@ -190,6 +190,14 @@
     "total": "Total",
     "invoice": {
       "conf": "Las facturas se han creado."
+    },
+    "invoiceAll": {
+      "label": "Facturar todas las cuotas preparadas",
+      "confirm": "Esta acción no factura solo la fila elegida: las {count} entradas en estado «ready» se convierten en facturas. ¿Quieres hacerlo ahora?",
+      "none": "No hay entradas en estado «ready» que se puedan facturar."
+    },
+    "config": {
+      "loading": "Los ajustes de contabilidad todavía se están cargando. Inténtalo de nuevo en un momento."
     }
   },
   "list": {

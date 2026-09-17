@@ -11,7 +11,7 @@ import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
 import { AccountingConfigModel, ExportFormat, FeeScheduleEntry, INVOICE_STATE, MembershipCollection, MembershipModel, OwnershipCollection, OwnershipModel, MemberFeeCollection, MemberFeeModel } from '@okr/shared-models';
 import { confirm, exportCsv, showToast } from '@okr/shared-util-angular';
-import { DateFormat, debugListLoaded, generateRandomString, getDataRow, getFullName, getSystemQuery, getTodayStr, getYear, isAfterDate, nameMatches } from '@okr/shared-util-core';
+import { DateFormat, debugListLoaded, fill, generateRandomString, getDataRow, getFullName, getSystemQuery, getTodayStr, getYear, isAfterDate, nameMatches } from '@okr/shared-util-core';
 import { ExportFormats } from '@okr/shared-categories';
 import { I18nService } from '@okr/shared-i18n';
 
@@ -183,6 +183,24 @@ export const _MemberFeesStore = signalStore(
       const config: AccountingConfigModel | undefined = store.accountingConfigResource.value();
       return config?.feeSchedule?.find(e => e.year === year) ?? { year, positions: [] };
     }),
+
+    /**
+     * Whether the accounting config has actually arrived. While the resource is still loading,
+     * `accountingBackend ?? 'native'` reads 'native' for EVERY tenant — a Bexio tenant clicking
+     * early would take the native branch and get a raw `failed-precondition` from the callable.
+     * Every invoicing action is gated on this. 'error' deliberately does NOT count as loaded:
+     * refusing is the safe direction, guessing the backend is not.
+     */
+    /**
+     * Whether this tenant's books live in Bexio. Only meaningful once
+     * `accountingConfigLoaded()` is true — before that it reads false, like every unloaded
+     * tenant, which is why the UI gates on the loaded flag and not on this one.
+     */
+    isBexioBackend: computed(() => store.accountingConfigResource.value()?.accountingBackend === 'bexio'),
+
+    accountingConfigLoaded: computed(() =>
+      store.accountingConfigResource.status() === 'resolved' ||
+      store.accountingConfigResource.status() === 'local'),
 
     mcatScsCategory: computed(() => store.appStore.allCategories()?.find(c => c.name === 'mcat_scs')),
   })),
@@ -391,6 +409,19 @@ export const _MemberFeesStore = signalStore(
      * postMemberFees Cloud Function (the 'native' accountingBackend counterpart to uploadToBexio).
      */
     async postMemberFees(): Promise<void> {
+      // This is a BULK run: the callable posts every 'ready' row of the tenant and knows nothing
+      // about a clicked row. Name the number of rows before doing it — the action used to sit on
+      // a single fee's ActionSheet and looked like a per-member invoice.
+      const readyCount = store.allFees().filter((f: MemberFeeModel) => f.okey && f.state === 'ready').length;
+      if (readyCount === 0) {
+        await showToast(store.toastController, store.i18n.memberFee_invoiceAll_none());
+        return;
+      }
+      const confirmed = await confirm(store.alertController,
+        fill(store.i18n.memberFee_invoiceAll_confirm(), { count: readyCount }),
+        store.i18n.ok(), store.i18n.cancel(), true);
+      if (!confirmed) return;
+
       const accountingTenantId = store.appStore.defaultOrg()?.okey ?? store.appStore.tenantId();
       const fn = httpsCallable<
         { tenantId: string; accountingTenantId: string },
@@ -473,6 +504,10 @@ export const _MemberFeesStore = signalStore(
      * screen needs no second setting, and never both paths for the same tenant.
      */
     async invoice(fee: MemberFeeModel): Promise<void> {
+      if (!store.accountingConfigLoaded()) {
+        await showToast(store.toastController, store.i18n.memberFee_config_loading());
+        return;
+      }
       const backend = store.accountingConfigResource.value()?.accountingBackend ?? 'native';
       if (backend === 'bexio') {
         await store.uploadToBexio(fee);

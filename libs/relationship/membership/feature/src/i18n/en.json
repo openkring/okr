@@ -190,6 +190,14 @@
     "total": "Total",
     "invoice": {
       "conf": "The invoices were created."
+    },
+    "invoiceAll": {
+      "label": "Invoice all prepared fees",
+      "confirm": "This does not only invoice the selected row: all {count} entries in state 'ready' become invoices. Do you want to do that now?",
+      "none": "There are no entries in state 'ready' that could be invoiced."
+    },
+    "config": {
+      "loading": "The accounting settings are still loading. Please try again in a moment."
     }
   },
   "list": {

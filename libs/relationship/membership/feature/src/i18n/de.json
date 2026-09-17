@@ -190,6 +190,14 @@
     "total": "Total",
     "invoice": {
       "conf": "Die Rechnungen wurden erstellt."
+    },
+    "invoiceAll": {
+      "label": "Alle bereiten Rechnungen verrechnen",
+      "confirm": "Diese Aktion verrechnet nicht nur die gewählte Zeile: alle {count} Einträge im Status «ready» werden zu Rechnungen. Soll das jetzt geschehen?",
+      "none": "Es gibt keine Einträge im Status «ready», die verrechnet werden könnten."
+    },
+    "config": {
+      "loading": "Die Buchhaltungs-Einstellungen werden noch geladen. Bitte versuche es gleich nochmals."
     }
   },
   "list": {

@@ -190,6 +190,14 @@
     "total": "Total",
     "invoice": {
       "conf": "Les factures ont été créées."
+    },
+    "invoiceAll": {
+      "label": "Facturer toutes les cotisations prêtes",
+      "confirm": "Cette action ne facture pas seulement la ligne choisie : les {count} entrées à l'état « ready » deviennent des factures. Veux-tu le faire maintenant ?",
+      "none": "Il n'y a aucune entrée à l'état « ready » qui pourrait être facturée."
+    },
+    "config": {
+      "loading": "Les réglages de comptabilité sont encore en cours de chargement. Réessaie dans un instant."
     }
   },
   "list": {

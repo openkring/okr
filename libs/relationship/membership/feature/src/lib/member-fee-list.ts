@@ -295,7 +295,14 @@ export class MemberFees {
 
     if (this.canChange()) {
       opts.buttons.push(createActionSheetButton('invoice.edit', imgixBaseUrl, 'edit', this.store.i18n.invoice_update()));
-      opts.buttons.push(createActionSheetButton('invoice.upload', imgixBaseUrl, 'upload', this.store.i18n.invoice_upload()));
+      // Bexio invoices the CLICKED fee; every other backend runs the bulk postMemberFees over
+      // every 'ready' row of the tenant and ignores the clicked one. One label for both lied
+      // about what the second one does, so the label follows the backend — and the bulk run
+      // names its row count in its own confirmation (see MemberFeesStore.postMemberFees).
+      const invoiceLabel = this.store.isBexioBackend()
+        ? this.store.i18n.invoice_upload()
+        : this.store.i18n.memberFee_invoiceAll_label();
+      opts.buttons.push(createActionSheetButton('invoice.upload', imgixBaseUrl, 'upload', invoiceLabel));
       opts.buttons.push(createActionSheetButton('invoice.download', imgixBaseUrl, 'download', this.store.i18n.invoice_download()));
       opts.buttons.push(createActionSheetButton('invoice.paid', imgixBaseUrl, 'checkmark', this.store.i18n.invoice_paid()));
       opts.buttons.push(createActionSheetDivider());
@@ -347,12 +354,13 @@ export class MemberFees {
     this.cdr.markForCheck();
   }
 
-  // 'initial', 'review', 'ready', 'uploaded', 'sent', 'paid', 'cancelled'
+  // 'initial', 'review', 'ready', 'uploaded', 'invoiced', 'sent', 'paid', 'cancelled'
   protected getStateColor(state: string): string {
     switch(state) {
       case 'initial': return 'tertiary';
       case 'review': return 'danger';
-      case 'uploaded': 
+      case 'uploaded':
+      case 'invoiced':
       case 'sent': return 'warning';
       case 'paid': return 'success';
     }
