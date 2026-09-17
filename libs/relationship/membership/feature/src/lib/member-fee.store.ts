@@ -23,7 +23,7 @@ import { MembershipEditModal } from './membership-edit.modal';
 import { MemberFeeInvoiceIdModal } from './member-fee-invoice-id.modal';
 import { MemberFeeUploadModal } from './member-fee-upload.modal';
 import { MemberFeesTotalsModal } from './member-fee-totals.modal';
-import { buildPositions, getFeeTotal, MEMBERSHIP_I18N_KEYS } from '@okr/relationship-membership-util';
+import { buildPositions, getFeeTotal, rebatePosition, MEMBERSHIP_I18N_KEYS } from '@okr/relationship-membership-util';
 
 export type MemberFeesState = {
   searchTerm: string;
@@ -520,6 +520,14 @@ function deriveFee(
     currentYear: schedule.year,
     categoryLists,
   });
+
+  // The per-member rebate (Ausbildungs-/Familienrabatt) is an override a treasurer set on THIS
+  // membership, not a rule of the year's price list — the old `convertMembershipToFee` copied it
+  // onto the fee and subtracted it. Without this every regenerated fee would bill the full amount
+  // while migrated rows still carried their rebate, and the difference would only surface in the
+  // next Rechnungslauf.
+  const rebate = rebatePosition(membership.rebate, membership.rebateReason);
+  if (rebate) fee.positions.push(rebate);
 
   fee.state = 'initial';
   return fee;

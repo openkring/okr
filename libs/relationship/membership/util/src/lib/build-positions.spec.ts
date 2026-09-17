@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { FeeScheduleEntry, MembershipModel } from '@okr/shared-models';
-import { buildPositions, getFeeTotal, type FeeContext } from './build-positions';
+import { buildPositions, getFeeTotal, rebatePosition, type FeeContext } from './build-positions';
 
 const membership = (overrides: Partial<MembershipModel> = {}): MembershipModel => ({
   memberKey: 'p1', memberName1: 'Anna', memberName2: 'Muster', category: 'active',
@@ -93,6 +93,41 @@ describe('buildPositions — scs 2026 regression', () => {
       ctx({ categoryLists: { mcat_scs: { active: 320 }, mcat_srv: {} } }));
     positions.push({ key: 'rebate', usage: 'other', type: 'rebate', label: 'Rabatt',
       amount: 50, accountKey: '', vatCodeKey: '' });
+    expect(getFeeTotal(positions)).toBe(270);
+  });
+});
+
+describe('rebatePosition', () => {
+  it('builds a rebate position carrying the reason as its label', () => {
+    expect(rebatePosition(50, 'edu')).toEqual({
+      key: 'rebate', usage: 'other', type: 'rebate', label: 'edu',
+      amount: 50, accountKey: '', vatCodeKey: '',
+    });
+  });
+
+  it('falls back to "Rabatt" when no reason is set', () => {
+    expect(rebatePosition(50, 'none')?.label).toBe('Rabatt');
+    expect(rebatePosition(50, '')?.label).toBe('Rabatt');
+  });
+
+  it('keeps a reason even when the amount is zero', () => {
+    expect(rebatePosition(0, 'family')).toMatchObject({ label: 'family', amount: 0 });
+  });
+
+  it('yields nothing when there is neither an amount nor a reason', () => {
+    expect(rebatePosition(0, 'none')).toBeUndefined();
+    expect(rebatePosition(0, '')).toBeUndefined();
+  });
+
+  it('subtracts from the total, like every rebate position', () => {
+    const positions = [
+      ...buildPositions(membership(), schedule([
+        { key: 'jb', usage: 'membershipFee', type: 'fix', label: 'Jahresbeitrag',
+          source: 'category', categoryList: 'mcat_scs' },
+      ]), ctx({ categoryLists: { mcat_scs: { active: 320 } } })),
+    ];
+    const rebate = rebatePosition(50, 'edu');
+    if (rebate) positions.push(rebate);
     expect(getFeeTotal(positions)).toBe(270);
   });
 });

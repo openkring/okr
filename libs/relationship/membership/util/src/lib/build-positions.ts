@@ -61,6 +61,25 @@ export function buildPositions(
   }));
 }
 
+/**
+ * The per-member rebate as a fee position, or `undefined` when there is none. This is NOT a
+ * schedule rule and therefore deliberately not part of `buildPositions`: `rebate`/`rebateReason`
+ * are a manual override a treasurer sets on ONE membership, while `buildPositions` is pure over
+ * (membership, schedule, ctx) and must stay reproducible from the year's price list alone.
+ *
+ * The shape mirrors what the migration writes for a legacy rebate column (key 'rebate',
+ * usage 'other', label = the reason, falling back to 'Rabatt'), so a migrated row and a freshly
+ * derived row are indistinguishable. Kept when the amount is zero but a reason is set — the
+ * reason is information the treasurer entered.
+ */
+export function rebatePosition(rebate: number, rebateReason: string): MemberFeePosition | undefined {
+  const amount = Number(rebate) || 0;
+  const reason = rebateReason === 'none' ? '' : (rebateReason ?? '');
+  if (amount === 0 && reason.length === 0) return undefined;
+  return { key: 'rebate', usage: 'other', type: 'rebate', label: reason || 'Rabatt',
+    amount, accountKey: '', vatCodeKey: '' };
+}
+
 /** Σ of every non-rebate position minus Σ of every rebate position. */
 export function getFeeTotal(positions: MemberFeePosition[]): number {
   return positions.reduce((sum, p) => p.type === 'rebate' ? sum - p.amount : sum + p.amount, 0);
