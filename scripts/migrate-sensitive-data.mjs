@@ -6,7 +6,7 @@
  *   1. persons.ssnId        -> addresses doc { addressChannel: 'ssn',  ssn,  parentKey: 'person.<id>' }
  *   2. persons.dateOfBirth  -> addresses doc { addressChannel: 'dob',  dob,  parentKey: 'person.<id>' }
  *   3. memberships          -> memberBirthYear (YYYY) from memberDateOfBirth
- *   4. scs-memberfees       -> memberBirthYear (YYYY) from memberDateOfBirth
+ *   4. member-fees       -> memberBirthYear (YYYY) from memberDateOfBirth
  *
  * NON-DESTRUCTIVE: nothing is deleted or stripped (that is Phase 4). Re-runnable:
  * every write is skipped when the target already matches.
@@ -101,14 +101,14 @@ async function main() {
 
   // 3+4: birth-year replicas
   const memberships = await backfillBirthYear('memberships');
-  const memberfees = await backfillBirthYear('scs-memberfees');
+  const memberfees = await backfillBirthYear('member-fees');
 
   console.log('---');
   console.log(`persons scanned:        ${personsSnap.size}`);
   console.log(`ssn vault writes:       ${ssnCreated}`);
   console.log(`dob vault writes:       ${dobCreated}`);
   console.log(`memberships updated:    ${memberships}`);
-  console.log(`scs-memberfees updated: ${memberfees}`);
+  console.log(`member-fees updated: ${memberfees}`);
   if (DRY_RUN) console.log('(dry run — no writes performed)');
 }
 

@@ -6,7 +6,7 @@
  *   1. persons         -> FieldValue.delete() ssnId, dateOfBirth, favEmail, favPhone
  *   2. orgs            -> FieldValue.delete() favEmail, favPhone
  *   3. memberships     -> FieldValue.delete() memberDateOfBirth
- *   4. scs-memberfees  -> FieldValue.delete() memberDateOfBirth
+ *   4. member-fees  -> FieldValue.delete() memberDateOfBirth
  *
  * PRECONDITION (checked, aborts otherwise): every person carrying ssnId or
  * dateOfBirth has the matching ssn/dob vault address (else the strip would
@@ -96,13 +96,13 @@ async function main() {
   const persons = await stripFields('persons', ['ssnId', 'dateOfBirth', 'favEmail', 'favPhone']);
   const orgs = await stripFields('orgs', ['favEmail', 'favPhone']);
   const memberships = await stripFields('memberships', ['memberDateOfBirth']);
-  const memberfees = await stripFields('scs-memberfees', ['memberDateOfBirth']);
+  const memberfees = await stripFields('member-fees', ['memberDateOfBirth']);
 
   console.log('---');
   console.log(`persons stripped:        ${persons}`);
   console.log(`orgs stripped:           ${orgs}`);
   console.log(`memberships stripped:    ${memberships}`);
-  console.log(`scs-memberfees stripped: ${memberfees}`);
+  console.log(`member-fees stripped: ${memberfees}`);
   if (DRY_RUN) console.log('(dry run — no writes performed)');
 }
 
