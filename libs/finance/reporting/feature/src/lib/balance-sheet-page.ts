@@ -66,7 +66,8 @@ import { ReportingStore } from './reporting.store';
       } @else if (store.bookings().length === 0) {
         <okr-empty-list [message]="store.i18n.empty()" />
       } @else {
-        <okr-report-table [rows]="store.balanceRows()" (groupToggled)="store.toggleExpand($event)" />
+        <okr-report-table [rows]="store.balanceRows()" (groupToggled)="store.toggleExpand($event)"
+          (accountSelected)="store.showAccount($event)" />
       }
     </ion-content>
   `,

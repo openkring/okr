@@ -7,7 +7,8 @@ import { ReportRow } from '@okr/finance-reporting-util';
 
 /**
  * The body of a Bilanz / Erfolgsrechnung: one row per account, group, total or result line
- * (spec 2026-05-27 accounting design, Phase 5). Groups are indented by depth and toggle on tap;
+ * (spec 2026-05-27 accounting design, Phase 5). Groups are indented by depth and toggle on tap,
+ * a leaf account row opens the journal filtered by that account (as the Kontoplan does);
  * total and result rows are emphasised. Column widths mirror the page's header toolbar
  * (account number 2/12 · name 6/12 · current 2/12 · previous 2/12; the number hides on phones).
  */
@@ -28,7 +29,7 @@ import { ReportRow } from '@okr/finance-reporting-util';
   template: `
     <ion-list lines="inset">
       @for (row of rows(); track row.okey) {
-        <ion-item [button]="row.hasChildren" [detail]="false" (click)="row.hasChildren && groupToggled.emit(row.okey)"
+        <ion-item [button]="row.hasChildren || row.kind === 'account'" [detail]="false" (click)="onRowClick(row)"
           [class]="row.kind" [style.padding-inline-start.px]="row.depth * 16">
           <ion-grid>
             <ion-row>
@@ -53,6 +54,13 @@ import { ReportRow } from '@okr/finance-reporting-util';
 export class ReportTable {
   public readonly rows = input.required<ReportRow[]>();
   public readonly groupToggled = output<string>();
+  /** A leaf account row was tapped: the page opens the journal filtered by this account and the selected year. */
+  public readonly accountSelected = output<string>();
+
+  protected onRowClick(row: ReportRow): void {
+    if (row.hasChildren) this.groupToggled.emit(row.okey);
+    else if (row.kind === 'account') this.accountSelected.emit(row.okey);
+  }
 
   protected format(minor: number): string {
     return formatMinorAmount(minor);

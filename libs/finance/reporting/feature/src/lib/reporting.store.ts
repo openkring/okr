@@ -1,5 +1,6 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
+import { Router } from '@angular/router';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { of } from 'rxjs';
 
@@ -39,6 +40,7 @@ export const ReportingStore = signalStore(
     appStore: inject(AppStore),
     alertService: inject(AlertService),
     i18nService: inject(I18nService),
+    router: inject(Router),
   })),
   withProps(store => ({
     i18n: store.i18nService.translateAll(REPORTING_I18N_KEYS) as ReportingI18n,
@@ -148,6 +150,13 @@ export const ReportingStore = signalStore(
     },
     rows(kind: ReportKind): ReportRow[] {
       return kind === 'balance' ? store.balanceRows() : store.incomeRows();
+    },
+    /** Open the journal filtered by the tapped account and the selected fiscal year (as the Kontoplan does). */
+    async showAccount(accountKey: string): Promise<void> {
+      if (!accountKey) return;
+      await store.router.navigate(
+        ['/accounting', store.accountingTenantId(), 'journal', 'c-journal'],
+        { queryParams: { accountKey, year: store.year() } });
     },
     async exportCsv(kind: ReportKind): Promise<void> {
       const header = [store.i18n.col_account(), store.i18n.col_name(), store.currentFy().label, store.previousFy().label];
