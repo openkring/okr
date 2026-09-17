@@ -17,9 +17,20 @@ export const feePositionValidations = staticSuite(
     omitWhen(model.source !== 'category', () => {
       stringValidations('categoryList', model.categoryList ?? '', undefined, 0, true);
     });
+    omitWhen(model.source !== 'flag', () => {
+      // selector value (a FeeFlag key) — no length cap.
+      stringValidations('flag', model.flag ?? '', undefined, 0, true);
+    });
+    omitWhen(model.source !== 'rule', () => {
+      // selector value (a FeeRule key) — no length cap.
+      stringValidations('rule', model.rule ?? '', undefined, 0, true);
+    });
     // 'amount' is required for 'flag'/'rule' sources; do NOT default it with `?? 0` — that would
     // make notUndefined() pass trivially and silently accept a missing amount as valid.
+    // isInteger = false: amounts are money and carry cents (e.g. 50.50), matching the sibling
+    // suites for the same kind of value (member-fee.validations.ts, category.validations.ts
+    // 'price') and the "0.00" i18n placeholder for this field.
     omitWhen(model.source === 'category' || model.source === 'manual', () => {
-      numberValidations('amount', model.amount, true, 0, 100000);
+      numberValidations('amount', model.amount, false, 0, 100000);
     });
   });

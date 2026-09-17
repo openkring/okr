@@ -91,6 +91,7 @@ import {
                       (selectedItemNameChange)="onFieldChange('flag', $event)"
                       [fieldStyle]="true" [label]="i18n().feeSchedule_position_flag_label()"
                       [showIcons]="false" [readOnly]="isReadOnly()" />
+                    <okr-error-note [errors]="flagErrors()" />
                   </ion-col>
                 }
                 @if (source() === 'rule') {
@@ -99,6 +100,7 @@ import {
                       (selectedItemNameChange)="onFieldChange('rule', $event)"
                       [fieldStyle]="true" [label]="i18n().feeSchedule_position_rule_label()"
                       [showIcons]="false" [readOnly]="isReadOnly()" />
+                    <okr-error-note [errors]="ruleErrors()" />
                   </ion-col>
                 }
               </ion-row>
@@ -168,6 +170,8 @@ export class FeePositionForm {
   protected typeErrors = computed(() => this.validationResult().getErrors('type'));
   protected sourceErrors = computed(() => this.validationResult().getErrors('source'));
   protected categoryListErrors = computed(() => this.validationResult().getErrors('categoryList'));
+  protected flagErrors = computed(() => this.validationResult().getErrors('flag'));
+  protected ruleErrors = computed(() => this.validationResult().getErrors('rule'));
   protected amountErrors = computed(() => this.validationResult().getErrors('amount'));
 
   constructor() {

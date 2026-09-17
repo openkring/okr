@@ -37,4 +37,24 @@ describe('feePositionValidations', () => {
   it('requires an amount for a rule-based position', () => {
     expect(feePositionValidations(rule({ source: 'rule', rule: 'newMemberOver25', amount: undefined })).isValid()).toBe(false);
   });
+
+  it('accepts a decimal amount', () => {
+    expect(feePositionValidations(rule({ source: 'flag', flag: 'hasLocker', amount: 50.5 })).isValid()).toBe(true);
+  });
+
+  it('requires a flag for a flag rule', () => {
+    expect(feePositionValidations(rule({ source: 'flag', flag: undefined, amount: 50 })).isValid()).toBe(false);
+  });
+
+  it('accepts a flag rule with a flag set', () => {
+    expect(feePositionValidations(rule({ source: 'flag', flag: 'hasLocker', amount: 50 })).isValid()).toBe(true);
+  });
+
+  it('requires a rule for a rule-based position', () => {
+    expect(feePositionValidations(rule({ source: 'rule', rule: undefined, amount: 50 })).isValid()).toBe(false);
+  });
+
+  it('accepts a rule-based position with a rule set', () => {
+    expect(feePositionValidations(rule({ source: 'rule', rule: 'newMemberOver25', amount: 50 })).isValid()).toBe(true);
+  });
 });
