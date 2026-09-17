@@ -11,7 +11,7 @@ import { AUTH, ENV, FIRESTORE } from '@okr/shared-config';
 import { AppConfigService, FirestoreService } from '@okr/shared-data-access';
 import { AddressDirectoryCollection, AddressDirectoryModel, AppConfig, AvailableLanguages, CategoryCollection, CategoryItemModel, CategoryListModel, DefaultLanguage, DefaultLanguageCode, GroupCollection, GroupModel, InvitationCollection, InvitationModel, OrgCollection, OrgModel, PersonCollection, PersonModel, PrivacySettings, privacyUsageToAccessor, ResourceCollection, ResourceModel, ResourceModelName, stricterAccessor, TagCollection, TagModel, TaskCollection, TaskModel, UserCollection, UserModel } from '@okr/shared-models';
 import { die, getSystemQuery, indexBy, openInvitationsOf, pickForTenant, replacePlaceholders, sortPersons } from '@okr/shared-util-core';
-import { AppNavigationService, armStartupStallCheck, isBrowser, markStartup, reportStartupTiming, VersionCheckService, resourceParams } from '@okr/shared-util-angular';
+import { AppNavigationService, armStartupStallCheck, isBrowser, markStartup, probeStoredSession, reportStartupTiming, VersionCheckService, resourceParams } from '@okr/shared-util-angular';
 
 import { authPhase, isDegradedBoot, openBootGate, type BootState } from './boot-readiness.util';
 import { I18nService } from '@okr/shared-i18n';
@@ -656,6 +656,18 @@ export const AppStore = signalStore(
 
       // TEMPORARY startup instrumentation (remove after slow-startup investigation).
       // Marks the auth/data boundaries; reportStartupTiming ships the gaps to Sentry.
+      //
+      // The two session-restore marks exist because SCS-AZ could not say WHY the restore hung:
+      // the gate said `session-restore` and the marks stopped at `bootstrap:call`. `session:stored`
+      // names what the browser had to restore from (nothing / a valid token / an expired one, i.e.
+      // a mandatory token round-trip / storage we could not read at all), and `session:ready` fires
+      // when the SDK settles — including for a signed-OUT user, which the `fbUser` mark below
+      // cannot show because it only fires on a truthy user. A stall with `session:stored` but no
+      // `session:ready` is an SDK/network hang; one with neither is the storage read itself.
+      // Labels avoid the word "auth" on purpose: Sentry's scrubber nulls any extra containing it.
+      markStartup(`session:stored:${probeStoredSession(store.env.firebase.apiKey)}`);
+      void store.auth.authStateReady().then(() => markStartup('session:ready'));
+
       effect(() => { if (store.fbUser()) markStartup('fbUser'); });
       effect(() => { if (store.currentUser()) markStartup('user:loaded'); });
       effect(() => { if (store.isDataReady()) markStartup('data-ready'); });

@@ -2,7 +2,7 @@ import { inject, InjectionToken } from "@angular/core";
 import { browserLocalPersistence, connectAuthEmulator, indexedDBLocalPersistence, initializeAuth } from "firebase/auth";
 import { getApp } from "firebase/app";
 import { ENV } from "./env";
-import { isFirefox, isSafari } from "./firestore";
+import { isFirefox, isIos, isSafari } from "./firestore";
 
 export const AUTH_EMULATOR_PORT = 9099;
 
@@ -13,7 +13,14 @@ export function authFactory() {
   // and not subject to that throttling — and keep IndexedDB only as a fallback. All other
   // browsers keep the IndexedDB-first default. Defensive: mirrors the same "avoid IndexedDB on
   // Safari/Firefox" carve-out already used for Firestore (see firestore.ts).
-  const persistence = (isSafari() || isFirefox())
+  //
+  // isIos() is part of the test for the same reason it is part of the Firestore one: Apple
+  // mandates WebKit for EVERY iOS browser, so Chrome (CriOS), Edge (EdgiOS), Firefox (FxiOS) and
+  // Opera (OPiOS) inherit Safari's exact ITP-throttled IndexedDB — but isSafari() excludes them
+  // by design. Without this they took the IndexedDB-FIRST path, where a throttled open leaves
+  // onAuthStateChanged pending and the boot sits in the session-restore gate (SCS-AZ) with no
+  // upper bound of its own.
+  const persistence = (isSafari() || isFirefox() || isIos())
     ? [browserLocalPersistence, indexedDBLocalPersistence]
     : [indexedDBLocalPersistence, browserLocalPersistence];
 

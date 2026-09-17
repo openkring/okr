@@ -25,5 +25,6 @@ export * from './lib/chunk-load-error-handler';
 export * from './lib/firestore-queue-recovery';
 export * from './lib/analytics-init-window';
 export * from './lib/failed-request-recorder';
+export * from './lib/session-probe';
 export * from './lib/startup-timing';
 export * from './lib/lazy-service';
