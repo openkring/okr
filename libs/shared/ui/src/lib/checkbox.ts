@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, model, output } from '@angular/core';
+import { Component, computed, inject, input, model } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonCheckbox, IonIcon, IonItem, IonLabel, IonNote, IonToggle } from '@ionic/angular/standalone';
 
@@ -75,9 +75,8 @@ export interface CheckboxI18n {
 export class Checkbox {
   private env = inject(ENV);
 
-  // model and explicit output
+  // model.required() already declares the matching `checkedChange` output — see TextInput.
   public checked = model.required<boolean>(); // current value of the checkbox, two-way bound
-  public checkedChange = output<boolean>();
 
   // inputs
   public i18n = input.required<CheckboxI18n>();
@@ -111,9 +110,8 @@ export class Checkbox {
     : '');
   protected svgIconUrl = computed(() => getSvgIconUrl(this.env.services.imgixBaseUrl, this.checked() ? 'checkbox-circle' : 'radio-button-off'));
 
-// always emit change
+  /** set() on the model already emits `checkedChange`. */
   protected onChange(newValue: boolean): void {
     this.checked.set(newValue);
-    this.checkedChange.emit(newValue);
   }
 }

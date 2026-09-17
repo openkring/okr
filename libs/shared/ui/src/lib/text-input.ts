@@ -1,4 +1,4 @@
-import { Component, computed, effect, input, model, output, viewChild } from '@angular/core';
+import { Component, computed, effect, input, model, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonInput, IonItem, IonNote } from '@ionic/angular/standalone';
 
@@ -61,9 +61,11 @@ export interface TextInputI18n {
   `
 })
 export class TextInput {
-  // model and explicit output
-  public value = model.required<string>(); // mandatory view model
-  public valueChange = output<string>();
+  // model.required() already declares the matching `valueChange` output; declaring a second
+  // one by hand made TextInput's metadata invalid ("Output 'valueChange' is bound to both
+  // 'value' and 'valueChange'"), which in turn made every consumer report the component as
+  // not standalone.
+  public value = model.required<string>(); // mandatory view model, two-way bound
 
   // inputs
   public i18n = input.required<TextInputI18n>();
@@ -126,9 +128,8 @@ export class TextInput {
     });
   }
 
-// always emit change
+  /** set() on the model already emits `valueChange` — no manual emit, that would fire twice. */
   protected onChange(newValue: string): void {
     this.value.set(newValue);
-    this.valueChange.emit(newValue);
   }
 }

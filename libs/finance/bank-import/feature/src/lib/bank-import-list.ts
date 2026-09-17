@@ -91,7 +91,7 @@ const STATUS_FILTERS: BankImportStatusFilter[] = ['open', 'all', 'unmapped', 'ma
               <ion-col size="12" size-md="3" class="ion-hide-md-down">{{ row.payee }}</ion-col>
               <ion-col size="12" size-md="3" class="ion-text-end" [style.color]="row.amount.amount < 0 ? 'var(--ion-color-danger)' : null">
                 {{ row.amount.amount / 100 | number:'1.2-2' }} {{ row.amount.currency }}
-                @if (row.fee?.amount) {
+                @if (row.fee.amount) {
                   <!-- gross stays the headline; the processor fee and what actually arrives read underneath -->
                   <ion-note class="fee">./. {{ store.i18n.fee_label() }} {{ row.fee!.amount / 100 | number:'1.2-2' }}
                     → {{ store.i18n.fee_net_label() }} {{ (row.amount.amount - row.fee!.amount) / 100 | number:'1.2-2' }}</ion-note>
@@ -175,16 +175,20 @@ export class BankImportList {
   private addActionSheetButtons(options: ActionSheetOptions, row: BankImportRowModel): void {
     switch (row.status) {
       case 'unmapped':
-        options.buttons.push(createActionSheetButton('bankImport.createRule', this.store.i18n.as_create_rule(), this.imgixBaseUrl, 'add'));
-        options.buttons.push(createActionSheetButton('bankImport.assign', this.store.i18n.as_assign(), this.imgixBaseUrl, 'link'));
-        options.buttons.push(createActionSheetDivider());
-        options.buttons.push(createActionSheetButton('bankImport.delete', this.store.i18n.as_delete(), this.imgixBaseUrl, 'trash'));
+        options.buttons.push(
+          createActionSheetButton('bankImport.createRule', this.store.i18n.as_create_rule(), this.imgixBaseUrl, 'add'),
+          createActionSheetButton('bankImport.assign', this.store.i18n.as_assign(), this.imgixBaseUrl, 'link'),
+          createActionSheetDivider(),
+          createActionSheetButton('bankImport.delete', this.store.i18n.as_delete(), this.imgixBaseUrl, 'trash'),
+        );
         break;
       case 'mapped':
       case 'error':
-        options.buttons.push(createActionSheetButton('bankImport.assign', this.store.i18n.as_assign(), this.imgixBaseUrl, 'link'));
-        options.buttons.push(createActionSheetDivider());
-        options.buttons.push(createActionSheetButton('bankImport.delete', this.store.i18n.as_delete(), this.imgixBaseUrl, 'trash'));
+        options.buttons.push(
+          createActionSheetButton('bankImport.assign', this.store.i18n.as_assign(), this.imgixBaseUrl, 'link'),
+          createActionSheetDivider(),
+          createActionSheetButton('bankImport.delete', this.store.i18n.as_delete(), this.imgixBaseUrl, 'trash'),
+        );
         break;
       case 'posted':
         options.buttons.push(createActionSheetButton('bankImport.openBooking', this.store.i18n.as_open_booking(), this.imgixBaseUrl, 'open'));

@@ -45,7 +45,14 @@
   "MD038": false,
 
   // Specs start with a metadata block or a redirect line, not always an H1.
-  "MD041": false
+  "MD041": false,
+
+  // Pin the bullet style instead of leaving it on "consistent". With "consistent",
+  // markdownlint infers the style from the first bullet it finds — and a wrapped
+  // PROSE line that happens to start with "+" is read as a plus-list, after which
+  // every real dash bullet in the file is reported. That single inference produced
+  // 334 bogus MD004 errors in PENDING_IMPLEMENTATION.md alone. Dash is what we write.
+  "MD004": { "style": "dash" }
 
   // --- kept ON deliberately ---
   // MD022 blanks-around-headings   } the structural blank-line rules: they
