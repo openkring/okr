@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { collapseWhitespace, normalizeIban, parseAmountMinor, parseCsvLine, parseCsvRecords, parseDdMmYyyy, splitLines, stripBom } from './csv.util';
+import { collapseWhitespace, normalizeIban, parseAmountMinor, parseCsvLine, parseCsvRecords, parseDdMmYyyy, parseIsoDate, splitLines, stripBom } from './csv.util';
 
 describe('csv.util', () => {
   it('stripBom removes a leading UTF-8 BOM only', () => {
@@ -37,6 +37,14 @@ describe('csv.util', () => {
     expect(parseDdMmYyyy('15/03.2025')).toBe('20250315');
     expect(parseDdMmYyyy('2025-12-31')).toBeUndefined();
     expect(parseDdMmYyyy('')).toBeUndefined();
+  });
+
+  it('parseIsoDate converts the card export\'s yyyy-mm-dd and rejects the other layouts', () => {
+    expect(parseIsoDate('2023-01-22')).toBe('20230122');
+    expect(parseIsoDate('2023-1-2')).toBe('20230102');
+    expect(parseIsoDate('22.01.2023')).toBeUndefined();
+    expect(parseIsoDate('2023-02-30')).toBeUndefined();
+    expect(parseIsoDate('')).toBeUndefined();
   });
 
   it('collapseWhitespace and normalizeIban', () => {

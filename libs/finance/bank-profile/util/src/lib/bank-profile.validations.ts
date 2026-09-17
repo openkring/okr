@@ -20,6 +20,6 @@ export const bankProfileValidations = staticSuite(
     });
     stringValidations('currency', model.currency, undefined, 0, true);
     test('format', 'bankProfile.format.invalid', () => {
-      enforce(['postfinance', 'zkb', 'yuh', 'vz', 'gkb', 'swissquote', 'raisenow', 'bonuscard'].includes(model.format)).isTruthy();
+      enforce(['postfinance', 'zkb', 'yuh', 'vz', 'gkb', 'swissquote', 'raisenow', 'bonuscard', 'postfinance-card'].includes(model.format)).isTruthy();
     });
   });

@@ -105,3 +105,10 @@ export function parseCsvRecords(text: string, separator: string): CsvRecord[] {
   endRecord();
   return out;
 }
+
+/** ISO `yyyy-mm-dd` → yyyymmdd; undefined for anything else. Delegates the calendar check. */
+export function parseIsoDate(value: string): string | undefined {
+  const v = (value ?? '').trim();
+  const m = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(v);
+  return m ? parseDdMmYyyy(`${m[3]}.${m[2]}.${m[1]}`) : undefined;
+}
