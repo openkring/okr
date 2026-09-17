@@ -88,6 +88,30 @@
         "placeholder": "MWST-Code wählen",
         "helper": "Der Mehrwertsteuer-Code, der für diese Position gilt."
       }
+    },
+    "source": {
+      "category": {
+        "label": "Kategorie-Preisliste"
+      },
+      "flag": {
+        "label": "Merkmal"
+      },
+      "rule": {
+        "label": "Regel"
+      },
+      "manual": {
+        "label": "Von Hand"
+      }
+    },
+    "flag": {
+      "hasLocker": {
+        "label": "Hat einen Schrankplatz"
+      }
+    },
+    "rule": {
+      "newMemberOver25": {
+        "label": "Neu eingetreten und über 25"
+      }
     }
   }
 }

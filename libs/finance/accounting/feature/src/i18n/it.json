@@ -88,6 +88,30 @@
         "placeholder": "Scegli il codice IVA",
         "helper": "Il codice IVA applicabile a questa posizione."
       }
+    },
+    "source": {
+      "category": {
+        "label": "Listino per categoria"
+      },
+      "flag": {
+        "label": "Caratteristica"
+      },
+      "rule": {
+        "label": "Regola"
+      },
+      "manual": {
+        "label": "Inserito a mano"
+      }
+    },
+    "flag": {
+      "hasLocker": {
+        "label": "Ha un armadietto"
+      }
+    },
+    "rule": {
+      "newMemberOver25": {
+        "label": "Nuova adesione e più di 25 anni"
+      }
     }
   }
 }

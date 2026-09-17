@@ -12,6 +12,11 @@
     "@okr/shared-util-core": "*",
     "@okr/shared-ui": "*",
     "@okr/finance-account-ui": "*",
-    "@okr/finance-account-util": "*"
+    "@okr/finance-account-util": "*",
+    "@okr/shared-constants": "*",
+    "@okr/shared-config": "*",
+    "@okr/shared-pipes": "*",
+    "@okr/shared-util-angular": "*",
+    "@okr/finance-accounting-util": "*"
   }
 }

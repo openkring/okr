@@ -88,6 +88,30 @@
         "placeholder": "Choisir le code TVA",
         "helper": "Le code de TVA applicable à cette position."
       }
+    },
+    "source": {
+      "category": {
+        "label": "Liste de prix par catégorie"
+      },
+      "flag": {
+        "label": "Caractéristique"
+      },
+      "rule": {
+        "label": "Règle"
+      },
+      "manual": {
+        "label": "Saisi à la main"
+      }
+    },
+    "flag": {
+      "hasLocker": {
+        "label": "A un casier"
+      }
+    },
+    "rule": {
+      "newMemberOver25": {
+        "label": "Nouvelle adhésion et plus de 25 ans"
+      }
     }
   }
 }

@@ -88,6 +88,30 @@
         "placeholder": "Choose VAT code",
         "helper": "The VAT code that applies to this position."
       }
+    },
+    "source": {
+      "category": {
+        "label": "Category price list"
+      },
+      "flag": {
+        "label": "Attribute"
+      },
+      "rule": {
+        "label": "Rule"
+      },
+      "manual": {
+        "label": "Entered by hand"
+      }
+    },
+    "flag": {
+      "hasLocker": {
+        "label": "Has a locker"
+      }
+    },
+    "rule": {
+      "newMemberOver25": {
+        "label": "Newly joined and over 25"
+      }
     }
   }
 }

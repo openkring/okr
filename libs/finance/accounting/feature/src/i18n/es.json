@@ -88,6 +88,30 @@
         "placeholder": "Elegir código de IVA",
         "helper": "El código de IVA aplicable a esta posición."
       }
+    },
+    "source": {
+      "category": {
+        "label": "Lista de precios por categoría"
+      },
+      "flag": {
+        "label": "Característica"
+      },
+      "rule": {
+        "label": "Regla"
+      },
+      "manual": {
+        "label": "Introducido a mano"
+      }
+    },
+    "flag": {
+      "hasLocker": {
+        "label": "Tiene una taquilla"
+      }
+    },
+    "rule": {
+      "newMemberOver25": {
+        "label": "Alta nueva y mayor de 25"
+      }
     }
   }
 }
