@@ -22,6 +22,33 @@ export interface VatRateEntry {
   accommodationRate: number;  // e.g. 3.8
 }
 
+export type FeeSource = 'category' | 'flag' | 'manual' | 'rule';
+
+// Closed registries — every member is a predicate implemented and tested in code, never an
+// expression in the database: these run against MembershipModel and must be reviewable.
+export type FeeFlag = 'hasLocker';
+export type FeeRule = 'newMemberOver25';
+
+export interface FeePositionRule {
+  key: string;
+  usage: string;
+  type: string;
+  label: string;
+  source: FeeSource;
+  categoryList?: string;  // source 'category' — which mcat list supplies the price
+  flag?: FeeFlag;         // source 'flag'
+  rule?: FeeRule;         // source 'rule'
+  amount?: number;        // source 'flag' | 'rule'; default for 'manual'
+  accountKey?: string;
+  vatCodeKey?: string;
+}
+
+/** One year's price list. Year-versioned like `vatRates`, so re-running 2025 reproduces 2025. */
+export interface FeeScheduleEntry {
+  year: number;
+  positions: FeePositionRule[];
+}
+
 // One document per accounting tenant. okey = accountingTenantId.
 export class AccountingConfigModel implements OkrModel {
   public okey = DEFAULT_KEY;
@@ -38,6 +65,7 @@ export class AccountingConfigModel implements OkrModel {
   public vatMethodYear = 0;                           // year from which vatMethod applies
   public vatPeriod: VatPeriod = 'quarterly';
   public vatRates: VatRateEntry[] = [];               // one entry per year; historical rates kept
+  public feeSchedule: FeeScheduleEntry[] = [];        // one entry per year; historical kept
 
   public assetCapitalizationLimit: MoneyModel | undefined;  // items below limit → immediate expense
   public depreciationFrequency: DepreciationFrequency = 'annual';
