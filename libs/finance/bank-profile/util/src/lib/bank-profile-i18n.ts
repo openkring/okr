@@ -30,6 +30,7 @@ export const BANK_PROFILE_I18N_KEYS = {
   format_gkb:          PFX + 'format.gkb',
   format_swissquote:   PFX + 'format.swissquote',
   format_raisenow:     PFX + 'format.raisenow',
+  format_bonuscard:    PFX + 'format.bonuscard',
   iban_label:          PFX + 'iban.label',
   iban_placeholder:    PFX + 'iban.placeholder',
   iban_helper:         PFX + 'iban.helper',

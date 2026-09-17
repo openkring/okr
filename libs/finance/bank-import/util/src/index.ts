@@ -8,6 +8,7 @@ export * from './lib/gkb.adapter';
 export * from './lib/vz.adapter';
 export * from './lib/swissquote.adapter';
 export * from './lib/raisenow.adapter';
+export * from './lib/bonuscard.adapter';
 export * from './lib/bexio-journal.adapter';
 export * from './lib/journal-import.util';
 export * from './lib/journal-account-map.validations';
