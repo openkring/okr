@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { FeeScheduleEntry, MembershipModel } from '@okr/shared-models';
-import { buildPositions, type FeeContext } from './build-positions';
+import { buildPositions, getFeeTotal, type FeeContext } from './build-positions';
 
 const membership = (overrides: Partial<MembershipModel> = {}): MembershipModel => ({
   memberKey: 'p1', memberName1: 'Anna', memberName2: 'Muster', category: 'active',
@@ -66,5 +66,33 @@ describe('buildPositions', () => {
       schedule([{ key: 'entryFee', usage: 'other', type: 'fix', label: 'Eintrittsgebühr',
         source: 'rule', rule: 'newMemberOver25', amount: 750 }]), ctx());
     expect(result[0].amount).toBe(0);
+  });
+});
+
+describe('buildPositions — scs 2026 regression', () => {
+  // Reproduces the numbers the eight hardcoded columns produced, so the migration is provably
+  // behaviour-preserving for everything except the entry fee (design §8.3).
+  const SCS_2026: FeeScheduleEntry = { year: 2026, positions: [
+    { key: 'jb', usage: 'membershipFee', type: 'fix', label: 'Jahresbeitrag', source: 'category', categoryList: 'mcat_scs' },
+    { key: 'srv', usage: 'srvFee', type: 'fix', label: 'SRV-Beitrag', source: 'category', categoryList: 'mcat_srv' },
+    { key: 'locker', usage: 'lockerRental', type: 'fix', label: 'Kästchen', source: 'flag', flag: 'hasLocker', amount: 20 },
+    { key: 'skiff', usage: 'boatPlaceRental', type: 'fix', label: 'Skiffplatz', source: 'manual' },
+    { key: 'skiffInsurance', usage: 'insurance', type: 'fix', label: 'Skiffversicherung', source: 'manual' },
+    { key: 'hallenTraining', usage: 'other', type: 'fix', label: 'Hallentraining', source: 'manual' },
+  ] };
+
+  it('reproduces an active member with a locker', () => {
+    const positions = buildPositions(
+      membership({ category: 'active' } as Partial<MembershipModel>), SCS_2026,
+      ctx({ hasLocker: true, categoryLists: { mcat_scs: { active: 320 }, mcat_srv: {} } }));
+    expect(getFeeTotal(positions)).toBe(340);
+  });
+
+  it('subtracts a rebate position from the total', () => {
+    const positions = buildPositions(membership(), SCS_2026,
+      ctx({ categoryLists: { mcat_scs: { active: 320 }, mcat_srv: {} } }));
+    positions.push({ key: 'rebate', usage: 'other', type: 'rebate', label: 'Rabatt',
+      amount: 50, accountKey: '', vatCodeKey: '' });
+    expect(getFeeTotal(positions)).toBe(270);
   });
 });
