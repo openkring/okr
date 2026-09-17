@@ -1,5 +1,5 @@
 import Handlebars from 'handlebars';
-import { MemberFeeCollection } from '@okr/shared-models';
+import { LegacyMemberFeeCollection, MemberFeeCollection } from '@okr/shared-models';
 import type { IndexRow, SubjectDataBundle } from './gather';
 
 /**
@@ -101,6 +101,9 @@ export const COLLECTION_LABELS: Record<string, string> = {
   // this exact concept (libs/finance/invoice/feature/src/i18n/de.json).
   'invoice-positions': 'Rechnungspositionen',
   [MemberFeeCollection]: 'Mitgliedergebühren', // libs/relationship/membership/feature/src/i18n/de.json: member-fee.list.title
+  // Same rows, still in the pre-rename collection until the owner drops it (migrateMemberFees
+  // copies, it does not move). The reader must not see two different names for one thing.
+  [LegacyMemberFeeCollection]: 'Mitgliedergebühren (frühere Ablage)',
   bills: 'Kreditoren-Rechnungen', // libs/finance/bill/feature/src/i18n/de.json: list.title
   expenses: 'Spesen',
   'payment-orders': 'Zahlungsaufträge',

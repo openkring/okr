@@ -53,6 +53,16 @@ export class MemberFeeModel implements OkrModel, SearchableModel, TaggedModel {
 }
 
 export const MemberFeeCollection = 'member-fees';
+
+/**
+ * The collection this feature lived in before it was generalized out of its scs shape
+ * (`MemberFeeModel` was `ScsMemberFeesModel`). Every historical document still sits here until
+ * the owner drops the collection deliberately, so it stays wired into the privacy machinery
+ * (SUBJECT_DATA_MAP, the privacy report, firestore.rules) and is the READ side of
+ * `migrateMemberFees`, which copies id-for-id into `MemberFeeCollection`. Never inline the
+ * literal: a privacy guard test asserts every mapped collection resolves to an exported constant.
+ */
+export const LegacyMemberFeeCollection = 'scs-memberfees';
 export const MemberFeeModelName = 'member-fee';
 
 export type INVOICE_STATE = 'initial' | 'review' | 'ready' | 'uploaded' | 'invoiced' | 'sent' | 'paid' | 'cancelled';

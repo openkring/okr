@@ -1,6 +1,6 @@
 import { FieldPath, Filter, getFirestore } from 'firebase-admin/firestore';
 import type { DocumentSnapshot, QueryDocumentSnapshot } from 'firebase-admin/firestore';
-import { MemberFeeCollection, PROSPECT_PARENT_PREFIX } from '@okr/shared-models';
+import { LegacyMemberFeeCollection, MemberFeeCollection, PROSPECT_PARENT_PREFIX } from '@okr/shared-models';
 import type { AvatarInfo } from '@okr/shared-models';
 import type { Blocker, SubjectCtx, SubjectDataEntry } from './types';
 
@@ -589,6 +589,28 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     // gating on it blocked every member who was ever invoiced, forever. The debt is
     // the invoice it produced, and the `invoices` entry above already gates on that
     // (paymentDate, synced from Bexio).
+  },
+  {
+    // The pre-rename home of the member-fee rows. `migrateMemberFees` COPIES id-for-id into
+    // `member-fees` and deliberately leaves the originals behind, so until the owner drops this
+    // collection the personal data in it is live and must stay inside erasure and the export.
+    // Same classification, finder and anonymize field list as the `member-fees` row above —
+    // the document shape is identical apart from the fee columns, which carry no name.
+    collection: LegacyMemberFeeCollection,
+    dataClass: 'financial',
+    tier: 'T3',
+    onTenantExit: 'anonymize',
+    find: (c: SubjectCtx) => db().collection(LegacyMemberFeeCollection)
+      .where('member.key', '==', c.personKey)
+      .where('member.modelType', '==', 'person'),
+    tenantScope: 'tenantsArray',
+    onExport: 'full',
+    onErasure: 'anonymize',
+    anonymizeFields: [
+      'member.key', 'member.name1', 'member.name2',
+      'memberBexioId', 'invoiceBexioId', 'memberBirthYear',
+    ],
+    retention: RETAIN_10Y,
   },
   {
     collection: 'bills',
