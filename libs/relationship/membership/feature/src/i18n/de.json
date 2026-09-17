@@ -189,7 +189,8 @@
     },
     "total": "Total",
     "invoice": {
-      "conf": "Die Rechnungen wurden erstellt."
+      "conf": "Die Rechnungen wurden erstellt.",
+      "incomplete": "{invoiced} Rechnungen wurden erstellt. Für diese Mitglieder ging es nicht, weil eine Position kein Ertragskonto hat: {names}. Bitte ergänze den Gebührenplan."
     },
     "invoiceAll": {
       "label": "Alle bereiten Rechnungen verrechnen",

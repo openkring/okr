@@ -189,7 +189,8 @@
     },
     "total": "Total",
     "invoice": {
-      "conf": "The invoices were created."
+      "conf": "The invoices were created.",
+      "incomplete": "{invoiced} invoices were created. These members were skipped because a position has no revenue account: {names}. Please complete the fee schedule."
     },
     "invoiceAll": {
       "label": "Invoice all prepared fees",

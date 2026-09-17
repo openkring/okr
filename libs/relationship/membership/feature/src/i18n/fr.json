@@ -189,7 +189,8 @@
     },
     "total": "Total",
     "invoice": {
-      "conf": "Les factures ont été créées."
+      "conf": "Les factures ont été créées.",
+      "incomplete": "{invoiced} factures ont été créées. Ces membres ont été ignorés parce qu'une position n'a pas de compte de produits : {names}. Merci de compléter le plan des cotisations."
     },
     "invoiceAll": {
       "label": "Facturer toutes les cotisations prêtes",

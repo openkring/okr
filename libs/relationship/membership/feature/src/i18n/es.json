@@ -189,7 +189,8 @@
     },
     "total": "Total",
     "invoice": {
-      "conf": "Las facturas se han creado."
+      "conf": "Las facturas se han creado.",
+      "incomplete": "Se han creado {invoiced} facturas. Estos miembros se han omitido porque una posición no tiene cuenta de ingresos: {names}. Completa el plan de cuotas."
     },
     "invoiceAll": {
       "label": "Facturar todas las cuotas preparadas",

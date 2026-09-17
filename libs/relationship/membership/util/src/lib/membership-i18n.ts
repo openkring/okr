@@ -75,6 +75,7 @@ export const MEMBERSHIP_I18N_KEYS = {
   memberFee_upload_conf:       PFX + 'memberFee.upload.conf',
   memberFee_upload_noBexioId:  PFX + 'memberFee.upload.noBexioId',
   memberFee_invoice_conf:      PFX + 'memberFee.invoice.conf',
+  memberFee_invoice_incomplete: PFX + 'memberFee.invoice.incomplete',
   memberFee_invoiceAll_label:  PFX + 'memberFee.invoiceAll.label',
   memberFee_invoiceAll_confirm: PFX + 'memberFee.invoiceAll.confirm',
   memberFee_invoiceAll_none:   PFX + 'memberFee.invoiceAll.none',

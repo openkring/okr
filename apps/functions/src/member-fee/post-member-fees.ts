@@ -34,6 +34,20 @@ async function nextInvoiceNo(db: Firestore, tenantId: string, accountingTenantId
 }
 
 /**
+ * The positions of a fee that cannot be booked: a native invoice position without an
+ * `accountKey` has no revenue account, so the booking it produces has nowhere to go. The
+ * migration writes `''` for every position it converts (a legacy fee column carried no account),
+ * and a schedule position whose rule has no `accountKey` does the same. Posting such a position
+ * silently would produce an invoice nobody can book and which no error ever mentions — so the
+ * member is skipped and named in the result instead, and a treasurer fixes the fee schedule.
+ */
+export function unbookablePositions(fee: Pick<MemberFeeModel, 'positions'>): string[] {
+  return (fee.positions ?? [])
+    .filter(p => (p.accountKey ?? '').trim().length === 0)
+    .map(p => p.label || p.key || p.usage);
+}
+
+/**
  * Post every 'ready' member-fee row of a tenant as a real in-house invoice: one `InvoiceModel`
  * plus one `InvoicePositionModel` per fee position, written in a single Firestore batch per fee
  * row so a row is never left half-posted (invoice without positions, or positions without the
@@ -77,8 +91,17 @@ export const postMemberFees = onCall(
     const dueDate = addDuration(invoiceDate, { days: 30 });
 
     let invoiced = 0;
+    const failed: { member: string; positions: string[] }[] = [];
     for (const feeDoc of feeSnap.docs) {
       const fee = feeDoc.data() as MemberFeeModel;
+
+      const unbookable = unbookablePositions(fee);
+      if (unbookable.length > 0) {
+        const member = fee.member?.label || fee.member?.key || feeDoc.id;
+        logger.error(`${CF_NAME}: ${member} has position(s) without a revenue account: ${unbookable.join(', ')} — skipped`);
+        failed.push({ member, positions: unbookable });
+        continue;
+      }
 
       const invoice = new InvoiceModel(tenantId);
       invoice.accountingTenantId = accountingTenantId;
@@ -122,7 +145,7 @@ export const postMemberFees = onCall(
       invoiced++;
     }
 
-    logger.info(`${CF_NAME}: posted ${invoiced} of ${feeSnap.size} 'ready' member-fee(s) for tenant ${tenantId} (accountingTenantId ${accountingTenantId})`);
-    return { processed: feeSnap.size, invoiced };
+    logger.info(`${CF_NAME}: posted ${invoiced} of ${feeSnap.size} 'ready' member-fee(s) for tenant ${tenantId} (accountingTenantId ${accountingTenantId}), ${failed.length} skipped`);
+    return { processed: feeSnap.size, invoiced, failed };
   },
 );

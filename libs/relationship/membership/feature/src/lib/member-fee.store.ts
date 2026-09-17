@@ -425,10 +425,24 @@ export const _MemberFeesStore = signalStore(
       const accountingTenantId = store.appStore.defaultOrg()?.okey ?? store.appStore.tenantId();
       const fn = httpsCallable<
         { tenantId: string; accountingTenantId: string },
-        { processed: number; invoiced: number }
+        { processed: number; invoiced: number; failed: { member: string; positions: string[] }[] }
       >(store.functions, 'postMemberFees');
-      await fn({ tenantId: store.appStore.tenantId(), accountingTenantId });
+      const result = await fn({ tenantId: store.appStore.tenantId(), accountingTenantId });
       patchState(store, { version: store.version() + 1 });
+
+      // A fee with a position that has no revenue account is not posted — an invoice position
+      // without an account cannot be booked. The callable names those members instead of
+      // posting them silently; say so, otherwise the treasurer sees a success message for a
+      // run that skipped people.
+      const failed = result.data.failed ?? [];
+      if (failed.length > 0) {
+        await showToast(store.toastController,
+          fill(store.i18n.memberFee_invoice_incomplete(), {
+            invoiced: result.data.invoiced,
+            names: failed.map(f => f.member).join(', '),
+          }));
+        return;
+      }
       await showToast(store.toastController, store.i18n.memberFee_invoice_conf());
     },
 
