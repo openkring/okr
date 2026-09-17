@@ -3,6 +3,20 @@ import { OkrModel, SearchableModel, TaggedModel } from './base.model';
 import { AvatarInfo } from './avatar-info';
 
 /**
+ * One line of a member's fee. Mirrors the subset of `InvoicePositionModel` a fee needs, so a
+ * position materialises into a real invoice position on posting without a mapping table.
+ */
+export interface MemberFeePosition {
+  key: string; // stable id from the schedule rule, e.g. 'jb'
+  usage: string; // invoice_position_usage
+  type: string; // invoice_position_type ('fix' | 'rebate' | …)
+  label: string; // grid column header and invoice position name
+  amount: number;
+  accountKey: string; // revenue account (AccountModel)
+  vatCodeKey: string;
+}
+
+/**
  * A list of all active or passive member of organization scs (it is scs-specific)
  * to prepare the yearly membership invoices.
  * The entries of this list are deleted when creating the invoice in Bexio (upload of the data to Bexio)
@@ -21,16 +35,7 @@ export class MemberFeeModel implements OkrModel, SearchableModel, TaggedModel {
   public dateOfEntry = DEFAULT_DATE;
   public category = DEFAULT_MCAT;
 
-  public jb = 0;
-  public srv = 0;
-  public bev  = 0;
-  public entryFee = 0;
-  public locker = 0;
-  public hallenTraining = 0;
-  public skiff = 0;
-  public skiffInsurance = 0;
-  public rebate = 0;
-  public rebateReason = '';
+  public positions: MemberFeePosition[] = [];
   public templateId = '';
   public invoiceBexioId = '';
 
