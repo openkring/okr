@@ -1,7 +1,8 @@
 import { DEFAULT_PERIODICITY } from '@okr/shared-constants';
+import { BankImportRowModel, MoneyModel } from '@okr/shared-models';
 import { describe, expect, it } from 'vitest';
 
-import { toImportRows } from './bank-import-row.util';
+import { toImportRows, withFee } from './bank-import-row.util';
 import { ParsedStatement } from './types';
 
 const s: ParsedStatement = {
@@ -27,5 +28,34 @@ describe('toImportRows', () => {
   });
   it('throws when keys and rows differ in length', () => {
     expect(() => toImportRows(s, ['k1'], ctx)).toThrow();
+  });
+});
+
+describe('withFee', () => {
+  // A row as Firestore hands it back: a plain object, no class field initialisers.
+  const stored = (over: Partial<BankImportRowModel> = {}) =>
+    ({ okey: 'k', amount: new MoneyModel(-5000, 'EUR'), ...over }) as BankImportRowModel;
+
+  it('fills fee on a legacy row written before spec 1.62', () => {
+    const row = withFee(stored());
+    expect(row.fee).toEqual(new MoneyModel(0, 'EUR'));
+  });
+
+  it('takes the currency from amount, so net = amount - fee stays one currency', () => {
+    expect(withFee(stored()).fee.currency).toBe('EUR');
+  });
+
+  it('falls back to CHF when even amount is missing', () => {
+    expect(withFee(stored({ amount: undefined as unknown as MoneyModel })).fee.currency).toBe('CHF');
+  });
+
+  it('leaves a row that already carries a fee untouched, identity included', () => {
+    const row = stored({ fee: new MoneyModel(250, 'EUR') });
+    expect(withFee(row)).toBe(row);
+  });
+
+  it('keeps a zero fee written by the parse path — it is present, not missing', () => {
+    const row = stored({ fee: new MoneyModel(0, 'EUR') });
+    expect(withFee(row)).toBe(row);
   });
 });

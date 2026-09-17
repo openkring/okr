@@ -35,10 +35,10 @@ import { BankImportI18n, bankImportRowValidations } from '@okr/finance-bank-impo
                 }
                 · {{ formData().rawText }} ·
                 {{ formData().amount.amount / 100 | number:'1.2-2' }} {{ formData().amount.currency }}
-                @if (formData().fee?.amount) {
+                @if (formData().fee.amount) {
                   <!-- read-only like every other bank figure: the fee comes from the file, not from the treasurer -->
-                  · {{ i18n().fee_label() }} {{ formData().fee!.amount / 100 | number:'1.2-2' }}
-                  · {{ i18n().fee_net_label() }} {{ (formData().amount.amount - formData().fee!.amount) / 100 | number:'1.2-2' }}
+                  · {{ i18n().fee_label() }} {{ formData().fee.amount / 100 | number:'1.2-2' }}
+                  · {{ i18n().fee_net_label() }} {{ (formData().amount.amount - formData().fee.amount) / 100 | number:'1.2-2' }}
                 }
               </ion-label>
             </ion-item>

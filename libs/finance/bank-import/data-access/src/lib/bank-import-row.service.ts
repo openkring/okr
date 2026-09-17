@@ -1,5 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { doc } from 'firebase/firestore';
@@ -10,7 +11,7 @@ import { BankImportRowCollection, BankImportRowModel, UserModel } from '@okr/sha
 import { getSystemQuery, removeKeyFromOkrModel, removeUndefinedFields } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
 
-import { BANK_IMPORT_I18N_KEYS, PostJournalImportPayload, PostJournalImportResult } from '@okr/finance-bank-import-util';
+import { BANK_IMPORT_I18N_KEYS, PostJournalImportPayload, PostJournalImportResult, withFee } from '@okr/finance-bank-import-util';
 
 export interface PostBankImportPayload { accountingTenantId: string; rowKeys?: string[]; }
 export interface PostBankImportResult { posted: number; failed: { rowKey: string; reason: string }[]; }
@@ -34,7 +35,9 @@ export class BankImportRowService {
   }
 
   public list(accountingTenantId: string): Observable<BankImportRowModel[]> {
-    return this.firestoreService.searchData<BankImportRowModel>(BankImportRowCollection, this.query(accountingTenantId), 'date', 'desc');
+    return this.firestoreService
+      .searchData<BankImportRowModel>(BankImportRowCollection, this.query(accountingTenantId), 'date', 'desc')
+      .pipe(map(rows => rows.map(row => withFee(row))));
   }
 
   /** Which of the given import keys already exist (any status). Firestore `in` takes ≤ 30 values. */
