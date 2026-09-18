@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildReceiptAriaLabel, filterRoomsOfTenant, isRoomClassifiable, findSupportRoom, isBridgeGhost, hashUserIdToColor, formatReceiptTime, isRenderableChatEvent, linkifyText, resolveMatrixDisplayName, canPostWithPower, groupRoomAliasLocalpart, groupKeyFromRoomAlias, isRoomGoneError } from './chat.util';
+import { buildReceiptAriaLabel, filterRoomsOfTenant, isRoomClassifiable, findSupportRoom, isBridgeGhost, hashUserIdToColor, formatReceiptTime, isRenderableChatEvent, linkifyText, resolveMatrixDisplayName, canPostWithPower, groupRoomAliasLocalpart, groupKeyFromRoomAlias, isRoomGoneError, askRoomAliasLocalpart, shouldDeferAskRoom } from './chat.util';
 
 describe('buildReceiptAriaLabel', () => {
   it('returns empty string for no receipts', () => {
@@ -322,5 +322,73 @@ describe('isRoomGoneError', () => {
     expect(isRoomGoneError({ errcode: 'M_LIMIT_EXCEEDED', message: 'Too many requests' })).toBe(false);
     expect(isRoomGoneError(null)).toBe(false);
     expect(isRoomGoneError(undefined)).toBe(false);
+  });
+});
+
+describe('askRoomAliasLocalpart', () => {
+  it('mirrors the Cloud Function derivation', () => {
+    expect(askRoomAliasLocalpart('scs_vorstand', 'kaiser')).toBe('ask_scs_vorstand_kaiser');
+  });
+
+  it('sanitises a legacy group key that contains spaces and capitals', () => {
+    // groups/'Ausschuss Boote' is a real pre-2026-08 key — the alias it produced is
+    // #ask_ausschuss_boote_<person>, so the client must sanitise identically or it will
+    // never recognise the room it already joined.
+    expect(askRoomAliasLocalpart('Ausschuss Boote', 'ABC123')).toBe('ask_ausschuss_boote_abc123');
+  });
+});
+
+describe('shouldDeferAskRoom', () => {
+  const me = 'jhmzsqs0oxxpjbfc0aiu';
+  const askGroup = { okey: 'support', chatMode: 'ask' as const };
+  const myRoom = { canonicalAlias: `#ask_support_${me}:bkchat.etke.host` };
+
+  it('defers for an ask group the person has no room in', () => {
+    expect(shouldDeferAskRoom(askGroup, [], me)).toBe(true);
+  });
+
+  it('does NOT defer once the person has their own ask room', () => {
+    expect(shouldDeferAskRoom(askGroup, [myRoom], me)).toBe(false);
+  });
+
+  it('does NOT defer because SOMEONE ELSE has an ask room in the group', () => {
+    // A group member sees every requester's room. Matching the prefix alone would make
+    // the member's own first message skip creation and post into a stranger's room.
+    const othersRoom = { canonicalAlias: '#ask_support_someoneelse:bkchat.etke.host' };
+    expect(shouldDeferAskRoom(askGroup, [othersRoom], me)).toBe(true);
+  });
+
+  it('never defers for a shared group', () => {
+    // Opening a shared group joins an EXISTING room — nothing is created, so there is
+    // nothing to defer, and deferring would hide the group's history.
+    expect(shouldDeferAskRoom({ okey: 'scs', chatMode: 'shared' }, [], me)).toBe(false);
+  });
+
+  it('never defers for a members-only group', () => {
+    // The CF refuses a non-member outright; a member lands in the shared room.
+    expect(shouldDeferAskRoom({ okey: 'notfall', chatMode: 'members' }, [], me)).toBe(false);
+  });
+
+  it('treats a missing chatMode as shared (the model default)', () => {
+    expect(shouldDeferAskRoom({ okey: 'scs' }, [], me)).toBe(false);
+  });
+
+  it('falls back to today behaviour when the group is unknown to the client', () => {
+    // The group doc may not be loaded, or belong to another tenant. Never defer on a guess:
+    // the worst case then is one empty room, exactly as before this change.
+    expect(shouldDeferAskRoom(undefined, [], me)).toBe(false);
+  });
+
+  it('does not defer without a personKey', () => {
+    expect(shouldDeferAskRoom(askGroup, [], '')).toBe(false);
+  });
+
+  it('matches the alias case-insensitively', () => {
+    const upper = { canonicalAlias: `#ASK_SUPPORT_${me.toUpperCase()}:bkchat.etke.host` };
+    expect(shouldDeferAskRoom(askGroup, [upper], me)).toBe(false);
+  });
+
+  it('ignores rooms with no canonical alias', () => {
+    expect(shouldDeferAskRoom(askGroup, [{ canonicalAlias: undefined }], me)).toBe(true);
   });
 });

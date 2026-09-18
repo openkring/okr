@@ -222,6 +222,8 @@ export const MATRIX_CHAT_I18N_KEYS = {
 
   validation_name_required:  PFX + 'validation.nameRequired',
 
+  askRoom_hint:              PFX + 'askRoom.hint',
+
   readOnly_hint:             PFX + 'readOnly.hint',
   readOnly_ask:              PFX + 'readOnly.ask',
 } satisfies Record<string, string>;

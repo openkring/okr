@@ -127,6 +127,55 @@ export function groupRoomAliasLocalpart(groupOkey: string): string {
 }
 
 /**
+ * Canonical-alias localpart of an ask room: `ask_<sanitised group okey>_<sanitised personKey>`.
+ *
+ * Mirrors `askRoomAliasLocalpart` in `apps/functions/src/matrix-simple/shared.ts` — keep the two
+ * in sync. The sanitising matters more than it looks: `groups/'Ausschuss Boote'` is a real
+ * pre-2026-08 key, so its rooms carry `#ask_ausschuss_boote_…`. A client that did not sanitise
+ * identically would never recognise a room it is already in, and would ask for a new one.
+ */
+export function askRoomAliasLocalpart(groupOkey: string, personKey: string): string {
+  const clean = (s: string) => s.toLowerCase().replace(/[^a-z0-9._~-]/g, '_');
+  return `ask_${clean(groupOkey)}_${clean(personKey)}`;
+}
+
+/**
+ * Whether opening this group's chat should render the "no conversation yet" state INSTEAD of
+ * asking the Cloud Function for a room (spec `2026-08-26-lazy-ask-rooms-spec.md` §1).
+ *
+ * A `chatMode: 'ask'` group gives every requester their own room and force-joins the whole group
+ * into it. Because that happened on OPEN, merely looking at the chat tab put a permanent
+ * `<Gruppe> · <Name>` row into every member's room list for a conversation that never happened —
+ * 22 of 28 such rooms were empty on 2026-09-18, and six of them were read as incoming "Notfall"
+ * messages by people who received nothing.
+ *
+ * Deferring is deliberately the narrow case. Every uncertainty resolves to `false`, i.e. today's
+ * behaviour:
+ *
+ * - `shared` opens an EXISTING room — nothing is created, and deferring would hide its history.
+ * - `members` is refused by the CF for a non-member and shared for a member.
+ * - An unknown group (doc not loaded, or another tenant) is never guessed at: the cost of being
+ *   wrong here is one empty room, exactly as before this change, rather than a chat that cannot
+ *   be opened.
+ *
+ * The person's OWN room is what ends the deferral — not any room of the group. A member sees
+ * every requester's room, so a prefix match would make their first message skip creation and
+ * post into a stranger's conversation.
+ */
+export function shouldDeferAskRoom(
+  group: { okey: string; chatMode?: 'shared' | 'ask' | 'members' } | undefined,
+  joinedRooms: Array<{ canonicalAlias?: string }>,
+  personKey: string,
+): boolean {
+  if (!group || group.chatMode !== 'ask' || !personKey) return false;
+  const own = askRoomAliasLocalpart(group.okey, personKey);
+  const hasOwnRoom = joinedRooms.some(
+    (r) => r.canonicalAlias?.split(':')[0]?.replace(/^#/, '').toLowerCase() === own,
+  );
+  return !hasOwnRoom;
+}
+
+/**
  * The group okey a room alias points at, or undefined for a non-group alias.
  * `#group_scs_notfall:bkchat.etke.host` → `scs_notfall`.
  *

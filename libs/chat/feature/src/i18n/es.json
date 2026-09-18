@@ -220,6 +220,9 @@
     "nameRequired": "El nombre es obligatorio.",
     "membersRequired": "Elige al menos a una persona."
   },
+  "askRoom": {
+    "hint": "Todavía no hay conversación. Tu mensaje llega a todos los miembros de {group}."
+  },
   "readOnly": {
     "hint": "Canal de avisos – aquí solo escribe la junta.",
     "ask": "Hacer una pregunta"

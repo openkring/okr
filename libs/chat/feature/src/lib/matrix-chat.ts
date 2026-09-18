@@ -14,7 +14,7 @@ import { MenuService } from '@okr/cms-menu-data-access';
 
 import { MatrixMessageInput, MatrixMessageList, MatrixRoomList, PollDetailModal } from '@okr/chat-ui';
 import { MatrixPollData } from '@okr/chat-data-access';
-import { convertHeicToJpeg, groupRoomAliasLocalpart, isSupportedImageFile, isUploadTooLargeError, filterRoomsByName, resolveInitialRoomId, MessageDraft, UploadTooLargeError } from '@okr/chat-util';
+import { convertHeicToJpeg, groupRoomAliasLocalpart, shouldDeferAskRoom, isSupportedImageFile, isUploadTooLargeError, filterRoomsByName, resolveInitialRoomId, MessageDraft, UploadTooLargeError } from '@okr/chat-util';
 
 import { MatrixChatStore } from './matrix-chat.store';
 import { PollCreateModal } from './poll-create.modal';
@@ -445,6 +445,29 @@ function rejectionReasons(results: PromiseSettledResult<unknown>[]): unknown[] {
                     (cancelReplyClicked)="onCancelReply()"
                   />
                 }
+              } @else if (pendingAskGroup()) {
+                <!-- 'ask' group, no room yet: the room is created by the first send, not by
+                     opening this tab. The hint names the REACH, because that is what a person
+                     writing to Notfall or Support needs to know before they type. -->
+                <div class="empty-state pending-ask">
+                  <ion-icon src="{{'chatbubbles' | svgIcon}}" size="large"></ion-icon>
+                  <p>{{ pendingAskHint() }}</p>
+                </div>
+                <okr-matrix-message-input
+                  [i18n]="store.i18n"
+                  [roomId]="undefined"
+                  [mentionCandidates]="store.mentionCandidates()"
+                  [isDirectRoom]="false"
+                  [typingUsers]="[]"
+                  [replyToMessage]="undefined"
+                  [pendingImages]="pendingImages()"
+                  (messageSent)="onMessageSent($event)"
+                  (fileSent)="onFileSent($event)"
+                  (fileQueued)="onFileQueued($event)"
+                  (removeImage)="onRemoveImage($event)"
+                  (filesSent)="onFilesSent($event)"
+                  (locationSent)="onLocationSent()"
+                />
               } @else {
                 @if (rooms().length === 0) {
                   <div class="empty-state">
@@ -606,6 +629,55 @@ export class MatrixChat implements OnDestroy {
   protected readonly rooms = this.store.rooms;
   protected readonly currentRoom = this.store.currentRoom;
   protected readonly currentRoomId = computed(() => this.store.currentRoomId());
+
+  /**
+   * The okey of an 'ask' group whose chat is open but whose room does not exist yet.
+   * Set by the deep-link effect, cleared once the first send has created the room.
+   */
+  protected readonly pendingAskGroup = signal<string | undefined>(undefined);
+
+  /** Names the reach — who will read what the person is about to write. */
+  protected readonly pendingAskHint = computed(() => {
+    const key = this.pendingAskGroup();
+    const group = key ? this.store.appStore.getGroup(key) : undefined;
+    return fill(this.store.i18n.askRoom_hint(), { group: group?.name ?? key ?? '' });
+  });
+
+  /**
+   * In-flight room creation, so a double-tap on send cannot start two.
+   *
+   * `M_ROOM_IN_USE` is unhandled on the CF create path (it throws), and a genuine race is the
+   * only way to reach it — so the fix is to make it unreachable rather than to handle it.
+   */
+  private askRoomCreation?: Promise<string | undefined>;
+
+  /**
+   * Make sure there is a room to send into, creating the deferred ask room on first use.
+   *
+   * Returns false only when creation failed, in which case the caller must not send: the
+   * message would go nowhere. A created-but-send-failed room is left standing on purpose —
+   * the retry lands in the same room, and a delete path on the error branch is more dangerous
+   * than an empty room.
+   */
+  private async ensureAskRoom(): Promise<boolean> {
+    const groupId = this.pendingAskGroup();
+    if (!groupId) return true;
+    try {
+      this.askRoomCreation ??= this.store.requestGroupRoomAccess(groupId).then(r => r.roomId);
+      const roomId = await this.askRoomCreation;
+      if (!roomId) return false;
+      this.resolvedRoomAlias = groupId;   // the deep link is spent, as in requestRoomAccess
+      this.store.setCurrentRoom(roomId);
+      this.pendingAskGroup.set(undefined);
+      return true;
+    } catch (error) {
+      console.error('MatrixChat: Failed to create ask room:', error);
+      await this.alertService.showToast(this.store.i18n.room_create_error());
+      return false;
+    } finally {
+      this.askRoomCreation = undefined;
+    }
+  }
   protected readonly totalUnreadCount = this.store.totalUnreadCount;
   protected readonly matrixUserId = computed(() => this.store.matrixUser()?.id);
   private readonly currentUser = computed(() => this.store.currentUser());
@@ -710,6 +782,22 @@ export class MatrixChat implements OnDestroy {
         this.store.setCurrentRoom(roomAlias);
         return;
       }
+      // An 'ask' group creates the requester's room on the CF call — so for those, opening
+      // must not call at all: the room is created on the first SEND instead (spec
+      // 2026-08-26-lazy-ask-rooms-spec.md §1). Before this, merely looking at the chat tab put
+      // a permanent '<Gruppe> · <Name>' row into every group member's list; 22 of 28 such rooms
+      // were empty, and six were read as incoming Notfall messages by people who got nothing.
+      // The deep link is deliberately NOT marked resolved here: if the room shows up later
+      // (another device, a slow sync), this effect re-runs and resolves it normally.
+      // `topic` is where MatrixRoom carries the canonical alias (see the match above).
+      const personKey = this.currentUser()?.personKey ?? '';
+      const group = this.store.appStore.getGroup(roomAlias);
+      if (shouldDeferAskRoom(group, syncRooms.map(r => ({ canonicalAlias: r.topic })), personKey)) {
+        this.pendingAskGroup.set(roomAlias);
+        return;
+      }
+      this.pendingAskGroup.set(undefined);
+
       // Otherwise it's a group alias / person key → request access via CF.
       const isReady = this.isGroupView()
         ? this.store.isMatrixInitialized()
@@ -912,6 +1000,7 @@ export class MatrixChat implements OnDestroy {
 
   async onMessageSent(draft: MessageDraft) {
     try {
+      if (!await this.ensureAskRoom()) return;
       await this.store.sendReply(draft.text, draft.mentions, draft.mentionRoom);
     } catch (error) {
       console.error('Failed to send message:', error);
@@ -921,6 +1010,7 @@ export class MatrixChat implements OnDestroy {
 
   async onFileSent(file: File) {
     try {
+      if (!await this.ensureAskRoom()) return;
       await this.store.sendFile(file);
     } catch (error) {
       if (await this.showUploadLimitToast([error])) return;
@@ -930,6 +1020,7 @@ export class MatrixChat implements OnDestroy {
   }
 
   async onLocationSent() {
+    if (!await this.ensureAskRoom()) return;
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         const { latitude, longitude } = pos.coords;
@@ -1052,6 +1143,7 @@ export class MatrixChat implements OnDestroy {
   }
 
   protected async onFilesSent(files: File[]): Promise<void> {
+    if (!await this.ensureAskRoom()) return;
     this.pendingImages.set([]);
     const results = await Promise.allSettled(files.map(f => this.store.sendFile(f)));
     const errors = rejectionReasons(results);

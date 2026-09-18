@@ -220,6 +220,9 @@
     "nameRequired": "Le nom est obligatoire.",
     "membersRequired": "Sélectionne au moins une personne."
   },
+  "askRoom": {
+    "hint": "Pas encore de conversation. Ton message est transmis à tous les membres de {group}."
+  },
   "readOnly": {
     "hint": "Canal d'annonces – seul le comité écrit ici.",
     "ask": "Poser une question"
