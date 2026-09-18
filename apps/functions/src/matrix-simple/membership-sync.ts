@@ -34,8 +34,19 @@ import {
 const MEMBERSHIP_COLLECTION = 'memberships';
 const GROUP_COLLECTION = 'groups';
 
-/** Matrix accounts that legitimately live in every room and must never be reported/kicked. */
-const SERVICE_ACCOUNT_LOCALPARTS = new Set(['bk2-bot', 'bruno']);
+/**
+ * Matrix accounts that legitimately live in every room and must never be reported/kicked.
+ *
+ * `okrbot` is the workflow bot (`workflow/matrix-bot.ts`): it joins a room to post an `openChat`
+ * message and stays. Without it here, every room it has ever posted into reports the bot as an
+ * `extra` — a stranger to prune — and `kickRoomMembers` would remove it, silently killing
+ * workflow posts into that room. Found in 9 of 28 ask rooms by the 2026-09-18 audit.
+ *
+ * This list MIRRORS runtime identities it cannot read: the workflow bot's user id comes from
+ * `whoami(MATRIX_BOT_TOKEN)`, so pointing that secret at a differently-named account silently
+ * un-protects it. Keep them in step.
+ */
+const SERVICE_ACCOUNT_LOCALPARTS = new Set(['bk2-bot', 'okrbot', 'bruno']);
 
 // Inlined subset of MembershipModel to avoid monorepo cross-bundle imports
 // (same pattern as task/index.ts and calendar/index.ts).
