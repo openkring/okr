@@ -274,5 +274,15 @@
     "hint": "Aktivieren, um auch ausserhalb der App benachrichtigt zu werden.",
     "renew": "Erneuern",
     "enable": "Aktivieren"
+  },
+  "maintenance": {
+    "title": "Wartung",
+    "description": "Wenn die App nicht mehr richtig lädt oder noch eine alte Version zeigt, kannst du sie hier zurücksetzen. Deine Daten bleiben erhalten und du bleibst angemeldet.",
+    "version": "Installierte Version",
+    "reset": "App zurücksetzen",
+    "confirm": {
+      "header": "App zurücksetzen?",
+      "message": "Die App lädt sich vollständig neu. Das dauert einen Moment länger als sonst. Deine Daten bleiben erhalten und du bleibst angemeldet."
+    }
   }
 }

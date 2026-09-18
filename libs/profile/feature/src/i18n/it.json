@@ -274,5 +274,15 @@
     "hint": "Attivare per ricevere notifiche anche fuori dall’app.",
     "renew": "Rinnovare",
     "enable": "Attivare"
+  },
+  "maintenance": {
+    "title": "Manutenzione",
+    "description": "Se l'app non si carica più correttamente o mostra ancora una versione vecchia, puoi reimpostarla qui. I tuoi dati restano e rimani connesso.",
+    "version": "Versione installata",
+    "reset": "Reimposta l'app",
+    "confirm": {
+      "header": "Reimpostare l'app?",
+      "message": "L'app si ricarica completamente. Ci vuole un momento in più del solito. I tuoi dati restano e rimani connesso."
+    }
   }
 }

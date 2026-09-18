@@ -274,5 +274,15 @@
     "hint": "Activez pour être notifié également en dehors de l’application.",
     "renew": "Renouveler",
     "enable": "Activer"
+  },
+  "maintenance": {
+    "title": "Maintenance",
+    "description": "Si l'application ne se charge plus correctement ou affiche encore une ancienne version, tu peux la réinitialiser ici. Tes données sont conservées et tu restes connecté.",
+    "version": "Version installée",
+    "reset": "Réinitialiser l'application",
+    "confirm": {
+      "header": "Réinitialiser l'application ?",
+      "message": "L'application se recharge entièrement. Cela prend un peu plus de temps que d'habitude. Tes données sont conservées et tu restes connecté."
+    }
   }
 }

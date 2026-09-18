@@ -274,5 +274,15 @@
     "hint": "Actívelas para recibir avisos también fuera de la aplicación.",
     "renew": "Renovar",
     "enable": "Activar"
+  },
+  "maintenance": {
+    "title": "Mantenimiento",
+    "description": "Si la aplicación ya no carga bien o sigue mostrando una versión antigua, puedes restablecerla aquí. Tus datos se conservan y sigues con la sesión iniciada.",
+    "version": "Versión instalada",
+    "reset": "Restablecer la aplicación",
+    "confirm": {
+      "header": "¿Restablecer la aplicación?",
+      "message": "La aplicación se carga de nuevo por completo. Tarda un momento más de lo habitual. Tus datos se conservan y sigues con la sesión iniciada."
+    }
   }
 }

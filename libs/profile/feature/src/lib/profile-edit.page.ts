@@ -15,6 +15,7 @@ import { ProfileDataAccordion, ProfilePrivacyAccordion, ProfileSettingsAccordion
 import { ProfileStore } from './profile.store';
 import { EmailSignatureAccordion } from './email-signature.accordion';
 import { DataRightsAccordion } from './data-rights.accordion';
+import { MaintenanceAccordion } from './maintenance.accordion';
 
 @Component({
   selector: 'okr-profile-edit-page',
@@ -23,7 +24,7 @@ import { DataRightsAccordion } from './data-rights.accordion';
     AsyncPipe,
     AvatarToolbar, Header, AddressesAccordion, ProfileDataAccordion,
     ChangeConfirmation, ProfileSettingsAccordion, ProfilePrivacyAccordion, EmailSignatureAccordion,
-    DataRightsAccordion,
+    DataRightsAccordion, MaintenanceAccordion,
     IonContent, IonItem, IonAccordionGroup, IonLabel, IonCard, IonCardContent
   ],
   providers: [ProfileStore],
@@ -102,6 +103,9 @@ import { DataRightsAccordion } from './data-rights.accordion';
             <!-- privacy 1.19 Phase 5A/5B: policy acceptance, data export, data erasure -->
             <okr-data-rights-accordion [i18n]="store.i18n" />
             <okr-email-signature-accordion [i18n]="store.i18n" />
+            <!-- Last panel on purpose: the escape hatch out of a stale cached build is the one
+                 thing a member only ever opens when told to, never while editing their profile. -->
+            <okr-maintenance-accordion [i18n]="store.i18n" />
           </ion-accordion-group>
         </ion-card-content>
       </ion-card>

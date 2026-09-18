@@ -177,6 +177,14 @@ export const PROFILE_I18N_KEYS = {
   push_hint:                  PFX + 'push.hint',
   push_renew:                 PFX + 'push.renew',
   push_enable:                PFX + 'push.enable',
+
+  // maintenance block — the user-driven escape hatch out of a stale cached build
+  maint_title:                PFX + 'maintenance.title',
+  maint_description:          PFX + 'maintenance.description',
+  maint_version:              PFX + 'maintenance.version',
+  maint_reset:                PFX + 'maintenance.reset',
+  maint_confirm_header:       PFX + 'maintenance.confirm.header',
+  maint_confirm_message:      PFX + 'maintenance.confirm.message',
 } satisfies Record<string, string>;
 
 export type ProfileI18n = { [K in keyof typeof PROFILE_I18N_KEYS]: Signal<string> };

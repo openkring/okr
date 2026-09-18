@@ -274,5 +274,15 @@
     "hint": "Enable to be notified outside the app as well.",
     "renew": "Renew",
     "enable": "Enable"
+  },
+  "maintenance": {
+    "title": "Maintenance",
+    "description": "If the app no longer loads properly or still shows an old version, you can reset it here. Your data is kept and you stay signed in.",
+    "version": "Installed version",
+    "reset": "Reset app",
+    "confirm": {
+      "header": "Reset the app?",
+      "message": "The app will load again from scratch. This takes a moment longer than usual. Your data is kept and you stay signed in."
+    }
   }
 }
