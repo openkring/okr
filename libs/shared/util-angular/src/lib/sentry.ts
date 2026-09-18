@@ -7,6 +7,7 @@ import { isStaleChunkRecoveryInFlight } from './chunk-load-error-handler';
 import { isFirestoreQueueRecoveryInFlight } from './firestore-queue-recovery';
 import { isAnalyticsInitInFlight } from './analytics-init-window';
 import { getRecentFailedRequests } from './failed-request-recorder';
+import { getDeviceSupportTags } from './device-support';
 
 /** Sentry configuration as emitted into environment.ts by set-env.js. */
 export interface SentryConfig {
@@ -125,6 +126,13 @@ export function buildSentryOptions(
     release: cfg.release,
 
     integrations,
+
+    // Which device this is, and whether the build was ever compiled for it. Set here rather
+    // than via setTag() so the tags are on the FIRST event too — a device below the build floor
+    // typically fails early, long before login calls setSentryUser (SCS-9V). Sentry's own
+    // os.version / browser.version arrive empty on every iOS event in this project, so these
+    // are the only versions you can aggregate or alert on. See device-support.ts.
+    initialScope: { tags: { ...getDeviceSupportTags() } },
 
     // Benign noise we never want as issues. Backstop only — the source helpers
     // (takePhoto/pickPhoto) already swallow camera cancellations; this guards any
