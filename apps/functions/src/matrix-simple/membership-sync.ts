@@ -26,6 +26,7 @@ import {
   ensureAdminInRoom,
   forceJoinUserToRoom,
   kickUserFromRoom,
+  kickFromAskRooms,
   getUserTenants,
   activeGroupMemberKeys,
 } from './shared';
@@ -105,6 +106,11 @@ export const onMembershipWritten = onDocumentWritten(
           const kicked = await kickUserFromRoom(roomId, matrixUserId, adminToken, 'Membership ended');
           console.log(`onMembershipWritten: ${matrixUserId} ${kicked ? 'kicked from' : 'was not in'} room ${roomId} (group ${doc.orgKey})`);
         }
+        // The shared room is not the whole membership. An 'ask' group force-joins every member
+        // into every requester's room, so without this an ex-member keeps reading — and being
+        // notified about — conversations the group is no longer theirs to see. Runs whether or
+        // not the shared room resolved: the two room families are independent.
+        await kickFromAskRooms(doc.orgKey, doc.memberKey, matrixUserId, adminToken);
       }
       if ((has && !had) || rekeyed) {
         const doc = after!;

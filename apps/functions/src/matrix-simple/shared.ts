@@ -458,6 +458,74 @@ export async function resolveAskRoom(
 }
 
 /**
+ * The ask rooms of `groupId` that a person who LOSES their membership must be removed from.
+ *
+ * `resolveAskRoom` force-joins the whole group into every requester's room, and until now
+ * nothing ever undid that: `onMembershipWritten` kicked from the SHARED room only, so an
+ * ex-member kept reading — and being notified about — every ask room that existed while they
+ * were on the group. Six of them sat in two ex-Notfall-members' room lists in Sep 2026.
+ *
+ * Their OWN room is deliberately kept: `#ask_<group>_<themselves>` is that person's channel to
+ * the group, not a perk of membership, and evicting them from it would silently delete a
+ * conversation they started.
+ *
+ * Identification is by canonical alias only. An ask room without one cannot be told apart from
+ * any other room, and guessing by NAME is what the room-identity rule forbids.
+ */
+export function askRoomsToLeave(
+  rooms: Array<{ room_id: string; canonical_alias?: string | null }>,
+  groupId: string,
+  personKey: string,
+): string[] {
+  const prefix = askRoomAliasLocalpart(groupId, ''); // 'ask_<group>_'
+  const own = askRoomAliasLocalpart(groupId, personKey);
+  return rooms
+    .filter((r) => {
+      const localpart = (r.canonical_alias ?? '').split(':')[0].replace(/^#/, '');
+      return localpart.startsWith(prefix) && localpart !== own;
+    })
+    .map((r) => r.room_id);
+}
+
+/**
+ * Kick `personKey` out of every ask room of `groupId` except their own.
+ *
+ * Errors are swallowed per room: one unreachable room must not stop the rest, and the caller
+ * (a Firestore trigger) must not retry-storm over a Matrix hiccup.
+ */
+export async function kickFromAskRooms(
+  groupId: string,
+  personKey: string,
+  matrixUserId: string,
+  adminToken: string,
+): Promise<number> {
+  const prefix = askRoomAliasLocalpart(groupId, '');
+  const listResp = await fetch(
+    `${MATRIX_HOMESERVER}/_synapse/admin/v1/rooms?search_term=${encodeURIComponent(prefix)}&limit=500`,
+    { headers: { Authorization: `Bearer ${adminToken}` } }
+  );
+  if (!listResp.ok) {
+    console.error(`kickFromAskRooms: room list failed for group ${groupId}: ${await listResp.text()}`);
+    return 0;
+  }
+  const { rooms = [] } = await listResp.json() as {
+    rooms?: Array<{ room_id: string; canonical_alias?: string | null }>;
+  };
+
+  let kicked = 0;
+  for (const roomId of askRoomsToLeave(rooms, groupId, personKey)) {
+    try {
+      await ensureAdminInRoom(roomId, adminToken);
+      if (await kickUserFromRoom(roomId, matrixUserId, adminToken, 'Membership ended')) kicked++;
+    } catch (error) {
+      console.error(`kickFromAskRooms: failed to kick ${matrixUserId} from ${roomId}:`, error);
+    }
+  }
+  console.log(`kickFromAskRooms: ${matrixUserId} removed from ${kicked} ask room(s) of group ${groupId}`);
+  return kicked;
+}
+
+/**
  * Ensure a Matrix account exists for `matrixUserId`, provisioning it via the Synapse
  * admin API if missing. The display name is resolved from `persons/{personKey}` when a
  * personKey is given, else from the Firebase user record when a firebaseUid is given.

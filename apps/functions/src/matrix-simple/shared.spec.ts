@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { askRoomAliasLocalpart, groupRoomAliasLocalpart, roomAdmitsTenant, useAskRoom } from './shared';
+import { askRoomAliasLocalpart, askRoomsToLeave, groupRoomAliasLocalpart, roomAdmitsTenant, useAskRoom } from './shared';
 
 describe('askRoomAliasLocalpart', () => {
   it('derives a stable localpart from group + person', () => {
@@ -64,5 +64,46 @@ describe('useAskRoom', () => {
 
   it('compares case-insensitively, like the Matrix localpart', () => {
     expect(useAskRoom('ask', ['KAISER'], 'KaIsEr')).toBe(false);
+  });
+});
+
+describe('askRoomsToLeave', () => {
+  const rooms = [
+    { room_id: '!bjoern', canonical_alias: '#ask_notfall_bjoern:bkchat.etke.host' },
+    { room_id: '!alenka', canonical_alias: '#ask_notfall_alenka:bkchat.etke.host' },
+    { room_id: '!dieter', canonical_alias: '#ask_notfall_dieter:bkchat.etke.host' },
+  ];
+
+  it('returns every ask room of the group', () => {
+    expect(askRoomsToLeave(rooms, 'notfall', 'kaiser')).toEqual(['!bjoern', '!alenka', '!dieter']);
+  });
+
+  it('keeps the leaver in their OWN ask room', () => {
+    // The room is that person's channel to the group, not a membership perk: losing the
+    // membership must not silently delete a conversation they started.
+    expect(askRoomsToLeave(rooms, 'notfall', 'dieter')).toEqual(['!bjoern', '!alenka']);
+  });
+
+  it('matches the person case-insensitively (aliases are lowercased, personKeys are not)', () => {
+    expect(askRoomsToLeave(rooms, 'notfall', 'Dieter')).toEqual(['!bjoern', '!alenka']);
+  });
+
+  it('never matches another group whose key merely shares a prefix', () => {
+    // 'ask_notfall_' vs 'ask_notfall_intern_' — the trailing underscore is what separates them,
+    // so the person key of one group can never be read as a sub-key of another.
+    const mixed = [
+      { room_id: '!a', canonical_alias: '#ask_notfall_x:bkchat.etke.host' },
+      { room_id: '!b', canonical_alias: '#ask_notfall_intern_x:bkchat.etke.host' },
+    ];
+    expect(askRoomsToLeave(mixed, 'notfall_intern', 'kaiser')).toEqual(['!b']);
+  });
+
+  it('ignores group rooms and alias-less rooms', () => {
+    const mixed = [
+      { room_id: '!shared', canonical_alias: '#group_notfall:bkchat.etke.host' },
+      { room_id: '!nameless', canonical_alias: null },
+      { room_id: '!ask', canonical_alias: '#ask_notfall_x:bkchat.etke.host' },
+    ];
+    expect(askRoomsToLeave(mixed, 'notfall', 'kaiser')).toEqual(['!ask']);
   });
 });
