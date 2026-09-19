@@ -43,7 +43,7 @@ import { TenantSwitcherGrid } from './tenant-switcher-grid';
               [entries]="entries()"
               [imgixBaseUrl]="imgixBaseUrl()"
               [currentLabel]="i18n.switcher_current()"
-              (select)="onSelect($event, switcherPopover)" />
+              (selectEntry)="onSelect($event, switcherPopover)" />
           </ion-content>
         </ng-template>
       </ion-popover>

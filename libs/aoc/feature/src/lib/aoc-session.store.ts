@@ -10,6 +10,8 @@ import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { SessionCollection, SessionModel } from '@okr/shared-models';
+import { PersonEditModal } from '@okr/subject-person-feature';
+import { DurationPickerModal } from '@okr/shared-ui';
 import { DateFormat, convertDateFormatToString, getTodayStr, subDuration } from '@okr/shared-util-core';
 import { exportCsv, getExportFileName, navigateByUrl, showToast } from '@okr/shared-util-angular';
 import { getLoggedInUsers, getSessionStatus, SessionStatus } from '@okr/session-util';
@@ -179,7 +181,6 @@ export const AocSessionStore = signalStore(
     },
 
     async changeDuration(): Promise<void> {
-      const { DurationPickerModal } = await import('@okr/shared-ui');
       const modal = await store.modalController.create({
         component: DurationPickerModal,
         cssClass: 'duration-picker-modal',
@@ -225,7 +226,6 @@ export const AocSessionStore = signalStore(
       if (!user?.personKey) return;
       const person = store.appStore.getPerson(user.personKey);
       if (!person) return;
-      const { PersonEditModal } = await import('@okr/subject-person-feature');
       const modal = await store.modalController.create({
         component: PersonEditModal,
         componentProps: {

@@ -249,7 +249,7 @@ export const AocDataStore = signalStore(
           const colonIdx = field.indexOf(':');
           if (colonIdx === -1) continue;
           type = field.substring(0, colonIdx);
-          let rest = field.substring(colonIdx + 1);
+          const rest = field.substring(colonIdx + 1);
           const eqIdx = rest.indexOf('=');
           if (eqIdx !== -1) {
             attr = rest.substring(0, eqIdx);
@@ -434,8 +434,9 @@ export const AocDataStore = signalStore(
           case 'group':
             this.executeValidation<GroupModel>(GroupCollection, groupValidations, tenants, store.appStore.getTags('group'));
             break;
-          case 'account': 
+          case 'account':
             // this.validate(AccountCollection, accountValidations, tenants, store.appStore.getTags('account'), 'name');
+            // falls through — disabled, so it joins the unsupported group below
           case 'avatar':
           case 'bill':
           case 'competitionLevel':
@@ -622,6 +623,7 @@ export const AocDataStore = signalStore(
             break;
           case 'account':
             // this.createIndex<AccountModel>(AccountCollection, getAccountIndex, 'name');
+            // falls through — disabled, so it joins the unsupported group below
           case 'avatar':
           case 'bill':
           case 'competitionLevel':

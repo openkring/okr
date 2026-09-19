@@ -247,7 +247,9 @@ export const AocContentStore = signalStore(
           for (const item of menuItems) {
             switch(item.action) {
               case 'main':
-              case 'context': referencedKeys.add(item.name);
+              case 'context':
+                referencedKeys.add(item.name);
+                // falls through — a main/context menu contributes its own name AND its children
               case 'sub': 
                 for (const key of (item.menuItems ?? [])) {
                   referencedKeys.add(key);

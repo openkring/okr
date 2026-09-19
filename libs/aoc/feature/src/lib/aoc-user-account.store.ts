@@ -19,6 +19,7 @@ import { confirm, error, navigateByUrl } from '@okr/shared-util-angular';
 import { AuthService } from '@okr/auth-data-access';
 import { UserService } from '@okr/user-data-access';
 import { PersonService } from '@okr/subject-person-data-access';
+import { PersonEditModal } from '@okr/subject-person-feature';
 import { createFirebaseAccount, generatePassword, getUidByEmail, isValidEmail, AOC_I18N_KEYS } from '@okr/aoc-util';
 
 export type FirebaseAuthUser = {
@@ -250,8 +251,7 @@ export const AocUserAccountStore = signalStore(
         if (!account.personKey) return;
         const person = store.appStore.getPerson(account.personKey);
         if (!person) return;
-        const { PersonEditModal } = await import('@okr/subject-person-feature');
-        const modal = await store.modalController.create({
+          const modal = await store.modalController.create({
           component: PersonEditModal,
           componentProps: {
             person,
@@ -273,8 +273,7 @@ export const AocUserAccountStore = signalStore(
         if (!account.personKey) return;
         const person = store.appStore.getPerson(account.personKey);
         if (!person) return;
-        const { PersonEditModal } = await import('@okr/subject-person-feature');
-        const modal = await store.modalController.create({
+          const modal = await store.modalController.create({
           component: PersonEditModal,
           componentProps: {
             person,

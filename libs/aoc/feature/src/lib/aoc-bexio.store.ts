@@ -309,13 +309,13 @@ export const AocBexioStore = signalStore(
             item.bx_id = contact.id + '';
             item.bx_name1 = bxname1;
             item.bx_name2 = bxname2;
-            item.bx_type = contact.contact_type_id === 1 ? 'org' : 'person',
-            item.bx_streetName = contact.street_name,
-            item.bx_streetNumber = contact.house_number,
-            item.bx_zipCode = contact.postcode,
-            item.bx_city = contact.city,
-            item.bx_email = contact.mail,
-            item.bx_phone = contact.phone
+            item.bx_type = contact.contact_type_id === 1 ? 'org' : 'person';
+            item.bx_streetName = contact.street_name;
+            item.bx_streetNumber = contact.house_number;
+            item.bx_zipCode = contact.postcode;
+            item.bx_city = contact.city;
+            item.bx_email = contact.mail;
+            item.bx_phone = contact.phone;
           } else {
             // Before adding as orphan, check if a name-key entry already exists (unmatched due to bexioId mismatch)
             // If so, enrich it rather than creating a duplicate key

@@ -43,7 +43,8 @@ export class TenantSwitcherGrid {
   public readonly entries = input.required<TenantSwitcherEntry[]>();
   public readonly imgixBaseUrl = input<string>('');
   public readonly currentLabel = input<string>('');
-  public readonly select = output<TenantSwitcherEntry>();
+  /** Not `select`: an output named after a standard DOM event shadows the native one. */
+  public readonly selectEntry = output<TenantSwitcherEntry>();
 
   protected logoSrc(entry: TenantSwitcherEntry): string {
     if (!entry.logoUrl || !this.imgixBaseUrl()) return '';
@@ -52,6 +53,6 @@ export class TenantSwitcherGrid {
 
   protected onSelect(entry: TenantSwitcherEntry): void {
     if (entry.isCurrent) return;
-    this.select.emit(entry);
+    this.selectEntry.emit(entry);
   }
 }
