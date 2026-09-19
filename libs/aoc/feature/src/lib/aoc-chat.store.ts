@@ -1,4 +1,4 @@
-import { computed, inject } from '@angular/core';
+import { computed, inject, Injector, runInInjectionContext } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { firstValueFrom, from, of } from 'rxjs';
@@ -12,7 +12,7 @@ import { I18nService } from '@okr/shared-i18n';
 import { showToast } from '@okr/shared-util-angular';
 import { AOC_I18N_KEYS } from '@okr/aoc-util';
 import { getMatrixLogLevel, setMatrixLogLevel, MatrixLogLevel } from '@okr/chat-util';
-import { MatrixMediaService } from '@okr/chat-data-access';
+import type { MatrixMediaService } from '@okr/chat-data-access';
 
 // ─── types mirroring the cloud-function interfaces ───────────────────────────
 export interface AdminRoom {
@@ -185,13 +185,33 @@ function getFn() {
 
 export const AocChatStore = signalStore(
   withState(initialState),
-  withProps(() => ({
-    appStore: inject(AppStore),
-    alertController: inject(AlertController),
-    toastController: inject(ToastController),
-    i18nService: inject(I18nService),
-    media: inject(MatrixMediaService),
-  })),
+  withProps(() => {
+    // `@okr/chat-data-access` is the barrel in front of matrix-js-sdk: importing it
+    // statically binds ~890 KB (the matrix chunk plus the SDK chunk it pulls) into the AOC
+    // section chunk, which every AOC page then downloads — the tenant list, the storage
+    // page, the kiosk page, none of which touch Matrix. A static import is the binding edge,
+    // so the only way out is to not have one: the type import above carries no runtime edge,
+    // and the service is resolved on first use through the injector.
+    //
+    // Same reasoning as `aoc-kiosk.store` and `trip.store`, which already lazy-load this lib.
+    const injector = inject(Injector);
+    let service: Promise<MatrixMediaService> | undefined;
+    const load = (): Promise<MatrixMediaService> => (service ??= import('@okr/chat-data-access')
+      .then(m => runInInjectionContext(injector, () => inject(m.MatrixMediaService))));
+
+    return {
+      appStore: inject(AppStore),
+      alertController: inject(AlertController),
+      toastController: inject(ToastController),
+      i18nService: inject(I18nService),
+      // Shaped like the service so the call sites read unchanged. Every caller is already
+      // async (an rxResource stream), so the one-time import costs them nothing extra.
+      media: {
+        resolveMediaUrl: async (mxcUrl: string | undefined, mimeTypeHint?: string): Promise<string> =>
+          (await load()).resolveMediaUrl(mxcUrl, mimeTypeHint),
+      },
+    };
+  }),
   withProps(store => ({
     i18n: store.i18nService.translateAll(AOC_I18N_KEYS),
   })),
