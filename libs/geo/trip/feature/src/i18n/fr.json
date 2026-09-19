@@ -80,10 +80,10 @@
       "in_use": "Le bateau {name} est encore sur une sortie ouverte. Il ne pourra être réutilisé qu’une fois cette sortie clôturée."
     },
     "training": {
-      "add": "Équipage depuis l'entraînement",
-      "title": "Choisir un entraînement",
+      "add": "Reprendre l'équipage d'un événement",
+      "title": "Choisir un événement",
       "option": "{time} {name} ({count} participants)",
-      "none": "Il n'y a pas d'entraînement ce jour-là qui corresponde à ce bateau."
+      "none": "Il n'y a pas d'événement ce jour-là qui corresponde à ce bateau."
     },
     "location": {
       "title": "Choisir une destination",

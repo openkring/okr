@@ -80,10 +80,10 @@
       "in_use": "El barco {name} sigue en una salida abierta. Solo podrá volver a usarse cuando esa salida se haya cerrado."
     },
     "training": {
-      "add": "Tripulación del entrenamiento",
-      "title": "Elige un entrenamiento",
+      "add": "Tomar la tripulación de un evento",
+      "title": "Elige un evento",
       "option": "{time} {name} ({count} participantes)",
-      "none": "Ese día no hay ningún entrenamiento que encaje con este barco."
+      "none": "Ese día no hay ningún evento que encaje con este barco."
     },
     "location": {
       "title": "Elegir destino",

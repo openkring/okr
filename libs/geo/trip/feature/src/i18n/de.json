@@ -80,10 +80,10 @@
       "in_use": "Das Boot {name} ist noch auf einer offenen Fahrt. Es kann erst wieder verwendet werden, wenn diese Fahrt abgeschlossen ist."
     },
     "training": {
-      "add": "Crew aus Training",
-      "title": "Training wählen",
+      "add": "Crew aus Termin übernehmen",
+      "title": "Termin wählen",
       "option": "{time} {name} ({count} Teilnehmende)",
-      "none": "An diesem Tag gibt es kein Training, das zu diesem Boot passt."
+      "none": "An diesem Tag gibt es keinen Termin, der zu diesem Boot passt."
     },
     "location": {
       "title": "Zielort wählen",

@@ -80,10 +80,10 @@
       "in_use": "The boat {name} is still out on an open trip. It can only be used again once that trip has been closed."
     },
     "training": {
-      "add": "Crew from training",
-      "title": "Choose a training",
+      "add": "Take crew from event",
+      "title": "Choose an event",
       "option": "{time} {name} ({count} attendees)",
-      "none": "There is no training on this day that matches this boat."
+      "none": "There is no event on this day that matches this boat."
     },
     "location": {
       "title": "Select destination",
