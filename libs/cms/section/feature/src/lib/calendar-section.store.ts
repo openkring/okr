@@ -158,7 +158,8 @@ export const CalendarStore = signalStore(
       caleventsResource: rxResource({
         params: resourceParams(() => ({
           calendarName: store.calendarName(),
-          calendarsOfCurrentUser: store.calendarsForCurrentUserResource.value() ?? []
+          calendarsOfCurrentUser: store.calendarsForCurrentUserResource.value() ?? [],
+          invitedEventKeys: (store.invitationsForCurrentUserResource.value() ?? []).map(inv => inv.caleventKey)
         })),
         stream: ({ params }) => {
           const calName = params.calendarName;
@@ -177,9 +178,14 @@ export const CalendarStore = signalStore(
                 if (seen.has(e.okey)) {
                   continue;
                 }
-                // Filter by calendar(s)
+                // Filter by calendar(s). An invitation is the second source of reach: it is the
+                // permission to see exactly that one occurrence, so an invited non-member finds
+                // the event under 'my' too (spec 2026-09-06). Same rule as
+                // `isCaleventInView` in the calevent store — this section deliberately keeps its
+                // own loop because it has no 'personal' view.
                 if (calName === 'my') {
-                  if (!store.calendarsForCurrentUserResource.value()?.some(key => e.calendars?.includes(key))) {
+                  if (!params.invitedEventKeys.includes(e.okey) &&
+                      !params.calendarsOfCurrentUser.some(key => e.calendars?.includes(key))) {
                     continue;
                   }
                 } else if (calName !== 'all') { // explicit calendar name

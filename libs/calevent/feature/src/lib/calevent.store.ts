@@ -26,7 +26,7 @@ import { LocationService } from '@okr/location-data-access';
 import { CalEventService } from '@okr/calevent-data-access';
 import { AliasMintService } from '@okr/system-alias-data-access';
 import { SeenService } from '@okr/user-data-access';
-import { addInvitedAttendee, applyInvitationAnswer, toAttendeeState, CALEVENT_I18N_KEYS, resetActivity, seenKeyFor, toSeenCounts, unseenActivity, CalEventNotifyFormData, findConflictingCalEvents, newCalEventNotifyFormData, buildCalEventLink, buildSchedulePollLink, formatSchedulePollInviteMessage, formatScheduleCloseMessage, getCaleventIndex, getSeriesUpdateFields, isCalEvent, isCaleventFull, isPersonalCalendarName, isPersonalCalevent, mergeAttendee, planSeriesReconcile, resolveCalendars, SchedulePollFormData, SchedulePollRow } from '@okr/calevent-util';
+import { addInvitedAttendee, applyInvitationAnswer, toAttendeeState, CALEVENT_I18N_KEYS, resetActivity, seenKeyFor, toSeenCounts, unseenActivity, CalEventNotifyFormData, findConflictingCalEvents, newCalEventNotifyFormData, buildCalEventLink, buildSchedulePollLink, formatSchedulePollInviteMessage, formatScheduleCloseMessage, getCaleventIndex, getSeriesUpdateFields, isCalEvent, isCaleventFull, isCaleventInView, isPersonalCalendarName, mergeAttendee, planSeriesReconcile, resolveCalendars, SchedulePollFormData, SchedulePollRow } from '@okr/calevent-util';
 import { CalEventNotifyModal, RegressionSelectionModal, showCalEventInfo } from '@okr/calevent-ui';
 
 /**
@@ -215,23 +215,14 @@ export const CalEventStore = signalStore(
               if (seen.has(e.okey)) {
                 continue;
               }
-              // Personal events (no calendar) are visible to their organiser and their invitees only,
-              // and never show up in a shared calendar. The 'personal' calendar shows nothing else.
-              if (isPersonalCalevent(e)) {
-                if (calName !== 'personal' && calName !== 'all' && calName !== 'my') continue;
-                const isOrganiser = e.responsiblePersons?.some(p => p.key === params.personKey) === true;
-                const isInvitee = params.invitedEventKeys.includes(e.okey);
-                if (!params.personKey || (!isOrganiser && !isInvitee)) continue;
-              } else if (calName === 'personal') {
+              // Reach: the owning calendar's members — plus anybody holding an invitation to
+              // exactly this occurrence. See isCaleventInView for the whole rule.
+              if (!isCaleventInView(e, calName, {
+                myCalendarKeys: params.calendarsOfCurrentUser,
+                personKey: params.personKey,
+                isInvited: params.invitedEventKeys.includes(e.okey),
+              })) {
                 continue;
-              } else if (calName === 'my') {
-                if (!store.calendarsForCurrentUserResource.value()?.some(key => e.calendars?.includes(key))) {
-                  continue;
-                }
-              } else if (calName !== 'all') { // explicit calendar name
-                if (!e.calendars?.includes(calName)) {
-                  continue;
-                }
               }
               // Filter by showPastEvents/showUpcomingEvents for all calendar types.
               // Skipped when a year other than the current one is selected (99 = all years):

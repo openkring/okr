@@ -1,7 +1,7 @@
 import { Attendee, AvatarInfo, CalEventModel, InvitationState } from '@okr/shared-models';
 import * as coreUtils from '@okr/shared-util-core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { addInvitedAttendee, removeInvitedAttendee, applyInvitationAnswer, bestScheduleColumn, buildCalEventLink, canAttendCalevent, buildSchedulePollLink, convertCalEventToFullCalendar, formatDurationLabel, formatScheduleCloseMessage, formatSchedulePollInviteMessage, getCalEventCssClass, getSeriesUpdateFields, isCalEvent, isFullDayEvent, isPastCalevent, isPersonalCalendarName, isPersonalCalevent, isCaleventFull, isSchedulePoll, resolveCalendars, mayJoinOpenCalevent, mergeAttendee, nextInvitationState, planSeriesReconcile, splitAttendees, toAttendeeState, toInvitationState } from './calevent.util';
+import { addInvitedAttendee, removeInvitedAttendee, applyInvitationAnswer, bestScheduleColumn, buildCalEventLink, canAttendCalevent, buildSchedulePollLink, convertCalEventToFullCalendar, formatDurationLabel, formatScheduleCloseMessage, formatSchedulePollInviteMessage, getCalEventCssClass, getSeriesUpdateFields, isCaleventInView, isCalEvent, isFullDayEvent, isPastCalevent, isPersonalCalendarName, isPersonalCalevent, isCaleventFull, isSchedulePoll, resolveCalendars, mayJoinOpenCalevent, mergeAttendee, nextInvitationState, planSeriesReconcile, splitAttendees, toAttendeeState, toInvitationState } from './calevent.util';
 
 // Mock shared utility functions
 vi.mock('@okr/shared-util-core', async importOriginal => {
@@ -671,5 +671,50 @@ describe('applyInvitationAnswer', () => {
     const after = applyInvitationAnswer(before, person('p1'), 'declined');
     expect(stateOf(after, 'p2')).toBe('accepted');
     expect(before).toHaveLength(1);
+  });
+
+});
+
+/**
+ * Regression (2026-09-19): Udo Heinss held an accepted invitation to «Masters Achter» on the
+ * group calendar `machter`, was not a member of that group, and therefore never saw the event
+ * under 'Meine Termine' — the store consulted the invitation only for personal events.
+ */
+describe('isCaleventInView', () => {
+  const groupEvent = (): CalEventModel =>
+    ({ okey: 'e1', calendars: ['machter'], responsiblePersons: [] }) as unknown as CalEventModel;
+  const personalEvent = (): CalEventModel =>
+    ({ okey: 'e2', calendars: [], responsiblePersons: [] }) as unknown as CalEventModel;
+  const ctx = (over: Partial<{ myCalendarKeys: string[]; personKey: string; isInvited: boolean }> = {}) =>
+    ({ myCalendarKeys: [], personKey: 'udo', isInvited: false, ...over });
+
+  it("shows an invited non-member the group event under 'my'", () => {
+    expect(isCaleventInView(groupEvent(), 'my', ctx({ isInvited: true }))).toBe(true);
+  });
+
+  it("hides a group event under 'my' from a non-member without an invitation", () => {
+    expect(isCaleventInView(groupEvent(), 'my', ctx())).toBe(false);
+  });
+
+  it("shows a group event under 'my' to a member of the owning group", () => {
+    expect(isCaleventInView(groupEvent(), 'my', ctx({ myCalendarKeys: ['machter'] }))).toBe(true);
+  });
+
+  it("shows every event under 'all' and none under 'personal'", () => {
+    expect(isCaleventInView(groupEvent(), 'all', ctx())).toBe(true);
+    expect(isCaleventInView(groupEvent(), 'personal', ctx({ isInvited: true }))).toBe(false);
+  });
+
+  it('matches an explicit calendar okey on the calendars array alone', () => {
+    expect(isCaleventInView(groupEvent(), 'machter', ctx())).toBe(true);
+    expect(isCaleventInView(groupEvent(), 'scs', ctx({ isInvited: true }))).toBe(false);
+  });
+
+  it('keeps a personal event to its organiser and its invitees', () => {
+    const organiser = { okey: 'e2', calendars: [], responsiblePersons: [{ key: 'udo' }] } as unknown as CalEventModel;
+    expect(isCaleventInView(organiser, 'my', ctx())).toBe(true);
+    expect(isCaleventInView(personalEvent(), 'my', ctx({ isInvited: true }))).toBe(true);
+    expect(isCaleventInView(personalEvent(), 'my', ctx())).toBe(false);
+    expect(isCaleventInView(personalEvent(), 'machter', ctx({ isInvited: true }))).toBe(false);
   });
 });

@@ -486,3 +486,43 @@ export function isCaleventFull(calevent: CalEventModel): boolean {
   if (cap <= 0) return false;
   return (calevent.attendees ?? []).filter(attendee => attendee.state === 'accepted').length >= cap;
 }
+
+/**
+ * Does `calevent` belong into the calendar VIEW the user is currently looking at?
+ *
+ * Extracted from `CalEventStore.caleventsResource` so the rule is testable in one place — it is
+ * the whole of the app-side visibility model (`firestore.rules` lets every tenant user read
+ * `calevents`, see spec 2026-09-06 «Sichtbarkeit — was diese Spec bewusst nicht durchsetzt»).
+ *
+ * Reach normally comes from the calendar: `calendar.owner` + the user's memberships, resolved
+ * into `myCalendarKeys` by the store. **An invitation is the second source of reach** — the spec
+ * defines it as «die Bitte um eine Antwort an eine Person ausserhalb der Sichtbarkeit — zugleich
+ * die Erlaubnis, genau dieses eine Vorkommen zu sehen». So an invitee sees the event under 'my'
+ * although the owning group's calendar is none of theirs, and sees it there only for the one
+ * occurrence they hold an invitation for.
+ *
+ * @param calevent the event to judge
+ * @param view     the store's `calendarName`: 'all' | 'my' | 'personal' | a calendar okey
+ * @param ctx      `myCalendarKeys` = calendars of the user's orgs/groups, `personKey` = the
+ *                 current user's person, `isInvited` = an invitation of theirs points at this event
+ */
+export function isCaleventInView(
+  calevent: CalEventModel,
+  view: string,
+  ctx: { myCalendarKeys: string[]; personKey: string; isInvited: boolean },
+): boolean {
+  // Personal events (no calendar) are visible to their organiser and their invitees only,
+  // and never show up in a shared calendar. The 'personal' calendar shows nothing else.
+  if (isPersonalCalevent(calevent)) {
+    if (view !== 'personal' && view !== 'all' && view !== 'my') return false;
+    if (!ctx.personKey) return false;
+    const isOrganiser = calevent.responsiblePersons?.some(p => p.key === ctx.personKey) === true;
+    return isOrganiser || ctx.isInvited;
+  }
+  if (view === 'personal') return false;
+  if (view === 'all') return true;
+  if (view === 'my') {
+    return ctx.isInvited || ctx.myCalendarKeys.some(key => calevent.calendars?.includes(key) === true);
+  }
+  return calevent.calendars?.includes(view) === true;   // explicit calendar okey
+}
