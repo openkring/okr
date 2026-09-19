@@ -1490,6 +1490,7 @@ const finance: FeatureBlock = {
     // Bilanz + Erfolgsrechnung share one context menu; `url` is the page method name (`onPopoverDismiss`).
     { key: 'c-report', name: 'c-report', url: '', action: 'context', roleNeeded: 'treasurer', icon: 'help-circle', label: '', children: [
       { key: 'report-export-csv', name: 'report-export-csv', url: 'exportCsv', action: 'call', roleNeeded: 'treasurer', icon: 'download', label: '@item.report-export-csv' },
+      { key: 'report-export-pdf', name: 'report-export-pdf', url: 'exportPdf', action: 'call', roleNeeded: 'treasurer', icon: 'document', label: '@item.report-export-pdf' },
       { key: 'report-toggle-zero', name: 'report-toggle-zero', url: 'toggleZero', action: 'call', roleNeeded: 'treasurer', icon: 'eye-on', label: '@item.report-toggle-zero' },
     ] },
     // The generic accounting submenu (see the block comment). Order mirrors the live

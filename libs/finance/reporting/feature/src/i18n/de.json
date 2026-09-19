@@ -12,6 +12,27 @@
     "csv": "CSV exportieren",
     "conf": "Der Bericht wurde als CSV gespeichert."
   },
+  "pdf": {
+    "sheet": "Welche Fassung?",
+    "final": "Definitiv",
+    "provisional": "Provisorisch",
+    "cancel": "Abbrechen",
+    "conf": "Das PDF wurde gespeichert: {filename}",
+    "prefix": {
+      "final": "Definitive",
+      "provisional": "Provisorische"
+    },
+    "title": {
+      "balance": "{prefix} Bilanz per {date}",
+      "income": "{prefix} Erfolgsrechnung {period}"
+    },
+    "created": "Erstellt",
+    "address": "Adresse",
+    "period": "Periode",
+    "periodValue": "{from} bis {to}",
+    "amounts": "Alle Beträge in {currency}",
+    "watermark": "PROVISORISCH"
+  },
   "loading": "Wird geladen …",
   "empty": "Keine Buchungen in diesem Geschäftsjahr.",
   "debit": "Soll",

@@ -588,6 +588,7 @@
     "accounting-balance": "Bilanz",
     "accounting-income-statement": "Erfolgsrechnung",
     "report-export-csv": "CSV exportieren",
+    "report-export-pdf": "Als PDF exportieren",
     "report-toggle-zero": "Nullkonten ein-/ausblenden",
     "accounting-cash-flow": "Geldfluss",
     "accounting-assets": "Anlagen",

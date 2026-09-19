@@ -70,6 +70,15 @@
     },
     {
       "path": "../ui/tsconfig.lib.json"
+    },
+    {
+      "path": "../../../content/pdf-template/data-access/tsconfig.lib.json"
+    },
+    {
+      "path": "../../../subject/address/data-access/tsconfig.lib.json"
+    },
+    {
+      "path": "../../../subject/address/util/tsconfig.lib.json"
     }
   ]
 }

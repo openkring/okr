@@ -99,6 +99,7 @@ export class BalanceSheetPage {
     if (!method) return;
     switch (method) {
       case 'exportCsv': await this.store.exportCsv('balance'); break;
+      case 'exportPdf': await this.store.exportPdf('balance'); break;
       case 'toggleZero': this.store.toggleZero(); break;
       default: this.alertService.error(`BalanceSheetPage.onPopoverDismiss: unknown method ${method}`);
     }

@@ -588,6 +588,7 @@
     "accounting-balance": "Balance",
     "accounting-income-statement": "Cuenta de resultados",
     "report-export-csv": "Exportar CSV",
+    "report-export-pdf": "Exportar como PDF",
     "report-toggle-zero": "Mostrar/ocultar cuentas a cero",
     "accounting-cash-flow": "Flujo de caja",
     "accounting-assets": "Activos fijos",

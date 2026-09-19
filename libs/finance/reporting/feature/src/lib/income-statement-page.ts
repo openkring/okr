@@ -99,6 +99,7 @@ export class IncomeStatementPage {
     if (!method) return;
     switch (method) {
       case 'exportCsv': await this.store.exportCsv('income'); break;
+      case 'exportPdf': await this.store.exportPdf('income'); break;
       case 'toggleZero': this.store.toggleZero(); break;
       default: this.alertService.error(`IncomeStatementPage.onPopoverDismiss: unknown method ${method}`);
     }

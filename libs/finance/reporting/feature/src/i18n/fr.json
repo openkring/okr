@@ -12,6 +12,27 @@
     "csv": "Exporter en CSV",
     "conf": "Le rapport a été enregistré en CSV."
   },
+  "pdf": {
+    "sheet": "Quelle version ?",
+    "final": "Définitif",
+    "provisional": "Provisoire",
+    "cancel": "Annuler",
+    "conf": "Le PDF a été enregistré : {filename}",
+    "prefix": {
+      "final": "définitif",
+      "provisional": "provisoire"
+    },
+    "title": {
+      "balance": "Bilan {prefix} au {date}",
+      "income": "Compte de résultat {prefix} {period}"
+    },
+    "created": "Établi le",
+    "address": "Adresse",
+    "period": "Période",
+    "periodValue": "{from} au {to}",
+    "amounts": "Tous les montants en {currency}",
+    "watermark": "PROVISOIRE"
+  },
   "loading": "Chargement …",
   "empty": "Aucune écriture dans cet exercice.",
   "debit": "Débit",

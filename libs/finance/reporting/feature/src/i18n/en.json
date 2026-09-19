@@ -12,6 +12,27 @@
     "csv": "Export CSV",
     "conf": "The report was saved as CSV."
   },
+  "pdf": {
+    "sheet": "Which version?",
+    "final": "Final",
+    "provisional": "Provisional",
+    "cancel": "Cancel",
+    "conf": "The PDF has been saved: {filename}",
+    "prefix": {
+      "final": "Final",
+      "provisional": "Provisional"
+    },
+    "title": {
+      "balance": "{prefix} balance sheet as of {date}",
+      "income": "{prefix} income statement {period}"
+    },
+    "created": "Created",
+    "address": "Address",
+    "period": "Period",
+    "periodValue": "{from} to {to}",
+    "amounts": "All amounts in {currency}",
+    "watermark": "PROVISIONAL"
+  },
   "loading": "Loading …",
   "empty": "No postings in this fiscal year.",
   "debit": "Debit",

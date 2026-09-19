@@ -588,6 +588,7 @@
     "accounting-balance": "Balance sheet",
     "accounting-income-statement": "Income statement",
     "report-export-csv": "Export CSV",
+    "report-export-pdf": "Export as PDF",
     "report-toggle-zero": "Show/hide zero accounts",
     "accounting-cash-flow": "Cash flow",
     "accounting-assets": "Fixed assets",

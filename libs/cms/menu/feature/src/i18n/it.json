@@ -588,6 +588,7 @@
     "accounting-balance": "Bilancio",
     "accounting-income-statement": "Conto economico",
     "report-export-csv": "Esporta CSV",
+    "report-export-pdf": "Esporta come PDF",
     "report-toggle-zero": "Mostra/nascondi conti a zero",
     "accounting-cash-flow": "Flusso di cassa",
     "accounting-assets": "Immobilizzazioni",

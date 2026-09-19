@@ -20,6 +20,9 @@
     "@okr/shared-util-core": "*",
     "@okr/cms-menu-feature": "*",
     "@okr/finance-account-data-access": "*",
-    "@okr/finance-reporting-ui": "*"
+    "@okr/finance-reporting-ui": "*",
+    "@okr/content-pdf-template-data-access": "*",
+    "@okr/subject-address-data-access": "*",
+    "@okr/subject-address-util": "*"
   }
 }
