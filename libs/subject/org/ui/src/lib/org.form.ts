@@ -7,14 +7,17 @@ import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInput
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 
 import { OrgI18n, orgValidations } from '@okr/subject-org-util';
+import { ZefixCompanyDetails } from '@okr/subject-org-data-access';
 import { BEXIO_ID_LENGTH, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
+
+import { ZefixLookup } from './zefix-lookup';
 
 @Component({
   selector: 'okr-org-form',
   standalone: true,
   imports: [
     ErrorNote,
-    CategorySelect, DateInput, TextInput, Chips, NotesInput,
+    CategorySelect, DateInput, TextInput, Chips, NotesInput, ZefixLookup,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent
   ],
    styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -40,11 +43,16 @@ import { BEXIO_ID_LENGTH, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@okr/sha
                 </ion-col>
               </ion-row>
             }
-            <ion-row> 
-              <ion-col size="12">
+            <ion-row class="ion-align-items-center">
+              <ion-col [size]="isZefixLookupVisible() ? 10 : 12">
                 <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" autocomplete="organization" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
                 <okr-error-note [errors]="nameErrors()" />
               </ion-col>
+              @if (isZefixLookupVisible()) {
+                <ion-col size="2" class="ion-text-center">
+                  <okr-zefix-lookup [i18n]="i18n()" [orgName]="name()" (detailsLoaded)="onZefixSelected($event)" />
+                </ion-col>
+              }
             </ion-row>
             <ion-row>
               <ion-col size="12" size-md="6">
@@ -111,6 +119,8 @@ export class OrgForm {
   public isOrgTypeVisible = input(true);
   public readOnly = input<boolean>(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
+  protected isLegalEntity = computed(() => this.type() === 'legalEntity');
+  protected isZefixLookupVisible = computed(() => this.isLegalEntity() && !this.isReadOnly());
 
   // signals
   public dirty = output<boolean>();
@@ -149,7 +159,52 @@ export class OrgForm {
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
   }
 
+  /**
+   * Fills the form with the data found in the commercial register (Zefix).
+   * In the edit form we never overwrite what is already there: only empty fields are
+   * filled, and the Zefix notes (purpose, legal form) plus its address are APPENDED to
+   * the existing notes (the org model has no address fields; they live in the addresses
+   * accordion, so the address would otherwise be lost).
+   */
+  protected onZefixSelected(details: ZefixCompanyDetails): void {
+    this.dirty.emit(true);
+    this.formData.update((vm) => ({
+      ...vm,
+      name: fillIfEmpty(vm.name, details.name),
+      taxId: fillIfEmpty(vm.taxId, details.taxId),
+      notes: appendNotes(vm.notes, details),
+    }));
+  }
+
   protected hasRole(role: RoleName): boolean {
     return hasRole(role, this.currentUser());
   }
+}
+
+/** keeps an existing value, falls back to the looked-up one */
+function fillIfEmpty(currentValue: string | undefined, newValue: string): string {
+  const _current = (currentValue ?? '').trim();
+  return _current.length > 0 ? _current : (newValue ?? '').trim();
+}
+
+/** appends the Zefix findings (purpose/legal form, address) to the existing notes */
+function appendNotes(currentNotes: string | undefined, details: ZefixCompanyDetails): string {
+  const _parts: string[] = [];
+  const _notes = (details.notes ?? '').trim();
+  if (_notes.length > 0) _parts.push(_notes);
+  const _address = formatZefixAddress(details);
+  if (_address.length > 0) _parts.push(_address);
+  if (_parts.length === 0) return currentNotes ?? '';
+
+  const _current = (currentNotes ?? '').trim();
+  const _addition = _parts.join('\n');
+  return _current.length > 0 ? `${_current}\n${_addition}` : _addition;
+}
+
+/** one-line rendering of the Zefix address, e.g. 'Zefix-Adresse: Bahnhofstrasse 1, 8001 Zuerich' */
+function formatZefixAddress(details: ZefixCompanyDetails): string {
+  const _street = [details.streetName, details.streetNumber].map((_v) => (_v ?? '').trim()).filter((_v) => _v.length > 0).join(' ');
+  const _place = [details.zipCode, details.city].map((_v) => (_v ?? '').trim()).filter((_v) => _v.length > 0).join(' ');
+  const _address = [_street, _place].filter((_v) => _v.length > 0).join(', ');
+  return _address.length > 0 ? `Zefix-Adresse: ${_address}` : '';
 }
