@@ -3,8 +3,8 @@ import { logger } from 'firebase-functions/v2';
 import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 
 import {
-  AddressCollection, AllocationDirection, AppConfigCollection, AvatarCollection,
-  PersonCollection, TenantAllocationLogCollection, TenantAllocationLogModel,
+  AddressCollection, AllocationDirection, allocationSubjectKey, AllocationSubjectType,
+  AppConfigCollection, AvatarCollection, TenantAllocationLogCollection, TenantAllocationLogModel,
 } from '@okr/shared-models';
 import {
   checkAdminRole, checkAppCheckToken, getCallerTenantId, writeAddressDirectory,
@@ -13,7 +13,7 @@ import { DateFormat, getTodayStr } from '@okr/shared-util-core';
 
 import { openAccount } from '../auth/account-sync';
 
-import { AllocationDoc, buildAllocationPlan } from './allocation-plan';
+import { AllocationDoc, buildAllocationPlan, SUBJECT_COLLECTION } from './allocation-plan';
 
 const REGION = 'europe-west6';
 
@@ -24,15 +24,15 @@ const REGION = 'europe-west6';
 const MAX_BATCH_WRITES = 450;
 
 export interface AllocateTenantRequest {
-  /** D-TA-7: the contract is wider than today's implementation on purpose. */
-  readonly modelType: 'person';
+  /** D-TA-7, widened 2026-09-19: persons, orgs and resources. */
+  readonly modelType: AllocationSubjectType;
   readonly okey: string;
   readonly targetTenantId: string;
   readonly direction: AllocationDirection;
   readonly addressKeys: string[];
   readonly includeAvatar: boolean;
   readonly includeSubject: boolean;
-  /** Open a user account for the person in the TARGET tenant. Grants only. */
+  /** Open a user account for the person in the TARGET tenant. Grants on a person only. */
   readonly createAccount?: boolean;
   /** The address the account logs in with. Must be one of `addressKeys`. */
   readonly loginEmail?: string;
@@ -44,11 +44,12 @@ export interface AllocateTenantAccount {
   readonly loginEmail?: string;
   /** Why nothing was created. `exists` covers both an Auth identity that is already a user
    * somewhere and a users/{uid} document that is already there. */
-  readonly reason?: 'notRequested' | 'notAGrant' | 'notSelected' | 'exists' | 'noEmail' | 'noPerson' | 'failed';
+  readonly reason?: 'notRequested' | 'notAGrant' | 'notAPerson' | 'notSelected' | 'exists' | 'noEmail' | 'noPerson' | 'failed';
 }
 
 export interface AllocateTenantResponse {
-  readonly changed: { persons: number; addresses: number; avatars: number };
+  /** Documents touched, per collection — the subject's own collection, addresses, avatars. */
+  readonly changed: Record<string, number>;
   readonly rejected: { okey: string; reason: string }[];
   readonly logKey: string;
   readonly account: AllocateTenantAccount;
@@ -60,8 +61,13 @@ function isCleanKey(value: unknown): value is string {
   return typeof value === 'string' && value.length > 0 && !value.includes('/');
 }
 
+/** The three model types this callable can move. Anything else is a malformed request. */
+function isSubjectType(value: unknown): value is AllocationSubjectType {
+  return value === 'person' || value === 'org' || value === 'resource';
+}
+
 /**
- * Move a person between tenants (spec 1.47).
+ * Move a person, an org or a resource between tenants (spec 1.47, D-TA-7).
  *
  * Everything the plan builder decides on is re-read here first: the client's selection names
  * documents, it never supplies their contents. The acting tenant comes from `users/{uid}`,
@@ -78,11 +84,18 @@ export const allocateTenant = onCall(
   const uid = request.auth?.uid ?? '';
 
   const data = request.data as AllocateTenantRequest;
-  if (data?.modelType !== 'person') {
-    throw new HttpsError('invalid-argument', 'Nur Personen lassen sich zurzeit zuteilen.');
+  if (!isSubjectType(data?.modelType)) {
+    throw new HttpsError('invalid-argument', 'Dieser Datensatztyp lässt sich nicht zuteilen.');
+  }
+  const modelType = data.modelType;
+  // Resources have no `addresses` vault — a selection for one could only have been fabricated,
+  // and every key in it would be rejected as a foreign parent anyway. Refuse it as the
+  // malformed request it is rather than returning a page of rejections.
+  if (modelType === 'resource' && (data.addressKeys?.length ?? 0) > 0) {
+    throw new HttpsError('invalid-argument', 'Ressourcen haben keine Adressen.');
   }
   if (!isCleanKey(data.okey) || !isCleanKey(data.targetTenantId)) {
-    throw new HttpsError('invalid-argument', 'Person und Zielmandant müssen angegeben sein.');
+    throw new HttpsError('invalid-argument', 'Datensatz und Zielmandant müssen angegeben sein.');
   }
   if (data.direction !== 'grant' && data.direction !== 'revoke') {
     throw new HttpsError('invalid-argument', 'Unbekannte Richtung.');
@@ -103,9 +116,10 @@ export const allocateTenant = onCall(
     throw new HttpsError('not-found', 'Diesen Mandanten gibt es nicht.');
   }
 
-  const personSnap = await db.collection(PersonCollection).doc(data.okey).get();
-  if (!personSnap.exists) {
-    throw new HttpsError('not-found', 'Diese Person gibt es nicht.');
+  const subjectCollection = SUBJECT_COLLECTION[modelType];
+  const subjectSnap = await db.collection(subjectCollection).doc(data.okey).get();
+  if (!subjectSnap.exists) {
+    throw new HttpsError('not-found', 'Diesen Datensatz gibt es nicht.');
   }
 
   const toDoc = (id: string, docData: Record<string, unknown> | undefined): AllocationDoc => ({
@@ -115,10 +129,14 @@ export const allocateTenant = onCall(
     channel: docData?.['addressChannel'] as string | undefined,
   });
 
-  const parentKey = `person.${data.okey}`;
-  const addressSnap = await db.collection(AddressCollection).where('parentKey', '==', parentKey).get();
+  // `person.<okey>` / `org.<okey>` — the same shape identifies the addresses AND the avatar.
+  const subjectKey = allocationSubjectKey(modelType, data.okey);
+  const addressSnap = modelType === 'resource'
+    ? undefined
+    : await db.collection(AddressCollection).where('parentKey', '==', subjectKey).get();
+  const addressDocs = addressSnap?.docs ?? [];
 
-  // Only the bare `person.<okey>` document can ever help the target tenant: `AvatarService`
+  // Only the bare `<prefix>.<okey>` document can ever help the target tenant: `AvatarService`
   // streams `tenants array-contains-any [currentTenant, 'system']` and resolves
   // `avatarDocId(currentTenant, key) ?? key` (avatar.service.ts:54,172) — the TARGET reads
   // either its OWN tenant-prefixed doc or the bare one, never the ACTOR's prefixed doc. So
@@ -126,19 +144,19 @@ export const allocateTenant = onCall(
   // This also removes a confusing rejection: when the bare doc is the shared default
   // (`tenants: ['system']`), it fails the actor-carries-it check and needs no action anyway —
   // `'system'` is already in every tenant's avatar stream.
-  const avatarId = `person.${data.okey}`;
-  const avatarSnap = data.includeAvatar ? await db.collection(AvatarCollection).doc(avatarId).get() : undefined;
+  const avatarSnap = data.includeAvatar ? await db.collection(AvatarCollection).doc(subjectKey).get() : undefined;
   const avatarSnaps = avatarSnap?.exists ? [avatarSnap] : [];
 
   const plan = buildAllocationPlan({
     direction: data.direction,
-    personKey: data.okey,
+    modelType,
+    subjectKey: data.okey,
     actorTenantId,
     targetTenantId: data.targetTenantId,
     includeSubject: data.includeSubject !== false,
     includeAvatar: data.includeAvatar === true,
-    person: toDoc(personSnap.id, personSnap.data()),
-    addresses: addressSnap.docs.map((d) => toDoc(d.id, d.data())),
+    subject: toDoc(subjectSnap.id, subjectSnap.data()),
+    addresses: addressDocs.map((d) => toDoc(d.id, d.data())),
     avatars: avatarSnaps.map((d) => toDoc(d.id, d.data())),
     selectedAddressKeys: rawAddressKeys,
   });
@@ -150,7 +168,7 @@ export const allocateTenant = onCall(
   // a login that tenant cannot see, support or correct.
   const requestedEmail = (data.loginEmail ?? '').trim().toLowerCase();
   const selectedKeys = new Set(rawAddressKeys);
-  const loginAddress = addressSnap.docs.find((d) => {
+  const loginAddress = addressDocs.find((d) => {
     const a = d.data();
     return selectedKeys.has(d.id)
       && a['addressChannel'] === 'email'
@@ -171,6 +189,10 @@ export const allocateTenant = onCall(
   const openTargetAccount = async (): Promise<AllocateTenantAccount> => {
     if (data.createAccount !== true) return { created: false, reason: 'notRequested' };
     if (data.direction !== 'grant') return { created: false, reason: 'notAGrant' };
+    // An account belongs to a natural person — `openAccount` resolves the login from an email
+    // address of that person and writes `users/{uid}.personKey`. There is nothing to resolve
+    // for an org or a resource, so the request is reported as refused, not attempted.
+    if (modelType !== 'person') return { created: false, reason: 'notAPerson' };
     if (!requestedEmail || !loginAddress) return { created: false, reason: 'notSelected' };
     try {
       const email = ((loginAddress.data()['email'] as string | undefined) ?? '').trim();
@@ -217,7 +239,7 @@ export const allocateTenant = onCall(
     tenantId: actorTenantId,
     targetTenantId: data.targetTenantId,
     direction: data.direction,
-    modelType: 'person',
+    modelType,
     subjectKey: data.okey,
     actorUid: uid,
     executedAt: getTodayStr(DateFormat.StoreDateTime),
@@ -229,23 +251,26 @@ export const allocateTenant = onCall(
 
   await batch.commit();
 
-  // Only this person's own projection changed — rebuilding the WHOLE target tenant
+  // Only this record's own projection changed — rebuilding the WHOLE target tenant
   // (rebuildDirectoryForTenant) would re-project every person and org of that tenant,
-  // sequentially, on every single-person allocation, which can blow the callable's deadline
-  // on a mid-size tenant. The batch above has already committed by this point, so a failure
-  // here must not fail the call — the transfer happened; only the read-side projection is
-  // stale until the next write to one of this person's addresses.
-  try {
-    await writeAddressDirectory(db, `person.${data.okey}`);
-  } catch (ex) {
-    logger.error(`allocateTenant: directory rebuild for person.${data.okey} failed`, ex);
+  // sequentially, on every single allocation, which can blow the callable's deadline on a
+  // mid-size tenant. The batch above has already committed by this point, so a failure here
+  // must not fail the call — the transfer happened; only the read-side projection is stale
+  // until the next write to one of this record's addresses. Resources have no addresses and
+  // therefore no projection.
+  if (modelType !== 'resource') {
+    try {
+      await writeAddressDirectory(db, subjectKey);
+    } catch (ex) {
+      logger.error(`allocateTenant: directory rebuild for ${subjectKey} failed`, ex);
+    }
   }
 
-  // No personKey in Cloud Logging, matching the erasure callables — direction, both tenant
-  // ids and counts are enough to operate on.
+  // No subject key in Cloud Logging, matching the erasure callables — model type, direction,
+  // both tenant ids and counts are enough to operate on.
   const account = await openTargetAccount();
 
-  logger.info(`allocateTenant: ${data.direction} ${actorTenantId} -> ${data.targetTenantId}`, { ...plan.counts, account: account.created });
+  logger.info(`allocateTenant: ${modelType} ${data.direction} ${actorTenantId} -> ${data.targetTenantId}`, { ...plan.counts, account: account.created });
   return {
     changed: plan.counts,
     rejected: plan.rejections.map((r) => ({ okey: r.okey, reason: r.reason })),

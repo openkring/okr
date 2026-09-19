@@ -895,8 +895,18 @@
       "content": "Elige la persona cuyos inquilinos quieres cambiar.",
       "button": "Buscar persona"
     },
+    "orgSelect": {
+      "content": "Elige la organización cuyos inquilinos quieres cambiar.",
+      "button": "Buscar organización"
+    },
+    "resourceSelect": {
+      "content": "Elige el recurso cuyos inquilinos quieres cambiar.",
+      "button": "Buscar recurso"
+    },
     "card": {
-      "person": "Persona"
+      "person": "Persona",
+      "org": "Organización",
+      "resource": "Recurso"
     },
     "column": {
       "current": "Inquilinos actuales",

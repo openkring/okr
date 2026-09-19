@@ -895,8 +895,18 @@
       "content": "Scegli la persona di cui vuoi modificare i tenant.",
       "button": "Cerca persona"
     },
+    "orgSelect": {
+      "content": "Scegli l'organizzazione di cui vuoi modificare i tenant.",
+      "button": "Cerca organizzazione"
+    },
+    "resourceSelect": {
+      "content": "Scegli la risorsa di cui vuoi modificare i tenant.",
+      "button": "Cerca risorsa"
+    },
     "card": {
-      "person": "Persona"
+      "person": "Persona",
+      "org": "Organizzazione",
+      "resource": "Risorsa"
     },
     "column": {
       "current": "Tenant attuali",

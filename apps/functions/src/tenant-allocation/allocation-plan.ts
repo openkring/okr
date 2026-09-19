@@ -1,17 +1,24 @@
-import { AllocationDirection } from '@okr/shared-models';
+import { AllocationDirection, AllocationSubjectType, allocationSubjectKey } from '@okr/shared-models';
 
 /** The slice of a Firestore document the plan builder needs. Kept structural so the builder
  * is testable without Firestore, exactly like `ErasureOps`. */
 export interface AllocationDoc {
   readonly okey: string;
   readonly tenants: string[];
-  /** `person.<key>` for addresses; '' for persons and avatars. */
+  /** `person.<key>` / `org.<key>` for addresses; '' for the subject itself and for avatars. */
   readonly parentKey: string;
-  /** `addressChannel`, for the log. Absent on persons and avatars. */
+  /** `addressChannel`, for the log. Absent on the subject and on avatars. */
   readonly channel?: string;
 }
 
-export type AllocationCollection = 'persons' | 'addresses' | 'avatars';
+export type AllocationCollection = 'persons' | 'orgs' | 'resources' | 'addresses' | 'avatars';
+
+/** The Firestore collection each model type lives in (D-TA-7). */
+export const SUBJECT_COLLECTION: Record<AllocationSubjectType, AllocationCollection> = {
+  person: 'persons',
+  org: 'orgs',
+  resource: 'resources',
+};
 
 export interface AllocationWrite {
   readonly collection: AllocationCollection;
@@ -22,7 +29,7 @@ export interface AllocationWrite {
 export type AllocationRejectionReason =
   | 'targetIsActor'       // D-TA-4 — the acting tenant may not be its own target
   | 'notVisibleToActor'   // the actor tenant does not carry it (grant), or actor+target do not (revoke)
-  | 'foreignParent'       // the address belongs to a different person than the one named
+  | 'foreignParent'       // the address belongs to a different record than the one named
   | 'notFound';           // a selected key that was never loaded
 
 export interface AllocationRejection {
@@ -32,12 +39,14 @@ export interface AllocationRejection {
 
 export interface AllocationRequest {
   readonly direction: AllocationDirection;
-  readonly personKey: string;
+  readonly modelType: AllocationSubjectType;
+  readonly subjectKey: string;
   readonly actorTenantId: string;
   readonly targetTenantId: string;
   readonly includeSubject: boolean;
   readonly includeAvatar: boolean;
-  readonly person: AllocationDoc;
+  /** The record being allocated — a person, an org or a resource. */
+  readonly subject: AllocationDoc;
   readonly addresses: readonly AllocationDoc[];
   readonly avatars: readonly AllocationDoc[];
   readonly selectedAddressKeys: readonly string[];
@@ -46,7 +55,8 @@ export interface AllocationRequest {
 export interface AllocationPlan {
   readonly writes: AllocationWrite[];
   readonly rejections: AllocationRejection[];
-  readonly counts: Record<AllocationCollection, number>;
+  /** Documents touched per collection. Only the collections this plan can write appear. */
+  readonly counts: Record<string, number>;
   readonly channels: string[];
 }
 
@@ -83,14 +93,15 @@ function wouldEmpty(doc: AllocationDoc, req: AllocationRequest): boolean {
  * Turn a validated request into the exact set of `tenants[]` mutations to apply.
  *
  * Pure: no Firestore, no clock, no randomness. Everything the caller must re-read fresh
- * (person, addresses, avatars) is passed in, so the callable's only remaining job is to load
+ * (subject, addresses, avatars) is passed in, so the callable's only remaining job is to load
  * documents, apply `writes` in one batch, and log.
  */
 export function buildAllocationPlan(req: AllocationRequest): AllocationPlan {
   const writes: AllocationWrite[] = [];
   const rejections: AllocationRejection[] = [];
   const channels = new Set<string>();
-  const counts: Record<AllocationCollection, number> = { persons: 0, addresses: 0, avatars: 0 };
+  const subjectCollection = SUBJECT_COLLECTION[req.modelType];
+  const counts: Record<string, number> = { [subjectCollection]: 0, addresses: 0, avatars: 0 };
 
   if (req.targetTenantId === req.actorTenantId || !req.targetTenantId) {
     return { writes: [], rejections: [{ okey: req.actorTenantId, reason: 'targetIsActor' }], counts, channels: [] };
@@ -107,7 +118,7 @@ export function buildAllocationPlan(req: AllocationRequest): AllocationPlan {
     if (doc.channel) channels.add(doc.channel);
   };
 
-  if (req.includeSubject) push('persons', req.person);
+  if (req.includeSubject) push(subjectCollection, req.subject);
 
   const byKey = new Map(req.addresses.map((a) => [a.okey, a]));
   // Dedupe selectedAddressKeys to preserve audit-count integrity: a client that names
@@ -121,7 +132,7 @@ export function buildAllocationPlan(req: AllocationRequest): AllocationPlan {
       rejections.push({ okey: key, reason: 'notFound' });
       continue;
     }
-    if (address.parentKey !== `person.${req.personKey}`) {
+    if (address.parentKey !== allocationSubjectKey(req.modelType, req.subjectKey)) {
       rejections.push({ okey: key, reason: 'foreignParent' });
       continue;
     }

@@ -1,4 +1,4 @@
-import { AddressModel, AllocationDirection } from '@okr/shared-models';
+import { AddressModel, AllocationDirection, AllocationSubjectType } from '@okr/shared-models';
 
 import { TenantConfigMeta } from './tenant-switcher.util';
 
@@ -215,3 +215,28 @@ export function resolveLoginEmail(chosen: string, eligible: readonly AllocationE
   if (eligible.length === 0) return '';
   return eligible.some(o => o.email === chosen) ? chosen : eligible[0].email;
 }
+
+/**
+ * What differs between the three allocation cards (D-TA-7).
+ *
+ * Everything else on the card — the two columns, the consent dialog, the top-up rule — is the
+ * same for all three, which is why this table is the whole of the per-model branch on the
+ * client. The callable has the matching branch on the collection.
+ */
+export interface AllocationSubjectMeta {
+  readonly modelType: AllocationSubjectType;
+  /** Whether the subject has an `addresses` vault at all. Resources do not. */
+  readonly hasAddresses: boolean;
+  /**
+   * Whether a grant may also open a user account in the target tenant. Persons only: an
+   * account belongs to a natural person, and `openAccount` resolves the login from an email
+   * address of that person.
+   */
+  readonly canOpenAccount: boolean;
+}
+
+export const ALLOCATION_SUBJECTS: Record<AllocationSubjectType, AllocationSubjectMeta> = {
+  person:   { modelType: 'person',   hasAddresses: true,  canOpenAccount: true },
+  org:      { modelType: 'org',      hasAddresses: true,  canOpenAccount: false },
+  resource: { modelType: 'resource', hasAddresses: false, canOpenAccount: false },
+};

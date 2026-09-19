@@ -895,8 +895,18 @@
       "content": "Choose the person whose tenants you want to change.",
       "button": "Find person"
     },
+    "orgSelect": {
+      "content": "Choose the organisation whose tenants you want to change.",
+      "button": "Find organisation"
+    },
+    "resourceSelect": {
+      "content": "Choose the resource whose tenants you want to change.",
+      "button": "Find resource"
+    },
     "card": {
-      "person": "Person"
+      "person": "Person",
+      "org": "Organisation",
+      "resource": "Resource"
     },
     "column": {
       "current": "Current tenants",

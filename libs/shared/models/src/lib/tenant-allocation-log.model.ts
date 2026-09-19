@@ -5,6 +5,33 @@ import { OkrModel } from './base.model';
 export type AllocationDirection = 'grant' | 'revoke';
 
 /**
+ * What kind of record an allocation moves (D-TA-7, widened 2026-09-19).
+ *
+ * This is a CONTRACT type, not a schema change: `TenantAllocationLogModel.modelType` below
+ * stays a plain `string` so an older log entry never fails to parse. It is shared with the
+ * `allocateTenant` callable — client and function must agree on the same three words, and on
+ * the key prefix each one implies.
+ */
+export type AllocationSubjectType = 'person' | 'org' | 'resource';
+
+/**
+ * The prefix that identifies a subject in the two collections that hang off it: the
+ * `addresses.parentKey` (`org.DIVsVOA0…`) and the bare avatar document id (`avatars/org.…`).
+ * Both use the same shape, which is why one map serves both — see `address-model` and the
+ * avatar-doc-id rule in `allocate-tenant.ts`.
+ */
+export const ALLOCATION_SUBJECT_PREFIX: Record<AllocationSubjectType, string> = {
+  person: 'person',
+  org: 'org',
+  resource: 'resource',
+};
+
+/** `person.kaiser`, `org.DIVsVOA0…` — the parentKey / avatar id of a subject. */
+export function allocationSubjectKey(modelType: AllocationSubjectType, okey: string): string {
+  return `${ALLOCATION_SUBJECT_PREFIX[modelType]}.${okey}`;
+}
+
+/**
  * Evidence that a tenant allocation ran (spec 1.47, D-TA-5).
  *
  * Written by the `allocateTenant` Cloud Function only, readable by the acting tenant's

@@ -6,27 +6,42 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 import { firstValueFrom } from 'rxjs';
 
 import { FirestoreService } from '@okr/shared-data-access';
-import { AppStore, PersonSelectModal, PersonSelectResult } from '@okr/shared-feature';
+import { AppStore, OrgSelectModal, PersonSelectModal, PersonSelectResult, ResourceSelectModal } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import {
-  AddressCollection, AddressModel, AllocationDirection, AppConfigCollection,
-  AvatarCollection, AvatarModel, LogInfo, logMessage, PersonModel,
+  AddressCollection, AddressModel, AllocationDirection, allocationSubjectKey, AllocationSubjectType,
+  AppConfigCollection, AvatarCollection, AvatarInfo, AvatarModel, LogInfo, logMessage, OrgModel,
+  PersonModel, ResourceModel,
 } from '@okr/shared-models';
 import { error } from '@okr/shared-util-angular';
 import { getSystemQuery, isPerson, SYSTEM_TENANT } from '@okr/shared-util-core';
 
 import {
-  AllocationTile, AOC_I18N_KEYS, buildEmailOptions, eligibleAddresses, groupAddressesForConsent,
-  isDropAllowed, splitTenants, TenantConfigMeta,
+  ALLOCATION_SUBJECTS, AllocationTile, AOC_I18N_KEYS, buildEmailOptions, eligibleAddresses,
+  groupAddressesForConsent, isDropAllowed, splitTenants, TenantConfigMeta,
 } from '@okr/aoc-util';
 
 import { AllocationConfirmResult, TenantAllocationConfirmModal } from './tenant-allocation-confirm.modal';
 
+/**
+ * The record being allocated, flattened to what every card needs: a key, something to show,
+ * and the `tenants[]` the two columns are drawn from. Keeping the full model out of the state
+ * is what lets one store serve persons, orgs and resources without a union type in every read.
+ */
+export interface AllocationSubject {
+  readonly okey: string;
+  readonly label: string;
+  readonly tenants: string[];
+  readonly avatar: AvatarInfo;
+}
+
 export type AocTenantAllocationState = {
-  selectedPerson: PersonModel | undefined;
+  /** Which card this store instance belongs to — set once by the card component. */
+  modelType: AllocationSubjectType;
+  subject: AllocationSubject | undefined;
   addresses: AddressModel[];
   hasAvatar: boolean;
-  /** The `tenants[]` of `avatars/person.<okey>` — decides whether the avatar checkbox has
+  /** The `tenants[]` of `avatars/<prefix>.<okey>` — decides whether the avatar checkbox has
    * anything left to do for a given target. */
   avatarTenants: string[];
   tenantConfigs: Record<string, TenantConfigMeta>;
@@ -35,7 +50,8 @@ export type AocTenantAllocationState = {
 };
 
 const initialState: AocTenantAllocationState = {
-  selectedPerson: undefined,
+  modelType: 'person',
+  subject: undefined,
   addresses: [],
   hasAvatar: false,
   avatarTenants: [],
@@ -46,12 +62,16 @@ const initialState: AocTenantAllocationState = {
 
 /** The response shape of the `allocateTenant` Cloud Function. */
 interface AllocateTenantResponse {
-  changed: { persons: number; addresses: number; avatars: number };
+  changed: Record<string, number>;
   rejected: { okey: string; reason: string }[];
   logKey: string;
   account: { created: boolean; loginEmail?: string; reason?: string };
 }
 
+/**
+ * One instance per allocation card (spec 1.47, D-TA-7). The card provides it, so the three
+ * cards hold three independent selections and three independent result logs.
+ */
 export const AocTenantAllocationStore = signalStore(
   withState(initialState),
   withProps(() => ({
@@ -65,92 +85,121 @@ export const AocTenantAllocationStore = signalStore(
     i18n: store.i18nService.translateAll(AOC_I18N_KEYS),
   })),
   withComputed(store => ({
-    /** Left and right column, derived from the person and the app-config docs. */
+    /** What this model type does and does not support — addresses, an account offer. */
+    meta: computed(() => ALLOCATION_SUBJECTS[store.modelType()]),
+    /** Left and right column, derived from the subject and the app-config docs. */
     lists: computed(() => {
-      const person = store.selectedPerson();
+      const subject = store.subject();
       const configs = new Map(Object.entries(store.tenantConfigs()));
-      return splitTenants(person?.tenants ?? [], [...configs.keys()], store.appStore.env.tenantId, configs);
+      return splitTenants(subject?.tenants ?? [], [...configs.keys()], store.appStore.env.tenantId, configs);
     }),
   })),
   withMethods(store => ({
-    /** Every tenant that exists — `app-config` is world-readable, so this is one plain read. */
-    async loadTenantConfigs(): Promise<void> {
-      // 'none' is load-bearing: getDataOnce defaults to orderBy('name'), and an orderBy on a
-      // field a document does not have silently excludes that document. app-config docs have
-      // no `name`, so the default would return an empty list and the right column would be
-      // permanently empty with no error anywhere.
-      const docs = await store.firestoreService.getDataOnce<Record<string, unknown>>(AppConfigCollection, [], 'none');
-      const configs: Record<string, TenantConfigMeta> = {};
-      for (const doc of docs) {
-        const id = doc['okey'] as string;
-        if (!id) continue;
-        configs[id] = {
-          appName: doc['appName'] as string | undefined,
-          logoUrl: doc['logoUrl'] as string | undefined,
-          appDomain: doc['appDomain'] as string | undefined,
-        };
-      }
-      if (docs.length === 0) {
-        // an empty result is indistinguishable from a denied read (getDataOnce swallows every
-        // error into []) — log it so the empty right-hand column is never silently confident.
-        const message = 'Es wurden keine Mandanten gefunden. Das kann auch bedeuten, dass der Zugriff verweigert wurde.';
-        patchState(store, { logTitle: message, log: logMessage([...store.log()], message) });
-      }
+    /** Which card this is. Called once, from the card component's constructor. */
+    init(modelType: AllocationSubjectType): void {
+      patchState(store, { modelType });
+    },
+
+    /**
+     * The tenant list is the same for all three cards, so the page reads `app-config` once and
+     * hands the result down rather than every card re-reading it.
+     */
+    setTenantConfigs(configs: Record<string, TenantConfigMeta>): void {
       patchState(store, { tenantConfigs: configs });
     },
 
-    async selectPerson(): Promise<void> {
-      const modal = await store.modalController.create({
-        component: PersonSelectModal,
-        cssClass: 'list-modal',
-        componentProps: { selectedTag: '', currentUser: store.appStore.currentUser() },
-      });
-      modal.present();
-      const { data, role } = await modal.onWillDismiss<PersonSelectResult>();
-      if (role === 'confirm' && data?.kind === 'predefined' && isPerson(data.person, store.appStore.env.tenantId)) {
-        patchState(store, { selectedPerson: data.person });
-        await this.loadAddresses(data.person.okey);
-        await this.loadAvatar(data.person.okey);
+    async loadAddresses(okey: string): Promise<void> {
+      if (!ALLOCATION_SUBJECTS[store.modelType()].hasAddresses) {
+        patchState(store, { addresses: [] });
+        return;
       }
-    },
-
-    async loadAddresses(personKey: string): Promise<void> {
-      // Same 'none' rule as above — AddressModel has no `name` field either. And the query is
-      // tenant-scoped via getSystemQuery: the raw vault rule is tenant-scoped too, so an
-      // unscoped query would just be denied, and getDataOnce swallows the denial and returns
-      // [] — which reads as "this person has no addresses".
+      // Same 'none' rule as in the page's config load — AddressModel has no `name` field, and
+      // getDataOnce defaults to orderBy('name'), which silently excludes every document that
+      // lacks the field. And the query is tenant-scoped via getSystemQuery: the raw vault rule
+      // is tenant-scoped too, so an unscoped query would just be denied, and getDataOnce
+      // swallows the denial and returns [] — which reads as "this record has no addresses".
       const query = getSystemQuery(store.appStore.env.tenantId);
-      query.push({ key: 'parentKey', operator: '==', value: `person.${personKey}` });
+      query.push({ key: 'parentKey', operator: '==', value: allocationSubjectKey(store.modelType(), okey) });
       const addresses = await store.firestoreService.getDataOnce<AddressModel>(AddressCollection, query, 'none');
       if (addresses.length === 0) {
-        // same rationale as loadTenantConfigs: getDataOnce swallows a permission denial into [],
-        // so an empty address list must not read as a confident "this person has no addresses".
-        const message = 'Zu dieser Person wurden keine Adressen gefunden. Das kann auch bedeuten, dass der Zugriff verweigert wurde.';
+        // getDataOnce swallows a permission denial into [], so an empty address list must not
+        // read as a confident "this record has no addresses".
+        const message = 'Zu diesem Datensatz wurden keine Adressen gefunden. Das kann auch bedeuten, dass der Zugriff verweigert wurde.';
         patchState(store, { logTitle: message, log: logMessage([...store.log()], message) });
       }
       patchState(store, { addresses: addresses.filter(a => !a.isArchived) });
     },
 
     /**
-     * Whether the bare `avatars/person.<okey>` document exists — the only avatar doc the
+     * Whether the bare `avatars/<prefix>.<okey>` document exists — the only avatar doc the
      * target tenant of an allocation can ever read (see `allocate-tenant.ts`). A direct
      * point read by id, not a query, so the `getDataOnce` orderBy('name') pitfall does not
      * apply here.
      */
-    async loadAvatar(personKey: string): Promise<void> {
+    async loadAvatar(okey: string): Promise<void> {
       const avatar = await firstValueFrom(
-        store.firestoreService.readModel<AvatarModel>(AvatarCollection, `person.${personKey}`),
+        store.firestoreService.readModel<AvatarModel>(AvatarCollection, allocationSubjectKey(store.modelType(), okey)),
       );
       patchState(store, { hasAvatar: !!avatar, avatarTenants: avatar?.tenants ?? [] });
     },
 
-    clearPerson(): void {
+    clear(): void {
       patchState(store, {
-        selectedPerson: undefined, addresses: [], hasAvatar: false, avatarTenants: [], log: [], logTitle: '',
+        subject: undefined, addresses: [], hasAvatar: false, avatarTenants: [], log: [], logTitle: '',
       });
     },
   })),
   withMethods(store => ({
+    /**
+     * Open this card's select modal and load what hangs off the chosen record.
+     *
+     * The three modals have three different result shapes — `PersonSelectModal` wraps its
+     * answer (a person can also be entered ad hoc, which is not a record that can be
+     * allocated), the other two return the model — so the branch is here and nowhere else.
+     */
+    async select(): Promise<void> {
+      const currentUser = store.appStore.currentUser();
+      const modelType = store.modelType();
+      const component = modelType === 'person' ? PersonSelectModal
+        : modelType === 'org' ? OrgSelectModal
+        : ResourceSelectModal;
+      const modal = await store.modalController.create({
+        component,
+        cssClass: 'list-modal',
+        componentProps: { selectedTag: '', currentUser },
+      });
+      modal.present();
+      const { data, role } = await modal.onWillDismiss<PersonSelectResult | OrgModel | ResourceModel>();
+      if (role !== 'confirm' || !data) return;
+
+      let subject: AllocationSubject | undefined;
+      if (modelType === 'person') {
+        const result = data as PersonSelectResult;
+        // An ad-hoc person exists only in the dialog that made it — there is no document to
+        // hand to another tenant, so only a predefined one can be allocated.
+        if (result.kind !== 'predefined' || !isPerson(result.person, store.appStore.env.tenantId)) return;
+        const p = result.person as PersonModel;
+        subject = {
+          okey: p.okey,
+          label: `${p.firstName} ${p.lastName}`.trim(),
+          tenants: p.tenants,
+          avatar: { key: p.okey, name1: p.firstName, name2: p.lastName, label: '', modelType: 'person', type: '', subType: '' } as AvatarInfo,
+        };
+      } else {
+        const m = data as OrgModel | ResourceModel;
+        subject = {
+          okey: m.okey,
+          label: m.name,
+          tenants: m.tenants,
+          avatar: { key: m.okey, name1: m.name, name2: '', label: '', modelType, type: m.type ?? '', subType: '' } as AvatarInfo,
+        };
+      }
+
+      patchState(store, { subject });
+      await store.loadAddresses(subject.okey);
+      await store.loadAvatar(subject.okey);
+    },
+
     /**
      * The person's email addresses that Firebase Auth already knows, from
      * `getAllocationEmails`.
@@ -160,14 +209,14 @@ export const AocTenantAllocationStore = signalStore(
      * allocation itself is unaffected — the admin can re-run it once the lookup works, and
      * `openAccount` is idempotent.
      */
-    async loadTakenEmails(personKey: string): Promise<string[]> {
+    async loadTakenEmails(okey: string): Promise<string[]> {
       const allEmails = store.addresses()
         .filter(a => a.addressChannel === 'email' && !!a.email?.trim())
         .map(a => a.email.trim());
       try {
         const functions = getFunctions(getApp(), 'europe-west6');
         const lookup = httpsCallable(functions, 'getAllocationEmails');
-        const result = await lookup({ okey: personKey });
+        const result = await lookup({ okey });
         return (result.data as { taken: string[] }).taken ?? [];
       } catch (ex) {
         const message = 'Es liess sich nicht feststellen, welche Adressen schon einen Zugang haben.';
@@ -178,11 +227,12 @@ export const AocTenantAllocationStore = signalStore(
 
     /**
      * A drop or an arrow click. Opens the consent dialog and, on confirmation, calls
-     * `allocateTenant`. The client never writes persons/addresses/avatars itself.
+     * `allocateTenant`. The client never writes the records itself.
      */
     async move(tile: AllocationTile, direction: AllocationDirection): Promise<void> {
-      const person = store.selectedPerson();
-      if (!person || !isDropAllowed(tile, direction)) return;
+      const subject = store.subject();
+      const meta = store.meta();
+      if (!subject || !isDropAllowed(tile, direction)) return;
 
       // D-TA-3 / D-TA-8, spec §2: the dialog lists only documents the write would actually
       // touch — on a revoke what BOTH tenants carry (the target keeps what it collected
@@ -191,10 +241,11 @@ export const AocTenantAllocationStore = signalStore(
       const pending = eligibleAddresses(store.addresses(), tile.tenantId, direction);
       const groups = groupAddressesForConsent(pending);
 
-      // A grant aimed at a tenant the person already has (D-TA-8). The person document is not
+      // A grant aimed at a tenant the record already has (D-TA-8). The record itself is not
       // travelling — it is already there — so only the gap is on offer, and when there is no
-      // gap the dialog would be a page of dashes: say so instead of opening it.
-      const isTopUp = direction === 'grant' && person.tenants.includes(tile.tenantId);
+      // gap the dialog would be a page of dashes: say so instead of opening it. This is also
+      // the whole answer to "do not create a duplicate": a top-up never writes the subject.
+      const isTopUp = direction === 'grant' && subject.tenants.includes(tile.tenantId);
       // The avatar checkbox is offered only when the write would do something. Besides the
       // target-carries-it test that applies to every document, the bare avatar doc has one
       // special state: `tenants: ['system']` is the fleet-wide default, already in every
@@ -217,11 +268,12 @@ export const AocTenantAllocationStore = signalStore(
       // dialog opens, because the answer decides whether the "open an account" checkbox is
       // offered at all: an email that already has an account resolves to the SAME uid, and a
       // uid belongs to exactly one tenant, so it can never become a second, target-tenant
-      // login. A revoke never opens anything, so it does not ask.
-      const takenEmails = direction === 'grant' ? await this.loadTakenEmails(person.okey) : [];
+      // login. A revoke never opens anything, and only a person can hold an account.
+      const offersAccount = meta.canOpenAccount && direction === 'grant';
+      const takenEmails = offersAccount ? await this.loadTakenEmails(subject.okey) : [];
       // Built from ALL of the actor's addresses, not just the pending ones: on a top-up an
       // address the target already carries is still a valid login for a new account there.
-      const emailOptions = buildEmailOptions(direction === 'grant' ? store.addresses() : pending, takenEmails);
+      const emailOptions = offersAccount ? buildEmailOptions(store.addresses(), takenEmails) : [];
       const carriedAddressKeys = direction === 'grant'
         ? store.addresses().filter(a => a.tenants.includes(tile.tenantId)).map(a => a.okey)
         : [];
@@ -250,7 +302,7 @@ export const AocTenantAllocationStore = signalStore(
           groups,
           emailOptions,
           carriedAddressKeys,
-          personLabel: `${person.firstName} ${person.lastName}`,
+          personLabel: subject.label,
           hasAvatar: avatarPending,
           isRevoke: direction === 'revoke',
           isTopUp,
@@ -264,8 +316,8 @@ export const AocTenantAllocationStore = signalStore(
         const functions = getFunctions(getApp(), 'europe-west6');
         const allocate = httpsCallable(functions, 'allocateTenant');
         const result = await allocate({
-          modelType: 'person',
-          okey: person.okey,
+          modelType: store.modelType(),
+          okey: subject.okey,
           targetTenantId: tile.tenantId,
           direction,
           addressKeys: data.addressKeys,
@@ -290,29 +342,58 @@ export const AocTenantAllocationStore = signalStore(
         }
         patchState(store, { logTitle: store.i18n.allocation_result(), log: entries });
 
-        // The two columns redraw from `selectedPerson.tenants`, so that field must reflect what
-        // the callable just wrote. Re-reading the document here is a race that cannot be won:
+        // The two columns redraw from `subject.tenants`, so that field must reflect what the
+        // callable just wrote. Re-reading the document here is a race that cannot be won:
         // `readModel` is latency-compensated AND shares a ReplaySubject(1), so `firstValueFrom`
         // hands back the LOCAL snapshot — the one from before the callable's write — and the
-        // grant appears to have done nothing until the page is reloaded. `changed.persons` is
-        // the server's own confirmation that `persons/{okey}.tenants` was among the writes
+        // grant appears to have done nothing until the page is reloaded. The subject count is
+        // the server's own confirmation that the record's `tenants[]` was among the writes
         // (it counts exactly the one arrayUnion/arrayRemove the plan emitted), so derive the
         // new list from it instead of asking Firestore a question it answers from cache.
-        if (payload.changed.persons > 0) {
+        const subjectChanged = (payload.changed[`${store.modelType()}s`] ?? 0) > 0;
+        if (subjectChanged) {
           const tenants = direction === 'grant'
-            ? [...new Set([...person.tenants, tile.tenantId])]
-            : person.tenants.filter(t => t !== tile.tenantId);
-          patchState(store, { selectedPerson: { ...person, tenants } });
+            ? [...new Set([...subject.tenants, tile.tenantId])]
+            : subject.tenants.filter(t => t !== tile.tenantId);
+          patchState(store, { subject: { ...subject, tenants } });
         }
 
         // A revoke can drop address documents (D-TA-3) as well as the tenants[] entry — the
         // stale `store.addresses()` list would otherwise carry rows into a second dialog in
         // the same session that the server just rejected as no-longer-actor-visible.
-        await store.loadAddresses(person.okey);
-        await store.loadAvatar(person.okey);
+        await store.loadAddresses(subject.okey);
+        await store.loadAvatar(subject.okey);
       } catch (ex) {
         error(store.toastController, `${store.i18n.allocation_error()} ${JSON.stringify(ex)}`);
       }
     },
   })),
 );
+
+/**
+ * Every tenant that exists — `app-config` is world-readable, so this is one plain read.
+ *
+ * A free function, not a store method: the tenant list is the same for all three cards and is
+ * loaded ONCE by the page, then handed to each card's store via `setTenantConfigs`.
+ *
+ * 'none' is load-bearing: getDataOnce defaults to orderBy('name'), and an orderBy on a field a
+ * document does not have silently excludes that document. app-config docs have no `name`, so
+ * the default would return an empty list and the right column would be permanently empty with
+ * no error anywhere.
+ */
+export async function loadTenantConfigs(
+  firestoreService: FirestoreService,
+): Promise<Record<string, TenantConfigMeta>> {
+  const docs = await firestoreService.getDataOnce<Record<string, unknown>>(AppConfigCollection, [], 'none');
+  const configs: Record<string, TenantConfigMeta> = {};
+  for (const doc of docs) {
+    const id = doc['okey'] as string;
+    if (!id) continue;
+    configs[id] = {
+      appName: doc['appName'] as string | undefined,
+      logoUrl: doc['logoUrl'] as string | undefined,
+      appDomain: doc['appDomain'] as string | undefined,
+    };
+  }
+  return configs;
+}

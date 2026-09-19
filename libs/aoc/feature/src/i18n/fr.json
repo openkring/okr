@@ -895,8 +895,18 @@
       "content": "Choisis la personne dont tu veux changer les locataires.",
       "button": "Rechercher une personne"
     },
+    "orgSelect": {
+      "content": "Choisis l'organisation dont tu veux changer les locataires.",
+      "button": "Rechercher une organisation"
+    },
+    "resourceSelect": {
+      "content": "Choisis la ressource dont tu veux changer les locataires.",
+      "button": "Rechercher une ressource"
+    },
     "card": {
-      "person": "Personne"
+      "person": "Personne",
+      "org": "Organisation",
+      "resource": "Ressource"
     },
     "column": {
       "current": "Locataires actuels",

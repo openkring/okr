@@ -895,8 +895,18 @@
       "content": "Wähle die Person, deren Mandanten du ändern möchtest.",
       "button": "Person suchen"
     },
+    "orgSelect": {
+      "content": "Wähle die Organisation, deren Mandanten du ändern möchtest.",
+      "button": "Organisation suchen"
+    },
+    "resourceSelect": {
+      "content": "Wähle die Ressource, deren Mandanten du ändern möchtest.",
+      "button": "Ressource suchen"
+    },
     "card": {
-      "person": "Person"
+      "person": "Person",
+      "org": "Organisation",
+      "resource": "Ressource"
     },
     "column": {
       "current": "Aktuelle Mandanten",
