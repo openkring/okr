@@ -67,9 +67,37 @@ export const TemplateStore = signalStore(
       patchState(store, { searchTerm: term });
     },
 
+    /**
+     * Create the provisional document behind 'add template'. Silent: it is only a
+     * template once the user saves it in the editor — until then leaving the editor
+     * discards it again (see discardUnsavedTemplate).
+     */
     async createTemplate(): Promise<string | undefined> {
       const tmpl = newTemplate(store.appStore.tenantId());
-      return store.templateService.create(tmpl, store.currentUser());
+      return store.templateService.create(tmpl, store.currentUser(), true);
+    },
+
+    /** Discard a provisional template the user left without saving. */
+    async discardUnsavedTemplate(template: TemplateModel): Promise<void> {
+      await store.templateService.discardUnsaved(template, store.currentUser());
+    },
+
+    /**
+     * Copy a template (settings + content of its effective version) into a new
+     * unpublished draft template.
+     * @return the key of the new template, or undefined if the copy failed
+     */
+    async copyTemplate(template: TemplateModel): Promise<string | undefined> {
+      const key = await store.templateService.copy(
+        template, store.i18n.copy_suffix(), store.currentUser()
+      );
+      const toast = await store.toastController.create({
+        message:  key ? store.i18n.copy_conf() : store.i18n.copy_error(),
+        duration: key ? 2000 : 3000,
+        color:    key ? 'success' : 'danger',
+      });
+      await toast.present();
+      return key;
     },
 
     async updateTemplate(template: TemplateModel): Promise<void> {

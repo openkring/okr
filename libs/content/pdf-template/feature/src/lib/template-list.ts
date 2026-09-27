@@ -92,7 +92,9 @@ export class TemplateList {
   protected async create(): Promise<void> {
     const key = await this.store.createTemplate();
     if (key) {
-      await this.router.navigate(['/templates', key]);
+      // `new=1` marks the document as provisional: leaving the editor without saving
+      // discards it again (TemplateEditPage.ngOnDestroy).
+      await this.router.navigate(['/templates', key], { queryParams: { new: '1' } });
     }
   }
 
@@ -106,6 +108,9 @@ export class TemplateList {
         createActionSheetButton('template.view', this.store.i18n.view(), this.imgixBaseUrl, 'eye-on')
       );
     }
+    actionSheetOptions.buttons.push(
+      createActionSheetButton('template.copy', this.store.i18n.copy(), this.imgixBaseUrl, 'copy')
+    );
     // revert is only meaningful when there is a draft or more than one published version
     if (tmpl.draftVersion || tmpl.currentVersion > 1) {
       actionSheetOptions.buttons.push(
@@ -130,6 +135,11 @@ export class TemplateList {
       case 'template.view':
         await this.router.navigate(['/templates', tmpl.okey], { queryParams: { mode: 'view' } });
         break;
+      case 'template.copy': {
+        const key = await this.store.copyTemplate(tmpl);
+        if (key) await this.router.navigate(['/templates', key]);
+        break;
+      }
       case 'template.revert':
         await this.store.revertToLastVersion(tmpl);
         break;

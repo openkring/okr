@@ -643,7 +643,11 @@ service cloud.firestore {
         allow read:   if signedIn();
         allow create: if isPrivileged() || hasRole('contentAdmin');
         allow update: if (isPrivileged() || hasRole('contentAdmin')) && resource.data.status == 'draft';
-        allow delete: if false;
+        // Einen unveröffentlichten Entwurf verwerfen gehört zum Editor ('Auf letzte Version
+        // zurücksetzen' → TemplateService.discardDraft). Mit `if false` schlug dieser Löschvorgang
+        // immer fehl, der Entwurf blieb liegen. Veröffentlichte Versionen bleiben unantastbar —
+        // sie sind die Historie.
+        allow delete: if (isPrivileged() || hasRole('contentAdmin')) && resource.data.status == 'draft';
       }
     }
 

@@ -19,8 +19,11 @@
     "conf": "La plantilla PDF se ha eliminado",
     "error": "No se ha podido eliminar la plantilla PDF"
   },
-  "duplicate": {
-    "label": "Duplicar plantilla"
+  "copy": {
+    "label": "Copiar plantilla",
+    "conf": "Se ha creado la copia de la plantilla.",
+    "error": "No se ha podido copiar la plantilla.",
+    "suffix": "(copia)"
   },
   "preview": {
     "label": "Vista previa",

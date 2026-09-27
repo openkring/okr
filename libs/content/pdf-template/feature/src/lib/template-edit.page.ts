@@ -1,7 +1,7 @@
 // libs/content/pdf-template/feature/src/lib/template-edit.page.ts
 import {
   ChangeDetectionStrategy, Component, computed, effect, inject,
-  linkedSignal, signal,
+  linkedSignal, OnDestroy, signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
@@ -210,7 +210,7 @@ type EditorTab = 'metadata' | 'html' | 'css' | 'preview';
     </ion-content>
   `
 })
-export class TemplateEditPage {
+export class TemplateEditPage implements OnDestroy {
   protected readonly store = inject(TemplateStore);
   private readonly templateService = inject(TemplateService);
   private readonly route = inject(ActivatedRoute);
@@ -221,6 +221,10 @@ export class TemplateEditPage {
   protected readonly saving = signal(false);
   // read-only view of the current published version (?mode=view)
   protected readonly readOnly = signal(false);
+  // provisional document created by 'add template' (?new=1) — discarded again when the
+  // user leaves without ever saving
+  private readonly isNew = signal(false);
+  private savedOnce = false;
   // tracks unsaved edits; drives the change-confirmation banner (no save button)
   protected readonly dirty = signal(false);
   protected readonly showConfirmation = computed(() => this.dirty() && !this.readOnly());
@@ -310,6 +314,7 @@ export class TemplateEditPage {
       const key = this.route.snapshot.paramMap.get('templateKey');
       if (key) this.templateKey.set(key);
       this.readOnly.set(this.route.snapshot.queryParamMap.get('mode') === 'view');
+      this.isNew.set(this.route.snapshot.queryParamMap.get('new') === '1');
     }, { allowSignalWrites: true });
 
     // Seed _localTemplate from resource once it loads
@@ -359,9 +364,28 @@ export class TemplateEditPage {
         await this.store.updateTemplate(updated);
       }
       this.dirty.set(false);
+      this.savedOnce = true;
     } finally {
       this.saving.set(false);
     }
+  }
+
+  /**
+   * A template added via 'add template' exists in Firestore before the editor opens (the
+   * preview renderer and the version subcollection both need a key). If the user leaves
+   * without ever saving, that document is debris — an unnamed v0 stub in the list — so it
+   * is discarded here.
+   *
+   * The `savedOnce` flag only covers this instance; the state check is what makes a reload
+   * (which keeps `new=1` in the URL but resets the flag) safe: anything that was saved has
+   * a draft pointer and a version document, and is never touched.
+   */
+  public ngOnDestroy(): void {
+    if (!this.isNew() || this.savedOnce) return;
+    const tmpl = this._templateResource.value();
+    const versions = this._versions.value() ?? [];
+    if (!tmpl || tmpl.currentVersion > 0 || tmpl.draftVersion || versions.length > 0) return;
+    void this.store.discardUnsavedTemplate(tmpl);
   }
 
   /** Discard unsaved edits and revert to the last loaded state. */

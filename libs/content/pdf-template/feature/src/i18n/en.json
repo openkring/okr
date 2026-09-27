@@ -19,8 +19,11 @@
     "conf": "The PDF template was deleted",
     "error": "The PDF template could not be deleted"
   },
-  "duplicate": {
-    "label": "Duplicate template"
+  "copy": {
+    "label": "Copy template",
+    "conf": "The copy of the template was created.",
+    "error": "The template could not be copied.",
+    "suffix": "(copy)"
   },
   "preview": {
     "label": "Preview",

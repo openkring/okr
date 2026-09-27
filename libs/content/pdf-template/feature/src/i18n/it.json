@@ -19,8 +19,11 @@
     "conf": "Il modello PDF è stato eliminato",
     "error": "Non è stato possibile eliminare il modello PDF"
   },
-  "duplicate": {
-    "label": "Duplicare modello"
+  "copy": {
+    "label": "Copia modello",
+    "conf": "La copia del modello è stata creata.",
+    "error": "Non è stato possibile copiare il modello.",
+    "suffix": "(copia)"
   },
   "preview": {
     "label": "Anteprima",

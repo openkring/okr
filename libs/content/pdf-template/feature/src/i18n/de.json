@@ -19,8 +19,11 @@
     "conf": "Das PDF Template wurde gelöscht",
     "error": "Das PDF Template konnte nicht gelöscht werden"
   },
-  "duplicate": {
-    "label": "Vorlage duplizieren"
+  "copy": {
+    "label": "Vorlage kopieren",
+    "conf": "Die Kopie der Vorlage wurde erstellt.",
+    "error": "Die Vorlage konnte nicht kopiert werden.",
+    "suffix": "(Kopie)"
   },
   "preview": {
     "label": "Vorschau",

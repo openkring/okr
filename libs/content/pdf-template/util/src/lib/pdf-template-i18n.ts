@@ -19,7 +19,10 @@ export const TEMPLATE_I18N_KEYS = {
   delete_conf:      PFX + 'delete.conf',
   delete_error:     PFX + 'delete.error',
 
-  duplicate:        PFX + 'duplicate.label',
+  copy:             PFX + 'copy.label',
+  copy_conf:        PFX + 'copy.conf',
+  copy_error:       PFX + 'copy.error',
+  copy_suffix:      PFX + 'copy.suffix',
 
   preview:          PFX + 'preview.label',
   preview_error:    PFX + 'preview.error',
