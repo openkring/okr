@@ -354,3 +354,33 @@ export function isRoomGoneError(error: unknown): boolean {
   if (errcode === 'M_NOT_FOUND') return true;
   return errcode === 'M_FORBIDDEN' && /not in room/i.test(message ?? '');
 }
+
+/** The part of a group document this module needs to match a room back to it. */
+export interface RoomOwningGroup {
+  okey: string;
+  matrixRoomId?: string;
+}
+
+/**
+ * The group (or ad-hoc chat) a Matrix room belongs to, or undefined for a DM or an
+ * unmatched room.
+ *
+ * Two keys, in the order `resolveGroupRoom` trusts them: the stored `matrixRoomId` is
+ * authoritative, the canonical alias is the fallback for a group whose id was never written
+ * back. The room NAME is deliberately not consulted — it carries the group's free-text
+ * display name and is no identifier.
+ *
+ * `groups` must come from `AppStore.allGroupsAndChats()`: `allGroups()` drops the ad-hoc
+ * chats, and a room resolving to "no group" is exactly what the ad-hoc callers need to see.
+ */
+export function findGroupOfRoom<T extends RoomOwningGroup>(
+  groups: T[],
+  roomId: string,
+  canonicalAlias: string | undefined,
+): T | undefined {
+  const aliasKey = groupKeyFromRoomAlias(canonicalAlias);
+  return groups.find(g =>
+    (!!g.matrixRoomId && g.matrixRoomId === roomId) ||
+    (!!aliasKey && groupRoomAliasLocalpart(g.okey) === `group_${aliasKey}`)
+  );
+}

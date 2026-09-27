@@ -20,7 +20,8 @@
   },
   "resource": {
     "select": "Resource wählen",
-    "empty": "Keine Resourcen gefunden."
+    "empty": "Keine Resourcen gefunden.",
+    "custom_use": "als Text verwenden"
   },
   "responsibility": {
     "select": "Verantwortliche wählen",

@@ -75,3 +75,25 @@ describe('tripValidationSuite: start/end date and time', () => {
     expect(errorsOf(makeTrip({ endTime: '08:30' }), 'endDate')).toEqual([]);
   });
 });
+
+describe('tripValidationSuite: boat', () => {
+  it('accepts a boat entered ad hoc, identified by its name alone', () => {
+    const trip = makeTrip({
+      resource: { key: '', name1: '', name2: 'Leihboot Tarzan', label: '', modelType: 'resource', type: '', subType: '' },
+    });
+    expect(errorsOf(trip, 'resource')).toEqual([]);
+  });
+
+  it('rejects a boat with neither a key nor a name', () => {
+    const trip = makeTrip({
+      resource: { key: '', name1: '', name2: '', label: '', modelType: 'resource', type: '', subType: '' },
+    });
+    expect(errorsOf(trip, 'resource').length).toBeGreaterThan(0);
+  });
+
+  it('rejects a missing boat', () => {
+    const trip = makeTrip();
+    (trip as Partial<TripModel>).resource = undefined;
+    expect(errorsOf(trip, 'resource').length).toBeGreaterThan(0);
+  });
+});

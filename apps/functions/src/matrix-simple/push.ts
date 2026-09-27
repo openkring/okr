@@ -21,6 +21,25 @@ import {
 import { appNameFor, collectTokens, withAppName } from '../srv/push';
 
 /**
+ * Does the group behind `groupKey` have a `<okey>_chat` CMS page to deep-link into?
+ *
+ * True only for a real group: `GroupStore.save()` creates the page and its chat section
+ * alongside the group, while `createAdhocChat` creates neither. Reads `kind ?? 'group'`
+ * because documents predating the ad-hoc feature do not carry the field. Any read failure
+ * answers false — a generic chat page is always safe, a 404 never is.
+ */
+async function hasGroupChatPage(groupKey: string): Promise<boolean> {
+  try {
+    const snap = await getFirestore().collection('groups').doc(groupKey).get();
+    if (!snap.exists) return false;
+    return ((snap.data()?.['kind'] as string | undefined) ?? 'group') === 'group';
+  } catch (e) {
+    console.warn(`hasGroupChatPage(${groupKey}) failed, linking to the generic chat page:`, e);
+    return false;
+  }
+}
+
+/**
  * Send an FCM push notification to all room members when a video call is started.
  * Called by the caller's client right after placing the call.
  *
@@ -69,10 +88,15 @@ export const sendCallNotification = onCall(
     // derived from the room name again. That coupling only ever worked because rooms used to
     // be named by their key; since rooms carry the group's display name ("Freitags 8-er",
     // "Kandidat:innen & Instrukt."), a name-derived id would be blanks-and-colons garbage.
-    // Without a key (older client, or a room that is not a group room) fall back to the
-    // tenant's generic chat page — ?selectedRoom carries the Matrix room ID either way, so
-    // the right room is pre-selected regardless of which page opens.
-    const chatUrl = roomKey
+    // A key alone is not enough, though: only a real GROUP owns a `<okey>_chat` page.
+    // Ad-hoc chats are group documents with `kind: 'chat'` and no page or sections —
+    // `createAdhocChat` writes the document and the room, nothing else — so their deep
+    // link would land on PageDispatcher's `pageNotFound`. So fall back to the tenant's
+    // generic chat page whenever there is no key (older client, or a room that is not a
+    // group room), the key names an ad-hoc chat, or its document is gone. ?selectedRoom
+    // carries the Matrix room ID either way, so the right room is pre-selected regardless
+    // of which page opens.
+    const chatUrl = (roomKey && await hasGroupChatPage(roomKey))
       ? `/private/${roomKey}_chat?selectedRoom=${encodeURIComponent(roomId)}`
       : `/private/chat?selectedRoom=${encodeURIComponent(roomId)}`;
 

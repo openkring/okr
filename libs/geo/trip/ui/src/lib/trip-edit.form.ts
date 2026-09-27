@@ -283,6 +283,8 @@ export class TripEditForm {
   }
 
   protected getIcon(boat: AvatarInfo): string {
+    // a boat entered ad hoc has no type to look up — fall back to the generic boat icon
+    if (!boat.key) return 'boat';
     const itemName = boat.type === 'rboat' ? boat.subType : boat.type;
     return this.getCategoryItem(this.category(), itemName)?.icon ?? '';
   }

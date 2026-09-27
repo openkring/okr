@@ -8,6 +8,12 @@ import { dismissOverlay } from '@okr/shared-util-angular';
 
 import { ResourceSelectStore } from './resource-select.store';
 
+/**
+ * A predefined resource is returned as the model itself (callers guard it with isResource), an
+ * ad-hoc entry as its label. Only a caller that passes allowCustom can ever see the custom kind.
+ */
+export type ResourceSelectResult = { kind: 'custom'; label: string };
+
 @Component({
   selector: 'okr-resource-select-modal',
   standalone: true,
@@ -34,7 +40,18 @@ import { ResourceSelectStore } from './resource-select.store';
       @if(isLoading()) {
         <okr-spinner />
       } @else {
-        @if(selectedResourcesCount() === 0) {
+        @if(store.showCustomEntry()) {
+          <ion-list lines="none">
+            <ion-item class="item" color="light" (click)="selectCustom()">
+              <ion-icon src="{{ 'edit' | svgIcon }}" slot="start" />
+              <ion-label>
+                <h3>„{{ store.customLabel() }}"</h3>
+                <p>{{ store.i18n.resource_custom_use() }}</p>
+              </ion-label>
+            </ion-item>
+          </ion-list>
+        }
+        @if(selectedResourcesCount() === 0 && !store.showCustomEntry()) {
           <okr-empty-list [message]="store.i18n.resource_empty()" />
         } @else {
           @for(resource of filteredResources(); track $index) {
@@ -59,6 +76,8 @@ export class ResourceSelectModal {
   public currentUser = input.required<UserModel>();
   /** Optional, already-resolved title string; falls back to the generic "Resource wählen". */
   public title = input<string>();
+  /** Offer the typed term as an ad-hoc entry when it matches no resource (returned as kind: 'custom'). */
+  public allowCustom = input<boolean>(false);
 
   protected searchTerm = linkedSignal(() => this.store.searchTerm());
 
@@ -76,10 +95,17 @@ export class ResourceSelectModal {
     effect(() => {
       this.store.setCurrentUser(this.currentUser());
     });
+    effect(() => {
+      this.store.setAllowCustom(this.allowCustom());
+    });
   }
 
   public select(selectedResource: ResourceModel): Promise<boolean> {
     return dismissOverlay(this.modalController, selectedResource, 'confirm');
+  }
+
+  public selectCustom(): Promise<boolean> {
+    return dismissOverlay(this.modalController, { kind: 'custom', label: this.store.customLabel() } satisfies ResourceSelectResult, 'confirm');
   }
 
   protected getIcon(resource: ResourceModel): string {

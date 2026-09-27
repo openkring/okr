@@ -20,7 +20,8 @@
   },
   "resource": {
     "select": "Select resource",
-    "empty": "No resources found."
+    "empty": "No resources found.",
+    "custom_use": "use as text"
   },
   "responsibility": {
     "select": "Select responsible person",

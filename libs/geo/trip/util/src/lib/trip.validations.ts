@@ -29,8 +29,9 @@ export const tripValidationSuite = staticSuite((trip: TripModel, field?: string)
     });
   });
 
+  // a boat entered ad hoc in the picker carries no key — its name is what identifies it
   test('resource', '@trip/field.boat', () => {
-    enforce(trip.resource?.key).isNotBlank();
+    enforce(trip.resource?.key || trip.resource?.name2).isNotBlank();
   });
 
   test('locations', '@geo/trip/feature.location.none_selected', () => {

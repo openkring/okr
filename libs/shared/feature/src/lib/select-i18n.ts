@@ -20,6 +20,7 @@ export const SHARED_FEATURE_I18N_KEYS = {
 
   resource_select: PFX + 'resource.select',
   resource_empty:  PFX + 'resource.empty',
+  resource_custom_use: PFX + 'resource.custom_use',
 
   responsibility_select: PFX + 'responsibility.select',
   responsibility_empty:  PFX + 'responsibility.empty',

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildReceiptAriaLabel, filterRoomsOfTenant, isRoomClassifiable, findSupportRoom, isBridgeGhost, hashUserIdToColor, formatReceiptTime, isRenderableChatEvent, linkifyText, resolveMatrixDisplayName, canPostWithPower, groupRoomAliasLocalpart, groupKeyFromRoomAlias, isRoomGoneError, askRoomAliasLocalpart, shouldDeferAskRoom } from './chat.util';
+import { buildReceiptAriaLabel, filterRoomsOfTenant, isRoomClassifiable, findSupportRoom, isBridgeGhost, hashUserIdToColor, formatReceiptTime, isRenderableChatEvent, linkifyText, resolveMatrixDisplayName, canPostWithPower, groupRoomAliasLocalpart, groupKeyFromRoomAlias, isRoomGoneError, askRoomAliasLocalpart, shouldDeferAskRoom, findGroupOfRoom } from './chat.util';
 
 describe('buildReceiptAriaLabel', () => {
   it('returns empty string for no receipts', () => {
@@ -390,5 +390,40 @@ describe('shouldDeferAskRoom', () => {
 
   it('ignores rooms with no canonical alias', () => {
     expect(shouldDeferAskRoom(askGroup, [{ canonicalAlias: undefined }], me)).toBe(true);
+  });
+});
+
+describe('findGroupOfRoom', () => {
+  const groups = [
+    { okey: 'scs_notfall', matrixRoomId: '!notfall:bkchat.etke.host' },
+    { okey: 'scs_c_anc37t5jy3', matrixRoomId: '' },
+    { okey: 'Trainerteam', matrixRoomId: '' },
+  ];
+
+  it('matches on the stored matrixRoomId first', () => {
+    expect(findGroupOfRoom(groups, '!notfall:bkchat.etke.host', undefined)?.okey).toBe('scs_notfall');
+  });
+
+  it('falls back to the canonical alias when no id is stored', () => {
+    const alias = '#group_scs_c_anc37t5jy3:bkchat.etke.host';
+    expect(findGroupOfRoom(groups, '!whatever:bkchat.etke.host', alias)?.okey).toBe('scs_c_anc37t5jy3');
+  });
+
+  it('matches a legacy mixed-case okey against its lowercased alias', () => {
+    const alias = '#group_trainerteam:bkchat.etke.host';
+    expect(findGroupOfRoom(groups, '!x:bkchat.etke.host', alias)?.okey).toBe('Trainerteam');
+  });
+
+  it('returns undefined for a DM (no alias, no matching id)', () => {
+    expect(findGroupOfRoom(groups, '!dm:bkchat.etke.host', undefined)).toBeUndefined();
+  });
+
+  it('ignores an ask-room alias rather than matching its group', () => {
+    const alias = '#ask_scs_notfall_kaiser:bkchat.etke.host';
+    expect(findGroupOfRoom(groups, '!ask:bkchat.etke.host', alias)).toBeUndefined();
+  });
+
+  it('does not match an empty stored id against an empty room id', () => {
+    expect(findGroupOfRoom(groups, '', undefined)).toBeUndefined();
   });
 });

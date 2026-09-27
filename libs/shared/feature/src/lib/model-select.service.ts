@@ -8,6 +8,7 @@ import { DEFAULT_LABEL, DEFAULT_TAGS } from "@okr/shared-constants";
 
 import { LocationSelectModal, LocationSelectResult } from "./location-select.modal";
 import { PersonSelectResult } from "./person-select.modal";
+import { ResourceSelectResult } from "./resource-select.modal";
 import { normalizeWhitespace } from "./location-select.store";
 
 /**
@@ -134,40 +135,64 @@ export class ModelSelectService {
   }
 
 /***************************  resource  *************************** */
-  public async selectResource(selectedTag = DEFAULT_TAGS, title?: string): Promise<ResourceModel | undefined> {
+  /**
+   * Opens the resource-select modal. With allowCustom the modal also offers the typed term when it
+   * matches no resource; that answer comes back as { kind: 'custom' } instead of a model, so a
+   * caller that does not ask for it keeps seeing resources only.
+   */
+  private async openResourceSelect(selectedTag: string, title: string | undefined, allowCustom: boolean): Promise<ResourceModel | ResourceSelectResult | undefined> {
     const modal = await this.modalController.create({
       component: ResourceSelectModal,
       cssClass: 'list-modal',
       componentProps: {
         selectedTag,
         title,
+        allowCustom,
         currentUser: this.appStore.currentUser(),
       },
     });
     modal.present();
-    const { data, role } = await modal.onWillDismiss();
-    if (role === 'confirm') {
-        if (isResource(data, this.appStore.env.tenantId)) {
-            return data;
-        }
+    const { data, role } = await modal.onWillDismiss<ResourceModel | ResourceSelectResult>();
+    if (role === 'confirm' && data) {
+      if (isResource(data, this.appStore.env.tenantId)) return data;
+      if ((data as ResourceSelectResult).kind === 'custom') return data as ResourceSelectResult;
     }
     return undefined;
   }
 
-  public async selectResourceAvatar(selectedTag = DEFAULT_TAGS, label = DEFAULT_LABEL, title?: string): Promise<AvatarInfo | undefined> {
-    const resource = await this.selectResource(selectedTag, title);
-    if (resource) {
+  public async selectResource(selectedTag = DEFAULT_TAGS, title?: string): Promise<ResourceModel | undefined> {
+    const result = await this.openResourceSelect(selectedTag, title, false);
+    return isResource(result, this.appStore.env.tenantId) ? result : undefined;
+  }
+
+  /**
+   * Returns an AvatarInfo for the selected resource. When allowCustom is true and the user enters a
+   * name that matches no resource, a custom avatar (key '') carrying that name is returned — the
+   * Logbuch needs it for a boat that is not (yet) in the inventory.
+   */
+  public async selectResourceAvatar(selectedTag = DEFAULT_TAGS, label = DEFAULT_LABEL, title?: string, allowCustom = false): Promise<AvatarInfo | undefined> {
+    const result = await this.openResourceSelect(selectedTag, title, allowCustom);
+    if (!result) return undefined;
+    if (!isResource(result, this.appStore.env.tenantId)) {
       return {
-        key: resource.okey,
+        key: '',
         name1: '',
-        name2: resource.name,
+        name2: (result as ResourceSelectResult).label,
         label,
         modelType: 'resource',
-        type: resource.type,
-        subType: resource.subType,
+        type: '',
+        subType: '',
       }
     }
-    return undefined;
+    return {
+      key: result.okey,
+      name1: '',
+      name2: result.name,
+      label,
+      modelType: 'resource',
+      type: result.type,
+      subType: result.subType,
+    }
   }
 
   /***************************  location  *************************** */

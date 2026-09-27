@@ -272,8 +272,13 @@ export const TripStore = signalStore(
       // continues with another boat instead of being aborted (see the boat-reservation spec §3).
       for (;;) {
         // selectedTag is a raw tag name matched against resource.tags — never an i18n key
-        const boat = await store.modelSelectService.selectResourceAvatar('okBoat', undefined, store.i18n.select_boat_title());
+        // allowCustom: a boat that is not (yet) in the inventory must still be loggable, so the
+        // picker offers the typed name as plain text (key '')
+        const boat = await store.modelSelectService.selectResourceAvatar('okBoat', undefined, store.i18n.select_boat_title(), true);
         if (!boat) return undefined;
+        // an ad-hoc boat is not a record: none of the inventory checks below can say anything about
+        // it, and findOpenTripForBoat('') would match any other trip without a boat key
+        if (!boat.key) return boat;
         // a boat that is still out on an open trip cannot be taken out again
         if (findOpenTripForBoat(store.trips(), boat.key, excludeTripKey)) {
           await store.alertService.showToast(fill(store.i18n.select_boat_in_use(), { name: boat.name2 ?? boat.name1 }));
