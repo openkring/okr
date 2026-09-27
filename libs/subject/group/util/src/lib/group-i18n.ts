@@ -14,6 +14,7 @@ export const GROUP_I18N_KEYS = {
   segment_files:                    PFX + 'segment.files',
   segment_members:                  PFX + 'segment.members',
   files_conflict:                   PFX + 'files.conflict',
+  view_denied:                      PFX + 'view.denied',
 
   add_page:                         PFX + 'add.page',
 

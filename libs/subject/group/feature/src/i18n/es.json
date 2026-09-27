@@ -51,7 +51,8 @@
     "conf": "Los cambios se han guardado."
   },
   "view": {
-    "label": "Mostrar grupo"
+    "label": "Mostrar grupo",
+    "denied": "Este grupo solo es visible para sus miembros."
   },
   "page": {
     "create": {

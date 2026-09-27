@@ -89,7 +89,8 @@
     "conf": "Die Änderungen wurden gespeichert."
   },
   "view": {
-    "label": "Gruppe anzeigen"
+    "label": "Gruppe anzeigen",
+    "denied": "Diese Gruppe ist nur für ihre Mitglieder sichtbar."
   },
   "page": {
     "create": {

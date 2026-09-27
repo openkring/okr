@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { AVATAR_INFO_SHAPE, AvatarInfo, GroupModel, UserModel } from '@okr/shared-models';
-import { canAccessGroup, findConflictingGroups, findDuplicateGroups, findGroupKeyIssues, getGroupKeyFromName, getMainContact, getUniqueGroupKey, getVisibilityRoles, getVisibleGroupKeys, shouldNotifyUser, userMatchesGroupVisibility, withCreatorAsAdmin } from './group.util';
+import { canAccessGroup, filterAccessibleGroups, findConflictingGroups, findDuplicateGroups, findGroupKeyIssues, getGroupKeyFromName, getMainContact, getUniqueGroupKey, getVisibilityRoles, getVisibleGroupKeys, shouldNotifyUser, userMatchesGroupVisibility, withCreatorAsAdmin } from './group.util';
 
 describe('Group Utils', () => {
   const tenantId = 'tenant-1';
@@ -161,6 +161,56 @@ describe('canAccessGroup', () => {
 
   it('returns false when not a member and no matching role', () => {
     expect(canAccessGroup(makeGroup('privileged'), false, makeUser({ registered: true, privileged: false }))).toBe(false);
+  });
+
+  it('keeps a members-only group closed to a registered non-member', () => {
+    expect(canAccessGroup(makeGroup(''), false, makeUser({ registered: true }))).toBe(false);
+  });
+
+  it('lets an admin into a members-only group without a membership', () => {
+    expect(canAccessGroup(makeGroup(''), false, makeUser({ registered: true, admin: true }))).toBe(true);
+  });
+
+  it('does not let privileged bypass a members-only group', () => {
+    expect(canAccessGroup(makeGroup(''), false, makeUser({ registered: true, privileged: true }))).toBe(false);
+  });
+
+  it('counts a group admin listed in admins[] as a member', () => {
+    const g = makeGroup('');
+    g.admins = [{ key: 'p1', name1: '', name2: '', modelType: 'person', type: '', subType: '', label: '' }];
+    const user = makeUser({ registered: true });
+    user.personKey = 'p1';
+    expect(canAccessGroup(g, false, user)).toBe(true);
+  });
+
+  it('never grants access without a user', () => {
+    expect(canAccessGroup(makeGroup('registered'), true, undefined)).toBe(false);
+  });
+});
+
+describe('userMatchesGroupVisibility role implication', () => {
+  it('matches registered for a user holding only a higher role', () => {
+    expect(userMatchesGroupVisibility(makeGroup('registered'), makeUser({ privileged: true }))).toBe(true);
+  });
+});
+
+describe('filterAccessibleGroups', () => {
+  const open = makeGroup('registered'); open.okey = 'open';
+  const closed = makeGroup(''); closed.okey = 'closed';
+  const mine = makeGroup(''); mine.okey = 'mine';
+
+  it('shows a registered non-member the open groups and their own groups only', () => {
+    const result = filterAccessibleGroups([open, closed, mine], new Set(['mine']), makeUser({ registered: true }));
+    expect(result.map(g => g.okey)).toEqual(['open', 'mine']);
+  });
+
+  it('shows an admin every group', () => {
+    const result = filterAccessibleGroups([open, closed, mine], new Set(), makeUser({ registered: true, admin: true }));
+    expect(result.map(g => g.okey)).toEqual(['open', 'closed', 'mine']);
+  });
+
+  it('shows nothing without a user', () => {
+    expect(filterAccessibleGroups([open, closed], new Set(['closed']), undefined)).toEqual([]);
   });
 });
 

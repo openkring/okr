@@ -51,7 +51,8 @@
     "conf": "The changes have been saved."
   },
   "view": {
-    "label": "Show group"
+    "label": "Show group",
+    "denied": "This group is only visible to its members."
   },
   "page": {
     "create": {

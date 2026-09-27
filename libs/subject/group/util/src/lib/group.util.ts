@@ -1,5 +1,5 @@
-import { AvatarInfo, GroupModel, RoleName, Roles, UserModel } from '@okr/shared-models';
-import { addIndexElement, deaccent } from '@okr/shared-util-core';
+import { AvatarInfo, GroupModel, RoleName, UserModel } from '@okr/shared-models';
+import { addIndexElement, deaccent, hasRole } from '@okr/shared-util-core';
 
 /*-------------------------- key derivation --------------------------------*/
 /** Maximum length of a group key derived from the group name. */
@@ -96,11 +96,14 @@ export function getVisibilityRoles(group: GroupModel): RoleName[] {
  * Returns true if the given user has at least one role that matches
  * any role listed in the group's `visibility` field.
  * Always returns false for groups with an empty `visibility`.
+ *
+ * Matched through `hasRole`, so role implication applies: `registered` is met by every
+ * logged-in role (privileged, memberAdmin, admin, …), not only by a literal `registered` flag.
  */
 export function userMatchesGroupVisibility(group: GroupModel, user: UserModel): boolean {
   const roles = getVisibilityRoles(group);
   if (roles.length === 0) return false;
-  return roles.some(role => user.roles[role as keyof Roles] === true);
+  return roles.some(role => hasRole(role, user));
 }
 
 /**
@@ -122,11 +125,37 @@ export function getVisibleGroupKeys(
 }
 
 /**
- * Returns true if the given user can access this group's calendar and chat,
- * either because they are a member or because their roles match `visibility`.
+ * Returns true if the given user may see this group at all — its page, and with it the
+ * calendar, files and chat segments.
+ *
+ * Access is granted to
+ * - admins (role), always — 37 of 45 live groups are members-only, and an admin locked out
+ *   of Vorstand or Finanzen could no longer administer them;
+ * - members, and group admins listed in `admins[]` (same rule as the Cloud Functions,
+ *   which count an admin without a formal membership as a member);
+ * - everybody whose roles match the group's `visibility` (e.g. `registered`).
+ *
+ * An empty `visibility` therefore means members-only. This is the ONLY gate in front of the
+ * group chat for non-members: a group page that renders its chat segment lets the chat
+ * resolve a room for the viewer, so a reachable page is a reachable chat.
+ * @param group the group to check
+ * @param isMember whether the user holds an active membership in the group
+ * @param user the current user; undefined (not logged in) never has access
  */
-export function canAccessGroup(group: GroupModel, isMember: boolean, user: UserModel): boolean {
-  return isMember || userMatchesGroupVisibility(group, user);
+export function canAccessGroup(group: GroupModel, isMember: boolean, user: UserModel | undefined): boolean {
+  if (!user) return false;
+  if (hasRole('admin', user)) return true;
+  return isMember || isAdminMember(group, user.personKey) || userMatchesGroupVisibility(group, user);
+}
+
+/**
+ * The groups among `groups` that the user may see — `canAccessGroup` applied to a list.
+ * @param groups the candidate groups (typically all groups of the tenant)
+ * @param memberKeys okeys of the groups the user holds an active membership in
+ * @param user the current user
+ */
+export function filterAccessibleGroups(groups: GroupModel[], memberKeys: ReadonlySet<string>, user: UserModel | undefined): GroupModel[] {
+  return groups.filter(g => canAccessGroup(g, memberKeys.has(g.okey), user));
 }
 
 /**

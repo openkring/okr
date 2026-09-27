@@ -6,7 +6,7 @@ import { GroupModel } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, DeferError } from '@okr/shared-ui';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { hasRole, safeStructuredClone } from '@okr/shared-util-core';
-import { isAdminMember } from '@okr/subject-group-util';
+import { canAccessGroup, isAdminMember } from '@okr/subject-group-util';
 import { canManageFolders } from '@okr/content-folder-util';
 import { DEFAULT_ID, DEFAULT_NAME } from '@okr/shared-constants';
 
@@ -43,6 +43,7 @@ import { GroupStore } from './group.store';
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
         <ion-title>{{ name() }}</ion-title>
         <ion-buttons slot="end">
+          @if(access() === 'granted') {
           <!-- view toggle of the selected segment, hoisted from the segment toolbar -->
           @if(segmentHasViewToggle()) {
             <ion-button (click)="toggleSegmentView()">
@@ -74,8 +75,10 @@ import { GroupStore } from './group.store';
               </ng-template>
             </ion-popover>
           }
+          }
         </ion-buttons>
       </ion-toolbar>
+      @if(access() === 'granted') {
       <ion-toolbar>
       <ion-segment [scrollable]="true" color="secondary" (ionChange)="onSegmentChanged($event)" [value]="selectedSegment()">
         @if(hasContent()) {
@@ -110,11 +113,19 @@ import { GroupStore } from './group.store';
         }
       </ion-segment>
       </ion-toolbar>
+      }
     </ion-header>
     @if(showConfirmation()) {
       <okr-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
+      @if(access() === 'pending') {
+        <div class="placeholder-center"><ion-spinner /></div>
+      } @else if(access() === 'denied') {
+        <ion-item lines="none">
+          <ion-label class="ion-text-wrap">{{ store.i18n.view_denied() }}</ion-label>
+        </ion-item>
+      } @else {
       @if(id(); as id) {
         @if(id.length > 0) {
         @switch (selectedSegment()) {
@@ -178,6 +189,7 @@ import { GroupStore } from './group.store';
         }
       }
     }
+      }
     </ion-content>
   `
 })
@@ -211,6 +223,26 @@ export class GroupViewPage implements ViewWillEnter {
   protected readonly listId = computed(() => `f:${this.groupKey()}`);
   protected currentUser = computed(() => this.store.currentUser());
   protected isGroupAdmin = computed(() => isAdminMember(this.group(), this.currentUser()?.personKey));
+  /**
+   * Whether the viewer may see this group at all (`canAccessGroup`: admin role, member,
+   * group admin, or a role matching `visibility`). The route guard only checks
+   * authentication, so this is what keeps a members-only group closed to a direct URL.
+   *
+   * 'pending' until the decision is certain, and NOTHING group-specific renders before it:
+   * the chat segment resolves a room for whoever renders it, so a segment shown to a
+   * non-member for even one tick is the leak this gate exists to close. `formData` retains
+   * the previous group across a key change, so a record of another group counts as pending.
+   */
+  protected access = computed<'pending' | 'granted' | 'denied'>(() => {
+    const group = this.formData();
+    const user = this.currentUser();
+    if (!group || !user || group.okey !== this.groupKey()) return 'pending';
+    if (canAccessGroup(group, false, user)) return 'granted';
+    const memberships = this.store.currentUserMembershipsResource;
+    if (memberships.isLoading()) return 'pending';
+    const isMember = memberships.hasValue() && memberships.value().some(m => m.orgKey === group.okey);
+    return canAccessGroup(group, isMember, user) ? 'granted' : 'denied';
+  });
   // Same rule as the group list's ActionSheet: group admins, memberAdmins and privileged users may reconfigure a group.
   protected canEditGroup = computed(() =>
     this.isGroupAdmin() || hasRole('memberAdmin', this.currentUser()) || hasRole('privileged', this.currentUser()));
@@ -414,6 +446,7 @@ export class GroupViewPage implements ViewWillEnter {
   // PageDispatcher is an embedded child — it doesn't receive ionViewWillEnter —
   // so we must reset pageId here to prevent the cached view from showing stale content.
   ionViewWillEnter(): void {
+    if (this.access() !== 'granted') return;
     const groupId = this.id();
     const segment = this.selectedSegment();
     if ((segment === 'content' || segment === 'chat') && groupId && groupId !== DEFAULT_ID) {

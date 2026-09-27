@@ -17,7 +17,7 @@ import { GroupService } from '@okr/subject-group-data-access';
 import { AvatarService } from '@okr/avatar-data-access';
 import { MembershipService } from '@okr/relationship-membership-data-access';
 import { createGroupMembership } from '@okr/relationship-membership-util';
-import { findConflictingGroups, getUniqueGroupKey, getVisibleGroupKeys, GROUP_I18N_KEYS, withCreatorAsAdmin } from '@okr/subject-group-util';
+import { filterAccessibleGroups, findConflictingGroups, getUniqueGroupKey, getVisibleGroupKeys, GROUP_I18N_KEYS, withCreatorAsAdmin } from '@okr/subject-group-util';
 
 import { GroupEditModal } from './group-edit.modal';
 
@@ -109,12 +109,16 @@ export const GroupStore = signalStore(
       return state.groupsResource.value();
     }),
     groupsCount: computed(() => state.groupsResource.value()?.length ?? 0),
-    filteredGroups: computed(() =>
-      state.groupsResource.value()?.filter((group: GroupModel) =>
-        nameMatches(group.index, state.searchTerm()) &&
-        chipMatches(group.tags, state.selectedTag())
-      ) ?? []
-    ),
+    // Only the groups the user may see (`canAccessGroup`): a members-only group
+    // (`visibility: ''`) stays out of a non-member's list, admins see every group.
+    filteredGroups: computed(() => {
+      const memberKeys = new Set(state.currentUserMembershipsResource.value()?.map(m => m.orgKey) ?? []);
+      return filterAccessibleGroups(state.groupsResource.value() ?? [], memberKeys, state.appStore.currentUser())
+        .filter((group: GroupModel) =>
+          nameMatches(group.index, state.searchTerm()) &&
+          chipMatches(group.tags, state.selectedTag())
+        );
+    }),
     // group
     group: computed(() => state.groupResource.value()),
     defaultResource : computed(() => state.appStore.defaultResource()),

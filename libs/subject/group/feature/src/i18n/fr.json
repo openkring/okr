@@ -51,7 +51,8 @@
     "conf": "Les modifications ont été enregistrées."
   },
   "view": {
-    "label": "Afficher le groupe"
+    "label": "Afficher le groupe",
+    "denied": "Ce groupe n'est visible que par ses membres."
   },
   "page": {
     "create": {
