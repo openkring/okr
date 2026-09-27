@@ -206,6 +206,11 @@
     "pdf": "Download invoice as PDF",
     "pdf_error": "The invoice could not be loaded as a PDF. Please try again later."
   },
+  "paymentConfirmation": {
+    "label": "Create payment confirmation",
+    "noAddress": "There is no postal address for this invoice. A payment confirmation needs an address.",
+    "error": "The payment confirmation could not be created. Please try again later."
+  },
   "readonly": {
     "banner": "This list is read-only. The accounts receivable are managed in Bexio."
   },

@@ -206,6 +206,11 @@
     "pdf": "Descargar factura como PDF",
     "pdf_error": "No se pudo cargar la factura como PDF. Inténtalo de nuevo más tarde."
   },
+  "paymentConfirmation": {
+    "label": "Crear confirmación de pago",
+    "noAddress": "No hay ninguna dirección postal para esta factura. Sin dirección no se puede crear la confirmación de pago.",
+    "error": "No se pudo crear la confirmación de pago. Inténtalo de nuevo más tarde."
+  },
   "readonly": {
     "banner": "Esta lista es de solo lectura. Los deudores se gestionan en Bexio."
   },

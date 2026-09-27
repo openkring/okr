@@ -206,6 +206,11 @@
     "pdf": "Rechnung als PDF herunterladen",
     "pdf_error": "Die Rechnung konnte nicht als PDF geladen werden. Bitte versuche es später noch einmal."
   },
+  "paymentConfirmation": {
+    "label": "Zahlungsbestätigung erstellen",
+    "noAddress": "Für diese Rechnung ist keine Postadresse hinterlegt. Ohne Adresse kann keine Zahlungsbestätigung erstellt werden.",
+    "error": "Die Zahlungsbestätigung konnte nicht erstellt werden. Bitte versuche es später noch einmal."
+  },
   "readonly": {
     "banner": "Diese Liste ist readonly. Die Debitoren werden in Bexio bewirtschaftet."
   },

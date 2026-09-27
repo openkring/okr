@@ -20,6 +20,12 @@
     "@okr/finance-accounting-feature": "*",
     "@okr/finance-invoice-data-access": "*",
     "@okr/finance-invoice-ui": "*",
-    "@okr/finance-invoice-util": "*"
+    "@okr/finance-invoice-util": "*",
+    "@okr/content-pdf-template-data-access": "*",
+    "@okr/subject-address-data-access": "*",
+    "@okr/subject-org-data-access": "*",
+    "@okr/subject-person-data-access": "*",
+    "@okr/finance-booking-util": "*",
+    "@okr/finance-reporting-util": "*"
   }
 }

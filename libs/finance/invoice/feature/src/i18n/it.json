@@ -206,6 +206,11 @@
     "pdf": "Scaricare la fattura in PDF",
     "pdf_error": "Non è stato possibile caricare la fattura in PDF. Riprova più tardi."
   },
+  "paymentConfirmation": {
+    "label": "Crea conferma di pagamento",
+    "noAddress": "Per questa fattura non è registrato alcun indirizzo postale. Senza indirizzo non è possibile creare la conferma di pagamento.",
+    "error": "Non è stato possibile creare la conferma di pagamento. Riprova più tardi."
+  },
   "readonly": {
     "banner": "Questo elenco è di sola lettura. I debitori sono gestiti in Bexio."
   },

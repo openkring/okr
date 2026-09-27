@@ -108,6 +108,10 @@ export const INVOICE_I18N_KEYS = {
   show_pdf:                 PFX + 'view.pdf',
   show_pdf_error:           PFX + 'view.pdf_error',
 
+  payment_confirmation:           PFX + 'paymentConfirmation.label',
+  payment_confirmation_noAddress: PFX + 'paymentConfirmation.noAddress',
+  payment_confirmation_error:     PFX + 'paymentConfirmation.error',
+
   read_only_banner:         PFX + 'readonly.banner',
 
   as_title:         '@actionsheet.title',

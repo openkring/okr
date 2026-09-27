@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, effect, inject, input } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonChip, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonLabel, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 import { InvoiceModel, RoleName } from '@okr/shared-models';
+import { canCreatePaymentConfirmation } from '@okr/finance-invoice-util';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@okr/shared-util-angular';
@@ -176,10 +177,13 @@ export class InvoiceList {
     await this.executeActions(options, invoice);
   }
 
-  private async addActionSheetButtons(options: ActionSheetOptions, _invoice: InvoiceModel): Promise<void> {
+  private async addActionSheetButtons(options: ActionSheetOptions, invoice: InvoiceModel): Promise<void> {
     const base = this.imgixBaseUrl();
     options.buttons.push(createActionSheetButton('invoice.view', this.store.i18n.view(), base, 'eye-on'));
     options.buttons.push(createActionSheetButton('invoice.showpdf', this.store.i18n.show_pdf(), base, 'download'));
+    if (canCreatePaymentConfirmation(invoice)) {
+      options.buttons.push(createActionSheetButton('invoice.paymentConfirmation', this.store.i18n.payment_confirmation(), base, 'document'));
+    }
     if (this.store.isExternallyManaged() === false) {
       if (this.canChange()) {
         options.buttons.push(createActionSheetButton('invoice.edit', this.store.i18n.update(), base, 'edit'));
@@ -201,6 +205,7 @@ export class InvoiceList {
     switch (data.action) {
       case 'invoice.view': await this.store.view(invoice); break;
       case 'invoice.showpdf': await this.store.showPdf(invoice); break;
+      case 'invoice.paymentConfirmation': await this.store.createPaymentConfirmation(invoice); break;
       case 'invoice.edit': await this.store.edit(invoice, false); break;
       case 'invoice.delete': await this.store.delete(invoice); break;
     }

@@ -206,6 +206,11 @@
     "pdf": "Télécharger la facture au format PDF",
     "pdf_error": "La facture n’a pas pu être chargée au format PDF. Merci de réessayer plus tard."
   },
+  "paymentConfirmation": {
+    "label": "Créer une confirmation de paiement",
+    "noAddress": "Aucune adresse postale n’est enregistrée pour cette facture. Sans adresse, la confirmation de paiement ne peut pas être créée.",
+    "error": "La confirmation de paiement n’a pas pu être créée. Réessaie plus tard."
+  },
   "readonly": {
     "banner": "Cette liste est en lecture seule. Les débiteurs sont gérés dans Bexio."
   },
