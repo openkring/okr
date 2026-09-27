@@ -359,7 +359,16 @@ export class TemplateEditPage implements OnDestroy {
       if (tmpl) {
         // Record the active draft on the template so re-editing reuses this version
         // instead of allocating a new number every save (which orphans drafts).
-        const updated = { ...tmpl, draftVersion: draft.version };
+        // status/currentVersion belong to publish/discard/rollback, not to the editor: take
+        // them from the live document. The local copy is seeded once, so after a publish it
+        // still said draft/v0, and the next save reset the published template to unpublished.
+        const live = this._templateResource.value();
+        const updated = {
+          ...tmpl,
+          status: live?.status ?? tmpl.status,
+          currentVersion: live?.currentVersion ?? tmpl.currentVersion,
+          draftVersion: draft.version,
+        };
         this._localTemplate.set(updated);
         await this.store.updateTemplate(updated);
       }
@@ -397,7 +406,15 @@ export class TemplateEditPage implements OnDestroy {
 
   protected async publish(): Promise<void> {
     await this.save();
-    await this.store.openPublishDialog(this.templateKey(), this.draftVersion().version);
+    const versionNum = this.draftVersion().version;
+    const published = await this.store.openPublishDialog(this.templateKey(), versionNum);
+    if (!published) return;
+    // Mirror publishVersion's pointer write into the local copy, so what the editor shows
+    // (and would save) matches Firestore instead of the pre-publish snapshot.
+    const tmpl = this._localTemplate();
+    if (tmpl) {
+      this._localTemplate.set({ ...tmpl, status: 'published', currentVersion: versionNum, draftVersion: undefined });
+    }
   }
 
   /** Switch tabs; generating the preview automatically when the preview tab opens. */
