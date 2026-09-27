@@ -8,7 +8,7 @@ import { take } from 'rxjs/operators';
 
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
-import { BookingLineModel, BookingModel } from '@okr/shared-models';
+import { BookingLineModel, BookingModel, OrgModelName, PersonModelName } from '@okr/shared-models';
 import { getTodayStr, getYear } from '@okr/shared-util-core';
 import { exportCsv } from '@okr/shared-util-angular';
 
@@ -457,7 +457,12 @@ export const BookingStore = signalStore(
       const amountRappen = line?.creditAmount?.amount ?? line?.debitAmount?.amount ?? 0;
 
       const cp = booking.counterparty;
-      const address = await firstValueFrom(store.addressService.getFavoritePostalAddress(cp.key).pipe(take(1)));
+      // addresses.parentKey is modelType-prefixed ('person.<okey>' / 'org.<okey>'); the bare
+      // counterparty key matches no address, so every receipt ended in action_noAddress.
+      const prefix = cp.modelType === 'org' ? OrgModelName : PersonModelName;
+      const address = await firstValueFrom(
+        store.addressService.getFavoritePostalAddress(`${prefix}.${cp.key}`).pipe(take(1))
+      );
       if (!address) {
         await this.toast(store.i18n.action_noAddress());
         return;
