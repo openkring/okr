@@ -32,6 +32,7 @@
     "@okr/finance-bank-import-feature": "*",
     "@okr/subject-org-feature": "*",
     "@okr/comment-feature": "*",
-    "@okr/content-document-feature": "*"
+    "@okr/content-document-feature": "*",
+    "@okr/subject-address-util": "*"
   }
 }

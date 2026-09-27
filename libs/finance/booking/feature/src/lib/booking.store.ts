@@ -43,6 +43,7 @@ import {
 import { PersonService } from '@okr/subject-person-data-access';
 import { OrgService } from '@okr/subject-org-data-access';
 import { AddressService } from '@okr/subject-address-data-access';
+import { getDirectoryPostalAddress, readsAddressVault } from '@okr/subject-address-util';
 import { DocGenerationService } from '@okr/content-pdf-template-data-access';
 
 import { BookingEditModal } from './booking-edit.modal';
@@ -459,10 +460,12 @@ export const BookingStore = signalStore(
       const cp = booking.counterparty;
       // addresses.parentKey is modelType-prefixed ('person.<okey>' / 'org.<okey>'); the bare
       // counterparty key matches no address, so every receipt ended in action_noAddress.
-      const prefix = cp.modelType === 'org' ? OrgModelName : PersonModelName;
-      const address = await firstValueFrom(
-        store.addressService.getFavoritePostalAddress(`${prefix}.${cp.key}`).pipe(take(1))
-      );
+      // Only the owner, privileged and memberAdmin read the raw vault; a treasurer gets the
+      // member-visible postal address from the address-directory projection instead.
+      const parentKey = `${cp.modelType === 'org' ? OrgModelName : PersonModelName}.${cp.key}`;
+      const address = readsAddressVault(store.appStore.currentUser(), parentKey)
+        ? await firstValueFrom(store.addressService.getFavoritePostalAddress(parentKey).pipe(take(1)))
+        : getDirectoryPostalAddress(store.appStore.getDirectoryEntry(parentKey)?.entries, store.appStore.tenantId(), parentKey);
       if (!address) {
         await this.toast(store.i18n.action_noAddress());
         return;
