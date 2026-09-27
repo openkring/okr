@@ -742,9 +742,16 @@ export class AocChat {
     const opts = createActionSheetOptions(this.store.i18n.as_title());
     opts.buttons.push(createActionSheetButton('chat.actionsheet.showMembers', this.store.i18n.chat_member_view(), this.imgixBaseUrl, 'people'));
     opts.buttons.push(createActionSheetButton('chat.actionsheet.showDetails', this.store.i18n.chat_details(), this.imgixBaseUrl, 'info-circle'));
+    // Read-only: this is how an admin sees a closed group's traffic without joining its room.
+    opts.buttons.push(createActionSheetButton('chat.actionsheet.showHistory', this.store.i18n.chat_history(), this.imgixBaseUrl, 'chatbubbles'));
     opts.buttons.push(createActionSheetButton('chat.actionsheet.rename', this.store.i18n.chat_room_rename(), this.imgixBaseUrl, 'edit'));
     opts.buttons.push(createActionSheetButton('chat.actionsheet.addAlias', this.store.i18n.chat_alias_add(), this.imgixBaseUrl, 'add-circle'));
     opts.buttons.push(createActionSheetButton('chat.actionsheet.invite', this.store.i18n.chat_room_invite(), this.imgixBaseUrl, 'person-add'));
+    // Only an ad-hoc chat can become a group — every other room already belongs to one, or to
+    // no group at all (a DM).
+    if (this.store.isAdhocChatRoom(room)) {
+      opts.buttons.push(createActionSheetButton('chat.actionsheet.convert', this.store.i18n.chat_convert(), this.imgixBaseUrl, 'group'));
+    }
     opts.buttons.push(createActionSheetButton('chat.actionsheet.provision', this.store.i18n.chat_user_provision(), this.imgixBaseUrl, 'key'));
     opts.buttons.push(createActionSheetButton('chat.actionsheet.delete', this.store.i18n.chat_room_delete(), this.imgixBaseUrl, 'trash'));
     opts.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
@@ -761,6 +768,9 @@ export class AocChat {
       case 'chat.actionsheet.showDetails':
         this.store.showRoomDetails(room.roomId);
         break;
+      case 'chat.actionsheet.showHistory':
+        await this.store.showRoomHistory(room);
+        break;
       case 'chat.actionsheet.rename':
         await this.store.renameRoom(room.roomId);
         break;
@@ -769,6 +779,9 @@ export class AocChat {
         break;
       case 'chat.actionsheet.invite':
         await this.store.inviteToRoom(room.roomId);
+        break;
+      case 'chat.actionsheet.convert':
+        await this.store.convertAdhocChatToGroup(room);
         break;
       case 'chat.actionsheet.provision':
         await this.store.provisionUser();

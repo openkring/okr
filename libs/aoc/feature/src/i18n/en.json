@@ -239,6 +239,30 @@
         "label": "Show room details"
       }
     },
+    "history": {
+      "label": "Read history",
+      "header": "History",
+      "empty": "Nothing has been written in this room yet.",
+      "more": "Load older",
+      "redacted": "Message deleted",
+      "hint": "Read-only. You do not join the room, and nobody sees that you are reading along.",
+      "error": "Could not load the history"
+    },
+    "convert": {
+      "label": "Convert into a group",
+      "header": "Convert into a group",
+      "message": "This chat becomes a real group with a member list. Everyone currently in it stays, and no message is lost. The chat stays closed — only members can enter, and anyone joining later reads along from that point on. What else should the group get?",
+      "action": "Convert",
+      "conf": "The chat is now a group",
+      "calendar": "Calendar",
+      "content": "Content page",
+      "files": "Files",
+      "tasks": "Tasks",
+      "page": {
+        "chat": "Chat",
+        "content": "Content"
+      }
+    },
     "alias": {
       "add": {
         "label": "Add alias",

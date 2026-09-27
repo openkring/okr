@@ -5,13 +5,15 @@ import { firstValueFrom, from, of } from 'rxjs';
 import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
-import { AlertController, ToastController } from '@ionic/angular/standalone';
+import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
 
 import { AppStore } from '@okr/shared-feature';
+import { FirestoreService } from '@okr/shared-data-access';
+import { ArticleSection, CalendarCollection, CalendarModel, ChatSection, ColorIonic, GroupCollection, GroupModel, GroupModelName, ImageActionType, PageCollection, PageModel, SectionCollection, UserModel, ViewPosition } from '@okr/shared-models';
 import { I18nService } from '@okr/shared-i18n';
 import { showToast } from '@okr/shared-util-angular';
 import { AOC_I18N_KEYS } from '@okr/aoc-util';
-import { getMatrixLogLevel, setMatrixLogLevel, MatrixLogLevel } from '@okr/chat-util';
+import { findGroupOfRoom, getMatrixLogLevel, setMatrixLogLevel, MatrixLogLevel } from '@okr/chat-util';
 import type { MatrixMediaService } from '@okr/chat-data-access';
 
 // ─── types mirroring the cloud-function interfaces ───────────────────────────
@@ -118,6 +120,21 @@ export interface GroupRoomDrift {
   extras: Array<{ userId: string; displayName: string }>;
 }
 
+/**
+ * One message of a room, as `getRoomMessages` returns it. Mirrors the Cloud Function's
+ * `RoomMessageInfo` — functions cannot import from libs, so the shape is kept in sync by hand.
+ */
+export interface RoomMessageInfo {
+  eventId: string;
+  sender: string;
+  senderName: string;
+  body: string;
+  msgtype: string;
+  url?: string;
+  timestamp: number;
+  isRedacted: boolean;
+}
+
 export type DetailsTarget = 'room' | 'member';
 
 export type AocChatState = {
@@ -150,6 +167,12 @@ export type AocChatState = {
   guestPreview: GroupRoomDrift[] | undefined; // undefined = not yet scanned
   guestScanning: boolean;
   guestPruningGroup: string | undefined;      // groupKey currently being pruned
+  // read-only room history (admin window into a room they are not in)
+  history: RoomMessageInfo[];
+  historyRoomId: string | undefined;
+  /** Synapse pagination token for the NEXT page backwards; undefined = start of the room. */
+  historyCursor: string | undefined;
+  historyLoading: boolean;
 };
 
 const initialState: AocChatState = {
@@ -177,6 +200,10 @@ const initialState: AocChatState = {
   guestPreview: undefined,
   guestScanning: false,
   guestPruningGroup: undefined,
+  history: [],
+  historyRoomId: undefined,
+  historyCursor: undefined,
+  historyLoading: false,
 };
 
 function getFn() {
@@ -202,8 +229,10 @@ export const AocChatStore = signalStore(
     return {
       appStore: inject(AppStore),
       alertController: inject(AlertController),
+      modalController: inject(ModalController),
       toastController: inject(ToastController),
       i18nService: inject(I18nService),
+      firestoreService: inject(FirestoreService),
       // Shaped like the service so the call sites read unchanged. Every caller is already
       // async (an rxResource stream), so the one-time import costs them nothing extra.
       media: {
@@ -295,6 +324,8 @@ export const AocChatStore = signalStore(
      * Empty until `previewGuests()` has run — the room list then flags the drifted rooms
      * so the mismatch is visible where the member count is shown, not only in the card.
      */
+    /** Another page of history exists exactly while Synapse still hands back a cursor. */
+    historyHasMore: computed(() => !!state.historyCursor()),
     guestExtrasByRoom: computed(() => new Map(
       (state.guestPreview() ?? [])
         .filter(g => g.extras.length > 0)
@@ -378,6 +409,68 @@ export const AocChatStore = signalStore(
       patchState(store, { selectedMemberId: userId, detailsTarget: 'member' });
     },
 
+    // ─── read-only history ─────────────────────────────────────────────────────
+
+    /**
+     * Open a room's message history read-only.
+     *
+     * This is the admin's answer to a closed group chat: `requestGroupRoomAccess` refuses a
+     * tenant admin who is not a member of a `chatMode: 'members'` group on purpose — it
+     * force-joins, and the admin would appear in that room permanently and visibly. Reading
+     * through the Synapse admin API changes no membership and leaves no trace in the room.
+     *
+     * The modal is imported dynamically: it injects this store back, and a static import
+     * would make Ionic's overlay creation fail with an undefined provider.
+     */
+    async showRoomHistory(room: AdminRoom): Promise<void> {
+      patchState(store, { history: [], historyRoomId: room.roomId, historyCursor: undefined });
+      const opened = this.loadHistoryPage();
+      const { ChatHistoryModal } = await import('./chat-history.modal');
+      const modal = await store.modalController.create({
+        component: ChatHistoryModal,
+        componentProps: { roomName: room.name || room.derivedName || room.roomId },
+      });
+      await modal.present();
+      await opened;
+      await modal.onDidDismiss();
+      // Drop the transcript on close: it is other people's conversation, and there is no
+      // reason to keep it in memory once the admin has stopped looking at it.
+      patchState(store, { history: [], historyRoomId: undefined, historyCursor: undefined });
+    },
+
+    /** Append the next page (further into the past). No-op at the start of the room. */
+    async loadOlderHistory(): Promise<void> {
+      if (!store.historyCursor() || store.historyLoading()) return;
+      await this.loadHistoryPage();
+    },
+
+    async loadHistoryPage(): Promise<void> {
+      const roomId = store.historyRoomId();
+      if (!roomId) return;
+      patchState(store, { historyLoading: true });
+      try {
+        const fn = httpsCallable<
+          { roomId: string; limit: number; from?: string },
+          { messages: RoomMessageInfo[]; end?: string }
+        >(getFn(), 'getRoomMessages');
+        const result = await fn({ roomId, limit: 50, from: store.historyCursor() });
+        // Guard against a page arriving after the admin closed the modal or opened another
+        // room: `historyRoomId` is the only thing that says which request this answer belongs to.
+        if (store.historyRoomId() !== roomId) return;
+        // Synapse returns the same `end` token at the start of the room; treating that as a
+        // further page would loop the "load older" button forever.
+        const end = result.data.end;
+        patchState(store, {
+          history: [...store.history(), ...(result.data.messages ?? [])],
+          historyCursor: (result.data.messages ?? []).length > 0 ? end : undefined,
+        });
+      } catch (e) {
+        await showToast(store.toastController, `${store.i18n.chat_history_error()}: ${(e as Error).message}`);
+      } finally {
+        patchState(store, { historyLoading: false });
+      }
+    },
+
     // ─── room actions ──────────────────────────────────────────────────────────
 
     async renameRoom(roomId: string): Promise<void> {
@@ -408,6 +501,217 @@ export const AocChatStore = signalStore(
       } catch (e) {
         await showToast(store.toastController, `${store.i18n.error()}: ${(e as Error).message}`);
       }
+    },
+
+    /**
+     * The group document behind a room, or undefined for a DM / an unmatched room.
+     * `allGroupsAndChats()` on purpose: `allGroups()` drops the ad-hoc chats, which are
+     * exactly what the convert action is looking for.
+     */
+    groupOfRoom(room: AdminRoom): GroupModel | undefined {
+      return findGroupOfRoom(store.appStore.allGroupsAndChats(), room.roomId, room.canonicalAlias);
+    },
+
+    /** Is this room an ad-hoc chat, i.e. can it be converted into a group? */
+    isAdhocChatRoom(room: AdminRoom): boolean {
+      const group = this.groupOfRoom(room);
+      return !!group && (group.kind ?? 'group') === 'chat';
+    },
+
+    /**
+     * Turn an ad-hoc chat into a real group.
+     *
+     * An ad-hoc chat IS a group document already (`kind: 'chat'`), with its members, its
+     * `admins[]` and its Matrix room in place — what `createAdhocChat` never wrote is the CMS
+     * page and section behind the group view's chat segment, which is why that segment 404s.
+     * So this flips `kind`, turns on the sub-features the admin ticks, and creates the
+     * documents the normal group-creation flow (`GroupStore.save`) would have created.
+     *
+     * Three things it deliberately does NOT touch:
+     *  - the okey. `scs_c_anc37t5jy3` is baked into the room alias, the canonical-alias state
+     *    event and every membership's `orgKey`. A prettier key would mean a new room and a lost
+     *    history; legacy keys like `notfall` live with the same trade-off.
+     *  - `chatMode: 'members'`, so the room stays closed to non-members.
+     *  - `history_visibility: 'joined'` on the room, so someone joining the group later does not
+     *    get to read back what was written while this was a private chat.
+     *
+     * Idempotent: every document is skipped if it already exists, so a run that failed halfway
+     * can simply be repeated.
+     */
+    async convertAdhocChatToGroup(room: AdminRoom): Promise<void> {
+      const group = this.groupOfRoom(room);
+      if (!group || (group.kind ?? 'group') !== 'chat') return;
+
+      const alert = await store.alertController.create({
+        header: store.i18n.chat_convert_header(),
+        message: store.i18n.chat_convert_message(),
+        inputs: [
+          { type: 'checkbox', name: 'hasCalendar', value: 'hasCalendar', label: store.i18n.chat_convert_calendar(), checked: true },
+          { type: 'checkbox', name: 'hasContent', value: 'hasContent', label: store.i18n.chat_convert_content() },
+          { type: 'checkbox', name: 'hasFiles', value: 'hasFiles', label: store.i18n.chat_convert_files() },
+          { type: 'checkbox', name: 'hasTasks', value: 'hasTasks', label: store.i18n.chat_convert_tasks() },
+        ],
+        buttons: [
+          { text: store.i18n.cancel(), role: 'cancel' },
+          { text: store.i18n.chat_convert_action(), role: 'confirm' },
+        ],
+      });
+      await alert.present();
+      const { data, role } = await alert.onDidDismiss();
+      if (role !== 'confirm') return;
+      // A checkbox alert hands back the VALUES of the ticked boxes, not a name→boolean map.
+      const picked = new Set<string>(Array.isArray(data?.values) ? (data.values as string[]) : []);
+
+      try {
+        const user = store.appStore.currentUser();
+        const tenantId = store.appStore.tenantId();
+        const hasCalendar = picked.has('hasCalendar');
+        const hasContent = picked.has('hasContent');
+        const hasFiles = picked.has('hasFiles');
+
+        // 1. the chat page + section — without these the group view's chat segment 404s
+        const chatSectionKey = await this.ensureChatSection(group, tenantId, user);
+        await this.ensureGroupPage(group, 'chat', store.i18n.chat_convert_page_chat(), tenantId, user, chatSectionKey);
+
+        // 2. the optional content page with its intro article
+        if (hasContent) {
+          const articleKey = await this.ensureArticleSection(group, tenantId, user);
+          await this.ensureGroupPage(group, 'content', store.i18n.chat_convert_page_content(), tenantId, user, articleKey);
+        }
+
+        // 3. the optional group calendar, owned by `group.<okey>` like every group calendar
+        if (hasCalendar) await this.ensureGroupCalendar(group, tenantId, user);
+
+        // 4. only now the group document itself: if any step above failed, the chat stays a
+        //    chat and the admin can simply run the action again.
+        const converted = {
+          ...group,
+          kind: 'group',
+          hasMembers: true,
+          hasChat: true,
+          hasCalendar,
+          hasContent,
+          hasFiles,
+          hasTasks: picked.has('hasTasks'),
+          filesFolder: hasFiles ? `f_${group.okey}` : group.filesFolder,
+        } as GroupModel;
+        await store.firestoreService.updateModel<GroupModel>(GroupCollection, converted, false, undefined, undefined, user);
+
+        await showToast(store.toastController, `${store.i18n.chat_convert_conf()}: ${group.name}`);
+      } catch (e) {
+        await showToast(store.toastController, `${store.i18n.error()}: ${(e as Error).message}`);
+      }
+    },
+
+    // ─── convert: the documents GroupStore.save() would have created ─────────────
+    //
+    // These mirror `GroupStore.createChatSection` / `createArticleSection` /
+    // `createGroupPage` / `createGroupCalendar`. They are duplicated rather than imported:
+    // `@okr/subject-group-feature` would drag the whole group view (tasks, folder, document,
+    // calendar) into the AOC chunk, which is exactly the eager-bundle growth the AOC page was
+    // just trimmed of. Only the document shapes are copied, and those are model-defined.
+
+    /** Read a document once; used to keep every create below idempotent. */
+    async docExists(collection: string, key: string): Promise<boolean> {
+      return !!(await firstValueFrom(store.firestoreService.readModel(collection, key)));
+    },
+
+    async ensureChatSection(group: GroupModel, tenantId: string, user: UserModel | undefined): Promise<string> {
+      const key = `${group.okey}_chat`;
+      if (await this.docExists(SectionCollection, key)) return key;
+      const section = {
+        okey: key,
+        type: 'chat',
+        name: key,
+        title: store.i18n.chat_convert_page_chat(),
+        subTitle: '',
+        index: '',
+        color: ColorIonic.Light,
+        roleNeeded: 'registered',
+        isArchived: false,
+        content: { htmlContent: '<p></p>', colSize: 4, position: ViewPosition.None },
+        properties: {
+          description: '',
+          id: `group-chat-${group.okey}`,
+          name: group.name,
+          showChannelList: true,
+          type: 'messaging',
+          url: '',
+        },
+        notes: '',
+        tags: '',
+        tenants: [tenantId],
+      } as ChatSection;
+      await store.firestoreService.createModel<ChatSection>(SectionCollection, section, undefined, undefined, user);
+      return key;
+    },
+
+    async ensureArticleSection(group: GroupModel, tenantId: string, user: UserModel | undefined): Promise<string> {
+      const key = `g-${group.okey}`;
+      if (await this.docExists(SectionCollection, key)) return key;
+      const section = {
+        okey: key,
+        type: 'article',
+        state: 'published',
+        name: `group-intro-${group.okey}`,
+        title: group.name,
+        subTitle: '',
+        index: '',
+        color: ColorIonic.Light,
+        colSize: '12',
+        roleNeeded: 'groupAdmin',
+        isArchived: false,
+        content: { htmlContent: '<p></p>', colSize: 3, position: ViewPosition.None },
+        // The full imageStyle matters: Firestore hands reads back as plain objects, so a
+        // field missing here stays undefined on the section forever (no model defaults).
+        properties: {
+          images: [],
+          imageStyle: {
+            imgIxParams: '',
+            width: '100%',
+            height: 'auto',
+            sizes: '(max-width: 786px) 50vw, 100vw',
+            border: '1px',
+            borderRadius: '4px',
+            isThumbnail: false,
+            slot: 'none',
+            fill: false,
+            hasPriority: false,
+            action: ImageActionType.None,
+            zoomFactor: 2,
+          },
+        },
+        notes: '',
+        tags: '',
+        tenants: [tenantId],
+      } as ArticleSection;
+      await store.firestoreService.createModel<ArticleSection>(SectionCollection, section, undefined, undefined, user);
+      return key;
+    },
+
+    async ensureGroupPage(
+      group: GroupModel, postfix: string, name: string,
+      tenantId: string, user: UserModel | undefined, sectionKey?: string,
+    ): Promise<void> {
+      const key = `${group.okey}_${postfix}`;
+      if (await this.docExists(PageCollection, key)) return;
+      const page = new PageModel(tenantId);
+      page.okey = key;
+      page.name = name;
+      page.type = postfix;
+      page.state = 'published';
+      if (sectionKey) page.sections = [sectionKey];
+      await store.firestoreService.createModel<PageModel>(PageCollection, page, undefined, undefined, user);
+    },
+
+    async ensureGroupCalendar(group: GroupModel, tenantId: string, user: UserModel | undefined): Promise<void> {
+      if (await this.docExists(CalendarCollection, group.okey)) return;
+      const cal = new CalendarModel(tenantId);
+      cal.okey = group.okey;
+      cal.name = group.name;
+      cal.description = group.name;
+      cal.owner = `${GroupModelName}.${group.okey}`;
+      await store.firestoreService.createModel<CalendarModel>(CalendarCollection, cal, undefined, undefined, user);
     },
 
     async deleteRoom(roomId: string): Promise<void> {

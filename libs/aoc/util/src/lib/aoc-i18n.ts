@@ -178,6 +178,26 @@ export const AOC_I18N_KEYS = {
 
   chat_room_view:                           PFX + 'chat.room.view.label',
 
+  chat_history:                             PFX + 'chat.history.label',
+  chat_history_header:                      PFX + 'chat.history.header',
+  chat_history_empty:                       PFX + 'chat.history.empty',
+  chat_history_more:                        PFX + 'chat.history.more',
+  chat_history_redacted:                    PFX + 'chat.history.redacted',
+  chat_history_hint:                        PFX + 'chat.history.hint',
+  chat_history_error:                       PFX + 'chat.history.error',
+
+  chat_convert:                             PFX + 'chat.convert.label',
+  chat_convert_header:                      PFX + 'chat.convert.header',
+  chat_convert_message:                     PFX + 'chat.convert.message',
+  chat_convert_action:                      PFX + 'chat.convert.action',
+  chat_convert_conf:                        PFX + 'chat.convert.conf',
+  chat_convert_calendar:                    PFX + 'chat.convert.calendar',
+  chat_convert_content:                     PFX + 'chat.convert.content',
+  chat_convert_files:                       PFX + 'chat.convert.files',
+  chat_convert_tasks:                       PFX + 'chat.convert.tasks',
+  chat_convert_page_chat:                   PFX + 'chat.convert.page.chat',
+  chat_convert_page_content:                PFX + 'chat.convert.page.content',
+
   chat_alias_add:                           PFX + 'chat.alias.add.label',
   chat_alias_add_placeholder:               PFX + 'chat.alias.add.placeholder',
   chat_alias_add_action:                    PFX + 'chat.alias.add.action',

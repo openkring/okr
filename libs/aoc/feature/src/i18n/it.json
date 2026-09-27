@@ -239,6 +239,30 @@
         "label": "Mostrare i dettagli della stanza"
       }
     },
+    "history": {
+      "label": "Leggere la cronologia",
+      "header": "Cronologia",
+      "empty": "In questa stanza non è ancora stato scritto nulla.",
+      "more": "Carica i più vecchi",
+      "redacted": "Messaggio eliminato",
+      "hint": "Solo lettura. Non entri nella stanza e nessuno vede che stai leggendo.",
+      "error": "Impossibile caricare la cronologia"
+    },
+    "convert": {
+      "label": "Converti in gruppo",
+      "header": "Converti in gruppo",
+      "message": "Questa chat diventa un vero gruppo con un elenco di membri. Tutte le persone che ne fanno parte restano e nessun messaggio va perso. La chat resta chiusa — entrano solo i membri, e chi arriva più tardi legge solo da quel momento in poi. Cos'altro deve avere il gruppo?",
+      "action": "Converti",
+      "conf": "La chat ora è un gruppo",
+      "calendar": "Calendario",
+      "content": "Pagina di contenuto",
+      "files": "File",
+      "tasks": "Attività",
+      "page": {
+        "chat": "Chat",
+        "content": "Contenuto"
+      }
+    },
     "alias": {
       "add": {
         "label": "Aggiungere alias",

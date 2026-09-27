@@ -239,6 +239,30 @@
         "label": "Afficher les détails du salon"
       }
     },
+    "history": {
+      "label": "Lire l'historique",
+      "header": "Historique",
+      "empty": "Rien n'a encore été écrit dans ce salon.",
+      "more": "Charger les plus anciens",
+      "redacted": "Message supprimé",
+      "hint": "Lecture seule. Tu ne rejoins pas le salon et personne ne voit que tu lis.",
+      "error": "Impossible de charger l'historique"
+    },
+    "convert": {
+      "label": "Convertir en groupe",
+      "header": "Convertir en groupe",
+      "message": "Ce chat devient un vrai groupe avec une liste de membres. Toutes les personnes présentes y restent et aucun message n'est perdu. Le chat reste fermé — seuls les membres y entrent, et celles et ceux qui arrivent plus tard ne lisent qu'à partir de leur arrivée. Que doit recevoir le groupe en plus ?",
+      "action": "Convertir",
+      "conf": "Le chat est maintenant un groupe",
+      "calendar": "Calendrier",
+      "content": "Page de contenu",
+      "files": "Fichiers",
+      "tasks": "Tâches",
+      "page": {
+        "chat": "Chat",
+        "content": "Contenu"
+      }
+    },
     "alias": {
       "add": {
         "label": "Ajouter un alias",

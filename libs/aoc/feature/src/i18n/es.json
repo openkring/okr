@@ -239,6 +239,30 @@
         "label": "Mostrar detalles de la sala"
       }
     },
+    "history": {
+      "label": "Leer el historial",
+      "header": "Historial",
+      "empty": "Todavía no se ha escrito nada en esta sala.",
+      "more": "Cargar más antiguos",
+      "redacted": "Mensaje eliminado",
+      "hint": "Solo lectura. No te unes a la sala y nadie ve que estás leyendo.",
+      "error": "No se pudo cargar el historial"
+    },
+    "convert": {
+      "label": "Convertir en grupo",
+      "header": "Convertir en grupo",
+      "message": "Este chat se convierte en un grupo real con lista de miembros. Todas las personas que están ahora siguen dentro y no se pierde ningún mensaje. El chat sigue cerrado — solo entran los miembros, y quien se incorpore más tarde lee a partir de ese momento. ¿Qué más debe tener el grupo?",
+      "action": "Convertir",
+      "conf": "El chat ya es un grupo",
+      "calendar": "Calendario",
+      "content": "Página de contenido",
+      "files": "Archivos",
+      "tasks": "Tareas",
+      "page": {
+        "chat": "Chat",
+        "content": "Contenido"
+      }
+    },
     "alias": {
       "add": {
         "label": "Añadir alias",

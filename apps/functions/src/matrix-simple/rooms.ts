@@ -655,6 +655,120 @@ export const getMemberDetails = onCall(
   }
 );
 
+export interface RoomMessageInfo {
+  eventId: string;
+  /** Matrix user id of the sender, e.g. '@kaiser:bkchat.etke.host'. */
+  sender: string;
+  /** The sender's display name in this room, falling back to the localpart. */
+  senderName: string;
+  /** Plain-text body. Empty for an event whose content was redacted. */
+  body: string;
+  /** 'm.text', 'm.image', 'm.file', 'm.audio', 'm.video', 'm.location', ... */
+  msgtype: string;
+  /** mxc:// URI for a media message; the client resolves it with the admin token. */
+  url?: string;
+  /** origin_server_ts, milliseconds since epoch. */
+  timestamp: number;
+  isRedacted: boolean;
+}
+
+/**
+ * Read a room's message history WITHOUT joining it — the admin's read-only window into a
+ * closed group chat.
+ *
+ * This exists because `requestGroupRoomAccess` deliberately refuses a tenant admin who is
+ * not a member of a `chatMode: 'members'` group: that call force-joins, and a force-join is
+ * itself an event — the admin would appear in a boat crew's room, permanently and visibly,
+ * and start receiving its notifications. Reading through the Synapse admin API leaves no
+ * trace in the room and changes no membership, which is the whole point.
+ *
+ * Paginates BACKWARDS from the live end (`dir=b`), so `messages[0]` is the newest. Pass the
+ * previous response's `end` back as `from` to walk further into the past.
+ *
+ * Gated exactly like every other AOC room tool: the 'admin' role plus requireRoomInTenant,
+ * so an admin of one tenant can never read another tenant's room.
+ */
+export const getRoomMessages = onCall(
+  {
+    cors: true,
+    region: 'europe-west6',
+    enforceAppCheck: true,
+    secrets: [matrixAdminToken],
+  },
+  async (request): Promise<{ messages: RoomMessageInfo[]; end?: string }> => {
+    const uid = await requireRole(request, 'getRoomMessages', ['admin']);
+    const { roomId, limit, from } = request.data as { roomId: string; limit?: number; from?: string };
+    requireParam(roomId, 'roomId');
+
+    const adminToken = matrixAdminToken.value();
+    await requireRoomInTenant(roomId, uid, 'getRoomMessages', adminToken);
+
+    // Synapse caps this server-side too; bound it here so one call cannot pull a whole room.
+    const pageSize = Math.min(Math.max(limit ?? 50, 1), 200);
+    const params = new URLSearchParams({ limit: String(pageSize), dir: 'b' });
+    if (from) params.set('from', from);
+
+    const [msgResp, stateResp] = await Promise.all([
+      fetch(
+        `${MATRIX_HOMESERVER}/_synapse/admin/v1/rooms/${encodeURIComponent(roomId)}/messages?${params}`,
+        { headers: { Authorization: `Bearer ${adminToken}` } }
+      ),
+      fetch(
+        `${MATRIX_HOMESERVER}/_synapse/admin/v1/rooms/${encodeURIComponent(roomId)}/state`,
+        { headers: { Authorization: `Bearer ${adminToken}` } }
+      ),
+    ]);
+    if (!msgResp.ok) throw new HttpsError('internal', `Failed to read messages: ${await msgResp.text()}`);
+
+    // Display names come from the room's member state, not from each event: an event carries
+    // the name the sender had WHEN THEY SENT IT, so a renamed person would show under two
+    // names in one timeline.
+    const names = new Map<string, string>();
+    if (stateResp.ok) {
+      const stateData = await stateResp.json() as { state: Array<{ type: string; state_key: string; content: Record<string, unknown> }> };
+      for (const e of stateData.state ?? []) {
+        if (e.type !== 'm.room.member') continue;
+        const displayName = e.content['displayname'] as string | undefined;
+        if (displayName) names.set(e.state_key, displayName);
+      }
+    }
+
+    const data = await msgResp.json() as {
+      chunk?: Array<{
+        event_id: string;
+        type: string;
+        sender: string;
+        origin_server_ts: number;
+        content?: Record<string, unknown>;
+        unsigned?: Record<string, unknown>;
+      }>;
+      end?: string;
+    };
+
+    const messages: RoomMessageInfo[] = (data.chunk ?? [])
+      .filter(e => e.type === 'm.room.message')
+      .map(e => {
+        const content = e.content ?? {};
+        // A redacted event keeps its place in the timeline with an empty content object —
+        // show it as redacted rather than dropping it, so a deletion stays visible to the admin.
+        const isRedacted = !!e.unsigned?.['redacted_because'] || Object.keys(content).length === 0;
+        return {
+          eventId: e.event_id,
+          sender: e.sender,
+          senderName: names.get(e.sender) ?? e.sender.split(':')[0].substring(1),
+          body: (content['body'] as string | undefined) ?? '',
+          msgtype: (content['msgtype'] as string | undefined) ?? 'm.text',
+          url: content['url'] as string | undefined,
+          timestamp: e.origin_server_ts,
+          isRedacted,
+        };
+      });
+
+    console.log(`getRoomMessages: uid ${uid} read ${messages.length} messages of ${roomId}`);
+    return { messages, end: data.end };
+  }
+);
+
 /**
  * Delete (purge) a Matrix room by its room ID.
  * Kicks all members, removes the room from all local users' room lists,

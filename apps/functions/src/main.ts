@@ -114,6 +114,7 @@ export const repairMatrixAvatars = MatrixSimple.repairMatrixAvatars;
 export const listMatrixRooms = MatrixSimple.listMatrixRooms;
 export const getRoomDetails = MatrixSimple.getRoomDetails;
 export const getAllMembersFromRoom = MatrixSimple.getAllMembersFromRoom;
+export const getRoomMessages = MatrixSimple.getRoomMessages;
 export const getMemberDetails = MatrixSimple.getMemberDetails;
 export const addMatrixRoomAlias = MatrixSimple.addMatrixRoomAlias;
 export const sendCallNotification = MatrixSimple.sendCallNotification;

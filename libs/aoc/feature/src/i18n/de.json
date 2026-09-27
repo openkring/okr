@@ -239,6 +239,30 @@
         "label": "Raum-Details anzeigen"
       }
     },
+    "history": {
+      "label": "Verlauf lesen",
+      "header": "Verlauf",
+      "empty": "In diesem Raum wurde noch nichts geschrieben.",
+      "more": "Ältere laden",
+      "redacted": "Nachricht gelöscht",
+      "hint": "Nur zum Lesen. Du trittst dem Raum nicht bei, und niemand sieht, dass du mitliest.",
+      "error": "Der Verlauf konnte nicht geladen werden"
+    },
+    "convert": {
+      "label": "In Gruppe umwandeln",
+      "header": "In Gruppe umwandeln",
+      "message": "Aus diesem Chat wird eine richtige Gruppe mit Mitgliederliste. Alle bisherigen Teilnehmenden bleiben dabei, und keine Nachricht geht verloren. Der Chat bleibt geschlossen — nur Mitglieder kommen hinein, und wer neu dazukommt, liest erst ab dem Beitritt mit. Was soll die Gruppe zusätzlich bekommen?",
+      "action": "Umwandeln",
+      "conf": "Der Chat ist jetzt eine Gruppe",
+      "calendar": "Kalender",
+      "content": "Inhaltsseite",
+      "files": "Dateien",
+      "tasks": "Aufgaben",
+      "page": {
+        "chat": "Chat",
+        "content": "Inhalt"
+      }
+    },
     "alias": {
       "add": {
         "label": "Alias hinzufügen",
