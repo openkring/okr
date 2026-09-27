@@ -24,6 +24,7 @@ import { ReceiptParty } from '@okr/finance-booking-util';
 import { downloadFromUrl } from '@okr/finance-reporting-util';
 import { DocGenerationService } from '@okr/content-pdf-template-data-access';
 import { AddressService } from '@okr/subject-address-data-access';
+import { getDirectoryPostalAddress, readsAddressVault } from '@okr/subject-address-util';
 import { OrgService } from '@okr/subject-org-data-access';
 import { PersonService } from '@okr/subject-person-data-access';
 
@@ -274,11 +275,13 @@ export const InvoiceStore = signalStore(
           await showToast(store.toastController, store.i18n.payment_confirmation_error());
           return;
         }
-        // addresses.parentKey is modelType-prefixed ('person.<okey>' / 'org.<okey>')
-        const prefix = party.kind === 'person' ? PersonModelName : OrgModelName;
-        const address = await firstValueFrom(
-          store.addressService.getFavoritePostalAddress(`${prefix}.${receiver.key}`).pipe(take(1))
-        );
+        // addresses.parentKey is modelType-prefixed ('person.<okey>' / 'org.<okey>').
+        // Only the owner, privileged and memberAdmin read the raw vault; a treasurer gets the
+        // member-visible postal address from the address-directory projection instead.
+        const parentKey = `${party.kind === 'person' ? PersonModelName : OrgModelName}.${receiver.key}`;
+        const address = readsAddressVault(store.appStore.currentUser(), parentKey)
+          ? await firstValueFrom(store.addressService.getFavoritePostalAddress(parentKey).pipe(take(1)))
+          : getDirectoryPostalAddress(store.appStore.getDirectoryEntry(parentKey)?.entries, store.appStore.tenantId(), parentKey);
         if (!address) {
           await showToast(store.toastController, store.i18n.payment_confirmation_noAddress());
           return;

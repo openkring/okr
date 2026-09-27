@@ -63,6 +63,7 @@
     {"path": "../../booking/util/tsconfig.lib.json"},
     {"path": "../../reporting/util/tsconfig.lib.json"},
     {"path": "../../../subject/address/data-access/tsconfig.lib.json"},
+    {"path": "../../../subject/address/util/tsconfig.lib.json"},
     {"path": "../../../subject/org/data-access/tsconfig.lib.json"},
     {"path": "../../../subject/person/data-access/tsconfig.lib.json"}
   ]
