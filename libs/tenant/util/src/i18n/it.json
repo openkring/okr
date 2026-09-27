@@ -117,7 +117,7 @@
       "label": "Strumenti strategici e lavagne"
     },
     "games": {
-      "label": "Quiz"
+      "label": "Giochi"
     },
     "business": {
       "label": "Canale partner"
@@ -134,6 +134,12 @@
     "weather": {
       "label": "Meteo",
       "remarks": "I dati meteo vengono da Open-Meteo. Sono gratuiti per le associazioni e per ogni uso non commerciale. Se li usi a scopo commerciale, ti serve una licenza tua direttamente da Open-Meteo."
+    },
+    "quiz": {
+      "label": "Quiz"
+    },
+    "zip": {
+      "label": "Zip (percorso numerico)"
     }
   },
   "picker": {

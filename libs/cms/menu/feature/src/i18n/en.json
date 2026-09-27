@@ -603,7 +603,10 @@
     "memberfees-totals": "Show totals",
     "memberfees-export": "Export",
     "memberfees-archive": "Archive data",
-    "accounting-settings": "Settings"
+    "accounting-settings": "Settings",
+    "games-menu": "Games",
+    "game-quiz": "Quiz",
+    "game-zip": "Zip"
   },
   "ownership": {
     "fork_confirm": "«{name}» belongs to the feature catalogue ({blocks}).\n\nSaving creates a tenant-private copy «{forkKey}» and detaches this tenant from the shared original. Future catalogue corrections (url, action, role) will no longer reach this entry.\n\nSave anyway?",

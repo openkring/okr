@@ -1,0 +1,28 @@
+{
+  "title": "Zip",
+  "desc": "Connect the numbers in order and fill every square of the grid along the way. The path only runs horizontally and vertically, and never touches a square twice.",
+  "config": {
+    "size_label": "Grid",
+    "count_label": "Numbers"
+  },
+  "action": {
+    "undo": "Undo",
+    "hint": "Hint",
+    "restart": "New game"
+  },
+  "status": {
+    "progress": "{done} of {total} squares",
+    "hints_used": "{count} hints used",
+    "solved": "Solved",
+    "time_label": "Time",
+    "solved_time": "in {time}",
+    "solved_hints": "with {count} hints",
+    "solved_no_hints": "without a hint"
+  },
+  "blocked": {
+    "visited": "You have already been on this square.",
+    "adjacent": "You can only move to a directly adjacent square.",
+    "order": "This number is not up yet, {next} comes first.",
+    "finished": "You have reached the last number."
+  }
+}

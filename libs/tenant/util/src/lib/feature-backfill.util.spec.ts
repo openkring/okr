@@ -236,7 +236,7 @@ describe('deriveEnabledFeatures — owner override (R-8)', () => {
       override: override(FEATURE_BLOCKS.map(b => b.id)),
     });
     expect(out.enabled).toEqual(expected);
-    expect(out.enabled).toHaveLength(33);   // +1: `meeting` (spec 2.7) 2026-08-14, +1: `alias` (spec 3.21) 2026-08-22, +1: `trip` split out of core `geo` 2026-08-24, +1: `weather` (spec 1.45) 2026-08-29, +1: `member-fee` (member-fees-generic plan, task 17) 2026-09-17; `diary` (beta) does not add to this count
+    expect(out.enabled).toHaveLength(35);   // +1: `meeting` (spec 2.7) 2026-08-14, +1: `alias` (spec 3.21) 2026-08-22, +1: `trip` split out of core `geo` 2026-08-24, +1: `weather` (spec 1.45) 2026-08-29, +1: `member-fee` (member-fees-generic plan, task 17) 2026-09-17, +2: the per-game `games` split 2026-09-27 — the `games` umbrella flipped `disabled`→`ga` and `zip` is new; `diary` (beta) and `quiz` (disabled) do not add to this count
     FEATURE_BLOCKS.filter(b => b.defaultAvailability === 'disabled')
       .forEach(b => expect(out.enabled).not.toContain(b.id));
   });
@@ -321,6 +321,13 @@ describe('deriveEnabledFeatures — against the real catalogue', () => {
     // the point: the block carries a third-party licence caveat (Open-Meteo excludes
     // commercial use), so a tenant must tick it deliberately rather than have
     // `deriveEnabledFeatures` switch it on from menu evidence.
-    expect(withoutExclusive).toEqual(['instruments', 'weather']);
+    // `games` (2026-09-27) is here BY DESIGN, like `weather`. It is the Spiele UMBRELLA: the
+    // games it groups own the menu rows, and the shared `games-menu` parent they co-declare is
+    // by definition not exclusive to any one of them. Declaring that parent on the umbrella too
+    // would satisfy this test and be wrong — it would append an empty "Spiele" accordion to the
+    // root nav of a tenant that has the umbrella on but no game enabled. Being un-inferable is
+    // harmless here: `resolveWithDeps` closes every game's `dependsOn: ['games']` over the
+    // umbrella, so evidence for a GAME already switches it on.
+    expect(withoutExclusive).toEqual(['instruments', 'games', 'weather']);
   });
 });

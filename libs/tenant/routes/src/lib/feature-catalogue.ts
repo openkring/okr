@@ -1146,26 +1146,46 @@ const instruments: BlockRoutes = {
 };
 
 /**
- * The single `quiz` top-level path, copied verbatim from `app.routes.ts:52-56`. No guard
- * correction needed (`isAuthenticatedGuard` is a plain `CanActivateFn`). `libs/games/quiz` is
- * the domain's only subdomain and `QuizPage` its only screen — see the block comment in
- * `feature-blocks.ts` for what that screen actually contains.
+ * The `games` domain, one route entry per block since the 2026-09-27 per-game split — see the
+ * `games` block comment in `feature-blocks.ts` for why the domain is split and what adding a
+ * game costs.
  *
- * THE FRAGMENT STAYS EVEN THOUGH THE BLOCK IS `defaultAvailability: 'disabled'` (repo owner's
- * ruling, 2026-08-04). Disabling is not deleting: the route is what the catalogue would compose
- * if the block were ever raised again by a `feature-rollout/games` doc, and emptying it would
- * throw that away for no gain. The ruling only bites once task 19 composes the app's table PER
- * BLOCK with `isFeatureEnabledGuard(block.id)` prepended to each fragment's `canActivate` —
- * `composeFeatureRoutes` alone flat-maps every fragment in unconditionally, so catalogue-driving
- * by itself would leave `/quiz` live. See the `games` block comment in `feature-blocks.ts` for
- * why static pre-filtering is not an alternative.
+ * The umbrella ships NO route of its own; it is the group switch its games depend on. An empty
+ * `routes: () => []` is a normal, supported shape here (`social-feed` is the other one) — the
+ * sync spec only requires that every metadata block have a matching entry BY ID, not that the
+ * entry carry paths.
  */
 const games: BlockRoutes = {
   id: 'games',
+  routes: (): Route[] => [],
+};
+
+/**
+ * `/quiz` — unchanged from `app.routes.ts:52-56`, only re-homed from the old whole-domain
+ * `games` fragment onto its own block. Still `defaultAvailability: 'disabled'`, so
+ * `composeGatedFeatureRoutes` keeps gating it off for every tenant; the 2026-08-04 ruling is
+ * about this screen and it stands. The fragment stays regardless — disabling is not deleting.
+ */
+const quiz: BlockRoutes = {
+  id: 'quiz',
   routes: (): Route[] => [{
     path: 'quiz',
     canActivate: [isAuthenticatedGuard],
     loadComponent: () => import('@okr/games-quiz-feature').then(m => m.QuizPage),
+  }],
+};
+
+/**
+ * `/zip` — the path puzzle in `libs/games/zip`. In-memory only, no service, no Firestore, no
+ * `:contextMenuName` segment and no `okr-menu` binding, so it owes no context-menu wrapper. Its
+ * block is `ga`, so unlike `/quiz` this one actually reaches a tenant that ticks it.
+ */
+const zip: BlockRoutes = {
+  id: 'zip',
+  routes: (): Route[] => [{
+    path: 'zip',
+    canActivate: [isAuthenticatedGuard],
+    loadComponent: () => import('@okr/games-zip-feature').then(m => m.ZipPage),
   }],
 };
 
@@ -1286,7 +1306,7 @@ const weather: BlockRoutes = {
 };
 
 export const FEATURE_ROUTES: BlockRoutes[] = [
-  calevent, aoc, activity, task, instruments, games,
+  calevent, aoc, activity, task, instruments, games, quiz, zip,
   auth, cms, user, profile, session, security, i18n, avatar, category, comment, geo, trip, consent,
   subject, relationship, vcard,
   resource, mobility,

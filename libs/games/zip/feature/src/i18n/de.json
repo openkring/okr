@@ -1,0 +1,28 @@
+{
+  "title": "Zip",
+  "desc": "Verbinde die Zahlen der Reihe nach und füll dabei jedes Feld des Gitters. Der Weg darf nur waagrecht und senkrecht laufen und kein Feld zweimal berühren.",
+  "config": {
+    "size_label": "Gitter",
+    "count_label": "Zahlen"
+  },
+  "action": {
+    "undo": "Widerrufen",
+    "hint": "Tipp",
+    "restart": "Neues Spiel"
+  },
+  "status": {
+    "progress": "{done} von {total} Feldern",
+    "hints_used": "{count} Tipps benutzt",
+    "solved": "Geschafft",
+    "time_label": "Zeit",
+    "solved_time": "in {time}",
+    "solved_hints": "mit {count} Tipps",
+    "solved_no_hints": "ohne Tipp"
+  },
+  "blocked": {
+    "visited": "Auf diesem Feld warst du schon.",
+    "adjacent": "Du kannst nur auf ein direkt angrenzendes Feld weiterziehen.",
+    "order": "Diese Zahl ist noch nicht an der Reihe, zuerst kommt die {next}.",
+    "finished": "Du bist bei der letzten Zahl angekommen."
+  }
+}

@@ -117,7 +117,7 @@
       "label": "Strategy instruments & whiteboards"
     },
     "games": {
-      "label": "Quiz"
+      "label": "Games"
     },
     "business": {
       "label": "Partner channel"
@@ -134,6 +134,12 @@
     "weather": {
       "label": "Weather",
       "remarks": "The weather data comes from Open-Meteo. It is free for clubs and other non-commercial use. If you use it commercially, you need your own licence directly from Open-Meteo."
+    },
+    "quiz": {
+      "label": "Quiz"
+    },
+    "zip": {
+      "label": "Zip (number path)"
     }
   },
   "picker": {

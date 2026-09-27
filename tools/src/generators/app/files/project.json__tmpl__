@@ -412,6 +412,11 @@
           },
           {
             "glob": "*.json",
+            "input": "libs/games/zip/feature/src/i18n",
+            "output": "./assets/i18n/games/zip/feature"
+          },
+          {
+            "glob": "*.json",
             "input": "libs/geo/location/data-access/src/i18n",
             "output": "./assets/i18n/geo/location/data-access"
           },

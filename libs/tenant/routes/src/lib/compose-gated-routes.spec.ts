@@ -101,24 +101,26 @@ const allBlockIds = (): string[] => FEATURE_BLOCKS.map(b => b.id);
 
 describe('composeGatedFeatureRoutes', () => {
   /**
-   * THE RULING THIS WHOLE FUNCTION EXISTS FOR. The repo owner set `games` to
+   * THE RULING THIS WHOLE FUNCTION EXISTS FOR. The repo owner set the quiz to
    * `defaultAvailability: 'disabled'` on 2026-08-04 intending `/quiz` to disappear, and the
-   * `games` block deliberately KEEPS its route fragment (disabling is not deleting). With
+   * block deliberately KEEPS its route fragment (disabling is not deleting). The ruling was
+   * recorded on the whole-domain `games` block then and moved to its own `quiz` block in the
+   * 2026-09-27 per-game split, which is why this test names `quiz` on both axes now. With
    * the ungated `composeFeatureRoutes` from `@okr/tenant-util` — which is what
    * `feature-catalogue.spec.ts` calls, and therefore the obvious thing to copy — `/quiz`
    * would stay reachable behind nothing but `isAuthenticatedGuard` and the ruling would do
    * nothing at all.
    */
   it('a route belonging to a block the tenant does not have is NOT reachable', async () => {
-    const appRef = await appFor(allBlockIds().filter(id => id !== 'games'));
-    const verdict = featureVerdict(fragmentOf('games', 'quiz'), appRef);
+    const appRef = await appFor(allBlockIds().filter(id => id !== 'quiz'));
+    const verdict = featureVerdict(fragmentOf('quiz', 'quiz'), appRef);
 
     expect(verdict).not.toBe(true);
     expect(String(verdict)).toBe(ROOT_URL);
   });
 
   it('the same route IS reachable for a tenant that has the block', async () => {
-    expect(featureVerdict(fragmentOf('games', 'quiz'), await appFor(['games']))).toBe(true);
+    expect(featureVerdict(fragmentOf('quiz', 'quiz'), await appFor(['games', 'quiz']))).toBe(true);
   });
 
   /**

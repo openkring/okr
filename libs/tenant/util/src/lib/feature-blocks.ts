@@ -2349,83 +2349,138 @@ const instruments: FeatureBlock = {
 };
 
 /**
- * `libs/games/quiz/feature` — the domain's ONLY subdomain and only screen: `QuizPage` +
- * `QuizStore`, routed at `/quiz` behind `isAuthenticatedGuard`.
+ * THE `games` DOMAIN, SPLIT PER GAME (owner ruling 2026-09-27) — read this before adding a game.
  *
- * WHAT IT ACTUALLY IS, checked before classifying it: a self-contained, in-memory quiz. Its
- * whole state is a hard-coded literal in `quiz.state.ts` (`initialState`, `title: 'NgRx Quiz'`,
- * a fixed question list and a 180-second timer); `quiz.store.ts` scores answers against it with
- * `patchState` and nothing else. There is no service, no Firestore access, and the domain's
- * ONLY `@okr/*` import in any file is `@okr/shared-ui` — hence `dependsOn: []` and
- * `collections: []` are both structural, not unresearched.
+ * `libs/games` is a container domain with no `libs/games/feature` of its own: every game is a
+ * subdomain (`quiz`, `zip`, …). Until 2026-09-27 one `games` block covered all of it, per the
+ * one-block-per-container-domain ruling. That ruling is now overridden FOR THIS DOMAIN ONLY,
+ * because games are independently sellable in a way finance subdomains are not: a tenant wants
+ * Zip without the quiz, and the next game must not arrive as a silent addition to a SKU someone
+ * already bought. `geo`/`trip` is the existing precedent for a container domain spanning more
+ * than one block.
  *
- * It is a BLOCK, not a `NON_BLOCK_DOMAINS` entry, and being disabled below does not change
- * that: it is a user-facing routed screen, i.e. a product feature (however slight), not
- * cross-cutting infrastructure. `defaultAvailability` — never that list — is the lever for
- * keeping a feature out of a tenant's picker; the same call was made for `social-feed`, whose
- * block comment argues it at length.
+ * The shape, and the ONLY thing adding a game requires:
  *
- * `defaultAvailability: 'disabled'` — RULED BY THE REPO OWNER on 2026-08-04 ("disabled —
- * remove it"), NOT an oversight and NOT a kill-switch pulled after a regression. If you have
- * landed here because you found a `disabled` block and wondered whether someone forgot to flip
- * it back: they did not. The owner's reasoning is the evidence above — what ships at `/quiz` is
- * a hard-coded "NgRx Quiz" demonstration of Signal-Store state management, with no service, no
- * Firestore and no tenant-authorable content. It is not something a tenant should be offered.
- * The task-18 comment this replaces flagged the value for exactly this ruling; it has now been
- * made, and it went the other way.
+ *   games   umbrella  — no route, no menu, no collection; the group switch
+ *     quiz  dependsOn ['games']  → /quiz   + one child row under `games-menu`
+ *     zip   dependsOn ['games']  → /zip    + one child row under `games-menu`
  *
- * CONSEQUENCE, INTENDED AND STATED PLAINLY — this is where `games` differs from `social-feed`,
- * the catalogue's other `disabled` block. `social-feed` ships `routes: () => []` and is
- * reachable from nowhere, so disabling it removes nothing. `games` owns a REGISTERED, WORKING
- * route: `/quiz` is in `app.routes.ts:52-56` behind `isAuthenticatedGuard` and renders today
- * for any authenticated user. So the ruling only takes effect through task 19 — and WHAT TASK
- * 19 HAS TO DO IS NARROWER THAN "DRIVE THE ROUTE TABLE FROM THE CATALOGUE", which is why the
- * requirement is recorded here rather than only in a task report. `composeFeatureRoutes`
- * (`feature-routes.util.ts:18-20`) is a bare `sources.flatMap(source => source.routes())`:
- * no effective-set filter, no per-block gate — and `feature-catalogue.spec.ts:7` already calls
- * it as `composeFeatureRoutes(FEATURE_ROUTES)`. Composing the app's table that way ships
- * `/quiz` fully live behind nothing but `isAuthenticatedGuard`, and this ruling has ZERO effect.
- * What actually removes it is composing PER BLOCK with `isFeatureEnabledGuard(block.id)`
- * (`@okr/tenant-feature`; used nowhere in the repo today) prepended to each fragment's
- * `canActivate`. Static pre-filtering is not available as an alternative: the effective set is
- * a computed over async app-config and rollout data, and does not exist at bootstrap, when the
- * route table is assembled. Done that way `/quiz` disappears for every tenant, which is the
- * point of the ruling rather than a side effect of it — and it is the whole of the change:
- * nothing else in the repo links to `/quiz` (no live `menuItems` doc, see the `menu` note
- * below; no `routerLink` or `navigateByUrl` anywhere in `libs/` or `apps/`), so no other screen
- * acquires a dead link.
+ * Game #3 is a block here, a route fragment in `FEATURE_ROUTES`, one child row in its own
+ * `gamesMenuParent([...])`, and its `feature.<id>.label` + `@item.game-<id>` strings. Nothing
+ * structural changes, and no other block is touched.
  *
- * THE BLOCK AND ITS ROUTE FRAGMENT BOTH STAY — disabling is not deleting. The block keeps its
- * `FEATURE_ROUTES` entry (the real `quiz` fragment, not an empty one), so the catalogue still
- * records that the domain exists and what it would route to, the sitemap still shows it, and a
- * rollout doc or a later rollout decision can raise it again with no code change
- * (`feature-rollout.util.ts:29` prefers `rollout.availability` over the catalogue default in
- * BOTH directions). WHY `'disabled'` AND NOT `'internal'`: `resolveAvailability`
- * (`feature-rollout.util.ts:35-40`) short-circuits `'disabled'` to `offered: false` for
- * EVERYONE, whereas `'internal'` still offers the block to any tenant an operator allow-lists.
- * The owner wants it unselectable, not selectively available — see the `social-feed` block for
- * the same argument at length, including the D-BB-10 legacy-config interaction that keeps a
- * `disabled` default from reaching tenants whose `app-config` predates `enabledFeatures`.
+ * COMPLETENESS STILL PASSES because `games` remains a block id:
+ * `feature-catalogue.completeness.spec.ts` resolves `libs/<domain>/feature` at the TOP level
+ * (`libs/games/zip/feature` reports as `games`), so the umbrella is what classifies the domain.
+ * Deleting the umbrella in favour of `games-quiz`/`games-zip` ids would fail that test and
+ * rename an immutable SKU key — do not.
+ */
+/**
+ * The Spiele UMBRELLA. It ships no route, no collection and no menu of its own — its whole
+ * job is to group the games and to be the thing a tenant switches off to remove all of them
+ * at once. Each individual game is its own block (`quiz`, `zip`, …) with
+ * `dependsOn: ['games']`, so ticking a game closes this one over automatically and this one
+ * cannot be switched off while a game is still running (`holdersOf` → the picker's `required`
+ * state).
+ *
+ * WHY THE ID STAYS `games` THOUGH ITS MEANING CHANGED. Until 2026-09-27 this block WAS the
+ * quiz — one block for the whole `libs/games` container domain, per the one-block-per-domain
+ * ruling, with `label` "Quiz". Splitting per game could have renamed it to `quiz`, but `id` is
+ * an immutable SKU key (D-BB-5), so the id stays and the quiz moved to a NEW `quiz` block
+ * instead. Repurposing it is safe rather than merely legal: the block has been `disabled`
+ * since 2026-08-04, and an `app-config` query on 2026-09-27 (`enabledFeatures
+ * array-contains 'games'`) returned zero documents, so no tenant has ever carried this SKU.
+ *
+ * This block deliberately declares NO menu. The `games-menu` parent is declared by each GAME
+ * block instead (the shared-parent pattern, see `cms-menu`/`aoc-menu` above) — declaring it
+ * here too would append an empty "Spiele" accordion to the root nav of any tenant that has
+ * the umbrella on but no game enabled.
  */
 const games: FeatureBlock = {
   id: 'games',
   bundle: 'special',
   label: '@tenant/util.feature.games.label',
-  icon: 'star',
-  // Owner ruling 2026-08-04 — see the block comment above before changing this.
-  defaultAvailability: 'disabled',
+  icon: 'play',
+  defaultAvailability: 'ga',
   dependsOn: [],
-  // Structurally empty: no Firestore access anywhere in the domain and no `*Collection` constant
-  // for it in `@okr/shared-models` (the quiz's questions are a hard-coded literal in
-  // `quiz.state.ts`). See the block comment.
   collections: [],
-  // No live `menuItems` doc — verified with the same two query shapes as `instruments` above (a
-  // name-equality `IN` query including `quiz` and `games`, zero hits; plus an ordered range scan
-  // of every doc whose `name` sorts in ['q','s'), which returned 18 documents — all `r*`, i.e.
-  // not a single doc whose name begins with `q` exists at all). `/quiz` is reachable only by
-  // typing the URL today. The route takes
-  // no `:contextMenuName` segment and `QuizPage` binds no `okr-menu`, so no wrapper is owed.
   menu: [],
+};
+
+/**
+ * The `games-menu` parent — the "Spiele" row in the main menu, one `sub` accordion holding one
+ * row per ENABLED game.
+ *
+ * Every game block re-declares this node field-identically, differing only in `children`. That
+ * is the documented shared-parent pattern (`cmsMenuParent`/`aocMenuParent` above) and all three
+ * moving parts are already built for it: `planMenuOpsForBlocks` folds the copies into ONE
+ * Firestore write, `blockOwnersOfMenuKey` resolves the parent's visibility to "ANY owning block
+ * effective" so it renders as soon as one game is on, and `rootNavKeys` looks only at a block's
+ * TOP-LEVEL specs, so the parent reaches `main_<tenantId>` while the children stay nested under
+ * it. `feature-catalogue.completeness.spec.ts` asserts every re-declaration is field-identical —
+ * if you edit one copy, edit both.
+ *
+ * `roleNeeded: 'registered'`: both games sit behind `isAuthenticatedGuard` and neither reads
+ * tenant data, so any signed-in member may play.
+ */
+function gamesMenuParent(children: MenuSpec[]): MenuSpec {
+  return {
+    key: 'games-menu', name: 'games-menu', url: '', action: 'sub',
+    roleNeeded: 'registered', icon: 'play', label: '@item.games-menu', children,
+  };
+}
+
+/**
+ * `libs/games/quiz/feature` — `QuizPage` + `QuizStore` at `/quiz`.
+ *
+ * `defaultAvailability: 'disabled'` — THE 2026-08-04 OWNER RULING STANDS, and the 2026-09-27
+ * split is what finally lets it stand on its own. That ruling ("disabled — remove it") was
+ * about this screen specifically: a hard-coded "NgRx Quiz" demonstration of Signal-Store state
+ * management whose questions are a literal in `quiz.state.ts`, with no service, no Firestore
+ * and nothing a tenant can author. It was recorded on the old whole-domain `games` block only
+ * because there was no finer unit to record it on; now there is, and it lives here while the
+ * umbrella and `zip` go GA. Do not read the umbrella's `'ga'` as a reversal of it.
+ *
+ * `dependsOn: ['games']` — the umbrella owns the Spiele grouping this block's menu row hangs in.
+ */
+const quiz: FeatureBlock = {
+  id: 'quiz',
+  bundle: 'special',
+  label: '@tenant/util.feature.quiz.label',
+  icon: 'help-circle',
+  // Owner ruling 2026-08-04, re-affirmed at the 2026-09-27 split — see the block comment.
+  defaultAvailability: 'disabled',
+  dependsOn: ['games'],
+  // Structurally empty: no Firestore access anywhere in the domain and no `*Collection`
+  // constant for it in `@okr/shared-models`.
+  collections: [],
+  menu: [gamesMenuParent([
+    { key: 'game-quiz', name: 'game-quiz', url: '/quiz', action: 'navigate', roleNeeded: 'registered', icon: 'help-circle', label: '@item.game-quiz' },
+  ])],
+};
+
+/**
+ * `libs/games/zip` — `ZipPage` + `ZipStore` at `/zip`, over the pure `@okr/games-zip-util`.
+ *
+ * Connect the numbered cells in order with one path that fills the board; size (3-6) and
+ * checkpoint count (4-10) are chosen in the page itself, so there is nothing tenant-side to
+ * configure and no seed doc to write. State is in memory only — no service, no Firestore, no
+ * `*Collection` constant, hence `collections: []`.
+ *
+ * `defaultAvailability: 'ga'` (owner ruling 2026-09-27): unlike the quiz this is a finished
+ * game rather than a state-management demo, so it is offered to every tenant.
+ */
+const zip: FeatureBlock = {
+  id: 'zip',
+  bundle: 'special',
+  label: '@tenant/util.feature.zip.label',
+  icon: 'grid',
+  defaultAvailability: 'ga',
+  dependsOn: ['games'],
+  collections: [],
+  menu: [gamesMenuParent([
+    { key: 'game-zip', name: 'game-zip', url: '/zip', action: 'navigate', roleNeeded: 'registered', icon: 'grid', label: '@item.game-zip' },
+  ])],
 };
 
 /**
@@ -2599,7 +2654,7 @@ const weather: FeatureBlock = {
 };
 
 export const FEATURE_BLOCKS: FeatureBlock[] = [
-  calevent, aoc, activity, task, instruments, games,
+  calevent, aoc, activity, task, instruments, games, quiz, zip,
   auth, cms, user, profile, session, security, i18n, avatar, category, comment, geo, trip, consent,
   subject, relationship, vcard,
   resource, mobility,

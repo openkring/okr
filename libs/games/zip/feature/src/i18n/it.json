@@ -1,0 +1,28 @@
+{
+  "title": "Zip",
+  "desc": "Collega i numeri in ordine e riempi ogni casella della griglia lungo il percorso. Il tracciato procede solo in orizzontale e in verticale e non tocca mai due volte la stessa casella.",
+  "config": {
+    "size_label": "Griglia",
+    "count_label": "Numeri"
+  },
+  "action": {
+    "undo": "Annulla",
+    "hint": "Suggerimento",
+    "restart": "Nuova partita"
+  },
+  "status": {
+    "progress": "{done} caselle su {total}",
+    "hints_used": "{count} suggerimenti usati",
+    "solved": "Fatto",
+    "time_label": "Tempo",
+    "solved_time": "in {time}",
+    "solved_hints": "con {count} suggerimenti",
+    "solved_no_hints": "senza suggerimenti"
+  },
+  "blocked": {
+    "visited": "Su questa casella ci sei già passato.",
+    "adjacent": "Puoi spostarti solo su una casella direttamente adiacente.",
+    "order": "Questo numero non tocca ancora, prima viene {next}.",
+    "finished": "Sei arrivato all'ultimo numero."
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "title": "Zip",
+  "desc": "Relie les nombres dans l'ordre et remplis chaque case de la grille en chemin. Le tracé ne va qu'à l'horizontale et à la verticale, et ne touche jamais deux fois la même case.",
+  "config": {
+    "size_label": "Grille",
+    "count_label": "Nombres"
+  },
+  "action": {
+    "undo": "Annuler",
+    "hint": "Indice",
+    "restart": "Nouvelle partie"
+  },
+  "status": {
+    "progress": "{done} cases sur {total}",
+    "hints_used": "{count} indices utilisés",
+    "solved": "Réussi",
+    "time_label": "Temps",
+    "solved_time": "en {time}",
+    "solved_hints": "avec {count} indices",
+    "solved_no_hints": "sans indice"
+  },
+  "blocked": {
+    "visited": "Tu es déjà passé par cette case.",
+    "adjacent": "Tu ne peux avancer que sur une case directement voisine.",
+    "order": "Ce nombre n'est pas encore à son tour, {next} vient d'abord.",
+    "finished": "Tu es arrivé au dernier nombre."
+  }
+}

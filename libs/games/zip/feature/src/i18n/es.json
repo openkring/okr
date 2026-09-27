@@ -1,0 +1,28 @@
+{
+  "title": "Zip",
+  "desc": "Conecta los números en orden y rellena cada casilla de la cuadrícula por el camino. El trazado solo va en horizontal y en vertical, y nunca toca dos veces la misma casilla.",
+  "config": {
+    "size_label": "Cuadrícula",
+    "count_label": "Números"
+  },
+  "action": {
+    "undo": "Deshacer",
+    "hint": "Pista",
+    "restart": "Partida nueva"
+  },
+  "status": {
+    "progress": "{done} de {total} casillas",
+    "hints_used": "{count} pistas usadas",
+    "solved": "Resuelto",
+    "time_label": "Tiempo",
+    "solved_time": "en {time}",
+    "solved_hints": "con {count} pistas",
+    "solved_no_hints": "sin pistas"
+  },
+  "blocked": {
+    "visited": "Por esta casilla ya has pasado.",
+    "adjacent": "Solo puedes avanzar a una casilla directamente contigua.",
+    "order": "Este número aún no toca, primero viene {next}.",
+    "finished": "Has llegado al último número."
+  }
+}

@@ -117,7 +117,7 @@
       "label": "Instrumentos estratégicos y pizarras"
     },
     "games": {
-      "label": "Quiz"
+      "label": "Juegos"
     },
     "business": {
       "label": "Canal de socios"
@@ -134,6 +134,12 @@
     "weather": {
       "label": "Tiempo",
       "remarks": "Los datos del tiempo vienen de Open-Meteo. Son gratuitos para asociaciones y cualquier uso no comercial. Si los usas con fines comerciales, necesitas tu propia licencia directamente de Open-Meteo."
+    },
+    "quiz": {
+      "label": "Quiz"
+    },
+    "zip": {
+      "label": "Zip (camino de números)"
     }
   },
   "picker": {

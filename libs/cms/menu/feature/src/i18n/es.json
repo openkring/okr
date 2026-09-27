@@ -603,7 +603,10 @@
     "memberfees-totals": "Mostrar totales",
     "memberfees-export": "Exportar",
     "memberfees-archive": "Archivar datos",
-    "accounting-settings": "Configuración"
+    "accounting-settings": "Configuración",
+    "games-menu": "Juegos",
+    "game-quiz": "Quiz",
+    "game-zip": "Zip"
   },
   "ownership": {
     "fork_confirm": "«{name}» pertenece al catálogo de funciones ({blocks}).\n\nAl guardar se crea una copia propia del inquilino «{forkKey}» y se desvincula este inquilino del original compartido. Las futuras correcciones del catálogo (URL, acción, rol) ya no llegarán a esta entrada.\n\n¿Guardar de todos modos?",
