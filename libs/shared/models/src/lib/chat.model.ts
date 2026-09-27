@@ -64,8 +64,22 @@ export interface MatrixRoom {
    * Firestore document; this only mirrors room state. Undefined for rooms created before the
    * marker existed and not covered by `backfillMatrixRoomTenants`; such rooms stay visible in
    * every tenant.
+   *
+   * An EMPTY array is not the same as undefined and must not be collapsed into it: it means the
+   * room was deliberately assigned to no tenant (an unassigned bridged chat, or the room of an
+   * archived group) and is hidden in every app. `undefined` means "never classified".
    */
   tenants?: string[];
+  /**
+   * Matrix user id of the room's creator (`m.room.create` sender). Read from the same state
+   * lookup as `stateLoaded`, so it costs nothing extra.
+   *
+   * Its one job is to recognise rooms a chat bridge provisioned (`@signalbot`, `@whatsappbot`,
+   * …): those can never match a group or a person, so without this the tenant filter would keep
+   * every bridged conversation in every tenant app. `members` cannot serve here — the room-list
+   * entry carries `members: []` by design (perf fix P-2).
+   */
+  creator?: string;
   /**
    * Whether the user pinned this room to the top of the room list. Mirrors the Matrix room tag
    * `m.favourite` (MATRIX_FAVOURITE_TAG in `@okr/chat-util`), which lives in the user's own

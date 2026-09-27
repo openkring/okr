@@ -86,6 +86,22 @@ export interface AvatarRepairResult {
   skippedHasAvatar: number;
   applied: boolean;
 }
+/**
+ * One room that has no group and therefore needs a decision rather than a derivation.
+ *
+ * `tenants: undefined` means the room carries no marker at all; `[]` means it was deliberately
+ * assigned to no app. The two look the same in a list and are opposites in the filter, so the
+ * template labels them differently.
+ */
+export interface RoomAssignmentEntry {
+  roomId: string;
+  name: string;
+  creator: string;
+  joinedMembers: number;
+  tenants: string[] | undefined;
+  bridged: boolean;
+}
+
 /** One room the tenant backfill would stamp. */
 export interface TenantBackfillEntry {
   roomId: string;
@@ -158,6 +174,10 @@ export type AocChatState = {
   tenantRepairAmbiguous: number;
   tenantRepairScanning: boolean;
   tenantRepairApplying: boolean;
+  // manual room↔tenant assignment (bridge rooms — the backfill cannot derive these)
+  assignRooms: RoomAssignmentEntry[] | undefined; // undefined = not yet scanned
+  assignScanning: boolean;
+  assignBusyRoomId: string | undefined;           // the row currently being written
   memberRepairApplying: boolean;
   memberRepairJoined: number;
   // group-room write-permission sync
@@ -193,6 +213,9 @@ const initialState: AocChatState = {
   tenantRepairAmbiguous: 0,
   tenantRepairScanning: false,
   tenantRepairApplying: false,
+  assignRooms: undefined,
+  assignScanning: false,
+  assignBusyRoomId: undefined,
   memberRepairApplying: false,
   memberRepairJoined: 0,
   postPolicySyncApplying: false,
@@ -946,6 +969,84 @@ export const AocChatStore = signalStore(
         await showToast(store.toastController, `${store.i18n.error()}: ${(e as Error).message}`);
       } finally {
         patchState(store, { avatarRepairApplying: false });
+      }
+    },
+
+    // ─── Raumzuordnung von Hand ────────────────────────────────────────────────
+
+    /**
+     * Raeume auflisten, die zu keiner Gruppe gehoeren und deshalb eine Entscheidung brauchen.
+     *
+     * Ergaenzt den Backfill, ersetzt ihn nicht: der leitet die Zuordnung aus dem Gruppenschluessel
+     * ab und laesst bewusst alles liegen, was er nicht ableiten kann. Ein von einer Verbindung zu
+     * Signal/WhatsApp angelegter Raum hat keinen Alias und kein Gruppendokument — er ist per
+     * Definition nicht ableitbar.
+     */
+    async scanAssignableRooms(): Promise<void> {
+      patchState(store, { assignScanning: true });
+      try {
+        const fn = httpsCallable<Record<string, never>, { rooms: RoomAssignmentEntry[] }>(
+          getFn(), 'listUnassignedMatrixRooms'
+        );
+        const res = await fn({});
+        // Bruecken-Raeume zuerst und die groessten oben: das ist die Reihenfolge, in der man
+        // entscheidet — was viele Leute sieht, faellt zuerst auf.
+        patchState(store, {
+          assignRooms: [...res.data.rooms].sort((a, b) =>
+            Number(b.bridged) - Number(a.bridged) || b.joinedMembers - a.joinedMembers),
+        });
+      } catch (e) {
+        patchState(store, { assignRooms: undefined });
+        await showToast(store.toastController, `${store.i18n.error()}: ${(e as Error).message}`);
+      } finally {
+        patchState(store, { assignScanning: false });
+      }
+    },
+
+    /**
+     * Einen Raum dieser App zuordnen (`toThisApp`) oder ausdruecklich keiner (`tenants: []`).
+     *
+     * Beides ist derselbe Schreibvorgang auf denselben Marker und jederzeit umkehrbar — deshalb
+     * eine Methode und kein Loeschen. Der Raum selbst wird nie angefasst.
+     */
+    async assignRoom(entry: RoomAssignmentEntry, toThisApp: boolean): Promise<void> {
+      const tenantId = store.appStore.tenantId();
+      const message = await firstValueFrom(store.i18nService.translate(
+        toThisApp ? '@aoc/feature.chat.assign.confirm_here' : '@aoc/feature.chat.assign.confirm_hide',
+        { name: entry.name || entry.roomId },
+      ));
+      const alert = await store.alertController.create({
+        header: store.i18n.chat_assign(),
+        message,
+        buttons: [
+          { text: store.i18n.cancel(), role: 'cancel' },
+          {
+            text: toThisApp ? store.i18n.chat_assign_action_here() : store.i18n.chat_assign_action_hide(),
+            role: 'confirm',
+          },
+        ],
+      });
+      await alert.present();
+      const { role } = await alert.onDidDismiss();
+      if (role !== 'confirm') return;
+
+      patchState(store, { assignBusyRoomId: entry.roomId });
+      try {
+        const fn = httpsCallable<{ roomId: string; tenants: string[] }, { roomId: string; tenants: string[] }>(
+          getFn(), 'assignMatrixRoomTenants'
+        );
+        const res = await fn({ roomId: entry.roomId, tenants: toThisApp ? [tenantId] : [] });
+        // Die Zeile an Ort und Stelle nachziehen statt neu zu scannen: ein Scan laeuft ueber
+        // jeden Raum des Homeservers, und die Antwort sagt schon, was jetzt gilt.
+        patchState(store, {
+          assignRooms: store.assignRooms()?.map(r =>
+            r.roomId === entry.roomId ? { ...r, tenants: res.data.tenants } : r),
+        });
+        await showToast(store.toastController, store.i18n.chat_assign_conf());
+      } catch (e) {
+        await showToast(store.toastController, `${store.i18n.error()}: ${(e as Error).message}`);
+      } finally {
+        patchState(store, { assignBusyRoomId: undefined });
       }
     },
 

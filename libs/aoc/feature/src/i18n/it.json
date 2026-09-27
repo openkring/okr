@@ -362,6 +362,21 @@
         "confirm": "Rimuovere ora {{ count }} persone senza appartenenza da «{{ group }}»?",
         "conf": "{{ count }} persone rimosse."
       }
+    },
+    "assign": {
+      "label": "Assegnare le stanze a mano",
+      "description": "Alcune stanze di chat non appartengono a nessun gruppo — per esempio quelle create da un collegamento a Signal o WhatsApp. L'assegnazione automatica non riesce a riconoscerle, quindi decidi tu qui: le stanze che assegni a questa app compaiono nella panoramica delle chat; le stanze nascoste non compaiono in nessuna app. In entrambi i casi restano leggibili in Element.",
+      "scan": "Cerca stanze",
+      "none": "Tutte le stanze sono assegnate: niente da fare.",
+      "found": "Stanze senza gruppo",
+      "bridged": "creata da un collegamento",
+      "state_unassigned": "non assegnata a nessuna app",
+      "state_unmarked": "non ancora assegnata",
+      "action_here": "Assegna a questa app",
+      "action_hide": "Nascondi",
+      "confirm_here": "Assegnare la stanza «{{ name }}» a questa app? Comparirà poi nella panoramica delle chat.",
+      "confirm_hide": "Nascondere la stanza «{{ name }}»? Non comparirà più in nessuna app.",
+      "conf": "Assegnazione salvata."
     }
   },
   "content": {

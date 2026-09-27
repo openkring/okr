@@ -16,7 +16,7 @@ import { I18nService } from '@okr/shared-i18n';
 import { ActivityService } from '@okr/activity-data-access';
 import { AvatarService } from '@okr/avatar-data-access';
 import { MatrixChatService, MatrixPollData } from '@okr/chat-data-access';
-import { AdhocChatFormModel, filterRoomsOfTenant, findSupportRoom, MATRIX_CHAT_I18N_KEYS, MatrixChatI18n, MentionRef } from '@okr/chat-util';
+import { AdhocChatFormModel, filterRoomsOfTenant, findSupportRoom, serverNameOf, MATRIX_CHAT_I18N_KEYS, MatrixChatI18n, MentionRef } from '@okr/chat-util';
 
 import { RoomEditModal } from './room-edit.modal';
 
@@ -147,19 +147,18 @@ export const _MatrixChatStore = signalStore(
         state.appStore.allGroupsAndChats(),
         new Set(state.appStore.allPersons().map((p: PersonModel) => p.okey.toLowerCase())),
         state.appStore.tenantId(),
+        // Raeume fremder Homeserver sind keine okr-Raeume und koennen auch nicht markiert
+        // werden — nur hier laesst sich das entscheiden. Inline berechnet, weil `homeServer`
+        // im selben withComputed-Block definiert wird und sich nicht selbst lesen kann.
+        serverNameOf(state.appStore.env.services.matrixHomeserver),
       )),
       imageUrl: computed(() => state.imageUrlResource.value()),
       activeCall: computed(() => state.activeCallResource.value() as MatrixCall | null | undefined),
       callState: computed(() => state.callStateResource.value()),
       callFeeds: computed(() => state.callFeedsResource.value() ?? []),
       isInCall: computed(() => !!state.activeCallResource.value()),
-      homeServer: computed(() => {
-        // Matrix server_name used in user IDs (e.g. @user:bkchat.etke.host).
-        // The homeserver URL often has a 'matrix.' subdomain that is NOT part of the server_name.
-        return state.appStore.env.services.matrixHomeserver
-          .replace(/^https?:\/\//, '')
-          .replace(/^matrix\./, '');
-      }),
+      // Matrix server_name used in user IDs (e.g. @user:bkchat.etke.host).
+      homeServer: computed(() => serverNameOf(state.appStore.env.services.matrixHomeserver)),
       messages: computed(() =>
         (state.messagesResource.value() ?? []).filter(
           m => m.relatesTo?.relationType !== 'm.thread'
@@ -340,6 +339,7 @@ export const _MatrixChatStore = signalStore(
           store.appStore.allGroupsAndChats(),
           new Set(store.appStore.allPersons().map((p: PersonModel) => p.okey.toLowerCase())),
           store.appStore.tenantId(),
+          store.homeServer(),
         );
       },
 

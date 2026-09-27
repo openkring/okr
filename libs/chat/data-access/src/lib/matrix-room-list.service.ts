@@ -306,6 +306,7 @@ export class MatrixRoomListService {
           members: [],
           typingUsers: this.typingByRoom.get(room.roomId) ?? [],
           tenants: this.getRoomTenants(room),
+          creator: this.getRoomCreator(room),
           directUserId,
           isFavourite: this.isFavouriteRoom(room),
           stateLoaded: this.isRoomStateLoaded(room, directUserId),
@@ -353,11 +354,25 @@ export class MatrixRoomListService {
    * Read the room's tenant marker (`org.okr.tenant` state event). Undefined for rooms
    * created before the marker existed — those stay visible in every tenant until
    * `backfillMatrixRoomTenants` stamps them.
+   *
+   * An EMPTY `tenants` array is returned as `[]`, never as `undefined`: the two mean opposite
+   * things to `filterRoomsOfTenant` (`[]` = assigned to no app, hidden everywhere; `undefined` =
+   * never classified, fall through to alias/DM matching). Collapsing them — as this did until
+   * the marker gained its "no tenant" meaning — makes an unassigned room visible in every
+   * tenant, i.e. exactly the state the assignment was performed to end.
    */
   private getRoomTenants(room: Room): string[] | undefined {
     const state = room.getLiveTimeline().getState(EventTimeline.FORWARDS);
-    const tenants = state?.getStateEvents(OKR_TENANT_EVENT, '')?.getContent()?.['tenants'] as string[] | undefined;
-    return tenants?.length ? tenants : undefined;
+    const marker = state?.getStateEvents(OKR_TENANT_EVENT, '');
+    if (!marker) return undefined;
+    const tenants = marker.getContent()?.['tenants'];
+    return Array.isArray(tenants) ? tenants as string[] : undefined;
+  }
+
+  /** Matrix user id that created the room (`m.room.create` sender); undefined before state arrives. */
+  private getRoomCreator(room: Room): string | undefined {
+    const state = room.getLiveTimeline().getState(EventTimeline.FORWARDS);
+    return state?.getStateEvents('m.room.create', '')?.getSender() ?? undefined;
   }
 
   /**

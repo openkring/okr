@@ -755,9 +755,16 @@ export const OKR_TENANT_EVENT = 'org.okr.tenant';
 /**
  * Stamp a room with the tenants it belongs to. Best-effort: a failure only means the room
  * stays unmarked, and unmarked rooms remain visible in every tenant (never hidden).
+ *
+ * An EMPTY `tenants` array is written, not rejected, and means "this room belongs to no okr
+ * app" — `filterRoomsOfTenant` hides it everywhere. That is a different statement from having
+ * no marker at all (= not classified, stays visible), and it is the only way to express either
+ * of the two cases that need it: a bridged personal chat that was deliberately unassigned, and
+ * the room of an archived group, which keeps its history instead of being purged for a
+ * reversible action. Refusing it — as this did before — silently turned both into "visible in
+ * every tenant", the opposite of the intent.
  */
 export async function setRoomTenants(roomId: string, tenants: string[], adminToken: string): Promise<boolean> {
-  if (!tenants.length) return false;
   await ensureAdminInRoom(roomId, adminToken);
 
   const put = () => fetch(
@@ -791,15 +798,30 @@ export async function setRoomTenants(roomId: string, tenants: string[], adminTok
   return true;
 }
 
-/** Read the tenants marker of a room; empty array when the room is unmarked. */
-export async function getRoomTenants(roomId: string, adminToken: string): Promise<string[]> {
+/**
+ * Read the tenants marker of a room, distinguishing ABSENT from EMPTY.
+ *
+ *  - `undefined` — no marker: the room was never classified and stays visible in every tenant.
+ *  - `[]`        — marker present, no tenant: deliberately assigned to no okr app, hidden
+ *                  everywhere (an unassigned bridged chat, or an archived group's room).
+ *  - `[...]`     — the tenants the room belongs to.
+ *
+ * Callers that must not touch an already-decided room need this distinction; `getRoomTenants`
+ * flattens both empty cases to `[]` and is the right choice only for admission checks.
+ */
+export async function getRoomTenantMarker(roomId: string, adminToken: string): Promise<string[] | undefined> {
   const resp = await fetch(
     `${MATRIX_HOMESERVER}/_matrix/client/v3/rooms/${encodeURIComponent(roomId)}/state/${OKR_TENANT_EVENT}/`,
     { headers: { Authorization: `Bearer ${adminToken}` } }
   );
-  if (!resp.ok) return [];
+  if (!resp.ok) return undefined;
   const content = await resp.json() as { tenants?: string[] };
-  return content.tenants ?? [];
+  return Array.isArray(content.tenants) ? content.tenants : undefined;
+}
+
+/** Read the tenants marker of a room; empty array when the room is unmarked OR assigned to none. */
+export async function getRoomTenants(roomId: string, adminToken: string): Promise<string[]> {
+  return (await getRoomTenantMarker(roomId, adminToken)) ?? [];
 }
 
 /**

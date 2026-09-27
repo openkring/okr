@@ -16,7 +16,7 @@ import {
   MATRIX_HOMESERVER,
   requireRole,
   groupRoomAliasLocalpart,
-  getRoomTenants,
+  getRoomTenantMarker,
   setRoomTenants,
 } from './shared';
 
@@ -109,7 +109,11 @@ export const backfillMatrixRoomTenants = onCall(
         console.log(`backfillMatrixRoomTenants: stopping early after ${Math.round((Date.now() - startedAt) / 1000)}s — re-run to continue`);
         break;
       }
-      if ((await getRoomTenants(room.roomId, adminToken)).length) {
+      // Any marker at all means the room is already decided — INCLUDING an empty one, which
+      // says "assigned to no okr app" (an unassigned bridged chat, or an archived group's room).
+      // Reading that as "unmarked" would re-stamp an archived group's room from its still-present
+      // alias and resurrect it in the app, undoing the archive.
+      if ((await getRoomTenantMarker(room.roomId, adminToken)) !== undefined) {
         result.alreadyMarked++;
         continue;
       }

@@ -230,6 +230,20 @@ export const AOC_I18N_KEYS = {
   chat_repair_tenants_none:                 PFX + 'chat.repair.tenants.none',
   chat_repair_tenants_preview:              PFX + 'chat.repair.tenants.preview',
   chat_repair_tenants_skipped:              PFX + 'chat.repair.tenants.ambiguous',
+  // Raumzuordnung von Hand — fuer Raeume, die der Backfill nicht ableiten kann (Bruecken-Raeume).
+  // `assign_confirm_*` sind NICHT hier: sie tragen {{ name }}, und translateAll wuerde den
+  // Parameter leer substituieren — sie laufen ueber i18nService.translate(key, { name }).
+  chat_assign:                              PFX + 'chat.assign.label',
+  chat_assign_description:                  PFX + 'chat.assign.description',
+  chat_assign_scan:                         PFX + 'chat.assign.scan',
+  chat_assign_none:                         PFX + 'chat.assign.none',
+  chat_assign_found:                        PFX + 'chat.assign.found',
+  chat_assign_bridged:                      PFX + 'chat.assign.bridged',
+  chat_assign_state_unassigned:             PFX + 'chat.assign.state_unassigned',
+  chat_assign_state_unmarked:               PFX + 'chat.assign.state_unmarked',
+  chat_assign_action_here:                  PFX + 'chat.assign.action_here',
+  chat_assign_action_hide:                  PFX + 'chat.assign.action_hide',
+  chat_assign_conf:                         PFX + 'chat.assign.conf',
 
   chat_repair_members:                      PFX + 'chat.repair.members.label',
   chat_repair_members_description:          PFX + 'chat.repair.members.description',

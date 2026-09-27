@@ -362,6 +362,21 @@
         "confirm": "Retirer maintenant {{ count }} personnes sans adhésion de « {{ group }} » ?",
         "conf": "{{ count }} personnes retirées."
       }
+    },
+    "assign": {
+      "label": "Attribuer des salons à la main",
+      "description": "Certains salons de discussion n'appartiennent à aucun groupe — par exemple ceux créés par une connexion à Signal ou WhatsApp. L'attribution automatique ne peut pas les reconnaître, c'est donc à toi de décider : les salons que tu attribues à cette app apparaissent dans la vue d'ensemble des discussions ; les salons masqués n'apparaissent dans aucune app. Dans les deux cas, ils restent lisibles dans Element.",
+      "scan": "Chercher les salons",
+      "none": "Tous les salons sont attribués – rien à faire.",
+      "found": "Salons sans groupe",
+      "bridged": "créé par une connexion",
+      "state_unassigned": "attribué à aucune app",
+      "state_unmarked": "pas encore attribué",
+      "action_here": "Attribuer à cette app",
+      "action_hide": "Masquer",
+      "confirm_here": "Attribuer le salon « {{ name }} » à cette app ? Il apparaîtra alors dans la vue d'ensemble des discussions.",
+      "confirm_hide": "Masquer le salon « {{ name }} » ? Il n'apparaîtra alors dans aucune app.",
+      "conf": "Attribution enregistrée."
     }
   },
   "content": {

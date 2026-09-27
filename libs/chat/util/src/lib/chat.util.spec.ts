@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildReceiptAriaLabel, filterRoomsOfTenant, isRoomClassifiable, findSupportRoom, isBridgeGhost, hashUserIdToColor, formatReceiptTime, isRenderableChatEvent, linkifyText, resolveMatrixDisplayName, canPostWithPower, groupRoomAliasLocalpart, groupKeyFromRoomAlias, isRoomGoneError, askRoomAliasLocalpart, shouldDeferAskRoom, findGroupOfRoom } from './chat.util';
+import { buildReceiptAriaLabel, filterRoomsOfTenant, isBridgedRoom, isForeignRoom, serverNameOf, isRoomClassifiable, findSupportRoom, isBridgeGhost, hashUserIdToColor, formatReceiptTime, isRenderableChatEvent, linkifyText, resolveMatrixDisplayName, canPostWithPower, groupRoomAliasLocalpart, groupKeyFromRoomAlias, isRoomGoneError, askRoomAliasLocalpart, shouldDeferAskRoom, findGroupOfRoom } from './chat.util';
 
 describe('buildReceiptAriaLabel', () => {
   it('returns empty string for no receipts', () => {
@@ -123,6 +123,119 @@ describe('filterRoomsOfTenant', () => {
   it('treats an absent stateLoaded flag as loaded, keeping the historic fallback', () => {
     expect(filterRoomsOfTenant([{ roomId: '!m:hs' }], groups, personKeys, 'p13').map(r => r.roomId))
       .toEqual(['!m:hs']);
+  });
+
+  it('hides a room whose marker is present but empty, in every tenant', () => {
+    // An empty marker says "no okr app"; only an ABSENT marker means "not classified".
+    const unassigned = [{ roomId: '!n:hs', tenants: [] }];
+    expect(filterRoomsOfTenant(unassigned, groups, personKeys, 'p13')).toEqual([]);
+    expect(filterRoomsOfTenant(unassigned, groups, personKeys, 'scs')).toEqual([]);
+  });
+
+  it('keeps an emptied marker hidden even when an alias would match a group', () => {
+    // Archiving a group blanks its room marker; the alias must not resurrect the room.
+    const archived = [{ roomId: '!c:hs', topic: '#group_whatever:hs', tenants: [] }];
+    expect(filterRoomsOfTenant(archived, groups, personKeys, 'p13')).toEqual([]);
+  });
+
+  it('hides a room of another homeserver, and only when a server name is given', () => {
+    const foreign = [{ roomId: '!news:etke.cc', topic: '#news:etke.cc' }];
+    expect(filterRoomsOfTenant(foreign, groups, personKeys, 'p13', 'bkchat.etke.host')).toEqual([]);
+    // No server name → previous behaviour (rule 5 keeps it).
+    expect(filterRoomsOfTenant(foreign, groups, personKeys, 'p13').map(r => r.roomId)).toEqual(['!news:etke.cc']);
+  });
+
+  it('lets an explicit marker win over the foreign-homeserver rule', () => {
+    const marked = [{ roomId: '!x:etke.cc', tenants: ['p13'] }];
+    expect(filterRoomsOfTenant(marked, groups, personKeys, 'p13', 'bkchat.etke.host').map(r => r.roomId))
+      .toEqual(['!x:etke.cc']);
+  });
+
+  it('keeps our own rooms when a server name is given', () => {
+    // Guards against the rule hiding everything if the derivation ever drifts.
+    const ours = [{ roomId: '!f:bkchat.etke.host' }];
+    expect(filterRoomsOfTenant(ours, groups, personKeys, 'p13', 'bkchat.etke.host').map(r => r.roomId))
+      .toEqual(['!f:bkchat.etke.host']);
+  });
+
+  it('hides an unmarked bridge-provisioned room instead of showing it in every tenant', () => {
+    const signalGroup = [{ roomId: '!o:hs', creator: '@signalbot:hs' }];
+    expect(filterRoomsOfTenant(signalGroup, groups, personKeys, 'p13')).toEqual([]);
+    expect(filterRoomsOfTenant(signalGroup, groups, personKeys, 'scs')).toEqual([]);
+  });
+
+  it('surfaces a bridged room once it carries a marker', () => {
+    const assigned = [{ roomId: '!p:hs', tenants: ['scs'], creator: '@signalbot:hs' }];
+    expect(filterRoomsOfTenant(assigned, groups, personKeys, 'scs').map(r => r.roomId)).toEqual(['!p:hs']);
+    expect(filterRoomsOfTenant(assigned, groups, personKeys, 'p13')).toEqual([]);
+  });
+
+  it('keeps an okr room created by a person', () => {
+    // Guards against the bridge rule swallowing ordinary ad-hoc rooms.
+    const adhoc = [{ roomId: '!q:hs', creator: '@bruno:hs' }];
+    expect(filterRoomsOfTenant(adhoc, groups, personKeys, 'p13').map(r => r.roomId)).toEqual(['!q:hs']);
+  });
+
+  it('keeps a bridged DM, which belongs wherever its two people are', () => {
+    // Rule 3 fires before 4b: the ghost counterpart must not be hidden everywhere.
+    const dm = [{ roomId: '!r:hs', creator: '@signalbot:hs', directUserId: '@signal_9f3a:hs' }];
+    expect(filterRoomsOfTenant(dm, groups, personKeys, 'p13').map(r => r.roomId)).toEqual(['!r:hs']);
+  });
+});
+
+describe('isForeignRoom', () => {
+  it('flags a room created on another homeserver', () => {
+    expect(isForeignRoom('!gqlCuoCdhufltluRXk:etke.cc', 'bkchat.etke.host')).toBe(true);
+  });
+
+  it('accepts a room of our own homeserver', () => {
+    expect(isForeignRoom('!abc:bkchat.etke.host', 'bkchat.etke.host')).toBe(false);
+  });
+
+  it('is case-insensitive on the domain', () => {
+    expect(isForeignRoom('!abc:BKChat.Etke.Host', 'bkchat.etke.host')).toBe(false);
+  });
+
+  it('never flags anything without a server name', () => {
+    // A caller that cannot supply one must keep the old behaviour, not hide every room.
+    expect(isForeignRoom('!gqlCuoCdhufltluRXk:etke.cc', undefined)).toBe(false);
+  });
+
+  it('treats a room id without a domain as ours rather than foreign', () => {
+    expect(isForeignRoom('!malformed', 'bkchat.etke.host')).toBe(false);
+  });
+});
+
+describe('serverNameOf', () => {
+  it('strips the scheme and the matrix. api subdomain', () => {
+    expect(serverNameOf('https://matrix.bkchat.etke.host')).toBe('bkchat.etke.host');
+  });
+
+  it('leaves a bare server name alone and drops a trailing slash', () => {
+    expect(serverNameOf('bkchat.etke.host')).toBe('bkchat.etke.host');
+    expect(serverNameOf('https://matrix.bkchat.etke.host/')).toBe('bkchat.etke.host');
+  });
+});
+
+describe('isBridgedRoom', () => {
+  it('detects a room provisioned by a bridge bot', () => {
+    expect(isBridgedRoom('@signalbot:hs')).toBe(true);
+    expect(isBridgedRoom('@whatsappbot:hs')).toBe(true);
+  });
+
+  it('does not flag a room created by a person, a ghost or the okr bot', () => {
+    expect(isBridgedRoom('@bruno:hs')).toBe(false);
+    expect(isBridgedRoom('@bk2-bot:hs')).toBe(false);
+    // A ghost never creates a room; only the bridge bot does.
+    expect(isBridgedRoom('@signal_9f3a:hs')).toBe(false);
+  });
+
+  it('treats an absent creator as not bridged', () => {
+    expect(isBridgedRoom(undefined)).toBe(false);
+  });
+
+  it('is case-insensitive on the localpart', () => {
+    expect(isBridgedRoom('@SignalBot:hs')).toBe(true);
   });
 });
 

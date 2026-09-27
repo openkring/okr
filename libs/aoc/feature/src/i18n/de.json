@@ -362,6 +362,21 @@
         "confirm": "{{ count }} Personen ohne Mitgliedschaft jetzt aus „{{ group }}“ entfernen?",
         "conf": "{{ count }} Personen entfernt."
       }
+    },
+    "assign": {
+      "label": "Räume von Hand zuordnen",
+      "description": "Manche Chat-Räume gehören zu keiner Gruppe — zum Beispiel Räume, die über eine Verbindung zu Signal oder WhatsApp entstehen. Die automatische Zuordnung kann sie nicht erkennen, darum entscheidest du hier selbst: Räume, die du dieser App zuordnest, erscheinen in der Chat-Übersicht; ausgeblendete Räume erscheinen in keiner App. In Element bleiben sie in beiden Fällen unverändert lesbar.",
+      "scan": "Räume suchen",
+      "none": "Alle Räume sind zugeordnet – nichts zu tun.",
+      "found": "Räume ohne Gruppe",
+      "bridged": "über eine Verbindung entstanden",
+      "state_unassigned": "keiner App zugeordnet",
+      "state_unmarked": "noch nicht zugeordnet",
+      "action_here": "Dieser App zuordnen",
+      "action_hide": "Ausblenden",
+      "confirm_here": "Den Raum «{{ name }}» dieser App zuordnen? Er erscheint dann in der Chat-Übersicht.",
+      "confirm_hide": "Den Raum «{{ name }}» ausblenden? Er erscheint dann in keiner App mehr.",
+      "conf": "Zuordnung gespeichert."
     }
   },
   "content": {

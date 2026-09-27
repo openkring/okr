@@ -13,6 +13,7 @@ import * as MatrixSimple from './matrix-simple';
 import * as MatrixMembershipSync from './matrix-simple/membership-sync';
 import * as MatrixPostPolicy from './matrix-simple/post-policy-sync';
 import * as MatrixGroupNameSync from './matrix-simple/group-name-sync';
+import * as MatrixGroupChatCleanup from './matrix-simple/group-chat-cleanup';
 import * as Rag from './rag';
 import * as Ocr from './ocr';
 import * as Vectorize from './vectorize';
@@ -121,6 +122,9 @@ export const sendCallNotification = MatrixSimple.sendCallNotification;
 export const registerMatrixPusher = MatrixSimple.registerMatrixPusher;
 export const matrixPushGateway = MatrixSimple.matrixPushGateway;
 export const backfillMatrixRoomTenants = MatrixSimple.backfillMatrixRoomTenants;
+// Mandantenzuordnung von Hand, fuer Raeume die der Backfill nicht ableiten kann (Bruecken-Raeume)
+export const listUnassignedMatrixRooms = MatrixSimple.listUnassignedMatrixRooms;
+export const assignMatrixRoomTenants = MatrixSimple.assignMatrixRoomTenants;
 // Ad-hoc-Chats: ein Chat mit mehreren Personen ohne eigene Gruppe (spec 2026-09-01)
 export const createAdhocChat = MatrixSimple.createAdhocChat;
 export const leaveAdhocChat = MatrixSimple.leaveAdhocChat;
@@ -131,6 +135,8 @@ export const reconcileGroupRoomMembers = MatrixMembershipSync.reconcileGroupRoom
 export const onGroupPostPolicyWritten = MatrixPostPolicy.onGroupPostPolicyWritten;
 // Gruppe umbenannt → Chatraum-Anzeigename nachziehen
 export const onGroupNameWritten = MatrixGroupNameSync.onGroupNameWritten;
+// Gruppe abgeloest/archiviert/geloescht → Chatraum nachziehen (Marker leeren bzw. purgen)
+export const onGroupChatCleanup = MatrixGroupChatCleanup.onGroupChatCleanup;
 export const sweepRoomPostPolicies = MatrixPostPolicy.sweepRoomPostPolicies;
 export const syncRoomPostPolicy = MatrixPostPolicy.syncRoomPostPolicy;
 // group-room drift: report room members without a membership, and prune them on demand

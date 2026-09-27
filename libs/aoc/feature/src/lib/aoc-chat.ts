@@ -11,7 +11,7 @@ import { AvatarSelect } from '@okr/avatar-ui';
 
 import { formatMatrixTimestamp, isMatrixPhotoUrl, MATRIX_LOG_LEVELS, MatrixLogLevel } from '@okr/chat-util';
 import { filterAdminRoomsByName } from '@okr/aoc-util';
-import { AocChatStore, AdminRoom, GroupRoomDrift, RoomMemberInfo } from './aoc-chat.store';
+import { AocChatStore, AdminRoom, GroupRoomDrift, RoomMemberInfo, RoomAssignmentEntry } from './aoc-chat.store';
 
 @Component({
   selector: 'okr-aoc-chat',
@@ -336,6 +336,69 @@ import { AocChatStore, AdminRoom, GroupRoomDrift, RoomMemberInfo } from './aoc-c
         </ion-card-content>
       </ion-card>
 
+      <!-- Manual room assignment — for rooms the backfill cannot derive (bridge rooms) -->
+      <ion-card class="repair-card">
+        <ion-card-header>
+          <ion-card-title>{{ store.i18n.chat_assign() }}</ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          <p class="repair-desc">{{ store.i18n.chat_assign_description() }}</p>
+          <div class="repair-actions">
+            <ion-button size="small" fill="outline" (click)="onScanAssignableRooms()" [disabled]="assignScanning()">
+              @if (assignScanning()) {
+                <ion-spinner name="dots" slot="start" style="width:16px;height:16px" />
+              } @else {
+                <ion-icon slot="start" src="{{'search' | svgIcon}}" />
+              }
+              {{ store.i18n.chat_assign_scan() }}
+            </ion-button>
+          </div>
+
+          @if (assignRooms(); as rooms) {
+            @if (rooms.length === 0) {
+              <ion-note color="medium">{{ store.i18n.chat_assign_none() }}</ion-note>
+            } @else {
+              <div class="repair-preview-title">{{ store.i18n.chat_assign_found() }} ({{ rooms.length }})</div>
+              <ion-list lines="inset" class="repair-list">
+                @for (entry of rooms; track entry.roomId) {
+                  <ion-item>
+                    <ion-label>
+                      <div>{{ entry.name || entry.roomId }}</div>
+                      <ion-note color="medium" style="font-size:0.75rem">
+                        {{ entry.joinedMembers }}
+                        @if (entry.bridged) { · {{ store.i18n.chat_assign_bridged() }} }
+                        ·
+                        @if (entry.tenants === undefined) {
+                          {{ store.i18n.chat_assign_state_unmarked() }}
+                        } @else if (entry.tenants.length === 0) {
+                          {{ store.i18n.chat_assign_state_unassigned() }}
+                        } @else {
+                          {{ entry.tenants.join(', ') }}
+                        }
+                      </ion-note>
+                    </ion-label>
+                    @if (assignBusyRoomId() === entry.roomId) {
+                      <ion-spinner slot="end" name="dots" style="width:16px;height:16px" />
+                    } @else {
+                      @if (!isAssignedHere(entry)) {
+                        <ion-button slot="end" size="small" fill="clear" (click)="onAssignRoom(entry, true)">
+                          {{ store.i18n.chat_assign_action_here() }}
+                        </ion-button>
+                      }
+                      @if (entry.tenants === undefined || entry.tenants.length > 0) {
+                        <ion-button slot="end" size="small" fill="clear" color="medium" (click)="onAssignRoom(entry, false)">
+                          {{ store.i18n.chat_assign_action_hide() }}
+                        </ion-button>
+                      }
+                    }
+                  </ion-item>
+                }
+              </ion-list>
+            }
+          }
+        </ion-card-content>
+      </ion-card>
+
       <!-- Group-room member reconciliation — additive-only, so no preview step -->
       <ion-card class="repair-card">
         <ion-card-header>
@@ -639,6 +702,9 @@ export class AocChat {
   protected readonly tenantRepairAmbiguous = computed(() => this.store.tenantRepairAmbiguous());
   protected readonly tenantRepairScanning = computed(() => this.store.tenantRepairScanning());
   protected readonly tenantRepairApplying = computed(() => this.store.tenantRepairApplying());
+  protected readonly assignRooms = computed(() => this.store.assignRooms());
+  protected readonly assignScanning = computed(() => this.store.assignScanning());
+  protected readonly assignBusyRoomId = computed(() => this.store.assignBusyRoomId());
   protected readonly memberRepairApplying = computed(() => this.store.memberRepairApplying());
   protected readonly memberRepairJoined = computed(() => this.store.memberRepairJoined());
   protected readonly postPolicySyncApplying = computed(() => this.store.postPolicySyncApplying());
@@ -700,6 +766,19 @@ export class AocChat {
 
   protected onApplyTenantRepair(): void {
     this.store.applyTenantRepair();
+  }
+
+  protected onScanAssignableRooms(): void {
+    this.store.scanAssignableRooms();
+  }
+
+  protected onAssignRoom(entry: RoomAssignmentEntry, toThisApp: boolean): void {
+    this.store.assignRoom(entry, toThisApp);
+  }
+
+  /** Whether the room is already assigned to the app currently open — then "assign here" is a no-op. */
+  protected isAssignedHere(entry: RoomAssignmentEntry): boolean {
+    return !!entry.tenants?.includes(this.store.appStore.tenantId());
   }
 
   protected onApplyMemberRepair(): void {

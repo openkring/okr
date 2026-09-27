@@ -362,6 +362,21 @@
         "confirm": "Remove {{ count }} people without a membership from “{{ group }}” now?",
         "conf": "{{ count }} people removed."
       }
+    },
+    "assign": {
+      "label": "Assign rooms by hand",
+      "description": "Some chat rooms belong to no group — for example rooms created by a connection to Signal or WhatsApp. The automatic assignment cannot recognise them, so you decide here: rooms you assign to this app appear in the chat overview; hidden rooms appear in no app. Either way they stay readable in Element.",
+      "scan": "Find rooms",
+      "none": "Every room is assigned – nothing to do.",
+      "found": "Rooms without a group",
+      "bridged": "created by a connection",
+      "state_unassigned": "assigned to no app",
+      "state_unmarked": "not assigned yet",
+      "action_here": "Assign to this app",
+      "action_hide": "Hide",
+      "confirm_here": "Assign the room “{{ name }}” to this app? It will then appear in the chat overview.",
+      "confirm_hide": "Hide the room “{{ name }}”? It will then appear in no app.",
+      "conf": "Assignment saved."
     }
   },
   "content": {

@@ -115,6 +115,65 @@ export function isBridgeGhost(localpart: string): boolean {
 }
 
 /**
+ * Localparts of the mautrix bridge BOTS — `@signalbot`, `@whatsappbot`, … — derived from the
+ * same prefix list as the ghosts so a newly bridged platform only has to be added once.
+ *
+ * The bot is not a ghost: it is the bridge's own service account, and it is the CREATOR of
+ * every room a bridge provisions. That makes it the cheapest reliable "this room is bridged"
+ * signal available to the room list — see `isBridgedRoom`.
+ */
+export const BRIDGE_BOT_LOCALPARTS = BRIDGE_GHOST_PREFIXES.map(p => `${p.replace(/_$/, '')}bot`);
+
+/** True if the Matrix localpart is a mautrix bridge's own bot account. */
+export function isBridgeBot(localpart: string): boolean {
+  return BRIDGE_BOT_LOCALPARTS.includes(localpart);
+}
+
+/**
+ * Matrix `server_name` from the homeserver URL — the domain that appears in user and room ids
+ * (`@kaiser:bkchat.etke.host`), which is NOT the same string as the URL: the API is usually
+ * served from a `matrix.` subdomain that is no part of the server name.
+ */
+export function serverNameOf(homeserverUrl: string): string {
+  return homeserverUrl.replace(/^https?:\/\//, '').replace(/^matrix\./, '').replace(/\/+$/, '');
+}
+
+/**
+ * Whether a room lives on a different homeserver than ours.
+ *
+ * A room id is `!<opaque>:<server that created it>` — the domain is assigned at creation and
+ * never changes, even as the room federates. Every okr room is created on our own homeserver
+ * (by `resolveGroupRoom`, `createAdhocChat` or MatrixChatService), so a foreign domain is
+ * positive proof the room is not one of ours.
+ *
+ * Returns false without a `serverName` so callers that cannot supply one keep the old
+ * behaviour — failing towards "show it", never towards hiding every room at once.
+ */
+export function isForeignRoom(roomId: string, serverName: string | undefined): boolean {
+  if (!serverName) return false;
+  const domain = roomId.split(':').slice(1).join(':');
+  return !!domain && domain.toLowerCase() !== serverName.toLowerCase();
+}
+
+/**
+ * Whether a room was provisioned by a chat bridge rather than by okr.
+ *
+ * Decided on the room's CREATOR, and that choice is forced rather than preferred: the room-list
+ * entry deliberately carries `members: []` (perf fix P-2 — rebuilding member arrays for every
+ * room on every debounced event was O(rooms × members)), so a membership test would silently
+ * always be false. `m.room.create` is already read in the same state lookup that feeds
+ * `stateLoaded`, so the creator costs nothing extra and cannot be absent from a room whose
+ * state has arrived.
+ *
+ * Returns false for an absent creator, which is the safe direction: a bridged room shown a beat
+ * too long loses nothing, a real conversation hidden does.
+ */
+export function isBridgedRoom(creator: string | undefined): boolean {
+  if (!creator) return false;
+  return isBridgeBot(creator.split(':')[0].replace(/^@/, '').toLowerCase());
+}
+
+/**
  * Canonical-alias localpart of a group room: `group_<sanitised okey>`.
  *
  * Mirrors `groupRoomAliasLocalpart` in `apps/functions/src/matrix-simple/shared.ts` (libs
@@ -194,6 +253,12 @@ export function groupKeyFromRoomAlias(alias: string | undefined): string | undef
  * Per room, in order:
  *  1. `tenants` — the `org.okr.tenant` marker written at room creation (and backfilled onto
  *     existing group rooms). Authoritative.
+ *  1b. marker PRESENT but EMPTY (`tenants: []`): hidden in every tenant. This is the only way
+ *     to say "this room belongs to no okr app", and it is a deliberate statement rather than
+ *     the absence of one — an unmarked room (rule 5) means "not classified", an empty marker
+ *     means "classified as private". Two callers rely on it: a bridged personal chat that was
+ *     explicitly unassigned, and a group that was archived (its room keeps its history and
+ *     disappears from the app, instead of being purged for a reversible action).
  *  2. no marker, but a `#group_…` canonical alias (mapped onto `topic` by MatrixChatService):
  *     a group room, kept when it matches one of this tenant's groups — by the persisted
  *     `matrixRoomId`, or by the alias localpart derived from the group okey (same derivation as
@@ -209,6 +274,21 @@ export function groupKeyFromRoomAlias(alias: string | undefined): string | undef
  *     not "unclassifiable" but "not classifiable YET". Rule 5 would keep it in every tenant for
  *     the length of that window (an elab group room briefly listed in the scs app). It comes
  *     back a beat later, fully classified, on the next rebuild.
+ *  1c. a room hosted on ANOTHER homeserver: dropped. The domain of a room id is the server that
+ *     created it, and every okr room is created on ours — so a foreign domain means a room
+ *     federated in from elsewhere (the hoster's own `#news:etke.cc` and `#service:etke.cc`,
+ *     1069 and 972 members, reached every tenant app through rule 5). Such a room can never be
+ *     marked either: `setRoomTenants` needs the admin bot to hold power in the room, and the
+ *     Synapse admin API only governs local rooms — so this is the only place it can be handled.
+ *     Skipped entirely when no `serverName` is supplied, so a caller that cannot supply one
+ *     keeps the previous behaviour rather than hiding everything.
+ *  4b. an unmarked, alias-less room CREATED BY A BRIDGE BOT (`@signalbot` and friends): dropped.
+ *     A bridge provisions one room per bridged conversation on its own schedule, so these
+ *     appear continuously and can never match a group or a person — rule 5 would put every one
+ *     of the user's private Signal/WhatsApp groups into every tenant app they open, and a
+ *     one-time cleanup would not hold. Default-hidden rather than default-everywhere; assign a
+ *     marker (rule 1) to surface one deliberately. A bridged 1:1 chat never reaches here —
+ *     rule 3 keeps it, because a DM belongs wherever its two participants are.
  *  5. anything else (ad-hoc room, unresolvable DM counterpart): kept. Hiding a room we cannot
  *     classify would lose a conversation.
  *
@@ -216,16 +296,22 @@ export function groupKeyFromRoomAlias(alias: string | undefined): string | undef
  */
 export function filterRoomsOfTenant<T extends {
   roomId: string; topic?: string; tenants?: string[]; directUserId?: string; stateLoaded?: boolean;
+  creator?: string;
 }>(
   rooms: T[],
   groups: { okey: string; matrixRoomId?: string }[],
   personKeys: Set<string>,
-  tenantId: string
+  tenantId: string,
+  serverName?: string
 ): T[] {
   const roomIds = new Set(groups.map(g => g.matrixRoomId).filter(Boolean));
   const aliases = new Set(groups.map(g => `#${groupRoomAliasLocalpart(g.okey)}`));
   return rooms.filter(r => {
     if (r.tenants?.length) return r.tenants.includes(tenantId);
+    // An empty marker is a statement, not a gap: the room was explicitly assigned to no
+    // tenant. `undefined` (never marked) falls through to the classification rules below.
+    if (r.tenants) return false;
+    if (isForeignRoom(r.roomId, serverName)) return false;
     // Lowercased: rooms created by an older code path kept the okey's original case
     // (`#group_Trainerteam`), while the alias derived from a group okey is lowercased.
     const alias = r.topic?.toLowerCase();
@@ -237,6 +323,7 @@ export function filterRoomsOfTenant<T extends {
     // Explicit `false` only: undefined means an entry from a code path that does not track
     // state loading, which must keep the historic "keep" behaviour.
     if (r.stateLoaded === false) return false;
+    if (isBridgedRoom(r.creator)) return false;
     return true;
   });
 }

@@ -362,6 +362,21 @@
         "confirm": "¿Eliminar ahora {{ count }} personas sin membresía de «{{ group }}»?",
         "conf": "{{ count }} personas eliminadas."
       }
+    },
+    "assign": {
+      "label": "Asignar salas a mano",
+      "description": "Algunas salas de chat no pertenecen a ningún grupo — por ejemplo las que se crean a través de una conexión con Signal o WhatsApp. La asignación automática no puede reconocerlas, así que aquí decides tú: las salas que asignes a esta app aparecen en el resumen de chats; las salas ocultas no aparecen en ninguna app. En ambos casos siguen siendo legibles en Element.",
+      "scan": "Buscar salas",
+      "none": "Todas las salas están asignadas: nada que hacer.",
+      "found": "Salas sin grupo",
+      "bridged": "creada por una conexión",
+      "state_unassigned": "no asignada a ninguna app",
+      "state_unmarked": "aún no asignada",
+      "action_here": "Asignar a esta app",
+      "action_hide": "Ocultar",
+      "confirm_here": "¿Asignar la sala «{{ name }}» a esta app? Entonces aparecerá en el resumen de chats.",
+      "confirm_hide": "¿Ocultar la sala «{{ name }}»? Entonces no aparecerá en ninguna app.",
+      "conf": "Asignación guardada."
     }
   },
   "content": {
