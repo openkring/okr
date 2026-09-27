@@ -34,6 +34,7 @@ export const MATRIX_CHAT_I18N_KEYS = {
   connectionError:           PFX + 'connectionError',
   connecting:                PFX + 'connecting',
   noRoomsError:              PFX + 'noRoomsError',
+  roomAccessDenied:          PFX + 'roomAccessDenied',
   createTestRoom:            PFX + 'createTestRoom',
   type_message:              PFX + 'typeMessage',
   record_audio:              PFX + 'recordAudio',

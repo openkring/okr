@@ -37,6 +37,7 @@
   "connectionError": "Connection error",
   "connecting": "connecting...",
   "noRoomsError": "No chat rooms available. Create a room or join one to get started.",
+  "roomAccessDenied": "This chat is open to members of the group only. Ask a group admin if you would like to join.",
   "createTestRoom": "Create test room",
   "typeMessage": "Write a message...",
   "recordAudio": "Record voice message",

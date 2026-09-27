@@ -37,6 +37,7 @@
   "connectionError": "Erreur de connexion",
   "connecting": "connexion...",
   "noRoomsError": "Aucun salon de discussion disponible. Créez un salon ou rejoignez-en un pour commencer.",
+  "roomAccessDenied": "Cette discussion est réservée aux membres du groupe. Adresse-toi à une administratrice du groupe si tu souhaites en faire partie.",
   "createTestRoom": "Créer un salon de test",
   "typeMessage": "Écrire un message...",
   "recordAudio": "Enregistrer un message vocal",

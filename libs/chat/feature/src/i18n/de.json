@@ -37,6 +37,7 @@
   "connectionError": "Verbindungsfehler",
   "connecting": "verbinden...",
   "noRoomsError": "Keine Chat-Räume vorhanden. Erstelle einen Raum oder nimm in einem Raum teil um zu starten.",
+  "roomAccessDenied": "Dieser Chat steht nur Mitgliedern der Gruppe offen. Wende dich an eine Gruppenadministratorin, wenn du dabei sein möchtest.",
   "createTestRoom": "Test Raum erstellen",
   "typeMessage": "Schreibe eine Nachricht...",
   "recordAudio": "Sprachnachricht aufnehmen",

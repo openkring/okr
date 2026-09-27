@@ -37,6 +37,7 @@
   "connectionError": "Errore di connessione",
   "connecting": "connessione...",
   "noRoomsError": "Nessuna stanza di chat disponibile. Crea una stanza o partecipa a una per iniziare.",
+  "roomAccessDenied": "Questa chat è riservata ai membri del gruppo. Rivolgiti a un'amministratrice del gruppo se vuoi parteciparvi.",
   "createTestRoom": "Crea stanza di prova",
   "typeMessage": "Scrivi un messaggio...",
   "recordAudio": "Registra messaggio vocale",

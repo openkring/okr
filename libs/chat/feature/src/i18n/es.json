@@ -37,6 +37,7 @@
   "connectionError": "Error de conexión",
   "connecting": "conectando...",
   "noRoomsError": "No hay salas de chat disponibles. Crea una sala o únete a una para empezar.",
+  "roomAccessDenied": "Este chat está reservado a los miembros del grupo. Habla con una administradora del grupo si quieres participar.",
   "createTestRoom": "Crear sala de prueba",
   "typeMessage": "Escribir un mensaje...",
   "recordAudio": "Grabar mensaje de voz",

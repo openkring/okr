@@ -468,6 +468,14 @@ function rejectionReasons(results: PromiseSettledResult<unknown>[]): unknown[] {
                   (filesSent)="onFilesSent($event)"
                   (locationSent)="onLocationSent()"
                 />
+              } @else if (roomAccessDenied()) {
+                <!-- The deep-linked group room exists but this person may not enter it
+                     (chatMode 'members'). Say so where the chat would be: the access toast
+                     is gone in seconds, and an unexplained blank pane reads as a defect. -->
+                <div class="empty-state">
+                  <ion-icon src="{{'chatbubbles' | svgIcon}}" size="large"></ion-icon>
+                  <p>{{ store.i18n.roomAccessDenied() }}</p>
+                </div>
               } @else {
                 @if (rooms().length === 0) {
                   <div class="empty-state">
@@ -636,6 +644,13 @@ export class MatrixChat implements OnDestroy {
    */
   protected readonly pendingAskGroup = signal<string | undefined>(undefined);
 
+  /**
+   * The okey of a group whose room `requestGroupRoomAccess` refused (a 'members' group the
+   * caller does not belong to). Drives the explanatory empty state; cleared as soon as any
+   * deep link resolves, so it can never outlive the room it refers to.
+   */
+  protected readonly roomAccessDenied = signal<string | undefined>(undefined);
+
   /** Names the reach — who will read what the person is about to write. */
   protected readonly pendingAskHint = computed(() => {
     const key = this.pendingAskGroup();
@@ -766,6 +781,7 @@ export class MatrixChat implements OnDestroy {
         ?? syncRooms.find(r => r.topic?.split(':')[0]?.toLowerCase() === wantedAlias);
       if (match) {
         this.resolvedRoomAlias = roomAlias;
+        this.roomAccessDenied.set(undefined);
         this.store.setCurrentRoom(match.roomId);
         return;
       }
@@ -779,8 +795,20 @@ export class MatrixChat implements OnDestroy {
       // Never send a Matrix room ID through requestGroupRoomAccess (it would create a spurious room).
       if (roomAlias.startsWith('!')) {
         this.resolvedRoomAlias = roomAlias;
+        this.roomAccessDenied.set(undefined);
         this.store.setCurrentRoom(roomAlias);
         return;
+      }
+      // The wanted room is demonstrably NOT in this user's room list, so whatever
+      // `currentRoomId` still holds belongs to some OTHER room — MatrixChatStore is
+      // providedIn: 'root', so the selection survives every navigation. Leaving it in place
+      // renders the previously opened chat under this group's heading, which is how a member
+      // of '4er Dienstag' saw that conversation inside '4er Mittwoch' while the access toast
+      // told them they are not a member. Showing nothing is the only honest state here; the
+      // room is restored below the moment access is granted, or by the match branch above.
+      // Guarded on a non-empty list: with no rooms loaded yet, absence proves nothing.
+      if (syncRooms.length > 0 && this.store.currentRoomId()) {
+        untracked(() => this.store.setCurrentRoom(undefined));
       }
       // An 'ask' group creates the requester's room on the CF call — so for those, opening
       // must not call at all: the room is created on the first SEND instead (spec
@@ -909,9 +937,13 @@ export class MatrixChat implements OnDestroy {
       // the `#group_<key>` alias the deep link derives, so the match branch can never claim it.
       // Only on success: a failed request must stay retryable after the cooldown.
       this.resolvedRoomAlias = groupId;
+      this.roomAccessDenied.set(undefined);
       this.store.setCurrentRoom(result.roomId);
     } catch (error) {
       console.error('MatrixChat: Failed to request room access:', error);
+      // Remember the refusal: the toast is gone in seconds, but the pane must keep saying
+      // why it is empty for as long as the person looks at this group's chat.
+      this.roomAccessDenied.set(groupId);
       const msg = error instanceof Error ? error.message : 'Room access failed';
       await this.alertService.showToast(msg);
     } finally {

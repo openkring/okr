@@ -1,6 +1,6 @@
 import { computed, inject, Injector } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { firstValueFrom, of } from 'rxjs';
+import { firstValueFrom, map, of } from 'rxjs';
 import { Router } from '@angular/router';
 import { ModalController, ToastController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
@@ -66,7 +66,12 @@ export const GroupStore = signalStore(
       }),
       stream: ({ params }): ReturnType<typeof store.firestoreService.searchData<GroupModel>> => {
         if (!params.currentUser || !params.tenantId) return of([] as GroupModel[]);
-        return store.firestoreService.searchData<GroupModel>(GroupCollection, getSystemQuery(params.tenantId), 'name', 'asc');
+        // Ad-hoc-Chats (`kind: 'chat'`) liegen in derselben Collection, gehoeren aber in
+        // keine Gruppenoberflaeche: ihr Gruppendokument traegt weder CMS-Seite noch
+        // Sections, also endet die Chat-Segment des group-view bei `pageNotFound`.
+        // Gleiche Regel wie `AppStore.allGroups()`; `kind ?? 'group'` fuer Altdokumente.
+        return store.firestoreService.searchData<GroupModel>(GroupCollection, getSystemQuery(params.tenantId), 'name', 'asc')
+          .pipe(map((groups) => groups.filter((g) => (g.kind ?? 'group') === 'group')));
       }
     }),
     groupResource: rxResource({
@@ -456,7 +461,7 @@ export const GroupStore = signalStore(
       const cal = new CalendarModel(store.tenantId());
       cal.okey = group.okey;
       cal.name = group.name;
-      cal.description = store.i18n.calendar_name + group.okey;
+      cal.description = `${store.i18n.calendar_name()} ${group.name}`;
       cal.owner = `${GroupModelName}.${group.okey}`;
       await store.firestoreService.createModel<CalendarModel>(CalendarCollection, cal, 
         store.i18n.calendar_create_conf(), store.i18n.calendar_create_error(), store.currentUser());
