@@ -11,7 +11,7 @@ import { AppStore } from '@okr/shared-feature';
 import { debugData, debugMessage } from '@okr/shared-util-core';
 import { convertHeicToJpeg, materializeFile, resolveFileMimeType, extractVideoPoster, UploadTooLargeError, initMatrixLogLevel, ensurePromiseWithResolvers, buildMentionContent, escapeHtml, MentionRef, OKR_TENANT_EVENT, resolveMatrixDisplayName, canPostWithPower } from '@okr/chat-util';
 
-import { mxcAvatarHttpUrl } from './matrix-helpers';
+import { mediaMimeHint, mxcAvatarHttpUrl } from './matrix-helpers';
 import { MatrixMediaService } from './matrix-media.service';
 import { MatrixCallService } from './matrix-call.service';
 import { MatrixDirectRoomService } from './matrix-direct-room.service';
@@ -705,6 +705,25 @@ export class MatrixChatService {
     return this.messages.paginateRoomBackwards(roomId);
   }
 
+  /** Event ids of attachments whose download failed (and is being retried). */
+  public get failedMediaIds(): Observable<ReadonlySet<string>> {
+    return this.messages.failedMediaIds;
+  }
+
+  /** Retry one failed attachment now — a tap on its "image unavailable" tile. */
+  public retryMedia(roomId: string, eventId: string): void {
+    this.messages.retryMedia(roomId, eventId);
+  }
+
+  /**
+   * The ORIGINAL of an attachment as a blob URL ('' on failure). The message list shows a
+   * scaled preview of large photos; opening, zooming or saving one needs the full file.
+   */
+  public resolveOriginalMediaUrl(message: MatrixMessage): Promise<string> {
+    const mxcUrl = message.content?.url ?? message.content?.file?.url;
+    return this.media.resolveMediaUrl(mxcUrl, mediaMimeHint(message));
+  }
+
   /**
    * Send a text message to a room, optionally with person/room mentions.
    */
@@ -793,6 +812,10 @@ export class MatrixChatService {
     // Upload the file
     const upload = await this.client.uploadContent(file);
     const url = upload.content_uri;
+
+    // The sender already holds the bytes: show them straight away instead of downloading
+    // the photo back. Must happen before sendEvent — the local echo resolves immediately.
+    if (mimetype.startsWith('image/')) this.media.seedMedia(url, file);
 
     const info: IContent = { size: file.size, mimetype };
 

@@ -3,6 +3,8 @@ import { captureMessage } from '@sentry/angular';
 import type { MatrixClient } from 'matrix-js-sdk';
 import { Observable, Subject } from 'rxjs';
 
+import { IMAGE_PREVIEW_EDGE_PX, shouldUseImagePreview } from '@okr/chat-util';
+
 /** P-1: upper bound for the mxc→blob-URL cache (LRU eviction). */
 const MEDIA_CACHE_MAX = 200;
 
@@ -51,7 +53,7 @@ function isTransportFailure(message: string): boolean {
 })
 export class MatrixMediaService {
   private client: MatrixClient | null = null;
-  private readonly cache = new Map<string, string>(); // mxc → blob URL (insertion order = LRU order)
+  private readonly cache = new Map<string, string>(); // mxc (or `mxc#preview`) → blob URL (insertion order = LRU order)
   /** Reasons already reported this session — see reportSilentFailure. */
   private readonly reportedFailures = new Set<string>();
   private readonly authFailed$ = new Subject<void>();
@@ -77,37 +79,89 @@ export class MatrixMediaService {
   }
 
   /**
-   * Fetch a Matrix media URL with auth and return a blob URL.
-   * Caches results to avoid redundant fetches.
+   * Fetch a Matrix media URL with auth and return a blob URL of the ORIGINAL file.
+   * Caches results to avoid redundant fetches. Returns '' on any failure — nothing is cached
+   * then, so a later call tries again.
    * @param mimeTypeHint - expected MIME type; used to fix generic content-types returned by some homeservers
    */
   public async resolveMediaUrl(mxcUrl: string | undefined, mimeTypeHint?: string): Promise<string> {
     if (!this.client || !mxcUrl || !mxcUrl.startsWith('mxc://')) return '';
-    const cached = this.cache.get(mxcUrl);
-    if (cached) {
-      // P-1: mark as most-recently-used (re-insert moves it to the end of the Map order).
-      this.cache.delete(mxcUrl);
-      this.cache.set(mxcUrl, cached);
-      return cached;
-    }
+    const cached = this.cacheGet(mxcUrl);
+    if (cached) return cached;
     const httpUrl = this.client.mxcUrlToHttp(mxcUrl, undefined, undefined, undefined, false, true, true) ?? '';
     if (!httpUrl) {
       this.reportSilentFailure('mxcUrlToHttp returned no URL');
       return '';
     }
+    const { url } = await this.fetchToBlobUrl(httpUrl, mxcUrl, 'media download failed', mimeTypeHint);
+    return url;
+  }
+
+  /**
+   * The URL to SHOW an attachment in the message list: the homeserver's scaled preview for a
+   * large photo, the original for everything else (see shouldUseImagePreview).
+   *
+   * A photo straight off a phone is 7–10 MB and the preview ~100 KB. Downloading the original
+   * just to draw a 300 px tile took long enough on mobile data to be cut off by a backgrounded
+   * tab or a network switch, and the tile then read "image unavailable".
+   *
+   * An original that is already in the cache — the sender's own upload (seedMedia) or an image
+   * opened in the lightbox — wins over the preview. A preview the server refuses outright
+   * (4xx: format it cannot thumbnail) falls back to the original; a transient failure returns
+   * '' so the caller can retry later.
+   */
+  public async resolvePreviewUrl(mxcUrl: string | undefined, mimeTypeHint?: string, sizeBytes?: number): Promise<string> {
+    if (!shouldUseImagePreview(mimeTypeHint, sizeBytes)) return this.resolveMediaUrl(mxcUrl, mimeTypeHint);
+    if (!this.client || !mxcUrl || !mxcUrl.startsWith('mxc://')) return '';
+    const original = this.cacheGet(mxcUrl);
+    if (original) return original;
+    const cacheKey = `${mxcUrl}#preview`;
+    const cached = this.cacheGet(cacheKey);
+    if (cached) return cached;
+    const httpUrl = this.client.mxcUrlToHttp(
+      mxcUrl, IMAGE_PREVIEW_EDGE_PX, IMAGE_PREVIEW_EDGE_PX, 'scale', false, true, true,
+    ) ?? '';
+    if (!httpUrl) return this.resolveMediaUrl(mxcUrl, mimeTypeHint);
+    // No MIME hint: the preview is re-encoded by the server and carries its own correct type.
+    const { url, status } = await this.fetchToBlobUrl(httpUrl, cacheKey, 'preview download failed');
+    if (url) return url;
+    const refused = status !== undefined && status >= 400 && status < 500 && status !== 401;
+    return refused ? this.resolveMediaUrl(mxcUrl, mimeTypeHint) : '';
+  }
+
+  /**
+   * Remember a file the user just uploaded as the resolved original of its `mxc://` URI, so
+   * the sender's own message shows the photo at once instead of downloading back the bytes
+   * the device already holds. Call it after the upload and BEFORE the event is sent — the
+   * local echo resolves its media immediately.
+   */
+  public seedMedia(mxcUrl: string, blob: Blob): void {
+    if (!mxcUrl.startsWith('mxc://') || blob.size === 0) return;
+    if (this.cacheGet(mxcUrl)) return;
+    this.cacheSet(mxcUrl, URL.createObjectURL(blob));
+  }
+
+  /**
+   * Download one media URL into a blob URL and cache it under `cacheKey`.
+   * `url` is '' on failure; `status` is the HTTP status of a failed response (undefined when
+   * the fetch threw), so a caller can tell a refusal from a transient failure.
+   */
+  private async fetchToBlobUrl(
+    httpUrl: string, cacheKey: string, failureLabel: string, mimeTypeHint?: string,
+  ): Promise<{ url: string; status?: number }> {
     try {
-      const accessToken = this.client.getAccessToken();
+      const accessToken = this.client?.getAccessToken();
       const headers: Record<string, string> = accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {};
       const resp = await this.fetchOnceRetrying(httpUrl, headers);
       if (!resp.ok) {
-        this.reportSilentFailure(`media download failed: HTTP ${resp.status}`);
+        this.reportSilentFailure(`${failureLabel}: HTTP ${resp.status}`);
         // 401 is never about this one file — the token is gone. Signal once per client
         // so the facade can re-authenticate; further 401s belong to the same dead token.
         if (resp.status === 401 && !this.authFailureSignalled) {
           this.authFailureSignalled = true;
           this.authFailed$.next();
         }
-        return '';
+        return { url: '', status: resp.status };
       }
       const raw = await resp.blob();
       // Some homeservers serve media with mismatched or generic content-types (e.g. application/octet-stream).
@@ -116,28 +170,44 @@ export class MatrixMediaService {
         ? new Blob([await raw.arrayBuffer()], { type: mimeTypeHint })
         : raw;
       const blobUrl = URL.createObjectURL(blob);
-      // P-1: bound the cache — evict and revoke the least-recently-used entry when full,
-      // so long sessions in image-heavy rooms don't leak blob URLs unboundedly.
-      if (this.cache.size >= MEDIA_CACHE_MAX) {
-        const oldestKey = this.cache.keys().next().value as string | undefined;
-        if (oldestKey !== undefined) {
-          const oldestUrl = this.cache.get(oldestKey);
-          if (oldestUrl?.startsWith('blob:')) URL.revokeObjectURL(oldestUrl);
-          this.cache.delete(oldestKey);
-        }
-      }
-      this.cache.set(mxcUrl, blobUrl);
-      return blobUrl;
+      this.cacheSet(cacheKey, blobUrl);
+      return { url: blobUrl, status: resp.status };
     } catch (ex) {
       // SCS-9Q: a fetch that throws never reached the homeserver — on Safari that is the
       // generic "Load failed" TypeError, raised when the device switches network, the tab is
       // backgrounded mid-request or the connection simply drops. Nothing about it is
-      // actionable from here, so don't file a ticket for it.
+      // actionable from here, so don't file a ticket for it. The caller retries later.
       const message = (ex as Error | null)?.message ?? 'unknown';
-      if (isTransportFailure(message)) return '';
-      this.reportSilentFailure(`media fetch threw: ${message}`);
-      return '';
+      if (!isTransportFailure(message)) this.reportSilentFailure(`media fetch threw: ${message}`);
+      return { url: '' };
     }
+  }
+
+  /** Cache lookup that marks the entry most-recently-used (P-1). */
+  private cacheGet(key: string): string | undefined {
+    const cached = this.cache.get(key);
+    if (cached) {
+      // P-1: re-insert moves the entry to the end of the Map order.
+      this.cache.delete(key);
+      this.cache.set(key, cached);
+    }
+    return cached;
+  }
+
+  /**
+   * P-1: bounded insert — evict and revoke the least-recently-used entry when full, so long
+   * sessions in image-heavy rooms don't leak blob URLs unboundedly.
+   */
+  private cacheSet(key: string, blobUrl: string): void {
+    if (this.cache.size >= MEDIA_CACHE_MAX) {
+      const oldestKey = this.cache.keys().next().value as string | undefined;
+      if (oldestKey !== undefined) {
+        const oldestUrl = this.cache.get(oldestKey);
+        if (oldestUrl?.startsWith('blob:')) URL.revokeObjectURL(oldestUrl);
+        this.cache.delete(oldestKey);
+      }
+    }
+    this.cache.set(key, blobUrl);
   }
 
   /**

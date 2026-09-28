@@ -406,7 +406,9 @@ function rejectionReasons(results: PromiseSettledResult<unknown>[]): unknown[] {
                     [i18n]="store.i18n"
                     (loadOlder)="onLoadOlder()"
                     (messageClicked)="onMessageClicked($event)"
+                    [failedMediaIds]="store.failedMediaIds()"
                     (imageClicked)="onImageClicked($event)"
+                    (mediaRetry)="store.retryMedia($event)"
                     (reactionClicked)="onReactionClicked($event)"
                     (threadClicked)="onThreadClicked($event)"
                     (pollVoteClicked)="onPollVoteClicked($event)"
@@ -529,7 +531,9 @@ function rejectionReasons(results: PromiseSettledResult<unknown>[]): unknown[] {
                     [typingUsers]="[]"
                     [i18n]="store.i18n"
                     (messageClicked)="onMessageClicked($event)"
+                    [failedMediaIds]="store.failedMediaIds()"
                     (imageClicked)="onImageClicked($event)"
+                    (mediaRetry)="store.retryMedia($event)"
                     (reactionClicked)="onReactionClicked($event)"
                     (threadClicked)="onThreadClicked($event)"
                     (pollVoteClicked)="onPollVoteClicked($event)"
@@ -1119,9 +1123,12 @@ export class MatrixChat implements OnDestroy {
   }
 
   protected async onImageClicked(event: { message: MatrixMessage; group: MatrixMessage[] }): Promise<void> {
+    // The list shows a scaled preview of large photos; the lightbox opens on that preview at
+    // once and swaps in the original (also what "download" saves) as soon as it has arrived.
     const images: LightboxImage[] = event.group.map(m => ({
-      mediaUrl: m.mediaUrl ?? (m.content?.url as string | undefined) ?? '',
+      mediaUrl: m.mediaUrl ?? '',
       filename: m.body,
+      resolveFull: () => this.store.resolveOriginalMediaUrl(m),
     }));
     const initialIndex = event.group.indexOf(event.message);
     const modal = await this.modalController.create({

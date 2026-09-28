@@ -100,6 +100,7 @@ export const _MatrixChatStore = signalStore(
     callStateResource: rxResource({ stream: () => store.matrixService.callState }),
     callFeedsResource: rxResource({ stream: () => store.matrixService.callFeeds }),
     typingResource: rxResource({ stream: () => store.matrixService.typing }),
+    failedMediaResource: rxResource({ stream: () => store.matrixService.failedMediaIds }),
 
     receiptsResource: rxResource({
       params: () => ({
@@ -164,6 +165,8 @@ export const _MatrixChatStore = signalStore(
           m => m.relatesTo?.relationType !== 'm.thread'
         )
       ),
+      /** Attachments whose download failed — their tile shows the error, the rest show "loading". */
+      failedMediaIds: computed((): ReadonlySet<string> => state.failedMediaResource.value() ?? new Set<string>()),
       typingUsers: computed(() => {
         const notification = state.typingResource.value();
         if (!notification || notification.roomId !== state.currentRoomId()) return [];
@@ -369,6 +372,17 @@ export const _MatrixChatStore = signalStore(
         if (!roomId) return;
         const hasMore = await store.matrixService.paginateRoomBackwards(roomId);
         patchState(store, { hasMoreHistory: hasMore });
+      },
+
+      /** Retry a failed attachment of the current room now (tap on its tile). */
+      retryMedia(eventId: string): void {
+        const roomId = store.currentRoomId();
+        if (roomId) store.matrixService.retryMedia(roomId, eventId);
+      },
+
+      /** The original of an attachment — the list only shows a scaled preview of large photos. */
+      resolveOriginalMediaUrl(message: MatrixMessage): Promise<string> {
+        return store.matrixService.resolveOriginalMediaUrl(message);
       },
 
       markCurrentRoomAsRead(): void {

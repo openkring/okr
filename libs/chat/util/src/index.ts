@@ -14,3 +14,4 @@ export * from './lib/mention-link.util';
 export * from './lib/chat-view.util';
 export * from './lib/promise-with-resolvers.util';
 export * from './lib/evicted-rooms.util';
+export * from './lib/media-preview.util';

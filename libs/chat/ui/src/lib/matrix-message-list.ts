@@ -181,6 +181,33 @@ const MENTION_AVATAR_SIZE = 36;
       border: 1px dashed var(--ion-color-medium);
     }
 
+    /* A tap retries the download (MatrixChatStore.retryMedia). */
+    button.image-batch-thumb.image-broken {
+      cursor: pointer;
+      font: inherit;
+    }
+
+    .image-batch-thumb.image-broken .image-retry {
+      text-decoration: underline;
+    }
+
+    /* Still downloading — must NOT look like the error tile above. Before this state existed
+       every new photo read "image unavailable" until its download finished, and on a phone
+       that was long enough to be reported as broken. */
+    .image-batch-thumb.image-loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: default;
+      background: var(--ion-color-light);
+    }
+
+    .image-batch-thumb.image-loading ion-spinner {
+      width: 20px;
+      height: 20px;
+      color: var(--ion-color-medium);
+    }
+
     .image-batch-thumb.image-broken ion-icon {
       font-size: 20px;
     }
@@ -420,10 +447,17 @@ const MENTION_AVATAR_SIZE = 36;
                             (error)="onImageError(msg.eventId)"
                             (click)="imageClicked.emit({ message: msg, group: item.messages }); $event.stopPropagation()"
                           />
-                        } @else {
-                          <div class="image-batch-thumb image-broken" [title]="msg.body" [attr.aria-label]="i18n().image_unavailable()">
+                        } @else if (failedMediaIds().has(msg.eventId) || brokenImages().has(msg.eventId)) {
+                          <button type="button" class="image-batch-thumb image-broken" [title]="msg.body"
+                                  [attr.aria-label]="i18n().image_unavailable() + '. ' + i18n().image_retry()"
+                                  (click)="onRetryImage(msg.eventId); $event.stopPropagation()">
                             <ion-icon src="{{ 'alert-circle' | svgIcon }}" />
                             <span>{{ i18n().image_unavailable() }}</span>
+                            <span class="image-retry">{{ i18n().image_retry() }}</span>
+                          </button>
+                        } @else {
+                          <div class="image-batch-thumb image-loading" [title]="msg.body" [attr.aria-label]="i18n().image_loading()" role="status">
+                            <ion-spinner name="crescent" />
                           </div>
                         }
                       }
@@ -601,6 +635,8 @@ export class MatrixMessageList {
   typingUsers = input<string[]>([]);
   threadReplyCounts = input<Map<string, number>>(new Map());
   receiptsByEventId = input<Map<string, MatrixReadReceipt[]>>(new Map());
+  /** Attachments whose download failed; any other image without a mediaUrl is still loading. */
+  failedMediaIds = input<ReadonlySet<string>>(new Set());
   public readonly i18n = input.required<MatrixChatI18n>();
 
 
@@ -616,6 +652,8 @@ export class MatrixMessageList {
    */
   personSelected = output<{ localpart: string; message: MatrixMessage }>();
   imageClicked = output<{ message: MatrixMessage; group: MatrixMessage[] }>();
+  /** A tap on a failed image tile: download it again. */
+  mediaRetry = output<string>();
   reactionClicked = output<{messageId: string, emoji: string}>();
   threadClicked = output<string>();
   pollVoteClicked = output<{ pollEventId: string; answerIds: string[] }>();
@@ -828,6 +866,17 @@ export class MatrixMessageList {
   /** Mark an attachment as undecodable — the tile re-renders as the placeholder. */
   protected onImageError(eventId: string): void {
     this.brokenImages.update(prev => (prev.has(eventId) ? prev : new Set(prev).add(eventId)));
+  }
+
+  /** Forget the decode failure and ask for a fresh download; the tile shows "loading" meanwhile. */
+  protected onRetryImage(eventId: string): void {
+    this.brokenImages.update(prev => {
+      if (!prev.has(eventId)) return prev;
+      const next = new Set(prev);
+      next.delete(eventId);
+      return next;
+    });
+    this.mediaRetry.emit(eventId);
   }
 
   formatDate(timestamp: number): string {

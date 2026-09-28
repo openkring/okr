@@ -1,4 +1,5 @@
-import { inject, Injectable } from '@angular/core';
+import { DestroyRef, inject, Injectable, PLATFORM_ID } from '@angular/core';
+import { DOCUMENT, isPlatformBrowser } from '@angular/common';
 import { captureMessage } from '@sentry/angular';
 import { EventTimeline, EventType, MatrixClient, MatrixError, MatrixEvent, RelationType, Room } from 'matrix-js-sdk';
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
@@ -8,7 +9,7 @@ import { AppStore } from '@okr/shared-feature';
 import { debugData, debugMessage } from '@okr/shared-util-core';
 import {
   EvictedRooms, evictedRoomsStorageKey, isRenderableChatEvent, isRoomGoneError, isStillEvicted,
-  parseEvictedRooms, recordEvictedRoom,
+  mediaRetryDelayMs, parseEvictedRooms, recordEvictedRoom,
 } from '@okr/chat-util';
 import { AvatarService } from '@okr/avatar-data-access';
 
@@ -58,10 +59,40 @@ export class MatrixMessageService {
   // on the dead room.
   private readonly roomGone$ = new Subject<string>();
 
+  /**
+   * Attachments whose download failed, eventId → roomId. A failed download used to be
+   * dropped silently and the tile read "image unavailable" until the next cold start of the
+   * app, because only a full rebuild of the message list resolved media again. Everything
+   * listed here is retried: on a back-off timer, when the app returns to the foreground, when
+   * the device comes back online, and on a tap on the tile (retryMedia).
+   */
+  private readonly failedMedia = new Map<string, string>();
+  private readonly failedMedia$ = new BehaviorSubject<ReadonlySet<string>>(new Set());
+  /** Automatic retries already used per eventId — see mediaRetryDelayMs. */
+  private readonly mediaRetryAttempts = new Map<string, number>();
+  private readonly mediaRetryTimers = new Map<string, ReturnType<typeof setTimeout>>();
+
   /** How many rendered messages an opened room should carry before back-filling stops. */
   private static readonly MIN_VISIBLE_MESSAGES = 20;
   /** Round cap, so a room made almost entirely of state events cannot spin on /messages. */
   private static readonly MAX_INITIAL_PAGINATIONS = 5;
+
+  constructor() {
+    if (!isPlatformBrowser(inject(PLATFORM_ID))) return;
+    const document = inject(DOCUMENT);
+    const window = document.defaultView;
+    // A download cut off by a backgrounded tab or a dropped connection is exactly what these
+    // two moments repair — retry everything that is still missing right then.
+    const onVisible = () => { if (document.visibilityState === 'visible') this.retryAllFailedMedia(); };
+    const onOnline = () => this.retryAllFailedMedia();
+    document.addEventListener('visibilitychange', onVisible);
+    window?.addEventListener('online', onOnline);
+    inject(DestroyRef).onDestroy(() => {
+      document.removeEventListener('visibilitychange', onVisible);
+      window?.removeEventListener('online', onOnline);
+      this.mediaRetryTimers.forEach(t => clearTimeout(t));
+    });
+  }
 
   // ---- lifecycle, driven by the facade ----
 
@@ -75,6 +106,30 @@ export class MatrixMessageService {
     this.loadingRooms.clear();
     this.pendingReload.clear();
     this.pendingEdits.clear();
+    this.mediaRetryTimers.forEach(t => clearTimeout(t));
+    this.mediaRetryTimers.clear();
+    this.mediaRetryAttempts.clear();
+  }
+
+  /** Event ids of attachments whose download failed — the tile shows the error instead of "loading". */
+  get failedMediaIds(): Observable<ReadonlySet<string>> {
+    return this.failedMedia$.asObservable();
+  }
+
+  /**
+   * Retry one attachment now (a tap on its "image unavailable" tile). Does not consume one
+   * of the automatic retries.
+   */
+  public retryMedia(roomId: string, eventId: string): void {
+    const subject = this.messages$.get(roomId);
+    const message = subject?.value?.find(m => m.eventId === eventId);
+    if (!subject || !message) return;
+    this.patchResolvedMedia(subject, message);
+  }
+
+  /** Retry every attachment that is still missing (foreground, back online). */
+  private retryAllFailedMedia(): void {
+    for (const [eventId, roomId] of [...this.failedMedia]) this.retryMedia(roomId, eventId);
   }
 
   /** Emits the id of a room that was evicted because the server no longer knows it. */
@@ -161,9 +216,13 @@ export class MatrixMessageService {
     const baseMsg = this.mapEventToMessage(event, room);
     // For poll.start: preserve tally fields from the existing entry (avoids wiping votes on echo confirmation)
     const oldMsg = oldIdx >= 0 ? msgs[oldIdx] : undefined;
-    const newMsg = (et === 'org.matrix.msc3381.poll.start' && oldMsg)
+    const pollMsg = (et === 'org.matrix.msc3381.poll.start' && oldMsg)
       ? { ...baseMsg, pollVotes: oldMsg.pollVotes, pollVoters: oldMsg.pollVoters, myVoteAnswerId: oldMsg.myVoteAnswerId, myVoteAnswerIds: oldMsg.myVoteAnswerIds, pollEnded: oldMsg.pollEnded, maxSelections: oldMsg.maxSelections }
       : baseMsg;
+    // Keep the attachment the temp entry already shows: the confirmed event points at the
+    // same file, and dropping it made the sender's own photo flash back to a placeholder.
+    const newMsg = withResolvedMedia(pollMsg, oldMsg);
+    if (oldEventId && oldEventId !== newMsg.eventId) this.clearMediaFailure(oldEventId);
     if (oldIdx >= 0) {
       // Replace the temp-ID entry in-place so the message doesn't jump around
       const updated = [...msgs];
@@ -533,10 +592,11 @@ export class MatrixMessageService {
 
           if (hasResolvableMedia(msg.type) && mxcUrl) {
             const [mediaUrl, posterUrl] = await Promise.all([
-              this.media.resolveMediaUrl(mxcUrl, mediaMimeHint(msg)),
+              this.resolveDisplayUrl(msg, mxcUrl),
               this.resolvePosterUrl(msg),
             ]);
-            return { ...msg, senderAvatar: senderAvatar || undefined, mediaUrl, posterUrl };
+            this.recordMediaOutcome(roomId, msg.eventId, !!mediaUrl);
+            return { ...msg, senderAvatar: senderAvatar || undefined, mediaUrl: mediaUrl || undefined, posterUrl };
           }
           return { ...msg, senderAvatar: senderAvatar || undefined };
         })
@@ -579,7 +639,7 @@ export class MatrixMessageService {
       const existing = currentMsgs.findIndex(m => m.eventId === message.eventId);
       if (existing >= 0) {
         const updated = [...currentMsgs];
-        updated[existing] = message;
+        updated[existing] = withResolvedMedia(message, currentMsgs[existing]);
         subject.next(updated);
       } else {
         subject.next([...currentMsgs, message]);
@@ -628,11 +688,15 @@ export class MatrixMessageService {
     if (!hasResolvableMedia(message.type) || !mxcUrl) return;
 
     void Promise.all([
-      this.media.resolveMediaUrl(mxcUrl, mediaMimeHint(message)),
+      this.resolveDisplayUrl(message, mxcUrl),
       this.resolvePosterUrl(message),
     ]).then(([mediaUrl, posterUrl]) => {
-      if (!mediaUrl && !posterUrl) return;
       const msgs = subject.value ?? [];
+      // The entry may have been replaced meanwhile (local echo confirmed under its real id);
+      // the replacement resolves its own media, so this outcome no longer belongs to anything.
+      if (!msgs.some(m => m.eventId === message.eventId)) return;
+      this.recordMediaOutcome(message.roomId, message.eventId, !!mediaUrl);
+      if (!mediaUrl && !posterUrl) return;
       const idx = msgs.findIndex(m => m.eventId === message.eventId);
       if (idx < 0) return;
       const updated = [...msgs];
@@ -643,6 +707,47 @@ export class MatrixMessageService {
       };
       subject.next(updated);
     });
+  }
+
+  /**
+   * The URL to show an attachment in the list: the server's scaled preview for a large photo,
+   * the original for everything else — see MatrixMediaService.resolvePreviewUrl. The original
+   * of a photo is only fetched when it is opened (MatrixChatService.resolveMediaUrl).
+   */
+  private resolveDisplayUrl(message: MatrixMessage, mxcUrl: string): Promise<string> {
+    const hint = mediaMimeHint(message);
+    if (message.type !== 'm.image') return this.media.resolveMediaUrl(mxcUrl, hint);
+    const size = message.content?.info?.size;
+    return this.media.resolvePreviewUrl(mxcUrl, hint, typeof size === 'number' ? size : undefined);
+  }
+
+  /** Track a download's outcome: a success clears a failure, a failure is scheduled for retry. */
+  private recordMediaOutcome(roomId: string, eventId: string, ok: boolean): void {
+    if (ok) {
+      this.clearMediaFailure(eventId);
+      return;
+    }
+    if (!this.failedMedia.has(eventId)) {
+      this.failedMedia.set(eventId, roomId);
+      this.failedMedia$.next(new Set(this.failedMedia.keys()));
+    }
+    if (this.mediaRetryTimers.has(eventId)) return;
+    const attempt = this.mediaRetryAttempts.get(eventId) ?? 0;
+    const delay = mediaRetryDelayMs(attempt);
+    if (delay === undefined) return; // automatic retries used up — foreground, online or a tap
+    this.mediaRetryAttempts.set(eventId, attempt + 1);
+    this.mediaRetryTimers.set(eventId, setTimeout(() => {
+      this.mediaRetryTimers.delete(eventId);
+      if (this.failedMedia.has(eventId)) this.retryMedia(roomId, eventId);
+    }, delay));
+  }
+
+  private clearMediaFailure(eventId: string): void {
+    const timer = this.mediaRetryTimers.get(eventId);
+    if (timer) clearTimeout(timer);
+    this.mediaRetryTimers.delete(eventId);
+    this.mediaRetryAttempts.delete(eventId);
+    if (this.failedMedia.delete(eventId)) this.failedMedia$.next(new Set(this.failedMedia.keys()));
   }
 
   /**
@@ -955,4 +1060,18 @@ export class MatrixMessageService {
     }
     subject.next(result);
   }
+}
+
+/**
+ * `next` with the attachment URLs of `previous` carried over, when both entries point at the
+ * same file. Rebuilding a message from its event (local-echo confirmation, a re-fired timeline
+ * event) otherwise drops the already resolved URL and the tile falls back to its placeholder
+ * until the download runs again.
+ */
+function withResolvedMedia(next: MatrixMessage, previous: MatrixMessage | undefined): MatrixMessage {
+  if (!previous || next.mediaUrl) return next;
+  const nextMxc = next.content?.url ?? next.content?.file?.url;
+  const prevMxc = previous.content?.url ?? previous.content?.file?.url;
+  if (!nextMxc || nextMxc !== prevMxc) return next;
+  return { ...next, mediaUrl: previous.mediaUrl, posterUrl: next.posterUrl ?? previous.posterUrl };
 }

@@ -241,6 +241,8 @@
   "file": {
     "unavailable": "File non disponibile",
     "imageUnavailable": "Immagine non disponibile",
+    "imageLoading": "Caricamento dell'immagine",
+    "imageRetry": "Tocca per ricaricare",
     "shareError": "Non è stato possibile condividere il file",
     "downloadError": "Non è stato possibile scaricare il file",
     "sendError": "Non è stato possibile inviare il/i file",
