@@ -1,5 +1,5 @@
 import type { HttpInterceptorFn } from '@angular/common/http';
-import { addBreadcrumb, captureMessage, flush, setTag, setUser } from '@sentry/angular';
+import { addBreadcrumb, captureMessage, flush, getClient, isEnabled, setTag, setUser } from '@sentry/angular';
 import type { BrowserOptions, ErrorEvent, EventHint } from '@sentry/angular';
 import { redactSensitive, stripPii } from '@okr/shared-util-core';
 import { catchError } from 'rxjs';
@@ -283,4 +283,58 @@ export function reportBootFailure(context: Record<string, unknown> = {}): Promis
   });
   // The recovery reload tears the page down; without a flush the event never leaves the client.
   return flush(2000).catch(() => false);
+}
+
+/**
+ * A Sentry Crons monitor. Sent along with a check-in it creates the monitor on first use and
+ * keeps it in sync afterwards (upsert) — no hand-made monitor in the Sentry UI to drift from code.
+ * Field names are Sentry's wire format.
+ */
+export interface SentryMonitorConfig {
+  schedule: { type: 'crontab'; value: string } | { type: 'interval'; value: number; unit: 'minute' | 'hour' | 'day' };
+  /** Minutes after the expected time before a check-in counts as missed. */
+  checkin_margin?: number;
+  /** tz database name the crontab is read in, e.g. 'Europe/Zurich'. */
+  timezone?: string;
+  /** Consecutive missed/failed check-ins before Sentry opens an issue. */
+  failure_issue_threshold?: number;
+  /** Consecutive ok check-ins before Sentry resolves that issue again. */
+  recovery_threshold?: number;
+}
+
+type SentryEnvelope = Parameters<NonNullable<ReturnType<typeof getClient>>['sendEnvelope']>[0];
+
+/**
+ * Send one `ok` check-in to a Sentry Crons monitor — a heartbeat whose ABSENCE Sentry alerts on.
+ * That is the point: a client that is dead or offline can report nothing itself, so only a missing
+ * heartbeat can reveal it.
+ *
+ * The browser SDK has no captureCheckIn (it ships only in the server SDKs), so the `check_in`
+ * envelope item is built by hand and handed to the SDK's own transport: same DSN, CSP, rate
+ * limits. Check-ins bypass beforeSend, hence the explicit development guard.
+ *
+ * Resolves true only when Sentry accepted it — false while offline, rate-limited or disabled.
+ */
+export async function sendSentryCheckIn(monitorSlug: string, monitorConfig: SentryMonitorConfig): Promise<boolean> {
+  const client = getClient();
+  if (!client || !isEnabled()) return false;
+  const { release, environment } = client.getOptions();
+  if (environment === 'development') return false;
+
+  const checkIn = {
+    check_in_id: globalThis.crypto?.randomUUID?.().replace(/-/g, '') ?? '0'.repeat(32),
+    monitor_slug: monitorSlug,
+    status: 'ok',
+    release,
+    environment,
+    monitor_config: monitorConfig,
+  };
+  const envelope = [{ sent_at: new Date().toISOString() }, [[{ type: 'check_in' }, checkIn]]] as unknown as SentryEnvelope;
+  try {
+    // a failed fetch resolves with the error (the client swallows it), a success with a statusCode
+    const response = (await client.sendEnvelope(envelope)) as { statusCode?: number } | undefined;
+    return typeof response?.statusCode === 'number' && response.statusCode < 300;
+  } catch {
+    return false;
+  }
 }

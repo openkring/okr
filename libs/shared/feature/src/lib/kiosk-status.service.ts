@@ -10,6 +10,7 @@ import { FirestoreService } from '@okr/shared-data-access';
 import { isBrowser, isKioskOnly } from '@okr/shared-util-core';
 
 import { AppStore } from './app.store';
+import { KioskMonitorService } from './kiosk-monitor.service';
 
 /** Top-level collection, one document per kiosk user, document id = the kiosk user's uid. */
 export const KioskStatusCollection = 'kiosk-status';
@@ -107,6 +108,7 @@ export class KioskStatusService {
   private readonly firestoreService = inject(FirestoreService);
   private readonly platformId = inject(PLATFORM_ID);
   private readonly alertController = inject(AlertController);
+  private readonly kioskMonitor = inject(KioskMonitorService);
   private timer?: ReturnType<typeof setInterval>;
 
   /**
@@ -135,6 +137,9 @@ export class KioskStatusService {
       document.addEventListener('visibilitychange', this.reportOnWake);
       window.addEventListener('online', this.reportOnWake);
       this.listenForCommands();
+      // the outage alarm (Sentry Crons) and the why-was-it-gone report — see KioskMonitorService
+      const uid = this.appStore.fbUser()?.uid;
+      if (uid) this.kioskMonitor.start(this.appStore.tenantId(), uid);
     });
   }
 
