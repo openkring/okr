@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ErrorEvent } from '@sentry/angular';
 import { beforeSend, buildSentryOptions, SentryConfig } from './sentry';
 import { closeAnalyticsInitWindow, markAnalyticsInitStarted } from './analytics-init-window';
-import { clearRecentFailedRequests } from './failed-request-recorder';
+import { clearRecentFailedRequests, installFailedRequestRecorder } from './failed-request-recorder';
 
 const cfg: SentryConfig = {
   dsn: 'https://abc@o1.ingest.de.sentry.io/2',
@@ -217,6 +217,67 @@ describe('beforeSend and unowned object rejections (SCS-A8)', () => {
   it('never drops an error that carries a stacktrace, analytics window or not', () => {
     markAnalyticsInitStarted();
     const event = objectRejection({ status: 504 });
+    event.exception!.values![0].stacktrace = { frames: [{ function: 'confirm' }] };
+    expect(beforeSend(event, {} as never)).not.toBeNull();
+  });
+});
+
+describe('beforeSend and Edge-iOS injected rejections (SCS-B2)', () => {
+  const EDGE_IOS_UA =
+    'Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 EdgiOS/153.0.4234.0 Mobile/15E148 Safari/605.1.15';
+  const SAFARI_UA =
+    'Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.6 Mobile/15E148 Safari/604.1';
+
+  const objectRejection = (): ErrorEvent =>
+    ({
+      environment: 'production',
+      extra: { __serialized__: { status: 504, message: 'Gateway Timeout', details: {} } },
+      exception: {
+        values: [
+          {
+            type: 'UnhandledRejection',
+            value: 'Object captured as promise rejection with keys: details, message, status',
+            mechanism: { type: 'onunhandledrejection', handled: false },
+          },
+        ],
+      },
+    }) as unknown as ErrorEvent;
+
+  /** The recorder wraps fetch once; tests swap the response behind a stable stub. */
+  let fetchImpl: () => Promise<Response> = () => Promise.resolve(new Response(''));
+  globalThis.fetch = (() => fetchImpl()) as typeof fetch;
+  installFailedRequestRecorder();
+
+  const withUserAgent = (ua: string): void => { vi.stubGlobal('navigator', { userAgent: ua }); };
+
+  beforeEach(() => vi.stubGlobal('location', new URL('https://app.seeclub.org/auth/confirm')));
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    clearRecentFailedRequests();
+  });
+
+  it('drops an unowned object rejection on Edge iOS when none of our requests failed', () => {
+    withUserAgent(EDGE_IOS_UA);
+    expect(beforeSend(objectRejection(), {} as never)).toBeNull();
+  });
+
+  it('keeps it on Edge iOS when a request of ours failed just before', async () => {
+    withUserAgent(EDGE_IOS_UA);
+    fetchImpl = () => Promise.resolve(new Response('', { status: 504 }));
+    await fetch('https://app.seeclub.org/api/x');
+    const sent = beforeSend(objectRejection(), {} as never);
+    expect(sent?.extra?.['recentFailedRequests']).toEqual(['504 https://app.seeclub.org/api/x']);
+  });
+
+  it('keeps the same rejection on any other browser', () => {
+    withUserAgent(SAFARI_UA);
+    expect(beforeSend(objectRejection(), {} as never)).not.toBeNull();
+  });
+
+  it('keeps a rejection with a stacktrace on Edge iOS', () => {
+    withUserAgent(EDGE_IOS_UA);
+    const event = objectRejection();
     event.exception!.values![0].stacktrace = { frames: [{ function: 'confirm' }] };
     expect(beforeSend(event, {} as never)).not.toBeNull();
   });

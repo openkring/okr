@@ -6,7 +6,7 @@ import { catchError } from 'rxjs';
 import { isStaleChunkRecoveryInFlight } from './chunk-load-error-handler';
 import { isFirestoreQueueRecoveryInFlight } from './firestore-queue-recovery';
 import { isAnalyticsInitInFlight } from './analytics-init-window';
-import { getRecentFailedRequests } from './failed-request-recorder';
+import { getRecentFailedRequests, hasRecentFailedRequest } from './failed-request-recorder';
 import { getDeviceSupportTags } from './device-support';
 
 /** Sentry configuration as emitted into environment.ts by set-env.js. */
@@ -62,6 +62,13 @@ export function beforeSend(event: ErrorEvent, _hint: EventHint): ErrorEvent | nu
   // error carries a stacktrace or is a proper Error, and still reports.
   if (isUnownedObjectRejection(event) && isAnalyticsInitInFlight()) return null;
 
+  // Edge on iOS injects its own scripts (translator, Copilot, read-aloud …) that reject with a
+  // bare `{ status: 504, message: 'Gateway Timeout', details: {} }` when their Microsoft backend
+  // times out (SCS-B2, and in hindsight SCS-A8: 15 of 15 events Edge iOS, no other browser).
+  // No request of ours failed beforehand — the recorder would have listed it — so nothing is
+  // actionable. A real app failure still reports: it leaves a trace in the recorder.
+  if (isUnownedObjectRejection(event) && isEdgeIos() && !hasRecentFailedRequest(/./, EDGE_IOS_QUIET_MS)) return null;
+
   // An object rejection has no stacktrace and a title that names only its keys
   // ("…with keys: details, message, status"). Say what it actually was, and list the
   // requests that failed just before it — otherwise there is nothing to go on at all.
@@ -74,6 +81,14 @@ export function beforeSend(event: ErrorEvent, _hint: EventHint): ErrorEvent | nu
   event.breadcrumbs?.forEach((b) => { b.message = redactSensitive(b.message); });
 
   return event;
+}
+
+/** How far back a failed request of ours still makes an Edge-iOS object rejection plausibly ours. */
+const EDGE_IOS_QUIET_MS = 60_000;
+
+/** Microsoft Edge on iOS identifies itself with an `EdgiOS/<version>` user-agent token. */
+function isEdgeIos(): boolean {
+  return /\bEdgiOS\//.test(globalThis.navigator?.userAgent ?? '');
 }
 
 /** The `{ status, message, details }`-style payload Sentry serialises for object rejections. */
