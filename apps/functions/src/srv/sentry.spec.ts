@@ -75,6 +75,22 @@ describe('reportToSentry', () => {
     expect(event.extra).toEqual({ continueUrl: 'https://app.example.ch/auth/login' });
   });
 
+  it('passes a fingerprint through so one message can split into one issue per cause', async () => {
+    process.env['SENTRY_FUNCTIONS_DSN'] = DSN;
+    await reportToSentry({ message: 'boom', fingerprint: ['boom', 'auth/internal-error'] });
+
+    const event = JSON.parse((fetchMock.mock.calls[0][1].body as string).trim().split('\n')[2]);
+    expect(event.fingerprint).toEqual(['boom', 'auth/internal-error']);
+  });
+
+  it('omits the fingerprint when none is given, leaving grouping to Sentry', async () => {
+    process.env['SENTRY_FUNCTIONS_DSN'] = DSN;
+    await reportToSentry({ message: 'boom' });
+
+    const event = JSON.parse((fetchMock.mock.calls[0][1].body as string).trim().split('\n')[2]);
+    expect(event).not.toHaveProperty('fingerprint');
+  });
+
   it('never throws when Sentry is unreachable — the caller is already handling a failure', async () => {
     process.env['SENTRY_FUNCTIONS_DSN'] = DSN;
     fetchMock.mockRejectedValue(new Error('ECONNREFUSED'));

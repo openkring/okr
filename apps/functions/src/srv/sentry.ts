@@ -23,6 +23,11 @@ interface SentryReport {
   tags?: Record<string, string>;
   /** Extra context attached to the event but not indexed. */
   extra?: Record<string, unknown>;
+  /**
+   * Overrides Sentry's grouping. Use it when one stable `message` covers several unrelated causes
+   * (e.g. `[message, code]`), so a config error and a transient backend fault don't share one issue.
+   */
+  fingerprint?: string[];
   level?: 'error' | 'warning' | 'info';
 }
 
@@ -76,6 +81,7 @@ export async function reportToSentry(report: SentryReport): Promise<void> {
     message: { formatted: report.message },
     tags: { function: process.env['K_SERVICE'] ?? 'unknown', ...report.tags },
     ...(report.extra ? { extra: report.extra } : {}),
+    ...(report.fingerprint ? { fingerprint: report.fingerprint } : {}),
   };
 
   const envelope =

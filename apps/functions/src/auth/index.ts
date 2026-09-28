@@ -557,11 +557,20 @@ export const sendEmail = functions.onCall(
           // The caller gets the same generic success either way, so this is the ONLY signal that
           // the tenant is misconfigured (typically appDomain missing from the Auth authorized
           // domains). Log AND report — a log line nobody reads is how this stayed hidden.
-          logger.error(`${CF_NAME}: password-reset link generation FAILED (appId=${appId}, ${code}) — no email sent`);
+          // `auth/internal-error` is the Admin SDK's catch-all: the real cause (e.g. a per-address
+          // rate limit) is only in the raw server response inside the message, as an UPPER_SNAKE code.
+          const detail = String(e?.message ?? e).slice(0, 500);
+          const serverCode = detail.match(/\b[A-Z][A-Z0-9_]{3,}\b/)?.[0] ?? 'none';
+          logger.error(`${CF_NAME}: password-reset link generation FAILED (appId=${appId}, ${code}, ${serverCode}) — no email sent`, { detail });
+          // Tags, not extras: Sentry scrubs any extra whose key or value contains "auth", which
+          // hid both the continueUrl (…/auth/confirm) and the hint on every earlier event.
+          // Fingerprint by code so a misconfigured tenant (unauthorized-continue-uri) and a
+          // transient backend fault (internal-error) become separate issues.
           await reportToSentry({
             message: 'sendEmail: password-reset link generation failed',
-            tags: { appId, code, provider },
-            extra: { continueUrl: config.continueUrl, hint: 'is appDomain in Firebase Auth → authorized domains?' },
+            tags: { appId, code, serverCode, provider, appDomain: config.appDomain },
+            extra: { detail },
+            fingerprint: ['sendEmail-reset-link', code],
           });
         }
         return { success: true };
