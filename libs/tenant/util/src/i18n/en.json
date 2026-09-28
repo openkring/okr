@@ -140,6 +140,9 @@
     },
     "zip": {
       "label": "Zip (number path)"
+    },
+    "hearing-quiz": {
+      "label": "Hearing training"
     }
   },
   "picker": {

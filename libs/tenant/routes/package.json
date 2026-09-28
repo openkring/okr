@@ -65,6 +65,7 @@
     "@okr/task-feature": "*",
     "@okr/instruments-feature": "*",
     "@okr/instruments-whiteboard-feature": "*",
+    "@okr/games-hearing-quiz-feature": "*",
     "@okr/games-quiz-feature": "*",
     "@okr/games-zip-feature": "*"
   }

@@ -846,6 +846,21 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     retention: { months: 'indefinite', legalBasis: 'Persönliche Aufzeichnung — bleibt, bis der Autor sie löscht' },
   },
   {
+    collection: 'hearingQuizResults',
+    dataClass: 'content',
+    tier: 'T2',               // voluntary training — nothing may block its erasure
+    onTenantExit: 'delete',   // not a club record: the results leave with their user
+    // Hörtraining results (spec 2026-09-28-hearing-quiz-spec.md §10) are HEALTH DATA (revDSG
+    // Art. 5 lit. c): that someone trains their hearing at all is the sensitive fact. The subject
+    // is the one user, by Firebase Auth uid on `userKey` — the same field the collection's rule
+    // compares against (`userKey == request.auth.uid`, admin included), like `diaries`.
+    find: (c: SubjectCtx) => db().collection('hearingQuizResults').where('userKey', '==', c.uid),
+    tenantScope: 'tenantsArray',
+    onExport: 'full',
+    onErasure: 'delete',
+    retention: { months: 'indefinite', legalBasis: 'Freiwilliges Training — bleibt, bis die Person es löscht' },
+  },
+  {
     collection: 'stats_members',
     dataClass: 'content',
     tier: 'T4',
@@ -1323,6 +1338,9 @@ export async function resolveDocs(entry: SubjectDataEntry, ctx: SubjectCtx): Pro
 //   createdBy, and nothing a data subject could be identified from. That a member happens to
 //   have looked at a forecast leaves no trace here — the documents are written by the
 //   scheduler for the tenant's locations, whether anybody reads them or not.
+// not personal data: hearingQuizNodes — the Hörtraining CONTENT tree (folders, questions, clips)
+//   authored by content admins. `parentKey` is the parent FOLDER's okey, never a person; nothing
+//   in a node records who wrote it or who answered it — answers live in `hearingQuizResults`.
 // not personal data: accounts — chart of accounts (account numbers, names, hierarchy)
 // not personal data: accounting-configs — per-tenant accounting settings
 // not personal data: app-config — tenant configuration; opEmail/dpoEmail are operator

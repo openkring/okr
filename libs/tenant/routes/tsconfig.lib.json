@@ -49,6 +49,7 @@
     { "path": "../../finance/reporting/feature/tsconfig.lib.json" },
     { "path": "../../finance/vat-code/feature/tsconfig.lib.json" },
     { "path": "../../forms/feature/tsconfig.lib.json" },
+    { "path": "../../games/hearing-quiz/feature/tsconfig.lib.json" },
     { "path": "../../games/quiz/feature/tsconfig.lib.json" },
     { "path": "../../games/zip/feature/tsconfig.lib.json" },
     { "path": "../../geo/location/feature/tsconfig.lib.json" },

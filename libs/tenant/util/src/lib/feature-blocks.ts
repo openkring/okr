@@ -2484,6 +2484,42 @@ const zip: FeatureBlock = {
 };
 
 /**
+ * `libs/games/hearing-quiz/{data-access,feature,ui,util}` — Hörtraining for hearing-impaired
+ * people (spec `2026-09-28-hearing-quiz-spec.md`, TOC 1.64): a tenant-authored tree of topics,
+ * trainings and questions with recorded clips, and the listening exercise itself.
+ *
+ * Unlike the other games it OWNS DATA: `hearingQuizNodes` (the content, written by content
+ * admins) and `hearingQuizResults` (each user's own results — health data, owner-only in
+ * firestore.rules, no admin view).
+ *
+ * `defaultAvailability: 'beta'` + a `feature-rollout/hearing-quiz` doc with
+ * `allowTenants: ['okr']`: it is built as a showcase for a prospective client (an audiology
+ * practice) and lives in the demo tenant until that client has a tenant of its own. Widening it
+ * is one rollout-doc edit, no code.
+ *
+ * `c-hearing-quiz` re-declares the SHARED `editmode-toggle` leaf field-identically (same doc as
+ * `c-contentpage`, `c-docs`, …); the page only offers the context menu to content admins.
+ */
+const hearingQuiz: FeatureBlock = {
+  id: 'hearing-quiz',
+  bundle: 'special',
+  label: '@tenant/util.feature.hearing-quiz.label',
+  icon: 'music',
+  defaultAvailability: 'beta',
+  dependsOn: ['games'],
+  collections: ['hearingQuizNodes', 'hearingQuizResults'],
+  menu: [
+    gamesMenuParent([
+      { key: 'game-hearing-quiz', name: 'game-hearing-quiz', url: '/hearing-quiz/all/c-hearing-quiz', action: 'navigate', roleNeeded: 'registered', icon: 'music', label: '@item.game-hearing-quiz' },
+    ]),
+    { key: 'c-hearing-quiz', name: 'c-hearing-quiz', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
+      { key: 'editmode-toggle', name: 'editmode-toggle', url: 'toggleEditMode', action: 'toggle', roleNeeded: 'registered', icon: 'edit', label: '@item.editmode-toggle' },
+      { key: 'hq-add', name: 'hq-add', url: 'add', action: 'call', roleNeeded: 'contentAdmin', icon: 'add-circle', label: '@item.hq-add' },
+    ] },
+  ],
+};
+
+/**
  * Every feature block's METADATA the platform ships. Adding a block here is HALF of what
  * makes a feature reachable — the matching Angular route fragment must also be added to
  * `FEATURE_ROUTES` in `@okr/tenant-routes` (`feature-catalogue.ts`), joined by `id`.
@@ -2654,7 +2690,7 @@ const weather: FeatureBlock = {
 };
 
 export const FEATURE_BLOCKS: FeatureBlock[] = [
-  calevent, aoc, activity, task, instruments, games, quiz, zip,
+  calevent, aoc, activity, task, instruments, games, quiz, zip, hearingQuiz,
   auth, cms, user, profile, session, security, i18n, avatar, category, comment, geo, trip, consent,
   subject, relationship, vcard,
   resource, mobility,

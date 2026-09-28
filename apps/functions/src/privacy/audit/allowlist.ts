@@ -26,6 +26,7 @@ export const NON_PERSONAL_COLLECTIONS: ReadonlySet<string> = new Set([
   'erasure-log',
   'exchange-rates',
   'formDefinitions',
+  'hearingQuizNodes',
   'i18nDefault',
   'i18nTenantOverride',
   'icons',

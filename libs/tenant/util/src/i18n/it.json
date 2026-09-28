@@ -140,6 +140,9 @@
     },
     "zip": {
       "label": "Zip (percorso numerico)"
+    },
+    "hearing-quiz": {
+      "label": "Allenamento uditivo"
     }
   },
   "picker": {

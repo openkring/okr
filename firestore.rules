@@ -400,6 +400,27 @@ service cloud.firestore {
                       && belongsToTenant(resource.data) && belongsToTenant(request.resource.data);
       allow delete: if userExists() && isDiaryOwner(resource.data) && canWriteTenant(resource.data);
     }
+    // Hörtraining (spec 2026-09-28-hearing-quiz-spec.md). The content tree is authored in the
+    // app by content admins and read by every member of the tenant.
+    match /hearingQuizNodes/{id} {
+      allow read: if tenantRead();
+      allow create, update: if isContentManager() && tenantCreateOrDetach();
+      allow delete: if isContentManager() && canWriteTenant(resource.data);
+    }
+    // Training results are HEALTH DATA (revDSG Art. 5 lit. c): readable and writable by the one
+    // user they belong to — `userKey` is the Firebase Auth uid — and by nobody else, admin
+    // included, like `diaries`. HearingQuizResultService.listMine mirrors this rule in its query
+    // (uid AND tenant), which is what lets Firestore prove the rule for a list; keep both in step.
+    function isResultOwner(data) {
+      return userExists() && data.userKey == request.auth.uid;
+    }
+    match /hearingQuizResults/{id} {
+      allow read: if userExists() && (resource == null || (isResultOwner(resource.data) && belongsToTenant(resource.data)));
+      allow create: if isResultOwner(request.resource.data) && canWriteTenant(request.resource.data);
+      allow update: if isResultOwner(resource.data) && isResultOwner(request.resource.data)
+                      && belongsToTenant(resource.data) && canWriteTenant(request.resource.data);
+      allow delete: if isResultOwner(resource.data) && canWriteTenant(resource.data);
+    }
     match /diaryImports/{id} {
       allow read: if userExists() && (resource == null || (isDiaryOwner(resource.data) && belongsToTenant(resource.data)));
       // Written only by dryRunDiaryImport/commitDiaryImport via the Admin SDK, which bypasses

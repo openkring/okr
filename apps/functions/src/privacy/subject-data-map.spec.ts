@@ -246,7 +246,9 @@ describe('SUBJECT_DATA_MAP — tiers and tenant-exit disposition', () => {
     // their author. So nothing may lawfully block their erasure, which is what T2 encodes.
     // `diaryImports` joined the same day: the import run's cursor/report is the same
     // author-locked, voluntary shape as `diaries` — it mirrors that row on purpose.
-    expect(SUBJECT_DATA_MAP.filter((e) => e.tier === 'T2').map((e) => e.collection)).toEqual(['avatars', 'prospects', 'diaries', 'diaryImports']);
+    // `hearingQuizResults` joined 2026-09-28 (1.64): a user's own Hörtraining results — the
+    // same owner-locked, voluntary shape as `diaries`, and health data on top.
+    expect(SUBJECT_DATA_MAP.filter((e) => e.tier === 'T2').map((e) => e.collection)).toEqual(['avatars', 'prospects', 'diaries', 'diaryImports', 'hearingQuizResults']);
   });
 
   // Regression guard on the strictest-tier rule. `addresses` holds both the favorite

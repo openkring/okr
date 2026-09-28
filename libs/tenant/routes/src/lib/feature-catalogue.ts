@@ -1190,6 +1190,24 @@ const zip: BlockRoutes = {
 };
 
 /**
+ * `/hearing-quiz` — Hörtraining (spec 1.64). The tree page follows the list convention
+ * (`:listId/:contextMenuName`, listId always `all`); the two exercise routes come FIRST because
+ * they have the same segment count and would otherwise be swallowed by the list route.
+ */
+const hearingQuiz: BlockRoutes = {
+  id: 'hearing-quiz',
+  routes: (): Route[] => [{
+    path: 'hearing-quiz',
+    canActivate: [isAuthenticatedGuard],
+    children: [
+      { path: 'q/:nodeKey', loadComponent: () => import('@okr/games-hearing-quiz-feature').then(m => m.HearingQuizExercisePage) },
+      { path: 'session/:folderKey', loadComponent: () => import('@okr/games-hearing-quiz-feature').then(m => m.HearingQuizExercisePage) },
+      { path: ':listId/:contextMenuName', loadComponent: () => import('@okr/games-hearing-quiz-feature').then(m => m.HearingQuizTreePage) },
+    ],
+  }],
+};
+
+/**
  * The partner channel (spec 1.25 / C3 §5). `isAdminGuard` because the registry carries each
  * partner's contractual status and the `serviceUid` their installation reports with — an
  * operator-grade screen, not a member-facing one. `kring-app` also declares this route by hand
@@ -1306,7 +1324,7 @@ const weather: BlockRoutes = {
 };
 
 export const FEATURE_ROUTES: BlockRoutes[] = [
-  calevent, aoc, activity, task, instruments, games, quiz, zip,
+  calevent, aoc, activity, task, instruments, games, quiz, zip, hearingQuiz,
   auth, cms, user, profile, session, security, i18n, avatar, category, comment, geo, trip, consent,
   subject, relationship, vcard,
   resource, mobility,

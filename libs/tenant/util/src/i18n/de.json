@@ -140,6 +140,9 @@
     },
     "zip": {
       "label": "Zip (Zahlenpfad)"
+    },
+    "hearing-quiz": {
+      "label": "Hörtraining"
     }
   },
   "picker": {
