@@ -64,7 +64,12 @@
     },
     "date": "Date",
     "author": "Soumis par",
-    "account": "Compte de charges"
+    "account": "Compte de charges",
+    "qrBill": {
+      "title": "QR-facture dans le justificatif",
+      "creditor": "Bénéficiaire",
+      "reference": "Référence"
+    }
   },
   "submit": {
     "iban": "La relation bancaire est en cours d'enregistrement…",

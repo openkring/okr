@@ -64,7 +64,12 @@
     },
     "date": "Fecha",
     "author": "Enviado por",
-    "account": "Cuenta de gastos"
+    "account": "Cuenta de gastos",
+    "qrBill": {
+      "title": "Factura QR en el comprobante",
+      "creditor": "Beneficiario",
+      "reference": "Referencia"
+    }
   },
   "submit": {
     "iban": "Se están guardando los datos bancarios…",

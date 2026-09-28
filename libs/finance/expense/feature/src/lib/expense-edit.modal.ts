@@ -47,6 +47,7 @@ import { injectExpenseView } from './expense-view';
           [authorName]="view.authorName()"
           [accounts]="view.accounts()"
           [receipts]="view.receipts()"
+          [qrBills]="view.qrBills()"
           [qrCode]="view.qrCode()"
           [imgixBaseUrl]="view.imgixBaseUrl"
           [showForm]="showForm()"

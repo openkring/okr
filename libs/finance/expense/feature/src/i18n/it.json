@@ -64,7 +64,12 @@
     },
     "date": "Data",
     "author": "Inviato da",
-    "account": "Conto spese"
+    "account": "Conto spese",
+    "qrBill": {
+      "title": "QR-fattura nella ricevuta",
+      "creditor": "Beneficiario",
+      "reference": "Riferimento"
+    }
   },
   "submit": {
     "iban": "Le coordinate bancarie vengono salvate…",

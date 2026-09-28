@@ -1,4 +1,4 @@
-import { hasRole } from '@okr/shared-util-core';
+import { hasRole, SwissQrBill } from '@okr/shared-util-core';
 import {
   CategoryItemModel, CategoryListModel, ExpenseDocumentModel, ExpenseModel, ExpenseStatus, ExpenseTransferTo, UserModel,
 } from '@okr/shared-models';
@@ -26,6 +26,14 @@ export interface ExpenseReceipt {
   /** the Storage path, tenant/{tenantId}/ocr/expense/{expenseKey}/{name} — for the imgix thumbnail */
   path: string;
   contentType: string;
+}
+
+/** A Swiss QR-bill found on a receipt (ocr-results.qrBill), ready to render. */
+export interface ExpenseQrBill {
+  receiptName: string;
+  /** the QR code, re-rendered from the stored payload, as a data url */
+  qrCode: string;
+  bill: SwissQrBill;
 }
 
 export function newExpenseModel(tenantId: string, userId: string, accountingTenantId: string): ExpenseModel {

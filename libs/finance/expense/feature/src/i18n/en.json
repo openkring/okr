@@ -64,7 +64,12 @@
     },
     "date": "Date",
     "author": "Submitted by",
-    "account": "Expense account"
+    "account": "Expense account",
+    "qrBill": {
+      "title": "QR bill in the receipt",
+      "creditor": "Payee",
+      "reference": "Reference"
+    }
   },
   "submit": {
     "iban": "Bank details are being saved…",

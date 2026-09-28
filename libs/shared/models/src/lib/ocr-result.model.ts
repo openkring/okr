@@ -38,6 +38,10 @@ export class OcrResultModel implements OkrModel, SearchableModel {
   public vatLines: OcrVatLine[] = [];
   public subject = '';
   public confidence: Record<string, number> = {};
+  // The Swiss QR-bill printed on the receipt (Swiss Payment Code, CRLF-separated), decoded by
+  // stage ① — with the DEBTOR block blanked: the debtor is the member who paid, and this
+  // collection is tenant-readable. '' = the receipt carries no QR-bill (or predates 2026-09-28).
+  public qrBill = '';
 
   // resolution (stage ②)
   public matchedRuleKey = '';       // '' if no rule matched

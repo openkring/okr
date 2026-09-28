@@ -9,12 +9,12 @@ import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { AccountModel, ExpenseModel, OcrResultCollection, OcrResultModel, PersonModelName } from '@okr/shared-models';
 import { copyToClipboardWithConfirmation, createActionSheetButton, createActionSheetOptions } from '@okr/shared-util-angular';
-import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
+import { convertDateFormatToString, DateFormat, parseSwissQrBill } from '@okr/shared-util-core';
 
 import { AccountService } from '@okr/finance-account-data-access';
 import { ExpenseService } from '@okr/finance-expense-data-access';
 import {
-  buildSwissPaymentCode, centsToCHF, EXPENSE_I18N_KEYS, EXPENSE_STATE_CATEGORY_NAME, ExpenseI18n, ExpenseReceipt,
+  buildSwissPaymentCode, centsToCHF, EXPENSE_I18N_KEYS, EXPENSE_STATE_CATEGORY_NAME, ExpenseI18n, ExpenseQrBill, ExpenseReceipt,
   renderSwissQrSvg, svgToDataUrl, SwissQrPayment, swissQrBlocker,
 } from '@okr/finance-expense-util';
 import { ExpenseEditFormI18n } from '@okr/finance-expense-ui';
@@ -52,6 +52,29 @@ export function injectExpenseView(expense: Signal<ExpenseModel>) {
     stream: ({ params }) => from(expenseService.listReceipts(params)),
   });
   const receipts = computed(() => receiptsResource.value() ?? []);
+
+  /**
+   * The OCR results of this expense's receipts (one per file, matched by storagePath). Read ONCE
+   * for the QR-bill card and the "OCR-Text anzeigen" action. getDataOnce, not a stream: the
+   * results only change when the OCR runs again, and a cache-first partial snapshot would hide a
+   * QR-bill that is there.
+   */
+  const ocrResultsResource = rxResource<OcrResultModel[], string>({
+    params: () => expense().okey,
+    stream: ({ params }) => params ? from(firestoreService.getDataOnce<OcrResultModel>(OcrResultCollection, [
+      { key: 'tenants', operator: 'array-contains', value: env.tenantId },
+      { key: 'correlationKey', operator: '==', value: params },
+    ], 'none')) : of([]),
+  });
+  const ocrResults = computed(() => ocrResultsResource.value() ?? []);
+
+  /** The QR-bills printed on the receipts, in receipt order, re-rendered from the stored payload. */
+  const qrBills = computed((): ExpenseQrBill[] => receipts().flatMap(receipt => {
+    const payload = ocrResults().find(r => r.storagePath === receipt.path)?.qrBill ?? '';
+    const bill = parseSwissQrBill(payload);
+    if (!bill) return [];
+    return [{ receiptName: receipt.name, qrCode: svgToDataUrl(renderSwissQrSvg(payload)), bill }];
+  }));
 
   const accountsResource = rxResource<AccountModel[], string>({
     params: () => expense().accountingTenantId ?? '',
@@ -104,6 +127,9 @@ export function injectExpenseView(expense: Signal<ExpenseModel>) {
     iban_label:       i18n.detail_iban,
     iban_copy_conf:   i18n.iban_copy_conf,
     qr_hint:          i18n.qr_hint,
+    qrbill_title:     i18n.qrbill_title,
+    qrbill_creditor:  i18n.qrbill_creditor,
+    qrbill_reference: i18n.qrbill_reference,
     account_label:    i18n.account_label,
     note_label:       i18n.note_label,
     field_status:     i18n.field_status,
@@ -135,11 +161,7 @@ export function injectExpenseView(expense: Signal<ExpenseModel>) {
    * (one doc per receipt file, keyed by its storagePath). Those fields ARE the OCR result.
    */
   async function showOcrResult(receipt: ExpenseReceipt): Promise<void> {
-    const results = await firestoreService.getDataOnce<OcrResultModel>(OcrResultCollection, [
-      { key: 'tenants', operator: 'array-contains', value: env.tenantId },
-      { key: 'correlationKey', operator: '==', value: expense().okey },
-    ], 'none');
-    const result = results.find(r => r.storagePath === receipt.path);
+    const result = ocrResults().find(r => r.storagePath === receipt.path);
     const lines: string[] = [];
     if (!result) {
       lines.push(i18n.ocr_none());
@@ -165,8 +187,8 @@ export function injectExpenseView(expense: Signal<ExpenseModel>) {
   }
 
   return {
-    i18n, formI18n, imgixBaseUrl, authorKey, authorName, receipts, accounts, stateCategory, qrCode,
-    reloadReceipts: () => receiptsResource.reload(),
+    i18n, formI18n, imgixBaseUrl, authorKey, authorName, receipts, accounts, stateCategory, qrCode, qrBills,
+    reloadReceipts: () => { receiptsResource.reload(); ocrResultsResource.reload(); },
     showReceiptActions,
   };
 }

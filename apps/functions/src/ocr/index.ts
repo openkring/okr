@@ -13,6 +13,7 @@ import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functi
 import { parseOcrPath } from './ocr-path.util';
 import { toCents, ocrResultId, matchRule, resolveDebitAccount, type OcrRuleLite } from './ocr-extract.util';
 import { geminiExtract } from './gemini-extract';
+import { decodeQrBill } from './qr-bill-decode';
 import { emitEvent } from '../workflow/emit';
 import { getTodayStr, DateFormat } from '@okr/shared-util-core';
 
@@ -174,7 +175,11 @@ async function extractReceipt(opts: {
     await admin.storage().bucket(bucketName).file(objectName).download({ destination: tempFilePath });
     const accountingTenantId = tenantId;
     const accountList = ocrUsage === 'paper' ? '' : await loadLeafAccountList(accountingTenantId);
-    const raw = await geminiExtract(apiKey, tempFilePath, contentType, ocrUsage, accountList);
+    // The QR-bill decode runs beside Gemini; it never throws, so it cannot fail the extraction.
+    const [raw, qrBill] = await Promise.all([
+      geminiExtract(apiKey, tempFilePath, contentType, ocrUsage, accountList),
+      decodeQrBill(objectName, contentType),
+    ]);
     const documentKey = await createVoucher(tenantId, objectName, bucketName, contentType, size, downloadToken);
     await resultRef.set({
       tenants: [tenantId], isArchived: false, index: '', ocrUsage,
@@ -189,9 +194,10 @@ async function extractReceipt(opts: {
       confidence: raw.confidence ?? {},
       matchedRuleKey: '', accountKey: '', llmProposedAccountKey: '',
       llmProposedAccountId: raw.llmProposedAccountId ?? '',
+      qrBill,
       bookingKey: '', error: '',
     });
-    logger.info(`extractReceipt: wrote result ${resultRef.id} (vendor="${raw.vendor}")`);
+    logger.info(`extractReceipt: wrote result ${resultRef.id} (vendor="${raw.vendor}", qrBill=${qrBill ? 'yes' : 'no'})`);
   } catch (error: unknown) {
     logger.error(`extractReceipt: extraction failed for "${objectName}":`, error);
     await resultRef.set({

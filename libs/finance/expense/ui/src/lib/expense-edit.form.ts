@@ -12,7 +12,7 @@ import { coerceBoolean, convertDateFormatToString, DateFormat, getThumbnailUrl }
 import { AvatarPipe } from '@okr/avatar-ui';
 import { AccountSelect, AccountSelectI18n } from '@okr/finance-account-ui';
 import {
-  ALLOWED_CURRENCIES, centsToCHF, chfToCents, ExpenseEditFormValue, expenseEditValidations, ExpenseReceipt,
+  ALLOWED_CURRENCIES, centsToCHF, chfToCents, ExpenseEditFormValue, expenseEditValidations, ExpenseQrBill, ExpenseReceipt,
 } from '@okr/finance-expense-util';
 
 export type { ExpenseEditFormValue };
@@ -30,6 +30,9 @@ export interface ExpenseEditFormI18n {
   iban_label: Signal<string>;
   iban_copy_conf: Signal<string>;
   qr_hint: Signal<string>;
+  qrbill_title: Signal<string>;
+  qrbill_creditor: Signal<string>;
+  qrbill_reference: Signal<string>;
   account_label: Signal<string>;
   note_label: Signal<string>;
   field_status: Signal<string>;
@@ -171,7 +174,7 @@ export interface ExpenseEditFormI18n {
                       </ion-label>
                       <okr-button-copy slot="end" [value]="ibanElectronic()" [i18n]="copyI18n()" />
                     </ion-item>
-                    @if (!qrCode()) {
+                    @if (showQrHint()) {
                       <ion-item lines="none">
                         <ion-note>{{ i18n().qr_hint() }}</ion-note>
                       </ion-item>
@@ -197,6 +200,60 @@ export interface ExpenseEditFormI18n {
             </ion-grid>
           </ion-card-content>
         </ion-card>
+
+        <!-- the Swiss QR-bill printed on a receipt, decoded by the OCR pipeline (debtor removed) -->
+        @for (qr of qrBills(); track qr.receiptName) {
+          <ion-card>
+            <ion-card-header>
+              <ion-card-title>{{ i18n().qrbill_title() }}</ion-card-title>
+            </ion-card-header>
+            <ion-card-content class="ion-no-padding">
+              <ion-grid>
+                <ion-row>
+                  <ion-col size="12" size-md="6">
+                    <ion-item lines="none">
+                      <ion-label>
+                        <p>{{ i18n().qrbill_creditor() }}</p>
+                        <h3>{{ qr.bill.creditorName }}</h3>
+                        <p>{{ qr.bill.creditorStreet }}</p>
+                        <p>{{ qr.bill.creditorPlace }}</p>
+                      </ion-label>
+                    </ion-item>
+                    <ion-item lines="none">
+                      <ion-label>
+                        <p>{{ i18n().iban_label() }}</p>
+                        <h3 class="iban">{{ formatIban(qr.bill.iban) }}</h3>
+                      </ion-label>
+                      <okr-button-copy slot="end" [value]="qr.bill.iban" [i18n]="copyI18n()" />
+                    </ion-item>
+                    @if (qr.bill.amount) {
+                      <ion-item lines="none">
+                        <ion-label>
+                          <p>{{ i18n().amount_label() }}</p>
+                          <h3>{{ qr.bill.amount }} {{ qr.bill.currency }}</h3>
+                        </ion-label>
+                      </ion-item>
+                    }
+                    @if (qr.bill.reference) {
+                      <ion-item lines="none">
+                        <ion-label>
+                          <p>{{ i18n().qrbill_reference() }}</p>
+                          <h3 class="iban">{{ qr.bill.reference }}</h3>
+                        </ion-label>
+                      </ion-item>
+                    }
+                    <ion-item lines="none">
+                      <ion-note>{{ qr.receiptName }}</ion-note>
+                    </ion-item>
+                  </ion-col>
+                  <ion-col size="12" size-md="6" class="qr">
+                    <img [src]="qr.qrCode" [alt]="i18n().qrbill_title()" />
+                  </ion-col>
+                </ion-row>
+              </ion-grid>
+            </ion-card-content>
+          </ion-card>
+        }
 
         @if (receipts().length > 0) {
           <ion-card>
@@ -239,6 +296,8 @@ export class ExpenseEditForm {
   public readonly authorName = input('');
   public readonly accounts = input<AccountModel[]>([]);
   public readonly receipts = input<ExpenseReceipt[]>([]);
+  /** the QR-bills found on the receipts (ocr-results.qrBill) */
+  public readonly qrBills = input<ExpenseQrBill[]>([]);
   /** the Swiss QR payment code as a data url; '' when none can be built (qr_hint explains) */
   public readonly qrCode = input('');
   public readonly imgixBaseUrl = input.required<string>();
@@ -293,6 +352,17 @@ export class ExpenseEditForm {
     const raw = this.expense().iban ?? '';
     return formatIban(raw, IbanFormat.Friendly) || raw;
   });
+  /**
+   * "No QR code possible" — except for a transfer to the issuer whose receipt carries its own
+   * QR-bill: that card below IS the code to pay with.
+   */
+  protected readonly showQrHint = computed(() =>
+    !this.qrCode() && !(this.transferTo() === 'issuer' && this.qrBills().length > 0));
+
+  protected formatIban(iban: string): string {
+    return formatIban(iban, IbanFormat.Friendly) || iban;
+  }
+
   /** Legacy documents predate `ocrError` — coalesce. */
   protected readonly ocrError = computed(() => this.expense().ocrError ?? '');
   protected readonly ibanElectronic = computed(() => (this.expense().iban ?? '').replace(/\s/g, '').toUpperCase());

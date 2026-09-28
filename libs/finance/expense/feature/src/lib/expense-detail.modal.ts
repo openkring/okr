@@ -33,6 +33,7 @@ import { injectExpenseView } from './expense-view';
         [authorKey]="view.authorKey()"
         [authorName]="view.authorName()"
         [receipts]="view.receipts()"
+        [qrBills]="view.qrBills()"
         [qrCode]="view.qrCode()"
         [imgixBaseUrl]="view.imgixBaseUrl"
         (receiptSelected)="view.showReceiptActions($event)"

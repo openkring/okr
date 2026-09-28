@@ -64,7 +64,12 @@
     },
     "date": "Datum",
     "author": "Eingereicht von",
-    "account": "Aufwandskonto"
+    "account": "Aufwandskonto",
+    "qrBill": {
+      "title": "QR-Rechnung im Beleg",
+      "creditor": "Empfänger",
+      "reference": "Referenz"
+    }
   },
   "submit": {
     "iban": "Bankverbindung wird gespeichert…",
