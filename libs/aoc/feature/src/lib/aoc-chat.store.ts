@@ -250,6 +250,10 @@ export const AocChatStore = signalStore(
       .then(m => runInInjectionContext(injector, () => inject(m.MatrixMediaService))));
 
     return {
+      // The component-level injector that provides this store. Ionic creates a modal from the
+      // environment injector, which cannot see a component-scoped store (NG0201) — a modal that
+      // injects the store back must be created with `injector: store.injector`.
+      injector,
       appStore: inject(AppStore),
       alertController: inject(AlertController),
       modalController: inject(ModalController),
@@ -452,6 +456,7 @@ export const AocChatStore = signalStore(
       const modal = await store.modalController.create({
         component: ChatHistoryModal,
         componentProps: { roomName: room.name || room.derivedName || room.roomId },
+        injector: store.injector,
       });
       await modal.present();
       await opened;
