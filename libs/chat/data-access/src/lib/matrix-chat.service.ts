@@ -521,6 +521,9 @@ export class MatrixChatService {
       
       if (state === 'PREPARED') {
         debugMessage('MatrixChatService: Initial sync complete, updating rooms list', this.appStore.currentUser());
+        // Drop purged rooms the sync accumulator just replayed, before anything reads the
+        // room list (SCS-AS).
+        this.messages.evictPersistedGoneRooms();
         this.dm.repairDmRoomsAccountData().then(async () => {
           await this.roomList.updateRoomsList();
           this.roomList.markRoomsLoaded();

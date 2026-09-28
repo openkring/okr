@@ -6,7 +6,10 @@ import { BehaviorSubject, Observable, Subject } from 'rxjs';
 import { MatrixMessage, MatrixReadReceipt } from '@okr/shared-models';
 import { AppStore } from '@okr/shared-feature';
 import { debugData, debugMessage } from '@okr/shared-util-core';
-import { isRenderableChatEvent, isRoomGoneError } from '@okr/chat-util';
+import {
+  EvictedRooms, evictedRoomsStorageKey, isRenderableChatEvent, isRoomGoneError, isStillEvicted,
+  parseEvictedRooms, recordEvictedRoom,
+} from '@okr/chat-util';
 import { AvatarService } from '@okr/avatar-data-access';
 
 import { hasResolvableMedia, isServiceAccount, mediaMimeHint, personAvatarUrl } from './matrix-helpers';
@@ -352,15 +355,17 @@ export class MatrixMessageService {
    * Function — which would have returned the live room. Every /messages request against it is
    * a 403 "not in room", i.e. a permanently blank chat (SCS-AD).
    *
-   * Eviction is per app session: the SDK's persisted sync accumulator replays the room on the
-   * next start (only a synced leave event removes it there), so the first open after a restart
-   * hits this path once more and heals again. `forget` is attempted so the server marks it
-   * forgotten where it still can; it is best-effort because a purged room has nothing left
-   * to forget.
+   * `removeRoom` only clears the in-memory store: the SDK's persisted sync accumulator replays
+   * the room on the next start (only a synced leave event removes it there). The eviction is
+   * therefore also recorded in localStorage and re-applied by {@link evictPersistedGoneRooms}
+   * at PREPARED, so each dead room costs one 403 per device instead of one per app start
+   * (SCS-AS). `forget` is attempted so the server marks it forgotten where it still can; it
+   * is best-effort because a purged room has nothing left to forget.
    */
   private async evictGoneRoom(roomId: string, error: unknown): Promise<void> {
     const errcode = (error as MatrixError | null)?.errcode ?? 'unknown';
     console.warn(`MatrixMessageService: Room ${roomId} is gone on the server (${errcode}) — evicting it from the local store`);
+    this.writeEvictedRooms(recordEvictedRoom(this.readEvictedRooms(), roomId, Date.now()));
     const reason = `stale-room:${errcode}`;
     if (!this.reportedPaginationFailures.has(reason)) {
       this.reportedPaginationFailures.add(reason);
@@ -381,6 +386,65 @@ export class MatrixMessageService {
       await this.client?.forget(roomId);
     } catch (forgetError) {
       debugMessage(`MatrixMessageService: forget(${roomId}) after eviction failed (expected for a purged room): ${(forgetError as Error)?.message}`, this.appStore.currentUser());
+    }
+  }
+
+  /**
+   * Re-apply the evictions recorded by {@link evictGoneRoom} in earlier sessions. Called at
+   * PREPARED, before the first room list is built, because the sync accumulator has just
+   * replayed those rooms as joined.
+   *
+   * A room the store no longer holds is dropped from the record (a leave did sync after all).
+   * A room whose own membership event is newer than the eviction was re-invited or re-joined
+   * and is released again. Everything else is removed from the store without another
+   * /messages round-trip and without another Sentry event.
+   */
+  evictPersistedGoneRooms(): void {
+    const client = this.client;
+    const userId = client?.getUserId();
+    if (!client || !userId) return;
+    const evicted = this.readEvictedRooms();
+    const remaining: EvictedRooms = {};
+    for (const [roomId, evictedAt] of Object.entries(evicted)) {
+      const room = client.getRoom(roomId);
+      if (!room) continue;
+      const ownMembershipTs = room.getMember(userId)?.events.member?.getTs();
+      if (!isStillEvicted(evictedAt, ownMembershipTs)) {
+        debugMessage(`MatrixMessageService: ${roomId} has a membership newer than its eviction — keeping it`, this.appStore.currentUser());
+        continue;
+      }
+      remaining[roomId] = evictedAt;
+      this.messages$.get(roomId)?.complete();
+      this.messages$.delete(roomId);
+      client.store.removeRoom(roomId);
+      debugMessage(`MatrixMessageService: re-evicted ${roomId} replayed by the sync store`, this.appStore.currentUser());
+    }
+    if (Object.keys(remaining).length !== Object.keys(evicted).length) this.writeEvictedRooms(remaining);
+  }
+
+  private evictedRoomsKey(): string | undefined {
+    const userId = this.client?.getUserId();
+    return userId ? evictedRoomsStorageKey(userId) : undefined;
+  }
+
+  private readEvictedRooms(): EvictedRooms {
+    const key = this.evictedRoomsKey();
+    if (!key) return {};
+    try {
+      return parseEvictedRooms(localStorage.getItem(key));
+    } catch {
+      return {};
+    }
+  }
+
+  private writeEvictedRooms(rooms: EvictedRooms): void {
+    const key = this.evictedRoomsKey();
+    if (!key) return;
+    try {
+      if (Object.keys(rooms).length === 0) localStorage.removeItem(key);
+      else localStorage.setItem(key, JSON.stringify(rooms));
+    } catch {
+      // Storage blocked (private mode, quota): the in-session eviction still works.
     }
   }
 
