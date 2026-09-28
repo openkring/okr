@@ -35,7 +35,7 @@
     "ocrError": "Der Beleg konnte nicht automatisch gelesen werden"
   },
   "edit": {
-    "title": "Auslage bearbeiten",
+    "title": "Spesen bearbeiten",
     "lockedHint": "Diese Auslage ist bereits verbucht — Betrag, Währung und Überweisungsziel lassen sich nicht mehr ändern."
   },
   "field": {
@@ -52,16 +52,19 @@
       "label": "IBAN",
       "on": "auf IBAN",
       "profileHint": "aus meinem Profil",
-      "change": "Andere IBAN verwenden"
+      "change": "Andere IBAN verwenden",
+      "copyConf": "IBAN kopiert",
+      "qrHint": "Für diese Überweisung gibt es keinen QR-Code. Dafür braucht es eine Schweizer IBAN und die Postadresse der Person, die das Geld erhält."
     },
-    "category": "Kategorie",
-    "costcenter": "Kostenstelle",
     "note": "Interne Notiz",
     "belege": {
       "label": "Belege",
       "pick": "Datei wählen",
       "photo": "Foto aufnehmen"
-    }
+    },
+    "date": "Datum",
+    "author": "Eingereicht von",
+    "account": "Aufwandskonto"
   },
   "submit": {
     "iban": "Bankverbindung wird gespeichert…",
@@ -69,14 +72,6 @@
     "saving": "Auslage wird gespeichert…",
     "done": "Gespeichert — der Kassier prüft den Beleg.",
     "error": "Fehler — Vorgang wurde zurückgerollt"
-  },
-  "status": {
-    "draft": "Entwurf",
-    "processing": "In Bearbeitung",
-    "validated": "Validiert",
-    "error": "Fehler",
-    "posted": "Verbucht",
-    "pendingExport": "Bereit für Export"
   },
   "validation": {
     "abstractRequired": "Betreff ist erforderlich.",
@@ -123,17 +118,11 @@
     "processing": {
       "label": "In Bearbeitung"
     },
-    "validated": {
-      "label": "Validiert"
+    "done": {
+      "label": "Erledigt"
     },
-    "error": {
-      "label": "Fehler"
-    },
-    "posted": {
-      "label": "Verbucht"
-    },
-    "pending-export": {
-      "label": "Bereit für Export"
+    "cancelled": {
+      "label": "Storniert"
     }
   },
   "expense_transfer": {
@@ -146,5 +135,19 @@
     "issuer": {
       "label": "an Rechnungssteller"
     }
+  },
+  "view": {
+    "title": "Spesen anzeigen"
+  },
+  "receipt": {
+    "download": "Herunterladen",
+    "copyUrl": "Link kopieren",
+    "copyUrlConf": "Link kopiert",
+    "ocr": "OCR-Text anzeigen",
+    "ocrNone": "Für diesen Beleg gibt es noch kein OCR-Ergebnis.",
+    "ocrFailed": "Der Beleg konnte nicht gelesen werden",
+    "ocrVendor": "Lieferant",
+    "ocrDate": "Rechnungsdatum",
+    "ocrVat": "MWST"
   }
 }

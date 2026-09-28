@@ -1,6 +1,6 @@
 import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 
-import { ExpenseTransferTo } from '@okr/shared-models';
+import { ExpenseModel, ExpenseTransferTo } from '@okr/shared-models';
 import { ibanValidations } from '@okr/subject-address-util';
 
 import { ALLOWED_CURRENCIES } from './expense.util';
@@ -13,7 +13,7 @@ export interface ExpenseFormValue {
   currency: string;
   transferTo: ExpenseTransferTo;
   iban: string;
-  category: string;
+  accountKey: string;
   costCenterId: string;
   note: string;
 }
@@ -64,7 +64,7 @@ export interface ExpenseEditFormValue {
   amountTotal: number;
   currency: string;
   transferTo: ExpenseTransferTo;
-  category: string;
+  accountKey: string;
   costCenterId: string;
   note: string;
   status: string;
@@ -107,3 +107,21 @@ export const expenseEditValidations = staticSuite((model: ExpenseEditFormValue, 
   // updateExpense CF re-checks the value against its own VALID_STATUS. A third copy of the list
   // would be the duplication, not the check.
 });
+
+/**
+ * The editable projection of a stored expense. Firestore reads skip model defaults, so every
+ * field is coalesced rather than trusted — and the coalesced status is also what the edit modal
+ * compares against to decide whether the status changed.
+ */
+export function toExpenseFormValue(expense: ExpenseModel): ExpenseEditFormValue {
+  return {
+    abstract:     expense.abstract ?? '',
+    amountTotal:  expense.amountTotal ?? 0,
+    currency:     expense.currency ?? 'CHF',
+    transferTo:   expense.transferTo ?? 'me',
+    accountKey:   expense.accountKey ?? '',
+    costCenterId: expense.costCenterId ?? '',
+    note:         expense.note ?? '',
+    status:       expense.status ?? 'draft',
+  };
+}

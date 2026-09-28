@@ -19,7 +19,7 @@ interface CreateExpenseData {
   currency: string;
   transferTo: 'me' | 'issuer';
   iban: string;
-  category: string;
+  accountKey: string;
   costCenterId: string;
   note: string;
   receiptCount: number;
@@ -56,7 +56,7 @@ export const createExpense = onCall(
       abstract: d.abstract ?? '',
       amountTotal: d.amountTotal, currency: d.currency || 'CHF',
       transferTo: d.transferTo === 'issuer' ? 'issuer' : 'me', iban: d.iban ?? '',
-      category: d.category ?? '', costCenterId: d.costCenterId ?? '', note: d.note ?? '',
+      accountKey: d.accountKey ?? '', costCenterId: d.costCenterId ?? '', note: d.note ?? '',
       status: 'processing', bookingKey: '',
       userId: uid, userName: `${user['firstName'] ?? ''} ${user['lastName'] ?? ''}`.trim(),
       personKey: (user['personKey'] as string) ?? '',
@@ -76,7 +76,7 @@ export const createExpense = onCall(
         // format, so a raw cents value would land verbatim in the task name ("… über 12500 CHF").
         amount: (d.amountTotal / 100).toFixed(2),
         currency: d.currency || 'CHF',
-        category: d.category ?? '',
+        accountKey: d.accountKey ?? '',
         costCenterId: d.costCenterId ?? '',
       },
     });
@@ -125,25 +125,23 @@ interface UpdateExpenseData {
   amountTotal?: number;
   currency?: string;
   transferTo?: 'me' | 'issuer';
-  category?: string;
+  accountKey?: string;
   costCenterId?: string;
   note?: string;
   status?: string;
 }
 
 const EDITABLE_FIELDS = [
-  'abstract', 'amountTotal', 'currency', 'transferTo', 'category', 'costCenterId', 'note', 'status',
+  'abstract', 'amountTotal', 'currency', 'transferTo', 'accountKey', 'costCenterId', 'note', 'status',
 ] as const;
 
 /**
- * The statuses a treasurer may set BY HAND — a strict subset of `ExpenseStatus`, mirroring
- * EXPENSE_EDIT_STATES in `expense.util.ts`. `posted` and `pending-export` belong to the booking
- * function, the only code that knows a booking actually landed; accepting them here would let a
- * treasurer mark an unbooked expense as posted with an empty `bookingKey` and no ledger entry,
- * after which `nextStatusForCompletedTask` would refuse to move it again. `draft` is written only
- * by the client-side model factory, before the expense exists here.
+ * The statuses a treasurer may set BY HAND — every `ExpenseStatus` except `draft`, which is
+ * written only by the client-side model factory before the expense exists here. Mirrors
+ * EXPENSE_EDIT_STATES in `expense.util.ts`. Whether an expense is BOOKED is `bookingKey`, never
+ * the status, so a hand-set 'done' claims no ledger entry.
  */
-const VALID_STATUS = ['processing', 'validated', 'error'];
+const VALID_STATUS = ['processing', 'done', 'cancelled'];
 
 /**
  * Treasurer edit. `expenses` is CF-write-only, so this is the only client-reachable update.
@@ -188,11 +186,11 @@ export const updateExpense = onCall(
       }
       patch[field] = value;
     }
-    // Moving the expense OFF 'error' clears the OCR failure with it. `ocrError` is deliberately
-    // not an EDITABLE_FIELD (nobody hand-types an error message), but leaving it set would keep
-    // the red banner on the detail page — and the stale text on the document — forever, since
-    // only `redoExpenseOcr` clears it and redo is refused once `bookingKey` is set.
-    if (d.status !== undefined && d.status !== 'error' && (expense['ocrError'] || expense['ocrErrorAt'])) {
+    // Settling the expense (done/cancelled) clears the OCR failure with it. `ocrError` is
+    // deliberately not an EDITABLE_FIELD (nobody hand-types an error message), but leaving it set
+    // would keep the red banner on the detail page — and the stale text on the document — forever,
+    // since only `redoExpenseOcr` clears it and redo is refused once `bookingKey` is set.
+    if ((d.status === 'done' || d.status === 'cancelled') && (expense['ocrError'] || expense['ocrErrorAt'])) {
       patch['ocrError'] = '';
       patch['ocrErrorAt'] = '';
     }
@@ -214,12 +212,12 @@ const TASK_COLLECTION = 'tasks';
  *    nothing about expenses (and must not learn — `createTask` is generic), so without this the
  *    expense loses the link the OCR pipeline used to write, and `canOpenTask` goes false for
  *    every new expense.
- *  - on the transition into DONE, move the expense to 'validated'.
+ *  - on the transition into DONE, move the expense to 'done'.
  *
  * Deliberately a dedicated trigger rather than a workflow action: no engine action patches an
  * arbitrary field on an arbitrary collection, and adding one would be an expression language by
- * the back door. `nextStatusForCompletedTask` holds the decision (and its 'posted' guard, which
- * fires on every approved booking) so it is unit-tested without the emulator.
+ * the back door. `nextStatusForCompletedTask` holds the decision (and its 'done'/'cancelled'
+ * guard, which fires on every approved booking) so it is unit-tested without the emulator.
  */
 export const onExpenseTaskWritten = onDocumentWritten(
   { document: `${TASK_COLLECTION}/{taskId}`, region: REGION },

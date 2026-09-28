@@ -129,14 +129,13 @@ function payloadNamesEmail(payload: string, email: string): boolean {
 /**
  * Whether an expense still has an open accounting entry.
  *
- * Settled == booked. `bookingKey` and `status: 'validated'` are written in the same
- * transaction (ocr/index.ts:416), so either signal counts — accepting both means an
- * expense written before `bookingKey` existed clears instead of blocking forever, which
- * is the same never-satisfiable-predicate shape C1 was about. `'error'` clears too: it
- * is a dead end the member cannot influence.
+ * Settled == booked (`bookingKey`) or terminal ('done' | 'cancelled'). Accepting the status
+ * too means an expense settled before `bookingKey` existed clears instead of blocking forever,
+ * which is the same never-satisfiable-predicate shape C1 was about. A failed OCR (`ocrError`)
+ * clears too: it is a dead end the member cannot influence.
  */
-function expenseIsOpen(bookingKey: string, status: string): boolean {
-  return !bookingKey && status !== 'validated' && status !== 'error';
+function expenseIsOpen(bookingKey: string, status: string, ocrError = ''): boolean {
+  return !bookingKey && status !== 'done' && status !== 'cancelled' && !ocrError;
 }
 
 // ─────────────────────────── prospects: the two-hop resolver (C5 §4) ────────────────────────────
@@ -648,21 +647,20 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     // what ExpenseStatus declares. Expenses are CF-write-only (firestore.rules), so the
     // complete set of status writes is enumerable — and every one of them either sets
     // bookingKey in the same write or leaves the expense unsettled:
-    //   'processing'  createExpense; redoExpenseOcr (ocr/index.ts)
-    //   'error'       reportExpenseOcrFailure (ocr/index.ts); reviewBooking on REJECT
-    //   'validated'   handleExpenseResult, in the same transaction as bookingKey;
-    //                 onExpenseTaskWritten when the linked task completes (guards 'posted')
-    //   'posted'      reviewBooking on APPROVE only — and always `{ status: 'posted',
-    //                 bookingKey }` in one write, so it never appears without a booking
-    //   hand-set      updateExpense, restricted to processing | validated | error
-    // 'draft' and 'pending-export' are declared in ExpenseStatus but never written to an
-    // expense: the external-backend path emits `expense.pendingExport` and leaves the
-    // expense at 'processing'. So the STATUS alone is not a settlement signal — treating
-    // an unreachable value as terminal blocked every filer forever. bookingKey is also
-    // the field redoOcr itself guards on ("already booked"), which makes it the honest
-    // terminal signal. See expenseIsOpen for the exact rule.
+    //   'processing'  createExpense; redoExpenseOcr (ocr/index.ts). A failed OCR stays
+    //                 'processing' and sets `ocrError` (reportExpenseOcrFailure)
+    //   'done'        reviewBooking on APPROVE (with bookingKey); onExpenseTaskWritten when
+    //                 the linked task completes
+    //   'cancelled'   reviewBooking on REJECT
+    //   hand-set      updateExpense, restricted to processing | done | cancelled
+    // 'draft' is declared in ExpenseStatus but never written to an expense. The external-
+    // backend path emits `expense.pendingExport` and leaves the expense at 'processing'.
+    // bookingKey is also the field redoOcr itself guards on ("already booked"), which makes it
+    // the honest terminal signal. See expenseIsOpen for the exact rule.
     blocksErasure: (docs) => blockOpenInvoice(
-      docs.filter((d) => expenseIsOpen(String(d.get('bookingKey') ?? ''), String(d.get('status') ?? ''))).length,
+      docs.filter((d) => expenseIsOpen(
+        String(d.get('bookingKey') ?? ''), String(d.get('status') ?? ''), String(d.get('ocrError') ?? ''),
+      )).length,
       'Du hast noch eine Spesenabrechnung offen. Sobald sie verbucht ist, können wir deine Daten löschen.',
     ),
   },

@@ -11,6 +11,7 @@ import {
   ExpenseCollection, ExpenseModel, TaskCollection, TaskModel,
 } from '@okr/shared-models';
 import { getSystemQuery } from '@okr/shared-util-core';
+import { ExpenseReceipt } from '@okr/finance-expense-util';
 
 export interface CreateExpensePayload {
   tenantId: string;
@@ -19,7 +20,7 @@ export interface CreateExpensePayload {
   currency: string;
   transferTo: 'me' | 'issuer';
   iban: string;
-  category: string;
+  accountKey: string;
   costCenterId: string;
   note: string;
   receiptCount: number;
@@ -32,18 +33,13 @@ export interface UpdateExpensePayload {
   amountTotal?: number;
   currency?: string;
   transferTo?: 'me' | 'issuer';
-  category?: string;
+  accountKey?: string;
   costCenterId?: string;
   note?: string;
   status?: string;
 }
 
-/** A receipt file uploaded for an expense, read straight from Firebase Storage. */
-export interface ExpenseReceipt {
-  name: string;
-  url: string;
-  contentType: string;
-}
+export type { ExpenseReceipt };
 
 @Injectable({ providedIn: 'root' })
 export class ExpenseService {
@@ -139,7 +135,7 @@ export class ExpenseService {
       return await Promise.all(
         listing.items.map(async item => {
           const [url, metadata] = await Promise.all([getDownloadURL(item), getMetadata(item)]);
-          return { name: item.name, url, contentType: metadata.contentType ?? '' };
+          return { name: item.name, url, path: item.fullPath, contentType: metadata.contentType ?? '' };
         })
       );
     } catch (e) {

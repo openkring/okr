@@ -350,37 +350,38 @@ describe('SUBJECT_DATA_MAP — blocker predicates', () => {
   describe('expenses clears on the states the code actually writes', () => {
     const b = entry('expenses').blocksErasure;
 
-    it('clears once booked — ocr/index.ts:416 sets bookingKey and validated together', () => {
-      expect(b?.([snap({ status: 'validated', bookingKey: 'BK-1' })])).toBeUndefined();
+    it('clears once booked — handleExpenseResult sets bookingKey', () => {
+      expect(b?.([snap({ status: 'processing', bookingKey: 'BK-1' })])).toBeUndefined();
     });
 
-    it('clears on error, a dead end the member cannot resolve', () => {
-      expect(b?.([snap({ status: 'error', bookingKey: '' })])).toBeUndefined();
+    it('clears on a failed OCR, a dead end the member cannot resolve', () => {
+      expect(b?.([snap({ status: 'processing', bookingKey: '', ocrError: 'unreadable' })])).toBeUndefined();
+    });
+
+    it('clears on the terminal states done and cancelled', () => {
+      // done: reviewBooking approve / task completed; cancelled: reviewBooking reject
+      expect(b?.([snap({ status: 'done', bookingKey: '' })])).toBeUndefined();
+      expect(b?.([snap({ status: 'cancelled', bookingKey: '' })])).toBeUndefined();
     });
 
     it('blocks while the expense is still in flight', () => {
-      // 'processing' is written on create (expense/index.ts:57) and on redo (ocr:586)
+      // 'processing' is written on create and on redo
       expect(b?.([snap({ status: 'processing', bookingKey: '' })])?.code).toBe('openInvoice');
     });
 
-    it('does NOT treat posted or pending-export as terminal — nothing writes them to an expense', () => {
-      // the sole `status: 'posted'` write in the repo is on a booking (bexio/journal.ts:110)
-      // and 'pending-export' exists only in the type and an i18n label. Keying the
-      // blocker on either IS the C1 bug; this fails if someone re-adds them.
+    it('does NOT treat the retired states as terminal', () => {
+      // posted/validated/error/pending-export were migrated away (2026-09-28); a stray one
+      // must keep blocking rather than silently clear.
       expect(b?.([snap({ status: 'posted', bookingKey: '' })])?.code).toBe('openInvoice');
       expect(b?.([snap({ status: 'pending-export', bookingKey: '' })])?.code).toBe('openInvoice');
     });
 
-    it('keys on bookingKey, the field redoOcr itself guards on (ocr/index.ts:577)', () => {
+    it('keys on bookingKey, the field redoOcr itself guards on', () => {
       expect(b?.([snap({ status: 'whatever', bookingKey: 'BK-1' })])).toBeUndefined();
     });
 
-    it('clears a booked expense that predates the bookingKey field', () => {
-      // an absent field reads as undefined, which would otherwise block forever — the
-      // same never-satisfiable shape as C1. 'validated' is written in the same
-      // transaction as bookingKey, so it is an equally valid booked signal.
-      expect(b?.([snap({ status: 'validated' })])).toBeUndefined();
-      expect(b?.([snap({})])?.code, 'a doc with neither signal is still open').toBe('openInvoice');
+    it('a doc with no settlement signal is still open', () => {
+      expect(b?.([snap({})])?.code).toBe('openInvoice');
     });
   });
 

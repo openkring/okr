@@ -2,10 +2,14 @@ import { DEFAULT_CURRENCY, DEFAULT_DATETIME, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT
 
 import { OkrModel, SearchableModel, TaggedModel } from './base.model';
 
-// 'posted'         = booked in okr's own ledger (native accounting backend).
-// 'pending-export' = expense + receipts saved, but the accounting entry is owned by an external
-//                    backend (e.g. Bexio); okr does not write a local booking for it.
-export type ExpenseStatus = 'draft' | 'processing' | 'validated' | 'error' | 'posted' | 'pending-export';
+// The four item names of the `expense_state` category (categories collection, tenants ['system']).
+// The names are fixed because the Cloud Functions write them; labels/icons live in the DB.
+// 'draft'      = not yet submitted (client-side model factory only).
+// 'processing' = submitted; OCR, booking and the treasurer review run. A failed OCR keeps the
+//                expense here and sets `ocrError` — a flag, not a state.
+// 'done'       = settled: the booking was approved, or the treasurer closed the review task.
+// 'cancelled'  = rejected: the booking was rejected, or the treasurer cancelled it by hand.
+export type ExpenseStatus = 'draft' | 'processing' | 'done' | 'cancelled';
 
 /** Where the reimbursement is paid: 'me' = to the employee (needs an IBAN), 'issuer' = to the invoice issuer. */
 export type ExpenseTransferTo = 'me' | 'issuer';
@@ -24,7 +28,7 @@ export class ExpenseModel implements OkrModel, SearchableModel, TaggedModel {
   public currency = DEFAULT_CURRENCY;
   public transferTo: ExpenseTransferTo = 'me';
   public iban = '';
-  public category = '';
+  public accountKey = '';        // FK → accounts; the expense account (Aufwandskonto), '' = not chosen yet
   public costCenterId = '';
   public note = '';
   public status: ExpenseStatus = 'draft';
@@ -40,7 +44,7 @@ export class ExpenseModel implements OkrModel, SearchableModel, TaggedModel {
   public receiptCount = 0; // number of receipt files uploaded to the OCR pipeline; lets stage ② know when all receipts are in
 
   // Latest OCR failure (spec 2026-09-02-expense-workflow-design §3.5). '' = no failure on record.
-  // Written together with status 'error'; cleared by redoExpenseOcr.
+  // The expense stays 'processing'; cleared by redoExpenseOcr or when the treasurer settles it.
   public ocrError = '';
   public ocrErrorAt = '';         // StoreDateTime of that failure, so a retry supersedes it visibly
 

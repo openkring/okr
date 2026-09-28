@@ -27,6 +27,7 @@
     "@okr/finance-booking-feature": "*",
     "@okr/finance-expense-data-access": "*",
     "@okr/finance-expense-util": "*",
-    "@okr/finance-expense-ui": "*"
+    "@okr/finance-expense-ui": "*",
+    "@okr/finance-account-data-access": "*"
   }
 }

@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { normalizeIban, chfToCents, centsToCHF, newExpenseModel, newExpenseDocumentModel, canDeleteExpense, canRedoOcr, canOpenTask, canOpenBooking, canViewExpense, canEditExpense, filterExpenses, sortExpenses, getExpenseStateCategory, getExpenseEditStateCategory, getExpenseTransferCategory } from './expense.util';
+import { normalizeIban, chfToCents, centsToCHF, newExpenseModel, newExpenseDocumentModel, canDeleteExpense, canRedoOcr, canOpenTask, canOpenBooking, canViewExpense, canEditExpense, filterExpenses, sortExpenses, getExpenseEditStateCategory, getExpenseTransferCategory, EXPENSE_EDIT_STATES, expenseStatusColor, nextExpenseStateFilter } from './expense.util';
+import { CategoryItemModel, CategoryListModel } from '@okr/shared-models';
 import { ExpenseModel, UserModel } from '@okr/shared-models';
 
 describe('normalizeIban', () => {
@@ -99,7 +100,7 @@ function listItem(over: Partial<ExpenseModel>): ExpenseModel {
   return Object.assign(new ExpenseModel('scs'), over);
 }
 
-const anna  = listItem({ okey: 'a', abstract: 'Taxi Bern',   userName: 'Anna Muster', amountTotal: 3000, status: 'posted',    transferTo: 'me',     creationDateTime: '20260101120000' });
+const anna  = listItem({ okey: 'a', abstract: 'Taxi Bern',   userName: 'Anna Muster', amountTotal: 3000, status: 'done',      transferTo: 'me',     creationDateTime: '20260101120000' });
 const bruno = listItem({ okey: 'b', abstract: 'Hotel Zürich', userName: 'Bruno Kaiser', amountTotal: 12000, status: 'draft',  transferTo: 'issuer', creationDateTime: '20260315080000' });
 const cesar = listItem({ okey: 'c', abstract: 'Znüni',        userName: 'Cesar Rossi',  amountTotal: 500,  status: 'draft',    transferTo: 'me',     creationDateTime: '20260210093000' });
 const all = [anna, bruno, cesar];
@@ -146,27 +147,52 @@ describe('sortExpenses', () => {
 });
 
 describe('expense filter categories', () => {
-  it('state category translates its items from the feature scope', () => {
-    const category = getExpenseStateCategory('scs');
+  // the DB category (categories collection, tenants ['system']) as the AppStore delivers it
+  const dbStateCategory = (): CategoryListModel => Object.assign(new CategoryListModel('system'), {
+    name: 'expense_state', i18n: '@finance/expense/feature', translateItems: true,
+    items: ['draft', 'processing', 'done', 'cancelled'].map(n => new CategoryItemModel(n, '')),
+  });
+
+  it('edit state category keeps the DB metadata and offers only the hand-settable statuses', () => {
+    const category = getExpenseEditStateCategory(dbStateCategory());
     expect(category.name).toBe('expense_state');
     expect(category.i18n).toBe('@finance/expense/feature');
     expect(category.translateItems).toBe(true);
-    expect(category.items.map(i => i.name)).toEqual(['draft', 'processing', 'validated', 'error', 'posted', 'pending-export']);
+    expect(category.items.map(i => i.name)).toEqual(['processing', 'done', 'cancelled']);
   });
-  it('edit state category offers only the hand-settable statuses', () => {
-    const category = getExpenseEditStateCategory('scs');
-    expect(category.name).toBe('expense_state');
-    expect(category.i18n).toBe('@finance/expense/feature');
-    expect(category.translateItems).toBe(true);
-    expect(category.items.map(i => i.name)).toEqual(['processing', 'validated', 'error']);
+  it('edit state category never offers draft', () => {
+    expect(EXPENSE_EDIT_STATES).not.toContain('draft');
+    expect(getExpenseEditStateCategory(dbStateCategory()).items.map(i => i.name)).not.toContain('draft');
   });
-  it('edit state category never offers posted or pending-export', () => {
-    const names = getExpenseEditStateCategory('scs').items.map(i => i.name);
-    expect(names).not.toContain('posted');
-    expect(names).not.toContain('pending-export');
-    expect(names).not.toContain('draft');
+  it('does not mutate the DB category', () => {
+    const category = dbStateCategory();
+    getExpenseEditStateCategory(category);
+    expect(category.items).toHaveLength(4);
   });
   it('transfer category carries the two transferTo values', () => {
     expect(getExpenseTransferCategory('scs').items.map(i => i.name)).toEqual(['me', 'issuer']);
+  });
+});
+
+describe('expenseStatusColor', () => {
+  it('colours the four states and falls back to the text colour', () => {
+    expect(expenseStatusColor('done')).toBe('var(--ion-color-success)');
+    expect(expenseStatusColor('cancelled')).toBe('var(--ion-color-danger)');
+    expect(expenseStatusColor('processing')).toBe('var(--ion-color-warning)');
+    expect(expenseStatusColor('draft')).toBe('#1e6fd9');
+    expect(expenseStatusColor('posted')).toBe('var(--ion-text-color)');
+    expect(expenseStatusColor(undefined)).toBe('var(--ion-text-color)');
+  });
+});
+
+describe('nextExpenseStateFilter', () => {
+  const states = ['draft', 'processing', 'done', 'cancelled'];
+  it('cycles all → each state → all', () => {
+    expect(nextExpenseStateFilter('all', states)).toBe('draft');
+    expect(nextExpenseStateFilter('draft', states)).toBe('processing');
+    expect(nextExpenseStateFilter('cancelled', states)).toBe('all');
+  });
+  it('starts over at the first state from an unknown value', () => {
+    expect(nextExpenseStateFilter('', states)).toBe('draft');
   });
 });

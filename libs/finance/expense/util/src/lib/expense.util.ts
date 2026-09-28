@@ -18,6 +18,16 @@ export function centsToCHF(cents: number): number {
   return cents / 100;
 }
 
+/** A receipt file uploaded for an expense, read straight from Firebase Storage. */
+export interface ExpenseReceipt {
+  name: string;
+  /** Firebase download url (tokenized) — for download and copy */
+  url: string;
+  /** the Storage path, tenant/{tenantId}/ocr/expense/{expenseKey}/{name} — for the imgix thumbnail */
+  path: string;
+  contentType: string;
+}
+
 export function newExpenseModel(tenantId: string, userId: string, accountingTenantId: string): ExpenseModel {
   const m = new ExpenseModel(tenantId);
   m.userId = userId;
@@ -69,67 +79,77 @@ export interface ExpenseFilter {
   transferTo: string;
 }
 
+/** The status category in the `categories` collection (tenants ['system']). */
 export const EXPENSE_STATE_CATEGORY_NAME = 'expense_state';
 export const EXPENSE_TRANSFER_CATEGORY_NAME = 'expense_transfer';
 
 /** The i18n scope of the expense feature; the filter categories translate their items from it. */
 const EXPENSE_I18N_SCOPE = '@finance/expense/feature';
 
-const EXPENSE_STATES: ExpenseStatus[] = ['draft', 'processing', 'validated', 'error', 'posted', 'pending-export'];
-
 /**
- * The statuses a treasurer may set BY HAND in the edit modal — a strict subset of EXPENSE_STATES.
- *
- * `posted` and `pending-export` are owned by the booking function (`booking/index.ts`), which is
- * the only code that knows a booking actually landed: hand-setting `posted` would claim a ledger
- * entry and a booking number that do not exist, and `nextStatusForCompletedTask` would then refuse
- * to move that expense ever again. `draft` is written only by `newExpenseModel` before the expense
- * exists server-side. The FILTER keeps all six (EXPENSE_STATES) so a treasurer can still search for
- * posted or pending-export expenses; only the picker is narrowed. `VALID_STATUS` in the
- * `updateExpense` callable mirrors this list — the UI is not the security boundary.
+ * The statuses a treasurer may set BY HAND in the edit modal: every `ExpenseStatus` except
+ * `draft`, which is written only by `newExpenseModel` before the expense exists server-side.
+ * `VALID_STATUS` in the `updateExpense` callable mirrors this list — the UI is not the
+ * security boundary.
  */
-const EXPENSE_EDIT_STATES: ExpenseStatus[] = ['processing', 'validated', 'error'];
+export const EXPENSE_EDIT_STATES: ExpenseStatus[] = ['processing', 'done', 'cancelled'];
 
 const EXPENSE_TRANSFERS: ExpenseTransferTo[] = ['me', 'issuer'];
 
 /**
- * Build a CategoryListModel from a fixed item list. Unlike the categories in the `categories`
- * collection these two are code-owned: status and transferTo are union types in the model, so a
- * DB-editable list could drift from what the code accepts. `translateItems` makes okr-cat-select
- * resolve each item through `@finance/expense/feature.<categoryName>.<item>.label`.
+ * The status picker of the treasurer edit modal: the `expense_state` category from the
+ * `categories` collection (labels, icons and colours are DB-owned), narrowed to the
+ * hand-settable items. The item NAMES are fixed — the Cloud Functions write them.
  */
-function buildExpenseCategory(tenantId: string, name: string, items: readonly string[]): CategoryListModel {
+export function getExpenseEditStateCategory(stateCategory: CategoryListModel): CategoryListModel {
+  return { ...stateCategory, items: stateCategory.items.filter(i => EXPENSE_EDIT_STATES.includes(i.name as ExpenseStatus)) };
+}
+
+/**
+ * The transferTo filter of the expense list ('all' is prepended by okr-cat-select). Code-owned:
+ * transferTo is a two-value union type in the model. `translateItems` makes okr-cat-select
+ * resolve each item through `@finance/expense/feature.expense_transfer.<item>.label`.
+ */
+export function getExpenseTransferCategory(tenantId: string): CategoryListModel {
   const category = new CategoryListModel(tenantId);
-  category.name = name;
+  category.name = EXPENSE_TRANSFER_CATEGORY_NAME;
   category.i18n = EXPENSE_I18N_SCOPE;
   category.translateItems = true;
-  category.items = items.map(item => new CategoryItemModel(item, ''));
+  category.items = EXPENSE_TRANSFERS.map(item => new CategoryItemModel(item, ''));
   return category;
 }
 
-/** The status filter of the expense list ('all' is prepended by okr-cat-select). */
-export function getExpenseStateCategory(tenantId: string): CategoryListModel {
-  return buildExpenseCategory(tenantId, EXPENSE_STATE_CATEGORY_NAME, EXPENSE_STATES);
+/**
+ * The colour of a status icon in the list: done green, cancelled red, processing orange, draft
+ * blue, anything else (a legacy value) in the text colour — black in light mode, and still
+ * visible in dark mode. Code-owned on purpose: the colour carries the meaning of the item NAME,
+ * which is fixed, while its label and icon come from the DB category.
+ */
+export function expenseStatusColor(status: string | undefined): string {
+  switch (status) {
+    case 'done':       return 'var(--ion-color-success)';
+    case 'cancelled':  return 'var(--ion-color-danger)';
+    case 'processing': return 'var(--ion-color-warning)';
+    case 'draft':      return '#1e6fd9';
+    default:           return 'var(--ion-text-color)';
+  }
 }
 
-/** The status picker of the treasurer edit modal — only the hand-settable subset. */
-export function getExpenseEditStateCategory(tenantId: string): CategoryListModel {
-  return buildExpenseCategory(tenantId, EXPENSE_STATE_CATEGORY_NAME, EXPENSE_EDIT_STATES);
+/** The click-through status filter: 'all' → each item of the category in turn → 'all'. */
+export function nextExpenseStateFilter(current: string, stateNames: string[]): string {
+  const cycle = ['all', ...stateNames];
+  const i = Math.max(cycle.indexOf(current), 0);   // an unknown value counts as 'all'
+  return cycle[(i + 1) % cycle.length];
 }
 
-/** The transferTo filter of the expense list ('all' is prepended by okr-cat-select). */
-export function getExpenseTransferCategory(tenantId: string): CategoryListModel {
-  return buildExpenseCategory(tenantId, EXPENSE_TRANSFER_CATEGORY_NAME, EXPENSE_TRANSFERS);
-}
-
-/** Search matches the subject, the submitter's name and the category; '' / 'all' disable a filter. */
+/** Search matches the subject and the submitter's name; '' / 'all' disable a filter. */
 export function filterExpenses(expenses: ExpenseModel[], filter: ExpenseFilter): ExpenseModel[] {
   const term = filter.searchTerm.trim().toLowerCase();
   return expenses.filter(e => {
     if (filter.status !== 'all' && filter.status !== '' && e.status !== filter.status) return false;
     if (filter.transferTo !== 'all' && filter.transferTo !== '' && e.transferTo !== filter.transferTo) return false;
     if (term.length === 0) return true;
-    return `${e.abstract} ${e.userName} ${e.category}`.toLowerCase().includes(term);
+    return `${e.abstract} ${e.userName}`.toLowerCase().includes(term);
   });
 }
 

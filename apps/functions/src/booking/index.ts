@@ -116,7 +116,7 @@ export const reviewBooking = onCall(
           notes: formatRejectNote((booking['notes'] as string) ?? '', today, reviewer, reason),
         }, { merge: true });
         if (taskKey) tx.set(db.collection(TASK_COLLECTION).doc(taskKey), { state: 'cancelled' }, { merge: true });
-        if (expenseExists) tx.set(expenseRef, { status: 'error' }, { merge: true });
+        if (expenseExists) tx.set(expenseRef, { status: 'cancelled' }, { merge: true });
         return { bookingNo: 0, status: 'cancelled' };
       }
 
@@ -156,7 +156,7 @@ export const reviewBooking = onCall(
           state: 'done', completionDate: getTodayStr(),
         }, { merge: true });
       }
-      if (expenseExists) tx.set(expenseRef, { status: 'posted', bookingKey }, { merge: true });
+      if (expenseExists) tx.set(expenseRef, { status: 'done', bookingKey }, { merge: true });
 
       return { bookingNo, status: 'posted' };
     });

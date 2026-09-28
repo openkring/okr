@@ -21,8 +21,6 @@ export interface ExpenseFormI18n {
   iban_on: Signal<string>;
   iban_profile_hint: Signal<string>;
   iban_change: Signal<string>;
-  category_label: Signal<string>;
-  costcenter_label: Signal<string>;
   note_label: Signal<string>;
   belege_label: Signal<string>;
   belege_pick: Signal<string>;

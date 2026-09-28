@@ -35,7 +35,7 @@
     "ocrError": "El comprobante no se pudo leer automáticamente"
   },
   "edit": {
-    "title": "Editar desembolso",
+    "title": "Editar gastos",
     "lockedHint": "Este desembolso ya está contabilizado — el importe, la moneda y el destinatario de la transferencia ya no se pueden cambiar."
   },
   "field": {
@@ -52,16 +52,19 @@
       "label": "IBAN",
       "on": "a IBAN",
       "profileHint": "desde mi perfil",
-      "change": "Usar otro IBAN"
+      "change": "Usar otro IBAN",
+      "copyConf": "IBAN copiado",
+      "qrHint": "No hay código QR para esta transferencia. Hace falta un IBAN suizo y la dirección postal de la persona que recibe el dinero."
     },
-    "category": "Categoría",
-    "costcenter": "Centro de costes",
     "note": "Nota interna",
     "belege": {
       "label": "Comprobantes",
       "pick": "Elegir archivo",
       "photo": "Tomar foto"
-    }
+    },
+    "date": "Fecha",
+    "author": "Enviado por",
+    "account": "Cuenta de gastos"
   },
   "submit": {
     "iban": "Se están guardando los datos bancarios…",
@@ -69,14 +72,6 @@
     "saving": "Se está guardando el desembolso…",
     "done": "Guardado — el tesorero revisará el comprobante.",
     "error": "Error — la operación se ha revertido"
-  },
-  "status": {
-    "draft": "Borrador",
-    "processing": "En proceso",
-    "validated": "Validado",
-    "error": "Error",
-    "posted": "Contabilizado",
-    "pendingExport": "Listo para exportar"
   },
   "validation": {
     "abstractRequired": "El asunto es obligatorio.",
@@ -121,19 +116,13 @@
       "label": "Borrador"
     },
     "processing": {
-      "label": "En proceso"
+      "label": "En curso"
     },
-    "validated": {
-      "label": "Validado"
+    "done": {
+      "label": "Hecho"
     },
-    "error": {
-      "label": "Error"
-    },
-    "posted": {
-      "label": "Contabilizado"
-    },
-    "pending-export": {
-      "label": "Listo para exportar"
+    "cancelled": {
+      "label": "Anulado"
     }
   },
   "expense_transfer": {
@@ -146,5 +135,19 @@
     "issuer": {
       "label": "al emisor de la factura"
     }
+  },
+  "view": {
+    "title": "Ver gastos"
+  },
+  "receipt": {
+    "download": "Descargar",
+    "copyUrl": "Copiar enlace",
+    "copyUrlConf": "Enlace copiado",
+    "ocr": "Mostrar texto OCR",
+    "ocrNone": "Todavía no hay resultado OCR para este comprobante.",
+    "ocrFailed": "No se pudo leer el comprobante",
+    "ocrVendor": "Proveedor",
+    "ocrDate": "Fecha de factura",
+    "ocrVat": "IVA"
   }
 }

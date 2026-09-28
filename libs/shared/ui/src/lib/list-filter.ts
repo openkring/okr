@@ -65,7 +65,7 @@ import { StringSelect } from './string-select';
             </ion-col>
           }
           @if(showType()) {
-            <ion-col size="6" [attr.size-md]="compact() ? null : (mdSize() ?? '3')" class="ion-no-padding">
+            <ion-col size="6" [attr.size-md]="compact() ? null : (mdSize() ?? '3')" class="ion-no-padding" [class.ion-hide-sm-down]="hideTypesOnMobile()">
               <okr-cat-select [selectedItemName]="selectedType()" (selectedItemNameChange)="typeChanged.emit($event)" [category]="types()!" [withAll]="true" [readOnly]="false" [showIcons]="shouldShowIcons()" />
             </ion-col>
           }
@@ -135,6 +135,7 @@ export class ListFilter {
   /** Uniform size-md for every filter column, overriding the per-filter defaults (compact wins). */
   public mdSize = input<number>();
   public hideTagsOnMobile = input(false); // hide the tag filter on small screens (sm and down)
+  public hideTypesOnMobile = input(false); // hide the type filter on small screens (sm and down)
 
   public isListView = linkedSignal(() => this.initialView() === 'list');
 
@@ -158,9 +159,13 @@ export class ListFilter {
   protected showsAnyFilter = computed(() =>
     this.showSearchField() || this.showTags() || this.showType() || this.showCategory() || this.showYear()
     || this.showState() || this.showStrings() || (!!this.initialView() && this.isVisible('view')));
-  /** A lone searchbar takes the full row on small screens; next to another filter it keeps its half. */
+  /**
+   * A lone searchbar takes the full row on small screens; next to another filter it keeps its half.
+   * A filter hidden on small screens does not count — it would leave the other half empty.
+   */
   protected searchSize = computed(() =>
-    this.showTags() || this.showType() || this.showCategory() || this.showYear() || this.showState() || this.showStrings() ? '6' : '12');
+    (this.showTags() && !this.hideTagsOnMobile()) || (this.showType() && !this.hideTypesOnMobile())
+    || this.showCategory() || this.showYear() || this.showState() || this.showStrings() ? '6' : '12');
 
   // outputs
   public searchTermChanged = output<string>();

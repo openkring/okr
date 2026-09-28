@@ -15,7 +15,7 @@ const validExpense = (): ExpenseFormValue => ({
   currency: 'CHF',
   transferTo: 'me',
   iban: 'CH9800700112900069345',
-  category: '',
+  accountKey: '',
   costCenterId: '',
   note: '',
 });
@@ -70,7 +70,7 @@ describe('expenseValidations', () => {
 describe('expenseEditValidations', () => {
   const valid: ExpenseEditFormValue = {
     abstract: 'Materialkauf', amountTotal: 12500, currency: 'CHF', transferTo: 'me',
-    category: '', costCenterId: '', note: '', status: 'validated',
+    accountKey: '', costCenterId: '', note: '', status: 'processing',
   };
 
   it('accepts a complete edit value', () => {

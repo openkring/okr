@@ -35,7 +35,7 @@
     "ocrError": "Il giustificativo non è stato letto automaticamente"
   },
   "edit": {
-    "title": "Modifica esborso",
+    "title": "Modifica spese",
     "lockedHint": "Questo esborso è già stato contabilizzato — l'importo, la valuta e il destinatario del bonifico non possono più essere modificati."
   },
   "field": {
@@ -52,16 +52,19 @@
       "label": "IBAN",
       "on": "su IBAN",
       "profileHint": "dal mio profilo",
-      "change": "Usa un altro IBAN"
+      "change": "Usa un altro IBAN",
+      "copyConf": "IBAN copiato",
+      "qrHint": "Per questo bonifico non c’è un codice QR. Servono un IBAN svizzero e l’indirizzo postale della persona che riceve il denaro."
     },
-    "category": "Categoria",
-    "costcenter": "Centro di costo",
     "note": "Nota interna",
     "belege": {
       "label": "Ricevute",
       "pick": "Scegli file",
       "photo": "Scatta foto"
-    }
+    },
+    "date": "Data",
+    "author": "Inviato da",
+    "account": "Conto spese"
   },
   "submit": {
     "iban": "Le coordinate bancarie vengono salvate…",
@@ -69,14 +72,6 @@
     "saving": "L'esborso viene salvato…",
     "done": "Salvato — il cassiere verifica la ricevuta.",
     "error": "Errore — l'operazione è stata annullata"
-  },
-  "status": {
-    "draft": "Bozza",
-    "processing": "In elaborazione",
-    "validated": "Validato",
-    "error": "Errore",
-    "posted": "Contabilizzato",
-    "pendingExport": "Pronto per l'esportazione"
   },
   "validation": {
     "abstractRequired": "L'oggetto è obbligatorio.",
@@ -121,19 +116,13 @@
       "label": "Bozza"
     },
     "processing": {
-      "label": "In elaborazione"
+      "label": "In corso"
     },
-    "validated": {
-      "label": "Validato"
+    "done": {
+      "label": "Completato"
     },
-    "error": {
-      "label": "Errore"
-    },
-    "posted": {
-      "label": "Contabilizzato"
-    },
-    "pending-export": {
-      "label": "Pronto per l'esportazione"
+    "cancelled": {
+      "label": "Annullato"
     }
   },
   "expense_transfer": {
@@ -146,5 +135,19 @@
     "issuer": {
       "label": "all'emittente della fattura"
     }
+  },
+  "view": {
+    "title": "Visualizza spese"
+  },
+  "receipt": {
+    "download": "Scarica",
+    "copyUrl": "Copia link",
+    "copyUrlConf": "Link copiato",
+    "ocr": "Mostra testo OCR",
+    "ocrNone": "Per questa ricevuta non c’è ancora un risultato OCR.",
+    "ocrFailed": "Non è stato possibile leggere la ricevuta",
+    "ocrVendor": "Fornitore",
+    "ocrDate": "Data fattura",
+    "ocrVat": "IVA"
   }
 }

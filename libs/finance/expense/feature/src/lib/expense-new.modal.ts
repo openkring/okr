@@ -78,8 +78,6 @@ export class ExpenseNewModal {
     iban_on:        PFX + 'field.iban.on',
     iban_profile_hint: PFX + 'field.iban.profileHint',
     iban_change:    PFX + 'field.iban.change',
-    category_label: PFX + 'field.category',
-    costcenter_label: PFX + 'field.costcenter',
     note_label:     PFX + 'field.note',
     belege_label:   PFX + 'field.belege.label',
     belege_pick:    PFX + 'field.belege.pick',
@@ -89,7 +87,7 @@ export class ExpenseNewModal {
   });
 
   protected formValue = model<ExpenseFormValue>({
-    abstract: '', amountCHF: 0, currency: 'CHF', transferTo: 'me', iban: '', category: '', costCenterId: '', note: '',
+    abstract: '', amountCHF: 0, currency: 'CHF', transferTo: 'me', iban: '', accountKey: '', costCenterId: '', note: '',
   });
   protected files = model<File[]>([]);
   protected readonly isValid = signal(false);
@@ -129,8 +127,6 @@ export class ExpenseNewModal {
     iban_on:          this.i18n.iban_on,
     iban_profile_hint: this.i18n.iban_profile_hint,
     iban_change:      this.i18n.iban_change,
-    category_label:   this.i18n.category_label,
-    costcenter_label: this.i18n.costcenter_label,
     note_label:       this.i18n.note_label,
     belege_label:     this.i18n.belege_label,
     belege_pick:      this.i18n.belege_pick,

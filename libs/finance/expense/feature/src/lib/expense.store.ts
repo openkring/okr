@@ -17,7 +17,7 @@ import { UploadService } from '@okr/avatar-data-access';
 import { ExpenseService } from '@okr/finance-expense-data-access';
 import {
   chfToCents, EXPENSE_I18N_KEYS, ExpenseFormValue, ExpenseI18n, ExpenseSortField,
-  filterExpenses, getExpenseStateCategory, getExpenseTransferCategory, normalizeIban, sortExpenses,
+  EXPENSE_STATE_CATEGORY_NAME, filterExpenses, getExpenseTransferCategory, normalizeIban, sortExpenses,
 } from '@okr/finance-expense-util';
 
 export type SubmitStep = 'idle' | 'iban' | 'upload' | 'saving' | 'done' | 'error';
@@ -73,7 +73,8 @@ export const ExpenseStore = signalStore(
   })),
   withComputed(store => ({
     expenses:    computed(() => store.expensesResource.value() ?? []),
-    stateCategory:    computed(() => getExpenseStateCategory(store.env.tenantId)),
+    /** DB-owned (categories collection, tenants ['system']); the item names are fixed. */
+    stateCategory:    computed(() => store.appStore.getCategory(EXPENSE_STATE_CATEGORY_NAME)),
     transferCategory: computed(() => getExpenseTransferCategory(store.env.tenantId)),
     /**
      * full name → person key, for the submitter avatar on the 'all' list. The expense only
@@ -122,6 +123,8 @@ export const ExpenseStore = signalStore(
   withMethods(store => ({
     /** The avatar key of an expense's submitter, '' when the person cannot be resolved. */
     avatarKey(expense: ExpenseModel): string {
+      // createExpense stamps personKey since 2026-09-02; the name lookup covers older expenses
+      if (expense.personKey) return `${PersonModelName}.${expense.personKey}`;
       const key = store.personKeyByName().get((expense.userName ?? '').trim().toLowerCase());
       return key ? `${PersonModelName}.${key}` : '';
     },
@@ -296,7 +299,7 @@ export const ExpenseStore = signalStore(
           currency:     formValue.currency,
           transferTo:   formValue.transferTo,
           iban:         formValue.transferTo === 'me' ? normalizeIban(formValue.iban) : '',
-          category:     formValue.category,
+          accountKey:   formValue.accountKey,
           costCenterId: formValue.costCenterId,
           note:         formValue.note,
           receiptCount: files.length,

@@ -35,7 +35,7 @@
     "ocrError": "Le justificatif n'a pas pu être lu automatiquement"
   },
   "edit": {
-    "title": "Modifier le débours",
+    "title": "Modifier la note de frais",
     "lockedHint": "Ce débours est déjà comptabilisé — le montant, la devise et le destinataire du virement ne peuvent plus être modifiés."
   },
   "field": {
@@ -52,16 +52,19 @@
       "label": "IBAN",
       "on": "sur IBAN",
       "profileHint": "depuis mon profil",
-      "change": "Utiliser un autre IBAN"
+      "change": "Utiliser un autre IBAN",
+      "copyConf": "IBAN copié",
+      "qrHint": "Il n’y a pas de code QR pour ce virement. Il faut une IBAN suisse et l’adresse postale de la personne qui reçoit l’argent."
     },
-    "category": "Catégorie",
-    "costcenter": "Centre de coûts",
     "note": "Note interne",
     "belege": {
       "label": "Justificatifs",
       "pick": "Choisir un fichier",
       "photo": "Prendre une photo"
-    }
+    },
+    "date": "Date",
+    "author": "Soumis par",
+    "account": "Compte de charges"
   },
   "submit": {
     "iban": "La relation bancaire est en cours d'enregistrement…",
@@ -69,14 +72,6 @@
     "saving": "Le débours est en cours d'enregistrement…",
     "done": "Enregistré — le caissier vérifie le justificatif.",
     "error": "Erreur — l'opération a été annulée"
-  },
-  "status": {
-    "draft": "Brouillon",
-    "processing": "En cours de traitement",
-    "validated": "Validé",
-    "error": "Erreur",
-    "posted": "Comptabilisé",
-    "pendingExport": "Prêt pour l'export"
   },
   "validation": {
     "abstractRequired": "L'objet est obligatoire.",
@@ -121,19 +116,13 @@
       "label": "Brouillon"
     },
     "processing": {
-      "label": "En cours de traitement"
+      "label": "En cours"
     },
-    "validated": {
-      "label": "Validé"
+    "done": {
+      "label": "Terminé"
     },
-    "error": {
-      "label": "Erreur"
-    },
-    "posted": {
-      "label": "Comptabilisé"
-    },
-    "pending-export": {
-      "label": "Prêt pour l'export"
+    "cancelled": {
+      "label": "Annulé"
     }
   },
   "expense_transfer": {
@@ -146,5 +135,19 @@
     "issuer": {
       "label": "à l'émetteur de la facture"
     }
+  },
+  "view": {
+    "title": "Afficher la note de frais"
+  },
+  "receipt": {
+    "download": "Télécharger",
+    "copyUrl": "Copier le lien",
+    "copyUrlConf": "Lien copié",
+    "ocr": "Afficher le texte OCR",
+    "ocrNone": "Il n’y a pas encore de résultat OCR pour ce justificatif.",
+    "ocrFailed": "Le justificatif n’a pas pu être lu",
+    "ocrVendor": "Fournisseur",
+    "ocrDate": "Date de facture",
+    "ocrVat": "TVA"
   }
 }

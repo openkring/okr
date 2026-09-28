@@ -11,6 +11,7 @@
     "@okr/shared-constants": "*",
     "@okr/shared-util-core": "*",
     "@okr/shared-util-angular": "*",
-    "@okr/subject-address-util": "*"
+    "@okr/subject-address-util": "*",
+    "@okr/system-alias-util": "*"
   }
 }

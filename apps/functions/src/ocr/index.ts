@@ -34,8 +34,9 @@ const EXPENSE_COLLECTION = 'expenses';
 /**
  * One OCR failure, recorded and announced.
  *
- * The status patch is a DIRECT write, not a workflow consequence: a tenant that archives the
- * rule must still see the expense leave 'processing'. The emit is best-effort by construction —
+ * The flag is a DIRECT write, not a workflow consequence: a tenant that archives the rule must
+ * still see the failure on the expense. The expense stays 'processing' — an OCR failure is the
+ * `ocrError` flag, not a status. The emit is best-effort by construction —
  * runWorkflow never throws — so it cannot fail the OCR pipeline that produced it.
  */
 async function reportExpenseOcrFailure(
@@ -48,7 +49,6 @@ async function reportExpenseOcrFailure(
   if (!snap.exists) return;
   const expense = snap.data()!;
   await expenseRef.set({
-    status: 'error',
     ocrError: message.slice(0, 500),
     ocrErrorAt: getTodayStr(DateFormat.StoreDateTime),
   }, { merge: true });
@@ -465,7 +465,7 @@ async function handleExpenseResult(
       creditAmount: { amount: amountCents, currency, periodicity: 'one-time' },
       accountingTenantId,
     });
-    tx.set(expenseRef, { bookingKey: correlationKey, status: 'validated' }, { merge: true });
+    tx.set(expenseRef, { bookingKey: correlationKey }, { merge: true });   // stays 'processing' until reviewed
     return true;
   });
 
@@ -531,7 +531,7 @@ async function handleExpenseResult(
  * (spec 2026-09-02 §3.2). Redelivery of a receipt, and every additional receipt of the same expense,
  * re-emits the event; the engine's `hasOpenTask(relatedKey, assignee)` dedup collapses them onto the
  * one open task, which is what the old deterministic-task-id trick did by hand. The expense itself is
- * left at 'processing' — 'pending-export' is an EVENT name here, never a status write.
+ * left at 'processing' — 'pending-export' is an EVENT name, not an ExpenseStatus.
  * Other usages (invoice/paper) just store the extraction. The full Bexio integration (document upload +
  * prepared payment) is a separate spec — see 2026-07-21-ocr-cloud-function-design.md §11.
  */

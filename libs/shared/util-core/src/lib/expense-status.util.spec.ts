@@ -14,19 +14,19 @@ describe('lockedExpenseFields', () => {
 });
 
 describe('nextStatusForCompletedTask', () => {
-  it('moves a validated-pending expense to validated', () => {
-    expect(nextStatusForCompletedTask('expense.e1', { status: 'processing' })).toBe('validated');
+  it('settles a processing expense', () => {
+    expect(nextStatusForCompletedTask('expense.e1', { status: 'processing' })).toBe('done');
   });
-  it('never demotes a posted expense', () => {
-    // reviewBooking closes the task IN THE SAME TRANSACTION that sets 'posted'
-    // (booking/index.ts:155-159), so this case fires on every approved booking.
-    expect(nextStatusForCompletedTask('expense.e1', { status: 'posted' })).toBeUndefined();
+  it('is a no-op on a done expense', () => {
+    // reviewBooking closes the task IN THE SAME TRANSACTION that sets 'done' (approve),
+    // so this case fires on every approved booking.
+    expect(nextStatusForCompletedTask('expense.e1', { status: 'done' })).toBeUndefined();
+  });
+  it('never revives a cancelled expense', () => {
+    expect(nextStatusForCompletedTask('expense.e1', { status: 'cancelled' })).toBeUndefined();
   });
   it('ignores a task that does not link to an expense', () => {
     expect(nextStatusForCompletedTask('trip.t1', { status: 'processing' })).toBeUndefined();
     expect(nextStatusForCompletedTask('', { status: 'processing' })).toBeUndefined();
-  });
-  it('is a no-op when the expense is already validated', () => {
-    expect(nextStatusForCompletedTask('expense.e1', { status: 'validated' })).toBeUndefined();
   });
 });

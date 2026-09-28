@@ -36,11 +36,11 @@ const TRIGGERS = [
     event: 'expense.created', icon: 'expense', dueInDays: 7,
     ruleName: 'Spese eingereicht → Ressort Finanzen', i18nKey: 'expense.created',
     text: {
-      de: 'Neue Spese von {name} über {amount} {currency}',
-      en: 'New expense from {name} for {amount} {currency}',
-      fr: 'Nouvelle note de frais de {name} pour {amount} {currency}',
-      es: 'Nuevo gasto de {name} por {amount} {currency}',
-      it: 'Nuova nota spese di {name} per {amount} {currency}',
+      de: 'Spesen von {name} über {amount} {currency}',
+      en: 'Expenses from {name} for {amount} {currency}',
+      fr: 'Note de frais de {name} pour {amount} {currency}',
+      es: 'Gastos de {name} por {amount} {currency}',
+      it: 'Nota spese di {name} per {amount} {currency}',
     },
   },
   {
@@ -58,7 +58,7 @@ const TRIGGERS = [
     event: 'expense.validated', icon: 'checkbox', dueInDays: 7,
     ruleName: 'Spese verbucht → Ressort Finanzen prüft', i18nKey: 'expense.validated',
     text: {
-      de: 'Spese von {name} über {amount} {currency} prüfen',
+      de: 'Spesen von {name} über {amount} {currency} prüfen',
       en: 'Review expense from {name} for {amount} {currency}',
       fr: 'Vérifier la note de frais de {name} pour {amount} {currency}',
       es: 'Revisar el gasto de {name} por {amount} {currency}',

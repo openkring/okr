@@ -125,7 +125,7 @@ export class DiaryList {
    * only the three real states are listed here. Item `name` is the actual filter VALUE
    * (DiaryStateFilter) — it is what `(stateChanged)` emits and must never be a translated label.
    * Labels come from the 'diaryState' i18n block via translateItems/getItemLabel, the same
-   * pattern as `getExpenseStateCategory`.
+   * pattern as `getExpenseTransferCategory`.
    */
   protected readonly states = computed((): CategoryListModel => {
     const category = new CategoryListModel(this.store.tenantId());

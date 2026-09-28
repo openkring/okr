@@ -1,18 +1,18 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { from } from 'rxjs';
 import {
-  IonBackButton, IonBadge, IonButton, IonButtons, IonCard, IonCardContent, IonCardHeader,
-  IonCardTitle, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonTitle, IonToolbar,
+  IonBackButton, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonTitle, IonToolbar,
 } from '@ionic/angular/standalone';
 
 import { ExpenseModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, Spinner } from '@okr/shared-ui';
 
-import { ExpenseReceipt, ExpenseService } from '@okr/finance-expense-data-access';
-import { canEditExpense, canViewExpense, centsToCHF } from '@okr/finance-expense-util';
+import { ExpenseService } from '@okr/finance-expense-data-access';
+import { canEditExpense, canViewExpense, toExpenseFormValue } from '@okr/finance-expense-util';
+import { ExpenseEditForm } from '@okr/finance-expense-ui';
 
+import { injectExpenseView } from './expense-view';
 import { ExpenseStore } from './expense.store';
 
 /**
@@ -20,8 +20,8 @@ import { ExpenseStore } from './expense.store';
  * workflow task: a task created for an expense carries `relatedKey: 'expense.<okey>'`, which
  * RELATED_ROUTES maps to `/expense/<okey>`.
  *
- * It renders the same fields and receipts as `expense-detail.modal.ts` (and reuses its i18n keys),
- * plus the OCR error banner, the booking/task links and the treasurer edit button.
+ * It renders the same read-only expense form as `expense-detail.modal.ts` (via `injectExpenseView`),
+ * plus the booking/task links and the treasurer edit button.
  *
  * The store is provided here (own instance, like `ExpenseList`). The page is opened by the ROUTER,
  * not by the store, so injecting the store is not the circular case that forces `openDetail` /
@@ -31,10 +31,9 @@ import { ExpenseStore } from './expense.store';
   selector: 'okr-expense-detail-page',
   standalone: true,
   imports: [
-    SvgIconPipe, Spinner, EmptyList,
+    SvgIconPipe, Spinner, EmptyList, ExpenseEditForm,
     IonHeader, IonToolbar, IonButtons, IonBackButton, IonTitle, IonButton, IonIcon,
-    IonContent, IonList, IonItem, IonLabel, IonBadge,
-    IonCard, IonCardHeader, IonCardTitle, IonCardContent,
+    IonContent, IonList, IonItem, IonLabel,
   ],
   providers: [ExpenseStore],
   template: `
@@ -60,74 +59,38 @@ import { ExpenseStore } from './expense.store';
       } @else if (!expense() || !canView()) {
         <okr-empty-list [message]="store.i18n.list_empty()" />
       } @else {
-        @if (ocrError().length > 0) {
-          <ion-card color="danger">
-            <ion-card-header>
-              <ion-card-title>{{ store.i18n.detail_ocr_error() }}</ion-card-title>
-            </ion-card-header>
-            <ion-card-content>{{ ocrError() }}</ion-card-content>
-          </ion-card>
-        }
+        <okr-expense-edit-form
+          [formData]="formData()"
+          [expense]="expense()!"
+          [readOnly]="true"
+          [i18n]="view.formI18n"
+          [statuses]="view.stateCategory()"
+          [authorKey]="view.authorKey()"
+          [authorName]="view.authorName()"
+          [receipts]="view.receipts()"
+          [qrCode]="view.qrCode()"
+          [imgixBaseUrl]="view.imgixBaseUrl"
+          (receiptSelected)="view.showReceiptActions($event)"
+        />
 
-        <ion-list>
-          <ion-item>
-            <ion-label>
-              <h3>{{ store.i18n.abstract_label() }}</h3>
-              <p>{{ expense()!.abstract }}</p>
-            </ion-label>
-          </ion-item>
-          <ion-item>
-            <ion-label>
-              <h3>{{ store.i18n.amount() }}</h3>
-              <p>{{ toCHF(expense()!.amountTotal) }} {{ expense()!.currency }}</p>
-            </ion-label>
-          </ion-item>
-          <ion-item>
-            <ion-label>
-              <h3>{{ store.i18n.detail_iban() }}</h3>
-              <p>{{ expense()!.iban }}</p>
-            </ion-label>
-          </ion-item>
-          <ion-item>
-            <ion-label><h3>{{ store.i18n.detail_status() }}</h3></ion-label>
-            <ion-badge slot="end">{{ statusLabel() }}</ion-badge>
-          </ion-item>
-          @if (expense()!.note) {
-            <ion-item>
-              <ion-label>
-                <h3>{{ store.i18n.detail_note() }}</h3>
-                <p>{{ expense()!.note }}</p>
-              </ion-label>
-            </ion-item>
-          }
-          @if (expense()!.bookingKey) {
-            <ion-item button (click)="openBooking()">
-              <ion-label>
-                <h3>{{ store.i18n.detail_booking_ref() }}</h3>
-                <p>{{ expense()!.bookingKey }}</p>
-              </ion-label>
-              <ion-icon slot="end" src="{{ 'chevron-forward' | svgIcon }}" />
-            </ion-item>
-          }
-          @if (expense()!.taskKey) {
-            <ion-item button (click)="openTask()">
-              <ion-label>
-                <h3>{{ store.i18n.action_openTask() }}</h3>
-                <p>{{ expense()!.taskKey }}</p>
-              </ion-label>
-              <ion-icon slot="end" src="{{ 'chevron-forward' | svgIcon }}" />
-            </ion-item>
-          }
-        </ion-list>
-
-        @if (receipts().length > 0) {
+        @if (expense()!.bookingKey || expense()!.taskKey) {
           <ion-list>
-            @for (receipt of receipts(); track receipt.url; let i = $index) {
-              <ion-item button (click)="open(receipt.url)">
+            @if (expense()!.bookingKey) {
+              <ion-item button (click)="openBooking()">
                 <ion-label>
-                  <h3>{{ store.i18n.detail_receipt() }} {{ i + 1 }}</h3>
-                  <p>{{ receipt.name }}</p>
+                  <h3>{{ store.i18n.detail_booking_ref() }}</h3>
+                  <p>{{ expense()!.bookingKey }}</p>
                 </ion-label>
+                <ion-icon slot="end" src="{{ 'chevron-forward' | svgIcon }}" />
+              </ion-item>
+            }
+            @if (expense()!.taskKey) {
+              <ion-item button (click)="openTask()">
+                <ion-label>
+                  <h3>{{ store.i18n.action_openTask() }}</h3>
+                  <p>{{ expense()!.taskKey }}</p>
+                </ion-label>
+                <ion-icon slot="end" src="{{ 'chevron-forward' | svgIcon }}" />
               </ion-item>
             }
           </ion-list>
@@ -143,45 +106,18 @@ export class ExpenseDetailPage {
   protected readonly store = inject(ExpenseStore);
   private readonly expenseService = inject(ExpenseService);
 
-  protected readonly toCHF = centsToCHF;
-
   private readonly expenseResource = rxResource<ExpenseModel | undefined, string>({
     params: () => this.expenseKey(),
     stream: ({ params }) => this.expenseService.read(params),
   });
 
-  // Receipts live in Storage (tenant/{tenantId}/ocr/expense/{expenseKey}/), not in Firestore.
-  // listReceipts() is a Promise, wrapped via `from` for rxResource — same as the detail modal.
-  private readonly receiptsResource = rxResource<ExpenseReceipt[], string>({
-    params: () => this.expenseKey(),
-    stream: ({ params }) => from(this.expenseService.listReceipts(params)),
-  });
-
   protected readonly expense = computed(() => this.expenseResource.value());
   protected readonly isLoading = computed(() => this.expenseResource.isLoading());
 
-  /** Legacy documents predate `ocrError`, so Firestore returns objects without it — coalesce. */
-  protected readonly ocrError = computed(() => this.expense()?.ocrError ?? '');
-
-  /**
-   * The status badge, translated. The `status.*` keys exist in all five languages; the map is
-   * needed because the union value `pending-export` is hyphenated while its key is camelCase,
-   * and because a legacy document can carry a status the union does not list — that falls back
-   * to the raw value rather than rendering an empty badge.
-   */
-  protected readonly statusLabel = computed(() => {
-    const status = this.expense()?.status ?? '';
-    const i18n = this.store.i18n;
-    const labels: Record<string, () => string> = {
-      'draft':          i18n.status_draft,
-      'processing':     i18n.status_processing,
-      'validated':      i18n.status_validated,
-      'error':          i18n.status_error,
-      'posted':         i18n.status_posted,
-      'pending-export': i18n.status_pendingExport,
-    };
-    return labels[status]?.() ?? status;
-  });
+  /** A placeholder while loading keeps the view helper's signals total; the template gates on expense(). */
+  private readonly shownExpense = computed(() => this.expense() ?? new ExpenseModel(this.store.tenantId()));
+  protected readonly view = injectExpenseView(this.shownExpense);
+  protected readonly formData = computed(() => toExpenseFormValue(this.shownExpense()));
 
   protected readonly canView = computed(() => {
     const expense = this.expense();
@@ -193,10 +129,6 @@ export class ExpenseDetailPage {
     return !!expense && canEditExpense(expense, this.store.currentUser());
   });
 
-  protected receipts(): ExpenseReceipt[] {
-    return this.receiptsResource.value() ?? [];
-  }
-
   protected async edit(): Promise<void> {
     const expense = this.expense();
     if (!expense) return;
@@ -204,6 +136,7 @@ export class ExpenseDetailPage {
     // so re-read it after the modal closes to show the treasurer's changes.
     await this.store.editExpense(expense);
     this.expenseResource.reload();
+    this.view.reloadReceipts();
   }
 
   protected openBooking(): void {
@@ -214,9 +147,5 @@ export class ExpenseDetailPage {
   protected openTask(): void {
     const expense = this.expense();
     if (expense) void this.store.openTask(expense);
-  }
-
-  protected open(url: string): void {
-    window.open(url, '_blank', 'noopener');
   }
 }

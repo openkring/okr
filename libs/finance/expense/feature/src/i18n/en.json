@@ -35,7 +35,7 @@
     "ocrError": "The receipt could not be read automatically"
   },
   "edit": {
-    "title": "Edit outlay",
+    "title": "Edit expenses",
     "lockedHint": "This outlay has already been posted — the amount, currency and transfer destination can no longer be changed."
   },
   "field": {
@@ -52,16 +52,19 @@
       "label": "IBAN",
       "on": "to IBAN",
       "profileHint": "from my profile",
-      "change": "Use a different IBAN"
+      "change": "Use a different IBAN",
+      "copyConf": "IBAN copied",
+      "qrHint": "There is no QR code for this transfer. It needs a Swiss IBAN and the postal address of the person receiving the money."
     },
-    "category": "Category",
-    "costcenter": "Cost centre",
     "note": "Internal note",
     "belege": {
       "label": "Receipts",
       "pick": "Choose file",
       "photo": "Take photo"
-    }
+    },
+    "date": "Date",
+    "author": "Submitted by",
+    "account": "Expense account"
   },
   "submit": {
     "iban": "Bank details are being saved…",
@@ -69,14 +72,6 @@
     "saving": "Outlay is being saved…",
     "done": "Saved — the treasurer will check the receipt.",
     "error": "Error — operation was rolled back"
-  },
-  "status": {
-    "draft": "Draft",
-    "processing": "In progress",
-    "validated": "Validated",
-    "error": "Error",
-    "posted": "Posted",
-    "pendingExport": "Ready for export"
   },
   "validation": {
     "abstractRequired": "Subject is required.",
@@ -123,17 +118,11 @@
     "processing": {
       "label": "In progress"
     },
-    "validated": {
-      "label": "Validated"
+    "done": {
+      "label": "Done"
     },
-    "error": {
-      "label": "Error"
-    },
-    "posted": {
-      "label": "Posted"
-    },
-    "pending-export": {
-      "label": "Ready for export"
+    "cancelled": {
+      "label": "Cancelled"
     }
   },
   "expense_transfer": {
@@ -146,5 +135,19 @@
     "issuer": {
       "label": "to invoice issuer"
     }
+  },
+  "view": {
+    "title": "View expenses"
+  },
+  "receipt": {
+    "download": "Download",
+    "copyUrl": "Copy link",
+    "copyUrlConf": "Link copied",
+    "ocr": "Show OCR text",
+    "ocrNone": "There is no OCR result for this receipt yet.",
+    "ocrFailed": "The receipt could not be read",
+    "ocrVendor": "Vendor",
+    "ocrDate": "Invoice date",
+    "ocrVat": "VAT"
   }
 }

@@ -17,7 +17,7 @@ import { AvatarPipe } from '@okr/avatar-ui';
 import { Menu } from '@okr/cms-menu-feature';
 import {
   canDeleteExpense, canEditExpense, canOpenBooking, canOpenTask, canRedoOcr, canViewExpense, centsToCHF,
-  ExpenseSortField,
+  expenseStatusColor, ExpenseSortField, nextExpenseStateFilter,
 } from '@okr/finance-expense-util';
 
 import { ExpenseNewModal } from './expense-new.modal';
@@ -37,9 +37,13 @@ import { ExpenseListId, ExpenseStore } from './expense.store';
     ion-avatar { width: 30px; height: 30px; background-color: var(--ion-color-light); }
     .header-row {
       font-weight: 600;
-      border-bottom: 1px solid var(--ion-color-step-150, #d7d8da);
       padding-inline: 16px;
     }
+    .header-row, .item-row { flex-wrap: nowrap; }
+    .status { flex: 0 0 36px; display: flex; align-items: center; }
+    .status ion-icon { font-size: 20px; }
+    .state-filter { cursor: pointer; display: flex; align-items: center; gap: 4px; }
+    .state-filter ion-icon { font-size: 20px; }
     .item-row {
       min-height: 48px;
       align-items: center;
@@ -77,28 +81,33 @@ import { ExpenseListId, ExpenseStore } from './expense.store';
       </ion-toolbar>
       <okr-list-filter
         (searchTermChanged)="store.setSearchTerm($event)"
-        [states]="store.stateCategory()" [selectedState]="store.selectedState()" (stateChanged)="store.setSelectedState($event)"
         [types]="store.transferCategory()" [selectedType]="store.selectedTransfer()" (typeChanged)="store.setSelectedTransfer($event)"
+        [mdSize]="6" [hideTypesOnMobile]="true"
       />
 
       <!-- sortable column headers: the full set from md up, the three sortable ones below -->
       <ion-toolbar color="primary">
         <ion-grid class="ion-no-padding">
           <ion-row class="header-row ion-hide-md-down">
+            <ion-col class="status state-filter" (click)="cycleStateFilter()" [title]="stateFilterTitle()">
+              <ion-icon [src]="stateFilterIcon() | svgIcon" />
+            </ion-col>
             <ion-col size="2" class="clickable" (click)="store.setSort('date')">{{ store.i18n.col_date() }}{{ sortIcon('date') }}</ion-col>
             @if (showSubmitter()) {
               <ion-col size="3" class="clickable" (click)="store.setSort('name')">{{ store.i18n.col_name() }}{{ sortIcon('name') }}</ion-col>
             }
             <ion-col>{{ store.i18n.col_abstract() }}</ion-col>
             <ion-col size="2" class="num clickable" (click)="store.setSort('amount')">{{ store.i18n.col_amount() }}{{ sortIcon('amount') }}</ion-col>
-            <ion-col size="2">{{ store.i18n.col_status() }}</ion-col>
           </ion-row>
           <ion-row class="header-row ion-hide-md-up">
-            <ion-col size="4" class="clickable" (click)="store.setSort('date')">{{ store.i18n.col_date() }}{{ sortIcon('date') }}</ion-col>
+            <ion-col class="status state-filter" (click)="cycleStateFilter()" [title]="stateFilterTitle()">
+              <ion-icon [src]="stateFilterIcon() | svgIcon" />
+            </ion-col>
+            <ion-col class="clickable" (click)="store.setSort('date')">{{ store.i18n.col_date() }}{{ sortIcon('date') }}</ion-col>
             @if (showSubmitter()) {
-              <ion-col size="4" class="clickable" (click)="store.setSort('name')">{{ store.i18n.col_name() }}{{ sortIcon('name') }}</ion-col>
+              <ion-col class="clickable" (click)="store.setSort('name')">{{ store.i18n.col_name() }}{{ sortIcon('name') }}</ion-col>
             }
-            <ion-col size="4" class="num clickable" (click)="store.setSort('amount')">{{ store.i18n.col_amount() }}{{ sortIcon('amount') }}</ion-col>
+            <ion-col class="num clickable" (click)="store.setSort('amount')">{{ store.i18n.col_amount() }}{{ sortIcon('amount') }}</ion-col>
           </ion-row>
         </ion-grid>
       </ion-toolbar>
@@ -113,6 +122,10 @@ import { ExpenseListId, ExpenseStore } from './expense.store';
         <ion-grid class="ion-no-padding ion-hide-md-down">
           @for (expense of expenses(); track expense.okey) {
             <ion-row class="item-row clickable" (click)="openActions(expense)">
+              <ion-col class="status">
+                <ion-icon [src]="statusIcon(expense) | svgIcon" [style.color]="statusColor(expense)"
+                  [attr.aria-label]="statusLabel(expense) | translate | async" />
+              </ion-col>
               <ion-col size="2">{{ viewDate(expense) }}</ion-col>
               @if (showSubmitter()) {
                 <ion-col size="3" class="name">
@@ -124,7 +137,6 @@ import { ExpenseListId, ExpenseStore } from './expense.store';
               }
               <ion-col>{{ expense.abstract }}</ion-col>
               <ion-col size="2" class="num">{{ amount(expense) }} {{ expense.currency }}</ion-col>
-              <ion-col size="2">{{ statusLabel(expense) | translate | async }}</ion-col>
             </ion-row>
           }
         </ion-grid>
@@ -133,6 +145,8 @@ import { ExpenseListId, ExpenseStore } from './expense.store';
         <ion-list class="ion-hide-md-up" lines="inset">
           @for (expense of expenses(); track expense.okey) {
             <ion-item button [detail]="false" (click)="openActions(expense)">
+              <ion-icon slot="start" [src]="statusIcon(expense) | svgIcon" [style.color]="statusColor(expense)"
+                [attr.aria-label]="statusLabel(expense) | translate | async" />
               @if (showSubmitter()) {
                 <ion-avatar slot="start">
                   <ion-img src="{{ store.avatarKey(expense) | avatar:'person' }}" alt="Avatar" />
@@ -141,10 +155,9 @@ import { ExpenseListId, ExpenseStore } from './expense.store';
               <ion-label>
                 <h3>{{ expense.abstract }}</h3>
                 <p>{{ viewDate(expense) }} · {{ amount(expense) }} {{ expense.currency }}</p>
-                <p>
-                  {{ statusLabel(expense) | translate | async }}
-                  @if (showSubmitter() && expense.userName) { · {{ expense.userName }} }
-                </p>
+                @if (showSubmitter() && expense.userName) {
+                  <p>{{ expense.userName }}</p>
+                }
               </ion-label>
             </ion-item>
           }
@@ -200,6 +213,30 @@ export class ExpenseList {
   protected statusLabel(expense: ExpenseModel): string {
     return getItemLabel(this.store.stateCategory(), expense.status);
   }
+
+  /** The status icon comes from the DB category item; a status it does not know gets a neutral dot. */
+  protected statusIcon(expense: ExpenseModel): string {
+    return this.store.stateCategory().items.find(i => i.name === expense.status)?.icon || 'circle';
+  }
+
+  protected statusColor(expense: ExpenseModel): string {
+    return expenseStatusColor(expense.status);
+  }
+
+  /** Header click-through filter: all → draft → processing → done → cancelled → all. */
+  protected cycleStateFilter(): void {
+    const names = this.store.stateCategory().items.map(i => i.name);
+    this.store.setSelectedState(nextExpenseStateFilter(this.store.selectedState(), names));
+  }
+
+  /** 'list' while all states show, otherwise the icon of the selected state. */
+  protected readonly stateFilterIcon = computed(() => {
+    const selected = this.store.selectedState();
+    if (!selected || selected === 'all') return 'list';
+    return this.store.stateCategory().items.find(i => i.name === selected)?.icon || 'list';
+  });
+
+  protected readonly stateFilterTitle = computed(() => this.store.i18n.filter_state());
 
   protected sortIcon(field: ExpenseSortField): string {
     if (this.store.sortField() !== field) return '';

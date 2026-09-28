@@ -21,15 +21,16 @@ export function lockedExpenseFields(expense: ExpenseLifecycleFields): string[] {
 /**
  * The status an expense moves to when its task is completed, or undefined when it must not move.
  *
- * 'posted' is terminal and owned by booking/index.ts, the only code that knows a booking landed.
- * That guard is load-bearing rather than defensive: `reviewBooking` closes the review task in the
- * same transaction that writes 'posted', so this runs on every approved booking.
+ * Completing the review task is the treasurer's "this expense is settled", so it moves to 'done'.
+ * 'done' and 'cancelled' are terminal: `reviewBooking` closes the review task in the same
+ * transaction that writes 'done' (approve), and a rejected expense must not be revived by a
+ * later task write.
  */
 export function nextStatusForCompletedTask(
   linkKey: string, expense: ExpenseLifecycleFields,
-): 'validated' | undefined {
+): 'done' | undefined {
   if (!linkKey.startsWith('expense.')) return undefined;
   const status = expense.status ?? '';
-  if (status === 'posted' || status === 'validated') return undefined;
-  return 'validated';
+  if (status === 'done' || status === 'cancelled') return undefined;
+  return 'done';
 }
