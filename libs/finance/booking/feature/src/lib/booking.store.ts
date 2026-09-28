@@ -252,6 +252,23 @@ export const BookingStore = signalStore(
       await store.injector.get(JournalImportStore).importFile();
     },
 
+    /**
+     * "Bankauszug importieren": runs the bank-import feature's statement import (ZKB, PostFinance, …;
+     * spec 2026-09-14 §6.2) for this accounting tenant, then opens the import list, where the rows are
+     * reviewed and posted as bookings. The stores are created on demand in a throwaway injector so the
+     * journal page does not carry the bank-import libs.
+     */
+    async importBankStatement(): Promise<void> {
+      const { BANK_IMPORT_PROVIDERS, BankImportStore } = await import('@okr/finance-bank-import-feature');
+      const injector = Injector.create({ providers: BANK_IMPORT_PROVIDERS, parent: store.injector });
+      try {
+        const created = await injector.get(BankImportStore).importFile();
+        if (created > 0) await store.router.navigate(['/accounting-bank-import', store.accountingTenantId(), 'bank-import-context']);
+      } finally {
+        injector.destroy();
+      }
+    },
+
     async export(): Promise<void> {
       const data = journalToRows(store.filteredRows(), {
         date:   store.i18n.col_date(),

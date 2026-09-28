@@ -123,10 +123,11 @@ export const BankImportStore = signalStore(
   withMethods(store => ({
     /**
      * §6.2. The file dialog must open inside the user gesture — no await before pickFile().
+     * Returns the number of new rows (0 when cancelled, failed or all duplicates).
      */
-    async importFile(): Promise<void> {
+    async importFile(): Promise<number> {
       const file = await store.uploadService.pickFile(BANK_IMPORT_MIMETYPES);
-      if (!file) return;
+      if (!file) return 0;
       const accountingTenantId = store.accountingTenantId();
       const tenantId = store.appStore.tenantId();
       let statement;
@@ -137,7 +138,7 @@ export const BankImportStore = signalStore(
         const code = e instanceof BankImportError ? e.code : 'unknown-format';
         const detail = e instanceof BankImportError ? e.detail : '';
         await store.alertService.confirm(`${store.errorText(code)} ${detail}`.trim());
-        return;
+        return 0;
       }
 
       // One profile per currency: a CSV carries one currency, a Swissquote PDF one section per currency
@@ -159,7 +160,7 @@ export const BankImportStore = signalStore(
           proposal.bankName = statement.bankName;
           proposal.currency = currency;
           profile = await store.profileStore.openEdit(proposal, false);
-          if (!profile?.okey) { await store.alertService.confirm(store.i18n.import_cancelled()); return; }
+          if (!profile?.okey) { await store.alertService.confirm(store.i18n.import_cancelled()); return 0; }
         }
         const iban = statement.iban || profile.iban;
         const keys = await computeImportKeys(rows.map(r => ({ iban, date: r.date, amount: r.amount, bankReference: r.bankReference, rawText: r.rawText })));
@@ -179,7 +180,7 @@ export const BankImportStore = signalStore(
         if (!ok) {
           store.rowsResource.reload();
           await store.alertService.confirm(store.i18n.create_error());
-          return;
+          return 0;
         }
       }
       store.rowsResource.reload();
@@ -194,6 +195,7 @@ export const BankImportStore = signalStore(
         ...(warnings.length ? [`${store.i18n.import_summary_warnings()}:`, ...warnings.map(w => store.warningText(w))] : []),
       ].join('\n');
       await store.alertService.confirm(`${store.i18n.import_summary_title()}\n${summary}`);
+      return mapped.length;
     },
 
     /** "Regeln anwenden": re-run the rules over every open row of the tenant and persist the changes. */
@@ -277,3 +279,6 @@ export const BankImportStore = signalStore(
     },
   })),
 );
+
+/** Everything `BankImportStore` needs outside the import list — e.g. the journal's "Bankauszug importieren". */
+export const BANK_IMPORT_PROVIDERS = [BankImportStore, BankProfileStore, BankRuleStore];

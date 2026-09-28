@@ -505,6 +505,7 @@
     "aoc-chat": "Administración del chat",
     "journal-export": "Exportar diario",
     "journal-import-bexio": "Importar diario bexio",
+    "journal-import-bank": "Importar extracto bancario",
     "task-add": "Crear nueva tarea",
     "task-all": "Todas las tareas",
     "task-export": "Exportar tareas",

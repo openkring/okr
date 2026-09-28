@@ -15,9 +15,7 @@ import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
 
 import { Menu } from '@okr/cms-menu-feature';
 
-import { BankImportStatusFilter, BankImportStore } from './bank-import.store';
-import { BankProfileStore } from '@okr/finance-bank-profile-feature';
-import { BankRuleStore } from '@okr/finance-bank-rule-feature';
+import { BANK_IMPORT_PROVIDERS, BankImportStatusFilter, BankImportStore } from './bank-import.store';
 
 const STATUS_FILTERS: BankImportStatusFilter[] = ['open', 'all', 'unmapped', 'mapped', 'posted', 'error'];
 
@@ -30,7 +28,7 @@ const STATUS_FILTERS: BankImportStatusFilter[] = ['open', 'all', 'unmapped', 'ma
     IonContent, IonGrid, IonRow, IonCol, IonChip, IonNote,
     IonSelect, IonSelectOption, IonItem,
   ],
-  providers: [BankImportStore, BankProfileStore, BankRuleStore],
+  providers: BANK_IMPORT_PROVIDERS,
   styles: [`.medium { color: var(--ion-color-medium); } ion-note.fee { display: block; font-size: 0.8em; }`],
   template: `
     <ion-header>

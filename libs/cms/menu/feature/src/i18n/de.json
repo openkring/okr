@@ -505,6 +505,7 @@
     "aoc-chat": "Chat Admin",
     "journal-export": "Journal exportieren",
     "journal-import-bexio": "bexio-Journal importieren",
+    "journal-import-bank": "Bankauszug importieren",
     "task-add": "Neuen Task erstellen",
     "task-all": "Alle Todos",
     "task-export": "Aufgaben exportieren",
