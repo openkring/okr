@@ -46,6 +46,11 @@ export const INVOICE_I18N_KEYS = {
   notes_placeholder:        PFX + 'notes.placeholder',
 
   state_label:              PFX + 'state.label',
+  state_draft:              PFX + 'invoice_state.draft.label',
+  state_pending:            PFX + 'invoice_state.pending.label',
+  state_paid:               PFX + 'invoice_state.paid.label',
+  state_overdue:            PFX + 'invoice_state.overdue.label',
+  state_cancelled:          PFX + 'invoice_state.cancelled.label',
 
   bexioId_label:            PFX + 'bexio.id.label',
   bexioId_placeholder:      PFX + 'bexio.id.placeholder',

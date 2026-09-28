@@ -87,7 +87,7 @@ import { InvoiceStore } from './invoice.store';
               <ion-col size="2"class="ion-align-self-center ion-text-end">{{ getAmount(invoice.totalAmount?.amount)}}</ion-col>
               <ion-col size="2" class="state">
                 <ion-chip [outline]="true" size="small" [color]="getStateColor(invoice.state)">
-                  {{ invoice.state }}
+                  {{ getStateLabel(invoice.state) }}
                 </ion-chip>
               </ion-col>
             </ion-row>
@@ -153,6 +153,18 @@ export class InvoiceList {
       case 'cancelled': return 'medium';
     }
     return '';
+  }
+
+  protected getStateLabel(state: string): string {
+    const i18n = this.store.i18n;
+    switch(state) {
+      case 'draft': return i18n.state_draft();
+      case 'pending': return i18n.state_pending();
+      case 'paid': return i18n.state_paid();
+      case 'overdue': return i18n.state_overdue();
+      case 'cancelled': return i18n.state_cancelled();
+    }
+    return state;
   }
 
   protected formatDate(storeDate: string): string {
