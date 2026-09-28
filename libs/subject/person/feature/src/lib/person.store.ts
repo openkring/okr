@@ -235,7 +235,7 @@ export const PersonStore = signalStore(
             if ((p.web ?? '').length > 0) this.saveAddress(convertNewPersonFormToWebAddress(p, store.tenantId()), avatarKey);
             if ((p.city ?? '').length > 0) this.saveAddress(convertNewPersonFormToPostalAddress(p, store.tenantId()), avatarKey);
             if ((p.email ?? '').length > 0 || (p.phone ?? '').length > 0 || (p.web ?? '').length > 0 || (p.city ?? '').length > 0) {
-                store.appStore.reloadAddressDirectory();
+                store.appStore.watchDirectoryEntry(avatarKey);
             }
             if (p.shouldAddMembership && (p.orgKey ?? '').length > 0 && (p.membershipCategory ?? '').length > 0) {
                 await this.saveMembership(p, personKey);
@@ -271,7 +271,7 @@ export const PersonStore = signalStore(
             }
             this.reload();
             store.appStore.reloadPersons();
-            store.appStore.reloadAddressDirectory();
+            store.appStore.watchDirectoryEntry(avatarKey);
         },
 
         /**

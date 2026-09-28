@@ -240,7 +240,7 @@ export const AddressStore = signalStore(
               await store.addressService.update(data, store.currentUser());
             }
             this.reload();
-            store.appStore.reloadAddressDirectory();
+            store.appStore.watchDirectoryEntry(data.parentKey);
             await this.offerLoginEmailChange(data);
         }
         }
@@ -288,9 +288,9 @@ export const AddressStore = signalStore(
           console.log(person);
         }
         // No-op today: editSubject only looks up and logs the org/person, it does not
-        // write. Kept here so the projection reload is already wired once this method
+        // write. Kept here so the projection refresh is already wired once this method
         // grows an actual edit/write path — do not delete as dead code.
-        store.appStore.reloadAddressDirectory();
+        store.appStore.watchDirectoryEntry(parentKey);
       },
 
       async export(type: string): Promise<void> {
@@ -303,7 +303,7 @@ export const AddressStore = signalStore(
         if (result === true) {
           await store.addressService.delete(address, store.currentUser());
           this.reload();
-          store.appStore.reloadAddressDirectory();
+          store.appStore.watchDirectoryEntry(address.parentKey);
         }
       },
 

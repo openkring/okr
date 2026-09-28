@@ -4,12 +4,12 @@ import { Title } from '@angular/platform-browser';
 import { patchState, signalStore, withComputed, withHooks, withMethods, withProps, withState } from '@ngrx/signals';
 import { captureMessage } from '@sentry/angular';
 import { authState } from 'rxfire/auth';
-import { from, of } from 'rxjs';
+import { from, of, takeUntil, timer } from 'rxjs';
 import { App } from '@capacitor/app';
 
 import { AUTH, ENV, FIRESTORE } from '@okr/shared-config';
 import { AppConfigService, FirestoreService } from '@okr/shared-data-access';
-import { AddressDirectoryCollection, AddressDirectoryModel, AppConfig, AvailableLanguages, CategoryCollection, CategoryItemModel, CategoryListModel, DefaultLanguage, DefaultLanguageCode, GroupCollection, GroupModel, InvitationCollection, InvitationModel, OrgCollection, OrgModel, PersonCollection, PersonModel, PrivacySettings, privacyUsageToAccessor, ResourceCollection, ResourceModel, ResourceModelName, stricterAccessor, TagCollection, TagModel, TaskCollection, TaskModel, UserCollection, UserModel } from '@okr/shared-models';
+import { AddressDirectoryCollection, AddressDirectoryModel, AppConfig, getAddressDirectoryKey, AvailableLanguages, CategoryCollection, CategoryItemModel, CategoryListModel, DefaultLanguage, DefaultLanguageCode, GroupCollection, GroupModel, InvitationCollection, InvitationModel, OrgCollection, OrgModel, PersonCollection, PersonModel, PrivacySettings, privacyUsageToAccessor, ResourceCollection, ResourceModel, ResourceModelName, stricterAccessor, TagCollection, TagModel, TaskCollection, TaskModel, UserCollection, UserModel } from '@okr/shared-models';
 import { die, getSystemQuery, indexBy, openInvitationsOf, pickForTenant, replacePlaceholders, sortPersons } from '@okr/shared-util-core';
 import { AppNavigationService, armStartupStallCheck, isBrowser, markStartup, probeStoredSession, reportStartupTiming, VersionCheckService, resourceParams } from '@okr/shared-util-angular';
 
@@ -173,7 +173,7 @@ export const AppStore = signalStore(
       stream: ({params}) => {
         if (!params.userKey || !params.tenantId) return of([]);
         // Einmal laden statt Echtzeit-Abo: siehe personsResource oben. Nach eigenen
-        // Schreibzugriffen holt reloadAddressDirectory() neu.
+        // Adress-Schreibzugriffen folgt watchDirectoryEntry() dem betroffenen Eintrag.
         return from(store.firestoreService.getDataOnce<AddressDirectoryModel>(
           AddressDirectoryCollection, getSystemQuery(params.tenantId), 'none'));
       }
@@ -616,6 +616,31 @@ export const AppStore = signalStore(
       reloadTags(): void { store.tagsResource.reload(); },
       reloadCategories(): void { store.categoriesResource.reload(); },
       reloadAddressDirectory(): void { store.addressDirectoryResource.reload(); },
+
+      /**
+       * Follows ONE parent's address-directory doc after the app wrote to its addresses.
+       * The projection is rebuilt by the onAddressChange Cloud Function seconds AFTER the
+       * address write (once per changed address), so a reloadAddressDirectory() issued right
+       * after the write reads the old state and the lists stay stale until the next app start.
+       * Instead, listen to that single doc for a short window and patch every snapshot into
+       * the loaded directory — no full reload, and the load-once contract for the rest stays.
+       * @param parentKey 'person.<okey>' or 'org.<okey>'
+       * @param windowMs how long to follow the doc (covers the CF's cold start)
+       */
+      watchDirectoryEntry(parentKey: string, windowMs = 30_000): void {
+        const tenantId = store.tenantId();
+        if (!parentKey || !tenantId) return;
+        store.firestoreService.readModel<AddressDirectoryModel>(
+          AddressDirectoryCollection, getAddressDirectoryKey(tenantId, parentKey))
+          .pipe(takeUntil(timer(windowMs)))
+          .subscribe(entry => {
+            // undefined = doc not written yet (or read failed): keep what is loaded
+            if (!entry) return;
+            store.addressDirectoryResource.value.update(list => [
+              ...(list ?? []).filter(d => d.parentKey !== parentKey), entry
+            ]);
+          });
+      },
 
       /**
        * This returns the name of the default icon for a given ModelType.

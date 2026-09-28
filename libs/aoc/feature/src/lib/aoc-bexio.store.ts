@@ -565,7 +565,7 @@ export const AocBexioStore = signalStore(
         } else {
           store.appStore.reloadOrgs();
         }
-        store.appStore.reloadAddressDirectory();
+        store.appStore.watchDirectoryEntry(`${item.type}.${okey}`);
       }
     },
 
@@ -623,7 +623,7 @@ export const AocBexioStore = signalStore(
           : i
         ),
       });
-      store.appStore.reloadAddressDirectory();
+      store.appStore.watchDirectoryEntry(avatarKey);
     },
 
     async saveAddress(address: AddressModel, avatarKey: string): Promise<string | undefined> {
