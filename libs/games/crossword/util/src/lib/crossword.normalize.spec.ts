@@ -10,6 +10,10 @@ describe('normalizeAnswer', () => {
     expect(normalizeAnswer('Straße')).toBe('STRASSE');
   });
 
+  it('folds the capital sharp-S (ẞ, U+1E9E) without losing a letter', () => {
+    expect(normalizeAnswer('GROẞE')).toBe('GROSSE');
+  });
+
   it('strips everything outside A-Z', () => {
     expect(normalizeAnswer('Vierer-Boot')).toBe('VIERERBOOT');
     expect(normalizeAnswer('  Ruder ')).toBe('RUDER');

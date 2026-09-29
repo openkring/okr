@@ -19,7 +19,7 @@ export interface RejectedEntry {
 
 /** Umlauts expand to two characters — the German crossword convention, one letter per cell. */
 const REPLACEMENTS: readonly (readonly [RegExp, string])[] = [
-  [/Ä/g, 'AE'], [/Ö/g, 'OE'], [/Ü/g, 'UE'], [/ß/g, 'SS'],
+  [/Ä/g, 'AE'], [/Ö/g, 'OE'], [/Ü/g, 'UE'], [/ß/g, 'SS'], [/ẞ/g, 'SS'],
 ];
 
 /**
