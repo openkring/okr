@@ -1,6 +1,7 @@
 import { trumpMultiplier } from './jass.config';
 import {
-  JassConfig, JassGame, JassHand, JassOutcome, JassPlayer, JassSide, JassVariant, MATCH_POINTS, STOECK_POINTS,
+  CARD_POINTS, CoiffeurRow, JASS_TRUMPS, JassConfig, JassGame, JassHand, JassOutcome, JassPlayer, JassSide, JassSideStats,
+  JassVariant, MATCH_POINTS, STOECK_POINTS,
 } from './jass.types';
 
 export function buildSides(variant: JassVariant, playerCount: number, config: JassConfig, bid?: number, bueterIdx = 0): JassSide[] {
@@ -158,4 +159,63 @@ export function undoHand(game: JassGame): JassGame {
 
 export function replaceHand(game: JassGame, index: number, hand: JassHand): JassGame {
   return { ...game, hands: game.hands.map((h, i) => (i === index ? hand : h)), finishedAt: undefined };
+}
+
+export function playedRows(game: JassGame, sideId: string, excludeIndex?: number): string[] {
+  return game.hands.filter((h, i) => i !== excludeIndex && h.sideId === sideId).map(h => h.trump);
+}
+
+export function openRows(game: JassGame, sideId: string, excludeIndex?: number): CoiffeurRow[] {
+  const played = new Set(playedRows(game, sideId, excludeIndex));
+  return game.config.coiffeurRows.filter(r => !played.has(r.id));
+}
+
+const inRange = (v: number | undefined, max: number) => typeof v === 'number' && Number.isInteger(v) && v >= 0 && v <= max;
+
+/** Error codes for a hand; an empty list means it may be saved. `excludeIndex` = the hand being edited. */
+export function validateHand(game: JassGame, hand: JassHand, excludeIndex?: number): string[] {
+  const errors: string[] = [];
+  const ids = game.sides.map(s => s.id);
+
+  if (game.variant === 'coiffeur') {
+    if (!game.config.coiffeurRows.some(r => r.id === hand.trump)) errors.push('trump_unknown');
+    if (!hand.sideId || !ids.includes(hand.sideId)) errors.push('side_missing');
+    else if (playedRows(game, hand.sideId, excludeIndex).includes(hand.trump)) errors.push('row_played');
+  } else if (game.variant !== 'differenzler' && !(JASS_TRUMPS as string[]).includes(hand.trump)) {
+    errors.push('trump_unknown');
+  }
+
+  if (hand.matchSideId !== undefined && !ids.includes(hand.matchSideId)) errors.push('match_unknown');
+  if (!hand.matchSideId) {
+    if (ids.some(id => !inRange(hand.cardPoints[id], CARD_POINTS))) errors.push('points_range');
+    else if (ids.reduce((s, id) => s + hand.cardPoints[id], 0) !== CARD_POINTS) errors.push('points_sum');
+  }
+
+  if (game.variant === 'differenzler') {
+    if (ids.some(id => !inRange(hand.announced?.[id], CARD_POINTS))) errors.push('announce_range');
+  } else if (Object.values(hand.weis).some(w => !Number.isInteger(w) || w < 0 || w % 10 !== 0)) {
+    errors.push('weis_invalid');
+  }
+  return errors;
+}
+
+export function validateBid(bid: number, config: JassConfig): boolean {
+  return Number.isInteger(bid) && bid >= CARD_POINTS && bid <= config.bueterPairTarget && bid % 10 === 0;
+}
+
+/** Raw (unmultiplied) figures per side; Coiffeur counts the opponents of a row too. */
+export function stats(game: JassGame): Record<string, JassSideStats> {
+  const out: Record<string, JassSideStats> = {};
+  for (const side of game.sides) {
+    const s = { hands: game.hands.length, pointsPlayed: 0, weis: 0, stoeck: 0, matches: 0, average: 0 };
+    for (const hand of game.hands) {
+      s.pointsPlayed += cardPointsOf(hand, side.id);
+      s.weis += hand.weis[side.id] ?? 0;
+      if (hand.stoeckSideId === side.id) s.stoeck++;
+      if (hand.matchSideId === side.id) s.matches++;
+    }
+    s.average = s.hands ? Math.round(s.pointsPlayed / s.hands) : 0;
+    out[side.id] = s;
+  }
+  return out;
 }
