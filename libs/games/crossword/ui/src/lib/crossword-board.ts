@@ -43,6 +43,9 @@ export interface CrosswordSelectedCell {
       cursor: pointer;
       user-select: none;
     }
+    .cw-grid.read-only .cw-cell {
+      cursor: default;
+    }
     .cw-cell.blocked {
       background: var(--ion-color-step-850, #1a1a1a);
       cursor: default;
@@ -62,7 +65,11 @@ export interface CrosswordSelectedCell {
   `],
   template: `
     <div class="cw-scroll">
-      <div class="cw-grid" [style.grid-template-columns]="'repeat(' + grid().cols + ', 40px)'">
+      <div
+        class="cw-grid"
+        [class.read-only]="readOnly()"
+        [style.grid-template-columns]="'repeat(' + grid().cols + ', 40px)'"
+      >
         @for (row of cellMap(); track $index; let r = $index) {
           @for (cell of row; track $index; let c = $index) {
             <div
@@ -106,7 +113,7 @@ export class CrosswordBoard {
   }
 
   protected onCellClick(row: number, col: number, cell: CellView): void {
-    if (cell.blocked) return;
+    if (cell.blocked || this.readOnly()) return;
     this.cellPicked.emit({ row, col });
   }
 }
