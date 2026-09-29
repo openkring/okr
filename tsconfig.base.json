@@ -159,6 +159,7 @@
       "@okr/forms-util": ["libs/forms/util/src/index.ts"],
       "@okr/games-battleship-feature": ["libs/games/battleship/feature/src/index.ts"],
       "@okr/games-battleship-util": ["libs/games/battleship/util/src/index.ts"],
+      "@okr/games-crossword-util": ["libs/games/crossword/util/src/index.ts"],
       "@okr/games-hearing-quiz-data-access": ["libs/games/hearing-quiz/data-access/src/index.ts"],
       "@okr/games-hearing-quiz-feature": ["libs/games/hearing-quiz/feature/src/index.ts"],
       "@okr/games-hearing-quiz-ui": ["libs/games/hearing-quiz/ui/src/index.ts"],
