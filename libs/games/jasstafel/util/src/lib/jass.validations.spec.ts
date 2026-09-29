@@ -50,6 +50,11 @@ describe('jassConfigValidations', () => {
     expect(jassConfigValidations({ ...DEFAULT_JASS_CONFIG, schieberTarget: 50 }).getErrors('schieberTarget')).toHaveLength(1);
     expect(jassConfigValidations({ ...DEFAULT_JASS_CONFIG, differenzlerHands: 0 }).getErrors('differenzlerHands')).toHaveLength(1);
   });
+  it('flags a Büter bid off the 10-steps or above the pair target', () => {
+    expect(jassConfigValidations({ ...DEFAULT_JASS_CONFIG, bueterBid: 655 }).getErrors('bueterBid')).toHaveLength(1);
+    expect(jassConfigValidations({ ...DEFAULT_JASS_CONFIG, bueterBid: 1100 }).getErrors('bueterBid')).toHaveLength(1);
+    expect(jassConfigValidations({ ...DEFAULT_JASS_CONFIG, bueterBid: 650 }).getErrors('bueterBid')).toHaveLength(0);
+  });
   it('flags a row with an empty label or multiplier 0', () => {
     const rows = [{ id: 'x', label: '', multiplier: 1 }, { id: 'y', label: 'Y', multiplier: 0 }];
     expect(jassConfigValidations({ ...DEFAULT_JASS_CONFIG, coiffeurRows: rows }).getErrors('coiffeurRows')).toHaveLength(1);

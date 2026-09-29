@@ -13,10 +13,7 @@
     "bueter_label": "Büter",
     "players_count": "{count} joueurs",
     "start": "Commencer",
-    "duplicate_player": "Cette personne est déjà à la table.",
-    "bid_title": "L'annonce du Büter",
-    "bid_placeholder": "p. ex. 500",
-    "bid_invalid": "L'annonce doit se situer entre 160 et l'objectif des adversaires, par pas de dix."
+    "duplicate_player": "Cette personne est déjà à la table."
   },
   "slate": {
     "trump_maker": "Fait l'atout",
@@ -28,7 +25,6 @@
     "enter_hand": "Saisir le tour",
     "enter_announce": "Saisir les annonces",
     "undo": "Annuler",
-    "settings": "Réglages",
     "history": "Historique",
     "end_game": "Terminer la partie",
     "end_confirm": "Veux-tu vraiment terminer la partie en cours ? Elle ne sera pas comptée.",
@@ -56,18 +52,20 @@
     "preview": "Compte"
   },
   "settings": {
-    "title": "Réglages",
-    "schieber_target": "Objectif Schieber",
-    "bueter_target": "Objectif des adversaires au Büter",
-    "differenzler_hands": "Tours au Differenzler",
+    "schieber_target": "Objectif",
+    "bueter_target": "Objectif des adversaires",
+    "bid_label": "Annonce",
+    "differenzler_hands": "Tours",
     "rows_title": "Lignes du Coiffeur",
     "row_label": "Ligne",
     "row_multiplier": "Facteur",
-    "rows_helper": "Un champ vide supprime la ligne.",
-    "next_game": "Les changements s'appliquent dès la prochaine partie."
+    "rows_helper": "Un champ vide supprime la ligne."
   },
   "result": {
     "winner": "Gagné",
+    "stat_date": "Date",
+    "stat_start": "Début",
+    "stat_duration": "Durée",
     "draw": "Égalité",
     "stat_points": "Points joués",
     "stat_weis": "Weis (avec Stöck)",
@@ -88,6 +86,7 @@
     "side": "Choisis l'équipe.",
     "announce": "Une annonce se situe entre 0 et 157.",
     "target": "L'objectif se situe entre 100 et 10000.",
+    "bid": "L'annonce se situe entre 160 et l'objectif des adversaires, par pas de dix.",
     "hands": "Entre 1 et 36 tours.",
     "rows": "Chaque ligne a besoin d'un nom et d'un facteur de 1 à 20."
   },

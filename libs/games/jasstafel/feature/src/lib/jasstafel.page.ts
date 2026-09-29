@@ -4,7 +4,7 @@ import {
   IonSegment, IonSegmentButton, IonToolbar,
 } from '@ionic/angular/standalone';
 
-import { JassAvatar, JassGrid, JassResult, JassSlate } from '@okr/games-jasstafel-ui';
+import { JassAvatar, JassGrid, JassResult, JassSettingsForm, JassSlate } from '@okr/games-jasstafel-ui';
 import { JASS_VARIANTS, JassVariant } from '@okr/games-jasstafel-util';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { Header } from '@okr/shared-ui';
@@ -21,7 +21,7 @@ import { JasstafelStore } from './jasstafel.store';
   standalone: true,
   providers: [JasstafelStore],
   imports: [
-    Header, JassSlate, JassGrid, JassResult, JassAvatar, SvgIconPipe,
+    Header, JassSlate, JassGrid, JassResult, JassAvatar, JassSettingsForm, SvgIconPipe,
     IonContent, IonCard, IonCardContent, IonSegment, IonSegmentButton, IonLabel, IonButton, IonButtons,
     IonIcon, IonFooter, IonToolbar, IonNote,
   ],
@@ -30,7 +30,9 @@ import { JasstafelStore } from './jasstafel.store';
     .fill { display: flex; flex-direction: column; height: 100%; gap: 8px; }
     .fill > okr-jass-slate, .fill > okr-jass-grid, .fill > okr-jass-result { flex: 1; min-height: 0; }
     .setup { flex: 1; min-height: 0; margin: 0; display: flex; flex-direction: column; }
-    .setup ion-card-content { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 8px; }
+    .setup ion-card-content { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; }
+    /* «Rückgängig»: the reload arrow turned backwards */
+    .mirrored { transform: scaleX(-1); }
 
     /* the table seen from above: seat 1 at the bottom, then counter-clockwise (the Jass direction) */
     .table { flex: 1; min-height: 260px; display: grid; gap: 8px;
@@ -102,14 +104,17 @@ import { JasstafelStore } from './jasstafel.store';
               </ion-segment>
             }
 
+            <!-- the settings of the chosen variant, saved as typed -->
+            <okr-jass-settings-form [formData]="store.config()" (formDataChange)="store.setConfig($event)"
+              [variant]="store.variant()" section="main" [i18n]="store.i18n" />
+
             <ion-button expand="block" class="ion-margin-top" [disabled]="!store.canStart()" (click)="store.start()">
               {{ store.i18n.start() }}
             </ion-button>
-            @if (store.archive().length) {
-              <ion-button expand="block" fill="clear" (click)="store.openHistory()">
-                <ion-icon slot="start" src="{{ 'list' | svgIcon }}" />
-                {{ store.i18n.history() }}
-              </ion-button>
+
+            @if (store.variant() === 'coiffeur') {
+              <okr-jass-settings-form [formData]="store.config()" (formDataChange)="store.setConfig($event)"
+                variant="coiffeur" section="rows" [i18n]="store.i18n" />
             }
           </ion-card-content>
         </ion-card>
@@ -123,13 +128,10 @@ import { JasstafelStore } from './jasstafel.store';
         <ion-toolbar>
           <ion-buttons slot="start">
             <ion-button (click)="store.undo()" [attr.aria-label]="store.i18n.undo()">
-              <ion-icon slot="icon-only" src="{{ 'reload' | svgIcon }}" />
+              <ion-icon slot="icon-only" class="mirrored" src="{{ 'reload' | svgIcon }}" />
             </ion-button>
             <ion-button (click)="store.openHistory()" [attr.aria-label]="store.i18n.history()">
-              <ion-icon slot="icon-only" src="{{ 'list' | svgIcon }}" />
-            </ion-button>
-            <ion-button (click)="store.openSettings()" [attr.aria-label]="store.i18n.settings()">
-              <ion-icon slot="icon-only" src="{{ 'settings' | svgIcon }}" />
+              <ion-icon slot="icon-only" src="{{ 'chart' | svgIcon }}" />
             </ion-button>
             <ion-button (click)="store.endGame()" [attr.aria-label]="store.i18n.end_game()">
               <ion-icon slot="icon-only" src="{{ 'cancel' | svgIcon }}" />
@@ -137,7 +139,9 @@ import { JasstafelStore } from './jasstafel.store';
           </ion-buttons>
           @if (!store.outcome()) {
             <ion-buttons slot="end">
-              <ion-button fill="solid" color="primary" (click)="store.enterHand()">{{ enterLabel() }}</ion-button>
+              <ion-button fill="solid" color="primary" (click)="store.enterHand()" [attr.aria-label]="enterLabel()">
+                <ion-icon slot="icon-only" src="{{ 'add' | svgIcon }}" />
+              </ion-button>
             </ion-buttons>
           }
         </ion-toolbar>

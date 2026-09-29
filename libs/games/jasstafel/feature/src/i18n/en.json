@@ -13,10 +13,7 @@
     "bueter_label": "Büter",
     "players_count": "{count} players",
     "start": "Start",
-    "duplicate_player": "This person is already at the table.",
-    "bid_title": "The Büter's bid",
-    "bid_placeholder": "e.g. 500",
-    "bid_invalid": "The bid must be between 160 and the opponents' target, in steps of ten."
+    "duplicate_player": "This person is already at the table."
   },
   "slate": {
     "trump_maker": "Makes trump",
@@ -28,7 +25,6 @@
     "enter_hand": "Enter hand",
     "enter_announce": "Enter announcements",
     "undo": "Undo",
-    "settings": "Settings",
     "history": "History",
     "end_game": "End game",
     "end_confirm": "Do you really want to end the running game? It will not be counted.",
@@ -56,18 +52,20 @@
     "preview": "Counts"
   },
   "settings": {
-    "title": "Settings",
-    "schieber_target": "Schieber target",
-    "bueter_target": "Opponents' target in Büter",
-    "differenzler_hands": "Hands in Differenzler",
+    "schieber_target": "Target",
+    "bueter_target": "Opponents' target",
+    "bid_label": "Bid",
+    "differenzler_hands": "Hands",
     "rows_title": "Coiffeur rows",
     "row_label": "Row",
     "row_multiplier": "Multiplier",
-    "rows_helper": "An empty field removes the row.",
-    "next_game": "Changes apply from the next game on."
+    "rows_helper": "An empty field removes the row."
   },
   "result": {
     "winner": "Won",
+    "stat_date": "Date",
+    "stat_start": "Start",
+    "stat_duration": "Duration",
     "draw": "Draw",
     "stat_points": "Points played",
     "stat_weis": "Weis (with Stöck)",
@@ -88,6 +86,7 @@
     "side": "Choose the team.",
     "announce": "An announcement is between 0 and 157.",
     "target": "The target is between 100 and 10000.",
+    "bid": "The bid is between 160 and the opponents' target, in steps of ten.",
     "hands": "Between 1 and 36 hands.",
     "rows": "Each row needs a name and a multiplier from 1 to 20."
   },

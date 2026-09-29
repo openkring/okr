@@ -5,12 +5,13 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import {
   DEFAULT_JASS_CONFIG, JASS_I18N_KEYS, JassConfig, JassGame, JassHandFormModel, JassI18n, JassPlayer, JassVariant,
   JassChalkUnit, PLAYER_COUNTS, addChalk, addHand, createGame, deleteHand as deleteHandAt, handFromForm, newHandForm, nextTrumpMaker, normalizeConfig, parsePending,
-  parseStoredGame, replaceHand, stats, totals, undoLast, validateBid, validateHand, winner,
+  parseStoredGame, replaceHand, stats, totals, undoLast, jassConfigValidations, validateHand, winner,
 } from '@okr/games-jasstafel-util';
 import { ModelSelectService } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { AvatarInfo } from '@okr/shared-models';
 import { AlertService } from '@okr/shared-util-angular';
+import { DateFormat, getTodayStr } from '@okr/shared-util-core';
 
 const GAME_KEY = 'jasstafel.game';
 const CONFIG_KEY = 'jasstafel.config';
@@ -92,7 +93,7 @@ export const JasstafelStore = signalStore(
       const filled = seats.filter(Boolean).length;
       const firstGap = seats.findIndex(s => !s);
       const contiguous = firstGap === -1 || seats.slice(firstGap).every(s => !s);
-      return PLAYER_COUNTS[store.variant()].includes(filled) && contiguous;
+      return PLAYER_COUNTS[store.variant()].includes(filled) && contiguous && jassConfigValidations(store.config()).isValid();
     }),
   })),
 
@@ -110,7 +111,7 @@ export const JasstafelStore = signalStore(
       let game = next;
       if (game) {
         const done = winner(game) !== undefined;
-        if (done && !game.finishedAt) game = { ...game, finishedAt: new Date().toISOString() };
+        if (done && !game.finishedAt) game = { ...game, finishedAt: getTodayStr(DateFormat.StoreDateTime) };
         if (!done && game.finishedAt) game = { ...game, finishedAt: undefined };
         const id = game.id;
         const others = store.archive().filter(a => a.id !== id);
@@ -134,16 +135,8 @@ export const JasstafelStore = signalStore(
     async function start(): Promise<void> {
       if (!store.canStart()) return;
       const players: JassPlayer[] = store.seats().filter((s): s is AvatarInfo => !!s).map(avatar => ({ avatar }));
-      let bid: number | undefined;
-      if (store.variant() === 'bueter') {
-        const raw = await store.alertService.okrPrompt(store.i18n.bid_title(), store.i18n.bid_placeholder());
-        if (raw === undefined) return;
-        bid = Number(raw.trim());
-        if (!validateBid(bid, store.config())) {
-          await store.alertService.showToast(store.i18n.bid_invalid());
-          return;
-        }
-      }
+      // the bid is set on the start screen; canStart already refuses an invalid one
+      const bid = store.variant() === 'bueter' ? store.config().bueterBid : undefined;
       patchState(store, { pendingAnnounced: null });
       setGame(createGame(store.variant(), players, store.config(), { bid, bueterIdx: store.bueterIdx() }));
     }
@@ -247,16 +240,9 @@ export const JasstafelStore = signalStore(
         if (game) setGame(undoLast(game));
       },
 
-      async openSettings(): Promise<void> {
-        const { JassSettingsModal } = await import('@okr/games-jasstafel-ui');
-        const modal = await store.modalController.create({
-          component: JassSettingsModal,
-          componentProps: { config: store.config(), i18n: store.i18n },
-        });
-        await modal.present();
-        const { data, role } = await modal.onWillDismiss<JassConfig>();
-        if (role !== 'confirm' || !data) return;
-        patchState(store, { config: normalizeConfig(data) });
+      /** Start-screen settings are saved as they are typed; a running game keeps its own copy. */
+      setConfig(config: JassConfig): void {
+        patchState(store, { config: normalizeConfig(config) });
         persist();
       },
 

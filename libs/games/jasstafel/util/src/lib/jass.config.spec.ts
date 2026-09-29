@@ -24,6 +24,7 @@ describe('normalizeConfig', () => {
   });
   it('defaults: Schieber 1000, 10 Coiffeur rows 1..10, 12 Differenzler hands', () => {
     expect(DEFAULT_JASS_CONFIG.schieberTarget).toBe(1000);
+    expect(DEFAULT_JASS_CONFIG.bueterBid).toBe(650);
     expect(DEFAULT_JASS_CONFIG.coiffeurRows.map(r => r.multiplier)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
   });
 });

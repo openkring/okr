@@ -19,9 +19,6 @@ export const JASS_I18N_KEYS = {
   players_count:      PFX + 'setup.players_count',
   start:              PFX + 'setup.start',
   duplicate_player:   PFX + 'setup.duplicate_player',
-  bid_title:          PFX + 'setup.bid_title',
-  bid_placeholder:    PFX + 'setup.bid_placeholder',
-  bid_invalid:        PFX + 'setup.bid_invalid',
 
   // slate
   trump_maker:        PFX + 'slate.trump_maker',
@@ -31,7 +28,6 @@ export const JASS_I18N_KEYS = {
   enter_hand:         PFX + 'action.enter_hand',
   enter_announce:     PFX + 'action.enter_announce',
   undo:               PFX + 'action.undo',
-  settings:           PFX + 'action.settings',
   history:            PFX + 'action.history',
   end_game:           PFX + 'action.end_game',
   end_confirm:        PFX + 'action.end_confirm',
@@ -60,18 +56,20 @@ export const JASS_I18N_KEYS = {
   preview:            PFX + 'hand.preview',
 
   // settings form
-  settings_title:     PFX + 'settings.title',
   schieber_target:    PFX + 'settings.schieber_target',
   bueter_target:      PFX + 'settings.bueter_target',
+  bid_label:          PFX + 'settings.bid_label',
   differenzler_hands: PFX + 'settings.differenzler_hands',
   rows_title:         PFX + 'settings.rows_title',
   row_label:          PFX + 'settings.row_label',
   row_multiplier:     PFX + 'settings.row_multiplier',
   rows_helper:        PFX + 'settings.rows_helper',
-  settings_next_game: PFX + 'settings.next_game',
 
   // result + stats
   winner:             PFX + 'result.winner',
+  stat_date:          PFX + 'result.stat_date',
+  stat_start:         PFX + 'result.stat_start',
+  stat_duration:      PFX + 'result.stat_duration',
   draw:               PFX + 'result.draw',
   stat_points:        PFX + 'result.stat_points',
   stat_weis:          PFX + 'result.stat_weis',
@@ -92,6 +90,7 @@ export const JASS_I18N_KEYS = {
   error_side:         PFX + 'error.side',
   error_announce:     PFX + 'error.announce',
   error_target:       PFX + 'error.target',
+  error_bid:          PFX + 'error.bid',
   error_hands:        PFX + 'error.hands',
   error_rows:         PFX + 'error.rows',
 

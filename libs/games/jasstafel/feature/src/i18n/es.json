@@ -13,10 +13,7 @@
     "bueter_label": "Büter",
     "players_count": "{count} jugadores",
     "start": "Empezar",
-    "duplicate_player": "Esta persona ya está en la mesa.",
-    "bid_title": "La apuesta del Büter",
-    "bid_placeholder": "p. ej. 500",
-    "bid_invalid": "La apuesta debe estar entre 160 y el objetivo de los rivales, de diez en diez."
+    "duplicate_player": "Esta persona ya está en la mesa."
   },
   "slate": {
     "trump_maker": "Elige el triunfo",
@@ -28,7 +25,6 @@
     "enter_hand": "Anotar ronda",
     "enter_announce": "Anotar predicciones",
     "undo": "Deshacer",
-    "settings": "Ajustes",
     "history": "Historial",
     "end_game": "Terminar partida",
     "end_confirm": "¿Seguro que quieres terminar la partida en curso? No contará.",
@@ -56,18 +52,20 @@
     "preview": "Cuenta"
   },
   "settings": {
-    "title": "Ajustes",
-    "schieber_target": "Objetivo Schieber",
-    "bueter_target": "Objetivo de los rivales en Büter",
-    "differenzler_hands": "Rondas en Differenzler",
+    "schieber_target": "Objetivo",
+    "bueter_target": "Objetivo de los rivales",
+    "bid_label": "Apuesta",
+    "differenzler_hands": "Rondas",
     "rows_title": "Filas del Coiffeur",
     "row_label": "Fila",
     "row_multiplier": "Factor",
-    "rows_helper": "Un campo vacío elimina la fila.",
-    "next_game": "Los cambios se aplican a partir de la próxima partida."
+    "rows_helper": "Un campo vacío elimina la fila."
   },
   "result": {
     "winner": "Ganado",
+    "stat_date": "Fecha",
+    "stat_start": "Inicio",
+    "stat_duration": "Duración",
     "draw": "Empate",
     "stat_points": "Puntos jugados",
     "stat_weis": "Weis (con Stöck)",
@@ -88,6 +86,7 @@
     "side": "Elige el equipo.",
     "announce": "Una predicción está entre 0 y 157.",
     "target": "El objetivo está entre 100 y 10000.",
+    "bid": "La apuesta está entre 160 y el objetivo de los rivales, de diez en diez.",
     "hands": "Entre 1 y 36 rondas.",
     "rows": "Cada fila necesita un nombre y un factor de 1 a 20."
   },

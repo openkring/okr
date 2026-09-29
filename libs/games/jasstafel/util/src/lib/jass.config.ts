@@ -16,6 +16,7 @@ export const DEFAULT_COIFFEUR_ROWS: CoiffeurRow[] = [
 export const DEFAULT_JASS_CONFIG: JassConfig = {
   schieberTarget: 1000,
   bueterPairTarget: 1000,
+  bueterBid: 650,
   coiffeurRows: DEFAULT_COIFFEUR_ROWS,
   differenzlerHands: 12,
 };
@@ -41,6 +42,7 @@ export function normalizeConfig(raw: unknown): JassConfig {
   return {
     schieberTarget: isPosInt(r.schieberTarget) ? r.schieberTarget : d.schieberTarget,
     bueterPairTarget: isPosInt(r.bueterPairTarget) ? r.bueterPairTarget : d.bueterPairTarget,
+    bueterBid: isPosInt(r.bueterBid) ? r.bueterBid : d.bueterBid,
     coiffeurRows: normalizeRows(r.coiffeurRows),
     differenzlerHands: isPosInt(r.differenzlerHands) ? r.differenzlerHands : d.differenzlerHands,
   };

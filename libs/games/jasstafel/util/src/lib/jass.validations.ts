@@ -1,5 +1,6 @@
 import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 
+import { validateBid } from './jass.engine';
 import { JassHandFormModel } from './jass-hand.form-model';
 import { CARD_POINTS, JASS_MULTIPLIERS, JassConfig } from './jass.types';
 
@@ -55,6 +56,9 @@ export const jassConfigValidations = staticSuite((model: JassConfig, field?: str
   });
   test('bueterPairTarget', '@games/jasstafel/feature.error.target', () => {
     enforce(isIntIn(model.bueterPairTarget, 160, 10000)).isTruthy();
+  });
+  test('bueterBid', '@games/jasstafel/feature.error.bid', () => {
+    enforce(validateBid(model.bueterBid, model)).isTruthy();
   });
   test('differenzlerHands', '@games/jasstafel/feature.error.hands', () => {
     enforce(isIntIn(model.differenzlerHands, 1, 36)).isTruthy();

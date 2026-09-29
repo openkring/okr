@@ -20,6 +20,8 @@ export interface CoiffeurRow { id: string; label: string; multiplier: number; }
 export interface JassConfig {
   schieberTarget: number;
   bueterPairTarget: number;
+  /** the Büter's bid, set on the start screen (default 650) */
+  bueterBid: number;
   coiffeurRows: CoiffeurRow[];
   differenzlerHands: number;
 }

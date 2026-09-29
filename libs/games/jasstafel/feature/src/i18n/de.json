@@ -13,10 +13,7 @@
     "bueter_label": "Büter",
     "players_count": "{count} Spieler",
     "start": "Starten",
-    "duplicate_player": "Diese Person sitzt schon am Tisch.",
-    "bid_title": "Gebot des Büters",
-    "bid_placeholder": "z. B. 500",
-    "bid_invalid": "Das Gebot muss zwischen 160 und dem Ziel der Gegner liegen, in Zehnerschritten."
+    "duplicate_player": "Diese Person sitzt schon am Tisch."
   },
   "slate": {
     "trump_maker": "Macht Trumpf",
@@ -28,7 +25,6 @@
     "enter_hand": "Runde erfassen",
     "enter_announce": "Ansagen erfassen",
     "undo": "Rückgängig",
-    "settings": "Einstellungen",
     "history": "Verlauf",
     "end_game": "Partie beenden",
     "end_confirm": "Willst du die laufende Partie wirklich beenden? Sie wird nicht gewertet.",
@@ -56,18 +52,20 @@
     "preview": "Zählt"
   },
   "settings": {
-    "title": "Einstellungen",
-    "schieber_target": "Ziel Schieber",
-    "bueter_target": "Ziel der Gegner beim Büter",
-    "differenzler_hands": "Runden beim Differenzler",
+    "schieber_target": "Ziel",
+    "bueter_target": "Ziel der Gegner",
+    "bid_label": "Gebot",
+    "differenzler_hands": "Runden",
     "rows_title": "Coiffeur-Zeilen",
     "row_label": "Zeile",
     "row_multiplier": "Faktor",
-    "rows_helper": "Leeres Feld entfernt die Zeile.",
-    "next_game": "Änderungen gelten ab der nächsten Partie."
+    "rows_helper": "Leeres Feld entfernt die Zeile."
   },
   "result": {
     "winner": "Gewonnen",
+    "stat_date": "Datum",
+    "stat_start": "Beginn",
+    "stat_duration": "Dauer",
     "draw": "Unentschieden",
     "stat_points": "Gespielte Punkte",
     "stat_weis": "Weis (mit Stöck)",
@@ -88,6 +86,7 @@
     "side": "Wähle das Team.",
     "announce": "Eine Ansage liegt zwischen 0 und 157.",
     "target": "Das Ziel liegt zwischen 100 und 10000.",
+    "bid": "Das Gebot liegt zwischen 160 und dem Ziel der Gegner, in Zehnerschritten.",
     "hands": "Zwischen 1 und 36 Runden.",
     "rows": "Jede Zeile braucht einen Namen und einen Faktor von 1 bis 20."
   },

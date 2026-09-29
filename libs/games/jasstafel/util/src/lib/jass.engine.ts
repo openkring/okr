@@ -1,3 +1,5 @@
+import { DateFormat, getTodayStr } from '@okr/shared-util-core';
+
 import { toStrokes } from './jass.strokes';
 import {
   CARD_POINTS, CoiffeurRow, JASS_MULTIPLIERS, JassChalk, JassChalkUnit, JassConfig, JassGame, JassHand, JassOutcome, JassPlayer, JassSide, JassSideStats, JassStrokes,
@@ -36,7 +38,7 @@ export function createGame(
     bid: variant === 'bueter' ? opts.bid : undefined,
     bueterIdx: variant === 'bueter' ? (opts.bueterIdx ?? 0) : undefined,
     hands: [],
-    startedAt: opts.now ?? new Date().toISOString(),
+    startedAt: opts.now ?? getTodayStr(DateFormat.StoreDateTime),
   };
 }
 

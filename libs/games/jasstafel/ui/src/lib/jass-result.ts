@@ -1,7 +1,7 @@
 import { Component, computed, input, output } from '@angular/core';
 import { IonButton } from '@ionic/angular/standalone';
 
-import { JassGame, JassI18n, JassSideStats } from '@okr/games-jasstafel-util';
+import { JassGame, JassI18n, JassSideStats, formatDuration, jassTiming } from '@okr/games-jasstafel-util';
 
 import { JassAvatar } from './jass-avatar';
 import { JASS_CHALK_STYLES } from './jass-chalk.scss';
@@ -18,6 +18,7 @@ import { JASS_CHALK_STYLES } from './jass-chalk.scss';
     table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
     th, td { padding: 4px; text-align: right; } th:first-child, td:first-child { text-align: left; }
     .buttons { display: flex; gap: 8px; justify-content: center; }
+    .timing { display: flex; flex-wrap: wrap; gap: 4px 16px; justify-content: center; margin-bottom: 12px; }
   `],
   template: `
     <div class="jass-board">
@@ -25,6 +26,13 @@ import { JASS_CHALK_STYLES } from './jass-chalk.scss';
       @if (winnerSide(); as w) {
         <div class="winners">
           @for (idx of w.playerIdx; track idx) { <okr-jass-avatar [avatar]="game().players[idx].avatar" /> }
+        </div>
+      }
+      @if (timing().date) {
+        <div class="timing jass-dim">
+          <span>{{ i18n().stat_date() }} {{ timing().date }}</span>
+          <span>{{ i18n().stat_start() }} {{ timing().start }}</span>
+          @if (duration()) { <span>{{ i18n().stat_duration() }} {{ duration() }}</span> }
         </div>
       }
       <table>
@@ -59,5 +67,7 @@ export class JassResult {
   public readonly newGame = output<void>();
   public readonly done = output<void>();
 
+  protected readonly timing = computed(() => jassTiming(this.game()));
+  protected readonly duration = computed(() => formatDuration(this.timing().minutes));
   protected readonly winnerSide = computed(() => this.game().sides.find(s => s.id === this.outcome()));
 }

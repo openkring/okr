@@ -6,5 +6,4 @@ export * from './lib/jass-result';
 export * from './lib/jass-hand.form';
 export * from './lib/jass-hand.modal';
 export * from './lib/jass-settings.form';
-export * from './lib/jass-settings.modal';
 export * from './lib/jass-history.modal';
