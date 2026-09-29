@@ -1,0 +1,58 @@
+import { Signal } from '@angular/core';
+
+const PFX = '@games/crossword/feature.';
+
+/** Validation messages are filed by the Vest suite and resolved by `okr-error-note`. */
+export const CROSSWORD_I18N_KEYS = {
+  title:              PFX + 'title',
+  desc:               PFX + 'desc',
+
+  // admin list + modal
+  list_title:         PFX + 'list.title',
+  list_empty:         PFX + 'list.empty',
+  add:                PFX + 'action.add',
+  generate:           PFX + 'action.generate',
+  reroll:             PFX + 'action.reroll',
+  publish:            PFX + 'action.publish',
+  paste_label:        PFX + 'form.paste_label',
+  paste_hint:         PFX + 'form.paste_hint',
+  form_title:         PFX + 'form.title',
+  form_description:   PFX + 'form.description',
+  form_language:      PFX + 'form.language',
+  form_answer:        PFX + 'form.answer',
+  form_clue:          PFX + 'form.clue',
+
+  // generator feedback; {params} are filled with fill()
+  placed_count:       PFX + 'status.placed_count',
+  grid_stale:         PFX + 'status.grid_stale',
+  no_grid:            PFX + 'status.no_grid',
+
+  // play
+  across:             PFX + 'play.across',
+  down:               PFX + 'play.down',
+  check:              PFX + 'play.check',
+  reveal_letter:      PFX + 'play.reveal_letter',
+  reveal_word:        PFX + 'play.reveal_word',
+  restart:            PFX + 'play.restart',
+  time_label:         PFX + 'play.time_label',
+  solved:             PFX + 'play.solved',
+  solved_time:        PFX + 'play.solved_time',
+
+  // service confirmations
+  create_conf:        PFX + 'create.conf',
+  create_error:       PFX + 'create.error',
+  update_conf:        PFX + 'update.conf',
+  update_error:       PFX + 'update.error',
+  delete_conf:        PFX + 'delete.conf',
+  delete_error:       PFX + 'delete.error',
+
+  // validation — same PFX + 'error.<name>' shape as the other keys, filed by crosswordTopicSuite
+  error_title_required:       PFX + 'error.title_required',
+  error_title_too_long:       PFX + 'error.title_too_long',
+  error_description_too_long: PFX + 'error.description_too_long',
+  error_clue_too_long:        PFX + 'error.clue_too_long',
+  error_too_few_entries:      PFX + 'error.too_few_entries',
+  error_entries_rejected:     PFX + 'error.entries_rejected',
+} satisfies Record<string, string>;
+
+export type CrosswordI18n = { [K in keyof typeof CROSSWORD_I18N_KEYS]: Signal<string> };

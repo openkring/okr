@@ -1,0 +1,34 @@
+{
+  "title": "Mots croisés",
+  "desc": "Résous la grille sur un thème de ton club.",
+  "list": { "title": "Mots croisés", "empty": "Il n'y a pas encore de grille." },
+  "action": { "add": "Nouvelle grille", "generate": "Générer la grille", "reroll": "Relancer", "publish": "Publier" },
+  "form": {
+    "paste_label": "Coller des mots",
+    "paste_hint": "Un mot par ligne, réponse et indice séparés par un point-virgule.",
+    "title": "Titre", "description": "Description", "language": "Langue",
+    "answer": "Réponse", "clue": "Indice"
+  },
+  "status": {
+    "placed_count": "{placed} mots placés sur {total}",
+    "grid_stale": "Les mots ont changé. Régénère la grille avant de publier.",
+    "no_grid": "Aucune grille n'a encore été générée pour ce thème."
+  },
+  "play": {
+    "across": "Horizontal", "down": "Vertical",
+    "check": "Vérifier", "reveal_letter": "Révéler une lettre", "reveal_word": "Révéler le mot",
+    "restart": "Recommencer", "time_label": "Temps", "solved": "Résolu",
+    "solved_time": "Tu as résolu la grille en {time}."
+  },
+  "create": { "conf": "La grille a été créée.", "error": "La grille n'a pas pu être créée." },
+  "update": { "conf": "La grille a été enregistrée.", "error": "La grille n'a pas pu être enregistrée." },
+  "delete": { "conf": "La grille a été supprimée.", "error": "La grille n'a pas pu être supprimée." },
+  "error": {
+    "title_required": "Donne un titre à la grille.",
+    "title_too_long": "Le titre est trop long.",
+    "description_too_long": "La description est trop longue.",
+    "clue_too_long": "Un indice est trop long.",
+    "too_few_entries": "Il faut au moins cinq mots utilisables.",
+    "entries_rejected": "Certains mots ne peuvent pas être utilisés. Vérifie la longueur, l'indice et si un mot apparaît deux fois."
+  }
+}

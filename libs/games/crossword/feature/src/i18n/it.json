@@ -1,0 +1,34 @@
+{
+  "title": "Cruciverba",
+  "desc": "Risolvi il cruciverba su un tema del tuo club.",
+  "list": { "title": "Cruciverba", "empty": "Non ci sono ancora cruciverba." },
+  "action": { "add": "Nuovo cruciverba", "generate": "Genera griglia", "reroll": "Rigenera", "publish": "Pubblica" },
+  "form": {
+    "paste_label": "Incolla parole",
+    "paste_hint": "Una parola per riga, risposta e definizione separate da un punto e virgola.",
+    "title": "Titolo", "description": "Descrizione", "language": "Lingua",
+    "answer": "Risposta", "clue": "Definizione"
+  },
+  "status": {
+    "placed_count": "{placed} di {total} parole posizionate",
+    "grid_stale": "Le parole sono cambiate. Genera di nuovo la griglia prima di pubblicare.",
+    "no_grid": "Per questo tema non è ancora stata generata una griglia."
+  },
+  "play": {
+    "across": "Orizzontale", "down": "Verticale",
+    "check": "Controlla", "reveal_letter": "Mostra lettera", "reveal_word": "Mostra parola",
+    "restart": "Ricomincia", "time_label": "Tempo", "solved": "Risolto",
+    "solved_time": "Hai risolto il cruciverba in {time}."
+  },
+  "create": { "conf": "Il cruciverba è stato creato.", "error": "Non è stato possibile creare il cruciverba." },
+  "update": { "conf": "Il cruciverba è stato salvato.", "error": "Non è stato possibile salvare il cruciverba." },
+  "delete": { "conf": "Il cruciverba è stato eliminato.", "error": "Non è stato possibile eliminare il cruciverba." },
+  "error": {
+    "title_required": "Dai un titolo al cruciverba.",
+    "title_too_long": "Il titolo è troppo lungo.",
+    "description_too_long": "La descrizione è troppo lunga.",
+    "clue_too_long": "Una definizione è troppo lunga.",
+    "too_few_entries": "Servono almeno cinque parole utilizzabili.",
+    "entries_rejected": "Alcune parole non possono essere usate. Controlla la lunghezza, la definizione e se una parola compare due volte."
+  }
+}

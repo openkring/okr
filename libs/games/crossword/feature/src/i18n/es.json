@@ -1,0 +1,34 @@
+{
+  "title": "Crucigrama",
+  "desc": "Resuelve el crucigrama sobre un tema de tu club.",
+  "list": { "title": "Crucigramas", "empty": "Todavía no hay crucigramas." },
+  "action": { "add": "Nuevo crucigrama", "generate": "Generar cuadrícula", "reroll": "Repetir", "publish": "Publicar" },
+  "form": {
+    "paste_label": "Pegar palabras",
+    "paste_hint": "Una palabra por línea, respuesta y pista separadas por punto y coma.",
+    "title": "Título", "description": "Descripción", "language": "Idioma",
+    "answer": "Respuesta", "clue": "Pista"
+  },
+  "status": {
+    "placed_count": "{placed} de {total} palabras colocadas",
+    "grid_stale": "Las palabras han cambiado. Genera la cuadrícula de nuevo antes de publicar.",
+    "no_grid": "Todavía no se ha generado una cuadrícula para este tema."
+  },
+  "play": {
+    "across": "Horizontal", "down": "Vertical",
+    "check": "Comprobar", "reveal_letter": "Mostrar letra", "reveal_word": "Mostrar palabra",
+    "restart": "Reiniciar", "time_label": "Tiempo", "solved": "Resuelto",
+    "solved_time": "Has resuelto el crucigrama en {time}."
+  },
+  "create": { "conf": "El crucigrama se ha creado.", "error": "El crucigrama no se ha podido crear." },
+  "update": { "conf": "El crucigrama se ha guardado.", "error": "El crucigrama no se ha podido guardar." },
+  "delete": { "conf": "El crucigrama se ha eliminado.", "error": "El crucigrama no se ha podido eliminar." },
+  "error": {
+    "title_required": "Ponle un título al crucigrama.",
+    "title_too_long": "El título es demasiado largo.",
+    "description_too_long": "La descripción es demasiado larga.",
+    "clue_too_long": "Una de las pistas es demasiado larga.",
+    "too_few_entries": "Se necesitan al menos cinco palabras utilizables.",
+    "entries_rejected": "Algunas palabras no se pueden usar. Revisa la longitud, la pista y si una palabra aparece dos veces."
+  }
+}

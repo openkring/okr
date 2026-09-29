@@ -1,0 +1,24 @@
+{
+  "name": "games-crossword-data-access",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/games/crossword/data-access/src",
+  "prefix": "okr",
+  "projectType": "library",
+  "tags": ["type:data-access", "scope:games", "platform:mobile", "platform:web"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/games/crossword/data-access",
+        "main": "libs/games/crossword/data-access/src/index.ts",
+        "tsConfig": "libs/games/crossword/data-access/tsconfig.lib.json",
+        "assets": ["libs/games/crossword/data-access/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

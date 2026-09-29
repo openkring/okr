@@ -1,0 +1,34 @@
+{
+  "title": "Kreuzworträtsel",
+  "desc": "Löse das Rätsel zu einem Thema aus deinem Verein.",
+  "list": { "title": "Kreuzworträtsel", "empty": "Es gibt noch keine Rätsel." },
+  "action": { "add": "Neues Rätsel", "generate": "Gitter erzeugen", "reroll": "Neu würfeln", "publish": "Veröffentlichen" },
+  "form": {
+    "paste_label": "Wörter einfügen",
+    "paste_hint": "Eine Zeile pro Wort, Antwort und Hinweis mit Semikolon getrennt.",
+    "title": "Titel", "description": "Beschreibung", "language": "Sprache",
+    "answer": "Antwort", "clue": "Hinweis"
+  },
+  "status": {
+    "placed_count": "{placed} von {total} Wörtern platziert",
+    "grid_stale": "Die Wörter haben sich geändert. Erzeuge das Gitter neu, bevor du veröffentlichst.",
+    "no_grid": "Für dieses Thema wurde noch kein Gitter erzeugt."
+  },
+  "play": {
+    "across": "Waagrecht", "down": "Senkrecht",
+    "check": "Prüfen", "reveal_letter": "Buchstabe zeigen", "reveal_word": "Wort zeigen",
+    "restart": "Neu starten", "time_label": "Zeit", "solved": "Gelöst",
+    "solved_time": "Du hast das Rätsel in {time} gelöst."
+  },
+  "create": { "conf": "Das Rätsel wurde erstellt.", "error": "Das Rätsel konnte nicht erstellt werden." },
+  "update": { "conf": "Das Rätsel wurde gespeichert.", "error": "Das Rätsel konnte nicht gespeichert werden." },
+  "delete": { "conf": "Das Rätsel wurde gelöscht.", "error": "Das Rätsel konnte nicht gelöscht werden." },
+  "error": {
+    "title_required": "Gib dem Rätsel einen Titel.",
+    "title_too_long": "Der Titel ist zu lang.",
+    "description_too_long": "Die Beschreibung ist zu lang.",
+    "clue_too_long": "Ein Hinweis ist zu lang.",
+    "too_few_entries": "Es braucht mindestens fünf brauchbare Wörter.",
+    "entries_rejected": "Einige Wörter können nicht verwendet werden. Prüfe Länge, Hinweis und ob ein Wort doppelt vorkommt."
+  }
+}

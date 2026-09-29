@@ -1,0 +1,24 @@
+{
+  "name": "games-crossword-feature",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/games/crossword/feature/src",
+  "prefix": "okr",
+  "projectType": "library",
+  "tags": ["type:feature", "scope:games", "platform:mobile", "platform:web"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/games/crossword/feature",
+        "main": "libs/games/crossword/feature/src/index.ts",
+        "tsConfig": "libs/games/crossword/feature/tsconfig.lib.json",
+        "assets": ["libs/games/crossword/feature/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

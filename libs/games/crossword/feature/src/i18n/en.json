@@ -1,0 +1,34 @@
+{
+  "title": "Crossword",
+  "desc": "Solve the puzzle about a topic from your club.",
+  "list": { "title": "Crosswords", "empty": "There are no puzzles yet." },
+  "action": { "add": "New puzzle", "generate": "Generate grid", "reroll": "Reroll", "publish": "Publish" },
+  "form": {
+    "paste_label": "Paste words",
+    "paste_hint": "One word per line, answer and clue separated by a semicolon.",
+    "title": "Title", "description": "Description", "language": "Language",
+    "answer": "Answer", "clue": "Clue"
+  },
+  "status": {
+    "placed_count": "{placed} of {total} words placed",
+    "grid_stale": "The words have changed. Generate the grid again before publishing.",
+    "no_grid": "No grid has been generated for this topic yet."
+  },
+  "play": {
+    "across": "Across", "down": "Down",
+    "check": "Check", "reveal_letter": "Reveal letter", "reveal_word": "Reveal word",
+    "restart": "Restart", "time_label": "Time", "solved": "Solved",
+    "solved_time": "You solved the puzzle in {time}."
+  },
+  "create": { "conf": "The puzzle was created.", "error": "The puzzle could not be created." },
+  "update": { "conf": "The puzzle was saved.", "error": "The puzzle could not be saved." },
+  "delete": { "conf": "The puzzle was deleted.", "error": "The puzzle could not be deleted." },
+  "error": {
+    "title_required": "Give the puzzle a title.",
+    "title_too_long": "The title is too long.",
+    "description_too_long": "The description is too long.",
+    "clue_too_long": "One of the clues is too long.",
+    "too_few_entries": "At least five usable words are needed.",
+    "entries_rejected": "Some words cannot be used. Check length, clue and whether a word appears twice."
+  }
+}
