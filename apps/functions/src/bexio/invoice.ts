@@ -8,6 +8,7 @@ import * as admin from 'firebase-admin';
 import { convertDateFormatToString, addDuration, getTodayStr, getFullName, addIndexElement, DateFormat } from '@okr/shared-util-core';
 
 import { bexioApiKey, bexioTenantId, bexioDefaultTaxId, BEXIO_BASE } from './shared';
+import { loadIsBexioBackend } from './backend-gate';
 
 interface BexioInvoice {
   id: number;
@@ -517,8 +518,13 @@ export const scheduledBexioInvoiceSync = onSchedule(
   },
   async () => {
     const db = admin.firestore();
+    const tenantId = bexioTenantId.value();
+    if (!(await loadIsBexioBackend(db, tenantId))) {
+      logger.info(`scheduledBexioInvoiceSync: accounting backend of ${tenantId} is not bexio — skipped`);
+      return;
+    }
     const configDoc = await db.collection('config').doc('bexioSync').get();
     const fromDate: string = configDoc.data()?.lastSyncedAt ?? '2000-01-01 00:00:00';
-    await runInvoiceSync(fromDate, bexioTenantId.value(), 'scheduledBexioInvoiceSync');
+    await runInvoiceSync(fromDate, tenantId, 'scheduledBexioInvoiceSync');
   }
 );

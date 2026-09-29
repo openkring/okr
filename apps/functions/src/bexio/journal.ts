@@ -7,6 +7,7 @@ import * as admin from 'firebase-admin';
 import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
 
 import { bexioApiKey, bexioTenantId, BEXIO_BASE_V3 } from './shared';
+import { loadIsBexioBackend } from './backend-gate';
 
 interface BexioJournalEntry {
   id: number;
@@ -192,6 +193,11 @@ export const scheduleBexioJournalSync = onSchedule(
     secrets: [bexioApiKey, bexioTenantId],
   },
   async () => {
-    await runJournalSync(bexioTenantId.value(), 'scheduleBexioJournalSync');
+    const tenantId = bexioTenantId.value();
+    if (!(await loadIsBexioBackend(admin.firestore(), tenantId))) {
+      logger.info(`scheduleBexioJournalSync: accounting backend of ${tenantId} is not bexio — skipped`);
+      return;
+    }
+    await runJournalSync(tenantId, 'scheduleBexioJournalSync');
   }
 );
