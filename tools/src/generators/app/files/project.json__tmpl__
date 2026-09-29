@@ -437,6 +437,11 @@
           },
           {
             "glob": "*.json",
+            "input": "libs/games/crossword/feature/src/i18n",
+            "output": "./assets/i18n/games/crossword/feature"
+          },
+          {
+            "glob": "*.json",
             "input": "libs/games/tetris/feature/src/i18n",
             "output": "./assets/i18n/games/tetris/feature"
           },
