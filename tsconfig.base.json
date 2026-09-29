@@ -167,6 +167,7 @@
       "@okr/games-muehle-util": ["libs/games/muehle/util/src/index.ts"],
       "@okr/games-tetris-feature": ["libs/games/tetris/feature/src/index.ts"],
       "@okr/games-tetris-util": ["libs/games/tetris/util/src/index.ts"],
+      "@okr/games-mampf-util": ["libs/games/mampf/util/src/index.ts"],
       "@okr/games-jasstafel-feature": ["libs/games/jasstafel/feature/src/index.ts"],
       "@okr/games-jasstafel-ui": ["libs/games/jasstafel/ui/src/index.ts"],
       "@okr/games-jasstafel-util": ["libs/games/jasstafel/util/src/index.ts"],
