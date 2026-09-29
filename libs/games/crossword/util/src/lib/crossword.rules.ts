@@ -1,11 +1,11 @@
-export type Direction = 'across' | 'down';
+export type CrosswordDirection = 'across' | 'down';
 
 export interface PlacedWord {
   entry: number;
   answer: string;   // normalised, A-Z only
   row: number;
   col: number;
-  direction: Direction;
+  direction: CrosswordDirection;
 }
 
 interface Occupancy {
@@ -32,7 +32,10 @@ function occupancyOf(placed: PlacedWord[]): Occupancy {
 /**
  * True when `candidate` may join `placed`.
  *
- * Three conditions, all load-bearing:
+ * Four conditions, all load-bearing:
+ *  - it does not share any cell with an already-placed word running in the SAME direction —
+ *    otherwise a shorter placed word (e.g. 'OST') could sit strictly inside a longer collinear
+ *    candidate (e.g. 'KOSTEN'), putting two clues on one run and making the puzzle unsolvable;
  *  - it crosses at least one existing word (so the grid stays one connected component);
  *  - every shared cell carries the same letter;
  *  - no new cell touches a foreign word sideways, and the cells just before and after the
@@ -41,8 +44,16 @@ function occupancyOf(placed: PlacedWord[]): Occupancy {
  */
 export function canPlace(placed: PlacedWord[], candidate: PlacedWord): boolean {
   if (placed.length === 0) return true;
-  const { letters } = occupancyOf(placed);
   const cells = cellsOf(candidate);
+
+  // a same-direction word may never overlap another same-direction word, even where every
+  // overlapped letter matches — that is not a crossing, it is two clues on one collinear run
+  const sameDirectionOverlap = placed
+    .filter(word => word.direction === candidate.direction)
+    .some(word => cellsOf(word).some(wc => cells.some(cc => cc.row === wc.row && cc.col === wc.col)));
+  if (sameDirectionOverlap) return false;
+
+  const { letters } = occupancyOf(placed);
   let crossings = 0;
 
   // the cell before and the cell after must be empty

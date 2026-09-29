@@ -5,8 +5,6 @@ import { PlacedWord, canPlace, cellsOf } from './crossword.rules';
 /** A source of randomness, so tests can pin the generator down. Shaped like `Math.random`. */
 export type CrosswordRandom = () => number;
 
-const EMPTY_GRID: CrosswordGrid = { rows: 0, cols: 0, placements: [], unplaced: [] };
-
 /**
  * Lay the topic's entries out as a freeform criss-cross grid.
  *
@@ -18,7 +16,9 @@ const EMPTY_GRID: CrosswordGrid = { rows: 0, cols: 0, placements: [], unplaced: 
 export function generateCrossword(entries: CrosswordEntry[], random: CrosswordRandom = Math.random): CrosswordGrid {
   const { usable, rejected } = normalizeEntries(entries);
   if (usable.length === 0) {
-    return { ...EMPTY_GRID, unplaced: rejected.map(r => r.index).sort((a, b) => a - b) };
+    // build a fresh `placements` array on every call — a shared/module-level empty array here
+    // would let one caller's mutation of a returned grid leak into every later call's result
+    return { rows: 0, cols: 0, placements: [], unplaced: rejected.map(r => r.index).sort((a, b) => a - b) };
   }
 
   const queue = [...usable].sort((a, b) => b.answer.length - a.answer.length);

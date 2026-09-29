@@ -94,4 +94,18 @@ describe('generateCrossword', () => {
     expect(() => letterAt(grid, twoEntries, 0, 0)).not.toThrow();
     expect(letterAt(grid, twoEntries, 0, 0)).toBeUndefined();
   });
+
+  it('gives two successive empty-grid results independent placements arrays (no shared-reference leak)', () => {
+    const tooShort: CrosswordEntry[] = [{ answer: 'Au', clue: 'zu kurz' }];
+    const first = generateCrossword(tooShort, seeded([0.5]));
+    expect(first.placements).toEqual([]);
+
+    // mutate the first result's placements — if the generator ever handed out the same
+    // module-level empty array on every call, this would leak into `second` below
+    (first.placements as unknown[]).push({ entry: 0, row: 0, col: 0, direction: 'across', number: 1 });
+
+    const second = generateCrossword(tooShort, seeded([0.5]));
+    expect(second.placements).toEqual([]);
+    expect(second.placements).not.toBe(first.placements);
+  });
 });
