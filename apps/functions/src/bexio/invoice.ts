@@ -9,6 +9,7 @@ import { convertDateFormatToString, addDuration, getTodayStr, getFullName, addIn
 
 import { bexioApiKey, bexioTenantId, bexioDefaultTaxId, BEXIO_BASE } from './shared';
 import { loadIsBexioBackend } from './backend-gate';
+import { readFinanceDocument } from './finance-document';
 
 interface BexioInvoice {
   id: number;
@@ -340,6 +341,15 @@ export const showInvoicePdf = onCall(
     // Invoice PDFs carry recipient PII — treasurer flows + privileged/admin (privacy
     // inventory §7.2), plus the recipient themselves for their own invoice.
     await checkInvoicePdfAccess(request, CF_NAME, invoiceId);
+
+    // migrated from bexio (spec 1.68): serve the stored copy, bexio only as the fallback
+    const invoice = (await admin.firestore().collection('invoices').doc(invoiceId).get()).data();
+    const local = await readFinanceDocument(admin.firestore(), admin.storage().bucket(),
+      (invoice?.['documentKey'] as string | undefined) ?? '', (invoice?.['tenants'] as string[] | undefined) ?? []);
+    if (local) {
+      logger.info(`${CF_NAME}: served stored PDF for invoice ${invoiceId}`);
+      return { content: local };
+    }
 
     logger.info(`${CF_NAME}: fetching PDF for invoice ${invoiceId}`);
 

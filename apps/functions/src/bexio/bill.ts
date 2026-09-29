@@ -10,6 +10,8 @@ import { addDuration, getTodayStr, DateFormat } from '@okr/shared-util-core';
 import { bexioApiKey, bexioTenantId, BEXIO_BASE_V4 } from './shared';
 import { BexioBill, billDoc } from './bill.mapper';
 import { loadIsBexioBackend } from './backend-gate';
+import { readFinanceDocument } from './finance-document';
+import { checkRoles, getCallerTenantId } from '@okr/shared-util-functions';
 
 interface BexioBillsResponse {
   data: BexioBill[];
@@ -141,6 +143,16 @@ export const showBillPdf = onCall(
     if (!request.auth) throw new HttpsError('unauthenticated', 'Authentication required');
     const { attachmentId } = request.data;
     if (!attachmentId) throw new HttpsError('invalid-argument', 'attachmentId is required');
+    // bills are treasurer data — before 1.68 any signed-in user could stream an attachment
+    await checkRoles(request as never, CF_NAME, ['treasurer', 'privileged']);
+
+    // migrated from bexio (spec 1.68): bill.attachments now hold finance-documents okeys
+    if (attachmentId.startsWith('bexio-file-')) {
+      const tenantId = await getCallerTenantId(request as never, CF_NAME);
+      const local = await readFinanceDocument(admin.firestore(), admin.storage().bucket(), attachmentId, [tenantId]);
+      if (!local) throw new HttpsError('not-found', 'Document not found');
+      return { content: local };
+    }
 
     logger.info(`${CF_NAME}: fetching PDF for attachment ${attachmentId}`);
     try {
