@@ -23,8 +23,16 @@ describe('hand form model', () => {
   });
 
   it('round-trips a hand', () => {
-    const h = { trumpMakerIdx: 2, trump: '', multiplier: 3, cardPoints: { a: 100, b: 57 }, weis: { a: 20, b: 0 }, stoeckSideId: 'b' };
+    const h = { trumpMakerIdx: 2, trump: '', multiplier: 3, cardPoints: { a: 100, b: 57 }, weis: {} };
     expect(handFromForm(newHandForm(g, 'full', h), 2)).toEqual(h);
+  });
+
+  it('keeps the Weis field only for Coiffeur', () => {
+    const c = createGame('coiffeur', [p(0), p(1), p(2), p(3)], DEFAULT_JASS_CONFIG, { id: 'c', now: 't' });
+    const h = { trumpMakerIdx: 0, trump: 'rosen', sideId: 'a', cardPoints: { a: 100, b: 57 }, weis: { a: 50, b: 0 } };
+    expect(handFromForm(newHandForm(c, 'full', h), 0)).toEqual(h);
+    const s = { ...newHandForm(g, 'full'), weis: [50, 0] };
+    expect(handFromForm(s, 0).weis).toEqual({});
   });
 
   it('offers Coiffeur only the open rows of the trump-maker team', () => {

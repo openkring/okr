@@ -29,7 +29,7 @@ export const jassHandValidations = staticSuite((model: JassHandFormModel, field?
     });
   });
 
-  omitWhen(model.variant === 'differenzler' || model.phase === 'announce', () => {
+  omitWhen(model.variant !== 'coiffeur', () => {
     test('weis', '@games/jasstafel/feature.error.weis', () => {
       enforce(model.weis.every(w => Number.isInteger(w) && w >= 0 && w % 10 === 0)).isTruthy();
     });

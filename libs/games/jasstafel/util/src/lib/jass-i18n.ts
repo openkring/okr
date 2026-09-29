@@ -54,7 +54,6 @@ export const JASS_I18N_KEYS = {
   points_helper:      PFX + 'hand.points_helper',
   weis_label:         PFX + 'hand.weis_label',
   weis_helper:        PFX + 'hand.weis_helper',
-  stoeck_label:       PFX + 'hand.stoeck_label',
   match_label:        PFX + 'hand.match_label',
   none:               PFX + 'hand.none',
   announced_label:    PFX + 'hand.announced_label',
@@ -76,7 +75,6 @@ export const JASS_I18N_KEYS = {
   draw:               PFX + 'result.draw',
   stat_points:        PFX + 'result.stat_points',
   stat_weis:          PFX + 'result.stat_weis',
-  stat_stoeck:        PFX + 'result.stat_stoeck',
   stat_matches:       PFX + 'result.stat_matches',
   stat_average:       PFX + 'result.stat_average',
 

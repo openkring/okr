@@ -5,7 +5,7 @@ import { jassConfigValidations, jassHandValidations } from './jass.validations';
 
 const base: JassHandFormModel = {
   variant: 'schieber', sideIds: ['a', 'b'], trumpOptions: [], phase: 'full', multiplier: 1,
-  trump: '', sideId: '', points: [100, 57], weis: [0, 0], stoeck: '', match: '', announced: [],
+  trump: '', sideId: '', points: [100, 57], weis: [0, 0], match: '', announced: [],
 };
 
 describe('jassHandValidations', () => {
@@ -25,8 +25,10 @@ describe('jassHandValidations', () => {
     expect(jassHandValidations({ ...c, trump: '' }).getErrors('trump')).toHaveLength(1);
     expect(jassHandValidations({ ...c, trump: 'eicheln' }).isValid()).toBe(true);
   });
-  it('flags invalid Weis', () => {
-    expect(jassHandValidations({ ...base, weis: [25, 0] }).getErrors('weis')).toHaveLength(1);
+  it('flags invalid Weis in Coiffeur only (Schieber and Büter chalk Weis on the slate)', () => {
+    const c: JassHandFormModel = { ...base, variant: 'coiffeur', trumpOptions: ['eicheln'], trump: 'eicheln', sideId: 'a' };
+    expect(jassHandValidations({ ...c, weis: [25, 0] }).getErrors('weis')).toHaveLength(1);
+    expect(jassHandValidations({ ...base, weis: [25, 0] }).getErrors('weis')).toHaveLength(0);
   });
   it('Differenzler: accepts 257/0/0 as a Match only', () => {
     const d: JassHandFormModel = { ...base, variant: 'differenzler', sideIds: ['p0', 'p1', 'p2'], trump: 'eicheln',

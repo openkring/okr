@@ -12,7 +12,8 @@ import { JassAvatar } from './jass-avatar';
 
 /**
  * One hand: trump (or Coiffeur row and team), card points per side — with two sides the other side
- * is filled in as 157 − x —, Weis per side, Stöck and Match. Differenzler is entered in two steps
+ * is filled in as 157 − x —, the multiplier (Schieber/Büter), Weis per side (Coiffeur only — the others
+ * chalk Weis by tapping the slate) and Match. Differenzler is entered in two steps
  * (`phase`): the announcements before the hand, the card points after it.
  */
 @Component({
@@ -70,7 +71,7 @@ import { JassAvatar } from './jass-avatar';
                         (valueChange)="onPoints(i, $event)" [integer]="true" [min]="0" [max]="157"
                         [readOnly]="!!formData().match" />
                     </ion-col>
-                    @if (formData().variant !== 'differenzler') {
+                    @if (formData().variant === 'coiffeur') {
                       <ion-col size="12" size-md="6">
                         <okr-number-input [i18n]="weisI18n()" [value]="formData().weis[i]"
                           (valueChange)="setAt('weis', i, $event)" [integer]="true" [min]="0" [readOnly]="false" />
@@ -88,13 +89,6 @@ import { JassAvatar } from './jass-avatar';
               </ion-row>
               @if (formData().phase !== 'announce') {
                 <ion-row>
-                  @if (formData().variant !== 'differenzler') {
-                    <ion-col size="12" size-md="6">
-                      <okr-string-select [i18n]="stoeckI18n()" [stringList]="optionalSides()"
-                        [labels]="optionalSideLabels()" [selectedString]="formData().stoeck"
-                        (selectedStringChange)="set('stoeck', $event)" [readOnly]="false" />
-                    </ion-col>
-                  }
                   <ion-col size="12" size-md="6">
                     <okr-string-select [i18n]="matchI18n()" [stringList]="optionalSides()"
                       [labels]="optionalSideLabels()" [selectedString]="formData().match"
@@ -140,7 +134,6 @@ export class JassHandForm {
   protected readonly multiplierOptions = JASS_MULTIPLIERS.map(String);
   protected readonly multiplierLabels = JASS_MULTIPLIERS.map(m => m + '×');
   protected readonly sideI18n = computed(() => ({ name: 'sideId', label: this.i18n().side_label() }) as StringSelectI18n);
-  protected readonly stoeckI18n = computed(() => ({ name: 'stoeck', label: this.i18n().stoeck_label() }) as StringSelectI18n);
   protected readonly matchI18n = computed(() => ({ name: 'match', label: this.i18n().match_label() }) as StringSelectI18n);
   protected readonly pointsI18n = computed(() => ({ name: 'points', label: this.i18n().points_label(),
     placeholder: '0', helper: this.i18n().points_helper() }) as NumberInputI18n);
@@ -172,7 +165,7 @@ export class JassHandForm {
     return this.game().sides.find(s => s.id === sideId)?.playerIdx ?? [];
   }
 
-  protected set(field: 'trump' | 'sideId' | 'stoeck' | 'match', value: string): void {
+  protected set(field: 'trump' | 'sideId' | 'match', value: string): void {
     this.dirty.emit(true);
     this.formData.update(m => ({ ...m, [field]: value ?? '' }));
   }

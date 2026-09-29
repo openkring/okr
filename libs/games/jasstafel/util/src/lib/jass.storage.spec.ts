@@ -32,6 +32,15 @@ describe('parseStoredGame', () => {
     expect(parseStoredGame(raw)).toBeNull();
   });
 
+  it('keeps valid tapped strokes and drops damaged ones', () => {
+    const chalks = [
+      { sideId: 'a', unit: 50, afterHand: 1 }, { sideId: 'x', unit: 50, afterHand: 1 },
+      { sideId: 'b', unit: 30, afterHand: 0 }, { sideId: 'b', unit: 20, afterHand: 9 }, null,
+    ];
+    expect(parseStoredGame({ ...clone(), chalks })!.chalks).toEqual([{ sideId: 'a', unit: 50, afterHand: 1 }]);
+    expect(parseStoredGame({ ...clone(), chalks: 'junk' })!.chalks).toEqual([]);
+  });
+
   it('repairs a broken config inside an otherwise valid game', () => {
     expect(parseStoredGame({ ...clone(), config: 'junk' })!.config).toEqual(DEFAULT_JASS_CONFIG);
   });

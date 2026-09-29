@@ -1,5 +1,6 @@
+import { toStrokes } from './jass.strokes';
 import {
-  CARD_POINTS, CoiffeurRow, JASS_MULTIPLIERS, JassConfig, JassGame, JassHand, JassOutcome, JassPlayer, JassSide, JassSideStats,
+  CARD_POINTS, CoiffeurRow, JASS_MULTIPLIERS, JassChalk, JassChalkUnit, JassConfig, JassGame, JassHand, JassOutcome, JassPlayer, JassSide, JassSideStats, JassStrokes,
   JassVariant, MATCH_POINTS, STOECK_POINTS,
 } from './jass.types';
 
@@ -85,14 +86,37 @@ function slateValues(game: JassGame, hand: JassHand): Record<string, number> {
   return Object.fromEntries(game.sides.map(s => [s.id, s.id === hand.sideId ? v[s.id] : 0]));
 }
 
-/** Always recomputed from the list of hands — never stored. */
-export function totals(game: JassGame): Record<string, number> {
+function handTotals(game: JassGame): Record<string, number> {
   const sum: Record<string, number> = Object.fromEntries(game.sides.map(s => [s.id, 0]));
   for (const hand of game.hands) {
     const v = slateValues(game, hand);
     for (const id of Object.keys(sum)) sum[id] += v[id] ?? 0;
   }
   return sum;
+}
+
+const chalksOf = (game: JassGame, sideId: string): JassChalk[] => (game.chalks ?? []).filter(c => c.sideId === sideId);
+
+/** Always recomputed from the hands and the tapped strokes — never stored. */
+export function totals(game: JassGame): Record<string, number> {
+  const sum = handTotals(game);
+  for (const c of game.chalks ?? []) if (c.sideId in sum) sum[c.sideId] += c.unit;
+  return sum;
+}
+
+/**
+ * What the Z of one side shows: the hand points split the way they are chalked (100s on the top
+ * line, one 50 on the diagonal, 20s on the bottom line, the rest as a number), plus every tapped
+ * stroke on exactly the line it was tapped on.
+ */
+export function slateStrokes(game: JassGame, sideId: string): JassStrokes {
+  const s = toStrokes(handTotals(game)[sideId] ?? 0);
+  for (const c of chalksOf(game, sideId)) {
+    if (c.unit === 100) s.hundreds++;
+    else if (c.unit === 50) s.fifties++;
+    else s.twenties++;
+  }
+  return s;
 }
 
 /**
@@ -102,7 +126,17 @@ export function totals(game: JassGame): Record<string, number> {
  */
 function raceWinner(game: JassGame): JassOutcome {
   const running: Record<string, number> = Object.fromEntries(game.sides.map(s => [s.id, 0]));
-  for (const hand of game.hands) {
+  const target = (id: string) => game.sides.find(s => s.id === id)?.target;
+  for (let k = 0; k <= game.hands.length; k++) {
+    // strokes tapped before hand k, one at a time
+    for (const c of (game.chalks ?? []).filter(x => x.afterHand === k)) {
+      if (!(c.sideId in running)) continue;
+      running[c.sideId] += c.unit;
+      const t = target(c.sideId);
+      if (t !== undefined && running[c.sideId] >= t) return c.sideId;
+    }
+    const hand = game.hands[k];
+    if (!hand) break;
     const m = handMultiplier(game, hand);
     const stages: ((id: string) => number)[] = [
       id => (hand.stoeckSideId === id ? STOECK_POINTS * m : 0),
@@ -146,6 +180,28 @@ export function winner(game: JassGame): JassOutcome {
     case 'differenzler':
       return game.hands.length >= game.config.differenzlerHands ? bestOf(totals(game), 'min') : undefined;
   }
+}
+
+export function addChalk(game: JassGame, sideId: string, unit: JassChalkUnit): JassGame {
+  return { ...game, chalks: [...(game.chalks ?? []), { sideId, unit, afterHand: game.hands.length }] };
+}
+
+/** Removes the latest entry — a tapped stroke or a hand, whichever came last. */
+export function undoLast(game: JassGame): JassGame {
+  const chalks = game.chalks ?? [];
+  const last = chalks[chalks.length - 1];
+  if (last && last.afterHand >= game.hands.length) return { ...game, chalks: chalks.slice(0, -1), finishedAt: undefined };
+  return game.hands.length ? undoHand(game) : game;
+}
+
+/** Deletes one hand; strokes tapped after it move up with the hands that follow. */
+export function deleteHand(game: JassGame, index: number): JassGame {
+  return {
+    ...game,
+    hands: game.hands.filter((_, i) => i !== index),
+    chalks: (game.chalks ?? []).map(c => (c.afterHand > index ? { ...c, afterHand: c.afterHand - 1 } : c)),
+    finishedAt: undefined,
+  };
 }
 
 export function addHand(game: JassGame, hand: JassHand): JassGame {
@@ -202,17 +258,21 @@ export function validateBid(bid: number, config: JassConfig): boolean {
   return Number.isInteger(bid) && bid >= CARD_POINTS && bid <= config.bueterPairTarget && bid % 10 === 0;
 }
 
-/** Raw (unmultiplied) figures per side; Coiffeur counts the opponents of a row too. */
+/**
+ * Raw (unmultiplied) figures per side; Coiffeur counts the opponents of a row too. Weis covers
+ * Weis entered with a hand, Stöck and every tapped stroke (owner ruling 2026-09-29).
+ */
 export function stats(game: JassGame): Record<string, JassSideStats> {
   const out: Record<string, JassSideStats> = {};
   for (const side of game.sides) {
-    const s = { hands: game.hands.length, pointsPlayed: 0, weis: 0, stoeck: 0, matches: 0, average: 0 };
+    const s = { hands: game.hands.length, pointsPlayed: 0, weis: 0, matches: 0, average: 0 };
     for (const hand of game.hands) {
       s.pointsPlayed += cardPointsOf(hand, side.id);
       s.weis += hand.weis[side.id] ?? 0;
-      if (hand.stoeckSideId === side.id) s.stoeck++;
+      if (hand.stoeckSideId === side.id) s.weis += STOECK_POINTS;
       if (hand.matchSideId === side.id) s.matches++;
     }
+    for (const c of chalksOf(game, side.id)) s.weis += c.unit;
     s.average = s.hands ? Math.round(s.pointsPlayed / s.hands) : 0;
     out[side.id] = s;
   }

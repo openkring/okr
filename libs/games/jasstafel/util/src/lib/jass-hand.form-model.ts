@@ -15,9 +15,8 @@ export interface JassHandFormModel {
   multiplier: number;
   sideId: string;
   points: number[];
+  /** Coiffeur only — Schieber and Büter chalk Weis by tapping the slate */
   weis: number[];
-  /** '' or a side id */
-  stoeck: string;
   /** '' or a side id */
   match: string;
   announced: number[];
@@ -41,7 +40,6 @@ export function newHandForm(game: JassGame, phase: JassHandFormModel['phase'], b
     sideId,
     points: sideIds.map(id => (base && !base.matchSideId ? cardPointsOf(base, id) : 0)),
     weis: sideIds.map(id => base?.weis[id] ?? 0),
-    stoeck: base?.stoeckSideId ?? '',
     match: base?.matchSideId ?? '',
     announced: sideIds.map(id => base?.announced?.[id] ?? 0),
   };
@@ -61,11 +59,10 @@ export function handFromForm(model: JassHandFormModel, trumpMakerIdx: number): J
     trumpMakerIdx,
     trump: model.variant === 'coiffeur' ? model.trump : '',
     cardPoints: model.match ? {} : byId(model.points),
-    weis: model.variant === 'differenzler' ? {} : byId(model.weis),
+    weis: model.variant === 'coiffeur' ? byId(model.weis) : {},
   };
   if (model.variant === 'coiffeur') hand.sideId = model.sideId;
   if (model.variant === 'schieber' || model.variant === 'bueter') hand.multiplier = model.multiplier;
-  if (model.stoeck) hand.stoeckSideId = model.stoeck;
   if (model.match) hand.matchSideId = model.match;
   if (model.variant === 'differenzler') hand.announced = byId(model.announced);
   return hand;

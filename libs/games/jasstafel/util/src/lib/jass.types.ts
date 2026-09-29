@@ -46,6 +46,17 @@ export interface JassHand {
   announced?: Record<string, number>;
 }
 
+/** Schieber/Büter: a stroke chalked by tapping a line of the Z — Weis (Stöck included), never multiplied. */
+export type JassChalkUnit = 100 | 50 | 20;
+export const JASS_CHALK_UNITS: JassChalkUnit[] = [100, 50, 20];
+
+export interface JassChalk {
+  sideId: string;
+  unit: JassChalkUnit;
+  /** how many hands had been entered when the stroke was tapped — keeps taps and hands in order */
+  afterHand: number;
+}
+
 export interface JassGame {
   id: string;
   variant: JassVariant;
@@ -56,6 +67,8 @@ export interface JassGame {
   bid?: number;
   bueterIdx?: number;
   hands: JassHand[];
+  /** tapped strokes; missing on games stored before 2026-09-29 */
+  chalks?: JassChalk[];
   startedAt: string;
   finishedAt?: string;
 }
@@ -66,8 +79,8 @@ export type JassOutcome = string | undefined;
 export interface JassSideStats {
   hands: number;
   pointsPlayed: number;
+  /** Weis entered with a hand, Stöck and tapped strokes */
   weis: number;
-  stoeck: number;
   matches: number;
   average: number;
 }

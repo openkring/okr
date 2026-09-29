@@ -3,7 +3,8 @@ import { AvatarInfo } from '@okr/shared-models';
 import { DEFAULT_JASS_CONFIG } from './jass.config';
 import { JassHand, JassPlayer } from './jass.types';
 import {
-  addHand, createGame, handValues, nextTrumpMaker, openRows, playedRows, replaceHand, stats, totals, undoHand, validateBid, validateHand, winner,
+  addChalk, addHand, createGame, deleteHand, handValues, nextTrumpMaker, openRows, playedRows, replaceHand, slateStrokes, stats,
+  totals, undoHand, undoLast, validateBid, validateHand, winner,
 } from './jass.engine';
 
 const p = (n: number): JassPlayer => ({ avatar: { key: 'k' + n, name1: '', name2: 'P' + n, label: '', modelType: 'person' } as AvatarInfo });
@@ -188,17 +189,65 @@ describe('validateBid', () => {
 });
 
 describe('stats', () => {
-  it('counts raw points, Weis, Stöck and Matches per side, including Coiffeur opponents', () => {
+  it('counts raw points, Weis (with Stöck and tapped strokes) and Matches per side', () => {
     let g = createGame('schieber', four, DEFAULT_JASS_CONFIG, { id: 'g', now: 't' });
     g = addHand(g, hand({ cardPoints: { a: 100, b: 57 }, weis: { a: 50 }, stoeckSideId: 'b' }));
+    g = addChalk(g, 'b', 100);
     g = addHand(g, hand({ cardPoints: {}, matchSideId: 'a' }));
     expect(stats(g)).toEqual({
-      a: { hands: 2, pointsPlayed: 357, weis: 50, stoeck: 0, matches: 1, average: 179 },
-      b: { hands: 2, pointsPlayed: 57, weis: 0, stoeck: 1, matches: 0, average: 29 },
+      a: { hands: 2, pointsPlayed: 357, weis: 50, matches: 1, average: 179 },
+      b: { hands: 2, pointsPlayed: 57, weis: 120, matches: 0, average: 29 },
     });
   });
   it('returns zeros for a game without hands', () => {
     const g = createGame('schieber', four, DEFAULT_JASS_CONFIG, { id: 'g', now: 't' });
-    expect(stats(g)['a']).toEqual({ hands: 0, pointsPlayed: 0, weis: 0, stoeck: 0, matches: 0, average: 0 });
+    expect(stats(g)['a']).toEqual({ hands: 0, pointsPlayed: 0, weis: 0, matches: 0, average: 0 });
+  });
+});
+
+describe('tapped strokes (Weis on the Z)', () => {
+  const g0 = createGame('schieber', four, DEFAULT_JASS_CONFIG, { id: 'g', now: 't' });
+
+  it('adds 100, 50 or 20 to the tapped side, never multiplied', () => {
+    let g = addHand(g0, hand({ multiplier: 3, cardPoints: { a: 100, b: 57 } }));
+    g = addChalk(addChalk(addChalk(g, 'a', 100), 'a', 50), 'b', 20);
+    expect(totals(g)).toEqual({ a: 450, b: 191 });
+  });
+
+  it('undoes the latest entry, tap or hand, in the order they were made', () => {
+    let g = addChalk(g0, 'a', 50);                             // tap before the first hand
+    g = addHand(g, hand({ cardPoints: { a: 100, b: 57 } }));
+    g = addChalk(g, 'b', 20);
+    g = undoLast(g);                                          // removes the tap
+    expect(totals(g)).toEqual({ a: 150, b: 57 });
+    g = undoLast(g);                                          // removes the hand
+    expect(totals(g)).toEqual({ a: 50, b: 0 });
+    g = undoLast(g);                                          // removes the first tap
+    expect(totals(g)).toEqual({ a: 0, b: 0 });
+    expect(undoLast(g)).toEqual(g);
+  });
+
+  it('keeps taps attached to their place when an earlier hand is deleted', () => {
+    let g = addHand(g0, hand({ cardPoints: { a: 100, b: 57 } }));
+    g = addHand(g, hand({ cardPoints: { a: 57, b: 100 } }));
+    g = addChalk(g, 'a', 20);                                 // after hand 2
+    g = deleteHand(g, 0);
+    expect(g.chalks).toEqual([{ sideId: 'a', unit: 20, afterHand: 1 }]);
+    expect(totals(undoLast(g))).toEqual({ a: 57, b: 100 }); // the tap is still the latest entry
+  });
+
+  it('lets a tap decide the race when it reaches the target', () => {
+    let g = { ...g0, hands: [hand({ cardPoints: { a: 0, b: 0 }, weis: { a: 950 } })] };
+    g = addChalk(g, 'a', 20);
+    expect(winner(g)).toBeUndefined();                        // 970
+    g = addChalk(g, 'a', 50);
+    expect(winner(g)).toBe('a');                              // 1020
+  });
+
+  it('splits hand points 100 / 50 / 20 / rest and puts tapped strokes on their own line', () => {
+    let g = addHand(g0, hand({ cardPoints: { a: 157, b: 0 } }));   // a: 1×100, 1×50, 0×20, rest 7
+    g = addChalk(addChalk(g, 'a', 50), 'a', 20);
+    expect(slateStrokes(g, 'a')).toEqual({ hundreds: 1, fifties: 2, twenties: 1, rest: 7 });
+    expect(slateStrokes(g, 'b')).toEqual({ hundreds: 0, fifties: 0, twenties: 0, rest: 0 });
   });
 });

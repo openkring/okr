@@ -39,7 +39,6 @@ import { JASS_CHALK_STYLES } from './jass-chalk.scss';
           <tr><td>{{ i18n().sum() }}</td>@for (s of game().sides; track s.id) { <td>{{ totals()[s.id] }}</td> }</tr>
           <tr><td>{{ i18n().stat_points() }}</td>@for (s of game().sides; track s.id) { <td>{{ stats()[s.id].pointsPlayed }}</td> }</tr>
           <tr><td>{{ i18n().stat_weis() }}</td>@for (s of game().sides; track s.id) { <td>{{ stats()[s.id].weis }}</td> }</tr>
-          <tr><td>{{ i18n().stat_stoeck() }}</td>@for (s of game().sides; track s.id) { <td>{{ stats()[s.id].stoeck }}</td> }</tr>
           <tr><td>{{ i18n().stat_matches() }}</td>@for (s of game().sides; track s.id) { <td>{{ stats()[s.id].matches }}</td> }</tr>
           <tr><td>{{ i18n().stat_average() }}</td>@for (s of game().sides; track s.id) { <td>{{ stats()[s.id].average }}</td> }</tr>
         </tbody>

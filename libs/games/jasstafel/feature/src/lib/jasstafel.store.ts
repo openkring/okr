@@ -4,8 +4,8 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 
 import {
   DEFAULT_JASS_CONFIG, JASS_I18N_KEYS, JassConfig, JassGame, JassHandFormModel, JassI18n, JassPlayer, JassVariant,
-  PLAYER_COUNTS, addHand, createGame, handFromForm, newHandForm, nextTrumpMaker, normalizeConfig, parsePending,
-  parseStoredGame, replaceHand, stats, totals, undoHand, validateBid, validateHand, winner,
+  JassChalkUnit, PLAYER_COUNTS, addChalk, addHand, createGame, deleteHand as deleteHandAt, handFromForm, newHandForm, nextTrumpMaker, normalizeConfig, parsePending,
+  parseStoredGame, replaceHand, stats, totals, undoLast, validateBid, validateHand, winner,
 } from '@okr/games-jasstafel-util';
 import { ModelSelectService } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
@@ -162,7 +162,7 @@ export const JasstafelStore = signalStore(
     function deleteHand(index: number): void {
       const game = store.game();
       if (!game) return;
-      setGame({ ...game, hands: game.hands.filter((_, i) => i !== index) });
+      setGame(deleteHandAt(game, index));
     }
 
     return {
@@ -230,6 +230,13 @@ export const JasstafelStore = signalStore(
       editHand,
       deleteHand,
 
+      /** A tap on a line of a side's Z: Weis (Stöck included) of 100, 50 or 20, never multiplied. */
+      addChalk(sideId: string, unit: JassChalkUnit): void {
+        const game = store.game();
+        if (!game || store.outcome() !== undefined) return;
+        setGame(addChalk(game, sideId, unit));
+      },
+
       undo(): void {
         if (store.pendingAnnounced()) {
           patchState(store, { pendingAnnounced: null });
@@ -237,7 +244,7 @@ export const JasstafelStore = signalStore(
           return;
         }
         const game = store.game();
-        if (game?.hands.length) setGame(undoHand(game));
+        if (game) setGame(undoLast(game));
       },
 
       async openSettings(): Promise<void> {
