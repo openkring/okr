@@ -6,3 +6,4 @@ export * from './lib/mampf.ghosts';
 export * from './lib/mampf.settings';
 export * from './lib/mampf.color';
 export * from './lib/mampf.input';
+export * from './lib/mampf.engine';
