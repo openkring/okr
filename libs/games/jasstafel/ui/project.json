@@ -1,0 +1,24 @@
+{
+  "name": "games-jasstafel-ui",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/games/jasstafel/ui/src",
+  "prefix": "okr",
+  "projectType": "library",
+  "tags": ["type:ui", "scope:games", "platform:mobile", "platform:web"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/games/jasstafel/ui",
+        "main": "libs/games/jasstafel/ui/src/index.ts",
+        "tsConfig": "libs/games/jasstafel/ui/tsconfig.lib.json",
+        "assets": ["libs/games/jasstafel/ui/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}
