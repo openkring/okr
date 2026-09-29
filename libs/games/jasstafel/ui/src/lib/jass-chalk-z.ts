@@ -1,46 +1,55 @@
-import { Component, computed, input } from '@angular/core';
+import { afterNextRender, Component, computed, DestroyRef, ElementRef, inject, input, signal } from '@angular/core';
 
 import { toStrokes } from '@okr/games-jasstafel-util';
 
 import { JASS_CHALK_STYLES } from './jass-chalk.scss';
 
+const W = 320;
+
 /**
  * One side's score the way it is chalked on a Jasstafel: a big Z whose top bar collects a cross
  * per 100, its diagonal a stroke per 50, its bottom bar a stroke per 20 — then the rest as tally
  * marks in groups of five. An optional target is drawn as a dashed line under the Z.
+ *
+ * The drawing fills whatever box it gets: the viewBox keeps a fixed width of 320 units and takes
+ * its height from the box's aspect ratio (measured with a ResizeObserver), so on a tall phone half
+ * the Z is tall, on a wide tablet it is wide — strokes keep their size instead of being stretched.
  */
 @Component({
   selector: 'okr-jass-chalk-z',
   standalone: true,
-  styles: [JASS_CHALK_STYLES, `svg { width: 100%; height: auto; display: block; }`],
+  styles: [JASS_CHALK_STYLES, `
+    :host { flex: 1; }
+    svg { width: 100%; height: 100%; display: block; }
+  `],
   template: `
-    <svg viewBox="0 0 320 140" role="img" [attr.aria-label]="points()">
+    <svg [attr.viewBox]="'0 0 ' + w + ' ' + h()" preserveAspectRatio="xMidYMid meet" role="img" [attr.aria-label]="points()">
       <defs>
         <filter id="jass-rough"><feTurbulence baseFrequency="0.9" numOctaves="1" result="n" />
           <feDisplacementMap in="SourceGraphic" in2="n" scale="1.6" /></filter>
       </defs>
       <!-- the Z -->
-      <path class="jass-chalk" d="M20 20 H300 L20 110 H300" opacity="0.5" />
-      @for (x of hundreds(); track $index) {
-        <path class="jass-chalk" [attr.d]="'M' + x + ' 10 l12 20 M' + (x + 12) + ' 10 l-12 20'" />
+      <path class="jass-chalk" [attr.d]="'M20 ' + topY() + ' H300 L20 ' + bottomY() + ' H300'" opacity="0.5" />
+      @for (c of hundreds(); track $index) {
+        <path class="jass-chalk" [attr.d]="'M' + c.x + ' ' + c.y + ' l12 20 M' + (c.x + 12) + ' ' + c.y + ' l-12 20'" />
       }
       @for (p of fifties(); track $index) {
         <path class="jass-chalk" [attr.d]="'M' + p.x + ' ' + p.y + ' l14 10'" />
       }
       @for (x of twenties(); track $index) {
-        <path class="jass-chalk" [attr.d]="'M' + x + ' 100 v20'" />
+        <path class="jass-chalk" [attr.d]="'M' + x + ' ' + (bottomY() - 10) + ' v20'" />
       }
       <!-- the rest as tally marks, a diagonal through every fifth -->
       @for (g of tally(); track $index) {
         @for (i of g.strokes; track $index) {
-          <path class="jass-chalk" [attr.d]="'M' + (g.x + i * 6) + ' 124 v14'" />
+          <path class="jass-chalk" [attr.d]="'M' + (g.x + i * 6) + ' ' + tallyY() + ' v14'" />
         }
         @if (g.strokes.length === 5) {
-          <path class="jass-chalk" [attr.d]="'M' + (g.x - 3) + ' 136 l32 -10'" />
+          <path class="jass-chalk" [attr.d]="'M' + (g.x - 3) + ' ' + (tallyY() + 12) + ' l32 -10'" />
         }
       }
       @if (target()) {
-        <path class="jass-chalk" d="M20 132 H300" stroke-dasharray="6 8" opacity="0.4" />
+        <path class="jass-chalk" [attr.d]="'M20 ' + (h() - 8) + ' H300'" stroke-dasharray="6 8" opacity="0.4" />
       }
     </svg>
   `,
@@ -49,14 +58,27 @@ export class JassChalkZ {
   public readonly points = input.required<number>();
   public readonly target = input<number>();
 
+  protected readonly w = W;
+  /** viewBox height: the box's aspect ratio applied to the fixed width, never flatter than 140 */
+  protected readonly h = signal(140);
+
+  protected readonly topY = computed(() => Math.round(this.h() * 0.14));
+  protected readonly bottomY = computed(() => Math.round(this.h() * 0.7));
+  protected readonly tallyY = computed(() => Math.round(this.h() * 0.78));
+
   private readonly strokes = computed(() => toStrokes(this.points()));
 
-  /** crosses along the top bar; wraps into a second, tighter row after 20 */
+  /** crosses along the top bar, 20 per row; further rows stack below it */
   protected readonly hundreds = computed(() =>
-    Array.from({ length: this.strokes().hundreds }, (_, i) => 24 + (i % 20) * 13.5));
-  /** strokes across the diagonal from (300,20) to (20,110) */
-  protected readonly fifties = computed(() =>
-    Array.from({ length: this.strokes().fifties }, (_, i) => ({ x: 150 - i * 18, y: 64 + i * 6 })));
+    Array.from({ length: this.strokes().hundreds }, (_, i) => ({
+      x: 24 + (i % 20) * 13.5,
+      y: this.topY() - 10 + Math.floor(i / 20) * 24,
+    })));
+  /** a stroke across the middle of the diagonal */
+  protected readonly fifties = computed(() => {
+    const midY = (this.topY() + this.bottomY()) / 2;
+    return Array.from({ length: this.strokes().fifties }, (_, i) => ({ x: 150 - i * 18, y: midY - 5 + i * 6 }));
+  });
   protected readonly twenties = computed(() =>
     Array.from({ length: this.strokes().twenties }, (_, i) => 30 + i * 12));
   protected readonly tally = computed(() => {
@@ -67,4 +89,18 @@ export class JassChalkZ {
     }
     return groups;
   });
+
+  constructor() {
+    const host = inject(ElementRef<HTMLElement>).nativeElement as HTMLElement;
+    const destroyRef = inject(DestroyRef);
+    afterNextRender(() => {
+      if (typeof ResizeObserver === 'undefined') return;
+      const observer = new ResizeObserver(([entry]) => {
+        const { width, height } = entry.contentRect;
+        if (width > 0 && height > 0) this.h.set(Math.max(140, Math.round(W * height / width)));
+      });
+      observer.observe(host);
+      destroyRef.onDestroy(() => observer.disconnect());
+    });
+  }
 }

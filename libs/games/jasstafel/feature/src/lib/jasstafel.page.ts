@@ -26,16 +26,33 @@ import { JasstafelStore } from './jasstafel.store';
     IonIcon, IonFooter, IonToolbar, IonNote,
   ],
   styles: [`
-    .seats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin: 16px 0; }
+    /* everything below the header fills the height; the slate, grid or card takes what is left */
+    .fill { display: flex; flex-direction: column; height: 100%; gap: 8px; }
+    .fill > okr-jass-slate, .fill > okr-jass-grid, .fill > okr-jass-result { flex: 1; min-height: 0; }
+    .setup { flex: 1; min-height: 0; margin: 0; display: flex; flex-direction: column; }
+    .setup ion-card-content { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 8px; }
+
+    /* the table seen from above: seat 1 at the bottom, then counter-clockwise (the Jass direction) */
+    .table { flex: 1; min-height: 260px; display: grid; gap: 8px;
+      grid-template-columns: 1fr minmax(96px, 1.3fr) 1fr; grid-template-rows: 1fr minmax(80px, 1.3fr) 1fr;
+      grid-template-areas: '. top .' 'left felt right' '. bottom .'; }
+    .felt { grid-area: felt; border-radius: 24px; background: #2f5d3a; box-shadow: inset 0 0 24px rgba(0, 0, 0, 0.45);
+      display: grid; place-items: center; color: #f2f0e6; font-weight: 600; text-align: center; padding: 4px; }
+    .pos-bottom { grid-area: bottom; } .pos-right { grid-area: right; } .pos-top { grid-area: top; } .pos-left { grid-area: left; }
     .seat { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
-      min-height: 80px; border: 2px dashed var(--ion-color-medium); border-radius: 12px; padding: 8px; cursor: pointer; }
+      border: 3px dashed var(--ion-color-medium); border-radius: 12px; padding: 8px; cursor: pointer; min-height: 72px; }
+    .seat.team1 { border-color: var(--ion-color-primary); }
+    .seat.team2 { border-color: var(--ion-color-tertiary); }
+    .seat.filled { border-style: solid; }
     .seat.bueter { border-color: var(--ion-color-warning); border-style: solid; }
     .seat .clear { position: absolute; top: 0; right: 0; }
     .hint { font-size: 0.8rem; color: var(--ion-color-medium); }
+    .team1 .hint { color: var(--ion-color-primary); } .team2 .hint { color: var(--ion-color-tertiary); }
   `],
   template: `
     <okr-header [i18n]="{ title: store.i18n.title() }" />
     <ion-content class="ion-padding">
+      <div class="fill">
       @if (!store.storageOk()) {
         <ion-note color="warning">{{ store.i18n.storage_note() }}</ion-note>
       }
@@ -50,7 +67,7 @@ import { JasstafelStore } from './jasstafel.store';
           <okr-jass-grid [game]="game" [i18n]="store.i18n" [pendingAnnounced]="store.pendingAnnounced()" />
         }
       } @else {
-        <ion-card>
+        <ion-card class="setup">
           <ion-card-content>
             <ion-segment [value]="store.variant()" (ionChange)="onVariant($event.detail.value)">
               @for (v of variants; track v) {
@@ -58,9 +75,12 @@ import { JasstafelStore } from './jasstafel.store';
               }
             </ion-segment>
 
-            <div class="seats">
+            <div class="table">
+              <div class="felt">{{ variantLabel(store.variant()) }}</div>
               @for (seat of store.seats(); track $index; let i = $index) {
-                <div class="seat" role="button" tabindex="0" [class.bueter]="store.variant() === 'bueter' && store.bueterIdx() === i"
+                <div class="seat" role="button" tabindex="0" [class]="'pos-' + seatPosition(i)"
+                  [class.team1]="teamOf(i) === 1" [class.team2]="teamOf(i) === 2" [class.filled]="!!seat"
+                  [class.bueter]="store.variant() === 'bueter' && store.bueterIdx() === i"
                   (click)="store.pickSeat(i)" (keyup.enter)="store.pickSeat(i)">
                   @if (seat) { <okr-jass-avatar [avatar]="seat" /> } @else { <span>{{ store.i18n.seat_empty() }}</span> }
                   <span class="hint">{{ seatHint(i) }}</span>
@@ -93,6 +113,7 @@ import { JasstafelStore } from './jasstafel.store';
           </ion-card-content>
         </ion-card>
       }
+      </div>
     </ion-content>
 
     <!-- stays after the game is decided: a mistyped last hand must still be undoable or editable -->
@@ -148,6 +169,18 @@ export class JasstafelPage implements OnInit {
   protected variantLabel(v: JassVariant): string {
     const i = this.store.i18n;
     return { schieber: i.variant_schieber, bueter: i.variant_bueter, coiffeur: i.variant_coiffeur, differenzler: i.variant_differenzler }[v]();
+  }
+
+  /** Seat order is the play order; placed counter-clockwise from the bottom, partners opposite. */
+  protected seatPosition(i: number): string {
+    const positions = this.store.seats().length === 3 ? ['bottom', 'right', 'left'] : ['bottom', 'right', 'top', 'left'];
+    return positions[i] ?? 'bottom';
+  }
+
+  /** Schieber and Coiffeur: seats 1+3 are team 1, seats 2+4 team 2; 0 = no teams. */
+  protected teamOf(i: number): number {
+    const v = this.store.variant();
+    return v === 'schieber' || v === 'coiffeur' ? (i % 2) + 1 : 0;
   }
 
   protected seatHint(i: number): string {

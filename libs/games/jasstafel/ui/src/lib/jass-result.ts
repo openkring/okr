@@ -12,6 +12,7 @@ import { JASS_CHALK_STYLES } from './jass-chalk.scss';
   standalone: true,
   imports: [JassAvatar, IonButton],
   styles: [JASS_CHALK_STYLES, `
+    .jass-board { display: flex; flex-direction: column; justify-content: space-evenly; }
     .winners { display: flex; gap: 8px; justify-content: center; margin: 8px 0 16px; }
     h2 { text-align: center; margin: 0; }
     table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }

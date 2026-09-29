@@ -17,7 +17,7 @@ type GridRow = { key: string; label: string; cells: { main: string; sub: string 
   standalone: true,
   imports: [JassAvatar],
   styles: [JASS_CHALK_STYLES, `
-    table { width: 100%; border-collapse: collapse; }
+    table { width: 100%; height: 100%; border-collapse: collapse; }
     th, td { border: 1px solid rgba(242, 240, 230, 0.35); padding: 4px 6px; text-align: center; }
     th.row { text-align: left; font-weight: 400; }
     .heads { display: flex; gap: 4px; justify-content: center; }

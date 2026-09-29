@@ -12,7 +12,11 @@ import { JASS_CHALK_STYLES } from './jass-chalk.scss';
   standalone: true,
   imports: [JassAvatar, JassChalkZ],
   styles: [JASS_CHALK_STYLES, `
-    .half { display: grid; grid-template-columns: 64px 1fr; gap: 8px; align-items: center; padding: 8px 0; cursor: pointer; }
+    .jass-board { display: flex; flex-direction: column; }
+    .half { flex: 1; min-height: 0; display: grid; grid-template-columns: 64px 1fr; gap: 8px; align-items: stretch;
+      padding: 8px 0; cursor: pointer; }
+    .score { display: flex; flex-direction: column; min-height: 0; }
+    .avatars { justify-content: center; }
     .half + .half { border-top: 2px dashed rgba(242, 240, 230, 0.35); }
     .avatars { display: flex; flex-direction: column; gap: 6px; align-items: center; }
     .number { font-size: 1.6rem; text-align: right; }
@@ -27,10 +31,10 @@ import { JASS_CHALK_STYLES } from './jass-chalk.scss';
               <okr-jass-avatar [avatar]="game().players[idx].avatar" [marked]="idx === maker()" />
             }
           </div>
-          <div>
-            <okr-jass-chalk-z [points]="totals()[side.id] ?? 0" [target]="side.target" />
+          <div class="score">
+            <okr-jass-chalk-z [points]="totals()[side.id]" [target]="side.target" />
             @if (revealed() === side.id) {
-              <div class="number">{{ totals()[side.id] ?? 0 }}</div>
+              <div class="number">{{ totals()[side.id] }}</div>
             }
             @if (side.target) {
               <div class="target jass-dim">{{ i18n().target() }} {{ side.target }}</div>
