@@ -53,6 +53,26 @@ export const CROSSWORD_I18N_KEYS = {
   error_clue_too_long:        PFX + 'error.clue_too_long',
   error_too_few_entries:      PFX + 'error.too_few_entries',
   error_entries_rejected:     PFX + 'error.entries_rejected',
+
+  // admin list/modal chrome (Task 8) — generic action/header labels the original Task 4 key
+  // set did not include (list + edit modal need them for the standard header/change-confirmation/
+  // ActionSheet apparatus). `as_title`/`cancel` reuse the existing shared global keys every other
+  // domain aliases the same way; the rest are feature-scoped and need real translations.
+  as_title:                  '@actionsheet.title',
+  cancel:                    '@cancel',
+  edit:                      PFX + 'action.edit',
+  delete:                    PFX + 'action.delete',
+  play:                      PFX + 'action.play',
+  create_label:              PFX + 'form.create_label',
+  edit_label:                PFX + 'form.edit_label',
+  view_label:                PFX + 'form.view_label',
+  changeConfirmation_ok:     PFX + 'form.changeConfirmation_ok',
+  changeConfirmation_cancel: PFX + 'form.changeConfirmation_cancel',
+  entries_label:             PFX + 'form.entries_label',
+  entry_add:                 PFX + 'form.entry_add',
+  entry_remove:              PFX + 'form.entry_remove',
+  paste_apply:               PFX + 'form.paste_apply',
+  unplaced_label:            PFX + 'status.unplaced_label',
 } satisfies Record<string, string>;
 
 export type CrosswordI18n = { [K in keyof typeof CROSSWORD_I18N_KEYS]: Signal<string> };

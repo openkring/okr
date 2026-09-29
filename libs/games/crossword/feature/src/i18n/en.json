@@ -2,17 +2,22 @@
   "title": "Crossword",
   "desc": "Solve the puzzle about a topic from your club.",
   "list": { "title": "Crosswords", "empty": "There are no puzzles yet." },
-  "action": { "add": "New puzzle", "generate": "Generate grid", "reroll": "Reroll", "publish": "Publish" },
+  "action": { "add": "New puzzle", "generate": "Generate grid", "reroll": "Reroll", "publish": "Publish", "edit": "Edit", "delete": "Delete", "play": "Play" },
   "form": {
     "paste_label": "Paste words",
     "paste_hint": "One word per line, answer and clue separated by a semicolon.",
     "title": "Title", "description": "Description", "language": "Language",
-    "answer": "Answer", "clue": "Clue"
+    "answer": "Answer", "clue": "Clue",
+    "create_label": "New puzzle", "edit_label": "Edit puzzle", "view_label": "View puzzle",
+    "changeConfirmation_ok": "Save", "changeConfirmation_cancel": "Discard",
+    "entries_label": "Words", "entry_add": "Add word", "entry_remove": "Remove",
+    "paste_apply": "Apply"
   },
   "status": {
     "placed_count": "{placed} of {total} words placed",
     "grid_stale": "The words have changed. Generate the grid again before publishing.",
-    "no_grid": "No grid has been generated for this topic yet."
+    "no_grid": "No grid has been generated for this topic yet.",
+    "unplaced_label": "Unplaced words"
   },
   "play": {
     "across": "Across", "down": "Down",

@@ -2,17 +2,22 @@
   "title": "Cruciverba",
   "desc": "Risolvi il cruciverba su un tema del tuo club.",
   "list": { "title": "Cruciverba", "empty": "Non ci sono ancora cruciverba." },
-  "action": { "add": "Nuovo cruciverba", "generate": "Genera griglia", "reroll": "Rigenera", "publish": "Pubblica" },
+  "action": { "add": "Nuovo cruciverba", "generate": "Genera griglia", "reroll": "Rigenera", "publish": "Pubblica", "edit": "Modifica", "delete": "Elimina", "play": "Gioca" },
   "form": {
     "paste_label": "Incolla parole",
     "paste_hint": "Una parola per riga, risposta e definizione separate da un punto e virgola.",
     "title": "Titolo", "description": "Descrizione", "language": "Lingua",
-    "answer": "Risposta", "clue": "Definizione"
+    "answer": "Risposta", "clue": "Definizione",
+    "create_label": "Nuovo cruciverba", "edit_label": "Modifica cruciverba", "view_label": "Visualizza cruciverba",
+    "changeConfirmation_ok": "Salva", "changeConfirmation_cancel": "Annulla modifiche",
+    "entries_label": "Parole", "entry_add": "Aggiungi parola", "entry_remove": "Rimuovi",
+    "paste_apply": "Applica"
   },
   "status": {
     "placed_count": "{placed} di {total} parole posizionate",
     "grid_stale": "Le parole sono cambiate. Genera di nuovo la griglia prima di pubblicare.",
-    "no_grid": "Per questo tema non è ancora stata generata una griglia."
+    "no_grid": "Per questo tema non è ancora stata generata una griglia.",
+    "unplaced_label": "Parole non posizionate"
   },
   "play": {
     "across": "Orizzontale", "down": "Verticale",

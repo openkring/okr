@@ -2,17 +2,22 @@
   "title": "Mots croisés",
   "desc": "Résous la grille sur un thème de ton club.",
   "list": { "title": "Mots croisés", "empty": "Il n'y a pas encore de grille." },
-  "action": { "add": "Nouvelle grille", "generate": "Générer la grille", "reroll": "Relancer", "publish": "Publier" },
+  "action": { "add": "Nouvelle grille", "generate": "Générer la grille", "reroll": "Relancer", "publish": "Publier", "edit": "Modifier", "delete": "Supprimer", "play": "Jouer" },
   "form": {
     "paste_label": "Coller des mots",
     "paste_hint": "Un mot par ligne, réponse et indice séparés par un point-virgule.",
     "title": "Titre", "description": "Description", "language": "Langue",
-    "answer": "Réponse", "clue": "Indice"
+    "answer": "Réponse", "clue": "Indice",
+    "create_label": "Nouvelle grille", "edit_label": "Modifier la grille", "view_label": "Voir la grille",
+    "changeConfirmation_ok": "Enregistrer", "changeConfirmation_cancel": "Annuler les modifications",
+    "entries_label": "Mots", "entry_add": "Ajouter un mot", "entry_remove": "Supprimer",
+    "paste_apply": "Appliquer"
   },
   "status": {
     "placed_count": "{placed} mots placés sur {total}",
     "grid_stale": "Les mots ont changé. Régénère la grille avant de publier.",
-    "no_grid": "Aucune grille n'a encore été générée pour ce thème."
+    "no_grid": "Aucune grille n'a encore été générée pour ce thème.",
+    "unplaced_label": "Mots non placés"
   },
   "play": {
     "across": "Horizontal", "down": "Vertical",

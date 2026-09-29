@@ -2,17 +2,22 @@
   "title": "Kreuzworträtsel",
   "desc": "Löse das Rätsel zu einem Thema aus deinem Verein.",
   "list": { "title": "Kreuzworträtsel", "empty": "Es gibt noch keine Rätsel." },
-  "action": { "add": "Neues Rätsel", "generate": "Gitter erzeugen", "reroll": "Neu würfeln", "publish": "Veröffentlichen" },
+  "action": { "add": "Neues Rätsel", "generate": "Gitter erzeugen", "reroll": "Neu würfeln", "publish": "Veröffentlichen", "edit": "Bearbeiten", "delete": "Löschen", "play": "Spielen" },
   "form": {
     "paste_label": "Wörter einfügen",
     "paste_hint": "Eine Zeile pro Wort, Antwort und Hinweis mit Semikolon getrennt.",
     "title": "Titel", "description": "Beschreibung", "language": "Sprache",
-    "answer": "Antwort", "clue": "Hinweis"
+    "answer": "Antwort", "clue": "Hinweis",
+    "create_label": "Neues Rätsel", "edit_label": "Rätsel bearbeiten", "view_label": "Rätsel ansehen",
+    "changeConfirmation_ok": "Speichern", "changeConfirmation_cancel": "Verwerfen",
+    "entries_label": "Wörter", "entry_add": "Wort hinzufügen", "entry_remove": "Entfernen",
+    "paste_apply": "Übernehmen"
   },
   "status": {
     "placed_count": "{placed} von {total} Wörtern platziert",
     "grid_stale": "Die Wörter haben sich geändert. Erzeuge das Gitter neu, bevor du veröffentlichst.",
-    "no_grid": "Für dieses Thema wurde noch kein Gitter erzeugt."
+    "no_grid": "Für dieses Thema wurde noch kein Gitter erzeugt.",
+    "unplaced_label": "Nicht platzierte Wörter"
   },
   "play": {
     "across": "Waagrecht", "down": "Senkrecht",
