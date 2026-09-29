@@ -209,9 +209,9 @@ test('invoice-details stores PDFs, reminders, payments and internal comments', a
   assert.equal(inv.paymentDate, '20260702');
   const c = db.store.get('finance-comments/bexio-comment-9');
   assert.equal(c.parentKey, 'invoice.2097');
-  assert.deepEqual(c.attachmentKeys, ['bexio-comment-image-9']);
-  assert.equal(db.store.get('finance-documents/bexio-comment-image-9').mimeType, 'image/jpeg');
-  assert.equal(bucket.saved.has('tenant/scs/private/finance/bexio/bexio-comment-image-9.jpeg'), true);
+  // `image` is the comment author's bexio avatar (2 distinct PNGs on 644 comments, 2026-09-29), not an attachment
+  assert.deepEqual(c.attachmentKeys, []);
+  assert.equal(db.store.has('finance-documents/bexio-comment-image-9'), false);
   assert.equal(db.store.has('invoices/native1') && db.store.get('invoices/native1').documentKey, undefined);   // native invoice untouched
   assert.deepEqual([counts.invoices, counts.pdfs, counts.reminders, counts.payments, counts.comments], [1, 1, 1, 2, 1]);
 });
@@ -360,4 +360,19 @@ test('invoice-details logs a PDF that keeps failing and carries on', async () =>
   assert.equal(db.store.get('invoices/9').documentKey, 'bexio-invoice-9');
   assert.equal(db.store.get('invoices/8').documentKey, undefined);
   assert.equal(counts.invoices, 2);
+});
+
+test('cleanup-comment-images removes the avatar copies and their references', async () => {
+  const db = fakeFirestore({
+    'finance-documents': { 'bexio-comment-image-9': { fullPath: 'p/9.png' }, 'bexio-file-1': { fullPath: 'p/1.pdf' } },
+    'finance-comments': { 'bexio-comment-9': { attachmentKeys: ['bexio-comment-image-9'] } },
+  });
+  const deleted = [];
+  const bucket = { file: (p) => ({ delete: async () => deleted.push(p) }) };
+  const counts = await STEPS['cleanup-comment-images']({ db, bucket, tenantId: 'scs', dry: false });
+  assert.deepEqual(deleted, ['p/9.png']);
+  assert.equal(db.store.has('finance-documents/bexio-comment-image-9'), false);
+  assert.equal(db.store.has('finance-documents/bexio-file-1'), true);
+  assert.deepEqual(db.store.get('finance-comments/bexio-comment-9').attachmentKeys, []);
+  assert.deepEqual([counts.images, counts.comments], [1, 1]);
 });

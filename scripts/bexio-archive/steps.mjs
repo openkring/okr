@@ -8,7 +8,7 @@ import { createHash } from 'node:crypto';
 import { FieldValue } from 'firebase-admin/firestore';
 
 import {
-  accountOkey, commentImageOkey, commentOkey, fileOkey, filePath, financeDocument, invoicePdfOkey, isoToStoreDate,
+  accountOkey, commentOkey, fileOkey, filePath, financeDocument, invoicePdfOkey, isoToStoreDate,
   mapBillPayment, mapBillState, mapComment, mapInvoicePayment, mapInvoiceState, mapReminder, reminderPdfOkey, staleIds, toRappen,
 } from './mappers.mjs';
 
@@ -309,13 +309,8 @@ STEPS['invoice-details'] = async (ctx) => {
     if (update.payments.length) update.paymentDate = update.payments.at(-1).date;
     counts.payments += payments.length;
     for (const c of (await bexio.get(`/2.0/kb_invoice/${id}/comment`)) ?? []) {
+      // c.image is the author's bexio avatar, not an attachment — bexio comments carry no files
       const attachmentKeys = [];
-      if (c.image) {
-        const m = /^data:([^;]+);base64,(.*)$/s.exec(c.image);
-        const mimeType = m ? m[1] : 'image/png';
-        attachmentKeys.push(await saveBase64(ctx, commentImageOkey(c.id), m ? m[2] : c.image,
-          { mimeType, ext: mimeType.split('/')[1] ?? 'png', createdAt: c.date }));
-      }
       if (!dry) await db.collection('finance-comments').doc(commentOkey(c.id)).set(mapComment(c, id, tenantId, attachmentKeys));
       counts.comments++;
     }
@@ -341,4 +336,22 @@ STEPS['bill-payments'] = async ({ db, bexio, tenantId, dry }) => {
     pushChanges(ops, b.ref, b.data(), { payments: list, paymentDate: list.at(-1)?.date ?? '' });
   }
   return { bills, payments, foreignPayments, writes: await commitOps(db, ops, dry) };
+};
+
+/**
+ * One-off repair (2026-09-29): the first invoice-details run stored each comment's `image` — the
+ * author's bexio avatar, not an attachment — 644 times. Removes those docs, their Storage objects
+ * and the references on the comments. Touches nothing but `bexio-comment-image-*`.
+ */
+STEPS['cleanup-comment-images'] = async ({ db, bucket, dry }) => {
+  const images = (await db.collection('finance-documents').get()).docs.filter(d => d.id.startsWith('bexio-comment-image-'));
+  const comments = (await db.collection('finance-comments').get()).docs.filter(d => (d.get('attachmentKeys') ?? []).length > 0);
+  if (!dry) {
+    for (const d of images) {
+      await bucket.file(String(d.get('fullPath'))).delete().catch(e => console.warn('storage delete failed', d.id, e.message));
+    }
+    await commitOps(db, images.map(d => ({ ref: d.ref, del: true })), false);
+    await commitOps(db, comments.map(d => ({ ref: d.ref, data: { attachmentKeys: [] } })), false);
+  }
+  return { images: images.length, comments: comments.length };
 };
