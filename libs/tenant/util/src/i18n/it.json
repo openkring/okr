@@ -155,6 +155,9 @@
     },
     "jasstafel": {
       "label": "Lavagna del Jass"
+    },
+    "tetris": {
+      "label": "Blocchi"
     }
   },
   "picker": {

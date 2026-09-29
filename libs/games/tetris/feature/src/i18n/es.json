@@ -1,0 +1,49 @@
+{
+  "title": "Bloques",
+  "board_label": "Campo de juego",
+  "hud": {
+    "hold": "Reserva",
+    "next": "Siguientes",
+    "score": "Puntos",
+    "level": "Nivel",
+    "lines": "Filas",
+    "best": "Récord"
+  },
+  "overlay": {
+    "ready": "Apila los bloques que caen para llenar filas enteras. Las filas llenas desaparecen. No dejes que la pila llegue arriba.",
+    "paused": "Pausa",
+    "over": "Fin de la partida",
+    "over_score": "{score} puntos",
+    "new_best": "Nuevo récord"
+  },
+  "clear": {
+    "single": "1 fila",
+    "double": "2 filas",
+    "triple": "3 filas",
+    "four": "4 filas",
+    "back_to_back": "Otra vez 4 filas",
+    "combo": "Racha {count}"
+  },
+  "action": {
+    "start": "Empezar",
+    "resume": "Continuar",
+    "pause": "Pausa",
+    "restart": "Nueva partida",
+    "again": "Jugar otra vez",
+    "left": "A la izquierda",
+    "right": "A la derecha",
+    "rotate": "Girar",
+    "rotate_ccw": "Girar al otro lado",
+    "soft_drop": "Caer más rápido",
+    "hard_drop": "Caer del todo",
+    "hold": "Guardar en reserva"
+  },
+  "rules": {
+    "title": "Controles y reglas",
+    "goal": "Objetivo: llena filas enteras para que desaparezcan. La partida termina cuando la pila llega arriba.",
+    "keys": "Teclado: ← → mover, ↑ o X girar, Z girar al otro lado, ↓ caer más rápido, espacio caer del todo, C guardar en reserva, P pausa.",
+    "touch": "Táctil: arrastra el bloque hacia un lado o hacia abajo, toca para girarlo, desliza rápido hacia abajo para que caiga del todo y rápido hacia arriba para la reserva. Los botones debajo del campo hacen lo mismo.",
+    "hold": "Reserva: una vez por bloque puedes apartarlo y recuperarlo más tarde.",
+    "score": "Puntos: 1 fila 100, 2 filas 300, 3 filas 500, 4 filas 800, cada vez multiplicados por el nivel. Cada 10 filas sube el nivel y los bloques caen más rápido."
+  }
+}

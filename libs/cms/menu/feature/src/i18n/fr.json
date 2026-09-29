@@ -612,7 +612,8 @@
     "hq-add": "Ajouter un dossier",
     "game-muehle": "Jeu du moulin",
     "game-battleship": "Bataille navale",
-    "game-jasstafel": "Tableau de Jass"
+    "game-jasstafel": "Tableau de Jass",
+    "game-tetris": "Blocs"
   },
   "ownership": {
     "fork_confirm": "« {name} » appartient au catalogue de fonctionnalités ({blocks}).\n\nL'enregistrement crée une copie propre au locataire « {forkKey} » et détache ce locataire de l'original partagé. Les corrections futures du catalogue (URL, action, rôle) n'atteindront plus cette entrée.\n\nEnregistrer quand même ?",

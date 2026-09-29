@@ -155,6 +155,9 @@
     },
     "jasstafel": {
       "label": "Jasstafel"
+    },
+    "tetris": {
+      "label": "Blöckli"
     }
   },
   "picker": {

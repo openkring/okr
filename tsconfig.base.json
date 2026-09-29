@@ -165,6 +165,8 @@
       "@okr/games-hearing-quiz-util": ["libs/games/hearing-quiz/util/src/index.ts"],
       "@okr/games-muehle-feature": ["libs/games/muehle/feature/src/index.ts"],
       "@okr/games-muehle-util": ["libs/games/muehle/util/src/index.ts"],
+      "@okr/games-tetris-feature": ["libs/games/tetris/feature/src/index.ts"],
+      "@okr/games-tetris-util": ["libs/games/tetris/util/src/index.ts"],
       "@okr/games-jasstafel-feature": ["libs/games/jasstafel/feature/src/index.ts"],
       "@okr/games-jasstafel-ui": ["libs/games/jasstafel/ui/src/index.ts"],
       "@okr/games-jasstafel-util": ["libs/games/jasstafel/util/src/index.ts"],

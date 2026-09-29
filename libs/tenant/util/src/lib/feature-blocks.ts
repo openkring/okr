@@ -2594,6 +2594,29 @@ const jasstafel: FeatureBlock = {
 };
 
 /**
+ * `libs/games/tetris` — `TetrisPage` + `TetrisStore` at `/tetris`, over the pure
+ * `@okr/games-tetris-util` (7-bag, SRS rotation with wall kicks, lock delay, hold, scoring).
+ *
+ * Falling blocks, shown as «Blöckli»: the name "Tetris" is a trademark of The Tetris Company and
+ * stays out of every user-visible string; the code id `tetris` is internal. Best score and a
+ * paused game live in `localStorage` — no service, no Firestore, hence `collections: []`.
+ *
+ * `defaultAvailability: 'ga'`, like `muehle`: nothing tenant-side to configure.
+ */
+const tetris: FeatureBlock = {
+  id: 'tetris',
+  bundle: 'games',
+  label: '@tenant/util.feature.tetris.label',
+  icon: 'grid',
+  defaultAvailability: 'ga',
+  dependsOn: ['games'],
+  collections: [],
+  menu: [gamesMenuParent([
+    { key: 'game-tetris', name: 'game-tetris', url: '/tetris', action: 'navigate', roleNeeded: 'registered', icon: 'grid', label: '@item.game-tetris' },
+  ])],
+};
+
+/**
  * Every feature block's METADATA the platform ships. Adding a block here is HALF of what
  * makes a feature reachable — the matching Angular route fragment must also be added to
  * `FEATURE_ROUTES` in `@okr/tenant-routes` (`feature-catalogue.ts`), joined by `id`.
@@ -2764,7 +2787,7 @@ const weather: FeatureBlock = {
 };
 
 export const FEATURE_BLOCKS: FeatureBlock[] = [
-  calevent, aoc, activity, task, instruments, games, quiz, zip, hearingQuiz, muehle, battleship, jasstafel,
+  calevent, aoc, activity, task, instruments, games, quiz, zip, hearingQuiz, muehle, battleship, jasstafel, tetris,
   auth, cms, user, profile, session, security, i18n, avatar, category, comment, geo, trip, consent,
   subject, relationship, vcard,
   resource, mobility,

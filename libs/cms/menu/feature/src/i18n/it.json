@@ -612,7 +612,8 @@
     "hq-add": "Aggiungi cartella",
     "game-muehle": "Filetto",
     "game-battleship": "Battaglia navale",
-    "game-jasstafel": "Lavagna del Jass"
+    "game-jasstafel": "Lavagna del Jass",
+    "game-tetris": "Blocchi"
   },
   "ownership": {
     "fork_confirm": "«{name}» appartiene al catalogo delle funzionalità ({blocks}).\n\nIl salvataggio crea una copia propria del tenant «{forkKey}» e scollega questo tenant dall'originale condiviso. Le future correzioni del catalogo (URL, azione, ruolo) non raggiungeranno più questa voce.\n\nSalvare comunque?",

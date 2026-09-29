@@ -68,6 +68,7 @@
     "@okr/games-hearing-quiz-feature": "*",
     "@okr/games-battleship-feature": "*",
     "@okr/games-muehle-feature": "*",
+    "@okr/games-tetris-feature": "*",
     "@okr/games-quiz-feature": "*",
     "@okr/games-zip-feature": "*"
   }

@@ -1,0 +1,49 @@
+{
+  "title": "Blocs",
+  "board_label": "Aire de jeu",
+  "hud": {
+    "hold": "Réserve",
+    "next": "Suivants",
+    "score": "Points",
+    "level": "Niveau",
+    "lines": "Lignes",
+    "best": "Record"
+  },
+  "overlay": {
+    "ready": "Empile les blocs qui tombent pour remplir des lignes entières. Les lignes pleines disparaissent. Ne laisse pas la pile atteindre le haut.",
+    "paused": "Pause",
+    "over": "Partie terminée",
+    "over_score": "{score} points",
+    "new_best": "Nouveau record"
+  },
+  "clear": {
+    "single": "1 ligne",
+    "double": "2 lignes",
+    "triple": "3 lignes",
+    "four": "4 lignes",
+    "back_to_back": "Encore 4 lignes",
+    "combo": "Série {count}"
+  },
+  "action": {
+    "start": "Commencer",
+    "resume": "Reprendre",
+    "pause": "Pause",
+    "restart": "Nouvelle partie",
+    "again": "Rejouer",
+    "left": "Vers la gauche",
+    "right": "Vers la droite",
+    "rotate": "Tourner",
+    "rotate_ccw": "Tourner dans l'autre sens",
+    "soft_drop": "Faire tomber plus vite",
+    "hard_drop": "Faire tomber d'un coup",
+    "hold": "Mettre en réserve"
+  },
+  "rules": {
+    "title": "Commandes et règles",
+    "goal": "But : remplis des lignes entières pour les faire disparaître. La partie se termine quand la pile touche le haut.",
+    "keys": "Clavier : ← → déplacer, ↑ ou X tourner, Z tourner dans l'autre sens, ↓ tomber plus vite, espace tomber d'un coup, C mettre en réserve, P pause.",
+    "touch": "Tactile : fais glisser le bloc sur le côté ou vers le bas, touche pour le tourner, balaie vite vers le bas pour le faire tomber d'un coup et vite vers le haut pour la réserve. Les boutons sous l'aire de jeu font la même chose.",
+    "hold": "Réserve : une fois par bloc, tu peux le mettre de côté et le reprendre plus tard.",
+    "score": "Points : 1 ligne 100, 2 lignes 300, 3 lignes 500, 4 lignes 800, chaque fois multipliés par le niveau. Toutes les 10 lignes, le niveau monte et les blocs tombent plus vite."
+  }
+}

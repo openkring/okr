@@ -422,6 +422,11 @@
           },
           {
             "glob": "*.json",
+            "input": "libs/games/tetris/feature/src/i18n",
+            "output": "./assets/i18n/games/tetris/feature"
+          },
+          {
+            "glob": "*.json",
             "input": "libs/games/hearing-quiz/feature/src/i18n",
             "output": "./assets/i18n/games/hearing-quiz/feature"
           },

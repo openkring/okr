@@ -1,0 +1,49 @@
+{
+  "title": "Blocks",
+  "board_label": "Playing field",
+  "hud": {
+    "hold": "Hold",
+    "next": "Next",
+    "score": "Score",
+    "level": "Level",
+    "lines": "Lines",
+    "best": "Best"
+  },
+  "overlay": {
+    "ready": "Stack the falling blocks so that rows fill up completely. Full rows disappear. Don't let the stack reach the top.",
+    "paused": "Paused",
+    "over": "Game over",
+    "over_score": "{score} points",
+    "new_best": "New best score"
+  },
+  "clear": {
+    "single": "1 row",
+    "double": "2 rows",
+    "triple": "3 rows",
+    "four": "4 rows",
+    "back_to_back": "4 rows again",
+    "combo": "Streak {count}"
+  },
+  "action": {
+    "start": "Start game",
+    "resume": "Continue",
+    "pause": "Pause",
+    "restart": "New game",
+    "again": "Play again",
+    "left": "Move left",
+    "right": "Move right",
+    "rotate": "Rotate",
+    "rotate_ccw": "Rotate the other way",
+    "soft_drop": "Drop faster",
+    "hard_drop": "Drop all the way",
+    "hold": "Put on hold"
+  },
+  "rules": {
+    "title": "Controls and rules",
+    "goal": "Goal: fill complete rows to make them disappear. The game ends when the stack reaches the top.",
+    "keys": "Keyboard: ← → move, ↑ or X rotate, Z rotate the other way, ↓ drop faster, space drop all the way, C put on hold, P pause.",
+    "touch": "Touch: drag the block sideways or down, tap to rotate, swipe down quickly to drop it all the way and swipe up quickly to put it on hold. The buttons below the field do the same.",
+    "hold": "Hold: once per block you can put it aside and bring it back later.",
+    "score": "Score: 1 row 100, 2 rows 300, 3 rows 500, 4 rows 800, each times the level. Every 10 rows the level goes up and the blocks fall faster."
+  }
+}

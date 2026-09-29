@@ -155,6 +155,9 @@
     },
     "jasstafel": {
       "label": "Jass scoreboard"
+    },
+    "tetris": {
+      "label": "Blocks"
     }
   },
   "picker": {

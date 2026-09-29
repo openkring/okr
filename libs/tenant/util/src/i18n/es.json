@@ -155,6 +155,9 @@
     },
     "jasstafel": {
       "label": "Marcador de Jass"
+    },
+    "tetris": {
+      "label": "Bloques"
     }
   },
   "picker": {

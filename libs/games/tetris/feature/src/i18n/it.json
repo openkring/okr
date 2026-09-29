@@ -1,0 +1,49 @@
+{
+  "title": "Blocchi",
+  "board_label": "Campo di gioco",
+  "hud": {
+    "hold": "Riserva",
+    "next": "Prossimi",
+    "score": "Punti",
+    "level": "Livello",
+    "lines": "Righe",
+    "best": "Record"
+  },
+  "overlay": {
+    "ready": "Impila i blocchi che cadono in modo da riempire righe intere. Le righe piene scompaiono. Non lasciare che la pila arrivi in cima.",
+    "paused": "Pausa",
+    "over": "Partita finita",
+    "over_score": "{score} punti",
+    "new_best": "Nuovo record"
+  },
+  "clear": {
+    "single": "1 riga",
+    "double": "2 righe",
+    "triple": "3 righe",
+    "four": "4 righe",
+    "back_to_back": "Di nuovo 4 righe",
+    "combo": "Serie {count}"
+  },
+  "action": {
+    "start": "Inizia",
+    "resume": "Continua",
+    "pause": "Pausa",
+    "restart": "Nuova partita",
+    "again": "Gioca ancora",
+    "left": "A sinistra",
+    "right": "A destra",
+    "rotate": "Ruota",
+    "rotate_ccw": "Ruota nell'altro senso",
+    "soft_drop": "Fai cadere più veloce",
+    "hard_drop": "Fai cadere fino in fondo",
+    "hold": "Metti in riserva"
+  },
+  "rules": {
+    "title": "Comandi e regole",
+    "goal": "Obiettivo: riempi righe intere per farle scomparire. La partita finisce quando la pila tocca la cima.",
+    "keys": "Tastiera: ← → muovi, ↑ o X ruota, Z ruota nell'altro senso, ↓ cadi più veloce, spazio cadi fino in fondo, C metti in riserva, P pausa.",
+    "touch": "Touch: trascina il blocco di lato o verso il basso, tocca per ruotarlo, scorri veloce verso il basso per farlo cadere fino in fondo e veloce verso l'alto per la riserva. I pulsanti sotto il campo fanno lo stesso.",
+    "hold": "Riserva: una volta per blocco puoi metterlo da parte e riprenderlo più tardi.",
+    "score": "Punti: 1 riga 100, 2 righe 300, 3 righe 500, 4 righe 800, ogni volta per il livello. Ogni 10 righe il livello sale e i blocchi cadono più veloci."
+  }
+}

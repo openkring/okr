@@ -1,0 +1,49 @@
+{
+  "title": "Blöckli",
+  "board_label": "Spielfeld",
+  "hud": {
+    "hold": "Reserve",
+    "next": "Als Nächstes",
+    "score": "Punkte",
+    "level": "Stufe",
+    "lines": "Reihen",
+    "best": "Bestwert"
+  },
+  "overlay": {
+    "ready": "Staple die fallenden Steine so, dass ganze Reihen voll werden. Volle Reihen verschwinden. Lass den Stapel nicht bis oben wachsen.",
+    "paused": "Pause",
+    "over": "Spiel vorbei",
+    "over_score": "{score} Punkte",
+    "new_best": "Neuer Bestwert"
+  },
+  "clear": {
+    "single": "1 Reihe",
+    "double": "2 Reihen",
+    "triple": "3 Reihen",
+    "four": "4 Reihen",
+    "back_to_back": "Nochmals 4 Reihen",
+    "combo": "Serie {count}"
+  },
+  "action": {
+    "start": "Spiel starten",
+    "resume": "Weiterspielen",
+    "pause": "Pause",
+    "restart": "Neues Spiel",
+    "again": "Nochmals spielen",
+    "left": "Nach links",
+    "right": "Nach rechts",
+    "rotate": "Drehen",
+    "rotate_ccw": "Andersherum drehen",
+    "soft_drop": "Schneller fallen lassen",
+    "hard_drop": "Ganz fallen lassen",
+    "hold": "In die Reserve legen"
+  },
+  "rules": {
+    "title": "Steuerung und Regeln",
+    "goal": "Ziel: Fülle ganze Reihen, dann verschwinden sie. Das Spiel endet, wenn der Stapel oben anstösst.",
+    "keys": "Tastatur: ← → bewegen, ↑ oder X drehen, Z andersherum drehen, ↓ schneller fallen lassen, Leertaste ganz fallen lassen, C in die Reserve legen, P Pause.",
+    "touch": "Touch: Ziehe den Stein zur Seite oder nach unten, tippe zum Drehen, wische schnell nach unten, um ihn ganz fallen zu lassen, und schnell nach oben für die Reserve. Die Tasten unter dem Spielfeld tun dasselbe.",
+    "hold": "Reserve: Einmal pro Stein kannst du ihn beiseitelegen und später wieder hervorholen.",
+    "score": "Punkte: 1 Reihe 100, 2 Reihen 300, 3 Reihen 500, 4 Reihen 800, jeweils mal die Stufe. Alle 10 Reihen steigt die Stufe, und die Steine fallen schneller."
+  }
+}
