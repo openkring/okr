@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { CrosswordEntry, CrosswordGrid } from '@okr/shared-models';
-import { generateCrossword, letterAt } from './crossword.generator';
+import { REROLL_VARIETY, generateCrossword, sameLayout } from './crossword.generator';
+import { buildCellMap } from './crossword.view';
 
 /** A deterministic stand-in for Math.random, cycling a fixed sequence. */
 function seeded(values: number[]): () => number {
@@ -73,28 +74,6 @@ describe('generateCrossword', () => {
     expect(grid.cols).toBe(0);
   });
 
-  it('derives letters from the entries rather than storing them', () => {
-    const grid = generateCrossword(ROWING, seeded([0.4]));
-    const first = grid.placements[0];
-    expect(letterAt(grid, ROWING, first.row, first.col)).toMatch(/[A-Z]/);
-    expect(letterAt(grid, ROWING, 999, 999)).toBeUndefined();
-  });
-
-  it('skips a placement whose entry index has outlived the entries array, rather than throwing', () => {
-    const twoEntries: CrosswordEntry[] = [
-      { answer: 'Ruder', clue: 'Damit bewegt man das Boot' },
-      { answer: 'Steg', clue: 'Zugang zum Wasser' },
-    ];
-    const grid: CrosswordGrid = {
-      rows: 5,
-      cols: 5,
-      placements: [{ entry: 99, row: 0, col: 0, direction: 'across', number: 1 }],
-      unplaced: [],
-    };
-    expect(() => letterAt(grid, twoEntries, 0, 0)).not.toThrow();
-    expect(letterAt(grid, twoEntries, 0, 0)).toBeUndefined();
-  });
-
   it('gives two successive empty-grid results independent placements arrays (no shared-reference leak)', () => {
     const tooShort: CrosswordEntry[] = [{ answer: 'Au', clue: 'zu kurz' }];
     const first = generateCrossword(tooShort, seeded([0.5]));
@@ -107,5 +86,59 @@ describe('generateCrossword', () => {
     const second = generateCrossword(tooShort, seeded([0.5]));
     expect(second.placements).toEqual([]);
     expect(second.placements).not.toBe(first.placements);
+  });
+});
+
+describe('re-roll variety', () => {
+  /** Distinct layouts produced over a range of random sequences. */
+  function distinctLayouts(variety: number): CrosswordGrid[] {
+    const layouts: CrosswordGrid[] = [];
+    for (let i = 0; i < 20; i++) {
+      const grid = generateCrossword(ROWING, seeded([i / 20, (i * 7 % 20) / 20, (i * 13 % 20) / 20]), variety);
+      if (!layouts.some(known => sameLayout(known, grid))) layouts.push(grid);
+    }
+    return layouts;
+  }
+
+  it('produces more than one layout for the same words', () => {
+    expect(distinctLayouts(REROLL_VARIETY).length).toBeGreaterThan(1);
+  });
+
+  it('keeps every varied layout one connected grid', () => {
+    for (const grid of distinctLayouts(REROLL_VARIETY)) {
+      const map = buildCellMap(grid, ROWING);
+      const open: string[] = [];
+      map.forEach((row, r) => row.forEach((cell, c) => { if (!cell.blocked) open.push(`${r},${c}`); }));
+      const seen = new Set<string>([open[0]]);
+      const stack = [open[0]];
+      while (stack.length > 0) {
+        const [r, c] = (stack.pop() as string).split(',').map(Number);
+        for (const [nr, nc] of [[r + 1, c], [r - 1, c], [r, c + 1], [r, c - 1]]) {
+          const key = `${nr},${nc}`;
+          if (map[nr]?.[nc] && !map[nr][nc].blocked && !seen.has(key)) { seen.add(key); stack.push(key); }
+        }
+      }
+      expect(seen.size).toBe(open.length);
+    }
+  });
+});
+
+describe('sameLayout', () => {
+  const grid: CrosswordGrid = {
+    rows: 4, cols: 5, unplaced: [],
+    placements: [
+      { entry: 0, row: 0, col: 0, direction: 'across', number: 1 },
+      { entry: 1, row: 0, col: 3, direction: 'down', number: 2 },
+    ],
+  };
+
+  it('is true for the same placements in any order', () => {
+    expect(sameLayout(grid, { ...grid, placements: [...grid.placements].reverse() })).toBe(true);
+  });
+
+  it('is false when a word moved or the size changed', () => {
+    const moved = { ...grid, placements: [grid.placements[0], { ...grid.placements[1], col: 2 }] };
+    expect(sameLayout(grid, moved)).toBe(false);
+    expect(sameLayout(grid, { ...grid, rows: 5 })).toBe(false);
   });
 });

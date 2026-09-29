@@ -16,20 +16,29 @@
     "placed_count": "{placed} of {total} words placed",
     "grid_stale": "The words have changed. Generate the grid again before publishing.",
     "no_grid": "No grid has been generated for this topic yet.",
-    "unplaced_label": "Unplaced words"
+    "unplaced_label": "Unplaced words",
+    "not_found": "This puzzle no longer exists.",
+    "reroll_same": "There is no other layout for these words."
   },
   "play": {
     "across": "Across", "down": "Down",
     "check": "Check", "reveal_letter": "Reveal letter", "reveal_word": "Reveal word",
     "restart": "Restart", "time_label": "Time", "solved": "Solved",
-    "solved_time": "You solved the puzzle in {time}."
+    "solved_time": "You solved the puzzle in {time}.",
+    "umlaut_hint": "Umlauts are spelled out: Ä as AE, Ö as OE, Ü as UE and ß as SS."
   },
   "create": { "conf": "The puzzle was created.", "error": "The puzzle could not be created." },
   "update": { "conf": "The puzzle was saved.", "error": "The puzzle could not be saved." },
-  "delete": { "conf": "The puzzle was deleted.", "error": "The puzzle could not be deleted." },
+  "delete": { "conf": "The puzzle was deleted.", "error": "The puzzle could not be deleted.", "confirm": "Do you really want to delete the puzzle «{title}»?" },
+  "reject": {
+    "too_short": "Too short – an answer needs at least {min} letters.",
+    "too_long": "Too long – at most {max} letters. Ä, Ö, Ü and ß count twice.",
+    "duplicate": "This word already appears further up.",
+    "empty_clue": "The clue is missing."
+  },
   "error": {
     "clue_too_long": "One of the clues is too long.",
     "too_few_entries": "At least five usable words are needed.",
-    "entries_rejected": "Some words cannot be used. Check length, clue and whether a word appears twice."
+    "entries_rejected": "Some words cannot be used. The affected rows are marked."
   }
 }

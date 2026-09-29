@@ -16,20 +16,29 @@
     "placed_count": "{placed} mots placés sur {total}",
     "grid_stale": "Les mots ont changé. Régénère la grille avant de publier.",
     "no_grid": "Aucune grille n'a encore été générée pour ce thème.",
-    "unplaced_label": "Mots non placés"
+    "unplaced_label": "Mots non placés",
+    "not_found": "Cette grille n'existe plus.",
+    "reroll_same": "Il n'y a pas d'autre disposition pour ces mots."
   },
   "play": {
     "across": "Horizontal", "down": "Vertical",
     "check": "Vérifier", "reveal_letter": "Révéler une lettre", "reveal_word": "Révéler le mot",
     "restart": "Recommencer", "time_label": "Temps", "solved": "Résolu",
-    "solved_time": "Tu as résolu la grille en {time}."
+    "solved_time": "Tu as résolu la grille en {time}.",
+    "umlaut_hint": "Les trémas s'écrivent en toutes lettres : Ä en AE, Ö en OE, Ü en UE et ß en SS."
   },
   "create": { "conf": "La grille a été créée.", "error": "La grille n'a pas pu être créée." },
   "update": { "conf": "La grille a été enregistrée.", "error": "La grille n'a pas pu être enregistrée." },
-  "delete": { "conf": "La grille a été supprimée.", "error": "La grille n'a pas pu être supprimée." },
+  "delete": { "conf": "La grille a été supprimée.", "error": "La grille n'a pas pu être supprimée.", "confirm": "Veux-tu vraiment supprimer la grille «{title}» ?" },
+  "reject": {
+    "too_short": "Trop court – une réponse doit compter au moins {min} lettres.",
+    "too_long": "Trop long – {max} lettres au maximum. Ä, Ö, Ü et ß comptent double.",
+    "duplicate": "Ce mot figure déjà plus haut.",
+    "empty_clue": "L'indice manque."
+  },
   "error": {
     "clue_too_long": "Un indice est trop long.",
     "too_few_entries": "Il faut au moins cinq mots utilisables.",
-    "entries_rejected": "Certains mots ne peuvent pas être utilisés. Vérifie la longueur, l'indice et si un mot apparaît deux fois."
+    "entries_rejected": "Certains mots ne peuvent pas être utilisés. Les lignes concernées sont signalées."
   }
 }

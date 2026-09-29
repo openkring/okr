@@ -16,20 +16,29 @@
     "placed_count": "{placed} von {total} Wörtern platziert",
     "grid_stale": "Die Wörter haben sich geändert. Erzeuge das Gitter neu, bevor du veröffentlichst.",
     "no_grid": "Für dieses Thema wurde noch kein Gitter erzeugt.",
-    "unplaced_label": "Nicht platzierte Wörter"
+    "unplaced_label": "Nicht platzierte Wörter",
+    "not_found": "Dieses Rätsel gibt es nicht mehr.",
+    "reroll_same": "Mit diesen Wörtern gibt es keine andere Anordnung."
   },
   "play": {
     "across": "Waagrecht", "down": "Senkrecht",
     "check": "Prüfen", "reveal_letter": "Buchstabe zeigen", "reveal_word": "Wort zeigen",
     "restart": "Neu starten", "time_label": "Zeit", "solved": "Gelöst",
-    "solved_time": "Du hast das Rätsel in {time} gelöst."
+    "solved_time": "Du hast das Rätsel in {time} gelöst.",
+    "umlaut_hint": "Umlaute schreibst du aus: Ä als AE, Ö als OE, Ü als UE und ß als SS."
   },
   "create": { "conf": "Das Rätsel wurde erstellt.", "error": "Das Rätsel konnte nicht erstellt werden." },
   "update": { "conf": "Das Rätsel wurde gespeichert.", "error": "Das Rätsel konnte nicht gespeichert werden." },
-  "delete": { "conf": "Das Rätsel wurde gelöscht.", "error": "Das Rätsel konnte nicht gelöscht werden." },
+  "delete": { "conf": "Das Rätsel wurde gelöscht.", "error": "Das Rätsel konnte nicht gelöscht werden.", "confirm": "Möchtest du das Rätsel «{title}» wirklich löschen?" },
+  "reject": {
+    "too_short": "Zu kurz – eine Antwort braucht mindestens {min} Buchstaben.",
+    "too_long": "Zu lang – höchstens {max} Buchstaben. Ä, Ö, Ü und ß zählen doppelt.",
+    "duplicate": "Dieses Wort kommt weiter oben schon vor.",
+    "empty_clue": "Der Hinweis fehlt."
+  },
   "error": {
     "clue_too_long": "Ein Hinweis ist zu lang.",
     "too_few_entries": "Es braucht mindestens fünf brauchbare Wörter.",
-    "entries_rejected": "Einige Wörter können nicht verwendet werden. Prüfe Länge, Hinweis und ob ein Wort doppelt vorkommt."
+    "entries_rejected": "Einige Wörter können nicht verwendet werden. Die betroffenen Zeilen sind markiert."
   }
 }

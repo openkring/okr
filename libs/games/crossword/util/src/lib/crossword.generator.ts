@@ -6,14 +6,25 @@ import { PlacedWord, canPlace, cellsOf } from './crossword.rules';
 export type CrosswordRandom = () => number;
 
 /**
+ * How far a re-roll may stray from the most compact layout: up to this many extra rows plus
+ * columns of bounding box per placement. Far below the weight of one crossing (100), so a re-roll
+ * never trades a crossing for variety — it only picks among layouts that are nearly as compact.
+ */
+export const REROLL_VARIETY = 4;
+
+/**
  * Lay the topic's entries out as a freeform criss-cross grid.
  *
  * Longest word first at the origin, then every remaining word onto its best legal crossing —
  * most crossings first, most compact second, ties broken by `random`. Because every word after
  * the first sits on a crossing, the result is always a single connected component; islands are
  * structurally impossible.
+ *
+ * `variety` (0 = the most compact layout) lets a re-roll accept a layout up to that much less
+ * compact per placement, so "Neu würfeln" is not a visual no-op whenever the scoring has no exact
+ * ties to break. It never costs a crossing — see `REROLL_VARIETY`.
  */
-export function generateCrossword(entries: CrosswordEntry[], random: CrosswordRandom = Math.random): CrosswordGrid {
+export function generateCrossword(entries: CrosswordEntry[], random: CrosswordRandom = Math.random, variety = 0): CrosswordGrid {
   const { usable, rejected } = normalizeEntries(entries);
   if (usable.length === 0) {
     // build a fresh `placements` array on every call — a shared/module-level empty array here
@@ -26,15 +37,18 @@ export function generateCrossword(entries: CrosswordEntry[], random: CrosswordRa
   const unplaced: number[] = rejected.map(r => r.index);
 
   for (const candidate of queue.slice(1)) {
-    const best = bestPlacement(placed, candidate, random);
+    const best = bestPlacement(placed, candidate, random, variety);
     if (best) placed.push(best); else unplaced.push(candidate.index);
   }
 
   return finalise(placed, unplaced);
 }
 
-/** Every legal placement of `candidate`, scored; the winner, or undefined when there is none. */
-function bestPlacement(placed: PlacedWord[], candidate: NormalizedEntry, random: CrosswordRandom): PlacedWord | undefined {
+/**
+ * Every legal placement of `candidate`, scored; the winner, or undefined when there is none. With
+ * `variety` > 0 every option within `variety` points of the best is a candidate winner.
+ */
+function bestPlacement(placed: PlacedWord[], candidate: NormalizedEntry, random: CrosswordRandom, variety: number): PlacedWord | undefined {
   const options: { word: PlacedWord; score: number }[] = [];
 
   for (const word of placed) {
@@ -55,7 +69,7 @@ function bestPlacement(placed: PlacedWord[], candidate: NormalizedEntry, random:
 
   if (options.length === 0) return undefined;
   const best = Math.max(...options.map(o => o.score));
-  const winners = options.filter(o => o.score === best);
+  const winners = options.filter(o => o.score >= best - variety);
   return winners[Math.floor(random() * winners.length) % winners.length].word;
 }
 
@@ -95,22 +109,14 @@ function finalise(placed: PlacedWord[], unplaced: number[]): CrosswordGrid {
 }
 
 /**
- * The letter on a cell, derived from the entries — the grid deliberately stores none.
- * `undefined` for a blank cell.
- *
- * Correction (B): a saved grid can outlive the entry it points at (a topic may be edited after
- * its grid was generated). Guard against `entries[placement.entry]` being undefined and skip
- * that placement rather than letting `normalizeEntries` throw on the play page.
+ * True when two grids place every word on the same cells in the same direction — the admin would
+ * see no difference. Clue numbers follow from the positions, so they are not compared.
  */
-export function letterAt(grid: CrosswordGrid, entries: CrosswordEntry[], row: number, col: number): string | undefined {
-  for (const placement of grid.placements) {
-    const entry = entries[placement.entry];
-    if (!entry) continue;
-    const answer = normalizeEntries([entry]).usable[0]?.answer;
-    if (!answer) continue;
-    const cells = cellsOf({ ...placement, answer });
-    const hit = cells.findIndex(c => c.row === row && c.col === col);
-    if (hit !== -1) return answer[hit];
-  }
-  return undefined;
+export function sameLayout(a: CrosswordGrid, b: CrosswordGrid): boolean {
+  if (a.rows !== b.rows || a.cols !== b.cols || a.placements.length !== b.placements.length) return false;
+  const signature = (grid: CrosswordGrid): string[] =>
+    grid.placements.map(p => `${p.entry}:${p.row},${p.col},${p.direction}`).sort();
+  const sa = signature(a);
+  const sb = signature(b);
+  return sa.every((value, i) => value === sb[i]);
 }

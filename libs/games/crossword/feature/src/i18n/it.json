@@ -16,20 +16,29 @@
     "placed_count": "{placed} di {total} parole posizionate",
     "grid_stale": "Le parole sono cambiate. Genera di nuovo la griglia prima di pubblicare.",
     "no_grid": "Per questo tema non è ancora stata generata una griglia.",
-    "unplaced_label": "Parole non posizionate"
+    "unplaced_label": "Parole non posizionate",
+    "not_found": "Questo cruciverba non esiste più.",
+    "reroll_same": "Non c'è un'altra disposizione per queste parole."
   },
   "play": {
     "across": "Orizzontale", "down": "Verticale",
     "check": "Controlla", "reveal_letter": "Mostra lettera", "reveal_word": "Mostra parola",
     "restart": "Ricomincia", "time_label": "Tempo", "solved": "Risolto",
-    "solved_time": "Hai risolto il cruciverba in {time}."
+    "solved_time": "Hai risolto il cruciverba in {time}.",
+    "umlaut_hint": "Le dieresi si scrivono per esteso: Ä come AE, Ö come OE, Ü come UE e ß come SS."
   },
   "create": { "conf": "Il cruciverba è stato creato.", "error": "Non è stato possibile creare il cruciverba." },
   "update": { "conf": "Il cruciverba è stato salvato.", "error": "Non è stato possibile salvare il cruciverba." },
-  "delete": { "conf": "Il cruciverba è stato eliminato.", "error": "Non è stato possibile eliminare il cruciverba." },
+  "delete": { "conf": "Il cruciverba è stato eliminato.", "error": "Non è stato possibile eliminare il cruciverba.", "confirm": "Vuoi davvero eliminare il cruciverba «{title}»?" },
+  "reject": {
+    "too_short": "Troppo corta: una risposta deve avere almeno {min} lettere.",
+    "too_long": "Troppo lunga: al massimo {max} lettere. Ä, Ö, Ü e ß contano doppio.",
+    "duplicate": "Questa parola compare già più in alto.",
+    "empty_clue": "Manca la definizione."
+  },
   "error": {
     "clue_too_long": "Una definizione è troppo lunga.",
     "too_few_entries": "Servono almeno cinque parole utilizzabili.",
-    "entries_rejected": "Alcune parole non possono essere usate. Controlla la lunghezza, la definizione e se una parola compare due volte."
+    "entries_rejected": "Alcune parole non possono essere usate. Le righe interessate sono segnalate."
   }
 }

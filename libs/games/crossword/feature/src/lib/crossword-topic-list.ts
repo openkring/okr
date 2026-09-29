@@ -1,15 +1,15 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
-import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonChip, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar, ModalController } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, AlertController, IonButton, IonButtons, IonChip, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar, ModalController } from '@ionic/angular/standalone';
 
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { CrosswordTopicModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
-import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error } from '@okr/shared-util-angular';
-import { hasRole, nameMatches } from '@okr/shared-util-core';
+import { confirm, createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error } from '@okr/shared-util-angular';
+import { fill, hasRole, nameMatches } from '@okr/shared-util-core';
 
 import { Menu } from '@okr/cms-menu-feature';
 
@@ -90,6 +90,7 @@ export class CrosswordTopicList {
   private readonly topicService = inject(CrosswordTopicService);
   private readonly actionSheetController = inject(ActionSheetController);
   private readonly modalController = inject(ModalController);
+  private readonly alertController = inject(AlertController);
   private readonly appStore = inject(AppStore);
   private readonly router = inject(Router);
   protected readonly i18n = inject(I18nService).translateAll(CROSSWORD_I18N_KEYS) as CrosswordI18n;
@@ -198,8 +199,11 @@ export class CrosswordTopicList {
     this.topicsResource.reload();
   }
 
+  /** Asks first — one mistap on the ActionSheet must not cost an admin a topic they built for an hour. */
   protected async delete(topic: CrosswordTopicModel): Promise<void> {
     if (!this.editMode()) return;
+    const message = fill(this.i18n.delete_confirm(), { title: topic.title });
+    if (!await confirm(this.alertController, message, this.i18n.delete(), this.i18n.cancel(), true)) return;
     await this.topicService.delete(topic, this.currentUser());
     this.topicsResource.reload();
   }

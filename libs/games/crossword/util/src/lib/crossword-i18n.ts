@@ -24,6 +24,8 @@ export const CROSSWORD_I18N_KEYS = {
   placed_count:       PFX + 'status.placed_count',
   grid_stale:         PFX + 'status.grid_stale',
   no_grid:            PFX + 'status.no_grid',
+  not_found:          PFX + 'status.not_found',
+  reroll_same:        PFX + 'status.reroll_same',
 
   // play
   across:             PFX + 'play.across',
@@ -35,6 +37,7 @@ export const CROSSWORD_I18N_KEYS = {
   time_label:         PFX + 'play.time_label',
   solved:             PFX + 'play.solved',
   solved_time:        PFX + 'play.solved_time',
+  umlaut_hint:        PFX + 'play.umlaut_hint',
 
   // service confirmations
   create_conf:        PFX + 'create.conf',
@@ -43,6 +46,7 @@ export const CROSSWORD_I18N_KEYS = {
   update_error:       PFX + 'update.error',
   delete_conf:        PFX + 'delete.conf',
   delete_error:       PFX + 'delete.error',
+  delete_confirm:     PFX + 'delete.confirm',
 
   // validation — same PFX + 'error.<name>' shape as the other keys, filed by crosswordTopicSuite.
   // title/description now go through the shared stringValidations() helper (generic
@@ -51,6 +55,12 @@ export const CROSSWORD_I18N_KEYS = {
   error_clue_too_long:        PFX + 'error.clue_too_long',
   error_too_few_entries:      PFX + 'error.too_few_entries',
   error_entries_rejected:     PFX + 'error.entries_rejected',
+
+  // why normalizeEntries rejected one row, shown under that row; {min}/{max} are filled with fill()
+  reject_too_short:           PFX + 'reject.too_short',
+  reject_too_long:            PFX + 'reject.too_long',
+  reject_duplicate:           PFX + 'reject.duplicate',
+  reject_empty_clue:          PFX + 'reject.empty_clue',
 
   // admin list/modal chrome (Task 8) — generic action/header labels the original Task 4 key
   // set did not include (list + edit modal need them for the standard header/change-confirmation/

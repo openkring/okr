@@ -42,7 +42,9 @@ function formatElapsed(milliseconds: number): string {
     <ion-content class="ion-padding">
       @if (!store.topicLoaded()) {
         <ion-spinner name="dots" />
-      } @else if (store.notFound() || !store.topic()?.grid) {
+      } @else if (store.notFound()) {
+        <ion-note color="danger">{{ store.i18n.not_found() }}</ion-note>
+      } @else if (!store.topic()?.grid) {
         <ion-note color="danger">{{ store.i18n.no_grid() }}</ion-note>
       } @else {
         <div class="cw-play">
@@ -52,8 +54,8 @@ function formatElapsed(milliseconds: number): string {
             } @else {
               <ion-note>{{ store.i18n.time_label() }} {{ elapsed() }}</ion-note>
               @if (store.checking()) {
-                <ion-note [color]="wrongCount() === 0 ? 'success' : 'warning'">
-                  {{ store.i18n.check() }}: {{ wrongCount() }}
+                <ion-note [color]="store.wrongCount() === 0 ? 'success' : 'warning'">
+                  {{ store.i18n.check() }}: {{ store.wrongCount() }}
                 </ion-note>
               }
             }
@@ -66,6 +68,10 @@ function formatElapsed(milliseconds: number): string {
             [selected]="store.selected()"
             (cellPicked)="onCellPicked($event)"
           />
+
+          @if (store.showUmlautHint()) {
+            <ion-note class="cw-hint">{{ store.i18n.umlaut_hint() }}</ion-note>
+          }
 
           <!-- Off-screen but genuinely focusable/typeable — not display:none/visibility:hidden,
                which would stop it from ever receiving focus or opening a mobile keyboard. -->
@@ -126,6 +132,8 @@ function formatElapsed(milliseconds: number): string {
       white-space: nowrap;
     }
 
+    .cw-hint { font-size: 0.85rem; }
+
     .cw-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: flex-end; }
   `],
 })
@@ -144,19 +152,6 @@ export class CrosswordPage {
   protected readonly solvedLabel = computed(() =>
     `${this.store.i18n.solved()} — ${fill(this.store.i18n.solved_time(), { time: this.elapsed() })}`,
   );
-
-  /** How many of the currently filled cells are wrong, right after `check()`. */
-  protected readonly wrongCount = computed(() => {
-    if (!this.store.checking()) return 0;
-    const map = this.store.solutionMap();
-    if (!map) return 0;
-    let wrong = 0;
-    for (const [key, letter] of this.store.filled()) {
-      const [row, col] = key.split(',').map(Number);
-      if (map[row]?.[col] && letter !== map[row][col].letter) wrong++;
-    }
-    return wrong;
-  });
 
   constructor() {
     const topicKey = inject(ActivatedRoute).snapshot.paramMap.get('topicKey') ?? '';

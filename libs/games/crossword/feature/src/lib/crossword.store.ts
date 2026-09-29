@@ -12,10 +12,17 @@ import {
   CrosswordI18n,
   buildCellMap,
   cellAt,
+  countWrong,
+  finishedAtAfterEdit,
+  hasExpandedLetters,
+  inputLetter,
+  isSolved,
   loadProgress,
+  nextDirection,
   runOf,
   runStart,
   saveProgress,
+  stepInRun,
 } from '@okr/games-crossword-util';
 
 export type CrosswordState = {
@@ -103,26 +110,20 @@ export const CrosswordStore = signalStore(
       return cellAt(map, start.row, start.col)?.number;
     }),
 
-    /**
-     * True once every unblocked cell holds its solution letter. Requires at least one unblocked
-     * cell to exist — an empty or all-blocked grid (no placeable entries) must never read as
-     * solved, or the page would show the solved banner over a board with nothing on it.
-     */
+    /** True once every unblocked cell holds its solution letter — see `isSolved`. */
     solved: computed(() => {
       const map = store.solutionMap();
-      if (!map) return false;
-      const filled = store.filled();
-      let hasUnblockedCell = false;
-      for (let r = 0; r < map.length; r++) {
-        for (let c = 0; c < map[r].length; c++) {
-          const cell = map[r][c];
-          if (cell.blocked) continue;
-          hasUnblockedCell = true;
-          if (filled.get(`${r},${c}`) !== cell.letter) return false;
-        }
-      }
-      return hasUnblockedCell;
+      return map ? isSolved(map, store.filled()) : false;
     }),
+
+    /** How many of the currently filled cells are wrong, right after `check()`; 0 otherwise. */
+    wrongCount: computed(() => {
+      const map = store.solutionMap();
+      return map && store.checking() ? countWrong(map, store.filled()) : 0;
+    }),
+
+    /** True when the grid spells some answer's Ä/Ö/Ü/ß as two cells, so the page explains it. */
+    showUmlautHint: computed(() => hasExpandedLetters(store.topic()?.entries ?? [])),
   })),
 
   withMethods(store => {
@@ -137,9 +138,7 @@ export const CrosswordStore = signalStore(
       const wasSolved = store.solved();
       patchState(store, { filled, checking: false });
       if (topic?.grid) saveProgress(topic.okey, topic.grid, filled);
-      const isSolved = store.solved();
-      if (isSolved && !wasSolved) patchState(store, { finishedAt: Date.now() });
-      else if (!isSolved && wasSolved) patchState(store, { finishedAt: undefined });
+      patchState(store, { finishedAt: finishedAtAfterEdit(wasSolved, store.solved(), store.finishedAt(), Date.now()) });
     }
 
     return {
@@ -148,30 +147,12 @@ export const CrosswordStore = signalStore(
         patchState(store, { ...initialState, topicKey, startedAt: Date.now() });
       },
 
-      /**
-       * Picks a cell. Clicking the already-selected cell flips direction (across ↔ down) when
-       * the other direction also runs through it; otherwise the previous direction is kept where
-       * it still applies, and falls back to whichever direction has a run there.
-       */
+      /** Picks a cell; the direction follows `nextDirection` (a second tap on a crossing flips it). */
       select(row: number, col: number): void {
         const map = store.solutionMap();
         const cell = map ? cellAt(map, row, col) : undefined;
         if (!map || !cell || cell.blocked) return;
-
-        const sel = store.selected();
-        const across = runOf(map, row, col, 'across');
-        const down = runOf(map, row, col, 'down');
-
-        let direction: 'across' | 'down';
-        if (sel?.row === row && sel.col === col && across.length > 1 && down.length > 1) {
-          direction = sel.direction === 'across' ? 'down' : 'across';
-        } else if (sel?.direction === 'across' && across.length > 1) {
-          direction = 'across';
-        } else if (sel?.direction === 'down' && down.length > 1) {
-          direction = 'down';
-        } else {
-          direction = across.length > 1 ? 'across' : 'down';
-        }
+        const direction = nextDirection(map, store.selected(), row, col);
         patchState(store, { selected: { row, col, direction }, checking: false });
       },
 
@@ -189,23 +170,24 @@ export const CrosswordStore = signalStore(
         patchState(store, { selected: { row, col, direction }, checking: false });
       },
 
-      /** Types one letter into the selected cell and advances to the next cell of the run. */
+      /**
+       * Types one letter into the selected cell and advances to the next cell of the run. An
+       * umlaut types its first grid letter (Ü → U) — see `inputLetter`.
+       */
       setLetter(letter: string): void {
         const map = store.solutionMap();
         const sel = store.selected();
-        const upper = letter.slice(-1).toUpperCase();
-        if (!map || !sel || !/^[A-Z]$/.test(upper)) return;
+        const typed = inputLetter(letter);
+        if (!map || !sel || !typed) return;
         const cell = cellAt(map, sel.row, sel.col);
         if (!cell || cell.blocked) return;
 
         const filled = new Map(store.filled());
-        filled.set(`${sel.row},${sel.col}`, upper);
+        filled.set(`${sel.row},${sel.col}`, typed);
         commitFilled(filled);
 
-        const run = runOf(map, sel.row, sel.col, sel.direction);
-        const index = run.findIndex(c => c.row === sel.row && c.col === sel.col);
-        const next = run[index + 1];
-        if (next) patchState(store, { selected: { ...next, direction: sel.direction } });
+        const next = stepInRun(map, sel, 1);
+        if (next) patchState(store, { selected: next });
       },
 
       /** Clears the selected cell; an empty cell instead clears the previous one (typewriter). */
@@ -221,13 +203,11 @@ export const CrosswordStore = signalStore(
           commitFilled(filled);
           return;
         }
-        const run = runOf(map, sel.row, sel.col, sel.direction);
-        const index = run.findIndex(c => c.row === sel.row && c.col === sel.col);
-        const prev = run[index - 1];
+        const prev = stepInRun(map, sel, -1);
         if (!prev) return;
         filled.delete(`${prev.row},${prev.col}`);
         commitFilled(filled);
-        patchState(store, { selected: { ...prev, direction: sel.direction } });
+        patchState(store, { selected: prev });
       },
 
       /** Marks the currently filled cells right/wrong; cleared again on the next edit. */

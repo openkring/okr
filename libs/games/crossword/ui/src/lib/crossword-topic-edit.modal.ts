@@ -9,7 +9,12 @@ import { coerceBoolean, fill, safeStructuredClone } from '@okr/shared-util-core'
 
 import { CrosswordBoard } from './crossword-board';
 import { CrosswordTopicForm } from './crossword-topic.form';
-import { CROSSWORD_I18N_KEYS, CrosswordI18n, MIN_ENTRIES, generateCrossword, normalizeEntries } from '@okr/games-crossword-util';
+import {
+  CROSSWORD_I18N_KEYS, CrosswordI18n, MIN_ENTRIES, REROLL_VARIETY, generateCrossword, normalizeEntries, sameLayout,
+} from '@okr/games-crossword-util';
+
+/** How many varied layouts a re-roll tries before it concludes there is no other one. */
+const REROLL_ATTEMPTS = 12;
 
 /**
  * Header + change-confirmation + the topic form (the `building-forms` structure), plus the
@@ -72,6 +77,9 @@ import { CROSSWORD_I18N_KEYS, CrosswordI18n, MIN_ENTRIES, generateCrossword, nor
               }
               <ion-button fill="solid" [disabled]="!canPublish()" (click)="publish()">{{ i18n.publish() }}</ion-button>
             </div>
+            @if (rerollSame() && data.grid && !data.gridStale) {
+              <ion-item lines="none"><ion-note>{{ i18n.reroll_same() }}</ion-note></ion-item>
+            }
             @if (!canPublish() && publishBlockReason(); as reason) {
               <ion-item lines="none"><ion-note color="warning">{{ reason }}</ion-note></ion-item>
             }
@@ -118,6 +126,8 @@ export class CrosswordTopicEditModal {
    * demotes the former back to draft when a later edit (in the same session) made the grid stale.
    */
   protected readonly publishedThisSession = signal(false);
+  /** True after a re-roll found no layout that differs from the current one. */
+  protected readonly rerollSame = signal(false);
 
   protected readonly headerTitle = computed(() => {
     if (this.isReadOnly()) return this.i18n.view_label();
@@ -191,14 +201,29 @@ export class CrosswordTopicEditModal {
   public cancel(): void {
     this.formDirty.set(false);
     this.publishedThisSession.set(false);
+    this.rerollSame.set(false);
     this.formData.set(safeStructuredClone(this.topic()) as CrosswordTopicModel);
     this.showForm.set(false);
     setTimeout(() => this.showForm.set(true), 0);
   }
 
-  /** Builds a fresh layout from the current entries — Generate the first time, re-roll after. */
+  /**
+   * Generate builds the most compact layout. Re-roll (a fresh grid already exists) tries varied
+   * layouts and takes the first one that looks different and places at least as many words — a
+   * re-roll that drops a word is worse, not different. When none turns up, it says so instead of
+   * leaving the admin to wonder why nothing changed. A stale grid is rebuilt like a first Generate:
+   * its words changed, so the most compact layout of the NEW words is what the admin wants.
+   */
   protected generate(): void {
-    const grid = generateCrossword(this.formData().entries);
+    const data = this.formData();
+    const current = data.grid && !data.gridStale ? data.grid : undefined;
+    let grid = current ? undefined : generateCrossword(data.entries);
+    for (let attempt = 0; !grid && current && attempt < REROLL_ATTEMPTS; attempt++) {
+      const candidate = generateCrossword(data.entries, Math.random, REROLL_VARIETY);
+      if (!sameLayout(candidate, current) && candidate.placements.length >= current.placements.length) grid = candidate;
+    }
+    this.rerollSame.set(!grid);
+    if (!grid) return;
     this.formData.update(vm => ({ ...vm, grid, gridStale: false }));
     this.formDirty.set(true);
   }

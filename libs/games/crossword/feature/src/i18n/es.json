@@ -16,20 +16,29 @@
     "placed_count": "{placed} de {total} palabras colocadas",
     "grid_stale": "Las palabras han cambiado. Genera la cuadrícula de nuevo antes de publicar.",
     "no_grid": "Todavía no se ha generado una cuadrícula para este tema.",
-    "unplaced_label": "Palabras no colocadas"
+    "unplaced_label": "Palabras no colocadas",
+    "not_found": "Este crucigrama ya no existe.",
+    "reroll_same": "No hay otra disposición posible para estas palabras."
   },
   "play": {
     "across": "Horizontal", "down": "Vertical",
     "check": "Comprobar", "reveal_letter": "Mostrar letra", "reveal_word": "Mostrar palabra",
     "restart": "Reiniciar", "time_label": "Tiempo", "solved": "Resuelto",
-    "solved_time": "Has resuelto el crucigrama en {time}."
+    "solved_time": "Has resuelto el crucigrama en {time}.",
+    "umlaut_hint": "Las diéresis se escriben completas: Ä como AE, Ö como OE, Ü como UE y ß como SS."
   },
   "create": { "conf": "El crucigrama se ha creado.", "error": "El crucigrama no se ha podido crear." },
   "update": { "conf": "El crucigrama se ha guardado.", "error": "El crucigrama no se ha podido guardar." },
-  "delete": { "conf": "El crucigrama se ha eliminado.", "error": "El crucigrama no se ha podido eliminar." },
+  "delete": { "conf": "El crucigrama se ha eliminado.", "error": "El crucigrama no se ha podido eliminar.", "confirm": "¿De verdad quieres eliminar el crucigrama «{title}»?" },
+  "reject": {
+    "too_short": "Demasiado corta: una respuesta necesita al menos {min} letras.",
+    "too_long": "Demasiado larga: como máximo {max} letras. Ä, Ö, Ü y ß cuentan doble.",
+    "duplicate": "Esta palabra ya aparece más arriba.",
+    "empty_clue": "Falta la pista."
+  },
   "error": {
     "clue_too_long": "Una de las pistas es demasiado larga.",
     "too_few_entries": "Se necesitan al menos cinco palabras utilizables.",
-    "entries_rejected": "Algunas palabras no se pueden usar. Revisa la longitud, la pista y si una palabra aparece dos veces."
+    "entries_rejected": "Algunas palabras no se pueden usar. Las filas afectadas están marcadas."
   }
 }

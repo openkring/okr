@@ -8,9 +8,11 @@ import { CrosswordEntry, CrosswordTopicModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { ErrorNote, NotesInput, NotesInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { validateVestTree } from '@okr/shared-util-angular';
-import { coerceBoolean } from '@okr/shared-util-core';
+import { coerceBoolean, fill } from '@okr/shared-util-core';
 
-import { CrosswordI18n, MAX_ANSWER_LENGTH, MAX_CLUE_LENGTH, MAX_TITLE_LENGTH, crosswordTopicSuite } from '@okr/games-crossword-util';
+import {
+  CrosswordI18n, MAX_ANSWER_LENGTH, MAX_CLUE_LENGTH, MAX_TITLE_LENGTH, MIN_ANSWER_LENGTH, RejectReason, crosswordTopicSuite, normalizeEntries,
+} from '@okr/games-crossword-util';
 
 /** Languages a topic's text may be authored in — the same five the app itself is translated into. */
 const CROSSWORD_LANGUAGES = ['de', 'en', 'es', 'fr', 'it'];
@@ -38,6 +40,7 @@ const CROSSWORD_LANGUAGES = ['de', 'en', 'es', 'fr', 'it'];
     @media (width <= 600px) { ion-card { margin: 5px; } }
     .cw-entry-row { border-bottom: 1px solid var(--ion-color-light-shade); }
     .cw-paste-area { width: 100%; min-height: 100px; }
+    .cw-reject { display: block; padding: 0 8px 8px; font-size: 0.85rem; }
   `],
   template: `
     @if (showForm()) {
@@ -85,6 +88,11 @@ const CROSSWORD_LANGUAGES = ['de', 'en', 'es', 'fr', 'it'];
                       </ion-button>
                     }
                   </ion-col>
+                  @if (rejections().get(i); as reason) {
+                    <ion-col size="12">
+                      <ion-note color="warning" class="cw-reject">{{ reason }}</ion-note>
+                    </ion-col>
+                  }
                 </ion-row>
               }
             </ion-grid>
@@ -156,6 +164,22 @@ export class CrosswordTopicForm {
   constructor() {
     effect(() => this.valid.emit(this.topicForm().valid()));
   }
+
+  /**
+   * Why each rejected row cannot be used, keyed by its index — the same `normalizeEntries` verdict
+   * the modal's publish gate counts, so the rows marked here are exactly the ones blocking it.
+   * Only a publish blocker, never a save blocker, which is why it is a note and not a Vest rule.
+   */
+  protected readonly rejections = computed(() => {
+    const i18n = this.i18n();
+    const messages: Record<RejectReason, string> = {
+      'too-short': fill(i18n.reject_too_short(), { min: MIN_ANSWER_LENGTH }),
+      'too-long': fill(i18n.reject_too_long(), { max: MAX_ANSWER_LENGTH }),
+      'duplicate': i18n.reject_duplicate(),
+      'empty-clue': i18n.reject_empty_clue(),
+    };
+    return new Map(normalizeEntries(this.entries()).rejected.map(r => [r.index, messages[r.reason]]));
+  });
 
   // field accessors — Firestore reads skip model defaults, so coalesce
   protected readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()));
