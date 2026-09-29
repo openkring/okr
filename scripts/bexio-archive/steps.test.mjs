@@ -232,14 +232,15 @@ test('invoice-details dry run writes nothing', async () => {
 });
 
 test('bill-payments sets payments and the latest execution date', async () => {
-  const db = fakeFirestore({ bills: { '5': { ...T }, '6': { ...T, paymentDate: '' } } });
-  const bexio = { get: async (path, params) => path === '/4.0/purchase/outgoing-payments' && params.bill_id === '5'
+  const B5 = '00000000-0000-4000-8000-000000000005', B6 = '00000000-0000-4000-8000-000000000006';
+  const db = fakeFirestore({ bills: { [B5]: { ...T }, [B6]: { ...T, paymentDate: '' } } });
+  const bexio = { get: async (path, params) => path === '/4.0/purchase/outgoing-payments' && params.bill_id === B5
     ? { data: [{ execution_date: '2025-03-01', amount: 10, payment_type: 'QR' }, { execution_date: '2025-02-01', amount: 5, payment_type: 'MANUAL' }] }
     : { data: [] } };
   const counts = await STEPS['bill-payments']({ db, bexio, tenantId: 'scs', dry: false });
-  assert.deepEqual(db.store.get('bills/5').payments.map(p => p.date), ['20250201', '20250301']);
-  assert.equal(db.store.get('bills/5').paymentDate, '20250301');
-  assert.deepEqual(db.store.get('bills/6').payments, []);
+  assert.deepEqual(db.store.get(`bills/${B5}`).payments.map(p => p.date), ['20250201', '20250301']);
+  assert.equal(db.store.get(`bills/${B5}`).paymentDate, '20250301');
+  assert.deepEqual(db.store.get(`bills/${B6}`).payments, []);
   assert.equal(counts.payments, 2);
 });
 
@@ -275,23 +276,26 @@ test('invoices-reconcile refuses an empty invoice list', async () => {
 });
 
 test('second runs write nothing (journal periods, bills-full, link-vouchers, bill-payments)', async () => {
+  const UB = '00000000-0000-4000-8000-0000000000b5';
   const db = fakeFirestore({
     bookings: { '59': { ...T, date: '20250105' } },
-    bills: { '5': { ...T, attachments: ['u-9'] } },
+    bills: { [UB]: { ...T, attachments: ['u-9'] } },
     orgs: { o1: { name: 'Muster AG', bexioId: '77' } },
     'finance-documents': { 'bexio-file-9': {} },
   });
   const bexio = {
     ...bexioWith({
       '/3.0/accounting/journal': [{ id: 59 }],
-      '/4.0/purchase/bills': [{ id: 5, document_no: 'LR-5', title: null, status: 'PAID', gross: '1', bill_date: '2025-02-01', due_date: null, booking_account_ids: [1] }],
-      '/4.0/purchase/bills/5': { supplier_id: 77 },
+      '/4.0/purchase/bills': [{ id: UB, document_no: 'LR-5', title: null, status: 'PAID', gross: '1', bill_date: '2025-02-01', due_date: null, booking_account_ids: [1] }],
+      [`/4.0/purchase/bills/${UB}`]: { supplier_id: 77 },
       '/3.0/files?archived_state=all': [{ id: 9, uuid: 'u-9' }],
       '/3.0/accounting/manual_entries': [{ id: 1, entries: [{ id: 59 }] }],
       '/3.0/accounting/manual_entries/1/files': [{ id: 9 }],
     }),
   };
   const bp = { get: async () => ({ data: [{ execution_date: '2025-03-01', amount: 1, payment_type: 'QR' }] }) };
+  const first = await STEPS['bill-payments']({ db, bexio: bp, tenantId: 'scs', dry: true });
+  assert.equal(first.writes, 1, 'bill-payments must see the bexio bill');
   for (const step of ['journal-reconcile', 'bills-full', 'link-vouchers']) await STEPS[step]({ db, bexio, tenantId: 'scs', dry: false });
   await STEPS['bill-payments']({ db, bexio: bp, tenantId: 'scs', dry: false });
   for (const step of ['journal-reconcile', 'bills-full', 'link-vouchers']) {
@@ -301,16 +305,18 @@ test('second runs write nothing (journal periods, bills-full, link-vouchers, bil
 });
 
 test('bill-payments drops payments of another bill and skips native bills', async () => {
-  const db = fakeFirestore({ bills: { '5': { ...T }, 'nat1': { ...T } } });
+  const U = '0b3f6a1e-8c2d-4e5f-9a7b-1c2d3e4f5a6b';            // bexio v4 bill ids are UUIDs
+  const db = fakeFirestore({ bills: { [U]: { ...T }, 'nat1': { ...T } } });
   const calls = [];
   const bexio = { get: async (path, params) => { calls.push(params.bill_id); return { data: [
-    { bill_id: 5, execution_date: '2025-03-01', amount: 1, payment_type: 'QR' },
-    { bill_id: 6, execution_date: '2025-04-01', amount: 2, payment_type: 'QR' },
+    { bill_id: U, execution_date: '2025-03-01', amount: 1, payment_type: 'QR' },
+    { bill_id: 'aaaaaaaa-8c2d-4e5f-9a7b-1c2d3e4f5a6b', execution_date: '2025-04-01', amount: 2, payment_type: 'QR' },
   ] }; } };
   const counts = await STEPS['bill-payments']({ db, bexio, tenantId: 'scs', dry: false });
-  assert.deepEqual(calls, ['5']);
-  assert.equal(db.store.get('bills/5').payments.length, 1);
+  assert.deepEqual(calls, [U]);
+  assert.equal(db.store.get(`bills/${U}`).payments.length, 1);
   assert.equal(counts.foreignPayments, 1);
+  assert.equal(counts.bills, 1);
 });
 
 test('link-vouchers commits in chunks so a later failure keeps earlier links', async () => {

@@ -15,6 +15,8 @@ import {
 export const STEPS = {};
 
 const MAX_STALE = 50;
+/** bexio v4 bill ids are UUIDs (verified 2026-09-29: all 969 local bills), unlike the numeric v2/v3 ids. */
+const BEXIO_BILL_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** Refuses a destructive apply on a suspicious remote list; a dry run only reports. `--force` overrides. */
 function guard({ dry, force }, condition, message) {
@@ -315,7 +317,7 @@ STEPS['bill-payments'] = async ({ db, bexio, tenantId, dry }) => {
   const ops = [];
   let payments = 0, foreignPayments = 0, bills = 0;
   for (const b of await localDocs(db, 'bills', tenantId)) {
-    if (!/^\d+$/.test(b.id)) continue;                          // bexio bills only
+    if (!BEXIO_BILL_ID.test(b.id)) continue;                    // bexio bills only
     bills++;
     const r = await bexio.get('/4.0/purchase/outgoing-payments', { bill_id: b.id, limit: 100, page: 1 });
     // do not trust the filter blindly: a payment naming another bill is dropped and counted
