@@ -1,0 +1,37 @@
+{
+  "title": "Wordle",
+  "desc": "Errate das gesuchte Wort. Nach jedem Versuch zeigen die Farben: grün steht richtig, gelb kommt im Wort vor, aber an einer anderen Stelle, grau kommt nicht vor. Umlaute schreibst du als AE, OE und UE, ß als SS.",
+  "config": {
+    "mode_label": "Modus",
+    "mode_daily": "Tageswort",
+    "mode_endless": "Endlos",
+    "length_label": "Buchstaben",
+    "tries_label": "Versuche",
+    "tries_next": "Die neue Anzahl Versuche gilt ab dem nächsten Wort."
+  },
+  "action": {
+    "enter": "Prüfen",
+    "backspace": "Löschen",
+    "next_word": "Neues Wort",
+    "share": "Teilen"
+  },
+  "status": {
+    "too_short": "Das Wort braucht {length} Buchstaben.",
+    "won": "Geschafft",
+    "won_detail": "mit {count} von {max} Versuchen",
+    "lost": "Leider nicht",
+    "lost_detail": "Das Wort war {word}.",
+    "daily_done": "Morgen gibt es ein neues Tageswort.",
+    "copied": "Ergebnis kopiert",
+    "share_daily": "Wordle {date}",
+    "share_endless": "Wordle Endlos"
+  },
+  "stats": {
+    "title": "Statistik",
+    "played": "Gespielt",
+    "winrate": "Gewonnen %",
+    "streak": "Serie",
+    "max_streak": "Beste Serie",
+    "dist": "Verteilung der Versuche"
+  }
+}

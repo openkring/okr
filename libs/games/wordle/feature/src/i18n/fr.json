@@ -1,0 +1,37 @@
+{
+  "title": "Wordle",
+  "desc": "Devine le mot caché. Après chaque essai, les couleurs indiquent : vert est à la bonne place, jaune est dans le mot mais ailleurs, gris n'est pas dans le mot. Écris les trémas allemands AE, OE et UE, et ß SS.",
+  "config": {
+    "mode_label": "Mode",
+    "mode_daily": "Mot du jour",
+    "mode_endless": "Sans fin",
+    "length_label": "Lettres",
+    "tries_label": "Essais",
+    "tries_next": "Le nouveau nombre d'essais s'applique dès le prochain mot."
+  },
+  "action": {
+    "enter": "Valider",
+    "backspace": "Effacer",
+    "next_word": "Nouveau mot",
+    "share": "Partager"
+  },
+  "status": {
+    "too_short": "Le mot compte {length} lettres.",
+    "won": "Réussi",
+    "won_detail": "en {count} essais sur {max}",
+    "lost": "Pas cette fois",
+    "lost_detail": "Le mot était {word}.",
+    "daily_done": "Un nouveau mot du jour t'attend demain.",
+    "copied": "Résultat copié",
+    "share_daily": "Wordle {date}",
+    "share_endless": "Wordle sans fin"
+  },
+  "stats": {
+    "title": "Statistiques",
+    "played": "Parties",
+    "winrate": "Gagnées %",
+    "streak": "Série",
+    "max_streak": "Meilleure série",
+    "dist": "Répartition des essais"
+  }
+}

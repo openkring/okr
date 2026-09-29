@@ -175,6 +175,8 @@
       "@okr/games-quiz-feature": ["libs/games/quiz/feature/src/index.ts"],
       "@okr/games-zip-feature": ["libs/games/zip/feature/src/index.ts"],
       "@okr/games-zip-util": ["libs/games/zip/util/src/index.ts"],
+      "@okr/games-wordle-feature": ["libs/games/wordle/feature/src/index.ts"],
+      "@okr/games-wordle-util": ["libs/games/wordle/util/src/index.ts"],
       "@okr/instruments-data-access": ["libs/instruments/data-access/src/index.ts"],
       "@okr/instruments-feature": ["libs/instruments/feature/src/index.ts"],
       "@okr/instruments-ui": ["libs/instruments/ui/src/index.ts"],

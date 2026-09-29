@@ -1,0 +1,31 @@
+{
+  "name": "games-wordle-util",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/games/wordle/util/src",
+  "prefix": "okr",
+  "projectType": "library",
+  "tags": ["type:util", "scope:games", "platform:mobile", "platform:web"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/games/wordle/util",
+        "main": "libs/games/wordle/util/src/index.ts",
+        "tsConfig": "libs/games/wordle/util/tsconfig.lib.json",
+        "assets": ["libs/games/wordle/util/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "test": {
+      "executor": "@nx/vite:test",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "configFile": "libs/games/wordle/util/vite.config.ts"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

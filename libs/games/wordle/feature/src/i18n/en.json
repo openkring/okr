@@ -1,0 +1,37 @@
+{
+  "title": "Wordle",
+  "desc": "Guess the hidden word. After each try the colours show: green is in the right place, yellow is in the word but somewhere else, grey is not in the word. Write umlauts as AE, OE and UE, and ß as SS.",
+  "config": {
+    "mode_label": "Mode",
+    "mode_daily": "Word of the day",
+    "mode_endless": "Endless",
+    "length_label": "Letters",
+    "tries_label": "Tries",
+    "tries_next": "The new number of tries applies from the next word."
+  },
+  "action": {
+    "enter": "Check",
+    "backspace": "Delete",
+    "next_word": "New word",
+    "share": "Share"
+  },
+  "status": {
+    "too_short": "The word needs {length} letters.",
+    "won": "Solved",
+    "won_detail": "in {count} of {max} tries",
+    "lost": "Not this time",
+    "lost_detail": "The word was {word}.",
+    "daily_done": "A new word of the day comes tomorrow.",
+    "copied": "Result copied",
+    "share_daily": "Wordle {date}",
+    "share_endless": "Wordle Endless"
+  },
+  "stats": {
+    "title": "Statistics",
+    "played": "Played",
+    "winrate": "Won %",
+    "streak": "Streak",
+    "max_streak": "Best streak",
+    "dist": "Guess distribution"
+  }
+}

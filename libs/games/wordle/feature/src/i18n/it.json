@@ -1,0 +1,37 @@
+{
+  "title": "Wordle",
+  "desc": "Indovina la parola nascosta. Dopo ogni tentativo i colori indicano: verde è al posto giusto, giallo è nella parola ma altrove, grigio non è nella parola. Scrivi le dieresi tedesche come AE, OE e UE, e ß come SS.",
+  "config": {
+    "mode_label": "Modalità",
+    "mode_daily": "Parola del giorno",
+    "mode_endless": "Senza fine",
+    "length_label": "Lettere",
+    "tries_label": "Tentativi",
+    "tries_next": "Il nuovo numero di tentativi vale dalla prossima parola."
+  },
+  "action": {
+    "enter": "Verifica",
+    "backspace": "Cancella",
+    "next_word": "Nuova parola",
+    "share": "Condividi"
+  },
+  "status": {
+    "too_short": "La parola ha {length} lettere.",
+    "won": "Fatto",
+    "won_detail": "in {count} tentativi su {max}",
+    "lost": "Non questa volta",
+    "lost_detail": "La parola era {word}.",
+    "daily_done": "Domani c'è una nuova parola del giorno.",
+    "copied": "Risultato copiato",
+    "share_daily": "Wordle {date}",
+    "share_endless": "Wordle senza fine"
+  },
+  "stats": {
+    "title": "Statistiche",
+    "played": "Giocate",
+    "winrate": "Vinte %",
+    "streak": "Serie",
+    "max_streak": "Serie migliore",
+    "dist": "Distribuzione dei tentativi"
+  }
+}

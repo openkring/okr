@@ -1,0 +1,37 @@
+{
+  "title": "Wordle",
+  "desc": "Adivina la palabra oculta. Tras cada intento, los colores indican: verde está en su sitio, amarillo está en la palabra pero en otro sitio, gris no está en la palabra. Escribe las diéresis alemanas como AE, OE y UE, y ß como SS.",
+  "config": {
+    "mode_label": "Modo",
+    "mode_daily": "Palabra del día",
+    "mode_endless": "Sin fin",
+    "length_label": "Letras",
+    "tries_label": "Intentos",
+    "tries_next": "El nuevo número de intentos se aplica a partir de la próxima palabra."
+  },
+  "action": {
+    "enter": "Comprobar",
+    "backspace": "Borrar",
+    "next_word": "Palabra nueva",
+    "share": "Compartir"
+  },
+  "status": {
+    "too_short": "La palabra tiene {length} letras.",
+    "won": "Conseguido",
+    "won_detail": "en {count} de {max} intentos",
+    "lost": "Esta vez no",
+    "lost_detail": "La palabra era {word}.",
+    "daily_done": "Mañana habrá una nueva palabra del día.",
+    "copied": "Resultado copiado",
+    "share_daily": "Wordle {date}",
+    "share_endless": "Wordle sin fin"
+  },
+  "stats": {
+    "title": "Estadísticas",
+    "played": "Jugadas",
+    "winrate": "Ganadas %",
+    "streak": "Racha",
+    "max_streak": "Mejor racha",
+    "dist": "Distribución de intentos"
+  }
+}
