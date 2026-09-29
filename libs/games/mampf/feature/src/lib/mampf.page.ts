@@ -3,7 +3,7 @@ import { IonButton, IonContent } from '@ionic/angular/standalone';
 
 import { Header } from '@okr/shared-ui';
 import { fill } from '@okr/shared-util-core';
-import { Dir, GameState, newGame, step, swipeDirection } from '@okr/games-mampf-util';
+import { Dir, GameState, newGame, ownsKeyboard, step, swipeDirection } from '@okr/games-mampf-util';
 
 import { MampfLoop } from './mampf.loop';
 import { MampfRenderer, Pose, poses } from './mampf.renderer';
@@ -354,7 +354,7 @@ export class MampfPage {
       else this.pause();
       return;
     }
-    if ((event.key === ' ' || event.key === 'Enter') && !target?.closest('button, ion-button')) {
+    if ((event.key === ' ' || event.key === 'Enter') && ownsKeyboard(target, this.boardRef().nativeElement)) {
       const status = this.store.status();
       if (status === 'idle' || status === 'gameOver') {
         event.preventDefault();

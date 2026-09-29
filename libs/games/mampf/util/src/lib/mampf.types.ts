@@ -37,7 +37,7 @@ export interface Ghost extends Actor {
 export type EngineStatus = 'ready' | 'playing' | 'dying' | 'levelClear' | 'gameOver';
 
 export type MampfEventType =
-  | 'dot' | 'pellet' | 'ghostEaten' | 'extraLife' | 'died'
+  | 'dot' | 'pellet' | 'frightStart' | 'ghostEaten' | 'extraLife' | 'died'
   | 'levelClear' | 'gameOver' | 'modeChange' | 'frightEnd';
 
 export interface MampfEvent { type: MampfEventType; points?: number }

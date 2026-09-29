@@ -35,6 +35,9 @@ export class MampfSound {
         this.tone(this.dotHigh ? 520 : 390, 0, 0.06, 'square', 0.04);
         break;
       case 'pellet':
+        this.tone(260, 0, 0.12, 'square', 0.05);
+        break;
+      case 'frightStart':
         this.startSiren();
         break;
       case 'ghostEaten':

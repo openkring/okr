@@ -116,6 +116,19 @@ describe('eating', () => {
     expect(ghostById(s, 'fickle').frightened).toBe(false);
   });
 
+  it('signals frightStart only when the ghosts really get frightened', () => {
+    const early = playing();
+    Object.assign(early.hero, { x: 1, y: 3.2, dir: 'up', want: 'up' });
+    expect(types(step(early, null))).toEqual(expect.arrayContaining(['pellet', 'frightStart']));
+
+    const late = playing();
+    late.level = 17;
+    Object.assign(late.hero, { x: 1, y: 3.2, dir: 'up', want: 'up' });
+    const events = types(step(late, null));
+    expect(events).toContain('pellet');
+    expect(events).not.toContain('frightStart');
+  });
+
   it('gives one extra life at 10 000 points, once', () => {
     const s = alone();
     s.score = 9_995;

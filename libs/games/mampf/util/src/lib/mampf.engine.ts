@@ -197,7 +197,7 @@ function eat(state: GameState, params: LevelParams, events: MampfEvent[]): void 
   } else {
     addScore(state, PELLET_POINTS, events);
     events.push({ type: 'pellet' });
-    frighten(state, params);
+    frighten(state, params, events);
   }
   if (state.dotsLeft === 0) {
     state.status = 'levelClear';
@@ -206,14 +206,18 @@ function eat(state: GameState, params: LevelParams, events: MampfEvent[]): void 
   }
 }
 
-function frighten(state: GameState, params: LevelParams): void {
+/** A pellet always reverses the active ghosts; it frightens them only while the level has fright time. */
+function frighten(state: GameState, params: LevelParams, events: MampfEvent[]): void {
   state.combo = 0;
   for (const g of state.ghosts) {
     if (g.state !== 'active') continue;
     g.dir = OPPOSITE[g.dir];
     if (params.frightSeconds > 0) g.frightened = true;
   }
-  if (params.frightSeconds > 0) state.frightTicks = params.frightSeconds * TICKS_PER_SECOND;
+  if (params.frightSeconds > 0) {
+    state.frightTicks = params.frightSeconds * TICKS_PER_SECOND;
+    events.push({ type: 'frightStart' });
+  }
 }
 
 function updateTimers(state: GameState, params: LevelParams, events: MampfEvent[]): void {
