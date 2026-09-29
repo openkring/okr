@@ -88,7 +88,6 @@ const CROSSWORD_LANGUAGES = ['de', 'en', 'es', 'fr', 'it'];
                 </ion-row>
               }
             </ion-grid>
-            <okr-error-note [errors]="clueErrors()" />
             <okr-error-note [errors]="entriesErrors()" />
             @if (!isReadOnly()) {
               <ion-button fill="clear" (click)="addEntry()">
@@ -144,10 +143,14 @@ export class CrosswordTopicForm {
   protected readonly topicForm = form(this.formData, (path) =>
     validateVestTree(path, crosswordTopicSuite as any));
 
+  // called with just the model — tenants/tags/field all default, so `only()` filters nothing and
+  // every field's errors are available for the notes below (the same 1-arg call `validateVestTree`
+  // itself makes; see crosswordTopicSuite's doc comment for the (model, tenants, tags, field?)
+  // signature `baseValidations` needs).
   private readonly validationResult = computed(() => crosswordTopicSuite(this.formData()));
   protected titleErrors = computed(() => this.validationResult().getErrors('title'));
   protected descriptionErrors = computed(() => this.validationResult().getErrors('description'));
-  protected clueErrors = computed(() => this.validationResult().getErrors('clue'));
+  /** Also carries the clue-too-long message — filed under 'entries', the resolvable model field. */
   protected entriesErrors = computed(() => this.validationResult().getErrors('entries'));
 
   constructor() {
@@ -202,7 +205,12 @@ export class CrosswordTopicForm {
     this.formData.update(vm => ({ ...vm, entries: vm.entries.filter((_, i) => i !== index), gridStale: true }));
   }
 
-  /** Parses `answer;clue` per line and appends the parsed rows; blank/malformed lines are skipped. */
+  /**
+   * Parses `answer;clue` per line and appends the parsed rows. Blank lines are skipped. A line
+   * with no `;` is NOT skipped — it is appended as an entry with that whole line as the answer and
+   * an empty clue (`normalizeEntries` then rejects it for the empty clue, same as typing it by
+   * hand); only a line that is blank before the first `;` (no answer at all) is dropped.
+   */
   protected applyPaste(): void {
     const rows: CrosswordEntry[] = this.pasteText
       .split('\n')
