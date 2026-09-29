@@ -75,6 +75,8 @@ export class DocumentModel implements OkrModel, SearchableModel, TaggedModel {
 
 export const DocumentCollection = 'docs';
 export const DocumentModelName = 'document';
+/** Vouchers and finance PDFs (bexio migration, spec 1.68) — DocumentModel shape plus accountingTenantId, treasurer-only. */
+export const FinanceDocumentCollection = 'finance-documents';
 
 // tbd: Protocol can be derived for external files (absolute link: protocol)
 // ftp/s, http/s, webdav, etc.

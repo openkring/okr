@@ -23,3 +23,6 @@ export class CommentModel implements OkrModel, SearchableModel {
 
 export const CommentCollection = 'comments';
 export const CommentModelName = 'comment';
+
+/** Comments on invoices/bills (bexio migration, spec 1.68) — CommentModel shape, treasurer-only. */
+export const FinanceCommentCollection = 'finance-comments';

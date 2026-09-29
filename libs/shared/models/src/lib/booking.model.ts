@@ -22,6 +22,7 @@ export class BookingModel implements OkrModel, SearchableModel, TaggedModel {
   public bookingNo = 0;                   // sequential per year + accountingTenantId
   public periodKey = '';                  // ref to PeriodModel
   public documentKey = '';               // ref to DocumentModel (voucher)
+  public documentKeys: string[] = [];    // all vouchers (finance-documents okeys); documentKey = documentKeys[0] (spec 1.68)
   public status: BookingStatus = 'draft';
   public accountingTenantId = '';        // = org.okey of the accounting tenant
   public counterparty: AvatarInfo | undefined;  // external party of the booking (Gutschrift sender, donor, invoice receiver)
