@@ -407,6 +407,13 @@ service cloud.firestore {
       allow create, update: if isContentManager() && tenantCreateOrDetach();
       allow delete: if isContentManager() && canWriteTenant(resource.data);
     }
+    // Kreuzworträtsel (spec 2026-09-29-crossword-spec.md). Topics are authored in the app by
+    // content admins and read by every member of the tenant, mirroring hearingQuizNodes.
+    match /crosswordTopics/{id} {
+      allow read: if tenantRead();
+      allow create, update: if isContentManager() && tenantCreateOrDetach();
+      allow delete: if isContentManager() && canWriteTenant(resource.data);
+    }
     // Training results are HEALTH DATA (revDSG Art. 5 lit. c): readable and writable by the one
     // user they belong to — `userKey` is the Firebase Auth uid — and by nobody else, admin
     // included, like `diaries`. HearingQuizResultService.listMine mirrors this rule in its query
