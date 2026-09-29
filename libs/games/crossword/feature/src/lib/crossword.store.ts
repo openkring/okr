@@ -11,7 +11,10 @@ import {
   CellView,
   CrosswordI18n,
   buildCellMap,
+  cellAt,
   loadProgress,
+  runOf,
+  runStart,
   saveProgress,
 } from '@okr/games-crossword-util';
 
@@ -41,38 +44,6 @@ const initialState: CrosswordState = {
   finishedAt: undefined,
   progressSeeded: false,
 };
-
-/** The unbroken run of cells starting at (row, col) and continuing in `direction`. */
-function runFrom(map: CellView[][], row: number, col: number, direction: 'across' | 'down'): { row: number; col: number }[] {
-  const cells: { row: number; col: number }[] = [];
-  let r = row;
-  let c = col;
-  while (r < map.length && c < map[0].length && !map[r][c].blocked) {
-    cells.push({ row: r, col: c });
-    if (direction === 'across') c++; else r++;
-  }
-  return cells;
-}
-
-/** Walks back to the first cell of the run (row, col) sits inside, in `direction`. */
-function runStart(map: CellView[][], row: number, col: number, direction: 'across' | 'down'): { row: number; col: number } {
-  let r = row;
-  let c = col;
-  for (;;) {
-    const pr = direction === 'across' ? r : r - 1;
-    const pc = direction === 'across' ? c - 1 : c;
-    if (pr < 0 || pc < 0 || pr >= map.length || pc >= map[0].length || map[pr][pc].blocked) break;
-    r = pr;
-    c = pc;
-  }
-  return { row: r, col: c };
-}
-
-/** The whole run (row, col) sits inside, in `direction` — from its first cell to its last. */
-function runOf(map: CellView[][], row: number, col: number, direction: 'across' | 'down'): { row: number; col: number }[] {
-  const start = runStart(map, row, col, direction);
-  return runFrom(map, start.row, start.col, direction);
-}
 
 /**
  * One play session on one `CrosswordTopicModel`. Component-provided on `CrosswordPage` — a fresh
@@ -129,31 +100,46 @@ export const CrosswordStore = signalStore(
       const sel = store.selected();
       if (!map || !sel) return undefined;
       const start = runStart(map, sel.row, sel.col, sel.direction);
-      return map[start.row][start.col].number;
+      return cellAt(map, start.row, start.col)?.number;
     }),
 
+    /**
+     * True once every unblocked cell holds its solution letter. Requires at least one unblocked
+     * cell to exist — an empty or all-blocked grid (no placeable entries) must never read as
+     * solved, or the page would show the solved banner over a board with nothing on it.
+     */
     solved: computed(() => {
       const map = store.solutionMap();
       if (!map) return false;
       const filled = store.filled();
+      let hasUnblockedCell = false;
       for (let r = 0; r < map.length; r++) {
         for (let c = 0; c < map[r].length; c++) {
           const cell = map[r][c];
-          if (!cell.blocked && filled.get(`${r},${c}`) !== cell.letter) return false;
+          if (cell.blocked) continue;
+          hasUnblockedCell = true;
+          if (filled.get(`${r},${c}`) !== cell.letter) return false;
         }
       }
-      return true;
+      return hasUnblockedCell;
     }),
   })),
 
   withMethods(store => {
-    /** Persists `filled` for this device, then re-checks for a solve. */
+    /**
+     * Persists `filled` for this device, then re-checks for a solve — either edge. Fixing the
+     * solve stamps `finishedAt` (freezing the page's clock); editing a solved board back to
+     * unsolved (overtyping a correct cell) clears it again, or the clock would stay frozen on a
+     * board that is visibly no longer done.
+     */
     function commitFilled(filled: Map<string, string>): void {
       const topic = store.topic();
       const wasSolved = store.solved();
       patchState(store, { filled, checking: false });
       if (topic?.grid) saveProgress(topic.okey, topic.grid, filled);
-      if (!wasSolved && store.solved()) patchState(store, { finishedAt: Date.now() });
+      const isSolved = store.solved();
+      if (isSolved && !wasSolved) patchState(store, { finishedAt: Date.now() });
+      else if (!isSolved && wasSolved) patchState(store, { finishedAt: undefined });
     }
 
     return {
@@ -169,7 +155,8 @@ export const CrosswordStore = signalStore(
        */
       select(row: number, col: number): void {
         const map = store.solutionMap();
-        if (!map || map[row][col].blocked) return;
+        const cell = map ? cellAt(map, row, col) : undefined;
+        if (!map || !cell || cell.blocked) return;
 
         const sel = store.selected();
         const across = runOf(map, row, col, 'across');
@@ -188,8 +175,17 @@ export const CrosswordStore = signalStore(
         patchState(store, { selected: { row, col, direction }, checking: false });
       },
 
-      /** Jumps straight to a clue's first cell and direction — no toggle inference (`CrosswordClues`). */
+      /**
+       * Jumps straight to a clue's first cell and direction — no toggle inference
+       * (`CrosswordClues`). Ignores a placement whose start cell is missing or blocked: a
+       * placement whose `entry` was since deleted still sits in `grid.placements` (`gridStale`
+       * covers the intent, but nothing purges the stale row), and `buildCellMap` renders that
+       * cell as an ordinary blocked square.
+       */
       selectClue(row: number, col: number, direction: 'across' | 'down'): void {
+        const map = store.solutionMap();
+        const cell = map ? cellAt(map, row, col) : undefined;
+        if (!cell || cell.blocked) return;
         patchState(store, { selected: { row, col, direction }, checking: false });
       },
 
@@ -199,6 +195,8 @@ export const CrosswordStore = signalStore(
         const sel = store.selected();
         const upper = letter.slice(-1).toUpperCase();
         if (!map || !sel || !/^[A-Z]$/.test(upper)) return;
+        const cell = cellAt(map, sel.row, sel.col);
+        if (!cell || cell.blocked) return;
 
         const filled = new Map(store.filled());
         filled.set(`${sel.row},${sel.col}`, upper);
@@ -241,8 +239,8 @@ export const CrosswordStore = signalStore(
       revealLetter(): void {
         const map = store.solutionMap();
         const sel = store.selected();
-        if (!map || !sel) return;
-        const cell = map[sel.row][sel.col];
+        const cell = map && sel ? cellAt(map, sel.row, sel.col) : undefined;
+        if (!map || !sel || !cell || cell.blocked) return;
         if (store.filled().get(`${sel.row},${sel.col}`) === cell.letter) return;
 
         const filled = new Map(store.filled());
@@ -303,6 +301,12 @@ export const CrosswordStore = signalStore(
           const topic = store.topic();
           if (!topic?.grid) return;
           patchState(store, { filled: loadProgress(topic.okey, topic.grid), progressSeeded: true });
+          // A board restored already solved must not read as freshly finished — `solved()` was
+          // never given a rising edge to catch (there was no earlier, unsolved `filled` to
+          // compare against), so without this the clock keeps ticking on a done puzzle. Stamping
+          // `startedAt` rather than `Date.now()` gives it a duration of 0 rather than an
+          // arbitrary "time to load the page".
+          if (store.solved()) patchState(store, { finishedAt: store.startedAt() });
         });
       });
     },

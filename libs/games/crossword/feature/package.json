@@ -12,6 +12,7 @@
     "@okr/games-crossword-util": "*",
     "@okr/shared-i18n": "*",
     "@okr/shared-models": "*",
+    "@okr/shared-ui": "*",
     "@okr/shared-util-core": "*"
   }
 }
