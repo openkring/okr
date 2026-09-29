@@ -161,6 +161,9 @@
     },
     "mampf": {
       "label": "Mampf"
+    },
+    "wordle": {
+      "label": "Wordle"
     }
   },
   "picker": {

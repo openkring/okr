@@ -56,6 +56,7 @@
     { "path": "../../games/muehle/feature/tsconfig.lib.json" },
     { "path": "../../games/quiz/feature/tsconfig.lib.json" },
     { "path": "../../games/tetris/feature/tsconfig.lib.json" },
+    { "path": "../../games/wordle/feature/tsconfig.lib.json" },
     { "path": "../../games/zip/feature/tsconfig.lib.json" },
     { "path": "../../geo/location/feature/tsconfig.lib.json" },
     { "path": "../../geo/trip/feature/tsconfig.lib.json" },

@@ -417,13 +417,13 @@
           },
           {
             "glob": "*.json",
-            "input": "libs/games/jasstafel/feature/src/i18n",
-            "output": "./assets/i18n/games/jasstafel/feature"
+            "input": "libs/games/hearing-quiz/feature/src/i18n",
+            "output": "./assets/i18n/games/hearing-quiz/feature"
           },
           {
             "glob": "*.json",
-            "input": "libs/games/tetris/feature/src/i18n",
-            "output": "./assets/i18n/games/tetris/feature"
+            "input": "libs/games/jasstafel/feature/src/i18n",
+            "output": "./assets/i18n/games/jasstafel/feature"
           },
           {
             "glob": "*.json",
@@ -432,13 +432,18 @@
           },
           {
             "glob": "*.json",
-            "input": "libs/games/hearing-quiz/feature/src/i18n",
-            "output": "./assets/i18n/games/hearing-quiz/feature"
+            "input": "libs/games/muehle/feature/src/i18n",
+            "output": "./assets/i18n/games/muehle/feature"
           },
           {
             "glob": "*.json",
-            "input": "libs/games/muehle/feature/src/i18n",
-            "output": "./assets/i18n/games/muehle/feature"
+            "input": "libs/games/tetris/feature/src/i18n",
+            "output": "./assets/i18n/games/tetris/feature"
+          },
+          {
+            "glob": "*.json",
+            "input": "libs/games/wordle/feature/src/i18n",
+            "output": "./assets/i18n/games/wordle/feature"
           },
           {
             "glob": "*.json",
