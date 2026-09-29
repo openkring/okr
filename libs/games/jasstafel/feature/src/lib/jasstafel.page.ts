@@ -84,12 +84,19 @@ import { JasstafelStore } from './jasstafel.store';
             <ion-button expand="block" class="ion-margin-top" [disabled]="!store.canStart()" (click)="store.start()">
               {{ store.i18n.start() }}
             </ion-button>
+            @if (store.archive().length) {
+              <ion-button expand="block" fill="clear" (click)="store.openHistory()">
+                <ion-icon slot="start" src="{{ 'list' | svgIcon }}" />
+                {{ store.i18n.history() }}
+              </ion-button>
+            }
           </ion-card-content>
         </ion-card>
       }
     </ion-content>
 
-    @if (store.game() && !store.outcome()) {
+    <!-- stays after the game is decided: a mistyped last hand must still be undoable or editable -->
+    @if (store.game()) {
       <ion-footer>
         <ion-toolbar>
           <ion-buttons slot="start">
@@ -106,9 +113,11 @@ import { JasstafelStore } from './jasstafel.store';
               <ion-icon slot="icon-only" src="{{ 'cancel' | svgIcon }}" />
             </ion-button>
           </ion-buttons>
-          <ion-buttons slot="end">
-            <ion-button fill="solid" color="primary" (click)="store.enterHand()">{{ enterLabel() }}</ion-button>
-          </ion-buttons>
+          @if (!store.outcome()) {
+            <ion-buttons slot="end">
+              <ion-button fill="solid" color="primary" (click)="store.enterHand()">{{ enterLabel() }}</ion-button>
+            </ion-buttons>
+          }
         </ion-toolbar>
       </ion-footer>
     }

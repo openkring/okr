@@ -4,8 +4,8 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 
 import {
   DEFAULT_JASS_CONFIG, JASS_I18N_KEYS, JassConfig, JassGame, JassHandFormModel, JassI18n, JassPlayer, JassVariant,
-  PLAYER_COUNTS, addHand, createGame, handFromForm, newHandForm, nextTrumpMaker, normalizeConfig, replaceHand,
-  stats, totals, undoHand, validateBid, validateHand, winner,
+  PLAYER_COUNTS, addHand, createGame, handFromForm, newHandForm, nextTrumpMaker, normalizeConfig, parsePending,
+  parseStoredGame, replaceHand, stats, totals, undoHand, validateBid, validateHand, winner,
 } from '@okr/games-jasstafel-util';
 import { ModelSelectService } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
@@ -15,6 +15,7 @@ import { AlertService } from '@okr/shared-util-angular';
 const GAME_KEY = 'jasstafel.game';
 const CONFIG_KEY = 'jasstafel.config';
 const ARCHIVE_KEY = 'jasstafel.archive';
+const PENDING_KEY = 'jasstafel.pending';
 const ARCHIVE_MAX = 20;
 
 type StorageFlag = { ok: boolean };
@@ -36,13 +37,6 @@ function write(key: string, value: unknown, flag: StorageFlag): void {
   } catch {
     flag.ok = false;
   }
-}
-
-/** A stored game is trusted only if it has the fields the engine reads. */
-function readGame(raw: unknown): JassGame | null {
-  const g = raw as JassGame | null;
-  if (!g || typeof g !== 'object' || !Array.isArray(g.hands) || !Array.isArray(g.sides) || !Array.isArray(g.players)) return null;
-  return { ...g, config: normalizeConfig(g.config) };
 }
 
 const sameAvatar = (a: AvatarInfo, b: AvatarInfo) => (a.key || b.key)
@@ -107,6 +101,7 @@ export const JasstafelStore = signalStore(
       write(GAME_KEY, store.game(), store._storage);
       write(CONFIG_KEY, store.config(), store._storage);
       write(ARCHIVE_KEY, store.archive(), store._storage);
+      write(PENDING_KEY, store.pendingAnnounced(), store._storage);
       patchState(store, { storageOk: store._storage.ok });
     }
 
@@ -173,12 +168,13 @@ export const JasstafelStore = signalStore(
     return {
       load(): void {
         const config = normalizeConfig(read(CONFIG_KEY, store._storage));
-        const game = readGame(read(GAME_KEY, store._storage));
+        const game = parseStoredGame(read(GAME_KEY, store._storage));
+        const pendingAnnounced = parsePending(read(PENDING_KEY, store._storage), game);
         const rawArchive = read<unknown[]>(ARCHIVE_KEY, store._storage);
-        const archive = (Array.isArray(rawArchive) ? rawArchive : []).map(readGame).filter((g): g is JassGame => !!g);
+        const archive = (Array.isArray(rawArchive) ? rawArchive : []).map(parseStoredGame).filter((g): g is JassGame => !!g);
         const seats = game ? game.players.map(p => p.avatar) : [null, null, null, null];
         patchState(store, {
-          config, game, archive, seats, variant: game?.variant ?? 'schieber', bueterIdx: game?.bueterIdx ?? 0,
+          config, game, archive, seats, pendingAnnounced, variant: game?.variant ?? 'schieber', bueterIdx: game?.bueterIdx ?? 0,
           storageOk: store._storage.ok,
         });
       },
@@ -222,6 +218,7 @@ export const JasstafelStore = signalStore(
         if (!result) return;
         if (phase === 'announce') {
           patchState(store, { pendingAnnounced: result.announced });
+          persist();
           return;
         }
         const hand = handFromForm(result, maker);
@@ -236,6 +233,7 @@ export const JasstafelStore = signalStore(
       undo(): void {
         if (store.pendingAnnounced()) {
           patchState(store, { pendingAnnounced: null });
+          persist();
           return;
         }
         const game = store.game();
@@ -280,12 +278,15 @@ export const JasstafelStore = signalStore(
         setGame(null);
       },
 
-      /** Same players and variant; the Büter is asked for a new bid. */
+      /**
+       * Same players and variant. Büter goes back to the start screen with the seats kept, because
+       * a new game means new bidding and possibly a different Büter; every other variant restarts.
+       */
       async newGame(): Promise<void> {
         const game = store.game();
         if (game) patchState(store, { variant: game.variant, seats: game.players.map(p => p.avatar), bueterIdx: game.bueterIdx ?? 0 });
         setGame(null);
-        await start();
+        if (game?.variant !== 'bueter') await start();
       },
     };
   }),

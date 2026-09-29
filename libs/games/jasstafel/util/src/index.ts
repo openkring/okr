@@ -5,3 +5,4 @@ export * from './lib/jass.engine';
 export * from './lib/jass-hand.form-model';
 export * from './lib/jass.validations';
 export * from './lib/jass-i18n';
+export * from './lib/jass.storage';
