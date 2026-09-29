@@ -1191,8 +1191,10 @@ const zip: BlockRoutes = {
 
 /**
  * `/crossword` — Kreuzworträtsel (spec 2026-09-29). The play route follows the list convention
- * (`:listId/:contextMenuName`, listId always `all`); the play route comes FIRST because it and
- * the list route have the same segment count and would otherwise be swallowed by it.
+ * (`:listId/:contextMenuName`, listId always `all`). Listing the play route first is just
+ * convention here, not a requirement: `:topicKey` is one segment and `:listId/:contextMenuName`
+ * is two, so Angular already discriminates between them by segment count and they cannot
+ * collide in either order.
  */
 const crossword: BlockRoutes = {
   id: 'crossword',
