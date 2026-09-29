@@ -2526,6 +2526,39 @@ const hearingQuiz: FeatureBlock = {
 };
 
 /**
+ * `libs/games/crossword/{data-access,feature,ui,util}` — Kreuzworträtsel: a tenant-authored tree
+ * of topics and crosswords (spec `2026-09-29-crossword-spec.md`), and the solving exercise itself.
+ *
+ * Unlike `zip`/`muehle`/`battleship` it OWNS DATA, like `hearingQuiz`: `crosswordTopics` (the
+ * content, written by content admins). Modelled directly on `hearingQuiz` for that reason.
+ *
+ * `defaultAvailability: 'beta'` — this ships unproven, and the first tenant should opt in
+ * deliberately rather than every tenant finding it switched on.
+ *
+ * `c-crossword` re-declares the SHARED `editmode-toggle` leaf field-identically (same doc as
+ * `c-hearing-quiz`, `c-contentpage`, `c-docs`, …); the page only offers the context menu to
+ * content admins.
+ */
+const crossword: FeatureBlock = {
+  id: 'crossword',
+  bundle: 'games',
+  label: '@tenant/util.feature.crossword.label',
+  icon: 'grid',
+  defaultAvailability: 'beta',
+  dependsOn: ['games'],
+  collections: ['crosswordTopics'],
+  menu: [
+    gamesMenuParent([
+      { key: 'game-crossword', name: 'game-crossword', url: '/crossword/all/c-crossword', action: 'navigate', roleNeeded: 'registered', icon: 'grid', label: '@item.game-crossword' },
+    ]),
+    { key: 'c-crossword', name: 'c-crossword', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'grid', label: '', children: [
+      { key: 'editmode-toggle', name: 'editmode-toggle', url: 'toggleEditMode', action: 'toggle', roleNeeded: 'registered', icon: 'edit', label: '@item.editmode-toggle' },
+      { key: 'cw-add', name: 'cw-add', url: 'add', action: 'call', roleNeeded: 'contentAdmin', icon: 'add-circle', label: '@item.cw-add' },
+    ] },
+  ],
+};
+
+/**
  * `libs/games/muehle` — `MuehlePage` + `MuehleStore` at `/muehle`, over the pure
  * `@okr/games-muehle-util` (rules engine + negamax computer opponent).
  *
@@ -2832,7 +2865,7 @@ const weather: FeatureBlock = {
 };
 
 export const FEATURE_BLOCKS: FeatureBlock[] = [
-  calevent, aoc, activity, task, instruments, games, quiz, zip, hearingQuiz, muehle, battleship, jasstafel, tetris, mampf, wordle,
+  calevent, aoc, activity, task, instruments, games, quiz, zip, hearingQuiz, crossword, muehle, battleship, jasstafel, tetris, mampf, wordle,
   auth, cms, user, profile, session, security, i18n, avatar, category, comment, geo, trip, consent,
   subject, relationship, vcard,
   resource, mobility,

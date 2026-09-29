@@ -1190,6 +1190,23 @@ const zip: BlockRoutes = {
 };
 
 /**
+ * `/crossword` — Kreuzworträtsel (spec 2026-09-29). The play route follows the list convention
+ * (`:listId/:contextMenuName`, listId always `all`); the play route comes FIRST because it and
+ * the list route have the same segment count and would otherwise be swallowed by it.
+ */
+const crossword: BlockRoutes = {
+  id: 'crossword',
+  routes: (): Route[] => [{
+    path: 'crossword',
+    canActivate: [isAuthenticatedGuard],
+    children: [
+      { path: ':topicKey', loadComponent: () => import('@okr/games-crossword-feature').then(m => m.CrosswordPage) },
+      { path: ':listId/:contextMenuName', loadComponent: () => import('@okr/games-crossword-feature').then(m => m.CrosswordTopicList) },
+    ],
+  }],
+};
+
+/**
  * `/muehle` — Mühle in `libs/games/muehle`. In memory only (settings in `localStorage`), no
  * `:contextMenuName` segment, so no context-menu wrapper — the same shape as `/zip`.
  */
@@ -1402,7 +1419,7 @@ const weather: BlockRoutes = {
 };
 
 export const FEATURE_ROUTES: BlockRoutes[] = [
-  calevent, aoc, activity, task, instruments, games, quiz, zip, hearingQuiz, muehle, battleship, jasstafel, tetris, mampf, wordle,
+  calevent, aoc, activity, task, instruments, games, quiz, zip, hearingQuiz, crossword, muehle, battleship, jasstafel, tetris, mampf, wordle,
   auth, cms, user, profile, session, security, i18n, avatar, category, comment, geo, trip, consent,
   subject, relationship, vcard,
   resource, mobility,
