@@ -1339,6 +1339,9 @@ export async function resolveDocs(entry: SubjectDataEntry, ctx: SubjectCtx): Pro
 // not personal data: hearingQuizNodes — the Hörtraining CONTENT tree (folders, questions, clips)
 //   authored by content admins. `parentKey` is the parent FOLDER's okey, never a person; nothing
 //   in a node records who wrote it or who answered it — answers live in `hearingQuizResults`.
+// not personal data: crosswordTopics — the Kreuzworträtsel CONTENT (answer/clue pairs and the
+//   generated grid) authored by content admins. No person field and no createdBy; a player's
+//   solve progress lives only in browser localStorage, never written to this collection.
 // not personal data: accounts — chart of accounts (account numbers, names, hierarchy)
 // not personal data: accounting-configs — per-tenant accounting settings
 // not personal data: app-config — tenant configuration; opEmail/dpoEmail are operator
