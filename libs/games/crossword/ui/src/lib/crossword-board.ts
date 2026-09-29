@@ -1,6 +1,6 @@
 import { Component, computed, input, output } from '@angular/core';
 
-import { CrosswordEntry, CrosswordGrid as CrosswordGridModel } from '@okr/shared-models';
+import { CrosswordEntry, CrosswordGrid } from '@okr/shared-models';
 import { CellView, buildCellMap } from '@okr/games-crossword-util';
 
 export interface CrosswordSelectedCell {
@@ -17,7 +17,7 @@ export interface CrosswordSelectedCell {
  * must never scroll sideways because of a crossword grid.
  */
 @Component({
-  selector: 'okr-crossword-grid',
+  selector: 'okr-crossword-board',
   standalone: true,
   imports: [],
   styles: [`
@@ -84,8 +84,8 @@ export interface CrosswordSelectedCell {
     </div>
   `,
 })
-export class CrosswordGrid {
-  public readonly grid = input.required<CrosswordGridModel>();
+export class CrosswordBoard {
+  public readonly grid = input.required<CrosswordGrid>();
   public readonly entries = input.required<CrosswordEntry[]>();
   public readonly filled = input<Map<string, string>>(new Map());
   public readonly selected = input<CrosswordSelectedCell | undefined>(undefined);

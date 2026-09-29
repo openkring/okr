@@ -1,2 +1,2 @@
-export * from './lib/crossword-grid';
+export * from './lib/crossword-board';
 export * from './lib/crossword-clues';

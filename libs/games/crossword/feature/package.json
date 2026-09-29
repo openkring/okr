@@ -6,18 +6,6 @@
   "sideEffects": false,
   "private": true,
   "dependencies": {
-    "tslib": "^2.8.1",
-    "@okr/cms-menu-feature": "*",
-    "@okr/games-crossword-data-access": "*",
-    "@okr/games-crossword-ui": "*",
-    "@okr/games-crossword-util": "*",
-    "@okr/shared-config": "*",
-    "@okr/shared-feature": "*",
-    "@okr/shared-i18n": "*",
-    "@okr/shared-models": "*",
-    "@okr/shared-pipes": "*",
-    "@okr/shared-ui": "*",
-    "@okr/shared-util-angular": "*",
-    "@okr/shared-util-core": "*"
+    "tslib": "^2.8.1"
   }
 }

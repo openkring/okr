@@ -33,9 +33,6 @@
       "path": "../../../activity/data-access/tsconfig.lib.json"
     },
     {
-      "path": "../../../avatar/data-access/tsconfig.lib.json"
-    },
-    {
       "path": "../util/tsconfig.lib.json"
     },
     {

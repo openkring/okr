@@ -7,13 +7,7 @@
   "private": true,
   "dependencies": {
     "tslib": "^2.8.1",
-    "@angular/forms": "*",
     "@okr/games-crossword-util": "*",
-    "@okr/shared-constants": "*",
-    "@okr/shared-models": "*",
-    "@okr/shared-pipes": "*",
-    "@okr/shared-ui": "*",
-    "@okr/shared-util-angular": "*",
-    "@okr/shared-util-core": "*"
+    "@okr/shared-models": "*"
   }
 }
