@@ -4,10 +4,11 @@
  * deterministic okey and merge, so a step can be re-run safely.
  */
 
+import { createHash } from 'node:crypto';
 import { FieldValue } from 'firebase-admin/firestore';
 
 import {
-  accountOkey, isoToStoreDate, mapBillState, mapInvoiceState, staleIds, toRappen,
+  accountOkey, fileOkey, filePath, financeDocument, isoToStoreDate, mapBillState, mapInvoiceState, staleIds, toRappen,
 } from './mappers.mjs';
 
 export const STEPS = {};
@@ -134,4 +135,82 @@ STEPS['bills-full'] = async ({ db, bexio, tenantId, dry }) => {
     ops.push({ ref: db.collection('bills').doc(String(b.id)), data });
   }
   return { remote: list.length, unresolvedVendor: unresolved, writes: await commitOps(db, ops, dry) };
+};
+
+/** Read-only: how does a journal row link to its manual entry? (spec §4.2 "verify during implementation") */
+STEPS['probe-vouchers'] = async ({ bexio }) => {
+  const entries = (await bexio.get('/3.0/accounting/manual_entries', { limit: 30, offset: 0 })) ?? [];
+  const journal = await bexio.getAll('/3.0/accounting/journal');
+  const journalIds = new Set(journal.map(j => j.id));
+  const out = entries.slice(0, 12).map(me => ({
+    manualEntryId: me.id, type: me.type,
+    lineIds: (me.entries ?? []).map(e => e.id),
+    lineIdsInJournal: (me.entries ?? []).filter(e => journalIds.has(e.id)).length,
+    journalByRef: journal.filter(j => j.ref_id === me.id).map(j => ({ id: j.id, ref_class: j.ref_class })),
+  }));
+  const refClasses = {};
+  for (const j of journal) refClasses[j.ref_class ?? 'null'] = (refClasses[j.ref_class ?? 'null'] ?? 0) + 1;
+  console.log(JSON.stringify({ sample: out, refClasses }, null, 1));
+  return { sampled: out.length };
+};
+
+/** Every bexio file, downloaded once into the Cloud-Functions-only prefix, plus its finance-documents doc (spec D4). Resumable. */
+STEPS['files'] = async ({ db, bucket, bexio, tenantId, dry }) => {
+  const files = await bexio.getAll('/3.0/files?archived_state=all');
+  let written = 0, skipped = 0, missing = 0, bytes = 0;
+  for (const f of files) {
+    const ref = db.collection('finance-documents').doc(fileOkey(f.id));
+    if ((await ref.get()).exists) { skipped++; continue; }
+    if (dry) { written++; bytes += f.size_in_bytes ?? 0; continue; }
+    const buf = await bexio.download(f.id);
+    if (!buf) { missing++; console.warn('file 404:', f.id); continue; }
+    const path = filePath(tenantId, f.uuid, f.extension);
+    await bucket.file(path).save(buf, { contentType: f.mime_type || 'application/octet-stream', resumable: false });
+    await ref.set(financeDocument({ okey: fileOkey(f.id), tenantId, path, name: f.name ?? String(f.id), mimeType: f.mime_type,
+      size: buf.length, hash: createHash('sha256').update(buf).digest('hex'), createdAt: f.created_at }));
+    written++; bytes += buf.length;
+    if (written % 200 === 0) console.log(`files: ${written} written`);
+  }
+  return { remote: files.length, written, skipped, missing, megabytes: Math.round(bytes / 1e6) };
+};
+
+/**
+ * Manual-entry files → booking.documentKeys; bill attachment UUIDs → doc okeys (spec D5, D6).
+ * Verified 2026-09-29 (probe-vouchers): a manual-entry line id IS its journal id, i.e. the booking okey.
+ * Header files of a (group) entry go on every line's booking. Run `files` first: only docs that exist are linked.
+ */
+STEPS['link-vouchers'] = async ({ db, bexio, tenantId, dry }) => {
+  const downloaded = new Set((await db.collection('finance-documents').get()).docs.map(d => d.id));
+  const files = await bexio.getAll('/3.0/files?archived_state=all');
+  const okeyByUuid = new Map(files.map(f => [f.uuid, fileOkey(f.id)]));
+  const entries = await bexio.getAll('/3.0/accounting/manual_entries');
+  const ops = [];
+  let missingBooking = 0, notDownloaded = 0, unmappedAttachments = 0, linkedBookings = 0;
+  for (const me of entries) {
+    const headerFiles = (await bexio.get(`/3.0/accounting/manual_entries/${me.id}/files`)) ?? [];
+    const keys = new Set(headerFiles.map(f => fileOkey(f.id)));
+    for (const line of me.entries ?? []) {
+      const lineFiles = (await bexio.get(`/3.0/accounting/manual_entries/${me.id}/entries/${line.id}/files`)) ?? [];
+      lineFiles.forEach(f => keys.add(fileOkey(f.id)));
+    }
+    const documentKeys = [...keys].filter(k => downloaded.has(k) || (notDownloaded++, false)).sort();
+    if (documentKeys.length === 0) continue;
+    for (const line of me.entries ?? []) {
+      const ref = db.collection('bookings').doc(String(line.id));
+      if (!(await ref.get()).exists) { missingBooking++; console.warn('no booking for manual entry line', me.id, line.id); continue; }
+      ops.push({ ref, data: { documentKeys, documentKey: documentKeys[0] } });
+      linkedBookings++;
+    }
+  }
+  for (const b of await localDocs(db, 'bills', tenantId)) {
+    const att = b.get('attachments') ?? [];
+    if (att.length === 0 || att.every(a => String(a).startsWith('bexio-file-'))) continue;
+    const mapped = att.map(a => {
+      const k = okeyByUuid.get(a);
+      if (!k || !downloaded.has(k)) { unmappedAttachments++; return a; }
+      return k;
+    });
+    ops.push({ ref: b.ref, data: { attachments: mapped } });
+  }
+  return { manualEntries: entries.length, linkedBookings, missingBooking, notDownloaded, unmappedAttachments, writes: await commitOps(db, ops, dry) };
 };

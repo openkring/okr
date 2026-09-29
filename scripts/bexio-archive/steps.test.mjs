@@ -116,3 +116,70 @@ test('bills-full resolves the vendor and maps state and accounts', async () => {
   assert.equal(db.store.get('bills/6').state, 'overdue');
   assert.equal(db.store.get('bills/6').notes, 'bexio supplier 88');
 });
+
+function fakeBucket() {
+  const saved = new Map();
+  return { saved, file: (path) => ({ save: async (buf, opt) => saved.set(path, { buf, opt }) }) };
+}
+
+test('files downloads each file once into the private prefix and skips existing docs', async () => {
+  const db = fakeFirestore({ 'finance-documents': { 'bexio-file-2': { okey: 'bexio-file-2' } } });
+  const bucket = fakeBucket();
+  const downloads = [];
+  const bexio = {
+    ...bexioWith({ '/3.0/files?archived_state=all': [
+      { id: 1, uuid: 'u-1', name: 'beleg.pdf', extension: 'pdf', mime_type: 'application/pdf', size_in_bytes: 3, created_at: '2025-01-02 10:00:00' },
+      { id: 2, uuid: 'u-2', name: 'alt.pdf', extension: 'pdf', mime_type: 'application/pdf' },
+    ] }),
+    download: async (id) => { downloads.push(id); return Buffer.from('pdf'); },
+  };
+  const counts = await STEPS['files']({ db, bucket, bexio, tenantId: 'scs', dry: false });
+  assert.deepEqual(downloads, [1]);
+  assert.deepEqual([counts.written, counts.skipped], [1, 1]);
+  assert.equal(bucket.saved.has('tenant/scs/private/finance/bexio/u-1.pdf'), true);
+  const doc = db.store.get('finance-documents/bexio-file-1');
+  assert.equal(doc.fullPath, 'tenant/scs/private/finance/bexio/u-1.pdf');
+  assert.equal(doc.type, 'finance');
+  assert.equal(doc.dateOfDocCreation, '20250102');
+  assert.equal(doc.hash.length, 64);
+});
+
+test('link-vouchers puts header and line files on the booking, maps bill uuids, counts missing bookings', async () => {
+  const db = fakeFirestore({
+    bookings: { '59': { ...T }, '64': { ...T }, '65': { ...T } },
+    bills: { '5': { ...T, attachments: ['u-9', 'u-unknown'] }, '6': { ...T, attachments: ['bexio-file-9'] } },
+    'finance-documents': { 'bexio-file-3': {}, 'bexio-file-4': {}, 'bexio-file-7': {}, 'bexio-file-9': {} },
+  });
+  const bexio = bexioWith({
+    '/3.0/files?archived_state=all': [{ id: 9, uuid: 'u-9' }],
+    '/3.0/accounting/manual_entries': [
+      { id: 1, entries: [{ id: 59 }] },
+      { id: 6, entries: [{ id: 64 }, { id: 65 }] },
+      { id: 8, entries: [{ id: 99 }] },
+    ],
+    '/3.0/accounting/manual_entries/1/files': [{ id: 7 }],
+    '/3.0/accounting/manual_entries/1/entries/59/files': [{ id: 3 }, { id: 7 }],
+    '/3.0/accounting/manual_entries/6/entries/65/files': [{ id: 4 }],
+    '/3.0/accounting/manual_entries/8/files': [{ id: 4 }],
+  });
+  const counts = await STEPS['link-vouchers']({ db, bexio, tenantId: 'scs', dry: false });
+  assert.deepEqual(db.store.get('bookings/59').documentKeys, ['bexio-file-3', 'bexio-file-7']);
+  assert.equal(db.store.get('bookings/59').documentKey, 'bexio-file-3');
+  assert.deepEqual(db.store.get('bookings/64').documentKeys, ['bexio-file-4']);   // group entry: shared by all its lines
+  assert.deepEqual(db.store.get('bookings/65').documentKeys, ['bexio-file-4']);
+  assert.equal(counts.missingBooking, 1);                                          // entry 8 → booking 99 absent
+  assert.deepEqual(db.store.get('bills/5').attachments, ['bexio-file-9', 'u-unknown']);
+  assert.equal(counts.unmappedAttachments, 1);
+  assert.deepEqual(db.store.get('bills/6').attachments, ['bexio-file-9']);
+});
+
+test('link-vouchers never links a doc that was not downloaded', async () => {
+  const db = fakeFirestore({ bookings: { '59': { ...T } } });
+  const bexio = bexioWith({
+    '/3.0/accounting/manual_entries': [{ id: 1, entries: [{ id: 59 }] }],
+    '/3.0/accounting/manual_entries/1/files': [{ id: 7 }],
+  });
+  const counts = await STEPS['link-vouchers']({ db, bexio, tenantId: 'scs', dry: false });
+  assert.equal(db.store.get('bookings/59').documentKeys, undefined);
+  assert.equal(counts.notDownloaded, 1);
+});
