@@ -78,6 +78,10 @@
       "label": "resourceAdmin",
       "description": "Gestionnaire de ressources (p. ex. véhicules, bateaux, clés)"
     },
+    "tripAdmin": {
+      "label": "tripAdmin",
+      "description": "Gère le journal de bord : ajoute, corrige et supprime des sorties, y compris la date et l’heure"
+    },
     "memberAdmin": {
       "label": "memberAdmin",
       "description": "Gestionnaire de membres"

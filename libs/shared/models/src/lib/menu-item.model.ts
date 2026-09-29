@@ -1,7 +1,7 @@
 import { DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_MENU_ACTION, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS, DEFAULT_TENANTS, DEFAULT_URL } from '@okr/shared-constants';
 import { BaseProperty, OkrModel, NamedModel, SearchableModel, TaggedModel } from './base.model';
 
-export type RoleName = 'none' | 'anonymous' | 'registered' | 'privileged' | 'contentAdmin' | 'resourceAdmin' | 'memberAdmin' | 'eventAdmin' | 'treasurer' | 'admin' | 'public' | 'groupAdmin' | 'kiosk' | 'auditor' | 'tester';
+export type RoleName = 'none' | 'anonymous' | 'registered' | 'privileged' | 'contentAdmin' | 'resourceAdmin' | 'memberAdmin' | 'eventAdmin' | 'treasurer' | 'admin' | 'public' | 'groupAdmin' | 'kiosk' | 'tripAdmin' | 'auditor' | 'tester';
 
 export class MenuItemModel implements OkrModel, NamedModel, SearchableModel, TaggedModel {
   public okey = DEFAULT_KEY; // unique key of the model in the database

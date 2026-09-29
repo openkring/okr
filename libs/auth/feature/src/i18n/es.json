@@ -78,6 +78,10 @@
       "label": "resourceAdmin",
       "description": "Gestor de recursos (p. ej. vehículos, embarcaciones, llaves)"
     },
+    "tripAdmin": {
+      "label": "tripAdmin",
+      "description": "Gestiona el cuaderno de bitácora: añade, corrige y elimina salidas, incluida la fecha y la hora"
+    },
     "memberAdmin": {
       "label": "memberAdmin",
       "description": "Gestor de miembros"

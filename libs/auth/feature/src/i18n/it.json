@@ -78,6 +78,10 @@
       "label": "resourceAdmin",
       "description": "Gestore di risorse (ad es. veicoli, imbarcazioni, chiavi)"
     },
+    "tripAdmin": {
+      "label": "tripAdmin",
+      "description": "Gestisce il giornale di bordo: aggiunge, corregge ed elimina uscite, anche data e ora"
+    },
     "memberAdmin": {
       "label": "memberAdmin",
       "description": "Gestore di membri"

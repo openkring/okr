@@ -287,18 +287,18 @@ export class TripList {
    * Two rules, in order (documented in full in the `trips` skill):
    *
    * Rule 0 — the pre-empt gate. The read-only view opens directly, with no ActionSheet at all,
-   * when the Logbuch is locked or when the user is not a writer (kiosk or admin). `canWrite`
+   * when the Logbuch is locked or when the user is not a writer (kiosk, tripAdmin or admin). `canWrite`
    * already folds in the lock.
    *
-   * Rule 1 — the sheet. Kiosk and admin see the same buttons, in a fixed order. The 15-minute
-   * edit window only hides the actions that change THIS trip (edit, end, delete); it never
-   * times an admin out. `copy` creates a new trip and is therefore offered on every open or
+   * Rule 1 — the sheet. Kiosk, tripAdmin and admin see the same buttons, in a fixed order. The
+   * 15-minute edit window only hides the actions that change THIS trip (edit, end, delete); it
+   * never times a tripAdmin or admin out. `copy` creates a new trip and is therefore offered on every open or
    * ended trip regardless of the window — a crew repeating yesterday's outing must not be
    * stopped by it.
    */
   protected async showActions(trip: TripModel): Promise<void> {
-    const isAdmin = this.hasRole('admin');
-    // Rule 0: writers are kiosk/admin. Everyone else gets no write actions — but a registered
+    const isTripAdmin = this.hasRole('tripAdmin');
+    // Rule 0: writers are kiosk/tripAdmin/admin. Everyone else gets no write actions — but a registered
     // member standing at the boathouse must still be able to report a damage, so they get a
     // reduced sheet instead of the read-only modal.
     if (!this.store.canWrite()) {
@@ -311,7 +311,7 @@ export class TripList {
     }
 
     // the edit window gates only the actions that mutate this trip; copy stays available
-    const canEdit = isTripEditable(trip, isAdmin);
+    const canEdit = isTripEditable(trip, isTripAdmin);
     const isOpen = trip.state === 'open' || trip.state === 'open.rev';
     // a soft-deleted trip is shown (the state filter can ask for it) but must not be edited again
     const isDeleted = trip.state === 'deleted';

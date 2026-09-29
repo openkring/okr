@@ -126,7 +126,7 @@ export const TripStore = signalStore(
     // always false for a non-kiosk user, so gating everyone on it here is safe.
     canWrite: computed(() =>
       !store.kioskStatusService.locked() &&
-      (hasRole('kiosk', store.appStore.currentUser()) || hasRole('admin', store.appStore.currentUser()))
+      (hasRole('kiosk', store.appStore.currentUser()) || hasRole('tripAdmin', store.appStore.currentUser()))
     ),
     locked: computed(() => store.kioskStatusService.locked()),
     kiosks: computed<KioskStatus[]>(() => store.kiosksResource.value() ?? []),

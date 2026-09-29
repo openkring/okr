@@ -64,7 +64,7 @@ function isWithinEndWindow(trip: TripModel, windowMs: number, now: number): bool
 /**
  * The single time gate of the Logbuch: a trip stays actionable while it is not yet ended, and for
  * TRIP_EDIT_WINDOW_MS (15 min) after its endTime. Afterwards the kiosk only gets the read-only
- * view — there is no per-action window any more, edit and delete share this one. Admins are exempt.
+ * view — there is no per-action window any more, edit and delete share this one. Admins and tripAdmins are exempt.
  *
  * Called once, before the ActionSheet is built (see the `trips` skill, Rule 0).
  */

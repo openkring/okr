@@ -14,6 +14,7 @@ export type Roles = {
   treasurer?: boolean;
   admin?: boolean;
   kiosk?: boolean;
+  tripAdmin?: boolean;         // adds, corrects and backdates Logbuch trips (no 15-min window)
   auditor?: boolean;          // read-only access to closed accounting periods (Revisor)
 };
 

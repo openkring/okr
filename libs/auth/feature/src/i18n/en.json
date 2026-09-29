@@ -78,6 +78,10 @@
       "label": "resourceAdmin",
       "description": "Manager of resources (e.g. vehicles, boats, keys)"
     },
+    "tripAdmin": {
+      "label": "tripAdmin",
+      "description": "Manages the logbook: adds, corrects and deletes trips, including date and time"
+    },
     "memberAdmin": {
       "label": "memberAdmin",
       "description": "Manager of members"

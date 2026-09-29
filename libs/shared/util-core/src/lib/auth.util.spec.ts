@@ -118,6 +118,30 @@ describe('auth.util', () => {
       expect(result).toBe(false);
     });
 
+    it('should return true when user has tripAdmin role and checks for tripAdmin', () => {
+      expect(hasRole('tripAdmin', createUserWithRoles({ tripAdmin: true }))).toBe(true);
+    });
+
+    it('should return true when user has admin role and checks for tripAdmin (admin includes tripAdmin)', () => {
+      expect(hasRole('tripAdmin', createUserWithRoles({ admin: true }))).toBe(true);
+    });
+
+    it('should return false when user has kiosk role and checks for tripAdmin (kiosk cannot backdate trips)', () => {
+      expect(hasRole('tripAdmin', createUserWithRoles({ kiosk: true }))).toBe(false);
+    });
+
+    it('should return true when user has tripAdmin role and checks for kiosk (Logbuch writer menu rows)', () => {
+      expect(hasRole('kiosk', createUserWithRoles({ tripAdmin: true }))).toBe(true);
+    });
+
+    it('should return true when user has tripAdmin role and checks for registered', () => {
+      expect(hasRole('registered', createUserWithRoles({ tripAdmin: true }))).toBe(true);
+    });
+
+    it('should return false when user has tripAdmin role and checks for admin', () => {
+      expect(hasRole('admin', createUserWithRoles({ tripAdmin: true }))).toBe(false);
+    });
+
     it('should return true when user has privileged role and checks for privileged', () => {
       const user = createUserWithRoles({ privileged: true });
       const result = hasRole('privileged', user);

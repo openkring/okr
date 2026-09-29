@@ -78,6 +78,10 @@
       "label": "resourceAdmin",
       "description": "Verwalter von Resourcen (z.B. Fahrzeuge, Boote, Schlüssel)"
     },
+    "tripAdmin": {
+      "label": "tripAdmin",
+      "description": "Verwaltet das Logbuch: erfasst, korrigiert und löscht Fahrten, auch mit Datum und Zeit"
+    },
     "memberAdmin": {
       "label": "memberAdmin",
       "description": "Verwalter von Mitgliedern"

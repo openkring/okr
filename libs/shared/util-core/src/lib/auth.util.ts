@@ -35,7 +35,7 @@ export function hasRole(role: RoleName | undefined, currentUser?: UserModel): bo
     // 'kiosk' counts as registered: it is a real logged-in account, and a kiosk-only user is
     // route-locked to /trips anyway (kioskLock.guard), so this widens nothing it can reach.
     // Without it, every menu item gated 'registered' vanishes on the kiosk (empty context menu).
-    case 'registered': roles = ['registered', 'privileged', 'contentAdmin', 'resourceAdmin', 'eventAdmin', 'memberAdmin', 'treasurer', 'admin', 'kiosk']; break;
+    case 'registered': roles = ['registered', 'privileged', 'contentAdmin', 'resourceAdmin', 'eventAdmin', 'memberAdmin', 'treasurer', 'admin', 'kiosk', 'tripAdmin']; break;
     case 'privileged': roles = ['privileged', 'admin']; break;
     case 'memberAdmin': roles = ['memberAdmin', 'admin']; break;
     case 'contentAdmin': roles = ['contentAdmin', 'admin']; break;
@@ -44,7 +44,10 @@ export function hasRole(role: RoleName | undefined, currentUser?: UserModel): bo
     case 'treasurer': roles = ['treasurer', 'admin']; break;
     case 'admin':  roles = ['admin']; break;
     case 'groupAdmin': roles = ['groupAdmin', 'admin']; break;
-    case 'kiosk': roles = ['kiosk', 'admin']; break;
+    // 'kiosk' gates the Logbuch writer menu rows (trip-add, reportDamage, callSupport); a
+    // tripAdmin writes trips from the normal app and needs the same rows.
+    case 'kiosk': roles = ['kiosk', 'tripAdmin', 'admin']; break;
+    case 'tripAdmin': roles = ['tripAdmin', 'admin']; break;
     case 'auditor': roles = ['auditor', 'admin']; break;
     case 'tester': roles = ['tester', 'admin']; break;
     default: die('AuthUtil.hasRole: unknown role claimed: ' + role);

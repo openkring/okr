@@ -32,8 +32,8 @@ import { formatTripTime, isTrainingCrewBoat, MAX_TRIP_DISTANCE_KM, TripI18n, tri
       <ion-card>
         <ion-card-content class="ion-no-padding">
           <ion-grid>
-            <!-- date/time: read-only for the kiosk, editable for an admin correcting a trip -->
-            @if(hasRole('admin')) {
+            <!-- date/time: read-only for the kiosk, editable for a tripAdmin/admin correcting a trip -->
+            @if(hasRole('tripAdmin')) {
               <ion-row>
                 <ion-col size="12" size-md="6">
                   <okr-date-input [i18n]="startDateI18n()" [storeDate]="startDate()"
