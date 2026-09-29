@@ -2,3 +2,6 @@ export * from './lib/jass.types';
 export * from './lib/jass.config';
 export * from './lib/jass.strokes';
 export * from './lib/jass.engine';
+export * from './lib/jass-hand.form-model';
+export * from './lib/jass.validations';
+export * from './lib/jass-i18n';
