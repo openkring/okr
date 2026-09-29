@@ -10,6 +10,8 @@ const X0 = 16;
 const X1 = 272;
 /** vertical stroke length (owner: one third longer than the first version's 20) */
 const V = 27;
+/** the "vertical" strokes lean slightly, as drawn by hand */
+const TILT = 3;
 /** distance between the strokes of a bundle, and between bundles */
 const STEP = 7;
 const BUNDLE = 4 * STEP + 12;
@@ -25,7 +27,7 @@ function tally(count: number, lineY: number, rowDir: 1 | -1): Line[] {
     const x = X0 + 8 + (b % PER_ROW) * BUNDLE;
     const y = lineY + rowDir * Math.floor(b / PER_ROW) * (V + 8);
     for (let i = 0; i < Math.min(4, inBundle); i++) {
-      lines.push({ x1: x + i * STEP, y1: y - V / 2, x2: x + i * STEP, y2: y + V / 2 });
+      lines.push({ x1: x + i * STEP, y1: y + V / 2, x2: x + i * STEP + TILT, y2: y - V / 2 });
     }
     if (inBundle === 5) lines.push({ x1: x - 4, y1: y + V / 2 - 3, x2: x + 3 * STEP + 4, y2: y - V / 2 + 3 });
   }
@@ -53,7 +55,9 @@ function tally(count: number, lineY: number, rowDir: 1 | -1): Line[] {
   template: `
     <svg [attr.viewBox]="'0 0 ' + w + ' ' + h()" preserveAspectRatio="xMidYMid meet" role="img" [attr.aria-label]="ariaLabel()">
       <defs>
-        <filter id="jass-rough"><feTurbulence baseFrequency="0.9" numOctaves="1" result="n" />
+        <!-- userSpaceOnUse: a region from each stroke's bounding box collapses to width 0 on a
+             vertical line, and the browser then drops the line altogether -->
+        <filter id="jass-rough" filterUnits="userSpaceOnUse" x="-20" y="-20" [attr.width]="w + 40" [attr.height]="h() + 40"><feTurbulence baseFrequency="0.9" numOctaves="1" result="n" />
           <feDisplacementMap in="SourceGraphic" in2="n" scale="1.6" /></filter>
       </defs>
       <path class="jass-chalk" [attr.d]="zPath()" opacity="0.5" />

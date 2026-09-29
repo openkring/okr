@@ -5,7 +5,7 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular
 import {
   JASS_MULTIPLIERS, JassGame, JassHandFormModel, JassI18n, handFromForm, handValues, jassHandValidations, withCounterPoints,
 } from '@okr/games-jasstafel-util';
-import { ErrorNote, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n } from '@okr/shared-ui';
+import { Checkbox, CheckboxI18n, ErrorNote, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n } from '@okr/shared-ui';
 import { validateVestTree } from '@okr/shared-util-angular';
 
 import { JassAvatar } from './jass-avatar';
@@ -19,7 +19,7 @@ import { JassAvatar } from './jass-avatar';
 @Component({
   selector: 'okr-jass-hand-form',
   standalone: true,
-  imports: [IonCard, IonCardContent, IonGrid, IonRow, IonCol, NumberInput, StringSelect, ErrorNote, JassAvatar],
+  imports: [IonCard, IonCardContent, IonGrid, IonRow, IonCol, NumberInput, StringSelect, Checkbox, ErrorNote, JassAvatar],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px; } } .heads { display: flex; gap: 4px; }`],
   template: `
     @if (showForm()) {
@@ -71,6 +71,10 @@ import { JassAvatar } from './jass-avatar';
                         (valueChange)="onPoints(i, $event)" [integer]="true" [min]="0" [max]="157"
                         [readOnly]="!!formData().match" />
                     </ion-col>
+                    <ion-col size="12" size-md="6">
+                      <okr-checkbox [i18n]="matchI18n()" [checked]="formData().match === id"
+                        (checkedChange)="setMatch(id, $event)" [readOnly]="false" />
+                    </ion-col>
                     @if (formData().variant === 'coiffeur') {
                       <ion-col size="12" size-md="6">
                         <okr-number-input [i18n]="weisI18n()" [value]="formData().weis[i]"
@@ -88,13 +92,6 @@ import { JassAvatar } from './jass-avatar';
                 </ion-col>
               </ion-row>
               @if (formData().phase !== 'announce') {
-                <ion-row>
-                  <ion-col size="12" size-md="6">
-                    <okr-string-select [i18n]="matchI18n()" [stringList]="optionalSides()"
-                      [labels]="optionalSideLabels()" [selectedString]="formData().match"
-                      (selectedStringChange)="set('match', $event)" [readOnly]="false" />
-                  </ion-col>
-                </ion-row>
                 @if (preview(); as p) {
                   <ion-row><ion-col size="12">{{ i18n().preview() }}: {{ p }}</ion-col></ion-row>
                 }
@@ -134,7 +131,7 @@ export class JassHandForm {
   protected readonly multiplierOptions = JASS_MULTIPLIERS.map(String);
   protected readonly multiplierLabels = JASS_MULTIPLIERS.map(m => m + '×');
   protected readonly sideI18n = computed(() => ({ name: 'sideId', label: this.i18n().side_label() }) as StringSelectI18n);
-  protected readonly matchI18n = computed(() => ({ name: 'match', label: this.i18n().match_label() }) as StringSelectI18n);
+  protected readonly matchI18n = computed(() => ({ name: 'match', label: this.i18n().match_label(), helper: '' }) as CheckboxI18n);
   protected readonly pointsI18n = computed(() => ({ name: 'points', label: this.i18n().points_label(),
     placeholder: '0', helper: this.i18n().points_helper() }) as NumberInputI18n);
   protected readonly weisI18n = computed(() => ({ name: 'weis', label: this.i18n().weis_label(),
@@ -152,8 +149,6 @@ export class JassHandForm {
   });
   protected readonly sideLabels = computed(() =>
     this.formData().sideIds.map((_, n) => `${this.i18n().team()} ${n + 1}`));
-  protected readonly optionalSides = computed(() => ['', ...this.formData().sideIds]);
-  protected readonly optionalSideLabels = computed(() => [this.i18n().none(), ...this.sideLabels()]);
 
   protected readonly preview = computed(() => {
     if (this.formData().phase === 'announce' || !this.result().isValid()) return '';
@@ -165,7 +160,13 @@ export class JassHandForm {
     return this.game().sides.find(s => s.id === sideId)?.playerIdx ?? [];
   }
 
-  protected set(field: 'trump' | 'sideId' | 'match', value: string): void {
+  /** Match is one checkbox per side; ticking one clears the others, since only one side can take every trick. */
+  protected setMatch(sideId: string, checked: boolean): void {
+    this.dirty.emit(true);
+    this.formData.update(m => ({ ...m, match: checked ? sideId : (m.match === sideId ? '' : m.match) }));
+  }
+
+  protected set(field: 'trump' | 'sideId', value: string): void {
     this.dirty.emit(true);
     this.formData.update(m => ({ ...m, [field]: value ?? '' }));
   }
