@@ -25,7 +25,9 @@ export function createBexioClient({ token, fetchImpl = fetch, sleep = (ms) => ne
     async getAll(path, pageSize = 2000) {
       const all = [];
       for (let offset = 0; ; offset += pageSize) {
-        const page = (await request(path, { limit: pageSize, offset })) ?? [];
+        const page = await request(path, { limit: pageSize, offset });
+        // a missing list must never read as "bexio has nothing" — the reconcile steps would delete everything
+        if (!Array.isArray(page)) throw new Error(`bexio: no list at ${path}`);
         all.push(...page);
         if (page.length < pageSize) return all;
       }

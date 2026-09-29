@@ -69,7 +69,7 @@ test('journal-reconcile never unlocks a locked period', async () => {
 
 test('journal-reconcile dry run writes nothing', async () => {
   const db = fakeFirestore({ bookings: { '2': { ...T, date: '20260110' } } });
-  const counts = await STEPS['journal-reconcile']({ db, bexio: bexioWith({}), tenantId: 'scs', dry: true });
+  const counts = await STEPS['journal-reconcile']({ db, bexio: bexioWith({ '/3.0/accounting/journal': [{ id: 1 }] }), tenantId: 'scs', dry: true });
   assert.equal(counts.stale, 1);
   assert.equal(db.store.has('bookings/2'), true);
 });
@@ -86,7 +86,7 @@ test('invoices-reconcile deletes stale invoices and maps partial/unpaid', async 
 
 test('invoices-reconcile never deletes a native invoice', async () => {
   const db = fakeFirestore({ invoices: { 'AbC123xyz': { ...T, state: 'pending' } } });
-  const counts = await STEPS['invoices-reconcile']({ db, bexio: bexioWith({ '/2.0/kb_invoice': [] }), tenantId: 'scs', dry: false });
+  const counts = await STEPS['invoices-reconcile']({ db, bexio: bexioWith({ '/2.0/kb_invoice': [{ id: 99, kb_item_status_id: 9 }] }), tenantId: 'scs', dry: false });
   assert.equal(counts.stale, 0);
   assert.equal(db.store.has('invoices/AbC123xyz'), true);
 });
@@ -241,4 +241,89 @@ test('bill-payments sets payments and the latest execution date', async () => {
   assert.equal(db.store.get('bills/5').paymentDate, '20250301');
   assert.deepEqual(db.store.get('bills/6').payments, []);
   assert.equal(counts.payments, 2);
+});
+
+// ── review fix pass ────────────────────────────────────────────────────────────
+test('journal-reconcile refuses to delete when bexio returns an empty journal', async () => {
+  const db = fakeFirestore({ bookings: { '1': { ...T, date: '20250105' } } });
+  await assert.rejects(STEPS['journal-reconcile']({ db, bexio: bexioWith({}), tenantId: 'scs', dry: false }), /empty/);
+  assert.equal(db.store.has('bookings/1'), true);
+});
+
+test('journal-reconcile refuses to delete more than 50 or with unsynced rows, unless forced', async () => {
+  const many = Object.fromEntries(Array.from({ length: 60 }, (_, i) => [String(i + 10), { ...T, date: '20250105' }]));
+  const db = fakeFirestore({ bookings: { '1': { ...T, date: '20250105' }, ...many } });
+  const bx = bexioWith({ '/3.0/accounting/journal': [{ id: 1 }] });
+  await assert.rejects(STEPS['journal-reconcile']({ db, bexio: bx, tenantId: 'scs', dry: false }), /stale/);
+  assert.equal(db.store.has('bookings/10'), true);
+  const db2 = fakeFirestore({ bookings: { '1': { ...T, date: '20250105' } } });
+  const bx2 = bexioWith({ '/3.0/accounting/journal': [{ id: 1 }, { id: 2 }] });
+  await assert.rejects(STEPS['journal-reconcile']({ db: db2, bexio: bx2, tenantId: 'scs', dry: false }), /missing/);
+  const counts = await STEPS['journal-reconcile']({ db: db2, bexio: bx2, tenantId: 'scs', dry: false, force: true });
+  assert.equal(counts.missing, 1);
+});
+
+test('a dry run never throws on the guards — it reports', async () => {
+  const db = fakeFirestore({ bookings: { '1': { ...T, date: '20250105' } } });
+  const counts = await STEPS['journal-reconcile']({ db, bexio: bexioWith({ '/3.0/accounting/journal': [{ id: 1 }, { id: 2 }] }), tenantId: 'scs', dry: true });
+  assert.equal(counts.missing, 1);
+});
+
+test('invoices-reconcile refuses an empty invoice list', async () => {
+  const db = fakeFirestore({ invoices: { '10': { ...T } } });
+  await assert.rejects(STEPS['invoices-reconcile']({ db, bexio: bexioWith({}), tenantId: 'scs', dry: false }), /empty/);
+});
+
+test('second runs write nothing (journal periods, bills-full, link-vouchers, bill-payments)', async () => {
+  const db = fakeFirestore({
+    bookings: { '59': { ...T, date: '20250105' } },
+    bills: { '5': { ...T, attachments: ['u-9'] } },
+    orgs: { o1: { name: 'Muster AG', bexioId: '77' } },
+    'finance-documents': { 'bexio-file-9': {} },
+  });
+  const bexio = {
+    ...bexioWith({
+      '/3.0/accounting/journal': [{ id: 59 }],
+      '/4.0/purchase/bills': [{ id: 5, document_no: 'LR-5', title: null, status: 'PAID', gross: '1', bill_date: '2025-02-01', due_date: null, booking_account_ids: [1] }],
+      '/4.0/purchase/bills/5': { supplier_id: 77 },
+      '/3.0/files?archived_state=all': [{ id: 9, uuid: 'u-9' }],
+      '/3.0/accounting/manual_entries': [{ id: 1, entries: [{ id: 59 }] }],
+      '/3.0/accounting/manual_entries/1/files': [{ id: 9 }],
+    }),
+  };
+  const bp = { get: async () => ({ data: [{ execution_date: '2025-03-01', amount: 1, payment_type: 'QR' }] }) };
+  for (const step of ['journal-reconcile', 'bills-full', 'link-vouchers']) await STEPS[step]({ db, bexio, tenantId: 'scs', dry: false });
+  await STEPS['bill-payments']({ db, bexio: bp, tenantId: 'scs', dry: false });
+  for (const step of ['journal-reconcile', 'bills-full', 'link-vouchers']) {
+    assert.equal((await STEPS[step]({ db, bexio, tenantId: 'scs', dry: true })).writes, 0, step);
+  }
+  assert.equal((await STEPS['bill-payments']({ db, bexio: bp, tenantId: 'scs', dry: true })).writes, 0, 'bill-payments');
+});
+
+test('bill-payments drops payments of another bill and skips native bills', async () => {
+  const db = fakeFirestore({ bills: { '5': { ...T }, 'nat1': { ...T } } });
+  const calls = [];
+  const bexio = { get: async (path, params) => { calls.push(params.bill_id); return { data: [
+    { bill_id: 5, execution_date: '2025-03-01', amount: 1, payment_type: 'QR' },
+    { bill_id: 6, execution_date: '2025-04-01', amount: 2, payment_type: 'QR' },
+  ] }; } };
+  const counts = await STEPS['bill-payments']({ db, bexio, tenantId: 'scs', dry: false });
+  assert.deepEqual(calls, ['5']);
+  assert.equal(db.store.get('bills/5').payments.length, 1);
+  assert.equal(counts.foreignPayments, 1);
+});
+
+test('link-vouchers commits in chunks so a later failure keeps earlier links', async () => {
+  const entries = Array.from({ length: 250 }, (_, i) => ({ id: i + 1, entries: [{ id: 1000 + i }] }));
+  const seed = { bookings: Object.fromEntries(entries.map(e => [String(e.entries[0].id), { ...T }])), 'finance-documents': { 'bexio-file-9': {} } };
+  const db = fakeFirestore(seed);
+  const bexio = {
+    getAll: async (p) => p === '/3.0/accounting/manual_entries' ? entries : [],
+    get: async (p) => {
+      if (p === '/3.0/accounting/manual_entries/250/files') throw new Error('bexio 500');
+      return /\/manual_entries\/\d+\/files$/.test(p) ? [{ id: 9 }] : [];
+    },
+  };
+  await assert.rejects(STEPS['link-vouchers']({ db, bexio, tenantId: 'scs', dry: false }), /500/);
+  assert.deepEqual(db.store.get('bookings/1000').documentKeys, ['bexio-file-9']);
 });

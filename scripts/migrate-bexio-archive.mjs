@@ -22,17 +22,18 @@ const TENANT = 'scs';
 const arg = (name) => { const i = argv.indexOf(name); return i >= 0 ? argv[i + 1] : undefined; };
 const step = arg('--step');
 const dry = argv.includes('--dry');
+const force = argv.includes('--force');   // overrides the delete guards (spec 1.68 review finding 1)
 
 if (!env.BEXIO_APIKEY) { console.error('BEXIO_APIKEY is not set'); exit(1); }
 if (!step || !STEPS[step]) { console.error(`--step must be one of: ${Object.keys(STEPS).join(', ')}`); exit(1); }
 
 if (!getApps().length) initializeApp({ projectId: PROJECT_ID, storageBucket: `${PROJECT_ID}.appspot.com` });
 const db = getFirestore();
-const ctx = { db, bucket: getStorage().bucket(), bexio: createBexioClient({ token: env.BEXIO_APIKEY }), tenantId: TENANT, dry };
+const ctx = { db, bucket: getStorage().bucket(), bexio: createBexioClient({ token: env.BEXIO_APIKEY }), tenantId: TENANT, dry, force };
 
 const startedAt = new Date().toISOString();
 const counts = await STEPS[step](ctx);
-console.log(JSON.stringify({ step, dry, counts }, null, 2));
+console.log(JSON.stringify({ step, dry, force, counts }, null, 2));
 if (!dry) {
   await db.collection('config').doc('bexioMigration').set(
     { runs: FieldValue.arrayUnion({ step, startedAt, finishedAt: new Date().toISOString(), counts }) }, { merge: true });

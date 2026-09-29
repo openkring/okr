@@ -14,6 +14,29 @@ import {
 
 export const STEPS = {};
 
+const MAX_STALE = 50;
+
+/** Refuses a destructive apply on a suspicious remote list; a dry run only reports. `--force` overrides. */
+function guard({ dry, force }, condition, message) {
+  if (condition && !dry && !force) throw new Error(`refusing to apply: ${message} (re-run with --dry to inspect, --force to override)`);
+}
+
+/** The subset of `data` that differs from `existing` — so a second run writes nothing. */
+export function changes(existing, data) {
+  const out = {};
+  for (const [k, v] of Object.entries(data)) {
+    if (v instanceof FieldValue) { if (v.isEqual(FieldValue.delete()) && existing?.[k] !== undefined) out[k] = v; continue; }
+    if (JSON.stringify(existing?.[k]) !== JSON.stringify(v)) out[k] = v;
+  }
+  return out;
+}
+
+/** Queues a merge only when something changes. */
+function pushChanges(ops, ref, existing, data) {
+  const diff = changes(existing, data);
+  if (Object.keys(diff).length) ops.push({ ref, data: diff });
+}
+
 /** Finance docs of the accounting tenant (both tenancy fields, as every finance query must). */
 export async function localDocs(db, collection, tenantId) {
   const snap = await db.collection(collection)
@@ -64,11 +87,17 @@ export async function loadReceiverMap(db) {
 }
 
 /** Deletes local bookings bexio no longer has (+ both lines), creates annual periods, sets periodKey (spec D3, D12). */
-STEPS['journal-reconcile'] = async ({ db, bexio, tenantId, dry }) => {
+STEPS['journal-reconcile'] = async ({ db, bexio, tenantId, dry, force }) => {
+  const ctxFlags = { dry, force };
   const remote = await bexio.getAll('/3.0/accounting/journal');
+  if (remote.length === 0) throw new Error('bexio returned an empty journal — refusing to reconcile');
   const local = await localDocs(db, 'bookings', tenantId);
   // only bare numeric okeys come from the bexio sync; bank-/journal-/expense bookings are native
   const stale = new Set(staleIds(local.filter(d => /^\d+$/.test(d.id)).map(d => d.id), remote.map(e => e.id)));
+  // remote rows not yet synced locally — the bexio journal sync brings them; must be 0 at the final run
+  const missing = staleIds(remote.map(e => e.id), local.map(d => d.id)).length;
+  guard(ctxFlags, stale.size > MAX_STALE, `${stale.size} stale bookings (> ${MAX_STALE})`);
+  guard(ctxFlags, missing > 0, `${missing} journal rows missing locally — run the bexio journal sync first`);
   const ops = [];
   for (const id of stale) {
     ops.push({ ref: db.collection('bookings').doc(id), del: true });
@@ -84,24 +113,25 @@ STEPS['journal-reconcile'] = async ({ db, bexio, tenantId, dry }) => {
     const periodKey = `${tenantId}-${year}`;
     if (d.get('periodKey') !== periodKey) ops.push({ ref: d.ref, data: { periodKey } });
   }
+  const periods = new Map((await localDocs(db, 'periods', tenantId)).map(d => [d.id, d.data()]));
   for (const year of years) {
     // no isLocked/lockedBy/lockedAt: a merge must never unlock an already locked year
-    ops.push({ ref: db.collection('periods').doc(`${tenantId}-${year}`), data: {
-      okey: `${tenantId}-${year}`, tenants: [tenantId], isArchived: false, year: Number(year), month: 0,
-      accountingTenantId: tenantId } });
+    const okey = `${tenantId}-${year}`;
+    pushChanges(ops, db.collection('periods').doc(okey), periods.get(okey), {
+      okey, tenants: [tenantId], isArchived: false, year: Number(year), month: 0, accountingTenantId: tenantId });
   }
   console.log('stale bookings:', [...stale].join(', ') || '—');
-  // remote rows not yet synced locally — the bexio journal sync brings them; must be 0 at the final run
-  const missing = staleIds(remote.map(e => e.id), local.map(d => d.id)).length;
   return { remote: remote.length, local: local.length, stale: stale.size, missing, periods: [...years].sort().join(','), writes: await commitOps(db, ops, dry) };
 };
 
 /** Deletes local invoices bexio no longer has, re-maps every state (16 partial, 31 unpaid). */
-STEPS['invoices-reconcile'] = async ({ db, bexio, tenantId, dry }) => {
+STEPS['invoices-reconcile'] = async ({ db, bexio, tenantId, dry, force }) => {
   const remote = await bexio.getAll('/2.0/kb_invoice');
+  if (remote.length === 0) throw new Error('bexio returned an empty invoice list — refusing to reconcile');
   const byId = new Map(remote.map(i => [String(i.id), i]));
   const local = await localDocs(db, 'invoices', tenantId);
   const stale = staleIds(local.filter(d => /^\d+$/.test(d.id)).map(d => d.id), byId.keys());
+  guard({ dry, force }, stale.length > MAX_STALE, `${stale.length} stale invoices (> ${MAX_STALE})`);
   const ops = stale.map(id => ({ ref: db.collection('invoices').doc(id), del: true }));
   for (const d of local) {
     const inv = byId.get(d.id);
@@ -117,6 +147,8 @@ STEPS['invoices-reconcile'] = async ({ db, bexio, tenantId, dry }) => {
 STEPS['bills-full'] = async ({ db, bexio, tenantId, dry }) => {
   const list = await bexio.getV4All('/4.0/purchase/bills', { bill_date_start: '2000-01-01' });
   const receivers = await loadReceiverMap(db);
+  // not localDocs: three legacy bills lack accountingTenantId and get it here
+  const existing = new Map((await db.collection('bills').where('tenants', 'array-contains', tenantId).get()).docs.map(d => [d.id, d.data()]));
   const ops = [];
   let unresolved = 0;
   for (const b of list) {
@@ -133,7 +165,7 @@ STEPS['bills-full'] = async ({ db, bexio, tenantId, dry }) => {
     };
     if (vendor) data.vendor = vendor;
     else { unresolved++; data.notes = `bexio supplier ${detail.supplier_id ?? '?'}`; }
-    ops.push({ ref: db.collection('bills').doc(String(b.id)), data });
+    pushChanges(ops, db.collection('bills').doc(String(b.id)), existing.get(String(b.id)), data);
   }
   return { remote: list.length, unresolvedVendor: unresolved, writes: await commitOps(db, ops, dry) };
 };
@@ -186,7 +218,7 @@ STEPS['link-vouchers'] = async ({ db, bexio, tenantId, dry }) => {
   const okeyByUuid = new Map(files.map(f => [f.uuid, fileOkey(f.id)]));
   const entries = await bexio.getAll('/3.0/accounting/manual_entries');
   const ops = [];
-  let missingBooking = 0, notDownloaded = 0, unmappedAttachments = 0, linkedBookings = 0;
+  let missingBooking = 0, notDownloaded = 0, unmappedAttachments = 0, linkedBookings = 0, written = 0;
   for (const me of entries) {
     const headerFiles = (await bexio.get(`/3.0/accounting/manual_entries/${me.id}/files`)) ?? [];
     const keys = new Set(headerFiles.map(f => fileOkey(f.id)));
@@ -199,9 +231,11 @@ STEPS['link-vouchers'] = async ({ db, bexio, tenantId, dry }) => {
     for (const line of me.entries ?? []) {
       const ref = db.collection('bookings').doc(String(line.id));
       if (!(await ref.get()).exists) { missingBooking++; console.warn('no booking for manual entry line', me.id, line.id); continue; }
-      ops.push({ ref, data: { documentKeys, documentKey: documentKeys[0] } });
+      pushChanges(ops, ref, (await ref.get()).data(), { documentKeys, documentKey: documentKeys[0] });
       linkedBookings++;
     }
+    // commit as we go: ~4.6k bexio calls, one failure must not discard the links made so far
+    if (ops.length >= 200) written += await commitOps(db, ops.splice(0), dry);
   }
   for (const b of await localDocs(db, 'bills', tenantId)) {
     const att = b.get('attachments') ?? [];
@@ -211,9 +245,10 @@ STEPS['link-vouchers'] = async ({ db, bexio, tenantId, dry }) => {
       if (!k || !downloaded.has(k)) { unmappedAttachments++; return a; }
       return k;
     });
-    ops.push({ ref: b.ref, data: { attachments: mapped } });
+    pushChanges(ops, b.ref, b.data(), { attachments: mapped });
   }
-  return { manualEntries: entries.length, linkedBookings, missingBooking, notDownloaded, unmappedAttachments, writes: await commitOps(db, ops, dry) };
+  written += await commitOps(db, ops, dry);
+  return { manualEntries: entries.length, linkedBookings, missingBooking, notDownloaded, unmappedAttachments, writes: written };
 };
 
 /** Stores a base64 payload once as a finance-documents doc + private Storage object; returns its okey. */
@@ -278,12 +313,16 @@ STEPS['invoice-details'] = async (ctx) => {
 /** Outgoing payments per bill → payments[] + paymentDate (latest execution date). */
 STEPS['bill-payments'] = async ({ db, bexio, tenantId, dry }) => {
   const ops = [];
-  let payments = 0;
+  let payments = 0, foreignPayments = 0, bills = 0;
   for (const b of await localDocs(db, 'bills', tenantId)) {
+    if (!/^\d+$/.test(b.id)) continue;                          // bexio bills only
+    bills++;
     const r = await bexio.get('/4.0/purchase/outgoing-payments', { bill_id: b.id, limit: 100, page: 1 });
-    const list = (r?.data ?? []).map(mapBillPayment).sort((x, y) => x.date.localeCompare(y.date));
+    // do not trust the filter blindly: a payment naming another bill is dropped and counted
+    const own = (r?.data ?? []).filter(p => p.bill_id == null || String(p.bill_id) === b.id || (foreignPayments++, false));
+    const list = own.map(mapBillPayment).sort((x, y) => x.date.localeCompare(y.date));
     payments += list.length;
-    ops.push({ ref: b.ref, data: { payments: list, paymentDate: list.at(-1)?.date ?? '' } });
+    pushChanges(ops, b.ref, b.data(), { payments: list, paymentDate: list.at(-1)?.date ?? '' });
   }
-  return { bills: ops.length, payments, writes: await commitOps(db, ops, dry) };
+  return { bills, payments, foreignPayments, writes: await commitOps(db, ops, dry) };
 };

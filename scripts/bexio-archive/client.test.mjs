@@ -49,3 +49,8 @@ test('500 throws with the path, never the token', async () => {
   const c = createBexioClient({ token: 'SECRET', fetchImpl: async () => res(500, {}), sleep: async () => {} });
   await assert.rejects(c.get('/2.0/x'), (e) => e.message.includes('/2.0/x') && !e.message.includes('SECRET'));
 });
+
+test('getAll throws when a list endpoint is missing instead of returning an empty list', async () => {
+  const c = createBexioClient({ token: 't', fetchImpl: async () => res(404, {}), sleep: async () => {} });
+  await assert.rejects(c.getAll('/3.0/accounting/journal'), /no list/);
+});

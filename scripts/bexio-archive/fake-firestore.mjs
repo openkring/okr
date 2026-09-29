@@ -1,3 +1,5 @@
+import { FieldValue } from 'firebase-admin/firestore';
+
 /** Tiny in-memory Firestore stand-in for the step tests: collection/doc/where(==, array-contains)/get/batch/getAll. */
 export function fakeFirestore(seed = {}) {
   const store = new Map();                                     // 'col/id' → data
@@ -14,7 +16,7 @@ export function fakeFirestore(seed = {}) {
   const write = (col, id, data, opt) => {
     const prev = opt?.merge ? (store.get(`${col}/${id}`) ?? {}) : {};
     const next = { ...prev };
-    for (const [k, v] of Object.entries(data)) { if (v && v.__delete) delete next[k]; else next[k] = v; }
+    for (const [k, v] of Object.entries(data)) { if (v && (v.__delete || (v instanceof FieldValue && v.isEqual(FieldValue.delete())))) delete next[k]; else next[k] = v; }
     store.set(`${col}/${id}`, next);
   };
   const query = (col, filters) => ({
