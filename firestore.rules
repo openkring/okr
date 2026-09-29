@@ -537,6 +537,11 @@ service cloud.firestore {
     match /address-directory/{id}  { allow read: if tenantRead(); allow write: if false; }
     match /asset-movements/{id}    { allow read: if tenantRead(); allow write: if false; }
     match /bills/{id}              { allow read: if tenantRead(); allow write: if false; }
+    // Vouchers, invoice/reminder PDFs and comments migrated from bexio (spec 1.68). Personal data
+    // (members' receipts, internal notes) — treasurer/privileged only, never client-written.
+    // The files themselves are under tenant/{tid}/private/**, which only Cloud Functions reach.
+    match /finance-documents/{id} { allow read: if tenantRead() && (isPrivileged() || hasRole('treasurer')); allow write: if false; }
+    match /finance-comments/{id}  { allow read: if tenantRead() && (isPrivileged() || hasRole('treasurer')); allow write: if false; }
     match /booking-lines/{id}      { allow read: if tenantRead(); allow write: if false; }
     match /bookings/{id}          { allow read: if tenantRead(); allow write: if false; }
     match /exchange-rates/{id}    { allow read: if tenantRead(); allow write: if false; }
