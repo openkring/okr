@@ -8,7 +8,8 @@
     "showCredit": "Mostrar cuenta de haber",
     "showDebit": "Mostrar cuenta de debe",
     "showCounterparty": "Mostrar contraparte",
-    "noCounterparty": "Este asiento no tiene contraparte."
+    "noCounterparty": "Este asiento no tiene contraparte.",
+    "selectAccount": "¿Qué cuenta quieres ver?"
   },
   "cancel": {
     "label": "Cancelar"
@@ -128,11 +129,14 @@
       "label": "Código IVA"
     },
     "details": {
-      "toggle": "Moneda extranjera e IVA"
+      "toggle": "Moneda extranjera, IVA e intercambio de cuentas"
     },
     "line": {
       "add": "Añadir línea",
-      "remove": "Quitar línea"
+      "remove": "Quitar línea",
+      "text": {
+        "label": "Texto de línea"
+      }
     },
     "notes": {
       "label": "Notas",
@@ -147,5 +151,10 @@
     "date": "Introduce una fecha válida.",
     "pairsEmpty": "Un asiento necesita al menos una línea.",
     "pairsIncomplete": "Cada línea necesita una cuenta de debe, otra cuenta de haber y un importe mayor que cero."
+  },
+  "split": {
+    "title": "Asiento compuesto",
+    "expand": "Mostrar las partes",
+    "collapse": "Ocultar las partes"
   }
 }

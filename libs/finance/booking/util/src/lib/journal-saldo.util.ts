@@ -19,8 +19,10 @@ import { bookingMonth, bookingYear } from './booking.util';
  * - Erfolgsrechnung accounts (3–9) are closed at the year end, so they restart at `periodFrom`.
  *
  * Only `posted` bookings move the balance — `draft`, `forReview` and `cancelled` are not in the
- * ledger. Such a row therefore has NO entry in the returned map (the list shows a dash), rather
- * than the misleading balance of the row above it.
+ * ledger. Besides the booking okey, every line on the account is keyed `<booking>#<line>` (the
+ * JournalRow okey of a line row), carrying the saldo after that line. A not-posted row has NO
+ * entry in the returned map (the list shows a dash), rather than the misleading balance of the
+ * row above it.
  */
 export function runningSaldoByBooking(
   bookings: BookingModel[],
@@ -41,14 +43,12 @@ export function runningSaldoByBooking(
 
   let saldo = 0;
   for (const booking of chronological) {
-    let debit = 0;
-    let credit = 0;
     for (const line of linesByBooking.get(booking.okey) ?? []) {
       if (line.accountKey !== accountKey) continue;
-      debit += line.debitAmount?.amount ?? 0;
-      credit += line.creditAmount?.amount ?? 0;
+      saldo += signedBalance(cls, { debit: line.debitAmount?.amount ?? 0, credit: line.creditAmount?.amount ?? 0 });
+      // a split booking is listed line by line on the filtered account: each line row shows its own saldo
+      if (line.okey) saldi.set(`${booking.okey}#${line.okey}`, saldo);
     }
-    saldo += signedBalance(cls, { debit, credit });
     saldi.set(booking.okey, saldo);
   }
   return saldi;

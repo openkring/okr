@@ -13,8 +13,14 @@
     "streetNumber": "12",
     "zipCode":      "8712",
     "city":         "Stäfa",
-    "date":         "07.05.2026",   // pre-formatted DD.MM.YYYY
-    "amount":       "1’000.00"      // pre-formatted string (Swiss apostrophe), rendered after the literal "CHF "
+    "year":         "2026",
+    "payments": [                   // every payment of the year, oldest first
+      { "date": "15.01.2026", "label": "Mitgliederbeitrag", "amount": "100.00" },
+      { "date": "07.05.2026", "label": "Spende",            "amount": "1’000.00" }
+    ],
+    "total":        "1’100.00",
+    "date":         "07.05.2026",   // legacy single-payment fields (last date, total) —
+    "amount":       "1’100.00"      // used only when "payments" is absent
   }
 
   No Handlebars helpers required — all values are pre-formatted by the caller.
@@ -128,6 +134,25 @@
     font-weight: 700;
   }
 
+  table.payments {
+    border-collapse: collapse;
+    margin: 2mm 0 6mm 0;
+    width: 110mm;
+  }
+
+  table.payments td {
+    padding: 1.2mm 0;
+  }
+
+  table.payments td.amount {
+    text-align: right;
+  }
+
+  table.payments tr.total td {
+    border-top: 0.3mm solid var(--hairline);
+    font-weight: 700;
+  }
+
   .legal {
     margin-top: 4mm;
   }
@@ -189,6 +214,24 @@
 
     <p>Vielen Dank für deine finanzielle Unterstützung des Jugendsports im Seeclub Stäfa.</p>
 
+    {{#if payments}}
+    <p>Hiermit bestätigen wir gerne deine Zuwendungen im Jahr {{year}}:</p>
+
+    <table class="payments">
+      {{#each payments}}
+      <tr>
+        <td>{{date}}</td>
+        <td>{{label}}</td>
+        <td class="amount">CHF {{amount}}</td>
+      </tr>
+      {{/each}}
+      <tr class="total">
+        <td>Total</td>
+        <td></td>
+        <td class="amount">CHF {{total}}</td>
+      </tr>
+    </table>
+    {{else}}
     <p>Hiermit bestätigen wir gerne deine Zuwendung</p>
 
     <div class="field">
@@ -200,6 +243,7 @@
       <div class="label">Spende:</div>
       <div class="value amount">CHF {{amount}}</div>
     </div>
+    {{/if}}
 
     <p class="legal">Der Gönnerverein Seeclub Stäfa (GSS) leistet finanzielle Unterstützung zur Förderung der Jugendarbeit im Seeclub Stäfa. Gemäss Verfügung des Kant. Steueramtes vom 23.3.2026 sind Mitgliederbeiträge und Spenden an den GSS steuerbefreit. Solche Beiträge sind also bei Staats- und Gemeindesteuern sowie bei der direkten Bundessteuer abziehbar.</p>
 

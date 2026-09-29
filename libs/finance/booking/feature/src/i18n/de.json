@@ -8,7 +8,8 @@
     "showCredit": "Haben-Konto anzeigen",
     "showDebit": "Soll-Konto anzeigen",
     "showCounterparty": "Gegenpartei anzeigen",
-    "noCounterparty": "Diese Buchung hat keine Gegenpartei."
+    "noCounterparty": "Diese Buchung hat keine Gegenpartei.",
+    "selectAccount": "Welches Konto möchtest du anzeigen?"
   },
   "cancel": {
     "label": "Abbrechen"
@@ -128,11 +129,14 @@
       "label": "MWST-Code"
     },
     "details": {
-      "toggle": "Fremdwährung und MWST"
+      "toggle": "Fremdwährung, MWST und Konten tauschen"
     },
     "line": {
       "add": "Zeile hinzufügen",
-      "remove": "Zeile entfernen"
+      "remove": "Zeile entfernen",
+      "text": {
+        "label": "Zeilentext"
+      }
     },
     "notes": {
       "label": "Notizen",
@@ -147,5 +151,10 @@
     "date": "Bitte ein gültiges Datum eingeben.",
     "pairsEmpty": "Eine Buchung braucht mindestens eine Zeile.",
     "pairsIncomplete": "Jede Zeile braucht ein Soll-Konto, ein anderes Haben-Konto und einen Betrag grösser als null."
+  },
+  "split": {
+    "title": "Sammelbuchung",
+    "expand": "Teilbuchungen anzeigen",
+    "collapse": "Teilbuchungen ausblenden"
   }
 }

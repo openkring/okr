@@ -32,6 +32,14 @@ function linesMap(...lines: BookingLineModel[]): Map<string, BookingLineModel[]>
 }
 
 describe('runningSaldoByBooking', () => {
+  it('keys the saldo after each line of a split booking as <booking>#<line>', () => {
+    const l1 = Object.assign(line('b1', ACCOUNT, 1000, 0), { okey: 'x' });
+    const l2 = Object.assign(line('b1', ACCOUNT, 500, 0), { okey: 'y' });
+    const saldi = runningSaldoByBooking([booking('b1', '20260110', 1)], linesMap(l1, l2, line('b1', 'bank', 0, 1500)), ACCOUNT, '6000', '20260101');
+    expect(saldi.get('b1#x')).toBe(1000);
+    expect(saldi.get('b1#y')).toBe(1500);
+    expect(saldi.get('b1')).toBe(1500);
+  });
   it('accumulates debit-positive on an Aktivkonto, in date order', () => {
     const bookings = [booking('b2', '20260215', 2), booking('b1', '20260110', 1)];
     const lines = linesMap(line('b1', ACCOUNT, 1000, 0), line('b2', ACCOUNT, 0, 400));

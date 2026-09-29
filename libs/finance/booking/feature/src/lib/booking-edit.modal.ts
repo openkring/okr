@@ -11,7 +11,7 @@ import { coerceBoolean, safeStructuredClone } from '@okr/shared-util-core';
 import { CommentsAccordion } from '@okr/comment-feature';
 import { DocumentsAccordion } from '@okr/content-document-feature';
 import { BookingForm } from '@okr/finance-booking-ui';
-import { BOOKING_I18N_KEYS, BookingFormData, BookingI18n, pairsToLines, toBookingFormData } from '@okr/finance-booking-util';
+import { BOOKING_I18N_KEYS, BookingFormData, BookingI18n, pairsToLines, toBookingFormData, withSplitTitle } from '@okr/finance-booking-util';
 
 /**
  * Header + change-confirmation + the booking form, then the Belege (documents) and comments of a
@@ -77,7 +77,7 @@ export class BookingEditModal {
   protected readonly parentKey = computed(() => `${BookingModelName}.${this.booking().okey}`);
   protected formDirty = signal(false);
   protected formValid = signal(false);
-  public formData = linkedSignal<BookingFormData>(() => safeStructuredClone(toBookingFormData(this.booking(), this.lines())) as BookingFormData);
+  public formData = linkedSignal<BookingFormData>(() => this.initialFormData());
   protected showForm = signal(true);
 
   protected showConfirmation = computed(() => !this.isReadOnly() && this.formValid() && this.formDirty());
@@ -87,6 +87,12 @@ export class BookingEditModal {
     cancel: this.i18n.changeConfirmation_cancel(),
     save: this.i18n.changeConfirmation_ok(),
   } as ChangeConfirmationI18n));
+
+  /** The stored booking as form data; a split booking shows its generated name 'Sammelbuchung · <Gegenpartei>'. */
+  private initialFormData(): BookingFormData {
+    const data = safeStructuredClone(toBookingFormData(this.booking(), this.lines())) as BookingFormData;
+    return withSplitTitle(data, this.i18n.split_title());
+  }
 
   protected onFormDataChange(data: BookingFormData): void {
     this.formData.set(data);
@@ -109,7 +115,7 @@ export class BookingEditModal {
     else if (role === 'org') avatar = await this.modelSelectService.selectOrgAvatar();
     if (avatar) {
       this.formDirty.set(true);
-      this.formData.update(vm => ({ ...vm, counterparty: avatar }));
+      this.formData.update(vm => withSplitTitle({ ...vm, counterparty: avatar }, this.i18n.split_title()));
     }
   }
 
@@ -125,7 +131,7 @@ export class BookingEditModal {
 
   public cancel(): void {
     this.formDirty.set(false);
-    this.formData.set(safeStructuredClone(toBookingFormData(this.booking(), this.lines())) as BookingFormData);
+    this.formData.set(this.initialFormData());
     this.showForm.set(false);
     setTimeout(() => this.showForm.set(true), 0);
   }

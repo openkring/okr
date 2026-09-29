@@ -5,7 +5,7 @@ import { getFirestore, Transaction } from 'firebase-admin/firestore';
 import { checkAppCheckToken, checkAuthentication, checkRoles, getCallerTenantId, isBalanced, nextBookingNo } from '@okr/shared-util-functions';
 import { DateFormat, getTodayStr } from '@okr/shared-util-core';
 
-import { buildBankBookingHeader, buildBankBookingLines, feeAmountOf, hasFeeLine, periodKeyFor, ProfileDoc, RowDoc } from './bank-import.util';
+import { buildBankBookingHeader, buildBankBookingLines, feeAmountOf, hasFeeLine, isValidSplit, periodKeyFor, ProfileDoc, RowDoc, splitsOf } from './bank-import.util';
 
 const REGION = 'europe-west6';
 const CF_NAME = 'postBankImport';
@@ -18,7 +18,8 @@ const BOOKING_COLLECTION = 'bookings';
 const BOOKING_LINE_COLLECTION = 'booking-lines';
 const MAX_ROWS = 100;
 
-interface PostBankImportData { accountingTenantId: string; rowKeys?: string[]; }
+// splitTitle: base main name of a split booking in the caller's language (e.g. 'Sammelbuchung').
+interface PostBankImportData { accountingTenantId: string; rowKeys?: string[]; splitTitle?: string; }
 interface Failure { rowKey: string; reason: string; }
 
 /** Thrown inside the per-row transaction; the code lands on the row's `error` field. */
@@ -40,6 +41,7 @@ export const postBankImport = onCall(
     const tenantId = await getCallerTenantId(request as never, CF_NAME);
 
     const accountingTenantId = request.data?.accountingTenantId ?? '';
+    const splitTitle = typeof request.data?.splitTitle === 'string' ? request.data.splitTitle.slice(0, 60) : undefined;
     if (!accountingTenantId) throw new HttpsError('invalid-argument', 'accountingTenantId is required');
     const requested = request.data?.rowKeys;
     if (requested && requested.length > MAX_ROWS) throw new HttpsError('invalid-argument', `at most ${MAX_ROWS} rows per call`);
@@ -75,18 +77,24 @@ export const postBankImport = onCall(
           const profile = profileSnap.data() as ProfileDoc | undefined;
           if (!profile || profile.accountingTenantId !== accountingTenantId || !profile.accountKey || profile.isArchived === true) throw new RowError('profile-missing');
 
-          const accountSnap = await tx.get(db.collection(ACCOUNT_COLLECTION).doc(row.accountKey));
-          const account = accountSnap.data();
-          if (!account || account['accountingTenantId'] !== accountingTenantId || row.accountKey === profile.accountKey) throw new RowError('account-invalid');
-          const children = await tx.get(db.collection(ACCOUNT_COLLECTION).where('parentKey', '==', row.accountKey).limit(1));
-          if (!children.empty) throw new RowError('account-invalid');
+          // Every counter-account — the main one and each split part's — must be a leaf of this
+          // accounting tenant and must not be the bank account itself.
+          if (!isValidSplit(row)) throw new RowError('split-invalid');
+          const counterKeys = [...new Set([row.accountKey, ...splitsOf(row).map(s => s.accountKey)])];
+          for (const counterKey of counterKeys) {
+            const accountSnap = await tx.get(db.collection(ACCOUNT_COLLECTION).doc(counterKey));
+            const account = accountSnap.data();
+            if (!account || account['accountingTenantId'] !== accountingTenantId || counterKey === profile.accountKey) throw new RowError('account-invalid');
+            const children = await tx.get(db.collection(ACCOUNT_COLLECTION).where('parentKey', '==', counterKey).limit(1));
+            if (!children.empty) throw new RowError('account-invalid');
+          }
 
           // Processor fee (spec 1.62 §5): its account is validated like the counter-account, and the
           // fee can never swallow the whole transaction — that would be a silent mis-booking.
           if (hasFeeLine(row, profile)) {
             if (feeAmountOf(row) >= Math.abs(row.amount.amount)) throw new RowError('fee-exceeds-amount');
             const feeAccountKey = profile.feeAccountKey as string;
-            if (feeAccountKey === profile.accountKey || feeAccountKey === row.accountKey) throw new RowError('account-invalid');
+            if (feeAccountKey === profile.accountKey || counterKeys.includes(feeAccountKey)) throw new RowError('account-invalid');
             const feeSnap = await tx.get(db.collection(ACCOUNT_COLLECTION).doc(feeAccountKey));
             const feeAccount = feeSnap.data();
             if (!feeAccount || feeAccount['accountingTenantId'] !== accountingTenantId) throw new RowError('account-invalid');
@@ -122,7 +130,7 @@ export const postBankImport = onCall(
           if (!periodSnap.exists) {
             tx.set(periodRef, { tenants: [tenantId], isArchived: false, accountingTenantId, year: Number(periodKey.slice(-4)), month: 0, isLocked: false, lockedBy: '', lockedAt: '' });
           }
-          tx.set(bookingRef, { ...buildBankBookingHeader(row, tenantId, periodKey), bookingNo });
+          tx.set(bookingRef, { ...buildBankBookingHeader(row, tenantId, periodKey, splitTitle), bookingNo });
           for (const line of lines) tx.set(db.collection(BOOKING_LINE_COLLECTION).doc(), line);
           tx.update(rowRef, { status: 'posted', bookingKey, postedAt: now, error: '' });
           return 'posted';

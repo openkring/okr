@@ -17,6 +17,7 @@ export class BookingLineModel implements OkrModel {
   public amountFx: MoneyModel | undefined;      // original foreign currency amount (Phase 4)
   public exchangeRateKey = '';               // ref to ExchangeRateModel (Phase 4)
   public vatCodeKey = '';                    // ref to VatCodeModel (Phase 3)
+  public description = '';                   // line text, e.g. one part of a split bank booking; '' = the booking's title
   public accountingTenantId = '';
 
   constructor(tenantId: string, accountingTenantId: string) {

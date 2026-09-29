@@ -43,6 +43,7 @@
       "profileMissing": "Il profilo bancario di questa riga non è stato trovato.",
       "unbalanced": "La registrazione non è bilanciata.",
       "feeExceedsAmount": "La commissione è pari o superiore all'importo: la riga non è stata registrata.",
+      "splitInvalid": "La ripartizione è incompleta o le parti sono troppo alte.",
       "unknown": "La riga non ha potuto essere registrata."
     }
   },
@@ -62,6 +63,8 @@
   "title": { "label": "Testo di registrazione", "placeholder": "p.es. Google Cloud GCP, Dublino", "helper": "Così appare la registrazione nel giornale." },
   "account": { "label": "Conto di contropartita", "helper": "Il conto di costo o ricavo per questa singola riga. Non viene creata alcuna regola." },
   "vat": { "label": "Codice IVA (opzionale)", "helper": "Annotato sulla riga del conto di contropartita." },
+  "split": {"heading": "Ripartire su altri conti", "intro": "Ripartisci l'importo se riguarda più conti. Ogni parte riceve il proprio testo di registrazione. Il conto di contropartita sopra riceve ciò che resta.", "add": "Aggiungi parte", "remove": "Rimuovi parte", "amount": "Importo", "rest": "Resto per il conto di contropartita sopra", "bookingTitle": "Registrazione collettiva"},
+  "validation": {"splitIncomplete": "Ogni parte ha bisogno di un testo di registrazione, di un conto di contropartita e di un importo maggiore di zero.", "splitExceeds": "Insieme le parti raggiungono o superano l'importo totale. Per il conto di contropartita sopra deve restare un resto."},
   "changeConfirmation": { "cancel": "Scarta", "ok": "Salva" },
   "journal": {
     "label": "Importa giornale bexio",

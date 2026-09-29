@@ -174,6 +174,7 @@ interface WriteLine {
   amountFx?: { amount: number; currency: string } | null;
   exchangeRateKey?: string;
   vatCodeKey?: string;
+  description?: string;
 }
 
 interface WriteBookingData {
@@ -284,6 +285,7 @@ export const writeBooking = onCall(
           ...(line.amountFx ? { amountFx: { ...line.amountFx, periodicity: 'one-time' } } : {}),
           ...(line.exchangeRateKey ? { exchangeRateKey: line.exchangeRateKey } : {}),
           ...(line.vatCodeKey ? { vatCodeKey: line.vatCodeKey } : {}),
+          ...(typeof line.description === 'string' && line.description.trim() ? { description: line.description.trim().slice(0, 200) } : {}),
         });
       }
       return no;

@@ -47,6 +47,7 @@ export const BOOKING_I18N_KEYS = {
   // action sheet: show the accounts / the counterparty of a booking
   as_show_credit:              PFX + 'as.showCredit',
   as_show_debit:               PFX + 'as.showDebit',
+  as_select_account:           PFX + 'as.selectAccount',
   as_show_counterparty:        PFX + 'as.showCounterparty',
   as_no_counterparty:          PFX + 'as.noCounterparty',
   // edit modal + form
@@ -71,10 +72,14 @@ export const BOOKING_I18N_KEYS = {
   form_fx_currency_label:      PFX + 'form.fxCurrency.label',
   form_vat_label:              PFX + 'form.vat.label',
   form_details_toggle:         PFX + 'form.details.toggle',
+  form_line_text_label:        PFX + 'form.line.text.label',
   form_line_add:               PFX + 'form.line.add',
   form_swap:                   PFX + 'form.swap',
   form_documents_label:        PFX + 'form.documents.label',
   form_line_remove:            PFX + 'form.line.remove',
+  split_title:                 PFX + 'split.title',
+  split_expand:                PFX + 'split.expand',
+  split_collapse:              PFX + 'split.collapse',
   form_notes_label:            PFX + 'form.notes.label',
   form_notes_placeholder:      PFX + 'form.notes.placeholder',
 } satisfies Record<string, string>;

@@ -8,7 +8,8 @@
     "showCredit": "Afficher le compte crédit",
     "showDebit": "Afficher le compte débit",
     "showCounterparty": "Afficher la contrepartie",
-    "noCounterparty": "Cette écriture n'a pas de contrepartie."
+    "noCounterparty": "Cette écriture n'a pas de contrepartie.",
+    "selectAccount": "Quel compte veux-tu afficher ?"
   },
   "cancel": {
     "label": "Annuler"
@@ -128,11 +129,14 @@
       "label": "Code TVA"
     },
     "details": {
-      "toggle": "Devise étrangère et TVA"
+      "toggle": "Devise étrangère, TVA et inversion des comptes"
     },
     "line": {
       "add": "Ajouter une ligne",
-      "remove": "Supprimer la ligne"
+      "remove": "Supprimer la ligne",
+      "text": {
+        "label": "Texte de ligne"
+      }
     },
     "notes": {
       "label": "Notes",
@@ -147,5 +151,10 @@
     "date": "Merci de saisir une date valide.",
     "pairsEmpty": "Une écriture a besoin d’au moins une ligne.",
     "pairsIncomplete": "Chaque ligne a besoin d’un compte débit, d’un compte crédit différent et d’un montant supérieur à zéro."
+  },
+  "split": {
+    "title": "Écriture collective",
+    "expand": "Afficher les parties",
+    "collapse": "Masquer les parties"
   }
 }

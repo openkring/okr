@@ -54,6 +54,7 @@ export const BANK_IMPORT_I18N_KEYS = {
   post_error_profile_missing: PFX + 'post.error.profileMissing',
   post_error_unbalanced: PFX + 'post.error.unbalanced',
   post_error_fee_exceeds_amount: PFX + 'post.error.feeExceedsAmount',
+  post_error_split_invalid: PFX + 'post.error.splitInvalid',
   post_error_unknown:   PFX + 'post.error.unknown',
 
   apply_rules:          PFX + 'applyRules.label',
@@ -79,6 +80,13 @@ export const BANK_IMPORT_I18N_KEYS = {
   account_helper:       PFX + 'account.helper',
   vat_label:            PFX + 'vat.label',
   vat_helper:           PFX + 'vat.helper',
+  split_heading:        PFX + 'split.heading',
+  split_intro:          PFX + 'split.intro',
+  split_add:            PFX + 'split.add',
+  split_remove:         PFX + 'split.remove',
+  split_amount:         PFX + 'split.amount',
+  split_rest:           PFX + 'split.rest',
+  split_booking_title:  PFX + 'split.bookingTitle',
   changeConfirmation_cancel: PFX + 'changeConfirmation.cancel',
   changeConfirmation_ok:     PFX + 'changeConfirmation.ok',
 

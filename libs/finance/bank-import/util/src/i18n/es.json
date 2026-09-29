@@ -43,6 +43,7 @@
       "profileMissing": "No se encontró el perfil bancario de esta línea.",
       "unbalanced": "El asiento no está equilibrado.",
       "feeExceedsAmount": "La comisión es igual o superior al importe: la línea no se ha contabilizado.",
+      "splitInvalid": "El reparto está incompleto o las partes son demasiado altas.",
       "unknown": "La línea no pudo ser contabilizada."
     }
   },
@@ -62,6 +63,8 @@
   "title": { "label": "Texto de contabilización", "placeholder": "p.ej. Google Cloud GCP, Dublín", "helper": "Así aparecerá el asiento en el diario." },
   "account": { "label": "Cuenta de contrapartida", "helper": "La cuenta de gasto o ingreso para esta única línea. No se crea ninguna regla." },
   "vat": { "label": "Código de IVA (opcional)", "helper": "Se anota en la línea de la cuenta de contrapartida." },
+  "split": {"heading": "Repartir en otras cuentas", "intro": "Reparte el importe si afecta a varias cuentas. Cada parte recibe su propio texto de asiento. La cuenta de contrapartida de arriba recibe lo que queda.", "add": "Añadir parte", "remove": "Quitar parte", "amount": "Importe", "rest": "Resto para la cuenta de contrapartida de arriba", "bookingTitle": "Asiento compuesto"},
+  "validation": {"splitIncomplete": "Cada parte necesita un texto de asiento, una cuenta de contrapartida y un importe mayor que cero.", "splitExceeds": "Juntas, las partes alcanzan o superan el importe total. Debe quedar un resto para la cuenta de contrapartida de arriba."},
   "changeConfirmation": { "cancel": "Descartar", "ok": "Guardar" },
   "journal": {
     "label": "Importar diario bexio",

@@ -8,7 +8,8 @@
     "showCredit": "Mostra conto avere",
     "showDebit": "Mostra conto dare",
     "showCounterparty": "Mostra controparte",
-    "noCounterparty": "Questa registrazione non ha una controparte."
+    "noCounterparty": "Questa registrazione non ha una controparte.",
+    "selectAccount": "Quale conto vuoi visualizzare?"
   },
   "cancel": {
     "label": "Annulla"
@@ -128,11 +129,14 @@
       "label": "Codice IVA"
     },
     "details": {
-      "toggle": "Valuta estera e IVA"
+      "toggle": "Valuta estera, IVA e scambio dei conti"
     },
     "line": {
       "add": "Aggiungi riga",
-      "remove": "Rimuovi riga"
+      "remove": "Rimuovi riga",
+      "text": {
+        "label": "Testo di riga"
+      }
     },
     "notes": {
       "label": "Note",
@@ -147,5 +151,10 @@
     "date": "Inserisci una data valida.",
     "pairsEmpty": "Una registrazione richiede almeno una riga.",
     "pairsIncomplete": "Ogni riga richiede un conto dare, un conto avere diverso e un importo maggiore di zero."
+  },
+  "split": {
+    "title": "Registrazione collettiva",
+    "expand": "Mostra le parti",
+    "collapse": "Nascondi le parti"
   }
 }

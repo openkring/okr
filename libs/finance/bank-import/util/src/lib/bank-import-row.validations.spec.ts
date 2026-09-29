@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { BankImportRowModel } from '@okr/shared-models';
+import { BankImportRowModel, MoneyModel } from '@okr/shared-models';
 
 import { bankImportRowValidations } from './bank-import-row.validations';
 
@@ -25,5 +25,28 @@ describe('bankImportRowValidations', () => {
   it('requires title and account', () => {
     expect(bankImportRowValidations(model({ title: '' }), 't1', '').isValid()).toBe(false);
     expect(bankImportRowValidations(model({ accountKey: '' }), 't1', '').isValid()).toBe(false);
+  });
+
+  describe('split assignment', () => {
+    const split = (p = {}) => ({ title: 'Anteil Ressort B', accountKey: 'a2', vatCodeKey: '', amount: 3000, ...p });
+    const gross = (amount: number) => ({ amount: new MoneyModel(amount, 'CHF') });
+
+    it('accepts parts that leave a positive rest for the main part, for money in and out', () => {
+      expect(bankImportRowValidations(model({ ...gross(10000), splits: [split()] }), 't1', '').isValid()).toBe(true);
+      expect(bankImportRowValidations(model({ ...gross(-10000), splits: [split(), split()] }), 't1', '').isValid()).toBe(true);
+    });
+    it('rejects a part without text, account or amount', () => {
+      for (const bad of [{ title: ' ' }, { accountKey: '' }, { amount: 0 }]) {
+        const result = bankImportRowValidations(model({ ...gross(10000), splits: [split(bad)] }), 't1', '');
+        expect(result.getErrors('splits')).toContain('@finance/bank-import/util.validation.splitIncomplete');
+      }
+    });
+    it('rejects parts that use up the whole amount — the main part needs a rest', () => {
+      const result = bankImportRowValidations(model({ ...gross(-6000), splits: [split({ amount: 6000 })] }), 't1', '');
+      expect(result.getErrors('splits')).toContain('@finance/bank-import/util.validation.splitExceeds');
+    });
+    it('accepts a legacy row without splits', () => {
+      expect(bankImportRowValidations(model({ splits: undefined as never }), 't1', '').isValid()).toBe(true);
+    });
   });
 });

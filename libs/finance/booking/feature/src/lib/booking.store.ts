@@ -27,6 +27,7 @@ import {
   bookingYear,
   buildReceiptPayload,
   canReviewBooking,
+  collectReceiptPayments,
   copyBooking,
   isForReview,
   JournalRow,
@@ -38,6 +39,7 @@ import {
   monthGroupLabel,
   ReceiptParty,
   runningSaldoByBooking,
+  toAccountJournalRows,
   toJournalRow,
 } from '@okr/finance-booking-util';
 import { PersonService } from '@okr/subject-person-data-access';
@@ -101,6 +103,8 @@ export const BookingStore = signalStore(
       const account = (store.accountsResource.value() ?? []).find(a => a.okey === store.accountKey());
       return account ? `${account.id} ${account.name}` : '';
     }),
+    // The saldo column is shown only while it can say something: the toggle is on AND one account is selected.
+    saldoVisible: computed(() => store.showSaldo() && !!store.accountKey()),
     // "mm.yyyy" of the month the journal is narrowed to, '' when the whole year is shown.
     monthLabel: computed(() => {
       const month = store.selectedMonth();
@@ -128,13 +132,17 @@ export const BookingStore = signalStore(
     }),
   })),
   withComputed(store => ({
-    // Flattened journal rows for display, newest booking first.
+    // Flattened journal rows for display, newest booking first. Filtered on an account, only bookings
+    // with a line there remain, and a split booking shows just its lines on that account.
     journalRows: computed<JournalRow[]>(() => {
       const accountIdByKey = store.accountIdByKey();
       const accountNameByKey = store.accountNameByKey();
       const linesByBooking = store.linesByBooking();
+      const accountKey = store.accountKey();
       return store.bookings()
-        .map(b => toJournalRow(b, linesByBooking.get(b.okey) ?? [], accountIdByKey, accountNameByKey))
+        .flatMap(b => accountKey
+          ? toAccountJournalRows(b, linesByBooking.get(b.okey) ?? [], accountKey, accountIdByKey, accountNameByKey)
+          : [toJournalRow(b, linesByBooking.get(b.okey) ?? [], accountIdByKey, accountNameByKey)])
         .sort((a, b) => (b.booking.date ?? '').localeCompare(a.booking.date ?? '') || b.booking.bookingNo - a.booking.bookingNo);
     }),
     // Distinct booking years (desc), always including the current year for the filter.
@@ -153,11 +161,8 @@ export const BookingStore = signalStore(
       const year = store.selectedYear();
       const term = store.searchTerm();
       const status = store.selectedStatus();
-      const accountKey = store.accountKey();
       const month = store.selectedMonth();
-      const linesByBooking = store.linesByBooking();
       return store.journalRows()
-        .filter(r => !accountKey || (linesByBooking.get(r.okey) ?? []).some(l => l.accountKey === accountKey))
         .filter(r => year === ALL_YEARS || r.year === year)
         .filter(r => month === 0 || bookingMonth(r.booking) === month)
         .filter(r => status === 'all' || r.booking.status === status)
@@ -228,9 +233,9 @@ export const BookingStore = signalStore(
       patchState(store, { groupByMonth: !store.groupByMonth() });
     },
 
-    /** Saldo after this booking, formatted; '' when it has none (not posted, or no account filter). */
-    saldoOf(booking: BookingModel): string {
-      const saldo = store.saldoByBooking().get(booking.okey);
+    /** Saldo after this row (a booking, or one line of a split booking), formatted; '' when it has none (not posted, or no account filter). */
+    saldoOf(row: JournalRow): string {
+      const saldo = store.saldoByBooking().get(row.okey);
       return saldo === undefined ? '' : formatMinorAmount(saldo);
     },
 
@@ -312,6 +317,10 @@ export const BookingStore = signalStore(
       const cp = booking.counterparty;
       if (!cp?.key) { await this.toast(store.i18n.as_no_counterparty()); return; }
       if (cp.modelType === 'person') {
+        // The header's close button pops AppNavigationService's history, not the browser's:
+        // without these entries it fell through to '/' and landed on /public/welcome.
+        store.appStore.appNavigationService.resetLinkHistory(store.router.url);
+        store.appStore.appNavigationService.pushLink(`/person/${cp.key}`);
         await store.router.navigate(['/person', cp.key]);
         return;
       }
@@ -468,13 +477,18 @@ export const BookingStore = signalStore(
         await this.toast(store.i18n.action_counterpartyRequired());
         return;
       }
-      const lines = store.linesByBooking().get(booking.okey) ?? [];
-      const line = lines.find(
-        (l) => store.accountIdByKey().get(l.accountKey) === action.trigger.accountId,
-      );
-      const amountRappen = line?.creditAmount?.amount ?? line?.debitAmount?.amount ?? 0;
-
       const cp = booking.counterparty;
+      // Every payment of this counterparty in the journal's selected year (the booking's own year
+      // while "all years" is selected), e.g. Mitgliederbeitrag and Spende on one receipt.
+      const year = store.selectedYear() === ALL_YEARS ? bookingYear(booking) : store.selectedYear();
+      const payments = collectReceiptPayments(
+        cp, year, action.trigger.accountIds, store.bookings(), store.linesByBooking(), store.accountIdByKey(), booking.okey,
+      );
+      if (payments.length === 0) {
+        await this.toast(store.i18n.action_failed());
+        return;
+      }
+
       // addresses.parentKey is modelType-prefixed ('person.<okey>' / 'org.<okey>'); the bare
       // counterparty key matches no address, so every receipt ended in action_noAddress.
       // Only the owner, privileged and memberAdmin read the raw vault; a treasurer gets the
@@ -503,7 +517,7 @@ export const BookingStore = signalStore(
 
       const payload = {
         ...(action.staticPayload ?? {}),
-        ...buildReceiptPayload(party, address, amountRappen, booking.date),
+        ...buildReceiptPayload(party, address, payments, year, (accountId) => this.receiptLabel(action, accountId)),
       };
 
       try {
@@ -521,6 +535,12 @@ export const BookingStore = signalStore(
       } catch {
         await this.toast(store.i18n.action_failed());
       }
+    },
+
+    /** Row label on a receipt: the action's configured label, else the account name. */
+    receiptLabel(action: BookingAction, accountId: string): string {
+      if (action.type === 'generateDocument' && action.accountLabels?.[accountId]) return action.accountLabels[accountId];
+      return (store.accountsResource.value() ?? []).find(a => a.id === accountId)?.name ?? accountId;
     },
 
     async toast(message: string): Promise<void> {

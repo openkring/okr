@@ -11,7 +11,7 @@ import { hasRole } from '@okr/shared-util-core';
 import { Menu } from '@okr/cms-menu-feature';
 import { ReadOnlyBanner } from '@okr/finance-accounting-feature';
 
-import { BookingAction, isForReview, JournalRow } from '@okr/finance-booking-util';
+import { BookingAction, isForReview, JournalRow, sideAccountKeys } from '@okr/finance-booking-util';
 import { BookingStore } from './booking.store';
 
 type JournalSortField = 'date' | 'haben' | 'soll' | 'text' | 'amount';
@@ -62,7 +62,7 @@ function parseAmount(amount: string): number {
           <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
             <ng-template>
               <ion-content>
-                <okr-menu [menuName]="contextMenuName()" [toggleStates]="{ toggleSaldo: store.showSaldo(), toggleMonthGroups: store.groupByMonth() }" />
+                <okr-menu [menuName]="contextMenuName()" [excludeNames]="excludedMenuItems()" [toggleStates]="{ toggleSaldo: store.showSaldo(), toggleMonthGroups: store.groupByMonth() }" />
               </ion-content>
             </ng-template>
           </ion-popover>
@@ -86,7 +86,7 @@ function parseAmount(amount: string): number {
           <ion-col size-md="2" class="ion-hide-sm-down clickable" (click)="setSort('haben')"><ion-label><strong>{{ store.i18n.col_credit() }}{{ sortIcon('haben') }}</strong></ion-label></ion-col>
           <ion-col size="5" [sizeMd]="textSizeMd()" class="clickable" (click)="setSort('text')"><ion-label><strong>{{ store.i18n.col_name() }}{{ sortIcon('text') }}</strong></ion-label></ion-col>
           <ion-col size="4" size-md="2" class="ion-text-end clickable" (click)="setSort('amount')"><ion-label><strong>{{ store.i18n.col_amount() }}{{ sortIcon('amount') }}</strong></ion-label></ion-col>
-          @if(store.showSaldo()) {
+          @if(store.saldoVisible()) {
             <ion-col size-md="2" class="ion-text-end ion-hide-sm-down"><ion-label><strong>{{ store.i18n.col_saldo() }}</strong></ion-label></ion-col>
           }
         </ion-row>
@@ -112,6 +112,13 @@ function parseAmount(amount: string): number {
             <ion-grid>
               <ion-row>
                 <ion-col size="3" size-md="2">
+                  <!-- split bookings open to their parts; the others keep the chevron's room so the dates line up -->
+                  @if(row.parts.length > 0) {
+                    <ion-icon class="parts-toggle" src="{{ (isExpanded(row) ? 'chevron-down' : 'chevron-forward') | svgIcon }}"
+                      (click)="toggleParts($event, row)" [attr.aria-label]="isExpanded(row) ? store.i18n.split_collapse() : store.i18n.split_expand()" />
+                  } @else if(hasSplitRows()) {
+                    <span class="parts-toggle-space"></span>
+                  }
                   @if(isForReview(row)) {
                     <ion-icon class="review-icon" src="{{ 'alert-circle' | svgIcon }}" [attr.aria-label]="store.i18n.status_forReview()" />
                   }
@@ -129,14 +136,39 @@ function parseAmount(amount: string): number {
                 <ion-col size="4" size-md="2" class="ion-text-end">
                   {{ row.amount }}
                   <!-- no room for a sixth column on a phone: the saldo rides under the amount there -->
-                  @if(store.showSaldo()) { <br /><ion-note class="saldo ion-hide-md-up">{{ store.saldoOf(row.booking) || '–' }}</ion-note> }
+                  @if(store.saldoVisible()) { <br /><ion-note class="saldo ion-hide-md-up">{{ store.saldoOf(row) || '–' }}</ion-note> }
                 </ion-col>
-                @if(store.showSaldo()) {
-                  <ion-col size-md="2" class="ion-text-end ion-hide-sm-down">{{ store.saldoOf(row.booking) || '–' }}</ion-col>
+                @if(store.saldoVisible()) {
+                  <ion-col size-md="2" class="ion-text-end ion-hide-sm-down">{{ store.saldoOf(row) || '–' }}</ion-col>
                 }
               </ion-row>
             </ion-grid>
           </ion-item>
+          <!-- the parts of an expanded split booking: Soll against Haben with the part's own text and amount -->
+          @if(isExpanded(row)) {
+            @for(part of row.parts; track part.okey) {
+              <ion-item button [detail]="false" (click)="showActions(row)" class="part" [class.for-review]="isForReview(row)">
+                <ion-grid>
+                  <ion-row>
+                    <ion-col size="3" size-md="2"></ion-col>
+                    <ion-col size-md="2" class="ion-hide-sm-down">
+                      {{ part.debitAccountId }}
+                      @if(part.debitAccountName) { <br /><ion-note class="account-name">{{ part.debitAccountName }}</ion-note> }
+                    </ion-col>
+                    <ion-col size-md="2" class="ion-hide-sm-down">
+                      {{ part.creditAccountId }}
+                      @if(part.creditAccountName) { <br /><ion-note class="account-name">{{ part.creditAccountName }}</ion-note> }
+                    </ion-col>
+                    <ion-col size="5" [sizeMd]="textSizeMd()">
+                      <!-- no Soll/Haben columns on a phone: the accounts lead the text there -->
+                      <span class="ion-hide-md-up">{{ part.debitAccountId }} / {{ part.creditAccountId }}<br /></span>{{ part.text }}
+                    </ion-col>
+                    <ion-col size="4" size-md="2" class="ion-text-end">{{ part.amount }}</ion-col>
+                  </ion-row>
+                </ion-grid>
+              </ion-item>
+            }
+          }
         }
       </ion-list>
     }
@@ -160,6 +192,9 @@ function parseAmount(amount: string): number {
     .review-icon { font-size: 1rem; vertical-align: text-bottom; color: var(--ion-color-warning-shade); }
     .account-name { font-size: 0.75rem; }
     .saldo { font-size: 0.75rem; font-weight: 600; }
+    .parts-toggle { font-size: 1rem; vertical-align: text-bottom; margin: 0 0.2rem 0 -0.2rem; padding: 0.2rem; cursor: pointer; }
+    .parts-toggle-space { display: inline-block; width: calc(1rem + 0.4rem); margin: 0 0.2rem 0 -0.2rem; }
+    ion-item.part { font-size: 0.85rem; --min-height: 36px; color: var(--ion-color-medium-shade); }
     ion-item-divider { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; }
     ion-item.for-review { --background: rgba(var(--ion-color-warning-rgb), 0.12); }
   `],
@@ -220,8 +255,10 @@ export class BookingList {
       return { row, divider };
     });
   });
+  /** A running balance needs exactly one account: 'Saldo anzeigen' is offered only while the journal is filtered on one. */
+  protected readonly excludedMenuItems = computed(() => this.store.accountKey() ? [] : ['journal-saldo']);
   /** The text column gives up half its width on md+ when the saldo column is shown. */
-  protected readonly textSizeMd = computed(() => this.store.showSaldo() ? '2' : '4');
+  protected readonly textSizeMd = computed(() => this.store.saldoVisible() ? '2' : '4');
   protected readonly filteredCount = computed(() => this.filtered().length);
   protected readonly count = computed(() => this.store.bookings().length);
   protected readonly years = computed(() => this.store.years());
@@ -229,6 +266,26 @@ export class BookingList {
   protected readonly readOnly = computed(() => this.store.isReadOnly());
   protected readonly forReviewCount = computed(() => this.store.forReviewCount());
   protected readonly statusCategory = computed(() => this.store.statusCategory());
+
+  /** Split bookings the user has opened to their lines (unfiltered journal only; keyed by row okey). */
+  private readonly expandedRows = signal<ReadonlySet<string>>(new Set());
+
+  /** Only when the visible list has a split booking do the rows make room for the chevron. */
+  protected readonly hasSplitRows = computed(() => this.filtered().some(r => r.parts.length > 0));
+
+  protected isExpanded(row: JournalRow): boolean {
+    return row.parts.length > 0 && this.expandedRows().has(row.okey);
+  }
+
+  /** The chevron opens/closes the lines without opening the row's action sheet. */
+  protected toggleParts(event: Event, row: JournalRow): void {
+    event.stopPropagation();
+    this.expandedRows.update(set => {
+      const next = new Set(set);
+      if (next.has(row.okey)) next.delete(row.okey); else next.add(row.okey);
+      return next;
+    });
+  }
 
   protected isForReview(row: JournalRow): boolean {
     return isForReview(row.booking);
@@ -308,8 +365,8 @@ export class BookingList {
     const { data } = await actionSheet.onDidDismiss();
     if (!data) return;
     const action: string = data.action;
-    if (action === 'booking.showCredit') { await this.store.showAccount(lines.find(l => l.creditAmount)?.accountKey ?? ''); return; }
-    if (action === 'booking.showDebit') { await this.store.showAccount(lines.find(l => l.debitAmount)?.accountKey ?? ''); return; }
+    if (action === 'booking.showCredit') { await this.showSideAccount(lines, 'credit'); return; }
+    if (action === 'booking.showDebit') { await this.showSideAccount(lines, 'debit'); return; }
     if (action === 'booking.showCounterparty') { await this.store.showCounterparty(booking); return; }
     if (action === 'booking.approve') { await this.store.approve(booking); return; }
     if (action === 'booking.review')  { await this.store.openReview(booking, lines); return; }
@@ -323,6 +380,26 @@ export class BookingList {
       const bookingAction = actions[idx];
       if (bookingAction) await this.store.runAction(bookingAction, booking);
     }
+  }
+
+  /**
+   * "Soll-/Haben-Konto anzeigen": one account on that side opens it directly; the parts' side of a
+   * split booking has several, so a sheet asks which one.
+   */
+  private async showSideAccount(lines: BookingLineModel[], side: 'debit' | 'credit'): Promise<void> {
+    const keys = sideAccountKeys(lines, side);
+    if (keys.length <= 1) { await this.store.showAccount(keys[0] ?? ''); return; }
+    const options = createActionSheetOptions(this.store.i18n.as_select_account());
+    for (const key of keys) {
+      const label = `${this.store.accountIdByKey().get(key) ?? ''} ${this.store.accountNameByKey().get(key) ?? ''}`.trim();
+      options.buttons.push(createActionSheetButton(`account.${key}`, label || key, this.imgixBaseUrl, 'eye-on'));
+    }
+    options.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
+    const sheet = await this.actionSheetController.create(options);
+    await sheet.present();
+    const { data } = await sheet.onDidDismiss();
+    const action: string = data?.action ?? '';
+    if (action.startsWith('account.')) await this.store.showAccount(action.substring('account.'.length));
   }
 
   protected hasRole(role: RoleName): boolean {

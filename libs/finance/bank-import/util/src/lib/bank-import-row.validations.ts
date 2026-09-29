@@ -1,8 +1,14 @@
-import { only, staticSuite } from 'vest';
+import { enforce, only, staticSuite, test } from 'vest';
 
 import { BankImportRowModel } from '@okr/shared-models';
 import { stringValidations } from '@okr/shared-util-core';
 import { SHORT_NAME_LENGTH } from '@okr/shared-constants';
+
+import { mainPartAmount } from './bank-import-row.util';
+
+const PFX = '@finance/bank-import/util.validation.';
+/** Buchungstext cap, shared by the main part and every further part (the form binds it too). */
+export const BANK_IMPORT_TITLE_LENGTH = 100;
 
 /**
  * Validates only the fields the assignment form (title/account) can actually edit — a staging
@@ -18,6 +24,16 @@ export const bankImportRowValidations = staticSuite(
   (model: BankImportRowModel, tenants: string, tags: string, field?: string) => {
     if (field) only(field);
 
-    stringValidations('title', model.title, 100, 1, true);
+    stringValidations('title', model.title, BANK_IMPORT_TITLE_LENGTH, 1, true);
     stringValidations('accountKey', model.accountKey, undefined, 1, true);
+
+    // Split assignment: every further part is complete, and the main part keeps a positive rest.
+    const splits = model.splits ?? [];
+    test('splits', PFX + 'splitIncomplete', () => {
+      enforce(splits.every(s => (s.title ?? '').trim().length > 0 && (s.title ?? '').length <= BANK_IMPORT_TITLE_LENGTH
+        && !!s.accountKey && (s.amount ?? 0) > 0)).isTruthy();
+    });
+    test('splits', PFX + 'splitExceeds', () => {
+      enforce(splits.length === 0 || mainPartAmount(model) > 0).isTruthy();
+    });
   });

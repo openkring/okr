@@ -43,6 +43,7 @@
       "profileMissing": "Le profil bancaire de cette ligne est introuvable.",
       "unbalanced": "L'écriture n'est pas équilibrée.",
       "feeExceedsAmount": "Les frais sont égaux ou supérieurs au montant — la ligne n'a pas été comptabilisée.",
+      "splitInvalid": "La répartition est incomplète ou les parties sont trop élevées.",
       "unknown": "La ligne n'a pas pu être comptabilisée."
     }
   },
@@ -62,6 +63,8 @@
   "title": { "label": "Texte de comptabilisation", "placeholder": "p.ex. Google Cloud GCP, Dublin", "helper": "C'est ainsi que l'écriture apparaît dans le journal." },
   "account": { "label": "Compte de contrepartie", "helper": "Le compte de charge ou de produit pour cette seule ligne. Aucune règle n'est créée." },
   "vat": { "label": "Code TVA (facultatif)", "helper": "Indiqué sur la ligne du compte de contrepartie." },
+  "split": {"heading": "Répartir sur d'autres comptes", "intro": "Répartis le montant s'il concerne plusieurs comptes. Chaque partie reçoit son propre libellé. Le compte de contrepartie ci-dessus reçoit ce qui reste.", "add": "Ajouter une partie", "remove": "Supprimer la partie", "amount": "Montant", "rest": "Reste pour le compte de contrepartie ci-dessus", "bookingTitle": "Écriture collective"},
+  "validation": {"splitIncomplete": "Chaque partie a besoin d'un libellé, d'un compte de contrepartie et d'un montant supérieur à zéro.", "splitExceeds": "Ensemble, les parties atteignent ou dépassent le montant total. Il doit rester un solde pour le compte de contrepartie ci-dessus."},
   "changeConfirmation": { "cancel": "Annuler", "ok": "Enregistrer" },
   "journal": {
     "label": "Importer le journal bexio",

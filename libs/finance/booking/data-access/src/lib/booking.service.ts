@@ -67,6 +67,7 @@ function toWriteLine(line: BookingLineModel): Record<string, unknown> {
     amountFx: line.amountFx ? { amount: line.amountFx.amount, currency: line.amountFx.currency } : null,
     exchangeRateKey: line.exchangeRateKey,
     vatCodeKey: line.vatCodeKey,
+    description: line.description ?? '',
   };
 }
 

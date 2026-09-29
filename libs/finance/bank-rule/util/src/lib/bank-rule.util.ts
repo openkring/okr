@@ -132,8 +132,9 @@ export function applyRules(rows: BankImportRowModel[], rules: BankRuleModel[]): 
     if (row.status === 'posted' || row.status === 'error' || isOneOff(row)) return row;
     const { result, invalidRuleKeys } = matchRule(row.rawText, rules);
     invalidRuleKeys.forEach(k => invalid.add(k));
-    if (!result) return { ...row, status: 'unmapped' as const, ruleKey: '', accountKey: '', title: '', vatCodeKey: '' };
-    return { ...row, status: 'mapped' as const, ruleKey: result.ruleKey, accountKey: result.accountKey, title: result.title, vatCodeKey: result.vatCodeKey };
+    // a rule assigns the whole amount to one account; split parts only come from a one-off assignment
+    if (!result) return { ...row, status: 'unmapped' as const, ruleKey: '', accountKey: '', title: '', vatCodeKey: '', splits: [] };
+    return { ...row, status: 'mapped' as const, ruleKey: result.ruleKey, accountKey: result.accountKey, title: result.title, vatCodeKey: result.vatCodeKey, splits: [] };
   });
   return { rows: out, invalidRuleKeys: [...invalid] };
 }

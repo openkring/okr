@@ -2,7 +2,7 @@ import { DEFAULT_PERIODICITY } from '@okr/shared-constants';
 import { BankImportRowModel, MoneyModel } from '@okr/shared-models';
 import { describe, expect, it } from 'vitest';
 
-import { toImportRows, withFee } from './bank-import-row.util';
+import { mainPartAmount, toImportRows, withFee, withSplits } from './bank-import-row.util';
 import { ParsedStatement } from './types';
 
 const s: ParsedStatement = {
@@ -57,5 +57,29 @@ describe('withFee', () => {
   it('keeps a zero fee written by the parse path — it is present, not missing', () => {
     const row = stored({ fee: new MoneyModel(0, 'EUR') });
     expect(withFee(row)).toBe(row);
+  });
+});
+
+describe('withSplits', () => {
+  it('gives a legacy row (no splits field) an empty list and leaves a current row untouched', () => {
+    const legacy = { ...new BankImportRowModel('t', 'a'), splits: undefined } as unknown as BankImportRowModel;
+    expect(withSplits(legacy).splits).toEqual([]);
+    const current = new BankImportRowModel('t', 'a');
+    expect(withSplits(current)).toBe(current);
+  });
+});
+
+describe('mainPartAmount', () => {
+  const row = (amount: number, parts: number[]) => ({
+    ...new BankImportRowModel('t', 'a'), amount: new MoneyModel(amount, 'CHF'),
+    splits: parts.map(p => ({ title: 'x', accountKey: 'k', vatCodeKey: '', amount: p })),
+  });
+  it('is the gross magnitude minus the further parts, regardless of the sign', () => {
+    expect(mainPartAmount(row(10000, []))).toBe(10000);
+    expect(mainPartAmount(row(-10000, [2500, 1500]))).toBe(6000);
+  });
+  it('goes to zero or below when the parts use up the amount (the suite rejects that)', () => {
+    expect(mainPartAmount(row(-5000, [5000]))).toBe(0);
+    expect(mainPartAmount(row(5000, [6000]))).toBe(-1000);
   });
 });

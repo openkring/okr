@@ -6,6 +6,18 @@ import { MoneyModel } from './money.model';
 export type BankImportRowStatus = 'unmapped' | 'mapped' | 'posted' | 'error';
 
 /**
+ * One further part of a split assignment ("Konto zuweisen" → Teilbetrag): its own Buchungstext,
+ * counter-account, VAT code and amount. `amount` is a positive magnitude in minor units of the
+ * row's currency; the sign comes from the row, like for the main part.
+ */
+export interface BankImportSplit {
+  title: string;
+  accountKey: string;
+  vatCodeKey: string;
+  amount: number;
+}
+
+/**
  * One parsed bank statement line in the import staging table (spec 1.60 §3.3).
  * Document id == `importKey` (SHA-256 of iban|date|amount|reference|normalized text|occurrence),
  * which is what makes overlapping downloads and re-runs safe. The posted booking has the id
@@ -32,6 +44,9 @@ export class BankImportRowModel implements OkrModel {
   public accountKey = '';                 // counter-account
   public vatCodeKey = '';
   public ruleKey = '';                    // '' = one-off assignment
+  // Further parts of a one-off split. The main part (title/accountKey/vatCodeKey) keeps the rest:
+  // |amount| − Σ splits. Empty = the whole amount goes to accountKey. Missing on legacy docs.
+  public splits: BankImportSplit[] = [];
   public status: BankImportRowStatus = 'unmapped';
   public bookingKey = '';
   public error = '';                      // error code, translated client-side

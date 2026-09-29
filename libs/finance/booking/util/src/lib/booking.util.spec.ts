@@ -1,7 +1,14 @@
 import { describe, it, expect } from 'vitest';
-import { BookingLineModel, BookingModel } from '@okr/shared-models';
+import { AvatarInfo, BookingLineModel, BookingModel } from '@okr/shared-models';
 import { bookingValidations } from './booking.validations';
 import {
+  addBookingPart,
+  isSplitBookingTitle,
+  removeBookingPart,
+  splitBookingTitle,
+  toAccountJournalRows,
+  withSplitTitle,
+  sideAccountKeys,
   bookingMonth,
   bookingYear,
   copyBooking,
@@ -127,6 +134,7 @@ describe('matchesJournalSearch', () => {
   const row: JournalRow = {
     booking: makeBooking(),
     okey: 'b1',
+    lineKey: '',
     date: '15.03.2026',
     year: 2026,
     creditAccount: '1020',
@@ -136,6 +144,7 @@ describe('matchesJournalSearch', () => {
     accountName: 'Mitgliederbeitrag',
     amount: '100.00',
     currency: 'CHF',
+    parts: [{ okey: '0', debitAccountId: '1020', debitAccountName: 'Bank', creditAccountId: '3407', creditAccountName: 'Spenden', text: 'Spende Jugend', amount: '100.00' }],
   };
 
   it('matches on empty term', () => {
@@ -149,6 +158,9 @@ describe('matchesJournalSearch', () => {
     expect(matchesJournalSearch(row, '100.00')).toBe(true);
     expect(matchesJournalSearch(row, '42')).toBe(true);
   });
+  it('matches the text of a split booking\'s parts', () => {
+    expect(matchesJournalSearch(row, 'jugend')).toBe(true);
+  });
   it('does not match unrelated terms', () => {
     expect(matchesJournalSearch(row, 'xyz')).toBe(false);
   });
@@ -158,7 +170,7 @@ describe('journalToRows', () => {
   it('prepends a header row and flattens the display columns', () => {
     const row: JournalRow = {
       booking: makeBooking(),
-      okey: 'b1', date: '15.03.2026', year: 2026,
+      okey: 'b1', lineKey: '', date: '15.03.2026', year: 2026, parts: [],
       creditAccount: '1020', debitAccount: '6000', creditAccountName: '', debitAccountName: '',
       accountName: 'Mitgliederbeitrag', amount: '100.00', currency: 'CHF',
     };
@@ -187,27 +199,51 @@ describe('linesToPairs / pairsToLines', () => {
 
   it('a two-line booking is one pair carrying fx and vat', () => {
     const lines = [line('a6000', 'debit', 10000, { vatCodeKey: 'VST', amountFx: { amount: 9000, currency: 'EUR', periodicity: 'one-time' } }), line('a1020', 'credit', 10000)];
-    expect(linesToPairs(lines)).toEqual([{ debitAccountKey: 'a6000', creditAccountKey: 'a1020', amount: 10000, amountFx: 9000, fxCurrency: 'EUR', vatCodeKey: 'VST', vatSide: 'debit' }]);
+    expect(linesToPairs(lines)).toEqual([{ debitAccountKey: 'a6000', creditAccountKey: 'a1020', amount: 10000, amountFx: 9000, fxCurrency: 'EUR', vatCodeKey: 'VST', vatSide: 'debit', description: '', descriptionSide: 'debit' }]);
   });
   it('a split booking is one pair per credit; an unbalanced one leaves an open pair', () => {
     expect(linesToPairs([line('a1020', 'debit', 10000), line('a3000', 'credit', 6000), line('a3001', 'credit', 4000)])).toEqual([
-      { debitAccountKey: 'a1020', creditAccountKey: 'a3000', amount: 6000, amountFx: 0, fxCurrency: 'EUR', vatCodeKey: '', vatSide: 'debit' },
-      { debitAccountKey: 'a1020', creditAccountKey: 'a3001', amount: 4000, amountFx: 0, fxCurrency: 'EUR', vatCodeKey: '', vatSide: 'debit' },
+      { debitAccountKey: 'a1020', creditAccountKey: 'a3000', amount: 6000, amountFx: 0, fxCurrency: 'EUR', vatCodeKey: '', vatSide: 'debit', description: '', descriptionSide: 'debit' },
+      { debitAccountKey: 'a1020', creditAccountKey: 'a3001', amount: 4000, amountFx: 0, fxCurrency: 'EUR', vatCodeKey: '', vatSide: 'debit', description: '', descriptionSide: 'debit' },
     ]);
     expect(linesToPairs([line('a1020', 'debit', 10000), line('a3000', 'credit', 6000)])).toEqual([
-      { debitAccountKey: 'a1020', creditAccountKey: 'a3000', amount: 6000, amountFx: 0, fxCurrency: 'EUR', vatCodeKey: '', vatSide: 'debit' },
-      { debitAccountKey: 'a1020', creditAccountKey: '', amount: 4000, amountFx: 0, fxCurrency: 'EUR', vatCodeKey: '', vatSide: 'debit' },
+      { debitAccountKey: 'a1020', creditAccountKey: 'a3000', amount: 6000, amountFx: 0, fxCurrency: 'EUR', vatCodeKey: '', vatSide: 'debit', description: '', descriptionSide: 'debit' },
+      { debitAccountKey: 'a1020', creditAccountKey: '', amount: 4000, amountFx: 0, fxCurrency: 'EUR', vatCodeKey: '', vatSide: 'debit', description: '', descriptionSide: 'debit' },
     ]);
   });
   it('pairsToLines merges the same account and side, debit lines first', () => {
     const lines = pairsToLines([
-      { debitAccountKey: 'a1020', creditAccountKey: 'a3000', amount: 6000, amountFx: 0, fxCurrency: 'EUR', vatCodeKey: '', vatSide: 'debit' },
-      { debitAccountKey: 'a1020', creditAccountKey: 'a3001', amount: 4000, amountFx: 0, fxCurrency: 'EUR', vatCodeKey: 'UST', vatSide: 'credit' },
+      { debitAccountKey: 'a1020', creditAccountKey: 'a3000', amount: 6000, amountFx: 0, fxCurrency: 'EUR', vatCodeKey: '', vatSide: 'debit', description: '', descriptionSide: 'debit' },
+      { debitAccountKey: 'a1020', creditAccountKey: 'a3001', amount: 4000, amountFx: 0, fxCurrency: 'EUR', vatCodeKey: 'UST', vatSide: 'credit', description: '', descriptionSide: 'debit' },
     ], 'bka', 'bka', 'b1');
     expect(lines.map(l => [l.accountKey, l.debitAmount?.amount, l.creditAmount?.amount, l.vatCodeKey, l.bookingKey])).toEqual([
       ['a1020', 10000, undefined, '', 'b1'], ['a3000', undefined, 6000, '', 'b1'], ['a3001', undefined, 4000, 'UST', 'b1'],
     ]);
     expect(lines[0].amountFx).toBeUndefined();
+  });
+  it('round-trips the texts of a split bank booking and keeps the bank line whole', () => {
+    // Gutschrift with processor fee: bank + fee debit, three counter parts credit, each with its text
+    const original = [
+      line('a1020', 'debit', 9700), line('a6941', 'debit', 300),
+      line('a3000', 'credit', 6000, { description: 'Beitrag' }),
+      line('a3610', 'credit', 3000, { description: 'Spende Jugend' }),
+      line('a3610', 'credit', 1000, { description: 'Spende Material' }),
+    ];
+    const back = pairsToLines(linesToPairs(original), 'bka', 'bka', 'k');
+    expect(back.map(l => [l.accountKey, l.debitAmount?.amount ?? l.creditAmount?.amount, l.description])).toEqual([
+      ['a1020', 9700, ''], ['a6941', 300, ''],
+      ['a3000', 6000, 'Beitrag'], ['a3610', 3000, 'Spende Jugend'], ['a3610', 1000, 'Spende Material'],
+    ]);
+  });
+  it('round-trips the texts of a split Lastschrift (text on the debit parts)', () => {
+    const original = [
+      line('a6570', 'debit', 9000, { description: 'Bexio' }), line('a6500', 'debit', 3975, { description: 'Anteil B' }),
+      line('a1020', 'credit', 12975),
+    ];
+    const pairs = linesToPairs(original);
+    expect(pairs.map(p => [p.description, p.descriptionSide])).toEqual([['Bexio', 'debit'], ['Anteil B', 'debit']]);
+    const back = pairsToLines(pairs, 'bka', 'bka', 'k');
+    expect(back.map(l => [l.accountKey, l.description])).toEqual([['a6570', 'Bexio'], ['a6500', 'Anteil B'], ['a1020', '']]);
   });
   it('round-trips a booking with fx', () => {
     const original = [line('a6000', 'debit', 10000, { amountFx: { amount: 9000, currency: 'EUR', periodicity: 'one-time' } }), line('a1020', 'credit', 10000, { amountFx: { amount: 9000, currency: 'EUR', periodicity: 'one-time' } })];
@@ -228,7 +264,7 @@ describe('linesToPairs / pairsToLines', () => {
 
 describe('bookingValidations', () => {
   const ok: BookingFormData = { okey: '', title: 'Miete', date: '20260101', notes: '', counterparty: undefined,
-    pairs: [{ debitAccountKey: 'a', creditAccountKey: 'b', amount: 100, amountFx: 0, fxCurrency: 'EUR', vatCodeKey: '', vatSide: 'debit' }] };
+    pairs: [{ debitAccountKey: 'a', creditAccountKey: 'b', amount: 100, amountFx: 0, fxCurrency: 'EUR', vatCodeKey: '', vatSide: 'debit', description: '', descriptionSide: 'debit' }] };
   it('accepts a complete booking and rejects a bad date, no pairs, an incomplete pair', () => {
     expect(bookingValidations(ok, '', '').isValid()).toBe(true);
     expect(bookingValidations({ ...ok, date: '2026-01-01' }, '', '').isValid()).toBe(false);
@@ -300,5 +336,95 @@ describe('copyBooking', () => {
     expect(booking.okey).toBe('b1');
     expect(booking.date).toBe('20250301');
     expect(lines[0].bookingKey).toBe('b1');
+  });
+});
+
+describe('split bookings', () => {
+  const ids = new Map([['k1020', '1020'], ['k3401', '3401'], ['k3407', '3407']]);
+  const names = new Map([['k1020', 'Bank'], ['k3401', 'Mitgliederbeiträge'], ['k3407', 'Spenden']]);
+  const line = (okey: string, accountKey: string, side: 'debit' | 'credit', amount: number, description = ''): BookingLineModel => {
+    const l = new BookingLineModel('t1', 'org1');
+    l.okey = okey; l.accountKey = accountKey; l.description = description;
+    if (side === 'debit') l.debitAmount = { amount, currency: 'CHF', periodicity: 'one-time' };
+    else l.creditAmount = { amount, currency: 'CHF', periodicity: 'one-time' };
+    return l;
+  };
+  // one bank payment: Mitgliederbeitrag + Spende
+  const lines = [line('l0', 'k1020', 'debit', 15000), line('l1', 'k3401', 'credit', 5000, 'Beitrag 2026'), line('l2', 'k3407', 'credit', 10000)];
+  const booking = makeBooking({ title: 'Sammelbuchung · Anna Muster' });
+
+  it('splitBookingTitle / isSplitBookingTitle', () => {
+    expect(splitBookingTitle('Sammelbuchung', ' Migros ')).toBe('Sammelbuchung · Migros');
+    expect(splitBookingTitle('Sammelbuchung')).toBe('Sammelbuchung');
+    expect(isSplitBookingTitle('Sammelbuchung · Migros', 'Sammelbuchung')).toBe(true);
+    expect(isSplitBookingTitle('Sammelbuchung', 'Sammelbuchung')).toBe(true);
+    expect(isSplitBookingTitle('Sammelbuchungen 2025', 'Sammelbuchung')).toBe(false);
+  });
+
+  it('toJournalRow lists a split booking as Soll/Haben parts without the bank line, none for a plain booking', () => {
+    const row = toJournalRow(booking, lines, ids, names);
+    expect(row.parts.map(p => [p.debitAccountId, p.creditAccountId, p.creditAccountName, p.text, p.amount])).toEqual([
+      ['1020', '3401', 'Mitgliederbeiträge', 'Beitrag 2026', '50.00'], ['1020', '3407', 'Spenden', '', '100.00'],
+    ]);
+    expect(toJournalRow(booking, lines.slice(0, 2), ids).parts).toEqual([]);
+  });
+
+  it('toAccountJournalRows shows only the lines on the account, with their own amount and text', () => {
+    const [donation] = toAccountJournalRows(booking, lines, 'k3407', ids, names);
+    expect(donation).toMatchObject({ okey: 'b1#l2', lineKey: 'l2', debitAccount: '1020', creditAccount: '3407', creditAccountName: 'Spenden', accountName: 'Sammelbuchung · Anna Muster', amount: '100.00', parts: [] });
+    expect(toAccountJournalRows(booking, lines, 'k3401', ids)[0]).toMatchObject({ accountName: 'Beitrag 2026', amount: '50.00' });
+    expect(toAccountJournalRows(booking, lines, 'k1020', ids)).toMatchObject([{ debitAccount: '1020', creditAccount: '3401, 3407', amount: '150.00' }]);
+    expect(toAccountJournalRows(booking, lines, 'kOther', ids)).toEqual([]);
+  });
+
+  it('sideAccountKeys lists the distinct accounts of one side in line order', () => {
+    expect(sideAccountKeys(lines, 'credit')).toEqual(['k3401', 'k3407']);
+    expect(sideAccountKeys(lines, 'debit')).toEqual(['k1020']);
+    expect(sideAccountKeys([...lines, line('l3', 'k3401', 'credit', 1)], 'credit')).toEqual(['k3401', 'k3407']);
+  });
+
+  it('toAccountJournalRows keeps a plain booking as one whole row', () => {
+    expect(toAccountJournalRows(booking, lines.slice(0, 2), 'k1020', ids)).toMatchObject([{ okey: 'b1', lineKey: '' }]);
+  });
+
+  const pair = (debit: string, credit: string, amount: number, description = '') => ({ ...emptyBookingPair(), debitAccountKey: debit, creditAccountKey: credit, amount, description });
+  const migros = { key: '', name1: '', name2: 'Migros', modelType: 'org', type: '', subType: '', label: 'Migros' } as AvatarInfo;
+  const data = (title: string, pairs: ReturnType<typeof pair>[], counterparty: AvatarInfo | undefined = migros): BookingFormData => ({ okey: '', title, date: '20260315', notes: '', counterparty, pairs });
+
+  it('addBookingPart moves the title onto the first part and names the booking after the counterparty', () => {
+    const split = addBookingPart(data('Migros Einkauf', [pair('k6500', 'k1020', 5000)]), 'Sammelbuchung');
+    expect(split.title).toBe('Sammelbuchung · Migros');
+    expect(split.pairs.map(p => p.description)).toEqual(['Migros Einkauf', '']);
+    // a part that already has its own text keeps it; a third row changes nothing else
+    expect(addBookingPart(data('X', [pair('a', 'b', 1, 'eigen')], undefined), 'S').pairs.map(p => p.description)).toEqual(['eigen', '']);
+    const third = addBookingPart(split, 'Sammelbuchung');
+    expect(third.title).toBe('Sammelbuchung · Migros');
+    expect(third.pairs.map(p => p.description)).toEqual(['Migros Einkauf', '', '']);
+  });
+
+  it('withSplitTitle follows the counterparty and leaves a one-part booking alone', () => {
+    const split = addBookingPart(data('Migros Einkauf', [pair('k6500', 'k1020', 5000)]), 'Sammelbuchung');
+    expect(withSplitTitle({ ...split, counterparty: undefined }, 'Sammelbuchung').title).toBe('Sammelbuchung');
+    const one = data('Einkauf', [pair('a', 'b', 1)]);
+    expect(withSplitTitle(one, 'Sammelbuchung')).toBe(one);
+    // a legacy split whose title is the text of the booking: the text moves onto the first part
+    const legacy = withSplitTitle(data('GS JB und Spende', [pair('k1020', 'k3401', 1), pair('k1020', 'k3407', 2)]), 'Sammelbuchung');
+    expect([legacy.title, legacy.pairs[0].description]).toEqual(['Sammelbuchung · Migros', 'GS JB und Spende']);
+  });
+
+  it('removeBookingPart restores the title when one part is left', () => {
+    const split = addBookingPart(data('Migros Einkauf', [pair('k6500', 'k1020', 5000)]), 'Sammelbuchung');
+    const back = removeBookingPart(split, 1, 'Sammelbuchung');
+    expect(back.title).toBe('Migros Einkauf');
+    expect(back.pairs.map(p => p.description)).toEqual(['']);
+    // a title the user changed by hand stays
+    expect(removeBookingPart({ ...split, title: 'Einkauf Juni' }, 1, 'Sammelbuchung').title).toBe('Einkauf Juni');
+  });
+
+  it('pairsToLines puts part texts on the parts, not on the shared bank line', () => {
+    const back = pairsToLines([pair('k1020', 'k3401', 5000, 'Beitrag'), pair('k1020', 'k3407', 10000, 'Spende')], 't1', 'org1', 'b1');
+    expect(back.map(l => [l.accountKey, l.debitAmount?.amount ?? l.creditAmount?.amount, l.description])).toEqual([
+      ['k1020', 15000, ''], ['k3401', 5000, 'Beitrag'], ['k3407', 10000, 'Spende'],
+    ]);
   });
 });

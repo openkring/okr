@@ -8,7 +8,8 @@
     "showCredit": "Show credit account",
     "showDebit": "Show debit account",
     "showCounterparty": "Show counterparty",
-    "noCounterparty": "This booking has no counterparty."
+    "noCounterparty": "This booking has no counterparty.",
+    "selectAccount": "Which account do you want to show?"
   },
   "cancel": {
     "label": "Cancel"
@@ -128,11 +129,14 @@
       "label": "VAT code"
     },
     "details": {
-      "toggle": "Foreign currency and VAT"
+      "toggle": "Foreign currency, VAT and swap accounts"
     },
     "line": {
       "add": "Add line",
-      "remove": "Remove line"
+      "remove": "Remove line",
+      "text": {
+        "label": "Line text"
+      }
     },
     "notes": {
       "label": "Notes",
@@ -147,5 +151,10 @@
     "date": "Please enter a valid date.",
     "pairsEmpty": "A booking needs at least one line.",
     "pairsIncomplete": "Every line needs a debit account, a different credit account and an amount greater than zero."
+  },
+  "split": {
+    "title": "Compound entry",
+    "expand": "Show the parts",
+    "collapse": "Hide the parts"
   }
 }

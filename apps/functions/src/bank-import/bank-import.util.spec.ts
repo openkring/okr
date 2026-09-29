@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildBankBookingHeader, buildBankBookingLines, feeAmountOf, hasFeeLine, buildJournalBookingHeader, buildJournalBookingLines, fiscalYear, JournalEntry, periodKeyFor, RowDoc } from './bank-import.util';
+import { buildBankBookingHeader, buildBankBookingLines, feeAmountOf, hasFeeLine, isValidSplit, mainPartAmountOf, buildJournalBookingHeader, buildJournalBookingLines, fiscalYear, JournalEntry, periodKeyFor, RowDoc } from './bank-import.util';
 
 const row = (p: Partial<RowDoc>): RowDoc => ({
   importKey: 'k', date: '20250714', rawText: 'KAUF BEXIO AG', payee: 'BEXIO AG', title: 'Bexio', accountKey: '6570', vatCodeKey: 'VST',
@@ -112,6 +112,13 @@ describe('buildBankBookingHeader', () => {
   it('no payee → no counterparty', () => {
     expect(buildBankBookingHeader(row({ payee: '' }), 'bkg', 'bkg-2025')).not.toHaveProperty('counterparty');
   });
+  it('a split row gets the split main name with the payee; its own text stays on the first part', () => {
+    const split = row({ splits: [{ title: 'Anteil B', accountKey: '6500', amount: 3975 }] });
+    expect(buildBankBookingHeader(split, 'bkg', 'bkg-2025')['title']).toBe('Sammelbuchung · BEXIO AG');
+    expect(buildBankBookingHeader(split, 'bkg', 'bkg-2025', 'Compound entry')['title']).toBe('Compound entry · BEXIO AG');
+    expect(buildBankBookingHeader({ ...split, payee: '' }, 'bkg', 'bkg-2025', ' ')['title']).toBe('Sammelbuchung');
+    expect(buildBankBookingLines(split, profile, 'bkg', 'b')[0]).toMatchObject({ accountKey: '6570', description: 'Bexio' });
+  });
 });
 
 describe('journal import builders', () => {
@@ -136,5 +143,51 @@ describe('journal import builders', () => {
     });
     expect(buildJournalBookingHeader({ ...entry, title: '' }, 'bka', 'bka', 'p', 'k').title).toBe('Manuelle Buchung 354 ()');
     expect(buildJournalBookingHeader({ ...entry, title: '', reference: '' }, 'bka', 'bka', 'p', 'k').title).toBe('k');
+  });
+});
+
+describe('split assignment', () => {
+  const parts = [
+    { title: 'Anteil Ressort B', accountKey: '6500', vatCodeKey: '', amount: 3000 },
+    { title: 'Anteil Ressort C', accountKey: '6510', vatCodeKey: 'VST', amount: 975 },
+  ];
+
+  it('Lastschrift: main part takes the rest, every part is its own debit line with its Buchungstext', () => {
+    const lines = buildBankBookingLines(row({ splits: parts }), profile, 'bkg', 'bank-k');
+    expect(lines).toHaveLength(4);
+    expect(lines[0]).toMatchObject({ accountKey: '6570', debitAmount: { amount: 9000 }, vatCodeKey: 'VST', description: 'Bexio' });
+    expect(lines[1]).toMatchObject({ accountKey: '6500', debitAmount: { amount: 3000 }, description: 'Anteil Ressort B' });
+    expect(lines[1]).not.toHaveProperty('vatCodeKey');
+    expect(lines[2]).toMatchObject({ accountKey: '6510', debitAmount: { amount: 975 }, vatCodeKey: 'VST', description: 'Anteil Ressort C' });
+    expect(lines[3]).toMatchObject({ accountKey: '1020', creditAmount: { amount: 12975 } });
+  });
+  it('Gutschrift with a processor fee: the parts split the gross, the fee stays on the bank side', () => {
+    const lines = buildBankBookingLines(
+      row({ amount: { amount: 10000, currency: 'CHF' }, fee: { amount: 300, currency: 'CHF' }, splits: [{ title: 'Spende Jugend', accountKey: '3610', amount: 4000 }] }),
+      { ...profile, feeAccountKey: '6941' }, 'bkg', 'bank-k');
+    expect(lines.map(l => l['accountKey'])).toEqual(['1020', '6941', '6570', '3610']);
+    expect(lines[0]).toMatchObject({ debitAmount: { amount: 9700 } });
+    expect(lines[2]).toMatchObject({ creditAmount: { amount: 6000 }, description: 'Bexio' });
+    expect(lines[3]).toMatchObject({ creditAmount: { amount: 4000 }, description: 'Spende Jugend' });
+  });
+  it('leaves amountFx off the counter lines of a split (no foreign amount per part)', () => {
+    const lines = buildBankBookingLines(row({ amountFx: { amount: -14000, currency: 'EUR' }, splits: parts }), profile, 'bkg', 'bank-k');
+    expect(lines[0]).not.toHaveProperty('amountFx');
+    expect(lines[3]).toHaveProperty('amountFx');
+  });
+  it('without splits (or on a legacy row with none) the lines carry no description', () => {
+    for (const r of [row({}), row({ splits: [] }), row({ splits: null })]) {
+      expect(buildBankBookingLines(r, profile, 'bkg', 'bank-k').some(l => 'description' in l)).toBe(false);
+    }
+  });
+  it('isValidSplit: complete parts and a positive rest for the main part', () => {
+    expect(isValidSplit(row({}))).toBe(true);
+    expect(isValidSplit(row({ splits: parts }))).toBe(true);
+    expect(mainPartAmountOf(row({ splits: parts }))).toBe(9000);
+    expect(isValidSplit(row({ splits: [{ ...parts[0], title: ' ' }] }))).toBe(false);
+    expect(isValidSplit(row({ splits: [{ ...parts[0], accountKey: '' }] }))).toBe(false);
+    expect(isValidSplit(row({ splits: [{ ...parts[0], amount: 0 }] }))).toBe(false);
+    expect(isValidSplit(row({ splits: [{ ...parts[0], amount: 12.5 }] }))).toBe(false);
+    expect(isValidSplit(row({ splits: [{ ...parts[0], amount: 12975 }] }))).toBe(false);
   });
 });

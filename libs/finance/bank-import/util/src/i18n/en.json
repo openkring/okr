@@ -43,6 +43,7 @@
       "profileMissing": "The bank profile for this line was not found.",
       "unbalanced": "The entry is not balanced.",
       "feeExceedsAmount": "The fee is equal to or higher than the amount — the row was not posted.",
+      "splitInvalid": "The split is incomplete or the parts are too high.",
       "unknown": "The line could not be posted."
     }
   },
@@ -62,6 +63,8 @@
   "title": { "label": "Booking text", "placeholder": "e.g. Google Cloud GCP, Dublin", "helper": "This is how the entry appears in the journal." },
   "account": { "label": "Counter account", "helper": "The expense or income account for this one line. No rule is created." },
   "vat": { "label": "VAT code (optional)", "helper": "Noted on the counter account line." },
+  "split": {"heading": "Split across further accounts", "intro": "Split the amount if it concerns several accounts. Each part gets its own booking text. The counter account above receives whatever is left.", "add": "Add part", "remove": "Remove part", "amount": "Amount", "rest": "Rest for the counter account above", "bookingTitle": "Compound entry"},
+  "validation": {"splitIncomplete": "Every part needs a booking text, a counter account and an amount greater than zero.", "splitExceeds": "Together the parts are as high as the whole amount or higher. A rest must remain for the counter account above."},
   "changeConfirmation": { "cancel": "Discard", "ok": "Save" },
   "journal": {
     "label": "Import bexio journal",

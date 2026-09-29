@@ -107,6 +107,7 @@ export const BankImportStore = signalStore(
         'not-mapped': store.i18n.post_error_not_mapped, 'period-locked': store.i18n.post_error_period_locked,
         'account-invalid': store.i18n.post_error_account_invalid, 'profile-missing': store.i18n.post_error_profile_missing,
         'unbalanced': store.i18n.post_error_unbalanced, 'fee-exceeds-amount': store.i18n.post_error_fee_exceeds_amount,
+        'split-invalid': store.i18n.post_error_split_invalid,
       };
       return (map[code] ?? store.i18n.post_error_unknown)();
     },
@@ -223,7 +224,7 @@ export const BankImportStore = signalStore(
       try {
         const total: PostBankImportResult = { posted: 0, failed: [] };
         for (let i = 0; i < keys.length; i += 100) {
-          const res = await store.rowService.postViaFunction({ accountingTenantId: store.accountingTenantId(), rowKeys: keys.slice(i, i + 100) });
+          const res = await store.rowService.postViaFunction({ accountingTenantId: store.accountingTenantId(), rowKeys: keys.slice(i, i + 100), splitTitle: store.i18n.split_booking_title() });
           total.posted += res.posted;
           total.failed.push(...res.failed);
         }

@@ -1,4 +1,4 @@
-import { BankImportRowModel, MoneyModel } from '@okr/shared-models';
+import { BankImportRowModel, BankImportSplit, MoneyModel } from '@okr/shared-models';
 
 import { ParsedStatement } from './types';
 
@@ -53,4 +53,24 @@ export function toImportRows(s: ParsedStatement, keys: string[], ctx: ImportCont
 export function withFee(row: BankImportRowModel): BankImportRowModel {
   if (row.fee) return row;
   return { ...row, fee: new MoneyModel(0, row.amount?.currency ?? 'CHF') };
+}
+
+/** Same read-side repair as `withFee`: rows written before split assignments have no `splits`. */
+export function withSplits(row: BankImportRowModel): BankImportRowModel {
+  if (Array.isArray(row.splits)) return row;
+  return { ...row, splits: [] };
+}
+
+export function emptyBankImportSplit(): BankImportSplit {
+  return { title: '', accountKey: '', vatCodeKey: '', amount: 0 };
+}
+
+/**
+ * What is left for the main part (title/accountKey/vatCodeKey) of a split assignment, as a magnitude
+ * in minor units: the gross amount minus every further part. The counter side is always gross — a
+ * processor fee is taken from the bank side (spec 1.62 §5), so it does not reduce what can be split.
+ */
+export function mainPartAmount(row: BankImportRowModel): number {
+  const parts = (row.splits ?? []).reduce((sum, s) => sum + (s.amount || 0), 0);
+  return Math.abs(row.amount?.amount ?? 0) - parts;
 }

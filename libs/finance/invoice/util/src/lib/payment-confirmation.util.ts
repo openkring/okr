@@ -1,7 +1,7 @@
 import { AddressModel, InvoiceModel } from '@okr/shared-models';
 import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
 
-import { buildReceiptPayload, ReceiptParty } from '@okr/finance-booking-util';
+import { buildRecipientPayload, formatChf, ReceiptParty } from '@okr/finance-booking-util';
 
 /** `templates/{id}` rendered by the 'Zahlungsbestätigung erstellen' action. Must have a published version. */
 export const PAYMENT_CONFIRMATION_TEMPLATE_ID = 'r9poptz0k6fw5rq56v0w';
@@ -32,11 +32,10 @@ export function buildPaymentConfirmationPayload(
   party: ReceiptParty,
   address: AddressModel,
 ): Record<string, string> {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { date, ...recipient } = buildReceiptPayload(party, address, invoice.totalAmount?.amount ?? 0, invoice.paymentDate);
   return {
     ...PAYMENT_CONFIRMATION_STATIC_PAYLOAD,
-    ...recipient,
+    ...buildRecipientPayload(party, address),
+    amount: formatChf(invoice.totalAmount?.amount ?? 0),
     invoiceId: invoice.invoiceId,
     invoiceTitle: invoice.title,
     invoiceDate: toViewDate(invoice.invoiceDate),

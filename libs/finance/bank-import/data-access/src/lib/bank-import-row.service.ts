@@ -11,9 +11,10 @@ import { BankImportRowCollection, BankImportRowModel, UserModel } from '@okr/sha
 import { getSystemQuery, removeKeyFromOkrModel, removeUndefinedFields } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
 
-import { BANK_IMPORT_I18N_KEYS, PostJournalImportPayload, PostJournalImportResult, withFee } from '@okr/finance-bank-import-util';
+import { BANK_IMPORT_I18N_KEYS, PostJournalImportPayload, PostJournalImportResult, withFee, withSplits } from '@okr/finance-bank-import-util';
 
-export interface PostBankImportPayload { accountingTenantId: string; rowKeys?: string[]; }
+/** `splitTitle`: base main name of a split booking in the user's language, e.g. 'Sammelbuchung'. */
+export interface PostBankImportPayload { accountingTenantId: string; rowKeys?: string[]; splitTitle?: string; }
 export interface PostBankImportResult { posted: number; failed: { rowKey: string; reason: string }[]; }
 
 @Injectable({ providedIn: 'root' })
@@ -37,7 +38,7 @@ export class BankImportRowService {
   public list(accountingTenantId: string): Observable<BankImportRowModel[]> {
     return this.firestoreService
       .searchData<BankImportRowModel>(BankImportRowCollection, this.query(accountingTenantId), 'date', 'desc')
-      .pipe(map(rows => rows.map(row => withFee(row))));
+      .pipe(map(rows => rows.map(row => withSplits(withFee(row)))));
   }
 
   /** Which of the given import keys already exist (any status). Firestore `in` takes ≤ 30 values. */

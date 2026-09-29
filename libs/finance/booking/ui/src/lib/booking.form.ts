@@ -1,6 +1,6 @@
 import { Component, computed, effect, input, model, output, signal } from '@angular/core';
 import { form } from '@angular/forms/signals';
-import { IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonNote, IonRow } from '@ionic/angular/standalone';
+import { IonAvatar, IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonImg, IonItem, IonLabel, IonNote, IonRow } from '@ionic/angular/standalone';
 
 import { AccountModel, AvatarInfo, RoleName, UserModel, VatCodeModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
@@ -8,13 +8,16 @@ import { AmountInput, AmountInputI18n, DateInput, DateInputI18n, ErrorNote, Note
 import { validateVestTree } from '@okr/shared-util-angular';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 
+import { AvatarPipe } from '@okr/avatar-ui';
 import { AccountSelect, AccountSelectI18n } from '@okr/finance-account-ui';
-import { BookingFormData, BookingI18n, BookingPair, bookingValidations, emptyBookingPair, formatMinorAmount, pairsTotal } from '@okr/finance-booking-util';
+import { addBookingPart, BOOKING_LINE_TEXT_LENGTH, BookingFormData, BookingI18n, BookingPair, bookingValidations, counterpartyLabel, formatMinorAmount, pairsTotal, removeBookingPart, withSplitTitle } from '@okr/finance-booking-util';
 
 /**
- * The booking form: date, name, counterparty, then one row per debit/credit pair
- * (Haben-Konto · Soll-Konto · Betrag). Foreign currency and VAT sit behind the row's detail
- * toggle — rarely used, so they do not widen the row. Amounts are edited in major units and
+ * The booking form: date, name, counterparty, then one card per debit/credit pair
+ * (Soll-Konto · Haben-Konto · [Text] · Betrag). A split booking (more than one pair) is named
+ * 'Sammelbuchung · <Gegenpartei>' (read-only) and each part gets its own text field. Foreign
+ * currency, VAT and the account swap sit behind the card's detail toggle — rarely used, so they do
+ * not widen the row. Amounts are edited in major units and
  * stored in minor units. The counterparty picker lives in the parent (feature layer).
  */
 @Component({
@@ -22,11 +25,14 @@ import { BookingFormData, BookingI18n, BookingPair, bookingValidations, emptyBoo
   standalone: true,
   imports: [
     SvgIconPipe, DateInput, TextInput, AmountInput, StringSelect, NotesInput, ErrorNote, AccountSelect,
-    IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonButton, IonIcon, IonItem, IonLabel, IonNote,
+    IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonButton, IonIcon, IonItem, IonLabel, IonNote, IonAvatar, IonImg, AvatarPipe,
   ],
   styles: [`
     @media (width <= 600px) { ion-card { margin: 5px;} }
-    .line-header ion-col { font-size: 0.8rem; color: var(--ion-color-medium); padding-left: 1rem; }
+    .line-header, .line-footer { margin: 0 10px; }
+    .line-header ion-col { font-size: 0.8rem; color: var(--ion-color-medium); padding-left: 1rem; padding-bottom: 0; }
+    ion-card.line-card { margin-top: 4px; margin-bottom: 4px; }
+    @media (width <= 600px) { .line-header, .line-footer { margin: 0 5px; } }
     .line-tools { display: flex; justify-content: flex-end; gap: 0.25rem; }
     .line-tools ion-button { --padding-start: 4px; --padding-end: 4px; }
     .line-tools ion-icon { font-size: 1.3rem; }
@@ -34,6 +40,7 @@ import { BookingFormData, BookingI18n, BookingPair, bookingValidations, emptyBoo
     .total { text-align: end; font-weight: 600; padding: 0.5rem 1rem; }
     .counterparty { --min-height: 44px; }
     .counterparty ion-note { font-size: 0.75rem; }
+    .counterparty ion-avatar { width: 32px; height: 32px; }
   `],
   template: `
     @if (showForm()) {
@@ -47,7 +54,8 @@ import { BookingFormData, BookingI18n, BookingPair, bookingValidations, emptyBoo
                   <okr-error-note [errors]="dateErrors()" />
                 </ion-col>
                 <ion-col size="12" size-md="8">
-                  <okr-text-input [i18n]="nameI18n()" [value]="title()" (valueChange)="onFieldChange('title', $event)" [autofocus]="true" [maxLength]="100" [readOnly]="isReadOnly()" />
+                  <!-- a split booking is named after its counterparty ('Sammelbuchung · Migros'), not typed -->
+                  <okr-text-input [i18n]="nameI18n()" [value]="title()" (valueChange)="onFieldChange('title', $event)" [autofocus]="!isSplit()" [maxLength]="100" [readOnly]="isReadOnly() || isSplit()" />
                   <okr-error-note [errors]="titleErrors()" />
                 </ion-col>
               </ion-row>
@@ -55,6 +63,10 @@ import { BookingFormData, BookingI18n, BookingPair, bookingValidations, emptyBoo
                 <ion-col size="12">
                   <!-- the counterparty is optional and rarely edited: one quiet line, not a card -->
                   <ion-item lines="none" class="counterparty">
+                    <!-- the avatar shows the counterparty is linked to a person/org record, not just a name from the bank file -->
+                    @if (counterpartyAvatarKey(); as avatarKey) {
+                      <ion-avatar slot="start"><ion-img src="{{ avatarKey | avatar }}" alt="" /></ion-avatar>
+                    }
                     <ion-label>
                       <ion-note>{{ i18n().form_counterparty_label() }}</ion-note>
                       <div>{{ counterpartyName() || '—' }}</div>
@@ -76,34 +88,37 @@ import { BookingFormData, BookingI18n, BookingPair, bookingValidations, emptyBoo
           </ion-card-content>
         </ion-card>
 
-        <ion-card>
-          <ion-card-content class="ion-no-padding">
-            <ion-grid>
-              <ion-row class="line-header ion-hide-sm-down">
-                <ion-col size-md="4">{{ i18n().form_debit_label() }}</ion-col>
-                <ion-col size-md="1"></ion-col>
-                <ion-col size-md="4">{{ i18n().form_credit_label() }}</ion-col>
-                <ion-col size-md="2">{{ i18n().form_amount_label() }}</ion-col>
-                <ion-col size-md="1"></ion-col>
-              </ion-row>
-              @for (pair of pairs(); track $index; let i = $index) {
+        <!-- the Soll/Haben/Text/Betrag heads of the line cards below (md+ only; a phone stacks the fields) -->
+        <ion-grid class="line-header ion-hide-sm-down">
+          <ion-row>
+            <ion-col [sizeMd]="accountColMd()">{{ i18n().form_debit_label() }}</ion-col>
+            <ion-col [sizeMd]="accountColMd()">{{ i18n().form_credit_label() }}</ion-col>
+            @if (isSplit()) { <ion-col size-md="3">{{ i18n().form_line_text_label() }}</ion-col> }
+            <ion-col [sizeMd]="amountColMd()">{{ i18n().form_amount_label() }}</ion-col>
+            <ion-col size-md="1"></ion-col>
+          </ion-row>
+        </ion-grid>
+        @for (pair of pairs(); track $index; let i = $index) {
+          <ion-card class="line-card">
+            <ion-card-content class="ion-no-padding">
+              <ion-grid>
                 <ion-row class="ion-align-items-center">
-                  <ion-col size="12" size-md="4">
+                  <ion-col size="12" [sizeMd]="accountColMd()">
                     <okr-account-select [i18n]="debitI18n()" [accounts]="accounts()" [allowEmpty]="false" [compact]="true"
                       [selectedKey]="pair.debitAccountKey" (selectedKeyChange)="onPairChange(i, 'debitAccountKey', $event)" [readOnly]="isReadOnly()" />
                   </ion-col>
-                  <ion-col size="12" size-md="1" class="ion-text-center">
-                    @if (!isReadOnly()) {
-                      <ion-button fill="clear" size="small" (click)="swapAccounts(i)" [title]="i18n().form_swap()">
-                        <ion-icon slot="icon-only" src="{{ 'swap-horizontal' | svgIcon }}" />
-                      </ion-button>
-                    }
-                  </ion-col>
-                  <ion-col size="12" size-md="4">
+                  <ion-col size="12" [sizeMd]="accountColMd()">
                     <okr-account-select [i18n]="creditI18n()" [accounts]="accounts()" [allowEmpty]="false" [compact]="true"
                       [selectedKey]="pair.creditAccountKey" (selectedKeyChange)="onPairChange(i, 'creditAccountKey', $event)" [readOnly]="isReadOnly()" />
                   </ion-col>
-                  <ion-col size="8" size-md="2">
+                  <!-- a split booking's name is generated: each part carries its own text -->
+                  @if (isSplit()) {
+                    <ion-col size="12" size-md="3">
+                      <okr-text-input [i18n]="lineTextI18n()" [value]="pair.description" (valueChange)="onPairChange(i, 'description', $event)"
+                        [maxLength]="lineTextLength" [readOnly]="isReadOnly()" />
+                    </ion-col>
+                  }
+                  <ion-col size="8" [sizeMd]="amountColMd()">
                     <okr-amount-input [i18n]="amountI18n()" [value]="pair.amount" (valueChange)="onPairChange(i, 'amount', $event)" [readOnly]="isReadOnly()" />
                   </ion-col>
                   <ion-col size="4" size-md="1">
@@ -111,7 +126,7 @@ import { BookingFormData, BookingI18n, BookingPair, bookingValidations, emptyBoo
                       <ion-button fill="clear" size="small" (click)="toggleDetails(i)" [title]="i18n().form_details_toggle()">
                         <ion-icon slot="icon-only" src="{{ (isExpanded(i) ? 'chevron-up' : 'chevron-down') | svgIcon }}" />
                       </ion-button>
-                      @if (!isReadOnly() && pairs().length > 1) {
+                      @if (!isReadOnly() && isSplit()) {
                         <ion-button fill="clear" size="small" color="danger" (click)="removePair(i)" [title]="i18n().form_line_remove()">
                           <ion-icon slot="icon-only" src="{{ 'trash' | svgIcon }}" />
                         </ion-button>
@@ -121,10 +136,17 @@ import { BookingFormData, BookingI18n, BookingPair, bookingValidations, emptyBoo
                 </ion-row>
                 @if (isExpanded(i)) {
                   <ion-row class="details-row ion-align-items-center">
-                    <ion-col size="12" size-md="5">
-                      <okr-amount-input [i18n]="fxAmountI18n()" [value]="pair.amountFx" (valueChange)="onPairChange(i, 'amountFx', $event)" [readOnly]="isReadOnly()" />
+                    <ion-col size="12" size-md="1" class="ion-text-center">
+                      @if (!isReadOnly()) {
+                        <ion-button fill="clear" size="small" (click)="swapAccounts(i)" [title]="i18n().form_swap()">
+                          <ion-icon slot="icon-only" src="{{ 'swap-horizontal' | svgIcon }}" />
+                        </ion-button>
+                      }
                     </ion-col>
                     <ion-col size="12" size-md="4">
+                      <okr-amount-input [i18n]="fxAmountI18n()" [value]="pair.amountFx" (valueChange)="onPairChange(i, 'amountFx', $event)" [readOnly]="isReadOnly()" />
+                    </ion-col>
+                    <ion-col size="12" size-md="3">
                       <okr-text-input [i18n]="fxCurrencyI18n()" [value]="pair.fxCurrency" (valueChange)="onPairChange(i, 'fxCurrency', $event.toUpperCase())" [maxLength]="3" [readOnly]="isReadOnly()" />
                     </ion-col>
                     <ion-col size="12" size-md="4">
@@ -133,21 +155,23 @@ import { BookingFormData, BookingI18n, BookingPair, bookingValidations, emptyBoo
                     </ion-col>
                   </ion-row>
                 }
+              </ion-grid>
+            </ion-card-content>
+          </ion-card>
+        }
+        <ion-grid class="line-footer">
+          <ion-row class="ion-align-items-center">
+            <ion-col size="6">
+              @if (!isReadOnly()) {
+                <ion-button fill="clear" size="small" (click)="addPair()">
+                  <ion-icon slot="start" src="{{ 'add' | svgIcon }}" />{{ i18n().form_line_add() }}
+                </ion-button>
               }
-              <ion-row class="ion-align-items-center">
-                <ion-col size="6">
-                  @if (!isReadOnly()) {
-                    <ion-button fill="clear" size="small" (click)="addPair()">
-                      <ion-icon slot="start" src="{{ 'add' | svgIcon }}" />{{ i18n().form_line_add() }}
-                    </ion-button>
-                  }
-                </ion-col>
-                <ion-col size="6" class="total">{{ i18n().form_total_label() }}: {{ total() }}</ion-col>
-              </ion-row>
-            </ion-grid>
-            <okr-error-note [errors]="pairsErrors()" />
-          </ion-card-content>
-        </ion-card>
+            </ion-col>
+            <ion-col size="6" class="total">{{ i18n().form_total_label() }}: {{ total() }}</ion-col>
+          </ion-row>
+          <okr-error-note [errors]="pairsErrors()" />
+        </ion-grid>
 
         @if (hasRole('treasurer')) {
           <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
@@ -184,8 +208,17 @@ export class BookingForm {
   protected readonly title = computed(() => this.formData()?.title ?? '');
   protected readonly notes = computed(() => this.formData()?.notes ?? '');
   protected readonly counterparty = computed(() => this.formData()?.counterparty);
-  protected readonly counterpartyName = computed(() => { const c = this.counterparty(); return c ? (c.label || `${c.name1} ${c.name2}`.trim()) : ''; });
+  protected readonly counterpartyName = computed(() => counterpartyLabel(this.counterparty()));
+  /** 'person.<okey>' / 'org.<okey>' once the counterparty is linked to a record; '' for a bare name (e.g. a bank payee). */
+  protected readonly counterpartyAvatarKey = computed(() => {
+    const c = this.counterparty();
+    return c?.key && (c.modelType === 'person' || c.modelType === 'org') ? `${c.modelType}.${c.key}` : '';
+  });
   protected readonly pairs = computed(() => this.formData()?.pairs ?? []);
+  protected readonly isSplit = computed(() => this.pairs().length > 1);
+  // md+ column widths of a line card: a split makes room for the part's text
+  protected readonly accountColMd = computed(() => this.isSplit() ? '3' : '4');
+  protected readonly amountColMd = computed(() => this.isSplit() ? '2' : '3');
   protected readonly total = computed(() => formatMinorAmount(pairsTotal(this.pairs())));
 
   protected readonly dateErrors = computed(() => this.bookingForm.date().errors().map(e => e.message ?? ''));
@@ -202,8 +235,12 @@ export class BookingForm {
   protected readonly amountI18n = computed(() => ({ name: 'amount', placeholder: this.i18n().form_amount_placeholder() } as AmountInputI18n));
   protected readonly fxAmountI18n = computed(() => ({ name: 'amountFx', label: this.i18n().form_fx_amount_label(), placeholder: this.i18n().form_fx_amount_placeholder() } as AmountInputI18n));
   protected readonly fxCurrencyI18n = computed(() => ({ name: 'fxCurrency', label: this.i18n().form_fx_currency_label(), placeholder: 'EUR', helper: '' } as TextInputI18n));
+  protected readonly lineTextI18n = computed(() => ({ name: 'description', label: this.i18n().form_line_text_label(), placeholder: '', helper: '' } as TextInputI18n));
   protected readonly vatI18n = computed(() => ({ name: 'vatCodeKey', label: this.i18n().form_vat_label(), helper: '' } as StringSelectI18n));
   protected readonly notesI18n = computed(() => ({ name: 'notes', label: this.i18n().form_notes_label(), placeholder: this.i18n().form_notes_placeholder() } as NotesInputI18n));
+
+  /** kept in step with the cap writeBooking applies to a line text */
+  protected readonly lineTextLength = BOOKING_LINE_TEXT_LENGTH;
 
   protected isExpanded(i: number): boolean { return this.expanded().has(i); }
   protected toggleDetails(i: number): void {
@@ -212,7 +249,8 @@ export class BookingForm {
 
   protected onFieldChange(fieldName: 'date' | 'title' | 'notes' | 'counterparty', fieldValue: string | AvatarInfo | undefined): void {
     this.dirty.emit(true);
-    this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
+    // a split booking's name follows its counterparty
+    this.formData.update((vm) => withSplitTitle({ ...vm, [fieldName]: fieldValue }, this.i18n().split_title()));
   }
 
   protected onPairChange(index: number, field: keyof BookingPair, value: string | number): void {
@@ -224,18 +262,24 @@ export class BookingForm {
   protected swapAccounts(index: number): void {
     this.dirty.emit(true);
     this.formData.update((vm) => ({ ...vm, pairs: vm.pairs.map((p, i) => i === index
-      ? { ...p, debitAccountKey: p.creditAccountKey, creditAccountKey: p.debitAccountKey, vatSide: p.vatSide === 'debit' ? 'credit' : 'debit' }
+      ? { ...p, debitAccountKey: p.creditAccountKey, creditAccountKey: p.debitAccountKey, vatSide: p.vatSide === 'debit' ? 'credit' : 'debit',
+          descriptionSide: p.descriptionSide === 'debit' ? 'credit' : 'debit' }
       : p) }));
   }
 
+  /**
+   * The second row turns the booking into a split: its text moves onto the first part and the
+   * booking gets the main name 'Sammelbuchung · <Gegenpartei>'.
+   */
   protected addPair(): void {
     this.dirty.emit(true);
-    this.formData.update((vm) => ({ ...vm, pairs: [...vm.pairs, emptyBookingPair()] }));
+    this.formData.update((vm) => addBookingPart(vm, this.i18n().split_title()));
   }
 
   protected removePair(index: number): void {
     this.dirty.emit(true);
-    this.formData.update((vm) => ({ ...vm, pairs: vm.pairs.filter((_, i) => i !== index) }));
+    this.expanded.set(new Set());
+    this.formData.update((vm) => removeBookingPart(vm, index, this.i18n().split_title()));
   }
 
   protected hasRole(role: RoleName): boolean {
