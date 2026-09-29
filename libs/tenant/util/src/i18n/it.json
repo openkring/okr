@@ -152,6 +152,9 @@
     },
     "battleship": {
       "label": "Battaglia navale"
+    },
+    "jasstafel": {
+      "label": "Lavagna del Jass"
     }
   },
   "picker": {

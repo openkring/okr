@@ -2572,6 +2572,28 @@ const battleship: FeatureBlock = {
 };
 
 /**
+ * `libs/games/jasstafel` — `JasstafelPage` + `JasstafelStore` at `/jasstafel`, over the pure
+ * `@okr/games-jasstafel-util` (Schieber, Büter, Coiffeur, Differenzler scoring).
+ *
+ * A scoreboard for a real card game on one device. Running game, settings and the last 20
+ * finished games live in `localStorage` — no service, no Firestore, hence `collections: []`.
+ *
+ * `defaultAvailability: 'ga'`, like `muehle`: nothing tenant-side to configure.
+ */
+const jasstafel: FeatureBlock = {
+  id: 'jasstafel',
+  bundle: 'games',
+  label: '@tenant/util.feature.jasstafel.label',
+  icon: 'chart',
+  defaultAvailability: 'ga',
+  dependsOn: ['games'],
+  collections: [],
+  menu: [gamesMenuParent([
+    { key: 'game-jasstafel', name: 'game-jasstafel', url: '/jasstafel', action: 'navigate', roleNeeded: 'registered', icon: 'chart', label: '@item.game-jasstafel' },
+  ])],
+};
+
+/**
  * Every feature block's METADATA the platform ships. Adding a block here is HALF of what
  * makes a feature reachable — the matching Angular route fragment must also be added to
  * `FEATURE_ROUTES` in `@okr/tenant-routes` (`feature-catalogue.ts`), joined by `id`.
@@ -2742,7 +2764,7 @@ const weather: FeatureBlock = {
 };
 
 export const FEATURE_BLOCKS: FeatureBlock[] = [
-  calevent, aoc, activity, task, instruments, games, quiz, zip, hearingQuiz, muehle, battleship,
+  calevent, aoc, activity, task, instruments, games, quiz, zip, hearingQuiz, muehle, battleship, jasstafel,
   auth, cms, user, profile, session, security, i18n, avatar, category, comment, geo, trip, consent,
   subject, relationship, vcard,
   resource, mobility,

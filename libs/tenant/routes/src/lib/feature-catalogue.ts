@@ -1216,6 +1216,19 @@ const battleship: BlockRoutes = {
 };
 
 /**
+ * `/jasstafel` — Jasstafel in `libs/games/jasstafel`. `localStorage` only, no
+ * `:contextMenuName` segment — the same shape as `/zip`.
+ */
+const jasstafel: BlockRoutes = {
+  id: 'jasstafel',
+  routes: (): Route[] => [{
+    path: 'jasstafel',
+    canActivate: [isAuthenticatedGuard],
+    loadComponent: () => import('@okr/games-jasstafel-feature').then(m => m.JasstafelPage),
+  }],
+};
+
+/**
  * `/hearing-quiz` — Hörtraining (spec 1.64). The tree page follows the list convention
  * (`:listId/:contextMenuName`, listId always `all`); the two exercise routes come FIRST because
  * they have the same segment count and would otherwise be swallowed by the list route.
@@ -1350,7 +1363,7 @@ const weather: BlockRoutes = {
 };
 
 export const FEATURE_ROUTES: BlockRoutes[] = [
-  calevent, aoc, activity, task, instruments, games, quiz, zip, hearingQuiz, muehle, battleship,
+  calevent, aoc, activity, task, instruments, games, quiz, zip, hearingQuiz, muehle, battleship, jasstafel,
   auth, cms, user, profile, session, security, i18n, avatar, category, comment, geo, trip, consent,
   subject, relationship, vcard,
   resource, mobility,

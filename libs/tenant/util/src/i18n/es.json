@@ -152,6 +152,9 @@
     },
     "battleship": {
       "label": "Hundir la flota"
+    },
+    "jasstafel": {
+      "label": "Marcador de Jass"
     }
   },
   "picker": {

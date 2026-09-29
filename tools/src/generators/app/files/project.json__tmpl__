@@ -417,6 +417,11 @@
           },
           {
             "glob": "*.json",
+            "input": "libs/games/jasstafel/feature/src/i18n",
+            "output": "./assets/i18n/games/jasstafel/feature"
+          },
+          {
+            "glob": "*.json",
             "input": "libs/games/hearing-quiz/feature/src/i18n",
             "output": "./assets/i18n/games/hearing-quiz/feature"
           },

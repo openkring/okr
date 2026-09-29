@@ -152,6 +152,9 @@
     },
     "battleship": {
       "label": "Schiffli versenken"
+    },
+    "jasstafel": {
+      "label": "Jasstafel"
     }
   },
   "picker": {
