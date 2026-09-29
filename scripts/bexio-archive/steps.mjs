@@ -253,6 +253,10 @@ STEPS['link-vouchers'] = async ({ db, bexio, tenantId, dry }) => {
   return { manualEntries: entries.length, linkedBookings, missingBooking, notDownloaded, unmappedAttachments, writes: written };
 };
 
+async function isStored(db, okey) {
+  return (await db.collection('finance-documents').doc(okey).get()).exists;
+}
+
 /** Stores a base64 payload once as a finance-documents doc + private Storage object; returns its okey. */
 async function saveBase64({ db, bucket, tenantId, dry }, okey, base64, { name, mimeType, ext, title, createdAt }) {
   const ref = db.collection('finance-documents').doc(okey);
@@ -276,15 +280,21 @@ STEPS['invoice-details'] = async (ctx) => {
     const id = d.id;
     const nr = d.get('invoiceId') ?? id;
     const update = {};
-    const pdf = await bexio.get(`/2.0/kb_invoice/${id}/pdf`);
-    if (pdf?.content) {
-      update.documentKey = await saveBase64(ctx, invoicePdfOkey(id), pdf.content, { name: pdf.name, mimeType: 'application/pdf', ext: 'pdf', title: nr });
+    if (await isStored(db, invoicePdfOkey(id))) {
+      update.documentKey = invoicePdfOkey(id);                    // resume: stored on an earlier run
       counts.pdfs++;
+    } else {
+      const pdf = await bexio.get(`/2.0/kb_invoice/${id}/pdf`);
+      if (pdf?.content) {
+        update.documentKey = await saveBase64(ctx, invoicePdfOkey(id), pdf.content, { name: pdf.name, mimeType: 'application/pdf', ext: 'pdf', title: nr });
+        counts.pdfs++;
+      }
     }
     update.reminders = [];
     for (const r of (await bexio.get(`/2.0/kb_invoice/${id}/kb_reminder`)) ?? []) {
-      const rpdf = await bexio.get(`/2.0/kb_invoice/${id}/kb_reminder/${r.id}/pdf`);
-      const key = rpdf?.content
+      const stored = await isStored(db, reminderPdfOkey(id, r.id));
+      const rpdf = stored ? null : await bexio.get(`/2.0/kb_invoice/${id}/kb_reminder/${r.id}/pdf`);
+      const key = stored ? reminderPdfOkey(id, r.id) : rpdf?.content
         ? await saveBase64(ctx, reminderPdfOkey(id, r.id), rpdf.content, { name: rpdf.name, mimeType: 'application/pdf', ext: 'pdf', title: `${nr} Mahnung ${r.reminder_level}` })
         : '';
       update.reminders.push(mapReminder(r, key));

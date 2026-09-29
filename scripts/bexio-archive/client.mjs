@@ -7,7 +7,14 @@ export function createBexioClient({ token, fetchImpl = fetch, sleep = (ms) => ne
     const url = new URL(BASE + path);
     for (const [k, v] of Object.entries(params ?? {})) url.searchParams.set(k, String(v));
     for (let attempt = 0; ; attempt++) {
-      const r = await fetchImpl(url.toString(), { headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' } });
+      let r;
+      try {
+        r = await fetchImpl(url.toString(), { headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' } });
+      } catch (e) {
+        // transient network failure (ECONNRESET, socket hang-up): back off and retry like a 429
+        if (attempt < MAX_RETRIES) { await sleep(Math.min(1000 * 2 ** attempt, 30000)); continue; }
+        throw new Error(`bexio network error on ${path}: ${e?.cause?.code ?? e?.message ?? e}`);
+      }
       if (r.status === 429 && attempt < MAX_RETRIES) {
         const after = parseInt(r.headers.get('retry-after') ?? '', 10);
         await sleep(Number.isFinite(after) && after > 0 ? after * 1000 : Math.min(1000 * 2 ** attempt, 30000));

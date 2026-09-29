@@ -54,3 +54,11 @@ test('getAll throws when a list endpoint is missing instead of returning an empt
   const c = createBexioClient({ token: 't', fetchImpl: async () => res(404, {}), sleep: async () => {} });
   await assert.rejects(c.getAll('/3.0/accounting/journal'), /no list/);
 });
+
+test('retries a network reset, then succeeds', async () => {
+  let n = 0;
+  const fetchImpl = async () => { if (++n === 1) { const e = new TypeError('fetch failed'); e.cause = { code: 'ECONNRESET' }; throw e; } return res(200, [1]); };
+  const c = createBexioClient({ token: 't', fetchImpl, sleep: async () => {} });
+  assert.deepEqual(await c.get('/2.0/x'), [1]);
+  assert.equal(n, 2);
+});

@@ -333,3 +333,16 @@ test('link-vouchers commits in chunks so a later failure keeps earlier links', a
   await assert.rejects(STEPS['link-vouchers']({ db, bexio, tenantId: 'scs', dry: false }), /500/);
   assert.deepEqual(db.store.get('bookings/1000').documentKeys, ['bexio-file-9']);
 });
+
+test('invoice-details resumes without re-fetching stored PDFs', async () => {
+  const db = fakeFirestore({
+    invoices: { '7': { ...T } },
+    'finance-documents': { 'bexio-invoice-7': {}, 'bexio-reminder-7-1': {} },
+  });
+  const fetched = [];
+  const bexio = { get: async (p) => { fetched.push(p); return p.endsWith('/kb_reminder') ? [{ id: 1, reminder_level: 1 }] : null; } };
+  await STEPS['invoice-details']({ db, bucket: fakeBucket(), bexio, tenantId: 'scs', dry: false });
+  assert.equal(fetched.some(p => p.endsWith('/pdf')), false);
+  assert.equal(db.store.get('invoices/7').documentKey, 'bexio-invoice-7');
+  assert.equal(db.store.get('invoices/7').reminders[0].documentKey, 'bexio-reminder-7-1');
+});
