@@ -1,8 +1,7 @@
 {
   "title": "Kreuzworträtsel",
-  "desc": "Löse das Rätsel zu einem Thema aus deinem Verein.",
   "list": { "title": "Kreuzworträtsel", "empty": "Es gibt noch keine Rätsel." },
-  "action": { "add": "Neues Rätsel", "generate": "Gitter erzeugen", "reroll": "Neu würfeln", "publish": "Veröffentlichen", "edit": "Bearbeiten", "delete": "Löschen", "play": "Spielen" },
+  "action": { "generate": "Gitter erzeugen", "reroll": "Neu würfeln", "publish": "Veröffentlichen", "edit": "Bearbeiten", "delete": "Löschen", "play": "Spielen" },
   "form": {
     "paste_label": "Wörter einfügen",
     "paste_hint": "Eine Zeile pro Wort, Antwort und Hinweis mit Semikolon getrennt.",

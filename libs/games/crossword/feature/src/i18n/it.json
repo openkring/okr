@@ -1,8 +1,7 @@
 {
   "title": "Cruciverba",
-  "desc": "Risolvi il cruciverba su un tema del tuo club.",
   "list": { "title": "Cruciverba", "empty": "Non ci sono ancora cruciverba." },
-  "action": { "add": "Nuovo cruciverba", "generate": "Genera griglia", "reroll": "Rigenera", "publish": "Pubblica", "edit": "Modifica", "delete": "Elimina", "play": "Gioca" },
+  "action": { "generate": "Genera griglia", "reroll": "Rigenera", "publish": "Pubblica", "edit": "Modifica", "delete": "Elimina", "play": "Gioca" },
   "form": {
     "paste_label": "Incolla parole",
     "paste_hint": "Una parola per riga, risposta e definizione separate da un punto e virgola.",

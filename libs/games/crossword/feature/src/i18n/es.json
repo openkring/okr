@@ -1,8 +1,7 @@
 {
   "title": "Crucigrama",
-  "desc": "Resuelve el crucigrama sobre un tema de tu club.",
   "list": { "title": "Crucigramas", "empty": "Todavía no hay crucigramas." },
-  "action": { "add": "Nuevo crucigrama", "generate": "Generar cuadrícula", "reroll": "Repetir", "publish": "Publicar", "edit": "Editar", "delete": "Eliminar", "play": "Jugar" },
+  "action": { "generate": "Generar cuadrícula", "reroll": "Repetir", "publish": "Publicar", "edit": "Editar", "delete": "Eliminar", "play": "Jugar" },
   "form": {
     "paste_label": "Pegar palabras",
     "paste_hint": "Una palabra por línea, respuesta y pista separadas por punto y coma.",

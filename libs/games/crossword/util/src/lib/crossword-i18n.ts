@@ -5,12 +5,10 @@ const PFX = '@games/crossword/feature.';
 /** Validation messages are filed by the Vest suite and resolved by `okr-error-note`. */
 export const CROSSWORD_I18N_KEYS = {
   title:              PFX + 'title',
-  desc:               PFX + 'desc',
 
   // admin list + modal
   list_title:         PFX + 'list.title',
   list_empty:         PFX + 'list.empty',
-  add:                PFX + 'action.add',
   generate:           PFX + 'action.generate',
   reroll:             PFX + 'action.reroll',
   publish:            PFX + 'action.publish',

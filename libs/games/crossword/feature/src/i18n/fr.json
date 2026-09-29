@@ -1,8 +1,7 @@
 {
   "title": "Mots croisés",
-  "desc": "Résous la grille sur un thème de ton club.",
   "list": { "title": "Mots croisés", "empty": "Il n'y a pas encore de grille." },
-  "action": { "add": "Nouvelle grille", "generate": "Générer la grille", "reroll": "Relancer", "publish": "Publier", "edit": "Modifier", "delete": "Supprimer", "play": "Jouer" },
+  "action": { "generate": "Générer la grille", "reroll": "Relancer", "publish": "Publier", "edit": "Modifier", "delete": "Supprimer", "play": "Jouer" },
   "form": {
     "paste_label": "Coller des mots",
     "paste_hint": "Un mot par ligne, réponse et indice séparés par un point-virgule.",
