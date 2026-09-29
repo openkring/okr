@@ -3,7 +3,7 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { Router } from '@angular/router';
-import { of } from 'rxjs';
+import { firstValueFrom, of } from 'rxjs';
 import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
@@ -546,6 +546,7 @@ export const _MembershipStore = signalStore(
           }
 
           const personKey = await store.personService.create(convertFormToNewPerson(newMember, tenantId), store.currentUser());
+          store.appStore.reloadPersons();
           const avatarKey = `person.${personKey}`;
           if (newMember.email.length > 0) {
             this.saveAddress(convertNewMemberFormToEmailAddress(newMember, tenantId), avatarKey);
@@ -959,8 +960,15 @@ export const _MembershipStore = signalStore(
 
       async editPerson(membership?: MembershipModel, readOnly = true): Promise<void> {
         if (!membership) return;
-        const person = store.appStore.getPerson(membership.memberKey);
-        if (!person || !store.personEditModal) return;
+        // AppStore loads persons once per session: a person created after that (by another
+        // admin, or a flow that skipped reloadPersons()) is missing from the cache, so fall back
+        // to reading the document instead of silently doing nothing.
+        const person = store.appStore.getPerson(membership.memberKey)
+          ?? await firstValueFrom(store.personService.read(membership.memberKey));
+        if (!person || !store.personEditModal) {
+          console.warn(`MembershipStore.editPerson: person ${membership.memberKey} not found`);
+          return;
+        }
         const PersonEditModal = await store.personEditModal();
         const modal = await store.modalController.create({
           component: PersonEditModal,
