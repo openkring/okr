@@ -7,7 +7,9 @@ import * as admin from 'firebase-admin';
 import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
 
 import { bexioApiKey, bexioTenantId, BEXIO_BASE_V3 } from './shared';
+import { checkRoles } from '@okr/shared-util-functions';
 import { loadIsBexioBackend } from './backend-gate';
+import { journalBookingDoc } from './journal.mapper';
 
 interface BexioJournalEntry {
   id: number;
@@ -96,21 +98,8 @@ async function persistJournalEntries(entries: BexioJournalEntry[], tenantId: str
         ? (accountMap.get(String(entry.credit_account_id)) ?? String(entry.credit_account_id))
         : '';
 
-      // booking document
-      const bookingDoc: Record<string, unknown> = {
-        tenants: [tenantId],
-        isArchived: false,
-        index: `d:${dateStr} no:${okey}`,
-        tags: '',
-        notes: '',
-        title: entry.description ?? '',
-        date: dateStr,
-        bookingNo: entry.id,
-        periodKey: '',
-        documentKey: '',
-        status: 'posted',
-        accountingTenantId: tenantId,
-      };
+      // booking document — without the fields the migration owns (spec 1.68)
+      const bookingDoc = journalBookingDoc(entry as never, dateStr, tenantId);
       batch.set(db.collection('bookings').doc(okey), bookingDoc, { merge: true });
 
       // booking-line debit document
@@ -177,6 +166,10 @@ export const syncBexioJournal = onCall(
   },
   async (request: CallableRequest) => {
     if (!request.auth) throw new HttpsError('unauthenticated', 'Authentication required');
+    await checkRoles(request as never, 'syncBexioJournal', ['treasurer', 'privileged']);
+    if (!(await loadIsBexioBackend(admin.firestore(), bexioTenantId.value()))) {
+      throw new HttpsError('failed-precondition', 'The accounting backend is no longer bexio (spec 1.68).');
+    }
     return runJournalSync(bexioTenantId.value(), 'syncBexioJournal');
   }
 );

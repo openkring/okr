@@ -10,6 +10,7 @@ import { convertDateFormatToString, addDuration, getTodayStr, getFullName, addIn
 import { bexioApiKey, bexioTenantId, bexioDefaultTaxId, BEXIO_BASE } from './shared';
 import { loadIsBexioBackend } from './backend-gate';
 import { readFinanceDocument } from './finance-document';
+import { invoiceSyncFields } from './invoice.mapper';
 
 interface BexioInvoice {
   id: number;
@@ -31,17 +32,6 @@ interface BexioInvoice {
   kb_item_status_id: number;
   network_link: string | null;
   updated_at: string;            // "YYYY-MM-DD HH:mm:ss"
-}
-
-/** Map kb_item_status_id to a human-readable state string. */
-function mapInvoiceStatus(statusId: number): string {
-  switch (statusId) {
-    case 7: return 'draft';
-    case 8: return 'pending';
-    case 9: return 'paid';
-    case 19: return 'cancelled';
-    default: return String(statusId);
-  }
 }
 
 function mapVatType(mwst_type: number): string {
@@ -262,8 +252,7 @@ async function persistInvoices(invoices: BexioInvoice[], tenantId: string, nowSt
         totalAmount: { amount: totalCents, currency: 'CHF', periodicity: 'one-time' },
         taxes: parseFloat(inv.total_taxes) || 0,
         vatType: mapVatType(inv.mwst_type),
-        state: mapInvoiceStatus(inv.kb_item_status_id),
-        paymentDate: paymentDates[idx],
+        ...invoiceSyncFields(inv.kb_item_status_id, paymentDates[idx]),
         accountingTenantId: tenantId,
       };
       if (receiver) doc.receiver = receiver;
@@ -393,6 +382,10 @@ export const syncBexioInvoices = onCall(
   },
   async (request: CallableRequest<{ fromDate?: string }>) => {
     if (!request.auth) throw new HttpsError('unauthenticated', 'Authentication required');
+    await checkRoles(request as never, 'syncBexioInvoices', ['treasurer', 'privileged']);
+    if (!(await loadIsBexioBackend(admin.firestore(), bexioTenantId.value()))) {
+      throw new HttpsError('failed-precondition', 'The accounting backend is no longer bexio (spec 1.68).');
+    }
     // Full-collection person/org read + invoice import is an AOC admin operation (privacy inventory §7.2).
     await checkAdminRole(request, 'syncBexioInvoices');
     const fromDate = request.data?.fromDate ?? '2000-01-01 00:00:00';

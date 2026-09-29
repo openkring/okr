@@ -36,3 +36,17 @@ describe('billDoc', () => {
     expect(d['state']).toBe('paid');
   });
 });
+
+describe('billDoc after the migration', () => {
+  it('keeps migrated attachments and account okeys even when the vendor stayed unresolved', () => {
+    const d = billDoc(bill, 'scs', { attachments: ['bexio-file-1'], bookingAccount: 'scs0256', notes: 'bexio supplier 88' });
+    expect(d).not.toHaveProperty('attachments');
+    expect(d).not.toHaveProperty('bookingAccount');
+    expect(d).not.toHaveProperty('bexioVender');
+  });
+  it('still maps legacy fields on an unmigrated bill', () => {
+    const d = billDoc(bill, 'scs', { attachments: ['u-1'], bookingAccount: '256' });
+    expect(d['attachments']).toEqual(['u-1']);
+    expect(d['bookingAccount']).toBe('256');
+  });
+});

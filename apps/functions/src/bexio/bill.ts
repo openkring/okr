@@ -100,6 +100,10 @@ export const syncBexioBills = onCall(
   },
   async (request: CallableRequest<{ billDateStart?: string }>) => {
     if (!request.auth) throw new HttpsError('unauthenticated', 'Authentication required');
+    await checkRoles(request as never, 'syncBexioBills', ['treasurer', 'privileged']);
+    if (!(await loadIsBexioBackend(admin.firestore(), bexioTenantId.value()))) {
+      throw new HttpsError('failed-precondition', 'The accounting backend is no longer bexio (spec 1.68).');
+    }
     // Manual sync defaults to full history; pass billDateStart to limit the window.
     const billDateStart = request.data?.billDateStart ?? BILL_DATE_FULL_HISTORY;
     return runBillSync(billDateStart, bexioTenantId.value(), 'syncBexioBills');
