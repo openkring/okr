@@ -1,0 +1,110 @@
+{
+  "title": "Marcador de Jass",
+  "storage_note": "Este navegador no guarda nada. La partida se pierde al recargar.",
+  "setup": {
+    "variant_label": "Juego",
+    "variant_schieber": "Schieber",
+    "variant_bueter": "Büter",
+    "variant_coiffeur": "Coiffeur",
+    "variant_differenzler": "Differenzler",
+    "seat": "Asiento",
+    "seat_empty": "Elige un jugador",
+    "team": "Equipo",
+    "bueter_label": "Büter",
+    "players_count": "{count} jugadores",
+    "start": "Empezar",
+    "duplicate_player": "Esta persona ya está en la mesa.",
+    "bid_title": "La apuesta del Büter",
+    "bid_placeholder": "p. ej. 500",
+    "bid_invalid": "La apuesta debe estar entre 160 y el objetivo de los rivales, de diez en diez."
+  },
+  "slate": {
+    "trump_maker": "Elige el triunfo",
+    "target": "Objetivo",
+    "hand_no": "Ronda",
+    "sum": "Total"
+  },
+  "action": {
+    "enter_hand": "Anotar ronda",
+    "enter_announce": "Anotar predicciones",
+    "undo": "Deshacer",
+    "settings": "Ajustes",
+    "history": "Historial",
+    "end_game": "Terminar partida",
+    "end_confirm": "¿Seguro que quieres terminar la partida en curso? No contará.",
+    "new_game": "Nueva partida",
+    "done": "Listo",
+    "ok": "OK",
+    "cancel": "Cancelar",
+    "delete_hand": "Borrar ronda",
+    "edit_hand": "Editar ronda",
+    "clear_archive": "Borrar historial"
+  },
+  "trump": {
+    "eicheln": "Eicheln",
+    "schellen": "Schellen",
+    "schilten": "Schilten",
+    "rosen": "Rosen",
+    "obenabe": "Obenabe",
+    "undenufe": "Undenufe",
+    "slalom": "Slalom"
+  },
+  "hand": {
+    "title": "Anotar ronda",
+    "announce_title": "Predicciones",
+    "trump_label": "Triunfo",
+    "side_label": "Equipo",
+    "points_label": "Puntos de cartas",
+    "points_helper": "El otro lado se completa hasta 157.",
+    "weis_label": "Weis",
+    "weis_helper": "20, 50, 100, 150 o 200 – sumados",
+    "stoeck_label": "Stöck",
+    "match_label": "Match",
+    "none": "nadie",
+    "announced_label": "Predicción",
+    "preview": "Cuenta"
+  },
+  "settings": {
+    "title": "Ajustes",
+    "schieber_target": "Objetivo Schieber",
+    "bueter_target": "Objetivo de los rivales en Büter",
+    "suits_double": "Schilten y Schellen cuentan doble",
+    "top_down_triple": "Obenabe y Undenufe cuentan triple",
+    "slalom_quad": "Slalom cuenta cuádruple",
+    "differenzler_hands": "Rondas en Differenzler",
+    "rows_title": "Filas del Coiffeur",
+    "row_label": "Fila",
+    "row_multiplier": "Factor",
+    "rows_helper": "Un campo vacío elimina la fila.",
+    "next_game": "Los cambios se aplican a partir de la próxima partida."
+  },
+  "result": {
+    "winner": "Ganado",
+    "draw": "Empate",
+    "stat_points": "Puntos jugados",
+    "stat_weis": "Weis",
+    "stat_stoeck": "Stöck",
+    "stat_matches": "Match",
+    "stat_average": "Puntos por ronda"
+  },
+  "history": {
+    "title": "Historial",
+    "hands": "Rondas de esta partida",
+    "finished": "Últimas partidas en este dispositivo",
+    "empty": "Todavía nada."
+  },
+  "error": {
+    "trump": "Elige un triunfo.",
+    "points_sum": "Los puntos de cartas deben sumar 157.",
+    "weis": "El Weis cuenta de diez en diez.",
+    "side": "Elige el equipo.",
+    "announce": "Una predicción está entre 0 y 157.",
+    "target": "El objetivo está entre 100 y 10000.",
+    "hands": "Entre 1 y 36 rondas.",
+    "rows": "Cada fila necesita un nombre y un factor de 1 a 20."
+  },
+  "changeConfirmation": {
+    "ok": "Guardar",
+    "cancel": "Descartar"
+  }
+}

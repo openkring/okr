@@ -1,0 +1,24 @@
+{
+  "name": "games-jasstafel-feature",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/games/jasstafel/feature/src",
+  "prefix": "okr",
+  "projectType": "library",
+  "tags": ["type:feature", "scope:games", "platform:mobile", "platform:web"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/games/jasstafel/feature",
+        "main": "libs/games/jasstafel/feature/src/index.ts",
+        "tsConfig": "libs/games/jasstafel/feature/tsconfig.lib.json",
+        "assets": ["libs/games/jasstafel/feature/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

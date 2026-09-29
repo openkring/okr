@@ -1,0 +1,110 @@
+{
+  "title": "Lavagna del Jass",
+  "storage_note": "Questo browser non salva nulla. La partita va persa se ricarichi la pagina.",
+  "setup": {
+    "variant_label": "Gioco",
+    "variant_schieber": "Schieber",
+    "variant_bueter": "Büter",
+    "variant_coiffeur": "Coiffeur",
+    "variant_differenzler": "Differenzler",
+    "seat": "Posto",
+    "seat_empty": "Scegli un giocatore",
+    "team": "Squadra",
+    "bueter_label": "Büter",
+    "players_count": "{count} giocatori",
+    "start": "Inizia",
+    "duplicate_player": "Questa persona è già al tavolo.",
+    "bid_title": "La puntata del Büter",
+    "bid_placeholder": "ad es. 500",
+    "bid_invalid": "La puntata deve essere tra 160 e l'obiettivo degli avversari, a passi di dieci."
+  },
+  "slate": {
+    "trump_maker": "Sceglie la briscola",
+    "target": "Obiettivo",
+    "hand_no": "Mano",
+    "sum": "Totale"
+  },
+  "action": {
+    "enter_hand": "Registra mano",
+    "enter_announce": "Registra le previsioni",
+    "undo": "Annulla",
+    "settings": "Impostazioni",
+    "history": "Cronologia",
+    "end_game": "Termina partita",
+    "end_confirm": "Vuoi davvero terminare la partita in corso? Non verrà conteggiata.",
+    "new_game": "Nuova partita",
+    "done": "Fatto",
+    "ok": "OK",
+    "cancel": "Annulla",
+    "delete_hand": "Elimina mano",
+    "edit_hand": "Modifica mano",
+    "clear_archive": "Cancella cronologia"
+  },
+  "trump": {
+    "eicheln": "Eicheln",
+    "schellen": "Schellen",
+    "schilten": "Schilten",
+    "rosen": "Rosen",
+    "obenabe": "Obenabe",
+    "undenufe": "Undenufe",
+    "slalom": "Slalom"
+  },
+  "hand": {
+    "title": "Registra mano",
+    "announce_title": "Previsioni",
+    "trump_label": "Briscola",
+    "side_label": "Squadra",
+    "points_label": "Punti delle carte",
+    "points_helper": "L'altra parte viene completata fino a 157.",
+    "weis_label": "Weis",
+    "weis_helper": "20, 50, 100, 150 o 200 – sommati",
+    "stoeck_label": "Stöck",
+    "match_label": "Match",
+    "none": "nessuno",
+    "announced_label": "Previsione",
+    "preview": "Conta"
+  },
+  "settings": {
+    "title": "Impostazioni",
+    "schieber_target": "Obiettivo Schieber",
+    "bueter_target": "Obiettivo degli avversari nel Büter",
+    "suits_double": "Schilten e Schellen contano doppio",
+    "top_down_triple": "Obenabe e Undenufe contano triplo",
+    "slalom_quad": "Slalom conta quadruplo",
+    "differenzler_hands": "Mani nel Differenzler",
+    "rows_title": "Righe del Coiffeur",
+    "row_label": "Riga",
+    "row_multiplier": "Fattore",
+    "rows_helper": "Un campo vuoto rimuove la riga.",
+    "next_game": "Le modifiche valgono dalla prossima partita."
+  },
+  "result": {
+    "winner": "Vinto",
+    "draw": "Pareggio",
+    "stat_points": "Punti giocati",
+    "stat_weis": "Weis",
+    "stat_stoeck": "Stöck",
+    "stat_matches": "Match",
+    "stat_average": "Punti per mano"
+  },
+  "history": {
+    "title": "Cronologia",
+    "hands": "Mani di questa partita",
+    "finished": "Ultime partite su questo dispositivo",
+    "empty": "Ancora niente."
+  },
+  "error": {
+    "trump": "Scegli una briscola.",
+    "points_sum": "I punti delle carte devono fare 157 in totale.",
+    "weis": "Il Weis conta a passi di dieci.",
+    "side": "Scegli la squadra.",
+    "announce": "Una previsione è tra 0 e 157.",
+    "target": "L'obiettivo è tra 100 e 10000.",
+    "hands": "Tra 1 e 36 mani.",
+    "rows": "Ogni riga ha bisogno di un nome e di un fattore da 1 a 20."
+  },
+  "changeConfirmation": {
+    "ok": "Salva",
+    "cancel": "Scarta"
+  }
+}

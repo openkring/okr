@@ -1,0 +1,110 @@
+{
+  "title": "Tableau de Jass",
+  "storage_note": "Ce navigateur n'enregistre rien. La partie sera perdue si tu recharges la page.",
+  "setup": {
+    "variant_label": "Jeu",
+    "variant_schieber": "Schieber",
+    "variant_bueter": "Büter",
+    "variant_coiffeur": "Coiffeur",
+    "variant_differenzler": "Differenzler",
+    "seat": "Place",
+    "seat_empty": "Choisis un joueur",
+    "team": "Équipe",
+    "bueter_label": "Büter",
+    "players_count": "{count} joueurs",
+    "start": "Commencer",
+    "duplicate_player": "Cette personne est déjà à la table.",
+    "bid_title": "L'annonce du Büter",
+    "bid_placeholder": "p. ex. 500",
+    "bid_invalid": "L'annonce doit se situer entre 160 et l'objectif des adversaires, par pas de dix."
+  },
+  "slate": {
+    "trump_maker": "Fait l'atout",
+    "target": "Objectif",
+    "hand_no": "Tour",
+    "sum": "Total"
+  },
+  "action": {
+    "enter_hand": "Saisir le tour",
+    "enter_announce": "Saisir les annonces",
+    "undo": "Annuler",
+    "settings": "Réglages",
+    "history": "Historique",
+    "end_game": "Terminer la partie",
+    "end_confirm": "Veux-tu vraiment terminer la partie en cours ? Elle ne sera pas comptée.",
+    "new_game": "Nouvelle partie",
+    "done": "Terminé",
+    "ok": "OK",
+    "cancel": "Annuler",
+    "delete_hand": "Supprimer le tour",
+    "edit_hand": "Modifier le tour",
+    "clear_archive": "Effacer l'historique"
+  },
+  "trump": {
+    "eicheln": "Eicheln",
+    "schellen": "Schellen",
+    "schilten": "Schilten",
+    "rosen": "Rosen",
+    "obenabe": "Obenabe",
+    "undenufe": "Undenufe",
+    "slalom": "Slalom"
+  },
+  "hand": {
+    "title": "Saisir le tour",
+    "announce_title": "Annonces",
+    "trump_label": "Atout",
+    "side_label": "Équipe",
+    "points_label": "Points des cartes",
+    "points_helper": "L'autre côté est complété jusqu'à 157.",
+    "weis_label": "Weis",
+    "weis_helper": "20, 50, 100, 150 ou 200 – additionnés",
+    "stoeck_label": "Stöck",
+    "match_label": "Match",
+    "none": "personne",
+    "announced_label": "Annonce",
+    "preview": "Compte"
+  },
+  "settings": {
+    "title": "Réglages",
+    "schieber_target": "Objectif Schieber",
+    "bueter_target": "Objectif des adversaires au Büter",
+    "suits_double": "Schilten et Schellen comptent double",
+    "top_down_triple": "Obenabe et Undenufe comptent triple",
+    "slalom_quad": "Slalom compte quadruple",
+    "differenzler_hands": "Tours au Differenzler",
+    "rows_title": "Lignes du Coiffeur",
+    "row_label": "Ligne",
+    "row_multiplier": "Facteur",
+    "rows_helper": "Un champ vide supprime la ligne.",
+    "next_game": "Les changements s'appliquent dès la prochaine partie."
+  },
+  "result": {
+    "winner": "Gagné",
+    "draw": "Égalité",
+    "stat_points": "Points joués",
+    "stat_weis": "Weis",
+    "stat_stoeck": "Stöck",
+    "stat_matches": "Match",
+    "stat_average": "Points par tour"
+  },
+  "history": {
+    "title": "Historique",
+    "hands": "Tours de cette partie",
+    "finished": "Dernières parties sur cet appareil",
+    "empty": "Rien pour l'instant."
+  },
+  "error": {
+    "trump": "Choisis un atout.",
+    "points_sum": "Les points des cartes doivent totaliser 157.",
+    "weis": "Le Weis compte par pas de dix.",
+    "side": "Choisis l'équipe.",
+    "announce": "Une annonce se situe entre 0 et 157.",
+    "target": "L'objectif se situe entre 100 et 10000.",
+    "hands": "Entre 1 et 36 tours.",
+    "rows": "Chaque ligne a besoin d'un nom et d'un facteur de 1 à 20."
+  },
+  "changeConfirmation": {
+    "ok": "Enregistrer",
+    "cancel": "Annuler"
+  }
+}

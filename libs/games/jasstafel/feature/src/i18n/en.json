@@ -1,0 +1,110 @@
+{
+  "title": "Jass scoreboard",
+  "storage_note": "This browser does not save anything. The game is lost when you reload.",
+  "setup": {
+    "variant_label": "Game",
+    "variant_schieber": "Schieber",
+    "variant_bueter": "Büter",
+    "variant_coiffeur": "Coiffeur",
+    "variant_differenzler": "Differenzler",
+    "seat": "Seat",
+    "seat_empty": "Choose a player",
+    "team": "Team",
+    "bueter_label": "Büter",
+    "players_count": "{count} players",
+    "start": "Start",
+    "duplicate_player": "This person is already at the table.",
+    "bid_title": "The Büter's bid",
+    "bid_placeholder": "e.g. 500",
+    "bid_invalid": "The bid must be between 160 and the opponents' target, in steps of ten."
+  },
+  "slate": {
+    "trump_maker": "Makes trump",
+    "target": "Target",
+    "hand_no": "Hand",
+    "sum": "Total"
+  },
+  "action": {
+    "enter_hand": "Enter hand",
+    "enter_announce": "Enter announcements",
+    "undo": "Undo",
+    "settings": "Settings",
+    "history": "History",
+    "end_game": "End game",
+    "end_confirm": "Do you really want to end the running game? It will not be counted.",
+    "new_game": "New game",
+    "done": "Done",
+    "ok": "OK",
+    "cancel": "Cancel",
+    "delete_hand": "Delete hand",
+    "edit_hand": "Edit hand",
+    "clear_archive": "Clear history"
+  },
+  "trump": {
+    "eicheln": "Eicheln",
+    "schellen": "Schellen",
+    "schilten": "Schilten",
+    "rosen": "Rosen",
+    "obenabe": "Obenabe",
+    "undenufe": "Undenufe",
+    "slalom": "Slalom"
+  },
+  "hand": {
+    "title": "Enter hand",
+    "announce_title": "Announcements",
+    "trump_label": "Trump",
+    "side_label": "Team",
+    "points_label": "Card points",
+    "points_helper": "The other side is filled up to 157.",
+    "weis_label": "Weis",
+    "weis_helper": "20, 50, 100, 150 or 200 – added up",
+    "stoeck_label": "Stöck",
+    "match_label": "Match",
+    "none": "nobody",
+    "announced_label": "Announcement",
+    "preview": "Counts"
+  },
+  "settings": {
+    "title": "Settings",
+    "schieber_target": "Schieber target",
+    "bueter_target": "Opponents' target in Büter",
+    "suits_double": "Schilten and Schellen count double",
+    "top_down_triple": "Obenabe and Undenufe count triple",
+    "slalom_quad": "Slalom counts four times",
+    "differenzler_hands": "Hands in Differenzler",
+    "rows_title": "Coiffeur rows",
+    "row_label": "Row",
+    "row_multiplier": "Multiplier",
+    "rows_helper": "An empty field removes the row.",
+    "next_game": "Changes apply from the next game on."
+  },
+  "result": {
+    "winner": "Won",
+    "draw": "Draw",
+    "stat_points": "Points played",
+    "stat_weis": "Weis",
+    "stat_stoeck": "Stöck",
+    "stat_matches": "Match",
+    "stat_average": "Points per hand"
+  },
+  "history": {
+    "title": "History",
+    "hands": "Hands of this game",
+    "finished": "Recent games on this device",
+    "empty": "Nothing here yet."
+  },
+  "error": {
+    "trump": "Choose a trump.",
+    "points_sum": "The card points must add up to 157.",
+    "weis": "Weis counts in steps of ten.",
+    "side": "Choose the team.",
+    "announce": "An announcement is between 0 and 157.",
+    "target": "The target is between 100 and 10000.",
+    "hands": "Between 1 and 36 hands.",
+    "rows": "Each row needs a name and a multiplier from 1 to 20."
+  },
+  "changeConfirmation": {
+    "ok": "Save",
+    "cancel": "Discard"
+  }
+}
