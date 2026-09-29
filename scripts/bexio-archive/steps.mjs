@@ -8,7 +8,8 @@ import { createHash } from 'node:crypto';
 import { FieldValue } from 'firebase-admin/firestore';
 
 import {
-  accountOkey, fileOkey, filePath, financeDocument, isoToStoreDate, mapBillState, mapInvoiceState, staleIds, toRappen,
+  accountOkey, commentImageOkey, commentOkey, fileOkey, filePath, financeDocument, invoicePdfOkey, isoToStoreDate,
+  mapBillPayment, mapBillState, mapComment, mapInvoicePayment, mapInvoiceState, mapReminder, reminderPdfOkey, staleIds, toRappen,
 } from './mappers.mjs';
 
 export const STEPS = {};
@@ -213,4 +214,76 @@ STEPS['link-vouchers'] = async ({ db, bexio, tenantId, dry }) => {
     ops.push({ ref: b.ref, data: { attachments: mapped } });
   }
   return { manualEntries: entries.length, linkedBookings, missingBooking, notDownloaded, unmappedAttachments, writes: await commitOps(db, ops, dry) };
+};
+
+/** Stores a base64 payload once as a finance-documents doc + private Storage object; returns its okey. */
+async function saveBase64({ db, bucket, tenantId, dry }, okey, base64, { name, mimeType, ext, title, createdAt }) {
+  const ref = db.collection('finance-documents').doc(okey);
+  if (dry || (await ref.get()).exists) return okey;
+  const buf = Buffer.from(base64, 'base64');
+  const path = `tenant/${tenantId}/private/finance/bexio/${okey}.${ext}`;
+  await bucket.file(path).save(buf, { contentType: mimeType, resumable: false });
+  await ref.set(financeDocument({ okey, tenantId, path, name: name || okey, mimeType, size: buf.length,
+    hash: createHash('sha256').update(buf).digest('hex'), createdAt: createdAt ?? '', title }));
+  return okey;
+}
+
+/** Per bexio invoice: PDF, reminders (+ PDFs), payments, comments (+ images) — spec D7, D8, Q3. Resumable. */
+STEPS['invoice-details'] = async (ctx) => {
+  const { db, bexio, tenantId, dry } = ctx;
+  const bankAccounts = (await bexio.get('/3.0/banking/accounts')) ?? [];
+  const bankMap = new Map(bankAccounts.map(a => [String(a.id), a.account_id ? accountOkey(tenantId, a.account_id) : '']));
+  const counts = { invoices: 0, pdfs: 0, reminders: 0, payments: 0, comments: 0 };
+  for (const d of await localDocs(db, 'invoices', tenantId)) {
+    if (!/^\d+$/.test(d.id)) continue;                          // bexio invoices only
+    const id = d.id;
+    const nr = d.get('invoiceId') ?? id;
+    const update = {};
+    const pdf = await bexio.get(`/2.0/kb_invoice/${id}/pdf`);
+    if (pdf?.content) {
+      update.documentKey = await saveBase64(ctx, invoicePdfOkey(id), pdf.content, { name: pdf.name, mimeType: 'application/pdf', ext: 'pdf', title: nr });
+      counts.pdfs++;
+    }
+    update.reminders = [];
+    for (const r of (await bexio.get(`/2.0/kb_invoice/${id}/kb_reminder`)) ?? []) {
+      const rpdf = await bexio.get(`/2.0/kb_invoice/${id}/kb_reminder/${r.id}/pdf`);
+      const key = rpdf?.content
+        ? await saveBase64(ctx, reminderPdfOkey(id, r.id), rpdf.content, { name: rpdf.name, mimeType: 'application/pdf', ext: 'pdf', title: `${nr} Mahnung ${r.reminder_level}` })
+        : '';
+      update.reminders.push(mapReminder(r, key));
+      counts.reminders++;
+    }
+    const payments = (await bexio.get(`/2.0/kb_invoice/${id}/payment`)) ?? [];
+    update.payments = payments.map(p => mapInvoicePayment(p, tenantId, bankMap)).sort((a, b) => a.date.localeCompare(b.date));
+    if (update.payments.length) update.paymentDate = update.payments.at(-1).date;
+    counts.payments += payments.length;
+    for (const c of (await bexio.get(`/2.0/kb_invoice/${id}/comment`)) ?? []) {
+      const attachmentKeys = [];
+      if (c.image) {
+        const m = /^data:([^;]+);base64,(.*)$/s.exec(c.image);
+        const mimeType = m ? m[1] : 'image/png';
+        attachmentKeys.push(await saveBase64(ctx, commentImageOkey(c.id), m ? m[2] : c.image,
+          { mimeType, ext: mimeType.split('/')[1] ?? 'png', createdAt: c.date }));
+      }
+      if (!dry) await db.collection('finance-comments').doc(commentOkey(c.id)).set(mapComment(c, id, tenantId, attachmentKeys));
+      counts.comments++;
+    }
+    if (!dry) await d.ref.set(update, { merge: true });
+    counts.invoices++;
+    if (counts.invoices % 100 === 0) console.log(`invoice-details: ${counts.invoices} invoices`);
+  }
+  return counts;
+};
+
+/** Outgoing payments per bill → payments[] + paymentDate (latest execution date). */
+STEPS['bill-payments'] = async ({ db, bexio, tenantId, dry }) => {
+  const ops = [];
+  let payments = 0;
+  for (const b of await localDocs(db, 'bills', tenantId)) {
+    const r = await bexio.get('/4.0/purchase/outgoing-payments', { bill_id: b.id, limit: 100, page: 1 });
+    const list = (r?.data ?? []).map(mapBillPayment).sort((x, y) => x.date.localeCompare(y.date));
+    payments += list.length;
+    ops.push({ ref: b.ref, data: { payments: list, paymentDate: list.at(-1)?.date ?? '' } });
+  }
+  return { bills: ops.length, payments, writes: await commitOps(db, ops, dry) };
 };

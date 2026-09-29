@@ -183,3 +183,62 @@ test('link-vouchers never links a doc that was not downloaded', async () => {
   assert.equal(db.store.get('bookings/59').documentKeys, undefined);
   assert.equal(counts.notDownloaded, 1);
 });
+
+test('invoice-details stores PDFs, reminders, payments and internal comments', async () => {
+  const db = fakeFirestore({ invoices: { '2097': { ...T, invoiceId: 'RE-2097', paymentDate: '' }, 'native1': { ...T } } });
+  const bucket = fakeBucket();
+  const b64 = Buffer.from('pdf').toString('base64');
+  const bexio = bexioWith({
+    '/3.0/banking/accounts': [{ id: 3, account_id: 21 }],
+    '/2.0/kb_invoice/2097/pdf': { name: 'RE-2097.pdf', content: b64 },
+    '/2.0/kb_invoice/2097/kb_reminder': [{ id: 1, reminder_level: 1, is_valid_from: '2026-06-01', is_valid_to: '2026-06-15', is_sent: true }],
+    '/2.0/kb_invoice/2097/kb_reminder/1/pdf': { name: 'M1.pdf', content: b64 },
+    '/2.0/kb_invoice/2097/payment': [
+      { date: '2026-07-02', value: '30.00', bank_account_id: 3 },
+      { date: '2026-06-20', value: '50.00', bank_account_id: null },
+    ],
+    '/2.0/kb_invoice/2097/comment': [{ id: 9, text: 'Rest folgt', user_name: 'Kassier', date: '2026-06-21 09:00:00', is_public: true,
+      image: 'data:image/jpeg;base64,' + b64 }],
+  });
+  const counts = await STEPS['invoice-details']({ db, bucket, bexio, tenantId: 'scs', dry: false });
+  const inv = db.store.get('invoices/2097');
+  assert.equal(inv.documentKey, 'bexio-invoice-2097');
+  assert.equal(db.store.get('finance-documents/bexio-invoice-2097').fullPath, 'tenant/scs/private/finance/bexio/bexio-invoice-2097.pdf');
+  assert.deepEqual(inv.reminders, [{ level: 1, date: '20260601', dueDate: '20260615', isSent: true, documentKey: 'bexio-reminder-2097-1' }]);
+  assert.deepEqual(inv.payments.map(p => [p.date, p.amount, p.bankAccountKey]), [['20260620', 5000, ''], ['20260702', 3000, 'scs0021']]);
+  assert.equal(inv.paymentDate, '20260702');
+  const c = db.store.get('finance-comments/bexio-comment-9');
+  assert.equal(c.parentKey, 'invoice.2097');
+  assert.deepEqual(c.attachmentKeys, ['bexio-comment-image-9']);
+  assert.equal(db.store.get('finance-documents/bexio-comment-image-9').mimeType, 'image/jpeg');
+  assert.equal(bucket.saved.has('tenant/scs/private/finance/bexio/bexio-comment-image-9.jpeg'), true);
+  assert.equal(db.store.has('invoices/native1') && db.store.get('invoices/native1').documentKey, undefined);   // native invoice untouched
+  assert.deepEqual([counts.invoices, counts.pdfs, counts.reminders, counts.payments, counts.comments], [1, 1, 1, 2, 1]);
+});
+
+test('invoice-details keeps an existing paymentDate when bexio lists no payment', async () => {
+  const db = fakeFirestore({ invoices: { '5': { ...T, paymentDate: '20250101' } } });
+  await STEPS['invoice-details']({ db, bucket: fakeBucket(), bexio: bexioWith({}), tenantId: 'scs', dry: false });
+  assert.equal(db.store.get('invoices/5').paymentDate, '20250101');
+});
+
+test('invoice-details dry run writes nothing', async () => {
+  const db = fakeFirestore({ invoices: { '5': { ...T } } });
+  const bucket = fakeBucket();
+  await STEPS['invoice-details']({ db, bucket, bexio: bexioWith({ '/2.0/kb_invoice/5/comment': [{ id: 1, text: 'x' }] }), tenantId: 'scs', dry: true });
+  assert.deepEqual(db.store.get('invoices/5'), { ...T });
+  assert.equal(db.store.has('finance-comments/bexio-comment-1'), false);
+  assert.equal(bucket.saved.size, 0);
+});
+
+test('bill-payments sets payments and the latest execution date', async () => {
+  const db = fakeFirestore({ bills: { '5': { ...T }, '6': { ...T, paymentDate: '' } } });
+  const bexio = { get: async (path, params) => path === '/4.0/purchase/outgoing-payments' && params.bill_id === '5'
+    ? { data: [{ execution_date: '2025-03-01', amount: 10, payment_type: 'QR' }, { execution_date: '2025-02-01', amount: 5, payment_type: 'MANUAL' }] }
+    : { data: [] } };
+  const counts = await STEPS['bill-payments']({ db, bexio, tenantId: 'scs', dry: false });
+  assert.deepEqual(db.store.get('bills/5').payments.map(p => p.date), ['20250201', '20250301']);
+  assert.equal(db.store.get('bills/5').paymentDate, '20250301');
+  assert.deepEqual(db.store.get('bills/6').payments, []);
+  assert.equal(counts.payments, 2);
+});
