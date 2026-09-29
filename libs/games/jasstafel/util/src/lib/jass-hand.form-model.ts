@@ -1,15 +1,18 @@
 import { cardPointsOf, nextTrumpMaker, openRows, sideOfPlayer } from './jass.engine';
-import { CARD_POINTS, JASS_TRUMPS, JassGame, JassHand, JassVariant } from './jass.types';
+import { CARD_POINTS, JassGame, JassHand, JassVariant } from './jass.types';
 
 export interface JassHandFormModel {
   variant: JassVariant;
   /** context, not edited: the side ids in slate order */
   sideIds: string[];
-  /** context, not edited: the trumps (or open Coiffeur rows) this hand may use */
+  /** context, not edited: the Coiffeur rows still open for the team; empty for every other variant */
   trumpOptions: string[];
   /** Differenzler is entered in two steps; every other variant in one ('full') */
   phase: 'announce' | 'points' | 'full';
+  /** Coiffeur: the row id */
   trump: string;
+  /** Schieber/Büter: 1..5 */
+  multiplier: number;
   sideId: string;
   points: number[];
   weis: number[];
@@ -26,14 +29,15 @@ export function newHandForm(game: JassGame, phase: JassHandFormModel['phase'], b
   const sideId = game.variant === 'coiffeur' ? (base?.sideId ?? sideOfPlayer(game, maker)) : '';
   const trumpOptions = game.variant === 'coiffeur'
     ? openRows(game, sideId, excludeIndex).map(r => r.id)
-    : [...JASS_TRUMPS];
+    : [];
   if (base && game.variant === 'coiffeur' && !trumpOptions.includes(base.trump)) trumpOptions.unshift(base.trump);
   return {
     variant: game.variant,
     sideIds,
     trumpOptions,
     phase,
-    trump: base?.trump ?? (game.variant === 'differenzler' ? 'eicheln' : ''),
+    trump: base?.trump ?? '',
+    multiplier: base?.multiplier ?? 1,
     sideId,
     points: sideIds.map(id => (base && !base.matchSideId ? cardPointsOf(base, id) : 0)),
     weis: sideIds.map(id => base?.weis[id] ?? 0),
@@ -55,11 +59,12 @@ export function handFromForm(model: JassHandFormModel, trumpMakerIdx: number): J
   const byId = (values: number[]) => Object.fromEntries(model.sideIds.map((id, i) => [id, values[i] ?? 0]));
   const hand: JassHand = {
     trumpMakerIdx,
-    trump: model.trump,
+    trump: model.variant === 'coiffeur' ? model.trump : '',
     cardPoints: model.match ? {} : byId(model.points),
     weis: model.variant === 'differenzler' ? {} : byId(model.weis),
   };
   if (model.variant === 'coiffeur') hand.sideId = model.sideId;
+  if (model.variant === 'schieber' || model.variant === 'bueter') hand.multiplier = model.multiplier;
   if (model.stoeck) hand.stoeckSideId = model.stoeck;
   if (model.match) hand.matchSideId = model.match;
   if (model.variant === 'differenzler') hand.announced = byId(model.announced);

@@ -9,10 +9,11 @@ const p = (n: number) => ({ avatar: { key: 'k' + n, name1: '', name2: 'P' + n, l
 describe('hand form model', () => {
   const g = createGame('schieber', [p(0), p(1), p(2), p(3)], DEFAULT_JASS_CONFIG, { id: 'g', now: 't' });
 
-  it('starts empty with the seven trumps', () => {
+  it('starts empty at 1× without a trump choice', () => {
     const m = newHandForm(g, 'full');
     expect(m.sideIds).toEqual(['a', 'b']);
-    expect(m.trumpOptions).toHaveLength(7);
+    expect(m.trumpOptions).toEqual([]);
+    expect(m.multiplier).toBe(1);
     expect(m.points).toEqual([0, 0]);
   });
 
@@ -22,7 +23,7 @@ describe('hand form model', () => {
   });
 
   it('round-trips a hand', () => {
-    const h = { trumpMakerIdx: 2, trump: 'rosen', cardPoints: { a: 100, b: 57 }, weis: { a: 20, b: 0 }, stoeckSideId: 'b' };
+    const h = { trumpMakerIdx: 2, trump: '', multiplier: 3, cardPoints: { a: 100, b: 57 }, weis: { a: 20, b: 0 }, stoeckSideId: 'b' };
     expect(handFromForm(newHandForm(g, 'full', h), 2)).toEqual(h);
   });
 

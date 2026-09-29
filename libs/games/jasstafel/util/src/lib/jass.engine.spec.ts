@@ -21,10 +21,13 @@ describe('Schieber', () => {
     ]);
   });
 
-  it('values a hand as (cards + Weis + Stöck) × multiplier', () => {
-    const c = { ...g0, config: { ...g0.config, topDownTriple: true } };
-    const v = handValues(c, hand({ trump: 'obenabe', cardPoints: { a: 100, b: 57 }, weis: { a: 50 }, stoeckSideId: 'b' }));
+  it('values a hand as (cards + Weis + Stöck) × the multiplier entered with the points', () => {
+    const v = handValues(g0, hand({ multiplier: 3, cardPoints: { a: 100, b: 57 }, weis: { a: 50 }, stoeckSideId: 'b' }));
     expect(v).toEqual({ a: 450, b: 231 });
+  });
+
+  it('counts a hand without a multiplier as 1×', () => {
+    expect(handValues(g0, hand({ cardPoints: { a: 100, b: 57 } }))).toEqual({ a: 100, b: 57 });
   });
 
   it('gives a Match 257 and the other side 0', () => {
@@ -164,8 +167,11 @@ describe('validateHand (Schieber)', () => {
     expect(validateHand(g0, hand({ cardPoints: { a: 100, b: 57 } }))).toEqual([]);
     expect(validateHand(g0, hand({ cardPoints: {}, matchSideId: 'a' }))).toEqual([]);
   });
-  it('refuses unknown trumps, negative and non-multiple-of-10 Weis', () => {
-    expect(validateHand(g0, hand({ trump: 'x', cardPoints: { a: 100, b: 57 } }))).toContain('trump_unknown');
+  it('accepts multipliers 1..5 only, and no longer cares about the trump', () => {
+    for (const m of [1, 2, 3, 4, 5]) expect(validateHand(g0, hand({ trump: '', multiplier: m, cardPoints: { a: 100, b: 57 } }))).toEqual([]);
+    for (const m of [0, 6, 2.5]) expect(validateHand(g0, hand({ multiplier: m, cardPoints: { a: 100, b: 57 } }))).toContain('multiplier_invalid');
+  });
+  it('refuses negative and non-multiple-of-10 Weis', () => {
     expect(validateHand(g0, hand({ cardPoints: { a: 100, b: 57 }, weis: { a: -20 } }))).toContain('weis_invalid');
     expect(validateHand(g0, hand({ cardPoints: { a: 100, b: 57 }, weis: { a: 25 } }))).toContain('weis_invalid');
   });

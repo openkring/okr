@@ -40,19 +40,11 @@
     "edit_hand": "Modifica mano",
     "clear_archive": "Cancella cronologia"
   },
-  "trump": {
-    "eicheln": "Eicheln",
-    "schellen": "Schellen",
-    "schilten": "Schilten",
-    "rosen": "Rosen",
-    "obenabe": "Obenabe",
-    "undenufe": "Undenufe",
-    "slalom": "Slalom"
-  },
   "hand": {
     "title": "Registra mano",
     "announce_title": "Previsioni",
     "trump_label": "Briscola",
+    "multiplier_label": "Fattore",
     "side_label": "Squadra",
     "points_label": "Punti delle carte",
     "points_helper": "L'altra parte viene completata fino a 157.",
@@ -68,9 +60,6 @@
     "title": "Impostazioni",
     "schieber_target": "Obiettivo Schieber",
     "bueter_target": "Obiettivo degli avversari nel Büter",
-    "suits_double": "Schilten e Schellen contano doppio",
-    "top_down_triple": "Obenabe e Undenufe contano triplo",
-    "slalom_quad": "Slalom conta quadruplo",
     "differenzler_hands": "Mani nel Differenzler",
     "rows_title": "Righe del Coiffeur",
     "row_label": "Riga",
@@ -95,6 +84,7 @@
   },
   "error": {
     "trump": "Scegli una briscola.",
+    "multiplier": "Scegli un fattore da 1 a 5.",
     "points_sum": "I punti delle carte devono fare 157 in totale.",
     "weis": "Il Weis conta a passi di dieci.",
     "side": "Scegli la squadra.",

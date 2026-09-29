@@ -40,19 +40,11 @@
     "edit_hand": "Editar ronda",
     "clear_archive": "Borrar historial"
   },
-  "trump": {
-    "eicheln": "Eicheln",
-    "schellen": "Schellen",
-    "schilten": "Schilten",
-    "rosen": "Rosen",
-    "obenabe": "Obenabe",
-    "undenufe": "Undenufe",
-    "slalom": "Slalom"
-  },
   "hand": {
     "title": "Anotar ronda",
     "announce_title": "Predicciones",
     "trump_label": "Triunfo",
+    "multiplier_label": "Factor",
     "side_label": "Equipo",
     "points_label": "Puntos de cartas",
     "points_helper": "El otro lado se completa hasta 157.",
@@ -68,9 +60,6 @@
     "title": "Ajustes",
     "schieber_target": "Objetivo Schieber",
     "bueter_target": "Objetivo de los rivales en Büter",
-    "suits_double": "Schilten y Schellen cuentan doble",
-    "top_down_triple": "Obenabe y Undenufe cuentan triple",
-    "slalom_quad": "Slalom cuenta cuádruple",
     "differenzler_hands": "Rondas en Differenzler",
     "rows_title": "Filas del Coiffeur",
     "row_label": "Fila",
@@ -95,6 +84,7 @@
   },
   "error": {
     "trump": "Elige un triunfo.",
+    "multiplier": "Elige un factor de 1 a 5.",
     "points_sum": "Los puntos de cartas deben sumar 157.",
     "weis": "El Weis cuenta de diez en diez.",
     "side": "Elige el equipo.",

@@ -43,19 +43,12 @@ export const JASS_I18N_KEYS = {
   edit_hand:          PFX + 'action.edit_hand',
   clear_archive:      PFX + 'action.clear_archive',
 
-  // trumps
-  trump_eicheln:      PFX + 'trump.eicheln',
-  trump_schellen:     PFX + 'trump.schellen',
-  trump_schilten:     PFX + 'trump.schilten',
-  trump_rosen:        PFX + 'trump.rosen',
-  trump_obenabe:      PFX + 'trump.obenabe',
-  trump_undenufe:     PFX + 'trump.undenufe',
-  trump_slalom:       PFX + 'trump.slalom',
 
   // hand form
   hand_title:         PFX + 'hand.title',
   announce_title:     PFX + 'hand.announce_title',
   trump_label:        PFX + 'hand.trump_label',
+  multiplier_label:   PFX + 'hand.multiplier_label',
   side_label:         PFX + 'hand.side_label',
   points_label:       PFX + 'hand.points_label',
   points_helper:      PFX + 'hand.points_helper',
@@ -71,9 +64,6 @@ export const JASS_I18N_KEYS = {
   settings_title:     PFX + 'settings.title',
   schieber_target:    PFX + 'settings.schieber_target',
   bueter_target:      PFX + 'settings.bueter_target',
-  suits_double:       PFX + 'settings.suits_double',
-  top_down_triple:    PFX + 'settings.top_down_triple',
-  slalom_quad:        PFX + 'settings.slalom_quad',
   differenzler_hands: PFX + 'settings.differenzler_hands',
   rows_title:         PFX + 'settings.rows_title',
   row_label:          PFX + 'settings.row_label',
@@ -98,6 +88,7 @@ export const JASS_I18N_KEYS = {
 
   // validation messages
   error_trump:        PFX + 'error.trump',
+  error_multiplier:   PFX + 'error.multiplier',
   error_points_sum:   PFX + 'error.points_sum',
   error_weis:         PFX + 'error.weis',
   error_side:         PFX + 'error.side',

@@ -9,7 +9,7 @@ const W = 320;
 /**
  * One side's score the way it is chalked on a Jasstafel: a big Z whose top bar collects a cross
  * per 100, its diagonal a stroke per 50, its bottom bar a stroke per 20 — then the rest as tally
- * marks in groups of five. An optional target is drawn as a dashed line under the Z.
+ * marks in groups of five.
  *
  * The drawing fills whatever box it gets: the viewBox keeps a fixed width of 320 units and takes
  * its height from the box's aspect ratio (measured with a ResizeObserver), so on a tall phone half
@@ -48,23 +48,19 @@ const W = 320;
           <path class="jass-chalk" [attr.d]="'M' + (g.x - 3) + ' ' + (tallyY() + 12) + ' l32 -10'" />
         }
       }
-      @if (target()) {
-        <path class="jass-chalk" [attr.d]="'M20 ' + (h() - 8) + ' H300'" stroke-dasharray="6 8" opacity="0.4" />
-      }
     </svg>
   `,
 })
 export class JassChalkZ {
   public readonly points = input.required<number>();
-  public readonly target = input<number>();
 
   protected readonly w = W;
   /** viewBox height: the box's aspect ratio applied to the fixed width, never flatter than 140 */
   protected readonly h = signal(140);
 
   protected readonly topY = computed(() => Math.round(this.h() * 0.14));
-  protected readonly bottomY = computed(() => Math.round(this.h() * 0.7));
-  protected readonly tallyY = computed(() => Math.round(this.h() * 0.78));
+  protected readonly bottomY = computed(() => Math.round(this.h() * 0.74));
+  protected readonly tallyY = computed(() => Math.round(this.h() * 0.84));
 
   private readonly strokes = computed(() => toStrokes(this.points()));
 

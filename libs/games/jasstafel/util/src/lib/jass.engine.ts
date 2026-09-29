@@ -1,6 +1,5 @@
-import { trumpMultiplier } from './jass.config';
 import {
-  CARD_POINTS, CoiffeurRow, JASS_TRUMPS, JassConfig, JassGame, JassHand, JassOutcome, JassPlayer, JassSide, JassSideStats,
+  CARD_POINTS, CoiffeurRow, JASS_MULTIPLIERS, JassConfig, JassGame, JassHand, JassOutcome, JassPlayer, JassSide, JassSideStats,
   JassVariant, MATCH_POINTS, STOECK_POINTS,
 } from './jass.types';
 
@@ -52,7 +51,7 @@ export function nextTrumpMaker(game: JassGame): number {
 export function handMultiplier(game: JassGame, hand: JassHand): number {
   if (game.variant === 'differenzler') return 1;
   if (game.variant === 'coiffeur') return game.config.coiffeurRows.find(r => r.id === hand.trump)?.multiplier ?? 1;
-  return trumpMultiplier(hand.trump, game.config);
+  return hand.multiplier ?? 1;
 }
 
 export function cardPointsOf(hand: JassHand, sideId: string): number {
@@ -181,8 +180,8 @@ export function validateHand(game: JassGame, hand: JassHand, excludeIndex?: numb
     if (!game.config.coiffeurRows.some(r => r.id === hand.trump)) errors.push('trump_unknown');
     if (!hand.sideId || !ids.includes(hand.sideId)) errors.push('side_missing');
     else if (playedRows(game, hand.sideId, excludeIndex).includes(hand.trump)) errors.push('row_played');
-  } else if (game.variant !== 'differenzler' && !(JASS_TRUMPS as string[]).includes(hand.trump)) {
-    errors.push('trump_unknown');
+  } else if (game.variant !== 'differenzler' && hand.multiplier !== undefined && !JASS_MULTIPLIERS.includes(hand.multiplier)) {
+    errors.push('multiplier_invalid');
   }
 
   if (hand.matchSideId !== undefined && !ids.includes(hand.matchSideId)) errors.push('match_unknown');

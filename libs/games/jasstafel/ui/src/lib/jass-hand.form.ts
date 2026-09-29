@@ -3,7 +3,7 @@ import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
 import {
-  JassGame, JassHandFormModel, JassI18n, handFromForm, handValues, jassHandValidations, withCounterPoints,
+  JASS_MULTIPLIERS, JassGame, JassHandFormModel, JassI18n, handFromForm, handValues, jassHandValidations, withCounterPoints,
 } from '@okr/games-jasstafel-util';
 import { ErrorNote, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n } from '@okr/shared-ui';
 import { validateVestTree } from '@okr/shared-util-angular';
@@ -26,22 +26,30 @@ import { JassAvatar } from './jass-avatar';
         <ion-card>
           <ion-card-content class="ion-no-padding">
             <ion-grid>
-              @if (formData().phase !== 'announce') {
+              @if (formData().variant === 'coiffeur') {
                 <ion-row>
                   <ion-col size="12" size-md="6">
                     <okr-string-select [i18n]="trumpI18n()" [stringList]="formData().trumpOptions"
-                      [labels]="trumpLabels()" [selectedString]="formData().trump"
+                      [labels]="rowLabels()" [selectedString]="formData().trump"
                       (selectedStringChange)="set('trump', $event)" [readOnly]="false" />
                     <okr-error-note [errors]="trumpErrors()" />
                   </ion-col>
-                  @if (formData().variant === 'coiffeur') {
-                    <ion-col size="12" size-md="6">
-                      <okr-string-select [i18n]="sideI18n()" [stringList]="formData().sideIds"
-                        [labels]="sideLabels()" [selectedString]="formData().sideId"
-                        (selectedStringChange)="set('sideId', $event)" [readOnly]="false" />
-                      <okr-error-note [errors]="sideIdErrors()" />
-                    </ion-col>
-                  }
+                  <ion-col size="12" size-md="6">
+                    <okr-string-select [i18n]="sideI18n()" [stringList]="formData().sideIds"
+                      [labels]="sideLabels()" [selectedString]="formData().sideId"
+                      (selectedStringChange)="set('sideId', $event)" [readOnly]="false" />
+                    <okr-error-note [errors]="sideIdErrors()" />
+                  </ion-col>
+                </ion-row>
+              }
+              @if (formData().variant === 'schieber' || formData().variant === 'bueter') {
+                <ion-row>
+                  <ion-col size="12" size-md="6">
+                    <okr-string-select [i18n]="multiplierI18n()" [stringList]="multiplierOptions"
+                      [labels]="multiplierLabels" [selectedString]="'' + formData().multiplier"
+                      (selectedStringChange)="setMultiplier($event)" [readOnly]="false" />
+                    <okr-error-note [errors]="multiplierErrors()" />
+                  </ion-col>
                 </ion-row>
               }
               @for (id of formData().sideIds; track id; let i = $index) {
@@ -121,12 +129,16 @@ export class JassHandForm {
 
   private readonly result = computed(() => jassHandValidations(this.formData()));
   protected readonly trumpErrors = computed(() => this.result().getErrors('trump'));
+  protected readonly multiplierErrors = computed(() => this.result().getErrors('multiplier'));
   protected readonly sideIdErrors = computed(() => this.result().getErrors('sideId'));
   protected readonly pointsErrors = computed(() => this.result().getErrors('points'));
   protected readonly weisErrors = computed(() => this.result().getErrors('weis'));
   protected readonly announcedErrors = computed(() => this.result().getErrors('announced'));
 
   protected readonly trumpI18n = computed(() => ({ name: 'trump', label: this.i18n().trump_label() }) as StringSelectI18n);
+  protected readonly multiplierI18n = computed(() => ({ name: 'multiplier', label: this.i18n().multiplier_label() }) as StringSelectI18n);
+  protected readonly multiplierOptions = JASS_MULTIPLIERS.map(String);
+  protected readonly multiplierLabels = JASS_MULTIPLIERS.map(m => m + '×');
   protected readonly sideI18n = computed(() => ({ name: 'sideId', label: this.i18n().side_label() }) as StringSelectI18n);
   protected readonly stoeckI18n = computed(() => ({ name: 'stoeck', label: this.i18n().stoeck_label() }) as StringSelectI18n);
   protected readonly matchI18n = computed(() => ({ name: 'match', label: this.i18n().match_label() }) as StringSelectI18n);
@@ -137,12 +149,13 @@ export class JassHandForm {
   protected readonly announcedI18n = computed(() => ({ name: 'announced', label: this.i18n().announced_label(),
     placeholder: '0', helper: '' }) as NumberInputI18n);
 
-  protected readonly trumpLabels = computed(() => {
-    const g = this.game();
-    const i = this.i18n() as unknown as Record<string, () => string>;
-    return this.formData().trumpOptions.map(t => g.variant === 'coiffeur'
-      ? (g.config.coiffeurRows.find(r => r.id === t)?.label ?? t)
-      : (i['trump_' + t]?.() ?? t));
+  /** Coiffeur: the open rows with their multiplier, e.g. «Rosen 4×» */
+  protected readonly rowLabels = computed(() => {
+    const rows = this.game().config.coiffeurRows;
+    return this.formData().trumpOptions.map(t => {
+      const r = rows.find(x => x.id === t);
+      return r ? `${r.label} ${r.multiplier}×` : t;
+    });
   });
   protected readonly sideLabels = computed(() =>
     this.formData().sideIds.map((_, n) => `${this.i18n().team()} ${n + 1}`));
@@ -162,6 +175,11 @@ export class JassHandForm {
   protected set(field: 'trump' | 'sideId' | 'stoeck' | 'match', value: string): void {
     this.dirty.emit(true);
     this.formData.update(m => ({ ...m, [field]: value ?? '' }));
+  }
+
+  protected setMultiplier(value: string): void {
+    this.dirty.emit(true);
+    this.formData.update(m => ({ ...m, multiplier: Number(value) || 1 }));
   }
 
   protected setAt(field: 'weis' | 'announced', index: number, value: number): void {

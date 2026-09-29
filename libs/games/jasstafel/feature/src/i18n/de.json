@@ -40,19 +40,11 @@
     "edit_hand": "Runde ändern",
     "clear_archive": "Verlauf löschen"
   },
-  "trump": {
-    "eicheln": "Eicheln",
-    "schellen": "Schellen",
-    "schilten": "Schilten",
-    "rosen": "Rosen",
-    "obenabe": "Obenabe",
-    "undenufe": "Undenufe",
-    "slalom": "Slalom"
-  },
   "hand": {
     "title": "Runde erfassen",
     "announce_title": "Ansagen",
     "trump_label": "Trumpf",
+    "multiplier_label": "Faktor",
     "side_label": "Team",
     "points_label": "Kartenpunkte",
     "points_helper": "Die Gegenseite wird mit 157 ergänzt.",
@@ -68,9 +60,6 @@
     "title": "Einstellungen",
     "schieber_target": "Ziel Schieber",
     "bueter_target": "Ziel der Gegner beim Büter",
-    "suits_double": "Schilten und Schellen zählen doppelt",
-    "top_down_triple": "Obenabe und Undenufe zählen dreifach",
-    "slalom_quad": "Slalom zählt vierfach",
     "differenzler_hands": "Runden beim Differenzler",
     "rows_title": "Coiffeur-Zeilen",
     "row_label": "Zeile",
@@ -95,6 +84,7 @@
   },
   "error": {
     "trump": "Wähle einen Trumpf.",
+    "multiplier": "Wähle einen Faktor von 1 bis 5.",
     "points_sum": "Die Kartenpunkte müssen zusammen 157 ergeben.",
     "weis": "Weis zählt in Zehnerschritten.",
     "side": "Wähle das Team.",

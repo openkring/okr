@@ -4,8 +4,8 @@ import { JassHandFormModel } from './jass-hand.form-model';
 import { jassConfigValidations, jassHandValidations } from './jass.validations';
 
 const base: JassHandFormModel = {
-  variant: 'schieber', sideIds: ['a', 'b'], trumpOptions: ['eicheln'], phase: 'full',
-  trump: 'eicheln', sideId: '', points: [100, 57], weis: [0, 0], stoeck: '', match: '', announced: [],
+  variant: 'schieber', sideIds: ['a', 'b'], trumpOptions: [], phase: 'full', multiplier: 1,
+  trump: '', sideId: '', points: [100, 57], weis: [0, 0], stoeck: '', match: '', announced: [],
 };
 
 describe('jassHandValidations', () => {
@@ -16,8 +16,16 @@ describe('jassHandValidations', () => {
   it('skips the sum for a Match', () => {
     expect(jassHandValidations({ ...base, points: [0, 0], match: 'a' }).isValid()).toBe(true);
   });
-  it('flags a missing trump and invalid Weis', () => {
-    expect(jassHandValidations({ ...base, trump: '' }).getErrors('trump')).toHaveLength(1);
+  it('flags a multiplier outside 1..5', () => {
+    expect(jassHandValidations({ ...base, multiplier: 6 }).getErrors('multiplier')).toHaveLength(1);
+    expect(jassHandValidations({ ...base, multiplier: 5 }).isValid()).toBe(true);
+  });
+  it('Coiffeur: flags a missing row, and ignores the multiplier', () => {
+    const c: JassHandFormModel = { ...base, variant: 'coiffeur', trumpOptions: ['eicheln'], sideId: 'a', multiplier: 0 };
+    expect(jassHandValidations({ ...c, trump: '' }).getErrors('trump')).toHaveLength(1);
+    expect(jassHandValidations({ ...c, trump: 'eicheln' }).isValid()).toBe(true);
+  });
+  it('flags invalid Weis', () => {
     expect(jassHandValidations({ ...base, weis: [25, 0] }).getErrors('weis')).toHaveLength(1);
   });
   it('Differenzler: accepts 257/0/0 as a Match only', () => {

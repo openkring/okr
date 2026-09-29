@@ -3,9 +3,8 @@ import { AvatarInfo } from '@okr/shared-models';
 export type JassVariant = 'schieber' | 'bueter' | 'coiffeur' | 'differenzler';
 export const JASS_VARIANTS: JassVariant[] = ['schieber', 'bueter', 'coiffeur', 'differenzler'];
 
-/** The seven trump modes of Schieber and Büter. Coiffeur uses its own row ids instead. */
-export type JassTrump = 'eicheln' | 'schellen' | 'schilten' | 'rosen' | 'obenabe' | 'undenufe' | 'slalom';
-export const JASS_TRUMPS: JassTrump[] = ['eicheln', 'schellen', 'schilten', 'rosen', 'obenabe', 'undenufe', 'slalom'];
+/** Schieber and Büter: the multiplier is entered with the points of each hand (owner ruling 2026-09-29). */
+export const JASS_MULTIPLIERS = [1, 2, 3, 4, 5];
 
 export const CARD_POINTS = 157;
 export const MATCH_POINTS = 257;
@@ -21,12 +20,6 @@ export interface CoiffeurRow { id: string; label: string; multiplier: number; }
 export interface JassConfig {
   schieberTarget: number;
   bueterPairTarget: number;
-  /** Schilten and Schellen count 2× */
-  suitsDouble: boolean;
-  /** Obenabe and Undenufe count 3× */
-  topDownTriple: boolean;
-  /** Slalom counts 4× */
-  slalomQuad: boolean;
   coiffeurRows: CoiffeurRow[];
   differenzlerHands: number;
 }
@@ -38,8 +31,10 @@ export interface JassSide { id: string; playerIdx: number[]; target?: number; }
 
 export interface JassHand {
   trumpMakerIdx: number;
-  /** a JassTrump, or a Coiffeur row id */
+  /** Coiffeur: the row id; '' for every other variant */
   trump: string;
+  /** Schieber/Büter: 1..5, entered with the points; missing = 1 */
+  multiplier?: number;
   /** Coiffeur: the team that played the row */
   sideId?: string;
   /** card points per side id, before multiplier; ignored for the sides of a Match */

@@ -4,18 +4,18 @@ import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, 
 
 import { CoiffeurRow, JassConfig, JassI18n, jassConfigValidations } from '@okr/games-jasstafel-util';
 import { SHORT_NAME_LENGTH } from '@okr/shared-constants';
-import { Checkbox, CheckboxI18n, ErrorNote, NumberInput, NumberInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { ErrorNote, NumberInput, NumberInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { validateVestTree } from '@okr/shared-util-angular';
 
 /**
- * Targets, the three multiplier switches, the Differenzler hand count and the Coiffeur rows.
+ * Targets, the Differenzler hand count and the Coiffeur rows.
  * Rows are label + multiplier pairs: an emptied label removes a row, typing into the blank last
  * row adds one; the order follows the multiplier.
  */
 @Component({
   selector: 'okr-jass-settings-form',
   standalone: true,
-  imports: [IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonGrid, IonRow, IonCol, NumberInput, Checkbox, TextInput, ErrorNote],
+  imports: [IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonGrid, IonRow, IonCol, NumberInput, TextInput, ErrorNote],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px; } }`],
   template: `
     @if (showForm()) {
@@ -33,20 +33,6 @@ import { validateVestTree } from '@okr/shared-util-angular';
                   <okr-number-input [i18n]="bueterI18n()" [value]="formData().bueterPairTarget"
                     (valueChange)="set('bueterPairTarget', $event)" [integer]="true" [readOnly]="false" />
                   <okr-error-note [errors]="bueterPairTargetErrors()" />
-                </ion-col>
-              </ion-row>
-              <ion-row>
-                <ion-col size="12" size-md="4">
-                  <okr-checkbox [i18n]="suitsI18n()" [checked]="formData().suitsDouble"
-                    (checkedChange)="set('suitsDouble', $event)" [readOnly]="false" [toggle]="true" />
-                </ion-col>
-                <ion-col size="12" size-md="4">
-                  <okr-checkbox [i18n]="topDownI18n()" [checked]="formData().topDownTriple"
-                    (checkedChange)="set('topDownTriple', $event)" [readOnly]="false" [toggle]="true" />
-                </ion-col>
-                <ion-col size="12" size-md="4">
-                  <okr-checkbox [i18n]="slalomI18n()" [checked]="formData().slalomQuad"
-                    (checkedChange)="set('slalomQuad', $event)" [readOnly]="false" [toggle]="true" />
                 </ion-col>
               </ion-row>
               <ion-row>
@@ -112,13 +98,10 @@ export class JassSettingsForm {
   protected readonly schieberI18n = computed(() => ({ name: 'schieberTarget', label: this.i18n().schieber_target(), placeholder: '1000', helper: '' }) as NumberInputI18n);
   protected readonly bueterI18n = computed(() => ({ name: 'bueterPairTarget', label: this.i18n().bueter_target(), placeholder: '1000', helper: '' }) as NumberInputI18n);
   protected readonly handsI18n = computed(() => ({ name: 'differenzlerHands', label: this.i18n().differenzler_hands(), placeholder: '12', helper: '' }) as NumberInputI18n);
-  protected readonly suitsI18n = computed(() => ({ name: 'suitsDouble', label: this.i18n().suits_double(), helper: '' }) as CheckboxI18n);
-  protected readonly topDownI18n = computed(() => ({ name: 'topDownTriple', label: this.i18n().top_down_triple(), helper: '' }) as CheckboxI18n);
-  protected readonly slalomI18n = computed(() => ({ name: 'slalomQuad', label: this.i18n().slalom_quad(), helper: '' }) as CheckboxI18n);
   protected readonly rowLabelI18n = computed(() => ({ name: 'rowLabel', label: this.i18n().row_label(), placeholder: '', helper: this.i18n().rows_helper() }) as TextInputI18n);
   protected readonly rowMultI18n = computed(() => ({ name: 'rowMultiplier', label: this.i18n().row_multiplier(), placeholder: '1', helper: '' }) as NumberInputI18n);
 
-  protected set(field: keyof JassConfig, value: number | boolean): void {
+  protected set(field: keyof JassConfig, value: number): void {
     this.dirty.emit(true);
     this.formData.update(c => ({ ...c, [field]: value }));
   }

@@ -40,19 +40,11 @@
     "edit_hand": "Edit hand",
     "clear_archive": "Clear history"
   },
-  "trump": {
-    "eicheln": "Eicheln",
-    "schellen": "Schellen",
-    "schilten": "Schilten",
-    "rosen": "Rosen",
-    "obenabe": "Obenabe",
-    "undenufe": "Undenufe",
-    "slalom": "Slalom"
-  },
   "hand": {
     "title": "Enter hand",
     "announce_title": "Announcements",
     "trump_label": "Trump",
+    "multiplier_label": "Multiplier",
     "side_label": "Team",
     "points_label": "Card points",
     "points_helper": "The other side is filled up to 157.",
@@ -68,9 +60,6 @@
     "title": "Settings",
     "schieber_target": "Schieber target",
     "bueter_target": "Opponents' target in Büter",
-    "suits_double": "Schilten and Schellen count double",
-    "top_down_triple": "Obenabe and Undenufe count triple",
-    "slalom_quad": "Slalom counts four times",
     "differenzler_hands": "Hands in Differenzler",
     "rows_title": "Coiffeur rows",
     "row_label": "Row",
@@ -95,6 +84,7 @@
   },
   "error": {
     "trump": "Choose a trump.",
+    "multiplier": "Choose a multiplier from 1 to 5.",
     "points_sum": "The card points must add up to 157.",
     "weis": "Weis counts in steps of ten.",
     "side": "Choose the team.",

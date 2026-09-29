@@ -40,19 +40,11 @@
     "edit_hand": "Modifier le tour",
     "clear_archive": "Effacer l'historique"
   },
-  "trump": {
-    "eicheln": "Eicheln",
-    "schellen": "Schellen",
-    "schilten": "Schilten",
-    "rosen": "Rosen",
-    "obenabe": "Obenabe",
-    "undenufe": "Undenufe",
-    "slalom": "Slalom"
-  },
   "hand": {
     "title": "Saisir le tour",
     "announce_title": "Annonces",
     "trump_label": "Atout",
+    "multiplier_label": "Facteur",
     "side_label": "Équipe",
     "points_label": "Points des cartes",
     "points_helper": "L'autre côté est complété jusqu'à 157.",
@@ -68,9 +60,6 @@
     "title": "Réglages",
     "schieber_target": "Objectif Schieber",
     "bueter_target": "Objectif des adversaires au Büter",
-    "suits_double": "Schilten et Schellen comptent double",
-    "top_down_triple": "Obenabe et Undenufe comptent triple",
-    "slalom_quad": "Slalom compte quadruple",
     "differenzler_hands": "Tours au Differenzler",
     "rows_title": "Lignes du Coiffeur",
     "row_label": "Ligne",
@@ -95,6 +84,7 @@
   },
   "error": {
     "trump": "Choisis un atout.",
+    "multiplier": "Choisis un facteur de 1 à 5.",
     "points_sum": "Les points des cartes doivent totaliser 157.",
     "weis": "Le Weis compte par pas de dix.",
     "side": "Choisis l'équipe.",

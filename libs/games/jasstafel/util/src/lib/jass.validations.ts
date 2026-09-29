@@ -1,7 +1,7 @@
 import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 
 import { JassHandFormModel } from './jass-hand.form-model';
-import { CARD_POINTS, JassConfig } from './jass.types';
+import { CARD_POINTS, JASS_MULTIPLIERS, JassConfig } from './jass.types';
 
 const isIntIn = (v: number, min: number, max: number) => Number.isInteger(v) && v >= min && v <= max;
 
@@ -9,10 +9,19 @@ const isIntIn = (v: number, min: number, max: number) => Number.isInteger(v) && 
 export const jassHandValidations = staticSuite((model: JassHandFormModel, field?: string) => {
   if (field) only(field);
 
-  omitWhen(model.phase === 'announce', () => {
+  omitWhen(model.variant !== 'coiffeur', () => {
     test('trump', '@games/jasstafel/feature.error.trump', () => {
       enforce(model.trumpOptions.includes(model.trump)).isTruthy();
     });
+  });
+
+  omitWhen(model.variant !== 'schieber' && model.variant !== 'bueter', () => {
+    test('multiplier', '@games/jasstafel/feature.error.multiplier', () => {
+      enforce(JASS_MULTIPLIERS.includes(model.multiplier)).isTruthy();
+    });
+  });
+
+  omitWhen(model.phase === 'announce', () => {
     test('points', '@games/jasstafel/feature.error.points_sum', () => {
       if (model.match) return;
       enforce(model.points.every(p => isIntIn(p, 0, CARD_POINTS))).isTruthy();

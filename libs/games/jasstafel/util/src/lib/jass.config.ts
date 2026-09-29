@@ -16,9 +16,6 @@ export const DEFAULT_COIFFEUR_ROWS: CoiffeurRow[] = [
 export const DEFAULT_JASS_CONFIG: JassConfig = {
   schieberTarget: 1000,
   bueterPairTarget: 1000,
-  suitsDouble: false,
-  topDownTriple: false,
-  slalomQuad: false,
   coiffeurRows: DEFAULT_COIFFEUR_ROWS,
   differenzlerHands: 12,
 };
@@ -44,18 +41,7 @@ export function normalizeConfig(raw: unknown): JassConfig {
   return {
     schieberTarget: isPosInt(r.schieberTarget) ? r.schieberTarget : d.schieberTarget,
     bueterPairTarget: isPosInt(r.bueterPairTarget) ? r.bueterPairTarget : d.bueterPairTarget,
-    suitsDouble: typeof r.suitsDouble === 'boolean' ? r.suitsDouble : d.suitsDouble,
-    topDownTriple: typeof r.topDownTriple === 'boolean' ? r.topDownTriple : d.topDownTriple,
-    slalomQuad: typeof r.slalomQuad === 'boolean' ? r.slalomQuad : d.slalomQuad,
     coiffeurRows: normalizeRows(r.coiffeurRows),
     differenzlerHands: isPosInt(r.differenzlerHands) ? r.differenzlerHands : d.differenzlerHands,
   };
-}
-
-/** The Schieber/Büter multiplier of a trump under the three combinable switches. */
-export function trumpMultiplier(trump: string, config: JassConfig): number {
-  if (config.slalomQuad && trump === 'slalom') return 4;
-  if (config.topDownTriple && (trump === 'obenabe' || trump === 'undenufe')) return 3;
-  if (config.suitsDouble && (trump === 'schilten' || trump === 'schellen')) return 2;
-  return 1;
 }

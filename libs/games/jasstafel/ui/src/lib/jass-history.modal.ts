@@ -23,7 +23,7 @@ export type JassHistoryAction = { action: 'edit' | 'delete'; index: number } | {
           <ion-list-header>{{ i18n().history_hands() }}</ion-list-header>
           @for (h of g.hands; track $index; let i = $index) {
             <ion-item>
-              <ion-label>{{ i + 1 }} · {{ h.trump }} · {{ values(g, i) }}</ion-label>
+              <ion-label>{{ i + 1 }} · {{ handLabel(g, i) }} · {{ values(g, i) }}</ion-label>
               <ion-button slot="end" fill="clear" (click)="close({ action: 'edit', index: i })" [attr.aria-label]="i18n().edit_hand()">
                 <ion-icon slot="icon-only" src="{{ 'edit' | svgIcon }}" />
               </ion-button>
@@ -61,6 +61,13 @@ export class JassHistoryModal {
   public readonly game = input<JassGame | null>(null);
   public readonly archive = input<JassGame[]>([]);
   public readonly i18n = input.required<JassI18n>();
+
+  /** Coiffeur: the row's name; otherwise the multiplier of the hand */
+  protected handLabel(g: JassGame, i: number): string {
+    const h = g.hands[i];
+    if (g.variant === 'coiffeur') return g.config.coiffeurRows.find(r => r.id === h.trump)?.label ?? h.trump;
+    return g.variant === 'differenzler' ? '' : `${h.multiplier ?? 1}×`;
+  }
 
   protected values(g: JassGame, i: number): string {
     const v = handValues(g, g.hands[i]);
