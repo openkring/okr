@@ -1,0 +1,52 @@
+{
+  "title": "Mampf",
+  "canvas_label": "Mampf maze",
+  "hud": {
+    "score": "Score",
+    "high": "Best",
+    "level": "Level",
+    "lives": "{count} spare lives"
+  },
+  "action": {
+    "start": "Start",
+    "pause": "Pause",
+    "resume": "Resume",
+    "restart": "New game",
+    "again": "Play again",
+    "sound_on": "Sound on",
+    "sound_off": "Sound off",
+    "dpad_on": "Show d-pad",
+    "dpad_off": "Hide d-pad"
+  },
+  "dir": {
+    "up": "Up",
+    "down": "Down",
+    "left": "Left",
+    "right": "Right"
+  },
+  "overlay": {
+    "idle": "Eat every dot in the maze and dodge the four ghosts.",
+    "ready": "Ready",
+    "level": "Level {level}",
+    "paused": "Paused",
+    "over": "Game over",
+    "score": "{score} points",
+    "new_high": "New best score"
+  },
+  "hint": {
+    "keys": "Steer with the arrow keys or W A S D, pause with P.",
+    "touch": "Swipe across the maze or tap the d-pad."
+  },
+  "rules": {
+    "title": "How to play",
+    "goal": "Eat every dot to reach the next level – the ghosts get faster.",
+    "pellet": "The big dots make the ghosts harmless for a moment: now you can eat them, and each one is worth twice the last.",
+    "lives": "You have three lives and earn one more at 10,000 points."
+  },
+  "ghost": {
+    "chaser": "Fäger (red) comes straight for you.",
+    "ambusher": "Schlaumeier (pink) tries to cut you off.",
+    "fickle": "Zwirbel (turquoise) is hard to read – he works together with Fäger.",
+    "shy": "Trödli (orange) only chases you from afar and turns away when he gets close."
+  }
+}

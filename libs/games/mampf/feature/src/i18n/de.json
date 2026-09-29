@@ -1,0 +1,52 @@
+{
+  "title": "Mampf",
+  "canvas_label": "Mampf-Labyrinth",
+  "hud": {
+    "score": "Punkte",
+    "high": "Rekord",
+    "level": "Level",
+    "lives": "{count} Reserveleben"
+  },
+  "action": {
+    "start": "Start",
+    "pause": "Pause",
+    "resume": "Weiter",
+    "restart": "Neues Spiel",
+    "again": "Nochmal",
+    "sound_on": "Ton an",
+    "sound_off": "Ton aus",
+    "dpad_on": "Steuerkreuz zeigen",
+    "dpad_off": "Steuerkreuz ausblenden"
+  },
+  "dir": {
+    "up": "Nach oben",
+    "down": "Nach unten",
+    "left": "Nach links",
+    "right": "Nach rechts"
+  },
+  "overlay": {
+    "idle": "Iss alle Punkte im Labyrinth und weiche den vier Gespenstern aus.",
+    "ready": "Bereit",
+    "level": "Level {level}",
+    "paused": "Pause",
+    "over": "Game over",
+    "score": "{score} Punkte",
+    "new_high": "Neuer Rekord"
+  },
+  "hint": {
+    "keys": "Steuern mit den Pfeiltasten oder W A S D, Pause mit P.",
+    "touch": "Wische über das Labyrinth oder tippe aufs Steuerkreuz."
+  },
+  "rules": {
+    "title": "So spielst du",
+    "goal": "Iss alle Punkte, dann geht es ins nächste Level – mit schnelleren Gespenstern.",
+    "pellet": "Die grossen Punkte machen die Gespenster kurz harmlos: Jetzt kannst du sie fressen, und jedes weitere bringt doppelt so viel.",
+    "lives": "Du hast drei Leben und bekommst bei 10'000 Punkten eines dazu."
+  },
+  "ghost": {
+    "chaser": "Fäger (rot) jagt dich auf direktem Weg.",
+    "ambusher": "Schlaumeier (rosa) versucht, dir den Weg abzuschneiden.",
+    "fickle": "Zwirbel (türkis) ist schwer zu durchschauen – er arbeitet mit Fäger zusammen.",
+    "shy": "Trödli (orange) jagt dich nur von weitem und dreht ab, wenn er dir nahe kommt."
+  }
+}

@@ -1,0 +1,52 @@
+{
+  "title": "Mampf",
+  "canvas_label": "Labyrinthe de Mampf",
+  "hud": {
+    "score": "Points",
+    "high": "Record",
+    "level": "Niveau",
+    "lives": "{count} vies en réserve"
+  },
+  "action": {
+    "start": "Démarrer",
+    "pause": "Pause",
+    "resume": "Continuer",
+    "restart": "Nouvelle partie",
+    "again": "Rejouer",
+    "sound_on": "Activer le son",
+    "sound_off": "Couper le son",
+    "dpad_on": "Afficher la croix directionnelle",
+    "dpad_off": "Masquer la croix directionnelle"
+  },
+  "dir": {
+    "up": "Haut",
+    "down": "Bas",
+    "left": "Gauche",
+    "right": "Droite"
+  },
+  "overlay": {
+    "idle": "Mange tous les points du labyrinthe et évite les quatre fantômes.",
+    "ready": "Prêt",
+    "level": "Niveau {level}",
+    "paused": "Pause",
+    "over": "Partie terminée",
+    "score": "{score} points",
+    "new_high": "Nouveau record"
+  },
+  "hint": {
+    "keys": "Dirige avec les flèches ou W A S D, pause avec P.",
+    "touch": "Glisse sur le labyrinthe ou touche la croix directionnelle."
+  },
+  "rules": {
+    "title": "Comment jouer",
+    "goal": "Mange tous les points pour passer au niveau suivant – les fantômes deviennent plus rapides.",
+    "pellet": "Les gros points rendent les fantômes inoffensifs un court instant : tu peux alors les manger, et chacun rapporte deux fois plus que le précédent.",
+    "lives": "Tu as trois vies et tu en gagnes une de plus à 10 000 points."
+  },
+  "ghost": {
+    "chaser": "Fäger (rouge) fonce droit sur toi.",
+    "ambusher": "Schlaumeier (rose) essaie de te couper la route.",
+    "fickle": "Zwirbel (turquoise) est imprévisible – il fait équipe avec Fäger.",
+    "shy": "Trödli (orange) ne te poursuit que de loin et s'éloigne quand il s'approche de toi."
+  }
+}

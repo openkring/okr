@@ -7,3 +7,4 @@ export * from './lib/mampf.settings';
 export * from './lib/mampf.color';
 export * from './lib/mampf.input';
 export * from './lib/mampf.engine';
+export * from './lib/mampf-i18n';

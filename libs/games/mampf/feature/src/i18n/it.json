@@ -1,0 +1,52 @@
+{
+  "title": "Mampf",
+  "canvas_label": "Labirinto di Mampf",
+  "hud": {
+    "score": "Punti",
+    "high": "Record",
+    "level": "Livello",
+    "lives": "{count} vite di riserva"
+  },
+  "action": {
+    "start": "Inizia",
+    "pause": "Pausa",
+    "resume": "Continua",
+    "restart": "Nuova partita",
+    "again": "Gioca ancora",
+    "sound_on": "Attiva audio",
+    "sound_off": "Disattiva audio",
+    "dpad_on": "Mostra croce direzionale",
+    "dpad_off": "Nascondi croce direzionale"
+  },
+  "dir": {
+    "up": "Su",
+    "down": "Giù",
+    "left": "Sinistra",
+    "right": "Destra"
+  },
+  "overlay": {
+    "idle": "Mangia tutti i punti del labirinto ed evita i quattro fantasmi.",
+    "ready": "Pronto",
+    "level": "Livello {level}",
+    "paused": "Pausa",
+    "over": "Partita finita",
+    "score": "{score} punti",
+    "new_high": "Nuovo record"
+  },
+  "hint": {
+    "keys": "Muoviti con le frecce o W A S D, pausa con P.",
+    "touch": "Scorri sul labirinto o tocca la croce direzionale."
+  },
+  "rules": {
+    "title": "Come si gioca",
+    "goal": "Mangia tutti i punti per passare al livello successivo – i fantasmi diventano più veloci.",
+    "pellet": "I punti grandi rendono innocui i fantasmi per poco tempo: ora puoi mangiarli, e ognuno vale il doppio del precedente.",
+    "lives": "Hai tre vite e ne guadagni una in più a 10'000 punti."
+  },
+  "ghost": {
+    "chaser": "Fäger (rosso) ti insegue dritto.",
+    "ambusher": "Schlaumeier (rosa) cerca di tagliarti la strada.",
+    "fickle": "Zwirbel (turchese) è imprevedibile – lavora insieme a Fäger.",
+    "shy": "Trödli (arancione) ti insegue solo da lontano e si allontana quando ti si avvicina."
+  }
+}

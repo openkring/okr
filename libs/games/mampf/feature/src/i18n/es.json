@@ -1,0 +1,52 @@
+{
+  "title": "Mampf",
+  "canvas_label": "Laberinto de Mampf",
+  "hud": {
+    "score": "Puntos",
+    "high": "Récord",
+    "level": "Nivel",
+    "lives": "{count} vidas de reserva"
+  },
+  "action": {
+    "start": "Empezar",
+    "pause": "Pausa",
+    "resume": "Seguir",
+    "restart": "Nueva partida",
+    "again": "Otra vez",
+    "sound_on": "Activar sonido",
+    "sound_off": "Silenciar",
+    "dpad_on": "Mostrar cruceta",
+    "dpad_off": "Ocultar cruceta"
+  },
+  "dir": {
+    "up": "Arriba",
+    "down": "Abajo",
+    "left": "Izquierda",
+    "right": "Derecha"
+  },
+  "overlay": {
+    "idle": "Cómete todos los puntos del laberinto y esquiva a los cuatro fantasmas.",
+    "ready": "Preparado",
+    "level": "Nivel {level}",
+    "paused": "Pausa",
+    "over": "Fin de la partida",
+    "score": "{score} puntos",
+    "new_high": "Nuevo récord"
+  },
+  "hint": {
+    "keys": "Muévete con las flechas o W A S D, pausa con P.",
+    "touch": "Desliza sobre el laberinto o toca la cruceta."
+  },
+  "rules": {
+    "title": "Cómo se juega",
+    "goal": "Cómete todos los puntos para pasar al siguiente nivel: los fantasmas se vuelven más rápidos.",
+    "pellet": "Los puntos grandes vuelven inofensivos a los fantasmas por un momento: ahora puedes comértelos, y cada uno vale el doble que el anterior.",
+    "lives": "Tienes tres vidas y ganas una más con 10 000 puntos."
+  },
+  "ghost": {
+    "chaser": "Fäger (rojo) va directo a por ti.",
+    "ambusher": "Schlaumeier (rosa) intenta cortarte el paso.",
+    "fickle": "Zwirbel (turquesa) es impredecible: trabaja junto con Fäger.",
+    "shy": "Trödli (naranja) solo te persigue de lejos y se aparta cuando se te acerca."
+  }
+}
