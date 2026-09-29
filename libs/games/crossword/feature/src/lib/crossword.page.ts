@@ -29,8 +29,8 @@ function formatElapsed(milliseconds: number): string {
  * Typing goes through a real (if visually all-but-invisible) focused `<input>` — `keydown`
  * alone never opens a mobile keyboard, and `CrosswordBoard` itself takes no keyboard input, it
  * only reports which cell was tapped. The input is refocused by an `effect` every time the
- * store's selection changes, including the very first cell the store selects once the topic has
- * loaded.
+ * store's selection changes — the store never auto-selects, so this only fires once the player
+ * has tapped a cell or picked a clue, but it fires on every such change from then on.
  */
 @Component({
   selector: 'okr-crossword-page',
@@ -87,6 +87,7 @@ function formatElapsed(milliseconds: number): string {
             [entries]="store.topic()!.entries"
             [i18n]="store.i18n"
             [activeNumber]="store.activeNumber()"
+            [activeDirection]="store.selected()?.direction"
             (cluePicked)="onCluePicked($event)"
           />
 
@@ -164,9 +165,10 @@ export class CrosswordPage {
     const ticker = setInterval(() => this.now.set(Date.now()), TICK_MS);
     inject(DestroyRef).onDestroy(() => clearInterval(ticker));
 
-    // Refocus the capture input every time the selection changes, including the store's own
-    // first selection once the topic has loaded — a tap or a clue pick must always be followed
-    // by a keyboard-ready input, or typing silently goes nowhere on mobile.
+    // Refocus the capture input every time the selection changes. The store never auto-selects
+    // a cell — `selected` stays undefined until the player taps a cell or picks a clue — but once
+    // they do, that first selection (and every one after it) must be followed by a keyboard-ready
+    // input, or typing silently goes nowhere on mobile.
     effect(() => {
       if (this.store.selected()) {
         this.hiddenInput()?.nativeElement.focus();

@@ -30,7 +30,7 @@ interface ClueRow {
           button
           lines="none"
           class="cw-clue-item"
-          [class.active]="row.placement.number === activeNumber()"
+          [class.active]="isActive(row.placement)"
           (click)="cluePicked.emit(row.placement)"
         >
           <ion-label>
@@ -46,7 +46,7 @@ interface ClueRow {
           button
           lines="none"
           class="cw-clue-item"
-          [class.active]="row.placement.number === activeNumber()"
+          [class.active]="isActive(row.placement)"
           (click)="cluePicked.emit(row.placement)"
         >
           <ion-label>
@@ -62,11 +62,21 @@ export class CrosswordClues {
   public readonly entries = input.required<CrosswordEntry[]>();
   public readonly i18n = input.required<CrosswordI18n>();
   public readonly activeNumber = input<number | undefined>(undefined);
+  /**
+   * The generator numbers by CELL, so an across and a down word starting on the same cell can
+   * share a number. Without this, both clues would light up at an intersection — one of them
+   * wrong. `isActive` requires both number AND direction to match.
+   */
+  public readonly activeDirection = input<'across' | 'down' | undefined>(undefined);
 
   public readonly cluePicked = output<CrosswordPlacement>();
 
   protected readonly across = computed<ClueRow[]>(() => this.rowsFor('across'));
   protected readonly down = computed<ClueRow[]>(() => this.rowsFor('down'));
+
+  protected isActive(placement: CrosswordPlacement): boolean {
+    return placement.number === this.activeNumber() && placement.direction === this.activeDirection();
+  }
 
   private rowsFor(direction: 'across' | 'down'): ClueRow[] {
     const entries = this.entries();
