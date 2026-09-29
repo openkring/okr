@@ -158,6 +158,9 @@
     },
     "tetris": {
       "label": "Blocks"
+    },
+    "mampf": {
+      "label": "Mampf"
     }
   },
   "picker": {

@@ -52,6 +52,7 @@
     { "path": "../../games/battleship/feature/tsconfig.lib.json" },
     { "path": "../../games/hearing-quiz/feature/tsconfig.lib.json" },
     { "path": "../../games/jasstafel/feature/tsconfig.lib.json" },
+    { "path": "../../games/mampf/feature/tsconfig.lib.json" },
     { "path": "../../games/muehle/feature/tsconfig.lib.json" },
     { "path": "../../games/quiz/feature/tsconfig.lib.json" },
     { "path": "../../games/tetris/feature/tsconfig.lib.json" },

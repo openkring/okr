@@ -2366,7 +2366,7 @@ const instruments: FeatureBlock = {
  *   games   umbrella  — no route, no menu, no collection; the group switch
  *     quiz  dependsOn ['games']  → /quiz   + one child row under `games-menu`
  *     zip   dependsOn ['games']  → /zip    + one child row under `games-menu`
- *     muehle, battleship, hearing-quiz — same shape (added 2026-09-28/29)
+ *     muehle, battleship, hearing-quiz, jasstafel, tetris, mampf — same shape (added 2026-09-28/29)
  *
  * Every game block carries `bundle: 'games'` (since 2026-09-29), so the picker lists them
  * together under «Spiele» instead of scattering them through «Spezial».
@@ -2617,6 +2617,28 @@ const tetris: FeatureBlock = {
 };
 
 /**
+ * `libs/games/mampf` — `MampfPage` + `MampfStore` at `/mampf`, over the pure
+ * `@okr/games-mampf-util` (maze, fixed-step engine, ghost AI).
+ *
+ * A maze-chase arcade game under its own name, maze, art and sounds (spec 1.69). High score and
+ * the two toggles live in `localStorage` — no Firestore, hence `collections: []`.
+ *
+ * `defaultAvailability: 'ga'`, like the other finished games.
+ */
+const mampf: FeatureBlock = {
+  id: 'mampf',
+  bundle: 'games',
+  label: '@tenant/util.feature.mampf.label',
+  icon: 'target',
+  defaultAvailability: 'ga',
+  dependsOn: ['games'],
+  collections: [],
+  menu: [gamesMenuParent([
+    { key: 'game-mampf', name: 'game-mampf', url: '/mampf', action: 'navigate', roleNeeded: 'registered', icon: 'target', label: '@item.game-mampf' },
+  ])],
+};
+
+/**
  * Every feature block's METADATA the platform ships. Adding a block here is HALF of what
  * makes a feature reachable — the matching Angular route fragment must also be added to
  * `FEATURE_ROUTES` in `@okr/tenant-routes` (`feature-catalogue.ts`), joined by `id`.
@@ -2787,7 +2809,7 @@ const weather: FeatureBlock = {
 };
 
 export const FEATURE_BLOCKS: FeatureBlock[] = [
-  calevent, aoc, activity, task, instruments, games, quiz, zip, hearingQuiz, muehle, battleship, jasstafel, tetris,
+  calevent, aoc, activity, task, instruments, games, quiz, zip, hearingQuiz, muehle, battleship, jasstafel, tetris, mampf,
   auth, cms, user, profile, session, security, i18n, avatar, category, comment, geo, trip, consent,
   subject, relationship, vcard,
   resource, mobility,

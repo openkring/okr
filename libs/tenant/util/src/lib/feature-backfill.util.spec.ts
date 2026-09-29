@@ -236,7 +236,7 @@ describe('deriveEnabledFeatures — owner override (R-8)', () => {
       override: override(FEATURE_BLOCKS.map(b => b.id)),
     });
     expect(out.enabled).toEqual(expected);
-    expect(out.enabled).toHaveLength(39);   // +1: `meeting` (spec 2.7) 2026-08-14, +1: `alias` (spec 3.21) 2026-08-22, +1: `trip` split out of core `geo` 2026-08-24, +1: `weather` (spec 1.45) 2026-08-29, +1: `member-fee` (member-fees-generic plan, task 17) 2026-09-17, +2: the per-game `games` split 2026-09-27 — the `games` umbrella flipped `disabled`→`ga` and `zip` is new, +2: `muehle` and `battleship` (ga games) 2026-09-29, +1: `jasstafel` (ga game) 2026-09-29, +1: `tetris` (ga game) 2026-09-29; `diary` (beta) and `quiz` (disabled) do not add to this count
+    expect(out.enabled).toHaveLength(40);   // +1: `meeting` (spec 2.7) 2026-08-14, +1: `alias` (spec 3.21) 2026-08-22, +1: `trip` split out of core `geo` 2026-08-24, +1: `weather` (spec 1.45) 2026-08-29, +1: `member-fee` (member-fees-generic plan, task 17) 2026-09-17, +2: the per-game `games` split 2026-09-27 — the `games` umbrella flipped `disabled`→`ga` and `zip` is new, +2: `muehle` and `battleship` (ga games) 2026-09-29, +1: `jasstafel` (ga game) 2026-09-29, +1: `tetris` (ga game) 2026-09-29, +1: `mampf` (ga game) 2026-09-29; `diary` (beta) and `quiz` (disabled) do not add to this count
     FEATURE_BLOCKS.filter(b => b.defaultAvailability === 'disabled')
       .forEach(b => expect(out.enabled).not.toContain(b.id));
   });
