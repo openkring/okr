@@ -1,0 +1,42 @@
+{
+  "title": "Bimaru",
+  "desc": "Encuentra la flota escondida. Los números del borde te dicen cuántas casillas de cada fila y columna pertenecen a un barco. Los barcos son rectos y nunca se tocan, ni siquiera en diagonal.",
+  "option": {
+    "size_label": "Tamaño",
+    "size_small": "Pequeño (6×6)",
+    "size_medium": "Mediano (8×8)",
+    "size_large": "Grande (10×10)"
+  },
+  "action": {
+    "undo": "Deshacer",
+    "hint": "Pista",
+    "check": "Comprobar",
+    "new_game": "Nuevo acertijo"
+  },
+  "board": {
+    "fleet": "Flota"
+  },
+  "ship": {
+    "4": "Acorazado",
+    "3": "Crucero",
+    "2": "Destructor",
+    "1": "Submarino"
+  },
+  "cell": {
+    "unknown": "vacía",
+    "water": "agua",
+    "ship": "barco",
+    "count_row": "Fila {n}: {count} casillas de barco",
+    "count_col": "Columna {n}: {count} casillas de barco"
+  },
+  "status": {
+    "play": "Toca una casilla: una vez para agua, dos veces para un barco, tres veces para vaciarla. Toca un número para llenar de agua el resto de la línea.",
+    "errors": "{count} casillas están mal, están marcadas en rojo.",
+    "error_one": "Una casilla está mal, está marcada en rojo.",
+    "no_errors": "Hasta ahora todo está bien.",
+    "hint": "Pista: la casilla {at} ya está descubierta.",
+    "no_hint": "No queda nada por descubrir.",
+    "solved": "Resuelto en {time}.",
+    "solved_hints": "Resuelto en {time}, con {count} pistas."
+  }
+}

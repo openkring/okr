@@ -1,0 +1,42 @@
+{
+  "title": "Bimaru",
+  "desc": "Finde die versteckte Flotte. Die Zahlen am Rand sagen dir, wie viele Felder jeder Zeile und Spalte zu einem Schiff gehören. Schiffe liegen gerade und berühren sich nie, auch nicht schräg.",
+  "option": {
+    "size_label": "Grösse",
+    "size_small": "Klein (6×6)",
+    "size_medium": "Mittel (8×8)",
+    "size_large": "Gross (10×10)"
+  },
+  "action": {
+    "undo": "Widerrufen",
+    "hint": "Tipp",
+    "check": "Prüfen",
+    "new_game": "Neues Rätsel"
+  },
+  "board": {
+    "fleet": "Flotte"
+  },
+  "ship": {
+    "4": "Schlachtschiff",
+    "3": "Kreuzer",
+    "2": "Zerstörer",
+    "1": "U-Boot"
+  },
+  "cell": {
+    "unknown": "leer",
+    "water": "Wasser",
+    "ship": "Schiff",
+    "count_row": "Zeile {n}: {count} Schiffsfelder",
+    "count_col": "Spalte {n}: {count} Schiffsfelder"
+  },
+  "status": {
+    "play": "Tippe auf ein Feld: einmal für Wasser, zweimal für ein Schiff, dreimal zum Leeren. Tippst du auf eine Zahl, füllt sich der Rest der Reihe mit Wasser.",
+    "errors": "{count} Felder stimmen nicht, sie sind rot umrandet.",
+    "error_one": "Ein Feld stimmt nicht, es ist rot umrandet.",
+    "no_errors": "Bisher stimmt alles.",
+    "hint": "Tipp: Feld {at} ist jetzt aufgedeckt.",
+    "no_hint": "Es gibt nichts mehr aufzudecken.",
+    "solved": "Gelöst in {time}.",
+    "solved_hints": "Gelöst in {time}, mit {count} Tipps."
+  }
+}

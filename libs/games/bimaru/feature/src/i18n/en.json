@@ -1,0 +1,42 @@
+{
+  "title": "Bimaru",
+  "desc": "Find the hidden fleet. The numbers along the edge tell you how many cells of each row and column belong to a ship. Ships lie straight and never touch, not even diagonally.",
+  "option": {
+    "size_label": "Size",
+    "size_small": "Small (6×6)",
+    "size_medium": "Medium (8×8)",
+    "size_large": "Large (10×10)"
+  },
+  "action": {
+    "undo": "Undo",
+    "hint": "Hint",
+    "check": "Check",
+    "new_game": "New puzzle"
+  },
+  "board": {
+    "fleet": "Fleet"
+  },
+  "ship": {
+    "4": "Battleship",
+    "3": "Cruiser",
+    "2": "Destroyer",
+    "1": "Submarine"
+  },
+  "cell": {
+    "unknown": "empty",
+    "water": "water",
+    "ship": "ship",
+    "count_row": "Row {n}: {count} ship cells",
+    "count_col": "Column {n}: {count} ship cells"
+  },
+  "status": {
+    "play": "Tap a cell: once for water, twice for a ship, three times to clear it. Tap a number to fill the rest of that line with water.",
+    "errors": "{count} cells are wrong, they are outlined in red.",
+    "error_one": "One cell is wrong, it is outlined in red.",
+    "no_errors": "Everything is correct so far.",
+    "hint": "Hint: cell {at} is now revealed.",
+    "no_hint": "There is nothing left to reveal.",
+    "solved": "Solved in {time}.",
+    "solved_hints": "Solved in {time}, with {count} hints."
+  }
+}

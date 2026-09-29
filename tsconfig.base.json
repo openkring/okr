@@ -159,6 +159,8 @@
       "@okr/forms-util": ["libs/forms/util/src/index.ts"],
       "@okr/games-battleship-feature": ["libs/games/battleship/feature/src/index.ts"],
       "@okr/games-battleship-util": ["libs/games/battleship/util/src/index.ts"],
+      "@okr/games-bimaru-feature": ["libs/games/bimaru/feature/src/index.ts"],
+      "@okr/games-bimaru-util": ["libs/games/bimaru/util/src/index.ts"],
       "@okr/games-crossword-data-access": ["libs/games/crossword/data-access/src/index.ts"],
       "@okr/games-crossword-feature": ["libs/games/crossword/feature/src/index.ts"],
       "@okr/games-crossword-ui": ["libs/games/crossword/ui/src/index.ts"],

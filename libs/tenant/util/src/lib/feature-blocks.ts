@@ -2366,7 +2366,7 @@ const instruments: FeatureBlock = {
  *   games   umbrella  — no route, no menu, no collection; the group switch
  *     quiz  dependsOn ['games']  → /quiz   + one child row under `games-menu`
  *     zip   dependsOn ['games']  → /zip    + one child row under `games-menu`
- *     muehle, battleship, hearing-quiz, jasstafel, tetris, mampf, wordle — same shape (added 2026-09-28/29)
+ *     muehle, battleship, bimaru, hearing-quiz, jasstafel, tetris, mampf, wordle — same shape (added 2026-09-28/29)
  *
  * Every game block carries `bundle: 'games'` (since 2026-09-29), so the picker lists them
  * together under «Spiele» instead of scattering them through «Spezial».
@@ -2601,6 +2601,29 @@ const battleship: FeatureBlock = {
   collections: [],
   menu: [gamesMenuParent([
     { key: 'game-battleship', name: 'game-battleship', url: '/battleship', action: 'navigate', roleNeeded: 'registered', icon: 'boat', label: '@item.game-battleship' },
+  ])],
+};
+
+/**
+ * `libs/games/bimaru` — `BimaruPage` + `BimaruStore` at `/bimaru`, over the pure
+ * `@okr/games-bimaru-util` (fleet placement, a solver that proves each board has one solution,
+ * hints and error check).
+ *
+ * Bimaru (Battleship solitaire): find the hidden fleet from the row and column counts. The board
+ * size is chosen on the page per game; state is in memory only, hence `collections: []`.
+ *
+ * `defaultAvailability: 'ga'`, like `battleship`: nothing tenant-side to configure.
+ */
+const bimaru: FeatureBlock = {
+  id: 'bimaru',
+  bundle: 'games',
+  label: '@tenant/util.feature.bimaru.label',
+  icon: 'compass',
+  defaultAvailability: 'ga',
+  dependsOn: ['games'],
+  collections: [],
+  menu: [gamesMenuParent([
+    { key: 'game-bimaru', name: 'game-bimaru', url: '/bimaru', action: 'navigate', roleNeeded: 'registered', icon: 'compass', label: '@item.game-bimaru' },
   ])],
 };
 
@@ -2865,7 +2888,7 @@ const weather: FeatureBlock = {
 };
 
 export const FEATURE_BLOCKS: FeatureBlock[] = [
-  calevent, aoc, activity, task, instruments, games, quiz, zip, hearingQuiz, crossword, muehle, battleship, jasstafel, tetris, mampf, wordle,
+  calevent, aoc, activity, task, instruments, games, quiz, zip, hearingQuiz, crossword, muehle, battleship, bimaru, jasstafel, tetris, mampf, wordle,
   auth, cms, user, profile, session, security, i18n, avatar, category, comment, geo, trip, consent,
   subject, relationship, vcard,
   resource, mobility,

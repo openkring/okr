@@ -1235,6 +1235,19 @@ const battleship: BlockRoutes = {
 };
 
 /**
+ * `/bimaru` — Bimaru (Battleship solitaire) in `libs/games/bimaru`. In memory only, no
+ * `:contextMenuName` segment — the same shape as `/zip`.
+ */
+const bimaru: BlockRoutes = {
+  id: 'bimaru',
+  routes: (): Route[] => [{
+    path: 'bimaru',
+    canActivate: [isAuthenticatedGuard],
+    loadComponent: () => import('@okr/games-bimaru-feature').then(m => m.BimaruPage),
+  }],
+};
+
+/**
  * `/jasstafel` — Jasstafel in `libs/games/jasstafel`. `localStorage` only, no
  * `:contextMenuName` segment — the same shape as `/zip`.
  */
@@ -1421,7 +1434,7 @@ const weather: BlockRoutes = {
 };
 
 export const FEATURE_ROUTES: BlockRoutes[] = [
-  calevent, aoc, activity, task, instruments, games, quiz, zip, hearingQuiz, crossword, muehle, battleship, jasstafel, tetris, mampf, wordle,
+  calevent, aoc, activity, task, instruments, games, quiz, zip, hearingQuiz, crossword, muehle, battleship, bimaru, jasstafel, tetris, mampf, wordle,
   auth, cms, user, profile, session, security, i18n, avatar, category, comment, geo, trip, consent,
   subject, relationship, vcard,
   resource, mobility,

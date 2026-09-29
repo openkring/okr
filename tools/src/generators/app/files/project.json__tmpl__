@@ -417,6 +417,11 @@
           },
           {
             "glob": "*.json",
+            "input": "libs/games/bimaru/feature/src/i18n",
+            "output": "./assets/i18n/games/bimaru/feature"
+          },
+          {
+            "glob": "*.json",
             "input": "libs/games/hearing-quiz/feature/src/i18n",
             "output": "./assets/i18n/games/hearing-quiz/feature"
           },

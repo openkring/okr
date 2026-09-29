@@ -1,0 +1,42 @@
+{
+  "title": "Bimaru",
+  "desc": "Trova la flotta nascosta. I numeri sul bordo ti dicono quante caselle di ogni riga e colonna appartengono a una nave. Le navi sono dritte e non si toccano mai, nemmeno in diagonale.",
+  "option": {
+    "size_label": "Dimensione",
+    "size_small": "Piccola (6×6)",
+    "size_medium": "Media (8×8)",
+    "size_large": "Grande (10×10)"
+  },
+  "action": {
+    "undo": "Annulla",
+    "hint": "Suggerimento",
+    "check": "Verifica",
+    "new_game": "Nuovo rompicapo"
+  },
+  "board": {
+    "fleet": "Flotta"
+  },
+  "ship": {
+    "4": "Corazzata",
+    "3": "Incrociatore",
+    "2": "Cacciatorpediniere",
+    "1": "Sottomarino"
+  },
+  "cell": {
+    "unknown": "vuota",
+    "water": "acqua",
+    "ship": "nave",
+    "count_row": "Riga {n}: {count} caselle di nave",
+    "count_col": "Colonna {n}: {count} caselle di nave"
+  },
+  "status": {
+    "play": "Tocca una casella: una volta per l'acqua, due volte per una nave, tre volte per svuotarla. Tocca un numero per riempire d'acqua il resto della riga.",
+    "errors": "{count} caselle sono sbagliate, sono bordate di rosso.",
+    "error_one": "Una casella è sbagliata, è bordata di rosso.",
+    "no_errors": "Finora è tutto giusto.",
+    "hint": "Suggerimento: la casella {at} ora è scoperta.",
+    "no_hint": "Non c'è più niente da scoprire.",
+    "solved": "Risolto in {time}.",
+    "solved_hints": "Risolto in {time}, con {count} suggerimenti."
+  }
+}

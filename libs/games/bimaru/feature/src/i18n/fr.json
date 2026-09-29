@@ -1,0 +1,42 @@
+{
+  "title": "Bimaru",
+  "desc": "Trouve la flotte cachée. Les nombres au bord t'indiquent combien de cases de chaque ligne et de chaque colonne appartiennent à un navire. Les navires sont droits et ne se touchent jamais, même pas en diagonale.",
+  "option": {
+    "size_label": "Taille",
+    "size_small": "Petite (6×6)",
+    "size_medium": "Moyenne (8×8)",
+    "size_large": "Grande (10×10)"
+  },
+  "action": {
+    "undo": "Annuler",
+    "hint": "Indice",
+    "check": "Vérifier",
+    "new_game": "Nouvelle grille"
+  },
+  "board": {
+    "fleet": "Flotte"
+  },
+  "ship": {
+    "4": "Cuirassé",
+    "3": "Croiseur",
+    "2": "Destroyer",
+    "1": "Sous-marin"
+  },
+  "cell": {
+    "unknown": "vide",
+    "water": "eau",
+    "ship": "navire",
+    "count_row": "Ligne {n} : {count} cases de navire",
+    "count_col": "Colonne {n} : {count} cases de navire"
+  },
+  "status": {
+    "play": "Touche une case : une fois pour de l'eau, deux fois pour un navire, trois fois pour la vider. Touche un nombre pour remplir le reste de la ligne avec de l'eau.",
+    "errors": "{count} cases sont fausses, elles sont entourées de rouge.",
+    "error_one": "Une case est fausse, elle est entourée de rouge.",
+    "no_errors": "Tout est juste jusqu'ici.",
+    "hint": "Indice : la case {at} est maintenant révélée.",
+    "no_hint": "Il n'y a plus rien à révéler.",
+    "solved": "Résolu en {time}.",
+    "solved_hints": "Résolu en {time}, avec {count} indices."
+  }
+}
