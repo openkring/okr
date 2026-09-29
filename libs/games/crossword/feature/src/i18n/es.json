@@ -24,9 +24,6 @@
   "update": { "conf": "El crucigrama se ha guardado.", "error": "El crucigrama no se ha podido guardar." },
   "delete": { "conf": "El crucigrama se ha eliminado.", "error": "El crucigrama no se ha podido eliminar." },
   "error": {
-    "title_required": "Ponle un título al crucigrama.",
-    "title_too_long": "El título es demasiado largo.",
-    "description_too_long": "La descripción es demasiado larga.",
     "clue_too_long": "Una de las pistas es demasiado larga.",
     "too_few_entries": "Se necesitan al menos cinco palabras utilizables.",
     "entries_rejected": "Algunas palabras no se pueden usar. Revisa la longitud, la pista y si una palabra aparece dos veces."

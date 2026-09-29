@@ -24,9 +24,6 @@
   "update": { "conf": "The puzzle was saved.", "error": "The puzzle could not be saved." },
   "delete": { "conf": "The puzzle was deleted.", "error": "The puzzle could not be deleted." },
   "error": {
-    "title_required": "Give the puzzle a title.",
-    "title_too_long": "The title is too long.",
-    "description_too_long": "The description is too long.",
     "clue_too_long": "One of the clues is too long.",
     "too_few_entries": "At least five usable words are needed.",
     "entries_rejected": "Some words cannot be used. Check length, clue and whether a word appears twice."

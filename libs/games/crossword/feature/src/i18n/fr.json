@@ -24,9 +24,6 @@
   "update": { "conf": "La grille a été enregistrée.", "error": "La grille n'a pas pu être enregistrée." },
   "delete": { "conf": "La grille a été supprimée.", "error": "La grille n'a pas pu être supprimée." },
   "error": {
-    "title_required": "Donne un titre à la grille.",
-    "title_too_long": "Le titre est trop long.",
-    "description_too_long": "La description est trop longue.",
     "clue_too_long": "Un indice est trop long.",
     "too_few_entries": "Il faut au moins cinq mots utilisables.",
     "entries_rejected": "Certains mots ne peuvent pas être utilisés. Vérifie la longueur, l'indice et si un mot apparaît deux fois."

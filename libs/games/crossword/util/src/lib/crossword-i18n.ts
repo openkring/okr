@@ -46,10 +46,10 @@ export const CROSSWORD_I18N_KEYS = {
   delete_conf:        PFX + 'delete.conf',
   delete_error:       PFX + 'delete.error',
 
-  // validation — same PFX + 'error.<name>' shape as the other keys, filed by crosswordTopicSuite
-  error_title_required:       PFX + 'error.title_required',
-  error_title_too_long:       PFX + 'error.title_too_long',
-  error_description_too_long: PFX + 'error.description_too_long',
+  // validation — same PFX + 'error.<name>' shape as the other keys, filed by crosswordTopicSuite.
+  // title/description now go through the shared stringValidations() helper (generic
+  // validation.required/tooLong copy, same as hearing-quiz), so only the checks that helper
+  // cannot express (clue length, entry-count aggregates) keep a feature-scoped message here.
   error_clue_too_long:        PFX + 'error.clue_too_long',
   error_too_few_entries:      PFX + 'error.too_few_entries',
   error_entries_rejected:     PFX + 'error.entries_rejected',

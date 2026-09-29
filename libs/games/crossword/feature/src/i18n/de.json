@@ -24,9 +24,6 @@
   "update": { "conf": "Das Rätsel wurde gespeichert.", "error": "Das Rätsel konnte nicht gespeichert werden." },
   "delete": { "conf": "Das Rätsel wurde gelöscht.", "error": "Das Rätsel konnte nicht gelöscht werden." },
   "error": {
-    "title_required": "Gib dem Rätsel einen Titel.",
-    "title_too_long": "Der Titel ist zu lang.",
-    "description_too_long": "Die Beschreibung ist zu lang.",
     "clue_too_long": "Ein Hinweis ist zu lang.",
     "too_few_entries": "Es braucht mindestens fünf brauchbare Wörter.",
     "entries_rejected": "Einige Wörter können nicht verwendet werden. Prüfe Länge, Hinweis und ob ein Wort doppelt vorkommt."

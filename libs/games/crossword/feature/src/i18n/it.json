@@ -24,9 +24,6 @@
   "update": { "conf": "Il cruciverba è stato salvato.", "error": "Non è stato possibile salvare il cruciverba." },
   "delete": { "conf": "Il cruciverba è stato eliminato.", "error": "Non è stato possibile eliminare il cruciverba." },
   "error": {
-    "title_required": "Dai un titolo al cruciverba.",
-    "title_too_long": "Il titolo è troppo lungo.",
-    "description_too_long": "La descrizione è troppo lunga.",
     "clue_too_long": "Una definizione è troppo lunga.",
     "too_few_entries": "Servono almeno cinque parole utilizzabili.",
     "entries_rejected": "Alcune parole non possono essere usate. Controlla la lunghezza, la definizione e se una parola compare due volte."
