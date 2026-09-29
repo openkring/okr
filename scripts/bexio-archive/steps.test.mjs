@@ -376,3 +376,10 @@ test('cleanup-comment-images removes the avatar copies and their references', as
   assert.deepEqual(db.store.get('finance-comments/bexio-comment-9').attachmentKeys, []);
   assert.deepEqual([counts.images, counts.comments], [1, 1]);
 });
+
+import { changes } from './steps.mjs';
+test('changes ignores key order inside maps (Firestore returns maps key-sorted)', () => {
+  const existing = { totalAmount: { amount: 1, periodicity: 'one-time', currency: 'CHF' }, list: [{ b: 1, a: 2 }] };
+  assert.deepEqual(changes(existing, { totalAmount: { amount: 1, currency: 'CHF', periodicity: 'one-time' }, list: [{ a: 2, b: 1 }] }), {});
+  assert.deepEqual(Object.keys(changes(existing, { totalAmount: { amount: 2, currency: 'CHF', periodicity: 'one-time' } })), ['totalAmount']);
+});

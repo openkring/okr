@@ -23,12 +23,19 @@ function guard({ dry, force }, condition, message) {
   if (condition && !dry && !force) throw new Error(`refusing to apply: ${message} (re-run with --dry to inspect, --force to override)`);
 }
 
+/** JSON with sorted object keys — Firestore returns map fields key-sorted, the step builds them in its own order. */
+function stableJson(v) {
+  if (Array.isArray(v)) return `[${v.map(stableJson).join(',')}]`;
+  if (v && typeof v === 'object') return `{${Object.keys(v).sort().map(k => `${JSON.stringify(k)}:${stableJson(v[k])}`).join(',')}}`;
+  return JSON.stringify(v);
+}
+
 /** The subset of `data` that differs from `existing` — so a second run writes nothing. */
 export function changes(existing, data) {
   const out = {};
   for (const [k, v] of Object.entries(data)) {
     if (v instanceof FieldValue) { if (v.isEqual(FieldValue.delete()) && existing?.[k] !== undefined) out[k] = v; continue; }
-    if (JSON.stringify(existing?.[k]) !== JSON.stringify(v)) out[k] = v;
+    if (stableJson(existing?.[k]) !== stableJson(v)) out[k] = v;
   }
   return out;
 }
