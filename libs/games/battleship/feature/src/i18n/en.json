@@ -1,0 +1,47 @@
+{
+  "title": "Battleship",
+  "option": {
+    "allow_touch": "Ships may touch",
+    "extra_shot": "Shoot again after a hit",
+    "level_label": "Opponent",
+    "level_easy": "Easy",
+    "level_normal": "Medium",
+    "level_hard": "Hard"
+  },
+  "action": {
+    "rotate": "Rotate",
+    "random": "Random",
+    "reset": "Reset",
+    "start": "Start",
+    "again": "Play again"
+  },
+  "board": {
+    "own": "Your fleet",
+    "enemy": "Opponent"
+  },
+  "ship": {
+    "carrier": "Aircraft carrier",
+    "battleship": "Battleship",
+    "cruiser": "Cruiser",
+    "submarine": "Submarine",
+    "destroyer": "Destroyer"
+  },
+  "status": {
+    "place": "Place: {ship} ({len} cells). Tap a cell, «Rotate» changes the direction.",
+    "ready": "Fleet ready. Tap «Start».",
+    "no_fit": "The {ship} does not fit here.",
+    "no_fit_touch": "The {ship} does not fit here. Ships may not touch.",
+    "your_turn": "Your turn. Shoot at the opponent's grid.",
+    "you": "You",
+    "enemy": "Opponent",
+    "miss": "{who} {at}: water.",
+    "hit": "{who} {at}: hit.",
+    "sunk": "{who} {at}: {ship} sunk.",
+    "again": "Shoot again.",
+    "enemy_aims": "The opponent is aiming …",
+    "enemy_again": "It shoots again …",
+    "your_turn_short": "Your turn.",
+    "won": "You won. You sank the whole fleet in {shots} shots.",
+    "lost": "You lost. The opponent sank your fleet in {shots} shots."
+  }
+}

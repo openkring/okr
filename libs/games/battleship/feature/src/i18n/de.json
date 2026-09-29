@@ -1,0 +1,47 @@
+{
+  "title": "Schiffli versenken",
+  "option": {
+    "allow_touch": "Schiffe dürfen sich berühren",
+    "extra_shot": "Nach Treffer nochmals schiessen",
+    "level_label": "Gegner",
+    "level_easy": "Leicht",
+    "level_normal": "Mittel",
+    "level_hard": "Schwer"
+  },
+  "action": {
+    "rotate": "Drehen",
+    "random": "Zufällig",
+    "reset": "Zurücksetzen",
+    "start": "Start",
+    "again": "Nochmals spielen"
+  },
+  "board": {
+    "own": "Deine Flotte",
+    "enemy": "Gegner"
+  },
+  "ship": {
+    "carrier": "Flugzeugträger",
+    "battleship": "Schlachtschiff",
+    "cruiser": "Kreuzer",
+    "submarine": "U-Boot",
+    "destroyer": "Zerstörer"
+  },
+  "status": {
+    "place": "Platziere: {ship} ({len} Felder). Tippe aufs Feld, «Drehen» wechselt die Richtung.",
+    "ready": "Flotte bereit. Tippe auf «Start».",
+    "no_fit": "{ship} passt hier nicht hin.",
+    "no_fit_touch": "{ship} passt hier nicht hin. Schiffe dürfen sich nicht berühren.",
+    "your_turn": "Du bist dran. Schiess aufs gegnerische Feld.",
+    "you": "Du",
+    "enemy": "Gegner",
+    "miss": "{who} {at}: Wasser.",
+    "hit": "{who} {at}: Treffer.",
+    "sunk": "{who} {at}: {ship} versenkt.",
+    "again": "Nochmals schiessen.",
+    "enemy_aims": "Der Gegner zielt …",
+    "enemy_again": "Er schiesst nochmals …",
+    "your_turn_short": "Du bist dran.",
+    "won": "Gewonnen. Du hast die ganze Flotte in {shots} Schüssen versenkt.",
+    "lost": "Verloren. Der Gegner hat deine Flotte in {shots} Schüssen versenkt."
+  }
+}

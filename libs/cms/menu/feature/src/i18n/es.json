@@ -609,7 +609,9 @@
     "game-quiz": "Quiz",
     "game-zip": "Zip",
     "game-hearing-quiz": "Entrenamiento auditivo",
-    "hq-add": "Añadir carpeta"
+    "hq-add": "Añadir carpeta",
+    "game-muehle": "Molino",
+    "game-battleship": "Hundir la flota"
   },
   "ownership": {
     "fork_confirm": "«{name}» pertenece al catálogo de funciones ({blocks}).\n\nAl guardar se crea una copia propia del inquilino «{forkKey}» y se desvincula este inquilino del original compartido. Las futuras correcciones del catálogo (URL, acción, rol) ya no llegarán a esta entrada.\n\n¿Guardar de todos modos?",

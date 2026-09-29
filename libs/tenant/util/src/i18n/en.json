@@ -18,6 +18,9 @@
     "communication": {
       "label": "Communication"
     },
+    "games": {
+      "label": "Games"
+    },
     "special": {
       "label": "Special"
     }
@@ -143,6 +146,12 @@
     },
     "hearing-quiz": {
       "label": "Hearing training"
+    },
+    "muehle": {
+      "label": "Nine Men's Morris"
+    },
+    "battleship": {
+      "label": "Battleship"
     }
   },
   "picker": {

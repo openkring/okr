@@ -1,0 +1,51 @@
+{
+  "title": "Mühle",
+  "subtitle": "9 Steine · 24 Punkte",
+  "board_label": "Mühle-Brett",
+  "config": {
+    "opponent_label": "Gegner",
+    "opponent_easy": "Computer · leicht",
+    "opponent_medium": "Computer · mittel",
+    "opponent_hard": "Computer · stark",
+    "opponent_human": "Zwei Spieler",
+    "color_label": "Du spielst",
+    "color_white": "Weiss (beginnt)",
+    "color_black": "Schwarz"
+  },
+  "action": {
+    "undo": "Zug zurück",
+    "restart": "Neues Spiel"
+  },
+  "player": {
+    "white": "Weiss",
+    "black": "Schwarz",
+    "you": "Du",
+    "computer": "Computer",
+    "player": "Spieler",
+    "tray_meta": "{onBoard} auf dem Brett · {lost} verloren"
+  },
+  "status": {
+    "you": "Du",
+    "place": "{who}: Setze einen Stein. Noch {count} in der Hand.",
+    "select": "{who}: Wähle einen Stein zum Ziehen.",
+    "select_fly": "{who}: Nur noch 3 Steine, du darfst springen. Wähle einen Stein.",
+    "target": "{who}: Wähle das Zielfeld.",
+    "target_fly": "{who}: Springe auf einen beliebigen freien Punkt.",
+    "remove": "Mühle geschlossen. Tippe auf einen gegnerischen Stein, um ihn zu nehmen.",
+    "thinking": "Computer ({name}) überlegt …",
+    "draw": "Remis: 50 Züge pro Seite ohne Mühle.",
+    "win_you": "Du gewinnst.",
+    "win_computer": "Der Computer gewinnt.",
+    "win_named": "{name} gewinnt.",
+    "reason_no_moves": "{name} kann nicht mehr ziehen.",
+    "reason_two_stones": "{name} hat nur noch zwei Steine."
+  },
+  "rules": {
+    "title": "Spielregeln",
+    "place": "Setzen: Abwechselnd setzt jede Seite ihre 9 Steine auf freie Punkte.",
+    "move": "Ziehen: Danach wird ein Stein entlang einer Linie auf einen freien Nachbarpunkt gezogen.",
+    "mill": "Mühle: Drei eigene Steine in einer Linie. Dann darfst du einen gegnerischen Stein nehmen, aber keinen aus einer geschlossenen Mühle, solange andere Steine frei sind.",
+    "fly": "Springen: Wer nur noch 3 Steine hat, darf auf jeden freien Punkt springen.",
+    "end": "Ende: Verloren hat, wer nur noch 2 Steine hat oder nicht mehr ziehen kann. Nach 50 Zügen pro Seite ohne Mühle endet das Spiel remis."
+  }
+}

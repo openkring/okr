@@ -1,0 +1,47 @@
+{
+  "title": "Bataille navale",
+  "option": {
+    "allow_touch": "Les navires peuvent se toucher",
+    "extra_shot": "Rejouer après un coup au but",
+    "level_label": "Adversaire",
+    "level_easy": "Facile",
+    "level_normal": "Moyen",
+    "level_hard": "Difficile"
+  },
+  "action": {
+    "rotate": "Pivoter",
+    "random": "Au hasard",
+    "reset": "Réinitialiser",
+    "start": "Démarrer",
+    "again": "Rejouer"
+  },
+  "board": {
+    "own": "Ta flotte",
+    "enemy": "Adversaire"
+  },
+  "ship": {
+    "carrier": "Porte-avions",
+    "battleship": "Cuirassé",
+    "cruiser": "Croiseur",
+    "submarine": "Sous-marin",
+    "destroyer": "Torpilleur"
+  },
+  "status": {
+    "place": "Place : {ship} ({len} cases). Touche une case, «Pivoter» change la direction.",
+    "ready": "Flotte prête. Touche «Démarrer».",
+    "no_fit": "{ship} ne rentre pas ici.",
+    "no_fit_touch": "{ship} ne rentre pas ici. Les navires ne peuvent pas se toucher.",
+    "your_turn": "À toi. Tire sur la grille adverse.",
+    "you": "Toi",
+    "enemy": "Adversaire",
+    "miss": "{who} {at} : à l'eau.",
+    "hit": "{who} {at} : touché.",
+    "sunk": "{who} {at} : {ship} coulé.",
+    "again": "Tire encore une fois.",
+    "enemy_aims": "L'adversaire vise …",
+    "enemy_again": "Il tire encore …",
+    "your_turn_short": "À toi.",
+    "won": "Gagné. Tu as coulé toute la flotte en {shots} tirs.",
+    "lost": "Perdu. L'adversaire a coulé ta flotte en {shots} tirs."
+  }
+}

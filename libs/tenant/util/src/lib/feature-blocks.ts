@@ -19,6 +19,7 @@ export const FEATURE_BUNDLES: { id: BundleId; label: string; icon: string }[] = 
   { id: 'finance',       label: '@tenant/util.bundle.finance.label',       icon: 'cash' },
   { id: 'documents',     label: '@tenant/util.bundle.documents.label',     icon: 'documents' },
   { id: 'communication', label: '@tenant/util.bundle.communication.label', icon: 'chatbubbles' },
+  { id: 'games',         label: '@tenant/util.bundle.games.label',         icon: 'play' },
   { id: 'special',       label: '@tenant/util.bundle.special.label',       icon: 'star' },
 ];
 
@@ -2365,6 +2366,10 @@ const instruments: FeatureBlock = {
  *   games   umbrella  — no route, no menu, no collection; the group switch
  *     quiz  dependsOn ['games']  → /quiz   + one child row under `games-menu`
  *     zip   dependsOn ['games']  → /zip    + one child row under `games-menu`
+ *     muehle, battleship, hearing-quiz — same shape (added 2026-09-28/29)
+ *
+ * Every game block carries `bundle: 'games'` (since 2026-09-29), so the picker lists them
+ * together under «Spiele» instead of scattering them through «Spezial».
  *
  * Game #3 is a block here, a route fragment in `FEATURE_ROUTES`, one child row in its own
  * `gamesMenuParent([...])`, and its `feature.<id>.label` + `@item.game-<id>` strings. Nothing
@@ -2399,7 +2404,7 @@ const instruments: FeatureBlock = {
  */
 const games: FeatureBlock = {
   id: 'games',
-  bundle: 'special',
+  bundle: 'games',
   label: '@tenant/util.feature.games.label',
   icon: 'play',
   defaultAvailability: 'ga',
@@ -2446,7 +2451,7 @@ function gamesMenuParent(children: MenuSpec[]): MenuSpec {
  */
 const quiz: FeatureBlock = {
   id: 'quiz',
-  bundle: 'special',
+  bundle: 'games',
   label: '@tenant/util.feature.quiz.label',
   icon: 'help-circle',
   // Owner ruling 2026-08-04, re-affirmed at the 2026-09-27 split — see the block comment.
@@ -2473,7 +2478,7 @@ const quiz: FeatureBlock = {
  */
 const zip: FeatureBlock = {
   id: 'zip',
-  bundle: 'special',
+  bundle: 'games',
   label: '@tenant/util.feature.zip.label',
   icon: 'grid',
   defaultAvailability: 'ga',
@@ -2503,7 +2508,7 @@ const zip: FeatureBlock = {
  */
 const hearingQuiz: FeatureBlock = {
   id: 'hearing-quiz',
-  bundle: 'special',
+  bundle: 'games',
   label: '@tenant/util.feature.hearing-quiz.label',
   icon: 'music',
   defaultAvailability: 'beta',
@@ -2518,6 +2523,52 @@ const hearingQuiz: FeatureBlock = {
       { key: 'hq-add', name: 'hq-add', url: 'add', action: 'call', roleNeeded: 'contentAdmin', icon: 'add-circle', label: '@item.hq-add' },
     ] },
   ],
+};
+
+/**
+ * `libs/games/muehle` — `MuehlePage` + `MuehleStore` at `/muehle`, over the pure
+ * `@okr/games-muehle-util` (rules engine + negamax computer opponent).
+ *
+ * Mühle (Nine Men's Morris) against the computer at three levels, or two people at one device.
+ * Opponent and colour are chosen on the page and remembered per browser in `localStorage`;
+ * the game itself is in memory only — no service, no Firestore, hence `collections: []`.
+ *
+ * `defaultAvailability: 'ga'`, like `zip`: a finished game, nothing tenant-side to configure.
+ */
+const muehle: FeatureBlock = {
+  id: 'muehle',
+  bundle: 'games',
+  label: '@tenant/util.feature.muehle.label',
+  icon: 'radio-button-on',
+  defaultAvailability: 'ga',
+  dependsOn: ['games'],
+  collections: [],
+  menu: [gamesMenuParent([
+    { key: 'game-muehle', name: 'game-muehle', url: '/muehle', action: 'navigate', roleNeeded: 'registered', icon: 'radio-button-on', label: '@item.game-muehle' },
+  ])],
+};
+
+/**
+ * `libs/games/battleship` — `BattleshipPage` + `BattleshipStore` at `/battleship`, over the pure
+ * `@okr/games-battleship-util` (fleet placement, firing, three computer levels).
+ *
+ * Schiffli versenken against the computer. The rule options (ships may touch, shoot again after
+ * a hit) and the level are set on the page per game; state is in memory only, hence
+ * `collections: []`.
+ *
+ * `defaultAvailability: 'ga'`, like `zip`: a finished game, nothing tenant-side to configure.
+ */
+const battleship: FeatureBlock = {
+  id: 'battleship',
+  bundle: 'games',
+  label: '@tenant/util.feature.battleship.label',
+  icon: 'boat',
+  defaultAvailability: 'ga',
+  dependsOn: ['games'],
+  collections: [],
+  menu: [gamesMenuParent([
+    { key: 'game-battleship', name: 'game-battleship', url: '/battleship', action: 'navigate', roleNeeded: 'registered', icon: 'boat', label: '@item.game-battleship' },
+  ])],
 };
 
 /**
@@ -2691,7 +2742,7 @@ const weather: FeatureBlock = {
 };
 
 export const FEATURE_BLOCKS: FeatureBlock[] = [
-  calevent, aoc, activity, task, instruments, games, quiz, zip, hearingQuiz,
+  calevent, aoc, activity, task, instruments, games, quiz, zip, hearingQuiz, muehle, battleship,
   auth, cms, user, profile, session, security, i18n, avatar, category, comment, geo, trip, consent,
   subject, relationship, vcard,
   resource, mobility,

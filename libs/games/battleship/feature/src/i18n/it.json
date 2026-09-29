@@ -1,0 +1,47 @@
+{
+  "title": "Battaglia navale",
+  "option": {
+    "allow_touch": "Le navi possono toccarsi",
+    "extra_shot": "Spara ancora dopo un colpo a segno",
+    "level_label": "Avversario",
+    "level_easy": "Facile",
+    "level_normal": "Medio",
+    "level_hard": "Difficile"
+  },
+  "action": {
+    "rotate": "Ruota",
+    "random": "Casuale",
+    "reset": "Reimposta",
+    "start": "Inizia",
+    "again": "Gioca ancora"
+  },
+  "board": {
+    "own": "La tua flotta",
+    "enemy": "Avversario"
+  },
+  "ship": {
+    "carrier": "Portaerei",
+    "battleship": "Corazzata",
+    "cruiser": "Incrociatore",
+    "submarine": "Sottomarino",
+    "destroyer": "Cacciatorpediniere"
+  },
+  "status": {
+    "place": "Posiziona: {ship} ({len} caselle). Tocca una casella, «Ruota» cambia la direzione.",
+    "ready": "Flotta pronta. Tocca «Inizia».",
+    "no_fit": "{ship} non ci sta qui.",
+    "no_fit_touch": "{ship} non ci sta qui. Le navi non possono toccarsi.",
+    "your_turn": "Tocca a te. Spara sulla griglia avversaria.",
+    "you": "Tu",
+    "enemy": "Avversario",
+    "miss": "{who} {at}: acqua.",
+    "hit": "{who} {at}: colpito.",
+    "sunk": "{who} {at}: {ship} affondato.",
+    "again": "Spara ancora.",
+    "enemy_aims": "L'avversario prende la mira …",
+    "enemy_again": "Spara ancora …",
+    "your_turn_short": "Tocca a te.",
+    "won": "Hai vinto. Hai affondato tutta la flotta in {shots} colpi.",
+    "lost": "Hai perso. L'avversario ha affondato la tua flotta in {shots} colpi."
+  }
+}

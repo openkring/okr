@@ -18,6 +18,9 @@
     "communication": {
       "label": "Communication"
     },
+    "games": {
+      "label": "Jeux"
+    },
     "special": {
       "label": "Spécial"
     }
@@ -143,6 +146,12 @@
     },
     "hearing-quiz": {
       "label": "Entraînement auditif"
+    },
+    "muehle": {
+      "label": "Jeu du moulin"
+    },
+    "battleship": {
+      "label": "Bataille navale"
     }
   },
   "picker": {

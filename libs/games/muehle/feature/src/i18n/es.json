@@ -1,0 +1,51 @@
+{
+  "title": "Molino",
+  "subtitle": "9 fichas · 24 puntos",
+  "board_label": "Tablero de molino",
+  "config": {
+    "opponent_label": "Rival",
+    "opponent_easy": "Ordenador · fácil",
+    "opponent_medium": "Ordenador · medio",
+    "opponent_hard": "Ordenador · fuerte",
+    "opponent_human": "Dos jugadores",
+    "color_label": "Juegas con",
+    "color_white": "Blancas (empiezan)",
+    "color_black": "Negras"
+  },
+  "action": {
+    "undo": "Deshacer jugada",
+    "restart": "Nueva partida"
+  },
+  "player": {
+    "white": "Blancas",
+    "black": "Negras",
+    "you": "Tú",
+    "computer": "Ordenador",
+    "player": "Jugador",
+    "tray_meta": "{onBoard} en el tablero · {lost} perdidas"
+  },
+  "status": {
+    "you": "Tú",
+    "place": "{who}: Coloca una ficha. Te quedan {count} en la mano.",
+    "select": "{who}: Elige una ficha para mover.",
+    "select_fly": "{who}: Solo quedan 3 fichas, puedes saltar. Elige una ficha.",
+    "target": "{who}: Elige la casilla de destino.",
+    "target_fly": "{who}: Salta a cualquier punto libre.",
+    "remove": "Molino cerrado. Toca una ficha rival para quitarla.",
+    "thinking": "El ordenador ({name}) está pensando …",
+    "draw": "Tablas: 50 jugadas por bando sin molino.",
+    "win_you": "Ganas tú.",
+    "win_computer": "Gana el ordenador.",
+    "win_named": "Ganan {name}.",
+    "reason_no_moves": "{name} ya no pueden mover.",
+    "reason_two_stones": "A {name} solo les quedan dos fichas."
+  },
+  "rules": {
+    "title": "Reglas",
+    "place": "Colocar: Por turnos, cada bando coloca sus 9 fichas en puntos libres.",
+    "move": "Mover: Después se mueve una ficha a lo largo de una línea a un punto vecino libre.",
+    "mill": "Molino: Tres fichas propias en línea. Entonces puedes quitar una ficha rival, pero ninguna de un molino cerrado mientras haya otras libres.",
+    "fly": "Saltar: Con solo 3 fichas puedes saltar a cualquier punto libre.",
+    "end": "Final: Pierde quien se queda con 2 fichas o no puede mover. Tras 50 jugadas por bando sin molino, la partida acaba en tablas."
+  }
+}

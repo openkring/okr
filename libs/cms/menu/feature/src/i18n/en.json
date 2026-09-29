@@ -609,7 +609,9 @@
     "game-quiz": "Quiz",
     "game-zip": "Zip",
     "game-hearing-quiz": "Hearing training",
-    "hq-add": "Add folder"
+    "hq-add": "Add folder",
+    "game-muehle": "Nine Men's Morris",
+    "game-battleship": "Battleship"
   },
   "ownership": {
     "fork_confirm": "«{name}» belongs to the feature catalogue ({blocks}).\n\nSaving creates a tenant-private copy «{forkKey}» and detaches this tenant from the shared original. Future catalogue corrections (url, action, role) will no longer reach this entry.\n\nSave anyway?",

@@ -66,6 +66,8 @@
     "@okr/instruments-feature": "*",
     "@okr/instruments-whiteboard-feature": "*",
     "@okr/games-hearing-quiz-feature": "*",
+    "@okr/games-battleship-feature": "*",
+    "@okr/games-muehle-feature": "*",
     "@okr/games-quiz-feature": "*",
     "@okr/games-zip-feature": "*"
   }

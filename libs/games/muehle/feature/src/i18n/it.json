@@ -1,0 +1,51 @@
+{
+  "title": "Filetto",
+  "subtitle": "9 pedine · 24 punti",
+  "board_label": "Tavola del filetto",
+  "config": {
+    "opponent_label": "Avversario",
+    "opponent_easy": "Computer · facile",
+    "opponent_medium": "Computer · medio",
+    "opponent_hard": "Computer · forte",
+    "opponent_human": "Due giocatori",
+    "color_label": "Giochi con",
+    "color_white": "Bianco (inizia)",
+    "color_black": "Nero"
+  },
+  "action": {
+    "undo": "Annulla mossa",
+    "restart": "Nuova partita"
+  },
+  "player": {
+    "white": "Bianco",
+    "black": "Nero",
+    "you": "Tu",
+    "computer": "Computer",
+    "player": "Giocatore",
+    "tray_meta": "{onBoard} sulla tavola · {lost} perse"
+  },
+  "status": {
+    "you": "Tu",
+    "place": "{who}: Metti una pedina. Te ne restano {count} in mano.",
+    "select": "{who}: Scegli una pedina da muovere.",
+    "select_fly": "{who}: Solo 3 pedine, puoi saltare. Scegli una pedina.",
+    "target": "{who}: Scegli il punto di arrivo.",
+    "target_fly": "{who}: Salta su un punto libero qualsiasi.",
+    "remove": "Filetto chiuso. Tocca una pedina avversaria per prenderla.",
+    "thinking": "Il computer ({name}) sta pensando …",
+    "draw": "Patta: 50 mosse per parte senza filetto.",
+    "win_you": "Hai vinto.",
+    "win_computer": "Vince il computer.",
+    "win_named": "Vince {name}.",
+    "reason_no_moves": "{name} non può più muovere.",
+    "reason_two_stones": "{name} ha solo due pedine."
+  },
+  "rules": {
+    "title": "Regole",
+    "place": "Piazzare: A turno ogni parte mette le sue 9 pedine su punti liberi.",
+    "move": "Muovere: Poi una pedina si sposta lungo una linea su un punto vicino libero.",
+    "mill": "Filetto: Tre pedine tue in linea. Allora puoi prendere una pedina avversaria, ma non da un filetto chiuso finché altre sono libere.",
+    "fly": "Saltare: Con solo 3 pedine puoi saltare su qualsiasi punto libero.",
+    "end": "Fine: Perde chi ha solo 2 pedine o non può più muovere. Dopo 50 mosse per parte senza filetto la partita è patta."
+  }
+}

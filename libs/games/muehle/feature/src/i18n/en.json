@@ -1,0 +1,51 @@
+{
+  "title": "Nine Men's Morris",
+  "subtitle": "9 stones · 24 points",
+  "board_label": "Nine Men's Morris board",
+  "config": {
+    "opponent_label": "Opponent",
+    "opponent_easy": "Computer · easy",
+    "opponent_medium": "Computer · medium",
+    "opponent_hard": "Computer · strong",
+    "opponent_human": "Two players",
+    "color_label": "You play",
+    "color_white": "White (moves first)",
+    "color_black": "Black"
+  },
+  "action": {
+    "undo": "Undo move",
+    "restart": "New game"
+  },
+  "player": {
+    "white": "White",
+    "black": "Black",
+    "you": "You",
+    "computer": "Computer",
+    "player": "Player",
+    "tray_meta": "{onBoard} on the board · {lost} lost"
+  },
+  "status": {
+    "you": "You",
+    "place": "{who}: Place a stone. {count} left in hand.",
+    "select": "{who}: Pick a stone to move.",
+    "select_fly": "{who}: Only 3 stones left, you may fly. Pick a stone.",
+    "target": "{who}: Pick the target point.",
+    "target_fly": "{who}: Fly to any free point.",
+    "remove": "Mill closed. Tap an opponent's stone to take it.",
+    "thinking": "Computer ({name}) is thinking …",
+    "draw": "Draw: 50 moves per side without a mill.",
+    "win_you": "You win.",
+    "win_computer": "The computer wins.",
+    "win_named": "{name} wins.",
+    "reason_no_moves": "{name} cannot move any more.",
+    "reason_two_stones": "{name} has only two stones left."
+  },
+  "rules": {
+    "title": "Rules",
+    "place": "Placing: Taking turns, each side places its 9 stones on free points.",
+    "move": "Moving: Then a stone moves along a line to a free neighbouring point.",
+    "mill": "Mill: Three of your stones in one line. You may then take an opponent's stone, but none from a closed mill while other stones are free.",
+    "fly": "Flying: With only 3 stones left, you may jump to any free point.",
+    "end": "End: You lose with only 2 stones left or when you cannot move. After 50 moves per side without a mill the game is a draw."
+  }
+}

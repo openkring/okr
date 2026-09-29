@@ -1190,6 +1190,32 @@ const zip: BlockRoutes = {
 };
 
 /**
+ * `/muehle` — Mühle in `libs/games/muehle`. In memory only (settings in `localStorage`), no
+ * `:contextMenuName` segment, so no context-menu wrapper — the same shape as `/zip`.
+ */
+const muehle: BlockRoutes = {
+  id: 'muehle',
+  routes: (): Route[] => [{
+    path: 'muehle',
+    canActivate: [isAuthenticatedGuard],
+    loadComponent: () => import('@okr/games-muehle-feature').then(m => m.MuehlePage),
+  }],
+};
+
+/**
+ * `/battleship` — Schiffli versenken in `libs/games/battleship`. In memory only, no
+ * `:contextMenuName` segment — the same shape as `/zip`.
+ */
+const battleship: BlockRoutes = {
+  id: 'battleship',
+  routes: (): Route[] => [{
+    path: 'battleship',
+    canActivate: [isAuthenticatedGuard],
+    loadComponent: () => import('@okr/games-battleship-feature').then(m => m.BattleshipPage),
+  }],
+};
+
+/**
  * `/hearing-quiz` — Hörtraining (spec 1.64). The tree page follows the list convention
  * (`:listId/:contextMenuName`, listId always `all`); the two exercise routes come FIRST because
  * they have the same segment count and would otherwise be swallowed by the list route.
@@ -1324,7 +1350,7 @@ const weather: BlockRoutes = {
 };
 
 export const FEATURE_ROUTES: BlockRoutes[] = [
-  calevent, aoc, activity, task, instruments, games, quiz, zip, hearingQuiz,
+  calevent, aoc, activity, task, instruments, games, quiz, zip, hearingQuiz, muehle, battleship,
   auth, cms, user, profile, session, security, i18n, avatar, category, comment, geo, trip, consent,
   subject, relationship, vcard,
   resource, mobility,

@@ -1,0 +1,47 @@
+{
+  "title": "Hundir la flota",
+  "option": {
+    "allow_touch": "Los barcos pueden tocarse",
+    "extra_shot": "Volver a disparar tras un impacto",
+    "level_label": "Rival",
+    "level_easy": "Fácil",
+    "level_normal": "Medio",
+    "level_hard": "Difícil"
+  },
+  "action": {
+    "rotate": "Girar",
+    "random": "Al azar",
+    "reset": "Restablecer",
+    "start": "Empezar",
+    "again": "Jugar otra vez"
+  },
+  "board": {
+    "own": "Tu flota",
+    "enemy": "Rival"
+  },
+  "ship": {
+    "carrier": "Portaaviones",
+    "battleship": "Acorazado",
+    "cruiser": "Crucero",
+    "submarine": "Submarino",
+    "destroyer": "Destructor"
+  },
+  "status": {
+    "place": "Coloca: {ship} ({len} casillas). Toca una casilla, «Girar» cambia la dirección.",
+    "ready": "Flota lista. Toca «Empezar».",
+    "no_fit": "{ship} no cabe aquí.",
+    "no_fit_touch": "{ship} no cabe aquí. Los barcos no pueden tocarse.",
+    "your_turn": "Te toca. Dispara al tablero rival.",
+    "you": "Tú",
+    "enemy": "Rival",
+    "miss": "{who} {at}: agua.",
+    "hit": "{who} {at}: tocado.",
+    "sunk": "{who} {at}: {ship} hundido.",
+    "again": "Dispara otra vez.",
+    "enemy_aims": "El rival apunta …",
+    "enemy_again": "Vuelve a disparar …",
+    "your_turn_short": "Te toca.",
+    "won": "Has ganado. Hundiste toda la flota en {shots} disparos.",
+    "lost": "Has perdido. El rival hundió tu flota en {shots} disparos."
+  }
+}

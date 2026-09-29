@@ -1,0 +1,24 @@
+{
+  "name": "games-battleship-feature",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/games/battleship/feature/src",
+  "prefix": "okr",
+  "projectType": "library",
+  "tags": ["type:feature", "scope:games", "platform:mobile", "platform:web"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/games/battleship/feature",
+        "main": "libs/games/battleship/feature/src/index.ts",
+        "tsConfig": "libs/games/battleship/feature/tsconfig.lib.json",
+        "assets": ["libs/games/battleship/feature/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

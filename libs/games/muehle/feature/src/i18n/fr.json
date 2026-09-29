@@ -1,0 +1,51 @@
+{
+  "title": "Jeu du moulin",
+  "subtitle": "9 pions · 24 points",
+  "board_label": "Plateau du jeu du moulin",
+  "config": {
+    "opponent_label": "Adversaire",
+    "opponent_easy": "Ordinateur · facile",
+    "opponent_medium": "Ordinateur · moyen",
+    "opponent_hard": "Ordinateur · fort",
+    "opponent_human": "Deux joueurs",
+    "color_label": "Tu joues",
+    "color_white": "Blanc (commence)",
+    "color_black": "Noir"
+  },
+  "action": {
+    "undo": "Annuler le coup",
+    "restart": "Nouvelle partie"
+  },
+  "player": {
+    "white": "Blanc",
+    "black": "Noir",
+    "you": "Toi",
+    "computer": "Ordinateur",
+    "player": "Joueur",
+    "tray_meta": "{onBoard} sur le plateau · {lost} perdus"
+  },
+  "status": {
+    "you": "Toi",
+    "place": "{who} : Pose un pion. Encore {count} en main.",
+    "select": "{who} : Choisis un pion à déplacer.",
+    "select_fly": "{who} : Plus que 3 pions, tu peux sauter. Choisis un pion.",
+    "target": "{who} : Choisis la case d'arrivée.",
+    "target_fly": "{who} : Saute sur n'importe quel point libre.",
+    "remove": "Moulin fermé. Touche un pion adverse pour le prendre.",
+    "thinking": "L'ordinateur ({name}) réfléchit …",
+    "draw": "Match nul : 50 coups par camp sans moulin.",
+    "win_you": "Tu gagnes.",
+    "win_computer": "L'ordinateur gagne.",
+    "win_named": "{name} gagne.",
+    "reason_no_moves": "{name} ne peut plus bouger.",
+    "reason_two_stones": "{name} n'a plus que deux pions."
+  },
+  "rules": {
+    "title": "Règles du jeu",
+    "place": "Poser : Chaque camp pose à tour de rôle ses 9 pions sur des points libres.",
+    "move": "Déplacer : Ensuite, un pion avance le long d'une ligne vers un point voisin libre.",
+    "mill": "Moulin : Trois de tes pions sur une ligne. Tu peux alors prendre un pion adverse, mais pas dans un moulin fermé tant que d'autres pions sont libres.",
+    "fly": "Sauter : Avec seulement 3 pions, tu peux sauter sur n'importe quel point libre.",
+    "end": "Fin : Perd celui qui n'a plus que 2 pions ou ne peut plus bouger. Après 50 coups par camp sans moulin, la partie est nulle."
+  }
+}
