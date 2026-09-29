@@ -45,7 +45,13 @@ test('getV4All pages until page_count', async () => {
   assert.deepEqual(await c.getV4All('/4.0/purchase/bills'), [1, 2]);
 });
 
-test('500 throws with the path, never the token', async () => {
+test('a transient 5xx is retried', async () => {
+  let n = 0;
+  const c = createBexioClient({ token: 't', fetchImpl: async () => (++n === 1 ? res(500, {}) : res(200, [1])), sleep: async () => {} });
+  assert.deepEqual(await c.get('/2.0/x'), [1]);
+});
+
+test('a persistent 500 throws with the path, never the token', async () => {
   const c = createBexioClient({ token: 'SECRET', fetchImpl: async () => res(500, {}), sleep: async () => {} });
   await assert.rejects(c.get('/2.0/x'), (e) => e.message.includes('/2.0/x') && !e.message.includes('SECRET'));
 });

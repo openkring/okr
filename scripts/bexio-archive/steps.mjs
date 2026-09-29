@@ -274,7 +274,11 @@ STEPS['invoice-details'] = async (ctx) => {
   const { db, bexio, tenantId, dry } = ctx;
   const bankAccounts = (await bexio.get('/3.0/banking/accounts')) ?? [];
   const bankMap = new Map(bankAccounts.map(a => [String(a.id), a.account_id ? accountOkey(tenantId, a.account_id) : '']));
-  const counts = { invoices: 0, pdfs: 0, reminders: 0, payments: 0, comments: 0 };
+  const counts = { invoices: 0, pdfs: 0, reminders: 0, payments: 0, comments: 0, pdfErrors: [] };
+  // a PDF bexio still cannot render after the client's retries is listed, not fatal — re-run the step later
+  const tryPdf = async (path, invoiceId) => {
+    try { return await bexio.get(path); } catch (e) { console.warn('pdf failed:', path, e.message); if (!counts.pdfErrors.includes(invoiceId)) counts.pdfErrors.push(invoiceId); return null; }
+  };
   for (const d of await localDocs(db, 'invoices', tenantId)) {
     if (!/^\d+$/.test(d.id)) continue;                          // bexio invoices only
     const id = d.id;
@@ -284,7 +288,7 @@ STEPS['invoice-details'] = async (ctx) => {
       update.documentKey = invoicePdfOkey(id);                    // resume: stored on an earlier run
       counts.pdfs++;
     } else {
-      const pdf = await bexio.get(`/2.0/kb_invoice/${id}/pdf`);
+      const pdf = await tryPdf(`/2.0/kb_invoice/${id}/pdf`, id);
       if (pdf?.content) {
         update.documentKey = await saveBase64(ctx, invoicePdfOkey(id), pdf.content, { name: pdf.name, mimeType: 'application/pdf', ext: 'pdf', title: nr });
         counts.pdfs++;
@@ -293,7 +297,7 @@ STEPS['invoice-details'] = async (ctx) => {
     update.reminders = [];
     for (const r of (await bexio.get(`/2.0/kb_invoice/${id}/kb_reminder`)) ?? []) {
       const stored = await isStored(db, reminderPdfOkey(id, r.id));
-      const rpdf = stored ? null : await bexio.get(`/2.0/kb_invoice/${id}/kb_reminder/${r.id}/pdf`);
+      const rpdf = stored ? null : await tryPdf(`/2.0/kb_invoice/${id}/kb_reminder/${r.id}/pdf`, id);
       const key = stored ? reminderPdfOkey(id, r.id) : rpdf?.content
         ? await saveBase64(ctx, reminderPdfOkey(id, r.id), rpdf.content, { name: rpdf.name, mimeType: 'application/pdf', ext: 'pdf', title: `${nr} Mahnung ${r.reminder_level}` })
         : '';

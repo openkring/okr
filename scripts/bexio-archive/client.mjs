@@ -15,6 +15,10 @@ export function createBexioClient({ token, fetchImpl = fetch, sleep = (ms) => ne
         if (attempt < MAX_RETRIES) { await sleep(Math.min(1000 * 2 ** attempt, 30000)); continue; }
         throw new Error(`bexio network error on ${path}: ${e?.cause?.code ?? e?.message ?? e}`);
       }
+      if (r.status >= 500 && attempt < 3) {                        // bexio renders PDFs flakily (HTTP 500, then 200)
+        await sleep(Math.min(2000 * 2 ** attempt, 30000));
+        continue;
+      }
       if (r.status === 429 && attempt < MAX_RETRIES) {
         const after = parseInt(r.headers.get('retry-after') ?? '', 10);
         await sleep(Number.isFinite(after) && after > 0 ? after * 1000 : Math.min(1000 * 2 ** attempt, 30000));

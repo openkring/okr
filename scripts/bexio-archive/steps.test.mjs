@@ -346,3 +346,18 @@ test('invoice-details resumes without re-fetching stored PDFs', async () => {
   assert.equal(db.store.get('invoices/7').documentKey, 'bexio-invoice-7');
   assert.equal(db.store.get('invoices/7').reminders[0].documentKey, 'bexio-reminder-7-1');
 });
+
+test('invoice-details logs a PDF that keeps failing and carries on', async () => {
+  const db = fakeFirestore({ invoices: { '8': { ...T }, '9': { ...T } } });
+  const b64 = Buffer.from('pdf').toString('base64');
+  const bexio = { get: async (p) => {
+    if (p === '/2.0/kb_invoice/8/pdf') throw new Error('bexio 500 on /2.0/kb_invoice/8/pdf');
+    if (p === '/2.0/kb_invoice/9/pdf') return { name: '9.pdf', content: b64 };
+    return null;
+  } };
+  const counts = await STEPS['invoice-details']({ db, bucket: fakeBucket(), bexio, tenantId: 'scs', dry: false });
+  assert.deepEqual(counts.pdfErrors, ['8']);
+  assert.equal(db.store.get('invoices/9').documentKey, 'bexio-invoice-9');
+  assert.equal(db.store.get('invoices/8').documentKey, undefined);
+  assert.equal(counts.invoices, 2);
+});
