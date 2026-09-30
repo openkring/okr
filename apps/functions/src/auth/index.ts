@@ -5,6 +5,7 @@ import { getAuth } from 'firebase-admin/auth';
 import { getStorage } from 'firebase-admin/storage';
 import { DocumentData, getFirestore } from 'firebase-admin/firestore';
 import { checkAdminRole, checkAppCheckToken, checkAuthentication, checkStringField } from '@okr/shared-util-functions';
+import { isSyntheticLoginEmail } from '@okr/user-util';
 import { getAppEmailConfig } from './email-templates';
 import { EmailAttachment, isValidProvider, sendEmailViaProvider } from './email-transport';
 import { findUserByLoginId } from './login-id';
@@ -269,6 +270,19 @@ export const setPassword = functions.onCall(
 );
 
 /**
+ * True when an admin edit would change the Auth email of a Benutzername account, or turn a real
+ * account into one (spec 1.71 §3/§6b). The synthetic address is derived from the Benutzername and
+ * kept in step with users/{uid}.loginEmail; only setLoginId and swapLoginEmail may move it. An edit
+ * that leaves the email as it is (e.g. disabling the account) is fine.
+ */
+export function isBlockedSyntheticEmailChange(currentEmail: string | undefined, newEmail: string | undefined): boolean {
+  const current = (currentEmail ?? '').trim().toLowerCase();
+  const next = (newEmail ?? '').trim().toLowerCase();
+  if (current === next) return false;
+  return isSyntheticLoginEmail(current) || isSyntheticLoginEmail(next);
+}
+
+/**
  * Change attributes of an existing firebase user.
  * @param uid firebase user id of the user to change
  * @param email the new login email
@@ -299,6 +313,11 @@ export const updateFirebaseUser = functions.onCall(
     await checkAdminRole(request as any, CF_NAME);
     checkStringField(request as any, CF_NAME, 'uid');
     checkStringField(request as any, CF_NAME, 'email');
+    const currentEmail = (await getAuth().getUser(request.data.uid)).email;
+    if (isBlockedSyntheticEmailChange(currentEmail, request.data.email)) {
+      logger.warn(CF_NAME + ': refused an email change on a Benutzername account', { uid: request.data.uid });
+      throw new functions.HttpsError('failed-precondition', 'Die Anmelde-Adresse eines Benutzername-Kontos ändert sich nur über «Benutzername ändern» oder «E-Mail tauschen».');
+    }
     try {
       await getAuth().updateUser(request.data.uid, {
         email: request.data.email,

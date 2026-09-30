@@ -7,3 +7,4 @@ export * from './lib/tenant-allocation.util';
 export * from './lib/tag-string.validations';
 export * from './lib/kiosk.util';
 export * from './lib/chat-room-filter.util';
+export * from './lib/login-id-admin.util';

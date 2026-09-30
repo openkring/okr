@@ -39,6 +39,9 @@ export function isValidPassword(password: string): boolean {
  * @param password the password of the new user account
  * @param displayName the display name of the new user account, by default the login email is used
  * @returns the uid of the new Firebase account or undefined if there was an error.
+ * @deprecated to open an account for a person, call the syncPersonAccount callable
+ *   ({ action: 'open' } → openAccount, spec 1.71 §5.3). Only that path applies the shared-email
+ *   rule; an Auth identity created here for a person's favourite email can end up shared by two persons.
  */
 export async function createFirebaseAccount(toastController: ToastController, loginEmail: string, password: string, displayName?: string): Promise<string | undefined> {
   try {
@@ -210,6 +213,8 @@ export function generatePassword(password?: string): string {
  * @param email the person's favorite email, resolved from the address-directory
  *              projection (person.favEmail was stripped, spec 1.19 Phase 4)
  * @returns user model that corresponds to the given person
+ * @deprecated account opening goes through the syncPersonAccount callable (openAccount, spec 1.71 §5.3),
+ *   which writes the users doc server-side (incl. the Benutzername).
  */
 export function createUserFromPerson(person: PersonModel, tenantId: string, email: string): UserModel {
   if (!person.okey) die('AdminOpsUtil.createUserFromPerson: person must have a okey.');

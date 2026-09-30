@@ -4,7 +4,7 @@ import { ModalController, ToastController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { getApp } from 'firebase/app';
 import { connectFunctionsEmulator, getFunctions, httpsCallable } from 'firebase/functions';
-import { firstValueFrom, from, of } from 'rxjs';
+import { from, of } from 'rxjs';
 
 import { AUTH, isFirestoreInitializedCheck } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
@@ -14,7 +14,8 @@ import { FirebaseUserModel, LogInfo, logMessage, PersonCollection, PersonModel, 
 import { error } from '@okr/shared-util-angular';
 import { debugListLoaded, debugMessage, findUserByPersonKey, getSystemQuery, hasRole, isPerson, warn } from '@okr/shared-util-core';
 
-import { createFirebaseAccount, createUserFromPerson, getUidByEmail, generatePassword, isValidEmail, setPassword, getFirebaseUser, updateFirebaseUser, AOC_I18N_KEYS } from '@okr/aoc-util';
+import { generatePassword, setPassword, getFirebaseUser, updateFirebaseUser, AOC_I18N_KEYS } from '@okr/aoc-util';
+import { isSyntheticLoginEmail } from '@okr/user-util';
 import { AuthService } from '@okr/auth-data-access';
 import { UserService } from '@okr/user-data-access';
 import { FbuserEditModal } from '@okr/user-feature';
@@ -176,57 +177,33 @@ export const AocRolesStore = signalStore(
       },
 
       /**
-       * Creates a new Firebase user account for the selected person if it does not yet exist.
-       * Additionally, it creates a new user account for the same user to link the Firebase account with the person.
-       * Check whether a Firebase account already exists for this email address. If not, create the account.
-       * On successful creation of the firebase user account, this new user is signed in. That's why we update the user to the former current user.
-       * User account creation can fail if the account already exists or the password is invalid.
-       * see https://stackoverflow.com/questions/37517208/firebase-kicks-out-current-user/38013551#38013551
-       * for solutions to solve this admin function on the client side without being looged out.
-       * @param password - optional password for the new user account. If not given, a random password is generated.
+       * Opens a user account for the selected person through the openAccount Cloud Function
+       * (syncPersonAccount, spec 1.71 §5.3) — the one code path that knows the shared-email rule and
+       * hands out a Benutzername when the favourite email already belongs to another person. The
+       * former client-side path (getUidByEmail + createFirebaseAccount + userService.create) attached
+       * such a person to the other person's uid.
+       * @param password - optional password for the new account. openAccount sets a random one;
+       *   if a password is given, it replaces that one afterwards.
        */
       async createAccountAndUser(password?: string): Promise<void> {
-        const generatedPwd = generatePassword(password);
-
         const person = store.selectedPerson();
-        if (!person) {
+        if (!person?.okey) {
           warn('RolesStore.createAccountAndUser: please select a person first.');
           return;
         }
         try {
-          const favEmail = store.appStore.getDirectoryEntry(`person.${person.okey}`)?.favEmail ?? '';
-          patchState(store, { log: [], logTitle: `creating account for ${person.firstName} ${person.lastName}/${person.okey}/${favEmail}` });
-          const user = createUserFromPerson(person, store.appStore.env.tenantId, favEmail);
-          if (!user.loginEmail || user.loginEmail.length === 0 || !isValidEmail(user.loginEmail)) {
-            console.warn('RolesStore.createAccountAndUser: loginEmail is missing or invalid - can not register this user');
-            return;
+          patchState(store, { log: [], logTitle: `opening an account for ${person.firstName} ${person.lastName}/${person.okey}` });
+          const fn = httpsCallable<{ personKey: string; tenantId: string; action: 'open' }, { ok: boolean; outcome?: string; uid?: string; loginId?: string }>(
+            getFunctions(getApp(), 'europe-west6'), 'syncPersonAccount');
+          const { data } = await fn({ personKey: person.okey, tenantId: store.appStore.env.tenantId, action: 'open' });
+          const opened = data.outcome === 'created' || data.outcome === 'createdWithLoginId';
+          if (opened && data.uid && password) {
+            await setPassword(data.uid, generatePassword(password), store.appStore.env.useEmulators);
           }
-          let uid = await getUidByEmail(user.loginEmail);
-          if (!uid) {
-            uid = await createFirebaseAccount(store.toastController, user.loginEmail, generatedPwd);
-            console.log(`RolesStore.createAccountAndUser: Firebase user <${uid}/${user.loginEmail}> created.`);
-          } else {
-            console.log(`RolesStore.createAccountAndUser: Firebase user <${uid}/${user.loginEmail}> already exists.`);
-          }
-
-          if (uid) {
-            // the Firebase account exists, now create the user
-            // check whether this user already exists
-            const existingUser = await firstValueFrom(store.userService.read(uid));
-            console.log(`RolesStore.createAccountAndUser: read user ${uid}`, existingUser);
-            if (!existingUser) {
-              user.okey = uid;
-              console.log('RolesStore.createAccountAndUser: creating user: ', user);
-              await store.userService.create(user, store.currentUser());
-              store.usersResource.reload();
-              store.userResource.reload();
-              console.log(`RolesStore.createAccountAndUser: user ${uid} was created.`);
-            } else {
-              console.log(`RolesStore.createAccountAndUser: user ${uid} already exists.`);
-            }
-          } else {
-            console.error('RolesStore.createAccountAndUser: did not receive a valid firebase uid.');
-          }
+          const loginIdInfo = data.outcome === 'createdWithLoginId' ? ` — Benutzername ${data.loginId}` : '';
+          patchState(store, { logTitle: `account for ${person.okey}: ${data.outcome ?? 'unknown'}${loginIdInfo}` });
+          store.usersResource.reload();
+          store.userResource.reload();
         } catch (ex) {
           error(store.toastController, 'RolesStore.createAccountAndUser -> error: ' + JSON.stringify(ex));
         }
@@ -249,7 +226,10 @@ export const AocRolesStore = signalStore(
           // a user is selected
           try {
             // we send the password reset email to the selected user (in prod) or to the current user (in dev)
-            const email = store.appStore.env.production ? user.loginEmail : store.appStore.currentUser()?.loginEmail;
+            // a Benutzername account is reset by its Benutzername: the mail goes to the favourite
+            // email (spec 1.71 §5.2) — the synthetic login address has no mailbox
+            const target = isSyntheticLoginEmail(user.loginEmail) ? user.loginId : user.loginEmail;
+            const email = store.appStore.env.production ? target : store.appStore.currentUser()?.loginEmail;
             patchState(store, { log: [], logTitle: `sending reset password email to ${email}` });
             if (email) {
               // resetPassword no longer navigates or toasts — the console reports through its

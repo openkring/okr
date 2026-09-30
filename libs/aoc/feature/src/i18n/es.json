@@ -42,6 +42,41 @@
       "email": "Copiar correo",
       "uid": "Copiar UID",
       "pkey": "Copiar clave de persona"
+    },
+    "loginId": {
+      "label": "Nombre de usuario",
+      "change": {
+        "label": "Cambiar nombre de usuario",
+        "header": "Nuevo nombre de usuario",
+        "signout": "{name} inicia sesión con un nombre de usuario. Tras el cambio, {name} cerrará sesión una vez y volverá a entrar con el nuevo nombre de usuario.",
+        "conf": "El nombre de usuario ahora es {loginId}.",
+        "invalid": "Un nombre de usuario tiene de 3 a 40 caracteres: minúsculas, cifras, punto, guion o guion bajo.",
+        "taken": "Este nombre de usuario ya existe.",
+        "error": "No se pudo cambiar el nombre de usuario."
+      }
+    },
+    "open": {
+      "label": "Abrir cuenta",
+      "created": "La cuenta está abierta.",
+      "createdWithLoginId": "La cuenta está abierta. El correo ya pertenece a otra persona, por eso {name} inicia sesión con el nombre de usuario {loginId}.",
+      "exists": "Esta persona ya tiene una cuenta.",
+      "noEmail": "No hay ningún correo para esta persona. Sin correo no se puede abrir una cuenta.",
+      "noPerson": "Esta persona ya no existe.",
+      "error": "No se pudo abrir la cuenta."
+    },
+    "reset": {
+      "label": "Enviar enlace de contraseña",
+      "conf": "Se ha solicitado el enlace para establecer una contraseña.",
+      "error": "No se pudo solicitar el enlace para establecer una contraseña."
+    },
+    "swap": {
+      "label": "Intercambiar correo",
+      "confirm": "{holder} cede el correo a {newcomer} y a partir de ahora iniciará sesión con el nombre de usuario {loginId}. {holder} cerrará sesión una vez.",
+      "minor": "{holder} es menor de edad — aquí suele ser correcto intercambiar.",
+      "noHolder": "Nadie más aquí inicia sesión con este correo. No hay nada que intercambiar.",
+      "noLoginId": "{holder} todavía no tiene nombre de usuario. Inténtalo de nuevo mañana.",
+      "conf": "Intercambiado. {holder} inicia sesión ahora con el nombre de usuario {loginId} — pásaselo, por favor. {newcomer} recibe un enlace para establecer una contraseña.",
+      "error": "No se pudo intercambiar el correo."
     }
   },
   "adminops": {

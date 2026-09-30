@@ -560,8 +560,10 @@ export const syncPersonAccount = onCall(
       throw new HttpsError('invalid-argument', "action must be 'open' or 'close'");
     }
 
-    if (action === 'open') await openAccount(personKey, tenantId);
-    else await closeAccount(personKey, tenantId);
+    // 'open' hands back openAccount's outcome so the admin UI can say what happened
+    // (created / createdWithLoginId + Benutzername / exists / noEmail). Old clients read only `ok`.
+    if (action === 'open') return { ok: true, ...(await openAccount(personKey, tenantId)) };
+    await closeAccount(personKey, tenantId);
     return { ok: true };
   }
 );

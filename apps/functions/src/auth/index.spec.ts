@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { resetMailFields } from './index';
+import { isBlockedSyntheticEmailChange, resetMailFields } from './index';
 
 function found(over: Record<string, unknown> = {}): { uid: string; data: Record<string, unknown> } {
   return { uid: 'uid1', data: { personKey: 'p1', loginId: 'max_mueller', ...over } };
@@ -27,5 +27,28 @@ describe('resetMailFields', () => {
       resetLoginId: '',
       recipients: ['anna@example.ch'],
     });
+  });
+});
+
+describe('isBlockedSyntheticEmailChange', () => {
+  const synthetic = 'max_mueller@login.seeclub.org';
+
+  it('allows an edit that keeps a synthetic email unchanged', () => {
+    expect(isBlockedSyntheticEmailChange(synthetic, synthetic)).toBe(false);
+    expect(isBlockedSyntheticEmailChange(synthetic, ' MAX_MUELLER@LOGIN.SEECLUB.ORG ')).toBe(false);
+  });
+
+  it('refuses to move a synthetic account to another address', () => {
+    expect(isBlockedSyntheticEmailChange(synthetic, 'anna@gmail.com')).toBe(true);
+    expect(isBlockedSyntheticEmailChange(synthetic, 'max_m@login.seeclub.org')).toBe(true);
+  });
+
+  it('refuses to give a real account a synthetic address', () => {
+    expect(isBlockedSyntheticEmailChange('anna@gmail.com', synthetic)).toBe(true);
+  });
+
+  it('leaves real-to-real email changes alone', () => {
+    expect(isBlockedSyntheticEmailChange('anna@gmail.com', 'anna@bluewin.ch')).toBe(false);
+    expect(isBlockedSyntheticEmailChange(undefined, 'anna@gmail.com')).toBe(false);
   });
 });

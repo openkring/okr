@@ -12,6 +12,7 @@ import * as Auth from './auth';
 import * as AccountSync from './auth/account-sync';
 import * as LoginId from './auth/login-id';
 import * as LoginWithLoginId from './auth/login-with-login-id';
+import * as LoginIdAdmin from './auth/login-id-admin';
 import * as MatrixSimple from './matrix-simple';
 import * as MatrixMembershipSync from './matrix-simple/membership-sync';
 import * as MatrixPostPolicy from './matrix-simple/post-policy-sync';
@@ -157,6 +158,10 @@ export const assignMissingLoginIds = LoginId.assignMissingLoginIds;
 // Login by Benutzername (spec 2026-09-30-login-id-spec.md §5.1): verifies the password server-side
 // and hands back a custom token so the client never learns the account's email.
 export const loginWithLoginId = LoginWithLoginId.loginWithLoginId;
+// Admin changes to the login identity (spec 2026-09-30-login-id-spec.md §3, §6b): hand the real
+// email from one account to another (the swap), and change a Benutzername on purpose.
+export const swapLoginEmail = LoginIdAdmin.swapLoginEmail;
+export const setLoginId = LoginIdAdmin.setLoginId;
 
 // workflow trigger rules — event producers, the side-effect outbox and the approval step
 // (specs 2026-08-12-workflow-trigger-rules-design.md, 2026-08-15-approval-workflow-spec.md)

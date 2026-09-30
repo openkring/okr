@@ -42,6 +42,41 @@
       "email": "Copier l'e-mail",
       "uid": "Copier l'UID",
       "pkey": "Copier la clé de personne"
+    },
+    "loginId": {
+      "label": "Nom d'utilisateur",
+      "change": {
+        "label": "Modifier le nom d'utilisateur",
+        "header": "Nouveau nom d'utilisateur",
+        "signout": "{name} se connecte avec un nom d'utilisateur. Après la modification, {name} sera déconnecté une fois et se reconnectera avec le nouveau nom d'utilisateur.",
+        "conf": "Le nom d'utilisateur est maintenant {loginId}.",
+        "invalid": "Un nom d'utilisateur compte 3 à 40 caractères : lettres minuscules, chiffres, point, trait d'union ou tiret bas.",
+        "taken": "Ce nom d'utilisateur existe déjà.",
+        "error": "Le nom d'utilisateur n'a pas pu être modifié."
+      }
+    },
+    "open": {
+      "label": "Ouvrir un compte",
+      "created": "Le compte est ouvert.",
+      "createdWithLoginId": "Le compte est ouvert. L'e-mail appartient déjà à quelqu'un d'autre, c'est pourquoi {name} se connecte avec le nom d'utilisateur {loginId}.",
+      "exists": "Cette personne a déjà un compte.",
+      "noEmail": "Aucun e-mail n'est enregistré pour cette personne. Sans e-mail, on ne peut pas ouvrir de compte.",
+      "noPerson": "Cette personne n'existe plus.",
+      "error": "Le compte n'a pas pu être ouvert."
+    },
+    "reset": {
+      "label": "Envoyer un lien pour le mot de passe",
+      "conf": "Le lien pour définir un mot de passe a été demandé.",
+      "error": "Le lien pour définir un mot de passe n'a pas pu être demandé."
+    },
+    "swap": {
+      "label": "Échanger l'e-mail",
+      "confirm": "{holder} cède l'e-mail à {newcomer} et se connectera désormais avec le nom d'utilisateur {loginId}. {holder} sera déconnecté une fois.",
+      "minor": "{holder} est mineur — l'échange est ici généralement le bon choix.",
+      "noHolder": "Personne d'autre ici ne se connecte avec cet e-mail. Il n'y a rien à échanger.",
+      "noLoginId": "{holder} n'a pas encore de nom d'utilisateur. Réessaie demain.",
+      "conf": "Échange effectué. {holder} se connecte désormais avec le nom d'utilisateur {loginId} — transmets-le, s'il te plaît. {newcomer} reçoit un lien pour définir un mot de passe.",
+      "error": "L'e-mail n'a pas pu être échangé."
     }
   },
   "adminops": {

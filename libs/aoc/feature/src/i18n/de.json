@@ -42,6 +42,41 @@
       "email": "E-Mail kopieren",
       "uid": "UID kopieren",
       "pkey": "Person-Key kopieren"
+    },
+    "loginId": {
+      "label": "Benutzername",
+      "change": {
+        "label": "Benutzername ändern",
+        "header": "Neuer Benutzername",
+        "signout": "{name} meldet sich mit dem Benutzernamen an. Nach der Änderung wird {name} einmal abgemeldet und meldet sich dann mit dem neuen Benutzernamen wieder an.",
+        "conf": "Der Benutzername ist jetzt {loginId}.",
+        "invalid": "Ein Benutzername hat 3 bis 40 Zeichen: Kleinbuchstaben, Ziffern, Punkt, Bindestrich oder Unterstrich.",
+        "taken": "Diesen Benutzernamen gibt es schon.",
+        "error": "Der Benutzername konnte nicht geändert werden."
+      }
+    },
+    "open": {
+      "label": "Konto eröffnen",
+      "created": "Das Konto ist eröffnet.",
+      "createdWithLoginId": "Das Konto ist eröffnet. Die E-Mail gehört schon jemand anderem, darum meldet sich {name} mit dem Benutzernamen {loginId} an.",
+      "exists": "Für diese Person gibt es schon ein Konto.",
+      "noEmail": "Für diese Person ist keine E-Mail hinterlegt. Ohne E-Mail lässt sich kein Konto eröffnen.",
+      "noPerson": "Diese Person gibt es nicht mehr.",
+      "error": "Das Konto konnte nicht eröffnet werden."
+    },
+    "reset": {
+      "label": "Passwort-Link senden",
+      "conf": "Der Link zum Setzen des Passworts ist angefordert.",
+      "error": "Der Link zum Setzen des Passworts konnte nicht angefordert werden."
+    },
+    "swap": {
+      "label": "E-Mail tauschen",
+      "confirm": "{holder} gibt die E-Mail an {newcomer} ab und meldet sich künftig mit dem Benutzernamen {loginId} an. {holder} wird dabei einmal abgemeldet.",
+      "minor": "{holder} ist minderjährig — tauschen ist hier meist richtig.",
+      "noHolder": "Mit dieser E-Mail meldet sich hier niemand sonst an. Es gibt nichts zu tauschen.",
+      "noLoginId": "{holder} hat noch keinen Benutzernamen. Versuche es morgen noch einmal.",
+      "conf": "Getauscht. {holder} meldet sich ab jetzt mit dem Benutzernamen {loginId} an — gib ihn bitte weiter. {newcomer} bekommt einen Link, um ein Passwort zu setzen.",
+      "error": "Die E-Mail konnte nicht getauscht werden."
     }
   },
   "adminops": {

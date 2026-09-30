@@ -5,10 +5,11 @@ import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCo
 import { RoleName } from '@okr/shared-models';
 import { FullNamePipe, SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
-import { copyToClipboardWithConfirmation, createActionSheetButton, createActionSheetOptions } from '@okr/shared-util-angular';
+import { copyToClipboardWithConfirmation, createActionSheetButton, createActionSheetDivider, createActionSheetOptions } from '@okr/shared-util-angular';
 import { generateRandomString, hasRole } from '@okr/shared-util-core';
 
 import { Menu } from '@okr/cms-menu-feature';
+import { isSyntheticLoginEmail } from '@okr/user-util';
 
 import { AocUserAccountStore, UserAccount } from './aoc-user-account.store';
 
@@ -78,7 +79,12 @@ import { AocUserAccountStore, UserAccount } from './aoc-user-account.store';
                   {{account.hasBkAccount ? 'X' : '-'}}     
                   {{account.hasMembership ? 'X' : '-'}}
                 </ion-label>      
-                <ion-label>{{account.loginEmail}}</ion-label>      
+                <ion-label>
+                  {{account.loginEmail}}
+                  @if(account.loginId) {
+                    <p>{{ store.i18n.account_login_id() }}: {{account.loginId}}</p>
+                  }
+                </ion-label>
                 <ion-label>{{account.firstName | fullName:account.lastName}}</ion-label>
                 <!-- tbd: add personKey, uid -->    
               </ion-item>
@@ -152,6 +158,21 @@ export class AocUserAccounts {
     if (account.hasMembership) {
       actionSheetOptions.buttons.push(createActionSheetButton('membership.edit', this.store.i18n.account_membership_edit(), this.imgixBaseUrl, 'edit'));
     }
+    // login identity (spec 1.71): admin only — the callables behind these refuse everyone else
+    if (this.hasRole('admin')) {
+      const before = actionSheetOptions.buttons.length;
+      if (account.personKey && !account.hasBkAccount) {
+        actionSheetOptions.buttons.push(createActionSheetButton('account.open', this.store.i18n.account_open(), this.imgixBaseUrl, 'person-add'));
+      }
+      if (account.hasFirebaseAccount && account.hasBkAccount) {
+        actionSheetOptions.buttons.push(createActionSheetButton('account.reset', this.store.i18n.account_reset(), this.imgixBaseUrl, 'lock-closed'));
+        actionSheetOptions.buttons.push(createActionSheetButton('account.loginid', this.store.i18n.account_login_id_change(), this.imgixBaseUrl, 'edit'));
+        if (isSyntheticLoginEmail(account.loginEmail)) {
+          actionSheetOptions.buttons.push(createActionSheetButton('account.swap', this.store.i18n.account_swap(), this.imgixBaseUrl, 'email'));
+        }
+      }
+      if (actionSheetOptions.buttons.length > before) actionSheetOptions.buttons.splice(before, 0, createActionSheetDivider());
+    }
     if (account.loginEmail) {
       actionSheetOptions.buttons.push(createActionSheetButton('account.copyemail', this.store.i18n.account_copy_email(), this.imgixBaseUrl, 'copy'));
     }
@@ -190,6 +211,18 @@ export class AocUserAccounts {
           break;
         case 'membership.edit':
           await this.store.editMembership(account);
+          break;
+        case 'account.open':
+          await this.store.createAccountAndUser(account);
+          break;
+        case 'account.reset':
+          await this.store.resetPassword(account);
+          break;
+        case 'account.loginid':
+          await this.store.changeLoginId(account);
+          break;
+        case 'account.swap':
+          await this.store.swapLoginEmail(account);
           break;
         case 'account.copyemail':
           await copyToClipboardWithConfirmation(this.toastController, account.loginEmail, 'Copied successfully');

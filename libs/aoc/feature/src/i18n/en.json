@@ -42,6 +42,41 @@
       "email": "Copy email",
       "uid": "Copy UID",
       "pkey": "Copy person key"
+    },
+    "loginId": {
+      "label": "Username",
+      "change": {
+        "label": "Change username",
+        "header": "New username",
+        "signout": "{name} logs in with a username. After the change, {name} is signed out once and then logs in again with the new username.",
+        "conf": "The username is now {loginId}.",
+        "invalid": "A username has 3 to 40 characters: lowercase letters, digits, dot, hyphen or underscore.",
+        "taken": "This username already exists.",
+        "error": "The username could not be changed."
+      }
+    },
+    "open": {
+      "label": "Open account",
+      "created": "The account is open.",
+      "createdWithLoginId": "The account is open. The email already belongs to someone else, so {name} logs in with the username {loginId}.",
+      "exists": "This person already has an account.",
+      "noEmail": "There is no email for this person. An account cannot be opened without one.",
+      "noPerson": "This person no longer exists.",
+      "error": "The account could not be opened."
+    },
+    "reset": {
+      "label": "Send password link",
+      "conf": "The link to set a password has been requested.",
+      "error": "The link to set a password could not be requested."
+    },
+    "swap": {
+      "label": "Swap email",
+      "confirm": "{holder} hands the email over to {newcomer} and will log in with the username {loginId} from now on. {holder} is signed out once.",
+      "minor": "{holder} is under 18 — swapping is usually right here.",
+      "noHolder": "Nobody else here logs in with this email. There is nothing to swap.",
+      "noLoginId": "{holder} does not have a username yet. Please try again tomorrow.",
+      "conf": "Swapped. {holder} now logs in with the username {loginId} — please pass it on. {newcomer} gets a link to set a password.",
+      "error": "The email could not be swapped."
     }
   },
   "adminops": {
