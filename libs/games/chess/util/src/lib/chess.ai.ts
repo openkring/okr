@@ -53,12 +53,12 @@ function ordered(moves: readonly Move[], first: Move | null = null): Move[] {
 }
 
 /** Only captures and promotions, so a search never stops in the middle of an exchange. */
-function quiesce(pos: Position, alpha: number, beta: number, ply: number, ctx: Ctx): number {
+function quiesce(pos: Position, alpha: number, beta: number, ply: number, ctx: Ctx, moves?: Move[]): number {
   tick(ctx);
   const stand = evaluate(pos);
   if (stand >= beta || ply >= MAX_QUIESCENCE_PLY) return stand;
   if (stand > alpha) alpha = stand;
-  for (const m of ordered(legalMoves(pos).filter(x => x.captured || x.promotion))) {
+  for (const m of ordered((moves ?? legalMoves(pos)).filter(x => x.captured || x.promotion))) {
     const score = -quiesce(applyMove(pos, m), -beta, -alpha, ply + 1, ctx);
     if (score >= beta) return score;
     if (score > alpha) alpha = score;
@@ -70,10 +70,12 @@ function negamax(pos: Position, depth: number, alpha: number, beta: number, ply:
   tick(ctx);
   const key = positionKey(pos);
   // One repetition inside the search already scores as a draw: whoever is worse would repeat.
-  if (pos.halfmove >= 100 || (ctx.seen.get(key) ?? 0) > 0) return 0;
+  if ((ctx.seen.get(key) ?? 0) > 0) return 0;
   const moves = legalMoves(pos);
+  // Checkmate/stalemate outrank the fifty-move draw (gameResult puts checkmate first — FIDE).
   if (moves.length === 0) return inCheck(pos) ? -(MATE - ply) : 0;
-  if (depth <= 0) return quiesce(pos, alpha, beta, ply, ctx);
+  if (pos.halfmove >= 100) return 0;
+  if (depth <= 0) return quiesce(pos, alpha, beta, ply, ctx, moves);
 
   ctx.seen.set(key, 1);
   let best = -Infinity;

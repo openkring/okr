@@ -19,6 +19,12 @@ describe('chooseMove', () => {
     expect(toUci(move!)).toBe('a1a8');
   });
 
+  it('finds mate in one even on the 100th half-move (checkmate outranks the fifty-move draw)', () => {
+    const move = chooseMove(parseFen('6k1/5ppp/8/8/8/8/8/R5K1 w - - 99 80'),
+      { level: 'medium', maxDepth: 2, budgetMs: 60_000, random: fixed });
+    expect(toUci(move!)).toBe('a1a8');
+  });
+
   it('finds mate in two against every defence', { timeout: 60_000 }, () => {
     const start = parseFen('7k/8/8/8/8/8/8/RR4K1 w - - 0 1');
     const first = chooseMove(start, { level: 'medium', maxDepth: 4, ...deep })!;

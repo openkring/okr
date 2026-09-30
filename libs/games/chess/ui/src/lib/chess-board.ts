@@ -19,7 +19,7 @@ interface Drag { from: Square; x: number; y: number; sx: number; sy: number; mov
  * The chess board: ONE SVG with an 800-unit viewBox (100 per square), like the Mühle board, so
  * squares, pieces, highlights and the promotion picker can never drift apart at any size.
  *
- * Dumb: it reports `pick` (press on a square) and `drop` (release of a dragged piece on another
+ * Dumb: it reports `pick` (press on a square) and `dropped` (release of a dragged piece on another
  * square); the store decides what they mean. Tap-tap and drag-and-drop both end in the same calls.
  */
 @Component({
@@ -92,7 +92,8 @@ interface Drag { from: Square; x: number; y: number; sx: number; sy: number; mov
         <rect class="cb-veil" x="0" y="0" width="800" height="800" (click)="cancelPromotion.emit()" />
         @for (t of promotionPieces; track t; let i = $index) {
           <g class="cb-promo" tabindex="0" role="button" [attr.aria-label]="promotionLabels()[t]"
-            (click)="$event.stopPropagation(); promote.emit(t)" (keydown.enter)="promote.emit(t)">
+            (click)="$event.stopPropagation(); promote.emit(t)" (keydown.enter)="promote.emit(t)"
+            (keydown.space)="$event.preventDefault(); promote.emit(t)" (keydown.escape)="cancelPromotion.emit()">
             <rect [attr.x]="x(pr.to)" [attr.y]="promoY(pr.to, i)" width="100" height="100" />
             <image [attr.href]="images[piece(pr.color, t)]" [attr.x]="x(pr.to)" [attr.y]="promoY(pr.to, i)" width="100" height="100" />
           </g>
@@ -146,7 +147,7 @@ export class ChessBoard {
   public readonly promotionLabels = input<Readonly<Record<PromotionPiece, string>>>({ q: 'Q', r: 'R', b: 'B', n: 'N' });
 
   public readonly pick = output<Square>();
-  public readonly drop = output<Square>();
+  public readonly dropped = output<Square>();
   public readonly promote = output<PromotionPiece>();
   public readonly cancelPromotion = output<void>();
 
@@ -217,7 +218,7 @@ export class ChessBoard {
     if (!d?.moved) return;
     const p = this.toSvg(e);
     const sq = this.squareAt(p.x, p.y);
-    if (sq !== null && sq !== d.from) this.drop.emit(sq);
+    if (sq !== null && sq !== d.from) this.dropped.emit(sq);
   }
 
   private toSvg(e: PointerEvent): { x: number; y: number } {

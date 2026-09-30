@@ -106,7 +106,7 @@ import { ChessStore } from './chess.store';
               [squareLabels]="squareLabels()"
               [promotionLabels]="promotionLabels()"
               (pick)="store.pick($event)"
-              (drop)="store.drop($event)"
+              (dropped)="store.drop($event)"
               (promote)="store.promote($event)"
               (cancelPromotion)="store.cancelPromotion()" />
 

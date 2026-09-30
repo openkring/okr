@@ -24,7 +24,7 @@ export type ChessStoreState = {
   /** A pawn move waiting for the person to pick the promotion piece. */
   promotion: { from: Square; to: Square } | null;
   /** Named `hintMove` in state (not `hint`) to avoid colliding with the `hint()` method below —
-   *  a same-named state field and method breaks the store's type (see chess.store.ts history). */
+   *  a state field and a method with the same name break signalStore's declaration emit (TS4023). */
   hintMove: { from: Square; to: Square } | null;
   thinking: boolean;
   hinting: boolean;
