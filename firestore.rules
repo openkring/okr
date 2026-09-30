@@ -534,11 +534,13 @@ service cloud.firestore {
     // Group-admin writes (§4) are NOT granted yet: groups/{key}.admins holds AvatarInfo maps,
     // which a rule cannot search for a personKey — they await a derived `adminKeys` field.
     // author/assignee may be absent on legacy docs, hence get(…, {}).
+    // A caller without a personKey ('' from callerPersonKey()) must never match a missing field.
     function taskAuthor(data) {
-      return data.get('author', {}).get('key', '') == callerPersonKey();
+      return callerPersonKey() != '' && data.get('author', {}).get('key', '') == callerPersonKey();
     }
     function taskMember(data) {
-      return taskAuthor(data) || data.get('assignee', {}).get('key', '') == callerPersonKey();
+      return taskAuthor(data)
+             || (callerPersonKey() != '' && data.get('assignee', {}).get('key', '') == callerPersonKey());
     }
     function taskStaff() {
       return isPrivileged() || hasRole('eventAdmin');
@@ -550,8 +552,10 @@ service cloud.firestore {
     match /tasks/{id} {
       allow read: if tenantRead() && (resource == null
         || taskStaff() || taskMember(resource.data) || resource.data.get('shareKey', '') != '');
-      allow create: if tenantCreate() && (taskStaff() || taskAuthor(request.resource.data));
-      allow update: if (tenantCreate() || selfDetach()) && (
+      // only privileged may create a task in someone else's name (spec §2)
+      allow create: if tenantCreate() && (isPrivileged() || taskAuthor(request.resource.data));
+      // tenantUpdate(): the caller's tenant must be on the stored doc, not just on the new one
+      allow update: if tenantUpdate() && (
         (taskArchiving() || selfDetach())
           ? (isPrivileged() || taskAuthor(resource.data))
           : (taskStaff() || taskMember(resource.data)));
