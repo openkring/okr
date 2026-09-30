@@ -79,6 +79,14 @@ describe('synthetic login email', () => {
     expect(isSyntheticLoginEmail('anna@login-service.ch')).toBe(false);
     expect(isSyntheticLoginEmail(undefined)).toBe(false);
   });
+  it('needs at least two labels after login. — a real address on a login.<tld> host is not synthetic', () => {
+    expect(isSyntheticLoginEmail('x@login.ch')).toBe(false);
+    expect(isSyntheticLoginEmail('x@login.')).toBe(false);
+    expect(isSyntheticLoginEmail('x@login..ch')).toBe(false);
+    expect(isSyntheticLoginEmail('max@login.seeclub.org')).toBe(true);
+    expect(isSyntheticLoginEmail(syntheticLoginEmail('max', 'app.p13.ch'))).toBe(true);
+    expect(isSyntheticLoginEmail('max@login.sub.example.co.uk')).toBe(true);
+  });
   it('extracts the Benutzername from a synthetic address only', () => {
     expect(loginIdFromSyntheticEmail('max_mueller@login.seeclub.org')).toBe('max_mueller');
     expect(loginIdFromSyntheticEmail('anna@gmail.com')).toBe('');

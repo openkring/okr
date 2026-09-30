@@ -63,9 +63,13 @@ export function syntheticLoginEmail(loginId: string, appDomain: string): string 
   return `${loginId}@login.${loginDomainFromAppDomain(appDomain)}`;
 }
 
-/** A `…@login.<domain>` Auth email — never mailable (no MX), see spec decision 3. */
+/**
+ * A `…@login.<domain>` Auth email — never mailable (no MX), see spec decision 3. `<domain>` is the
+ * appDomain minus its leading `app.` (e.g. `seeclub.org`, `p13.ch`), so it always has at least two
+ * labels; a real address such as `x@login.ch` (one label after `login.`) is not synthetic.
+ */
 export function isSyntheticLoginEmail(email: string | undefined): boolean {
-  return /@login\.[^@]+$/i.test((email ?? '').trim());
+  return /@login\.[^@.\s]+(\.[^@.\s]+)+$/i.test((email ?? '').trim());
 }
 
 export function loginIdFromSyntheticEmail(email: string): string {
