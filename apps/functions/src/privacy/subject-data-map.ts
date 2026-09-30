@@ -1396,6 +1396,13 @@ export async function resolveDocs(entry: SubjectDataEntry, ctx: SubjectCtx): Pro
 //   correlationKey → expenses. Reachable transitively once the expense row is erased.
 // gap: expense-documents — OCR metadata for an expense receipt, linked only by
 //   expenseKey. Same transitive path as ocr-results.
+// gap: finance-documents — vouchers, invoice/reminder PDFs migrated from bexio (spec 1.68);
+//   the files sit in the private bucket. No person FK: reachable only transitively through
+//   the record that names them (bookings.documentKeys, invoices.documentKey/reminders,
+//   bills.attachments), whose rows already cover the subject. Treasurer-only read.
+// gap: finance-comments — internal bexio invoice comments (spec 1.68), linked by
+//   parentKey 'invoice.<okey>' only; free text may name a person. Reachable through the
+//   invoices row. Treasurer-only read.
 // gap: bank-import-rows — counterparty name extracted from a bank statement line (payee,
 //   rawText), no subject link (no personKey); the same name lands on the posted booking's
 //   counterparty, so erasure/anonymisation follows the bookings row (spec 1.60)

@@ -29,7 +29,8 @@ if (!step || !STEPS[step]) { console.error(`--step must be one of: ${Object.keys
 
 if (!getApps().length) initializeApp({ projectId: PROJECT_ID, storageBucket: `${PROJECT_ID}.appspot.com` });
 const db = getFirestore();
-const ctx = { db, bucket: getStorage().bucket(), bexio: createBexioClient({ token: env.BEXIO_APIKEY }), tenantId: TENANT, dry, force };
+// vouchers and PDFs go to the private bucket (not an imgix source, not Firebase-linked) — spec private media bucket
+const ctx = { db, bucket: getStorage().bucket(`${PROJECT_ID}-private`), bexio: createBexioClient({ token: env.BEXIO_APIKEY }), tenantId: TENANT, dry, force };
 
 const startedAt = new Date().toISOString();
 const counts = await STEPS[step](ctx);

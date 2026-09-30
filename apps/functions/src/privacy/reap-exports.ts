@@ -1,7 +1,7 @@
 // apps/functions/src/privacy/reap-exports.ts
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { logger } from 'firebase-functions/v2';
-import { getStorage } from 'firebase-admin/storage';
+import { privateBucket } from '../_storage/private-bucket';
 
 const REGION = 'europe-west6';
 
@@ -43,7 +43,7 @@ export function isReapableExportArtifact(
 export const reapPrivacyExports = onSchedule(
   { region: REGION, schedule: 'every 24 hours' },
   async () => {
-    const bucket = getStorage().bucket();
+    const bucket = privateBucket();
     const [files] = await bucket.getFiles({ prefix: 'tenant/' });
     const now = Date.now();
 

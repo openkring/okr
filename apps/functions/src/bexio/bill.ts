@@ -11,6 +11,7 @@ import { bexioApiKey, bexioTenantId, BEXIO_BASE_V4 } from './shared';
 import { BexioBill, billDoc } from './bill.mapper';
 import { loadIsBexioBackend } from './backend-gate';
 import { readFinanceDocument } from './finance-document';
+import { privateBucket } from '../_storage/private-bucket';
 import { checkRoles, getCallerTenantId } from '@okr/shared-util-functions';
 
 interface BexioBillsResponse {
@@ -153,7 +154,7 @@ export const showBillPdf = onCall(
     // migrated from bexio (spec 1.68): bill.attachments now hold finance-documents okeys
     if (attachmentId.startsWith('bexio-file-')) {
       const tenantId = await getCallerTenantId(request as never, CF_NAME);
-      const local = await readFinanceDocument(admin.firestore(), admin.storage().bucket(), attachmentId, [tenantId]);
+      const local = await readFinanceDocument(admin.firestore(), privateBucket(), attachmentId, [tenantId]);
       if (!local) throw new HttpsError('not-found', 'Document not found');
       return { content: local };
     }

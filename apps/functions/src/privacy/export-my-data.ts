@@ -6,6 +6,8 @@ import { logger } from 'firebase-functions/v2';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
 
+import { privateBucket } from '../_storage/private-bucket';
+
 import { AppConfigCollection, UserCollection } from '@okr/shared-models';
 import type { ExportMyDataResponse } from '@okr/shared-models';
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
@@ -61,7 +63,7 @@ export function isRateLimited(newestCreatedAtMs: number, nowMs: number, cooldown
  * is a handful of objects.
  */
 async function findReusableExport(tenantId: string, uid: string): Promise<File | undefined> {
-  const [files] = await getStorage().bucket().getFiles({ prefix: exportPrefix(tenantId, uid) });
+  const [files] = await privateBucket().getFiles({ prefix: exportPrefix(tenantId, uid) });
   const newest = files
     .map((f) => ({ file: f, createdMs: new Date(f.metadata.timeCreated ?? 0).getTime() }))
     .sort((a, b) => b.createdMs - a.createdMs)[0];
@@ -200,7 +202,8 @@ export const exportMyData = onCall<void, Promise<ExportMyDataResponse>>(
     const token = randomUUID();
     const stamp = getTodayStr(DateFormat.StoreDateTime);
     const path = `${exportPrefix(ctx.tenantId, uid)}${stamp}-${token}.zip`;
-    const file = getStorage().bucket().file(path);
+    // the ZIP carries AHV, dob and IBAN in plaintext: private bucket, never the imgix-readable default one
+    const file = privateBucket().file(path);
     await file.save(buf, { contentType: 'application/zip', resumable: false });
 
     const expiresAtMs = Date.now() + SIGNED_URL_TTL_MS;

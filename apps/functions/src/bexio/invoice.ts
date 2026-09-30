@@ -10,6 +10,7 @@ import { convertDateFormatToString, addDuration, getTodayStr, getFullName, addIn
 import { bexioApiKey, bexioTenantId, bexioDefaultTaxId, BEXIO_BASE } from './shared';
 import { loadIsBexioBackend } from './backend-gate';
 import { readFinanceDocument } from './finance-document';
+import { privateBucket } from '../_storage/private-bucket';
 import { invoiceSyncFields } from './invoice.mapper';
 
 interface BexioInvoice {
@@ -333,7 +334,7 @@ export const showInvoicePdf = onCall(
 
     // migrated from bexio (spec 1.68): serve the stored copy, bexio only as the fallback
     const invoice = (await admin.firestore().collection('invoices').doc(invoiceId).get()).data();
-    const local = await readFinanceDocument(admin.firestore(), admin.storage().bucket(),
+    const local = await readFinanceDocument(admin.firestore(), privateBucket(),
       (invoice?.['documentKey'] as string | undefined) ?? '', (invoice?.['tenants'] as string[] | undefined) ?? []);
     if (local) {
       logger.info(`${CF_NAME}: served stored PDF for invoice ${invoiceId}`);
