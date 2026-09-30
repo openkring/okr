@@ -189,11 +189,16 @@ export const ChessStore = signalStore(
 
     function fallback(req: Ask): Promise<string | null> {
       return new Promise(resolve => setTimeout(() => {
-        const level: Level = req.level === 'hard' ? 'medium' : req.level;
-        const move = chooseMove(parseFen(req.fen), {
-          level, budgetMs: Math.min(req.budgetMs, FALLBACK_BUDGET_MS), history: req.history,
-        });
-        resolve(move ? toUci(move) : null);
+        try {
+          const level: Level = req.level === 'hard' ? 'medium' : req.level;
+          const move = chooseMove(parseFen(req.fen), {
+            level, budgetMs: Math.min(req.budgetMs, FALLBACK_BUDGET_MS), history: req.history,
+          });
+          resolve(move ? toUci(move) : null);
+        } catch {
+          // The search failed on the main thread too: never leave the caller waiting forever.
+          resolve(null);
+        }
       }, 0));
     }
 
@@ -215,8 +220,13 @@ export const ChessStore = signalStore(
           const p = store._engine.pending.get(e.data.id);
           if (!p) return;
           store._engine.pending.delete(e.data.id);
-          if (e.data.error) void fallback(p.req).then(p.resolve);
-          else p.resolve(e.data.move);
+          if (e.data.error) {
+            // The worker's deterministic search failed too; the page shows the fallback note.
+            patchState(store, { workerFailed: true });
+            void fallback(p.req).then(p.resolve);
+          } else {
+            p.resolve(e.data.move);
+          }
         };
         w.onerror = () => failWorker();
         store._engine.worker = w;
@@ -261,7 +271,12 @@ export const ChessStore = signalStore(
         setTimeout(() => {
           if (generation !== store._engine.generation) return;
           patchState(store, { thinking: false });
-          const move = uci ? fromUci(store.current(), uci) : null;
+          let move = uci ? fromUci(store.current(), uci) : null;
+          // No (legal) answer, but the game isn't over: never let the board lock up — spec §5.1.
+          if (!move && !store.result() && store.legal().length) {
+            const legal = store.legal();
+            move = legal[Math.floor(Math.random() * legal.length)];
+          }
           if (move) commit(move);
         }, wait);
       });
