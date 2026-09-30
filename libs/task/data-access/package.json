@@ -8,7 +8,9 @@
   "dependencies": {
     "tslib": "^2.8.1",
     "@okr/activity-data-access": "*",
+    "@okr/shared-i18n": "*",
     "@okr/shared-models": "*",
-    "@okr/shared-data-access": "*"
+    "@okr/shared-data-access": "*",
+    "@okr/task-util": "*"
   }
 }

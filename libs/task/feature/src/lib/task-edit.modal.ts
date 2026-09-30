@@ -5,7 +5,7 @@ import { IonAccordionGroup, IonContent, ModalController } from '@ionic/angular/s
 import { LowercaseWordMask } from '@okr/shared-config';
 import { CategoryListModel, TaskModel, TaskModelName, UserModel } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header, StringList } from '@okr/shared-ui';
-import { coerceBoolean, newAvatarInfo, safeStructuredClone } from '@okr/shared-util-core';
+import { coerceBoolean, hasRole, newAvatarInfo, safeStructuredClone } from '@okr/shared-util-core';
 
 import { CommentsAccordion } from '@okr/comment-feature';
 import { TaskForm } from '@okr/task-ui';
@@ -67,7 +67,7 @@ import { TaskStore } from './task.store';
           [title]="store.i18n.author()"
           [note]="store.i18n.author_description()"
           [avatar]="author()"
-          [readOnly]="isReadOnly()"
+          [readOnly]="isReadOnly() || !canPickAuthor()"
           (selectClicked)="selectPerson('author')"
           />
 
@@ -127,6 +127,10 @@ export class TaskEditModal {
   // no fallback to the current user: an empty author/assignee must look empty, since that is what is saved
   protected author = computed(() => this.formData()?.author);
   protected assignee = computed(() => this.formData()?.assignee);
+  // The create rule denies setting an author other than yourself unless privileged (spec 1.72
+  // §4); the author picker must not offer what the rules would reject. `hasRole('privileged', …)`
+  // also covers admin (see auth.util.ts).
+  protected canPickAuthor = computed(() => hasRole('privileged', this.currentUser()));
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
   protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.store.i18n.cancel(), save: this.store.i18n.save()} as ChangeConfirmationI18n));
 

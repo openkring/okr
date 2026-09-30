@@ -549,6 +549,9 @@ service cloud.firestore {
       return request.resource.data.get('isArchived', false) == true
              && resource.data.get('isArchived', false) == false;
     }
+    // Spec 1.72 — do NOT deploy these rules before the 1.72 rollout: run
+    // scripts/backfill-task-share-key.mjs and scripts/repair-task-authors.mjs, ship the client
+    // release, then deploy rules last (plan Task 9).
     match /tasks/{id} {
       allow read: if tenantRead() && (resource == null
         || taskStaff() || taskMember(resource.data) || resource.data.get('shareKey', '') != '');

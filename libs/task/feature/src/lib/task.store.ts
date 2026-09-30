@@ -187,11 +187,11 @@ export const TaskStore = signalStore(
     },
 
     canChangeTask(task?: TaskModel): boolean {
-      return canChangeTask(task, store.currentUser(), store.groupAdmin());
+      return canChangeTask(task, store.currentUser());
     },
 
     canDeleteTask(task?: TaskModel): boolean {
-      return canDeleteTask(task, store.currentUser(), store.groupAdmin());
+      return canDeleteTask(task, store.currentUser());
     },
 
     /**

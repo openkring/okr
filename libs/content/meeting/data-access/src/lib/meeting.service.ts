@@ -62,10 +62,11 @@ export class MeetingService {
 
   /*-------------------------- ACTION ITEMS --------------------------------*/
   /**
-   * The tasks created from a meeting's agenda. Tasks carry the back-link in
-   * `relatedKey` (spec 1.35); a second array-contains on the tenants filter is not
-   * possible, so the tenant-scoped task stream is filtered client-side — the same
-   * approach FolderService.listByParent uses, and it reuses the cached stream.
+   * The tasks created from a meeting's agenda. Tasks carry the back-link in `relatedKey`
+   * (spec 1.35), which doubles as the task's `shareKey` (spec 1.72 §4.1) — so this queries
+   * `tasks` directly by that `shareKey` via `buildTaskListQueries` (the same shared-task query
+   * every share-key reader uses), rather than filtering the whole tenant-scoped task stream
+   * client-side.
    * @param meetingKey okey of the meeting
    */
   public listActionItems(meetingKey: string): Observable<TaskModel[]> {

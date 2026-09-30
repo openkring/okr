@@ -13,23 +13,24 @@ export function canCreateTask(currentUser: UserModel | undefined, groupAdmin = f
 }
 
 /**
- * May the current user change this task? privileged/eventAdmin, the group admin of the scoped
- * group, and the task's own author or assignee.
+ * May the current user change this task? privileged/eventAdmin and the task's own author or
+ * assignee. Group admins get nothing beyond that here: the Firestore rules have no `adminKeys`
+ * field to check group-admin writes against (spec 1.72 §4 — group-admin writes await a derived
+ * `adminKeys` field), so the UI must not offer more than the rules allow.
  */
-export function canChangeTask(task: TaskModel | undefined, currentUser: UserModel | undefined, groupAdmin = false): boolean {
+export function canChangeTask(task: TaskModel | undefined, currentUser: UserModel | undefined): boolean {
   if (hasRole('privileged', currentUser)) return true;
   if (hasRole('eventAdmin', currentUser)) return true;
-  if (groupAdmin) return true;
   return isOwnTask(task, currentUser, false);
 }
 
 /**
- * May the current user delete (archive) this task? privileged, the group admin of the scoped
- * group, and the task's author. The assignee may not — a task handed to you is not yours to drop.
+ * May the current user delete (archive) this task? privileged and the task's author. The
+ * assignee may not — a task handed to you is not yours to drop. Group admins get nothing beyond
+ * that here (spec 1.72 §4 — group-admin writes await a derived `adminKeys` field).
  */
-export function canDeleteTask(task: TaskModel | undefined, currentUser: UserModel | undefined, groupAdmin = false): boolean {
+export function canDeleteTask(task: TaskModel | undefined, currentUser: UserModel | undefined): boolean {
   if (hasRole('privileged', currentUser)) return true;
-  if (groupAdmin) return true;
   return isOwnTask(task, currentUser, true);
 }
 

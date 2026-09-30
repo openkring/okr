@@ -29,7 +29,7 @@ describe('task permissions', () => {
     it('allows the assignee', () => expect(canChangeTask(task('p2', 'p1'), user('p1'))).toBe(true));
     it('denies an unrelated member', () => expect(canChangeTask(task('p2', 'p3'), user('p1'))).toBe(false));
     it('allows privileged', () => expect(canChangeTask(task('p2'), user('p1', { registered: true, privileged: true }))).toBe(true));
-    it('allows a group admin', () => expect(canChangeTask(task('p2'), user('p1'), true)).toBe(true));
+    it('denies a group admin without author/assignee/privileged', () => expect(canChangeTask(task('p2'), user('p1'))).toBe(false));
     it('denies a member without a task', () => expect(canChangeTask(undefined, user('p1'))).toBe(false));
     it('denies a user without personKey', () => expect(canChangeTask(task(''), user(''))).toBe(false));
   });
@@ -38,7 +38,7 @@ describe('task permissions', () => {
     it('allows the author', () => expect(canDeleteTask(task('p1', 'p2'), user('p1'))).toBe(true));
     it('denies the assignee', () => expect(canDeleteTask(task('p2', 'p1'), user('p1'))).toBe(false));
     it('allows privileged', () => expect(canDeleteTask(task('p2'), user('p1', { registered: true, privileged: true }))).toBe(true));
-    it('allows a group admin', () => expect(canDeleteTask(task('p2'), user('p1'), true)).toBe(true));
+    it('denies a group admin without author/privileged', () => expect(canDeleteTask(task('p2'), user('p1'))).toBe(false));
   });
 });
 

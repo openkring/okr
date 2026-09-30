@@ -1,7 +1,7 @@
 // apps/functions/src/task/task-diary.ts
 //
 // Writes a completed task's name as one line into the assignee's diary of the day it was
-// completed — and removes it again on reopen (spec 1.73 §9). Runs from `onTaskWritten`, gated
+// completed — and removes it again on reopen (spec 1.72 §9). Runs from `onTaskWritten`, gated
 // on `app-config.taskDiaryTenantId` (Task 5): '' means the fleet has no diary tenant and this
 // module is never reached.
 
@@ -23,10 +23,11 @@ const isAlreadyExists = (err: unknown): boolean =>
 /**
  * Completes or reopens the assignee's diary line for `date` in `diaryTenantId`.
  *
- * 1. Resolves `assigneeKey` (a `PersonModel.okey`) to a Firebase uid via `users.personKey` —
- *    preferring the user doc whose `tenants` already includes the diary tenant (spec 1.73 §9.2),
+ * 1. Resolves `assigneeKey` (a `PersonModel.okey`) to a Firebase uid via `users.personKey`,
+ *    requiring the user doc whose `tenants` already includes the diary tenant (spec 1.72 §9.1),
  *    since a person can hold one `users/{uid}` doc per tenant. No matching user → `'skipped-no-user'`,
- *    the diary of someone who has no account in the diary tenant.
+ *    the diary of someone who has no account in the diary tenant — never falling back to an
+ *    unrelated user doc for the same person in a foreign tenant.
  * 2. Addresses the day entry directly by its deterministic id, `diaryKey(diaryTenantId, uid,
  *    date)` (`@okr/content-diary-util`, the same id `newDiary`/`DiaryStore.add` and the diary
  *    import function use — spec §9.1 "one entry per author, tenant and day"). A query-then-write
@@ -38,7 +39,8 @@ const isAlreadyExists = (err: unknown): boolean =>
  *    functions never `new` a `shared-models` class, see `TaskDocLike`), and on `ALREADY_EXISTS`
  *    (the entry already existed, e.g. authored in the app) re-reads it and, unless `final`,
  *    `arrayUnion`s the line — never re-creating and never losing the concurrent write.
- * 5. `reopen`: reads the entry by id; missing or `final` → no-op; else `arrayRemove`s the line.
+ * 5. `reopen`: reads the entry by id; missing → `'skipped-missing'`, `final` → `'skipped-final'`,
+ *    else `arrayRemove`s the line and returns `'written'`.
  *
  * A task renamed while completed leaves its old name as the diary line — this sync only ever
  * arrayUnion/arrayRemove's the CURRENT name, so a rename after completion is not retro-applied
@@ -51,18 +53,18 @@ export async function applyTaskToDiary(
   date: string,
   line: string,
   mode: 'complete' | 'reopen',
-): Promise<'written' | 'skipped-final' | 'skipped-no-user'> {
+): Promise<'written' | 'skipped-final' | 'skipped-no-user' | 'skipped-missing'> {
   const usersSnap = await db.collection(USERS_COLLECTION).where('personKey', '==', assigneeKey).get();
-  if (usersSnap.empty) return 'skipped-no-user';
-  const userDoc = usersSnap.docs.find((doc) => ((doc.get('tenants') as string[] | undefined) ?? []).includes(diaryTenantId))
-    ?? usersSnap.docs[0];
+  const userDoc = usersSnap.docs.find((doc) => ((doc.get('tenants') as string[] | undefined) ?? []).includes(diaryTenantId));
+  if (!userDoc) return 'skipped-no-user';
   const uid = userDoc.id;
 
   const ref = db.collection(DIARY_COLLECTION).doc(diaryKey(diaryTenantId, uid, date));
 
   if (mode === 'reopen') {
     const snap = await ref.get();
-    if (!snap.exists || (snap.get('status') as string | undefined) === 'final') return 'written';
+    if (!snap.exists) return 'skipped-missing';
+    if ((snap.get('status') as string | undefined) === 'final') return 'skipped-final';
     await ref.update({ done: FieldValue.arrayRemove(line) });
     return 'written';
   }

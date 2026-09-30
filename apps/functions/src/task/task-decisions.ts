@@ -60,7 +60,7 @@ export function getArchiveCutoff(todayStoreDate: string, days: number): string {
 
 /**
  * Does this write complete or reopen a task, for the purpose of syncing the assignee's diary
- * (spec 1.73 §9)? Mirrors the `completionDate` half of `decideTaskPush`'s reopen check, but
+ * (spec 1.72 §9)? Mirrors the `completionDate` half of `decideTaskPush`'s reopen check, but
  * unlike the push decision this also fires on create-as-done and is indifferent to archiving,
  * self-assignment and re-assignment — the diary line only cares whether the task's done-ness
  * changed. Needs an assignee on the relevant side (`after` for complete, `before` for reopen);

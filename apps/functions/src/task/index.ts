@@ -35,6 +35,11 @@ export const onTaskWritten = onDocumentWritten(
     // swallowed, same rationale as `logArchiveActivity` in `task-daily.ts`.
     try {
       const transition = decideDiaryTransition(before, after);
+      const beforeDone = (before?.completionDate ?? '') !== '';
+      const afterDone = (after?.completionDate ?? '') !== '';
+      if (transition === 'none' && beforeDone !== afterDone) {
+        logger.info(`onTaskWritten: diary skipped — no assignee on the transitioning side task=${event.params['taskId']}`);
+      }
       if (transition !== 'none') {
         const tenantId = (after ?? before)?.tenants?.[0] ?? '';
         if (tenantId) {
