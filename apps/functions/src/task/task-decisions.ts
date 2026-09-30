@@ -24,15 +24,20 @@ export function decideTaskPush(before: TaskDocLike | undefined, after: TaskDocLi
   return reassigned || reopened;
 }
 
+/** The validated maximum of `app-config.taskArchiveDays` (spec 1.72 §8.2: "validated 0 … 3650"). */
+export const MAX_TASK_ARCHIVE_DAYS = 3650;
+
 /**
  * `app-config/{tenantId}.taskArchiveDays` as read off Firestore, defensively — a legacy doc
  * predating this field, or one hand-edited to garbage, must not crash the daily job.
  * `0` means "never archive" and is kept; anything else invalid falls back to the model
- * default (30, see `AppConfigModel.taskArchiveDays`).
+ * default (30, see `AppConfigModel.taskArchiveDays`). Capped at `MAX_TASK_ARCHIVE_DAYS`: an
+ * uncapped huge value would push `getArchiveCutoff`'s `Date` past the range `toISOString` can
+ * render, throwing and skipping that tenant's whole run (archive AND due-today reminder).
  */
 export function resolveTaskArchiveDays(raw: unknown): number {
   if (typeof raw !== 'number' || !Number.isFinite(raw) || raw < 0) return 30;
-  return Math.floor(raw);
+  return Math.min(Math.floor(raw), MAX_TASK_ARCHIVE_DAYS);
 }
 
 /**

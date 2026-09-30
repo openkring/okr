@@ -24,6 +24,7 @@ describe('resolveTaskArchiveDays', () => {
   it('keeps 0 (never)', () => expect(resolveTaskArchiveDays(0)).toBe(0));
   it('rejects garbage', () => expect(resolveTaskArchiveDays('x')).toBe(30));
   it('floors fractions', () => expect(resolveTaskArchiveDays(7.9)).toBe(7));
+  it('caps an oversized value at the validated maximum', () => expect(resolveTaskArchiveDays(1e9)).toBe(3650));
 });
 
 describe('getArchiveCutoff', () => {
