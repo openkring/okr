@@ -14,9 +14,8 @@ export function canCreateTask(currentUser: UserModel | undefined, groupAdmin = f
 
 /**
  * May the current user change this task? privileged/eventAdmin and the task's own author or
- * assignee. Group admins get nothing beyond that here: the Firestore rules have no `adminKeys`
- * field to check group-admin writes against (spec 1.72 §4 — group-admin writes await a derived
- * `adminKeys` field), so the UI must not offer more than the rules allow.
+ * assignee. Group admins get nothing beyond that (spec 1.72 §4, decided 2026-09-30: no
+ * group-admin writes), matching the Firestore rules — the UI must not offer more than they allow.
  */
 export function canChangeTask(task: TaskModel | undefined, currentUser: UserModel | undefined): boolean {
   if (hasRole('privileged', currentUser)) return true;
@@ -27,7 +26,7 @@ export function canChangeTask(task: TaskModel | undefined, currentUser: UserMode
 /**
  * May the current user delete (archive) this task? privileged and the task's author. The
  * assignee may not — a task handed to you is not yours to drop. Group admins get nothing beyond
- * that here (spec 1.72 §4 — group-admin writes await a derived `adminKeys` field).
+ * that (spec 1.72 §4, decided 2026-09-30: no group-admin writes).
  */
 export function canDeleteTask(task: TaskModel | undefined, currentUser: UserModel | undefined): boolean {
   if (hasRole('privileged', currentUser)) return true;
@@ -51,6 +50,18 @@ export function getCompletionPatch(task: TaskModel, today: string): Pick<TaskMod
   return isTaskCompleted(task)
     ? { state: 'planned', completionDate: '' }
     : { state: 'done', completionDate: today };
+}
+
+/**
+ * Restoring an archived task reopens it (spec 1.72 §10): otherwise a completed task restored
+ * after the archive cut-off is archived again by the next taskDaily run. Reopening also fires
+ * the diary reopen in onTaskWritten, like the completion toggle. An open task only loses
+ * `isArchived`.
+ */
+export function getRestorePatch(task: TaskModel): Partial<Pick<TaskModel, 'isArchived' | 'state' | 'completionDate'>> {
+  return isTaskCompleted(task)
+    ? { isArchived: false, state: 'planned', completionDate: '' }
+    : { isArchived: false };
 }
 
 /** A task is completed when its completionDate is set (legacy docs may lack the field). */

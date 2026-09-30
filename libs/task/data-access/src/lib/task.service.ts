@@ -5,7 +5,7 @@ import { FirestoreService } from '@okr/shared-data-access';
 import { DbQuery, TaskCollection, TaskModel, UserModel } from '@okr/shared-models';
 import { I18nService } from '@okr/shared-i18n';
 
-import { getTaskIndex, getTaskShareKey } from '@okr/task-util';
+import { getRestorePatch, getTaskIndex, getTaskShareKey } from '@okr/task-util';
 import { ActivityService } from '@okr/activity-data-access';
 import { PFX } from './scope';
 
@@ -110,14 +110,15 @@ export class TaskService {
   }
 
   /**
-   * Restore an archived task (spec §10): only `isArchived` flips back to false, same one-field
-   * shape as saveCompletion/saveBoardPosition — a one-tap action, not a form save, so no toast
+   * Restore an archived task (spec §10): `isArchived` flips back to false and a completed task
+   * is reopened (getRestorePatch) — else the next taskDaily run archives it again. Same shape
+   * as saveCompletion/saveBoardPosition — a one-tap action, not a form save, so no toast
    * and no audit comment, just one activity entry. The Firestore rules (Task 3) allow this
    * isArchived true→false transition through the ordinary-update branch; gating on
    * `canDeleteTask` is done by the caller (TaskStore.restore), not here.
    */
   public async restore(task: TaskModel, currentUser?: UserModel): Promise<void> {
-    await this.firestoreService.updateObject(TaskCollection, task.okey, { isArchived: false }, false);
+    await this.firestoreService.updateObject(TaskCollection, task.okey, getRestorePatch(task), false);
     void this.activityService.log('task', 'update', currentUser, `${task.okey}: ${task.name}/restore`);
   }
 

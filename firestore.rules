@@ -531,8 +531,8 @@ service cloud.firestore {
     // tasks (spec 1.72 §2, §3.1, §4): readable/writable by author, assignee and staff
     // (privileged/eventAdmin); shared tasks (shareKey = group key or 'meeting.<okey>') are
     // tenant-readable. Archiving (isArchived -> true, or a self-detach) is author/privileged only.
-    // Group-admin writes (§4) are NOT granted yet: groups/{key}.admins holds AvatarInfo maps,
-    // which a rule cannot search for a personKey — they await a derived `adminKeys` field.
+    // Group admins get no extra writes (§4, decided 2026-09-30). Only privileged may change
+    // the author.
     // author/assignee may be absent on legacy docs, hence get(…, {}).
     // A caller without a personKey ('' from callerPersonKey()) must never match a missing field.
     function taskAuthor(data) {
@@ -544,6 +544,12 @@ service cloud.firestore {
     }
     function taskStaff() {
       return isPrivileged() || hasRole('eventAdmin');
+    }
+    // only privileged may change a task's author (a member/assignee must not take it over);
+    // compares the key only, so a refreshed avatar name/label does not trip it
+    function taskAuthorKept() {
+      return request.resource.data.get('author', {}).get('key', '')
+             == resource.data.get('author', {}).get('key', '');
     }
     function taskArchiving() {
       return request.resource.data.get('isArchived', false) == true
@@ -558,7 +564,7 @@ service cloud.firestore {
       // only privileged may create a task in someone else's name (spec §2)
       allow create: if tenantCreate() && (isPrivileged() || taskAuthor(request.resource.data));
       // tenantUpdate(): the caller's tenant must be on the stored doc, not just on the new one
-      allow update: if tenantUpdate() && (
+      allow update: if tenantUpdate() && (isPrivileged() || taskAuthorKept()) && (
         (taskArchiving() || selfDetach())
           ? (isPrivileged() || taskAuthor(resource.data))
           : (taskStaff() || taskMember(resource.data)));

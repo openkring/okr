@@ -255,6 +255,14 @@ seed("bank-rules/ruleA",           {"tenants": ["t1"], "isArchived": False, "acc
 # editing something else on the doc can be checked for leaving loginId untouched.
 seed("users/uidL", {"tenants": ["t1"], "roles": {}, "firstName": "L", "personKey": "pL", "loginId": "max_mueller"})
 
+# tasks (spec 1.72): author pE, assignee pA; only privileged may change the author, and a
+# restore reopens a completed task (isArchived + state + completionDate in one write).
+seed("tasks/tkA",    {"tenants": ["t1"], "isArchived": False, "shareKey": "", "name": "Task A",
+                      "author": {"key": "pE", "name1": "E"}, "assignee": {"key": "pA", "name1": "A"},
+                      "state": "planned", "completionDate": ""})
+seed("tasks/tkArch", {"tenants": ["t1"], "isArchived": True, "shareKey": "", "name": "Done",
+                      "author": {"key": "pE", "name1": "E"}, "state": "done", "completionDate": "20260801"})
+
 A, B, C, D = jwt("uidA"), jwt("uidB"), jwt("uidC"), jwt("uidD")
 E, M, P = jwt("uidE"), jwt("uidM"), jwt("uidP")
 T = jwt("uidT")
@@ -650,6 +658,19 @@ single_cases = [
     ("userD(admin t1) GET login-throttle/x -> DENY", False, GET, "login-throttle/x", D, None, None),
     ("userD(admin t1) PATCH login-throttle/x -> DENY", False, PATCH, "login-throttle/x", D,
      body({"count": 0}), ["count"]),
+
+    # tasks (spec 1.72): author lock — order matters, the last case changes tkA's author
+    ("assignee A PATCH tkA.name -> ALLOW", True, PATCH, "tasks/tkA", A, body({"name": "Task A2"}), ["name"]),
+    ("assignee A PATCH tkA.author -> self -> DENY (takeover)", False, PATCH, "tasks/tkA", A,
+     body({"author": {"key": "pA", "name1": "A"}}), ["author"]),
+    ("author E PATCH tkA.author -> pA -> DENY (only privileged)", False, PATCH, "tasks/tkA", E,
+     body({"author": {"key": "pA", "name1": "A"}}), ["author"]),
+    ("author E PATCH tkA.author same key, new name -> ALLOW", True, PATCH, "tasks/tkA", E,
+     body({"author": {"key": "pE", "name1": "E2"}}), ["author"]),
+    ("author E restore tkArch (reopen) -> ALLOW", True, PATCH, "tasks/tkArch", E,
+     body({"isArchived": False, "state": "planned", "completionDate": ""}), ["isArchived", "state", "completionDate"]),
+    ("privileged P PATCH tkA.author -> pC -> ALLOW", True, PATCH, "tasks/tkA", P,
+     body({"author": {"key": "pC", "name1": "C"}}), ["author"]),
 ]
 
 # (label, expect_allow, collection, tenant, token)

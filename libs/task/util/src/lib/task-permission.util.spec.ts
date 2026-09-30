@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { AvatarInfo, TaskModel, UserModel } from '@okr/shared-models';
 
-import { canChangeTask, canCreateTask, canDeleteTask, getCompletionPatch, isTaskCompleted } from './task-permission.util';
+import { canChangeTask, canCreateTask, canDeleteTask, getCompletionPatch, getRestorePatch, isTaskCompleted } from './task-permission.util';
 
 function user(personKey: string, roles: Record<string, boolean> = { registered: true }): UserModel {
   const u = new UserModel('test');
@@ -57,5 +57,20 @@ describe('task completion', () => {
     const t = task();
     (t as unknown as { completionDate?: string }).completionDate = undefined;
     expect(isTaskCompleted(t)).toBe(false);
+  });
+});
+
+describe('task restore', () => {
+  it('reopens a completed task', () => {
+    const t = task();
+    t.isArchived = true;
+    t.completionDate = '20260801';
+    expect(getRestorePatch(t)).toEqual({ isArchived: false, state: 'planned', completionDate: '' });
+  });
+
+  it('only unarchives an open task', () => {
+    const t = task();
+    t.isArchived = true;
+    expect(getRestorePatch(t)).toEqual({ isArchived: false });
   });
 });
