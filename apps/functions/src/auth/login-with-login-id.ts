@@ -22,7 +22,7 @@ const CF_NAME = 'loginWithLoginId';
 // secret purely for delivery, matching the repo convention (see DIARY_OWNER_UID in import-diary.ts):
 // every .env file is git-ignored and dist/apps/functions is rebuilt on every deploy, so a defineString
 // param has nowhere to persist and would prompt on every unrelated functions deploy.
-const WEB_API_KEY = defineSecret('FIREBASE_WEB_API_KEY');
+const WEB_API_KEY = defineSecret('IDENTITY_TOOLKIT_APIKEY');
 /** Every failure answers no earlier than this, so "unknown Benutzername" is not measurably faster. */
 const FAILURE_FLOOR_MS = 900;
 
@@ -90,7 +90,7 @@ export const loginWithLoginId = onCall(
         // a network failure on the identitytoolkit fetch) must not surface as functions/internal —
         // that would be a wrong-password/unknown-Benutzername existence oracle (fix round 1 #2).
         outcome = 'error';
-        logger.error(`${CF_NAME}: known-user check failed unexpectedly — check the FIREBASE_WEB_API_KEY secret and App Check forwarding`, {
+        logger.error(`${CF_NAME}: known-user check failed unexpectedly — check the IDENTITY_TOOLKIT_APIKEY secret and App Check forwarding`, {
           tenantId, uid: user.uid, code: errorCode(error),
         });
       }
