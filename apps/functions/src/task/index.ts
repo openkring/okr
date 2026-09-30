@@ -5,56 +5,31 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
 
 import { pushToPersons } from '../srv/push';
+import { decideTaskPush, TASK_LIST_URL, type TaskDocLike } from './task-decisions';
 
 const REGION = 'europe-west6';
 const TASK_COLLECTION = 'tasks';
-
-// Inlined to avoid monorepo cross-bundle imports (same pattern as calendar/index.ts)
-interface TaskDoc {
-  name: string;
-  state: string;
-  isArchived: boolean;
-  completionDate: string;
-  dueDate: string;
-  assignee?: { key: string };
-  tenants: string[];
-}
 
 /**
  * Firestore trigger that sends an FCM push notification to a task's assignee
  * whenever a task is created, reassigned, or reopened.
  *
- * Notification conditions:
- *   - Create: task has an assignee and is not already done/archived
- *   - Update: assignee changed to a new person, OR completionDate was cleared (task reopened)
- *   - Never: task is done (state == 'done' OR completionDate != ''), archived, or has no assignee
+ * The push/skip decision (create vs. reassignment vs. reopen, self-assignment, done/archived/
+ * unassigned) lives in `decideTaskPush` (spec 1.72 §7.1).
  *
  * Badge count mirrors the dashboard query (tasks-section.store.ts):
- *   isArchived==false, tenants array-contains tenantId, completionDate=='',
- *   then in-memory filter: assignee.key == personKey
+ *   isArchived==false, tenants array-contains tenantId, completionDate=='', assignee.key == personKey.
  */
 export const onTaskWritten = onDocumentWritten(
   { document: `${TASK_COLLECTION}/{taskId}`, region: REGION },
   async (event) => {
-    const before = event.data?.before?.data() as TaskDoc | undefined;
-    const after = event.data?.after?.data() as TaskDoc | undefined;
+    const before = event.data?.before?.data() as TaskDocLike | undefined;
+    const after = event.data?.after?.data() as TaskDocLike | undefined;
 
-    // Skip deletes
-    if (!after) return;
+    if (!decideTaskPush(before, after)) return;
 
-    // Skip if done, archived, or has no assignee
-    if (after.isArchived || after.completionDate !== '' || after.state === 'done') return;
-    if (!after.assignee?.key) return;
-
-    const assigneeKey = after.assignee.key;
-    const isCreate = !before;
-    const assigneeChanged = !isCreate && before?.assignee?.key !== assigneeKey;
-    const taskReopened = !isCreate && (before?.completionDate ?? '') !== '' && after.completionDate === '';
-
-    // Only notify on create, assignee change, or reopen — skip plain edits
-    if (!isCreate && !assigneeChanged && !taskReopened) return;
-
-    const tenantId = after.tenants?.[0];
+    const assigneeKey = after?.assignee?.key ?? '';
+    const tenantId = after?.tenants?.[0];
     if (!tenantId) return;
 
     const db = getFirestore();
@@ -64,11 +39,12 @@ export const onTaskWritten = onDocumentWritten(
       .where('isArchived', '==', false)
       .where('tenants', 'array-contains', tenantId)
       .where('completionDate', '==', '')
-      .get();
-    const badgeCount = openSnap.docs.filter(doc => doc.data()['assignee']?.key === assigneeKey).length;
+      .where('assignee.key', '==', assigneeKey)
+      .count().get();
+    const badgeCount = openSnap.data().count;
 
-    const title = after.name || 'Neue Aufgabe';
-    const body = after.dueDate
+    const title = after?.name || 'Neue Aufgabe';
+    const body = after?.dueDate
       ? `Fällig: ${convertDateFormatToString(after.dueDate, DateFormat.StoreDate, DateFormat.ViewDate, false)}`
       : 'Neue Aufgabe zugewiesen';
 
@@ -76,7 +52,7 @@ export const onTaskWritten = onDocumentWritten(
     // open count. Every calendar sender omits it — see the head of `srv/push.ts`.
     const result = await pushToPersons(
       [assigneeKey],
-      { type: 'task', tenantId, title, body, url: '/task/my/all', badgeCount },
+      { type: 'task', tenantId, title, body, url: TASK_LIST_URL, badgeCount },
       'onTaskWritten',
     );
 
