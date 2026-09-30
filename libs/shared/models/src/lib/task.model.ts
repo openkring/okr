@@ -26,6 +26,10 @@ export class TaskModel implements OkrModel, PersistedModel, NamedModel, Searchab
   // a task can be shown on its due date in calendars
   public calendars: string[] = [];
 
+  // denormalised reader scope (spec 1.72 §4): '' = private; a group key or 'meeting.<okey>' =
+  // readable by the whole tenant. Computed by getTaskShareKey on every write; legacy docs lack it.
+  public shareKey = '';
+
   // fractional Kanban rank within its (state) partition; '' = not yet ranked (sorts by dueDate)
   public rank = '';
 

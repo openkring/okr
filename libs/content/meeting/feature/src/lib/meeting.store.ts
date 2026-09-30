@@ -9,7 +9,7 @@ import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { AgendaItem, DocumentModel, MeetingModel, MeetingModelName, MembershipModel, TaskModel } from '@okr/shared-models';
 import { AlertService, EmailEntry } from '@okr/shared-util-angular';
-import { DateFormat, convertDateFormatToString, debugListLoaded, fileName, getTodayStr, hasRole, nameMatches } from '@okr/shared-util-core';
+import { DateFormat, convertDateFormatToString, debugListLoaded, fileName, getAvatarInfoForCurrentUser, getTodayStr, hasRole, nameMatches } from '@okr/shared-util-core';
 
 import { MeetingService } from '@okr/content-meeting-data-access';
 import { MEETING_I18N_KEYS, buildMinutesDocument, carryOverAgendaItems, getMeetingRelatedKey, newAttendees, newMeetingModel } from '@okr/content-meeting-util';
@@ -193,6 +193,8 @@ export const MeetingStore = signalStore(
       const task = new TaskModel(store.tenantId());
       task.name = item.title;
       task.assignee = item.owner;
+      const currentUser = store.appStore.currentUser();
+      task.author = currentUser ? getAvatarInfoForCurrentUser(currentUser) : undefined;
       task.relatedModelType = MeetingModelName;
       task.relatedKey = getMeetingRelatedKey(meetingKey);
       await store.taskService.create(task, store.currentUser());

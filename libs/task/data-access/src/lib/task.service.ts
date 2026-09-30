@@ -7,7 +7,7 @@ import { TaskCollection, TaskModel, UserModel } from '@okr/shared-models';
 import { findByKey, getSystemQuery } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
 
-import { getTaskIndex } from '@okr/task-util';
+import { getTaskIndex, getTaskShareKey } from '@okr/task-util';
 import { ActivityService } from '@okr/activity-data-access';
 import { PFX } from './scope';
 
@@ -39,6 +39,7 @@ export class TaskService {
    */
   public async create(task: TaskModel, currentUser: UserModel | undefined): Promise<string | undefined> {
     task.index = getTaskIndex(task);
+    task.shareKey = getTaskShareKey(task);
     const key = await this.firestoreService.createModel<TaskModel>(TaskCollection, task, this.i18n.create_conf(), this.i18n.create_error(), currentUser);
     const payload = `${key}: ${task.name}/${task.state}`;
     void this.activityService.log('task', 'create', currentUser, payload);
@@ -62,6 +63,7 @@ export class TaskService {
    */
   public async update(task: TaskModel, currentUser?: UserModel): Promise<string | undefined> {
     task.index = getTaskIndex(task);
+    task.shareKey = getTaskShareKey(task);
     const key = await this.firestoreService.updateModel<TaskModel>(TaskCollection, task, false, this.i18n.update_conf(), this.i18n.update_error(), currentUser);
     const payload = `${key}: ${task.name}/${task.state}`;
     void this.activityService.log('task', 'update', currentUser, payload);
