@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { WEATHER_TAG, buildWeatherDocs, hasWeatherTag, hoursSince, toStoreDate, toStoreDateTime } from './weather.util';
+import { WEATHER_TAG, buildWeatherDocs, hasWeatherTag, hoursSince } from './weather.util';
 import fixture from './open-meteo.fixture.json';
 
 /**
@@ -88,33 +88,6 @@ describe('buildWeatherDocs — against a real provider response', () => {
   it('treats today as forecast right up to midnight, not from noon', () => {
     const lateToday = buildWeatherDocs(location, fixture as never, new Date(2026, 7, 30, 23, 59));
     expect(lateToday[0]['isForecast']).toBe(true);
-  });
-});
-
-describe('toStoreDate — pinned to Europe/Zurich, not the host clock', () => {
-  it('zero-pads month and day', () => {
-    expect(toStoreDate(new Date(Date.UTC(2026, 0, 5, 12, 0)))).toBe('20260105');
-  });
-
-  it('uses Zurich, not UTC: 22:31 UTC in summer is already the next day', () => {
-    // The bug this pins: the deployed container runs in UTC, so Date's local getters gave the
-    // UTC date. `onSchedule({ timeZone })` only schedules the run, it does not set the zone.
-    expect(toStoreDate(new Date('2026-08-30T22:31:51Z'))).toBe('20260831');
-  });
-
-  it('handles the winter offset too (CET, +1)', () => {
-    expect(toStoreDate(new Date('2026-01-15T23:30:00Z'))).toBe('20260116');
-    expect(toStoreDate(new Date('2026-01-15T22:30:00Z'))).toBe('20260115');
-  });
-});
-
-describe('toStoreDateTime', () => {
-  it('stamps the Zurich wall clock, not UTC', () => {
-    expect(toStoreDateTime(new Date('2026-08-30T22:31:51Z'))).toBe('20260831003151');
-  });
-
-  it('zero-pads every component', () => {
-    expect(toStoreDateTime(new Date('2026-01-05T07:08:09Z'))).toBe('20260105080809');
   });
 });
 

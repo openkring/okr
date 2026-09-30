@@ -3,7 +3,8 @@ import { logger } from 'firebase-functions/v2';
 import axios from 'axios';
 import * as admin from 'firebase-admin';
 
-import { LocationDoc, OpenMeteoResponse, WEATHER_TAG, buildWeatherDocs, hasWeatherTag, hoursSince, toStoreDate } from './weather.util';
+import { LocationDoc, OpenMeteoResponse, WEATHER_TAG, buildWeatherDocs, hasWeatherTag, hoursSince } from './weather.util';
+import { toStoreDate } from '../srv/zurich-time';
 
 const OPEN_METEO_URL = 'https://api.open-meteo.com/v1/forecast';
 

@@ -1,3 +1,10 @@
+// `onSchedule({ timeZone })` only controls WHEN the job fires — the container itself runs in
+// UTC, so `toStoreDate`/`toStoreDateTime` (srv/zurich-time.ts) pin the formatting to
+// Europe/Zurich explicitly rather than inherit it from the host. Without that, `fetchedAt`
+// would mis-stamp (the widgets show "last updated" two hours out) and the interval gate would
+// read yesterday's document between 22:00 and midnight UTC.
+import { toStoreDate, toStoreDateTime } from '../srv/zurich-time';
+
 /**
  * The tag that marks a location as a weather location.
  *
@@ -35,35 +42,6 @@ export interface LocationDoc {
 export interface OpenMeteoResponse {
   daily: Record<string, (number | string)[]>;
   hourly: Record<string, (number | string)[]>;
-}
-
-/**
- * The zone every stored date and time is expressed in.
- *
- * `onSchedule({ timeZone })` only controls WHEN the job fires — the container itself runs in
- * UTC, so `Date`'s local getters would produce UTC dates. Between 22:00 and midnight UTC that
- * is already the previous day in Zurich, which silently mis-stamps `fetchedAt` (the widgets
- * show "last updated" two hours out) and makes the interval gate read yesterday's document.
- * So the formatting is pinned to the zone explicitly rather than inherited from the host.
- */
-export const TIME_ZONE = 'Europe/Zurich';
-
-// en-CA formats as yyyy-mm-dd, which is the StoreDate order without further rearranging.
-const DATE_FMT = new Intl.DateTimeFormat('en-CA', {
-  timeZone: TIME_ZONE, year: 'numeric', month: '2-digit', day: '2-digit',
-});
-const TIME_FMT = new Intl.DateTimeFormat('en-GB', {
-  timeZone: TIME_ZONE, hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
-});
-
-/** A Date as a StoreDate (yyyyMMdd) in Europe/Zurich wall-clock time. */
-export function toStoreDate(d: Date): string {
-  return DATE_FMT.format(d).replace(/-/g, '');
-}
-
-/** A Date as a StoreDateTime (yyyyMMddHHmmss) in Europe/Zurich wall-clock time. */
-export function toStoreDateTime(d: Date): string {
-  return toStoreDate(d) + TIME_FMT.format(d).replace(/:/g, '');
 }
 
 /** `'2026-08-29T16:00'` (Open-Meteo's local ISO) → `{ date: '20260829', time: '16:00' }`. */

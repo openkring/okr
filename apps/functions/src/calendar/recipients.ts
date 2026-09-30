@@ -12,7 +12,8 @@
 // The pure functions carry the rules and are unit-tested; only the resolver touches Firestore.
 
 import { getFirestore } from 'firebase-admin/firestore';
-import { DateFormat, getTodayStr } from '@okr/shared-util-core';
+
+import { toStoreDate } from '../srv/zurich-time';
 
 /** Which occurrences a broadcast covers. */
 export type NotifyScope = 'event' | 'series';
@@ -159,9 +160,13 @@ export async function resolveCalEventRecipients(
   return { events, personKeys: collectRecipients(events, exclude) };
 }
 
-/** Today as a StoreDate (yyyyMMdd) — the series cut-off. */
+/**
+ * Today as a StoreDate (yyyyMMdd) in Europe/Zurich wall-clock time — the series cut-off.
+ * Cloud Functions run in UTC; a bare `getTodayStr` would read the wrong day for part of
+ * the evening (see srv/zurich-time.ts).
+ */
 export function todayStoreDate(): string {
-  return getTodayStr(DateFormat.StoreDate);
+  return toStoreDate(new Date());
 }
 
 /**
