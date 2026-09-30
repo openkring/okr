@@ -1,0 +1,17 @@
+{
+  "name": "@okr/games-chess-feature",
+  "version": "0.0.1",
+  "main": "./src/index.js",
+  "types": "./src/index.d.ts",
+  "sideEffects": false,
+  "private": true,
+  "dependencies": {
+    "tslib": "^2.8.1",
+    "@okr/games-chess-ui": "*",
+    "@okr/games-chess-util": "*",
+    "@okr/shared-i18n": "*",
+    "@okr/shared-ui": "*",
+    "@okr/shared-util-angular": "*",
+    "@okr/shared-util-core": "*"
+  }
+}
