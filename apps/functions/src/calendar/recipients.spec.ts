@@ -5,7 +5,6 @@ import {
   caleventKeyFromFolders,
   caleventDeepLink,
   caleventKeyFromParent,
-  hasTag,
   shorten,
   CalEventNotifyDoc,
   collectRecipients,
@@ -126,19 +125,6 @@ describe('caleventKeyFromFolders', () => {
   it('returns empty when the document hangs elsewhere', () => {
     expect(caleventKeyFromFolders(['person.x', 'org.y'])).toBe('');
     expect(caleventKeyFromFolders(undefined)).toBe('');
-  });
-});
-
-describe('hasTag', () => {
-  it('matches a whole tag, not a prefix', () => {
-    expect(hasTag('broadcast', 'broadcast')).toBe(true);
-    expect(hasTag('urgent, broadcast', 'broadcast')).toBe(true);
-    expect(hasTag('broadcaster', 'broadcast')).toBe(false);
-  });
-
-  it('is false for no tags at all', () => {
-    expect(hasTag(undefined, 'broadcast')).toBe(false);
-    expect(hasTag('', 'broadcast')).toBe(false);
   });
 });
 

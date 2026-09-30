@@ -7,10 +7,11 @@
 // event modals all along — they just never told anyone. Whoever did not happen to open the
 // event never learned that the meeting point had changed.
 //
-// CREATE ONLY, and push ONLY:
-//  - create only, because a corrected typo is not news;
-//  - push only (no bot DM), because this is ambient activity, not an announcement. A direct
-//    message per uploaded photo would be noise. The broadcast (§1) is the announcement channel.
+// CREATE ONLY, because a corrected typo is not news.
+//
+// Comments are delivered by each recipient's `newsDelivery` (spec 1.73 §5) — push and/or
+// email, via `notifyPersons`. Documents stay push-only: ambient activity, not an
+// announcement — a direct message per uploaded photo would be noise.
 //
 // The push carries no `badgeCount` (see the head of `srv/push.ts`) and one `channelId` per
 // event, so five files uploaded in a row collapse into ONE banner instead of stacking five.
@@ -21,24 +22,19 @@ import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 import { DateFormat, getTodayStr } from '@okr/shared-util-core';
 
 import { pushToPersons } from '../srv/push';
+import { commentEmail, eventWhen, locationLabel } from './mail';
+import { eventUrl, notifyPersons, tenantLinks, TenantLinks } from './deliver';
 import {
   caleventDeepLink,
   caleventKeyFromFolders,
   caleventKeyFromParent,
-  hasTag,
+  CalEventNotifyDoc,
   resolveCalEventRecipients,
   shorten,
   todayStoreDate,
 } from './recipients';
 
 const REGION = 'europe-west6';
-
-/**
- * Tag on the comment a broadcast writes as its record (§1.4). It MUST NOT notify: the
- * broadcast has already pushed to exactly these people, and a second message about its own
- * receipt is the kind of duplicate that makes people mute a feature.
- */
-export const BROADCAST_TAG = 'broadcast';
 
 interface CommentDoc {
   parentKey?: string;
@@ -79,12 +75,18 @@ async function recordActivity(caleventKey: string, context: string): Promise<voi
   }
 }
 
-/** Deliver one calendar-activity push. Shared by both triggers. */
+/**
+ * Deliver one calendar-activity notification. Shared by both triggers.
+ *
+ * With no `email` builder (the document trigger), delivery stays push-only. With one (the
+ * comment trigger), delivery follows each recipient's `newsDelivery` via `notifyPersons`.
+ */
 async function notifyAboutEvent(
   caleventKey: string,
   authorKey: string,
   body: string,
   context: string,
+  email?: (event: CalEventNotifyDoc & { location?: string }, links: TenantLinks) => { subject: string; html: string },
 ): Promise<void> {
   const { events, personKeys } = await resolveCalEventRecipients(
     caleventKey, 'event', todayStoreDate(), [authorKey]);
@@ -100,6 +102,19 @@ async function notifyAboutEvent(
   const tenantId = event.tenants?.[0] ?? '';
   if (!tenantId) {
     logger.warn(`${context}: calevent ${caleventKey} has no tenant`);
+    return;
+  }
+
+  if (email) {
+    const links = await tenantLinks(tenantId);
+    await notifyPersons({
+      personKeys,
+      tenantId,
+      ruleKey: `calevent:${caleventKey}`,
+      context,
+      push: { type: 'calevent', tenantId, title: event.name ?? '', body, url: caleventDeepLink(caleventKey), channelId: `calevent.${caleventKey}` },
+      email: () => email(event, links),
+    });
     return;
   }
 
@@ -127,11 +142,19 @@ export const onCalEventCommentCreated = onDocumentCreated(
     const caleventKey = caleventKeyFromParent(comment.parentKey);
     if (!caleventKey) return;                                  // a comment on something else
     await recordActivity(caleventKey, 'onCalEventCommentCreated');
-    if (hasTag(comment.tags, BROADCAST_TAG)) return;           // the broadcast's own record: counted, not pushed again
 
     const author = comment.authorName ?? '';
     const body = author ? `${author}: ${shorten(comment.description)}` : shorten(comment.description);
-    await notifyAboutEvent(caleventKey, comment.authorKey ?? '', body, 'onCalEventCommentCreated');
+    await notifyAboutEvent(caleventKey, comment.authorKey ?? '', body, 'onCalEventCommentCreated',
+      (event, links) => commentEmail({
+        appName: links.appName,
+        eventName: event.name ?? '',
+        when: eventWhen(event.startDate, event.startTime),
+        location: locationLabel(event.locationKey),
+        authorName: author,
+        comment: comment.description ?? '',
+        eventUrl: eventUrl(links, caleventKey),
+      }));
   },
 );
 

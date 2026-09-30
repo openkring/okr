@@ -28,6 +28,7 @@ export interface CalEventNotifyDoc {
   startDate?: string;
   startTime?: string;
   durationMinutes?: number;
+  locationKey?: string;
   seriesId?: string;
   isArchived?: boolean;
   state?: string;
@@ -189,14 +190,6 @@ export function caleventKeyFromFolders(folderKeys: string[] | undefined): string
     if (key) return key;
   }
   return '';
-}
-
-/**
- * `true` when a comment carries the given tag. Tags are one comma-separated string on the
- * model, so a substring test would match 'broadcaster' as 'broadcast'.
- */
-export function hasTag(tags: string | undefined, tag: string): boolean {
-  return (tags ?? '').split(',').map((entry) => entry.trim()).includes(tag);
 }
 
 /** Shorten to `max` characters for a notification body, without cutting mid-ellipsis. */
