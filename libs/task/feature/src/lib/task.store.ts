@@ -254,12 +254,7 @@ export const TaskStore = signalStore(
       const task = new TaskModel(store.tenantId());
       task.author = author;
       task.assignee = author; // by default, the task is self-assigned, user can change this in the edit modal
-      const calendar = store.calendarName();
-      if (!calendar || calendar === 'all' || calendar === 'my') {
-        task.calendars = [store.tenantId()];
-      } else {
-        task.calendars = [calendar];
-      }
+      task.calendars = this.getDefaultCalendars();
       await this.edit(task, false);
     },
 
@@ -292,8 +287,16 @@ export const TaskStore = signalStore(
       }
     },
 
+    /** A new task belongs to the list it was created in: the group calendar, else the tenant's own. */
+    getDefaultCalendars(): string[] {
+      const calendar = store.calendarName();
+      return (!calendar || calendar === 'all' || calendar === 'my') ? [store.tenantId()] : [calendar];
+    },
+
     async quickEntry(task: TaskModel): Promise<void> {
       if (!this.canCreateTask()) return;
+      // without this, a task typed into a group's quick entry never showed in that group's list
+      if (task.calendars.length === 0) task.calendars = this.getDefaultCalendars();
       await store.taskService.create(task, store.currentUser());
     },
 
