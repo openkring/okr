@@ -50,6 +50,15 @@ async function writeLoginIdExclusively(user: DocumentSnapshot, tenantId: string,
   });
 }
 
+/** Best-effort restore of an Auth email; a failure is logged (uid only) and never hides the caller's error. */
+async function restoreAuthEmail(uid: string, email: string, cfName: string): Promise<void> {
+  try {
+    await getAuth().updateUser(uid, { email });
+  } catch (error) {
+    logger.error(`${cfName}: could not restore the Auth email of users/${uid}`, { message: error instanceof Error ? error.message : 'unknown' });
+  }
+}
+
 export const swapLoginEmail = onCall({ region: REGION, enforceAppCheck: true, cors: true }, async (request: CallableRequest<{ holderUid?: string; newcomerUid?: string }>) => {
   const CF_NAME = 'swapLoginEmail';
   checkAppCheckToken(request as never, CF_NAME);
@@ -70,19 +79,32 @@ export const swapLoginEmail = onCall({ region: REGION, enforceAppCheck: true, co
   if (!holderLoginId) throw new HttpsError('failed-precondition', 'Das erste Konto hat noch keinen Benutzernamen.');
   const holderSynthetic = syntheticLoginEmail(holderLoginId, await tenantAppDomain(tenantId));
 
-  // 1. free the real email (signs the holder out once), 2. give it to the newcomer
-  await getAuth().updateUser(holderUid, { email: holderSynthetic });
-  await holder.ref.update(withIndex(holder, { loginEmail: holderSynthetic }));
+  // 1. free the real email (signs the holder out once), 2. give it to the newcomer.
+  // Every step that completed is recorded so the rollback undoes exactly those — never leaving the real
+  // email owned by nobody, or the holder's users doc out of step with its Auth account.
+  let holderAuthMoved = false;
+  let holderDocMoved = false;
   let newcomerMoved = false;
   try {
+    await getAuth().updateUser(holderUid, { email: holderSynthetic });
+    holderAuthMoved = true;
+    await holder.ref.update(withIndex(holder, { loginEmail: holderSynthetic }));
+    holderDocMoved = true;
     await getAuth().updateUser(newcomerUid, { email: realEmail });
     newcomerMoved = true;
     await newcomer.ref.update(withIndex(newcomer, { loginEmail: realEmail }));
   } catch (error) {
-    // put both back — never leave the real email owned by nobody (or by a half-written newcomer)
-    if (newcomerMoved) await getAuth().updateUser(newcomerUid, { email: newcomerEmail });
-    await getAuth().updateUser(holderUid, { email: realEmail });
-    await holder.ref.update(withIndex(holder, { loginEmail: realEmail }));
+    // reverse order; a failing rollback step is logged (uids only) and must not hide the original error
+    const undo = async (step: string, uid: string, fn: () => Promise<unknown>) => {
+      try {
+        await fn();
+      } catch (rollbackError) {
+        logger.error(`${CF_NAME}: rollback step ${step} failed for users/${uid} (${tenantId})`, { message: rollbackError instanceof Error ? rollbackError.message : 'unknown' });
+      }
+    };
+    if (newcomerMoved) await undo('newcomerAuth', newcomerUid, () => getAuth().updateUser(newcomerUid, { email: newcomerEmail }));
+    if (holderDocMoved) await undo('holderDoc', holderUid, () => holder.ref.update(withIndex(holder, { loginEmail: realEmail })));
+    if (holderAuthMoved) await undo('holderAuth', holderUid, () => getAuth().updateUser(holderUid, { email: realEmail }));
     throw error;
   }
   logger.info(`${CF_NAME}: swapped the login email from users/${holderUid} to users/${newcomerUid} (${tenantId})`);
@@ -101,13 +123,21 @@ export const setLoginId = onCall({ region: REGION, enforceAppCheck: true, cors: 
   const user = await loadTenantUser(uid, tenantId);
   const other = await findUserByLoginId(tenantId, loginId);
   if (other && other.uid !== uid) throw new HttpsError('already-exists', 'Diesen Benutzernamen gibt es schon.');
+  if (other && other.uid === uid) return { loginId }; // already this user's Benutzername — nothing to change, nobody to sign out
 
   const authEmail = (await getAuth().getUser(uid)).email ?? '';
   if (isSyntheticLoginEmail(authEmail)) {
     const loginEmail = syntheticLoginEmail(loginId, await tenantAppDomain(tenantId));
     await getAuth().updateUser(uid, { email: loginEmail }); // signs this user out once
-    if (!(await writeLoginIdExclusively(user, tenantId, { loginId, loginEmail }))) {
-      await getAuth().updateUser(uid, { email: authEmail }); // lost the race — restore the old login
+    let written = false;
+    try {
+      written = await writeLoginIdExclusively(user, tenantId, { loginId, loginEmail });
+    } catch (error) {
+      await restoreAuthEmail(uid, authEmail, CF_NAME); // the write threw — put the old login back, then surface the error
+      throw error;
+    }
+    if (!written) {
+      await restoreAuthEmail(uid, authEmail, CF_NAME); // lost the race — restore the old login
       throw new HttpsError('already-exists', 'Diesen Benutzernamen gibt es schon.');
     }
   } else if (!(await writeLoginIdExclusively(user, tenantId, { loginId }))) {

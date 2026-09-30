@@ -24,7 +24,7 @@ import { onCall, HttpsError, CallableRequest } from 'firebase-functions/v2/https
 
 import { AvatarInfo, UserModel } from '@okr/shared-models';
 import { DateFormat, getTodayStr, isActiveMembership } from '@okr/shared-util-core';
-import { checkAppCheckToken, checkAuthentication, checkRoles } from '@okr/shared-util-functions';
+import { checkAppCheckToken, checkAuthentication, checkRoles, getCallerTenantId } from '@okr/shared-util-functions';
 import { getUserIndex, isSyntheticLoginEmail, syntheticLoginEmail } from '@okr/user-util';
 
 import { runWorkflow } from '../workflow';
@@ -555,6 +555,10 @@ export const syncPersonAccount = onCall(
     const action = request.data?.action ?? '';
     if (!personKey || !tenantId) {
       throw new HttpsError('invalid-argument', 'personKey and tenantId are required');
+    }
+    // an admin acts inside their own tenant only — never on the tenant named by the request
+    if (tenantId !== (await getCallerTenantId(request as never, 'syncPersonAccount'))) {
+      throw new HttpsError('permission-denied', 'Dieser Mandant gehört nicht zu deinem Konto.');
     }
     if (action !== 'open' && action !== 'close') {
       throw new HttpsError('invalid-argument', "action must be 'open' or 'close'");

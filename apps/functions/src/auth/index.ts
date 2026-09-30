@@ -313,7 +313,17 @@ export const updateFirebaseUser = functions.onCall(
     await checkAdminRole(request as any, CF_NAME);
     checkStringField(request as any, CF_NAME, 'uid');
     checkStringField(request as any, CF_NAME, 'email');
-    const currentEmail = (await getAuth().getUser(request.data.uid)).email;
+    let currentEmail: string | undefined;
+    try {
+      currentEmail = (await getAuth().getUser(request.data.uid)).email;
+    } catch (error: any) {
+      if (error?.code === 'auth/user-not-found') {
+        logger.warn(CF_NAME + ': unknown uid', { uid: request.data.uid });
+        throw new functions.HttpsError('not-found', 'Dieses Benutzerkonto gibt es nicht.');
+      }
+      console.error(CF_NAME + ': ERROR: ', error);
+      throw new functions.HttpsError('internal', `Failed to read the firebase user: ${error.message}`);
+    }
     if (isBlockedSyntheticEmailChange(currentEmail, request.data.email)) {
       logger.warn(CF_NAME + ': refused an email change on a Benutzername account', { uid: request.data.uid });
       throw new functions.HttpsError('failed-precondition', 'Die Anmelde-Adresse eines Benutzername-Kontos ändert sich nur über «Benutzername ändern» oder «E-Mail tauschen».');
