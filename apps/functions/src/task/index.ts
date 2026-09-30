@@ -7,6 +7,8 @@ import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
 import { pushToPersons } from '../srv/push';
 import { decideTaskPush, TASK_LIST_URL, type TaskDocLike } from './task-decisions';
 
+export { taskDaily } from './task-daily';
+
 const REGION = 'europe-west6';
 const TASK_COLLECTION = 'tasks';
 

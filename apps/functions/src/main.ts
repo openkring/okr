@@ -282,6 +282,8 @@ export const cleanupOrphanSessions = Session.cleanupOrphanSessions;
 
 // task notifications
 export const onTaskWritten = Task.onTaskWritten;
+// task daily job: auto-archive completed tasks + due-today reminder (spec 1.72 §7.2, §8)
+export const taskDaily = Task.taskDaily;
 
 // trip statistics
 export const onTripWrite             = Trip.onTripWrite;
