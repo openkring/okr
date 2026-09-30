@@ -44,6 +44,7 @@
       "resent": "Nous avons renvoyé le lien à {email}.",
       "resentLoginId": "Nous avons renvoyé le lien à l'adresse e-mail enregistrée pour toi.",
       "other": "Utiliser une autre adresse e-mail",
+      "otherLoginId": "Utiliser une autre saisie",
       "help": "Si rien n'arrive après quelques minutes, contacte l'administration de ton club."
     },
     "checking": "Un instant, nous vérifions ton lien …"

@@ -11,7 +11,7 @@ import { DateFormat, convertDateFormatToString } from '@okr/shared-util-core';
 
 import { DEFAULT_EMAIL_PROVIDER, isValidProvider, sendEmailViaProvider } from '../auth/email-transport';
 import { getAppEmailConfig } from '../auth/email-templates';
-import { buildSubjectCtx } from './export-my-data';
+import { buildSubjectCtx, loadFavEmailIfSynthetic } from './export-my-data';
 import { SUBJECT_DATA_MAP } from './subject-data-map';
 import { buildPreview, firestoreDocFetcher } from './erasure-preview';
 import type { ErasurePreview } from './erasure-preview';
@@ -154,7 +154,9 @@ async function notifyTenantAdmin(tenantId: string, executedAt: string): Promise<
 async function subjectCtxOf(uid: string): Promise<SubjectCtx> {
   const userSnap = await getFirestore().collection(UserCollection).doc(uid).get();
   if (!userSnap.exists) throw new HttpsError('permission-denied', 'No user document for the caller.');
-  return buildSubjectCtx(uid, userSnap.data());
+  const userData = userSnap.data();
+  // same email the export matches on (a Benutzername account's login address is synthetic)
+  return buildSubjectCtx(uid, userData, await loadFavEmailIfSynthetic(userData));
 }
 
 /** The honest four-plus-one-section preflight report for the CALLER'S OWN data. */

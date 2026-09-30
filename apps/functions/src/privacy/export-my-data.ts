@@ -112,7 +112,7 @@ export function buildSubjectCtx(uid: string, userData: Record<string, unknown> |
 
 /** Favourite email from `address-directory/{tenantId}_person.{personKey}` — only read for a
  * Benutzername account (synthetic login address); everyone else keeps their `loginEmail`. */
-async function loadFavEmailIfSynthetic(userData: Record<string, unknown> | undefined): Promise<string | undefined> {
+export async function loadFavEmailIfSynthetic(userData: Record<string, unknown> | undefined): Promise<string | undefined> {
   if (!isSyntheticLoginEmail(String(userData?.['loginEmail'] ?? ''))) return undefined;
   const personKey = String(userData?.['personKey'] ?? '');
   const tenants = Array.isArray(userData?.['tenants']) ? (userData['tenants'] as string[]) : [];

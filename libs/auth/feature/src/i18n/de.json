@@ -44,6 +44,7 @@
       "resent": "Wir haben den Link nochmals an {email} geschickt.",
       "resentLoginId": "Wir haben den Link nochmals an deine hinterlegte E-Mail-Adresse geschickt.",
       "other": "Andere E-Mail-Adresse verwenden",
+      "otherLoginId": "Andere Eingabe verwenden",
       "help": "Kommt auch nach ein paar Minuten nichts an, melde dich bei der Administration deines Vereins."
     },
     "checking": "Einen Moment, wir prüfen deinen Link …"

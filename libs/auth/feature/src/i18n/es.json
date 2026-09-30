@@ -44,6 +44,7 @@
       "resent": "Hemos vuelto a enviar el enlace a {email}.",
       "resentLoginId": "Hemos vuelto a enviar el enlace a la dirección de correo registrada para ti.",
       "other": "Usar otra dirección de correo",
+      "otherLoginId": "Usar otra entrada",
       "help": "Si no llega nada tras unos minutos, ponte en contacto con la administración de tu club."
     },
     "checking": "Un momento, estamos comprobando tu enlace …"

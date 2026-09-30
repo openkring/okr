@@ -51,7 +51,7 @@ import { isLoginIdInput } from '@okr/user-util';
             {{ i18n().sent_resend() }}
           }
         </ion-button>
-        <ion-button expand="block" fill="clear" (click)="useOther.emit()">{{ i18n().sent_other() }}</ion-button>
+        <ion-button expand="block" fill="clear" (click)="useOther.emit()">{{ otherLabel() }}</ion-button>
       </div>
       <p class="muted">{{ i18n().sent_help() }}</p>
     </div>
@@ -75,6 +75,8 @@ export class PwdResetSent {
   // double-brace params away to an empty string before we ever see them.
   // A Benutzername is not an address: the mail goes to the favourite email on file, so the
   // neutral wording is used and the typed input is never echoed as if it were an email.
+  protected otherLabel = computed(() =>
+    isLoginIdInput(this.email()) ? this.i18n().sent_otherLoginId() : this.i18n().sent_other());
   protected body = computed(() => {
     const i18n = this.i18n();
     if (isLoginIdInput(this.email())) return this.resent() ? i18n.sent_resentLoginId() : i18n.sent_bodyLoginId();

@@ -37,6 +37,7 @@ export const AUTH_I18N_KEYS = {
   sent_resent:              PFX + 'pwdreset.sent.resent',
   sent_resentLoginId:       PFX + 'pwdreset.sent.resentLoginId',
   sent_other:               PFX + 'pwdreset.sent.other',
+  sent_otherLoginId:        PFX + 'pwdreset.sent.otherLoginId',
   sent_help:                PFX + 'pwdreset.sent.help',
   newpwd:                   PFX + 'pwdreset.newpwd',
   invalid_link:             PFX + 'pwdreset.invalidLink',

@@ -1,6 +1,27 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { HttpsError } from 'firebase-functions/v2/https';
-import { buildSubjectCtx, isRateLimited } from './export-my-data';
+import { buildSubjectCtx, isRateLimited, loadFavEmailIfSynthetic } from './export-my-data';
+
+const dirGet = vi.hoisted(() => vi.fn());
+const dirDoc = vi.hoisted(() => vi.fn());
+vi.mock('firebase-admin/firestore', () => ({
+  getFirestore: () => ({ collection: (name: string) => ({ doc: (id: string) => { dirDoc(name, id); return { get: dirGet }; } }) }),
+}));
+
+describe('loadFavEmailIfSynthetic', () => {
+  it('reads address-directory/{tenant}_person.{personKey} for a synthetic login', async () => {
+    dirGet.mockResolvedValueOnce({ data: () => ({ favEmail: 'anna@gmail.com' }) });
+    const r = await loadFavEmailIfSynthetic({ personKey: 'p1', tenants: ['scs'], loginEmail: 'max@login.seeclub.org' });
+    expect(r).toBe('anna@gmail.com');
+    expect(dirDoc).toHaveBeenCalledWith('address-directory', 'scs_person.p1');
+  });
+
+  it('does not read anything for a real login email', async () => {
+    dirDoc.mockClear();
+    expect(await loadFavEmailIfSynthetic({ personKey: 'p1', tenants: ['scs'], loginEmail: 'a@b.ch' })).toBeUndefined();
+    expect(dirDoc).not.toHaveBeenCalled();
+  });
+});
 
 describe('buildSubjectCtx', () => {
   it('derives the ctx from the caller\'s OWN user doc — no subject can be named by a parameter', () => {

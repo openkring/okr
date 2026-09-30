@@ -44,6 +44,7 @@
       "resent": "We have sent the link to {email} again.",
       "resentLoginId": "We have sent the link again to the email address on file for you.",
       "other": "Use a different email address",
+      "otherLoginId": "Use a different entry",
       "help": "If nothing arrives after a few minutes, get in touch with your club's administration."
     },
     "checking": "One moment, we are checking your link …"
