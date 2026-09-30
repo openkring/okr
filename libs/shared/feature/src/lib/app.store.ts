@@ -10,13 +10,14 @@ import { App } from '@capacitor/app';
 import { AUTH, ENV, FIRESTORE } from '@okr/shared-config';
 import { AppConfigService, FirestoreService } from '@okr/shared-data-access';
 import { AddressDirectoryCollection, AddressDirectoryModel, AppConfig, getAddressDirectoryKey, AvailableLanguages, CategoryCollection, CategoryItemModel, CategoryListModel, DefaultLanguage, DefaultLanguageCode, GroupCollection, GroupModel, InvitationCollection, InvitationModel, OrgCollection, OrgModel, PersonCollection, PersonModel, PrivacySettings, privacyUsageToAccessor, ResourceCollection, ResourceModel, ResourceModelName, stricterAccessor, TagCollection, TagModel, TaskCollection, TaskModel, UserCollection, UserModel } from '@okr/shared-models';
-import { die, getSystemQuery, indexBy, openInvitationsOf, pickForTenant, replacePlaceholders, sortPersons } from '@okr/shared-util-core';
+import { die, getSystemQuery, indexBy, openInvitationsOf, pickForTenant, replacePlaceholders, sortPersons, withOfflineSnapshot } from '@okr/shared-util-core';
 import { AppNavigationService, armStartupStallCheck, isBrowser, markStartup, probeStoredSession, reportStartupTiming, VersionCheckService, resourceParams } from '@okr/shared-util-angular';
 
 import { authPhase, isDegradedBoot, openBootGate, type BootState } from './boot-readiness.util';
 import { I18nService } from '@okr/shared-i18n';
 
 import { SessionService} from '@okr/session-data-access';
+import { OfflineNoticeService } from './offline-notice.service';
 
 export type AppState = {
   tenantId: string;
@@ -113,7 +114,10 @@ export const AppStore = signalStore(
         // user, including the 'registered' role.
         const uid = store.fbUser()?.uid;
         if (!uid) return of(undefined);
-        return store.firestoreService.readModel<UserModel>(UserCollection, uid);
+        // Offline cold start on iOS/Safari/Firefox (memory cache): seed from the last copy on
+        // this device, or every store gated on currentUser stays empty (see `offline` skill).
+        return store.firestoreService.readModel<UserModel>(UserCollection, uid).pipe(
+          withOfflineSnapshot<UserModel | undefined>(`user.${uid}`));
       }
     }),
   })),
@@ -274,7 +278,8 @@ export const AppStore = signalStore(
       })),
       stream: ({params}) => {
         if (!params.tenantId) return of(undefined);
-        return store.appConfigService.read(params.tenantId);
+        return store.appConfigService.read(params.tenantId).pipe(
+          withOfflineSnapshot(`appConfig.${params.tenantId}`));
       }
     })
   })),
@@ -678,6 +683,9 @@ export const AppStore = signalStore(
       });
 
       if (!isBrowser(store.platformId)) return;
+
+      // Persistent "no connection" toast while offline (see offline-notice.service.ts).
+      inject(OfflineNoticeService).start();
 
       // TEMPORARY startup instrumentation (remove after slow-startup investigation).
       // Marks the auth/data boundaries; reportStartupTiming ships the gaps to Sentry.

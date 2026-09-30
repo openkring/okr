@@ -40,5 +40,9 @@
       "copy_w3w": "Copiare what3words",
       "copied": "Copiato"
     }
+  },
+  "offline": {
+    "notice": "Nessuna connessione. Vedi gli ultimi dati caricati.",
+    "online": "Connessione ripristinata."
   }
 }

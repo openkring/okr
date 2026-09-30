@@ -28,6 +28,29 @@
       }
     }
   ],
+  "dataGroups": [
+    {
+      "name": "imgix-icons",
+      "urls": ["https://bkaiser.imgix.net/logo/**"],
+      "cacheConfig": {
+        "strategy": "performance",
+        "maxSize": 1500,
+        "maxAge": "7d",
+        "cacheOpaqueResponses": false
+      }
+    },
+    {
+      "name": "imgix-images",
+      "urls": ["https://bkaiser.imgix.net/**"],
+      "cacheConfig": {
+        "strategy": "freshness",
+        "timeout": "5s",
+        "maxSize": 300,
+        "maxAge": "30d",
+        "cacheOpaqueResponses": true
+      }
+    }
+  ],
   "navigationUrls": [
     "/**",
     "!/web/**",

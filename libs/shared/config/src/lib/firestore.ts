@@ -5,6 +5,7 @@ import {
   Firestore,
   initializeFirestore,
   memoryLocalCache,
+  memoryLruGarbageCollector,
   persistentLocalCache,
   persistentMultipleTabManager,
 } from "firebase/firestore";
@@ -94,8 +95,14 @@ export function isWebStorageAvailable(): boolean {
  * The async hang escapes the try/catch below (which only catches a synchronous throw), so it
  * must be avoided up front, not caught. This re-establishes the "no IndexedDB on Safari" carve-out
  * (the v12 #9056 fix addressed a different, synchronous failure — not this ITP open-hang). Both
- * lose offline persistence, which is acceptable. If persistent init still throws on the
+ * lose persistence across reloads, which is acceptable. If persistent init still throws on the
  * remaining browsers (e.g. open issue #8860), fall back to in-memory cache.
+ *
+ * Memory GC: LRU, not the default eager collector. Eager GC dropped a query's documents the
+ * moment its last listener closed (30 s after a list view was left, see FirestoreService), so a
+ * view revisited offline on iOS/Safari/Firefox rendered empty. LRU keeps every document read in
+ * this session (up to the SDK's 40 MB default) and serves it to a new listener while offline —
+ * the "loaded once, readable offline" rule of the `offline` skill.
  *
  * Tab manager: multi-tab. Single-tab was used until 2026-08 to avoid the open multi-tab
  * leader-election edge cases (#6511, #8314, #6806), but it takes an EXCLUSIVE IndexedDB lock:
@@ -155,7 +162,7 @@ export const FIRESTORE = new InjectionToken<Firestore>('Firebase Firestore', {
     if (isFirefoxBrowser || isSafariBrowser || isIosDevice || !webStorageAvailable) {
       firestore = initializeFirestore(app, {
         ...baseOptions,
-        localCache: memoryLocalCache(),
+        localCache: memoryLocalCache({ garbageCollector: memoryLruGarbageCollector() }),
       });
       cacheMode = 'memory-fallback';
     } else {
@@ -171,7 +178,7 @@ export const FIRESTORE = new InjectionToken<Firestore>('Firebase Firestore', {
         console.warn('Firestore persistent cache init failed, falling back to memory cache:', e);
         firestore = initializeFirestore(app, {
           ...baseOptions,
-          localCache: memoryLocalCache(),
+          localCache: memoryLocalCache({ garbageCollector: memoryLruGarbageCollector() }),
         });
         cacheMode = 'memory-fallback';
       }

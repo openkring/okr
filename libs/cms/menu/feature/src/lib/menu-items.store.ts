@@ -4,7 +4,7 @@ import { catchError, from, of, timeout } from 'rxjs';
 
 import { AppStore } from '@okr/shared-feature';
 import { MenuItemModel } from '@okr/shared-models';
-import { debugData } from '@okr/shared-util-core';
+import { debugData, withOfflineSnapshot } from '@okr/shared-util-core';
 
 import { MenuService } from '@okr/cms-menu-data-access';
 import { resourceParams } from '@okr/shared-util-angular';
@@ -62,6 +62,8 @@ export class MenuItemsStore {
      */
     params: resourceParams(() => this.appStore.currentUser()?.okey ?? ''),
     stream: () => this.menuService.list().pipe(
+      // Offline cold start: the last menu seen on this device instead of an empty menu.
+      withOfflineSnapshot<MenuItemModel[]>(`menu.${this.appStore.tenantId()}`),
       timeout({
         first: MenuItemsStore.FIRST_SNAPSHOT_TIMEOUT_MS,
         with: () => {
