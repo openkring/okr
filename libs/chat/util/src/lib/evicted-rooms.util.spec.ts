@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { evictedRoomsStorageKey, isStillEvicted, parseEvictedRooms, recordEvictedRoom } from './evicted-rooms.util';
+import { evictedRoomsStorageKey, evictionAction, isStillEvicted, parseEvictedRooms, recordEvictedRoom } from './evicted-rooms.util';
 
 describe('evictedRoomsStorageKey', () => {
   it('scopes the key to the Matrix user', () => {
@@ -51,5 +51,21 @@ describe('isStillEvicted', () => {
 
   it('is released by a membership event newer than the eviction (re-invite / re-join)', () => {
     expect(isStillEvicted(1000, 1001)).toBe(false);
+  });
+});
+
+describe('evictionAction', () => {
+  it('keeps the record when the store does not hold the room (second PREPARED after a cached sync)', () => {
+    expect(evictionAction(1000, false, undefined)).toBe('keep');
+    expect(evictionAction(1000, false, 2000)).toBe('keep');
+  });
+
+  it('evicts a replayed room whose own membership is not newer than the eviction', () => {
+    expect(evictionAction(1000, true, 500)).toBe('evict');
+    expect(evictionAction(1000, true, undefined)).toBe('evict');
+  });
+
+  it('releases a replayed room re-invited or re-joined after the eviction', () => {
+    expect(evictionAction(1000, true, 1001)).toBe('release');
   });
 });

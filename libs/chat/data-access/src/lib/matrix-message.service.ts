@@ -8,7 +8,7 @@ import { MatrixMessage, MatrixReadReceipt } from '@okr/shared-models';
 import { AppStore } from '@okr/shared-feature';
 import { debugData, debugMessage } from '@okr/shared-util-core';
 import {
-  EvictedRooms, evictedRoomsStorageKey, isRenderableChatEvent, isRoomGoneError, isStillEvicted,
+  EvictedRooms, evictedRoomsStorageKey, evictionAction, isRenderableChatEvent, isRoomGoneError,
   mediaRetryDelayMs, parseEvictedRooms, recordEvictedRoom,
 } from '@okr/chat-util';
 import { AvatarService } from '@okr/avatar-data-access';
@@ -453,9 +453,11 @@ export class MatrixMessageService {
    * PREPARED, before the first room list is built, because the sync accumulator has just
    * replayed those rooms as joined.
    *
-   * A room the store no longer holds is dropped from the record (a leave did sync after all).
-   * A room whose own membership event is newer than the eviction was re-invited or re-joined
-   * and is released again. Everything else is removed from the store without another
+   * Runs on EVERY PREPARED — with a cached sync the SDK emits it twice (after the cache
+   * replay, then after the first server /sync). A room the store does not hold is therefore
+   * kept in the record, never dropped: the persisted sync accumulator replays it again on the
+   * next start. A room whose own membership event is newer than the eviction was re-invited
+   * or re-joined and is released again. Everything else is removed from the store without another
    * /messages round-trip and without another Sentry event.
    */
   evictPersistedGoneRooms(): void {
@@ -466,13 +468,13 @@ export class MatrixMessageService {
     const remaining: EvictedRooms = {};
     for (const [roomId, evictedAt] of Object.entries(evicted)) {
       const room = client.getRoom(roomId);
-      if (!room) continue;
-      const ownMembershipTs = room.getMember(userId)?.events.member?.getTs();
-      if (!isStillEvicted(evictedAt, ownMembershipTs)) {
+      const action = evictionAction(evictedAt, !!room, room?.getMember(userId)?.events.member?.getTs());
+      if (action === 'release') {
         debugMessage(`MatrixMessageService: ${roomId} has a membership newer than its eviction — keeping it`, this.appStore.currentUser());
         continue;
       }
       remaining[roomId] = evictedAt;
+      if (action === 'keep') continue;
       this.messages$.get(roomId)?.complete();
       this.messages$.delete(roomId);
       client.store.removeRoom(roomId);

@@ -56,3 +56,23 @@ export function recordEvictedRoom(rooms: EvictedRooms, roomId: string, now: numb
 export function isStillEvicted(evictedAt: number, ownMembershipTs: number | undefined): boolean {
   return ownMembershipTs === undefined || ownMembershipTs <= evictedAt;
 }
+
+/** What re-applying the record at PREPARED does with one recorded room. */
+export type EvictionAction = 'evict' | 'keep' | 'release';
+
+/**
+ * Decide what to do with a recorded eviction when the sync store (re)reaches PREPARED.
+ *
+ * - `evict`: the store replayed the room and it is still dead — remove it and keep the record.
+ * - `keep`: the store does not hold the room right now — keep the record untouched. This is
+ *   the normal case on the SECOND PREPARED: with a cached sync, matrix-js-sdk emits PREPARED
+ *   once after replaying the cache (the room is evicted there) and once more after the first
+ *   server /sync (the room is already gone). Dropping the record here would let the persisted
+ *   sync accumulator replay the room on the next start unguarded (SCS-AS regression).
+ * - `release`: an own membership event newer than the eviction arrived (re-invite/re-join) —
+ *   the room is live again and the record must go.
+ */
+export function evictionAction(evictedAt: number, roomInStore: boolean, ownMembershipTs: number | undefined): EvictionAction {
+  if (!roomInStore) return 'keep';
+  return isStillEvicted(evictedAt, ownMembershipTs) ? 'evict' : 'release';
+}
