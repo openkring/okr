@@ -66,28 +66,9 @@
     "label": "Cancellation notice",
     "placeholder": "Reason for the cancellation, e.g. \"Cancelled because of the storm warning.\"",
     "banner": "Cancelled",
-    "conf": "The cancellation notice has been saved."
-  },
-  "notify": {
-    "label": "Notify participants",
-    "message": {
-      "label": "Message",
-      "placeholder": "Short notice, e.g. “Training is cancelled, see you again next week.”",
-      "helper": "A short message to everyone who signed up. Not for confidential information."
-    },
-    "scope": {
-      "label": "Applies to",
-      "event": "This date",
-      "series": "This and all future dates of the series"
-    },
-    "recipients": {
-      "label": "Recipients",
-      "count": "{count} participants will get your message",
-      "empty": "Nobody has signed up — there is no one to notify right now."
-    },
-    "conf": "Your message is on its way.",
-    "error": "The message could not be sent.",
-    "cancelIntro": "The event {name} on {date} is cancelled: {reason}"
+    "conf": "The cancellation notice has been saved.",
+    "intro": "The event {name} on {date} is cancelled: {reason}",
+    "inform": "Do you want to let the participants know with a comment on the event?"
   },
   "copy": {
     "label": "Copy event"

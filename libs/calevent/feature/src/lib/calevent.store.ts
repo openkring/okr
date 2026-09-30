@@ -26,8 +26,9 @@ import { LocationService } from '@okr/location-data-access';
 import { CalEventService } from '@okr/calevent-data-access';
 import { AliasMintService } from '@okr/system-alias-data-access';
 import { SeenService } from '@okr/user-data-access';
-import { addInvitedAttendee, applyInvitationAnswer, toAttendeeState, CALEVENT_I18N_KEYS, resetActivity, seenKeyFor, toSeenCounts, unseenActivity, CalEventNotifyFormData, findConflictingCalEvents, newCalEventNotifyFormData, buildCalEventLink, buildSchedulePollLink, formatSchedulePollInviteMessage, formatScheduleCloseMessage, getCaleventIndex, getSeriesUpdateFields, isCalEvent, isCaleventFull, isCaleventInView, isPersonalCalendarName, mergeAttendee, planSeriesReconcile, resolveCalendars, SchedulePollFormData, SchedulePollRow } from '@okr/calevent-util';
-import { CalEventNotifyModal, RegressionSelectionModal, showCalEventInfo } from '@okr/calevent-ui';
+import { addInvitedAttendee, applyInvitationAnswer, toAttendeeState, CALEVENT_I18N_KEYS, resetActivity, seenKeyFor, toSeenCounts, unseenActivity, findConflictingCalEvents, buildCalEventLink, buildSchedulePollLink, formatSchedulePollInviteMessage, formatScheduleCloseMessage, getCaleventIndex, getSeriesUpdateFields, isCalEvent, isCaleventFull, isCaleventInView, isPersonalCalendarName, mergeAttendee, planSeriesReconcile, resolveCalendars, SchedulePollFormData, SchedulePollRow } from '@okr/calevent-util';
+import { RegressionSelectionModal, showCalEventInfo } from '@okr/calevent-ui';
+import { createComment } from '@okr/comment-util';
 
 /**
  * Der Alias-Space der Termin-Kurzlinks: ein `redirect`-Space mit `targetTypes: ['url']`
@@ -1221,6 +1222,7 @@ export const CalEventStore = signalStore(
             inv.caleventKey = calevent.okey;
             inv.name = calevent.name;
             inv.date = calevent.startDate;
+            inv.sentAt = getTodayStr(DateFormat.StoreDateTime);   // the batch bypasses InvitationService.create()
             inv.index = `ik:${inv.inviteeKey}, ck:${inv.caleventKey}, n:${inv.inviteeLastName}, d:${inv.date}`;
             batch.set(doc(store.firestoreService.firestore, `${InvitationCollection}/${key + pad(index, 2)}`),
               removeKeyFromOkrModel(structuredClone(inv)));
@@ -1377,62 +1379,17 @@ export const CalEventStore = signalStore(
         }
       },
 
-      /******************************* participant broadcast *********************************** */
       /**
-       * Names of the people a broadcast would reach — the preview shown in the modal
-       * (spec `2026-08-25-participant-messaging-spec.md` §1.1).
-       *
-       * ⚠️ DISPLAY ONLY. The real recipient set is derived server-side from the event itself;
-       * nothing here is sent along. The two can differ slightly (a person without a user
-       * account is listed here but has no channel), and that is fine — the preview answers
-       * "did I pick the right event", not "who exactly gets a push".
+       * Post `text` as a comment on the event. The comment trigger (functions/calendar/activity.ts)
+       * then notifies everyone on the event by their chosen channels — this replaced the
+       * «Teilnehmende benachrichtigen» broadcast (spec 1.73 §1).
        */
-      notifyRecipientNames(calevent: CalEventModel): string[] {
-        // dieselbe Regel wie im Empfaengersatz der Function: wer nicht abgesagt hat
-        const names = (calevent.attendees ?? [])
-          .filter(a => a.state !== 'declined')
-          .map(a => getFullName(a.person.name1, a.person.name2));
-        const declined = new Set(calevent.attendees.filter(a => a.state === 'declined').map(a => a.person.key));
-        const organisers = calevent.responsiblePersons.filter(p => !declined.has(p.key)).map(p => getFullName(p.name1, p.name2));
-        return [...new Set([...names, ...organisers])].filter(name => name.length > 0).sort();
-      },
-
-      /**
-       * Send a short notice to everyone signed up for `calevent`.
-       *
-       * No group, no chat room: the system bot already owns one direct room per person, so a
-       * broadcast to twenty participants opens none. See the spec's §3.5 for why temporary
-       * per-event rooms were rejected.
-       *
-       * @param calevent the event to notify about
-       * @param message  optional prefilled text — the cancellation path (§1.5) seeds it
-       */
-      async notifyParticipants(calevent: CalEventModel, message = ''): Promise<void> {
-        // Statically imported, unlike the modals a store opens elsewhere: this one injects
-        // I18nService directly and never reaches back into CalEventStore, so it cannot form the
-        // circular import that breaks Ionic overlay creation (SCS-12).
-        const notifyData = newCalEventNotifyFormData(
-          this.notifyRecipientNames(calevent), calevent.seriesId.length > 0, message);
-        const modal = await store.modalController.create({
-          component: CalEventNotifyModal,
-          componentProps: { notifyData, caleventName: calevent.name },
-        });
-        modal.present();
-        const { data, role } = await modal.onWillDismiss();
-        if (role !== 'confirm' || !data) return;
-
-        const form = data as CalEventNotifyFormData;
-        try {
-          const recipients = await store.calEventService.notifyParticipants(
-            calevent.okey, form.message.trim(), form.scope);
-          await showToast(store.toastController,
-            recipients > 0 ? store.i18n.notify_conf() : store.i18n.notify_recipients_empty());
-        } catch (ex) {
-          // The server sentence is precise but English and meant for admins; the user gets the
-          // translated one. Same split as copyLink.
-          warn(`CalEventStore.notifyParticipants -> ${ex}`);
-          error(store.toastController, store.i18n.notify_error());
-        }
+      async postComment(calevent: CalEventModel, text: string): Promise<void> {
+        const user = store.currentUser();
+        if (!user?.personKey || !calevent.okey || !text.trim()) return;
+        const comment = createComment(user.personKey, getFullName(user.firstName, user.lastName),
+          text.trim(), `${CalEventModelName}.${calevent.okey}`, store.tenantId());
+        await store.firestoreService.saveComment(comment);
       },
 
       /******************************* other *************************************** */

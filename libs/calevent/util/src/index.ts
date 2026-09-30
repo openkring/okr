@@ -7,7 +7,5 @@ export * from './lib/schedule-poll.util';
 export * from './lib/series-attendance.util';
 export * from './lib/schedule-poll.validations';
 export * from './lib/calevent.validations';
-export * from './lib/calevent-notify.model';
-export * from './lib/calevent-notify.validations';
 export * from './lib/calevent-activity.util';
 export * from './lib/calevent-export.util';

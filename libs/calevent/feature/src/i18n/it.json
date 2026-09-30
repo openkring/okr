@@ -66,28 +66,9 @@
     "label": "Avviso di annullamento",
     "placeholder": "Motivo dell’annullamento, ad es. «Annullato per allerta temporale.»",
     "banner": "Annullato",
-    "conf": "L’avviso di annullamento è stato salvato."
-  },
-  "notify": {
-    "label": "Avvisa i partecipanti",
-    "message": {
-      "label": "Messaggio",
-      "placeholder": "Messaggio breve, per es. «L'allenamento è annullato, ci vediamo la settimana prossima.»",
-      "helper": "Un breve messaggio a tutte le persone iscritte. Non per dati riservati."
-    },
-    "scope": {
-      "label": "Vale per",
-      "event": "Questa data",
-      "series": "Questa e tutte le date future della serie"
-    },
-    "recipients": {
-      "label": "Destinatari",
-      "count": "{count} persone iscritte riceveranno il tuo messaggio",
-      "empty": "Non si è iscritto nessuno: per ora non c'è nessuno da avvisare."
-    },
-    "conf": "Il tuo messaggio è in viaggio.",
-    "error": "Non è stato possibile inviare il messaggio.",
-    "cancelIntro": "L'evento {name} del {date} è annullato: {reason}"
+    "conf": "L’avviso di annullamento è stato salvato.",
+    "intro": "L'evento {name} del {date} è annullato: {reason}",
+    "inform": "Vuoi informare i partecipanti con un commento sull'evento?"
   },
   "copy": {
     "label": "Copia evento"

@@ -66,28 +66,9 @@
     "label": "Absagemitteilung",
     "placeholder": "Grund der Absage, z.B. \"Wegen Sturmwarnung abgesagt.\"",
     "banner": "Abgesagt",
-    "conf": "Die Absagemitteilung wurde gespeichert."
-  },
-  "notify": {
-    "label": "Teilnehmende benachrichtigen",
-    "message": {
-      "label": "Mitteilung",
-      "placeholder": "Kurze Mitteilung, z.B. „Training fällt aus, wir treffen uns nächste Woche wieder.“",
-      "helper": "Kurze Mitteilung an alle, die sich angemeldet haben. Nicht für vertrauliche Angaben."
-    },
-    "scope": {
-      "label": "Gilt für",
-      "event": "Diesen Termin",
-      "series": "Diesen und alle künftigen Termine der Serie"
-    },
-    "recipients": {
-      "label": "Empfänger",
-      "count": "{count} Angemeldete bekommen deine Mitteilung",
-      "empty": "Es ist niemand angemeldet — im Moment gibt es niemanden zu benachrichtigen."
-    },
-    "conf": "Deine Mitteilung ist unterwegs.",
-    "error": "Die Mitteilung konnte nicht verschickt werden.",
-    "cancelIntro": "Der Termin {name} vom {date} fällt aus: {reason}"
+    "conf": "Die Absagemitteilung wurde gespeichert.",
+    "intro": "Der Termin {name} vom {date} fällt aus: {reason}",
+    "inform": "Möchtest du die Teilnehmenden mit einem Kommentar am Anlass informieren?"
   },
   "copy": {
     "label": "Termin kopieren"

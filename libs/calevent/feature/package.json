@@ -12,6 +12,7 @@
     "@okr/calevent-util": "*",
     "@okr/chat-data-access": "*",
     "@okr/cms-menu-feature": "*",
+    "@okr/comment-util": "*",
     "@okr/location-data-access": "*",
     "@okr/shared-categories": "*",
     "@okr/shared-data-access": "*",
