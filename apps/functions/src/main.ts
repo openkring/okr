@@ -10,6 +10,7 @@ import * as Calendar from './calendar';
 import * as Replication from './replication';
 import * as Auth from './auth';
 import * as AccountSync from './auth/account-sync';
+import * as LoginId from './auth/login-id';
 import * as MatrixSimple from './matrix-simple';
 import * as MatrixMembershipSync from './matrix-simple/membership-sync';
 import * as MatrixPostPolicy from './matrix-simple/post-policy-sync';
@@ -148,6 +149,10 @@ export const pruneGroupRoomExtras = MatrixMembershipSync.pruneGroupRoomExtras;
 export const onMembershipAccountSync = AccountSync.onMembershipAccountSync;
 export const sweepExpiredMemberships = AccountSync.sweepExpiredMemberships;
 export const syncPersonAccount = AccountSync.syncPersonAccount;
+
+// Benutzername (spec 2026-09-30-login-id-spec.md): daily backfill sweep — assigns a loginId
+// to every user who does not yet have one
+export const assignMissingLoginIds = LoginId.assignMissingLoginIds;
 
 // workflow trigger rules — event producers, the side-effect outbox and the approval step
 // (specs 2026-08-12-workflow-trigger-rules-design.md, 2026-08-15-approval-workflow-spec.md)
