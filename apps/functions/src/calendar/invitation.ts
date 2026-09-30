@@ -6,6 +6,7 @@
 
 import { onDocumentCreated } from 'firebase-functions/v2/firestore';
 import { logger } from 'firebase-functions/v2';
+import { projectID } from 'firebase-functions/params';
 import { getFirestore } from 'firebase-admin/firestore';
 
 import { answerFunctionUrl, answerUrl, invitationLinkSecret } from './answer-link';
@@ -64,7 +65,7 @@ export const onInvitationCreated = onDocumentCreated(
     const when = eventWhen(event.startDate, event.startTime);
     const links = await tenantLinks(tenantId);
     const secret = invitationLinkSecret.value();
-    const base = answerFunctionUrl(process.env['GCLOUD_PROJECT'] ?? '');
+    const base = answerFunctionUrl(projectID.value());
     if (!links.appUrl) logger.warn(`${CF_NAME}: tenant ${tenantId} has no appDomain, email links are relative`);
 
     await notifyPersons({
