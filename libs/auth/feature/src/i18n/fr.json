@@ -38,9 +38,11 @@
     "sent": {
       "title": "Regarde dans ta boîte mail",
       "body": "Nous venons d'envoyer un lien à {email}. Touche-le et tu pourras définir ton mot de passe. Le lien est valable une heure.",
+      "bodyLoginId": "Nous venons d'envoyer un lien à l'adresse e-mail enregistrée pour toi. Touche-le et tu pourras définir ton mot de passe. Le lien est valable une heure.",
       "spam": "Rien reçu ? Regarde aussi dans le dossier spam.",
       "resend": "Renvoyer l'e-mail",
       "resent": "Nous avons renvoyé le lien à {email}.",
+      "resentLoginId": "Nous avons renvoyé le lien à l'adresse e-mail enregistrée pour toi.",
       "other": "Utiliser une autre adresse e-mail",
       "help": "Si rien n'arrive après quelques minutes, contacte l'administration de ton club."
     },

@@ -38,9 +38,11 @@
     "sent": {
       "title": "Mira en tu buzón",
       "body": "Acabamos de enviar un enlace a {email}. Tócalo y podrás establecer tu contraseña. El enlace vale una hora.",
+      "bodyLoginId": "Acabamos de enviar un enlace a la dirección de correo registrada para ti. Tócalo y podrás establecer tu contraseña. El enlace vale una hora.",
       "spam": "¿No ha llegado nada? Mira también en la carpeta de spam.",
       "resend": "Enviar el correo otra vez",
       "resent": "Hemos vuelto a enviar el enlace a {email}.",
+      "resentLoginId": "Hemos vuelto a enviar el enlace a la dirección de correo registrada para ti.",
       "other": "Usar otra dirección de correo",
       "help": "Si no llega nada tras unos minutos, ponte en contacto con la administración de tu club."
     },

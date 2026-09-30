@@ -5,6 +5,7 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { fill } from '@okr/shared-util-core';
 
 import { AuthI18n } from '@okr/auth-util';
+import { isLoginIdInput } from '@okr/user-util';
 
 /**
  * What the user sees once the password mail is on its way.
@@ -72,6 +73,11 @@ export class PwdResetSent {
   // computed
   // fill(), not a {{param}}: translateAll resolves keys through Transloco, which substitutes
   // double-brace params away to an empty string before we ever see them.
-  protected body = computed(() =>
-    fill(this.resent() ? this.i18n().sent_resent() : this.i18n().sent_body(), { email: this.email() }));
+  // A Benutzername is not an address: the mail goes to the favourite email on file, so the
+  // neutral wording is used and the typed input is never echoed as if it were an email.
+  protected body = computed(() => {
+    const i18n = this.i18n();
+    if (isLoginIdInput(this.email())) return this.resent() ? i18n.sent_resentLoginId() : i18n.sent_bodyLoginId();
+    return fill(this.resent() ? i18n.sent_resent() : i18n.sent_body(), { email: this.email() });
+  });
 }

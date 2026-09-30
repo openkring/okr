@@ -30,9 +30,12 @@ export const AUTH_I18N_KEYS = {
   // The state the login screen switches to once the mail is on its way.
   sent_title:               PFX + 'pwdreset.sent.title',
   sent_body:                PFX + 'pwdreset.sent.body',
+  // same confirmation for a Benutzername: never echoes it as if it were an address (spec 1.71 §7)
+  sent_bodyLoginId:         PFX + 'pwdreset.sent.bodyLoginId',
   sent_spam:                PFX + 'pwdreset.sent.spam',
   sent_resend:              PFX + 'pwdreset.sent.resend',
   sent_resent:              PFX + 'pwdreset.sent.resent',
+  sent_resentLoginId:       PFX + 'pwdreset.sent.resentLoginId',
   sent_other:               PFX + 'pwdreset.sent.other',
   sent_help:                PFX + 'pwdreset.sent.help',
   newpwd:                   PFX + 'pwdreset.newpwd',

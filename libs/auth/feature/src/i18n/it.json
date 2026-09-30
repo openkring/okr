@@ -38,9 +38,11 @@
     "sent": {
       "title": "Guarda nella tua casella",
       "body": "Abbiamo appena inviato un link a {email}. Toccalo e potrai impostare la tua password. Il link vale un'ora.",
+      "bodyLoginId": "Abbiamo appena inviato un link all'indirizzo e-mail registrato per te. Toccalo e potrai impostare la tua password. Il link vale un'ora.",
       "spam": "Non è arrivato nulla? Controlla anche la cartella spam.",
       "resend": "Invia di nuovo l'e-mail",
       "resent": "Abbiamo inviato di nuovo il link a {email}.",
+      "resentLoginId": "Abbiamo inviato di nuovo il link all'indirizzo e-mail registrato per te.",
       "other": "Usa un altro indirizzo e-mail",
       "help": "Se dopo qualche minuto non arriva nulla, contatta l'amministrazione del tuo club."
     },

@@ -38,9 +38,11 @@
     "sent": {
       "title": "Schau in deine Mailbox",
       "body": "Wir haben dir eben einen Link an {email} geschickt. Tippe darauf, dann kannst du dein Passwort setzen. Der Link gilt eine Stunde.",
+      "bodyLoginId": "Wir haben dir eben einen Link an deine hinterlegte E-Mail-Adresse geschickt. Tippe darauf, dann kannst du dein Passwort setzen. Der Link gilt eine Stunde.",
       "spam": "Nichts angekommen? Schau auch im Spam-Ordner nach.",
       "resend": "E-Mail nochmals senden",
       "resent": "Wir haben den Link nochmals an {email} geschickt.",
+      "resentLoginId": "Wir haben den Link nochmals an deine hinterlegte E-Mail-Adresse geschickt.",
       "other": "Andere E-Mail-Adresse verwenden",
       "help": "Kommt auch nach ein paar Minuten nichts an, melde dich bei der Administration deines Vereins."
     },

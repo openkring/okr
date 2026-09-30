@@ -38,9 +38,11 @@
     "sent": {
       "title": "Check your mailbox",
       "body": "We have just sent a link to {email}. Tap it and you can set your password. The link is valid for one hour.",
+      "bodyLoginId": "We have just sent a link to the email address on file for you. Tap it and you can set your password. The link is valid for one hour.",
       "spam": "Nothing arrived? Have a look in your spam folder too.",
       "resend": "Send the email again",
       "resent": "We have sent the link to {email} again.",
+      "resentLoginId": "We have sent the link again to the email address on file for you.",
       "other": "Use a different email address",
       "help": "If nothing arrives after a few minutes, get in touch with your club's administration."
     },
