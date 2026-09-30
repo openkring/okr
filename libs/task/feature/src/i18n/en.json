@@ -128,7 +128,9 @@
     "description": "The task is normally visible to the author, the responsible person and privileged users. With the context, visibility can be extended to a group."
   },
   "validations": {
-    "taskModelType": "The ModelType must be TaskModel."
+    "taskModelType": "The ModelType must be TaskModel.",
+    "taskArchiveDaysRange": "Please enter a number between 0 and 3650.",
+    "taskArchiveDaysInteger": "Please enter a whole number."
   },
   "form": {
     "advanced": {

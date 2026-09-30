@@ -128,7 +128,9 @@
     "description": "La tarea normalmente es visible para el autor, la persona responsable y los usuarios privilegiados. Con el contexto, la visibilidad puede ampliarse a un grupo."
   },
   "validations": {
-    "taskModelType": "El ModelType debe ser TaskModel."
+    "taskModelType": "El ModelType debe ser TaskModel.",
+    "taskArchiveDaysRange": "Introduce un número entre 0 y 3650.",
+    "taskArchiveDaysInteger": "Introduce un número entero."
   },
   "form": {
     "advanced": {

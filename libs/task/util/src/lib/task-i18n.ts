@@ -95,6 +95,10 @@ export const TASK_I18N_KEYS = {
   scope_description:               PFX + 'scope.description',
 
   validations_taskModelType:       PFX + 'validations.taskModelType',
+  // Vest messages for taskSettingsValidations — used AS the test message (not just a label),
+  // so ErrorNote's '@'-prefixed branch resolves them via the lazy-loaded scope.
+  validations_taskArchiveDaysRange:    PFX + 'validations.taskArchiveDaysRange',
+  validations_taskArchiveDaysInteger:  PFX + 'validations.taskArchiveDaysInteger',
 
   // settings modal (spec 1.72 §8.2/§9) — the two AppConfig fields, admin-only
   settings_title:                       PFX + 'settings.title',

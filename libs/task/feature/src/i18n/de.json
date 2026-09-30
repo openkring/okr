@@ -128,7 +128,9 @@
     "description": "Die Aufgabe ist normalerweise sichtbar für Autor/in, Zuständige/n und Privilegierte User. Mit dem Kontext kann die Sichtbarkeit auf eine Gruppe erweitert werden."
   },
   "validations": {
-    "taskModelType": "Der ModelType muss TaskModel sein."
+    "taskModelType": "Der ModelType muss TaskModel sein.",
+    "taskArchiveDaysRange": "Bitte gib eine Zahl zwischen 0 und 3650 ein.",
+    "taskArchiveDaysInteger": "Bitte gib eine ganze Zahl ein."
   },
   "form": {
     "advanced": {

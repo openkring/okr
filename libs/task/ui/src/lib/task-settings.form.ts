@@ -5,7 +5,7 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular
 import { ErrorNote, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n } from '@okr/shared-ui';
 import { validateVestTree } from '@okr/shared-util-angular';
 
-import { TaskI18n, TaskSettings, taskSettingsValidations } from '@okr/task-util';
+import { TASK_ARCHIVE_DAYS_MAX, TASK_ARCHIVE_DAYS_MIN, TaskI18n, TaskSettings, taskSettingsValidations } from '@okr/task-util';
 
 /**
  * Admin-only settings form (spec 1.72 §8.2/§9): two `AppConfig` fields, not a Firestore model —
@@ -28,7 +28,7 @@ import { TaskI18n, TaskSettings, taskSettingsValidations } from '@okr/task-util'
                 <ion-col size="12" size-md="6">
                   <okr-number-input [i18n]="taskArchiveDaysI18n()" [value]="taskArchiveDays()"
                     (valueChange)="onFieldChange('taskArchiveDays', $event)"
-                    [autofocus]="true" [integer]="true" [min]="0" [max]="taskArchiveDaysMax"
+                    [autofocus]="true" [integer]="true" [min]="taskArchiveDaysMin" [max]="taskArchiveDaysMax"
                     [showHelper]="true" [readOnly]="false" />
                   <okr-error-note [errors]="taskArchiveDaysErrors()" />
                 </ion-col>
@@ -48,8 +48,9 @@ import { TaskI18n, TaskSettings, taskSettingsValidations } from '@okr/task-util'
   `,
 })
 export class TaskSettingsForm {
-  /** kept in step with the cap the Vest suite enforces on this field */
-  protected readonly taskArchiveDaysMax = 3650;
+  /** bound to the Vest suite's own constants (building-forms rule 2) — never a copied literal */
+  protected readonly taskArchiveDaysMin = TASK_ARCHIVE_DAYS_MIN;
+  protected readonly taskArchiveDaysMax = TASK_ARCHIVE_DAYS_MAX;
 
   // inputs
   public readonly i18n = input.required<TaskI18n>();

@@ -128,7 +128,9 @@
     "description": "La tâche est normalement visible pour l'auteur, la personne responsable et les utilisateurs privilégiés. Avec le contexte, la visibilité peut être étendue à un groupe."
   },
   "validations": {
-    "taskModelType": "Le ModelType doit être TaskModel."
+    "taskModelType": "Le ModelType doit être TaskModel.",
+    "taskArchiveDaysRange": "Indique un nombre entre 0 et 3650.",
+    "taskArchiveDaysInteger": "Indique un nombre entier."
   },
   "form": {
     "advanced": {

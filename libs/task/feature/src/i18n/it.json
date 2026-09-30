@@ -128,7 +128,9 @@
     "description": "L'attività è normalmente visibile all'autore, alla persona responsabile e agli utenti privilegiati. Con il contesto, la visibilità può essere estesa a un gruppo."
   },
   "validations": {
-    "taskModelType": "Il ModelType deve essere TaskModel."
+    "taskModelType": "Il ModelType deve essere TaskModel.",
+    "taskArchiveDaysRange": "Inserisci un numero tra 0 e 3650.",
+    "taskArchiveDaysInteger": "Inserisci un numero intero."
   },
   "form": {
     "advanced": {
