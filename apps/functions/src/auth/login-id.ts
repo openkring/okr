@@ -36,16 +36,21 @@ export async function findUserByLoginId(tenantId: string, rawLoginId: string): P
 /**
  * Give a user a Benutzername unless it already has one ("assigned once, never re-derived", spec §3).
  *
- * The candidate set is read by prefix, then re-checked inside a transaction on the user doc. Two
- * concurrent allocations of the SAME name in the same tenant can still both pass (a transaction cannot
- * lock the absence of a query result); findUserByLoginId logs that case loudly, and it needs two people
- * with the same name opened within the same second.
+ * The candidate set is read by prefix outside the transaction (cheap, approximate), then every
+ * candidate is re-checked for the exact tenant INSIDE the transaction via `tx.get(query)`, so the
+ * transaction's read set includes those query results and Firestore aborts/retries it if a
+ * concurrent write changes them before commit. The remaining gap: a transaction cannot lock the
+ * absence of a document that does not exist yet, so two allocations of a brand-new candidate that
+ * both start before either commits can still both pass — it needs two people with the same name
+ * opened within the same second, and findUserByLoginId logs that case loudly.
  */
 export async function allocateLoginId(userRef: DocumentReference, tenantId: string, firstName: string, lastName: string): Promise<string> {
   const db = getFirestore();
   const base = proposeLoginIdBase(firstName, lastName);
+  // '\uf8ff' is the highest code point in the Unicode private-use area — the standard
+  // Firestore idiom for a string-prefix range's upper bound.
   const prefixSnap = await db.collection('users')
-    .where('loginId', '>=', base).where('loginId', '<=', base + '').get();
+    .where('loginId', '>=', base).where('loginId', '<=', base + '\uf8ff').get();
   const taken = new Set(prefixSnap.docs
     .filter((d) => ((d.data()['tenants'] as string[] | undefined) ?? []).includes(tenantId))
     .map((d) => String(d.data()['loginId'] ?? '')));
@@ -55,7 +60,12 @@ export async function allocateLoginId(userRef: DocumentReference, tenantId: stri
     const existing = String(current.data()?.['loginId'] ?? '');
     if (existing) return existing;
     let candidate = nextFreeLoginId(base, taken);
-    while ((await usersWithLoginId(tenantId, candidate)).length > 0) {
+    // All reads (including this loop's tx.get) happen before the tx.update below —
+    // Firestore transactions require every read to happen before the first write.
+    for (;;) {
+      const candidateSnap = await tx.get(db.collection('users').where('loginId', '==', candidate));
+      const inTenant = candidateSnap.docs.some((d) => ((d.data()['tenants'] as string[] | undefined) ?? []).includes(tenantId));
+      if (!inTenant) break;
       taken.add(candidate);
       candidate = nextFreeLoginId(base, taken);
     }
