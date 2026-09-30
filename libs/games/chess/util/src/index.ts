@@ -5,3 +5,5 @@ export * from './lib/chess.notation';
 export * from './lib/chess.game';
 export * from './lib/chess.eval';
 export * from './lib/chess.ai';
+export * from './lib/chess.clock';
+export * from './lib/chess.save';
