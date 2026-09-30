@@ -60,6 +60,7 @@ export function convertUserToModelForm(user: UserModel, firstName = '', lastName
     firstName: user.firstName ?? firstName,
     lastName: user.lastName ?? lastName,
     loginEmail: user.loginEmail ?? die('UserUtil.convertUserToForm: user.loginEmail is mandatory.'),
+    loginId: user.loginId ?? '',
     gravatarEmail: user.gravatarEmail ?? '',
     tenants: user.tenants ?? [],
     notes: user.notes ?? '',
@@ -126,7 +127,8 @@ export function convertModelFormToUser(vm: UserModelFormModel, user?: UserModel)
   user.personKey = vm.personKey ?? user.personKey;
   user.firstName = vm.firstName ?? user.firstName;
   user.lastName = vm.lastName ?? user.lastName;
-  user.loginEmail = vm.loginEmail ?? user.loginEmail; // be careful: this should not be changed.
+  // loginId / loginEmail are the login identity (spec 1.71) — server-only, written by Cloud
+  // Functions only. The form renders both read-only; never copy them back from the form.
   user.gravatarEmail = vm.gravatarEmail ?? user.gravatarEmail;
   user.tags = vm.tags ?? user.tags;
   user.tenants = vm.tenants ?? user.tenants;

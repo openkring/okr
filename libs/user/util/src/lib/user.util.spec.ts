@@ -140,6 +140,17 @@ describe('User Utils', () => {
       expect(updatedUser.gravatarEmail).toBe('new@gravatar.com');
     });
 
+    it('convertModelFormToUser never copies loginEmail/loginId back (spec 1.71 — server-only)', () => {
+      const form: UserModelFormModel = {
+        gravatarEmail: 'new@gravatar.com',
+        loginEmail: 'spoofed@evil.example',
+        loginId: 'spoofed_id',
+      } as UserModelFormModel;
+      const updatedUser = convertModelFormToUser(form, user);
+      expect(updatedUser.loginEmail).toBe('john.doe@example.com');
+      expect(updatedUser.loginId).toBe('');
+    });
+
     it('convertNotificationFormToUser should update user from notification form model', () => {
       const form: UserNotificationFormModel = { newsDelivery: [DeliveryChannel.Post], invoiceDelivery: [DeliveryChannel.Chat] };
       const updatedUser = convertNotificationFormToUser(form, user);

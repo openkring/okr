@@ -72,6 +72,7 @@
   "lastName": { "label": "Last name", "placeholder": "Enter last name", "helper": "The user's family name." },
   "tenants": { "label": "Tenants", "placeholder": "sss, sss, sss", "helper": "Identifiers of the tenants" },
   "loginEmail": { "label": "Login e-mail", "placeholder": "Enter e-mail address" },
+  "loginId": { "label": "Username", "placeholder": "", "helper": "Set only by Cloud Functions." },
   "gravatarEmail": { "label": "Gravatar e-mail", "placeholder": "Enter e-mail address" },
   "email": { "label": "E-mail", "placeholder": "Enter e-mail address" },
   "phone": { "label": "Phone", "placeholder": "+41 XX XXX XX XX" },

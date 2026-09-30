@@ -72,6 +72,7 @@
   "lastName": { "label": "Cognome", "placeholder": "Inserire il cognome", "helper": "Il cognome dell'utente." },
   "tenants": { "label": "Tenant", "placeholder": "sss, sss, sss", "helper": "Identificatori dei tenant" },
   "loginEmail": { "label": "E-mail di accesso", "placeholder": "Inserire l'indirizzo e-mail" },
+  "loginId": { "label": "Nome utente", "placeholder": "", "helper": "Impostato solo dalle Cloud Functions." },
   "gravatarEmail": { "label": "E-mail Gravatar", "placeholder": "Inserire l'indirizzo e-mail" },
   "email": { "label": "E-mail", "placeholder": "Inserire l'indirizzo e-mail" },
   "phone": { "label": "Telefono", "placeholder": "+41 XX XXX XX XX" },

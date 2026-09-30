@@ -6,6 +6,7 @@ export type UserModelFormModel = {
   firstName: string,
   lastName: string,
   loginEmail: string,
+  loginId: string,      // Benutzername — read-only, written only by Cloud Functions
   gravatarEmail: string,
   tenants: string[],       // user has always exactly one tenant
   notes: string,
@@ -20,6 +21,7 @@ export const USER_FORM_SHAPE: UserModelFormModel = {
   firstName: DEFAULT_NAME,
   lastName: DEFAULT_NAME,
   loginEmail: DEFAULT_EMAIL,
+  loginId: DEFAULT_NAME,
   gravatarEmail: DEFAULT_EMAIL,
   tenants: DEFAULT_TENANTS,
   notes: DEFAULT_NOTES,

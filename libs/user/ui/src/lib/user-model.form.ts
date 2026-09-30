@@ -44,8 +44,11 @@ import { DESCRIPTION_LENGTH, NAME_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-
                 <okr-error-note [errors]="lastNameErrors()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <okr-email [i18n]="loginEmailI18n()" [value]="loginEmail()" (valueChange)="onFieldChange('loginEmail', $event)" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
+                <okr-email [i18n]="loginEmailI18n()" [value]="loginEmail()" (valueChange)="onFieldChange('loginEmail', $event)" [maxLength]="shortNameLength" [readOnly]="true" />
                 <okr-error-note [errors]="loginEmailErrors()" />
+              </ion-col>
+              <ion-col size="12" size-md="6">
+                <okr-text-input [i18n]="loginIdI18n()" [value]="loginId()" (valueChange)="onFieldChange('loginId', $event)" [readOnly]="true" [copyable]=true />
               </ion-col>
               <ion-col size="12" size-md="6">
                 <okr-email [i18n]="gravatarEmailI18n()" [value]="gravatarEmail()" (valueChange)="onFieldChange('gravatarEmail', $event)" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
@@ -105,6 +108,9 @@ export class UserModelForm {
   } as NotesInputI18n));
 
   protected loginEmailI18n = computed(() => ({ name: 'loginEmail', label: this.i18n().loginEmail_label(), placeholder: this.i18n().loginEmail_placeholder() } as EmailInputI18n));
+  protected loginIdI18n = computed(() => ({
+    name: 'loginId', label: this.i18n().loginId_label(), placeholder: this.i18n().loginId_placeholder(), helper: this.i18n().loginId_helper()
+  } as TextInputI18n));
   protected gravatarEmailI18n = computed(() => ({ name: 'gravatarEmail', label: this.i18n().gravatarEmail_label(), placeholder: this.i18n().gravatarEmail_placeholder() } as EmailInputI18n));
 
   // signals
@@ -132,6 +138,7 @@ export class UserModelForm {
   protected firstName = linkedSignal(() => this.formData().firstName);
   protected lastName = linkedSignal(() => this.formData().lastName);
   protected loginEmail = linkedSignal(() => this.formData().loginEmail);
+  protected loginId = linkedSignal(() => this.formData().loginId ?? '');
   protected gravatarEmail = linkedSignal(() => this.formData().gravatarEmail);
   protected notes = linkedSignal(() => this.formData().notes);
 
