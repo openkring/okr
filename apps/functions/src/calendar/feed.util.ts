@@ -88,3 +88,27 @@ export function toPartstat(state: string | undefined): string | undefined {
     default:         return undefined;
   }
 }
+
+/**
+ * Zugangsprüfung für einen einzeln angefragten Anlass (`calendar=e:<okey>`, der «Zum Kalender
+ * hinzufügen»-Knopf). Dieselben Regeln wie die beiden Feeds zusammen: sichtbar ist, was der
+ * Benutzer abonnieren könnte (Mitgliedschaft oder offener Kalender), sein persönlicher Anlass
+ * als Organisator — und jeder Anlass, zu dem er eingeladen ist, auch ausserhalb seiner Kalender
+ * (eine Einladung reicht über die Kalenderreichweite hinaus).
+ */
+export function isEventVisibleTo(
+  e: FeedEvent,
+  p: {
+    calendars: { okey: string; isPublic?: boolean; defaultIsOpen?: boolean }[];
+    allowedCalendarKeys: string[];
+    personKey: string;
+    invitedEventKeys: string[];
+  },
+): boolean {
+  if (p.invitedEventKeys.includes(e.okey)) return true;
+  if (isPersonalEvent(e)) {
+    return !!p.personKey && e.responsiblePersons?.some(r => r.key === p.personKey) === true;
+  }
+  return (e.calendars ?? []).some(k =>
+    isCalendarSubscribable(p.calendars.find(c => c.okey === k), p.allowedCalendarKeys));
+}

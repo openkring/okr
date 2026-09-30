@@ -317,6 +317,7 @@ export function isPubliclyExportable(
  * URL: GET /generateCalendarICS?calendar=<key>           (single calendar)
  *      GET /generateCalendarICS?calendar=<k1>,<k2>,<kn>  (merged, deduplicated)
  *      GET /generateCalendarICS?calendar=e:<eventOkey>   (single event)
+ *      &disposition=inline                               (iOS: calendar preview instead of a file)
  *
  * No authentication required, so it serves PUBLIC calendars only (`isPublic`) — and, as
  * of 2026-08-24, that rule covers the `e:<okey>` path too. Anything private goes through
@@ -473,7 +474,10 @@ export const generateCalendarICS = onRequest(
     const filename = calendarKeys.join('_').replace(/[^a-zA-Z0-9_-]/g, '_') + '.ics';
 
     res.set('Content-Type', 'text/calendar; charset=utf-8');
-    res.set('Content-Disposition', `attachment; filename="${filename}"`);
+    // `disposition=inline` — iOS zeigt dann die Kalender-Vorschau mit «Hinzufügen», statt die
+    // Datei unauffindbar in «Dateien» abzulegen. Standard bleibt der Download.
+    const disposition = req.query['disposition'] === 'inline' ? 'inline' : 'attachment';
+    res.set('Content-Disposition', `${disposition}; filename="${filename}"`);
     res.send(ics);
   }
 );

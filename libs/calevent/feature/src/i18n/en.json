@@ -45,7 +45,7 @@
     }
   },
   "download": {
-    "ics": "Download appointment (ICS)"
+    "ics": "Add to calendar"
   },
   "lock": {
     "label": "Lock event",

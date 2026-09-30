@@ -1,6 +1,5 @@
 import { Component, ComponentRef, computed, CUSTOM_ELEMENTS_SCHEMA, DestroyRef, effect, ElementRef, inject, Injector, input, linkedSignal, OnInit, PLATFORM_ID, signal, untracked, viewChild, ViewContainerRef } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, AlertController, createGesture, Gesture, IonBadge, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTextarea, IonTitle, IonToolbar, ModalController } from '@ionic/angular/standalone';
-import { Browser } from '@capacitor/browser';
 import { Router } from '@angular/router';
 import { format } from 'date-fns';
 
@@ -20,11 +19,11 @@ import { isAdminMember } from '@okr/subject-group-util';
 
 import { CalEventDurationPipe, canAttendCalevent, countPollAcceptances, countPollResponses, formatDateTimeLabel, getCalEventCssClass, isPastCalevent, isPersonalCalendarName, isPersonalCalevent, mayJoinOpenCalevent, resetActivity, resolveCalendars, upcomingOccurrences } from '@okr/calevent-util';
 import { showCalendarSync } from '@okr/calevent-ui';
+import { CalendarFeedService } from '@okr/calevent-data-access';
 import type { OrganiserContactAction, OrganiserContactResult } from '@okr/calevent-ui';
 import { browseUrl } from '@okr/subject-address-util';
 import { CalEventStore } from './calevent.store';
 
-const ICS_FUNCTION_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/generateCalendarICS';
 
 /** Swipe navigation (touch only): a gesture must travel this far before it counts as prev/next. */
 const SWIPE_MIN_DISTANCE_PX = 60;
@@ -335,6 +334,7 @@ export class CalEventList implements OnInit {
   private readonly alertController = inject(AlertController);
   private readonly modalController = inject(ModalController);
   private readonly quickEntryService = inject(QuickEntryService);
+  private readonly calendarFeedService = inject(CalendarFeedService);
   private readonly modelSelectService = inject(ModelSelectService);
   private selectedQuickEntryPerson = signal<PersonModel | null>(null);
   private selectedQuickEntryLocation = signal<LocationModel | null>(null);
@@ -910,16 +910,15 @@ export class CalEventList implements OnInit {
         break;
       }
       case 'exportRaw': await this.store.export("raw"); break;
-      case 'exportIcs': 
-        const cal =  this.store.calendar();
-        console.log('exportIcs: ', cal);
+      case 'exportIcs': {
+        const cal = this.store.calendar();
         if (!cal) {
           error(undefined, 'all or my calendars can not be exported');
         } else {
-          const url = 'https://europe-west6-bkaiser-org.cloudfunctions.net/generateCalendarICS?calendar=' + cal.okey;
-          Browser.open({ url: url, windowName: '_blank' });
+          await this.calendarFeedService.addCalendarToCalendar(cal.okey, !!this.currentUser());
         }
         break;
+      }
       case 'sync': {
         await showCalendarSync(this.modalController, {
           calendars: this.subscribableCalendars(),
@@ -1066,7 +1065,7 @@ export class CalEventList implements OnInit {
           await this.store.unsubscribe(calEvent);
           break;
         case 'calevent.downloadIcs':
-          await this.download(calEvent.okey);
+          await this.calendarFeedService.addEventToCalendar(calEvent, !!this.currentUser());
         break;
         case 'calevent.copyLink':
           await this.store.copyLink(calEvent, window.location.origin);
@@ -1551,10 +1550,5 @@ export class CalEventList implements OnInit {
     const personKey = this.currentUser()?.personKey;
     if (!personKey) return false;
     return calevent.responsiblePersons?.some(p => p.key === personKey) ?? false;
-  }
-
-  protected async download(key: string): Promise<void> {
-    const url = `${ICS_FUNCTION_URL}?calendar=e:${key}`;
-    await Browser.open({ url, windowName: '_blank' });
   }
 }

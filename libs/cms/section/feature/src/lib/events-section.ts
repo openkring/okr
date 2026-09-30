@@ -1,7 +1,6 @@
 import { AsyncPipe } from '@angular/common';
 import { CUSTOM_ELEMENTS_SCHEMA, Component, OnInit, PLATFORM_ID, computed, effect, inject, input, untracked } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonBadge, IonCard, IonCardContent, IonLabel, ModalController } from '@ionic/angular/standalone';
-import { Browser } from '@capacitor/browser';
 
 import { CalEventModel, EventsConfig, EventsSection } from '@okr/shared-models';
 import { MoreButton, OptionalCardHeader, Spinner } from '@okr/shared-ui';
@@ -12,12 +11,11 @@ import { I18nService, TranslatePipe } from '@okr/shared-i18n';
 
 import { CALEVENT_I18N_KEYS } from '@okr/calevent-util';
 import { showCalEventInfo } from '@okr/calevent-ui';
+import { CalendarFeedService } from '@okr/calevent-data-access';
 import { isAdminMember } from '@okr/subject-group-util';
 import { getReservedListHeightPx } from '@okr/cms-section-util';
 
 import { CalendarStore } from './calendar-section.store';
-
-const ICS_FUNCTION_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/generateCalendarICS';
 
 @Component({
   selector: 'okr-events-section',
@@ -100,6 +98,7 @@ export class EventsSectionComponent implements OnInit {
   protected readonly calevents = computed(() => this.store.calevents());
   private currentUser = computed(() => this.store.appStore.currentUser());
   private modalController = inject(ModalController);
+  private readonly calendarFeedService = inject(CalendarFeedService);
 
   /** Only the label of the info button — the explainer itself lives in the calevent domain. */
   protected readonly caleventI18n = inject(I18nService).translateAll({ info_open: CALEVENT_I18N_KEYS.info_open, activity_unseen: CALEVENT_I18N_KEYS.activity_unseen });
@@ -225,15 +224,10 @@ export class EventsSectionComponent implements OnInit {
           await this.store.unsubscribe(calEvent);
           break;
         case 'calevent.downloadIcs':
-          await this.download(calEvent.okey);
+          await this.calendarFeedService.addEventToCalendar(calEvent, !!this.currentUser());
         break;
       }
     }
-  }
-
-  protected async download(key: string): Promise<void> {
-    const url = `${ICS_FUNCTION_URL}?calendar=e:${key}`;
-    await Browser.open({ url, windowName: '_blank' });
   }
 
   /**

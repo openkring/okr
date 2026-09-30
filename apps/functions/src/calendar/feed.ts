@@ -3,7 +3,7 @@ import { onCall, onRequest, HttpsError } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
 import { getFirestore } from 'firebase-admin/firestore';
 import { buildICS } from './index';
-import { computeWindow, filterMyFeed, isCalendarSubscribable, resolveListId, toPartstat } from './feed.util';
+import { computeWindow, filterMyFeed, isCalendarSubscribable, isEventVisibleTo, resolveListId, toPartstat } from './feed.util';
 import { appBaseUrl } from '../alias/tenant-domains';
 
 const FEEDS = 'calendarFeeds';
@@ -69,6 +69,13 @@ export const ensureCalendarFeedToken = onCall(
  * Öffentlicher Abo-Endpunkt. Unauthentifiziert im Firebase-Sinn — das Token IST der Ausweis.
  * Jeder Ablehnungsgrund antwortet mit 404, nie mit 403: der Endpunkt darf nicht bestätigen,
  * dass ein Token gültig ist. Nur eine fehlende `token`- oder `calendar`-Query ist 400.
+ *
+ *   calendar=my            persönlicher Feed (Abo)
+ *   calendar=<k1>,<k2>     Kalender-Feed (Abo)
+ *   calendar=e:<okey>      ein einzelner Anlass («Zum Kalender hinzufügen»), ohne Zeitfenster
+ *
+ * `disposition=attachment` erzwingt einen Download (Desktop); Standard ist `inline`, womit iOS
+ * die Kalender-Vorschau mit «Hinzufügen» zeigt und Kalender-Apps ein Abo erkennen.
  */
 export const calendarFeed = onRequest(
   { region: 'europe-west6' },
@@ -121,10 +128,13 @@ export const calendarFeed = onRequest(
         .map(d => ({ okey: d.id, ...(d.data() as { owner?: string; title?: string; name?: string; isPublic?: boolean; defaultIsOpen?: boolean }) }));
       const allowedCalendarKeys = calendars.filter(c => orgKeys.includes(c.owner ?? '')).map(c => c.okey);
 
-      const mode: 'my' | 'calendar' = rawCalendar === 'my' ? 'my' : 'calendar';
-      const requestedKeys = mode === 'my'
-        ? []
-        : [...new Set(rawCalendar.split(',').map(k => k.trim()).filter(Boolean))];
+      const mode: 'my' | 'calendar' | 'event' =
+        rawCalendar === 'my' ? 'my' : rawCalendar.startsWith('e:') ? 'event' : 'calendar';
+      const requestedKeys = mode === 'calendar'
+        ? [...new Set(rawCalendar.split(',').map(k => k.trim()).filter(Boolean))]
+        : [];
+      const eventOkey = mode === 'event' ? rawCalendar.slice(2).trim() : '';
+      if (mode === 'event' && (!eventOkey || eventOkey.includes('/'))) { res.status(404).send('Not found'); return; }
 
       // Zugangsprüfung für den Kalender-Feed: Mitgliedschaft ODER offener Kalender.
       if (mode === 'calendar') {
@@ -170,12 +180,25 @@ export const calendarFeed = onRequest(
         if (!collected.has(id)) collected.set(id, { okey: id, ...data });
       };
 
+      if (mode === 'event') {
+        const snap = await db.collection('calevents').doc(eventOkey).get();
+        const data = snap.data();
+        if (!snap.exists || !data || data['isArchived'] === true) { res.status(404).send('Not found'); return; }
+        add(snap.id, data);   // Tenant- und columnLabel-Filter wie in den Feeds
+        const event = collected.get(snap.id) as { okey: string; calendars?: string[]; responsiblePersons?: { key: string }[] } | undefined;
+        if (!event || !isEventVisibleTo(event, {
+          calendars, allowedCalendarKeys, personKey: feed.personKey, invitedEventKeys: [...stateByEvent.keys()],
+        })) { res.status(404).send('Not found'); return; }
+      }
+
       const base = db.collection('calevents')
         .where('isArchived', '==', false)
         .where('startDate', '>=', from)
         .where('startDate', '<=', to);
 
-      if (mode === 'calendar') {
+      if (mode === 'event') {
+        // oben bereits geladen und geprüft
+      } else if (mode === 'calendar') {
         const chunks: string[][] = [];
         for (let i = 0; i < requestedKeys.length; i += 30) chunks.push(requestedKeys.slice(i, i + 30));
         for (const chunk of chunks) {
@@ -211,7 +234,7 @@ export const calendarFeed = onRequest(
         }) as never[];
       }
 
-      const calendarName = mode === 'my'
+      const calendarName = mode === 'my' || mode === 'event'
         ? 'Mein Kalender'
         : requestedKeys.map(k => { const c = calendars.find(x => x.okey === k); return c?.title || c?.name || k; }).join(', ');
 
@@ -222,7 +245,9 @@ export const calendarFeed = onRequest(
 
       const ics = buildICS(calendarName, events, {
         appOrigin,
-        listIdFor: (e) => resolveListId(e as never, mode, requestedKeys),
+        listIdFor: (e) => mode === 'event'
+          ? resolveListId(e as never, e.calendars?.length ? 'calendar' : 'my', e.calendars ?? [])
+          : resolveListId(e as never, mode, requestedKeys),
         attendee: user?.loginEmail
           ? { cn: `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim(), email: user.loginEmail }
           : undefined,
@@ -250,8 +275,11 @@ export const calendarFeed = onRequest(
 
       logger.info('calendarFeed: served', { mode, count: events.length, tokenPrefix: token.slice(0, 6) });
       res.set('Content-Type', 'text/calendar; charset=utf-8');
-      // `inline`, nicht `attachment` — genau das macht aus dem Download ein Abo.
-      res.set('Content-Disposition', 'inline; filename="calendar.ics"');
+      // `inline`, nicht `attachment` — genau das macht aus dem Download ein Abo, und auf iOS
+      // aus einem Anlass die Kalender-Vorschau. Nur der Desktop-Download fragt `attachment` an.
+      const disposition = req.query['disposition'] === 'attachment' ? 'attachment' : 'inline';
+      const filename = mode === 'event' ? 'event.ics' : 'calendar.ics';
+      res.set('Content-Disposition', `${disposition}; filename="${filename}"`);
       res.send(ics);
     } catch (err) {
       // Nur ein Präfix ins Log — das Token selbst ist der Ausweis. Echte Fehler sind 500;

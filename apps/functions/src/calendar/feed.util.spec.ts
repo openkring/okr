@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { computeWindow, filterMyFeed, isCalendarSubscribable, isPersonalEvent, resolveListId, toPartstat } from './feed.util';
+import { computeWindow, filterMyFeed, isCalendarSubscribable, isEventVisibleTo, isPersonalEvent, resolveListId, toPartstat } from './feed.util';
 
 describe('computeWindow', () => {
   it('spans 3 months back and 12 months forward', () => {
@@ -101,5 +101,39 @@ describe('toPartstat', () => {
 
   it('is undefined when there is no invitation', () => {
     expect(toPartstat(undefined)).toBeUndefined();
+  });
+});
+
+describe('isEventVisibleTo', () => {
+  const p = {
+    calendars: [{ okey: 'scs', isPublic: false }, { okey: 'vorstand', isPublic: false }, { okey: 'open', isPublic: true }],
+    allowedCalendarKeys: ['scs'],
+    personKey: 'p1',
+    invitedEventKeys: ['inv'],
+  };
+
+  it('allows an event in a member calendar', () => {
+    expect(isEventVisibleTo({ okey: 'e1', calendars: ['scs'] }, p)).toBe(true);
+  });
+
+  it('allows an event in an open calendar without membership', () => {
+    expect(isEventVisibleTo({ okey: 'e1', calendars: ['open'] }, p)).toBe(true);
+  });
+
+  it('denies an event in a closed foreign calendar', () => {
+    expect(isEventVisibleTo({ okey: 'e1', calendars: ['vorstand'] }, p)).toBe(false);
+  });
+
+  it('allows a closed foreign event the user is invited to', () => {
+    expect(isEventVisibleTo({ okey: 'inv', calendars: ['vorstand'] }, p)).toBe(true);
+  });
+
+  it('allows an own personal event, denies a foreign one', () => {
+    expect(isEventVisibleTo({ okey: 'e2', calendars: [], responsiblePersons: [{ key: 'p1' }] }, p)).toBe(true);
+    expect(isEventVisibleTo({ okey: 'e3', calendars: [], responsiblePersons: [{ key: 'p9' }] }, p)).toBe(false);
+  });
+
+  it('denies an event in an unknown calendar', () => {
+    expect(isEventVisibleTo({ okey: 'e1', calendars: ['gone'] }, p)).toBe(false);
   });
 });

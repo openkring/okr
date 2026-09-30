@@ -190,7 +190,7 @@
     "unsubscribe": "Cancel registration",
     "edit": "Edit event",
     "view": "Show event",
-    "download": "Download event (ICS)"
+    "download": "Add to calendar"
   },
   "cal": {
     "title": "Calendar configuration",

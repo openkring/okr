@@ -45,7 +45,7 @@
     }
   },
   "download": {
-    "ics": "Descargar cita (ICS)"
+    "ics": "Añadir al calendario"
   },
   "lock": {
     "label": "Bloquear la cita",

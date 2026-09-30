@@ -45,7 +45,7 @@
     }
   },
   "download": {
-    "ics": "Télécharger le rendez-vous (ICS)"
+    "ics": "Ajouter au calendrier"
   },
   "lock": {
     "label": "Verrouiller le rendez-vous",

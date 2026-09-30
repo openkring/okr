@@ -190,7 +190,7 @@
     "unsubscribe": "Se désinscrire",
     "edit": "Modifier l'événement",
     "view": "Afficher l'événement",
-    "download": "Télécharger l'événement (ICS)"
+    "download": "Ajouter au calendrier"
   },
   "cal": {
     "title": "Configuration du calendrier",
