@@ -51,3 +51,26 @@ export function decideOwnAccount(identity: LoginIdentity, ownDoc: { loginEmail?:
   if (identity === 'exists' || !ownDoc) return 'proceed';
   return ownDoc.loginEmail?.trim() ? 'exists' : 'resume';
 }
+
+/** State kept per (tenantId, loginId) in the `login-throttle` collection. */
+export interface ThrottleState { failures: number; lockedUntil: number }
+export const MAX_FAILURES = 5;
+export const LOCK_MS = 15 * 60_000;
+
+export function isLocked(s: ThrottleState | undefined, now: number): boolean {
+  return (s?.lockedUntil ?? 0) > now;
+}
+
+export function afterFailure(s: ThrottleState | undefined, now: number): ThrottleState {
+  const expired = !!s && s.lockedUntil > 0 && s.lockedUntil <= now;
+  const failures = (expired ? 0 : s?.failures ?? 0) + 1;
+  return failures >= MAX_FAILURES ? { failures: 0, lockedUntil: now + LOCK_MS } : { failures, lockedUntil: 0 };
+}
+
+/** identitytoolkit error.message → our three answers. Disabled is NOT distinguished (spec §5.1). */
+export function mapSignInError(message: string): 'invalid' | 'throttled' | 'error' {
+  const code = (message ?? '').split(/[ :]/)[0];
+  if (['INVALID_LOGIN_CREDENTIALS', 'INVALID_PASSWORD', 'EMAIL_NOT_FOUND', 'USER_DISABLED'].includes(code)) return 'invalid';
+  if (code === 'TOO_MANY_ATTEMPTS_TRY_LATER') return 'throttled';
+  return 'error';
+}

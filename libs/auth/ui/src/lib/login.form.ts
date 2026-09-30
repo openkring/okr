@@ -44,7 +44,8 @@ import { authCredentialsValidations, AuthI18n } from '@okr/auth-util';
                   [copyable]="false"
                   [clearInput]="true"
                   [readOnly]="false"
-                  autocomplete="username email"
+                  type="text"
+                  autocomplete="username"
                 />
                 <okr-error-note [errors]="emailErrors()" />
               </ion-col>

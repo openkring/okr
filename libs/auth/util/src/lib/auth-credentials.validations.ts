@@ -1,6 +1,7 @@
 import { EMAIL_LENGTH, PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, PASSWORD_SET_MIN_LENGTH } from '@okr/shared-constants';
 import { AuthCredentials } from '@okr/shared-models';
 import { stringValidations } from '@okr/shared-util-core';
+import { isLoginIdInput, isValidLoginId, normalizeLoginIdInput } from '@okr/user-util';
 import { enforce, only, staticSuite, test } from 'vest';
 
 export type AuthCredentialsContext = 'login' | 'email' | 'password';
@@ -9,10 +10,14 @@ const emailTests = (model: AuthCredentials) => {
   test('loginEmail', '@validation.emailRequired', () => {
     enforce(model.loginEmail).isNotBlank();
   });
+  if (isLoginIdInput(model.loginEmail ?? '')) {
+    // a Benutzername (spec 1.71 §5.1) — same alphabet the functions assign
+    test('loginEmail', '@validation.loginIdInvalid', () => {
+      enforce(isValidLoginId(normalizeLoginIdInput(model.loginEmail ?? ''))).isTruthy();
+    });
+    return;
+  }
   stringValidations('loginEmail', model.loginEmail, EMAIL_LENGTH, 9, true);
-  test('loginEmail', '@validation.emailMustContainAt', () => {
-    enforce(model.loginEmail?.includes('@')).isTruthy();
-  });
   test('loginEmail', '@validation.emailMustContainDot', () => {
     enforce(model.loginEmail?.includes('.')).isTruthy();
   });

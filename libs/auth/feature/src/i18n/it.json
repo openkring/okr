@@ -1,10 +1,10 @@
 {
   "title": "Accedi",
   "email": {
-    "label": "E-mail",
-    "placeholder": "ssss@ssssssss.sss",
+    "label": "E-mail o nome utente",
+    "placeholder": "anna@esempio.it o max_mueller",
     "error": "Inserisci un indirizzo e-mail valido.",
-    "helper": "Usa l'indirizzo e-mail al quale ricevi le informazioni del club."
+    "helper": "Il tuo indirizzo e-mail o il tuo nome utente."
   },
   "password": {
     "label": "Password",

@@ -1,10 +1,10 @@
 {
   "title": "Se connecter",
   "email": {
-    "label": "E-mail",
-    "placeholder": "ssss@ssssssss.sss",
+    "label": "E-mail ou nom d'utilisateur",
+    "placeholder": "anna@exemple.ch ou max_mueller",
     "error": "Merci de saisir une adresse e-mail valide.",
-    "helper": "Utilise l'adresse e-mail à laquelle tu reçois les informations du club."
+    "helper": "Ton adresse e-mail ou ton nom d'utilisateur."
   },
   "password": {
     "label": "Mot de passe",

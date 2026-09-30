@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { decideLoginIdentity, decideOwnAccount, LoginIdentity } from './login-id.decide';
+import { afterFailure, decideLoginIdentity, decideOwnAccount, isLocked, LOCK_MS, LoginIdentity, MAX_FAILURES, mapSignInError } from './login-id.decide';
 
 describe('decideLoginIdentity', () => {
   it('no Auth identity for the email → create one with the real email', () => {
@@ -58,5 +58,37 @@ describe('decideOwnAccount', () => {
   it("'exists' is decided by the email holder already — the guard stays out of it", () => {
     expect(decideOwnAccount('exists', { loginEmail: '' })).toBe('proceed');
     expect(decideOwnAccount('exists', undefined)).toBe('proceed');
+  });
+});
+
+describe('login throttle', () => {
+  it('locks after MAX_FAILURES failures for LOCK_MS', () => {
+    let s = { failures: 0, lockedUntil: 0 };
+    for (let i = 0; i < MAX_FAILURES; i++) s = afterFailure(s, 1000);
+    expect(isLocked(s, 1000)).toBe(true);
+    expect(isLocked(s, 1000 + LOCK_MS + 1)).toBe(false);
+  });
+  it('starts counting afresh once a lock has expired', () => {
+    const locked = { failures: 0, lockedUntil: 5000 };
+    expect(afterFailure(locked, 6000)).toEqual({ failures: 1, lockedUntil: 0 });
+  });
+  it('treats a missing state as clean', () => {
+    expect(isLocked(undefined, 0)).toBe(false);
+    expect(afterFailure(undefined, 0)).toEqual({ failures: 1, lockedUntil: 0 });
+  });
+});
+
+describe('mapSignInError', () => {
+  it('collapses wrong password, unknown and disabled into one answer', () => {
+    expect(mapSignInError('INVALID_LOGIN_CREDENTIALS')).toBe('invalid');
+    expect(mapSignInError('INVALID_PASSWORD')).toBe('invalid');
+    expect(mapSignInError('EMAIL_NOT_FOUND')).toBe('invalid');
+    expect(mapSignInError('USER_DISABLED')).toBe('invalid');
+  });
+  it('reports throttling separately', () => {
+    expect(mapSignInError('TOO_MANY_ATTEMPTS_TRY_LATER : Too many unsuccessful login attempts.')).toBe('throttled');
+  });
+  it('anything else is an error, not a wrong password', () => {
+    expect(mapSignInError('API_KEY_HTTP_REFERRER_BLOCKED')).toBe('error');
   });
 });

@@ -1,10 +1,10 @@
 {
   "title": "Iniciar sesión",
   "email": {
-    "label": "Correo electrónico",
-    "placeholder": "ssss@ssssssss.sss",
+    "label": "Correo electrónico o nombre de usuario",
+    "placeholder": "anna@ejemplo.com o max_mueller",
     "error": "Introduce una dirección de correo válida.",
-    "helper": "Usa la dirección de correo a la que recibes la información del club."
+    "helper": "Tu dirección de correo electrónico o tu nombre de usuario."
   },
   "password": {
     "label": "Contraseña",

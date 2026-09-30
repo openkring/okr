@@ -1,10 +1,10 @@
 {
   "title": "Anmelden",
   "email": {
-    "label": "E-Mail",
-    "placeholder": "ssss@ssssssss.sss",
+    "label": "E-Mail oder Benutzername",
+    "placeholder": "anna@beispiel.ch oder max_mueller",
     "error": "Bitte gib eine gültige E-Mail-Adresse ein.",
-    "helper": "Nimm die E-Mail-Adresse, an die du die Vereinsinformationen bekommst."
+    "helper": "Deine E-Mail-Adresse oder dein Benutzername."
   },
   "password": {
     "label": "Passwort",

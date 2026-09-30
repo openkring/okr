@@ -23,4 +23,10 @@ describe('toLoginFailure', () => {
     expect(toLoginFailure(undefined)).toBe('unknown');
     expect(toLoginFailure(null)).toBe('unknown');
   });
+
+  it('maps the callable answers of the Benutzername login', () => {
+    expect(toLoginFailure({ code: 'functions/unauthenticated' })).toBe('wrongCredentials');
+    expect(toLoginFailure({ code: 'functions/resource-exhausted' })).toBe('tooManyAttempts');
+    expect(toLoginFailure({ code: 'functions/unavailable' })).toBe('network');
+  });
 });

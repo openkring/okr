@@ -10,6 +10,7 @@ import { AlertService, navigateByUrl } from '@okr/shared-util-angular';
 import { clearOfflineSnapshots, die, warn } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
 import { ActivityService } from '@okr/activity-data-access';
+import { isLoginIdInput, normalizeLoginIdInput } from '@okr/user-util';
 import { LoginFailure, PwdResetFailure, PwdResetResult, toLoginFailure, toPwdResetFailure } from '@okr/auth-util';
 
 import { PFX } from './scope';
@@ -73,7 +74,12 @@ export class AuthService {
           browserLocalPersistence, browserSessionPersistence, inMemoryPersistence
       */
       await setPersistence(this.auth, browserLocalPersistence);
-      await signInWithEmailAndPassword(this.auth, credentials.loginEmail, credentials.loginPassword);
+      const input = credentials.loginEmail.trim();
+      if (isLoginIdInput(input)) {
+        await this.signInWithLoginId(normalizeLoginIdInput(input), credentials.loginPassword);
+      } else {
+        await signInWithEmailAndPassword(this.auth, input, credentials.loginPassword);
+      }
       void this.activityService.logAuth('login', `${credentials.loginEmail}: SUCCESS`);
       await this.alertService.showToast(this.i18n.login_conf());
       await navigateByUrl(this.router, rootUrl);
@@ -99,6 +105,14 @@ export class AuthService {
       case 'network':          return this.i18n.login_network();
       default:                 return this.i18n.login_error();
     }
+  }
+
+  /** Benutzername login (spec 1.71 §5.1): the server checks the password and hands back a custom token. */
+  private async signInWithLoginId(loginId: string, password: string): Promise<void> {
+    const fn = httpsCallable<{ tenantId: string; loginId: string; password: string }, { token: string }>(
+      getFunctions(getApp(), 'europe-west6'), 'loginWithLoginId');
+    const { data } = await fn({ tenantId: this.env.tenantId, loginId, password });
+    await signInWithCustomToken(this.auth, data.token);
   }
 
   public async loginWithToken(token: string, url: string): Promise<void> {

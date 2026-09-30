@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { AuthCredentials } from '@okr/shared-models';
 
-import { authCredentialsValidations } from './auth-credentials.validations';
+import { authCredentialsValidations, loginValidations } from './auth-credentials.validations';
 
 const creds = (loginEmail: string, loginPassword: string): AuthCredentials => ({ loginEmail, loginPassword });
 
@@ -65,8 +65,27 @@ describe('authCredentialsValidations', () => {
       expect(result.isValid()).toBe(true);
     });
 
-    it('rejects an address without an @ or a dot', () => {
-      expect(authCredentialsValidations(creds('annaexample', ''), undefined, 'email').isValid()).toBe(false);
+    it('rejects an address with an @ but no dot', () => {
+      expect(authCredentialsValidations(creds('anna@example', ''), undefined, 'email').isValid()).toBe(false);
     });
+
+    // A bare word with no '@' now reads as a Benutzername candidate (spec 1.71 §5.1), not a
+    // malformed email — see loginValidations 'login accepts a Benutzername' below. The old
+    // "rejects an address without an @" case moved there.
+  });
+});
+
+describe('login validations', () => {
+  it('login accepts a Benutzername instead of an email', () => {
+    const r = loginValidations({ loginEmail: 'max_mueller', loginPassword: 'secret1' } as AuthCredentials);
+    expect(r.hasErrors('loginEmail')).toBe(false);
+  });
+  it('login rejects a Benutzername with forbidden characters', () => {
+    const r = loginValidations({ loginEmail: 'max mueller!', loginPassword: 'secret1' } as AuthCredentials);
+    expect(r.hasErrors('loginEmail')).toBe(true);
+  });
+  it('login still validates an email as before', () => {
+    const r = loginValidations({ loginEmail: 'anna@gmail', loginPassword: 'secret1' } as AuthCredentials);
+    expect(r.hasErrors('loginEmail')).toBe(true);
   });
 });

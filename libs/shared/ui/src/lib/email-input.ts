@@ -29,7 +29,7 @@ export interface EmailInputI18n {
   template: `
   <ion-item lines="none" [button]="false">
     <ion-input #emailInput
-      type="email"
+      [type]="type()"
       [name]="i18n().name"
       [ngModel]="value()"
       (ngModelChange)="value.set($event)"
@@ -64,6 +64,9 @@ export class EmailInput {
   public clearInput = input(true); // show an icon to clear the input field
   public autocomplete = input('email'); // autocomplete value for the input field
   public autofocus = input(false); // if true, the input field is focused on component initialization
+  // 'text' when the field may also hold a Benutzername (spec 1.71 §5.1) — type="email" would show
+  // the browser's own invalid-email styling for a value like "max_mueller".
+  public type = input<'email' | 'text'>('email');
 
   // view children
   protected emailInput = viewChild<IonInput>('emailInput');

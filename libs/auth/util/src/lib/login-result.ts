@@ -33,6 +33,11 @@ export function toLoginFailure(ex: unknown): LoginFailure {
     case 'auth/user-disabled':           return 'disabled';
     case 'auth/too-many-requests':       return 'tooManyAttempts';
     case 'auth/network-request-failed':  return 'network';
+    // The Benutzername callable (loginWithLoginId, spec 1.71 §5.1) answers with its own
+    // HttpsError codes — it never throws a Firebase Auth `auth/*` error.
+    case 'functions/unauthenticated':    return 'wrongCredentials';
+    case 'functions/resource-exhausted': return 'tooManyAttempts';
+    case 'functions/unavailable':        return 'network';
     default:                             return 'unknown';
   }
 }
