@@ -1,6 +1,9 @@
 {
   "profile": "Profil",
   "intro": "Ici, vous pouvez définir vos coordonnées et adapter le comportement de l'application à vos besoins. Certains champs ne peuvent pas être modifiés vous-même, car ils sont nécessaires dans le système. Pour de telles corrections, veuillez vous adresser à ",
+  "loginId": {
+    "label": "Nom d'utilisateur"
+  },
   "personal": {
     "title": "Données personnelles",
     "description": "Mettez à jour ici vos données personnelles, comme p. ex. le numéro AVS.",

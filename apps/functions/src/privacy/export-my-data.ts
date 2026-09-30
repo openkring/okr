@@ -12,6 +12,7 @@ import { AppConfigCollection, UserCollection } from '@okr/shared-models';
 import type { ExportMyDataResponse } from '@okr/shared-models';
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
 import { getTodayStr, DateFormat } from '@okr/shared-util-core';
+import { isSyntheticLoginEmail } from '@okr/user-util';
 
 import { gatherSubjectData } from './gather';
 import { renderExportReport, renderReadme } from './report';
@@ -94,16 +95,30 @@ async function signDownloadUrl(file: File, expiresAtMs: number): Promise<string>
  * Exported so `export-my-data.spec.ts` can test the derivation (including the missing
  * personKey/tenantId failure path) without Firestore.
  */
-export function buildSubjectCtx(uid: string, userData: Record<string, unknown> | undefined): SubjectCtx {
+export function buildSubjectCtx(uid: string, userData: Record<string, unknown> | undefined, favEmail?: string): SubjectCtx {
   const personKey = String(userData?.['personKey'] ?? '');
   const tenants = Array.isArray(userData?.['tenants']) ? (userData['tenants'] as string[]) : [];
   const tenantId = tenants[0] ?? '';
-  const email = String(userData?.['loginEmail'] ?? '').toLowerCase();
+  const loginEmail = String(userData?.['loginEmail'] ?? '').toLowerCase();
+  // a Benutzername account's login address is synthetic (spec 1.71 §7): the person's real
+  // address is the favourite email from the address-directory, passed in by the caller
+  const email = isSyntheticLoginEmail(loginEmail) ? (favEmail ?? '').toLowerCase() : loginEmail;
 
   if (personKey === '' || tenantId === '') {
     throw new HttpsError('failed-precondition', 'User is not linked to a person or a tenant.');
   }
   return { uid, personKey, parentKey: `person.${personKey}`, tenantId, email };
+}
+
+/** Favourite email from `address-directory/{tenantId}_person.{personKey}` — only read for a
+ * Benutzername account (synthetic login address); everyone else keeps their `loginEmail`. */
+async function loadFavEmailIfSynthetic(userData: Record<string, unknown> | undefined): Promise<string | undefined> {
+  if (!isSyntheticLoginEmail(String(userData?.['loginEmail'] ?? ''))) return undefined;
+  const personKey = String(userData?.['personKey'] ?? '');
+  const tenants = Array.isArray(userData?.['tenants']) ? (userData['tenants'] as string[]) : [];
+  if (personKey === '' || !tenants[0]) return undefined;
+  const snap = await getFirestore().collection('address-directory').doc(`${tenants[0]}_person.${personKey}`).get();
+  return (snap.data()?.['favEmail'] as string | undefined) || undefined;
 }
 
 /** Plain-text imprint/contact block for `renderReadme`'s "who is responsible" section,
@@ -160,7 +175,8 @@ export const exportMyData = onCall<void, Promise<ExportMyDataResponse>>(
     if (!userSnap.exists) {
       throw new HttpsError('permission-denied', 'No user document for the caller.');
     }
-    const ctx = buildSubjectCtx(uid, userSnap.data());
+    const userData = userSnap.data();
+    const ctx = buildSubjectCtx(uid, userData, await loadFavEmailIfSynthetic(userData));
 
     // One export per hour (D-P5-1) — but the cooldown must not cost the member the export
     // they already paid for: if the artifact from the last hour is still there, hand back a

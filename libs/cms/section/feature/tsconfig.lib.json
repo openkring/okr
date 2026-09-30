@@ -77,6 +77,7 @@
     { "path": "../../../task/data-access/tsconfig.lib.json" },
     { "path": "../../../task/feature/tsconfig.lib.json" },
     { "path": "../../../task/util/tsconfig.lib.json" },
-    { "path": "../../../user/data-access/tsconfig.lib.json" }
+    { "path": "../../../user/data-access/tsconfig.lib.json" },
+    { "path": "../../../user/util/tsconfig.lib.json" }
   ]
 }

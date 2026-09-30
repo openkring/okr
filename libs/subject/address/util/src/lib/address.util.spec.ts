@@ -488,6 +488,10 @@ describe('loginEmailDivergence', () => {
     expect(loginEmailDivergence(fav({ isArchived: true }), 'p1', 'old@b.ch')).toBeUndefined();
   });
 
+  it('never suggests an email for a synthetic Benutzername account', () => {
+    expect(loginEmailDivergence(fav({ email: 'anna@gmail.com' }), 'p1', 'max_mueller@login.seeclub.org')).toBeUndefined();
+  });
+
   it('is silent without a person key, login email or address value', () => {
     expect(loginEmailDivergence(fav(), undefined, 'old@b.ch')).toBeUndefined();
     expect(loginEmailDivergence(fav(), 'p1', undefined)).toBeUndefined();

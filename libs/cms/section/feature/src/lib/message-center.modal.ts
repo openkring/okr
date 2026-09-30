@@ -5,6 +5,7 @@ import { of } from 'rxjs';
 
 import { DeliveryChannels } from '@okr/shared-categories';
 import { AppStore } from '@okr/shared-feature';
+import { isSyntheticLoginEmail } from '@okr/user-util';
 import { DeliveryChannel, UserModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { I18nService } from '@okr/shared-i18n';
@@ -227,7 +228,8 @@ export class MessageCenterModal {
       result = result.filter(u =>
         u.firstName.toLowerCase().includes(term) ||
         u.lastName.toLowerCase().includes(term) ||
-        u.loginEmail.toLowerCase().includes(term)
+        u.loginEmail.toLowerCase().includes(term) ||
+        (u.loginId ?? '').includes(term)
       );
     }
 
@@ -294,8 +296,10 @@ export class MessageCenterModal {
     const checkedKeys = this.checkedKeys();
     const selectedEmails = allUsers
       .filter(u => checkedKeys.has(u.okey))
-      .map(u => u.loginEmail)
-      .filter(Boolean);
+      // a Benutzername account's login address is synthetic and not mailable (spec 1.71 §7)
+      .map(u => this.appStore.getDirectoryEntry(`person.${u.personKey}`)?.favEmail
+             || (isSyntheticLoginEmail(u.loginEmail) ? '' : u.loginEmail))
+      .filter((email): email is string => !!email);
 
     const from = this.from();
     const cc = this.parseEmails(this.cc());

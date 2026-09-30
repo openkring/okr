@@ -13,6 +13,7 @@
     "@okr/shared-categories": "*",
     "@okr/shared-i18n": "*",
     "@okr/shared-util-angular": "*",
-    "@okr/shared-util-core": "*"
+    "@okr/shared-util-core": "*",
+    "@okr/user-util": "*"
   }
 }

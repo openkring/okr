@@ -1,6 +1,9 @@
 {
   "profile": "Profilo",
   "intro": "Qui puoi impostare i tuoi dati di contatto e adattare il comportamento dell'applicazione alle tue esigenze. Alcuni campi non puoi modificarli tu stesso, perché sono necessari nel sistema. Per tali correzioni rivolgiti a ",
+  "loginId": {
+    "label": "Nome utente"
+  },
   "personal": {
     "title": "Dati personali",
     "description": "Aggiorna qui i tuoi dati personali, come ad es. il numero AVS.",

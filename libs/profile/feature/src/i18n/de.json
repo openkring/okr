@@ -1,6 +1,9 @@
 {
   "profile": "Profil",
   "intro": "Hier kannst du deine Kontaktdaten festlegen und das Verhalten der Applikation an deine Bedürfnisse anpassen. Gewisse Felder kannst du nicht selber ändern, weil sie im System benötigt werden. Bitte wende dich für solche Korrekturen an ",
+  "loginId": {
+    "label": "Benutzername"
+  },
   "personal": {
     "title": "Persönliche Daten",
     "description": "Aktualisiere hier deine persönlichen Daten wie z.B die AHV-Nummer.",

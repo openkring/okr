@@ -23,6 +23,16 @@ describe('buildSubjectCtx', () => {
     expect(ctx.email).toBe('ann@scs.ch');
   });
 
+  it('uses the favourite email for a synthetic Benutzername account', () => {
+    const user = { personKey: 'p1', tenants: ['scs'], loginEmail: 'max_mueller@login.seeclub.org' };
+    expect(buildSubjectCtx('uid1', user, 'Anna@Gmail.com').email).toBe('anna@gmail.com');
+    expect(buildSubjectCtx('uid1', user).email).toBe('');
+  });
+
+  it('ignores the favourite email for a real login address', () => {
+    expect(buildSubjectCtx('uid1', { personKey: 'p1', tenants: ['scs'], loginEmail: 'a@b.ch' }, 'x@y.ch').email).toBe('a@b.ch');
+  });
+
   it('throws failed-precondition when the user has no personKey', () => {
     expect(() => buildSubjectCtx('uid1', { personKey: '', tenants: ['scs'] }))
       .toThrow(HttpsError);

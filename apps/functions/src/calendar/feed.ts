@@ -4,6 +4,7 @@ import { logger } from 'firebase-functions/v2';
 import { getFirestore } from 'firebase-admin/firestore';
 import { buildICS } from './index';
 import { computeWindow, filterMyFeed, isCalendarSubscribable, isEventVisibleTo, resolveListId, toPartstat } from './feed.util';
+import { isSyntheticLoginEmail } from '@okr/user-util';
 import { appBaseUrl } from '../alias/tenant-domains';
 
 const FEEDS = 'calendarFeeds';
@@ -248,7 +249,8 @@ export const calendarFeed = onRequest(
         listIdFor: (e) => mode === 'event'
           ? resolveListId(e as never, e.calendars?.length ? 'calendar' : 'my', e.calendars ?? [])
           : resolveListId(e as never, mode, requestedKeys),
-        attendee: user?.loginEmail
+        // a Benutzername account's login address is synthetic, not a mailable attendee (spec 1.71 §7)
+        attendee: user?.loginEmail && !isSyntheticLoginEmail(user.loginEmail)
           ? { cn: `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim(), email: user.loginEmail }
           : undefined,
         partstatFor: (e) => toPartstat(stateByEvent.get((e as { okey: string }).okey)),

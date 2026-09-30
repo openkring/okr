@@ -1,6 +1,9 @@
 {
   "profile": "Profile",
   "intro": "Here you can set your contact details and adapt the behavior of the application to your needs. Certain fields you cannot change yourself because they are needed in the system. For such corrections please contact ",
+  "loginId": {
+    "label": "Username"
+  },
   "personal": {
     "title": "Personal data",
     "description": "Update your personal data here, such as the AHV number.",

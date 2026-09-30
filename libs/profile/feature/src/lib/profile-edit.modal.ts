@@ -37,7 +37,7 @@ import { EmailSignatureAccordion } from './email-signature.accordion';
             key="{{parentKey()}}"
             [title]="avatarTitle()"
             modelType="person"
-            subTitle="{{ 'mailto:' + loginEmail() }}"
+            subTitle="{{ loginIdSubtitle() }}"
             [readOnly]="false"
             (imageSelected)="onImageSelected($event)"
         />
@@ -130,7 +130,10 @@ export class ProfileEditModal {
   protected tenantId = computed(() => this.store.tenantId());
   protected availableLanguages = computed(() =>
     Languages.filter((l) => !!l.abbreviation && this.store.appStore.enabledLanguageCodes().includes(l.abbreviation)));
-  protected loginEmail = computed(() => this.currentUser()?.loginEmail || '');
+  protected loginIdSubtitle = computed(() => {
+    const loginId = this.currentUser()?.loginId;
+    return loginId ? this.store.i18n.loginId_label() + ': ' + loginId : '';
+  });
   protected parentKey = computed(() => `${PersonModelName}.${this.personKey()}`);
   protected avatarTitle = computed(() => this.currentPerson()?.firstName + ' ' + this.currentPerson()?.lastName);
   protected introHtml = computed(async () => this.store.i18n.intro() + ' <a href=mailto:"' + this.store.appStore.appConfig().opEmail + '">Website Admin</a>.');

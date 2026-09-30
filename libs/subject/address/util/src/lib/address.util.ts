@@ -4,6 +4,7 @@ import { ToastController } from '@ionic/angular';
 
 import { AddressModel, DirectoryEntry, isSensitiveScalarChannel, UserModel } from '@okr/shared-models';
 import { copyToClipboard, formatIban, formatPhoneNumber, IbanFormat, showToast } from '@okr/shared-util-angular';
+import { isSyntheticLoginEmail } from '@okr/user-util';
 import { die, getCountryName, isType, replaceEndingSlash, replaceSubstring } from '@okr/shared-util-core';
 
 /*-------------------------- address visibility ------------------------------*/
@@ -49,6 +50,8 @@ export function shouldBecomeFavorite(address: AddressModel, siblings: AddressMod
  */
 export function loginEmailDivergence(address: AddressModel, personKey?: string, loginEmail?: string): 'changed' | 'unfavored' | undefined {
   if (!personKey || !loginEmail || !address.email) return undefined;
+  // a Benutzername account (spec 1.71): its login is not an address, so no address can "diverge" from it
+  if (isSyntheticLoginEmail(loginEmail)) return undefined;
   if (address.addressChannel !== 'email' || address.isArchived) return undefined;
   if (address.parentKey !== 'person.' + personKey) return undefined;
   const isLoginEmail = address.email.toLowerCase() === loginEmail.toLowerCase();

@@ -5,6 +5,7 @@ const PFX = '@profile/feature.';
 export const PROFILE_I18N_KEYS = {
   profile:                         PFX + 'profile',
   intro:                           PFX + 'intro',
+  loginId_label:                   PFX + 'loginId.label',
   personal_title:                  PFX + 'personal.title',
   personal_description:            PFX + 'personal.description',
   personal_dob_label:              PFX + 'personal.dateOfBirth.label',
