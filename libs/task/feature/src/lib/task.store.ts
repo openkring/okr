@@ -326,6 +326,12 @@ export const TaskStore = signalStore(
       await store.taskService.delete(task, store.currentUser());
     },
 
+    /** Restore an archived task (spec §10). Same permission as delete/archive. Gated here, not only in the ActionSheet. */
+    async restore(task?: TaskModel): Promise<void> {
+      if (!task || !this.canDeleteTask(task)) return;
+      await store.taskService.restore(task, store.currentUser());
+    },
+
     /** Toggle completion: open → done today, done → planned. Never mutates the streamed task. */
     async toggleCompleted(task: TaskModel): Promise<void> {
       if (!this.canChangeTask(task)) return;

@@ -508,6 +508,7 @@
     "journal-import-bank": "Import bank statement",
     "task-add": "Create new task",
     "task-all": "All to-dos",
+    "task-archived": "Show archived",
     "task-export": "Export tasks",
     "task-settings": "Settings",
     "terms": "Terms and conditions",

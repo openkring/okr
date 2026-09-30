@@ -4,6 +4,7 @@
   "desc": "Tareas que deben realizarse.",
   "empty": "No se encontraron tareas.",
   "empty-my": "¡Enhorabuena ! - No tiene tareas pendientes.",
+  "archived_count": "archivadas",
   "calendar": {
     "name": {
       "label": "Calendario",
@@ -31,6 +32,11 @@
     "label": "Modificar tarea",
     "conf": "La tarea se ha modificado.",
     "error": "No se pudo modificar la tarea."
+  },
+  "restore": {
+    "label": "Restaurar",
+    "conf": "La tarea se ha restaurado.",
+    "error": "No se pudo restaurar la tarea."
   },
   "view": {
     "label": "Ver detalles de la tarea"

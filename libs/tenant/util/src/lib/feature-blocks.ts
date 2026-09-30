@@ -2289,6 +2289,11 @@ const task: FeatureBlock = {
       // `c-calevents`. `TaskList` binds it through `[toggleStates]="{ toggleFilter: showFilter() }"`
       // (`task-list.ts:72`), so the `toggle` action and the `toggleFilter` url are both load-bearing.
       { key: 'filter-toggle', name: 'filter-toggle', url: 'toggleFilter', action: 'toggle', roleNeeded: 'contentAdmin', icon: 'eye-on', label: '@item.filter-toggle' },
+      // spec §10 — the archived-tasks toggle. `registered` (not `contentAdmin` like
+      // `filter-toggle`): any member may show/hide their own archived todos, same reach as
+      // `task-add`/`task-export` above. `TaskList` binds it through
+      // `[toggleStates]="{ toggleFilter: showFilter(), toggleArchived: store.showArchived() }"`.
+      { key: 'task-archived', name: 'task-archived', url: 'toggleArchived', action: 'toggle', roleNeeded: 'registered', icon: 'history', label: '@item.task-archived' },
       // spec 1.72 §8.2/§9 — the two AppConfig task settings (taskArchiveDays,
       // taskDiaryTenantId), admin-only: `TaskList.onPopoverDismiss` case 'settings' opens
       // `TaskSettingsModal` via `TaskStore.editSettings()`.

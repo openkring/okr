@@ -8,6 +8,7 @@ export const TASK_I18N_KEYS = {
   desc:                           PFX + 'desc',
   empty:                          PFX + 'empty',
   empty_my:                       PFX + 'empty-my',
+  archived_count:                 PFX + 'archived_count',
 
   calendarName_label:              PFX + 'calendar.name.label',
   calendarName_description:        PFX + 'calendar.name.description',
@@ -29,6 +30,10 @@ export const TASK_I18N_KEYS = {
   update:                         PFX + 'update.label',
   update_conf:                    PFX + 'update.conf',
   update_error:                   PFX + 'update.error',
+
+  restore:                        PFX + 'restore.label',
+  restore_conf:                   PFX + 'restore.conf',
+  restore_error:                  PFX + 'restore.error',
 
   view:                           PFX + 'view.label',
 

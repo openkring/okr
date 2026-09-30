@@ -56,9 +56,13 @@ import { TaskMove, TaskStore } from './task.store';
         @if(showMenuButton()) {
           <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
         }
-        <ion-title>{{ selectedTasksCount()}}/{{tasksCount()}} {{ store.i18n.tasks() }}</ion-title>
+        @if(store.showArchived()) {
+          <ion-title>{{ selectedTasksCount() }} {{ store.i18n.archived_count() }}</ion-title>
+        } @else {
+          <ion-title>{{ selectedTasksCount()}}/{{tasksCount()}} {{ store.i18n.tasks() }}</ion-title>
+        }
         <ion-buttons slot="end">
-          @if(showViewToggle()) {
+          @if(showViewToggle() && !store.showArchived()) {
             <ion-button (click)="toggleView()">
               <ion-icon slot="icon-only" src="{{ (isListView() ? 'grid' : 'list') | svgIcon }}" />
             </ion-button>
@@ -73,7 +77,7 @@ import { TaskMove, TaskStore } from './task.store';
           <ion-popover [trigger]="popupId()" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
             <ng-template>
               <ion-content>
-                <okr-menu [menuName]="contextMenuName()" [forceVisible]="groupAdmin()" [forceVisibleSelf]="true" [toggleStates]="{ toggleFilter: showFilter() }"/>
+                <okr-menu [menuName]="contextMenuName()" [forceVisible]="groupAdmin()" [forceVisibleSelf]="true" [toggleStates]="{ toggleFilter: showFilter(), toggleArchived: store.showArchived() }"/>
               </ion-content>
             </ng-template>
           </ion-popover>
@@ -81,8 +85,8 @@ import { TaskMove, TaskStore } from './task.store';
       </ion-toolbar>
       }
 
-      <!-- quick entry -->
-      @if(canCreate()) {
+      <!-- quick entry — hidden while showing archived tasks (spec §10): archived tasks are read-only besides restore -->
+      @if(canCreate() && !store.showArchived()) {
         <ion-item lines="none">
           <ion-textarea #okrQuickEntry
             (keyup.enter)="quickEntry(okrQuickEntry)"
@@ -115,9 +119,10 @@ import { TaskMove, TaskStore } from './task.store';
       }
     </ion-header>
 
-  <!-- list or board -->
+  <!-- list or board — the board view is hidden while showing archived tasks (spec §10), so an
+       archived toggle flipped while on the board falls back to the list -->
   <ion-content #content>
-      @if(isListView()) {
+      @if(isListView() || store.showArchived()) {
         @if(selectedTasksCount() === 0) {
           <okr-empty-list [message]="store.i18n.empty()" />
         } @else {
@@ -319,6 +324,7 @@ export class TaskList {
       case 'add': await this.store.add(); break;
       case 'export': await this.store.export('raw'); break;
       case 'toggleFilter': this.showFilter.update(v => !v); break;
+      case 'toggleArchived': this.store.toggleShowArchived(); break;
       case 'settings': await this.store.editSettings(); break;
       default: error(undefined, `TaskList.onPopoverDismiss: unknown method ${selectedMethod}`);
     }
@@ -340,6 +346,20 @@ export class TaskList {
    * @param task 
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, task: TaskModel): void {
+    // archived tasks (spec §10): read-only besides restore — no edit, no complete, no delete,
+    // whether or not the user could otherwise change this task.
+    if (this.store.showArchived()) {
+      actionSheetOptions.buttons.push(createActionSheetButton('task.view', this.store.i18n.view(), this.imgixBaseUrl, 'eye-on'));
+      if (this.store.canDeleteTask(task)) {
+        actionSheetOptions.buttons.push(createActionSheetButton('task.restore', this.store.i18n.restore(), this.imgixBaseUrl, 'reload'));
+      }
+      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
+      if (actionSheetOptions.buttons.length === 1) { // only cancel button
+        actionSheetOptions.buttons = [];
+      }
+      return;
+    }
+
     if (this.canChange(task) && !isTaskCompleted(task)) {
       actionSheetOptions.buttons.push(createActionSheetButton('task.complete', this.store.i18n.done(), this.imgixBaseUrl, 'checkbox'));
       actionSheetOptions.buttons.push(createActionSheetDivider());
@@ -381,6 +401,9 @@ export class TaskList {
           break;
         case 'task.complete':
           await this.store.toggleCompleted(task);
+          break;
+        case 'task.restore':
+          await this.store.restore(task);
           break;
 
       }

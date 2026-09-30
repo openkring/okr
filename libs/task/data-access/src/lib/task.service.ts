@@ -110,6 +110,18 @@ export class TaskService {
   }
 
   /**
+   * Restore an archived task (spec §10): only `isArchived` flips back to false, same one-field
+   * shape as saveCompletion/saveBoardPosition — a one-tap action, not a form save, so no toast
+   * and no audit comment, just one activity entry. The Firestore rules (Task 3) allow this
+   * isArchived true→false transition through the ordinary-update branch; gating on
+   * `canDeleteTask` is done by the caller (TaskStore.restore), not here.
+   */
+  public async restore(task: TaskModel, currentUser?: UserModel): Promise<void> {
+    await this.firestoreService.updateObject(TaskCollection, task.okey, { isArchived: false }, false);
+    void this.activityService.log('task', 'update', currentUser, `${task.okey}: ${task.name}/restore`);
+  }
+
+  /**
    * Persist backfilled ranks for a column whose tasks had none. Silent and unlogged: this is
    * bookkeeping triggered by someone else's drag, not an edit they made.
    */

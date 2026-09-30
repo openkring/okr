@@ -4,6 +4,7 @@
   "desc": "Attività da svolgere.",
   "empty": "Nessuna attività trovata.",
   "empty-my": "Congratulazioni ! - Non hai attività in sospeso.",
+  "archived_count": "archiviate",
   "calendar": {
     "name": {
       "label": "Calendario",
@@ -31,6 +32,11 @@
     "label": "Modifica attività",
     "conf": "L'attività è stata modificata.",
     "error": "Impossibile modificare l'attività."
+  },
+  "restore": {
+    "label": "Ripristina",
+    "conf": "L'attività è stata ripristinata.",
+    "error": "Impossibile ripristinare l'attività."
   },
   "view": {
     "label": "Visualizza dettagli dell'attività"

@@ -4,6 +4,7 @@
   "desc": "Tâches à accomplir.",
   "empty": "Aucune tâche trouvée.",
   "empty-my": "Félicitations ! - Vous n'avez aucune tâche en cours.",
+  "archived_count": "archivées",
   "calendar": {
     "name": {
       "label": "Calendrier",
@@ -31,6 +32,11 @@
     "label": "Modifier la tâche",
     "conf": "La tâche a été modifiée.",
     "error": "La tâche n'a pas pu être modifiée."
+  },
+  "restore": {
+    "label": "Restaurer",
+    "conf": "La tâche a été restaurée.",
+    "error": "La tâche n'a pas pu être restaurée."
   },
   "view": {
     "label": "Afficher les détails de la tâche"

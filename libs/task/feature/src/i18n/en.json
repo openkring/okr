@@ -4,6 +4,7 @@
   "desc": "Tasks that need to be done.",
   "empty": "No todos found.",
   "empty-my": "Congratulations ! - You have no open tasks.",
+  "archived_count": "archived",
   "calendar": {
     "name": {
       "label": "Calendar",
@@ -31,6 +32,11 @@
     "label": "Edit todo",
     "conf": "Todo was changed.",
     "error": "Todo could not be changed."
+  },
+  "restore": {
+    "label": "Restore",
+    "conf": "Todo was restored.",
+    "error": "Todo could not be restored."
   },
   "view": {
     "label": "View todo details"

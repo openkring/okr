@@ -4,6 +4,7 @@
   "desc": "Aufgaben, die erledigt werden sollen.",
   "empty": "Keine Todos gefunden.",
   "empty-my": "Gratulation ! - Du hast keine offenen Aufgaben.",
+  "archived_count": "archiviert",
   "calendar": {
     "name": {
       "label": "Kalender",
@@ -31,6 +32,11 @@
     "label": "Todo ändern",
     "conf": "Todo wurde geändert.",
     "error": "Todo konnte nicht geändert werden."
+  },
+  "restore": {
+    "label": "Wiederherstellen",
+    "conf": "Todo wurde wiederhergestellt.",
+    "error": "Todo konnte nicht wiederhergestellt werden."
   },
   "view": {
     "label": "Todo Details ansehen"

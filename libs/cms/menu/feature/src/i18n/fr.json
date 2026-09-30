@@ -508,6 +508,7 @@
     "journal-import-bank": "Importer un relevé bancaire",
     "task-add": "Créer une nouvelle tâche",
     "task-all": "Toutes les tâches",
+    "task-archived": "Afficher les archivées",
     "task-export": "Exporter les tâches",
     "task-settings": "Paramètres",
     "terms": "Conditions générales",
