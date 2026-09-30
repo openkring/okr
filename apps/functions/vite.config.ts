@@ -24,4 +24,6 @@ const appConfig = defineConfig({
   },
 });
 
-export default mergeConfig(appConfig, sharedTestConfig);
+// Shared first, app second: later configs win on scalars, so `environment: 'node'` overrides the
+// shared jsdom default. The reverse order silently ran all functions tests under jsdom.
+export default mergeConfig(sharedTestConfig, appConfig);

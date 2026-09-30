@@ -1,4 +1,4 @@
-import * as admin from 'firebase-admin';
+import { getFirestore } from 'firebase-admin/firestore';
 import * as logger from "firebase-functions/logger";
 import { onDocumentWritten } from "firebase-functions/v2/firestore";
 
@@ -24,7 +24,7 @@ import {
 } from "@okr/shared-util-functions";
 import { getStoreDateYear } from "@okr/shared-util-core";
 
-const firestore = admin.firestore();
+const db = () => getFirestore();
 
 /**
  * Synchronizes a set of related documents with new (denormalized) data.
@@ -46,7 +46,7 @@ async function syncRelations(
   try {
     for (const relation of relations) {
       if (hasChanged(relation, newData)) {
-        await admin.firestore().doc(`${collection}/${relation.okey}`).update(newData);
+        await db().doc(`${collection}/${relation.okey}`).update(newData);
         logger.info(`Successfully updated ${label} ${relation.okey} for ${sourceId}`);
       }
     }
@@ -120,7 +120,7 @@ export const onAddressChange = onDocumentWritten(
       // this function; syncAddressOwnerName read-compares and the second pass is a
       // no-op, exactly like demoteFavorites below.
       if (after) {
-        await syncAddressOwnerName(firestore, addressId, after);
+        await syncAddressOwnerName(db(), addressId, after);
       }
       // …and skip the rest on the invocation that write-back caused: no replication
       // target derives from `index`, so there is nothing left to sync.
@@ -130,23 +130,23 @@ export const onAddressChange = onDocumentWritten(
       }
 
       for (const parentKey of parentKeys) {
-        const addresses = await getActiveAddresses(firestore, parentKey);
+        const addresses = await getActiveAddresses(db(), parentKey);
         // enforce ONE favorite per channel before anything derives from the list:
         // demoteFavorites mutates `addresses`, so the zip code and the projection below
         // are both computed from the corrected state in this same pass.
-        await demoteFavorites(firestore, addresses, addressId);
-        await updateFavoriteZipCode(firestore, parentKey, addresses);
+        await demoteFavorites(db(), addresses, addressId);
+        await updateFavoriteZipCode(db(), parentKey, addresses);
         // spec 1.19 Phase 4: keep the address-directory projection in sync.
         // Writes only address-directory (no trigger on it) — no recursion.
-        await writeAddressDirectory(firestore, parentKey);
+        await writeAddressDirectory(db(), parentKey);
 
         if (!parentKey.startsWith('person.')) continue;
         const personId = parentKey.substring('person.'.length);
         if (touchedChannels.has('dob')) {
-          await syncBirthYearReplicas(firestore, personId, addresses);
+          await syncBirthYearReplicas(db(), personId, addresses);
         }
         if (touchedChannels.has('dod')) {
-          await syncDateOfDeathReplicas(firestore, personId, addresses);
+          await syncDateOfDeathReplicas(db(), personId, addresses);
         }
       }
     }
@@ -186,7 +186,7 @@ export const onAppConfigChange = onDocumentWritten(
 
     logger.info(`app-config ${tenantId}: privacy floors changed — rebuilding the address directory`);
     try {
-      const result = await rebuildDirectoryForTenant(firestore, tenantId);
+      const result = await rebuildDirectoryForTenant(db(), tenantId);
       logger.info(`Rebuilt address directory for tenant ${tenantId}`, result);
     } catch (error) {
       logger.error(`Error rebuilding address directory for tenant ${tenantId}:`, { error });
@@ -217,10 +217,10 @@ export const onResourceChange = onDocumentWritten(
           resourceSubType: resource.subType,
         };
         // synchronize the ownerships (resource objects only; an account may share this key)
-        const ownerships = await getAllOwnershipsOfResource(firestore, resourceId, 'resource')
+        const ownerships = await getAllOwnershipsOfResource(db(), resourceId, 'resource')
         for (const ownership of ownerships) {
           if (hasChanged(ownership, newOwnershipData)) {
-            const ownershipRef = admin.firestore().doc(`${OwnershipCollection}/${ownership.okey}`);
+            const ownershipRef = db().doc(`${OwnershipCollection}/${ownership.okey}`);
             await ownershipRef.update(newOwnershipData);
             logger.info(`Successfully updated ownership ${ownership.okey} for resource ${resourceId}`);
           }
@@ -233,10 +233,10 @@ export const onResourceChange = onDocumentWritten(
           'resource.subType': resource.subType,
         };
         // synchronize the reservations (resource objects only; an account may share this key)
-        const reservations = await getAllReservationsOfResource(firestore, resourceId, 'resource');
+        const reservations = await getAllReservationsOfResource(db(), resourceId, 'resource');
         for (const reservation of reservations) {
           if (hasChanged(reservation, newReservationData)) {
-            const resRef = admin.firestore().doc(`${ReservationCollection}/${reservation.okey}`);
+            const resRef = db().doc(`${ReservationCollection}/${reservation.okey}`);
             await resRef.update(newReservationData);
             logger.info(`Successfully updated reservation ${reservation.okey} for resource ${resourceId} (resource)`);
           }
@@ -274,7 +274,7 @@ export const onPersonChange = onDocumentWritten(
       || privacyInputs.some((f) => JSON.stringify(before[f] ?? null) !== JSON.stringify(person[f] ?? null));
     if (privacyChanged) {
       try {
-        await writeAddressDirectory(firestore, `person.${personId}`);
+        await writeAddressDirectory(db(), `person.${personId}`);
       } catch (error) {
         logger.error(`Error rebuilding address directory for person ${personId}:`, { error });
       }
@@ -285,7 +285,7 @@ export const onPersonChange = onDocumentWritten(
       // the projection was already cleaned above; the vault itself has no other reaper.
       // Only a HARD delete gets here — the app archives persons (see reapDeletedPerson).
       try {
-        await reapDeletedPerson(firestore, personId);
+        await reapDeletedPerson(db(), personId);
       } catch (error) {
         logger.error(`Error reaping the vault of deleted person ${personId}:`, { error });
       }
@@ -298,7 +298,7 @@ export const onPersonChange = onDocumentWritten(
     // next write to each address. Diff first: person writes are frequent.
     if (!before || before.firstName !== person.firstName || before.lastName !== person.lastName) {
       try {
-        await syncOwnerNameOnAddresses(firestore, `person.${personId}`);
+        await syncOwnerNameOnAddresses(db(), `person.${personId}`);
       } catch (error) {
         logger.error(`Error refreshing the address index owner name of person ${personId}:`, { error });
       }
@@ -309,7 +309,7 @@ export const onPersonChange = onDocumentWritten(
 
     // synchronize the ownerships
     await syncRelations('ownership', source, OwnershipCollection,
-      await fetchRelations('ownerships', source, () => getAllOwnershipsOfOwner(firestore, personId, 'person')),
+      await fetchRelations('ownerships', source, () => getAllOwnershipsOfOwner(db(), personId, 'person')),
       {
         ownerName1: person.firstName,
         ownerName2: person.lastName,
@@ -318,7 +318,7 @@ export const onPersonChange = onDocumentWritten(
 
     // synchronize the memberships
     await syncRelations('membership', source, MembershipCollection,
-      await fetchRelations('memberships', source, () => getAllMembershipsOfMember(firestore, personId, 'person')),
+      await fetchRelations('memberships', source, () => getAllMembershipsOfMember(db(), personId, 'person')),
       {
         memberName1: person.firstName,
         memberName2: person.lastName,
@@ -332,7 +332,7 @@ export const onPersonChange = onDocumentWritten(
 
     // synchronize the personalRels (by subject)
     await syncRelations('personalRel (subject)', source, PersonalRelCollection,
-      await fetchRelations('personalRels (subject)', source, () => getAllPersonalRelsOfSubject(firestore, personId)),
+      await fetchRelations('personalRels (subject)', source, () => getAllPersonalRelsOfSubject(db(), personId)),
       {
         subjectFirstName: person.firstName,
         subjectLastName: person.lastName,
@@ -341,7 +341,7 @@ export const onPersonChange = onDocumentWritten(
 
     // synchronize the personalRels (by object)
     await syncRelations('personalRel (object)', source, PersonalRelCollection,
-      await fetchRelations('personalRels (object)', source, () => getAllPersonalRelsOfObject(firestore, personId)),
+      await fetchRelations('personalRels (object)', source, () => getAllPersonalRelsOfObject(db(), personId)),
       {
         objectFirstName: person.firstName,
         objectLastName: person.lastName,
@@ -350,7 +350,7 @@ export const onPersonChange = onDocumentWritten(
 
     // synchronize the workRels (by subject)
     await syncRelations('workingRel (subject)', source, WorkrelCollection,
-      await fetchRelations('workingRels (subject)', source, () => getAllWorkrelsOfSubject(firestore, personId, 'person')),
+      await fetchRelations('workingRels (subject)', source, () => getAllWorkrelsOfSubject(db(), personId, 'person')),
       {
         subjectName1: person.firstName,
         subjectName2: person.lastName,
@@ -359,7 +359,7 @@ export const onPersonChange = onDocumentWritten(
 
     // synchronize the reservations (by reserver) — reserver is a nested AvatarInfo map (dot-notation update)
     await syncRelations('reservation (reserver)', source, ReservationCollection,
-      await fetchRelations('reservations (reserver)', source, () => getAllReservationsOfReserver(firestore, personId, 'person')),
+      await fetchRelations('reservations (reserver)', source, () => getAllReservationsOfReserver(db(), personId, 'person')),
       {
         'reserver.name1': person.firstName,
         'reserver.name2': person.lastName,
@@ -390,7 +390,7 @@ export const onOrgChange = onDocumentWritten(
       || JSON.stringify(beforeOrg['tenants'] ?? null) !== JSON.stringify(afterOrg['tenants'] ?? null);
     if (orgTenantsChanged) {
       try {
-        await writeAddressDirectory(firestore, `org.${orgId}`);
+        await writeAddressDirectory(db(), `org.${orgId}`);
       } catch (error) {
         logger.error(`Error rebuilding address directory for org ${orgId}:`, { error });
       }
@@ -400,7 +400,7 @@ export const onOrgChange = onDocumentWritten(
     // same rationale as onPersonChange.
     if (afterOrg && (!beforeOrg || beforeOrg['name'] !== afterOrg['name'])) {
       try {
-        await syncOwnerNameOnAddresses(firestore, `org.${orgId}`);
+        await syncOwnerNameOnAddresses(db(), `org.${orgId}`);
       } catch (error) {
         logger.error(`Error refreshing the address index owner name of org ${orgId}:`, { error });
       }
@@ -416,10 +416,10 @@ export const onOrgChange = onDocumentWritten(
           ownerName2: org.name,
           ownerType: org.type
         };
-        const ownerships = await getAllOwnershipsOfOwner(firestore, orgId, 'org');
+        const ownerships = await getAllOwnershipsOfOwner(db(), orgId, 'org');
         for (const ownership of ownerships) {
           if (hasChanged(ownership, newOwner)) {
-            const ownershipRef = admin.firestore().doc(`${OwnershipCollection}/${ownership.okey}`);
+            const ownershipRef = db().doc(`${OwnershipCollection}/${ownership.okey}`);
             await ownershipRef.update(newOwner);
             logger.info(`Successfully updated ownership ${ownership.okey} for org ${orgId} (owner)`);
           }
@@ -435,20 +435,20 @@ export const onOrgChange = onDocumentWritten(
           memberZipCode: org.favZipCode,
           memberBexioId: org.bexioId
         };
-        const memberships = await getAllMembershipsOfMember(firestore, orgId, 'org');
+        const memberships = await getAllMembershipsOfMember(db(), orgId, 'org');
         for (const membership of memberships) {
           if (hasChanged(membership, newMember)) {
-            const membershipRef = admin.firestore().doc(`${MembershipCollection}/${membership.okey}`);
+            const membershipRef = db().doc(`${MembershipCollection}/${membership.okey}`);
             await membershipRef.update(newMember);
             logger.info(`Successfully updated membership ${membership.okey} for org ${orgId} (member)`);
           }
         }
 
         // synchronize the membership org (org objects only; a group may share this key)
-        const memberOrgs = await getAllMembershipsOfOrg(firestore, orgId, 'org');
+        const memberOrgs = await getAllMembershipsOfOrg(db(), orgId, 'org');
         for (const membership of memberOrgs) {
           if (membership.orgName !== org.name) {
-            const membershipRef = admin.firestore().doc(`${MembershipCollection}/${membership.okey}`);
+            const membershipRef = db().doc(`${MembershipCollection}/${membership.okey}`);
             await membershipRef.update({
               orgName: org.name,
             });
@@ -457,10 +457,10 @@ export const onOrgChange = onDocumentWritten(
         }
 
         // synchronize the workingRels (by object)
-        const workRels = await getAllWorkrelsOfObject(firestore, orgId);
+        const workRels = await getAllWorkrelsOfObject(db(), orgId);
         for (const workRel of workRels) {
           if (workRel.objectName !== org.name || workRel.objectType !== org.type) {
-            const workRelRef = admin.firestore().doc(`${WorkrelCollection}/${workRel.okey}`);
+            const workRelRef = db().doc(`${WorkrelCollection}/${workRel.okey}`);
             await workRelRef.update({
               objectName: org.name,
               objectType: org.type,
@@ -476,10 +476,10 @@ export const onOrgChange = onDocumentWritten(
           'reserver.name2': org.name,
           'reserver.type': org.type,
         };
-        const orgReservations = await getAllReservationsOfReserver(firestore, orgId, 'org');
+        const orgReservations = await getAllReservationsOfReserver(db(), orgId, 'org');
         for (const reservation of orgReservations) {
           if (hasChanged(reservation, newReserver)) {
-            const resRef = admin.firestore().doc(`${ReservationCollection}/${reservation.okey}`);
+            const resRef = db().doc(`${ReservationCollection}/${reservation.okey}`);
             await resRef.update(newReserver);
             logger.info(`Successfully updated reservation ${reservation.okey} for org ${orgId} (reserver)`);
           }
@@ -519,20 +519,20 @@ export const onGroupChange = onDocumentWritten(
           memberZipCode: '',
           memberBexioId: ''
         };
-        const memberships = await getAllMembershipsOfMember(firestore, groupId, 'group');
+        const memberships = await getAllMembershipsOfMember(db(), groupId, 'group');
         for (const membership of memberships) {
           if (hasChanged(membership, newMember)) {
-            const membershipRef = admin.firestore().doc(`${MembershipCollection}/${membership.okey}`);
+            const membershipRef = db().doc(`${MembershipCollection}/${membership.okey}`);
             await membershipRef.update(newMember);
             logger.info(`Successfully updated membership ${membership.okey} for group ${groupId} (member)`);
           }
         }
 
         // synchronize the membership group (group objects only; an org may share this key)
-        const memberOrgs = await getAllMembershipsOfOrg(firestore, groupId, 'group');
+        const memberOrgs = await getAllMembershipsOfOrg(db(), groupId, 'group');
         for (const membership of memberOrgs) {
           if (membership.orgName !== group.name) {
-            const membershipRef = admin.firestore().doc(`${MembershipCollection}/${membership.okey}`);
+            const membershipRef = db().doc(`${MembershipCollection}/${membership.okey}`);
             await membershipRef.update({
               orgName: group.name,
             });

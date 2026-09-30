@@ -7,6 +7,7 @@ export default defineConfig({
     watch: false,
     globals: true,
     environment: 'jsdom',
+    maxWorkers: 2,        // per lib; Nx parallelism does the rest
     include: ['src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     // Many libs (per-module i18n maps, validation-only, barrel-only) have no unit-testable
     // code; the convention is to test util functions/services where they exist. Don't fail

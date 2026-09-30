@@ -293,6 +293,17 @@ See the **`firebase-deploy` skill** for all deployment commands and guidelines (
 - use test runner vite for unit tests
 - create unit tests for each util function (shared-util and feature/util)
 
+### Tests
+
+Unbounded test runs have exhausted the Mac's RAM (90+ GB swap), so test runs are capped:
+
+- Run tests only via `pnpm test:affected --base=<sha>` or `pnpm nx test <project>`; never call
+  `nx affected -t test` directly (the script pins `--parallel=3`).
+- Never run test commands in the background, in parallel with another test run, or in watch mode.
+- Never add a root `package.json` script named after an Nx target (e.g. `test`, `build`, `lint`)
+  that calls `nx <target>` — it recurses via the root `okr` project. `"nx": { "includedScripts": [] }`
+  in the root `package.json` guards against this; keep it.
+
 ### Patterns
 
 - for date conversions in Cloud Functions and libs, always use `convertDateFormatToString` / `convertDateFormat` / `DateFormat` from `@okr/shared-util-core`. Never write custom date helpers (e.g. no `toStoreDate` in bexio/shared.ts or similar).
