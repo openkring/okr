@@ -16,5 +16,9 @@
   },
   "include": ["src/**/*", "**/*.spec.ts", "**/*.test.ts"],
   "exclude": ["dist/**/*"],
-  "references": []
+  "references": [
+    { "path": "../util/tsconfig.lib.json" },
+    { "path": "../../../shared/i18n/tsconfig.lib.json" },
+    { "path": "../../../shared/ui/tsconfig.lib.json" }
+  ]
 }
