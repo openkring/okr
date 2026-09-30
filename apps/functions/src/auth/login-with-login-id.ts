@@ -111,13 +111,26 @@ export const loginWithLoginId = onCall(
     // per-account rate limit — only reachable for a real account, so answering resource-exhausted
     // here would itself be an existence oracle, fix round 1 #4a) both count as one of our failures
     // and both answer unauthenticated unless OUR OWN counter is what locks.
-    const locked = await getFirestore().runTransaction(async (tx) => {
-      const snap = await tx.get(ref);
-      const current = snap.data() as ThrottleState | undefined;
-      const next = afterFailure(current, Date.now());
-      tx.set(ref, { ...next, expireAt: Timestamp.fromMillis(Date.now() + 24 * 3600_000) });
-      return next.lockedUntil > 0;
-    });
+    let locked: boolean;
+    try {
+      locked = await getFirestore().runTransaction(async (tx) => {
+        const snap = await tx.get(ref);
+        const current = snap.data() as ThrottleState | undefined;
+        const next = afterFailure(current, Date.now());
+        tx.set(ref, { ...next, expireAt: Timestamp.fromMillis(Date.now() + 24 * 3600_000) });
+        // afterFailure leaves an already-active lock's lockedUntil untouched (fix round 2 #1), so
+        // this is true both right after we just tripped the lock AND when the state we read was
+        // already locked — exactly the "locked either already or after this failure" the ruling asks for.
+        return next.lockedUntil > 0;
+      });
+    } catch (error) {
+      // Contention (retries exhausted) or a Firestore error must not escape as functions/internal
+      // and must not skip the timing floor (fix round 2 #2) — fall back to the generic answer.
+      logger.error(`${CF_NAME}: failure-counter transaction failed — answering generically without updating the counter`, {
+        tenantId, code: errorCode(error),
+      });
+      return fail('unauthenticated');
+    }
     return fail(locked ? 'resource-exhausted' : 'unauthenticated');
   },
 );

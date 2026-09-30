@@ -72,6 +72,12 @@ describe('login throttle', () => {
     const locked = { failures: 0, lockedUntil: 5000 };
     expect(afterFailure(locked, 6000)).toEqual({ failures: 1, lockedUntil: 0 });
   });
+  it('a failure during an active lock keeps it locked', () => {
+    // fix round 2 #1: a burst of parallel wrong guesses that all read the same still-locked state
+    // must not each reset it to { failures: 1, lockedUntil: 0 } — that would permanently unlock.
+    const locked = { failures: 0, lockedUntil: 5000 };
+    expect(afterFailure(locked, 1000)).toEqual(locked);
+  });
   it('treats a missing state as clean', () => {
     expect(isLocked(undefined, 0)).toBe(false);
     expect(afterFailure(undefined, 0)).toEqual({ failures: 1, lockedUntil: 0 });

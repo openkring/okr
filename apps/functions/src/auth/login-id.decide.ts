@@ -62,6 +62,12 @@ export function isLocked(s: ThrottleState | undefined, now: number): boolean {
 }
 
 export function afterFailure(s: ThrottleState | undefined, now: number): ThrottleState {
+  // An active lock is not touched by a failure that lands during it (fix round 2 #1): without this,
+  // a burst of >= MAX_FAILURES parallel wrong guesses that all read the same already-locked state
+  // would each compute failures = 0 + 1 and overwrite the lock with { failures: 1, lockedUntil: 0 },
+  // permanently unlocking the account. Once locked, the state stays exactly as read until it expires
+  // naturally (isLocked(s, now) turns false), at which point the branch below resets the counter.
+  if (s && isLocked(s, now)) return s;
   const expired = !!s && s.lockedUntil > 0 && s.lockedUntil <= now;
   const failures = (expired ? 0 : s?.failures ?? 0) + 1;
   return failures >= MAX_FAILURES ? { failures: 0, lockedUntil: now + LOCK_MS } : { failures, lockedUntil: 0 };
