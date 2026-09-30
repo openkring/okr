@@ -2366,7 +2366,7 @@ const instruments: FeatureBlock = {
  *   games   umbrella  — no route, no menu, no collection; the group switch
  *     quiz  dependsOn ['games']  → /quiz   + one child row under `games-menu`
  *     zip   dependsOn ['games']  → /zip    + one child row under `games-menu`
- *     muehle, battleship, bimaru, hearing-quiz, jasstafel, tetris, mampf, wordle — same shape (added 2026-09-28/29)
+ *     muehle, battleship, bimaru, hearing-quiz, jasstafel, tetris, mampf, wordle, chess — same shape (added 2026-09-28/29)
  *
  * Every game block carries `bundle: 'games'` (since 2026-09-29), so the picker lists them
  * together under «Spiele» instead of scattering them through «Spezial».
@@ -2718,6 +2718,29 @@ const wordle: FeatureBlock = {
 };
 
 /**
+ * `libs/games/chess` — `ChessPage` + `ChessStore` at `/chess`, over the pure
+ * `@okr/games-chess-util` (rules engine, notation, alpha-beta computer opponent, clock).
+ *
+ * Chess against the computer at three levels, or two people at one device. The computer searches
+ * in a Web Worker. Settings and the one running game live in `localStorage` — no Firestore, hence
+ * `collections: []`.
+ *
+ * `defaultAvailability: 'ga'`, like the other finished games.
+ */
+const chess: FeatureBlock = {
+  id: 'chess',
+  bundle: 'games',
+  label: '@tenant/util.feature.chess.label',
+  icon: 'grid',
+  defaultAvailability: 'ga',
+  dependsOn: ['games'],
+  collections: [],
+  menu: [gamesMenuParent([
+    { key: 'game-chess', name: 'game-chess', url: '/chess', action: 'navigate', roleNeeded: 'registered', icon: 'grid', label: '@item.game-chess' },
+  ])],
+};
+
+/**
  * Every feature block's METADATA the platform ships. Adding a block here is HALF of what
  * makes a feature reachable — the matching Angular route fragment must also be added to
  * `FEATURE_ROUTES` in `@okr/tenant-routes` (`feature-catalogue.ts`), joined by `id`.
@@ -2888,7 +2911,7 @@ const weather: FeatureBlock = {
 };
 
 export const FEATURE_BLOCKS: FeatureBlock[] = [
-  calevent, aoc, activity, task, instruments, games, quiz, zip, hearingQuiz, crossword, muehle, battleship, bimaru, jasstafel, tetris, mampf, wordle,
+  calevent, aoc, activity, task, instruments, games, quiz, zip, hearingQuiz, crossword, muehle, battleship, bimaru, jasstafel, tetris, mampf, wordle, chess,
   auth, cms, user, profile, session, security, i18n, avatar, category, comment, geo, trip, consent,
   subject, relationship, vcard,
   resource, mobility,

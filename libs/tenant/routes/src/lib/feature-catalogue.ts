@@ -1300,6 +1300,19 @@ const wordle: BlockRoutes = {
 };
 
 /**
+ * `/chess` — Schach in `libs/games/chess`. `localStorage` only (settings, running game), no
+ * `:contextMenuName` segment — the same shape as `/zip`.
+ */
+const chess: BlockRoutes = {
+  id: 'chess',
+  routes: (): Route[] => [{
+    path: 'chess',
+    canActivate: [isAuthenticatedGuard],
+    loadComponent: () => import('@okr/games-chess-feature').then(m => m.ChessPage),
+  }],
+};
+
+/**
  * `/hearing-quiz` — Hörtraining (spec 1.64). The tree page follows the list convention
  * (`:listId/:contextMenuName`, listId always `all`); the two exercise routes come FIRST because
  * they have the same segment count and would otherwise be swallowed by the list route.
@@ -1434,7 +1447,7 @@ const weather: BlockRoutes = {
 };
 
 export const FEATURE_ROUTES: BlockRoutes[] = [
-  calevent, aoc, activity, task, instruments, games, quiz, zip, hearingQuiz, crossword, muehle, battleship, bimaru, jasstafel, tetris, mampf, wordle,
+  calevent, aoc, activity, task, instruments, games, quiz, zip, hearingQuiz, crossword, muehle, battleship, bimaru, jasstafel, tetris, mampf, wordle, chess,
   auth, cms, user, profile, session, security, i18n, avatar, category, comment, geo, trip, consent,
   subject, relationship, vcard,
   resource, mobility,

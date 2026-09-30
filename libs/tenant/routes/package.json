@@ -72,6 +72,7 @@
     "@okr/games-tetris-feature": "*",
     "@okr/games-mampf-feature": "*",
     "@okr/games-wordle-feature": "*",
+    "@okr/games-chess-feature": "*",
     "@okr/games-quiz-feature": "*",
     "@okr/games-zip-feature": "*"
   }

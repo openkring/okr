@@ -170,6 +170,9 @@
     },
     "wordle": {
       "label": "Wordle"
+    },
+    "chess": {
+      "label": "Schach"
     }
   },
   "picker": {
