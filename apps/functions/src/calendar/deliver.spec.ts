@@ -1,0 +1,35 @@
+import { describe, expect, it } from 'vitest';
+import { accountChannels, eventUrl, pickChannels } from './deliver';
+
+describe('pickChannels', () => {
+  it('reads the two electronic channels', () => {
+    expect(pickChannels(['email', 'chat'])).toEqual({ push: true, email: true });
+    expect(pickChannels(['email'])).toEqual({ push: false, email: true });
+    expect(pickChannels(['chat'])).toEqual({ push: true, email: false });
+  });
+  it('ignores post', () => expect(pickChannels(['post'])).toEqual({ push: false, email: false }));
+  it('treats a missing value as the default (both)', () => expect(pickChannels(undefined)).toEqual({ push: true, email: true }));
+  it('maps the legacy number 4 (InAppNotification) to push', () => expect(pickChannels(4)).toEqual({ push: true, email: false }));
+});
+
+describe('accountChannels', () => {
+  it('uses the account of the tenant, not a foreign one', () => {
+    const accounts = [
+      { uid: 'k', tenants: ['kwa'], newsDelivery: ['email'] },
+      { uid: 's', tenants: ['scs'], newsDelivery: ['chat'] },
+    ];
+    expect(accountChannels(accounts, 'scs')).toEqual({ push: true, email: false });
+  });
+  it('is undefined without an account in the tenant', () => {
+    expect(accountChannels([{ uid: 'k', tenants: ['kwa'], newsDelivery: ['email'] }], 'scs')).toBeUndefined();
+  });
+  it('skips an archived account', () => {
+    expect(accountChannels([{ uid: 's', tenants: ['scs'], isArchived: true }], 'scs')).toBeUndefined();
+  });
+});
+
+describe('eventUrl', () => {
+  it('is absolute on the app domain', () => {
+    expect(eventUrl({ appName: 'x', appUrl: 'https://app.seeclub.org' }, 'abc')).toBe('https://app.seeclub.org/calevent/all/c-calevents?event=abc');
+  });
+});
