@@ -188,6 +188,14 @@ export class AppConfig {
    */
   public weatherIntervalHours = 4;
 
+  /**
+   * Tenant whose diary receives lines from this app — a finished Jasstafel game (spec 1.67), later
+   * completed tasks (spec 1.72 §9). '' = no diary transfer. Written by the `recordDiaryLine`
+   * callable into the caller's own entry; the caller must belong to that tenant. Legacy config
+   * docs lack it — coalesce to '' on read.
+   */
+  public diaryTenantId = '';
+
   // git repository information
   public gitRepo = DEFAULT_NAME; //  git repository name
   public gitOrg = DEFAULT_NAME; // git organization name

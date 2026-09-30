@@ -62,7 +62,8 @@ import { JasstafelStore } from './jasstafel.store';
       @if (store.game(); as game) {
         @if (store.outcome(); as outcome) {
           <okr-jass-result [game]="game" [outcome]="outcome" [stats]="store.stats()" [totals]="store.totals()"
-            [i18n]="store.i18n" (newGame)="store.newGame()" (done)="store.endGame()" />
+            [i18n]="store.i18n" [diaryState]="store.diaryState()" [diaryBusy]="store.diaryBusy()"
+            (newGame)="store.newGame()" (done)="store.endGame()" (toDiary)="store.toDiary()" />
         } @else if (game.variant === 'schieber' || game.variant === 'bueter') {
           <okr-jass-slate [game]="game" [totals]="store.totals()" [i18n]="store.i18n"
             (chalk)="store.addChalk($event.sideId, $event.unit)" />

@@ -93,5 +93,15 @@
   "changeConfirmation": {
     "ok": "Speichern",
     "cancel": "Verwerfen"
+  },
+  "diary": {
+    "to_diary": "Ins Tagebuch",
+    "in_diary": "Im Tagebuch",
+    "prefix": "Jass",
+    "hands": "Runden",
+    "ok": "Das Resultat steht jetzt in deinem Tagebuch.",
+    "final": "Dein Tagebucheintrag für diesen Tag ist abgeschlossen. Das Resultat wurde nicht eingetragen.",
+    "denied": "Du hast kein Tagebuch, in das das Resultat eingetragen werden kann.",
+    "error": "Das Resultat konnte nicht ins Tagebuch übertragen werden. Versuch es später noch einmal."
   }
 }

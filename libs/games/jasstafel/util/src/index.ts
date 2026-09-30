@@ -7,3 +7,4 @@ export * from './lib/jass.validations';
 export * from './lib/jass-i18n';
 export * from './lib/jass.storage';
 export * from './lib/jass.timing';
+export * from './lib/jass.diary';

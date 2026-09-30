@@ -93,5 +93,15 @@
   "changeConfirmation": {
     "ok": "Salva",
     "cancel": "Scarta"
+  },
+  "diary": {
+    "to_diary": "Nel diario",
+    "in_diary": "Già nel diario",
+    "prefix": "Jass",
+    "hands": "mani",
+    "ok": "Il risultato è ora nel tuo diario.",
+    "final": "La tua voce di diario per questo giorno è conclusa. Il risultato non è stato aggiunto.",
+    "denied": "Non hai un diario in cui aggiungere il risultato.",
+    "error": "Non è stato possibile aggiungere il risultato al tuo diario. Riprova più tardi."
   }
 }

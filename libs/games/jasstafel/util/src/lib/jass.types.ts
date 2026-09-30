@@ -73,6 +73,8 @@ export interface JassGame {
   chalks?: JassChalk[];
   startedAt: string;
   finishedAt?: string;
+  /** set once the result went into the diary (spec 1.67 §11); cleared again when an undo re-opens the game */
+  diaryAt?: string;
 }
 
 /** a side id, 'draw', or undefined while the game is running */

@@ -17,7 +17,7 @@ import { JASS_CHALK_STYLES } from './jass-chalk.scss';
     h2 { text-align: center; margin: 0; }
     table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
     th, td { padding: 4px; text-align: right; } th:first-child, td:first-child { text-align: left; }
-    .buttons { display: flex; gap: 8px; justify-content: center; }
+    .buttons { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
     .timing { display: flex; flex-wrap: wrap; gap: 4px 16px; justify-content: center; margin-bottom: 12px; }
   `],
   template: `
@@ -53,6 +53,11 @@ import { JASS_CHALK_STYLES } from './jass-chalk.scss';
       </table>
       <div class="buttons">
         <ion-button (click)="newGame.emit()">{{ i18n().new_game() }}</ion-button>
+        @if (diaryState() !== 'hidden') {
+          <ion-button fill="outline" [disabled]="diaryState() === 'done' || diaryBusy()" (click)="toDiary.emit()">
+            {{ diaryState() === 'done' ? i18n().in_diary() : i18n().to_diary() }}
+          </ion-button>
+        }
         <ion-button fill="outline" (click)="done.emit()">{{ i18n().done() }}</ion-button>
       </div>
     </div>
@@ -64,8 +69,12 @@ export class JassResult {
   public readonly stats = input.required<Record<string, JassSideStats>>();
   public readonly totals = input.required<Record<string, number>>();
   public readonly i18n = input.required<JassI18n>();
+  /** 'hidden' without a configured diary tenant (spec 1.67 §11) */
+  public readonly diaryState = input<'hidden' | 'ready' | 'done'>('hidden');
+  public readonly diaryBusy = input(false);
   public readonly newGame = output<void>();
   public readonly done = output<void>();
+  public readonly toDiary = output<void>();
 
   protected readonly timing = computed(() => jassTiming(this.game()));
   protected readonly duration = computed(() => formatDuration(this.timing().minutes));
