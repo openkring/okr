@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Task domain models to-do items and work tasks assigned within the application. Tasks have an author, an assignee, a state lifecycle, priority, importance, a due date, and an optional completion date. They can optionally appear in calendars. Access is restricted to the author, the assignee, and privileged users.
+The Task domain models to-do items and work tasks assigned within the application. Tasks have an author, an assignee, a state lifecycle, priority, importance, a due date, and an optional completion date. They can optionally appear in calendars. Access is restricted to the author, the assignee, and staff (privileged/eventAdmin); tasks shared with a group or meeting are readable by the whole tenant (spec 1.72).
 
 ## Firestore Collection
 
@@ -27,13 +27,45 @@ Collection name: `tasks`
 | `priority` | string | Priority level (from `priority` category: `low`, `medium`, `high`) |
 | `importance` | string | Importance level (from `importance` category: `low`, `medium`, `high`) |
 | `calendars` | string[] | Calendar keys this task should appear in |
+| `shareKey` | string | Derived on every write by `getTaskShareKey`: `''` = private, `'meeting.<okey>'` for a meeting action item, else the group key from `calendars`. The rules and the group/meeting list queries filter on it (spec 1.72 §4) |
 
 ## Completion Logic
 
-A task is considered completed when `completionDate` is non-empty. The `setCompleted()` store method toggles completion:
+A task is considered completed when `completionDate` is non-empty. `toggleCompleted()` applies
+`getCompletionPatch` (`@okr/task-util`):
 
 - If `completionDate` is empty → sets it to today's date and sets `state = 'done'`.
 - If `completionDate` is set → clears it and sets `state = 'planned'`.
+
+Restoring an archived task (`restore()`, `getRestorePatch`) also reopens it when it was completed —
+otherwise the next `taskDaily` run would archive it again.
+
+## Access Control (spec 1.72)
+
+`firestore.rules` (`match /tasks/{id}`) — keep the UI gates in `task-permission.util.ts` aligned:
+
+| Action | Who |
+|---|---|
+| read | author, assignee, staff (privileged/eventAdmin); anyone in the tenant if `shareKey != ''` |
+| create | registered members as author; privileged in someone else's name |
+| update | author, assignee, staff; changing `author.key` is privileged-only |
+| archive / restore | author, privileged (`canDeleteTask`) |
+| delete (hard) | privileged |
+
+Group admins get no extra writes (decided 2026-09-30); `groupAdmin` only lets them create. A list
+query must filter on what the rule checks (`author.key`, `assignee.key`, `shareKey`), otherwise
+Firestore rejects the whole query — see `buildTaskListQueries`.
+
+## Cloud Functions (`apps/functions/src/task`)
+
+- `onTaskWritten` — pushes the assignee on create, reassignment or reopen (never to oneself), and
+  syncs the assignee's diary: a completed task's name goes into `done` of the day entry in
+  `AppConfig.diaryTenantId` (shared with the Jasstafel), a reopen removes it (`appendToDiary`).
+- `taskDaily` — 07:00 Europe/Zurich: archives tasks completed more than `AppConfig.taskArchiveDays`
+  (default 30, `0` = never) ago, and pushes a reminder for tasks due today.
+
+Both settings are edited in the admin-only `TaskSettingsModal` (menu row `task-settings`,
+`AppConfigService.setTaskSettings`).
 
 ## TaskStore
 
@@ -66,9 +98,11 @@ Key actions:
 
 - `add(readOnly)` — creates a new task pre-populated with the current user as both author and assignee, then opens the edit modal.
 - `edit(task, readOnly)` — opens `TaskEditModal`.
-- `delete(task, readOnly)` — calls `TaskService.delete`.
+- `delete(task)` — archives the task (`TaskService.delete`), gated by `canDeleteTask`.
+- `restore(task)` — un-archives (and reopens) an archived task, same gate.
 - `quickEntry(task)` — creates a task without opening the modal.
-- `setCompleted(task, readOnly)` — toggle completion state.
+- `toggleCompleted(task)` — toggle completion state.
+- `editSettings()` — opens `TaskSettingsModal` (admins).
 
 ## Components
 
@@ -77,13 +111,15 @@ Key actions:
 | `TaskList` | Full filterable task list with filter toolbar |
 | `SimpleTaskList` | Compact task list suitable for embedding in dashboards; uses `maxItems` to limit results |
 | `TaskEditModal` | Full-modal edit form for create/update |
+| `TaskBoard` | Kanban board by state (`moveTask`) |
 
 ## Related Libraries
 
 | Library | Path |
 |---|---|
 | `@okr/task-data-access` | `TaskService` — Firestore CRUD for TaskModel |
-| `@okr/task-util` | `getTaskIndex`, `taskValidations`, `isTask` |
+| `@okr/task-util` | `getTaskIndex`, `getTaskShareKey`, `buildTaskListQueries`, permission and completion/restore patches, `taskValidations`, `isTask` |
+| `@okr/task-ui` | `TaskForm`, `TaskSettingsModal` / `TaskSettingsForm` |
 
 ## Library Path
 
