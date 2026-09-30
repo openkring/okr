@@ -1021,7 +1021,7 @@
       "hint": "Così la persona può accedere all'altro club. Imposta la propria password tramite «Password dimenticata».",
       "emailChoice": "Con quale indirizzo deve accedere?",
       "created": "L'accesso è aperto.",
-      "createdWithLoginId": "L'accesso è aperto con il nome utente {loginId}. L'e-mail appartiene già a un altro accesso — in Account utente puoi scambiare i due.",
+      "createdWithLoginId": "L'accesso è aperto con il nome utente {loginId}. L'e-mail appartiene già a un altro accesso. Se entrambi gli accessi sono gestiti qui, puoi scambiare l'e-mail in Account utente.",
       "failed": "Non è stato possibile aprire l'accesso."
     },
     "email": {

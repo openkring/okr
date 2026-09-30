@@ -72,7 +72,7 @@
   "lastName": { "label": "Apellido", "placeholder": "Introducir el apellido", "helper": "El apellido del usuario." },
   "tenants": { "label": "Inquilinos", "placeholder": "sss, sss, sss", "helper": "Identificadores de los inquilinos" },
   "loginEmail": { "label": "Correo electrónico de acceso", "placeholder": "Introducir la dirección de correo electrónico" },
-  "loginId": { "label": "Nombre de usuario", "placeholder": "", "helper": "Solo lo establecen las Cloud Functions." },
+  "loginId": { "label": "Nombre de usuario", "placeholder": "Aún no asignado", "helper": "Se asigna automáticamente; puedes cambiarlo en Cuentas de usuario." },
   "gravatarEmail": { "label": "Correo electrónico de Gravatar", "placeholder": "Introducir la dirección de correo electrónico" },
   "email": { "label": "Correo electrónico", "placeholder": "Introducir la dirección de correo electrónico" },
   "phone": { "label": "Teléfono", "placeholder": "+41 XX XXX XX XX" },

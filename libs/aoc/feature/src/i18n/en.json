@@ -1021,7 +1021,7 @@
       "hint": "This lets the person sign in to the other club. They set their own password via “Forgot password”.",
       "emailChoice": "Which address should they sign in with?",
       "created": "The access has been opened.",
-      "createdWithLoginId": "The access has been opened with the username {loginId}. The email already belongs to another access — you can swap the two under user accounts.",
+      "createdWithLoginId": "The access has been opened with the username {loginId}. The email already belongs to another access. If both accesses are managed here, you can swap the email under user accounts.",
       "failed": "The access could not be opened."
     },
     "email": {

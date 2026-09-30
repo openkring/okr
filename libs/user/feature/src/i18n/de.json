@@ -72,7 +72,7 @@
   "lastName":      { "label": "Nachname",            "placeholder": "Nachname eingeben",     "helper": "Der Familienname des Users." },
   "tenants":       { "label": "Mandanten",           "placeholder": "sss, sss, sss",                      "helper": "Identifikatoren der Mandanten" },
   "loginEmail":    { "label": "Login E-Mail",        "placeholder": "E-Mail Adresse eingeben" },
-  "loginId":       { "label": "Benutzername",        "placeholder": "",                      "helper": "Wird nur von Cloud Functions gesetzt." },
+  "loginId":       { "label": "Benutzername",        "placeholder": "Noch nicht vergeben", "helper": "Wird automatisch vergeben; ändern kannst du ihn unter Benutzerkonten." },
   "gravatarEmail": { "label": "Gravatar E-Mail",     "placeholder": "E-Mail Adresse eingeben" },
   "email":         { "label": "E-Mail",              "placeholder": "E-Mail Adresse eingeben" },
   "phone":         { "label": "Telefon",             "placeholder": "+41 XX XXX XX XX" },
