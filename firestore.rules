@@ -528,7 +528,35 @@ service cloud.firestore {
     // Pre-rename home of the member-fee rows; migrateMemberFees copies id-for-id and leaves the
     // originals in place, so they stay readable/erasable until the owner drops the collection.
     match /scs-memberfees/{id}     { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
-    match /tasks/{id}              { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
+    // tasks (spec 1.72 §2, §3.1, §4): readable/writable by author, assignee and staff
+    // (privileged/eventAdmin); shared tasks (shareKey = group key or 'meeting.<okey>') are
+    // tenant-readable. Archiving (isArchived -> true, or a self-detach) is author/privileged only.
+    // Group-admin writes (§4) are NOT granted yet: groups/{key}.admins holds AvatarInfo maps,
+    // which a rule cannot search for a personKey — they await a derived `adminKeys` field.
+    // author/assignee may be absent on legacy docs, hence get(…, {}).
+    function taskAuthor(data) {
+      return data.get('author', {}).get('key', '') == callerPersonKey();
+    }
+    function taskMember(data) {
+      return taskAuthor(data) || data.get('assignee', {}).get('key', '') == callerPersonKey();
+    }
+    function taskStaff() {
+      return isPrivileged() || hasRole('eventAdmin');
+    }
+    function taskArchiving() {
+      return request.resource.data.get('isArchived', false) == true
+             && resource.data.get('isArchived', false) == false;
+    }
+    match /tasks/{id} {
+      allow read: if tenantRead() && (resource == null
+        || taskStaff() || taskMember(resource.data) || resource.data.get('shareKey', '') != '');
+      allow create: if tenantCreate() && (taskStaff() || taskAuthor(request.resource.data));
+      allow update: if (tenantCreate() || selfDetach()) && (
+        (taskArchiving() || selfDetach())
+          ? (isPrivileged() || taskAuthor(resource.data))
+          : (taskStaff() || taskMember(resource.data)));
+      allow delete: if tenantDelete() && isPrivileged();
+    }
     match /transfers/{id}          { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
     match /trips/{id}              { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
     match /websiteContent/{id}     { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
