@@ -1,6 +1,6 @@
 // apps/functions/src/task/task-decisions.spec.ts
 import { describe, expect, it } from 'vitest';
-import { decideTaskPush, getArchiveCutoff, resolveTaskArchiveDays } from './task-decisions';
+import { decideDiaryTransition, decideTaskPush, getArchiveCutoff, resolveTaskArchiveDays } from './task-decisions';
 
 const open = { name: 'x', state: 'planned', isArchived: false, completionDate: '', assignee: { key: 'pA' }, author: { key: 'pB' }, tenants: ['scs'] };
 
@@ -31,4 +31,18 @@ describe('getArchiveCutoff', () => {
   it('30 days before', () => expect(getArchiveCutoff('20260930', 30)).toBe('20260831'));
   it('crosses a year', () => expect(getArchiveCutoff('20260105', 10)).toBe('20251226'));
   it('0 means no cut-off', () => expect(getArchiveCutoff('20260930', 0)).toBe(''));
+});
+
+describe('decideDiaryTransition', () => {
+  const base = { name: 'x', completionDate: '', isArchived: false, assignee: { key: 'pA' } };
+  it('complete', () => expect(decideDiaryTransition(base, { ...base, completionDate: '20260930' })).toBe('complete'));
+  it('complete on create as done', () => expect(decideDiaryTransition(undefined, { ...base, completionDate: '20260930' })).toBe('complete'));
+  it('reopen', () => expect(decideDiaryTransition({ ...base, completionDate: '20260930' }, base)).toBe('reopen'));
+  it('ignores archiving a completed task', () => {
+    const done = { ...base, completionDate: '20260930' };
+    expect(decideDiaryTransition(done, { ...done, isArchived: true })).toBe('none');
+  });
+  it('ignores a plain edit', () => expect(decideDiaryTransition(base, { ...base, name: 'y' })).toBe('none'));
+  it('needs an assignee', () => expect(decideDiaryTransition(base, { ...base, completionDate: '20260930', assignee: undefined })).toBe('none'));
+  it('ignores a delete', () => expect(decideDiaryTransition({ ...base, completionDate: '20260930' }, undefined)).toBe('none'));
 });

@@ -5,7 +5,8 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
 
 import { pushToPersons } from '../srv/push';
-import { decideTaskPush, TASK_LIST_URL, type TaskDocLike } from './task-decisions';
+import { decideDiaryTransition, decideTaskPush, TASK_LIST_URL, type TaskDocLike } from './task-decisions';
+import { applyTaskToDiary } from './task-diary';
 
 export { taskDaily } from './task-daily';
 
@@ -28,13 +29,26 @@ export const onTaskWritten = onDocumentWritten(
     const before = event.data?.before?.data() as TaskDocLike | undefined;
     const after = event.data?.after?.data() as TaskDocLike | undefined;
 
+    const db = getFirestore();
+
+    const transition = decideDiaryTransition(before, after);
+    if (transition !== 'none') {
+      const tenantId = (after ?? before)?.tenants?.[0] ?? '';
+      const cfg = await db.collection('app-config').doc(tenantId).get();
+      const diaryTenantId = (cfg.get('taskDiaryTenantId') as string | undefined) ?? '';
+      if (diaryTenantId) {
+        const date = transition === 'complete' ? after!.completionDate! : before!.completionDate!;
+        const assigneeKey = (transition === 'complete' ? after : before)!.assignee!.key!;
+        const result = await applyTaskToDiary(db, diaryTenantId, assigneeKey, date, (after ?? before)!.name ?? '', transition);
+        logger.info(`onTaskWritten: diary ${transition} → ${result} task=${event.params['taskId']}`);
+      }
+    }
+
     if (!decideTaskPush(before, after)) return;
 
     const assigneeKey = after?.assignee?.key ?? '';
     const tenantId = after?.tenants?.[0];
     if (!tenantId) return;
-
-    const db = getFirestore();
 
     // Count open tasks for the assignee — mirrors tasks-section.store.ts exactly
     const openSnap = await db.collection(TASK_COLLECTION)

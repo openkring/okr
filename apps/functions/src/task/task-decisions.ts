@@ -57,3 +57,20 @@ export function getArchiveCutoff(todayStoreDate: string, days: number): string {
   cutoff.setUTCDate(cutoff.getUTCDate() - days);
   return convertDateFormatToString(cutoff.toISOString().slice(0, 10), DateFormat.IsoDate, DateFormat.StoreDate);
 }
+
+/**
+ * Does this write complete or reopen a task, for the purpose of syncing the assignee's diary
+ * (spec 1.73 §9)? Mirrors the `completionDate` half of `decideTaskPush`'s reopen check, but
+ * unlike the push decision this also fires on create-as-done and is indifferent to archiving,
+ * self-assignment and re-assignment — the diary line only cares whether the task's done-ness
+ * changed. Needs an assignee on the relevant side (`after` for complete, `before` for reopen);
+ * a delete (`after` undefined) is never a transition.
+ */
+export function decideDiaryTransition(before: TaskDocLike | undefined, after: TaskDocLike | undefined): 'complete' | 'reopen' | 'none' {
+  if (!after) return 'none';
+  const beforeDone = (before?.completionDate ?? '') !== '';
+  const afterDone = (after.completionDate ?? '') !== '';
+  if (!beforeDone && afterDone) return after.assignee?.key ? 'complete' : 'none';
+  if (beforeDone && !afterDone) return before?.assignee?.key ? 'reopen' : 'none';
+  return 'none';
+}
