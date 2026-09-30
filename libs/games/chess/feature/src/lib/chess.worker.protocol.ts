@@ -1,5 +1,4 @@
-/** Computer strength; re-exported from `@okr/games-chess-util` once Task 7 adds it there. */
-export type WorkerLevel = 'easy' | 'medium' | 'hard';
+import type { Level } from '@okr/games-chess-util';
 
 /** store → worker: search `fen` for `budgetMs` and answer with a UCI move. */
 export interface ChessWorkerRequest {
@@ -7,7 +6,7 @@ export interface ChessWorkerRequest {
   fen: string;
   /** positionKey() of every earlier position of the game (repetition rule). */
   history: string[];
-  level: WorkerLevel;
+  level: Level;
   budgetMs: number;
 }
 

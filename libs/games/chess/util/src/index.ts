@@ -3,3 +3,5 @@ export * from './lib/chess.fen';
 export * from './lib/chess.engine';
 export * from './lib/chess.notation';
 export * from './lib/chess.game';
+export * from './lib/chess.eval';
+export * from './lib/chess.ai';
