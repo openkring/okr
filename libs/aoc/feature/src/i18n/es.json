@@ -986,11 +986,11 @@
       "hint": "Así la persona puede iniciar sesión en el otro club. Ella misma establece su contraseña con «He olvidado mi contraseña».",
       "emailChoice": "¿Con qué dirección debe iniciar sesión?",
       "created": "El acceso está abierto.",
-      "createdWithLoginId": "Cuenta abierta con el nombre de usuario {loginId}. El correo electrónico ya pertenece a otra cuenta — en Cuentas de usuario puedes intercambiar las dos.",
+      "createdWithLoginId": "El acceso está abierto con el nombre de usuario {loginId}. El correo electrónico ya pertenece a otro acceso — en Cuentas de usuario puedes intercambiar los dos.",
       "failed": "No se ha podido abrir el acceso."
     },
     "email": {
-      "taken": "Este correo electrónico ya tiene una cuenta. Se abrirá una cuenta con nombre de usuario."
+      "taken": "Este correo electrónico ya tiene un acceso. Si pertenece a otra persona, el nuevo acceso se abre con un nombre de usuario."
     }
   },
   "hygiene": {

@@ -986,11 +986,11 @@
       "hint": "This lets the person sign in to the other club. They set their own password via “Forgot password”.",
       "emailChoice": "Which address should they sign in with?",
       "created": "The access has been opened.",
-      "createdWithLoginId": "Account opened with the username {loginId}. The email already belongs to another account — you can swap the two under user accounts.",
+      "createdWithLoginId": "The access has been opened with the username {loginId}. The email already belongs to another access — you can swap the two under user accounts.",
       "failed": "The access could not be opened."
     },
     "email": {
-      "taken": "This email already has an account. An account with a username will be opened."
+      "taken": "This email already has an access. If it belongs to another person, the new access is opened with a username."
     }
   },
   "hygiene": {

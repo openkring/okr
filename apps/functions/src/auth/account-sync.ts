@@ -15,8 +15,8 @@
 
 import { randomBytes } from 'node:crypto';
 
-import { getFirestore, FieldValue } from 'firebase-admin/firestore';
-import { getAuth } from 'firebase-admin/auth';
+import { getFirestore, DocumentReference, FieldValue } from 'firebase-admin/firestore';
+import { getAuth, UserRecord } from 'firebase-admin/auth';
 import { logger } from 'firebase-functions/v2';
 import { onDocumentWritten } from 'firebase-functions/v2/firestore';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
@@ -25,13 +25,13 @@ import { onCall, HttpsError, CallableRequest } from 'firebase-functions/v2/https
 import { AvatarInfo, UserModel } from '@okr/shared-models';
 import { DateFormat, getTodayStr, isActiveMembership } from '@okr/shared-util-core';
 import { checkAppCheckToken, checkAuthentication, checkRoles } from '@okr/shared-util-functions';
-import { getUserIndex, syntheticLoginEmail } from '@okr/user-util';
+import { getUserIndex, isSyntheticLoginEmail, syntheticLoginEmail } from '@okr/user-util';
 
 import { runWorkflow } from '../workflow';
 
 import { decideAccountAction, MembershipDoc, relLogAbbrs, shiftDaysBack } from './account-sync.decide';
 import { allocateLoginId, tenantAppDomain } from './login-id';
-import { decideLoginIdentity } from './login-id.decide';
+import { decideLoginIdentity, decideOwnAccount, PERSON_KEY_CLAIM } from './login-id.decide';
 
 const CF_NAME = 'accountSync';
 
@@ -109,7 +109,10 @@ export interface OpenAccountResult {
 
 /**
  * Open a user account for a person (spec 1.71 §5.3). Idempotent: returns 'exists' when the
- * favourite email already belongs to THIS person's users/{uid} document.
+ * favourite email already belongs to THIS person's users/{uid} document, or when the person
+ * already holds an account in the tenant under another login (at most one per person and tenant).
+ * Every Auth identity it creates or reuses is stamped with the `okrPersonKey` claim, so an
+ * orphaned identity is never handed to a different person.
  *
  * When the email belongs to ANOTHER person's account (a parent and a child sharing one
  * mailbox), the account is opened with a Benutzername and a synthetic, never-mailable Auth
@@ -148,50 +151,56 @@ export async function openAccount(personKey: string, tenantId: string, loginEmai
   const lastName = (personSnap.data()?.['lastName'] as string | undefined) ?? '';
 
   // 2. whose Auth identity is the favourite email — decides real vs. synthetic (spec §5.3)
-  let authUid: string | undefined;
+  let authUser: UserRecord | undefined;
   try {
-    authUid = (await getAuth().getUserByEmail(favEmail)).uid;
+    authUser = await getAuth().getUserByEmail(favEmail);
   } catch {
-    authUid = undefined;
+    authUser = undefined;
   }
+  const authUid = authUser?.uid;
+  const claimPersonKey = authUser?.customClaims?.[PERSON_KEY_CLAIM] as string | undefined;
   const holderSnap = authUid ? await db.collection('users').doc(authUid).get() : undefined;
   const holderPersonKey = holderSnap?.exists ? String(holderSnap.data()?.['personKey'] ?? '') : undefined;
-  const identity = decideLoginIdentity(authUid, holderPersonKey, personKey);
+  const identity = decideLoginIdentity(authUid, holderPersonKey, personKey, claimPersonKey);
 
   if (identity === 'exists') {
     logger.info(`${CF_NAME}: users/${authUid} already exists for person ${personKey} — nothing to do`);
     return { outcome: 'exists', uid: authUid, loginEmail: favEmail, loginId: String(holderSnap?.data()?.['loginId'] ?? '') };
   }
 
-  if (identity === 'synthetic') {
-    // Idempotency for the Benutzername path. The favourite email still names the OTHER person's
-    // Auth identity after this person got their own synthetic account, so without this check
-    // every repeated open (a manual "open" from the person list, a re-run allocation) would
-    // create yet another account. Same query shape as closeAccount — no new index.
-    const own = await db.collection('users')
-      .where('personKey', '==', personKey)
-      .where('tenants', 'array-contains', tenantId)
-      .limit(1)
-      .get();
-    if (!own.empty) {
-      const ownDoc = own.docs[0];
-      logger.info(`${CF_NAME}: users/${ownDoc.id} already exists for person ${personKey} — nothing to do`);
-      return {
-        outcome: 'exists',
-        uid: ownDoc.id,
-        loginEmail: String(ownDoc.data()['loginEmail'] ?? ''),
-        loginId: String(ownDoc.data()['loginId'] ?? ''),
-      };
-    }
+  const displayName = `${firstName} ${lastName}`.trim();
+  // whose login the favourite email is, for the Benutzername report: the live holder, else the stamp
+  const emailOwnerPersonKey = holderPersonKey || claimPersonKey || undefined;
+  const synthetic: SyntheticContext = { tenantId, personKey, displayName, emailHeldBy: authUid, emailOwnerPersonKey };
+
+  // 3. at most one account per person and tenant, whatever the email resolves to today. Without
+  //    this, the favourite email of a child who already has a Benutzername account still names the
+  //    parent's identity (→ 'synthetic' again), or — after the parent left — an orphan ('reuse') or
+  //    nothing ('createReal'), and every repeated open would add another account. Same query shape
+  //    as closeAccount — no new index. Two opens of the same person running at the very same time
+  //    can both pass this check; the triggers and callables that call openAccount do not do that
+  //    in practice, and it is not locked.
+  const own = await db.collection('users')
+    .where('personKey', '==', personKey)
+    .where('tenants', 'array-contains', tenantId)
+    .limit(1)
+    .get();
+  const ownDoc = own.docs[0];
+  const ownAction = decideOwnAccount(identity, ownDoc ? { loginEmail: String(ownDoc.data()['loginEmail'] ?? '') } : undefined);
+  if (ownDoc && ownAction === 'exists') {
+    logger.info(`${CF_NAME}: users/${ownDoc.id} already exists for person ${personKey} — nothing to do`);
+    return { outcome: 'exists', uid: ownDoc.id, loginEmail: String(ownDoc.data()['loginEmail']), loginId: String(ownDoc.data()['loginId'] ?? '') };
+  }
+  if (ownDoc && ownAction === 'resume') {
+    return resumeAccount(ownDoc.ref, ownDoc.data() as UserModel, firstName, lastName, synthetic);
   }
 
-  const displayName = `${firstName} ${lastName}`.trim();
   // Resolved before anything is written: a tenant without an appDomain cannot build a
   // synthetic login address, and failing here leaves no half-opened account behind.
   const appDomain = identity === 'synthetic' ? await tenantAppDomain(tenantId) : '';
   let uid: string;
   // a synthetic account never carries the other person's address, not even for a moment
-  let authEmail = identity === 'synthetic' ? '' : favEmail;
+  const authEmail = identity === 'synthetic' ? '' : favEmail;
   if (identity === 'reuse') {
     uid = authUid as string;
   } else if (identity === 'createReal') {
@@ -201,8 +210,10 @@ export async function openAccount(personKey: string, tenantId: string, loginEmai
     // that users doc, and only then create the Auth user with the synthetic address built from it.
     uid = db.collection('users').doc().id;
   }
+  // a real-email identity says whose it is — decideLoginIdentity never hands it to anyone else
+  if (identity !== 'synthetic') await stampPersonKey(uid, personKey);
 
-  // 3. the user document. Built from `new UserModel(tenantId)` rather than a hand-written
+  // 4. the user document. Built from `new UserModel(tenantId)` rather than a hand-written
   //    field list, so every default (settings, delivery prefs and especially the usage*
   //    privacy flags) is materialized. Firestore reads do NOT apply model defaults — a
   //    field missing from the document reads back as undefined, so a partially written
@@ -218,45 +229,135 @@ export async function openAccount(personKey: string, tenantId: string, loginEmai
   user.index = getUserIndex(user);
   await userRef.set({ ...user });
 
-  // 4. the Benutzername — every user gets one (spec decision 2). allocateLoginId reads the
+  // 5. the Benutzername — every user gets one (spec decision 2). allocateLoginId reads the
   //    users doc inside its transaction, which is why the doc is written first.
-  let loginId: string;
-  try {
-    loginId = await allocateLoginId(userRef, tenantId, firstName, lastName);
-  } catch (error) {
-    // A synthetic account's users doc has no Auth identity yet — never leave it behind. A real
-    // account keeps its doc: the Auth identity exists and the daily backfill assigns the loginId.
-    if (identity === 'synthetic') await userRef.delete();
-    throw error;
-  }
-
   if (identity === 'synthetic') {
-    authEmail = syntheticLoginEmail(loginId, appDomain);
+    let loginId: string;
     try {
-      await getAuth().createUser({ uid, email: authEmail, password: randomPassword(), displayName });
+      loginId = await allocateLoginId(userRef, tenantId, firstName, lastName);
+    } catch (error) {
+      await userRef.delete(); // the doc has no Auth identity yet — never leave it behind
+      throw error;
+    }
+    const email = syntheticLoginEmail(loginId, appDomain);
+    try {
+      await getAuth().createUser({ uid, email, password: randomPassword(), displayName });
     } catch (error) {
       await userRef.delete(); // no users doc without its Auth identity
       throw error;
     }
-    await userRef.update({ loginEmail: authEmail, index: getUserIndex({ ...user, loginEmail: authEmail, loginId }) });
-    logger.info(`${CF_NAME}: opened account users/${uid} with a Benutzername for person ${personKey} (${tenantId}) — email held by users/${authUid}`);
-    await logActivity(tenantId, 'create', { personKey, uid, loginId, emailHeldBy: authUid });
-    await runWorkflow({
-      tenantId,
-      event: 'account.createdWithLoginId',
-      personKey,
-      relatedKey: `user.${uid}`,
-      subjectName: displayName,
-      today: getTodayStr(DateFormat.StoreDate),
-      params: { loginId, emailOwnerPersonKey: holderPersonKey ?? '' },
-    });
-    return { outcome: 'createdWithLoginId', uid, loginEmail: authEmail, loginId, emailOwnerPersonKey: holderPersonKey };
+    await stampPersonKeyBestEffort(uid, personKey);
+    return finishSyntheticAccount(userRef, user, uid, loginId, email, synthetic);
   }
 
-  await userRef.update({ index: getUserIndex({ ...user, loginId }) });
+  // A real account is complete without its Benutzername: the Auth identity and the users doc
+  // exist, and the daily backfill (assignMissingLoginIds) assigns the loginId later.
+  let loginId = '';
+  try {
+    loginId = await allocateLoginId(userRef, tenantId, firstName, lastName);
+    await userRef.update({ index: getUserIndex({ ...user, loginId }) });
+  } catch (error) {
+    logger.error(`${CF_NAME}: users/${uid} opened without a Benutzername — the daily backfill assigns it`, error);
+  }
   logger.info(`${CF_NAME}: opened account users/${uid} for person ${personKey} (${tenantId})`);
   await logActivity(tenantId, 'create', { personKey, uid, loginId });
   return { outcome: 'created', uid, loginEmail: authEmail, loginId };
+}
+
+/** Who a Benutzername account is reported as being opened for, and whose email it could not use. */
+interface SyntheticContext {
+  readonly tenantId: string;
+  readonly personKey: string;
+  readonly displayName: string;
+  readonly emailHeldBy: string | undefined;
+  readonly emailOwnerPersonKey: string | undefined;
+}
+
+/**
+ * Stamp `okrPersonKey` on an Auth identity, merged into whatever claims it already carries
+ * (there are none in the project today — merged anyway, so a future claim is never wiped).
+ */
+async function stampPersonKey(uid: string, personKey: string): Promise<void> {
+  const claims = (await getAuth().getUser(uid)).customClaims ?? {};
+  if (claims[PERSON_KEY_CLAIM] === personKey) return;
+  await getAuth().setCustomUserClaims(uid, { ...claims, [PERSON_KEY_CLAIM]: personKey });
+}
+
+/**
+ * The stamp on a SYNTHETIC identity is informational: no favourite email ever resolves to a
+ * `…@login.<domain>` address, so decideLoginIdentity never meets it. Failing to set it must not
+ * undo an account whose Auth user already exists.
+ */
+async function stampPersonKeyBestEffort(uid: string, personKey: string): Promise<void> {
+  try {
+    await stampPersonKey(uid, personKey);
+  } catch (error) {
+    logger.error(`${CF_NAME}: could not stamp ${PERSON_KEY_CLAIM} on ${uid}`, error);
+  }
+}
+
+/** The last step of a Benutzername account: the doc learns its login address, then report it. */
+async function finishSyntheticAccount(
+  userRef: DocumentReference,
+  user: UserModel,
+  uid: string,
+  loginId: string,
+  loginEmail: string,
+  ctx: SyntheticContext,
+): Promise<OpenAccountResult> {
+  await userRef.update({ loginEmail, index: getUserIndex({ ...user, loginEmail, loginId }) });
+  logger.info(`${CF_NAME}: opened account users/${uid} with a Benutzername for person ${ctx.personKey} (${ctx.tenantId}) — email held by users/${ctx.emailHeldBy}`);
+  await logActivity(ctx.tenantId, 'create', { personKey: ctx.personKey, uid, loginId, emailHeldBy: ctx.emailHeldBy });
+  await runWorkflow({
+    tenantId: ctx.tenantId,
+    event: 'account.createdWithLoginId',
+    personKey: ctx.personKey,
+    relatedKey: `user.${uid}`,
+    subjectName: ctx.displayName,
+    today: getTodayStr(DateFormat.StoreDate),
+    params: { loginId, emailOwnerPersonKey: ctx.emailOwnerPersonKey ?? '' },
+  });
+  return { outcome: 'createdWithLoginId', uid, loginEmail, loginId, emailOwnerPersonKey: ctx.emailOwnerPersonKey };
+}
+
+/**
+ * Finish an account whose users doc exists with an empty loginEmail — a Benutzername open that
+ * died between writing the doc and completing the Auth side. Behind the guard in openAccount it
+ * would otherwise stay half-open for good.
+ *
+ * An Auth user that already exists under this uid keeps its email (the synthetic one, if
+ * createUser succeeded before the crash; a real one on a legacy doc, which then reports
+ * 'exists'). A missing one is created with the synthetic address.
+ */
+async function resumeAccount(
+  userRef: DocumentReference,
+  user: UserModel,
+  firstName: string,
+  lastName: string,
+  ctx: SyntheticContext,
+): Promise<OpenAccountResult> {
+  const uid = userRef.id;
+  const loginId = String(user.loginId ?? '') || await allocateLoginId(userRef, ctx.tenantId, firstName, lastName);
+  let authEmail: string;
+  try {
+    authEmail = (await getAuth().getUser(uid)).email ?? '';
+  } catch (error) {
+    if ((error as { code?: string }).code !== 'auth/user-not-found') throw error;
+    authEmail = syntheticLoginEmail(loginId, await tenantAppDomain(ctx.tenantId));
+    await getAuth().createUser({ uid, email: authEmail, password: randomPassword(), displayName: ctx.displayName });
+  }
+  if (!authEmail) {
+    authEmail = syntheticLoginEmail(loginId, await tenantAppDomain(ctx.tenantId));
+    await getAuth().updateUser(uid, { email: authEmail });
+  }
+  await stampPersonKeyBestEffort(uid, ctx.personKey);
+  if (isSyntheticLoginEmail(authEmail)) {
+    logger.info(`${CF_NAME}: resumed the half-open account users/${uid} of person ${ctx.personKey}`);
+    return finishSyntheticAccount(userRef, user, uid, loginId, authEmail, ctx);
+  }
+  await userRef.update({ loginEmail: authEmail, index: getUserIndex({ ...user, loginEmail: authEmail, loginId }) });
+  logger.info(`${CF_NAME}: users/${uid} of person ${ctx.personKey} had no loginEmail — restored from its Auth identity`);
+  return { outcome: 'exists', uid, loginEmail: authEmail, loginId };
 }
 
 /**

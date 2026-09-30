@@ -986,11 +986,11 @@
       "hint": "La personne peut ainsi se connecter à l'autre club. Elle définit son mot de passe elle-même via « Mot de passe oublié ».",
       "emailChoice": "Avec quelle adresse doit-elle se connecter ?",
       "created": "L'accès est ouvert.",
-      "createdWithLoginId": "Compte ouvert avec le nom d'utilisateur {loginId}. L'adresse e-mail appartient déjà à un autre compte — sous Comptes utilisateur, tu peux échanger les deux.",
+      "createdWithLoginId": "L'accès est ouvert avec le nom d'utilisateur {loginId}. L'adresse e-mail appartient déjà à un autre accès — sous Comptes utilisateur, tu peux échanger les deux.",
       "failed": "L'accès n'a pas pu être ouvert."
     },
     "email": {
-      "taken": "Cette adresse e-mail a déjà un compte. Un compte avec nom d'utilisateur sera ouvert."
+      "taken": "Cette adresse e-mail a déjà un accès. S'il appartient à une autre personne, le nouvel accès est ouvert avec un nom d'utilisateur."
     }
   },
   "hygiene": {

@@ -986,11 +986,11 @@
       "hint": "Die Person kann sich damit beim anderen Verein anmelden. Ihr Passwort setzt sie selbst über «Passwort vergessen».",
       "emailChoice": "Mit welcher Adresse soll sie sich anmelden?",
       "created": "Der Zugang ist eröffnet.",
-      "createdWithLoginId": "Konto mit dem Benutzernamen {loginId} eröffnet. Die E-Mail gehört schon einem anderen Konto — unter Benutzerkonten kannst du die beiden tauschen.",
+      "createdWithLoginId": "Der Zugang ist mit dem Benutzernamen {loginId} eröffnet. Die E-Mail gehört schon zu einem anderen Zugang — unter Benutzerkonten kannst du die beiden tauschen.",
       "failed": "Der Zugang konnte nicht eröffnet werden."
     },
     "email": {
-      "taken": "Diese E-Mail hat schon ein Konto. Es wird ein Konto mit Benutzername eröffnet."
+      "taken": "Diese E-Mail hat schon einen Zugang. Gehört er einer anderen Person, wird der neue Zugang mit einem Benutzernamen eröffnet."
     }
   },
   "hygiene": {

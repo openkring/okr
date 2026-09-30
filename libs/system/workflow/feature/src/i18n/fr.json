@@ -48,7 +48,7 @@
     },
     "account": {
       "createdWithLoginId": {
-        "label": "Compte ouvert avec nom d'utilisateur"
+        "label": "Accès ouvert avec nom d'utilisateur"
       }
     },
     "expense": {
