@@ -1,3 +1,4 @@
+export * from './lib/attendee.util';
 export * from './lib/auth.util';
 export * from './lib/platform.util';
 export * from './lib/base-model.util';
