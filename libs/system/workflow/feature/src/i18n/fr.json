@@ -46,6 +46,11 @@
         "label": "Catégorie de membre modifiée"
       }
     },
+    "account": {
+      "createdWithLoginId": {
+        "label": "Compte ouvert avec nom d'utilisateur"
+      }
+    },
     "expense": {
       "created": {
         "label": "Justificatif de frais enregistré"

@@ -46,6 +46,11 @@
         "label": "Membership category changed"
       }
     },
+    "account": {
+      "createdWithLoginId": {
+        "label": "Account opened with username"
+      }
+    },
     "expense": {
       "created": {
         "label": "Expense receipt recorded"

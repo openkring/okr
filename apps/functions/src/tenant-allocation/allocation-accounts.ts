@@ -20,12 +20,12 @@ export interface GetAllocationEmailsResponse {
 /**
  * Which of a person's email addresses already carry a Firebase Auth identity (spec 1.47).
  *
- * The allocation dialog needs this BEFORE it opens, to decide whether opening an account for
- * the target tenant is offerable at all: a Firebase identity belongs to exactly one tenant
- * (`UserModel.tenants` — "user has always exactly one tenant") and `createUser` resolves an
- * existing email to the SAME uid, so an address that already has an account can never become
- * a second login. Offering it and failing afterwards would be a worse dialog than not
- * offering it.
+ * The allocation dialog needs this BEFORE it opens, to tell the admin what choosing an address
+ * will do. A Firebase identity belongs to exactly one tenant (`UserModel.tenants` — "user has
+ * always exactly one tenant") and an email names at most one Auth identity, so an address that
+ * already has an account cannot become a second login WITH THAT EMAIL. Since spec 1.71 §5.3 it
+ * is still offered: `openAccount` then opens the account with a Benutzername and a synthetic
+ * login address, and the dialog shows a hint instead of withholding the option.
  *
  * Takes the PERSON, not a list of emails, on purpose: the addresses are read here rather than
  * accepted from the caller, so this cannot be used to probe whether an arbitrary address has

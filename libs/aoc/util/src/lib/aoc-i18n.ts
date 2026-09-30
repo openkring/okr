@@ -737,6 +737,8 @@ export const AOC_I18N_KEYS = {
   allocation_account_hint:                PFX + 'allocation.account.hint',
   allocation_account_email_choice:        PFX + 'allocation.account.emailChoice',
   allocation_account_created:             PFX + 'allocation.account.created',
+  allocation_account_createdWithLoginId:  PFX + 'allocation.account.createdWithLoginId',
+  allocation_email_taken:                 PFX + 'allocation.email.taken',
   allocation_account_failed:              PFX + 'allocation.account.failed',
 } satisfies Record<string, string>;
 

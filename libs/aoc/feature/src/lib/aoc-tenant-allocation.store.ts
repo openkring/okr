@@ -17,7 +17,7 @@ import { error } from '@okr/shared-util-angular';
 import { getSystemQuery, isPerson, SYSTEM_TENANT } from '@okr/shared-util-core';
 
 import {
-  ALLOCATION_SUBJECTS, AllocationTile, AOC_I18N_KEYS, buildEmailOptions, eligibleAddresses,
+  ALLOCATION_SUBJECTS, AllocationTile, AOC_I18N_KEYS, buildEmailOptions, eligibleAddresses, fill,
   groupAddressesForConsent, isDropAllowed, splitTenants, TenantConfigMeta,
 } from '@okr/aoc-util';
 
@@ -65,7 +65,8 @@ interface AllocateTenantResponse {
   changed: Record<string, number>;
   rejected: { okey: string; reason: string }[];
   logKey: string;
-  account: { created: boolean; loginEmail?: string; reason?: string };
+  /** Mirrors `AllocateTenantAccount` (apps/functions/src/tenant-allocation/allocate-tenant.ts). */
+  account: { created: boolean; loginEmail?: string; loginId?: string; withLoginId?: boolean; reason?: string };
 }
 
 /**
@@ -265,10 +266,10 @@ export const AocTenantAllocationStore = signalStore(
       }
 
       // Which of this person's addresses already carry a Firebase identity. Asked BEFORE the
-      // dialog opens, because the answer decides whether the "open an account" checkbox is
-      // offered at all: an email that already has an account resolves to the SAME uid, and a
-      // uid belongs to exactly one tenant, so it can never become a second, target-tenant
-      // login. A revoke never opens anything, and only a person can hold an account.
+      // dialog opens, because the dialog tells the admin what picking such an address does:
+      // an email names at most one Auth identity, so a taken one becomes a Benutzername login
+      // (spec 1.71 §5.3) rather than a second login with that email. A revoke never opens
+      // anything, and only a person can hold an account.
       const offersAccount = meta.canOpenAccount && direction === 'grant';
       const takenEmails = offersAccount ? await this.loadTakenEmails(subject.okey) : [];
       // Built from ALL of the actor's addresses, not just the pending ones: on a top-up an
@@ -298,6 +299,7 @@ export const AocTenantAllocationStore = signalStore(
             accountCheckbox: store.i18n.allocation_account_checkbox(),
             accountHint: store.i18n.allocation_account_hint(),
             accountEmailChoice: store.i18n.allocation_account_email_choice(),
+            accountEmailTaken: store.i18n.allocation_email_taken(),
           },
           groups,
           emailOptions,
@@ -337,7 +339,9 @@ export const AocTenantAllocationStore = signalStore(
         // case and saying so on every allocation would be noise, not information.
         if (data.createAccount) {
           entries = payload.account?.created
-            ? logMessage(entries, `${store.i18n.allocation_account_created()} ${payload.account.loginEmail ?? ''}`.trim())
+            ? logMessage(entries, payload.account.withLoginId
+                ? fill(store.i18n.allocation_account_createdWithLoginId(), { loginId: payload.account.loginId ?? '' })
+                : `${store.i18n.allocation_account_created()} ${payload.account.loginEmail ?? ''}`.trim())
             : logMessage(entries, `${store.i18n.allocation_account_failed()} (${payload.account?.reason ?? 'unknown'})`);
         }
         patchState(store, { logTitle: store.i18n.allocation_result(), log: entries });

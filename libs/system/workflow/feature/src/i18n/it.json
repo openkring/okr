@@ -46,6 +46,11 @@
         "label": "Categoria di socio modificata"
       }
     },
+    "account": {
+      "createdWithLoginId": {
+        "label": "Account aperto con nome utente"
+      }
+    },
     "expense": {
       "created": {
         "label": "Giustificativo di spesa registrato"

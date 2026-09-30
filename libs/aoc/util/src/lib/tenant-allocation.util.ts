@@ -45,11 +45,12 @@ export interface AllocationAddressGroups {
  * whether Firebase Auth already knows it.
  *
  * `hasAccount` is the whole reason this type exists. A Firebase identity belongs to exactly
- * one tenant (`UserModel.tenants` — "user has always exactly one tenant"), and
- * `createUser` returns the SAME uid for an email that already exists. So an address whose
- * email already carries an account can never become a second, target-tenant login: the
- * request would silently resolve to the other tenant's user document. Such an address is
- * therefore not offered at all rather than offered and rejected.
+ * one tenant (`UserModel.tenants` — "user has always exactly one tenant"), and an email names
+ * at most one Auth identity, so an address that already carries an account cannot become a
+ * second login WITH THAT EMAIL. Since spec 1.71 §5.3 it is offered anyway: when the account
+ * belongs to another person (a parent and a child sharing one mailbox), `openAccount` opens
+ * the new account with a Benutzername and a synthetic login address. The flag no longer
+ * withholds the option — the dialog shows a hint instead.
  */
 export interface AllocationEmailOption {
   readonly okey: string;
@@ -192,7 +193,8 @@ export function buildEmailOptions(
 
 /**
  * The email addresses that could become the login of a new account: the ones the admin has
- * ticked for transfer AND that no account uses yet.
+ * ticked for transfer. An address that already has an account stays in the list (spec 1.71
+ * §5.3) — it becomes a Benutzername login, and `hasAccount` drives the dialog's hint.
  *
  * Ticked, not merely present: the target tenant must actually receive the address it is
  * supposed to log in with. An account whose `loginEmail` names an address the target tenant
@@ -203,17 +205,20 @@ export function eligibleLoginEmails(
   options: readonly AllocationEmailOption[],
 ): AllocationEmailOption[] {
   const selected = new Set(selectedAddressKeys);
-  return options.filter(o => selected.has(o.okey) && !o.hasAccount);
+  return options.filter(o => selected.has(o.okey));
 }
 
 /**
- * Keep the admin's pick while it stays eligible, otherwise fall back to the first candidate
- * (favourite first, by the ordering of `buildEmailOptions`). Unticking the chosen address
- * must not leave a stale `loginEmail` pointing at an address that is no longer travelling.
+ * Keep the admin's pick while it stays eligible, otherwise fall back to the first FREE
+ * candidate (favourite first, by the ordering of `buildEmailOptions`), and only then to the
+ * first taken one. Unticking the chosen address must not leave a stale `loginEmail` pointing
+ * at an address that is no longer travelling, and the default must not turn a real-email
+ * login into a Benutzername login while a free address is available.
  */
 export function resolveLoginEmail(chosen: string, eligible: readonly AllocationEmailOption[]): string {
   if (eligible.length === 0) return '';
-  return eligible.some(o => o.email === chosen) ? chosen : eligible[0].email;
+  if (eligible.some(o => o.email === chosen)) return chosen;
+  return (eligible.find(o => !o.hasAccount) ?? eligible[0]).email;
 }
 
 /**

@@ -125,16 +125,18 @@ describe('eligibleLoginEmails', () => {
     ['a@x.ch'],
   );
 
-  it('offers only addresses that travel AND have no account yet', () => {
-    expect(eligibleLoginEmails(['a', 'b'], options).map(o => o.email)).toEqual(['b@x.ch']);
+  it('offers every address that travels, taken or not (spec 1.71 §5.3)', () => {
+    expect(eligibleLoginEmails(['a', 'b'], options).map(o => o.email)).toEqual(['a@x.ch', 'b@x.ch']);
   });
 
   it('offers nothing when no email address is selected', () => {
     expect(eligibleLoginEmails([], options)).toEqual([]);
   });
 
-  it('offers nothing when every selected email already has an account', () => {
-    expect(eligibleLoginEmails(['a'], options)).toEqual([]);
+  it('still offers an email that already has an account — it becomes a Benutzername login', () => {
+    const eligible = eligibleLoginEmails(['a'], options);
+    expect(eligible.map(o => o.email)).toEqual(['a@x.ch']);
+    expect(eligible[0].hasAccount).toBe(true);
   });
 });
 
@@ -154,6 +156,27 @@ describe('resolveLoginEmail', () => {
 
   it('returns empty when nothing is eligible', () => {
     expect(resolveLoginEmail('a@x.ch', [])).toBe('');
+  });
+
+  it('falls back to a free address before a taken one, even when the taken one is the favourite', () => {
+    const mixed = buildEmailOptions(
+      [address('a', 'email', { email: 'fav@x.ch', isFavorite: true }), address('b', 'email', { email: 'free@x.ch' })],
+      ['fav@x.ch'],
+    );
+    expect(resolveLoginEmail('', mixed)).toBe('free@x.ch');
+  });
+
+  it('falls back to a taken address when no free one is left', () => {
+    const allTaken = buildEmailOptions([address('a', 'email', { email: 'a@x.ch' })], ['a@x.ch']);
+    expect(resolveLoginEmail('', allTaken)).toBe('a@x.ch');
+  });
+
+  it('keeps a deliberately chosen taken address', () => {
+    const mixed = buildEmailOptions(
+      [address('a', 'email', { email: 'a@x.ch' }), address('b', 'email', { email: 'b@x.ch' })],
+      ['a@x.ch'],
+    );
+    expect(resolveLoginEmail('a@x.ch', mixed)).toBe('a@x.ch');
   });
 });
 

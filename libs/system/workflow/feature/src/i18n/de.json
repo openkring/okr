@@ -46,6 +46,11 @@
         "label": "Mitgliederkategorie geändert"
       }
     },
+    "account": {
+      "createdWithLoginId": {
+        "label": "Konto mit Benutzername eröffnet"
+      }
+    },
     "expense": {
       "created": {
         "label": "Spesenbeleg erfasst"

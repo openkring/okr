@@ -25,11 +25,13 @@ import { onCall, HttpsError, CallableRequest } from 'firebase-functions/v2/https
 import { AvatarInfo, UserModel } from '@okr/shared-models';
 import { DateFormat, getTodayStr, isActiveMembership } from '@okr/shared-util-core';
 import { checkAppCheckToken, checkAuthentication, checkRoles } from '@okr/shared-util-functions';
-import { getUserIndex } from '@okr/user-util';
+import { getUserIndex, syntheticLoginEmail } from '@okr/user-util';
 
 import { runWorkflow } from '../workflow';
 
 import { decideAccountAction, MembershipDoc, relLogAbbrs, shiftDaysBack } from './account-sync.decide';
+import { allocateLoginId, tenantAppDomain } from './login-id';
+import { decideLoginIdentity } from './login-id.decide';
 
 const CF_NAME = 'accountSync';
 
@@ -94,17 +96,25 @@ function randomPassword(): string {
 }
 
 /** What `openAccount` did, for a caller that has to report it back to a user. */
-export type OpenAccountOutcome = 'created' | 'exists' | 'noEmail' | 'noPerson';
+export type OpenAccountOutcome = 'created' | 'createdWithLoginId' | 'exists' | 'noEmail' | 'noPerson';
 
 export interface OpenAccountResult {
   readonly outcome: OpenAccountOutcome;
   readonly uid?: string;
   readonly loginEmail?: string;
+  readonly loginId?: string;
+  /** Set for 'createdWithLoginId': whose account holds the favourite email. */
+  readonly emailOwnerPersonKey?: string;
 }
 
 /**
- * Open a user account for a person. Idempotent: returns early when a users/{uid}
- * document already exists.
+ * Open a user account for a person (spec 1.71 §5.3). Idempotent: returns 'exists' when the
+ * favourite email already belongs to THIS person's users/{uid} document.
+ *
+ * When the email belongs to ANOTHER person's account (a parent and a child sharing one
+ * mailbox), the account is opened with a Benutzername and a synthetic, never-mailable Auth
+ * email (`<loginId>@login.<domain>`) instead — outcome 'createdWithLoginId'. Every account
+ * gets a Benutzername either way.
  *
  * `loginEmail` overrides the address-directory favourite. The membership trigger has no
  * choice to offer and passes nothing; the tenant allocation (spec 1.47) passes the address
@@ -137,34 +147,70 @@ export async function openAccount(personKey: string, tenantId: string, loginEmai
   const firstName = (personSnap.data()?.['firstName'] as string | undefined) ?? '';
   const lastName = (personSnap.data()?.['lastName'] as string | undefined) ?? '';
 
-  // 2. resolve or create the Firebase Auth identity
-  let uid: string;
+  // 2. whose Auth identity is the favourite email — decides real vs. synthetic (spec §5.3)
+  let authUid: string | undefined;
   try {
-    uid = (await getAuth().getUserByEmail(favEmail)).uid;
+    authUid = (await getAuth().getUserByEmail(favEmail)).uid;
   } catch {
-    const created = await getAuth().createUser({
-      email: favEmail,
-      password: randomPassword(),
-      displayName: `${firstName} ${lastName}`.trim(),
-    });
-    uid = created.uid;
+    authUid = undefined;
+  }
+  const holderSnap = authUid ? await db.collection('users').doc(authUid).get() : undefined;
+  const holderPersonKey = holderSnap?.exists ? String(holderSnap.data()?.['personKey'] ?? '') : undefined;
+  const identity = decideLoginIdentity(authUid, holderPersonKey, personKey);
+
+  if (identity === 'exists') {
+    logger.info(`${CF_NAME}: users/${authUid} already exists for person ${personKey} — nothing to do`);
+    return { outcome: 'exists', uid: authUid, loginEmail: favEmail, loginId: String(holderSnap?.data()?.['loginId'] ?? '') };
   }
 
-  // 3. idempotency
-  const userRef = db.collection('users').doc(uid);
-  if ((await userRef.get()).exists) {
-    logger.info(`${CF_NAME}: users/${uid} already exists for person ${personKey} — nothing to do`);
-    return { outcome: 'exists', uid, loginEmail: favEmail };
+  if (identity === 'synthetic') {
+    // Idempotency for the Benutzername path. The favourite email still names the OTHER person's
+    // Auth identity after this person got their own synthetic account, so without this check
+    // every repeated open (a manual "open" from the person list, a re-run allocation) would
+    // create yet another account. Same query shape as closeAccount — no new index.
+    const own = await db.collection('users')
+      .where('personKey', '==', personKey)
+      .where('tenants', 'array-contains', tenantId)
+      .limit(1)
+      .get();
+    if (!own.empty) {
+      const ownDoc = own.docs[0];
+      logger.info(`${CF_NAME}: users/${ownDoc.id} already exists for person ${personKey} — nothing to do`);
+      return {
+        outcome: 'exists',
+        uid: ownDoc.id,
+        loginEmail: String(ownDoc.data()['loginEmail'] ?? ''),
+        loginId: String(ownDoc.data()['loginId'] ?? ''),
+      };
+    }
   }
 
-  // 4. the user document. Built from `new UserModel(tenantId)` rather than a hand-written
+  const displayName = `${firstName} ${lastName}`.trim();
+  // Resolved before anything is written: a tenant without an appDomain cannot build a
+  // synthetic login address, and failing here leaves no half-opened account behind.
+  const appDomain = identity === 'synthetic' ? await tenantAppDomain(tenantId) : '';
+  let uid: string;
+  // a synthetic account never carries the other person's address, not even for a moment
+  let authEmail = identity === 'synthetic' ? '' : favEmail;
+  if (identity === 'reuse') {
+    uid = authUid as string;
+  } else if (identity === 'createReal') {
+    uid = (await getAuth().createUser({ email: favEmail, password: randomPassword(), displayName })).uid;
+  } else {
+    // 'synthetic': the email belongs to someone else. Pick the uid now, allocate the Benutzername on
+    // that users doc, and only then create the Auth user with the synthetic address built from it.
+    uid = db.collection('users').doc().id;
+  }
+
+  // 3. the user document. Built from `new UserModel(tenantId)` rather than a hand-written
   //    field list, so every default (settings, delivery prefs and especially the usage*
   //    privacy flags) is materialized. Firestore reads do NOT apply model defaults — a
   //    field missing from the document reads back as undefined, so a partially written
   //    user would have undefined privacy flags instead of PrivacyUsage.Restricted.
+  const userRef = db.collection('users').doc(uid);
   const user = new UserModel(tenantId);
   user.okey = uid;
-  user.loginEmail = favEmail;
+  user.loginEmail = authEmail;
   user.personKey = personKey;
   user.firstName = firstName;
   user.lastName = lastName;
@@ -172,9 +218,45 @@ export async function openAccount(personKey: string, tenantId: string, loginEmai
   user.index = getUserIndex(user);
   await userRef.set({ ...user });
 
+  // 4. the Benutzername — every user gets one (spec decision 2). allocateLoginId reads the
+  //    users doc inside its transaction, which is why the doc is written first.
+  let loginId: string;
+  try {
+    loginId = await allocateLoginId(userRef, tenantId, firstName, lastName);
+  } catch (error) {
+    // A synthetic account's users doc has no Auth identity yet — never leave it behind. A real
+    // account keeps its doc: the Auth identity exists and the daily backfill assigns the loginId.
+    if (identity === 'synthetic') await userRef.delete();
+    throw error;
+  }
+
+  if (identity === 'synthetic') {
+    authEmail = syntheticLoginEmail(loginId, appDomain);
+    try {
+      await getAuth().createUser({ uid, email: authEmail, password: randomPassword(), displayName });
+    } catch (error) {
+      await userRef.delete(); // no users doc without its Auth identity
+      throw error;
+    }
+    await userRef.update({ loginEmail: authEmail, index: getUserIndex({ ...user, loginEmail: authEmail, loginId }) });
+    logger.info(`${CF_NAME}: opened account users/${uid} with a Benutzername for person ${personKey} (${tenantId}) — email held by users/${authUid}`);
+    await logActivity(tenantId, 'create', { personKey, uid, loginId, emailHeldBy: authUid });
+    await runWorkflow({
+      tenantId,
+      event: 'account.createdWithLoginId',
+      personKey,
+      relatedKey: `user.${uid}`,
+      subjectName: displayName,
+      today: getTodayStr(DateFormat.StoreDate),
+      params: { loginId, emailOwnerPersonKey: holderPersonKey ?? '' },
+    });
+    return { outcome: 'createdWithLoginId', uid, loginEmail: authEmail, loginId, emailOwnerPersonKey: holderPersonKey };
+  }
+
+  await userRef.update({ index: getUserIndex({ ...user, loginId }) });
   logger.info(`${CF_NAME}: opened account users/${uid} for person ${personKey} (${tenantId})`);
-  await logActivity(tenantId, 'create', { personKey, uid, loginEmail: favEmail });
-  return { outcome: 'created', uid, loginEmail: favEmail };
+  await logActivity(tenantId, 'create', { personKey, uid, loginId });
+  return { outcome: 'created', uid, loginEmail: authEmail, loginId };
 }
 
 /**

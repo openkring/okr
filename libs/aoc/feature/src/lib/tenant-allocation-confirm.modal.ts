@@ -31,6 +31,8 @@ export interface AllocationConfirmI18n {
   readonly accountCheckbox: string;
   readonly accountHint: string;
   readonly accountEmailChoice: string;
+  /** Shown when the chosen email already has an account: it becomes a Benutzername login. */
+  readonly accountEmailTaken: string;
 }
 
 /**
@@ -136,6 +138,9 @@ export interface AllocationConfirmI18n {
                 }
               </ion-radio-group>
             }
+            @if (createAccount() && loginEmailTaken()) {
+              <ion-item lines="none"><ion-note color="warning">{{ i18n().accountEmailTaken }}</ion-note></ion-item>
+            }
           </ion-card-content>
         </ion-card>
       }
@@ -165,8 +170,9 @@ export class TenantAllocationConfirmModal {
   /** Addresses the target tenant already carries. Not offered as checkboxes (there is nothing
    * to transfer), but still valid login candidates on a top-up — see `eligibleEmails`. */
   public carriedAddressKeys = input<string[]>([]);
-  /** The person's email addresses, each flagged with whether an account already uses it.
-   * Empty on a revoke — there is nothing to open there. */
+  /** The person's email addresses, each flagged with whether an account already uses it
+   * (then the dialog shows a hint instead of withholding it). Empty on a revoke — there is
+   * nothing to open there. */
   public emailOptions = input<AllocationEmailOption[]>([]);
 
   // state — a revoke preselects everything, a grant preselects nothing
@@ -182,7 +188,8 @@ export class TenantAllocationConfirmModal {
   protected chosenEmail = linkedSignal(() => '');
 
   /** Recomputed as the admin ticks addresses: an account can only log in with an address the
-   * target tenant actually receives, so unticking the last free email withdraws the offer. */
+   * target tenant actually receives, so unticking the last email withdraws the offer. An email
+   * that already has an account stays offered — see `loginEmailTaken`. */
   protected readonly eligibleEmails = computed(() =>
     this.isRevoke() ? [] : eligibleLoginEmails([...this.selected(), ...this.carriedAddressKeys()], this.emailOptions()));
 
@@ -190,6 +197,10 @@ export class TenantAllocationConfirmModal {
 
   /** The pick, corrected whenever it stopped being eligible. */
   protected readonly loginEmail = computed(() => resolveLoginEmail(this.chosenEmail(), this.eligibleEmails()));
+
+  /** The pick already has an account — the new one is opened with a Benutzername (spec 1.71 §5.3). */
+  protected readonly loginEmailTaken = computed(() =>
+    this.eligibleEmails().some(o => o.email === this.loginEmail() && o.hasAccount));
 
   protected readonly changeConfirmationI18n = computed(() =>
     ({ cancel: this.i18n().cancel, save: this.i18n().ok }) as ChangeConfirmationI18n);

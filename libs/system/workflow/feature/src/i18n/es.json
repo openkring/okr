@@ -46,6 +46,11 @@
         "label": "Categoría de socio modificada"
       }
     },
+    "account": {
+      "createdWithLoginId": {
+        "label": "Cuenta abierta con nombre de usuario"
+      }
+    },
     "expense": {
       "created": {
         "label": "Justificante de gastos registrado"

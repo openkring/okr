@@ -44,6 +44,7 @@ live account. Rules only decide who gets told.
 | Event | Emitted from | `relatedKey` | notable params |
 |---|---|---|---|
 | `membership.created` · `.ended` · `.categoryChanged` | the `memberships/{id}` trigger (`auth/account-sync.ts`) | `membership.<okey>` | `category`, `categoryAbbr`, `fromCategory` |
+| `account.createdWithLoginId` | `openAccount` (`auth/account-sync.ts`) when the favourite email already belongs to another person's account (spec 1.71 §5.3) | `user.<uid>` | `loginId`, `emailOwnerPersonKey` |
 | `expense.created` | inside the `createExpense` callable | `expense.<okey>` | `amount`, `currency`, `category` |
 | `form.submitted` | inside the `submitForm` callable | `formSubmission.<okey>` | `formKey`, `formName` |
 | `application.created` | `onDocumentCreated('applications/{id}')` | `application.<okey>` | `state`, `kind` |

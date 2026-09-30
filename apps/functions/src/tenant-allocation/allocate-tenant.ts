@@ -41,7 +41,13 @@ export interface AllocateTenantRequest {
 /** What became of the "open an account too" request, if there was one. */
 export interface AllocateTenantAccount {
   readonly created: boolean;
+  /** The Auth email of the new account — synthetic (`<loginId>@login.<domain>`) when `withLoginId`. */
   readonly loginEmail?: string;
+  /** The Benutzername of the new account (spec 1.71). */
+  readonly loginId?: string;
+  /** True when the chosen email already belonged to another person's account, so the account
+   * was opened with a Benutzername login instead (spec 1.71 §5.3). */
+  readonly withLoginId?: boolean;
   /** Why nothing was created. `exists` covers both an Auth identity that is already a user
    * somewhere and a users/{uid} document that is already there. */
   readonly reason?: 'notRequested' | 'notAGrant' | 'notAPerson' | 'notSelected' | 'exists' | 'noEmail' | 'noPerson' | 'failed';
@@ -197,9 +203,10 @@ export const allocateTenant = onCall(
     try {
       const email = ((loginAddress.data()['email'] as string | undefined) ?? '').trim();
       const result = await openAccount(data.okey, data.targetTenantId, email);
-      return result.outcome === 'created'
-        ? { created: true, loginEmail: result.loginEmail }
-        : { created: false, reason: result.outcome };
+      if (result.outcome === 'created' || result.outcome === 'createdWithLoginId') {
+        return { created: true, loginEmail: result.loginEmail, loginId: result.loginId, withLoginId: result.outcome === 'createdWithLoginId' };
+      }
+      return { created: false, reason: result.outcome };
     } catch (ex) {
       // No email in the log — PII (privacy inventory §7.2).
       logger.error(`allocateTenant: opening the account in ${data.targetTenantId} failed`, ex);
