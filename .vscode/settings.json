@@ -21,6 +21,8 @@
     "**/.firebase/**": true
   },
 
+  "sonarlint.ls.vmargs": "-Xmx1024m",
+
 // Optimize search to exclude large directories
   "search.exclude": {
     "**/node_modules": true,
