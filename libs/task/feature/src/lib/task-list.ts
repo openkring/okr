@@ -6,10 +6,11 @@ import { ModelSelectService } from '@okr/shared-feature';
 import { PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error, isBrowser, keepDefaultTrue, QuickEntryService } from '@okr/shared-util-angular';
-import { convertDateFormatToString, DateFormat, getAvatarInfo, hasRole } from '@okr/shared-util-core';
+import { convertDateFormatToString, DateFormat, getAvatarInfo, getAvatarInfoForCurrentUser, hasRole } from '@okr/shared-util-core';
 
 import { AvatarPipe } from '@okr/avatar-ui';
 import { Menu } from '@okr/cms-menu-feature';
+import { isTaskCompleted } from '@okr/task-util';
 import { TaskBoard } from './task-board';
 import { TaskMove, TaskStore } from './task.store';
 
@@ -62,24 +63,26 @@ import { TaskMove, TaskStore } from './task.store';
               <ion-icon slot="icon-only" src="{{ (isListView() ? 'grid' : 'list') | svgIcon }}" />
             </ion-button>
           }
-          @if(canChange()) {
-            <ion-button id="c-tasks">
-              <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
-            </ion-button>
-            <ion-popover trigger="c-tasks" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
-              <ng-template>
-                <ion-content>
-                  <okr-menu [menuName]="contextMenuName()" [forceVisible]="groupAdmin()" [toggleStates]="{ toggleFilter: showFilter() }"/>
-                </ion-content>
-              </ng-template>
-            </ion-popover>
-          }
+          <!-- No role gate on the trigger: okr-menu gates every entry by its own roleNeeded, and the
+               wrapper (c-tasks, privileged) is forced visible so members reach 'add'. The id is per
+               list: Ionic keeps /task/my and /task/all in the DOM together, and a shared id binds the
+               popover to the hidden page's button (a click then does nothing). -->
+          <ion-button [id]="popupId()">
+            <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
+          </ion-button>
+          <ion-popover [trigger]="popupId()" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
+            <ng-template>
+              <ion-content>
+                <okr-menu [menuName]="contextMenuName()" [forceVisible]="groupAdmin()" [forceVisibleSelf]="true" [toggleStates]="{ toggleFilter: showFilter() }"/>
+              </ion-content>
+            </ng-template>
+          </ion-popover>
         </ion-buttons>
       </ion-toolbar>
       }
 
       <!-- quick entry -->
-      @if(canChange()) {
+      @if(canCreate()) {
         <ion-item lines="none">
           <ion-textarea #okrQuickEntry
             (keyup.enter)="quickEntry(okrQuickEntry)"
@@ -189,6 +192,7 @@ export class TaskList {
   private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 
   public readonly isListView = signal(true);
+  protected readonly popupId = computed(() => `c_tasks_${this.listId()}`);
 
   constructor() {
     effect(() => {
@@ -234,7 +238,7 @@ export class TaskList {
 
   /******************************* getters *************************************** */
   public getIcon(task: TaskModel): string {
-    return task.completionDate.length > 0 ? 'checkbox-circle' : 'circle';
+    return isTaskCompleted(task) ? 'checkbox-circle' : 'circle';
   }
 
   /******************************* actions *************************************** */
@@ -256,7 +260,10 @@ export class TaskList {
       .replace(/\b\d{2}\.\d{2}\.\d{4}(?:,\d{4})?\b/g, '')
       .replace(/:\S+/g, '')
       .replace(/\s+/g, ' ').trim();
-    task.author = getAvatarInfo(this.store.currentUser(), 'user');
+    // the author is a PERSON (key = personKey), like in add(): the permission checks and the
+    // 'my' list compare author.key with the current user's personKey
+    const currentUser = this.store.currentUser();
+    task.author = currentUser ? getAvatarInfoForCurrentUser(currentUser) : undefined;
     const person = this.selectedQuickEntryPerson();
     if (person) {
       task.assignee = getAvatarInfo(person, 'person');
@@ -309,7 +316,7 @@ export class TaskList {
     const selectedMethod = $event.detail.data;
     if (!selectedMethod) return; // dismissed without choosing an item (backdrop/escape) — not an error
     switch (selectedMethod) {
-      case 'add': await this.store.add(!this.canChange()); break;
+      case 'add': await this.store.add(); break;
       case 'export': await this.store.export('raw'); break;
       case 'toggleFilter': this.showFilter.update(v => !v); break;
       default: error(undefined, `TaskList.onPopoverDismiss: unknown method ${selectedMethod}`);
@@ -332,7 +339,7 @@ export class TaskList {
    * @param task 
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, task: TaskModel): void {
-    if (task.state !== 'done') {
+    if (this.canChange(task) && !isTaskCompleted(task)) {
       actionSheetOptions.buttons.push(createActionSheetButton('task.complete', this.store.i18n.done(), this.imgixBaseUrl, 'checkbox'));
       actionSheetOptions.buttons.push(createActionSheetDivider());
     }
@@ -341,7 +348,7 @@ export class TaskList {
     } else {
       actionSheetOptions.buttons.push(createActionSheetButton('task.view', this.store.i18n.view(), this.imgixBaseUrl, 'eye-on'));
     }
-    if (hasRole('admin', this.store.appStore.currentUser())) {
+    if (this.store.canDeleteTask(task)) {
       actionSheetOptions.buttons.push(createActionSheetButton('task.delete', this.store.i18n.delete(), this.imgixBaseUrl, 'trash'));
     }
     actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
@@ -363,7 +370,7 @@ export class TaskList {
       if (!data) return;
       switch (data.action) {
         case 'task.delete':
-          await this.store.delete(task, !this.canChange(task));
+          await this.store.delete(task);
           break;
         case 'task.edit':
           await this.store.edit(task, !this.canChange(task));
@@ -372,7 +379,7 @@ export class TaskList {
           await this.store.edit(task, true);
           break;
         case 'task.complete':
-          await this.store.setCompleted(task, !this.canChange(task));
+          await this.store.toggleCompleted(task);
           break;
 
       }
@@ -380,7 +387,7 @@ export class TaskList {
   }
 
   public async toggleCompleted(task: TaskModel): Promise<void> {
-    await this.store.setCompleted(task);
+    await this.store.toggleCompleted(task);
   }
 
   protected clear(okrQuickEntry: IonTextarea): void {
@@ -392,6 +399,10 @@ export class TaskList {
   /******************************* helpers *************************************** */
   public canChange(task?: TaskModel): boolean {
     return this.store.canChangeTask(task);
+  }
+
+  protected canCreate(): boolean {
+    return this.store.canCreateTask();
   }
 
   protected hasRole(role: RoleName): boolean {

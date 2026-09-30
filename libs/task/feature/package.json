@@ -20,7 +20,6 @@
     "@okr/shared-util-angular": "*",
     "@okr/shared-util-core": "*",
     "@okr/avatar-ui": "*",
-    "@okr/avatar-data-access": "*",
     "@okr/comment-feature": "*",
     "@okr/cms-menu-feature": "*",
     "@okr/task-data-access": "*",

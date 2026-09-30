@@ -10,6 +10,7 @@ import { TaskModel, TasksConfig, TasksSection } from '@okr/shared-models';
 
 import { AvatarPipe } from '@okr/avatar-ui';
 import { getReservedListHeightPx } from '@okr/cms-section-util';
+import { isTaskCompleted } from '@okr/task-util';
 
 import { TasksStore } from './tasks-section.store';
 
@@ -146,16 +147,17 @@ export class TasksSectionComponent implements OnInit {
    * @param task 
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, task: TaskModel): void {
-    if (hasRole('registered', this.currentUser())) {
-        if (task.completionDate.length === 0) { // task is not yet completed.
-            actionSheetOptions.buttons.push(createActionSheetButton('task.complete', this.store.i18n.task_complete(), this.imgixBaseUrl, 'checkbox-circle'));
-        }
-        actionSheetOptions.buttons.push(createActionSheetButton('task.view', this.store.i18n.task_view(), this.imgixBaseUrl, 'eye-on'));
+    // same rules as the task list (@okr/task-util): author/assignee may complete and edit, the author may delete
+    const canChange = this.store.canChangeTask(task);
+    if (canChange && !isTaskCompleted(task)) {
+      actionSheetOptions.buttons.push(createActionSheetButton('task.complete', this.store.i18n.task_complete(), this.imgixBaseUrl, 'checkbox-circle'));
     }
-    if (hasRole('eventAdmin', this.currentUser()) || hasRole('privileged', this.currentUser())) {
-        actionSheetOptions.buttons.push(createActionSheetButton('task.edit', this.store.i18n.task_edit(), this.imgixBaseUrl, 'edit'));
+    if (canChange) {
+      actionSheetOptions.buttons.push(createActionSheetButton('task.edit', this.store.i18n.task_edit(), this.imgixBaseUrl, 'edit'));
+    } else if (hasRole('registered', this.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('task.view', this.store.i18n.task_view(), this.imgixBaseUrl, 'eye-on'));
     }
-    if (hasRole('admin', this.currentUser())) {
+    if (this.store.canDeleteTask(task)) {
         actionSheetOptions.buttons.push(createActionSheetButton('task.delete', this.store.i18n.task_delete(), this.imgixBaseUrl, 'trash'));
     }
     actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
@@ -177,13 +179,13 @@ export class TasksSectionComponent implements OnInit {
       if (!data) return;
       switch (data.action) {
         case 'task.complete':
-            await this.store.setCompleted(task, false);
+            await this.store.toggleCompleted(task);
             break;
         case 'task.view':
             await this.store.edit(task, true);
             break;
         case 'task.edit':
-            await this.store.edit(task, false);
+            await this.store.edit(task, !this.store.canChangeTask(task));
             break;
         case 'task.delete':
             await this.store.delete(task);
@@ -193,6 +195,6 @@ export class TasksSectionComponent implements OnInit {
   }
 
   protected getIcon(task: TaskModel): string {
-    return task.completionDate.length > 0 ? 'checkbox-circle' : 'circle';
+    return isTaskCompleted(task) ? 'checkbox-circle' : 'circle';
   }
 }

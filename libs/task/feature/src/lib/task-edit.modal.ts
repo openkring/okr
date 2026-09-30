@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 import { IonAccordionGroup, IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { LowercaseWordMask } from '@okr/shared-config';
-import { CategoryListModel, PersonModel, TaskModel, TaskModelName, UserModel } from '@okr/shared-models';
+import { CategoryListModel, TaskModel, TaskModelName, UserModel } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header, StringList } from '@okr/shared-ui';
 import { coerceBoolean, newAvatarInfo, safeStructuredClone } from '@okr/shared-util-core';
 
@@ -76,7 +76,7 @@ import { TaskStore } from './task.store';
           (stringsChange)="onFieldChange('calendars', $event)"
           [mask]="calendarMask"
           [maxLength]="20"
-          [readOnly]="readOnly()"
+          [readOnly]="isReadOnly()"
           [title]="store.i18n.calendarName_label()"
           [description]="store.i18n.calendarName_description()"
           [add]="store.i18n.calendarName_addLabel()" />
@@ -85,9 +85,12 @@ import { TaskStore } from './task.store';
       <!-- Commenting is NOT part of editing the task: a viewer may always answer a
            Schadenmeldung, so the accordion is open and its add button enabled even in
            view mode ([readOnly]=false, independent of the form's own readOnly). -->
-      <ion-accordion-group value="comments">
-        <okr-comments-accordion [parentKey]="parentKey()" [readOnly]="false" />
-      </ion-accordion-group>
+      <!-- a new task has no okey yet: comments would attach to the dangling key 'task.' -->
+      @if(!isNew()) {
+        <ion-accordion-group value="comments">
+          <okr-comments-accordion [parentKey]="parentKey()" [readOnly]="false" />
+        </ion-accordion-group>
+      }
     </ion-content>
   `
 })
@@ -112,15 +115,18 @@ export class TaskEditModal {
   protected formValid = signal(false);
   public formData = linkedSignal(() => safeStructuredClone(this.task()));
   protected showForm = signal(true);
-  protected showAdvanced = signal(false);   // shared with the form; drives author + calendars here
+  protected isNew = computed(() => (this.task().okey ?? '').length === 0);
+  // shared with the form; drives name, author + calendars here. A new task opens expanded: the
+  // simplified view shows the name only as a title, so an empty new task could not be named.
+  protected showAdvanced = linkedSignal(() => this.isNew());
 
   // derived
-  protected defaultAvatar = computed(() => newAvatarInfo(this.currentUser()!.personKey, this.currentUser()!.firstName, this.currentUser()!.lastName, 'person', '', '', ''));
   protected headerTitle = computed(() => this.store.getTitleLabel(this.isReadOnly(), this.task().okey, ));
   protected readonly parentKey = computed(() => `${TaskModelName}.${this.task().okey}`);
   protected calendars = linkedSignal(() => (this.formData()?.calendars ?? []) as string[]);
-  protected author = linkedSignal(() => this.formData()?.author ?? this.defaultAvatar());
-  protected assignee = linkedSignal(() => this.formData()?.assignee ?? this.defaultAvatar());
+  // no fallback to the current user: an empty author/assignee must look empty, since that is what is saved
+  protected author = computed(() => this.formData()?.author);
+  protected assignee = computed(() => this.formData()?.assignee);
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
   protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.store.i18n.cancel(), save: this.store.i18n.save()} as ChangeConfirmationI18n));
 

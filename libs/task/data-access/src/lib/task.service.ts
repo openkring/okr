@@ -100,6 +100,16 @@ export class TaskService {
   }
 
   /**
+   * Persist a completion toggle (checkbox or «Erledigt»): only state + completionDate, which
+   * must agree (see getCompletionPatch). Like saveBoardPosition, a one-tap action is not a form
+   * save — no toast, no audit comment, one activity entry.
+   */
+  public async saveCompletion(task: TaskModel, patch: Pick<TaskModel, 'state' | 'completionDate'>, currentUser?: UserModel): Promise<void> {
+    await this.firestoreService.updateObject(TaskCollection, task.okey, patch, false);
+    void this.activityService.log('task', 'update', currentUser, `${task.okey}: ${task.name}/${patch.state}`);
+  }
+
+  /**
    * Persist backfilled ranks for a column whose tasks had none. Silent and unlogged: this is
    * bookkeeping triggered by someone else's drag, not an edit they made.
    */

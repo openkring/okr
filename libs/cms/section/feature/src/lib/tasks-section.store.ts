@@ -12,7 +12,7 @@ import { I18nService } from '@okr/shared-i18n';
 import { SECTION_I18N_KEYS } from '@okr/cms-section-util';
 import { TaskService } from '@okr/task-data-access';
 import { TaskEditModal } from '@okr/task-feature';
-import { isTask } from '@okr/task-util';
+import { canChangeTask, canDeleteTask, getCompletionPatch, isTask } from '@okr/task-util';
 import { resourceParams } from '@okr/shared-util-angular';
 
 
@@ -40,7 +40,7 @@ export const TasksStore = signalStore(
       stream: ({params}) => {
         const personKey = params.personKey;
         if (!personKey) return of([]);
-        const query = getSystemQuery(store.appStore.env.tenantId);
+        const query = getSystemQuery(store.appStore.tenantId());
         query.push({ key: 'completionDate', operator: '==', value: '' }); // only get tasks that are not completed (completionDate is empty)
         return store.appStore.firestoreService.searchData<TaskModel>(TaskCollection, query, 'dueDate', 'asc').pipe(
           map(tasks => tasks.filter(task => task.assignee?.key === personKey))
@@ -99,31 +99,29 @@ export const TasksStore = signalStore(
           data.okey?.length === 0 ? 
             await store.taskService.create(data, store.currentUser()) : 
             await store.taskService.update(data, store.currentUser());
-          this.reload();
+          // no reload(): the list is an rxfire real-time stream
         }
       }
     },
 
-    /**
-     * Archive a task (soft delete, sets isArchived). Admin-only; the caller gates the action.
-     */
+    canChangeTask(task: TaskModel): boolean {
+      return canChangeTask(task, store.currentUser());
+    },
+
+    canDeleteTask(task: TaskModel): boolean {
+      return canDeleteTask(task, store.currentUser());
+    },
+
+    /** Archive a task (soft delete, sets isArchived). Gated here, not only in the ActionSheet. */
     async delete(task: TaskModel): Promise<void> {
+      if (!canDeleteTask(task, store.currentUser())) return;
       await store.taskService.delete(task, store.currentUser());
-      this.reload();
     },
 
-    async setCompleted(task: TaskModel, readOnly = true): Promise<void> {
-      if (!readOnly) {
-        if (task.completionDate) {
-          task.completionDate = '';
-          task.state = 'planned';
-        } else {
-          task.completionDate = getTodayStr();
-          task.state = 'done';
-        }
-        await store.taskService.update(task, store.currentUser());
-        this.reload();
-      }
+    /** Toggle completion: open → done today, done → planned. Never mutates the streamed task. */
+    async toggleCompleted(task: TaskModel): Promise<void> {
+      if (!canChangeTask(task, store.currentUser())) return;
+      await store.taskService.saveCompletion(task, getCompletionPatch(task, getTodayStr()), store.currentUser());
     },
     }
   })

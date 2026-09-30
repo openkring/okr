@@ -7,12 +7,11 @@ import { ModalController } from '@ionic/angular/standalone';
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore, PersonSelectModal, PersonSelectResult } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
-import { CategoryListModel, PersonModel, TaskCollection, TaskModel } from '@okr/shared-models';
-import { chipMatches, debugItemLoaded, debugListLoaded, getAvatarInfo, getSystemQuery, getTodayStr, hasRole, isPerson, nameMatches, rankBetween } from '@okr/shared-util-core';
+import { PersonModel, TaskCollection, TaskModel } from '@okr/shared-models';
+import { chipMatches, debugItemLoaded, debugListLoaded, getAvatarInfo, getAvatarInfoForCurrentUser, getSystemQuery, getTodayStr, isPerson, nameMatches, rankBetween } from '@okr/shared-util-core';
 
 import { TaskService } from '@okr/task-data-access';
-import { assignMissingRanks, groupTasksByState, isTask, TASK_I18N_KEYS, TaskBoardColumn, TaskI18n } from '@okr/task-util';
-import { AvatarService } from '@okr/avatar-data-access';
+import { assignMissingRanks, canChangeTask, canCreateTask, canDeleteTask, getCompletionPatch, groupTasksByState, isTask, TASK_I18N_KEYS, TaskBoardColumn } from '@okr/task-util';
 
 /** The payload of a Kanban drag-and-drop. `columnTasks` is the target column, ordered, without the moved task. */
 export type TaskMove = {
@@ -59,7 +58,6 @@ export const TaskStore = signalStore(
     appStore: inject(AppStore),
     firestoreService: inject(FirestoreService),
     modalController: inject(ModalController),
-    avatarService: inject(AvatarService),
     i18nService: inject(I18nService),
   })),
   withProps((store) => ({
@@ -82,7 +80,7 @@ export const TaskStore = signalStore(
       stream: ({params}) => {
         const personKey = params.personKey;
         if (!personKey) return of([]);
-        const query = getSystemQuery(store.appStore.env.tenantId);
+        const query = getSystemQuery(store.appStore.tenantId());
         query.push({ key: 'completionDate', operator: '==', value: '' }); // only get tasks that are not completed (completionDate is empty)  
         return store.appStore.firestoreService.searchData<TaskModel>(TaskCollection, query, 'dueDate', 'asc').pipe(
           map(tasks => {
@@ -189,22 +187,19 @@ export const TaskStore = signalStore(
     },
 
     /******************************* actions *************************************** */
-    /**
-     * May the current user change this task?
-     * Lives in the store because both the list (ActionSheet) and the board (drag handles) need it.
-     * 1) privileged/eventAdmin roles, 2) admin of the group the list is scoped to, 3) the task's
-     * own author or assignee.
-     */
+    /******************************* permissions *************************************** */
+    // The rules live in @okr/task-util (shared with the dashboard section); the store only
+    // supplies the current user and the group scope. Both the list and the board need them.
+    canCreateTask(): boolean {
+      return canCreateTask(store.currentUser(), store.groupAdmin());
+    },
+
     canChangeTask(task?: TaskModel): boolean {
-      const currentUser = store.currentUser();
-      if (hasRole('privileged', currentUser)) return true;
-      if (hasRole('eventAdmin', currentUser)) return true;
-      if (store.groupAdmin()) return true;
-      if (task && currentUser) {
-        if (task.author?.key === currentUser.personKey) return true;
-        if (task.assignee?.key === currentUser.personKey) return true;
-      }
-      return false;
+      return canChangeTask(task, store.currentUser(), store.groupAdmin());
+    },
+
+    canDeleteTask(task?: TaskModel): boolean {
+      return canDeleteTask(task, store.currentUser(), store.groupAdmin());
     },
 
     /**
@@ -247,23 +242,25 @@ export const TaskStore = signalStore(
       console.log(`TaskListStore.export(${type}) ist not yet implemented`);
     },
 
-    async add(readOnly = true): Promise<void> {
-      if (readOnly) return;
-      const pKey = store.currentUser()?.personKey;
-      if (!pKey) return;
-      const person = store.appStore.getPerson(pKey);
-      const author = getAvatarInfo(person, 'person');
+    async add(): Promise<void> {
+      if (!this.canCreateTask()) return;
+      const currentUser = store.currentUser();
+      if (!currentUser?.personKey) return;
+      // the cached person carries the gender for the avatar; fall back to the user's own name
+      // rather than silently doing nothing while the person list is still loading
+      const person = store.appStore.getPerson(currentUser.personKey);
+      const author = person ? getAvatarInfo(person, 'person') : getAvatarInfoForCurrentUser(currentUser);
       if (!author) return;
       const task = new TaskModel(store.tenantId());
       task.author = author;
       task.assignee = author; // by default, the task is self-assigned, user can change this in the edit modal
       const calendar = store.calendarName();
-      if (!calendar || calendar === 'all' || calendar === 'my' || calendar === '') {
+      if (!calendar || calendar === 'all' || calendar === 'my') {
         task.calendars = [store.tenantId()];
       } else {
         task.calendars = [calendar];
       }
-      await this.edit(task, readOnly);
+      await this.edit(task, false);
     },
 
     async edit(task: TaskModel, readOnly = true): Promise<void> {
@@ -285,32 +282,31 @@ export const TaskStore = signalStore(
       const { data, role } = await modal.onDidDismiss();
       if (role === 'confirm' && data && !readOnly) {
         if (isTask(data, store.tenantId())) {
-          data.okey?.length === 0 ? 
-            await store.taskService.create(data, store.currentUser()) : 
+          if ((data.okey ?? '').length === 0) {
+            await store.taskService.create(data, store.currentUser());
+          } else {
             await store.taskService.update(data, store.currentUser());
-          this.reload();
+          }
+          // no reload(): the lists are rxfire real-time streams
         }
       }
     },
 
     async quickEntry(task: TaskModel): Promise<void> {
+      if (!this.canCreateTask()) return;
       await store.taskService.create(task, store.currentUser());
     },
 
-    async delete(task?: TaskModel, readOnly = true): Promise<void> {
-      if (task && !readOnly) {
-        await store.taskService.delete(task);
-        this.reload();
-      }
+    /** Archive a task (soft delete). Gated here, not only in the ActionSheet. */
+    async delete(task?: TaskModel): Promise<void> {
+      if (!task || !this.canDeleteTask(task)) return;
+      await store.taskService.delete(task, store.currentUser());
     },
 
-    async setCompleted(task: TaskModel, readOnly = true): Promise<void> {
-      if (!readOnly) {
-        task.completionDate = getTodayStr();
-        task.state = 'done';
-        await store.taskService.update(task, store.currentUser());
-        this.reload();
-      }
+    /** Toggle completion: open → done today, done → planned. Never mutates the streamed task. */
+    async toggleCompleted(task: TaskModel): Promise<void> {
+      if (!this.canChangeTask(task)) return;
+      await store.taskService.saveCompletion(task, getCompletionPatch(task, getTodayStr()), store.currentUser());
     },
 
     async selectPerson(): Promise<PersonModel | undefined> {
