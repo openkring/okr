@@ -3,7 +3,7 @@
 // Shared FCM delivery to a set of PERSONS (not devices, not uids).
 //
 // Extracted verbatim from `task/index.ts`, which was the only sender until the calendar
-// grew its own (participant broadcast + comment/document activity, spec
+// grew its own (invitation + comment/document activity, spec
 // `2026-08-25-participant-messaging-spec.md` §2.3). Three things were duplicated there and
 // are easy to get subtly wrong a second time: person → uid → token resolution, the
 // data-only message shape the service worker depends on, and the removal of tokens Firebase

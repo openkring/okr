@@ -169,7 +169,6 @@ export const generateCalendarICS = Calendar.generateCalendarICS;
 export const getPublicCalEvents = Calendar.getPublicCalEvents;
 export const ensureCalendarFeedToken = Calendar.ensureCalendarFeedToken;
 export const calendarFeed = Calendar.calendarFeed;
-export const notifyCalEventParticipants = Calendar.notifyCalEventParticipants;
 export const onCalEventCommentCreated = Calendar.onCalEventCommentCreated;
 export const onCalEventDocumentCreated = Calendar.onCalEventDocumentCreated;
 export const onInvitationCreated = Calendar.onInvitationCreated;
