@@ -7,12 +7,15 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 import { AUTH, ENV } from '@okr/shared-config';
 import { AuthCredentials, UserModel } from '@okr/shared-models';
 import { AlertService, navigateByUrl } from '@okr/shared-util-angular';
-import { die, warn } from '@okr/shared-util-core';
+import { clearOfflineSnapshots, die, warn } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
 import { ActivityService } from '@okr/activity-data-access';
 import { LoginFailure, PwdResetFailure, PwdResetResult, toLoginFailure, toPwdResetFailure } from '@okr/auth-util';
 
 import { PFX } from './scope';
+
+/** How long logout waits for its audit entry before signing out anyway (offline, see logout()). */
+const LOGOUT_AUDIT_TIMEOUT_MS = 2000;
 
 /**
  * This provider centralizes the authentication functions
@@ -217,8 +220,17 @@ export class AuthService {
         // The write was therefore always denied and the logout never reached the audit
         // trail. If signOut() below fails the caller is still authenticated, so the
         // catch-path write is permitted too.
-        await this.activityService.log('auth', 'logout', currentUser, `${msg}: SUCCESS`);
+        // Bounded wait: a Firestore write resolves only on server acknowledgement, so offline
+        // the await never settled and logout hung with the user still signed in. Online the
+        // ack arrives well within the bound; offline the queued entry is lost (it would be
+        // sent after signOut and denied) — an accepted gap in the audit trail.
+        await Promise.race([
+          this.activityService.log('auth', 'logout', currentUser, `${msg}: SUCCESS`),
+          new Promise<void>(resolve => setTimeout(resolve, LOGOUT_AUDIT_TIMEOUT_MS)),
+        ]);
         await signOut(this.auth);
+        // The offline copy of users/{uid} must not outlive the session on a shared device.
+        clearOfflineSnapshots('user.');
         await this.clearMatrixCredentials();
         await this.alertService.showToast(this.i18n.logout_conf());
         return true;
