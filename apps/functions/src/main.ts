@@ -5,6 +5,7 @@ import * as functions from 'firebase-functions'; // needed for logger
 
 import * as Test from './test';
 import * as Address from './address';
+import * as FinanceDocument from './finance-document';
 import * as Calendar from './calendar';
 import * as Replication from './replication';
 import * as Auth from './auth';
@@ -377,6 +378,8 @@ export { generateDunningPdf } from './payment/generate-dunning-pdf';
 
 // privacy 1.19 Phase 5B: GDPR/revDSG subject-access export delivery (D-P5-1) —
 // exportMyData zips + signs the caller's own export, reapPrivacyExports reaps stale artifacts
+// signFinanceDocuments: short-lived links to vouchers in the private bucket (spec 1.74)
+export const signFinanceDocuments = FinanceDocument.signFinanceDocuments;
 export const exportMyData = Privacy.exportMyData;
 export const reapPrivacyExports = Privacy.reapPrivacyExports;
 
