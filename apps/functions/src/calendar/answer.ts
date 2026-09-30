@@ -11,7 +11,7 @@ import { onRequest } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
 import { projectID } from 'firebase-functions/params';
 import { DocumentReference, getFirestore } from 'firebase-admin/firestore';
-import { applyInvitationAnswer, DateFormat, getTodayStr } from '@okr/shared-util-core';
+import { applyInvitationAnswer } from '@okr/shared-util-core';
 import { AvatarInfo, Attendee } from '@okr/shared-models';
 
 import { answerFunctionUrl, invitationLinkSecret, isAnswerChoice, verifyAnswer } from './answer-link';
@@ -19,6 +19,7 @@ import { eventUrl, tenantLinks } from './deliver';
 import { AnswerableEvent, InvitationDoc } from './invitation';
 import { answerConfirmPage, answerResultPage, eventWhen, locationLabel } from './mail';
 import { todayStoreDate } from './recipients';
+import { toStoreDateTime } from '../srv/zurich-time';
 
 const REGION = 'europe-west6';
 const CF_NAME = 'invitationAnswer';
@@ -74,7 +75,7 @@ function param(req: { method: string; query: Record<string, unknown>; body?: Rec
  */
 async function recordAnswer(invRef: DocumentReference, eventRef: DocumentReference, invitationKey: string, inv: FullInvitation, state: 'accepted' | 'declined', tenantId: string): Promise<AnswerRefusal | undefined> {
   const db = getFirestore();
-  const now = getTodayStr(DateFormat.StoreDateTime);
+  const now = toStoreDateTime(new Date());
   const person: AvatarInfo = {
     key: inv.inviteeKey ?? '', name1: inv.inviteeFirstName ?? '', name2: inv.inviteeLastName ?? '',
     modelType: 'person', type: '', subType: '', label: '',
@@ -116,57 +117,74 @@ export const invitationAnswer = onRequest(
     res.set('Referrer-Policy', 'no-referrer');
     if (req.method !== 'GET' && req.method !== 'POST') { res.set('Allow', 'GET, POST'); res.status(405).send(''); return; }
 
-    const params = { method: req.method, query: req.query as Record<string, unknown>, body: req.body as Record<string, unknown> | undefined };
-    const invitationKey = param(params, 'i');
-    const answer = param(params, 'a');
-    const signature = param(params, 's');
-    const db = getFirestore();
-    const invRef = invitationKey ? db.collection('invitations').doc(invitationKey) : undefined;
-    const invSnap = invRef ? await invRef.get() : undefined;
-    const inv = invSnap?.exists ? (invSnap.data() as FullInvitation) : undefined;
-    const tenantId = inv?.tenants?.[0] ?? '';
-    const links = tenantId ? await tenantLinks(tenantId) : { appName: '', appUrl: '' };
+    // Everything below can throw (Firestore/tenantLinks failure, transaction contention, the
+    // invitation getting deleted mid-flight in recordAnswer). This is a bare onRequest handler —
+    // an uncaught throw here would otherwise escape as a raw framework crash page instead of the
+    // same branded result page every other outcome gets.
+    let appName = '';
+    try {
+      const params = { method: req.method, query: req.query as Record<string, unknown>, body: req.body as Record<string, unknown> | undefined };
+      const invitationKey = param(params, 'i');
+      const answer = param(params, 'a');
+      const signature = param(params, 's');
+      const db = getFirestore();
+      const invRef = invitationKey ? db.collection('invitations').doc(invitationKey) : undefined;
+      const invSnap = invRef ? await invRef.get() : undefined;
+      const inv = invSnap?.exists ? (invSnap.data() as FullInvitation) : undefined;
+      const tenantId = inv?.tenants?.[0] ?? '';
+      const links = tenantId ? await tenantLinks(tenantId) : { appName: '', appUrl: '' };
+      appName = links.appName;
 
-    const refuse = (reason: AnswerRefusal, status = 200): void => {
-      res.status(status).send(answerResultPage({ appName: links.appName, ...REFUSAL_TEXT[reason] }));
-    };
+      const refuse = (reason: AnswerRefusal, status = 200): void => {
+        res.status(status).send(answerResultPage({ appName: links.appName, ...REFUSAL_TEXT[reason] }));
+      };
 
-    const answerValid = isAnswerChoice(answer);
-    const signatureValid = !!inv && answerValid
-      && verifyAnswer(invitationKey, inv.inviteeKey ?? '', answer, signature, invitationLinkSecret.value());
-    const badLink = linkRefusal(!!inv, answerValid, signatureValid);
-    if (badLink) { refuse(badLink.reason, badLink.status); return; }
-    // unreachable after linkRefusal — only here so TypeScript narrows the types
-    if (!inv || !invRef || !answerValid) { refuse('invalid', 403); return; }
+      const answerValid = isAnswerChoice(answer);
+      const signatureValid = !!inv && answerValid
+        && verifyAnswer(invitationKey, inv.inviteeKey ?? '', answer, signature, invitationLinkSecret.value());
+      const badLink = linkRefusal(!!inv, answerValid, signatureValid);
+      if (badLink) { refuse(badLink.reason, badLink.status); return; }
+      // unreachable after linkRefusal — only here so TypeScript narrows the types
+      if (!inv || !invRef || !answerValid) { refuse('invalid', 403); return; }
 
-    const caleventKey = inv.caleventKey ?? '';
-    const eventRef = caleventKey ? db.collection('calevents').doc(caleventKey) : undefined;
-    const eventSnap = eventRef ? await eventRef.get() : undefined;
-    const event = eventSnap?.exists ? (eventSnap.data() as AnswerableEvent) : undefined;
-    const refusal = decideAnswer(inv, event, todayStoreDate());
-    if (refusal || !eventRef) { refuse(refusal ?? 'eventGone'); return; }
+      const caleventKey = inv.caleventKey ?? '';
+      const eventRef = caleventKey ? db.collection('calevents').doc(caleventKey) : undefined;
+      const eventSnap = eventRef ? await eventRef.get() : undefined;
+      const event = eventSnap?.exists ? (eventSnap.data() as AnswerableEvent) : undefined;
+      const refusal = decideAnswer(inv, event, todayStoreDate());
+      if (refusal || !eventRef) { refuse(refusal ?? 'eventGone'); return; }
 
-    if (req.method === 'GET') {
-      res.status(200).send(answerConfirmPage({
+      if (req.method === 'GET') {
+        res.status(200).send(answerConfirmPage({
+          appName: links.appName,
+          eventName: event?.name ?? '',
+          when: eventWhen(event?.startDate, event?.startTime),
+          location: locationLabel(event?.locationKey),
+          answer, postUrl: answerFunctionUrl(projectID.value()), invitationKey, signature,
+        }));
+        return;
+      }
+
+      const state = answer === 'accept' ? 'accepted' : 'declined';
+      const lateRefusal = await recordAnswer(invRef, eventRef, invitationKey, inv, state, tenantId);
+      if (lateRefusal) { refuse(lateRefusal); return; }
+      logger.info(`${CF_NAME}: recorded ${state} for one invitation (tenant ${tenantId})`);
+
+      res.status(200).send(answerResultPage({
         appName: links.appName,
-        eventName: event?.name ?? '',
-        when: eventWhen(event?.startDate, event?.startTime),
-        location: locationLabel(event?.locationKey),
-        answer, postUrl: answerFunctionUrl(projectID.value()), invitationKey, signature,
+        title: state === 'accepted' ? 'Danke für deine Zusage' : 'Danke für deine Rückmeldung',
+        message: state === 'accepted' ? 'Du bist für den Anlass angemeldet.' : 'Du hast für den Anlass abgesagt.',
+        eventUrl: links.appUrl ? eventUrl(links, caleventKey) : undefined,
       }));
-      return;
+    } catch (err) {
+      // Never log the invitation key, signature, or any name/email — only that it failed.
+      logger.error(`${CF_NAME}: failed`, err);
+      if (res.headersSent) return;
+      res.status(500).send(answerResultPage({
+        appName,
+        title: 'Das hat nicht geklappt',
+        message: 'Deine Antwort konnte nicht gespeichert werden. Versuch es bitte nochmals oder antworte in der App.',
+      }));
     }
-
-    const state = answer === 'accept' ? 'accepted' : 'declined';
-    const lateRefusal = await recordAnswer(invRef, eventRef, invitationKey, inv, state, tenantId);
-    if (lateRefusal) { refuse(lateRefusal); return; }
-    logger.info(`${CF_NAME}: recorded ${state} for one invitation (tenant ${tenantId})`);
-
-    res.status(200).send(answerResultPage({
-      appName: links.appName,
-      title: state === 'accepted' ? 'Danke für deine Zusage' : 'Danke für deine Rückmeldung',
-      message: state === 'accepted' ? 'Du bist für den Anlass angemeldet.' : 'Du hast für den Anlass abgesagt.',
-      eventUrl: links.appUrl ? eventUrl(links, caleventKey) : undefined,
-    }));
   },
 );
