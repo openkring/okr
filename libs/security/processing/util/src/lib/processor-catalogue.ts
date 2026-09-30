@@ -119,9 +119,11 @@ export const PROCESSOR_CATALOGUE: readonly CatalogueEntry[] = [
     country: 'US',
     transferMechanism: 'scc',
     purposes: [
-      'Versand von Transaktions-E-Mails (Registrierung, Passwort-Zurücksetzung, Benachrichtigungen)',
+      'Versand von Transaktions-E-Mails (Registrierung, Passwort-Zurücksetzung samt Benutzername, Benachrichtigungen)',
       'Versand von Dokumenten als E-Mail-Anhang',
     ],
+    // Der Benutzername (loginId, spec 1.71) steht in der Passwort-Zurücksetzen-Mail und zählt zur
+    // Klasse 'identity'; eine eigene DataClass gibt es nicht.
     dataClasses: ['identity', 'contact', 'communication', 'content'],
     retentionText: 'Zustellprotokolle beim Anbieter gemäss dessen Aufbewahrungsfristen',
     securityMeasures: [
