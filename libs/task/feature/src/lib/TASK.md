@@ -43,23 +43,24 @@ NgRx Signal Store (provided at component level). State:
 |---|---|
 | `calendarName` | `'all'`, `'my'`, or a specific calendar key |
 | `maxItems` | Optional limit on returned items (used in summary widgets) |
+| `showArchived` | Archived view (spec §10); toggled by the list's «Archiv»-Filter |
 | `taskKey` | Key of a single task to load individually |
 | `searchTerm` | Text filter on `index` |
 | `selectedTag` | Tag chip filter |
 | `selectedState` | State filter (`'all'` or a specific state) |
 | `selectedPriority` | Priority filter (`'all'` or a specific priority) |
 
-Key resources:
+Key resources (spec 1.72 §3.2, §4.1 — every reader is scoped, not client-filtered):
 
-- `tasksResource` — all tasks for the tenant ordered by `dueDate`.
-- `tasksForCurrentUserResource` — tasks where `assignee.key` or `author.key` equals the current user's `personKey`; only non-completed tasks (`completionDate == ''`).
-- `taskResource` — single task by `taskKey`.
+- `tasksResource` — one resource for all three views. `calendarName` picks the scope passed to
+  `buildTaskListQueries` (`@okr/task-util`): `'all'` → staff-only whole-tenant query, `'my'` →
+  `assignee.key == personKey` ∪ `author.key == personKey` (merged by `okey`, open tasks only),
+  any other value → `shareKey == calendarName` (a group key or `meeting.<okey>`). `showArchived`
+  switches the `isArchived` filter. `TaskService.listByQueries` runs the query set and merges it.
+- `taskResource` — single task by `taskKey`, via `TaskService.read` (direct `readModel`).
 
-The `tasks` computed signal switches between resources based on `calendarName`:
-
-- `'all'` → `tasksResource`
-- `'my'` → `tasksForCurrentUserResource`
-- any other value → `tasksResource` filtered by calendar membership
+The `tasks` computed signal reads `tasksResource` directly (the query already scopes it) and
+slices to `maxItems` only for the `'my'` view.
 
 Key actions:
 

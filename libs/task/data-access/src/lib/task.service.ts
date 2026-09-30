@@ -1,10 +1,8 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, combineLatest, map, of } from 'rxjs';
 
-import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
-import { TaskCollection, TaskModel, UserModel } from '@okr/shared-models';
-import { findByKey, getSystemQuery } from '@okr/shared-util-core';
+import { DbQuery, TaskCollection, TaskModel, UserModel } from '@okr/shared-models';
 import { I18nService } from '@okr/shared-i18n';
 
 import { getTaskIndex, getTaskShareKey } from '@okr/task-util';
@@ -16,7 +14,6 @@ import { PFX } from './scope';
 })
 export class TaskService {
   private readonly firestoreService = inject(FirestoreService);
-  private readonly env = inject(ENV);
   private readonly activityService = inject(ActivityService);
   private i18nService = inject(I18nService);
 
@@ -52,7 +49,8 @@ export class TaskService {
    * @returns an Observable of the TaskModel or undefined if not found
    */
   public read(key: string | undefined): Observable<TaskModel | undefined> {
-    return findByKey<TaskModel>(this.list(), key);    
+    if (!key) return of(undefined);
+    return this.firestoreService.readModel<TaskModel>(TaskCollection, key);
   }
 
   /**
@@ -123,13 +121,23 @@ export class TaskService {
 
   /*-------------------------- LIST / QUERY / FILTER --------------------------------*/
   /**
-   * List all tasks with optional sorting.
-   * @param orderBy the field to order the tasks by, e.g., 'dueDate'
-   * @param sortOrder the order to sort the tasks, either 'asc' or 'desc'
-   * @returns an Observable of the list of tasks
+   * Runs several queries and merges them by okey (spec 1.72 §3.2: 'my' = assignee ∪ author).
+   * Each query in `queries` must be provable against the Firestore rules of spec 1.72 §3.1 —
+   * see {@link buildTaskListQueries}. An empty `queries` array means there is nothing to query.
+   * @param queries the query sets to run, as produced by buildTaskListQueries
+   * @param orderBy the field to order the merged tasks by, e.g., 'dueDate'
+   * @param sortOrder the order to sort the merged tasks, either 'asc' or 'desc'
+   * @returns an Observable of the merged, de-duplicated list of tasks
    */
-  public list(orderBy = 'dueDate', sortOrder = 'asc'): Observable<TaskModel[]> {
-    return this.firestoreService.searchData(TaskCollection, getSystemQuery(this.env.tenantId), orderBy, sortOrder);
+  public listByQueries(queries: DbQuery[][], orderBy = 'dueDate', sortOrder = 'asc'): Observable<TaskModel[]> {
+    if (queries.length === 0) return of([]);
+    return combineLatest(queries.map(q => this.firestoreService.searchData<TaskModel>(TaskCollection, q, orderBy, sortOrder))).pipe(
+      map(lists => {
+        const byKey = new Map<string, TaskModel>();
+        for (const t of lists.flat()) byKey.set(t.okey, t);
+        return [...byKey.values()].sort((a, b) => (a.dueDate ?? '').localeCompare(b.dueDate ?? ''));
+      })
+    );
   }
 
   /*-------------------------- export --------------------------------*/

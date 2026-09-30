@@ -1,17 +1,17 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
-import { map, of } from 'rxjs';
+import { of } from 'rxjs';
 import { ModalController } from '@ionic/angular/standalone';
 
-import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore, PersonSelectModal, PersonSelectResult } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
-import { PersonModel, TaskCollection, TaskModel } from '@okr/shared-models';
-import { chipMatches, debugItemLoaded, debugListLoaded, getAvatarInfo, getAvatarInfoForCurrentUser, getSystemQuery, getTodayStr, isPerson, nameMatches, rankBetween } from '@okr/shared-util-core';
+import { PersonModel, TaskModel } from '@okr/shared-models';
+import { chipMatches, debugItemLoaded, getAvatarInfo, getAvatarInfoForCurrentUser, getTodayStr, isPerson, nameMatches, rankBetween } from '@okr/shared-util-core';
+import { resourceParams } from '@okr/shared-util-angular';
 
 import { TaskService } from '@okr/task-data-access';
-import { assignMissingRanks, canChangeTask, canCreateTask, canDeleteTask, getCompletionPatch, groupTasksByState, isTask, TASK_I18N_KEYS, TaskBoardColumn } from '@okr/task-util';
+import { assignMissingRanks, buildTaskListQueries, canChangeTask, canCreateTask, canDeleteTask, getCompletionPatch, groupTasksByState, isTask, TASK_I18N_KEYS, TaskBoardColumn } from '@okr/task-util';
 
 /** The payload of a Kanban drag-and-drop. `columnTasks` is the target column, ordered, without the moved task. */
 export type TaskMove = {
@@ -25,6 +25,7 @@ export type TaskState = {
   calendarName: string;
   maxItems: number | undefined,
   groupAdmin: boolean,          // set by the group view; a group admin may change that group's tasks
+  showArchived: boolean,        // the archived view (spec §10); toggled by Task 8's UI, consumed here
 
   // task
   taskKey: string;
@@ -40,6 +41,7 @@ export const initialState: TaskState = {
   calendarName: '',
   maxItems: undefined,
   groupAdmin: false,
+  showArchived: false,
 
   // task
   taskKey: '',
@@ -56,39 +58,27 @@ export const TaskStore = signalStore(
   withProps(() => ({
     taskService: inject(TaskService),
     appStore: inject(AppStore),
-    firestoreService: inject(FirestoreService),
     modalController: inject(ModalController),
     i18nService: inject(I18nService),
   })),
   withProps((store) => ({
     i18n: store.i18nService.translateAll(TASK_I18N_KEYS),
     tasksResource: rxResource({
-      params: () => ({
-        currentUser: store.appStore.currentUser()
-      }),
-      stream: ({params}) => {
-        return store.firestoreService.searchData<TaskModel>(TaskCollection, getSystemQuery(store.appStore.tenantId()), 'dueDate', 'asc').pipe(
-          debugListLoaded<TaskModel>('TaskListStore.tasks', params.currentUser)
-        );
-      }
-    }),
-   tasksForCurrentUserResource: rxResource({
-      params: () => ({
+      params: resourceParams(() => ({
+        calendarName: store.calendarName(),
         personKey: store.appStore.currentUser()?.personKey,
-        maxItems: store.maxItems()
-      }),
-      stream: ({params}) => {
-        const personKey = params.personKey;
-        if (!personKey) return of([]);
-        const query = getSystemQuery(store.appStore.tenantId());
-        query.push({ key: 'completionDate', operator: '==', value: '' }); // only get tasks that are not completed (completionDate is empty)  
-        return store.appStore.firestoreService.searchData<TaskModel>(TaskCollection, query, 'dueDate', 'asc').pipe(
-          map(tasks => {
-            const filteredTasks = tasks.filter(task => task.assignee?.key === personKey || task.author?.key === personKey);
-            // Limit results if maxItems is defined
-            return params.maxItems !== undefined ? filteredTasks.slice(0, params.maxItems) : filteredTasks;
-          })
-        );
+        tenantId: store.appStore.tenantId(),
+        archived: store.showArchived(),
+      })),
+      stream: ({ params }) => {
+        if (!params.calendarName || !params.tenantId) return of([]);
+        const kind = params.calendarName === 'all' ? 'all' : params.calendarName === 'my' ? 'my' : 'shared';
+        const queries = buildTaskListQueries({
+          kind, tenantId: params.tenantId, personKey: params.personKey,
+          shareKey: kind === 'shared' ? params.calendarName : undefined,
+          archived: params.archived, openOnly: kind === 'my',
+        });
+        return store.taskService.listByQueries(queries);
       }
     }),
     taskResource: rxResource({
@@ -97,6 +87,7 @@ export const TaskStore = signalStore(
         currentUser: store.appStore.currentUser()
       }),
       stream: ({params}) => {
+        if (!params.taskKey) return of(undefined);
         return store.taskService.read(params.taskKey).pipe(
           debugItemLoaded('TaskStore.task', params.currentUser)
         );
@@ -106,13 +97,9 @@ export const TaskStore = signalStore(
 
  withComputed((state) => ({
     tasks: computed(() => {
-      if (state.calendarName() === 'all') {
-        return state.tasksResource.value() ?? [];
-      } else if (state.calendarName() === 'my') {
-        return state.tasksForCurrentUserResource.value() ?? [];
-      } else {
-        return state.tasksResource.value()?.filter((task: TaskModel) => task.calendars.includes(state.calendarName())) ?? [];
-      }
+      const tasks = state.tasksResource.value() ?? [];
+      const maxItems = state.maxItems();
+      return state.calendarName() === 'my' && maxItems !== undefined ? tasks.slice(0, maxItems) : tasks;
     })
  })),
 
@@ -154,7 +141,10 @@ export const TaskStore = signalStore(
     reload() {
       store.tasksResource.reload();
       store.taskResource.reload();
-      store.tasksForCurrentUserResource.reload();
+    },
+
+    toggleShowArchived() {
+      patchState(store, { showArchived: !store.showArchived() });
     },
 
     /******************************** setters (filter) ******************************************* */

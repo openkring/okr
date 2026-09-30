@@ -233,6 +233,7 @@ export const AppStore = signalStore(
         if (!params.personKey || !params.tenantId) return of([]);
         const taskQuery = getSystemQuery(params.tenantId);
         taskQuery.push({ key: 'completionDate', operator: '==', value: '' });
+        taskQuery.push({ key: 'assignee.key', operator: '==', value: params.personKey });
         return store.firestoreService.searchData<TaskModel>(TaskCollection, taskQuery, 'dueDate', 'asc');
       }
     }),
@@ -321,11 +322,7 @@ export const AppStore = signalStore(
       allTags: computed(() => state.tagsResource.value() ?? []),
       allCategories: computed(() => state.categoriesResource.value() ?? []),
       /** Number of open tasks assigned to the signed-in user — the task half of every badge. */
-      openTaskCount: computed(() => {
-        const personKey = state.currentUserResource.value()?.personKey;
-        if (!personKey) return 0;
-        return (state.openTasksResource.value() ?? []).filter((t: TaskModel) => t.assignee?.key === personKey).length;
-      }),
+      openTaskCount: computed(() => (state.openTasksResource.value() ?? []).length),
       /** Number of unanswered invitations to future events — the invitation half of every badge. */
       openInvitationCount: computed(() => {
         const personKey = state.currentUserResource.value()?.personKey;

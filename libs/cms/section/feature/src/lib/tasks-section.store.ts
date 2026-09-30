@@ -1,7 +1,7 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
-import { map, of } from 'rxjs';
+import { of } from 'rxjs';
 import { ModalController } from '@ionic/angular/standalone';
 
 import { AppStore } from '@okr/shared-feature';
@@ -42,9 +42,8 @@ export const TasksStore = signalStore(
         if (!personKey) return of([]);
         const query = getSystemQuery(store.appStore.tenantId());
         query.push({ key: 'completionDate', operator: '==', value: '' }); // only get tasks that are not completed (completionDate is empty)
-        return store.appStore.firestoreService.searchData<TaskModel>(TaskCollection, query, 'dueDate', 'asc').pipe(
-          map(tasks => tasks.filter(task => task.assignee?.key === personKey))
-        );
+        query.push({ key: 'assignee.key', operator: '==', value: personKey });
+        return store.appStore.firestoreService.searchData<TaskModel>(TaskCollection, query, 'dueDate', 'asc');
       }
     })
   })),

@@ -9,6 +9,7 @@ import { MeetingCollection, MeetingModel, TaskCollection, TaskModel, UserModel }
 import { getSystemQuery } from '@okr/shared-util-core';
 
 import { getMeetingIndex, getMeetingRelatedKey, isOpenTask } from '@okr/content-meeting-util';
+import { buildTaskListQueries } from '@okr/task-util';
 import { PFX } from './scope';
 
 @Injectable({
@@ -68,13 +69,10 @@ export class MeetingService {
    * @param meetingKey okey of the meeting
    */
   public listActionItems(meetingKey: string): Observable<TaskModel[]> {
+    // the meeting's relatedKey IS its shareKey (spec 1.72 §4.1)
     const relatedKey = getMeetingRelatedKey(meetingKey);
-    return this.firestoreService.searchData<TaskModel>(
-      TaskCollection, getSystemQuery(this.tenantId), 'dueDate', 'asc'
-    ).pipe(
-      // legacy tasks have no relatedKey at all (Firestore reads skip model defaults)
-      map(tasks => tasks.filter(t => (t.relatedKey ?? '') === relatedKey))
-    );
+    const [query] = buildTaskListQueries({ kind: 'shared', tenantId: this.tenantId, shareKey: relatedKey });
+    return this.firestoreService.searchData<TaskModel>(TaskCollection, query, 'dueDate', 'asc');
   }
 
   /** The still-open action items of a meeting — the carry-over source for the next one. */
