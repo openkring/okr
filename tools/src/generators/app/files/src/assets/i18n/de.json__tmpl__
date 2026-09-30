@@ -337,6 +337,7 @@
     "docUpdateAfterCreation": "Das Änderungsdatum muss nach dem Erstellungsdatum liegen.",
     "emailMustContainAt": "Die E-Mail Adresse muss ein @ enthalten.",
     "emailMustContainDot": "Die E-Mail Adresse muss einen Punkt enthalten.",
+    "loginIdInvalid": "Ein Benutzername besteht aus Kleinbuchstaben, Ziffern, Punkt, Binde- oder Unterstrich.",
     "caleventRepeatUntilDateMandatoryWithGivenPeriodicity": "Das Wiederholen-bis Datum ist mit dieser Periodizität obligatorisch",
     "caleventRepeatUntilDateNotBeforeStartDate": "Das Wiederholen-bis Datum darf nicht vor dem Startdatum liegen",
     "caleventMaxDatesPerSeries": "Die Serie hätte zu viele Termine (maximal 100). Bitte das Wiederholen-bis Datum verkürzen.",

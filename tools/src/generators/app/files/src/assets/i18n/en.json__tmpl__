@@ -337,6 +337,7 @@
     "docUpdateAfterCreation": "The modification date must be after the creation date.",
     "emailMustContainAt": "The e-mail address must contain an @.",
     "emailMustContainDot": "The e-mail address must contain a dot.",
+    "loginIdInvalid": "A username consists of lowercase letters, digits, dot, hyphen or underscore.",
     "caleventRepeatUntilDateMandatoryWithGivenPeriodicity": "The repeat-until date is mandatory with this periodicity",
     "caleventRepeatUntilDateNotBeforeStartDate": "The repeat-until date must not be before the start date",
     "caleventMaxDatesPerSeries": "The series would have too many occurrences (100 at most). Please shorten the repeat-until date.",

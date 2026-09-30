@@ -337,6 +337,7 @@
     "docUpdateAfterCreation": "La fecha de modificación debe ser posterior a la fecha de creación.",
     "emailMustContainAt": "La dirección de correo electrónico debe contener una @.",
     "emailMustContainDot": "La dirección de correo electrónico debe contener un punto.",
+    "loginIdInvalid": "Un nombre de usuario se compone de letras minúsculas, dígitos, punto, guion o guion bajo.",
     "caleventRepeatUntilDateMandatoryWithGivenPeriodicity": "La fecha de repetición-hasta es obligatoria con esta periodicidad",
     "caleventRepeatUntilDateNotBeforeStartDate": "La fecha de repetición hasta no puede ser anterior a la fecha de inicio",
     "caleventMaxDatesPerSeries": "La serie tendría demasiadas fechas (100 como máximo). Acorte la fecha de repetición-hasta.",

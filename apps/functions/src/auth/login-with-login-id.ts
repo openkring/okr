@@ -40,6 +40,13 @@ async function verifyPassword(email: string, password: string, appCheckToken: st
   return mapSignInError(body.error?.message ?? String(response.status));
 }
 
+/** `error.code` when present (Admin SDK errors), else the message, else the stringified value — never the raw object (could carry PII in some SDK error shapes). */
+function errorCode(error: unknown): string {
+  if (typeof error === 'object' && error !== null && 'code' in error) return String((error as { code: unknown }).code);
+  if (error instanceof Error) return error.message;
+  return String(error);
+}
+
 export const loginWithLoginId = onCall(
   { region: 'europe-west6', enforceAppCheck: true, cors: true, secrets: [WEB_API_KEY] },
   async (request) => {
@@ -58,17 +65,33 @@ export const loginWithLoginId = onCall(
     };
 
     const ref = throttleRef(tenantId, loginId);
-    const state = (await ref.get()).data() as ThrottleState | undefined;
-    if (isLocked(state, Date.now())) return fail('resource-exhausted');
+    // A cheap, non-transactional short-circuit only — the authoritative lock decision on the
+    // failure path below is made inside a transaction against a freshly re-read state (fix round 1
+    // #3: two parallel requests reading this same snapshot must not both slip past the lockout).
+    const preState = (await ref.get()).data() as ThrottleState | undefined;
+    if (isLocked(preState, Date.now())) return fail('resource-exhausted');
 
     const user = await findUserByLoginId(tenantId, loginId);
     let outcome: 'ok' | 'invalid' | 'throttled' | 'error' = 'invalid';
     if (user) {
-      const email = (await getAuth().getUser(user.uid)).email ?? '';
-      // Header names arrive lower-cased on request.rawRequest (Express/Connect convention) — see
-      // apps/functions/src/forms/index.ts for the same accessor pattern.
-      const appCheckToken = (request.rawRequest.headers['x-firebase-appcheck'] as string | undefined) ?? '';
-      outcome = email ? await verifyPassword(email, password, appCheckToken, await tenantAppDomain(tenantId)) : 'invalid';
+      const knownStarted = Date.now();
+      try {
+        const email = (await getAuth().getUser(user.uid)).email ?? '';
+        // Header names arrive lower-cased on request.rawRequest (Express/Connect convention) — see
+        // apps/functions/src/forms/index.ts for the same accessor pattern.
+        const appCheckToken = (request.rawRequest.headers['x-firebase-appcheck'] as string | undefined) ?? '';
+        outcome = email ? await verifyPassword(email, password, appCheckToken, await tenantAppDomain(tenantId)) : 'invalid';
+      } catch (error) {
+        // A known-user account hitting ANY unexpected throw here (Auth lookup, missing appDomain,
+        // a network failure on the identitytoolkit fetch) must not surface as functions/internal —
+        // that would be a wrong-password/unknown-Benutzername existence oracle (fix round 1 #2).
+        outcome = 'error';
+        logger.error(`${CF_NAME}: known-user check failed unexpectedly — check the FIREBASE_WEB_API_KEY secret and App Check forwarding`, {
+          tenantId, uid: user.uid, code: errorCode(error),
+        });
+      }
+      // No PII — just enough to check the 900 ms floor in production (fix round 1 #4c).
+      logger.info(`${CF_NAME}: known-user check took ${Date.now() - knownStarted}ms (${tenantId})`);
     }
 
     if (outcome === 'ok' && user) {
@@ -76,9 +99,25 @@ export const loginWithLoginId = onCall(
       logger.info(`${CF_NAME}: users/${user.uid} signed in by Benutzername (${tenantId})`);
       return { token: await getAuth().createCustomToken(user.uid) };
     }
-    if (outcome === 'error') logger.error(`${CF_NAME}: password check failed unexpectedly (${tenantId}) — see the spike notes`);
-    const next = afterFailure(state, Date.now());
-    await ref.set({ ...next, expireAt: Timestamp.fromMillis(Date.now() + 24 * 3600_000) });
-    return fail(outcome === 'throttled' || next.lockedUntil > 0 ? 'resource-exhausted' : 'unauthenticated');
+
+    if (outcome === 'error') {
+      // A misconfiguration (bad key, broken App Check forwarding, a network blip) must not count
+      // against the member's own lockout counter (fix round 1 #4b) — still answered generically
+      // via fail(), since only an existing account can ever reach 'error'.
+      return fail('unauthenticated');
+    }
+
+    // 'invalid' (wrong password, or no user found at all) and 'throttled' (Firebase's OWN
+    // per-account rate limit — only reachable for a real account, so answering resource-exhausted
+    // here would itself be an existence oracle, fix round 1 #4a) both count as one of our failures
+    // and both answer unauthenticated unless OUR OWN counter is what locks.
+    const locked = await getFirestore().runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+      const current = snap.data() as ThrottleState | undefined;
+      const next = afterFailure(current, Date.now());
+      tx.set(ref, { ...next, expireAt: Timestamp.fromMillis(Date.now() + 24 * 3600_000) });
+      return next.lockedUntil > 0;
+    });
+    return fail(locked ? 'resource-exhausted' : 'unauthenticated');
   },
 );

@@ -337,6 +337,7 @@
     "docUpdateAfterCreation": "La date de modification doit être postérieure à la date de création.",
     "emailMustContainAt": "L'adresse e-mail doit contenir un @.",
     "emailMustContainDot": "L'adresse e-mail doit contenir un point.",
+    "loginIdInvalid": "Un nom d'utilisateur se compose de lettres minuscules, de chiffres, d'un point, d'un tiret ou d'un trait de soulignement.",
     "caleventRepeatUntilDateMandatoryWithGivenPeriodicity": "La date de répétition-jusqu'à est obligatoire avec cette périodicité",
     "caleventRepeatUntilDateNotBeforeStartDate": "La date de fin de répétition ne doit pas précéder la date de début",
     "caleventMaxDatesPerSeries": "La série aurait trop d’occurrences (100 au maximum). Veuillez raccourcir la date de répétition-jusqu’à.",
