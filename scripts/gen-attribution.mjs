@@ -141,6 +141,12 @@ const TARGETS = {
   },
 };
 
+/**
+ * Artwork compiled into the app code rather than installed as an npm package, so the Angular
+ * `3rdpartylicenses.txt` cannot know it. Each directory holds LICENSE-<Name>.txt files.
+ */
+const BUNDLED_ARTWORK = ['libs/games/chess/ui/licenses'];
+
 /** Permissive / attribution-only licenses. Anything else is reported, not blocked. */
 const ALLOWED = new Set(['0BSD', 'Apache-2.0', 'BlueOak-1.0.0', 'BSD-2-Clause', 'BSD-3-Clause', 'CC-BY-3.0', 'CC-BY-4.0', 'CC0-1.0', 'ISC', 'MIT', 'MIT-0', 'MIT/X11', 'OFL-1.1', 'Python-2.0', 'Unlicense', '(Apache-2.0 AND BSD-3-Clause)', '(MIT AND Zlib)', '(MIT OR CC0-1.0)']);
 
@@ -194,6 +200,9 @@ function detectLicenseId(text) {
   if (/SIL OPEN FONT LICENSE\s+Version 1\.1/i.test(text)) return 'OFL-1.1';
   if (/Apache License[\s\S]{0,120}Version 2\.0/i.test(text)) return 'Apache-2.0';
   if (/\bMIT License\b/i.test(text)) return 'MIT';
+  if (/Redistribution and use in source and binary forms/i.test(text)) {
+    return /Neither the name/i.test(text) ? 'BSD-3-Clause' : 'BSD-2-Clause';
+  }
   return 'Unknown';
 }
 
@@ -328,6 +337,13 @@ function buildSections(name, target) {
       blurb: 'Every npm package bundled into the application delivered to your browser, with its full license text.',
       format: 'text',
       entries: collectBundle(target.bundle),
+    });
+    sections.push({
+      id: 'artwork',
+      title: 'Bundled artwork',
+      blurb: 'Images compiled into the application code rather than installed as a package, with their license text.',
+      format: 'text',
+      entries: BUNDLED_ARTWORK.flatMap(dir => collectLicenseDir(dir)),
     });
   }
   if (target.selfHostedFonts) {
