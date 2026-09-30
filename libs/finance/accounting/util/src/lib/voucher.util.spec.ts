@@ -13,3 +13,15 @@ describe('voucherKind', () => {
     expect(voucherKind('image/heic')).toBe('file');
   });
 });
+
+import { voucherTileImage } from './voucher.util';
+describe('voucherTileImage', () => {
+  const v = { key: 'k', name: 'a.pdf', mimeType: 'application/pdf', size: 1, url: 'https://storage/orig', thumbnailUrl: '' };
+  it('prefers the signed imgix thumbnail', () => {
+    expect(voucherTileImage({ ...v, thumbnailUrl: 'https://thumb' }, 'logo')).toEqual({ imageUrl: 'https://thumb', isLogo: false });
+  });
+  it('falls back to the original for an inline image, else to the file logo', () => {
+    expect(voucherTileImage({ ...v, mimeType: 'image/png' }, 'logo')).toEqual({ imageUrl: 'https://storage/orig', isLogo: false });
+    expect(voucherTileImage(v, 'logo')).toEqual({ imageUrl: 'logo', isLogo: true });
+  });
+});

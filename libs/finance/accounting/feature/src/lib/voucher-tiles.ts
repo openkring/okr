@@ -7,13 +7,13 @@ import { FileTile, FileTiles } from '@okr/shared-ui';
 import { resourceParams } from '@okr/shared-util-angular';
 import { fileExtension, reduceLogoName } from '@okr/shared-util-core';
 import { FinanceDocumentService } from '@okr/finance-accounting-data-access';
-import { ACCOUNTING_I18N_KEYS, AccountingI18n, voucherKind } from '@okr/finance-accounting-util';
+import { ACCOUNTING_I18N_KEYS, AccountingI18n, voucherTileImage } from '@okr/finance-accounting-util';
 
 /**
  * The vouchers (Belege) of a booking or bill as a row of clickable tiles (spec 1.74). The files sit
- * in the private bucket; `signFinanceDocuments` hands out links valid for ~10 minutes. Images show
- * themselves, PDFs and other files a file-type logo — PDF page thumbnails follow with the private
- * imgix source. A click opens the file in a new tab.
+ * in the private bucket; `signFinanceDocuments` hands out links valid for ~10 minutes: the original,
+ * and a thumbnail (images, a PDF's first page) from the private imgix source. Other files show a
+ * file-type logo. A click opens the file in a new tab.
  */
 @Component({
   selector: 'okr-voucher-tiles',
@@ -48,15 +48,12 @@ export class VoucherTiles {
     loader: ({ params }) => this.financeDocumentService.sign(params.keys),
   });
 
-  protected readonly tiles = computed((): FileTile[] => (this.vouchers.value() ?? []).map(v => {
-    const isImage = voucherKind(v.mimeType) === 'image';
-    return {
-      key: v.key,
-      name: v.name,
-      imageUrl: isImage ? v.url : `${this.imgixBaseUrl}/logo/filetypes/${reduceLogoName(fileExtension(v.name).toLowerCase())}.svg`,
-      isLogo: !isImage,
-    };
-  }));
+  protected readonly tiles = computed((): FileTile[] => (this.vouchers.value() ?? []).map(v => ({
+    key: v.key,
+    name: v.name,
+    // the file-type logo is a public asset; the thumbnail is signed by the private imgix source
+    ...voucherTileImage(v, `${this.imgixBaseUrl}/logo/filetypes/${reduceLogoName(fileExtension(v.name).toLowerCase())}.svg`),
+  })));
 
   protected open(tile: FileTile): void {
     const voucher = this.vouchers.value()?.find(v => v.key === tile.key);

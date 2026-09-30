@@ -23,3 +23,14 @@ describe('voucherView', () => {
     expect(voucherView('bexio-file-2', { ...doc, title: '' }, ['scs'])?.name).toBe('bexio-file-2');
   });
 });
+
+import { canThumbnail } from './voucher-view';
+describe('canThumbnail', () => {
+  it('lets imgix render images (HEIC included) and PDFs, nothing else', () => {
+    expect(canThumbnail('application/pdf')).toBe(true);
+    expect(canThumbnail('image/jpeg')).toBe(true);
+    expect(canThumbnail('image/heic')).toBe(true);
+    expect(canThumbnail('application/zip')).toBe(false);
+    expect(canThumbnail('')).toBe(false);
+  });
+});

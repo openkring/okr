@@ -22,3 +22,9 @@ export function voucherView(key: string, data: Record<string, unknown> | undefin
     path,
   };
 }
+
+/** imgix renders images (HEIC too) and the first page of a PDF; other files get no thumbnail. */
+export function canThumbnail(mimeType: string): boolean {
+  const m = (mimeType ?? '').toLowerCase();
+  return m.startsWith('image/') || m === 'application/pdf';
+}
