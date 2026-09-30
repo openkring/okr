@@ -8,6 +8,7 @@ export { ensureCalendarFeedToken, calendarFeed } from './feed';
 export { notifyCalEventParticipants } from './notify';
 export { onCalEventCommentCreated, onCalEventDocumentCreated } from './activity';
 export { onInvitationCreated } from './invitation';
+export { invitationAnswer } from './answer';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types (inlined to avoid monorepo cross-bundle imports)
