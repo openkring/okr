@@ -167,9 +167,9 @@ export function isUser(user: unknown, tenantId: string): user is UserModel {
    * @returns the index string
    */
 export function getUserIndex(user: UserModel): string {
-  return `n:${user.firstName} ${user.lastName} l:${user.loginEmail} p:${user.personKey} u:${user.okey}`;
+  return `n:${user.firstName} ${user.lastName} l:${user.loginEmail} b:${user.loginId ?? ''} p:${user.personKey} u:${user.okey}`;
 }
 
 export function getUserIndexInfo(): string {
-  return 'n:ame l:oginEmail p:ersonKey u:id';
+  return 'n:ame l:oginEmail b:enutzername p:ersonKey u:id';
 }

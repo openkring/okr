@@ -10,7 +10,8 @@ import { Roles } from './roles';
 
 export class UserModel implements OkrModel, TaggedModel, SearchableModel {
   public okey = DEFAULT_KEY;
-  public loginEmail = DEFAULT_EMAIL; // Firebase Auth Login Email
+  public loginEmail = DEFAULT_EMAIL; // Firebase Auth Login Email — real, or synthetic <loginId>@login.<domain>
+  public loginId = '';               // Benutzername, unique per tenant, written only by Cloud Functions
   public personKey = DEFAULT_KEY; // PersonModel.okey
   public firstName = DEFAULT_NAME;
   public lastName = DEFAULT_NAME;

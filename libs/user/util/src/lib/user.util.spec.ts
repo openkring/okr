@@ -183,11 +183,17 @@ describe('User Utils', () => {
   describe('Index functions', () => {
     it('getUserIndex should return a formatted index string', () => {
       const index = getUserIndex(user);
-      expect(index).toBe('n:John Doe l:john.doe@example.com p:person-1 u:user-1');
+      expect(index).toBe('n:John Doe l:john.doe@example.com b: p:person-1 u:user-1');
+    });
+
+    it('getUserIndex contains the Benutzername', () => {
+      const u = new UserModel(tenantId);
+      u.loginId = 'max_mueller';
+      expect(getUserIndex(u)).toContain('b:max_mueller');
     });
 
     it('getUserIndexInfo should return the info string', () => {
-      expect(getUserIndexInfo()).toBe('n:ame l:oginEmail p:ersonKey u:id');
+      expect(getUserIndexInfo()).toBe('n:ame l:oginEmail b:enutzername p:ersonKey u:id');
     });
   });
 

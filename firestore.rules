@@ -267,6 +267,14 @@ service cloud.firestore {
     // ============================================================================
 
     match /users/{userId} {
+      // loginId / loginEmail are the login identity. Only Cloud Functions (Admin SDK) write them —
+      // uniqueness per tenant is checked there (spec 1.71 §3). get(…, '') makes a legacy doc without
+      // the field equal to a client that writes the model default ''.
+      function loginIdentityUnchanged() {
+        return request.resource.data.get('loginId', '') == resource.data.get('loginId', '')
+            && request.resource.data.get('loginEmail', '') == resource.data.get('loginEmail', '');
+      }
+
       // Read your own doc; admins/privileged may read others within their tenant.
       // The `resource == null` arm is the same guard tenantRead() carries: a get() on a
       // NON-EXISTENT user doc evaluates rules with resource == null, and dereferencing
@@ -282,17 +290,19 @@ service cloud.firestore {
       // Self-service create of your own doc is allowed only without elevated roles;
       // admins may create within their tenant. (User provisioning normally happens
       // via the Admin SDK, which bypasses rules.)
-      allow create: if signedIn() && (
+      // A client-created user doc may never carry a Benutzername — admins provision
+      // accounts through the openAccount callable, which writes loginId server-side.
+      allow create: if signedIn() && request.resource.data.get('loginId', '') == '' && (
                        (request.auth.uid == userId
                           && !request.resource.data.roles.get('admin', false)
                           && !request.resource.data.roles.get('privileged', false))
                        || (isAdmin() && canWriteTenant(request.resource.data))
                     );
 
-      // Update your own doc but NOT roles / tenants / personKey; admins may update
-      // users of their own tenant only (both before and after the write, so an
-      // admin cannot pull a foreign user into their tenant or push one out).
-      allow update: if signedIn() && (
+      // Update your own doc but NOT roles / tenants / personKey / loginId / loginEmail;
+      // admins may update users of their own tenant only (both before and after the
+      // write, so an admin cannot pull a foreign user into their tenant or push one out).
+      allow update: if signedIn() && loginIdentityUnchanged() && (
                        (request.auth.uid == userId
                           && !request.resource.data.diff(resource.data).affectedKeys()
                                 .hasAny(['roles', 'tenants', 'personKey']))
@@ -319,6 +329,11 @@ service cloud.firestore {
     // isPrivileged()-Benutzer lesen (siehe oben), und ein lesbares Bearer-Token ist kein
     // Token. Ausschliesslich über das Admin SDK erreichbar.
     match /calendarFeeds/{token} {
+      allow read, write: if false;
+    }
+
+    // Server-only failure counters for the Benutzername login (spec 1.71 §5.1, plan D1).
+    match /login-throttle/{id} {
       allow read, write: if false;
     }
 

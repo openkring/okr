@@ -251,6 +251,10 @@ seed("bank-import-rows/rowOpen",   {"tenants": ["t1"], "isArchived": False, "acc
 seed("bank-import-rows/rowPosted", {"tenants": ["t1"], "isArchived": False, "accountingTenantId": "t1", "importKey": "rowPosted", "status": "posted", "bookingKey": "bank-rowPosted"})
 seed("bank-rules/ruleA",           {"tenants": ["t1"], "isArchived": False, "accountingTenantId": "t1", "term": "google", "active": True})
 
+# login-id (spec 1.71): a same-tenant user WITH a Benutzername already set, so an admin
+# editing something else on the doc can be checked for leaving loginId untouched.
+seed("users/uidL", {"tenants": ["t1"], "roles": {}, "firstName": "L", "personKey": "pL", "loginId": "max_mueller"})
+
 A, B, C, D = jwt("uidA"), jwt("uidB"), jwt("uidC"), jwt("uidD")
 E, M, P = jwt("uidE"), jwt("uidM"), jwt("uidP")
 T = jwt("uidT")
@@ -620,6 +624,32 @@ single_cases = [
     ("treasurer T GET bank-rules/ruleA -> ALLOW", True, GET, "bank-rules/ruleA", T, None, None),
     ("treasurer T CREATE bank-rules -> ALLOW", True, POST, "bank-rules?documentId=ruleNew", T,
      body({"tenants": ["t1"], "isArchived": False, "accountingTenantId": "t1", "term": "tesla", "active": True}), None),
+
+    # ── login-id (spec 1.71): loginId / loginEmail are the login identity — clients ─────
+    # (self or admin) may never change them; only Cloud Functions (Admin SDK) write them.
+    ("userA(self) PATCH own loginId -> DENY", False, PATCH, "users/uidA", A,
+     body({"loginId": "hacker"}), ["loginId"]),
+    ("userA(self) PATCH own loginEmail -> DENY", False, PATCH, "users/uidA", A,
+     body({"loginEmail": "other@evil.example"}), ["loginEmail"]),
+    ("userD(admin t1) PATCH uidA.loginId -> DENY", False, PATCH, "users/uidA", D,
+     body({"loginId": "hacker"}), ["loginId"]),
+    ("userD(admin t1) PATCH uidL.firstName, loginId untouched -> ALLOW", True, PATCH, "users/uidL", D,
+     body({"firstName": "X"}), ["firstName"]),
+    # Review Focus 1: a legacy doc has NO loginId field at all. The client model default
+    # ('') still equals resource.data.get('loginId','') on such a doc, so an unrelated
+    # settings change must not be blocked by the missing field.
+    ("userA(self) PATCH userLanguage on legacy doc (no loginId field), writes loginId='' -> ALLOW",
+     True, PATCH, "users/uidA", A, body({"userLanguage": "fr", "loginId": ""}),
+     ["userLanguage", "loginId"]),
+    # a client-created user doc may never carry a Benutzername (admins provision accounts
+    # through the openAccount callable after Task 8; Cloud Functions write loginId there).
+    ("userD(admin t1) CREATE users with loginId -> DENY", False, POST, "users?documentId=uidNew", D,
+     body({"tenants": ["t1"], "roles": {}, "firstName": "N", "personKey": "pN", "loginId": "sneaky"}), None),
+    # login-throttle: server-only failure counters, no client access at all.
+    ("anon GET login-throttle/x -> DENY", False, GET, "login-throttle/x", None, None, None),
+    ("userD(admin t1) GET login-throttle/x -> DENY", False, GET, "login-throttle/x", D, None, None),
+    ("userD(admin t1) PATCH login-throttle/x -> DENY", False, PATCH, "login-throttle/x", D,
+     body({"count": 0}), ["count"]),
 ]
 
 # (label, expect_allow, collection, tenant, token)
