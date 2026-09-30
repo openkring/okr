@@ -129,7 +129,7 @@ import { TaskMove, TaskStore } from './task.store';
           <ion-list lines="inset">
             @for(task of filteredTasks(); track task.okey) {
               <ion-item>
-                <ion-icon src="{{ getIcon(task) | svgIcon }}"  (click)="toggleCompleted(task)" />
+                <ion-icon src="{{ getIcon(task) | svgIcon }}"  (click)="onCheckboxClick(task)" />
                 @if(task.assignee) {
                   <ion-avatar>
                     <ion-img src="{{ task.assignee.modelType + '.' + task.assignee.key | avatar }}" alt="Avatar of the assigned person" />
@@ -214,6 +214,11 @@ export class TaskList {
   /** Whether the filter row is currently visible. Public so a parent (group view) can reflect it in a hoisted toggle menu item. */
   public isFilterVisible(): boolean {
     return this.showFilter();
+  }
+
+  /** Whether archived tasks are currently shown. Public so a parent (group view) can reflect it in a hoisted toggle menu item. */
+  public isArchivedVisible(): boolean {
+    return this.store.showArchived();
   }
 
   protected onViewChange(showList: boolean): void {
@@ -412,6 +417,20 @@ export class TaskList {
 
   public async toggleCompleted(task: TaskModel): Promise<void> {
     await this.store.toggleCompleted(task);
+  }
+
+  /**
+   * The checkbox icon toggles completion normally, but while showing archived tasks (spec §10)
+   * a task is read-only besides restore — clicking the icon there opens the ActionSheet (which
+   * offers only «Details ansehen» / «Wiederherstellen») instead of silently reopening/completing
+   * the archived task.
+   */
+  protected async onCheckboxClick(task: TaskModel): Promise<void> {
+    if (this.store.showArchived()) {
+      await this.showActions(task);
+    } else {
+      await this.toggleCompleted(task);
+    }
   }
 
   protected clear(okrQuickEntry: IonTextarea): void {

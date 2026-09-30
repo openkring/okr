@@ -205,7 +205,7 @@ export const TaskStore = signalStore(
      * - the done ⇄ completionDate invariant (spec §6.2) is enforced here, on the same write.
      */
     async moveTask(move: TaskMove, readOnly = true): Promise<void> {
-      if (readOnly) return;
+      if (readOnly || move.task.isArchived) return;
       const { task, targetState, targetIndex, columnTasks } = move;
 
       // lazily backfill the target column if any neighbour lacks a rank (see board.util)
@@ -267,7 +267,9 @@ export const TaskStore = signalStore(
       });
       modal.present();
       const { data, role } = await modal.onDidDismiss();
-      if (role === 'confirm' && data && !readOnly) {
+      // defence in depth (spec §10): an archived task is read-only besides restore — the
+      // ActionSheet only ever opens it with readOnly=true, but refuse the write here too.
+      if (role === 'confirm' && data && !readOnly && !data.isArchived) {
         if (isTask(data, store.tenantId())) {
           if ((data.okey ?? '').length === 0) {
             await store.taskService.create(data, store.currentUser());
@@ -322,7 +324,7 @@ export const TaskStore = signalStore(
 
     /** Archive a task (soft delete). Gated here, not only in the ActionSheet. */
     async delete(task?: TaskModel): Promise<void> {
-      if (!task || !this.canDeleteTask(task)) return;
+      if (!task || task.isArchived || !this.canDeleteTask(task)) return;
       await store.taskService.delete(task, store.currentUser());
     },
 
@@ -334,7 +336,9 @@ export const TaskStore = signalStore(
 
     /** Toggle completion: open → done today, done → planned. Never mutates the streamed task. */
     async toggleCompleted(task: TaskModel): Promise<void> {
-      if (!this.canChangeTask(task)) return;
+      // archived tasks are read-only besides restore (spec §10) — the checkbox is not clickable
+      // while showing archived tasks, but refuse the write here too (defence in depth).
+      if (task.isArchived || !this.canChangeTask(task)) return;
       await store.taskService.saveCompletion(task, getCompletionPatch(task, getTodayStr()), store.currentUser());
     },
 

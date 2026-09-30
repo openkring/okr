@@ -32,8 +32,6 @@ export const TASK_I18N_KEYS = {
   update_error:                   PFX + 'update.error',
 
   restore:                        PFX + 'restore.label',
-  restore_conf:                   PFX + 'restore.conf',
-  restore_error:                  PFX + 'restore.error',
 
   view:                           PFX + 'view.label',
 

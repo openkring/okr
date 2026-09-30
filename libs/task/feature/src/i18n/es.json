@@ -34,9 +34,7 @@
     "error": "No se pudo modificar la tarea."
   },
   "restore": {
-    "label": "Restaurar",
-    "conf": "La tarea se ha restaurado.",
-    "error": "No se pudo restaurar la tarea."
+    "label": "Restaurar"
   },
   "view": {
     "label": "Ver detalles de la tarea"

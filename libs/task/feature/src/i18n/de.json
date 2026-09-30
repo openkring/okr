@@ -34,9 +34,7 @@
     "error": "Todo konnte nicht geändert werden."
   },
   "restore": {
-    "label": "Wiederherstellen",
-    "conf": "Todo wurde wiederhergestellt.",
-    "error": "Todo konnte nicht wiederhergestellt werden."
+    "label": "Wiederherstellen"
   },
   "view": {
     "label": "Todo Details ansehen"

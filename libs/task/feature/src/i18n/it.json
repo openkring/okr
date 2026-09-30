@@ -34,9 +34,7 @@
     "error": "Impossibile modificare l'attività."
   },
   "restore": {
-    "label": "Ripristina",
-    "conf": "L'attività è stata ripristinata.",
-    "error": "Impossibile ripristinare l'attività."
+    "label": "Ripristina"
   },
   "view": {
     "label": "Visualizza dettagli dell'attività"

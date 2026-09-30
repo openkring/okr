@@ -34,9 +34,7 @@
     "error": "La tâche n'a pas pu être modifiée."
   },
   "restore": {
-    "label": "Restaurer",
-    "conf": "La tâche a été restaurée.",
-    "error": "La tâche n'a pas pu être restaurée."
+    "label": "Restaurer"
   },
   "view": {
     "label": "Afficher les détails de la tâche"

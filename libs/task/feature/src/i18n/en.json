@@ -34,9 +34,7 @@
     "error": "Todo could not be changed."
   },
   "restore": {
-    "label": "Restore",
-    "conf": "Todo was restored.",
-    "error": "Todo could not be restored."
+    "label": "Restore"
   },
   "view": {
     "label": "View todo details"

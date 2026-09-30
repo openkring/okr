@@ -334,6 +334,7 @@ export class GroupViewPage implements ViewWillEnter {
         break;
       case 'tasks':
         states['toggleFilter'] = this.taskList()?.isFilterVisible() ?? false;
+        states['toggleArchived'] = this.taskList()?.isArchivedVisible() ?? false;
         break;
       case 'calendar':
         states['toggleFilter'] = this.caleventList()?.isFilterVisible() ?? false;
