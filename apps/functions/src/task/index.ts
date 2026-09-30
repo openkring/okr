@@ -31,17 +31,28 @@ export const onTaskWritten = onDocumentWritten(
 
     const db = getFirestore();
 
-    const transition = decideDiaryTransition(before, after);
-    if (transition !== 'none') {
-      const tenantId = (after ?? before)?.tenants?.[0] ?? '';
-      const cfg = await db.collection('app-config').doc(tenantId).get();
-      const diaryTenantId = (cfg.get('taskDiaryTenantId') as string | undefined) ?? '';
-      if (diaryTenantId) {
-        const date = transition === 'complete' ? after!.completionDate! : before!.completionDate!;
-        const assigneeKey = (transition === 'complete' ? after : before)!.assignee!.key!;
-        const result = await applyTaskToDiary(db, diaryTenantId, assigneeKey, date, (after ?? before)!.name ?? '', transition);
-        logger.info(`onTaskWritten: diary ${transition} → ${result} task=${event.params['taskId']}`);
+    // A diary-sync failure must never prevent the push below it — best-effort, logged and
+    // swallowed, same rationale as `logArchiveActivity` in `task-daily.ts`.
+    try {
+      const transition = decideDiaryTransition(before, after);
+      if (transition !== 'none') {
+        const tenantId = (after ?? before)?.tenants?.[0] ?? '';
+        if (tenantId) {
+          const cfg = await db.collection('app-config').doc(tenantId).get();
+          const diaryTenantId = (cfg.get('taskDiaryTenantId') as string | undefined) ?? '';
+          if (diaryTenantId) {
+            // reopen removes the line that was actually written on completion — `before.name`,
+            // not the (possibly since-renamed) current name; see `applyTaskToDiary`'s doc comment.
+            const doc = transition === 'complete' ? after! : before!;
+            const result = await applyTaskToDiary(
+              db, diaryTenantId, doc.assignee!.key!, doc.completionDate!, doc.name ?? '', transition,
+            );
+            logger.info(`onTaskWritten: diary ${transition} → ${result} task=${event.params['taskId']}`);
+          }
+        }
       }
+    } catch (error) {
+      logger.error(`onTaskWritten: diary sync failed task=${event.params['taskId']}`, error);
     }
 
     if (!decideTaskPush(before, after)) return;

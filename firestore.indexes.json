@@ -4045,28 +4045,6 @@
       ]
     },
     {
-      "collectionGroup": "diaries",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "authorKey",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "tenants",
-          "arrayConfig": "CONTAINS"
-        },
-        {
-          "fieldPath": "scope",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "date",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
       "collectionGroup": "hearingQuizResults",
       "queryScope": "COLLECTION",
       "fields": [
