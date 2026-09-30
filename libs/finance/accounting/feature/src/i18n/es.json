@@ -113,5 +113,9 @@
         "label": "Alta nueva y mayor de 25"
       }
     }
+  },
+  "voucher": {
+    "title": "Justificantes",
+    "loadError": "No se han podido cargar los justificantes. Vuelve a intentarlo más tarde."
   }
 }

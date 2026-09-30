@@ -85,3 +85,4 @@ export * from './lib/video-view.modal';
 export * from './lib/image-grid';
 export * from './lib/viewdate-input';
 export * from './lib/year-select';
+export * from './lib/file-tiles';

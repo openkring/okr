@@ -113,5 +113,9 @@
         "label": "Nuova adesione e più di 25 anni"
       }
     }
+  },
+  "voucher": {
+    "title": "Giustificativi",
+    "loadError": "Non è stato possibile caricare i giustificativi. Riprova più tardi."
   }
 }

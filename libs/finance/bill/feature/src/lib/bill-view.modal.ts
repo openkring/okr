@@ -1,6 +1,7 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { IonCard, IonCardContent, IonChip, IonContent, IonIcon, IonItem, IonLabel } from '@ionic/angular/standalone';
 
+import { VoucherTiles } from '@okr/finance-accounting-feature';
 import { BillModel } from '@okr/shared-models';
 import { Header } from '@okr/shared-ui';
 import { PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
@@ -12,6 +13,7 @@ import { BillStore } from './bill.store';
   standalone: true,
   providers: [BillStore],
   imports: [
+    VoucherTiles,
     SvgIconPipe, PrettyDatePipe,
     Header,
     IonContent, IonCard, IonCardContent, IonIcon, IonItem, IonLabel, IonChip
@@ -99,6 +101,8 @@ import { BillStore } from './bill.store';
           </ion-card-content>
         </ion-card>
       }
+      <!-- attachments migrated from bexio: finance-documents okeys, files in the private bucket (spec 1.74) -->
+      <okr-voucher-tiles [documentKeys]="voucherKeys()" />
     </ion-content>
   `
 })
@@ -115,6 +119,8 @@ export class BillViewModal {
   protected readonly state = computed(() => this.bill()?.state ?? 'draft');
   protected readonly paymentDate = computed(() => this.bill()?.paymentDate ?? '');
   protected readonly notes = computed(() => this.bill()?.notes ?? '');
+  // legacy bills still hold bexio file UUIDs — only migrated keys are vouchers
+  protected readonly voucherKeys = computed(() => (this.bill()?.attachments ?? []).filter(a => a.startsWith('bexio-file-')));
 
   protected getStateColor(state: string): string {
     switch (state) {

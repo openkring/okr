@@ -2,6 +2,7 @@ import { Component, computed, inject, input, linkedSignal, signal } from '@angul
 import { IonContent } from '@ionic/angular/standalone';
 import { ModalController } from '@ionic/angular/standalone';
 
+import { VoucherTiles } from '@okr/finance-accounting-feature';
 import { BillModel, UserModel } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
 import { coerceBoolean, safeStructuredClone } from '@okr/shared-util-core';
@@ -15,6 +16,7 @@ import { dismissOverlay } from '@okr/shared-util-angular';
   selector: 'okr-bill-edit-modal',
   standalone: true,
   imports: [
+    VoucherTiles,
     Header, ChangeConfirmation, BillEditForm,
     IonContent,
   ],
@@ -37,6 +39,8 @@ import { dismissOverlay } from '@okr/shared-util-angular';
           (valid)="formValid.set($event)"
         />
       }
+      <!-- attachments migrated from bexio: finance-documents okeys, files in the private bucket (spec 1.74) -->
+      <okr-voucher-tiles [documentKeys]="voucherKeys()" />
     </ion-content>
   `
 })
@@ -46,6 +50,8 @@ export class BillEditModal {
 
   // inputs
   public readonly bill = input.required<BillModel>();
+  // legacy bills still hold bexio file UUIDs — only migrated keys are vouchers
+  protected readonly voucherKeys = computed(() => (this.bill()?.attachments ?? []).filter(a => a.startsWith('bexio-file-')));
   public readonly currentUser = input.required<UserModel>();
   public readonly isNew = input.required<boolean>();
   public readonly readOnly = input(true);

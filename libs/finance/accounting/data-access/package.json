@@ -12,6 +12,7 @@
     "@okr/shared-data-access": "*",
     "@okr/shared-i18n": "*",
     "@okr/shared-models": "*",
-    "@okr/shared-util-core": "*"
+    "@okr/shared-util-core": "*",
+    "@okr/finance-accounting-util": "*"
   }
 }

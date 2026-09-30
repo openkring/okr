@@ -10,6 +10,7 @@ import { coerceBoolean, safeStructuredClone } from '@okr/shared-util-core';
 
 import { CommentsAccordion } from '@okr/comment-feature';
 import { DocumentsAccordion } from '@okr/content-document-feature';
+import { VoucherTiles } from '@okr/finance-accounting-feature';
 import { BookingForm } from '@okr/finance-booking-ui';
 import { BOOKING_I18N_KEYS, BookingFormData, BookingI18n, pairsToLines, toBookingFormData, withSplitTitle } from '@okr/finance-booking-util';
 
@@ -21,7 +22,7 @@ import { BOOKING_I18N_KEYS, BookingFormData, BookingI18n, pairsToLines, toBookin
 @Component({
   selector: 'okr-booking-edit-modal',
   standalone: true,
-  imports: [Header, ChangeConfirmation, BookingForm, DocumentsAccordion, CommentsAccordion, IonContent, IonAccordionGroup, IonCard, IonCardContent],
+  imports: [Header, ChangeConfirmation, BookingForm, VoucherTiles, DocumentsAccordion, CommentsAccordion, IonContent, IonAccordionGroup, IonCard, IonCardContent],
   template: `
     <okr-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
     @if (showConfirmation()) {
@@ -44,6 +45,8 @@ import { BOOKING_I18N_KEYS, BookingFormData, BookingI18n, pairsToLines, toBookin
           (counterpartySelect)="selectCounterparty()"
         />
       }
+      <!-- vouchers migrated from bexio (booking.documentKeys, files in the private bucket, spec 1.74) -->
+      <okr-voucher-tiles [documentKeys]="voucherKeys()" />
       <!-- Belege and comments hang on the booking's key, so they appear once the booking is saved -->
       @if (booking().okey) {
         <ion-card>
@@ -75,6 +78,8 @@ export class BookingEditModal {
 
   protected readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   protected readonly parentKey = computed(() => `${BookingModelName}.${this.booking().okey}`);
+  // legacy docs predate the field — coalesce
+  protected readonly voucherKeys = computed(() => this.booking().documentKeys ?? []);
   protected formDirty = signal(false);
   protected formValid = signal(false);
   public formData = linkedSignal<BookingFormData>(() => this.initialFormData());

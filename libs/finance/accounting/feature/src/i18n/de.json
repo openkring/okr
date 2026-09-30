@@ -113,5 +113,9 @@
         "label": "Neu eingetreten und über 25"
       }
     }
+  },
+  "voucher": {
+    "title": "Belege",
+    "loadError": "Die Belege konnten nicht geladen werden. Versuche es später noch einmal."
   }
 }

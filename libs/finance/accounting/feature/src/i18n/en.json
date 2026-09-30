@@ -113,5 +113,9 @@
         "label": "Newly joined and over 25"
       }
     }
+  },
+  "voucher": {
+    "title": "Vouchers",
+    "loadError": "The vouchers could not be loaded. Please try again later."
   }
 }

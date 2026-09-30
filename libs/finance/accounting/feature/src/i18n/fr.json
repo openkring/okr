@@ -113,5 +113,9 @@
         "label": "Nouvelle adhésion et plus de 25 ans"
       }
     }
+  },
+  "voucher": {
+    "title": "Justificatifs",
+    "loadError": "Les justificatifs n’ont pas pu être chargés. Réessaie plus tard."
   }
 }
