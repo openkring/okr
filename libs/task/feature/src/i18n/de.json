@@ -16,7 +16,6 @@
     "placeholder": "Text [@Person] [//Datum]",
     "helper": "Ermöglicht die schnelle Erstellung einer Aufgabe mit Beschreibung, Zuweisung und Fälligkeitsdatum."
   },
-
   "create": {
     "label": "Neues Todo erstellen",
     "conf": "Todo wurde erstellt.",
@@ -37,7 +36,6 @@
     "label": "Todo Details ansehen"
   },
   "done": "Todo auf Erledigt setzen",
-
   "list": {
     "header": {
       "name": "Name",
@@ -46,13 +44,11 @@
       "state": "Status"
     }
   },
-
   "board": {
     "emptyColumn": "Keine Todos",
     "noStates": "Es ist keine Kategorie 'task_state' definiert. Ohne Stati kann kein Board dargestellt werden."
   },
-
-   "okey": {
+  "okey": {
     "label": "ID",
     "placeholder": "ssssssss",
     "helper": "Der Schlüssel des Tasks in der Datenbank."
@@ -131,11 +127,9 @@
     "label": "Kontext",
     "description": "Die Aufgabe ist normalerweise sichtbar für Autor/in, Zuständige/n und Privilegierte User. Mit dem Kontext kann die Sichtbarkeit auf eine Gruppe erweitert werden."
   },
-
   "validations": {
     "taskModelType": "Der ModelType muss TaskModel sein."
   },
-
   "form": {
     "advanced": {
       "label": "Erweiterte Einstellungen anzeigen"
@@ -148,5 +142,17 @@
     "user": "Benutzer",
     "meeting": "Sitzung",
     "trip": "Fahrt"
+  },
+  "settings": {
+    "title": "Einstellungen",
+    "taskArchiveDays": {
+      "label": "Erledigte Aufgaben archivieren nach (Tagen)",
+      "helper": "0 heisst: nie automatisch archivieren"
+    },
+    "taskDiaryTenantId": {
+      "label": "Erledigte Aufgaben ins Tagebuch von",
+      "helper": "Leer lassen, wenn keine Tagebuch-Einträge entstehen sollen",
+      "none": "Kein Tagebuch"
+    }
   }
 }

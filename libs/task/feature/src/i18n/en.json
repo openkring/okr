@@ -16,7 +16,6 @@
     "placeholder": "Text [@Person] [//Date]",
     "helper": "Enables the quick creation of a task with description, assignment and due date."
   },
-
   "create": {
     "label": "Create new todo",
     "conf": "Todo was created.",
@@ -37,7 +36,6 @@
     "label": "View todo details"
   },
   "done": "Set todo to done",
-
   "list": {
     "header": {
       "name": "Name",
@@ -46,13 +44,11 @@
       "state": "Status"
     }
   },
-
   "board": {
     "emptyColumn": "No todos",
     "noStates": "No 'task_state' category is defined. Without states no board can be displayed."
   },
-
-   "okey": {
+  "okey": {
     "label": "ID",
     "placeholder": "ssssssss",
     "helper": "The key of the task in the database."
@@ -131,11 +127,9 @@
     "label": "Context",
     "description": "The task is normally visible to the author, the responsible person and privileged users. With the context, visibility can be extended to a group."
   },
-
   "validations": {
     "taskModelType": "The ModelType must be TaskModel."
   },
-
   "form": {
     "advanced": {
       "label": "Show advanced settings"
@@ -148,5 +142,17 @@
     "user": "User",
     "meeting": "Meeting",
     "trip": "Trip"
+  },
+  "settings": {
+    "title": "Settings",
+    "taskArchiveDays": {
+      "label": "Archive completed tasks after (days)",
+      "helper": "0 means: never archive automatically"
+    },
+    "taskDiaryTenantId": {
+      "label": "Add completed tasks to the diary of",
+      "helper": "Leave empty if no diary entries should be created",
+      "none": "No diary"
+    }
   }
 }

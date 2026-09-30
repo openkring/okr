@@ -16,7 +16,6 @@
     "placeholder": "Texte [@Person] [//Date]",
     "helper": "Permet la création rapide d'une tâche avec description, attribution et date d'échéance."
   },
-
   "create": {
     "label": "Créer une nouvelle tâche",
     "conf": "La tâche a été créée.",
@@ -37,7 +36,6 @@
     "label": "Afficher les détails de la tâche"
   },
   "done": "Marquer la tâche comme terminée",
-
   "list": {
     "header": {
       "name": "Nom",
@@ -46,13 +44,11 @@
       "state": "Statut"
     }
   },
-
   "board": {
     "emptyColumn": "Aucune tâche",
     "noStates": "Aucune catégorie 'task_state' n'est définie. Sans statuts, aucun tableau ne peut être affiché."
   },
-
-   "okey": {
+  "okey": {
     "label": "ID",
     "placeholder": "ssssssss",
     "helper": "La clé de la tâche dans la base de données."
@@ -131,11 +127,9 @@
     "label": "Contexte",
     "description": "La tâche est normalement visible pour l'auteur, la personne responsable et les utilisateurs privilégiés. Avec le contexte, la visibilité peut être étendue à un groupe."
   },
-
   "validations": {
     "taskModelType": "Le ModelType doit être TaskModel."
   },
-
   "form": {
     "advanced": {
       "label": "Afficher les paramètres avancés"
@@ -148,5 +142,17 @@
     "user": "Utilisateur",
     "meeting": "Séance",
     "trip": "Sortie"
+  },
+  "settings": {
+    "title": "Paramètres",
+    "taskArchiveDays": {
+      "label": "Archiver les tâches terminées après (jours)",
+      "helper": "0 signifie : ne jamais archiver automatiquement"
+    },
+    "taskDiaryTenantId": {
+      "label": "Ajouter les tâches terminées au journal de",
+      "helper": "Laisse vide si tu ne veux pas créer d’entrées de journal",
+      "none": "Aucun journal"
+    }
   }
 }

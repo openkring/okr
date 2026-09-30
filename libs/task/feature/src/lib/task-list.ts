@@ -319,6 +319,7 @@ export class TaskList {
       case 'add': await this.store.add(); break;
       case 'export': await this.store.export('raw'); break;
       case 'toggleFilter': this.showFilter.update(v => !v); break;
+      case 'settings': await this.store.editSettings(); break;
       default: error(undefined, `TaskList.onPopoverDismiss: unknown method ${selectedMethod}`);
     }
   }

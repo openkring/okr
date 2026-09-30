@@ -1,17 +1,18 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
-import { of } from 'rxjs';
+import { firstValueFrom, of } from 'rxjs';
 import { ModalController } from '@ionic/angular/standalone';
 
+import { AppConfigService } from '@okr/shared-data-access';
 import { AppStore, PersonSelectModal, PersonSelectResult } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { PersonModel, TaskModel } from '@okr/shared-models';
-import { chipMatches, debugItemLoaded, getAvatarInfo, getAvatarInfoForCurrentUser, getTodayStr, isPerson, nameMatches, rankBetween } from '@okr/shared-util-core';
+import { chipMatches, debugItemLoaded, getAvatarInfo, getAvatarInfoForCurrentUser, getTodayStr, hasRole, isPerson, nameMatches, rankBetween } from '@okr/shared-util-core';
 import { resourceParams } from '@okr/shared-util-angular';
 
 import { TaskService } from '@okr/task-data-access';
-import { assignMissingRanks, buildTaskListQueries, canChangeTask, canCreateTask, canDeleteTask, getCompletionPatch, groupTasksByState, isTask, TASK_I18N_KEYS, TaskBoardColumn } from '@okr/task-util';
+import { assignMissingRanks, buildTaskListQueries, canChangeTask, canCreateTask, canDeleteTask, getCompletionPatch, groupTasksByState, isTask, TASK_I18N_KEYS, TaskBoardColumn, TaskSettings } from '@okr/task-util';
 
 /** The payload of a Kanban drag-and-drop. `columnTasks` is the target column, ordered, without the moved task. */
 export type TaskMove = {
@@ -58,6 +59,7 @@ export const TaskStore = signalStore(
   withProps(() => ({
     taskService: inject(TaskService),
     appStore: inject(AppStore),
+    appConfigService: inject(AppConfigService),
     modalController: inject(ModalController),
     i18nService: inject(I18nService),
   })),
@@ -274,6 +276,34 @@ export const TaskStore = signalStore(
           }
           // no reload(): the lists are rxfire real-time streams
         }
+      }
+    },
+
+    /**
+     * Open the admin-only task-settings modal (spec 1.72 §8.2/§9) — the menu row already gates on
+     * `roleNeeded: 'admin'`, so this is a defence-in-depth check, same shape as `canCreateTask`.
+     * The two `AppConfig` fields are coalesced here (`?? 30`, `?? ''`) because a legacy config doc
+     * predates them (Firestore reads skip model defaults — see the class doc on `AppConfig`).
+     */
+    async editSettings(): Promise<void> {
+      if (!hasRole('admin', store.currentUser())) return;
+      const config = store.appStore.appConfig();
+      const settings: TaskSettings = {
+        taskArchiveDays: config.taskArchiveDays ?? 30,
+        taskDiaryTenantId: config.taskDiaryTenantId ?? '',
+      };
+      const tenants = await firstValueFrom(store.appConfigService.list());
+      const tenantIds = tenants.map((t) => t.okey);
+
+      const { TaskSettingsModal } = await import('@okr/task-ui');
+      const modal = await store.modalController.create({
+        component: TaskSettingsModal,
+        componentProps: { settings, tenantIds }
+      });
+      modal.present();
+      const { data, role } = await modal.onDidDismiss();
+      if (role === 'confirm' && data) {
+        await store.appConfigService.setTaskSettings(store.tenantId(), data as TaskSettings);
       }
     },
 

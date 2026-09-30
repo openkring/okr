@@ -16,7 +16,6 @@
     "placeholder": "Texto [@Person] [//Date]",
     "helper": "Permite la creación rápida de una tarea con descripción, asignación y fecha de vencimiento."
   },
-
   "create": {
     "label": "Crear nueva tarea",
     "conf": "La tarea se ha creado.",
@@ -37,7 +36,6 @@
     "label": "Ver detalles de la tarea"
   },
   "done": "Marcar la tarea como realizada",
-
   "list": {
     "header": {
       "name": "Nombre",
@@ -46,13 +44,11 @@
       "state": "Estado"
     }
   },
-
   "board": {
     "emptyColumn": "Sin tareas",
     "noStates": "No se ha definido ninguna categoría 'task_state'. Sin estados no se puede mostrar ningún tablero."
   },
-
-   "okey": {
+  "okey": {
     "label": "ID",
     "placeholder": "ssssssss",
     "helper": "La clave de la tarea en la base de datos."
@@ -131,11 +127,9 @@
     "label": "Contexto",
     "description": "La tarea normalmente es visible para el autor, la persona responsable y los usuarios privilegiados. Con el contexto, la visibilidad puede ampliarse a un grupo."
   },
-
   "validations": {
     "taskModelType": "El ModelType debe ser TaskModel."
   },
-
   "form": {
     "advanced": {
       "label": "Mostrar ajustes avanzados"
@@ -148,5 +142,17 @@
     "user": "Usuario",
     "meeting": "Reunión",
     "trip": "Salida"
+  },
+  "settings": {
+    "title": "Ajustes",
+    "taskArchiveDays": {
+      "label": "Archivar tareas completadas después de (días)",
+      "helper": "0 significa: nunca archivar automáticamente"
+    },
+    "taskDiaryTenantId": {
+      "label": "Añadir tareas completadas al diario de",
+      "helper": "Déjalo vacío si no quieres que se creen entradas de diario",
+      "none": "Sin diario"
+    }
   }
 }

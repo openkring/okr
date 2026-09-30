@@ -94,8 +94,16 @@ export const TASK_I18N_KEYS = {
   scope:                           PFX + 'scope.label',
   scope_description:               PFX + 'scope.description',
 
-  validations_taskModelType:       PFX + 'validations.taskModelType'
-  
+  validations_taskModelType:       PFX + 'validations.taskModelType',
+
+  // settings modal (spec 1.72 §8.2/§9) — the two AppConfig fields, admin-only
+  settings_title:                       PFX + 'settings.title',
+  settings_taskArchiveDays_label:       PFX + 'settings.taskArchiveDays.label',
+  settings_taskArchiveDays_helper:      PFX + 'settings.taskArchiveDays.helper',
+  settings_taskDiaryTenantId_label:     PFX + 'settings.taskDiaryTenantId.label',
+  settings_taskDiaryTenantId_helper:    PFX + 'settings.taskDiaryTenantId.helper',
+  settings_taskDiaryTenantId_none:      PFX + 'settings.taskDiaryTenantId.none',
+
 } satisfies Record<string, string>;
 
 export type TaskI18n = { [K in keyof typeof TASK_I18N_KEYS]: Signal<string> };

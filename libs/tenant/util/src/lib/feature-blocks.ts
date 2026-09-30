@@ -2289,6 +2289,10 @@ const task: FeatureBlock = {
       // `c-calevents`. `TaskList` binds it through `[toggleStates]="{ toggleFilter: showFilter() }"`
       // (`task-list.ts:72`), so the `toggle` action and the `toggleFilter` url are both load-bearing.
       { key: 'filter-toggle', name: 'filter-toggle', url: 'toggleFilter', action: 'toggle', roleNeeded: 'contentAdmin', icon: 'eye-on', label: '@item.filter-toggle' },
+      // spec 1.72 §8.2/§9 — the two AppConfig task settings (taskArchiveDays,
+      // taskDiaryTenantId), admin-only: `TaskList.onPopoverDismiss` case 'settings' opens
+      // `TaskSettingsModal` via `TaskStore.editSettings()`.
+      { key: 'task-settings', name: 'task-settings', url: 'settings', action: 'call', roleNeeded: 'admin', icon: 'settings', label: '@item.task-settings' },
     ] },
   ],
 };

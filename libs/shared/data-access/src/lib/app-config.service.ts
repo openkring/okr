@@ -74,6 +74,20 @@ export class AppConfigService {
   }
 
   /**
+   * Patch the two task settings only (same single-field pattern as {@link setHiddenMenuKeys}).
+   * Typed inline with `Pick<AppConfig, …>` rather than `@okr/task-util`'s `TaskSettings` — the
+   * two are the same shape by construction, but `shared-data-access` must not import a
+   * feature-domain util lib.
+   *
+   * @param tenantId the tenant whose config to patch — the doc id IS the tenantId
+   * @param settings `{ taskArchiveDays, taskDiaryTenantId }`
+   */
+  public async setTaskSettings(tenantId: string, settings: Pick<AppConfig, 'taskArchiveDays' | 'taskDiaryTenantId'>): Promise<string | undefined> {
+    return await this.firestoreService.updateObject<Partial<AppConfig>>(
+      AppConfigCollection, tenantId, { ...settings }, false, this.i18n.update_conf());
+  }
+
+  /**
    * We are not actually deleting an AppConfig. We are just archiving it.
    * @param key the document id of the AppConfig
    * @returns a Promise that resolves when the operation is complete 
@@ -83,8 +97,16 @@ export class AppConfigService {
   }
 
   /*-------------------------- LIST / QUERY / FILTER --------------------------------*/
-  
-  public list(): Observable<AppConfig[]> {
-    return this.firestoreService.listAllObjects<AppConfig>(AppConfigCollection);
+
+  /**
+   * Every tenant's `AppConfig`, `okey` = tenant id (the document id — see the class comment on
+   * why the tenant id is never a class FIELD). `addOkey: true` so a caller enumerating tenant ids
+   * (e.g. the `taskDiaryTenantId` select) has something to read; the return type is widened with
+   * `& { okey: string }` rather than adding `okey` to the `AppConfig` class itself, which would
+   * reintroduce exactly the duplicated-identity trap the class comment warns against. Nothing
+   * consumed this list before, so widening it changes no existing caller.
+   */
+  public list(): Observable<(AppConfig & { okey: string })[]> {
+    return this.firestoreService.listAllObjects<AppConfig & { okey: string }>(AppConfigCollection, true);
   }
 }

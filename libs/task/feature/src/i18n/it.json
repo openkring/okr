@@ -16,7 +16,6 @@
     "placeholder": "Testo [@Person] [//Date]",
     "helper": "Consente la creazione rapida di un'attività con descrizione, assegnazione e data di scadenza."
   },
-
   "create": {
     "label": "Crea nuova attività",
     "conf": "L'attività è stata creata.",
@@ -37,7 +36,6 @@
     "label": "Visualizza dettagli dell'attività"
   },
   "done": "Contrassegna l'attività come completata",
-
   "list": {
     "header": {
       "name": "Nome",
@@ -46,13 +44,11 @@
       "state": "Stato"
     }
   },
-
   "board": {
     "emptyColumn": "Nessuna attività",
     "noStates": "Nessuna categoria 'task_state' è definita. Senza stati non è possibile visualizzare alcuna bacheca."
   },
-
-   "okey": {
+  "okey": {
     "label": "ID",
     "placeholder": "ssssssss",
     "helper": "La chiave dell'attività nel database."
@@ -131,11 +127,9 @@
     "label": "Contesto",
     "description": "L'attività è normalmente visibile all'autore, alla persona responsabile e agli utenti privilegiati. Con il contesto, la visibilità può essere estesa a un gruppo."
   },
-
   "validations": {
     "taskModelType": "Il ModelType deve essere TaskModel."
   },
-
   "form": {
     "advanced": {
       "label": "Mostra impostazioni avanzate"
@@ -148,5 +142,17 @@
     "user": "Utente",
     "meeting": "Riunione",
     "trip": "Uscita"
+  },
+  "settings": {
+    "title": "Impostazioni",
+    "taskArchiveDays": {
+      "label": "Archivia le attività completate dopo (giorni)",
+      "helper": "0 significa: mai archiviare automaticamente"
+    },
+    "taskDiaryTenantId": {
+      "label": "Aggiungi le attività completate al diario di",
+      "helper": "Lascia vuoto se non vuoi che vengano creare voci di diario",
+      "none": "Nessun diario"
+    }
   }
 }
