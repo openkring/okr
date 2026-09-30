@@ -172,6 +172,7 @@ export const calendarFeed = Calendar.calendarFeed;
 export const notifyCalEventParticipants = Calendar.notifyCalEventParticipants;
 export const onCalEventCommentCreated = Calendar.onCalEventCommentCreated;
 export const onCalEventDocumentCreated = Calendar.onCalEventDocumentCreated;
+export const onInvitationCreated = Calendar.onInvitationCreated;
 
 // email webhooks
 export const mailtrapWebhook = Email.mailtrapWebhook;
