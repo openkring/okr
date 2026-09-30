@@ -8,6 +8,7 @@ import { AuthCredentials } from '@okr/shared-models';
 
 import { LoginForm } from '@okr/auth-ui';
 import { isRetryablePwdResetFailure, PwdResetFailure } from '@okr/auth-util';
+import { loginIdFromSyntheticEmail } from '@okr/user-util';
 
 import { AuthStore } from './auth.store';
 
@@ -181,7 +182,9 @@ export class ConfirmPasswordResetPage implements OnInit {
       this.failure.set(result);
       return;
     }
-    this.currentCredentials.update(c => ({ ...c, loginEmail: result.email }));
+    // A Benutzername-only account's Auth email is a synthetic placeholder (spec 1.71 §5.2) — show
+    // the Benutzername instead of that internal address; a real account still shows its email.
+    this.currentCredentials.update(c => ({ ...c, loginEmail: loginIdFromSyntheticEmail(result.email) || result.email }));
   }
 
   public async confirm(): Promise<void> {

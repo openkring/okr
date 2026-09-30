@@ -141,15 +141,20 @@ export class AuthService {
    * old behaviour (toast, then back to the empty login form) left no trace on screen that a mail
    * was coming at all.
    */
-  public async resetPassword(loginEmail: string): Promise<boolean> {
+  public async resetPassword(loginEmailOrId: string): Promise<boolean> {
     try {
-      if (!loginEmail || loginEmail.length === 0) die('AuthService.resetPassword: loginEmail is mandatory.');
+      if (!loginEmailOrId || loginEmailOrId.length === 0) die('AuthService.resetPassword: loginEmail is mandatory.');
       const fn = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'sendEmail');
-      await fn({ to: [loginEmail], appId: this.env.appId, provider: 'mailtrap_api', template: 'password_reset' });
-      void this.activityService.logAuth('pwdreset', `${loginEmail}: SUCCESS`);
+      const input = loginEmailOrId.trim();
+      // Benutzername (spec 1.71 §5.2): the client never resolves it to an address — the server
+      // looks up the account and mails the person's favourite email, so `to` is empty here.
+      await (isLoginIdInput(input)
+        ? fn({ to: [], loginId: normalizeLoginIdInput(input), appId: this.env.appId, tenantId: this.env.tenantId, provider: 'mailtrap_api', template: 'password_reset' })
+        : fn({ to: [input], appId: this.env.appId, provider: 'mailtrap_api', template: 'password_reset' }));
+      void this.activityService.logAuth('pwdreset', `${loginEmailOrId}: SUCCESS`);
       return true;
     } catch (ex) {
-      void this.activityService.logAuth('pwdreset', `${loginEmail}: ERROR: ${ex}`);
+      void this.activityService.logAuth('pwdreset', `${loginEmailOrId}: ERROR: ${ex}`);
       console.error('AuthService.resetPassword: error: ', ex);
       await this.alertService.showToast(this.i18n.pwdreset_error());
       return false;

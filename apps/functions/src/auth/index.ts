@@ -3,10 +3,11 @@ import * as functions from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
 import { getAuth } from 'firebase-admin/auth';
 import { getStorage } from 'firebase-admin/storage';
-import { getFirestore } from 'firebase-admin/firestore';
+import { DocumentData, getFirestore } from 'firebase-admin/firestore';
 import { checkAdminRole, checkAppCheckToken, checkAuthentication, checkStringField } from '@okr/shared-util-functions';
 import { getAppEmailConfig } from './email-templates';
 import { EmailAttachment, isValidProvider, sendEmailViaProvider } from './email-transport';
+import { findUserByLoginId } from './login-id';
 import { reportToSentry } from '../srv/sentry';
 
 /** Storage prefixes that `generateDocument` writes generated documents to. */
@@ -467,19 +468,40 @@ const LEGACY_PASSWORD_RESET_TEMPLATE = 'scs_password_reset';
  * Plain, tenant-neutral password-reset mail — the body used when a tenant has no Mailtrap template
  * (`app-config.mailtrapPasswordResetTemplate`). Deliberately inline-styled and table-free: it has to
  * survive Outlook and Gmail without a template engine.
+ * @param loginId the Benutzername, when the reset was requested by Benutzername (spec 1.71 §5.2) —
+ *                shown so the mail recipient (who may not be the account holder, e.g. a child's
+ *                account) knows which login the new password belongs to.
  */
-function buildPasswordResetHtml(link: string, appName: string): string {
+function buildPasswordResetHtml(link: string, appName: string, loginId = ''): string {
   const safeName = appName.replace(/[<>&]/g, '');
+  const safeLoginId = loginId.replace(/[<>&]/g, '');
+  const loginIdLine = safeLoginId
+    ? `<p style="margin:0 0 24px;font-size:15px;line-height:1.5;">Benutzername: <b>${safeLoginId}</b></p>`
+    : '';
   return `<!DOCTYPE html><html lang="de"><body style="margin:0;padding:24px;background:#f4f4f5;font-family:Arial,Helvetica,sans-serif;color:#18181b;">
   <div style="max-width:500px;margin:0 auto;background:#ffffff;border-radius:8px;padding:32px;">
     <h1 style="margin:0 0 16px;font-size:20px;">Passwort zurücksetzen</h1>
     <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Hallo,</p>
     <p style="margin:0 0 24px;font-size:15px;line-height:1.5;">für dein ${safeName}-Konto wurde ein neues Passwort angefordert. Klicke auf den Link, um es zu setzen:</p>
+    ${loginIdLine}
     <p style="margin:0 0 24px;"><a href="${link}" style="display:inline-block;padding:12px 20px;background:#3880ff;color:#ffffff;text-decoration:none;border-radius:6px;font-size:15px;">Passwort neu setzen</a></p>
     <p style="margin:0 0 24px;font-size:13px;line-height:1.5;color:#52525b;">Falls der Button nicht funktioniert, kopiere diesen Link in deinen Browser:<br><a href="${link}" style="color:#3880ff;word-break:break-all;">${link}</a></p>
     <p style="margin:0;font-size:13px;line-height:1.5;color:#52525b;">Hast du diese Zurücksetzung nicht selbst angefordert, kannst du diese E-Mail ignorieren.</p>
   </div>
 </body></html>`;
+}
+
+/**
+ * The recipient(s) and Benutzername for a password reset requested by Benutzername (spec 1.71 §5.2) —
+ * pure decision, no Firestore/Auth calls, so it is unit-testable without mocking either. Returns
+ * undefined when the reset must bail out generically (M-3 anti-enumeration): unknown Benutzername, or
+ * no favourite email on file to mail the link to.
+ * @param found   the Auth user matched by `findUserByLoginId`, or undefined when none matched
+ * @param favEmail the person's favourite email address (may be a child's, mailed to a parent)
+ */
+export function resetMailFields(found: { uid: string; data: DocumentData } | undefined, favEmail: string): { resetLoginId: string; recipients: string[] } | undefined {
+  if (!found || !favEmail) return undefined;
+  return { resetLoginId: String(found.data['loginId'] ?? ''), recipients: [favEmail] };
 }
 
 /**
@@ -498,6 +520,8 @@ function buildPasswordResetHtml(link: string, appName: string): string {
  * @param provider          email provider: 'mailgun_smtp' | 'mailtrap_api' | 'netzone_smtp' | 'mailtrap_test'
  * @param template          optional Mailtrap template UUID, or 'password_reset' for the reset flow
  * @param templateVariables optional variables passed to the template
+ * @param loginId           reset by Benutzername instead of email (spec 1.71 §5.2) — `to` is then `[]`
+ * @param tenantId           the tenant to resolve `loginId` in; falls back to `appId` when omitted
  */
 export const sendEmail = functions.onCall(
   {
@@ -505,7 +529,7 @@ export const sendEmail = functions.onCall(
     enforceAppCheck: true,
     secrets: ['MAILGUN_SMTP_PASSWORD', 'MAILTRAP_APIKEY', 'NETZONE_SMTP_PASSWORD', 'MAILTRAP_TEST_USER', 'MAILTRAP_TEST_PASS', 'SENTRY_FUNCTIONS_DSN'],
   },
-  async (request: functions.CallableRequest<{ to: string[]; cc?: string[]; bcc?: string[]; appId: string; html?: string; from?: string; subject?: string; provider: string; template?: string; templateVariables?: Record<string, string>; attachments?: AttachmentRef[] }>) => {
+  async (request: functions.CallableRequest<{ to: string[]; cc?: string[]; bcc?: string[]; appId: string; html?: string; from?: string; subject?: string; provider: string; template?: string; templateVariables?: Record<string, string>; attachments?: AttachmentRef[]; loginId?: string; tenantId?: string }>) => {
     const CF_NAME = 'sendEmail';
     checkAppCheckToken(request as any, CF_NAME);
 
@@ -523,7 +547,28 @@ export const sendEmail = functions.onCall(
       checkAuthentication(request as any, CF_NAME);
     }
 
-    if (!Array.isArray(to) || to.length === 0) {
+    // Reset by Benutzername (spec 1.71 §5.2): the link is for the account's Auth email (real or
+    // synthetic), the MAIL goes to the person's favourite email — the parent's, for a child.
+    let resetAuthEmail = '';
+    let resetLoginId = '';
+    let recipients = to;
+    if (isPasswordReset && typeof request.data.loginId === 'string' && request.data.loginId.trim()) {
+      const lookupTenantId = String(request.data.tenantId || appId);
+      const found = await findUserByLoginId(lookupTenantId, request.data.loginId);
+      const personKey = String(found?.data['personKey'] ?? '');
+      const dir = personKey ? await getFirestore().collection('address-directory').doc(`${lookupTenantId}_person.${personKey}`).get() : undefined;
+      const favEmail = String(dir?.data()?.['favEmail'] ?? '');
+      const fields = resetMailFields(found, favEmail);
+      if (!found || !fields) {
+        logger.info(`${CF_NAME}: reset by Benutzername with no account or no favourite email — responding generically`);
+        return { success: true };
+      }
+      resetAuthEmail = (await getAuth().getUser(found.uid)).email ?? '';
+      resetLoginId = fields.resetLoginId;
+      recipients = fields.recipients;
+    }
+
+    if (!Array.isArray(recipients) || recipients.length === 0) {
       throw new functions.HttpsError('invalid-argument', 'to must be a non-empty array.');
     }
     checkStringField(request as any, CF_NAME, 'appId');
@@ -539,7 +584,7 @@ export const sendEmail = functions.onCall(
       // and return the SAME generic success response without sending (M-3).
       let link: string;
       try {
-        link = await getAuth().generatePasswordResetLink(to[0], { url: config.continueUrl });
+        link = await getAuth().generatePasswordResetLink(resetAuthEmail || recipients[0], { url: config.continueUrl });
         // Firebase Auth has ONE project-wide action-handler URL, so every tenant's link comes
         // back on that host. Swap in the tenant's own domain — the oobCode is validated against
         // the project, not the host, and /auth/confirm exists in every app.
@@ -576,12 +621,13 @@ export const sendEmail = functions.onCall(
         return { success: true };
       }
       from = config.from;
-      subject = `Passwort zurücksetzen – ${config.appName}`;
+      subject = resetLoginId ? `Passwort für den Benutzernamen ${resetLoginId} – ${config.appName}` : `Passwort zurücksetzen – ${config.appName}`;
       // Used verbatim when the tenant has no Mailtrap template, and never wasted otherwise.
-      html = buildPasswordResetHtml(link, config.appName);
+      html = buildPasswordResetHtml(link, config.appName, resetLoginId);
       // Only controlled variables — do not echo caller-supplied templateVariables
-      // into the password-reset email.
-      templateVariables = { url: link, email: to[0], app_name: config.appName };
+      // into the password-reset email. `login_id` is '' for an email reset so a template that
+      // references the variable still renders cleanly.
+      templateVariables = { url: link, email: recipients[0], app_name: config.appName, login_id: resetLoginId };
       // Per-tenant Mailtrap template (app-config.mailtrapPasswordResetTemplate). Without it the
       // provider falls back to the inline plain-HTML body above.
       if (config.passwordResetTemplate) templateRef = config.passwordResetTemplate;
@@ -596,14 +642,14 @@ export const sendEmail = functions.onCall(
     if (!subject) throw new functions.HttpsError('invalid-argument', 'subject is required.');
 
     // Log recipient COUNT, not addresses — PII (privacy inventory §7.2).
-    logger.info(`${CF_NAME}: sending via ${provider} to ${to.length} recipient(s) (appId=${appId}, template=${templateRef ?? 'none'})`);
+    logger.info(`${CF_NAME}: sending via ${provider} to ${recipients.length} recipient(s) (appId=${appId}, template=${templateRef ?? 'none'})`);
 
     // Attachments are resolved server-side from Storage (never on the password-reset path).
     const resolvedAttachments = isPasswordReset ? [] : await resolveAttachments(attachments, CF_NAME);
 
     try {
-      await sendEmailViaProvider(provider, { from, to, cc, bcc, subject, html: html ?? '', template: templateRef, templateVariables, attachments: resolvedAttachments });
-      logger.info(`${CF_NAME}: email sent to ${to.length} recipient(s)${resolvedAttachments.length ? ` with ${resolvedAttachments.length} attachment(s)` : ''}`);
+      await sendEmailViaProvider(provider, { from, to: recipients, cc, bcc, subject, html: html ?? '', template: templateRef, templateVariables, attachments: resolvedAttachments });
+      logger.info(`${CF_NAME}: email sent to ${recipients.length} recipient(s)${resolvedAttachments.length ? ` with ${resolvedAttachments.length} attachment(s)` : ''}`);
       return { success: true };
     } catch (error: any) {
       logger.error(`${CF_NAME}: failed to send email`, { error: error.message });
