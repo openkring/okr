@@ -19,3 +19,28 @@ export function journalBookingDoc(entry: BexioJournalHeader & Record<string, unk
     accountingTenantId: tenantId,
   };
 }
+
+/** The amount fields of a bexio journal row. `amount` is in the row's own currency, `base_currency_amount` in CHF. */
+export interface BexioJournalAmounts {
+  amount: string | number;
+  currency_id?: number | null;
+  base_currency_id?: number | null;
+  base_currency_amount?: string | number | null;
+}
+
+interface JournalMoney { amount: number; currency: string; periodicity: 'one-time'; }
+
+/**
+ * CHF amount of a journal row plus, for a foreign-currency row, its original amount (spec 1.68).
+ * bexio's `amount` is in the transaction currency — booking it as CHF skewed every EUR payment.
+ */
+export function journalLineAmounts(entry: BexioJournalAmounts, currencyCodes: Map<number, string>): { chf: JournalMoney; fx: JournalMoney | null } {
+  const cents = (v: string | number) => Math.round(Number(v) * 100);
+  const base = entry.base_currency_amount ?? entry.amount;
+  const chf: JournalMoney = { amount: cents(base), currency: 'CHF', periodicity: 'one-time' };
+  const isFx = entry.currency_id != null && entry.base_currency_id != null && entry.currency_id !== entry.base_currency_id;
+  const fx: JournalMoney | null = isFx
+    ? { amount: cents(entry.amount), currency: currencyCodes.get(entry.currency_id as number) ?? String(entry.currency_id), periodicity: 'one-time' }
+    : null;
+  return { chf, fx };
+}

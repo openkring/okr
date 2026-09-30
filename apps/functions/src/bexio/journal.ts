@@ -9,7 +9,7 @@ import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
 import { bexioApiKey, bexioTenantId, BEXIO_BASE_V3 } from './shared';
 import { checkRoles } from '@okr/shared-util-functions';
 import { loadIsBexioBackend } from './backend-gate';
-import { journalBookingDoc } from './journal.mapper';
+import { journalBookingDoc, journalLineAmounts } from './journal.mapper';
 
 interface BexioJournalEntry {
   id: number;
@@ -17,7 +17,18 @@ interface BexioJournalEntry {
   description: string | null;
   debit_account_id: number | null;
   credit_account_id: number | null;
-  amount: string;                 // decimal string e.g. "1234.56"
+  amount: string;                 // in the row's own currency (currency_id), e.g. EUR
+  currency_id: number | null;
+  base_currency_id: number | null;
+  base_currency_amount: string | null; // CHF
+}
+
+/** bexio currency id → ISO code (1 = CHF, 2 = EUR, …). */
+async function fetchBexioCurrencyCodes(apiKey: string): Promise<Map<number, string>> {
+  const response = await axios.get<{ id: number; name: string }[]>(`${BEXIO_BASE_V3}/currencies`, {
+    headers: { 'Authorization': `Bearer ${apiKey}`, 'Accept': 'application/json' },
+  });
+  return new Map((Array.isArray(response.data) ? response.data : []).map(c => [c.id, c.name]));
 }
 
 /** Fetch paginated journal entries from Bexio v3 (flat array, offset-based pagination). */
@@ -76,7 +87,7 @@ function bexioDateToStoreDate(bexioDate: string | null | undefined): string {
  * Each entry creates 3 documents (1 booking + 2 booking-lines), so we keep
  * batch size to max 50 entries (150 docs) to stay under Firestore's 500-write limit.
  */
-async function persistJournalEntries(entries: BexioJournalEntry[], tenantId: string, nowStr: string): Promise<void> {
+async function persistJournalEntries(entries: BexioJournalEntry[], currencyCodes: Map<number, string>, tenantId: string, nowStr: string): Promise<void> {
   const db = admin.firestore();
   const BATCH_SIZE = 50; // 50 entries × 3 docs = 150 docs per batch
 
@@ -88,7 +99,7 @@ async function persistJournalEntries(entries: BexioJournalEntry[], tenantId: str
 
     for (const entry of chunk) {
       const okey = String(entry.id);
-      const amountCents = Math.round(parseFloat(entry.amount) * 100);
+      const { chf, fx } = journalLineAmounts(entry, currencyCodes);
       const dateStr = bexioDateToStoreDate(entry.date);
 
       const debitAccount = entry.debit_account_id != null
@@ -108,9 +119,9 @@ async function persistJournalEntries(entries: BexioJournalEntry[], tenantId: str
         isArchived: false,
         bookingKey: okey,
         accountKey: debitAccount,
-        debitAmount: { amount: amountCents, currency: 'CHF', periodicity: 'one-time' },
+        debitAmount: chf,
         creditAmount: null,
-        amountFx: null,
+        amountFx: fx,
         exchangeRateKey: '',
         vatCodeKey: '',
         accountingTenantId: tenantId,
@@ -124,8 +135,8 @@ async function persistJournalEntries(entries: BexioJournalEntry[], tenantId: str
         bookingKey: okey,
         accountKey: creditAccount,
         debitAmount: null,
-        creditAmount: { amount: amountCents, currency: 'CHF', periodicity: 'one-time' },
-        amountFx: null,
+        creditAmount: chf,
+        amountFx: fx,
         exchangeRateKey: '',
         vatCodeKey: '',
         accountingTenantId: tenantId,
@@ -145,9 +156,10 @@ async function persistJournalEntries(entries: BexioJournalEntry[], tenantId: str
 async function runJournalSync(tenantId: string, label: string): Promise<{ count: number }> {
   logger.info(`${label}: fetching all journal entries`);
   const entries = await fetchBexioJournalEntries(bexioApiKey.value());
+  const currencyCodes = await fetchBexioCurrencyCodes(bexioApiKey.value());
   logger.info(`${label}: fetched ${entries.length} journal entries`);
   const nowStr = new Date().toISOString().replace('T', ' ').substring(0, 19);
-  await persistJournalEntries(entries, tenantId, nowStr);
+  await persistJournalEntries(entries, currencyCodes, tenantId, nowStr);
   logger.info(`${label}: persisted ${entries.length} journal entries, pointer updated to ${nowStr}`);
   return { count: entries.length };
 }

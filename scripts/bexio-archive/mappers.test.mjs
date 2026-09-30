@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   isoToStoreDate, toRappen, accountOkey, mapInvoiceState, mapBillState, fileOkey, filePath,
-  mapInvoicePayment, mapReminder, mapComment, mapBillPayment, staleIds,
+  mapInvoicePayment, mapReminder, mapComment, mapBillPayment, staleIds, journalLineAmounts,
 } from './mappers.mjs';
 
 test('dates and money', () => {
@@ -61,4 +61,13 @@ test('payments, reminders, comments', () => {
 test('staleIds lists local ids bexio no longer has', () => {
   assert.deepEqual(staleIds(['1', '2', '3'], ['1', '3', '4']), ['2']);
   assert.deepEqual(staleIds([], ['1']), []);
+});
+
+test('journalLineAmounts books a EUR row in CHF and keeps the EUR amount', () => {
+  const codes = new Map([[1, 'CHF'], [2, 'EUR']]);
+  assert.deepEqual(journalLineAmounts({ amount: 168.15, currency_id: 2, base_currency_id: 1, base_currency_amount: 159 }, codes), {
+    chf: { amount: 15900, currency: 'CHF', periodicity: 'one-time' },
+    fx: { amount: 16815, currency: 'EUR', periodicity: 'one-time' },
+  });
+  assert.equal(journalLineAmounts({ amount: 588.57, currency_id: 1, base_currency_id: 1, base_currency_amount: 588.57 }, codes).fx, null);
 });

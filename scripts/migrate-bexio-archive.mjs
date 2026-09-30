@@ -6,7 +6,7 @@
  *   node scripts/migrate-bexio-archive.mjs --step journal-reconcile --dry
  *   node scripts/migrate-bexio-archive.mjs --step journal-reconcile
  *
- * Order: journal-reconcile · invoices-reconcile · bills-full · probe-vouchers (read-only) · files ·
+ * Order: journal-reconcile · journal-fx · invoices-reconcile · bills-full · probe-vouchers (read-only) · files ·
  * link-vouchers · invoice-details · bill-payments. Every step is idempotent (deterministic okeys).
  * Each applied run appends its counts to config/bexioMigration.
  */

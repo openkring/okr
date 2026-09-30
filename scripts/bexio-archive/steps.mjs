@@ -9,7 +9,7 @@ import { FieldValue } from 'firebase-admin/firestore';
 
 import {
   accountOkey, commentOkey, fileOkey, filePath, financeDocument, invoicePdfOkey, isoToStoreDate,
-  mapBillPayment, mapBillState, mapComment, mapInvoicePayment, mapInvoiceState, mapReminder, reminderPdfOkey, staleIds, toRappen,
+  journalLineAmounts, mapBillPayment, mapBillState, mapComment, mapInvoicePayment, mapInvoiceState, mapReminder, reminderPdfOkey, staleIds, toRappen,
 } from './mappers.mjs';
 
 export const STEPS = {};
@@ -131,6 +131,29 @@ STEPS['journal-reconcile'] = async ({ db, bexio, tenantId, dry, force }) => {
   }
   console.log('stale bookings:', [...stale].join(', ') || '—');
   return { remote: remote.length, local: local.length, stale: stale.size, missing, periods: [...years].sort().join(','), writes: await commitOps(db, ops, dry) };
+};
+
+/**
+ * Books foreign-currency journal rows with their CHF amount and keeps the original in `amountFx`.
+ * The journal sync used to take bexio's `amount` (transaction currency) as CHF (spec 1.68 §4.3).
+ */
+STEPS['journal-fx'] = async ({ db, bexio, tenantId, dry }) => {
+  const remote = await bexio.getAll('/3.0/accounting/journal');
+  const codes = new Map((await bexio.get('/3.0/currencies')).map(c => [c.id, c.name]));
+  const fxRows = remote.filter(e => e.currency_id != null && e.base_currency_id != null && e.currency_id !== e.base_currency_id);
+  const ops = [];
+  for (const e of fxRows) {
+    const { chf, fx } = journalLineAmounts(e, codes);
+    for (const [side, field] of [['dr', 'debitAmount'], ['cr', 'creditAmount']]) {
+      const ref = db.collection('booking-lines').doc(`${e.id}-${side}`);
+      const snap = await ref.get();
+      if (!snap.exists) { console.log('missing line', ref.id); continue; }
+      if (snap.get('accountingTenantId') !== tenantId) continue;
+      pushChanges(ops, ref, snap.data(), { [field]: chf, amountFx: fx });
+    }
+    console.log(e.id, e.date?.slice(0, 10), `${e.amount} ${fx.currency}`, '→', `${(chf.amount / 100).toFixed(2)} CHF`);
+  }
+  return { fxRows: fxRows.length, writes: await commitOps(db, ops, dry) };
 };
 
 /** Deletes local invoices bexio no longer has, re-maps every state (16 partial, 31 unpaid). */

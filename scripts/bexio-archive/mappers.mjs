@@ -93,3 +93,16 @@ export function staleIds(localIds, remoteIds) {
   const remote = new Set([...remoteIds].map(String));
   return [...localIds].map(String).filter(id => !remote.has(id));
 }
+
+/**
+ * CHF amount of a journal row plus, for a foreign-currency row, its original amount.
+ * Port of journalLineAmounts in apps/functions/src/bexio/journal.mapper.ts — keep the two in step.
+ */
+export function journalLineAmounts(entry, currencyCodes) {
+  const chf = { amount: toRappen(entry.base_currency_amount ?? entry.amount), currency: 'CHF', periodicity: 'one-time' };
+  const isFx = entry.currency_id != null && entry.base_currency_id != null && entry.currency_id !== entry.base_currency_id;
+  const fx = isFx
+    ? { amount: toRappen(entry.amount), currency: currencyCodes.get(entry.currency_id) ?? String(entry.currency_id), periodicity: 'one-time' }
+    : null;
+  return { chf, fx };
+}
