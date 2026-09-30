@@ -1,7 +1,7 @@
 import { Level } from './chess.ai';
 import { ClockState } from './chess.clock';
 import { replay } from './chess.game';
-import { Color, GameResult } from './chess.types';
+import { Color, GameResult, ResultKind } from './chess.types';
 
 export type ChessMode = Level | 'human';
 export type ClockMinutes = 0 | 5 | 10 | 15;
@@ -47,11 +47,19 @@ function parseClock(x: unknown): ClockState | null {
   return { remaining: { w, b }, running: null, since: null };
 }
 
+const VALID_KINDS: readonly ResultKind[] = ['checkmate', 'stalemate', 'repetition', 'fifty-move', 'insufficient', 'timeout', 'resign', 'agreement'];
+
 function parseResult(x: unknown): GameResult | null {
   if (!isObject(x) || typeof x['kind'] !== 'string') return null;
-  const winner = x['winner'] === 'w' || x['winner'] === 'b' ? x['winner'] : null;
-  const by = x['by'] === 'w' || x['by'] === 'b' ? x['by'] : undefined;
-  return { kind: x['kind'] as GameResult['kind'], winner, ...(by ? { by } : {}) };
+  if (!VALID_KINDS.includes(x['kind'] as ResultKind)) return null;
+
+  const winner = x['winner'];
+  if (winner !== 'w' && winner !== 'b' && winner !== null) return null;
+
+  const by = x['by'];
+  if (by !== undefined && by !== 'w' && by !== 'b') return null;
+
+  return { kind: x['kind'] as ResultKind, winner: winner as Color | null, ...(by ? { by: by as Color } : {}) };
 }
 
 /** A save from `localStorage` checked move by move; null when anything does not fit. */
@@ -61,5 +69,12 @@ export function parseSavedGame(raw: unknown): SavedGame | null {
   if (typeof initialFen !== 'string' || !Array.isArray(moves) || !moves.every(m => typeof m === 'string')) return null;
   if (!isChessSettings(settings)) return null;
   if (!replay(initialFen, moves)) return null;
+
+  const ended = raw['ended'];
+  if (ended !== null && ended !== undefined) {
+    const parsed = parseResult(ended);
+    if (parsed === null) return null;
+  }
+
   return { v: 1, initialFen, moves, settings, clock: parseClock(raw['clock']), ended: parseResult(raw['ended']) };
 }

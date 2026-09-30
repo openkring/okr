@@ -37,4 +37,26 @@ describe('parseSavedGame', () => {
   it('has sensible defaults', () => {
     expect(DEFAULT_SETTINGS).toEqual({ mode: 'medium', human: 'w', clock: 0, autoFlip: true });
   });
+
+  it('rejects an unknown kind in ended', () => {
+    expect(parseSavedGame({ ...valid, ended: { kind: 'asdf', winner: null } })).toBeNull();
+  });
+
+  it('rejects an invalid winner in ended', () => {
+    expect(parseSavedGame({ ...valid, ended: { kind: 'resign', winner: 'x' } })).toBeNull();
+  });
+
+  it('rejects an invalid by in ended', () => {
+    expect(parseSavedGame({ ...valid, ended: { kind: 'resign', winner: 'b', by: 'x' } })).toBeNull();
+  });
+
+  it('accepts a valid ended with winner and by', () => {
+    const saved = parseSavedGame({ ...valid, ended: { kind: 'resign', winner: 'b', by: 'w' } });
+    expect(saved?.ended).toEqual({ kind: 'resign', winner: 'b', by: 'w' });
+  });
+
+  it('still accepts ended: null', () => {
+    const saved = parseSavedGame(valid);
+    expect(saved?.ended).toBeNull();
+  });
 });
