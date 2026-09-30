@@ -198,8 +198,6 @@ export class AppConfig {
 
   // spec 1.72 §8.2 — days after completion until a task is archived automatically; 0 = never
   public taskArchiveDays = 30;
-  // spec 1.72 §9 — tenant whose diary receives completed tasks; '' = no diary entry
-  public taskDiaryTenantId = '';
 
   // git repository information
   public gitRepo = DEFAULT_NAME; //  git repository name

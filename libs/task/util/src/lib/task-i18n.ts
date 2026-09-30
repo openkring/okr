@@ -107,9 +107,9 @@ export const TASK_I18N_KEYS = {
   settings_title:                       PFX + 'settings.title',
   settings_taskArchiveDays_label:       PFX + 'settings.taskArchiveDays.label',
   settings_taskArchiveDays_helper:      PFX + 'settings.taskArchiveDays.helper',
-  settings_taskDiaryTenantId_label:     PFX + 'settings.taskDiaryTenantId.label',
-  settings_taskDiaryTenantId_helper:    PFX + 'settings.taskDiaryTenantId.helper',
-  settings_taskDiaryTenantId_none:      PFX + 'settings.taskDiaryTenantId.none',
+  settings_diaryTenantId_label:     PFX + 'settings.diaryTenantId.label',
+  settings_diaryTenantId_helper:    PFX + 'settings.diaryTenantId.helper',
+  settings_diaryTenantId_none:      PFX + 'settings.diaryTenantId.none',
 
 } satisfies Record<string, string>;
 

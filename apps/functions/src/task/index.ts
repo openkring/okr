@@ -6,6 +6,7 @@ import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
 
 import { pushToPersons } from '../srv/push';
 import { decideDiaryTransition, decideTaskPush, TASK_LIST_URL, type TaskDocLike } from './task-decisions';
+import { readDiaryTenantId } from '../diary/append-to-diary';
 import { applyTaskToDiary } from './task-diary';
 
 export { taskDaily } from './task-daily';
@@ -43,8 +44,7 @@ export const onTaskWritten = onDocumentWritten(
       if (transition !== 'none') {
         const tenantId = (after ?? before)?.tenants?.[0] ?? '';
         if (tenantId) {
-          const cfg = await db.collection('app-config').doc(tenantId).get();
-          const diaryTenantId = (cfg.get('taskDiaryTenantId') as string | undefined) ?? '';
+          const diaryTenantId = await readDiaryTenantId(db, tenantId);
           if (diaryTenantId) {
             // reopen removes the line that was actually written on completion — `before.name`,
             // not the (possibly since-renamed) current name; see `applyTaskToDiary`'s doc comment.

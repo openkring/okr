@@ -9,7 +9,7 @@ import { TASK_ARCHIVE_DAYS_MAX, TASK_ARCHIVE_DAYS_MIN, TaskI18n, TaskSettings, t
 
 /**
  * Admin-only settings form (spec 1.72 §8.2/§9): two `AppConfig` fields, not a Firestore model —
- * no `okey`/`tenants`/`tags`, no chips/notes. `taskDiaryTenantId` selects among the tenants this
+ * no `okey`/`tenants`/`tags`, no chips/notes. `diaryTenantId` selects among the tenants this
  * operator runs (an empty option means "no diary entry"); membership in that list is enforced by
  * the select itself, so the Vest suite carries no length cap on the field (building-forms rule 1).
  */
@@ -33,11 +33,11 @@ import { TASK_ARCHIVE_DAYS_MAX, TASK_ARCHIVE_DAYS_MIN, TaskI18n, TaskSettings, t
                   <okr-error-note [errors]="taskArchiveDaysErrors()" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
-                  <okr-string-select [i18n]="taskDiaryTenantIdI18n()"
-                    [selectedString]="taskDiaryTenantId()"
-                    (selectedStringChange)="onFieldChange('taskDiaryTenantId', $event)"
+                  <okr-string-select [i18n]="diaryTenantIdI18n()"
+                    [selectedString]="diaryTenantId()"
+                    (selectedStringChange)="onFieldChange('diaryTenantId', $event)"
                     [stringList]="tenantIdOptions()" [labels]="tenantIdLabels()" [readOnly]="false" />
-                  <okr-error-note [errors]="taskDiaryTenantIdErrors()" />
+                  <okr-error-note [errors]="diaryTenantIdErrors()" />
                 </ion-col>
               </ion-row>
             </ion-grid>
@@ -69,7 +69,7 @@ export class TaskSettingsForm {
 
   private readonly validationResult = computed(() => taskSettingsValidations(this.formData()));
   protected taskArchiveDaysErrors = computed(() => this.validationResult().getErrors('taskArchiveDays'));
-  protected taskDiaryTenantIdErrors = computed(() => this.validationResult().getErrors('taskDiaryTenantId'));
+  protected diaryTenantIdErrors = computed(() => this.validationResult().getErrors('diaryTenantId'));
 
   constructor() {
     effect(() => this.valid.emit(this.settingsForm().valid()));
@@ -77,11 +77,11 @@ export class TaskSettingsForm {
 
   // computed field accessors
   protected readonly taskArchiveDays = computed(() => this.formData()?.taskArchiveDays ?? 30);
-  protected readonly taskDiaryTenantId = computed(() => this.formData()?.taskDiaryTenantId ?? '');
+  protected readonly diaryTenantId = computed(() => this.formData()?.diaryTenantId ?? '');
   // '' (no diary) always first, then every known tenant id
   protected readonly tenantIdOptions = computed(() => ['', ...this.tenantIds()]);
   protected readonly tenantIdLabels = computed(() => ['', ...this.tenantIds()].map(
-    (id, i) => i === 0 ? this.i18n().settings_taskDiaryTenantId_none() : id));
+    (id, i) => i === 0 ? this.i18n().settings_diaryTenantId_none() : id));
 
   protected taskArchiveDaysI18n = computed(() => ({
     name: 'taskArchiveDays',
@@ -90,10 +90,10 @@ export class TaskSettingsForm {
     helper: this.i18n().settings_taskArchiveDays_helper(),
   } as NumberInputI18n));
 
-  protected taskDiaryTenantIdI18n = computed(() => ({
-    name: 'taskDiaryTenantId',
-    label: this.i18n().settings_taskDiaryTenantId_label(),
-    helper: this.i18n().settings_taskDiaryTenantId_helper(),
+  protected diaryTenantIdI18n = computed(() => ({
+    name: 'diaryTenantId',
+    label: this.i18n().settings_diaryTenantId_label(),
+    helper: this.i18n().settings_diaryTenantId_helper(),
   } as StringSelectI18n));
 
   protected onFieldChange(fieldName: keyof TaskSettings, fieldValue: string | number): void {

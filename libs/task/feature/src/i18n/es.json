@@ -155,9 +155,9 @@
       "label": "Archivar tareas completadas después de (días)",
       "helper": "0 significa: nunca archivar automáticamente"
     },
-    "taskDiaryTenantId": {
+    "diaryTenantId": {
       "label": "Añadir tareas completadas al diario de",
-      "helper": "Déjalo vacío si no quieres que se creen entradas de diario",
+      "helper": "También vale para la Jasstafel. Déjalo vacío si no quieres que se creen entradas de diario",
       "none": "Sin diario"
     }
   }

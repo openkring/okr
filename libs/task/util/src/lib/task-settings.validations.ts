@@ -9,11 +9,11 @@ import { TASK_I18N_KEYS } from './task-i18n';
  * base-model shape (no `okey`/`tenants`/`tags`): this is a plain settings patch, not a
  * Firestore model. Defined here (not in `shared-models`) so `shared-data-access` does not
  * have to import `@okr/task-util` — `AppConfigService.setTaskSettings` types its parameter
- * inline as `Pick<AppConfig, 'taskArchiveDays' | 'taskDiaryTenantId'>`, the same shape.
+ * inline as `Pick<AppConfig, 'taskArchiveDays' | 'diaryTenantId'>`, the same shape.
  */
 export type TaskSettings = {
   taskArchiveDays: number;
-  taskDiaryTenantId: string;
+  diaryTenantId: string;
 };
 
 /**
@@ -38,6 +38,6 @@ export const taskSettingsValidations = staticSuite((model: TaskSettings, field?:
     enforce(isInteger(model.taskArchiveDays)).isTruthy();
   });
 
-  // taskDiaryTenantId: a selector value (a tenant id, or '' for "no diary") — no length cap,
+  // diaryTenantId: a selector value (a tenant id, or '' for "no diary") — no length cap,
   // membership in the catalogue is enforced by the select, not by this suite (building-forms rule 1).
 });

@@ -80,9 +80,9 @@ export class AppConfigService {
    * feature-domain util lib.
    *
    * @param tenantId the tenant whose config to patch — the doc id IS the tenantId
-   * @param settings `{ taskArchiveDays, taskDiaryTenantId }`
+   * @param settings `{ taskArchiveDays, diaryTenantId }`
    */
-  public async setTaskSettings(tenantId: string, settings: Pick<AppConfig, 'taskArchiveDays' | 'taskDiaryTenantId'>): Promise<string | undefined> {
+  public async setTaskSettings(tenantId: string, settings: Pick<AppConfig, 'taskArchiveDays' | 'diaryTenantId'>): Promise<string | undefined> {
     return await this.firestoreService.updateObject<Partial<AppConfig>>(
       AppConfigCollection, tenantId, { ...settings }, false, this.i18n.update_conf());
   }
@@ -101,7 +101,7 @@ export class AppConfigService {
   /**
    * Every tenant's `AppConfig`, `okey` = tenant id (the document id — see the class comment on
    * why the tenant id is never a class FIELD). `addOkey: true` so a caller enumerating tenant ids
-   * (e.g. the `taskDiaryTenantId` select) has something to read; the return type is widened with
+   * (e.g. the `diaryTenantId` select) has something to read; the return type is widened with
    * `& { okey: string }` rather than adding `okey` to the `AppConfig` class itself, which would
    * reintroduce exactly the duplicated-identity trap the class comment warns against. Nothing
    * consumed this list before, so widening it changes no existing caller.

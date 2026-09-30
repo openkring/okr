@@ -292,7 +292,7 @@ export const TaskStore = signalStore(
       const config = store.appStore.appConfig();
       const settings: TaskSettings = {
         taskArchiveDays: config.taskArchiveDays ?? 30,
-        taskDiaryTenantId: config.taskDiaryTenantId ?? '',
+        diaryTenantId: config.diaryTenantId ?? '',
       };
       const tenants = await firstValueFrom(store.appConfigService.list());
       const tenantIds = tenants.map((t) => t.okey);
