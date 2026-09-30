@@ -1,3 +1,70 @@
 {
-  "title": "Échecs"
+  "title": "Échecs",
+  "board_label": "Échiquier",
+  "moves_title": "Coups",
+  "square_piece": "{square} : {piece}, {color}",
+  "config": {
+    "opponent_label": "Adversaire",
+    "opponent_easy": "Ordinateur · facile",
+    "opponent_medium": "Ordinateur · moyen",
+    "opponent_hard": "Ordinateur · fort",
+    "opponent_human": "Deux joueurs",
+    "color_label": "Tu joues",
+    "color_white": "Blancs (commencent)",
+    "color_black": "Noirs",
+    "clock_label": "Temps de réflexion",
+    "clock_none": "Sans pendule",
+    "clock_minutes": "{minutes} minutes par joueur",
+    "autoflip_label": "Tourner l'échiquier après chaque coup"
+  },
+  "action": {
+    "undo": "Annuler le coup",
+    "hint": "Conseil",
+    "resign": "Abandonner",
+    "draw": "Nulle",
+    "restart": "Nouvelle partie"
+  },
+  "confirm": {
+    "restart": "La partie en cours sera terminée. Commencer une nouvelle partie ?",
+    "settings": "Les nouveaux réglages lancent une nouvelle partie. La partie en cours sera terminée.",
+    "resign": "Veux-tu vraiment abandonner la partie ?",
+    "draw": "Êtes-vous d'accord pour une partie nulle ?",
+    "ok": "Oui",
+    "cancel": "Annuler"
+  },
+  "player": {
+    "white": "Blancs",
+    "black": "Noirs",
+    "you": "Toi",
+    "computer": "Ordinateur"
+  },
+  "status": {
+    "turn_you": "C'est à toi de jouer.",
+    "turn_named": "C'est aux {name} de jouer.",
+    "check_you": "Échec – ton roi est attaqué.",
+    "check_named": "Échec – les {name} doivent protéger leur roi.",
+    "thinking": "L'ordinateur réfléchit …",
+    "promote": "Choisis la pièce en laquelle ton pion se transforme."
+  },
+  "result": {
+    "win_you": "Tu gagnes.",
+    "win_computer": "L'ordinateur gagne.",
+    "win_named": "Les {name} gagnent.",
+    "draw": "Partie nulle.",
+    "checkmate": "Échec et mat.",
+    "stalemate": "Pat : le camp au trait ne peut plus jouer, mais n'est pas en échec.",
+    "repetition": "La même position s'est répétée trois fois.",
+    "fifty_move": "50 coups sans prise ni coup de pion.",
+    "insufficient": "Avec les pièces restantes, plus personne ne peut mater.",
+    "timeout": "Les {name} n'ont plus de temps.",
+    "timeout_draw": "Les {name} n'ont plus de temps, mais les {other} ne peuvent plus mater.",
+    "resign": "Les {name} abandonnent.",
+    "agreement": "Vous vous êtes mis d'accord sur la nulle."
+  },
+  "note": {
+    "fallback": "L'ordinateur calcule un peu plus lentement en ce moment. Tu peux continuer à jouer normalement.",
+    "storage": "Cette partie n'est pas enregistrée sur cet appareil et sera perdue si tu recharges la page."
+  },
+  "letter": { "k": "R", "q": "D", "r": "T", "b": "F", "n": "C" },
+  "piece": { "k": "Roi", "q": "Dame", "r": "Tour", "b": "Fou", "n": "Cavalier", "p": "Pion" }
 }

@@ -1,3 +1,70 @@
 {
-  "title": "Schach"
+  "title": "Schach",
+  "board_label": "Schachbrett",
+  "moves_title": "Züge",
+  "square_piece": "{square}: {piece}, {color}",
+  "config": {
+    "opponent_label": "Gegner",
+    "opponent_easy": "Computer · leicht",
+    "opponent_medium": "Computer · mittel",
+    "opponent_hard": "Computer · stark",
+    "opponent_human": "Zwei Spieler",
+    "color_label": "Du spielst",
+    "color_white": "Weiss (beginnt)",
+    "color_black": "Schwarz",
+    "clock_label": "Bedenkzeit",
+    "clock_none": "Ohne Uhr",
+    "clock_minutes": "{minutes} Minuten pro Seite",
+    "autoflip_label": "Brett nach jedem Zug drehen"
+  },
+  "action": {
+    "undo": "Zug zurück",
+    "hint": "Tipp",
+    "resign": "Aufgeben",
+    "draw": "Remis",
+    "restart": "Neues Spiel"
+  },
+  "confirm": {
+    "restart": "Die laufende Partie wird beendet. Neues Spiel starten?",
+    "settings": "Mit den neuen Einstellungen beginnt eine neue Partie. Die laufende Partie wird beendet.",
+    "resign": "Willst du die Partie wirklich aufgeben?",
+    "draw": "Seid ihr euch einig, dass die Partie remis endet?",
+    "ok": "Ja",
+    "cancel": "Abbrechen"
+  },
+  "player": {
+    "white": "Weiss",
+    "black": "Schwarz",
+    "you": "Du",
+    "computer": "Computer"
+  },
+  "status": {
+    "turn_you": "Du bist am Zug.",
+    "turn_named": "{name} ist am Zug.",
+    "check_you": "Schach – dein König wird angegriffen.",
+    "check_named": "Schach – {name} muss den König schützen.",
+    "thinking": "Der Computer überlegt …",
+    "promote": "Wähle die Figur, in die sich dein Bauer verwandelt."
+  },
+  "result": {
+    "win_you": "Du gewinnst.",
+    "win_computer": "Der Computer gewinnt.",
+    "win_named": "{name} gewinnt.",
+    "draw": "Remis.",
+    "checkmate": "Schachmatt.",
+    "stalemate": "Patt: Wer am Zug ist, kann nicht ziehen, steht aber nicht im Schach.",
+    "repetition": "Dieselbe Stellung kam dreimal vor.",
+    "fifty_move": "50 Züge lang wurde weder geschlagen noch ein Bauer gezogen.",
+    "insufficient": "Mit den verbleibenden Figuren kann niemand mehr mattsetzen.",
+    "timeout": "{name} hat keine Zeit mehr.",
+    "timeout_draw": "{name} hat keine Zeit mehr, aber {other} kann nicht mehr mattsetzen.",
+    "resign": "{name} gibt auf.",
+    "agreement": "Ihr habt euch auf Remis geeinigt."
+  },
+  "note": {
+    "fallback": "Der Computer rechnet gerade etwas langsamer. Du kannst normal weiterspielen.",
+    "storage": "Dieses Spiel wird auf diesem Gerät nicht gespeichert und geht beim Neuladen verloren."
+  },
+  "letter": { "k": "K", "q": "D", "r": "T", "b": "L", "n": "S" },
+  "piece": { "k": "König", "q": "Dame", "r": "Turm", "b": "Läufer", "n": "Springer", "p": "Bauer" }
 }

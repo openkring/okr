@@ -7,3 +7,4 @@ export * from './lib/chess.eval';
 export * from './lib/chess.ai';
 export * from './lib/chess.clock';
 export * from './lib/chess.save';
+export * from './lib/chess-i18n';

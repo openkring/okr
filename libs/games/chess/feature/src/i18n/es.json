@@ -1,3 +1,70 @@
 {
-  "title": "Ajedrez"
+  "title": "Ajedrez",
+  "board_label": "Tablero de ajedrez",
+  "moves_title": "Jugadas",
+  "square_piece": "{square}: {piece}, {color}",
+  "config": {
+    "opponent_label": "Rival",
+    "opponent_easy": "Ordenador · fácil",
+    "opponent_medium": "Ordenador · medio",
+    "opponent_hard": "Ordenador · fuerte",
+    "opponent_human": "Dos jugadores",
+    "color_label": "Juegas con",
+    "color_white": "Blancas (empiezan)",
+    "color_black": "Negras",
+    "clock_label": "Tiempo de reflexión",
+    "clock_none": "Sin reloj",
+    "clock_minutes": "{minutes} minutos por jugador",
+    "autoflip_label": "Girar el tablero tras cada jugada"
+  },
+  "action": {
+    "undo": "Deshacer jugada",
+    "hint": "Pista",
+    "resign": "Rendirse",
+    "draw": "Tablas",
+    "restart": "Nueva partida"
+  },
+  "confirm": {
+    "restart": "La partida en curso terminará. ¿Empezar una nueva?",
+    "settings": "Los nuevos ajustes inician una nueva partida. La partida en curso terminará.",
+    "resign": "¿De verdad quieres rendirte?",
+    "draw": "¿Estáis de acuerdo en hacer tablas?",
+    "ok": "Sí",
+    "cancel": "Cancelar"
+  },
+  "player": {
+    "white": "Blancas",
+    "black": "Negras",
+    "you": "Tú",
+    "computer": "Ordenador"
+  },
+  "status": {
+    "turn_you": "Te toca mover.",
+    "turn_named": "Juegan las {name}.",
+    "check_you": "Jaque – tu rey está atacado.",
+    "check_named": "Jaque – las {name} deben proteger a su rey.",
+    "thinking": "El ordenador está pensando …",
+    "promote": "Elige la pieza en la que se convierte tu peón."
+  },
+  "result": {
+    "win_you": "Has ganado.",
+    "win_computer": "Gana el ordenador.",
+    "win_named": "Ganan las {name}.",
+    "draw": "Tablas.",
+    "checkmate": "Jaque mate.",
+    "stalemate": "Ahogado: quien debe mover no tiene jugadas legales, pero no está en jaque.",
+    "repetition": "La misma posición se ha repetido tres veces.",
+    "fifty_move": "50 jugadas sin capturas ni movimientos de peón.",
+    "insufficient": "Con las piezas que quedan nadie puede dar jaque mate.",
+    "timeout": "Las {name} se han quedado sin tiempo.",
+    "timeout_draw": "Las {name} se han quedado sin tiempo, pero las {other} ya no pueden dar jaque mate.",
+    "resign": "Las {name} se rinden.",
+    "agreement": "Habéis acordado tablas."
+  },
+  "note": {
+    "fallback": "El ordenador está calculando un poco más despacio. Puedes seguir jugando con normalidad.",
+    "storage": "Esta partida no se guarda en este dispositivo y se perderá si recargas la página."
+  },
+  "letter": { "k": "R", "q": "D", "r": "T", "b": "A", "n": "C" },
+  "piece": { "k": "Rey", "q": "Dama", "r": "Torre", "b": "Alfil", "n": "Caballo", "p": "Peón" }
 }

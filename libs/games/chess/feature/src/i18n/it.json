@@ -1,3 +1,70 @@
 {
-  "title": "Scacchi"
+  "title": "Scacchi",
+  "board_label": "Scacchiera",
+  "moves_title": "Mosse",
+  "square_piece": "{square}: {piece}, {color}",
+  "config": {
+    "opponent_label": "Avversario",
+    "opponent_easy": "Computer · facile",
+    "opponent_medium": "Computer · medio",
+    "opponent_hard": "Computer · forte",
+    "opponent_human": "Due giocatori",
+    "color_label": "Giochi con",
+    "color_white": "Bianco (inizia)",
+    "color_black": "Nero",
+    "clock_label": "Tempo di riflessione",
+    "clock_none": "Senza orologio",
+    "clock_minutes": "{minutes} minuti a testa",
+    "autoflip_label": "Gira la scacchiera dopo ogni mossa"
+  },
+  "action": {
+    "undo": "Annulla mossa",
+    "hint": "Suggerimento",
+    "resign": "Abbandona",
+    "draw": "Patta",
+    "restart": "Nuova partita"
+  },
+  "confirm": {
+    "restart": "La partita in corso verrà chiusa. Vuoi iniziarne una nuova?",
+    "settings": "Le nuove impostazioni avviano una nuova partita. La partita in corso verrà chiusa.",
+    "resign": "Vuoi davvero abbandonare la partita?",
+    "draw": "Siete d'accordo sulla patta?",
+    "ok": "Sì",
+    "cancel": "Annulla"
+  },
+  "player": {
+    "white": "Bianco",
+    "black": "Nero",
+    "you": "Tu",
+    "computer": "Computer"
+  },
+  "status": {
+    "turn_you": "Tocca a te.",
+    "turn_named": "Tocca al {name}.",
+    "check_you": "Scacco – il tuo re è sotto attacco.",
+    "check_named": "Scacco – il {name} deve proteggere il re.",
+    "thinking": "Il computer sta pensando …",
+    "promote": "Scegli il pezzo in cui si trasforma il tuo pedone."
+  },
+  "result": {
+    "win_you": "Hai vinto.",
+    "win_computer": "Vince il computer.",
+    "win_named": "Vince il {name}.",
+    "draw": "Patta.",
+    "checkmate": "Scacco matto.",
+    "stalemate": "Stallo: chi deve muovere non ha mosse legali, ma non è sotto scacco.",
+    "repetition": "La stessa posizione si è ripetuta tre volte.",
+    "fifty_move": "50 mosse senza catture né mosse di pedone.",
+    "insufficient": "Con i pezzi rimasti nessuno può più dare scacco matto.",
+    "timeout": "Il {name} ha finito il tempo.",
+    "timeout_draw": "Il {name} ha finito il tempo, ma il {other} non può più dare scacco matto.",
+    "resign": "Il {name} abbandona.",
+    "agreement": "Vi siete accordati per la patta."
+  },
+  "note": {
+    "fallback": "Il computer sta calcolando un po' più lentamente. Puoi continuare a giocare normalmente.",
+    "storage": "Questa partita non viene salvata su questo dispositivo e andrà persa se ricarichi la pagina."
+  },
+  "letter": { "k": "R", "q": "D", "r": "T", "b": "A", "n": "C" },
+  "piece": { "k": "Re", "q": "Donna", "r": "Torre", "b": "Alfiere", "n": "Cavallo", "p": "Pedone" }
 }

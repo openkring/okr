@@ -1,3 +1,70 @@
 {
-  "title": "Chess"
+  "title": "Chess",
+  "board_label": "Chessboard",
+  "moves_title": "Moves",
+  "square_piece": "{square}: {piece}, {color}",
+  "config": {
+    "opponent_label": "Opponent",
+    "opponent_easy": "Computer · easy",
+    "opponent_medium": "Computer · medium",
+    "opponent_hard": "Computer · strong",
+    "opponent_human": "Two players",
+    "color_label": "You play",
+    "color_white": "White (moves first)",
+    "color_black": "Black",
+    "clock_label": "Time control",
+    "clock_none": "No clock",
+    "clock_minutes": "{minutes} minutes each",
+    "autoflip_label": "Turn the board after every move"
+  },
+  "action": {
+    "undo": "Undo move",
+    "hint": "Hint",
+    "resign": "Resign",
+    "draw": "Draw",
+    "restart": "New game"
+  },
+  "confirm": {
+    "restart": "This ends the current game. Start a new one?",
+    "settings": "The new settings start a new game. The current game ends.",
+    "resign": "Do you really want to resign?",
+    "draw": "Do you both agree to a draw?",
+    "ok": "Yes",
+    "cancel": "Cancel"
+  },
+  "player": {
+    "white": "White",
+    "black": "Black",
+    "you": "You",
+    "computer": "Computer"
+  },
+  "status": {
+    "turn_you": "Your move.",
+    "turn_named": "{name} to move.",
+    "check_you": "Check – your king is under attack.",
+    "check_named": "Check – {name} must protect the king.",
+    "thinking": "The computer is thinking …",
+    "promote": "Choose the piece your pawn turns into."
+  },
+  "result": {
+    "win_you": "You win.",
+    "win_computer": "The computer wins.",
+    "win_named": "{name} wins.",
+    "draw": "Draw.",
+    "checkmate": "Checkmate.",
+    "stalemate": "Stalemate: the side to move has no legal move but is not in check.",
+    "repetition": "The same position occurred three times.",
+    "fifty_move": "50 moves without a capture or a pawn move.",
+    "insufficient": "Neither side has enough pieces left to checkmate.",
+    "timeout": "{name} has run out of time.",
+    "timeout_draw": "{name} has run out of time, but {other} can no longer checkmate.",
+    "resign": "{name} resigns.",
+    "agreement": "You agreed to a draw."
+  },
+  "note": {
+    "fallback": "The computer is calculating a little more slowly right now. You can keep playing as usual.",
+    "storage": "This game is not saved on this device and will be lost when you reload."
+  },
+  "letter": { "k": "K", "q": "Q", "r": "R", "b": "B", "n": "N" },
+  "piece": { "k": "King", "q": "Queen", "r": "Rook", "b": "Bishop", "n": "Knight", "p": "Pawn" }
 }
