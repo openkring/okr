@@ -136,8 +136,8 @@
       "description": "recibes el documento por correo electrónico."
     },
     "chat": {
-      "label": "Chat",
-      "description": "recibes un mensaje en el chat."
+      "label": "Notificación en la app",
+      "description": "recibes una notificación en la app."
     }
   },
   "export": {

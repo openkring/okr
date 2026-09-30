@@ -136,8 +136,8 @@
         "description": "du bekommst das Schreiben per E-Mail."
       },
       "chat": {
-        "label": "Chat",
-        "description": "du bekommst eine Nachricht im Chat."
+        "label": "In-App-Benachrichtigung",
+        "description": "du bekommst eine Benachrichtigung in der App."
       }
     },
   "export": {
