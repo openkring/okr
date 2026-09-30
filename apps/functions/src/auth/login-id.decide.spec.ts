@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { afterFailure, decideLoginIdentity, decideOwnAccount, isLocked, LOCK_MS, LoginIdentity, MAX_FAILURES, mapSignInError } from './login-id.decide';
+import {
+  afterFailure, decideLoginIdentity, decideOwnAccount, decideSyntheticCandidate, isLocked, LOCK_MS, LoginIdentity, MAX_FAILURES,
+  mapSignInError, needsPersonKeyStamp, PERSON_KEY_CLAIM, personKeyStampsDue,
+} from './login-id.decide';
 
 describe('decideLoginIdentity', () => {
   it('no Auth identity for the email → create one with the real email', () => {
@@ -58,6 +61,68 @@ describe('decideOwnAccount', () => {
   it("'exists' is decided by the email holder already — the guard stays out of it", () => {
     expect(decideOwnAccount('exists', { loginEmail: '' })).toBe('proceed');
     expect(decideOwnAccount('exists', undefined)).toBe('proceed');
+  });
+});
+
+describe('decideSyntheticCandidate', () => {
+  const orphan = (claimPersonKey?: string) => ({ uid: 'old', claimPersonKey, hasUserDoc: false });
+
+  it('no Auth identity holds the address → free', () => {
+    expect(decideSyntheticCandidate(undefined, 'p1')).toBe('free');
+  });
+  it("this person's own orphan (closed account, stamped for them) → reclaim: the old login comes back", () => {
+    expect(decideSyntheticCandidate(orphan('p1'), 'p1')).toBe('reclaim');
+  });
+  it("somebody else's orphan → taken (a namesake moves on to the next candidate)", () => {
+    expect(decideSyntheticCandidate(orphan('p2'), 'p1')).toBe('taken');
+  });
+  it('an unstamped orphan is never handed out → taken', () => {
+    expect(decideSyntheticCandidate(orphan(undefined), 'p1')).toBe('taken');
+    expect(decideSyntheticCandidate(orphan(''), 'p1')).toBe('taken');
+  });
+  it('a live account (users doc exists) → taken, even when stamped for this person', () => {
+    expect(decideSyntheticCandidate({ uid: 'live', claimPersonKey: 'p1', hasUserDoc: true }, 'p1')).toBe('taken');
+  });
+  it('an empty personKey never reclaims', () => {
+    expect(decideSyntheticCandidate(orphan(''), '')).toBe('taken');
+  });
+  it('the fixed uid holding the address itself is no collision → free', () => {
+    expect(decideSyntheticCandidate({ uid: 'u1', hasUserDoc: true }, 'p1', 'u1')).toBe('free');
+  });
+  it('with a fixed uid, another identity still counts (reclaim is up to the caller)', () => {
+    expect(decideSyntheticCandidate({ uid: 'u2', hasUserDoc: true }, 'p1', 'u1')).toBe('taken');
+    expect(decideSyntheticCandidate(orphan('p1'), 'p1', 'u1')).toBe('reclaim');
+  });
+});
+
+describe('okrPersonKey backfill selection', () => {
+  it('needsPersonKeyStamp: only an identity without a stamp, and only with a personKey', () => {
+    expect(needsPersonKeyStamp(undefined, 'p1')).toBe(true);
+    expect(needsPersonKeyStamp({}, 'p1')).toBe(true);
+    expect(needsPersonKeyStamp({ [PERSON_KEY_CLAIM]: '' }, 'p1')).toBe(true);
+    expect(needsPersonKeyStamp({ [PERSON_KEY_CLAIM]: 'p1' }, 'p1')).toBe(false);
+    expect(needsPersonKeyStamp({ [PERSON_KEY_CLAIM]: 'p2' }, 'p1')).toBe(false); // never overwritten
+    expect(needsPersonKeyStamp(undefined, '')).toBe(false);
+    expect(needsPersonKeyStamp(undefined, undefined)).toBe(false);
+  });
+  it('personKeyStampsDue: live docs with an unstamped Auth identity, other claims carried along', () => {
+    const claims = new Map<string, Record<string, unknown> | undefined>([
+      ['legacy', undefined],
+      ['withOther', { admin: true }],
+      ['stamped', { [PERSON_KEY_CLAIM]: 'p3' }],
+      ['noPerson', undefined],
+    ]);
+    const due = personKeyStampsDue([
+      { uid: 'legacy', personKey: 'p1' },
+      { uid: 'withOther', personKey: 'p2' },
+      { uid: 'stamped', personKey: 'p3' },
+      { uid: 'noPerson', personKey: '' },
+      { uid: 'halfOpen', personKey: 'p5' }, // users doc without an Auth identity
+    ], claims);
+    expect(due).toEqual([
+      { uid: 'legacy', personKey: 'p1', claims: {} },
+      { uid: 'withOther', personKey: 'p2', claims: { admin: true } },
+    ]);
   });
 });
 

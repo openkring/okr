@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { isBlockedSyntheticEmailChange, resetMailFields } from './index';
+import { isBlockedSyntheticEmailChange, isLoginEmailChange, resetMailFields } from './index';
 
 function found(over: Record<string, unknown> = {}): { uid: string; data: Record<string, unknown> } {
   return { uid: 'uid1', data: { personKey: 'p1', loginId: 'max_mueller', ...over } };
@@ -50,5 +50,22 @@ describe('isBlockedSyntheticEmailChange', () => {
   it('leaves real-to-real email changes alone', () => {
     expect(isBlockedSyntheticEmailChange('anna@gmail.com', 'anna@bluewin.ch')).toBe(false);
     expect(isBlockedSyntheticEmailChange(undefined, 'anna@gmail.com')).toBe(false);
+  });
+});
+
+describe('isLoginEmailChange', () => {
+  it('a different address is a change', () => {
+    expect(isLoginEmailChange('anna@example.ch', 'anna.mueller@example.ch')).toBe(true);
+  });
+  it('the same address in another case or with blanks is not', () => {
+    expect(isLoginEmailChange('Anna@Example.ch', ' anna@example.ch ')).toBe(false);
+  });
+  it('a users doc without loginEmail yet is reconciled', () => {
+    expect(isLoginEmailChange('', 'anna@example.ch')).toBe(true);
+    expect(isLoginEmailChange(undefined, 'anna@example.ch')).toBe(true);
+  });
+  it('an empty new address never overwrites', () => {
+    expect(isLoginEmailChange('anna@example.ch', '')).toBe(false);
+    expect(isLoginEmailChange('anna@example.ch', undefined)).toBe(false);
   });
 });

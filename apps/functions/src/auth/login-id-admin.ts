@@ -10,27 +10,18 @@ import { DocumentReference, DocumentSnapshot, getFirestore } from 'firebase-admi
 import { logger } from 'firebase-functions/v2';
 import { CallableRequest, HttpsError, onCall } from 'firebase-functions/v2/https';
 
-import { UserModel } from '@okr/shared-models';
 import { checkAdminRole, checkAppCheckToken, getCallerTenantId } from '@okr/shared-util-functions';
-import { getUserIndex, isSyntheticLoginEmail, isValidLoginId, normalizeLoginIdInput, syntheticLoginEmail } from '@okr/user-util';
+import { isSyntheticLoginEmail, isValidLoginId, normalizeLoginIdInput, syntheticLoginEmail } from '@okr/user-util';
 
-import { findUserByLoginId, tenantAppDomain } from './login-id';
+import { findUserByLoginId, syntheticAddressFree, tenantAppDomain } from './login-id';
+import { loadTenantUser, restoreAuthEmail, withIndex } from './tenant-user';
 
 const REGION = 'europe-west6';
+const LOGIN_ID_TAKEN = 'Diesen Benutzernamen gibt es schon.';
 
-async function loadTenantUser(uid: string, tenantId: string) {
-  const snap = await getFirestore().collection('users').doc(uid).get();
-  if (!snap.exists || !((snap.data()?.['tenants'] as string[] | undefined) ?? []).includes(tenantId)) {
-    throw new HttpsError('not-found', 'Dieses Benutzerkonto gibt es nicht.');
-  }
-  return snap;
-}
-
-type LoginPatch = { loginEmail?: string; loginId?: string };
-
-/** The patch plus the users-doc search index rebuilt from it — the index carries loginEmail and loginId. */
-function withIndex(snap: DocumentSnapshot, patch: LoginPatch): LoginPatch & { index: string } {
-  return { ...patch, index: getUserIndex({ ...(snap.data() as UserModel), okey: snap.id, ...patch }) };
+/** Firebase refused an Auth email because another identity has it (a race past the Auth check). */
+function isEmailTaken(error: unknown): boolean {
+  return (error as { code?: string })?.code === 'auth/email-already-exists';
 }
 
 /**
@@ -48,15 +39,6 @@ async function writeLoginIdExclusively(user: DocumentSnapshot, tenantId: string,
     tx.update(userRef, withIndex(user, patch));
     return true;
   });
-}
-
-/** Best-effort restore of an Auth email; a failure is logged (uid only) and never hides the caller's error. */
-async function restoreAuthEmail(uid: string, email: string, cfName: string): Promise<void> {
-  try {
-    await getAuth().updateUser(uid, { email });
-  } catch (error) {
-    logger.error(`${cfName}: could not restore the Auth email of users/${uid}`, { message: error instanceof Error ? error.message : 'unknown' });
-  }
 }
 
 export const swapLoginEmail = onCall({ region: REGION, enforceAppCheck: true, cors: true }, async (request: CallableRequest<{ holderUid?: string; newcomerUid?: string }>) => {
@@ -77,7 +59,12 @@ export const swapLoginEmail = onCall({ region: REGION, enforceAppCheck: true, co
 
   const holderLoginId = String(holder.data()?.['loginId'] ?? '');
   if (!holderLoginId) throw new HttpsError('failed-precondition', 'Das erste Konto hat noch keinen Benutzernamen.');
-  const holderSynthetic = syntheticLoginEmail(holderLoginId, await tenantAppDomain(tenantId));
+  const appDomain = await tenantAppDomain(tenantId);
+  const holderSynthetic = syntheticLoginEmail(holderLoginId, appDomain);
+  // an account closed earlier may still hold that address in Auth — createUser/updateUser would fail
+  if (!(await syntheticAddressFree(appDomain, String(holder.data()?.['personKey'] ?? ''), holderUid)(holderLoginId))) {
+    throw new HttpsError('already-exists', 'Der Benutzername des ersten Kontos ist als Anmelde-Adresse schon vergeben. Gib ihm zuerst einen anderen Benutzernamen.');
+  }
 
   // 1. free the real email (signs the holder out once), 2. give it to the newcomer.
   // Every step that completed is recorded so the rollback undoes exactly those — never leaving the real
@@ -105,6 +92,7 @@ export const swapLoginEmail = onCall({ region: REGION, enforceAppCheck: true, co
     if (newcomerMoved) await undo('newcomerAuth', newcomerUid, () => getAuth().updateUser(newcomerUid, { email: newcomerEmail }));
     if (holderDocMoved) await undo('holderDoc', holderUid, () => holder.ref.update(withIndex(holder, { loginEmail: realEmail })));
     if (holderAuthMoved) await undo('holderAuth', holderUid, () => getAuth().updateUser(holderUid, { email: realEmail }));
+    if (isEmailTaken(error)) throw new HttpsError('already-exists', 'Eine der Anmelde-Adressen ist schon vergeben.');
     throw error;
   }
   logger.info(`${CF_NAME}: swapped the login email from users/${holderUid} to users/${newcomerUid} (${tenantId})`);
@@ -122,13 +110,25 @@ export const setLoginId = onCall({ region: REGION, enforceAppCheck: true, cors: 
 
   const user = await loadTenantUser(uid, tenantId);
   const other = await findUserByLoginId(tenantId, loginId);
-  if (other && other.uid !== uid) throw new HttpsError('already-exists', 'Diesen Benutzernamen gibt es schon.');
+  if (other && other.uid !== uid) throw new HttpsError('already-exists', LOGIN_ID_TAKEN);
   if (other && other.uid === uid) return { loginId }; // already this user's Benutzername — nothing to change, nobody to sign out
+
+  // Free in Firestore is not enough: an account closed earlier keeps its Auth identity and with it
+  // the Benutzername's address. Checked for real-email accounts too — a later swap moves them onto it.
+  const appDomain = await tenantAppDomain(tenantId);
+  if (!(await syntheticAddressFree(appDomain, String(user.data()?.['personKey'] ?? ''), uid)(loginId))) {
+    throw new HttpsError('already-exists', LOGIN_ID_TAKEN);
+  }
 
   const authEmail = (await getAuth().getUser(uid)).email ?? '';
   if (isSyntheticLoginEmail(authEmail)) {
-    const loginEmail = syntheticLoginEmail(loginId, await tenantAppDomain(tenantId));
-    await getAuth().updateUser(uid, { email: loginEmail }); // signs this user out once
+    const loginEmail = syntheticLoginEmail(loginId, appDomain);
+    try {
+      await getAuth().updateUser(uid, { email: loginEmail }); // signs this user out once
+    } catch (error) {
+      if (isEmailTaken(error)) throw new HttpsError('already-exists', LOGIN_ID_TAKEN);
+      throw error;
+    }
     let written = false;
     try {
       written = await writeLoginIdExclusively(user, tenantId, { loginId, loginEmail });
@@ -138,10 +138,10 @@ export const setLoginId = onCall({ region: REGION, enforceAppCheck: true, cors: 
     }
     if (!written) {
       await restoreAuthEmail(uid, authEmail, CF_NAME); // lost the race — restore the old login
-      throw new HttpsError('already-exists', 'Diesen Benutzernamen gibt es schon.');
+      throw new HttpsError('already-exists', LOGIN_ID_TAKEN);
     }
   } else if (!(await writeLoginIdExclusively(user, tenantId, { loginId }))) {
-    throw new HttpsError('already-exists', 'Diesen Benutzernamen gibt es schon.');
+    throw new HttpsError('already-exists', LOGIN_ID_TAKEN);
   }
   logger.info(`${CF_NAME}: users/${uid} has a new Benutzername (${tenantId})`);
   return { loginId };

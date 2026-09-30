@@ -4,11 +4,12 @@ import { logger } from 'firebase-functions/v2';
 import { getAuth } from 'firebase-admin/auth';
 import { getStorage } from 'firebase-admin/storage';
 import { DocumentData, getFirestore } from 'firebase-admin/firestore';
-import { checkAdminRole, checkAppCheckToken, checkAuthentication, checkStringField } from '@okr/shared-util-functions';
+import { checkAdminRole, checkAppCheckToken, checkAuthentication, checkStringField, getCallerTenantId } from '@okr/shared-util-functions';
 import { isSyntheticLoginEmail } from '@okr/user-util';
 import { getAppEmailConfig } from './email-templates';
 import { EmailAttachment, isValidProvider, sendEmailViaProvider } from './email-transport';
 import { findUserByLoginId } from './login-id';
+import { loadTenantUser, restoreAuthEmail, withIndex } from './tenant-user';
 import { reportToSentry } from '../srv/sentry';
 
 /** Storage prefixes that `generateDocument` writes generated documents to. */
@@ -142,6 +143,11 @@ export const createFirebaseUser = functions.onCall(
     checkAppCheckToken(request as any, CF_NAME);
     checkAuthentication(request as any, CF_NAME);
     await checkAdminRole(request as any, CF_NAME);
+    // a `…@login.<domain>` address belongs to a Benutzername account; only openAccount hands those out
+    if (isSyntheticLoginEmail(request.data?.email)) {
+      logger.warn(`${CF_NAME}: refused a Benutzername login address`);
+      throw new functions.HttpsError('failed-precondition', 'Eine Benutzername-Adresse vergibt nur die Konto-Eröffnung.');
+    }
 
     try {
       const userRecord = await getAuth().createUser({
@@ -259,6 +265,8 @@ export const setPassword = functions.onCall(
     await checkAdminRole(request as any, CF_NAME);
     checkStringField(request as any, CF_NAME, 'uid');
     checkStringField(request as any, CF_NAME, 'password');
+    // only an account of the caller's own tenant — an admin elsewhere must not take it over
+    await loadTenantUser(request.data.uid, await getCallerTenantId(request as any, CF_NAME));
     try {
       await getAuth().updateUser(request.data.uid, { password: request.data.password });
       console.log(`${CF_NAME}: OK`);
@@ -313,6 +321,8 @@ export const updateFirebaseUser = functions.onCall(
     await checkAdminRole(request as any, CF_NAME);
     checkStringField(request as any, CF_NAME, 'uid');
     checkStringField(request as any, CF_NAME, 'email');
+    // only an account of the caller's own tenant — an admin elsewhere must not take it over
+    const userSnap = await loadTenantUser(request.data.uid, await getCallerTenantId(request as any, CF_NAME));
     let currentEmail: string | undefined;
     try {
       currentEmail = (await getAuth().getUser(request.data.uid)).email;
@@ -328,22 +338,43 @@ export const updateFirebaseUser = functions.onCall(
       logger.warn(CF_NAME + ': refused an email change on a Benutzername account', { uid: request.data.uid });
       throw new functions.HttpsError('failed-precondition', 'Die Anmelde-Adresse eines Benutzername-Kontos ändert sich nur über «Benutzername ändern» oder «E-Mail tauschen».');
     }
+    let updatedEmail: string | undefined;
     try {
-      await getAuth().updateUser(request.data.uid, {
+      updatedEmail = (await getAuth().updateUser(request.data.uid, {
         email: request.data.email,
         displayName: request.data.displayName || undefined,
         emailVerified: request.data.emailVerified,
         disabled: request.data.disabled,
         phoneNumber: request.data.phone || undefined,
         photoURL: request.data.photoUrl || undefined,
-      });
+      })).email;
       console.log(CF_NAME + ': OK');
     } catch (error: any) {
       console.error(CF_NAME + ': ERROR: ', error);
       throw new functions.HttpsError('internal', `Failed to update the firebase user: ${error.message}`);
     }
+    // users/{uid}.loginEmail is "the Auth email" and only the functions write it (the admin form shows
+    // it read-only) — so it is reconciled here, index included: after an email change, and also when
+    // it had drifted before. Should that write fail after an email change, the old Auth email is put
+    // back, so the two never drift apart.
+    const newEmail = updatedEmail ?? request.data.email;
+    if (isLoginEmailChange(String(userSnap.data()?.['loginEmail'] ?? ''), newEmail)) {
+      try {
+        await userSnap.ref.update(withIndex(userSnap, { loginEmail: newEmail }));
+      } catch (error: any) {
+        logger.error(CF_NAME + ': could not carry the Auth email over to the users doc', { uid: request.data.uid, message: error?.message });
+        if (currentEmail && isLoginEmailChange(currentEmail, newEmail)) await restoreAuthEmail(request.data.uid, currentEmail, CF_NAME);
+        throw new functions.HttpsError('internal', 'Die Anmelde-E-Mail konnte nicht geändert werden.');
+      }
+    }
   }
 );
+
+/** True when `newEmail` is a different address than `currentEmail` (compared case-insensitively, as Firebase does). */
+export function isLoginEmailChange(currentEmail: string | undefined, newEmail: string | undefined): boolean {
+  const next = (newEmail ?? '').trim().toLowerCase();
+  return !!next && (currentEmail ?? '').trim().toLowerCase() !== next;
+}
 
 export type FirebaseAuthUser = {
   uid: string;

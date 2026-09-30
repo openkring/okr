@@ -12,7 +12,7 @@ import { defineSecret } from 'firebase-functions/params';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
 
 import { checkAppCheckToken } from '@okr/shared-util-functions';
-import { normalizeLoginIdInput } from '@okr/user-util';
+import { isValidLoginId, normalizeLoginIdInput } from '@okr/user-util';
 
 import { afterFailure, isLocked, mapSignInError, ThrottleState } from './login-id.decide';
 import { findUserByLoginId, tenantAppDomain } from './login-id';
@@ -63,6 +63,10 @@ export const loginWithLoginId = onCall(
       if (wait > 0) await new Promise((r) => setTimeout(r, wait));
       throw new HttpsError(code, code === 'unauthenticated' ? 'Anmeldung nicht erfolgreich' : 'Zu viele Versuche');
     };
+
+    // Nothing that breaks the Benutzername pattern can name an account: same answer, same floor,
+    // but no throttle doc — arbitrary garbage must not fill the login-throttle collection.
+    if (!isValidLoginId(loginId)) return fail('unauthenticated');
 
     const ref = throttleRef(tenantId, loginId);
     // A cheap, non-transactional short-circuit only — the authoritative lock decision on the
