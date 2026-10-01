@@ -10,9 +10,7 @@ import { ExpenseService, UpdateExpensePayload } from '@okr/finance-expense-data-
 import { EXPENSE_EDIT_STATES, ExpenseEditFormValue, getExpenseEditStateCategory, toExpenseFormValue } from '@okr/finance-expense-util';
 import { ExpenseEditForm } from '@okr/finance-expense-ui';
 
-import { CostCenterStore } from '@okr/finance-cost-center-feature';
-
-import { injectExpenseView } from './expense-view';
+import { injectExpenseCostCenters, injectExpenseView } from './expense-view';
 
 /**
  * The treasurer's edit modal for a single expense ("Spesen bearbeiten"). Same form as the view
@@ -48,8 +46,8 @@ import { injectExpenseView } from './expense-view';
           [authorKey]="view.authorKey()"
           [authorName]="view.authorName()"
           [accounts]="view.accounts()"
-          [costCenters]="costCenterStore.costCenters()"
-          [costCentersEnabled]="costCenterStore.isEnabled()"
+          [costCenters]="costCenters.costCenters()"
+          [costCentersEnabled]="costCenters.costCentersEnabled()"
           [receipts]="view.receipts()"
           [qrBills]="view.qrBills()"
           [qrCode]="view.qrCode()"
@@ -71,8 +69,9 @@ export class ExpenseEditModal {
   // inputs (set via componentProps by ExpenseStore.editExpense)
   public readonly expense = input.required<ExpenseModel>();
 
-  protected readonly costCenterStore = inject(CostCenterStore);
   protected readonly view = injectExpenseView(this.expense);
+  /** the Kostenstellen of the expense's own book, never the accounting shell's */
+  protected readonly costCenters = injectExpenseCostCenters(this.expense);
   protected readonly i18n = this.view.i18n;
 
   // signals
