@@ -177,7 +177,8 @@
   },
   "video": {
     "incoming": "Appel vidéo entrant...",
-    "connecting": "Établissement de la connexion..."
+    "connecting": "Établissement de la connexion...",
+    "notPlayable": "Cette vidéo ne peut pas être lue ici. Tu peux la télécharger et la regarder dans une autre application."
   },
   "survey": {
     "title": "Créer un sondage",

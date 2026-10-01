@@ -139,6 +139,7 @@ export const MATRIX_CHAT_I18N_KEYS = {
 
   video_incoming:            PFX + 'video.incoming',
   video_connecting:          PFX + 'video.connecting',
+  video_notPlayable:         PFX + 'video.notPlayable',
 
   survey_title:              PFX + 'survey.title',
   survey_create:             PFX + 'survey.create',

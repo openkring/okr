@@ -177,7 +177,8 @@
   },
   "video": {
     "incoming": "Incoming video call...",
-    "connecting": "Establishing connection..."
+    "connecting": "Establishing connection...",
+    "notPlayable": "This video cannot be played here. You can download it and watch it in another app."
   },
   "survey": {
     "title": "Create survey",

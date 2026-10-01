@@ -233,6 +233,12 @@ const MENTION_AVATAR_SIZE = 36;
       display: block;
     }
 
+    .media-fallback-note {
+      margin: 6px 0 0;
+      font-size: 0.8rem;
+      opacity: 0.75;
+    }
+
     .message-video {
       max-width: 100%;
       /* Cap the height so a portrait phone clip cannot fill the whole timeline. */
@@ -510,7 +516,7 @@ const MENTION_AVATAR_SIZE = 36;
                             }
                           }
                           @case ('m.video') {
-                            @if (item.mediaUrl) {
+                            @if (showVideoPlayer(item)) {
                               <video
                                 controls
                                 preload="metadata"
@@ -518,6 +524,7 @@ const MENTION_AVATAR_SIZE = 36;
                                 class="message-video"
                                 [src]="item.mediaUrl"
                                 [poster]="item.posterUrl ?? null"
+                                (error)="onVideoError(item.eventId)"
                                 (click)="$event.stopPropagation()"
                               ></video>
                             } @else {
@@ -525,13 +532,14 @@ const MENTION_AVATAR_SIZE = 36;
                                 <ion-icon src="{{'video' | svgIcon}}"></ion-icon>
                                 <span>{{ item.body }}</span>
                               </div>
+                              <p class="media-fallback-note">{{ i18n().video_notPlayable() }}</p>
                             }
                           }
                           @case ('m.file') {
                             <!-- Videos this app sent before it knew about m.video arrived as
                                  m.file with a video mimetype. Route them to the same player
                                  rather than leaving them as document cards forever. -->
-                            @if (isVideoFile(item) && item.mediaUrl) {
+                            @if (showVideoPlayer(item)) {
                               <video
                                 controls
                                 preload="metadata"
@@ -539,6 +547,7 @@ const MENTION_AVATAR_SIZE = 36;
                                 class="message-video"
                                 [src]="item.mediaUrl"
                                 [poster]="item.posterUrl ?? null"
+                                (error)="onVideoError(item.eventId)"
                                 (click)="$event.stopPropagation()"
                               ></video>
                             } @else if (isAudioFile(item) && item.mediaUrl) {
@@ -674,6 +683,14 @@ export class MatrixMessageList {
    * used to render as a silent gap in the room, indistinguishable from no attachment at all.
    */
   protected readonly brokenImages = signal<ReadonlySet<string>>(new Set());
+  /**
+   * Event ids of videos the browser refused to play. Separate from brokenImages because the
+   * cause is usually different and not a defect: an iPhone records HEVC in a .mov container,
+   * which Chrome and Firefox cannot decode at all. Without this the bubble keeps a player
+   * that is permanently black at 0:00 — worse than no player, because it hides the fact that
+   * the file is there and can simply be downloaded.
+   */
+  protected readonly unplayableVideos = signal<ReadonlySet<string>>(new Set());
   /** Scroll height captured when loadOlder fired, to restore the viewport after prepend. */
   private prevScrollHeight = 0;
   /**
@@ -863,6 +880,21 @@ export class MatrixMessageList {
     return items[index - 1].sender !== item.sender;
   }
 
+  /**
+   * True while this message should render as a playable video: it is one, its media has been
+   * resolved, and the browser has not already told us it cannot play it.
+   */
+  protected showVideoPlayer(message: MatrixMessage): boolean {
+    return isVideoMessage(message)
+      && !!message.mediaUrl
+      && !this.unplayableVideos().has(message.eventId);
+  }
+
+  /** Mark a video as unplayable — the bubble falls back to the file card with share/download. */
+  protected onVideoError(eventId: string): void {
+    this.unplayableVideos.update(prev => (prev.has(eventId) ? prev : new Set(prev).add(eventId)));
+  }
+
   /** Mark an attachment as undecodable — the tile re-renders as the placeholder. */
   protected onImageError(eventId: string): void {
     this.brokenImages.update(prev => (prev.has(eventId) ? prev : new Set(prev).add(eventId)));
@@ -885,11 +917,6 @@ export class MatrixMessageList {
 
   formatTime(timestamp: number): string {
     return formatMatrixTime(timestamp);
-  }
-
-  /** True if this message should render as a video player — see isVideoMessage. */
-  isVideoFile(message: MatrixMessage): boolean {
-    return isVideoMessage(message);
   }
 
   isAudioFile(message: MatrixMessage): boolean {

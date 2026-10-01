@@ -177,7 +177,8 @@
   },
   "video": {
     "incoming": "Videochiamata in arrivo...",
-    "connecting": "Connessione in corso..."
+    "connecting": "Connessione in corso...",
+    "notPlayable": "Questo video non può essere riprodotto qui. Puoi scaricarlo e guardarlo in un’altra app."
   },
   "survey": {
     "title": "Crea sondaggio",

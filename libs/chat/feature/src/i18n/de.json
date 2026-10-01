@@ -177,7 +177,8 @@
   },
   "video": {
     "incoming": "Eingehender Video-Anruf...",
-    "connecting": "Verbindung wird hergestellt..."
+    "connecting": "Verbindung wird hergestellt...",
+    "notPlayable": "Dieses Video lässt sich hier nicht abspielen. Du kannst es herunterladen und mit einer anderen App ansehen."
   },
   "survey": {
     "title": "Umfrage erstellen",

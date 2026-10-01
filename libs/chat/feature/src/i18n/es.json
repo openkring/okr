@@ -177,7 +177,8 @@
   },
   "video": {
     "incoming": "Videollamada entrante...",
-    "connecting": "Estableciendo la conexión..."
+    "connecting": "Estableciendo la conexión...",
+    "notPlayable": "Este vídeo no se puede reproducir aquí. Puedes descargarlo y verlo en otra aplicación."
   },
   "survey": {
     "title": "Crear encuesta",
