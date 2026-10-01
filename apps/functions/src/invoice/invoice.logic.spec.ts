@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildInvoicePayload, invoiceBookingLines, issueBlockers, totalRappen } from './invoice.logic';
+import { buildInvoicePayload, draftWriteRefusal, invoiceBookingLines, issueBlockers, totalRappen } from './invoice.logic';
 
 const pos = (amount: number, accountKey = 'scs3401', name = 'Beitrag') => ({ name, amount, accountKey });
 
@@ -72,5 +72,23 @@ describe('buildInvoicePayload', () => {
   it('uses the org name as lastName and still builds without an address', () => {
     const p = buildInvoicePayload({ ...base, receiver: { name1: '', name2: 'Ruderclub X', modelType: 'org' } });
     expect(p).toMatchObject({ firstName: '', lastName: 'Ruderclub X', zipCode: '', city: '' });
+  });
+});
+
+describe('draftWriteRefusal', () => {
+  it('allows creating and updating/deleting a draft', () => {
+    expect(draftWriteRefusal(undefined, 'create')).toBeUndefined();
+    expect(draftWriteRefusal('draft', 'update')).toBeUndefined();
+    expect(draftWriteRefusal('draft', 'delete')).toBeUndefined();
+  });
+
+  it('refuses to touch an issued invoice', () => {
+    expect(draftWriteRefusal('pending', 'update')).toBe('not-a-draft');
+    expect(draftWriteRefusal('pending', 'delete')).toBe('not-a-draft');
+  });
+
+  it('refuses update/delete of a missing invoice', () => {
+    expect(draftWriteRefusal(undefined, 'update')).toBe('not-found');
+    expect(draftWriteRefusal(undefined, 'delete')).toBe('not-found');
   });
 });

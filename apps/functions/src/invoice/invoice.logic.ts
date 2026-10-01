@@ -94,3 +94,13 @@ export function buildInvoicePayload(i: {
     qrMessage: `Rechnung ${i.invoiceId}`,
   };
 }
+
+/**
+ * Why a writeInvoice call must be refused, or undefined when it may proceed.
+ * Only drafts are editable; an issued invoice is changed through its own lifecycle callables.
+ */
+export function draftWriteRefusal(existingState: string | undefined, mode: 'create' | 'update' | 'delete'): string | undefined {
+  if (mode === 'create') return undefined;
+  if (existingState === undefined) return 'not-found';
+  return existingState === 'draft' ? undefined : 'not-a-draft';
+}
