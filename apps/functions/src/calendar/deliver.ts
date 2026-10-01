@@ -22,6 +22,7 @@ import { DateFormat, getTodayStr, toDeliveryChannels } from '@okr/shared-util-co
 import { PushPayload, appNameFor, pushToPersons, selectUserDocs } from '../srv/push';
 import { createFirestoreDeps } from '../workflow/firestore-deps';
 import { OutboxDoc, WorkflowOutboxCollection } from '../workflow/outbox';
+import { Brand } from './mail';
 import { caleventDeepLink } from './recipients';
 
 export interface ChannelChoice { push: boolean; email: boolean }
@@ -46,13 +47,42 @@ export function recipientChannels(accounts: AccountDoc[], tenantId: string, emai
   return accountChannels(accounts, tenantId) ?? (emailWithoutAccount ? { push: false, email: true } : undefined);
 }
 
-export interface TenantLinks { appName: string; appUrl: string }
+export interface TenantLinks { appName: string; appUrl: string; brandColor: string; logoUrl: string }
+
+const IMGIX_BASE = 'https://bkaiser.imgix.net';
+
+/**
+ * The banner logo: `logo-maskable.png`, which `pnpm logo:gen` writes beside the master that
+ * `logoUrl` names (see the logo skill). It is a raster — a mail cannot show the SVG master, and
+ * imgix does not rasterize SVG. It can still be transparent, so the banner sets it on a white tile. 96 px for a 48 px
+ * slot (retina). '' when `logoUrl` carries no directory.
+ * Same derivation as toGeneratedMasterRaster in libs/profile/util (not importable here).
+ */
+export function bannerLogoUrl(configLogoUrl: string | undefined): string {
+  const path = (configLogoUrl ?? '').split('?')[0].trim().replace(/^\/+/, '');
+  const slash = path.lastIndexOf('/');
+  if (slash <= 0) return '';
+  // the trailing empty `auto=` keeps imgix from turning the PNG into a JPEG
+  return `${IMGIX_BASE}/${path.slice(0, slash)}/logo-maskable.png?w=96&h=96&fm=png&auto=`;
+}
 
 export async function tenantLinks(tenantId: string): Promise<TenantLinks> {
-  const snap = await getFirestore().collection('app-config').doc(tenantId).get();
-  const domain = String(snap.data()?.['appDomain'] ?? '').replace(/\/+$/, '');
-  return { appName: await appNameFor(tenantId), appUrl: domain ? `https://${domain}` : '' };
+  const cfg = (await getFirestore().collection('app-config').doc(tenantId).get()).data();
+  const domain = String(cfg?.['appDomain'] ?? '').replace(/\/+$/, '');
+  return {
+    appName: await appNameFor(tenantId),
+    appUrl: domain ? `https://${domain}` : '',
+    brandColor: String(cfg?.['brandColor'] ?? ''),
+    logoUrl: bannerLogoUrl(cfg?.['logoUrl'] as string | undefined),
+  };
 }
+
+/** The banner part of the tenant links, for the mail and page builders. */
+export function brandOf(links: TenantLinks): Brand {
+  return { appName: links.appName, brandColor: links.brandColor, logoUrl: links.logoUrl };
+}
+
+export const NO_TENANT_LINKS: TenantLinks = { appName: '', appUrl: '', brandColor: '', logoUrl: '' };
 
 export function eventUrl(links: TenantLinks, caleventKey: string): string {
   return `${links.appUrl}${caleventDeepLink(caleventKey)}`;

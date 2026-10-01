@@ -120,6 +120,14 @@ export class AppConfig {
   public mailtrapPasswordResetTemplate = '';
   public rootUrl = '/public/welcome';
   public logoUrl = DEFAULT_URL;
+  /**
+   * The tenant's brand colour as '#rrggbb' — the Ionic `--ion-color-primary` of the tenant app.
+   * Server-rendered pages and mails cannot read the app's theme, so the calendar mails and the
+   * invitation answer page take their banner colour from here (apps/functions/src/calendar/mail.ts).
+   * Empty ⇒ a neutral blue. The banner logo needs no field: it is the `logo-maskable.png` that
+   * `pnpm logo:gen` writes beside `logoUrl`.
+   */
+  public brandColor = '';
   public welcomeBannerUrl = DEFAULT_URL;
   public notfoundBannerUrl = DEFAULT_URL;
   public osiLogoUrl = 'logo/general/osi.svg';

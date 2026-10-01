@@ -23,7 +23,7 @@ import { DateFormat, getTodayStr } from '@okr/shared-util-core';
 
 import { pushToPersons } from '../srv/push';
 import { commentEmail, eventWhen, locationLabel } from './mail';
-import { eventUrl, notifyPersons, tenantLinks, TenantLinks } from './deliver';
+import { brandOf, eventUrl, notifyPersons, tenantLinks, TenantLinks } from './deliver';
 import {
   caleventDeepLink,
   caleventKeyFromFolders,
@@ -147,7 +147,7 @@ export const onCalEventCommentCreated = onDocumentCreated(
     const body = author ? `${author}: ${shorten(comment.description)}` : shorten(comment.description);
     await notifyAboutEvent(caleventKey, comment.authorKey ?? '', body, 'onCalEventCommentCreated',
       (event, links) => commentEmail({
-        appName: links.appName,
+        ...brandOf(links),
         eventName: event.name ?? '',
         when: eventWhen(event.startDate, event.startTime),
         location: locationLabel(event.locationKey),

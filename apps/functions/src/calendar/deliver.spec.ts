@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { accountChannels, eventUrl, pickChannels, recipientChannels } from './deliver';
+import { accountChannels, bannerLogoUrl, eventUrl, pickChannels, recipientChannels } from './deliver';
 
 describe('pickChannels', () => {
   it('reads the two electronic channels', () => {
@@ -45,6 +45,18 @@ describe('recipientChannels', () => {
 
 describe('eventUrl', () => {
   it('is absolute on the app domain', () => {
-    expect(eventUrl({ appName: 'x', appUrl: 'https://app.seeclub.org' }, 'abc')).toBe('https://app.seeclub.org/calevent/all/c-calevents?event=abc');
+    expect(eventUrl({ appName: 'x', appUrl: 'https://app.seeclub.org', brandColor: '', logoUrl: '' }, 'abc')).toBe('https://app.seeclub.org/calevent/all/c-calevents?event=abc');
+  });
+});
+
+describe('bannerLogoUrl', () => {
+  it('points at the generated maskable raster beside the master', () => {
+    expect(bannerLogoUrl('tenant/scs/logo/scs-logo.svg')).toBe('https://bkaiser.imgix.net/tenant/scs/logo/logo-maskable.png?w=96&h=96&fm=png&auto=');
+    expect(bannerLogoUrl('/tenant/elab/logo/logo.png?x=1')).toBe('https://bkaiser.imgix.net/tenant/elab/logo/logo-maskable.png?w=96&h=96&fm=png&auto=');
+  });
+  it('is empty without a directory', () => {
+    expect(bannerLogoUrl('logo.svg')).toBe('');
+    expect(bannerLogoUrl('')).toBe('');
+    expect(bannerLogoUrl(undefined)).toBe('');
   });
 });

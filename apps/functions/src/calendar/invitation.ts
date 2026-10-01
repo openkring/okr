@@ -1,16 +1,15 @@
 // apps/functions/src/calendar/invitation.ts
 //
 // A new invitation notifies the invitee over their channels (spec 1.73 §3): push opening the
-// event, and/or an email with signed «ich nehme teil / nicht teil» links (answer-link.ts).
+// event, and/or an email with one signed «Antworten» link to the answer page (answer-link.ts).
 // Create-only and read-only on the invitation: `sentAt` is stamped by the client.
 
 import { onDocumentCreated } from 'firebase-functions/v2/firestore';
-import { logger } from 'firebase-functions/v2';
 import { projectID } from 'firebase-functions/params';
 import { getFirestore } from 'firebase-admin/firestore';
 
-import { answerFunctionUrl, answerUrl, invitationLinkSecret } from './answer-link';
-import { eventUrl, notifyPersons, tenantLinks } from './deliver';
+import { answerFunctionUrl, invitationLinkSecret, respondUrl } from './answer-link';
+import { brandOf, notifyPersons, tenantLinks } from './deliver';
 import { eventWhen, invitationEmail, locationLabel } from './mail';
 import { caleventDeepLink, todayStoreDate } from './recipients';
 
@@ -66,7 +65,6 @@ export const onInvitationCreated = onDocumentCreated(
     const links = await tenantLinks(tenantId);
     const secret = invitationLinkSecret.value();
     const base = answerFunctionUrl(projectID.value());
-    if (!links.appUrl) logger.warn(`${CF_NAME}: tenant ${tenantId} has no appDomain, email links are relative`);
 
     await notifyPersons({
       personKeys: [inviteeKey],
@@ -84,15 +82,13 @@ export const onInvitationCreated = onDocumentCreated(
         channelId: `invitation.${invitationKey}`,
       },
       email: () => invitationEmail({
-        appName: links.appName,
+        ...brandOf(links),
         eventName: event.name ?? '',
         when,
         location: locationLabel(event.locationKey),
         inviterName,
         note: inv.notes ?? '',
-        eventUrl: eventUrl(links, caleventKey),
-        acceptUrl: answerUrl(base, invitationKey, inviteeKey, 'accept', secret),
-        declineUrl: answerUrl(base, invitationKey, inviteeKey, 'decline', secret),
+        respondUrl: respondUrl(base, invitationKey, inviteeKey, secret),
       }),
     });
   },
