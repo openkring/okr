@@ -1,0 +1,44 @@
+{
+  "costCenters": "Centres de coûts",
+  "empty": "Aucun centre de coûts trouvé.",
+  "none": "sans centre de coûts",
+  "picker": "Centre de coûts",
+  "create": "Nouveau centre de coûts",
+  "update": "Modifier le centre de coûts",
+  "view": "Afficher le centre de coûts",
+  "archive": "Archiver le centre de coûts",
+  "archiveConf": "Veux-tu archiver ce centre de coûts ? Les écritures existantes restent inchangées.",
+  "id": {
+    "label": "Numéro",
+    "placeholder": "p. ex. 310",
+    "helper": "Le numéro du centre de coûts, p. ex. 310.",
+    "duplicate": "Ce numéro existe déjà."
+  },
+  "name": {
+    "label": "Nom",
+    "placeholder": "p. ex. Juniors",
+    "helper": "Le nom du centre de coûts."
+  },
+  "parentKey": {
+    "label": "Parent",
+    "helper": "Le groupe auquel appartient ce centre de coûts.",
+    "cycle": "Un centre de coûts ne peut pas être placé sous lui-même ni sous l'un de ses propres sous-centres.",
+    "notGroup": "Le parent doit être un groupe ou le niveau supérieur."
+  },
+  "type": {
+    "label": "Type",
+    "helper": "Tu peux comptabiliser sur un centre de coûts ; un groupe en réunit plusieurs.",
+    "hasChildren": "Ce centre de coûts a des sous-centres et ne peut donc pas être comptabilisé directement.",
+    "root": "Racine",
+    "group": "Groupe",
+    "leaf": "Centre de coûts"
+  },
+  "responsibility": {
+    "label": "Responsabilité",
+    "helper": "Qui est responsable de ce centre de coûts. Laisse vide et seul le trésorier le voit."
+  },
+  "notes": {
+    "label": "Notes",
+    "placeholder": "Notes sur le centre de coûts"
+  }
+}

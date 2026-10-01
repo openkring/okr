@@ -1,0 +1,44 @@
+{
+  "costCenters": "Centros de coste",
+  "empty": "No se han encontrado centros de coste.",
+  "none": "sin centro de coste",
+  "picker": "Centro de coste",
+  "create": "Nuevo centro de coste",
+  "update": "Editar centro de coste",
+  "view": "Ver centro de coste",
+  "archive": "Archivar centro de coste",
+  "archiveConf": "¿Quieres archivar este centro de coste? Los asientos existentes no cambian.",
+  "id": {
+    "label": "Número",
+    "placeholder": "p. ej. 310",
+    "helper": "El número del centro de coste, p. ej. 310.",
+    "duplicate": "Este número ya existe."
+  },
+  "name": {
+    "label": "Nombre",
+    "placeholder": "p. ej. Juniors",
+    "helper": "Cómo se llama el centro de coste."
+  },
+  "parentKey": {
+    "label": "Superior",
+    "helper": "El grupo al que pertenece este centro de coste.",
+    "cycle": "Un centro de coste no puede colocarse debajo de sí mismo ni de sus propios subcentros.",
+    "notGroup": "El superior debe ser un grupo o el nivel superior."
+  },
+  "type": {
+    "label": "Tipo",
+    "helper": "Puedes contabilizar en un centro de coste; un grupo reúne varios.",
+    "hasChildren": "Este centro de coste tiene subcentros y por eso no se puede contabilizar directamente.",
+    "root": "Raíz",
+    "group": "Grupo",
+    "leaf": "Centro de coste"
+  },
+  "responsibility": {
+    "label": "Responsabilidad",
+    "helper": "Quién es responsable de este centro de coste. Si lo dejas vacío, solo lo ve el tesorero."
+  },
+  "notes": {
+    "label": "Notas",
+    "placeholder": "Notas sobre el centro de coste"
+  }
+}

@@ -346,6 +346,8 @@ service cloud.firestore {
 
     match /accounting-configs/{id} { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
     match /accounts/{id}           { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
+    // Kostenstellen (spec 1.65 §8.3): treasurer/admin only; archive instead of delete.
+    match /cost-centers/{id} { allow read: if tenantRead() && (hasRole('treasurer') || isAdmin()); allow create, update: if (hasRole('treasurer') || isAdmin()) && tenantCreateOrDetach(); allow delete: if false; }
     // Activities are the audit log. Authenticated tenant members write normal activities.
     // Auth-scope events (login/logout) are logged by ActivityService.logAuth pre-auth or
     // during the post-signIn token-propagation race, i.e. with request.auth == null. Allow

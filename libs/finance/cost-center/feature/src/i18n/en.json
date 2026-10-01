@@ -1,0 +1,44 @@
+{
+  "costCenters": "Cost centres",
+  "empty": "No cost centres found.",
+  "none": "no cost centre",
+  "picker": "Cost centre",
+  "create": "New cost centre",
+  "update": "Edit cost centre",
+  "view": "View cost centre",
+  "archive": "Archive cost centre",
+  "archiveConf": "Do you want to archive this cost centre? Existing bookings stay unchanged.",
+  "id": {
+    "label": "Number",
+    "placeholder": "e.g. 310",
+    "helper": "The number of the cost centre, e.g. 310.",
+    "duplicate": "This number is already taken."
+  },
+  "name": {
+    "label": "Name",
+    "placeholder": "e.g. Juniors",
+    "helper": "What the cost centre is called."
+  },
+  "parentKey": {
+    "label": "Parent",
+    "helper": "The group this cost centre belongs to.",
+    "cycle": "A cost centre cannot be placed below itself or below one of its own sub-centres.",
+    "notGroup": "The parent must be a group or the top level."
+  },
+  "type": {
+    "label": "Kind",
+    "helper": "You can book on a cost centre; a group combines several of them.",
+    "hasChildren": "This cost centre has sub-centres and therefore cannot be booked on directly.",
+    "root": "Root",
+    "group": "Group",
+    "leaf": "Cost centre"
+  },
+  "responsibility": {
+    "label": "Responsibility",
+    "helper": "Who is in charge of this cost centre. Leave empty and only the treasurer sees it."
+  },
+  "notes": {
+    "label": "Notes",
+    "placeholder": "Notes on the cost centre"
+  }
+}
