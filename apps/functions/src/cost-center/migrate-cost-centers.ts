@@ -17,7 +17,7 @@ import { getTodayStr } from '@okr/shared-util-core';
 import { fiscalYear } from '../bank-import/bank-import.util';
 import { loadFiscalYearStart } from '../booking/period-lock';
 import { costCenterKeyForLine, loadCostCenterContext } from './cost-center-context';
-import { decideFreeText } from './cost-center-migration.util';
+import { bookOfDoc, decideFreeText } from './cost-center-migration.util';
 
 const REGION = 'europe-west6';
 const CF_NAME = 'migrateCostCenters';
@@ -81,6 +81,13 @@ async function migrateFreeText(db: Firestore, tenantId: string, accountingTenant
   // every centre of the tenant, whatever its book or archive state: such an okey is never cleared
   const allCenters = await db.collection('cost-centers').where('tenants', 'array-contains', tenantId).get();
   const allKeys = new Set(allCenters.docs.map(d => d.id));
+  // account okey → its book, over ALL books of the tenant: a doc whose account sits in another book is skipped, not unattributed
+  const accountSnap = await db.collection('accounts').where('tenants', 'array-contains', tenantId).get();
+  const accountBook = new Map<string, string>();
+  for (const a of accountSnap.docs) {
+    const book = a.data()['accountingTenantId'];
+    if (typeof book === 'string' && book !== '') accountBook.set(a.id, book);
+  }
   const writer = new BatchWriter(db);
   const unmatched: Unmatched[] = [];
   const unattributed: Unmatched[] = [];
@@ -94,9 +101,7 @@ async function migrateFreeText(db: Firestore, tenantId: string, accountingTenant
       if (value.trim() === '') continue;
       scanned++;
       // the document's book: its own field, else the book of its account (ocr-rules have no field)
-      const ownBook = typeof data['accountingTenantId'] === 'string' ? (data['accountingTenantId'] as string).trim() : '';
-      const accountKey = typeof data['accountKey'] === 'string' ? (data['accountKey'] as string) : '';
-      const docBook = ownBook || (accountKey && ctx.accounts.has(accountKey) ? accountingTenantId : undefined);
+      const docBook = bookOfDoc(data['accountingTenantId'] as string | undefined, data['accountKey'] as string | undefined, accountBook);
       const decision = decideFreeText(value, docBook, accountingTenantId, ctx.costCenters, allKeys);
       if (decision.action === 'unattributed') { unattributed.push({ collection, okey: doc.id, value }); continue; }
       if (decision.action !== 'rewrite' && decision.action !== 'clear') continue;

@@ -35,3 +35,11 @@ export function decideFreeText(value: string, docBook: string | undefined, accou
   if (matched === '') return { action: 'clear' };
   return matched === value ? { action: 'keep' } : { action: 'rewrite', newValue: matched };
 }
+
+/** The set of books a document belongs to: its own non-empty `accountingTenantId`, else the book of its account, else unknown. */
+export function bookOfDoc(ownBook: string | undefined, accountKey: string | undefined, accountBook: Map<string, string>): string | undefined {
+  const own = (ownBook ?? '').trim();
+  if (own) return own;
+  const key = (accountKey ?? '').trim();
+  return key ? accountBook.get(key) || undefined : undefined;
+}

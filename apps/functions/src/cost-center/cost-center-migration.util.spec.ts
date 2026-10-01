@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { decideFreeText, matchCostCenterText } from './cost-center-migration.util';
+import { bookOfDoc, decideFreeText, matchCostCenterText } from './cost-center-migration.util';
 
 const centers = [
   { okey: 'k1', id: '310', name: 'Junioren', parentKey: '', accountingTenantId: 'scs' },
@@ -27,7 +27,9 @@ describe('decideFreeText', () => {
 
   it('skips an empty value', () => expect(decide('  ', 'scs')).toEqual({ action: 'skip' }));
   it('rewrites a matching text of the chosen book', () => expect(decide('Junioren', 'scs')).toEqual({ action: 'rewrite', newValue: 'k1' }));
-  it('keeps a value that already is a valid okey of the book', () => expect(decide('k1', 'scs')).toEqual({ action: 'keep' }));
+  it('keeps a tenant okey via the short-circuit', () => expect(decide('k1', 'scs')).toEqual({ action: 'keep' }));
+  it('keeps a valid okey of the book even when the tenant set is empty (matcher path)', () =>
+    expect(decideFreeText('k1', 'scs', 'scs', centers, new Set())).toEqual({ action: 'keep' }));
   it('clears an unmatched text of the chosen book', () => expect(decide('Vorstand', 'scs')).toEqual({ action: 'clear' }));
   it('skips a doc that belongs to another book', () => expect(decide('Vorstand', 'gss')).toEqual({ action: 'skip' }));
   it('never clears the okey of a centre of another book of the tenant', () => {
@@ -39,4 +41,20 @@ describe('decideFreeText', () => {
     expect(decide('Vorstand', undefined)).toEqual({ action: 'unattributed' });
     expect(decide('310', '')).toEqual({ action: 'unattributed' });
   });
+});
+
+describe('bookOfDoc', () => {
+  const accountBook = new Map([['a1', 'scs'], ['a2', 'gss']]);
+  it('an own non-empty book wins', () => expect(bookOfDoc('gss', 'a1', accountBook)).toBe('gss'));
+  it('falls back to the book of the account', () => {
+    expect(bookOfDoc('', 'a1', accountBook)).toBe('scs');
+    expect(bookOfDoc(undefined, 'a2', accountBook)).toBe('gss');
+  });
+  it('is undefined for an unknown or empty account', () => {
+    expect(bookOfDoc('', 'zzz', accountBook)).toBeUndefined();
+    expect(bookOfDoc('', '', accountBook)).toBeUndefined();
+    expect(bookOfDoc('', undefined, accountBook)).toBeUndefined();
+  });
+  it('a gss account yields a skip in an scs run', () =>
+    expect(decideFreeText('Vorstand', bookOfDoc('', 'a2', accountBook), 'scs', centers, new Set())).toEqual({ action: 'skip' }));
 });
