@@ -36,7 +36,11 @@
     }
   },
   "receiver": {
-    "label": "Destinataire"
+    "label": "Destinataire",
+    "none": "Pas encore de destinataire",
+    "select": "Choisir le destinataire",
+    "person": "Personne",
+    "org": "Organisation"
   },
   "title": {
     "label": "Objet",
@@ -240,5 +244,60 @@
       "label": "Annulée",
       "description": "La facture a été annulée."
     }
+  },
+  "total": {
+    "label": "Total",
+    "helper": "La somme de toutes les positions."
+  },
+  "positions": {
+    "title": "Positions",
+    "name": {
+      "label": "Désignation",
+      "placeholder": "p.ex. Cotisation annuelle 2026"
+    },
+    "amount": {
+      "label": "Montant (CHF)",
+      "placeholder": "0.00"
+    },
+    "account": {
+      "label": "Compte de produits"
+    },
+    "add": "Ajouter une position",
+    "remove": "Supprimer la position",
+    "total": "Total",
+    "empty": "Ajoute au moins une position.",
+    "error": {
+      "empty": "Ajoute au moins une position.",
+      "tooMany": "Une facture peut avoir au maximum 100 positions.",
+      "name": "Donne une désignation à la position.",
+      "nameLength": "La désignation est trop longue.",
+      "amount": "Le montant doit être supérieur à 0.",
+      "account": "Choisis un compte de produits."
+    }
+  },
+  "issue": {
+    "label": "Émettre la facture",
+    "confirm": "La facture reçoit maintenant son numéro et est comptabilisée. Ensuite, tu ne pourras plus la modifier.",
+    "conf": "La facture {invoiceId} est émise",
+    "error": "La facture n'a pas pu être émise."
+  },
+  "refusal": {
+    "no-positions": "La facture n'a pas encore de positions. Ajoute d'abord au moins une position.",
+    "position-without-account": "Au moins une position n’a pas de compte de produits. Choisis un compte pour chaque position.",
+    "invalid-amount": "Au moins une position n'a pas de montant valable. Vérifie les montants.",
+    "total-not-positive": "Le total de la facture doit être supérieur à 0.",
+    "no-receivables-account": "Le compte débiteurs manque encore dans les paramètres comptables. Complète-le là-bas.",
+    "no-receiver": "La facture n'a pas encore de destinataire. Choisis d'abord à qui elle est adressée.",
+    "no-invoice-date": "La facture n'a pas encore de date de facture.",
+    "no-invoice-template": "Le modèle de facture manque encore dans les paramètres comptables. Complète-le là-bas.",
+    "account-invalid": "Un des comptes ne peut pas être utilisé pour une écriture. Choisis pour chaque position un compte sans sous-comptes.",
+    "period-locked": "La période comptable de la date de facture est clôturée. Choisis une autre date ou fais rouvrir la période.",
+    "state-changed": "La facture a été modifiée entre-temps. Réessaie, s’il te plaît.",
+    "not-a-draft": "Cette facture n'est plus un brouillon et ne peut plus être modifiée.",
+    "not-found": "Cette facture n'existe plus. Elle a peut-être été supprimée.",
+    "bexio-backend": "Cette comptabilité est tenue dans bexio. Tu y crées les factures.",
+    "no-accounting-config": "Les paramètres de cette comptabilité manquent encore. Configure-les d'abord.",
+    "foreign-accounting-tenant": "Cette comptabilité n'appartient pas à ton club.",
+    "too-many-positions": "Une facture peut avoir au maximum 100 positions."
   }
 }

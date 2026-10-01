@@ -4,15 +4,16 @@ import { firstValueFrom } from 'rxjs';
 import { take } from 'rxjs/operators';
 
 import { AppStore } from '@okr/shared-feature';
-import { InvoiceModel, MembershipModel } from '@okr/shared-models';
+import { MembershipModel } from '@okr/shared-models';
+import { I18nService } from '@okr/shared-i18n';
 import { getTodayStr } from '@okr/shared-util-core';
 import { showToast } from '@okr/shared-util-angular';
 
 import { AccountingConfigService } from '@okr/finance-accounting-data-access';
 import { InvoiceService } from '@okr/finance-invoice-data-access';
-import { newMemberInvoice, withInvoiceNo } from '@okr/finance-invoice-util';
+import { INVOICE_I18N_KEYS, InvoiceI18n, invoiceRefusalReasons, invoiceRefusalText, newMemberInvoice } from '@okr/finance-invoice-util';
 
-import { InvoiceEditModal } from './invoice-edit.modal';
+import { InvoiceEditModal, InvoiceEditResult } from './invoice-edit.modal';
 
 /**
  * "Rechnung erstellen" for a member: in bexio while the own books are bexio-managed, natively after
@@ -25,6 +26,7 @@ export class MemberInvoiceService {
   private readonly configService = inject(AccountingConfigService);
   private readonly invoiceService = inject(InvoiceService);
   private readonly appStore = inject(AppStore);
+  private readonly i18n = inject(I18nService).translateAll(INVOICE_I18N_KEYS) as InvoiceI18n;
 
   public async createFor(membership: MembershipModel): Promise<void> {
     const tenantId = this.appStore.tenantId();
@@ -46,15 +48,24 @@ export class MemberInvoiceService {
       },
     });
     await modal.present();
-    const { data, role } = await modal.onWillDismiss<InvoiceModel>();
-    if (role === 'confirm' && data) await this.createNumbered(data);
+    const { data, role } = await modal.onWillDismiss<InvoiceEditResult>();
+    if (role === 'confirm' && data) await this.createDraft(data);
   }
 
-  /** Saves a new native invoice with its sequential number (per fiscal year and accounting tenant). */
-  public async createNumbered(invoice: InvoiceModel): Promise<string | undefined> {
-    const year = Number((invoice.invoiceDate || getTodayStr()).substring(0, 4));
-    const no = invoice.invoiceNo > 0 ? invoice.invoiceNo : await this.invoiceService.nextInvoiceNo(year, invoice.accountingTenantId);
-    return this.invoiceService.create(withInvoiceNo(invoice, no), this.appStore.currentUser() ?? undefined);
+  /**
+   * Saves a new native draft with its positions through `writeInvoice`; the number is assigned when it
+   * is issued. Toasts the outcome; returns the new key, or undefined when the server refused.
+   */
+  public async createDraft(data: InvoiceEditResult): Promise<string | undefined> {
+    try {
+      const key = await this.invoiceService.create(data.invoice, data.positions, this.appStore.currentUser() ?? undefined);
+      await showToast(this.toastController, this.i18n.create_conf());
+      return key;
+    } catch (e) {
+      console.error('MemberInvoiceService.createDraft: writeInvoice failed', e);
+      await showToast(this.toastController, invoiceRefusalText(invoiceRefusalReasons(e), this.i18n, this.i18n.create_error()));
+      return undefined;
+    }
   }
 
   private async createInBexio(membership: MembershipModel): Promise<void> {

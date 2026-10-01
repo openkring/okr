@@ -5,6 +5,19 @@ export function newInvoice(tenantId: string): InvoiceModel {
   return new InvoiceModel(tenantId);
 }
 
+/**
+ * A new native draft (spec 1.76) of the given books: dated `today`, due after INVOICE_PAYMENT_DAYS,
+ * without receiver and positions yet. The number is assigned when it is issued.
+ */
+export function newDraftInvoice(tenantId: string, accountingTenantId: string, today: string): InvoiceModel {
+  const invoice = new InvoiceModel(tenantId);
+  invoice.accountingTenantId = accountingTenantId;
+  invoice.state = 'draft';
+  invoice.invoiceDate = today;
+  invoice.dueDate = addDuration(today, { days: INVOICE_PAYMENT_DAYS });
+  return invoice;
+}
+
 /** Payment term of a new native invoice, in days. */
 export const INVOICE_PAYMENT_DAYS = 30;
 
@@ -13,13 +26,10 @@ export interface InvoiceMember { memberKey: string; memberName1: string; memberN
 
 /**
  * A new native invoice to a member of the own books (spec 1.68: no bexio after the cut-over).
- * Dated `today`, due after INVOICE_PAYMENT_DAYS; the number is assigned on save.
+ * Dated `today`, due after INVOICE_PAYMENT_DAYS; the number is assigned when it is issued.
  */
 export function newMemberInvoice(tenantId: string, accountingTenantId: string, member: InvoiceMember, today: string): InvoiceModel {
-  const invoice = new InvoiceModel(tenantId);
-  invoice.accountingTenantId = accountingTenantId;
-  invoice.invoiceDate = today;
-  invoice.dueDate = addDuration(today, { days: INVOICE_PAYMENT_DAYS });
+  const invoice = newDraftInvoice(tenantId, accountingTenantId, today);
   invoice.receiver = {
     key: member.memberKey, name1: member.memberName1, name2: member.memberName2,
     modelType: member.memberModelType, type: '', subType: '',

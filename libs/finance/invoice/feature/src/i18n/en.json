@@ -36,7 +36,11 @@
     }
   },
   "receiver": {
-    "label": "Recipient"
+    "label": "Recipient",
+    "none": "No recipient yet",
+    "select": "Choose recipient",
+    "person": "Person",
+    "org": "Organisation"
   },
   "title": {
     "label": "Subject",
@@ -240,5 +244,60 @@
       "label": "Cancelled",
       "description": "The invoice has been cancelled."
     }
+  },
+  "total": {
+    "label": "Total",
+    "helper": "The sum of all items."
+  },
+  "positions": {
+    "title": "Items",
+    "name": {
+      "label": "Description",
+      "placeholder": "e.g. Annual fee 2026"
+    },
+    "amount": {
+      "label": "Amount (CHF)",
+      "placeholder": "0.00"
+    },
+    "account": {
+      "label": "Revenue account"
+    },
+    "add": "Add item",
+    "remove": "Remove item",
+    "total": "Total",
+    "empty": "Add at least one item.",
+    "error": {
+      "empty": "Add at least one item.",
+      "tooMany": "An invoice can have at most 100 items.",
+      "name": "Give the item a description.",
+      "nameLength": "The description is too long.",
+      "amount": "The amount must be greater than 0.",
+      "account": "Choose a revenue account."
+    }
+  },
+  "issue": {
+    "label": "Issue invoice",
+    "confirm": "The invoice now gets its number and is booked. After that you can no longer change it.",
+    "conf": "Invoice {invoiceId} has been issued",
+    "error": "The invoice could not be issued."
+  },
+  "refusal": {
+    "no-positions": "The invoice has no items yet. Add at least one item first.",
+    "position-without-account": "At least one item has no revenue account. Choose an account for every item.",
+    "invalid-amount": "At least one item has no valid amount. Please check the amounts.",
+    "total-not-positive": "The invoice total must be greater than 0.",
+    "no-receivables-account": "The accounting settings have no receivables account yet. Please add it there.",
+    "no-receiver": "The invoice has no recipient yet. Choose who it goes to first.",
+    "no-invoice-date": "The invoice has no invoice date yet.",
+    "no-invoice-template": "The accounting settings have no invoice template yet. Please add it there.",
+    "account-invalid": "One of the accounts cannot be booked on. Choose an account without sub-accounts for every item.",
+    "period-locked": "The accounting period of the invoice date is closed. Choose another date or have the period reopened.",
+    "state-changed": "The invoice was changed in the meantime. Please try again.",
+    "not-a-draft": "This invoice is no longer a draft and can no longer be changed.",
+    "not-found": "This invoice no longer exists. Perhaps it was deleted.",
+    "bexio-backend": "These books are kept in bexio. You create invoices there.",
+    "no-accounting-config": "These books have no settings yet. Please set them up first.",
+    "foreign-accounting-tenant": "These books do not belong to your club.",
+    "too-many-positions": "An invoice can have at most 100 items."
   }
 }

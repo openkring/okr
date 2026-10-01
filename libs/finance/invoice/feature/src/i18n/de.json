@@ -36,7 +36,11 @@
     }
   },
   "receiver": {
-    "label": "Empfänger"
+    "label": "Empfänger",
+    "none": "Noch kein Empfänger",
+    "select": "Empfänger wählen",
+    "person": "Person",
+    "org": "Organisation"
   },
   "title": {
     "label": "Betreff",
@@ -240,5 +244,60 @@
       "label": "Storniert",
       "description": "Die Rechnung wurde storniert."
     }
+  },
+  "total": {
+    "label": "Total",
+    "helper": "Die Summe aller Positionen."
+  },
+  "positions": {
+    "title": "Positionen",
+    "name": {
+      "label": "Bezeichnung",
+      "placeholder": "z.B. Jahresbeitrag 2026"
+    },
+    "amount": {
+      "label": "Betrag (CHF)",
+      "placeholder": "0.00"
+    },
+    "account": {
+      "label": "Ertragskonto"
+    },
+    "add": "Position hinzufügen",
+    "remove": "Position entfernen",
+    "total": "Total",
+    "empty": "Füge mindestens eine Position hinzu.",
+    "error": {
+      "empty": "Füge mindestens eine Position hinzu.",
+      "tooMany": "Eine Rechnung kann höchstens 100 Positionen haben.",
+      "name": "Gib der Position eine Bezeichnung.",
+      "nameLength": "Die Bezeichnung ist zu lang.",
+      "amount": "Der Betrag muss grösser als 0 sein.",
+      "account": "Wähle ein Ertragskonto."
+    }
+  },
+  "issue": {
+    "label": "Rechnung ausstellen",
+    "confirm": "Die Rechnung bekommt jetzt ihre Nummer und wird verbucht. Danach kannst du sie nicht mehr ändern.",
+    "conf": "Rechnung {invoiceId} ist ausgestellt",
+    "error": "Die Rechnung konnte nicht ausgestellt werden."
+  },
+  "refusal": {
+    "no-positions": "Die Rechnung hat noch keine Positionen. Füge zuerst mindestens eine Position hinzu.",
+    "position-without-account": "Bei mindestens einer Position fehlt das Ertragskonto. Wähle für jede Position ein Konto.",
+    "invalid-amount": "Mindestens eine Position hat keinen gültigen Betrag. Prüfe die Beträge.",
+    "total-not-positive": "Das Total der Rechnung muss grösser als 0 sein.",
+    "no-receivables-account": "In den Buchhaltungseinstellungen fehlt noch das Debitorenkonto. Bitte ergänze es dort.",
+    "no-receiver": "Die Rechnung hat noch keinen Empfänger. Wähle zuerst, an wen sie geht.",
+    "no-invoice-date": "Die Rechnung hat noch kein Rechnungsdatum.",
+    "no-invoice-template": "In den Buchhaltungseinstellungen fehlt noch die Rechnungsvorlage. Bitte ergänze sie dort.",
+    "account-invalid": "Auf eines der Konten kann nicht gebucht werden. Wähle für jede Position ein Konto ohne Unterkonten.",
+    "period-locked": "Die Buchungsperiode zum Rechnungsdatum ist abgeschlossen. Wähle ein anderes Datum oder lass die Periode wieder öffnen.",
+    "state-changed": "Die Rechnung wurde in der Zwischenzeit verändert. Versuche es bitte noch einmal.",
+    "not-a-draft": "Diese Rechnung ist kein Entwurf mehr und kann nicht mehr geändert werden.",
+    "not-found": "Die Rechnung gibt es nicht mehr. Vielleicht wurde sie gelöscht.",
+    "bexio-backend": "Diese Buchhaltung wird in bexio geführt. Rechnungen erstellst du dort.",
+    "no-accounting-config": "Für diese Buchhaltung fehlen noch die Einstellungen. Bitte richte sie zuerst ein.",
+    "foreign-accounting-tenant": "Diese Buchhaltung gehört nicht zu deinem Verein.",
+    "too-many-positions": "Eine Rechnung kann höchstens 100 Positionen haben."
   }
 }

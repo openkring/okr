@@ -31,6 +31,8 @@
     },
     {
       "path": "../util/tsconfig.lib.json"
-    }
+    },
+    {"path": "../../account/ui/tsconfig.lib.json"},
+    {"path": "../../../shared/pipes/tsconfig.lib.json"}
   ]
 }

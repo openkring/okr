@@ -120,6 +120,47 @@ export const INVOICE_I18N_KEYS = {
 
   read_only_banner:         PFX + 'readonly.banner',
 
+  receiver_none:            PFX + 'receiver.none',
+  receiver_select:          PFX + 'receiver.select',
+  receiver_person:          PFX + 'receiver.person',
+  receiver_org:             PFX + 'receiver.org',
+  total_label:              PFX + 'total.label',
+  total_helper:             PFX + 'total.helper',
+
+  positions_title:          PFX + 'positions.title',
+  positions_name_label:     PFX + 'positions.name.label',
+  positions_name_placeholder: PFX + 'positions.name.placeholder',
+  positions_amount_label:   PFX + 'positions.amount.label',
+  positions_amount_placeholder: PFX + 'positions.amount.placeholder',
+  positions_account_label:  PFX + 'positions.account.label',
+  positions_add:            PFX + 'positions.add',
+  positions_remove:         PFX + 'positions.remove',
+  positions_total:          PFX + 'positions.total',
+  positions_empty:          PFX + 'positions.empty',
+
+  issue:                    PFX + 'issue.label',
+  issue_confirm:            PFX + 'issue.confirm',
+  issue_conf:               PFX + 'issue.conf',
+  issue_error:              PFX + 'issue.error',
+
+  refusal_no_positions:             PFX + 'refusal.no-positions',
+  refusal_position_without_account: PFX + 'refusal.position-without-account',
+  refusal_invalid_amount:           PFX + 'refusal.invalid-amount',
+  refusal_total_not_positive:       PFX + 'refusal.total-not-positive',
+  refusal_no_receivables_account:   PFX + 'refusal.no-receivables-account',
+  refusal_no_receiver:              PFX + 'refusal.no-receiver',
+  refusal_no_invoice_date:          PFX + 'refusal.no-invoice-date',
+  refusal_no_invoice_template:      PFX + 'refusal.no-invoice-template',
+  refusal_account_invalid:          PFX + 'refusal.account-invalid',
+  refusal_period_locked:            PFX + 'refusal.period-locked',
+  refusal_state_changed:            PFX + 'refusal.state-changed',
+  refusal_not_a_draft:              PFX + 'refusal.not-a-draft',
+  refusal_not_found:                PFX + 'refusal.not-found',
+  refusal_bexio_backend:            PFX + 'refusal.bexio-backend',
+  refusal_no_accounting_config:     PFX + 'refusal.no-accounting-config',
+  refusal_foreign_accounting_tenant: PFX + 'refusal.foreign-accounting-tenant',
+  refusal_too_many_positions:       PFX + 'refusal.too-many-positions',
+
   as_title:         '@actionsheet.title',
   ok:               '@ok',
   cancel:           '@cancel',
@@ -127,3 +168,37 @@ export const INVOICE_I18N_KEYS = {
 } satisfies Record<string, string>;
 
 export type InvoiceI18n = { [K in keyof typeof INVOICE_I18N_KEYS]: Signal<string> };
+
+/**
+ * The i18n entry for every refusal reason `writeInvoice` / `issueInvoice` can send (details.reason, or
+ * one of details.reasons of `issue-blocked`). A reason missing here falls back to the generic text.
+ */
+export const INVOICE_REFUSAL_I18N: Record<string, keyof typeof INVOICE_I18N_KEYS> = {
+  'no-positions': 'refusal_no_positions',
+  'position-without-account': 'refusal_position_without_account',
+  'invalid-amount': 'refusal_invalid_amount',
+  'total-not-positive': 'refusal_total_not_positive',
+  'no-receivables-account': 'refusal_no_receivables_account',
+  'no-receiver': 'refusal_no_receiver',
+  'no-invoice-date': 'refusal_no_invoice_date',
+  'no-invoice-template': 'refusal_no_invoice_template',
+  'account-invalid': 'refusal_account_invalid',
+  'period-locked': 'refusal_period_locked',
+  'state-changed': 'refusal_state_changed',
+  'not-a-draft': 'refusal_not_a_draft',
+  'not-issuable': 'refusal_not_a_draft',
+  'not-found': 'refusal_not_found',
+  'bexio-backend': 'refusal_bexio_backend',
+  'no-accounting-config': 'refusal_no_accounting_config',
+  'foreign-accounting-tenant': 'refusal_foreign_accounting_tenant',
+  'too-many-positions': 'refusal_too_many_positions',
+};
+
+/**
+ * The friendly text for a failed invoice call: the text of each known reason, joined; `fallback`
+ * when no reason is known (a network error, an unexpected server state).
+ */
+export function invoiceRefusalText(reasons: string[], i18n: InvoiceI18n, fallback: string): string {
+  const texts = [...new Set(reasons.map((r) => INVOICE_REFUSAL_I18N[r]).filter((k) => !!k))].map((k) => i18n[k]());
+  return texts.length > 0 ? texts.join(' ') : fallback;
+}

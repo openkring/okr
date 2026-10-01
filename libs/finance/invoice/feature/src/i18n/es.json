@@ -36,7 +36,11 @@
     }
   },
   "receiver": {
-    "label": "Destinatario"
+    "label": "Destinatario",
+    "none": "Todavía sin destinatario",
+    "select": "Elegir destinatario",
+    "person": "Persona",
+    "org": "Organización"
   },
   "title": {
     "label": "Asunto",
@@ -240,5 +244,60 @@
       "label": "Anulada",
       "description": "La factura se ha anulado."
     }
+  },
+  "total": {
+    "label": "Total",
+    "helper": "La suma de todas las posiciones."
+  },
+  "positions": {
+    "title": "Posiciones",
+    "name": {
+      "label": "Descripción",
+      "placeholder": "p.ej. Cuota anual 2026"
+    },
+    "amount": {
+      "label": "Importe (CHF)",
+      "placeholder": "0.00"
+    },
+    "account": {
+      "label": "Cuenta de ingresos"
+    },
+    "add": "Añadir posición",
+    "remove": "Quitar posición",
+    "total": "Total",
+    "empty": "Añade al menos una posición.",
+    "error": {
+      "empty": "Añade al menos una posición.",
+      "tooMany": "Una factura puede tener como máximo 100 posiciones.",
+      "name": "Dale una descripción a la posición.",
+      "nameLength": "La descripción es demasiado larga.",
+      "amount": "El importe debe ser mayor que 0.",
+      "account": "Elige una cuenta de ingresos."
+    }
+  },
+  "issue": {
+    "label": "Emitir factura",
+    "confirm": "La factura recibe ahora su número y se contabiliza. Después ya no podrás modificarla.",
+    "conf": "La factura {invoiceId} está emitida",
+    "error": "No se pudo emitir la factura."
+  },
+  "refusal": {
+    "no-positions": "La factura todavía no tiene posiciones. Añade primero al menos una posición.",
+    "position-without-account": "Al menos una posición no tiene cuenta de ingresos. Elige una cuenta para cada posición.",
+    "invalid-amount": "Al menos una posición no tiene un importe válido. Revisa los importes.",
+    "total-not-positive": "El total de la factura debe ser mayor que 0.",
+    "no-receivables-account": "En los ajustes contables todavía falta la cuenta de deudores. Complétala allí.",
+    "no-receiver": "La factura todavía no tiene destinatario. Elige primero a quién va dirigida.",
+    "no-invoice-date": "La factura todavía no tiene fecha.",
+    "no-invoice-template": "En los ajustes contables todavía falta la plantilla de factura. Complétala allí.",
+    "account-invalid": "En una de las cuentas no se puede contabilizar. Elige para cada posición una cuenta sin subcuentas.",
+    "period-locked": "El período contable de la fecha de la factura está cerrado. Elige otra fecha o pide que se vuelva a abrir el período.",
+    "state-changed": "La factura se modificó mientras tanto. Inténtalo de nuevo, por favor.",
+    "not-a-draft": "Esta factura ya no es un borrador y ya no se puede modificar.",
+    "not-found": "Esta factura ya no existe. Quizá se eliminó.",
+    "bexio-backend": "Esta contabilidad se lleva en bexio. Las facturas las creas allí.",
+    "no-accounting-config": "A esta contabilidad todavía le faltan los ajustes. Configúralos primero.",
+    "foreign-accounting-tenant": "Esta contabilidad no pertenece a tu club.",
+    "too-many-positions": "Una factura puede tener como máximo 100 posiciones."
   }
 }

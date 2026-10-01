@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, effect, inject, input } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonChip, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonLabel, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 import { InvoiceModel, RoleName } from '@okr/shared-models';
-import { canCreatePaymentConfirmation } from '@okr/finance-invoice-util';
+import { canCreatePaymentConfirmation, isDraftInvoice } from '@okr/finance-invoice-util';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@okr/shared-util-angular';
@@ -149,6 +149,7 @@ export class InvoiceList {
       case 'paid': return 'success';
       case 'overdue': return 'danger';
       case 'pending': return 'warning';
+      case 'issuing': return 'warning';
       case 'draft': return 'medium';
       case 'cancelled': return 'medium';
     }
@@ -160,6 +161,7 @@ export class InvoiceList {
     switch(state) {
       case 'draft': return i18n.state_draft();
       case 'pending': return i18n.state_pending();
+      case 'issuing': return i18n.state_pending();
       case 'paid': return i18n.state_paid();
       case 'overdue': return i18n.state_overdue();
       case 'cancelled': return i18n.state_cancelled();
@@ -189,22 +191,34 @@ export class InvoiceList {
     await this.executeActions(options, invoice);
   }
 
+  /**
+   * A native draft is edited, issued or deleted; an issued invoice shows its PDF; `issuing` (a transient
+   * server state) only shows its details. Books kept in bexio are read-only here: details and PDF.
+   */
   private async addActionSheetButtons(options: ActionSheetOptions, invoice: InvoiceModel): Promise<void> {
     const base = this.imgixBaseUrl();
-    options.buttons.push(createActionSheetButton('invoice.view', this.store.i18n.view(), base, 'eye-on'));
-    options.buttons.push(createActionSheetButton('invoice.showpdf', this.store.i18n.show_pdf(), base, 'download'));
-    if (canCreatePaymentConfirmation(invoice)) {
-      options.buttons.push(createActionSheetButton('invoice.paymentConfirmation', this.store.i18n.payment_confirmation(), base, 'document'));
-    }
-    if (this.store.isExternallyManaged() === false) {
+    const i18n = this.store.i18n;
+    if (this.store.isExternallyManaged() !== false) {
+      options.buttons.push(createActionSheetButton('invoice.view', i18n.view(), base, 'eye-on'));
+      options.buttons.push(createActionSheetButton('invoice.showpdf', i18n.show_pdf(), base, 'download'));
+    } else if (isDraftInvoice(invoice)) {
       if (this.canChange()) {
-        options.buttons.push(createActionSheetButton('invoice.edit', this.store.i18n.update(), base, 'edit'));
+        options.buttons.push(createActionSheetButton('invoice.edit', i18n.update(), base, 'edit'));
+        options.buttons.push(createActionSheetButton('invoice.issue', i18n.issue(), base, 'send'));
+        options.buttons.push(createActionSheetButton('invoice.delete', i18n.delete(), base, 'trash'));
+      } else {
+        options.buttons.push(createActionSheetButton('invoice.view', i18n.view(), base, 'eye-on'));
       }
-      if (this.canDelete()) {
-        options.buttons.push(createActionSheetButton('invoice.delete', this.store.i18n.delete(), base, 'trash'));
-      }
+    } else if (invoice.state === 'issuing') {
+      options.buttons.push(createActionSheetButton('invoice.view', i18n.view(), base, 'eye-on'));
+    } else {
+      options.buttons.push(createActionSheetButton('invoice.showpdf', i18n.show_pdf(), base, 'download'));
+      options.buttons.push(createActionSheetButton('invoice.view', i18n.view(), base, 'eye-on'));
     }
-    options.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), base, 'cancel'));
+    if (canCreatePaymentConfirmation(invoice)) {
+      options.buttons.push(createActionSheetButton('invoice.paymentConfirmation', i18n.payment_confirmation(), base, 'document'));
+    }
+    options.buttons.push(createActionSheetButton('cancel', i18n.cancel(), base, 'cancel'));
     if (options.buttons.length === 1) options.buttons = [];
   }
 
@@ -219,6 +233,7 @@ export class InvoiceList {
       case 'invoice.showpdf': await this.store.showPdf(invoice); break;
       case 'invoice.paymentConfirmation': await this.store.createPaymentConfirmation(invoice); break;
       case 'invoice.edit': await this.store.edit(invoice, false); break;
+      case 'invoice.issue': await this.store.issue(invoice); break;
       case 'invoice.delete': await this.store.delete(invoice); break;
     }
     this.cdr.markForCheck();
@@ -231,9 +246,5 @@ export class InvoiceList {
 
   protected canChange(): boolean {
     return hasRole('treasurer', this.currentUser()) || hasRole('privileged', this.currentUser());
-  }
-
-  protected canDelete(): boolean {
-    return hasRole('admin', this.currentUser());
   }
 }

@@ -1,26 +1,35 @@
-import { Component, computed, effect, input, output } from '@angular/core';
-import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
+import { Component, computed, effect, input, model, output, signal } from '@angular/core';
+import { IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonNote, IonRow } from '@ionic/angular/standalone';
 
 import { DEFAULT_NOTES, DEFAULT_TAGS, SHORT_NAME_LENGTH } from '@okr/shared-constants';
-import { InvoiceModel, UserModel } from '@okr/shared-models';
-import { Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n , ErrorNote} from '@okr/shared-ui';
+import { AccountModel, InvoiceModel, UserModel } from '@okr/shared-models';
+import { SvgIconPipe } from '@okr/shared-pipes';
+import { DateInput, DateInputI18n, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { coerceBoolean } from '@okr/shared-util-core';
 
-import { InvoiceI18n, invoiceValidations } from '@okr/finance-invoice-util';
+import { InvoiceI18n, InvoicePositionInput, invoiceValidations, positionsTotal } from '@okr/finance-invoice-util';
 
-const INVOICE_STATES = ['draft', 'pending', 'paid', 'cancelled'];
-const VAT_TYPES = ['included', 'excluded', 'exempt'];
+import { InvoicePositionsForm } from './invoice-positions.form';
 
+/**
+ * The invoice header plus its positions (spec 1.76). Only what `writeInvoice` accepts is editable:
+ * title, dates, receiver and notes; number, state, total and payment date are set by the server and
+ * shown read-only. The receiver picker lives in the parent (feature layer): `receiverSelect` asks for
+ * it. A draft may still lack its receiver — that is checked when the invoice is issued, not here.
+ */
 @Component({
   selector: 'okr-invoice-edit-form',
   standalone: true,
   imports: [
-    ErrorNote,
-    TextInput, DateInput, NumberInput,
-    StringSelect, NotesInput, Chips,
-    IonCard, IonCardContent, IonGrid, IonRow, IonCol,
+    SvgIconPipe,
+    ErrorNote, TextInput, DateInput, NotesInput, InvoicePositionsForm,
+    IonCard, IonCardContent, IonGrid, IonRow, IonCol, IonItem, IonLabel, IonNote, IonButton, IonIcon,
   ],
-  styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
+  styles: [`
+    @media (width <= 600px) { ion-card { margin: 5px;} }
+    .receiver { --min-height: 44px; }
+    ion-note { font-size: 0.75rem; }
+  `],
   template: `
     @if(showForm()) {
       <form novalidate>
@@ -29,61 +38,82 @@ const VAT_TYPES = ['included', 'excluded', 'exempt'];
           <ion-card-content class="ion-no-padding">
             <ion-grid>
               <ion-row>
-                <ion-col size="4">
-                  <okr-text-input [i18n]="invoiceIdI18n()" [value]="invoiceId()" (valueChange)="onFieldChange('invoiceId', $event)"
-                    [maxLength]="shortNameLength" [readOnly]="isReadOnly() || !isNew()" />
-                  <okr-error-note [errors]="invoiceIdErrors()" />
+                <ion-col size="12" size-md="4">
+                  <!-- the number is assigned when the invoice is issued -->
+                  <okr-text-input [i18n]="invoiceIdI18n()" [value]="invoiceId()" [readOnly]="true" />
                 </ion-col>
-                <ion-col size="8">
+                <ion-col size="12" size-md="8">
                   <okr-text-input [i18n]="titleI18n()" [value]="title()" (valueChange)="onFieldChange('title', $event)"
-                    [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
+                    [autofocus]="!isReadOnly()" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
                   <okr-error-note [errors]="titleErrors()" />
                 </ion-col>
               </ion-row>
               <ion-row>
-                <ion-col size="6">
+                <ion-col size="12">
+                  <ion-item lines="none" class="receiver">
+                    <ion-label>
+                      <ion-note>{{ i18n().receiver_label() }}</ion-note>
+                      <div>{{ receiverName() || i18n().receiver_none() }}</div>
+                    </ion-label>
+                    @if (!isReadOnly()) {
+                      <ion-button slot="end" fill="clear" size="small" (click)="receiverSelect.emit()" [attr.aria-label]="i18n().receiver_select()">
+                        <ion-icon slot="icon-only" src="{{ 'person' | svgIcon }}" />
+                      </ion-button>
+                    }
+                  </ion-item>
+                </ion-col>
+              </ion-row>
+              <ion-row>
+                <ion-col size="12" size-md="6">
                   <okr-date-input [i18n]="invoiceDateI18n()" [storeDate]="invoiceDate()" (storeDateChange)="onFieldChange('invoiceDate', $event)" [readOnly]="isReadOnly()" />
                   <okr-error-note [errors]="invoiceDateErrors()" />
                 </ion-col>
-                <ion-col size="6">
+                <ion-col size="12" size-md="6">
                   <okr-date-input [i18n]="dueDateI18n()" [storeDate]="dueDate()" (storeDateChange)="onFieldChange('dueDate', $event)" [readOnly]="isReadOnly()" />
                   <okr-error-note [errors]="dueDateErrors()" />
                 </ion-col>
               </ion-row>
               <ion-row>
-                <ion-col size="6">
-                  <okr-number-input [i18n]="amountI18n()" [value]="amountInCHF()" (valueChange)="onAmountChange($event)"
-                    [readOnly]="isReadOnly()" />
+                <ion-col size="12" size-md="6">
+                  <ion-item lines="none">
+                    <ion-label>
+                      <ion-note>{{ i18n().total_label() }}</ion-note>
+                      <div>CHF {{ total() }}</div>
+                    </ion-label>
+                  </ion-item>
                 </ion-col>
-                <ion-col size="6">
-                  <okr-string-select [i18n]="vatTypeI18n()" [stringList]="vatTypes" [selectedString]="vatType()"
-                    (selectedStringChange)="onFieldChange('vatType', $event)" [readOnly]="isReadOnly()" />
-                </ion-col>
-              </ion-row>
-              <ion-row>
-                <ion-col size="6">
-                  <okr-string-select [i18n]="stateI18n()" [stringList]="states" [selectedString]="state()"
-                    (selectedStringChange)="onFieldChange('state', $event)" [readOnly]="isReadOnly()" />
-                </ion-col>
-                <ion-col size="6">
-                  <okr-date-input [i18n]="paymentDateI18n()" [storeDate]="paymentDate()" (storeDateChange)="onFieldChange('paymentDate', $event)" [readOnly]="isReadOnly()" />
-                  <okr-error-note [errors]="paymentDateErrors()" />
+                <ion-col size="12" size-md="6">
+                  <ion-item lines="none">
+                    <ion-label>
+                      <ion-note>{{ i18n().state_label() }}</ion-note>
+                      <div>{{ stateLabel() }}</div>
+                    </ion-label>
+                  </ion-item>
                 </ion-col>
               </ion-row>
-              <ion-row>
-                <ion-col size="12">
-                  <okr-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)"
-                    [allChips]="allTags()" [readOnly]="isReadOnly()" />
-                </ion-col>
-              </ion-row>
-              <ion-row>
-                <ion-col size="12">
-                  <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
-                </ion-col>
-              </ion-row>
+              @if (paymentDate()) {
+                <ion-row>
+                  <ion-col size="12" size-md="6">
+                    <okr-date-input [i18n]="paymentDateI18n()" [storeDate]="paymentDate()" [readOnly]="true" />
+                  </ion-col>
+                </ion-row>
+              }
             </ion-grid>
           </ion-card-content>
         </ion-card>
+
+        <okr-invoice-positions-form
+          [i18n]="i18n()"
+          [positions]="positions()"
+          (positionsChange)="onPositionsChange($event)"
+          [accounts]="accounts()"
+          [readOnly]="isReadOnly()"
+          (dirty)="dirty.emit($event)"
+          (valid)="positionsValid.set($event)"
+        />
+
+        <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)"
+          [maxLength]="notesLength" [readOnly]="isReadOnly()" [errors]="notesErrors()" />
       </form>
     }
   `
@@ -91,25 +121,34 @@ const VAT_TYPES = ['included', 'excluded', 'exempt'];
 export class InvoiceEditForm {
   /** kept in step with the cap the Vest suite enforces on this field */
   protected readonly shortNameLength = SHORT_NAME_LENGTH;
+  /** writeInvoice keeps at most 2000 characters of the notes */
+  protected readonly notesLength = 2000;
+
   public readonly formData = input.required<InvoiceModel>();
+  public readonly positions = model<InvoicePositionInput[]>([]);
+  /** the chart of accounts of the invoice's books; the positions offer its revenue leaves */
+  public readonly accounts = input<AccountModel[]>([]);
   public readonly currentUser = input<UserModel | undefined>();
   public readonly allTags = input(DEFAULT_TAGS);
   public readonly readOnly = input(true);
-  public readonly isNew = input(false);
   public readonly showForm = input(true);
   public readonly i18n = input.required<InvoiceI18n>();
 
+  public readonly formDataChange = output<InvoiceModel>();
+  public readonly dirty = output<boolean>();
+  public readonly valid = output<boolean>();
+  /** the parent opens the person/org picker and writes the receiver back into formData */
+  public readonly receiverSelect = output<void>();
+
+  protected readonly positionsValid = signal(false);
+
   protected invoiceIdI18n = computed(() => ({
-    name: 'invoiceId', label: this.i18n().id_label(), placeholder: this.i18n().id_placeholder(), helper: this.i18n().id_helper()
+    name: 'invoiceId', label: this.i18n().id_label(), placeholder: '', helper: this.i18n().id_helper()
   } as TextInputI18n));
 
   protected titleI18n = computed(() => ({
     name: 'title', label: this.i18n().title_label(), placeholder: this.i18n().title_placeholder(), helper: this.i18n().title_helper()
   } as TextInputI18n));
-
-  protected amountI18n = computed(() => ({
-    name: 'amount', label: this.i18n().amount_label(), placeholder: this.i18n().amount_placeholder(), helper: this.i18n().amount_helper()
-  } as NumberInputI18n));
 
   protected notesI18n = computed(() => ({
     name: 'notes', label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder()
@@ -118,12 +157,6 @@ export class InvoiceEditForm {
   protected invoiceDateI18n = computed(() => ({ name: 'invoiceDate', label: this.i18n().invoice_date_label(), placeholder: this.i18n().invoice_date_placeholder(), helper: this.i18n().invoice_date_helper() } as DateInputI18n));
   protected dueDateI18n = computed(() => ({ name: 'dueDate', label: this.i18n().due_date_label(), placeholder: this.i18n().due_date_placeholder(), helper: this.i18n().due_date_helper() } as DateInputI18n));
   protected paymentDateI18n = computed(() => ({ name: 'paymentDate', label: this.i18n().payment_date_label(), placeholder: this.i18n().payment_date_placeholder(), helper: this.i18n().payment_date_helper() } as DateInputI18n));
-  protected vatTypeI18n = computed(() => ({ name: 'vatType', label: this.i18n().vat_type() } as StringSelectI18n));
-  protected stateI18n   = computed(() => ({ name: 'state',   label: this.i18n().state_label()   } as StringSelectI18n));
-
-  public readonly formDataChange = output<InvoiceModel>();
-  public readonly dirty = output<boolean>();
-  public readonly valid = output<boolean>();
 
   protected readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   private readonly validationResult = computed(() =>
@@ -131,44 +164,46 @@ export class InvoiceEditForm {
   );
   protected dueDateErrors = computed(() => this.validationResult().getErrors('dueDate'));
   protected invoiceDateErrors = computed(() => this.validationResult().getErrors('invoiceDate'));
-  protected paymentDateErrors = computed(() => this.validationResult().getErrors('paymentDate'));
-  protected invoiceIdErrors = computed(() => this.validationResult().getErrors('invoiceId'));
   protected titleErrors = computed(() => this.validationResult().getErrors('title'));
+  protected notesErrors = computed(() => this.validationResult().getErrors('notes'));
 
   constructor() {
-    effect(() => this.valid.emit(this.validationResult().isValid()));
+    effect(() => this.valid.emit(this.validationResult().isValid() && this.positionsValid()));
   }
-
-  protected readonly states = INVOICE_STATES;
-  protected readonly vatTypes = VAT_TYPES;
 
   protected readonly title = computed(() => this.formData()?.title ?? '');
   protected readonly invoiceId = computed(() => this.formData()?.invoiceId ?? '');
   protected readonly invoiceDate = computed(() => this.formData()?.invoiceDate ?? '');
   protected readonly dueDate = computed(() => this.formData()?.dueDate ?? '');
-  protected readonly amountInCHF = computed(() => (this.formData()?.totalAmount?.amount ?? 0) / 100);
-  protected readonly vatType = computed(() => this.formData()?.vatType ?? 'exempt');
-  protected readonly state = computed(() => this.formData()?.state ?? 'draft');
   protected readonly paymentDate = computed(() => this.formData()?.paymentDate ?? '');
-  protected readonly tags = computed(() => this.formData()?.tags ?? DEFAULT_TAGS);
   protected readonly notes = computed(() => this.formData()?.notes ?? DEFAULT_NOTES);
+  protected readonly receiverName = computed(() => {
+    const r = this.formData()?.receiver;
+    return r ? (r.label || `${r.name1 ?? ''} ${r.name2 ?? ''}`.trim()) : '';
+  });
+  /** a draft shows the running total of its positions; an invoice without positions its stored amount */
+  protected readonly total = computed(() => {
+    const positions = this.positions();
+    const amount = positions.length > 0 ? positionsTotal(positions) : (this.formData()?.totalAmount?.amount ?? 0) / 100;
+    return amount.toFixed(2);
+  });
+  protected readonly stateLabel = computed(() => {
+    const i18n = this.i18n();
+    switch (this.formData()?.state) {
+      case 'paid': return i18n.state_paid();
+      case 'pending': case 'issuing': return i18n.state_pending();
+      case 'overdue': return i18n.state_overdue();
+      case 'cancelled': return i18n.state_cancelled();
+      default: return i18n.state_draft();
+    }
+  });
 
   protected onFieldChange(fieldName: string, fieldValue: string | string[]): void {
     this.dirty.emit(true);
     this.formDataChange.emit({ ...this.formData(), [fieldName]: fieldValue });
   }
 
-  protected onAmountChange(amountInCHF: number | null): void {
-    const cents = Math.round((amountInCHF ?? 0) * 100);
-    const current = this.formData();
-    this.formDataChange.emit({
-      ...current,
-      totalAmount: {
-        amount: cents,
-        currency: current.totalAmount?.currency ?? 'CHF',
-        periodicity: current.totalAmount?.periodicity ?? 'one-time',
-      },
-    });
-    this.dirty.emit(true);
+  protected onPositionsChange(positions: InvoicePositionInput[]): void {
+    this.positions.set(positions);
   }
 }
