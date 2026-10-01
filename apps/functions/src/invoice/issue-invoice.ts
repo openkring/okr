@@ -77,12 +77,15 @@ function blockersOf(invoice: InvoiceDoc, positions: PositionInput[], receivables
 }
 
 /**
- * The account exists, belongs to this accounting tenant and is a leaf (same rule as postBankImport,
- * read inside the posting transaction). Reads only, so it must run before the first write.
+ * The account exists, belongs to this accounting tenant and is a leaf (same rule as postBankImport).
+ * Without `tx` it is the cheap pre-check before numbering; with `tx` the authoritative check in the
+ * posting transaction (reads only, so it must run before the first write).
  */
-async function assertLeafAccount(db: Firestore, tx: Transaction, accountingTenantId: string, accountKey: string): Promise<void> {
-  const account = (await tx.get(db.collection(ACCOUNT_COLLECTION).doc(accountKey))).data();
-  const children = await tx.get(db.collection(ACCOUNT_COLLECTION).where('parentKey', '==', accountKey).limit(1));
+async function assertLeafAccount(db: Firestore, accountingTenantId: string, accountKey: string, tx?: Transaction): Promise<void> {
+  const accountRef = db.collection(ACCOUNT_COLLECTION).doc(accountKey);
+  const childrenQuery = db.collection(ACCOUNT_COLLECTION).where('parentKey', '==', accountKey).limit(1);
+  const account = (tx ? await tx.get(accountRef) : await accountRef.get()).data();
+  const children = tx ? await tx.get(childrenQuery) : await childrenQuery.get();
   if (!account || account['accountingTenantId'] !== accountingTenantId || !children.empty) {
     throw refuse('account-invalid', `account ${accountKey} is not a leaf account of ${accountingTenantId}`, { accountKey });
   }
@@ -110,7 +113,10 @@ interface Preflight {
   fiscalYearStart: number;
 }
 
-/** Steps 2 and 3: the config allows issuing here, nothing blocks the draft, its period is open (accounts: final tx). */
+/**
+ * Steps 2 and 3, before a number is taken: the config allows issuing here, nothing blocks the draft,
+ * its accounts are leaves and its period is open. The final transaction re-checks accounts and period.
+ */
 async function checkIssuable(db: Firestore, tenantId: string, invoiceKey: string, pre: InvoiceDoc): Promise<Preflight> {
   const accountingTenantId = String(pre['accountingTenantId'] ?? '');
   if (!accountingTenantId) throw refuse('no-accounting-config', `invoice ${invoiceKey} has no accounting tenant`);
@@ -130,6 +136,9 @@ async function checkIssuable(db: Firestore, tenantId: string, invoiceKey: string
   const blockers = blockersOf(pre, prePositions, receivablesKey, templateId);
   if (blockers.length > 0) {
     throw refuse('issue-blocked', `invoice ${invoiceKey} cannot be issued: ${blockers.join(', ')}`, { reasons: blockers });
+  }
+  for (const key of [...new Set([receivablesKey, ...prePositions.map((p) => p.accountKey)])]) {
+    await assertLeafAccount(db, accountingTenantId, key);
   }
   await assertPeriodsOpen(db, issuePeriodKeys(accountingTenantId, String(pre['invoiceDate'] ?? ''), fiscalYearStart));
   return { receivablesKey, templateId, fiscalYearStart };
@@ -264,19 +273,24 @@ export const issueInvoice = onCall(
         if (!current) throw new HttpsError('not-found', `invoice ${invoiceKey} not found`);
         const bookingExists = (await tx.get(bookingRef)).exists;
         const decision = finalizeDecision(
-          { state: String(current['state'] ?? ''), invoiceNo: Number(current['invoiceNo'] ?? 0), issueRunId: String(current['issueRunId'] ?? '') },
+          {
+            state: String(current['state'] ?? ''),
+            invoiceNo: Number(current['invoiceNo'] ?? 0),
+            issueRunId: String(current['issueRunId'] ?? ''),
+          },
           { expectedInvoiceNo: invoiceNo, expectedRunId: runId, bookingExists },
         );
         if (decision === 'return-stored') return storedResult(current); // a concurrent run won: write nothing
         if (decision === 'refuse') throw refuse('state-changed', `invoice ${invoiceKey} changed while it was issued`);
         await assertPeriodsOpen(db, periodKeys, tx);
         for (const key of [...new Set([receivablesKey, ...positions.map((p) => p.accountKey)])]) {
-          await assertLeafAccount(db, tx, accountingTenantId, key);
+          await assertLeafAccount(db, accountingTenantId, key, tx);
         }
         let bookingNo = 0;
         if (decision === 'write') {
           const ledger = await tx.get(db.collection(BOOKING_COLLECTION).where('accountingTenantId', '==', accountingTenantId));
-          bookingNo = nextBookingNo(ledger.docs.map((s) => s.data() as { date?: string; bookingNo?: number }), Number(invoiceDate.substring(0, 4)));
+          const ledgerRows = ledger.docs.map((s) => s.data() as { date?: string; bookingNo?: number });
+          bookingNo = nextBookingNo(ledgerRows, Number(invoiceDate.substring(0, 4)));
         }
 
         // writes
