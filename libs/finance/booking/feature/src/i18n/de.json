@@ -164,6 +164,7 @@
     "locked": "Dieses Jahr ist abgeschlossen. Buchungen darin können nicht mehr geändert werden."
   },
   "write": {
-    "failed": "Die Buchung konnte nicht gespeichert werden."
+    "failed": "Die Buchung konnte nicht gespeichert werden.",
+    "costCenterInvalid": "Die gewählte Kostenstelle ist nicht mehr aktiv — bitte wähle eine andere."
   }
 }

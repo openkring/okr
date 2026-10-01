@@ -13,6 +13,7 @@ import { getTodayStr, getYear } from '@okr/shared-util-core';
 import { exportCsv } from '@okr/shared-util-angular';
 
 import { AccountingStore } from '@okr/finance-accounting-feature';
+import { CostCenterStore } from '@okr/finance-cost-center-feature';
 import { AccountService } from '@okr/finance-account-data-access';
 import { VatCodeService } from '@okr/finance-vat-code-data-access';
 import { BookingLineService, BookingService, ReviewBookingLine } from '@okr/finance-booking-data-access';
@@ -29,6 +30,7 @@ import {
   buildReceiptPayload,
   canReviewBooking,
   collectReceiptPayments,
+  bookingWriteErrorReason,
   copyBooking,
   isForReview,
   JournalRow,
@@ -64,6 +66,7 @@ export const BookingStore = signalStore(
     bookingLineService: inject(BookingLineService),
     periodService: inject(PeriodService),
     accountingStore: inject(AccountingStore),
+    costCenterStore: inject(CostCenterStore),
     appStore: inject(AppStore),
     modalController: inject(ModalController),
     alertController: inject(AlertController),
@@ -359,7 +362,10 @@ export const BookingStore = signalStore(
      */
     async openCopy(booking: BookingModel, lines: BookingLineModel[]): Promise<void> {
       if (store.isReadOnly()) return;
-      const copy = copyBooking(booking, lines, getTodayStr());
+      // drop copied Kostenstellen that are no longer active leaves — but only once they are loaded,
+      // an empty list while loading would strip every key
+      const costCenters = store.costCenterStore.isLoading() ? undefined : store.costCenterStore.costCenters();
+      const copy = copyBooking(booking, lines, getTodayStr(), costCenters);
       await this.openEdit(copy.booking, copy.lines, false);
     },
 
@@ -414,8 +420,16 @@ export const BookingStore = signalStore(
 
     /** Toast for a refused ledger write: a locked period gets its own message. */
     async toastWriteError(error: unknown): Promise<void> {
-      const reason = (error as { details?: { reason?: string } })?.details?.reason;
-      await this.toast(reason === 'period-locked' ? store.i18n.period_locked() : store.i18n.write_failed());
+      await this.toast(this.refusalMessage(error) ?? store.i18n.write_failed());
+    },
+
+    /** The explained refusals of a ledger callable: a locked period, a Kostenstelle no longer active. */
+    refusalMessage(error: unknown): string | undefined {
+      switch (bookingWriteErrorReason(error)) {
+        case 'period-locked':       return store.i18n.period_locked();
+        case 'cost-center-invalid': return store.i18n.write_costCenterInvalid();
+        default:                    return undefined;
+      }
     },
 
     /**
@@ -485,8 +499,7 @@ export const BookingStore = signalStore(
           ? `${store.i18n.review_approved()} (${result.bookingNo})`
           : store.i18n.review_rejected());
       } catch (error) {
-        const reason = (error as { details?: { reason?: string } })?.details?.reason;
-        await this.toast(reason === 'period-locked' ? store.i18n.period_locked() : store.i18n.review_failed());
+        await this.toast(this.refusalMessage(error) ?? store.i18n.review_failed());
       }
       // Reload either way: on failure the local state may still be stale from an earlier attempt.
       store.bookingsResource.reload();

@@ -164,6 +164,7 @@
     "locked": "Quest'anno è chiuso. Le sue registrazioni non possono più essere modificate."
   },
   "write": {
-    "failed": "La registrazione non è stata salvata."
+    "failed": "La registrazione non è stata salvata.",
+    "costCenterInvalid": "Il centro di costo scelto non è più attivo — scegline un altro."
   }
 }

@@ -1,5 +1,5 @@
 import { AccountModel, AvatarInfo, BookingLineModel, BookingModel, MoneyModel } from '@okr/shared-models';
-import { convertDateFormatToString, DateFormat, isProfitAndLossAccountId } from '@okr/shared-util-core';
+import { convertDateFormatToString, CostCenterLike, DateFormat, isActiveLeafCostCenter, isProfitAndLossAccountId } from '@okr/shared-util-core';
 
 /**
  * One part of a split booking, as shown when the journal row is expanded: a Soll account against a
@@ -429,11 +429,15 @@ export function pairsTotal(pairs: BookingPair[]): number {
  * voucher (`documentKey`) and period, the review status, and — because they hang on the original's
  * key — its Belege and comments. The copy starts as a `draft`; the `writeBooking` CF assigns the
  * booking number when it is saved.
+ * With `costCenters` given, a copied Kostenstelle that is no longer an active leaf of the booking's
+ * accounting tenant (archived, turned into a group, …) is dropped: `writeBooking` would refuse it
+ * as a new key, and the editor's picker could not show it.
  */
 export function copyBooking(
   booking: BookingModel,
   lines: BookingLineModel[],
   date: string,
+  costCenters?: CostCenterLike[],
 ): { booking: BookingModel; lines: BookingLineModel[] } {
   const tenantId = booking.tenants[0] ?? '';
   const copy = new BookingModel(tenantId, booking.accountingTenantId);
@@ -453,8 +457,19 @@ export function copyBooking(
       copiedLine.exchangeRateKey = line.exchangeRateKey;
       copiedLine.vatCodeKey = line.vatCodeKey;
       copiedLine.description = line.description ?? '';
-      copiedLine.costCenterKey = line.costCenterKey ?? '';
+      const costCenterKey = line.costCenterKey ?? '';
+      copiedLine.costCenterKey = !costCenters || isActiveLeafCostCenter(costCenterKey, booking.accountingTenantId, costCenters)
+        ? costCenterKey : '';
       return copiedLine;
     }),
   };
+}
+
+/** The reasons a ledger callable (`writeBooking`, `reviewBooking`) attaches to a refusal that get their own toast. */
+export type BookingWriteErrorReason = 'period-locked' | 'cost-center-invalid';
+
+/** The `details.reason` of a refused ledger write, when it is one the UI explains; undefined otherwise. */
+export function bookingWriteErrorReason(error: unknown): BookingWriteErrorReason | undefined {
+  const reason = (error as { details?: { reason?: unknown } } | undefined)?.details?.reason;
+  return reason === 'period-locked' || reason === 'cost-center-invalid' ? reason : undefined;
 }

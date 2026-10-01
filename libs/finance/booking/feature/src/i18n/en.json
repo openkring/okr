@@ -164,6 +164,7 @@
     "locked": "This year is closed. Its bookings can no longer be changed."
   },
   "write": {
-    "failed": "The booking could not be saved."
+    "failed": "The booking could not be saved.",
+    "costCenterInvalid": "The selected cost centre is no longer active — please choose another one."
   }
 }

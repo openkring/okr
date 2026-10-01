@@ -40,6 +40,7 @@ export const BOOKING_I18N_KEYS = {
   review_failed:               PFX + 'review.failed',
   period_locked:               PFX + 'period.locked',
   write_failed:                PFX + 'write.failed',
+  write_costCenterInvalid:     PFX + 'write.costCenterInvalid',
   // status labels double as the okr-list-filter category labels — getItemLabel builds
   // `${i18n}.${category.name}.${item.name}.label`, so the '.label' suffix is mandatory here.
   status_draft:                PFX + 'status.draft.label',

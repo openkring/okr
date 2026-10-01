@@ -164,6 +164,7 @@
     "locked": "Cette année est clôturée. Ses écritures ne peuvent plus être modifiées."
   },
   "write": {
-    "failed": "L'écriture n'a pas pu être enregistrée."
+    "failed": "L'écriture n'a pas pu être enregistrée.",
+    "costCenterInvalid": "Le centre de coûts choisi n'est plus actif — choisis-en un autre."
   }
 }

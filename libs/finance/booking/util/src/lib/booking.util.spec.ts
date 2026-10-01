@@ -11,6 +11,7 @@ import {
   sideAccountKeys,
   bookingMonth,
   bookingYear,
+  bookingWriteErrorReason,
   copyBooking,
   emptyBookingPair,
   formatMinorAmount,
@@ -356,6 +357,25 @@ describe('copyBooking', () => {
     const back = pairsToLines(linesToPairs(copy.lines), 'scs', 'gss', 'b2');
     expect(back.filter(l => l.debitAmount).map(l => [l.costCenterKey, l.debitAmount?.amount])).toEqual([['cc-jun', 70000], ['cc-reg', 50000]]);
   });
+
+  it('drops a copied Kostenstelle that is no longer an active leaf when the cost centres are passed', () => {
+    const { booking } = source();
+    const mk = (cc: string): BookingLineModel => {
+      const l = new BookingLineModel('scs', 'gss');
+      l.accountKey = 'scs-6300'; l.costCenterKey = cc;
+      return l;
+    };
+    const centers = [
+      { okey: 'cc-jun', parentKey: '', type: 'leaf' as const, accountingTenantId: 'gss' },
+      { okey: 'cc-old', parentKey: '', type: 'leaf' as const, isArchived: true, accountingTenantId: 'gss' },
+      { okey: 'cc-grp', parentKey: '', type: 'group' as const, accountingTenantId: 'gss' },
+      { okey: 'cc-scs', parentKey: '', type: 'leaf' as const, accountingTenantId: 'scs' },
+    ];
+    const lines = [mk('cc-jun'), mk('cc-old'), mk('cc-grp'), mk('cc-scs'), mk('')];
+    expect(copyBooking(booking, lines, '20250916', centers).lines.map(l => l.costCenterKey)).toEqual(['cc-jun', '', '', '', '']);
+    // without the list the keys are copied as they are (the server still validates them)
+    expect(copyBooking(booking, lines, '20250916').lines.map(l => l.costCenterKey)).toEqual(['cc-jun', 'cc-old', 'cc-grp', 'cc-scs', '']);
+  });
 });
 
 describe('split bookings', () => {
@@ -488,5 +508,18 @@ describe('Kostenstelle on pairs', () => {
   it('withPairAccount clears the key for an unknown account', () => {
     const p = withPairAccount({ ...emptyBookingPair(), debitCostCenterKey: 'cc-jun' }, 'debit', 'nope', []);
     expect(p.debitCostCenterKey).toBe('');
+  });
+});
+
+describe('bookingWriteErrorReason', () => {
+  it('reads the reason a ledger callable attaches to its HttpsError', () => {
+    expect(bookingWriteErrorReason({ details: { reason: 'period-locked' } })).toBe('period-locked');
+    expect(bookingWriteErrorReason({ details: { reason: 'cost-center-invalid', costCenterKey: 'k' } })).toBe('cost-center-invalid');
+  });
+  it('is undefined for an unknown reason, no details or a non-object', () => {
+    expect(bookingWriteErrorReason({ details: { reason: 'other' } })).toBeUndefined();
+    expect(bookingWriteErrorReason(new Error('x'))).toBeUndefined();
+    expect(bookingWriteErrorReason(undefined)).toBeUndefined();
+    expect(bookingWriteErrorReason('boom')).toBeUndefined();
   });
 });
