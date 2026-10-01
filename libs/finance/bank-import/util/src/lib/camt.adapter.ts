@@ -5,7 +5,7 @@ import { BankImportError, ParsedRow, ParsedWarning, ParsedStatement } from './ty
 /** camt.053 (statement) / camt.054 (notification), any version; namespace-agnostic (spec 1.2 §4.1). */
 export function matchesCamtHeader(lines: string[]): boolean {
   const head = lines.join(' ');
-  return head.includes('<Document') && /urn:iso:std:iso:20022:tech:xsd:camt\.05[34]/.test(head);
+  return /<(\w+:)?Document[\s>]/.test(head) && /urn:iso:std:iso:20022:tech:xsd:camt\.05[34]/.test(head);
 }
 
 const kids = (el: Element | undefined, name: string): Element[] =>
@@ -24,6 +24,12 @@ function toMinor(value: string): number | undefined {
 }
 const storeDate = (iso: string): string => iso.substring(0, 10).replace(/-/g, '');
 
+/** Amount from AmtDtls: counter-value first, then the transaction/instructed amount if in the account currency, else whatever exists. */
+function detailAmount(tx: Element, currency: string): Element | undefined {
+  const cand = ['CntrValAmt', 'TxAmt', 'InstdAmt'].map(n => path(tx, 'AmtDtls', n, 'Amt'));
+  return cand[0] ?? cand.find(a => a?.getAttribute('Ccy') === currency) ?? cand.find(Boolean);
+}
+
 export function parseCamt(xml: string): ParsedStatement {
   const doc = new DOMParser().parseFromString(xml, 'application/xml');
   if (doc.getElementsByTagName('parsererror').length) throw new BankImportError('unknown-format', 'camt: invalid XML');
@@ -32,7 +38,10 @@ export function parseCamt(xml: string): ParsedStatement {
   if (stmts.length === 0) throw new BankImportError('empty-file', 'camt');
 
   const first = stmts[0];
-  const iban = text(path(first, 'Acct', 'Id', 'IBAN')).replace(/\s/g, '').toUpperCase();
+  const last = stmts[stmts.length - 1];
+  const ibanOf = (st: Element): string => text(path(st, 'Acct', 'Id', 'IBAN')).replace(/\s/g, '').toUpperCase();
+  const iban = ibanOf(first);
+  if (stmts.some(st => ibanOf(st) !== iban)) throw new BankImportError('unknown-format', 'camt: several accounts in one file');
   const currency = text(path(first, 'Acct', 'Ccy')) || 'CHF';
   const rows: ParsedRow[] = [];
   const warnings: ParsedWarning[] = [];
@@ -49,13 +58,21 @@ export function parseCamt(xml: string): ParsedStatement {
         warnings.push({ code: 'line-skipped', lineNo: lineNo + 1, detail: `${ntryRef} (${status})` });
         continue;
       }
-      const reversal = text(kid(ntry, 'RvslInd')) === 'true';
+      // CdtDbtInd of a reversal entry is its own direction and the encoding is unconfirmed: book manually.
+      if (text(kid(ntry, 'RvslInd')) === 'true') {
+        warnings.push({ code: 'line-skipped', lineNo: lineNo + 1, detail: `Storno ${ntryRef}` });
+        continue;
+      }
       const date = storeDate(text(path(ntry, 'BookgDt', 'Dt')) || text(path(ntry, 'BookgDt', 'DtTm')) || text(path(ntry, 'ValDt', 'Dt')));
-      const txs = kids(path(ntry, 'NtryDtls'), 'TxDtls');
+      if (!/^\d{8}$/.test(date)) {
+        warnings.push({ code: 'line-skipped', lineNo: lineNo + 1, detail: `${ntryRef} (no date)` });
+        continue;
+      }
+      const txs = kids(ntry, 'NtryDtls').flatMap(d => kids(d, 'TxDtls'));
       const parts = txs.length ? txs : [undefined];
       for (const tx of parts) {
         lineNo += 1;
-        const amtEl = (tx && (kid(tx, 'Amt') || path(tx, 'AmtDtls', 'TxAmt', 'Amt'))) || (txs.length <= 1 ? kid(ntry, 'Amt') : undefined);
+        const amtEl = (tx && (kid(tx, 'Amt') || detailAmount(tx, currency))) || (txs.length <= 1 ? kid(ntry, 'Amt') : undefined);
         const ind = text((tx && kid(tx, 'CdtDbtInd')) || kid(ntry, 'CdtDbtInd'));
         const minor = toMinor(text(amtEl));
         if (minor === undefined) {
@@ -65,12 +82,13 @@ export function parseCamt(xml: string): ParsedStatement {
         const credit = ind !== 'DBIT';
         const payee = text(path(tx, 'RltdPties', credit ? 'Dbtr' : 'Cdtr', 'Nm'))
           || text(path(tx, 'RltdPties', credit ? 'Dbtr' : 'Cdtr', 'Pty', 'Nm'));
-        const info = text(path(tx, 'AddtlTxInf')) || text(path(tx, 'RmtInf', 'Ustrd')) || text(kid(ntry, 'AddtlNtryInf'));
+        const infos = [...new Set([text(path(tx, 'AddtlTxInf')), text(path(tx, 'RmtInf', 'Ustrd'))].filter(Boolean))];
+        const info = infos.length ? infos.join(' ') : text(kid(ntry, 'AddtlNtryInf'));
         rows.push({
           date,
           rawText: [info, payee].filter(Boolean).join(' '),
           payee,
-          amount: credit !== reversal ? minor : -minor,
+          amount: credit ? minor : -minor,
           currency: amtEl?.getAttribute('Ccy') || currency,
           bankReference: text(path(tx, 'Refs', 'AcctSvcrRef')) || text(kid(ntry, 'AcctSvcrRef')),
           paymentReference: normalizeQrReference(text(path(tx, 'RmtInf', 'Strd', 'CdtrRefInf', 'Ref'))),
@@ -83,7 +101,7 @@ export function parseCamt(xml: string): ParsedStatement {
   return {
     format: 'camt', iban, currency, bankName: '',
     dateFrom: storeDate(text(path(first, 'FrToDt', 'FrDtTm'))),
-    dateTo: storeDate(text(path(first, 'FrToDt', 'ToDtTm'))),
+    dateTo: storeDate(text(path(last, 'FrToDt', 'ToDtTm'))),
     rows, warnings, newestFirst: false,
   };
 }

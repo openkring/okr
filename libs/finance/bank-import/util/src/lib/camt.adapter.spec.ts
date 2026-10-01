@@ -88,9 +88,43 @@ describe('parseCamt (robustness)', () => {
     expect(s.warnings).toHaveLength(1);
     expect(s.warnings[0].code).toBe('line-skipped');
   });
-  it('flips the sign of a reversal', () => {
+  it('skips a reversal entry with a Storno warning', () => {
     const s = parseCamt(wrap(ntry('', '<RvslInd>true</RvslInd>')));
-    expect(s.rows[0].amount).toBe(-20000);
+    expect(s.rows).toHaveLength(0);
+    expect(s.warnings).toHaveLength(1);
+    expect(s.warnings[0].detail).toContain('Storno');
+  });
+  it('skips an entry without a usable date', () => {
+    const s = parseCamt(wrap(ntry('').replace('<BookgDt><Dt>2026-10-01</Dt></BookgDt>', '')));
+    expect(s.rows).toHaveLength(0);
+    expect(s.warnings[0].code).toBe('line-skipped');
+  });
+  it('rejects several accounts in one file', () => {
+    const stmt = (iban: string): string => `<Ntfctn><Acct><Id><IBAN>${iban}</IBAN></Id></Acct></Ntfctn>`;
+    const doc = (a: string, b: string): string => `<Document xmlns="urn:iso:std:iso:20022:tech:xsd:camt.054.001.08"><BkToCstmrDbtCdtNtfctn>${stmt(a)}${stmt(b)}</BkToCstmrDbtCdtNtfctn></Document>`;
+    expect(() => parseCamt(doc('CH9300762011623852957', 'CH5604835012345678009'))).toThrow(/several accounts/);
+  });
+  it('merges several statements of the same account, dateTo from the last', () => {
+    const stmt = (to: string): string => `<Stmt><FrToDt><FrDtTm>2026-10-01T00:00:00</FrDtTm><ToDtTm>${to}T23:59:59</ToDtTm></FrToDt><Acct><Id><IBAN>CH9300762011623852957</IBAN></Id></Acct>${ntry('')}</Stmt>`;
+    const s = parseCamt(`<Document xmlns="urn:iso:std:iso:20022:tech:xsd:camt.053.001.04"><BkToCstmrStmt>${stmt('2026-10-01')}${stmt('2026-10-05')}</BkToCstmrStmt></Document>`);
+    expect(s.rows).toHaveLength(2);
+    expect(s.dateTo).toBe('20261005');
+  });
+  it('accepts a prefixed Document root', () => {
+    expect(matchesCamtHeader(['<ns2:Document xmlns:ns2="urn:iso:std:iso:20022:tech:xsd:camt.053.001.04">'])).toBe(true);
+  });
+  it('prefers the counter value in the account currency', () => {
+    const s = parseCamt(wrap(ntry('<NtryDtls><TxDtls><AmtDtls><TxAmt><Amt Ccy="EUR">90.00</Amt></TxAmt><CntrValAmt><Amt Ccy="CHF">100.00</Amt></CntrValAmt></AmtDtls></TxDtls></NtryDtls>').replace('<Acct>', '<Acct>')).replace('</IBAN></Id>', '</IBAN></Id><Ccy>CHF</Ccy>'));
+    expect(s.rows[0].amount).toBe(10000);
+    expect(s.rows[0].currency).toBe('CHF');
+  });
+  it('reads TxDtls from every NtryDtls', () => {
+    const s = parseCamt(wrap(ntry('<NtryDtls><TxDtls><Amt Ccy="CHF">1.00</Amt></TxDtls></NtryDtls><NtryDtls><TxDtls><Amt Ccy="CHF">2.00</Amt></TxDtls></NtryDtls>')));
+    expect(s.rows.map(r => r.amount)).toEqual([100, 200]);
+  });
+  it('joins AddtlTxInf and Ustrd in rawText', () => {
+    const s = parseCamt(wrap(ntry('<NtryDtls><TxDtls><Amt Ccy="CHF">1.00</Amt><AddtlTxInf>Info</AddtlTxInf><RmtInf><Ustrd>Beitrag</Ustrd></RmtInf></TxDtls></NtryDtls>')));
+    expect(s.rows[0].rawText).toBe('Info Beitrag');
   });
   it('a single TxDtls without Amt uses the entry amount', () => {
     const s = parseCamt(wrap(ntry('<NtryDtls><TxDtls><AddtlTxInf>x</AddtlTxInf></TxDtls></NtryDtls>')));
