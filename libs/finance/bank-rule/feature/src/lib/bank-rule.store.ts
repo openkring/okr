@@ -63,7 +63,7 @@ export const BankRuleStore = signalStore(
       await modal.present();
       const { data, role } = await modal.onDidDismiss();
       if (role !== 'confirm' || !data) return undefined;
-      const edited = normalizeRuleForSave(data as BankRuleModel);
+      const edited = normalizeRuleForSave(data as BankRuleModel, store.accounts());
       if (edited.okey?.length > 0) {
         await store.bankRuleService.update(edited, store.currentUser());
       } else {

@@ -6,6 +6,7 @@ import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-
 import { coerceBoolean, safeStructuredClone } from '@okr/shared-util-core';
 
 import { AccountForm } from '@okr/finance-account-ui';
+import { withCostCenterForAccountId } from '@okr/finance-account-util';
 import { dismissOverlay } from '@okr/shared-util-angular';
 import { CostCenterStore } from '@okr/finance-cost-center-feature';
 import { AccountStore } from './account.store';
@@ -68,7 +69,7 @@ export class AccountEditModal {
   protected tenantId = computed(() => this.store.appStore.tenantId());
 
   public async save(): Promise<void> {
-    await dismissOverlay(this.store.modalController, this.formData(), 'confirm');
+    await dismissOverlay(this.store.modalController, this.formData() ? withCostCenterForAccountId(this.formData() as AccountModel) : this.formData(), 'confirm');
   }
 
   public async cancel(): Promise<void> {

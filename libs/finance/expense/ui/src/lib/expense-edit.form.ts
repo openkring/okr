@@ -7,7 +7,7 @@ import {
 import { AccountModel, CategoryListModel, CostCenterModel, ExpenseModel } from '@okr/shared-models';
 import { ButtonCopy, CategorySelect, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { formatIban, IbanFormat } from '@okr/shared-util-angular';
-import { coerceBoolean, convertDateFormatToString, DateFormat, getThumbnailUrl } from '@okr/shared-util-core';
+import { coerceBoolean, convertDateFormatToString, DateFormat, getThumbnailUrl, isProfitAndLossAccountId } from '@okr/shared-util-core';
 
 import { AvatarPipe } from '@okr/avatar-ui';
 import { AccountSelect, AccountSelectI18n } from '@okr/finance-account-ui';
@@ -197,7 +197,7 @@ export interface ExpenseEditFormI18n {
                       [selectedKey]="accountKey()" (selectedKeyChange)="onFieldChange('accountKey', $event)"
                       [readOnly]="false" />
                   </ion-col>
-                  @if (costCentersEnabled()) {
+                  @if (showCostCenter()) {
                     <ion-col size="12" size-md="6">
                       <okr-cost-center-select [i18n]="costCenterI18n()" [costCenters]="costCenters()" [allowEmpty]="true"
                         [selectedKey]="costCenterId()" (selectedKeyChange)="onFieldChange('costCenterId', $event)"
@@ -353,6 +353,8 @@ export class ExpenseEditForm {
   protected currency   = linkedSignal(() => this.formData().currency ?? 'CHF');
   protected transferTo = linkedSignal(() => this.formData().transferTo ?? 'me');
   protected accountKey = linkedSignal(() => this.formData().accountKey ?? '');
+  protected showCostCenter = computed(() =>
+    this.costCentersEnabled() && isProfitAndLossAccountId(this.accounts().find(a => a.okey === this.accountKey())?.id));
   protected costCenterId = linkedSignal(() => this.formData().costCenterId ?? '');
   protected note       = linkedSignal(() => this.formData().note ?? '');
   protected status     = linkedSignal(() => this.formData().status ?? 'draft');

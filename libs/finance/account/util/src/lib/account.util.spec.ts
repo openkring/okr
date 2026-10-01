@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { AccountModel } from '@okr/shared-models';
 import * as coreUtils from '@okr/shared-util-core';
-import { accountDescendantKeys, accountSubtree, flattenAccountForest, flattenAccountTree, getAccountIndex, getDefaultExpandedKeys, isAccount, leafAccounts, parentCandidates, usedAccountIds } from './account.util';
+import { accountDescendantKeys, accountSubtree, flattenAccountForest, flattenAccountTree, getAccountIndex, getDefaultExpandedKeys, isAccount, leafAccounts, parentCandidates, usedAccountIds, withCostCenterForAccountId } from './account.util';
 
 vi.mock('@okr/shared-util-core', async importOriginal => {
   const actual = await importOriginal<typeof coreUtils>();
@@ -243,5 +243,15 @@ describe('accountSubtree', () => {
 
   it('returns just the node for a leaf', () => {
     expect(accountSubtree(tree, 'l1000').map(a => a.okey)).toEqual(['l1000']);
+  });
+});
+
+describe('withCostCenterForAccountId', () => {
+  it('keeps the key on a P&L account', () => {
+    expect(withCostCenterForAccountId({ id: '4000', costCenterKey: 'cc' } as AccountModel).costCenterKey).toBe('cc');
+  });
+  it('clears the key on a balance-sheet account', () => {
+    expect(withCostCenterForAccountId({ id: '1020', costCenterKey: 'cc' } as AccountModel).costCenterKey).toBe('');
+    expect(withCostCenterForAccountId({ id: '2000', costCenterKey: 'cc' } as AccountModel).costCenterKey).toBe('');
   });
 });
