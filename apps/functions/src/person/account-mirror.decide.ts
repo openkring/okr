@@ -8,7 +8,32 @@
 // without standing up Firestore.
 
 /** The part of `users/{uid}` this mirror cares about. */
-export type UserAccountDoc = { personKey?: string; tenants?: string[] };
+export type UserAccountDoc = { personKey?: string; tenants?: string[]; roles?: { kiosk?: boolean } };
+
+/** The part of `persons/{id}` this mirror writes. */
+export type PersonMirrorDoc = { accountTenants?: string[]; isSystem?: boolean };
+
+/**
+ * Whether one of the person's accounts is a technical one. Today that is the kiosk account (the
+ * shared tablet, `roles.kiosk`) — its person ('Logbuch') is no human and must not be picked.
+ */
+export function hasSystemAccount(users: UserAccountDoc[]): boolean {
+  return users.some(user => user.roles?.kiosk === true);
+}
+
+/**
+ * The merge patch for one person, or undefined when nothing changes.
+ *
+ * `isSystem` is only ever SET here, never cleared: it is a general marker for technical persons,
+ * and one set by hand on a person without any kiosk account must survive every recompute.
+ */
+export function personMirrorPatch(users: UserAccountDoc[], current: PersonMirrorDoc): PersonMirrorDoc | undefined {
+  const patch: PersonMirrorDoc = {};
+  const desired = accountTenantsOf(users);
+  if (!sameTenants(current.accountTenants, desired)) patch.accountTenants = desired;
+  if (hasSystemAccount(users) && current.isSystem !== true) patch.isSystem = true;
+  return Object.keys(patch).length > 0 ? patch : undefined;
+}
 
 /**
  * Which person documents must be recomputed after a write to `users/{uid}`.
@@ -22,7 +47,9 @@ export function affectedPersonKeys(before: UserAccountDoc | undefined, after: Us
   const oldKey = before?.personKey ?? '';
   const newKey = after?.personKey ?? '';
   if (oldKey === newKey) {
-    return sameTenants(before?.tenants, after?.tenants) ? [] : [oldKey].filter(key => key.length > 0);
+    const unchanged = sameTenants(before?.tenants, after?.tenants)
+      && (before?.roles?.kiosk === true) === (after?.roles?.kiosk === true);
+    return unchanged ? [] : [oldKey].filter(key => key.length > 0);
   }
   return [oldKey, newKey].filter(key => key.length > 0);
 }

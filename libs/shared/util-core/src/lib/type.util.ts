@@ -180,6 +180,17 @@ export function nameMatches(nameProperty: string, searchTerm: string | null | un
   return compareName(nameProperty, searchTerm);
 }
 
+/**
+ * Like nameMatches, but word by word: every whitespace-separated word of the search term must occur
+ * somewhere in nameProperty, in any order. A person index reads 'n:Pfeiffer z:8712 fn:Kurt', so a
+ * plain substring check never matches 'Kurt Pf' — the way people actually type a name.
+ */
+export function allTermsMatch(nameProperty: string, searchTerm: string | null | undefined): boolean {
+  const terms = (searchTerm ?? '').trim().split(/\s+/).filter(Boolean);
+  if (terms.length === 0 || (terms.length === 1 && terms[0] === 'all')) return true;
+  return terms.every(term => compareName(nameProperty, term));
+}
+
 export function compareName(name1: string, name2: string): boolean {
   return name1 && name2 ? name1.toLowerCase().indexOf(name2.toLowerCase()) > -1 : false;
 }

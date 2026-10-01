@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { accountChannels, eventUrl, pickChannels } from './deliver';
+import { accountChannels, eventUrl, pickChannels, recipientChannels } from './deliver';
 
 describe('pickChannels', () => {
   it('reads the two electronic channels', () => {
@@ -25,6 +25,21 @@ describe('accountChannels', () => {
   });
   it('skips an archived account', () => {
     expect(accountChannels([{ uid: 's', tenants: ['scs'], isArchived: true }], 'scs')).toBeUndefined();
+  });
+});
+
+describe('recipientChannels', () => {
+  const foreign = [{ uid: 'k', tenants: ['kwa'], newsDelivery: ['chat'] }];
+  it('follows the account of the tenant when there is one', () => {
+    expect(recipientChannels([{ uid: 's', tenants: ['scs'], newsDelivery: ['chat'] }], 'scs', true)).toEqual({ push: true, email: false });
+  });
+  it('skips a person without an account by default', () => {
+    expect(recipientChannels(foreign, 'scs')).toBeUndefined();
+    expect(recipientChannels([], 'scs')).toBeUndefined();
+  });
+  it('emails a person without an account when allowed', () => {
+    expect(recipientChannels(foreign, 'scs', true)).toEqual({ push: false, email: true });
+    expect(recipientChannels([], 'scs', true)).toEqual({ push: false, email: true });
   });
 });
 

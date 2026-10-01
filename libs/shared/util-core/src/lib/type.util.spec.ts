@@ -63,6 +63,7 @@ import {
     mapMove,
     // Comparison functions
     nameMatches,
+    allTermsMatch,
     numberMatches,
     // Utility functions
     removeDuplicatesFromArray,
@@ -380,6 +381,24 @@ describe('type.util', () => {
   });
 
   describe('Comparison functions', () => {
+    describe('allTermsMatch', () => {
+      const index = 'n:Pfeiffer z:8712 fn:Kurt bx:476';
+      it('matches everything without a term', () => {
+        expect(allTermsMatch(index, '')).toBe(true);
+        expect(allTermsMatch(index, '  ')).toBe(true);
+        expect(allTermsMatch(index, null)).toBe(true);
+        expect(allTermsMatch(index, 'all')).toBe(true);
+      });
+      it('matches a partial first name followed by a partial last name', () => {
+        expect(allTermsMatch(index, 'Kurt Pf')).toBe(true);
+        expect(allTermsMatch(index, 'kur  pfei')).toBe(true);
+        expect(allTermsMatch(index, 'Pfeiffer Kurt')).toBe(true);
+      });
+      it('fails when any word is missing', () => {
+        expect(allTermsMatch(index, 'Kurt Meier')).toBe(false);
+      });
+    });
+
     describe('nameMatches', () => {
       it('should return true for empty or null search terms', () => {
         expect(nameMatches('John Doe', '')).toBe(true);

@@ -1,11 +1,14 @@
 import { Component, computed, inject, input, linkedSignal, model, output } from '@angular/core';
-import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
+import { IonAvatar, IonButton, IonCard, IonCardContent, IonIcon, IonImg, IonItem, IonLabel, IonList } from '@ionic/angular/standalone';
 
 import { AvatarInfo, UserModel } from '@okr/shared-models';
 import { ModelSelectService } from '@okr/shared-feature';
-import { NotesInput, NotesInputI18n } from '@okr/shared-ui';
-import { coerceBoolean } from '@okr/shared-util-core';
-import { Avatars } from '@okr/avatar-ui';
+import { COMMENT_LENGTH } from '@okr/shared-constants';
+import { SvgIconPipe } from '@okr/shared-pipes';
+import { TextareaInput, TextInputI18n } from '@okr/shared-ui';
+import { coerceBoolean, getAvatarName } from '@okr/shared-util-core';
+import { AvatarPipe } from '@okr/avatar-ui';
+import { getDefaultIcon } from '@okr/avatar-util';
 
 import { InvitePersonsFormData, InvitePersonsI18n } from '@okr/relationship-invitation-util';
 
@@ -16,11 +19,11 @@ import { InvitePersonsFormData, InvitePersonsI18n } from '@okr/relationship-invi
  * Beide Angaben gelten fuer ALLE Ausgewaehlten — pro Person entsteht ein eigenes
  * Einladungsdokument mit demselben Text, weil der Antwortzustand pro Person gefuehrt wird.
  *
- * Die Auswahl ist auf registrierte Benutzer DIESES Mandanten eingeschraenkt (Spec „Offene
- * Anlaesse", Entscheidung 9): wer hier keinen Zugang hat, koennte die Einladung nie beantworten —
- * ein Benutzerkonto gehoert zu genau einem Mandanten, auch wenn die Person in mehreren steht.
- * Deshalb gibt es hier auch bewusst kein „Person neu anlegen" — eine frisch angelegte Person
- * haette keinen Zugang.
+ * Die Auswahl sucht zweistufig: zuerst Personen mit Benutzerkonto in DIESEM Mandanten, darunter
+ * alle uebrigen Personen. Wer kein Konto hat, bekommt die Einladung per E-Mail und antwortet ueber
+ * die signierten Links darin (onInvitationCreated, emailWithoutAccount) — das loest Entscheidung 9
+ * der Spec „Offene Anlaesse" ab, die nur registrierte Benutzer zuliess. Eine Person muss es aber
+ * geben (und sie braucht eine E-Mail-Adresse), freie Adressen gibt es hier bewusst nicht.
  *
  * Kein Vest-Suite: das einzige Kriterium ist „mindestens eine Person", und das prueft `valid`
  * direkt. Eine Suite ohne Regel waere Zeremonie.
@@ -29,34 +32,47 @@ import { InvitePersonsFormData, InvitePersonsI18n } from '@okr/relationship-invi
   selector: 'okr-invite-persons-form',
   standalone: true,
   imports: [
-    Avatars, NotesInput,
-    IonGrid, IonRow, IonCol, IonCard, IonCardContent,
+    AvatarPipe, SvgIconPipe, TextareaInput,
+    IonCard, IonCardContent, IonButton, IonIcon, IonList, IonItem, IonAvatar, IonImg, IonLabel,
   ],
-  styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
+  styles: [`
+    @media (width <= 600px) { ion-card { margin: 5px;} }
+    ion-avatar { width: 30px; height: 30px; }
+    .remove { cursor: pointer; }
+    .select { padding: 8px 16px; }
+  `],
   template: `
     @if (showForm()) {
       <form novalidate>
+        <!-- one card: who (button + picked persons) and the optional message -->
         <ion-card>
           <ion-card-content class="ion-no-padding">
-            <ion-grid>
-              @if (currentUser(); as currentUser) {
-                <ion-row>
-                  <ion-col size="12">
-                    <okr-avatars name="invitees" [avatars]="invitees()" (avatarsChange)="setInvitees($event)"
-                      [currentUser]="currentUser"
-                      [readOnly]="isReadOnly()" [editable]="true" [showButton]="true"
-                      [label]="i18n().invite_persons_label()" [addLabel]="i18n().invite_persons_add()"
-                      selectIcon="person" (selectClicked)="selectPerson()" />
-                  </ion-col>
-                </ion-row>
-              }
-              <ion-row>
-                <ion-col size="12">
-                  <okr-notes-input [i18n]="messageI18n()" [value]="message()"
-                    (valueChange)="onMessageChange($event)" [rows]="4" [readOnly]="isReadOnly()" />
-                </ion-col>
-              </ion-row>
-            </ion-grid>
+            @if (!isReadOnly()) {
+              <!-- not inside an ion-item: an item shrinks its buttons to the condensed item size -->
+              <div class="select">
+                <ion-button expand="block" (click)="selectPerson()">
+                  <ion-icon slot="start" src="{{ 'person-add' | svgIcon }}" />
+                  {{ i18n().invite_persons_select() }}
+                </ion-button>
+              </div>
+            }
+            @if (invitees().length > 0) {
+              <ion-list>
+                @for (avatar of invitees(); track avatar.key) {
+                  <ion-item>
+                    <ion-avatar slot="start">
+                      <ion-img src="{{ avatar.modelType + '.' + avatar.key | avatar:defaultIcon }}" alt="Avatar" />
+                    </ion-avatar>
+                    <ion-label>{{ avatarName(avatar) }}</ion-label>
+                    @if (!isReadOnly()) {
+                      <ion-icon class="remove" slot="end" src="{{ 'cancel' | svgIcon }}" (click)="remove($index)" />
+                    }
+                  </ion-item>
+                }
+              </ion-list>
+            }
+            <okr-textarea-input [i18n]="messageI18n()" [value]="message()" (valueChange)="onMessageChange($event)"
+              [maxLength]="messageLength" [rows]="3" [showHelper]="true" [readOnly]="isReadOnly()" />
           </ion-card-content>
         </ion-card>
       </form>
@@ -83,11 +99,12 @@ export class InvitePersonsForm {
 
   protected readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   protected readonly message = computed(() => this.formData()?.message ?? '');
+  protected readonly messageLength = COMMENT_LENGTH;
+  protected readonly defaultIcon = getDefaultIcon('person');
 
   /**
    * Seeded from the model and written back through {@link setInvitees} — the same path the message
-   * takes, so `dirty`/`valid` stay in step whether a person is added or removed (`okr-avatars`
-   * removes entries itself).
+   * takes, so `dirty`/`valid` stay in step whether a person is added or removed.
    */
   protected readonly invitees = linkedSignal(() => this.formData()?.invitees ?? []);
 
@@ -96,17 +113,25 @@ export class InvitePersonsForm {
     label: this.i18n().invite_message_label(),
     placeholder: this.i18n().invite_message_placeholder(),
     helper: this.i18n().invite_message_helper(),
-  } as NotesInputI18n));
+  } as TextInputI18n));
 
   /** Adds one person; the picker offers only registered users who are not already on the event. */
   public async selectPerson(): Promise<void> {
     const picked = [...(this.formData()?.invitees ?? [])];
     const avatar = await this.modelSelectService.selectPersonAvatar('', '', false, false, {
-      accountTenant: this.tenantId(),
+      accountsFirst: this.tenantId(),
       excludeKeys: [...this.excludeKeys(), ...picked.map(person => person.key)],
     });
     if (!avatar) return;
     this.setInvitees([...picked, avatar]);
+  }
+
+  protected remove(index: number): void {
+    this.setInvitees(this.invitees().filter((_, i) => i !== index));
+  }
+
+  protected avatarName(avatar: AvatarInfo): string {
+    return getAvatarName(avatar, this.currentUser()?.nameDisplay);
   }
 
   protected onMessageChange(message: string): void {

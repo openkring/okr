@@ -23,7 +23,7 @@ import { InvitePersonsForm } from './invite-persons.form';
   standalone: true,
   imports: [Header, ChangeConfirmation, InvitePersonsForm, IonContent],
   template: `
-    <okr-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
+    <okr-header [i18n]="headerI18n()" [isModal]="true" />
     @if (showConfirmation()) {
       <okr-change-confirmation [i18n]="changeConfirmationI18n()"
         (saveClicked)="save()" (cancelClicked)="cancel()" />
@@ -53,10 +53,13 @@ export class InvitePersonsModal {
   protected formValid = signal(false);
   protected showForm = signal(true);
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
-  protected headerTitle = computed(() => this.i18n().invite_persons_title());
+  protected headerI18n = computed(() => ({
+    title: this.i18n().invite_persons_title(),
+    shortTitle: this.i18n().invite_persons_short_title(),
+  }));
   protected changeConfirmationI18n = computed(() => ({
     cancel: this.i18n().cancel(),
-    save: this.i18n().save(),
+    save: this.i18n().invite_persons_send(),
   }));
 
   protected onFormDataChange(data: InvitePersonsFormData): void {

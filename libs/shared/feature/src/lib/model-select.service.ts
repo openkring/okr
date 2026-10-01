@@ -16,10 +16,11 @@ import { normalizeWhitespace } from "./location-select.store";
  */
 export type PersonSelectOptions = {
   /**
-   * Tenant id: offer only persons holding an app account in THAT tenant — see the invite path.
-   * A tenant rather than a boolean because an account belongs to exactly one tenant.
+   * Tenant id: two-level lookup — persons holding an app account in THAT tenant first, everybody
+   * else below a divider (the invite path). A tenant rather than a boolean because an account
+   * belongs to exactly one tenant.
    */
-  accountTenant?: string;
+  accountsFirst?: string;
   /** okeys never offered, e.g. those the caller has already picked. */
   excludeKeys?: string[];
 };
@@ -45,7 +46,7 @@ export class ModelSelectService {
         currentUser: this.appStore.currentUser(),
         allowCustom,
         membersFirst,
-        accountTenant: options.accountTenant ?? '',
+        accountsFirst: options.accountsFirst ?? '',
         excludeKeys: options.excludeKeys ?? [],
       },
     });

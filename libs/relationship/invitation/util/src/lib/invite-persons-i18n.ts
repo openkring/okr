@@ -7,11 +7,14 @@ import { Signal } from '@angular/core';
  */
 export type InvitePersonsI18n = {
   invite_persons_title: Signal<string>;
-  invite_persons_label: Signal<string>;
-  invite_persons_add: Signal<string>;
+  /** replaces the title on small screens */
+  invite_persons_short_title: Signal<string>;
+  /** the one select button of the invitee card */
+  invite_persons_select: Signal<string>;
+  /** the save button of the change confirmation — an invitation is sent, not saved */
+  invite_persons_send: Signal<string>;
   invite_message_label: Signal<string>;
   invite_message_placeholder: Signal<string>;
   invite_message_helper: Signal<string>;
   cancel: Signal<string>;
-  save: Signal<string>;
 };

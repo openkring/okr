@@ -16,7 +16,8 @@
     "empty": "No persons found.",
     "custom_use": "use as guest",
     "label": "Person",
-    "beyond_members": "More persons – not members"
+    "beyond_members": "More persons – not members",
+    "beyond_accounts": "More persons – no app access"
   },
   "resource": {
     "select": "Select resource",

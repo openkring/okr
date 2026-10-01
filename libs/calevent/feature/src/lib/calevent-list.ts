@@ -3,7 +3,7 @@ import { ActionSheetController, ActionSheetOptions, AlertController, createGestu
 import { Router } from '@angular/router';
 import { format } from 'date-fns';
 
-import type { DateSelectArg, EventInput } from '@fullcalendar/core';
+import type { DateSelectArg, DatesSetArg, EventInput } from '@fullcalendar/core';
 import type { CaleventFullcalendarView } from './calevent-fullcalendar-view';
 import { DEFAULT_DATE } from '@okr/shared-constants';
 import { AvatarInfo, CalEventModel, LocationModel, PersonModel, RoleName } from '@okr/shared-models';
@@ -521,6 +521,9 @@ export class CalEventList implements OnInit {
     });
   });
 
+  /** The view FullCalendar shows; kept in step by datesSet so the toggle button names it. */
+  protected readonly currentView = signal('timeGridWeek');
+
   // computed: the i18n signals start out empty, so buttonText must re-evaluate once they resolve
   protected calendarOptions = computed(() => ({
     events: this.calendarEvents(),
@@ -528,8 +531,16 @@ export class CalEventList implements OnInit {
     headerToolbar: {
       left: 'prev,next today',
       center: 'title',
-      right: 'dayGridMonth,timeGridWeek,timeGridDay'
+      right: 'viewToggle'
     },
+    // one button naming the current view; a click steps Tag -> Woche -> Monat -> Tag
+    customButtons: {
+      viewToggle: {
+        text: this.viewLabel(this.currentView()),
+        click: () => this.cycleView(),
+      },
+    },
+    datesSet: (arg: DatesSetArg) => { this.currentView.set(arg.view.type); },
     locale: 'de',
     buttonText: {
       today: this.store.i18n.cal_today(),
@@ -1437,6 +1448,22 @@ export class CalEventList implements OnInit {
   }
 
   /******************************* helpers *************************************** */
+
+  private viewLabel(viewType: string): string {
+    switch (viewType) {
+      case 'dayGridMonth': return this.store.i18n.cal_month();
+      case 'timeGridDay':  return this.store.i18n.cal_day();
+      default:             return this.store.i18n.cal_week();
+    }
+  }
+
+  /** Tag -> Woche -> Monat -> Tag, staying on the date currently shown. */
+  private cycleView(): void {
+    const api = this.calendarRef()?.instance.getApi();
+    if (!api) return;
+    const next: Record<string, string> = { timeGridDay: 'timeGridWeek', timeGridWeek: 'dayGridMonth', dayGridMonth: 'timeGridDay' };
+    api.changeView(next[api.view.type] ?? 'timeGridWeek', api.getDate());
+  }
 
   /** The FullCalendar view the user is currently on ('timeGridWeek', 'dayGridMonth', …). */
   private currentViewType(): string | undefined {

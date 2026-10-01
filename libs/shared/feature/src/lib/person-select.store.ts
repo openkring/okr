@@ -6,7 +6,7 @@ import { of } from 'rxjs';
 
 import { FirestoreService } from '@okr/shared-data-access';
 import { MembershipCollection, MembershipModel, PersonModel, UserModel } from '@okr/shared-models';
-import { chipMatches, DateFormat, getSystemQuery, getTodayStr, isAfterDate, nameMatches } from '@okr/shared-util-core';
+import { allTermsMatch, chipMatches, DateFormat, getSystemQuery, getTodayStr, isAfterDate } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
 
 import { AppStore } from './app.store';
@@ -21,11 +21,11 @@ export type PersonSelectState = {
   allowCustom: boolean;
   membersFirst: boolean;
   /**
-   * When set, offer only persons who hold an app account IN THIS TENANT. The tenant id itself,
-   * not a boolean: an account belongs to exactly one tenant, so "has an account" is only ever a
-   * question about one of them.
+   * When set, a two-level lookup like membersFirst: persons who hold an app account IN THIS
+   * TENANT first, everybody else below. The tenant id itself, not a boolean: an account belongs
+   * to exactly one tenant, so "has an account" is only ever a question about one of them.
    */
-  accountTenant: string;
+  accountsFirst: string;
   /** okeys never offered — e.g. people who are already on the list the caller is filling. */
   excludeKeys: string[];
 };
@@ -36,7 +36,7 @@ export const personInitialState: PersonSelectState = {
   selectedTag: '',
   allowCustom: false,
   membersFirst: false,
-  accountTenant: '',
+  accountsFirst: '',
   excludeKeys: [],
 };
 
@@ -72,22 +72,13 @@ export const PersonSelectStore = signalStore(
   withComputed((store) => {
     return {
       /**
-       * A deceased person is never offered, on either level.
-       *
-       * `accountTenant` narrows it to people who can actually log in HERE — an invitation may only
-       * reach a registered user (spec 2026-09-06 open events, decision 9), and offering somebody
-       * who could never answer is worse than not offering them. It is checked against the tenant
-       * rather than as a boolean because a person may hold accounts in several tenants and none in
-       * this one. `?? []` because every person written before `accountTenants` existed reads back
-       * undefined.
+       * Never offered, on either level: a deceased person, and a technical one (`isSystem`, e.g. the
+       * kiosk tablet's 'Logbuch' person). `?? false` because older documents lack the field.
        */
       persons: computed(() => {
         const excluded = new Set(store.excludeKeys());
-        const tenant = store.accountTenant();
         return store.appStore.allPersons().filter((p: PersonModel) =>
-          !p.isDeceased
-          && !excluded.has(p.okey)
-          && (!tenant || (p.accountTenants ?? []).includes(tenant)));
+          !p.isDeceased && !(p.isSystem ?? false) && !excluded.has(p.okey));
       }),
       isLoading: computed(() => store.appStore.isReferenceDataLoading()),
       // state === 'active' is not enough: scs has memberships left at 'active' with a dateOfExit
@@ -103,13 +94,28 @@ export const PersonSelectStore = signalStore(
     }
   }),
 
+  withComputed((store) => ({
+    /**
+     * Who belongs on the first level: current members (membersFirst), or people who can log in
+     * HERE (accountsFirst — an invitation email still reaches the rest, but an account holder is
+     * the usual guest). `?? []` because persons written before `accountTenants` read back undefined.
+     */
+    firstLevelKeys: computed(() => {
+      if (store.membersFirst()) return store.memberKeys();
+      const tenant = store.accountsFirst();
+      if (!tenant) return new Set<string>();
+      return new Set(store.persons().filter(p => (p.accountTenants ?? []).includes(tenant)).map(p => p.okey));
+    }),
+    isTwoLevel: computed(() => store.membersFirst() || store.accountsFirst().length > 0),
+  })),
+
   withComputed((store) => {
     const matches = (person: PersonModel) =>
-      nameMatches(person.index, store.searchTerm()) && chipMatches(person.tags, store.selectedTag());
+      allTermsMatch(person.index, store.searchTerm()) && chipMatches(person.tags, store.selectedTag());
     return {
       personsCount: computed(() => store.persons()?.length ?? 0),
-      /** Level 1: current members only. */
-      memberMatches: computed(() => store.persons().filter(p => store.memberKeys().has(p.okey) && matches(p))),
+      /** Level 1: current members, or account holders (see firstLevelKeys). */
+      memberMatches: computed(() => store.persons().filter(p => store.firstLevelKeys().has(p.okey) && matches(p))),
       /** Level 2: every living person, members or not. */
       personMatches: computed(() => store.persons().filter(matches)),
       customLabel: computed(() => normalizeWhitespace(store.searchTerm())),
@@ -130,15 +136,15 @@ export const PersonSelectStore = signalStore(
      * Members of the default org matching the term. Empty unless membersFirst (opt-in, currently
      * the trip/logbuch lookup) — without it there is only one, undivided section.
      */
-    memberSection: computed(() => store.membersFirst() ? store.memberMatches() : []),
+    memberSection: computed(() => store.isTwoLevel() ? store.memberMatches() : []),
     /**
      * Everyone else matching the term. With membersFirst this is the non-member remainder shown
      * BELOW the members, never instead of them: a member hit must not hide a non-member of the
      * same name (searching 'Pedersen' has to offer Jasmine next to the member Hans).
      */
     otherSection: computed(() =>
-      store.membersFirst()
-        ? store.personMatches().filter(p => !store.memberKeys().has(p.okey))
+      store.isTwoLevel()
+        ? store.personMatches().filter(p => !store.firstLevelKeys().has(p.okey))
         : store.personMatches()
     ),
   })),
@@ -146,7 +152,7 @@ export const PersonSelectStore = signalStore(
   withComputed((store) => ({
     matchCount: computed(() => store.memberSection().length + store.otherSection().length),
     /** Label the non-member remainder, so the extra names are not read as members. */
-    showOtherDivider: computed(() => store.membersFirst() && store.otherSection().length > 0),
+    showOtherDivider: computed(() => store.isTwoLevel() && store.otherSection().length > 0),
   })),
 
   withMethods((store) => {
@@ -172,8 +178,8 @@ export const PersonSelectStore = signalStore(
         patchState(store, { membersFirst });
       },
 
-      setAccountTenant(accountTenant: string) {
-        patchState(store, { accountTenant });
+      setAccountsFirst(accountsFirst: string) {
+        patchState(store, { accountsFirst });
       },
 
       setExcludeKeys(excludeKeys: string[]) {

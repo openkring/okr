@@ -242,8 +242,9 @@ export const CALEVENT_I18N_KEYS = {
   invite_message_helper:      PFX + 'invite.message.helper',
   invite_persons:             PFX + 'invite.persons.label',
   invite_persons_title:       PFX + 'invite.persons.title',
-  invite_persons_label:       PFX + 'invite.persons.invitees',
-  invite_persons_add:         PFX + 'invite.persons.add',
+  invite_persons_short_title: PFX + 'invite.persons.short_title',
+  invite_persons_select:      PFX + 'invite.persons.select',
+  invite_persons_send:        PFX + 'invite.persons.send',
   invite_persons_conf:        PFX + 'invite.persons.conf',
   invite_persons_error:       PFX + 'invite.persons.error',
 

@@ -16,7 +16,8 @@
     "empty": "Nessuna persona trovata.",
     "custom_use": "usare come ospite",
     "label": "Persona",
-    "beyond_members": "Altre persone – non soci"
+    "beyond_members": "Altre persone – non soci",
+    "beyond_accounts": "Altre persone – senza accesso all'app"
   },
   "resource": {
     "select": "Scegliere la risorsa",

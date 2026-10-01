@@ -40,6 +40,15 @@ export class PersonModel implements OkrModel, AddressableModel, SearchableModel,
    * Optional beim Lesen: jedes vor diesem Feld geschriebene Dokument liefert `undefined`.
    */
   public accountTenants: string[] = [];
+  /**
+   * Eine technische Person, kein Mensch — heute die Person hinter einem Kiosk-Konto (das
+   * gemeinsame Tablet, 'Logbuch'). Personen-Auswahlen bieten sie nie an.
+   *
+   * Gesetzt vom account-mirror (Cloud Function), sobald eines ihrer Konten `roles.kiosk` hat, und
+   * dort nie wieder geloescht: das Feld ist allgemein gemeint und darf auch von Hand gesetzt werden.
+   * Optional beim Lesen (`?? false`): aeltere Dokumente kennen es nicht.
+   */
+  public isSystem = false;
   public favZipCode = '';
   public bexioId = DEFAULT_ID;
 

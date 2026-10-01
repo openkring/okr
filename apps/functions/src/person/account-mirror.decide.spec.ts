@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { accountTenantsOf, affectedPersonKeys, sameTenants } from './account-mirror.decide';
+import { accountTenantsOf, affectedPersonKeys, hasSystemAccount, personMirrorPatch, sameTenants } from './account-mirror.decide';
 
 describe('affectedPersonKeys', () => {
   it('names the person when a user document is created', () => {
@@ -66,5 +66,39 @@ describe('sameTenants', () => {
   it('sees a real difference', () => {
     expect(sameTenants(['scs'], ['elab'])).toBe(false);
     expect(sameTenants(['scs'], ['scs', 'elab'])).toBe(false);
+  });
+});
+
+describe('kiosk role change', () => {
+  it('recomputes the person when the kiosk role is granted or revoked', () => {
+    const plain = { personKey: 'p1', tenants: ['scs'] };
+    const kiosk = { personKey: 'p1', tenants: ['scs'], roles: { kiosk: true } };
+    expect(affectedPersonKeys(plain, kiosk)).toEqual(['p1']);
+    expect(affectedPersonKeys(kiosk, plain)).toEqual(['p1']);
+    expect(affectedPersonKeys(kiosk, kiosk)).toEqual([]);
+  });
+});
+
+describe('hasSystemAccount', () => {
+  it('is true for a kiosk account only', () => {
+    expect(hasSystemAccount([{ tenants: ['scs'], roles: { kiosk: true } }])).toBe(true);
+    expect(hasSystemAccount([{ tenants: ['scs'] }, { tenants: ['kwa'], roles: { kiosk: false } }])).toBe(false);
+    expect(hasSystemAccount([])).toBe(false);
+  });
+});
+
+describe('personMirrorPatch', () => {
+  it('is undefined when nothing changes', () => {
+    expect(personMirrorPatch([{ tenants: ['scs'] }], { accountTenants: ['scs'] })).toBeUndefined();
+  });
+  it('writes the changed account tenants', () => {
+    expect(personMirrorPatch([{ tenants: ['scs'] }], {})).toEqual({ accountTenants: ['scs'] });
+  });
+  it('marks the person of a kiosk account as system', () => {
+    expect(personMirrorPatch([{ tenants: ['scs'], roles: { kiosk: true } }], { accountTenants: ['scs'] })).toEqual({ isSystem: true });
+  });
+  it('never clears a system flag set by hand', () => {
+    expect(personMirrorPatch([{ tenants: ['scs'] }], { accountTenants: ['scs'], isSystem: true })).toBeUndefined();
+    expect(personMirrorPatch([], { accountTenants: [], isSystem: true })).toBeUndefined();
   });
 });

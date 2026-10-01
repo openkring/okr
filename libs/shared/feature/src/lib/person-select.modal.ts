@@ -67,7 +67,7 @@ export type PersonSelectResult =
           @if(store.showOtherDivider()) {
             <!-- the non-member remainder follows — say so, or these names look like members -->
             <ion-item-divider color="light">
-              <ion-label>{{ store.i18n.person_beyond_members() }}</ion-label>
+              <ion-label>{{ store.accountsFirst() ? store.i18n.person_beyond_accounts() : store.i18n.person_beyond_members() }}</ion-label>
             </ion-item-divider>
           }
           @for(person of otherSection(); track person.okey) {
@@ -95,8 +95,8 @@ export class PersonSelectModal {
   public allowCustom = input<boolean>(false);
   /** Opt-in two-level lookup (members of the default org first). Off everywhere but trip/logbuch. */
   public membersFirst = input<boolean>(false);
-  /** When set, offer only persons holding an app account in THIS tenant — see PersonSelectStore.persons. */
-  public accountTenant = input<string>('');
+  /** When set, persons holding an app account in THIS tenant come first — see PersonSelectStore. */
+  public accountsFirst = input<string>('');
   /** okeys never offered, e.g. those already picked by the caller. */
   public excludeKeys = input<string[]>([]);
 
@@ -122,7 +122,7 @@ export class PersonSelectModal {
       this.store.setMembersFirst(this.membersFirst());
     });
     effect(() => {
-      this.store.setAccountTenant(this.accountTenant());
+      this.store.setAccountsFirst(this.accountsFirst());
     });
     effect(() => {
       this.store.setExcludeKeys(this.excludeKeys());

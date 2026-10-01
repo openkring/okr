@@ -15,6 +15,10 @@
 // only in A — they could never answer the invitation — and deleting one of seven accounts would
 // clear the flag entirely.
 //
+// It also marks the person of a kiosk account as `isSystem` (the shared tablet's 'Logbuch' person
+// is no human, person pickers skip it). That flag is only set here, never cleared — see
+// personMirrorPatch.
+//
 // This module is the ONLY writer of `persons/{id}.accountTenants`. The app never writes it.
 
 import { onCall } from 'firebase-functions/v2/https';
@@ -25,7 +29,7 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { PersonCollection, UserCollection } from '@okr/shared-models';
 import { checkAdminRole, checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
 
-import { accountTenantsOf, affectedPersonKeys, sameTenants, UserAccountDoc } from './account-mirror.decide';
+import { affectedPersonKeys, PersonMirrorDoc, personMirrorPatch, UserAccountDoc } from './account-mirror.decide';
 
 const REGION = 'europe-west6';
 const BATCH = 400;
@@ -50,12 +54,11 @@ async function syncPerson(personKey: string): Promise<boolean> {
     logger.warn(`syncPerson: person ${personKey} does not exist (orphaned user document)`);
     return false;
   }
-  const desired = accountTenantsOf(users.docs.map((doc) => doc.data() as UserAccountDoc));
-  const current = (person.data() as { accountTenants?: string[] }).accountTenants;
-  if (sameTenants(current, desired)) return false;
+  const patch = personMirrorPatch(users.docs.map((doc) => doc.data() as UserAccountDoc), person.data() as PersonMirrorDoc);
+  if (!patch) return false;
 
-  // merge: the person document carries the whole PII-adjacent profile, this knows one field of it
-  await person.ref.set({ accountTenants: desired }, { merge: true });
+  // merge: the person document carries the whole PII-adjacent profile, this knows two fields of it
+  await person.ref.set(patch, { merge: true });
   return true;
 }
 
@@ -106,10 +109,9 @@ export const backfillAccountTenants = onCall(
     let pending = 0;
 
     for (const doc of persons.docs) {
-      const desired = accountTenantsOf(byPerson.get(doc.id) ?? []);
-      const current = (doc.data() as { accountTenants?: string[] }).accountTenants;
-      if (sameTenants(current, desired)) continue;
-      batch.set(doc.ref, { accountTenants: desired }, { merge: true });
+      const patch = personMirrorPatch(byPerson.get(doc.id) ?? [], doc.data() as PersonMirrorDoc);
+      if (!patch) continue;
+      batch.set(doc.ref, patch, { merge: true });
       written++;
       if (++pending >= BATCH) {
         await batch.commit();

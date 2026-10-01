@@ -73,6 +73,7 @@ export * from './lib/spinner';
 export * from './lib/string-select';
 export * from './lib/string-list';
 export * from './lib/text-input';
+export * from './lib/textarea-input';
 export * from './lib/text-list';
 export * from './lib/time-input';
 export * from './lib/time-select.modal';

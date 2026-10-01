@@ -16,7 +16,8 @@
     "empty": "No se encontraron personas.",
     "custom_use": "usar como invitado",
     "label": "Persona",
-    "beyond_members": "Otras personas: no son socios"
+    "beyond_members": "Otras personas: no son socios",
+    "beyond_accounts": "Otras personas: sin acceso a la app"
   },
   "resource": {
     "select": "Seleccionar recurso",

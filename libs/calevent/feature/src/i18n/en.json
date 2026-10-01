@@ -178,8 +178,9 @@
     "persons": {
       "label": "Invite people",
       "title": "Invite people",
-      "invitees": "Who would you like to invite?",
-      "add": "Add person",
+      "short_title": "Invitation",
+      "send": "Send",
+      "select": "Choose a person to invite",
       "conf": "{count} invitations sent.",
       "error": "The invitations could not be sent."
     }

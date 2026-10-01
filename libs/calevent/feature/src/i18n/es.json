@@ -178,8 +178,9 @@
     "persons": {
       "label": "Invitar a personas",
       "title": "Invitar a personas",
-      "invitees": "¿A quién quieres invitar?",
-      "add": "Añadir persona",
+      "short_title": "Invitación",
+      "send": "Enviar",
+      "select": "Elegir una persona para invitar",
       "conf": "{count} invitaciones enviadas.",
       "error": "No se han podido enviar las invitaciones."
     }

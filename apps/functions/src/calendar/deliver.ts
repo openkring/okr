@@ -7,7 +7,9 @@
 // its bot DM for the same value, because a workflow message has no page to open.
 //
 // A person is not an account: only the account whose tenants[] holds the event's tenant counts.
-// No account there → nothing, the deep link would lead nowhere.
+// No account there → nothing, the deep link would lead nowhere. The one exception is an
+// invitation (`emailWithoutAccount`): its email carries signed answer links that work without
+// logging in, so a person without an account still gets it — by email, the only channel they have.
 //
 // Email is queued on the workflow outbox, which already holds the mail secrets and picks the
 // tenant's provider and sender. ruleKey `calevent:<okey>` keeps it out of any workflow rule's count.
@@ -36,6 +38,14 @@ export function accountChannels(accounts: AccountDoc[], tenantId: string): Chann
   return account ? pickChannels(account.newsDelivery) : undefined;
 }
 
+/**
+ * The channels for one person. With an account in the tenant, the account's own choice. Without
+ * one, email only — and only when the caller allows it (invitations, see the header).
+ */
+export function recipientChannels(accounts: AccountDoc[], tenantId: string, emailWithoutAccount = false): ChannelChoice | undefined {
+  return accountChannels(accounts, tenantId) ?? (emailWithoutAccount ? { push: false, email: true } : undefined);
+}
+
 export interface TenantLinks { appName: string; appUrl: string }
 
 export async function tenantLinks(tenantId: string): Promise<TenantLinks> {
@@ -56,6 +66,8 @@ export interface NotifyRequest {
   email: (personKey: string) => { subject: string; html: string };
   /** Outbox ruleKey, `calevent:<okey>`. */
   ruleKey: string;
+  /** true: a person without an account in the tenant is still emailed (invitations only). */
+  emailWithoutAccount?: boolean;
   context: string;
 }
 
@@ -69,7 +81,7 @@ export async function notifyPersons(req: NotifyRequest): Promise<{ pushed: numbe
   await Promise.all([...new Set(req.personKeys)].filter(Boolean).map(async (personKey) => {
     try {
       const snap = await db.collection('users').where('personKey', '==', personKey).get();
-      const choice = accountChannels(snap.docs.map((d) => ({ uid: d.id, ...d.data() })), req.tenantId);
+      const choice = recipientChannels(snap.docs.map((d) => ({ uid: d.id, ...d.data() })), req.tenantId, req.emailWithoutAccount);
       if (!choice) return;
       if (choice.push) pushKeys.push(personKey);
       if (!choice.email) return;

@@ -73,6 +73,8 @@ export const onInvitationCreated = onDocumentCreated(
       tenantId,
       ruleKey: `calevent:${caleventKey}`,
       context: CF_NAME,
+      // a guest without an app account answers through the signed links in the email
+      emailWithoutAccount: true,
       push: {
         type: 'calevent',
         tenantId,

@@ -14,6 +14,8 @@
     "@okr/shared-ui": "*",
     "@okr/shared-util-core": "*",
     "@okr/relationship-invitation-util": "*",
-    "@okr/avatar-ui": "*"
+    "@okr/avatar-ui": "*",
+    "@okr/avatar-util": "*",
+    "@okr/shared-pipes": "*"
   }
 }

@@ -16,7 +16,8 @@
     "empty": "Keine Personen gefunden.",
     "custom_use": "als Gast verwenden",
     "label": "Person",
-    "beyond_members": "Weitere Personen – keine Mitglieder"
+    "beyond_members": "Weitere Personen – keine Mitglieder",
+    "beyond_accounts": "Weitere Personen – ohne App-Zugang"
   },
   "resource": {
     "select": "Resource wählen",

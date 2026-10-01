@@ -1182,7 +1182,8 @@ export const CalEventStore = signalStore(
        * werden gefaltet, sonst wuerde jede Person den Anlass einzeln ueberschreiben und die
        * vorherigen Eintraege verlieren.
        *
-       * Die Auswahl bietet nur registrierte Benutzer an, und niemanden, der schon auf dem Anlass
+       * Die Auswahl bietet zuerst registrierte Benutzer an, dann alle uebrigen Personen (diese
+       * erhalten die Einladung per E-Mail), und niemanden, der schon auf dem Anlass
        * steht — wer eingeladen ist oder zugesagt hat, ist bereits Teilnehmer.
        */
       async invitePersons(calevent: CalEventModel, readOnly = true): Promise<void> {

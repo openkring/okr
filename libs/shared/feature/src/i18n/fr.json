@@ -16,7 +16,8 @@
     "empty": "Aucune personne trouvée.",
     "custom_use": "utiliser comme invité",
     "label": "Personne",
-    "beyond_members": "Autres personnes – non-membres"
+    "beyond_members": "Autres personnes – non-membres",
+    "beyond_accounts": "Autres personnes – sans accès à l'app"
   },
   "resource": {
     "select": "Choisir la ressource",
