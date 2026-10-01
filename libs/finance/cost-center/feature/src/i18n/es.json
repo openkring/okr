@@ -69,6 +69,7 @@
     "unattributed": "No se puede asignar a una contabilidad, queda sin cambios: {list}",
     "more": "… y {count} más",
     "refused": "La asignación solo es posible para contabilidades llevadas aquí.",
-    "noCostCenters": "Crea primero al menos un centro de costes activo. De lo contrario, se vaciarían todas las entradas existentes."
+    "noCostCenters": "Crea primero al menos un centro de costes activo. De lo contrario, se vaciarían todas las entradas existentes.",
+    "lockedSkipped": "En años cerrados, se mantiene sin cambios: {count}"
   }
 }

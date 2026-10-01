@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { bookOfDoc, decideFreeText, freeTextBlocker, matchCostCenterText } from './cost-center-migration.util';
+import { bookOfDoc, decideFreeText, freeTextBlocker, lockedBookingKeys, matchCostCenterText } from './cost-center-migration.util';
 
 const centers = [
   { okey: 'k1', id: '310', name: 'Junioren', parentKey: '', accountingTenantId: 'scs' },
@@ -70,4 +70,19 @@ describe('freeTextBlocker', () => {
     ], 'scs')).toBe('no-cost-centers');
   });
   it('allows the step once the book has an active leaf', () => expect(freeTextBlocker(centers, 'scs')).toBeUndefined());
+});
+
+describe('lockedBookingKeys', () => {
+  const bookings = [
+    { okey: 'b1', date: '20260115' },   // fiscal year 2026 (calendar year)
+    { okey: 'b2', date: '20250610' },   // 2025
+    { okey: 'b3', date: '' },           // no valid date: never counted as locked
+  ];
+  it('lists the bookings whose annual period is locked', () =>
+    expect([...lockedBookingKeys(bookings, 'scs', 1, new Set(['scs-2025']))]).toEqual(['b2']));
+  it('is empty when no period is locked', () =>
+    expect(lockedBookingKeys(bookings, 'scs', 1, new Set()).size).toBe(0));
+  it('respects a fiscal year that does not start in January', () =>
+    // fiscal year starting in July: 20260115 belongs to the year that started 2025-07
+    expect([...lockedBookingKeys(bookings, 'scs', 7, new Set(['scs-2025']))].sort()).toEqual(['b1']));
 });

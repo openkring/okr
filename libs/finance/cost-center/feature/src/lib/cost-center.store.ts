@@ -178,9 +178,11 @@ export const CostCenterStore = signalStore(
         const _lines = [fill(store.i18n.migrate_report(), { scanned: _preview.scanned, updated: _preview.updated })];
         if (_preview.unmatched.length > 0) _lines.push(fill(store.i18n.migrate_unmatched(), { list: _describe(_preview.unmatched) }));
         if (_preview.unattributed.length > 0) _lines.push(fill(store.i18n.migrate_unattributed(), { list: _describe(_preview.unattributed) }));
+        const _lockedSkipped = _preview.lockedSkipped ?? 0;
+        if (_lockedSkipped > 0) _lines.push(fill(store.i18n.migrate_lockedSkipped(), { count: _lockedSkipped }));
         if (_preview.updated === 0) {
-          // nothing to apply: inform only (the unattributed list, if any, still matters)
-          await store.alertService.confirm(_preview.unattributed.length > 0 ? _lines.join('\n\n') : store.i18n.migrate_none());
+          // nothing to apply: inform only (the unattributed list and the locked count, if any, still matter)
+          await store.alertService.confirm(_preview.unattributed.length > 0 || _lockedSkipped > 0 ? _lines.join('\n\n') : store.i18n.migrate_none());
           return;
         }
         _lines.push(store.i18n.migrate_apply());

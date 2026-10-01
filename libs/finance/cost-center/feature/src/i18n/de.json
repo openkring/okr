@@ -69,6 +69,7 @@
     "unattributed": "Keinem Buchhaltungs-Mandanten zuordenbar, bleibt unverändert: {list}",
     "more": "… und {count} weitere",
     "refused": "Die Zuordnung ist nur für Buchhaltungen möglich, die hier geführt werden.",
-    "noCostCenters": "Lege zuerst mindestens eine aktive Kostenstelle an. Sonst würden alle bisherigen Einträge geleert."
+    "noCostCenters": "Lege zuerst mindestens eine aktive Kostenstelle an. Sonst würden alle bisherigen Einträge geleert.",
+    "lockedSkipped": "In abgeschlossenen Jahren, bleibt unverändert: {count}"
   }
 }

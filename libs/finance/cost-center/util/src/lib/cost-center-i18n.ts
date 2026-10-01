@@ -61,6 +61,7 @@ export const COST_CENTER_I18N_KEYS = {
   migrate_more:         PFX + 'migrate.more',
   migrate_refused:      PFX + 'migrate.refused',
   migrate_noCostCenters: PFX + 'migrate.noCostCenters',
+  migrate_lockedSkipped: PFX + 'migrate.lockedSkipped',
   migrate_apply:        PFX + 'migrate.apply',
   migrate_none:         PFX + 'migrate.none',
   migrate_done:         PFX + 'migrate.done',

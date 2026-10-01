@@ -19,6 +19,8 @@ export interface CostCenterMigrationResult {
   unmatched: { collection: string; okey: string; value: string }[];
   /** legacy values whose set of books cannot be told: listed, never touched */
   unattributed: { collection: string; okey: string; value: string }[];
+  /** backfill lines left alone because their booking lies in a locked period (absent from an older function) */
+  lockedSkipped?: number;
 }
 
 @Injectable({

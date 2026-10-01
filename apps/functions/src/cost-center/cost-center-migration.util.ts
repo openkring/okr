@@ -1,5 +1,7 @@
 import { CostCenterLike, isActiveLeafCostCenter } from '@okr/shared-util-core';
 
+import { periodKeyFor } from '../bank-import/bank-import.util';
+
 type Named = CostCenterLike & { id?: string; name?: string };
 
 /** Free-text Kostenstelle (spec 1.65 §6.4.1) → okey of an active leaf, or '' when nothing matches. */
@@ -51,4 +53,14 @@ export function bookOfDoc(ownBook: string | undefined, accountKey: string | unde
  */
 export function freeTextBlocker(centers: CostCenterLike[], accountingTenantId: string): 'no-cost-centers' | undefined {
   return centers.some(c => isActiveLeafCostCenter(c.okey, accountingTenantId, centers)) ? undefined : 'no-cost-centers';
+}
+
+/**
+ * The bookings that lie in a locked (annual) period — the backfill leaves their lines alone, as
+ * every other ledger writer refuses changes there. A booking without a valid date is never locked.
+ */
+export function lockedBookingKeys(bookings: { okey: string; date?: string }[], accountingTenantId: string, fiscalYearStart: number, lockedPeriodKeys: Set<string>): Set<string> {
+  return new Set(bookings
+    .filter(b => typeof b.date === 'string' && /^\d{8}$/.test(b.date) && lockedPeriodKeys.has(periodKeyFor(accountingTenantId, b.date, fiscalYearStart)))
+    .map(b => b.okey));
 }
