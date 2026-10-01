@@ -155,6 +155,7 @@ export function buildJournalBookingHeader(entry: JournalEntry, tenantId: string,
  * Kostenstelle per line of a bank booking (spec 1.65 §6.2): the bank rule's key applies to the main
  * counter-account line only; split parts, fee and bank lines get their account default via `keyFor`
  * (which returns '' for balance-sheet accounts). An empty key writes no field.
+ * A split part on the same account as the main part also receives the rule key (accepted).
  */
 export function withCostCenterKeys(
   lines: Record<string, unknown>[], row: RowDoc, ruleCostCenterKey: string,

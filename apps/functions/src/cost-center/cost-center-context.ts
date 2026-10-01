@@ -9,14 +9,20 @@ const COST_CENTER_COLLECTION = 'cost-centers';
 export interface AccountLite { okey: string; id?: string; costCenterKey?: string; accountingTenantId?: string; parentKey?: string }
 export interface CostCenterContext { accountingTenantId: string; accounts: Map<string, AccountLite>; costCenters: CostCenterLike[] }
 
+/** Unique, non-blank account keys: `doc('')` throws in the Admin SDK, so callers may pass unresolved keys. */
+export function accountKeysToLoad(keys: string[]): string[] {
+  return [...new Set(keys.map(k => (k ?? '').trim()).filter(k => k !== ''))];
+}
+
 /**
  * Accounts (the given keys, or all of the accounting tenant) and the tenant's Kostenstellen —
  * everything `resolveCostCenterKey` needs. Reads only; call it before a transaction's first write.
  */
 export async function loadCostCenterContext(db: Firestore, tenantId: string, accountingTenantId: string, accountKeys?: string[]): Promise<CostCenterContext> {
   const accounts = new Map<string, AccountLite>();
-  const accountDocs = accountKeys
-    ? (accountKeys.length ? await db.getAll(...[...new Set(accountKeys)].map(k => db.collection(ACCOUNT_COLLECTION).doc(k))) : [])
+  const keys = accountKeys ? accountKeysToLoad(accountKeys) : undefined;
+  const accountDocs = keys
+    ? (keys.length ? await db.getAll(...keys.map(k => db.collection(ACCOUNT_COLLECTION).doc(k))) : [])
     : (await db.collection(ACCOUNT_COLLECTION).where('accountingTenantId', '==', accountingTenantId).get()).docs;
   for (const snap of accountDocs) {
     const data = snap.data() as Record<string, unknown> | undefined;

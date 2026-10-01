@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { assertExplicitCostCenter, belongsToAccountingTenant, costCenterKeyForLine, CostCenterContext } from './cost-center-context';
+import { accountKeysToLoad, assertExplicitCostCenter, belongsToAccountingTenant, costCenterKeyForLine, CostCenterContext } from './cost-center-context';
 
 const ctx: CostCenterContext = {
   accountingTenantId: 'scs',
@@ -39,5 +39,17 @@ describe('belongsToAccountingTenant', () => {
   it('rejects another accounting tenant or none', () => {
     expect(belongsToAccountingTenant({ accountingTenantId: 'gss' }, 'scs')).toBe(false);
     expect(belongsToAccountingTenant({}, 'scs')).toBe(false);
+  });
+});
+
+describe('accountKeysToLoad', () => {
+  it('drops empty and whitespace keys', () => {
+    expect(accountKeysToLoad(['scs-6300', '', '  '])).toEqual(['scs-6300']);
+  });
+  it('removes duplicates', () => {
+    expect(accountKeysToLoad(['a', 'b', 'a'])).toEqual(['a', 'b']);
+  });
+  it('returns [] when every key is empty', () => {
+    expect(accountKeysToLoad([''])).toEqual([]);
   });
 });
