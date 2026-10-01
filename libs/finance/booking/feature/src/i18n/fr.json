@@ -132,7 +132,7 @@
       "label": "Centre de coûts"
     },
     "details": {
-      "toggle": "Devise étrangère, TVA et inversion des comptes"
+      "toggle": "Devise étrangère, TVA, centre de coûts et inversion des comptes"
     },
     "line": {
       "add": "Ajouter une ligne",

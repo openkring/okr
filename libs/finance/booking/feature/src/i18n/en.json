@@ -132,7 +132,7 @@
       "label": "Cost centre"
     },
     "details": {
-      "toggle": "Foreign currency, VAT and swap accounts"
+      "toggle": "Foreign currency, VAT, cost centre and swap accounts"
     },
     "line": {
       "add": "Add line",

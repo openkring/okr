@@ -339,6 +339,23 @@ describe('copyBooking', () => {
     expect(booking.date).toBe('20250301');
     expect(lines[0].bookingKey).toBe('b1');
   });
+
+  it('copies the Kostenstelle and text; a split over two Kostenstellen survives copy and re-merge', () => {
+    const { booking } = source();
+    const mk = (cc: string, amount: number): BookingLineModel => {
+      const l = new BookingLineModel('scs', 'gss');
+      l.accountKey = 'scs-6300'; l.costCenterKey = cc; l.description = 'T';
+      l.debitAmount = { amount, currency: 'CHF' } as BookingLineModel['debitAmount'];
+      return l;
+    };
+    const bank = new BookingLineModel('scs', 'gss');
+    bank.accountKey = 'scs-1020';
+    bank.creditAmount = { amount: 120000, currency: 'CHF' } as BookingLineModel['creditAmount'];
+    const copy = copyBooking(booking, [mk('cc-jun', 70000), mk('cc-reg', 50000), bank], '20250916');
+    expect(copy.lines.map(l => [l.costCenterKey, l.description])).toEqual([['cc-jun', 'T'], ['cc-reg', 'T'], ['', '']]);
+    const back = pairsToLines(linesToPairs(copy.lines), 'scs', 'gss', 'b2');
+    expect(back.filter(l => l.debitAmount).map(l => [l.costCenterKey, l.debitAmount?.amount])).toEqual([['cc-jun', 70000], ['cc-reg', 50000]]);
+  });
 });
 
 describe('split bookings', () => {
@@ -462,5 +479,14 @@ describe('Kostenstelle on pairs', () => {
     const accounts = [Object.assign(new AccountModel('scs'), { okey: 'scs-6500', id: '6500' })];
     const p = withPairAccount({ ...emptyBookingPair(), debitCostCenterKey: 'cc-jun' }, 'debit', 'scs-6500', accounts);
     expect(p.debitCostCenterKey).toBe('cc-jun');
+  });
+  it('withPairAccount leaves the pair unchanged when the same account is re-picked', () => {
+    const accounts = [Object.assign(new AccountModel('scs'), { okey: 'scs-6300', id: '6300', costCenterKey: 'cc-reg' })];
+    const pair = { ...emptyBookingPair(), debitAccountKey: 'scs-6300', debitCostCenterKey: 'cc-jun' };
+    expect(withPairAccount(pair, 'debit', 'scs-6300', accounts)).toBe(pair);
+  });
+  it('withPairAccount clears the key for an unknown account', () => {
+    const p = withPairAccount({ ...emptyBookingPair(), debitCostCenterKey: 'cc-jun' }, 'debit', 'nope', []);
+    expect(p.debitCostCenterKey).toBe('');
   });
 });

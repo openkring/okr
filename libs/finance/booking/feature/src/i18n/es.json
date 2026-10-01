@@ -132,7 +132,7 @@
       "label": "Centro de costes"
     },
     "details": {
-      "toggle": "Moneda extranjera, IVA e intercambio de cuentas"
+      "toggle": "Moneda extranjera, IVA, centro de costes e intercambio de cuentas"
     },
     "line": {
       "add": "Añadir línea",

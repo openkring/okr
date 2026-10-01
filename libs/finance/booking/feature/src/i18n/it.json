@@ -132,7 +132,7 @@
       "label": "Centro di costo"
     },
     "details": {
-      "toggle": "Valuta estera, IVA e scambio dei conti"
+      "toggle": "Valuta estera, IVA, centro di costo e scambio dei conti"
     },
     "line": {
       "add": "Aggiungi riga",

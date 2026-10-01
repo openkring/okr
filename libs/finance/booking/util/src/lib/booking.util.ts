@@ -365,6 +365,8 @@ export function pairsToLines(pairs: BookingPair[], tenantId: string, accountingT
  * with a default prefills it, a balance-sheet account clears it, otherwise the chosen key stays.
  */
 export function withPairAccount(pair: BookingPair, side: 'debit' | 'credit', accountKey: string, accounts: AccountModel[]): BookingPair {
+  const sameAccount = (side === 'debit' ? pair.debitAccountKey : pair.creditAccountKey) === accountKey;
+  if (sameAccount) return pair;   // re-picking the account must not overwrite a chosen Kostenstelle
   const account = accounts.find(a => a.okey === accountKey);
   const current = (side === 'debit' ? pair.debitCostCenterKey : pair.creditCostCenterKey) ?? '';
   const next = !isProfitAndLossAccountId(account?.id) ? '' : (account?.costCenterKey || current);
@@ -450,6 +452,8 @@ export function copyBooking(
       copiedLine.amountFx = line.amountFx;
       copiedLine.exchangeRateKey = line.exchangeRateKey;
       copiedLine.vatCodeKey = line.vatCodeKey;
+      copiedLine.description = line.description ?? '';
+      copiedLine.costCenterKey = line.costCenterKey ?? '';
       return copiedLine;
     }),
   };
