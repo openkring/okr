@@ -20,3 +20,4 @@ export * from './lib/format-registry';
 export * from './lib/bank-import-row.util';
 export * from './lib/bank-import-row.validations';
 export * from './lib/bank-import-i18n';
+export * from './lib/invoice-match.util';
