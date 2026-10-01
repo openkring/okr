@@ -47,12 +47,23 @@ export function formatQrReference(ref: string | undefined): string {
   return [head, ...groups].filter(Boolean).join(' ');
 }
 
-/** The first valid QRR in free bank text (digit groups may be separated by single spaces), else ''. */
+/**
+ * The first valid QRR in free bank text, else ''. Digit-only tokens separated by whitespace (space,
+ * newline, nbsp) form a run; from every start token, consecutive tokens are concatenated until they
+ * reach 27 digits and accepted only when exactly 27 digits with a valid check digit. This tolerates
+ * neighbouring numbers (amount, date) without trying arbitrary 27-digit windows.
+ */
 export function findQrReference(text: string | undefined): string {
-  const runs = (text ?? '').match(/\d[\d ]*\d/g) ?? [];
-  for (const run of runs) {
-    const n = run.replace(/ /g, '');
-    if (isValidQrReference(n)) return n;
+  const tokens = (text ?? '').split(/\s+/);
+  for (let i = 0; i < tokens.length; i++) {
+    let acc = '';
+    for (let j = i; j < tokens.length && /^\d+$/.test(tokens[j]); j++) {
+      acc += tokens[j];
+      if (acc.length >= 27) {
+        if (acc.length === 27 && isValidQrReference(acc)) return acc;
+        break;
+      }
+    }
   }
   return '';
 }

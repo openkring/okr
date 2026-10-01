@@ -64,6 +64,14 @@ describe('findQrReference', () => {
   it('finds an unspaced reference', () => {
     expect(findQrReference('QRR 210000000003139471430009017')).toBe('210000000003139471430009017');
   });
+  it('tolerates a neighbouring number before or after', () => {
+    expect(findQrReference('Betrag 120 21 00000 00003 13947 14300 09017')).toBe('210000000003139471430009017');
+    expect(findQrReference('21 00000 00003 13947 14300 09017 20260101')).toBe('210000000003139471430009017');
+    expect(findQrReference('Ref 210000000003139471430009017 99')).toBe('210000000003139471430009017');
+  });
+  it('accepts newline and nbsp between groups', () => {
+    expect(findQrReference('21\n00000 00003 13947\u00a014300 09017')).toBe('210000000003139471430009017');
+  });
   it('ignores digit runs with a wrong check digit or wrong length', () => {
     expect(findQrReference('Konto 210000000003139471430009018')).toBe('');
     expect(findQrReference('Betrag 120.00 am 20260101')).toBe('');
