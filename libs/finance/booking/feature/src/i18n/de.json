@@ -129,7 +129,8 @@
       "label": "MWST-Code"
     },
     "costCenter": {
-      "label": "Kostenstelle"
+      "label": "Kostenstelle",
+      "accountDefault": "Standard des Kontos"
     },
     "details": {
       "toggle": "Fremdwährung, MWST, Kostenstelle und Konten tauschen"

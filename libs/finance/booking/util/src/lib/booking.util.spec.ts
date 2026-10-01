@@ -11,6 +11,7 @@ import {
   sideAccountKeys,
   bookingMonth,
   bookingYear,
+  accountDefaultCostCenterKey,
   bookingWriteErrorReason,
   copyBooking,
   emptyBookingPair,
@@ -521,5 +522,23 @@ describe('bookingWriteErrorReason', () => {
     expect(bookingWriteErrorReason(new Error('x'))).toBeUndefined();
     expect(bookingWriteErrorReason(undefined)).toBeUndefined();
     expect(bookingWriteErrorReason('boom')).toBeUndefined();
+  });
+});
+
+describe('accountDefaultCostCenterKey', () => {
+  const acc = (okey: string, id: string, costCenterKey = ''): AccountModel =>
+    ({ okey, id, costCenterKey, accountingTenantId: 'gss' }) as AccountModel;
+  const accounts = [acc('a6300', '6300', 'cc-jun'), acc('a6400', '6400', 'cc-old'), acc('a6500', '6500'), acc('a1020', '1020', 'cc-jun')];
+  const centers = [
+    { okey: 'cc-jun', parentKey: '', type: 'leaf', accountingTenantId: 'gss' },
+    { okey: 'cc-old', parentKey: '', type: 'leaf', isArchived: true, accountingTenantId: 'gss' },
+  ];
+  it('is the default writeBooking fills for an empty line', () =>
+    expect(accountDefaultCostCenterKey('a6300', accounts, centers)).toBe('cc-jun'));
+  it('is empty when the default is not an active leaf, the account has none, is a balance-sheet account or unknown', () => {
+    expect(accountDefaultCostCenterKey('a6400', accounts, centers)).toBe('');
+    expect(accountDefaultCostCenterKey('a6500', accounts, centers)).toBe('');
+    expect(accountDefaultCostCenterKey('a1020', accounts, centers)).toBe('');
+    expect(accountDefaultCostCenterKey('nope', accounts, centers)).toBe('');
   });
 });

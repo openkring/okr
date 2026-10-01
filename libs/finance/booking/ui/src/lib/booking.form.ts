@@ -11,7 +11,7 @@ import { coerceBoolean, hasRole, isProfitAndLossAccountId } from '@okr/shared-ut
 import { AvatarPipe } from '@okr/avatar-ui';
 import { AccountSelect, AccountSelectI18n } from '@okr/finance-account-ui';
 import { CostCenterSelect, CostCenterSelectI18n } from '@okr/finance-cost-center-ui';
-import { addBookingPart, BOOKING_LINE_TEXT_LENGTH, BookingFormData, BookingI18n, BookingPair, bookingValidations, counterpartyLabel, formatMinorAmount, pairsTotal, removeBookingPart, withPairAccount, withSplitTitle } from '@okr/finance-booking-util';
+import { accountDefaultCostCenterKey, addBookingPart, BOOKING_LINE_TEXT_LENGTH, BookingFormData, BookingI18n, BookingPair, bookingValidations, counterpartyLabel, formatMinorAmount, pairsTotal, removeBookingPart, withPairAccount, withSplitTitle } from '@okr/finance-booking-util';
 
 /**
  * The booking form: date, name, counterparty, then one card per debit/credit pair
@@ -141,12 +141,14 @@ import { addBookingPart, BOOKING_LINE_TEXT_LENGTH, BookingFormData, BookingI18n,
                       <ion-col size="12" [sizeMd]="accountColMd()">
                         @if (showDebitCostCenter(pair)) {
                           <okr-cost-center-select [i18n]="costCenterI18n()" [costCenters]="costCenters()" [compact]="true"
+                            [emptyLabel]="costCenterEmptyLabel(pair.debitAccountKey)"
                             [selectedKey]="pair.debitCostCenterKey" (selectedKeyChange)="onPairChange(i, 'debitCostCenterKey', $event)" [readOnly]="isReadOnly()" />
                         }
                       </ion-col>
                       <ion-col size="12" [sizeMd]="accountColMd()">
                         @if (showCreditCostCenter(pair)) {
                           <okr-cost-center-select [i18n]="costCenterI18n()" [costCenters]="costCenters()" [compact]="true"
+                            [emptyLabel]="costCenterEmptyLabel(pair.creditAccountKey)"
                             [selectedKey]="pair.creditCostCenterKey" (selectedKeyChange)="onPairChange(i, 'creditCostCenterKey', $event)" [readOnly]="isReadOnly()" />
                         }
                       </ion-col>
@@ -284,6 +286,11 @@ export class BookingForm {
   protected showCreditCostCenter(pair: BookingPair): boolean { return this.showCostCenter(pair.creditAccountKey); }
   private showCostCenter(accountKey: string): boolean {
     return this.costCentersEnabled() && isProfitAndLossAccountId(this.accounts().find(a => a.okey === accountKey)?.id);
+  }
+
+  /** An empty Kostenstelle is saved with the account's default (writeBooking): say so on the empty option. */
+  protected costCenterEmptyLabel(accountKey: string): string {
+    return accountDefaultCostCenterKey(accountKey, this.accounts(), this.costCenters()) ? this.i18n().form_cost_center_accountDefault() : '';
   }
 
   protected onPairChange(index: number, field: keyof BookingPair, value: string | number): void {

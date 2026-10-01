@@ -16,7 +16,7 @@ export interface CostCenterSelectI18n {
 
 /**
  * Picks a Kostenstelle for a booking line, an expense or a bill. The value is the cost centre's
- * `okey` ('' = ohne Kostenstelle). Only ACTIVE LEAVES are offered — groups and roots cannot be
+ * `okey` ('' = ohne Kostenstelle, or what `emptyLabel` says). Only ACTIVE LEAVES are offered — groups and roots cannot be
  * booked on, and an archived cost centre takes no new costs. A key that is already selected is
  * still displayed even when it is archived (a historic line must keep showing what it was booked
  * on), it is just not offered again.
@@ -61,7 +61,7 @@ export interface CostCenterSelectI18n {
       @if (isCompact()) {
         <ion-label class="compact">
           <div>{{ selectedCenter()?.id || '—' }}</div>
-          <ion-note>{{ selectedCenter()?.name || i18n().label }}</ion-note>
+          <ion-note>{{ selectedCenter()?.name || emptyLabel() || i18n().label }}</ion-note>
         </ion-label>
       } @else {
         <ion-input
@@ -105,7 +105,7 @@ export interface CostCenterSelectI18n {
             <ion-list>
               @if (isAllowEmpty()) {
                 <ion-item button="true" detail="false" (click)="select('')">
-                  <ion-label>{{ ownI18n.none() }}</ion-label>
+                  <ion-label>{{ emptyLabel() || ownI18n.none() }}</ion-label>
                 </ion-item>
               }
               @for (center of filteredCenters(); track center.okey) {
@@ -132,6 +132,11 @@ export class CostCenterSelect {
   public readonly costCenters = input<CostCenterModel[]>([]);
   public readonly selectedKey = model('');
   public readonly allowEmpty = input(true);
+  /**
+   * What choosing '' means, when it is not «ohne Kostenstelle» — e.g. «Standard des Kontos» on a
+   * booking line, where writeBooking fills the account's default into an empty line.
+   */
+  public readonly emptyLabel = input('');
   public readonly readOnly = input(false);
   /** number + name-note instead of a labelled input; for table-like rows whose header names the column */
   public readonly compact = input(false);

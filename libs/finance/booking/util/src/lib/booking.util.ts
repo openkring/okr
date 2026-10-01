@@ -1,5 +1,5 @@
 import { AccountModel, AvatarInfo, BookingLineModel, BookingModel, MoneyModel } from '@okr/shared-models';
-import { convertDateFormatToString, CostCenterLike, DateFormat, isActiveLeafCostCenter, isProfitAndLossAccountId } from '@okr/shared-util-core';
+import { convertDateFormatToString, CostCenterLike, DateFormat, isActiveLeafCostCenter, isProfitAndLossAccountId, resolveCostCenterKey } from '@okr/shared-util-core';
 
 /**
  * One part of a split booking, as shown when the journal row is expanded: a Soll account against a
@@ -373,6 +373,14 @@ export function withPairAccount(pair: BookingPair, side: 'debit' | 'credit', acc
   return side === 'debit'
     ? { ...pair, debitAccountKey: accountKey, debitCostCenterKey: next }
     : { ...pair, creditAccountKey: accountKey, creditCostCenterKey: next };
+}
+
+/**
+ * The Kostenstelle `writeBooking` fills into a line of this account that is saved without one —
+ * the account's default when it is an active leaf; '' otherwise (also for balance-sheet accounts).
+ */
+export function accountDefaultCostCenterKey(accountKey: string, accounts: AccountModel[], costCenters: CostCenterLike[]): string {
+  return resolveCostCenterKey({ account: accounts.find(a => a.okey === accountKey), costCenters });
 }
 
 export function toBookingFormData(booking: BookingModel, lines: BookingLineModel[]): BookingFormData {
