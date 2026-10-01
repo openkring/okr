@@ -335,14 +335,21 @@ export class BookingList {
     }
     options.buttons.push(createActionSheetDivider());
     // Treasurer decision on an OCR-proposed booking comes first — it is why the row was opened.
+    // A locked period takes no ledger change (the CFs refuse it); rejecting only cancels the proposal.
+    const isLocked = this.store.isLocked(booking);
     if (this.store.canReview(booking)) {
-      options.buttons.push(createActionSheetButton('booking.approve', this.store.i18n.review_approve(), this.imgixBaseUrl, 'checkbox-circle'));
-      options.buttons.push(createActionSheetButton('booking.review',  this.store.i18n.review_correct(), this.imgixBaseUrl, 'edit'));
+      if (!isLocked) {
+        options.buttons.push(createActionSheetButton('booking.approve', this.store.i18n.review_approve(), this.imgixBaseUrl, 'checkbox-circle'));
+        options.buttons.push(createActionSheetButton('booking.review',  this.store.i18n.review_correct(), this.imgixBaseUrl, 'edit'));
+      }
       options.buttons.push(createActionSheetButton('booking.reject',  this.store.i18n.review_reject(),  this.imgixBaseUrl, 'cancel-circle'));
       options.buttons.push(createActionSheetDivider());
     }
     if (this.readOnly()) {
       options.buttons.push(createActionSheetButton('booking.view', this.store.i18n.view(), this.imgixBaseUrl, 'eye-on'));
+    } else if (isLocked) {
+      options.buttons.push(createActionSheetButton('booking.view', this.store.i18n.view(), this.imgixBaseUrl, 'eye-on'));
+      options.buttons.push(createActionSheetButton('booking.copy', this.store.i18n.copy(), this.imgixBaseUrl, 'copy'));
     } else {
       options.buttons.push(createActionSheetButton('booking.edit', this.store.i18n.edit(), this.imgixBaseUrl, 'edit'));
       options.buttons.push(createActionSheetButton('booking.copy', this.store.i18n.copy(), this.imgixBaseUrl, 'copy'));

@@ -156,5 +156,11 @@
     "title": "Registrazione collettiva",
     "expand": "Mostra le parti",
     "collapse": "Nascondi le parti"
+  },
+  "period": {
+    "locked": "Quest'anno è chiuso. Le sue registrazioni non possono più essere modificate."
+  },
+  "write": {
+    "failed": "La registrazione non è stata salvata."
   }
 }

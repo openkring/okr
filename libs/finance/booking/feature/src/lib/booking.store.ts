@@ -16,7 +16,8 @@ import { AccountingStore } from '@okr/finance-accounting-feature';
 import { AccountService } from '@okr/finance-account-data-access';
 import { VatCodeService } from '@okr/finance-vat-code-data-access';
 import { BookingLineService, BookingService, ReviewBookingLine } from '@okr/finance-booking-data-access';
-import { fiscalYear } from '@okr/finance-reporting-util';
+import { fiscalYear, fiscalYearOf } from '@okr/finance-reporting-util';
+import { PeriodService } from '@okr/finance-period-data-access';
 import {
   BOOKING_ACTIONS,
   BookingAction,
@@ -61,6 +62,7 @@ export const BookingStore = signalStore(
   withProps(() => ({
     bookingService: inject(BookingService),
     bookingLineService: inject(BookingLineService),
+    periodService: inject(PeriodService),
     accountingStore: inject(AccountingStore),
     appStore: inject(AppStore),
     modalController: inject(ModalController),
@@ -90,6 +92,9 @@ export const BookingStore = signalStore(
     vatCodesResource: rxResource({
       stream: () => store.vatCodeService.list(store.accountingStore.accountingTenantId()),
     }),
+    periodsResource: rxResource({
+      stream: () => store.periodService.list(store.accountingStore.accountingTenantId()),
+    }),
   })),
   withComputed(store => ({
     bookings: computed(() => store.bookingsResource.value() ?? []),
@@ -97,6 +102,8 @@ export const BookingStore = signalStore(
     currentUser: computed(() => store.appStore.currentUser()),
     accountingTenantId: computed(() => store.accountingStore.accountingTenantId()),
     isReadOnly: computed(() => store.accountingStore.isExternallyManaged()),
+    /** okeys of the locked periods — the writeBooking/reviewBooking CFs refuse changes in them. */
+    lockedPeriodKeys: computed(() => new Set((store.periodsResource.value() ?? []).filter(p => p.isLocked).map(p => p.okey))),
     tenantId: computed(() => store.appStore.tenantId()),
     // "<id> <name>" of the account the journal is filtered on, '' when unfiltered.
     accountLabel: computed(() => {
@@ -366,10 +373,14 @@ export const BookingStore = signalStore(
       const { data, role } = await modal.onDidDismiss<{ booking: BookingModel; lines: BookingLineModel[] }>();
       if (role === 'confirm' && data && !store.isReadOnly()) {
         const okey = (data.booking as BookingModel & { okey: string }).okey;
-        if (okey?.length > 0) {
-          await store.bookingService.update(data.booking, data.lines, store.currentUser());
-        } else {
-          await store.bookingService.create(data.booking, data.lines, store.currentUser());
+        try {
+          if (okey?.length > 0) {
+            await store.bookingService.update(data.booking, data.lines, store.currentUser());
+          } else {
+            await store.bookingService.create(data.booking, data.lines, store.currentUser());
+          }
+        } catch (error) {
+          await this.toastWriteError(error);
         }
         store.bookingsResource.reload();
         store.linesResource.reload();
@@ -378,7 +389,11 @@ export const BookingStore = signalStore(
 
     async delete(booking: BookingModel): Promise<void> {
       if (store.isReadOnly()) return;
-      await store.bookingService.delete(booking, store.currentUser());
+      try {
+        await store.bookingService.delete(booking, store.currentUser());
+      } catch (error) {
+        await this.toastWriteError(error);
+      }
       store.bookingsResource.reload();
       store.linesResource.reload();
     },
@@ -388,6 +403,19 @@ export const BookingStore = signalStore(
     /** Whether the approve/correct/reject actions are offered for this booking. */
     canReview(booking: BookingModel): boolean {
       return canReviewBooking(booking, store.currentUser(), store.isReadOnly());
+    },
+
+    /** Whether the booking lies in a locked period (annual period of its fiscal year, spec 1.68 D12). */
+    isLocked(booking: BookingModel): boolean {
+      if (!/^\d{8}$/.test(booking.date ?? '')) return false;
+      const year = fiscalYearOf(booking.date, store.accountingStore.config()?.fiscalYearStart ?? 1);
+      return store.lockedPeriodKeys().has(`${booking.accountingTenantId}-${year}`);
+    },
+
+    /** Toast for a refused ledger write: a locked period gets its own message. */
+    async toastWriteError(error: unknown): Promise<void> {
+      const reason = (error as { details?: { reason?: string } })?.details?.reason;
+      await this.toast(reason === 'period-locked' ? store.i18n.period_locked() : store.i18n.write_failed());
     },
 
     /**
@@ -455,8 +483,9 @@ export const BookingStore = signalStore(
         await this.toast(result.status === 'posted'
           ? `${store.i18n.review_approved()} (${result.bookingNo})`
           : store.i18n.review_rejected());
-      } catch {
-        await this.toast(store.i18n.review_failed());
+      } catch (error) {
+        const reason = (error as { details?: { reason?: string } })?.details?.reason;
+        await this.toast(reason === 'period-locked' ? store.i18n.period_locked() : store.i18n.review_failed());
       }
       // Reload either way: on failure the local state may still be stale from an earlier attempt.
       store.bookingsResource.reload();

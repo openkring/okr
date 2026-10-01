@@ -24,6 +24,7 @@
     "@okr/finance-exchange-rate-data-access": "*",
     "@okr/finance-exchange-rate-util": "*",
     "@okr/finance-account-data-access": "*",
+    "@okr/finance-period-data-access": "*",
     "@okr/subject-person-data-access": "*",
     "@okr/subject-org-data-access": "*",
     "@okr/subject-address-data-access": "*",

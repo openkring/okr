@@ -156,5 +156,11 @@
     "title": "Écriture collective",
     "expand": "Afficher les parties",
     "collapse": "Masquer les parties"
+  },
+  "period": {
+    "locked": "Cette année est clôturée. Ses écritures ne peuvent plus être modifiées."
+  },
+  "write": {
+    "failed": "L'écriture n'a pas pu être enregistrée."
   }
 }

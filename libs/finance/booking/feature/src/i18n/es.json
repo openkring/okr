@@ -156,5 +156,11 @@
     "title": "Asiento compuesto",
     "expand": "Mostrar las partes",
     "collapse": "Ocultar las partes"
+  },
+  "period": {
+    "locked": "Este año está cerrado. Sus asientos ya no se pueden modificar."
+  },
+  "write": {
+    "failed": "No se ha podido guardar el asiento."
   }
 }

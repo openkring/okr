@@ -156,5 +156,11 @@
     "title": "Compound entry",
     "expand": "Show the parts",
     "collapse": "Hide the parts"
+  },
+  "period": {
+    "locked": "This year is closed. Its bookings can no longer be changed."
+  },
+  "write": {
+    "failed": "The booking could not be saved."
   }
 }

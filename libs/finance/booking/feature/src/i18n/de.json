@@ -156,5 +156,11 @@
     "title": "Sammelbuchung",
     "expand": "Teilbuchungen anzeigen",
     "collapse": "Teilbuchungen ausblenden"
+  },
+  "period": {
+    "locked": "Dieses Jahr ist abgeschlossen. Buchungen darin können nicht mehr geändert werden."
+  },
+  "write": {
+    "failed": "Die Buchung konnte nicht gespeichert werden."
   }
 }

@@ -5,6 +5,8 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { checkAppCheckToken, checkAuthentication, checkRoles, getCallerTenantId, formatRejectNote, isBalanced, nextBookingNo } from '@okr/shared-util-functions';
 import { convertDateFormatToString, DateFormat, getTodayStr } from '@okr/shared-util-core';
 
+import { assertPeriodsOpen, loadFiscalYearStart, touchedPeriodKeys } from './period-lock';
+
 const REGION = 'europe-west6';
 const CF_NAME = 'reviewBooking';
 const WRITE_CF_NAME = 'writeBooking';
@@ -94,6 +96,7 @@ export const reviewBooking = onCall(
       ? (await db.collection(BOOKING_LINE_COLLECTION).where('bookingKey', '==', bookingKey).get()).docs.map(s => s.ref)
       : [];
     const reviewer = decision === 'reject' ? await reviewerName(db, request.auth!.uid) : '';
+    const fiscalYearStart = decision === 'approve' ? await loadFiscalYearStart(db, pre['accountingTenantId'] as string) : 1;
 
     const result = await db.runTransaction(async (tx) => {
       const snap = await tx.get(bookingRef);
@@ -127,6 +130,7 @@ export const reviewBooking = onCall(
         throw new HttpsError('failed-precondition', 'the booking has no valid date — correct it before approving');
       }
       const accountingTenantId = booking['accountingTenantId'] as string;
+      await assertPeriodsOpen(db, touchedPeriodKeys(accountingTenantId, [date], fiscalYearStart), tx);
       const ledger = await tx.get(
         db.collection(BOOKING_COLLECTION).where('accountingTenantId', '==', accountingTenantId),
       );
@@ -233,6 +237,8 @@ export const writeBooking = onCall(
       .docs.map(s => s.ref);
 
     if (mode === 'delete') {
+      const acct = existing?.['accountingTenantId'] as string;
+      await assertPeriodsOpen(db, touchedPeriodKeys(acct, [existing?.['date'] as string], await loadFiscalYearStart(db, acct)));
       const batch = db.batch();
       for (const ref of oldLineRefs) batch.delete(ref);
       batch.delete(bookingRef);
@@ -257,8 +263,11 @@ export const writeBooking = onCall(
       ? (d.accountingTenantId ?? '')
       : (existing!['accountingTenantId'] as string);
     if (!accountingTenantId) throw new HttpsError('invalid-argument', 'accountingTenantId is required');
+    // a booking moved between years must leave an open period and land in one
+    const periodKeys = touchedPeriodKeys(accountingTenantId, [date, existing?.['date'] as string | undefined], await loadFiscalYearStart(db, accountingTenantId));
 
     const bookingNo = await db.runTransaction(async (tx) => {
+      await assertPeriodsOpen(db, periodKeys, tx);
       let no = (existing?.['bookingNo'] as number) ?? 0;
       if (mode === 'create' || no === 0) {
         const ledger = await tx.get(
