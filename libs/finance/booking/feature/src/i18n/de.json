@@ -128,6 +128,9 @@
     "vat": {
       "label": "MWST-Code"
     },
+    "costCenter": {
+      "label": "Kostenstelle"
+    },
     "details": {
       "toggle": "Fremdwährung, MWST und Konten tauschen"
     },

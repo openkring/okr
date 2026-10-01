@@ -128,6 +128,9 @@
     "vat": {
       "label": "VAT code"
     },
+    "costCenter": {
+      "label": "Cost centre"
+    },
     "details": {
       "toggle": "Foreign currency, VAT and swap accounts"
     },

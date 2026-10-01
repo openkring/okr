@@ -128,6 +128,9 @@
     "vat": {
       "label": "Codice IVA"
     },
+    "costCenter": {
+      "label": "Centro di costo"
+    },
     "details": {
       "toggle": "Valuta estera, IVA e scambio dei conti"
     },

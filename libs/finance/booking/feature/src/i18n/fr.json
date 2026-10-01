@@ -128,6 +128,9 @@
     "vat": {
       "label": "Code TVA"
     },
+    "costCenter": {
+      "label": "Centre de coûts"
+    },
     "details": {
       "toggle": "Devise étrangère, TVA et inversion des comptes"
     },

@@ -471,6 +471,7 @@ export const BookingStore = signalStore(
             accountKey: l.accountKey,
             debitAmount:  l.debitAmount  ? { amount: l.debitAmount.amount,  currency: l.debitAmount.currency }  : null,
             creditAmount: l.creditAmount ? { amount: l.creditAmount.amount, currency: l.creditAmount.currency } : null,
+            costCenterKey: l.costCenterKey ?? '',
           })),
         },
       });
