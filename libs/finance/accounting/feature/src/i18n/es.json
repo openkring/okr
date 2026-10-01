@@ -17,6 +17,19 @@
       "label": "Inicio del ejercicio",
       "placeholder": "Mes 1–12",
       "helper": "Mes en que empieza el ejercicio. 1 = año natural. Determina a qué período se asigna un asiento."
+    },
+    "receivablesAccount": {
+      "label": "Cuenta de deudores",
+      "helper": "Las facturas abiertas se contabilizan aquí hasta que se pagan."
+    },
+    "invoiceTemplate": {
+      "label": "Plantilla de factura",
+      "placeholder": "ID de la plantilla",
+      "helper": "Plantilla con la que se crean las facturas en PDF."
+    },
+    "paymentAccounts": {
+      "label": "Cuentas de pago",
+      "helper": "El pago de una factura puede contabilizarse en estas cuentas."
     }
   },
   "feeSchedule": {

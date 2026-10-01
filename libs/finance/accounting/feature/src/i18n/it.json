@@ -17,6 +17,19 @@
       "label": "Inizio dell’esercizio",
       "placeholder": "Mese 1–12",
       "helper": "Mese in cui inizia l’esercizio. 1 = anno civile. Determina a quale periodo viene assegnata una registrazione."
+    },
+    "receivablesAccount": {
+      "label": "Conto debitori",
+      "helper": "Le fatture aperte vengono registrate qui fino al pagamento."
+    },
+    "invoiceTemplate": {
+      "label": "Modello di fattura",
+      "placeholder": "ID del modello",
+      "helper": "Modello usato per creare le fatture in PDF."
+    },
+    "paymentAccounts": {
+      "label": "Conti di pagamento",
+      "helper": "Il pagamento di una fattura può essere registrato su questi conti."
     }
   },
   "feeSchedule": {

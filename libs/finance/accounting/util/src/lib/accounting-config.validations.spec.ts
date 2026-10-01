@@ -18,6 +18,13 @@ describe('accountingConfigValidations', () => {
     expect(result.isValid()).toBe(true);
   });
 
+  it('accepts the invoicing fields, empty or long (selector fields are uncapped)', () => {
+    const result = accountingConfigValidations(
+      config({ receivablesAccountKey: 'x'.repeat(30), invoiceTemplateId: 'y'.repeat(40), invoicePaymentAccountKeys: ['a', 'b'] }), 'tenant-1', '');
+    expect(result.isValid()).toBe(true);
+    expect(accountingConfigValidations(config(), 'tenant-1', '').isValid()).toBe(true);
+  });
+
   it('accepts a fiscal year starting in July', () => {
     expect(accountingConfigValidations(config({ fiscalYearStart: 7 }), 'tenant-1', '').isValid()).toBe(true);
   });

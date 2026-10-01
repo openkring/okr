@@ -17,6 +17,19 @@
       "label": "Beginn des Geschäftsjahres",
       "placeholder": "Monat 1–12",
       "helper": "Monat, in dem das Geschäftsjahr beginnt. 1 = Kalenderjahr. Bestimmt, welcher Periode eine Buchung zugeordnet wird."
+    },
+    "receivablesAccount": {
+      "label": "Debitorenkonto",
+      "helper": "Hier landen die offenen Rechnungen, bis sie bezahlt sind."
+    },
+    "invoiceTemplate": {
+      "label": "Rechnungsvorlage",
+      "placeholder": "Vorlage-ID",
+      "helper": "Vorlage, mit der Rechnungen als PDF erstellt werden."
+    },
+    "paymentAccounts": {
+      "label": "Zahlungskonten",
+      "helper": "Auf diese Konten darf eine Rechnungszahlung gebucht werden."
     }
   },
   "feeSchedule": {

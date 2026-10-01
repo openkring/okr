@@ -17,6 +17,19 @@
       "label": "Début de l’exercice",
       "placeholder": "Mois 1–12",
       "helper": "Mois où commence l’exercice. 1 = année civile. Détermine à quelle période une écriture est rattachée."
+    },
+    "receivablesAccount": {
+      "label": "Compte débiteurs",
+      "helper": "Les factures ouvertes sont comptabilisées ici jusqu'à leur paiement."
+    },
+    "invoiceTemplate": {
+      "label": "Modèle de facture",
+      "placeholder": "ID du modèle",
+      "helper": "Modèle utilisé pour créer les factures en PDF."
+    },
+    "paymentAccounts": {
+      "label": "Comptes de paiement",
+      "helper": "Le paiement d'une facture peut être comptabilisé sur ces comptes."
     }
   },
   "feeSchedule": {
