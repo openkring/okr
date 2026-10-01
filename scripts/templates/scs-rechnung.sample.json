@@ -28,5 +28,14 @@
     { "name": "Mitgliederbeitrag", "amount": "500.00" },
     { "name": "Bootsplatz", "amount": "175.50" }
   ],
-  "qrMessage": "Rechnung REA-260501"
+  "qrMessage": "Rechnung REA-260501",
+  "payee": {
+    "name": "Seeclub Stäfa",
+    "iban": "CH00 0000 0000 0000 0000 0",
+    "street": "Seestrasse",
+    "buildingNumber": "1",
+    "zip": "8712",
+    "city": "Stäfa",
+    "country": "CH"
+  }
 }

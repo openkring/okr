@@ -194,9 +194,9 @@
       {{/each}}<tr class="total"><td>Total</td><td class="amount">CHF {{amount}}</td></tr>
     </table>
 
-    <p>Vielen Dank, dass du die Rechnung bis zum {{dueDate}} bezahlst an {{payee.name}} auf das Konto IBAN {{payee.iban}}.</p>
+    <p>Vielen Dank, dass du die Rechnung bis zum {{dueDate}} auf das Konto von {{payee.name}} (IBAN {{payee.iban}}) bezahlst.</p>
 
-    <p>Bitte verwende den QR-Code Einzahlungsschein auf der nächsten Seite oder überweise direkt auf die IBAN-Nummer.</p>
+    <p>Bitte verwende den QR-Code Einzahlungsschein auf der nächsten Seite oder überweise den Betrag direkt auf die IBAN.</p>
 
     <p class="closing">Herzlichen Dank und freundliche Grüsse</p>
 
@@ -208,8 +208,8 @@
     <footer class="footer">
       <div class="left">{{payee.iban}}</div>
       <div class="right">
-        079 790 8929<br>
-        <a href="mailto:bruno@seeclub.org">bruno@seeclub.org</a>
+        {{payee.name}}<br>
+        {{payee.street}} {{payee.buildingNumber}}, {{payee.zip}} {{payee.city}}
       </div>
     </footer>
 
