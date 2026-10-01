@@ -1,5 +1,6 @@
 import { BankFormat } from '@okr/shared-models';
 
+import { matchesCamtHeader, parseCamt } from './camt.adapter';
 import { matchesBonuscardHeader, parseBonuscard } from './bonuscard.adapter';
 import { splitLines, stripBom } from './csv.util';
 import { matchesGkbHeader, parseGkb } from './gkb.adapter';
@@ -30,6 +31,7 @@ const ADAPTERS: Record<BankFormat, Adapter> = {
   raisenow:    { matchesHeader: matchesRaisenowHeader, parse: parseRaisenow, newestFirst: true },
   bonuscard:   { matchesHeader: matchesBonuscardHeader, parse: parseBonuscard, newestFirst: true },
   'postfinance-card': { matchesHeader: matchesPostfinanceCardHeader, parse: parsePostfinanceCard, newestFirst: true },
+  camt:        { matchesHeader: matchesCamtHeader, parse: parseCamt, newestFirst: false },
 };
 
 export function detectFormat(text: string): BankFormat | undefined {

@@ -11,7 +11,7 @@ import { validateVestTree } from '@okr/shared-util-angular';
 import { AccountSelect, AccountSelectI18n } from '@okr/finance-account-ui';
 import { BankProfileI18n, bankProfileValidations } from '@okr/finance-bank-profile-util';
 
-const FORMATS: BankFormat[] = ['postfinance', 'zkb', 'yuh', 'vz', 'gkb', 'swissquote', 'raisenow', 'bonuscard', 'postfinance-card'];
+const FORMATS: BankFormat[] = ['postfinance', 'zkb', 'yuh', 'vz', 'gkb', 'swissquote', 'raisenow', 'bonuscard', 'postfinance-card', 'camt'];
 const CURRENCIES = ['CHF', 'EUR', 'USD', 'GBP'];
 
 @Component({

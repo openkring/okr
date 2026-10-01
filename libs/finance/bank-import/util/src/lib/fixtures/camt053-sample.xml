@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:camt.053.001.04">
+  <BkToCstmrStmt>
+    <GrpHdr><MsgId>MSG2</MsgId><CreDtTm>2026-10-02T06:00:00</CreDtTm></GrpHdr>
+    <Stmt>
+      <Id>S1</Id>
+      <FrToDt><FrDtTm>2026-10-01T00:00:00</FrDtTm><ToDtTm>2026-10-01T23:59:59</ToDtTm></FrToDt>
+      <Acct><Id><IBAN>CH93 0076 2011 6238 5295 7</IBAN></Id><Ccy>CHF</Ccy></Acct>
+      <Ntry>
+        <Amt Ccy="CHF">75.00</Amt><CdtDbtInd>CRDT</CdtDbtInd>
+        <ValDt><Dt>2026-10-01</Dt></ValDt>
+        <AddtlNtryInf>Zahlung Muster</AddtlNtryInf>
+      </Ntry>
+    </Stmt>
+  </BkToCstmrStmt>
+</Document>

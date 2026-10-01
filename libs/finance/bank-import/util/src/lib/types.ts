@@ -18,6 +18,7 @@ export interface ParsedRow {
   amountFx?: { amount: number; currency: string };
   fxRate?: number;
   bankReference: string;         // '' for PostFinance and ZKB
+  paymentReference?: string;     // creditor reference (QRR/SCOR), normalized; camt only
   saldo?: number;                // minor units when the format has a saldo column
   lineNo: number;
 }

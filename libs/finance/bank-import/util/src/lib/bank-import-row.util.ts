@@ -27,6 +27,7 @@ export function toImportRows(s: ParsedStatement, keys: string[], ctx: ImportCont
     row.amountFx = r.amountFx ? new MoneyModel(r.amountFx.amount, r.amountFx.currency) : undefined;
     row.fxRate = r.fxRate ?? 0;
     row.bankReference = r.bankReference;
+    row.paymentReference = r.paymentReference ?? '';
     row.saldo = r.saldo !== undefined ? new MoneyModel(r.saldo, r.currency) : undefined;
     row.sourceFileName = ctx.sourceFileName;
     row.importedBy = ctx.importedBy;

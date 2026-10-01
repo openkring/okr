@@ -10,6 +10,7 @@ export * from './lib/swissquote.adapter';
 export * from './lib/raisenow.adapter';
 export * from './lib/bonuscard.adapter';
 export * from './lib/postfinance-card.adapter';
+export * from './lib/camt.adapter';
 export * from './lib/bexio-journal.adapter';
 export * from './lib/journal-import.util';
 export * from './lib/journal-account-map.validations';
