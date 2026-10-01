@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildInvoicePayload, draftWriteRefusal, invoiceBookingLines, issueBlockers, totalRappen, withoutUndefined } from './invoice.logic';
+import { buildInvoicePayload, draftWriteRefusal, invoiceBookingLines, issueBlockers, issueHeaderBlockers, issueOutcome, totalRappen, withoutUndefined } from './invoice.logic';
 
 const pos = (amount: number, accountKey = 'scs3401', name = 'Beitrag') => ({ name, amount, accountKey });
 
@@ -97,5 +97,39 @@ describe('withoutUndefined', () => {
   it('drops undefined keys but keeps null, empty and zero values', () => {
     expect(withoutUndefined({ a: 1, b: undefined, c: null, d: '', e: 0 })).toEqual({ a: 1, c: null, d: '', e: 0 });
     expect('b' in withoutUndefined({ b: undefined })).toBe(false);
+  });
+});
+
+describe('issueOutcome', () => {
+  it('issues a draft and resumes an interrupted issue', () => {
+    expect(issueOutcome('draft')).toBe('issue');
+    expect(issueOutcome('issuing')).toBe('issue');
+  });
+  it('returns the stored result for an issued invoice (double click, retried call)', () => {
+    expect(issueOutcome('pending')).toBe('already-issued');
+    expect(issueOutcome('paid')).toBe('already-issued');
+  });
+  it('refuses a cancelled or unknown state', () => {
+    expect(issueOutcome('cancelled')).toBe('refuse');
+    expect(issueOutcome('created')).toBe('refuse');
+    expect(issueOutcome('')).toBe('refuse');
+  });
+});
+
+describe('issueHeaderBlockers', () => {
+  const ok = { receiverKey: 'p1', invoiceDate: '20261001', invoiceTemplateId: 'scs-rechnung' };
+  it('accepts a complete header', () => {
+    expect(issueHeaderBlockers(ok)).toEqual([]);
+  });
+  it('refuses an invoice without receiver', () => {
+    expect(issueHeaderBlockers({ ...ok, receiverKey: undefined })).toContain('no-receiver');
+    expect(issueHeaderBlockers({ ...ok, receiverKey: '  ' })).toContain('no-receiver');
+  });
+  it('refuses an empty or malformed invoice date', () => {
+    expect(issueHeaderBlockers({ ...ok, invoiceDate: '' })).toContain('no-invoice-date');
+    expect(issueHeaderBlockers({ ...ok, invoiceDate: '2026-10-01' })).toContain('no-invoice-date');
+  });
+  it('refuses when no invoice template is configured', () => {
+    expect(issueHeaderBlockers({ ...ok, invoiceTemplateId: '' })).toContain('no-invoice-template');
   });
 });

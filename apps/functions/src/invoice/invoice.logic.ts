@@ -109,3 +109,22 @@ export function draftWriteRefusal(existingState: string | undefined, mode: 'crea
 export function withoutUndefined<T extends object>(obj: T): T {
   return Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== undefined)) as T;
 }
+
+/**
+ * What issueInvoice does with an invoice in this state. `issuing` is the transient state between
+ * numbering and the final ledger transaction: a run that finds it resumes with the stored number.
+ */
+export function issueOutcome(state: string): 'issue' | 'already-issued' | 'refuse' {
+  if (state === 'draft' || state === 'issuing') return 'issue';
+  if (state === 'pending' || state === 'paid') return 'already-issued';
+  return 'refuse';
+}
+
+/** Header reasons why a draft cannot be issued (drafts may lack receiver and date; issued invoices may not). */
+export function issueHeaderBlockers(h: { receiverKey?: string; invoiceDate?: string; invoiceTemplateId?: string }): string[] {
+  const blockers: string[] = [];
+  if (!h.receiverKey?.trim()) blockers.push('no-receiver');
+  if (!/^\d{8}$/.test(h.invoiceDate ?? '')) blockers.push('no-invoice-date');
+  if (!h.invoiceTemplateId?.trim()) blockers.push('no-invoice-template');
+  return blockers;
+}

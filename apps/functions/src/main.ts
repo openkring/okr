@@ -264,6 +264,7 @@ export const reviewBooking = Booking.reviewBooking;
 // manual journal entries (create/update/delete) — same reason: bookings are CF-write-only
 export const writeBooking = Booking.writeBooking;
 export const writeInvoice = Invoice.writeInvoice;
+export const issueInvoice = Invoice.issueInvoice;
 // bank import: the only write path from bank-import-rows into the ledger (spec 1.60 §7)
 export const postBankImport = BankImport.postBankImport;
 // bexio journal import: mapped entries posted directly as bookings (spec 1.60 §12)
