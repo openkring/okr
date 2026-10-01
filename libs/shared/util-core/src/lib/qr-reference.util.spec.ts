@@ -69,6 +69,15 @@ describe('findQrReference', () => {
     expect(findQrReference('21 00000 00003 13947 14300 09017 20260101')).toBe('210000000003139471430009017');
     expect(findQrReference('Ref 210000000003139471430009017 99')).toBe('210000000003139471430009017');
   });
+  it('ignores punctuation and labels glued to the reference', () => {
+    const ref = '210000000003139471430009017';
+    expect(findQrReference('21 00000 00003 13947 14300 09017.')).toBe(ref);
+    expect(findQrReference('21 00000 00003 13947 14300 09017,')).toBe(ref);
+    expect(findQrReference('QRR:210000000003139471430009017')).toBe(ref);
+    expect(findQrReference('Ref.210000000003139471430009017.')).toBe(ref);
+    expect(findQrReference('Ref.21 00000 00003 13947 14300 09017')).toBe(ref);
+    expect(findQrReference('Betrag 120.00 21 00000')).toBe('');
+  });
   it('accepts newline and nbsp between groups', () => {
     expect(findQrReference('21\n00000 00003 13947\u00a014300 09017')).toBe('210000000003139471430009017');
   });

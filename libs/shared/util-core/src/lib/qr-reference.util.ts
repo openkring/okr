@@ -48,17 +48,23 @@ export function formatQrReference(ref: string | undefined): string {
 }
 
 /**
- * The first valid QRR in free bank text, else ''. Digit-only tokens separated by whitespace (space,
- * newline, nbsp) form a run; from every start token, consecutive tokens are concatenated until they
+ * The first valid QRR in free bank text, else ''. Whitespace-separated tokens (space, newline, nbsp)
+ * with leading/trailing non-digits stripped ("Ref.21", "09017.") are digit tokens when the rest is all
+ * digits; anything else ("120.00") ends a run. A token with leading junk may only start a run, one with
+ * trailing junk may only end it. From every start token, consecutive tokens are concatenated until they
  * reach 27 digits and accepted only when exactly 27 digits with a valid check digit. This tolerates
  * neighbouring numbers (amount, date) without trying arbitrary 27-digit windows.
  */
 export function findQrReference(text: string | undefined): string {
-  const tokens = (text ?? '').split(/\s+/);
+  const tokens = (text ?? '').split(/\s+/).map((raw) => {
+    const m = /^(\D*)(.*?)(\D*)$/.exec(raw) as RegExpExecArray;
+    return { digits: m[2], lead: m[1] !== '', trail: m[3] !== '' };
+  });
   for (let i = 0; i < tokens.length; i++) {
     let acc = '';
-    for (let j = i; j < tokens.length && /^\d+$/.test(tokens[j]); j++) {
-      acc += tokens[j];
+    for (let j = i; j < tokens.length && /^\d+$/.test(tokens[j].digits); j++) {
+      if (j > i && (tokens[j].lead || tokens[j - 1].trail)) break;
+      acc += tokens[j].digits;
       if (acc.length >= 27) {
         if (acc.length === 27 && isValidQrReference(acc)) return acc;
         break;
