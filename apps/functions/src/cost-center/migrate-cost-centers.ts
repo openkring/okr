@@ -17,7 +17,7 @@ import { getTodayStr } from '@okr/shared-util-core';
 import { fiscalYear } from '../bank-import/bank-import.util';
 import { loadFiscalYearStart } from '../booking/period-lock';
 import { costCenterKeyForLine, loadCostCenterContext } from './cost-center-context';
-import { bookOfDoc, decideFreeText } from './cost-center-migration.util';
+import { bookOfDoc, decideFreeText, freeTextBlocker } from './cost-center-migration.util';
 
 const REGION = 'europe-west6';
 const CF_NAME = 'migrateCostCenters';
@@ -78,6 +78,9 @@ export const migrateCostCenters = onCall(
 
 async function migrateFreeText(db: Firestore, tenantId: string, accountingTenantId: string, dryRun: boolean): Promise<MigrateResponse> {
   const ctx = await loadCostCenterContext(db, tenantId, accountingTenantId);
+  // no active leaf in this book: nothing could match, so the step would clear every legacy value
+  const blocker = freeTextBlocker(ctx.costCenters, accountingTenantId);
+  if (blocker) throw new HttpsError('failed-precondition', blocker, { reason: blocker });
   // every centre of the tenant, whatever its book or archive state: such an okey is never cleared
   const allCenters = await db.collection('cost-centers').where('tenants', 'array-contains', tenantId).get();
   const allKeys = new Set(allCenters.docs.map(d => d.id));

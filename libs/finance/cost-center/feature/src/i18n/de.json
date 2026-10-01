@@ -68,6 +68,7 @@
     "error": "Die Zuordnung hat nicht geklappt. Versuche es später noch einmal.",
     "unattributed": "Keinem Buchhaltungs-Mandanten zuordenbar, bleibt unverändert: {list}",
     "more": "… und {count} weitere",
-    "refused": "Die Zuordnung ist nur für Buchhaltungen möglich, die hier geführt werden."
+    "refused": "Die Zuordnung ist nur für Buchhaltungen möglich, die hier geführt werden.",
+    "noCostCenters": "Lege zuerst mindestens eine aktive Kostenstelle an. Sonst würden alle bisherigen Einträge geleert."
   }
 }

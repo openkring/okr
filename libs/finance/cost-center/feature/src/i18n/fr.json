@@ -68,6 +68,7 @@
     "error": "L'attribution n'a pas fonctionné. Réessaie plus tard.",
     "unattributed": "Impossible à rattacher à une comptabilité, reste inchangé : {list}",
     "more": "… et {count} autres",
-    "refused": "L'attribution n'est possible que pour les comptabilités tenues ici."
+    "refused": "L'attribution n'est possible que pour les comptabilités tenues ici.",
+    "noCostCenters": "Crée d'abord au moins un centre de coûts actif. Sinon, toutes les entrées existantes seraient vidées."
   }
 }

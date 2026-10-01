@@ -189,8 +189,14 @@ export const CostCenterStore = signalStore(
         await store.alertService.showToast(fill(store.i18n.migrate_done(), { updated: _done.updated }));
       } catch (err) {
         error(undefined, `CostCenterStore.migrate(${step}): ${String((err as { message?: unknown })?.message ?? err)}`, true);
-        const _refused = String((err as { message?: unknown })?.message ?? '').includes('accounting-backend-not-native');
-        await store.alertService.showToast(_refused ? store.i18n.migrate_refused() : store.i18n.migrate_error());
+        const _message = String((err as { message?: unknown })?.message ?? '');
+        const _reason = (err as { details?: { reason?: unknown } })?.details?.reason;
+        if (_reason === 'no-cost-centers' || _message.includes('no-cost-centers')) {
+          // the server refuses: without an active leaf the step would clear every legacy value
+          await store.alertService.showToast(store.i18n.migrate_noCostCenters());
+          return;
+        }
+        await store.alertService.showToast(_message.includes('accounting-backend-not-native') ? store.i18n.migrate_refused() : store.i18n.migrate_error());
       }
     },
   })),

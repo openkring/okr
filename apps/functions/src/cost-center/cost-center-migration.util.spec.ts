@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { bookOfDoc, decideFreeText, matchCostCenterText } from './cost-center-migration.util';
+import { bookOfDoc, decideFreeText, freeTextBlocker, matchCostCenterText } from './cost-center-migration.util';
 
 const centers = [
   { okey: 'k1', id: '310', name: 'Junioren', parentKey: '', accountingTenantId: 'scs' },
@@ -57,4 +57,17 @@ describe('bookOfDoc', () => {
   });
   it('a gss account yields a skip in an scs run', () =>
     expect(decideFreeText('Vorstand', bookOfDoc('', 'a2', accountBook), 'scs', centers, new Set())).toEqual({ action: 'skip' }));
+});
+
+describe('freeTextBlocker', () => {
+  it('refuses a book without any cost centre (every legacy value would be cleared)', () =>
+    expect(freeTextBlocker([], 'scs')).toBe('no-cost-centers'));
+  it('refuses a book whose only cost centres are groups, archived or of another book', () => {
+    expect(freeTextBlocker([
+      { okey: 'g', parentKey: '', type: 'root', accountingTenantId: 'scs' },
+      { okey: 'a', parentKey: 'g', type: 'leaf', isArchived: true, accountingTenantId: 'scs' },
+      { okey: 'o', parentKey: '', accountingTenantId: 'gss' },
+    ], 'scs')).toBe('no-cost-centers');
+  });
+  it('allows the step once the book has an active leaf', () => expect(freeTextBlocker(centers, 'scs')).toBeUndefined());
 });

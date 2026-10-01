@@ -43,3 +43,12 @@ export function bookOfDoc(ownBook: string | undefined, accountKey: string | unde
   const key = (accountKey ?? '').trim();
   return key ? accountBook.get(key) || undefined : undefined;
 }
+
+/**
+ * Why the free-text step must not run for this book, or undefined when it may. Without a single
+ * active leaf no legacy value can match, so every document of the book would be CLEARED — the
+ * treasurer must create the tree first.
+ */
+export function freeTextBlocker(centers: CostCenterLike[], accountingTenantId: string): 'no-cost-centers' | undefined {
+  return centers.some(c => isActiveLeafCostCenter(c.okey, accountingTenantId, centers)) ? undefined : 'no-cost-centers';
+}
