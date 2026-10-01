@@ -50,7 +50,7 @@ import { ReportingStore } from './reporting.store';
       />
       @if (store.showCostCenterFilter()) {
         <okr-string-select [i18n]="costCenterI18n()" [stringList]="store.costCenterOptions()" [labels]="store.costCenterOptionLabels()"
-          [selectedString]="store.selectedCostCenterKey()" (selectedStringChange)="store.setSelectedCostCenterKey($event)" [readOnly]="false" />
+          [selectedString]="store.effectiveCostCenterKey()" (selectedStringChange)="store.setSelectedCostCenterKey($event)" [readOnly]="false" />
       }
       <ion-toolbar color="primary">
         <ion-grid>

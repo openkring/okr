@@ -213,3 +213,11 @@ export function filterLinesByCostCenter(lines: BookingLineModel[], selection: st
   if (selection === NO_COST_CENTER) return lines.filter(l => !(l.costCenterKey ?? ''));
   return lines.filter(l => subtreeKeys.has(l.costCenterKey ?? ''));
 }
+
+/**
+ * The selection that actually filters: all when the filter is off (non-native ledger / no
+ * Kostenstellen) or when the stored key is no longer an option (e.g. left over from another tenant).
+ */
+export function effectiveCostCenterSelection(selected: string, enabled: boolean, optionKeys: string[]): string {
+  return enabled && optionKeys.includes(selected) ? selected : ALL_COST_CENTERS;
+}

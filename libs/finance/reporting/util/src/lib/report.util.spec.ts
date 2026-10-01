@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { AccountModel, BookingLineModel, BookingModel, MoneyModel } from '@okr/shared-models';
 
 import {
-  accountClass, ALL_COST_CENTERS, buildReportRows, defaultExpandedKeys, fiscalYear, fiscalYearOf, filterLinesByCostCenter, NO_COST_CENTER, reportToCsv, signedBalance, sumLinesByAccount, totalForClasses, yearResult,
+  accountClass, ALL_COST_CENTERS, buildReportRows, effectiveCostCenterSelection, defaultExpandedKeys, fiscalYear, fiscalYearOf, filterLinesByCostCenter, NO_COST_CENTER, reportToCsv, signedBalance, sumLinesByAccount, totalForClasses, yearResult,
 } from './report.util';
 
 function account(okey: string, id: string, name: string, parentKey = '', type = 'leaf'): AccountModel {
@@ -195,4 +195,13 @@ describe('filterLinesByCostCenter', () => {
       + sum(filterLinesByCostCenter(lines, NO_COST_CENTER, new Set()));
     expect(parts).toBe(sum(lines));
   });
+});
+
+describe('effectiveCostCenterSelection', () => {
+  const options = [ALL_COST_CENTERS, 'cc-jun', NO_COST_CENTER];
+  it('disabled -> all', () => expect(effectiveCostCenterSelection('cc-jun', false, options)).toBe(ALL_COST_CENTERS));
+  it('unknown key -> all', () => expect(effectiveCostCenterSelection('cc-gone', true, options)).toBe(ALL_COST_CENTERS));
+  it('valid key is kept', () => expect(effectiveCostCenterSelection('cc-jun', true, options)).toBe('cc-jun'));
+  it('bucket kept when listed', () => expect(effectiveCostCenterSelection(NO_COST_CENTER, true, options)).toBe(NO_COST_CENTER));
+  it('bucket dropped when not listed', () => expect(effectiveCostCenterSelection(NO_COST_CENTER, true, [ALL_COST_CENTERS])).toBe(ALL_COST_CENTERS));
 });

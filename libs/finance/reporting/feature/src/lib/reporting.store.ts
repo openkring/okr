@@ -17,7 +17,7 @@ import { CostCenterStore } from '@okr/finance-cost-center-feature';
 import { costCenterLabel, costCenterSubtreeKeys, sortCostCenterTree } from '@okr/finance-cost-center-util';
 import { ReportingService } from '@okr/finance-reporting-data-access';
 import {
-  ALL_COST_CENTERS, buildReportDocument, buildReportRows, defaultExpandedKeys, downloadCsv, downloadFromUrl, fiscalYear, fiscalYearOf, filterLinesByCostCenter, NO_COST_CENTER, REPORTING_I18N_KEYS,
+  ALL_COST_CENTERS, buildReportDocument, buildReportRows, defaultExpandedKeys, downloadCsv, downloadFromUrl, fiscalYear, fiscalYearOf, effectiveCostCenterSelection, filterLinesByCostCenter, NO_COST_CENTER, REPORTING_I18N_KEYS,
   ReportDocumentLabels, ReportingI18n, ReportRow, reportToCsv, ReportVariant, sumLinesByAccount, totalForClasses, yearResult,
 } from '@okr/finance-reporting-util';
 import { AddressService } from '@okr/subject-address-data-access';
@@ -108,6 +108,17 @@ export const ReportingStore = signalStore(
     previousFy: computed(() => fiscalYear(store.year() - 1, store.fiscalYearStart())),
   })),
   withComputed(store => ({
+    /** Filter choices: all, every Kostenstelle (tree order, indented, archived included), the bucket. */
+    costCenterOptions: computed<string[]>(() => [
+      ALL_COST_CENTERS, ...sortCostCenterTree(store.costCenterStore.costCenters()).map(n => n.center.okey), NO_COST_CENTER]),
+    /** The filter is offered only on the native ledger and once at least one Kostenstelle exists. */
+    showCostCenterFilter: computed(() => store.costCenterStore.isEnabled() && store.costCenterStore.costCenters().length > 0),
+  })),
+  withComputed(store => ({
+    /** The selection that actually filters: all when the filter is off or the stored key is not an option. */
+    effectiveCostCenterKey: computed(() => effectiveCostCenterSelection(store.selectedCostCenterKey(), store.showCostCenterFilter(), store.costCenterOptions())),
+  })),
+  withComputed(store => ({
     // Bilanz: cumulative up to the year end. Erfolgsrechnung: within the year.
     balanceCurrent: computed(() => sumLinesByAccount(store.lines(), store.bookings(), '', store.currentFy().to)),
     balancePrevious: computed(() => sumLinesByAccount(store.lines(), store.bookings(), '', store.previousFy().to)),
@@ -116,7 +127,7 @@ export const ReportingStore = signalStore(
     unfilteredIncomePrevious: computed(() => sumLinesByAccount(store.lines(), store.bookings(), store.previousFy().from, store.previousFy().to)),
     /** The Erfolgsrechnung lines: filtered by the selected Kostenstelle subtree (all / bucket / subtree). */
     incomeLines: computed(() => filterLinesByCostCenter(
-      store.lines(), store.selectedCostCenterKey(), costCenterSubtreeKeys(store.costCenterStore.costCenters(), store.selectedCostCenterKey()))),
+      store.lines(), store.effectiveCostCenterKey(), costCenterSubtreeKeys(store.costCenterStore.costCenters(), store.effectiveCostCenterKey()))),
   })),
   withComputed(store => ({
     incomeCurrent: computed(() => sumLinesByAccount(store.incomeLines(), store.bookings(), store.currentFy().from, store.currentFy().to)),
@@ -127,18 +138,13 @@ export const ReportingStore = signalStore(
   withComputed(store => ({
     resultCurrent: computed(() => yearResult(store.accounts(), store.incomeCurrent())),
     resultPrevious: computed(() => yearResult(store.accounts(), store.incomePrevious())),
-    /** Filter choices: all, every Kostenstelle (tree order, indented, archived included), the bucket. */
-    costCenterOptions: computed<string[]>(() => [
-      ALL_COST_CENTERS, ...sortCostCenterTree(store.costCenterStore.costCenters()).map(n => n.center.okey), NO_COST_CENTER]),
     costCenterOptionLabels: computed<string[]>(() => [
       store.i18n.all_cost_centers(),
       ...sortCostCenterTree(store.costCenterStore.costCenters()).map(n => '\u00A0\u00A0'.repeat(n.depth) + costCenterLabel(n.center)),
       store.i18n.no_cost_center()]),
-    /** The filter is offered only on the native ledger and once at least one Kostenstelle exists. */
-    showCostCenterFilter: computed(() => store.costCenterStore.isEnabled() && store.costCenterStore.costCenters().length > 0),
     /** Label of the active filter, '' when none is set (appended to the PDF title). */
     costCenterFilterLabel: computed(() => {
-      const key = store.selectedCostCenterKey();
+      const key = store.effectiveCostCenterKey();
       if (key === ALL_COST_CENTERS) return '';
       if (key === NO_COST_CENTER) return store.i18n.no_cost_center();
       const center = store.costCenterStore.costCenters().find(c => c.okey === key);
@@ -222,7 +228,10 @@ export const ReportingStore = signalStore(
     incomeRows: computed<ReportRow[]>(() => store.reportRows('income', true)),
   })),
   withMethods(store => ({
-    setAccountingTenant(id: string): void { store.accountingStore.setTenant(id); },
+    setAccountingTenant(id: string): void {
+      if (id !== store.accountingTenantId()) patchState(store, { selectedCostCenterKey: ALL_COST_CENTERS });
+      store.accountingStore.setTenant(id);
+    },
     setSelectedYear(year: number): void {
       if (year > 1900 && year < 3000) patchState(store, { selectedYear: year });   // ignore the "all years" sentinel
     },
