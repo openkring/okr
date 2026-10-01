@@ -12,6 +12,7 @@ import {
 import { isBexioBackend } from '../bexio/backend-gate';
 import { periodKeyFor } from '../bank-import/bank-import.util';
 import { assertPeriodsOpen } from '../booking/period-lock';
+import { costCenterKeyForLine, loadCostCenterContext } from '../cost-center/cost-center-context';
 import { privateBucket } from '../_storage/private-bucket';
 import { renderDocument } from '../pdf/render-document';
 import {
@@ -267,6 +268,8 @@ export const issueInvoice = onCall(
       // ---- 7. finance-document, booking, lines, pending — atomically ----
       const tenants = (invoice['tenants'] as string[] | undefined) ?? [tenantId];
       const lines = invoiceBookingLines(positions, receivablesKey);
+      // Kostenstellen (spec 1.65): plain reads before the transaction, account default per line
+      const ccCtx = await loadCostCenterContext(db, tenantId, accountingTenantId, lines.map((l) => l.accountKey));
       const bookingRef = db.collection(BOOKING_COLLECTION).doc(bookingKey);
       const result = await db.runTransaction(async (tx) => {
         // reads (all before any write)
@@ -311,8 +314,10 @@ export const issueInvoice = onCall(
             documentKey, documentKeys: [documentKey], counterparty: receiver,
           }));
           lines.forEach((line, i) => {
+            const costCenterKey = costCenterKeyForLine(ccCtx, line.accountKey, { explicit: '' });
             tx.set(db.collection(BOOKING_LINE_COLLECTION).doc(`${bookingKey}-${i}`), withoutUndefined({
               tenants, accountingTenantId, isArchived: false, bookingKey, accountKey: line.accountKey,
+              ...(costCenterKey ? { costCenterKey } : {}),
               ...(line.debitAmount ? { debitAmount: { ...line.debitAmount, periodicity: 'one-time' } } : {}),
               ...(line.creditAmount ? { creditAmount: { ...line.creditAmount, periodicity: 'one-time' } } : {}),
             }));
