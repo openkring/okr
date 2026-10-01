@@ -57,6 +57,9 @@ export const COST_CENTER_I18N_KEYS = {
 
   migrate_report:       PFX + 'migrate.report',
   migrate_unmatched:    PFX + 'migrate.unmatched',
+  migrate_unattributed: PFX + 'migrate.unattributed',
+  migrate_more:         PFX + 'migrate.more',
+  migrate_refused:      PFX + 'migrate.refused',
   migrate_apply:        PFX + 'migrate.apply',
   migrate_none:         PFX + 'migrate.none',
   migrate_done:         PFX + 'migrate.done',

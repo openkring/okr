@@ -65,6 +65,9 @@
     "apply": "Appliquer maintenant ?",
     "none": "Rien à modifier.",
     "done": "Terminé. {updated} entrées modifiées.",
-    "error": "L'attribution n'a pas fonctionné. Réessaie plus tard."
+    "error": "L'attribution n'a pas fonctionné. Réessaie plus tard.",
+    "unattributed": "Impossible à rattacher à une comptabilité, reste inchangé : {list}",
+    "more": "… et {count} autres",
+    "refused": "L'attribution n'est possible que pour les comptabilités tenues ici."
   }
 }

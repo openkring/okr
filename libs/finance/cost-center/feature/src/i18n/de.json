@@ -65,6 +65,9 @@
     "apply": "Jetzt anwenden?",
     "none": "Es gibt nichts anzupassen.",
     "done": "Fertig. {updated} Einträge angepasst.",
-    "error": "Die Zuordnung hat nicht geklappt. Versuche es später noch einmal."
+    "error": "Die Zuordnung hat nicht geklappt. Versuche es später noch einmal.",
+    "unattributed": "Keinem Buchhaltungs-Mandanten zuordenbar, bleibt unverändert: {list}",
+    "more": "… und {count} weitere",
+    "refused": "Die Zuordnung ist nur für Buchhaltungen möglich, die hier geführt werden."
   }
 }

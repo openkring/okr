@@ -17,7 +17,7 @@ import { getTodayStr } from '@okr/shared-util-core';
 import { fiscalYear } from '../bank-import/bank-import.util';
 import { loadFiscalYearStart } from '../booking/period-lock';
 import { costCenterKeyForLine, loadCostCenterContext } from './cost-center-context';
-import { matchCostCenterText } from './cost-center-migration.util';
+import { decideFreeText } from './cost-center-migration.util';
 
 const REGION = 'europe-west6';
 const CF_NAME = 'migrateCostCenters';
@@ -26,7 +26,7 @@ const IN_CHUNK = 30;
 
 interface MigrateRequest { accountingTenantId?: string; step?: 'free-text' | 'backfill'; dryRun?: boolean }
 interface Unmatched { collection: string; okey: string; value: string }
-interface MigrateResponse { scanned: number; updated: number; unmatched: Unmatched[] }
+interface MigrateResponse { scanned: number; updated: number; unmatched: Unmatched[]; unattributed: Unmatched[] }
 
 /** [collection, field] of the free-text sources. */
 const FREE_TEXT_SOURCES: [string, string][] = [['expenses', 'costCenterId'], ['ocr-rules', 'costCenterId'], ['assets', 'costCenter']];
@@ -78,28 +78,35 @@ export const migrateCostCenters = onCall(
 
 async function migrateFreeText(db: Firestore, tenantId: string, accountingTenantId: string, dryRun: boolean): Promise<MigrateResponse> {
   const ctx = await loadCostCenterContext(db, tenantId, accountingTenantId);
+  // every centre of the tenant, whatever its book or archive state: such an okey is never cleared
+  const allCenters = await db.collection('cost-centers').where('tenants', 'array-contains', tenantId).get();
+  const allKeys = new Set(allCenters.docs.map(d => d.id));
   const writer = new BatchWriter(db);
   const unmatched: Unmatched[] = [];
+  const unattributed: Unmatched[] = [];
   let scanned = 0;
   let updated = 0;
   for (const [collection, field] of FREE_TEXT_SOURCES) {
     const snap = await db.collection(collection).where('tenants', 'array-contains', tenantId).get();
     for (const doc of snap.docs) {
       const data = doc.data();
-      const docAccountingTenant = data['accountingTenantId'];
-      if (typeof docAccountingTenant === 'string' && docAccountingTenant !== '' && docAccountingTenant !== accountingTenantId) continue;
       const value = typeof data[field] === 'string' ? (data[field] as string) : '';
       if (value.trim() === '') continue;
       scanned++;
-      const matched = matchCostCenterText(value, ctx.costCenters, accountingTenantId);
-      if (matched === value) continue;
-      if (matched === '') unmatched.push({ collection, okey: doc.id, value });
+      // the document's book: its own field, else the book of its account (ocr-rules have no field)
+      const ownBook = typeof data['accountingTenantId'] === 'string' ? (data['accountingTenantId'] as string).trim() : '';
+      const accountKey = typeof data['accountKey'] === 'string' ? (data['accountKey'] as string) : '';
+      const docBook = ownBook || (accountKey && ctx.accounts.has(accountKey) ? accountingTenantId : undefined);
+      const decision = decideFreeText(value, docBook, accountingTenantId, ctx.costCenters, allKeys);
+      if (decision.action === 'unattributed') { unattributed.push({ collection, okey: doc.id, value }); continue; }
+      if (decision.action !== 'rewrite' && decision.action !== 'clear') continue;
+      if (decision.action === 'clear') unmatched.push({ collection, okey: doc.id, value });
       updated++;
-      if (!dryRun) await writer.update(doc.ref, { [field]: matched });
+      if (!dryRun) await writer.update(doc.ref, { [field]: decision.action === 'rewrite' ? decision.newValue : '' });
     }
   }
   await writer.flush();
-  return { scanned, updated, unmatched };
+  return { scanned, updated, unmatched, unattributed };
 }
 
 async function backfillCurrentYear(db: Firestore, tenantId: string, accountingTenantId: string, dryRun: boolean): Promise<MigrateResponse> {
@@ -127,7 +134,7 @@ async function backfillCurrentYear(db: Firestore, tenantId: string, accountingTe
     const lines = await db.collection('booking-lines').where('bookingKey', 'in', bookingKeys.slice(i, i + IN_CHUNK)).get();
     for (const line of lines.docs) {
       const data = line.data();
-      if (!((data['tenants'] as string[] | undefined) ?? []).includes(tenantId)) continue;
+      if (!((data['tenants'] as string[] | undefined) ?? []).includes(tenantId) || data['accountingTenantId'] !== accountingTenantId) continue;
       scanned++;
       if (typeof data['costCenterKey'] === 'string' && data['costCenterKey'].trim() !== '') continue;
       const key = costCenterKeyForLine(ctx, String(data['accountKey'] ?? ''));
@@ -137,5 +144,5 @@ async function backfillCurrentYear(db: Firestore, tenantId: string, accountingTe
     }
   }
   await writer.flush();
-  return { scanned, updated, unmatched: [] };
+  return { scanned, updated, unmatched: [], unattributed: [] };
 }

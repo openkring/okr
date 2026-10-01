@@ -7,7 +7,7 @@ import { of } from 'rxjs';
 import { AppStore, ModelSelectService } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { CostCenterModel } from '@okr/shared-models';
-import { AlertService } from '@okr/shared-util-angular';
+import { AlertService, error } from '@okr/shared-util-angular';
 import { fill } from '@okr/shared-util-core';
 
 import { AccountingStore } from '@okr/finance-accounting-feature';
@@ -17,6 +17,9 @@ import { COST_CENTER_I18N_KEYS, CostCenterI18n, leafCostCenters, sortCostCenterT
 import { ResponsibilityService } from '@okr/relationship-responsibility-data-access';
 
 export type { CostCenterI18n };
+
+/** entries of the migration alert's lists before «… und N weitere» */
+const MIGRATE_LIST_CAP = 20;
 
 /** The list's archive filter: 'all' is what okr-list-filter's category select prepends itself. */
 export type CostCenterArchiveFilter = 'active' | 'archived' | 'all';
@@ -164,23 +167,30 @@ export const CostCenterStore = signalStore(
     async migrate(step: CostCenterMigrationStep): Promise<void> {
       const _tenant = store.accountingStore.accountingTenantId();
       if (!store.isEnabled() || !_tenant) return;
+      const _describe = (list: { collection: string; okey: string; value: string }[]): string => {
+        const _shown = list.slice(0, MIGRATE_LIST_CAP).map(u => `${u.collection}/${u.okey}: ${u.value}`).join('; ');
+        return list.length > MIGRATE_LIST_CAP
+          ? `${_shown} ${fill(store.i18n.migrate_more(), { count: list.length - MIGRATE_LIST_CAP })}`
+          : _shown;
+      };
       try {
         const _preview = await store.costCenterService.migrate(_tenant, step, true);
-        if (_preview.updated === 0) {
-          await store.alertService.confirm(store.i18n.migrate_none());
-          return;
-        }
         const _lines = [fill(store.i18n.migrate_report(), { scanned: _preview.scanned, updated: _preview.updated })];
-        if (_preview.unmatched.length > 0) {
-          const _list = _preview.unmatched.map(u => `${u.collection}/${u.okey}: ${u.value}`).join('; ');
-          _lines.push(fill(store.i18n.migrate_unmatched(), { list: _list }));
+        if (_preview.unmatched.length > 0) _lines.push(fill(store.i18n.migrate_unmatched(), { list: _describe(_preview.unmatched) }));
+        if (_preview.unattributed.length > 0) _lines.push(fill(store.i18n.migrate_unattributed(), { list: _describe(_preview.unattributed) }));
+        if (_preview.updated === 0) {
+          // nothing to apply: inform only (the unattributed list, if any, still matters)
+          await store.alertService.confirm(_preview.unattributed.length > 0 ? _lines.join('\n\n') : store.i18n.migrate_none());
+          return;
         }
         _lines.push(store.i18n.migrate_apply());
         if (!await store.alertService.confirm(_lines.join('\n\n'), true)) return;
         const _done = await store.costCenterService.migrate(_tenant, step, false);
         await store.alertService.showToast(fill(store.i18n.migrate_done(), { updated: _done.updated }));
-      } catch {
-        await store.alertService.showToast(store.i18n.migrate_error());
+      } catch (err) {
+        error(undefined, `CostCenterStore.migrate(${step}): ${String((err as { message?: unknown })?.message ?? err)}`, true);
+        const _refused = String((err as { message?: unknown })?.message ?? '').includes('accounting-backend-not-native');
+        await store.alertService.showToast(_refused ? store.i18n.migrate_refused() : store.i18n.migrate_error());
       }
     },
   })),

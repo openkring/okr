@@ -65,6 +65,9 @@
     "apply": "Apply now?",
     "none": "Nothing to change.",
     "done": "Done. {updated} entries changed.",
-    "error": "The assignment did not work. Please try again later."
+    "error": "The assignment did not work. Please try again later.",
+    "unattributed": "Cannot be tied to a set of books, left unchanged: {list}",
+    "more": "… and {count} more",
+    "refused": "The assignment is only possible for books kept here."
   }
 }

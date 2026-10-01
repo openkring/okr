@@ -65,6 +65,9 @@
     "apply": "Applicare ora?",
     "none": "Non c'è nulla da modificare.",
     "done": "Fatto. {updated} voci modificate.",
-    "error": "L'assegnazione non ha funzionato. Riprova più tardi."
+    "error": "L'assegnazione non ha funzionato. Riprova più tardi.",
+    "unattributed": "Non assegnabile a una contabilità, resta invariato: {list}",
+    "more": "… e altri {count}",
+    "refused": "L'assegnazione è possibile solo per le contabilità tenute qui."
   }
 }

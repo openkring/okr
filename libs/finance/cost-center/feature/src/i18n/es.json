@@ -65,6 +65,9 @@
     "apply": "¿Aplicar ahora?",
     "none": "No hay nada que cambiar.",
     "done": "Listo. {updated} entradas cambiadas.",
-    "error": "La asignación no ha funcionado. Inténtalo más tarde."
+    "error": "La asignación no ha funcionado. Inténtalo más tarde.",
+    "unattributed": "No se puede asignar a una contabilidad, queda sin cambios: {list}",
+    "more": "… y {count} más",
+    "refused": "La asignación solo es posible para contabilidades llevadas aquí."
   }
 }

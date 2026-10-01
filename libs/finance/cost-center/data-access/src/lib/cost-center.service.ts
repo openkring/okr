@@ -17,6 +17,8 @@ export interface CostCenterMigrationResult {
   updated: number;
   /** okey + raw free text of the values that matched no cost centre (no personal data) */
   unmatched: { collection: string; okey: string; value: string }[];
+  /** legacy values whose set of books cannot be told: listed, never touched */
+  unattributed: { collection: string; okey: string; value: string }[];
 }
 
 @Injectable({
