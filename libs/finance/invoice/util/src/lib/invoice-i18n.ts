@@ -119,6 +119,7 @@ export const INVOICE_I18N_KEYS = {
   payment_confirmation_error:     PFX + 'paymentConfirmation.error',
 
   read_only_banner:         PFX + 'readonly.banner',
+  positions_failed:         PFX + 'readonly.positionsFailed',
 
   receiver_none:            PFX + 'receiver.none',
   receiver_select:          PFX + 'receiver.select',
@@ -159,6 +160,8 @@ export const INVOICE_I18N_KEYS = {
   refusal_foreign_accounting_tenant: PFX + 'refusal.foreign-accounting-tenant',
   refusal_too_many_positions:       PFX + 'refusal.too-many-positions',
   refusal_inconsistent_state:       PFX + 'refusal.inconsistent-state',
+  refusal_no_due_date:              PFX + 'refusal.no-due-date',
+  refusal_due_before_invoice_date:  PFX + 'refusal.due-before-invoice-date',
 
   as_title:         '@actionsheet.title',
   ok:               '@ok',
@@ -192,6 +195,8 @@ export const INVOICE_REFUSAL_I18N: Record<string, keyof typeof INVOICE_I18N_KEYS
   'foreign-accounting-tenant': 'refusal_foreign_accounting_tenant',
   'too-many-positions': 'refusal_too_many_positions',
   'inconsistent-state': 'refusal_inconsistent_state',
+  'no-due-date': 'refusal_no_due_date',
+  'due-before-invoice-date': 'refusal_due_before_invoice_date',
 };
 
 /**

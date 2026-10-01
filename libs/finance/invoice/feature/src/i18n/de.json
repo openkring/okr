@@ -217,7 +217,8 @@
     "error": "Die Zahlungsbestätigung konnte nicht erstellt werden. Bitte versuche es später noch einmal."
   },
   "readonly": {
-    "banner": "Diese Liste ist readonly. Die Debitoren werden in Bexio bewirtschaftet."
+    "banner": "Diese Liste ist readonly. Die Debitoren werden in Bexio bewirtschaftet.",
+    "positionsFailed": "Die Positionen dieser Rechnung konnten nicht geladen werden. Darum kannst du sie gerade nicht ändern. Versuche es später noch einmal."
   },
   "invoice_state": {
     "name": "Rechnungsstatus",
@@ -297,6 +298,8 @@
     "no-accounting-config": "Für diese Buchhaltung fehlen noch die Einstellungen. Bitte richte sie zuerst ein.",
     "foreign-accounting-tenant": "Diese Buchhaltung gehört nicht zu deinem Verein.",
     "too-many-positions": "Eine Rechnung kann höchstens 100 Positionen haben.",
-    "inconsistent-state": "Beim Ausstellen ist etwas schiefgelaufen. Versuche es bitte noch einmal."
+    "inconsistent-state": "Beim Ausstellen ist etwas schiefgelaufen. Versuche es bitte noch einmal.",
+    "no-due-date": "Die Rechnung hat noch kein Fälligkeitsdatum. Ergänze, bis wann sie bezahlt sein soll.",
+    "due-before-invoice-date": "Das Fälligkeitsdatum liegt vor dem Rechnungsdatum. Wähle ein späteres Datum."
   }
 }

@@ -30,6 +30,20 @@ export function isDraftInvoice(invoice: Pick<InvoiceModel, 'state'> | undefined)
   return invoice?.state === 'draft';
 }
 
+/**
+ * The invoices of one list view. `all` is the treasurer's unfiltered list. `my` (the current user's
+ * own invoices) and a person key (a member's invoices) are receiver views: they show only invoices
+ * that were actually issued — a draft or one still `issuing` is work in progress of the treasurer.
+ */
+export function invoicesForList<T extends Pick<InvoiceModel, 'state' | 'receiver'>>(
+  invoices: T[], listId: string, currentPersonKey: string | undefined,
+): T[] {
+  if (listId === 'all') return invoices;
+  const receiverKey = listId === 'my' ? currentPersonKey : listId;
+  if (!receiverKey) return [];
+  return invoices.filter((i) => i.receiver?.key === receiverKey && i.state !== 'draft' && i.state !== 'issuing');
+}
+
 export function newInvoicePosition(): InvoicePositionInput {
   return { name: '', amount: 0, accountKey: '' };
 }

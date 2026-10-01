@@ -17,7 +17,7 @@ import { I18nService } from '@okr/shared-i18n';
 import { InvoiceService } from '@okr/finance-invoice-data-access';
 import {
   buildPaymentConfirmationPayload, canCreatePaymentConfirmation, getInvoiceExportData, INVOICE_I18N_KEYS, InvoiceI18n,
-  invoiceRefusalReasons, invoiceRefusalText, isDraftInvoice, newDraftInvoice, PAYMENT_CONFIRMATION_TEMPLATE_ID,
+  invoiceRefusalReasons, invoiceRefusalText, invoicesForList, isDraftInvoice, newDraftInvoice, PAYMENT_CONFIRMATION_TEMPLATE_ID,
 } from '@okr/finance-invoice-util';
 import { AccountingStore } from '@okr/finance-accounting-feature';
 import { ReceiptParty } from '@okr/finance-booking-util';
@@ -116,15 +116,8 @@ export const InvoiceStore = signalStore(
     filteredInvoices: computed(() => {
       let invoices = store.allInvoicesResource.value() ?? [];
 
-      // filter by listId
-      const listId = store.listId();
-      const currentUser = store.appStore.currentUser();
-      if (listId === 'my') {
-        const personKey = currentUser?.personKey;
-        invoices = personKey ? invoices.filter(i => i.receiver?.key === personKey) : [];
-      } else if (listId !== 'all') {
-        invoices = invoices.filter(i => i.receiver?.key === listId);
-      }
+      // filter by listId; receiver views ('my', a person key) never show drafts or issuing invoices
+      invoices = invoicesForList(invoices, store.listId(), store.appStore.currentUser()?.personKey);
 
       // filter by state
       const selectedState = store.selectedState();

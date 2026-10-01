@@ -217,7 +217,8 @@
     "error": "La confirmation de paiement n'a pas pu être créée. Réessaie plus tard."
   },
   "readonly": {
-    "banner": "Cette liste est en lecture seule. Les débiteurs sont gérés dans Bexio."
+    "banner": "Cette liste est en lecture seule. Les débiteurs sont gérés dans Bexio.",
+    "positionsFailed": "Les positions de cette facture n'ont pas pu être chargées, tu ne peux donc pas la modifier pour le moment. Réessaie plus tard."
   },
   "invoice_state": {
     "name": "Statut de la facture",
@@ -297,6 +298,8 @@
     "no-accounting-config": "Les paramètres de cette comptabilité manquent encore. Configure-les d'abord.",
     "foreign-accounting-tenant": "Cette comptabilité n'appartient pas à ton club.",
     "too-many-positions": "Une facture peut avoir au maximum 100 positions.",
-    "inconsistent-state": "Un problème est survenu lors de l'émission. Réessaie, s'il te plaît."
+    "inconsistent-state": "Un problème est survenu lors de l'émission. Réessaie, s'il te plaît.",
+    "no-due-date": "La facture n'a pas encore de date d'échéance. Indique jusqu'à quand elle doit être payée.",
+    "due-before-invoice-date": "La date d'échéance est antérieure à la date de la facture. Choisis une date plus tardive."
   }
 }

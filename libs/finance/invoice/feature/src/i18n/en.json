@@ -217,7 +217,8 @@
     "error": "The payment confirmation could not be created. Please try again later."
   },
   "readonly": {
-    "banner": "This list is read-only. The accounts receivable are managed in Bexio."
+    "banner": "This list is read-only. The accounts receivable are managed in Bexio.",
+    "positionsFailed": "The items of this invoice could not be loaded, so you cannot change it right now. Please try again later."
   },
   "invoice_state": {
     "name": "Invoice status",
@@ -297,6 +298,8 @@
     "no-accounting-config": "These books have no settings yet. Please set them up first.",
     "foreign-accounting-tenant": "These books do not belong to your club.",
     "too-many-positions": "An invoice can have at most 100 items.",
-    "inconsistent-state": "Something went wrong while issuing. Please try again."
+    "inconsistent-state": "Something went wrong while issuing. Please try again.",
+    "no-due-date": "The invoice has no due date yet. Add the date by which it should be paid.",
+    "due-before-invoice-date": "The due date is before the invoice date. Choose a later date."
   }
 }

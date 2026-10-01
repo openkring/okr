@@ -4,7 +4,7 @@ import { AccountModel, InvoiceModel, InvoicePositionModel } from '@okr/shared-mo
 
 import { INVOICE_I18N_KEYS, InvoiceI18n, invoiceRefusalText } from './invoice-i18n';
 import {
-  accountClass, invoiceRefusalReasons, isDraftInvoice, positionsTotal, revenueAccounts,
+  accountClass, invoiceRefusalReasons, invoicesForList, isDraftInvoice, positionsTotal, revenueAccounts,
   toInvoiceHeaderInput, toPositionInputs,
 } from './invoice-position.util';
 import { invoicePositionsValidations } from './invoice-position.validations';
@@ -71,6 +71,21 @@ describe('toInvoiceHeaderInput', () => {
   });
 });
 
+describe('invoicesForList', () => {
+  const inv = (state: string, key = 'p1') => ({ state, receiver: { key } }) as unknown as InvoiceModel;
+  const all = [inv('draft'), inv('issuing'), inv('pending'), inv('paid'), inv('cancelled'), inv('pending', 'p2')];
+  it('keeps the treasurer list unfiltered', () => {
+    expect(invoicesForList(all, 'all', 'p1')).toEqual(all);
+  });
+  it('shows the receiver only issued invoices of their own', () => {
+    expect(invoicesForList(all, 'my', 'p1').map((i) => i.state)).toEqual(['pending', 'paid', 'cancelled']);
+    expect(invoicesForList(all, 'p2', 'p1').map((i) => i.receiver?.key)).toEqual(['p2']);
+  });
+  it('shows nothing in my list without a person key', () => {
+    expect(invoicesForList(all, 'my', undefined)).toEqual([]);
+  });
+});
+
 describe('isDraftInvoice', () => {
   it('is true only for draft', () => {
     expect(isDraftInvoice({ state: 'draft' })).toBe(true);
@@ -106,6 +121,10 @@ describe('invoiceRefusalText', () => {
   });
   it('gives inconsistent-state its own text', () => {
     expect(invoiceRefusalText(['inconsistent-state'], i18n, 'generic')).toBe('refusal_inconsistent_state');
+  });
+  it('gives the due-date blockers their own texts', () => {
+    expect(invoiceRefusalText(['no-due-date'], i18n, 'generic')).toBe('refusal_no_due_date');
+    expect(invoiceRefusalText(['due-before-invoice-date'], i18n, 'generic')).toBe('refusal_due_before_invoice_date');
   });
   it('maps not-issuable like not-a-draft', () => {
     expect(invoiceRefusalText(['not-issuable'], i18n, 'generic')).toBe('refusal_not_a_draft');

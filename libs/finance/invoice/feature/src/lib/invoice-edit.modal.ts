@@ -11,6 +11,7 @@ import { dismissOverlay } from '@okr/shared-util-angular';
 import { coerceBoolean, safeStructuredClone } from '@okr/shared-util-core';
 
 import { AccountService } from '@okr/finance-account-data-access';
+import { ReadOnlyBanner } from '@okr/finance-accounting-feature';
 import { InvoiceService } from '@okr/finance-invoice-data-access';
 import { InvoiceEditForm } from '@okr/finance-invoice-ui';
 import {
@@ -33,7 +34,7 @@ export interface InvoiceEditResult {
   selector: 'okr-invoice-edit-modal',
   standalone: true,
   imports: [
-    Header, ChangeConfirmation, InvoiceEditForm, Spinner,
+    Header, ChangeConfirmation, InvoiceEditForm, ReadOnlyBanner, Spinner,
     IonContent,
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -46,6 +47,9 @@ export interface InvoiceEditResult {
       @if (!positionsLoaded()) {
         <okr-spinner />
       } @else {
+        @if(positionsFailed()) {
+          <okr-read-only-banner [message]="i18n.positions_failed()" />
+        }
         @if(formData(); as formData) {
           <okr-invoice-edit-form
             [formData]="formData"
@@ -85,7 +89,7 @@ export class InvoiceEditModal {
   protected readonly positions = signal<InvoicePositionInput[]>([]);
   protected readonly positionsLoaded = signal(false);
   /** the positions could not be read: saving would replace them with what is shown, so do not offer it */
-  private readonly positionsFailed = signal(false);
+  protected readonly positionsFailed = signal(false);
   protected formDirty = signal(false);
   protected formValid = signal(false);
 
@@ -121,7 +125,12 @@ export class InvoiceEditModal {
       return;
     }
     try {
-      this.positions.set(toPositionInputs(await this.invoiceService.listPositionsOnce(invoice.okey)));
+      const positions = await this.invoiceService.listPositionsOnce(invoice.okey);
+      // a non-zero total is the sum of stored positions: none found means the read came back incomplete
+      if (positions.length === 0 && (invoice.totalAmount?.amount ?? 0) > 0) {
+        throw new Error(`no positions found for invoice ${invoice.okey} with a total of ${invoice.totalAmount?.amount}`);
+      }
+      this.positions.set(toPositionInputs(positions));
     } catch (e) {
       console.error('InvoiceEditModal.loadPositions: could not read the positions', e);
       this.positions.set([]);

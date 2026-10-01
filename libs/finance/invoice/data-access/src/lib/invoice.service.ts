@@ -1,12 +1,13 @@
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { getApp } from 'firebase/app';
+import { collection, getDocs, query } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
 import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { DbQuery, InvoiceCollection, InvoiceModel, InvoicePositionCollection, InvoicePositionModel, UserModel } from '@okr/shared-models';
-import { findByKey, getSystemQuery } from '@okr/shared-util-core';
+import { findByKey, getQuery, getSystemQuery } from '@okr/shared-util-core';
 import { ActivityService } from '@okr/activity-data-access';
 
 import { InvoiceHeaderInput, InvoicePositionInput, toInvoiceHeaderInput } from '@okr/finance-invoice-util';
@@ -97,8 +98,16 @@ export class InvoiceService {
    * One-shot, consistent read of an invoice's positions — what an edit form is seeded from. The live
    * stream may replay a cached snapshot from before the last server write.
    */
-  public listPositionsOnce(invoiceKey: string): Promise<InvoicePositionModel[]> {
-    return this.firestoreService.getDataOnce<InvoicePositionModel>(InvoicePositionCollection, this.positionsQuery(invoiceKey), 'none');
+  public async listPositionsOnce(invoiceKey: string): Promise<InvoicePositionModel[]> {
+    // Not FirestoreService.getDataOnce: it logs and returns [] on any error, which would look like
+    // "no positions" — and saving the draft then would delete every stored position. Here a failed
+    // read (permission, missing index, offline) rejects, so the caller can refuse to edit.
+    const ref = query(
+      collection(this.firestoreService.firestore, InvoicePositionCollection),
+      ...getQuery(this.positionsQuery(invoiceKey), 'none'),
+    );
+    const snapshot = await getDocs(ref);
+    return snapshot.docs.map((d) => ({ ...d.data(), okey: d.id }) as InvoicePositionModel);
   }
 
   private positionsQuery(invoiceKey: string): DbQuery[] {

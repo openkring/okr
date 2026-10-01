@@ -217,7 +217,8 @@
     "error": "No se pudo crear la confirmación de pago. Inténtalo de nuevo más tarde."
   },
   "readonly": {
-    "banner": "Esta lista es de solo lectura. Los deudores se gestionan en Bexio."
+    "banner": "Esta lista es de solo lectura. Los deudores se gestionan en Bexio.",
+    "positionsFailed": "No se han podido cargar las posiciones de esta factura, así que por ahora no puedes modificarla. Inténtalo de nuevo más tarde."
   },
   "invoice_state": {
     "name": "Estado de la factura",
@@ -297,6 +298,8 @@
     "no-accounting-config": "A esta contabilidad todavía le faltan los ajustes. Configúralos primero.",
     "foreign-accounting-tenant": "Esta contabilidad no pertenece a tu club.",
     "too-many-positions": "Una factura puede tener como máximo 100 posiciones.",
-    "inconsistent-state": "Algo salió mal al emitir la factura. Inténtalo de nuevo, por favor."
+    "inconsistent-state": "Algo salió mal al emitir la factura. Inténtalo de nuevo, por favor.",
+    "no-due-date": "La factura todavía no tiene fecha de vencimiento. Indica hasta cuándo debe pagarse.",
+    "due-before-invoice-date": "La fecha de vencimiento es anterior a la fecha de la factura. Elige una fecha posterior."
   }
 }
