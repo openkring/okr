@@ -1,4 +1,5 @@
 {
+  "costCenter": { "label": "Centro di costo predefinito", "helper": "Proposto per le nuove registrazioni su questo conto." },
   "accounts": "Conti",
   "empty": "Nessun conto trovato.",
   "create": "Aprire un nuovo conto",

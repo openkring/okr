@@ -45,6 +45,9 @@ export const ACCOUNT_I18N_KEYS = {
   parentKey:            PFX + 'parentKey.label',
   parentKey_helper:     PFX + 'parentKey.helper',
 
+  costCenter:           PFX + 'costCenter.label',
+  costCenter_helper:    PFX + 'costCenter.helper',
+
   notes:                PFX + 'notes.label',
   notes_placeholder:    PFX + 'notes.placeholder',
 

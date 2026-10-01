@@ -16,6 +16,7 @@
     "@okr/shared-pipes": "*",
     "@okr/finance-expense-util": "*",
     "@okr/avatar-ui": "*",
-    "@okr/finance-account-ui": "*"
+    "@okr/finance-account-ui": "*",
+    "@okr/finance-cost-center-ui": "*"
   }
 }

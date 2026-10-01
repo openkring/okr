@@ -10,6 +10,8 @@ import { ExpenseService, UpdateExpensePayload } from '@okr/finance-expense-data-
 import { EXPENSE_EDIT_STATES, ExpenseEditFormValue, getExpenseEditStateCategory, toExpenseFormValue } from '@okr/finance-expense-util';
 import { ExpenseEditForm } from '@okr/finance-expense-ui';
 
+import { CostCenterStore } from '@okr/finance-cost-center-feature';
+
 import { injectExpenseView } from './expense-view';
 
 /**
@@ -46,6 +48,8 @@ import { injectExpenseView } from './expense-view';
           [authorKey]="view.authorKey()"
           [authorName]="view.authorName()"
           [accounts]="view.accounts()"
+          [costCenters]="costCenterStore.costCenters()"
+          [costCentersEnabled]="costCenterStore.isEnabled()"
           [receipts]="view.receipts()"
           [qrBills]="view.qrBills()"
           [qrCode]="view.qrCode()"
@@ -67,6 +71,7 @@ export class ExpenseEditModal {
   // inputs (set via componentProps by ExpenseStore.editExpense)
   public readonly expense = input.required<ExpenseModel>();
 
+  protected readonly costCenterStore = inject(CostCenterStore);
   protected readonly view = injectExpenseView(this.expense);
   protected readonly i18n = this.view.i18n;
 

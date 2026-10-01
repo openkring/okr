@@ -20,6 +20,7 @@
     "@okr/finance-vat-code-data-access": "*",
     "@okr/finance-bank-rule-data-access": "*",
     "@okr/finance-bank-rule-util": "*",
-    "@okr/finance-bank-rule-ui": "*"
+    "@okr/finance-bank-rule-ui": "*",
+    "@okr/finance-cost-center-feature": "*"
   }
 }

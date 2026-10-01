@@ -4,13 +4,14 @@ import {
   IonNote, IonRow, IonSelect, IonSelectOption,
 } from '@ionic/angular/standalone';
 
-import { AccountModel, CategoryListModel, ExpenseModel } from '@okr/shared-models';
+import { AccountModel, CategoryListModel, CostCenterModel, ExpenseModel } from '@okr/shared-models';
 import { ButtonCopy, CategorySelect, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { formatIban, IbanFormat } from '@okr/shared-util-angular';
 import { coerceBoolean, convertDateFormatToString, DateFormat, getThumbnailUrl } from '@okr/shared-util-core';
 
 import { AvatarPipe } from '@okr/avatar-ui';
 import { AccountSelect, AccountSelectI18n } from '@okr/finance-account-ui';
+import { CostCenterSelect, CostCenterSelectI18n } from '@okr/finance-cost-center-ui';
 import {
   ALLOWED_CURRENCIES, centsToCHF, chfToCents, ExpenseEditFormValue, expenseEditValidations, ExpenseQrBill, ExpenseReceipt,
 } from '@okr/finance-expense-util';
@@ -34,6 +35,7 @@ export interface ExpenseEditFormI18n {
   qrbill_creditor: Signal<string>;
   qrbill_reference: Signal<string>;
   account_label: Signal<string>;
+  cost_center_label: Signal<string>;
   note_label: Signal<string>;
   field_status: Signal<string>;
   receipts_label: Signal<string>;
@@ -56,7 +58,7 @@ export interface ExpenseEditFormI18n {
   selector: 'okr-expense-edit-form',
   standalone: true,
   imports: [
-    TextInput, NotesInput, ErrorNote, CategorySelect, ButtonCopy, AccountSelect, AvatarPipe,
+    TextInput, NotesInput, ErrorNote, CategorySelect, ButtonCopy, AccountSelect, CostCenterSelect, AvatarPipe,
     IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonGrid, IonRow, IonCol, IonItem, IonLabel, IonNote,
     IonSelect, IonSelectOption, IonAvatar, IonImg,
   ],
@@ -195,6 +197,13 @@ export interface ExpenseEditFormI18n {
                       [selectedKey]="accountKey()" (selectedKeyChange)="onFieldChange('accountKey', $event)"
                       [readOnly]="false" />
                   </ion-col>
+                  @if (costCentersEnabled()) {
+                    <ion-col size="12" size-md="6">
+                      <okr-cost-center-select [i18n]="costCenterI18n()" [costCenters]="costCenters()" [allowEmpty]="true"
+                        [selectedKey]="costCenterId()" (selectedKeyChange)="onFieldChange('costCenterId', $event)"
+                        [readOnly]="false" />
+                    </ion-col>
+                  }
                 </ion-row>
               }
             </ion-grid>
@@ -295,6 +304,10 @@ export class ExpenseEditForm {
   public readonly authorKey = input('');
   public readonly authorName = input('');
   public readonly accounts = input<AccountModel[]>([]);
+  /** the Kostenstellen of the accounting tenant; passed in because a ui lib must not inject a feature store */
+  public readonly costCenters = input<CostCenterModel[]>([]);
+  /** Kostenstellen only exist on the native ledger; a bexio ledger gets no picker */
+  public readonly costCentersEnabled = input(false);
   public readonly receipts = input<ExpenseReceipt[]>([]);
   /** the QR-bills found on the receipts (ocr-results.qrBill) */
   public readonly qrBills = input<ExpenseQrBill[]>([]);
@@ -340,6 +353,7 @@ export class ExpenseEditForm {
   protected currency   = linkedSignal(() => this.formData().currency ?? 'CHF');
   protected transferTo = linkedSignal(() => this.formData().transferTo ?? 'me');
   protected accountKey = linkedSignal(() => this.formData().accountKey ?? '');
+  protected costCenterId = linkedSignal(() => this.formData().costCenterId ?? '');
   protected note       = linkedSignal(() => this.formData().note ?? '');
   protected status     = linkedSignal(() => this.formData().status ?? 'draft');
 
@@ -396,6 +410,10 @@ export class ExpenseEditForm {
   protected readonly accountI18n = computed(() => ({
     name: 'accountKey', label: this.i18n().account_label(),
   } as AccountSelectI18n));
+
+  protected readonly costCenterI18n = computed(() => ({
+    name: 'costCenterId', label: this.i18n().cost_center_label(),
+  } as CostCenterSelectI18n));
 
   protected readonly copyI18n = computed(() => ({ copy_conf: this.i18n().iban_copy_conf() }));
 

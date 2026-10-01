@@ -16,6 +16,7 @@ export const ASSET_I18N_KEYS = {
   category:             PFX + 'category.label',
   acquisition_date:     PFX + 'date.acquisition.label',
   life:                 PFX + 'life.label',
+  cost_center:          PFX + 'costCenter.label',
   period_end:           PFX + 'date.end.label',
   preview:              PFX + 'preview.label',
 

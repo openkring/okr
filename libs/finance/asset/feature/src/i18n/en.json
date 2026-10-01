@@ -1,4 +1,5 @@
 {
+    "costCenter": { "label": "Cost centre" },
     "singular": "Asset",
     "plural": "Assets",
     "empty": "No assets found",

@@ -1,4 +1,5 @@
 {
+    "costCenter": { "label": "Kostenstelle" },
     "singular": "Aktivum",
     "plural": "Aktiven",
     "empty": "Keine Aktiven gefunden",

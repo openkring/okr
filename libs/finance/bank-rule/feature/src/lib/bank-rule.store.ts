@@ -12,6 +12,7 @@ import { resourceParams } from '@okr/shared-util-angular';
 import { AccountService } from '@okr/finance-account-data-access';
 import { AccountingStore } from '@okr/finance-accounting-feature';
 import { leafAccounts } from '@okr/finance-account-util';
+import { CostCenterStore } from '@okr/finance-cost-center-feature';
 import { VatCodeService } from '@okr/finance-vat-code-data-access';
 import { BankRuleService } from '@okr/finance-bank-rule-data-access';
 import { BANK_RULE_I18N_KEYS, normalizeRuleForSave, seedBankRule } from '@okr/finance-bank-rule-util';
@@ -23,6 +24,7 @@ export const BankRuleStore = signalStore(
     accountService: inject(AccountService),
     vatCodeService: inject(VatCodeService),
     accountingStore: inject(AccountingStore),
+    costCenterStore: inject(CostCenterStore),
     appStore: inject(AppStore),
     modalController: inject(ModalController),
     i18nService: inject(I18nService),
@@ -56,7 +58,7 @@ export const BankRuleStore = signalStore(
       const { BankRuleEditModal } = await import('@okr/finance-bank-rule-ui');
       const modal = await store.modalController.create({
         component: BankRuleEditModal,
-        componentProps: { rule, readOnly, accounts: store.accounts(), vatCodes: store.vatCodes(), currentUser: store.currentUser() },
+        componentProps: { rule, readOnly, accounts: store.accounts(), vatCodes: store.vatCodes(), costCenters: store.costCenterStore.costCenters(), costCentersEnabled: store.costCenterStore.isEnabled(), currentUser: store.currentUser() },
       });
       await modal.present();
       const { data, role } = await modal.onDidDismiss();

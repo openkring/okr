@@ -1,4 +1,5 @@
 {
+  "costCenter": { "label": "Centre de coûts par défaut", "helper": "Proposé pour les nouvelles écritures sur ce compte." },
   "accounts": "Comptes",
   "empty": "Aucun compte trouvé.",
   "create": "Ouvrir un nouveau compte",

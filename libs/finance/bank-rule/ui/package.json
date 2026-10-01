@@ -14,6 +14,7 @@
     "@okr/shared-util-angular": "*",
     "@okr/shared-i18n": "*",
     "@okr/finance-bank-rule-util": "*",
-    "@okr/finance-account-ui": "*"
+    "@okr/finance-account-ui": "*",
+    "@okr/finance-cost-center-ui": "*"
   }
 }

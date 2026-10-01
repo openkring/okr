@@ -7,6 +7,7 @@ import { coerceBoolean, safeStructuredClone } from '@okr/shared-util-core';
 
 import { AccountForm } from '@okr/finance-account-ui';
 import { dismissOverlay } from '@okr/shared-util-angular';
+import { CostCenterStore } from '@okr/finance-cost-center-feature';
 import { AccountStore } from './account.store';
 
 @Component({
@@ -30,6 +31,8 @@ import { AccountStore } from './account.store';
           [currentUser]="currentUser()"
           [types]="types()"
           [accounts]="store.accounts()"
+          [costCenters]="costCenterStore.costCenters()"
+          [costCentersEnabled]="costCenterStore.isEnabled()"
           [tenantId]="tenantId()"
           [readOnly]="isReadOnly()"
           [i18n]="store.i18n"
@@ -42,6 +45,7 @@ import { AccountStore } from './account.store';
 })
 export class AccountEditModal {
   protected readonly store = inject(AccountStore);
+  protected readonly costCenterStore = inject(CostCenterStore);
 
   public account = input.required<AccountModel>();
   public currentUser = input<UserModel | undefined>();

@@ -3,12 +3,13 @@ import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonNote, IonRow } from '@ionic/angular/standalone';
 
 import { DEFAULT_NOTES } from '@okr/shared-constants';
-import { AccountModel, BankRuleCondition, BankRuleModel, RoleName, UserModel, VatCodeModel } from '@okr/shared-models';
+import { AccountModel, BankRuleCondition, BankRuleModel, CostCenterModel, RoleName, UserModel, VatCodeModel } from '@okr/shared-models';
 import { Checkbox, CheckboxI18n, ErrorNote, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
-import { coerceBoolean, hasRole } from '@okr/shared-util-core';
+import { coerceBoolean, hasRole, isProfitAndLossAccountId } from '@okr/shared-util-core';
 import { validateVestTree } from '@okr/shared-util-angular';
 
 import { AccountSelect, AccountSelectI18n } from '@okr/finance-account-ui';
+import { CostCenterSelect, CostCenterSelectI18n } from '@okr/finance-cost-center-ui';
 import { BankRuleI18n, bankRuleValidations, normalizeRuleForSave } from '@okr/finance-bank-rule-util';
 
 const CONDITIONS: BankRuleCondition[] = ['contains', 'startsWith', 'endsWith', 'regex'];
@@ -16,7 +17,7 @@ const CONDITIONS: BankRuleCondition[] = ['contains', 'startsWith', 'endsWith', '
 @Component({
   selector: 'okr-bank-rule-form',
   standalone: true,
-  imports: [TextInput, NumberInput, NotesInput, Checkbox, StringSelect, AccountSelect, ErrorNote, IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonItem, IonNote],
+  imports: [TextInput, NumberInput, NotesInput, Checkbox, StringSelect, AccountSelect, CostCenterSelect, ErrorNote, IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonItem, IonNote],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
     @if (showForm()) {
@@ -56,6 +57,12 @@ const CONDITIONS: BankRuleCondition[] = ['contains', 'startsWith', 'endsWith', '
                   <okr-string-select [i18n]="vatCodeI18n()" [stringList]="vatCodeKeys()" [labels]="vatCodeLabels()"
                     [selectedString]="vatCodeKey()" (selectedStringChange)="onFieldChange('vatCodeKey', $event)" [readOnly]="isReadOnly()" />
                 </ion-col>
+                @if (showCostCenter()) {
+                  <ion-col size="12" size-md="6">
+                    <okr-cost-center-select [i18n]="costCenterI18n()" [costCenters]="costCenters()" [allowEmpty]="true"
+                      [selectedKey]="costCenterKey()" (selectedKeyChange)="onFieldChange('costCenterKey', $event)" [readOnly]="isReadOnly()" />
+                  </ion-col>
+                }
                 <ion-col size="12" size-md="6">
                   <okr-number-input [i18n]="priorityI18n()" [value]="priority()" (valueChange)="onFieldChange('priority', $event)"
                     [readOnly]="isReadOnly()" />
@@ -83,6 +90,9 @@ export class BankRuleForm {
   public readonly currentUser = input<UserModel | undefined>();
   public readonly accounts = input<AccountModel[]>([]);
   public readonly vatCodes = input<VatCodeModel[]>([]);
+  public readonly costCenters = input<CostCenterModel[]>([]);
+  /** Kostenstellen only exist on the native ledger; a bexio ledger gets no picker */
+  public readonly costCentersEnabled = input(false);
   public readonly readOnly = input(true);
   public readonly showForm = input(true);
 
@@ -109,6 +119,9 @@ export class BankRuleForm {
   protected readonly term = computed(() => this.formData()?.term ?? '');
   protected readonly title = computed(() => this.formData()?.title ?? '');
   protected readonly accountKey = computed(() => this.formData()?.accountKey ?? '');
+  protected readonly costCenterKey = computed(() => this.formData()?.costCenterKey ?? '');
+  protected readonly showCostCenter = computed(() =>
+    this.costCentersEnabled() && isProfitAndLossAccountId(this.accounts().find((a) => a.okey === this.accountKey())?.id));
   protected readonly vatCodeKey = computed(() => this.formData()?.vatCodeKey ?? '');
   protected readonly priority = computed(() => this.formData()?.priority ?? 0);
   protected readonly active = computed(() => this.formData()?.active ?? true);
@@ -126,6 +139,7 @@ export class BankRuleForm {
   protected readonly termI18n = computed(() => ({ name: 'term', label: this.i18n().term_label(), placeholder: this.i18n().term_placeholder(), helper: this.i18n().term_helper() } as TextInputI18n));
   protected readonly titleI18n = computed(() => ({ name: 'title', label: this.i18n().title_label(), placeholder: this.i18n().title_placeholder(), helper: this.i18n().title_helper() } as TextInputI18n));
   protected readonly accountI18n = computed(() => ({ name: 'accountKey', label: this.i18n().account_label(), helper: this.i18n().account_helper() } as AccountSelectI18n));
+  protected readonly costCenterI18n = computed(() => ({ name: 'costCenterKey', label: this.i18n().costCenter_label(), helper: this.i18n().costCenter_helper() } as CostCenterSelectI18n));
   protected readonly vatCodeI18n = computed(() => ({ name: 'vatCodeKey', label: this.i18n().vat_label(), helper: this.i18n().vat_helper() } as StringSelectI18n));
   protected readonly priorityI18n = computed(() => ({ name: 'priority', label: this.i18n().priority_label(), placeholder: '', helper: this.i18n().priority_helper() } as NumberInputI18n));
   protected readonly activeI18n = computed(() => ({ name: 'active', label: this.i18n().active_label(), helper: this.i18n().active_helper() } as CheckboxI18n));

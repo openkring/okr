@@ -39,6 +39,7 @@
     "lockedHint": "Este desembolso ya está contabilizado — el importe, la moneda y el destinatario de la transferencia ya no se pueden cambiar."
   },
   "field": {
+    "costCenter": "Centro de costes",
     "abstract": "Asunto",
     "amount": "Importe total",
     "currency": "Moneda",

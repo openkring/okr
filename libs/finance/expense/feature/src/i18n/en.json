@@ -39,6 +39,7 @@
     "lockedHint": "This outlay has already been posted — the amount, currency and transfer destination can no longer be changed."
   },
   "field": {
+    "costCenter": "Cost centre",
     "abstract": "Subject",
     "amount": "Total amount",
     "currency": "Currency",

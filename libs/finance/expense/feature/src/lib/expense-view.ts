@@ -131,6 +131,7 @@ export function injectExpenseView(expense: Signal<ExpenseModel>) {
     qrbill_creditor:  i18n.qrbill_creditor,
     qrbill_reference: i18n.qrbill_reference,
     account_label:    i18n.account_label,
+    cost_center_label: i18n.cost_center_label,
     note_label:       i18n.note_label,
     field_status:     i18n.field_status,
     receipts_label:   i18n.receipts_label,

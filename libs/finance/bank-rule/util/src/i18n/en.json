@@ -1,4 +1,5 @@
 {
+  "costCenter": { "label": "Cost centre (optional)", "helper": "Applied to bookings created with this rule." },
   "singular": "Bank rule",
   "plural": "Bank rules",
   "empty": "No bank rules yet. When you import a bank file, you can create a rule from any row.",

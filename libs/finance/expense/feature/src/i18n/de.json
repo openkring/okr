@@ -39,6 +39,7 @@
     "lockedHint": "Diese Auslage ist bereits verbucht — Betrag, Währung und Überweisungsziel lassen sich nicht mehr ändern."
   },
   "field": {
+    "costCenter": "Kostenstelle",
     "abstract": "Betreff",
     "amount": "Gesamtbetrag",
     "currency": "Währung",
