@@ -14,6 +14,7 @@ import { parseOcrPath } from './ocr-path.util';
 import { toCents, ocrResultId, matchRule, resolveDebitAccount, type OcrRuleLite } from './ocr-extract.util';
 import { geminiExtract } from './gemini-extract';
 import { decodeQrBill } from './qr-bill-decode';
+import { costCenterKeyForLine, loadCostCenterContext } from '../cost-center/cost-center-context';
 import { emitEvent } from '../workflow/emit';
 import { getTodayStr, DateFormat } from '@okr/shared-util-core';
 
@@ -328,6 +329,9 @@ export const onOcrResultWritten = onDocumentWritten(
     const defaultDebit = cfg['defaultExpenseAccountKey'] ?? '';
     const debitAccountKey = resolveDebitAccount(rule?.accountKey ?? '', llmAccountKey, defaultDebit);
     const creditAccountKey = cfg['employeePayablesAccountKey'] ?? '';
+    // Kostenstelle of the debit (P&L) line; the credit line is a balance-sheet account and gets none (spec 1.65 §6.2)
+    const ccCtx = await loadCostCenterContext(db, tenantId, accountingTenantId, [debitAccountKey]);
+    const debitCostCenterKey = costCenterKeyForLine(ccCtx, debitAccountKey, { rule: rule?.costCenterId ?? '' });
 
     const amountCents = after.grossAmount ?? 0;
     const currency = after.currency || 'CHF';
@@ -352,6 +356,7 @@ export const onOcrResultWritten = onDocumentWritten(
     batch.set(debitRef, {
       tenants: [tenantId], isArchived: false,
       bookingKey: bookingRef.id, accountKey: debitAccountKey,
+      ...(debitCostCenterKey ? { costCenterKey: debitCostCenterKey } : {}),
       debitAmount: { amount: amountCents, currency, periodicity: 'one-time' },
       accountingTenantId,
     });
@@ -417,6 +422,11 @@ async function handleExpenseResult(
   const llmAccountKey = await accountKeyById(accountingTenantId, after.llmProposedAccountId ?? '');
   const debitAccountKey = resolveDebitAccount(rule?.accountKey ?? '', llmAccountKey, cfg['defaultExpenseAccountKey'] ?? '');
   const creditAccountKey = cfg['employeePayablesAccountKey'] ?? '';
+  // read before the transaction (spec 1.65 §6.2)
+  const ccCtx = await loadCostCenterContext(db, tenantId, accountingTenantId, [debitAccountKey]);
+  const debitCostCenterKey = costCenterKeyForLine(ccCtx, debitAccountKey, {
+    source: (expense['costCenterId'] as string | undefined) ?? '', rule: rule?.costCenterId ?? '',
+  });
 
   const amountCents = expense['amountTotal'] ?? 0;
   const currency = expense['currency'] || after.currency || 'CHF';
@@ -462,6 +472,7 @@ async function handleExpenseResult(
     tx.set(debitRef, {
       tenants: [tenantId], isArchived: false,
       bookingKey: correlationKey, accountKey: debitAccountKey,
+      ...(debitCostCenterKey ? { costCenterKey: debitCostCenterKey } : {}),
       debitAmount: { amount: amountCents, currency, periodicity: 'one-time' },
       accountingTenantId,
     });

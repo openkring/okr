@@ -5,7 +5,8 @@ import { getFirestore, Transaction } from 'firebase-admin/firestore';
 import { checkAppCheckToken, checkAuthentication, checkRoles, getCallerTenantId, isBalanced, nextBookingNo } from '@okr/shared-util-functions';
 import { DateFormat, getTodayStr } from '@okr/shared-util-core';
 
-import { buildBankBookingHeader, buildBankBookingLines, feeAmountOf, hasFeeLine, isValidSplit, periodKeyFor, ProfileDoc, RowDoc, splitsOf } from './bank-import.util';
+import { buildBankBookingHeader, buildBankBookingLines, feeAmountOf, hasFeeLine, isValidSplit, periodKeyFor, ProfileDoc, RowDoc, splitsOf, withCostCenterKeys } from './bank-import.util';
+import { costCenterKeyForLine, loadCostCenterContext } from '../cost-center/cost-center-context';
 
 const REGION = 'europe-west6';
 const CF_NAME = 'postBankImport';
@@ -60,6 +61,13 @@ export const postBankImport = onCall(
         .orderBy('importedAt').orderBy('date').limit(MAX_ROWS).get();
       rowRefs = q.docs.map(d => d.ref);
     }
+
+    // Kostenstellen: all reads happen once, before the per-row transactions (spec 1.65 §6.2)
+    const ccCtx = await loadCostCenterContext(db, tenantId, accountingTenantId);
+    const ruleSnap = await db.collection('bank-rules').where('accountingTenantId', '==', accountingTenantId).get();
+    const ruleCostCenter = new Map(ruleSnap.docs
+      .filter(s => ((s.data()['tenants'] as string[] | undefined) ?? []).includes(tenantId))
+      .map(s => [s.id, (s.data()['costCenterKey'] as string | undefined) ?? '']));
 
     let posted = 0;
     const failed: Failure[] = [];
@@ -116,7 +124,8 @@ export const postBankImport = onCall(
             return 'replayed';
           }
 
-          const lines = buildBankBookingLines(row, profile, tenantId, bookingKey);
+          const lines = withCostCenterKeys(buildBankBookingLines(row, profile, tenantId, bookingKey), row,
+            ruleCostCenter.get(row.ruleKey ?? '') ?? '', (accountKey, rule) => costCenterKeyForLine(ccCtx, accountKey, { rule }));
           if (!isBalanced(lines as { debitAmount?: { amount: number } | null; creditAmount?: { amount: number } | null }[])) {
             throw new RowError('unbalanced');
           }
