@@ -100,13 +100,13 @@ export const reviewBooking = onCall(
     const oldLineRefs = oldLineDocs.map(s => s.ref);
     // Kostenstelle per corrected line: validate before the transaction (plain reads).
     const reviewAccountingTenantId = pre['accountingTenantId'] as string;
-    const reviewCtx = newLines
+    const reviewCtx = decision === 'approve' && newLines
       ? await loadCostCenterContext(db, tenantId, reviewAccountingTenantId, newLines.map(l => l.accountKey))
       : undefined;
     const reviewGrandfathered = new Set(
       oldLineDocs.map(s => (s.data()['costCenterKey'] as string | undefined) ?? '').filter(k => !!k),
     );
-    if (newLines && reviewCtx) {
+    if (decision === 'approve' && newLines && reviewCtx) {
       for (const line of newLines) assertExplicitCostCenter(reviewCtx, line.accountKey, line.costCenterKey, reviewGrandfathered);
     }
     const reviewer = decision === 'reject' ? await reviewerName(db, request.auth!.uid) : '';

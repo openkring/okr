@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { assertExplicitCostCenter, costCenterKeyForLine, CostCenterContext } from './cost-center-context';
+import { assertExplicitCostCenter, belongsToAccountingTenant, costCenterKeyForLine, CostCenterContext } from './cost-center-context';
 
 const ctx: CostCenterContext = {
   accountingTenantId: 'scs',
@@ -32,4 +32,12 @@ describe('assertExplicitCostCenter', () => {
     expect(() => assertExplicitCostCenter(ctx, 'scs-6300', 'cc-old', new Set(['cc-old']))).not.toThrow());
   it('rejects any key on a balance-sheet line', () =>
     expect(() => assertExplicitCostCenter(ctx, 'scs-1020', 'cc-jun', new Set())).toThrow(/cost-center-invalid/));
+});
+
+describe('belongsToAccountingTenant', () => {
+  it('accepts the same accounting tenant', () => expect(belongsToAccountingTenant({ accountingTenantId: 'scs' }, 'scs')).toBe(true));
+  it('rejects another accounting tenant or none', () => {
+    expect(belongsToAccountingTenant({ accountingTenantId: 'gss' }, 'scs')).toBe(false);
+    expect(belongsToAccountingTenant({}, 'scs')).toBe(false);
+  });
 });

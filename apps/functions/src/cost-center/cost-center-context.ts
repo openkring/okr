@@ -21,6 +21,8 @@ export async function loadCostCenterContext(db: Firestore, tenantId: string, acc
   for (const snap of accountDocs) {
     const data = snap.data() as Record<string, unknown> | undefined;
     if (!data || !((data['tenants'] as string[] | undefined) ?? []).includes(tenantId)) continue;
+    // an account of another accounting tenant (e.g. gss on an scs booking) is treated as unknown
+    if (!belongsToAccountingTenant(data, accountingTenantId)) continue;
     accounts.set(snap.id, { okey: snap.id, ...(data as Omit<AccountLite, 'okey'>) });
   }
   const centerSnap = await db.collection(COST_CENTER_COLLECTION).where('accountingTenantId', '==', accountingTenantId).get();
@@ -28,6 +30,11 @@ export async function loadCostCenterContext(db: Firestore, tenantId: string, acc
     .filter(s => ((s.data()['tenants'] as string[] | undefined) ?? []).includes(tenantId))
     .map(s => ({ okey: s.id, ...(s.data() as Omit<CostCenterLike, 'okey'>) }));
   return { accountingTenantId, accounts, costCenters };
+}
+
+/** True when the account document belongs to the given accounting tenant. */
+export function belongsToAccountingTenant(account: { accountingTenantId?: unknown }, accountingTenantId: string): boolean {
+  return account.accountingTenantId === accountingTenantId;
 }
 
 export function costCenterKeyForLine(ctx: CostCenterContext, accountKey: string, input: { explicit?: string; source?: string; rule?: string } = {}): string {
