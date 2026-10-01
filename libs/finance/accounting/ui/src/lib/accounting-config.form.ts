@@ -1,5 +1,5 @@
 import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
-import { IonCard, IonCardContent, IonCol, IonGrid, IonNote, IonRow, IonSelect, IonSelectOption } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent, IonCol, IonGrid, IonNote, IonRow, IonSelect, IonSelectOption, SelectChangeEventDetail } from '@ionic/angular/standalone';
 
 import { NumberInput, NumberInputI18n, ErrorNote, TextInput, TextInputI18n } from '@okr/shared-ui';
 
@@ -7,6 +7,7 @@ import { AccountingConfigModel, AccountModel } from '@okr/shared-models';
 import { coerceBoolean } from '@okr/shared-util-core';
 
 import { AccountSelect, AccountSelectI18n } from '@okr/finance-account-ui';
+import { leafAccounts } from '@okr/finance-account-util';
 import { AccountingI18n, accountingConfigValidations } from '@okr/finance-accounting-util';
 
 export type { AccountingI18n };
@@ -46,7 +47,7 @@ export type { AccountingI18n };
               </ion-row>
               <ion-row>
                 <ion-col size="12" size-md="6">
-                  <okr-account-select [i18n]="receivablesAccountI18n()" [accounts]="accounts()"
+                  <okr-account-select [i18n]="receivablesAccountI18n()" [accounts]="leaves()"
                     [selectedKey]="receivablesAccountKey()"
                     (selectedKeyChange)="onFieldChange('receivablesAccountKey', $event)"
                     [readOnly]="isReadOnly()" />
@@ -63,7 +64,7 @@ export type { AccountingI18n };
                 <ion-col size="12" size-md="6">
                   <ion-select [label]="i18n().payment_accounts()" labelPlacement="floating" [multiple]="true"
                     [value]="invoicePaymentAccountKeys()" [disabled]="isReadOnly()"
-                    (ionChange)="onFieldChange('invoicePaymentAccountKeys', $any($event).detail.value ?? [])">
+                    (ionChange)="onPaymentAccountsChange($event)">
                     @for (account of paymentAccountChoices(); track account.okey) {
                       <ion-select-option [value]="account.okey">{{ account.id }} — {{ account.name }}</ion-select-option>
                     }
@@ -106,8 +107,9 @@ export class AccountingConfigForm {
   protected invoiceTemplateId = linkedSignal(() => this.formData().invoiceTemplateId ?? '');
   protected invoicePaymentAccountKeys = linkedSignal(() => this.formData().invoicePaymentAccountKeys ?? []);
   /** leaf accounts of class 1 (assets): the accounts an invoice payment may be posted to */
+  protected leaves = computed(() => leafAccounts(this.accounts()));
   protected paymentAccountChoices = computed(() =>
-    this.accounts().filter(a => a.type === 'leaf' && a.id.startsWith('1')).sort((a, b) => a.id.localeCompare(b.id)));
+    this.leaves().filter(a => String(a.id).replace(/^0+/, '').startsWith('1')).sort((a, b) => a.id.localeCompare(b.id)));
   // Legacy config docs predate the field; coalesce to the calendar year like the Cloud Functions do.
   protected fiscalYearStart = linkedSignal(() => this.formData().fiscalYearStart ?? 1);
 
@@ -141,6 +143,10 @@ export class AccountingConfigForm {
 
   constructor() {
     effect(() => this.valid.emit(this.validationResult().isValid()));
+  }
+
+  protected onPaymentAccountsChange(event: CustomEvent<SelectChangeEventDetail<string[]>>): void {
+    this.onFieldChange('invoicePaymentAccountKeys', event.detail.value ?? []);
   }
 
   protected onFieldChange(fieldName: string, fieldValue: string | number | string[]): void {
