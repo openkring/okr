@@ -547,6 +547,8 @@
     "aoc-account": "User Accounts",
     "account-create": "Konto hinzufügen",
     "cost-center-add": "Kostenstelle hinzufügen",
+    "cost-center-migrate-free-text": "Freitext-Kostenstellen zuordnen",
+    "cost-center-migrate-backfill": "Kostenstellen nachtragen (laufendes Jahr)",
     "period-create": "Periode erstellen",
     "bh_varianten": "Projekt Vorgeschichte",
     "scs-contacts": "Adressliste",

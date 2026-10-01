@@ -58,5 +58,13 @@
   "select": {
     "search": "Cerca numero o nome",
     "notFound": "Nessun centro di costo trovato."
+  },
+  "migrate": {
+    "report": "Controllati: {scanned}. Da modificare: {updated}.",
+    "unmatched": "Nessun centro di costo corrispondente, verrà svuotato: {list}",
+    "apply": "Applicare ora?",
+    "none": "Non c'è nulla da modificare.",
+    "done": "Fatto. {updated} voci modificate.",
+    "error": "L'assegnazione non ha funzionato. Riprova più tardi."
   }
 }

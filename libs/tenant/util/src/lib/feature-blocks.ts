@@ -1468,9 +1468,11 @@ const finance: FeatureBlock = {
       { key: 'account-import', name: 'account-import', url: 'import', action: 'call', roleNeeded: 'treasurer', icon: 'upload', label: '@item.account-import' },
       { key: 'account-export', name: 'account-export', url: 'export', action: 'call', roleNeeded: 'treasurer', icon: 'download', label: '@item.account-export' },
     ] },
-    // Kostenstellen list (spec 1.65): only *add*; edit/archive live on the row's action sheet.
+    // Kostenstellen list (spec 1.65): *add* plus the two one-off migrations (§6.4); edit/archive live on the row's action sheet.
     { key: 'c-cost-center', name: 'c-cost-center', url: '', action: 'context', roleNeeded: 'treasurer', icon: 'help-circle', label: '', children: [
       { key: 'cost-center-add', name: 'cost-center-add', url: 'add', action: 'call', roleNeeded: 'treasurer', icon: 'add-circle', label: '@item.cost-center-add' },
+      { key: 'cost-center-migrate-free-text', name: 'cost-center-migrate-free-text', url: 'migrate-free-text', action: 'call', roleNeeded: 'treasurer', icon: 'sync', label: '@item.cost-center-migrate-free-text' },
+      { key: 'cost-center-migrate-backfill', name: 'cost-center-migrate-backfill', url: 'migrate-backfill', action: 'call', roleNeeded: 'treasurer', icon: 'download', label: '@item.cost-center-migrate-backfill' },
     ] },
     { key: 'c-period', name: 'c-period', url: '', action: 'context', roleNeeded: 'treasurer', icon: 'help-circle', label: '', children: [
       { key: 'period-create', name: 'period-create', url: 'create', action: 'call', roleNeeded: 'treasurer', icon: 'add', label: '@item.period-create' },

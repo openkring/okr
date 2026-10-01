@@ -58,5 +58,13 @@
   "select": {
     "search": "Nummer oder Name suchen",
     "notFound": "Keine passende Kostenstelle gefunden."
+  },
+  "migrate": {
+    "report": "Geprüft: {scanned}. Anzupassen: {updated}.",
+    "unmatched": "Ohne passende Kostenstelle, wird geleert: {list}",
+    "apply": "Jetzt anwenden?",
+    "none": "Es gibt nichts anzupassen.",
+    "done": "Fertig. {updated} Einträge angepasst.",
+    "error": "Die Zuordnung hat nicht geklappt. Versuche es später noch einmal."
   }
 }

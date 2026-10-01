@@ -1,5 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { getApp } from 'firebase/app';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 
 import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
@@ -8,6 +10,14 @@ import { CostCenterCollection, CostCenterModel, UserModel } from '@okr/shared-mo
 import { getArchiveInclusiveQuery } from '@okr/shared-util-core';
 
 import { PFX } from './scope';
+
+export type CostCenterMigrationStep = 'free-text' | 'backfill';
+export interface CostCenterMigrationResult {
+  scanned: number;
+  updated: number;
+  /** okey + raw free text of the values that matched no cost centre (no personal data) */
+  unmatched: { collection: string; okey: string; value: string }[];
+}
 
 @Injectable({
   providedIn: 'root'
@@ -43,6 +53,13 @@ export class CostCenterService {
    */
   public async archive(costCenter: CostCenterModel, currentUser?: UserModel): Promise<string | undefined> {
     return await this.firestoreService.updateModel<CostCenterModel>(CostCenterCollection, { ...costCenter, isArchived: true }, false, this.i18n.archive_conf(), this.i18n.archive_error(), currentUser);
+  }
+
+  /** One-off migration (spec 1.65 §6.4) via the treasurer callable; `dryRun` only counts and lists. */
+  public async migrate(accountingTenantId: string, step: CostCenterMigrationStep, dryRun: boolean): Promise<CostCenterMigrationResult> {
+    const fn = httpsCallable<{ accountingTenantId: string; step: CostCenterMigrationStep; dryRun: boolean }, CostCenterMigrationResult>(
+      getFunctions(getApp(), 'europe-west6'), 'migrateCostCenters');
+    return (await fn({ accountingTenantId, step, dryRun })).data;
   }
 
   /*-------------------------- LIST / QUERY / FILTER --------------------------------*/

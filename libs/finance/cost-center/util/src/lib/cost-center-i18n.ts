@@ -55,6 +55,13 @@ export const COST_CENTER_I18N_KEYS = {
   notes:                PFX + 'notes.label',
   notes_placeholder:    PFX + 'notes.placeholder',
 
+  migrate_report:       PFX + 'migrate.report',
+  migrate_unmatched:    PFX + 'migrate.unmatched',
+  migrate_apply:        PFX + 'migrate.apply',
+  migrate_none:         PFX + 'migrate.none',
+  migrate_done:         PFX + 'migrate.done',
+  migrate_error:        PFX + 'migrate.error',
+
   as_title:             '@actionsheet.title',
   save:                 '@save.label',
   cancel:               '@cancel',

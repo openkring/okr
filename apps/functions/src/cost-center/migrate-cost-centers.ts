@@ -1,0 +1,141 @@
+// apps/functions/src/cost-center/migrate-cost-centers.ts
+//
+// One-off migrations of spec 1.65 §6.4, triggered from the Kostenstellen list (treasurer):
+//   free-text — expenses.costCenterId, ocr-rules.costCenterId, assets.costCenter were free text
+//               and become the okey of an active leaf cost centre (or '' when nothing matches);
+//   backfill  — posted booking lines of the CURRENT fiscal year without a cost centre get the
+//               default of their account. Earlier years stay untouched.
+// Idempotent: a second run finds nothing to change. `dryRun` counts and lists without writing.
+
+import { onCall, CallableRequest, HttpsError } from 'firebase-functions/v2/https';
+import { logger } from 'firebase-functions/v2';
+import { getFirestore, type Firestore, type WriteBatch } from 'firebase-admin/firestore';
+
+import { checkAppCheckToken, checkAuthentication, checkRoles, getCallerTenantId } from '@okr/shared-util-functions';
+import { getTodayStr } from '@okr/shared-util-core';
+
+import { fiscalYear } from '../bank-import/bank-import.util';
+import { loadFiscalYearStart } from '../booking/period-lock';
+import { costCenterKeyForLine, loadCostCenterContext } from './cost-center-context';
+import { matchCostCenterText } from './cost-center-migration.util';
+
+const REGION = 'europe-west6';
+const CF_NAME = 'migrateCostCenters';
+const BATCH = 400;
+const IN_CHUNK = 30;
+
+interface MigrateRequest { accountingTenantId?: string; step?: 'free-text' | 'backfill'; dryRun?: boolean }
+interface Unmatched { collection: string; okey: string; value: string }
+interface MigrateResponse { scanned: number; updated: number; unmatched: Unmatched[] }
+
+/** [collection, field] of the free-text sources. */
+const FREE_TEXT_SOURCES: [string, string][] = [['expenses', 'costCenterId'], ['ocr-rules', 'costCenterId'], ['assets', 'costCenter']];
+
+/** Commits in chunks of BATCH writes. */
+class BatchWriter {
+  private batch: WriteBatch;
+  private pending = 0;
+  constructor(private readonly db: Firestore) { this.batch = db.batch(); }
+  public async update(ref: FirebaseFirestore.DocumentReference, patch: Record<string, unknown>): Promise<void> {
+    this.batch.update(ref, patch);
+    if (++this.pending >= BATCH) await this.flush();
+  }
+  public async flush(): Promise<void> {
+    if (this.pending === 0) return;
+    await this.batch.commit();
+    this.batch = this.db.batch();
+    this.pending = 0;
+  }
+}
+
+export const migrateCostCenters = onCall(
+  { region: REGION, enforceAppCheck: true, cors: true, timeoutSeconds: 540, memory: '512MiB' },
+  async (request: CallableRequest<MigrateRequest>): Promise<MigrateResponse> => {
+    checkAppCheckToken(request as never, CF_NAME);
+    checkAuthentication(request as never, CF_NAME);
+    await checkRoles(request as never, CF_NAME, ['treasurer']);
+    const tenantId = await getCallerTenantId(request as never, CF_NAME);
+
+    const accountingTenantId = (request.data?.accountingTenantId ?? '').trim();
+    const step = request.data?.step;
+    const dryRun = request.data?.dryRun === true;
+    if (!accountingTenantId) throw new HttpsError('invalid-argument', 'accountingTenantId is required');
+    if (step !== 'free-text' && step !== 'backfill') throw new HttpsError('invalid-argument', 'step must be free-text or backfill');
+
+    const db = getFirestore();
+    const config = await db.collection('accounting-configs').doc(accountingTenantId).get();
+    if (((config.data()?.['accountingBackend'] as string | undefined) ?? 'native') !== 'native') {
+      throw new HttpsError('failed-precondition', 'accounting-backend-not-native');
+    }
+
+    const result = step === 'free-text'
+      ? await migrateFreeText(db, tenantId, accountingTenantId, dryRun)
+      : await backfillCurrentYear(db, tenantId, accountingTenantId, dryRun);
+    logger.info(`${CF_NAME}: ${step} ${dryRun ? 'dry run' : 'applied'} scanned=${result.scanned} updated=${result.updated} unmatched=${result.unmatched.length}`);
+    return result;
+  },
+);
+
+async function migrateFreeText(db: Firestore, tenantId: string, accountingTenantId: string, dryRun: boolean): Promise<MigrateResponse> {
+  const ctx = await loadCostCenterContext(db, tenantId, accountingTenantId);
+  const writer = new BatchWriter(db);
+  const unmatched: Unmatched[] = [];
+  let scanned = 0;
+  let updated = 0;
+  for (const [collection, field] of FREE_TEXT_SOURCES) {
+    const snap = await db.collection(collection).where('tenants', 'array-contains', tenantId).get();
+    for (const doc of snap.docs) {
+      const data = doc.data();
+      const docAccountingTenant = data['accountingTenantId'];
+      if (typeof docAccountingTenant === 'string' && docAccountingTenant !== '' && docAccountingTenant !== accountingTenantId) continue;
+      const value = typeof data[field] === 'string' ? (data[field] as string) : '';
+      if (value.trim() === '') continue;
+      scanned++;
+      const matched = matchCostCenterText(value, ctx.costCenters, accountingTenantId);
+      if (matched === value) continue;
+      if (matched === '') unmatched.push({ collection, okey: doc.id, value });
+      updated++;
+      if (!dryRun) await writer.update(doc.ref, { [field]: matched });
+    }
+  }
+  await writer.flush();
+  return { scanned, updated, unmatched };
+}
+
+async function backfillCurrentYear(db: Firestore, tenantId: string, accountingTenantId: string, dryRun: boolean): Promise<MigrateResponse> {
+  const fiscalYearStart = await loadFiscalYearStart(db, accountingTenantId);
+  const today = getTodayStr();
+  const currentYear = fiscalYear(today, fiscalYearStart);
+
+  const bookings = await db.collection('bookings')
+    .where('accountingTenantId', '==', accountingTenantId)
+    .where('tenants', 'array-contains', tenantId)
+    .get();
+  const bookingKeys = bookings.docs
+    .filter(b => b.data()['status'] === 'posted')
+    .filter(b => {
+      const date = b.data()['date'];
+      return typeof date === 'string' && /^\d{8}$/.test(date) && fiscalYear(date, fiscalYearStart) === currentYear;
+    })
+    .map(b => b.id);
+
+  const ctx = await loadCostCenterContext(db, tenantId, accountingTenantId);
+  const writer = new BatchWriter(db);
+  let scanned = 0;
+  let updated = 0;
+  for (let i = 0; i < bookingKeys.length; i += IN_CHUNK) {
+    const lines = await db.collection('booking-lines').where('bookingKey', 'in', bookingKeys.slice(i, i + IN_CHUNK)).get();
+    for (const line of lines.docs) {
+      const data = line.data();
+      if (!((data['tenants'] as string[] | undefined) ?? []).includes(tenantId)) continue;
+      scanned++;
+      if (typeof data['costCenterKey'] === 'string' && data['costCenterKey'].trim() !== '') continue;
+      const key = costCenterKeyForLine(ctx, String(data['accountKey'] ?? ''));
+      if (!key) continue;
+      updated++;
+      if (!dryRun) await writer.update(line.ref, { costCenterKey: key });
+    }
+  }
+  await writer.flush();
+  return { scanned, updated, unmatched: [] };
+}

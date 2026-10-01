@@ -58,5 +58,13 @@
   "select": {
     "search": "Chercher un numéro ou un nom",
     "notFound": "Aucun centre de coûts trouvé."
+  },
+  "migrate": {
+    "report": "Vérifiés : {scanned}. À modifier : {updated}.",
+    "unmatched": "Aucun centre de coûts correspondant, sera vidé : {list}",
+    "apply": "Appliquer maintenant ?",
+    "none": "Rien à modifier.",
+    "done": "Terminé. {updated} entrées modifiées.",
+    "error": "L'attribution n'a pas fonctionné. Réessaie plus tard."
   }
 }

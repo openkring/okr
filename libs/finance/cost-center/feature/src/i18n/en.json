@@ -58,5 +58,13 @@
   "select": {
     "search": "Search number or name",
     "notFound": "No matching cost centre found."
+  },
+  "migrate": {
+    "report": "Checked: {scanned}. To change: {updated}.",
+    "unmatched": "No matching cost centre, will be cleared: {list}",
+    "apply": "Apply now?",
+    "none": "Nothing to change.",
+    "done": "Done. {updated} entries changed.",
+    "error": "The assignment did not work. Please try again later."
   }
 }

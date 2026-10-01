@@ -547,6 +547,8 @@
     "aoc-account": "User accounts",
     "account-create": "Add account",
     "cost-center-add": "Add cost centre",
+    "cost-center-migrate-free-text": "Assign free-text cost centres",
+    "cost-center-migrate-backfill": "Backfill cost centres (current year)",
     "period-create": "Create period",
     "bh_varianten": "Project history",
     "scs-contacts": "Address list",

@@ -375,6 +375,9 @@ export { postMemberFees } from './member-fee/post-member-fees';
 // from the legacy numeric DeliveryType to DeliveryChannel[], run once per tenant after release
 export { migrateDeliveryChannels } from './user/migrate-delivery-channels';
 
+// Kostenrechnung 1.65 §6.4: free-text → cost-centre key and current-year backfill (treasurer)
+export { migrateCostCenters } from './cost-center/migrate-cost-centers';
+
 // address-directory projection rebuild/backfill (privacy 1.19 Phase 4)
 export { rebuildAddressDirectory } from './address/rebuild-address-directory';
 

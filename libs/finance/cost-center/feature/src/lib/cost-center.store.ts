@@ -8,9 +8,10 @@ import { AppStore, ModelSelectService } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { CostCenterModel } from '@okr/shared-models';
 import { AlertService } from '@okr/shared-util-angular';
+import { fill } from '@okr/shared-util-core';
 
 import { AccountingStore } from '@okr/finance-accounting-feature';
-import { CostCenterService } from '@okr/finance-cost-center-data-access';
+import { CostCenterMigrationStep, CostCenterService } from '@okr/finance-cost-center-data-access';
 import { CostCenterEditModal } from '@okr/finance-cost-center-ui';
 import { COST_CENTER_I18N_KEYS, CostCenterI18n, leafCostCenters, sortCostCenterTree } from '@okr/finance-cost-center-util';
 import { ResponsibilityService } from '@okr/relationship-responsibility-data-access';
@@ -154,6 +155,33 @@ export const CostCenterStore = signalStore(
       }
       if (!await store.alertService.confirm(store.i18n.archive_conf(), true)) return;
       await store.costCenterService.archive(costCenter, store.currentUser());
+    },
+
+    /**
+     * One-off migration (spec 1.65 §6.4): a dry run first, shown as an alert with the counts and
+     * the values that match no cost centre; only on *OK* the same call is repeated for real.
+     */
+    async migrate(step: CostCenterMigrationStep): Promise<void> {
+      const _tenant = store.accountingStore.accountingTenantId();
+      if (!store.isEnabled() || !_tenant) return;
+      try {
+        const _preview = await store.costCenterService.migrate(_tenant, step, true);
+        if (_preview.updated === 0) {
+          await store.alertService.confirm(store.i18n.migrate_none());
+          return;
+        }
+        const _lines = [fill(store.i18n.migrate_report(), { scanned: _preview.scanned, updated: _preview.updated })];
+        if (_preview.unmatched.length > 0) {
+          const _list = _preview.unmatched.map(u => `${u.collection}/${u.okey}: ${u.value}`).join('; ');
+          _lines.push(fill(store.i18n.migrate_unmatched(), { list: _list }));
+        }
+        _lines.push(store.i18n.migrate_apply());
+        if (!await store.alertService.confirm(_lines.join('\n\n'), true)) return;
+        const _done = await store.costCenterService.migrate(_tenant, step, false);
+        await store.alertService.showToast(fill(store.i18n.migrate_done(), { updated: _done.updated }));
+      } catch {
+        await store.alertService.showToast(store.i18n.migrate_error());
+      }
     },
   })),
 );

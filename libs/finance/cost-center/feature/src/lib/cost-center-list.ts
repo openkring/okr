@@ -128,6 +128,8 @@ export class CostCenterList {
     if (!_method) return; // dismissed without choosing an item (backdrop/escape) — not an error
     switch (_method) {
       case 'add': await this.store.add(); break;
+      case 'migrate-free-text': await this.store.migrate('free-text'); break;
+      case 'migrate-backfill': await this.store.migrate('backfill'); break;
       default: error(undefined, `CostCenterList.onPopoverDismiss: unknown method ${_method}`);
     }
   }

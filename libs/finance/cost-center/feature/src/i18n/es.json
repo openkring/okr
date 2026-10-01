@@ -58,5 +58,13 @@
   "select": {
     "search": "Buscar número o nombre",
     "notFound": "No se encontró ningún centro de coste."
+  },
+  "migrate": {
+    "report": "Revisados: {scanned}. Por cambiar: {updated}.",
+    "unmatched": "Sin centro de coste correspondiente, se vaciará: {list}",
+    "apply": "¿Aplicar ahora?",
+    "none": "No hay nada que cambiar.",
+    "done": "Listo. {updated} entradas cambiadas.",
+    "error": "La asignación no ha funcionado. Inténtalo más tarde."
   }
 }

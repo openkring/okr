@@ -2,7 +2,8 @@
  * ONE-TIME DATA SEED — the Kostenstellen menu rows (spec 1.65):
  *   - `accounting-cost-centers`, a `navigate` row in the catalogued `accounting-menu` submenu
  *     (url `/accounting/@TID@/cost-center/c-cost-center`, role `treasurer`), and
- *   - `c-cost-center`, the list's context menu, with its one `call` child `cost-center-add`.
+ *   - `c-cost-center`, the list's context menu, with its `call` children `cost-center-add`,
+ *     `cost-center-migrate-free-text` and `cost-center-migrate-backfill` (spec 1.65 §6.4).
  *
  * WHY A SCRIPT AND NOT THE FEATURE PICKER
  * The rows are declared in the feature catalogue (`finance` block, `libs/tenant/util/src/lib/
@@ -46,8 +47,10 @@ const AFTER = 'accounting-accounts';
 /** Copied from the catalogue specs in feature-blocks.ts — keep the two in step. */
 const SPECS = [
   { name: ROW, action: 'navigate', url: '/accounting/@TID@/cost-center/c-cost-center', roleNeeded: 'treasurer', icon: 'target', label: '@item.accounting-cost-centers', menuItems: [] },
-  { name: 'c-cost-center', action: 'context', url: '', roleNeeded: 'treasurer', icon: 'help-circle', label: '', menuItems: ['cost-center-add'] },
+  { name: 'c-cost-center', action: 'context', url: '', roleNeeded: 'treasurer', icon: 'help-circle', label: '', menuItems: ['cost-center-add', 'cost-center-migrate-free-text', 'cost-center-migrate-backfill'] },
   { name: 'cost-center-add', action: 'call', url: 'add', roleNeeded: 'treasurer', icon: 'add-circle', label: '@item.cost-center-add', menuItems: [] },
+  { name: 'cost-center-migrate-free-text', action: 'call', url: 'migrate-free-text', roleNeeded: 'treasurer', icon: 'sync', label: '@item.cost-center-migrate-free-text', menuItems: [] },
+  { name: 'cost-center-migrate-backfill', action: 'call', url: 'migrate-backfill', roleNeeded: 'treasurer', icon: 'download', label: '@item.cost-center-migrate-backfill', menuItems: [] },
 ];
 
 /** The shape `planMenuOps` creates (`libs/tenant/util/src/lib/menu-seed.util.ts`). */
@@ -85,7 +88,7 @@ async function main() {
 
   let writes = 0;
 
-  // 2. the three catalogue documents: create, or extend (tenants, children, unarchive) only
+  // 2. the catalogue documents: create, or extend (tenants, children, unarchive) only
   for (const spec of SPECS) {
     const existing = (await menuItems.where('name', '==', spec.name).get()).docs;
     if (existing.length === 0) {
