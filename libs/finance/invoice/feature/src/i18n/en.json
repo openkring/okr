@@ -246,8 +246,7 @@
     }
   },
   "total": {
-    "label": "Total",
-    "helper": "The sum of all items."
+    "label": "Total"
   },
   "positions": {
     "title": "Items",
@@ -265,7 +264,6 @@
     "add": "Add item",
     "remove": "Remove item",
     "total": "Total",
-    "empty": "Add at least one item.",
     "error": {
       "empty": "Add at least one item.",
       "tooMany": "An invoice can have at most 100 items.",
@@ -298,6 +296,7 @@
     "bexio-backend": "These books are kept in bexio. You create invoices there.",
     "no-accounting-config": "These books have no settings yet. Please set them up first.",
     "foreign-accounting-tenant": "These books do not belong to your club.",
-    "too-many-positions": "An invoice can have at most 100 items."
+    "too-many-positions": "An invoice can have at most 100 items.",
+    "inconsistent-state": "Something went wrong while issuing. Please try again."
   }
 }

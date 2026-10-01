@@ -245,7 +245,7 @@ export const InvoiceStore = signalStore(
      * changed afterwards — hence the confirmation. A refusal names its reason in a friendly toast.
      */
     async issue(invoice: InvoiceModel): Promise<void> {
-      if (!isDraftInvoice(invoice)) return;
+      if (!isDraftInvoice(invoice) && invoice.state !== 'issuing') return;
       const confirmed = await confirm(store.alertController, store.i18n.issue_confirm(), store.i18n.issue(), store.i18n.cancel(), true);
       if (!confirmed) return;
       try {

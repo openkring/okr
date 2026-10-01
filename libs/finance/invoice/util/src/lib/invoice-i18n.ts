@@ -125,7 +125,6 @@ export const INVOICE_I18N_KEYS = {
   receiver_person:          PFX + 'receiver.person',
   receiver_org:             PFX + 'receiver.org',
   total_label:              PFX + 'total.label',
-  total_helper:             PFX + 'total.helper',
 
   positions_title:          PFX + 'positions.title',
   positions_name_label:     PFX + 'positions.name.label',
@@ -136,7 +135,6 @@ export const INVOICE_I18N_KEYS = {
   positions_add:            PFX + 'positions.add',
   positions_remove:         PFX + 'positions.remove',
   positions_total:          PFX + 'positions.total',
-  positions_empty:          PFX + 'positions.empty',
 
   issue:                    PFX + 'issue.label',
   issue_confirm:            PFX + 'issue.confirm',
@@ -160,6 +158,7 @@ export const INVOICE_I18N_KEYS = {
   refusal_no_accounting_config:     PFX + 'refusal.no-accounting-config',
   refusal_foreign_accounting_tenant: PFX + 'refusal.foreign-accounting-tenant',
   refusal_too_many_positions:       PFX + 'refusal.too-many-positions',
+  refusal_inconsistent_state:       PFX + 'refusal.inconsistent-state',
 
   as_title:         '@actionsheet.title',
   ok:               '@ok',
@@ -192,6 +191,7 @@ export const INVOICE_REFUSAL_I18N: Record<string, keyof typeof INVOICE_I18N_KEYS
   'no-accounting-config': 'refusal_no_accounting_config',
   'foreign-accounting-tenant': 'refusal_foreign_accounting_tenant',
   'too-many-positions': 'refusal_too_many_positions',
+  'inconsistent-state': 'refusal_inconsistent_state',
 };
 
 /**

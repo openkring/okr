@@ -246,8 +246,7 @@
     }
   },
   "total": {
-    "label": "Totale",
-    "helper": "La somma di tutte le posizioni."
+    "label": "Totale"
   },
   "positions": {
     "title": "Posizioni",
@@ -265,7 +264,6 @@
     "add": "Aggiungi posizione",
     "remove": "Rimuovi posizione",
     "total": "Totale",
-    "empty": "Aggiungi almeno una posizione.",
     "error": {
       "empty": "Aggiungi almeno una posizione.",
       "tooMany": "Una fattura può avere al massimo 100 posizioni.",
@@ -291,13 +289,14 @@
     "no-invoice-date": "La fattura non ha ancora una data.",
     "no-invoice-template": "Nelle impostazioni contabili manca ancora il modello di fattura. Completalo lì.",
     "account-invalid": "Su uno dei conti non si può registrare. Scegli per ogni posizione un conto senza sottoconti.",
-    "period-locked": "Il periodo contabile della data della fattura è chiuso. Scegli un’altra data o fai riaprire il periodo.",
+    "period-locked": "Il periodo contabile della data della fattura è chiuso. Scegli un'altra data o fai riaprire il periodo.",
     "state-changed": "Nel frattempo la fattura è stata modificata. Riprova, per favore.",
     "not-a-draft": "Questa fattura non è più una bozza e non può più essere modificata.",
     "not-found": "Questa fattura non esiste più. Forse è stata eliminata.",
     "bexio-backend": "Questa contabilità è tenuta in bexio. Le fatture le crei lì.",
     "no-accounting-config": "Per questa contabilità mancano ancora le impostazioni. Configurale prima.",
     "foreign-accounting-tenant": "Questa contabilità non appartiene al tuo club.",
-    "too-many-positions": "Una fattura può avere al massimo 100 posizioni."
+    "too-many-positions": "Una fattura può avere al massimo 100 posizioni.",
+    "inconsistent-state": "Qualcosa è andato storto durante l'emissione. Riprova, per favore."
   }
 }

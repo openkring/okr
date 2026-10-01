@@ -7,7 +7,7 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { DateInput, DateInputI18n, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { coerceBoolean } from '@okr/shared-util-core';
 
-import { InvoiceI18n, InvoicePositionInput, invoiceValidations, positionsTotal } from '@okr/finance-invoice-util';
+import { INVOICE_NOTES_LENGTH, InvoiceI18n, InvoicePositionInput, invoiceValidations, positionsTotal } from '@okr/finance-invoice-util';
 
 import { InvoicePositionsForm } from './invoice-positions.form';
 
@@ -121,8 +121,8 @@ import { InvoicePositionsForm } from './invoice-positions.form';
 export class InvoiceEditForm {
   /** kept in step with the cap the Vest suite enforces on this field */
   protected readonly shortNameLength = SHORT_NAME_LENGTH;
-  /** writeInvoice keeps at most 2000 characters of the notes */
-  protected readonly notesLength = 2000;
+  /** kept in step with the cap the Vest suite enforces on the notes */
+  protected readonly notesLength = INVOICE_NOTES_LENGTH;
 
   public readonly formData = input.required<InvoiceModel>();
   public readonly positions = model<InvoicePositionInput[]>([]);

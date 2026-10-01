@@ -246,8 +246,7 @@
     }
   },
   "total": {
-    "label": "Total",
-    "helper": "La suma de todas las posiciones."
+    "label": "Total"
   },
   "positions": {
     "title": "Posiciones",
@@ -265,7 +264,6 @@
     "add": "Añadir posición",
     "remove": "Quitar posición",
     "total": "Total",
-    "empty": "Añade al menos una posición.",
     "error": {
       "empty": "Añade al menos una posición.",
       "tooMany": "Una factura puede tener como máximo 100 posiciones.",
@@ -298,6 +296,7 @@
     "bexio-backend": "Esta contabilidad se lleva en bexio. Las facturas las creas allí.",
     "no-accounting-config": "A esta contabilidad todavía le faltan los ajustes. Configúralos primero.",
     "foreign-accounting-tenant": "Esta contabilidad no pertenece a tu club.",
-    "too-many-positions": "Una factura puede tener como máximo 100 posiciones."
+    "too-many-positions": "Una factura puede tener como máximo 100 posiciones.",
+    "inconsistent-state": "Algo salió mal al emitir la factura. Inténtalo de nuevo, por favor."
   }
 }

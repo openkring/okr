@@ -37,7 +37,7 @@ import { InvoiceStore } from './invoice.store';
       <ion-toolbar color="secondary">
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
         <ion-title>{{ filteredCount() }} {{ store.i18n.list_title() }}</ion-title>
-        @if(canChange()) {
+        @if(canWriteDrafts()) {
           <ion-buttons slot="end">
             <ion-button id="{{ popupId() }}">
               <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />
@@ -210,6 +210,10 @@ export class InvoiceList {
         options.buttons.push(createActionSheetButton('invoice.view', i18n.view(), base, 'eye-on'));
       }
     } else if (invoice.state === 'issuing') {
+      // an interrupted issue: issueInvoice resumes it with the number it already has
+      if (this.canWriteDrafts()) {
+        options.buttons.push(createActionSheetButton('invoice.issue', i18n.issue(), base, 'send'));
+      }
       options.buttons.push(createActionSheetButton('invoice.view', i18n.view(), base, 'eye-on'));
     } else {
       options.buttons.push(createActionSheetButton('invoice.showpdf', i18n.show_pdf(), base, 'download'));
@@ -249,7 +253,4 @@ export class InvoiceList {
     return hasRole('treasurer', this.currentUser());
   }
 
-  protected canChange(): boolean {
-    return hasRole('treasurer', this.currentUser()) || hasRole('privileged', this.currentUser());
-  }
 }

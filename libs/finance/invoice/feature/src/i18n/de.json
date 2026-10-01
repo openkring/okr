@@ -246,8 +246,7 @@
     }
   },
   "total": {
-    "label": "Total",
-    "helper": "Die Summe aller Positionen."
+    "label": "Total"
   },
   "positions": {
     "title": "Positionen",
@@ -265,7 +264,6 @@
     "add": "Position hinzufügen",
     "remove": "Position entfernen",
     "total": "Total",
-    "empty": "Füge mindestens eine Position hinzu.",
     "error": {
       "empty": "Füge mindestens eine Position hinzu.",
       "tooMany": "Eine Rechnung kann höchstens 100 Positionen haben.",
@@ -298,6 +296,7 @@
     "bexio-backend": "Diese Buchhaltung wird in bexio geführt. Rechnungen erstellst du dort.",
     "no-accounting-config": "Für diese Buchhaltung fehlen noch die Einstellungen. Bitte richte sie zuerst ein.",
     "foreign-accounting-tenant": "Diese Buchhaltung gehört nicht zu deinem Verein.",
-    "too-many-positions": "Eine Rechnung kann höchstens 100 Positionen haben."
+    "too-many-positions": "Eine Rechnung kann höchstens 100 Positionen haben.",
+    "inconsistent-state": "Beim Ausstellen ist etwas schiefgelaufen. Versuche es bitte noch einmal."
   }
 }

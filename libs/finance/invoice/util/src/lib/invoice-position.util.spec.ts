@@ -9,6 +9,7 @@ import {
 } from './invoice-position.util';
 import { invoicePositionsValidations } from './invoice-position.validations';
 import { newDraftInvoice } from './invoice.util';
+import { INVOICE_NOTES_LENGTH, invoiceValidations } from './invoice.validations';
 
 function account(okey: string, id: string, parentKey = ''): AccountModel {
   const a = new AccountModel('scs');
@@ -103,11 +104,14 @@ describe('invoiceRefusalText', () => {
     expect(invoiceRefusalText(['no-positions', 'no-receiver', 'no-positions'], i18n, 'generic'))
       .toBe('refusal_no_positions refusal_no_receiver');
   });
+  it('gives inconsistent-state its own text', () => {
+    expect(invoiceRefusalText(['inconsistent-state'], i18n, 'generic')).toBe('refusal_inconsistent_state');
+  });
   it('maps not-issuable like not-a-draft', () => {
     expect(invoiceRefusalText(['not-issuable'], i18n, 'generic')).toBe('refusal_not_a_draft');
   });
   it('falls back for unknown reasons', () => {
-    expect(invoiceRefusalText(['inconsistent-state'], i18n, 'generic')).toBe('generic');
+    expect(invoiceRefusalText(['some-new-reason'], i18n, 'generic')).toBe('generic');
     expect(invoiceRefusalText([], i18n, 'generic')).toBe('generic');
   });
 });
@@ -143,5 +147,15 @@ describe('newDraftInvoice', () => {
     expect(inv.invoiceDate).toBe('20261001');
     expect(inv.dueDate).toBe('20261031');
     expect(inv.receiver).toBeUndefined();
+  });
+});
+
+describe('invoiceValidations notes', () => {
+  it('caps the notes at the server limit', () => {
+    const inv = newDraftInvoice('scs', 'scs', '20261001');
+    inv.notes = 'x'.repeat(INVOICE_NOTES_LENGTH);
+    expect(invoiceValidations(inv, '', '').getErrors('notes')).toEqual([]);
+    inv.notes = 'x'.repeat(INVOICE_NOTES_LENGTH + 1);
+    expect(invoiceValidations(inv, '', '').getErrors('notes').length).toBe(1);
   });
 });

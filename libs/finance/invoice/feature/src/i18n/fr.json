@@ -208,13 +208,13 @@
   "view": {
     "label": "Afficher les détails de la facture",
     "pdf": "Télécharger la facture au format PDF",
-    "pdf_error": "La facture n’a pas pu être chargée au format PDF. Merci de réessayer plus tard.",
+    "pdf_error": "La facture n'a pas pu être chargée au format PDF. Merci de réessayer plus tard.",
     "pdf_missing": "Il n'y a pas encore de PDF pour cette facture."
   },
   "paymentConfirmation": {
     "label": "Créer une confirmation de paiement",
-    "noAddress": "Aucune adresse postale n’est enregistrée pour cette facture. Sans adresse, la confirmation de paiement ne peut pas être créée.",
-    "error": "La confirmation de paiement n’a pas pu être créée. Réessaie plus tard."
+    "noAddress": "Aucune adresse postale n'est enregistrée pour cette facture. Sans adresse, la confirmation de paiement ne peut pas être créée.",
+    "error": "La confirmation de paiement n'a pas pu être créée. Réessaie plus tard."
   },
   "readonly": {
     "banner": "Cette liste est en lecture seule. Les débiteurs sont gérés dans Bexio."
@@ -246,8 +246,7 @@
     }
   },
   "total": {
-    "label": "Total",
-    "helper": "La somme de toutes les positions."
+    "label": "Total"
   },
   "positions": {
     "title": "Positions",
@@ -265,7 +264,6 @@
     "add": "Ajouter une position",
     "remove": "Supprimer la position",
     "total": "Total",
-    "empty": "Ajoute au moins une position.",
     "error": {
       "empty": "Ajoute au moins une position.",
       "tooMany": "Une facture peut avoir au maximum 100 positions.",
@@ -283,7 +281,7 @@
   },
   "refusal": {
     "no-positions": "La facture n'a pas encore de positions. Ajoute d'abord au moins une position.",
-    "position-without-account": "Au moins une position n’a pas de compte de produits. Choisis un compte pour chaque position.",
+    "position-without-account": "Au moins une position n'a pas de compte de produits. Choisis un compte pour chaque position.",
     "invalid-amount": "Au moins une position n'a pas de montant valable. Vérifie les montants.",
     "total-not-positive": "Le total de la facture doit être supérieur à 0.",
     "no-receivables-account": "Le compte débiteurs manque encore dans les paramètres comptables. Complète-le là-bas.",
@@ -292,12 +290,13 @@
     "no-invoice-template": "Le modèle de facture manque encore dans les paramètres comptables. Complète-le là-bas.",
     "account-invalid": "Un des comptes ne peut pas être utilisé pour une écriture. Choisis pour chaque position un compte sans sous-comptes.",
     "period-locked": "La période comptable de la date de facture est clôturée. Choisis une autre date ou fais rouvrir la période.",
-    "state-changed": "La facture a été modifiée entre-temps. Réessaie, s’il te plaît.",
+    "state-changed": "La facture a été modifiée entre-temps. Réessaie, s'il te plaît.",
     "not-a-draft": "Cette facture n'est plus un brouillon et ne peut plus être modifiée.",
     "not-found": "Cette facture n'existe plus. Elle a peut-être été supprimée.",
     "bexio-backend": "Cette comptabilité est tenue dans bexio. Tu y crées les factures.",
     "no-accounting-config": "Les paramètres de cette comptabilité manquent encore. Configure-les d'abord.",
     "foreign-accounting-tenant": "Cette comptabilité n'appartient pas à ton club.",
-    "too-many-positions": "Une facture peut avoir au maximum 100 positions."
+    "too-many-positions": "Une facture peut avoir au maximum 100 positions.",
+    "inconsistent-state": "Un problème est survenu lors de l'émission. Réessaie, s'il te plaît."
   }
 }
