@@ -1,6 +1,6 @@
 import { normalizeQrReference } from '@okr/shared-util-core';
 
-import { BankImportError, ParsedRow, ParsedStatement } from './types';
+import { BankImportError, ParsedRow, ParsedWarning, ParsedStatement } from './types';
 
 /** camt.053 (statement) / camt.054 (notification), any version; namespace-agnostic (spec 1.2 §4.1). */
 export function matchesCamtHeader(lines: string[]): boolean {
@@ -16,10 +16,11 @@ const path = (el: Element | undefined, ...names: string[]): Element | undefined 
   names.reduce<Element | undefined>((cur, n) => kid(cur, n), el);
 const text = (el: Element | undefined): string => (el?.textContent ?? '').replace(/\s+/g, ' ').trim();
 
-/** '120.00' | '80.5' | '50' → minor units, without float drift. */
-function toMinor(value: string): number {
-  const [int, frac = ''] = value.trim().split('.');
-  return Number(int) * 100 + Number((frac + '00').substring(0, 2));
+/** '120.00' | '80.5' | '50' → minor units, without float drift; undefined when not a plain decimal. */
+function toMinor(value: string): number | undefined {
+  const m = /^(\d+)(?:\.(\d*))?$/.exec(value.trim());
+  if (!m) return undefined;
+  return Number(m[1]) * 100 + Number(((m[2] ?? '') + '00').substring(0, 2));
 }
 const storeDate = (iso: string): string => iso.substring(0, 10).replace(/-/g, '');
 
@@ -34,18 +35,33 @@ export function parseCamt(xml: string): ParsedStatement {
   const iban = text(path(first, 'Acct', 'Id', 'IBAN')).replace(/\s/g, '').toUpperCase();
   const currency = text(path(first, 'Acct', 'Ccy')) || 'CHF';
   const rows: ParsedRow[] = [];
+  const warnings: ParsedWarning[] = [];
   let lineNo = 0;
+  let ntryNo = 0;
 
   for (const stmt of stmts) {
     for (const ntry of kids(stmt, 'Ntry')) {
+      ntryNo += 1;
+      const ntryRef = text(kid(ntry, 'AcctSvcrRef')) || `camt Ntry ${ntryNo}`;
+      const sts = kid(ntry, 'Sts');
+      const status = text(kid(sts, 'Cd')) || text(sts);
+      if (status && status !== 'BOOK') {
+        warnings.push({ code: 'line-skipped', lineNo: lineNo + 1, detail: `${ntryRef} (${status})` });
+        continue;
+      }
+      const reversal = text(kid(ntry, 'RvslInd')) === 'true';
       const date = storeDate(text(path(ntry, 'BookgDt', 'Dt')) || text(path(ntry, 'BookgDt', 'DtTm')) || text(path(ntry, 'ValDt', 'Dt')));
       const txs = kids(path(ntry, 'NtryDtls'), 'TxDtls');
       const parts = txs.length ? txs : [undefined];
       for (const tx of parts) {
         lineNo += 1;
-        const amtEl = (tx && kid(tx, 'Amt')) || kid(ntry, 'Amt');
+        const amtEl = (tx && (kid(tx, 'Amt') || path(tx, 'AmtDtls', 'TxAmt', 'Amt'))) || (txs.length <= 1 ? kid(ntry, 'Amt') : undefined);
         const ind = text((tx && kid(tx, 'CdtDbtInd')) || kid(ntry, 'CdtDbtInd'));
         const minor = toMinor(text(amtEl));
+        if (minor === undefined) {
+          warnings.push({ code: 'line-skipped', lineNo, detail: ntryRef });
+          continue;
+        }
         const credit = ind !== 'DBIT';
         const payee = text(path(tx, 'RltdPties', credit ? 'Dbtr' : 'Cdtr', 'Nm'))
           || text(path(tx, 'RltdPties', credit ? 'Dbtr' : 'Cdtr', 'Pty', 'Nm'));
@@ -54,7 +70,7 @@ export function parseCamt(xml: string): ParsedStatement {
           date,
           rawText: [info, payee].filter(Boolean).join(' '),
           payee,
-          amount: credit ? minor : -minor,
+          amount: credit !== reversal ? minor : -minor,
           currency: amtEl?.getAttribute('Ccy') || currency,
           bankReference: text(path(tx, 'Refs', 'AcctSvcrRef')) || text(kid(ntry, 'AcctSvcrRef')),
           paymentReference: normalizeQrReference(text(path(tx, 'RmtInf', 'Strd', 'CdtrRefInf', 'Ref'))),
@@ -68,6 +84,6 @@ export function parseCamt(xml: string): ParsedStatement {
     format: 'camt', iban, currency, bankName: '',
     dateFrom: storeDate(text(path(first, 'FrToDt', 'FrDtTm'))),
     dateTo: storeDate(text(path(first, 'FrToDt', 'ToDtTm'))),
-    rows, warnings: [], newestFirst: false,
+    rows, warnings, newestFirst: false,
   };
 }

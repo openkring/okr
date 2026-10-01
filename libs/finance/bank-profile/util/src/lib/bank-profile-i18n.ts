@@ -32,6 +32,7 @@ export const BANK_PROFILE_I18N_KEYS = {
   format_raisenow:     PFX + 'format.raisenow',
   format_bonuscard:    PFX + 'format.bonuscard',
   format_postfinanceCard: PFX + 'format.postfinance-card',
+  format_camt:         PFX + 'format.camt',
   iban_label:          PFX + 'iban.label',
   iban_placeholder:    PFX + 'iban.placeholder',
   iban_helper:         PFX + 'iban.helper',

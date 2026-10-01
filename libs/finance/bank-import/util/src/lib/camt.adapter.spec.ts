@@ -59,3 +59,41 @@ describe('matchesCamtHeader', () => {
     expect(matchesCamtHeader(['Datum;Buchungstext;Betrag'])).toBe(false);
   });
 });
+
+describe('parseCamt (robustness)', () => {
+  const wrap = (ntries: string): string =>
+    `<Document xmlns="urn:iso:std:iso:20022:tech:xsd:camt.054.001.08"><BkToCstmrDbtCdtNtfctn><Ntfctn>` +
+    `<Acct><Id><IBAN>CH9300762011623852957</IBAN></Id></Acct>${ntries}</Ntfctn></BkToCstmrDbtCdtNtfctn></Document>`;
+  const ntry = (inner: string, extra = ''): string =>
+    `<Ntry><Amt Ccy="CHF">200.00</Amt><CdtDbtInd>CRDT</CdtDbtInd>${extra}<BookgDt><Dt>2026-10-01</Dt></BookgDt>${inner}</Ntry>`;
+
+  it('uses AmtDtls/TxAmt/Amt for a batch TxDtls without its own Amt', () => {
+    const s = parseCamt(wrap(ntry('<NtryDtls><TxDtls><Amt Ccy="CHF">120.00</Amt></TxDtls><TxDtls><AmtDtls><TxAmt><Amt Ccy="CHF">80.00</Amt></TxAmt></AmtDtls></TxDtls></NtryDtls>')));
+    expect(s.rows.map(r => r.amount)).toEqual([12000, 8000]);
+  });
+  it('skips a batch TxDtls with no amount instead of booking the entry total', () => {
+    const s = parseCamt(wrap(ntry('<NtryDtls><TxDtls><Amt Ccy="CHF">120.00</Amt></TxDtls><TxDtls><AddtlTxInf>x</AddtlTxInf></TxDtls></NtryDtls>')));
+    expect(s.rows.map(r => r.amount)).toEqual([12000]);
+    expect(s.warnings).toHaveLength(1);
+    expect(s.warnings[0].code).toBe('line-skipped');
+  });
+  it('skips a malformed amount with a warning', () => {
+    const s = parseCamt(wrap(ntry('').replace('200.00', 'abc')));
+    expect(s.rows).toHaveLength(0);
+    expect(s.warnings[0].code).toBe('line-skipped');
+  });
+  it('skips a non-booked entry with a warning', () => {
+    const s = parseCamt(wrap(ntry('', '<Sts><Cd>PDNG</Cd></Sts>') + ntry('', '<Sts>BOOK</Sts>')));
+    expect(s.rows).toHaveLength(1);
+    expect(s.warnings).toHaveLength(1);
+    expect(s.warnings[0].code).toBe('line-skipped');
+  });
+  it('flips the sign of a reversal', () => {
+    const s = parseCamt(wrap(ntry('', '<RvslInd>true</RvslInd>')));
+    expect(s.rows[0].amount).toBe(-20000);
+  });
+  it('a single TxDtls without Amt uses the entry amount', () => {
+    const s = parseCamt(wrap(ntry('<NtryDtls><TxDtls><AddtlTxInf>x</AddtlTxInf></TxDtls></NtryDtls>')));
+    expect(s.rows.map(r => r.amount)).toEqual([20000]);
+  });
+});
