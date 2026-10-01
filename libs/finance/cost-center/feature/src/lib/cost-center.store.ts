@@ -27,11 +27,14 @@ export type CostCenterArchiveFilter = 'active' | 'archived' | 'all';
 export type CostCenterState = {
   searchTerm: string;
   archiveFilter: CostCenterArchiveFilter;
+  /** set by the list / edit(): only they show responsibility names — the pickers never load them */
+  responsibilitiesNeeded: boolean;
 };
 
 export const initialCostCenterState: CostCenterState = {
   searchTerm: '',
   archiveFilter: 'active',
+  responsibilitiesNeeded: false,
 };
 
 /**
@@ -60,7 +63,9 @@ export const CostCenterStore = signalStore(
       stream: ({ params: accountingTenantId }) =>
         accountingTenantId ? store.costCenterService.list(accountingTenantId) : of([]),
     }),
+    // idle (undefined params) until a consumer that shows names asks for them
     responsibilitiesResource: rxResource({
+      params: () => store.responsibilitiesNeeded() || undefined,
       stream: () => store.responsibilityService.list('name', 'asc'),
     }),
   })),
@@ -107,6 +112,11 @@ export const CostCenterStore = signalStore(
       patchState(store, { archiveFilter: _filter });
     },
 
+    /** The list and the edit modal show responsibility names; call before reading `responsibilities()`. */
+    loadResponsibilities(): void {
+      if (!store.responsibilitiesNeeded()) patchState(store, { responsibilitiesNeeded: true });
+    },
+
     responsibilityName(key: string): string {
       if (!key) return '';
       return store.responsibilities().find(r => r.okey === key)?.name ?? '';
@@ -122,6 +132,7 @@ export const CostCenterStore = signalStore(
     },
 
     async edit(costCenter: CostCenterModel, readOnly = true): Promise<void> {
+      this.loadResponsibilities();
       const _readOnly = readOnly || !store.isEnabled();
       const modal = await store.modalController.create({
         component: CostCenterEditModal,

@@ -97,6 +97,11 @@ export class CostCenterList {
 
   public readonly contextMenuName = input.required<string>();
 
+  constructor() {
+    // the list shows the responsible person per row; the pickers elsewhere never load them
+    this.store.loadResponsibilities();
+  }
+
   protected readonly popupId = 'c_cost_centers';
   protected readonly rows = computed(() => this.store.filteredTree());
   protected readonly filteredCount = computed(() => this.rows().length);
