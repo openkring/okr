@@ -64,6 +64,17 @@ export interface GenerateDocumentResponse {
 }
 
 /**
+ * In-process storage target. Only server code may pass it (never derived from a client
+ * request): the file goes to `bucket` at `path`, no `docGenerations` audit, `url` is ''.
+ */
+type Bucket = ReturnType<ReturnType<typeof getStorage>['bucket']>;
+
+export interface RenderSink {
+  bucket: Bucket;
+  path: string;
+}
+
+/**
  * The rendering core of `generateDocument`, callable in-process (the workflow engine
  * must not call its own HTTPS endpoint). Authentication, the raw-HTML admin check and
  * the rate limit stay in the callable wrapper; this function assumes them done.
@@ -71,7 +82,8 @@ export interface GenerateDocumentResponse {
 export async function renderDocument(
   req: GenerateDocumentRequest,
   uid: string,
-  tenantId: string
+  tenantId: string,
+  sink?: RenderSink
 ): Promise<GenerateDocumentResponse> {
   const { templateId, html: rawHtml, payload = {}, options = {} } = req;
   const userId = uid;
@@ -201,11 +213,11 @@ export async function renderDocument(
     }
 
     const sizeBytes = fs.statSync(tempPath).size;
-    const storagePath = storageMode === 'persist'
+    const storagePath = sink?.path ?? (storageMode === 'persist'
       ? `generated-docs/${tenantId}/${userId}/${generationId}.${ext}`
-      : `generated-docs-ephemeral/${tenantId}/${generationId}.${ext}`;
+      : `generated-docs-ephemeral/${tenantId}/${generationId}.${ext}`);
 
-    const bucket = getStorage().bucket();
+    const bucket = sink?.bucket ?? getStorage().bucket();
     const mimeTypes: Record<string, string> = {
       pdf: 'application/pdf',
       docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
@@ -216,16 +228,18 @@ export async function renderDocument(
       metadata: { contentType: mimeTypes[outputFormat] },
     });
 
-    const [signedUrl] = await bucket.file(storagePath).getSignedUrl({
-      action: 'read',
-      expires: Date.now() + 3600_000, // 1 hour
-    });
+    const signedUrl = sink
+      ? ''
+      : (await bucket.file(storagePath).getSignedUrl({
+          action: 'read',
+          expires: Date.now() + 3600_000, // 1 hour
+        }))[0];
 
     const durationMs = Date.now() - startMs;
     const generatedAt = new Date().toISOString();
 
-    // Write audit entry (skip for ephemeral)
-    if (storageMode === 'persist') {
+    // Write audit entry (skip for ephemeral and for an in-process sink)
+    if (storageMode === 'persist' && !sink) {
       const audit: Partial<DocGenerationModel> = {
         okey: generationId,
         tenants: [tenantId],
@@ -262,7 +276,7 @@ export async function renderDocument(
     const message = err instanceof Error ? err.message : String(err);
     logger.error('generateDocument: failed', { generationId, message });
 
-    if (storageMode === 'persist') {
+    if (storageMode === 'persist' && !sink) {
       await getFirestore().collection(DocGenerationCollection).doc(generationId).set({
         okey: generationId,
         tenants: [tenantId],

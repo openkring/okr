@@ -75,3 +75,14 @@ describe('buildQrSlipData', () => {
     expect(buildQrSlipData(payee, {}, false).debtor).toBeUndefined();
   });
 });
+
+describe('buildQrSlipData message', () => {
+  const msgPayee: QrPayee = { name: 'SCS', iban: 'CH93 0076 2011 6238 5295 7', street: 'Seestrasse', buildingNumber: '1', zip: '8712', city: 'Stäfa', country: 'CH' };
+  it('carries payload.qrMessage as the unstructured message', () => {
+    expect(buildQrSlipData(msgPayee, { qrMessage: 'Rechnung 202600001' }, false).message).toBe('Rechnung 202600001');
+  });
+  it('omits an empty message and caps it at 140 characters', () => {
+    expect(buildQrSlipData(msgPayee, {}, false)).not.toHaveProperty('message');
+    expect(buildQrSlipData(msgPayee, { qrMessage: 'x'.repeat(200) }, false).message).toHaveLength(140);
+  });
+});
