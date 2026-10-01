@@ -15,6 +15,10 @@ describe('cost-center tree', () => {
     const typed = [...tree, Object.assign(cc('f', '200', 'Leer'), { type: 'group' as const }), Object.assign(cc('g', '900', 'Wurzel'), { type: 'root' as const })];
     expect(leafCostCenters(typed).map(c => c.okey).sort()).toEqual(['b', 'c', 'e']);
   });
+  it('leafCostCenters counts a typeless childless node (legacy/raw doc) as a leaf, like the server', () => {
+    const typeless = Object.assign(cc('h', '400', 'Ohne Typ'), { type: undefined });
+    expect(leafCostCenters([...tree, typeless]).map(c => c.okey).sort()).toEqual(['b', 'c', 'e', 'h']);
+  });
   it('costCenterSubtreeKeys includes root and descendants', () =>
     expect([...costCenterSubtreeKeys(tree, 'a')].sort()).toEqual(['a', 'b', 'c', 'd']));
   it('costCenterSubtreeKeys of a leaf is the leaf', () =>

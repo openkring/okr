@@ -1,12 +1,13 @@
 import { CostCenterModel } from '@okr/shared-models';
 
 /**
- * The active nodes of type 'leaf' without children — the only cost centres a booking line may
+ * The active nodes of type 'leaf' (or without a type) without children — the only cost centres a booking line may
  * point at (same rule as `isActiveLeafCostCenter` in `@okr/shared-util-core`, which the server uses).
  */
 export function leafCostCenters(centers: CostCenterModel[]): CostCenterModel[] {
   const parents = new Set(centers.map(c => c.parentKey).filter(k => !!k));
-  return centers.filter(c => !c.isArchived && c.type === 'leaf' && !parents.has(c.okey));
+  // a missing type (Firestore reads skip model defaults) counts as a leaf, exactly as on the server
+  return centers.filter(c => !c.isArchived && (c.type ?? 'leaf') === 'leaf' && !parents.has(c.okey));
 }
 
 /** The key itself plus the keys of all its descendants (archived ones included). */
