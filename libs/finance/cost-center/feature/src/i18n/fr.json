@@ -23,7 +23,8 @@
     "label": "Parent",
     "helper": "Le groupe auquel appartient ce centre de coûts.",
     "cycle": "Un centre de coûts ne peut pas être placé sous lui-même ni sous l'un de ses propres sous-centres.",
-    "notGroup": "Le parent doit être un groupe ou le niveau supérieur."
+    "notGroup": "Le parent doit être un groupe ou le niveau supérieur.",
+    "none": "niveau supérieur"
   },
   "type": {
     "label": "Type",
@@ -35,10 +36,27 @@
   },
   "responsibility": {
     "label": "Responsabilité",
-    "helper": "Qui est responsable de ce centre de coûts. Laisse vide et seul le trésorier le voit."
+    "helper": "Qui est responsable de ce centre de coûts. Laisse vide et seul le trésorier le voit.",
+    "select": "Choisir",
+    "clear": "Retirer",
+    "none": "Aucune – seulement la trésorière ou le trésorier"
   },
   "notes": {
     "label": "Notes",
     "placeholder": "Notes sur le centre de coûts"
+  },
+  "archiveHasChildren": "Ce groupe contient encore des centres de coûts actifs. Archive-les d’abord.",
+  "archived": "archivé",
+  "archiveState": {
+    "active": {
+      "label": "Actifs"
+    },
+    "archived": {
+      "label": "Archivés"
+    }
+  },
+  "select": {
+    "search": "Chercher un numéro ou un nom",
+    "notFound": "Aucun centre de coûts trouvé."
   }
 }

@@ -41,6 +41,7 @@
     { "path": "../../finance/bank-rule/feature/tsconfig.lib.json" },
     { "path": "../../finance/bill/feature/tsconfig.lib.json" },
     { "path": "../../finance/booking/feature/tsconfig.lib.json" },
+    { "path": "../../finance/cost-center/feature/tsconfig.lib.json" },
     { "path": "../../finance/expense/feature/tsconfig.lib.json" },
     { "path": "../../finance/invoice/feature/tsconfig.lib.json" },
     { "path": "../../finance/ocr-rule/feature/tsconfig.lib.json" },

@@ -14,11 +14,11 @@
     "@okr/shared-ui": "*",
     "@okr/shared-util-angular": "*",
     "@okr/shared-util-core": "*",
-    "@okr/finance-cost-centering-feature": "*",
+    "@okr/cms-menu-feature": "*",
+    "@okr/finance-accounting-feature": "*",
     "@okr/finance-cost-center-data-access": "*",
-    "@okr/finance-booking-data-access": "*",
     "@okr/finance-cost-center-ui": "*",
     "@okr/finance-cost-center-util": "*",
-    "@okr/cms-menu-feature": "*"
+    "@okr/relationship-responsibility-data-access": "*"
   }
 }

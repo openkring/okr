@@ -42,6 +42,7 @@
     "@okr/resource-feature": "*",
     "@okr/mobility-flighttracker-feature": "*",
     "@okr/finance-account-feature": "*",
+    "@okr/finance-cost-center-feature": "*",
     "@okr/finance-accounting-feature": "*",
     "@okr/finance-asset-feature": "*",
     "@okr/finance-bill-feature": "*",

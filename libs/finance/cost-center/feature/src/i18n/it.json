@@ -23,7 +23,8 @@
     "label": "Superiore",
     "helper": "Il gruppo a cui appartiene questo centro di costo.",
     "cycle": "Un centro di costo non può essere collocato sotto se stesso né sotto i propri sotto-centri.",
-    "notGroup": "Il superiore deve essere un gruppo o il livello superiore."
+    "notGroup": "Il superiore deve essere un gruppo o il livello superiore.",
+    "none": "livello superiore"
   },
   "type": {
     "label": "Tipo",
@@ -35,10 +36,27 @@
   },
   "responsibility": {
     "label": "Responsabilità",
-    "helper": "Chi è responsabile di questo centro di costo. Se lasci vuoto, lo vede solo il tesoriere."
+    "helper": "Chi è responsabile di questo centro di costo. Se lasci vuoto, lo vede solo il tesoriere.",
+    "select": "Scegli",
+    "clear": "Rimuovi",
+    "none": "Nessuna – solo la cassiera o il cassiere"
   },
   "notes": {
     "label": "Note",
     "placeholder": "Note sul centro di costo"
+  },
+  "archiveHasChildren": "Questo gruppo ha ancora centri di costo attivi. Archiviali prima.",
+  "archived": "archiviato",
+  "archiveState": {
+    "active": {
+      "label": "Attivi"
+    },
+    "archived": {
+      "label": "Archiviati"
+    }
+  },
+  "select": {
+    "search": "Cerca numero o nome",
+    "notFound": "Nessun centro di costo trovato."
   }
 }

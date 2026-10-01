@@ -23,7 +23,8 @@
     "label": "Übergeordnet",
     "helper": "Zu welcher Gruppe die Kostenstelle gehört.",
     "cycle": "Eine Kostenstelle kann nicht unter sich selbst oder unter ihren eigenen Unterstellen liegen.",
-    "notGroup": "Übergeordnet muss eine Gruppe oder die oberste Ebene sein."
+    "notGroup": "Übergeordnet muss eine Gruppe oder die oberste Ebene sein.",
+    "none": "oberste Ebene"
   },
   "type": {
     "label": "Art",
@@ -35,10 +36,27 @@
   },
   "responsibility": {
     "label": "Verantwortung",
-    "helper": "Wer für diese Kostenstelle zuständig ist. Leer lassen, dann sieht nur die Kassierin oder der Kassier sie."
+    "helper": "Wer für diese Kostenstelle zuständig ist. Leer lassen, dann sieht nur die Kassierin oder der Kassier sie.",
+    "select": "Auswählen",
+    "clear": "Entfernen",
+    "none": "Keine – nur die Kassierin oder der Kassier"
   },
   "notes": {
     "label": "Notizen",
     "placeholder": "Notizen zur Kostenstelle"
+  },
+  "archiveHasChildren": "Diese Gruppe hat noch aktive Kostenstellen. Archiviere zuerst diese.",
+  "archived": "archiviert",
+  "archiveState": {
+    "active": {
+      "label": "Aktive"
+    },
+    "archived": {
+      "label": "Archivierte"
+    }
+  },
+  "select": {
+    "search": "Nummer oder Name suchen",
+    "notFound": "Keine passende Kostenstelle gefunden."
   }
 }

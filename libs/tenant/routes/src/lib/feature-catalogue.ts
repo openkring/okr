@@ -765,6 +765,11 @@ const finance: BlockRoutes = {
           children: [{ path: ':contextMenuName', loadComponent: () => import('@okr/finance-account-feature').then(m => m.AccountList) }],
         },
         {
+          // Kostenstellen (spec 1.65): tree list like the Kontoplan; treasurer via the shell's guard.
+          path: 'cost-center',
+          children: [{ path: ':contextMenuName', loadComponent: () => import('@okr/finance-cost-center-feature').then(m => m.CostCenterList) }],
+        },
+        {
           // Account links and fiscal year start of this accounting tenant (`accounting-settings` row).
           path: 'settings',
           loadComponent: () => import('@okr/finance-accounting-feature').then(m => m.AccountingSettingsPage),

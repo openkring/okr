@@ -2,6 +2,9 @@ import { Signal } from '@angular/core';
 
 const PFX = '@finance/cost-center/feature.';
 
+/** The `i18n` scope of the list's archive-state filter category (items: active, archived). */
+export const COST_CENTER_I18N_SCOPE = '@finance/cost-center/feature';
+
 export const COST_CENTER_I18N_KEYS = {
   costCenters:          PFX + 'costCenters',
   empty:                PFX + 'empty',
@@ -13,6 +16,13 @@ export const COST_CENTER_I18N_KEYS = {
   view:                 PFX + 'view',
   archive:              PFX + 'archive',
   archive_conf:         PFX + 'archiveConf',
+  archive_hasChildren:  PFX + 'archiveHasChildren',
+  archived:             PFX + 'archived',
+  archiveState_active:  PFX + 'archiveState.active.label',
+  archiveState_archived: PFX + 'archiveState.archived.label',
+
+  select_search:        PFX + 'select.search',
+  select_notFound:      PFX + 'select.notFound',
 
   id:                   PFX + 'id.label',
   id_placeholder:       PFX + 'id.placeholder',
@@ -27,6 +37,7 @@ export const COST_CENTER_I18N_KEYS = {
   parentKey_helper:     PFX + 'parentKey.helper',
   parentKey_cycle:      PFX + 'parentKey.cycle',
   parentKey_notGroup:   PFX + 'parentKey.notGroup',
+  parentKey_none:       PFX + 'parentKey.none',
 
   type:                 PFX + 'type.label',
   type_helper:          PFX + 'type.helper',
@@ -37,6 +48,9 @@ export const COST_CENTER_I18N_KEYS = {
 
   responsibility:        PFX + 'responsibility.label',
   responsibility_helper: PFX + 'responsibility.helper',
+  responsibility_select: PFX + 'responsibility.select',
+  responsibility_clear:  PFX + 'responsibility.clear',
+  responsibility_none:   PFX + 'responsibility.none',
 
   notes:                PFX + 'notes.label',
   notes_placeholder:    PFX + 'notes.placeholder',

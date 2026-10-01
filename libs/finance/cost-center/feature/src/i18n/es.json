@@ -23,7 +23,8 @@
     "label": "Superior",
     "helper": "El grupo al que pertenece este centro de coste.",
     "cycle": "Un centro de coste no puede colocarse debajo de sí mismo ni de sus propios subcentros.",
-    "notGroup": "El superior debe ser un grupo o el nivel superior."
+    "notGroup": "El superior debe ser un grupo o el nivel superior.",
+    "none": "nivel superior"
   },
   "type": {
     "label": "Tipo",
@@ -35,10 +36,27 @@
   },
   "responsibility": {
     "label": "Responsabilidad",
-    "helper": "Quién es responsable de este centro de coste. Si lo dejas vacío, solo lo ve el tesorero."
+    "helper": "Quién es responsable de este centro de coste. Si lo dejas vacío, solo lo ve el tesorero.",
+    "select": "Elegir",
+    "clear": "Quitar",
+    "none": "Ninguna – solo la tesorera o el tesorero"
   },
   "notes": {
     "label": "Notas",
     "placeholder": "Notas sobre el centro de coste"
+  },
+  "archiveHasChildren": "Este grupo todavía tiene centros de coste activos. Archívalos primero.",
+  "archived": "archivado",
+  "archiveState": {
+    "active": {
+      "label": "Activos"
+    },
+    "archived": {
+      "label": "Archivados"
+    }
+  },
+  "select": {
+    "search": "Buscar número o nombre",
+    "notFound": "No se encontró ningún centro de coste."
   }
 }

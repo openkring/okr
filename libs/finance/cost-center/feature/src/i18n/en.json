@@ -23,7 +23,8 @@
     "label": "Parent",
     "helper": "The group this cost centre belongs to.",
     "cycle": "A cost centre cannot be placed below itself or below one of its own sub-centres.",
-    "notGroup": "The parent must be a group or the top level."
+    "notGroup": "The parent must be a group or the top level.",
+    "none": "top level"
   },
   "type": {
     "label": "Kind",
@@ -35,10 +36,27 @@
   },
   "responsibility": {
     "label": "Responsibility",
-    "helper": "Who is in charge of this cost centre. Leave empty and only the treasurer sees it."
+    "helper": "Who is in charge of this cost centre. Leave empty and only the treasurer sees it.",
+    "select": "Select",
+    "clear": "Remove",
+    "none": "None – only the treasurer"
   },
   "notes": {
     "label": "Notes",
     "placeholder": "Notes on the cost centre"
+  },
+  "archiveHasChildren": "This group still has active cost centres. Archive them first.",
+  "archived": "archived",
+  "archiveState": {
+    "active": {
+      "label": "Active"
+    },
+    "archived": {
+      "label": "Archived"
+    }
+  },
+  "select": {
+    "search": "Search number or name",
+    "notFound": "No matching cost centre found."
   }
 }
