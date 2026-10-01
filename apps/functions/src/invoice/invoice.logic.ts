@@ -104,3 +104,8 @@ export function draftWriteRefusal(existingState: string | undefined, mode: 'crea
   if (existingState === undefined) return 'not-found';
   return existingState === 'draft' ? undefined : 'not-a-draft';
 }
+
+/** Drops top-level `undefined` values: firebase-admin refuses them ("Cannot use undefined as a Firestore value"). */
+export function withoutUndefined<T extends object>(obj: T): T {
+  return Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== undefined)) as T;
+}

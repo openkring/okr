@@ -8,7 +8,7 @@ import { generateRandomString, removeKeyFromOkrModel } from '@okr/shared-util-co
 import { checkAppCheckToken, checkAuthentication, checkRoles, getCallerTenantId } from '@okr/shared-util-functions';
 
 import { isBexioBackend } from '../bexio/backend-gate';
-import { draftWriteRefusal, PositionInput, totalRappen } from './invoice.logic';
+import { draftWriteRefusal, PositionInput, totalRappen, withoutUndefined } from './invoice.logic';
 
 const REGION = 'europe-west6';
 const CF_NAME = 'writeInvoice';
@@ -153,7 +153,7 @@ export const writeInvoice = onCall(
       invoice.invoiceId = '';
       invoice.totalAmount = { amount: totalRappen(positions), currency: 'CHF', periodicity: 'one-time' };
       invoice.index = getInvoiceIndex(invoice);
-      tx.set(invoiceRef, removeKeyFromOkrModel(invoice));
+      tx.set(invoiceRef, withoutUndefined(removeKeyFromOkrModel(invoice)));
 
       for (const p of positions) {
         const position = new InvoicePositionModel(tenantId);
@@ -165,7 +165,7 @@ export const writeInvoice = onCall(
         position.currency = 'CHF';
         position.accountKey = String(p.accountKey ?? '');
         position.isBillable = true;
-        tx.set(db.collection(InvoicePositionCollection).doc(generateRandomString(20)), removeKeyFromOkrModel(position));
+        tx.set(db.collection(InvoicePositionCollection).doc(generateRandomString(20)), withoutUndefined(removeKeyFromOkrModel(position)));
       }
     });
 

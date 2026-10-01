@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildInvoicePayload, draftWriteRefusal, invoiceBookingLines, issueBlockers, totalRappen } from './invoice.logic';
+import { buildInvoicePayload, draftWriteRefusal, invoiceBookingLines, issueBlockers, totalRappen, withoutUndefined } from './invoice.logic';
 
 const pos = (amount: number, accountKey = 'scs3401', name = 'Beitrag') => ({ name, amount, accountKey });
 
@@ -90,5 +90,12 @@ describe('draftWriteRefusal', () => {
   it('refuses update/delete of a missing invoice', () => {
     expect(draftWriteRefusal(undefined, 'update')).toBe('not-found');
     expect(draftWriteRefusal(undefined, 'delete')).toBe('not-found');
+  });
+});
+
+describe('withoutUndefined', () => {
+  it('drops undefined keys but keeps null, empty and zero values', () => {
+    expect(withoutUndefined({ a: 1, b: undefined, c: null, d: '', e: 0 })).toEqual({ a: 1, c: null, d: '', e: 0 });
+    expect('b' in withoutUndefined({ b: undefined })).toBe(false);
   });
 });
