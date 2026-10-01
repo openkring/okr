@@ -122,10 +122,14 @@ export function issueOutcome(state: string): 'issue' | 'already-issued' | 'refus
 }
 
 /** Header reasons why a draft cannot be issued (drafts may lack receiver and date; issued invoices may not). */
-export function issueHeaderBlockers(h: { receiverKey?: string; invoiceDate?: string; invoiceTemplateId?: string }): string[] {
+export function issueHeaderBlockers(h: { receiverKey?: string; invoiceDate?: string; dueDate?: string; invoiceTemplateId?: string }): string[] {
   const blockers: string[] = [];
   if (!h.receiverKey?.trim()) blockers.push('no-receiver');
-  if (!/^\d{8}$/.test(h.invoiceDate ?? '')) blockers.push('no-invoice-date');
+  const hasInvoiceDate = /^\d{8}$/.test(h.invoiceDate ?? '');
+  if (!hasInvoiceDate) blockers.push('no-invoice-date');
+  // an issued invoice must say when it is due; StoreDate strings (yyyymmdd) compare lexically
+  if (!/^\d{8}$/.test(h.dueDate ?? '')) blockers.push('no-due-date');
+  else if (hasInvoiceDate && (h.dueDate as string) < (h.invoiceDate as string)) blockers.push('due-before-invoice-date');
   if (!h.invoiceTemplateId?.trim()) blockers.push('no-invoice-template');
   return blockers;
 }

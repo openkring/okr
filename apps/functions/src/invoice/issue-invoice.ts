@@ -2,8 +2,8 @@ import { onCall, CallableRequest, HttpsError } from 'firebase-functions/v2/https
 import { logger } from 'firebase-functions/v2';
 import { FieldValue, Firestore, getFirestore, Transaction } from 'firebase-admin/firestore';
 
-import { AddressCollection, AddressModel, FinanceDocumentCollection, InvoiceCollection, InvoicePositionCollection } from '@okr/shared-models';
-import { getNextInvoiceNo } from '@okr/finance-invoice-util';
+import { AddressCollection, AddressModel, FinanceDocumentCollection, InvoiceCollection, InvoiceModel, InvoicePositionCollection } from '@okr/shared-models';
+import { getInvoiceIndex, getNextInvoiceNo } from '@okr/finance-invoice-util';
 import { DateFormat, generateRandomString, getTodayStr } from '@okr/shared-util-core';
 import {
   checkAppCheckToken, checkAuthentication, checkRoles, getCallerTenantId, nextBookingNo, pickFavoriteByChannel, scopeToTenant,
@@ -71,6 +71,7 @@ function blockersOf(invoice: InvoiceDoc, positions: PositionInput[], receivables
     ...issueHeaderBlockers({
       receiverKey: (invoice['receiver'] as Receiver)?.key,
       invoiceDate: invoice['invoiceDate'] as string | undefined,
+      dueDate: invoice['dueDate'] as string | undefined,
       invoiceTemplateId: templateId,
     }),
   ];
@@ -317,7 +318,9 @@ export const issueInvoice = onCall(
             }));
           });
         }
-        tx.update(invoiceRef, { state: 'pending', documentKey, bookingKey, issueRunId: FieldValue.delete() });
+        // the search index was built while the draft had no number: rebuild it with the invoice number
+        const index = getInvoiceIndex({ ...current, invoiceId } as unknown as InvoiceModel);
+        tx.update(invoiceRef, { state: 'pending', index, documentKey, bookingKey, issueRunId: FieldValue.delete() });
         return { invoiceNo, documentKey, bookingKey };
       });
       committed = true;

@@ -85,6 +85,11 @@ export const writeInvoice = onCall(
       throw new HttpsError('invalid-argument', 'invoiceKey is required for update and delete');
     }
 
+    // create may omit positions (an empty draft); update replaces them all, so a missing array there
+    // would silently delete every stored position — refuse it instead.
+    if (mode === 'update' && d.positions === undefined) {
+      throw new HttpsError('invalid-argument', 'positions are required for update');
+    }
     const positions = d.positions ?? [];
     if (mode !== 'delete') {
       if (!Array.isArray(positions)) throw new HttpsError('invalid-argument', 'positions must be an array');

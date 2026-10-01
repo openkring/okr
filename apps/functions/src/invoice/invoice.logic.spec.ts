@@ -117,7 +117,7 @@ describe('issueOutcome', () => {
 });
 
 describe('issueHeaderBlockers', () => {
-  const ok = { receiverKey: 'p1', invoiceDate: '20261001', invoiceTemplateId: 'scs-rechnung' };
+  const ok = { receiverKey: 'p1', invoiceDate: '20261001', dueDate: '20261031', invoiceTemplateId: 'scs-rechnung' };
   it('accepts a complete header', () => {
     expect(issueHeaderBlockers(ok)).toEqual([]);
   });
@@ -131,6 +131,17 @@ describe('issueHeaderBlockers', () => {
   });
   it('refuses when no invoice template is configured', () => {
     expect(issueHeaderBlockers({ ...ok, invoiceTemplateId: '' })).toContain('no-invoice-template');
+  });
+  it('refuses an invoice without due date', () => {
+    expect(issueHeaderBlockers({ ...ok, dueDate: '' })).toContain('no-due-date');
+    expect(issueHeaderBlockers({ ...ok, dueDate: undefined })).toContain('no-due-date');
+  });
+  it('refuses a due date before the invoice date, accepts the same day', () => {
+    expect(issueHeaderBlockers({ ...ok, dueDate: '20260930' })).toEqual(['due-before-invoice-date']);
+    expect(issueHeaderBlockers({ ...ok, dueDate: '20261001' })).toEqual([]);
+  });
+  it('does not compare dates when the invoice date is missing', () => {
+    expect(issueHeaderBlockers({ ...ok, invoiceDate: '', dueDate: '20260101' })).toEqual(['no-invoice-date']);
   });
 });
 
