@@ -59,4 +59,20 @@ describe('costCenterValidations', () => {
       .toContain('@finance/cost-center/feature.type.hasChildren');
     expect(costCenterValidations(form({ okey: 'g', id: '300', type: 'group', parentKey: 'r' }), existing).getErrors('type')).toEqual([]);
   });
+
+  // The add flow: an unsaved node has okey '' — the same value a top-level node carries as
+  // parentKey, so a naive "has children" check would match every top-level node.
+  it('type: a new leaf under an existing top-level group is valid', () => {
+    const tops = [cc('g', '300', 'Sport', 'group')];
+    const r = costCenterValidations(form({ okey: '', id: '310', name: 'Junioren', parentKey: 'g' }), tops);
+    expect(r.getErrors('type')).toEqual([]);
+    expect(r.isValid()).toBe(true);
+  });
+
+  it('type: a second new top-level leaf next to an existing root is valid', () => {
+    const tops = [cc('r', '000', 'Verein', 'root')];
+    const r = costCenterValidations(form({ okey: '', id: '100', name: 'Clubhaus', parentKey: '' }), tops);
+    expect(r.getErrors('type')).toEqual([]);
+    expect(r.isValid()).toBe(true);
+  });
 });

@@ -51,7 +51,9 @@ export const costCenterValidations = staticSuite((model: CostCenterFormModel, ex
     });
   });
 
-  omitWhen(model.type !== 'leaf', () => {
+  // An unsaved node (okey '') has no children yet — and '' is also every top-level node's
+  // parentKey, so without this guard the check would match all of them.
+  omitWhen(model.type !== 'leaf' || !model.okey, () => {
     test('type', '@finance/cost-center/feature.type.hasChildren', () => {
       enforce(existing.some(c => c.parentKey === model.okey && c.okey !== model.okey)).isFalsy();
     });

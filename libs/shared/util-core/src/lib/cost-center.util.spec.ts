@@ -19,6 +19,13 @@ describe('isActiveLeafCostCenter', () => {
   it('rejects a group', () => expect(isActiveLeafCostCenter('300', 'scs', centers)).toBe(false));
   it('rejects an archived leaf', () => expect(isActiveLeafCostCenter('400', 'scs', centers)).toBe(false));
   it('rejects a foreign accounting tenant', () => expect(isActiveLeafCostCenter('900', 'scs', centers)).toBe(false));
+  it('rejects a childless group or root (type set and not leaf)', () => {
+    const typed = [cc('500', '', { type: 'group' }), cc('600', '', { type: 'root' }), cc('700', '', { type: 'leaf' })];
+    expect(isActiveLeafCostCenter('500', 'scs', typed)).toBe(false);
+    expect(isActiveLeafCostCenter('600', 'scs', typed)).toBe(false);
+    expect(isActiveLeafCostCenter('700', 'scs', typed)).toBe(true);
+  });
+  it('accepts a childless node without a type field', () => expect(isActiveLeafCostCenter('320', 'scs', centers)).toBe(true));
   it('rejects an unknown or empty key', () => {
     expect(isActiveLeafCostCenter('nope', 'scs', centers)).toBe(false);
     expect(isActiveLeafCostCenter('', 'scs', centers)).toBe(false);

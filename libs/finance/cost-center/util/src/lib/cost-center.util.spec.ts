@@ -11,6 +11,10 @@ const tree = [cc('a', '300', 'Sport'), cc('b', '310', 'Junioren', 'a'), cc('c', 
 describe('cost-center tree', () => {
   it('leafCostCenters returns active nodes without children', () =>
     expect(leafCostCenters(tree).map(c => c.okey).sort()).toEqual(['b', 'c', 'e']));
+  it('leafCostCenters skips a childless group or root — only type leaf is postable', () => {
+    const typed = [...tree, Object.assign(cc('f', '200', 'Leer'), { type: 'group' as const }), Object.assign(cc('g', '900', 'Wurzel'), { type: 'root' as const })];
+    expect(leafCostCenters(typed).map(c => c.okey).sort()).toEqual(['b', 'c', 'e']);
+  });
   it('costCenterSubtreeKeys includes root and descendants', () =>
     expect([...costCenterSubtreeKeys(tree, 'a')].sort()).toEqual(['a', 'b', 'c', 'd']));
   it('costCenterSubtreeKeys of a leaf is the leaf', () =>

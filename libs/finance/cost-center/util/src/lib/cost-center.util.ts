@@ -1,9 +1,12 @@
 import { CostCenterModel } from '@okr/shared-models';
 
-/** The active nodes without children — the only cost centres a booking line may point at. */
+/**
+ * The active nodes of type 'leaf' without children — the only cost centres a booking line may
+ * point at (same rule as `isActiveLeafCostCenter` in `@okr/shared-util-core`, which the server uses).
+ */
 export function leafCostCenters(centers: CostCenterModel[]): CostCenterModel[] {
   const parents = new Set(centers.map(c => c.parentKey).filter(k => !!k));
-  return centers.filter(c => !c.isArchived && !parents.has(c.okey));
+  return centers.filter(c => !c.isArchived && c.type === 'leaf' && !parents.has(c.okey));
 }
 
 /** The key itself plus the keys of all its descendants (archived ones included). */
