@@ -22,7 +22,32 @@ describe('issueBlockers', () => {
   });
 });
 
+describe('issueBlockers hardening', () => {
+  it('flags NaN, Infinity and zero amounts', () => {
+    expect(issueBlockers([pos(NaN), pos(600)], 'scs0093')).toContain('invalid-amount');
+    expect(issueBlockers([pos(Infinity), pos(600)], 'scs0093')).toContain('invalid-amount');
+    expect(issueBlockers([pos(0), pos(600)], 'scs0093')).toContain('invalid-amount');
+  });
+  it('treats a whitespace accountKey as missing', () => {
+    expect(issueBlockers([pos(600, '   ')], 'scs0093')).toContain('position-without-account');
+  });
+});
+
 describe('invoiceBookingLines', () => {
+  it('turns a negative group into a debit and keeps the entry balanced', () => {
+    const lines = invoiceBookingLines([pos(600, 'scs3401'), pos(-100, 'scs3409')], 'scs0093');
+    expect(lines).toEqual([
+      { accountKey: 'scs0093', debitAmount: { amount: 50000, currency: 'CHF' } },
+      { accountKey: 'scs3401', creditAmount: { amount: 60000, currency: 'CHF' } },
+      { accountKey: 'scs3409', debitAmount: { amount: 10000, currency: 'CHF' } },
+    ]);
+    const sum = (k: 'debitAmount' | 'creditAmount') => lines.reduce((s, l) => s + (l[k]?.amount ?? 0), 0);
+    expect(sum('debitAmount')).toBe(sum('creditAmount'));
+  });
+  it('emits no line for a group netting to zero', () => {
+    const lines = invoiceBookingLines([pos(600, 'scs3401'), pos(100, 'scs3409'), pos(-100, 'scs3409')], 'scs0093');
+    expect(lines.map((l) => l.accountKey)).toEqual(['scs0093', 'scs3401']);
+  });
   it('debits receivables with the total and credits each revenue account once', () => {
     const lines = invoiceBookingLines([pos(600, 'scs3401'), pos(75, 'scs3402'), pos(50, 'scs3401')], 'scs0093');
     expect(lines).toEqual([

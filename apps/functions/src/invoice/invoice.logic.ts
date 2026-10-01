@@ -21,16 +21,22 @@ interface BookingLineInput {
   creditAmount?: { amount: number; currency: 'CHF' };
 }
 
+/** The single rounding rule: CHF decimal to integer Rappen. */
+export function toRappen(amount: number): number {
+  return Math.round(amount * 100);
+}
+
 /** Sum of all positions in Rappen (integer, no float drift). */
 export function totalRappen(positions: PositionInput[]): number {
-  return positions.reduce((sum, p) => sum + Math.round(p.amount * 100), 0);
+  return positions.reduce((sum, p) => sum + toRappen(p.amount), 0);
 }
 
 /** Reasons why a draft cannot be issued. An empty array means it can. */
 export function issueBlockers(positions: PositionInput[], receivablesAccountKey: string): string[] {
   const blockers: string[] = [];
   if (positions.length === 0) blockers.push('no-positions');
-  if (positions.some((p) => !p.accountKey)) blockers.push('position-without-account');
+  if (positions.some((p) => !p.accountKey?.trim())) blockers.push('position-without-account');
+  if (positions.some((p) => !Number.isFinite(p.amount) || toRappen(p.amount) === 0)) blockers.push('invalid-amount');
   if (totalRappen(positions) <= 0) blockers.push('total-not-positive');
   if (!receivablesAccountKey) blockers.push('no-receivables-account');
   return blockers;
@@ -40,11 +46,17 @@ export function issueBlockers(positions: PositionInput[], receivablesAccountKey:
 export function invoiceBookingLines(positions: PositionInput[], receivablesAccountKey: string): BookingLineInput[] {
   const credits = new Map<string, number>();
   for (const p of positions) {
-    credits.set(p.accountKey, (credits.get(p.accountKey) ?? 0) + Math.round(p.amount * 100));
+    credits.set(p.accountKey, (credits.get(p.accountKey) ?? 0) + toRappen(p.amount));
   }
   return [
     { accountKey: receivablesAccountKey, debitAmount: { amount: totalRappen(positions), currency: 'CHF' } },
-    ...[...credits].map(([accountKey, amount]) => ({ accountKey, creditAmount: { amount, currency: 'CHF' as const } })),
+    ...[...credits]
+      .filter(([, amount]) => amount !== 0)
+      .map(([accountKey, amount]): BookingLineInput =>
+        amount > 0
+          ? { accountKey, creditAmount: { amount, currency: 'CHF' } }
+          : { accountKey, debitAmount: { amount: -amount, currency: 'CHF' } },
+      ),
   ];
 }
 
@@ -78,7 +90,7 @@ export function buildInvoicePayload(i: {
     city: a?.city ?? '',
     countryCode: a?.countryCode ?? 'CH',
     amount: chf(totalRappen(i.positions)),
-    positions: i.positions.map((p) => ({ name: p.name, amount: chf(Math.round(p.amount * 100)) })),
+    positions: i.positions.map((p) => ({ name: p.name, amount: chf(toRappen(p.amount)) })),
     qrMessage: `Rechnung ${i.invoiceId}`,
   };
 }
