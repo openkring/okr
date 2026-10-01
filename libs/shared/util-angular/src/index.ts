@@ -29,3 +29,4 @@ export * from './lib/failed-request-recorder';
 export * from './lib/session-probe';
 export * from './lib/startup-timing';
 export * from './lib/lazy-service';
+export * from './lib/scroll-diagnostics';

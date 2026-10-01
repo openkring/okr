@@ -11,7 +11,7 @@ import { AUTH, ENV, FIRESTORE } from '@okr/shared-config';
 import { AppConfigService, FirestoreService } from '@okr/shared-data-access';
 import { AddressDirectoryCollection, AddressDirectoryModel, AppConfig, getAddressDirectoryKey, AvailableLanguages, CategoryCollection, CategoryItemModel, CategoryListModel, DefaultLanguage, DefaultLanguageCode, GroupCollection, GroupModel, InvitationCollection, InvitationModel, OrgCollection, OrgModel, PersonCollection, PersonModel, PrivacySettings, privacyUsageToAccessor, ResourceCollection, ResourceModel, ResourceModelName, stricterAccessor, TagCollection, TagModel, TaskCollection, TaskModel, UserCollection, UserModel } from '@okr/shared-models';
 import { die, getSystemQuery, indexBy, openInvitationsOf, pickForTenant, replacePlaceholders, sortPersons, withOfflineSnapshot } from '@okr/shared-util-core';
-import { AppNavigationService, armStartupStallCheck, isBrowser, markStartup, probeStoredSession, reportStartupTiming, VersionCheckService, resourceParams } from '@okr/shared-util-angular';
+import { AppNavigationService, armStartupStallCheck, installScrollDiagnostics, isBrowser, markStartup, probeStoredSession, reportStartupTiming, VersionCheckService, resourceParams } from '@okr/shared-util-angular';
 
 import { authPhase, isDegradedBoot, openBootGate, type BootState } from './boot-readiness.util';
 import { I18nService } from '@okr/shared-i18n';
@@ -683,6 +683,11 @@ export const AppStore = signalStore(
 
       // Persistent "no connection" toast while offline (see offline-notice.service.ts).
       inject(OfflineNoticeService).start();
+
+      // Scroll-freeze instrumentation. Must be armed BEFORE a freeze: the decisive reading is a
+      // capture-phase wheel counter on `window`, which a console snippet pasted afterwards cannot
+      // provide. See scroll-diagnostics.ts for what the 2026-10-01 live session already ruled out.
+      installScrollDiagnostics();
 
       // TEMPORARY startup instrumentation (remove after slow-startup investigation).
       // Marks the auth/data boundaries; reportStartupTiming ships the gaps to Sentry.
