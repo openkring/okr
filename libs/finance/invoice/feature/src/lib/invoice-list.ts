@@ -202,7 +202,7 @@ export class InvoiceList {
       options.buttons.push(createActionSheetButton('invoice.view', i18n.view(), base, 'eye-on'));
       options.buttons.push(createActionSheetButton('invoice.showpdf', i18n.show_pdf(), base, 'download'));
     } else if (isDraftInvoice(invoice)) {
-      if (this.canChange()) {
+      if (this.canWriteDrafts()) {
         options.buttons.push(createActionSheetButton('invoice.edit', i18n.update(), base, 'edit'));
         options.buttons.push(createActionSheetButton('invoice.issue', i18n.issue(), base, 'send'));
         options.buttons.push(createActionSheetButton('invoice.delete', i18n.delete(), base, 'trash'));
@@ -242,6 +242,11 @@ export class InvoiceList {
   /******************************* helpers *************************************** */
   protected hasRole(role: RoleName): boolean {
     return hasRole(role, this.currentUser());
+  }
+
+  /** writeInvoice and issueInvoice accept treasurer (and admin) only — not privileged */
+  protected canWriteDrafts(): boolean {
+    return hasRole('treasurer', this.currentUser());
   }
 
   protected canChange(): boolean {
