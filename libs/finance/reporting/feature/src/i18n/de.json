@@ -62,5 +62,10 @@
   "zero": {
     "show": "Nullkonten anzeigen",
     "hide": "Nullkonten ausblenden"
+  },
+  "costCenter": {
+    "filter": "Kostenstelle",
+    "all": "Alle Kostenstellen",
+    "none": "Ohne Kostenstelle"
   }
 }

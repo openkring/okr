@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { AccountModel, BookingLineModel, BookingModel, MoneyModel } from '@okr/shared-models';
 
 import {
-  accountClass, buildReportRows, defaultExpandedKeys, fiscalYear, fiscalYearOf, reportToCsv, signedBalance, sumLinesByAccount, totalForClasses, yearResult,
+  accountClass, ALL_COST_CENTERS, buildReportRows, defaultExpandedKeys, fiscalYear, fiscalYearOf, filterLinesByCostCenter, NO_COST_CENTER, reportToCsv, signedBalance, sumLinesByAccount, totalForClasses, yearResult,
 } from './report.util';
 
 function account(okey: string, id: string, name: string, parentKey = '', type = 'leaf'): AccountModel {
@@ -174,5 +174,25 @@ describe('reportToCsv', () => {
   it('escapes a name containing the separator or quotes', () => {
     const rows = buildReportRows([account('x', '6000', 'Miete; "Büro"', '')], ['expense'], new Map(), new Map(), [], true);
     expect(reportToCsv(rows, ['a', 'b', 'c', 'd']).split('\n')[1]).toBe('6000;"Miete; ""Büro""";0.00;0.00');
+  });
+});
+
+describe('filterLinesByCostCenter', () => {
+  const cl = (accountKey: string, debit: number, costCenterKey?: string): BookingLineModel =>
+    ({ ...line('b1', accountKey, debit, 0), costCenterKey }) as BookingLineModel;
+  const lines = [cl('a6000', 700, 'cc-jun'), cl('a6000', 500, 'cc-reg'), cl('a6000', 200, ''), cl('a6000', 100, undefined)];
+  const amounts = (ls: BookingLineModel[]): (number | undefined)[] => ls.map(l => l.debitAmount?.amount);
+  const sum = (ls: BookingLineModel[]): number => ls.reduce((s, l) => s + (l.debitAmount?.amount ?? 0), 0);
+
+  it('all = unfiltered', () => expect(filterLinesByCostCenter(lines, ALL_COST_CENTERS, new Set())).toHaveLength(4));
+  it('subtree keeps only lines of the subtree', () =>
+    expect(amounts(filterLinesByCostCenter(lines, 'cc-sport', new Set(['cc-sport', 'cc-jun', 'cc-reg'])))).toEqual([700, 500]));
+  it('bucket keeps empty and missing keys', () =>
+    expect(amounts(filterLinesByCostCenter(lines, NO_COST_CENTER, new Set()))).toEqual([200, 100]));
+  it('leaves + bucket sum to the total', () => {
+    const parts = sum(filterLinesByCostCenter(lines, 'cc-jun', new Set(['cc-jun'])))
+      + sum(filterLinesByCostCenter(lines, 'cc-reg', new Set(['cc-reg'])))
+      + sum(filterLinesByCostCenter(lines, NO_COST_CENTER, new Set()));
+    expect(parts).toBe(sum(lines));
   });
 });

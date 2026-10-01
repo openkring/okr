@@ -62,5 +62,10 @@
   "zero": {
     "show": "Afficher les comptes à zéro",
     "hide": "Masquer les comptes à zéro"
+  },
+  "costCenter": {
+    "filter": "Centre de coûts",
+    "all": "Tous les centres de coûts",
+    "none": "Sans centre de coûts"
   }
 }

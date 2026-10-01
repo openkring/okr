@@ -23,6 +23,8 @@
     "@okr/finance-reporting-ui": "*",
     "@okr/content-pdf-template-data-access": "*",
     "@okr/subject-address-data-access": "*",
-    "@okr/subject-address-util": "*"
+    "@okr/subject-address-util": "*",
+    "@okr/finance-cost-center-feature": "*",
+    "@okr/finance-cost-center-util": "*"
   }
 }

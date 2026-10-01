@@ -19,6 +19,8 @@
     { "path": "../../../content/pdf-template/data-access/tsconfig.lib.json" },
     { "path": "../../account/data-access/tsconfig.lib.json" },
     { "path": "../../accounting/feature/tsconfig.lib.json" },
+    { "path": "../../cost-center/feature/tsconfig.lib.json" },
+    { "path": "../../cost-center/util/tsconfig.lib.json" },
     { "path": "../data-access/tsconfig.lib.json" },
     { "path": "../ui/tsconfig.lib.json" },
     { "path": "../util/tsconfig.lib.json" },
