@@ -1,6 +1,6 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { ActionSheetController, ActionSheetOptions, IonBackdrop, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 import { AccountModel, RoleName } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, Spinner } from '@okr/shared-ui';
@@ -22,7 +22,7 @@ import { AccountStore } from './account.store';
     Spinner, EmptyList, Menu, ReadOnlyBanner,
     IonToolbar, IonButton, IonIcon, IonLabel, IonHeader, IonButtons,
     IonTitle, IonMenuButton, IonContent, IonItem,
-    IonBackdrop, IonList, IonPopover
+    IonList, IonPopover
   ],
   providers: [AccountStore],
   template: `
@@ -64,7 +64,6 @@ import { AccountStore } from './account.store';
     <okr-read-only-banner />
     @if(isLoading()) {
       <okr-spinner />
-      <ion-backdrop />
     } @else if(visibleNodes().length === 0) {
       <okr-empty-list [message]="store.i18n.empty()" />
     } @else {

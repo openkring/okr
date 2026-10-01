@@ -1,5 +1,5 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonBackdrop, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 import { LocationModel, RoleName } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
@@ -19,8 +19,7 @@ type LocationSortField = 'name' | 'type';
     SvgIconPipe,
     Spinner, EmptyList, Menu, ListFilter,
     IonToolbar, IonButton, IonIcon, IonLabel, IonHeader, IonButtons, 
-    IonTitle, IonMenuButton, IonContent, IonItem, IonBackdrop,
-    IonGrid, IonRow, IonCol, IonList, IonPopover
+    IonTitle, IonMenuButton, IonContent, IonItem,     IonGrid, IonRow, IonCol, IonList, IonPopover
   ],
   providers: [LocationStore],
   styles: [`.clickable { cursor: pointer; user-select: none; }`],
@@ -81,7 +80,6 @@ type LocationSortField = 'name' | 'type';
 <ion-content #content>
   @if(isLoading()) {
     <okr-spinner />
-    <ion-backdrop />
   } @else {
     @if (selectedLocationsCount() === 0) {
       <okr-empty-list [message]="store.i18n.empty()" />

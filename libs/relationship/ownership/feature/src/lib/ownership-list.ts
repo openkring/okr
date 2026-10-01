@@ -1,6 +1,6 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonAvatar, IonBackdrop, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@okr/shared-i18n';
 import { OwnershipModel, PersonModelName, RoleName } from '@okr/shared-models';
@@ -24,7 +24,7 @@ type OwnershipSortField = 'owner' | 'name' | 'type' | 'duration';
     TranslatePipe, AsyncPipe, SvgIconPipe, DurationPipe, AvatarPipe,
     Spinner, ListFilter, EmptyList, Menu,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
-    IonLabel, IonContent, IonItem, IonBackdrop, IonAvatar, IonImg, IonList, IonPopover
+    IonLabel, IonContent, IonItem, IonAvatar, IonImg, IonList, IonPopover
   ],
   providers: [OwnershipStore],
   styles: [`.clickable { cursor: pointer; user-select: none; }`],
@@ -84,7 +84,6 @@ type OwnershipSortField = 'owner' | 'name' | 'type' | 'duration';
   <ion-content #content>
     @if(isLoading()) {
       <okr-spinner />
-      <ion-backdrop />
     } @else {
       @if(filteredOwnerships().length === 0) {
         <okr-empty-list [message]="store.i18n.empty()" />

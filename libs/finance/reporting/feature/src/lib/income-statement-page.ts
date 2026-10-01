@@ -2,7 +2,7 @@ import { Component, computed, effect, inject, input } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
-  IonBackdrop, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonLabel, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar,
+  IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonLabel, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar,
 } from '@ionic/angular/standalone';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
@@ -24,7 +24,7 @@ import { ReportingStore } from './reporting.store';
   imports: [
     SvgIconPipe, Menu, Spinner, EmptyList, ListFilter, ReportTable,
     IonHeader, IonToolbar, IonButtons, IonButton, IonMenuButton, IonTitle, IonIcon, IonPopover,
-    IonContent, IonBackdrop, IonGrid, IonRow, IonCol, IonLabel,
+    IonContent, IonGrid, IonRow, IonCol, IonLabel,
   ],
   providers: [ReportingStore],
   template: `
@@ -62,7 +62,6 @@ import { ReportingStore } from './reporting.store';
     <ion-content>
       @if (store.isLoading()) {
         <okr-spinner />
-        <ion-backdrop />
       } @else if (store.bookings().length === 0) {
         <okr-empty-list [message]="store.i18n.empty()" />
       } @else {

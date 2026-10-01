@@ -1,5 +1,5 @@
 import { Component, computed, effect, inject, input, signal } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonBackdrop, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonItemDivider, IonLabel, IonList, IonMenuButton, IonNote, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonItemDivider, IonLabel, IonList, IonMenuButton, IonNote, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { BookingLineModel, BookingModel, RoleName } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
@@ -29,7 +29,7 @@ function parseAmount(amount: string): number {
     Spinner, EmptyList, Menu, ListFilter, ReadOnlyBanner,
     IonHeader, IonToolbar, IonTitle, IonContent,
     IonList, IonItem, IonItemDivider, IonLabel, IonIcon, IonButton, IonButtons, IonMenuButton,
-    IonPopover, IonBackdrop, IonGrid, IonRow, IonCol, IonNote,
+    IonPopover, IonGrid, IonRow, IonCol, IonNote,
   ],
   providers: [BookingStore],
   template: `
@@ -98,7 +98,6 @@ function parseAmount(amount: string): number {
     <okr-read-only-banner [message]="store.i18n.read_only_banner()" />
     @if(isLoading()) {
       <okr-spinner />
-      <ion-backdrop />
     } @else if(filteredCount() === 0) {
       <okr-empty-list [message]="store.i18n.empty()" />
     } @else {

@@ -1,7 +1,7 @@
 import { Component, computed, DestroyRef, effect, inject, input, linkedSignal, signal } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { switchMap } from 'rxjs/operators';
-import { ActionSheetController, IonBackdrop, IonButton, IonButtons, IonContent, IonFab, IonFabButton, IonHeader, IonIcon, IonItem, IonItemDivider, IonLabel, IonList, IonMenuButton, IonPopover, IonRefresher, IonRefresherContent, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { ActionSheetController, IonButton, IonButtons, IonContent, IonFab, IonFabButton, IonHeader, IonIcon, IonItem, IonItemDivider, IonLabel, IonList, IonMenuButton, IonPopover, IonRefresher, IonRefresherContent, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { ConnectionStatusButton, EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
@@ -26,7 +26,7 @@ import { AvatarDisplay } from '@okr/avatar-ui';
     Spinner, EmptyList, ListFilter, AvatarDisplay, Menu, ConnectionStatusButton,
     IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonMenuButton,
     IonIcon, IonContent, IonList, IonItem, IonLabel, IonItemDivider, IonPopover,
-    IonBackdrop, IonFab, IonFabButton, IonRefresher, IonRefresherContent
+    IonFab, IonFabButton, IonRefresher, IonRefresherContent
   ],
   providers: [TripStore],
   template: `
@@ -87,7 +87,6 @@ import { AvatarDisplay } from '@okr/avatar-ui';
       </ion-refresher>
       @if (store.isLoading()) {
         <okr-spinner />
-        <ion-backdrop />
       } @else if (store.filteredTrips().length === 0) {
         <okr-empty-list [message]="store.i18n.empty()" />
       } @else {

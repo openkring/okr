@@ -1,7 +1,7 @@
 import { DecimalPipe } from '@angular/common';
 import { AfterViewInit, CUSTOM_ELEMENTS_SCHEMA, Component, OnDestroy, PLATFORM_ID, computed, effect, inject } from '@angular/core';
 import {
-  IonBackdrop, IonBadge, IonButton, IonButtons, IonContent, IonHeader,
+  IonBadge, IonButton, IonButtons, IonContent, IonHeader,
   IonIcon, IonInput, IonItem, IonLabel, IonMenuButton, IonNote,
   IonTitle, IonToolbar, ModalController
 } from '@ionic/angular/standalone';
@@ -64,7 +64,7 @@ function zoomForBounds(latSpan: number, lngSpan: number): number {
     Spinner,
     IonHeader, IonToolbar, IonTitle, IonButtons, IonMenuButton,
     IonButton, IonIcon, IonInput, IonItem, IonLabel, IonNote,
-    IonBadge, IonContent, IonBackdrop
+    IonBadge, IonContent
   ],
   template: `
     <ion-header>
@@ -117,7 +117,6 @@ function zoomForBounds(latSpan: number, lngSpan: number): number {
     <ion-content>
       @if (isLoading()) {
         <okr-spinner />
-        <ion-backdrop />
       }
       @if (error(); as err) {
         <ion-note color="danger" style="padding: 12px; display: block;">{{ err }}</ion-note>
