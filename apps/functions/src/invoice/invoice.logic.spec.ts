@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildInvoicePayload, draftWriteRefusal, invoiceBookingLines, issueBlockers, issueHeaderBlockers, issueOutcome, totalRappen, withoutUndefined } from './invoice.logic';
+import { buildInvoicePayload, draftWriteRefusal, finalizeDecision, invoiceBookingIndex, invoiceBookingLines, issueBlockers, issueHeaderBlockers, issueOutcome, issuePeriodKeys, totalRappen, withoutUndefined } from './invoice.logic';
 
 const pos = (amount: number, accountKey = 'scs3401', name = 'Beitrag') => ({ name, amount, accountKey });
 
@@ -131,5 +131,44 @@ describe('issueHeaderBlockers', () => {
   });
   it('refuses when no invoice template is configured', () => {
     expect(issueHeaderBlockers({ ...ok, invoiceTemplateId: '' })).toContain('no-invoice-template');
+  });
+});
+
+describe('finalizeDecision', () => {
+  const expected = { expectedInvoiceNo: 202600007, expectedRunId: 'run-a', bookingExists: false };
+  const issuing = { state: 'issuing', invoiceNo: 202600007, issueRunId: 'run-a' };
+  it('writes nothing when a concurrent run already issued the invoice (double click, retried call)', () => {
+    expect(finalizeDecision({ ...issuing, state: 'pending' }, expected)).toBe('return-stored');
+    expect(finalizeDecision({ ...issuing, state: 'paid' }, expected)).toBe('return-stored');
+  });
+  it('refuses when the invoice changed under this run', () => {
+    expect(finalizeDecision({ ...issuing, invoiceNo: 202600008 }, expected)).toBe('refuse');
+    expect(finalizeDecision({ ...issuing, issueRunId: 'run-b' }, expected)).toBe('refuse');
+    expect(finalizeDecision({ ...issuing, state: 'draft' }, expected)).toBe('refuse');
+    expect(finalizeDecision({ ...issuing, state: 'cancelled' }, expected)).toBe('refuse');
+  });
+  it('never writes the booking twice', () => {
+    expect(finalizeDecision(issuing, { ...expected, bookingExists: true })).toBe('write-without-booking');
+  });
+  it('writes everything on the normal path', () => {
+    expect(finalizeDecision(issuing, expected)).toBe('write');
+  });
+});
+
+describe('issuePeriodKeys', () => {
+  it('names the annual period of the invoice date (locked year → refused by assertPeriodsOpen)', () => {
+    expect(issuePeriodKeys('scs', '20251231', 1)).toEqual(['scs-2025']);
+    expect(issuePeriodKeys('scs', '20260101', 1)).toEqual(['scs-2026']);
+  });
+  it('follows a fiscal year that starts in July', () => {
+    expect(issuePeriodKeys('scs', '20260630', 7)).not.toEqual(issuePeriodKeys('scs', '20260701', 7));
+    expect(issuePeriodKeys('scs', '20260701', 7)).toEqual(issuePeriodKeys('scs', '20270630', 7));
+  });
+});
+
+describe('invoiceBookingIndex', () => {
+  it('follows the journal index format and finds the invoice by title and number', () => {
+    expect(invoiceBookingIndex('20261001', 42, 'Mitgliederbeitrag 2026', '202600007'))
+      .toBe('d:20261001 no:42 n:Mitgliederbeitrag 2026 i:202600007');
   });
 });

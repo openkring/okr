@@ -1,4 +1,5 @@
 import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
+import { touchedPeriodKeys } from '../booking/period-lock';
 
 export interface PositionInput {
   name: string;
@@ -127,4 +128,30 @@ export function issueHeaderBlockers(h: { receiverKey?: string; invoiceDate?: str
   if (!/^\d{8}$/.test(h.invoiceDate ?? '')) blockers.push('no-invoice-date');
   if (!h.invoiceTemplateId?.trim()) blockers.push('no-invoice-template');
   return blockers;
+}
+
+/**
+ * The final issue transaction's decision (R10). It may only write while the invoice is still in
+ * this run's `issuing` state: same number and same run nonce. An already issued invoice returns
+ * the stored result and writes nothing; an existing booking is never written twice.
+ */
+export function finalizeDecision(
+  current: { state: string; invoiceNo: number; issueRunId: string },
+  expected: { expectedInvoiceNo: number; expectedRunId: string; bookingExists: boolean },
+): 'return-stored' | 'refuse' | 'write' | 'write-without-booking' {
+  if (issueOutcome(current.state) === 'already-issued') return 'return-stored';
+  if (current.state !== 'issuing' || current.invoiceNo !== expected.expectedInvoiceNo || current.issueRunId !== expected.expectedRunId) {
+    return 'refuse';
+  }
+  return expected.bookingExists ? 'write-without-booking' : 'write';
+}
+
+/** The period keys an issue touches: exactly the annual period of the invoice date. */
+export function issuePeriodKeys(accountingTenantId: string, invoiceDate: string, fiscalYearStart: number): string[] {
+  return touchedPeriodKeys(accountingTenantId, [invoiceDate], fiscalYearStart);
+}
+
+/** Search index of the invoice booking, in the journal format (`d:{date} no:{bookingNo}`) plus title and invoice number. */
+export function invoiceBookingIndex(date: string, bookingNo: number, title: string, invoiceId: string): string {
+  return `d:${date} no:${bookingNo} n:${title} i:${invoiceId}`;
 }

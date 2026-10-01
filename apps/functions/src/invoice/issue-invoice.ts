@@ -1,22 +1,22 @@
 import { onCall, CallableRequest, HttpsError } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
-import { Firestore, getFirestore } from 'firebase-admin/firestore';
+import { FieldValue, Firestore, getFirestore, Transaction } from 'firebase-admin/firestore';
 
 import { AddressCollection, AddressModel, FinanceDocumentCollection, InvoiceCollection, InvoicePositionCollection } from '@okr/shared-models';
 import { getNextInvoiceNo } from '@okr/finance-invoice-util';
-import { DateFormat, getTodayStr } from '@okr/shared-util-core';
+import { DateFormat, generateRandomString, getTodayStr } from '@okr/shared-util-core';
 import {
   checkAppCheckToken, checkAuthentication, checkRoles, getCallerTenantId, nextBookingNo, pickFavoriteByChannel, scopeToTenant,
 } from '@okr/shared-util-functions';
 
 import { isBexioBackend } from '../bexio/backend-gate';
 import { periodKeyFor } from '../bank-import/bank-import.util';
-import { assertPeriodsOpen, touchedPeriodKeys } from '../booking/period-lock';
+import { assertPeriodsOpen } from '../booking/period-lock';
 import { privateBucket } from '../_storage/private-bucket';
 import { renderDocument } from '../pdf/render-document';
 import {
-  buildInvoicePayload, invoiceBookingLines, issueBlockers, issueHeaderBlockers, issueOutcome, PositionInput, PostalAddress,
-  withoutUndefined,
+  buildInvoicePayload, finalizeDecision, invoiceBookingIndex, invoiceBookingLines, issueBlockers, issueHeaderBlockers, issueOutcome,
+  issuePeriodKeys, PositionInput, PostalAddress, withoutUndefined,
 } from './invoice.logic';
 
 const REGION = 'europe-west6';
@@ -76,10 +76,13 @@ function blockersOf(invoice: InvoiceDoc, positions: PositionInput[], receivables
   ];
 }
 
-/** The account exists, belongs to this accounting tenant and is a leaf (same rule as postBankImport). */
-async function assertLeafAccount(db: Firestore, accountingTenantId: string, accountKey: string): Promise<void> {
-  const account = (await db.collection(ACCOUNT_COLLECTION).doc(accountKey).get()).data();
-  const children = await db.collection(ACCOUNT_COLLECTION).where('parentKey', '==', accountKey).limit(1).get();
+/**
+ * The account exists, belongs to this accounting tenant and is a leaf (same rule as postBankImport,
+ * read inside the posting transaction). Reads only, so it must run before the first write.
+ */
+async function assertLeafAccount(db: Firestore, tx: Transaction, accountingTenantId: string, accountKey: string): Promise<void> {
+  const account = (await tx.get(db.collection(ACCOUNT_COLLECTION).doc(accountKey))).data();
+  const children = await tx.get(db.collection(ACCOUNT_COLLECTION).where('parentKey', '==', accountKey).limit(1));
   if (!account || account['accountingTenantId'] !== accountingTenantId || !children.empty) {
     throw refuse('account-invalid', `account ${accountKey} is not a leaf account of ${accountingTenantId}`, { accountKey });
   }
@@ -105,10 +108,9 @@ interface Preflight {
   receivablesKey: string;
   templateId: string;
   fiscalYearStart: number;
-  prePositions: PositionInput[];
 }
 
-/** Steps 2 and 3: the config allows issuing here, nothing blocks the draft, its accounts are leaves, its period is open. */
+/** Steps 2 and 3: the config allows issuing here, nothing blocks the draft, its period is open (accounts: final tx). */
 async function checkIssuable(db: Firestore, tenantId: string, invoiceKey: string, pre: InvoiceDoc): Promise<Preflight> {
   const accountingTenantId = String(pre['accountingTenantId'] ?? '');
   if (!accountingTenantId) throw refuse('no-accounting-config', `invoice ${invoiceKey} has no accounting tenant`);
@@ -129,11 +131,8 @@ async function checkIssuable(db: Firestore, tenantId: string, invoiceKey: string
   if (blockers.length > 0) {
     throw refuse('issue-blocked', `invoice ${invoiceKey} cannot be issued: ${blockers.join(', ')}`, { reasons: blockers });
   }
-  for (const key of [...new Set([receivablesKey, ...prePositions.map((p) => p.accountKey)])]) {
-    await assertLeafAccount(db, accountingTenantId, key);
-  }
-  await assertPeriodsOpen(db, touchedPeriodKeys(accountingTenantId, [pre['invoiceDate'] as string], fiscalYearStart));
-  return { receivablesKey, templateId, fiscalYearStart, prePositions };
+  await assertPeriodsOpen(db, issuePeriodKeys(accountingTenantId, String(pre['invoiceDate'] ?? ''), fiscalYearStart));
+  return { receivablesKey, templateId, fiscalYearStart };
 }
 
 /**
@@ -143,7 +142,8 @@ async function checkIssuable(db: Firestore, tenantId: string, invoiceKey: string
  * Idempotent and resumable. The number is assigned in a first transaction that moves the draft to the
  * transient state `issuing` (writeInvoice refuses non-drafts, so header and positions are frozen from
  * then on). The slow render follows; every id after it is deterministic (`invoice-{key}`), so a run
- * that finds `issuing` keeps the stored number and overwrites. The final transaction writes the
+ * that finds `issuing` keeps the stored number and run nonce (`issueRunId`) and overwrites. The final
+ * transaction only writes while state, number and nonce are still this run's (`finalizeDecision`). The final transaction writes the
  * finance-document, the booking with its lines and the `pending` state atomically. A call on an
  * issued invoice (double click, retried call) returns the stored result and writes nothing.
  */
@@ -180,13 +180,16 @@ export const issueInvoice = onCall(
     try {
       preflight = await checkIssuable(db, tenantId, invoiceKey, pre);
     } catch (e) {
-      // a resumed `issuing` invoice that now fails a check gives its number back (step 8)
-      if (pre['state'] === 'issuing') await resetToDraft(db, invoiceKey, `invoice-${invoiceKey}`, Number(pre['invoiceNo'] ?? 0));
+      // A resumed `issuing` invoice that now fails a check gives its number back (step 8) — only on a
+      // real refusal (locked period, blocker, config), never on a transient error (network, quota).
+      if (pre['state'] === 'issuing' && e instanceof HttpsError && e.code === 'failed-precondition') {
+        await resetToDraft(db, invoiceKey, `invoice-${invoiceKey}`, Number(pre['invoiceNo'] ?? 0), String(pre['issueRunId'] ?? ''));
+      }
       throw e;
     }
-    const { receivablesKey, templateId, fiscalYearStart, prePositions } = preflight;
+    const { receivablesKey, templateId, fiscalYearStart } = preflight;
 
-    // ---- 4. number: draft → issuing (an `issuing` invoice keeps its number) ----
+    // ---- 4. number: draft → issuing (an `issuing` invoice keeps its number and adopts its run nonce) ----
     const numbered = await db.runTransaction(async (tx) => {
       const invoice = (await tx.get(invoiceRef)).data();
       if (!invoice) throw new HttpsError('not-found', `invoice ${invoiceKey} not found`);
@@ -201,7 +204,9 @@ export const issueInvoice = onCall(
       const all = await tx.get(db.collection(InvoiceCollection).where('accountingTenantId', '==', accountingTenantId));
       const nos = all.docs.map((d) => Number(d.data()['invoiceNo'] ?? 0)).filter((n) => Number.isInteger(n) && n > 0);
       const invoiceNo = getNextInvoiceNo(nos, Number(invoiceDate.substring(0, 4)));
-      const patch = { invoiceNo, invoiceId: String(invoiceNo), state: 'issuing' };
+      // issueRunId (R10): a per-run nonce, so a stale run can never finalize an invoice that was reset and
+      // issued again meanwhile — even under the same number. Transient: removed on pending and on reset.
+      const patch = { invoiceNo, invoiceId: String(invoiceNo), state: 'issuing', issueRunId: generateRandomString(20) };
       tx.update(invoiceRef, patch);
       return { done: false as const, invoice: { ...invoice, ...patch } };
     });
@@ -210,6 +215,7 @@ export const issueInvoice = onCall(
     const invoice = numbered.invoice;
     const invoiceNo = Number(invoice['invoiceNo'] ?? 0);
     const invoiceId = String(invoice['invoiceId'] ?? '');
+    const runId = String(invoice['issueRunId'] ?? '');
     const documentKey = `invoice-${invoiceKey}`;
     const bookingKey = `invoice-${invoiceKey}`;
     let committed = false;
@@ -225,11 +231,8 @@ export const issueInvoice = onCall(
       if (blockers.length > 0) {
         throw refuse('issue-blocked', `invoice ${invoiceKey} cannot be issued: ${blockers.join(', ')}`, { reasons: blockers });
       }
-      for (const key of [...new Set(positions.map((p) => p.accountKey))].filter((k) => !prePositions.some((p) => p.accountKey === k))) {
-        await assertLeafAccount(db, accountingTenantId, key);
-      }
       const invoiceDate = String(invoice['invoiceDate']);
-      const periodKeys = touchedPeriodKeys(accountingTenantId, [invoiceDate], fiscalYearStart);
+      const periodKeys = issuePeriodKeys(accountingTenantId, invoiceDate, fiscalYearStart);
       const receiver = invoice['receiver'] as Receiver;
       const title = String(invoice['title'] ?? '').trim() || `Rechnung ${invoiceId}`;
 
@@ -259,14 +262,19 @@ export const issueInvoice = onCall(
         // reads (all before any write)
         const current = (await tx.get(invoiceRef)).data();
         if (!current) throw new HttpsError('not-found', `invoice ${invoiceKey} not found`);
-        if (issueOutcome(String(current['state'] ?? '')) === 'already-issued') return storedResult(current); // a concurrent run won
-        if (current['state'] !== 'issuing' || Number(current['invoiceNo']) !== invoiceNo) {
-          throw refuse('state-changed', `invoice ${invoiceKey} changed while it was issued`);
-        }
-        await assertPeriodsOpen(db, periodKeys, tx);
         const bookingExists = (await tx.get(bookingRef)).exists;
+        const decision = finalizeDecision(
+          { state: String(current['state'] ?? ''), invoiceNo: Number(current['invoiceNo'] ?? 0), issueRunId: String(current['issueRunId'] ?? '') },
+          { expectedInvoiceNo: invoiceNo, expectedRunId: runId, bookingExists },
+        );
+        if (decision === 'return-stored') return storedResult(current); // a concurrent run won: write nothing
+        if (decision === 'refuse') throw refuse('state-changed', `invoice ${invoiceKey} changed while it was issued`);
+        await assertPeriodsOpen(db, periodKeys, tx);
+        for (const key of [...new Set([receivablesKey, ...positions.map((p) => p.accountKey)])]) {
+          await assertLeafAccount(db, tx, accountingTenantId, key);
+        }
         let bookingNo = 0;
-        if (!bookingExists) {
+        if (decision === 'write') {
           const ledger = await tx.get(db.collection(BOOKING_COLLECTION).where('accountingTenantId', '==', accountingTenantId));
           bookingNo = nextBookingNo(ledger.docs.map((s) => s.data() as { date?: string; bookingNo?: number }), Number(invoiceDate.substring(0, 4)));
         }
@@ -280,10 +288,10 @@ export const issueInvoice = onCall(
           size: rendered.sizeBytes, authorKey: '', authorName: '', dateOfDocCreation: today,
           dateOfDocLastUpdate: today, locationKey: '', hash: '', priorVersionKey: '', version: '', renderings: [],
         }));
-        if (!bookingExists) {
+        if (decision === 'write') {
           tx.set(bookingRef, withoutUndefined({
             tenants, accountingTenantId, isArchived: false,
-            title, date: invoiceDate, notes: '', tags: 'invoice', index: '',
+            title, date: invoiceDate, notes: '', tags: 'invoice', index: invoiceBookingIndex(invoiceDate, bookingNo, title, invoiceId),
             bookingNo, status: 'posted', periodKey: periodKeyFor(accountingTenantId, invoiceDate, fiscalYearStart),
             documentKey, documentKeys: [documentKey], counterparty: receiver,
           }));
@@ -295,14 +303,14 @@ export const issueInvoice = onCall(
             }));
           });
         }
-        tx.update(invoiceRef, { state: 'pending', documentKey, bookingKey });
+        tx.update(invoiceRef, { state: 'pending', documentKey, bookingKey, issueRunId: FieldValue.delete() });
         return { invoiceNo, documentKey, bookingKey };
       });
       committed = true;
       logger.info(`${CF_NAME}: issued ${invoiceKey} as ${invoiceId} (tenant=${tenantId})`);
       return result;
     } catch (e) {
-      if (!committed) await resetToDraft(db, invoiceKey, bookingKey, invoiceNo);
+      if (!committed) await resetToDraft(db, invoiceKey, bookingKey, invoiceNo, runId);
       throw e;
     }
   },
@@ -310,17 +318,18 @@ export const issueInvoice = onCall(
 
 /**
  * Best effort after a failed issue: give the number back, but only while the invoice is still
- * `issuing` with this number and no booking was committed — never touch a pending invoice.
+ * `issuing` with this number and run nonce and no booking was committed — never touch a pending invoice.
  */
-async function resetToDraft(db: Firestore, invoiceKey: string, bookingKey: string, invoiceNo: number): Promise<void> {
+async function resetToDraft(db: Firestore, invoiceKey: string, bookingKey: string, invoiceNo: number, runId: string): Promise<void> {
   const invoiceRef = db.collection(InvoiceCollection).doc(invoiceKey);
   try {
     await db.runTransaction(async (tx) => {
       const invoice = (await tx.get(invoiceRef)).data();
       const booking = await tx.get(db.collection(BOOKING_COLLECTION).doc(bookingKey));
-      // a concurrent run may have reset and re-numbered it: only release our own number
-      if (invoice?.['state'] !== 'issuing' || Number(invoice['invoiceNo']) !== invoiceNo || booking.exists) return;
-      tx.update(invoiceRef, { state: 'draft', invoiceNo: 0, invoiceId: '' });
+      // a concurrent run may have reset and re-numbered it: only release our own number and run
+      if (invoice?.['state'] !== 'issuing' || Number(invoice['invoiceNo']) !== invoiceNo) return;
+      if (String(invoice['issueRunId'] ?? '') !== runId || booking.exists) return;
+      tx.update(invoiceRef, { state: 'draft', invoiceNo: 0, invoiceId: '', issueRunId: FieldValue.delete() });
     });
   } catch (e) {
     logger.error(`${CF_NAME}: could not reset ${invoiceKey} to draft`, e);
