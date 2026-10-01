@@ -1,8 +1,37 @@
 import { InvoiceModel } from '@okr/shared-models';
-import { addIndexElement, getFullName } from '@okr/shared-util-core';
+import { addDuration, addIndexElement, getFullName } from '@okr/shared-util-core';
 
 export function newInvoice(tenantId: string): InvoiceModel {
   return new InvoiceModel(tenantId);
+}
+
+/** Payment term of a new native invoice, in days. */
+export const INVOICE_PAYMENT_DAYS = 30;
+
+/** The member a native invoice is addressed to — the subset of MembershipModel it needs. */
+export interface InvoiceMember { memberKey: string; memberName1: string; memberName2: string; memberModelType: 'person' | 'org' | 'group'; }
+
+/**
+ * A new native invoice to a member of the own books (spec 1.68: no bexio after the cut-over).
+ * Dated `today`, due after INVOICE_PAYMENT_DAYS; the number is assigned on save.
+ */
+export function newMemberInvoice(tenantId: string, accountingTenantId: string, member: InvoiceMember, today: string): InvoiceModel {
+  const invoice = new InvoiceModel(tenantId);
+  invoice.accountingTenantId = accountingTenantId;
+  invoice.invoiceDate = today;
+  invoice.dueDate = addDuration(today, { days: INVOICE_PAYMENT_DAYS });
+  invoice.receiver = {
+    key: member.memberKey, name1: member.memberName1, name2: member.memberName2,
+    modelType: member.memberModelType, type: '', subType: '',
+    label: getFullName(member.memberName1, member.memberName2),
+  };
+  return invoice;
+}
+
+/** Stamps the sequential number (and the visible Rechnungsnummer when empty); an already numbered invoice keeps its own. */
+export function withInvoiceNo(invoice: InvoiceModel, invoiceNo: number): InvoiceModel {
+  if (invoice.invoiceNo > 0) return invoice;
+  return { ...invoice, invoiceNo, invoiceId: invoice.invoiceId || String(invoiceNo) };
 }
 
 export function getInvoiceIndex(invoice: InvoiceModel): string {

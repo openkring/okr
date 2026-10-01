@@ -204,7 +204,8 @@
   "view": {
     "label": "Rechnungsdetails anzeigen",
     "pdf": "Rechnung als PDF herunterladen",
-    "pdf_error": "Die Rechnung konnte nicht als PDF geladen werden. Bitte versuche es später noch einmal."
+    "pdf_error": "Die Rechnung konnte nicht als PDF geladen werden. Bitte versuche es später noch einmal.",
+    "pdf_missing": "Für diese Rechnung gibt es noch kein PDF."
   },
   "paymentConfirmation": {
     "label": "Zahlungsbestätigung erstellen",

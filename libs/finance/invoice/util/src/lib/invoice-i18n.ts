@@ -112,6 +112,7 @@ export const INVOICE_I18N_KEYS = {
   view:                     PFX + 'view.label',
   show_pdf:                 PFX + 'view.pdf',
   show_pdf_error:           PFX + 'view.pdf_error',
+  show_pdf_missing:         PFX + 'view.pdf_missing',
 
   payment_confirmation:           PFX + 'paymentConfirmation.label',
   payment_confirmation_noAddress: PFX + 'paymentConfirmation.noAddress',

@@ -25,7 +25,7 @@ import { AddressService } from '@okr/subject-address-data-access';
 import { PersonService } from '@okr/subject-person-data-access';
 import { PERSON_EDIT_MODAL } from '@okr/subject-person-ui';
 import { browseUrl } from '@okr/subject-address-util';
-import { InvoiceNewModal } from '@okr/finance-invoice-feature';
+import { MemberInvoiceService } from '@okr/finance-invoice-feature';
 import { VcardExportService, VcardExportTarget } from '@okr/vcard-feature';
 
 import { MemberNewModal } from './member-new.modal';
@@ -80,6 +80,7 @@ export const _MembershipStore = signalStore(
     appStore: inject(AppStore),
     firestoreService: inject(FirestoreService),
     modalController: inject(ModalController),
+    memberInvoiceService: inject(MemberInvoiceService),
     toastController: inject(ToastController),
     alertController: inject(AlertController),
     router: inject(Router),
@@ -1006,19 +1007,9 @@ export const _MembershipStore = signalStore(
         }
       },
 
+      /** bexio while the own books are bexio-managed, natively after the cut-over (spec 1.68). */
       async createInvoice(membership: MembershipModel): Promise<void> {
-        const modal = await store.modalController.create({
-          component: InvoiceNewModal,
-          cssClass: 'wide-modal',
-          componentProps: { 
-            membership 
-          },
-        });
-        await modal.present();
-        const { data, role } = await modal.onWillDismiss<{ id: string }>();
-        if (role === 'confirm' && data) {
-          await showToast(store.toastController, `@finance.invoice.operation.create.conf`);
-        }
+        await store.memberInvoiceService.createFor(membership);
       }
     }
   }),

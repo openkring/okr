@@ -340,6 +340,11 @@ export const showInvoicePdf = onCall(
       logger.info(`${CF_NAME}: served stored PDF for invoice ${invoiceId}`);
       return { content: local };
     }
+    // a native invoice has no bexio copy: report the missing PDF instead of a bexio API error
+    const acct = (invoice?.['accountingTenantId'] as string | undefined) || ((invoice?.['tenants'] as string[] | undefined) ?? [])[0] || '';
+    if (!acct || !(await loadIsBexioBackend(admin.firestore(), acct))) {
+      throw new HttpsError('not-found', 'no PDF stored for this invoice', { reason: 'no-pdf' });
+    }
 
     logger.info(`${CF_NAME}: fetching PDF for invoice ${invoiceId}`);
 
@@ -419,7 +424,7 @@ export const createBexioInvoice = onCall(
   {
     region: 'europe-west6',
     enforceAppCheck: true,
-    secrets: [bexioApiKey, bexioDefaultTaxId],
+    secrets: [bexioApiKey, bexioDefaultTaxId, bexioTenantId],
   },
   async (request: CallableRequest<{
     title: string;
@@ -438,6 +443,10 @@ export const createBexioInvoice = onCall(
     }
     // Creates invoices for member contacts — treasurer flows + privileged/admin (privacy inventory §7.2).
     await checkRoles(request, CF_NAME, ['treasurer', 'privileged']);
+    // After the cut-over an invoice created in bexio would never reach okr again (spec 1.68 D13).
+    if (!(await loadIsBexioBackend(admin.firestore(), bexioTenantId.value()))) {
+      throw new HttpsError('failed-precondition', 'The accounting backend is no longer bexio (spec 1.68).');
+    }
 
     const { title, bexioId, header = '', footer = '', positions = [], template_slug = '' } = request.data;
 

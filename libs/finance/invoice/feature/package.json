@@ -18,6 +18,7 @@
     "@okr/avatar-ui": "*",
     "@okr/cms-menu-feature": "*",
     "@okr/finance-accounting-feature": "*",
+    "@okr/finance-accounting-data-access": "*",
     "@okr/finance-invoice-data-access": "*",
     "@okr/finance-invoice-ui": "*",
     "@okr/finance-invoice-util": "*",

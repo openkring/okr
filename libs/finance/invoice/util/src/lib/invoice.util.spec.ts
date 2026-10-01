@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { InvoiceModel } from '@okr/shared-models';
 
-import { getInvoiceExportData, getInvoiceIndex, getNextInvoiceNo, newInvoice } from './invoice.util';
+import { getInvoiceExportData, getInvoiceIndex, getNextInvoiceNo, newInvoice, newMemberInvoice, withInvoiceNo } from './invoice.util';
 
 describe('invoice.util', () => {
   describe('newInvoice', () => {
@@ -72,5 +72,32 @@ describe('invoice.util', () => {
       expect(data).toHaveLength(2);
       expect(data[1]).toContain('RE-001');
     });
+  });
+});
+
+describe('newMemberInvoice', () => {
+  it('addresses the member, dates it today and sets a 30-day term', () => {
+    const inv = newMemberInvoice('scs', 'scs', { memberKey: 'p1', memberName1: 'Anna', memberName2: 'Muster', memberModelType: 'person' }, '20261001');
+    expect(inv.tenants).toEqual(['scs']);
+    expect(inv.accountingTenantId).toBe('scs');
+    expect(inv.invoiceDate).toBe('20261001');
+    expect(inv.dueDate).toBe('20261031');
+    expect(inv.receiver).toMatchObject({ key: 'p1', name1: 'Anna', name2: 'Muster', modelType: 'person', label: 'Anna Muster' });
+    expect(inv.invoiceNo).toBe(0);
+  });
+});
+
+describe('withInvoiceNo', () => {
+  it('stamps the number and uses it as the visible Rechnungsnummer when that is empty', () => {
+    const inv = withInvoiceNo(new InvoiceModel('scs'), 202600001);
+    expect(inv.invoiceNo).toBe(202600001);
+    expect(inv.invoiceId).toBe('202600001');
+  });
+
+  it('keeps a hand-entered Rechnungsnummer and an existing number', () => {
+    const typed = { ...new InvoiceModel('scs'), invoiceId: 'R-17' };
+    expect(withInvoiceNo(typed, 202600001).invoiceId).toBe('R-17');
+    const numbered = { ...new InvoiceModel('scs'), invoiceNo: 202600005 };
+    expect(withInvoiceNo(numbered, 202600009).invoiceNo).toBe(202600005);
   });
 });

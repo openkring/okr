@@ -29,6 +29,7 @@ import { OrgService } from '@okr/subject-org-data-access';
 import { PersonService } from '@okr/subject-person-data-access';
 
 import { InvoiceEditModal } from './invoice-edit.modal';
+import { MemberInvoiceService } from './member-invoice.service';
 
 export type InvoiceState = {
   listId: string;         // 'all' | 'my' | personKey
@@ -56,6 +57,7 @@ export const InvoiceStore = signalStore(
     }
     return {
       invoiceService: inject(InvoiceService),
+      memberInvoiceService: inject(MemberInvoiceService),
       addressService: inject(AddressService),
       personService: inject(PersonService),
       orgService: inject(OrgService),
@@ -183,7 +185,7 @@ export const InvoiceStore = signalStore(
       await modal.present();
       const { data, role } = await modal.onWillDismiss<InvoiceModel>();
       if (role === 'confirm' && data) {
-        await store.invoiceService.create(data, store.appStore.currentUser() ?? undefined);
+        await store.memberInvoiceService.createNumbered(data);
         patchState(store, { version: store.version() + 1 });
       }
     },
@@ -250,7 +252,8 @@ export const InvoiceStore = signalStore(
         // (SCS-A0). Bexio can be unreachable, and the callable still rejects for
         // anyone who is neither the recipient nor treasurer/privileged.
         console.error('InvoiceStore.showPdf: failed to fetch the PDF', e);
-        await showToast(store.toastController, store.i18n.show_pdf_error());
+        const reason = (e as { details?: { reason?: string } })?.details?.reason;
+        await showToast(store.toastController, reason === 'no-pdf' ? store.i18n.show_pdf_missing() : store.i18n.show_pdf_error());
       }
     },
 

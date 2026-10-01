@@ -204,7 +204,8 @@
   "view": {
     "label": "Mostrare i dettagli della fattura",
     "pdf": "Scaricare la fattura in PDF",
-    "pdf_error": "Non è stato possibile caricare la fattura in PDF. Riprova più tardi."
+    "pdf_error": "Non è stato possibile caricare la fattura in PDF. Riprova più tardi.",
+    "pdf_missing": "Per questa fattura non c'è ancora un PDF."
   },
   "paymentConfirmation": {
     "label": "Crea conferma di pagamento",

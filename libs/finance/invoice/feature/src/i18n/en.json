@@ -204,7 +204,8 @@
   "view": {
     "label": "Show invoice details",
     "pdf": "Download invoice as PDF",
-    "pdf_error": "The invoice could not be loaded as a PDF. Please try again later."
+    "pdf_error": "The invoice could not be loaded as a PDF. Please try again later.",
+    "pdf_missing": "There is no PDF for this invoice yet."
   },
   "paymentConfirmation": {
     "label": "Create payment confirmation",
