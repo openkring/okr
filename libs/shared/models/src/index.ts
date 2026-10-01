@@ -37,6 +37,7 @@ export * from './lib/comment.model';
 export * from './lib/crossword.model';
 export * from './lib/seen.model';
 export * from './lib/competition-level.model';
+export * from './lib/cost-center.model';
 export * from './lib/db-query.model';
 export * from './lib/dimensions.model';
 export * from './lib/diary.model';

@@ -28,7 +28,7 @@ export class AssetModel implements OkrModel, NamedModel {
   public vendorKey = '';                            // ref to OrgModel (supplier)
   public serialNo = '';
   public location = '';
-  public costCenter = '';
+  public costCenter = '';         // CostCenterModel okey (spec 1.65 D16; was free text)
   public responsiblePersonKey = '';                 // ref to PersonModel
   public warrantyEndDate = DEFAULT_DATE;            // StoreDate yyyymmdd
 

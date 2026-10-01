@@ -18,6 +18,7 @@ export class BookingLineModel implements OkrModel {
   public exchangeRateKey = '';               // ref to ExchangeRateModel (Phase 4)
   public vatCodeKey = '';                    // ref to VatCodeModel (Phase 3)
   public description = '';                   // line text, e.g. one part of a split bank booking; '' = the booking's title
+  public costCenterKey = '';                 // ref CostCenterModel (leaf); '' = ohne Kostenstelle. P&L lines only.
   public accountingTenantId = '';
 
   constructor(tenantId: string, accountingTenantId: string) {

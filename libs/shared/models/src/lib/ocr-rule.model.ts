@@ -18,7 +18,7 @@ export class OcrRuleModel implements OkrModel {
   public party = '';            // normalized match token, e.g. 'migros'
   public aliases: string[] = []; // extra normalized tokens
   public accountKey = '';       // debit account to set
-  public costCenterId = '';     // optional
+  public costCenterId = '';     // CostCenterModel okey (spec 1.65 D16; was free text)
   public vatCode = '';          // optional
   public rank = 0;              // higher wins on multiple matches
   public active = true;

@@ -22,6 +22,7 @@ export class BankRuleModel implements OkrModel {
   public title = '';                      // booking description; regex rules may use $1..$9
   public accountKey = '';                 // ref AccountModel: the COUNTER-account
   public vatCodeKey = '';                 // ref VatCodeModel, optional
+  public costCenterKey = '';              // ref CostCenterModel, default for the counter line
   public priority = 0;                    // higher wins
   public active = true;
   public accountingTenantId = '';

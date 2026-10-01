@@ -29,7 +29,7 @@ export class ExpenseModel implements OkrModel, SearchableModel, TaggedModel {
   public transferTo: ExpenseTransferTo = 'me';
   public iban = '';
   public accountKey = '';        // FK → accounts; the expense account (Aufwandskonto), '' = not chosen yet
-  public costCenterId = '';
+  public costCenterId = '';     // CostCenterModel okey (spec 1.65 D16; was free text)
   public note = '';
   public status: ExpenseStatus = 'draft';
   public bookingKey = '';
