@@ -286,6 +286,7 @@ describe('SUBJECT_DATA_MAP — tiers and tenant-exit disposition', () => {
 
 describe('SUBJECT_DATA_MAP — blocker predicates', () => {
   const blocking = SUBJECT_DATA_MAP.filter((e) => e.blocksErasure);
+  const subject: SubjectCtx = { uid: 'u1', personKey: 'p1', parentKey: 'person.p1', tenantId: 't1', email: 'a@b.ch' };
 
   it('covers every Blocker code', () => {
     expect(blocking.length).toBeGreaterThanOrEqual(4);
@@ -293,7 +294,7 @@ describe('SUBJECT_DATA_MAP — blocker predicates', () => {
 
   it('never blocks on an empty result set', () => {
     for (const e of blocking) {
-      expect(e.blocksErasure?.([]), `${e.collection} blocks on an empty result`).toBeUndefined();
+      expect(e.blocksErasure?.([], subject), `${e.collection} blocks on an empty result`).toBeUndefined();
     }
   });
 
@@ -306,8 +307,8 @@ describe('SUBJECT_DATA_MAP — blocker predicates', () => {
       // force the blocking branch with a doc that fails every terminal-state test
       const b = e.blocksErasure?.([snap({
         dateOfExit: '', state: 'created', status: 'draft', documentStatus: 'in-progress',
-        paymentDate: '', admins: [{ key: 'p1' }],
-      })]);
+        paymentDate: '', admins: [{ key: 'p1' }], partyPersonKeys: ['p1'],
+      })], subject);
       expect(b, `${e.collection} did not block on an obviously open record`).toBeDefined();
       expect(b?.count, `${e.collection} reports no count`).toBe(1);
       expect(b?.detail.length, `${e.collection}: message too terse`).toBeGreaterThan(40);
@@ -323,28 +324,42 @@ describe('SUBJECT_DATA_MAP — blocker predicates', () => {
   it('scopes every blocker to the tiers it actually blocks, and never to T2', () => {
     const open = snap({
       dateOfExit: '', state: 'created', status: 'draft', documentStatus: 'in-progress',
-      paymentDate: '', admins: [{ key: 'p1' }],
+      paymentDate: '', admins: [{ key: 'p1' }], partyPersonKeys: ['p1'],
     });
     for (const e of blocking) {
-      const b = e.blocksErasure?.([open]);
+      const b = e.blocksErasure?.([open], subject);
       expect(b?.blocksTiers?.length, `${e.collection} does not say what it blocks`).toBeGreaterThan(0);
       expect(b?.blocksTiers, `${e.collection} blocks voluntary data`).not.toContain('T2');
     }
   });
 
   it('memberships blocks the contract tier only', () => {
-    const b = entry('memberships').blocksErasure?.([snap({ dateOfExit: '' })]);
+    const b = entry('memberships').blocksErasure?.([snap({ dateOfExit: '' })], subject);
     expect(b?.blocksTiers).toEqual(['T1']);
   });
 
   it('contracts blocks the contract tier only, and only until the contract has ended', () => {
     const b = entry('contracts').blocksErasure;
+    const party = { partyPersonKeys: ['p1'] };
     for (const state of ['draft', 'negotiating', 'active', 'noticeGiven']) {
-      expect(b?.([snap({ state })])?.code, state).toBe('activeContract');
+      expect(b?.([snap({ ...party, state })], subject)?.code, state).toBe('activeContract');
     }
-    expect(b?.([snap({ state: 'active' })])?.blocksTiers).toEqual(['T1']);
-    expect(b?.([snap({ state: 'ended' })])).toBeUndefined();
-    expect(b?.([snap({ state: 'draft', isArchived: true })])).toBeUndefined();
+    expect(b?.([snap({ ...party, state: 'active' })], subject)?.blocksTiers).toEqual(['T1']);
+    expect(b?.([snap({ ...party, state: 'ended' })], subject)).toBeUndefined();
+    expect(b?.([snap({ ...party, state: 'draft', isArchived: true })], subject)).toBeUndefined();
+  });
+
+  // Being the internal `responsible` person is a staff function, not a contractual tie:
+  // such a contract is found (and its responsible fields pseudonymised) but never blocks.
+  it('contracts never blocks on a contract the subject is only responsible for', () => {
+    const b = entry('contracts').blocksErasure;
+    const responsibleOnly = snap({
+      state: 'active', partyPersonKeys: ['p9'], responsible: { key: 'p1', modelType: 'person' },
+    });
+    expect(b?.([responsibleOnly], subject)).toBeUndefined();
+    const both = snap({ state: 'active', partyPersonKeys: ['p9'] });
+    const asParty = snap({ state: 'active', partyPersonKeys: ['p1'] });
+    expect(b?.([both, asParty], subject)?.count).toBe(1);
   });
 
   it('memberships blocks only while the membership is running', () => {

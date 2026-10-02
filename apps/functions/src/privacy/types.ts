@@ -94,7 +94,7 @@ export interface RetentionRule {
  *   docs = find(ctx).get()          // 1. query
  *          .filter(tenantScope)     // 2. tenant post-filter, per `tenantScope`
  *          .filter(matches ?? all)  // 3. subject post-filter, per `matches`
- *   blocker = blocksErasure?.(docs) // 4. sees ONLY the subject's own docs
+ *   blocker = blocksErasure?.(docs, ctx) // 4. sees ONLY the subject's own docs
  * ```
  *
  * 1. **Query.** `find` mostly mirrors the existing query helpers in
@@ -161,9 +161,10 @@ export interface SubjectDataEntry {
   readonly retention: RetentionRule;
   /**
    * Runs LAST, on the tenant- and `matches`-filtered set only. See contract step 4.
-   * MUST return `undefined` for an empty input.
+   * MUST return `undefined` for an empty input. `ctx` is the subject, for rows where
+   * only some of the subject's links may block (`contracts`: party yes, responsible no).
    */
-  readonly blocksErasure?: (docs: DocumentSnapshot[]) => Blocker | undefined;
+  readonly blocksErasure?: (docs: DocumentSnapshot[], ctx: SubjectCtx) => Blocker | undefined;
   /**
    * Post-filter for rows whose subject link is not queryable. See contract step 3.
    * Absent means `find` is already exact.

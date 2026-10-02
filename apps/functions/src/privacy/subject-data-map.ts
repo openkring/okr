@@ -556,9 +556,17 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     dataClass: 'financial',
     tier: 'T3',   // loan contracts are bookkeeping records (GeBüV) — spec 1.5 §5.2
     onTenantExit: 'anonymize',
-    // `partyPersonKeys` is the derived, queryable copy of `parties[].avatar.key` (person
-    // parties only), so the array-contains query is exact and needs no `matches`.
-    find: (c: SubjectCtx) => db().collection('contracts').where('partyPersonKeys', 'array-contains', c.personKey),
+    // Two subject links, both queryable, so no `matches`: `partyPersonKeys` is the derived
+    // copy of `parties[].avatar.key` (person parties only); `responsible` is the internal
+    // person looking after the dossier — polymorphic AvatarInfo, hence the modelType
+    // predicate, as on `responsibilities`.
+    find: (c: SubjectCtx) => db().collection('contracts').where(Filter.or(
+      Filter.where('partyPersonKeys', 'array-contains', c.personKey),
+      Filter.and(
+        Filter.where('responsible.key', '==', c.personKey),
+        Filter.where('responsible.modelType', '==', 'person'),
+      ),
+    )),
     tenantScope: 'tenantsArray',
     onExport: 'full',
     onErasure: 'anonymize',
@@ -566,15 +574,23 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     // their key leaves the derived key list. The counterparty/internal org parties, the
     // amounts and the terms are untouched — spec 1.5 §5.2 "party name pseudonymised,
     // amounts kept".
-    anonymizeFields: ['parties[].avatar', 'partyPersonKeys'],
+    // `responsible.*` is a dotted group, so it is only touched when it is the subject's.
+    anonymizeFields: [
+      'parties[].avatar', 'partyPersonKeys',
+      'responsible.key', 'responsible.name1', 'responsible.name2',
+    ],
     retention: RETAIN_10Y,
+    // Only contracts the subject is a PARTY to block — being the `responsible` person is
+    // a staff function, never a reason to keep someone's data. Hence the ctx argument.
     // Open = anything not 'ended' and not archived. 'active'/'noticeGiven' are the running
     // contract; 'draft'/'negotiating' are the pre-contractual steps Art. 6(1)(b) GDPR puts in
     // the same contract tier. An unknown state counts as open (fail-safe, and the shared
     // blocker fixture relies on it). An archived draft was abandoned and blocks nothing.
     // Like `memberships`, only the contract tier is blocked — consent data stays erasable.
-    blocksErasure: (docs) => {
-      const open = docs.filter((d) => d.get('isArchived') !== true && String(d.get('state') ?? '') !== 'ended');
+    blocksErasure: (docs, c) => {
+      const open = docs.filter((d) => !!c.personKey
+        && ((d.get('partyPersonKeys') as unknown[] | undefined) ?? []).includes(c.personKey)
+        && d.get('isArchived') !== true && String(d.get('state') ?? '') !== 'ended');
       return open.length === 0 ? undefined : {
         code: 'activeContract', count: open.length,
         detail: 'Du bist Partei eines Vertrags, der noch nicht beendet ist. Solange er besteht, brauchen wir deine Daten, um ihn zu führen.',
@@ -586,15 +602,19 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     collection: 'contract-documents',
     dataClass: 'financial',
     tier: 'T3',
-    onTenantExit: 'retain',
+    // 'anonymize' like `contracts`: party read access follows `partyPersonKeys`, so a
+    // departing member's key must leave it at tenant exit too.
+    onTenantExit: 'anonymize',
     find: (c: SubjectCtx) => db().collection('contract-documents').where('partyPersonKeys', 'array-contains', c.personKey),
     tenantScope: 'tenantsArray',
     // 'full', not 'index': a financial row is a full record (map invariant), the subject
     // is a party and may read these metadata records anyway (canReadContractData), and an
     // index route would link `/contract/<docKey>` — the wrong id. File bytes never travel.
     onExport: 'full',
-    // The signed files are the contract's evidence; they stay with the dossier.
-    onErasure: 'retain',
+    // The signed files and their metadata are the contract's evidence and stay with the
+    // dossier; only the subject's key leaves the derived key list (string-array branch).
+    onErasure: 'anonymize',
+    anonymizeFields: ['partyPersonKeys'],
     retention: RETAIN_10Y,
   },
   {

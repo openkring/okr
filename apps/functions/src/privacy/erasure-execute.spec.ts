@@ -175,6 +175,56 @@ describe('anonymizePatch', () => {
     expect(Object.keys(anonymizePatch(e, doc, ctx, pseudonym, '20260729'))).toEqual(['anonymizedAt']);
   });
 
+  it('pseudonymises the responsible person of a contract they are not a party to', () => {
+    const e = mapRow('contracts');
+    const doc = snap('k4', {
+      parties: [{ role: 'counterparty', avatar: { key: 'p9', name2: 'Zünd', modelType: 'person' } }],
+      partyPersonKeys: ['p9'],
+      responsible: { key: 'p1', name1: 'Ann', name2: 'Müller', modelType: 'person' },
+      principal: { amount: 500000, currency: 'CHF' },
+    });
+    const p = anonymizePatch(e, doc, ctx, pseudonym, '20260729');
+    expect(p['responsible.key']).toBe('');
+    expect(p['responsible.name1']).toBe('');
+    expect(p['responsible.name2']).toBe(pseudonym);
+    expect(Object.keys(p).sort()).toEqual(['anonymizedAt', 'responsible.key', 'responsible.name1', 'responsible.name2']);
+  });
+
+  it('leaves the responsible fields alone when the subject is only a party', () => {
+    const e = mapRow('contracts');
+    const doc = snap('k5', {
+      parties: [{ role: 'counterparty', avatar: { key: 'p1', name2: 'Müller', modelType: 'person' } }],
+      partyPersonKeys: ['p1'],
+      responsible: { key: 'p7', name1: 'Bea', name2: 'Kassier', modelType: 'person' },
+    });
+    const p = anonymizePatch(e, doc, ctx, pseudonym, '20260729');
+    expect(Object.keys(p).filter((k) => k.startsWith('responsible'))).toEqual([]);
+  });
+
+  it('passes a null party or one without an avatar through unchanged', () => {
+    const e = mapRow('contracts');
+    const doc = snap('k6', {
+      parties: [null, { role: 'guarantor' }, { role: 'counterparty', avatar: { key: 'p1', name2: 'Müller', modelType: 'person' } }],
+      partyPersonKeys: ['p1'],
+    });
+    let p: Record<string, unknown> = {};
+    expect(() => { p = anonymizePatch(e, doc, ctx, pseudonym, '20260729'); }).not.toThrow();
+    const parties = p['parties'] as unknown[];
+    expect(parties[0]).toBeNull();
+    expect(parties[1]).toEqual({ role: 'guarantor' });
+    expect((parties[2] as { avatar: { name2: string } }).avatar.name2).toBe(pseudonym);
+  });
+
+  it('strips only the subject\'s key from a contract document, keeping its metadata', () => {
+    const e = mapRow('contract-documents');
+    const doc = snap('d1', {
+      partyPersonKeys: ['p1', 'p9'], title: 'Darlehensvertrag', contractKey: 'k1', sha256: 'ab12',
+    });
+    const p = anonymizePatch(e, doc, ctx, pseudonym, '20260729');
+    expect(p['partyPersonKeys']).toEqual(['p9']);
+    expect(Object.keys(p).sort()).toEqual(['anonymizedAt', 'partyPersonKeys']);
+  });
+
   // Drives the REAL rows: catches a field name in the map that no longer exists on the
   // model, and a quasi-identifier that would survive as a pseudonym instead of being
   // cleared.

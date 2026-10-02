@@ -145,9 +145,21 @@ describe('find() query shapes', () => {
       // I12: responsibleAvatar / delegateAvatar are "Person or Group"
       ['responsibilities', 'responsibleAvatar.modelType'],
       ['responsibilities', 'delegateAvatar.modelType'],
+      ['contracts', 'responsible.modelType'],
     ] as const) {
       expect(fields(record(collection)), `${collection} lost its ${field} filter`).toContain(field);
     }
+  });
+
+  // spec 1.5 §5.2: a contract reaches the subject as a party (derived key list) OR as the
+  // internal responsible person — a responsible-only contract must be found too.
+  it('finds contracts by party key and by responsible person, contract documents by party key', () => {
+    const c = record('contracts');
+    expect(c.predicates).toContainEqual({ field: 'partyPersonKeys', op: 'array-contains', value: CTX.personKey });
+    expect(c.predicates).toContainEqual({ field: 'responsible.key', op: '==', value: CTX.personKey });
+    expect(c.predicates).toContainEqual({ field: 'responsible.modelType', op: '==', value: 'person' });
+    const d = record('contract-documents');
+    expect(d.predicates).toEqual([{ field: 'partyPersonKeys', op: 'array-contains', value: CTX.personKey }]);
   });
 
   it('queries the uid-linked collections with the uid', () => {

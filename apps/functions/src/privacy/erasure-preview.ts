@@ -188,7 +188,7 @@ export async function buildPreview(
     // and a blocker predicate is never asked about an empty set (map contract step 4).
     if (docs.length === 0) continue;
 
-    const blocker = entry.blocksErasure?.(docs);
+    const blocker = entry.blocksErasure?.(docs, ctx);
     if (blocker) blockers.push(blocker);
 
     const row = toPreviewRow(entry, docs, entry.onErasure !== 'delete');
