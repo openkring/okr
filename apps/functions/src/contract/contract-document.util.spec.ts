@@ -38,6 +38,24 @@ describe('upsertDocumentRef', () => {
     const b = { ...a, docKey: 'd2', docState: 'signed' as const };
     expect(upsertDocumentRef([a, { ...a, docKey: 'd3', role: 'annex' as const }], b, 'd1').map((r) => r.docKey)).toEqual(['d2', 'd3']);
   });
+  it('same docKey registered twice stays one entry, updated in place', () => {
+    const x = { ...a, docKey: 'd0', role: 'annex' as const };
+    const again = { ...a, title: 'Vertrag v2', docState: 'final' as const };
+    expect(upsertDocumentRef([x, a], again, '')).toEqual([x, again]);
+  });
+  it('same docKey with a listed prior version: one entry for docKey, prior dropped', () => {
+    const prior = { ...a, docKey: 'd0' };
+    const b = { ...a, docKey: 'd2', docState: 'signed' as const };
+    const d3 = { ...a, docKey: 'd3', role: 'annex' as const };
+    const out = upsertDocumentRef([prior, d3, { ...b, docState: 'draft' as const }], b, 'd0');
+    expect(out).toEqual([d3, b]);
+    expect(out.filter((r) => r.docKey === 'd2')).toHaveLength(1);
+  });
+  it('retry after a prior-version replace does not duplicate', () => {
+    const b = { ...a, docKey: 'd2' };
+    const once = upsertDocumentRef([a], b, 'd1');
+    expect(upsertDocumentRef(once, b, 'd1')).toEqual([b]);
+  });
 });
 
 describe('pickSummarySource', () => {

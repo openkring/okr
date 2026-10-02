@@ -35,8 +35,18 @@ export function contractDocumentPath(tenantId: string, contractKey: string, docK
   return `tenant/${tenantId}/contracts/${contractKey}/${docKey}.${ext}`;
 }
 
+/**
+ * Idempotent: a ref with the same docKey is replaced in place (a retried register never duplicates;
+ * the prior version, if also listed, is dropped). Else the prior version is replaced in place, else appended.
+ */
 export function upsertDocumentRef(refs: ContractDocumentRef[], ref: ContractDocumentRef, priorVersionKey: string): ContractDocumentRef[] {
   const list = refs ?? [];
+  const own = list.findIndex((r) => r.docKey === ref.docKey);
+  if (own >= 0) {
+    return list
+      .map((r, j) => (j === own ? ref : r))
+      .filter((r, j) => j === own || (r.docKey !== ref.docKey && !(priorVersionKey && r.docKey === priorVersionKey)));
+  }
   const i = priorVersionKey ? list.findIndex((r) => r.docKey === priorVersionKey) : -1;
   return i >= 0 ? list.map((r, j) => (j === i ? ref : r)) : [...list, ref];
 }
