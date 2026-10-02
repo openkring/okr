@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { appendStornoNote, applyInvoicePayment, cancelBlockers, isPayableState, isUsableIssueBooking, isValidStoreDate, pickBankAccount, InvoiceLike, isValidPaymentId, linkBlockers, linkDecision, openAmount, paymentBlockers, paymentBookingLines, paymentDecision, reversalLines } from './invoice-payment.logic';
+import { appendStornoNote, applyInvoicePayment, cancelBlockers, isPayableState, isUsableIssueBooking, isValidStoreDate, pickBankAccount, InvoiceLike, isValidPaymentId, linkBlockers, linkDecision, openAmount, paymentBlockers, paymentBookingLines, paymentDecision, reversalLines, stornoSourceLines } from './invoice-payment.logic';
 
 const inv = (o: Partial<InvoiceLike> = {}): InvoiceLike => ({ state: 'pending', totalAmount: { amount: 67550 }, payments: [], accountingTenantId: 'scs', ...o });
 
@@ -43,6 +43,19 @@ describe('invoice payment logic', () => {
   });
   it('reversal swaps debit and credit and keeps other fields', () =>
     expect(reversalLines([{ accountKey: 'a', debitAmount: { amount: 5 }, costCenterKey: 'cc' }])).toEqual([{ accountKey: 'a', creditAmount: { amount: 5 }, costCenterKey: 'cc' }]));
+  it('storno source lines append the fee lines; the receivables account nets to zero', () => {
+    const issue = [{ accountKey: '1100', debitAmount: { amount: 30000 } }, { accountKey: '3000', creditAmount: { amount: 30000 } }];
+    const fee = [{ accountKey: '1100', debitAmount: { amount: 2000 } }, { accountKey: '3400', creditAmount: { amount: 2000 } }];
+    const storno = stornoSourceLines(issue, [fee]);
+    expect(storno).toEqual([
+      { accountKey: '1100', creditAmount: { amount: 30000 } }, { accountKey: '3000', debitAmount: { amount: 30000 } },
+      { accountKey: '1100', creditAmount: { amount: 2000 } }, { accountKey: '3400', debitAmount: { amount: 2000 } },
+    ]);
+    const net = (ls: { accountKey: string; debitAmount?: { amount: number }; creditAmount?: { amount: number } }[]) =>
+      ls.filter((l) => l.accountKey === '1100').reduce((n, l) => n + (l.debitAmount?.amount ?? 0) - (l.creditAmount?.amount ?? 0), 0);
+    expect(net(issue) + net(fee) + net(storno)).toBe(0);
+    expect(stornoSourceLines(issue, [])).toEqual(reversalLines(issue));
+  });
   it('refuses negative, NaN and Infinity amounts', () => {
     for (const a of [-5, Number.NaN, Number.POSITIVE_INFINITY]) expect(paymentBlockers(inv(), a, '20261005')).toContain('invalid-amount');
   });

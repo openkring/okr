@@ -10,7 +10,7 @@ import { checkAppCheckToken, checkAuthentication, checkRoles, getCallerTenantId,
 import { periodKeyFor } from '../bank-import/bank-import.util';
 import { assertPeriodsOpen } from '../booking/period-lock';
 import { assertLeafAccount, loadOwnedAccountingConfig, refuse } from './invoice-context';
-import { appendStornoNote, cancelBlockers, InvoiceLike, isUsableIssueBooking, isValidStoreDate, reversalLines } from './invoice-payment.logic';
+import { appendStornoNote, cancelBlockers, InvoiceLike, isUsableIssueBooking, isValidStoreDate, stornoSourceLines } from './invoice-payment.logic';
 import { invoiceBookingIndex, issuePeriodKeys, withoutUndefined } from './invoice.logic';
 
 const REGION = 'europe-west6';
@@ -113,8 +113,28 @@ export const cancelInvoice = onCall(
       const issueLines = lineSnap.docs.sort((a, b) => a.id.localeCompare(b.id)).map((d) => d.data() as IssueLine).filter((l) => l.isArchived !== true);
       if (issueLines.length === 0) throw refuse('cancel-blocked', `invoice ${invoiceKey} has no issue booking lines`, { reasons: ['no-issue-booking'] });
 
+      // reminder fee bookings are reversed in the same storno; an unusable one is skipped, never blocks
+      const feeKeys = [...new Set(((invoice['reminders'] as { bookingKey?: string }[] | undefined) ?? []).map((r) => String(r?.bookingKey ?? '')).filter((k) => !!k))];
+      const feeBookings: { key: string; booking: { status?: string; accountingTenantId?: string; isArchived?: boolean; documentKeys?: string[] } | undefined }[] = [];
+      for (const key of feeKeys) {
+        const snap = await tx.get(db.collection(BOOKING_COLLECTION).doc(key));
+        feeBookings.push({ key, booking: snap.exists ? (snap.data() as (typeof feeBookings)[number]['booking']) : undefined });
+      }
+      const feeLineGroups: IssueLine[][] = [];
+      const feeDocumentKeys: string[] = [];
+      for (const { key, booking } of feeBookings) {
+        if (!isUsableIssueBooking(booking, accountingTenantId)) {
+          logger.warn(`${CF_NAME}: fee booking ${key} of ${invoiceKey} is missing, not posted, archived or in other books; not reversed`);
+          continue;
+        }
+        const feeSnap = await tx.get(db.collection(BOOKING_LINE_COLLECTION).where('bookingKey', '==', key));
+        feeLineGroups.push(feeSnap.docs.sort((a, b) => a.id.localeCompare(b.id)).map((d) => d.data() as IssueLine).filter((l) => l.isArchived !== true));
+        feeDocumentKeys.push(...(booking?.documentKeys ?? []).filter((k) => typeof k === 'string' && !!k));
+      }
+      const sourceLines = [...issueLines, ...feeLineGroups.flat()];
+
       await assertPeriodsOpen(db, issuePeriodKeys(accountingTenantId, date, fiscalYearStart), tx);
-      for (const key of [...new Set(issueLines.map((l) => String(l.accountKey ?? '')))]) {
+      for (const key of [...new Set(sourceLines.map((l) => String(l.accountKey ?? '')))]) {
         await assertLeafAccount(db, accountingTenantId, key, tx);
       }
       const ledger = await tx.get(db.collection(BOOKING_COLLECTION).where('accountingTenantId', '==', accountingTenantId));
@@ -129,13 +149,14 @@ export const cancelInvoice = onCall(
         tenants, accountingTenantId, isArchived: false,
         title, date, notes: reason, tags: 'invoice-storno', index: invoiceBookingIndex(date, bookingNo, title, invoiceId),
         bookingNo, status: 'posted', periodKey: periodKeyFor(accountingTenantId, date, fiscalYearStart),
-        documentKeys: documentKey ? [documentKey] : [], counterparty: invoice['receiver'],
+        documentKeys: [...new Set([...(documentKey ? [documentKey] : []), ...feeDocumentKeys])], counterparty: invoice['receiver'],
       }));
-      const reversed = reversalLines<StornoLine>(issueLines.map((l) => ({
+      const toStornoLine = (l: IssueLine): StornoLine => ({
         accountKey: String(l.accountKey ?? ''),
         ...(l.costCenterKey ? { costCenterKey: l.costCenterKey } : {}),
         debitAmount: toAmount(l.debitAmount), creditAmount: toAmount(l.creditAmount),
-      })));
+      });
+      const reversed = stornoSourceLines(issueLines.map(toStornoLine), feeLineGroups.map((g) => g.map(toStornoLine)));
       reversed.forEach((line, i) => {
         tx.set(db.collection(BOOKING_LINE_COLLECTION).doc(`${stornoKey}-${i}`), withoutUndefined({
           tenants, accountingTenantId, isArchived: false, bookingKey: stornoKey, accountKey: line.accountKey,

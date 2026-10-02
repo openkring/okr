@@ -188,3 +188,8 @@ export function reversalLines<T extends { debitAmount?: unknown; creditAmount?: 
     return out as T;
   });
 }
+
+/** The storno booking's lines: the issue lines followed by every reversed fee booking's lines, debit and credit swapped. */
+export function stornoSourceLines<T extends { debitAmount?: unknown; creditAmount?: unknown }>(issueLines: T[], feeLineGroups: T[][]): T[] {
+  return reversalLines([...issueLines, ...feeLineGroups.flat()]);
+}
