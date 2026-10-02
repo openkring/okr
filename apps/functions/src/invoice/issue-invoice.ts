@@ -1,6 +1,6 @@
 import { onCall, CallableRequest, HttpsError } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
-import { FieldValue, Firestore, getFirestore, Transaction } from 'firebase-admin/firestore';
+import { FieldValue, Firestore, getFirestore } from 'firebase-admin/firestore';
 
 import { AddressCollection, AddressModel, FinanceDocumentCollection, InvoiceCollection, InvoiceModel, InvoicePositionCollection } from '@okr/shared-models';
 import { getInvoiceIndex, getNextInvoiceNo } from '@okr/finance-invoice-util';
@@ -9,7 +9,6 @@ import {
   checkAppCheckToken, checkAuthentication, checkRoles, getCallerTenantId, nextBookingNo, pickFavoriteByChannel, scopeToTenant,
 } from '@okr/shared-util-functions';
 
-import { isBexioBackend } from '../bexio/backend-gate';
 import { periodKeyFor } from '../bank-import/bank-import.util';
 import { assertPeriodsOpen } from '../booking/period-lock';
 import { costCenterKeyForLine, loadCostCenterContext } from '../cost-center/cost-center-context';
@@ -19,11 +18,10 @@ import {
   buildInvoicePayload, finalizeDecision, invoiceBookingIndex, invoiceBookingLines, issueBlockers, issueHeaderBlockers, issueOutcome,
   issuePeriodKeys, PositionInput, PostalAddress, withoutUndefined,
 } from './invoice.logic';
+import { assertLeafAccount, loadOwnedAccountingConfig, refuse } from './invoice-context';
 
 const REGION = 'europe-west6';
 const CF_NAME = 'issueInvoice';
-const ACCOUNTING_CONFIG_COLLECTION = 'accounting-configs';
-const ACCOUNT_COLLECTION = 'accounts';
 const BOOKING_COLLECTION = 'bookings';
 const BOOKING_LINE_COLLECTION = 'booking-lines';
 
@@ -39,10 +37,6 @@ interface IssueInvoiceResult {
 
 type InvoiceDoc = Record<string, unknown>;
 type Receiver = { key?: string; name1?: string; name2?: string; modelType?: string } | undefined;
-
-function refuse(reason: string, message: string, extra: Record<string, unknown> = {}): HttpsError {
-  return new HttpsError('failed-precondition', message, { reason, ...extra });
-}
 
 function storedResult(invoice: InvoiceDoc): IssueInvoiceResult {
   return {
@@ -78,21 +72,6 @@ function blockersOf(invoice: InvoiceDoc, positions: PositionInput[], receivables
   ];
 }
 
-/**
- * The account exists, belongs to this accounting tenant and is a leaf (same rule as postBankImport).
- * Without `tx` it is the cheap pre-check before numbering; with `tx` the authoritative check in the
- * posting transaction (reads only, so it must run before the first write).
- */
-async function assertLeafAccount(db: Firestore, accountingTenantId: string, accountKey: string, tx?: Transaction): Promise<void> {
-  const accountRef = db.collection(ACCOUNT_COLLECTION).doc(accountKey);
-  const childrenQuery = db.collection(ACCOUNT_COLLECTION).where('parentKey', '==', accountKey).limit(1);
-  const account = (tx ? await tx.get(accountRef) : await accountRef.get()).data();
-  const children = tx ? await tx.get(childrenQuery) : await childrenQuery.get();
-  if (!account || account['accountingTenantId'] !== accountingTenantId || !children.empty) {
-    throw refuse('account-invalid', `account ${accountKey} is not a leaf account of ${accountingTenantId}`, { accountKey });
-  }
-}
-
 /** The receiver's favourite postal address collected by this tenant (D-L1), or undefined. */
 async function receiverAddress(db: Firestore, receiver: Receiver, tenantId: string): Promise<PostalAddress | undefined> {
   if (!receiver?.key || !receiver.modelType) return undefined;
@@ -121,15 +100,7 @@ interface Preflight {
  */
 async function checkIssuable(db: Firestore, tenantId: string, invoiceKey: string, pre: InvoiceDoc): Promise<Preflight> {
   const accountingTenantId = String(pre['accountingTenantId'] ?? '');
-  if (!accountingTenantId) throw refuse('no-accounting-config', `invoice ${invoiceKey} has no accounting tenant`);
-  const config = (await db.collection(ACCOUNTING_CONFIG_COLLECTION).doc(accountingTenantId).get()).data();
-  if (!config) throw refuse('no-accounting-config', `no accounting config for ${accountingTenantId}`);
-  if (!((config['tenants'] as string[] | undefined) ?? []).includes(tenantId)) {
-    throw refuse('foreign-accounting-tenant', `${accountingTenantId} does not belong to this tenant`);
-  }
-  if (isBexioBackend(config)) {
-    throw refuse('bexio-backend', `${accountingTenantId} is booked in bexio — invoices are not issued here`);
-  }
+  const config = await loadOwnedAccountingConfig(db, tenantId, invoiceKey, accountingTenantId);
   const receivablesKey = String(config['receivablesAccountKey'] ?? '');
   const templateId = String(config['invoiceTemplateId'] ?? '');
   const fiscalYearStart = Number(config['fiscalYearStart'] ?? 1) || 1;

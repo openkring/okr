@@ -95,6 +95,24 @@ export function paymentDecision(existing: { bookingKey: string }[], bookingKey: 
   return existing.some(p => p.bookingKey === bookingKey) ? 'return-stored' : 'write';
 }
 
+/** The client-generated idempotency key of a payment: 8 to 32 letters or digits. */
+export function isValidPaymentId(id: unknown): id is string {
+  return typeof id === 'string' && /^[A-Za-z0-9]{8,32}$/.test(id);
+}
+
+/**
+ * A retried link (same booking, amount and date already stored on this invoice) returns the stored
+ * result; anything else goes on to `linkBlockers`, which reports `already-linked` for a different one.
+ */
+export function linkDecision(existing: { bookingKey: string; amount: number; date: string }[], bookingKey: string, amount: number, date: string): 'write' | 'return-stored' {
+  return existing.some(p => p.bookingKey === bookingKey && p.amount === amount && p.date === date) ? 'return-stored' : 'write';
+}
+
+/** The account of the first debit line of a booking (the bank side of a received payment), or ''. */
+export function firstDebitAccount(lines: { accountKey: string; debitAmount?: { amount: number } | null }[]): string {
+  return lines.find(l => (l.debitAmount?.amount ?? 0) > 0)?.accountKey ?? '';
+}
+
 /** Refusal codes for cancelling: not-cancellable, has-payments, no-issue-booking. */
 export function cancelBlockers(invoice: InvoiceLike & { bookingKey?: string }, invoiceKey: string, issueBookingExists: boolean): string[] {
   const blockers: string[] = [];
@@ -109,8 +127,8 @@ export function reversalLines<T extends { debitAmount?: unknown; creditAmount?: 
   return lines.map(l => {
     const { debitAmount, creditAmount, ...rest } = l;
     const out: Record<string, unknown> = { ...rest };
-    if (creditAmount !== undefined) out['debitAmount'] = creditAmount;
-    if (debitAmount !== undefined) out['creditAmount'] = debitAmount;
+    if (creditAmount != null) out['debitAmount'] = creditAmount;
+    if (debitAmount != null) out['creditAmount'] = debitAmount;
     return out as T;
   });
 }
