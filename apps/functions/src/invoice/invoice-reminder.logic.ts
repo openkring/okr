@@ -5,24 +5,12 @@
  */
 
 import { addDuration } from '@okr/shared-util-core';
-import { isPayableState, isValidStoreDate, PaymentBookingLine } from './invoice-payment.logic';
+import { isPayableState, isValidStoreDate, PaymentBookingLine, ReminderLike, reminderFeeSum } from './invoice-payment.logic';
+
+export type { ReminderLike };
+export { reminderFeeSum };
 
 export const MAX_REMINDER_LEVEL = 3;
-
-export interface ReminderLike {
-  level: number;
-  date: string;
-  dueDate: string;
-  isSent?: boolean;
-  documentKey?: string;
-  fee?: number;
-  bookingKey?: string;
-}
-
-/** Sum of the reminder fees; a missing or non-finite fee (legacy migrated reminder) counts as 0. */
-export function reminderFeeSum(reminders: ReminderLike[] | undefined): number {
-  return (reminders ?? []).reduce((s, r) => s + (Number.isFinite(r.fee) ? (r.fee as number) : 0), 0);
-}
 
 /** Highest existing level + 1; 1 when there is none. */
 export function nextReminderLevel(reminders: ReminderLike[] | undefined): number {

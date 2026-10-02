@@ -23,6 +23,10 @@ describe('invoice reminder util', () => {
     const three = [1, 2, 3].map(level => ({ level, date: '20250101', dueDate: '20250115' }));
     expect(isReminderDue(inv({ reminders: three }), '20261231', 10)).toBe(false);
   });
+  it('an invalid due date is never due and does not throw', () => {
+    expect(isReminderDue(inv({ dueDate: '20261399' }), '20261231', 10)).toBe(false);
+    expect(mahnlaufCandidates([inv({ dueDate: '20261399' })], '20261231', 10)).toEqual([]);
+  });
   it('default fee', () => {
     expect(defaultReminderFee([0, 2000, 2000], 2)).toBe(2000);
     expect(defaultReminderFee(undefined, 1)).toBe(0);

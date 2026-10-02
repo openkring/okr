@@ -1,7 +1,5 @@
 import { BookingLineModel, BookingModel, InvoiceModel } from '@okr/shared-models';
 
-import { reminderFeeSum } from './invoice-reminder.util';
-
 /** How a received payment is recorded (spec 1.76 phase 2): book it now, or point at an existing bank booking. */
 export type InvoicePaymentMode = 'post' | 'link';
 
@@ -89,10 +87,15 @@ export function newPaymentId(randomBytes: (n: number) => Uint8Array = (n) => cry
   return id;
 }
 
+/** Sum of the reminder fees in Rappen; a missing or non-finite fee (legacy reminder) counts as 0. */
+export function reminderFeeSum(reminders: { fee?: number }[] | undefined): number {
+  return (reminders ?? []).reduce((s, r) => s + (Number.isFinite(r.fee) ? (r.fee as number) : 0), 0);
+}
+
 /** Rappen still open on an invoice: total plus reminder fees minus the recorded payments, never negative. */
 export function openInvoiceAmount(invoice: Pick<InvoiceModel, 'totalAmount' | 'payments'> & { reminders?: { fee?: number }[] }): number {
   const paid = (invoice.payments ?? []).reduce((sum, p) => sum + (p?.amount ?? 0), 0);
-  return Math.max(0, (invoice.totalAmount?.amount ?? 0) + reminderFeeSum(invoice.reminders as never) - paid);
+  return Math.max(0, (invoice.totalAmount?.amount ?? 0) + reminderFeeSum(invoice.reminders) - paid);
 }
 
 /** CHF with two decimals, e.g. 1234.5 → '1234.50'. */

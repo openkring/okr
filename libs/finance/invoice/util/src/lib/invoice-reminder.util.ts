@@ -1,17 +1,14 @@
-import { addDuration } from '@okr/shared-util-core';
+import { addDuration, classifyStoreDate, isValidPartialStoreDate } from '@okr/shared-util-core';
 
-import { isPayableState } from './invoice-payment.util';
+import { isPayableState, reminderFeeSum } from './invoice-payment.util';
+
+export { reminderFeeSum };
 
 /** At most this many reminders per invoice (server mirror: MAX_REMINDER_LEVEL). */
 export const MAX_REMINDER_LEVEL = 3;
 
 /** The reminder fields the rules read; InvoiceModel's reminders satisfy it. */
 export interface ReminderLike { level: number; date: string; dueDate: string; fee?: number }
-
-/** Sum of the reminder fees in Rappen; a missing or non-finite fee (legacy reminder) counts as 0. */
-export function reminderFeeSum(reminders: ReminderLike[] | undefined): number {
-  return (reminders ?? []).reduce((s, r) => s + (Number.isFinite(r.fee) ? (r.fee as number) : 0), 0);
-}
 
 /** Highest existing level + 1; 1 when there is none. */
 export function nextReminderLevel(reminders: ReminderLike[] | undefined): number {
@@ -37,7 +34,7 @@ export function isReminderDue(invoice: { state: string; dueDate: string; reminde
   if (!isPayableState(invoice.state)) return false;
   if (nextReminderLevel(invoice.reminders) > MAX_REMINDER_LEVEL) return false;
   const base = lastDueDate(invoice);
-  if (!/^\d{8}$/.test(base ?? '')) return false;
+  if (typeof base !== 'string' || classifyStoreDate(base) !== 'full' || !isValidPartialStoreDate(base)) return false;
   return addDuration(base, { days: graceDays }) < today;
 }
 
