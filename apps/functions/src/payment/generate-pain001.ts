@@ -63,8 +63,14 @@ export const generatePain001 = onCall(
       .where('paymentOrderKey', '==', paymentOrderKey)
       .where('tenants', 'array-contains', tenantId)
       .get();
-    const selected = paymentsSnap.docs.filter(d => (d.data()['accountingTenantId'] as string | undefined) === accountingTenantId);
-    // Same selection as approvePaymentOrder; a payment that slipped in after approval blocks the run.
+    // Exactly the selection approvePaymentOrder approved (order key + tenant). A payment of another
+    // accountingTenantId is not silently dropped — it is paid with the order it belongs to — but logged.
+    const selected = paymentsSnap.docs;
+    const foreign = selected.filter(d => (d.data()['accountingTenantId'] as string | undefined) !== accountingTenantId);
+    if (foreign.length) {
+      logger.warn(`${CF}: order ${paymentOrderKey} contains ${foreign.length} payment(s) with an accountingTenantId other than ${accountingTenantId}: [${foreign.map(d => d.id).join(', ')}]`);
+    }
+    // A payment that slipped in after approval blocks the run.
     if (selected.some(d => d.data()['status'] !== 'approved')) {
       throw new HttpsError('failed-precondition', 'all payments of the order must be approved');
     }
@@ -77,6 +83,7 @@ export const generatePain001 = onCall(
     if (!debtorIban || !validateIban(debtorIban)) throw new HttpsError('failed-precondition', 'debit account has no bank profile with an IBAN');
     const org = await db.collection('orgs').doc(tenantId).get();
     const debtorName = (org.data()?.['name'] as string | undefined) || tenantId;
+    // BankProfileModel carries no BIC, so debtorBic stays unset and <DbtrAgt> says NOTPROVIDED.
 
     const xml = buildPain001Xml({
       msgId: order['messageId'] as string, executionDate: order['executionDate'] as string,
