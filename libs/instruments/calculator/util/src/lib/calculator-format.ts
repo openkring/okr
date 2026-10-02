@@ -50,6 +50,8 @@ function formatPlain(text: string, separators: NumberSeparators): string {
 }
 
 export function formatDecimal(value: Decimal, locale: string): string {
+  // Domains turn non-finite results into «Fehler»; this only keeps a stray one from breaking the view.
+  if (!value.isFinite()) return value.isNaN() ? 'NaN' : value.isNeg() ? '-∞' : '∞';
   if (value.isZero()) return '0';
   const separators = separatorsFor(locale);
   const rounded = value.toSignificantDigits(16);

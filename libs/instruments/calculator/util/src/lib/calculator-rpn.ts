@@ -41,7 +41,7 @@ function step<V>(s: RpnState<V>, key: CalcKey, d: CalcDomain<V>): Result<V> {
       completed: { expression: `${d.format(a)} ${OP_SYMBOLS[key]} ${d.format(b)}`, value },
     };
   }
-  if (key === 'neg' && s.entry !== null) return none({ ...s, entry: toggleSign(s.entry) });
+  if (key === 'neg' && s.entry !== null && d.signEditsEntry) return none({ ...s, entry: toggleSign(s.entry) });
   if (isUnaryOp(key)) {
     const stack = pushEntry(s, d);
     if (stack.length === 0) return none(s);

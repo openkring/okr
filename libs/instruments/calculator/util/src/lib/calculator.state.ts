@@ -135,6 +135,7 @@ function pressMemory(st: CalcState, key: 'mc' | 'mplus' | 'mminus' | 'mr', local
   if (key === 'mr') return loadDecimal(st, new Dec(st.memory), locale);
   const value = currentDecimal(st, locale);
   const memory = key === 'mplus' ? new Dec(st.memory).add(value) : new Dec(st.memory).sub(value);
+  if (!memory.isFinite()) return st;
   return loadDecimal({ ...st, memory: memory.toString() }, value, locale);
 }
 
@@ -293,7 +294,10 @@ export function pasteText(st: CalcState, text: string, locale: string): CalcStat
   if (t === null) return st;
   if (p === 'convert') return CONVERT_DOMAIN.accepts(t) ? { ...st, convertEntry: t } : st;
   const d = decDomain(st, locale);
-  if (!d.accepts(t)) return loadDecimal(st, d.parse(t), locale);
+  if (!d.accepts(t)) {
+    const value = d.parse(t);
+    return value.isFinite() ? loadDecimal(st, value, locale) : st;
+  }
   return st.settings.rpn
     ? { ...st, decRpn: setRpnEntry(st.decRpn, t) }
     : { ...st, decInfix: setInfixEntry(st.decInfix, t, d) };

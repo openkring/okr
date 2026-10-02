@@ -93,3 +93,16 @@ export function keyFromKeyboard(key: string, profile: CalcProfile): CalcKey | nu
     default: return null;
   }
 }
+
+const EDITABLE_TAGS = ['INPUT', 'TEXTAREA', 'SELECT', 'ION-INPUT', 'ION-TEXTAREA', 'ION-SELECT', 'ION-SEARCHBAR'];
+const OVERLAYS = 'ion-popover, ion-modal, ion-alert, ion-action-sheet, ion-picker, ion-menu';
+
+/**
+ * Whether a keyboard/paste event target belongs to something else: a field, or anything inside an
+ * Ionic overlay (an open select popover renders its options there, outside the select element).
+ */
+export function isIgnoredKeyTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof Element)) return false;
+  if ((target as HTMLElement).isContentEditable || EDITABLE_TAGS.includes(target.tagName)) return true;
+  return target.closest(OVERLAYS) !== null;
+}

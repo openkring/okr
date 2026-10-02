@@ -21,6 +21,8 @@ export interface CalcDomain<V> {
   readonly zero: V;
   readonly allowsPoint: boolean;
   readonly allowsExponent: boolean;
+  /** Whether `±` toggles the sign of the typed text (decimal, signed DEC) or negates the value (two's complement). */
+  readonly signEditsEntry: boolean;
   /** Typed entry text (e.g. `-12.5e3`, `FF`) → value. Tolerates a trailing `.` or `e`. */
   parse(entry: string): V;
   /** Whether the candidate entry text is valid (digits allowed, length/width limits). */

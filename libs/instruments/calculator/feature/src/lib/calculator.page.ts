@@ -6,20 +6,13 @@ import {
 
 import { CalculatorBits, CalculatorDisplay, CalculatorKeypad, CalculatorTape } from '@okr/instruments-calculator-ui';
 import {
-  CALC_PROFILES, CalcProfile, keyFromKeyboard, PROG_BASES, ProgBase, UNIT_CATEGORIES, UnitCategoryId, unitI18nId,
+  CALC_PROFILES, CalcProfile, isIgnoredKeyTarget, keyFromKeyboard, PROG_BASES, ProgBase, UNIT_CATEGORIES, UnitCategoryId, unitI18nId,
   WORD_SIZES, WordSize,
 } from '@okr/instruments-calculator-util';
 
 import { CalculatorStore } from './calculator.store';
 
 const BASE_LABELS: Record<ProgBase, string> = { 16: 'HEX', 10: 'DEC', 8: 'OCT', 2: 'BIN' };
-const EDITABLE_TAGS = ['INPUT', 'TEXTAREA', 'SELECT', 'ION-INPUT', 'ION-TEXTAREA', 'ION-SELECT', 'ION-SEARCHBAR'];
-
-function isEditableTarget(target: EventTarget | null): boolean {
-  const el = target as HTMLElement | null;
-  return !!el && (el.isContentEditable || EDITABLE_TAGS.includes(el.tagName));
-}
-
 /**
  * The Rechner page (spec 1.81). Profile segment + display + keypads, an optional history strip, and
  * document-level keyboard/paste handling that is active only while this page is shown.
@@ -191,7 +184,7 @@ export class CalculatorPage implements ViewDidEnter, ViewWillLeave {
   }
 
   protected onKeydown(event: KeyboardEvent): void {
-    if (!this.active || isEditableTarget(event.target)) return;
+    if (!this.active || event.defaultPrevented || isIgnoredKeyTarget(event.target)) return;
     if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'c') {
       if (window.getSelection()?.toString()) return;
       event.preventDefault();
@@ -207,7 +200,7 @@ export class CalculatorPage implements ViewDidEnter, ViewWillLeave {
   }
 
   protected onPaste(event: ClipboardEvent): void {
-    if (!this.active || isEditableTarget(event.target)) return;
+    if (!this.active || event.defaultPrevented || isIgnoredKeyTarget(event.target)) return;
     const text = event.clipboardData?.getData('text') ?? '';
     if (text) {
       event.preventDefault();

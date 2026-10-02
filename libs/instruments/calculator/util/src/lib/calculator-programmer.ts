@@ -129,6 +129,7 @@ export function programmerDomain(o: ProgrammerOptions): CalcDomain<bigint> {
     zero: 0n,
     allowsPoint: false,
     allowsExponent: false,
+    signEditsEntry: o.base === 10 && o.signed,
     parse: entry => wrap(parseDigits(entry || '0', o.base), w),
     accepts: entry => {
       const body = o.base === 10 && entry.startsWith('-') ? entry.slice(1) : entry;

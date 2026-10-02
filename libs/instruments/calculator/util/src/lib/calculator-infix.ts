@@ -161,7 +161,7 @@ function step<V>(s: InfixState<V>, key: CalcKey, d: CalcDomain<V>): Result<V> {
     return none({ ...base, entry: appendDigit(base.entry, key, d), awaitingOperand: false });
   }
   if (isBinaryOp(key)) return pressBinary(s, key, d);
-  if (key === 'neg' && s.entry !== null) return none({ ...s, entry: toggleSign(s.entry) });
+  if (key === 'neg' && s.entry !== null && d.signEditsEntry) return none({ ...s, entry: toggleSign(s.entry) });
   if (isUnaryOp(key)) {
     const { value, text } = takeOperand(s, d);
     const result = d.unary(key, value);
