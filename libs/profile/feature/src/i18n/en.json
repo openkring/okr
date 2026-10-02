@@ -287,5 +287,19 @@
       "header": "Reset the app?",
       "message": "The app will load again from scratch. This takes a moment longer than usual. Your data is kept and you stay signed in."
     }
+  },
+  "diaryTransfer": {
+    "title": "Diary transfer",
+    "description": "Choose what this app sends into which of your diaries. Nothing is sent without a tick. Without a period, the diary's travel period applies if it has one.",
+    "from": "from",
+    "to": "to",
+    "travel": "trip",
+    "source": {
+      "taskDone": "Completed tasks",
+      "jasstafel": "Jass scoreboard"
+    },
+    "period": {
+      "error": "The start date is after the end date."
+    }
   }
 }

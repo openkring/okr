@@ -11,7 +11,7 @@ import { Languages } from '@okr/shared-categories';
 import { AddressesAccordion } from '@okr/subject-address-feature';
 import { AvatarToolbar } from '@okr/avatar-feature';
 import { PersonFormModel } from '@okr/subject-person-util';
-import { ProfileDataAccordion, ProfilePrivacyAccordion, ProfileSettingsAccordion } from '@okr/profile-ui';
+import { ProfileDataAccordion, ProfileDiaryTransferAccordion, ProfilePrivacyAccordion, ProfileSettingsAccordion } from '@okr/profile-ui';
 import { ProfileStore } from './profile.store';
 import { EmailSignatureAccordion } from './email-signature.accordion';
 import { DataRightsAccordion } from './data-rights.accordion';
@@ -24,7 +24,7 @@ import { MaintenanceAccordion } from './maintenance.accordion';
     AsyncPipe,
     AvatarToolbar, Header, AddressesAccordion, ProfileDataAccordion,
     ChangeConfirmation, ProfileSettingsAccordion, ProfilePrivacyAccordion, EmailSignatureAccordion,
-    DataRightsAccordion, MaintenanceAccordion,
+    DataRightsAccordion, MaintenanceAccordion, ProfileDiaryTransferAccordion,
     IonContent, IonItem, IonAccordionGroup, IonLabel, IonCard, IonCardContent
   ],
   providers: [ProfileStore],
@@ -81,6 +81,22 @@ import { MaintenanceAccordion } from './maintenance.accordion';
                 (valid)="formValid.set($event)"
                 (dirty)="formDirty.set($event)"
               />
+            }
+            <!-- spec 1.77 §5: only when this app offers a transfer kind and the person has a diary app -->
+            @if (showDiaryTransfer()) {
+              @if(userFormData(); as userFormData) {
+                <okr-profile-diary-transfer-accordion
+                  [formData]="userFormData"
+                  (formDataChange)="onUserChange($event)"
+                  [diaries]="store.diaryTenants().diaries"
+                  [sources]="store.diaryTenants().sources"
+                  [showForm]="showForm()"
+                  [readOnly]="false"
+                  [i18n]="store.i18n"
+                  (valid)="formValid.set($event)"
+                  (dirty)="formDirty.set($event)"
+                />
+              }
             }
             @if(userFormData(); as userFormData) {
               @if(personFormData(); as personFormData) {
@@ -150,9 +166,12 @@ export class ProfileEditPage {
   protected tags = computed(() => this.store.getTags());
   protected priv = computed(() => this.store.privacySettings());
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
+  protected showDiaryTransfer = computed(() =>
+    this.store.diaryTenants().diaries.length > 0 && this.store.diaryTenants().sources.length > 0);
   protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.store.i18n.cancel(), save: this.store.i18n.save()} as ChangeConfirmationI18n));
 
   constructor() {
+    void this.store.loadDiaryTenants();   // spec 1.77 §5.2 — once per page open, never at boot
     effect(() => {
       this.store.setPersonKey(this.personKey());
     });

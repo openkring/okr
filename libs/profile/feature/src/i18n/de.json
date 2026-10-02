@@ -287,5 +287,19 @@
       "header": "App zurücksetzen?",
       "message": "Die App lädt sich vollständig neu. Das dauert einen Moment länger als sonst. Deine Daten bleiben erhalten und du bleibst angemeldet."
     }
+  },
+  "diaryTransfer": {
+    "title": "Tagebuch-Transfer",
+    "description": "Hier legst du fest, was diese App in welches deiner Tagebücher überträgt. Ohne Häkchen wird nichts übertragen. Ist kein Zeitraum gesetzt, gilt die Reisezeit des Tagebuchs, falls es eine hat.",
+    "from": "von",
+    "to": "bis",
+    "travel": "Reise",
+    "source": {
+      "taskDone": "Erledigte Aufgaben",
+      "jasstafel": "Jasstafel"
+    },
+    "period": {
+      "error": "Das Startdatum liegt nach dem Enddatum."
+    }
   }
 }

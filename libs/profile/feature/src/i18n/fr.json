@@ -287,5 +287,19 @@
       "header": "Réinitialiser l'application ?",
       "message": "L'application se recharge entièrement. Cela prend un peu plus de temps que d'habitude. Tes données sont conservées et tu restes connecté."
     }
+  },
+  "diaryTransfer": {
+    "title": "Transfert vers le journal",
+    "description": "Choisis ce que cette app transfère dans lequel de tes journaux. Sans coche, rien n'est transféré. Sans période, la période de voyage du journal s'applique, s'il en a une.",
+    "from": "du",
+    "to": "au",
+    "travel": "voyage",
+    "source": {
+      "taskDone": "Tâches terminées",
+      "jasstafel": "Ardoise de jass"
+    },
+    "period": {
+      "error": "La date de début est après la date de fin."
+    }
   }
 }

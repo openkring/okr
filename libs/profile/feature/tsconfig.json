@@ -18,6 +18,9 @@
   "exclude": ["dist/**/*"],
   "references": [
     {
+      "path": "../../content/diary/data-access/tsconfig.lib.json"
+    },
+    {
       "path": "../../shared/categories/tsconfig.lib.json"
     },
     {

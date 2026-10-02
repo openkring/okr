@@ -3,3 +3,4 @@ export * from './lib/signature.model';
 export * from './lib/signature-logo';
 export * from './lib/signature-template';
 export * from './lib/signature-client-adapter';
+export * from './lib/diary-transfer.validations';

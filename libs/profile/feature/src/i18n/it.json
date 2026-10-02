@@ -287,5 +287,19 @@
       "header": "Reimpostare l'app?",
       "message": "L'app si ricarica completamente. Ci vuole un momento in più del solito. I tuoi dati restano e rimani connesso."
     }
+  },
+  "diaryTransfer": {
+    "title": "Trasferimento al diario",
+    "description": "Scegli che cosa questa app trasferisce in quale dei tuoi diari. Senza spunta non viene trasferito nulla. Senza periodo vale il periodo di viaggio del diario, se ne ha uno.",
+    "from": "dal",
+    "to": "al",
+    "travel": "viaggio",
+    "source": {
+      "taskDone": "Attività completate",
+      "jasstafel": "Lavagna del jass"
+    },
+    "period": {
+      "error": "La data d'inizio è dopo la data di fine."
+    }
   }
 }

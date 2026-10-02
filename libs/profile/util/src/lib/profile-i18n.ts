@@ -64,6 +64,16 @@ export const PROFILE_I18N_KEYS = {
   use_faceid_label:                PFX + 'use.faceid.label',
   use_faceid_helper:               PFX + 'use.faceid.helper',
 
+  // diary transfer (spec 1.77 §5)
+  diaryTransfer_title:             PFX + 'diaryTransfer.title',
+  diaryTransfer_description:       PFX + 'diaryTransfer.description',
+  diaryTransfer_from:              PFX + 'diaryTransfer.from',
+  diaryTransfer_to:                PFX + 'diaryTransfer.to',
+  diaryTransfer_travel:            PFX + 'diaryTransfer.travel',
+  diaryTransfer_source_taskDone:   PFX + 'diaryTransfer.source.taskDone',
+  diaryTransfer_source_jasstafel:  PFX + 'diaryTransfer.source.jasstafel',
+  diaryTransfer_period_error:      PFX + 'diaryTransfer.period.error',
+
   // email signature (spec 2026-06-16)
   sig_title:                       PFX + 'signature.title',
   sig_description:                 PFX + 'signature.description',

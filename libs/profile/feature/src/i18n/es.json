@@ -287,5 +287,19 @@
       "header": "¿Restablecer la aplicación?",
       "message": "La aplicación se carga de nuevo por completo. Tarda un momento más de lo habitual. Tus datos se conservan y sigues con la sesión iniciada."
     }
+  },
+  "diaryTransfer": {
+    "title": "Transferencia al diario",
+    "description": "Elige qué transfiere esta app a cuál de tus diarios. Sin marca no se transfiere nada. Sin periodo se aplica el periodo de viaje del diario, si tiene uno.",
+    "from": "desde",
+    "to": "hasta",
+    "travel": "viaje",
+    "source": {
+      "taskDone": "Tareas completadas",
+      "jasstafel": "Pizarra de jass"
+    },
+    "period": {
+      "error": "La fecha de inicio es posterior a la fecha de fin."
+    }
   }
 }

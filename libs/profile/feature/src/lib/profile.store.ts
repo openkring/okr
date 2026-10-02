@@ -6,7 +6,7 @@ import { from, of, take } from 'rxjs';
 
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
-import { PersonCollection, PersonModel, PersonModelName, UserCollection, UserModel } from '@okr/shared-models';
+import { DiarySource, PersonCollection, PersonModel, PersonModelName, UserCollection, UserModel } from '@okr/shared-models';
 import { AhvFormat, AppNavigationService, formatAhv, isBlankAhv } from '@okr/shared-util-angular';
 import { debugItemLoaded } from '@okr/shared-util-core';
 import { FirestoreService } from '@okr/shared-data-access';
@@ -16,6 +16,7 @@ import { AvatarService } from '@okr/avatar-data-access';
 import { PersonService, SensitivePersonData } from '@okr/subject-person-data-access';
 import { PersonFormModel } from '@okr/subject-person-util';
 import { PROFILE_I18N_KEYS, ProfileI18n } from '@okr/profile-util';
+import { DiaryLineService, DiaryTenantInfo } from '@okr/content-diary-data-access';
 
 /**
  * the personEditPage is setting the personKey.
@@ -24,10 +25,13 @@ import { PROFILE_I18N_KEYS, ProfileI18n } from '@okr/profile-util';
  */
 export type ProfileState = {
   personKey: string | undefined;
+  /** spec 1.77 §5.2 — the caller's diary apps (columns) and the transfer kinds (rows) */
+  diaryTenants: { diaries: DiaryTenantInfo[]; sources: DiarySource[] };
 };
 
 export const initialState: ProfileState = {
   personKey: undefined,
+  diaryTenants: { diaries: [], sources: [] },
 };
 
 export const ProfileStore = signalStore(
@@ -39,6 +43,7 @@ export const ProfileStore = signalStore(
     avatarService: inject(AvatarService),
     firestoreService: inject(FirestoreService),
     i18nService: inject(I18nService),
+    diaryLineService: inject(DiaryLineService),
   })),
   withProps(store => ({
     i18n: store.i18nService.translateAll(PROFILE_I18N_KEYS) as ProfileI18n,
@@ -107,6 +112,19 @@ export const ProfileStore = signalStore(
       },
 
       /************************************ ACTIONS ************************************* */
+      /**
+       * Spec 1.77 §5.2 — loads the diary apps of the caller, once when the profile page opens.
+       * A failed call leaves both lists empty, which hides the «Tagebuch-Transfer» accordion.
+       */
+      async loadDiaryTenants(): Promise<void> {
+        try {
+          const result = await store.diaryLineService.listMyDiaryTenants();
+          patchState(store, { diaryTenants: { diaries: result?.diaries ?? [], sources: result?.sources ?? [] } });
+        } catch (e) {
+          console.warn('ProfileStore.loadDiaryTenants', e);
+        }
+      },
+
     /**
      * Update the current user and the corresponding person with the changed profile data.
      * The method does two updates (person and user), saves two comments, and shows one confirmation toast.
