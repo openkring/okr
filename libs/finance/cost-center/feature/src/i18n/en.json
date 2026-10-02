@@ -2,6 +2,7 @@
   "costCenters": "Cost centres",
   "empty": "No cost centres found.",
   "none": "no cost centre",
+  "fallback": "Default (account or accounting)",
   "picker": "Cost centre",
   "create": "New cost centre",
   "update": "Edit cost centre",

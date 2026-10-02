@@ -1,5 +1,5 @@
 {
-  "costCenter": { "label": "Centro di costo (facoltativo)", "helper": "Si applica alle registrazioni create con questa regola.", "accountDefault": "Predefinito del conto" },
+  "costCenter": { "label": "Centro di costo (facoltativo)", "helper": "Si applica alle registrazioni create con questa regola." },
   "singular": "Regola bancaria",
   "plural": "Regole bancarie",
   "empty": "Non ci sono ancora regole bancarie. Quando importi un file bancario, puoi creare una regola da qualsiasi riga.",

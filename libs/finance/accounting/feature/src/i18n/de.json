@@ -33,8 +33,7 @@
     },
     "costCenter": {
       "label": "Standard-Kostenstelle der Buchhaltung",
-      "helper": "Gilt für Buchungen auf Erfolgskonten ohne eigene Standard-Kostenstelle.",
-      "none": "keine Kostenstelle"
+      "helper": "Gilt für Buchungen auf Erfolgskonten ohne eigene Standard-Kostenstelle."
     }
   },
   "feeSchedule": {

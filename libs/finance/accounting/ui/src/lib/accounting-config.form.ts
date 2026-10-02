@@ -85,7 +85,6 @@ export type { AccountingI18n };
                 @if (costCentersEnabled()) {
                   <ion-col size="12" size-md="6">
                     <okr-cost-center-select [i18n]="costCenterI18n()" [costCenters]="costCenters()" [allowEmpty]="true"
-                      [emptyLabel]="i18n().cost_center_none()"
                       [selectedKey]="defaultCostCenterKey()" (selectedKeyChange)="onFieldChange('defaultCostCenterKey', $event)"
                       [readOnly]="isReadOnly()" />
                     <okr-error-note [errors]="defaultCostCenterKeyErrors()" />

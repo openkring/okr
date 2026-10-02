@@ -144,7 +144,7 @@ export class AccountForm {
 
   /**
    * What an account without its own Kostenstelle gets on its bookings: the book default (when it is
-   * still an active leaf, as the resolver demands) or none.
+   * still an active leaf, as the resolver demands); '' lets the picker say «keine Kostenstelle».
    */
   protected costCenterEmptyLabel = computed(() => {
     const _key = this.bookDefaultCostCenterKey();
@@ -152,7 +152,7 @@ export class AccountForm {
     const _center = _valid ? this.costCenters().find(c => c.okey === _key) : undefined;
     return _center
       ? fill(this.i18n().costCenter_bookDefault(), { costCenter: costCenterLabel(_center) })
-      : this.i18n().costCenter_none();
+      : '';
   });
 
   protected notesI18n = computed(() => ({

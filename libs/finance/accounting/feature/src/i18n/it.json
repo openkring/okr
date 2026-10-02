@@ -33,8 +33,7 @@
     },
     "costCenter": {
       "label": "Centro di costo predefinito della contabilità",
-      "helper": "Si applica alle registrazioni sui conti economici senza un proprio centro di costo predefinito.",
-      "none": "nessun centro di costo"
+      "helper": "Si applica alle registrazioni sui conti economici senza un proprio centro di costo predefinito."
     }
   },
   "feeSchedule": {

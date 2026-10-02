@@ -1,7 +1,8 @@
 {
   "costCenters": "Centros de coste",
   "empty": "No se han encontrado centros de coste.",
-  "none": "sin centro de coste",
+  "none": "ningún centro de coste",
+  "fallback": "Predeterminado (cuenta o contabilidad)",
   "picker": "Centro de coste",
   "create": "Nuevo centro de coste",
   "update": "Editar centro de coste",

@@ -33,8 +33,7 @@
     },
     "costCenter": {
       "label": "Centro de costes predeterminado de la contabilidad",
-      "helper": "Se aplica a los asientos en cuentas de resultados sin centro de costes predeterminado propio.",
-      "none": "ningún centro de costes"
+      "helper": "Se aplica a los asientos en cuentas de resultados sin centro de costes predeterminado propio."
     }
   },
   "feeSchedule": {

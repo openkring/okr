@@ -1,7 +1,8 @@
 {
   "costCenters": "Centres de coûts",
   "empty": "Aucun centre de coûts trouvé.",
-  "none": "sans centre de coûts",
+  "none": "aucun centre de coûts",
+  "fallback": "Par défaut (compte ou comptabilité)",
   "picker": "Centre de coûts",
   "create": "Nouveau centre de coûts",
   "update": "Modifier le centre de coûts",

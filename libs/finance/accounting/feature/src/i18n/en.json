@@ -33,8 +33,7 @@
     },
     "costCenter": {
       "label": "Accounting default cost centre",
-      "helper": "Applies to bookings on income and expense accounts without their own default cost centre.",
-      "none": "no cost centre"
+      "helper": "Applies to bookings on income and expense accounts without their own default cost centre."
     }
   },
   "feeSchedule": {

@@ -1,7 +1,8 @@
 {
   "costCenters": "Kostenstellen",
   "empty": "Keine Kostenstellen gefunden.",
-  "none": "ohne Kostenstelle",
+  "none": "keine Kostenstelle",
+  "fallback": "Standard (Konto oder Buchhaltung)",
   "picker": "Kostenstelle",
   "create": "Neue Kostenstelle",
   "update": "Kostenstelle ändern",

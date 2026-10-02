@@ -133,10 +133,15 @@ export class CostCenterSelect {
   public readonly selectedKey = model('');
   public readonly allowEmpty = input(true);
   /**
-   * What choosing '' means, when it is not «ohne Kostenstelle» — e.g. «Standard des Kontos» on a
-   * booking line, where writeBooking fills the account's default into an empty line.
+   * What choosing '' means, when neither «keine Kostenstelle» nor the fallback text fits — e.g.
+   * «Standard der Buchhaltung (…)» on an account.
    */
   public readonly emptyLabel = input('');
+  /**
+   * '' is filled at posting (rule, account default, book default): say «Standard (Konto oder
+   * Buchhaltung)» instead of «keine Kostenstelle». An `emptyLabel` still wins.
+   */
+  public readonly emptyIsFallback = input(false);
   public readonly readOnly = input(false);
   /** number + name-note instead of a labelled input; for table-like rows whose header names the column */
   public readonly compact = input(false);
@@ -154,6 +159,7 @@ export class CostCenterSelect {
     search: COST_CENTER_I18N_KEYS.select_search,
     notFound: COST_CENTER_I18N_KEYS.select_notFound,
     none: COST_CENTER_I18N_KEYS.none,
+    fallback: COST_CENTER_I18N_KEYS.fallback,
     archived: COST_CENTER_I18N_KEYS.archived,
   });
 
@@ -163,8 +169,11 @@ export class CostCenterSelect {
 
   /** looked up in the FULL list: an archived cost centre on a historic line is still shown */
   protected readonly selectedCenter = computed(() => this.costCenters().find(c => c.okey === this.selectedKey()));
-  /** what '' means: the `emptyLabel` or «ohne Kostenstelle»; nothing when '' cannot be chosen */
-  protected readonly emptyText = computed(() => this.isAllowEmpty() ? (this.emptyLabel() || this.ownI18n.none()) : '');
+  /** what '' means: the `emptyLabel`, the fallback text or «keine Kostenstelle»; nothing when '' cannot be chosen */
+  protected readonly emptyText = computed(() => {
+    if (!this.isAllowEmpty()) return '';
+    return this.emptyLabel() || (coerceBoolean(this.emptyIsFallback()) ? this.ownI18n.fallback() : this.ownI18n.none());
+  });
   /**
    * An empty selection shows what it means as the value: a blank field would show only its
    * floating label, which reads like a chosen value.

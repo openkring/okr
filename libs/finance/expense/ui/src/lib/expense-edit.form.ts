@@ -199,7 +199,7 @@ export interface ExpenseEditFormI18n {
                   </ion-col>
                   @if (showCostCenter()) {
                     <ion-col size="12" size-md="6">
-                      <okr-cost-center-select [i18n]="costCenterI18n()" [costCenters]="costCenters()" [allowEmpty]="true"
+                      <okr-cost-center-select [i18n]="costCenterI18n()" [costCenters]="costCenters()" [allowEmpty]="true" [emptyIsFallback]="true"
                         [selectedKey]="costCenterId()" (selectedKeyChange)="onFieldChange('costCenterId', $event)"
                         [readOnly]="false" />
                     </ion-col>

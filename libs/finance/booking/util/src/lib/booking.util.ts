@@ -364,7 +364,8 @@ export function pairsToLines(pairs: BookingPair[], tenantId: string, accountingT
  * Set a pair side's account and keep its Kostenstelle consistent (spec 1.65 §6.2): a P&L account
  * with a default prefills it, a balance-sheet account clears it, otherwise the chosen key stays.
  * A side still without a key then gets the book default (`AccountingConfig.defaultCostCenterKey`)
- * when it is an active leaf of the account's accounting tenant.
+ * when it is an active leaf of the account's accounting tenant. When `costCenters` is given, the
+ * account default must be an active leaf too, else it falls through (chosen key, then book default).
  */
 export function withPairAccount(pair: BookingPair, side: 'debit' | 'credit', accountKey: string, accounts: AccountModel[],
   bookDefault = '', costCenters: CostCenterLike[] = []): BookingPair {
@@ -373,10 +374,21 @@ export function withPairAccount(pair: BookingPair, side: 'debit' | 'credit', acc
   const account = accounts.find(a => a.okey === accountKey);
   const current = (side === 'debit' ? pair.debitCostCenterKey : pair.creditCostCenterKey) ?? '';
   const next = !account || !isProfitAndLossAccountId(account.id) ? ''
-    : (account.costCenterKey || current || resolveCostCenterKey({ account: { ...account, costCenterKey: '' }, bookDefault, costCenters }));
+    : (pairAccountDefault(account, costCenters) || current
+      || resolveCostCenterKey({ account: { ...account, costCenterKey: '' }, bookDefault, costCenters }));
   return side === 'debit'
     ? { ...pair, debitAccountKey: accountKey, debitCostCenterKey: next }
     : { ...pair, creditAccountKey: accountKey, creditCostCenterKey: next };
+}
+
+/**
+ * The account default to prefill: with a known list it must still be an active leaf, like on the
+ * server; an empty list means "not loaded / not enabled" and takes the default as is.
+ */
+function pairAccountDefault(account: AccountModel, costCenters: CostCenterLike[]): string {
+  const key = account.costCenterKey ?? '';
+  if (costCenters.length === 0) return key;
+  return isActiveLeafCostCenter(key, account.accountingTenantId ?? '', costCenters) ? key : '';
 }
 
 /**

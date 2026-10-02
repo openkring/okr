@@ -9,6 +9,8 @@ export const COST_CENTER_I18N_KEYS = {
   costCenters:          PFX + 'costCenters',
   empty:                PFX + 'empty',
   none:                 PFX + 'none',
+  /** what an empty picker means where rule / account / book default still apply at posting */
+  fallback:             PFX + 'fallback',
   picker:               PFX + 'picker',
 
   create:               PFX + 'create',

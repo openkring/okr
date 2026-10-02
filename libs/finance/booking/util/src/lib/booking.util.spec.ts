@@ -530,6 +530,11 @@ describe('Kostenstelle on pairs', () => {
       expect(withPairAccount({ ...emptyBookingPair(), debitCostCenterKey: 'cc-reg' }, 'debit', 'scs-6500', accounts, 'cc-adm', centers).debitCostCenterKey).toBe('cc-reg'));
     it('drops an invalid book default', () =>
       expect(withPairAccount(emptyBookingPair(), 'debit', 'scs-6500', accounts, 'cc-old', centers).debitCostCenterKey).toBe(''));
+    it('skips an archived account default and falls through to the book default', () => {
+      const withOld = [...accounts, Object.assign(new AccountModel('scs'), { okey: 'scs-6600', id: '6600', costCenterKey: 'cc-old', accountingTenantId: 'scs' })];
+      expect(withPairAccount(emptyBookingPair(), 'debit', 'scs-6600', withOld, 'cc-adm', centers).debitCostCenterKey).toBe('cc-adm');
+      expect(withPairAccount({ ...emptyBookingPair(), debitCostCenterKey: 'cc-reg' }, 'debit', 'scs-6600', withOld, 'cc-adm', centers).debitCostCenterKey).toBe('cc-reg');
+    });
     it('never prefills it on a balance-sheet account', () =>
       expect(withPairAccount(emptyBookingPair(), 'debit', 'scs-1020', accounts, 'cc-adm', centers).debitCostCenterKey).toBe(''));
   });

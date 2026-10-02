@@ -28,7 +28,6 @@ export const ACCOUNTING_I18N_KEYS = {
   // Kostenrechnung (1.65): the accounting-wide fallback Kostenstelle
   cost_center:                   PFX + 'settings.costCenter.label',
   cost_center_helper:            PFX + 'settings.costCenter.helper',
-  cost_center_none:              PFX + 'settings.costCenter.none',
   save:                     '@save.label',
   cancel:                   '@cancel',
 

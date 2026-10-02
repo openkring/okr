@@ -49,7 +49,7 @@ import { AssetStore } from './asset.store';
         <ion-input type="number" [(ngModel)]="edit.usefulLifeMonths" [readonly]="readOnly()" />
       </ion-item>
       @if (costCenterStore.isEnabled()) {
-        <okr-cost-center-select [i18n]="costCenterI18n()" [costCenters]="costCenterStore.costCenters()" [allowEmpty]="true"
+        <okr-cost-center-select [i18n]="costCenterI18n()" [costCenters]="costCenterStore.costCenters()" [allowEmpty]="true" [emptyIsFallback]="true"
           [(selectedKey)]="edit.costCenter" [readOnly]="readOnly()" />
       }
     </ion-content>

@@ -129,8 +129,7 @@
       "label": "Code TVA"
     },
     "costCenter": {
-      "label": "Centre de coûts",
-      "accountDefault": "Par défaut du compte"
+      "label": "Centre de coûts"
     },
     "details": {
       "toggle": "Devise étrangère, TVA, centre de coûts et inversion des comptes"

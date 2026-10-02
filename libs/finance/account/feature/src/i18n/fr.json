@@ -1,5 +1,5 @@
 {
-  "costCenter": { "label": "Centre de coûts par défaut", "helper": "Proposé pour les nouvelles écritures sur ce compte.", "bookDefault": "Par défaut de la comptabilité ({costCenter})", "none": "aucun centre de coûts" },
+  "costCenter": { "label": "Centre de coûts par défaut", "helper": "Proposé pour les nouvelles écritures sur ce compte.", "bookDefault": "Par défaut de la comptabilité ({costCenter})" },
   "accounts": "Comptes",
   "empty": "Aucun compte trouvé.",
   "create": "Ouvrir un nouveau compte",

@@ -129,8 +129,7 @@
       "label": "Codice IVA"
     },
     "costCenter": {
-      "label": "Centro di costo",
-      "accountDefault": "Predefinito del conto"
+      "label": "Centro di costo"
     },
     "details": {
       "toggle": "Valuta estera, IVA, centro di costo e scambio dei conti"
