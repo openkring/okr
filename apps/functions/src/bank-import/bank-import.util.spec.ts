@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildBankBookingHeader, buildBankBookingLines, feeAmountOf, hasFeeLine, isValidSplit, mainPartAmountOf, withCostCenterKeys, buildJournalBookingHeader, buildJournalBookingLines, fiscalYear, JournalEntry, periodKeyFor, RowDoc } from './bank-import.util';
+import { buildBankBookingHeader, buildBankBookingLines, feeAmountOf, hasFeeLine, invoiceSettlement, isValidSplit, mainPartAmountOf, receivablesCredit, withCostCenterKeys, buildJournalBookingHeader, buildJournalBookingLines, fiscalYear, JournalEntry, periodKeyFor, RowDoc } from './bank-import.util';
 
 const row = (p: Partial<RowDoc>): RowDoc => ({
   importKey: 'k', date: '20250714', rawText: 'KAUF BEXIO AG', payee: 'BEXIO AG', title: 'Bexio', accountKey: '6570', vatCodeKey: 'VST',
@@ -201,5 +201,75 @@ describe('withCostCenterKeys', () => {
   });
   it('writes no field when the key is empty', () => {
     expect('costCenterKey' in withCostCenterKeys([{ accountKey: 'scs-1020' }], mainRow, '', keyFor)[0]).toBe(false);
+  });
+});
+
+describe('receivablesCredit (spec 1.2 §4.3)', () => {
+  it('sums the credit amounts on the receivables account over several lines', () => {
+    const lines = [
+      { accountKey: 'scs-1020', debitAmount: { amount: 15000, currency: 'CHF' } },
+      { accountKey: 'scs-1100', creditAmount: { amount: 10000, currency: 'CHF' } },
+      { accountKey: 'scs-1100', creditAmount: { amount: 5000, currency: 'CHF' } },
+    ];
+    expect(receivablesCredit(lines, 'scs-1100')).toBe(15000);
+  });
+  it('is 0 when no line credits the receivables account', () => {
+    expect(receivablesCredit([{ accountKey: 'scs-3200', creditAmount: { amount: 900, currency: 'CHF' } }], 'scs-1100')).toBe(0);
+  });
+  it('ignores debit lines on the receivables account', () => {
+    const lines = [{ accountKey: 'scs-1100', debitAmount: { amount: 700, currency: 'CHF' }, creditAmount: null }];
+    expect(receivablesCredit(lines, 'scs-1100')).toBe(0);
+  });
+  it('an empty receivables key gives 0', () => {
+    expect(receivablesCredit([{ accountKey: '', creditAmount: { amount: 900 } }], '')).toBe(0);
+  });
+  it('takes the gross from a fee booking: the processor fee is ours', () => {
+    const r = raisenowRow({ accountKey: 'scs-1100' });
+    expect(receivablesCredit(buildBankBookingLines(r, raisenowProfile, 'scs', 'bank-k') as never, 'scs-1100')).toBe(9300);
+  });
+});
+
+describe('invoiceSettlement (spec 1.2 §4.3 / 1.76 D6 link rule)', () => {
+  const invoice = (p: Record<string, unknown> = {}) => ({
+    state: 'pending', totalAmount: { amount: 10000 }, payments: [], accountingTenantId: 'scs', ...p,
+  });
+  const settle = (inv: ReturnType<typeof invoice> | undefined, amount = 10000) => invoiceSettlement(inv, 'scs', amount, '20261001', 'bank-k', 'scs-1020');
+
+  it('a full payment settles the invoice and flips it to paid', () => {
+    expect(settle(invoice())).toEqual({ patch: {
+      payments: [{ date: '20261001', amount: 10000, bankAccountKey: 'scs-1020', bookingKey: 'bank-k' }],
+      state: 'paid', paymentDate: '20261001',
+    } });
+  });
+  it('a partial payment appends the payment and keeps the state, without a paymentDate', () => {
+    const r = settle(invoice({ state: 'unpaid' }), 4000);
+    expect(r).toEqual({ patch: { payments: [{ date: '20261001', amount: 4000, bankAccountKey: 'scs-1020', bookingKey: 'bank-k' }], state: 'unpaid' } });
+  });
+  it('the payment that completes earlier ones flips to paid', () => {
+    const earlier = [{ date: '20260901', amount: 6000, bankAccountKey: 'scs-1020', bookingKey: 'bank-a' }];
+    const r = settle(invoice({ state: 'partial', payments: earlier }), 4000);
+    expect('patch' in r && r.patch['state']).toBe('paid');
+    expect('patch' in r && (r.patch['payments'] as unknown[]).length).toBe(2);
+  });
+  it('skips a missing invoice', () => {
+    expect(settle(undefined)).toEqual({ skip: 'missing' });
+  });
+  it('skips an invoice of other books', () => {
+    expect(settle(invoice({ accountingTenantId: 'gss' }))).toEqual({ skip: 'other-books' });
+  });
+  it('skips when the booking credits nothing to receivables', () => {
+    expect(settle(invoice(), 0)).toEqual({ skip: 'no-receivables-credit' });
+  });
+  it('skips a payment already recorded with the same booking key', () => {
+    const stored = [{ date: '20261001', amount: 4000, bankAccountKey: 'scs-1020', bookingKey: 'bank-k' }];
+    expect(settle(invoice({ state: 'partial', payments: stored }), 4000)).toEqual({ skip: 'already-recorded' });
+  });
+  it('skips an overpayment', () => {
+    expect(settle(invoice(), 10001)).toEqual({ skip: 'overpayment' });
+  });
+  it('skips a cancelled or already paid invoice', () => {
+    expect(settle(invoice({ state: 'cancelled' }))).toEqual({ skip: 'not-payable' });
+    const paid = [{ date: '20260901', amount: 10000, bankAccountKey: 'scs-1020', bookingKey: 'bank-a' }];
+    expect(settle(invoice({ state: 'paid', payments: paid }))).toEqual({ skip: 'not-payable,overpayment' });
   });
 });

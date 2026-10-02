@@ -5,7 +5,13 @@ import { getFirestore, Transaction } from 'firebase-admin/firestore';
 import { checkAppCheckToken, checkAuthentication, checkRoles, getCallerTenantId, isBalanced, nextBookingNo } from '@okr/shared-util-functions';
 import { DateFormat, getTodayStr } from '@okr/shared-util-core';
 
-import { buildBankBookingHeader, buildBankBookingLines, feeAmountOf, hasFeeLine, isValidSplit, periodKeyFor, ProfileDoc, RowDoc, splitsOf, withCostCenterKeys } from './bank-import.util';
+import { InvoiceCollection } from '@okr/shared-models';
+
+import {
+  buildBankBookingHeader, buildBankBookingLines, feeAmountOf, hasFeeLine, invoiceSettlement, isValidSplit, periodKeyFor, ProfileDoc, receivablesCredit, RowDoc,
+  splitsOf, withCostCenterKeys,
+} from './bank-import.util';
+import { InvoiceLike } from '../invoice/invoice-payment.logic';
 import { costCenterKeyForLine, loadCostCenterContext } from '../cost-center/cost-center-context';
 
 const REGION = 'europe-west6';
@@ -22,6 +28,17 @@ const MAX_ROWS = 100;
 // splitTitle: base main name of a split booking in the caller's language (e.g. 'Sammelbuchung').
 interface PostBankImportData { accountingTenantId: string; rowKeys?: string[]; splitTitle?: string; }
 interface Failure { rowKey: string; reason: string; }
+
+/** The fields the payment rules read, from a raw invoice document; undefined stays undefined. */
+function asInvoiceLike(doc: Record<string, unknown> | undefined): InvoiceLike | undefined {
+  if (!doc) return undefined;
+  return {
+    state: String(doc['state'] ?? ''),
+    totalAmount: doc['totalAmount'] as InvoiceLike['totalAmount'],
+    payments: doc['payments'] as InvoiceLike['payments'],
+    accountingTenantId: String(doc['accountingTenantId'] ?? ''),
+  };
+}
 
 /** Thrown inside the per-row transaction; the code lands on the row's `error` field. */
 class RowError extends Error {
@@ -50,6 +67,7 @@ export const postBankImport = onCall(
     const db = getFirestore();
     const configSnap = await db.collection(CONFIG_COLLECTION).doc(accountingTenantId).get();
     const fiscalYearStart = Number(configSnap.data()?.['fiscalYearStart'] ?? 1) || 1;
+    const receivablesKey = String(configSnap.data()?.['receivablesAccountKey'] ?? '');
 
     // ---- candidate rows (mapped, this tenant + accounting tenant), file order = importedAt asc, date asc ----
     let rowRefs;
@@ -129,6 +147,22 @@ export const postBankImport = onCall(
           if (!isBalanced(lines as { debitAmount?: { amount: number } | null; creditAmount?: { amount: number } | null }[])) {
             throw new RowError('unbalanced');
           }
+
+          // spec 1.2 §4.3 / 1.76 D6 link rule: a credit matched to an invoice and booked against the
+          // receivables account settles it in the same transaction. Never blocks the booking. The
+          // amount is the receivables credit (gross), not the bank net: a processor fee is ours.
+          let invoicePatch: Record<string, unknown> | undefined;
+          const invoiceRef = row.invoiceKey ? db.collection(InvoiceCollection).doc(row.invoiceKey) : undefined;
+          if (invoiceRef) {
+            if (row.amount.amount > 0 && row.amount.currency === 'CHF' && receivablesKey) {
+              const amount = receivablesCredit(lines as { accountKey: string; creditAmount?: { amount: number } | null }[], receivablesKey);
+              const settlement = invoiceSettlement(asInvoiceLike((await tx.get(invoiceRef)).data()), accountingTenantId, amount, row.date, bookingKey, profile.accountKey);
+              if ('patch' in settlement) invoicePatch = settlement.patch;
+              else logger.warn(`${CF_NAME}: ${rowRef.id} invoice ${row.invoiceKey} not settled (${settlement.skip})`);
+            } else {
+              logger.warn(`${CF_NAME}: ${rowRef.id} invoice ${row.invoiceKey} not settled (${receivablesKey ? 'not-a-chf-credit' : 'no-receivables-account'})`);
+            }
+          }
           const year = Number(row.date.substring(0, 4));
           // Follow-up: this reads the whole ledger of the accounting tenant per row to compute
           // nextBookingNo. MAX_ROWS=100 is the mitigation for now; the real fix is a narrow read
@@ -142,6 +176,7 @@ export const postBankImport = onCall(
           tx.set(bookingRef, { ...buildBankBookingHeader(row, tenantId, periodKey, splitTitle), bookingNo });
           for (const line of lines) tx.set(db.collection(BOOKING_LINE_COLLECTION).doc(), line);
           tx.update(rowRef, { status: 'posted', bookingKey, postedAt: now, error: '' });
+          if (invoiceRef && invoicePatch) tx.update(invoiceRef, invoicePatch);
           return 'posted';
         });
         posted += 1;

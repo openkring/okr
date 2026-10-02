@@ -1,3 +1,5 @@
+import { applyInvoicePayment, InvoiceLike, paymentBlockers, paymentDecision } from '../invoice/invoice-payment.logic';
+
 /** One further part of a split assignment; `amount` is a positive magnitude in minor units. */
 export interface SplitDoc { title: string; accountKey: string; vatCodeKey?: string; amount: number; }
 
@@ -10,6 +12,7 @@ export interface RowDoc {
   amountFx?: { amount: number; currency: string } | null;
   status: string; bankProfileKey: string; accountingTenantId: string; tenants: string[];
   ruleKey?: string;
+  invoiceKey?: string;                                // set by the QR-reference matcher (spec 1.2 §4.2)
 }
 export interface ProfileDoc { accountKey: string; feeAccountKey?: string; accountingTenantId: string; isArchived?: boolean; }
 
@@ -123,6 +126,37 @@ export function buildBankBookingHeader(row: RowDoc, tenantId: string, periodKey:
     ...(payee ? { counterparty: { key: '', name1: '', name2: payee, modelType: 'org', type: '', subType: '', label: payee } } : {}),
     status: 'posted', accountingTenantId: row.accountingTenantId, tenants: [tenantId], isArchived: false,
   };
+}
+
+/*-------------------------- invoice settlement (spec 1.2 §4.3 / 1.76 D6) -----------------*/
+/**
+ * The amount a bank booking credits to the receivables account (Debitoren), in minor units. This is
+ * what the payer paid: a processor fee comes off the bank side, never off the receivables credit.
+ */
+export function receivablesCredit(
+  lines: { accountKey: string; creditAmount?: { amount: number; currency?: string } | null }[], receivablesKey: string,
+): number {
+  if (!receivablesKey) return 0;
+  return lines.filter(l => l.accountKey === receivablesKey).reduce((sum, l) => sum + (l.creditAmount?.amount ?? 0), 0);
+}
+
+/**
+ * The invoice patch a posted bank booking writes under the 1.76 link rule, or why it does not settle
+ * the invoice: missing, other-books, no-receivables-credit, already-recorded, or the comma-joined
+ * `paymentBlockers` codes (not-payable, overpayment, …). Same write shape as `recordInvoicePayment`.
+ */
+export function invoiceSettlement(
+  invoice: InvoiceLike | undefined, accountingTenantId: string, amount: number, date: string, bookingKey: string, bankAccountKey: string,
+): { patch: Record<string, unknown> } | { skip: string } {
+  if (!invoice) return { skip: 'missing' };
+  if (invoice.accountingTenantId !== accountingTenantId) return { skip: 'other-books' };
+  if (!(amount > 0)) return { skip: 'no-receivables-credit' };
+  const existing = (invoice.payments ?? []).map(p => ({ bookingKey: p.bookingKey ?? '' }));
+  if (paymentDecision(existing, bookingKey) === 'return-stored') return { skip: 'already-recorded' };
+  const blockers = paymentBlockers(invoice, amount, date);
+  if (blockers.length > 0) return { skip: blockers.join(',') };
+  const applied = applyInvoicePayment(invoice, { paymentId: bookingKey, date, amount, bankAccountKey, bookingKey });
+  return { patch: { payments: applied.payments, state: applied.state, ...(applied.paymentDate ? { paymentDate: applied.paymentDate } : {}) } };
 }
 
 /*-------------------------- journal import (spec 1.60 §12) --------------------------------*/
