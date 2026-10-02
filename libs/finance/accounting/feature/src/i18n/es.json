@@ -38,7 +38,7 @@
     },
     "reminderTemplate": {
       "label": "Plantilla de recordatorio",
-      "placeholder": "ID de la plantilla",
+      "placeholder": "Elige una plantilla",
       "helper": "Plantilla con la que se crean los recordatorios de pago en PDF."
     },
     "reminderFeeAccount": {

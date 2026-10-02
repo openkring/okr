@@ -38,7 +38,7 @@
     },
     "reminderTemplate": {
       "label": "Modèle de rappel",
-      "placeholder": "ID du modèle",
+      "placeholder": "Choisis un modèle",
       "helper": "Modèle utilisé pour créer les rappels de paiement en PDF."
     },
     "reminderFeeAccount": {

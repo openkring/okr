@@ -106,9 +106,19 @@ export type { AccountingI18n };
               <!-- Mahnwesen (1.76 phase 3) -->
               <ion-row>
                 <ion-col size="12" size-md="6">
-                  <okr-text-input [i18n]="reminderTemplateI18n()" [value]="reminderTemplateId()"
-                    (valueChange)="onFieldChange('reminderTemplateId', $event)"
-                    [readOnly]="isReadOnly()" />
+                  <ion-select [label]="i18n().reminder_template()" labelPlacement="floating"
+                    [placeholder]="i18n().reminder_template_placeholder()"
+                    [value]="reminderTemplateId()" [disabled]="isReadOnly()"
+                    (ionChange)="onReminderTemplateChange($event)">
+                    @for (template of reminderTemplateChoices(); track template.okey) {
+                      <ion-select-option [value]="template.okey">{{ template.name || template.okey }}</ion-select-option>
+                    }
+                  </ion-select>
+                  <ion-note>{{ i18n().reminder_template_helper() }}
+                    @if (showTemplateLink()) {
+                      <a href="" (click)="$event.preventDefault(); addTemplate.emit()">{{ i18n().invoice_template_add() }}</a>
+                    }
+                  </ion-note>
                   <okr-error-note [errors]="reminderTemplateIdErrors()" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
@@ -171,7 +181,7 @@ export class AccountingConfigForm {
   public readonly costCentersEnabled = input(false);
   public readonly tenantId = input.required<string>();
   public readonly i18n = input.required<AccountingI18n>();
-  /** the tenant's PDF templates; the invoice template is picked from those of category `invoice` */
+  /** the tenant's PDF templates; the invoice template is picked from those of category `invoice`, the reminder template from `dunning` */
   public readonly templates = input<TemplateModel[]>([]);
   /** show the link to the template list (only for users who may open it) */
   public readonly showTemplateLink = input(false);
@@ -239,10 +249,13 @@ export class AccountingConfigForm {
   protected reminderFee2Chf = computed(() => reminderFeeOf(this.formData(), 2) / 100);
   protected reminderFee3Chf = computed(() => reminderFeeOf(this.formData(), 3) / 100);
 
-  protected reminderTemplateI18n = computed(() => ({
-    name: 'reminderTemplateId', label: this.i18n().reminder_template(),
-    placeholder: this.i18n().reminder_template_placeholder(), helper: this.i18n().reminder_template_helper()
-  } as TextInputI18n));
+  // Dunning templates only, but never drop the stored one (same rule as the invoice template).
+  protected reminderTemplateChoices = computed(() => {
+    const id = this.reminderTemplateId();
+    return this.templates()
+      .filter(t => t.category === 'dunning' || t.okey === id)
+      .sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''));
+  });
 
   protected reminderFeeAccountI18n = computed(() => ({
     name: 'reminderFeeAccountKey', label: this.i18n().reminder_fee_account(), helper: this.i18n().reminder_fee_account_helper()
@@ -282,6 +295,10 @@ export class AccountingConfigForm {
 
   protected onInvoiceTemplateChange(event: CustomEvent<SelectChangeEventDetail<string>>): void {
     this.onFieldChange('invoiceTemplateId', event.detail.value ?? '');
+  }
+
+  protected onReminderTemplateChange(event: CustomEvent<SelectChangeEventDetail<string>>): void {
+    this.onFieldChange('reminderTemplateId', event.detail.value ?? '');
   }
 
   protected onPaymentAccountsChange(event: CustomEvent<SelectChangeEventDetail<string[]>>): void {

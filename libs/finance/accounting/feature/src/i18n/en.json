@@ -38,7 +38,7 @@
     },
     "reminderTemplate": {
       "label": "Reminder template",
-      "placeholder": "Template ID",
+      "placeholder": "Choose a template",
       "helper": "Template used to create payment reminders as PDF."
     },
     "reminderFeeAccount": {

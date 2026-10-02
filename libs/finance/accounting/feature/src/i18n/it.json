@@ -38,7 +38,7 @@
     },
     "reminderTemplate": {
       "label": "Modello di sollecito",
-      "placeholder": "ID del modello",
+      "placeholder": "Scegli un modello",
       "helper": "Modello usato per creare i solleciti di pagamento in PDF."
     },
     "reminderFeeAccount": {

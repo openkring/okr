@@ -38,7 +38,7 @@
     },
     "reminderTemplate": {
       "label": "Mahnungsvorlage",
-      "placeholder": "Vorlage-ID",
+      "placeholder": "Vorlage wählen",
       "helper": "Vorlage, mit der Zahlungserinnerungen und Mahnungen als PDF erstellt werden."
     },
     "reminderFeeAccount": {
