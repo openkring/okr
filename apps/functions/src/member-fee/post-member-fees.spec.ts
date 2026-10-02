@@ -72,6 +72,11 @@ describe('billedPositions', () => {
     expect(unbookablePositions(fee)).toEqual([]);
   });
 
+  it('keeps a pro-rata description on the billed position', () => {
+    const fee = { positions: [position({ amount: 350, description: 'pro rata verrechnet, 7 Monate' })] };
+    expect(billedPositions(fee)[0].description).toBe('pro rata verrechnet, 7 Monate');
+  });
+
   it('turns a rebate negative, so the invoice total matches getFeeTotal', () => {
     const fee = { positions: [position({ amount: 600 }), position({ key: 'rebate', type: 'rebate', label: 'Ausbildungsrabatt', amount: 50 })] };
     const billed = billedPositions(fee);

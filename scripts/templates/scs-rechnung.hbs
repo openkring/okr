@@ -6,7 +6,7 @@
   Context (buildInvoicePayload in apps/functions/src/invoice/invoice.logic.ts):
     invoiceNumber, title, date, dueDate (DD.MM.YYYY), greeting, firstName, lastName,
     streetName, streetNumber, zipCode, city, countryCode, amount ("675.50"),
-    positions [{ name, amount }], qrMessage
+    positions [{ name, amount, description? }], qrMessage
   plus payee.* (name, iban, street, buildingNumber, zip, city, country), resolved server-side.
   The logo URL is fixed. The QR-bill slip is appended by the caller.
 --}}
@@ -121,6 +121,7 @@
   }
 
   .positions td { padding: 1.5mm 0; vertical-align: top; }
+  .positions .pos-desc { font-size: 8pt; color: #555; margin-top: 0.5mm; }
   .positions td.amount { text-align: right; white-space: nowrap; padding-left: 6mm; }
   .positions tr.total td { border-top: 0.3mm solid var(--ink); font-weight: 700; }
 
@@ -190,7 +191,7 @@
     </div>
 
     <table class="positions">
-      {{#each positions}}<tr><td>{{name}}</td><td class="amount">CHF {{amount}}</td></tr>
+      {{#each positions}}<tr><td>{{name}}{{#if description}}<div class="pos-desc">{{description}}</div>{{/if}}</td><td class="amount">CHF {{amount}}</td></tr>
       {{/each}}<tr class="total"><td>Total</td><td class="amount">CHF {{amount}}</td></tr>
     </table>
 

@@ -23,9 +23,9 @@
   "zipCode": "8712",
   "city": "Stäfa",
   "countryCode": "CH",
-  "amount": "675.50",
+  "amount": "525.50",
   "positions": [
-    { "name": "Mitgliederbeitrag", "amount": "500.00" },
+    { "name": "Mitgliederbeitrag", "amount": "350.00", "description": "pro rata verrechnet, 7 Monate" },
     { "name": "Bootsplatz", "amount": "175.50" }
   ],
   "qrMessage": "Rechnung REA-260501",

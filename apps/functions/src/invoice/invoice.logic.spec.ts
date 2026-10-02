@@ -69,6 +69,17 @@ describe('buildInvoicePayload', () => {
     expect(p['positions']).toEqual([{ name: 'Beitrag', amount: '600.00' }, { name: 'Bootsplatz', amount: '75.50' }]);
   });
 
+  it('passes a position description to the template and omits an empty one (spec 1.79 §3.6)', () => {
+    const p = buildInvoicePayload({ ...base, positions: [
+      { ...pos(350, 'scs0159', 'Jahresbeitrag'), description: 'pro rata verrechnet, 7 Monate' },
+      { ...pos(75, 'scs0284', 'SRV'), description: '' },
+    ] });
+    expect(p['positions']).toEqual([
+      { name: 'Jahresbeitrag', amount: '350.00', description: 'pro rata verrechnet, 7 Monate' },
+      { name: 'SRV', amount: '75.00' },
+    ]);
+  });
+
   it('uses the org name as lastName and still builds without an address', () => {
     const p = buildInvoicePayload({ ...base, receiver: { name1: '', name2: 'Ruderclub X', modelType: 'org' } });
     expect(p).toMatchObject({ firstName: '', lastName: 'Ruderclub X', zipCode: '', city: '' });

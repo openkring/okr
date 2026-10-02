@@ -142,6 +142,7 @@ export const postMemberFees = onCall(
         position.invoicePositionType = p.type;
         position.accountKey = p.accountKey;
         position.vatCodeKey = p.vatCodeKey;
+        position.description = p.description ?? '';
         position.personKey = fee.member?.key ?? '';
         position.firstName = fee.member?.name1 ?? '';
         position.lastName = fee.member?.name2 ?? '';

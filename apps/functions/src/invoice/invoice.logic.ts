@@ -99,7 +99,8 @@ export function buildInvoicePayload(i: {
     dueDate: viewDate(i.dueDate),
     ...recipientFields(i.receiver, i.address),
     amount: chf(totalRappen(i.positions)),
-    positions: i.positions.map((p) => ({ name: p.name, amount: chf(toRappen(p.amount)) })),
+    // `description` only when set, so a template's `{{#if description}}` never prints an empty line (1.79 §3.6)
+    positions: i.positions.map((p) => ({ name: p.name, amount: chf(toRappen(p.amount)), ...(p.description ? { description: p.description } : {}) })),
     qrMessage: `Rechnung ${i.invoiceId}`,
   };
 }
