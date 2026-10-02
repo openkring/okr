@@ -50,7 +50,7 @@ const asInvoiceLike = (invoice: Doc): InvoiceLike => ({
 
 /** A stored reminder with every field defined (Firestore refuses undefined, also nested). */
 const coalesceReminder = (r: ReminderLike): ReminderLike => ({
-  level: r.level, date: r.date ?? '', dueDate: r.dueDate ?? '', isSent: r.isSent ?? false,
+  level: r.level ?? 0, date: r.date ?? '', dueDate: r.dueDate ?? '', isSent: r.isSent ?? false,
   documentKey: r.documentKey ?? '', fee: Number.isFinite(r.fee) ? (r.fee as number) : 0, bookingKey: r.bookingKey ?? '',
 });
 
@@ -85,10 +85,7 @@ export const createInvoiceReminder = onCall(
     }
     if (!isValidStoreDate(date)) throw new HttpsError('invalid-argument', 'date must be a valid date (yyyyMMdd)');
     const lvl = level as number;
-    const requestedFee = request.data.fee;
-    if (requestedFee !== undefined && (!Number.isInteger(requestedFee) || (requestedFee as number) < 0)) {
-      throw new HttpsError('invalid-argument', 'fee must be a non-negative integer (Rappen)');
-    }
+    const requestedFee = request.data.fee ?? undefined; // null counts as omitted
 
     const db = getFirestore();
     const invoiceRef = db.collection(InvoiceCollection).doc(invoiceKey);
@@ -101,6 +98,10 @@ export const createInvoiceReminder = onCall(
     const accountingTenantId = String(pre['accountingTenantId'] ?? '');
     const config = await loadOwnedAccountingConfig(db, tenantId, invoiceKey, accountingTenantId, 'reminded');
 
+    // idempotency first: a retry returns the stored reminder even after a config change
+    const already = storedReminder(pre['reminders'] as ReminderLike[] | undefined, lvl);
+    if (already) return storedResult(pre, already);
+
     const templateId = String(config['reminderTemplateId'] ?? '');
     if (!templateId) throw refuse('no-reminder-template', `${accountingTenantId} has no reminder template`);
     const fee = requestedFee ?? defaultReminderFee(config['reminderFees'] as number[] | undefined, lvl);
@@ -108,16 +109,19 @@ export const createInvoiceReminder = onCall(
     const feeAccountKey = String(config['reminderFeeAccountKey'] ?? '');
     const fiscalYearStart = Number(config['fiscalYearStart'] ?? 1) || 1;
     const dueDays = Number.isFinite(config['reminderDueDays']) ? (config['reminderDueDays'] as number) : DEFAULT_DUE_DAYS;
+    if (typeof fee !== 'number' || !Number.isInteger(fee) || fee < 0) {
+      throw refuse('reminder-blocked', `invoice ${invoiceKey} cannot get reminder ${lvl}: invalid-fee`, { reasons: ['invalid-fee'] });
+    }
     if (fee > 0) {
       if (!feeAccountKey) throw refuse('no-reminder-fee-account', `${accountingTenantId} has no reminder fee account`);
       if (!receivablesKey) throw refuse('no-receivables-account', `${accountingTenantId} has no receivables account`);
       await assertLeafAccount(db, accountingTenantId, feeAccountKey);
       await assertLeafAccount(db, accountingTenantId, receivablesKey);
+      // before rendering, so a locked period leaves no orphan PDF and finance-document
+      await assertPeriodsOpen(db, issuePeriodKeys(accountingTenantId, date, fiscalYearStart));
     }
 
-    // ---- 2. idempotency, then blockers ----
-    const already = storedReminder(pre['reminders'] as ReminderLike[] | undefined, lvl);
-    if (already) return storedResult(pre, already);
+    // ---- 2. blockers ----
     const blockers = reminderBlockers(reminderAsLike(pre), lvl, date, fee);
     if (blockers.length > 0) {
       throw refuse('reminder-blocked', `invoice ${invoiceKey} cannot get reminder ${lvl}: ${blockers.join(', ')}`, { reasons: blockers });
@@ -160,7 +164,12 @@ export const createInvoiceReminder = onCall(
         throw refuse('state-changed', `invoice ${invoiceKey} changed while the reminder was created`);
       }
       const stored = storedReminder(invoice['reminders'] as ReminderLike[] | undefined, lvl);
-      if (stored) return storedResult(invoice, stored);
+      if (stored) {
+        if (stored.fee !== fee || stored.date !== date) {
+          logger.warn(`${CF_NAME}: ${invoiceKey} level ${lvl} already stored with fee=${stored.fee} date=${stored.date}, call had fee=${fee} date=${date}`);
+        }
+        return storedResult(invoice, stored);
+      }
       const fresh = reminderBlockers(reminderAsLike(invoice), lvl, date, fee);
       if (fresh.length > 0) {
         throw refuse('reminder-blocked', `invoice ${invoiceKey} cannot get reminder ${lvl}: ${fresh.join(', ')}`, { reasons: fresh });
@@ -199,7 +208,7 @@ export const createInvoiceReminder = onCall(
       }
       const reminder: ReminderLike = { level: lvl, date, dueDate, isSent: false, documentKey: key, fee, bookingKey: fee > 0 ? key : '' };
       const reminders = [...((invoice['reminders'] as ReminderLike[] | undefined) ?? []).map(coalesceReminder), reminder];
-      tx.update(invoiceRef, { reminders });
+      tx.update(invoiceRef, withoutUndefined({ reminders }));
       return { reminder, openAmount: openAmount({ ...asInvoiceLike(invoice), reminders }) };
     });
     logger.info(`${CF_NAME}: reminder ${lvl} on ${invoiceKey} (tenant=${tenantId}, fee=${fee})`);
