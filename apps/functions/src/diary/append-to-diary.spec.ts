@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { decideDiaryLine } from './append-to-diary';
-import { validateDiaryLineRequest } from './record-diary-line';
+import { rejectsForOldClient, validateDiaryLineRequest } from './record-diary-line';
 
 describe('decideDiaryLine', () => {
   it('creates a missing entry on add', () => expect(decideDiaryLine(undefined, 'add')).toBe('create'));
@@ -28,4 +28,10 @@ describe('validateDiaryLineRequest', () => {
   it('rejects an empty line', () => expect(() => validateDiaryLineRequest({ ...ok, line: '   ' })).toThrow());
   it('rejects an overlong line', () => expect(() => validateDiaryLineRequest({ ...ok, line: 'x'.repeat(501) })).toThrow());
   it('rejects a missing body', () => expect(() => validateDiaryLineRequest(undefined)).toThrow());
+});
+
+describe('rejectsForOldClient', () => {
+  it('rejects no source + no target', () => expect(rejectsForOldClient(false, 'skipped-no-target')).toBe(true));
+  it('keeps no-target for a client with source', () => expect(rejectsForOldClient(true, 'skipped-no-target')).toBe(false));
+  it('does not reject a write for an old client', () => expect(rejectsForOldClient(false, 'written')).toBe(false));
 });

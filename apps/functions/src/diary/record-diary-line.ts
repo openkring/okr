@@ -40,10 +40,19 @@ export function validateDiaryLineRequest(data: Partial<DiaryLineRequest> | undef
 }
 
 /**
+ * Old clients (no `source` in the request) treat any status but 'skipped-final' as success, so a
+ * 'skipped-no-target' would show them a false "ok". Reject it for them; they map it to "denied".
+ */
+export function rejectsForOldClient(hadSource: boolean, status: DiarySummary): boolean {
+  return !hadSource && status === 'skipped-no-target';
+}
+
+/**
  * Appends one line to the `events` of the caller's day entry in every diary their user doc in
  * THIS app routes `source` to (`users/{uid}.diaryTargets`, spec 1.77 §6). The author in each diary
  * is the caller's person's user in that diary tenant — never `request.auth.uid` from another
- * tenant. No matching target is not an error: `{ status: 'skipped-no-target' }`.
+ * tenant. No matching target is not an error: `{ status: 'skipped-no-target' }` — except for old
+ * clients without `source`, which get `failed-precondition` (see `rejectsForOldClient`).
  */
 export const recordDiaryLine = onCall<DiaryLineRequest, Promise<{ status: DiarySummary; written: string[] }>>(
   { region: 'europe-west6', memory: '256MiB', timeoutSeconds: 30, enforceAppCheck: true },
@@ -62,6 +71,9 @@ export const recordDiaryLine = onCall<DiaryLineRequest, Promise<{ status: DiaryS
       source, date, field: 'events', line, mode: 'add',
     });
     const status = summariseDiaryResults(results);
+    if (rejectsForOldClient(request.data.source !== undefined, status)) {
+      throw new HttpsError('failed-precondition', 'no diary target');
+    }
     const written = Object.entries(results).filter(([, r]) => r === 'written').map(([t]) => t);
     logger.info(`recordDiaryLine: ${status} tenant=${tenantId} source=${source} date=${date} results=${JSON.stringify(results)}`);
     return { status, written };
