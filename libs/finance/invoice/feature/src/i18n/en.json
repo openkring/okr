@@ -346,7 +346,16 @@
     "reminder-account-invalid": "The reminder fee account or the receivables account cannot be booked to. Choose an account without sub-accounts in the accounting settings.",
     "reminder-inconsistent-state": "Something went wrong while creating the reminder. Please try again.",
     "email-not-payable": "A reminder is only sent while the invoice is open. This invoice has already been paid or cancelled.",
-    "email-not-sendable": "A cancelled invoice is no longer sent."
+    "email-not-sendable": "A cancelled invoice is no longer sent.",
+    "no-reminder": "This invoice has no such reminder.",
+    "no-fee": "This reminder has no fee that could be waived.",
+    "already-waived": "The fee of this reminder is already waived.",
+    "no-waive-date": "Please enter a valid date for the waiver.",
+    "invalid-reason": "Please enter a reason (at most 500 characters).",
+    "no-fee-booking": "The fee of this reminder was never booked, so there is nothing to reverse.",
+    "waive-blocked": "The fee cannot be waived right now.",
+    "waive-period-locked": "The booking period for the date of the waiver is closed. Choose another date or have the period reopened.",
+    "waive-inconsistent-state": "Something went wrong while waiving the fee. Please try again."
   },
   "paymentReference": { "label": "Payment reference" },
   "payment": {
@@ -440,6 +449,20 @@
       "sent": "sent",
       "notSent": "not sent"
     }
+  },
+  "waiveFee": {
+    "label": "Waive fee",
+    "header": "Waive the fee of the {level}",
+    "message": "The fee is no longer charged and its booking is reversed. This cannot be undone.",
+    "date": "Date of the waiver",
+    "reason": "Reason for the waiver",
+    "ok": "Waive",
+    "conf": "The fee of CHF {fee} is waived. CHF {open} is now open.",
+    "confPaid": "The fee of CHF {fee} is waived. The invoice is now paid.",
+    "error": "The fee could not be waived. Please try again later.",
+    "reasonInvalid": "Enter a reason (at most 500 characters).",
+    "dateInvalid": "Enter a valid date, for example 31.12.2026.",
+    "waivedOn": "Fee waived on {date}"
   },
   "openAmount": {
     "label": "Open amount (incl. reminder fees)"

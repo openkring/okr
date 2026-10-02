@@ -67,6 +67,9 @@ export function linkableBookings<T extends Pick<BookingModel, 'okey'>>(bookings:
   return bookings.filter((b) => !b.okey.startsWith('invoice-') && !linked.has(b.okey));
 }
 
+/** waiveReminderFee accepts a reason of 1 to this many characters (server: WAIVE_REASON_MAX). */
+export const WAIVE_REASON_MAX = 500;
+
 /** cancelInvoice accepts a reason of 1 to this many characters. */
 export const INVOICE_CANCEL_REASON_LENGTH = 500;
 
@@ -87,13 +90,18 @@ export function newPaymentId(randomBytes: (n: number) => Uint8Array = (n) => cry
   return id;
 }
 
-/** Sum of the reminder fees in Rappen; a missing or non-finite fee (legacy reminder) counts as 0. */
-export function reminderFeeSum(reminders: { fee?: number }[] | undefined): number {
-  return (reminders ?? []).reduce((s, r) => s + (Number.isFinite(r.fee) ? (r.fee as number) : 0), 0);
+/** True when the fee of a reminder was waived (spec 1.76 D18): `waivedAt` is a non-empty StoreDate. */
+export function isWaivedReminder(reminder: { waivedAt?: string } | undefined): boolean {
+  return typeof reminder?.waivedAt === 'string' && reminder.waivedAt.length > 0;
+}
+
+/** Sum of the reminder fees in Rappen; waived fees and a missing or non-finite fee (legacy reminder) count as 0. */
+export function reminderFeeSum(reminders: { fee?: number; waivedAt?: string }[] | undefined): number {
+  return (reminders ?? []).reduce((s, r) => s + (isWaivedReminder(r) || !Number.isFinite(r.fee) ? 0 : (r.fee as number)), 0);
 }
 
 /** Rappen still open on an invoice: total plus reminder fees minus the recorded payments, never negative. */
-export function openInvoiceAmount(invoice: Pick<InvoiceModel, 'totalAmount' | 'payments'> & { reminders?: { fee?: number }[] }): number {
+export function openInvoiceAmount(invoice: Pick<InvoiceModel, 'totalAmount' | 'payments'> & { reminders?: { fee?: number; waivedAt?: string }[] }): number {
   const paid = (invoice.payments ?? []).reduce((sum, p) => sum + (p?.amount ?? 0), 0);
   return Math.max(0, (invoice.totalAmount?.amount ?? 0) + reminderFeeSum(invoice.reminders) - paid);
 }

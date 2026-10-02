@@ -23,7 +23,7 @@ import {
   draftInvoicesOf, formatPaymentChf, getInvoiceExportData, INVOICE_CANCEL_REASON_LENGTH, INVOICE_I18N_KEYS, InvoiceI18n, InvoicePaymentCandidate,
   InvoicePaymentInput, invoiceRefusalReasons, invoiceRefusalText, invoicesForList, isDraftInvoice, isRetryablePaymentRefusal, latestReminderWithDocument,
   mahnlaufCandidates, newDraftInvoice, newInvoicePaymentFormModel, newPaymentId, nextReminderLevel, openInvoiceAmount, parseReminderFee,
-  PAYMENT_CONFIRMATION_TEMPLATE_ID, reminderInputProblem, reminderLevelKey,
+  PAYMENT_CONFIRMATION_TEMPLATE_ID, reminderInputProblem, reminderLevelKey, waivableReminder, waiveInputProblem, WAIVE_REASON_MAX,
 } from '@okr/finance-invoice-util';
 import { FinanceDocumentService } from '@okr/finance-accounting-data-access';
 import { AccountService } from '@okr/finance-account-data-access';
@@ -418,6 +418,63 @@ export const InvoiceStore = signalStore(
         console.error('InvoiceStore.cancelInvoice: cancelInvoice failed', e);
         await showToast(store.toastController,
           invoiceRefusalText(invoiceRefusalReasons(e), store.i18n, store.i18n.cancel_invoice_error(), 'cancel'));
+      }
+      patchState(store, { version: store.version() + 1 });
+    },
+
+    /**
+     * Waives the fee of the latest waivable reminder (spec 1.76 D18): asks for the date (today by
+     * default) and a reason, then `waiveReminderFee` books the fee back. The toast comes from the
+     * callable's answer (open amount, or "now paid").
+     */
+    async waiveReminderFee(invoice: InvoiceModel): Promise<void> {
+      const reminder = waivableReminder(invoice);
+      if (!reminder || store.accountingStore.isExternallyManaged() !== false) return;
+      const levelLabel = store.i18n[reminderLevelKey(reminder.level)]();
+      const message = store.i18n.waive_fee_message();
+      let input: { reason: string; date: string } | undefined;
+      const alert = await store.alertController.create({
+        header: fill(store.i18n.waive_fee_header(), { level: levelLabel }),
+        message,
+        inputs: [
+          { name: 'reason', type: 'textarea', placeholder: store.i18n.waive_fee_reason(),
+            attributes: { maxlength: WAIVE_REASON_MAX, 'aria-label': store.i18n.waive_fee_reason() } },
+          { name: 'date', type: 'date', value: getTodayStr(DateFormat.IsoDate), attributes: { 'aria-label': store.i18n.waive_fee_date() } },
+        ],
+        buttons: [
+          { text: store.i18n.cancel(), role: 'cancel' },
+          {
+            text: store.i18n.waive_fee_ok(),
+            role: 'confirm',
+            handler: (values: { reason?: string; date?: string }) => {
+              const reason = (values?.reason ?? '').trim();
+              const date = values?.date ? (convertDateFormatToString(values.date, DateFormat.IsoDate, DateFormat.StoreDate, false) || '') : '';
+              const problem = waiveInputProblem(reason, date);
+              if (problem) {
+                // keep the alert open and say what is missing
+                alert.message = `${message} ${problem === 'reason' ? store.i18n.waive_fee_reason_invalid() : store.i18n.waive_fee_date_invalid()}`;
+                return false;
+              }
+              input = { reason, date };
+              return true;
+            },
+          },
+        ],
+      });
+      await alert.present();
+      const { role } = await alert.onDidDismiss();
+      if (role !== 'confirm' || !input) return;
+      try {
+        const result = await store.invoiceService.waiveReminderFee(invoice.okey, reminder.level, input.date, input.reason, store.appStore.currentUser() ?? undefined);
+        // derived from the callable's answer: a re-read right after the write may still be the old snapshot
+        const fee = formatPaymentChf(reminder.fee);
+        await showToast(store.toastController, result.state === 'paid'
+          ? fill(store.i18n.waive_fee_conf_paid(), { fee })
+          : fill(store.i18n.waive_fee_conf(), { fee, open: formatPaymentChf(result.openAmount) }));
+      } catch (e) {
+        console.error('InvoiceStore.waiveReminderFee: waiveReminderFee failed', e);
+        await showToast(store.toastController,
+          invoiceRefusalText(invoiceRefusalReasons(e), store.i18n, store.i18n.waive_fee_error(), 'waive'));
       }
       patchState(store, { version: store.version() + 1 });
     },

@@ -5,7 +5,7 @@ import {
 } from '@ionic/angular/standalone';
 import { InvoiceModel, RoleName } from '@okr/shared-models';
 import {
-  canCreatePaymentConfirmation, canCreateReminder, canEmailInvoice, isDraftInvoice, isPayableState, latestReminderWithDocument, mayReadInvoiceDocuments,
+  canCreatePaymentConfirmation, canCreateReminder, canEmailInvoice, isDraftInvoice, isPayableState, latestReminderWithDocument, mayReadInvoiceDocuments, waivableReminder,
 } from '@okr/finance-invoice-util';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
@@ -264,6 +264,9 @@ export class InvoiceList {
       if (canCreateReminder(invoice) && this.canWriteDrafts()) {
         options.buttons.push(createActionSheetButton('invoice.createReminder', i18n.reminder_create(), base, 'alarm'));
       }
+      if (waivableReminder(invoice) && this.canWriteDrafts()) {
+        options.buttons.push(createActionSheetButton('invoice.waiveFee', i18n.waive_fee(), base, 'cancel-circle'));
+      }
       if (canEmailInvoice(invoice) && this.canWriteDrafts()) {
         options.buttons.push(createActionSheetButton('invoice.sendEmail', i18n.email_send(), base, 'email'));
       }
@@ -305,6 +308,7 @@ export class InvoiceList {
       case 'invoice.delete': await this.store.delete(invoice); break;
       case 'invoice.payment': await this.store.recordPayment(invoice); break;
       case 'invoice.cancelInvoice': await this.store.cancelInvoice(invoice); break;
+      case 'invoice.waiveFee': await this.store.waiveReminderFee(invoice); break;
       case 'invoice.createReminder': await this.store.createReminder(invoice); break;
       case 'invoice.sendEmail': await this.store.sendInvoiceEmail(invoice); break;
       case 'invoice.sendReminder': await this.store.sendReminderEmail(invoice); break;

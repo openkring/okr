@@ -346,7 +346,16 @@
     "reminder-account-invalid": "Le compte des frais de rappel ou le compte débiteurs ne peut pas être mouvementé. Choisis dans les paramètres comptables un compte sans sous-comptes.",
     "reminder-inconsistent-state": "Un problème est survenu lors de la création du rappel. Réessaie.",
     "email-not-payable": "Un rappel n’est envoyé que tant que la facture est ouverte. Cette facture est déjà payée ou annulée.",
-    "email-not-sendable": "Une facture annulée n’est plus envoyée."
+    "email-not-sendable": "Une facture annulée n’est plus envoyée.",
+    "no-reminder": "Cette facture n’a pas ce rappel.",
+    "no-fee": "Ce rappel n’a aucun frais à annuler.",
+    "already-waived": "Les frais de ce rappel sont déjà annulés.",
+    "no-waive-date": "Merci d’indiquer une date valide pour l’annulation.",
+    "invalid-reason": "Merci d’indiquer un motif (500 caractères au maximum).",
+    "no-fee-booking": "Les frais de ce rappel n’ont pas été comptabilisés, il n’y a donc rien à annuler.",
+    "waive-blocked": "Les frais ne peuvent pas être annulés pour le moment.",
+    "waive-period-locked": "La période comptable à la date de l’annulation est clôturée. Choisis une autre date ou fais rouvrir la période.",
+    "waive-inconsistent-state": "Un problème est survenu lors de l’annulation des frais. Réessaie, s’il te plaît."
   },
   "paymentReference": { "label": "Référence de paiement" },
   "payment": {
@@ -440,6 +449,20 @@
       "sent": "envoyé",
       "notSent": "pas envoyé"
     }
+  },
+  "waiveFee": {
+    "label": "Annuler les frais",
+    "header": "Annuler les frais : {level}",
+    "message": "Les frais ne sont plus facturés et leur écriture est annulée. Cette action est irréversible.",
+    "date": "Date de l’annulation",
+    "reason": "Motif de l’annulation",
+    "ok": "Annuler les frais",
+    "conf": "Les frais de CHF {fee} sont annulés. Il reste CHF {open} à payer.",
+    "confPaid": "Les frais de CHF {fee} sont annulés. La facture est maintenant payée.",
+    "error": "Les frais n’ont pas pu être annulés. Réessaie plus tard.",
+    "reasonInvalid": "Indique un motif (500 caractères au maximum).",
+    "dateInvalid": "Indique une date valide, par exemple 31.12.2026.",
+    "waivedOn": "Frais annulés le {date}"
   },
   "openAmount": {
     "label": "Montant ouvert (frais de rappel compris)"

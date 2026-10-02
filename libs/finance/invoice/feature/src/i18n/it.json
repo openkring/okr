@@ -346,7 +346,16 @@
     "reminder-account-invalid": "Non è possibile registrare sul conto delle spese di sollecito o sul conto debitori. Scegli nelle impostazioni contabili un conto senza sottoconti.",
     "reminder-inconsistent-state": "Qualcosa è andato storto durante la creazione del sollecito. Riprova.",
     "email-not-payable": "Un sollecito viene inviato solo finché la fattura è aperta. Questa fattura è già pagata o annullata.",
-    "email-not-sendable": "Una fattura stornata non viene più inviata."
+    "email-not-sendable": "Una fattura stornata non viene più inviata.",
+    "no-reminder": "Questa fattura non ha questo sollecito.",
+    "no-fee": "Questo sollecito non ha spese da condonare.",
+    "already-waived": "Le spese di questo sollecito sono già condonate.",
+    "no-waive-date": "Inserisci una data valida per il condono.",
+    "invalid-reason": "Inserisci un motivo (al massimo 500 caratteri).",
+    "no-fee-booking": "Le spese di questo sollecito non sono state registrate, quindi non c’è nulla da stornare.",
+    "waive-blocked": "Al momento le spese non possono essere condonate.",
+    "waive-period-locked": "Il periodo contabile alla data del condono è chiuso. Scegli un’altra data o fai riaprire il periodo.",
+    "waive-inconsistent-state": "Qualcosa è andato storto nel condonare le spese. Riprova, per favore."
   },
   "paymentReference": { "label": "Riferimento di pagamento" },
   "payment": {
@@ -440,6 +449,20 @@
       "sent": "inviato",
       "notSent": "non inviato"
     }
+  },
+  "waiveFee": {
+    "label": "Condona le spese",
+    "header": "Condona le spese: {level}",
+    "message": "Le spese non vengono più addebitate e la loro registrazione viene stornata. L’operazione non si può annullare.",
+    "date": "Data del condono",
+    "reason": "Motivo del condono",
+    "ok": "Condona",
+    "conf": "Le spese di CHF {fee} sono condonate. Ora restano CHF {open} da pagare.",
+    "confPaid": "Le spese di CHF {fee} sono condonate. La fattura è ora pagata.",
+    "error": "Non è stato possibile condonare le spese. Riprova più tardi.",
+    "reasonInvalid": "Indica un motivo (al massimo 500 caratteri).",
+    "dateInvalid": "Indica una data valida, ad esempio 31.12.2026.",
+    "waivedOn": "Spese condonate il {date}"
   },
   "openAmount": {
     "label": "Importo aperto (spese di sollecito incluse)"

@@ -1,7 +1,7 @@
 import { DEFAULT_REMINDER_FEES } from '@okr/shared-models';
 import { addDuration, classifyStoreDate, isValidPartialStoreDate } from '@okr/shared-util-core';
 
-import { isPayableState, reminderFeeSum } from './invoice-payment.util';
+import { isPayableState, isWaivedReminder, reminderFeeSum, WAIVE_REASON_MAX } from './invoice-payment.util';
 
 export { reminderFeeSum };
 
@@ -9,7 +9,7 @@ export { reminderFeeSum };
 export const MAX_REMINDER_LEVEL = 3;
 
 /** The reminder fields the rules read; InvoiceModel's reminders satisfy it. */
-export interface ReminderLike { level: number; date: string; dueDate: string; fee?: number }
+export interface ReminderLike { level: number; date: string; dueDate: string; fee?: number; bookingKey?: string; waivedAt?: string }
 
 /** Highest existing level + 1; 1 when there is none. */
 export function nextReminderLevel(reminders: ReminderLike[] | undefined): number {
@@ -95,5 +95,24 @@ export function parseReminderFee(text: unknown): number | undefined {
 export function reminderInputProblem(date: string, feeText: unknown): 'date' | 'fee' | undefined {
   if (!/^\d{8}$/.test(date ?? '') || !isValidPartialStoreDate(date) || classifyStoreDate(date) !== 'full') return 'date';
   if (parseReminderFee(feeText) === undefined) return 'fee';
+  return undefined;
+}
+
+/**
+ * The reminder whose fee *Gebühr erlassen* waives: the highest level with a fee, a fee booking and no
+ * waiver yet, on a payable invoice; undefined when there is none.
+ */
+export function waivableReminder<T extends ReminderLike>(invoice: { state: string; reminders?: T[] }): T | undefined {
+  if (!isPayableState(invoice.state)) return undefined;
+  return (invoice.reminders ?? [])
+    .filter((r) => Number.isFinite(r.fee) && (r.fee as number) > 0 && !!r.bookingKey && !isWaivedReminder(r))
+    .reduce<T | undefined>((best, r) => (!best || (r.level ?? 0) > (best.level ?? 0) ? r : best), undefined);
+}
+
+/** Why the waiver alert's input is not accepted yet (same rules as waiveReminderFee): a reason of 1 to 500 characters, a full StoreDate. */
+export function waiveInputProblem(reason: string, date: string): 'reason' | 'date' | undefined {
+  const trimmed = (reason ?? '').trim();
+  if (trimmed.length < 1 || trimmed.length > WAIVE_REASON_MAX) return 'reason';
+  if (!/^\d{8}$/.test(date ?? '') || !isValidPartialStoreDate(date) || classifyStoreDate(date) !== 'full') return 'date';
   return undefined;
 }

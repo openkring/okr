@@ -2,10 +2,11 @@ import { describe, expect, it } from 'vitest';
 
 import {
   canCreateReminder, canEmailInvoice, defaultReminderFee, isReminderDue, lastDueDate, latestReminderWithDocument, mahnlaufCandidates, nextReminderLevel,
-  parseReminderFee, ReminderLike, reminderFeeSum, reminderInputProblem, reminderLevelKey,
+  parseReminderFee, ReminderLike, reminderFeeSum, reminderInputProblem, reminderLevelKey, waivableReminder, waiveInputProblem,
 } from './invoice-reminder.util';
 import { invoiceRefusalReasons } from './invoice-position.util';
 import { invoiceRefusalKeys } from './invoice-i18n';
+import { openInvoiceAmount } from './invoice-payment.util';
 
 const inv = (o = {}) => ({ state: 'pending', dueDate: '20261010', reminders: [] as ReminderLike[], ...o });
 
@@ -114,5 +115,55 @@ describe('reminder actions (client)', () => {
 
   it('expands the blockers of a reminder-blocked refusal', () => {
     expect(invoiceRefusalReasons({ details: { reason: 'reminder-blocked', reasons: ['max-level', 'invalid-fee'] } })).toEqual(['max-level', 'invalid-fee']);
+  });
+
+  describe('fee waiver (1.76 D18)', () => {
+    const w = (level: number, o = {}) => ({ level, date: '20261020', dueDate: '20261104', fee: 2000, bookingKey: `b${level}`, waivedAt: '', ...o });
+
+    it('reminderFeeSum skips waived reminders', () => {
+      expect(reminderFeeSum([w(1), w(2, { waivedAt: '20261101' })] as never)).toBe(2000);
+      expect(reminderFeeSum([w(1, { waivedAt: '20261101' })] as never)).toBe(0);
+    });
+
+    it('the open amount leaves out waived fees', () => {
+      const invoice = { totalAmount: { amount: 10000, currency: 'CHF' }, payments: [], reminders: [w(1, { waivedAt: '20261101' }), w(2)] } as never;
+      expect(openInvoiceAmount(invoice)).toBe(12000);
+    });
+
+    it('waivableReminder returns the highest level with a fee, a booking and no waiver', () => {
+      expect(waivableReminder(inv({ reminders: [w(1), w(2)] }) as never)?.level).toBe(2);
+      expect(waivableReminder(inv({ reminders: [w(1), w(2, { waivedAt: '20261101' })] }) as never)?.level).toBe(1);
+    });
+
+    it('waivableReminder skips reminders without fee or booking', () => {
+      expect(waivableReminder(inv({ reminders: [w(1), w(2, { fee: 0 })] }) as never)?.level).toBe(1);
+      expect(waivableReminder(inv({ reminders: [w(1, { bookingKey: '' })] }) as never)).toBeUndefined();
+      expect(waivableReminder(inv({ reminders: [{ level: 1, date: 'd', dueDate: 'd' }] }) as never)).toBeUndefined();
+    });
+
+    it('waivableReminder needs a payable invoice and reminders', () => {
+      expect(waivableReminder(inv({ state: 'paid', reminders: [w(1)] }) as never)).toBeUndefined();
+      expect(waivableReminder(inv({ state: 'cancelled', reminders: [w(1)] }) as never)).toBeUndefined();
+      expect(waivableReminder(inv() as never)).toBeUndefined();
+    });
+
+    it('waivableReminder takes the highest level even when it is the waived one', () => {
+      expect(waivableReminder(inv({ reminders: [w(1), w(2, { waivedAt: '20261101' })] }) as never)?.level).toBe(1);
+    });
+
+    it('waiveInputProblem mirrors the server', () => {
+      expect(waiveInputProblem('Kulanz', '20261101')).toBeUndefined();
+      expect(waiveInputProblem('  ', '20261101')).toBe('reason');
+      expect(waiveInputProblem('x'.repeat(501), '20261101')).toBe('reason');
+      expect(waiveInputProblem('x'.repeat(500), '20261101')).toBeUndefined();
+      expect(waiveInputProblem('Kulanz', '')).toBe('date');
+      expect(waiveInputProblem('Kulanz', '2026')).toBe('date');
+    });
+
+    it('expands the blockers of a waive-blocked refusal and gives each reason a text', () => {
+      const reasons = ['no-reminder', 'no-fee', 'already-waived', 'no-waive-date', 'invalid-reason'];
+      expect(invoiceRefusalReasons({ details: { reason: 'waive-blocked', reasons } })).toEqual(reasons);
+      expect(invoiceRefusalKeys([...reasons, 'no-fee-booking', 'waive-blocked']).length).toBe(7);
+    });
   });
 });

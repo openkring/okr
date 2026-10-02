@@ -4,7 +4,7 @@ import { IonAvatar, IonCard, IonCardContent, IonChip, IonContent, IonIcon, IonIm
 import { InvoiceModel } from '@okr/shared-models';
 import { Header } from '@okr/shared-ui';
 import { PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
-import { fill, formatQrReference, getFullName, prettyFormatDateTime } from '@okr/shared-util-core';
+import { fill, formatQrReference, getFullName, prettyFormatDate, prettyFormatDateTime } from '@okr/shared-util-core';
 import { AvatarPipe } from '@okr/avatar-ui';
 import { formatPaymentChf, isPayableState, openInvoiceAmount, reminderLevelKey } from '@okr/finance-invoice-util';
 import { InvoiceStore } from './invoice.store';
@@ -150,7 +150,11 @@ import { InvoiceStore } from './invoice.store';
                   @for(reminder of reminders(); track reminder.documentKey || $index) {
                     <p class="view-value">
                       {{ levelLabel(reminder.level) }} · {{ reminder.date | prettyDate }} · {{ store.i18n.reminder_due() }} {{ reminder.dueDate | prettyDate }}
-                      · {{ store.i18n.reminder_fee_short() }} CHF {{ formatChf(reminder.fee) }}
+                      @if(reminder.waivedAt) {
+                        · {{ waivedText(reminder.waivedAt) }}
+                      } @else {
+                        · {{ store.i18n.reminder_fee_short() }} CHF {{ formatChf(reminder.fee) }}
+                      }
                       · {{ reminder.isSent ? store.i18n.reminder_sent() : store.i18n.reminder_not_sent() }}
                     </p>
                   }
@@ -206,6 +210,10 @@ export class InvoiceViewModal {
 
   protected levelLabel(level: number): string {
     return this.store.i18n[reminderLevelKey(level)]();
+  }
+
+  protected waivedText(waivedAt: string): string {
+    return fill(this.store.i18n.reminder_waived_on(), { date: prettyFormatDate(waivedAt) });
   }
 
   protected formatChf(rappen: number): string {

@@ -346,7 +346,16 @@
     "reminder-account-invalid": "Auf das Konto für Mahngebühren oder das Debitorenkonto kann nicht gebucht werden. Wähle in den Buchhaltungseinstellungen ein Konto ohne Unterkonten.",
     "reminder-inconsistent-state": "Beim Erstellen der Mahnung ist etwas schiefgelaufen. Versuche es bitte noch einmal.",
     "email-not-payable": "Eine Mahnung wird nur gesendet, solange die Rechnung offen ist. Diese Rechnung ist schon bezahlt oder storniert.",
-    "email-not-sendable": "Eine stornierte Rechnung wird nicht mehr versendet."
+    "email-not-sendable": "Eine stornierte Rechnung wird nicht mehr versendet.",
+    "no-reminder": "Für diese Rechnung gibt es diese Mahnung nicht.",
+    "no-fee": "Zu dieser Mahnung gibt es keine Gebühr, die erlassen werden kann.",
+    "already-waived": "Die Gebühr dieser Mahnung ist schon erlassen.",
+    "no-waive-date": "Bitte gib ein gültiges Datum für den Erlass an.",
+    "invalid-reason": "Bitte gib einen Grund an (höchstens 500 Zeichen).",
+    "no-fee-booking": "Die Gebühr dieser Mahnung wurde nicht verbucht. Darum gibt es nichts rückgängig zu machen.",
+    "waive-blocked": "Die Gebühr kann gerade nicht erlassen werden.",
+    "waive-period-locked": "Die Buchungsperiode zum Datum des Erlasses ist abgeschlossen. Wähle ein anderes Datum oder lass die Periode wieder öffnen.",
+    "waive-inconsistent-state": "Beim Erlassen der Gebühr ist etwas schiefgelaufen. Versuche es bitte noch einmal."
   },
   "paymentReference": { "label": "Zahlungsreferenz" },
   "payment": {
@@ -440,6 +449,20 @@
       "sent": "versendet",
       "notSent": "nicht versendet"
     }
+  },
+  "waiveFee": {
+    "label": "Gebühr erlassen",
+    "header": "Gebühr der {level} erlassen",
+    "message": "Die Gebühr wird nicht mehr verlangt und ihre Buchung rückgängig gemacht. Das lässt sich nicht widerrufen.",
+    "date": "Datum des Erlasses",
+    "reason": "Grund des Erlasses",
+    "ok": "Erlassen",
+    "conf": "Die Gebühr von CHF {fee} ist erlassen. Offen sind jetzt CHF {open}.",
+    "confPaid": "Die Gebühr von CHF {fee} ist erlassen. Die Rechnung ist jetzt bezahlt.",
+    "error": "Die Gebühr konnte nicht erlassen werden. Bitte versuche es später noch einmal.",
+    "reasonInvalid": "Gib einen Grund an (höchstens 500 Zeichen).",
+    "dateInvalid": "Gib ein gültiges Datum an, zum Beispiel 31.12.2026.",
+    "waivedOn": "Gebühr erlassen am {date}"
   },
   "openAmount": {
     "label": "Offener Betrag (mit Mahngebühren)"

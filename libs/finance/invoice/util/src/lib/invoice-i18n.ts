@@ -295,6 +295,29 @@ export const INVOICE_I18N_KEYS = {
   refusal_email_not_payable:        PFX + 'refusal.email-not-payable',
   refusal_email_not_sendable:       PFX + 'refusal.email-not-sendable',
 
+  // reminder fee waiver (1.76 D18)
+  waive_fee:                  PFX + 'waiveFee.label',
+  waive_fee_header:           PFX + 'waiveFee.header',
+  waive_fee_message:          PFX + 'waiveFee.message',
+  waive_fee_date:             PFX + 'waiveFee.date',
+  waive_fee_reason:           PFX + 'waiveFee.reason',
+  waive_fee_ok:               PFX + 'waiveFee.ok',
+  waive_fee_conf:             PFX + 'waiveFee.conf',
+  waive_fee_conf_paid:        PFX + 'waiveFee.confPaid',
+  waive_fee_error:            PFX + 'waiveFee.error',
+  waive_fee_reason_invalid:   PFX + 'waiveFee.reasonInvalid',
+  waive_fee_date_invalid:     PFX + 'waiveFee.dateInvalid',
+  reminder_waived_on:         PFX + 'waiveFee.waivedOn',
+  refusal_no_reminder:        PFX + 'refusal.no-reminder',
+  refusal_no_fee:             PFX + 'refusal.no-fee',
+  refusal_already_waived:     PFX + 'refusal.already-waived',
+  refusal_no_waive_date:      PFX + 'refusal.no-waive-date',
+  refusal_invalid_reason:     PFX + 'refusal.invalid-reason',
+  refusal_no_fee_booking:     PFX + 'refusal.no-fee-booking',
+  refusal_waive_blocked:      PFX + 'refusal.waive-blocked',
+  refusal_waive_period_locked:        PFX + 'refusal.waive-period-locked',
+  refusal_waive_inconsistent_state:   PFX + 'refusal.waive-inconsistent-state',
+
   as_title:         '@actionsheet.title',
   ok:               '@ok',
   cancel:           '@cancel',
@@ -364,10 +387,18 @@ export const INVOICE_REFUSAL_I18N: Record<string, keyof typeof INVOICE_I18N_KEYS
   'foreign-document': 'refusal_foreign_document',
   'no-email': 'refusal_no_email',
   'not-sendable': 'refusal_email_not_sendable',
+  // reminder fee waiver (1.76 D18)
+  'no-reminder': 'refusal_no_reminder',
+  'no-fee': 'refusal_no_fee',
+  'already-waived': 'refusal_already_waived',
+  'no-waive-date': 'refusal_no_waive_date',
+  'invalid-reason': 'refusal_invalid_reason',
+  'no-fee-booking': 'refusal_no_fee_booking',
+  'waive-blocked': 'refusal_waive_blocked',
 };
 
 /** Which invoice call failed — some reasons need a different text there (a payment's amount is not a position's). */
-export type InvoiceRefusalContext = 'payment' | 'cancel' | 'confirmation' | 'reminder' | 'email';
+export type InvoiceRefusalContext = 'payment' | 'cancel' | 'confirmation' | 'reminder' | 'email' | 'waive';
 
 /** Per-context texts that replace the general one of the same reason. */
 export const INVOICE_REFUSAL_CONTEXT_I18N: Record<InvoiceRefusalContext, Record<string, keyof typeof INVOICE_I18N_KEYS>> = {
@@ -392,6 +423,10 @@ export const INVOICE_REFUSAL_CONTEXT_I18N: Record<InvoiceRefusalContext, Record<
   },
   email: {
     'not-payable': 'refusal_email_not_payable',
+  },
+  waive: {
+    'period-locked': 'refusal_waive_period_locked',
+    'inconsistent-state': 'refusal_waive_inconsistent_state',
   },
 };
 

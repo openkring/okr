@@ -346,7 +346,16 @@
     "reminder-account-invalid": "No se puede contabilizar en la cuenta de recargos o en la cuenta de deudores. Elige en la configuración contable una cuenta sin subcuentas.",
     "reminder-inconsistent-state": "Algo salió mal al crear el recordatorio. Inténtalo de nuevo.",
     "email-not-payable": "Un recordatorio solo se envía mientras la factura está pendiente. Esta factura ya está pagada o anulada.",
-    "email-not-sendable": "Una factura anulada ya no se envía."
+    "email-not-sendable": "Una factura anulada ya no se envía.",
+    "no-reminder": "Esta factura no tiene ese recordatorio.",
+    "no-fee": "Este recordatorio no tiene ninguna tarifa que condonar.",
+    "already-waived": "La tarifa de este recordatorio ya está condonada.",
+    "no-waive-date": "Indica una fecha válida para la condonación.",
+    "invalid-reason": "Indica un motivo (máximo 500 caracteres).",
+    "no-fee-booking": "La tarifa de este recordatorio no se contabilizó, así que no hay nada que revertir.",
+    "waive-blocked": "La tarifa no se puede condonar en este momento.",
+    "waive-period-locked": "El periodo contable de la fecha de la condonación está cerrado. Elige otra fecha o haz que se vuelva a abrir el periodo.",
+    "waive-inconsistent-state": "Algo salió mal al condonar la tarifa. Inténtalo de nuevo."
   },
   "paymentReference": { "label": "Referencia de pago" },
   "payment": {
@@ -440,6 +449,20 @@
       "sent": "enviado",
       "notSent": "no enviado"
     }
+  },
+  "waiveFee": {
+    "label": "Condonar tarifa",
+    "header": "Condonar la tarifa: {level}",
+    "message": "La tarifa ya no se cobra y su asiento se revierte. Esto no se puede deshacer.",
+    "date": "Fecha de la condonación",
+    "reason": "Motivo de la condonación",
+    "ok": "Condonar",
+    "conf": "La tarifa de CHF {fee} está condonada. Ahora quedan CHF {open} pendientes.",
+    "confPaid": "La tarifa de CHF {fee} está condonada. La factura ya está pagada.",
+    "error": "No se pudo condonar la tarifa. Inténtalo más tarde.",
+    "reasonInvalid": "Indica un motivo (máximo 500 caracteres).",
+    "dateInvalid": "Indica una fecha válida, por ejemplo 31.12.2026.",
+    "waivedOn": "Tarifa condonada el {date}"
   },
   "openAmount": {
     "label": "Importe pendiente (con recargos)"

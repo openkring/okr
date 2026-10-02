@@ -65,6 +65,13 @@ export interface CancelInvoiceResult {
   stornoBookingKey: string;
 }
 
+/** The `waiveReminderFee` callable's result: the stored reminder, the open amount incl. remaining fees (Rappen) and the invoice state. */
+export interface WaiveReminderFeeResult {
+  reminder: InvoiceReminder;
+  openAmount: number;
+  state: string;
+}
+
 /** The `createPaymentConfirmation` callable's result. */
 export interface PaymentConfirmationResult {
   documentKey: string;
@@ -171,6 +178,17 @@ export class InvoiceService {
     const fn = httpsCallable<{ invoiceKey: string; date: string; reason: string }, CancelInvoiceResult>(this.functions(), 'cancelInvoice');
     const result = await fn({ invoiceKey, date, reason });
     void this.activityService.log('invoice', 'cancel', currentUser, `${invoiceKey}: ${result.data.stornoBookingKey}`);
+    return result.data;
+  }
+
+  /**
+   * Waives the fee of reminder `level` (spec 1.76 D18): the server books the fee back, dated `date`
+   * (StoreDate), and marks the reminder. A retry returns the stored result.
+   */
+  public async waiveReminderFee(invoiceKey: string, level: number, date: string, reason: string, currentUser?: UserModel): Promise<WaiveReminderFeeResult> {
+    const fn = httpsCallable<{ invoiceKey: string; level: number; date: string; reason: string }, WaiveReminderFeeResult>(this.functions(), 'waiveReminderFee');
+    const result = await fn({ invoiceKey, level, date, reason });
+    void this.activityService.log('invoice', 'waive-fee', currentUser, `${invoiceKey}: ${level}`);
     return result.data;
   }
 

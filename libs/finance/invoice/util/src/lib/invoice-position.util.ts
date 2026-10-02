@@ -95,11 +95,11 @@ export function revenueAccounts(accounts: AccountModel[]): AccountModel[] {
 }
 
 /** Refusals whose individual blockers arrive as a list in `details.reasons`. */
-export const INVOICE_BLOCKED_REASONS = ['issue-blocked', 'payment-blocked', 'link-blocked', 'cancel-blocked', 'reminder-blocked'];
+export const INVOICE_BLOCKED_REASONS = ['issue-blocked', 'payment-blocked', 'link-blocked', 'cancel-blocked', 'reminder-blocked', 'waive-blocked'];
 
 /**
  * The refusal reasons of a failed invoice call (`writeInvoice`, `issueInvoice`, `recordInvoicePayment`,
- * `cancelInvoice`, `createPaymentConfirmation`, `createInvoiceReminder`, `sendInvoiceEmail`), most specific first. The `*-blocked` refusals carry
+ * `cancelInvoice`, `createPaymentConfirmation`, `createInvoiceReminder`, `waiveReminderFee`, `sendInvoiceEmail`), most specific first. The `*-blocked` refusals carry
  * the individual blockers in `details.reasons`; a missing invoice arrives as the `not-found` code; too
  * many positions as the message of an `invalid-argument`. [] = unknown.
  */
