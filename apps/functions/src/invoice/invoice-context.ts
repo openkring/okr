@@ -1,6 +1,10 @@
 import { HttpsError } from 'firebase-functions/v2/https';
 import type { Firestore, Transaction } from 'firebase-admin/firestore';
 
+import { AddressCollection, AddressModel } from '@okr/shared-models';
+import { pickFavoriteByChannel, scopeToTenant } from '@okr/shared-util-functions';
+
+import type { PostalAddress } from './invoice.logic';
 import { isBexioBackend } from '../bexio/backend-gate';
 
 const ACCOUNTING_CONFIG_COLLECTION = 'accounting-configs';
@@ -44,4 +48,22 @@ export async function assertLeafAccount(db: Firestore, accountingTenantId: strin
   if (!account || account['accountingTenantId'] !== accountingTenantId || !children.empty) {
     throw refuse('account-invalid', `account ${accountKey} is not a leaf account of ${accountingTenantId}`, { accountKey });
   }
+}
+
+export type ReceiverRef = { key?: string; name1?: string; name2?: string; modelType?: string } | undefined;
+
+/** The receiver's favourite postal address collected by this tenant (D-L1), or undefined. */
+export async function receiverAddress(db: Firestore, receiver: ReceiverRef, tenantId: string): Promise<PostalAddress | undefined> {
+  if (!receiver?.key || !receiver.modelType) return undefined;
+  const snap = await db.collection(AddressCollection).where('parentKey', '==', `${receiver.modelType}.${receiver.key}`).get();
+  const addresses = scopeToTenant(snap.docs.map((d) => ({ ...d.data(), okey: d.id }) as AddressModel), tenantId);
+  const postal = pickFavoriteByChannel(addresses, 'postal');
+  if (!postal) return undefined;
+  return {
+    streetName: postal.streetName ?? '',
+    streetNumber: postal.streetNumber ?? '',
+    zipCode: postal.zipCode ?? '',
+    city: postal.city ?? '',
+    countryCode: postal.countryCode || 'CH',
+  };
 }

@@ -2,11 +2,11 @@ import { onCall, CallableRequest, HttpsError } from 'firebase-functions/v2/https
 import { logger } from 'firebase-functions/v2';
 import { FieldValue, Firestore, getFirestore } from 'firebase-admin/firestore';
 
-import { AddressCollection, AddressModel, FinanceDocumentCollection, InvoiceCollection, InvoiceModel, InvoicePositionCollection } from '@okr/shared-models';
+import { FinanceDocumentCollection, InvoiceCollection, InvoiceModel, InvoicePositionCollection } from '@okr/shared-models';
 import { getInvoiceIndex, getNextInvoiceNo } from '@okr/finance-invoice-util';
 import { DateFormat, generateRandomString, getTodayStr } from '@okr/shared-util-core';
 import {
-  checkAppCheckToken, checkAuthentication, checkRoles, getCallerTenantId, nextBookingNo, pickFavoriteByChannel, scopeToTenant,
+  checkAppCheckToken, checkAuthentication, checkRoles, getCallerTenantId, nextBookingNo,
 } from '@okr/shared-util-functions';
 
 import { periodKeyFor } from '../bank-import/bank-import.util';
@@ -16,9 +16,9 @@ import { privateBucket } from '../_storage/private-bucket';
 import { renderDocument } from '../pdf/render-document';
 import {
   buildInvoicePayload, finalizeDecision, invoiceBookingIndex, invoiceBookingLines, issueBlockers, issueHeaderBlockers, issueOutcome,
-  issuePeriodKeys, PositionInput, PostalAddress, withoutUndefined,
+  issuePeriodKeys, PositionInput, withoutUndefined,
 } from './invoice.logic';
-import { assertLeafAccount, loadOwnedAccountingConfig, refuse } from './invoice-context';
+import { assertLeafAccount, loadOwnedAccountingConfig, receiverAddress, refuse } from './invoice-context';
 
 const REGION = 'europe-west6';
 const CF_NAME = 'issueInvoice';
@@ -70,22 +70,6 @@ function blockersOf(invoice: InvoiceDoc, positions: PositionInput[], receivables
       invoiceTemplateId: templateId,
     }),
   ];
-}
-
-/** The receiver's favourite postal address collected by this tenant (D-L1), or undefined. */
-async function receiverAddress(db: Firestore, receiver: Receiver, tenantId: string): Promise<PostalAddress | undefined> {
-  if (!receiver?.key || !receiver.modelType) return undefined;
-  const snap = await db.collection(AddressCollection).where('parentKey', '==', `${receiver.modelType}.${receiver.key}`).get();
-  const addresses = scopeToTenant(snap.docs.map((d) => ({ ...d.data(), okey: d.id }) as AddressModel), tenantId);
-  const postal = pickFavoriteByChannel(addresses, 'postal');
-  if (!postal) return undefined;
-  return {
-    streetName: postal.streetName ?? '',
-    streetNumber: postal.streetNumber ?? '',
-    zipCode: postal.zipCode ?? '',
-    city: postal.city ?? '',
-    countryCode: postal.countryCode || 'CH',
-  };
 }
 
 interface Preflight {
