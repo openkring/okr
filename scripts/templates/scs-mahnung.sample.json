@@ -1,0 +1,48 @@
+{
+  "_meta": {
+    "name": "SCS Mahnung",
+    "description": "Zahlungserinnerung und Mahnungen des Seeclub Stäfa mit QR-Einzahlungsschein über den offenen Betrag.",
+    "category": "invoice",
+    "language": "de",
+    "defaultOutputFormat": "pdf",
+    "defaultFormat": "A4",
+    "defaultOrientation": "portrait",
+    "attachQrSlip": true,
+    "qrSlipWithAmount": true,
+    "tenants": [
+      "scs"
+    ]
+  },
+  "heading": "2. Mahnung",
+  "levelText": "Leider haben wir deine Zahlung noch nicht erhalten. Bitte überweise den offenen Betrag bis zum unten genannten Datum.",
+  "invoiceId": "202600007",
+  "invoiceTitle": "Mitgliederbeitrag 2026",
+  "invoiceDate": "01.09.2026",
+  "reminderDate": "05.11.2026",
+  "dueDate": "19.11.2026",
+  "firstName": "Ada",
+  "lastName": "Muster",
+  "greeting": "Liebe/r Ada",
+  "streetName": "Seestrasse",
+  "streetNumber": "12",
+  "zipCode": "8712",
+  "city": "Stäfa",
+  "countryCode": "CH",
+  "totalAmount": "300.00",
+  "feesTotal": "20.00",
+  "paidTotal": "100.00",
+  "amountDue": "220.00",
+  "amount": "220.00",
+  "qrSlipWithAmount": true,
+  "qrAmount": 220,
+  "qrMessage": "Rechnung 202600007",
+  "payee": {
+    "name": "Seeclub Stäfa",
+    "iban": "CH00 0000 0000 0000 0000 0",
+    "street": "Seestrasse",
+    "buildingNumber": "1",
+    "zip": "8712",
+    "city": "Stäfa",
+    "country": "CH"
+  }
+}

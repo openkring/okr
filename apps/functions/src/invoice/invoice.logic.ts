@@ -61,8 +61,8 @@ export function invoiceBookingLines(positions: PositionInput[], receivablesAccou
   ];
 }
 
-const chf = (rappen: number): string => (rappen / 100).toFixed(2);
-const viewDate = (d: string): string => convertDateFormatToString(d, DateFormat.StoreDate, DateFormat.ViewDate, false);
+export const chf = (rappen: number): string => (rappen / 100).toFixed(2);
+export const viewDate = (d: string): string => convertDateFormatToString(d, DateFormat.StoreDate, DateFormat.ViewDate, false);
 
 /** Template/QR-slip payload; keys match the invoice layout and the qr-slip util. */
 export function buildInvoicePayload(i: {
