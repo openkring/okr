@@ -239,6 +239,7 @@ export const INVOICE_I18N_KEYS = {
   document_reminder:          PFX + 'document.reminder',
   mahnlauf:                   PFX + 'mahnlauf.label',
   mahnlauf_confirm:           PFX + 'mahnlauf.confirm',
+  mahnlauf_confirm_one:       PFX + 'mahnlauf.confirmOne',
   mahnlauf_create:            PFX + 'mahnlauf.create',
   mahnlauf_create_and_send:   PFX + 'mahnlauf.createAndSend',
   mahnlauf_progress:          PFX + 'mahnlauf.progress',
@@ -290,6 +291,7 @@ export const INVOICE_I18N_KEYS = {
   refusal_reminder_period_locked:   PFX + 'refusal.reminder-period-locked',
   refusal_reminder_account_invalid: PFX + 'refusal.reminder-account-invalid',
   refusal_reminder_inconsistent_state: PFX + 'refusal.reminder-inconsistent-state',
+  refusal_email_not_payable:        PFX + 'refusal.email-not-payable',
 
   as_title:         '@actionsheet.title',
   ok:               '@ok',
@@ -362,7 +364,7 @@ export const INVOICE_REFUSAL_I18N: Record<string, keyof typeof INVOICE_I18N_KEYS
 };
 
 /** Which invoice call failed — some reasons need a different text there (a payment's amount is not a position's). */
-export type InvoiceRefusalContext = 'payment' | 'cancel' | 'confirmation' | 'reminder';
+export type InvoiceRefusalContext = 'payment' | 'cancel' | 'confirmation' | 'reminder' | 'email';
 
 /** Per-context texts that replace the general one of the same reason. */
 export const INVOICE_REFUSAL_CONTEXT_I18N: Record<InvoiceRefusalContext, Record<string, keyof typeof INVOICE_I18N_KEYS>> = {
@@ -384,6 +386,9 @@ export const INVOICE_REFUSAL_CONTEXT_I18N: Record<InvoiceRefusalContext, Record<
     'period-locked': 'refusal_reminder_period_locked',
     'account-invalid': 'refusal_reminder_account_invalid',
     'inconsistent-state': 'refusal_reminder_inconsistent_state',
+  },
+  email: {
+    'not-payable': 'refusal_email_not_payable',
   },
 };
 

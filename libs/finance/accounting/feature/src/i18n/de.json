@@ -163,5 +163,8 @@
   "voucher": {
     "title": "Belege",
     "loadError": "Die Belege konnten nicht geladen werden. Versuche es später noch einmal."
+  },
+  "validation": {
+    "reminderFeeDecimals": "Bitte gib den Betrag mit höchstens zwei Nachkommastellen an."
   }
 }

@@ -556,7 +556,8 @@ export const InvoiceStore = signalStore(
     /** Mails the latest reminder that has a PDF to the receiver, after a confirmation naming it. */
     async sendReminderEmail(invoice: InvoiceModel): Promise<void> {
       const reminder = latestReminderWithDocument(invoice.reminders);
-      if (!reminder || invoice.state === 'draft' || store.accountingStore.isExternallyManaged() !== false) return;
+      // a paid or cancelled invoice gets no reminder mail (the server refuses it too)
+      if (!reminder || !isPayableState(invoice.state) || store.accountingStore.isExternallyManaged() !== false) return;
       await this.sendDocument(invoice, reminder.documentKey, this.reminderDocumentLabel(invoice, reminder.level));
     },
 
@@ -576,7 +577,7 @@ export const InvoiceStore = signalStore(
         await showToast(store.toastController, fill(store.i18n.email_conf(), { document: label, date: viewDate(result.sentAt) }));
       } catch (e) {
         console.error('InvoiceStore.sendDocument: sendInvoiceEmail failed', e);
-        await showToast(store.toastController, invoiceRefusalText(invoiceRefusalReasons(e), store.i18n, store.i18n.email_error()));
+        await showToast(store.toastController, invoiceRefusalText(invoiceRefusalReasons(e), store.i18n, store.i18n.email_error(), 'email'));
       }
       patchState(store, { version: store.version() + 1 });
     },
@@ -615,7 +616,7 @@ export const InvoiceStore = signalStore(
       if (candidates.length === 0) return;
       const alert = await store.alertController.create({
         header: store.i18n.mahnlauf(),
-        message: fill(store.i18n.mahnlauf_confirm(), { count: candidates.length }),
+        message: candidates.length === 1 ? store.i18n.mahnlauf_confirm_one() : fill(store.i18n.mahnlauf_confirm(), { count: candidates.length }),
         buttons: [
           { text: store.i18n.cancel(), role: 'cancel' },
           { text: store.i18n.mahnlauf_create(), role: 'create' },
@@ -659,7 +660,7 @@ export const InvoiceStore = signalStore(
           sent++;
         } catch (e) {
           console.error(`InvoiceStore.runMahnlauf: sendInvoiceEmail failed for ${invoice.okey}`, e);
-          sendFailures.push(`${invoiceLabel(invoice)}: ${invoiceRefusalText(invoiceRefusalReasons(e), store.i18n, store.i18n.email_error())}`);
+          sendFailures.push(`${invoiceLabel(invoice)}: ${invoiceRefusalText(invoiceRefusalReasons(e), store.i18n, store.i18n.email_error(), 'email')}`);
         }
       }
       await progress.dismiss();

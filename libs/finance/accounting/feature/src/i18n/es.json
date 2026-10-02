@@ -163,5 +163,8 @@
   "voucher": {
     "title": "Justificantes",
     "loadError": "No se han podido cargar los justificantes. Vuelve a intentarlo más tarde."
+  },
+  "validation": {
+    "reminderFeeDecimals": "Indica el importe con dos decimales como máximo."
   }
 }

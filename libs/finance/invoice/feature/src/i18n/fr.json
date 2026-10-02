@@ -335,7 +335,7 @@
     "reminder-blocked": "Aucun rappel ne peut être créé pour cette facture pour le moment.",
     "max-level": "Cette facture a déjà son 3e rappel. Il n’y en a pas d’autres.",
     "level-mismatch": "Un autre rappel a été créé entre-temps. Recharge la liste et réessaie.",
-    "no-reminder-date": "La date du rappel manque ou précède la dernière échéance. Choisis une date plus tardive.",
+    "no-reminder-date": "Indique une date valide pour le rappel.",
     "invalid-fee": "Les frais ne sont pas valables. Ils doivent être de 0 ou plus.",
     "not-issued": "Cette facture n’est pas encore émise. Émets-la d’abord.",
     "no-document": "Le PDF manque, rien ne peut donc être envoyé.",
@@ -344,7 +344,8 @@
     "reminder-not-payable": "Les rappels ne sont possibles que pour les factures émises encore ouvertes.",
     "reminder-period-locked": "La période comptable de la date du rappel est clôturée. Choisis une autre date ou fais rouvrir la période.",
     "reminder-account-invalid": "Le compte des frais de rappel ou le compte débiteurs ne peut pas être mouvementé. Choisis dans les paramètres comptables un compte sans sous-comptes.",
-    "reminder-inconsistent-state": "Un problème est survenu lors de la création du rappel. Réessaie."
+    "reminder-inconsistent-state": "Un problème est survenu lors de la création du rappel. Réessaie.",
+    "email-not-payable": "Un rappel n’est envoyé que tant que la facture est ouverte. Cette facture est déjà payée ou annulée."
   },
   "payment": {
     "label": "Saisir un paiement",
@@ -456,6 +457,7 @@
   "mahnlauf": {
     "label": "Relance groupée",
     "confirm": "{count} factures sont échues. Pour chacune, le rappel suivant est créé avec les frais configurés.",
+    "confirmOne": "Une facture est échue. Le rappel suivant est créé pour elle avec les frais configurés.",
     "create": "Créer",
     "createAndSend": "Créer et envoyer",
     "progress": "{n} sur {m}",

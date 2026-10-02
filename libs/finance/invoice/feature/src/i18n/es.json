@@ -335,7 +335,7 @@
     "reminder-blocked": "Ahora mismo no se puede crear ningún recordatorio para esta factura.",
     "max-level": "Esta factura ya tiene su 3.er recordatorio. No hay más recordatorios.",
     "level-mismatch": "Mientras tanto se creó otro recordatorio. Vuelve a cargar la lista e inténtalo de nuevo.",
-    "no-reminder-date": "Falta la fecha del recordatorio o es anterior al último vencimiento. Elige una fecha posterior.",
+    "no-reminder-date": "Indica una fecha válida para el recordatorio.",
     "invalid-fee": "El recargo no es válido. Debe ser 0 o más.",
     "not-issued": "Esta factura todavía no está emitida. Emítela primero.",
     "no-document": "Falta el PDF, por eso no se puede enviar nada.",
@@ -344,7 +344,8 @@
     "reminder-not-payable": "Los recordatorios solo son posibles para facturas emitidas que siguen pendientes.",
     "reminder-period-locked": "El periodo contable de la fecha del recordatorio está cerrado. Elige otra fecha o pide que se vuelva a abrir el periodo.",
     "reminder-account-invalid": "No se puede contabilizar en la cuenta de recargos o en la cuenta de deudores. Elige en la configuración contable una cuenta sin subcuentas.",
-    "reminder-inconsistent-state": "Algo salió mal al crear el recordatorio. Inténtalo de nuevo."
+    "reminder-inconsistent-state": "Algo salió mal al crear el recordatorio. Inténtalo de nuevo.",
+    "email-not-payable": "Un recordatorio solo se envía mientras la factura está pendiente. Esta factura ya está pagada o anulada."
   },
   "payment": {
     "label": "Registrar pago",
@@ -456,6 +457,7 @@
   "mahnlauf": {
     "label": "Ronda de recordatorios",
     "confirm": "{count} facturas están vencidas. Para cada una se crea el siguiente recordatorio con el recargo configurado.",
+    "confirmOne": "Una factura está vencida. Para ella se crea el siguiente recordatorio con el recargo configurado.",
     "create": "Crear",
     "createAndSend": "Crear y enviar",
     "progress": "{n} de {m}",

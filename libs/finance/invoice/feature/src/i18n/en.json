@@ -335,7 +335,7 @@
     "reminder-blocked": "No reminder can be created for this invoice right now.",
     "max-level": "This invoice already has its 3rd reminder. There are no further reminders.",
     "level-mismatch": "Another reminder was created in the meantime. Reload the list and try again.",
-    "no-reminder-date": "The reminder date is missing or before the last due date. Choose a later date.",
+    "no-reminder-date": "Please enter a valid date for the reminder.",
     "invalid-fee": "The fee is invalid. It must be 0 or more.",
     "not-issued": "This invoice has not been issued yet. Issue it first.",
     "no-document": "The PDF is missing, so nothing can be sent.",
@@ -344,7 +344,8 @@
     "reminder-not-payable": "Reminders are only possible for issued invoices that are still open.",
     "reminder-period-locked": "The accounting period of the reminder date is closed. Choose another date or have the period reopened.",
     "reminder-account-invalid": "The reminder fee account or the receivables account cannot be booked to. Choose an account without sub-accounts in the accounting settings.",
-    "reminder-inconsistent-state": "Something went wrong while creating the reminder. Please try again."
+    "reminder-inconsistent-state": "Something went wrong while creating the reminder. Please try again.",
+    "email-not-payable": "A reminder is only sent while the invoice is open. This invoice has already been paid or cancelled."
   },
   "payment": {
     "label": "Record payment",
@@ -456,6 +457,7 @@
   "mahnlauf": {
     "label": "Reminder run",
     "confirm": "{count} invoices are overdue. For each one, the next reminder is created with the configured fee.",
+    "confirmOne": "One invoice is overdue. The next reminder is created for it with the configured fee.",
     "create": "Create",
     "createAndSend": "Create and send",
     "progress": "{n} of {m}",

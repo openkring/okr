@@ -9,7 +9,7 @@ import { coerceBoolean } from '@okr/shared-util-core';
 import { AccountSelect, AccountSelectI18n } from '@okr/finance-account-ui';
 import { CostCenterSelect, CostCenterSelectI18n } from '@okr/finance-cost-center-ui';
 import { leafAccounts } from '@okr/finance-account-util';
-import { AccountingI18n, accountingConfigValidations, REMINDER_DAYS_MAX, reminderFeeOf } from '@okr/finance-accounting-util';
+import { AccountingI18n, accountingConfigValidations, REMINDER_DAYS_MAX, reminderFeeOf, reminderFeeRappen } from '@okr/finance-accounting-util';
 
 export type { AccountingI18n };
 
@@ -153,14 +153,14 @@ export type { AccountingI18n };
                 <ion-col size="12" size-md="6">
                   <okr-number-input [i18n]="reminderGraceDaysI18n()" [value]="reminderGraceDays()"
                     (valueChange)="onFieldChange('reminderGraceDays', $event)"
-                    [integer]="true" [min]="0" [max]="reminderDaysMax" [maxLength]="3" [inputMode]="'numeric'"
+                    [integer]="true" [min]="0" [max]="reminderDaysMax" [maxLength]="reminderDaysLength" [inputMode]="'numeric'"
                     [showHelper]="true" [readOnly]="isReadOnly()" />
                   <okr-error-note [errors]="reminderGraceDaysErrors()" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
                   <okr-number-input [i18n]="reminderDueDaysI18n()" [value]="reminderDueDays()"
                     (valueChange)="onFieldChange('reminderDueDays', $event)"
-                    [integer]="true" [min]="0" [max]="reminderDaysMax" [maxLength]="3" [inputMode]="'numeric'"
+                    [integer]="true" [min]="0" [max]="reminderDaysMax" [maxLength]="reminderDaysLength" [inputMode]="'numeric'"
                     [showHelper]="true" [readOnly]="isReadOnly()" />
                   <okr-error-note [errors]="reminderDueDaysErrors()" />
                 </ion-col>
@@ -240,6 +240,7 @@ export class AccountingConfigForm {
   // Mahnwesen (1.76 phase 3) — legacy config docs lack the fields: show the model defaults
   /** kept in step with the upper bound the Vest suite enforces on grace and due days */
   protected readonly reminderDaysMax = REMINDER_DAYS_MAX;
+  protected readonly reminderDaysLength = String(REMINDER_DAYS_MAX).length;
   protected reminderTemplateId = linkedSignal(() => this.formData().reminderTemplateId ?? '');
   protected reminderFeeAccountKey = linkedSignal(() => this.formData().reminderFeeAccountKey ?? '');
   protected reminderGraceDays = linkedSignal(() => this.formData().reminderGraceDays ?? 10);
@@ -305,10 +306,10 @@ export class AccountingConfigForm {
     this.onFieldChange('invoicePaymentAccountKeys', event.detail.value ?? []);
   }
 
-  /** CHF from the input → whole Rappen in the model, converted here once (legacy docs: start from the defaults). */
+  /** CHF from the input → Rappen in the model, converted here once; more than two decimals stay a fraction the suite rejects (legacy docs: start from the defaults). */
   protected onReminderFeeChange(level: number, chf: number): void {
     const fees = [1, 2, 3].map(l => reminderFeeOf(this.formData(), l));
-    fees[level - 1] = Math.round(Number(chf) * 100);
+    fees[level - 1] = reminderFeeRappen(chf);
     this.dirty.emit(true);
     this.formData.update(vm => ({ ...vm, reminderFees: fees }));
   }

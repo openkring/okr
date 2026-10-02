@@ -335,7 +335,7 @@
     "reminder-blocked": "Für diese Rechnung kann gerade keine Mahnung erstellt werden.",
     "max-level": "Diese Rechnung hat schon die 3. Mahnung. Weitere Mahnungen gibt es nicht.",
     "level-mismatch": "In der Zwischenzeit wurde schon eine andere Mahnung erstellt. Lade die Liste neu und versuche es noch einmal.",
-    "no-reminder-date": "Das Datum der Mahnung fehlt oder liegt vor dem letzten Fälligkeitsdatum. Wähle ein späteres Datum.",
+    "no-reminder-date": "Bitte gib ein gültiges Datum für die Mahnung an.",
     "invalid-fee": "Die Gebühr ist ungültig. Sie muss 0 oder mehr sein.",
     "not-issued": "Diese Rechnung ist noch nicht ausgestellt. Stelle sie zuerst aus.",
     "no-document": "Das PDF dazu fehlt. Darum kann nichts gesendet werden.",
@@ -344,7 +344,8 @@
     "reminder-not-payable": "Mahnungen gibt es nur für ausgestellte, noch offene Rechnungen.",
     "reminder-period-locked": "Die Buchungsperiode zum Datum der Mahnung ist abgeschlossen. Wähle ein anderes Datum oder lass die Periode wieder öffnen.",
     "reminder-account-invalid": "Auf das Konto für Mahngebühren oder das Debitorenkonto kann nicht gebucht werden. Wähle in den Buchhaltungseinstellungen ein Konto ohne Unterkonten.",
-    "reminder-inconsistent-state": "Beim Erstellen der Mahnung ist etwas schiefgelaufen. Versuche es bitte noch einmal."
+    "reminder-inconsistent-state": "Beim Erstellen der Mahnung ist etwas schiefgelaufen. Versuche es bitte noch einmal.",
+    "email-not-payable": "Eine Mahnung wird nur gesendet, solange die Rechnung offen ist. Diese Rechnung ist schon bezahlt oder storniert."
   },
   "payment": {
     "label": "Zahlung erfassen",
@@ -456,6 +457,7 @@
   "mahnlauf": {
     "label": "Mahnlauf",
     "confirm": "{count} Rechnungen sind überfällig. Für jede wird die nächste Mahnung mit der eingestellten Gebühr erstellt.",
+    "confirmOne": "Eine Rechnung ist überfällig. Für sie wird die nächste Mahnung mit der eingestellten Gebühr erstellt.",
     "create": "Erstellen",
     "createAndSend": "Erstellen und senden",
     "progress": "{n} von {m}",

@@ -163,5 +163,8 @@
   "voucher": {
     "title": "Giustificativi",
     "loadError": "Non è stato possibile caricare i giustificativi. Riprova più tardi."
+  },
+  "validation": {
+    "reminderFeeDecimals": "Indica l’importo con al massimo due decimali."
   }
 }

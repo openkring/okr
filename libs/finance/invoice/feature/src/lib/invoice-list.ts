@@ -268,7 +268,10 @@ export class InvoiceList {
         options.buttons.push(createActionSheetButton('invoice.sendEmail', i18n.email_send(), base, 'email'));
       }
       if (latestReminderWithDocument(invoice.reminders) && this.canWriteDrafts()) {
-        options.buttons.push(createActionSheetButton('invoice.sendReminder', i18n.reminder_send(), base, 'mail'));
+        // a paid or cancelled invoice gets no reminder mail; its reminder PDF can still be opened
+        if (isPayableState(invoice.state)) {
+          options.buttons.push(createActionSheetButton('invoice.sendReminder', i18n.reminder_send(), base, 'mail'));
+        }
         options.buttons.push(createActionSheetButton('invoice.showReminder', i18n.reminder_show(), base, 'download'));
       }
       if (invoice.state === 'pending' && this.canWriteDrafts()) {

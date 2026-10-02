@@ -335,7 +335,7 @@
     "reminder-blocked": "Al momento non è possibile creare un sollecito per questa fattura.",
     "max-level": "Questa fattura ha già il 3° sollecito. Non ce ne sono altri.",
     "level-mismatch": "Nel frattempo è stato creato un altro sollecito. Ricarica l’elenco e riprova.",
-    "no-reminder-date": "La data del sollecito manca o è precedente all’ultima scadenza. Scegli una data successiva.",
+    "no-reminder-date": "Indica una data valida per il sollecito.",
     "invalid-fee": "Le spese non sono valide. Devono essere 0 o più.",
     "not-issued": "Questa fattura non è ancora stata emessa. Emettila prima.",
     "no-document": "Manca il PDF, quindi non si può inviare nulla.",
@@ -344,7 +344,8 @@
     "reminder-not-payable": "I solleciti sono possibili solo per fatture emesse ancora aperte.",
     "reminder-period-locked": "Il periodo contabile della data del sollecito è chiuso. Scegli un’altra data o fai riaprire il periodo.",
     "reminder-account-invalid": "Non è possibile registrare sul conto delle spese di sollecito o sul conto debitori. Scegli nelle impostazioni contabili un conto senza sottoconti.",
-    "reminder-inconsistent-state": "Qualcosa è andato storto durante la creazione del sollecito. Riprova."
+    "reminder-inconsistent-state": "Qualcosa è andato storto durante la creazione del sollecito. Riprova.",
+    "email-not-payable": "Un sollecito viene inviato solo finché la fattura è aperta. Questa fattura è già pagata o annullata."
   },
   "payment": {
     "label": "Registra pagamento",
@@ -456,6 +457,7 @@
   "mahnlauf": {
     "label": "Giro di solleciti",
     "confirm": "{count} fatture sono scadute. Per ognuna viene creato il sollecito successivo con le spese impostate.",
+    "confirmOne": "Una fattura è scaduta. Per questa viene creato il sollecito successivo con le spese impostate.",
     "create": "Crea",
     "createAndSend": "Crea e invia",
     "progress": "{n} di {m}",

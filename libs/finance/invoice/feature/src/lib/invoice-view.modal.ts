@@ -6,7 +6,7 @@ import { Header } from '@okr/shared-ui';
 import { PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
 import { fill, getFullName, prettyFormatDateTime } from '@okr/shared-util-core';
 import { AvatarPipe } from '@okr/avatar-ui';
-import { formatPaymentChf, isPayableState, openInvoiceAmount, reminderFeeSum, reminderLevelKey } from '@okr/finance-invoice-util';
+import { formatPaymentChf, isPayableState, openInvoiceAmount, reminderLevelKey } from '@okr/finance-invoice-util';
 import { InvoiceStore } from './invoice.store';
 
 @Component({
@@ -189,11 +189,8 @@ export class InvoiceViewModal {
     [...(this.invoice()?.reminders ?? [])].map(r => ({ ...r, fee: Number.isFinite(r.fee) ? r.fee : 0 })).sort((a, b) => (a.level ?? 0) - (b.level ?? 0)));
   protected readonly sentAt = computed(() => this.invoice()?.sentAt ?? '');
   protected readonly sentAtText = computed(() => fill(this.store.i18n.email_sent_at(), { date: prettyFormatDateTime(this.sentAt()) }));
-  /** shown while the invoice is open, or once reminder fees changed what is owed */
-  protected readonly showOpenAmount = computed(() => {
-    const invoice = this.invoice();
-    return !!invoice && (isPayableState(invoice.state) || reminderFeeSum(invoice.reminders) > 0);
-  });
+  /** shown while the invoice is open (pending, partial, unpaid) — not for a paid or cancelled one */
+  protected readonly showOpenAmount = computed(() => isPayableState(this.invoice()?.state));
   protected readonly openAmount = computed(() => formatPaymentChf(openInvoiceAmount(this.invoice())));
 
   protected levelLabel(level: number): string {

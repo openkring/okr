@@ -5,6 +5,7 @@ import {
   parseReminderFee, ReminderLike, reminderFeeSum, reminderInputProblem, reminderLevelKey,
 } from './invoice-reminder.util';
 import { invoiceRefusalReasons } from './invoice-position.util';
+import { invoiceRefusalKeys } from './invoice-i18n';
 
 const inv = (o = {}) => ({ state: 'pending', dueDate: '20261010', reminders: [] as ReminderLike[], ...o });
 
@@ -94,6 +95,11 @@ describe('reminder actions (client)', () => {
     expect(reminderInputProblem('', '20')).toBe('date');
     expect(reminderInputProblem('20261340', '20')).toBe('date');
     expect(reminderInputProblem('20261020', '-5')).toBe('fee');
+  });
+
+  it('names a refused reminder mail of a paid or cancelled invoice in the email context', () => {
+    expect(invoiceRefusalKeys(['not-payable'], 'email')).toEqual(['refusal_email_not_payable']);
+    expect(invoiceRefusalKeys(['not-payable'], 'reminder')).toEqual(['refusal_reminder_not_payable']);
   });
 
   it('expands the blockers of a reminder-blocked refusal', () => {

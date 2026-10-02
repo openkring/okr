@@ -163,5 +163,8 @@
   "voucher": {
     "title": "Vouchers",
     "loadError": "The vouchers could not be loaded. Please try again later."
+  },
+  "validation": {
+    "reminderFeeDecimals": "Please enter the amount with at most two decimal places."
   }
 }

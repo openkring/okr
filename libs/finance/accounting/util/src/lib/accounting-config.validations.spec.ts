@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { AccountingConfigModel } from '@okr/shared-models';
 
-import { accountingConfigValidations, reminderFeeOf } from './accounting-config.validations';
+import { accountingConfigValidations, REMINDER_FEE_DECIMALS_ERROR, reminderFeeOf, reminderFeeRappen } from './accounting-config.validations';
 
 describe('accountingConfigValidations', () => {
   const config = (patch: Partial<AccountingConfigModel> = {}): AccountingConfigModel =>
@@ -80,6 +80,16 @@ describe('accountingConfigValidations', () => {
       expect(accountingConfigValidations(config({ reminderGraceDays: -1 }), 'tenant-1', '').getErrors('reminderGraceDays').length).toBeGreaterThan(0);
       expect(accountingConfigValidations(config({ reminderDueDays: 366 }), 'tenant-1', '').getErrors('reminderDueDays').length).toBeGreaterThan(0);
       expect(accountingConfigValidations(config({ reminderDueDays: 1.5 }), 'tenant-1', '').getErrors('reminderDueDays').length).toBeGreaterThan(0);
+    });
+
+    it('converts a CHF fee with up to two decimals to whole Rappen, keeps more decimals as a rejected fraction', () => {
+      expect(reminderFeeRappen(20)).toBe(2000);
+      expect(reminderFeeRappen(0.29)).toBe(29);
+      expect(reminderFeeRappen(12.5)).toBe(1250);
+      expect(Number.isInteger(reminderFeeRappen(1.234))).toBe(false);
+      const result = accountingConfigValidations(config({ reminderFees: [0, reminderFeeRappen(1.234), 2000] }), 'tenant-1', '');
+      expect(result.getErrors('reminderFee2')).toContain(REMINDER_FEE_DECIMALS_ERROR);
+      expect(accountingConfigValidations(config({ reminderFees: [0, reminderFeeRappen(0.29), 2000] }), 'tenant-1', '').isValid()).toBe(true);
     });
 
     it('reads the fee of a level, the model default when the field is missing', () => {
