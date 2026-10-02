@@ -1,10 +1,14 @@
 import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
+import { Router } from '@angular/router';
 import { IonContent } from '@ionic/angular/standalone';
 import { of } from 'rxjs';
 
 import { AccountingConfigModel } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header, HeaderI18n } from '@okr/shared-ui';
+import { hasRole } from '@okr/shared-util-core';
+
+import { TemplateService } from '@okr/content-pdf-template-data-access';
 
 import { AccountService } from '@okr/finance-account-data-access';
 import { CostCenterService } from '@okr/finance-cost-center-data-access';
@@ -36,6 +40,7 @@ import { ReadOnlyBanner } from './read-only-banner';
         <okr-accounting-config-form [formData]="config" (formDataChange)="formData.set($event)"
           [accounts]="accounts()" [costCenters]="costCenters()" [costCentersEnabled]="!store.isExternallyManaged()"
           [tenantId]="store.tenantId()" [i18n]="store.i18n"
+          [templates]="templates()" [showTemplateLink]="canManageTemplates()" (addTemplate)="openTemplates()"
           [readOnly]="store.isExternallyManaged()" [showForm]="showForm()"
           (dirty)="formDirty.set($event)" (valid)="formValid.set($event)" />
         <!-- The fee schedule edits the same config object. The banner above already covers it,
@@ -53,6 +58,8 @@ export class AccountingSettingsPage {
   private readonly vatCodeService = inject(VatCodeService);
   // the service, not CostCenterStore: @okr/finance-cost-center-feature depends on this lib
   private readonly costCenterService = inject(CostCenterService);
+  private readonly templateService = inject(TemplateService);
+  private readonly router = inject(Router);
 
   private readonly accountsResource = rxResource({
     params: () => this.store.accountingTenantId(),
@@ -74,6 +81,11 @@ export class AccountingSettingsPage {
       accountingTenantId ? this.vatCodeService.list(accountingTenantId) : of([]),
   });
   protected readonly vatCodes = computed(() => this.vatCodesResource.value() ?? []);
+
+  private readonly templatesResource = rxResource({ stream: () => this.templateService.list() });
+  protected readonly templates = computed(() => this.templatesResource.value() ?? []);
+  // `/templates` is guarded by isContentAdminGuard — offer the link only to whom it lets in.
+  protected readonly canManageTemplates = computed(() => hasRole('contentAdmin', this.store.currentUser()));
 
   // A tenant may have no config document yet — edit a fresh one and create it on save. Only
   // meaningful once `configLoaded()` is true; before that `store.config()` is merely unread.
@@ -127,6 +139,10 @@ export class AccountingSettingsPage {
   protected onFeeScheduleChange(config: AccountingConfigModel): void {
     this.formData.set(config);
     this.formDirty.set(true);
+  }
+
+  protected async openTemplates(): Promise<void> {
+    await this.router.navigate(['/templates']);
   }
 
   public cancel(): void {

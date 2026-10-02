@@ -24,8 +24,9 @@
     },
     "invoiceTemplate": {
       "label": "Plantilla de factura",
-      "placeholder": "ID de la plantilla",
-      "helper": "Plantilla con la que se crean las facturas en PDF."
+      "placeholder": "Elige una plantilla",
+      "helper": "Plantilla con la que se crean las facturas en PDF.",
+      "add": "Crear una plantilla nueva"
     },
     "paymentAccounts": {
       "label": "Cuentas de pago",

@@ -24,8 +24,9 @@
     },
     "invoiceTemplate": {
       "label": "Rechnungsvorlage",
-      "placeholder": "Vorlage-ID",
-      "helper": "Vorlage, mit der Rechnungen als PDF erstellt werden."
+      "placeholder": "Vorlage wählen",
+      "helper": "Vorlage, mit der Rechnungen als PDF erstellt werden.",
+      "add": "Neue Vorlage erstellen"
     },
     "paymentAccounts": {
       "label": "Zahlungskonten",

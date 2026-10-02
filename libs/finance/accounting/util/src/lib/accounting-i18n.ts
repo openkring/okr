@@ -20,6 +20,7 @@ export const ACCOUNTING_I18N_KEYS = {
   invoice_template:            PFX + 'settings.invoiceTemplate.label',
   invoice_template_placeholder: PFX + 'settings.invoiceTemplate.placeholder',
   invoice_template_helper:     PFX + 'settings.invoiceTemplate.helper',
+  invoice_template_add:        PFX + 'settings.invoiceTemplate.add',
   payment_accounts:            PFX + 'settings.paymentAccounts.label',
   payment_accounts_helper:     PFX + 'settings.paymentAccounts.helper',
   fiscal_year_start:             PFX + 'settings.fiscalYearStart.label',

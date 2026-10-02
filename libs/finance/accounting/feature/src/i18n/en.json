@@ -24,8 +24,9 @@
     },
     "invoiceTemplate": {
       "label": "Invoice template",
-      "placeholder": "Template ID",
-      "helper": "Template used to create invoice PDFs."
+      "placeholder": "Choose a template",
+      "helper": "Template used to create invoice PDFs.",
+      "add": "Create a new template"
     },
     "paymentAccounts": {
       "label": "Payment accounts",

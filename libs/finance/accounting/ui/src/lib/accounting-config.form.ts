@@ -1,9 +1,9 @@
 import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonNote, IonRow, IonSelect, IonSelectOption, SelectChangeEventDetail } from '@ionic/angular/standalone';
 
-import { NumberInput, NumberInputI18n, ErrorNote, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { NumberInput, NumberInputI18n, ErrorNote } from '@okr/shared-ui';
 
-import { AccountingConfigModel, AccountModel, CostCenterModel } from '@okr/shared-models';
+import { AccountingConfigModel, AccountModel, CostCenterModel, TemplateModel } from '@okr/shared-models';
 import { coerceBoolean } from '@okr/shared-util-core';
 
 import { AccountSelect, AccountSelectI18n } from '@okr/finance-account-ui';
@@ -24,7 +24,7 @@ export type { AccountingI18n };
   selector: 'okr-accounting-config-form',
   standalone: true,
   imports: [
-    ErrorNote, AccountSelect, CostCenterSelect, NumberInput, TextInput, IonSelect, IonSelectOption, IonNote, IonGrid, IonRow, IonCol, IonCard, IonCardContent],
+    ErrorNote, AccountSelect, CostCenterSelect, NumberInput, IonSelect, IonSelectOption, IonNote, IonGrid, IonRow, IonCol, IonCard, IonCardContent],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px; } }`],
   template: `
     @if (showForm()) {
@@ -55,9 +55,19 @@ export type { AccountingI18n };
                   <okr-error-note [errors]="receivablesAccountKeyErrors()" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
-                  <okr-text-input [i18n]="invoiceTemplateI18n()" [value]="invoiceTemplateId()"
-                    (valueChange)="onFieldChange('invoiceTemplateId', $event)"
-                    [readOnly]="isReadOnly()" />
+                  <ion-select [label]="i18n().invoice_template()" labelPlacement="floating"
+                    [placeholder]="i18n().invoice_template_placeholder()"
+                    [value]="invoiceTemplateId()" [disabled]="isReadOnly()"
+                    (ionChange)="onInvoiceTemplateChange($event)">
+                    @for (template of templateChoices(); track template.okey) {
+                      <ion-select-option [value]="template.okey">{{ template.name || template.okey }}</ion-select-option>
+                    }
+                  </ion-select>
+                  <ion-note>{{ i18n().invoice_template_helper() }}
+                    @if (showTemplateLink()) {
+                      <a href="" (click)="$event.preventDefault(); addTemplate.emit()">{{ i18n().invoice_template_add() }}</a>
+                    }
+                  </ion-note>
                   <okr-error-note [errors]="invoiceTemplateIdErrors()" />
                 </ion-col>
               </ion-row>
@@ -107,10 +117,15 @@ export class AccountingConfigForm {
   public readonly costCentersEnabled = input(false);
   public readonly tenantId = input.required<string>();
   public readonly i18n = input.required<AccountingI18n>();
+  /** the tenant's PDF templates; the invoice template is picked from those of category `invoice` */
+  public readonly templates = input<TemplateModel[]>([]);
+  /** show the link to the template list (only for users who may open it) */
+  public readonly showTemplateLink = input(false);
   public readonly readOnly = input(true);
   public showForm = input(true);
 
   public dirty = output<boolean>();
+  public addTemplate = output<void>();
   public valid = output<boolean>();
 
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
@@ -121,6 +136,14 @@ export class AccountingConfigForm {
   protected invoiceTemplateId = linkedSignal(() => this.formData().invoiceTemplateId ?? '');
   // legacy config docs predate the field: '' = keine Kostenstelle
   protected defaultCostCenterKey = linkedSignal(() => this.formData().defaultCostCenterKey ?? '');
+  // Invoice templates only, but never drop the stored one: a config pointing at a template of
+  // another category (or one not yet loaded) must still show its value instead of a blank select.
+  protected templateChoices = computed(() => {
+    const id = this.invoiceTemplateId();
+    return this.templates()
+      .filter(t => t.category === 'invoice' || t.okey === id)
+      .sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''));
+  });
   protected invoicePaymentAccountKeys = linkedSignal(() => this.formData().invoicePaymentAccountKeys ?? []);
   /** leaf accounts of class 1 (assets): the accounts an invoice payment may be posted to */
   protected leaves = computed(() => leafAccounts(this.accounts()));
@@ -141,11 +164,6 @@ export class AccountingConfigForm {
     name: 'receivablesAccountKey', label: this.i18n().receivables_account(), helper: this.i18n().receivables_account_helper()
   } as AccountSelectI18n));
 
-  protected invoiceTemplateI18n = computed(() => ({
-    name: 'invoiceTemplateId', label: this.i18n().invoice_template(),
-    placeholder: this.i18n().invoice_template_placeholder(), helper: this.i18n().invoice_template_helper()
-  } as TextInputI18n));
-
   protected costCenterI18n = computed(() => ({
     name: 'defaultCostCenterKey', label: this.i18n().cost_center(), helper: this.i18n().cost_center_helper()
   } as CostCenterSelectI18n));
@@ -164,6 +182,10 @@ export class AccountingConfigForm {
 
   constructor() {
     effect(() => this.valid.emit(this.validationResult().isValid()));
+  }
+
+  protected onInvoiceTemplateChange(event: CustomEvent<SelectChangeEventDetail<string>>): void {
+    this.onFieldChange('invoiceTemplateId', event.detail.value ?? '');
   }
 
   protected onPaymentAccountsChange(event: CustomEvent<SelectChangeEventDetail<string[]>>): void {

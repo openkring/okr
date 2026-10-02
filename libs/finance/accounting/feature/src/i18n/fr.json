@@ -24,8 +24,9 @@
     },
     "invoiceTemplate": {
       "label": "Modèle de facture",
-      "placeholder": "ID du modèle",
-      "helper": "Modèle utilisé pour créer les factures en PDF."
+      "placeholder": "Choisis un modèle",
+      "helper": "Modèle utilisé pour créer les factures en PDF.",
+      "add": "Créer un nouveau modèle"
     },
     "paymentAccounts": {
       "label": "Comptes de paiement",
