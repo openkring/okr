@@ -7,16 +7,17 @@ import { firstValueFrom, of, timeout } from 'rxjs';
 
 import type { DiaryLocationPick } from '@okr/content-diary-ui';
 import { DiaryService, DiaryWeatherService } from '@okr/content-diary-data-access';
+import { AppConfigService } from '@okr/shared-data-access';
 import {
   DIARY_I18N_KEYS, DiaryStateFilter, diaryStateMatches, diaryYearList, driveFolderUrl, getDiaryIndex,
   hasDiaryWeather, newDiary,
 } from '@okr/content-diary-util';
 import { LocationService } from '@okr/location-data-access';
-import { AvatarInfo, DiaryModel, TripModel } from '@okr/shared-models';
+import { AvatarInfo, DiaryModel, DiaryPeriod, TripModel } from '@okr/shared-models';
 import { AppStore, ModelSelectService } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { AlertService } from '@okr/shared-util-angular';
-import { nameMatches } from '@okr/shared-util-core';
+import { hasRole, nameMatches } from '@okr/shared-util-core';
 
 export type DiaryStoreState = {
   searchTerm: string;
@@ -42,6 +43,7 @@ export const DiaryStore = signalStore(
   withProps(() => ({
     appStore: inject(AppStore),
     diaryService: inject(DiaryService),
+    appConfigService: inject(AppConfigService),
     weatherService: inject(DiaryWeatherService),
     locationService: inject(LocationService),
     modelSelectService: inject(ModelSelectService),
@@ -202,6 +204,31 @@ export const DiaryStore = signalStore(
       },
 
       edit: editEntry,
+
+      /**
+       * Spec 1.77 D7 — the travel period this diary app publishes (`AppConfig.travelFrom`/
+       * `travelTo`), admin-only. Diary-transfer columns with empty bounds inherit it.
+       * The modal is imported dynamically: it lives in the ui lib this store already loads
+       * lazily (memory: store-modal-dynamic-import).
+       */
+      async editPeriod(): Promise<void> {
+        if (!hasRole('admin', store.currentUser())) return;
+        const config = store.appStore.appConfig();
+        // legacy config docs lack both fields — Firestore reads skip model defaults
+        const period: DiaryPeriod = { travelFrom: config?.travelFrom ?? '', travelTo: config?.travelTo ?? '' };
+        const { DiaryPeriodModal } = await import('@okr/content-diary-ui');
+        const modal = await store.modalController.create({
+          component: DiaryPeriodModal,
+          componentProps: { period, i18n: store.i18n },
+        });
+        await modal.present();
+        const { data, role } = await modal.onWillDismiss<DiaryPeriod>();
+        if (role === 'confirm' && data) {
+          await store.appConfigService.setTravelPeriod(store.tenantId(), {
+            travelFrom: data.travelFrom ?? '', travelTo: data.travelTo ?? '',
+          });
+        }
+      },
 
       async view(diary: DiaryModel): Promise<void> {
         const { DiaryViewModal } = await import('@okr/content-diary-ui');

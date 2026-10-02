@@ -8,6 +8,7 @@ export * from './lib/diary-key.util';
 export * from './lib/diary-lines.util';
 export * from './lib/diary-model-mapping';
 export * from './lib/diary-parse';
+export * from './lib/diary-period.validations';
 export * from './lib/diary-reference.util';
 export * from './lib/diary-render';
 export * from './lib/diary-state.util';

@@ -182,5 +182,16 @@
     "placeholder": {
       "label": "Solo imágenes"
     }
+  },
+  "period": {
+    "title": "Periodo de viaje",
+    "from": {
+      "label": "Viaje desde"
+    },
+    "to": {
+      "label": "Viaje hasta"
+    },
+    "helper": "Las transferencias al diario sin periodo propio solo se aplican durante este tiempo. Una fecha vacía deja el periodo abierto por ese lado.",
+    "error": "La fecha de inicio es posterior a la fecha de fin."
   }
 }

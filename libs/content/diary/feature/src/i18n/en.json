@@ -182,5 +182,16 @@
     "placeholder": {
       "label": "Images only"
     }
+  },
+  "period": {
+    "title": "Travel period",
+    "from": {
+      "label": "Travel from"
+    },
+    "to": {
+      "label": "Travel until"
+    },
+    "helper": "Diary transfers without their own period only apply during this time. An empty date leaves the travel period open on that side.",
+    "error": "The start date is after the end date."
   }
 }

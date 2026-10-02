@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { FirestoreService } from '@okr/shared-data-access';
-import { AppConfig, AppConfigCollection } from '@okr/shared-models';
+import { AppConfig, AppConfigCollection, DiaryPeriod } from '@okr/shared-models';
 import { I18nService } from "@okr/shared-i18n";
 
 import { PFX } from "./scope";
@@ -85,6 +85,18 @@ export class AppConfigService {
   public async setTaskSettings(tenantId: string, settings: Pick<AppConfig, 'taskArchiveDays' | 'diaryTenantId'>): Promise<string | undefined> {
     return await this.firestoreService.updateObject<Partial<AppConfig>>(
       AppConfigCollection, tenantId, { ...settings }, false, this.i18n.update_conf());
+  }
+
+  /**
+   * Patch the published travel period only (spec 1.77 D7); same single-field pattern as
+   * {@link setTaskSettings}. Diary-transfer columns with empty bounds inherit this period.
+   *
+   * @param tenantId the diary tenant whose config to patch — the doc id IS the tenantId
+   * @param period `{ travelFrom, travelTo }` as StoreDate strings, `''` = open bound
+   */
+  public async setTravelPeriod(tenantId: string, period: DiaryPeriod): Promise<string | undefined> {
+    return await this.firestoreService.updateObject<Partial<AppConfig>>(
+      AppConfigCollection, tenantId, { travelFrom: period.travelFrom, travelTo: period.travelTo }, false, this.i18n.update_conf());
   }
 
   /**

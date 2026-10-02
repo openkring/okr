@@ -2864,6 +2864,9 @@ const diary: FeatureBlock = {
     { key: 'diary', name: 'diary', url: '/diary/all/c-diary', action: 'navigate', roleNeeded: 'registered', icon: 'document', label: '@item.diary' },
     { key: 'c-diary', name: 'c-diary', url: '', action: 'context', roleNeeded: 'registered', icon: 'help-circle', label: '', children: [
       { key: 'diary-add', name: 'diary-add', url: 'add', action: 'call', roleNeeded: 'registered', icon: 'add', label: '@item.diary-add' },
+      // spec 1.77 D7 — the published travel period of a travel diary app, admin-only:
+      // `DiaryList.onPopoverDismiss` case 'period' opens `DiaryPeriodModal` via `DiaryStore.editPeriod()`.
+      { key: 'diary-period', name: 'diary-period', url: 'period', action: 'call', roleNeeded: 'admin', icon: 'calendar', label: '@item.diary-period' },
     ] },
   ],
 };

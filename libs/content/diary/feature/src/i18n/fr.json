@@ -182,5 +182,16 @@
     "placeholder": {
       "label": "Images seulement"
     }
+  },
+  "period": {
+    "title": "Période de voyage",
+    "from": {
+      "label": "Voyage du"
+    },
+    "to": {
+      "label": "Voyage jusqu'au"
+    },
+    "helper": "Les transferts vers le journal sans période propre ne s'appliquent que pendant cette période. Une date vide laisse la période ouverte de ce côté.",
+    "error": "La date de début est après la date de fin."
   }
 }

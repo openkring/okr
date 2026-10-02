@@ -149,6 +149,7 @@ export class DiaryList {
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     switch ($event.detail.data) {
       case 'add': await this.store.add(); break;
+      case 'period': await this.store.editPeriod(); break;
       case undefined: case null: break;
       default: this.alertService.error(`DiaryList.onPopoverDismiss: unknown method ${$event.detail.data}`);
     }
