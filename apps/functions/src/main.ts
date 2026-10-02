@@ -48,6 +48,7 @@ import * as WorkflowUiEvent from './workflow/ui-event';
 import * as WorkflowOutbox from './workflow/outbox';
 import * as Approval from './approval';
 import * as Content from './content';
+import * as Contract from './contract';
 
 // firebase app hosting requires a webserver. It does not automatically discover exported functions.
 //      the webserver is started in apphosting.yaml
@@ -455,3 +456,6 @@ export const updateGroupFolder = Content.updateGroupFolder;
 // public, unauthenticated health check for external uptime monitoring (BetterStack).
 // Verifies the backend is up and can reach Firestore. See ./health.
 export { healthz } from './health';
+
+// contracts: daily deadline scan (spec 1.5 §6.2)
+export const scanContractDeadlines = Contract.scanContractDeadlines;
