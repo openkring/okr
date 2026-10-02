@@ -204,7 +204,7 @@ test('invoice-details stores PDFs, reminders, payments and internal comments', a
   const inv = db.store.get('invoices/2097');
   assert.equal(inv.documentKey, 'bexio-invoice-2097');
   assert.equal(db.store.get('finance-documents/bexio-invoice-2097').fullPath, 'tenant/scs/private/finance/bexio/bexio-invoice-2097.pdf');
-  assert.deepEqual(inv.reminders, [{ level: 1, date: '20260601', dueDate: '20260615', isSent: true, documentKey: 'bexio-reminder-2097-1', fee: 0, bookingKey: '' }]);
+  assert.deepEqual(inv.reminders, [{ level: 1, date: '20260601', dueDate: '20260615', isSent: true, documentKey: 'bexio-reminder-2097-1', fee: 0, bookingKey: '', waivedAt: '', waiveBookingKey: '' }]);
   assert.deepEqual(inv.payments.map(p => [p.date, p.amount, p.bankAccountKey]), [['20260620', 5000, ''], ['20260702', 3000, 'scs0021']]);
   assert.equal(inv.paymentDate, '20260702');
   const c = db.store.get('finance-comments/bexio-comment-9');

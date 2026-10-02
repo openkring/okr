@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { appendStornoNote, applyInvoicePayment, cancelBlockers, isPayableState, isUsableIssueBooking, isValidStoreDate, pickBankAccount, InvoiceLike, isValidPaymentId, linkBlockers, linkDecision, openAmount, paymentBlockers, paymentBookingLines, paymentDecision, reversalLines, stornoSourceLines } from './invoice-payment.logic';
+import { appendStornoNote, applyInvoicePayment, cancelBlockers, isPayableState, isUsableIssueBooking, isValidStoreDate, pickBankAccount, InvoiceLike, isValidPaymentId, linkBlockers, linkDecision, openAmount, paymentBlockers, paymentBookingLines, paymentDecision, reversalLines, reminderFeeSum, stornoSourceLines, waiverOutcome, appendNote } from './invoice-payment.logic';
 
 const inv = (o: Partial<InvoiceLike> = {}): InvoiceLike => ({ state: 'pending', totalAmount: { amount: 67550 }, payments: [], accountingTenantId: 'scs', ...o });
 
@@ -156,5 +156,42 @@ describe('invoice payment logic', () => {
     expect(paymentBlockers(i, 12000, '20261101')).toEqual([]);
     expect(applyInvoicePayment(i, { paymentId: 'x', date: '20261101', amount: 12000, bankAccountKey: 'b', bookingKey: 'k' }).state).toBe('paid');
     expect(applyInvoicePayment(i, { paymentId: 'x', date: '20261101', amount: 10000, bankAccountKey: 'b', bookingKey: 'k' }).state).toBe('pending');
+  });
+
+  describe('waived reminder fees (D18)', () => {
+    const waived = { fee: 2000, waivedAt: '20261101' };
+    it('reminderFeeSum skips waived reminders', () => {
+      expect(reminderFeeSum([{ fee: 2000 }, waived, { fee: 500, waivedAt: '' }])).toBe(2500);
+      expect(reminderFeeSum([waived])).toBe(0);
+    });
+    it('openAmount and applyInvoicePayment ignore a waived fee', () => {
+      const i = inv({ totalAmount: { amount: 10000 }, reminders: [waived] });
+      expect(openAmount(i)).toBe(10000);
+      const r = applyInvoicePayment(i, { paymentId: 'x', date: '20261105', amount: 10000, bankAccountKey: 'b', bookingKey: 'k' });
+      expect(r.state).toBe('paid');
+      expect(openAmount({ ...i, payments: r.payments })).toBe(0);
+    });
+    it('waiverOutcome flips to paid with the latest payment date', () => {
+      const pay = (date: string, amount: number) => ({ date, amount, bankAccountKey: 'b', bookingKey: 'k' });
+      const base = inv({ totalAmount: { amount: 10000 }, reminders: [waived], payments: [pay('20261105', 4000), pay('20261110', 6000)] });
+      expect(waiverOutcome(base)).toEqual({ state: 'paid', paymentDate: '20261110' });
+      expect(waiverOutcome({ ...base, payments: [pay('20261110', 6000), pay('20261105', 4000)] })).toEqual({ state: 'paid', paymentDate: '20261110' });
+    });
+    it('waiverOutcome keeps the state when payments are short, absent, or the state is not payable', () => {
+      const pay = { date: '20261105', amount: 9999, bankAccountKey: 'b', bookingKey: 'k' };
+      expect(waiverOutcome(inv({ totalAmount: { amount: 10000 }, reminders: [waived], payments: [pay] }))).toEqual({ state: 'pending' });
+      expect(waiverOutcome(inv({ totalAmount: { amount: 10000 }, reminders: [waived], payments: [] }))).toEqual({ state: 'pending' });
+      expect(waiverOutcome(inv({ state: 'cancelled', totalAmount: { amount: 10 }, payments: [{ ...pay, amount: 10 }] }))).toEqual({ state: 'cancelled' });
+    });
+    it('waiverOutcome counts the fees that remain', () => {
+      const pay = { date: '20261105', amount: 10000, bankAccountKey: 'b', bookingKey: 'k' };
+      expect(waiverOutcome(inv({ totalAmount: { amount: 10000 }, reminders: [waived, { fee: 500 }], payments: [pay] }))).toEqual({ state: 'pending' });
+    });
+    it('appendNote labels the note; appendStornoNote is the Storniert label', () => {
+      expect(appendNote('alt', 'Gebühr erlassen', '05.11.2026', 'Kulanz', 100)).toBe('alt\n[Gebühr erlassen 05.11.2026] Kulanz');
+      expect(appendNote('', 'Gebühr erlassen', '05.11.2026', 'Kulanz', 100)).toBe('[Gebühr erlassen 05.11.2026] Kulanz');
+      expect(appendNote('', 'Gebühr erlassen', '05.11.2026', 'x'.repeat(200), 40)).toHaveLength(40);
+      expect(appendStornoNote('', '05.11.2026', 'r', 100)).toBe('[Storniert 05.11.2026] r');
+    });
   });
 });

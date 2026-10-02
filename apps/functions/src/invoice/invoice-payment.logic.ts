@@ -26,7 +26,7 @@ export interface InvoiceLike {
   totalAmount?: { amount: number } | null;
   payments?: { date: string; amount: number; bankAccountKey: string; bookingKey?: string }[];
   accountingTenantId: string;
-  reminders?: { fee?: number }[];
+  reminders?: { fee?: number; waivedAt?: string }[];
 }
 
 export interface PaymentBookingLine {
@@ -37,11 +37,17 @@ export interface PaymentBookingLine {
 
 const paidSum = (invoice: InvoiceLike): number => (invoice.payments ?? []).reduce((s, p) => s + p.amount, 0);
 
-export interface ReminderLike { level: number; date: string; dueDate: string; isSent?: boolean; documentKey?: string; fee?: number; bookingKey?: string }
+export interface ReminderLike {
+  level: number; date: string; dueDate: string; isSent?: boolean; documentKey?: string; fee?: number; bookingKey?: string;
+  waivedAt?: string; waiveBookingKey?: string; // fee waiver (spec 1.76 D18); waivedAt non-empty = waived
+}
 
-/** Sum of the reminder fees; a missing or non-finite fee (legacy migrated reminder) counts as 0. */
-export function reminderFeeSum(reminders: { fee?: number }[] | undefined): number {
-  return (reminders ?? []).reduce((s, r) => s + (Number.isFinite(r.fee) ? (r.fee as number) : 0), 0);
+/** A reminder whose fee was waived (spec 1.76 D18): `waivedAt` is non-empty. */
+export const isWaivedReminder = (r: { waivedAt?: string } | undefined): boolean => !!r?.waivedAt;
+
+/** Sum of the reminder fees; a missing or non-finite fee (legacy migrated reminder) and a waived fee count as 0. */
+export function reminderFeeSum(reminders: { fee?: number; waivedAt?: string }[] | undefined): number {
+  return (reminders ?? []).reduce((s, r) => s + (isWaivedReminder(r) || !Number.isFinite(r.fee) ? 0 : (r.fee as number)), 0);
 }
 
 /** Total plus the reminder fees minus the sum of the payments, never negative. */
@@ -148,12 +154,30 @@ export function isValidStoreDate(value: unknown): value is string {
 }
 
 /**
- * Appends "[Storniert {viewDate}] {reason}" to the notes (newline separated when notes exist). The reason
+ * Appends "[{label} {viewDate}] {reason}" to the notes (newline separated when notes exist). The reason
  * is truncated so the result fits `maxLength`; existing notes are never cut and the call never refuses.
  */
-export function appendStornoNote(notes: string, viewDate: string, reason: string, maxLength: number): string {
-  const prefix = `${notes ? `${notes}\n` : ''}[Storniert ${viewDate}] `;
+export function appendNote(notes: string, label: string, viewDate: string, reason: string, maxLength: number): string {
+  const prefix = `${notes ? `${notes}\n` : ''}[${label} ${viewDate}] `;
   return prefix + reason.substring(0, Math.max(0, maxLength - prefix.length));
+}
+
+/** Appends "[Storniert {viewDate}] {reason}" to the notes (see `appendNote`). */
+export function appendStornoNote(notes: string, viewDate: string, reason: string, maxLength: number): string {
+  return appendNote(notes, 'Storniert', viewDate, reason, maxLength);
+}
+
+/**
+ * The state after a reminder fee waiver (spec 1.76 D18), computed on the invoice with the waiver already
+ * applied: a payable invoice with at least one payment whose payments cover total + remaining fees
+ * becomes `paid` with `paymentDate` = the latest payment date; anything else keeps its state.
+ */
+export function waiverOutcome(invoice: InvoiceLike): { state: string; paymentDate?: string } {
+  const payments = invoice.payments ?? [];
+  const due = (invoice.totalAmount?.amount ?? 0) + reminderFeeSum(invoice.reminders);
+  if (!isPayableState(invoice.state) || payments.length === 0 || paidSum(invoice) < due) return { state: invoice.state };
+  const paymentDate = payments.reduce((latest, p) => ((p.date ?? '') > latest ? p.date : latest), '');
+  return { state: 'paid', paymentDate };
 }
 
 /** The okr issue booking a storno can reverse: in these books, posted and not archived. */

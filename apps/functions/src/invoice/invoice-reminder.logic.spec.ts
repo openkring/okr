@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { defaultReminderFee, isReminderDue, lastDueDate, nextReminderLevel, ReminderLike, reminderBlockers, reminderDueDate, reminderFeeLines, reminderFeeSum, reminderKey } from './invoice-reminder.logic';
+import { defaultReminderFee, isReminderDue, lastDueDate, nextReminderLevel, ReminderLike, reminderBlockers, reminderDueDate, reminderFeeLines, reminderFeeSum, reminderKey, unwaivedFeeKeys, waiveBlockers, waiverKey } from './invoice-reminder.logic';
 
 const inv = (o = {}) => ({ state: 'pending', dueDate: '20261010', reminders: [] as ReminderLike[], ...o });
 
@@ -55,5 +55,35 @@ describe('invoice reminder logic', () => {
     expect(isReminderDue({ state: 'pending', ...legacy }, '20261031', 10)).toBe(true);
     expect(isReminderDue({ state: 'pending', ...legacy }, '20261030', 10)).toBe(false);
     expect(lastDueDate({ dueDate: '20261001', reminders: [{ level: 1, date: '20261020', dueDate: '20261103' }] })).toBe('20261103');
+  });
+
+  describe('fee waiver (D18)', () => {
+    const rem = (o = {}): ReminderLike => ({ level: 2, date: '20261020', dueDate: '20261103', fee: 2000, bookingKey: 'invoice-abc-reminder-2', ...o });
+    const waivable = (o = {}) => inv({ reminders: [rem(o)] });
+    it('waiverKey', () => {
+      expect(waiverKey('abc', 2)).toBe('invoice-abc-reminder-2-waiver');
+    });
+    it('no blockers for a waivable fee', () => {
+      expect(waiveBlockers(waivable(), 2, '20261105', 'Kulanz')).toEqual([]);
+    });
+    it('not-payable, no-reminder, no-fee, already-waived, no-waive-date, invalid-reason', () => {
+      expect(waiveBlockers(inv({ state: 'paid', reminders: [rem()] }), 2, '20261105', 'x')).toContain('not-payable');
+      expect(waiveBlockers(waivable(), 3, '20261105', 'x')).toContain('no-reminder');
+      expect(waiveBlockers(waivable({ fee: 0 }), 2, '20261105', 'x')).toContain('no-fee');
+      expect(waiveBlockers(waivable({ fee: undefined }), 2, '20261105', 'x')).toContain('no-fee');
+      expect(waiveBlockers(waivable({ waivedAt: '20261101' }), 2, '20261105', 'x')).toContain('already-waived');
+      expect(waiveBlockers(waivable(), 2, '20261399', 'x')).toContain('no-waive-date');
+      expect(waiveBlockers(waivable(), 2, '20261105', '   ')).toContain('invalid-reason');
+      expect(waiveBlockers(waivable(), 2, '20261105', 'y'.repeat(501))).toContain('invalid-reason');
+      expect(waiveBlockers(waivable(), 2, '20261105', 'y'.repeat(500))).toEqual([]);
+    });
+    it('a fee without booking key is no-fee (nothing to reverse)', () => {
+      expect(waiveBlockers(waivable({ bookingKey: '' }), 2, '20261105', 'x')).toContain('no-fee');
+    });
+    it('unwaivedFeeKeys skips waived reminders and empty keys, deduplicated', () => {
+      expect(unwaivedFeeKeys([
+        rem({ level: 1, bookingKey: 'a' }), rem({ level: 2, bookingKey: 'b', waivedAt: '20261101' }), rem({ level: 3, bookingKey: '' }), rem({ level: 4, bookingKey: 'a' }),
+      ])).toEqual(['a']);
+    });
   });
 });

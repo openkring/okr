@@ -6,7 +6,7 @@
 
 import { DEFAULT_REMINDER_FEES } from '@okr/shared-models';
 import { addDuration } from '@okr/shared-util-core';
-import { isPayableState, isValidStoreDate, PaymentBookingLine, ReminderLike, reminderFeeSum } from './invoice-payment.logic';
+import { isPayableState, isValidStoreDate, isWaivedReminder, PaymentBookingLine, ReminderLike, reminderFeeSum } from './invoice-payment.logic';
 
 export type { ReminderLike };
 export { reminderFeeSum };
@@ -80,4 +80,34 @@ export function reminderFeeLines(receivablesKey: string, feeAccountKey: string, 
 /** Key of the reminder's finance document and fee booking. */
 export function reminderKey(invoiceKey: string, level: number): string {
   return `invoice-${invoiceKey}-reminder-${level}`;
+}
+
+/** Key of the fee waiver booking (spec 1.76 D18). */
+export function waiverKey(invoiceKey: string, level: number): string {
+  return `${reminderKey(invoiceKey, level)}-waiver`;
+}
+
+/** Longest reason of a fee waiver. */
+export const WAIVE_REASON_MAX = 500;
+
+/**
+ * Refusal codes for waiving a reminder fee (spec 1.76 D18): not-payable, no-reminder, no-fee (no fee, or
+ * no fee booking to reverse), already-waived, no-waive-date, invalid-reason (trimmed 1 to 500 characters).
+ */
+export function waiveBlockers(invoice: { state: string; reminders?: ReminderLike[] }, level: number, date: string, reason: string): string[] {
+  const blockers: string[] = [];
+  if (!isPayableState(invoice.state)) blockers.push('not-payable');
+  const reminder = storedReminder(invoice.reminders, level);
+  if (!reminder) blockers.push('no-reminder');
+  else if (isWaivedReminder(reminder)) blockers.push('already-waived');
+  else if (!(Number.isFinite(reminder.fee) && (reminder.fee as number) > 0) || !reminder.bookingKey) blockers.push('no-fee');
+  if (!isValidStoreDate(date)) blockers.push('no-waive-date');
+  const r = typeof reason === 'string' ? reason.trim() : '';
+  if (r.length < 1 || r.length > WAIVE_REASON_MAX) blockers.push('invalid-reason');
+  return blockers;
+}
+
+/** The fee booking keys cancelling must reverse: reminders with a fee booking whose fee was not waived, deduplicated. */
+export function unwaivedFeeKeys(reminders: { bookingKey?: string; waivedAt?: string }[] | undefined): string[] {
+  return [...new Set((reminders ?? []).filter((r) => !isWaivedReminder(r)).map((r) => String(r?.bookingKey ?? '')).filter((k) => !!k))];
 }

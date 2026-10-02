@@ -11,6 +11,7 @@ import { periodKeyFor } from '../bank-import/bank-import.util';
 import { assertPeriodsOpen } from '../booking/period-lock';
 import { assertLeafAccount, loadOwnedAccountingConfig, refuse } from './invoice-context';
 import { appendStornoNote, cancelBlockers, InvoiceLike, isUsableIssueBooking, isValidStoreDate, stornoSourceLines } from './invoice-payment.logic';
+import { unwaivedFeeKeys } from './invoice-reminder.logic';
 import { invoiceBookingIndex, issuePeriodKeys, withoutUndefined } from './invoice.logic';
 
 const REGION = 'europe-west6';
@@ -114,7 +115,8 @@ export const cancelInvoice = onCall(
       if (issueLines.length === 0) throw refuse('cancel-blocked', `invoice ${invoiceKey} has no issue booking lines`, { reasons: ['no-issue-booking'] });
 
       // reminder fee bookings are reversed in the same storno; an unusable one is skipped, never blocks
-      const feeKeys = [...new Set(((invoice['reminders'] as { bookingKey?: string }[] | undefined) ?? []).map((r) => String(r?.bookingKey ?? '')).filter((k) => !!k))];
+      // a waived fee (D18) is skipped: its waiver booking already reversed it
+      const feeKeys = unwaivedFeeKeys(invoice['reminders'] as { bookingKey?: string; waivedAt?: string }[] | undefined);
       const feeBookings: { key: string; booking: { status?: string; accountingTenantId?: string; isArchived?: boolean; documentKeys?: string[] } | undefined }[] = [];
       for (const key of feeKeys) {
         const snap = await tx.get(db.collection(BOOKING_COLLECTION).doc(key));

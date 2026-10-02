@@ -48,9 +48,10 @@ const asInvoiceLike = (invoice: Doc): InvoiceLike => ({
 });
 
 /** A stored reminder with every field defined (Firestore refuses undefined, also nested). */
-const coalesceReminder = (r: ReminderLike): ReminderLike => ({
+export const coalesceReminder = (r: ReminderLike): ReminderLike => ({
   level: r.level ?? 0, date: r.date ?? '', dueDate: r.dueDate ?? '', isSent: r.isSent ?? false,
   documentKey: r.documentKey ?? '', fee: Number.isFinite(r.fee) ? (r.fee as number) : 0, bookingKey: r.bookingKey ?? '',
+  waivedAt: r.waivedAt ?? '', waiveBookingKey: r.waiveBookingKey ?? '', // fee waiver (spec 1.76 D18)
 });
 
 const storedResult = (invoice: Doc, stored: ReminderLike): CreateInvoiceReminderResult => ({
@@ -206,7 +207,7 @@ export const createInvoiceReminder = onCall(
           }));
         });
       }
-      const reminder: ReminderLike = { level: lvl, date, dueDate, isSent: false, documentKey: key, fee, bookingKey: fee > 0 ? key : '' };
+      const reminder: ReminderLike = coalesceReminder({ level: lvl, date, dueDate, isSent: false, documentKey: key, fee, bookingKey: fee > 0 ? key : '' });
       const reminders = [...((invoice['reminders'] as ReminderLike[] | undefined) ?? []).map(coalesceReminder), reminder];
       tx.update(invoiceRef, withoutUndefined({ reminders }));
       return { reminder, openAmount: openAmount({ ...asInvoiceLike(invoice), reminders }) };

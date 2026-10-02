@@ -5,3 +5,4 @@ export { cancelInvoice } from './cancel-invoice';
 export { createPaymentConfirmation } from './payment-confirmation';
 export { createInvoiceReminder } from './create-invoice-reminder';
 export { sendInvoiceEmail } from './send-invoice-email';
+export { waiveReminderFee } from './waive-reminder-fee';

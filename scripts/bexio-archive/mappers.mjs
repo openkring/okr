@@ -54,6 +54,8 @@ export function mapReminder(r, documentKey) {
     documentKey,
     fee: 0,
     bookingKey: '',
+    waivedAt: '',
+    waiveBookingKey: '',
   };
 }
 

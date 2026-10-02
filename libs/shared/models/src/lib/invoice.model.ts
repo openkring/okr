@@ -62,5 +62,7 @@ export interface InvoicePayment { date: string; amount: number; bankAccountKey: 
 export interface InvoiceReminder { level: number; date: string; dueDate: string; isSent: boolean; documentKey: string;
   fee: number;         // Rappen charged with this reminder; 0 = none / migrated (spec 1.76 D14)
   bookingKey: string;  // fee booking `invoice-{key}-reminder-{level}`; '' = no fee booked (spec 1.76 D14)
+  waivedAt: string;        // StoreDate of the fee waiver; '' = not waived (spec 1.76 D18)
+  waiveBookingKey: string; // waiver booking `invoice-{key}-reminder-{level}-waiver`; '' = not waived (spec 1.76 D18)
 }
 export const VAT_TYPE_VALUES = ['included', 'excluded', 'exempt'] as const satisfies VAT_TYPE[];
