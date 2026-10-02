@@ -9,6 +9,7 @@ import { isSyntheticLoginEmail } from '@okr/user-util';
 import { getAppEmailConfig } from './email-templates';
 import { EmailAttachment, isValidProvider, sendEmailViaProvider } from './email-transport';
 import { findUserByLoginId } from './login-id';
+import { loginTenantsOf } from './login-tenants';
 import { loadTenantUser, restoreAuthEmail, withIndex } from './tenant-user';
 import { reportToSentry } from '../srv/sentry';
 
@@ -472,36 +473,14 @@ export const listMyLoginTenants = functions.onCall(
 
     const uid = request.auth?.uid ?? '';
     const db = getFirestore();
-    const ownSnap = await db.collection('users').doc(uid).get();
-    const personKey = (ownSnap.data()?.['personKey'] as string) ?? '';
+    const { personKey, tenants } = await loginTenantsOf(db, uid);
     if (!personKey) {
       logger.info(`${CF_NAME}: caller ${uid} has no personKey — no switchable tenants`);
       return { tenants: [] };
     }
 
-    const snap = await db
-      .collection('users')
-      .where('personKey', '==', personKey)
-      .where('isArchived', '==', false)
-      .get();
-
-    const tenants = new Set<string>();
-    await Promise.all(snap.docs.map(async doc => {
-      // The caller's own account is signed in right now — no need to ask Auth about it.
-      if (doc.id !== uid) {
-        try {
-          const authUser = await getAuth().getUser(doc.id);
-          if (authUser.disabled) return;
-        } catch {
-          // No Firebase Auth account (or deleted) → that user doc cannot be logged into.
-          return;
-        }
-      }
-      ((doc.data()['tenants'] as string[]) ?? []).forEach(t => { if (t) tenants.add(t); });
-    }));
-
-    logger.info(`${CF_NAME}: person ${personKey} can log in to [${[...tenants].join(', ')}]`);
-    return { tenants: [...tenants].sort() };
+    logger.info(`${CF_NAME}: person ${personKey} can log in to [${tenants.join(', ')}]`);
+    return { tenants };
   }
 );
 

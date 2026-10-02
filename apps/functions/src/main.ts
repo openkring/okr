@@ -352,6 +352,7 @@ export { dryRunDiaryImport, commitDiaryImport } from './diary/import-diary';
 export { fetchDiaryWeather } from './diary/fetch-diary-weather';
 // Jasstafel (spec 1.67): a finished game's result into the caller's diary of app-config.diaryTenantId
 export { recordDiaryLine } from './diary/record-diary-line';
+export { listMyDiaryTenants } from './diary/list-my-diary-tenants';
 
 // privacy 1.19 Phase 3: one-time backfill of the ssn/dob vault + memberBirthYear
 export { migrateSensitiveData } from './person/migrate-sensitive-data';
