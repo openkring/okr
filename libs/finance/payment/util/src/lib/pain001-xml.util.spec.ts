@@ -28,6 +28,18 @@ describe('buildPain001Xml', () => {
     expect(xml).toContain('<Dbtr><Nm>Seeclub Stäfa</Nm></Dbtr>');
     expect(xml).toContain('<DbtrAcct><Id><IBAN>CH9300762011623852957</IBAN></Id></DbtrAcct>');
   });
+  it('writes DbtrAgt with NOTPROVIDED after Dbtr when no debtor BIC is given', () => {
+    const xml = buildPain001Xml({ ...base, payments: [pay({})] });
+    expect(xml).toContain('<DbtrAgt><FinInstnId><Othr><Id>NOTPROVIDED</Id></Othr></FinInstnId></DbtrAgt>');
+    expect(xml).not.toContain('<BICFI>');
+    expect(xml.indexOf('</Dbtr>')).toBeLessThan(xml.indexOf('<DbtrAgt>'));
+    expect(xml.indexOf('</DbtrAcct>')).toBeLessThan(xml.indexOf('<DbtrAgt>'));
+  });
+  it('writes DbtrAgt with the BICFI when a debtor BIC is given', () => {
+    const xml = buildPain001Xml({ ...base, debtorBic: 'zkbkchzz80a', payments: [pay({})] });
+    expect(xml).toContain('<DbtrAgt><FinInstnId><BICFI>ZKBKCHZZ80A</BICFI></FinInstnId></DbtrAgt>');
+    expect(xml).not.toContain('NOTPROVIDED');
+  });
   it('formats amounts with two decimals', () => {
     const xml = buildPain001Xml({ ...base, payments: [pay({})] });
     expect(xml).toContain('<InstdAmt Ccy="CHF">125.50</InstdAmt>');
@@ -49,6 +61,16 @@ describe('buildPain001Xml', () => {
   it('keeps a NON reference as Ustrd', () => {
     const xml = buildPain001Xml({ ...base, payments: [pay({ referenceType: 'NON' })] });
     expect(xml).toContain('<Ustrd>Spesen: Benzin</Ustrd>');
+  });
+  it('falls back to Ustrd when a QRR reference is empty', () => {
+    const xml = buildPain001Xml({ ...base, payments: [pay({ recipientIban: 'CH4431999123000889012', reference: '', referenceType: 'QRR' })] });
+    expect(xml).not.toContain('<Strd>');
+    expect(xml).toContain('<RmtInf><Ustrd></Ustrd></RmtInf>');
+  });
+  it('falls back to Ustrd when a SCOR reference is blank', () => {
+    const xml = buildPain001Xml({ ...base, payments: [pay({ reference: '  ', referenceType: 'SCOR' })] });
+    expect(xml).not.toContain('<Strd>');
+    expect(xml).toContain('<Ustrd>');
   });
   it('derives the type of a legacy payment without referenceType', () => {
     const xml = buildPain001Xml({ ...base, payments: [pay({

@@ -20,6 +20,8 @@ export interface Pain001Input {
   executionDate: string;
   debtorName: string;
   debtorIban: string;
+  /** BIC of the debtor's bank; omitted → <DbtrAgt> carries Othr/Id NOTPROVIDED (IBAN-only debit) */
+  debtorBic?: string;
   payments: Pain001Payment[];
   /** ISO timestamp for CreDtTm — passed in so the output is deterministic under test */
   createdAt: string;
@@ -51,14 +53,15 @@ export function parseRecipientAddress(address: string): RecipientAddress | undef
 
 function remittance(p: Pain001Payment): string {
   const type = p.referenceType || detectPaymentType(p.recipientIban, p.amount?.currency ?? 'CHF', p.reference);
-  const ref = p.reference.replace(/\s+/g, '').toUpperCase();
-  if (type === 'QRR') {
+  const ref = (p.reference ?? '').replace(/\s+/g, '').toUpperCase();
+  // A structured reference without a value is invalid (<Ref> must not be empty): send it unstructured.
+  if (type === 'QRR' && ref) {
     return `<RmtInf><Strd><CdtrRefInf><Tp><CdOrPrtry><Prtry>QRR</Prtry></CdOrPrtry></Tp><Ref>${escapeXml(ref)}</Ref></CdtrRefInf></Strd></RmtInf>`;
   }
-  if (type === 'SCOR') {
+  if (type === 'SCOR' && ref) {
     return `<RmtInf><Strd><CdtrRefInf><Tp><CdOrPrtry><Cd>SCOR</Cd></CdOrPrtry></Tp><Ref>${escapeXml(ref)}</Ref></CdtrRefInf></Strd></RmtInf>`;
   }
-  return `<RmtInf><Ustrd>${escapeXml(p.reference)}</Ustrd></RmtInf>`;
+  return `<RmtInf><Ustrd>${escapeXml(p.reference ?? '')}</Ustrd></RmtInf>`;
 }
 
 function postalAddress(address: string): string {
@@ -66,6 +69,13 @@ function postalAddress(address: string): string {
   if (!a) return '';
   const street = a.street ? `<StrtNm>${escapeXml(a.street)}</StrtNm>` : '';
   return `<PstlAdr>${street}<PstCd>${escapeXml(a.zip)}</PstCd><TwnNm>${escapeXml(a.town)}</TwnNm><Ctry>${a.country}</Ctry></PstlAdr>`;
+}
+
+/** <DbtrAgt> is mandatory in pain.001.001.09; without a known BIC the Swiss IG allows Othr/Id NOTPROVIDED. */
+function debtorAgent(bic: string | undefined): string {
+  const b = (bic ?? '').replace(/\s+/g, '').toUpperCase();
+  const id = b ? `<BICFI>${escapeXml(b)}</BICFI>` : '<Othr><Id>NOTPROVIDED</Id></Othr>';
+  return `<DbtrAgt><FinInstnId>${id}</FinInstnId></DbtrAgt>`;
 }
 
 /** The pain.001.001.09 document for one payment order (spec 1.80 §5.2). Pure. */
@@ -100,6 +110,7 @@ export function buildPain001Xml(input: Pain001Input): string {
       <ReqdExctnDt><Dt>${isoDate}</Dt></ReqdExctnDt>
       <Dbtr><Nm>${escapeXml(input.debtorName)}</Nm></Dbtr>
       <DbtrAcct><Id><IBAN>${normalizeIban(input.debtorIban)}</IBAN></Id></DbtrAcct>
+      ${debtorAgent(input.debtorBic)}
       ${txs}
     </PmtInf>
   </CstmrCdtTrfInitn>
