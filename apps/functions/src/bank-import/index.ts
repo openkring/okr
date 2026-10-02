@@ -12,6 +12,7 @@ import {
   splitsOf, withCostCenterKeys,
 } from './bank-import.util';
 import { InvoiceLike } from '../invoice/invoice-payment.logic';
+import { isBexioBackend } from '../bexio/backend-gate';
 import { costCenterKeyForLine, loadCostCenterContext } from '../cost-center/cost-center-context';
 
 const REGION = 'europe-west6';
@@ -29,10 +30,11 @@ const MAX_ROWS = 100;
 interface PostBankImportData { accountingTenantId: string; rowKeys?: string[]; splitTitle?: string; }
 interface Failure { rowKey: string; reason: string; }
 
-/** The fields the payment rules read, from a raw invoice document; undefined stays undefined. */
-function asInvoiceLike(doc: Record<string, unknown> | undefined): InvoiceLike | undefined {
+/** The fields the payment rules and the tenant check read, from a raw invoice document; undefined stays undefined. */
+function asInvoiceLike(doc: Record<string, unknown> | undefined): (InvoiceLike & { tenants: string[] }) | undefined {
   if (!doc) return undefined;
   return {
+    tenants: (doc['tenants'] as string[] | undefined) ?? [],
     state: String(doc['state'] ?? ''),
     totalAmount: doc['totalAmount'] as InvoiceLike['totalAmount'],
     payments: doc['payments'] as InvoiceLike['payments'],
@@ -68,6 +70,7 @@ export const postBankImport = onCall(
     const configSnap = await db.collection(CONFIG_COLLECTION).doc(accountingTenantId).get();
     const fiscalYearStart = Number(configSnap.data()?.['fiscalYearStart'] ?? 1) || 1;
     const receivablesKey = String(configSnap.data()?.['receivablesAccountKey'] ?? '');
+    const settlementBooks = { accountingTenantId, tenantId, bexioBackend: isBexioBackend(configSnap.data() as { accountingBackend?: string } | undefined) };
 
     // ---- candidate rows (mapped, this tenant + accounting tenant), file order = importedAt asc, date asc ----
     let rowRefs;
@@ -156,7 +159,7 @@ export const postBankImport = onCall(
           if (invoiceRef) {
             if (row.amount.amount > 0 && row.amount.currency === 'CHF' && receivablesKey) {
               const amount = receivablesCredit(lines as { accountKey: string; creditAmount?: { amount: number } | null }[], receivablesKey);
-              const settlement = invoiceSettlement(asInvoiceLike((await tx.get(invoiceRef)).data()), accountingTenantId, amount, row.date, bookingKey, profile.accountKey);
+              const settlement = invoiceSettlement(asInvoiceLike((await tx.get(invoiceRef)).data()), settlementBooks, amount, row.date, bookingKey, profile.accountKey);
               if ('patch' in settlement) invoicePatch = settlement.patch;
               else logger.warn(`${CF_NAME}: ${rowRef.id} invoice ${row.invoiceKey} not settled (${settlement.skip})`);
             } else {

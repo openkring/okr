@@ -140,16 +140,23 @@ export function receivablesCredit(
   return lines.filter(l => l.accountKey === receivablesKey).reduce((sum, l) => sum + (l.creditAmount?.amount ?? 0), 0);
 }
 
+/** The books a bank import posts into: the accounting tenant, the caller's tenant, and whether bexio keeps them. */
+export interface SettlementBooks { accountingTenantId: string; tenantId: string; bexioBackend: boolean; }
+
 /**
  * The invoice patch a posted bank booking writes under the 1.76 link rule, or why it does not settle
- * the invoice: missing, other-books, no-receivables-credit, already-recorded, or the comma-joined
+ * the invoice: bexio-backend (1.76 writes no invoice in bexio books), missing, other-tenant (the
+ * row's invoiceKey is client-written, so the invoice must be the caller's, as in
+ * `recordInvoicePayment`), other-books, no-receivables-credit, already-recorded, or the comma-joined
  * `paymentBlockers` codes (not-payable, overpayment, …). Same write shape as `recordInvoicePayment`.
  */
 export function invoiceSettlement(
-  invoice: InvoiceLike | undefined, accountingTenantId: string, amount: number, date: string, bookingKey: string, bankAccountKey: string,
+  invoice: (InvoiceLike & { tenants?: string[] }) | undefined, books: SettlementBooks, amount: number, date: string, bookingKey: string, bankAccountKey: string,
 ): { patch: Record<string, unknown> } | { skip: string } {
+  if (books.bexioBackend) return { skip: 'bexio-backend' };
   if (!invoice) return { skip: 'missing' };
-  if (invoice.accountingTenantId !== accountingTenantId) return { skip: 'other-books' };
+  if (!(invoice.tenants ?? []).includes(books.tenantId)) return { skip: 'other-tenant' };
+  if (invoice.accountingTenantId !== books.accountingTenantId) return { skip: 'other-books' };
   if (!(amount > 0)) return { skip: 'no-receivables-credit' };
   const existing = (invoice.payments ?? []).map(p => ({ bookingKey: p.bookingKey ?? '' }));
   if (paymentDecision(existing, bookingKey) === 'return-stored') return { skip: 'already-recorded' };

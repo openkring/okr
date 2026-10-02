@@ -231,9 +231,10 @@ describe('receivablesCredit (spec 1.2 §4.3)', () => {
 
 describe('invoiceSettlement (spec 1.2 §4.3 / 1.76 D6 link rule)', () => {
   const invoice = (p: Record<string, unknown> = {}) => ({
-    state: 'pending', totalAmount: { amount: 10000 }, payments: [], accountingTenantId: 'scs', ...p,
+    state: 'pending', totalAmount: { amount: 10000 }, payments: [], accountingTenantId: 'scs', tenants: ['scs'], ...p,
   });
-  const settle = (inv: ReturnType<typeof invoice> | undefined, amount = 10000) => invoiceSettlement(inv, 'scs', amount, '20261001', 'bank-k', 'scs-1020');
+  const books = { accountingTenantId: 'scs', tenantId: 'scs', bexioBackend: false };
+  const settle = (inv: ReturnType<typeof invoice> | undefined, amount = 10000, b = books) => invoiceSettlement(inv, b, amount, '20261001', 'bank-k', 'scs-1020');
 
   it('a full payment settles the invoice and flips it to paid', () => {
     expect(settle(invoice())).toEqual({ patch: {
@@ -253,6 +254,15 @@ describe('invoiceSettlement (spec 1.2 §4.3 / 1.76 D6 link rule)', () => {
   });
   it('skips a missing invoice', () => {
     expect(settle(undefined)).toEqual({ skip: 'missing' });
+  });
+  it('skips an invoice of another tenant, also when the books are shared', () => {
+    expect(settle(invoice({ tenants: ['gss'] }))).toEqual({ skip: 'other-tenant' });
+    expect(settle(invoice({ tenants: undefined }))).toEqual({ skip: 'other-tenant' });
+    expect(settle(invoice({ tenants: ['gss', 'scs'] }))).toEqual({ patch: expect.objectContaining({ state: 'paid' }) });
+  });
+  it('refuses books kept in bexio, before looking at the invoice', () => {
+    expect(settle(invoice(), 10000, { ...books, bexioBackend: true })).toEqual({ skip: 'bexio-backend' });
+    expect(settle(undefined, 10000, { ...books, bexioBackend: true })).toEqual({ skip: 'bexio-backend' });
   });
   it('skips an invoice of other books', () => {
     expect(settle(invoice({ accountingTenantId: 'gss' }))).toEqual({ skip: 'other-books' });
