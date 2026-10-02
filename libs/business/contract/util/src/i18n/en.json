@@ -15,7 +15,12 @@
     "confirm": "Do you want to archive this contract?"
   },
   "notice": {
-    "title": "Record notice"
+    "title": "Record notice",
+    "date": "Notice given on",
+    "by": "Notice given by",
+    "byUs": "Us",
+    "byThem": "The other party",
+    "effectiveEnd": "The contract ends on"
   },
   "summarize": "Create summary",
   "dossier": "Dossier",
@@ -42,7 +47,8 @@
     "negotiating": "In negotiation",
     "active": "Active",
     "noticeGiven": "Terminated",
-    "ended": "Ended"
+    "ended": "Ended",
+    "label": "Status"
   },
   "deadlineKind": {
     "notice": "Last day to give notice",
@@ -68,6 +74,144 @@
     "endBeforeStart": "The contract end is before its start.",
     "renewNeedsEnd": "A tacit renewal needs a contract end.",
     "parties": "Please add at least one contract party.",
-    "loanRequired": "Please add the loan terms."
+    "loanRequired": "Please add the loan terms.",
+    "noticeDate": "Please enter the date of the notice.",
+    "noticeBy": "Please choose who gave notice."
+  },
+  "view": "View contract",
+  "cancel": "Cancel",
+  "save": "Save",
+  "select": "Select",
+  "section": {
+    "general": "General",
+    "parties": "Parties",
+    "term": "Term & notice",
+    "loan": "Loan",
+    "abstract": "Summary"
+  },
+  "name": {
+    "label": "Name",
+    "placeholder": "e.g. Loan Muster family"
+  },
+  "contractType": {
+    "label": "Contract type"
+  },
+  "contractNumber": {
+    "label": "Contract number"
+  },
+  "confidentiality": {
+    "label": "Confidentiality",
+    "internal": "Internal",
+    "confidential": "Confidential",
+    "strictlyConfidential": "Strictly confidential"
+  },
+  "responsible": {
+    "label": "Responsible",
+    "note": "Who looks after this contract on our side."
+  },
+  "parties": {
+    "addPerson": "Person",
+    "addOrg": "Organisation",
+    "role": "Role",
+    "remove": "Remove party"
+  },
+  "partyRole": {
+    "internal": "Us",
+    "counterparty": "Counterparty",
+    "guarantor": "Guarantor"
+  },
+  "signingDate": {
+    "label": "Signed on"
+  },
+  "startDate": {
+    "label": "Start"
+  },
+  "endDate": {
+    "label": "End",
+    "helper": "Leave empty if the contract has no end date."
+  },
+  "autoRenewMonths": {
+    "label": "Renews by (months)",
+    "helper": "0 means the contract does not renew by itself."
+  },
+  "noticeOurs": {
+    "label": "Our notice period"
+  },
+  "noticeTheirs": {
+    "label": "Their notice period"
+  },
+  "noticeUnit": {
+    "label": "Unit"
+  },
+  "unit": {
+    "days": "Days",
+    "weeks": "Weeks",
+    "months": "Months"
+  },
+  "noticeTo": {
+    "label": "Notice effective at",
+    "anytime": "Any time",
+    "monthEnd": "End of month",
+    "quarterEnd": "End of quarter",
+    "yearEnd": "End of year",
+    "contractEnd": "End of contract"
+  },
+  "reminderLeadDays": {
+    "label": "Reminders (days before)",
+    "helper": "Separated by commas, e.g. 90, 30, 7. Empty means 90, 30, 7."
+  },
+  "loan": {
+    "direction": {
+      "label": "Direction",
+      "borrowed": "We borrowed",
+      "lent": "We lent"
+    },
+    "principal": {
+      "label": "Principal"
+    },
+    "interestRate": {
+      "label": "Interest rate (% p.a.)"
+    },
+    "rateFixedUntil": {
+      "label": "Rate fixed until"
+    },
+    "repayment": {
+      "label": "Repayment",
+      "bullet": "All at the end",
+      "linear": "In equal instalments",
+      "annuity": "Annuity",
+      "onDemand": "By agreement"
+    },
+    "repaymentAmount": {
+      "label": "Instalment"
+    },
+    "repaymentIntervalMonths": {
+      "label": "Instalment every (months)"
+    },
+    "maturityDate": {
+      "label": "Due on"
+    },
+    "accountNo": {
+      "label": "Account"
+    },
+    "collateral": {
+      "label": "Collateral"
+    },
+    "outstanding": {
+      "label": "Outstanding"
+    },
+    "outstandingAsOf": {
+      "label": "Outstanding as of"
+    }
+  },
+  "abstract": {
+    "label": "Summary",
+    "helper": "The key points of the contract in a few sentences.",
+    "ai": "This summary was created automatically. Please check it."
+  },
+  "summarizeError": "The summary could not be created. Please try again later.",
+  "notes": {
+    "label": "Notes",
+    "placeholder": "Anything else worth knowing"
   }
 }

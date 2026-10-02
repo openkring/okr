@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { AVATAR_INFO_SHAPE, ContractModel } from '@okr/shared-models';
-import { applyDerivedFields, derivePartyPersonKeys, newContractModel } from './contract.util';
+import { applyDerivedFields, derivePartyPersonKeys, formatLeadDays, isLoanType, newContractModel, newLoanTerms, parseLeadDays } from './contract.util';
 
 const av = (key: string, modelType: 'person' | 'org', name2 = 'X') => ({ ...AVATAR_INFO_SHAPE, key, modelType, name1: 'A', name2 });
 
@@ -37,5 +37,31 @@ describe('newContractModel', () => {
     expect(c.tenants).toEqual(['scs']);
     expect(c.state).toBe('draft');
     expect(c.confidentiality).toBe('internal');
+  });
+});
+
+describe('loan helpers', () => {
+  it('isLoanType only for loan and mortgage', () => {
+    expect(isLoanType('loan')).toBe(true);
+    expect(isLoanType('mortgage')).toBe(true);
+    expect(isLoanType('lease')).toBe(false);
+    expect(isLoanType(undefined)).toBe(false);
+  });
+  it('newLoanTerms has a plain zero CHF principal', () => {
+    const l = newLoanTerms();
+    expect(l.principal).toEqual({ amount: 0, currency: 'CHF', periodicity: 'once' });
+    expect(Object.getPrototypeOf(l.principal)).toBe(Object.prototype);
+    expect(l.repayment).toBe('bullet');
+  });
+});
+
+describe('lead days', () => {
+  it('parses, dedupes and sorts descending', () => {
+    expect(parseLeadDays('7, 90;30 30 x -1 0 2.5')).toEqual([90, 30, 7]);
+    expect(parseLeadDays('')).toEqual([]);
+  });
+  it('formats', () => {
+    expect(formatLeadDays([90, 30])).toBe('90, 30');
+    expect(formatLeadDays(undefined)).toBe('');
   });
 });

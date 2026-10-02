@@ -31,3 +31,16 @@ export const contractValidations = staticSuite((model: ContractModel, tenants: s
     }
   }
 });
+
+/** What "Kündigung erfassen" collects (spec 1.5 §8). */
+export interface ContractNoticeData {
+  noticeGivenDate: string;
+  noticeGivenBy: 'us' | 'them' | '';
+}
+
+export const contractNoticeValidations = staticSuite((model: ContractNoticeData, field?: string) => {
+  if (field) only(field);
+  dateValidations('noticeGivenDate', model.noticeGivenDate);
+  test('noticeGivenDate', '@business/contract/util.validation.noticeDate', () => { enforce(model.noticeGivenDate).isNotEmpty(); });
+  test('noticeGivenBy', '@business/contract/util.validation.noticeBy', () => { enforce(['us', 'them'].includes(model.noticeGivenBy)).isTruthy(); });
+});

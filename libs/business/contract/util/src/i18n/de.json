@@ -15,7 +15,12 @@
     "confirm": "Möchtest du diesen Vertrag archivieren?"
   },
   "notice": {
-    "title": "Kündigung erfassen"
+    "title": "Kündigung erfassen",
+    "date": "Gekündigt am",
+    "by": "Gekündigt von",
+    "byUs": "Uns",
+    "byThem": "Der Gegenseite",
+    "effectiveEnd": "Der Vertrag endet am"
   },
   "summarize": "Zusammenfassung erstellen",
   "dossier": "Dossier",
@@ -42,7 +47,8 @@
     "negotiating": "In Verhandlung",
     "active": "Aktiv",
     "noticeGiven": "Gekündigt",
-    "ended": "Beendet"
+    "ended": "Beendet",
+    "label": "Status"
   },
   "deadlineKind": {
     "notice": "Letzter Kündigungstag",
@@ -68,6 +74,144 @@
     "endBeforeStart": "Das Vertragsende liegt vor dem Beginn.",
     "renewNeedsEnd": "Eine stillschweigende Verlängerung braucht ein Vertragsende.",
     "parties": "Bitte erfasse mindestens eine Vertragspartei.",
-    "loanRequired": "Bitte erfasse die Darlehensbedingungen."
+    "loanRequired": "Bitte erfasse die Darlehensbedingungen.",
+    "noticeDate": "Bitte gib das Datum der Kündigung an.",
+    "noticeBy": "Bitte wähle, wer gekündigt hat."
+  },
+  "view": "Vertrag ansehen",
+  "cancel": "Abbrechen",
+  "save": "Speichern",
+  "select": "Auswählen",
+  "section": {
+    "general": "Allgemein",
+    "parties": "Parteien",
+    "term": "Laufzeit & Kündigung",
+    "loan": "Darlehen",
+    "abstract": "Zusammenfassung"
+  },
+  "name": {
+    "label": "Bezeichnung",
+    "placeholder": "z. B. Darlehen Familie Muster"
+  },
+  "contractType": {
+    "label": "Vertragsart"
+  },
+  "contractNumber": {
+    "label": "Vertragsnummer"
+  },
+  "confidentiality": {
+    "label": "Vertraulichkeit",
+    "internal": "Intern",
+    "confidential": "Vertraulich",
+    "strictlyConfidential": "Streng vertraulich"
+  },
+  "responsible": {
+    "label": "Verantwortlich",
+    "note": "Wer sich bei uns um diesen Vertrag kümmert."
+  },
+  "parties": {
+    "addPerson": "Person",
+    "addOrg": "Organisation",
+    "role": "Rolle",
+    "remove": "Partei entfernen"
+  },
+  "partyRole": {
+    "internal": "Wir",
+    "counterparty": "Vertragspartner",
+    "guarantor": "Bürge"
+  },
+  "signingDate": {
+    "label": "Unterschrieben am"
+  },
+  "startDate": {
+    "label": "Beginn"
+  },
+  "endDate": {
+    "label": "Ende",
+    "helper": "Leer lassen, wenn der Vertrag unbefristet ist."
+  },
+  "autoRenewMonths": {
+    "label": "Verlängerung um (Monate)",
+    "helper": "0 heisst: der Vertrag verlängert sich nicht von selbst."
+  },
+  "noticeOurs": {
+    "label": "Unsere Kündigungsfrist"
+  },
+  "noticeTheirs": {
+    "label": "Kündigungsfrist der Gegenseite"
+  },
+  "noticeUnit": {
+    "label": "Einheit"
+  },
+  "unit": {
+    "days": "Tage",
+    "weeks": "Wochen",
+    "months": "Monate"
+  },
+  "noticeTo": {
+    "label": "Kündbar auf",
+    "anytime": "Jederzeit",
+    "monthEnd": "Monatsende",
+    "quarterEnd": "Quartalsende",
+    "yearEnd": "Jahresende",
+    "contractEnd": "Vertragsende"
+  },
+  "reminderLeadDays": {
+    "label": "Erinnerungen (Tage vorher)",
+    "helper": "Mit Komma getrennt, z. B. 90, 30, 7. Leer heisst 90, 30, 7."
+  },
+  "loan": {
+    "direction": {
+      "label": "Richtung",
+      "borrowed": "Wir haben Geld erhalten",
+      "lent": "Wir haben Geld verliehen"
+    },
+    "principal": {
+      "label": "Darlehensbetrag"
+    },
+    "interestRate": {
+      "label": "Zinssatz (% pro Jahr)"
+    },
+    "rateFixedUntil": {
+      "label": "Zins fest bis"
+    },
+    "repayment": {
+      "label": "Rückzahlung",
+      "bullet": "Am Ende auf einmal",
+      "linear": "In gleichen Raten",
+      "annuity": "Annuität",
+      "onDemand": "Nach Absprache"
+    },
+    "repaymentAmount": {
+      "label": "Rate"
+    },
+    "repaymentIntervalMonths": {
+      "label": "Rate alle (Monate)"
+    },
+    "maturityDate": {
+      "label": "Fällig am"
+    },
+    "accountNo": {
+      "label": "Konto"
+    },
+    "collateral": {
+      "label": "Sicherheit"
+    },
+    "outstanding": {
+      "label": "Offener Betrag"
+    },
+    "outstandingAsOf": {
+      "label": "Offen per"
+    }
+  },
+  "abstract": {
+    "label": "Zusammenfassung",
+    "helper": "Die wichtigsten Punkte des Vertrags in wenigen Sätzen.",
+    "ai": "Diese Zusammenfassung wurde automatisch erstellt. Bitte prüfe sie."
+  },
+  "summarizeError": "Die Zusammenfassung konnte nicht erstellt werden. Versuche es später noch einmal.",
+  "notes": {
+    "label": "Notizen",
+    "placeholder": "Was sonst noch wichtig ist"
   }
 }

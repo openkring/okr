@@ -15,7 +15,12 @@
     "confirm": "Veux-tu archiver ce contrat ?"
   },
   "notice": {
-    "title": "Saisir une résiliation"
+    "title": "Saisir une résiliation",
+    "date": "Résilié le",
+    "by": "Résilié par",
+    "byUs": "Nous",
+    "byThem": "L'autre partie",
+    "effectiveEnd": "Le contrat se termine le"
   },
   "summarize": "Créer un résumé",
   "dossier": "Dossier",
@@ -42,7 +47,8 @@
     "negotiating": "En négociation",
     "active": "Actif",
     "noticeGiven": "Résilié",
-    "ended": "Terminé"
+    "ended": "Terminé",
+    "label": "Statut"
   },
   "deadlineKind": {
     "notice": "Dernier jour pour résilier",
@@ -68,6 +74,144 @@
     "endBeforeStart": "La fin du contrat est antérieure au début.",
     "renewNeedsEnd": "Une reconduction tacite nécessite une fin de contrat.",
     "parties": "Saisis au moins une partie au contrat.",
-    "loanRequired": "Saisis les conditions du prêt."
+    "loanRequired": "Saisis les conditions du prêt.",
+    "noticeDate": "Indique la date de la résiliation.",
+    "noticeBy": "Choisis qui a résilié."
+  },
+  "view": "Voir le contrat",
+  "cancel": "Annuler",
+  "save": "Enregistrer",
+  "select": "Choisir",
+  "section": {
+    "general": "Général",
+    "parties": "Parties",
+    "term": "Durée & résiliation",
+    "loan": "Prêt",
+    "abstract": "Résumé"
+  },
+  "name": {
+    "label": "Désignation",
+    "placeholder": "p. ex. Prêt famille Muster"
+  },
+  "contractType": {
+    "label": "Type de contrat"
+  },
+  "contractNumber": {
+    "label": "Numéro de contrat"
+  },
+  "confidentiality": {
+    "label": "Confidentialité",
+    "internal": "Interne",
+    "confidential": "Confidentiel",
+    "strictlyConfidential": "Strictement confidentiel"
+  },
+  "responsible": {
+    "label": "Responsable",
+    "note": "Qui s'occupe de ce contrat chez nous."
+  },
+  "parties": {
+    "addPerson": "Personne",
+    "addOrg": "Organisation",
+    "role": "Rôle",
+    "remove": "Retirer la partie"
+  },
+  "partyRole": {
+    "internal": "Nous",
+    "counterparty": "Cocontractant",
+    "guarantor": "Garant"
+  },
+  "signingDate": {
+    "label": "Signé le"
+  },
+  "startDate": {
+    "label": "Début"
+  },
+  "endDate": {
+    "label": "Fin",
+    "helper": "Laisse vide si le contrat est à durée indéterminée."
+  },
+  "autoRenewMonths": {
+    "label": "Reconduction de (mois)",
+    "helper": "0 signifie : le contrat ne se reconduit pas tout seul."
+  },
+  "noticeOurs": {
+    "label": "Notre délai de résiliation"
+  },
+  "noticeTheirs": {
+    "label": "Délai de résiliation de l'autre partie"
+  },
+  "noticeUnit": {
+    "label": "Unité"
+  },
+  "unit": {
+    "days": "Jours",
+    "weeks": "Semaines",
+    "months": "Mois"
+  },
+  "noticeTo": {
+    "label": "Résiliable pour",
+    "anytime": "En tout temps",
+    "monthEnd": "Fin du mois",
+    "quarterEnd": "Fin du trimestre",
+    "yearEnd": "Fin de l'année",
+    "contractEnd": "Fin du contrat"
+  },
+  "reminderLeadDays": {
+    "label": "Rappels (jours avant)",
+    "helper": "Séparés par des virgules, p. ex. 90, 30, 7. Vide signifie 90, 30, 7."
+  },
+  "loan": {
+    "direction": {
+      "label": "Sens",
+      "borrowed": "Nous avons emprunté",
+      "lent": "Nous avons prêté"
+    },
+    "principal": {
+      "label": "Montant du prêt"
+    },
+    "interestRate": {
+      "label": "Taux d'intérêt (% par an)"
+    },
+    "rateFixedUntil": {
+      "label": "Taux fixe jusqu'au"
+    },
+    "repayment": {
+      "label": "Remboursement",
+      "bullet": "En une fois à la fin",
+      "linear": "Par tranches égales",
+      "annuity": "Annuité",
+      "onDemand": "Selon accord"
+    },
+    "repaymentAmount": {
+      "label": "Montant de la tranche"
+    },
+    "repaymentIntervalMonths": {
+      "label": "Tranche tous les (mois)"
+    },
+    "maturityDate": {
+      "label": "Échéance le"
+    },
+    "accountNo": {
+      "label": "Compte"
+    },
+    "collateral": {
+      "label": "Garantie"
+    },
+    "outstanding": {
+      "label": "Montant ouvert"
+    },
+    "outstandingAsOf": {
+      "label": "Ouvert au"
+    }
+  },
+  "abstract": {
+    "label": "Résumé",
+    "helper": "Les points clés du contrat en quelques phrases.",
+    "ai": "Ce résumé a été créé automatiquement. Vérifie-le s'il te plaît."
+  },
+  "summarizeError": "Le résumé n'a pas pu être créé. Réessaie plus tard.",
+  "notes": {
+    "label": "Notes",
+    "placeholder": "Ce qu'il faut encore savoir"
   }
 }

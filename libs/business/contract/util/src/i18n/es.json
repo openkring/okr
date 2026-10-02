@@ -15,7 +15,12 @@
     "confirm": "¿Quieres archivar este contrato?"
   },
   "notice": {
-    "title": "Registrar rescisión"
+    "title": "Registrar rescisión",
+    "date": "Rescindido el",
+    "by": "Rescindido por",
+    "byUs": "Nosotros",
+    "byThem": "La otra parte",
+    "effectiveEnd": "El contrato termina el"
   },
   "summarize": "Crear resumen",
   "dossier": "Dosier",
@@ -42,7 +47,8 @@
     "negotiating": "En negociación",
     "active": "Activo",
     "noticeGiven": "Rescindido",
-    "ended": "Finalizado"
+    "ended": "Finalizado",
+    "label": "Estado"
   },
   "deadlineKind": {
     "notice": "Último día para rescindir",
@@ -68,6 +74,144 @@
     "endBeforeStart": "El fin del contrato es anterior al inicio.",
     "renewNeedsEnd": "Una renovación tácita necesita una fecha de fin.",
     "parties": "Registra al menos una parte contratante.",
-    "loanRequired": "Registra las condiciones del préstamo."
+    "loanRequired": "Registra las condiciones del préstamo.",
+    "noticeDate": "Indica la fecha de la rescisión.",
+    "noticeBy": "Elige quién ha rescindido."
+  },
+  "view": "Ver contrato",
+  "cancel": "Cancelar",
+  "save": "Guardar",
+  "select": "Elegir",
+  "section": {
+    "general": "General",
+    "parties": "Partes",
+    "term": "Duración y rescisión",
+    "loan": "Préstamo",
+    "abstract": "Resumen"
+  },
+  "name": {
+    "label": "Denominación",
+    "placeholder": "p. ej. Préstamo familia Muster"
+  },
+  "contractType": {
+    "label": "Tipo de contrato"
+  },
+  "contractNumber": {
+    "label": "Número de contrato"
+  },
+  "confidentiality": {
+    "label": "Confidencialidad",
+    "internal": "Interno",
+    "confidential": "Confidencial",
+    "strictlyConfidential": "Estrictamente confidencial"
+  },
+  "responsible": {
+    "label": "Responsable",
+    "note": "Quién se ocupa de este contrato en nuestro lado."
+  },
+  "parties": {
+    "addPerson": "Persona",
+    "addOrg": "Organización",
+    "role": "Rol",
+    "remove": "Quitar la parte"
+  },
+  "partyRole": {
+    "internal": "Nosotros",
+    "counterparty": "Contraparte",
+    "guarantor": "Garante"
+  },
+  "signingDate": {
+    "label": "Firmado el"
+  },
+  "startDate": {
+    "label": "Inicio"
+  },
+  "endDate": {
+    "label": "Fin",
+    "helper": "Déjalo vacío si el contrato es indefinido."
+  },
+  "autoRenewMonths": {
+    "label": "Renovación por (meses)",
+    "helper": "0 significa: el contrato no se renueva solo."
+  },
+  "noticeOurs": {
+    "label": "Nuestro plazo de preaviso"
+  },
+  "noticeTheirs": {
+    "label": "Plazo de preaviso de la otra parte"
+  },
+  "noticeUnit": {
+    "label": "Unidad"
+  },
+  "unit": {
+    "days": "Días",
+    "weeks": "Semanas",
+    "months": "Meses"
+  },
+  "noticeTo": {
+    "label": "Rescindible para",
+    "anytime": "En cualquier momento",
+    "monthEnd": "Fin de mes",
+    "quarterEnd": "Fin de trimestre",
+    "yearEnd": "Fin de año",
+    "contractEnd": "Fin del contrato"
+  },
+  "reminderLeadDays": {
+    "label": "Recordatorios (días antes)",
+    "helper": "Separados por comas, p. ej. 90, 30, 7. Vacío significa 90, 30, 7."
+  },
+  "loan": {
+    "direction": {
+      "label": "Dirección",
+      "borrowed": "Hemos recibido un préstamo",
+      "lent": "Hemos prestado"
+    },
+    "principal": {
+      "label": "Importe del préstamo"
+    },
+    "interestRate": {
+      "label": "Tipo de interés (% anual)"
+    },
+    "rateFixedUntil": {
+      "label": "Interés fijo hasta"
+    },
+    "repayment": {
+      "label": "Amortización",
+      "bullet": "Todo al final",
+      "linear": "En cuotas iguales",
+      "annuity": "Anualidad",
+      "onDemand": "Según acuerdo"
+    },
+    "repaymentAmount": {
+      "label": "Importe de la cuota"
+    },
+    "repaymentIntervalMonths": {
+      "label": "Cuota cada (meses)"
+    },
+    "maturityDate": {
+      "label": "Vence el"
+    },
+    "accountNo": {
+      "label": "Cuenta"
+    },
+    "collateral": {
+      "label": "Garantía"
+    },
+    "outstanding": {
+      "label": "Importe pendiente"
+    },
+    "outstandingAsOf": {
+      "label": "Pendiente a"
+    }
+  },
+  "abstract": {
+    "label": "Resumen",
+    "helper": "Los puntos clave del contrato en pocas frases.",
+    "ai": "Este resumen se creó automáticamente. Revísalo, por favor."
+  },
+  "summarizeError": "No se pudo crear el resumen. Vuelve a intentarlo más tarde.",
+  "notes": {
+    "label": "Notas",
+    "placeholder": "Qué más es importante"
   }
 }

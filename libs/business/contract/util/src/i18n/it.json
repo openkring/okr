@@ -15,7 +15,12 @@
     "confirm": "Vuoi archiviare questo contratto?"
   },
   "notice": {
-    "title": "Registra disdetta"
+    "title": "Registra disdetta",
+    "date": "Disdetto il",
+    "by": "Disdetto da",
+    "byUs": "Noi",
+    "byThem": "La controparte",
+    "effectiveEnd": "Il contratto termina il"
   },
   "summarize": "Crea riepilogo",
   "dossier": "Dossier",
@@ -42,7 +47,8 @@
     "negotiating": "In trattativa",
     "active": "Attivo",
     "noticeGiven": "Disdetto",
-    "ended": "Concluso"
+    "ended": "Concluso",
+    "label": "Stato"
   },
   "deadlineKind": {
     "notice": "Ultimo giorno per la disdetta",
@@ -68,6 +74,144 @@
     "endBeforeStart": "La fine del contratto è precedente all'inizio.",
     "renewNeedsEnd": "Un rinnovo tacito richiede una fine del contratto.",
     "parties": "Registra almeno una parte contrattuale.",
-    "loanRequired": "Registra le condizioni del prestito."
+    "loanRequired": "Registra le condizioni del prestito.",
+    "noticeDate": "Indica la data della disdetta.",
+    "noticeBy": "Scegli chi ha dato la disdetta."
+  },
+  "view": "Vedi contratto",
+  "cancel": "Annulla",
+  "save": "Salva",
+  "select": "Scegli",
+  "section": {
+    "general": "Generale",
+    "parties": "Parti",
+    "term": "Durata & disdetta",
+    "loan": "Prestito",
+    "abstract": "Riassunto"
+  },
+  "name": {
+    "label": "Denominazione",
+    "placeholder": "ad es. Prestito famiglia Muster"
+  },
+  "contractType": {
+    "label": "Tipo di contratto"
+  },
+  "contractNumber": {
+    "label": "Numero di contratto"
+  },
+  "confidentiality": {
+    "label": "Riservatezza",
+    "internal": "Interno",
+    "confidential": "Riservato",
+    "strictlyConfidential": "Strettamente riservato"
+  },
+  "responsible": {
+    "label": "Responsabile",
+    "note": "Chi si occupa di questo contratto da noi."
+  },
+  "parties": {
+    "addPerson": "Persona",
+    "addOrg": "Organizzazione",
+    "role": "Ruolo",
+    "remove": "Rimuovi la parte"
+  },
+  "partyRole": {
+    "internal": "Noi",
+    "counterparty": "Controparte",
+    "guarantor": "Garante"
+  },
+  "signingDate": {
+    "label": "Firmato il"
+  },
+  "startDate": {
+    "label": "Inizio"
+  },
+  "endDate": {
+    "label": "Fine",
+    "helper": "Lascia vuoto se il contratto è a tempo indeterminato."
+  },
+  "autoRenewMonths": {
+    "label": "Rinnovo di (mesi)",
+    "helper": "0 significa: il contratto non si rinnova da solo."
+  },
+  "noticeOurs": {
+    "label": "Il nostro termine di disdetta"
+  },
+  "noticeTheirs": {
+    "label": "Termine di disdetta della controparte"
+  },
+  "noticeUnit": {
+    "label": "Unità"
+  },
+  "unit": {
+    "days": "Giorni",
+    "weeks": "Settimane",
+    "months": "Mesi"
+  },
+  "noticeTo": {
+    "label": "Disdicibile per",
+    "anytime": "In qualsiasi momento",
+    "monthEnd": "Fine del mese",
+    "quarterEnd": "Fine del trimestre",
+    "yearEnd": "Fine dell'anno",
+    "contractEnd": "Fine del contratto"
+  },
+  "reminderLeadDays": {
+    "label": "Promemoria (giorni prima)",
+    "helper": "Separati da virgole, ad es. 90, 30, 7. Vuoto significa 90, 30, 7."
+  },
+  "loan": {
+    "direction": {
+      "label": "Direzione",
+      "borrowed": "Abbiamo ricevuto un prestito",
+      "lent": "Abbiamo prestato"
+    },
+    "principal": {
+      "label": "Importo del prestito"
+    },
+    "interestRate": {
+      "label": "Tasso d'interesse (% annuo)"
+    },
+    "rateFixedUntil": {
+      "label": "Tasso fisso fino al"
+    },
+    "repayment": {
+      "label": "Rimborso",
+      "bullet": "Tutto alla fine",
+      "linear": "A rate uguali",
+      "annuity": "Annualità",
+      "onDemand": "Su accordo"
+    },
+    "repaymentAmount": {
+      "label": "Importo della rata"
+    },
+    "repaymentIntervalMonths": {
+      "label": "Rata ogni (mesi)"
+    },
+    "maturityDate": {
+      "label": "Scadenza il"
+    },
+    "accountNo": {
+      "label": "Conto"
+    },
+    "collateral": {
+      "label": "Garanzia"
+    },
+    "outstanding": {
+      "label": "Importo residuo"
+    },
+    "outstandingAsOf": {
+      "label": "Residuo al"
+    }
+  },
+  "abstract": {
+    "label": "Riassunto",
+    "helper": "I punti principali del contratto in poche frasi.",
+    "ai": "Questo riassunto è stato creato automaticamente. Controllalo per favore."
+  },
+  "summarizeError": "Non è stato possibile creare il riassunto. Riprova più tardi.",
+  "notes": {
+    "label": "Note",
+    "placeholder": "Cos'altro è importante"
   }
 }
