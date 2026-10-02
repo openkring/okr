@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { emailDocumentKind, invoiceEmailHtml, invoiceEmailSubject, recipientDirectoryId, scrubEmailAddresses } from './send-invoice-email.logic';
+import { emailDocumentKind, invoiceEmailHtml, invoiceEmailSubject, recipientDirectoryId, scrubEmailAddresses, sendRefusal } from './send-invoice-email.logic';
 
 describe('emailDocumentKind', () => {
   const invoice = { documentKey: 'invoice-a', reminders: [{ level: 1, date: '', dueDate: '', documentKey: 'invoice-a-reminder-1' }, { level: 2, date: '', dueDate: '', documentKey: 'invoice-a-reminder-2' }] };
@@ -62,5 +62,20 @@ describe('scrubEmailAddresses', () => {
   it('replaces anything that looks like an address', () => {
     expect(scrubEmailAddresses('550 rejected: max.muster@example.ch <a.b@c.d> unknown')).toBe('550 rejected: [email] <[email]> unknown');
     expect(scrubEmailAddresses('no address here')).toBe('no address here');
+  });
+});
+
+describe('sendRefusal', () => {
+  it('mails a reminder only while the invoice is open', () => {
+    for (const state of ['pending', 'partial', 'unpaid']) expect(sendRefusal('reminder', state)).toBeUndefined();
+    expect(sendRefusal('reminder', 'paid')).toBe('not-payable');
+    expect(sendRefusal('reminder', 'cancelled')).toBe('not-payable');
+    expect(sendRefusal('reminder', undefined)).toBe('not-payable');
+  });
+  it('mails the invoice PDF in any issued state, never a draft', () => {
+    expect(sendRefusal('invoice', 'paid')).toBeUndefined();
+    expect(sendRefusal('invoice', 'cancelled')).toBeUndefined();
+    expect(sendRefusal('invoice', 'draft')).toBe('not-issued');
+    expect(sendRefusal('reminder', 'draft')).toBe('not-issued');
   });
 });

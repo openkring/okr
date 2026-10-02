@@ -1,4 +1,4 @@
-import { ReminderLike } from './invoice-payment.logic';
+import { isPayableState, ReminderLike } from './invoice-payment.logic';
 
 export type EmailKind = 'invoice' | 'reminder';
 
@@ -10,6 +10,17 @@ export function emailDocumentKind(
   if (invoice.documentKey === documentKey) return { kind: 'invoice' };
   const reminder = (invoice.reminders ?? []).find((r) => r.documentKey === documentKey);
   return reminder ? { kind: 'reminder', level: reminder.level } : undefined;
+}
+
+/**
+ * Why a document of an invoice in this state may not be mailed: a draft has no PDF to send yet
+ * (`not-issued`); a reminder is only sent while the invoice is still open (`not-payable` — a paid or
+ * cancelled invoice gets no Mahnung). The invoice PDF itself may be mailed in any issued state.
+ */
+export function sendRefusal(kind: EmailKind, state: string | undefined): 'not-issued' | 'not-payable' | undefined {
+  if ((state ?? '') === 'draft') return 'not-issued';
+  if (kind === 'reminder' && !isPayableState(state)) return 'not-payable';
+  return undefined;
 }
 
 const reminderName = (level: number): string => (level <= 1 ? 'Zahlungserinnerung' : `${level}. Mahnung`);

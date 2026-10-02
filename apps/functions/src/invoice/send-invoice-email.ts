@@ -14,7 +14,7 @@ import { loadOwnedAccountingConfig, ReceiverRef, refuse } from './invoice-contex
 import { InvoiceLike, openAmount, ReminderLike } from './invoice-payment.logic';
 import { lastDueDate } from './invoice-reminder.logic';
 import { chf, viewDate, withoutUndefined } from './invoice.logic';
-import { emailDocumentKind, invoiceEmailHtml, invoiceEmailSubject, recipientDirectoryId, scrubEmailAddresses } from './send-invoice-email.logic';
+import { emailDocumentKind, invoiceEmailHtml, invoiceEmailSubject, recipientDirectoryId, scrubEmailAddresses, sendRefusal } from './send-invoice-email.logic';
 
 const REGION = 'europe-west6';
 const CF_NAME = 'sendInvoiceEmail';
@@ -72,6 +72,10 @@ export const sendInvoiceEmail = onCall(
     const target = emailDocumentKind({ documentKey: String(invoice['documentKey'] ?? ''), reminders }, documentKey);
     if (!target) throw refuse('foreign-document', `document ${documentKey} does not belong to invoice ${invoiceKey}`);
     const level = target.kind === 'reminder' ? target.level : 0;
+    // defense in depth: the app offers "Mahnung senden" only on open invoices
+    if (sendRefusal(target.kind, String(invoice['state'] ?? '')) === 'not-payable') {
+      throw refuse('not-payable', `invoice ${invoiceKey} is ${String(invoice['state'] ?? '')}: no reminder mail`);
+    }
 
     const document = (await db.collection(FinanceDocumentCollection).doc(documentKey).get()).data();
     const fullPath = String(document?.['fullPath'] ?? '');
