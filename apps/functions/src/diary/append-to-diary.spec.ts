@@ -16,7 +16,13 @@ describe('decideDiaryLine', () => {
 
 describe('validateDiaryLineRequest', () => {
   const ok = { tenantId: 'scs', date: '20260930', line: '  Jass Schieber  ' };
-  it('returns the trimmed line', () => expect(validateDiaryLineRequest(ok)).toBe('Jass Schieber'));
+  it('returns the trimmed line', () => expect(validateDiaryLineRequest(ok).line).toBe('Jass Schieber'));
+  it('defaults a missing source to jasstafel (old clients)', () =>
+    expect(validateDiaryLineRequest(ok).source).toBe('jasstafel'));
+  it('accepts a known source', () =>
+    expect(validateDiaryLineRequest({ ...ok, source: 'taskDone' }).source).toBe('taskDone'));
+  it('rejects an unknown source', () =>
+    expect(() => validateDiaryLineRequest({ ...ok, source: 'nope' as never })).toThrow());
   it('needs a tenant', () => expect(() => validateDiaryLineRequest({ ...ok, tenantId: '' })).toThrow());
   it('rejects an aggregate date', () => expect(() => validateDiaryLineRequest({ ...ok, date: '20260900' })).toThrow());
   it('rejects an empty line', () => expect(() => validateDiaryLineRequest({ ...ok, line: '   ' })).toThrow());
