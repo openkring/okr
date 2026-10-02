@@ -459,3 +459,4 @@ export { healthz } from './health';
 
 // contracts: daily deadline scan (spec 1.5 §6.2)
 export const scanContractDeadlines = Contract.scanContractDeadlines;
+export const onContractWritten = Contract.onContractWritten;

@@ -1,12 +1,14 @@
 import { onSchedule } from 'firebase-functions/v2/scheduler';
+import { onDocumentWritten } from 'firebase-functions/v2/firestore';
 import { logger } from 'firebase-functions/v2';
 import { getFirestore } from 'firebase-admin/firestore';
 
-import { ContractCollection, ContractModel } from '@okr/shared-models';
+import { ContractCollection, ContractDocumentCollection, ContractModel } from '@okr/shared-models';
 import { getTodayStr } from '@okr/shared-util-core';
 
 import { emitEvent } from '../workflow/emit';
 import { planContractScan } from './contract-scan';
+import { needsRestamp } from './contract-document.util';
 
 const REGION = 'europe-west6';
 
@@ -40,3 +42,22 @@ export const scanContractDeadlines = onSchedule(
     }
   },
 );
+
+/** Keeps file access in step with the contract (spec 1.5 §5.3): a removed party loses file access. */
+export const onContractWritten = onDocumentWritten({ document: `${ContractCollection}/{id}`, region: REGION }, async (event) => {
+  const before = event.data?.before.data();
+  const after = event.data?.after.data();
+  if (!needsRestamp(before, after) || !after) return;
+  const db = getFirestore();
+  const docs = await db.collection(ContractDocumentCollection).where('contractKey', '==', event.params.id).get();
+  const stamp = {
+    partyPersonKeys: after['partyPersonKeys'] ?? [], isStrictlyConfidential: after['isStrictlyConfidential'] ?? false,
+    confidentiality: after['confidentiality'] ?? 'internal', tenants: after['tenants'] ?? [],
+  };
+  for (let i = 0; i < docs.docs.length; i += 400) {
+    const batch = db.batch();
+    docs.docs.slice(i, i + 400).forEach((d) => batch.update(d.ref, stamp));
+    await batch.commit();
+  }
+  logger.info(`onContractWritten: restamped ${docs.size} file(s) of contract ${event.params.id}`);
+});
