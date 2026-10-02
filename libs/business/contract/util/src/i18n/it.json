@@ -76,7 +76,12 @@
     "parties": "Registra almeno una parte contrattuale.",
     "loanRequired": "Registra le condizioni del prestito.",
     "noticeDate": "Indica la data della disdetta.",
-    "noticeBy": "Scegli chi ha dato la disdetta."
+    "noticeBy": "Scegli chi ha dato la disdetta.",
+    "docRole": "Scegli il tipo di file.",
+    "docState": "Scegli lo stato del file.",
+    "fileMissing": "Scegli un file.",
+    "fileType": "Questo tipo di file non può essere archiviato. Sono ammessi PDF, immagini (JPEG, PNG, HEIC), Word, OpenDocument, testo ed e-mail.",
+    "fileSize": "Il file è troppo grande. Sono ammessi al massimo 25 MB."
   },
   "view": "Vedi contratto",
   "cancel": "Annulla",
@@ -213,5 +218,39 @@
   "notes": {
     "label": "Note",
     "placeholder": "Cos'altro è importante"
+  },
+  "file": {
+    "empty": "Nessun file nel dossier per ora.",
+    "signError": "Al momento i file non possono essere visualizzati. Riprova più tardi.",
+    "uploading": "Caricamento del file in corso …",
+    "uploadError": "Non è stato possibile caricare il file. Riprova.",
+    "open": "Apri il file",
+    "role": {
+      "label": "Tipo"
+    },
+    "docState": {
+      "label": "Stato"
+    },
+    "title": {
+      "label": "Titolo",
+      "placeholder": "p. es. contratto firmato",
+      "helper": "Lascia vuoto per usare il nome del file."
+    },
+    "prior": {
+      "label": "Sostituisce il file",
+      "none": "Nessuno, nuovo file"
+    },
+    "pick": {
+      "label": "File",
+      "helper": "PDF, immagine (JPEG, PNG, HEIC), Word, OpenDocument, testo o e-mail, al massimo 25 MB."
+    }
+  },
+  "deadline": {
+    "next": "Prossima scadenza",
+    "none": "Nessuna scadenza imminente",
+    "notSet": "Non definito",
+    "earliestTermination": "Prima data di disdetta possibile",
+    "remindersSent": "Promemoria inviati",
+    "reminder": "Promemoria {lead} giorni prima del {date}"
   }
 }

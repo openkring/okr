@@ -4,6 +4,7 @@ import { CONTRACT_STATES, CONTRACT_TYPES } from '@okr/shared-models';
 import {
   CONFIDENTIALITY_LEVELS, LOAN_DIRECTIONS, NOTICE_ANCHORS, NOTICE_UNITS, PARTY_ROLES, REPAYMENT_KINDS,
 } from './contract-options';
+import { CONTRACT_DOC_STATES, CONTRACT_DOCUMENT_ROLES, DEADLINE_KINDS } from './contract-dossier.util';
 
 /** MUST mirror the lib's physical path under `libs/` (libs/business/contract/util). */
 export const PFX = '@business/contract/util.';
@@ -54,7 +55,23 @@ export const CONTRACT_I18N_KEYS = {
   notice_date: PFX + 'notice.date', notice_by: PFX + 'notice.by', notice_byUs: PFX + 'notice.byUs',
   notice_byThem: PFX + 'notice.byThem', notice_effectiveEnd: PFX + 'notice.effectiveEnd',
 
+  // dossier (file list + upload modal)
+  file_empty: PFX + 'file.empty', file_signError: PFX + 'file.signError', file_uploading: PFX + 'file.uploading',
+  file_uploadError: PFX + 'file.uploadError', file_open: PFX + 'file.open',
+  file_role_label: PFX + 'file.role.label', file_docState_label: PFX + 'file.docState.label',
+  file_title_label: PFX + 'file.title.label', file_title_placeholder: PFX + 'file.title.placeholder',
+  file_title_helper: PFX + 'file.title.helper', file_prior_label: PFX + 'file.prior.label',
+  file_prior_none: PFX + 'file.prior.none', file_pick_label: PFX + 'file.pick.label', file_pick_helper: PFX + 'file.pick.helper',
+
+  // deadline panel
+  deadline_next: PFX + 'deadline.next', deadline_none: PFX + 'deadline.none', deadline_notSet: PFX + 'deadline.notSet',
+  deadline_earliestTermination: PFX + 'deadline.earliestTermination', deadline_remindersSent: PFX + 'deadline.remindersSent',
+  deadline_reminder: PFX + 'deadline.reminder',
+
   // select option labels
+  ...optionKeys('role', CONTRACT_DOCUMENT_ROLES),
+  ...optionKeys('docState', CONTRACT_DOC_STATES),
+  ...optionKeys('deadlineKind', DEADLINE_KINDS),
   ...optionKeys('type', CONTRACT_TYPES),
   ...optionKeys('state', CONTRACT_STATES),
   ...optionKeys('confidentiality', CONFIDENTIALITY_LEVELS),

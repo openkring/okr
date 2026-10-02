@@ -76,7 +76,12 @@
     "parties": "Registra al menos una parte contratante.",
     "loanRequired": "Registra las condiciones del préstamo.",
     "noticeDate": "Indica la fecha de la rescisión.",
-    "noticeBy": "Elige quién ha rescindido."
+    "noticeBy": "Elige quién ha rescindido.",
+    "docRole": "Elige el tipo de archivo.",
+    "docState": "Elige el estado del archivo.",
+    "fileMissing": "Elige un archivo.",
+    "fileType": "Este tipo de archivo no se puede guardar. Se permiten PDF, imágenes (JPEG, PNG, HEIC), Word, OpenDocument, texto y correos.",
+    "fileSize": "El archivo es demasiado grande. Se permiten como máximo 25 MB."
   },
   "view": "Ver contrato",
   "cancel": "Cancelar",
@@ -213,5 +218,39 @@
   "notes": {
     "label": "Notas",
     "placeholder": "Qué más es importante"
+  },
+  "file": {
+    "empty": "Todavía no hay archivos en el dosier.",
+    "signError": "Ahora mismo no se pueden mostrar los archivos. Inténtalo más tarde.",
+    "uploading": "Subiendo el archivo …",
+    "uploadError": "No se ha podido subir el archivo. Inténtalo de nuevo.",
+    "open": "Abrir el archivo",
+    "role": {
+      "label": "Tipo"
+    },
+    "docState": {
+      "label": "Estado"
+    },
+    "title": {
+      "label": "Título",
+      "placeholder": "p. ej. contrato firmado",
+      "helper": "Déjalo vacío para usar el nombre del archivo."
+    },
+    "prior": {
+      "label": "Sustituye el archivo",
+      "none": "Ninguno, archivo nuevo"
+    },
+    "pick": {
+      "label": "Archivo",
+      "helper": "PDF, imagen (JPEG, PNG, HEIC), Word, OpenDocument, texto o correo, como máximo 25 MB."
+    }
+  },
+  "deadline": {
+    "next": "Próximo plazo",
+    "none": "Ningún plazo pendiente",
+    "notSet": "No definido",
+    "earliestTermination": "Fecha de rescisión más temprana",
+    "remindersSent": "Recordatorios enviados",
+    "reminder": "Recordatorio {lead} días antes del {date}"
   }
 }

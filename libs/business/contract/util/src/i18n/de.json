@@ -76,7 +76,12 @@
     "parties": "Bitte erfasse mindestens eine Vertragspartei.",
     "loanRequired": "Bitte erfasse die Darlehensbedingungen.",
     "noticeDate": "Bitte gib das Datum der Kündigung an.",
-    "noticeBy": "Bitte wähle, wer gekündigt hat."
+    "noticeBy": "Bitte wähle, wer gekündigt hat.",
+    "docRole": "Bitte wähle die Art der Datei.",
+    "docState": "Bitte wähle den Stand der Datei.",
+    "fileMissing": "Bitte wähle eine Datei.",
+    "fileType": "Diese Dateiart kann nicht abgelegt werden. Erlaubt sind PDF, Bilder (JPEG, PNG, HEIC), Word, OpenDocument, Text und E-Mails.",
+    "fileSize": "Die Datei ist zu gross. Erlaubt sind höchstens 25 MB."
   },
   "view": "Vertrag ansehen",
   "cancel": "Abbrechen",
@@ -213,5 +218,39 @@
   "notes": {
     "label": "Notizen",
     "placeholder": "Was sonst noch wichtig ist"
+  },
+  "file": {
+    "empty": "Noch keine Dateien im Dossier.",
+    "signError": "Die Dateien können gerade nicht angezeigt werden. Versuche es später noch einmal.",
+    "uploading": "Die Datei wird hochgeladen …",
+    "uploadError": "Die Datei konnte nicht hochgeladen werden. Versuche es noch einmal.",
+    "open": "Datei öffnen",
+    "role": {
+      "label": "Art"
+    },
+    "docState": {
+      "label": "Stand"
+    },
+    "title": {
+      "label": "Titel",
+      "placeholder": "z. B. Vertrag unterschrieben",
+      "helper": "Leer lassen, um den Dateinamen zu übernehmen."
+    },
+    "prior": {
+      "label": "Ersetzt die Datei",
+      "none": "Keine, neue Datei"
+    },
+    "pick": {
+      "label": "Datei",
+      "helper": "PDF, Bild (JPEG, PNG, HEIC), Word, OpenDocument, Text oder E-Mail, höchstens 25 MB."
+    }
+  },
+  "deadline": {
+    "next": "Nächste Frist",
+    "none": "Keine anstehende Frist",
+    "notSet": "Nicht festgelegt",
+    "earliestTermination": "Frühester Kündigungstermin",
+    "remindersSent": "Verschickte Erinnerungen",
+    "reminder": "Erinnerung {lead} Tage vor {date}"
   }
 }

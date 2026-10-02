@@ -76,7 +76,12 @@
     "parties": "Saisis au moins une partie au contrat.",
     "loanRequired": "Saisis les conditions du prêt.",
     "noticeDate": "Indique la date de la résiliation.",
-    "noticeBy": "Choisis qui a résilié."
+    "noticeBy": "Choisis qui a résilié.",
+    "docRole": "Choisis le type de fichier.",
+    "docState": "Choisis l’état du fichier.",
+    "fileMissing": "Choisis un fichier.",
+    "fileType": "Ce type de fichier ne peut pas être enregistré. Sont autorisés : PDF, images (JPEG, PNG, HEIC), Word, OpenDocument, texte et e-mails.",
+    "fileSize": "Le fichier est trop volumineux. 25 Mo au maximum sont autorisés."
   },
   "view": "Voir le contrat",
   "cancel": "Annuler",
@@ -213,5 +218,39 @@
   "notes": {
     "label": "Notes",
     "placeholder": "Ce qu'il faut encore savoir"
+  },
+  "file": {
+    "empty": "Aucun fichier dans le dossier pour l’instant.",
+    "signError": "Les fichiers ne peuvent pas être affichés pour le moment. Réessaie plus tard.",
+    "uploading": "Le fichier est en cours de téléversement …",
+    "uploadError": "Le fichier n’a pas pu être téléversé. Réessaie.",
+    "open": "Ouvrir le fichier",
+    "role": {
+      "label": "Type"
+    },
+    "docState": {
+      "label": "État"
+    },
+    "title": {
+      "label": "Titre",
+      "placeholder": "p. ex. contrat signé",
+      "helper": "Laisse vide pour reprendre le nom du fichier."
+    },
+    "prior": {
+      "label": "Remplace le fichier",
+      "none": "Aucun, nouveau fichier"
+    },
+    "pick": {
+      "label": "Fichier",
+      "helper": "PDF, image (JPEG, PNG, HEIC), Word, OpenDocument, texte ou e-mail, 25 Mo au maximum."
+    }
+  },
+  "deadline": {
+    "next": "Prochaine échéance",
+    "none": "Aucune échéance à venir",
+    "notSet": "Non défini",
+    "earliestTermination": "Date de résiliation la plus proche",
+    "remindersSent": "Rappels envoyés",
+    "reminder": "Rappel {lead} jours avant le {date}"
   }
 }

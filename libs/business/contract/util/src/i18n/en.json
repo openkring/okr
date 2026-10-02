@@ -76,7 +76,12 @@
     "parties": "Please add at least one contract party.",
     "loanRequired": "Please add the loan terms.",
     "noticeDate": "Please enter the date of the notice.",
-    "noticeBy": "Please choose who gave notice."
+    "noticeBy": "Please choose who gave notice.",
+    "docRole": "Please choose the kind of file.",
+    "docState": "Please choose the status of the file.",
+    "fileMissing": "Please choose a file.",
+    "fileType": "This kind of file cannot be stored. Allowed are PDF, images (JPEG, PNG, HEIC), Word, OpenDocument, text and emails.",
+    "fileSize": "The file is too large. At most 25 MB are allowed."
   },
   "view": "View contract",
   "cancel": "Cancel",
@@ -213,5 +218,39 @@
   "notes": {
     "label": "Notes",
     "placeholder": "Anything else worth knowing"
+  },
+  "file": {
+    "empty": "No files in the dossier yet.",
+    "signError": "The files cannot be shown right now. Please try again later.",
+    "uploading": "Uploading the file …",
+    "uploadError": "The file could not be uploaded. Please try again.",
+    "open": "Open file",
+    "role": {
+      "label": "Kind"
+    },
+    "docState": {
+      "label": "Status"
+    },
+    "title": {
+      "label": "Title",
+      "placeholder": "e.g. signed contract",
+      "helper": "Leave empty to use the file name."
+    },
+    "prior": {
+      "label": "Replaces the file",
+      "none": "None, new file"
+    },
+    "pick": {
+      "label": "File",
+      "helper": "PDF, image (JPEG, PNG, HEIC), Word, OpenDocument, text or email, at most 25 MB."
+    }
+  },
+  "deadline": {
+    "next": "Next deadline",
+    "none": "No upcoming deadline",
+    "notSet": "Not set",
+    "earliestTermination": "Earliest termination date",
+    "remindersSent": "Reminders sent",
+    "reminder": "Reminder {lead} days before {date}"
   }
 }
