@@ -629,6 +629,26 @@ service cloud.firestore {
                        || resource.data.get('receiver', {}).get('key', '') == callerPersonKey());
       allow write: if false;
     }
+    // Contracts (spec 1.5 §5.1). Staff path is tenant-scoped; the own-party path is
+    // tenant-INDEPENDENT on purpose: the 'my' query filters partyPersonKeys (array) and Firestore
+    // allows only one array filter per query, so it cannot also constrain tenants[].
+    function contractStaffReader(d) {
+      return isAdmin() || hasRole('treasurer')
+             || ((isPrivileged() || hasRole('auditor')) && d.get('isStrictlyConfidential', true) == false);
+    }
+    function contractReader(d) {
+      return (belongsToTenant(d) && contractStaffReader(d))
+             || (callerPersonKey() != '' && callerPersonKey() in d.get('partyPersonKeys', []));
+    }
+    match /contracts/{id} {
+      allow read: if userExists() && (resource == null || contractReader(resource.data));
+      allow create, update: if (hasRole('treasurer') || isAdmin()) && tenantCreateOrDetach();
+      allow delete: if false;
+    }
+    match /contract-documents/{id} {
+      allow read: if userExists() && (resource == null || contractReader(resource.data));
+      allow write: if false;
+    }
     match /journallogs/{id}       { allow read: if tenantRead(); allow write: if false; }
     // Payment orders + payments (spec 1.80 §5.4): finance data, treasurer/admin only. Clients may
     // create and edit DRAFT orders (payments: confirm only, see below); approval and transmission happen only in approvePaymentOrder /

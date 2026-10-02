@@ -93,6 +93,24 @@ def parent_query(parentKey, token=None, tenant=None):
     except urllib.error.HTTPError as e:
         return e.code
 
+def field_query(coll, filters, token=None):
+    """Query with arbitrary (fieldPath, op, value) filters AND-combined."""
+    def val(v):
+        return {"booleanValue": v} if isinstance(v, bool) else {"stringValue": v}
+    fl = [{"fieldFilter": {"field": {"fieldPath": f}, "op": op, "value": val(v)}} for f, op, v in filters]
+    where = fl[0] if len(fl) == 1 else {"compositeFilter": {"op": "AND", "filters": fl}}
+    sq = {"from": [{"collectionId": coll}], "where": where}
+    hdr = {"Content-Type": "application/json"}
+    if token:
+        hdr["Authorization"] = f"Bearer {token}"
+    r = urllib.request.Request(f"{BASE}:runQuery",
+                               data=json.dumps({"structuredQuery": sq}).encode(),
+                               headers=hdr, method="POST")
+    try:
+        return urllib.request.urlopen(r).status
+    except urllib.error.HTTPError as e:
+        return e.code
+
 def list_query(coll, tenant=None, token=None, with_shared=False):
     """Mirrors getSystemQuery(tenant): isArchived==false [+ tenants array-contains tenant].
     with_shared mirrors the AvatarService stream, which also pulls the shared defaults:
@@ -266,6 +284,16 @@ seed("tasks/tkArch", {"tenants": ["t1"], "isArchived": True, "shareKey": "", "na
 A, B, C, D = jwt("uidA"), jwt("uidB"), jwt("uidC"), jwt("uidD")
 E, M, P = jwt("uidE"), jwt("uidM"), jwt("uidP")
 T = jwt("uidT")
+seed("users/uidU", {"tenants": ["t1"], "roles": {"auditor": True}, "firstName": "U", "personKey": "pU"})
+seed("contracts/cLoanA", {"tenants": ["t1"], "isArchived": False, "name": "Darlehen A",
+     "partyPersonKeys": ["pA"], "isStrictlyConfidential": False, "confidentiality": "confidential"})
+seed("contracts/cStrict", {"tenants": ["t1"], "isArchived": False, "name": "Streng",
+     "partyPersonKeys": [], "isStrictlyConfidential": True, "confidentiality": "strictlyConfidential"})
+seed("contracts/cRemoved", {"tenants": ["t1"], "isArchived": False, "name": "Entfernt",
+     "partyPersonKeys": [], "isStrictlyConfidential": False, "confidentiality": "confidential"})
+seed("contract-documents/dA", {"tenants": ["t1"], "isArchived": False, "contractKey": "cLoanA",
+     "partyPersonKeys": ["pA"], "isStrictlyConfidential": False})
+U = jwt("uidU")
 GET, PATCH, POST, DELETE = "GET", "PATCH", "POST", "DELETE"
 
 
@@ -671,6 +699,18 @@ single_cases = [
      body({"isArchived": False, "state": "planned", "completionDate": ""}), ["isArchived", "state", "completionDate"]),
     ("privileged P PATCH tkA.author -> pC -> ALLOW", True, PATCH, "tasks/tkA", P,
      body({"author": {"key": "pC", "name1": "C"}}), ["author"]),
+    # contracts / contract-documents (spec 1.5 §5.1)
+    ("userA GET contracts/cLoanA (own party) -> ALLOW", True, GET, "contracts/cLoanA", A, None, None),
+    ("userB GET contracts/cLoanA (stranger) -> DENY", False, GET, "contracts/cLoanA", B, None, None),
+    ("userT(treasurer) GET contracts/cStrict -> ALLOW", True, GET, "contracts/cStrict", T, None, None),
+    ("userP(privileged) GET contracts/cStrict -> DENY", False, GET, "contracts/cStrict", P, None, None),
+    ("userU(auditor) GET contracts/cLoanA -> ALLOW", True, GET, "contracts/cLoanA", U, None, None),
+    ("userA GET contracts/cRemoved (removed party) -> DENY", False, GET, "contracts/cRemoved", A, None, None),
+    ("userP(privileged) PATCH contracts/cLoanA -> DENY", False, PATCH, "contracts/cLoanA", P, body({"name": "x"}), ["name"]),
+    ("userT(treasurer) PATCH contracts/cLoanA -> ALLOW", True, PATCH, "contracts/cLoanA", T, body({"name": "x", "tenants": ["t1"]}), ["name", "tenants"]),
+    ("userA GET contract-documents/dA (own party) -> ALLOW", True, GET, "contract-documents/dA", A, None, None),
+    ("userT(treasurer) PATCH contract-documents/dA -> DENY (CF-only)", False, PATCH, "contract-documents/dA", T, body({"title": "x"}), ["title"]),
+    ("userD(admin) DELETE contracts/cLoanA -> DENY (archive only)", False, DELETE, "contracts/cLoanA", D, None, None),
 ]
 
 # (label, expect_allow, collection, tenant, token)
@@ -727,6 +767,20 @@ parent_cases = [
     ("userM(memberAdmin) QUERY addresses by parentKey+tenant -> ALLOW (upsert lookup)", True, "person.pO", M, "t1"),
 ]
 
+# (label, expect_allow, collection, [(field, op, value)], token) — contracts (spec 1.5 §5.1)
+field_cases = [
+    ("userA LIST contracts my (partyPersonKeys contains pA) -> ALLOW", True, "contracts",
+     [("partyPersonKeys", "ARRAY_CONTAINS", "pA"), ("isArchived", "EQUAL", False)], A),
+    ("userA LIST contracts my with FOREIGN key pB -> DENY", False, "contracts",
+     [("partyPersonKeys", "ARRAY_CONTAINS", "pB"), ("isArchived", "EQUAL", False)], A),
+    ("userP LIST contracts staff non-strict -> ALLOW", True, "contracts",
+     [("tenants", "ARRAY_CONTAINS", "t1"), ("isArchived", "EQUAL", False), ("isStrictlyConfidential", "EQUAL", False)], P),
+    ("userP LIST contracts staff unconstrained -> DENY", False, "contracts",
+     [("tenants", "ARRAY_CONTAINS", "t1"), ("isArchived", "EQUAL", False)], P),
+    ("userT LIST contracts staff unconstrained -> ALLOW", True, "contracts",
+     [("tenants", "ARRAY_CONTAINS", "t1"), ("isArchived", "EQUAL", False)], T),
+]
+
 
 # ------------------------------------------------------------------- run -----
 passed = failed = 0
@@ -751,6 +805,12 @@ for label, expect, coll, tenant, token in shared_list_cases:
 
 for label, expect, parentKey, token, tenant in parent_cases:
     code = parent_query(parentKey, token=token, tenant=tenant)
+    ok = (code == 200) == expect
+    passed += ok; failed += not ok
+    print(f"{'PASS' if ok else 'FAIL'}  [{code}]  {label}")
+
+for label, expect, coll, filters, token in field_cases:
+    code = field_query(coll, filters, token=token)
     ok = (code == 200) == expect
     passed += ok; failed += not ok
     print(f"{'PASS' if ok else 'FAIL'}  [{code}]  {label}")
