@@ -63,10 +63,10 @@ export function getInvoiceIndex(invoice: InvoiceModel): string {
  * (`year * 100000 + n`), so filtering by `Math.floor(no / 100000) === year` isolates this year's
  * numbers before taking the max.
  *
- * This is the ONE allocator for invoice numbers — both `InvoiceService.nextInvoiceNo` (client,
- * Angular) and the `postMemberFees` Cloud Function (admin SDK) call this pure function after
- * fetching the existing `invoiceNo`s their own way, so there is never a second, independent
- * sequence that could hand out a duplicate number.
+ * This is the ONE numbering rule, and `issueInvoice` (Cloud Function) is its ONE caller: it reads
+ * the tenant's `invoiceNo`s and writes the new number inside the same Firestore transaction, so two
+ * concurrent issues cannot hand out the same number. Every other path (`writeInvoice`,
+ * `postMemberFees`) only writes drafts with `invoiceNo` 0, and clients cannot write invoices at all.
  */
 export function getNextInvoiceNo(invoiceNos: number[], year: number): number {
   const maxNo = invoiceNos
