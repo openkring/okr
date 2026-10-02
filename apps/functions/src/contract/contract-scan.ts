@@ -40,3 +40,17 @@ export function planContractScan(c: ContractModel, today: string): ScanOutcome {
   }
   return { patch, events };
 }
+
+/**
+ * Where a scan event points. The workflow engine dedups openTask on (relatedKey, assignee), so a
+ * deadline reminder gets a per-deadline key '<contract>.<kind>.<date>': an open notice task no
+ * longer swallows the rateFix or next-cycle reminder. Follow-up lead windows (30/7 days) of the SAME
+ * deadline still collapse into its open task, by design. linkKey keeps the task linked to the contract.
+ */
+export function scanEventTarget(contractKey: string, e: ScanEvent): { relatedKey: string; params: Record<string, string> } {
+  const linkKey = `contract.${contractKey}`;
+  const relatedKey = e.event === 'contract.deadline'
+    ? `${linkKey}.${e.params['kind'] ?? ''}.${e.params['deadlineDate'] ?? ''}`
+    : linkKey;
+  return { relatedKey, params: { ...e.params, linkKey } };
+}

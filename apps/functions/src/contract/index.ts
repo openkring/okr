@@ -12,7 +12,7 @@ import { getTodayStr } from '@okr/shared-util-core';
 import { emitEvent } from '../workflow/emit';
 import { IMGIX_PRIVATE_HOST, signImgixUrl } from '../_storage/imgix-sign';
 import { privateBucket } from '../_storage/private-bucket';
-import { planContractScan } from './contract-scan';
+import { planContractScan, scanEventTarget } from './contract-scan';
 import {
   ALLOWED_CONTRACT_MIME_TYPES, buildContractDocumentStamp, canReadContractData, contractDocumentPath,
   MAX_CONTRACT_FILE_BYTES, needsRestamp, upsertDocumentRef,
@@ -51,14 +51,20 @@ export const scanContractDeadlines = onSchedule(
           .where('tenants', 'array-contains', tenantId).where('isArchived', '==', false)
           .where('state', 'in', ['active', 'noticeGiven']).get();
         for (const doc of snap.docs) {
-          // Firestore reads skip class defaults: merge over the model defaults so legacy docs are safe.
-          const c = { ...new ContractModel(tenantId), ...(doc.data() as Partial<ContractModel>), okey: doc.id } as ContractModel;
-          const { patch, events } = planContractScan(c, today);
-          if (Object.keys(patch).length > 0) await doc.ref.update(patch);
-          for (const e of events) {
-            await emitEvent(e.event, tenantId, `contract.${doc.id}`, {
-              personKey: c.responsible?.key ?? '', subjectName: c.name, params: e.params,
-            });
+          // One malformed contract (e.g. an unparsable date) must not stop the rest of the tenant.
+          try {
+            // Firestore reads skip class defaults: merge over the model defaults so legacy docs are safe.
+            const c = { ...new ContractModel(tenantId), ...(doc.data() as Partial<ContractModel>), okey: doc.id } as ContractModel;
+            const { patch, events } = planContractScan(c, today);
+            if (Object.keys(patch).length > 0) await doc.ref.update(patch);
+            for (const e of events) {
+              const { relatedKey, params } = scanEventTarget(doc.id, e);
+              await emitEvent(e.event, tenantId, relatedKey, {
+                personKey: c.responsible?.key ?? '', subjectName: c.name, params,
+              });
+            }
+          } catch (e) {
+            logger.error(`scanContractDeadlines: tenant=${tenantId} contract=${doc.id} failed`, e);
           }
         }
       } catch (e) {
@@ -115,7 +121,7 @@ export const registerContractDocument = onCall(CALLABLE, async (request: Callabl
   const contractKey = String(d.contractKey ?? '');
   const docKey = String(d.docKey ?? '');
   const fileName = String(d.fileName ?? '');
-  const { ref: contractRef, data: contract } = await loadWritableContract(viewer, contractKey, cf);
+  const { ref: contractRef } = await loadWritableContract(viewer, contractKey, cf);
   if (!DOC_ROLES.includes(d.role ?? '') || !DOC_STATES.includes(d.docState ?? '')) throw new HttpsError('invalid-argument', `${cf}: role/docState`);
   const path = filePath(viewer.tenantId, contractKey, docKey, fileName, cf);
   const db = getFirestore();
@@ -143,22 +149,24 @@ export const registerContractDocument = onCall(CALLABLE, async (request: Callabl
   });
   const today = getTodayStr();
   const title = String(d.title ?? '').slice(0, 120) || fileName;
-  // Access fields come from the strict-safe stamp, exactly as onContractWritten restamps them.
-  const stamp = buildContractDocumentStamp(contract);
-  const docData = {
-    isArchived: false, index: `n:${title}`, tags: '', folderKeys: [],
-    fullPath: path, description: '', title, altText: title, type: 'legal', source: 'storage', credit: '', url: '',
-    mimeType, size,
-    authorKey: viewer.personKey, authorName: '', dateOfDocCreation: today, dateOfDocLastUpdate: today,
-    locationKey: '', hash, priorVersionKey: prior, version: String(priorVersion + 1), renderings: [],
-    contractKey,
-    ...stamp,
-  };
   const newRef: ContractDocumentRef = {
     docKey, role: d.role as ContractDocumentRef['role'], title, docState: d.docState as ContractDocumentRef['docState'],
   };
   await db.runTransaction(async (tx) => {
-    const fresh = (await tx.get(contractRef)).data() ?? {};
+    const fresh = (await tx.get(contractRef)).data();
+    if (!fresh) throw new HttpsError('not-found', `${cf}: contract not found`);
+    // Access fields come from the strict-safe stamp of the contract as read INSIDE the transaction
+    // (exactly as onContractWritten restamps them): a party removed or a confidentiality raised
+    // since the pre-check read must not leak into the new file's access fields.
+    const docData = {
+      isArchived: false, index: `n:${title}`, tags: '', folderKeys: [],
+      fullPath: path, description: '', title, altText: title, type: 'legal', source: 'storage', credit: '', url: '',
+      mimeType, size,
+      authorKey: viewer.personKey, authorName: '', dateOfDocCreation: today, dateOfDocLastUpdate: today,
+      locationKey: '', hash, priorVersionKey: prior, version: String(priorVersion + 1), renderings: [],
+      contractKey,
+      ...buildContractDocumentStamp(fresh),
+    };
     tx.set(db.collection(ContractDocumentCollection).doc(docKey), docData);
     tx.update(contractRef, { documents: upsertDocumentRef((fresh['documents'] as ContractDocumentRef[]) ?? [], newRef, prior) });
   });

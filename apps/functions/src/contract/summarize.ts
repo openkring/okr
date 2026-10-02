@@ -8,10 +8,9 @@ import { privateBucket } from '../_storage/private-bucket';
 import { OCR_MODEL } from '../ocr/gemini-extract';
 import { loadViewer, loadWritableContract } from './caller';
 import { pickSummarySource } from './contract-document.util';
-import { parseSummaryResponse } from './summarize.util';
+import { checkSummarySource, parseSummaryResponse } from './summarize.util';
 
 const geminiApiKey = defineSecret('GEMINI_API_KEY');
-const MAX_BYTES = 15 * 1024 * 1024;
 const PROMPT = `Du erhältst einen Vertrag. Fasse ihn sachlich auf Deutsch in höchstens 8 Sätzen zusammen:
 Parteien, Gegenstand, Laufzeit, Kündigung, Geldbeträge, Besonderheiten. Keine Personendaten ausser Namen
 der Parteien. Schlage zusätzlich bis zu 5 kurze Stichworte vor.`;
@@ -22,18 +21,19 @@ export const summarizeContract = onCall(
   async (request: CallableRequest<{ contractKey?: string }>) => {
     const cf = 'summarizeContract';
     const viewer = await loadViewer(request, cf);
-    const { data: contract } = await loadWritableContract(viewer, request.data?.contractKey ?? '', cf);
+    const contractKey = request.data?.contractKey ?? '';
+    const { data: contract } = await loadWritableContract(viewer, contractKey, cf);
     // Strict-safe: a missing flag counts as strictly confidential.
     if (contract['isStrictlyConfidential'] !== false) throw new HttpsError('failed-precondition', `${cf}: strictly confidential`);
     const source = pickSummarySource((contract['documents'] as ContractDocumentRef[]) ?? []);
     if (!source) throw new HttpsError('failed-precondition', `${cf}: no contract file`);
     const doc = (await getFirestore().collection(ContractDocumentCollection).doc(source.docKey).get()).data();
-    if (!doc || Number(doc['size'] ?? 0) > MAX_BYTES) throw new HttpsError('failed-precondition', `${cf}: file missing or too large`);
-    const [bytes] = await privateBucket().file(String(doc['fullPath'])).download();
+    const { fullPath, mimeType } = checkSummarySource(doc, contractKey, viewer.tenantId);
+    const [bytes] = await privateBucket().file(fullPath).download();
     const ai = new GoogleGenAI({ apiKey: geminiApiKey.value() });
     const response = await ai.models.generateContent({
       model: OCR_MODEL,
-      contents: [{ inlineData: { mimeType: String(doc['mimeType'] || 'application/pdf'), data: bytes.toString('base64') } }, PROMPT],
+      contents: [{ inlineData: { mimeType, data: bytes.toString('base64') } }, PROMPT],
       config: {
         responseMimeType: 'application/json',
         responseSchema: {

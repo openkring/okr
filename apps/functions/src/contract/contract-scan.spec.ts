@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ContractModel } from '@okr/shared-models';
-import { planContractScan } from './contract-scan';
+import { planContractScan, scanEventTarget } from './contract-scan';
 
 const c = (p: Partial<ContractModel>) =>
   Object.assign(new ContractModel('t1'), { okey: 'k1', name: 'Darlehen A', contractType: 'loan', state: 'active' }, p);
@@ -38,5 +38,29 @@ describe('planContractScan', () => {
   it('prunes past markers', () => {
     const out = planContractScan(c({ endDate: '20301231', remindersSent: ['rateFix:20261231:7'] }), '20270101');
     expect(out.patch.remindersSent).toEqual([]);
+  });
+});
+
+describe('scanEventTarget', () => {
+  const deadline = (kind: string, deadlineDate: string) => ({ event: 'contract.deadline' as const, params: { kind, deadlineDate, leadDays: '90' } });
+  it('a deadline reminder gets a per-deadline relatedKey and links the contract', () => {
+    expect(scanEventTarget('k1', deadline('notice', '20270930'))).toEqual({
+      relatedKey: 'contract.k1.notice.20270930',
+      params: { kind: 'notice', deadlineDate: '20270930', leadDays: '90', linkKey: 'contract.k1' },
+    });
+  });
+  it('different deadlines of one contract never share a dedup key', () => {
+    const a = scanEventTarget('k1', deadline('notice', '20270930')).relatedKey;
+    const b = scanEventTarget('k1', deadline('rateFix', '20271231')).relatedKey;
+    const c = scanEventTarget('k1', deadline('notice', '20280930')).relatedKey;
+    expect(new Set([a, b, c]).size).toBe(3);
+  });
+  it('the relatedModelType segment stays "contract"', () => {
+    expect(scanEventTarget('k1', deadline('end', '20271231')).relatedKey.split('.')[0]).toBe('contract');
+  });
+  it('ended / renewed keep the contract as relatedKey', () => {
+    expect(scanEventTarget('k1', { event: 'contract.ended', params: { contractName: 'A' } })).toEqual({
+      relatedKey: 'contract.k1', params: { contractName: 'A', linkKey: 'contract.k1' },
+    });
   });
 });
