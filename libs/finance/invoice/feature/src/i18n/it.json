@@ -29,7 +29,8 @@
       "placeholder": "dd.mm.yyyy",
       "helper": "La data del termine di pagamento. Entro tale data la fattura deve essere pagata."
     },
-    "payment": {
+    "paymentReference": { "label": "Riferimento di pagamento" },
+  "payment": {
       "label": "Pagato il",
       "placeholder": "dd.mm.yyyy",
       "helper": "La data in cui è stata pagata la fattura."

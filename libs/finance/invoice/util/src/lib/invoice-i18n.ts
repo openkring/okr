@@ -31,6 +31,7 @@ export const INVOICE_I18N_KEYS = {
   payment_date_label:        PFX + 'date.payment.label',
   payment_date_placeholder:  PFX + 'date.payment.placeholder',
   payment_date_helper:       PFX + 'date.payment.helper',
+  payment_reference_label:   PFX + 'paymentReference.label',
 
   receiver_label:           PFX + 'receiver.label',
 

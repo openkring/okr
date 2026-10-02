@@ -29,7 +29,8 @@
       "placeholder": "dd.mm.yyyy",
       "helper": "The date of the payment deadline. The invoice must be paid by then."
     },
-    "payment": {
+    "paymentReference": { "label": "Payment reference" },
+  "payment": {
       "label": "Paid on",
       "placeholder": "dd.mm.yyyy",
       "helper": "The date on which the invoice was paid."

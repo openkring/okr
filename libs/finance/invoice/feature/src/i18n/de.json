@@ -29,7 +29,8 @@
       "placeholder": "dd.mm.yyyy",
       "helper": "Das Datum der Zahlungsfrist. Bis dann muss die Rechnung bezahlt werden."
     },
-    "payment": {
+    "paymentReference": { "label": "Zahlungsreferenz" },
+  "payment": {
       "label": "Bezahlt am",
       "placeholder": "dd.mm.yyyy",
       "helper": "Das Datum an dem die Rechnung bezahlt wurde."

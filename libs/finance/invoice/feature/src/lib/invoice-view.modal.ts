@@ -4,7 +4,7 @@ import { IonAvatar, IonCard, IonCardContent, IonChip, IonContent, IonIcon, IonIm
 import { InvoiceModel } from '@okr/shared-models';
 import { Header } from '@okr/shared-ui';
 import { PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
-import { fill, getFullName, prettyFormatDateTime } from '@okr/shared-util-core';
+import { fill, formatQrReference, getFullName, prettyFormatDateTime } from '@okr/shared-util-core';
 import { AvatarPipe } from '@okr/avatar-ui';
 import { formatPaymentChf, isPayableState, openInvoiceAmount, reminderLevelKey } from '@okr/finance-invoice-util';
 import { InvoiceStore } from './invoice.store';
@@ -100,6 +100,16 @@ import { InvoiceStore } from './invoice.store';
                 </ion-label>
               </ion-item>
             }
+            <!-- QR payment reference -->
+            @if(paymentReference().length > 0) {
+              <ion-item lines="none">
+                <ion-icon slot="start" src="{{'chf' | svgIcon}}" />
+                <ion-label>
+                  <p class="view-label">{{ store.i18n.payment_reference_label() }}</p>
+                  <p class="view-value">{{ paymentReference() }}</p>
+                </ion-label>
+              </ion-item>
+            }
             <!-- payments (read-only; recorded through the list's "Zahlung erfassen") -->
             @if(payments().length > 0) {
               <ion-item lines="none">
@@ -180,6 +190,7 @@ export class InvoiceViewModal {
   protected readonly amount = computed(() => ((this.invoice()?.totalAmount?.amount ?? 0) / 100).toFixed(2));
   protected readonly state = computed(() => this.invoice()?.state ?? 'draft');
   protected readonly paymentDate = computed(() => this.invoice()?.paymentDate ?? '');
+  protected readonly paymentReference = computed(() => formatQrReference(this.invoice()?.paymentReference));
   protected readonly notes = computed(() => this.invoice()?.notes ?? '');
   // legacy invoices lack the field (Firestore reads skip model defaults)
   protected readonly payments = computed(() => this.invoice()?.payments ?? []);

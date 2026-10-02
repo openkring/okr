@@ -29,7 +29,8 @@
       "placeholder": "dd.mm.yyyy",
       "helper": "La date de l'échéance de paiement. La facture doit être payée d'ici là."
     },
-    "payment": {
+    "paymentReference": { "label": "Référence de paiement" },
+  "payment": {
       "label": "Payé le",
       "placeholder": "dd.mm.yyyy",
       "helper": "La date à laquelle la facture a été payée."
