@@ -111,3 +111,13 @@ export function waiveBlockers(invoice: { state: string; reminders?: ReminderLike
 export function unwaivedFeeKeys(reminders: { bookingKey?: string; waivedAt?: string }[] | undefined): string[] {
   return [...new Set((reminders ?? []).filter((r) => !isWaivedReminder(r)).map((r) => String(r?.bookingKey ?? '')).filter((k) => !!k))];
 }
+
+/**
+ * A stored reminder with every field defined (Firestore refuses undefined, also nested). The one
+ * helper for every write that rewrites `invoice.reminders`, so no field (waiver, D18) is dropped.
+ */
+export const coalesceReminder = (r: ReminderLike): ReminderLike => ({
+  level: r.level ?? 0, date: r.date ?? '', dueDate: r.dueDate ?? '', isSent: r.isSent ?? false,
+  documentKey: r.documentKey ?? '', fee: Number.isFinite(r.fee) ? (r.fee as number) : 0, bookingKey: r.bookingKey ?? '',
+  waivedAt: r.waivedAt ?? '', waiveBookingKey: r.waiveBookingKey ?? '',
+});

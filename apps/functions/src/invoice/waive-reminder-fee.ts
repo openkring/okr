@@ -9,10 +9,9 @@ import { checkAppCheckToken, checkAuthentication, checkRoles, getCallerTenantId,
 
 import { periodKeyFor } from '../bank-import/bank-import.util';
 import { assertPeriodsOpen } from '../booking/period-lock';
-import { coalesceReminder } from './create-invoice-reminder';
 import { assertLeafAccount, loadOwnedAccountingConfig, refuse } from './invoice-context';
 import { appendNote, InvoiceLike, isUsableIssueBooking, openAmount, reversalLines, waiverOutcome } from './invoice-payment.logic';
-import { reminderKey, ReminderLike, storedReminder, waiveBlockers, waiverKey } from './invoice-reminder.logic';
+import { coalesceReminder, reminderKey, ReminderLike, storedReminder, waiveBlockers, waiverKey } from './invoice-reminder.logic';
 import { invoiceBookingIndex, issuePeriodKeys, withoutUndefined } from './invoice.logic';
 
 const REGION = 'europe-west6';
@@ -87,7 +86,8 @@ export const waiveReminderFee = onCall(
     const accountingTenantId = String(pre['accountingTenantId'] ?? '');
     const config = await loadOwnedAccountingConfig(db, tenantId, invoiceKey, accountingTenantId, 'waived');
 
-    // idempotency first: a retry returns the stored result even after a config change
+    // idempotency before the blockers and config checks: a retry returns the stored result even after a config change
+    // (tenant ownership and the bexio guard in loadOwnedAccountingConfig run first, by design)
     const already = storedReminder(pre['reminders'] as ReminderLike[] | undefined, lvl);
     if (already?.waiveBookingKey) return storedResult(pre, already);
 

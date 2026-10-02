@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { defaultReminderFee, isReminderDue, lastDueDate, nextReminderLevel, ReminderLike, reminderBlockers, reminderDueDate, reminderFeeLines, reminderFeeSum, reminderKey, unwaivedFeeKeys, waiveBlockers, waiverKey } from './invoice-reminder.logic';
+import { coalesceReminder, defaultReminderFee, isReminderDue, lastDueDate, nextReminderLevel, ReminderLike, reminderBlockers, reminderDueDate, reminderFeeLines, reminderFeeSum, reminderKey, unwaivedFeeKeys, waiveBlockers, waiverKey } from './invoice-reminder.logic';
 
 const inv = (o = {}) => ({ state: 'pending', dueDate: '20261010', reminders: [] as ReminderLike[], ...o });
 
@@ -84,6 +84,16 @@ describe('invoice reminder logic', () => {
       expect(unwaivedFeeKeys([
         rem({ level: 1, bookingKey: 'a' }), rem({ level: 2, bookingKey: 'b', waivedAt: '20261101' }), rem({ level: 3, bookingKey: '' }), rem({ level: 4, bookingKey: 'a' }),
       ])).toEqual(['a']);
+    });
+  });
+
+  describe('coalesceReminder', () => {
+    it('keeps the waiver fields and defaults them to empty strings', () => {
+      const waived = coalesceReminder({ level: 2, date: '20261020', dueDate: '20261103', fee: 2000, bookingKey: 'b', waivedAt: '20261105', waiveBookingKey: 'w' });
+      expect(waived.waivedAt).toBe('20261105');
+      expect(waived.waiveBookingKey).toBe('w');
+      const legacy = coalesceReminder({ level: 1, date: '20261020', dueDate: '20261103' });
+      expect(legacy).toEqual({ level: 1, date: '20261020', dueDate: '20261103', isSent: false, documentKey: '', fee: 0, bookingKey: '', waivedAt: '', waiveBookingKey: '' });
     });
   });
 });

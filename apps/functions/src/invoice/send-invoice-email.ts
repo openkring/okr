@@ -12,7 +12,7 @@ import { privateBucket } from '../_storage/private-bucket';
 import { reportToSentry } from '../srv/sentry';
 import { loadOwnedAccountingConfig, ReceiverRef, refuse } from './invoice-context';
 import { InvoiceLike, openAmount, ReminderLike } from './invoice-payment.logic';
-import { lastDueDate } from './invoice-reminder.logic';
+import { coalesceReminder, lastDueDate } from './invoice-reminder.logic';
 import { chf, viewDate, withoutUndefined } from './invoice.logic';
 import { emailDocumentKind, invoiceEmailAsksPayment, invoiceEmailHtml, invoiceEmailSubject, recipientDirectoryId, scrubEmailAddresses, sendRefusal } from './send-invoice-email.logic';
 
@@ -31,12 +31,6 @@ interface SendInvoiceEmailResult {
 }
 
 type Doc = Record<string, unknown>;
-
-/** A stored reminder with every field defined (Firestore refuses undefined, also nested). */
-const coalesceReminder = (r: ReminderLike): ReminderLike => ({
-  level: r.level ?? 0, date: r.date ?? '', dueDate: r.dueDate ?? '', isSent: r.isSent ?? false,
-  documentKey: r.documentKey ?? '', fee: Number.isFinite(r.fee) ? (r.fee as number) : 0, bookingKey: r.bookingKey ?? '',
-});
 
 /**
  * Mail an issued invoice PDF, or one of its reminder PDFs, to the receiver's favourite email (spec 1.76 D12).

@@ -42,7 +42,7 @@ function asInvoiceLike(doc: Record<string, unknown> | undefined): (InvoiceLike &
     state: String(doc['state'] ?? ''),
     totalAmount: doc['totalAmount'] as InvoiceLike['totalAmount'],
     payments: doc['payments'] as InvoiceLike['payments'],
-    reminders: (doc['reminders'] as { fee?: number }[] | undefined) ?? [],
+    reminders: (doc['reminders'] as InvoiceLike['reminders']) ?? [],
     accountingTenantId: String(doc['accountingTenantId'] ?? ''),
   };
   return invoice;

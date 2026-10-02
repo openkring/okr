@@ -15,7 +15,7 @@ import { assertLeafAccount, loadOwnedAccountingConfig, receiverAddress, Receiver
 import { InvoiceLike, isValidStoreDate, openAmount } from './invoice-payment.logic';
 import { confirmationDocumentFields } from './payment-confirmation.logic';
 import {
-  defaultReminderFee, MAX_REMINDER_LEVEL, reminderBlockers, reminderDueDate, reminderFeeLines, reminderKey, ReminderLike, storedReminder,
+  coalesceReminder, defaultReminderFee, MAX_REMINDER_LEVEL, reminderBlockers, reminderDueDate, reminderFeeLines, reminderKey, ReminderLike, storedReminder,
 } from './invoice-reminder.logic';
 import { invoiceBookingIndex, issuePeriodKeys, recipientFields, withoutUndefined } from './invoice.logic';
 import { buildReminderPayload } from './reminder-payload.logic';
@@ -45,13 +45,6 @@ const asInvoiceLike = (invoice: Doc): InvoiceLike => ({
   payments: invoice['payments'] as InvoiceLike['payments'],
   accountingTenantId: String(invoice['accountingTenantId'] ?? ''),
   reminders: invoice['reminders'] as InvoiceLike['reminders'],
-});
-
-/** A stored reminder with every field defined (Firestore refuses undefined, also nested). */
-export const coalesceReminder = (r: ReminderLike): ReminderLike => ({
-  level: r.level ?? 0, date: r.date ?? '', dueDate: r.dueDate ?? '', isSent: r.isSent ?? false,
-  documentKey: r.documentKey ?? '', fee: Number.isFinite(r.fee) ? (r.fee as number) : 0, bookingKey: r.bookingKey ?? '',
-  waivedAt: r.waivedAt ?? '', waiveBookingKey: r.waiveBookingKey ?? '', // fee waiver (spec 1.76 D18)
 });
 
 const storedResult = (invoice: Doc, stored: ReminderLike): CreateInvoiceReminderResult => ({
@@ -98,7 +91,8 @@ export const createInvoiceReminder = onCall(
     const accountingTenantId = String(pre['accountingTenantId'] ?? '');
     const config = await loadOwnedAccountingConfig(db, tenantId, invoiceKey, accountingTenantId, 'reminded');
 
-    // idempotency first: a retry returns the stored reminder even after a config change
+    // idempotency before the config-dependent checks: a retry returns the stored reminder even after a config change
+    // (tenant ownership and the bexio guard in loadOwnedAccountingConfig run first, by design)
     const already = storedReminder(pre['reminders'] as ReminderLike[] | undefined, lvl);
     if (already) return storedResult(pre, already);
 
