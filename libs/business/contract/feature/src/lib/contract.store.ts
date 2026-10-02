@@ -6,6 +6,10 @@ import { of } from 'rxjs';
 
 import { isContractReader } from '@okr/auth-feature';
 import { ContractService } from '@okr/business-contract-data-access';
+// Static on purpose: contract.page imports this ui lib statically anyway (no chunk to save), and
+// mixing static + dynamic imports of one lib breaks @nx/enforce-module-boundaries. The modals
+// take callbacks instead of injecting ContractStore, so the SCS-12 store↔modal cycle cannot occur.
+import { ContractEditModal, ContractNoticeModal } from '@okr/business-contract-ui';
 import { CONTRACT_I18N_KEYS, ContractI18n, newContractModel, sumLoans } from '@okr/business-contract-util';
 import { AppStore, ModelSelectService } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
@@ -41,9 +45,8 @@ const initialState: ContractStoreState = {
  *   privileged/auditor get the `isStrictlyConfidential == false` query.
  * - `my`: contracts where the current person is a party (`partyPersonKeys`).
  *
- * The contract modals live in @okr/business-contract-ui and are imported dynamically: they do not
- * inject this store, but the dynamic import keeps the ui lib out of the list's chunk and avoids the
- * store↔modal cycle should they ever need to.
+ * The contract modals live in @okr/business-contract-ui and are imported statically (see the import
+ * note): they do not inject this store. Should one ever need to, it must take a callback instead.
  */
 export const ContractStore = signalStore(
   withState(initialState),
@@ -125,7 +128,6 @@ export const ContractStore = signalStore(
     /** Opens the edit modal; anybody without write permission always gets it read-only. */
     async edit(contract: ContractModel, readOnly = true): Promise<void> {
       const isReadOnly = readOnly || !store.canEdit();
-      const { ContractEditModal } = await import('@okr/business-contract-ui');
       const modal = await store.modalController.create({
         component: ContractEditModal,
         componentProps: {
@@ -150,7 +152,6 @@ export const ContractStore = signalStore(
     /** "Kündigung erfassen": the modal returns noticeGivenDate/By, effectiveEndDate and state 'noticeGiven'. */
     async giveNotice(contract: ContractModel): Promise<void> {
       if (!store.canEdit()) return;
-      const { ContractNoticeModal } = await import('@okr/business-contract-ui');
       const modal = await store.modalController.create({
         component: ContractNoticeModal,
         componentProps: { contract },
