@@ -24,6 +24,9 @@ export interface ExpensePaymentPlan { drafts: ExpensePaymentDraft[]; manual: str
 
 const toCents = (major: string): number => Math.round(parseFloat(major) * 100);
 
+/** A positive, finite amount in cents — NaN (an unparseable QR amount) or Infinity never pays. */
+const isPayable = (amount: number): boolean => Number.isFinite(amount) && amount > 0;
+
 /** QRR / SCOR / NON for a reference; detectPaymentType's SEPA / ICP are transport types, not reference types. */
 function referenceTypeOf(iban: string, currency: string, reference: string): PaymentReferenceType {
   const t = detectPaymentType(iban, currency, reference);
@@ -32,13 +35,13 @@ function referenceTypeOf(iban: string, currency: string, reference: string): Pay
 
 function fromQrBill(src: ExpensePaymentSource): ExpensePaymentDraft | undefined {
   const bill = parseSwissQrBill(src.qrBill);
-  if (!bill || !validateIban(bill.iban)) return undefined;
+  if (!bill || !validateIban(bill.iban) || !(bill.creditorName ?? '').trim()) return undefined;
   const amount = bill.amount ? toCents(bill.amount) : (src.grossAmount ?? 0);
-  if (amount <= 0) return undefined;
+  if (!isPayable(amount)) return undefined;
   const refType = bill.referenceType === 'QRR' || bill.referenceType === 'SCOR' ? bill.referenceType : 'NON';
   return {
     ocrResultKey: src.okey, amount, currency: bill.currency || src.currency || 'CHF',
-    recipientName: bill.creditorName, recipientIban: normalizeIban(bill.iban),
+    recipientName: bill.creditorName.trim(), recipientIban: normalizeIban(bill.iban),
     recipientAddress: [bill.creditorStreet, bill.creditorPlace, bill.creditorCountry].filter(Boolean).join('\n'),
     reference: refType === 'NON' ? bill.message : bill.reference, referenceType: refType, needsReview: false,
   };
@@ -47,12 +50,13 @@ function fromQrBill(src: ExpensePaymentSource): ExpensePaymentDraft | undefined 
 function fromGemini(src: ExpensePaymentSource): ExpensePaymentDraft | undefined {
   const iban = src.creditorIban ?? '';
   const amount = src.grossAmount ?? 0;
-  if (!iban || !validateIban(iban) || amount <= 0) return undefined;
+  const recipientName = (src.creditorName || src.vendor || '').trim();
+  if (!iban || !validateIban(iban) || !isPayable(amount) || !recipientName) return undefined;
   const currency = src.currency || 'CHF';
   const reference = src.reference ?? '';
   return {
     ocrResultKey: src.okey, amount, currency,
-    recipientName: src.creditorName || src.vendor || '', recipientIban: normalizeIban(iban),
+    recipientName, recipientIban: normalizeIban(iban),
     recipientAddress: src.creditorAddress ?? '', reference,
     referenceType: referenceTypeOf(iban, currency, reference), needsReview: true,
   };
@@ -66,10 +70,12 @@ export function buildExpensePayments(expense: ExpenseLike, sources: ExpensePayme
   if ((expense.transferTo ?? 'me') === 'me') {
     const iban = expense.iban ?? '';
     const amount = expense.amountTotal ?? 0;
-    if (!iban || !validateIban(iban) || amount <= 0) return { drafts: [], manual: ['me'] };
+    const recipientName = (expense.userName ?? '').trim();
+    // No payee name, no payment: pain.001 needs a creditor <Nm>, so the treasurer pays by hand.
+    if (!iban || !validateIban(iban) || !isPayable(amount) || !recipientName) return { drafts: [], manual: ['me'] };
     return {
       drafts: [{
-        ocrResultKey: '', amount, currency: expense.currency || 'CHF', recipientName: expense.userName ?? '',
+        ocrResultKey: '', amount, currency: expense.currency || 'CHF', recipientName,
         recipientIban: normalizeIban(iban), recipientAddress: '',
         reference: `Spesen: ${expense.abstract ?? ''}`.trim(), referenceType: 'NON', needsReview: false,
       }],

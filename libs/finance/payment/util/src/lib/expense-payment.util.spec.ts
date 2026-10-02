@@ -31,6 +31,12 @@ describe('buildExpensePayments — me', () => {
     expect(buildExpensePayments({ ...me, transferTo: undefined }, []).drafts).toHaveLength(1));
   it('reports a zero amount as manual', () =>
     expect(buildExpensePayments({ ...me, amountTotal: 0 }, []).manual).toEqual(['me']));
+  it('reports a non-numeric amount as manual', () =>
+    expect(buildExpensePayments({ ...me, amountTotal: NaN }, []).manual).toEqual(['me']));
+  it('reports an empty payee name as manual', () =>
+    expect(buildExpensePayments({ ...me, userName: '' }, [])).toEqual({ drafts: [], manual: ['me'] }));
+  it('reports a blank payee name as manual', () =>
+    expect(buildExpensePayments({ ...me, userName: '   ' }, []).manual).toEqual(['me']));
 });
 
 describe('buildExpensePayments — issuer', () => {
@@ -68,6 +74,25 @@ describe('buildExpensePayments — issuer', () => {
     expect(plan.drafts.map(d => d.ocrResultKey)).toEqual(['a', 'b']);
     expect(plan.manual).toEqual(['c']);
   });
+  it('reports a QR-bill with a non-numeric amount as manual', () => {
+    const bad = QR.replace('1949.75', 'abc');
+    expect(buildExpensePayments(issuer, [{ okey: 'r5', qrBill: bad }])).toEqual({ drafts: [], manual: ['r5'] });
+  });
+  it('reports a non-numeric Gemini amount as manual', () =>
+    expect(buildExpensePayments(issuer, [{ okey: 'r6', creditorIban: 'CH5604835012345678009', grossAmount: NaN, vendor: 'V' }]).manual)
+      .toEqual(['r6']));
+  it('reports a QR-bill without a creditor name as manual', () => {
+    const noName = QR.replace('Robert Schneider AG', '');
+    expect(buildExpensePayments(issuer, [{ okey: 'r7', qrBill: noName }])).toEqual({ drafts: [], manual: ['r7'] });
+  });
+  it('falls back to the Gemini creditor when the QR-bill has no creditor name', () => {
+    const noName = QR.replace('Robert Schneider AG', '');
+    const plan = buildExpensePayments(issuer, [{ okey: 'r8', qrBill: noName, creditorIban: 'CH5604835012345678009', grossAmount: 100, vendor: 'V' }]);
+    expect(plan.drafts.map(d => [d.recipientName, d.needsReview])).toEqual([['V', true]]);
+  });
+  it('reports a Gemini receipt without creditor name and vendor as manual', () =>
+    expect(buildExpensePayments(issuer, [{ okey: 'r9', creditorIban: 'CH5604835012345678009', grossAmount: 100, creditorName: '' }]))
+      .toEqual({ drafts: [], manual: ['r9'] }));
   it('ignores an invalid Gemini IBAN that slipped through', () =>
     expect(buildExpensePayments(issuer, [{ okey: 'r4', creditorIban: 'CH00', grossAmount: 100 }]).manual).toEqual(['r4']));
 });
