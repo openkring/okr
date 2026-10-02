@@ -7,3 +7,4 @@ export * from './lib/calculator-entry';
 export * from './lib/calculator-infix';
 export * from './lib/calculator-rpn';
 export * from './lib/calculator-programmer';
+export * from './lib/calculator-units';
