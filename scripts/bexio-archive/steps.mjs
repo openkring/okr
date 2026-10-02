@@ -9,7 +9,7 @@ import { FieldValue } from 'firebase-admin/firestore';
 
 import {
   accountOkey, commentOkey, fileOkey, filePath, financeDocument, invoicePdfOkey, isoToStoreDate,
-  journalLineAmounts, mapBillPayment, mapBillState, mapComment, mapInvoicePayment, mapInvoiceState, mapReminder, hasNativeActivity, mergeArchivedPayments, mergeArchivedReminders, reminderPdfOkey, staleIds, toRappen,
+  journalLineAmounts, mapBillPayment, mapBillState, mapComment, mapInvoicePayment, mapInvoiceState, mapReminder, hasNativeActivity, mergeArchivedPayments, mergeArchivedReminders, reminderPdfOkey, staleIds, deletableStale, toRappen,
 } from './mappers.mjs';
 
 export const STEPS = {};
@@ -162,7 +162,8 @@ STEPS['invoices-reconcile'] = async ({ db, bexio, tenantId, dry, force }) => {
   if (remote.length === 0) throw new Error('bexio returned an empty invoice list — refusing to reconcile');
   const byId = new Map(remote.map(i => [String(i.id), i]));
   const local = await localDocs(db, 'invoices', tenantId);
-  const stale = staleIds(local.filter(d => /^\d+$/.test(d.id)).map(d => d.id), byId.keys());
+  const { deletable: stale, skipped } = deletableStale(local, byId.keys());
+  if (skipped.length) console.log('stale invoices with okr activity, kept:', skipped.join(', '));
   guard({ dry, force }, stale.length > MAX_STALE, `${stale.length} stale invoices (> ${MAX_STALE})`);
   const ops = stale.map(id => ({ ref: db.collection('invoices').doc(id), del: true }));
   for (const d of local) {

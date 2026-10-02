@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   isoToStoreDate, toRappen, accountOkey, mapInvoiceState, mapBillState, fileOkey, filePath,
-  mapInvoicePayment, mapReminder, mapComment, mapBillPayment, staleIds, journalLineAmounts, isNativeReminder, mergeArchivedReminders, mergeArchivedPayments, hasNativeActivity,
+  mapInvoicePayment, mapReminder, mapComment, mapBillPayment, staleIds, journalLineAmounts, isNativeReminder, mergeArchivedReminders, mergeArchivedPayments, hasNativeActivity, deletableStale,
 } from './mappers.mjs';
 
 test('dates and money', () => {
@@ -99,4 +99,10 @@ test('an invoice with okr payments or reminders keeps its own state on a reconci
   assert.equal(hasNativeActivity({}), false);
   assert.equal(hasNativeActivity({ payments: [{ bookingKey: 'invoice-7-pay-Ab12Cd34Ef' }] }), true);
   assert.equal(hasNativeActivity({ reminders: [{ level: 2, documentKey: 'invoice-7-reminder-2', bookingKey: '' }] }), true);
+});
+
+test('deletableStale keeps stale invoices that carry okr activity and reports them', () => {
+  const doc = (id, data) => ({ id, data: () => data });
+  const local = [doc('1', {}), doc('2', { payments: [{ bookingKey: 'invoice-2-pay-Ab12Cd34Ef' }] }), doc('3', {}), doc('invoice-x', {})];
+  assert.deepEqual(deletableStale(local, ['3']), { deletable: ['1'], skipped: ['2'] });
 });

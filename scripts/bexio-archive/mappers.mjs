@@ -131,6 +131,14 @@ export function financeDocument({ okey, tenantId, path, name, mimeType, size, ha
   };
 }
 
+/** The stale ids that may be deleted: not those whose local doc carries okr activity (payments or reminders recorded in okr). */
+export function deletableStale(localDocs, remoteIds) {
+  const stale = staleIds(localDocs.filter(d => /^\d+$/.test(d.id)).map(d => d.id), remoteIds);
+  const byId = new Map(localDocs.map(d => [d.id, d]));
+  const deletable = stale.filter(id => !hasNativeActivity(byId.get(id)?.data() ?? {}));
+  return { deletable, skipped: stale.filter(id => !deletable.includes(id)) };
+}
+
 export function staleIds(localIds, remoteIds) {
   const remote = new Set([...remoteIds].map(String));
   return [...localIds].map(String).filter(id => !remote.has(id));
