@@ -28,7 +28,7 @@ export type DataClass =
  */
 export type DataTier = 'T1' | 'T2' | 'T3' | 'T4';
 
-export type BlockerCode = 'activeMembership' | 'openInvoice' | 'pendingSignature' | 'soleAdmin';
+export type BlockerCode = 'activeMembership' | 'openInvoice' | 'pendingSignature' | 'soleAdmin' | 'activeContract';
 
 /** A reason the erasure cannot be executed yet. `detail` is authored server-side, in
  * German, and is rendered VERBATIM — the honest wording lives next to the rule that
