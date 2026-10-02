@@ -133,6 +133,10 @@
         "label": "MWST-Code",
         "placeholder": "MWST-Code wählen",
         "helper": "Der Mehrwertsteuer-Code, der für diese Position gilt."
+      },
+      "proRata": {
+        "label": "Pro rata (nach Monaten der Mitgliedschaft)",
+        "helper": "Im Eintritts- und im Austrittsjahr wird nur für die Monate der Mitgliedschaft verrechnet, auf ganze Franken gerundet."
       }
     },
     "source": {

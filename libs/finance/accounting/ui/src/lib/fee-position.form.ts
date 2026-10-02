@@ -8,7 +8,7 @@ import {
 import { SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { AccountModel, CategoryListModel, FeeFlag, FeePositionRule, FeeRule, FeeSource, VatCodeModel } from '@okr/shared-models';
 import {
-  CategorySelect, ErrorNote, NumberInput, NumberInputI18n, TextInput, TextInputI18n
+  CategorySelect, Checkbox, CheckboxI18n, ErrorNote, NumberInput, NumberInputI18n, TextInput, TextInputI18n
 } from '@okr/shared-ui';
 import { coerceBoolean, getItemLabel } from '@okr/shared-util-core';
 import { TranslatePipe } from '@okr/shared-i18n';
@@ -31,7 +31,7 @@ import {
   selector: 'okr-fee-position-form',
   standalone: true,
   imports: [
-    ErrorNote, TextInput, NumberInput, CategorySelect, AccountSelect, AsyncPipe, TranslatePipe,
+    ErrorNote, TextInput, NumberInput, CategorySelect, Checkbox, AccountSelect, AsyncPipe, TranslatePipe,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonList, IonListHeader, IonItem, IonLabel, IonButton, IonNote
   ],
   styles: [`
@@ -146,6 +146,15 @@ import {
                       (valueChange)="onNumberChange('amount', $event)"
                       [min]="0" [max]="maxAmount" [showHelper]="true" [readOnly]="isReadOnly()" />
                     <okr-error-note [errors]="amountErrors()" />
+                  </ion-col>
+                </ion-row>
+              }
+
+              @if (source() !== 'rule') {
+                <ion-row>
+                  <ion-col size="12">
+                    <okr-checkbox [i18n]="proRataI18n()" [checked]="proRata()" (checkedChange)="onProRataChange($event)"
+                      [showHelper]="true" [readOnly]="isReadOnly()" />
                   </ion-col>
                 </ion-row>
               }
@@ -271,6 +280,19 @@ export class FeePositionForm {
     label: this.i18n().feeSchedule_position_accountKey_label(),
     helper: this.i18n().feeSchedule_position_accountKey_helper()
   } as AccountSelectI18n));
+
+  protected readonly proRata = computed(() => this.formData()?.proRata === true);
+  protected readonly proRataI18n = computed(() => ({
+    name: 'proRata',
+    label: this.i18n().feeSchedule_position_proRata_label(),
+    helper: this.i18n().feeSchedule_position_proRata_helper()
+  } as CheckboxI18n));
+
+  /** spec 1.79 §3.5 — bill this position by months of membership in the entry/exit year */
+  protected onProRataChange(value: boolean): void {
+    this.dirty.emit(true);
+    this.formData.update((vm) => ({ ...vm, proRata: value }));
+  }
 
   protected onFieldChange(fieldName: string, fieldValue: string): void {
     this.dirty.emit(true);

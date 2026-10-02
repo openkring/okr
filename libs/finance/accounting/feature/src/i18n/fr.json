@@ -133,6 +133,10 @@
         "label": "Code TVA",
         "placeholder": "Choisir le code TVA",
         "helper": "Le code de TVA applicable à cette position."
+      },
+      "proRata": {
+        "label": "Au prorata (selon les mois d'adhésion)",
+        "helper": "L'année de l'entrée et celle de la sortie, seuls les mois d'adhésion sont facturés, arrondis au franc."
       }
     },
     "source": {

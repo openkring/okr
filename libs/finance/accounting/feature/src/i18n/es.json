@@ -133,6 +133,10 @@
         "label": "Código de IVA",
         "placeholder": "Elegir código de IVA",
         "helper": "El código de IVA aplicable a esta posición."
+      },
+      "proRata": {
+        "label": "Prorrateo (según los meses de afiliación)",
+        "helper": "En el año de alta y en el de baja solo se facturan los meses de afiliación, redondeados a francos enteros."
       }
     },
     "source": {

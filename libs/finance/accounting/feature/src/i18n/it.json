@@ -133,6 +133,10 @@
         "label": "Codice IVA",
         "placeholder": "Scegli il codice IVA",
         "helper": "Il codice IVA applicabile a questa posizione."
+      },
+      "proRata": {
+        "label": "Pro rata (secondo i mesi di adesione)",
+        "helper": "Nell'anno di entrata e in quello di uscita vengono fatturati solo i mesi di adesione, arrotondati al franco."
       }
     },
     "source": {

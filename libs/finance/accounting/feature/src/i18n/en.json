@@ -133,6 +133,10 @@
         "label": "VAT code",
         "placeholder": "Choose VAT code",
         "helper": "The VAT code that applies to this position."
+      },
+      "proRata": {
+        "label": "Pro rata (by months of membership)",
+        "helper": "In the year of joining and of leaving, only the months of membership are charged, rounded to whole francs."
       }
     },
     "source": {

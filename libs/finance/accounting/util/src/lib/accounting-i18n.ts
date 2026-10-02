@@ -94,6 +94,8 @@ export const ACCOUNTING_I18N_KEYS = {
   feeSchedule_position_rule_placeholder:      PFX + 'feeSchedule.position.rule.placeholder',
   feeSchedule_position_rule_helper:           PFX + 'feeSchedule.position.rule.helper',
 
+  feeSchedule_position_proRata_label:         PFX + 'feeSchedule.position.proRata.label',
+  feeSchedule_position_proRata_helper:        PFX + 'feeSchedule.position.proRata.helper',
   feeSchedule_position_amount_label:          PFX + 'feeSchedule.position.amount.label',
   feeSchedule_position_amount_placeholder:    PFX + 'feeSchedule.position.amount.placeholder',
   feeSchedule_position_amount_helper:         PFX + 'feeSchedule.position.amount.helper',
