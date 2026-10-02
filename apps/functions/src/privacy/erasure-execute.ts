@@ -79,14 +79,43 @@ function isDisplayNameField(path: string): boolean {
     || last === 'authorname' || last === 'username';
 }
 
-/** Whether an array element — an `AvatarInfo` or a wrapper like `{ person: AvatarInfo }` —
- * identifies the subject. Mirrors the `matches` predicates in the subject-data map. */
+/** Whether an array element — an `AvatarInfo`, a wrapper like `{ person: AvatarInfo }`, or a
+ * bare person key in a derived key list (`contracts.partyPersonKeys`) — identifies the
+ * subject. Mirrors the `matches` predicates in the subject-data map. */
 function elementIdentifies(element: unknown, personKey: string): boolean {
-  if (!personKey || element === null || typeof element !== 'object') return false;
+  if (!personKey) return false;
+  if (typeof element === 'string') return element === personKey;
+  if (element === null || typeof element !== 'object') return false;
   const el = element as Record<string, unknown>;
   if (el['key'] === personKey) return true;
   const person = el['person'] as Record<string, unknown> | undefined;
   return person?.['key'] === personKey;
+}
+
+/**
+ * `'parties[].avatar'` — an array of records whose `avatar` prop is an `AvatarInfo`, where the
+ * RECORD must survive (a contract keeps its borrower slot; spec 1.5 §5.2: "party name
+ * pseudonymised, amounts kept"). Unlike a plain array field, which drops the subject's
+ * element, this keeps the element and pseudonymises only its avatar: name2 carries the
+ * pseudonym, every other identity field is cleared, the record's own fields (`role`) stay.
+ */
+const ELEMENT_AVATAR_PATH = /^(.+)\[\]\.([^.[\]]+)$/;
+
+function pseudonymiseElementAvatars(
+  value: unknown, prop: string, personKey: string, pseudonym: string,
+): unknown[] | undefined {
+  if (!personKey || !Array.isArray(value)) return undefined;
+  let changed = false;
+  const next = value.map((el) => {
+    const avatar = (el as Record<string, unknown> | null)?.[prop] as Record<string, unknown> | undefined;
+    if (!avatar || avatar['key'] !== personKey || (avatar['modelType'] ?? 'person') !== 'person') return el;
+    changed = true;
+    return {
+      ...(el as Record<string, unknown>),
+      [prop]: { ...avatar, key: '', name1: '', name2: pseudonym, label: '', type: '', subType: '' },
+    };
+  });
+  return changed ? next : undefined;
 }
 
 /**
@@ -96,6 +125,8 @@ function elementIdentifies(element: unknown, personKey: string): boolean {
  * overwritten when its `.key` is the subject's (a task carries an author *and* an
  * assignee), and an array field loses only the matching element (a group keeps its other
  * admins). Dotted keys are Firestore field paths, so a patch never rewrites a whole map.
+ * `'<array>[].<prop>'` keeps the element and pseudonymises its embedded avatar instead
+ * (see `ELEMENT_AVATAR_PATH`).
  *
  * Returns `{ anonymizedAt }` alone when the subject appears in none of the row's fields;
  * the executor treats that as "nothing to do" and does not write it.
@@ -110,6 +141,14 @@ export function anonymizePatch(
   const patch: Record<string, unknown> = { anonymizedAt: now };
 
   for (const field of entry.anonymizeFields ?? []) {
+    const elementAvatar = ELEMENT_AVATAR_PATH.exec(field);
+    if (elementAvatar) {
+      const [, arrayField, prop] = elementAvatar;
+      const next = pseudonymiseElementAvatars(doc.get(arrayField), prop, ctx.personKey, pseudonym);
+      if (next) patch[arrayField] = next;
+      continue;
+    }
+
     const value = doc.get(field);
 
     if (Array.isArray(value)) {

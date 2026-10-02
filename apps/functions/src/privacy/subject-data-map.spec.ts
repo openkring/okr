@@ -337,6 +337,16 @@ describe('SUBJECT_DATA_MAP — blocker predicates', () => {
     expect(b?.blocksTiers).toEqual(['T1']);
   });
 
+  it('contracts blocks the contract tier only, and only until the contract has ended', () => {
+    const b = entry('contracts').blocksErasure;
+    for (const state of ['draft', 'negotiating', 'active', 'noticeGiven']) {
+      expect(b?.([snap({ state })])?.code, state).toBe('activeContract');
+    }
+    expect(b?.([snap({ state: 'active' })])?.blocksTiers).toEqual(['T1']);
+    expect(b?.([snap({ state: 'ended' })])).toBeUndefined();
+    expect(b?.([snap({ state: 'draft', isArchived: true })])).toBeUndefined();
+  });
+
   it('memberships blocks only while the membership is running', () => {
     const b = entry('memberships').blocksErasure;
     expect(b?.([snap({ dateOfExit: '' })])?.code).toBe('activeMembership');

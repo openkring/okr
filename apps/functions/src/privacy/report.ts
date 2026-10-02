@@ -96,6 +96,8 @@ export const COLLECTION_LABELS: Record<string, string> = {
   // — financial (10-year retention) —
   bookings: 'Buchungen', // libs/finance/booking/feature/src/i18n/de.json: list.title
   invoices: 'Rechnungen',
+  contracts: 'Verträge',
+  'contract-documents': 'Vertragsdokumente',
   // invoice-positions has no page of its own — it's edited inline inside the invoice
   // form; "Rechnungsposition(en)" is the term the invoice feature already uses for
   // this exact concept (libs/finance/invoice/feature/src/i18n/de.json).

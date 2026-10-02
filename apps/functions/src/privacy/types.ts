@@ -115,7 +115,9 @@ export interface RetentionRule {
  *    the subject's identity, including fields belonging to a *second* party on the
  *    same document (e.g. `tasks.author` vs `tasks.assignee`). The consumer MUST only
  *    overwrite a nested `AvatarInfo` group whose `.key` equals `ctx.personKey`, and
- *    for array fields MUST remove only the matching element.
+ *    for array fields MUST remove only the matching element. A `'<array>[].<prop>'`
+ *    path instead keeps the element and pseudonymises only its `<prop>` avatar
+ *    (`contracts.parties[].avatar`: the party slot and its role survive).
  */
 export interface SubjectDataEntry {
   readonly collection: string;

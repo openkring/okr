@@ -552,6 +552,52 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     ),
   },
   {
+    collection: 'contracts',
+    dataClass: 'financial',
+    tier: 'T3',   // loan contracts are bookkeeping records (GeBüV) — spec 1.5 §5.2
+    onTenantExit: 'anonymize',
+    // `partyPersonKeys` is the derived, queryable copy of `parties[].avatar.key` (person
+    // parties only), so the array-contains query is exact and needs no `matches`.
+    find: (c: SubjectCtx) => db().collection('contracts').where('partyPersonKeys', 'array-contains', c.personKey),
+    tenantScope: 'tenantsArray',
+    onExport: 'full',
+    onErasure: 'anonymize',
+    // The subject's party slot stays (with its role) and only its avatar is pseudonymised;
+    // their key leaves the derived key list. The counterparty/internal org parties, the
+    // amounts and the terms are untouched — spec 1.5 §5.2 "party name pseudonymised,
+    // amounts kept".
+    anonymizeFields: ['parties[].avatar', 'partyPersonKeys'],
+    retention: RETAIN_10Y,
+    // Open = anything not 'ended' and not archived. 'active'/'noticeGiven' are the running
+    // contract; 'draft'/'negotiating' are the pre-contractual steps Art. 6(1)(b) GDPR puts in
+    // the same contract tier. An unknown state counts as open (fail-safe, and the shared
+    // blocker fixture relies on it). An archived draft was abandoned and blocks nothing.
+    // Like `memberships`, only the contract tier is blocked — consent data stays erasable.
+    blocksErasure: (docs) => {
+      const open = docs.filter((d) => d.get('isArchived') !== true && String(d.get('state') ?? '') !== 'ended');
+      return open.length === 0 ? undefined : {
+        code: 'activeContract', count: open.length,
+        detail: 'Du bist Partei eines Vertrags, der noch nicht beendet ist. Solange er besteht, brauchen wir deine Daten, um ihn zu führen.',
+        blocksTiers: ['T1'],
+      };
+    },
+  },
+  {
+    collection: 'contract-documents',
+    dataClass: 'financial',
+    tier: 'T3',
+    onTenantExit: 'retain',
+    find: (c: SubjectCtx) => db().collection('contract-documents').where('partyPersonKeys', 'array-contains', c.personKey),
+    tenantScope: 'tenantsArray',
+    // 'full', not 'index': a financial row is a full record (map invariant), the subject
+    // is a party and may read these metadata records anyway (canReadContractData), and an
+    // index route would link `/contract/<docKey>` — the wrong id. File bytes never travel.
+    onExport: 'full',
+    // The signed files are the contract's evidence; they stay with the dossier.
+    onErasure: 'retain',
+    retention: RETAIN_10Y,
+  },
+  {
     collection: 'invoice-positions',
     dataClass: 'financial',
     tier: 'T3',

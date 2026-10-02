@@ -136,6 +136,45 @@ describe('anonymizePatch', () => {
     expect(anonymizePatch(e, doc, ctx, pseudonym, '20260729')['properties.persons']).toEqual([{ key: 'p9' }]);
   });
 
+  // Drives the REAL contracts row (spec 1.5 §5.2): the subject's party slot survives with
+  // a pseudonymised avatar, their key leaves the derived key list, and the counterparty org,
+  // the amounts and the terms are untouched.
+  it('pseudonymises the subject\'s contract party in place and keeps the other parties and amounts', () => {
+    const e = mapRow('contracts');
+    const org = { key: 'o1', name1: '', name2: 'Seeclub', modelType: 'org', type: '', subType: '', label: 'SCS' };
+    const doc = snap('k1', {
+      parties: [
+        { role: 'internal', avatar: org },
+        { role: 'counterparty', avatar: { key: 'p1', name1: 'Ann', name2: 'Müller', modelType: 'person', type: '', subType: '', label: 'AM' } },
+      ],
+      partyPersonKeys: ['p1', 'p9'],
+      principal: { amount: 500000, currency: 'CHF' },
+      state: 'ended',
+    });
+    const p = anonymizePatch(e, doc, ctx, pseudonym, '20260729');
+    expect(p['parties']).toEqual([
+      { role: 'internal', avatar: org },
+      { role: 'counterparty', avatar: { key: '', name1: '', name2: pseudonym, modelType: 'person', type: '', subType: '', label: '' } },
+    ]);
+    expect(p['partyPersonKeys']).toEqual(['p9']);
+    expect(Object.keys(p).sort()).toEqual(['anonymizedAt', 'parties', 'partyPersonKeys']);
+  });
+
+  it('leaves a contract untouched when the subject is not a party', () => {
+    const e = mapRow('contracts');
+    const doc = snap('k2', {
+      parties: [{ role: 'counterparty', avatar: { key: 'p9', name2: 'Zünd', modelType: 'person' } }],
+      partyPersonKeys: ['p9'],
+    });
+    expect(Object.keys(anonymizePatch(e, doc, ctx, pseudonym, '20260729'))).toEqual(['anonymizedAt']);
+  });
+
+  it('does not pseudonymise an org party that happens to share the subject\'s key', () => {
+    const e = mapRow('contracts');
+    const doc = snap('k3', { parties: [{ role: 'internal', avatar: { key: 'p1', name2: 'Org', modelType: 'org' } }], partyPersonKeys: [] });
+    expect(Object.keys(anonymizePatch(e, doc, ctx, pseudonym, '20260729'))).toEqual(['anonymizedAt']);
+  });
+
   // Drives the REAL rows: catches a field name in the map that no longer exists on the
   // model, and a quasi-identifier that would survive as a pseudonym instead of being
   // cleared.
