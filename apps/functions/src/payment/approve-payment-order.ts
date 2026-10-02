@@ -1,8 +1,8 @@
 import { onCall, HttpsError, CallableRequest } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
 import * as admin from 'firebase-admin';
-import { PaymentCollection, PaymentOrderCollection } from '@okr/shared-models';
-import { approveBlocker } from '@okr/finance-payment-util';
+import { BankProfileCollection, PaymentCollection, PaymentOrderCollection } from '@okr/shared-models';
+import { approveBlocker, normalizeIban, validateIban } from '@okr/finance-payment-util';
 import { checkAppCheckToken, checkAuthentication, checkRoles, getCallerTenantId } from '@okr/shared-util-functions';
 
 const CF = 'approvePaymentOrder';
@@ -35,6 +35,12 @@ export const approvePaymentOrder = onCall(
         .where('paymentOrderKey', '==', key).where('tenants', 'array-contains', tenantId));
       const blocker = approveBlocker(order, payments.docs.map(d => d.data()), approverKey);
       if (blocker) throw new HttpsError('failed-precondition', blocker);
+      // generatePain001 needs the debtor IBAN; refuse now rather than strand an approved order.
+      const profile = await tx.get(db.collection(BankProfileCollection)
+        .where('accountKey', '==', order['debitAccountKey']).where('tenants', 'array-contains', tenantId).limit(1));
+      const debtorIban = normalizeIban((profile.docs[0]?.data()['iban'] as string | undefined) ?? '');
+      if (!debtorIban || !validateIban(debtorIban)) throw new HttpsError('failed-precondition', 'no-debtor-iban');
+      // ---- writes ----
       tx.update(orderRef, { status: 'approved', approvedBy: approverKey });
       payments.docs.forEach(d => tx.update(d.ref, { status: 'approved' }));
     });
