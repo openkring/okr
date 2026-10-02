@@ -294,6 +294,7 @@ export const PROCESSOR_CATALOGUE: readonly CatalogueEntry[] = [
     purposes: [
       'Automatisches Auslesen von Belegen und Rechnungen (OCR)',
       'Beantwortung von Fragen zu Vereinsdokumenten',
+      'Zusammenfassung von Verträgen auf Anfrage (nie für streng vertrauliche Verträge)',
     ],
     dataClasses: ['identity', 'financial', 'content'],
     retentionText: 'Anfragen und Antworten werden vom Anbieter nicht zur Produktverbesserung genutzt (kostenpflichtige Nutzung)',
@@ -309,7 +310,7 @@ export const PROCESSOR_CATALOGUE: readonly CatalogueEntry[] = [
     privacyUrl: 'https://policies.google.com/privacy',
     contact: 'legal-notices@google.com',
     enabledWhen: byIntegration('gemini'),
-    cloudFunctions: ['ocr/*', 'rag/*'],
+    cloudFunctions: ['ocr/*', 'rag/*', 'contract/summarizeContract'],
     memberNoticeDe:
       'Belege und Dokumente, die du hochgeladen hast, wurden zur automatischen Auswertung an den Dienst übermittelt. Der Anbieter verwendet sie vertraglich nicht zur Produktverbesserung.',
   },
