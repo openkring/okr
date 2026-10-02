@@ -1,54 +1,14 @@
 import { onCall, HttpsError, CallableRequest } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
 import * as admin from 'firebase-admin';
-import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
-import { PaymentCollection, PaymentOrderCollection } from '@okr/shared-models';
+import { BankProfileCollection, PaymentCollection, PaymentOrderCollection, PaymentReferenceType } from '@okr/shared-models';
+import { buildPain001Xml } from '@okr/finance-payment-util';
 import { checkAppCheckToken, checkAuthentication, checkRoles, getCallerTenantId } from '@okr/shared-util-functions';
 
 const CF = 'generatePain001';
 
 interface GeneratePain001Data {
   paymentOrderKey: string;
-}
-
-function escapeXml(s: string): string {
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
-
-function buildPain001Xml(order: Record<string, unknown>, payments: Record<string, unknown>[], msgId: string, executionDate: string): string {
-  const isoDate = executionDate.length === 8
-    ? convertDateFormatToString(executionDate, DateFormat.StoreDate, DateFormat.IsoDate)
-    : executionDate;
-
-  const cdtTrfTxInf = payments.map((p: any) => `
-    <CdtTrfTxInf>
-      <PmtId><EndToEndId>${p.endToEndId ?? ''}</EndToEndId></PmtId>
-      <Amt><InstdAmt Ccy="${(p.amount as any)?.currency ?? 'CHF'}">${((p.amount as any)?.amount ?? 0) / 100}</InstdAmt></Amt>
-      <Cdtr><Nm>${escapeXml(p.recipientName as string ?? '')}</Nm></Cdtr>
-      <CdtrAcct><Id><IBAN>${p.recipientIban ?? ''}</IBAN></Id></CdtrAcct>
-      <RmtInf><Ustrd>${escapeXml(p.reference as string ?? '')}</Ustrd></RmtInf>
-    </CdtTrfTxInf>`).join('');
-
-  return `<?xml version="1.0" encoding="UTF-8"?>
-<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pain.001.001.09">
-  <CstmrCdtTrfInitn>
-    <GrpHdr>
-      <MsgId>${escapeXml(msgId)}</MsgId>
-      <CreDtTm>${new Date().toISOString()}</CreDtTm>
-      <NbOfTxs>${payments.length}</NbOfTxs>
-      <CtrlSum>${payments.reduce((s: number, p: any) => s + ((p.amount as any)?.amount ?? 0), 0) / 100}</CtrlSum>
-      <InitgPty><Nm>bk2</Nm></InitgPty>
-    </GrpHdr>
-    <PmtInf>
-      <PmtInfId>${escapeXml(msgId)}-1</PmtInfId>
-      <PmtMtd>TRF</PmtMtd>
-      <ReqdExctnDt><Dt>${isoDate}</Dt></ReqdExctnDt>
-      <Dbtr><Nm>Debtor</Nm></Dbtr>
-      <DbtrAcct><Id><IBAN>${order['debitAccountKey'] ?? ''}</IBAN></Id></DbtrAcct>
-      ${cdtTrfTxInf}
-    </PmtInf>
-  </CstmrCdtTrfInitn>
-</Document>`;
 }
 
 /**
@@ -105,9 +65,29 @@ export const generatePain001 = onCall(
       .get();
     const payments = paymentsSnap.docs.map(d => d.data());
 
-    const xml = buildPain001Xml(order, payments, order['messageId'] as string, order['executionDate'] as string);
+    const debitAccountKey = (order['debitAccountKey'] as string | undefined) ?? '';
+    const profile = await db.collection(BankProfileCollection)
+      .where('accountKey', '==', debitAccountKey).where('tenants', 'array-contains', tenantId).limit(1).get();
+    const debtorIban = (profile.docs[0]?.data()['iban'] as string | undefined) ?? '';
+    if (!debtorIban) throw new HttpsError('failed-precondition', 'debit account has no bank profile with an IBAN');
+    const org = await db.collection('orgs').doc(tenantId).get();
+    const debtorName = (org.data()?.['name'] as string | undefined) || tenantId;
 
-    await db.collection(PaymentOrderCollection).doc(paymentOrderKey).update({ pain001Xml: xml, status: 'transmitted' });
+    const xml = buildPain001Xml({
+      msgId: order['messageId'] as string, executionDate: order['executionDate'] as string,
+      debtorName, debtorIban, createdAt: new Date().toISOString(),
+      payments: payments.map(p => ({
+        endToEndId: (p['endToEndId'] as string) ?? '', amount: p['amount'] as { amount: number; currency: string } | undefined,
+        recipientName: (p['recipientName'] as string) ?? '', recipientIban: (p['recipientIban'] as string) ?? '',
+        recipientAddress: (p['recipientAddress'] as string) ?? '', reference: (p['reference'] as string) ?? '',
+        referenceType: (p['referenceType'] as PaymentReferenceType | undefined) ?? '',
+      })),
+    });
+
+    const batch = db.batch();
+    batch.update(db.collection(PaymentOrderCollection).doc(paymentOrderKey), { pain001Xml: xml, status: 'transmitted' });
+    paymentsSnap.docs.forEach(d => batch.update(d.ref, { status: 'transmitted' }));
+    await batch.commit();
     logger.info(`${CF}: generated XML for order ${paymentOrderKey}, ${payments.length} payments (tenant=${tenantId})`);
 
     return { xml };

@@ -630,8 +630,25 @@ service cloud.firestore {
       allow write: if false;
     }
     match /journallogs/{id}       { allow read: if tenantRead(); allow write: if false; }
-    match /payment-orders/{id}    { allow read: if tenantRead(); allow write: if false; }
-    match /payments/{id}          { allow read: if tenantRead(); allow write: if false; }
+    // Payment orders + payments (spec 1.80 §5.4): finance data, treasurer/admin only. Clients may
+    // create and edit DRAFTS; approval and transmission happen only in approvePaymentOrder /
+    // generatePain001 (admin SDK), so no client can approve or self-approve.
+    function isTreasurer() { return hasRole('treasurer') || isAdmin(); }
+    function staysDraft() {
+      return request.resource.data.status == 'draft' && request.resource.data.get('approvedBy', '') == '';
+    }
+    match /payment-orders/{id} {
+      allow read: if isTreasurer() && tenantRead();
+      allow create: if isTreasurer() && tenantCreate() && staysDraft();
+      allow update: if isTreasurer() && canWriteTenant(resource.data) && resource.data.status == 'draft' && staysDraft();
+      allow delete: if false;
+    }
+    match /payments/{id} {
+      allow read: if isTreasurer() && tenantRead();
+      allow create: if isTreasurer() && tenantCreate() && request.resource.data.status == 'draft';
+      allow update: if isTreasurer() && canWriteTenant(resource.data) && resource.data.status == 'draft' && request.resource.data.status == 'draft';
+      allow delete: if isTreasurer() && canWriteTenant(resource.data) && resource.data.status == 'draft';
+    }
     match /i18nDefault/{id}       { allow read: if tenantRead(); allow write: if false; }
     match /swissCities/{id}       { allow read: if tenantRead(); allow write: if false; }
 

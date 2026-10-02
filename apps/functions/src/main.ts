@@ -405,6 +405,7 @@ export { setManualRate } from './exchange-rate/set-manual-rate';
 
 // payment
 export { generatePain001 } from './payment/generate-pain001';
+export { approvePaymentOrder } from './payment/approve-payment-order';
 export { parseQrInvoice } from './payment/parse-qr-invoice';
 export { generateDunningPdf } from './payment/generate-dunning-pdf';
 
