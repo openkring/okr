@@ -1127,6 +1127,8 @@ const task: BlockRoutes = {
  * these screens through a menu at all today. Inventing the wrappers would violate the
  * mirror-verbatim rule; the block therefore ships `menu: []` and the gap is stated on the
  * block in `feature-blocks.ts`.
+ *
+ * `calculator` (`libs/instruments/calculator`, spec 1.81) is the third path; no menu doc yet.
  */
 const instruments: BlockRoutes = {
   id: 'instruments',
@@ -1146,6 +1148,12 @@ const instruments: BlockRoutes = {
         { path: 'board/:instrumentKey', canActivate: [isPrivilegedGuard], loadComponent: () => import('@okr/instruments-feature').then(m => m.InstrumentPage), data: { color: 'secondary' } },
         { path: ':listId/:contextMenuName', canActivate: [isPrivilegedGuard], loadComponent: () => import('@okr/instruments-feature').then(m => m.InstrumentList), data: { color: 'secondary' } },
       ],
+    },
+    {
+      path: 'calculator',
+      canActivate: [isAuthenticatedGuard],
+      loadComponent: () => import('@okr/instruments-calculator-feature').then(m => m.CalculatorPage),
+      data: { color: 'secondary' },
     },
   ],
 };

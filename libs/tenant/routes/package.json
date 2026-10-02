@@ -65,6 +65,7 @@
     "@okr/activity-feature": "*",
     "@okr/task-feature": "*",
     "@okr/instruments-feature": "*",
+    "@okr/instruments-calculator-feature": "*",
     "@okr/instruments-whiteboard-feature": "*",
     "@okr/games-hearing-quiz-feature": "*",
     "@okr/games-battleship-feature": "*",

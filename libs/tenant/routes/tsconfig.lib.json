@@ -66,6 +66,7 @@
     { "path": "../../geo/location/feature/tsconfig.lib.json" },
     { "path": "../../geo/trip/feature/tsconfig.lib.json" },
     { "path": "../../i18n/feature/tsconfig.lib.json" },
+    { "path": "../../instruments/calculator/feature/tsconfig.lib.json" },
     { "path": "../../instruments/feature/tsconfig.lib.json" },
     { "path": "../../instruments/whiteboard/feature/tsconfig.lib.json" },
     { "path": "../../mobility/flighttracker/feature/tsconfig.lib.json" },
