@@ -295,7 +295,7 @@ export const JasstafelStore = signalStore(
         });
         patchState(store, { diaryBusy: true });
         try {
-          const status = await store.diaryLineService.record({ tenantId: store.appStore.tenantId(), date: jassDiaryDate(game), line });
+          const { status } = await store.diaryLineService.record({ tenantId: store.appStore.tenantId(), source: 'jasstafel', date: jassDiaryDate(game), line });
           if (status === 'skipped-final') {
             await store.alertService.showToast(i.diary_final());
             return;
