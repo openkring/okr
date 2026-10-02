@@ -112,20 +112,30 @@ async function withdrawPayments(tenantId: string, expenseKey: string, expense: D
   const payments = await db.collection(PaymentCollection).where('expenseKey', '==', expenseKey).get();
   for (const p of payments.docs) {
     if (!((p.data()['tenants'] as string[] | undefined) ?? []).includes(tenantId)) continue;
-    const orderKey = (p.data()['paymentOrderKey'] as string | undefined) ?? '';
-    const order = orderKey ? await db.collection(PaymentOrderCollection).doc(orderKey).get() : undefined;
-    if (!order?.exists || order?.data()?.['status'] === 'draft') {
-      await p.ref.delete();
-      continue;
-    }
-    const amount = (p.data()['amount'] as { amount?: number; currency?: string } | undefined) ?? {};
+    // Re-read payment and order inside one transaction (reads before writes): an approval that lands
+    // between the query and the delete aborts the delete instead of removing an approved payment.
+    const orphan = await db.runTransaction(async (tx) => {
+      const pay = await tx.get(p.ref);
+      if (!pay.exists) return undefined;
+      const orderKey = (pay.data()?.['paymentOrderKey'] as string | undefined) ?? '';
+      const order = orderKey ? await tx.get(db.collection(PaymentOrderCollection).doc(orderKey)) : undefined;
+      if (!order?.exists || order.data()?.['status'] === 'draft') {
+        tx.delete(p.ref);
+        return undefined;
+      }
+      return {
+        amount: (pay.data()?.['amount'] as { amount?: number; currency?: string } | undefined) ?? {},
+        messageId: (order.data()?.['messageId'] as string | undefined) ?? '',
+      };
+    });
+    if (!orphan) continue;
     await emitEvent('expense.paymentOrphaned', tenantId, `expense.${expenseKey}`, {
       personKey: (expense['personKey'] as string) ?? '',
       subjectName: (expense['userName'] as string) ?? '',
       params: {
-        amount: ((amount.amount ?? 0) / 100).toFixed(2),
-        currency: amount.currency ?? 'CHF',
-        order: (order?.data()?.['messageId'] as string) ?? '',
+        amount: ((orphan.amount.amount ?? 0) / 100).toFixed(2),
+        currency: orphan.amount.currency ?? 'CHF',
+        order: orphan.messageId,
       },
     });
   }
