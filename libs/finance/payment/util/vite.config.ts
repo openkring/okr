@@ -8,6 +8,7 @@ const libraryConfig = defineConfig({
   cacheDir: '../../../../node_modules/.vite/libs/finance/payment/util',
   plugins: [nxViteTsPaths(), nxCopyAssetsPlugin(['*.md'])],
   test: {
+    setupFiles: ['./test-setup.ts'], // load @angular/compiler: @okr/shared-util-core pulls in Angular deps
     coverage: {
       reportsDirectory: '../../../../coverage/libs/finance/payment/util',
       provider: 'v8' as const,
