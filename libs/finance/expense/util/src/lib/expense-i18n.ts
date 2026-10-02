@@ -77,6 +77,10 @@ export const EXPENSE_I18N_KEYS = {
   save:               PFX + 'new.save',
   close:              '@shared/ui.close',
   export_todo:        PFX + 'export.todo',
+  payment_title:      PFX + 'payment.title',
+  payment_manual:     PFX + 'payment.manual',
+  payment_open_order: PFX + 'payment.openOrder',
+  payment_none:       PFX + 'payment.none',
 } satisfies Record<string, string>;
 
 export type ExpenseI18n = { [K in keyof typeof EXPENSE_I18N_KEYS]: Signal<string> };

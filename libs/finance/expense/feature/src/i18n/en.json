@@ -155,5 +155,11 @@
     "ocrVendor": "Vendor",
     "ocrDate": "Invoice date",
     "ocrVat": "VAT"
+  },
+  "payment": {
+    "title": "Payment",
+    "manual": "Please enter this payment manually",
+    "openOrder": "Open payment order",
+    "none": "No payment prepared yet"
   }
 }

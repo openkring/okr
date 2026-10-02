@@ -155,5 +155,11 @@
     "ocrVendor": "Proveedor",
     "ocrDate": "Fecha de factura",
     "ocrVat": "IVA"
+  },
+  "payment": {
+    "title": "Pago",
+    "manual": "Por favor, registra este pago manualmente",
+    "openOrder": "Abrir la orden de pago",
+    "none": "Todavía no hay ningún pago preparado"
   }
 }

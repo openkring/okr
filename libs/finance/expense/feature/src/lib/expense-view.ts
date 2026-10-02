@@ -70,6 +70,9 @@ export function injectExpenseView(expense: Signal<ExpenseModel>) {
   });
   const ocrResults = computed(() => ocrResultsResource.value() ?? []);
 
+  /** The OCR result id of a receipt (matched by storagePath); '' when none. */
+  const ocrResultKeyOf = (storagePath: string): string => ocrResults().find(r => r.storagePath === storagePath)?.okey ?? '';
+
   /** The QR-bills printed on the receipts, in receipt order, re-rendered from the stored payload. */
   const qrBills = computed((): ExpenseQrBill[] => receipts().flatMap(receipt => {
     const payload = ocrResults().find(r => r.storagePath === receipt.path)?.qrBill ?? '';
@@ -190,7 +193,7 @@ export function injectExpenseView(expense: Signal<ExpenseModel>) {
   }
 
   return {
-    i18n, formI18n, imgixBaseUrl, authorKey, authorName, receipts, accounts, stateCategory, qrCode, qrBills,
+    i18n, formI18n, imgixBaseUrl, authorKey, authorName, receipts, accounts, stateCategory, qrCode, qrBills, ocrResultKeyOf,
     reloadReceipts: () => { receiptsResource.reload(); ocrResultsResource.reload(); },
     showReceiptActions,
   };

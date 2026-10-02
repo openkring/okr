@@ -29,6 +29,7 @@
     "@okr/finance-expense-util": "*",
     "@okr/finance-expense-ui": "*",
     "@okr/finance-account-data-access": "*",
-    "@okr/finance-cost-center-data-access": "*"
+    "@okr/finance-cost-center-data-access": "*",
+    "@okr/finance-payment-data-access": "*"
   }
 }

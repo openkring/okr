@@ -155,5 +155,11 @@
     "ocrVendor": "Fournisseur",
     "ocrDate": "Date de facture",
     "ocrVat": "TVA"
+  },
+  "payment": {
+    "title": "Paiement",
+    "manual": "Merci de saisir ce paiement manuellement",
+    "openOrder": "Ouvrir l'ordre de paiement",
+    "none": "Aucun paiement préparé pour l'instant"
   }
 }

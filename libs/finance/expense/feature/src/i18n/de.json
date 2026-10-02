@@ -155,5 +155,11 @@
     "ocrVendor": "Lieferant",
     "ocrDate": "Rechnungsdatum",
     "ocrVat": "MWST"
+  },
+  "payment": {
+    "title": "Zahlung",
+    "manual": "Zahlung bitte manuell erfassen",
+    "openOrder": "Zahlungsauftrag öffnen",
+    "none": "Noch keine Zahlung vorbereitet"
   }
 }

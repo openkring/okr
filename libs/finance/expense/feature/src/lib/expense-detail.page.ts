@@ -1,13 +1,17 @@
+import { DecimalPipe } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
+import { Router } from '@angular/router';
 import {
-  IonBackButton, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonTitle, IonToolbar,
+  IonBackButton, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonListHeader, IonTitle, IonToolbar,
 } from '@ionic/angular/standalone';
+import { of } from 'rxjs';
 
-import { ExpenseModel } from '@okr/shared-models';
+import { ExpenseModel, PaymentModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, Spinner } from '@okr/shared-ui';
 
+import { PaymentService } from '@okr/finance-payment-data-access';
 import { ExpenseService } from '@okr/finance-expense-data-access';
 import { canEditExpense, canViewExpense, toExpenseFormValue } from '@okr/finance-expense-util';
 import { ExpenseEditForm } from '@okr/finance-expense-ui';
@@ -31,9 +35,9 @@ import { ExpenseStore } from './expense.store';
   selector: 'okr-expense-detail-page',
   standalone: true,
   imports: [
-    SvgIconPipe, Spinner, EmptyList, ExpenseEditForm,
+    SvgIconPipe, DecimalPipe, Spinner, EmptyList, ExpenseEditForm,
     IonHeader, IonToolbar, IonButtons, IonBackButton, IonTitle, IonButton, IonIcon,
-    IonContent, IonList, IonItem, IonLabel,
+    IonContent, IonList, IonListHeader, IonItem, IonLabel,
   ],
   providers: [ExpenseStore],
   template: `
@@ -96,6 +100,27 @@ import { ExpenseStore } from './expense.store';
             }
           </ion-list>
         }
+
+        @if (canEdit() && expense()!.status === 'done') {
+          <ion-list>
+            <ion-list-header><ion-label>{{ store.i18n.payment_title() }}</ion-label></ion-list-header>
+            @for (payment of payments(); track payment.okey) {
+              <ion-item button (click)="openOrder(payment.paymentOrderKey)">
+                <ion-label>
+                  <h3>{{ payment.recipientName }} — {{ (payment.amount?.amount ?? 0) / 100 | number: '1.2-2' }} {{ payment.amount?.currency }}</h3>
+                  <p>{{ payment.status }}</p>
+                </ion-label>
+                <ion-icon slot="end" src="{{ 'chevron-forward' | svgIcon }}" />
+              </ion-item>
+            }
+            @for (receipt of manualReceipts(); track receipt.path) {
+              <ion-item><ion-label><h3>{{ receipt.name }}</h3><p>{{ store.i18n.payment_manual() }}</p></ion-label></ion-item>
+            }
+            @if (meWithoutPayment()) {
+              <ion-item><ion-label>{{ store.i18n.payment_manual() }}</ion-label></ion-item>
+            }
+          </ion-list>
+        }
       }
     </ion-content>
   `,
@@ -106,6 +131,8 @@ export class ExpenseDetailPage {
 
   protected readonly store = inject(ExpenseStore);
   private readonly expenseService = inject(ExpenseService);
+  private readonly paymentService = inject(PaymentService);
+  private readonly router = inject(Router);
 
   private readonly expenseResource = rxResource<ExpenseModel | undefined, string>({
     params: () => this.expenseKey(),
@@ -129,6 +156,31 @@ export class ExpenseDetailPage {
     const expense = this.expense();
     return !!expense && canEditExpense(expense, this.store.currentUser());
   });
+
+  private readonly paymentsResource = rxResource<PaymentModel[], string | undefined>({
+    params: () => (this.canEdit() ? this.expenseKey() : undefined),
+    stream: ({ params }) => (params ? this.paymentService.listForExpense(params) : of<PaymentModel[]>([])),
+  });
+  protected readonly payments = computed(() => this.paymentsResource.value() ?? []);
+
+  /** Receipts of a done issuer expense that produced no payment — derived, nothing stored (spec 1.80 §6). */
+  protected readonly manualReceipts = computed(() => {
+    const expense = this.expense();
+    if (!expense || expense.status !== 'done' || (expense.transferTo ?? 'me') !== 'issuer') return [];
+    const paid = new Set(this.payments().map(p => p.ocrResultKey ?? ''));
+    return this.view.receipts().filter(r => !paid.has(this.view.ocrResultKeyOf(r.path)));
+  });
+
+  protected readonly meWithoutPayment = computed(() => {
+    const expense = this.expense();
+    return !!expense && expense.status === 'done' && (expense.transferTo ?? 'me') === 'me' && this.payments().length === 0;
+  });
+
+  protected openOrder(orderKey: string): void {
+    const accountingTenantId = this.expense()?.accountingTenantId ?? '';
+    if (!accountingTenantId || !orderKey) return;
+    void this.router.navigateByUrl(`/accounting/${accountingTenantId}/payments/${orderKey}`);
+  }
 
   protected async edit(): Promise<void> {
     const expense = this.expense();
