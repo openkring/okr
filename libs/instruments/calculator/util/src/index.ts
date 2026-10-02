@@ -8,3 +8,7 @@ export * from './lib/calculator-infix';
 export * from './lib/calculator-rpn';
 export * from './lib/calculator-programmer';
 export * from './lib/calculator-units';
+export * from './lib/calculator-keypads';
+export * from './lib/calculator.state';
+export * from './lib/calculator-view';
+export * from './lib/calculator-persist';
