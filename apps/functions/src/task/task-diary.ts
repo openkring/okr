@@ -11,6 +11,13 @@ import { DiaryTarget, UserCollection } from '@okr/shared-models';
 
 import { sendToDiaries, type DiaryTargetResult } from '../diary/diary-transfer';
 
+/** The user doc a task's diary routing is read from: the first active one in the task's tenant. */
+export function pickSourceUser<T extends { tenants?: string[]; isArchived?: boolean }>(
+  users: T[], taskTenantId: string,
+): T | undefined {
+  return users.find(u => u.isArchived !== true && (u.tenants ?? []).includes(taskTenantId));
+}
+
 /**
  * Completes or reopens the assignee's diary line for `date` in every diary the assignee's user
  * IN THE TASK'S TENANT routes `taskDone` to (spec 1.77 §6.3). Reopen removes from the diaries that
@@ -23,12 +30,19 @@ export async function applyTaskToDiary(
   const snap = await db.collection(UserCollection)
     .where('personKey', '==', assigneeKey)
     .get();
-  const source = snap.docs.find(d =>
-    d.get('isArchived') !== true && ((d.get('tenants') as string[] | undefined) ?? []).includes(taskTenantId));
+  const source = pickSourceUser(
+    snap.docs.map(d => ({
+      id: d.id,
+      tenants: d.get('tenants') as string[] | undefined,
+      isArchived: d.get('isArchived') as boolean | undefined,
+      diaryTargets: d.get('diaryTargets') as DiaryTarget[] | undefined,
+    })),
+    taskTenantId,
+  );
   if (!source) return {};
   return sendToDiaries(db, {
     personKey: assigneeKey,
-    targets: source.get('diaryTargets') as DiaryTarget[] | undefined,
+    targets: source.diaryTargets,
     source: 'taskDone', date, field: 'done', line, mode: mode === 'complete' ? 'add' : 'remove',
   });
 }
