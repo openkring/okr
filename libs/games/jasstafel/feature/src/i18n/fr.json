@@ -100,7 +100,7 @@
     "prefix": "Jass",
     "hands": "manches",
     "okIn": "Ajouté à ton journal : {diaries}",
-    "outside": "Cette partie est en dehors de la période de tes journaux.",
+    "outside": "Cette partie n'a pas été transférée : elle est en dehors de la période de tes journaux, ou tu n'y as plus accès.",
     "final": "Ton entrée de journal pour ce jour est finalisée. Le résultat n'a pas été ajouté.",
     "denied": "Tu n'as pas de journal dans lequel ajouter le résultat.",
     "error": "Le résultat n'a pas pu être ajouté à ton journal. Réessaie plus tard."

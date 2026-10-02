@@ -191,7 +191,7 @@
     "to": {
       "label": "Reise bis"
     },
-    "helper": "Tagebuch-Übertragungen ohne eigenen Zeitraum gelten nur in dieser Zeit. Ein leeres Datum lässt die Reisezeit auf dieser Seite offen.",
+    "helper": "Tagebuch-Übertragungen ohne eigenen Zeitraum gelten nur in dieser Zeit. Bleibt ein Datum leer, ist die Reisezeit an diesem Ende offen.",
     "error": "Das Startdatum liegt nach dem Enddatum."
   }
 }

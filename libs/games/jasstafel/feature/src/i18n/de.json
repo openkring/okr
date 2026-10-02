@@ -100,7 +100,7 @@
     "prefix": "Jass",
     "hands": "Runden",
     "okIn": "Ins Tagebuch übertragen: {diaries}",
-    "outside": "Diese Partie liegt ausserhalb des Zeitraums deiner Tagebücher.",
+    "outside": "Diese Partie wurde nicht übertragen: Sie liegt ausserhalb des Zeitraums deiner Tagebücher, oder du hast dort keinen Zugang mehr.",
     "final": "Dein Tagebucheintrag für diesen Tag ist abgeschlossen. Das Resultat wurde nicht eingetragen.",
     "denied": "Du hast kein Tagebuch, in das das Resultat eingetragen werden kann.",
     "error": "Das Resultat konnte nicht ins Tagebuch übertragen werden. Versuch es später noch einmal."

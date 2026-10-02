@@ -100,7 +100,7 @@
     "prefix": "Jass",
     "hands": "hands",
     "okIn": "Added to your diary: {diaries}",
-    "outside": "This game is outside the period of your diaries.",
+    "outside": "This game was not added: it is outside the period of your diaries, or you no longer have access there.",
     "final": "Your diary entry for this day is finalised. The result was not added.",
     "denied": "You have no diary the result could be added to.",
     "error": "The result could not be added to your diary. Please try again later."

@@ -100,7 +100,7 @@
     "prefix": "Jass",
     "hands": "mani",
     "okIn": "Aggiunto al tuo diario: {diaries}",
-    "outside": "Questa partita è fuori dal periodo dei tuoi diari.",
+    "outside": "Questa partita non è stata trasferita: è fuori dal periodo dei tuoi diari, oppure non hai più accesso.",
     "final": "La tua voce di diario per questo giorno è conclusa. Il risultato non è stato aggiunto.",
     "denied": "Non hai un diario in cui aggiungere il risultato.",
     "error": "Non è stato possibile aggiungere il risultato al tuo diario. Riprova più tardi."
