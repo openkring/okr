@@ -272,7 +272,8 @@
       "nameLength": "La désignation est trop longue.",
       "amount": "Le montant doit être supérieur à 0.",
       "account": "Choisis un compte de produits."
-    }
+    },
+    "fromFeeSchedule": "Reprendre du barème des cotisations"
   },
   "issue": {
     "label": "Émettre la facture",
@@ -389,5 +390,11 @@
     "progress": "{n} sur {m}",
     "done": "{issued} factures sur {total} sont émises.",
     "failed": "Non émises :"
+  },
+  "feeSelect": {
+    "title": "Position du barème des cotisations",
+    "empty": "Aucun barème des cotisations n'est encore saisi pour cette année.",
+    "notMember": "Réservé aux membres",
+    "noAccount": "Sans compte de produits – complète-le après la reprise"
   }
 }

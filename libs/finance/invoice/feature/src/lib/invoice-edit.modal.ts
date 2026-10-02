@@ -1,21 +1,24 @@
 import { Component, computed, effect, inject, input, linkedSignal, signal, untracked } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ActionSheetController, IonContent, ModalController } from '@ionic/angular/standalone';
-import { of } from 'rxjs';
+import { firstValueFrom, of } from 'rxjs';
 
-import { ModelSelectService } from '@okr/shared-feature';
+import { AppStore, ModelSelectService } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
-import { AvatarInfo, InvoiceModel, UserModel } from '@okr/shared-models';
+import { AvatarInfo, InvoiceModel, MembershipModel, UserModel } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header, Spinner } from '@okr/shared-ui';
 import { dismissOverlay } from '@okr/shared-util-angular';
-import { coerceBoolean, safeStructuredClone } from '@okr/shared-util-core';
+import { coerceBoolean, DateFormat, getTodayStr, getYear, isAfterDate, safeStructuredClone } from '@okr/shared-util-core';
 
 import { AccountService } from '@okr/finance-account-data-access';
+import { AccountingConfigService } from '@okr/finance-accounting-data-access';
 import { ReadOnlyBanner } from '@okr/finance-accounting-feature';
 import { InvoiceService } from '@okr/finance-invoice-data-access';
-import { InvoiceEditForm } from '@okr/finance-invoice-ui';
+import { FeePositionSelectModal, InvoiceEditForm } from '@okr/finance-invoice-ui';
+import { MembershipService } from '@okr/relationship-membership-data-access';
 import {
-  INVOICE_I18N_KEYS, InvoiceI18n, InvoicePositionInput, isDraftInvoice, newInvoicePosition, toPositionInputs,
+  addPickedPosition, feeOptionToPosition, FeePickOption, feePickOptions, INVOICE_I18N_KEYS, InvoiceI18n,
+  InvoicePositionInput, isDraftInvoice, newInvoicePosition, toCategoryPriceLists, toPositionInputs,
 } from '@okr/finance-invoice-util';
 
 /** What the modal dismisses with on confirm. */
@@ -63,6 +66,7 @@ export interface InvoiceEditResult {
             (dirty)="formDirty.set($event)"
             (valid)="formValid.set($event)"
             (receiverSelect)="selectReceiver()"
+            (feeSelect)="selectFeePosition()"
           />
         }
       }
@@ -75,6 +79,9 @@ export class InvoiceEditModal {
   private readonly modelSelectService = inject(ModelSelectService);
   private readonly invoiceService = inject(InvoiceService);
   private readonly accountService = inject(AccountService);
+  private readonly accountingConfigService = inject(AccountingConfigService);
+  private readonly membershipService = inject(MembershipService);
+  private readonly appStore = inject(AppStore);
   // direct inject, no store: the store opens this modal, importing it back would be circular
   protected readonly i18n = inject(I18nService).translateAll(INVOICE_I18N_KEYS) as InvoiceI18n;
 
@@ -162,6 +169,47 @@ export class InvoiceEditModal {
       this.formDirty.set(true);
       this.formData.update((vm) => (vm ? { ...vm, receiver } : vm));
     }
+  }
+
+  /**
+   * «Aus Gebührenplan übernehmen» (spec 1.78): offers the current year's fee schedule of the
+   * invoice's books, priced for the receiver, and adds the picked position. The owner org of the
+   * books is orgs/{accountingTenantId}; its membershipCategoryKey is the default price list.
+   */
+  protected async selectFeePosition(): Promise<void> {
+    if (this.isReadOnly()) return;
+    const accountingTenantId = this.invoice().accountingTenantId;
+    const config = await firstValueFrom(this.accountingConfigService.read(accountingTenantId));
+    const year = getYear();
+    const rules = config?.feeSchedule?.find(entry => entry.year === year)?.positions ?? [];
+    const ownerOrg = this.appStore.allOrgs().find(org => org.okey === accountingTenantId);
+    const options = feePickOptions(rules, {
+      categoryLists: toCategoryPriceLists(this.appStore.allCategories()),
+      defaultCategoryList: ownerOrg?.membershipCategoryKey || 'mcat',
+      receiverCategory: await this.receiverCategory(accountingTenantId),
+    });
+
+    const modal = await this.modalController.create({
+      component: FeePositionSelectModal,
+      componentProps: { options, i18n: this.i18n },
+    });
+    await modal.present();
+    const { data, role } = await modal.onWillDismiss<FeePickOption>();
+    if (role !== 'confirm' || !data) return;
+    this.formDirty.set(true);
+    this.positions.update(list => addPickedPosition(list, feeOptionToPosition(data)));
+  }
+
+  /** the receiver's current membership category in the books' owner org; undefined = not a member */
+  private async receiverCategory(orgKey: string): Promise<string | undefined> {
+    const receiver = this.formData()?.receiver;
+    if (!receiver?.key) return undefined;
+    const today = getTodayStr(DateFormat.StoreDate);
+    const memberships = await firstValueFrom(
+      this.membershipService.listMembershipsOfMember(receiver.key, receiver.modelType, 'org'));
+    return memberships.find((m: MembershipModel) =>
+      m.orgKey === orgKey && isAfterDate(m.dateOfExit, today) && (m.state === 'active' || m.state === 'passive')
+    )?.category;
   }
 
   protected async save(): Promise<void> {

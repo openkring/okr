@@ -272,7 +272,8 @@
       "nameLength": "The description is too long.",
       "amount": "The amount must be greater than 0.",
       "account": "Choose a revenue account."
-    }
+    },
+    "fromFeeSchedule": "Take from fee schedule"
   },
   "issue": {
     "label": "Issue invoice",
@@ -389,5 +390,11 @@
     "progress": "{n} of {m}",
     "done": "{issued} of {total} invoices are issued.",
     "failed": "Not issued:"
+  },
+  "feeSelect": {
+    "title": "Position from the fee schedule",
+    "empty": "No fee schedule has been set up for this year yet.",
+    "notMember": "Members only",
+    "noAccount": "No revenue account – please add one after taking it over"
   }
 }

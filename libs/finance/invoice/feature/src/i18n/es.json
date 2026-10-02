@@ -272,7 +272,8 @@
       "nameLength": "La descripción es demasiado larga.",
       "amount": "El importe debe ser mayor que 0.",
       "account": "Elige una cuenta de ingresos."
-    }
+    },
+    "fromFeeSchedule": "Tomar del plan de cuotas"
   },
   "issue": {
     "label": "Emitir factura",
@@ -389,5 +390,11 @@
     "progress": "{n} de {m}",
     "done": "{issued} de {total} facturas están emitidas.",
     "failed": "No emitidas:"
+  },
+  "feeSelect": {
+    "title": "Posición del plan de cuotas",
+    "empty": "Todavía no hay un plan de cuotas para este año.",
+    "notMember": "Solo para socios",
+    "noAccount": "Sin cuenta de ingresos – complétala después de tomarla"
   }
 }

@@ -83,6 +83,11 @@ type PositionField = 'name' | 'amount' | 'accountKey';
                     <ion-icon slot="start" src="{{ 'add-circle' | svgIcon }}" />
                     {{ i18n().positions_add() }}
                   </ion-button>
+                  <!-- the parent (feature layer) opens the fee-schedule picker and writes the pick back -->
+                  <ion-button fill="clear" (click)="feeSelect.emit()">
+                    <ion-icon slot="start" src="{{ 'list' | svgIcon }}" />
+                    {{ i18n().positions_fromFeeSchedule() }}
+                  </ion-button>
                 }
               </ion-col>
               <ion-col size="12" size-md="6">
@@ -113,6 +118,8 @@ export class InvoicePositionsForm {
   // outputs
   public readonly dirty = output<boolean>();
   public readonly valid = output<boolean>();
+  /** «Aus Gebührenplan übernehmen» (spec 1.78) — the parent opens the picker */
+  public readonly feeSelect = output<void>();
 
   protected readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   protected readonly selectableAccounts = computed(() => revenueAccounts(this.accounts()));

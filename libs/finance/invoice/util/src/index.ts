@@ -8,3 +8,4 @@ export * from './lib/bexio-invoice.validations';
 export * from './lib/payment-confirmation.util';
 export * from './lib/invoice-payment.util';
 export * from './lib/invoice-payment.validations';
+export * from './lib/fee-position-pick.util';

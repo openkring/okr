@@ -272,7 +272,8 @@
       "nameLength": "La descrizione è troppo lunga.",
       "amount": "L'importo deve essere maggiore di 0.",
       "account": "Scegli un conto ricavi."
-    }
+    },
+    "fromFeeSchedule": "Riprendi dal piano delle quote"
   },
   "issue": {
     "label": "Emetti fattura",
@@ -389,5 +390,11 @@
     "progress": "{n} di {m}",
     "done": "{issued} fatture su {total} sono emesse.",
     "failed": "Non emesse:"
+  },
+  "feeSelect": {
+    "title": "Posizione dal piano delle quote",
+    "empty": "Per quest'anno non è ancora stato inserito un piano delle quote.",
+    "notMember": "Solo per i soci",
+    "noAccount": "Senza conto di ricavo – completalo dopo averla ripresa"
   }
 }

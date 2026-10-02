@@ -136,6 +136,11 @@ export const INVOICE_I18N_KEYS = {
   positions_add:            PFX + 'positions.add',
   positions_remove:         PFX + 'positions.remove',
   positions_total:          PFX + 'positions.total',
+  positions_fromFeeSchedule: PFX + 'positions.fromFeeSchedule',
+  feeSelect_title:          PFX + 'feeSelect.title',
+  feeSelect_empty:          PFX + 'feeSelect.empty',
+  feeSelect_notMember:      PFX + 'feeSelect.notMember',
+  feeSelect_noAccount:      PFX + 'feeSelect.noAccount',
 
   issue:                    PFX + 'issue.label',
   issue_confirm:            PFX + 'issue.confirm',

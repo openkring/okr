@@ -110,6 +110,7 @@ import { InvoicePositionsForm } from './invoice-positions.form';
           [readOnly]="isReadOnly()"
           (dirty)="dirty.emit($event)"
           (valid)="positionsValid.set($event)"
+          (feeSelect)="feeSelect.emit()"
         />
 
         <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)"
@@ -139,6 +140,8 @@ export class InvoiceEditForm {
   public readonly valid = output<boolean>();
   /** the parent opens the person/org picker and writes the receiver back into formData */
   public readonly receiverSelect = output<void>();
+  /** the parent opens the fee-schedule picker and appends the pick to the positions (spec 1.78) */
+  public readonly feeSelect = output<void>();
 
   protected readonly positionsValid = signal(false);
 

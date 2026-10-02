@@ -272,7 +272,8 @@
       "nameLength": "Die Bezeichnung ist zu lang.",
       "amount": "Der Betrag muss grösser als 0 sein.",
       "account": "Wähle ein Ertragskonto."
-    }
+    },
+    "fromFeeSchedule": "Aus Gebührenplan übernehmen"
   },
   "issue": {
     "label": "Rechnung ausstellen",
@@ -389,5 +390,11 @@
     "progress": "{n} von {m}",
     "done": "{issued} von {total} Rechnungen sind ausgestellt.",
     "failed": "Nicht ausgestellt:"
+  },
+  "feeSelect": {
+    "title": "Position aus dem Gebührenplan",
+    "empty": "Für dieses Jahr ist noch kein Gebührenplan erfasst.",
+    "notMember": "Nur für Mitglieder",
+    "noAccount": "Ohne Ertragskonto – bitte nach dem Übernehmen ergänzen"
   }
 }

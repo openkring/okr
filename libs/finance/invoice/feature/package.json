@@ -29,6 +29,7 @@
     "@okr/finance-booking-util": "*",
     "@okr/finance-reporting-util": "*",
     "@okr/subject-address-util": "*",
-    "@okr/finance-account-data-access": "*"
+    "@okr/finance-account-data-access": "*",
+    "@okr/relationship-membership-data-access": "*"
   }
 }
