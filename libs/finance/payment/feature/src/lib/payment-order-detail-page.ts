@@ -3,7 +3,7 @@ import { DecimalPipe } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { of } from 'rxjs';
-import { ActionSheetButton, ActionSheetController, IonBadge, IonButton, IonContent, IonHeader, IonItem, IonLabel,
+import { ActionSheetButton, ActionSheetController, ToastController, IonBadge, IonButton, IonContent, IonHeader, IonItem, IonLabel,
   IonList, IonNote, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { PaymentModel, PaymentOrderModel } from '@okr/shared-models';
@@ -13,6 +13,7 @@ import { AccountingStore } from '@okr/finance-accounting-feature';
 import { PaymentOrderService, PaymentService } from '@okr/finance-payment-data-access';
 import { PAYMENT_I18N_KEYS, PaymentI18n, approveBlocker } from '@okr/finance-payment-util';
 
+import { showToast } from '@okr/shared-util-angular';
 import { PaymentStore } from './payment.store';
 
 @Component({
@@ -29,7 +30,7 @@ import { PaymentStore } from './payment.store';
             <ion-button slot="end" fill="clear" (click)="approve(headerOrder)">{{ i18n.approve_button() }}</ion-button>
           }
           @if (headerOrder.status === 'approved') {
-            <ion-button slot="end" fill="clear" (click)="store.downloadPain001(headerOrder)">{{ i18n.download_pain001() }}</ion-button>
+            <ion-button slot="end" fill="clear" (click)="downloadPain001(headerOrder)">{{ i18n.download_pain001() }}</ion-button>
           }
         }
       </ion-toolbar>
@@ -67,6 +68,7 @@ export class PaymentOrderDetailPage {
   protected readonly store = inject(PaymentStore);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly toastController = inject(ToastController);
   private readonly actionSheetController = inject(ActionSheetController);
   private readonly appStore = inject(AppStore);
   private readonly accountingStore = inject(AccountingStore);
@@ -115,9 +117,17 @@ export class PaymentOrderDetailPage {
   protected async approve(order: PaymentOrderModel): Promise<void> {
     this.serverBlocker.set('');
     const blocker = await this.store.approve(order);
-    if (blocker) this.serverBlocker.set(blocker);
+    this.serverBlocker.set(blocker);
     this.orderResource.reload();
     this.paymentsResource.reload();
+  }
+
+  protected async downloadPain001(order: PaymentOrderModel): Promise<void> {
+    try {
+      await this.store.downloadPain001(order);
+    } catch {
+      await showToast(this.toastController, this.i18n.action_error());
+    }
   }
 
   protected async openPayment(payment: PaymentModel): Promise<void> {
@@ -125,8 +135,13 @@ export class PaymentOrderDetailPage {
     const buttons: ActionSheetButton[] = [];
     if (payment.needsReview && order?.status === 'draft') {
       buttons.push({ text: this.i18n.as_confirm(), handler: async () => {
-        await this.store.confirmPayment(payment);
-        this.paymentsResource.reload();
+        try {
+          await this.store.confirmPayment(payment);
+          this.serverBlocker.set('');
+          this.paymentsResource.reload();
+        } catch {
+          await showToast(this.toastController, this.i18n.action_error());
+        }
       } });
     }
     if (payment.expenseKey) {

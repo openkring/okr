@@ -1,6 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { IonBadge, IonButton, IonContent, IonFab, IonFabButton, IonHeader, IonIcon,
+import { IonBadge, IonContent, IonFab, IonFabButton, IonHeader, IonIcon,
   IonItem, IonLabel, IonList, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
@@ -11,7 +11,7 @@ import { PaymentStore } from './payment.store';
 @Component({
   selector: 'okr-payment-order-list',
   standalone: true,
-  imports: [IonHeader, IonToolbar, IonTitle, IonContent, IonList, IonItem, IonLabel, IonBadge, IonButton, IonFab, IonFabButton, IonIcon, SvgIconPipe],
+  imports: [IonHeader, IonToolbar, IonTitle, IonContent, IonList, IonItem, IonLabel, IonBadge, IonFab, IonFabButton, IonIcon, SvgIconPipe],
   providers: [PaymentStore],
   template: `
     <ion-header>
@@ -33,11 +33,6 @@ import { PaymentStore } from './payment.store';
               <ion-badge slot="end" [color]="order.status === 'approved' ? 'success' : 'medium'">
                 {{ order.status }}
               </ion-badge>
-              @if (order.status === 'draft' && !store.isReadOnly() && order.createdBy !== store.currentUserKey()) {
-                <ion-button slot="end" fill="clear" (click)="store.approve(order); $event.stopPropagation()">
-                  {{ store.i18n.approve_label() }}
-                </ion-button>
-              }
             </ion-item>
           }
         </ion-list>

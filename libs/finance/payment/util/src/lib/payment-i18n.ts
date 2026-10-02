@@ -10,6 +10,7 @@ export const PAYMENT_I18N_KEYS = {
   as_edit:           PFX + 'actionsheet.edit',
   as_create:         PFX + 'actionsheet.create',
 
+  action_error:      PFX + 'order.action_error',
   cancel:            PFX + 'actionsheet.cancel',
   approve_button:    PFX + 'order.approve',
   approve_blocked:   PFX + 'order.approve_blocked',

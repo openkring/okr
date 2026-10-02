@@ -22,7 +22,8 @@
     "created_by": "Creado por",
     "approved_by": "Aprobado por",
     "approve": "Aprobar",
-    "approve_blocked": "La aprobación aún no es posible"
+    "approve_blocked": "La aprobación aún no es posible",
+    "action_error": "No ha funcionado. Por favor, inténtalo de nuevo."
   },
   "blocker": {
     "not_draft": "Esta orden ya está aprobada.",
