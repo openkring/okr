@@ -23,7 +23,8 @@
     "approved_by": "Aprobado por",
     "approve": "Aprobar",
     "approve_blocked": "La aprobación aún no es posible",
-    "action_error": "No ha funcionado. Por favor, inténtalo de nuevo."
+    "action_error": "No ha funcionado. Por favor, inténtalo de nuevo.",
+    "edit": "Editar"
   },
   "blocker": {
     "not_draft": "Esta orden ya está aprobada.",
@@ -31,7 +32,8 @@
     "self": "La aprobación debe hacerla una persona distinta de la que preparó la orden.",
     "incomplete": "Elige primero la cuenta de cargo y la fecha de ejecución.",
     "empty": "Esta orden todavía no contiene pagos.",
-    "needs_review": "Revisa primero los pagos marcados y confírmalos."
+    "needs_review": "Revisa primero los pagos marcados y confírmalos.",
+    "no_debtor_iban": "No hay ningún IBAN válido guardado para la cuenta de cargo elegida."
   },
   "payment": {
     "needs_review": "IBAN leído del texto del justificante – por favor, revísalo"

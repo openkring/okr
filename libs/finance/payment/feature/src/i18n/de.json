@@ -23,7 +23,8 @@
     "approved_by": "Freigegeben von",
     "approve": "Freigeben",
     "approve_blocked": "Freigabe noch nicht möglich",
-    "action_error": "Das hat leider nicht geklappt. Bitte versuche es noch einmal."
+    "action_error": "Das hat leider nicht geklappt. Bitte versuche es noch einmal.",
+    "edit": "Bearbeiten"
   },
   "blocker": {
     "not_draft": "Dieser Auftrag ist schon freigegeben.",
@@ -31,7 +32,8 @@
     "self": "Freigeben muss eine andere Person als die, die den Auftrag vorbereitet hat.",
     "incomplete": "Bitte wähle zuerst das Belastungskonto und das Ausführungsdatum.",
     "empty": "Dieser Auftrag enthält noch keine Zahlungen.",
-    "needs_review": "Bitte prüfe zuerst die markierten Zahlungen und bestätige sie."
+    "needs_review": "Bitte prüfe zuerst die markierten Zahlungen und bestätige sie.",
+    "no_debtor_iban": "Für das gewählte Belastungskonto ist keine gültige IBAN hinterlegt."
   },
   "payment": {
     "needs_review": "IBAN aus dem Belegtext gelesen – bitte prüfen"

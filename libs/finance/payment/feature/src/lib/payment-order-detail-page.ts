@@ -3,12 +3,13 @@ import { DecimalPipe } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { of } from 'rxjs';
-import { ActionSheetButton, ActionSheetController, ToastController, IonBadge, IonButton, IonContent, IonHeader, IonItem, IonLabel,
-  IonList, IonNote, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { ActionSheetButton, ActionSheetController, ToastController, IonBadge, IonButton, IonButtons, IonContent, IonHeader, IonIcon,
+  IonItem, IonLabel, IonList, IonNote, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { PaymentModel, PaymentOrderModel } from '@okr/shared-models';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
+import { SvgIconPipe } from '@okr/shared-pipes';
 import { AccountingStore } from '@okr/finance-accounting-feature';
 import { PaymentOrderService, PaymentService } from '@okr/finance-payment-data-access';
 import { PAYMENT_I18N_KEYS, PaymentI18n, approveBlocker } from '@okr/finance-payment-util';
@@ -19,19 +20,28 @@ import { PaymentStore } from './payment.store';
 @Component({
   selector: 'okr-payment-order-detail-page',
   standalone: true,
-  imports: [DecimalPipe, IonHeader, IonToolbar, IonTitle, IonContent, IonList, IonItem, IonLabel, IonButton, IonBadge, IonNote],
+  imports: [DecimalPipe, SvgIconPipe, IonHeader, IonToolbar, IonTitle, IonContent, IonList, IonItem, IonLabel, IonButton, IonButtons,
+    IonIcon, IonBadge, IonNote],
   providers: [PaymentStore],
   template: `
     <ion-header>
       <ion-toolbar>
         <ion-title>{{ i18n.order_title() }}</ion-title>
         @if (orderResource.value(); as headerOrder) {
-          @if (headerOrder.status === 'draft') {
-            <ion-button slot="end" fill="clear" (click)="approve(headerOrder)">{{ i18n.approve_button() }}</ion-button>
-          }
-          @if (headerOrder.status === 'approved') {
-            <ion-button slot="end" fill="clear" (click)="downloadPain001(headerOrder)">{{ i18n.download_pain001() }}</ion-button>
-          }
+          <ion-buttons slot="end">
+            @if (headerOrder.status === 'draft') {
+              <ion-button fill="clear" [attr.aria-label]="i18n.order_edit()" (click)="edit(headerOrder)">
+                <ion-icon slot="icon-only" src="{{ 'edit' | svgIcon }}" />
+              </ion-button>
+              <ion-button fill="clear" (click)="approve(headerOrder)">{{ i18n.approve_button() }}</ion-button>
+            }
+            @if (headerOrder.status === 'approved') {
+              <ion-button fill="clear" (click)="downloadPain001(headerOrder)">{{ i18n.download_pain001() }}</ion-button>
+            }
+            @if (hasStoredPain001(headerOrder)) {
+              <ion-button fill="clear" (click)="downloadStoredPain001(headerOrder)">{{ i18n.download_pain001() }}</ion-button>
+            }
+          </ion-buttons>
         }
       </ion-toolbar>
     </ion-header>
@@ -110,8 +120,30 @@ export class PaymentOrderDetailPage {
       'not-draft': this.i18n.blocker_not_draft, unprepared: this.i18n.blocker_unprepared,
       self: this.i18n.blocker_self, incomplete: this.i18n.blocker_incomplete,
       empty: this.i18n.blocker_empty, 'needs-review': this.i18n.blocker_needs_review,
+      'no-debtor-iban': this.i18n.blocker_no_debtor_iban,
     };
     return map[blocker]?.() ?? this.i18n.approve_blocked();
+  }
+
+  /** Prepare a draft (debit account, execution date); saving takes it over as createdBy (spec 1.80 §5.3). */
+  protected async edit(order: PaymentOrderModel): Promise<void> {
+    this.serverBlocker.set('');
+    await this.store.openEdit(order, false);
+    this.orderResource.reload();
+    this.paymentsResource.reload();
+  }
+
+  /** Once generated, the file is stored on the order: re-download it without regenerating. */
+  protected hasStoredPain001(order: PaymentOrderModel): boolean {
+    return order.status !== 'draft' && order.status !== 'approved' && !!(order.pain001Xml ?? '');
+  }
+
+  protected async downloadStoredPain001(order: PaymentOrderModel): Promise<void> {
+    try {
+      await this.store.downloadStoredPain001(order);
+    } catch {
+      await showToast(this.toastController, this.i18n.action_error());
+    }
   }
 
   protected async approve(order: PaymentOrderModel): Promise<void> {

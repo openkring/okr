@@ -20,11 +20,13 @@ export const PAYMENT_I18N_KEYS = {
   blocker_incomplete: PFX + 'blocker.incomplete',
   blocker_empty:     PFX + 'blocker.empty',
   blocker_needs_review: PFX + 'blocker.needs_review',
+  blocker_no_debtor_iban: PFX + 'blocker.no_debtor_iban',
   needs_review_badge: PFX + 'payment.needs_review',
   as_confirm:        PFX + 'actionsheet.confirm',
   as_open_expense:   PFX + 'actionsheet.open_expense',
 
   order_title:       PFX + 'order.title',
+  order_edit:        PFX + 'order.edit',
   download_pain001:  PFX + 'order.download_pain001',
   status_label:      PFX + 'order.status',
   execution_label:   PFX + 'order.execution',

@@ -95,6 +95,11 @@ export const PaymentStore = signalStore(
       store.ordersResource.reload();
     },
 
+    /** Saves the pain.001 stored on a transmitted order again — no callable, no status change. */
+    async downloadStoredPain001(order: PaymentOrderModel): Promise<void> {
+      await downloadTextFile(order.pain001Xml ?? '', `${order.messageId || order.okey}.xml`);
+    },
+
     async confirmPayment(payment: PaymentModel): Promise<void> {
       await store.paymentService.update({ ...payment, needsReview: false }, store.currentUser() ?? undefined);
     },

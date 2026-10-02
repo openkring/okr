@@ -23,7 +23,8 @@
     "approved_by": "Approuvé par",
     "approve": "Approuver",
     "approve_blocked": "L'approbation n'est pas encore possible",
-    "action_error": "Cela n'a pas fonctionné. Réessaie, s'il te plaît."
+    "action_error": "Cela n'a pas fonctionné. Réessaie, s'il te plaît.",
+    "edit": "Modifier"
   },
   "blocker": {
     "not_draft": "Cet ordre est déjà approuvé.",
@@ -31,7 +32,8 @@
     "self": "L'approbation doit être faite par une autre personne que celle qui a préparé l'ordre.",
     "incomplete": "Choisis d'abord le compte débiteur et la date d'exécution.",
     "empty": "Cet ordre ne contient encore aucun paiement.",
-    "needs_review": "Vérifie d'abord les paiements signalés et confirme-les."
+    "needs_review": "Vérifie d'abord les paiements signalés et confirme-les.",
+    "no_debtor_iban": "Aucun IBAN valide n'est enregistré pour le compte débiteur choisi."
   },
   "payment": {
     "needs_review": "IBAN lu dans le texte du justificatif – à vérifier"

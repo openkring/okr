@@ -23,7 +23,8 @@
     "approved_by": "Approved by",
     "approve": "Approve",
     "approve_blocked": "Approval not possible yet",
-    "action_error": "That did not work. Please try again."
+    "action_error": "That did not work. Please try again.",
+    "edit": "Edit"
   },
   "blocker": {
     "not_draft": "This order has already been approved.",
@@ -31,7 +32,8 @@
     "self": "Approval has to be done by a different person than the one who prepared the order.",
     "incomplete": "Please choose the debit account and the execution date first.",
     "empty": "This order does not contain any payments yet.",
-    "needs_review": "Please check the flagged payments first and confirm them."
+    "needs_review": "Please check the flagged payments first and confirm them.",
+    "no_debtor_iban": "No valid IBAN is stored for the selected debit account."
   },
   "payment": {
     "needs_review": "IBAN read from the receipt text – please check"

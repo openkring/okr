@@ -23,7 +23,8 @@
     "approved_by": "Approvato da",
     "approve": "Approva",
     "approve_blocked": "L'approvazione non è ancora possibile",
-    "action_error": "Non è andata a buon fine. Riprova, per favore."
+    "action_error": "Non è andata a buon fine. Riprova, per favore.",
+    "edit": "Modifica"
   },
   "blocker": {
     "not_draft": "Questo ordine è già stato approvato.",
@@ -31,7 +32,8 @@
     "self": "L'approvazione deve essere fatta da una persona diversa da quella che ha preparato l'ordine.",
     "incomplete": "Scegli prima il conto di addebito e la data di esecuzione.",
     "empty": "Questo ordine non contiene ancora pagamenti.",
-    "needs_review": "Controlla prima i pagamenti contrassegnati e confermali."
+    "needs_review": "Controlla prima i pagamenti contrassegnati e confermali.",
+    "no_debtor_iban": "Per il conto di addebito scelto non è registrato alcun IBAN valido."
   },
   "payment": {
     "needs_review": "IBAN letto dal testo della ricevuta – da controllare"
