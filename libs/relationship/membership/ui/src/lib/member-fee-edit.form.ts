@@ -1,11 +1,11 @@
 import { ChangeDetectionStrategy, Component, computed, effect, input, output } from '@angular/core';
-import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonNote, IonRow } from '@ionic/angular/standalone';
 
 import { CategoryListModel, INVOICE_STATE_VALUES, MemberFeeModel, MemberFeePosition, UserModel } from '@okr/shared-models';
 import { NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n , ErrorNote} from '@okr/shared-ui';
 import { getAgeFromBirthYear } from '@okr/shared-util-core';
 
-import { MembershipI18n, getFeeTotal, memberFeeValidations, positionAmountField } from '@okr/relationship-membership-util';
+import { MembershipI18n, applyProRata, getFeeTotal, memberFeeValidations, positionAmountField } from '@okr/relationship-membership-util';
 
 /** One rendered fee line: the position itself plus the i18n object and errors belonging to it. */
 interface PositionRow {
@@ -13,6 +13,10 @@ interface PositionRow {
   amount: number;
   i18n: NumberInputI18n;
   errors: string[];
+  /** set only for a position of a pro-rata rule (spec 1.79): the months input is shown */
+  yearlyAmount?: number;
+  months: number;
+  description: string;
 }
 
 @Component({
@@ -22,7 +26,7 @@ interface PositionRow {
   imports: [
     ErrorNote,
     NumberInput, StringSelect, NotesInput,
-    IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonItem, IonLabel,
+    IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonItem, IonLabel, IonNote,
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px; } }`],
   template: `
@@ -51,6 +55,14 @@ interface PositionRow {
                       (valueChange)="onPositionAmountChange(row.index, $event, fd)"
                       [readOnly]="readOnly()" />
                     <okr-error-note [errors]="row.errors" />
+                    @if (row.yearlyAmount !== undefined) {
+                      <okr-number-input [i18n]="proRataMonthsI18n()" [value]="row.months"
+                        (valueChange)="onPositionMonthsChange(row.index, $event, fd)"
+                        [min]="1" [max]="12" [showHelper]="true" [readOnly]="readOnly()" />
+                      @if (row.description) {
+                        <ion-item lines="none"><ion-note>{{ row.description }}</ion-note></ion-item>
+                      }
+                    }
                   </ion-col>
                 }
               </ion-row>
@@ -86,6 +98,7 @@ interface PositionRow {
 export class MemberFeeEditForm {
   // i18n — all translations come from the i18n input
   protected notesI18n        = computed(() => ({ name: 'notes',        label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder() } as NotesInputI18n));
+  protected proRataMonthsI18n = computed(() => ({ name: 'proRataMonths', label: this.i18n().memberFee_proRata_months_label(), helper: this.i18n().memberFee_proRata_months_helper() } as NumberInputI18n));
   protected invoiceStateI18n = computed(() => ({ name: 'invoiceState', label: this.i18n().invoice_state()                                           } as StringSelectI18n));
 
   // inputs
@@ -134,6 +147,9 @@ export class MemberFeeEditForm {
         errors: Object.entries(allErrors)
           .filter(([name]) => name === field)
           .flatMap(([, messages]) => messages),
+        yearlyAmount: position.yearlyAmount,
+        months: position.proRataMonths ?? 12,
+        description: position.description ?? '',
       };
     });
   });
@@ -153,6 +169,17 @@ export class MemberFeeEditForm {
   protected onPositionAmountChange(index: number, value: number, fd: MemberFeeModel): void {
     this.dirty.emit(true);
     const positions = (fd.positions ?? []).map((p, i) => i === index ? { ...p, amount: Number(value) } : p);
+    this.formDataChange.emit({ ...fd, positions });
+  }
+
+  /**
+   * Rescale a pro-rata position to the months the treasurer enters (spec 1.79 §3.4): 12 restores
+   * the full year. A typed amount (onPositionAmountChange) is never overwritten here — it wins.
+   */
+  protected onPositionMonthsChange(index: number, value: number, fd: MemberFeeModel): void {
+    const months = Math.min(12, Math.max(1, Math.round(Number(value) || 12)));
+    this.dirty.emit(true);
+    const positions = (fd.positions ?? []).map((p, i) => i === index ? applyProRata(p, months) : p);
     this.formDataChange.emit({ ...fd, positions });
   }
 }

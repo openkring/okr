@@ -60,6 +60,8 @@ export const MEMBERSHIP_I18N_KEYS = {
   member_state_label:             PFX + 'member.state.label',
   member_state_helper:            PFX + 'member.state.label',
 
+  memberFee_proRata_months_label:  PFX + 'memberFee.proRata.months.label',
+  memberFee_proRata_months_helper: PFX + 'memberFee.proRata.months.helper',
   memberFee_archive_confirm:   PFX + 'memberFee.archive.confirm',
   memberFee_archive_conf:      PFX + 'memberFee.archive.conf',
   memberFee_delete_label:      PFX + 'memberFee.delete.label',

@@ -159,6 +159,12 @@
     },
     "config": {
       "loading": "The accounting settings are still loading. Please try again in a moment."
+    },
+    "proRata": {
+      "months": {
+        "label": "Months (pro rata)",
+        "helper": "Months of membership this year. With 12, the full yearly fee is charged."
+      }
     }
   },
   "list": {
@@ -264,7 +270,13 @@
     "placeholder": "n.nn",
     "helper": "A discount (absolute amount in CHF) can be specified here, which is taken into account when invoicing.",
     "reason": "Reason for discount",
-    "reasons": { "edu": "Education", "family": "Family", "custom": "Individual", "hardship": "Hardship", "support": "Skiff for competitive rowing" }
+    "reasons": {
+      "edu": "Education",
+      "family": "Family",
+      "custom": "Individual",
+      "hardship": "Hardship",
+      "support": "Skiff for competitive rowing"
+    }
   },
   "notes": {
     "label": "Notes",

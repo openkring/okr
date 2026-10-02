@@ -159,6 +159,12 @@
     },
     "config": {
       "loading": "Le impostazioni contabili si stanno ancora caricando. Riprova tra un istante."
+    },
+    "proRata": {
+      "months": {
+        "label": "Mesi (pro rata)",
+        "helper": "Mesi di adesione quest'anno. Con 12 viene fatturata la quota annuale intera."
+      }
     }
   },
   "list": {
@@ -264,7 +270,13 @@
     "placeholder": "n.nn",
     "helper": "Qui è possibile indicare uno sconto (importo assoluto in CHF) che verrà considerato in fase di fatturazione.",
     "reason": "Motivo dello sconto",
-    "reasons": { "edu": "Formazione", "family": "Famiglia", "custom": "Individuale", "hardship": "Caso di rigore", "support": "Skiff per lo sport agonistico" }
+    "reasons": {
+      "edu": "Formazione",
+      "family": "Famiglia",
+      "custom": "Individuale",
+      "hardship": "Caso di rigore",
+      "support": "Skiff per lo sport agonistico"
+    }
   },
   "notes": {
     "label": "Note",

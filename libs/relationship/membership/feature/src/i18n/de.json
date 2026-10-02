@@ -159,6 +159,12 @@
     },
     "config": {
       "loading": "Die Buchhaltungs-Einstellungen werden noch geladen. Bitte versuche es gleich nochmals."
+    },
+    "proRata": {
+      "months": {
+        "label": "Monate (pro rata)",
+        "helper": "Monate der Mitgliedschaft in diesem Jahr. Bei 12 wird der ganze Jahresbeitrag verrechnet."
+      }
     }
   },
   "list": {
@@ -264,7 +270,13 @@
     "placeholder": "n.nn",
     "helper": "Hier kann ein Rabatt (absolute Zahl in CHF) angegeben werden, die bei Rechnungsstellung berücksichtigt wird.",
     "reason": "Rabattgrund",
-    "reasons": { "edu": "Ausbildung", "family": "Familie", "custom": "Individuell", "hardship": "Härtefall", "support": "Skiff für Leistungssport" }
+    "reasons": {
+      "edu": "Ausbildung",
+      "family": "Familie",
+      "custom": "Individuell",
+      "hardship": "Härtefall",
+      "support": "Skiff für Leistungssport"
+    }
   },
   "notes": {
     "label": "Notizen",

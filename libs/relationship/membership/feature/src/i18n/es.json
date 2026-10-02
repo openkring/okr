@@ -159,6 +159,12 @@
     },
     "config": {
       "loading": "Los ajustes de contabilidad todavía se están cargando. Inténtalo de nuevo en un momento."
+    },
+    "proRata": {
+      "months": {
+        "label": "Meses (prorrateo)",
+        "helper": "Meses de afiliación este año. Con 12 se factura la cuota anual completa."
+      }
     }
   },
   "list": {
@@ -264,7 +270,13 @@
     "placeholder": "n.nn",
     "helper": "Aquí se puede indicar un descuento (importe absoluto en CHF) que se tendrá en cuenta al facturar.",
     "reason": "Motivo del descuento",
-    "reasons": { "edu": "Formación", "family": "Familia", "custom": "Individual", "hardship": "Caso de necesidad", "support": "Skiff para deporte de competición" }
+    "reasons": {
+      "edu": "Formación",
+      "family": "Familia",
+      "custom": "Individual",
+      "hardship": "Caso de necesidad",
+      "support": "Skiff para deporte de competición"
+    }
   },
   "notes": {
     "label": "Notas",
