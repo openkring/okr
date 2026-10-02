@@ -4,6 +4,8 @@
  * All amounts are Rappen.
  */
 
+import { classifyStoreDate, isValidPartialStoreDate } from '@okr/shared-util-core';
+
 export interface PaymentInput {
   paymentId: string;
   date: string;
@@ -53,7 +55,7 @@ export function paymentBlockers(invoice: InvoiceLike, amount: number, date: stri
 /** Appends the payment; the payment that completes the total flips the state to paid. */
 export function applyInvoicePayment(invoice: InvoiceLike, p: PaymentInput): { payments: StoredPayment[]; state: string; paymentDate?: string } {
   const payments: StoredPayment[] = [
-    ...(invoice.payments ?? []).map(x => ({ date: x.date, amount: x.amount, bankAccountKey: x.bankAccountKey, bookingKey: x.bookingKey ?? '' })),
+    ...(invoice.payments ?? []).map(x => ({ date: x.date ?? '', amount: x.amount ?? 0, bankAccountKey: x.bankAccountKey ?? '', bookingKey: x.bookingKey ?? '' })),
     { date: p.date, amount: p.amount, bankAccountKey: p.bankAccountKey, bookingKey: p.bookingKey },
   ];
   const total = invoice.totalAmount?.amount ?? 0;
@@ -108,9 +110,27 @@ export function linkDecision(existing: { bookingKey: string; amount: number; dat
   return existing.some(p => p.bookingKey === bookingKey && p.amount === amount && p.date === date) ? 'return-stored' : 'write';
 }
 
-/** The account of the first debit line of a booking (the bank side of a received payment), or ''. */
-export function firstDebitAccount(lines: { accountKey: string; debitAmount?: { amount: number } | null }[]): string {
-  return lines.find(l => (l.debitAmount?.amount ?? 0) > 0)?.accountKey ?? '';
+/**
+ * The bank account of a linked booking: the first debit line (positive amount) on one of the configured
+ * payment accounts, else the first debit line, else ''.
+ */
+export function pickBankAccount(lines: { accountKey: string; debitAmount?: { amount: number } | null }[], paymentAccountKeys: string[]): string {
+  const debits = lines.filter(l => (l.debitAmount?.amount ?? 0) > 0);
+  return (debits.find(l => paymentAccountKeys.includes(l.accountKey)) ?? debits[0])?.accountKey ?? '';
+}
+
+/** A complete, real calendar StoreDate (yyyyMMdd): 8 digits, month and day exist in that year. */
+export function isValidStoreDate(value: unknown): value is string {
+  return typeof value === 'string' && classifyStoreDate(value) === 'full' && isValidPartialStoreDate(value);
+}
+
+/**
+ * Appends "[Storniert {viewDate}] {reason}" to the notes (newline separated when notes exist). The reason
+ * is truncated so the result fits `maxLength`; existing notes are never cut and the call never refuses.
+ */
+export function appendStornoNote(notes: string, viewDate: string, reason: string, maxLength: number): string {
+  const prefix = `${notes ? `${notes}\n` : ''}[Storniert ${viewDate}] `;
+  return prefix + reason.substring(0, Math.max(0, maxLength - prefix.length));
 }
 
 /** Refusal codes for cancelling: not-cancellable, has-payments, no-issue-booking. */

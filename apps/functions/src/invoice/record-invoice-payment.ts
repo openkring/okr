@@ -10,8 +10,8 @@ import { assertPeriodsOpen } from '../booking/period-lock';
 import { costCenterKeyForLine, loadCostCenterContext } from '../cost-center/cost-center-context';
 import { assertLeafAccount, loadOwnedAccountingConfig, refuse } from './invoice-context';
 import {
-  applyInvoicePayment, firstDebitAccount, InvoiceLike, isValidPaymentId, linkBlockers, linkDecision, paymentBlockers, paymentBookingLines,
-  paymentDecision, StoredPayment,
+  applyInvoicePayment, InvoiceLike, isValidPaymentId, isValidStoreDate, linkBlockers, linkDecision, paymentBlockers, paymentBookingLines,
+  paymentDecision, pickBankAccount, StoredPayment,
 } from './invoice-payment.logic';
 import { invoiceBookingIndex, issuePeriodKeys, withoutUndefined } from './invoice.logic';
 
@@ -75,7 +75,7 @@ export const recordInvoicePayment = onCall(
     if (mode !== 'post' && mode !== 'link') throw new HttpsError('invalid-argument', 'mode must be post or link');
     if (!isValidPaymentId(paymentId)) throw refuse('invalid-payment-id', 'paymentId must be 8 to 32 letters or digits');
     const amount = typeof request.data.amount === 'number' ? request.data.amount : Number.NaN;
-    const date = typeof request.data.date === 'string' && /^\d{8}$/.test(request.data.date) ? request.data.date : '';
+    const date = isValidStoreDate(request.data.date) ? request.data.date : '';
 
     const db = getFirestore();
     const invoiceRef = db.collection(InvoiceCollection).doc(invoiceKey);
@@ -140,7 +140,9 @@ export const recordInvoicePayment = onCall(
         if (linkProblems.length > 0) {
           throw refuse('link-blocked', `booking ${bookingKey} cannot be linked: ${linkProblems.join(', ')}`, { reasons: linkProblems });
         }
-        const applied = applyInvoicePayment(asInvoiceLike(invoice), { paymentId, date, amount, bankAccountKey: firstDebitAccount(lines), bookingKey });
+        const linkedBank = pickBankAccount(lines, (config['invoicePaymentAccountKeys'] as string[] | undefined) ?? []);
+        if (!linkedBank) throw refuse('no-bank-line', `booking ${bookingKey} has no debit line to take the bank account from`);
+        const applied = applyInvoicePayment(asInvoiceLike(invoice), { paymentId, date, amount, bankAccountKey: linkedBank, bookingKey });
         tx.update(invoiceRef, withoutUndefined({ payments: applied.payments, state: applied.state, paymentDate: applied.paymentDate }));
         return { state: applied.state, payments: applied.payments, bookingKey };
       }

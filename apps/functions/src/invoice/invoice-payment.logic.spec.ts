@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { applyInvoicePayment, cancelBlockers, firstDebitAccount, InvoiceLike, isValidPaymentId, linkBlockers, linkDecision, openAmount, paymentBlockers, paymentBookingLines, paymentDecision, reversalLines } from './invoice-payment.logic';
+import { appendStornoNote, applyInvoicePayment, cancelBlockers, isValidStoreDate, pickBankAccount, InvoiceLike, isValidPaymentId, linkBlockers, linkDecision, openAmount, paymentBlockers, paymentBookingLines, paymentDecision, reversalLines } from './invoice-payment.logic';
 
 const inv = (o: Partial<InvoiceLike> = {}): InvoiceLike => ({ state: 'pending', totalAmount: { amount: 67550 }, payments: [], accountingTenantId: 'scs', ...o });
 
@@ -67,8 +67,29 @@ describe('invoice payment logic', () => {
     expect(linkDecision(payments, 'b1', 100, '20261006')).toBe('write');
     expect(linkDecision(payments, 'b2', 100, '20261005')).toBe('write');
   });
-  it('the bank account of a linked booking is its first debit line', () => {
-    expect(firstDebitAccount([{ accountKey: 'r', creditAmount: { amount: 5 } }, { accountKey: 'bank', debitAmount: { amount: 5 } }, { accountKey: 'x', debitAmount: { amount: 1 } }])).toBe('bank');
-    expect(firstDebitAccount([{ accountKey: 'r', creditAmount: { amount: 5 } }])).toBe('');
+  it('the bank account of a linked booking prefers a configured payment account, else the first debit line', () => {
+    const lines = [{ accountKey: 'r', creditAmount: { amount: 5 } }, { accountKey: 'other', debitAmount: { amount: 1 } }, { accountKey: 'bank', debitAmount: { amount: 5 } }];
+    expect(pickBankAccount(lines, ['bank'])).toBe('bank');
+    expect(pickBankAccount(lines, ['nope'])).toBe('other');
+    expect(pickBankAccount(lines, [])).toBe('other');
+    expect(pickBankAccount([{ accountKey: 'r', creditAmount: { amount: 5 } }], ['bank'])).toBe('');
+    expect(pickBankAccount([{ accountKey: 'bank', debitAmount: { amount: 0 } }], ['bank'])).toBe('');
+  });
+  it('isValidStoreDate needs 8 digits and a real calendar date', () => {
+    for (const d of ['20261005', '20240229']) expect(isValidStoreDate(d)).toBe(true);
+    for (const d of ['20261305', '20260231', '20250229', '2026105', '', '00000415', '20260000', 'abcdefgh', undefined, 20261005]) expect(isValidStoreDate(d)).toBe(false);
+  });
+  it('applyInvoicePayment coalesces undefined nested fields of existing payments', () => {
+    const legacy = inv({ payments: [{ amount: undefined, date: undefined, bankAccountKey: undefined } as never] });
+    const a = applyInvoicePayment(legacy, { paymentId: 'p1', date: '20261005', amount: 100, bankAccountKey: 'b', bookingKey: 'k' });
+    expect(a.payments[0]).toEqual({ date: '', amount: 0, bankAccountKey: '', bookingKey: '' });
+  });
+  it('storno note: appended on a new line, reason truncated to the notes limit, never refused', () => {
+    expect(appendStornoNote('', '05.10.2026', 'Fehler', 2000)).toBe('[Storniert 05.10.2026] Fehler');
+    expect(appendStornoNote('alt', '05.10.2026', 'Fehler', 2000)).toBe('alt\n[Storniert 05.10.2026] Fehler');
+    const long = appendStornoNote('x'.repeat(100), '05.10.2026', 'y'.repeat(500), 150);
+    expect(long.length).toBe(150);
+    expect(long.startsWith('x'.repeat(100) + '\n[Storniert 05.10.2026] y')).toBe(true);
+    expect(appendStornoNote('x'.repeat(200), '05.10.2026', 'grund', 150).startsWith('x'.repeat(200))).toBe(true);
   });
 });
