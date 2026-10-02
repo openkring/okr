@@ -6,7 +6,7 @@ import {
   AccountingConfigCollection, AccountingConfigModel,
   InvoiceCollection, InvoiceModel,
   InvoicePositionCollection, InvoicePositionModel,
-  MemberFeeCollection, MemberFeeModel,
+  MemberFeeCollection, MemberFeeModel, MemberFeePosition,
 } from '@okr/shared-models';
 import { checkAppCheckToken, checkAuthentication, checkRoles } from '@okr/shared-util-functions';
 import { addDuration, DateFormat, generateRandomString, getTodayStr, getYear, removeKeyFromOkrModel } from '@okr/shared-util-core';
@@ -26,9 +26,22 @@ const REGION = 'europe-west6';
  * member is skipped and named in the result instead, and a treasurer fixes the fee schedule.
  */
 export function unbookablePositions(fee: Pick<MemberFeeModel, 'positions'>): string[] {
-  return (fee.positions ?? [])
+  return billedPositions(fee)
     .filter(p => (p.accountKey ?? '').trim().length === 0)
     .map(p => p.label || p.key || p.usage);
+}
+
+/**
+ * The fee positions that become invoice positions, with the sign the invoice needs. A zero amount
+ * is left out (an `E` Eintrittsgebühr kept at 0 for everyone, a rebate that only records a reason):
+ * `issueInvoice` refuses any zero position (`invalid-amount`), so one would block the whole draft.
+ * A rebate is stored positive on the fee row (`getFeeTotal` subtracts it) but must be NEGATIVE on
+ * the invoice — `issueInvoice` sums and books signed amounts and does not look at the type.
+ */
+export function billedPositions(fee: Pick<MemberFeeModel, 'positions'>): MemberFeePosition[] {
+  return (fee.positions ?? [])
+    .filter(p => Number(p.amount) !== 0)
+    .map(p => p.type === 'rebate' ? { ...p, amount: -Math.abs(p.amount) } : p);
 }
 
 /**
@@ -120,7 +133,7 @@ export const postMemberFees = onCall(
       const batch = db.batch();
       batch.set(invoiceRef, withoutUndefined(removeKeyFromOkrModel(invoice)));
 
-      for (const p of fee.positions ?? []) {
+      for (const p of billedPositions(fee)) {
         const position = new InvoicePositionModel(tenantId);
         position.invoiceKey = invoiceKey;
         position.name = p.label;

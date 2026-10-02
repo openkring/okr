@@ -263,7 +263,8 @@
     "label": "Sconto",
     "placeholder": "n.nn",
     "helper": "Qui è possibile indicare uno sconto (importo assoluto in CHF) che verrà considerato in fase di fatturazione.",
-    "reason": "Motivo dello sconto"
+    "reason": "Motivo dello sconto",
+    "reasons": { "edu": "Formazione", "family": "Famiglia", "custom": "Individuale", "hardship": "Caso di rigore", "support": "Skiff per lo sport agonistico" }
   },
   "notes": {
     "label": "Note",

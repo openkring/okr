@@ -263,7 +263,8 @@
     "label": "Discount",
     "placeholder": "n.nn",
     "helper": "A discount (absolute amount in CHF) can be specified here, which is taken into account when invoicing.",
-    "reason": "Reason for discount"
+    "reason": "Reason for discount",
+    "reasons": { "edu": "Education", "family": "Family", "custom": "Individual", "hardship": "Hardship", "support": "Skiff for competitive rowing" }
   },
   "notes": {
     "label": "Notes",

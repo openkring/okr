@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { FeeScheduleEntry, MembershipModel } from '@okr/shared-models';
+import type { FeeScheduleEntry, MemberFeePosition, MembershipModel } from '@okr/shared-models';
 import { buildPositions, getFeeTotal, rebatePosition, type FeeContext } from './build-positions';
 
 const membership = (overrides: Partial<MembershipModel> = {}): MembershipModel => ({
@@ -112,11 +112,32 @@ describe('buildPositions — scs 2026 regression', () => {
 });
 
 describe('rebatePosition', () => {
-  it('builds a rebate position carrying the reason as its label', () => {
+  it('builds a rebate position carrying a readable label for the reason', () => {
     expect(rebatePosition(50, 'edu')).toEqual({
-      key: 'rebate', usage: 'other', type: 'rebate', label: 'edu',
+      key: 'rebate', usage: 'other', type: 'rebate', label: 'Ausbildungsrabatt',
       amount: 50, accountKey: '', vatCodeKey: '',
     });
+    expect(rebatePosition(50, 'support')?.label).toBe('Skiff für Leistungssport');
+    expect(rebatePosition(50, 'custom')?.label).toBe('Rabatt');
+  });
+
+  const fp = (key: string, usage: string, accountKey: string): MemberFeePosition =>
+    ({ key, usage, type: 'fix', label: key, amount: 100, accountKey, vatCodeKey: '' }) as MemberFeePosition;
+
+  it('reduces the membership fee account', () => {
+    const positions = [fp('SRV', 'srvFee', 'acc-srv'), fp('JB', 'membershipFee', 'acc-jb')];
+    expect(rebatePosition(50, 'edu', positions)?.accountKey).toBe('acc-jb');
+    expect(rebatePosition(50, 'none', positions)?.accountKey).toBe('acc-jb');
+  });
+
+  it('reduces the skiff rental account for a support rebate', () => {
+    const positions = [fp('JB', 'membershipFee', 'acc-jb'), fp('SLG', 'boatPlaceRental', 'acc-slg')];
+    expect(rebatePosition(600, 'support', positions)?.accountKey).toBe('acc-slg');
+  });
+
+  it('falls back to the first position with an account', () => {
+    const positions = [fp('X', 'other', ''), fp('SRV', 'srvFee', 'acc-srv')];
+    expect(rebatePosition(50, 'support', positions)?.accountKey).toBe('acc-srv');
   });
 
   it('falls back to "Rabatt" when no reason is set', () => {
@@ -125,7 +146,7 @@ describe('rebatePosition', () => {
   });
 
   it('keeps a reason even when the amount is zero', () => {
-    expect(rebatePosition(0, 'family')).toMatchObject({ label: 'family', amount: 0 });
+    expect(rebatePosition(0, 'family')).toMatchObject({ label: 'Familienrabatt', amount: 0 });
   });
 
   it('yields nothing when there is neither an amount nor a reason', () => {

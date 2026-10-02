@@ -263,7 +263,8 @@
     "label": "Rabatt",
     "placeholder": "n.nn",
     "helper": "Hier kann ein Rabatt (absolute Zahl in CHF) angegeben werden, die bei Rechnungsstellung berücksichtigt wird.",
-    "reason": "Rabattgrund"
+    "reason": "Rabattgrund",
+    "reasons": { "edu": "Ausbildung", "family": "Familie", "custom": "Individuell", "hardship": "Härtefall", "support": "Skiff für Leistungssport" }
   },
   "notes": {
     "label": "Notizen",

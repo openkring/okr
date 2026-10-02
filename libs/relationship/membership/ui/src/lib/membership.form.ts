@@ -131,7 +131,7 @@ import { AvatarPipe } from '@okr/avatar-ui';
                         <okr-number-input [i18n]="rebateI18n()" [value]="rebate()" (valueChange)="onFieldChange('rebate', $event)" [maxLength]=6 [readOnly]="isReadOnly()" />
                       </ion-col>
                       <ion-col size="12" size-md="6">
-                        <okr-string-select [i18n]="rebateReasonI18n()" [selectedString]="rebateReason()" (selectedStringChange)="onFieldChange('rebateReason', $event)" [readOnly]="readOnly()" [stringList]="rebateReasons" />
+                        <okr-string-select [i18n]="rebateReasonI18n()" [selectedString]="rebateReason()" (selectedStringChange)="onFieldChange('rebateReason', $event)" [readOnly]="readOnly()" [stringList]="rebateReasons" [labels]="rebateReasonLabels()" />
                       </ion-col>
                     }
                   </ion-row>
@@ -291,6 +291,10 @@ export class MembershipForm {
   protected bexioMask = BexioIdMask;
   protected endFutureDate = END_FUTURE_DATE_STR;
   protected rebateReasons = REBATE_REASON_VALUES;
+  protected rebateReasonLabels = computed(() => {
+    const i = this.i18n();
+    return [i.rebate_reasons_edu(), i.rebate_reasons_family(), i.rebate_reasons_custom(), i.rebate_reasons_hardship(), i.rebate_reasons_support()];
+  });
 
   constructor() {
     effect(() => {

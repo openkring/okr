@@ -132,6 +132,11 @@ export const MEMBERSHIP_I18N_KEYS = {
   rebate_placeholder:             PFX + 'rebate.placeholder',
   rebate_helper:                  PFX + 'rebate.helper',
   rebate_reason:                  PFX + 'rebate.reason',
+  rebate_reasons_edu:             PFX + 'rebate.reasons.edu',
+  rebate_reasons_family:          PFX + 'rebate.reasons.family',
+  rebate_reasons_custom:          PFX + 'rebate.reasons.custom',
+  rebate_reasons_hardship:        PFX + 'rebate.reasons.hardship',
+  rebate_reasons_support:         PFX + 'rebate.reasons.support',
 
   notes_label:                    PFX + 'notes.label',
   notes_placeholder:              PFX + 'notes.placeholder',

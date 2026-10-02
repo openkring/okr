@@ -67,22 +67,44 @@ export function buildPositions(
 }
 
 /**
+ * The stored label of a rebate position, per reason. German on purpose: the label becomes the
+ * invoice position name and is printed on the invoice as is, so it must be text, not an i18n key.
+ * `custom` and an unknown or empty reason fall back to «Rabatt».
+ */
+export const REBATE_REASON_LABELS: Record<string, string> = {
+  edu: 'Ausbildungsrabatt',
+  family: 'Familienrabatt',
+  hardship: 'Härtefall',
+  support: 'Skiff für Leistungssport',
+  custom: 'Rabatt',
+};
+
+/**
+ * The usage of the position a rebate reduces. A `support` rebate waives the skiff rental (the
+ * private skiff is lent to the Leistungssport team); every other reason reduces the membership fee.
+ */
+const REBATE_REDUCES: Record<string, string> = { support: 'boatPlaceRental' };
+
+/**
  * The per-member rebate as a fee position, or `undefined` when there is none. This is NOT a
  * schedule rule and therefore deliberately not part of `buildPositions`: `rebate`/`rebateReason`
  * are a manual override a treasurer sets on ONE membership, while `buildPositions` is pure over
  * (membership, schedule, ctx) and must stay reproducible from the year's price list alone.
  *
- * The shape mirrors what the migration writes for a legacy rebate column (key 'rebate',
- * usage 'other', label = the reason, falling back to 'Rabatt'), so a migrated row and a freshly
- * derived row are indistinguishable. Kept when the amount is zero but a reason is set — the
- * reason is information the treasurer entered.
+ * The rebate is booked as a revenue reduction on the account of the position it reduces (see
+ * `REBATE_REDUCES`), falling back to the first position that has an account. Without an account
+ * `postMemberFees` skips the whole member (`unbookablePositions`). Kept when the amount is zero
+ * but a reason is set — the reason is information the treasurer entered.
  */
-export function rebatePosition(rebate: number, rebateReason: string): MemberFeePosition | undefined {
+export function rebatePosition(rebate: number, rebateReason: string, positions: MemberFeePosition[] = []): MemberFeePosition | undefined {
   const amount = Number(rebate) || 0;
   const reason = rebateReason === 'none' ? '' : (rebateReason ?? '');
   if (amount === 0 && reason.length === 0) return undefined;
-  return { key: 'rebate', usage: 'other', type: 'rebate', label: reason || 'Rabatt',
-    amount, accountKey: '', vatCodeKey: '' };
+  const usage = REBATE_REDUCES[reason] ?? 'membershipFee';
+  const withAccount = positions.filter(p => p.type !== 'rebate' && (p.accountKey ?? '').length > 0);
+  const target = withAccount.find(p => p.usage === usage) ?? withAccount[0];
+  return { key: 'rebate', usage: 'other', type: 'rebate', label: REBATE_REASON_LABELS[reason] ?? 'Rabatt',
+    amount, accountKey: target?.accountKey ?? '', vatCodeKey: '' };
 }
 
 /** Σ of every non-rebate position minus Σ of every rebate position. */

@@ -263,7 +263,8 @@
     "label": "Descuento",
     "placeholder": "n.nn",
     "helper": "Aquí se puede indicar un descuento (importe absoluto en CHF) que se tendrá en cuenta al facturar.",
-    "reason": "Motivo del descuento"
+    "reason": "Motivo del descuento",
+    "reasons": { "edu": "Formación", "family": "Familia", "custom": "Individual", "hardship": "Caso de necesidad", "support": "Skiff para deporte de competición" }
   },
   "notes": {
     "label": "Notas",

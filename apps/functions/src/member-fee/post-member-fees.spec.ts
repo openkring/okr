@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { memberFeeDraft, unbookablePositions } from './post-member-fees';
-import { issueHeaderBlockers } from '../invoice/invoice.logic';
+import { billedPositions, memberFeeDraft, unbookablePositions } from './post-member-fees';
+import { issueBlockers, issueHeaderBlockers } from '../invoice/invoice.logic';
 import type { MemberFeePosition } from '@okr/shared-models';
 
 const position = (overrides: Partial<MemberFeePosition> = {}): MemberFeePosition => ({
@@ -62,5 +62,21 @@ describe('memberFeeDraft', () => {
 
   it('indexes without a number token', () => {
     expect(draft().index).not.toMatch(/i:/);
+  });
+});
+
+describe('billedPositions', () => {
+  it('leaves out zero amounts, so a 0 Eintrittsgebühr does not block issuing', () => {
+    const fee = { positions: [position(), position({ key: 'E', label: 'Eintrittsgebühr', amount: 0, accountKey: '' })] };
+    expect(billedPositions(fee).map(p => p.key)).toEqual(['jb']);
+    expect(unbookablePositions(fee)).toEqual([]);
+  });
+
+  it('turns a rebate negative, so the invoice total matches getFeeTotal', () => {
+    const fee = { positions: [position({ amount: 600 }), position({ key: 'rebate', type: 'rebate', label: 'Ausbildungsrabatt', amount: 50 })] };
+    const billed = billedPositions(fee);
+    expect(billed.map(p => p.amount)).toEqual([600, -50]);
+    const asInput = billed.map(p => ({ name: p.label, amount: p.amount, accountKey: p.accountKey }));
+    expect(issueBlockers(asInput, 'recv')).toEqual([]);
   });
 });

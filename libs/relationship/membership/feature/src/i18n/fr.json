@@ -263,7 +263,8 @@
     "label": "Remise",
     "placeholder": "n.nn",
     "helper": "Une remise (montant absolu en CHF) peut être indiquée ici, qui sera prise en compte lors de la facturation.",
-    "reason": "Motif de la remise"
+    "reason": "Motif de la remise",
+    "reasons": { "edu": "Formation", "family": "Famille", "custom": "Individuel", "hardship": "Cas de rigueur", "support": "Skiff pour le sport de performance" }
   },
   "notes": {
     "label": "Notes",

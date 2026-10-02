@@ -585,7 +585,7 @@ function deriveFee(
   // onto the fee and subtracted it. Without this every regenerated fee would bill the full amount
   // while migrated rows still carried their rebate, and the difference would only surface in the
   // next Rechnungslauf.
-  const rebate = rebatePosition(membership.rebate, membership.rebateReason);
+  const rebate = rebatePosition(membership.rebate, membership.rebateReason, fee.positions);
   if (rebate) fee.positions.push(rebate);
 
   fee.state = 'initial';
