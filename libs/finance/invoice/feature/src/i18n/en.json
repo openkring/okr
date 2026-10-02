@@ -29,8 +29,7 @@
       "placeholder": "dd.mm.yyyy",
       "helper": "The date of the payment deadline. The invoice must be paid by then."
     },
-    "paymentReference": { "label": "Payment reference" },
-  "payment": {
+    "payment": {
       "label": "Paid on",
       "placeholder": "dd.mm.yyyy",
       "helper": "The date on which the invoice was paid."
@@ -349,6 +348,7 @@
     "email-not-payable": "A reminder is only sent while the invoice is open. This invoice has already been paid or cancelled.",
     "email-not-sendable": "A cancelled invoice is no longer sent."
   },
+  "paymentReference": { "label": "Payment reference" },
   "payment": {
     "label": "Record payment",
     "title": "Record payment",

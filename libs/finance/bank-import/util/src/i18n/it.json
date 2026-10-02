@@ -17,6 +17,7 @@
       "mapped": "assegnate a una regola",
       "unmapped": "senza regola, aperte",
       "invoices": "Fatture abbinate",
+      "invoicesFailed": "Questa volta non è stato possibile abbinare le fatture.",
       "warnings": "Avvisi"
     },
     "cancelled": "L'importazione è stata annullata. Non è stato salvato nulla."

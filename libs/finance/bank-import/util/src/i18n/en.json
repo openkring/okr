@@ -17,6 +17,7 @@
       "mapped": "matched to a rule",
       "unmapped": "without a rule, open",
       "invoices": "Invoices matched",
+      "invoicesFailed": "Invoices could not be matched this time.",
       "warnings": "Notices"
     },
     "cancelled": "The import was cancelled. Nothing was saved."

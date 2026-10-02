@@ -29,8 +29,7 @@
       "placeholder": "dd.mm.yyyy",
       "helper": "Das Datum der Zahlungsfrist. Bis dann muss die Rechnung bezahlt werden."
     },
-    "paymentReference": { "label": "Zahlungsreferenz" },
-  "payment": {
+    "payment": {
       "label": "Bezahlt am",
       "placeholder": "dd.mm.yyyy",
       "helper": "Das Datum an dem die Rechnung bezahlt wurde."
@@ -349,6 +348,7 @@
     "email-not-payable": "Eine Mahnung wird nur gesendet, solange die Rechnung offen ist. Diese Rechnung ist schon bezahlt oder storniert.",
     "email-not-sendable": "Eine stornierte Rechnung wird nicht mehr versendet."
   },
+  "paymentReference": { "label": "Zahlungsreferenz" },
   "payment": {
     "label": "Zahlung erfassen",
     "title": "Zahlung erfassen",

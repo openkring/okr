@@ -17,6 +17,7 @@
       "mapped": "attribuées à une règle",
       "unmapped": "sans règle, ouvertes",
       "invoices": "Factures attribuées",
+      "invoicesFailed": "Les factures n'ont pas pu être attribuées cette fois.",
       "warnings": "Remarques"
     },
     "cancelled": "L'import a été annulé. Rien n'a été enregistré."

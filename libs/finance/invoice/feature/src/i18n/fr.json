@@ -29,8 +29,7 @@
       "placeholder": "dd.mm.yyyy",
       "helper": "La date de l'échéance de paiement. La facture doit être payée d'ici là."
     },
-    "paymentReference": { "label": "Référence de paiement" },
-  "payment": {
+    "payment": {
       "label": "Payé le",
       "placeholder": "dd.mm.yyyy",
       "helper": "La date à laquelle la facture a été payée."
@@ -349,6 +348,7 @@
     "email-not-payable": "Un rappel n’est envoyé que tant que la facture est ouverte. Cette facture est déjà payée ou annulée.",
     "email-not-sendable": "Une facture annulée n’est plus envoyée."
   },
+  "paymentReference": { "label": "Référence de paiement" },
   "payment": {
     "label": "Saisir un paiement",
     "title": "Saisir un paiement",

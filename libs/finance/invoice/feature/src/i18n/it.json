@@ -29,8 +29,7 @@
       "placeholder": "dd.mm.yyyy",
       "helper": "La data del termine di pagamento. Entro tale data la fattura deve essere pagata."
     },
-    "paymentReference": { "label": "Riferimento di pagamento" },
-  "payment": {
+    "payment": {
       "label": "Pagato il",
       "placeholder": "dd.mm.yyyy",
       "helper": "La data in cui è stata pagata la fattura."
@@ -349,6 +348,7 @@
     "email-not-payable": "Un sollecito viene inviato solo finché la fattura è aperta. Questa fattura è già pagata o annullata.",
     "email-not-sendable": "Una fattura stornata non viene più inviata."
   },
+  "paymentReference": { "label": "Riferimento di pagamento" },
   "payment": {
     "label": "Registra pagamento",
     "title": "Registra pagamento",

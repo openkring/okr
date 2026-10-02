@@ -29,8 +29,7 @@
       "placeholder": "dd.mm.yyyy",
       "helper": "La fecha del plazo de pago. La factura debe pagarse antes de esa fecha."
     },
-    "paymentReference": { "label": "Referencia de pago" },
-  "payment": {
+    "payment": {
       "label": "Pagado el",
       "placeholder": "dd.mm.yyyy",
       "helper": "La fecha en que se pagó la factura."
@@ -349,6 +348,7 @@
     "email-not-payable": "Un recordatorio solo se envía mientras la factura está pendiente. Esta factura ya está pagada o anulada.",
     "email-not-sendable": "Una factura anulada ya no se envía."
   },
+  "paymentReference": { "label": "Referencia de pago" },
   "payment": {
     "label": "Registrar pago",
     "title": "Registrar pago",

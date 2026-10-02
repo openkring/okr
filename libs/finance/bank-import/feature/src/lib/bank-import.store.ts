@@ -8,7 +8,7 @@ import { of } from 'rxjs';
 import { BANK_IMPORT_MIMETYPES } from '@okr/shared-constants';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
-import { BankImportRowModel, BankImportRowStatus, BankProfileModel, BankRuleModel } from '@okr/shared-models';
+import { BankImportRowModel, BankImportRowStatus, InvoiceModel, BankProfileModel, BankRuleModel } from '@okr/shared-models';
 import { AlertService, resourceParams } from '@okr/shared-util-angular';
 import { DateFormat, getTodayStr } from '@okr/shared-util-core';
 
@@ -179,7 +179,15 @@ export const BankImportStore = signalStore(
       const rules = await store.ruleService.listOnce(accountingTenantId);
       const { rows: ruled, invalidRuleKeys } = applyRules(fresh, rules);
       // credits that quote an open invoice's QR reference are linked after the rules, so the link wins
-      const invoices = await store.invoiceService.listPayableWithReference(accountingTenantId);
+      let invoices: InvoiceModel[] = [];
+      let invoicesFailed = false;
+      try {
+        invoices = await store.invoiceService.listPayableWithReference(accountingTenantId);
+      } catch (ex) {
+        // the import must not die over the optional matching: proceed without it and say so in the summary
+        console.error('BankImportStore.importFile -> invoices unreadable:', ex);
+        invoicesFailed = true;
+      }
       const { rows: mapped, matched } = matchInvoicePayments(ruled, invoices, {
         titlePrefix: store.i18n.invoice_payment_title(),
         receivablesAccountKey: store.accountingStore.config()?.receivablesAccountKey ?? '',
@@ -201,7 +209,7 @@ export const BankImportStore = signalStore(
         `${store.i18n.import_summary_duplicates()}: ${all.length - fresh.length}`,
         `${store.i18n.import_summary_mapped()}: ${mapped.filter(r => r.status === 'mapped').length}`,
         `${store.i18n.import_summary_unmapped()}: ${mapped.filter(r => r.status === 'unmapped').length}`,
-        `${store.i18n.import_summary_invoices()}: ${matched}`,
+        invoicesFailed ? store.i18n.import_summary_invoices_failed() : `${store.i18n.import_summary_invoices()}: ${matched}`,
         ...(warnings.length ? [`${store.i18n.import_summary_warnings()}:`, ...warnings.map(w => store.warningText(w))] : []),
       ].join('\n');
       await store.alertService.confirm(`${store.i18n.import_summary_title()}\n${summary}`);
@@ -215,7 +223,14 @@ export const BankImportStore = signalStore(
         const open = store.rows().filter(r => r.status === 'unmapped' || r.status === 'mapped');
         const { rows: ruled } = applyRules(open, rules);
         // invoices issued after the import still get linked here; the matcher's output is what is persisted
-        const invoices = await store.invoiceService.listPayableWithReference(store.accountingTenantId());
+        let invoices: InvoiceModel[] = [];
+        let invoicesFailed = false;
+        try {
+          invoices = await store.invoiceService.listPayableWithReference(store.accountingTenantId());
+        } catch (ex) {
+          console.error('BankImportStore.applyRulesToOpenRows -> invoices unreadable:', ex);
+          invoicesFailed = true;
+        }
         const { rows } = matchInvoicePayments(ruled, invoices, {
           titlePrefix: store.i18n.invoice_payment_title(),
           receivablesAccountKey: store.accountingStore.config()?.receivablesAccountKey ?? '',
@@ -226,7 +241,7 @@ export const BankImportStore = signalStore(
         const ok = changed.length === 0 ? true : await store.rowService.updateMany(changed);
         store.rowsResource.reload();
         if (!ok) { await store.alertService.confirm(store.i18n.update_error()); return; }
-        await store.alertService.showToast(store.i18n.apply_rules_conf());
+        await store.alertService.showToast(invoicesFailed ? `${store.i18n.apply_rules_conf()} ${store.i18n.import_summary_invoices_failed()}` : store.i18n.apply_rules_conf());
       } catch (ex) {
         console.error('BankImportStore.applyRulesToOpenRows -> ERROR:', ex);
         store.rowsResource.reload();

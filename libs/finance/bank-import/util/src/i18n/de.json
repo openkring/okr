@@ -17,6 +17,7 @@
       "mapped": "mit Regel zugeordnet",
       "unmapped": "ohne Regel, offen",
       "invoices": "Rechnungen zugeordnet",
+      "invoicesFailed": "Rechnungen konnten diesmal nicht zugeordnet werden.",
       "warnings": "Hinweise"
     },
     "cancelled": "Der Import wurde abgebrochen. Es wurde nichts gespeichert."

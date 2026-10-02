@@ -17,6 +17,7 @@
       "mapped": "asignadas a una regla",
       "unmapped": "sin regla, abiertas",
       "invoices": "Facturas asignadas",
+      "invoicesFailed": "Esta vez no se pudieron asignar las facturas.",
       "warnings": "Avisos"
     },
     "cancelled": "La importación se canceló. No se guardó nada."
