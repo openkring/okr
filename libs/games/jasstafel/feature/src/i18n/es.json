@@ -99,7 +99,8 @@
     "in_diary": "En el diario",
     "prefix": "Jass",
     "hands": "manos",
-    "ok": "El resultado ya está en tu diario.",
+    "okIn": "Añadido a tu diario: {diaries}",
+    "outside": "Esta partida está fuera del periodo de tus diarios.",
     "final": "Tu entrada del diario para este día está cerrada. El resultado no se ha añadido.",
     "denied": "No tienes un diario en el que añadir el resultado.",
     "error": "No se ha podido añadir el resultado a tu diario. Inténtalo de nuevo más tarde."

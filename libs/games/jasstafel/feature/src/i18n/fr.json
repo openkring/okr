@@ -99,7 +99,8 @@
     "in_diary": "Déjà dans le journal",
     "prefix": "Jass",
     "hands": "manches",
-    "ok": "Le résultat figure maintenant dans ton journal.",
+    "okIn": "Ajouté à ton journal : {diaries}",
+    "outside": "Cette partie est en dehors de la période de tes journaux.",
     "final": "Ton entrée de journal pour ce jour est finalisée. Le résultat n'a pas été ajouté.",
     "denied": "Tu n'as pas de journal dans lequel ajouter le résultat.",
     "error": "Le résultat n'a pas pu être ajouté à ton journal. Réessaie plus tard."

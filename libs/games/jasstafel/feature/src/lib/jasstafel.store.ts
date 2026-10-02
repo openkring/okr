@@ -12,7 +12,7 @@ import { AppStore, ModelSelectService } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { AvatarInfo } from '@okr/shared-models';
 import { AlertService } from '@okr/shared-util-angular';
-import { DateFormat, getTodayStr } from '@okr/shared-util-core';
+import { DateFormat, fill, getTodayStr } from '@okr/shared-util-core';
 
 const GAME_KEY = 'jasstafel.game';
 const CONFIG_KEY = 'jasstafel.config';
@@ -95,12 +95,13 @@ export const JasstafelStore = signalStore(
     outcome: computed(() => { const g = store.game(); return g ? winner(g) : undefined; }),
     stats: computed(() => { const g = store.game(); return g ? stats(g) : {}; }),
     /**
-     * The result card's diary button: hidden without `app-config.diaryTenantId` (legacy docs lack
-     * it), 'done' once this game went into the diary, else 'ready' (spec 1.67 §11).
+     * The result card's diary button (spec 1.77 §6.3): hidden unless the current user routes
+     * `jasstafel` to at least one diary. The travel period is checked on the server only.
      */
     diaryState: computed((): 'hidden' | 'ready' | 'done' => {
       const g = store.game();
-      if (!g?.finishedAt || !store.appStore.appConfig()?.diaryTenantId) return 'hidden';
+      const routed = (store.appStore.currentUser()?.diaryTargets ?? []).some(t => (t.sources ?? []).includes('jasstafel'));
+      if (!g?.finishedAt || !routed) return 'hidden';
       return g.diaryAt ? 'done' : 'ready';
     }),
     canStart: computed(() => {
@@ -281,7 +282,8 @@ export const JasstafelStore = signalStore(
 
       /**
        * One line with the result and statistics into the caller's diary entry of the day the game
-       * finished, in the tenant named by `app-config.diaryTenantId` (`recordDiaryLine` callable).
+       * finished, into the diaries the user's own `diaryTargets` route `jasstafel` to (spec 1.77;
+       * `recordDiaryLine` callable). A game outside every diary's travel period is not sent.
        * The game is marked so the button cannot send it twice.
        */
       async toDiary(): Promise<void> {
@@ -295,13 +297,17 @@ export const JasstafelStore = signalStore(
         });
         patchState(store, { diaryBusy: true });
         try {
-          const { status } = await store.diaryLineService.record({ tenantId: store.appStore.tenantId(), source: 'jasstafel', date: jassDiaryDate(game), line });
+          const { status, written } = await store.diaryLineService.record({ tenantId: store.appStore.tenantId(), source: 'jasstafel', date: jassDiaryDate(game), line });
           if (status === 'skipped-final') {
             await store.alertService.showToast(i.diary_final());
             return;
           }
+          if (status === 'skipped-no-target') {
+            await store.alertService.showToast(i.diary_outside());
+            return;
+          }
           setGame({ ...game, diaryAt: getTodayStr(DateFormat.StoreDateTime) });
-          await store.alertService.showToast(i.diary_ok());
+          await store.alertService.showToast(fill(i.diary_ok_in(), { diaries: written.join(', ') }));
         } catch (error) {
           const code = (error as { code?: string }).code ?? '';
           const denied = code.endsWith('permission-denied') || code.endsWith('failed-precondition');
