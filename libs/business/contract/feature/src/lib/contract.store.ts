@@ -8,11 +8,16 @@ import { ContractService } from '@okr/business-contract-data-access';
 import { CONTRACT_I18N_KEYS, ContractI18n, newContractModel, sumLoans } from '@okr/business-contract-util';
 import { AppStore, ModelSelectService } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
-import { ContractModel } from '@okr/shared-models';
-import { AlertService } from '@okr/shared-util-angular';
+import { ContractModel, UserModel } from '@okr/shared-models';
+import { AlertService, resourceParams } from '@okr/shared-util-angular';
 import { addDuration, debugListLoaded, getTodayStr, hasRole, nameMatches } from '@okr/shared-util-core';
 
 export type ContractListId = 'all' | 'my';
+
+/** Same predicate as isContractReaderGuard: treasurer, privileged or auditor (admin included by hasRole). */
+export function isContractReader(user: UserModel | undefined): boolean {
+  return hasRole('treasurer', user) || hasRole('privileged', user) || hasRole('auditor', user);
+}
 
 /** Days ahead the "Frist in 90 Tagen" filter looks (spec 1.5 §8). */
 export const CONTRACT_DUE_SOON_DAYS = 90;
@@ -57,16 +62,27 @@ export const ContractStore = signalStore(
   withProps((store) => ({
     i18n: store.i18nService.translateAll(CONTRACT_I18N_KEYS) as ContractI18n,
     contractsResource: rxResource({
-      params: () => ({ currentUser: store.appStore.currentUser(), listId: store.listId() }),
+      // value-compared primitives: users/{uid} arrives twice at boot (cache, then server) and must
+      // not re-run the query (memory: rxResource params not value-compared)
+      params: resourceParams(() => {
+        const user = store.appStore.currentUser();
+        return {
+          personKey: user?.personKey ?? '',
+          includeStrict: hasRole('treasurer', user),   // treasurer or admin
+          isReader: isContractReader(user),
+          listId: store.listId(),
+        };
+      }),
       stream: ({ params }) => {
-        const user = params.currentUser;
+        const user = store.appStore.currentUser();
         if (!user || !params.listId) return of([] as ContractModel[]);
         if (params.listId === 'my') {
-          return store.contractService.listMine(user.personKey)
+          return store.contractService.listMine(params.personKey)
             .pipe(debugListLoaded<ContractModel>('ContractStore.myContracts', user));
         }
-        const includeStrict = hasRole('treasurer', user);   // treasurer or admin
-        return store.contractService.listStaff(includeStrict)
+        // defense in depth: never fire a staff query the rules would deny
+        if (!params.isReader) return of([] as ContractModel[]);
+        return store.contractService.listStaff(params.includeStrict)
           .pipe(debugListLoaded<ContractModel>('ContractStore.contracts', user));
       },
     }),
@@ -75,7 +91,8 @@ export const ContractStore = signalStore(
   withComputed((state) => ({
     // a rules denial puts the resource in error state, where value() throws
     contracts: computed(() => (state.contractsResource.hasValue() ? state.contractsResource.value() : undefined) ?? []),
-    isLoading: computed(() => state.contractsResource.isLoading()),
+    // a reload keeps the grid; the spinner is for the first load only
+    isLoading: computed(() => state.contractsResource.isLoading() && !state.contractsResource.hasValue()),
     currentUser: computed(() => state.appStore.currentUser()),
     tenantId: computed(() => state.appStore.tenantId()),
     /** treasurer or admin — the only roles the rules let write contracts */

@@ -15,9 +15,12 @@ import { convertDateFormatToString, DateFormat, fill } from '@okr/shared-util-co
 
 import { ContractListId, ContractStore } from './contract.store';
 
-/** Router input binding sets an unbound input to undefined — coalesce back to the 'all' default. */
+/**
+ * Router input binding sets an unbound input to undefined. An unbound or misspelled listId falls
+ * back to 'my' — the list every user may read — never to the staff list.
+ */
 function toListId(value: string | undefined | null): ContractListId {
-  return value === 'my' ? 'my' : 'all';
+  return value === 'all' ? 'all' : 'my';
 }
 
 /**
@@ -133,7 +136,7 @@ export class ContractList {
   private readonly router = inject(Router);
 
   // inputs (route binding)
-  public readonly listId = input<ContractListId, string | undefined | null>('all', { transform: toListId });
+  public readonly listId = input<ContractListId, string | undefined | null>('my', { transform: toListId });
   public readonly contextMenuName = input<string, string | undefined | null>('', { transform: (v) => v ?? '' });
 
   // data
@@ -213,6 +216,10 @@ export class ContractList {
       if (contract.state === 'active') {
         options.buttons.push(createActionSheetButton('contract.notice', this.store.i18n.notice_title(), this.imgixBaseUrl, 'calendar'));
       }
+      // the summarize button lives in the edit modal; offered only where it can run (saved, not strict)
+      if (contract.okey && contract.isStrictlyConfidential === false) {
+        options.buttons.push(createActionSheetButton('contract.summarize', this.store.i18n.summarize(), this.imgixBaseUrl, 'document'));
+      }
       options.buttons.push(createActionSheetDivider());
       options.buttons.push(createActionSheetButton('contract.archive', this.store.i18n.as_archive(), this.imgixBaseUrl, 'archive'));
     } else {
@@ -232,6 +239,7 @@ export class ContractList {
     switch (data.action) {
       case 'contract.view': await this.store.edit(contract, true); break;
       case 'contract.edit': await this.store.edit(contract, false); break;
+      case 'contract.summarize': await this.store.edit(contract, false); break;
       case 'contract.dossier': await this.router.navigate(['/contract', 'detail', contract.okey]); break;
       case 'contract.notice': await this.store.giveNotice(contract); break;
       case 'contract.archive': await this.store.archive(contract); break;
