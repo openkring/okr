@@ -460,3 +460,7 @@ export { healthz } from './health';
 // contracts: daily deadline scan (spec 1.5 §6.2)
 export const scanContractDeadlines = Contract.scanContractDeadlines;
 export const onContractWritten = Contract.onContractWritten;
+// contract dossier files: signed upload, register (SHA-256) and signed view links (spec 1.5 §7)
+export const requestContractUpload = Contract.requestContractUpload;
+export const registerContractDocument = Contract.registerContractDocument;
+export const signContractDocuments = Contract.signContractDocuments;

@@ -1,0 +1,17 @@
+[
+  {
+    "origin": [
+      "https://seeclub.org",
+      "https://www.seeclub.org",
+      "https://scs-app-54aef.web.app",
+      "https://scs-app-54aef.firebaseapp.com",
+      "https://app.bkaiser.com",
+      "https://bkg-app-54aef.web.app",
+      "https://bkg-app-54aef.firebaseapp.com",
+      "http://localhost:4200"
+    ],
+    "method": ["PUT", "GET"],
+    "responseHeader": ["Content-Type"],
+    "maxAgeSeconds": 3600
+  }
+]
