@@ -7,7 +7,7 @@ function model(overrides: Partial<TaskSettings> = {}): TaskSettings {
 }
 
 describe('taskSettingsValidations', () => {
-  it('accepts the default (30 days, no diary tenant)', () => {
+  it('accepts the default (30 days)', () => {
     const result = taskSettingsValidations(model());
     expect(result.isValid()).toBe(true);
   });

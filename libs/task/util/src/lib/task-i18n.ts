@@ -103,7 +103,7 @@ export const TASK_I18N_KEYS = {
   validations_taskArchiveDaysRange:    PFX + 'validations.taskArchiveDaysRange',
   validations_taskArchiveDaysInteger:  PFX + 'validations.taskArchiveDaysInteger',
 
-  // settings modal (spec 1.72 §8.2/§9) — the two AppConfig fields, admin-only
+  // settings modal (spec 1.72 §8.2/§9) — the AppConfig field `taskArchiveDays`, admin-only
   settings_title:                       PFX + 'settings.title',
   settings_taskArchiveDays_label:       PFX + 'settings.taskArchiveDays.label',
   settings_taskArchiveDays_helper:      PFX + 'settings.taskArchiveDays.helper',
