@@ -4,7 +4,7 @@ import { FieldValue, Firestore, getFirestore } from 'firebase-admin/firestore';
 
 import { FinanceDocumentCollection, InvoiceCollection, InvoiceModel, InvoicePositionCollection } from '@okr/shared-models';
 import { getInvoiceIndex, getNextInvoiceNo } from '@okr/finance-invoice-util';
-import { DateFormat, generateRandomString, getTodayStr } from '@okr/shared-util-core';
+import { DateFormat, generateQrReference, generateRandomString, getTodayStr } from '@okr/shared-util-core';
 import {
   checkAppCheckToken, checkAuthentication, checkRoles, getCallerTenantId, nextBookingNo,
 } from '@okr/shared-util-functions';
@@ -172,7 +172,7 @@ export const issueInvoice = onCall(
       const invoiceNo = getNextInvoiceNo(nos, Number(invoiceDate.substring(0, 4)));
       // issueRunId (R10): a per-run nonce, so a stale run can never finalize an invoice that was reset and
       // issued again meanwhile — even under the same number. Transient: removed on pending and on reset.
-      const patch = { invoiceNo, invoiceId: String(invoiceNo), state: 'issuing', issueRunId: generateRandomString(20) };
+      const patch = { invoiceNo, invoiceId: String(invoiceNo), paymentReference: generateQrReference(invoiceNo), state: 'issuing', issueRunId: generateRandomString(20) };
       tx.update(invoiceRef, patch);
       return { done: false as const, invoice: { ...invoice, ...patch } };
     });
@@ -208,15 +208,18 @@ export const issueInvoice = onCall(
       const fullPath = `tenant/${tenantId}/private/finance/invoices/${invoiceKey}.pdf`;
       const rendered = await renderDocument({
         templateId,
-        payload: buildInvoicePayload({
-          invoiceId,
-          title,
-          invoiceDate,
-          dueDate: String(invoice['dueDate'] ?? ''),
-          receiver: { name1: receiver?.name1 ?? '', name2: receiver?.name2 ?? '', modelType: receiver?.modelType ?? '' },
-          positions,
-          address,
-        }),
+        payload: {
+          ...buildInvoicePayload({
+            invoiceId,
+            title,
+            invoiceDate,
+            dueDate: String(invoice['dueDate'] ?? ''),
+            receiver: { name1: receiver?.name1 ?? '', name2: receiver?.name2 ?? '', modelType: receiver?.modelType ?? '' },
+            positions,
+            address,
+          }),
+          invoiceKey,
+        },
         options: { outputFormat: 'pdf', filename },
       }, uid, tenantId, { bucket: privateBucket(), path: fullPath });
 
@@ -306,7 +309,7 @@ async function resetToDraft(db: Firestore, invoiceKey: string, bookingKey: strin
       // a concurrent run may have reset and re-numbered it: only release our own number and run
       if (invoice?.['state'] !== 'issuing' || Number(invoice['invoiceNo']) !== invoiceNo) return;
       if (String(invoice['issueRunId'] ?? '') !== runId || booking.exists) return;
-      tx.update(invoiceRef, { state: 'draft', invoiceNo: 0, invoiceId: '', issueRunId: FieldValue.delete() });
+      tx.update(invoiceRef, { state: 'draft', invoiceNo: 0, invoiceId: '', paymentReference: '', issueRunId: FieldValue.delete() });
     });
   } catch (e) {
     logger.error(`${CF_NAME}: could not reset ${invoiceKey} to draft`, e);
