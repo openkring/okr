@@ -166,14 +166,17 @@ export class ExpenseDetailPage {
   /** Receipts of a done issuer expense that produced no payment — derived, nothing stored (spec 1.80 §6). */
   protected readonly manualReceipts = computed(() => {
     const expense = this.expense();
+    // Until the payments arrived, every receipt would look unpaid — show nothing rather than flash "manual".
+    if (!this.paymentsResource.hasValue()) return [];
     if (!expense || expense.status !== 'done' || (expense.transferTo ?? 'me') !== 'issuer') return [];
-    const paid = new Set(this.payments().map(p => p.ocrResultKey ?? ''));
+    const paid = new Set(this.payments().map(p => p.ocrResultKey ?? '').filter(k => k !== ''));
     return this.view.receipts().filter(r => !paid.has(this.view.ocrResultKeyOf(r.path)));
   });
 
   protected readonly meWithoutPayment = computed(() => {
     const expense = this.expense();
-    return !!expense && expense.status === 'done' && (expense.transferTo ?? 'me') === 'me' && this.payments().length === 0;
+    return this.paymentsResource.hasValue() && !!expense && expense.status === 'done'
+      && (expense.transferTo ?? 'me') === 'me' && this.payments().length === 0;
   });
 
   protected openOrder(orderKey: string): void {
