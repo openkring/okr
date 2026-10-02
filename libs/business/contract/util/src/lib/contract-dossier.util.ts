@@ -68,3 +68,11 @@ export function contractFileIconName(mimeType: string | undefined): string {
   if (mimeType.startsWith('image/')) return 'image';
   return reduceLogoName(getExtensionFromMimeType(mimeType).toLowerCase());
 }
+
+/**
+ * The URL to open after a re-sign: only one this re-sign produced. A failed (or superseded) re-sign
+ * leaves the previous, expired entry in place — opening it shows a raw storage "AccessDenied" page.
+ */
+export function pickFreshUrl(signedOk: boolean, entry: { url: string } | undefined): string | undefined {
+  return signedOk && entry?.url ? entry.url : undefined;
+}

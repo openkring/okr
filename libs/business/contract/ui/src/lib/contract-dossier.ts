@@ -11,6 +11,7 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { ContractDocumentService, SignedContractDocument } from '@okr/business-contract-data-access';
 import {
   CONTRACT_I18N_KEYS, contractFileIconName, contractFileMimeType, ContractI18n, documentKeysSignature, groupDocumentsByRole,
+  pickFreshUrl,
 } from '@okr/business-contract-util';
 
 import { ContractDocumentUploadModal, ContractDocumentUploadResult } from './contract-document-upload.modal';
@@ -133,25 +134,30 @@ export class ContractDossier {
     return contractFileIconName(signed?.mimeType);
   }
 
-  /** Signs the dossier's files; a late answer to an outdated key list is dropped. Never throws. */
-  private async sign(signature: string): Promise<void> {
+  /**
+   * Signs the dossier's files; a late answer to an outdated key list is dropped. Never throws.
+   * @returns true only when this call applied fresh results (a failure keeps the old, possibly expired map)
+   */
+  private async sign(signature: string): Promise<boolean> {
     const request = ++this.signRequest;
     const keys = signature ? signature.split('|') : [];
     if (keys.length === 0) {
       this.signedByKey.set(new Map());
       this.signFailed.set(false);
-      return;
+      return true;
     }
     try {
       const documents = await this.documentService.sign(keys);
-      if (request !== this.signRequest) return;
+      if (request !== this.signRequest) return false;
       this.signedByKey.set(new Map(documents.map((d) => [d.key, d])));
       this.signedAt = Date.now();
       this.signFailed.set(false);
+      return true;
     } catch (error) {
-      if (request !== this.signRequest) return;
+      if (request !== this.signRequest) return false;
       console.error('ContractDossier.sign: could not sign the dossier files', error);
       this.signFailed.set(true);
+      return false;
     }
   }
 
@@ -165,8 +171,9 @@ export class ContractDossier {
     event.preventDefault();
     const tab = window.open('', '_blank');
     if (tab) tab.opener = null;
-    await this.sign(this.keySignature());
-    const url = this.signedByKey().get(docKey)?.url;
+    const signedOk = await this.sign(this.keySignature());
+    // never fall back to the expired URL: on a failed re-sign the note above explains it
+    const url = pickFreshUrl(signedOk, this.signedByKey().get(docKey));
     if (tab && url) tab.location.href = url;
     else tab?.close();
   }

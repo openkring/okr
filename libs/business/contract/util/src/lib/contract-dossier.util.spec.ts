@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { ContractDocumentRef } from '@okr/shared-models';
 import {
   contractFileIconName, contractFileMimeType, CONTRACT_ACCEPT_ATTRIBUTE, documentKeysSignature, groupDocumentsByRole, MAX_CONTRACT_FILE_BYTES,
-  parseReminderMarker, parseReminderMarkers,
+  parseReminderMarker, parseReminderMarkers, pickFreshUrl,
 } from './contract-dossier.util';
 import { contractDocumentUploadValidations, newContractDocumentUploadData } from './contract-document.validations';
 
@@ -97,5 +97,18 @@ describe('contractFileIconName', () => {
     expect(contractFileIconName('text/plain')).toBe('txt');
     expect(contractFileIconName('message/rfc822')).toBe('file');
     expect(contractFileIconName('')).toBe('file');
+  });
+});
+
+describe('pickFreshUrl', () => {
+  it('uses the entry only after a successful re-sign', () => {
+    expect(pickFreshUrl(true, { url: 'https://new' })).toBe('https://new');
+  });
+  it('never falls back to an expired entry when the re-sign failed', () => {
+    expect(pickFreshUrl(false, { url: 'https://expired' })).toBeUndefined();
+  });
+  it('returns undefined for a missing or empty entry', () => {
+    expect(pickFreshUrl(true, undefined)).toBeUndefined();
+    expect(pickFreshUrl(true, { url: '' })).toBeUndefined();
   });
 });
