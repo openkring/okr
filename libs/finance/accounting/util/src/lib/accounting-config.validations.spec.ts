@@ -7,7 +7,7 @@ import {
 } from './accounting-config.validations';
 
 describe('accountingConfigValidations', () => {
-  // the model's default fees [0, 2000, 2000] need a fee account (P3-R2), so the base config links one
+  // the base config links a fee account so fee cases below can set fees > 0 (P3-R2)
   const config = (patch: Partial<AccountingConfigModel> = {}): AccountingConfigModel =>
     Object.assign(new AccountingConfigModel('tenant-1', 'org-1'), { reminderFeeAccountKey: 'org-1-6850' }, patch);
 
@@ -95,21 +95,23 @@ describe('accountingConfigValidations', () => {
     });
 
     it('requires the fee account as soon as any level charges a fee (P3-R2)', () => {
-      const missing = accountingConfigValidations(config({ reminderFeeAccountKey: '' }), 'tenant-1', '');
+      const missing = accountingConfigValidations(config({ reminderFeeAccountKey: '', reminderFees: [0, 2000, 2000] }), 'tenant-1', '');
       expect(missing.getErrors('reminderFeeAccountKey')).toContain(REMINDER_FEE_ACCOUNT_REQUIRED_ERROR);
       const legacy = config() as Partial<AccountingConfigModel>;
       delete legacy.reminderFeeAccountKey;
-      expect(accountingConfigValidations(legacy as AccountingConfigModel, 'tenant-1', '').getErrors('reminderFeeAccountKey').length).toBeGreaterThan(0);
+      delete legacy.reminderFees;
+      // a legacy config without fees uses the default [0, 0, 0] and needs no fee account
+      expect(accountingConfigValidations(legacy as AccountingConfigModel, 'tenant-1', '').getErrors('reminderFeeAccountKey')).toEqual([]);
       expect(accountingConfigValidations(config({ reminderFeeAccountKey: '', reminderFees: [0, 0, 0] }), 'tenant-1', '').isValid()).toBe(true);
       expect(accountingConfigValidations(config({ reminderFeeAccountKey: '', reminderFees: [100, 0, 0] }), 'tenant-1', '').isValid()).toBe(false);
       expect(hasReminderFee({ reminderFees: [0, 0, 0] })).toBe(false);
-      expect(hasReminderFee({} as AccountingConfigModel)).toBe(true);
+      expect(hasReminderFee({} as AccountingConfigModel)).toBe(false);
     });
 
     it('reads the fee of a level, the model default when the field is missing', () => {
       expect(reminderFeeOf({ reminderFees: [100, 200, 300] }, 3)).toBe(300);
       expect(reminderFeeOf({ reminderFees: [100] }, 2)).toBe(0);
-      expect(reminderFeeOf({} as AccountingConfigModel, 2)).toBe(2000);
+      expect(reminderFeeOf({} as AccountingConfigModel, 2)).toBe(0);
     });
   });
 });

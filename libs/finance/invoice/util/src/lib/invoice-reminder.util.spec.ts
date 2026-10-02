@@ -35,8 +35,8 @@ describe('invoice reminder util', () => {
   it('default fee', () => {
     expect(defaultReminderFee([0, 2000, 2000], 2)).toBe(2000);
     expect(defaultReminderFee(undefined, 1)).toBe(0);
-    expect(defaultReminderFee(undefined, 2)).toBe(2000);
-    expect(defaultReminderFee(undefined, 3)).toBe(2000);
+    expect(defaultReminderFee(undefined, 2)).toBe(0);
+    expect(defaultReminderFee(undefined, 3)).toBe(0);
     expect(defaultReminderFee([500], 2)).toBe(0);
     expect(defaultReminderFee([-5], 1)).toBe(0);
   });

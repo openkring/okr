@@ -42,10 +42,10 @@ describe('invoice reminder logic', () => {
     expect(defaultReminderFee([0, 2000, 2000], 2)).toBe(2000);
     expect(reminderDueDate('20261020', 14)).toBe('20261103');
   });
-  it('default fee: a config without the field uses the model default [0, 2000, 2000] (P3-R2)', () => {
+  it('default fee: a config without the field uses the model default [0, 0, 0] (P3-R2)', () => {
     expect(defaultReminderFee(undefined, 1)).toBe(0);
-    expect(defaultReminderFee(undefined, 2)).toBe(2000);
-    expect(defaultReminderFee(undefined, 3)).toBe(2000);
+    expect(defaultReminderFee(undefined, 2)).toBe(0);
+    expect(defaultReminderFee(undefined, 3)).toBe(0);
     expect(defaultReminderFee([500], 2)).toBe(0);
     expect(defaultReminderFee([-5], 1)).toBe(0);
   });

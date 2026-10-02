@@ -15,19 +15,19 @@ function legacyConfig(): AccountingConfigModel {
 }
 
 describe('toAccountingConfigFormData', () => {
-  it('turns a legacy config that fails the suite into one that passes once the fee account is set (P3-R2)', () => {
-    expect(accountingConfigValidations(legacyConfig(), 'scs', '').isValid()).toBe(false);
+  it('a seeded legacy config saves without a fee account; a fee then needs one (P3-R2)', () => {
     const seeded = toAccountingConfigFormData(legacyConfig());
-    // the seeded default fees [0, 2000, 2000] need a fee account
-    expect(accountingConfigValidations(seeded, 'scs', '').getErrors('reminderFeeAccountKey').length).toBeGreaterThan(0);
-    expect(accountingConfigValidations({ ...seeded, reminderFeeAccountKey: 'scs-6850' }, 'scs', '').isValid()).toBe(true);
-    expect(accountingConfigValidations({ ...seeded, reminderFees: [0, 0, 0] }, 'scs', '').isValid()).toBe(true);
+    // the seeded default fees [0, 0, 0] need no fee account
+    expect(accountingConfigValidations(seeded, 'scs', '').getErrors('reminderFeeAccountKey')).toEqual([]);
+    const withFee = { ...seeded, reminderFees: [0, 2000, 2000] };
+    expect(accountingConfigValidations(withFee, 'scs', '').getErrors('reminderFeeAccountKey').length).toBeGreaterThan(0);
+    expect(accountingConfigValidations({ ...withFee, reminderFeeAccountKey: 'scs-6850' }, 'scs', '').getErrors('reminderFeeAccountKey')).toEqual([]);
   });
 
   it('seeds all five reminder fields with the model defaults (P3-R2)', () => {
     const data = toAccountingConfigFormData(legacyConfig());
     expect([data.reminderTemplateId, data.reminderFeeAccountKey, data.reminderFees, data.reminderGraceDays, data.reminderDueDays])
-      .toEqual(['', '', [0, 2000, 2000], 10, 14]);
+      .toEqual(['', '', [0, 0, 0], 10, 14]);
     expect(data.reminderFees).toEqual([...DEFAULT_REMINDER_FEES]);
     expect(data.reminderFees).not.toBe(DEFAULT_REMINDER_FEES);
   });

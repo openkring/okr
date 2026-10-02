@@ -50,8 +50,11 @@ export interface FeeScheduleEntry {
   positions: FeePositionRule[];
 }
 
-/** Reminder fees in Rappen per level 1..3 (spec 1.76 D14): the one default for settings, dialog, Mahnlauf and server. */
-export const DEFAULT_REMINDER_FEES: readonly number[] = [0, 2000, 2000];
+/**
+ * Reminder fees in Rappen per level 1..3 (spec 1.76 D14): the one default for settings, dialog, Mahnlauf
+ * and server. 0 until the treasurer sets fees deliberately (with a fee account) — there is no fee waiver yet.
+ */
+export const DEFAULT_REMINDER_FEES: readonly number[] = [0, 0, 0];
 /** Days after the last due date before a Mahnlauf offers a reminder (spec 1.76 D15). */
 export const DEFAULT_REMINDER_GRACE_DAYS = 10;
 /** Days a reminder grants to pay (spec 1.76 D13). */
