@@ -5,7 +5,7 @@
 // collide in a shared working tree. Integrate back to main with a fast-forward
 // merge once green. See CLAUDE.md > Hard Rules > branching for the workflow.
 //
-//   pnpm session:new    <name>   create ../okr-worktrees/<name> on work/<name>
+//   pnpm session:new    <name>   create ../okr-worktrees/<name> on work/<name> (--open: VSCode window)
 //   pnpm session:sync   <name>   rebase work/<name> onto latest origin/main
 //   pnpm session:list            list worktrees
 //   pnpm session:remove <name>   remove the worktree (branch kept unless --force)
@@ -86,13 +86,15 @@ switch (cmd) {
     }
     console.log(`  ${copied} file(s) copied${copied === 0 ? ' — none found; the main checkout has none either' : ''}`);
 
-    const noOpen = process.argv.includes('--no-open');
-    if (!noOpen) {
+    // Opt-in: a session that runs session:new usually keeps working in the worktree itself,
+    // so an auto-opened window just sits on an empty Claude welcome screen.
+    const open = process.argv.includes('--open');
+    if (open) {
       try {
         execFileSync('code', [path], { stdio: 'ignore' });
         console.log(`\n→ Opened ${path} in a new VSCode window — click the Claude icon there.`);
       } catch {
-        console.warn('\n⚠ `code` CLI not found — open the folder manually, or run with --no-open to silence this.');
+        console.warn('\n⚠ `code` CLI not found — open the folder manually.');
       }
     }
 
@@ -175,7 +177,7 @@ switch (cmd) {
   default:
     console.log(`Per-session git worktrees for parallel work.
 
-  pnpm session:new    <name> [--no-open] create a worktree + work/<name> branch (opens VSCode unless --no-open)
+  pnpm session:new    <name> [--open]    create a worktree + work/<name> branch (--open also opens a VSCode window)
   pnpm session:sync   <name>          rebase work/<name> onto latest origin/main
   pnpm session:list                   list all worktrees
   pnpm session:remove <name> [--force] remove worktree (--force also deletes branch)`);
