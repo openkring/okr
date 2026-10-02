@@ -1,1 +1,73 @@
-{}
+{
+  "plural": "Contrats",
+  "myPlural": "Mes contrats",
+  "add": "Saisir un contrat",
+  "edit": "Modifier le contrat",
+  "create": {
+    "conf": "Le contrat est enregistré.",
+    "error": "Le contrat n'a pas pu être enregistré."
+  },
+  "update": {
+    "conf": "Le contrat est mis à jour.",
+    "error": "Le contrat n'a pas pu être mis à jour."
+  },
+  "archive": {
+    "confirm": "Veux-tu archiver ce contrat ?"
+  },
+  "notice": {
+    "title": "Saisir une résiliation"
+  },
+  "summarize": "Créer un résumé",
+  "dossier": "Dossier",
+  "deadlines": "Échéances",
+  "upload": "Ajouter un fichier",
+  "priorVersions": "Versions antérieures",
+  "empty": "Aucun contrat saisi pour le moment.",
+  "type": {
+    "loan": "Prêt",
+    "mortgage": "Hypothèque",
+    "partnerContract": "Contrat de partenariat",
+    "mandate": "Mandat",
+    "workContract": "Contrat d'entreprise",
+    "lease": "Contrat de bail",
+    "employment": "Contrat de travail",
+    "purchase": "Contrat de vente",
+    "nda": "Accord de confidentialité",
+    "license": "Contrat de licence",
+    "serviceAgreement": "Contrat de prestations de services",
+    "other": "Autre contrat"
+  },
+  "state": {
+    "draft": "Brouillon",
+    "negotiating": "En négociation",
+    "active": "Actif",
+    "noticeGiven": "Résilié",
+    "ended": "Terminé"
+  },
+  "deadlineKind": {
+    "notice": "Dernier jour pour résilier",
+    "end": "Fin du contrat",
+    "rateFix": "Fin du taux d'intérêt fixe"
+  },
+  "role": {
+    "contract": "Contrat",
+    "annex": "Annexe",
+    "amendment": "Avenant",
+    "correspondence": "Correspondance",
+    "other": "Autre"
+  },
+  "docState": {
+    "draft": "Brouillon",
+    "redline": "Révision",
+    "final": "Version finale",
+    "signed": "Signé"
+  },
+  "validation": {
+    "type": "Choisis un type de contrat.",
+    "state": "Choisis un statut.",
+    "endBeforeStart": "La fin du contrat est antérieure au début.",
+    "renewNeedsEnd": "Une reconduction tacite nécessite une fin de contrat.",
+    "parties": "Saisis au moins une partie au contrat.",
+    "loanRequired": "Saisis les conditions du prêt."
+  }
+}

@@ -1,1 +1,73 @@
-{}
+{
+  "plural": "Contracts",
+  "myPlural": "My contracts",
+  "add": "Add contract",
+  "edit": "Edit contract",
+  "create": {
+    "conf": "The contract has been saved.",
+    "error": "The contract could not be saved."
+  },
+  "update": {
+    "conf": "The contract has been updated.",
+    "error": "The contract could not be updated."
+  },
+  "archive": {
+    "confirm": "Do you want to archive this contract?"
+  },
+  "notice": {
+    "title": "Record notice"
+  },
+  "summarize": "Create summary",
+  "dossier": "Dossier",
+  "deadlines": "Deadlines",
+  "upload": "Add file",
+  "priorVersions": "Earlier versions",
+  "empty": "No contracts recorded yet.",
+  "type": {
+    "loan": "Loan",
+    "mortgage": "Mortgage",
+    "partnerContract": "Partner contract",
+    "mandate": "Mandate",
+    "workContract": "Contract for work",
+    "lease": "Lease",
+    "employment": "Employment contract",
+    "purchase": "Purchase agreement",
+    "nda": "Non-disclosure agreement",
+    "license": "License agreement",
+    "serviceAgreement": "Service agreement",
+    "other": "Other contract"
+  },
+  "state": {
+    "draft": "Draft",
+    "negotiating": "In negotiation",
+    "active": "Active",
+    "noticeGiven": "Terminated",
+    "ended": "Ended"
+  },
+  "deadlineKind": {
+    "notice": "Last day to give notice",
+    "end": "Contract end",
+    "rateFix": "End of fixed interest rate"
+  },
+  "role": {
+    "contract": "Contract",
+    "annex": "Annex",
+    "amendment": "Amendment",
+    "correspondence": "Correspondence",
+    "other": "Other"
+  },
+  "docState": {
+    "draft": "Draft",
+    "redline": "Revision",
+    "final": "Final version",
+    "signed": "Signed"
+  },
+  "validation": {
+    "type": "Please choose a contract type.",
+    "state": "Please choose a status.",
+    "endBeforeStart": "The contract end is before its start.",
+    "renewNeedsEnd": "A tacit renewal needs a contract end.",
+    "parties": "Please add at least one contract party.",
+    "loanRequired": "Please add the loan terms."
+  }
+}

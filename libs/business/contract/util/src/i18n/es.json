@@ -1,1 +1,73 @@
-{}
+{
+  "plural": "Contratos",
+  "myPlural": "Mis contratos",
+  "add": "Registrar contrato",
+  "edit": "Editar contrato",
+  "create": {
+    "conf": "El contrato se ha guardado.",
+    "error": "No se ha podido guardar el contrato."
+  },
+  "update": {
+    "conf": "El contrato se ha actualizado.",
+    "error": "No se ha podido actualizar el contrato."
+  },
+  "archive": {
+    "confirm": "¿Quieres archivar este contrato?"
+  },
+  "notice": {
+    "title": "Registrar rescisión"
+  },
+  "summarize": "Crear resumen",
+  "dossier": "Dosier",
+  "deadlines": "Plazos",
+  "upload": "Añadir archivo",
+  "priorVersions": "Versiones anteriores",
+  "empty": "Todavía no hay contratos registrados.",
+  "type": {
+    "loan": "Préstamo",
+    "mortgage": "Hipoteca",
+    "partnerContract": "Contrato de colaboración",
+    "mandate": "Encargo",
+    "workContract": "Contrato de obra",
+    "lease": "Contrato de alquiler",
+    "employment": "Contrato de trabajo",
+    "purchase": "Contrato de compraventa",
+    "nda": "Acuerdo de confidencialidad",
+    "license": "Contrato de licencia",
+    "serviceAgreement": "Contrato de servicios",
+    "other": "Otro contrato"
+  },
+  "state": {
+    "draft": "Borrador",
+    "negotiating": "En negociación",
+    "active": "Activo",
+    "noticeGiven": "Rescindido",
+    "ended": "Finalizado"
+  },
+  "deadlineKind": {
+    "notice": "Último día para rescindir",
+    "end": "Fin del contrato",
+    "rateFix": "Fin del tipo de interés fijo"
+  },
+  "role": {
+    "contract": "Contrato",
+    "annex": "Anexo",
+    "amendment": "Adenda",
+    "correspondence": "Correspondencia",
+    "other": "Otro"
+  },
+  "docState": {
+    "draft": "Borrador",
+    "redline": "Revisión",
+    "final": "Versión final",
+    "signed": "Firmado"
+  },
+  "validation": {
+    "type": "Elige un tipo de contrato.",
+    "state": "Elige un estado.",
+    "endBeforeStart": "El fin del contrato es anterior al inicio.",
+    "renewNeedsEnd": "Una renovación tácita necesita una fecha de fin.",
+    "parties": "Registra al menos una parte contratante.",
+    "loanRequired": "Registra las condiciones del préstamo."
+  }
+}

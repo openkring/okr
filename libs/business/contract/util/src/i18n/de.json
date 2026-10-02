@@ -1,1 +1,73 @@
-{}
+{
+  "plural": "Verträge",
+  "myPlural": "Meine Verträge",
+  "add": "Vertrag erfassen",
+  "edit": "Vertrag bearbeiten",
+  "create": {
+    "conf": "Der Vertrag ist gespeichert.",
+    "error": "Der Vertrag konnte nicht gespeichert werden."
+  },
+  "update": {
+    "conf": "Der Vertrag ist aktualisiert.",
+    "error": "Der Vertrag konnte nicht aktualisiert werden."
+  },
+  "archive": {
+    "confirm": "Möchtest du diesen Vertrag archivieren?"
+  },
+  "notice": {
+    "title": "Kündigung erfassen"
+  },
+  "summarize": "Zusammenfassung erstellen",
+  "dossier": "Dossier",
+  "deadlines": "Fristen",
+  "upload": "Datei hinzufügen",
+  "priorVersions": "Frühere Versionen",
+  "empty": "Noch keine Verträge erfasst.",
+  "type": {
+    "loan": "Darlehen",
+    "mortgage": "Hypothek",
+    "partnerContract": "Partnervertrag",
+    "mandate": "Auftrag",
+    "workContract": "Werkvertrag",
+    "lease": "Mietvertrag",
+    "employment": "Arbeitsvertrag",
+    "purchase": "Kaufvertrag",
+    "nda": "Geheimhaltungsvereinbarung",
+    "license": "Lizenzvertrag",
+    "serviceAgreement": "Dienstleistungsvertrag",
+    "other": "Anderer Vertrag"
+  },
+  "state": {
+    "draft": "Entwurf",
+    "negotiating": "In Verhandlung",
+    "active": "Aktiv",
+    "noticeGiven": "Gekündigt",
+    "ended": "Beendet"
+  },
+  "deadlineKind": {
+    "notice": "Letzter Kündigungstag",
+    "end": "Vertragsende",
+    "rateFix": "Ende der Zinsbindung"
+  },
+  "role": {
+    "contract": "Vertrag",
+    "annex": "Anhang",
+    "amendment": "Nachtrag",
+    "correspondence": "Korrespondenz",
+    "other": "Anderes"
+  },
+  "docState": {
+    "draft": "Entwurf",
+    "redline": "Überarbeitung",
+    "final": "Endfassung",
+    "signed": "Unterschrieben"
+  },
+  "validation": {
+    "type": "Bitte wähle eine Vertragsart.",
+    "state": "Bitte wähle einen Status.",
+    "endBeforeStart": "Das Vertragsende liegt vor dem Beginn.",
+    "renewNeedsEnd": "Eine stillschweigende Verlängerung braucht ein Vertragsende.",
+    "parties": "Bitte erfasse mindestens eine Vertragspartei.",
+    "loanRequired": "Bitte erfasse die Darlehensbedingungen."
+  }
+}

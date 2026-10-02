@@ -1,1 +1,73 @@
-{}
+{
+  "plural": "Contratti",
+  "myPlural": "I miei contratti",
+  "add": "Registra contratto",
+  "edit": "Modifica contratto",
+  "create": {
+    "conf": "Il contratto è stato salvato.",
+    "error": "Non è stato possibile salvare il contratto."
+  },
+  "update": {
+    "conf": "Il contratto è stato aggiornato.",
+    "error": "Non è stato possibile aggiornare il contratto."
+  },
+  "archive": {
+    "confirm": "Vuoi archiviare questo contratto?"
+  },
+  "notice": {
+    "title": "Registra disdetta"
+  },
+  "summarize": "Crea riepilogo",
+  "dossier": "Dossier",
+  "deadlines": "Scadenze",
+  "upload": "Aggiungi file",
+  "priorVersions": "Versioni precedenti",
+  "empty": "Nessun contratto ancora registrato.",
+  "type": {
+    "loan": "Prestito",
+    "mortgage": "Ipoteca",
+    "partnerContract": "Contratto di partnership",
+    "mandate": "Mandato",
+    "workContract": "Contratto d'opera",
+    "lease": "Contratto di locazione",
+    "employment": "Contratto di lavoro",
+    "purchase": "Contratto di compravendita",
+    "nda": "Accordo di riservatezza",
+    "license": "Contratto di licenza",
+    "serviceAgreement": "Contratto di servizi",
+    "other": "Altro contratto"
+  },
+  "state": {
+    "draft": "Bozza",
+    "negotiating": "In trattativa",
+    "active": "Attivo",
+    "noticeGiven": "Disdetto",
+    "ended": "Concluso"
+  },
+  "deadlineKind": {
+    "notice": "Ultimo giorno per la disdetta",
+    "end": "Fine del contratto",
+    "rateFix": "Fine del tasso fisso"
+  },
+  "role": {
+    "contract": "Contratto",
+    "annex": "Allegato",
+    "amendment": "Addendum",
+    "correspondence": "Corrispondenza",
+    "other": "Altro"
+  },
+  "docState": {
+    "draft": "Bozza",
+    "redline": "Revisione",
+    "final": "Versione finale",
+    "signed": "Firmato"
+  },
+  "validation": {
+    "type": "Scegli un tipo di contratto.",
+    "state": "Scegli uno stato.",
+    "endBeforeStart": "La fine del contratto è precedente all'inizio.",
+    "renewNeedsEnd": "Un rinnovo tacito richiede una fine del contratto.",
+    "parties": "Registra almeno una parte contrattuale.",
+    "loanRequired": "Registra le condizioni del prestito."
+  }
+}
