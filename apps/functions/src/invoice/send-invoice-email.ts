@@ -14,7 +14,7 @@ import { loadOwnedAccountingConfig, ReceiverRef, refuse } from './invoice-contex
 import { InvoiceLike, openAmount, ReminderLike } from './invoice-payment.logic';
 import { lastDueDate } from './invoice-reminder.logic';
 import { chf, viewDate, withoutUndefined } from './invoice.logic';
-import { emailDocumentKind, invoiceEmailHtml, invoiceEmailSubject, recipientDirectoryId } from './send-invoice-email.logic';
+import { emailDocumentKind, invoiceEmailHtml, invoiceEmailSubject, recipientDirectoryId, scrubEmailAddresses } from './send-invoice-email.logic';
 
 const REGION = 'europe-west6';
 const CF_NAME = 'sendInvoiceEmail';
@@ -75,7 +75,7 @@ export const sendInvoiceEmail = onCall(
 
     const document = (await db.collection(FinanceDocumentCollection).doc(documentKey).get()).data();
     const fullPath = String(document?.['fullPath'] ?? '');
-    if (!document || !fullPath) throw refuse('no-document', `finance-document ${documentKey} not found`);
+    if (!document || !fullPath || !((document['tenants'] as string[] | undefined) ?? []).includes(tenantId)) throw refuse('no-document', `finance-document ${documentKey} not found`);
 
     // recipient: favourite email of the receiver, as collected by this tenant (address-directory projection)
     const dirId = recipientDirectoryId(tenantId, (invoice['receiver'] as ReceiverRef) ?? {});
@@ -103,7 +103,7 @@ export const sendInvoiceEmail = onCall(
     };
     const dueDate = target.kind === 'reminder'
       ? String(reminders?.find((r) => r.level === level)?.dueDate ?? '')
-      : String(invoice['dueDate'] ?? lastDueDate({ dueDate: '', reminders }));
+      : String(invoice['dueDate'] || lastDueDate({ dueDate: '', reminders }));
     const attachment: EmailAttachment = {
       filename: target.kind === 'invoice' ? `${invoiceId}.pdf` : `Mahnung-${level}-${invoiceId}.pdf`,
       content, contentType: 'application/pdf',
@@ -120,11 +120,12 @@ export const sendInvoiceEmail = onCall(
         attachments: [attachment],
       });
     } catch (e) {
-      logger.error(`${CF_NAME}: provider ${provider} failed for ${invoiceKey} (recipients=1)`, { detail: String((e as Error)?.message ?? e).slice(0, 300) });
+      const detail = scrubEmailAddresses(String((e as Error)?.message ?? e)).slice(0, 300);
+      logger.error(`${CF_NAME}: provider ${provider} failed for ${invoiceKey} (recipients=1)`, { detail });
       await reportToSentry({
         message: 'sendInvoiceEmail: provider send failed',
         tags: { appId: tenantId, provider, kind: target.kind },
-        extra: { detail: String((e as Error)?.message ?? e).slice(0, 300) },
+        extra: { detail },
         fingerprint: ['sendInvoiceEmail', provider],
       });
       throw new HttpsError('internal', 'The email could not be sent.');

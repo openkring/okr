@@ -29,9 +29,10 @@ export function invoiceEmailHtml(
   const id = escapeHtml(invoiceId);
   const amount = escapeHtml(amountDueChf);
   const due = escapeHtml(dueDateView);
+  const until = due ? ` bis ${due}` : '';
   const sentence = kind === 'invoice'
-    ? `im Anhang findest du die Rechnung ${id}. Bitte überweise CHF ${amount} bis ${due}.`
-    : `im Anhang findest du die ${escapeHtml(reminderName(level))} zu Rechnung ${id}. Bitte überweise den offenen Betrag von CHF ${amount} bis ${due}.`;
+    ? `im Anhang findest du die Rechnung ${id}. Bitte überweise CHF ${amount}${until}.`
+    : `im Anhang findest du die ${escapeHtml(reminderName(level))} zu Rechnung ${id}. Bitte überweise den offenen Betrag von CHF ${amount}${until}.`;
   return `<p>Hallo,</p><p>${sentence} Vielen Dank.</p><p>Freundliche Grüsse<br>${escapeHtml(orgName)}</p>`;
 }
 
@@ -40,4 +41,9 @@ export function recipientDirectoryId(tenantId: string, receiver: { key?: string;
   if (!receiver.key) return undefined;
   if (receiver.modelType !== 'person' && receiver.modelType !== 'org') return undefined;
   return `${tenantId}_${receiver.modelType}.${receiver.key}`;
+}
+
+/** Replace anything that looks like an email address, so a provider error never leaks the receiver's address into logs. */
+export function scrubEmailAddresses(message: string): string {
+  return message.replace(/[^\s@<>]+@[^\s@<>]+/g, '[email]');
 }

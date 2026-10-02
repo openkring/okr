@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { emailDocumentKind, invoiceEmailHtml, invoiceEmailSubject, recipientDirectoryId } from './send-invoice-email.logic';
+import { emailDocumentKind, invoiceEmailHtml, invoiceEmailSubject, recipientDirectoryId, scrubEmailAddresses } from './send-invoice-email.logic';
 
 describe('emailDocumentKind', () => {
   const invoice = { documentKey: 'invoice-a', reminders: [{ level: 1, date: '', dueDate: '', documentKey: 'invoice-a-reminder-1' }, { level: 2, date: '', dueDate: '', documentKey: 'invoice-a-reminder-2' }] };
@@ -46,4 +46,21 @@ describe('recipientDirectoryId', () => {
   it('no key', () => expect(recipientDirectoryId('scs', { modelType: 'person' })).toBeUndefined());
   it('other type', () => expect(recipientDirectoryId('scs', { key: 'g1', modelType: 'group' })).toBeUndefined());
   it('no receiver', () => expect(recipientDirectoryId('scs', {})).toBeUndefined());
+});
+
+describe('invoiceEmailHtml without a due date', () => {
+  it('omits the bis clause', () => {
+    for (const kind of ['invoice', 'reminder'] as const) {
+      const html = invoiceEmailHtml(kind, 1, '7', '30.00', '', 'Seeclub');
+      expect(html).toContain('CHF 30.00.');
+      expect(html).not.toContain(' bis');
+    }
+  });
+});
+
+describe('scrubEmailAddresses', () => {
+  it('replaces anything that looks like an address', () => {
+    expect(scrubEmailAddresses('550 rejected: max.muster@example.ch <a.b@c.d> unknown')).toBe('550 rejected: [email] <[email]> unknown');
+    expect(scrubEmailAddresses('no address here')).toBe('no address here');
+  });
 });
