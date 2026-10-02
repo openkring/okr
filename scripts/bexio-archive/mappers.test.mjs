@@ -42,7 +42,7 @@ test('file keys are stable and shared', () => {
 test('payments, reminders, comments', () => {
   const bank = new Map([['3', 'scs0021']]);
   assert.deepEqual(mapInvoicePayment({ date: '2026-05-01', value: '80.00', bank_account_id: 3 }, 'scs', bank),
-    { date: '20260501', amount: 8000, bankAccountKey: 'scs0021' });
+    { date: '20260501', amount: 8000, bankAccountKey: 'scs0021', bookingKey: '' });
   assert.equal(mapInvoicePayment({ date: '2026-05-01', value: '80.00', bank_account_id: null }, 'scs', bank).bankAccountKey, '');
   assert.deepEqual(mapReminder({ reminder_level: 2, is_valid_from: '2026-06-01', is_valid_to: '2026-06-15', is_sent: true }, 'bexio-reminder-1-2'),
     { level: 2, date: '20260601', dueDate: '20260615', isSent: true, documentKey: 'bexio-reminder-1-2' });

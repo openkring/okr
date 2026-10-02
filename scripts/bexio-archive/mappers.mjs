@@ -42,7 +42,7 @@ export function filePath(tenantId, uuid, extension) {
 
 export function mapInvoicePayment(p, tenantId, bankAccountMap) {
   const bankKey = p.bank_account_id == null ? '' : (bankAccountMap.get(String(p.bank_account_id)) ?? '');
-  return { date: isoToStoreDate(p.date), amount: toRappen(p.value), bankAccountKey: bankKey };
+  return { date: isoToStoreDate(p.date), amount: toRappen(p.value), bankAccountKey: bankKey, bookingKey: '' };
 }
 
 export function mapReminder(r, documentKey) {
