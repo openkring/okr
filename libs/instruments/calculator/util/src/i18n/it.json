@@ -1,0 +1,28 @@
+{
+  "title": "Calcolatrice",
+  "profile": { "basic": "Base", "scientific": "Scientifica", "programmer": "Programmatore", "convert": "Conversione" },
+  "rpn": { "title": "Attiva o disattiva la notazione polacca inversa (RPN)" },
+  "error": "Errore",
+  "history": { "title": "Cronologia", "clear": "Cancella cronologia", "empty": "Ancora nessun calcolo." },
+  "programmer": { "signed": "Con segno", "wordSize": "Dimensione parola" },
+  "convert": {
+    "category": "Grandezza",
+    "from": "Da",
+    "to": "A",
+    "swap": "Inverti direzione",
+    "categories": {
+      "length": "Lunghezza", "area": "Superficie", "volume": "Volume", "mass": "Massa",
+      "temperature": "Temperatura", "time": "Tempo", "speed": "Velocità", "data": "Dati"
+    },
+    "units": {
+      "length": { "m": "Metro", "mm": "Millimetro", "cm": "Centimetro", "km": "Chilometro", "in": "Pollice", "ft": "Piede", "yd": "Iarda", "mi": "Miglio", "nmi": "Miglio nautico" },
+      "area": { "m2": "Metro quadrato", "mm2": "Millimetro quadrato", "cm2": "Centimetro quadrato", "a": "Ara", "ha": "Ettaro", "km2": "Chilometro quadrato", "in2": "Pollice quadrato", "ft2": "Piede quadrato", "yd2": "Iarda quadrata", "ac": "Acro", "mi2": "Miglio quadrato" },
+      "volume": { "m3": "Metro cubo", "ml": "Millilitro", "cl": "Centilitro", "dl": "Decilitro", "l": "Litro", "tsp": "Cucchiaino (USA)", "tbsp": "Cucchiaio (USA)", "floz": "Oncia liquida (USA)", "cup": "Tazza (USA)", "pt": "Pinta (USA)", "qt": "Quarto (USA)", "gal": "Gallone (USA)", "galuk": "Gallone (UK)" },
+      "mass": { "kg": "Chilogrammo", "mg": "Milligrammo", "g": "Grammo", "t": "Tonnellata", "oz": "Oncia", "lb": "Libbra", "st": "Stone" },
+      "temperature": { "K": "Kelvin", "C": "Grado Celsius", "F": "Grado Fahrenheit" },
+      "time": { "s": "Secondo", "ms": "Millisecondo", "min": "Minuto", "h": "Ora", "d": "Giorno", "wk": "Settimana", "yr": "Anno (365 giorni)" },
+      "speed": { "mps": "Metro al secondo", "kmh": "Chilometro orario", "mph": "Miglio orario", "kn": "Nodo", "fps": "Piede al secondo" },
+      "data": { "B": "Byte", "bit": "Bit", "kB": "Kilobyte", "MB": "Megabyte", "GB": "Gigabyte", "TB": "Terabyte", "KiB": "Kibibyte", "MiB": "Mebibyte", "GiB": "Gibibyte", "TiB": "Tebibyte" }
+    }
+  }
+}

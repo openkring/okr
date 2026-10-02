@@ -432,13 +432,18 @@
           },
           {
             "glob": "*.json",
+            "input": "libs/games/bimaru/feature/src/i18n",
+            "output": "./assets/i18n/games/bimaru/feature"
+          },
+          {
+            "glob": "*.json",
             "input": "libs/games/chess/feature/src/i18n",
             "output": "./assets/i18n/games/chess/feature"
           },
           {
             "glob": "*.json",
-            "input": "libs/games/bimaru/feature/src/i18n",
-            "output": "./assets/i18n/games/bimaru/feature"
+            "input": "libs/games/crossword/feature/src/i18n",
+            "output": "./assets/i18n/games/crossword/feature"
           },
           {
             "glob": "*.json",
@@ -459,11 +464,6 @@
             "glob": "*.json",
             "input": "libs/games/muehle/feature/src/i18n",
             "output": "./assets/i18n/games/muehle/feature"
-          },
-          {
-            "glob": "*.json",
-            "input": "libs/games/crossword/feature/src/i18n",
-            "output": "./assets/i18n/games/crossword/feature"
           },
           {
             "glob": "*.json",
@@ -514,6 +514,11 @@
             "glob": "*.json",
             "input": "libs/i18n/feature/src/i18n",
             "output": "./assets/i18n/i18n/feature"
+          },
+          {
+            "glob": "*.json",
+            "input": "libs/instruments/calculator/util/src/i18n",
+            "output": "./assets/i18n/instruments/calculator/util"
           },
           {
             "glob": "*.json",

@@ -1,0 +1,28 @@
+{
+  "title": "Calculadora",
+  "profile": { "basic": "Básica", "scientific": "Científica", "programmer": "Programador", "convert": "Convertir" },
+  "rpn": { "title": "Activar o desactivar la notación polaca inversa (RPN)" },
+  "error": "Error",
+  "history": { "title": "Historial", "clear": "Borrar historial", "empty": "Todavía no hay cálculos." },
+  "programmer": { "signed": "Con signo", "wordSize": "Tamaño de palabra" },
+  "convert": {
+    "category": "Magnitud",
+    "from": "De",
+    "to": "A",
+    "swap": "Invertir dirección",
+    "categories": {
+      "length": "Longitud", "area": "Superficie", "volume": "Volumen", "mass": "Masa",
+      "temperature": "Temperatura", "time": "Tiempo", "speed": "Velocidad", "data": "Datos"
+    },
+    "units": {
+      "length": { "m": "Metro", "mm": "Milímetro", "cm": "Centímetro", "km": "Kilómetro", "in": "Pulgada", "ft": "Pie", "yd": "Yarda", "mi": "Milla", "nmi": "Milla náutica" },
+      "area": { "m2": "Metro cuadrado", "mm2": "Milímetro cuadrado", "cm2": "Centímetro cuadrado", "a": "Área", "ha": "Hectárea", "km2": "Kilómetro cuadrado", "in2": "Pulgada cuadrada", "ft2": "Pie cuadrado", "yd2": "Yarda cuadrada", "ac": "Acre", "mi2": "Milla cuadrada" },
+      "volume": { "m3": "Metro cúbico", "ml": "Mililitro", "cl": "Centilitro", "dl": "Decilitro", "l": "Litro", "tsp": "Cucharadita (EE. UU.)", "tbsp": "Cucharada (EE. UU.)", "floz": "Onza líquida (EE. UU.)", "cup": "Taza (EE. UU.)", "pt": "Pinta (EE. UU.)", "qt": "Cuarto (EE. UU.)", "gal": "Galón (EE. UU.)", "galuk": "Galón (RU)" },
+      "mass": { "kg": "Kilogramo", "mg": "Miligramo", "g": "Gramo", "t": "Tonelada", "oz": "Onza", "lb": "Libra", "st": "Stone" },
+      "temperature": { "K": "Kelvin", "C": "Grado Celsius", "F": "Grado Fahrenheit" },
+      "time": { "s": "Segundo", "ms": "Milisegundo", "min": "Minuto", "h": "Hora", "d": "Día", "wk": "Semana", "yr": "Año (365 días)" },
+      "speed": { "mps": "Metro por segundo", "kmh": "Kilómetro por hora", "mph": "Milla por hora", "kn": "Nudo", "fps": "Pie por segundo" },
+      "data": { "B": "Byte", "bit": "Bit", "kB": "Kilobyte", "MB": "Megabyte", "GB": "Gigabyte", "TB": "Terabyte", "KiB": "Kibibyte", "MiB": "Mebibyte", "GiB": "Gibibyte", "TiB": "Tebibyte" }
+    }
+  }
+}

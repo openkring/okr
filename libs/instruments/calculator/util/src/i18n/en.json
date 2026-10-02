@@ -1,0 +1,28 @@
+{
+  "title": "Calculator",
+  "profile": { "basic": "Basic", "scientific": "Scientific", "programmer": "Programmer", "convert": "Convert" },
+  "rpn": { "title": "Turn reverse Polish notation (RPN) on or off" },
+  "error": "Error",
+  "history": { "title": "History", "clear": "Clear history", "empty": "No calculations yet." },
+  "programmer": { "signed": "Signed", "wordSize": "Word size" },
+  "convert": {
+    "category": "Quantity",
+    "from": "From",
+    "to": "To",
+    "swap": "Swap direction",
+    "categories": {
+      "length": "Length", "area": "Area", "volume": "Volume", "mass": "Mass",
+      "temperature": "Temperature", "time": "Time", "speed": "Speed", "data": "Data"
+    },
+    "units": {
+      "length": { "m": "Metre", "mm": "Millimetre", "cm": "Centimetre", "km": "Kilometre", "in": "Inch", "ft": "Foot", "yd": "Yard", "mi": "Mile", "nmi": "Nautical mile" },
+      "area": { "m2": "Square metre", "mm2": "Square millimetre", "cm2": "Square centimetre", "a": "Are", "ha": "Hectare", "km2": "Square kilometre", "in2": "Square inch", "ft2": "Square foot", "yd2": "Square yard", "ac": "Acre", "mi2": "Square mile" },
+      "volume": { "m3": "Cubic metre", "ml": "Millilitre", "cl": "Centilitre", "dl": "Decilitre", "l": "Litre", "tsp": "Teaspoon (US)", "tbsp": "Tablespoon (US)", "floz": "Fluid ounce (US)", "cup": "Cup (US)", "pt": "Pint (US)", "qt": "Quart (US)", "gal": "Gallon (US)", "galuk": "Gallon (UK)" },
+      "mass": { "kg": "Kilogram", "mg": "Milligram", "g": "Gram", "t": "Tonne", "oz": "Ounce", "lb": "Pound", "st": "Stone" },
+      "temperature": { "K": "Kelvin", "C": "Degree Celsius", "F": "Degree Fahrenheit" },
+      "time": { "s": "Second", "ms": "Millisecond", "min": "Minute", "h": "Hour", "d": "Day", "wk": "Week", "yr": "Year (365 days)" },
+      "speed": { "mps": "Metres per second", "kmh": "Kilometres per hour", "mph": "Miles per hour", "kn": "Knot", "fps": "Feet per second" },
+      "data": { "B": "Byte", "bit": "Bit", "kB": "Kilobyte", "MB": "Megabyte", "GB": "Gigabyte", "TB": "Terabyte", "KiB": "Kibibyte", "MiB": "Mebibyte", "GiB": "Gibibyte", "TiB": "Tebibyte" }
+    }
+  }
+}

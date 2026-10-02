@@ -1,0 +1,28 @@
+{
+  "title": "Rechner",
+  "profile": { "basic": "Standard", "scientific": "Wissenschaftlich", "programmer": "Programmierer", "convert": "Umrechnen" },
+  "rpn": { "title": "Umgekehrte polnische Notation (RPN) ein- oder ausschalten" },
+  "error": "Fehler",
+  "history": { "title": "Verlauf", "clear": "Verlauf löschen", "empty": "Noch keine Rechnungen." },
+  "programmer": { "signed": "Mit Vorzeichen", "wordSize": "Wortbreite" },
+  "convert": {
+    "category": "Grösse",
+    "from": "Von",
+    "to": "In",
+    "swap": "Richtung tauschen",
+    "categories": {
+      "length": "Länge", "area": "Fläche", "volume": "Volumen", "mass": "Gewicht",
+      "temperature": "Temperatur", "time": "Zeit", "speed": "Geschwindigkeit", "data": "Datenmenge"
+    },
+    "units": {
+      "length": { "m": "Meter", "mm": "Millimeter", "cm": "Zentimeter", "km": "Kilometer", "in": "Zoll", "ft": "Fuss", "yd": "Yard", "mi": "Meile", "nmi": "Seemeile" },
+      "area": { "m2": "Quadratmeter", "mm2": "Quadratmillimeter", "cm2": "Quadratzentimeter", "a": "Are", "ha": "Hektare", "km2": "Quadratkilometer", "in2": "Quadratzoll", "ft2": "Quadratfuss", "yd2": "Quadratyard", "ac": "Acre", "mi2": "Quadratmeile" },
+      "volume": { "m3": "Kubikmeter", "ml": "Milliliter", "cl": "Zentiliter", "dl": "Deziliter", "l": "Liter", "tsp": "Teelöffel (US)", "tbsp": "Esslöffel (US)", "floz": "Flüssigunze (US)", "cup": "Tasse (US)", "pt": "Pint (US)", "qt": "Quart (US)", "gal": "Gallone (US)", "galuk": "Gallone (UK)" },
+      "mass": { "kg": "Kilogramm", "mg": "Milligramm", "g": "Gramm", "t": "Tonne", "oz": "Unze", "lb": "Pfund", "st": "Stone" },
+      "temperature": { "K": "Kelvin", "C": "Grad Celsius", "F": "Grad Fahrenheit" },
+      "time": { "s": "Sekunde", "ms": "Millisekunde", "min": "Minute", "h": "Stunde", "d": "Tag", "wk": "Woche", "yr": "Jahr (365 Tage)" },
+      "speed": { "mps": "Meter pro Sekunde", "kmh": "Kilometer pro Stunde", "mph": "Meilen pro Stunde", "kn": "Knoten", "fps": "Fuss pro Sekunde" },
+      "data": { "B": "Byte", "bit": "Bit", "kB": "Kilobyte", "MB": "Megabyte", "GB": "Gigabyte", "TB": "Terabyte", "KiB": "Kibibyte", "MiB": "Mebibyte", "GiB": "Gibibyte", "TiB": "Tebibyte" }
+    }
+  }
+}

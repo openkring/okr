@@ -1,0 +1,28 @@
+{
+  "title": "Calculatrice",
+  "profile": { "basic": "Standard", "scientific": "Scientifique", "programmer": "Programmeur", "convert": "Conversion" },
+  "rpn": { "title": "Activer ou désactiver la notation polonaise inverse (RPN)" },
+  "error": "Erreur",
+  "history": { "title": "Historique", "clear": "Effacer l’historique", "empty": "Aucun calcul pour l’instant." },
+  "programmer": { "signed": "Signé", "wordSize": "Taille de mot" },
+  "convert": {
+    "category": "Grandeur",
+    "from": "De",
+    "to": "En",
+    "swap": "Inverser le sens",
+    "categories": {
+      "length": "Longueur", "area": "Surface", "volume": "Volume", "mass": "Masse",
+      "temperature": "Température", "time": "Durée", "speed": "Vitesse", "data": "Quantité de données"
+    },
+    "units": {
+      "length": { "m": "Mètre", "mm": "Millimètre", "cm": "Centimètre", "km": "Kilomètre", "in": "Pouce", "ft": "Pied", "yd": "Yard", "mi": "Mile", "nmi": "Mille marin" },
+      "area": { "m2": "Mètre carré", "mm2": "Millimètre carré", "cm2": "Centimètre carré", "a": "Are", "ha": "Hectare", "km2": "Kilomètre carré", "in2": "Pouce carré", "ft2": "Pied carré", "yd2": "Yard carré", "ac": "Acre", "mi2": "Mile carré" },
+      "volume": { "m3": "Mètre cube", "ml": "Millilitre", "cl": "Centilitre", "dl": "Décilitre", "l": "Litre", "tsp": "Cuillère à café (US)", "tbsp": "Cuillère à soupe (US)", "floz": "Once liquide (US)", "cup": "Tasse (US)", "pt": "Pinte (US)", "qt": "Quart (US)", "gal": "Gallon (US)", "galuk": "Gallon (UK)" },
+      "mass": { "kg": "Kilogramme", "mg": "Milligramme", "g": "Gramme", "t": "Tonne", "oz": "Once", "lb": "Livre", "st": "Stone" },
+      "temperature": { "K": "Kelvin", "C": "Degré Celsius", "F": "Degré Fahrenheit" },
+      "time": { "s": "Seconde", "ms": "Milliseconde", "min": "Minute", "h": "Heure", "d": "Jour", "wk": "Semaine", "yr": "Année (365 jours)" },
+      "speed": { "mps": "Mètre par seconde", "kmh": "Kilomètre par heure", "mph": "Mile par heure", "kn": "Nœud", "fps": "Pied par seconde" },
+      "data": { "B": "Octet", "bit": "Bit", "kB": "Kilooctet", "MB": "Mégaoctet", "GB": "Gigaoctet", "TB": "Téraoctet", "KiB": "Kibioctet", "MiB": "Mébioctet", "GiB": "Gibioctet", "TiB": "Tébioctet" }
+    }
+  }
+}

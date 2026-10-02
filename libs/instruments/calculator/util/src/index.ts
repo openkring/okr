@@ -12,3 +12,4 @@ export * from './lib/calculator-keypads';
 export * from './lib/calculator.state';
 export * from './lib/calculator-view';
 export * from './lib/calculator-persist';
+export * from './lib/calculator-i18n';
