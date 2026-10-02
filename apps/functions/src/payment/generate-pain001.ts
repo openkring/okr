@@ -2,7 +2,7 @@ import { onCall, HttpsError, CallableRequest } from 'firebase-functions/v2/https
 import { logger } from 'firebase-functions/v2';
 import * as admin from 'firebase-admin';
 import { BankProfileCollection, PaymentCollection, PaymentOrderCollection, PaymentReferenceType } from '@okr/shared-models';
-import { buildPain001Xml } from '@okr/finance-payment-util';
+import { buildPain001Xml, normalizeIban, validateIban } from '@okr/finance-payment-util';
 import { checkAppCheckToken, checkAuthentication, checkRoles, getCallerTenantId } from '@okr/shared-util-functions';
 
 const CF = 'generatePain001';
@@ -61,15 +61,20 @@ export const generatePain001 = onCall(
 
     const paymentsSnap = await db.collection(PaymentCollection)
       .where('paymentOrderKey', '==', paymentOrderKey)
-      .where('accountingTenantId', '==', accountingTenantId)
+      .where('tenants', 'array-contains', tenantId)
       .get();
-    const payments = paymentsSnap.docs.map(d => d.data());
+    const selected = paymentsSnap.docs.filter(d => (d.data()['accountingTenantId'] as string | undefined) === accountingTenantId);
+    // Same selection as approvePaymentOrder; a payment that slipped in after approval blocks the run.
+    if (selected.some(d => d.data()['status'] !== 'approved')) {
+      throw new HttpsError('failed-precondition', 'all payments of the order must be approved');
+    }
+    const payments = selected.map(d => d.data());
 
     const debitAccountKey = (order['debitAccountKey'] as string | undefined) ?? '';
     const profile = await db.collection(BankProfileCollection)
       .where('accountKey', '==', debitAccountKey).where('tenants', 'array-contains', tenantId).limit(1).get();
-    const debtorIban = (profile.docs[0]?.data()['iban'] as string | undefined) ?? '';
-    if (!debtorIban) throw new HttpsError('failed-precondition', 'debit account has no bank profile with an IBAN');
+    const debtorIban = normalizeIban((profile.docs[0]?.data()['iban'] as string | undefined) ?? '');
+    if (!debtorIban || !validateIban(debtorIban)) throw new HttpsError('failed-precondition', 'debit account has no bank profile with an IBAN');
     const org = await db.collection('orgs').doc(tenantId).get();
     const debtorName = (org.data()?.['name'] as string | undefined) || tenantId;
 
@@ -86,7 +91,7 @@ export const generatePain001 = onCall(
 
     const batch = db.batch();
     batch.update(db.collection(PaymentOrderCollection).doc(paymentOrderKey), { pain001Xml: xml, status: 'transmitted' });
-    paymentsSnap.docs.forEach(d => batch.update(d.ref, { status: 'transmitted' }));
+    selected.forEach(d => batch.update(d.ref, { status: 'transmitted' }));
     await batch.commit();
     logger.info(`${CF}: generated XML for order ${paymentOrderKey}, ${payments.length} payments (tenant=${tenantId})`);
 
