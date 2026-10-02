@@ -355,7 +355,9 @@
     "no-fee-booking": "The fee of this reminder was never booked, so there is nothing to reverse.",
     "waive-blocked": "The fee cannot be waived right now.",
     "waive-period-locked": "The booking period for the date of the waiver is closed. Choose another date or have the period reopened.",
-    "waive-inconsistent-state": "Something went wrong while waiving the fee. Please try again."
+    "waive-inconsistent-state": "Something went wrong while waiving the fee. Please try again.",
+    "waive-not-payable": "A fee can only be waived on an issued invoice that is still open.",
+    "email-already-waived": "The fee of this reminder is waived, but the PDF still shows it. So it is not sent."
   },
   "paymentReference": { "label": "Payment reference" },
   "payment": {

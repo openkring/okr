@@ -165,5 +165,11 @@ describe('reminder actions (client)', () => {
       expect(invoiceRefusalReasons({ details: { reason: 'waive-blocked', reasons } })).toEqual(reasons);
       expect(invoiceRefusalKeys([...reasons, 'no-fee-booking', 'waive-blocked']).length).toBe(7);
     });
+
+    it('the waive context has its own not-payable text, and account-invalid reuses the reminder one', () => {
+      expect(invoiceRefusalKeys(['not-payable'], 'waive')).toEqual(['refusal_waive_not_payable']);
+      expect(invoiceRefusalKeys(['account-invalid'], 'waive')).toEqual(['refusal_reminder_account_invalid']);
+      expect(invoiceRefusalKeys(['already-waived'], 'email')).toEqual(['refusal_email_already_waived']);
+    });
   });
 });

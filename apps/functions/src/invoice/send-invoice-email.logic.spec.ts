@@ -106,4 +106,10 @@ describe('sendRefusal', () => {
     expect(sendRefusal('invoice', 'draft')).toBe('not-issued');
     expect(sendRefusal('reminder', 'draft')).toBe('not-issued');
   });
+  it('does not mail a reminder whose fee was waived (its PDF still shows the fee)', () => {
+    expect(sendRefusal('reminder', 'pending', '20261101')).toBe('already-waived');
+    expect(sendRefusal('reminder', 'pending', '')).toBeUndefined();
+    expect(sendRefusal('invoice', 'pending', '20261101')).toBeUndefined();
+    expect(sendRefusal('reminder', 'paid', '20261101')).toBe('not-payable');
+  });
 });

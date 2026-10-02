@@ -355,7 +355,9 @@
     "no-fee-booking": "La tarifa de este recordatorio no se contabilizó, así que no hay nada que revertir.",
     "waive-blocked": "La tarifa no se puede condonar en este momento.",
     "waive-period-locked": "El periodo contable de la fecha de la condonación está cerrado. Elige otra fecha o haz que se vuelva a abrir el periodo.",
-    "waive-inconsistent-state": "Algo salió mal al condonar la tarifa. Inténtalo de nuevo."
+    "waive-inconsistent-state": "Algo salió mal al condonar la tarifa. Inténtalo de nuevo.",
+    "waive-not-payable": "Una tarifa solo se puede condonar en una factura emitida que siga abierta.",
+    "email-already-waived": "La tarifa de este recordatorio está condonada, pero el PDF todavía la muestra. Por eso no se envía."
   },
   "paymentReference": { "label": "Referencia de pago" },
   "payment": {

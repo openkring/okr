@@ -467,7 +467,7 @@ export const InvoiceStore = signalStore(
       try {
         const result = await store.invoiceService.waiveReminderFee(invoice.okey, reminder.level, input.date, input.reason, store.appStore.currentUser() ?? undefined);
         // derived from the callable's answer: a re-read right after the write may still be the old snapshot
-        const fee = formatPaymentChf(reminder.fee);
+        const fee = formatPaymentChf(result.reminder?.fee ?? reminder.fee);
         await showToast(store.toastController, result.state === 'paid'
           ? fill(store.i18n.waive_fee_conf_paid(), { fee })
           : fill(store.i18n.waive_fee_conf(), { fee, open: formatPaymentChf(result.openAmount) }));

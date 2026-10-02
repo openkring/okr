@@ -67,8 +67,10 @@ export const sendInvoiceEmail = onCall(
     if (!target) throw refuse('foreign-document', `document ${documentKey} does not belong to invoice ${invoiceKey}`);
     const level = target.kind === 'reminder' ? target.level : 0;
     // defense in depth: the app offers "Mahnung senden" only on open invoices, "Rechnung senden" never on a cancelled one
-    const refusal = sendRefusal(target.kind, String(invoice['state'] ?? ''));
+    const waivedAt = target.kind === 'reminder' ? String(reminders?.find((r) => r.level === target.level)?.waivedAt ?? '') : '';
+    const refusal = sendRefusal(target.kind, String(invoice['state'] ?? ''), waivedAt);
     if (refusal === 'not-payable') throw refuse('not-payable', `invoice ${invoiceKey} is ${String(invoice['state'] ?? '')}: no reminder mail`);
+    if (refusal === 'already-waived') throw refuse('already-waived', `reminder ${level} of invoice ${invoiceKey} has its fee waived: no reminder mail`);
     if (refusal === 'not-sendable') throw refuse('not-sendable', `invoice ${invoiceKey} is cancelled: not mailed`);
 
     const document = (await db.collection(FinanceDocumentCollection).doc(documentKey).get()).data();

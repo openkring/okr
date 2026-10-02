@@ -150,10 +150,9 @@ import { InvoiceStore } from './invoice.store';
                   @for(reminder of reminders(); track reminder.documentKey || $index) {
                     <p class="view-value">
                       {{ levelLabel(reminder.level) }} · {{ reminder.date | prettyDate }} · {{ store.i18n.reminder_due() }} {{ reminder.dueDate | prettyDate }}
+                      · {{ store.i18n.reminder_fee_short() }} CHF {{ formatChf(reminder.fee) }}
                       @if(reminder.waivedAt) {
                         · {{ waivedText(reminder.waivedAt) }}
-                      } @else {
-                        · {{ store.i18n.reminder_fee_short() }} CHF {{ formatChf(reminder.fee) }}
                       }
                       · {{ reminder.isSent ? store.i18n.reminder_sent() : store.i18n.reminder_not_sent() }}
                     </p>

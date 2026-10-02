@@ -16,11 +16,13 @@ export function emailDocumentKind(
  * Why a document of an invoice in this state may not be mailed: a draft has no PDF to send yet
  * (`not-issued`); a reminder is only sent while the invoice is still open (`not-payable` — a paid or
  * cancelled invoice gets no Mahnung); a cancelled invoice is not mailed at all (`not-sendable`,
- * ruling P3-R3). The invoice PDF may be mailed in any other issued state (paid: neutral body).
+ * ruling P3-R3); a reminder whose fee was waived is not mailed either (`already-waived`: its PDF still
+ * shows the fee). The invoice PDF may be mailed in any other issued state (paid: neutral body).
  */
-export function sendRefusal(kind: EmailKind, state: string | undefined): 'not-issued' | 'not-payable' | 'not-sendable' | undefined {
+export function sendRefusal(kind: EmailKind, state: string | undefined, waivedAt?: string): 'not-issued' | 'not-payable' | 'not-sendable' | 'already-waived' | undefined {
   if ((state ?? '') === 'draft') return 'not-issued';
   if (kind === 'reminder' && !isPayableState(state)) return 'not-payable';
+  if (kind === 'reminder' && typeof waivedAt === 'string' && waivedAt.length > 0) return 'already-waived';
   if (kind === 'invoice' && state === 'cancelled') return 'not-sendable';
   return undefined;
 }

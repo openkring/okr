@@ -355,7 +355,9 @@
     "no-fee-booking": "Les frais de ce rappel n’ont pas été comptabilisés, il n’y a donc rien à annuler.",
     "waive-blocked": "Les frais ne peuvent pas être annulés pour le moment.",
     "waive-period-locked": "La période comptable à la date de l’annulation est clôturée. Choisis une autre date ou fais rouvrir la période.",
-    "waive-inconsistent-state": "Un problème est survenu lors de l’annulation des frais. Réessaie, s’il te plaît."
+    "waive-inconsistent-state": "Un problème est survenu lors de l’annulation des frais. Réessaie, s’il te plaît.",
+    "waive-not-payable": "Des frais ne peuvent être annulés que sur une facture émise et encore ouverte.",
+    "email-already-waived": "Les frais de ce rappel sont annulés, mais le PDF les affiche encore. Il n’est donc pas envoyé."
   },
   "paymentReference": { "label": "Référence de paiement" },
   "payment": {

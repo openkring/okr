@@ -315,6 +315,8 @@ export const INVOICE_I18N_KEYS = {
   refusal_invalid_reason:     PFX + 'refusal.invalid-reason',
   refusal_no_fee_booking:     PFX + 'refusal.no-fee-booking',
   refusal_waive_blocked:      PFX + 'refusal.waive-blocked',
+  refusal_waive_not_payable:          PFX + 'refusal.waive-not-payable',
+  refusal_email_already_waived:       PFX + 'refusal.email-already-waived',
   refusal_waive_period_locked:        PFX + 'refusal.waive-period-locked',
   refusal_waive_inconsistent_state:   PFX + 'refusal.waive-inconsistent-state',
 
@@ -423,8 +425,11 @@ export const INVOICE_REFUSAL_CONTEXT_I18N: Record<InvoiceRefusalContext, Record<
   },
   email: {
     'not-payable': 'refusal_email_not_payable',
+    'already-waived': 'refusal_email_already_waived',
   },
   waive: {
+    'not-payable': 'refusal_waive_not_payable',
+    'account-invalid': 'refusal_reminder_account_invalid',
     'period-locked': 'refusal_waive_period_locked',
     'inconsistent-state': 'refusal_waive_inconsistent_state',
   },

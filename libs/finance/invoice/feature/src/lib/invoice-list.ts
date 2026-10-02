@@ -5,7 +5,7 @@ import {
 } from '@ionic/angular/standalone';
 import { InvoiceModel, RoleName } from '@okr/shared-models';
 import {
-  canCreatePaymentConfirmation, canCreateReminder, canEmailInvoice, isDraftInvoice, isPayableState, latestReminderWithDocument, mayReadInvoiceDocuments, waivableReminder,
+  canCreatePaymentConfirmation, canCreateReminder, canEmailInvoice, isDraftInvoice, isPayableState, isWaivedReminder, latestReminderWithDocument, mayReadInvoiceDocuments, waivableReminder,
 } from '@okr/finance-invoice-util';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
@@ -232,7 +232,8 @@ export class InvoiceList {
    * details. An open invoice (`pending`, or the migrated `partial` / `unpaid`) takes a payment, a
    * `pending` one can also be cancelled — those write actions are for the treasurer. The treasurer also
    * creates the next reminder of an open invoice, mails the invoice PDF or the latest reminder PDF, and
-   * opens the latest reminder PDF (spec 1.76 phase 3). A paid invoice
+   * opens the latest reminder PDF (spec 1.76 phase 3); the latest reminder is not mailed once its fee
+   * is waived. The treasurer can also waive the fee of the latest waivable reminder (*Gebühr erlassen*, D18). A paid invoice
    * offers its payment confirmation to whoever may read its documents (treasurer, privileged, or its
    * receiver). Every issued invoice shows its PDF.
    * Books kept in bexio are read-only here: details, PDF and the payment confirmation.
@@ -272,7 +273,8 @@ export class InvoiceList {
       }
       if (latestReminderWithDocument(invoice.reminders) && this.canWriteDrafts()) {
         // a paid or cancelled invoice gets no reminder mail; its reminder PDF can still be opened
-        if (isPayableState(invoice.state)) {
+        // a reminder whose fee was waived is not mailed: its PDF still shows the fee
+        if (isPayableState(invoice.state) && !isWaivedReminder(latestReminderWithDocument(invoice.reminders))) {
           options.buttons.push(createActionSheetButton('invoice.sendReminder', i18n.reminder_send(), base, 'mail'));
         }
         options.buttons.push(createActionSheetButton('invoice.showReminder', i18n.reminder_show(), base, 'download'));

@@ -355,7 +355,9 @@
     "no-fee-booking": "Die Gebühr dieser Mahnung wurde nicht verbucht. Darum gibt es nichts rückgängig zu machen.",
     "waive-blocked": "Die Gebühr kann gerade nicht erlassen werden.",
     "waive-period-locked": "Die Buchungsperiode zum Datum des Erlasses ist abgeschlossen. Wähle ein anderes Datum oder lass die Periode wieder öffnen.",
-    "waive-inconsistent-state": "Beim Erlassen der Gebühr ist etwas schiefgelaufen. Versuche es bitte noch einmal."
+    "waive-inconsistent-state": "Beim Erlassen der Gebühr ist etwas schiefgelaufen. Versuche es bitte noch einmal.",
+    "waive-not-payable": "Eine Gebühr kann nur bei einer ausgestellten, noch offenen Rechnung erlassen werden.",
+    "email-already-waived": "Die Gebühr dieser Mahnung ist erlassen, das PDF zeigt sie aber noch. Darum wird es nicht versendet."
   },
   "paymentReference": { "label": "Zahlungsreferenz" },
   "payment": {

@@ -355,7 +355,9 @@
     "no-fee-booking": "Le spese di questo sollecito non sono state registrate, quindi non c’è nulla da stornare.",
     "waive-blocked": "Al momento le spese non possono essere condonate.",
     "waive-period-locked": "Il periodo contabile alla data del condono è chiuso. Scegli un’altra data o fai riaprire il periodo.",
-    "waive-inconsistent-state": "Qualcosa è andato storto nel condonare le spese. Riprova, per favore."
+    "waive-inconsistent-state": "Qualcosa è andato storto nel condonare le spese. Riprova, per favore.",
+    "waive-not-payable": "Le spese si possono condonare solo su una fattura emessa e ancora aperta.",
+    "email-already-waived": "Le spese di questo sollecito sono condonate, ma il PDF le mostra ancora. Per questo non viene inviato."
   },
   "paymentReference": { "label": "Riferimento di pagamento" },
   "payment": {
