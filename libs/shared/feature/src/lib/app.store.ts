@@ -7,11 +7,11 @@ import { authState } from 'rxfire/auth';
 import { from, of, takeUntil, timer } from 'rxjs';
 import { App } from '@capacitor/app';
 
-import { AUTH, ENV, FIRESTORE } from '@okr/shared-config';
+import { AUTH, ENV, FIRESTORE, usesLocalStorageOnlySession } from '@okr/shared-config';
 import { AppConfigService, FirestoreService } from '@okr/shared-data-access';
 import { AddressDirectoryCollection, AddressDirectoryModel, AppConfig, getAddressDirectoryKey, AvailableLanguages, CategoryCollection, CategoryItemModel, CategoryListModel, DefaultLanguage, DefaultLanguageCode, GroupCollection, GroupModel, InvitationCollection, InvitationModel, OrgCollection, OrgModel, PersonCollection, PersonModel, PrivacySettings, privacyUsageToAccessor, ResourceCollection, ResourceModel, ResourceModelName, stricterAccessor, TagCollection, TagModel, TaskCollection, TaskModel, UserCollection, UserModel } from '@okr/shared-models';
 import { die, getSystemQuery, indexBy, openInvitationsOf, pickForTenant, replacePlaceholders, sortPersons, withOfflineSnapshot } from '@okr/shared-util-core';
-import { AppNavigationService, armStartupStallCheck, installScrollDiagnostics, isBrowser, markStartup, probeStoredSession, reportStartupTiming, VersionCheckService, resourceParams } from '@okr/shared-util-angular';
+import { AppNavigationService, armStartupStallCheck, installScrollDiagnostics, isBrowser, markStartup, probeStoredSession, probeStoredSessionIdb, reportStartupTiming, VersionCheckService, resourceParams } from '@okr/shared-util-angular';
 
 import { authPhase, isDegradedBoot, openBootGate, type BootState } from './boot-readiness.util';
 import { I18nService } from '@okr/shared-i18n';
@@ -701,6 +701,12 @@ export const AppStore = signalStore(
       // `session:ready` is an SDK/network hang; one with neither is the storage read itself.
       // Labels avoid the word "auth" on purpose: Sentry's scrubber nulls any extra containing it.
       markStartup(`session:stored:${probeStoredSession(store.env.firebase.apiKey)}`);
+      // On the IndexedDB-first path (Chromium) the session lives in IndexedDB, so the localStorage
+      // reading above is `none` for every signed-in user. `session:idb:*` is the real reading
+      // there; its absence in a stall report means the IndexedDB read itself hung.
+      if (!usesLocalStorageOnlySession()) {
+        void probeStoredSessionIdb(store.env.firebase.apiKey).then(state => markStartup(`session:idb:${state}`));
+      }
       void store.auth.authStateReady().then(() => markStartup('session:ready'));
 
       effect(() => { if (store.fbUser()) markStartup('fbUser'); });

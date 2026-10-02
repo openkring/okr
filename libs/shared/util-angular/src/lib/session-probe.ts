@@ -38,6 +38,14 @@ export function classifyStoredSession(raw: string | null | undefined, nowMs: num
   } catch {
     return 'unreadable';
   }
+  return classifyStoredUser(parsed, nowMs);
+}
+
+/**
+ * Classify an already-parsed persisted user — the shape both stores hold (localStorage as a JSON
+ * string, IndexedDB as the object itself).
+ */
+export function classifyStoredUser(parsed: unknown, nowMs: number): StoredSessionState {
   const expiresAt = (parsed as { stsTokenManager?: { expirationTime?: unknown } })?.stsTokenManager?.expirationTime;
   // A blob we cannot read an expiry out of tells us nothing about a pending refresh — saying
   // 'fresh' there would point the next investigation at the wrong one of the three causes.
@@ -54,6 +62,55 @@ export function probeStoredSession(apiKey: string, nowMs: number = Date.now()): 
   if (typeof localStorage === 'undefined') return 'unreadable';
   try {
     return classifyStoredSession(localStorage.getItem(storedSessionKey(apiKey)), nowMs);
+  } catch {
+    return 'unreadable';
+  }
+}
+
+/** Database and object store Firebase Auth's indexedDBLocalPersistence keeps the user in. */
+export const FIREBASE_AUTH_IDB_NAME = 'firebaseLocalStorageDb';
+const FIREBASE_AUTH_IDB_STORE = 'firebaseLocalStorage';
+
+/**
+ * Read and classify the session Firebase Auth persisted in IndexedDB — the store an
+ * IndexedDB-first (Chromium) browser restores from, which `probeStoredSession` cannot see.
+ *
+ * SCS-AZ's Android events reported `session:stored:none` from localStorage, which on that path
+ * says nothing: the session sits in IndexedDB. Asynchronous by nature, so the caller marks the
+ * result when it arrives — and a mark that never arrives before the stall report is the
+ * reading: the IndexedDB read itself hung.
+ *
+ * Opens the database only when `indexedDB.databases()` lists it. A bare `open()` of a missing
+ * database would create an empty one at version 1, and the SDK would then have to delete and
+ * recreate it — this probe must not change what it measures. Without `databases()` it reports
+ * 'unreadable' rather than risk that. Never rejects.
+ */
+export async function probeStoredSessionIdb(apiKey: string, nowMs: () => number = Date.now): Promise<StoredSessionState> {
+  try {
+    if (typeof indexedDB === 'undefined' || typeof indexedDB.databases !== 'function') return 'unreadable';
+    const dbs = await indexedDB.databases();
+    if (!dbs.some(d => d.name === FIREBASE_AUTH_IDB_NAME)) return 'none';
+    const db = await new Promise<IDBDatabase>((resolve, reject) => {
+      const req = indexedDB.open(FIREBASE_AUTH_IDB_NAME);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+    try {
+      // Never block the SDK's own delete/upgrade of the database.
+      db.onversionchange = () => db.close();
+      if (!db.objectStoreNames.contains(FIREBASE_AUTH_IDB_STORE)) return 'none';
+      const row = await new Promise<unknown>((resolve, reject) => {
+        const req = db.transaction(FIREBASE_AUTH_IDB_STORE, 'readonly')
+          .objectStore(FIREBASE_AUTH_IDB_STORE)
+          .get(storedSessionKey(apiKey));
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+      if (!row) return 'none';
+      return classifyStoredUser((row as { value?: unknown }).value, nowMs());
+    } finally {
+      db.close();
+    }
   } catch {
     return 'unreadable';
   }

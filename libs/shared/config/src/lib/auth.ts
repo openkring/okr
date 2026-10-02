@@ -6,22 +6,32 @@ import { isFirefox, isIos, isSafari } from "./firestore";
 
 export const AUTH_EMULATOR_PORT = 9099;
 
+/**
+ * Whether this browser keeps the signed-in session in localStorage ONLY, with no IndexedDB in
+ * the persistence list at all.
+ *
+ * On Safari (ITP) and Firefox (ETP/private mode) IndexedDB access is throttled/unreliable.
+ * Mirrors the same carve-out already used for Firestore (see firestore.ts). isIos() is part of
+ * the test because Apple mandates WebKit for EVERY iOS browser, so Chrome (CriOS), Edge (EdgiOS),
+ * Firefox (FxiOS) and Opera (OPiOS) inherit Safari's throttled IndexedDB — but isSafari()
+ * excludes them by design.
+ */
+export function usesLocalStorageOnlySession(): boolean {
+  return isSafari() || isFirefox() || isIos();
+}
+
 export function authFactory() {
-  // Persistence order: Firebase Auth restores the signed-in session from the FIRST available
-  // persistence on every load. On Safari (ITP) and Firefox (ETP/private mode) IndexedDB access
-  // is throttled/unreliable, so we prefer localStorage (browserLocalPersistence) — synchronous
-  // and not subject to that throttling — and keep IndexedDB only as a fallback. All other
-  // browsers keep the IndexedDB-first default. Defensive: mirrors the same "avoid IndexedDB on
-  // Safari/Firefox" carve-out already used for Firestore (see firestore.ts).
-  //
-  // isIos() is part of the test for the same reason it is part of the Firestore one: Apple
-  // mandates WebKit for EVERY iOS browser, so Chrome (CriOS), Edge (EdgiOS), Firefox (FxiOS) and
-  // Opera (OPiOS) inherit Safari's exact ITP-throttled IndexedDB — but isSafari() excludes them
-  // by design. Without this they took the IndexedDB-FIRST path, where a throttled open leaves
-  // onAuthStateChanged pending and the boot sits in the session-restore gate (SCS-AZ) with no
-  // upper bound of its own.
-  const persistence = (isSafari() || isFirefox() || isIos())
-    ? [browserLocalPersistence, indexedDBLocalPersistence]
+  // Persistence: on the throttled-IndexedDB browsers, localStorage ONLY. Ordering is not enough.
+  // SCS-AZ's first fix (7.33.0) put localStorage first and kept IndexedDB as a fallback, and the
+  // stall kept coming: PersistenceUserManager.create (@firebase/auth 1.13) probes EVERY listed
+  // persistence in a Promise.all — IndexedDB's _isAvailable opens the db and writes a test key —
+  // and after choosing one it _remove()s the key from all the others. A listed IndexedDB is
+  // therefore awaited twice on every restore whatever its position, and a throttled open leaves
+  // onAuthStateChanged pending with no upper bound. Cost of dropping it: a session that lives
+  // ONLY in IndexedDB is not found and that user signs in once more; every restore since 7.33.0
+  // has already migrated it into localStorage. All other browsers keep the IndexedDB-first default.
+  const persistence = usesLocalStorageOnlySession()
+    ? [browserLocalPersistence]
     : [indexedDBLocalPersistence, browserLocalPersistence];
 
   // Use initializeAuth without browserPopupRedirectResolver:
