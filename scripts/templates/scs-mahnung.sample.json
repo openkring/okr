@@ -2,7 +2,7 @@
   "_meta": {
     "name": "SCS Mahnung",
     "description": "Zahlungserinnerung und Mahnungen des Seeclub Stäfa mit QR-Einzahlungsschein über den offenen Betrag.",
-    "category": "invoice",
+    "category": "dunning",
     "language": "de",
     "defaultOutputFormat": "pdf",
     "defaultFormat": "A4",
