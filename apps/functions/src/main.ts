@@ -266,6 +266,7 @@ export const writeBooking = Booking.writeBooking;
 export const writeInvoice = Invoice.writeInvoice;
 export const issueInvoice = Invoice.issueInvoice;
 export const recordInvoicePayment = Invoice.recordInvoicePayment;
+export const cancelInvoice = Invoice.cancelInvoice;
 // bank import: the only write path from bank-import-rows into the ledger (spec 1.60 §7)
 export const postBankImport = BankImport.postBankImport;
 // bexio journal import: mapped entries posted directly as bookings (spec 1.60 §12)
