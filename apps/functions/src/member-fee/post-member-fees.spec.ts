@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { unbookablePositions } from './post-member-fees';
+import { memberFeeDraft, unbookablePositions } from './post-member-fees';
+import { issueHeaderBlockers } from '../invoice/invoice.logic';
 import type { MemberFeePosition } from '@okr/shared-models';
 
 const position = (overrides: Partial<MemberFeePosition> = {}): MemberFeePosition => ({
@@ -27,5 +28,39 @@ describe('unbookablePositions', () => {
 
   it('treats a fee without positions as bookable (it simply produces an empty invoice)', () => {
     expect(unbookablePositions({ positions: [] })).toEqual([]);
+  });
+});
+
+describe('memberFeeDraft', () => {
+  const member = { key: 'p1', name1: 'Anna', name2: 'Muster', modelType: 'person', type: '', subType: '', label: 'Anna Muster' } as never;
+  const o = { tenantId: 't1', accountingTenantId: 'acc', year: 2026, invoiceDate: '20261002', dueDate: '20261101' };
+  const draft = () => memberFeeDraft({ member, positions: [position(), position({ key: 'l', amount: 50 })] }, o);
+
+  it('is an unnumbered draft', () => {
+    const d = draft();
+    expect(d.state).toBe('draft');
+    expect(d.invoiceNo).toBe(0);
+    expect(d.invoiceId).toBe('');
+    expect(d.bookingKey).toBe('');
+    expect(d.payments).toEqual([]);
+  });
+
+  it('keeps title, dates, receiver and total', () => {
+    const d = draft();
+    expect(d.title).toBe('2026 Anna Muster');
+    expect(d.invoiceDate).toBe('20261002');
+    expect(d.dueDate).toBe('20261101');
+    expect(d.receiver).toBe(member);
+    expect(d.totalAmount).toEqual({ amount: 37000, currency: 'CHF', periodicity: 'one-time' });
+    expect(d.tenants).toEqual(['t1']);
+  });
+
+  it('passes the header requirements of issueInvoice (template comes from the config)', () => {
+    const d = draft();
+    expect(issueHeaderBlockers({ receiverKey: d.receiver?.key, invoiceDate: d.invoiceDate, dueDate: d.dueDate, invoiceTemplateId: 'tpl' })).toEqual([]);
+  });
+
+  it('indexes without a number token', () => {
+    expect(draft().index).not.toMatch(/i:/);
   });
 });

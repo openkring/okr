@@ -1,6 +1,6 @@
 import { onCall, HttpsError, CallableRequest } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
-import { getFirestore, Firestore } from 'firebase-admin/firestore';
+import { getFirestore } from 'firebase-admin/firestore';
 
 import {
   AccountingConfigCollection, AccountingConfigModel,
@@ -11,27 +11,11 @@ import {
 import { checkAppCheckToken, checkAuthentication, checkRoles } from '@okr/shared-util-functions';
 import { addDuration, DateFormat, generateRandomString, getTodayStr, getYear, removeKeyFromOkrModel } from '@okr/shared-util-core';
 import { getFeeTotal } from '@okr/relationship-membership-util';
-import { getInvoiceIndex, getNextInvoiceNo } from '@okr/finance-invoice-util';
+import { getInvoiceIndex } from '@okr/finance-invoice-util';
+
+import { withoutUndefined } from '../invoice/invoice.logic';
 
 const REGION = 'europe-west6';
-
-/**
- * The next `invoiceNo` for one (accountingTenantId, fiscal year) sequence. This is the SAME
- * allocator `InvoiceService.nextInvoiceNo` uses client-side (libs/finance/invoice/data-access) —
- * both fetch the existing invoiceNos their own way (rxfire vs. admin SDK) and hand them to the
- * shared, pure `getNextInvoiceNo` from `@okr/finance-invoice-util`. There is exactly one invoice-
- * number sequence per accounting tenant; this function must never invent a second one.
- */
-async function nextInvoiceNo(db: Firestore, tenantId: string, accountingTenantId: string, year: number): Promise<number> {
-  const snap = await db.collection(InvoiceCollection)
-    .where('tenants', 'array-contains', tenantId)
-    .where('isArchived', '==', false)
-    .get();
-  const invoiceNos = snap.docs
-    .filter(d => d.data()['accountingTenantId'] === accountingTenantId)
-    .map(d => (d.data()['invoiceNo'] as number) ?? 0);
-  return getNextInvoiceNo(invoiceNos, year);
-}
 
 /**
  * The positions of a fee that cannot be booked: a native invoice position without an
@@ -48,7 +32,32 @@ export function unbookablePositions(fee: Pick<MemberFeeModel, 'positions'>): str
 }
 
 /**
- * Post every 'ready' member-fee row of a tenant as a real in-house invoice: one `InvoiceModel`
+ * The invoice DRAFT of one member-fee row (spec 1.76 D10). It carries no number: `invoiceNo` 0 and
+ * `invoiceId` '' until a treasurer reviews and issues it (`issueInvoice` allocates the number
+ * transactionally). Same shape `writeInvoice` stores for a new draft.
+ */
+export function memberFeeDraft(
+  fee: Pick<MemberFeeModel, 'member' | 'positions'>,
+  o: { tenantId: string; accountingTenantId: string; year: number; invoiceDate: string; dueDate: string },
+): InvoiceModel {
+  const invoice = new InvoiceModel(o.tenantId);
+  invoice.accountingTenantId = o.accountingTenantId;
+  invoice.receiver = fee.member;
+  invoice.state = 'draft';
+  invoice.invoiceNo = 0;
+  invoice.invoiceId = '';
+  invoice.invoiceDate = o.invoiceDate;
+  invoice.dueDate = o.dueDate;
+  invoice.title = `${o.year} ${fee.member?.label ?? ''}`.trim();
+  const totalChf = getFeeTotal(fee.positions ?? []);
+  invoice.totalAmount = { amount: Math.round(totalChf * 100), currency: 'CHF', periodicity: 'one-time' };
+  invoice.index = getInvoiceIndex(invoice);
+  return invoice;
+}
+
+/**
+ * Post every 'ready' member-fee row of a tenant as an in-house invoice DRAFT (no number; a treasurer
+ * issues it via `issueInvoice`, which numbers it transactionally): one `InvoiceModel`
  * plus one `InvoicePositionModel` per fee position, written in a single Firestore batch per fee
  * row so a row is never left half-posted (invoice without positions, or positions without the
  * fee record being flipped to 'invoiced'). This is the 'native' counterpart to
@@ -103,23 +112,13 @@ export const postMemberFees = onCall(
         continue;
       }
 
-      const invoice = new InvoiceModel(tenantId);
-      invoice.accountingTenantId = accountingTenantId;
-      invoice.receiver = fee.member;
-      invoice.invoiceNo = await nextInvoiceNo(db, tenantId, accountingTenantId, scheduleYear);
-      invoice.invoiceId = String(invoice.invoiceNo);
-      invoice.invoiceDate = invoiceDate;
-      invoice.dueDate = dueDate;
-      invoice.title = `${scheduleYear} ${fee.member?.label ?? ''}`.trim();
-      const totalChf = getFeeTotal(fee.positions ?? []);
-      invoice.totalAmount = { amount: Math.round(totalChf * 100), currency: 'CHF', periodicity: 'one-time' };
-      invoice.index = getInvoiceIndex(invoice);
+      const invoice = memberFeeDraft(fee, { tenantId, accountingTenantId, year: scheduleYear, invoiceDate, dueDate });
 
       const invoiceKey = generateRandomString(20);
       const invoiceRef = db.collection(InvoiceCollection).doc(invoiceKey);
 
       const batch = db.batch();
-      batch.set(invoiceRef, removeKeyFromOkrModel(invoice));
+      batch.set(invoiceRef, withoutUndefined(removeKeyFromOkrModel(invoice)));
 
       for (const p of fee.positions ?? []) {
         const position = new InvoicePositionModel(tenantId);
