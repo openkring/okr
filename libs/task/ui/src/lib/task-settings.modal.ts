@@ -35,7 +35,6 @@ import { TaskSettingsForm } from './task-settings.form';
           [formData]="formData"
           (formDataChange)="onFormDataChange($event)"
           [i18n]="i18n"
-          [tenantIds]="tenantIds()"
           [showForm]="showForm()"
           (dirty)="formDirty.set($event)"
           (valid)="formValid.set($event)"
@@ -50,8 +49,6 @@ export class TaskSettingsModal {
 
   // inputs
   public readonly settings = input.required<TaskSettings>();
-  /** every tenant id this operator runs (`AppConfigService.list()` okeys) */
-  public readonly tenantIds = input<string[]>([]);
 
   // signals
   protected readonly formDirty = signal(false);

@@ -74,15 +74,15 @@ export class AppConfigService {
   }
 
   /**
-   * Patch the two task settings only (same single-field pattern as {@link setHiddenMenuKeys}).
+   * Patch the task settings only (same single-field pattern as {@link setHiddenMenuKeys}).
    * Typed inline with `Pick<AppConfig, …>` rather than `@okr/task-util`'s `TaskSettings` — the
    * two are the same shape by construction, but `shared-data-access` must not import a
    * feature-domain util lib.
    *
    * @param tenantId the tenant whose config to patch — the doc id IS the tenantId
-   * @param settings `{ taskArchiveDays, diaryTenantId }`
+   * @param settings `{ taskArchiveDays }`
    */
-  public async setTaskSettings(tenantId: string, settings: Pick<AppConfig, 'taskArchiveDays' | 'diaryTenantId'>): Promise<string | undefined> {
+  public async setTaskSettings(tenantId: string, settings: Pick<AppConfig, 'taskArchiveDays'>): Promise<string | undefined> {
     return await this.firestoreService.updateObject<Partial<AppConfig>>(
       AppConfigCollection, tenantId, { ...settings }, false, this.i18n.update_conf());
   }
@@ -113,7 +113,7 @@ export class AppConfigService {
   /**
    * Every tenant's `AppConfig`, `okey` = tenant id (the document id — see the class comment on
    * why the tenant id is never a class FIELD). `addOkey: true` so a caller enumerating tenant ids
-   * (e.g. the `diaryTenantId` select) has something to read; the return type is widened with
+   * has something to read; the return type is widened with
    * `& { okey: string }` rather than adding `okey` to the `AppConfig` class itself, which would
    * reintroduce exactly the duplicated-identity trap the class comment warns against. Nothing
    * consumed this list before, so widening it changes no existing caller.

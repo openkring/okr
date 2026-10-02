@@ -2,7 +2,7 @@ import { FieldValue } from 'firebase-admin/firestore';
 import type { Firestore } from 'firebase-admin/firestore';
 
 import { newDiary } from '@okr/content-diary-util';
-import { AppConfigCollection, DiaryCollection } from '@okr/shared-models';
+import { DiaryCollection } from '@okr/shared-models';
 import { removeKeyFromOkrModel } from '@okr/shared-util-core';
 
 /** The list fields of a diary entry that a feature may append a line to. */
@@ -49,11 +49,4 @@ export async function appendToDiary(
     }
     return decision;
   });
-}
-
-/** The tenant whose diary receives lines from `tenantId`'s app; '' = none (legacy docs lack the field). */
-export async function readDiaryTenantId(db: Firestore, tenantId: string): Promise<string> {
-  const snap = await db.collection(AppConfigCollection).doc(tenantId).get();
-  const value = snap.data()?.['diaryTenantId'];
-  return typeof value === 'string' ? value : '';
 }

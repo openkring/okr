@@ -1,7 +1,7 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
-import { firstValueFrom, of } from 'rxjs';
+import { of } from 'rxjs';
 import { ModalController } from '@ionic/angular/standalone';
 
 import { AppConfigService } from '@okr/shared-data-access';
@@ -284,7 +284,7 @@ export const TaskStore = signalStore(
     /**
      * Open the admin-only task-settings modal (spec 1.72 §8.2/§9) — the menu row already gates on
      * `roleNeeded: 'admin'`, so this is a defence-in-depth check, same shape as `canCreateTask`.
-     * The two `AppConfig` fields are coalesced here (`?? 30`, `?? ''`) because a legacy config doc
+     * The `AppConfig` field is coalesced here (`?? 30`) because a legacy config doc
      * predates them (Firestore reads skip model defaults — see the class doc on `AppConfig`).
      */
     async editSettings(): Promise<void> {
@@ -292,15 +292,12 @@ export const TaskStore = signalStore(
       const config = store.appStore.appConfig();
       const settings: TaskSettings = {
         taskArchiveDays: config.taskArchiveDays ?? 30,
-        diaryTenantId: config.diaryTenantId ?? '',
       };
-      const tenants = await firstValueFrom(store.appConfigService.list());
-      const tenantIds = tenants.map((t) => t.okey);
 
       const { TaskSettingsModal } = await import('@okr/task-ui');
       const modal = await store.modalController.create({
         component: TaskSettingsModal,
-        componentProps: { settings, tenantIds }
+        componentProps: { settings }
       });
       modal.present();
       const { data, role } = await modal.onDidDismiss();

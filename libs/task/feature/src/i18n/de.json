@@ -154,11 +154,6 @@
     "taskArchiveDays": {
       "label": "Erledigte Aufgaben archivieren nach (Tagen)",
       "helper": "0 heisst: nie automatisch archivieren"
-    },
-    "diaryTenantId": {
-      "label": "Erledigte Aufgaben ins Tagebuch von",
-      "helper": "Gilt auch für die Jasstafel. Leer lassen, wenn keine Tagebuch-Einträge entstehen sollen",
-      "none": "Kein Tagebuch"
     }
   }
 }

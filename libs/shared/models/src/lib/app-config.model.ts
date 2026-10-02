@@ -197,14 +197,6 @@ export class AppConfig {
   public weatherIntervalHours = 4;
 
   /**
-   * Tenant whose diary receives lines from this app — a finished Jasstafel game (spec 1.67), later
-   * completed tasks (spec 1.72 §9). '' = no diary transfer. Written by the `recordDiaryLine`
-   * callable into the caller's own entry; the caller must belong to that tenant. Legacy config
-   * docs lack it — coalesce to '' on read.
-   */
-  public diaryTenantId = '';
-
-  /**
    * Travel period of this app, published for the diary transfer (spec 1.77 D7): an empty bound of
    * a user's diary target inherits it. StoreDates; '' = this app has no travel period (e.g. a
    * personal diary). Legacy config docs lack both — coalesce to ''.

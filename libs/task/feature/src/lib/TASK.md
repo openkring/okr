@@ -60,11 +60,11 @@ Firestore rejects the whole query — see `buildTaskListQueries`.
 
 - `onTaskWritten` — pushes the assignee on create, reassignment or reopen (never to oneself), and
   syncs the assignee's diary: a completed task's name goes into `done` of the day entry in
-  `AppConfig.diaryTenantId` (shared with the Jasstafel), a reopen removes it (`appendToDiary`).
+  every diary tenant of the assignee's `UserModel.diaryTargets` (shared with the Jasstafel, spec 1.77), a reopen removes it (`appendToDiary`).
 - `taskDaily` — 07:00 Europe/Zurich: archives tasks completed more than `AppConfig.taskArchiveDays`
   (default 30, `0` = never) ago, and pushes a reminder for tasks due today.
 
-Both settings are edited in the admin-only `TaskSettingsModal` (menu row `task-settings`,
+The archive setting is edited in the admin-only `TaskSettingsModal` (menu row `task-settings`,
 `AppConfigService.setTaskSettings`).
 
 ## TaskStore

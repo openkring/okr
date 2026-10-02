@@ -2302,8 +2302,8 @@ const task: FeatureBlock = {
       // `task-add`/`task-export` above. `TaskList` binds it through
       // `[toggleStates]="{ toggleFilter: showFilter(), toggleArchived: store.showArchived() }"`.
       { key: 'task-archived', name: 'task-archived', url: 'toggleArchived', action: 'toggle', roleNeeded: 'registered', icon: 'history', label: '@item.task-archived' },
-      // spec 1.72 §8.2/§9 — the two AppConfig task settings (taskArchiveDays,
-      // diaryTenantId), admin-only: `TaskList.onPopoverDismiss` case 'settings' opens
+      // spec 1.72 §8.2/§9 — the AppConfig task settings (taskArchiveDays),
+      // admin-only: `TaskList.onPopoverDismiss` case 'settings' opens
       // `TaskSettingsModal` via `TaskStore.editSettings()`.
       { key: 'task-settings', name: 'task-settings', url: 'settings', action: 'call', roleNeeded: 'admin', icon: 'settings', label: '@item.task-settings' },
     ] },

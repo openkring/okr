@@ -2,21 +2,19 @@ import { Component, computed, effect, input, model, output } from '@angular/core
 import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
-import { ErrorNote, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n } from '@okr/shared-ui';
+import { ErrorNote, NumberInput, NumberInputI18n } from '@okr/shared-ui';
 import { validateVestTree } from '@okr/shared-util-angular';
 
 import { TASK_ARCHIVE_DAYS_MAX, TASK_ARCHIVE_DAYS_MIN, TaskI18n, TaskSettings, taskSettingsValidations } from '@okr/task-util';
 
 /**
- * Admin-only settings form (spec 1.72 §8.2/§9): two `AppConfig` fields, not a Firestore model —
- * no `okey`/`tenants`/`tags`, no chips/notes. `diaryTenantId` selects among the tenants this
- * operator runs (an empty option means "no diary entry"); membership in that list is enforced by
- * the select itself, so the Vest suite carries no length cap on the field (building-forms rule 1).
+ * Admin-only settings form (spec 1.72 §8.2/§9): the `AppConfig` task settings, not a Firestore
+ * model — no `okey`/`tenants`/`tags`, no chips/notes. (The diary tenant is chosen per user, spec 1.77.)
  */
 @Component({
   selector: 'okr-task-settings-form',
   standalone: true,
-  imports: [ErrorNote, NumberInput, StringSelect, IonGrid, IonRow, IonCol, IonCard, IonCardContent],
+  imports: [ErrorNote, NumberInput, IonGrid, IonRow, IonCol, IonCard, IonCardContent],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
     @if (showForm()) {
@@ -31,13 +29,6 @@ import { TASK_ARCHIVE_DAYS_MAX, TASK_ARCHIVE_DAYS_MIN, TaskI18n, TaskSettings, t
                     [autofocus]="true" [integer]="true" [min]="taskArchiveDaysMin" [max]="taskArchiveDaysMax"
                     [showHelper]="true" [readOnly]="false" />
                   <okr-error-note [errors]="taskArchiveDaysErrors()" />
-                </ion-col>
-                <ion-col size="12" size-md="6">
-                  <okr-string-select [i18n]="diaryTenantIdI18n()"
-                    [selectedString]="diaryTenantId()"
-                    (selectedStringChange)="onFieldChange('diaryTenantId', $event)"
-                    [stringList]="tenantIdOptions()" [labels]="tenantIdLabels()" [readOnly]="false" />
-                  <okr-error-note [errors]="diaryTenantIdErrors()" />
                 </ion-col>
               </ion-row>
             </ion-grid>
@@ -55,8 +46,6 @@ export class TaskSettingsForm {
   // inputs
   public readonly i18n = input.required<TaskI18n>();
   public formData = model.required<TaskSettings>();
-  /** every tenant id this operator runs (`AppConfigService.list()` okeys); '' is added by this form as "no diary" */
-  public readonly tenantIds = input<string[]>([]);
   public readonly showForm = input(true);
 
   // outputs
@@ -69,7 +58,6 @@ export class TaskSettingsForm {
 
   private readonly validationResult = computed(() => taskSettingsValidations(this.formData()));
   protected taskArchiveDaysErrors = computed(() => this.validationResult().getErrors('taskArchiveDays'));
-  protected diaryTenantIdErrors = computed(() => this.validationResult().getErrors('diaryTenantId'));
 
   constructor() {
     effect(() => this.valid.emit(this.settingsForm().valid()));
@@ -77,11 +65,6 @@ export class TaskSettingsForm {
 
   // computed field accessors
   protected readonly taskArchiveDays = computed(() => this.formData()?.taskArchiveDays ?? 30);
-  protected readonly diaryTenantId = computed(() => this.formData()?.diaryTenantId ?? '');
-  // '' (no diary) always first, then every known tenant id
-  protected readonly tenantIdOptions = computed(() => ['', ...this.tenantIds()]);
-  protected readonly tenantIdLabels = computed(() => ['', ...this.tenantIds()].map(
-    (id, i) => i === 0 ? this.i18n().settings_diaryTenantId_none() : id));
 
   protected taskArchiveDaysI18n = computed(() => ({
     name: 'taskArchiveDays',
@@ -90,13 +73,7 @@ export class TaskSettingsForm {
     helper: this.i18n().settings_taskArchiveDays_helper(),
   } as NumberInputI18n));
 
-  protected diaryTenantIdI18n = computed(() => ({
-    name: 'diaryTenantId',
-    label: this.i18n().settings_diaryTenantId_label(),
-    helper: this.i18n().settings_diaryTenantId_helper(),
-  } as StringSelectI18n));
-
-  protected onFieldChange(fieldName: keyof TaskSettings, fieldValue: string | number): void {
+  protected onFieldChange(fieldName: keyof TaskSettings, fieldValue: number): void {
     this.dirty.emit(true);
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
   }

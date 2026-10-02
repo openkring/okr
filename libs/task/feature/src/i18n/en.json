@@ -154,11 +154,6 @@
     "taskArchiveDays": {
       "label": "Archive completed tasks after (days)",
       "helper": "0 means: never archive automatically"
-    },
-    "diaryTenantId": {
-      "label": "Add completed tasks to the diary of",
-      "helper": "Also applies to the Jasstafel. Leave empty if no diary entries should be created",
-      "none": "No diary"
     }
   }
 }

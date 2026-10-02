@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { taskSettingsValidations, TaskSettings } from './task-settings.validations';
 
 function model(overrides: Partial<TaskSettings> = {}): TaskSettings {
-  return { taskArchiveDays: 30, diaryTenantId: '', ...overrides };
+  return { taskArchiveDays: 30, ...overrides };
 }
 
 describe('taskSettingsValidations', () => {
@@ -38,11 +38,6 @@ describe('taskSettingsValidations', () => {
     const result = taskSettingsValidations(model({ taskArchiveDays: 1.5 }));
     expect(result.isValid()).toBe(false);
     expect(result.getErrors('taskArchiveDays').length).toBeGreaterThan(0);
-  });
-
-  it('accepts any tenant id string for diaryTenantId — a selector value, no length cap', () => {
-    const result = taskSettingsValidations(model({ diaryTenantId: 'a-fairly-long-tenant-id-name' }));
-    expect(result.isValid()).toBe(true);
   });
 
   it('re-validates a single field with only()', () => {

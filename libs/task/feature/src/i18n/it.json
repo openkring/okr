@@ -154,11 +154,6 @@
     "taskArchiveDays": {
       "label": "Archivia le attività completate dopo (giorni)",
       "helper": "0 significa: mai archiviare automaticamente"
-    },
-    "diaryTenantId": {
-      "label": "Aggiungi le attività completate al diario di",
-      "helper": "Vale anche per la Jasstafel. Lascia vuoto se non vuoi che vengano create voci di diario",
-      "none": "Nessun diario"
     }
   }
 }
