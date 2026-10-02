@@ -631,7 +631,7 @@ service cloud.firestore {
     }
     match /journallogs/{id}       { allow read: if tenantRead(); allow write: if false; }
     // Payment orders + payments (spec 1.80 §5.4): finance data, treasurer/admin only. Clients may
-    // create and edit DRAFTS; approval and transmission happen only in approvePaymentOrder /
+    // create and edit DRAFT orders (payments: confirm only, see below); approval and transmission happen only in approvePaymentOrder /
     // generatePain001 (admin SDK), so no client can approve or self-approve.
     function isTreasurer() { return hasRole('treasurer') || isAdmin(); }
     function staysDraft() {
@@ -649,13 +649,16 @@ service cloud.firestore {
       allow update: if isTreasurer() && tenantUpdate() && resource.data.status == 'draft' && staysDraft() && createdByCaller();
       allow delete: if false;
     }
+    // Payments are written by onExpenseDone (admin SDK) only. A client may do exactly one thing to a
+    // draft: confirm a flagged payment (needsReview true -> false). Anything wider would let the
+    // approver rewrite IBAN/amount of a payment and then approve it — a four-eyes bypass.
     match /payments/{id} {
       allow read: if isTreasurer() && tenantRead();
-      allow create: if isTreasurer() && tenantCreate() && request.resource.data.status == 'draft'
-                     && orderIsDraft(request.resource.data.paymentOrderKey);
-      allow update: if isTreasurer() && tenantUpdate() && resource.data.status == 'draft' && request.resource.data.status == 'draft'
-                     && request.resource.data.paymentOrderKey == resource.data.paymentOrderKey
-                     && orderIsDraft(request.resource.data.paymentOrderKey);
+      allow create: if false;
+      allow update: if isTreasurer() && tenantUpdate() && resource.data.status == 'draft'
+                     && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['needsReview'])
+                     && request.resource.data.needsReview == false
+                     && orderIsDraft(resource.data.paymentOrderKey);
       allow delete: if isTreasurer() && canWriteTenant(resource.data) && resource.data.status == 'draft';
     }
     match /i18nDefault/{id}       { allow read: if tenantRead(); allow write: if false; }
