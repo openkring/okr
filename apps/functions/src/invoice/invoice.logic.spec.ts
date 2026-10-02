@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildInvoicePayload, draftWriteRefusal, finalizeDecision, invoiceBookingIndex, invoiceBookingLines, issueBlockers, issueHeaderBlockers, issueOutcome, issuePeriodKeys, totalRappen, withoutUndefined } from './invoice.logic';
+import { buildInvoicePayload, draftWriteRefusal, finalizeDecision, invoiceBookingIndex, invoiceBookingLines, issueBlockers, issueHeaderBlockers, issueOutcome, issuePeriodKeys, recipientFields, totalRappen, withoutUndefined } from './invoice.logic';
 
 const pos = (amount: number, accountKey = 'scs3401', name = 'Beitrag') => ({ name, amount, accountKey });
 
@@ -181,5 +181,17 @@ describe('invoiceBookingIndex', () => {
   it('follows the journal index format and finds the invoice by title and number', () => {
     expect(invoiceBookingIndex('20261001', 42, 'Mitgliederbeitrag 2026', '202600007'))
       .toBe('d:20261001 no:42 n:Mitgliederbeitrag 2026 i:202600007');
+  });
+});
+
+describe('recipientFields', () => {
+  it('greets a person by first name and carries the address', () => {
+    const r = recipientFields({ name1: 'Anna', name2: 'Muster', modelType: 'person' }, { streetName: 'Weg', streetNumber: '3', zipCode: '8000', city: 'Zürich', countryCode: 'CH' });
+    expect(r).toMatchObject({ firstName: 'Anna', lastName: 'Muster', greeting: 'Liebe/r Anna', streetName: 'Weg', streetNumber: '3', zipCode: '8000', city: 'Zürich', countryCode: 'CH' });
+  });
+  it('greets an org neutrally and defaults a missing address', () => {
+    const r = recipientFields({ name1: '', name2: 'Verein', modelType: 'org' });
+    expect(r['greeting']).toBe('Guten Tag');
+    expect(r).toMatchObject({ streetName: '', city: '', countryCode: 'CH' });
   });
 });

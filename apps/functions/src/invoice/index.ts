@@ -3,3 +3,4 @@ export { issueInvoice } from './issue-invoice';
 export { recordInvoicePayment } from './record-invoice-payment';
 export { cancelInvoice } from './cancel-invoice';
 export { createPaymentConfirmation } from './payment-confirmation';
+export { createInvoiceReminder } from './create-invoice-reminder';

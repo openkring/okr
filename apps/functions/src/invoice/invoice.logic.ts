@@ -64,6 +64,24 @@ export function invoiceBookingLines(positions: PositionInput[], receivablesAccou
 export const chf = (rappen: number): string => (rappen / 100).toFixed(2);
 export const viewDate = (d: string): string => convertDateFormatToString(d, DateFormat.StoreDate, DateFormat.ViewDate, false);
 
+/** Recipient name, greeting and postal address fields shared by the invoice and reminder payloads. */
+export function recipientFields(
+  receiver: { name1?: string; name2?: string; modelType?: string } | undefined, address?: PostalAddress,
+): Record<string, string> {
+  const firstName = receiver?.name1 ?? '';
+  const isPerson = receiver?.modelType === 'person';
+  return {
+    firstName,
+    lastName: receiver?.name2 ?? '',
+    greeting: isPerson && firstName ? `Liebe/r ${firstName}` : 'Guten Tag',
+    streetName: address?.streetName ?? '',
+    streetNumber: address?.streetNumber ?? '',
+    zipCode: address?.zipCode ?? '',
+    city: address?.city ?? '',
+    countryCode: address?.countryCode ?? 'CH',
+  };
+}
+
 /** Template/QR-slip payload; keys match the invoice layout and the qr-slip util. */
 export function buildInvoicePayload(i: {
   invoiceId: string;
@@ -74,22 +92,12 @@ export function buildInvoicePayload(i: {
   positions: PositionInput[];
   address?: PostalAddress;
 }): Record<string, unknown> {
-  const isPerson = i.receiver.modelType === 'person';
-  const firstName = i.receiver.name1;
-  const a = i.address;
   return {
     invoiceNumber: i.invoiceId,
     title: i.title,
     date: viewDate(i.invoiceDate),
     dueDate: viewDate(i.dueDate),
-    firstName,
-    lastName: i.receiver.name2,
-    greeting: isPerson && firstName ? `Liebe/r ${firstName}` : 'Guten Tag',
-    streetName: a?.streetName ?? '',
-    streetNumber: a?.streetNumber ?? '',
-    zipCode: a?.zipCode ?? '',
-    city: a?.city ?? '',
-    countryCode: a?.countryCode ?? 'CH',
+    ...recipientFields(i.receiver, i.address),
     amount: chf(totalRappen(i.positions)),
     positions: i.positions.map((p) => ({ name: p.name, amount: chf(toRappen(p.amount)) })),
     qrMessage: `Rechnung ${i.invoiceId}`,
