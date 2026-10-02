@@ -6,3 +6,5 @@ export * from './lib/invoice-position.validations';
 export * from './lib/bexio-invoice.util';
 export * from './lib/bexio-invoice.validations';
 export * from './lib/payment-confirmation.util';
+export * from './lib/invoice-payment.util';
+export * from './lib/invoice-payment.validations';

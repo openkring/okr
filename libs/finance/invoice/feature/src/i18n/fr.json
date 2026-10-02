@@ -300,6 +300,92 @@
     "too-many-positions": "Une facture peut avoir au maximum 100 positions.",
     "inconsistent-state": "Un problème est survenu lors de l'émission. Réessaie, s'il te plaît.",
     "no-due-date": "La facture n'a pas encore de date d'échéance. Indique jusqu'à quand elle doit être payée.",
-    "due-before-invoice-date": "La date d'échéance est antérieure à la date de la facture. Choisis une date plus tardive."
+    "due-before-invoice-date": "La date d'échéance est antérieure à la date de la facture. Choisis une date plus tardive.",
+    "invalid-payment-id": "Le paiement n’a pas pu être identifié. Ferme la fenêtre et réessaie.",
+    "not-a-payment-account": "Aucun paiement ne peut être comptabilisé sur ce compte. Choisis l’un des comptes bancaires des paramètres comptables.",
+    "payment-blocked": "Ce paiement ne peut pas être saisi.",
+    "link-blocked": "Cette écriture bancaire ne peut pas être liée à la facture.",
+    "cancel-blocked": "Cette facture ne peut pas être annulée.",
+    "no-bank-line": "Il manque la ligne du compte bancaire dans l’écriture choisie. Choisis une autre écriture.",
+    "not-paid": "La facture n’est pas encore payée. La confirmation de paiement n’est disponible qu’ensuite.",
+    "not-payable": "Aucun paiement ne peut être saisi pour cette facture. Cela n’est possible que pour une facture émise et encore ouverte.",
+    "overpayment": "Le montant dépasse ce qui reste à payer sur la facture.",
+    "no-payment-date": "Indique quand l’argent est arrivé.",
+    "booking-not-found": "L’écriture bancaire choisie n’existe plus.",
+    "booking-not-posted": "L’écriture bancaire choisie n’est pas encore comptabilisée. Comptabilise-la d’abord.",
+    "foreign-booking": "L’écriture bancaire choisie appartient à une autre comptabilité.",
+    "no-receivables-credit": "L’écriture bancaire choisie ne crédite pas assez le compte débiteurs. Choisis une autre écriture ou un montant plus petit.",
+    "already-linked": "Cette écriture bancaire est déjà liée à cette facture.",
+    "not-cancellable": "Seules les factures émises et encore ouvertes peuvent être annulées.",
+    "has-payments": "Des paiements sont déjà saisis pour cette facture, elle ne peut donc plus être annulée.",
+    "no-issue-booking": "Cette facture n’a pas été comptabilisée ici (par exemple reprise de bexio). Annule-la à la main dans la comptabilité.",
+    "payment-invalid-amount": "Le montant n’est pas valable. Il doit être supérieur à 0.",
+    "payment-account-invalid": "On ne peut pas comptabiliser sur le compte bancaire choisi. Choisis un compte sans sous-comptes.",
+    "payment-period-locked": "La période comptable de la date de paiement est clôturée. Choisis une autre date ou fais rouvrir la période.",
+    "payment-inconsistent-state": "Un problème est survenu lors de la saisie du paiement. Réessaie, s’il te plaît.",
+    "cancel-period-locked": "La période comptable de la date d’annulation est clôturée. Choisis une autre date ou fais rouvrir la période.",
+    "cancel-inconsistent-state": "Un problème est survenu lors de l’annulation. Réessaie, s’il te plaît.",
+    "confirmation-no-receiver": "La facture n’a pas de destinataire. Sans destinataire, il n’y a pas de confirmation de paiement."
+  },
+  "payment": {
+    "label": "Saisir un paiement",
+    "title": "Saisir un paiement",
+    "conf": "Le paiement est saisi. Il reste CHF {open} à payer.",
+    "conf_paid": "Le paiement est saisi. La facture est maintenant payée.",
+    "error": "Le paiement n’a pas pu être saisi. Réessaie plus tard.",
+    "mode": {
+      "post": "Comptabiliser le paiement bancaire",
+      "link": "Lier une écriture bancaire"
+    },
+    "date": {
+      "label": "Date de paiement",
+      "placeholder": "jj.mm.aaaa",
+      "helper": "Le jour où l’argent est arrivé."
+    },
+    "amount": {
+      "label": "Montant (CHF)",
+      "placeholder": "0.00",
+      "helper": "Reste à payer : CHF {open}. Tu ne peux pas saisir davantage."
+    },
+    "bankAccount": {
+      "label": "Compte bancaire",
+      "helper": "L’argent est arrivé sur ce compte."
+    },
+    "booking": {
+      "label": "Écriture bancaire",
+      "helper": "Choisis l’écriture qui enregistre déjà ce paiement dans la comptabilité.",
+      "none": "Il n’y a aucune écriture bancaire qui convient. Elle doit être comptabilisée et créditer le compte débiteurs.",
+      "failed": "Les écritures bancaires n’ont pas pu être chargées. Tu peux quand même comptabiliser le paiement."
+    },
+    "list": {
+      "title": "Paiements",
+      "booking": "Écriture"
+    },
+    "validation": {
+      "dateRequired": "Indique quand l’argent est arrivé.",
+      "amountPositive": "Le montant doit être supérieur à 0.",
+      "amountTooHigh": "Le montant dépasse ce qui reste à payer sur la facture.",
+      "amountAboveBooking": "Le montant dépasse le crédit de l’écriture bancaire choisie.",
+      "bankAccountRequired": "Choisis le compte bancaire sur lequel l’argent est arrivé.",
+      "bookingRequired": "Choisis l’écriture bancaire qui enregistre le paiement."
+    }
+  },
+  "cancelInvoice": {
+    "label": "Annuler la facture",
+    "message": "La facture est annulée et son écriture contrepassée. Cela ne peut pas être défait.",
+    "reason": "Motif de l’annulation",
+    "date": "Date de l’annulation",
+    "ok": "Annuler la facture",
+    "conf": "La facture est annulée.",
+    "error": "La facture n’a pas pu être annulée. Réessaie plus tard.",
+    "reasonInvalid": "Indique un motif (500 caractères au maximum).",
+    "dateInvalid": "Indique une date valable, par exemple 31.12.2026."
+  },
+  "issueAll": {
+    "label": "Émettre tous les brouillons",
+    "confirm": "{count} brouillons vont être émis. Ils reçoivent leur numéro et sont comptabilisés. Ensuite, tu ne pourras plus les modifier.",
+    "progress": "{n} sur {m}",
+    "done": "{issued} factures sur {total} sont émises.",
+    "failed": "Non émises :"
   }
 }

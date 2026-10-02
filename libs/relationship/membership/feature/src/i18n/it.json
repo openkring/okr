@@ -149,7 +149,7 @@
     },
     "total": "Totale",
     "invoice": {
-      "conf": "Le fatture sono state create.",
+      "conf": "Le fatture sono state create come bozze. Puoi emetterle nella lista delle fatture.",
       "incomplete": "Sono state create {invoiced} fatture. Questi membri sono stati saltati perché una posizione non ha un conto di ricavo: {names}. Completa il piano delle quote."
     },
     "invoiceAll": {

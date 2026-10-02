@@ -300,6 +300,92 @@
     "too-many-positions": "Una fattura può avere al massimo 100 posizioni.",
     "inconsistent-state": "Qualcosa è andato storto durante l'emissione. Riprova, per favore.",
     "no-due-date": "La fattura non ha ancora una data di scadenza. Indica entro quando deve essere pagata.",
-    "due-before-invoice-date": "La data di scadenza è precedente alla data della fattura. Scegli una data successiva."
+    "due-before-invoice-date": "La data di scadenza è precedente alla data della fattura. Scegli una data successiva.",
+    "invalid-payment-id": "Non è stato possibile identificare il pagamento. Chiudi la finestra e riprova.",
+    "not-a-payment-account": "Su questo conto non si possono contabilizzare pagamenti. Scegli uno dei conti bancari delle impostazioni contabili.",
+    "payment-blocked": "Questo pagamento non può essere registrato.",
+    "link-blocked": "Questa registrazione bancaria non può essere collegata alla fattura.",
+    "cancel-blocked": "Questa fattura non può essere stornata.",
+    "no-bank-line": "Nella registrazione scelta manca la riga con il conto bancario. Scegli un’altra registrazione.",
+    "not-paid": "La fattura non è ancora pagata. La conferma di pagamento è disponibile solo dopo.",
+    "not-payable": "Per questa fattura non si può registrare un pagamento. È possibile solo per una fattura emessa e ancora aperta.",
+    "overpayment": "L’importo supera quanto resta aperto sulla fattura.",
+    "no-payment-date": "Indica quando è arrivato il denaro.",
+    "booking-not-found": "La registrazione bancaria scelta non esiste più.",
+    "booking-not-posted": "La registrazione bancaria scelta non è ancora contabilizzata. Contabilizzala prima.",
+    "foreign-booking": "La registrazione bancaria scelta appartiene a un’altra contabilità.",
+    "no-receivables-credit": "La registrazione bancaria scelta non accredita abbastanza al conto debitori. Scegli un’altra registrazione o un importo minore.",
+    "already-linked": "Questa registrazione bancaria è già collegata a questa fattura.",
+    "not-cancellable": "Si possono stornare solo fatture emesse e ancora aperte.",
+    "has-payments": "Per questa fattura sono già registrati dei pagamenti, quindi non può più essere stornata.",
+    "no-issue-booking": "Questa fattura non è stata contabilizzata qui (per esempio ripresa da bexio). Stornala a mano in contabilità.",
+    "payment-invalid-amount": "L’importo non è valido. Deve essere maggiore di 0.",
+    "payment-account-invalid": "Sul conto bancario scelto non si può contabilizzare. Scegli un conto senza sottoconti.",
+    "payment-period-locked": "Il periodo contabile della data di pagamento è chiuso. Scegli un’altra data o fai riaprire il periodo.",
+    "payment-inconsistent-state": "Qualcosa è andato storto durante la registrazione del pagamento. Riprova, per favore.",
+    "cancel-period-locked": "Il periodo contabile della data di storno è chiuso. Scegli un’altra data o fai riaprire il periodo.",
+    "cancel-inconsistent-state": "Qualcosa è andato storto durante lo storno. Riprova, per favore.",
+    "confirmation-no-receiver": "La fattura non ha destinatario. Senza destinatario non c’è conferma di pagamento."
+  },
+  "payment": {
+    "label": "Registra pagamento",
+    "title": "Registra pagamento",
+    "conf": "Il pagamento è registrato. Restano aperti CHF {open}.",
+    "conf_paid": "Il pagamento è registrato. La fattura ora è pagata.",
+    "error": "Non è stato possibile registrare il pagamento. Riprova più tardi.",
+    "mode": {
+      "post": "Contabilizza pagamento bancario",
+      "link": "Collega registrazione bancaria"
+    },
+    "date": {
+      "label": "Data di pagamento",
+      "placeholder": "gg.mm.aaaa",
+      "helper": "Il giorno in cui è arrivato il denaro."
+    },
+    "amount": {
+      "label": "Importo (CHF)",
+      "placeholder": "0.00",
+      "helper": "Ancora aperto: CHF {open}. Non puoi registrare di più."
+    },
+    "bankAccount": {
+      "label": "Conto bancario",
+      "helper": "Il denaro è arrivato su questo conto."
+    },
+    "booking": {
+      "label": "Registrazione bancaria",
+      "helper": "Scegli la registrazione che riporta già questo pagamento in contabilità.",
+      "none": "Non c’è nessuna registrazione bancaria adatta. Deve essere contabilizzata e accreditare il conto debitori.",
+      "failed": "Non è stato possibile caricare le registrazioni bancarie. Puoi comunque contabilizzare il pagamento."
+    },
+    "list": {
+      "title": "Pagamenti",
+      "booking": "Registrazione"
+    },
+    "validation": {
+      "dateRequired": "Indica quando è arrivato il denaro.",
+      "amountPositive": "L’importo deve essere maggiore di 0.",
+      "amountTooHigh": "L’importo supera quanto resta aperto sulla fattura.",
+      "amountAboveBooking": "L’importo supera l’accredito della registrazione bancaria scelta.",
+      "bankAccountRequired": "Scegli il conto bancario su cui è arrivato il denaro.",
+      "bookingRequired": "Scegli la registrazione bancaria che riporta il pagamento."
+    }
+  },
+  "cancelInvoice": {
+    "label": "Stornare fattura",
+    "message": "La fattura viene stornata e la sua registrazione annullata. Non si può tornare indietro.",
+    "reason": "Motivo dello storno",
+    "date": "Data dello storno",
+    "ok": "Storna",
+    "conf": "La fattura è stornata.",
+    "error": "Non è stato possibile stornare la fattura. Riprova più tardi.",
+    "reasonInvalid": "Indica un motivo (al massimo 500 caratteri).",
+    "dateInvalid": "Indica una data valida, per esempio 31.12.2026."
+  },
+  "issueAll": {
+    "label": "Emetti tutte le bozze",
+    "confirm": "Verranno emesse {count} bozze. Ricevono il loro numero e vengono contabilizzate. Dopo non potrai più modificarle.",
+    "progress": "{n} di {m}",
+    "done": "{issued} fatture su {total} sono emesse.",
+    "failed": "Non emesse:"
   }
 }

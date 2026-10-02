@@ -6,6 +6,7 @@ import { Header } from '@okr/shared-ui';
 import { PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
 import { getFullName } from '@okr/shared-util-core';
 import { AvatarPipe } from '@okr/avatar-ui';
+import { formatPaymentChf } from '@okr/finance-invoice-util';
 import { InvoiceStore } from './invoice.store';
 
 @Component({
@@ -99,6 +100,21 @@ import { InvoiceStore } from './invoice.store';
                 </ion-label>
               </ion-item>
             }
+            <!-- payments (read-only; recorded through the list's "Zahlung erfassen") -->
+            @if(payments().length > 0) {
+              <ion-item lines="none">
+                <ion-icon slot="start" src="{{'chf' | svgIcon}}" />
+                <ion-label>
+                  <p class="view-label">{{ store.i18n.payments_title() }}</p>
+                  @for(payment of payments(); track $index) {
+                    <p class="view-value">
+                      {{ payment.date | prettyDate }} · CHF {{ formatChf(payment.amount) }}
+                      @if(payment.bookingKey) { · {{ store.i18n.payments_booking() }} {{ payment.bookingKey }} }
+                    </p>
+                  }
+                </ion-label>
+              </ion-item>
+            }
             <!-- notes -->
             @if(invoice.notes.length > 0) {
               <ion-item lines="none">
@@ -133,6 +149,12 @@ export class InvoiceViewModal {
   protected readonly state = computed(() => this.invoice()?.state ?? 'draft');
   protected readonly paymentDate = computed(() => this.invoice()?.paymentDate ?? '');
   protected readonly notes = computed(() => this.invoice()?.notes ?? '');
+  // legacy invoices lack the field (Firestore reads skip model defaults)
+  protected readonly payments = computed(() => this.invoice()?.payments ?? []);
+
+  protected formatChf(rappen: number): string {
+    return formatPaymentChf(rappen);
+  }
 
   protected getStateColor(state: string): string {
     switch(state) {

@@ -300,6 +300,92 @@
     "too-many-positions": "Eine Rechnung kann höchstens 100 Positionen haben.",
     "inconsistent-state": "Beim Ausstellen ist etwas schiefgelaufen. Versuche es bitte noch einmal.",
     "no-due-date": "Die Rechnung hat noch kein Fälligkeitsdatum. Ergänze, bis wann sie bezahlt sein soll.",
-    "due-before-invoice-date": "Das Fälligkeitsdatum liegt vor dem Rechnungsdatum. Wähle ein späteres Datum."
+    "due-before-invoice-date": "Das Fälligkeitsdatum liegt vor dem Rechnungsdatum. Wähle ein späteres Datum.",
+    "invalid-payment-id": "Die Zahlung konnte nicht eindeutig erkannt werden. Schliesse das Fenster und versuche es noch einmal.",
+    "not-a-payment-account": "Auf dieses Konto können keine Zahlungen gebucht werden. Wähle eines der Bankkonten aus den Buchhaltungseinstellungen.",
+    "payment-blocked": "Diese Zahlung kann nicht erfasst werden.",
+    "link-blocked": "Diese Bankbuchung kann nicht mit der Rechnung verknüpft werden.",
+    "cancel-blocked": "Diese Rechnung kann nicht storniert werden.",
+    "no-bank-line": "In der gewählten Bankbuchung fehlt die Zeile mit dem Bankkonto. Wähle eine andere Buchung.",
+    "not-paid": "Die Rechnung ist noch nicht bezahlt. Eine Zahlungsbestätigung gibt es erst danach.",
+    "not-payable": "Für diese Rechnung kann keine Zahlung erfasst werden. Das geht nur bei einer ausgestellten, noch offenen Rechnung.",
+    "overpayment": "Der Betrag ist höher als der noch offene Betrag der Rechnung.",
+    "no-payment-date": "Gib an, wann das Geld eingegangen ist.",
+    "booking-not-found": "Die gewählte Bankbuchung gibt es nicht mehr.",
+    "booking-not-posted": "Die gewählte Bankbuchung ist noch nicht verbucht. Verbuche sie zuerst.",
+    "foreign-booking": "Die gewählte Bankbuchung gehört zu einer anderen Buchhaltung.",
+    "no-receivables-credit": "Die gewählte Bankbuchung schreibt dem Debitorenkonto nicht genug gut. Wähle eine andere Buchung oder einen kleineren Betrag.",
+    "already-linked": "Diese Bankbuchung ist mit dieser Rechnung schon verknüpft.",
+    "not-cancellable": "Nur ausgestellte, noch offene Rechnungen können storniert werden.",
+    "has-payments": "Für diese Rechnung sind schon Zahlungen erfasst. Darum kann sie nicht mehr storniert werden.",
+    "no-issue-booking": "Diese Rechnung wurde nicht hier verbucht (zum Beispiel aus bexio übernommen). Storniere sie bitte von Hand in der Buchhaltung.",
+    "payment-invalid-amount": "Der Betrag ist ungültig. Er muss grösser als 0 sein.",
+    "payment-account-invalid": "Auf das gewählte Bankkonto kann nicht gebucht werden. Wähle ein Konto ohne Unterkonten.",
+    "payment-period-locked": "Die Buchungsperiode zum Zahlungsdatum ist abgeschlossen. Wähle ein anderes Datum oder lass die Periode wieder öffnen.",
+    "payment-inconsistent-state": "Beim Erfassen der Zahlung ist etwas schiefgelaufen. Versuche es bitte noch einmal.",
+    "cancel-period-locked": "Die Buchungsperiode zum Stornodatum ist abgeschlossen. Wähle ein anderes Datum oder lass die Periode wieder öffnen.",
+    "cancel-inconsistent-state": "Beim Stornieren ist etwas schiefgelaufen. Versuche es bitte noch einmal.",
+    "confirmation-no-receiver": "Die Rechnung hat keinen Empfänger. Ohne Empfänger gibt es keine Zahlungsbestätigung."
+  },
+  "payment": {
+    "label": "Zahlung erfassen",
+    "title": "Zahlung erfassen",
+    "conf": "Die Zahlung ist erfasst. Es ist noch CHF {open} offen.",
+    "conf_paid": "Die Zahlung ist erfasst. Die Rechnung ist jetzt bezahlt.",
+    "error": "Die Zahlung konnte nicht erfasst werden. Bitte versuche es später noch einmal.",
+    "mode": {
+      "post": "Bankzahlung buchen",
+      "link": "Bankbuchung verknüpfen"
+    },
+    "date": {
+      "label": "Zahlungsdatum",
+      "placeholder": "dd.mm.yyyy",
+      "helper": "Der Tag, an dem das Geld eingegangen ist."
+    },
+    "amount": {
+      "label": "Betrag (CHF)",
+      "placeholder": "0.00",
+      "helper": "Noch offen: CHF {open}. Mehr kannst du nicht erfassen."
+    },
+    "bankAccount": {
+      "label": "Bankkonto",
+      "helper": "Auf diesem Konto ist das Geld eingegangen."
+    },
+    "booking": {
+      "label": "Bankbuchung",
+      "helper": "Wähle die Buchung, mit der die Zahlung schon in der Buchhaltung steht.",
+      "none": "Es gibt keine passende Bankbuchung. Sie muss verbucht sein und auf dem Debitorenkonto eine Gutschrift haben.",
+      "failed": "Die Bankbuchungen konnten nicht geladen werden. Du kannst die Zahlung trotzdem buchen."
+    },
+    "list": {
+      "title": "Zahlungen",
+      "booking": "Buchung"
+    },
+    "validation": {
+      "dateRequired": "Gib an, wann das Geld eingegangen ist.",
+      "amountPositive": "Der Betrag muss grösser als 0 sein.",
+      "amountTooHigh": "Der Betrag ist höher als der noch offene Betrag der Rechnung.",
+      "amountAboveBooking": "Der Betrag ist höher als die Gutschrift der gewählten Bankbuchung.",
+      "bankAccountRequired": "Wähle das Bankkonto, auf dem das Geld eingegangen ist.",
+      "bookingRequired": "Wähle die Bankbuchung, mit der die Zahlung verbucht ist."
+    }
+  },
+  "cancelInvoice": {
+    "label": "Rechnung stornieren",
+    "message": "Die Rechnung wird storniert und ihre Buchung rückgängig gemacht. Das lässt sich nicht widerrufen.",
+    "reason": "Grund der Stornierung",
+    "date": "Datum der Stornierung",
+    "ok": "Stornieren",
+    "conf": "Die Rechnung ist storniert.",
+    "error": "Die Rechnung konnte nicht storniert werden. Bitte versuche es später noch einmal.",
+    "reasonInvalid": "Gib einen Grund an (höchstens 500 Zeichen).",
+    "dateInvalid": "Gib ein gültiges Datum an, zum Beispiel 31.12.2026."
+  },
+  "issueAll": {
+    "label": "Alle Entwürfe ausstellen",
+    "confirm": "Es werden {count} Entwürfe ausgestellt. Sie bekommen ihre Nummer und werden verbucht. Danach kannst du sie nicht mehr ändern.",
+    "progress": "{n} von {m}",
+    "done": "{issued} von {total} Rechnungen sind ausgestellt.",
+    "failed": "Nicht ausgestellt:"
   }
 }

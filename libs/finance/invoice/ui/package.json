@@ -13,6 +13,8 @@
     "@okr/shared-util-core": "*",
     "@okr/finance-invoice-util": "*",
     "@okr/finance-account-ui": "*",
-    "@okr/shared-pipes": "*"
+    "@okr/shared-pipes": "*",
+    "@okr/shared-util-angular": "*",
+    "@okr/shared-i18n": "*"
   }
 }

@@ -6,11 +6,16 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 
 import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
-import { DbQuery, InvoiceCollection, InvoiceModel, InvoicePositionCollection, InvoicePositionModel, UserModel } from '@okr/shared-models';
-import { findByKey, getQuery, getSystemQuery } from '@okr/shared-util-core';
+import {
+  BookingCollection, BookingLineCollection, BookingLineModel, BookingModel, DbQuery, InvoiceCollection, InvoiceModel, InvoicePayment,
+  InvoicePositionCollection, InvoicePositionModel, UserModel,
+} from '@okr/shared-models';
+import { addDuration, findByKey, getQuery, getSystemQuery, getTodayStr } from '@okr/shared-util-core';
 import { ActivityService } from '@okr/activity-data-access';
 
-import { InvoiceHeaderInput, InvoicePositionInput, toInvoiceHeaderInput } from '@okr/finance-invoice-util';
+import {
+  InvoiceHeaderInput, InvoicePaymentCandidate, invoicePaymentCandidates, InvoicePaymentInput, InvoicePositionInput, toInvoiceHeaderInput,
+} from '@okr/finance-invoice-util';
 
 /** The `writeInvoice` callable's request (apps/functions/src/invoice/write-invoice.ts). */
 export interface WriteInvoicePayload {
@@ -21,11 +26,44 @@ export interface WriteInvoicePayload {
   positions?: InvoicePositionInput[];
 }
 
+/** How far before the invoice date a linkable bank booking may lie (a prepayment). */
+export const PAYMENT_CANDIDATE_LOOKBACK_DAYS = 90;
+
 /** The `issueInvoice` callable's result. */
 export interface IssueInvoiceResult {
   invoiceNo: number;
   documentKey: string;
   bookingKey: string;
+}
+
+/** The `recordInvoicePayment` callable's request (apps/functions/src/invoice/record-invoice-payment.ts). */
+export interface RecordInvoicePaymentPayload {
+  invoiceKey: string;
+  mode: 'post' | 'link';
+  paymentId: string;
+  date: string;
+  amount: number;            // Rappen
+  bankAccountKey?: string;
+  bookingKey?: string;
+}
+
+/** The `recordInvoicePayment` callable's result: the invoice's state and payments after the write. */
+export interface RecordInvoicePaymentResult {
+  state: string;
+  payments: InvoicePayment[];
+  bookingKey: string;
+}
+
+/** The `cancelInvoice` callable's result. */
+export interface CancelInvoiceResult {
+  state: 'cancelled';
+  stornoBookingKey: string;
+}
+
+/** The `createPaymentConfirmation` callable's result. */
+export interface PaymentConfirmationResult {
+  documentKey: string;
+  content: string;           // base64 PDF
 }
 
 /**
@@ -83,6 +121,70 @@ export class InvoiceService {
     return result.data;
   }
 
+  /**
+   * Records a received payment (spec 1.76 phase 2). `payment.amount` is CHF; it is converted to Rappen
+   * here, exactly once. `paymentId` is the dialog's idempotency key — pass the same one on a retry.
+   */
+  public async recordPayment(invoiceKey: string, payment: InvoicePaymentInput, paymentId: string, currentUser?: UserModel): Promise<RecordInvoicePaymentResult> {
+    const payload: RecordInvoicePaymentPayload = {
+      invoiceKey,
+      mode: payment.mode,
+      paymentId,
+      date: payment.date,
+      amount: Math.round(payment.amount * 100),
+      ...(payment.mode === 'post' ? { bankAccountKey: payment.bankAccountKey } : { bookingKey: payment.bookingKey }),
+    };
+    const fn = httpsCallable<RecordInvoicePaymentPayload, RecordInvoicePaymentResult>(this.functions(), 'recordInvoicePayment');
+    const result = await fn(payload);
+    void this.activityService.log('invoice', 'payment', currentUser, `${invoiceKey}: ${payload.amount} (${payment.mode})`);
+    return result.data;
+  }
+
+  /** Cancels an issued, unpaid invoice with a reversal booking dated `date` (StoreDate). */
+  public async cancel(invoiceKey: string, date: string, reason: string, currentUser?: UserModel): Promise<CancelInvoiceResult> {
+    const fn = httpsCallable<{ invoiceKey: string; date: string; reason: string }, CancelInvoiceResult>(this.functions(), 'cancelInvoice');
+    const result = await fn({ invoiceKey, date, reason });
+    void this.activityService.log('invoice', 'cancel', currentUser, `${invoiceKey}: ${result.data.stornoBookingKey}`);
+    return result.data;
+  }
+
+  /** Renders the payment confirmation of a paid invoice on the server; returns it as base64 PDF. */
+  public async createPaymentConfirmation(invoiceKey: string): Promise<PaymentConfirmationResult> {
+    const fn = httpsCallable<{ invoiceKey: string }, PaymentConfirmationResult>(this.functions(), 'createPaymentConfirmation');
+    const result = await fn({ invoiceKey });
+    return result.data;
+  }
+
+  /**
+   * The bank bookings a payment of this invoice may be linked to: posted bookings of the accounting
+   * tenant that credit the receivables account, newest first, at most 50, without the ones already
+   * linked on the invoice (see `invoicePaymentCandidates`). Rejects when a read fails, so the caller
+   * can tell "no candidates" from "could not load".
+   * Bookings dated more than PAYMENT_CANDIDATE_LOOKBACK_DAYS before the invoice date are not read: a
+   * payment does not arrive long before its invoice, and the bound keeps the read small.
+   */
+  public async listPaymentCandidates(invoice: InvoiceModel, receivablesAccountKey: string): Promise<InvoicePaymentCandidate[]> {
+    if (!receivablesAccountKey || !invoice.accountingTenantId) return [];
+    const linesQuery: DbQuery[] = [
+      ...getSystemQuery(this.env.tenantId),
+      { key: 'accountingTenantId', operator: '==', value: invoice.accountingTenantId },
+      { key: 'accountKey', operator: '==', value: receivablesAccountKey },
+    ];
+    const fromDate = addDuration(invoice.invoiceDate || getTodayStr(), { days: -PAYMENT_CANDIDATE_LOOKBACK_DAYS });
+    const bookingsQuery: DbQuery[] = [
+      ...getSystemQuery(this.env.tenantId),
+      { key: 'accountingTenantId', operator: '==', value: invoice.accountingTenantId },
+      { key: 'status', operator: '==', value: 'posted' },
+      { key: 'date', operator: '>=', value: fromDate },
+    ];
+    const [lines, bookings] = await Promise.all([
+      this.readOnce<BookingLineModel>(BookingLineCollection, linesQuery, 'none'),
+      this.readOnce<BookingModel>(BookingCollection, bookingsQuery, 'date', 'desc'),
+    ]);
+    const linked = (invoice.payments ?? []).map((p) => p.bookingKey).filter((k) => !!k);
+    return invoicePaymentCandidates(lines, bookings, receivablesAccountKey, linked);
+  }
+
   public async writeViaFunction(payload: WriteInvoicePayload): Promise<{ invoiceKey: string }> {
     const fn = httpsCallable<WriteInvoicePayload, { invoiceKey: string }>(getFunctions(getApp(), 'europe-west6'), 'writeInvoice');
     const result = await fn(payload);
@@ -108,6 +210,17 @@ export class InvoiceService {
     );
     const snapshot = await getDocs(ref);
     return snapshot.docs.map((d) => ({ ...d.data(), okey: d.id }) as InvoicePositionModel);
+  }
+
+  private functions() {
+    return getFunctions(getApp(), 'europe-west6');
+  }
+
+  /** A one-shot read that rejects on failure (FirestoreService.getDataOnce would return [] instead). */
+  private async readOnce<T>(collectionName: string, dbQuery: DbQuery[], orderBy: string, sortOrder = 'asc'): Promise<T[]> {
+    const ref = query(collection(this.firestoreService.firestore, collectionName), ...getQuery(dbQuery, orderBy, sortOrder));
+    const snapshot = await getDocs(ref);
+    return snapshot.docs.map((d) => ({ ...d.data(), okey: d.id }) as T);
   }
 
   private positionsQuery(invoiceKey: string): DbQuery[] {

@@ -1,5 +1,8 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, effect, inject, input } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonChip, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonLabel, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import {
+  ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonChip, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg,
+  IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar, PopoverController,
+} from '@ionic/angular/standalone';
 import { InvoiceModel, RoleName } from '@okr/shared-models';
 import { canCreatePaymentConfirmation, isDraftInvoice } from '@okr/finance-invoice-util';
 import { SvgIconPipe } from '@okr/shared-pipes';
@@ -22,7 +25,7 @@ import { InvoiceStore } from './invoice.store';
     SvgIconPipe, AvatarPipe,
     Spinner, ListFilter, EmptyList, Menu, ReadOnlyBanner,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon, IonPopover,
-    IonContent, IonLabel, IonGrid, IonRow, IonCol, IonAvatar, IonImg, IonChip
+    IonContent, IonLabel, IonGrid, IonRow, IonCol, IonAvatar, IonImg, IonChip, IonList, IonItem
   ],
   styles: [`
     .inv-id { font-size: 0.8rem; }
@@ -47,6 +50,15 @@ import { InvoiceStore } from './invoice.store';
               <ng-template>
                 <ion-content>
                   <okr-menu [menuName]="contextMenuName()" />
+                  <!-- not a menuItems row: it is offered only while the list holds drafts -->
+                  @if (canIssueAllDrafts()) {
+                    <ion-list lines="none">
+                      <ion-item button="true" detail="false" (click)="selectPopoverAction('issueAllDrafts')">
+                        <ion-icon slot="start" src="{{ 'send' | svgIcon }}" />
+                        <ion-label>{{ store.i18n.issue_all() }}</ion-label>
+                      </ion-item>
+                    </ion-list>
+                  }
                 </ion-content>
               </ng-template>
             </ion-popover>
@@ -101,6 +113,7 @@ export class InvoiceList {
   protected readonly store = inject(InvoiceStore);
   private readonly actionSheetController = inject(ActionSheetController);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly popoverController = inject(PopoverController);
 
   // inputs
   public readonly listId = input.required<string>();  // all, my, personKey
@@ -115,6 +128,9 @@ export class InvoiceList {
   protected readonly imgixBaseUrl = computed(() => this.store.appStore.env.services.imgixBaseUrl);
   protected years = computed(() => getYearList(getYear(), 8));
   protected states = computed(() => this.store.states());
+  /** "Alle Entwürfe ausstellen": treasurer, native books, and only while the list holds drafts */
+  protected readonly canIssueAllDrafts = computed(() =>
+    this.store.isExternallyManaged() === false && hasRole('treasurer', this.currentUser()) && this.store.draftsToIssue().length > 0);
 
   /******************************** constructor ******************************************* */
   constructor() {
@@ -180,9 +196,14 @@ export class InvoiceList {
     switch (selectedMethod) {
       case 'add': await this.store.add(); break;
       case 'exportRaw': await this.store.export('raw', this.filteredInvoices()); break;
+      case 'issueAllDrafts': await this.store.issueAllDrafts(); break;
       default: error(undefined, `InvoiceList.onPopoverDismiss: unknown method ${selectedMethod}`);
     }
     this.cdr.markForCheck();
+  }
+
+  protected async selectPopoverAction(action: string): Promise<void> {
+    await this.popoverController.dismiss(action);
   }
 
   protected async showActions(invoice: InvoiceModel): Promise<void> {
@@ -192,8 +213,10 @@ export class InvoiceList {
   }
 
   /**
-   * A native draft is edited, issued or deleted; an issued invoice shows its PDF; `issuing` (a transient
-   * server state) only shows its details. Books kept in bexio are read-only here: details and PDF.
+   * A native draft is edited, issued or deleted; `issuing` (a transient server state) only shows its
+   * details. An open (`pending`) invoice takes a payment or is cancelled; a paid one offers its payment
+   * confirmation — those write actions are for the treasurer. Every issued invoice shows its PDF.
+   * Books kept in bexio are read-only here: details, PDF and the payment confirmation.
    */
   private async addActionSheetButtons(options: ActionSheetOptions, invoice: InvoiceModel): Promise<void> {
     const base = this.imgixBaseUrl();
@@ -216,10 +239,17 @@ export class InvoiceList {
       }
       options.buttons.push(createActionSheetButton('invoice.view', i18n.view(), base, 'eye-on'));
     } else {
+      if (invoice.state === 'pending' && this.canWriteDrafts()) {
+        options.buttons.push(createActionSheetButton('invoice.payment', i18n.payment(), base, 'chf'));
+        options.buttons.push(createActionSheetButton('invoice.cancelInvoice', i18n.cancel_invoice(), base, 'cancel-circle'));
+      }
+      if (canCreatePaymentConfirmation(invoice) && this.canWriteDrafts()) {
+        options.buttons.push(createActionSheetButton('invoice.paymentConfirmation', i18n.payment_confirmation(), base, 'document'));
+      }
       options.buttons.push(createActionSheetButton('invoice.showpdf', i18n.show_pdf(), base, 'download'));
       options.buttons.push(createActionSheetButton('invoice.view', i18n.view(), base, 'eye-on'));
     }
-    if (canCreatePaymentConfirmation(invoice)) {
+    if (this.store.isExternallyManaged() !== false && canCreatePaymentConfirmation(invoice)) {
       options.buttons.push(createActionSheetButton('invoice.paymentConfirmation', i18n.payment_confirmation(), base, 'document'));
     }
     options.buttons.push(createActionSheetButton('cancel', i18n.cancel(), base, 'cancel'));
@@ -239,6 +269,8 @@ export class InvoiceList {
       case 'invoice.edit': await this.store.edit(invoice, false); break;
       case 'invoice.issue': await this.store.issue(invoice); break;
       case 'invoice.delete': await this.store.delete(invoice); break;
+      case 'invoice.payment': await this.store.recordPayment(invoice); break;
+      case 'invoice.cancelInvoice': await this.store.cancelInvoice(invoice); break;
     }
     this.cdr.markForCheck();
   }

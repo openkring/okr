@@ -94,15 +94,20 @@ export function revenueAccounts(accounts: AccountModel[]): AccountModel[] {
   });
 }
 
+/** Refusals whose individual blockers arrive as a list in `details.reasons`. */
+export const INVOICE_BLOCKED_REASONS = ['issue-blocked', 'payment-blocked', 'link-blocked', 'cancel-blocked'];
+
 /**
- * The refusal reasons of a failed `writeInvoice` / `issueInvoice` call, most specific first.
- * `issue-blocked` carries the individual blockers in `details.reasons`; a missing invoice arrives as
- * the `not-found` code; too many positions as the message of an `invalid-argument`. [] = unknown.
+ * The refusal reasons of a failed invoice call (`writeInvoice`, `issueInvoice`, `recordInvoicePayment`,
+ * `cancelInvoice`, `createPaymentConfirmation`), most specific first. The `*-blocked` refusals carry
+ * the individual blockers in `details.reasons`; a missing invoice arrives as the `not-found` code; too
+ * many positions as the message of an `invalid-argument`. [] = unknown.
  */
 export function invoiceRefusalReasons(error: unknown): string[] {
   const e = error as { code?: string; message?: string; details?: { reason?: unknown; reasons?: unknown } } | undefined;
   const details = e?.details;
-  if (details?.reason === 'issue-blocked' && Array.isArray(details.reasons) && details.reasons.length > 0) {
+  if (typeof details?.reason === 'string' && INVOICE_BLOCKED_REASONS.includes(details.reason)
+    && Array.isArray(details.reasons) && details.reasons.length > 0) {
     return details.reasons.map((r) => String(r));
   }
   if (typeof details?.reason === 'string' && details.reason) return [details.reason];

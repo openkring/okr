@@ -149,7 +149,7 @@
     },
     "total": "Total",
     "invoice": {
-      "conf": "Las facturas se han creado.",
+      "conf": "Las facturas se han creado como borradores. Puedes emitirlas en la lista de facturas.",
       "incomplete": "Se han creado {invoiced} facturas. Estos miembros se han omitido porque una posición no tiene cuenta de ingresos: {names}. Completa el plan de cuotas."
     },
     "invoiceAll": {

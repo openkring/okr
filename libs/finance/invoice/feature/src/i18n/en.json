@@ -300,6 +300,92 @@
     "too-many-positions": "An invoice can have at most 100 items.",
     "inconsistent-state": "Something went wrong while issuing. Please try again.",
     "no-due-date": "The invoice has no due date yet. Add the date by which it should be paid.",
-    "due-before-invoice-date": "The due date is before the invoice date. Choose a later date."
+    "due-before-invoice-date": "The due date is before the invoice date. Choose a later date.",
+    "invalid-payment-id": "The payment could not be identified. Close the window and try again.",
+    "not-a-payment-account": "Payments cannot be booked on this account. Choose one of the bank accounts from the accounting settings.",
+    "payment-blocked": "This payment cannot be recorded.",
+    "link-blocked": "This bank booking cannot be linked to the invoice.",
+    "cancel-blocked": "This invoice cannot be cancelled.",
+    "no-bank-line": "The chosen bank booking has no line with the bank account. Choose another booking.",
+    "not-paid": "The invoice is not paid yet. A payment confirmation is only available afterwards.",
+    "not-payable": "No payment can be recorded for this invoice. That only works for an issued invoice that is still open.",
+    "overpayment": "The amount is higher than what is still open on the invoice.",
+    "no-payment-date": "Enter when the money arrived.",
+    "booking-not-found": "The chosen bank booking no longer exists.",
+    "booking-not-posted": "The chosen bank booking is not posted yet. Post it first.",
+    "foreign-booking": "The chosen bank booking belongs to another set of accounts.",
+    "no-receivables-credit": "The chosen bank booking does not credit enough to the receivables account. Choose another booking or a smaller amount.",
+    "already-linked": "This bank booking is already linked to this invoice.",
+    "not-cancellable": "Only issued invoices that are still open can be cancelled.",
+    "has-payments": "Payments have already been recorded for this invoice, so it can no longer be cancelled.",
+    "no-issue-booking": "This invoice was not booked here (for example taken over from bexio). Please cancel it by hand in the accounts.",
+    "payment-invalid-amount": "The amount is not valid. It must be greater than 0.",
+    "payment-account-invalid": "The chosen bank account cannot be booked on. Choose an account without sub-accounts.",
+    "payment-period-locked": "The accounting period of the payment date is closed. Choose another date or have the period reopened.",
+    "payment-inconsistent-state": "Something went wrong while recording the payment. Please try again.",
+    "cancel-period-locked": "The accounting period of the cancellation date is closed. Choose another date or have the period reopened.",
+    "cancel-inconsistent-state": "Something went wrong while cancelling. Please try again.",
+    "confirmation-no-receiver": "The invoice has no receiver. Without a receiver there is no payment confirmation."
+  },
+  "payment": {
+    "label": "Record payment",
+    "title": "Record payment",
+    "conf": "The payment is recorded. CHF {open} is still open.",
+    "conf_paid": "The payment is recorded. The invoice is now paid.",
+    "error": "The payment could not be recorded. Please try again later.",
+    "mode": {
+      "post": "Book bank payment",
+      "link": "Link bank booking"
+    },
+    "date": {
+      "label": "Payment date",
+      "placeholder": "dd.mm.yyyy",
+      "helper": "The day the money arrived."
+    },
+    "amount": {
+      "label": "Amount (CHF)",
+      "placeholder": "0.00",
+      "helper": "Still open: CHF {open}. You cannot record more than that."
+    },
+    "bankAccount": {
+      "label": "Bank account",
+      "helper": "The money arrived on this account."
+    },
+    "booking": {
+      "label": "Bank booking",
+      "helper": "Choose the booking that already records this payment in the accounts.",
+      "none": "There is no matching bank booking. It must be posted and credit the receivables account.",
+      "failed": "The bank bookings could not be loaded. You can still book the payment."
+    },
+    "list": {
+      "title": "Payments",
+      "booking": "Booking"
+    },
+    "validation": {
+      "dateRequired": "Enter when the money arrived.",
+      "amountPositive": "The amount must be greater than 0.",
+      "amountTooHigh": "The amount is higher than what is still open on the invoice.",
+      "amountAboveBooking": "The amount is higher than the credit of the chosen bank booking.",
+      "bankAccountRequired": "Choose the bank account the money arrived on.",
+      "bookingRequired": "Choose the bank booking that records the payment."
+    }
+  },
+  "cancelInvoice": {
+    "label": "Cancel invoice",
+    "message": "The invoice is cancelled and its booking reversed. This cannot be undone.",
+    "reason": "Reason for cancelling",
+    "date": "Cancellation date",
+    "ok": "Cancel invoice",
+    "conf": "The invoice is cancelled.",
+    "error": "The invoice could not be cancelled. Please try again later.",
+    "reasonInvalid": "Enter a reason (at most 500 characters).",
+    "dateInvalid": "Enter a valid date, for example 31.12.2026."
+  },
+  "issueAll": {
+    "label": "Issue all drafts",
+    "confirm": "{count} drafts will be issued. They get their number and are booked. After that you can no longer change them.",
+    "progress": "{n} of {m}",
+    "done": "{issued} of {total} invoices are issued.",
+    "failed": "Not issued:"
   }
 }

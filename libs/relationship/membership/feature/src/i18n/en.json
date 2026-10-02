@@ -149,7 +149,7 @@
     },
     "total": "Total",
     "invoice": {
-      "conf": "The invoices were created.",
+      "conf": "The invoices have been created as drafts. You can issue them in the invoice list.",
       "incomplete": "{invoiced} invoices were created. These members were skipped because a position has no revenue account: {names}. Please complete the fee schedule."
     },
     "invoiceAll": {

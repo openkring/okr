@@ -300,6 +300,92 @@
     "too-many-positions": "Una factura puede tener como máximo 100 posiciones.",
     "inconsistent-state": "Algo salió mal al emitir la factura. Inténtalo de nuevo, por favor.",
     "no-due-date": "La factura todavía no tiene fecha de vencimiento. Indica hasta cuándo debe pagarse.",
-    "due-before-invoice-date": "La fecha de vencimiento es anterior a la fecha de la factura. Elige una fecha posterior."
+    "due-before-invoice-date": "La fecha de vencimiento es anterior a la fecha de la factura. Elige una fecha posterior.",
+    "invalid-payment-id": "No se ha podido identificar el pago. Cierra la ventana e inténtalo de nuevo.",
+    "not-a-payment-account": "En esta cuenta no se pueden contabilizar pagos. Elige una de las cuentas bancarias de la configuración contable.",
+    "payment-blocked": "Este pago no se puede registrar.",
+    "link-blocked": "Este asiento bancario no se puede vincular con la factura.",
+    "cancel-blocked": "Esta factura no se puede anular.",
+    "no-bank-line": "En el asiento elegido falta la línea con la cuenta bancaria. Elige otro asiento.",
+    "not-paid": "La factura aún no está pagada. La confirmación de pago solo está disponible después.",
+    "not-payable": "No se puede registrar ningún pago para esta factura. Solo es posible en una factura emitida y aún pendiente.",
+    "overpayment": "El importe es mayor que lo que queda pendiente de la factura.",
+    "no-payment-date": "Indica cuándo llegó el dinero.",
+    "booking-not-found": "El asiento bancario elegido ya no existe.",
+    "booking-not-posted": "El asiento bancario elegido aún no está contabilizado. Contabilízalo primero.",
+    "foreign-booking": "El asiento bancario elegido pertenece a otra contabilidad.",
+    "no-receivables-credit": "El asiento bancario elegido no abona lo suficiente a la cuenta de deudores. Elige otro asiento o un importe menor.",
+    "already-linked": "Este asiento bancario ya está vinculado con esta factura.",
+    "not-cancellable": "Solo se pueden anular facturas emitidas que aún están pendientes.",
+    "has-payments": "Ya hay pagos registrados para esta factura, por eso ya no se puede anular.",
+    "no-issue-booking": "Esta factura no se contabilizó aquí (por ejemplo, se trajo de bexio). Anúlala a mano en la contabilidad.",
+    "payment-invalid-amount": "El importe no es válido. Debe ser mayor que 0.",
+    "payment-account-invalid": "No se puede contabilizar en la cuenta bancaria elegida. Elige una cuenta sin subcuentas.",
+    "payment-period-locked": "El periodo contable de la fecha de pago está cerrado. Elige otra fecha o pide que se reabra el periodo.",
+    "payment-inconsistent-state": "Algo ha fallado al registrar el pago. Inténtalo de nuevo, por favor.",
+    "cancel-period-locked": "El periodo contable de la fecha de anulación está cerrado. Elige otra fecha o pide que se reabra el periodo.",
+    "cancel-inconsistent-state": "Algo ha fallado al anular. Inténtalo de nuevo, por favor.",
+    "confirmation-no-receiver": "La factura no tiene destinatario. Sin destinatario no hay confirmación de pago."
+  },
+  "payment": {
+    "label": "Registrar pago",
+    "title": "Registrar pago",
+    "conf": "El pago está registrado. Quedan CHF {open} pendientes.",
+    "conf_paid": "El pago está registrado. La factura ya está pagada.",
+    "error": "No se ha podido registrar el pago. Inténtalo de nuevo más tarde.",
+    "mode": {
+      "post": "Contabilizar pago bancario",
+      "link": "Vincular asiento bancario"
+    },
+    "date": {
+      "label": "Fecha de pago",
+      "placeholder": "dd.mm.aaaa",
+      "helper": "El día en que llegó el dinero."
+    },
+    "amount": {
+      "label": "Importe (CHF)",
+      "placeholder": "0.00",
+      "helper": "Pendiente: CHF {open}. No puedes registrar más."
+    },
+    "bankAccount": {
+      "label": "Cuenta bancaria",
+      "helper": "El dinero llegó a esta cuenta."
+    },
+    "booking": {
+      "label": "Asiento bancario",
+      "helper": "Elige el asiento que ya registra este pago en la contabilidad.",
+      "none": "No hay ningún asiento bancario adecuado. Debe estar contabilizado y abonar la cuenta de deudores.",
+      "failed": "No se han podido cargar los asientos bancarios. Aun así puedes contabilizar el pago."
+    },
+    "list": {
+      "title": "Pagos",
+      "booking": "Asiento"
+    },
+    "validation": {
+      "dateRequired": "Indica cuándo llegó el dinero.",
+      "amountPositive": "El importe debe ser mayor que 0.",
+      "amountTooHigh": "El importe es mayor que lo que queda pendiente de la factura.",
+      "amountAboveBooking": "El importe es mayor que el abono del asiento bancario elegido.",
+      "bankAccountRequired": "Elige la cuenta bancaria a la que llegó el dinero.",
+      "bookingRequired": "Elige el asiento bancario que registra el pago."
+    }
+  },
+  "cancelInvoice": {
+    "label": "Anular factura",
+    "message": "La factura se anula y su asiento se revierte. Esto no se puede deshacer.",
+    "reason": "Motivo de la anulación",
+    "date": "Fecha de la anulación",
+    "ok": "Anular factura",
+    "conf": "La factura está anulada.",
+    "error": "No se ha podido anular la factura. Inténtalo de nuevo más tarde.",
+    "reasonInvalid": "Indica un motivo (como máximo 500 caracteres).",
+    "dateInvalid": "Indica una fecha válida, por ejemplo 31.12.2026."
+  },
+  "issueAll": {
+    "label": "Emitir todos los borradores",
+    "confirm": "Se emitirán {count} borradores. Reciben su número y se contabilizan. Después ya no podrás modificarlos.",
+    "progress": "{n} de {m}",
+    "done": "{issued} de {total} facturas están emitidas.",
+    "failed": "No emitidas:"
   }
 }
