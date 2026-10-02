@@ -1,5 +1,5 @@
 import type { Route } from '@angular/router';
-import { isAdminGuard, isAuthenticatedGuard, isContentAdminGuard, isMemberAdminGuard, isPrivilegedGuard, isTreasurerGuard } from '@okr/auth-feature';
+import { isAdminGuard, isAuthenticatedGuard, isContentAdminGuard, isContractReaderGuard, isMemberAdminGuard, isPrivilegedGuard, isTreasurerGuard } from '@okr/auth-feature';
 
 /**
  * A feature block's Angular ROUTE fragment — `canActivate` guards + `loadComponent`. Split
@@ -1451,13 +1451,34 @@ const weather: BlockRoutes = {
   routes: (): Route[] => [],
 };
 
+/**
+ * `contracts` (spec 1.5 §9). The staff list takes `isContractReaderGuard` (treasurer OR
+ * privileged OR auditor — a union no single-role guard expresses). The member list and the
+ * dossier page only need a login: WHICH contracts a member sees is the store's `my` query, and
+ * the dossier relies on the Firestore rules (a party or staff) — a stranger gets the page's
+ * not-found state, not a guard bounce.
+ */
+const contracts: BlockRoutes = {
+  id: 'contracts',
+  routes: (): Route[] => [
+    {
+      path: 'contract',
+      children: [
+        { path: 'all/:contextMenuName', canActivate: [isContractReaderGuard], data: { listId: 'all' }, loadComponent: () => import('@okr/business-contract-feature').then(m => m.ContractList) },
+        { path: 'my/:contextMenuName', canActivate: [isAuthenticatedGuard], data: { listId: 'my' }, loadComponent: () => import('@okr/business-contract-feature').then(m => m.ContractList) },
+        { path: 'detail/:contractKey', canActivate: [isAuthenticatedGuard], loadComponent: () => import('@okr/business-contract-feature').then(m => m.ContractPage) },
+      ],
+    },
+  ],
+};
+
 export const FEATURE_ROUTES: BlockRoutes[] = [
   calevent, aoc, activity, task, instruments, games, quiz, zip, hearingQuiz, crossword, muehle, battleship, bimaru, jasstafel, tetris, mampf, wordle, chess,
   auth, cms, user, profile, session, security, i18n, avatar, category, comment, geo, trip, consent,
   subject, relationship, vcard,
   resource, mobility,
   finance, memberFee, esign, pdfTemplate,
-  documentBlock, meeting, diary,
+  documentBlock, contracts, meeting, diary,
   chat, socialFeed, forms,
   business, alias, weather,
 ];

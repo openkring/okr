@@ -4,20 +4,16 @@ import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { of } from 'rxjs';
 
+import { isContractReader } from '@okr/auth-feature';
 import { ContractService } from '@okr/business-contract-data-access';
 import { CONTRACT_I18N_KEYS, ContractI18n, newContractModel, sumLoans } from '@okr/business-contract-util';
 import { AppStore, ModelSelectService } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
-import { ContractModel, UserModel } from '@okr/shared-models';
+import { ContractModel } from '@okr/shared-models';
 import { AlertService, resourceParams } from '@okr/shared-util-angular';
 import { addDuration, debugListLoaded, getTodayStr, hasRole, nameMatches } from '@okr/shared-util-core';
 
 export type ContractListId = 'all' | 'my';
-
-/** Same predicate as isContractReaderGuard: treasurer, privileged or auditor (admin included by hasRole). */
-export function isContractReader(user: UserModel | undefined): boolean {
-  return hasRole('treasurer', user) || hasRole('privileged', user) || hasRole('auditor', user);
-}
 
 /** Days ahead the "Frist in 90 Tagen" filter looks (spec 1.5 §8). */
 export const CONTRACT_DUE_SOON_DAYS = 90;

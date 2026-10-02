@@ -626,7 +626,11 @@
     "game-tetris": "Blocs",
     "game-mampf": "Mampf",
     "game-wordle": "Wordle",
-    "game-chess": "Échecs"
+    "game-chess": "Échecs",
+    "contract-all": "Contrats",
+    "contract-my": "Mes contrats",
+    "contract-add": "Nouveau contrat",
+    "contract-reload": "Recharger"
   },
   "ownership": {
     "fork_confirm": "« {name} » appartient au catalogue de fonctionnalités ({blocks}).\n\nL'enregistrement crée une copie propre au locataire « {forkKey} » et détache ce locataire de l'original partagé. Les corrections futures du catalogue (URL, action, rôle) n'atteindront plus cette entrée.\n\nEnregistrer quand même ?",

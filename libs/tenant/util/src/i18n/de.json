@@ -173,6 +173,9 @@
     },
     "chess": {
       "label": "Schach"
+    },
+    "contracts": {
+      "label": "Verträge"
     }
   },
   "picker": {

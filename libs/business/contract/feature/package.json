@@ -18,6 +18,7 @@
     "@okr/cms-menu-feature": "*",
     "@okr/business-contract-data-access": "*",
     "@okr/business-contract-ui": "*",
-    "@okr/business-contract-util": "*"
+    "@okr/business-contract-util": "*",
+    "@okr/auth-feature": "*"
   }
 }

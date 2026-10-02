@@ -626,7 +626,11 @@
     "game-tetris": "Blocks",
     "game-mampf": "Mampf",
     "game-wordle": "Wordle",
-    "game-chess": "Chess"
+    "game-chess": "Chess",
+    "contract-all": "Contracts",
+    "contract-my": "My contracts",
+    "contract-add": "New contract",
+    "contract-reload": "Reload"
   },
   "ownership": {
     "fork_confirm": "«{name}» belongs to the feature catalogue ({blocks}).\n\nSaving creates a tenant-private copy «{forkKey}» and detaches this tenant from the shared original. Future catalogue corrections (url, action, role) will no longer reach this entry.\n\nSave anyway?",

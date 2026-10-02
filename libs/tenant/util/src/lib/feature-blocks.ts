@@ -2930,13 +2930,64 @@ const weather: FeatureBlock = {
   menu: [],
 };
 
+/**
+ * `libs/business/contract/*` — Vertragsverwaltung (spec 1.5 §9): the staff list of every contract
+ * (`/contract/all/c-contracts`), the member's own list (`/contract/my/c-contracts-my`) and the
+ * dossier page (`/contract/detail/:contractKey`).
+ *
+ * WHO SEES THE STAFF LIST, AND WHY IT IS TWO ROWS. The route guard `isContractReaderGuard` admits
+ * treasurer OR privileged OR auditor. A menu row carries ONE `roleNeeded`, and `hasRole` is not a
+ * hierarchy: `privileged` is satisfied by `['privileged', 'admin']` only, `treasurer` by
+ * `['treasurer', 'admin']` only. So one row cannot reach both a treasurer and a board member.
+ *  - `contract-all` (privileged) — top level, the board's entry point.
+ *  - `contract-all-treasurer` (treasurer) — nested under the shared `accounting-menu`, where a
+ *    treasurer already works. Same url and label. An admin (and a privileged treasurer) sees
+ *    both, in two different places, which is the price of a single-role gate.
+ *  - auditor: NO row. No catalogued row anywhere is gated `auditor` (it would add a third copy
+ *    for every admin); an auditor reaches the list by url, which the guard admits.
+ * Co-declaring `accounting-menu` means a tenant with `contracts` on and `finance` off still
+ * renders that accordion (gate 2 is "ANY owning block") — holding just this one row.
+ *
+ * CONTEXT MENUS. `c-contracts` is gated `registered`, not `privileged`: a context root's own
+ * `roleNeeded` decides whether the popover renders at all, and it must render for treasurers and
+ * auditors too. Its children carry the real gates — `contract-add` treasurer (only treasurers
+ * write contracts, spec 1.5 §5.1; `ContractList` re-checks `canEdit()`), `contract-reload`
+ * registered. `c-contracts-my` reuses the SAME `contract-reload` doc (field-identical).
+ *
+ * `dependsOn: ['subject']` — parties are persons/orgs (`@okr/subject-*` pickers and avatars).
+ * `internal` until the dossier/reminder functions are rolled out per tenant.
+ */
+const contracts: FeatureBlock = {
+  id: 'contracts',
+  bundle: 'documents',
+  label: '@tenant/util.feature.contracts.label',
+  icon: 'contract',
+  defaultAvailability: 'internal',
+  dependsOn: ['subject'],
+  collections: ['contracts', 'contract-documents'],
+  menu: [
+    { key: 'contract-all', name: 'contract-all', url: '/contract/all/c-contracts', action: 'navigate', roleNeeded: 'privileged', icon: 'contract', label: '@item.contract-all' },
+    accountingMenuParent([
+      { key: 'contract-all-treasurer', name: 'contract-all-treasurer', url: '/contract/all/c-contracts', action: 'navigate', roleNeeded: 'treasurer', icon: 'contract', label: '@item.contract-all' },
+    ]),
+    { key: 'contract-my', name: 'contract-my', url: '/contract/my/c-contracts-my', action: 'navigate', roleNeeded: 'registered', icon: 'contract', label: '@item.contract-my' },
+    { key: 'c-contracts', name: 'c-contracts', url: '', action: 'context', roleNeeded: 'registered', icon: 'help-circle', label: '', children: [
+      { key: 'contract-add', name: 'contract-add', url: 'add', action: 'call', roleNeeded: 'treasurer', icon: 'add-circle', label: '@item.contract-add' },
+      { key: 'contract-reload', name: 'contract-reload', url: 'reload', action: 'call', roleNeeded: 'registered', icon: 'sync', label: '@item.contract-reload' },
+    ] },
+    { key: 'c-contracts-my', name: 'c-contracts-my', url: '', action: 'context', roleNeeded: 'registered', icon: 'help-circle', label: '', children: [
+      { key: 'contract-reload', name: 'contract-reload', url: 'reload', action: 'call', roleNeeded: 'registered', icon: 'sync', label: '@item.contract-reload' },
+    ] },
+  ],
+};
+
 export const FEATURE_BLOCKS: FeatureBlock[] = [
   calevent, aoc, activity, task, instruments, games, quiz, zip, hearingQuiz, crossword, muehle, battleship, bimaru, jasstafel, tetris, mampf, wordle, chess,
   auth, cms, user, profile, session, security, i18n, avatar, category, comment, geo, trip, consent,
   subject, relationship, vcard,
   resource, mobility,
   finance, memberFee, esign, pdfTemplate,
-  documentBlock, meeting, diary,
+  documentBlock, contracts, meeting, diary,
   chat, socialFeed, forms,
   business, alias, weather,
 ];

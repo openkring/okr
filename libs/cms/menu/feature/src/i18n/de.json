@@ -626,7 +626,11 @@
     "game-tetris": "Blöckli",
     "game-mampf": "Mampf",
     "game-wordle": "Wordle",
-    "game-chess": "Schach"
+    "game-chess": "Schach",
+    "contract-all": "Verträge",
+    "contract-my": "Meine Verträge",
+    "contract-add": "Neuer Vertrag",
+    "contract-reload": "Neu laden"
   },
   "ownership": {
     "fork_confirm": "«{name}» gehört zum Feature-Katalog ({blocks}).\n\nBeim Speichern wird eine eigene Kopie «{forkKey}» für diesen Mandanten angelegt und der Mandant vom gemeinsamen Original abgehängt. Künftige Katalog-Korrekturen (URL, Aktion, Berechtigung) erreichen diesen Eintrag dann nicht mehr.\n\nTrotzdem speichern?",
