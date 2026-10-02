@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { getApp } from 'firebase/app';
-import { collection, getDocs, query } from 'firebase/firestore';
+import { collection, getDocs, limit, query } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
 import { ENV } from '@okr/shared-config';
@@ -14,7 +14,8 @@ import { addDuration, findByKey, getQuery, getSystemQuery, getTodayStr } from '@
 import { ActivityService } from '@okr/activity-data-access';
 
 import {
-  InvoiceHeaderInput, InvoicePaymentCandidate, invoicePaymentCandidates, InvoicePaymentInput, InvoicePositionInput, toInvoiceHeaderInput,
+  BOOKING_KEY_CHUNK_SIZE, chunked, InvoiceHeaderInput, InvoicePaymentCandidate, invoicePaymentCandidates, InvoicePaymentInput, InvoicePositionInput,
+  linkableBookings, PAYMENT_CANDIDATE_BOOKING_LIMIT, toInvoiceHeaderInput,
 } from '@okr/finance-invoice-util';
 
 /** The `writeInvoice` callable's request (apps/functions/src/invoice/write-invoice.ts). */
@@ -158,18 +159,16 @@ export class InvoiceService {
   /**
    * The bank bookings a payment of this invoice may be linked to: posted bookings of the accounting
    * tenant that credit the receivables account, newest first, at most 50, without the ones already
-   * linked on the invoice (see `invoicePaymentCandidates`). Rejects when a read fails, so the caller
-   * can tell "no candidates" from "could not load".
-   * Bookings dated more than PAYMENT_CANDIDATE_LOOKBACK_DAYS before the invoice date are not read: a
-   * payment does not arrive long before its invoice, and the bound keeps the read small.
+   * linked on the invoice and without okr's own `invoice-…` bookings (see `invoicePaymentCandidates`).
+   * Rejects when a read fails, so the caller can tell "no candidates" from "could not load".
+   *
+   * Bounded in two steps: first the newest PAYMENT_CANDIDATE_BOOKING_LIMIT posted bookings dated at
+   * most PAYMENT_CANDIDATE_LOOKBACK_DAYS before the invoice date (a payment does not arrive long before
+   * its invoice); then only the lines of those bookings, read with `bookingKey in [...]` in chunks of
+   * BOOKING_KEY_CHUNK_SIZE. The receivables account is matched in memory.
    */
   public async listPaymentCandidates(invoice: InvoiceModel, receivablesAccountKey: string): Promise<InvoicePaymentCandidate[]> {
     if (!receivablesAccountKey || !invoice.accountingTenantId) return [];
-    const linesQuery: DbQuery[] = [
-      ...getSystemQuery(this.env.tenantId),
-      { key: 'accountingTenantId', operator: '==', value: invoice.accountingTenantId },
-      { key: 'accountKey', operator: '==', value: receivablesAccountKey },
-    ];
     const fromDate = addDuration(invoice.invoiceDate || getTodayStr(), { days: -PAYMENT_CANDIDATE_LOOKBACK_DAYS });
     const bookingsQuery: DbQuery[] = [
       ...getSystemQuery(this.env.tenantId),
@@ -177,12 +176,18 @@ export class InvoiceService {
       { key: 'status', operator: '==', value: 'posted' },
       { key: 'date', operator: '>=', value: fromDate },
     ];
-    const [lines, bookings] = await Promise.all([
-      this.readOnce<BookingLineModel>(BookingLineCollection, linesQuery, 'none'),
-      this.readOnce<BookingModel>(BookingCollection, bookingsQuery, 'date', 'desc'),
-    ]);
+    const bookings = await this.readOnce<BookingModel>(BookingCollection, bookingsQuery, 'date', 'desc', PAYMENT_CANDIDATE_BOOKING_LIMIT);
     const linked = (invoice.payments ?? []).map((p) => p.bookingKey).filter((k) => !!k);
-    return invoicePaymentCandidates(lines, bookings, receivablesAccountKey, linked);
+    const linkable = linkableBookings(bookings, linked);
+    if (linkable.length === 0) return [];
+
+    const lineChunks = await Promise.all(chunked(linkable.map((b) => b.okey), BOOKING_KEY_CHUNK_SIZE).map((keys) =>
+      this.readOnce<BookingLineModel>(BookingLineCollection, [
+        ...getSystemQuery(this.env.tenantId),
+        { key: 'accountingTenantId', operator: '==', value: invoice.accountingTenantId },
+        { key: 'bookingKey', operator: 'in', value: keys },
+      ], 'none')));
+    return invoicePaymentCandidates(lineChunks.flat(), linkable, receivablesAccountKey, linked);
   }
 
   public async writeViaFunction(payload: WriteInvoicePayload): Promise<{ invoiceKey: string }> {
@@ -217,8 +222,10 @@ export class InvoiceService {
   }
 
   /** A one-shot read that rejects on failure (FirestoreService.getDataOnce would return [] instead). */
-  private async readOnce<T>(collectionName: string, dbQuery: DbQuery[], orderBy: string, sortOrder = 'asc'): Promise<T[]> {
-    const ref = query(collection(this.firestoreService.firestore, collectionName), ...getQuery(dbQuery, orderBy, sortOrder));
+  private async readOnce<T>(collectionName: string, dbQuery: DbQuery[], orderBy: string, sortOrder = 'asc', max?: number): Promise<T[]> {
+    const constraints = getQuery(dbQuery, orderBy, sortOrder);
+    if (max) constraints.push(limit(max));
+    const ref = query(collection(this.firestoreService.firestore, collectionName), ...constraints);
     const snapshot = await getDocs(ref);
     return snapshot.docs.map((d) => ({ ...d.data(), okey: d.id }) as T);
   }

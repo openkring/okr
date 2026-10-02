@@ -107,10 +107,7 @@ import { InvoiceStore } from './invoice.store';
                 <ion-label>
                   <p class="view-label">{{ store.i18n.payments_title() }}</p>
                   @for(payment of payments(); track $index) {
-                    <p class="view-value">
-                      {{ payment.date | prettyDate }} · CHF {{ formatChf(payment.amount) }}
-                      @if(payment.bookingKey) { · {{ store.i18n.payments_booking() }} {{ payment.bookingKey }} }
-                    </p>
+                    <p class="view-value">{{ payment.date | prettyDate }} · CHF {{ formatChf(payment.amount) }}</p>
                   }
                 </ion-label>
               </ion-item>

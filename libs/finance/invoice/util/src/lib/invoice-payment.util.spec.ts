@@ -4,7 +4,7 @@ import { InvoiceModel } from '@okr/shared-models';
 
 import { INVOICE_I18N_KEYS, INVOICE_REFUSAL_I18N, InvoiceI18n, invoiceRefusalKeys, invoiceRefusalText } from './invoice-i18n';
 import {
-  cancelInputProblem, draftInvoicesOf, formatPaymentChf, INVOICE_CANCEL_REASON_LENGTH, InvoicePaymentFormModel, invoicePaymentCandidates,
+  BOOKING_KEY_CHUNK_SIZE, cancelInputProblem, chunked, draftInvoicesOf, linkableBookings, formatPaymentChf, INVOICE_CANCEL_REASON_LENGTH, InvoicePaymentFormModel, invoicePaymentCandidates,
   isRetryablePaymentRefusal, MAX_PAYMENT_CANDIDATES, newInvoicePaymentFormModel, newPaymentId, openInvoiceAmount,
 } from './invoice-payment.util';
 import { invoicePaymentValidations } from './invoice-payment.validations';
@@ -79,6 +79,9 @@ describe('invoicePaymentCandidates', () => {
       { bookingKey: 'a', bookingNo: 1, date: '20260901', title: 'a', creditedAmount: 5000 },
     ]);
   });
+  it('ignores lines of bookings that are not in the list', () => {
+    expect(invoicePaymentCandidates([credit('x', 100)], [booking('a', '20260901')], '1100', [])).toEqual([]);
+  });
   it('drops drafts, other accounts, debit lines, already linked and okr invoice bookings', () => {
     const result = invoicePaymentCandidates(
       [credit('draft', 100), credit('other', 100, '1020'), { bookingKey: 'debit', accountKey: '1100', creditAmount: undefined },
@@ -92,6 +95,23 @@ describe('invoicePaymentCandidates', () => {
     const keys = Array.from({ length: MAX_PAYMENT_CANDIDATES + 5 }, (_, i) => `k${i}`);
     const result = invoicePaymentCandidates(keys.map((k) => credit(k, 100)), keys.map((k) => booking(k, '20260901')), '1100', []);
     expect(result).toHaveLength(MAX_PAYMENT_CANDIDATES);
+  });
+});
+
+describe('linkableBookings', () => {
+  it('drops okr invoice bookings and the ones already linked', () => {
+    const bookings = ['bank1', 'invoice-a', 'invoice-a-pay-x', 'linked'].map((okey) => ({ okey }));
+    expect(linkableBookings(bookings, ['linked']).map((b) => b.okey)).toEqual(['bank1']);
+  });
+});
+
+describe('chunked', () => {
+  it('splits into chunks of at most size items', () => {
+    expect(chunked([1, 2, 3, 4, 5], 2)).toEqual([[1, 2], [3, 4], [5]]);
+    expect(chunked([], 15)).toEqual([]);
+  });
+  it('keeps a bookingKey in-query within the 30 disjunctions Firestore allows (× 2 tenants)', () => {
+    expect(BOOKING_KEY_CHUNK_SIZE * 2).toBeLessThanOrEqual(30);
   });
 });
 
@@ -124,6 +144,7 @@ describe('isRetryablePaymentRefusal', () => {
   it('does not retry when the invoice cannot take a payment', () => {
     expect(isRetryablePaymentRefusal(['not-payable', 'overpayment'])).toBe(false);
     expect(isRetryablePaymentRefusal(['bexio-backend'])).toBe(false);
+    expect(isRetryablePaymentRefusal(['invalid-payment-id'])).toBe(false);
   });
 });
 

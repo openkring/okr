@@ -358,8 +358,7 @@
       "failed": "Les écritures bancaires n’ont pas pu être chargées. Tu peux quand même comptabiliser le paiement."
     },
     "list": {
-      "title": "Paiements",
-      "booking": "Écriture"
+      "title": "Paiements"
     },
     "validation": {
       "dateRequired": "Indique quand l’argent est arrivé.",

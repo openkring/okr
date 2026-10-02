@@ -9,7 +9,7 @@ import { take } from 'rxjs/operators';
 
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
-import { InvoiceCollection, InvoiceModel, OrgModelName, PersonModelName } from '@okr/shared-models';
+import { AccountModel, InvoiceCollection, InvoiceModel, OrgModelName, PersonModelName } from '@okr/shared-models';
 import { confirm, exportCsv, showToast } from '@okr/shared-util-angular';
 import {
   convertDateFormatToString, DateFormat, debugListLoaded, fill, getSystemQuery, getTodayStr, getYear, hasRole, nameMatches,
@@ -291,17 +291,24 @@ export const InvoiceStore = signalStore(
       // legacy config docs lack the phase-2 fields (Firestore reads skip model defaults)
       const paymentAccountKeys = config.invoicePaymentAccountKeys ?? [];
       const receivablesAccountKey = config.receivablesAccountKey ?? '';
-      const [accounts, candidates] = await Promise.all([
-        paymentAccountKeys.length > 0
-          ? firstValueFrom(store.accountService.list(invoice.accountingTenantId).pipe(take(1)))
-          : Promise.resolve([]),
-        store.invoiceService.listPaymentCandidates(invoice, receivablesAccountKey).then(
-          (list) => ({ list, failed: false }),
-          (e) => {
-            console.error('InvoiceStore.recordPayment: loading the bank bookings failed', e);
-            return { list: [] as InvoicePaymentCandidate[], failed: true };
-          }),
-      ]);
+      let accounts: AccountModel[] = [];
+      try {
+        accounts = paymentAccountKeys.length > 0
+          ? await firstValueFrom(store.accountService.list(invoice.accountingTenantId).pipe(take(1)))
+          : [];
+      } catch (e) {
+        console.error('InvoiceStore.recordPayment: loading the accounts failed', e);
+        await showToast(store.toastController, store.i18n.payment_error());
+        return;
+      }
+      // The link candidates are read only when the dialog shows mode link, once per dialog; a failed
+      // read is forgotten so that a reopened dialog tries again.
+      let candidatesRead: Promise<InvoicePaymentCandidate[]> | undefined;
+      const loadCandidates = (): Promise<InvoicePaymentCandidate[]> =>
+        candidatesRead ??= store.invoiceService.listPaymentCandidates(invoice, receivablesAccountKey).catch((e) => {
+          candidatesRead = undefined;
+          throw e;
+        });
       const paymentAccounts = accounts.filter((a) => paymentAccountKeys.includes(a.okey));
       const paymentId = newPaymentId();
       let payment = newInvoicePaymentFormModel(invoice, getTodayStr(), paymentAccounts.map((a) => a.okey));
@@ -309,7 +316,7 @@ export const InvoiceStore = signalStore(
       for (;;) {
         const modal = await store.modalController.create({
           component: InvoicePaymentModal,
-          componentProps: { payment, accounts: paymentAccounts, candidates: candidates.list, candidatesFailed: candidates.failed },
+          componentProps: { payment, accounts: paymentAccounts, loadCandidates },
         });
         await modal.present();
         const { data, role } = await modal.onWillDismiss<InvoicePaymentInput>();
@@ -331,7 +338,8 @@ export const InvoiceStore = signalStore(
             patchState(store, { version: store.version() + 1 });
             return;
           }
-          const candidate = candidates.list.find((c) => c.bookingKey === data.bookingKey);
+          const candidates = data.mode === 'link' ? await loadCandidates().catch(() => [] as InvoicePaymentCandidate[]) : [];
+          const candidate = candidates.find((c) => c.bookingKey === data.bookingKey);
           payment = {
             ...payment, mode: data.mode, date: data.date, amount: data.amount,
             bankAccountKey: data.bankAccountKey || payment.bankAccountKey, bookingKey: data.bookingKey,

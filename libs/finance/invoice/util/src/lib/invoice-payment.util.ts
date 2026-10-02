@@ -40,6 +40,33 @@ export interface InvoicePaymentInput {
 /** At most this many bookings are offered in mode `link`. */
 export const MAX_PAYMENT_CANDIDATES = 50;
 
+/** At most this many recent posted bookings are read when looking for link candidates. */
+export const PAYMENT_CANDIDATE_BOOKING_LIMIT = 200;
+
+/**
+ * Booking keys per `bookingKey in [...]` read. Firestore allows 30 disjunctions per query, and the
+ * tenant filter (`tenants array-contains-any [tenant, 'system']`) doubles them: 15 × 2 = 30.
+ */
+export const BOOKING_KEY_CHUNK_SIZE = 15;
+
+/** Splits a list into consecutive chunks of at most `size` items. */
+export function chunked<T>(items: T[], size: number): T[][] {
+  const result: T[][] = [];
+  for (let i = 0; i < items.length; i += Math.max(1, size)) {
+    result.push(items.slice(i, i + Math.max(1, size)));
+  }
+  return result;
+}
+
+/**
+ * The bookings worth reading lines for: not one okr writes for invoices itself (`invoice-…`: the
+ * issue booking, a reversal, another invoice's payment) and not already linked on this invoice.
+ */
+export function linkableBookings<T extends Pick<BookingModel, 'okey'>>(bookings: T[], linkedBookingKeys: string[]): T[] {
+  const linked = new Set(linkedBookingKeys);
+  return bookings.filter((b) => !b.okey.startsWith('invoice-') && !linked.has(b.okey));
+}
+
 /** cancelInvoice accepts a reason of 1 to this many characters. */
 export const INVOICE_CANCEL_REASON_LENGTH = 500;
 
@@ -94,7 +121,7 @@ export function newInvoicePaymentFormModel(invoice: InvoiceModel, today: string,
  * the receivables account, newest first, capped at MAX_PAYMENT_CANDIDATES. Left out are bookings
  * already linked on this invoice and the bookings okr writes for invoices itself (`invoice-…`: the
  * issue booking, a reversal, another invoice's payment) — none of them is a received payment to link.
- * @param lines booking lines on the receivables account
+ * @param lines the lines of the given bookings (lines on other accounts are ignored)
  * @param bookings booking headers (any order; only `posted` ones qualify)
  */
 export function invoicePaymentCandidates(
@@ -111,9 +138,8 @@ export function invoicePaymentCandidates(
     if (amount <= 0) continue;
     credited.set(line.bookingKey, (credited.get(line.bookingKey) ?? 0) + amount);
   }
-  const linked = new Set(linkedBookingKeys);
-  return bookings
-    .filter((b) => b.status === 'posted' && credited.has(b.okey) && !linked.has(b.okey) && !b.okey.startsWith('invoice-'))
+  return linkableBookings(bookings, linkedBookingKeys)
+    .filter((b) => b.status === 'posted' && credited.has(b.okey))
     .sort((a, b) => (b.date ?? '').localeCompare(a.date ?? '') || (b.bookingNo ?? 0) - (a.bookingNo ?? 0))
     .slice(0, cap)
     .map((b) => ({
@@ -137,11 +163,12 @@ export function cancelInputProblem(reason: string, date: string): 'reason' | 'da
 
 /**
  * Refusals the payment dialog cannot fix: the invoice is not payable (anymore), the books are not
- * set up for it, or the server state needs a look. Every other refusal — a wrong amount, date,
+ * set up for it, the server state needs a look, or the dialog's own payment id was refused (a retry
+ * would send the same id again). Every other refusal — a wrong amount, date,
  * account or booking, a locked period, a concurrent change — and an error without a reason (a
  * network failure) lets the treasurer try again in the same dialog.
  */
-const FINAL_PAYMENT_REFUSALS = ['not-payable', 'not-found', 'no-accounting-config', 'foreign-accounting-tenant', 'bexio-backend', 'inconsistent-state'];
+const FINAL_PAYMENT_REFUSALS = ['invalid-payment-id', 'not-payable', 'not-found', 'no-accounting-config', 'foreign-accounting-tenant', 'bexio-backend', 'inconsistent-state'];
 
 /** True when the payment dialog should open again (with the same payment id) after this refusal. */
 export function isRetryablePaymentRefusal(reasons: string[]): boolean {

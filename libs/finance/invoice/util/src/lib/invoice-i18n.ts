@@ -183,7 +183,6 @@ export const INVOICE_I18N_KEYS = {
   payment_booking_none:       PFX + 'payment.booking.none',
   payment_booking_failed:     PFX + 'payment.booking.failed',
   payments_title:             PFX + 'payment.list.title',
-  payments_booking:           PFX + 'payment.list.booking',
 
   cancel_invoice:             PFX + 'cancelInvoice.label',
   cancel_invoice_message:     PFX + 'cancelInvoice.message',

@@ -358,8 +358,7 @@
       "failed": "Non è stato possibile caricare le registrazioni bancarie. Puoi comunque contabilizzare il pagamento."
     },
     "list": {
-      "title": "Pagamenti",
-      "booking": "Registrazione"
+      "title": "Pagamenti"
     },
     "validation": {
       "dateRequired": "Indica quando è arrivato il denaro.",

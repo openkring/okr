@@ -52,7 +52,7 @@ import {
                       <okr-string-select [i18n]="bookingI18n()" [selectedString]="bookingKey()"
                         (selectedStringChange)="onBookingChange($event)"
                         [stringList]="candidateKeys()" [labels]="candidateLabels()" [readOnly]="isReadOnly()" />
-                    } @else {
+                    } @else if (!candidatesLoading()) {
                       <ion-item lines="none">
                         <ion-note>{{ candidatesFailed() ? i18n().payment_booking_failed() : i18n().payment_booking_none() }}</ion-note>
                       </ion-item>
@@ -99,6 +99,8 @@ export class InvoicePaymentForm {
   public readonly candidates = input<InvoicePaymentCandidate[]>([]);
   /** true when the candidates could not be loaded (shown instead of "none") */
   public readonly candidatesFailed = input(false);
+  /** true while the candidates are being read (neither "none" nor "failed" is shown yet) */
+  public readonly candidatesLoading = input(false);
   public readonly readOnly = input(false);
   public readonly showForm = input(true);
 
@@ -171,7 +173,10 @@ export class InvoicePaymentForm {
     this.formData.update((vm) => ({ ...vm, amount: Number.isFinite(amount) ? Math.round(amount * 100) / 100 : 0 }));
   }
 
-  /** Selecting a booking takes over its receivables credit as amount (never more than is open). */
+  /**
+   * Selecting a booking takes over its receivables credit as amount (never more than is open) and its
+   * date as payment date — the money arrived when the bank booked it. Both stay editable.
+   */
   protected onBookingChange(bookingKey: string): void {
     const candidate = this.candidates().find((c) => c.bookingKey === bookingKey);
     const bookingAmount = (candidate?.creditedAmount ?? 0) / 100;
@@ -179,6 +184,7 @@ export class InvoicePaymentForm {
     this.formData.update((vm) => ({
       ...vm, bookingKey, bookingAmount,
       amount: candidate ? Math.min(bookingAmount, vm.openAmount) : vm.amount,
+      date: candidate?.date || vm.date,
     }));
   }
 }

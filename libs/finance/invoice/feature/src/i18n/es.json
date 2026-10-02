@@ -358,8 +358,7 @@
       "failed": "No se han podido cargar los asientos bancarios. Aun así puedes contabilizar el pago."
     },
     "list": {
-      "title": "Pagos",
-      "booking": "Asiento"
+      "title": "Pagos"
     },
     "validation": {
       "dateRequired": "Indica cuándo llegó el dinero.",

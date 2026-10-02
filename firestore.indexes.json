@@ -791,7 +791,7 @@
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "accountKey",
+          "fieldPath": "bookingKey",
           "order": "ASCENDING"
         }
       ]

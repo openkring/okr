@@ -358,8 +358,7 @@
       "failed": "Die Bankbuchungen konnten nicht geladen werden. Du kannst die Zahlung trotzdem buchen."
     },
     "list": {
-      "title": "Zahlungen",
-      "booking": "Buchung"
+      "title": "Zahlungen"
     },
     "validation": {
       "dateRequired": "Gib an, wann das Geld eingegangen ist.",

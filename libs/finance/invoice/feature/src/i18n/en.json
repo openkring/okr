@@ -358,8 +358,7 @@
       "failed": "The bank bookings could not be loaded. You can still book the payment."
     },
     "list": {
-      "title": "Payments",
-      "booking": "Booking"
+      "title": "Payments"
     },
     "validation": {
       "dateRequired": "Enter when the money arrived.",
