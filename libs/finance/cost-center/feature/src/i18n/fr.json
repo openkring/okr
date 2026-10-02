@@ -1,0 +1,75 @@
+{
+  "costCenters": "Centres de coûts",
+  "empty": "Aucun centre de coûts trouvé.",
+  "none": "sans centre de coûts",
+  "picker": "Centre de coûts",
+  "create": "Nouveau centre de coûts",
+  "update": "Modifier le centre de coûts",
+  "view": "Afficher le centre de coûts",
+  "archive": "Archiver le centre de coûts",
+  "archiveConf": "Veux-tu archiver ce centre de coûts ? Les écritures existantes restent inchangées.",
+  "id": {
+    "label": "Numéro",
+    "placeholder": "p. ex. 310",
+    "helper": "Le numéro du centre de coûts, p. ex. 310.",
+    "duplicate": "Ce numéro existe déjà."
+  },
+  "name": {
+    "label": "Nom",
+    "placeholder": "p. ex. Juniors",
+    "helper": "Le nom du centre de coûts."
+  },
+  "parentKey": {
+    "label": "Parent",
+    "helper": "Le groupe auquel appartient ce centre de coûts.",
+    "cycle": "Un centre de coûts ne peut pas être placé sous lui-même ni sous l'un de ses propres sous-centres.",
+    "notGroup": "Le parent doit être un groupe ou le niveau supérieur.",
+    "none": "niveau supérieur"
+  },
+  "type": {
+    "label": "Type",
+    "helper": "Tu peux comptabiliser sur un centre de coûts ; un groupe en réunit plusieurs.",
+    "hasChildren": "Ce centre de coûts a des sous-centres et ne peut donc pas être comptabilisé directement.",
+    "root": "Racine",
+    "group": "Groupe",
+    "leaf": "Centre de coûts"
+  },
+  "responsibility": {
+    "label": "Responsabilité",
+    "helper": "Qui est responsable de ce centre de coûts. Laisse vide et seul le trésorier le voit.",
+    "select": "Choisir",
+    "clear": "Retirer",
+    "none": "Aucune – seulement la trésorière ou le trésorier"
+  },
+  "notes": {
+    "label": "Notes",
+    "placeholder": "Notes sur le centre de coûts"
+  },
+  "archiveHasChildren": "Ce groupe contient encore des centres de coûts actifs. Archive-les d’abord.",
+  "archived": "archivé",
+  "archiveState": {
+    "active": {
+      "label": "Actifs"
+    },
+    "archived": {
+      "label": "Archivés"
+    }
+  },
+  "select": {
+    "search": "Chercher un numéro ou un nom",
+    "notFound": "Aucun centre de coûts trouvé."
+  },
+  "migrate": {
+    "report": "Vérifiés : {scanned}. À modifier : {updated}.",
+    "unmatched": "Aucun centre de coûts correspondant, sera vidé : {list}",
+    "apply": "Appliquer maintenant ?",
+    "none": "Rien à modifier.",
+    "done": "Terminé. {updated} entrées modifiées.",
+    "error": "L'attribution n'a pas fonctionné. Réessaie plus tard.",
+    "unattributed": "Impossible à rattacher à une comptabilité, reste inchangé : {list}",
+    "more": "… et {count} autres",
+    "refused": "L'attribution n'est possible que pour les comptabilités tenues ici.",
+    "noCostCenters": "Crée d'abord au moins un centre de coûts actif. Sinon, toutes les entrées existantes seraient vidées.",
+    "lockedSkipped": "Dans des années clôturées, reste inchangé : {count}"
+  }
+}

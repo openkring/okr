@@ -11,13 +11,13 @@ import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
 import { InvoiceCollection, InvoiceModel, OrgModelName, PersonModelName } from '@okr/shared-models';
 import { confirm, exportCsv, showToast } from '@okr/shared-util-angular';
-import { debugListLoaded, getSystemQuery, getYear, nameMatches } from '@okr/shared-util-core';
+import { debugListLoaded, fill, getSystemQuery, getTodayStr, getYear, nameMatches } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
 
 import { InvoiceService } from '@okr/finance-invoice-data-access';
 import {
   buildPaymentConfirmationPayload, canCreatePaymentConfirmation, getInvoiceExportData, INVOICE_I18N_KEYS, InvoiceI18n,
-  newInvoice, PAYMENT_CONFIRMATION_TEMPLATE_ID,
+  invoiceRefusalReasons, invoiceRefusalText, invoicesForList, isDraftInvoice, newDraftInvoice, PAYMENT_CONFIRMATION_TEMPLATE_ID,
 } from '@okr/finance-invoice-util';
 import { AccountingStore } from '@okr/finance-accounting-feature';
 import { ReceiptParty } from '@okr/finance-booking-util';
@@ -28,13 +28,13 @@ import { getDirectoryPostalAddress, readsAddressVault } from '@okr/subject-addre
 import { OrgService } from '@okr/subject-org-data-access';
 import { PersonService } from '@okr/subject-person-data-access';
 
-import { InvoiceEditModal } from './invoice-edit.modal';
+import { InvoiceEditModal, InvoiceEditResult } from './invoice-edit.modal';
 import { MemberInvoiceService } from './member-invoice.service';
 
 export type InvoiceState = {
   listId: string;         // 'all' | 'my' | personKey
   searchTerm: string;
-  selectedState: string;  // 'all' | 'draft' | 'pending' | 'paid' | 'cancelled'
+  selectedState: string;  // 'all' | 'draft' | 'issuing' | 'pending' | 'paid' | 'cancelled'
   selectedYear: number;   // all is 99
   version: number;
 };
@@ -116,15 +116,8 @@ export const InvoiceStore = signalStore(
     filteredInvoices: computed(() => {
       let invoices = store.allInvoicesResource.value() ?? [];
 
-      // filter by listId
-      const listId = store.listId();
-      const currentUser = store.appStore.currentUser();
-      if (listId === 'my') {
-        const personKey = currentUser?.personKey;
-        invoices = personKey ? invoices.filter(i => i.receiver?.key === personKey) : [];
-      } else if (listId !== 'all') {
-        invoices = invoices.filter(i => i.receiver?.key === listId);
-      }
+      // filter by listId; receiver views ('my', a person key) never show drafts or issuing invoices
+      invoices = invoicesForList(invoices, store.listId(), store.appStore.currentUser()?.personKey);
 
       // filter by state
       const selectedState = store.selectedState();
@@ -171,8 +164,7 @@ export const InvoiceStore = signalStore(
     /******************************** actions ******************************************* */
     async add(): Promise<void> {
       if (store.accountingStore.isExternallyManaged()) return;
-      const invoice = newInvoice(store.appStore.tenantId());
-      invoice.accountingTenantId = store.accountingStore.accountingTenantId();
+      const invoice = newDraftInvoice(store.appStore.tenantId(), store.accountingStore.accountingTenantId(), getTodayStr());
       const modal = await store.modalController.create({
         component: InvoiceEditModal,
         componentProps: {
@@ -183,13 +175,14 @@ export const InvoiceStore = signalStore(
         },
       });
       await modal.present();
-      const { data, role } = await modal.onWillDismiss<InvoiceModel>();
+      const { data, role } = await modal.onWillDismiss<InvoiceEditResult>();
       if (role === 'confirm' && data) {
-        await store.memberInvoiceService.createNumbered(data);
+        await store.memberInvoiceService.createDraft(data);
         patchState(store, { version: store.version() + 1 });
       }
     },
 
+    /** Opens an invoice in the edit modal; it is editable only while it is a draft. */
     async edit(invoice: InvoiceModel, readOnly = false): Promise<void> {
       const modal = await store.modalController.create({
         component: InvoiceEditModal,
@@ -197,13 +190,19 @@ export const InvoiceStore = signalStore(
           invoice: { ...invoice },
           currentUser: store.appStore.currentUser(),
           isNew: false,
-          readOnly,
+          readOnly: readOnly || !isDraftInvoice(invoice) || store.accountingStore.isExternallyManaged(),
         },
       });
       await modal.present();
-      const { data, role } = await modal.onWillDismiss<InvoiceModel>();
+      const { data, role } = await modal.onWillDismiss<InvoiceEditResult>();
       if (role === 'confirm' && data) {
-        await store.invoiceService.update(data, store.appStore.currentUser() ?? undefined);
+        try {
+          await store.invoiceService.update(data.invoice, data.positions, store.appStore.currentUser() ?? undefined);
+          await showToast(store.toastController, store.i18n.update_conf());
+        } catch (e) {
+          console.error('InvoiceStore.edit: writeInvoice failed', e);
+          await showToast(store.toastController, invoiceRefusalText(invoiceRefusalReasons(e), store.i18n, store.i18n.update_error()));
+        }
         patchState(store, { version: store.version() + 1 });
       }
     },
@@ -219,10 +218,36 @@ export const InvoiceStore = signalStore(
       await modal.present();
     },
 
+    /** Deletes a draft with its positions (the server refuses anything else). */
     async delete(invoice: InvoiceModel): Promise<void> {
+      if (!isDraftInvoice(invoice)) return;
       const confirmed = await confirm(store.alertController, store.i18n.delete_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
       if (!confirmed) return;
-      await store.invoiceService.delete(invoice, store.appStore.currentUser() ?? undefined);
+      try {
+        await store.invoiceService.delete(invoice, store.appStore.currentUser() ?? undefined);
+        await showToast(store.toastController, store.i18n.delete_conf());
+      } catch (e) {
+        console.error('InvoiceStore.delete: writeInvoice failed', e);
+        await showToast(store.toastController, invoiceRefusalText(invoiceRefusalReasons(e), store.i18n, store.i18n.delete_error()));
+      }
+      patchState(store, { version: store.version() + 1 });
+    },
+
+    /**
+     * Issues a draft (spec 1.76): it gets its number, its PDF and its Debitoren booking, and cannot be
+     * changed afterwards — hence the confirmation. A refusal names its reason in a friendly toast.
+     */
+    async issue(invoice: InvoiceModel): Promise<void> {
+      if (!isDraftInvoice(invoice) && invoice.state !== 'issuing') return;
+      const confirmed = await confirm(store.alertController, store.i18n.issue_confirm(), store.i18n.issue(), store.i18n.cancel(), true);
+      if (!confirmed) return;
+      try {
+        const result = await store.invoiceService.issue(invoice.okey, store.appStore.currentUser() ?? undefined);
+        await showToast(store.toastController, fill(store.i18n.issue_conf(), { invoiceId: String(result.invoiceNo) }));
+      } catch (e) {
+        console.error('InvoiceStore.issue: issueInvoice failed', e);
+        await showToast(store.toastController, invoiceRefusalText(invoiceRefusalReasons(e), store.i18n, store.i18n.issue_error()));
+      }
       patchState(store, { version: store.version() + 1 });
     },
 

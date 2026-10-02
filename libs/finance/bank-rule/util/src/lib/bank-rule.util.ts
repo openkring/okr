@@ -1,4 +1,5 @@
 import { BankImportRowModel, BankRuleModel } from '@okr/shared-models';
+import { isProfitAndLossAccountId } from '@okr/shared-util-core';
 
 /**
  * NFD, strip combining marks, lower case, collapse whitespace, trim. Punctuation is KEPT
@@ -77,9 +78,14 @@ export function matchRule(rawText: string, rules: BankRuleModel[]): MatchOutcome
 }
 
 /** Store contains/startsWith/endsWith terms pre-normalized; a regex term is stored as typed. */
-export function normalizeRuleForSave(rule: BankRuleModel): BankRuleModel {
+export function normalizeRuleForSave(rule: BankRuleModel, accounts?: { okey: string; id?: string }[]): BankRuleModel {
   const term = rule.condition === 'regex' ? (rule.term ?? '').trim() : normalizeText(rule.term ?? '');
-  return { ...rule, term, title: (rule.title ?? '').trim(), priority: Number(rule.priority) || 0 };
+  const normalized = { ...rule, term, title: (rule.title ?? '').trim(), priority: Number(rule.priority) || 0 };
+  // a Kostenstelle only goes with a P&L counter-account; with the accounts known, drop a stale one
+  if (accounts && normalized.costCenterKey && !isProfitAndLossAccountId(accounts.find(a => a.okey === rule.accountKey)?.id)) {
+    normalized.costCenterKey = '';
+  }
+  return normalized;
 }
 
 /**

@@ -39,6 +39,7 @@
     "lockedHint": "Questo esborso è già stato contabilizzato — l'importo, la valuta e il destinatario del bonifico non possono più essere modificati."
   },
   "field": {
+    "costCenter": "Centro di costo",
     "abstract": "Oggetto",
     "amount": "Importo totale",
     "currency": "Valuta",

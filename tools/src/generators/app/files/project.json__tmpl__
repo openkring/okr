@@ -342,6 +342,16 @@
           },
           {
             "glob": "*.json",
+            "input": "libs/finance/cost-center/data-access/src/i18n",
+            "output": "./assets/i18n/finance/cost-center/data-access"
+          },
+          {
+            "glob": "*.json",
+            "input": "libs/finance/cost-center/feature/src/i18n",
+            "output": "./assets/i18n/finance/cost-center/feature"
+          },
+          {
+            "glob": "*.json",
             "input": "libs/finance/expense/data-access/src/i18n",
             "output": "./assets/i18n/finance/expense/data-access"
           },

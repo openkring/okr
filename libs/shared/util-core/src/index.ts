@@ -41,3 +41,4 @@ export * from './lib/vest.util';
 export * from './lib/list-filter.util';
 export * from './lib/offline-snapshot.util';
 export * from './lib/qr-reference.util';
+export * from './lib/cost-center.util';

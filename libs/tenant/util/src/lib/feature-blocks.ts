@@ -1405,7 +1405,7 @@ const finance: FeatureBlock = {
   collections: [
     'accounts', 'accounting-configs', 'assets', 'asset-categories', 'asset-movements',
     'bank-import-rows', 'bank-profiles', 'bank-rules',
-    'bills', 'bookings', 'booking-lines', 'exchange-rates', 'expenses', 'expense-documents',
+    'bills', 'bookings', 'booking-lines', 'cost-centers', 'exchange-rates', 'expenses', 'expense-documents',
     'invoices', 'invoice-positions', 'ocr-rules', 'ocr-results', 'payments', 'payment-orders',
     'periods', 'vat-codes',
   ],
@@ -1468,6 +1468,12 @@ const finance: FeatureBlock = {
       { key: 'account-import', name: 'account-import', url: 'import', action: 'call', roleNeeded: 'treasurer', icon: 'upload', label: '@item.account-import' },
       { key: 'account-export', name: 'account-export', url: 'export', action: 'call', roleNeeded: 'treasurer', icon: 'download', label: '@item.account-export' },
     ] },
+    // Kostenstellen list (spec 1.65): *add* plus the two one-off migrations (§6.4); edit/archive live on the row's action sheet.
+    { key: 'c-cost-center', name: 'c-cost-center', url: '', action: 'context', roleNeeded: 'treasurer', icon: 'help-circle', label: '', children: [
+      { key: 'cost-center-add', name: 'cost-center-add', url: 'add', action: 'call', roleNeeded: 'treasurer', icon: 'add-circle', label: '@item.cost-center-add' },
+      { key: 'cost-center-migrate-free-text', name: 'cost-center-migrate-free-text', url: 'migrate-free-text', action: 'call', roleNeeded: 'treasurer', icon: 'sync', label: '@item.cost-center-migrate-free-text' },
+      { key: 'cost-center-migrate-backfill', name: 'cost-center-migrate-backfill', url: 'migrate-backfill', action: 'call', roleNeeded: 'treasurer', icon: 'download', label: '@item.cost-center-migrate-backfill' },
+    ] },
     { key: 'c-period', name: 'c-period', url: '', action: 'context', roleNeeded: 'treasurer', icon: 'help-circle', label: '', children: [
       { key: 'period-create', name: 'period-create', url: 'create', action: 'call', roleNeeded: 'treasurer', icon: 'add', label: '@item.period-create' },
     ] },
@@ -1500,6 +1506,8 @@ const finance: FeatureBlock = {
     // anywhere before. `@TID@` is expanded by `resolveMenuUrl` at select time.
     accountingMenuParent([
         { key: 'accounting-accounts', name: 'accounting-accounts', url: '/accounting/@TID@/account/c-account', action: 'navigate', roleNeeded: 'treasurer', icon: 'account', label: '@item.accounting-accounts' },
+        // Kostenstellen (spec 1.65) — next to the Kontoplan, its sibling master data.
+        { key: 'accounting-cost-centers', name: 'accounting-cost-centers', url: '/accounting/@TID@/cost-center/c-cost-center', action: 'navigate', roleNeeded: 'treasurer', icon: 'target', label: '@item.accounting-cost-centers' },
         { key: 'accounting-journal', name: 'accounting-journal', url: '/accounting/@TID@/journal/c-journal', action: 'navigate', roleNeeded: 'treasurer', icon: 'list', label: '@item.accounting-journal' },
         { key: 'accounting-bills', name: 'accounting-bills', url: '/accounting/@TID@/bill/all/c-bill', action: 'navigate', roleNeeded: 'treasurer', icon: 'invoice', label: '@item.accounting-bills' },
         { key: 'accounting-invoices', name: 'accounting-invoices', url: '/accounting/@TID@/invoice/all/c-invoice', action: 'navigate', roleNeeded: 'treasurer', icon: 'invoice', label: '@item.accounting-invoices' },

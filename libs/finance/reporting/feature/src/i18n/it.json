@@ -62,5 +62,10 @@
   "zero": {
     "show": "Mostra conti a zero",
     "hide": "Nascondi conti a zero"
+  },
+  "costCenter": {
+    "filter": "Centro di costo",
+    "all": "Tutti i centri di costo",
+    "none": "Senza centro di costo"
   }
 }

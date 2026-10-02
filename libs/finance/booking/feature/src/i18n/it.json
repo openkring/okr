@@ -128,8 +128,12 @@
     "vat": {
       "label": "Codice IVA"
     },
+    "costCenter": {
+      "label": "Centro di costo",
+      "accountDefault": "Predefinito del conto"
+    },
     "details": {
-      "toggle": "Valuta estera, IVA e scambio dei conti"
+      "toggle": "Valuta estera, IVA, centro di costo e scambio dei conti"
     },
     "line": {
       "add": "Aggiungi riga",
@@ -161,6 +165,7 @@
     "locked": "Quest'anno è chiuso. Le sue registrazioni non possono più essere modificate."
   },
   "write": {
-    "failed": "La registrazione non è stata salvata."
+    "failed": "La registrazione non è stata salvata.",
+    "costCenterInvalid": "Il centro di costo scelto non è più attivo — scegline un altro."
   }
 }

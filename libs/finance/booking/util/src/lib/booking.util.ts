@@ -1,5 +1,5 @@
-import { AvatarInfo, BookingLineModel, BookingModel, MoneyModel } from '@okr/shared-models';
-import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
+import { AccountModel, AvatarInfo, BookingLineModel, BookingModel, MoneyModel } from '@okr/shared-models';
+import { convertDateFormatToString, CostCenterLike, DateFormat, isActiveLeafCostCenter, isProfitAndLossAccountId, resolveCostCenterKey } from '@okr/shared-util-core';
 
 /**
  * One part of a split booking, as shown when the journal row is expanded: a Soll account against a
@@ -240,6 +240,8 @@ export function generateBookingNo(year: number, sequence: number): string {
 export interface BookingPair {
   debitAccountKey: string;
   creditAccountKey: string;
+  debitCostCenterKey: string;    // Kostenstelle of the debit line ('' = none / account default)
+  creditCostCenterKey: string;
   amount: number;
   amountFx: number;
   fxCurrency: string;
@@ -262,7 +264,7 @@ export interface BookingFormData {
 }
 
 export function emptyBookingPair(): BookingPair {
-  return { debitAccountKey: '', creditAccountKey: '', amount: 0, amountFx: 0, fxCurrency: 'EUR', vatCodeKey: '', vatSide: 'debit', description: '', descriptionSide: 'debit' };
+  return { debitAccountKey: '', creditAccountKey: '', debitCostCenterKey: '', creditCostCenterKey: '', amount: 0, amountFx: 0, fxCurrency: 'EUR', vatCodeKey: '', vatSide: 'debit', description: '', descriptionSide: 'debit' };
 }
 
 /**
@@ -274,10 +276,10 @@ export function emptyBookingPair(): BookingPair {
  * `pairsToLines` merges the pieces back into the one line by (account, text).
  */
 export function linesToPairs(lines: BookingLineModel[]): BookingPair[] {
-  type Open = { accountKey: string; left: number; amountFx: number; fxCurrency: string; vatCodeKey: string; description: string; total: number };
+  type Open = { accountKey: string; left: number; amountFx: number; fxCurrency: string; vatCodeKey: string; description: string; total: number; costCenterKey: string };
   const open = (l: BookingLineModel, m: MoneyModel): Open => ({
     accountKey: l.accountKey, left: m.amount, total: m.amount,
-    amountFx: l.amountFx?.amount ?? 0, fxCurrency: l.amountFx?.currency ?? 'EUR', vatCodeKey: l.vatCodeKey ?? '', description: l.description ?? '',
+    amountFx: l.amountFx?.amount ?? 0, fxCurrency: l.amountFx?.currency ?? 'EUR', vatCodeKey: l.vatCodeKey ?? '', description: l.description ?? '', costCenterKey: l.costCenterKey ?? '',
   });
   const debits = lines.filter(l => l.debitAmount && l.debitAmount.amount > 0).map(l => open(l, l.debitAmount as MoneyModel));
   const credits = lines.filter(l => l.creditAmount && l.creditAmount.amount > 0).map(l => open(l, l.creditAmount as MoneyModel));
@@ -289,7 +291,7 @@ export function linesToPairs(lines: BookingLineModel[]): BookingPair[] {
     const fxSource = d.left === d.total && amount === d.total && d.amountFx ? d : (c.left === c.total && amount === c.total && c.amountFx ? c : undefined);
     const textFromDebit = !!d.description;
     const description = d.description || c.description;
-    pairs.push({ debitAccountKey: d.accountKey, creditAccountKey: c.accountKey, amount,
+    pairs.push({ debitAccountKey: d.accountKey, creditAccountKey: c.accountKey, debitCostCenterKey: d.costCenterKey, creditCostCenterKey: c.costCenterKey, amount,
       amountFx: fxSource?.amountFx ?? 0, fxCurrency: fxSource?.fxCurrency ?? 'EUR',
       vatCodeKey: d.vatCodeKey || c.vatCodeKey, vatSide: d.vatCodeKey || !c.vatCodeKey ? 'debit' : 'credit',
       description, descriptionSide: textFromDebit || !description ? 'debit' : 'credit' });
@@ -297,8 +299,8 @@ export function linesToPairs(lines: BookingLineModel[]): BookingPair[] {
     if (d.left === 0) debits.shift();
     if (c.left === 0) credits.shift();
   }
-  for (const d of debits) pairs.push({ debitAccountKey: d.accountKey, creditAccountKey: '', amount: d.left, amountFx: 0, fxCurrency: 'EUR', vatCodeKey: d.vatCodeKey, vatSide: 'debit', description: d.description, descriptionSide: 'debit' });
-  for (const c of credits) pairs.push({ debitAccountKey: '', creditAccountKey: c.accountKey, amount: c.left, amountFx: 0, fxCurrency: 'EUR', vatCodeKey: c.vatCodeKey, vatSide: 'credit', description: c.description, descriptionSide: 'credit' });
+  for (const d of debits) pairs.push({ debitAccountKey: d.accountKey, creditAccountKey: '', debitCostCenterKey: d.costCenterKey, creditCostCenterKey: '', amount: d.left, amountFx: 0, fxCurrency: 'EUR', vatCodeKey: d.vatCodeKey, vatSide: 'debit', description: d.description, descriptionSide: 'debit' });
+  for (const c of credits) pairs.push({ debitAccountKey: '', creditAccountKey: c.accountKey, debitCostCenterKey: '', creditCostCenterKey: c.costCenterKey, amount: c.left, amountFx: 0, fxCurrency: 'EUR', vatCodeKey: c.vatCodeKey, vatSide: 'credit', description: c.description, descriptionSide: 'credit' });
   return pairs;
 }
 
@@ -323,11 +325,11 @@ function textSideOf(p: BookingPair, pairs: BookingPair[]): 'debit' | 'credit' {
  * Debit lines first.
  */
 export function pairsToLines(pairs: BookingPair[], tenantId: string, accountingTenantId: string, bookingKey: string, currency = 'CHF'): BookingLineModel[] {
-  type Acc = { accountKey: string; amount: number; amountFx: number; fxCurrency: string; vatCodeKey: string; description: string };
-  const merge = (map: Map<string, Acc>, key: string, p: BookingPair, vatCodeKey: string, description: string): void => {
+  type Acc = { accountKey: string; amount: number; amountFx: number; fxCurrency: string; vatCodeKey: string; description: string; costCenterKey: string };
+  const merge = (map: Map<string, Acc>, key: string, p: BookingPair, vatCodeKey: string, description: string, costCenterKey: string): void => {
     if (!key) return;
-    const id = `${key}\u0000${description}`;
-    const acc = map.get(id) ?? { accountKey: key, amount: 0, amountFx: 0, fxCurrency: p.fxCurrency, vatCodeKey: '', description };
+    const id = `${key}\u0000${description}\u0000${costCenterKey}`;
+    const acc = map.get(id) ?? { accountKey: key, amount: 0, amountFx: 0, fxCurrency: p.fxCurrency, vatCodeKey: '', description, costCenterKey };
     acc.amount += p.amount;
     acc.amountFx += p.amountFx;
     if (!acc.vatCodeKey && vatCodeKey) acc.vatCodeKey = vatCodeKey;
@@ -337,8 +339,8 @@ export function pairsToLines(pairs: BookingPair[], tenantId: string, accountingT
   for (const p of pairs) {
     const text = (p.description ?? '').trim();
     const textOnCredit = textSideOf(p, pairs) === 'credit';
-    merge(debits, p.debitAccountKey, p, p.vatSide === 'credit' ? '' : p.vatCodeKey, textOnCredit ? '' : text);
-    merge(credits, p.creditAccountKey, p, p.vatSide === 'credit' ? p.vatCodeKey : '', textOnCredit ? text : '');
+    merge(debits, p.debitAccountKey, p, p.vatSide === 'credit' ? '' : p.vatCodeKey, textOnCredit ? '' : text, p.debitCostCenterKey ?? '');
+    merge(credits, p.creditAccountKey, p, p.vatSide === 'credit' ? p.vatCodeKey : '', textOnCredit ? text : '', p.creditCostCenterKey ?? '');
   }
   const toLine = (acc: Acc, side: 'debit' | 'credit'): BookingLineModel => {
     const line = new BookingLineModel(tenantId, accountingTenantId);
@@ -349,12 +351,36 @@ export function pairsToLines(pairs: BookingPair[], tenantId: string, accountingT
     line.amountFx = acc.amountFx > 0 ? new MoneyModel(acc.amountFx, acc.fxCurrency as MoneyModel['currency']) : undefined;
     line.vatCodeKey = acc.vatCodeKey;
     line.description = acc.description;
+    line.costCenterKey = acc.costCenterKey;
     return line;
   };
   return [
     ...[...debits.values()].map(a => toLine(a, 'debit')),
     ...[...credits.values()].map(a => toLine(a, 'credit')),
   ];
+}
+
+/**
+ * Set a pair side's account and keep its Kostenstelle consistent (spec 1.65 §6.2): a P&L account
+ * with a default prefills it, a balance-sheet account clears it, otherwise the chosen key stays.
+ */
+export function withPairAccount(pair: BookingPair, side: 'debit' | 'credit', accountKey: string, accounts: AccountModel[]): BookingPair {
+  const sameAccount = (side === 'debit' ? pair.debitAccountKey : pair.creditAccountKey) === accountKey;
+  if (sameAccount) return pair;   // re-picking the account must not overwrite a chosen Kostenstelle
+  const account = accounts.find(a => a.okey === accountKey);
+  const current = (side === 'debit' ? pair.debitCostCenterKey : pair.creditCostCenterKey) ?? '';
+  const next = !isProfitAndLossAccountId(account?.id) ? '' : (account?.costCenterKey || current);
+  return side === 'debit'
+    ? { ...pair, debitAccountKey: accountKey, debitCostCenterKey: next }
+    : { ...pair, creditAccountKey: accountKey, creditCostCenterKey: next };
+}
+
+/**
+ * The Kostenstelle `writeBooking` fills into a line of this account that is saved without one —
+ * the account's default when it is an active leaf; '' otherwise (also for balance-sheet accounts).
+ */
+export function accountDefaultCostCenterKey(accountKey: string, accounts: AccountModel[], costCenters: CostCenterLike[]): string {
+  return resolveCostCenterKey({ account: accounts.find(a => a.okey === accountKey), costCenters });
 }
 
 export function toBookingFormData(booking: BookingModel, lines: BookingLineModel[]): BookingFormData {
@@ -411,11 +437,15 @@ export function pairsTotal(pairs: BookingPair[]): number {
  * voucher (`documentKey`) and period, the review status, and — because they hang on the original's
  * key — its Belege and comments. The copy starts as a `draft`; the `writeBooking` CF assigns the
  * booking number when it is saved.
+ * With `costCenters` given, a copied Kostenstelle that is no longer an active leaf of the booking's
+ * accounting tenant (archived, turned into a group, …) is dropped: `writeBooking` would refuse it
+ * as a new key, and the editor's picker could not show it.
  */
 export function copyBooking(
   booking: BookingModel,
   lines: BookingLineModel[],
   date: string,
+  costCenters?: CostCenterLike[],
 ): { booking: BookingModel; lines: BookingLineModel[] } {
   const tenantId = booking.tenants[0] ?? '';
   const copy = new BookingModel(tenantId, booking.accountingTenantId);
@@ -434,7 +464,20 @@ export function copyBooking(
       copiedLine.amountFx = line.amountFx;
       copiedLine.exchangeRateKey = line.exchangeRateKey;
       copiedLine.vatCodeKey = line.vatCodeKey;
+      copiedLine.description = line.description ?? '';
+      const costCenterKey = line.costCenterKey ?? '';
+      copiedLine.costCenterKey = !costCenters || isActiveLeafCostCenter(costCenterKey, booking.accountingTenantId, costCenters)
+        ? costCenterKey : '';
       return copiedLine;
     }),
   };
+}
+
+/** The reasons a ledger callable (`writeBooking`, `reviewBooking`) attaches to a refusal that get their own toast. */
+export type BookingWriteErrorReason = 'period-locked' | 'cost-center-invalid';
+
+/** The `details.reason` of a refused ledger write, when it is one the UI explains; undefined otherwise. */
+export function bookingWriteErrorReason(error: unknown): BookingWriteErrorReason | undefined {
+  const reason = (error as { details?: { reason?: unknown } } | undefined)?.details?.reason;
+  return reason === 'period-locked' || reason === 'cost-center-invalid' ? reason : undefined;
 }

@@ -1,0 +1,17 @@
+{
+  "create": {
+    "label": "Kostenstelle hinzufügen",
+    "error": "Die Kostenstelle konnte nicht erstellt werden.",
+    "conf": "Die Kostenstelle wurde erstellt."
+  },
+  "update": {
+    "label": "Kostenstelle ändern",
+    "error": "Die Änderungen konnten nicht gespeichert werden.",
+    "conf": "Die Änderungen wurden gespeichert."
+  },
+  "archive": {
+    "label": "Kostenstelle archivieren",
+    "error": "Die Kostenstelle konnte nicht archiviert werden.",
+    "conf": "Die Kostenstelle wurde archiviert."
+  }
+}

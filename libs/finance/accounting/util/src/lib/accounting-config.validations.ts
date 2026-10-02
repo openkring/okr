@@ -13,5 +13,8 @@ export const accountingConfigValidations = staticSuite(
     // Both account links are optional (empty = not linked yet), but must stay account okeys.
     stringValidations('defaultExpenseAccountKey', model.defaultExpenseAccountKey);
     stringValidations('employeePayablesAccountKey', model.employeePayablesAccountKey);
+    // Invoicing (1.76): selector / generated values, so no length cap; empty = not configured yet.
+    stringValidations('receivablesAccountKey', model.receivablesAccountKey);
+    stringValidations('invoiceTemplateId', model.invoiceTemplateId);
     numberValidations('fiscalYearStart', model.fiscalYearStart, true, 1, 12);
   });

@@ -164,3 +164,13 @@ describe('applyRules', () => {
     expect(rows[0]).toMatchObject({ status: 'unmapped', ruleKey: '', accountKey: '', title: '' });
   });
 });
+
+describe('normalizeRuleForSave cost centre', () => {
+  const accounts = [{ okey: 'pl', id: '4000' }, { okey: 'bs', id: '1020' }];
+  it('keeps the key on a P&L counter-account', () => {
+    expect(normalizeRuleForSave(rule({ accountKey: 'pl', costCenterKey: 'cc' }), accounts).costCenterKey).toBe('cc');
+  });
+  it('clears the key on a balance-sheet counter-account', () => {
+    expect(normalizeRuleForSave(rule({ accountKey: 'bs', costCenterKey: 'cc' }), accounts).costCenterKey).toBe('');
+  });
+});

@@ -2,15 +2,16 @@ import { Component, computed, effect, input, model, output, signal } from '@angu
 import { form } from '@angular/forms/signals';
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonImg, IonItem, IonLabel, IonNote, IonRow } from '@ionic/angular/standalone';
 
-import { AccountModel, AvatarInfo, RoleName, UserModel, VatCodeModel } from '@okr/shared-models';
+import { AccountModel, AvatarInfo, CostCenterModel, RoleName, UserModel, VatCodeModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { AmountInput, AmountInputI18n, DateInput, DateInputI18n, ErrorNote, NotesInput, NotesInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { validateVestTree } from '@okr/shared-util-angular';
-import { coerceBoolean, hasRole } from '@okr/shared-util-core';
+import { coerceBoolean, hasRole, isProfitAndLossAccountId } from '@okr/shared-util-core';
 
 import { AvatarPipe } from '@okr/avatar-ui';
 import { AccountSelect, AccountSelectI18n } from '@okr/finance-account-ui';
-import { addBookingPart, BOOKING_LINE_TEXT_LENGTH, BookingFormData, BookingI18n, BookingPair, bookingValidations, counterpartyLabel, formatMinorAmount, pairsTotal, removeBookingPart, withSplitTitle } from '@okr/finance-booking-util';
+import { CostCenterSelect, CostCenterSelectI18n } from '@okr/finance-cost-center-ui';
+import { accountDefaultCostCenterKey, addBookingPart, BOOKING_LINE_TEXT_LENGTH, BookingFormData, BookingI18n, BookingPair, bookingValidations, counterpartyLabel, formatMinorAmount, pairsTotal, removeBookingPart, withPairAccount, withSplitTitle } from '@okr/finance-booking-util';
 
 /**
  * The booking form: date, name, counterparty, then one card per debit/credit pair
@@ -24,7 +25,7 @@ import { addBookingPart, BOOKING_LINE_TEXT_LENGTH, BookingFormData, BookingI18n,
   selector: 'okr-booking-form',
   standalone: true,
   imports: [
-    SvgIconPipe, DateInput, TextInput, AmountInput, StringSelect, NotesInput, ErrorNote, AccountSelect,
+    SvgIconPipe, DateInput, TextInput, AmountInput, StringSelect, NotesInput, ErrorNote, AccountSelect, CostCenterSelect,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonButton, IonIcon, IonItem, IonLabel, IonNote, IonAvatar, IonImg, AvatarPipe,
   ],
   styles: [`
@@ -105,11 +106,11 @@ import { addBookingPart, BOOKING_LINE_TEXT_LENGTH, BookingFormData, BookingI18n,
                 <ion-row class="ion-align-items-center">
                   <ion-col size="12" [sizeMd]="accountColMd()">
                     <okr-account-select [i18n]="debitI18n()" [accounts]="accounts()" [allowEmpty]="false" [compact]="true"
-                      [selectedKey]="pair.debitAccountKey" (selectedKeyChange)="onPairChange(i, 'debitAccountKey', $event)" [readOnly]="isReadOnly()" />
+                      [selectedKey]="pair.debitAccountKey" (selectedKeyChange)="onAccountChange(i, 'debit', $event)" [readOnly]="isReadOnly()" />
                   </ion-col>
                   <ion-col size="12" [sizeMd]="accountColMd()">
                     <okr-account-select [i18n]="creditI18n()" [accounts]="accounts()" [allowEmpty]="false" [compact]="true"
-                      [selectedKey]="pair.creditAccountKey" (selectedKeyChange)="onPairChange(i, 'creditAccountKey', $event)" [readOnly]="isReadOnly()" />
+                      [selectedKey]="pair.creditAccountKey" (selectedKeyChange)="onAccountChange(i, 'credit', $event)" [readOnly]="isReadOnly()" />
                   </ion-col>
                   <!-- a split booking's name is generated: each part carries its own text -->
                   @if (isSplit()) {
@@ -135,6 +136,24 @@ import { addBookingPart, BOOKING_LINE_TEXT_LENGTH, BookingFormData, BookingI18n,
                   </ion-col>
                 </ion-row>
                 @if (isExpanded(i)) {
+                  @if (showDebitCostCenter(pair) || showCreditCostCenter(pair)) {
+                    <ion-row class="details-row ion-align-items-center">
+                      <ion-col size="12" [sizeMd]="accountColMd()">
+                        @if (showDebitCostCenter(pair)) {
+                          <okr-cost-center-select [i18n]="costCenterI18n()" [costCenters]="costCenters()" [compact]="true"
+                            [emptyLabel]="costCenterEmptyLabel(pair.debitAccountKey)"
+                            [selectedKey]="pair.debitCostCenterKey" (selectedKeyChange)="onPairChange(i, 'debitCostCenterKey', $event)" [readOnly]="isReadOnly()" />
+                        }
+                      </ion-col>
+                      <ion-col size="12" [sizeMd]="accountColMd()">
+                        @if (showCreditCostCenter(pair)) {
+                          <okr-cost-center-select [i18n]="costCenterI18n()" [costCenters]="costCenters()" [compact]="true"
+                            [emptyLabel]="costCenterEmptyLabel(pair.creditAccountKey)"
+                            [selectedKey]="pair.creditCostCenterKey" (selectedKeyChange)="onPairChange(i, 'creditCostCenterKey', $event)" [readOnly]="isReadOnly()" />
+                        }
+                      </ion-col>
+                    </ion-row>
+                  }
                   <ion-row class="details-row ion-align-items-center">
                     <ion-col size="12" size-md="1" class="ion-text-center">
                       @if (!isReadOnly()) {
@@ -186,6 +205,9 @@ export class BookingForm {
   public readonly currentUser = input<UserModel | undefined>();
   public readonly accounts = input<AccountModel[]>([]);
   public readonly vatCodes = input<VatCodeModel[]>([]);
+  public readonly costCenters = input<CostCenterModel[]>([]);
+  /** Kostenstellen only exist on the native ledger; a bexio ledger gets no picker. */
+  public readonly costCentersEnabled = input(false);
   public readonly locale = input('de-ch');
   public readonly readOnly = input(true);
   public readonly showForm = input(true);
@@ -236,6 +258,7 @@ export class BookingForm {
   protected readonly fxAmountI18n = computed(() => ({ name: 'amountFx', label: this.i18n().form_fx_amount_label(), placeholder: this.i18n().form_fx_amount_placeholder() } as AmountInputI18n));
   protected readonly fxCurrencyI18n = computed(() => ({ name: 'fxCurrency', label: this.i18n().form_fx_currency_label(), placeholder: 'EUR', helper: '' } as TextInputI18n));
   protected readonly lineTextI18n = computed(() => ({ name: 'description', label: this.i18n().form_line_text_label(), placeholder: '', helper: '' } as TextInputI18n));
+  protected readonly costCenterI18n = computed(() => ({ name: 'costCenterKey', label: this.i18n().form_cost_center_label() } as CostCenterSelectI18n));
   protected readonly vatI18n = computed(() => ({ name: 'vatCodeKey', label: this.i18n().form_vat_label(), helper: '' } as StringSelectI18n));
   protected readonly notesI18n = computed(() => ({ name: 'notes', label: this.i18n().form_notes_label(), placeholder: this.i18n().form_notes_placeholder() } as NotesInputI18n));
 
@@ -253,6 +276,23 @@ export class BookingForm {
     this.formData.update((vm) => withSplitTitle({ ...vm, [fieldName]: fieldValue }, this.i18n().split_title()));
   }
 
+  /** An account change keeps the side's Kostenstelle consistent (P&L default prefilled, balance-sheet cleared). */
+  protected onAccountChange(index: number, side: 'debit' | 'credit', accountKey: string): void {
+    this.dirty.emit(true);
+    this.formData.update((vm) => ({ ...vm, pairs: vm.pairs.map((p, i) => i === index ? withPairAccount(p, side, accountKey, this.accounts()) : p) }));
+  }
+
+  protected showDebitCostCenter(pair: BookingPair): boolean { return this.showCostCenter(pair.debitAccountKey); }
+  protected showCreditCostCenter(pair: BookingPair): boolean { return this.showCostCenter(pair.creditAccountKey); }
+  private showCostCenter(accountKey: string): boolean {
+    return this.costCentersEnabled() && isProfitAndLossAccountId(this.accounts().find(a => a.okey === accountKey)?.id);
+  }
+
+  /** An empty Kostenstelle is saved with the account's default (writeBooking): say so on the empty option. */
+  protected costCenterEmptyLabel(accountKey: string): string {
+    return accountDefaultCostCenterKey(accountKey, this.accounts(), this.costCenters()) ? this.i18n().form_cost_center_accountDefault() : '';
+  }
+
   protected onPairChange(index: number, field: keyof BookingPair, value: string | number): void {
     this.dirty.emit(true);
     this.formData.update((vm) => ({ ...vm, pairs: vm.pairs.map((p, i) => i === index ? { ...p, [field]: value } : p) }));
@@ -262,7 +302,8 @@ export class BookingForm {
   protected swapAccounts(index: number): void {
     this.dirty.emit(true);
     this.formData.update((vm) => ({ ...vm, pairs: vm.pairs.map((p, i) => i === index
-      ? { ...p, debitAccountKey: p.creditAccountKey, creditAccountKey: p.debitAccountKey, vatSide: p.vatSide === 'debit' ? 'credit' : 'debit',
+      ? { ...p, debitAccountKey: p.creditAccountKey, creditAccountKey: p.debitAccountKey,
+          debitCostCenterKey: p.creditCostCenterKey, creditCostCenterKey: p.debitCostCenterKey, vatSide: p.vatSide === 'debit' ? 'credit' : 'debit',
           descriptionSide: p.descriptionSide === 'debit' ? 'credit' : 'debit' }
       : p) }));
   }

@@ -15,6 +15,7 @@ export interface ReviewBookingLine {
   accountKey: string;
   debitAmount?: { amount: number; currency: string } | null;
   creditAmount?: { amount: number; currency: string } | null;
+  costCenterKey?: string;
 }
 
 /** Payload of the `reviewBooking` callable. `corrections` applies to 'approve' only. */
@@ -68,6 +69,7 @@ function toWriteLine(line: BookingLineModel): Record<string, unknown> {
     exchangeRateKey: line.exchangeRateKey,
     vatCodeKey: line.vatCodeKey,
     description: line.description ?? '',
+    costCenterKey: line.costCenterKey ?? '',
   };
 }
 

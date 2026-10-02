@@ -5,6 +5,7 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { checkAppCheckToken, checkAuthentication, checkRoles, getCallerTenantId, formatRejectNote, isBalanced, nextBookingNo } from '@okr/shared-util-functions';
 import { convertDateFormatToString, DateFormat, getTodayStr } from '@okr/shared-util-core';
 
+import { assertExplicitCostCenter, costCenterKeyForLine, loadCostCenterContext } from '../cost-center/cost-center-context';
 import { assertPeriodsOpen, loadFiscalYearStart, touchedPeriodKeys } from './period-lock';
 
 const REGION = 'europe-west6';
@@ -23,6 +24,7 @@ interface ReviewLine {
   accountKey: string;
   debitAmount?: { amount: number; currency: string } | null;
   creditAmount?: { amount: number; currency: string } | null;
+  costCenterKey?: string;
 }
 
 interface ReviewBookingData {
@@ -92,9 +94,21 @@ export const reviewBooking = onCall(
     const taskKey = await resolveTaskKey(db, bookingKey);
     const expenseRef = db.collection(EXPENSE_COLLECTION).doc(bookingKey);
     const expenseExists = (await expenseRef.get()).exists;
-    const oldLineRefs = newLines
-      ? (await db.collection(BOOKING_LINE_COLLECTION).where('bookingKey', '==', bookingKey).get()).docs.map(s => s.ref)
+    const oldLineDocs = newLines
+      ? (await db.collection(BOOKING_LINE_COLLECTION).where('bookingKey', '==', bookingKey).get()).docs
       : [];
+    const oldLineRefs = oldLineDocs.map(s => s.ref);
+    // Kostenstelle per corrected line: validate before the transaction (plain reads).
+    const reviewAccountingTenantId = pre['accountingTenantId'] as string;
+    const reviewCtx = decision === 'approve' && newLines
+      ? await loadCostCenterContext(db, tenantId, reviewAccountingTenantId, newLines.map(l => l.accountKey))
+      : undefined;
+    const reviewGrandfathered = new Set(
+      oldLineDocs.map(s => (s.data()['costCenterKey'] as string | undefined) ?? '').filter(k => !!k),
+    );
+    if (decision === 'approve' && newLines && reviewCtx) {
+      for (const line of newLines) assertExplicitCostCenter(reviewCtx, line.accountKey, line.costCenterKey, reviewGrandfathered);
+    }
     const reviewer = decision === 'reject' ? await reviewerName(db, request.auth!.uid) : '';
     const fiscalYearStart = decision === 'approve' ? await loadFiscalYearStart(db, pre['accountingTenantId'] as string) : 1;
 
@@ -145,9 +159,14 @@ export const reviewBooking = onCall(
       if (newLines) {
         for (const ref of oldLineRefs) tx.delete(ref);
         for (const line of newLines) {
+          const explicit = (line.costCenterKey ?? '').trim();
+          const costCenterKey = explicit && reviewGrandfathered.has(explicit)
+            ? explicit
+            : costCenterKeyForLine(reviewCtx!, line.accountKey, { explicit });
           tx.set(db.collection(BOOKING_LINE_COLLECTION).doc(), {
             tenants: [tenantId], isArchived: false,
             bookingKey, accountKey: line.accountKey,
+            ...(costCenterKey ? { costCenterKey } : {}),
             ...(line.debitAmount ? { debitAmount: { ...line.debitAmount, periodicity: 'one-time' } } : {}),
             ...(line.creditAmount ? { creditAmount: { ...line.creditAmount, periodicity: 'one-time' } } : {}),
             accountingTenantId,
@@ -179,6 +198,7 @@ interface WriteLine {
   exchangeRateKey?: string;
   vatCodeKey?: string;
   description?: string;
+  costCenterKey?: string;
 }
 
 interface WriteBookingData {
@@ -233,8 +253,8 @@ export const writeBooking = onCall(
 
     const bookingKey = mode === 'create' ? db.collection(BOOKING_COLLECTION).doc().id : d.bookingKey!;
     const bookingRef = db.collection(BOOKING_COLLECTION).doc(bookingKey);
-    const oldLineRefs = (await db.collection(BOOKING_LINE_COLLECTION).where('bookingKey', '==', bookingKey).get())
-      .docs.map(s => s.ref);
+    const oldLineDocs = (await db.collection(BOOKING_LINE_COLLECTION).where('bookingKey', '==', bookingKey).get()).docs;
+    const oldLineRefs = oldLineDocs.map(s => s.ref);
 
     if (mode === 'delete') {
       const acct = existing?.['accountingTenantId'] as string;
@@ -266,6 +286,13 @@ export const writeBooking = onCall(
     // a booking moved between years must leave an open period and land in one
     const periodKeys = touchedPeriodKeys(accountingTenantId, [date, existing?.['date'] as string | undefined], await loadFiscalYearStart(db, accountingTenantId));
 
+    // Kostenstelle per line: validate before the transaction (plain reads, no tx reads).
+    const ctx = await loadCostCenterContext(db, tenantId, accountingTenantId, lines.map(l => l.accountKey));
+    const grandfathered = new Set(
+      oldLineDocs.map(s => (s.data()['costCenterKey'] as string | undefined) ?? '').filter(k => !!k),
+    );
+    for (const line of lines) assertExplicitCostCenter(ctx, line.accountKey, line.costCenterKey, grandfathered);
+
     const bookingNo = await db.runTransaction(async (tx) => {
       await assertPeriodsOpen(db, periodKeys, tx);
       let no = (existing?.['bookingNo'] as number) ?? 0;
@@ -286,9 +313,14 @@ export const writeBooking = onCall(
 
       for (const ref of oldLineRefs) tx.delete(ref);
       for (const line of lines) {
+        const explicit = (line.costCenterKey ?? '').trim();
+        const costCenterKey = explicit && grandfathered.has(explicit)
+          ? explicit
+          : costCenterKeyForLine(ctx, line.accountKey, { explicit });
         tx.set(db.collection(BOOKING_LINE_COLLECTION).doc(), {
           tenants: [tenantId], isArchived: false,
           bookingKey, accountKey: line.accountKey, accountingTenantId,
+          ...(costCenterKey ? { costCenterKey } : {}),
           ...(line.debitAmount ? { debitAmount: { ...line.debitAmount, periodicity: 'one-time' } } : {}),
           ...(line.creditAmount ? { creditAmount: { ...line.creditAmount, periodicity: 'one-time' } } : {}),
           ...(line.amountFx ? { amountFx: { ...line.amountFx, periodicity: 'one-time' } } : {}),

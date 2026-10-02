@@ -19,6 +19,7 @@
     "@okr/finance-booking-data-access": "*",
     "@okr/finance-account-ui": "*",
     "@okr/finance-account-util": "*",
-    "@okr/cms-menu-feature": "*"
+    "@okr/cms-menu-feature": "*",
+    "@okr/finance-cost-center-feature": "*"
   }
 }

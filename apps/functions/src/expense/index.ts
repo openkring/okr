@@ -6,22 +6,15 @@ import { checkAppCheckToken, checkAuthentication, lockedExpenseFields, nextStatu
 import { getTodayStr, DateFormat } from '@okr/shared-util-core';
 
 import { emitEvent } from '../workflow/emit';
+import { CreateExpenseFields, memberExpenseFields } from './expense.util';
 
 const REGION = 'europe-west6';
 const CF_NAME = 'createExpense';
 const EXPENSE_COLLECTION = 'expenses';
 const USERS_COLLECTION = 'users';
 
-interface CreateExpenseData {
+interface CreateExpenseData extends CreateExpenseFields {
   tenantId: string;
-  abstract: string;
-  amountTotal: number;   // cents
-  currency: string;
-  transferTo: 'me' | 'issuer';
-  iban: string;
-  accountKey: string;
-  costCenterId: string;
-  note: string;
   receiptCount: number;
 }
 
@@ -50,13 +43,11 @@ export const createExpense = onCall(
     }
     const receiptCount = Number.isInteger(d.receiptCount) && d.receiptCount >= 0 ? d.receiptCount : 0;
     const ref = db.collection(EXPENSE_COLLECTION).doc();
+    const fields = memberExpenseFields(d);   // drops a member-sent costCenterId
     await ref.set({
       tenants: [d.tenantId], isArchived: false, index: '', tags: '', notes: '',
       creationDateTime: getTodayStr(DateFormat.StoreDateTime),
-      abstract: d.abstract ?? '',
-      amountTotal: d.amountTotal, currency: d.currency || 'CHF',
-      transferTo: d.transferTo === 'issuer' ? 'issuer' : 'me', iban: d.iban ?? '',
-      accountKey: d.accountKey ?? '', costCenterId: d.costCenterId ?? '', note: d.note ?? '',
+      ...fields,
       status: 'processing', bookingKey: '',
       userId: uid, userName: `${user['firstName'] ?? ''} ${user['lastName'] ?? ''}`.trim(),
       personKey: (user['personKey'] as string) ?? '',
@@ -75,9 +66,9 @@ export const createExpense = onCall(
         // Formatted HERE: the engine's translate() does plain {k} substitution and cannot
         // format, so a raw cents value would land verbatim in the task name ("… über 12500 CHF").
         amount: (d.amountTotal / 100).toFixed(2),
-        currency: d.currency || 'CHF',
-        accountKey: d.accountKey ?? '',
-        costCenterId: d.costCenterId ?? '',
+        currency: fields.currency,
+        accountKey: fields.accountKey,
+        costCenterId: fields.costCenterId,
       },
     });
 

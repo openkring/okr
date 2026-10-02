@@ -1,5 +1,5 @@
 import { AccountModel } from '@okr/shared-models';
-import { isType } from '@okr/shared-util-core';
+import { isProfitAndLossAccountId, isType } from '@okr/shared-util-core';
 
 export interface FlatAccountNode {
   account: AccountModel;
@@ -147,4 +147,10 @@ export function usedAccountIds(accounts: AccountModel[], account: AccountModel):
   return accounts
     .filter(a => a.okey !== account.okey && a.id.length > 0)
     .map(a => a.id);
+}
+
+/** Balance-sheet accounts (numbers 1xxx/2xxx) never carry a default Kostenstelle: a stale key on a renumbered account is dropped. */
+export function withCostCenterForAccountId(account: AccountModel): AccountModel {
+  if (isProfitAndLossAccountId(account.id) || !account.costCenterKey) return account;
+  return { ...account, costCenterKey: '' };
 }

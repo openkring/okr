@@ -128,8 +128,12 @@
     "vat": {
       "label": "Code TVA"
     },
+    "costCenter": {
+      "label": "Centre de coûts",
+      "accountDefault": "Par défaut du compte"
+    },
     "details": {
-      "toggle": "Devise étrangère, TVA et inversion des comptes"
+      "toggle": "Devise étrangère, TVA, centre de coûts et inversion des comptes"
     },
     "line": {
       "add": "Ajouter une ligne",
@@ -161,6 +165,7 @@
     "locked": "Cette année est clôturée. Ses écritures ne peuvent plus être modifiées."
   },
   "write": {
-    "failed": "L'écriture n'a pas pu être enregistrée."
+    "failed": "L'écriture n'a pas pu être enregistrée.",
+    "costCenterInvalid": "Le centre de coûts choisi n'est plus actif — choisis-en un autre."
   }
 }

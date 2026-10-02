@@ -6,7 +6,7 @@ import {
 } from '@ionic/angular/standalone';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
+import { EmptyList, ListFilter, Spinner, StringSelect, StringSelectI18n } from '@okr/shared-ui';
 import { AlertService } from '@okr/shared-util-angular';
 
 import { Menu } from '@okr/cms-menu-feature';
@@ -22,7 +22,7 @@ import { ReportingStore } from './reporting.store';
   selector: 'okr-income-statement-page',
   standalone: true,
   imports: [
-    SvgIconPipe, Menu, Spinner, EmptyList, ListFilter, ReportTable,
+    SvgIconPipe, Menu, Spinner, EmptyList, ListFilter, StringSelect, ReportTable,
     IonHeader, IonToolbar, IonButtons, IonButton, IonMenuButton, IonTitle, IonIcon, IonPopover,
     IonContent, IonGrid, IonRow, IonCol, IonLabel,
   ],
@@ -48,6 +48,10 @@ import { ReportingStore } from './reporting.store';
         (searchTermChanged)="store.setSearchTerm($event)"
         (yearChanged)="store.setSelectedYear($event)" [years]="store.years()" [selectedYear]="store.year()"
       />
+      @if (store.showCostCenterFilter()) {
+        <okr-string-select [i18n]="costCenterI18n()" [stringList]="store.costCenterOptions()" [labels]="store.costCenterOptionLabels()"
+          [selectedString]="store.effectiveCostCenterKey()" (selectedStringChange)="store.setSelectedCostCenterKey($event)" [readOnly]="false" />
+      }
       <ion-toolbar color="primary">
         <ion-grid>
           <ion-row>
@@ -78,6 +82,7 @@ export class IncomeStatementPage {
 
   /** Name of the DB menu document loaded into the header context menu (route `:contextMenuName`). */
   public readonly contextMenuName = input.required<string>();
+  protected readonly costCenterI18n = computed(() => ({ name: 'costCenterKey', label: this.store.i18n.filter_cost_center(), helper: '' } as StringSelectI18n));
   protected readonly popupId = computed(() => `c_income_${this.contextMenuName()}`);
 
   // `?year=<yyyy>` (query param): the period list opens the report for that fiscal year.

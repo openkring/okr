@@ -24,6 +24,7 @@ import * as Vectorize from './vectorize';
 import * as Video from './video';
 import * as Expense from './expense';
 import * as Booking from './booking';
+import * as Invoice from './invoice';
 import * as BankImport from './bank-import';
 import * as Email from './email';
 import * as Bexio from './bexio';
@@ -262,6 +263,8 @@ export const onExpenseTaskWritten = Expense.onExpenseTaskWritten;
 export const reviewBooking = Booking.reviewBooking;
 // manual journal entries (create/update/delete) — same reason: bookings are CF-write-only
 export const writeBooking = Booking.writeBooking;
+export const writeInvoice = Invoice.writeInvoice;
+export const issueInvoice = Invoice.issueInvoice;
 // bank import: the only write path from bank-import-rows into the ledger (spec 1.60 §7)
 export const postBankImport = BankImport.postBankImport;
 // bexio journal import: mapped entries posted directly as bookings (spec 1.60 §12)
@@ -375,6 +378,9 @@ export { postMemberFees } from './member-fee/post-member-fees';
 // from the legacy numeric DeliveryType to DeliveryChannel[], run once per tenant after release
 export { migrateDeliveryChannels } from './user/migrate-delivery-channels';
 
+// Kostenrechnung 1.65 §6.4: free-text → cost-centre key and current-year backfill (treasurer)
+export { migrateCostCenters } from './cost-center/migrate-cost-centers';
+
 // address-directory projection rebuild/backfill (privacy 1.19 Phase 4)
 export { rebuildAddressDirectory } from './address/rebuild-address-directory';
 
@@ -391,7 +397,6 @@ export { setManualRate } from './exchange-rate/set-manual-rate';
 
 // payment
 export { generatePain001 } from './payment/generate-pain001';
-export { generateInvoicePdf } from './payment/generate-invoice-pdf';
 export { parseQrInvoice } from './payment/parse-qr-invoice';
 export { generateDunningPdf } from './payment/generate-dunning-pdf';
 

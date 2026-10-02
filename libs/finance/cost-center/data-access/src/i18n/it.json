@@ -1,0 +1,17 @@
+{
+  "create": {
+    "label": "Aggiungi centro di costo",
+    "error": "Non è stato possibile creare il centro di costo.",
+    "conf": "Il centro di costo è stato creato."
+  },
+  "update": {
+    "label": "Modifica centro di costo",
+    "error": "Non è stato possibile salvare le modifiche.",
+    "conf": "Le modifiche sono state salvate."
+  },
+  "archive": {
+    "label": "Archivia centro di costo",
+    "error": "Non è stato possibile archiviare il centro di costo.",
+    "conf": "Il centro di costo è stato archiviato."
+  }
+}

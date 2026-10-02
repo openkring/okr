@@ -128,8 +128,12 @@
     "vat": {
       "label": "MWST-Code"
     },
+    "costCenter": {
+      "label": "Kostenstelle",
+      "accountDefault": "Standard des Kontos"
+    },
     "details": {
-      "toggle": "Fremdwährung, MWST und Konten tauschen"
+      "toggle": "Fremdwährung, MWST, Kostenstelle und Konten tauschen"
     },
     "line": {
       "add": "Zeile hinzufügen",
@@ -161,6 +165,7 @@
     "locked": "Dieses Jahr ist abgeschlossen. Buchungen darin können nicht mehr geändert werden."
   },
   "write": {
-    "failed": "Die Buchung konnte nicht gespeichert werden."
+    "failed": "Die Buchung konnte nicht gespeichert werden.",
+    "costCenterInvalid": "Die gewählte Kostenstelle ist nicht mehr aktiv — bitte wähle eine andere."
   }
 }

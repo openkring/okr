@@ -22,6 +22,7 @@ export class AccountModel implements OkrModel, NamedModel, SearchableModel, Tagg
   public accountingTenantId = '';     // = org.okey; separates chart of accounts per accounting tenant
   public vatCodeKey = '';             // default VatCodeModel okey suggested when booking to this account
   public currency = '';               // ISO 4217 code; fixed currency for foreign-currency bank accounts
+  public costCenterKey = '';          // default Kostenstelle for lines on this (P&L) account
 
   constructor(tenantId: string) {
     this.tenants = [tenantId];

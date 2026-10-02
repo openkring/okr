@@ -18,6 +18,9 @@
     "@okr/finance-booking-util": "*",
     "@okr/finance-asset-data-access": "*",
     "@okr/finance-asset-util": "*",
-    "@okr/finance-asset-ui": "*"
+    "@okr/finance-asset-ui": "*",
+    "@okr/finance-cost-center-feature": "*",
+    "@okr/finance-cost-center-ui": "*",
+    "@okr/finance-account-data-access": "*"
   }
 }

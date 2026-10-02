@@ -1,4 +1,5 @@
 {
+  "costCenter": { "label": "Centro de costes predeterminado", "helper": "Se sugiere para los nuevos asientos en esta cuenta." },
   "accounts": "Cuentas",
   "empty": "No se han encontrado cuentas.",
   "create": "Abrir una nueva cuenta",

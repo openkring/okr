@@ -1,0 +1,75 @@
+{
+  "costCenters": "Centri di costo",
+  "empty": "Nessun centro di costo trovato.",
+  "none": "senza centro di costo",
+  "picker": "Centro di costo",
+  "create": "Nuovo centro di costo",
+  "update": "Modifica centro di costo",
+  "view": "Mostra centro di costo",
+  "archive": "Archivia centro di costo",
+  "archiveConf": "Vuoi archiviare questo centro di costo? Le registrazioni esistenti restano invariate.",
+  "id": {
+    "label": "Numero",
+    "placeholder": "es. 310",
+    "helper": "Il numero del centro di costo, es. 310.",
+    "duplicate": "Questo numero esiste già."
+  },
+  "name": {
+    "label": "Nome",
+    "placeholder": "es. Juniores",
+    "helper": "Come si chiama il centro di costo."
+  },
+  "parentKey": {
+    "label": "Superiore",
+    "helper": "Il gruppo a cui appartiene questo centro di costo.",
+    "cycle": "Un centro di costo non può essere collocato sotto se stesso né sotto i propri sotto-centri.",
+    "notGroup": "Il superiore deve essere un gruppo o il livello superiore.",
+    "none": "livello superiore"
+  },
+  "type": {
+    "label": "Tipo",
+    "helper": "Puoi registrare su un centro di costo; un gruppo ne riunisce diversi.",
+    "hasChildren": "Questo centro di costo ha dei sotto-centri e quindi non può essere movimentato direttamente.",
+    "root": "Radice",
+    "group": "Gruppo",
+    "leaf": "Centro di costo"
+  },
+  "responsibility": {
+    "label": "Responsabilità",
+    "helper": "Chi è responsabile di questo centro di costo. Se lasci vuoto, lo vede solo il tesoriere.",
+    "select": "Scegli",
+    "clear": "Rimuovi",
+    "none": "Nessuna – solo la cassiera o il cassiere"
+  },
+  "notes": {
+    "label": "Note",
+    "placeholder": "Note sul centro di costo"
+  },
+  "archiveHasChildren": "Questo gruppo ha ancora centri di costo attivi. Archiviali prima.",
+  "archived": "archiviato",
+  "archiveState": {
+    "active": {
+      "label": "Attivi"
+    },
+    "archived": {
+      "label": "Archiviati"
+    }
+  },
+  "select": {
+    "search": "Cerca numero o nome",
+    "notFound": "Nessun centro di costo trovato."
+  },
+  "migrate": {
+    "report": "Controllati: {scanned}. Da modificare: {updated}.",
+    "unmatched": "Nessun centro di costo corrispondente, verrà svuotato: {list}",
+    "apply": "Applicare ora?",
+    "none": "Non c'è nulla da modificare.",
+    "done": "Fatto. {updated} voci modificate.",
+    "error": "L'assegnazione non ha funzionato. Riprova più tardi.",
+    "unattributed": "Non assegnabile a una contabilità, resta invariato: {list}",
+    "more": "… e altri {count}",
+    "refused": "L'assegnazione è possibile solo per le contabilità tenute qui.",
+    "noCostCenters": "Crea prima almeno un centro di costo attivo. Altrimenti tutte le voci esistenti verrebbero svuotate.",
+    "lockedSkipped": "In anni chiusi, resta invariato: {count}"
+  }
+}

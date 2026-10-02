@@ -50,6 +50,7 @@ export const EXPENSE_I18N_KEYS = {
   qrbill_creditor:    PFX + 'field.qrBill.creditor',
   qrbill_reference:   PFX + 'field.qrBill.reference',
   account_label:      PFX + 'field.account',
+  cost_center_label:  PFX + 'field.costCenter',
   receipts_label:     PFX + 'field.belege.label',
   receipt_download:   PFX + 'receipt.download',
   receipt_copyUrl:    PFX + 'receipt.copyUrl',

@@ -1,15 +1,17 @@
-import { Component, inject, input, OnInit } from '@angular/core';
+import { Component, computed, inject, input, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonButton, IonButtons, IonContent, IonHeader, IonInput, IonItem, IonLabel, IonSelect, IonSelectOption, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { AssetCategoryModel, AssetModel, UserModel } from '@okr/shared-models';
 import { dismissOverlay } from '@okr/shared-util-angular';
+import { CostCenterStore } from '@okr/finance-cost-center-feature';
+import { CostCenterSelect, CostCenterSelectI18n } from '@okr/finance-cost-center-ui';
 import { AssetStore } from './asset.store';
 
 @Component({
   selector: 'okr-asset-edit-modal',
   standalone: true,
-  imports: [FormsModule, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonContent, IonItem, IonLabel, IonInput, IonSelect, IonSelectOption],
+  imports: [FormsModule, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonContent, IonItem, IonLabel, IonInput, IonSelect, IonSelectOption, CostCenterSelect],
   providers: [AssetStore],
   template: `
     <ion-header>
@@ -46,6 +48,10 @@ import { AssetStore } from './asset.store';
         <ion-label position="stacked">{{ store.i18n.life() }}</ion-label>
         <ion-input type="number" [(ngModel)]="edit.usefulLifeMonths" [readonly]="readOnly()" />
       </ion-item>
+      @if (costCenterStore.isEnabled()) {
+        <okr-cost-center-select [i18n]="costCenterI18n()" [costCenters]="costCenterStore.costCenters()" [allowEmpty]="true"
+          [(selectedKey)]="edit.costCenter" [readOnly]="readOnly()" />
+      }
     </ion-content>
   `,
 })
@@ -57,6 +63,9 @@ export class AssetEditModal implements OnInit {
   public readonly categories = input<AssetCategoryModel[]>([]);
   public readonly readOnly = input<boolean>(true);
   public readonly currentUser = input<UserModel | undefined>(undefined);
+
+  protected readonly costCenterStore = inject(CostCenterStore);
+  protected readonly costCenterI18n = computed(() => ({ name: 'costCenter', label: this.store.i18n.cost_center() } as CostCenterSelectI18n));
 
   protected edit!: AssetModel;
 

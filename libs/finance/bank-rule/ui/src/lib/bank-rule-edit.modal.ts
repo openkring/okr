@@ -2,7 +2,7 @@ import { Component, computed, inject, input, linkedSignal, signal } from '@angul
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { I18nService } from '@okr/shared-i18n';
-import { AccountModel, BankRuleModel, UserModel, VatCodeModel } from '@okr/shared-models';
+import { AccountModel, BankRuleModel, CostCenterModel, UserModel, VatCodeModel } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
 import { dismissOverlay } from '@okr/shared-util-angular';
 import { coerceBoolean, safeStructuredClone } from '@okr/shared-util-core';
@@ -28,6 +28,8 @@ import { BankRuleForm } from './bank-rule.form';
           [currentUser]="currentUser()"
           [accounts]="accounts()"
           [vatCodes]="vatCodes()"
+          [costCenters]="costCenters()"
+          [costCentersEnabled]="costCentersEnabled()"
           [showForm]="showForm()"
           [readOnly]="isReadOnly()"
           [i18n]="i18n"
@@ -47,6 +49,8 @@ export class BankRuleEditModal {
   public readonly currentUser = input<UserModel | undefined>();
   public readonly accounts = input<AccountModel[]>([]);
   public readonly vatCodes = input<VatCodeModel[]>([]);
+  public readonly costCenters = input<CostCenterModel[]>([]);
+  public readonly costCentersEnabled = input(false);
   public readonly readOnly = input(true);
   protected readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 

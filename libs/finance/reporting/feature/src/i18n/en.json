@@ -62,5 +62,10 @@
   "zero": {
     "show": "Show zero accounts",
     "hide": "Hide zero accounts"
+  },
+  "costCenter": {
+    "filter": "Cost centre",
+    "all": "All cost centres",
+    "none": "No cost centre"
   }
 }

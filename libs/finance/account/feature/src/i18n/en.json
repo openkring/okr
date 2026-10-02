@@ -1,4 +1,5 @@
 {
+  "costCenter": { "label": "Default cost centre", "helper": "Suggested for new bookings on this account." },
   "accounts": "Accounts",
   "empty": "No accounts found.",
   "create": "Open a new account",

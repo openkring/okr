@@ -6,8 +6,11 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { AssetModel, BookingLineModel, BookingModel } from '@okr/shared-models';
+import { resolveCostCenterKey } from '@okr/shared-util-core';
 
 import { AccountingStore } from '@okr/finance-accounting-feature';
+import { AccountService } from '@okr/finance-account-data-access';
+import { CostCenterStore } from '@okr/finance-cost-center-feature';
 import { AssetCategoryService, AssetService } from '@okr/finance-asset-data-access';
 import { ASSET_I18N_KEYS, AssetI18n, linearDepreciationMonthly, proRataMonths } from '@okr/finance-asset-util';
 import { BookingService } from '@okr/finance-booking-data-access';
@@ -24,6 +27,8 @@ export const AssetStore = signalStore(
     assetCategoryService: inject(AssetCategoryService),
     accountingStore: inject(AccountingStore),
     bookingService: inject(BookingService),
+    accountService: inject(AccountService),
+    costCenterStore: inject(CostCenterStore),
     appStore: inject(AppStore),
     modalController: inject(ModalController),
     i18n: inject(I18nService).translateAll(ASSET_I18N_KEYS),
@@ -87,6 +92,12 @@ export const AssetStore = signalStore(
 
     async preview(periodEnd: string): Promise<void> {
       const lines: BookingLineModel[] = [];
+      // the depreciation expense line is booked on the asset's Kostenstelle; an archived one falls
+      // through to the account default here instead of being rejected by writeBooking
+      const resolveKeys = store.costCenterStore.isEnabled();
+      const accounts = resolveKeys ? await store.accountService.listOnce(store.accountingTenantId()) : [];
+      // do not resolve against a cost-centre list that is still loading (it would look empty)
+      for (let i = 0; resolveKeys && store.costCenterStore.isLoading() && i < 50; i++) await new Promise(r => setTimeout(r, 100));
 
       for (const asset of store.assets()) {
         const months = proRataMonths(asset.commissioningDate ?? asset.acquisitionDate, periodEnd);
@@ -98,6 +109,10 @@ export const AssetStore = signalStore(
 
         const drLine = new BookingLineModel(store.tenantId(), store.accountingTenantId());
         drLine.accountKey = asset.expenseAccountKey;
+        if (resolveKeys) drLine.costCenterKey = resolveCostCenterKey({
+          source: asset.costCenter, account: accounts.find(a => a.okey === drLine.accountKey),
+          costCenters: store.costCenterStore.costCenters(),
+        });
         drLine.debitAmount = { amount: periodDepreciation, currency: 'CHF', periodicity: 'one-time' };
         lines.push(drLine);
 

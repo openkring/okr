@@ -9,6 +9,7 @@ export interface RowDoc {
   fee?: { amount: number; currency: string } | null;  // payment-processor fee (spec 1.62 §5)
   amountFx?: { amount: number; currency: string } | null;
   status: string; bankProfileKey: string; accountingTenantId: string; tenants: string[];
+  ruleKey?: string;
 }
 export interface ProfileDoc { accountKey: string; feeAccountKey?: string; accountingTenantId: string; isArchived?: boolean; }
 
@@ -148,4 +149,21 @@ export function buildJournalBookingHeader(entry: JournalEntry, tenantId: string,
     title, date: entry.date, notes: (entry.reference ?? '').trim(), periodKey, documentKey: '', tags: 'journal-import', index: '',
     status: 'posted', accountingTenantId, tenants: [tenantId], isArchived: false,
   };
+}
+
+/**
+ * Kostenstelle per line of a bank booking (spec 1.65 §6.2): the bank rule's key applies to the main
+ * counter-account line only; split parts, fee and bank lines get their account default via `keyFor`
+ * (which returns '' for balance-sheet accounts). An empty key writes no field.
+ * A split part on the same account as the main part also receives the rule key (accepted).
+ */
+export function withCostCenterKeys(
+  lines: Record<string, unknown>[], row: RowDoc, ruleCostCenterKey: string,
+  keyFor: (accountKey: string, rule: string) => string,
+): Record<string, unknown>[] {
+  return lines.map(line => {
+    const accountKey = line['accountKey'] as string;
+    const key = keyFor(accountKey, accountKey === row.accountKey ? ruleCostCenterKey : '');
+    return key ? { ...line, costCenterKey: key } : line;
+  });
 }

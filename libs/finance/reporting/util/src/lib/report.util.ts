@@ -198,3 +198,26 @@ export function reportToCsv(rows: ReportRow[], header: string[]): string {
   const lines = rows.map(r => [cell(r.id), cell(r.name), francs(r.current), francs(r.previous)].join(';'));
   return [header.map(cell).join(';'), ...lines].join('\n');
 }
+
+/** ER filter value: every line. */
+export const ALL_COST_CENTERS = '';
+/** ER filter value: the "ohne Kostenstelle" bucket. */
+export const NO_COST_CENTER = '__none__';
+
+/**
+ * Lines of one Kostenstelle subtree (spec 1.65 §1 criterion 2). `subtreeKeys` = the selected node
+ * and its descendants (`costCenterSubtreeKeys`). Missing keys on legacy lines count as empty.
+ */
+export function filterLinesByCostCenter(lines: BookingLineModel[], selection: string, subtreeKeys: Set<string>): BookingLineModel[] {
+  if (selection === ALL_COST_CENTERS) return lines;
+  if (selection === NO_COST_CENTER) return lines.filter(l => !(l.costCenterKey ?? ''));
+  return lines.filter(l => subtreeKeys.has(l.costCenterKey ?? ''));
+}
+
+/**
+ * The selection that actually filters: all when the filter is off (non-native ledger / no
+ * Kostenstellen) or when the stored key is no longer an option (e.g. left over from another tenant).
+ */
+export function effectiveCostCenterSelection(selected: string, enabled: boolean, optionKeys: string[]): string {
+  return enabled && optionKeys.includes(selected) ? selected : ALL_COST_CENTERS;
+}

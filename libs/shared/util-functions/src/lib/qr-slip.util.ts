@@ -31,6 +31,7 @@ export interface QrSlipData {
   currency: 'CHF';
   amount?: number;
   debtor?: QrSlipParty;
+  message?: string;
 }
 
 const s = (v: unknown): string => (v === null || v === undefined ? '' : String(v));
@@ -58,6 +59,7 @@ export function buildQrSlipData(
 ): QrSlipData {
   const amount = withAmount ? parseSwissAmount(payload['amount']) : undefined;
   const debtor = buildDebtor(payload);
+  const message = s(payload['qrMessage']).trim().slice(0, 140);
   return {
     creditor: {
       account: payee.iban.replace(/\s/g, ''),
@@ -71,5 +73,6 @@ export function buildQrSlipData(
     currency: 'CHF',
     ...(amount !== undefined ? { amount } : {}),
     ...(debtor ? { debtor } : {}),
+    ...(message ? { message } : {}),
   };
 }

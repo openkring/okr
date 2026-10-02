@@ -1,0 +1,17 @@
+{
+  "create": {
+    "label": "Añadir centro de coste",
+    "error": "No se ha podido crear el centro de coste.",
+    "conf": "El centro de coste se ha creado."
+  },
+  "update": {
+    "label": "Editar centro de coste",
+    "error": "No se han podido guardar los cambios.",
+    "conf": "Los cambios se han guardado."
+  },
+  "archive": {
+    "label": "Archivar centro de coste",
+    "error": "No se ha podido archivar el centro de coste.",
+    "conf": "El centro de coste se ha archivado."
+  }
+}

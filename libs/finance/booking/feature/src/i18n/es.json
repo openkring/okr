@@ -128,8 +128,12 @@
     "vat": {
       "label": "Código IVA"
     },
+    "costCenter": {
+      "label": "Centro de costes",
+      "accountDefault": "Predeterminado de la cuenta"
+    },
     "details": {
-      "toggle": "Moneda extranjera, IVA e intercambio de cuentas"
+      "toggle": "Moneda extranjera, IVA, centro de costes e intercambio de cuentas"
     },
     "line": {
       "add": "Añadir línea",
@@ -161,6 +165,7 @@
     "locked": "Este año está cerrado. Sus asientos ya no se pueden modificar."
   },
   "write": {
-    "failed": "No se ha podido guardar el asiento."
+    "failed": "No se ha podido guardar el asiento.",
+    "costCenterInvalid": "El centro de costes elegido ya no está activo — elige otro."
   }
 }

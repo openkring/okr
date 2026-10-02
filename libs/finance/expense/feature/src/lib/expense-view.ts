@@ -7,11 +7,13 @@ import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
-import { AccountModel, ExpenseModel, OcrResultCollection, OcrResultModel, PersonModelName } from '@okr/shared-models';
+import { AccountingConfigModel, AccountModel, CostCenterModel, ExpenseModel, OcrResultCollection, OcrResultModel, PersonModelName } from '@okr/shared-models';
 import { copyToClipboardWithConfirmation, createActionSheetButton, createActionSheetOptions } from '@okr/shared-util-angular';
 import { convertDateFormatToString, DateFormat, parseSwissQrBill } from '@okr/shared-util-core';
 
 import { AccountService } from '@okr/finance-account-data-access';
+import { AccountingConfigService } from '@okr/finance-accounting-data-access';
+import { CostCenterService } from '@okr/finance-cost-center-data-access';
 import { ExpenseService } from '@okr/finance-expense-data-access';
 import {
   buildSwissPaymentCode, centsToCHF, EXPENSE_I18N_KEYS, EXPENSE_STATE_CATEGORY_NAME, ExpenseI18n, ExpenseQrBill, ExpenseReceipt,
@@ -131,6 +133,7 @@ export function injectExpenseView(expense: Signal<ExpenseModel>) {
     qrbill_creditor:  i18n.qrbill_creditor,
     qrbill_reference: i18n.qrbill_reference,
     account_label:    i18n.account_label,
+    cost_center_label: i18n.cost_center_label,
     note_label:       i18n.note_label,
     field_status:     i18n.field_status,
     receipts_label:   i18n.receipts_label,
@@ -191,6 +194,35 @@ export function injectExpenseView(expense: Signal<ExpenseModel>) {
     reloadReceipts: () => { receiptsResource.reload(); ocrResultsResource.reload(); },
     showReceiptActions,
   };
+}
+
+/**
+ * The Kostenstellen of the EXPENSE'S own book, for the treasurer's edit modal only. Not part of
+ * `injectExpenseView`: the view modal and page are opened by members too, and `cost-centers` is
+ * treasurer-only. Deliberately not the root `CostCenterStore`: that one follows the accounting
+ * shell's book, which `/expense/...` is outside of — a cold load would show an empty picker, and a
+ * gss expense opened after visiting the scs books would be offered scs Kostenstellen.
+ * Enabled only when that book is kept natively (D9); unknown/loading config counts as native,
+ * as in `AccountingStore.isExternallyManaged`.
+ */
+export function injectExpenseCostCenters(expense: Signal<ExpenseModel>) {
+  const costCenterService = inject(CostCenterService);
+  const configService = inject(AccountingConfigService);
+  const accountingTenantId = computed(() => expense().accountingTenantId ?? '');
+
+  const costCentersResource = rxResource<CostCenterModel[], string>({
+    params: () => accountingTenantId(),
+    stream: ({ params }) => params ? costCenterService.list(params) : of([]),
+  });
+  const configResource = rxResource<AccountingConfigModel | undefined, string>({
+    params: () => accountingTenantId(),
+    stream: ({ params }) => params ? configService.read(params) : of(undefined),
+  });
+
+  const costCenters = computed(() => costCentersResource.value() ?? []);
+  const costCentersEnabled = computed(() =>
+    !!accountingTenantId() && (configResource.value()?.accountingBackend ?? 'native') === 'native');
+  return { costCenters, costCentersEnabled };
 }
 
 function escapeHtml(value: string): string {

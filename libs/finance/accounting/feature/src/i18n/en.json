@@ -17,6 +17,19 @@
       "label": "Start of fiscal year",
       "placeholder": "Month 1–12",
       "helper": "Month in which the fiscal year starts. 1 = calendar year. Decides which period a booking is assigned to."
+    },
+    "receivablesAccount": {
+      "label": "Receivables account",
+      "helper": "Open invoices are booked here until they are paid."
+    },
+    "invoiceTemplate": {
+      "label": "Invoice template",
+      "placeholder": "Template ID",
+      "helper": "Template used to create invoice PDFs."
+    },
+    "paymentAccounts": {
+      "label": "Payment accounts",
+      "helper": "An invoice payment may be booked to these accounts."
     }
   },
   "feeSchedule": {

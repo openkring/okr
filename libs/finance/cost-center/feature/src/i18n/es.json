@@ -1,0 +1,75 @@
+{
+  "costCenters": "Centros de coste",
+  "empty": "No se han encontrado centros de coste.",
+  "none": "sin centro de coste",
+  "picker": "Centro de coste",
+  "create": "Nuevo centro de coste",
+  "update": "Editar centro de coste",
+  "view": "Ver centro de coste",
+  "archive": "Archivar centro de coste",
+  "archiveConf": "¿Quieres archivar este centro de coste? Los asientos existentes no cambian.",
+  "id": {
+    "label": "Número",
+    "placeholder": "p. ej. 310",
+    "helper": "El número del centro de coste, p. ej. 310.",
+    "duplicate": "Este número ya existe."
+  },
+  "name": {
+    "label": "Nombre",
+    "placeholder": "p. ej. Juniors",
+    "helper": "Cómo se llama el centro de coste."
+  },
+  "parentKey": {
+    "label": "Superior",
+    "helper": "El grupo al que pertenece este centro de coste.",
+    "cycle": "Un centro de coste no puede colocarse debajo de sí mismo ni de sus propios subcentros.",
+    "notGroup": "El superior debe ser un grupo o el nivel superior.",
+    "none": "nivel superior"
+  },
+  "type": {
+    "label": "Tipo",
+    "helper": "Puedes contabilizar en un centro de coste; un grupo reúne varios.",
+    "hasChildren": "Este centro de coste tiene subcentros y por eso no se puede contabilizar directamente.",
+    "root": "Raíz",
+    "group": "Grupo",
+    "leaf": "Centro de coste"
+  },
+  "responsibility": {
+    "label": "Responsabilidad",
+    "helper": "Quién es responsable de este centro de coste. Si lo dejas vacío, solo lo ve el tesorero.",
+    "select": "Elegir",
+    "clear": "Quitar",
+    "none": "Ninguna – solo la tesorera o el tesorero"
+  },
+  "notes": {
+    "label": "Notas",
+    "placeholder": "Notas sobre el centro de coste"
+  },
+  "archiveHasChildren": "Este grupo todavía tiene centros de coste activos. Archívalos primero.",
+  "archived": "archivado",
+  "archiveState": {
+    "active": {
+      "label": "Activos"
+    },
+    "archived": {
+      "label": "Archivados"
+    }
+  },
+  "select": {
+    "search": "Buscar número o nombre",
+    "notFound": "No se encontró ningún centro de coste."
+  },
+  "migrate": {
+    "report": "Revisados: {scanned}. Por cambiar: {updated}.",
+    "unmatched": "Sin centro de coste correspondiente, se vaciará: {list}",
+    "apply": "¿Aplicar ahora?",
+    "none": "No hay nada que cambiar.",
+    "done": "Listo. {updated} entradas cambiadas.",
+    "error": "La asignación no ha funcionado. Inténtalo más tarde.",
+    "unattributed": "No se puede asignar a una contabilidad, queda sin cambios: {list}",
+    "more": "… y {count} más",
+    "refused": "La asignación solo es posible para contabilidades llevadas aquí.",
+    "noCostCenters": "Crea primero al menos un centro de costes activo. De lo contrario, se vaciarían todas las entradas existentes.",
+    "lockedSkipped": "En años cerrados, se mantiene sin cambios: {count}"
+  }
+}

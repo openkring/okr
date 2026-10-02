@@ -40,6 +40,7 @@ export const BOOKING_I18N_KEYS = {
   review_failed:               PFX + 'review.failed',
   period_locked:               PFX + 'period.locked',
   write_failed:                PFX + 'write.failed',
+  write_costCenterInvalid:     PFX + 'write.costCenterInvalid',
   // status labels double as the okr-list-filter category labels — getItemLabel builds
   // `${i18n}.${category.name}.${item.name}.label`, so the '.label' suffix is mandatory here.
   status_draft:                PFX + 'status.draft.label',
@@ -73,6 +74,8 @@ export const BOOKING_I18N_KEYS = {
   form_fx_amount_placeholder:  PFX + 'form.fxAmount.placeholder',
   form_fx_currency_label:      PFX + 'form.fxCurrency.label',
   form_vat_label:              PFX + 'form.vat.label',
+  form_cost_center_label:      PFX + 'form.costCenter.label',
+  form_cost_center_accountDefault: PFX + 'form.costCenter.accountDefault',
   form_details_toggle:         PFX + 'form.details.toggle',
   form_line_text_label:        PFX + 'form.line.text.label',
   form_line_add:               PFX + 'form.line.add',

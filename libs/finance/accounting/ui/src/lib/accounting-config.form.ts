@@ -1,12 +1,13 @@
 import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
-import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent, IonCol, IonGrid, IonNote, IonRow, IonSelect, IonSelectOption, SelectChangeEventDetail } from '@ionic/angular/standalone';
 
-import { NumberInput, NumberInputI18n , ErrorNote} from '@okr/shared-ui';
+import { NumberInput, NumberInputI18n, ErrorNote, TextInput, TextInputI18n } from '@okr/shared-ui';
 
 import { AccountingConfigModel, AccountModel } from '@okr/shared-models';
 import { coerceBoolean } from '@okr/shared-util-core';
 
 import { AccountSelect, AccountSelectI18n } from '@okr/finance-account-ui';
+import { leafAccounts } from '@okr/finance-account-util';
 import { AccountingI18n, accountingConfigValidations } from '@okr/finance-accounting-util';
 
 export type { AccountingI18n };
@@ -22,7 +23,7 @@ export type { AccountingI18n };
   selector: 'okr-accounting-config-form',
   standalone: true,
   imports: [
-    ErrorNote,AccountSelect, NumberInput, IonGrid, IonRow, IonCol, IonCard, IonCardContent],
+    ErrorNote, AccountSelect, NumberInput, TextInput, IonSelect, IonSelectOption, IonNote, IonGrid, IonRow, IonCol, IonCard, IonCardContent],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px; } }`],
   template: `
     @if (showForm()) {
@@ -42,6 +43,33 @@ export type { AccountingI18n };
                     [selectedKey]="employeePayablesAccountKey()"
                     (selectedKeyChange)="onFieldChange('employeePayablesAccountKey', $event)"
                     [readOnly]="isReadOnly()" />
+                </ion-col>
+              </ion-row>
+              <ion-row>
+                <ion-col size="12" size-md="6">
+                  <okr-account-select [i18n]="receivablesAccountI18n()" [accounts]="leaves()"
+                    [selectedKey]="receivablesAccountKey()"
+                    (selectedKeyChange)="onFieldChange('receivablesAccountKey', $event)"
+                    [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="receivablesAccountKeyErrors()" />
+                </ion-col>
+                <ion-col size="12" size-md="6">
+                  <okr-text-input [i18n]="invoiceTemplateI18n()" [value]="invoiceTemplateId()"
+                    (valueChange)="onFieldChange('invoiceTemplateId', $event)"
+                    [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="invoiceTemplateIdErrors()" />
+                </ion-col>
+              </ion-row>
+              <ion-row>
+                <ion-col size="12" size-md="6">
+                  <ion-select [label]="i18n().payment_accounts()" labelPlacement="floating" [multiple]="true"
+                    [value]="invoicePaymentAccountKeys()" [disabled]="isReadOnly()"
+                    (ionChange)="onPaymentAccountsChange($event)">
+                    @for (account of paymentAccountChoices(); track account.okey) {
+                      <ion-select-option [value]="account.okey">{{ account.id }} — {{ account.name }}</ion-select-option>
+                    }
+                  </ion-select>
+                  <ion-note>{{ i18n().payment_accounts_helper() }}</ion-note>
                 </ion-col>
               </ion-row>
               <ion-row>
@@ -75,6 +103,13 @@ export class AccountingConfigForm {
 
   protected defaultExpenseAccountKey = linkedSignal(() => this.formData().defaultExpenseAccountKey ?? '');
   protected employeePayablesAccountKey = linkedSignal(() => this.formData().employeePayablesAccountKey ?? '');
+  protected receivablesAccountKey = linkedSignal(() => this.formData().receivablesAccountKey ?? '');
+  protected invoiceTemplateId = linkedSignal(() => this.formData().invoiceTemplateId ?? '');
+  protected invoicePaymentAccountKeys = linkedSignal(() => this.formData().invoicePaymentAccountKeys ?? []);
+  /** leaf accounts of class 1 (assets): the accounts an invoice payment may be posted to */
+  protected leaves = computed(() => leafAccounts(this.accounts()));
+  protected paymentAccountChoices = computed(() =>
+    this.leaves().filter(a => String(a.id).replace(/^0+/, '').startsWith('1')).sort((a, b) => a.id.localeCompare(b.id)));
   // Legacy config docs predate the field; coalesce to the calendar year like the Cloud Functions do.
   protected fiscalYearStart = linkedSignal(() => this.formData().fiscalYearStart ?? 1);
 
@@ -86,6 +121,15 @@ export class AccountingConfigForm {
     name: 'employeePayablesAccountKey', label: this.i18n().payables_account(), helper: this.i18n().payables_account_helper()
   } as AccountSelectI18n));
 
+  protected receivablesAccountI18n = computed(() => ({
+    name: 'receivablesAccountKey', label: this.i18n().receivables_account(), helper: this.i18n().receivables_account_helper()
+  } as AccountSelectI18n));
+
+  protected invoiceTemplateI18n = computed(() => ({
+    name: 'invoiceTemplateId', label: this.i18n().invoice_template(),
+    placeholder: this.i18n().invoice_template_placeholder(), helper: this.i18n().invoice_template_helper()
+  } as TextInputI18n));
+
   protected fiscalYearStartI18n = computed(() => ({
     name: 'fiscalYearStart', label: this.i18n().fiscal_year_start(),
     placeholder: this.i18n().fiscal_year_start_placeholder(), helper: this.i18n().fiscal_year_start_helper()
@@ -94,11 +138,18 @@ export class AccountingConfigForm {
   private readonly validationResult = computed(() => accountingConfigValidations(this.formData(), this.tenantId(), ''));
   protected fiscalYearStartErrors = computed(() => this.validationResult().getErrors('fiscalYearStart'));
 
+  protected receivablesAccountKeyErrors = computed(() => this.validationResult().getErrors('receivablesAccountKey'));
+  protected invoiceTemplateIdErrors = computed(() => this.validationResult().getErrors('invoiceTemplateId'));
+
   constructor() {
     effect(() => this.valid.emit(this.validationResult().isValid()));
   }
 
-  protected onFieldChange(fieldName: string, fieldValue: string | number): void {
+  protected onPaymentAccountsChange(event: CustomEvent<SelectChangeEventDetail<string[]>>): void {
+    this.onFieldChange('invoicePaymentAccountKeys', event.detail.value ?? []);
+  }
+
+  protected onFieldChange(fieldName: string, fieldValue: string | number | string[]): void {
     this.dirty.emit(true);
     this.formData.update(vm => ({ ...vm, [fieldName]: fieldValue }));
   }

@@ -1,0 +1,17 @@
+{
+  "create": {
+    "label": "Ajouter un centre de coûts",
+    "error": "Le centre de coûts n'a pas pu être créé.",
+    "conf": "Le centre de coûts a été créé."
+  },
+  "update": {
+    "label": "Modifier le centre de coûts",
+    "error": "Les modifications n'ont pas pu être enregistrées.",
+    "conf": "Les modifications ont été enregistrées."
+  },
+  "archive": {
+    "label": "Archiver le centre de coûts",
+    "error": "Le centre de coûts n'a pas pu être archivé.",
+    "conf": "Le centre de coûts a été archivé."
+  }
+}

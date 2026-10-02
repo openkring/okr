@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildBankBookingHeader, buildBankBookingLines, feeAmountOf, hasFeeLine, isValidSplit, mainPartAmountOf, buildJournalBookingHeader, buildJournalBookingLines, fiscalYear, JournalEntry, periodKeyFor, RowDoc } from './bank-import.util';
+import { buildBankBookingHeader, buildBankBookingLines, feeAmountOf, hasFeeLine, isValidSplit, mainPartAmountOf, withCostCenterKeys, buildJournalBookingHeader, buildJournalBookingLines, fiscalYear, JournalEntry, periodKeyFor, RowDoc } from './bank-import.util';
 
 const row = (p: Partial<RowDoc>): RowDoc => ({
   importKey: 'k', date: '20250714', rawText: 'KAUF BEXIO AG', payee: 'BEXIO AG', title: 'Bexio', accountKey: '6570', vatCodeKey: 'VST',
@@ -189,5 +189,17 @@ describe('split assignment', () => {
     expect(isValidSplit(row({ splits: [{ ...parts[0], amount: 0 }] }))).toBe(false);
     expect(isValidSplit(row({ splits: [{ ...parts[0], amount: 12.5 }] }))).toBe(false);
     expect(isValidSplit(row({ splits: [{ ...parts[0], amount: 12975 }] }))).toBe(false);
+  });
+});
+
+describe('withCostCenterKeys', () => {
+  const mainRow = { accountKey: 'scs-6300' } as RowDoc;
+  const keyFor = (accountKey: string, rule: string): string => (accountKey === 'scs-1020' ? '' : rule || `default-${accountKey}`);
+  it('gives the rule key to the main counter line and the account default to the others', () => {
+    const lines = [{ accountKey: 'scs-1020' }, { accountKey: 'scs-6300' }, { accountKey: 'scs-6800' }];
+    expect(withCostCenterKeys(lines, mainRow, 'cc-jun', keyFor).map(l => l['costCenterKey'] ?? '')).toEqual(['', 'cc-jun', 'default-scs-6800']);
+  });
+  it('writes no field when the key is empty', () => {
+    expect('costCenterKey' in withCostCenterKeys([{ accountKey: 'scs-1020' }], mainRow, '', keyFor)[0]).toBe(false);
   });
 });

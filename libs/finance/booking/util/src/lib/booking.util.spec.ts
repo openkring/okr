@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { AvatarInfo, BookingLineModel, BookingModel } from '@okr/shared-models';
+import { AccountModel, AvatarInfo, BookingLineModel, BookingModel } from '@okr/shared-models';
 import { bookingValidations } from './booking.validations';
 import {
   addBookingPart,
@@ -11,6 +11,8 @@ import {
   sideAccountKeys,
   bookingMonth,
   bookingYear,
+  accountDefaultCostCenterKey,
+  bookingWriteErrorReason,
   copyBooking,
   emptyBookingPair,
   formatMinorAmount,
@@ -24,6 +26,8 @@ import {
   matchesJournalSearch,
   toJournalRow,
   validateBookingBalance,
+  withPairAccount,
+  type BookingPair,
   type JournalRow,
 } from './booking.util';
 
@@ -199,22 +203,22 @@ describe('linesToPairs / pairsToLines', () => {
 
   it('a two-line booking is one pair carrying fx and vat', () => {
     const lines = [line('a6000', 'debit', 10000, { vatCodeKey: 'VST', amountFx: { amount: 9000, currency: 'EUR', periodicity: 'one-time' } }), line('a1020', 'credit', 10000)];
-    expect(linesToPairs(lines)).toEqual([{ debitAccountKey: 'a6000', creditAccountKey: 'a1020', amount: 10000, amountFx: 9000, fxCurrency: 'EUR', vatCodeKey: 'VST', vatSide: 'debit', description: '', descriptionSide: 'debit' }]);
+    expect(linesToPairs(lines)).toEqual([{ debitAccountKey: 'a6000', creditAccountKey: 'a1020', debitCostCenterKey: '', creditCostCenterKey: '', amount: 10000, amountFx: 9000, fxCurrency: 'EUR', vatCodeKey: 'VST', vatSide: 'debit', description: '', descriptionSide: 'debit' }]);
   });
   it('a split booking is one pair per credit; an unbalanced one leaves an open pair', () => {
     expect(linesToPairs([line('a1020', 'debit', 10000), line('a3000', 'credit', 6000), line('a3001', 'credit', 4000)])).toEqual([
-      { debitAccountKey: 'a1020', creditAccountKey: 'a3000', amount: 6000, amountFx: 0, fxCurrency: 'EUR', vatCodeKey: '', vatSide: 'debit', description: '', descriptionSide: 'debit' },
-      { debitAccountKey: 'a1020', creditAccountKey: 'a3001', amount: 4000, amountFx: 0, fxCurrency: 'EUR', vatCodeKey: '', vatSide: 'debit', description: '', descriptionSide: 'debit' },
+      { debitAccountKey: 'a1020', creditAccountKey: 'a3000', debitCostCenterKey: '', creditCostCenterKey: '', amount: 6000, amountFx: 0, fxCurrency: 'EUR', vatCodeKey: '', vatSide: 'debit', description: '', descriptionSide: 'debit' },
+      { debitAccountKey: 'a1020', creditAccountKey: 'a3001', debitCostCenterKey: '', creditCostCenterKey: '', amount: 4000, amountFx: 0, fxCurrency: 'EUR', vatCodeKey: '', vatSide: 'debit', description: '', descriptionSide: 'debit' },
     ]);
     expect(linesToPairs([line('a1020', 'debit', 10000), line('a3000', 'credit', 6000)])).toEqual([
-      { debitAccountKey: 'a1020', creditAccountKey: 'a3000', amount: 6000, amountFx: 0, fxCurrency: 'EUR', vatCodeKey: '', vatSide: 'debit', description: '', descriptionSide: 'debit' },
-      { debitAccountKey: 'a1020', creditAccountKey: '', amount: 4000, amountFx: 0, fxCurrency: 'EUR', vatCodeKey: '', vatSide: 'debit', description: '', descriptionSide: 'debit' },
+      { debitAccountKey: 'a1020', creditAccountKey: 'a3000', debitCostCenterKey: '', creditCostCenterKey: '', amount: 6000, amountFx: 0, fxCurrency: 'EUR', vatCodeKey: '', vatSide: 'debit', description: '', descriptionSide: 'debit' },
+      { debitAccountKey: 'a1020', creditAccountKey: '', debitCostCenterKey: '', creditCostCenterKey: '', amount: 4000, amountFx: 0, fxCurrency: 'EUR', vatCodeKey: '', vatSide: 'debit', description: '', descriptionSide: 'debit' },
     ]);
   });
   it('pairsToLines merges the same account and side, debit lines first', () => {
     const lines = pairsToLines([
-      { debitAccountKey: 'a1020', creditAccountKey: 'a3000', amount: 6000, amountFx: 0, fxCurrency: 'EUR', vatCodeKey: '', vatSide: 'debit', description: '', descriptionSide: 'debit' },
-      { debitAccountKey: 'a1020', creditAccountKey: 'a3001', amount: 4000, amountFx: 0, fxCurrency: 'EUR', vatCodeKey: 'UST', vatSide: 'credit', description: '', descriptionSide: 'debit' },
+      { debitAccountKey: 'a1020', creditAccountKey: 'a3000', debitCostCenterKey: '', creditCostCenterKey: '', amount: 6000, amountFx: 0, fxCurrency: 'EUR', vatCodeKey: '', vatSide: 'debit', description: '', descriptionSide: 'debit' },
+      { debitAccountKey: 'a1020', creditAccountKey: 'a3001', debitCostCenterKey: '', creditCostCenterKey: '', amount: 4000, amountFx: 0, fxCurrency: 'EUR', vatCodeKey: 'UST', vatSide: 'credit', description: '', descriptionSide: 'debit' },
     ], 'bka', 'bka', 'b1');
     expect(lines.map(l => [l.accountKey, l.debitAmount?.amount, l.creditAmount?.amount, l.vatCodeKey, l.bookingKey])).toEqual([
       ['a1020', 10000, undefined, '', 'b1'], ['a3000', undefined, 6000, '', 'b1'], ['a3001', undefined, 4000, 'UST', 'b1'],
@@ -264,7 +268,7 @@ describe('linesToPairs / pairsToLines', () => {
 
 describe('bookingValidations', () => {
   const ok: BookingFormData = { okey: '', title: 'Miete', date: '20260101', notes: '', counterparty: undefined,
-    pairs: [{ debitAccountKey: 'a', creditAccountKey: 'b', amount: 100, amountFx: 0, fxCurrency: 'EUR', vatCodeKey: '', vatSide: 'debit', description: '', descriptionSide: 'debit' }] };
+    pairs: [{ debitAccountKey: 'a', creditAccountKey: 'b', debitCostCenterKey: '', creditCostCenterKey: '', amount: 100, amountFx: 0, fxCurrency: 'EUR', vatCodeKey: '', vatSide: 'debit', description: '', descriptionSide: 'debit' }] };
   it('accepts a complete booking and rejects a bad date, no pairs, an incomplete pair', () => {
     expect(bookingValidations(ok, '', '').isValid()).toBe(true);
     expect(bookingValidations({ ...ok, date: '2026-01-01' }, '', '').isValid()).toBe(false);
@@ -336,6 +340,42 @@ describe('copyBooking', () => {
     expect(booking.okey).toBe('b1');
     expect(booking.date).toBe('20250301');
     expect(lines[0].bookingKey).toBe('b1');
+  });
+
+  it('copies the Kostenstelle and text; a split over two Kostenstellen survives copy and re-merge', () => {
+    const { booking } = source();
+    const mk = (cc: string, amount: number): BookingLineModel => {
+      const l = new BookingLineModel('scs', 'gss');
+      l.accountKey = 'scs-6300'; l.costCenterKey = cc; l.description = 'T';
+      l.debitAmount = { amount, currency: 'CHF' } as BookingLineModel['debitAmount'];
+      return l;
+    };
+    const bank = new BookingLineModel('scs', 'gss');
+    bank.accountKey = 'scs-1020';
+    bank.creditAmount = { amount: 120000, currency: 'CHF' } as BookingLineModel['creditAmount'];
+    const copy = copyBooking(booking, [mk('cc-jun', 70000), mk('cc-reg', 50000), bank], '20250916');
+    expect(copy.lines.map(l => [l.costCenterKey, l.description])).toEqual([['cc-jun', 'T'], ['cc-reg', 'T'], ['', '']]);
+    const back = pairsToLines(linesToPairs(copy.lines), 'scs', 'gss', 'b2');
+    expect(back.filter(l => l.debitAmount).map(l => [l.costCenterKey, l.debitAmount?.amount])).toEqual([['cc-jun', 70000], ['cc-reg', 50000]]);
+  });
+
+  it('drops a copied Kostenstelle that is no longer an active leaf when the cost centres are passed', () => {
+    const { booking } = source();
+    const mk = (cc: string): BookingLineModel => {
+      const l = new BookingLineModel('scs', 'gss');
+      l.accountKey = 'scs-6300'; l.costCenterKey = cc;
+      return l;
+    };
+    const centers = [
+      { okey: 'cc-jun', parentKey: '', type: 'leaf' as const, accountingTenantId: 'gss' },
+      { okey: 'cc-old', parentKey: '', type: 'leaf' as const, isArchived: true, accountingTenantId: 'gss' },
+      { okey: 'cc-grp', parentKey: '', type: 'group' as const, accountingTenantId: 'gss' },
+      { okey: 'cc-scs', parentKey: '', type: 'leaf' as const, accountingTenantId: 'scs' },
+    ];
+    const lines = [mk('cc-jun'), mk('cc-old'), mk('cc-grp'), mk('cc-scs'), mk('')];
+    expect(copyBooking(booking, lines, '20250916', centers).lines.map(l => l.costCenterKey)).toEqual(['cc-jun', '', '', '', '']);
+    // without the list the keys are copied as they are (the server still validates them)
+    expect(copyBooking(booking, lines, '20250916').lines.map(l => l.costCenterKey)).toEqual(['cc-jun', 'cc-old', 'cc-grp', 'cc-scs', '']);
   });
 });
 
@@ -426,5 +466,79 @@ describe('split bookings', () => {
     expect(back.map(l => [l.accountKey, l.debitAmount?.amount ?? l.creditAmount?.amount, l.description])).toEqual([
       ['k1020', 15000, ''], ['k3401', 5000, 'Beitrag'], ['k3407', 10000, 'Spende'],
     ]);
+  });
+});
+
+describe('Kostenstelle on pairs', () => {
+  it('keeps one account split over two Kostenstellen as two lines', () => {
+    const pairs: BookingPair[] = [
+      { ...emptyBookingPair(), debitAccountKey: 'scs-6300', creditAccountKey: 'scs-1020', amount: 70000, debitCostCenterKey: 'cc-jun' },
+      { ...emptyBookingPair(), debitAccountKey: 'scs-6300', creditAccountKey: 'scs-1020', amount: 50000, debitCostCenterKey: 'cc-reg' },
+    ];
+    const lines = pairsToLines(pairs, 'scs', 'scs', 'b1');
+    expect(lines.filter(l => l.debitAmount).map(l => [l.costCenterKey, l.debitAmount?.amount])).toEqual([['cc-jun', 70000], ['cc-reg', 50000]]);
+    expect(lines.filter(l => l.creditAmount)).toHaveLength(1);
+    const back = linesToPairs(lines);
+    expect(back.map(p => [p.debitCostCenterKey, p.amount])).toEqual([['cc-jun', 70000], ['cc-reg', 50000]]);
+  });
+  it('reads legacy lines without the field as empty', () => {
+    const lines = pairsToLines([{ ...emptyBookingPair(), debitAccountKey: 'scs-6300', creditAccountKey: 'scs-1020', amount: 100 }], 'scs', 'scs', 'b1');
+    delete (lines[0] as Partial<BookingLineModel>).costCenterKey;
+    expect(linesToPairs(lines)[0].debitCostCenterKey).toBe('');
+  });
+  it('withPairAccount prefills the account default and clears it on a balance-sheet account', () => {
+    const accounts = [
+      Object.assign(new AccountModel('scs'), { okey: 'scs-6300', id: '6300', costCenterKey: 'cc-reg' }),
+      Object.assign(new AccountModel('scs'), { okey: 'scs-1020', id: '1020' }),
+    ];
+    const p1 = withPairAccount(emptyBookingPair(), 'debit', 'scs-6300', accounts);
+    expect([p1.debitAccountKey, p1.debitCostCenterKey]).toEqual(['scs-6300', 'cc-reg']);
+    const p2 = withPairAccount({ ...p1 }, 'debit', 'scs-1020', accounts);
+    expect([p2.debitAccountKey, p2.debitCostCenterKey]).toEqual(['scs-1020', '']);
+  });
+  it('withPairAccount keeps a chosen key when the new account has no default', () => {
+    const accounts = [Object.assign(new AccountModel('scs'), { okey: 'scs-6500', id: '6500' })];
+    const p = withPairAccount({ ...emptyBookingPair(), debitCostCenterKey: 'cc-jun' }, 'debit', 'scs-6500', accounts);
+    expect(p.debitCostCenterKey).toBe('cc-jun');
+  });
+  it('withPairAccount leaves the pair unchanged when the same account is re-picked', () => {
+    const accounts = [Object.assign(new AccountModel('scs'), { okey: 'scs-6300', id: '6300', costCenterKey: 'cc-reg' })];
+    const pair = { ...emptyBookingPair(), debitAccountKey: 'scs-6300', debitCostCenterKey: 'cc-jun' };
+    expect(withPairAccount(pair, 'debit', 'scs-6300', accounts)).toBe(pair);
+  });
+  it('withPairAccount clears the key for an unknown account', () => {
+    const p = withPairAccount({ ...emptyBookingPair(), debitCostCenterKey: 'cc-jun' }, 'debit', 'nope', []);
+    expect(p.debitCostCenterKey).toBe('');
+  });
+});
+
+describe('bookingWriteErrorReason', () => {
+  it('reads the reason a ledger callable attaches to its HttpsError', () => {
+    expect(bookingWriteErrorReason({ details: { reason: 'period-locked' } })).toBe('period-locked');
+    expect(bookingWriteErrorReason({ details: { reason: 'cost-center-invalid', costCenterKey: 'k' } })).toBe('cost-center-invalid');
+  });
+  it('is undefined for an unknown reason, no details or a non-object', () => {
+    expect(bookingWriteErrorReason({ details: { reason: 'other' } })).toBeUndefined();
+    expect(bookingWriteErrorReason(new Error('x'))).toBeUndefined();
+    expect(bookingWriteErrorReason(undefined)).toBeUndefined();
+    expect(bookingWriteErrorReason('boom')).toBeUndefined();
+  });
+});
+
+describe('accountDefaultCostCenterKey', () => {
+  const acc = (okey: string, id: string, costCenterKey = ''): AccountModel =>
+    ({ okey, id, costCenterKey, accountingTenantId: 'gss' }) as AccountModel;
+  const accounts = [acc('a6300', '6300', 'cc-jun'), acc('a6400', '6400', 'cc-old'), acc('a6500', '6500'), acc('a1020', '1020', 'cc-jun')];
+  const centers = [
+    { okey: 'cc-jun', parentKey: '', type: 'leaf', accountingTenantId: 'gss' },
+    { okey: 'cc-old', parentKey: '', type: 'leaf', isArchived: true, accountingTenantId: 'gss' },
+  ];
+  it('is the default writeBooking fills for an empty line', () =>
+    expect(accountDefaultCostCenterKey('a6300', accounts, centers)).toBe('cc-jun'));
+  it('is empty when the default is not an active leaf, the account has none, is a balance-sheet account or unknown', () => {
+    expect(accountDefaultCostCenterKey('a6400', accounts, centers)).toBe('');
+    expect(accountDefaultCostCenterKey('a6500', accounts, centers)).toBe('');
+    expect(accountDefaultCostCenterKey('a1020', accounts, centers)).toBe('');
+    expect(accountDefaultCostCenterKey('nope', accounts, centers)).toBe('');
   });
 });

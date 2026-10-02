@@ -10,6 +10,7 @@
     "@okr/shared-constants": "*",
     "@okr/shared-models": "*",
     "@okr/shared-util-core": "*",
-    "@okr/finance-booking-util": "*"
+    "@okr/finance-booking-util": "*",
+    "@okr/finance-account-util": "*"
   }
 }

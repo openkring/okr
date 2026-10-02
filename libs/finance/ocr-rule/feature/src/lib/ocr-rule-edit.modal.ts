@@ -1,9 +1,11 @@
-import { Component, inject, input, OnInit } from '@angular/core';
+import { Component, computed, inject, input, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ModalController, IonButton, IonButtons, IonContent, IonHeader, IonInput,
   IonItem, IonLabel, IonNote, IonSelect, IonSelectOption, IonTitle, IonToggle, IonToolbar } from '@ionic/angular/standalone';
 
 import { AccountModel, OcrRuleModel, VatCodeModel } from '@okr/shared-models';
+import { CostCenterStore } from '@okr/finance-cost-center-feature';
+import { CostCenterSelect, CostCenterSelectI18n } from '@okr/finance-cost-center-ui';
 import { normalizeParty, OCR_RULE_I18N_KEYS, OcrRuleI18n } from '@okr/finance-ocr-rule-util';
 import { I18nService } from '@okr/shared-i18n';
 import { dismissOverlay } from '@okr/shared-util-angular';
@@ -15,6 +17,7 @@ import { dismissOverlay } from '@okr/shared-util-angular';
     FormsModule,
     IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonContent,
     IonItem, IonLabel, IonInput, IonNote, IonSelect, IonSelectOption, IonToggle,
+    CostCenterSelect,
   ],
   template: `
     <ion-header>
@@ -64,10 +67,10 @@ import { dismissOverlay } from '@okr/shared-util-angular';
           }
         </ion-select>
       </ion-item>
-      <ion-item>
-        <ion-label position="stacked">{{ i18n.f_cost_center() }}</ion-label>
-        <ion-input [(ngModel)]="edit.costCenterId" [readonly]="readOnly()" />
-      </ion-item>
+      @if (costCenterStore.isEnabled()) {
+        <okr-cost-center-select [i18n]="costCenterI18n()" [costCenters]="costCenterStore.costCenters()" [allowEmpty]="true"
+          [(selectedKey)]="edit.costCenterId" [readOnly]="readOnly()" />
+      }
       <ion-item>
         <ion-label position="stacked">{{ i18n.f_rank() }}</ion-label>
         <ion-input type="number" [(ngModel)]="edit.rank" [readonly]="readOnly()" />
@@ -88,6 +91,8 @@ export class OcrRuleEditModal implements OnInit {
   private readonly modalController = inject(ModalController);
   // Direct inject (no store): the store opens this modal, importing it back would be circular.
   protected readonly i18n = inject(I18nService).translateAll(OCR_RULE_I18N_KEYS) as OcrRuleI18n;
+  protected readonly costCenterStore = inject(CostCenterStore);
+  protected readonly costCenterI18n = computed(() => ({ name: 'costCenterId', label: this.i18n.f_cost_center() } as CostCenterSelectI18n));
   protected edit!: OcrRuleModel;
   protected aliasText = '';
 

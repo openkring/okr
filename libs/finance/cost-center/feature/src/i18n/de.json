@@ -1,0 +1,75 @@
+{
+  "costCenters": "Kostenstellen",
+  "empty": "Keine Kostenstellen gefunden.",
+  "none": "ohne Kostenstelle",
+  "picker": "Kostenstelle",
+  "create": "Neue Kostenstelle",
+  "update": "Kostenstelle ändern",
+  "view": "Kostenstelle anzeigen",
+  "archive": "Kostenstelle archivieren",
+  "archiveConf": "Möchtest du diese Kostenstelle archivieren? Bestehende Buchungen bleiben unverändert.",
+  "id": {
+    "label": "Nummer",
+    "placeholder": "z.B. 310",
+    "helper": "Die Nummer der Kostenstelle, z.B. 310.",
+    "duplicate": "Diese Nummer gibt es schon."
+  },
+  "name": {
+    "label": "Name",
+    "placeholder": "z.B. Junioren",
+    "helper": "Wie die Kostenstelle heisst."
+  },
+  "parentKey": {
+    "label": "Übergeordnet",
+    "helper": "Zu welcher Gruppe die Kostenstelle gehört.",
+    "cycle": "Eine Kostenstelle kann nicht unter sich selbst oder unter ihren eigenen Unterstellen liegen.",
+    "notGroup": "Übergeordnet muss eine Gruppe oder die oberste Ebene sein.",
+    "none": "oberste Ebene"
+  },
+  "type": {
+    "label": "Art",
+    "helper": "Auf eine Kostenstelle kannst du buchen, eine Gruppe fasst mehrere zusammen.",
+    "hasChildren": "Diese Kostenstelle hat Unterstellen und kann deshalb nicht direkt bebucht werden.",
+    "root": "Wurzel",
+    "group": "Gruppe",
+    "leaf": "Kostenstelle"
+  },
+  "responsibility": {
+    "label": "Verantwortung",
+    "helper": "Wer für diese Kostenstelle zuständig ist. Leer lassen, dann sieht nur die Kassierin oder der Kassier sie.",
+    "select": "Auswählen",
+    "clear": "Entfernen",
+    "none": "Keine – nur die Kassierin oder der Kassier"
+  },
+  "notes": {
+    "label": "Notizen",
+    "placeholder": "Notizen zur Kostenstelle"
+  },
+  "archiveHasChildren": "Diese Gruppe hat noch aktive Kostenstellen. Archiviere zuerst diese.",
+  "archived": "archiviert",
+  "archiveState": {
+    "active": {
+      "label": "Aktive"
+    },
+    "archived": {
+      "label": "Archivierte"
+    }
+  },
+  "select": {
+    "search": "Nummer oder Name suchen",
+    "notFound": "Keine passende Kostenstelle gefunden."
+  },
+  "migrate": {
+    "report": "Geprüft: {scanned}. Anzupassen: {updated}.",
+    "unmatched": "Ohne passende Kostenstelle, wird geleert: {list}",
+    "apply": "Jetzt anwenden?",
+    "none": "Es gibt nichts anzupassen.",
+    "done": "Fertig. {updated} Einträge angepasst.",
+    "error": "Die Zuordnung hat nicht geklappt. Versuche es später noch einmal.",
+    "unattributed": "Keinem Buchhaltungs-Mandanten zuordenbar, bleibt unverändert: {list}",
+    "more": "… und {count} weitere",
+    "refused": "Die Zuordnung ist nur für Buchhaltungen möglich, die hier geführt werden.",
+    "noCostCenters": "Lege zuerst mindestens eine aktive Kostenstelle an. Sonst würden alle bisherigen Einträge geleert.",
+    "lockedSkipped": "In abgeschlossenen Jahren, bleibt unverändert: {count}"
+  }
+}

@@ -1,4 +1,5 @@
 {
+    "costCenter": { "label": "Centre de coûts" },
     "singular": "Actif",
     "plural": "Actifs",
     "empty": "Aucun actif trouvé",

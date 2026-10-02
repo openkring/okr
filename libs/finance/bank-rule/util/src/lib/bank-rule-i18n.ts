@@ -37,6 +37,8 @@ export const BANK_RULE_I18N_KEYS = {
   title_helper:        PFX + 'title.helper',
   account_label:       PFX + 'account.label',
   account_helper:      PFX + 'account.helper',
+  costCenter_label:    PFX + 'costCenter.label',
+  costCenter_helper:   PFX + 'costCenter.helper',
   vat_label:           PFX + 'vat.label',
   vat_helper:          PFX + 'vat.helper',
   priority_label:      PFX + 'priority.label',

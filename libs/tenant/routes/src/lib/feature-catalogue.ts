@@ -723,7 +723,7 @@ const finance: BlockRoutes = {
       // a param — so a member cannot type their way to the `all` list. `AccountingShell` is
       // reused verbatim: it only maps `:accountingTenantId` into the root AccountingStore.
       // Reads are already permitted — `invoices` is `tenantRead` in firestore.rules — and
-      // InvoiceList's own `canChange()`/`canDelete()` keep edit/delete at treasurer/admin.
+      // InvoiceList gates draft actions on `canWriteDrafts()` (treasurer).
       path: 'my-invoice/:accountingTenantId',
       canActivate: [isAuthenticatedGuard],
       loadComponent: () => import('@okr/finance-accounting-feature').then(m => m.AccountingShell),
@@ -763,6 +763,11 @@ const finance: BlockRoutes = {
         {
           path: 'account',
           children: [{ path: ':contextMenuName', loadComponent: () => import('@okr/finance-account-feature').then(m => m.AccountList) }],
+        },
+        {
+          // Kostenstellen (spec 1.65): tree list like the Kontoplan; treasurer via the shell's guard.
+          path: 'cost-center',
+          children: [{ path: ':contextMenuName', loadComponent: () => import('@okr/finance-cost-center-feature').then(m => m.CostCenterList) }],
         },
         {
           // Account links and fiscal year start of this accounting tenant (`accounting-settings` row).

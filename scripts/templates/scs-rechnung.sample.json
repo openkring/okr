@@ -1,0 +1,41 @@
+{
+  "_meta": {
+    "name": "Rechnung SCS",
+    "description": "Rechnung des Seeclub Stäfa mit Positionen und QR-Einzahlungsschein.",
+    "category": "invoice",
+    "language": "de",
+    "defaultOutputFormat": "pdf",
+    "defaultFormat": "A4",
+    "defaultOrientation": "portrait",
+    "attachQrSlip": true,
+    "qrSlipWithAmount": true,
+    "tenants": ["scs"]
+  },
+  "invoiceNumber": "REA-260501",
+  "title": "Mitgliederbeitrag 2026",
+  "date": "01.10.2026",
+  "dueDate": "31.10.2026",
+  "firstName": "Anna",
+  "lastName": "Muster",
+  "greeting": "Liebe/r Anna",
+  "streetName": "Seestrasse",
+  "streetNumber": "12",
+  "zipCode": "8712",
+  "city": "Stäfa",
+  "countryCode": "CH",
+  "amount": "675.50",
+  "positions": [
+    { "name": "Mitgliederbeitrag", "amount": "500.00" },
+    { "name": "Bootsplatz", "amount": "175.50" }
+  ],
+  "qrMessage": "Rechnung REA-260501",
+  "payee": {
+    "name": "Seeclub Stäfa",
+    "iban": "CH00 0000 0000 0000 0000 0",
+    "street": "Seestrasse",
+    "buildingNumber": "1",
+    "zip": "8712",
+    "city": "Stäfa",
+    "country": "CH"
+  }
+}

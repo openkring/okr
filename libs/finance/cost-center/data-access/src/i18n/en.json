@@ -1,0 +1,17 @@
+{
+  "create": {
+    "label": "Add cost centre",
+    "error": "The cost centre could not be created.",
+    "conf": "The cost centre was created."
+  },
+  "update": {
+    "label": "Edit cost centre",
+    "error": "The changes could not be saved.",
+    "conf": "The changes were saved."
+  },
+  "archive": {
+    "label": "Archive cost centre",
+    "error": "The cost centre could not be archived.",
+    "conf": "The cost centre was archived."
+  }
+}

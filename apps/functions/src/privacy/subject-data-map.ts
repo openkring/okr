@@ -1309,6 +1309,8 @@ export async function resolveDocs(entry: SubjectDataEntry, ctx: SubjectCtx): Pro
 // not personal data: partners — the partner COMPANY's operational record (C3 §5): contract
 //   dates, status, heartbeat, the reporting identity's uid. Its people live on the partner's
 //   Org in `bkg` (orgKey), which the orgs row already covers.
+// not personal data: cost-centers — a Kostenstelle (1.65): Ressort name/number, a tree link
+//   (parentKey) and a `responsibilityKey` reference. No natural person's data is stored on it.
 // not personal data: commissionEntries — a ledger line (C3 §7): partnerKey, tenantId, band,
 //   amounts. No natural person appears on it; the contact-of-record stays on the metering
 //   record it was derived from.

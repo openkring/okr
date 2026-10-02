@@ -65,6 +65,7 @@
     {"path": "../../../subject/address/data-access/tsconfig.lib.json"},
     {"path": "../../../subject/address/util/tsconfig.lib.json"},
     {"path": "../../../subject/org/data-access/tsconfig.lib.json"},
-    {"path": "../../../subject/person/data-access/tsconfig.lib.json"}
+    {"path": "../../../subject/person/data-access/tsconfig.lib.json"},
+    {"path": "../../account/data-access/tsconfig.lib.json"}
   ]
 }

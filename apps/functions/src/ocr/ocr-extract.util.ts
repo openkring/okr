@@ -4,6 +4,7 @@ export interface OcrRuleLite {
   party: string;
   aliases: string[];
   accountKey: string;
+  costCenterId?: string;
   rank: number;
   active: boolean;
 }

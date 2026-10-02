@@ -45,6 +45,9 @@ export const REPORTING_I18N_KEYS = {
   year_loss:          PFX + 'result.loss',
   show_zero:          PFX + 'zero.show',
   hide_zero:          PFX + 'zero.hide',
+  filter_cost_center: PFX + 'costCenter.filter',
+  all_cost_centers:   PFX + 'costCenter.all',
+  no_cost_center:     PFX + 'costCenter.none',
 } satisfies Record<string, string>;
 
 export type ReportingI18n = { [K in keyof typeof REPORTING_I18N_KEYS]: Signal<string> };

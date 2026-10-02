@@ -1,10 +1,12 @@
 import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
-import { CategoryListModel, AccountModel, RoleName, UserModel } from '@okr/shared-models';
+import { CategoryListModel, AccountModel, CostCenterModel, RoleName, UserModel } from '@okr/shared-models';
 import { CategorySelect, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { DESCRIPTION_LENGTH, LONG_NAME_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
-import { coerceBoolean, hasRole } from '@okr/shared-util-core';
+import { coerceBoolean, hasRole, isProfitAndLossAccountId } from '@okr/shared-util-core';
+
+import { CostCenterSelect, CostCenterSelectI18n } from '@okr/finance-cost-center-ui';
 
 import { ACCOUNT_KIND_GROUP, AccountI18n, accountValidations, getAccountKind, parentCandidates, usedAccountIds } from '@okr/finance-account-util';
 
@@ -23,7 +25,7 @@ const RENDERED_FIELDS = ['id', 'name', 'type', 'parentKey', 'notes'];
   selector: 'okr-account-form',
   standalone: true,
   imports: [
-    CategorySelect, TextInput, NotesInput, ErrorNote, AccountSelect,
+    CategorySelect, TextInput, NotesInput, ErrorNote, AccountSelect, CostCenterSelect,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px; } }`],
@@ -66,6 +68,14 @@ const RENDERED_FIELDS = ['id', 'name', 'type', 'parentKey', 'notes'];
                   <ion-col size="12" size-md="6">
                     <okr-text-input [i18n]="kindI18n()" [value]="kind()" [readOnly]="true" />
                   </ion-col>
+                  <!-- the Kostenstelle proposed on new bookings: only Erfolgsrechnung accounts carry one -->
+                  @if (showCostCenter()) {
+                    <ion-col size="12" size-md="6">
+                      <okr-cost-center-select [i18n]="costCenterI18n()" [costCenters]="costCenters()" [allowEmpty]="true"
+                        [selectedKey]="costCenterKey()" (selectedKeyChange)="onFieldChange('costCenterKey', $event)"
+                        [readOnly]="isReadOnly()" />
+                    </ion-col>
+                  }
                 }
               </ion-row>
               <!-- rules on fields this form does not show (tags, label, okey, …) would otherwise only
@@ -93,6 +103,10 @@ export class AccountForm {
   public readonly types = input.required<CategoryListModel>();
   /** every account of the chart — the source for the Hauptkonto picker and the duplicate-number check */
   public readonly accounts = input<AccountModel[]>([]);
+  /** the Kostenstellen of the accounting tenant (archived included); the modal passes them in */
+  public readonly costCenters = input<CostCenterModel[]>([]);
+  /** Kostenstellen only exist on the native ledger; a bexio ledger gets no picker */
+  public readonly costCentersEnabled = input(false);
   public readonly tenantId = input.required<string>();
   public readonly readOnly = input(true);
   public readonly i18n = input.required<AccountI18n>();
@@ -119,6 +133,10 @@ export class AccountForm {
   protected parentI18n = computed(() => ({
     name: 'parentKey', label: this.i18n().parentKey(), helper: this.i18n().parentKey_helper()
   } as AccountSelectI18n));
+
+  protected costCenterI18n = computed(() => ({
+    name: 'costCenterKey', label: this.i18n().costCenter(), helper: this.i18n().costCenter_helper()
+  } as CostCenterSelectI18n));
 
   protected notesI18n = computed(() => ({
     name: 'notes', label: this.i18n().notes(), placeholder: this.i18n().notes_placeholder()
@@ -147,6 +165,8 @@ export class AccountForm {
   protected type = linkedSignal(() => this.formData().type ?? '');
   protected parentKey = linkedSignal(() => this.formData().parentKey ?? '');
   protected notes = linkedSignal(() => this.formData().notes ?? '');
+  protected costCenterKey = linkedSignal(() => this.formData().costCenterKey ?? '');
+  protected showCostCenter = computed(() => this.costCentersEnabled() && isProfitAndLossAccountId(this.formData().id));
   protected okey = computed(() => this.formData().okey ?? '');
   protected isRoot = computed(() => this.formData().type === 'root');
 

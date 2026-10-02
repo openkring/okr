@@ -5,6 +5,7 @@ import { getFirestore, Transaction } from 'firebase-admin/firestore';
 import { checkAppCheckToken, checkAuthentication, checkRoles, getCallerTenantId, nextBookingNo } from '@okr/shared-util-functions';
 
 import { buildJournalBookingHeader, buildJournalBookingLines, JournalEntry, periodKeyFor } from './bank-import.util';
+import { costCenterKeyForLine, loadCostCenterContext } from '../cost-center/cost-center-context';
 
 const REGION = 'europe-west6';
 const CF_NAME = 'postJournalImport';
@@ -47,6 +48,9 @@ export const postJournalImport = onCall(
     const db = getFirestore();
     const configSnap = await db.collection(CONFIG_COLLECTION).doc(accountingTenantId).get();
     const fiscalYearStart = Number(configSnap.data()?.['fiscalYearStart'] ?? 1) || 1;
+
+    // Kostenstellen: read once before the per-entry transactions; journal entries carry no rule (spec 1.65 §6.2)
+    const ccCtx = await loadCostCenterContext(db, tenantId, accountingTenantId);
 
     // account validation is cached per call: the same handful of accounts recurs in every entry
     const leafCache = new Map<string, boolean>();
@@ -98,8 +102,12 @@ export const postJournalImport = onCall(
           }
           tx.set(bookingRef, { ...buildJournalBookingHeader(entry, tenantId, accountingTenantId, periodKey, bookingKey), bookingNo });
           const lines = buildJournalBookingLines(entry, tenantId, accountingTenantId, bookingKey);
-          tx.set(db.collection(BOOKING_LINE_COLLECTION).doc(`${bookingKey}-dr`), lines[0]);
-          tx.set(db.collection(BOOKING_LINE_COLLECTION).doc(`${bookingKey}-cr`), lines[1]);
+          const withKey = (line: Record<string, unknown>): Record<string, unknown> => {
+            const key = costCenterKeyForLine(ccCtx, line['accountKey'] as string);
+            return key ? { ...line, costCenterKey: key } : line;
+          };
+          tx.set(db.collection(BOOKING_LINE_COLLECTION).doc(`${bookingKey}-dr`), withKey(lines[0]));
+          tx.set(db.collection(BOOKING_LINE_COLLECTION).doc(`${bookingKey}-cr`), withKey(lines[1]));
           return 'posted';
         });
         if (outcome === 'posted') result.posted += 1; else result.replayed += 1;

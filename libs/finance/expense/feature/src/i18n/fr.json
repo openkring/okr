@@ -39,6 +39,7 @@
     "lockedHint": "Ce débours est déjà comptabilisé — le montant, la devise et le destinataire du virement ne peuvent plus être modifiés."
   },
   "field": {
+    "costCenter": "Centre de coûts",
     "abstract": "Objet",
     "amount": "Montant total",
     "currency": "Devise",

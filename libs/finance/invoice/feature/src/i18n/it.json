@@ -36,7 +36,11 @@
     }
   },
   "receiver": {
-    "label": "Destinatario"
+    "label": "Destinatario",
+    "none": "Ancora nessun destinatario",
+    "select": "Scegli il destinatario",
+    "person": "Persona",
+    "org": "Organizzazione"
   },
   "title": {
     "label": "Oggetto",
@@ -213,7 +217,8 @@
     "error": "Non è stato possibile creare la conferma di pagamento. Riprova più tardi."
   },
   "readonly": {
-    "banner": "Questo elenco è di sola lettura. I debitori sono gestiti in Bexio."
+    "banner": "Questo elenco è di sola lettura. I debitori sono gestiti in Bexio.",
+    "positionsFailed": "Le posizioni di questa fattura non sono state caricate, quindi per ora non puoi modificarla. Riprova più tardi."
   },
   "invoice_state": {
     "name": "Stato della fattura",
@@ -240,5 +245,61 @@
       "label": "Annullata",
       "description": "La fattura è stata annullata."
     }
+  },
+  "total": {
+    "label": "Totale"
+  },
+  "positions": {
+    "title": "Posizioni",
+    "name": {
+      "label": "Descrizione",
+      "placeholder": "p.es. Quota annuale 2026"
+    },
+    "amount": {
+      "label": "Importo (CHF)",
+      "placeholder": "0.00"
+    },
+    "account": {
+      "label": "Conto ricavi"
+    },
+    "add": "Aggiungi posizione",
+    "remove": "Rimuovi posizione",
+    "total": "Totale",
+    "error": {
+      "empty": "Aggiungi almeno una posizione.",
+      "tooMany": "Una fattura può avere al massimo 100 posizioni.",
+      "name": "Dai una descrizione alla posizione.",
+      "nameLength": "La descrizione è troppo lunga.",
+      "amount": "L'importo deve essere maggiore di 0.",
+      "account": "Scegli un conto ricavi."
+    }
+  },
+  "issue": {
+    "label": "Emetti fattura",
+    "confirm": "La fattura riceve ora il suo numero e viene contabilizzata. Dopo non potrai più modificarla.",
+    "conf": "La fattura {invoiceId} è stata emessa",
+    "error": "Non è stato possibile emettere la fattura."
+  },
+  "refusal": {
+    "no-positions": "La fattura non ha ancora posizioni. Aggiungi prima almeno una posizione.",
+    "position-without-account": "Almeno una posizione non ha un conto ricavi. Scegli un conto per ogni posizione.",
+    "invalid-amount": "Almeno una posizione non ha un importo valido. Controlla gli importi.",
+    "total-not-positive": "Il totale della fattura deve essere maggiore di 0.",
+    "no-receivables-account": "Nelle impostazioni contabili manca ancora il conto debitori. Completalo lì.",
+    "no-receiver": "La fattura non ha ancora un destinatario. Scegli prima a chi è destinata.",
+    "no-invoice-date": "La fattura non ha ancora una data.",
+    "no-invoice-template": "Nelle impostazioni contabili manca ancora il modello di fattura. Completalo lì.",
+    "account-invalid": "Su uno dei conti non si può registrare. Scegli per ogni posizione un conto senza sottoconti.",
+    "period-locked": "Il periodo contabile della data della fattura è chiuso. Scegli un'altra data o fai riaprire il periodo.",
+    "state-changed": "Nel frattempo la fattura è stata modificata. Riprova, per favore.",
+    "not-a-draft": "Questa fattura non è più una bozza e non può più essere modificata.",
+    "not-found": "Questa fattura non esiste più. Forse è stata eliminata.",
+    "bexio-backend": "Questa contabilità è tenuta in bexio. Le fatture le crei lì.",
+    "no-accounting-config": "Per questa contabilità mancano ancora le impostazioni. Configurale prima.",
+    "foreign-accounting-tenant": "Questa contabilità non appartiene al tuo club.",
+    "too-many-positions": "Una fattura può avere al massimo 100 posizioni.",
+    "inconsistent-state": "Qualcosa è andato storto durante l'emissione. Riprova, per favore.",
+    "no-due-date": "La fattura non ha ancora una data di scadenza. Indica entro quando deve essere pagata.",
+    "due-before-invoice-date": "La data di scadenza è precedente alla data della fattura. Scegli una data successiva."
   }
 }
