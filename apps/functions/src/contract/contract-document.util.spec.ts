@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  canReadContractData, canWriteContracts, contractDocumentPath, needsRestamp, pickSummarySource, upsertDocumentRef,
+  buildContractDocumentStamp, canReadContractData, canWriteContracts, contractDocumentPath, needsRestamp, pickSummarySource, upsertDocumentRef,
 } from './contract-document.util';
 
 const v = (roles: Record<string, boolean>, personKey = 'pX') => ({ tenantIds: ['t1'], roles, personKey });
@@ -56,4 +56,27 @@ describe('needsRestamp', () => {
   it('tenants changed → true', () => expect(needsRestamp(doc(), doc({ tenants: ['t1', 't2'] }))).toBe(true));
   it('name changed only → false', () => expect(needsRestamp(doc(), doc({ name: 'neu' }))).toBe(false));
   it('deleted → false', () => expect(needsRestamp(doc(), undefined)).toBe(false));
+});
+
+describe('canReadContractData strict default', () => {
+  it('missing flag counts as strict for privileged', () => expect(canReadContractData(v({ privileged: true }), { tenants: ['t1'], partyPersonKeys: [] })).toBe(false));
+  it('same-tenant non-staff non-party denied', () => expect(canReadContractData(v({}), doc())).toBe(false));
+});
+
+describe('buildContractDocumentStamp', () => {
+  it('missing flag → strict', () => {
+    const s = buildContractDocumentStamp({ tenants: ['t1'] });
+    expect(s.isStrictlyConfidential).toBe(true);
+    expect(s.confidentiality).toBe('strictlyConfidential');
+  });
+  it('flag false → false, internal default', () => {
+    const s = buildContractDocumentStamp({ isStrictlyConfidential: false });
+    expect(s.isStrictlyConfidential).toBe(false);
+    expect(s.confidentiality).toBe('internal');
+  });
+  it('non-array keys → []', () => {
+    const s = buildContractDocumentStamp({ partyPersonKeys: 'x', tenants: null });
+    expect(s.partyPersonKeys).toEqual([]);
+    expect(s.tenants).toEqual([]);
+  });
 });

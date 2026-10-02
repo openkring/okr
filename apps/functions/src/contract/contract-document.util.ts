@@ -54,3 +54,16 @@ export function needsRestamp(before: DocData | undefined, after: DocData | undef
   if (!after) return false;
   return RESTAMP_FIELDS.some((f) => JSON.stringify(before?.[f] ?? null) !== JSON.stringify(after[f] ?? null));
 }
+
+/** Strict-safe stamp for contract-document files: a missing flag counts as strictly confidential. */
+export function buildContractDocumentStamp(after: DocData): {
+  partyPersonKeys: string[]; isStrictlyConfidential: boolean; confidentiality: unknown; tenants: string[];
+} {
+  const strict = after['isStrictlyConfidential'] !== false;
+  return {
+    partyPersonKeys: arr(after['partyPersonKeys']),
+    isStrictlyConfidential: strict,
+    confidentiality: after['confidentiality'] ?? (strict ? 'strictlyConfidential' : 'internal'),
+    tenants: arr(after['tenants']),
+  };
+}

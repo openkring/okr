@@ -8,7 +8,7 @@ import { getTodayStr } from '@okr/shared-util-core';
 
 import { emitEvent } from '../workflow/emit';
 import { planContractScan } from './contract-scan';
-import { needsRestamp } from './contract-document.util';
+import { buildContractDocumentStamp, needsRestamp } from './contract-document.util';
 
 const REGION = 'europe-west6';
 
@@ -50,10 +50,7 @@ export const onContractWritten = onDocumentWritten({ document: `${ContractCollec
   if (!needsRestamp(before, after) || !after) return;
   const db = getFirestore();
   const docs = await db.collection(ContractDocumentCollection).where('contractKey', '==', event.params.id).get();
-  const stamp = {
-    partyPersonKeys: after['partyPersonKeys'] ?? [], isStrictlyConfidential: after['isStrictlyConfidential'] ?? false,
-    confidentiality: after['confidentiality'] ?? 'internal', tenants: after['tenants'] ?? [],
-  };
+  const stamp = buildContractDocumentStamp(after);
   for (let i = 0; i < docs.docs.length; i += 400) {
     const batch = db.batch();
     docs.docs.slice(i, i + 400).forEach((d) => batch.update(d.ref, stamp));
