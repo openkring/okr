@@ -19,6 +19,9 @@ export interface MemberFeePosition {
   // from it. The two backends identify accounts differently; conflating them uploaded every
   // position with account_id 0.
   bexioAccountId?: number;
+  proRataMonths?: number; // 1–11 when billed pro rata; absent = full year (spec 1.79 P4/P6)
+  yearlyAmount?: number;  // full-year price, set on every position of a proRata rule — the base the months scale
+  description?: string;   // printed under the position name on the invoice
 }
 
 /**

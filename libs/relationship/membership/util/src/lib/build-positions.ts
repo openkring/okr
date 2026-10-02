@@ -54,16 +54,64 @@ export function buildPositions(
 ): MemberFeePosition[] {
   // `bexioAccountId` is spread in only when the rule carries one: an explicit `undefined` field
   // is rejected by Firestore on write, and an unseeded schedule simply has no Bexio id yet.
-  return schedule.positions.map(rule => ({
-    key: rule.key,
-    usage: rule.usage,
-    type: rule.type,
-    label: rule.label,
-    amount: amountOf(rule, membership, ctx),
-    accountKey: rule.accountKey ?? '',
-    vatCodeKey: rule.vatCodeKey ?? '',
-    ...(rule.bexioAccountId === undefined ? {} : { bexioAccountId: rule.bexioAccountId }),
-  }));
+  return schedule.positions.map(rule => {
+    const base: MemberFeePosition = {
+      key: rule.key,
+      usage: rule.usage,
+      type: rule.type,
+      label: rule.label,
+      amount: amountOf(rule, membership, ctx),
+      accountKey: rule.accountKey ?? '',
+      vatCodeKey: rule.vatCodeKey ?? '',
+      ...(rule.bexioAccountId === undefined ? {} : { bexioAccountId: rule.bexioAccountId }),
+    };
+    if (!rule.proRata) return base;
+    // A pro-rata rule always records its yearly price, so the row editor can rescale it later.
+    // 0 months (a member outside the year) is billed like a full year: such a row should not exist.
+    const months = proRataMonths(membership.dateOfEntry, membership.dateOfExit, ctx.currentYear);
+    return applyProRata({ ...base, yearlyAmount: base.amount }, months === 0 ? 12 : months);
+  });
+}
+
+const STORE_DATE = /^\d{8}$/;
+
+/** The month (1–12) of a StoreDate when it falls in `year`, otherwise undefined. */
+function monthIn(date: string, year: number): number | undefined {
+  if (!STORE_DATE.test(date ?? '')) return undefined;
+  return Number(date.substring(0, 4)) === year ? Number(date.substring(4, 6)) : undefined;
+}
+
+/**
+ * Months of membership in `year`, counted inclusively (spec 1.79 P2): entry month to December in
+ * the entry year, January to the exit month in the exit year. 12 when neither falls in the year
+ * (also for an empty or unparsable date), 0 when the member is outside the year altogether.
+ */
+export function proRataMonths(entry: string, exit: string, year: number): number {
+  const entryYear = STORE_DATE.test(entry ?? '') ? Number(entry.substring(0, 4)) : 0;
+  const exitYear = STORE_DATE.test(exit ?? '') ? Number(exit.substring(0, 4)) : 0;
+  if (entryYear > year || (exitYear > 0 && exitYear < year)) return 0;
+  const start = monthIn(entry, year) ?? 1;
+  const end = monthIn(exit, year) ?? 12;
+  return Math.max(0, end - start + 1);
+}
+
+/** The text printed under a pro-rata position on the invoice. German: it goes onto the PDF as is. */
+export function proRataDescription(months: number): string {
+  return `pro rata verrechnet, ${months} ${months === 1 ? 'Monat' : 'Monate'}`;
+}
+
+/**
+ * Rescale a position to `months` of its yearly price, in whole francs (spec 1.79 P3). 12 or more
+ * restores the full year and REMOVES months and text — the keys are dropped, not set to undefined,
+ * because Firestore rejects undefined fields. A zero yearly price stays 0 without text.
+ */
+export function applyProRata(p: MemberFeePosition, months: number): MemberFeePosition {
+  const yearly = p.yearlyAmount ?? p.amount;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { proRataMonths: _months, description: _text, ...rest } = p;
+  if (months >= 12 || yearly === 0) return { ...rest, yearlyAmount: yearly, amount: yearly };
+  return { ...rest, yearlyAmount: yearly, amount: Math.round(yearly * months / 12),
+    proRataMonths: months, description: proRataDescription(months) };
 }
 
 /**

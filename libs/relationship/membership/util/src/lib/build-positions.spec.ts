@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { FeeScheduleEntry, MemberFeePosition, MembershipModel } from '@okr/shared-models';
-import { buildPositions, getFeeTotal, rebatePosition, type FeeContext } from './build-positions';
+import { applyProRata, buildPositions, getFeeTotal, proRataMonths, rebatePosition, type FeeContext } from './build-positions';
 
 const membership = (overrides: Partial<MembershipModel> = {}): MembershipModel => ({
   memberKey: 'p1', memberName1: 'Anna', memberName2: 'Muster', category: 'active',
@@ -164,5 +164,72 @@ describe('rebatePosition', () => {
     const rebate = rebatePosition(50, 'edu');
     if (rebate) positions.push(rebate);
     expect(getFeeTotal(positions)).toBe(270);
+  });
+});
+
+describe('proRataMonths', () => {
+  it('counts the entry month in the entry year', () => expect(proRataMonths('20260615', '', 2026)).toBe(7));
+  it('counts the exit month in the exit year', () => expect(proRataMonths('20200101', '20260331', 2026)).toBe(3));
+  it('counts entry to exit when both fall in the year', () => expect(proRataMonths('20260301', '20260831', 2026)).toBe(6));
+  it('is a full year when neither falls in the year', () => expect(proRataMonths('20200101', '', 2026)).toBe(12));
+  it('is 0 for an entry after the year', () => expect(proRataMonths('20270101', '', 2026)).toBe(0));
+  it('is 0 for an exit before the year', () => expect(proRataMonths('20200101', '20251231', 2026)).toBe(0));
+  it('treats empty or broken dates as a full year', () => expect(proRataMonths('', 'xx', 2026)).toBe(12));
+});
+
+describe('applyProRata', () => {
+  const p = {
+    key: 'JB', usage: 'membershipFee', type: 'fix', label: 'Jahresbeitrag', amount: 350, accountKey: 'a',
+    vatCodeKey: '', yearlyAmount: 600, proRataMonths: 7, description: 'pro rata verrechnet, 7 Monate',
+  } as MemberFeePosition;
+
+  it('recomputes amount and text from the yearly amount', () => {
+    expect(applyProRata(p, 3)).toMatchObject({ amount: 150, proRataMonths: 3, description: 'pro rata verrechnet, 3 Monate' });
+  });
+
+  it('restores the full year at 12 months and drops months and text (no undefined keys)', () => {
+    const full = applyProRata(p, 12);
+    expect(full.amount).toBe(600);
+    expect(full.yearlyAmount).toBe(600);
+    expect('proRataMonths' in full).toBe(false);
+    expect('description' in full).toBe(false);
+  });
+
+  it('rounds to whole francs', () => expect(applyProRata({ ...p, yearlyAmount: 300 }, 7).amount).toBe(175));
+  it('says Monat in the singular', () => expect(applyProRata(p, 1).description).toBe('pro rata verrechnet, 1 Monat'));
+});
+
+describe('buildPositions with proRata', () => {
+  const jbRule = { key: 'JB', usage: 'membershipFee', type: 'fix', label: 'Jahresbeitrag',
+    source: 'category' as const, categoryList: 'mcat_scs', proRata: true };
+  const prices = ctx({ currentYear: 2026, categoryLists: { mcat_scs: { active: 600 } } });
+
+  it('bills a June entry at 7/12', () => {
+    const [jb] = buildPositions(membership({ dateOfEntry: '20260615' }), schedule([jbRule]), prices);
+    expect(jb).toMatchObject({ amount: 350, proRataMonths: 7, yearlyAmount: 600, description: 'pro rata verrechnet, 7 Monate' });
+  });
+
+  it('bills a March exit at 3/12', () => {
+    const [jb] = buildPositions(membership({ dateOfExit: '20260331' } as Partial<MembershipModel>), schedule([jbRule]), prices);
+    expect(jb.amount).toBe(150);
+  });
+
+  it('keeps yearlyAmount but no months or text for a full year', () => {
+    const [jb] = buildPositions(membership(), schedule([jbRule]), prices);
+    expect(jb.amount).toBe(600);
+    expect(jb.yearlyAmount).toBe(600);
+    expect('proRataMonths' in jb).toBe(false);
+  });
+
+  it('leaves a zero price at 0 without text', () => {
+    const [jb] = buildPositions(membership({ dateOfEntry: '20260615', category: 'passive' } as Partial<MembershipModel>), schedule([jbRule]), prices);
+    expect(jb.amount).toBe(0);
+    expect('description' in jb).toBe(false);
+  });
+
+  it('leaves a rule without proRata untouched', () => {
+    const [jb] = buildPositions(membership({ dateOfEntry: '20260615' }), schedule([{ ...jbRule, proRata: false }]), prices);
+    expect(jb.amount).toBe(600);
+    expect('yearlyAmount' in jb).toBe(false);
   });
 });

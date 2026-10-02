@@ -42,6 +42,7 @@ export interface FeePositionRule {
   accountKey?: string;    // revenue account (AccountModel) for the native posting path
   bexioAccountId?: number; // the same revenue account's id in Bexio — see MemberFeePosition
   vatCodeKey?: string;
+  proRata?: boolean;      // bill by months of membership in the entry/exit year (spec 1.79 §3)
 }
 
 /** One year's price list. Year-versioned like `vatRates`, so re-running 2025 reproduces 2025. */
