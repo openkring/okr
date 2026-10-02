@@ -24,6 +24,7 @@
     "@okr/finance-account-feature": "*",
     "@okr/finance-account-util": "*",
     "@okr/finance-vat-code-data-access": "*",
+    "@okr/finance-invoice-data-access": "*",
     "@okr/finance-bank-profile-data-access": "*",
     "@okr/finance-bank-profile-feature": "*",
     "@okr/finance-bank-rule-data-access": "*",

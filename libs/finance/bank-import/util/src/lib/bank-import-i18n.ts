@@ -30,6 +30,9 @@ export const BANK_IMPORT_I18N_KEYS = {
   import_summary_duplicates: PFX + 'import.summary.duplicates',
   import_summary_mapped: PFX + 'import.summary.mapped',
   import_summary_unmapped: PFX + 'import.summary.unmapped',
+  import_summary_invoices: PFX + 'import.summary.invoices',
+  invoice_payment_title: PFX + 'invoice.paymentTitle',
+  invoice_chip:         PFX + 'invoice.chip',
   import_summary_warnings: PFX + 'import.summary.warnings',
   import_cancelled:     PFX + 'import.cancelled',
 

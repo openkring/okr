@@ -5,6 +5,7 @@
   "loading": "Chargement des lignes bancaires…",
   "status": { "unmapped": "ouverte", "mapped": "attribuée", "posted": "comptabilisée", "error": "Erreur", "all": "toutes", "open": "non comptabilisée" },
   "header": { "date": "Date", "title": "Texte de comptabilisation", "payee": "Contrepartie", "amount": "Montant" },
+  "invoice": { "paymentTitle": "Paiement facture", "chip": "Facture" },
   "fee": { "label": "Frais", "netLabel": "net" },
   "import": {
     "file": "Importer un fichier",
@@ -15,6 +16,7 @@
       "duplicates": "déjà présentes, ignorées",
       "mapped": "attribuées à une règle",
       "unmapped": "sans règle, ouvertes",
+      "invoices": "Factures attribuées",
       "warnings": "Remarques"
     },
     "cancelled": "L'import a été annulé. Rien n'a été enregistré."

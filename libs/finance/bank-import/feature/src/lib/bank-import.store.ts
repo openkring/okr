@@ -17,12 +17,13 @@ import { AccountService } from '@okr/finance-account-data-access';
 import { AccountingStore } from '@okr/finance-accounting-feature';
 import { leafAccounts } from '@okr/finance-account-util';
 import { BankImportRowService, PostBankImportResult } from '@okr/finance-bank-import-data-access';
-import { BANK_IMPORT_I18N_KEYS, BankImportError, computeImportKeys, isPdfFile, parseStatement, ParsedWarning, toImportRows } from '@okr/finance-bank-import-util';
+import { BANK_IMPORT_I18N_KEYS, BankImportError, computeImportKeys, isPdfFile, matchInvoicePayments, parseStatement, ParsedWarning, toImportRows } from '@okr/finance-bank-import-util';
 import { BankProfileService } from '@okr/finance-bank-profile-data-access';
 import { BankProfileStore } from '@okr/finance-bank-profile-feature';
 import { BankRuleService } from '@okr/finance-bank-rule-data-access';
 import { BankRuleStore } from '@okr/finance-bank-rule-feature';
 import { applyRules, proposeBankRule } from '@okr/finance-bank-rule-util';
+import { InvoiceService } from '@okr/finance-invoice-data-access';
 import { VatCodeService } from '@okr/finance-vat-code-data-access';
 
 import { extractPdfLines } from './pdf-text.util';
@@ -39,6 +40,7 @@ export const BankImportStore = signalStore(
     ruleService: inject(BankRuleService),
     accountService: inject(AccountService),
     vatCodeService: inject(VatCodeService),
+    invoiceService: inject(InvoiceService),
     accountingStore: inject(AccountingStore),
     profileStore: inject(BankProfileStore),
     ruleStore: inject(BankRuleStore),
@@ -175,7 +177,13 @@ export const BankImportStore = signalStore(
       const existing = await store.rowService.existingKeys(accountingTenantId, keys);
       const fresh = all.filter(r => !existing.has(r.importKey));
       const rules = await store.ruleService.listOnce(accountingTenantId);
-      const { rows: mapped, invalidRuleKeys } = applyRules(fresh, rules);
+      const { rows: ruled, invalidRuleKeys } = applyRules(fresh, rules);
+      // credits that quote an open invoice's QR reference are linked after the rules, so the link wins
+      const invoices = await store.invoiceService.listPayableWithReference(accountingTenantId);
+      const { rows: mapped, matched } = matchInvoicePayments(ruled, invoices, {
+        titlePrefix: store.i18n.invoice_payment_title(),
+        receivablesAccountKey: store.accountingStore.config()?.receivablesAccountKey ?? '',
+      });
       if (mapped.length > 0) {
         const ok = await store.rowService.createMany(mapped);
         if (!ok) {
@@ -193,6 +201,7 @@ export const BankImportStore = signalStore(
         `${store.i18n.import_summary_duplicates()}: ${all.length - fresh.length}`,
         `${store.i18n.import_summary_mapped()}: ${mapped.filter(r => r.status === 'mapped').length}`,
         `${store.i18n.import_summary_unmapped()}: ${mapped.filter(r => r.status === 'unmapped').length}`,
+        `${store.i18n.import_summary_invoices()}: ${matched}`,
         ...(warnings.length ? [`${store.i18n.import_summary_warnings()}:`, ...warnings.map(w => store.warningText(w))] : []),
       ].join('\n');
       await store.alertService.confirm(`${store.i18n.import_summary_title()}\n${summary}`);
@@ -204,8 +213,16 @@ export const BankImportStore = signalStore(
       try {
         const rules = await store.ruleService.listOnce(store.accountingTenantId());
         const open = store.rows().filter(r => r.status === 'unmapped' || r.status === 'mapped');
-        const { rows } = applyRules(open, rules);
-        const changed = rows.filter((r, i) => r.status !== open[i].status || r.ruleKey !== open[i].ruleKey || r.title !== open[i].title || r.accountKey !== open[i].accountKey);
+        const { rows: ruled } = applyRules(open, rules);
+        // invoices issued after the import still get linked here; the matcher's output is what is persisted
+        const invoices = await store.invoiceService.listPayableWithReference(store.accountingTenantId());
+        const { rows } = matchInvoicePayments(ruled, invoices, {
+          titlePrefix: store.i18n.invoice_payment_title(),
+          receivablesAccountKey: store.accountingStore.config()?.receivablesAccountKey ?? '',
+        });
+        const changed = rows.filter((r, i) => r.status !== open[i].status || r.ruleKey !== open[i].ruleKey || r.title !== open[i].title || r.accountKey !== open[i].accountKey
+          || r.invoiceKey !== open[i].invoiceKey || r.paymentReference !== open[i].paymentReference || r.vatCodeKey !== open[i].vatCodeKey
+          || (r.splits?.length ?? 0) !== (open[i].splits?.length ?? 0));
         const ok = changed.length === 0 ? true : await store.rowService.updateMany(changed);
         store.rowsResource.reload();
         if (!ok) { await store.alertService.confirm(store.i18n.update_error()); return; }

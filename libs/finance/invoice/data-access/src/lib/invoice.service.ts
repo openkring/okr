@@ -15,7 +15,7 @@ import { ActivityService } from '@okr/activity-data-access';
 
 import {
   BOOKING_KEY_CHUNK_SIZE, chunked, InvoiceHeaderInput, InvoicePaymentCandidate, invoicePaymentCandidates, InvoicePaymentInput, InvoicePositionInput,
-  linkableBookings, PAYMENT_CANDIDATE_BOOKING_LIMIT, toInvoiceHeaderInput,
+  isPayableState, linkableBookings, PAYMENT_CANDIDATE_BOOKING_LIMIT, toInvoiceHeaderInput,
 } from '@okr/finance-invoice-util';
 
 /** The `writeInvoice` callable's request (apps/functions/src/invoice/write-invoice.ts). */
@@ -249,6 +249,16 @@ export class InvoiceService {
     const fn = httpsCallable<WriteInvoicePayload, { invoiceKey: string }>(getFunctions(getApp(), 'europe-west6'), 'writeInvoice');
     const result = await fn(payload);
     return result.data;
+  }
+
+  /**
+   * Payable invoices of one set of books that carry a QR reference — the bank import's match candidates
+   * (spec 1.2). Tenant-scoped through getSystemQuery; rejects on a failed read, so an import never
+   * runs against a silently empty candidate list.
+   */
+  public async listPayableWithReference(accountingTenantId: string): Promise<InvoiceModel[]> {
+    const all = await this.readOnce<InvoiceModel>(InvoiceCollection, getSystemQuery(this.env.tenantId), 'invoiceDate', 'desc');
+    return all.filter((inv) => inv.accountingTenantId === accountingTenantId && !!inv.paymentReference && isPayableState(inv.state));
   }
 
   /** The positions of one invoice (live). */

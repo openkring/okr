@@ -5,6 +5,7 @@
   "loading": "Caricamento delle righe bancarie…",
   "status": { "unmapped": "aperta", "mapped": "assegnata", "posted": "registrata", "error": "Errore", "all": "tutte", "open": "non registrata" },
   "header": { "date": "Data", "title": "Testo di registrazione", "payee": "Controparte", "amount": "Importo" },
+  "invoice": { "paymentTitle": "Pagamento fattura", "chip": "Fattura" },
   "fee": { "label": "Commissione", "netLabel": "netto" },
   "import": {
     "file": "Importa file",
@@ -15,6 +16,7 @@
       "duplicates": "già presenti, saltate",
       "mapped": "assegnate a una regola",
       "unmapped": "senza regola, aperte",
+      "invoices": "Fatture abbinate",
       "warnings": "Avvisi"
     },
     "cancelled": "L'importazione è stata annullata. Non è stato salvato nulla."

@@ -95,6 +95,9 @@ const STATUS_FILTERS: BankImportStatusFilter[] = ['open', 'all', 'unmapped', 'ma
                     → {{ store.i18n.fee_net_label() }} {{ (row.amount.amount - row.fee!.amount) / 100 | number:'1.2-2' }}</ion-note>
                 }
                 <ion-chip>{{ statusLabel(row.status) }}</ion-chip>
+                @if (row.invoiceKey) {
+                  <ion-chip color="success">{{ store.i18n.invoice_chip() }}</ion-chip>
+                }
                 @if (row.status === 'error') {
                   <ion-note color="danger">{{ store.errorText(row.error) }}</ion-note>
                 }

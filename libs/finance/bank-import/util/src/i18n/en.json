@@ -5,6 +5,7 @@
   "loading": "Loading bank lines…",
   "status": { "unmapped": "open", "mapped": "mapped", "posted": "posted", "error": "Error", "all": "all", "open": "not posted" },
   "header": { "date": "Date", "title": "Booking text", "payee": "Payee", "amount": "Amount" },
+  "invoice": { "paymentTitle": "Payment invoice", "chip": "Invoice" },
   "fee": { "label": "Fee", "netLabel": "net" },
   "import": {
     "file": "Import file",
@@ -15,6 +16,7 @@
       "duplicates": "already present, skipped",
       "mapped": "matched to a rule",
       "unmapped": "without a rule, open",
+      "invoices": "Invoices matched",
       "warnings": "Notices"
     },
     "cancelled": "The import was cancelled. Nothing was saved."

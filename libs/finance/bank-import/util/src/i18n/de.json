@@ -5,6 +5,7 @@
   "loading": "Bankzeilen werden geladen…",
   "status": { "unmapped": "offen", "mapped": "zugeordnet", "posted": "gebucht", "error": "Fehler", "all": "alle", "open": "nicht gebucht" },
   "header": { "date": "Datum", "title": "Buchungstext", "payee": "Gegenpartei", "amount": "Betrag" },
+  "invoice": { "paymentTitle": "Zahlung Rechnung", "chip": "Rechnung" },
   "fee": { "label": "Gebühr", "netLabel": "netto" },
   "import": {
     "file": "Datei importieren",
@@ -15,6 +16,7 @@
       "duplicates": "bereits vorhanden, übersprungen",
       "mapped": "mit Regel zugeordnet",
       "unmapped": "ohne Regel, offen",
+      "invoices": "Rechnungen zugeordnet",
       "warnings": "Hinweise"
     },
     "cancelled": "Der Import wurde abgebrochen. Es wurde nichts gespeichert."

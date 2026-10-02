@@ -5,6 +5,7 @@
   "loading": "Cargando líneas bancarias…",
   "status": { "unmapped": "abierta", "mapped": "asignada", "posted": "contabilizada", "error": "Error", "all": "todas", "open": "no contabilizada" },
   "header": { "date": "Fecha", "title": "Texto de contabilización", "payee": "Contraparte", "amount": "Importe" },
+  "invoice": { "paymentTitle": "Pago factura", "chip": "Factura" },
   "fee": { "label": "Comisión", "netLabel": "neto" },
   "import": {
     "file": "Importar archivo",
@@ -15,6 +16,7 @@
       "duplicates": "ya existentes, omitidas",
       "mapped": "asignadas a una regla",
       "unmapped": "sin regla, abiertas",
+      "invoices": "Facturas asignadas",
       "warnings": "Avisos"
     },
     "cancelled": "La importación se canceló. No se guardó nada."
