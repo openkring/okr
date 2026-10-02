@@ -637,12 +637,13 @@ service cloud.firestore {
              || ((isPrivileged() || hasRole('auditor')) && d.get('isStrictlyConfidential', true) == false);
     }
     function contractReader(d) {
-      return (belongsToTenant(d) && contractStaffReader(d))
+      return (canWriteTenant(d) && contractStaffReader(d))
              || (callerPersonKey() != '' && callerPersonKey() in d.get('partyPersonKeys', []));
     }
     match /contracts/{id} {
       allow read: if userExists() && (resource == null || contractReader(resource.data));
-      allow create, update: if (hasRole('treasurer') || isAdmin()) && tenantCreateOrDetach();
+      allow create: if (hasRole('treasurer') || isAdmin()) && tenantCreate();
+      allow update: if (hasRole('treasurer') || isAdmin()) && tenantUpdate();
       allow delete: if false;
     }
     match /contract-documents/{id} {

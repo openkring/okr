@@ -291,6 +291,8 @@ seed("contracts/cStrict", {"tenants": ["t1"], "isArchived": False, "name": "Stre
      "partyPersonKeys": [], "isStrictlyConfidential": True, "confidentiality": "strictlyConfidential"})
 seed("contracts/cRemoved", {"tenants": ["t1"], "isArchived": False, "name": "Entfernt",
      "partyPersonKeys": [], "isStrictlyConfidential": False, "confidentiality": "confidential"})
+seed("contracts/cSystem", {"tenants": ["system"], "isArchived": False, "name": "Shared",
+     "partyPersonKeys": [], "isStrictlyConfidential": False, "confidentiality": "confidential"})
 seed("contract-documents/dA", {"tenants": ["t1"], "isArchived": False, "contractKey": "cLoanA",
      "partyPersonKeys": ["pA"], "isStrictlyConfidential": False})
 U = jwt("uidU")
@@ -708,6 +710,8 @@ single_cases = [
     ("userA GET contracts/cRemoved (removed party) -> DENY", False, GET, "contracts/cRemoved", A, None, None),
     ("userP(privileged) PATCH contracts/cLoanA -> DENY", False, PATCH, "contracts/cLoanA", P, body({"name": "x"}), ["name"]),
     ("userT(treasurer) PATCH contracts/cLoanA -> ALLOW", True, PATCH, "contracts/cLoanA", T, body({"name": "x", "tenants": ["t1"]}), ["name", "tenants"]),
+    ("userB(admin t2) PATCH contracts/cLoanA tenants=[t2] -> DENY (takeover)", False, PATCH, "contracts/cLoanA", B, body({"tenants": ["t2"]}), ["tenants"]),
+    ("userT(treasurer t1) GET contracts/cSystem (tenants=[system]) -> DENY", False, GET, "contracts/cSystem", T, None, None),
     ("userA GET contract-documents/dA (own party) -> ALLOW", True, GET, "contract-documents/dA", A, None, None),
     ("userT(treasurer) PATCH contract-documents/dA -> DENY (CF-only)", False, PATCH, "contract-documents/dA", T, body({"title": "x"}), ["title"]),
     ("userD(admin) DELETE contracts/cLoanA -> DENY (archive only)", False, DELETE, "contracts/cLoanA", D, None, None),
