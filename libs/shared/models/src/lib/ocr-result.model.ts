@@ -43,6 +43,13 @@ export class OcrResultModel implements OkrModel, SearchableModel {
   // collection is tenant-readable. '' = the receipt carries no QR-bill (or predates 2026-09-28).
   public qrBill = '';
 
+  // Creditor read by Gemini from the printed invoice (spec 1.80 §5.1). Used only when qrBill is ''.
+  // creditorIban is normalised and mod-97-valid, or ''.
+  public creditorIban = '';
+  public creditorName = '';
+  public creditorAddress = '';
+  public reference = '';
+
   // resolution (stage ②)
   public matchedRuleKey = '';       // '' if no rule matched
   public accountKey = '';           // resolved debit account (rule → llm → default)

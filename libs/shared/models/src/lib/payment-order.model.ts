@@ -8,6 +8,9 @@ export type PaymentOrderStatus = 'draft' | 'approved' | 'transmitted' | 'accepte
 // bexio_api and ebics are future delivery channels — same approval flow, different transmission step.
 export type PaymentDeliveryMethod = 'pain001_download' | 'bexio_api' | 'ebics';
 
+/** 'expense-reimbursement' marks the collecting order that onExpenseDone appends to (spec 1.80 §4.1). */
+export type PaymentOrderPurpose = '' | 'expense-reimbursement';
+
 // Groups one or more PaymentModel entries into a single bank submission.
 // One PaymentOrderModel = one pain.001 file (or equivalent for other delivery methods).
 export class PaymentOrderModel implements OkrModel {
@@ -24,6 +27,7 @@ export class PaymentOrderModel implements OkrModel {
   public createdBy = '';                                   // okey of creating user
   public approvedBy = '';                                  // okey of approving user (four-eyes)
   public accountingTenantId = '';
+  public purpose: PaymentOrderPurpose = '';
 
   constructor(tenantId: string, accountingTenantId: string) {
     this.tenants = [tenantId];
