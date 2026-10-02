@@ -70,7 +70,7 @@ function describeContent(content: Element, index: number) {
 }
 
 function scrollState() {
-  const contents = [...document.querySelectorAll('ion-content')];
+  const contents = Array.from(document.querySelectorAll('ion-content'));
   return {
     wheel: { ...wheel },
     touchmove: { ...touch },
@@ -79,9 +79,9 @@ function scrollState() {
     htmlOverflow: getComputedStyle(document.documentElement).overflow,
     // Ionic hides inactive routed views with `ion-page-hidden`. More than one page WITHOUT it
     // means several views are displayed at once — the signature of an interrupted transition.
-    pages: [...document.querySelectorAll('.ion-page')].map(p => p.className),
+    pages: Array.from(document.querySelectorAll('.ion-page')).map(p => p.className),
     contents: contents.map(describeContent),
-    overlays: [...document.querySelectorAll('ion-modal,ion-popover,ion-action-sheet,ion-alert,ion-loading,ion-backdrop')]
+    overlays: Array.from(document.querySelectorAll('ion-modal,ion-popover,ion-action-sheet,ion-alert,ion-loading,ion-backdrop'))
       .map(e => `${e.tagName}${e.classList.contains('overlay-hidden') ? ':hidden' : ':VISIBLE'}`),
   };
 }
