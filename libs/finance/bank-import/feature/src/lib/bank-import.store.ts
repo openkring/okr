@@ -10,14 +10,16 @@ import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { BankImportRowModel, BankImportRowStatus, InvoiceModel, BankProfileModel, BankRuleModel } from '@okr/shared-models';
 import { AlertService, resourceParams } from '@okr/shared-util-angular';
-import { DateFormat, getTodayStr } from '@okr/shared-util-core';
+import { DateFormat, fill, getTodayStr } from '@okr/shared-util-core';
 
 import { UploadService } from '@okr/avatar-data-access';
 import { AccountService } from '@okr/finance-account-data-access';
 import { AccountingStore } from '@okr/finance-accounting-feature';
 import { leafAccounts } from '@okr/finance-account-util';
 import { BankImportRowService, PostBankImportResult } from '@okr/finance-bank-import-data-access';
-import { BANK_IMPORT_I18N_KEYS, BankImportError, computeImportKeys, isPdfFile, matchInvoicePayments, parseStatement, ParsedWarning, toImportRows } from '@okr/finance-bank-import-util';
+import {
+  BANK_IMPORT_I18N_KEYS, BankImportError, computeImportKeys, isPdfFile, matchInvoicePayments, parseStatement, ParsedWarning, toImportRows, unsettledReasonKey,
+} from '@okr/finance-bank-import-util';
 import { BankProfileService } from '@okr/finance-bank-profile-data-access';
 import { BankProfileStore } from '@okr/finance-bank-profile-feature';
 import { BankRuleService } from '@okr/finance-bank-rule-data-access';
@@ -78,6 +80,9 @@ export const BankImportStore = signalStore(
     isLoading: computed(() => store.rowsResource.isLoading()),
     currentUser: computed(() => store.appStore.currentUser()),
     accountingTenantId: computed(() => store.accountingStore.accountingTenantId()),
+    // The matcher pre-assigns this account; without it a linked row would keep a rule's revenue account
+    // and never be revisited (revenue booked twice). '' = config not loaded or no account configured.
+    receivablesAccountKey: computed(() => store.accountingStore.configLoaded() ? (store.accountingStore.config()?.receivablesAccountKey ?? '') : ''),
   })),
   withComputed(store => ({
     counts: computed(() => {
@@ -178,20 +183,23 @@ export const BankImportStore = signalStore(
       const fresh = all.filter(r => !existing.has(r.importKey));
       const rules = await store.ruleService.listOnce(accountingTenantId);
       const { rows: ruled, invalidRuleKeys } = applyRules(fresh, rules);
-      // credits that quote an open invoice's QR reference are linked after the rules, so the link wins
+      // credits that quote an open invoice's QR reference are linked after the rules, so the link wins.
+      // Only with a known receivables account; otherwise the rows stay unlinked and "Regeln anwenden" links them later.
+      const receivablesAccountKey = store.receivablesAccountKey();
       let invoices: InvoiceModel[] = [];
       let invoicesFailed = false;
-      try {
-        invoices = await store.invoiceService.listPayableWithReference(accountingTenantId);
-      } catch (ex) {
-        // the import must not die over the optional matching: proceed without it and say so in the summary
-        console.error('BankImportStore.importFile -> invoices unreadable:', ex);
-        invoicesFailed = true;
+      if (receivablesAccountKey) {
+        try {
+          invoices = await store.invoiceService.listPayableWithReference(accountingTenantId);
+        } catch (ex) {
+          // the import must not die over the optional matching: proceed without it and say so in the summary
+          console.error('BankImportStore.importFile -> invoices unreadable:', ex);
+          invoicesFailed = true;
+        }
       }
-      const { rows: mapped, matched } = matchInvoicePayments(ruled, invoices, {
-        titlePrefix: store.i18n.invoice_payment_title(),
-        receivablesAccountKey: store.accountingStore.config()?.receivablesAccountKey ?? '',
-      });
+      const { rows: mapped, matched } = receivablesAccountKey
+        ? matchInvoicePayments(ruled, invoices, { titlePrefix: store.i18n.invoice_payment_title(), receivablesAccountKey })
+        : { rows: ruled, matched: 0 };
       if (mapped.length > 0) {
         const ok = await store.rowService.createMany(mapped);
         if (!ok) {
@@ -222,19 +230,22 @@ export const BankImportStore = signalStore(
         const rules = await store.ruleService.listOnce(store.accountingTenantId());
         const open = store.rows().filter(r => r.status === 'unmapped' || r.status === 'mapped');
         const { rows: ruled } = applyRules(open, rules);
-        // invoices issued after the import still get linked here; the matcher's output is what is persisted
+        // invoices issued after the import still get linked here; the matcher's output is what is persisted.
+        // Only with a known receivables account (see importFile).
+        const receivablesAccountKey = store.receivablesAccountKey();
         let invoices: InvoiceModel[] = [];
         let invoicesFailed = false;
-        try {
-          invoices = await store.invoiceService.listPayableWithReference(store.accountingTenantId());
-        } catch (ex) {
-          console.error('BankImportStore.applyRulesToOpenRows -> invoices unreadable:', ex);
-          invoicesFailed = true;
+        if (receivablesAccountKey) {
+          try {
+            invoices = await store.invoiceService.listPayableWithReference(store.accountingTenantId());
+          } catch (ex) {
+            console.error('BankImportStore.applyRulesToOpenRows -> invoices unreadable:', ex);
+            invoicesFailed = true;
+          }
         }
-        const { rows } = matchInvoicePayments(ruled, invoices, {
-          titlePrefix: store.i18n.invoice_payment_title(),
-          receivablesAccountKey: store.accountingStore.config()?.receivablesAccountKey ?? '',
-        });
+        const rows = receivablesAccountKey
+          ? matchInvoicePayments(ruled, invoices, { titlePrefix: store.i18n.invoice_payment_title(), receivablesAccountKey }).rows
+          : ruled;
         const changed = rows.filter((r, i) => r.status !== open[i].status || r.ruleKey !== open[i].ruleKey || r.title !== open[i].title || r.accountKey !== open[i].accountKey
           || r.invoiceKey !== open[i].invoiceKey || r.paymentReference !== open[i].paymentReference || r.vatCodeKey !== open[i].vatCodeKey
           || (r.splits?.length ?? 0) !== (open[i].splits?.length ?? 0));
@@ -254,17 +265,24 @@ export const BankImportStore = signalStore(
       const keys = rowKeys ?? store.filtered().filter(r => r.status === 'mapped').map(r => r.okey);
       if (keys.length === 0) { await store.alertService.confirm(store.i18n.post_nothing()); return; }
       try {
-        const total: PostBankImportResult = { posted: 0, failed: [] };
+        const total: PostBankImportResult = { posted: 0, failed: [], unsettled: [] };
+        const titles = new Map(store.rows().map(r => [r.okey, r.title]));
         for (let i = 0; i < keys.length; i += 100) {
           const res = await store.rowService.postViaFunction({ accountingTenantId: store.accountingTenantId(), rowKeys: keys.slice(i, i + 100), splitTitle: store.i18n.split_booking_title() });
           total.posted += res.posted;
           total.failed.push(...res.failed);
+          total.unsettled.push(...(res.unsettled ?? []));  // ?? []: a function deployed before this field
         }
         store.rowsResource.reload();
         const lines = [
           `${store.i18n.post_summary_posted()}: ${total.posted}`,
           `${store.i18n.post_summary_failed()}: ${total.failed.length}`,
           ...total.failed.map(f => `${f.rowKey.slice(0, 8)}… ${store.errorText(f.reason)}`),
+          // the booking is posted; the matched invoice stays open — the treasurer settles it by hand
+          ...total.unsettled.map(u => fill(store.i18n.post_unsettled(), {
+            invoice: titles.get(u.rowKey) || u.invoiceKey,
+            reason: store.i18n[unsettledReasonKey(u.reason)](),
+          })),
         ];
         await store.alertService.confirm(`${store.i18n.post_summary_title()}\n${lines.join('\n')}`);
       } catch (ex) {

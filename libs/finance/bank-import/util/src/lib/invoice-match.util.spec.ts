@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { BankImportRowModel, InvoiceModel, MoneyModel } from '@okr/shared-models';
 import { generateQrReference } from '@okr/shared-util-core';
 
-import { matchInvoicePayments } from './invoice-match.util';
+import { matchInvoicePayments, unsettledReasonKey } from './invoice-match.util';
 
 const REF = generateQrReference(202600042);
 const spaced = REF.replace(/^(\d{2})(\d{5})(\d{5})(\d{5})(\d{5})(\d{5})$/, '$1 $2 $3 $4 $5 $6');
@@ -89,5 +89,21 @@ describe('matchInvoicePayments', () => {
   it('skips a row without amount', () => {
     const r = row(12000, { paymentReference: REF }); delete (r as Partial<BankImportRowModel>).amount;
     expect(matchInvoicePayments([r], [invoice()], { titlePrefix: 'x', receivablesAccountKey: '' }).matched).toBe(0);
+  });
+});
+
+describe('unsettledReasonKey (postBankImport skip reason → i18n key)', () => {
+  it('names what the treasurer can act on', () => {
+    expect(unsettledReasonKey('overpayment')).toBe('post_unsettled_overpayment');
+    expect(unsettledReasonKey('not-payable')).toBe('post_unsettled_not_payable');
+    expect(unsettledReasonKey('no-receivables-credit')).toBe('post_unsettled_no_receivables_credit');
+  });
+  it('an already paid invoice (not-payable + overpayment) reads as paid or cancelled', () => {
+    expect(unsettledReasonKey('not-payable,overpayment')).toBe('post_unsettled_not_payable');
+  });
+  it('everything else falls back to the general text', () => {
+    for (const r of ['missing', 'other-tenant', 'other-books', 'bexio-backend', 'already-recorded', 'not-a-chf-credit', 'no-receivables-account', 'invalid-amount', '']) {
+      expect(unsettledReasonKey(r)).toBe('post_unsettled_other');
+    }
   });
 });

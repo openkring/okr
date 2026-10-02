@@ -48,6 +48,13 @@
       "feeExceedsAmount": "La comisión es igual o superior al importe: la línea no se ha contabilizado.",
       "splitInvalid": "El reparto está incompleto o las partes son demasiado altas.",
       "unknown": "La línea no pudo ser contabilizada."
+    },
+    "unsettled": {
+      "line": "Factura no saldada: {invoice} – {reason}",
+      "overpayment": "El pago supera el importe pendiente. El asiento está registrado; salda la factura a mano.",
+      "notPayable": "La factura ya está pagada o anulada.",
+      "noReceivablesCredit": "La línea no se contabilizó en la cuenta de deudores, por eso la factura sigue abierta.",
+      "other": "No se pudo registrar el pago en la factura automáticamente. El asiento está registrado; revisa la factura."
     }
   },
   "applyRules": { "label": "Aplicar reglas", "conf": "Las reglas se aplicaron a todas las líneas abiertas." },

@@ -48,6 +48,13 @@
       "feeExceedsAmount": "Die Gebühr ist gleich hoch wie der Betrag oder höher — die Zeile wurde nicht gebucht.",
       "splitInvalid": "Die Aufteilung ist unvollständig oder die Teilbeträge sind zu hoch.",
       "unknown": "Die Zeile konnte nicht gebucht werden."
+    },
+    "unsettled": {
+      "line": "Rechnung nicht ausgeglichen: {invoice} – {reason}",
+      "overpayment": "Die Zahlung ist höher als der offene Betrag. Die Buchung ist erfasst, bitte gleiche die Rechnung von Hand aus.",
+      "notPayable": "Die Rechnung ist bereits bezahlt oder storniert.",
+      "noReceivablesCredit": "Die Zeile wurde nicht auf das Debitorenkonto gebucht, darum bleibt die Rechnung offen.",
+      "other": "Die Zahlung konnte nicht automatisch auf der Rechnung erfasst werden. Die Buchung ist erfasst, bitte prüfe die Rechnung."
     }
   },
   "applyRules": { "label": "Regeln anwenden", "conf": "Die Regeln wurden auf alle offenen Zeilen angewendet." },

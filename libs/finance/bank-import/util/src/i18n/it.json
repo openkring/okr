@@ -48,6 +48,13 @@
       "feeExceedsAmount": "La commissione è pari o superiore all'importo: la riga non è stata registrata.",
       "splitInvalid": "La ripartizione è incompleta o le parti sono troppo alte.",
       "unknown": "La riga non ha potuto essere registrata."
+    },
+    "unsettled": {
+      "line": "Fattura non saldata: {invoice} – {reason}",
+      "overpayment": "Il pagamento supera l'importo aperto. La registrazione è fatta; salda la fattura a mano.",
+      "notPayable": "La fattura è già pagata o annullata.",
+      "noReceivablesCredit": "La riga non è stata registrata sul conto debitori, quindi la fattura resta aperta.",
+      "other": "Non è stato possibile registrare il pagamento sulla fattura in automatico. La registrazione è fatta; controlla la fattura."
     }
   },
   "applyRules": { "label": "Applica regole", "conf": "Le regole sono state applicate a tutte le righe aperte." },

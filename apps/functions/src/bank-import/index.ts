@@ -29,17 +29,23 @@ const MAX_ROWS = 100;
 // splitTitle: base main name of a split booking in the caller's language (e.g. 'Sammelbuchung').
 interface PostBankImportData { accountingTenantId: string; rowKeys?: string[]; splitTitle?: string; }
 interface Failure { rowKey: string; reason: string; }
+/** A posted row whose matched invoice was left untouched; `reason` is the comma-joined skip code. */
+interface Unsettled { rowKey: string; invoiceKey: string; reason: string; }
 
 /** The fields the payment rules and the tenant check read, from a raw invoice document; undefined stays undefined. */
 function asInvoiceLike(doc: Record<string, unknown> | undefined): (InvoiceLike & { tenants: string[] }) | undefined {
   if (!doc) return undefined;
-  return {
+  // 1.76 Phase 3 adds reminder fees via `reminders`; the payment rules read them from there to compute
+  // the open amount. Built in a variable so the field passes while InvoiceLike does not declare it yet.
+  const invoice = {
     tenants: (doc['tenants'] as string[] | undefined) ?? [],
     state: String(doc['state'] ?? ''),
     totalAmount: doc['totalAmount'] as InvoiceLike['totalAmount'],
     payments: doc['payments'] as InvoiceLike['payments'],
+    reminders: (doc['reminders'] as unknown[] | undefined) ?? [],
     accountingTenantId: String(doc['accountingTenantId'] ?? ''),
   };
+  return invoice;
 }
 
 /** Thrown inside the per-row transaction; the code lands on the row's `error` field. */
@@ -54,7 +60,7 @@ class RowError extends Error {
  */
 export const postBankImport = onCall(
   { region: REGION, enforceAppCheck: true, cors: true, timeoutSeconds: 540, memory: '512MiB' },
-  async (request: CallableRequest<PostBankImportData>): Promise<{ posted: number; failed: Failure[] }> => {
+  async (request: CallableRequest<PostBankImportData>): Promise<{ posted: number; failed: Failure[]; unsettled: Unsettled[] }> => {
     checkAppCheckToken(request as never, CF_NAME);
     checkAuthentication(request as never, CF_NAME);
     await checkRoles(request as never, CF_NAME, ['treasurer']);
@@ -92,14 +98,15 @@ export const postBankImport = onCall(
 
     let posted = 0;
     const failed: Failure[] = [];
+    const unsettled: Unsettled[] = [];
     for (const rowRef of rowRefs) {
       try {
-        const outcome = await db.runTransaction(async (tx: Transaction) => {
+        const outcome = await db.runTransaction(async (tx: Transaction): Promise<{ outcome: string; unsettled?: Omit<Unsettled, 'rowKey'> }> => {
           const rowSnap = await tx.get(rowRef);
           const row = rowSnap.data() as RowDoc | undefined;
           if (!row) throw new RowError('not-mapped');
           if (!(row.tenants ?? []).includes(tenantId) || row.accountingTenantId !== accountingTenantId) throw new RowError('not-mapped');
-          if (row.status === 'posted') return 'replayed';
+          if (row.status === 'posted') return { outcome: 'replayed' };
           if (row.status !== 'mapped' || !row.title || !row.accountKey) throw new RowError('not-mapped');
 
           const profileSnap = await tx.get(db.collection(PROFILE_COLLECTION).doc(row.bankProfileKey));
@@ -142,7 +149,7 @@ export const postBankImport = onCall(
           const now = getTodayStr(DateFormat.StoreDateTime);
           if (bookingSnap.exists) {
             tx.update(rowRef, { status: 'posted', bookingKey, postedAt: now, error: '' });
-            return 'replayed';
+            return { outcome: 'replayed' };
           }
 
           const lines = withCostCenterKeys(buildBankBookingLines(row, profile, tenantId, bookingKey), row,
@@ -154,16 +161,19 @@ export const postBankImport = onCall(
           // spec 1.2 §4.3 / 1.76 D6 link rule: a credit matched to an invoice and booked against the
           // receivables account settles it in the same transaction. Never blocks the booking. The
           // amount is the receivables credit (gross), not the bank net: a processor fee is ours.
+          // bexio books are never read: invoiceSettlement refuses them before it looks at the invoice.
           let invoicePatch: Record<string, unknown> | undefined;
+          let skip: string | undefined;
           const invoiceRef = row.invoiceKey ? db.collection(InvoiceCollection).doc(row.invoiceKey) : undefined;
           if (invoiceRef) {
             if (row.amount.amount > 0 && row.amount.currency === 'CHF' && receivablesKey) {
               const amount = receivablesCredit(lines as { accountKey: string; creditAmount?: { amount: number } | null }[], receivablesKey);
-              const settlement = invoiceSettlement(asInvoiceLike((await tx.get(invoiceRef)).data()), settlementBooks, amount, row.date, bookingKey, profile.accountKey);
+              const invoice = settlementBooks.bexioBackend ? undefined : asInvoiceLike((await tx.get(invoiceRef)).data());
+              const settlement = invoiceSettlement(invoice, settlementBooks, amount, row.date, bookingKey, profile.accountKey);
               if ('patch' in settlement) invoicePatch = settlement.patch;
-              else logger.warn(`${CF_NAME}: ${rowRef.id} invoice ${row.invoiceKey} not settled (${settlement.skip})`);
+              else skip = settlement.skip;
             } else {
-              logger.warn(`${CF_NAME}: ${rowRef.id} invoice ${row.invoiceKey} not settled (${receivablesKey ? 'not-a-chf-credit' : 'no-receivables-account'})`);
+              skip = receivablesKey ? 'not-a-chf-credit' : 'no-receivables-account';
             }
           }
           const year = Number(row.date.substring(0, 4));
@@ -180,10 +190,15 @@ export const postBankImport = onCall(
           for (const line of lines) tx.set(db.collection(BOOKING_LINE_COLLECTION).doc(), line);
           tx.update(rowRef, { status: 'posted', bookingKey, postedAt: now, error: '' });
           if (invoiceRef && invoicePatch) tx.update(invoiceRef, invoicePatch);
-          return 'posted';
+          return { outcome: 'posted', unsettled: skip && row.invoiceKey ? { invoiceKey: row.invoiceKey, reason: skip } : undefined };
         });
         posted += 1;
-        logger.info(`${CF_NAME}: ${rowRef.id} ${outcome} (tenant=${tenantId})`);
+        logger.info(`${CF_NAME}: ${rowRef.id} ${outcome.outcome} (tenant=${tenantId})`);
+        // reported only once the transaction committed: a retried attempt must not be counted twice
+        if (outcome.unsettled) {
+          unsettled.push({ rowKey: rowRef.id, ...outcome.unsettled });
+          logger.warn(`${CF_NAME}: ${rowRef.id} invoice ${outcome.unsettled.invoiceKey} not settled (${outcome.unsettled.reason})`);
+        }
       } catch (e) {
         const code = e instanceof RowError ? e.code : 'unknown';
         failed.push({ rowKey: rowRef.id, reason: code });
@@ -194,7 +209,7 @@ export const postBankImport = onCall(
       }
     }
     logger.info(`${CF_NAME}: posted=${posted} failed=${failed.length} (accountingTenant=${accountingTenantId})`);
-    return { posted, failed };
+    return { posted, failed, unsettled };
   },
 );
 

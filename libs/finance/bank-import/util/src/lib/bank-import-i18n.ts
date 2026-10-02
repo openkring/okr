@@ -60,6 +60,12 @@ export const BANK_IMPORT_I18N_KEYS = {
   post_error_fee_exceeds_amount: PFX + 'post.error.feeExceedsAmount',
   post_error_split_invalid: PFX + 'post.error.splitInvalid',
   post_error_unknown:   PFX + 'post.error.unknown',
+  /** single-brace {invoice}/{reason}: translateAll strips {{…}} — fill() it */
+  post_unsettled:       PFX + 'post.unsettled.line',
+  post_unsettled_overpayment: PFX + 'post.unsettled.overpayment',
+  post_unsettled_not_payable: PFX + 'post.unsettled.notPayable',
+  post_unsettled_no_receivables_credit: PFX + 'post.unsettled.noReceivablesCredit',
+  post_unsettled_other: PFX + 'post.unsettled.other',
 
   apply_rules:          PFX + 'applyRules.label',
   apply_rules_conf:     PFX + 'applyRules.conf',

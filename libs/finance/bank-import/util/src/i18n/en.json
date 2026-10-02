@@ -48,6 +48,13 @@
       "feeExceedsAmount": "The fee is equal to or higher than the amount — the row was not posted.",
       "splitInvalid": "The split is incomplete or the parts are too high.",
       "unknown": "The line could not be posted."
+    },
+    "unsettled": {
+      "line": "Invoice not settled: {invoice} – {reason}",
+      "overpayment": "The payment is higher than the open amount. The booking is recorded; please settle the invoice by hand.",
+      "notPayable": "The invoice is already paid or cancelled.",
+      "noReceivablesCredit": "The line was not booked to the receivables account, so the invoice stays open.",
+      "other": "The payment could not be recorded on the invoice automatically. The booking is recorded; please check the invoice."
     }
   },
   "applyRules": { "label": "Apply rules", "conf": "The rules were applied to all open lines." },

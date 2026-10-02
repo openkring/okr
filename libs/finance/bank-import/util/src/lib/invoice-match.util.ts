@@ -46,3 +46,19 @@ export function matchInvoicePayments(
   });
   return { rows: out, matched };
 }
+
+/** The i18n key (of BANK_IMPORT_I18N_KEYS) that explains why `postBankImport` booked a matched credit without settling its invoice. */
+export type UnsettledReasonKey = 'post_unsettled_overpayment' | 'post_unsettled_not_payable' | 'post_unsettled_no_receivables_credit' | 'post_unsettled_other';
+
+/**
+ * Maps a server skip reason (comma-joined codes, see `invoiceSettlement` in the functions) to the
+ * text a treasurer can act on. An already paid invoice reports `not-payable,overpayment`: it reads
+ * as "paid or cancelled". Everything else (missing, other books, bexio, …) gets the general text.
+ */
+export function unsettledReasonKey(reason: string): UnsettledReasonKey {
+  const codes = (reason ?? '').split(',');
+  if (codes.includes('not-payable')) return 'post_unsettled_not_payable';
+  if (codes.includes('overpayment')) return 'post_unsettled_overpayment';
+  if (codes.includes('no-receivables-credit')) return 'post_unsettled_no_receivables_credit';
+  return 'post_unsettled_other';
+}

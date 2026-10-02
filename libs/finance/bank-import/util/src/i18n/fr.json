@@ -48,6 +48,13 @@
       "feeExceedsAmount": "Les frais sont égaux ou supérieurs au montant — la ligne n'a pas été comptabilisée.",
       "splitInvalid": "La répartition est incomplète ou les parties sont trop élevées.",
       "unknown": "La ligne n'a pas pu être comptabilisée."
+    },
+    "unsettled": {
+      "line": "Facture non soldée : {invoice} – {reason}",
+      "overpayment": "Le paiement dépasse le montant ouvert. L'écriture est enregistrée, solde la facture à la main.",
+      "notPayable": "La facture est déjà payée ou annulée.",
+      "noReceivablesCredit": "La ligne n'a pas été comptabilisée sur le compte débiteurs, la facture reste donc ouverte.",
+      "other": "Le paiement n'a pas pu être enregistré automatiquement sur la facture. L'écriture est enregistrée, vérifie la facture."
     }
   },
   "applyRules": { "label": "Appliquer les règles", "conf": "Les règles ont été appliquées à toutes les lignes ouvertes." },
