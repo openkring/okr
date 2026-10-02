@@ -640,10 +640,19 @@ service cloud.firestore {
       return (canWriteTenant(d) && contractStaffReader(d))
              || (callerPersonKey() != '' && callerPersonKey() in d.get('partyPersonKeys', []));
     }
+    // documents[] (registerContractDocument) and remindersSent (scanner) are server-owned: a client
+    // creates them empty and never changes them — a stale modal copy would otherwise wipe registered
+    // files or re-arm sent reminders. The client update omits both, so updateDoc leaves them equal.
+    function contractServerFieldsUnchanged() {
+      return request.resource.data.get('documents', []) == resource.data.get('documents', [])
+             && request.resource.data.get('remindersSent', []) == resource.data.get('remindersSent', []);
+    }
     match /contracts/{id} {
       allow read: if userExists() && (resource == null || contractReader(resource.data));
-      allow create: if (hasRole('treasurer') || isAdmin()) && tenantCreate();
-      allow update: if (hasRole('treasurer') || isAdmin()) && tenantUpdate();
+      allow create: if (hasRole('treasurer') || isAdmin()) && tenantCreate()
+                    && request.resource.data.get('documents', []).size() == 0
+                    && request.resource.data.get('remindersSent', []).size() == 0;
+      allow update: if (hasRole('treasurer') || isAdmin()) && tenantUpdate() && contractServerFieldsUnchanged();
       allow delete: if false;
     }
     match /contract-documents/{id} {

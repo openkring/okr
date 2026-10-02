@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { AVATAR_INFO_SHAPE, ContractModel } from '@okr/shared-models';
-import { applyDerivedFields, derivePartyPersonKeys, formatLeadDays, isLoanType, newContractModel, newLoanTerms, parseLeadDays, sumLoans } from './contract.util';
+import {
+  applyDerivedFields, clearedContractFields, derivePartyPersonKeys, formatLeadDays, isLoanType, newContractModel, newLoanTerms,
+  parseLeadDays, sumLoans, toContractCreatePayload, toContractUpdatePayload,
+} from './contract.util';
 
 const av = (key: string, modelType: 'person' | 'org', name2 = 'X') => ({ ...AVATAR_INFO_SHAPE, key, modelType, name1: 'A', name2 });
 
@@ -85,5 +88,30 @@ describe('sumLoans', () => {
 
   it('is zero for an empty list', () => {
     expect(sumLoans([])).toEqual({ principal: 0, outstanding: 0 });
+  });
+});
+
+describe('client write payloads', () => {
+  const ref = { docKey: 'd1', role: 'contract' as const, title: 'V', docState: 'signed' as const };
+  it('update never carries the server-owned documents / remindersSent', () => {
+    const c = Object.assign(new ContractModel('t1'), { okey: 'c1', name: 'N', documents: [ref], remindersSent: ['end:20300101:30'] });
+    const p = toContractUpdatePayload(c) as Record<string, unknown>;
+    expect('documents' in p).toBe(false);
+    expect('remindersSent' in p).toBe(false);
+    expect(p['name']).toBe('N');
+    expect(c.documents).toEqual([ref]);
+  });
+  it('create starts with no files and no reminders, whatever the modal held', () => {
+    const c = Object.assign(new ContractModel('t1'), { documents: [ref], remindersSent: ['x'] });
+    const p = toContractCreatePayload(c);
+    expect(p.documents).toEqual([]);
+    expect(p.remindersSent).toEqual([]);
+  });
+  it('lists the unset clearable fields for deletion', () => {
+    const c = new ContractModel('t1');
+    expect(clearedContractFields(c)).toEqual(['responsible', 'notice', 'value', 'loan']);
+    c.responsible = { ...AVATAR_INFO_SHAPE, key: 'p1', modelType: 'person' };
+    c.loan = newLoanTerms();
+    expect(clearedContractFields(c)).toEqual(['notice', 'value']);
   });
 });

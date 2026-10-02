@@ -29,6 +29,33 @@ export function applyDerivedFields(c: ContractModel, today: string): ContractMod
   };
 }
 
+/** Fields only the Cloud Functions write (upload register, scanner): never part of a client update. */
+export const SERVER_OWNED_CONTRACT_FIELDS = ['documents', 'remindersSent'] as const;
+
+/** Optional top-level fields a user can clear; an undefined value must be deleted explicitly on update. */
+export const CLEARABLE_CONTRACT_FIELDS = ['responsible', 'notice', 'value', 'loan'] as const;
+export type ClearableContractField = typeof CLEARABLE_CONTRACT_FIELDS[number];
+
+/**
+ * The client update payload: the model minus the server-owned fields, so a stale modal copy never
+ * overwrites files registered or reminders recorded meanwhile (updateDoc leaves absent fields alone).
+ */
+export function toContractUpdatePayload(c: ContractModel): Omit<ContractModel, 'documents' | 'remindersSent'> {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { documents, remindersSent, ...rest } = c;
+  return rest;
+}
+
+/** The client create payload: a fresh contract starts with no files and no reminders sent. */
+export function toContractCreatePayload(c: ContractModel): ContractModel {
+  return { ...c, documents: [], remindersSent: [] };
+}
+
+/** Clearable fields that are unset on the model and therefore must be deleted from the stored doc. */
+export function clearedContractFields(c: ContractModel): ClearableContractField[] {
+  return CLEARABLE_CONTRACT_FIELDS.filter((f) => c[f] === undefined || c[f] === null);
+}
+
 /** Contract types that carry loan terms (the form's Darlehen section). */
 export function isLoanType(type: ContractType | undefined): boolean {
   return type === 'loan' || type === 'mortgage';

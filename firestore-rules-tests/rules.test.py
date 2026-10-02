@@ -93,13 +93,13 @@ def parent_query(parentKey, token=None, tenant=None):
     except urllib.error.HTTPError as e:
         return e.code
 
-def field_query(coll, filters, token=None):
-    """Query with arbitrary (fieldPath, op, value) filters AND-combined."""
-    def val(v):
-        return {"booleanValue": v} if isinstance(v, bool) else {"stringValue": v}
-    fl = [{"fieldFilter": {"field": {"fieldPath": f}, "op": op, "value": val(v)}} for f, op, v in filters]
+def field_query(coll, filters, token=None, order_by=None):
+    """Query with arbitrary (fieldPath, op, value) filters AND-combined (+ optional orderBy ASC)."""
+    fl = [{"fieldFilter": {"field": {"fieldPath": f}, "op": op, "value": _val(v)}} for f, op, v in filters]
     where = fl[0] if len(fl) == 1 else {"compositeFilter": {"op": "AND", "filters": fl}}
     sq = {"from": [{"collectionId": coll}], "where": where}
+    if order_by:
+        sq["orderBy"] = [{"field": {"fieldPath": order_by}, "direction": "ASCENDING"}]
     hdr = {"Content-Type": "application/json"}
     if token:
         hdr["Authorization"] = f"Bearer {token}"
@@ -293,6 +293,10 @@ seed("contracts/cRemoved", {"tenants": ["t1"], "isArchived": False, "name": "Ent
      "partyPersonKeys": [], "isStrictlyConfidential": False, "confidentiality": "confidential"})
 seed("contracts/cSystem", {"tenants": ["system"], "isArchived": False, "name": "Shared",
      "partyPersonKeys": [], "isStrictlyConfidential": False, "confidentiality": "confidential"})
+seed("contracts/cDocs", {"tenants": ["t1"], "isArchived": False, "name": "Mit Dateien",
+     "partyPersonKeys": [], "isStrictlyConfidential": False, "confidentiality": "internal",
+     "documents": [{"docKey": "dA", "role": "contract", "title": "V", "docState": "signed"}],
+     "remindersSent": ["end:20300101:30"]})
 seed("contract-documents/dA", {"tenants": ["t1"], "isArchived": False, "contractKey": "cLoanA",
      "partyPersonKeys": ["pA"], "isStrictlyConfidential": False})
 U = jwt("uidU")
@@ -715,6 +719,17 @@ single_cases = [
     ("userA GET contract-documents/dA (own party) -> ALLOW", True, GET, "contract-documents/dA", A, None, None),
     ("userT(treasurer) PATCH contract-documents/dA -> DENY (CF-only)", False, PATCH, "contract-documents/dA", T, body({"title": "x"}), ["title"]),
     ("userD(admin) DELETE contracts/cLoanA -> DENY (archive only)", False, DELETE, "contracts/cLoanA", D, None, None),
+    # documents[] / remindersSent are server-owned (register callable, scanner): a client never changes them
+    ("userT(treasurer) PATCH contracts/cDocs documents=[] -> DENY (server-owned)", False, PATCH, "contracts/cDocs", T,
+     body({"documents": []}), ["documents"]),
+    ("userT(treasurer) PATCH contracts/cDocs remindersSent=[] -> DENY (server-owned)", False, PATCH, "contracts/cDocs", T,
+     body({"remindersSent": []}), ["remindersSent"]),
+    ("userT(treasurer) PATCH contracts/cDocs name only -> ALLOW (absent fields stay equal)", True, PATCH, "contracts/cDocs", T,
+     body({"name": "Neu", "tenants": ["t1"]}), ["name", "tenants"]),
+    ("userT(treasurer) CREATE contracts with documents -> DENY", False, POST, "contracts?documentId=cNewDocs", T,
+     body({"tenants": ["t1"], "isArchived": False, "name": "N", "documents": [{"docKey": "x"}], "remindersSent": []}), None),
+    ("userT(treasurer) CREATE contracts with empty documents/remindersSent -> ALLOW", True, POST, "contracts?documentId=cNewOk", T,
+     body({"tenants": ["t1"], "isArchived": False, "name": "N", "documents": [], "remindersSent": []}), None),
 ]
 
 # (label, expect_allow, collection, tenant, token)
@@ -771,18 +786,24 @@ parent_cases = [
     ("userM(memberAdmin) QUERY addresses by parentKey+tenant -> ALLOW (upsert lookup)", True, "person.pO", M, "t1"),
 ]
 
-# (label, expect_allow, collection, [(field, op, value)], token) — contracts (spec 1.5 §5.1)
+# (label, expect_allow, collection, [(field, op, value)], token) — contracts (spec 1.5 §5.1).
+# EXACTLY the client query shapes of ContractService.listStaff / listMine (filters + orderBy name),
+# so a drift in the client query fails here instead of as a 403 in the app.
+STAFF = [("isArchived", "EQUAL", False), ("tenants", "ARRAY_CONTAINS", "t1")]
+STAFF_NON_STRICT = STAFF + [("isStrictlyConfidential", "EQUAL", False)]
+MY = lambda pk: [("partyPersonKeys", "ARRAY_CONTAINS", pk), ("isArchived", "EQUAL", False)]
 field_cases = [
-    ("userA LIST contracts my (partyPersonKeys contains pA) -> ALLOW", True, "contracts",
-     [("partyPersonKeys", "ARRAY_CONTAINS", "pA"), ("isArchived", "EQUAL", False)], A),
-    ("userA LIST contracts my with FOREIGN key pB -> DENY", False, "contracts",
-     [("partyPersonKeys", "ARRAY_CONTAINS", "pB"), ("isArchived", "EQUAL", False)], A),
-    ("userP LIST contracts staff non-strict -> ALLOW", True, "contracts",
-     [("tenants", "ARRAY_CONTAINS", "t1"), ("isArchived", "EQUAL", False), ("isStrictlyConfidential", "EQUAL", False)], P),
-    ("userP LIST contracts staff unconstrained -> DENY", False, "contracts",
-     [("tenants", "ARRAY_CONTAINS", "t1"), ("isArchived", "EQUAL", False)], P),
-    ("userT LIST contracts staff unconstrained -> ALLOW", True, "contracts",
-     [("tenants", "ARRAY_CONTAINS", "t1"), ("isArchived", "EQUAL", False)], T),
+    ("userA LIST contracts listMine(pA) -> ALLOW", True, "contracts", MY("pA"), A),
+    ("userA LIST contracts listMine with FOREIGN key pB -> DENY", False, "contracts", MY("pB"), A),
+    ("userP(privileged) LIST contracts listStaff(false) -> ALLOW", True, "contracts", STAFF_NON_STRICT, P),
+    ("userU(auditor) LIST contracts listStaff(false) -> ALLOW", True, "contracts", STAFF_NON_STRICT, U),
+    ("userP(privileged) LIST contracts listStaff(true) -> DENY", False, "contracts", STAFF, P),
+    ("userT(treasurer) LIST contracts listStaff(true) -> ALLOW", True, "contracts", STAFF, T),
+    ("userD(admin) LIST contracts listStaff(true) -> ALLOW", True, "contracts", STAFF, D),
+    ("userT(treasurer) LIST contracts listStaff(false) -> ALLOW", True, "contracts", STAFF_NON_STRICT, T),
+    # regression: getSystemQuery's array-contains-any [t1, system] is unprovable for the staff leg
+    ("userT(treasurer) LIST contracts tenants any-of [t1, system] -> DENY (getSystemQuery shape)", False, "contracts",
+     [("isArchived", "EQUAL", False), ("tenants", "ARRAY_CONTAINS_ANY", ["t1", "system"])], T),
 ]
 
 
@@ -814,7 +835,7 @@ for label, expect, parentKey, token, tenant in parent_cases:
     print(f"{'PASS' if ok else 'FAIL'}  [{code}]  {label}")
 
 for label, expect, coll, filters, token in field_cases:
-    code = field_query(coll, filters, token=token)
+    code = field_query(coll, filters, token=token, order_by="name")
     ok = (code == 200) == expect
     passed += ok; failed += not ok
     print(f"{'PASS' if ok else 'FAIL'}  [{code}]  {label}")
