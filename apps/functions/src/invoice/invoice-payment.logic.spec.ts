@@ -137,4 +137,11 @@ describe('invoice payment logic', () => {
     expect(cancelBlockers(issued, 'k', true, '20261002')).toEqual([]);
     expect(cancelBlockers(issued, 'k', true, '20261003')).toEqual([]);
   });
+  it('open amount and paid detection include reminder fees', () => {
+    const i = { state: 'pending', accountingTenantId: 'a', totalAmount: { amount: 10000 }, payments: [], reminders: [{ level: 1, date: 'd', dueDate: 'd', fee: 2000 }] };
+    expect(openAmount(i)).toBe(12000);
+    expect(paymentBlockers(i, 12000, '20261101')).toEqual([]);
+    expect(applyInvoicePayment(i, { paymentId: 'x', date: '20261101', amount: 12000, bankAccountKey: 'b', bookingKey: 'k' }).state).toBe('paid');
+    expect(applyInvoicePayment(i, { paymentId: 'x', date: '20261101', amount: 10000, bankAccountKey: 'b', bookingKey: 'k' }).state).toBe('pending');
+  });
 });

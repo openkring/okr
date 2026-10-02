@@ -38,6 +38,9 @@ describe('openInvoiceAmount', () => {
   it('is the total minus the payments', () => {
     expect(openInvoiceAmount(invoice(10000, [2500]))).toBe(7500);
   });
+  it('adds the reminder fees', () => {
+    expect(openInvoiceAmount({ ...invoice(10000, []), reminders: [{ fee: 2000 }, {}] })).toBe(12000);
+  });
   it('is never negative', () => {
     expect(openInvoiceAmount(invoice(10000, [6000, 6000]))).toBe(0);
   });

@@ -36,6 +36,7 @@ export class InvoiceModel implements OkrModel, SearchableModel, TaggedModel {
   public documentKey = '';          // the invoice PDF (finance-documents okey, spec 1.68)
   public payments: InvoicePayment[] = [];   // received payments, oldest first
   public reminders: InvoiceReminder[] = []; // Mahnungen, oldest first
+  public sentAt = '';               // StoreDateTime of the last email send of the invoice PDF; '' = never (spec 1.76 D13)
 
   // Stamped (StoreDateTime) when a data-subject erasure pseudonymized this record
   // (privacy 1.19, D-P5-6): the name fields and the person link are overwritten, the
@@ -58,5 +59,8 @@ export type VAT_TYPE = 'included' | 'excluded' | 'exempt';
 export interface InvoicePayment { date: string; amount: number; bankAccountKey: string; bookingKey: string; }
 
 /** A reminder (Mahnung). date/dueDate = StoreDate, documentKey = its PDF in finance-documents or ''. */
-export interface InvoiceReminder { level: number; date: string; dueDate: string; isSent: boolean; documentKey: string; }
+export interface InvoiceReminder { level: number; date: string; dueDate: string; isSent: boolean; documentKey: string;
+  fee: number;         // Rappen charged with this reminder; 0 = none / migrated (spec 1.76 D14)
+  bookingKey: string;  // fee booking `invoice-{key}-reminder-{level}`; '' = no fee booked (spec 1.76 D14)
+}
 export const VAT_TYPE_VALUES = ['included', 'excluded', 'exempt'] as const satisfies VAT_TYPE[];

@@ -26,6 +26,7 @@ export interface InvoiceLike {
   totalAmount?: { amount: number } | null;
   payments?: { date: string; amount: number; bankAccountKey: string; bookingKey?: string }[];
   accountingTenantId: string;
+  reminders?: { fee?: number }[];
 }
 
 export interface PaymentBookingLine {
@@ -36,9 +37,12 @@ export interface PaymentBookingLine {
 
 const paidSum = (invoice: InvoiceLike): number => (invoice.payments ?? []).reduce((s, p) => s + p.amount, 0);
 
-/** Total minus the sum of the payments, never negative. */
+/** Sum of the reminder fees; a missing or non-finite fee (legacy migrated reminder) counts as 0. */
+const feeSum = (invoice: InvoiceLike): number => (invoice.reminders ?? []).reduce((s, r) => s + (Number.isFinite(r.fee) ? (r.fee as number) : 0), 0);
+
+/** Total plus the reminder fees minus the sum of the payments, never negative. */
 export function openAmount(invoice: InvoiceLike): number {
-  return Math.max(0, (invoice.totalAmount?.amount ?? 0) - paidSum(invoice));
+  return Math.max(0, (invoice.totalAmount?.amount ?? 0) + feeSum(invoice) - paidSum(invoice));
 }
 
 /**
@@ -68,7 +72,7 @@ export function applyInvoicePayment(invoice: InvoiceLike, p: PaymentInput): { pa
     ...(invoice.payments ?? []).map(x => ({ date: x.date ?? '', amount: x.amount ?? 0, bankAccountKey: x.bankAccountKey ?? '', bookingKey: x.bookingKey ?? '' })),
     { date: p.date, amount: p.amount, bankAccountKey: p.bankAccountKey, bookingKey: p.bookingKey },
   ];
-  const total = invoice.totalAmount?.amount ?? 0;
+  const total = (invoice.totalAmount?.amount ?? 0) + feeSum(invoice);
   const sum = payments.reduce((s, x) => s + x.amount, 0);
   if (sum >= total) return { payments, state: 'paid', paymentDate: p.date };
   return { payments, state: invoice.state };

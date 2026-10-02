@@ -52,6 +52,8 @@ export function mapReminder(r, documentKey) {
     dueDate: isoToStoreDate(r.is_valid_to),
     isSent: r.is_sent === true,
     documentKey,
+    fee: 0,
+    bookingKey: '',
   };
 }
 
