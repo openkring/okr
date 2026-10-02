@@ -65,7 +65,7 @@ export class ContractDeadlines {
       label: i.deadline_next(),
       value: next.date && next.kind ? `${this.view(next.date)} · ${this.kindLabel(next.kind)}` : i.deadline_none(),
     });
-    if (c.endDate === '' && c.state !== 'noticeGiven' && c.state !== 'ended') {
+    if (!c.endDate && c.state !== 'noticeGiven' && c.state !== 'ended') {
       rows.push({ label: i.deadline_earliestTermination(), value: this.view(earliestTerminationDate(c, this.today)) });
     }
     if (c.state === 'noticeGiven' && c.effectiveEndDate) {

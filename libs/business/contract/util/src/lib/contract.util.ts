@@ -61,6 +61,24 @@ export function isLoanType(type: ContractType | undefined): boolean {
   return type === 'loan' || type === 'mortgage';
 }
 
+/**
+ * The model after the user picks another contract type:
+ * - away from loan/mortgage: loan terms are dropped (undefined → deleted on update);
+ * - to loan/mortgage: empty loan terms are seeded, and a NEW contract still on the default
+ *   'internal' becomes 'confidential' (spec §5.2.3: member loan contracts default to confidential).
+ *   An existing contract or a level the user picked deliberately is never touched.
+ */
+export function applyContractTypeChange(c: ContractModel, contractType: ContractType): ContractModel {
+  if (!isLoanType(contractType)) return { ...c, contractType, loan: undefined };
+  const isNew = !c.okey;
+  return {
+    ...c,
+    contractType,
+    loan: c.loan ?? newLoanTerms(),
+    confidentiality: isNew && (c.confidentiality ?? 'internal') === 'internal' ? 'confidential' : c.confidentiality,
+  };
+}
+
 /** A plain (prototype-free) MoneyModel in minor units, with the model's default currency/periodicity. */
 export function newMoney(amount = 0): MoneyModel {
   return { ...new MoneyModel(amount) };

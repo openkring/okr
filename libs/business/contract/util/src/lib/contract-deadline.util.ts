@@ -31,7 +31,8 @@ function noticeDay(c: ContractModel, cycleEnd: string): string {
 /** For a tacitly renewing contract: the first cycle end whose notice day is today or later. */
 export function currentCycleEnd(c: ContractModel, today: string): string {
   let end = c.endDate;
-  if (!end || c.autoRenewMonths <= 0) return end;
+  // legacy docs may lack autoRenewMonths: undefined must read as 'does not renew', not loop on NaN
+  if (!end || !(c.autoRenewMonths > 0)) return end;
   for (let i = 0; i < MAX_CYCLES && noticeDay(c, end) < today; i++) {
     end = addDuration(end, { months: c.autoRenewMonths });
   }

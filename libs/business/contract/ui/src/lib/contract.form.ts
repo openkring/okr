@@ -14,7 +14,7 @@ import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 
 import { AvatarLabel, AvatarSelect } from '@okr/avatar-ui';
 import {
-  CONFIDENTIALITY_LEVELS, ContractI18n, contractValidations, formatLeadDays, isLoanType, LOAN_DIRECTIONS,
+  applyContractTypeChange, CONFIDENTIALITY_LEVELS, ContractI18n, contractValidations, formatLeadDays, isLoanType, LOAN_DIRECTIONS,
   newLoanTerms, newMoney, NOTICE_ANCHORS, NOTICE_UNITS, parseLeadDays, PARTY_ROLES, REPAYMENT_KINDS,
 } from '@okr/business-contract-util';
 
@@ -515,14 +515,10 @@ export class ContractForm {
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
   }
 
-  /** Switching to loan/mortgage seeds empty loan terms, so the Darlehen section has something to edit. */
+  /** Seeds / drops loan terms and applies the loan confidentiality default (applyContractTypeChange). */
   protected onTypeChange(contractType: string): void {
     this.dirty.emit(true);
-    this.formData.update((vm) => ({
-      ...vm,
-      contractType: contractType as ContractModel['contractType'],
-      loan: isLoanType(contractType as ContractModel['contractType']) && !vm.loan ? newLoanTerms() : vm.loan,
-    }));
+    this.formData.update((vm) => applyContractTypeChange(vm, contractType as ContractModel['contractType']));
   }
 
   protected onPartyRoleChange(index: number, role: string): void {

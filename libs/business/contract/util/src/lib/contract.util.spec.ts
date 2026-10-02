@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { AVATAR_INFO_SHAPE, ContractModel } from '@okr/shared-models';
 import {
-  applyDerivedFields, clearedContractFields, derivePartyPersonKeys, formatLeadDays, getContractIndex, isLoanType, newContractModel, newLoanTerms,
+  applyContractTypeChange, applyDerivedFields, clearedContractFields, derivePartyPersonKeys, formatLeadDays, getContractIndex, isLoanType, newContractModel, newLoanTerms,
   parseLeadDays, sumLoans, toContractCreatePayload, toContractUpdatePayload,
 } from './contract.util';
 
@@ -123,5 +123,31 @@ describe('getContractIndex', () => {
       parties: [null, { role: 'guarantor' }, { role: 'counterparty', avatar: av('p1', 'person', 'Muster') }],
     }) as unknown as ContractModel;
     expect(getContractIndex(c)).toBe('n:N t:loan nr:1 p:A Muster');
+  });
+});
+
+describe('applyContractTypeChange', () => {
+  it('switching away from loan drops the loan terms', () => {
+    const c = Object.assign(new ContractModel('t1'), { okey: 'c1', contractType: 'loan', loan: newLoanTerms() }) as ContractModel;
+    const n = applyContractTypeChange(c, 'lease');
+    expect(n.contractType).toBe('lease');
+    expect(n.loan).toBeUndefined();
+    expect(clearedContractFields(n)).toContain('loan');
+  });
+  it('a NEW contract switched to loan seeds terms and defaults internal → confidential', () => {
+    const n = applyContractTypeChange(new ContractModel('t1'), 'loan');
+    expect(n.loan).toEqual(newLoanTerms());
+    expect(n.confidentiality).toBe('confidential');
+  });
+  it('keeps a deliberately chosen level and an existing contract\'s level', () => {
+    const strict = Object.assign(new ContractModel('t1'), { confidentiality: 'strictlyConfidential' }) as ContractModel;
+    expect(applyContractTypeChange(strict, 'mortgage').confidentiality).toBe('strictlyConfidential');
+    const existing = Object.assign(new ContractModel('t1'), { okey: 'c1' }) as ContractModel;
+    expect(applyContractTypeChange(existing, 'loan').confidentiality).toBe('internal');
+  });
+  it('keeps existing loan terms when switching between loan types', () => {
+    const loan = { ...newLoanTerms(), interestRate: 2 };
+    const c = Object.assign(new ContractModel('t1'), { contractType: 'loan', loan }) as ContractModel;
+    expect(applyContractTypeChange(c, 'mortgage').loan).toBe(loan);
   });
 });

@@ -78,6 +78,12 @@ describe('currentCycleEnd', () => {
     const c = contract({ endDate: '20251231', autoRenewMonths: 12, notice: { ours: months(3), theirs: undefined, to: 'yearEnd' } });
     expect(currentCycleEnd(c, '20271015')).toBe('20281231');
   });
+  it('legacy doc without autoRenewMonths does not renew: returns endDate unchanged', () => {
+    const c = contract({ endDate: '20251231', notice: { ours: months(3), theirs: undefined, to: 'yearEnd' } });
+    delete (c as Partial<ContractModel>).autoRenewMonths;
+    expect(c.autoRenewMonths).toBeUndefined();
+    expect(currentCycleEnd(c, '20271015')).toBe('20251231');
+  });
 });
 
 describe('earliestTerminationDate', () => {
