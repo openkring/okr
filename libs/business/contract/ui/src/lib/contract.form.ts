@@ -1,4 +1,4 @@
-import { Component, computed, effect, input, model, output } from '@angular/core';
+import { Component, computed, effect, input, linkedSignal, model, output, untracked } from '@angular/core';
 import { form } from '@angular/forms/signals';
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonIcon, IonItem, IonNote, IonRow, IonSpinner } from '@ionic/angular/standalone';
 
@@ -195,7 +195,7 @@ export type ContractSelectTarget = 'responsible' | 'partyPerson' | 'partyOrg';
                     [stringList]="noticeAnchors" [labels]="noticeToLabels()" [readOnly]="isReadOnly()" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
-                  <okr-text-input [i18n]="reminderLeadDaysI18n()" [value]="reminderLeadDays()"
+                  <okr-text-input [i18n]="reminderLeadDaysI18n()" [value]="reminderLeadDaysText()"
                     (valueChange)="onLeadDaysChange($event)" [showHelper]="true" [readOnly]="isReadOnly()" />
                 </ion-col>
               </ion-row>
@@ -417,7 +417,15 @@ export class ContractForm {
   protected readonly noticeOurs = computed(() => this.formData()?.notice?.ours ?? EMPTY_PERIOD);
   protected readonly noticeTheirs = computed(() => this.formData()?.notice?.theirs ?? EMPTY_PERIOD);
   protected readonly noticeTo = computed(() => this.formData()?.notice?.to ?? 'anytime');
-  protected readonly reminderLeadDays = computed(() => formatLeadDays(this.formData()?.reminderLeadDays));
+  /**
+   * The raw text the user types. Seeded from the model only when a different contract is loaded or
+   * the form is reset (showForm toggle) — never per keystroke, because feeding the parsed, sorted
+   * value back would rewrite the field while typing ('7, 90' → '90, 7' mid-edit).
+   */
+  protected readonly reminderLeadDaysText = linkedSignal({
+    source: () => `${this.formData()?.okey ?? ''}|${this.showForm()}`,
+    computation: () => formatLeadDays(untracked(() => this.formData()?.reminderLeadDays)),
+  });
   protected readonly isLoan = computed(() => isLoanType(this.formData()?.contractType));
   protected readonly loan = computed(() => this.formData()?.loan ?? newLoanTerms());
   protected readonly abstract = computed(() => this.formData()?.abstract ?? '');
@@ -543,7 +551,9 @@ export class ContractForm {
     this.formData.update((vm) => ({ ...vm, notice: fn(vm.notice ?? { ours: undefined, theirs: undefined, to: 'anytime' }) }));
   }
 
+  /** keeps the raw text as typed; only the model gets the parsed (deduped, sorted) list */
   protected onLeadDaysChange(text: string): void {
+    this.reminderLeadDaysText.set(text);
     this.onFieldChange('reminderLeadDays', parseLeadDays(text));
   }
 

@@ -60,6 +60,12 @@ describe('lead days', () => {
     expect(parseLeadDays('7, 90;30 30 x -1 0 2.5')).toEqual([90, 30, 7]);
     expect(parseLeadDays('')).toEqual([]);
   });
+  it('parses partial input in any order without needing the formatted text', () => {
+    expect(parseLeadDays('7, 90')).toEqual([90, 7]);
+    expect(parseLeadDays('7, 9')).toEqual([9, 7]);
+    expect(parseLeadDays('3, 30')).toEqual([30, 3]);
+    expect(parseLeadDays('3, ')).toEqual([3]);
+  });
   it('formats', () => {
     expect(formatLeadDays([90, 30])).toBe('90, 30');
     expect(formatLeadDays(undefined)).toBe('');
