@@ -5,12 +5,12 @@ import { of } from 'rxjs';
 
 import { AccountingConfigModel } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header, HeaderI18n } from '@okr/shared-ui';
-import { safeStructuredClone } from '@okr/shared-util-core';
 
 import { AccountService } from '@okr/finance-account-data-access';
 import { CostCenterService } from '@okr/finance-cost-center-data-access';
 import { VatCodeService } from '@okr/finance-vat-code-data-access';
 import { AccountingConfigForm, FeeSchedule } from '@okr/finance-accounting-ui';
+import { toAccountingConfigFormData } from '@okr/finance-accounting-util';
 
 import { AccountingStore } from './accounting.store';
 import { ReadOnlyBanner } from './read-only-banner';
@@ -94,7 +94,7 @@ export class AccountingSettingsPage {
     const config = this.config();
     untracked(() => {
       if (this.formDirty()) return;
-      this.formData.set(safeStructuredClone(config));
+      this.formData.set(toAccountingConfigFormData(config));
     });
   });
 
@@ -131,7 +131,7 @@ export class AccountingSettingsPage {
 
   public cancel(): void {
     this.formDirty.set(false);
-    this.formData.set(safeStructuredClone(this.config()));
+    this.formData.set(toAccountingConfigFormData(this.config()));
     this.showForm.set(false);
     setTimeout(() => this.showForm.set(true), 0);
   }
