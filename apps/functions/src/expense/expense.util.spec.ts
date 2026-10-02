@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { memberExpenseFields } from './expense.util';
+import { collectingMessageId, collectingOrderId, expensePaymentId, expensePaymentTransition, memberExpenseFields } from './expense.util';
 
 describe('memberExpenseFields', () => {
   const data = {
@@ -20,4 +20,36 @@ describe('memberExpenseFields', () => {
     expect(memberExpenseFields({ amountTotal: 100 })).toEqual({
       abstract: '', amountTotal: 100, currency: 'CHF', transferTo: 'me', iban: '', accountKey: '', costCenterId: '', note: '',
     }));
+});
+
+describe('expensePaymentTransition', () => {
+  it('creates on the move into done', () =>
+    expect(expensePaymentTransition({ status: 'processing' }, { status: 'done' })).toBe('create'));
+  it('does nothing on a further write to a done expense', () =>
+    expect(expensePaymentTransition({ status: 'done' }, { status: 'done' })).toBe('none'));
+  it('withdraws when done is reopened', () =>
+    expect(expensePaymentTransition({ status: 'done' }, { status: 'processing' })).toBe('withdraw'));
+  it('withdraws when done is cancelled', () =>
+    expect(expensePaymentTransition({ status: 'done' }, { status: 'cancelled' })).toBe('withdraw'));
+  it('withdraws when a done expense is archived', () =>
+    expect(expensePaymentTransition({ status: 'done' }, { status: 'done', isArchived: true })).toBe('withdraw'));
+  it('ignores creates and deletes', () => {
+    expect(expensePaymentTransition(undefined, { status: 'done' })).toBe('none');
+    expect(expensePaymentTransition({ status: 'done' }, undefined)).toBe('none');
+  });
+  it('does nothing between non-done states', () =>
+    expect(expensePaymentTransition({ status: 'draft' }, { status: 'processing' })).toBe('none'));
+});
+
+describe('payment ids', () => {
+  it('derives a deterministic payment id — second create is a no-op', () => {
+    expect(expensePaymentId('e1', '')).toBe('e1-me');
+    expect(expensePaymentId('e1', 'r9')).toBe('e1-r9');
+  });
+  it('derives a deterministic collecting order id per day and generation', () =>
+    expect(collectingOrderId('scs', '20261002', 1)).toBe('scs-exp-20261002-1'));
+  it('keeps the message id within 35 characters', () => {
+    expect(collectingMessageId('scs', '20261002', 1)).toBe('SCS-EXP-20261002-1');
+    expect(collectingMessageId('averyveryverylongtenantname', '20261002', 12).length).toBeLessThanOrEqual(35);
+  });
 });

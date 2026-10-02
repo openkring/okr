@@ -1,10 +1,10 @@
 /**
  * Seeds the DB side of the expense workflow (spec 2026-09-02-expense-workflow-design.md §3.3).
  *
- * The code side (the four emits) ships with the functions deploy. Three things live in Firestore:
- *   1. four `workflow_event` category items — the rule form's picker is fed from the DB category;
- *   2. four `i18nDefault` rows for the task names;
- *   3. four `workflow-rules` documents replacing the createReviewTask calls in ocr/index.ts.
+ * The code side (the five emits) ships with the functions deploy. Three things live in Firestore:
+ *   1. five `workflow_event` category items — the rule form's picker is fed from the DB category;
+ *   2. five `i18nDefault` rows for the task names;
+ *   3. five `workflow-rules` documents replacing the createReviewTask calls in ocr/index.ts.
  *
  * Run with:  node scripts/seed-expense-workflow-rules.mjs --dry
  *            node scripts/seed-expense-workflow-rules.mjs --tenant scs
@@ -74,6 +74,17 @@ const TRIGGERS = [
       fr: 'Comptabiliser la note de frais de {name} pour {amount} {currency} en externe',
       es: 'Contabilizar externamente el gasto de {name} por {amount} {currency}',
       it: 'Contabilizzare esternamente la nota spese di {name} per {amount} {currency}',
+    },
+  },
+  {
+    event: 'expense.paymentOrphaned', icon: 'warning', dueInDays: 3,
+    ruleName: 'Spese zurückgenommen, Zahlung schon freigegeben → Ressort Finanzen', i18nKey: 'expense.paymentOrphaned',
+    text: {
+      de: 'Spese von {name} wurde zurückgenommen — die Zahlung über {amount} {currency} im Auftrag {order} ist schon freigegeben',
+      en: 'Expense from {name} was withdrawn — the payment of {amount} {currency} in order {order} is already approved',
+      fr: 'La note de frais de {name} a été retirée — le paiement de {amount} {currency} de l’ordre {order} est déjà validé',
+      es: 'El gasto de {name} se retiró — el pago de {amount} {currency} de la orden {order} ya está aprobado',
+      it: 'La nota spese di {name} è stata ritirata — il pagamento di {amount} {currency} dell’ordine {order} è già approvato',
     },
   },
 ];

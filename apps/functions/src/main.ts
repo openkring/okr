@@ -259,6 +259,7 @@ export const createExpense = Expense.createExpense;
 export const deleteExpense = Expense.deleteExpense;
 export const updateExpense = Expense.updateExpense;
 export const onExpenseTaskWritten = Expense.onExpenseTaskWritten;
+export const onExpenseDone = Expense.onExpenseDone;
 // treasurer approve/reject on forReview bookings (bookings/booking-lines are CF-write-only)
 export const reviewBooking = Booking.reviewBooking;
 // manual journal entries (create/update/delete) — same reason: bookings are CF-write-only

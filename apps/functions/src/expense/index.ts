@@ -249,3 +249,5 @@ export const onExpenseTaskWritten = onDocumentWritten(
     logger.info(`onExpenseTaskWritten: ${expenseKey} → ${status} (task ${event.params['taskId']})`);
   },
 );
+
+export { onExpenseDone } from './expense-payment';
