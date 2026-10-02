@@ -1,5 +1,5 @@
 {
-  "costCenter": { "label": "Centro de costes predeterminado", "helper": "Se sugiere para los nuevos asientos en esta cuenta." },
+  "costCenter": { "label": "Centro de costes predeterminado", "helper": "Se sugiere para los nuevos asientos en esta cuenta.", "bookDefault": "Predeterminado de la contabilidad ({costCenter})", "none": "ningún centro de costes" },
   "accounts": "Cuentas",
   "empty": "No se han encontrado cuentas.",
   "create": "Abrir una nueva cuenta",

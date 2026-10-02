@@ -59,8 +59,9 @@ const CONDITIONS: BankRuleCondition[] = ['contains', 'startsWith', 'endsWith', '
                 </ion-col>
                 @if (showCostCenter()) {
                   <ion-col size="12" size-md="6">
+                    <!-- an empty rule key falls through to the account's (then the book's) default -->
                     <okr-cost-center-select [i18n]="costCenterI18n()" [costCenters]="costCenters()" [allowEmpty]="true"
-                      [selectedKey]="costCenterKey()" (selectedKeyChange)="onFieldChange('costCenterKey', $event)" [readOnly]="isReadOnly()" />
+                      [emptyLabel]="i18n().costCenter_accountDefault()" [selectedKey]="costCenterKey()" (selectedKeyChange)="onFieldChange('costCenterKey', $event)" [readOnly]="isReadOnly()" />
                   </ion-col>
                 }
                 <ion-col size="12" size-md="6">

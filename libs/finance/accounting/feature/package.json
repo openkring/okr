@@ -18,6 +18,7 @@
     "@okr/finance-account-data-access": "*",
     "@okr/finance-vat-code-data-access": "*",
     "@okr/finance-accounting-ui": "*",
-    "@okr/finance-accounting-util": "*"
+    "@okr/finance-accounting-util": "*",
+    "@okr/finance-cost-center-data-access": "*"
   }
 }

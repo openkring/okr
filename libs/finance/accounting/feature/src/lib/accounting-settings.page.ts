@@ -8,6 +8,7 @@ import { ChangeConfirmation, ChangeConfirmationI18n, Header, HeaderI18n } from '
 import { safeStructuredClone } from '@okr/shared-util-core';
 
 import { AccountService } from '@okr/finance-account-data-access';
+import { CostCenterService } from '@okr/finance-cost-center-data-access';
 import { VatCodeService } from '@okr/finance-vat-code-data-access';
 import { AccountingConfigForm, FeeSchedule } from '@okr/finance-accounting-ui';
 
@@ -33,7 +34,8 @@ import { ReadOnlyBanner } from './read-only-banner';
       <okr-read-only-banner />
       @if (store.configLoaded() && formData(); as config) {
         <okr-accounting-config-form [formData]="config" (formDataChange)="formData.set($event)"
-          [accounts]="accounts()" [tenantId]="store.tenantId()" [i18n]="store.i18n"
+          [accounts]="accounts()" [costCenters]="costCenters()" [costCentersEnabled]="!store.isExternallyManaged()"
+          [tenantId]="store.tenantId()" [i18n]="store.i18n"
           [readOnly]="store.isExternallyManaged()" [showForm]="showForm()"
           (dirty)="formDirty.set($event)" (valid)="formValid.set($event)" />
         <!-- The fee schedule edits the same config object. The banner above already covers it,
@@ -49,6 +51,8 @@ export class AccountingSettingsPage {
   protected readonly store = inject(AccountingStore);
   private readonly accountService = inject(AccountService);
   private readonly vatCodeService = inject(VatCodeService);
+  // the service, not CostCenterStore: @okr/finance-cost-center-feature depends on this lib
+  private readonly costCenterService = inject(CostCenterService);
 
   private readonly accountsResource = rxResource({
     params: () => this.store.accountingTenantId(),
@@ -56,6 +60,13 @@ export class AccountingSettingsPage {
       accountingTenantId ? this.accountService.list(accountingTenantId) : of([]),
   });
   protected readonly accounts = computed(() => this.accountsResource.value() ?? []);
+
+  private readonly costCentersResource = rxResource({
+    params: () => this.store.accountingTenantId(),
+    stream: ({ params: accountingTenantId }) =>
+      accountingTenantId ? this.costCenterService.list(accountingTenantId) : of([]),
+  });
+  protected readonly costCenters = computed(() => this.costCentersResource.value() ?? []);
 
   private readonly vatCodesResource = rxResource({
     params: () => this.store.accountingTenantId(),

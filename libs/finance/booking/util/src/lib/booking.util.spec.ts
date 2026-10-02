@@ -510,6 +510,29 @@ describe('Kostenstelle on pairs', () => {
     const p = withPairAccount({ ...emptyBookingPair(), debitCostCenterKey: 'cc-jun' }, 'debit', 'nope', []);
     expect(p.debitCostCenterKey).toBe('');
   });
+
+  describe('withPairAccount with a book default', () => {
+    const accounts = [
+      Object.assign(new AccountModel('scs'), { okey: 'scs-6300', id: '6300', costCenterKey: 'cc-reg', accountingTenantId: 'scs' }),
+      Object.assign(new AccountModel('scs'), { okey: 'scs-6500', id: '6500', costCenterKey: '', accountingTenantId: 'scs' }),
+      Object.assign(new AccountModel('scs'), { okey: 'scs-1020', id: '1020', costCenterKey: '', accountingTenantId: 'scs' }),
+    ];
+    const centers = [
+      { okey: 'cc-adm', parentKey: '', type: 'leaf', accountingTenantId: 'scs' },
+      { okey: 'cc-reg', parentKey: '', type: 'leaf', accountingTenantId: 'scs' },
+      { okey: 'cc-old', parentKey: '', type: 'leaf', isArchived: true, accountingTenantId: 'scs' },
+    ];
+    it('prefills the book default when the account has none', () =>
+      expect(withPairAccount(emptyBookingPair(), 'credit', 'scs-6500', accounts, 'cc-adm', centers).creditCostCenterKey).toBe('cc-adm'));
+    it('prefers the account default over the book default', () =>
+      expect(withPairAccount(emptyBookingPair(), 'debit', 'scs-6300', accounts, 'cc-adm', centers).debitCostCenterKey).toBe('cc-reg'));
+    it('keeps a chosen key over the book default', () =>
+      expect(withPairAccount({ ...emptyBookingPair(), debitCostCenterKey: 'cc-reg' }, 'debit', 'scs-6500', accounts, 'cc-adm', centers).debitCostCenterKey).toBe('cc-reg'));
+    it('drops an invalid book default', () =>
+      expect(withPairAccount(emptyBookingPair(), 'debit', 'scs-6500', accounts, 'cc-old', centers).debitCostCenterKey).toBe(''));
+    it('never prefills it on a balance-sheet account', () =>
+      expect(withPairAccount(emptyBookingPair(), 'debit', 'scs-1020', accounts, 'cc-adm', centers).debitCostCenterKey).toBe(''));
+  });
 });
 
 describe('bookingWriteErrorReason', () => {
@@ -540,5 +563,16 @@ describe('accountDefaultCostCenterKey', () => {
     expect(accountDefaultCostCenterKey('a6500', accounts, centers)).toBe('');
     expect(accountDefaultCostCenterKey('a1020', accounts, centers)).toBe('');
     expect(accountDefaultCostCenterKey('nope', accounts, centers)).toBe('');
+  });
+  it('falls back to the book default when the account has none or an invalid one', () => {
+    const withAdm = [...centers, { okey: 'cc-adm', parentKey: '', type: 'leaf', accountingTenantId: 'gss' }];
+    expect(accountDefaultCostCenterKey('a6500', accounts, withAdm, 'cc-adm')).toBe('cc-adm');
+    expect(accountDefaultCostCenterKey('a6400', accounts, withAdm, 'cc-adm')).toBe('cc-adm');
+    expect(accountDefaultCostCenterKey('a6300', accounts, withAdm, 'cc-adm')).toBe('cc-jun');
+  });
+  it('ignores an invalid book default and never applies it to a balance-sheet account', () => {
+    expect(accountDefaultCostCenterKey('a6500', accounts, centers, 'cc-old')).toBe('');
+    expect(accountDefaultCostCenterKey('a1020', accounts, centers, 'cc-jun')).toBe('');
+    expect(accountDefaultCostCenterKey('a6500', accounts, centers, '')).toBe('');
   });
 });

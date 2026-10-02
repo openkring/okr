@@ -72,6 +72,7 @@ export class AccountingConfigModel implements OkrModel {
   public depreciationFrequency: DepreciationFrequency = 'annual';
   public depreciationProRata: DepreciationProRata = 'daily';
   public defaultExpenseAccountKey = '';
+  public defaultCostCenterKey = '';   // CostCenterModel okey; '' = keine Kostenstelle. Last fallback for P&L lines (spec 1.65)
   public employeePayablesAccountKey = '';
   public receivablesAccountKey = '';             // Debitoren leaf (scs: 1100) — invoices post here on issue (spec 1.76 D5)
   public invoiceTemplateId = '';                 // templates/{id} rendered by issueInvoice (spec 1.76 D7)

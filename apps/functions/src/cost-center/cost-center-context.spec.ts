@@ -12,6 +12,7 @@ const ctx: CostCenterContext = {
     { okey: 'cc-reg', parentKey: '', accountingTenantId: 'scs' },
     { okey: 'cc-old', parentKey: '', accountingTenantId: 'scs', isArchived: true },
   ],
+  bookDefaultKey: '',
 };
 
 describe('costCenterKeyForLine', () => {
@@ -19,6 +20,20 @@ describe('costCenterKeyForLine', () => {
   it('prefers a valid explicit key', () => expect(costCenterKeyForLine(ctx, 'scs-6300', { explicit: 'cc-jun' })).toBe('cc-jun'));
   it('is empty on a balance-sheet line', () => expect(costCenterKeyForLine(ctx, 'scs-1020', { explicit: 'cc-jun' })).toBe(''));
   it('is empty for an unknown account', () => expect(costCenterKeyForLine(ctx, 'scs-9999', { rule: 'cc-jun' })).toBe(''));
+
+  describe('with a book default', () => {
+    const withDefault: CostCenterContext = {
+      ...ctx,
+      accounts: new Map([...ctx.accounts, ['scs-6500', { okey: 'scs-6500', id: '6500', costCenterKey: '', accountingTenantId: 'scs' }]]),
+      bookDefaultKey: 'cc-jun',
+    };
+    it('applies it to a P&L account without its own default', () => expect(costCenterKeyForLine(withDefault, 'scs-6500')).toBe('cc-jun'));
+    it('lets the account default win', () => expect(costCenterKeyForLine(withDefault, 'scs-6300')).toBe('cc-reg'));
+    it('lets an explicit key win', () => expect(costCenterKeyForLine(withDefault, 'scs-6500', { explicit: 'cc-reg' })).toBe('cc-reg'));
+    it('never applies it to a balance-sheet line', () => expect(costCenterKeyForLine(withDefault, 'scs-1020')).toBe(''));
+    it('drops an archived book default', () =>
+      expect(costCenterKeyForLine({ ...withDefault, bookDefaultKey: 'cc-old' }, 'scs-6500')).toBe(''));
+  });
 });
 
 describe('assertExplicitCostCenter', () => {

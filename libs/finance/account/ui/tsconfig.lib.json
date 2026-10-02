@@ -17,6 +17,7 @@
   "references": [
     { "path": "../util/tsconfig.lib.json" },
     { "path": "../../cost-center/ui/tsconfig.lib.json" },
+    { "path": "../../cost-center/util/tsconfig.lib.json" },
     { "path": "../../../shared/constants/tsconfig.lib.json" },
     { "path": "../../../shared/i18n/tsconfig.lib.json" },
     { "path": "../../../shared/models/tsconfig.lib.json" },

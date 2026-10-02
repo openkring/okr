@@ -34,6 +34,19 @@ describe('accountingConfigValidations', () => {
     expect(accountingConfigValidations(config({ fiscalYearStart: 13 }), 'tenant-1', '').getErrors('fiscalYearStart').length).toBeGreaterThan(0);
   });
 
+  it('accepts the book default Kostenstelle empty, long or missing on a legacy config (selector, uncapped)', () => {
+    expect(accountingConfigValidations(config({ defaultCostCenterKey: '' }), 'tenant-1', '').isValid()).toBe(true);
+    expect(accountingConfigValidations(config({ defaultCostCenterKey: 'k'.repeat(40) }), 'tenant-1', '').isValid()).toBe(true);
+    const legacy = config();
+    delete (legacy as Partial<AccountingConfigModel>).defaultCostCenterKey;
+    expect(accountingConfigValidations(legacy, 'tenant-1', '').isValid()).toBe(true);
+  });
+
+  it('rejects a book default Kostenstelle that is not a key string', () => {
+    const result = accountingConfigValidations(config({ defaultCostCenterKey: 42 as unknown as string }), 'tenant-1', '');
+    expect(result.getErrors('defaultCostCenterKey').length).toBeGreaterThan(0);
+  });
+
   it('rejects a missing accounting tenant', () => {
     const result = accountingConfigValidations(config({ accountingTenantId: '' }), 'tenant-1', '');
     expect(result.getErrors('accountingTenantId').length).toBeGreaterThan(0);

@@ -30,6 +30,11 @@
     "paymentAccounts": {
       "label": "Payment accounts",
       "helper": "An invoice payment may be booked to these accounts."
+    },
+    "costCenter": {
+      "label": "Accounting default cost centre",
+      "helper": "Applies to bookings on income and expense accounts without their own default cost centre.",
+      "none": "no cost centre"
     }
   },
   "feeSchedule": {

@@ -1,5 +1,5 @@
 {
-  "costCenter": { "label": "Centre de coûts (facultatif)", "helper": "S'applique aux écritures créées avec cette règle." },
+  "costCenter": { "label": "Centre de coûts (facultatif)", "helper": "S'applique aux écritures créées avec cette règle.", "accountDefault": "Par défaut du compte" },
   "singular": "Règle bancaire",
   "plural": "Règles bancaires",
   "empty": "Aucune règle bancaire pour le moment. Lors de l'import d'un fichier bancaire, tu peux créer une règle à partir de n'importe quelle ligne.",

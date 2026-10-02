@@ -363,13 +363,17 @@ export function pairsToLines(pairs: BookingPair[], tenantId: string, accountingT
 /**
  * Set a pair side's account and keep its Kostenstelle consistent (spec 1.65 §6.2): a P&L account
  * with a default prefills it, a balance-sheet account clears it, otherwise the chosen key stays.
+ * A side still without a key then gets the book default (`AccountingConfig.defaultCostCenterKey`)
+ * when it is an active leaf of the account's accounting tenant.
  */
-export function withPairAccount(pair: BookingPair, side: 'debit' | 'credit', accountKey: string, accounts: AccountModel[]): BookingPair {
+export function withPairAccount(pair: BookingPair, side: 'debit' | 'credit', accountKey: string, accounts: AccountModel[],
+  bookDefault = '', costCenters: CostCenterLike[] = []): BookingPair {
   const sameAccount = (side === 'debit' ? pair.debitAccountKey : pair.creditAccountKey) === accountKey;
   if (sameAccount) return pair;   // re-picking the account must not overwrite a chosen Kostenstelle
   const account = accounts.find(a => a.okey === accountKey);
   const current = (side === 'debit' ? pair.debitCostCenterKey : pair.creditCostCenterKey) ?? '';
-  const next = !isProfitAndLossAccountId(account?.id) ? '' : (account?.costCenterKey || current);
+  const next = !account || !isProfitAndLossAccountId(account.id) ? ''
+    : (account.costCenterKey || current || resolveCostCenterKey({ account: { ...account, costCenterKey: '' }, bookDefault, costCenters }));
   return side === 'debit'
     ? { ...pair, debitAccountKey: accountKey, debitCostCenterKey: next }
     : { ...pair, creditAccountKey: accountKey, creditCostCenterKey: next };
@@ -377,10 +381,11 @@ export function withPairAccount(pair: BookingPair, side: 'debit' | 'credit', acc
 
 /**
  * The Kostenstelle `writeBooking` fills into a line of this account that is saved without one —
- * the account's default when it is an active leaf; '' otherwise (also for balance-sheet accounts).
+ * the account's default when it is an active leaf, else the book default when it is one; '' otherwise
+ * (also for balance-sheet accounts).
  */
-export function accountDefaultCostCenterKey(accountKey: string, accounts: AccountModel[], costCenters: CostCenterLike[]): string {
-  return resolveCostCenterKey({ account: accounts.find(a => a.okey === accountKey), costCenters });
+export function accountDefaultCostCenterKey(accountKey: string, accounts: AccountModel[], costCenters: CostCenterLike[], bookDefault = ''): string {
+  return resolveCostCenterKey({ account: accounts.find(a => a.okey === accountKey), costCenters, bookDefault });
 }
 
 export function toBookingFormData(booking: BookingModel, lines: BookingLineModel[]): BookingFormData {

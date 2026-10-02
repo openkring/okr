@@ -1,5 +1,5 @@
 {
-  "costCenter": { "label": "Centro de costes (opcional)", "helper": "Se aplica a los asientos creados con esta regla." },
+  "costCenter": { "label": "Centro de costes (opcional)", "helper": "Se aplica a los asientos creados con esta regla.", "accountDefault": "Predeterminado de la cuenta" },
   "singular": "Regla bancaria",
   "plural": "Reglas bancarias",
   "empty": "Todavía no hay reglas bancarias. Al importar un archivo bancario, puedes crear una regla a partir de cualquier línea.",

@@ -51,4 +51,33 @@ describe('resolveCostCenterKey', () => {
   it('returns empty for an unknown account', () => {
     expect(resolveCostCenterKey({ explicit: '310', account: undefined, costCenters: centers })).toBe('');
   });
+
+  describe('book default (accounting-wide fallback)', () => {
+    const noDefault = { ...expense, costCenterKey: '' };
+    it('applies the book default when the account has none', () => {
+      expect(resolveCostCenterKey({ account: noDefault, bookDefault: '310', costCenters: centers })).toBe('310');
+    });
+    it('lets the account default win over the book default', () => {
+      expect(resolveCostCenterKey({ account: expense, bookDefault: '310', costCenters: centers })).toBe('320');
+    });
+    it('lets explicit, source and rule win over the book default', () => {
+      expect(resolveCostCenterKey({ explicit: '320', account: noDefault, bookDefault: '310', costCenters: centers })).toBe('320');
+      expect(resolveCostCenterKey({ source: '320', account: noDefault, bookDefault: '310', costCenters: centers })).toBe('320');
+      expect(resolveCostCenterKey({ rule: '320', account: noDefault, bookDefault: '310', costCenters: centers })).toBe('320');
+    });
+    it('drops an invalid book default (archived, group, foreign tenant)', () => {
+      for (const bookDefault of ['400', '300', '900', 'nope']) {
+        expect(resolveCostCenterKey({ account: noDefault, bookDefault, costCenters: centers })).toBe('');
+      }
+    });
+    it('falls back to the book default when the account default is invalid', () => {
+      expect(resolveCostCenterKey({ account: { ...expense, costCenterKey: '400' }, bookDefault: '310', costCenters: centers })).toBe('310');
+    });
+    it('ignores the book default on a balance-sheet account', () => {
+      expect(resolveCostCenterKey({ account: { id: '1020', costCenterKey: '', accountingTenantId: 'scs' }, bookDefault: '310', costCenters: centers })).toBe('');
+    });
+    it('returns empty for an empty book default', () => {
+      expect(resolveCostCenterKey({ account: noDefault, bookDefault: '', costCenters: centers })).toBe('');
+    });
+  });
 });

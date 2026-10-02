@@ -30,6 +30,11 @@
     "paymentAccounts": {
       "label": "Comptes de paiement",
       "helper": "Le paiement d'une facture peut être comptabilisé sur ces comptes."
+    },
+    "costCenter": {
+      "label": "Centre de coûts par défaut de la comptabilité",
+      "helper": "S'applique aux écritures sur les comptes de résultat sans centre de coûts par défaut propre.",
+      "none": "aucun centre de coûts"
     }
   },
   "feeSchedule": {

@@ -26,17 +26,19 @@ export function isActiveLeafCostCenter(key: string | undefined, accountingTenant
 
 /**
  * The Kostenstelle of one booking line (spec 1.65 §6.1). Priority explicit > source > rule >
- * account default; a candidate that is not an active leaf of the account's accounting tenant is
- * skipped. Balance-sheet lines never carry one.
+ * account default > book default (`AccountingConfig.defaultCostCenterKey`); a candidate that is not
+ * an active leaf of the account's accounting tenant is skipped. Balance-sheet lines never carry one.
  */
 export function resolveCostCenterKey(input: {
   explicit?: string; source?: string; rule?: string;
   account: CostCenterAccountLike | undefined; costCenters: CostCenterLike[];
+  /** accounting-wide default Kostenstelle — the last fallback for P&L lines; '' = none */
+  bookDefault?: string;
 }): string {
   const account = input.account;
   if (!account || !isProfitAndLossAccountId(account.id)) return '';
   const tenant = account.accountingTenantId ?? '';
-  for (const candidate of [input.explicit, input.source, input.rule, account.costCenterKey]) {
+  for (const candidate of [input.explicit, input.source, input.rule, account.costCenterKey, input.bookDefault]) {
     if (isActiveLeafCostCenter(candidate, tenant, input.costCenters)) return candidate as string;
   }
   return '';

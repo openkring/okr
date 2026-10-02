@@ -30,6 +30,11 @@
     "paymentAccounts": {
       "label": "Cuentas de pago",
       "helper": "El pago de una factura puede contabilizarse en estas cuentas."
+    },
+    "costCenter": {
+      "label": "Centro de costes predeterminado de la contabilidad",
+      "helper": "Se aplica a los asientos en cuentas de resultados sin centro de costes predeterminado propio.",
+      "none": "ningún centro de costes"
     }
   },
   "feeSchedule": {

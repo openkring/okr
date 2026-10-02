@@ -1,5 +1,5 @@
 {
-  "costCenter": { "label": "Standard-Kostenstelle", "helper": "Wird bei neuen Buchungen auf dieses Konto vorgeschlagen." },
+  "costCenter": { "label": "Standard-Kostenstelle", "helper": "Wird bei neuen Buchungen auf dieses Konto vorgeschlagen.", "bookDefault": "Standard der Buchhaltung ({costCenter})", "none": "keine Kostenstelle" },
   "accounts": "Konti",
   "empty": "Keine Konti gefunden.",
   "create": "Neues Konto eröffnen",

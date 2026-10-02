@@ -3,10 +3,11 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonNote, IonRow, IonSelect, I
 
 import { NumberInput, NumberInputI18n, ErrorNote, TextInput, TextInputI18n } from '@okr/shared-ui';
 
-import { AccountingConfigModel, AccountModel } from '@okr/shared-models';
+import { AccountingConfigModel, AccountModel, CostCenterModel } from '@okr/shared-models';
 import { coerceBoolean } from '@okr/shared-util-core';
 
 import { AccountSelect, AccountSelectI18n } from '@okr/finance-account-ui';
+import { CostCenterSelect, CostCenterSelectI18n } from '@okr/finance-cost-center-ui';
 import { leafAccounts } from '@okr/finance-account-util';
 import { AccountingI18n, accountingConfigValidations } from '@okr/finance-accounting-util';
 
@@ -17,13 +18,13 @@ export type { AccountingI18n };
  * matches, and which payables account an employee reimbursement is booked against. Both store an
  * account `okey`; without them the expense→booking posting (1.20) has no fallback account.
  * Plus the fiscal year start month (1 = calendar year), which the period assignment of bank-import
- * and OCR bookings reads.
+ * and OCR bookings reads, and the book default Kostenstelle — the last fallback of P&L lines (1.65).
  */
 @Component({
   selector: 'okr-accounting-config-form',
   standalone: true,
   imports: [
-    ErrorNote, AccountSelect, NumberInput, TextInput, IonSelect, IonSelectOption, IonNote, IonGrid, IonRow, IonCol, IonCard, IonCardContent],
+    ErrorNote, AccountSelect, CostCenterSelect, NumberInput, TextInput, IonSelect, IonSelectOption, IonNote, IonGrid, IonRow, IonCol, IonCard, IonCardContent],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px; } }`],
   template: `
     @if (showForm()) {
@@ -80,6 +81,16 @@ export type { AccountingI18n };
                     [showHelper]="true" [readOnly]="isReadOnly()" />
                   <okr-error-note [errors]="fiscalYearStartErrors()" />
                 </ion-col>
+                <!-- the last fallback Kostenstelle of P&L lines; Kostenstellen exist on the native ledger only -->
+                @if (costCentersEnabled()) {
+                  <ion-col size="12" size-md="6">
+                    <okr-cost-center-select [i18n]="costCenterI18n()" [costCenters]="costCenters()" [allowEmpty]="true"
+                      [emptyLabel]="i18n().cost_center_none()"
+                      [selectedKey]="defaultCostCenterKey()" (selectedKeyChange)="onFieldChange('defaultCostCenterKey', $event)"
+                      [readOnly]="isReadOnly()" />
+                    <okr-error-note [errors]="defaultCostCenterKeyErrors()" />
+                  </ion-col>
+                }
               </ion-row>
             </ion-grid>
           </ion-card-content>
@@ -91,6 +102,10 @@ export type { AccountingI18n };
 export class AccountingConfigForm {
   public readonly formData = model.required<AccountingConfigModel>();
   public readonly accounts = input.required<AccountModel[]>();
+  /** the accounting tenant's Kostenstellen (archived included); the picker offers active leaves only */
+  public readonly costCenters = input<CostCenterModel[]>([]);
+  /** Kostenstellen only exist on the native ledger; a bexio ledger gets no picker. */
+  public readonly costCentersEnabled = input(false);
   public readonly tenantId = input.required<string>();
   public readonly i18n = input.required<AccountingI18n>();
   public readonly readOnly = input(true);
@@ -105,6 +120,8 @@ export class AccountingConfigForm {
   protected employeePayablesAccountKey = linkedSignal(() => this.formData().employeePayablesAccountKey ?? '');
   protected receivablesAccountKey = linkedSignal(() => this.formData().receivablesAccountKey ?? '');
   protected invoiceTemplateId = linkedSignal(() => this.formData().invoiceTemplateId ?? '');
+  // legacy config docs predate the field: '' = keine Kostenstelle
+  protected defaultCostCenterKey = linkedSignal(() => this.formData().defaultCostCenterKey ?? '');
   protected invoicePaymentAccountKeys = linkedSignal(() => this.formData().invoicePaymentAccountKeys ?? []);
   /** leaf accounts of class 1 (assets): the accounts an invoice payment may be posted to */
   protected leaves = computed(() => leafAccounts(this.accounts()));
@@ -130,6 +147,10 @@ export class AccountingConfigForm {
     placeholder: this.i18n().invoice_template_placeholder(), helper: this.i18n().invoice_template_helper()
   } as TextInputI18n));
 
+  protected costCenterI18n = computed(() => ({
+    name: 'defaultCostCenterKey', label: this.i18n().cost_center(), helper: this.i18n().cost_center_helper()
+  } as CostCenterSelectI18n));
+
   protected fiscalYearStartI18n = computed(() => ({
     name: 'fiscalYearStart', label: this.i18n().fiscal_year_start(),
     placeholder: this.i18n().fiscal_year_start_placeholder(), helper: this.i18n().fiscal_year_start_helper()
@@ -140,6 +161,7 @@ export class AccountingConfigForm {
 
   protected receivablesAccountKeyErrors = computed(() => this.validationResult().getErrors('receivablesAccountKey'));
   protected invoiceTemplateIdErrors = computed(() => this.validationResult().getErrors('invoiceTemplateId'));
+  protected defaultCostCenterKeyErrors = computed(() => this.validationResult().getErrors('defaultCostCenterKey'));
 
   constructor() {
     effect(() => this.valid.emit(this.validationResult().isValid()));

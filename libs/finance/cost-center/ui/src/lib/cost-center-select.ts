@@ -61,7 +61,7 @@ export interface CostCenterSelectI18n {
       @if (isCompact()) {
         <ion-label class="compact">
           <div>{{ selectedCenter()?.id || '—' }}</div>
-          <ion-note>{{ selectedCenter()?.name || emptyLabel() || i18n().label }}</ion-note>
+          <ion-note>{{ selectedCenter()?.name || emptyText() || i18n().label }}</ion-note>
         </ion-label>
       } @else {
         <ion-input
@@ -105,7 +105,7 @@ export interface CostCenterSelectI18n {
             <ion-list>
               @if (isAllowEmpty()) {
                 <ion-item button="true" detail="false" (click)="select('')">
-                  <ion-label>{{ emptyLabel() || ownI18n.none() }}</ion-label>
+                  <ion-label>{{ emptyText() }}</ion-label>
                 </ion-item>
               }
               @for (center of filteredCenters(); track center.okey) {
@@ -163,9 +163,15 @@ export class CostCenterSelect {
 
   /** looked up in the FULL list: an archived cost centre on a historic line is still shown */
   protected readonly selectedCenter = computed(() => this.costCenters().find(c => c.okey === this.selectedKey()));
+  /** what '' means: the `emptyLabel` or «ohne Kostenstelle»; nothing when '' cannot be chosen */
+  protected readonly emptyText = computed(() => this.isAllowEmpty() ? (this.emptyLabel() || this.ownI18n.none()) : '');
+  /**
+   * An empty selection shows what it means as the value: a blank field would show only its
+   * floating label, which reads like a chosen value.
+   */
   protected readonly displayValue = computed(() => {
     const _center = this.selectedCenter();
-    if (!_center) return this.selectedKey() ? this.selectedKey() : '';
+    if (!_center) return this.selectedKey() ? this.selectedKey() : this.emptyText();
     return _center.isArchived ? `${costCenterLabel(_center)} (${this.ownI18n.archived()})` : costCenterLabel(_center);
   });
 

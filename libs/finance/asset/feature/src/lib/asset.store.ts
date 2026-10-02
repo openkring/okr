@@ -93,7 +93,7 @@ export const AssetStore = signalStore(
     async preview(periodEnd: string): Promise<void> {
       const lines: BookingLineModel[] = [];
       // the depreciation expense line is booked on the asset's Kostenstelle; an archived one falls
-      // through to the account default here instead of being rejected by writeBooking
+      // through to the account default (then the book default) here instead of being rejected by writeBooking
       const resolveKeys = store.costCenterStore.isEnabled();
       const accounts = resolveKeys ? await store.accountService.listOnce(store.accountingTenantId()) : [];
       // do not resolve against a cost-centre list that is still loading (it would look empty)
@@ -112,6 +112,7 @@ export const AssetStore = signalStore(
         if (resolveKeys) drLine.costCenterKey = resolveCostCenterKey({
           source: asset.costCenter, account: accounts.find(a => a.okey === drLine.accountKey),
           costCenters: store.costCenterStore.costCenters(),
+          bookDefault: store.accountingStore.config()?.defaultCostCenterKey ?? '',
         });
         drLine.debitAmount = { amount: periodDepreciation, currency: 'CHF', periodicity: 'one-time' };
         lines.push(drLine);

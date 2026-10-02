@@ -47,6 +47,7 @@ function cloneAccount(account: AccountModel): AccountModel | undefined {
           [accounts]="store.accounts()"
           [costCenters]="costCenterStore.costCenters()"
           [costCentersEnabled]="costCenterStore.isEnabled()"
+          [bookDefaultCostCenterKey]="bookDefaultCostCenterKey()"
           [tenantId]="tenantId()"
           [readOnly]="isReadOnly()"
           [i18n]="store.i18n"
@@ -65,6 +66,8 @@ export class AccountEditModal {
   public currentUser = input<UserModel | undefined>();
   public readOnly = input(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
+  // the accounting-wide fallback Kostenstelle; legacy configs lack the field
+  protected readonly bookDefaultCostCenterKey = computed(() => this.store.accountingStore.config()?.defaultCostCenterKey ?? '');
 
   protected formDirty = signal(false);
   protected formValid = signal(false);

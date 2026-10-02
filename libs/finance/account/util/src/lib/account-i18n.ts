@@ -47,6 +47,9 @@ export const ACCOUNT_I18N_KEYS = {
 
   costCenter:           PFX + 'costCenter.label',
   costCenter_helper:    PFX + 'costCenter.helper',
+  /** single-brace {costCenter}: translateAll strips {{…}} — fill() it */
+  costCenter_bookDefault: PFX + 'costCenter.bookDefault',
+  costCenter_none:      PFX + 'costCenter.none',
 
   notes:                PFX + 'notes.label',
   notes_placeholder:    PFX + 'notes.placeholder',

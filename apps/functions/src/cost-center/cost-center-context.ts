@@ -5,9 +5,14 @@ import { CostCenterLike, isActiveLeafCostCenter, isProfitAndLossAccountId, resol
 
 const ACCOUNT_COLLECTION = 'accounts';
 const COST_CENTER_COLLECTION = 'cost-centers';
+const ACCOUNTING_CONFIG_COLLECTION = 'accounting-configs';
 
 export interface AccountLite { okey: string; id?: string; costCenterKey?: string; accountingTenantId?: string; parentKey?: string }
-export interface CostCenterContext { accountingTenantId: string; accounts: Map<string, AccountLite>; costCenters: CostCenterLike[] }
+export interface CostCenterContext {
+  accountingTenantId: string; accounts: Map<string, AccountLite>; costCenters: CostCenterLike[];
+  /** `AccountingConfig.defaultCostCenterKey` — last fallback for P&L lines; '' = keine Kostenstelle */
+  bookDefaultKey: string;
+}
 
 /** Unique, non-blank account keys: `doc('')` throws in the Admin SDK, so callers may pass unresolved keys. */
 export function accountKeysToLoad(keys: string[]): string[] {
@@ -15,8 +20,9 @@ export function accountKeysToLoad(keys: string[]): string[] {
 }
 
 /**
- * Accounts (the given keys, or all of the accounting tenant) and the tenant's Kostenstellen —
- * everything `resolveCostCenterKey` needs. Reads only; call it before a transaction's first write.
+ * Accounts (the given keys, or all of the accounting tenant), the tenant's Kostenstellen and the
+ * book default from `accounting-configs/{accountingTenantId}` — everything `resolveCostCenterKey`
+ * needs. Reads only; call it before a transaction's first write.
  */
 export async function loadCostCenterContext(db: Firestore, tenantId: string, accountingTenantId: string, accountKeys?: string[]): Promise<CostCenterContext> {
   const accounts = new Map<string, AccountLite>();
@@ -35,7 +41,11 @@ export async function loadCostCenterContext(db: Firestore, tenantId: string, acc
   const costCenters = centerSnap.docs
     .filter(s => ((s.data()['tenants'] as string[] | undefined) ?? []).includes(tenantId))
     .map(s => ({ okey: s.id, ...(s.data() as Omit<CostCenterLike, 'okey'>) }));
-  return { accountingTenantId, accounts, costCenters };
+  const configSnap = await db.collection(ACCOUNTING_CONFIG_COLLECTION).doc(accountingTenantId).get();
+  const configData = configSnap.data() as { defaultCostCenterKey?: unknown } | undefined;
+  // legacy configs lack the field
+  const bookDefaultKey = typeof configData?.defaultCostCenterKey === 'string' ? configData.defaultCostCenterKey : '';
+  return { accountingTenantId, accounts, costCenters, bookDefaultKey };
 }
 
 /** True when the account document belongs to the given accounting tenant. */
@@ -44,7 +54,7 @@ export function belongsToAccountingTenant(account: { accountingTenantId?: unknow
 }
 
 export function costCenterKeyForLine(ctx: CostCenterContext, accountKey: string, input: { explicit?: string; source?: string; rule?: string } = {}): string {
-  return resolveCostCenterKey({ ...input, account: ctx.accounts.get(accountKey), costCenters: ctx.costCenters });
+  return resolveCostCenterKey({ ...input, account: ctx.accounts.get(accountKey), costCenters: ctx.costCenters, bookDefault: ctx.bookDefaultKey });
 }
 
 /** Throws `cost-center-invalid` for an explicit key that is neither valid nor grandfathered (P&L accounts only). */

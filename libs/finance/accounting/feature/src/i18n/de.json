@@ -30,6 +30,11 @@
     "paymentAccounts": {
       "label": "Zahlungskonten",
       "helper": "Auf diese Konten darf eine Rechnungszahlung gebucht werden."
+    },
+    "costCenter": {
+      "label": "Standard-Kostenstelle der Buchhaltung",
+      "helper": "Gilt für Buchungen auf Erfolgskonten ohne eigene Standard-Kostenstelle.",
+      "none": "keine Kostenstelle"
     }
   },
   "feeSchedule": {

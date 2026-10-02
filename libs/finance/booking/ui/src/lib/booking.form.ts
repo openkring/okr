@@ -206,6 +206,8 @@ export class BookingForm {
   public readonly accounts = input<AccountModel[]>([]);
   public readonly vatCodes = input<VatCodeModel[]>([]);
   public readonly costCenters = input<CostCenterModel[]>([]);
+  /** `AccountingConfig.defaultCostCenterKey` — fills a P&L line whose account has no default; '' = none */
+  public readonly bookDefaultCostCenterKey = input('');
   /** Kostenstellen only exist on the native ledger; a bexio ledger gets no picker. */
   public readonly costCentersEnabled = input(false);
   public readonly locale = input('de-ch');
@@ -279,7 +281,7 @@ export class BookingForm {
   /** An account change keeps the side's Kostenstelle consistent (P&L default prefilled, balance-sheet cleared). */
   protected onAccountChange(index: number, side: 'debit' | 'credit', accountKey: string): void {
     this.dirty.emit(true);
-    this.formData.update((vm) => ({ ...vm, pairs: vm.pairs.map((p, i) => i === index ? withPairAccount(p, side, accountKey, this.accounts()) : p) }));
+    this.formData.update((vm) => ({ ...vm, pairs: vm.pairs.map((p, i) => i === index ? withPairAccount(p, side, accountKey, this.accounts(), this.bookDefaultCostCenterKey(), this.costCenters()) : p) }));
   }
 
   protected showDebitCostCenter(pair: BookingPair): boolean { return this.showCostCenter(pair.debitAccountKey); }
@@ -288,9 +290,10 @@ export class BookingForm {
     return this.costCentersEnabled() && isProfitAndLossAccountId(this.accounts().find(a => a.okey === accountKey)?.id);
   }
 
-  /** An empty Kostenstelle is saved with the account's default (writeBooking): say so on the empty option. */
+  /** An empty Kostenstelle is saved with the account's (or the book's) default (writeBooking): say so on the empty option. */
   protected costCenterEmptyLabel(accountKey: string): string {
-    return accountDefaultCostCenterKey(accountKey, this.accounts(), this.costCenters()) ? this.i18n().form_cost_center_accountDefault() : '';
+    return accountDefaultCostCenterKey(accountKey, this.accounts(), this.costCenters(), this.bookDefaultCostCenterKey())
+      ? this.i18n().form_cost_center_accountDefault() : '';
   }
 
   protected onPairChange(index: number, field: keyof BookingPair, value: string | number): void {

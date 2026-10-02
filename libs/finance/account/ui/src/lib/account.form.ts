@@ -4,9 +4,10 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular
 import { CategoryListModel, AccountModel, CostCenterModel, RoleName, UserModel } from '@okr/shared-models';
 import { CategorySelect, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { DESCRIPTION_LENGTH, LONG_NAME_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
-import { coerceBoolean, hasRole, isProfitAndLossAccountId } from '@okr/shared-util-core';
+import { coerceBoolean, fill, hasRole, isActiveLeafCostCenter, isProfitAndLossAccountId } from '@okr/shared-util-core';
 
 import { CostCenterSelect, CostCenterSelectI18n } from '@okr/finance-cost-center-ui';
+import { costCenterLabel } from '@okr/finance-cost-center-util';
 
 import { ACCOUNT_KIND_GROUP, AccountI18n, accountValidations, getAccountKind, parentCandidates, usedAccountIds } from '@okr/finance-account-util';
 
@@ -72,6 +73,7 @@ const RENDERED_FIELDS = ['id', 'name', 'type', 'parentKey', 'notes'];
                   @if (showCostCenter()) {
                     <ion-col size="12" size-md="6">
                       <okr-cost-center-select [i18n]="costCenterI18n()" [costCenters]="costCenters()" [allowEmpty]="true"
+                        [emptyLabel]="costCenterEmptyLabel()"
                         [selectedKey]="costCenterKey()" (selectedKeyChange)="onFieldChange('costCenterKey', $event)"
                         [readOnly]="isReadOnly()" />
                     </ion-col>
@@ -107,6 +109,8 @@ export class AccountForm {
   public readonly costCenters = input<CostCenterModel[]>([]);
   /** Kostenstellen only exist on the native ledger; a bexio ledger gets no picker */
   public readonly costCentersEnabled = input(false);
+  /** `AccountingConfig.defaultCostCenterKey` — what an account without its own default falls back to */
+  public readonly bookDefaultCostCenterKey = input('');
   public readonly tenantId = input.required<string>();
   public readonly readOnly = input(true);
   public readonly i18n = input.required<AccountI18n>();
@@ -137,6 +141,19 @@ export class AccountForm {
   protected costCenterI18n = computed(() => ({
     name: 'costCenterKey', label: this.i18n().costCenter(), helper: this.i18n().costCenter_helper()
   } as CostCenterSelectI18n));
+
+  /**
+   * What an account without its own Kostenstelle gets on its bookings: the book default (when it is
+   * still an active leaf, as the resolver demands) or none.
+   */
+  protected costCenterEmptyLabel = computed(() => {
+    const _key = this.bookDefaultCostCenterKey();
+    const _valid = isActiveLeafCostCenter(_key, this.formData().accountingTenantId ?? '', this.costCenters());
+    const _center = _valid ? this.costCenters().find(c => c.okey === _key) : undefined;
+    return _center
+      ? fill(this.i18n().costCenter_bookDefault(), { costCenter: costCenterLabel(_center) })
+      : this.i18n().costCenter_none();
+  });
 
   protected notesI18n = computed(() => ({
     name: 'notes', label: this.i18n().notes(), placeholder: this.i18n().notes_placeholder()

@@ -10,7 +10,7 @@ import { coerceBoolean, safeStructuredClone } from '@okr/shared-util-core';
 
 import { CommentsAccordion } from '@okr/comment-feature';
 import { DocumentsAccordion } from '@okr/content-document-feature';
-import { VoucherTiles } from '@okr/finance-accounting-feature';
+import { AccountingStore, VoucherTiles } from '@okr/finance-accounting-feature';
 import { CostCenterStore } from '@okr/finance-cost-center-feature';
 import { BookingForm } from '@okr/finance-booking-ui';
 import { BOOKING_I18N_KEYS, BookingFormData, BookingI18n, pairsToLines, toBookingFormData, withSplitTitle } from '@okr/finance-booking-util';
@@ -40,6 +40,7 @@ import { BOOKING_I18N_KEYS, BookingFormData, BookingI18n, pairsToLines, toBookin
           [vatCodes]="vatCodes()"
           [costCenters]="costCenterStore.costCenters()"
           [costCentersEnabled]="costCenterStore.isEnabled()"
+          [bookDefaultCostCenterKey]="bookDefaultCostCenterKey()"
           [locale]="locale()"
           [readOnly]="isReadOnly()"
           [showForm]="showForm()"
@@ -70,6 +71,7 @@ export class BookingEditModal {
   private readonly actionSheetCtrl = inject(ActionSheetController);
   // direct inject, no store: the store opens this modal, importing it back would be circular
   protected readonly costCenterStore = inject(CostCenterStore);
+  private readonly accountingStore = inject(AccountingStore);
   protected readonly i18n = inject(I18nService).translateAll(BOOKING_I18N_KEYS) as BookingI18n;
 
   public readonly booking = input.required<BookingModel>();
@@ -81,6 +83,8 @@ export class BookingEditModal {
   public readonly locale = input('de-ch');
 
   protected readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()));
+  // the accounting-wide fallback Kostenstelle; legacy configs lack the field
+  protected readonly bookDefaultCostCenterKey = computed(() => this.accountingStore.config()?.defaultCostCenterKey ?? '');
   protected readonly parentKey = computed(() => `${BookingModelName}.${this.booking().okey}`);
   // legacy docs predate the field — coalesce
   protected readonly voucherKeys = computed(() => this.booking().documentKeys ?? []);

@@ -1,5 +1,5 @@
 {
-  "costCenter": { "label": "Kostenstelle (optional)", "helper": "Gilt für Buchungen, die mit dieser Regel entstehen." },
+  "costCenter": { "label": "Kostenstelle (optional)", "helper": "Gilt für Buchungen, die mit dieser Regel entstehen.", "accountDefault": "Standard des Kontos" },
   "singular": "Bankregel",
   "plural": "Bankregeln",
   "empty": "Noch keine Bankregeln erfasst. Beim Import einer Bankdatei kannst du aus jeder Zeile eine Regel erstellen.",

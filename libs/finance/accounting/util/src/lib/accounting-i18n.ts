@@ -25,6 +25,10 @@ export const ACCOUNTING_I18N_KEYS = {
   fiscal_year_start:             PFX + 'settings.fiscalYearStart.label',
   fiscal_year_start_placeholder: PFX + 'settings.fiscalYearStart.placeholder',
   fiscal_year_start_helper:      PFX + 'settings.fiscalYearStart.helper',
+  // Kostenrechnung (1.65): the accounting-wide fallback Kostenstelle
+  cost_center:                   PFX + 'settings.costCenter.label',
+  cost_center_helper:            PFX + 'settings.costCenter.helper',
+  cost_center_none:              PFX + 'settings.costCenter.none',
   save:                     '@save.label',
   cancel:                   '@cancel',
 
