@@ -331,7 +331,7 @@
     "cancel-inconsistent-state": "Beim Stornieren ist etwas schiefgelaufen. Versuche es bitte noch einmal.",
     "confirmation-no-receiver": "Die Rechnung hat keinen Empfänger. Ohne Empfänger gibt es keine Zahlungsbestätigung.",
     "no-reminder-template": "In den Buchhaltungseinstellungen fehlt noch die Mahnungsvorlage. Bitte ergänze sie dort.",
-    "no-reminder-fee-account": "In den Buchhaltungseinstellungen fehlt noch das Konto für Mahngebühren. Bitte ergänze es dort oder erstelle die Mahnung ohne Gebühr.",
+    "no-reminder-fee-account": "Für die Mahngebühr fehlt ein Ertragskonto. Stelle in den Buchhaltungseinstellungen ein Ertragskonto für Mahngebühren ein oder setze die Gebühr auf 0.",
     "reminder-blocked": "Für diese Rechnung kann gerade keine Mahnung erstellt werden.",
     "max-level": "Diese Rechnung hat schon die 3. Mahnung. Weitere Mahnungen gibt es nicht.",
     "level-mismatch": "In der Zwischenzeit wurde schon eine andere Mahnung erstellt. Lade die Liste neu und versuche es noch einmal.",
@@ -345,7 +345,8 @@
     "reminder-period-locked": "Die Buchungsperiode zum Datum der Mahnung ist abgeschlossen. Wähle ein anderes Datum oder lass die Periode wieder öffnen.",
     "reminder-account-invalid": "Auf das Konto für Mahngebühren oder das Debitorenkonto kann nicht gebucht werden. Wähle in den Buchhaltungseinstellungen ein Konto ohne Unterkonten.",
     "reminder-inconsistent-state": "Beim Erstellen der Mahnung ist etwas schiefgelaufen. Versuche es bitte noch einmal.",
-    "email-not-payable": "Eine Mahnung wird nur gesendet, solange die Rechnung offen ist. Diese Rechnung ist schon bezahlt oder storniert."
+    "email-not-payable": "Eine Mahnung wird nur gesendet, solange die Rechnung offen ist. Diese Rechnung ist schon bezahlt oder storniert.",
+    "email-not-sendable": "Eine stornierte Rechnung wird nicht mehr versendet."
   },
   "payment": {
     "label": "Zahlung erfassen",

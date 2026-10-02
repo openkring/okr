@@ -37,6 +37,11 @@ describe('buildConfirmationPayload', () => {
     expect(p['city']).toBe('Zürich');
     expect(p['logoUrl']).toContain('logo');
   });
+  it('states the sum of the payments (a reminded invoice paid incl. fees), not the total', () => {
+    const paidWithFees = { ...invoice, payments: [{ date: '20260201', amount: 60000 }, { date: '20260210', amount: 42000 }] };
+    expect(buildConfirmationPayload(paidWithFees, '20260210', undefined, 'female')['amount']).toBe("1'020.00");
+    expect(buildConfirmationPayload({ ...invoice, payments: [] }, '20260210', undefined, 'female')['amount']).toBe("1'000.00");
+  });
   it('renders with empty address fields and an org greeting', () => {
     const p = buildConfirmationPayload({ ...invoice, receiver: { key: 'o1', name1: '', name2: 'Verein AG', modelType: 'org' } }, '20260210', undefined, undefined);
     expect(p['streetName']).toBe('');

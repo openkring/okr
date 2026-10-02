@@ -9,7 +9,7 @@ import { FieldValue } from 'firebase-admin/firestore';
 
 import {
   accountOkey, commentOkey, fileOkey, filePath, financeDocument, invoicePdfOkey, isoToStoreDate,
-  journalLineAmounts, mapBillPayment, mapBillState, mapComment, mapInvoicePayment, mapInvoiceState, mapReminder, reminderPdfOkey, staleIds, toRappen,
+  journalLineAmounts, mapBillPayment, mapBillState, mapComment, mapInvoicePayment, mapInvoiceState, mapReminder, mergeArchivedReminders, reminderPdfOkey, staleIds, toRappen,
 } from './mappers.mjs';
 
 export const STEPS = {};
@@ -324,16 +324,18 @@ STEPS['invoice-details'] = async (ctx) => {
         counts.pdfs++;
       }
     }
-    update.reminders = [];
+    const archived = [];
     for (const r of (await bexio.get(`/2.0/kb_invoice/${id}/kb_reminder`)) ?? []) {
       const stored = await isStored(db, reminderPdfOkey(id, r.id));
       const rpdf = stored ? null : await tryPdf(`/2.0/kb_invoice/${id}/kb_reminder/${r.id}/pdf`, id);
       const key = stored ? reminderPdfOkey(id, r.id) : rpdf?.content
         ? await saveBase64(ctx, reminderPdfOkey(id, r.id), rpdf.content, { name: rpdf.name, mimeType: 'application/pdf', ext: 'pdf', title: `${nr} Mahnung ${r.reminder_level}` })
         : '';
-      update.reminders.push(mapReminder(r, key));
+      archived.push(mapReminder(r, key));
       counts.reminders++;
     }
+    // a re-run must not wipe reminders created in okr since the migration (spec 1.76 phase 3)
+    update.reminders = mergeArchivedReminders(d.get('reminders'), archived);
     const payments = (await bexio.get(`/2.0/kb_invoice/${id}/payment`)) ?? [];
     update.payments = payments.map(p => mapInvoicePayment(p, tenantId, bankMap)).sort((a, b) => a.date.localeCompare(b.date));
     if (update.payments.length) update.paymentDate = update.payments.at(-1).date;

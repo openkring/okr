@@ -292,6 +292,7 @@ export const INVOICE_I18N_KEYS = {
   refusal_reminder_account_invalid: PFX + 'refusal.reminder-account-invalid',
   refusal_reminder_inconsistent_state: PFX + 'refusal.reminder-inconsistent-state',
   refusal_email_not_payable:        PFX + 'refusal.email-not-payable',
+  refusal_email_not_sendable:       PFX + 'refusal.email-not-sendable',
 
   as_title:         '@actionsheet.title',
   ok:               '@ok',
@@ -361,6 +362,7 @@ export const INVOICE_REFUSAL_I18N: Record<string, keyof typeof INVOICE_I18N_KEYS
   'no-document': 'refusal_no_document',
   'foreign-document': 'refusal_foreign_document',
   'no-email': 'refusal_no_email',
+  'not-sendable': 'refusal_email_not_sendable',
 };
 
 /** Which invoice call failed — some reasons need a different text there (a payment's amount is not a position's). */

@@ -4,6 +4,7 @@
  * The client mirror lives in @okr/finance-invoice-util (invoice-reminder.util.ts).
  */
 
+import { DEFAULT_REMINDER_FEES } from '@okr/shared-models';
 import { addDuration } from '@okr/shared-util-core';
 import { isPayableState, isValidStoreDate, PaymentBookingLine, ReminderLike, reminderFeeSum } from './invoice-payment.logic';
 
@@ -33,9 +34,13 @@ export function storedReminder(reminders: ReminderLike[] | undefined, level: num
   return (reminders ?? []).find(r => r.level === level);
 }
 
-/** The configured fee of a level (fees[level-1]), 0 when unconfigured, never negative. */
-export function defaultReminderFee(fees: number[] | undefined, level: number): number {
-  const fee = fees?.[level - 1];
+/**
+ * The configured fee of a level (fees[level-1]), never negative. A config without the field (legacy
+ * doc) uses the model default DEFAULT_REMINDER_FEES, like the settings form (ruling P3-R2); a level
+ * missing from a stored list is 0.
+ */
+export function defaultReminderFee(fees: readonly number[] | undefined, level: number): number {
+  const fee = (fees ?? DEFAULT_REMINDER_FEES)[level - 1];
   return Number.isFinite(fee) ? Math.max(0, fee as number) : 0;
 }
 
@@ -44,12 +49,15 @@ export function reminderDueDate(date: string, dueDays: number): string {
   return addDuration(date, { days: dueDays });
 }
 
-/** The due date the next reminder counts from: the last reminder's, else the invoice's. */
+/**
+ * The due date the next reminder counts from: the last reminder's, else the invoice's. A legacy
+ * reminder without a dueDate counts from its own date.
+ */
 export function lastDueDate(invoice: { dueDate: string; reminders?: ReminderLike[] }): string {
   const reminders = invoice.reminders ?? [];
   if (reminders.length === 0) return invoice.dueDate;
   const last = reminders.reduce((a, b) => ((b.level ?? 0) >= (a.level ?? 0) ? b : a));
-  return last.dueDate;
+  return last.dueDate || last.date;
 }
 
 /** Payable, a level left, and the last due date plus the grace days lies before today. */

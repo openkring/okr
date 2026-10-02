@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { AddressModel, InvoiceModel, PersonModel, UserModel } from '@okr/shared-models';
 import * as utilCore from '@okr/shared-util-core';
 
-import { buildPaymentConfirmationPayload, canCreatePaymentConfirmation, mayReadInvoiceDocuments } from './payment-confirmation.util';
+import { buildPaymentConfirmationPayload, canCreatePaymentConfirmation, mayReadInvoiceDocuments, receivedAmount } from './payment-confirmation.util';
 
 // @okr/shared-util-core re-exports platform.util which imports @angular/common (isPlatformBrowser).
 vi.mock('@okr/shared-util-core', async () => {
@@ -94,6 +94,21 @@ describe('buildPaymentConfirmationPayload', () => {
     expect(payload['lastName']).toBe('Muster');
     expect(payload['zipCode']).toBe('8712');
     expect(payload['logoUrl']).toContain('imgix');
+  });
+
+  it('states the sum of the payments, incl. reminder fees paid', () => {
+    const inv = paidInvoice();
+    inv.payments = [
+      { date: '20260620', amount: 50000, bankAccountKey: 'b', bookingKey: 'k1' },
+      { date: '20260701', amount: 52000, bankAccountKey: 'b', bookingKey: 'k2' },
+    ];
+    expect(buildPaymentConfirmationPayload(inv, { kind: 'person', person: anna() }, addr())['amount']).toMatch(/^1.020\.00$/);
+  });
+
+  it('falls back to the total for a legacy invoice without payments', () => {
+    expect(receivedAmount({ totalAmount: { amount: 100000, currency: 'CHF', periodicity: 'one-time' } })).toBe(100000);
+    expect(receivedAmount({ totalAmount: { amount: 100000, currency: 'CHF', periodicity: 'one-time' }, payments: [] })).toBe(100000);
+    expect(receivedAmount({ totalAmount: undefined as never, payments: [{ amount: 300 }, { amount: undefined }] })).toBe(300);
   });
 
   it('leaves payDate empty when the invoice has no payment date', () => {

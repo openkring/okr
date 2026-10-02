@@ -9,7 +9,7 @@ import { take } from 'rxjs/operators';
 
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
-import { AccountModel, InvoiceCollection, InvoiceModel, OrgModelName, PersonModelName } from '@okr/shared-models';
+import { AccountModel, DEFAULT_REMINDER_GRACE_DAYS, InvoiceCollection, InvoiceModel, OrgModelName, PersonModelName } from '@okr/shared-models';
 import { confirm, exportCsv, showToast } from '@okr/shared-util-angular';
 import {
   convertDateFormatToString, DateFormat, debugListLoaded, fill, getSystemQuery, getTodayStr, getYear, hasRole, nameMatches,
@@ -58,9 +58,6 @@ function saveBase64Pdf(content: string, filename: string): void {
   a.click();
   URL.revokeObjectURL(url);
 }
-
-/** Grace days of a Mahnlauf when the accounting config predates the field (model default). */
-const DEFAULT_REMINDER_GRACE_DAYS = 10;
 
 /** A StoreDate as the user reads it (dd.MM.yyyy). */
 function viewDate(storeDate: string): string {
@@ -490,8 +487,9 @@ export const InvoiceStore = signalStore(
       }
       const level = nextReminderLevel(invoice.reminders);
       const levelLabel = store.i18n[reminderLevelKey(level)]();
-      // legacy config docs lack the field (Firestore reads skip model defaults): the server then uses its default too
-      const defaultFee = formatPaymentChf(defaultReminderFee(config.reminderFees ?? [0, 2000, 2000], level));
+      // legacy config docs lack the field (Firestore reads skip model defaults): defaultReminderFee then
+      // uses the model default DEFAULT_REMINDER_FEES, exactly like the server (ruling P3-R2)
+      const defaultFee = formatPaymentChf(defaultReminderFee(config.reminderFees, level));
       const message = store.i18n.reminder_create_message();
       let input: { date: string; fee: number } | undefined;
       const alert = await store.alertController.create({

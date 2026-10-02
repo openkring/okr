@@ -27,13 +27,24 @@ export function mayReadInvoiceDocuments(invoice: InvoiceModel, user: UserModel |
   return !!user.personKey && user.personKey === invoice.receiver?.key;
 }
 
+/**
+ * The amount a confirmation states as received, in Rappen: the sum of the recorded payments — a
+ * reminded invoice paid incl. its fees is confirmed with what was paid. A legacy invoice without
+ * payment entries falls back to its total.
+ */
+export function receivedAmount(invoice: Pick<InvoiceModel, 'totalAmount'> & { payments?: { amount?: number }[] }): number {
+  const payments = invoice.payments ?? [];
+  if (payments.length === 0) return invoice.totalAmount?.amount ?? 0;
+  return payments.reduce((sum, p) => sum + (Number.isFinite(p.amount) ? (p.amount as number) : 0), 0);
+}
+
 function toViewDate(storeDate: string): string {
   return storeDate ? convertDateFormatToString(storeDate, DateFormat.StoreDate, DateFormat.ViewDate, false) : '';
 }
 
 /**
  * Fields for the payment-confirmation template:
- * - invoice: invoiceId, invoiceTitle (Betreff), invoiceDate, payDate, amount (dates DD.MM.YYYY, amount "1'000.00")
+ * - invoice: invoiceId, invoiceTitle (Betreff), invoiceDate, payDate, amount = receivedAmount (dates DD.MM.YYYY, amount "1'000.00")
  * - recipient: greeting, firstName, lastName, streetName, streetNumber, zipCode, city
  * - static: logoUrl
  * The payee (sender, IBAN) is resolved by the Cloud Function from the template's payeeOrgId.
@@ -46,7 +57,7 @@ export function buildPaymentConfirmationPayload(
   return {
     ...PAYMENT_CONFIRMATION_STATIC_PAYLOAD,
     ...buildRecipientPayload(party, address),
-    amount: formatChf(invoice.totalAmount?.amount ?? 0),
+    amount: formatChf(receivedAmount(invoice)),
     invoiceId: invoice.invoiceId,
     invoiceTitle: invoice.title,
     invoiceDate: toViewDate(invoice.invoiceDate),

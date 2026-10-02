@@ -5,6 +5,7 @@ import type { PostalAddress } from './invoice.logic';
 
 export type ConfirmationInvoice = Pick<InvoiceModel, 'invoiceId' | 'title' | 'invoiceDate' | 'totalAmount'> & {
   paymentDate?: string;
+  payments?: { date?: string; amount?: number }[]; // the confirmed amount is their sum (receivedAmount); none = legacy, the total
   receiver?: { key?: string; name1?: string; name2?: string; modelType?: string };
 };
 

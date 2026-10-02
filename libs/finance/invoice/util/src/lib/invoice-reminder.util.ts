@@ -1,3 +1,4 @@
+import { DEFAULT_REMINDER_FEES } from '@okr/shared-models';
 import { addDuration, classifyStoreDate, isValidPartialStoreDate } from '@okr/shared-util-core';
 
 import { isPayableState, reminderFeeSum } from './invoice-payment.util';
@@ -15,18 +16,25 @@ export function nextReminderLevel(reminders: ReminderLike[] | undefined): number
   return (reminders ?? []).reduce((m, r) => Math.max(m, r.level ?? 0), 0) + 1;
 }
 
-/** The configured fee of a level (fees[level-1]), 0 when unconfigured, never negative. */
-export function defaultReminderFee(fees: number[] | undefined, level: number): number {
-  const fee = fees?.[level - 1];
+/**
+ * The configured fee of a level (fees[level-1]), never negative. A config without the field (legacy
+ * doc) uses the model default DEFAULT_REMINDER_FEES, like the settings form (ruling P3-R2); a level
+ * missing from a stored list is 0.
+ */
+export function defaultReminderFee(fees: readonly number[] | undefined, level: number): number {
+  const fee = (fees ?? DEFAULT_REMINDER_FEES)[level - 1];
   return Number.isFinite(fee) ? Math.max(0, fee as number) : 0;
 }
 
-/** The due date the next reminder counts from: the last reminder's, else the invoice's. */
+/**
+ * The due date the next reminder counts from: the last reminder's, else the invoice's. A legacy
+ * reminder without a dueDate counts from its own date.
+ */
 export function lastDueDate(invoice: { dueDate: string; reminders?: ReminderLike[] }): string {
   const reminders = invoice.reminders ?? [];
   if (reminders.length === 0) return invoice.dueDate;
   const last = reminders.reduce((a, b) => ((b.level ?? 0) >= (a.level ?? 0) ? b : a));
-  return last.dueDate;
+  return last.dueDate || last.date;
 }
 
 /** Payable, a level left, and the last due date plus the grace days lies before today. */
@@ -57,7 +65,10 @@ export function canCreateReminder(invoice: { state: string; reminders?: Reminder
   return isPayableState(invoice.state) && nextReminderLevel(invoice.reminders) <= MAX_REMINDER_LEVEL;
 }
 
-/** True when the invoice PDF can be mailed: issued (not a draft, not being issued, not cancelled) and with a document. */
+/**
+ * True when the invoice PDF can be mailed: issued (not a draft, not being issued, not cancelled) and
+ * with a document. Mirrors sendRefusal on the server (draft → not-issued, cancelled → not-sendable, P3-R3).
+ */
 export function canEmailInvoice(invoice: { state: string; documentKey?: string }): boolean {
   return !['draft', 'issuing', 'cancelled'].includes(invoice.state) && !!invoice.documentKey;
 }

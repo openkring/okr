@@ -14,7 +14,7 @@ import { loadOwnedAccountingConfig, ReceiverRef, refuse } from './invoice-contex
 import { InvoiceLike, openAmount, ReminderLike } from './invoice-payment.logic';
 import { lastDueDate } from './invoice-reminder.logic';
 import { chf, viewDate, withoutUndefined } from './invoice.logic';
-import { emailDocumentKind, invoiceEmailHtml, invoiceEmailSubject, recipientDirectoryId, scrubEmailAddresses, sendRefusal } from './send-invoice-email.logic';
+import { emailDocumentKind, invoiceEmailAsksPayment, invoiceEmailHtml, invoiceEmailSubject, recipientDirectoryId, scrubEmailAddresses, sendRefusal } from './send-invoice-email.logic';
 
 const REGION = 'europe-west6';
 const CF_NAME = 'sendInvoiceEmail';
@@ -72,10 +72,10 @@ export const sendInvoiceEmail = onCall(
     const target = emailDocumentKind({ documentKey: String(invoice['documentKey'] ?? ''), reminders }, documentKey);
     if (!target) throw refuse('foreign-document', `document ${documentKey} does not belong to invoice ${invoiceKey}`);
     const level = target.kind === 'reminder' ? target.level : 0;
-    // defense in depth: the app offers "Mahnung senden" only on open invoices
-    if (sendRefusal(target.kind, String(invoice['state'] ?? '')) === 'not-payable') {
-      throw refuse('not-payable', `invoice ${invoiceKey} is ${String(invoice['state'] ?? '')}: no reminder mail`);
-    }
+    // defense in depth: the app offers "Mahnung senden" only on open invoices, "Rechnung senden" never on a cancelled one
+    const refusal = sendRefusal(target.kind, String(invoice['state'] ?? ''));
+    if (refusal === 'not-payable') throw refuse('not-payable', `invoice ${invoiceKey} is ${String(invoice['state'] ?? '')}: no reminder mail`);
+    if (refusal === 'not-sendable') throw refuse('not-sendable', `invoice ${invoiceKey} is cancelled: not mailed`);
 
     const document = (await db.collection(FinanceDocumentCollection).doc(documentKey).get()).data();
     const fullPath = String(document?.['fullPath'] ?? '');
@@ -108,6 +108,7 @@ export const sendInvoiceEmail = onCall(
     const dueDate = target.kind === 'reminder'
       ? String(reminders?.find((r) => r.level === level)?.dueDate ?? '')
       : String(invoice['dueDate'] || lastDueDate({ dueDate: '', reminders }));
+    const open = openAmount(likeInvoice);
     const attachment: EmailAttachment = {
       filename: target.kind === 'invoice' ? `${invoiceId}.pdf` : `Mahnung-${level}-${invoiceId}.pdf`,
       content, contentType: 'application/pdf',
@@ -120,7 +121,7 @@ export const sendInvoiceEmail = onCall(
         from: emailConfig.from,
         to: [favEmail],
         subject: invoiceEmailSubject(target.kind, level, invoiceId, orgName),
-        html: invoiceEmailHtml(target.kind, level, invoiceId, chf(openAmount(likeInvoice)), dueDate ? viewDate(dueDate) : '', orgName),
+        html: invoiceEmailHtml(target.kind, level, invoiceId, chf(open), dueDate ? viewDate(dueDate) : '', orgName, invoiceEmailAsksPayment(likeInvoice.state, open)),
         attachments: [attachment],
       });
     } catch (e) {

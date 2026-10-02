@@ -216,6 +216,27 @@ test('invoice-details stores PDFs, reminders, payments and internal comments', a
   assert.deepEqual([counts.invoices, counts.pdfs, counts.reminders, counts.payments, counts.comments], [1, 1, 1, 2, 1]);
 });
 
+test('invoice-details keeps native reminders created in okr on a re-run', async () => {
+  const native = { level: 2, date: '20261020', dueDate: '20261103', isSent: false, documentKey: 'invoice-2097-reminder-2', fee: 2000, bookingKey: 'invoice-2097-reminder-2' };
+  const stale = { level: 1, date: '20260101', dueDate: '20260115', isSent: false, documentKey: 'bexio-reminder-2097-1', fee: 0, bookingKey: '' };
+  const db = fakeFirestore({
+    invoices: { '2097': { ...T, invoiceId: 'RE-2097', reminders: [stale, native] } },
+    'finance-documents': { 'bexio-invoice-2097': {}, 'bexio-reminder-2097-1': {} },
+  });
+  const bexio = bexioWith({
+    '/3.0/banking/accounts': [],
+    '/2.0/kb_invoice/2097/kb_reminder': [
+      { id: 1, reminder_level: 1, is_valid_from: '2026-06-01', is_valid_to: '2026-06-15', is_sent: true },
+      { id: 2, reminder_level: 2, is_valid_from: '2026-07-01', is_valid_to: '2026-07-15', is_sent: true },
+    ],
+  });
+  await STEPS['invoice-details']({ db, bucket: fakeBucket(), bexio, tenantId: 'scs', dry: false });
+  const reminders = db.store.get('invoices/2097').reminders;
+  assert.deepEqual(reminders.map(r => [r.level, r.documentKey]), [[1, 'bexio-reminder-2097-1'], [2, 'invoice-2097-reminder-2']]);
+  assert.equal(reminders[0].date, '20260601');                // archived one refreshed from bexio
+  assert.deepEqual(reminders[1], native);                     // native one kept as it was, wins its level
+});
+
 test('invoice-details keeps an existing paymentDate when bexio lists no payment', async () => {
   const db = fakeFirestore({ invoices: { '5': { ...T, paymentDate: '20250101' } } });
   await STEPS['invoice-details']({ db, bucket: fakeBucket(), bexio: bexioWith({}), tenantId: 'scs', dry: false });

@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   isoToStoreDate, toRappen, accountOkey, mapInvoiceState, mapBillState, fileOkey, filePath,
-  mapInvoicePayment, mapReminder, mapComment, mapBillPayment, staleIds, journalLineAmounts,
+  mapInvoicePayment, mapReminder, mapComment, mapBillPayment, staleIds, journalLineAmounts, isNativeReminder, mergeArchivedReminders,
 } from './mappers.mjs';
 
 test('dates and money', () => {
@@ -70,4 +70,16 @@ test('journalLineAmounts books a EUR row in CHF and keeps the EUR amount', () =>
     fx: { amount: 16815, currency: 'EUR', periodicity: 'one-time' },
   });
   assert.equal(journalLineAmounts({ amount: 588.57, currency_id: 1, base_currency_id: 1, base_currency_amount: 588.57 }, codes).fx, null);
+});
+
+test('native reminders are recognised and survive a merge', () => {
+  assert.equal(isNativeReminder({ documentKey: 'invoice-a-reminder-1', bookingKey: '' }), true);
+  assert.equal(isNativeReminder({ documentKey: '', bookingKey: 'invoice-a-reminder-2' }), true);
+  assert.equal(isNativeReminder({ documentKey: 'bexio-reminder-7-1', bookingKey: '' }), false);
+  assert.equal(isNativeReminder({ documentKey: '', bookingKey: '' }), false);
+  const archived = [{ level: 1, documentKey: 'bexio-reminder-7-1', bookingKey: '' }];
+  assert.deepEqual(mergeArchivedReminders(undefined, archived), archived);
+  const native = { level: 2, documentKey: 'invoice-7-reminder-2', bookingKey: 'invoice-7-reminder-2' };
+  assert.deepEqual(mergeArchivedReminders([{ level: 1, documentKey: 'bexio-old', bookingKey: '' }, native], archived), [archived[0], native]);
+  assert.deepEqual(mergeArchivedReminders([native], [{ level: 2, documentKey: 'bexio-reminder-7-2', bookingKey: '' }]), [native]);
 });

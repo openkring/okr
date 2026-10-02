@@ -331,7 +331,7 @@
     "cancel-inconsistent-state": "Something went wrong while cancelling. Please try again.",
     "confirmation-no-receiver": "The invoice has no receiver. Without a receiver there is no payment confirmation.",
     "no-reminder-template": "The reminder template is still missing in the accounting settings. Please add it there.",
-    "no-reminder-fee-account": "The reminder fee account is still missing in the accounting settings. Please add it there or create the reminder without a fee.",
+    "no-reminder-fee-account": "There is no revenue account for the reminder fee. Set a revenue account for reminder fees in the accounting settings or set the fee to 0.",
     "reminder-blocked": "No reminder can be created for this invoice right now.",
     "max-level": "This invoice already has its 3rd reminder. There are no further reminders.",
     "level-mismatch": "Another reminder was created in the meantime. Reload the list and try again.",
@@ -345,7 +345,8 @@
     "reminder-period-locked": "The accounting period of the reminder date is closed. Choose another date or have the period reopened.",
     "reminder-account-invalid": "The reminder fee account or the receivables account cannot be booked to. Choose an account without sub-accounts in the accounting settings.",
     "reminder-inconsistent-state": "Something went wrong while creating the reminder. Please try again.",
-    "email-not-payable": "A reminder is only sent while the invoice is open. This invoice has already been paid or cancelled."
+    "email-not-payable": "A reminder is only sent while the invoice is open. This invoice has already been paid or cancelled.",
+    "email-not-sendable": "A cancelled invoice is no longer sent."
   },
   "payment": {
     "label": "Record payment",

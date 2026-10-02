@@ -2,7 +2,7 @@ import { onCall, CallableRequest, HttpsError } from 'firebase-functions/v2/https
 import { logger } from 'firebase-functions/v2';
 import { getFirestore } from 'firebase-admin/firestore';
 
-import { FinanceDocumentCollection, InvoiceCollection } from '@okr/shared-models';
+import { DEFAULT_REMINDER_DUE_DAYS, FinanceDocumentCollection, InvoiceCollection } from '@okr/shared-models';
 import { DateFormat, getTodayStr } from '@okr/shared-util-core';
 import { checkAppCheckToken, checkAuthentication, checkRoles, getCallerTenantId, nextBookingNo } from '@okr/shared-util-functions';
 
@@ -24,7 +24,6 @@ const REGION = 'europe-west6';
 const CF_NAME = 'createInvoiceReminder';
 const BOOKING_COLLECTION = 'bookings';
 const BOOKING_LINE_COLLECTION = 'booking-lines';
-const DEFAULT_DUE_DAYS = 14;
 
 interface CreateInvoiceReminderData {
   invoiceKey?: string;
@@ -108,7 +107,7 @@ export const createInvoiceReminder = onCall(
     const receivablesKey = String(config['receivablesAccountKey'] ?? '');
     const feeAccountKey = String(config['reminderFeeAccountKey'] ?? '');
     const fiscalYearStart = Number(config['fiscalYearStart'] ?? 1) || 1;
-    const dueDays = Number.isFinite(config['reminderDueDays']) ? (config['reminderDueDays'] as number) : DEFAULT_DUE_DAYS;
+    const dueDays = Number.isFinite(config['reminderDueDays']) ? (config['reminderDueDays'] as number) : DEFAULT_REMINDER_DUE_DAYS;
     if (typeof fee !== 'number' || !Number.isInteger(fee) || fee < 0) {
       throw refuse('reminder-blocked', `invoice ${invoiceKey} cannot get reminder ${lvl}: invalid-fee`, { reasons: ['invalid-fee'] });
     }

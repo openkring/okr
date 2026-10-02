@@ -331,7 +331,7 @@
     "cancel-inconsistent-state": "Algo ha fallado al anular. Inténtalo de nuevo, por favor.",
     "confirmation-no-receiver": "La factura no tiene destinatario. Sin destinatario no hay confirmación de pago.",
     "no-reminder-template": "Todavía falta la plantilla de recordatorio en la configuración contable. Añádela allí.",
-    "no-reminder-fee-account": "Todavía falta la cuenta de recargos en la configuración contable. Añádela allí o crea el recordatorio sin recargo.",
+    "no-reminder-fee-account": "Falta una cuenta de ingresos para el recargo. Define una cuenta de ingresos para los recargos en la configuración contable o pon el recargo a 0.",
     "reminder-blocked": "Ahora mismo no se puede crear ningún recordatorio para esta factura.",
     "max-level": "Esta factura ya tiene su 3.er recordatorio. No hay más recordatorios.",
     "level-mismatch": "Mientras tanto se creó otro recordatorio. Vuelve a cargar la lista e inténtalo de nuevo.",
@@ -345,7 +345,8 @@
     "reminder-period-locked": "El periodo contable de la fecha del recordatorio está cerrado. Elige otra fecha o pide que se vuelva a abrir el periodo.",
     "reminder-account-invalid": "No se puede contabilizar en la cuenta de recargos o en la cuenta de deudores. Elige en la configuración contable una cuenta sin subcuentas.",
     "reminder-inconsistent-state": "Algo salió mal al crear el recordatorio. Inténtalo de nuevo.",
-    "email-not-payable": "Un recordatorio solo se envía mientras la factura está pendiente. Esta factura ya está pagada o anulada."
+    "email-not-payable": "Un recordatorio solo se envía mientras la factura está pendiente. Esta factura ya está pagada o anulada.",
+    "email-not-sendable": "Una factura anulada ya no se envía."
   },
   "payment": {
     "label": "Registrar pago",

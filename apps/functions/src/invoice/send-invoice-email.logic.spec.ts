@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { emailDocumentKind, invoiceEmailHtml, invoiceEmailSubject, recipientDirectoryId, scrubEmailAddresses, sendRefusal } from './send-invoice-email.logic';
+import { emailDocumentKind, invoiceEmailAsksPayment, invoiceEmailHtml, invoiceEmailSubject, recipientDirectoryId, scrubEmailAddresses, sendRefusal } from './send-invoice-email.logic';
 
 describe('emailDocumentKind', () => {
   const invoice = { documentKey: 'invoice-a', reminders: [{ level: 1, date: '', dueDate: '', documentKey: 'invoice-a-reminder-1' }, { level: 2, date: '', dueDate: '', documentKey: 'invoice-a-reminder-2' }] };
@@ -40,6 +40,33 @@ describe('invoiceEmailHtml', () => {
   });
 });
 
+describe('invoice mail without a payment request (P3-R3)', () => {
+  it('asks for payment only when payable and something is open', () => {
+    expect(invoiceEmailAsksPayment('pending', 12050)).toBe(true);
+    expect(invoiceEmailAsksPayment('partial', 100)).toBe(true);
+    expect(invoiceEmailAsksPayment('unpaid', 1)).toBe(true);
+    expect(invoiceEmailAsksPayment('pending', 0)).toBe(false);
+    expect(invoiceEmailAsksPayment('paid', 0)).toBe(false);
+    expect(invoiceEmailAsksPayment('paid', 500)).toBe(false);
+    expect(invoiceEmailAsksPayment('cancelled', 500)).toBe(false);
+    expect(invoiceEmailAsksPayment(undefined, 500)).toBe(false);
+  });
+  it('the neutral body names the invoice and asks for nothing', () => {
+    const html = invoiceEmailHtml('invoice', 0, '202600001', '0.00', '31.10.2026', 'Seeclub', false);
+    expect(html).toBe('<p>Hallo,</p><p>im Anhang findest du die Rechnung 202600001.</p><p>Freundliche Grüsse<br>Seeclub</p>');
+    expect(html).not.toContain('überweise');
+    expect(html).not.toContain('CHF');
+  });
+  it('the neutral body escapes its inputs too', () => {
+    const html = invoiceEmailHtml('invoice', 0, '<i>1</i>', '', '', '<b>x</b>', false);
+    expect(html).not.toContain('<i>');
+    expect(html).not.toContain('<b>');
+  });
+  it('a reminder always asks for payment (it is only sent while payable)', () => {
+    expect(invoiceEmailHtml('reminder', 2, '7', '30.00', '15.11.2026', 'Seeclub', false)).toContain('offenen Betrag von CHF 30.00');
+  });
+});
+
 describe('recipientDirectoryId', () => {
   it('person', () => expect(recipientDirectoryId('scs', { key: 'p1', modelType: 'person' })).toBe('scs_person.p1'));
   it('org', () => expect(recipientDirectoryId('scs', { key: 'o1', modelType: 'org' })).toBe('scs_org.o1'));
@@ -74,7 +101,8 @@ describe('sendRefusal', () => {
   });
   it('mails the invoice PDF in any issued state, never a draft', () => {
     expect(sendRefusal('invoice', 'paid')).toBeUndefined();
-    expect(sendRefusal('invoice', 'cancelled')).toBeUndefined();
+    expect(sendRefusal('invoice', 'cancelled')).toBe('not-sendable');
+    for (const state of ['pending', 'partial', 'unpaid']) expect(sendRefusal('invoice', state)).toBeUndefined();
     expect(sendRefusal('invoice', 'draft')).toBe('not-issued');
     expect(sendRefusal('reminder', 'draft')).toBe('not-issued');
   });

@@ -137,7 +137,7 @@ import { InvoiceStore } from './invoice.store';
                 <ion-icon slot="start" src="{{'alarm' | svgIcon}}" />
                 <ion-label>
                   <p class="view-label">{{ store.i18n.reminders_title() }}</p>
-                  @for(reminder of reminders(); track reminder.level) {
+                  @for(reminder of reminders(); track reminder.documentKey || $index) {
                     <p class="view-value">
                       {{ levelLabel(reminder.level) }} · {{ reminder.date | prettyDate }} · {{ store.i18n.reminder_due() }} {{ reminder.dueDate | prettyDate }}
                       · {{ store.i18n.reminder_fee_short() }} CHF {{ formatChf(reminder.fee) }}

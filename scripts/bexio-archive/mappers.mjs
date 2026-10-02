@@ -57,6 +57,27 @@ export function mapReminder(r, documentKey) {
   };
 }
 
+/**
+ * A reminder created in okr (createInvoiceReminder, spec 1.76 phase 3), not archived from bexio: it
+ * carries a fee booking, or a document key outside the archive's `bexio-` namespace
+ * (native: `invoice-{key}-reminder-{level}`). Archived ones have bookingKey '' and a `bexio-` key or ''.
+ */
+export function isNativeReminder(r) {
+  const documentKey = String(r?.documentKey ?? '');
+  return !!r?.bookingKey || (documentKey !== '' && !documentKey.startsWith('bexio-'));
+}
+
+/**
+ * The reminders to store on a re-run: the freshly archived bexio ones plus every native reminder the
+ * invoice already carries. A native reminder wins its level (an archived one of the same level is
+ * skipped); the result is ordered by level, oldest first.
+ */
+export function mergeArchivedReminders(existing, archived) {
+  const native = (existing ?? []).filter(isNativeReminder);
+  const nativeLevels = new Set(native.map(r => r.level));
+  return [...archived.filter(r => !nativeLevels.has(r.level)), ...native].sort((a, b) => (a.level ?? 0) - (b.level ?? 0));
+}
+
 /** CommentModel shape (libs/shared/models/src/lib/comment.model.ts). All bexio comments are internal (spec §5 Q3). */
 export function mapComment(c, invoiceOkey, tenantId, attachmentKeys) {
   const dt = String(c.date ?? '').replace(/[^0-9]/g, '').padEnd(14, '0').substring(0, 14);

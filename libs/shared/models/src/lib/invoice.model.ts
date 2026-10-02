@@ -36,7 +36,7 @@ export class InvoiceModel implements OkrModel, SearchableModel, TaggedModel {
   public documentKey = '';          // the invoice PDF (finance-documents okey, spec 1.68)
   public payments: InvoicePayment[] = [];   // received payments, oldest first
   public reminders: InvoiceReminder[] = []; // Mahnungen, oldest first
-  public sentAt = '';               // StoreDateTime of the last email send of the invoice PDF; '' = never (spec 1.76 D13)
+  public sentAt = '';               // StoreDate (yyyyMMdd) of the last email send of the invoice PDF; '' = never (spec 1.76 D13)
 
   // Stamped (StoreDateTime) when a data-subject erasure pseudonymized this record
   // (privacy 1.19, D-P5-6): the name fields and the person link are overwritten, the

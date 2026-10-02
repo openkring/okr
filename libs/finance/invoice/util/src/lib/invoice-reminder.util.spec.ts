@@ -35,7 +35,16 @@ describe('invoice reminder util', () => {
   it('default fee', () => {
     expect(defaultReminderFee([0, 2000, 2000], 2)).toBe(2000);
     expect(defaultReminderFee(undefined, 1)).toBe(0);
+    expect(defaultReminderFee(undefined, 2)).toBe(2000);
+    expect(defaultReminderFee(undefined, 3)).toBe(2000);
+    expect(defaultReminderFee([500], 2)).toBe(0);
     expect(defaultReminderFee([-5], 1)).toBe(0);
+  });
+  it('a legacy reminder without dueDate counts from its date', () => {
+    const legacy = inv({ dueDate: '20261001', reminders: [{ level: 1, date: '20261020', dueDate: '' }] });
+    expect(lastDueDate(legacy)).toBe('20261020');
+    expect(isReminderDue(legacy, '20261031', 10)).toBe(true);
+    expect(isReminderDue(legacy, '20261030', 10)).toBe(false);
   });
   it('candidates: due ones, longest overdue first', () => {
     const a = inv({ dueDate: '20261015' });
@@ -99,6 +108,7 @@ describe('reminder actions (client)', () => {
 
   it('names a refused reminder mail of a paid or cancelled invoice in the email context', () => {
     expect(invoiceRefusalKeys(['not-payable'], 'email')).toEqual(['refusal_email_not_payable']);
+    expect(invoiceRefusalKeys(['not-sendable'], 'email')).toEqual(['refusal_email_not_sendable']);
     expect(invoiceRefusalKeys(['not-payable'], 'reminder')).toEqual(['refusal_reminder_not_payable']);
   });
 

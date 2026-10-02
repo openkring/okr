@@ -331,7 +331,7 @@
     "cancel-inconsistent-state": "Qualcosa è andato storto durante lo storno. Riprova, per favore.",
     "confirmation-no-receiver": "La fattura non ha destinatario. Senza destinatario non c’è conferma di pagamento.",
     "no-reminder-template": "Nelle impostazioni contabili manca ancora il modello di sollecito. Aggiungilo lì.",
-    "no-reminder-fee-account": "Nelle impostazioni contabili manca ancora il conto delle spese di sollecito. Aggiungilo lì o crea il sollecito senza spese.",
+    "no-reminder-fee-account": "Manca un conto ricavi per le spese di sollecito. Imposta un conto ricavi per le spese di sollecito nelle impostazioni contabili o imposta le spese a 0.",
     "reminder-blocked": "Al momento non è possibile creare un sollecito per questa fattura.",
     "max-level": "Questa fattura ha già il 3° sollecito. Non ce ne sono altri.",
     "level-mismatch": "Nel frattempo è stato creato un altro sollecito. Ricarica l’elenco e riprova.",
@@ -345,7 +345,8 @@
     "reminder-period-locked": "Il periodo contabile della data del sollecito è chiuso. Scegli un’altra data o fai riaprire il periodo.",
     "reminder-account-invalid": "Non è possibile registrare sul conto delle spese di sollecito o sul conto debitori. Scegli nelle impostazioni contabili un conto senza sottoconti.",
     "reminder-inconsistent-state": "Qualcosa è andato storto durante la creazione del sollecito. Riprova.",
-    "email-not-payable": "Un sollecito viene inviato solo finché la fattura è aperta. Questa fattura è già pagata o annullata."
+    "email-not-payable": "Un sollecito viene inviato solo finché la fattura è aperta. Questa fattura è già pagata o annullata.",
+    "email-not-sendable": "Una fattura stornata non viene più inviata."
   },
   "payment": {
     "label": "Registra pagamento",

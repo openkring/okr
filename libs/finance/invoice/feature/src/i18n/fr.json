@@ -331,7 +331,7 @@
     "cancel-inconsistent-state": "Un problème est survenu lors de l’annulation. Réessaie, s’il te plaît.",
     "confirmation-no-receiver": "La facture n’a pas de destinataire. Sans destinataire, il n’y a pas de confirmation de paiement.",
     "no-reminder-template": "Le modèle de rappel manque encore dans les paramètres comptables. Ajoute-le là-bas.",
-    "no-reminder-fee-account": "Le compte des frais de rappel manque encore dans les paramètres comptables. Ajoute-le là-bas ou crée le rappel sans frais.",
+    "no-reminder-fee-account": "Il manque un compte de produits pour les frais de rappel. Définis un compte de produits pour les frais de rappel dans les paramètres comptables ou mets les frais à 0.",
     "reminder-blocked": "Aucun rappel ne peut être créé pour cette facture pour le moment.",
     "max-level": "Cette facture a déjà son 3e rappel. Il n’y en a pas d’autres.",
     "level-mismatch": "Un autre rappel a été créé entre-temps. Recharge la liste et réessaie.",
@@ -345,7 +345,8 @@
     "reminder-period-locked": "La période comptable de la date du rappel est clôturée. Choisis une autre date ou fais rouvrir la période.",
     "reminder-account-invalid": "Le compte des frais de rappel ou le compte débiteurs ne peut pas être mouvementé. Choisis dans les paramètres comptables un compte sans sous-comptes.",
     "reminder-inconsistent-state": "Un problème est survenu lors de la création du rappel. Réessaie.",
-    "email-not-payable": "Un rappel n’est envoyé que tant que la facture est ouverte. Cette facture est déjà payée ou annulée."
+    "email-not-payable": "Un rappel n’est envoyé que tant que la facture est ouverte. Cette facture est déjà payée ou annulée.",
+    "email-not-sendable": "Une facture annulée n’est plus envoyée."
   },
   "payment": {
     "label": "Saisir un paiement",
