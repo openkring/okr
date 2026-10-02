@@ -1,5 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { getApp } from 'firebase/app';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 
 import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
@@ -47,9 +49,15 @@ export class PaymentOrderService {
     return this.firestoreService.searchData<PaymentOrderModel>(PaymentOrderCollection, query, orderBy, sortOrder);
   }
 
-  public async approve(order: PaymentOrderModel, approverId: string, currentUser?: UserModel): Promise<void> {
-    order.approvedBy = approverId;
-    order.status = 'approved';
-    await this.update(order, currentUser);
+  /** Approval is server-side only (status changes are denied to clients by the rules). Throws the callable's HttpsError. */
+  public async approve(orderKey: string): Promise<void> {
+    const fn = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'approvePaymentOrder');
+    await fn({ paymentOrderKey: orderKey });
+  }
+
+  public async generatePain001(orderKey: string): Promise<string> {
+    const fn = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'generatePain001');
+    const result = await fn({ paymentOrderKey: orderKey });
+    return (result.data as { xml: string }).xml;
   }
 }

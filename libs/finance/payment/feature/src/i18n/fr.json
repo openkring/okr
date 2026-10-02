@@ -1,11 +1,18 @@
 {
-  "list": { "title": "Ordres de paiement" },
+  "list": {
+    "title": "Ordres de paiement"
+  },
   "empty": "Aucun ordre de paiement trouvé.",
-  "approve": { "label": "Approuver" },
+  "approve": {
+    "label": "Approuver"
+  },
   "actionsheet": {
     "view": "Afficher l'ordre de paiement",
     "edit": "Modifier l'ordre de paiement",
-    "create": "Créer un ordre de paiement"
+    "create": "Créer un ordre de paiement",
+    "confirm": "Confirmer le paiement",
+    "open_expense": "Afficher la note de frais",
+    "cancel": "Annuler"
   },
   "order": {
     "title": "Ordre de paiement",
@@ -13,6 +20,19 @@
     "status": "Statut",
     "execution": "Date d'exécution",
     "created_by": "Créé par",
-    "approved_by": "Approuvé par"
+    "approved_by": "Approuvé par",
+    "approve": "Approuver",
+    "approve_blocked": "L'approbation n'est pas encore possible"
+  },
+  "blocker": {
+    "not_draft": "Cet ordre est déjà approuvé.",
+    "unprepared": "Ouvre d'abord l'ordre, choisis le compte débiteur et la date d'exécution, puis enregistre-le.",
+    "self": "L'approbation doit être faite par une autre personne que celle qui a préparé l'ordre.",
+    "incomplete": "Choisis d'abord le compte débiteur et la date d'exécution.",
+    "empty": "Cet ordre ne contient encore aucun paiement.",
+    "needs_review": "Vérifie d'abord les paiements signalés et confirme-les."
+  },
+  "payment": {
+    "needs_review": "IBAN lu dans le texte du justificatif – à vérifier"
   }
 }

@@ -1,11 +1,18 @@
 {
-  "list": { "title": "Zahlungsaufträge" },
+  "list": {
+    "title": "Zahlungsaufträge"
+  },
   "empty": "Keine Zahlungsaufträge gefunden.",
-  "approve": { "label": "Freigeben" },
+  "approve": {
+    "label": "Freigeben"
+  },
   "actionsheet": {
     "view": "Zahlungsauftrag anzeigen",
     "edit": "Zahlungsauftrag ändern",
-    "create": "Zahlungsauftrag erstellen"
+    "create": "Zahlungsauftrag erstellen",
+    "confirm": "Zahlung bestätigen",
+    "open_expense": "Spese anzeigen",
+    "cancel": "Abbrechen"
   },
   "order": {
     "title": "Zahlungsauftrag",
@@ -13,6 +20,19 @@
     "status": "Status",
     "execution": "Ausführungsdatum",
     "created_by": "Erstellt von",
-    "approved_by": "Freigegeben von"
+    "approved_by": "Freigegeben von",
+    "approve": "Freigeben",
+    "approve_blocked": "Freigabe noch nicht möglich"
+  },
+  "blocker": {
+    "not_draft": "Dieser Auftrag ist schon freigegeben.",
+    "unprepared": "Bitte öffne den Auftrag zuerst, wähle das Belastungskonto und das Ausführungsdatum und speichere ihn.",
+    "self": "Freigeben muss eine andere Person als die, die den Auftrag vorbereitet hat.",
+    "incomplete": "Bitte wähle zuerst das Belastungskonto und das Ausführungsdatum.",
+    "empty": "Dieser Auftrag enthält noch keine Zahlungen.",
+    "needs_review": "Bitte prüfe zuerst die markierten Zahlungen und bestätige sie."
+  },
+  "payment": {
+    "needs_review": "IBAN aus dem Belegtext gelesen – bitte prüfen"
   }
 }

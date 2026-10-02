@@ -1,11 +1,18 @@
 {
-  "list": { "title": "Payment orders" },
+  "list": {
+    "title": "Payment orders"
+  },
   "empty": "No payment orders found.",
-  "approve": { "label": "Approve" },
+  "approve": {
+    "label": "Approve"
+  },
   "actionsheet": {
     "view": "View payment order",
     "edit": "Edit payment order",
-    "create": "Create payment order"
+    "create": "Create payment order",
+    "confirm": "Confirm payment",
+    "open_expense": "Show expense",
+    "cancel": "Cancel"
   },
   "order": {
     "title": "Payment order",
@@ -13,6 +20,19 @@
     "status": "Status",
     "execution": "Execution date",
     "created_by": "Created by",
-    "approved_by": "Approved by"
+    "approved_by": "Approved by",
+    "approve": "Approve",
+    "approve_blocked": "Approval not possible yet"
+  },
+  "blocker": {
+    "not_draft": "This order has already been approved.",
+    "unprepared": "Please open the order first, choose the debit account and the execution date, and save it.",
+    "self": "Approval has to be done by a different person than the one who prepared the order.",
+    "incomplete": "Please choose the debit account and the execution date first.",
+    "empty": "This order does not contain any payments yet.",
+    "needs_review": "Please check the flagged payments first and confirm them."
+  },
+  "payment": {
+    "needs_review": "IBAN read from the receipt text – please check"
   }
 }

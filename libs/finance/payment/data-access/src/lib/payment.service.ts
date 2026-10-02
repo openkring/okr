@@ -43,4 +43,12 @@ export class PaymentService {
     ];
     return this.firestoreService.searchData<PaymentModel>(PaymentCollection, query);
   }
+
+  public listForExpense(expenseKey: string): Observable<PaymentModel[]> {
+    const query = [
+      ...getSystemQuery(this.tenantId),
+      { key: 'expenseKey', operator: '==' as const, value: expenseKey },
+    ];
+    return this.firestoreService.searchData<PaymentModel>(PaymentCollection, query);
+  }
 }

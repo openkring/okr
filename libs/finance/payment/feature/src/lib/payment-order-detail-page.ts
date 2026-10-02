@@ -1,27 +1,36 @@
-import { Component, inject } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { Component, computed, inject, signal } from '@angular/core';
+import { DecimalPipe } from '@angular/common';
+import { ActivatedRoute, Router } from '@angular/router';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { of } from 'rxjs';
-import { IonButton, IonContent, IonHeader, IonItem, IonLabel,
-  IonList, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { ActionSheetButton, ActionSheetController, IonBadge, IonButton, IonContent, IonHeader, IonItem, IonLabel,
+  IonList, IonNote, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { PaymentModel, PaymentOrderModel } from '@okr/shared-models';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { AccountingStore } from '@okr/finance-accounting-feature';
 import { PaymentOrderService, PaymentService } from '@okr/finance-payment-data-access';
-import { PAYMENT_I18N_KEYS, PaymentI18n } from '@okr/finance-payment-util';
+import { PAYMENT_I18N_KEYS, PaymentI18n, approveBlocker } from '@okr/finance-payment-util';
+
+import { PaymentStore } from './payment.store';
 
 @Component({
   selector: 'okr-payment-order-detail-page',
   standalone: true,
-  imports: [IonHeader, IonToolbar, IonTitle, IonContent, IonList, IonItem, IonLabel, IonButton],
+  imports: [DecimalPipe, IonHeader, IonToolbar, IonTitle, IonContent, IonList, IonItem, IonLabel, IonButton, IonBadge, IonNote],
+  providers: [PaymentStore],
   template: `
     <ion-header>
       <ion-toolbar>
         <ion-title>{{ i18n.order_title() }}</ion-title>
-        @if (orderResource.value()?.status === 'approved') {
-          <ion-button slot="end" fill="clear" (click)="generatePain001()">{{ i18n.download_pain001() }}</ion-button>
+        @if (orderResource.value(); as headerOrder) {
+          @if (headerOrder.status === 'draft') {
+            <ion-button slot="end" fill="clear" (click)="approve(headerOrder)">{{ i18n.approve_button() }}</ion-button>
+          }
+          @if (headerOrder.status === 'approved') {
+            <ion-button slot="end" fill="clear" (click)="store.downloadPain001(headerOrder)">{{ i18n.download_pain001() }}</ion-button>
+          }
         }
       </ion-toolbar>
     </ion-header>
@@ -32,13 +41,21 @@ import { PAYMENT_I18N_KEYS, PaymentI18n } from '@okr/finance-payment-util';
         <ion-item><ion-label>{{ i18n.created_by_label() }}: {{ order.createdBy }}</ion-label></ion-item>
         <ion-item><ion-label>{{ i18n.approved_by_label() }}: {{ order.approvedBy }}</ion-label></ion-item>
       }
+      @if (serverBlocker() || blocker(); as shown) {
+        <ion-item>
+          <ion-note color="warning">{{ blockerText(shown) }}</ion-note>
+        </ion-item>
+      }
       <ion-list>
         @for (payment of paymentsResource.value() ?? []; track payment.okey) {
-          <ion-item>
+          <ion-item button [detail]="false" (click)="openPayment(payment)">
             <ion-label>
-              <h3>{{ payment.recipientName }} — {{ payment.amount?.amount }}</h3>
+              <h3>{{ payment.recipientName }} — {{ (payment.amount?.amount ?? 0) / 100 | number: '1.2-2' }} {{ payment.amount?.currency }}</h3>
               <p>{{ payment.recipientIban }}</p>
             </ion-label>
+            @if (payment.needsReview) {
+              <ion-badge slot="end" color="warning">{{ i18n.needs_review_badge() }}</ion-badge>
+            }
           </ion-item>
         }
       </ion-list>
@@ -47,7 +64,10 @@ import { PAYMENT_I18N_KEYS, PaymentI18n } from '@okr/finance-payment-util';
 })
 export class PaymentOrderDetailPage {
   protected readonly i18n = inject(I18nService).translateAll(PAYMENT_I18N_KEYS) as PaymentI18n;
+  protected readonly store = inject(PaymentStore);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly actionSheetController = inject(ActionSheetController);
   private readonly appStore = inject(AppStore);
   private readonly accountingStore = inject(AccountingStore);
   private readonly paymentOrderService = inject(PaymentOrderService);
@@ -74,7 +94,46 @@ export class PaymentOrderDetailPage {
         : of<PaymentModel[]>([]),
   });
 
-  protected generatePain001(): void {
-    console.log('generatePain001: not yet wired to CF');
+  /** The server's answer, shown when it differs from what the client computed. */
+  protected readonly serverBlocker = signal('');
+
+  protected readonly blocker = computed(() => {
+    const order = this.orderResource.value();
+    if (!order || order.status !== 'draft') return '';
+    return approveBlocker(order, this.paymentsResource.value() ?? [], this.appStore.currentUser()?.okey ?? '');
+  });
+
+  protected blockerText(blocker: string): string {
+    const map: Record<string, () => string> = {
+      'not-draft': this.i18n.blocker_not_draft, unprepared: this.i18n.blocker_unprepared,
+      self: this.i18n.blocker_self, incomplete: this.i18n.blocker_incomplete,
+      empty: this.i18n.blocker_empty, 'needs-review': this.i18n.blocker_needs_review,
+    };
+    return map[blocker]?.() ?? this.i18n.approve_blocked();
+  }
+
+  protected async approve(order: PaymentOrderModel): Promise<void> {
+    this.serverBlocker.set('');
+    const blocker = await this.store.approve(order);
+    if (blocker) this.serverBlocker.set(blocker);
+    this.orderResource.reload();
+    this.paymentsResource.reload();
+  }
+
+  protected async openPayment(payment: PaymentModel): Promise<void> {
+    const order = this.orderResource.value();
+    const buttons: ActionSheetButton[] = [];
+    if (payment.needsReview && order?.status === 'draft') {
+      buttons.push({ text: this.i18n.as_confirm(), handler: async () => {
+        await this.store.confirmPayment(payment);
+        this.paymentsResource.reload();
+      } });
+    }
+    if (payment.expenseKey) {
+      buttons.push({ text: this.i18n.as_open_expense(), handler: async () => { await this.router.navigateByUrl(`/expense/${payment.expenseKey}`); } });
+    }
+    if (buttons.length === 0) return;
+    const sheet = await this.actionSheetController.create({ buttons: [...buttons, { text: this.i18n.cancel(), role: 'cancel' }] });
+    await sheet.present();
   }
 }

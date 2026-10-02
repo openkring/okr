@@ -1,11 +1,18 @@
 {
-  "list": { "title": "Ordini di pagamento" },
+  "list": {
+    "title": "Ordini di pagamento"
+  },
   "empty": "Nessun ordine di pagamento trovato.",
-  "approve": { "label": "Approva" },
+  "approve": {
+    "label": "Approva"
+  },
   "actionsheet": {
     "view": "Visualizza ordine di pagamento",
     "edit": "Modifica ordine di pagamento",
-    "create": "Crea ordine di pagamento"
+    "create": "Crea ordine di pagamento",
+    "confirm": "Conferma il pagamento",
+    "open_expense": "Mostra la nota spese",
+    "cancel": "Annulla"
   },
   "order": {
     "title": "Ordine di pagamento",
@@ -13,6 +20,19 @@
     "status": "Stato",
     "execution": "Data di esecuzione",
     "created_by": "Creato da",
-    "approved_by": "Approvato da"
+    "approved_by": "Approvato da",
+    "approve": "Approva",
+    "approve_blocked": "L'approvazione non è ancora possibile"
+  },
+  "blocker": {
+    "not_draft": "Questo ordine è già stato approvato.",
+    "unprepared": "Apri prima l'ordine, scegli il conto di addebito e la data di esecuzione e salvalo.",
+    "self": "L'approvazione deve essere fatta da una persona diversa da quella che ha preparato l'ordine.",
+    "incomplete": "Scegli prima il conto di addebito e la data di esecuzione.",
+    "empty": "Questo ordine non contiene ancora pagamenti.",
+    "needs_review": "Controlla prima i pagamenti contrassegnati e confermali."
+  },
+  "payment": {
+    "needs_review": "IBAN letto dal testo della ricevuta – da controllare"
   }
 }

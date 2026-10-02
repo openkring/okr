@@ -1,11 +1,18 @@
 {
-  "list": { "title": "Órdenes de pago" },
+  "list": {
+    "title": "Órdenes de pago"
+  },
   "empty": "No se encontraron órdenes de pago.",
-  "approve": { "label": "Aprobar" },
+  "approve": {
+    "label": "Aprobar"
+  },
   "actionsheet": {
     "view": "Ver orden de pago",
     "edit": "Editar orden de pago",
-    "create": "Crear orden de pago"
+    "create": "Crear orden de pago",
+    "confirm": "Confirmar pago",
+    "open_expense": "Mostrar gasto",
+    "cancel": "Cancelar"
   },
   "order": {
     "title": "Orden de pago",
@@ -13,6 +20,19 @@
     "status": "Estado",
     "execution": "Fecha de ejecución",
     "created_by": "Creado por",
-    "approved_by": "Aprobado por"
+    "approved_by": "Aprobado por",
+    "approve": "Aprobar",
+    "approve_blocked": "La aprobación aún no es posible"
+  },
+  "blocker": {
+    "not_draft": "Esta orden ya está aprobada.",
+    "unprepared": "Abre primero la orden, elige la cuenta de cargo y la fecha de ejecución y guárdala.",
+    "self": "La aprobación debe hacerla una persona distinta de la que preparó la orden.",
+    "incomplete": "Elige primero la cuenta de cargo y la fecha de ejecución.",
+    "empty": "Esta orden todavía no contiene pagos.",
+    "needs_review": "Revisa primero los pagos marcados y confírmalos."
+  },
+  "payment": {
+    "needs_review": "IBAN leído del texto del justificante – por favor, revísalo"
   }
 }

@@ -5,8 +5,9 @@ import { ModalController } from '@ionic/angular/standalone';
 import { signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
 import { AppStore } from '@okr/shared-feature';
+import { downloadTextFile } from '@okr/shared-util-angular';
 import { I18nService } from '@okr/shared-i18n';
-import { PaymentOrderModel } from '@okr/shared-models';
+import { PaymentModel, PaymentOrderModel } from '@okr/shared-models';
 
 import { AccountingStore } from '@okr/finance-accounting-feature';
 import { PaymentOrderService, PaymentService } from '@okr/finance-payment-data-access';
@@ -65,6 +66,9 @@ export const PaymentStore = signalStore(
       const { data, role } = await modal.onDidDismiss();
       if (role === 'confirm' && data) {
         const o = data as PaymentOrderModel;
+        // The rules require createdBy == caller uid on every order write. Saving is how a
+        // treasurer "prepares" (takes over) an order; the four-eyes check needs another approver.
+        o.createdBy = store.currentUserKey();
         if (o.okey?.length > 0) {
           await store.paymentOrderService.update(o, store.currentUser() ?? undefined);
         } else {
@@ -74,14 +78,25 @@ export const PaymentStore = signalStore(
       }
     },
 
-    async approve(order: PaymentOrderModel): Promise<void> {
-      const approverId = store.currentUserKey();
-      if (!approverId || approverId === order.createdBy) {
-        console.warn('PaymentStore.approve: approver must be a different person from the creator');
-        return;
+    /** Returns the ApproveBlocker the server reported, or '' on success. */
+    async approve(order: PaymentOrderModel): Promise<string> {
+      try {
+        await store.paymentOrderService.approve(order.okey);
+        store.ordersResource.reload();
+        return '';
+      } catch (err: unknown) {
+        return (err as { message?: string }).message ?? 'error';
       }
-      await store.paymentOrderService.approve(order, approverId, store.currentUser() ?? undefined);
+    },
+
+    async downloadPain001(order: PaymentOrderModel): Promise<void> {
+      const xml = await store.paymentOrderService.generatePain001(order.okey);
+      await downloadTextFile(xml, `${order.messageId || order.okey}.xml`);
       store.ordersResource.reload();
+    },
+
+    async confirmPayment(payment: PaymentModel): Promise<void> {
+      await store.paymentService.update({ ...payment, needsReview: false }, store.currentUser() ?? undefined);
     },
   }))
 );
