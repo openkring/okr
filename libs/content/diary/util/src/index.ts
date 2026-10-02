@@ -11,6 +11,7 @@ export * from './lib/diary-parse';
 export * from './lib/diary-reference.util';
 export * from './lib/diary-render';
 export * from './lib/diary-state.util';
+export * from './lib/diary-transfer.util';
 export * from './lib/diary.validations';
 export * from './lib/diary-weather.util';
 export * from './lib/location-normalise';
