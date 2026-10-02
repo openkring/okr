@@ -22,7 +22,8 @@
     "empty": "Es sind noch keine Elemente in dieser Kategorie definiert.",
     "title": "Elemente",
     "subTitle": "Die einzelnen Elemente einer Kategorie. Jedes Element wird in einer eigenen Zeile angezeigt.",
-    "add": "Hinzufügen"
+    "add": "Hinzufügen",
+    "price": "Preis"
   },
   "color": {
     "select": "Farbwahl",

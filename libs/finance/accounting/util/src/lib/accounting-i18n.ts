@@ -66,6 +66,8 @@ export const ACCOUNTING_I18N_KEYS = {
   feeSchedule_position_categoryList_label:       PFX + 'feeSchedule.position.categoryList.label',
   feeSchedule_position_categoryList_placeholder: PFX + 'feeSchedule.position.categoryList.placeholder',
   feeSchedule_position_categoryList_helper:      PFX + 'feeSchedule.position.categoryList.helper',
+  feeSchedule_position_categoryList_prices:      PFX + 'feeSchedule.position.categoryList.prices',
+  feeSchedule_position_categoryList_edit:        PFX + 'feeSchedule.position.categoryList.edit',
 
   feeSchedule_position_flag_label:            PFX + 'feeSchedule.position.flag.label',
   feeSchedule_position_flag_placeholder:      PFX + 'feeSchedule.position.flag.placeholder',

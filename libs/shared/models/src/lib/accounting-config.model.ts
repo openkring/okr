@@ -35,7 +35,7 @@ export interface FeePositionRule {
   type: string;
   label: string;
   source: FeeSource;
-  categoryList?: string;  // source 'category' — which mcat list supplies the price
+  categoryList?: string;  // source 'category' — override list (e.g. mcat_srv); empty = the org's membershipCategoryKey
   flag?: FeeFlag;         // source 'flag'
   rule?: FeeRule;         // source 'rule'
   amount?: number;        // source 'flag' | 'rule'; default for 'manual'

@@ -8,7 +8,7 @@ import {
 import { ENV } from '@okr/shared-config';
 import { DEFAULT_INVOICE_POSITION_TYPE, DEFAULT_INVOICE_POSITION_USAGE } from '@okr/shared-constants';
 import {
-  AccountModel, AccountingConfigModel, FeePositionRule, FeeScheduleEntry, VatCodeModel
+  AccountModel, AccountingConfigModel, CategoryListModel, FeePositionRule, FeeScheduleEntry, VatCodeModel
 } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { CategorySelect } from '@okr/shared-ui';
@@ -96,6 +96,9 @@ export class FeeSchedule {
   public readonly i18n = input.required<AccountingI18n>();
   public readonly accounts = input<AccountModel[]>([]);
   public readonly vatCodes = input<VatCodeModel[]>([]);
+  public readonly categoryLists = input<CategoryListModel[]>([]);
+  public readonly defaultCategoryList = input('mcat');
+  public readonly editCategoryListFn = input<(list: CategoryListModel) => Promise<CategoryListModel | undefined>>();
   public readonly readOnly = input(true);
 
   protected readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()));
@@ -199,6 +202,9 @@ export class FeeSchedule {
         tenantId: this.tenantId,
         accounts: this.accounts(),
         vatCodes: this.vatCodes(),
+        categoryLists: this.categoryLists(),
+        defaultCategoryList: this.defaultCategoryList(),
+        editCategoryListFn: this.editCategoryListFn(),
         readOnly: this.isReadOnly(),
       },
     });

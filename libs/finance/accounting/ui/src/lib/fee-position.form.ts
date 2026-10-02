@@ -1,19 +1,23 @@
+import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, input, model, output } from '@angular/core';
 import { form } from '@angular/forms/signals';
-import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
+import {
+  IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonList, IonListHeader, IonNote, IonRow
+} from '@ionic/angular/standalone';
 
 import { SHORT_NAME_LENGTH } from '@okr/shared-constants';
-import { AccountModel, FeeFlag, FeePositionRule, FeeRule, FeeSource, VatCodeModel } from '@okr/shared-models';
+import { AccountModel, CategoryListModel, FeeFlag, FeePositionRule, FeeRule, FeeSource, VatCodeModel } from '@okr/shared-models';
 import {
   CategorySelect, ErrorNote, NumberInput, NumberInputI18n, TextInput, TextInputI18n
 } from '@okr/shared-ui';
-import { coerceBoolean } from '@okr/shared-util-core';
+import { coerceBoolean, getItemLabel } from '@okr/shared-util-core';
+import { TranslatePipe } from '@okr/shared-i18n';
 import { validateVestTree } from '@okr/shared-util-angular';
 
 import { AccountSelect, AccountSelectI18n } from '@okr/finance-account-ui';
 import {
   AccountingI18n, feePositionValidations,
-  getFeeFlagCategory, getFeePositionTypeCategory, getFeePositionUsageCategory,
+  getFeeCategoryListCategory, getFeeFlagCategory, getFeePositionTypeCategory, getFeePositionUsageCategory,
   getFeeRuleCategory, getFeeSourceCategory, getVatCodeCategory
 } from '@okr/finance-accounting-util';
 
@@ -27,10 +31,14 @@ import {
   selector: 'okr-fee-position-form',
   standalone: true,
   imports: [
-    ErrorNote, TextInput, NumberInput, CategorySelect, AccountSelect,
-    IonGrid, IonRow, IonCol, IonCard, IonCardContent
+    ErrorNote, TextInput, NumberInput, CategorySelect, AccountSelect, AsyncPipe, TranslatePipe,
+    IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonList, IonListHeader, IonItem, IonLabel, IonButton, IonNote
   ],
-  styles: [`@media (width <= 600px) { ion-card { margin: 5px; } }`],
+  styles: [`
+    @media (width <= 600px) { ion-card { margin: 5px; } }
+    .helper { display: block; font-size: 0.8rem; padding: 4px 16px 0; }
+    .price-table ion-item { --min-height: 32px; font-size: 0.9rem; }
+  `],
   template: `
     @if (showForm()) {
       <form novalidate>
@@ -79,9 +87,11 @@ import {
                 </ion-col>
                 @if (source() === 'category') {
                   <ion-col size="12" size-md="6">
-                    <!-- the name of an mcat price list; it is data, not a typed name, so no cap -->
-                    <okr-text-input [i18n]="categoryListI18n()" [value]="categoryList()"
-                      (valueChange)="onFieldChange('categoryList', $event)" [readOnly]="isReadOnly()" />
+                    <okr-cat-select [category]="categoryListCategory()" [selectedItemName]="effectiveCategoryList()"
+                      (selectedItemNameChange)="onCategoryListChange($event)"
+                      [fieldStyle]="true" [label]="i18n().feeSchedule_position_categoryList_label()"
+                      [showIcons]="false" [readOnly]="isReadOnly()" />
+                    <ion-note class="helper">{{ i18n().feeSchedule_position_categoryList_helper() }}</ion-note>
                     <okr-error-note [errors]="categoryListErrors()" />
                   </ion-col>
                 }
@@ -104,6 +114,30 @@ import {
                   </ion-col>
                 }
               </ion-row>
+
+              @if (source() === 'category') {
+                <ion-row>
+                  <ion-col size="12">
+                    <!-- read-only: prices live on the category list, the schedule only points at it -->
+                    <ion-list lines="none" class="price-table">
+                      <ion-list-header>
+                        <ion-label>{{ i18n().feeSchedule_position_categoryList_prices() }}</ion-label>
+                        @if (selectedCategoryListModel(); as list) {
+                          <ion-button fill="clear" size="small" (click)="editCategoryList.emit(list)">
+                            {{ i18n().feeSchedule_position_categoryList_edit() }}
+                          </ion-button>
+                        }
+                      </ion-list-header>
+                      @for (item of selectedCategoryListModel()?.items ?? []; track item.name) {
+                        <ion-item>
+                          <ion-label>{{ itemLabel(item.name) | translate | async }}</ion-label>
+                          <ion-label slot="end" class="ion-text-end">{{ item.price ?? 0 }}</ion-label>
+                        </ion-item>
+                      }
+                    </ion-list>
+                  </ion-col>
+                </ion-row>
+              }
 
               @if (source() !== 'category') {
                 <ion-row>
@@ -149,12 +183,16 @@ export class FeePositionForm {
   public readonly tenantId = input.required<string>();
   public readonly accounts = input<AccountModel[]>([]);
   public readonly vatCodes = input<VatCodeModel[]>([]);
+  public readonly categoryLists = input<CategoryListModel[]>([]);
+  /** the owner org's own price list (`OrgModel.membershipCategoryKey`), used when `categoryList` is empty */
+  public readonly defaultCategoryList = input('mcat');
   public readonly readOnly = input(true);
   public readonly showForm = input(true);
 
   // outputs
   public readonly dirty = output<boolean>();
   public readonly valid = output<boolean>();
+  public readonly editCategoryList = output<CategoryListModel>();
 
   // signal form — wraps formData with Vest validation
   protected readonly feePositionForm = form(this.formData, (path) =>
@@ -198,6 +236,13 @@ export class FeePositionForm {
   protected readonly sourceCategory = computed(() => getFeeSourceCategory(this.tenantId()));
   protected readonly flagCategory = computed(() => getFeeFlagCategory(this.tenantId()));
   protected readonly ruleCategory = computed(() => getFeeRuleCategory(this.tenantId()));
+  // An empty `categoryList` means "the org's own list" — it then follows the org if that changes.
+  // Only an override (e.g. mcat_srv for the SRV fee) is stored.
+  protected readonly effectiveCategoryList = computed(() => this.categoryList() || this.defaultCategoryList());
+  protected readonly categoryListCategory = computed(() =>
+    getFeeCategoryListCategory(this.tenantId(), this.categoryLists(), this.effectiveCategoryList()));
+  protected readonly selectedCategoryListModel = computed(() =>
+    this.categoryLists().find(list => list.name === this.effectiveCategoryList()));
   protected readonly vatCodeCategory = computed(() => getVatCodeCategory(this.tenantId(), this.vatCodes()));
 
   protected keyI18n = computed(() => ({
@@ -212,13 +257,6 @@ export class FeePositionForm {
     label: this.i18n().feeSchedule_position_label_label(),
     placeholder: this.i18n().feeSchedule_position_label_placeholder(),
     helper: this.i18n().feeSchedule_position_label_helper()
-  } as TextInputI18n));
-
-  protected categoryListI18n = computed(() => ({
-    name: 'categoryList',
-    label: this.i18n().feeSchedule_position_categoryList_label(),
-    placeholder: this.i18n().feeSchedule_position_categoryList_placeholder(),
-    helper: this.i18n().feeSchedule_position_categoryList_helper()
   } as TextInputI18n));
 
   protected amountI18n = computed(() => ({
@@ -237,6 +275,16 @@ export class FeePositionForm {
   protected onFieldChange(fieldName: string, fieldValue: string): void {
     this.dirty.emit(true);
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
+  }
+
+  protected onCategoryListChange(name: string): void {
+    this.onFieldChange('categoryList', name === this.defaultCategoryList() ? '' : name);
+  }
+
+  /** the item's i18n key (or its plain name for an untranslated list), resolved in the template */
+  protected itemLabel(itemName: string): string {
+    const list = this.selectedCategoryListModel();
+    return list ? getItemLabel(list, itemName) : itemName;
   }
 
   protected onNumberChange(fieldName: string, fieldValue: number): void {

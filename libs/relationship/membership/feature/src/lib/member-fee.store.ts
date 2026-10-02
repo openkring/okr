@@ -202,7 +202,12 @@ export const _MemberFeesStore = signalStore(
       store.accountingConfigResource.status() === 'resolved' ||
       store.accountingConfigResource.status() === 'local'),
 
-    mcatScsCategory: computed(() => store.appStore.allCategories()?.find(c => c.name === 'mcat_scs')),
+    // The org names its own membership-category list; legacy org docs may lack the field.
+    membershipCategoryKey: computed(() => store.appStore.defaultOrg()?.membershipCategoryKey || 'mcat'),
+  })),
+
+  withComputed((store) => ({
+    mcatScsCategory: computed(() => store.appStore.allCategories()?.find(c => c.name === store.membershipCategoryKey())),
   })),
 
   withComputed((store) => ({
@@ -213,11 +218,12 @@ export const _MemberFeesStore = signalStore(
       const feeMap = store.feeRecordsByMemberKey();
       const schedule = store.feeSchedule();
       const categoryLists = store.categoryLists();
+      const defaultCategoryList = store.membershipCategoryKey();
 
       return store.defaultOrgMemberships().map((membership: MembershipModel) => {
         const existing = feeMap.get(membership.memberKey);
         if (existing) return existing;
-        return deriveFee(membership, schedule, categoryLists, lockerKeys, tenantId);
+        return deriveFee(membership, schedule, categoryLists, defaultCategoryList, lockerKeys, tenantId);
       });
     }),
 
@@ -227,7 +233,7 @@ export const _MemberFeesStore = signalStore(
       return map;
     }),
 
-    mcatCategory: computed(() => store.appStore.allCategories()?.find(c => c.name === 'mcat_scs')),
+    mcatCategory: computed(() => store.appStore.allCategories()?.find(c => c.name === store.membershipCategoryKey())),
   })),
 
   withComputed((store) => ({
@@ -284,7 +290,7 @@ export const _MemberFeesStore = signalStore(
 
       const members = store.defaultOrgMemberships().filter((m: MembershipModel) => !feeMap.has(m.memberKey));
       const saves = members.map((m: MembershipModel) => {
-          const fee = deriveFee(m, schedule, categoryLists, lockerKeys, tenantId);
+          const fee = deriveFee(m, schedule, categoryLists, store.membershipCategoryKey(), lockerKeys, tenantId);
           return store.memberFeeService.save(fee, currentUser, false);
       });
       const msg = 'generated ' + members.length + ' scs member fees.';
@@ -540,6 +546,7 @@ function deriveFee(
   membership: MembershipModel,
   schedule: FeeScheduleEntry,
   categoryLists: Record<string, Record<string, number>>,
+  defaultCategoryList: string,
   lockerOwnerKeys: Set<string>,
   tenantId: string,
 ): MemberFeeModel {
@@ -570,6 +577,7 @@ function deriveFee(
     hasLocker: lockerOwnerKeys.has(membership.memberKey),
     currentYear: schedule.year,
     categoryLists,
+    defaultCategoryList,
   });
 
   // The per-member rebate (Ausbildungs-/Familienrabatt) is an override a treasurer set on THIS

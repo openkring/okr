@@ -13,8 +13,8 @@ describe('feePositionValidations', () => {
     expect(feePositionValidations(rule()).isValid()).toBe(true);
   });
 
-  it('requires a category list for a category rule', () => {
-    expect(feePositionValidations(rule({ categoryList: '' })).isValid()).toBe(false);
+  it('accepts a category rule without a list (falls back to the org default)', () => {
+    expect(feePositionValidations(rule({ categoryList: '' })).isValid()).toBe(true);
   });
 
   it('requires an amount for a flag rule', () => {

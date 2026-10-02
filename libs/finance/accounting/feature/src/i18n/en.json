@@ -79,7 +79,9 @@
       "categoryList": {
         "label": "Category price list",
         "placeholder": "Choose price list",
-        "helper": "The price list the amount is taken from, per membership category. Only needed when the source is 'Category'."
+        "helper": "Each member pays the price of their category from this list. Your club's own list is preset; choose another one only for a special case such as the SRV fee.",
+        "prices": "Prices in this list",
+        "edit": "Edit prices"
       },
       "flag": {
         "label": "Flag",

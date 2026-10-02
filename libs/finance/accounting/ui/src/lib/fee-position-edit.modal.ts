@@ -1,7 +1,7 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
-import { AccountModel, FeePositionRule, VatCodeModel } from '@okr/shared-models';
+import { AccountModel, CategoryListModel, FeePositionRule, VatCodeModel } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
 import { coerceBoolean, safeStructuredClone } from '@okr/shared-util-core';
 import { dismissOverlay } from '@okr/shared-util-angular';
@@ -35,6 +35,9 @@ import { FeePositionForm } from './fee-position.form';
           [tenantId]="tenantId()"
           [accounts]="accounts()"
           [vatCodes]="vatCodes()"
+          [categoryLists]="localCategoryLists()"
+          [defaultCategoryList]="defaultCategoryList()"
+          (editCategoryList)="onEditCategoryList($event)"
           [showForm]="showForm()"
           [readOnly]="isReadOnly()"
           [i18n]="i18n()"
@@ -54,6 +57,16 @@ export class FeePositionEditModal {
   public readonly tenantId = input.required<string>();
   public readonly accounts = input<AccountModel[]>([]);
   public readonly vatCodes = input<VatCodeModel[]>([]);
+  public readonly categoryLists = input<CategoryListModel[]>([]);
+  public readonly defaultCategoryList = input('mcat');
+  /**
+   * Opens the category editor (a feature-lib concern, so the page supplies it) and resolves to the
+   * saved list. A callback rather than an output: this modal's opener awaits its dismissal and
+   * cannot listen to outputs, and the saved list must flow back in to refresh the price table.
+   */
+  public readonly editCategoryListFn = input<((list: CategoryListModel) => Promise<CategoryListModel | undefined>) | undefined>();
+  // componentProps are a snapshot — keep a local copy the edit callback can refresh
+  protected readonly localCategoryLists = linkedSignal(() => this.categoryLists());
   public readonly readOnly = input(true);
   protected readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
@@ -81,6 +94,11 @@ export class FeePositionEditModal {
     this.formData.set(safeStructuredClone(this.position()));
     this.showForm.set(false);
     setTimeout(() => this.showForm.set(true), 0);
+  }
+
+  protected async onEditCategoryList(list: CategoryListModel): Promise<void> {
+    const saved = await this.editCategoryListFn()?.(list);
+    if (saved) this.localCategoryLists.update(lists => lists.map(l => l.name === list.name ? saved : l));
   }
 
   protected onFormDataChange(formData: FeePositionRule): void {

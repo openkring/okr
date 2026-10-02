@@ -86,3 +86,18 @@ export function getVatCodeCategory(
     (item, index) => new CategoryItemModel(item.name, '', vatCodes[index].code));
   return category;
 }
+
+/**
+ * The price lists a `source: 'category'` position may read from, as a category. A position looks
+ * up `membership.category` in the chosen list, and membership categories only ever come from the
+ * `mcat*` lists — any other list could never match a member and would silently yield 0. Names are
+ * data, so no translation. A value already stored outside that set is kept selectable, so opening
+ * a legacy position never drops it.
+ */
+export function getFeeCategoryListCategory(
+  tenantId: string, categoryLists: readonly { name: string }[], current = ''
+): CategoryListModel {
+  const names = new Set(categoryLists.map(list => list.name).filter(name => name.startsWith('mcat')));
+  if (current) names.add(current);
+  return buildCategory(tenantId, 'categoryList', [...names].sort(), '', false);
+}

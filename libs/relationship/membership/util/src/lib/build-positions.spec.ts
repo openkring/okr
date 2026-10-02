@@ -32,6 +32,20 @@ describe('buildPositions', () => {
     expect(result[0].amount).toBe(0);
   });
 
+  it('falls back to the org default list when the position names none', () => {
+    const result = buildPositions(membership(), schedule([
+      { key: 'jb', usage: 'membershipFee', type: 'fix', label: 'Jahresbeitrag', source: 'category' },
+    ]), ctx({ categoryLists: { mcat_scs: { active: 320 } }, defaultCategoryList: 'mcat_scs' }));
+    expect(result[0].amount).toBe(320);
+  });
+
+  it('prefers an explicit list over the org default (SRV override)', () => {
+    const result = buildPositions(membership(), schedule([
+      { key: 'srv', usage: 'srvFee', type: 'fix', label: 'SRV-Beitrag', source: 'category', categoryList: 'mcat_srv' },
+    ]), ctx({ categoryLists: { mcat_scs: { active: 320 }, mcat_srv: { active: 75 } }, defaultCategoryList: 'mcat_scs' }));
+    expect(result[0].amount).toBe(75);
+  });
+
   it('charges a flag position only when the flag holds', () => {
     const rule = { key: 'locker', usage: 'lockerRental', type: 'fix', label: 'Kästchen',
       source: 'flag' as const, flag: 'hasLocker' as const, amount: 20 };

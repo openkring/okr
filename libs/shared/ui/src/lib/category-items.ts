@@ -14,6 +14,7 @@ export interface CategoryItemsI18n {
   subTitle: string;
   add: string;
   empty: string;
+  price: string;
 }
 
 @Component({
@@ -27,6 +28,7 @@ export interface CategoryItemsI18n {
     IonReorderGroup, IonReorder,
     IonCard, IonCardHeader, IonCardTitle, IonCardSubtitle, IonCardContent
   ],
+  styles: [`.item-price { max-width: 120px; text-align: end; }`],
   template: `
     <ion-card>
       <ion-card-header>
@@ -63,6 +65,15 @@ export interface CategoryItemsI18n {
             [counter]="true"
             [maxlength]="20"
             placeholder="ssssss"/>
+          @if(hasPrice()) {
+            <ion-input name="price" [value]="newItem.price" (ionInput)="onChange('price', $event)"
+              [label]="labels().price"
+              labelPlacement="floating"
+              inputMode="decimal"
+              type="number"
+              [min]="0"
+              placeholder="0.00"/>
+          }
           <ion-button [disabled]="isDisabled()" (click)="add()">{{ labels().add }}</ion-button>
         </ion-item>
 
@@ -83,6 +94,11 @@ export interface CategoryItemsI18n {
                       <ion-label>{{ item.abbreviation }}</ion-label>
                     }
                     <ion-label>{{ item.icon }}</ion-label>
+                    @if(hasPrice()) {
+                      <!-- edited in place: a treasurer changes prices year by year without re-creating the item -->
+                      <ion-input class="item-price" [value]="item.price ?? 0" (ionChange)="setPrice($index, $event)"
+                        [attr.aria-label]="labels().price" inputMode="decimal" type="number" [min]="0" />
+                    }
                     <ion-icon src="{{'cancel' | svgIcon }}" (click)="remove(item.name)" slot="end" />
                   </ion-item>
                 }
@@ -102,15 +118,19 @@ export class CategoryItems {
   private readonly defaults = inject(I18nService).translateAll({
     title: '@shared/ui.categoryItems.title', subTitle: '@shared/ui.categoryItems.subTitle',
     add: '@shared/ui.categoryItems.add', empty: '@shared/ui.categoryItems.empty',
+    price: '@shared/ui.categoryItems.price',
   });
   protected readonly labels = computed<CategoryItemsI18n>(() => ({
     title:    this.i18n().title    ?? this.defaults.title(),
     subTitle: this.i18n().subTitle ?? this.defaults.subTitle(),
     add:      this.i18n().add      ?? this.defaults.add(),
     empty:    this.i18n().empty    ?? this.defaults.empty(),
+    price:    this.i18n().price    ?? this.defaults.price(),
   }));
   public wordMask = input(LowercaseWordMask);
   public hasAbbreviation = input<boolean>(false);
+  /** shows a price per item — for price lists such as the membership categories (`mcat*`) */
+  public hasPrice = input<boolean>(false);
   public changed = output<CategoryItemModel[]>();
   
   protected newItem = new CategoryItemModel('', '');
@@ -130,7 +150,7 @@ export class CategoryItems {
         this.newItem.state = event.detail.value as string;
         break;
       case 'price':
-        this.newItem.price = parseInt(event.detail.value);
+        this.newItem.price = this.parsePrice(event.detail.value);
         break;
       case 'currency':
         this.newItem.currency = event.detail.value as string;
@@ -151,6 +171,18 @@ export class CategoryItems {
     this.items().push(this.newItem);
     this.newItem = new CategoryItemModel('', '');
     this.changed.emit(this.items());
+  }
+
+  protected setPrice(index: number, event: CustomEvent): void {
+    const items = this.items().map((item, i) => i === index ? { ...item, price: this.parsePrice(event.detail.value) } : item);
+    this.items.set(items);
+    this.changed.emit(items);
+  }
+
+  /** an empty or invalid entry becomes undefined (the validation skips it) rather than NaN */
+  private parsePrice(value: string | null | undefined): number | undefined {
+    const price = parseFloat(value ?? '');
+    return isNaN(price) ? undefined : price;
   }
 
   protected remove(name: string): void {

@@ -14,8 +14,10 @@ export const feePositionValidations = staticSuite(
     stringValidations('usage', model.usage, undefined, 0, true);
     stringValidations('type', model.type, undefined, 0, true);
     stringValidations('source', model.source, undefined, 0, true);
+    // categoryList is optional: empty means the owner org's own list (OrgModel.membershipCategoryKey);
+    // only an override such as mcat_srv is stored. Selector value — no length cap.
     omitWhen(model.source !== 'category', () => {
-      stringValidations('categoryList', model.categoryList ?? '', undefined, 0, true);
+      stringValidations('categoryList', model.categoryList ?? '', undefined, 0, false);
     });
     omitWhen(model.source !== 'flag', () => {
       // selector value (a FeeFlag key) — no length cap.

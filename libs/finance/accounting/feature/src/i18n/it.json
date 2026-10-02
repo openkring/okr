@@ -79,7 +79,9 @@
       "categoryList": {
         "label": "Tariffario per categoria",
         "placeholder": "Scegli il tariffario",
-        "helper": "Il tariffario da cui proviene l’importo in base alla categoria del socio. Necessario solo se l’origine è «Categoria»."
+        "helper": "Ogni socio paga il prezzo della sua categoria secondo questo tariffario. Il tariffario del tuo club è preimpostato; scegline un altro solo per un caso particolare come la quota SRV.",
+        "prices": "Prezzi di questo tariffario",
+        "edit": "Modifica i prezzi"
       },
       "flag": {
         "label": "Attributo",

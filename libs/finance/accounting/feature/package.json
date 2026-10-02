@@ -20,6 +20,7 @@
     "@okr/finance-accounting-ui": "*",
     "@okr/finance-accounting-util": "*",
     "@okr/finance-cost-center-data-access": "*",
-    "@okr/content-pdf-template-data-access": "*"
+    "@okr/content-pdf-template-data-access": "*",
+    "@okr/category-feature": "*"
   }
 }

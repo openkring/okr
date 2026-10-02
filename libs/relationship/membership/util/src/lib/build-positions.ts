@@ -8,6 +8,8 @@ export interface FeeContext {
   currentYear: number;
   /** category-list name -> category -> price, flattened by the caller from the category lists. */
   categoryLists: Record<string, Record<string, number>>;
+  /** the org's own price list (`OrgModel.membershipCategoryKey`), used when a rule names none */
+  defaultCategoryList?: string;
 }
 
 const FLAGS: Record<string, (m: MembershipModel, ctx: FeeContext) => boolean> = {
@@ -29,7 +31,7 @@ const RULES: Record<string, (m: MembershipModel, ctx: FeeContext) => boolean> = 
 function amountOf(rule: FeePositionRule, membership: MembershipModel, ctx: FeeContext): number {
   switch (rule.source) {
     case 'category':
-      return ctx.categoryLists[rule.categoryList ?? '']?.[membership.category] ?? 0;
+      return ctx.categoryLists[rule.categoryList || ctx.defaultCategoryList || '']?.[membership.category] ?? 0;
     case 'flag':
       return FLAGS[rule.flag ?? '']?.(membership, ctx) ? (rule.amount ?? 0) : 0;
     case 'rule':

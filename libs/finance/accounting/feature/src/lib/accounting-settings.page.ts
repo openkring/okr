@@ -4,12 +4,13 @@ import { Router } from '@angular/router';
 import { IonContent } from '@ionic/angular/standalone';
 import { of } from 'rxjs';
 
-import { AccountingConfigModel } from '@okr/shared-models';
+import { AccountingConfigModel, CategoryListModel } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header, HeaderI18n } from '@okr/shared-ui';
 import { hasRole } from '@okr/shared-util-core';
 
 import { TemplateService } from '@okr/content-pdf-template-data-access';
 
+import { CategoryStore } from '@okr/category-feature';
 import { AccountService } from '@okr/finance-account-data-access';
 import { CostCenterService } from '@okr/finance-cost-center-data-access';
 import { VatCodeService } from '@okr/finance-vat-code-data-access';
@@ -28,6 +29,7 @@ import { ReadOnlyBanner } from './read-only-banner';
   selector: 'okr-accounting-settings-page',
   standalone: true,
   imports: [Header, ChangeConfirmation, ReadOnlyBanner, AccountingConfigForm, FeeSchedule, IonContent],
+  providers: [CategoryStore],
   template: `
     <okr-header [i18n]="headerI18n()" [isModal]="false" />
     @if (showConfirmation()) {
@@ -47,6 +49,8 @@ import { ReadOnlyBanner } from './read-only-banner';
              so this section brings none of its own — it only reports that the config is dirty. -->
         <okr-fee-schedule [formData]="config" (formDataChange)="onFeeScheduleChange($event)"
           [i18n]="store.i18n" [accounts]="accounts()" [vatCodes]="vatCodes()"
+          [categoryLists]="store.appStore.allCategories()" [defaultCategoryList]="defaultCategoryList()"
+          [editCategoryListFn]="editCategoryList"
           [readOnly]="store.isExternallyManaged()" />
       }
     </ion-content>
@@ -85,6 +89,18 @@ export class AccountingSettingsPage {
   private readonly templatesResource = rxResource({ stream: () => this.templateService.list() });
   protected readonly templates = computed(() => this.templatesResource.value() ?? []);
   // `/templates` is guarded by isContentAdminGuard — offer the link only to whom it lets in.
+  private readonly categoryStore = inject(CategoryStore);
+
+  // A "Kategorie" fee position without an explicit list reads the owner org's membership-category
+  // list. The owner org of an accounting tenant is orgs/{accountingTenantId}; legacy org docs may
+  // lack the field, hence the fallback to the shared default.
+  protected readonly defaultCategoryList = computed(() =>
+    this.store.appStore.allOrgs().find(org => org.okey === this.store.accountingTenantId())?.membershipCategoryKey || 'mcat');
+
+  /** opens the category editor over the fee-position modal; same role as the category admin route */
+  protected readonly editCategoryList = (list: CategoryListModel): Promise<CategoryListModel | undefined> =>
+    this.categoryStore.edit(list, !hasRole('contentAdmin', this.store.currentUser()));
+
   protected readonly canManageTemplates = computed(() => hasRole('contentAdmin', this.store.currentUser()));
 
   // A tenant may have no config document yet — edit a fresh one and create it on save. Only

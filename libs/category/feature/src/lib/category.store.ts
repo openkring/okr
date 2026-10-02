@@ -92,7 +92,8 @@ export const CategoryStore = signalStore(
           await this.edit(cat, readOnly);
       },
 
-      async edit(category: CategoryListModel, readOnly = true): Promise<void> {
+      /** Opens the editor; resolves to the saved list, or undefined when nothing was saved. */
+      async edit(category: CategoryListModel, readOnly = true): Promise<CategoryListModel | undefined> {
         const modal = await store.modalController.create({
           component: CategoryEditModal,
           componentProps: {
@@ -111,9 +112,12 @@ export const CategoryStore = signalStore(
               await store.categoryService.create(data, store.currentUser()) :
               await store.categoryService.update(data, store.currentUser());
             store.appStore.reloadCategories();
+            store.categoriesResource.reload();
+            return data;
           }
         }
         store.categoriesResource.reload();
+        return undefined;
       },
 
       async delete(cat: CategoryListModel, readOnly = true): Promise<void> {

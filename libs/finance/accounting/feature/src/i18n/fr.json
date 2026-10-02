@@ -79,7 +79,9 @@
       "categoryList": {
         "label": "Barème par catégorie",
         "placeholder": "Choisir le barème",
-        "helper": "Le barème dont provient le montant selon la catégorie de membre. Nécessaire seulement si l’origine est « Catégorie »."
+        "helper": "Chaque membre paie le prix de sa catégorie selon ce barème. Le barème de ton club est proposé par défaut ; choisis-en un autre seulement pour un cas particulier comme la cotisation SRV.",
+        "prices": "Prix de ce barème",
+        "edit": "Modifier les prix"
       },
       "flag": {
         "label": "Attribut",

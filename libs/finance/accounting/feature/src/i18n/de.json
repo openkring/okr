@@ -79,7 +79,9 @@
       "categoryList": {
         "label": "Kategorie-Preisliste",
         "placeholder": "Preisliste wählen",
-        "helper": "Die Preisliste, aus der die Höhe des Betrags je Mitgliederkategorie stammt. Nur nötig, wenn die Herkunft «Kategorie» ist."
+        "helper": "Jedes Mitglied zahlt den Preis seiner Kategorie aus dieser Liste. Vorgegeben ist die Liste deines Vereins; wähle nur für einen Spezialfall wie den SRV-Beitrag eine andere.",
+        "prices": "Preise dieser Liste",
+        "edit": "Preise bearbeiten"
       },
       "flag": {
         "label": "Merkmal",

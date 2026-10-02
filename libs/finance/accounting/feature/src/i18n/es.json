@@ -79,7 +79,9 @@
       "categoryList": {
         "label": "Tarifa por categoría",
         "placeholder": "Elegir tarifa",
-        "helper": "La tarifa de la que procede el importe según la categoría del socio. Solo necesario si el origen es «Categoría»."
+        "helper": "Cada socio paga el precio de su categoría según esta tarifa. La tarifa de tu club viene preseleccionada; elige otra solo para un caso especial como la cuota SRV.",
+        "prices": "Precios de esta tarifa",
+        "edit": "Editar precios"
       },
       "flag": {
         "label": "Atributo",

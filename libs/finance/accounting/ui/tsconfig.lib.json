@@ -21,6 +21,7 @@
     { "path": "../../cost-center/ui/tsconfig.lib.json" },
     { "path": "../../../shared/config/tsconfig.lib.json" },
     { "path": "../../../shared/constants/tsconfig.lib.json" },
+    { "path": "../../../shared/i18n/tsconfig.lib.json" },
     { "path": "../../../shared/models/tsconfig.lib.json" },
     { "path": "../../../shared/pipes/tsconfig.lib.json" },
     { "path": "../../../shared/ui/tsconfig.lib.json" },

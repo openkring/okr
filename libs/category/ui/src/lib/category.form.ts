@@ -50,6 +50,7 @@ import { DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS, DESCRIPTION_LENGTH, NAME_LEN
       <okr-category-items
         [items]="items()"
         [hasAbbreviation]="hasAbbreviation()"
+        [hasPrice]="hasPrice()"
         (changed)="onFieldChange('items', $event)"
       />
 
@@ -105,6 +106,8 @@ export class CategoryListForm {
   protected items = linkedSignal(() => this.formData().items ?? []);
   protected translateItems = linkedSignal(() => this.formData().translateItems ?? false);
   protected okey = computed(() => this.formData().okey ?? '');
+  /** membership categories are price lists (the fee schedule reads them); any list that already carries a price stays editable */
+  protected hasPrice = computed(() => this.name().startsWith('mcat') || this.items().some(item => (item.price ?? 0) > 0));
 
   protected okeyI18n = computed(() => ({
     name: 'okey',
