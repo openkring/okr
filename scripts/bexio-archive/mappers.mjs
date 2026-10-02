@@ -78,6 +78,23 @@ export function mergeArchivedReminders(existing, archived) {
   return [...archived.filter(r => !nativeLevels.has(r.level)), ...native].sort((a, b) => (a.level ?? 0) - (b.level ?? 0));
 }
 
+/**
+ * The payments to store on a re-run: the archived bexio payments plus every payment recorded in okr
+ * since the migration (recordInvoicePayment sets a bookingKey; archived bexio payments carry ''),
+ * oldest first. Without this a re-run would wipe native payments and leave their bookings orphaned.
+ */
+export function mergeArchivedPayments(existing, archived) {
+  const native = (existing ?? []).filter(p => typeof p?.bookingKey === 'string' && p.bookingKey !== '');
+  return [...archived, ...native].sort((a, b) => String(a.date).localeCompare(String(b.date)));
+}
+
+/** True when okr has recorded payments or reminders on this invoice since the migration (bexio no longer knows its state). */
+export function hasNativeActivity(data) {
+  const payments = Array.isArray(data?.payments) ? data.payments : [];
+  const reminders = Array.isArray(data?.reminders) ? data.reminders : [];
+  return payments.some(p => typeof p?.bookingKey === 'string' && p.bookingKey !== '') || reminders.some(isNativeReminder);
+}
+
 /** CommentModel shape (libs/shared/models/src/lib/comment.model.ts). All bexio comments are internal (spec §5 Q3). */
 export function mapComment(c, invoiceOkey, tenantId, attachmentKeys) {
   const dt = String(c.date ?? '').replace(/[^0-9]/g, '').padEnd(14, '0').substring(0, 14);

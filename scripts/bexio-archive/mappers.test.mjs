@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   isoToStoreDate, toRappen, accountOkey, mapInvoiceState, mapBillState, fileOkey, filePath,
-  mapInvoicePayment, mapReminder, mapComment, mapBillPayment, staleIds, journalLineAmounts, isNativeReminder, mergeArchivedReminders,
+  mapInvoicePayment, mapReminder, mapComment, mapBillPayment, staleIds, journalLineAmounts, isNativeReminder, mergeArchivedReminders, mergeArchivedPayments, hasNativeActivity,
 } from './mappers.mjs';
 
 test('dates and money', () => {
@@ -82,4 +82,21 @@ test('native reminders are recognised and survive a merge', () => {
   const native = { level: 2, documentKey: 'invoice-7-reminder-2', bookingKey: 'invoice-7-reminder-2' };
   assert.deepEqual(mergeArchivedReminders([{ level: 1, documentKey: 'bexio-old', bookingKey: '' }, native], archived), [archived[0], native]);
   assert.deepEqual(mergeArchivedReminders([native], [{ level: 2, documentKey: 'bexio-reminder-7-2', bookingKey: '' }]), [native]);
+});
+
+test('a re-run keeps payments recorded in okr (spec 1.76 phase 2) next to the archived bexio ones', () => {
+  const archived = [{ date: '20250310', amount: 5000, bankAccountKey: 'scs0077', bookingKey: '' }];
+  assert.deepEqual(mergeArchivedPayments(undefined, archived), archived);
+  const native = { date: '20261015', amount: 2500, bankAccountKey: 'scs0077', bookingKey: 'invoice-7-pay-Ab12Cd34Ef' };
+  const oldArchived = { date: '20250301', amount: 1, bankAccountKey: '', bookingKey: '' };
+  assert.deepEqual(mergeArchivedPayments([oldArchived, native], archived), [archived[0], native]);
+  const early = { date: '20250101', amount: 100, bankAccountKey: 'scs0077', bookingKey: 'bank-row-9' };
+  assert.deepEqual(mergeArchivedPayments([early], archived).map(p => p.date), ['20250101', '20250310']);
+});
+
+test('an invoice with okr payments or reminders keeps its own state on a reconcile re-run', () => {
+  assert.equal(hasNativeActivity({ payments: [{ bookingKey: '' }], reminders: [{ documentKey: 'bexio-reminder-7-1', bookingKey: '' }] }), false);
+  assert.equal(hasNativeActivity({}), false);
+  assert.equal(hasNativeActivity({ payments: [{ bookingKey: 'invoice-7-pay-Ab12Cd34Ef' }] }), true);
+  assert.equal(hasNativeActivity({ reminders: [{ level: 2, documentKey: 'invoice-7-reminder-2', bookingKey: '' }] }), true);
 });
