@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseSwissAmount, pickFavoriteByChannel, buildQrSlipData, QrPayee } from './qr-slip.util';
+import { parseSwissAmount, pickFavoriteByChannel, buildQrSlipData, pickBankIbans, QrPayee, selectSlipAccount, SlipAccountError } from './qr-slip.util';
 import { AddressModel } from '@okr/shared-models';
 
 describe('parseSwissAmount', () => {
@@ -46,7 +46,7 @@ describe('pickFavoriteByChannel', () => {
 });
 
 const payee: QrPayee = {
-  name: 'Gönnerverein', iban: 'CH64 8080 8003 3249 8735 9',
+  name: 'Gönnerverein', iban: 'CH64 8080 8003 3249 8735 9', qrIban: '', regularIban: 'CH64 8080 8003 3249 8735 9',
   street: 'Seestrasse', buildingNumber: '1', zip: '8712', city: 'Stäfa', country: 'CH',
 };
 const payload = {
@@ -77,12 +77,65 @@ describe('buildQrSlipData', () => {
 });
 
 describe('buildQrSlipData message', () => {
-  const msgPayee: QrPayee = { name: 'SCS', iban: 'CH93 0076 2011 6238 5295 7', street: 'Seestrasse', buildingNumber: '1', zip: '8712', city: 'Stäfa', country: 'CH' };
+  const msgPayee: QrPayee = { name: 'SCS', iban: 'CH93 0076 2011 6238 5295 7', qrIban: '', regularIban: 'CH93 0076 2011 6238 5295 7', street: 'Seestrasse', buildingNumber: '1', zip: '8712', city: 'Stäfa', country: 'CH' };
   it('carries payload.qrMessage as the unstructured message', () => {
     expect(buildQrSlipData(msgPayee, { qrMessage: 'Rechnung 202600001' }, false).message).toBe('Rechnung 202600001');
   });
   it('omits an empty message and caps it at 140 characters', () => {
     expect(buildQrSlipData(msgPayee, {}, false)).not.toHaveProperty('message');
     expect(buildQrSlipData(msgPayee, { qrMessage: 'x'.repeat(200) }, false).message).toHaveLength(140);
+  });
+});
+
+const QR = 'CH4431999123000889012';
+const REG = 'CH9300762011623852957';
+const REF = '210000000003139471430009017';
+const slipPayee = (qrIban: string, regularIban: string): QrPayee => ({
+  name: 'SCS', iban: regularIban || qrIban, qrIban, regularIban, street: 'Seestr.', buildingNumber: '1', zip: '8000', city: 'Zürich', country: 'CH',
+});
+const bank = (iban: string, isFavorite = false, isArchived = false) =>
+  ({ addressChannel: 'bankaccount', iban, isFavorite, isArchived }) as unknown as AddressModel;
+
+describe('pickBankIbans', () => {
+  it('classifies favorite-else-first per kind, skipping archived', () => {
+    expect(pickBankIbans([bank(REG), bank(QR), bank('CH4430000000000000000', true)]))
+      .toEqual({ qrIban: 'CH4430000000000000000', regularIban: REG });
+    expect(pickBankIbans([bank(QR, false, true), bank(REG)])).toEqual({ qrIban: '', regularIban: REG });
+  });
+});
+
+describe('selectSlipAccount', () => {
+  it('reference + QR-IBAN → QRR on the QR-IBAN', () => {
+    expect(selectSlipAccount(slipPayee(QR, REG), REF)).toEqual({ account: QR, reference: REF });
+  });
+  it('reference without QR-IBAN → regular IBAN, no reference', () => {
+    expect(selectSlipAccount(slipPayee('', REG), REF)).toEqual({ account: REG });
+  });
+  it('no reference → regular IBAN even when a QR-IBAN exists', () => {
+    expect(selectSlipAccount(slipPayee(QR, REG), '')).toEqual({ account: REG });
+  });
+  it('only a QR-IBAN and no reference → error', () => {
+    expect(() => selectSlipAccount(slipPayee(QR, ''), '')).toThrow(SlipAccountError);
+  });
+  it('no IBAN at all → error', () => {
+    expect(() => selectSlipAccount(slipPayee('', ''), REF)).toThrowError(/no-iban/);
+  });
+});
+
+describe('buildQrSlipData with an account', () => {
+  it('uses the selected account and carries the reference', () => {
+    const d = buildQrSlipData(slipPayee(QR, REG), {}, false, { account: QR, reference: REF });
+    expect(d.creditor.account).toBe(QR);
+    expect(d.reference).toBe(REF);
+  });
+  it('defaults to payee.iban without reference', () => {
+    const d = buildQrSlipData(slipPayee('', REG), {}, false);
+    expect(d.creditor.account).toBe(REG);
+    expect(d.reference).toBeUndefined();
+  });
+  it('QRR with a message carries both reference and message', () => {
+    const d = buildQrSlipData(slipPayee(QR, REG), { qrMessage: 'Rechnung 1' }, false, { account: QR, reference: REF });
+    expect(d.reference).toBe(REF);
+    expect(d.message).toBe('Rechnung 1');
   });
 });

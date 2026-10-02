@@ -5,6 +5,7 @@ import * as path from 'path';
 import { randomUUID } from 'crypto';
 import { getStorage } from 'firebase-admin/storage';
 import { getFirestore } from 'firebase-admin/firestore';
+import type { Firestore } from 'firebase-admin/firestore';
 import { HttpsError } from 'firebase-functions/v2/https';
 import * as logger from 'firebase-functions/logger';
 // handlebars and html-to-docx are imported dynamically inside the handler so they
@@ -12,6 +13,7 @@ import * as logger from 'firebase-functions/logger';
 // function; top-level heavy imports OOM low-memory functions — see browser-pool.ts).
 
 import {
+  InvoiceCollection,
   TemplateCollection,
   TemplateVersionSubcollection,
   DocGenerationCollection,
@@ -23,7 +25,7 @@ import { registerHelpers } from './handlebars-helpers';
 import { getBrowser } from './browser-pool';
 import { compileTemplate } from './template-cache';
 import { resolvePayee, renderQrSlipSvg, buildQrSlipPageHtml } from './qr-slip';
-import { buildQrSlipData } from '@okr/shared-util-functions';
+import { buildQrSlipData, selectSlipAccount, SlipAccountError } from '@okr/shared-util-functions';
 import { resolveAssetUrls } from './asset-resolver';
 import { sanitizeHtml } from './sanitize';
 
@@ -34,6 +36,16 @@ async function ensureHelpers(): Promise<void> {
   if (helpersRegistered) return;
   await registerHelpers();
   helpersRegistered = true;
+}
+
+/** The QR reference of the invoice a document is printed for; '' when none is named. */
+async function readInvoiceReference(db: Firestore, tenantId: string, invoiceKey: unknown): Promise<string> {
+  if (typeof invoiceKey !== 'string' || !invoiceKey) return '';
+  const snap = await db.collection(InvoiceCollection).doc(invoiceKey).get();
+  if (!snap.exists) throw new HttpsError('not-found', `Invoice ${invoiceKey} not found`);
+  const tenants = (snap.data()?.['tenants'] as string[] | undefined) ?? [];
+  if (!tenants.includes(tenantId)) throw new HttpsError('permission-denied', 'Invoice belongs to another tenant');
+  return (snap.data()?.['paymentReference'] as string | undefined) ?? '';
 }
 
 export interface GenerateDocumentRequest {
@@ -154,12 +166,20 @@ export async function renderDocument(
 
     htmlToRender = compiled({ ...payload, payee });
 
-    // Append the QR payment slip as a second page (PDF output only).
+    // Append the QR payment slip as a second page (PDF output only). With payload.invoiceKey the
+    // slip carries that invoice's QR reference on the QR-IBAN (spec 1.2 §3.3); else NON as before.
     if (tmpl.attachQrSlip && outputFormat === 'pdf') {
-      if (!payee.iban.trim()) {
-        throw new HttpsError('failed-precondition', 'No payee IBAN configured for organisation');
+      const reference = await readInvoiceReference(db, tenantId, payload['invoiceKey']);
+      let selected;
+      try {
+        selected = selectSlipAccount(payee, reference);
+      } catch (e) {
+        const code = e instanceof SlipAccountError ? e.code : 'no-iban';
+        throw new HttpsError('failed-precondition', code === 'no-iban'
+          ? 'No payee IBAN configured for organisation'
+          : 'Payee has only a QR-IBAN; this document has no QR reference');
       }
-      const slipData = buildQrSlipData(payee, payload, !!tmpl.qrSlipWithAmount);
+      const slipData = buildQrSlipData(payee, payload, !!tmpl.qrSlipWithAmount, selected);
       htmlToRender += buildQrSlipPageHtml(renderQrSlipSvg(slipData));
     }
   } else {

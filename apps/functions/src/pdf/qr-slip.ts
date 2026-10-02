@@ -4,7 +4,7 @@ import { SwissQRBill } from 'swissqrbill/svg';
 import type { Data } from 'swissqrbill/types';
 
 import { AppConfigCollection, OrgCollection, AddressCollection, AddressModel } from '@okr/shared-models';
-import { pickFavoriteByChannel, QrPayee, QrSlipData, scopeToTenant } from '@okr/shared-util-functions';
+import { pickBankIbans, pickFavoriteByChannel, QrPayee, QrSlipData, scopeToTenant } from '@okr/shared-util-functions';
 
 /**
  * Resolve the payee (creditor) org: name from the org, IBAN from its favorite
@@ -39,11 +39,13 @@ export async function resolvePayee(db: Firestore, tenantId: string, payeeOrgId?:
   const addresses = ownAddresses.length > 0 ? ownAddresses : allAddresses;
 
   const bank = pickFavoriteByChannel(addresses, 'bankaccount');
+  const { qrIban, regularIban } = pickBankIbans(addresses);
   const postal = pickFavoriteByChannel(addresses, 'postal');
 
   return {
     name: orgName,
     iban: bank?.iban ?? '',
+    qrIban, regularIban,
     street: postal?.streetName ?? '',
     buildingNumber: postal?.streetNumber ?? '',
     zip: postal?.zipCode ?? '',

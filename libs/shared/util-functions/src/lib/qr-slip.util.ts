@@ -1,4 +1,5 @@
 import { AddressModel } from '@okr/shared-models';
+import { isQrIban, normalizeQrReference } from '@okr/shared-util-core';
 
 /** Parse a (possibly Swiss-formatted) amount string into a number, or undefined. */
 export function parseSwissAmount(value: unknown): number | undefined {
@@ -19,7 +20,8 @@ export function pickFavoriteByChannel(
 }
 
 export interface QrPayee {
-  name: string; iban: string; street: string; buildingNumber: string;
+  name: string; iban: string; qrIban: string; regularIban: string;
+  street: string; buildingNumber: string;
   zip: string; city: string; country: string;
 }
 export interface QrSlipParty {
@@ -30,8 +32,38 @@ export interface QrSlipData {
   creditor: QrSlipParty & { account: string };
   currency: 'CHF';
   amount?: number;
+  reference?: string;
   debtor?: QrSlipParty;
   message?: string;
+}
+
+export interface SlipAccount { account: string; reference?: string; }
+
+export class SlipAccountError extends Error {
+  constructor(public readonly code: 'qr-iban-needs-reference' | 'no-iban') { super(code); this.name = 'SlipAccountError'; }
+}
+
+const cleanIban = (iban: string | undefined): string => (iban ?? '').replace(/\s/g, '');
+
+/** The payee's QR-IBAN and regular IBAN: favorite-else-first non-archived bankaccount address of each kind. */
+export function pickBankIbans(addresses: AddressModel[]): { qrIban: string; regularIban: string } {
+  const banks = addresses.filter(a => a.addressChannel === 'bankaccount' && !a.isArchived && cleanIban(a.iban));
+  const pick = (qr: boolean): string => {
+    const kind = banks.filter(a => isQrIban(a.iban) === qr);
+    return cleanIban((kind.find(a => a.isFavorite) ?? kind[0])?.iban);
+  };
+  return { qrIban: pick(true), regularIban: pick(false) };
+}
+
+/**
+ * QRR must be paired with a QR-IBAN and NON with a regular IBAN (spec 1.2 §3.2), so a reference
+ * is only emitted together with a QR-IBAN and the slip cannot be invalid by construction.
+ */
+export function selectSlipAccount(payee: QrPayee, reference: string): SlipAccount {
+  const ref = normalizeQrReference(reference);
+  if (ref && payee.qrIban) return { account: payee.qrIban, reference: ref };
+  if (payee.regularIban) return { account: payee.regularIban };
+  throw new SlipAccountError(payee.qrIban ? 'qr-iban-needs-reference' : 'no-iban');
 }
 
 const s = (v: unknown): string => (v === null || v === undefined ? '' : String(v));
@@ -56,13 +88,14 @@ export function buildQrSlipData(
   payee: QrPayee,
   payload: Record<string, unknown>,
   withAmount: boolean,
+  selected: SlipAccount = { account: payee.iban },
 ): QrSlipData {
   const amount = withAmount ? parseSwissAmount(payload['amount']) : undefined;
   const debtor = buildDebtor(payload);
   const message = s(payload['qrMessage']).trim().slice(0, 140);
   return {
     creditor: {
-      account: payee.iban.replace(/\s/g, ''),
+      account: cleanIban(selected.account),
       name: payee.name,
       address: payee.street,
       ...(payee.buildingNumber ? { buildingNumber: payee.buildingNumber } : {}),
@@ -72,6 +105,7 @@ export function buildQrSlipData(
     },
     currency: 'CHF',
     ...(amount !== undefined ? { amount } : {}),
+    ...(selected.reference ? { reference: selected.reference } : {}),
     ...(debtor ? { debtor } : {}),
     ...(message ? { message } : {}),
   };
