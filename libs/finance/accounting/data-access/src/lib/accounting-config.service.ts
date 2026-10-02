@@ -48,7 +48,10 @@ export class AccountingConfigService {
     );
   }
 
-  public listForTenant(orderBy = 'okey', sortOrder = 'asc'): Observable<AccountingConfigModel[]> {
+  // Never order by 'okey': it is the document id, stripped before every write, and Firestore
+  // silently drops documents that lack the orderBy field — read() then found nothing and the
+  // settings page offered a blank config whose save hit DocumentExistsError.
+  public listForTenant(orderBy = 'none', sortOrder = 'asc'): Observable<AccountingConfigModel[]> {
     return this.firestoreService.searchData<AccountingConfigModel>(
       AccountingConfigCollection, getSystemQuery(this.tenantId), orderBy, sortOrder
     );
