@@ -165,6 +165,7 @@
     "loadError": "The vouchers could not be loaded. Please try again later."
   },
   "validation": {
-    "reminderFeeDecimals": "Please enter the amount with at most two decimal places."
+    "reminderFeeDecimals": "Please enter the amount with at most two decimal places.",
+    "reminderFeeAccountRequired": "Reminder fees need a revenue account. Choose one or set all fees to 0."
   }
 }

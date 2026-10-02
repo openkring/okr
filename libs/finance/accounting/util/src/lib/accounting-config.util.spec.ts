@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { AccountingConfigModel } from '@okr/shared-models';
+import { AccountingConfigModel, DEFAULT_REMINDER_FEES } from '@okr/shared-models';
 
 import { accountingConfigValidations } from './accounting-config.validations';
 import { toAccountingConfigFormData } from './accounting-config.util';
@@ -15,9 +15,31 @@ function legacyConfig(): AccountingConfigModel {
 }
 
 describe('toAccountingConfigFormData', () => {
-  it('turns a legacy config that fails the suite into one that passes', () => {
+  it('turns a legacy config that fails the suite into one that passes once the fee account is set (P3-R2)', () => {
     expect(accountingConfigValidations(legacyConfig(), 'scs', '').isValid()).toBe(false);
-    expect(accountingConfigValidations(toAccountingConfigFormData(legacyConfig()), 'scs', '').isValid()).toBe(true);
+    const seeded = toAccountingConfigFormData(legacyConfig());
+    // the seeded default fees [0, 2000, 2000] need a fee account
+    expect(accountingConfigValidations(seeded, 'scs', '').getErrors('reminderFeeAccountKey').length).toBeGreaterThan(0);
+    expect(accountingConfigValidations({ ...seeded, reminderFeeAccountKey: 'scs-6850' }, 'scs', '').isValid()).toBe(true);
+    expect(accountingConfigValidations({ ...seeded, reminderFees: [0, 0, 0] }, 'scs', '').isValid()).toBe(true);
+  });
+
+  it('seeds all five reminder fields with the model defaults (P3-R2)', () => {
+    const data = toAccountingConfigFormData(legacyConfig());
+    expect([data.reminderTemplateId, data.reminderFeeAccountKey, data.reminderFees, data.reminderGraceDays, data.reminderDueDays])
+      .toEqual(['', '', [0, 2000, 2000], 10, 14]);
+    expect(data.reminderFees).toEqual([...DEFAULT_REMINDER_FEES]);
+    expect(data.reminderFees).not.toBe(DEFAULT_REMINDER_FEES);
+  });
+
+  it('keeps the stored reminder fields', () => {
+    const stored = { ...legacyConfig(), reminderTemplateId: 'tpl-r', reminderFeeAccountKey: 'scs-6850', reminderFees: [500, 1000, 0],
+      reminderGraceDays: 0, reminderDueDays: 30 } as AccountingConfigModel;
+    const data = toAccountingConfigFormData(stored);
+    expect([data.reminderTemplateId, data.reminderFeeAccountKey, data.reminderFees, data.reminderGraceDays, data.reminderDueDays])
+      .toEqual(['tpl-r', 'scs-6850', [500, 1000, 0], 0, 30]);
+    data.reminderFees.push(1);
+    expect(stored.reminderFees).toEqual([500, 1000, 0]);
   });
 
   it('fills the missing fields with their model defaults', () => {

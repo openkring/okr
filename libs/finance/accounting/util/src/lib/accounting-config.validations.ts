@@ -1,7 +1,7 @@
 import { enforce, only, staticSuite, test } from 'vest';
 
 import { SHORT_NAME_LENGTH } from '@okr/shared-constants';
-import { AccountingConfigModel } from '@okr/shared-models';
+import { AccountingConfigModel, DEFAULT_REMINDER_DUE_DAYS, DEFAULT_REMINDER_FEES, DEFAULT_REMINDER_GRACE_DAYS } from '@okr/shared-models';
 import { baseValidations, numberValidations, stringValidations } from '@okr/shared-util-core';
 
 /** Grace days and reminder due days accept whole days from 0 to this many. */
@@ -9,6 +9,9 @@ export const REMINDER_DAYS_MAX = 365;
 
 /** Shown under a fee input whose CHF value has more than two decimals (same rule as parseReminderFee). */
 export const REMINDER_FEE_DECIMALS_ERROR = '@finance/accounting/feature.validation.reminderFeeDecimals';
+
+/** Shown under the fee account select when a reminder fee is set but no revenue account takes it (spec 1.76 D14). */
+export const REMINDER_FEE_ACCOUNT_REQUIRED_ERROR = '@finance/accounting/feature.validation.reminderFeeAccountRequired';
 
 /**
  * The model value of a fee typed in CHF: whole Rappen when the input has at most two decimals,
@@ -23,8 +26,13 @@ export function reminderFeeRappen(chf: number): number {
 
 /** The reminder fee of a level in Rappen as the form shows it; legacy configs lack the field (model default). */
 export function reminderFeeOf(model: Pick<AccountingConfigModel, 'reminderFees'>, level: number): number {
-  const fees = model.reminderFees ?? [0, 2000, 2000];
+  const fees = model.reminderFees ?? DEFAULT_REMINDER_FEES;
   return fees[level - 1] ?? 0;
+}
+
+/** True when any of the three reminder levels charges a fee (> 0 Rappen). */
+export function hasReminderFee(model: Pick<AccountingConfigModel, 'reminderFees'>): boolean {
+  return [1, 2, 3].some((level) => reminderFeeOf(model, level) > 0);
 }
 
 export const accountingConfigValidations = staticSuite(
@@ -53,6 +61,10 @@ export const accountingConfigValidations = staticSuite(
     test('reminderFee2', REMINDER_FEE_DECIMALS_ERROR, () => { enforce(Number.isInteger(reminderFeeOf(model, 2))).isTruthy(); });
     numberValidations('reminderFee3', reminderFeeOf(model, 3), false, 0);
     test('reminderFee3', REMINDER_FEE_DECIMALS_ERROR, () => { enforce(Number.isInteger(reminderFeeOf(model, 3))).isTruthy(); });
-    numberValidations('reminderGraceDays', model.reminderGraceDays ?? 10, true, 0, REMINDER_DAYS_MAX);
-    numberValidations('reminderDueDays', model.reminderDueDays ?? 14, true, 0, REMINDER_DAYS_MAX);
+    // a fee is booked to the fee account: without one createInvoiceReminder refuses (no-reminder-fee-account)
+    test('reminderFeeAccountKey', REMINDER_FEE_ACCOUNT_REQUIRED_ERROR, () => {
+      enforce(!hasReminderFee(model) || !!(model.reminderFeeAccountKey ?? '')).isTruthy();
+    });
+    numberValidations('reminderGraceDays', model.reminderGraceDays ?? DEFAULT_REMINDER_GRACE_DAYS, true, 0, REMINDER_DAYS_MAX);
+    numberValidations('reminderDueDays', model.reminderDueDays ?? DEFAULT_REMINDER_DUE_DAYS, true, 0, REMINDER_DAYS_MAX);
   });

@@ -165,6 +165,7 @@
     "loadError": "Non è stato possibile caricare i giustificativi. Riprova più tardi."
   },
   "validation": {
-    "reminderFeeDecimals": "Indica l’importo con al massimo due decimali."
+    "reminderFeeDecimals": "Indica l’importo con al massimo due decimali.",
+    "reminderFeeAccountRequired": "Le spese di sollecito richiedono un conto ricavi. Scegline uno o imposta tutte le spese a 0."
   }
 }

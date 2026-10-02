@@ -50,6 +50,13 @@ export interface FeeScheduleEntry {
   positions: FeePositionRule[];
 }
 
+/** Reminder fees in Rappen per level 1..3 (spec 1.76 D14): the one default for settings, dialog, Mahnlauf and server. */
+export const DEFAULT_REMINDER_FEES: readonly number[] = [0, 2000, 2000];
+/** Days after the last due date before a Mahnlauf offers a reminder (spec 1.76 D15). */
+export const DEFAULT_REMINDER_GRACE_DAYS = 10;
+/** Days a reminder grants to pay (spec 1.76 D13). */
+export const DEFAULT_REMINDER_DUE_DAYS = 14;
+
 // One document per accounting tenant. okey = accountingTenantId.
 export class AccountingConfigModel implements OkrModel {
   public okey = DEFAULT_KEY;
@@ -77,11 +84,11 @@ export class AccountingConfigModel implements OkrModel {
   public receivablesAccountKey = '';             // Debitoren leaf (scs: 1100) — invoices post here on issue (spec 1.76 D5)
   public invoiceTemplateId = '';                 // templates/{id} rendered by issueInvoice (spec 1.76 D7)
   public invoicePaymentAccountKeys: string[] = []; // leaf accounts a payment may be posted to (spec 1.76 D11)
-  public reminderTemplateId = '';                // templates/{id} rendered by sendInvoiceReminder (spec 1.76 D13)
+  public reminderTemplateId = '';                // templates/{id} rendered by createInvoiceReminder (spec 1.76 D13)
   public reminderFeeAccountKey = '';             // leaf account credited with the reminder fee (spec 1.76 D14)
-  public reminderFees: number[] = [0, 2000, 2000]; // Rappen per reminder level 1..3 (spec 1.76 D14)
-  public reminderGraceDays = 10;                 // days after the last due date before a Mahnlauf offers a reminder (spec 1.76 D12)
-  public reminderDueDays = 14;                   // days a reminder grants to pay (spec 1.76 D12)
+  public reminderFees: number[] = [...DEFAULT_REMINDER_FEES]; // Rappen per reminder level 1..3 (spec 1.76 D14)
+  public reminderGraceDays = DEFAULT_REMINDER_GRACE_DAYS; // days after the last due date before a Mahnlauf offers a reminder (spec 1.76 D15)
+  public reminderDueDays = DEFAULT_REMINDER_DUE_DAYS;     // days a reminder grants to pay (spec 1.76 D13)
   public reviewAssigneePersonKey = ''; // treasurer person.okey who reviews OCR bookings; '' → first treasurer
 
   constructor(tenantId: string, accountingTenantId: string) {

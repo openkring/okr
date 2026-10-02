@@ -165,6 +165,7 @@
     "loadError": "Die Belege konnten nicht geladen werden. Versuche es später noch einmal."
   },
   "validation": {
-    "reminderFeeDecimals": "Bitte gib den Betrag mit höchstens zwei Nachkommastellen an."
+    "reminderFeeDecimals": "Bitte gib den Betrag mit höchstens zwei Nachkommastellen an.",
+    "reminderFeeAccountRequired": "Für Mahngebühren braucht es ein Ertragskonto. Wähle eines aus oder setze alle Gebühren auf 0."
   }
 }

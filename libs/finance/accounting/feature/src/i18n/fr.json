@@ -165,6 +165,7 @@
     "loadError": "Les justificatifs n’ont pas pu être chargés. Réessaie plus tard."
   },
   "validation": {
-    "reminderFeeDecimals": "Indique le montant avec au maximum deux décimales."
+    "reminderFeeDecimals": "Indique le montant avec au maximum deux décimales.",
+    "reminderFeeAccountRequired": "Les frais de rappel ont besoin d’un compte de produits. Choisis-en un ou mets tous les frais à 0."
   }
 }

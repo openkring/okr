@@ -165,6 +165,7 @@
     "loadError": "No se han podido cargar los justificantes. Vuelve a intentarlo más tarde."
   },
   "validation": {
-    "reminderFeeDecimals": "Indica el importe con dos decimales como máximo."
+    "reminderFeeDecimals": "Indica el importe con dos decimales como máximo.",
+    "reminderFeeAccountRequired": "Los recargos de recordatorio necesitan una cuenta de ingresos. Elige una o pon todos los recargos a 0."
   }
 }

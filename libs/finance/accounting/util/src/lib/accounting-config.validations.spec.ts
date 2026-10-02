@@ -2,11 +2,14 @@ import { describe, expect, it } from 'vitest';
 
 import { AccountingConfigModel } from '@okr/shared-models';
 
-import { accountingConfigValidations, REMINDER_FEE_DECIMALS_ERROR, reminderFeeOf, reminderFeeRappen } from './accounting-config.validations';
+import {
+  accountingConfigValidations, hasReminderFee, REMINDER_FEE_ACCOUNT_REQUIRED_ERROR, REMINDER_FEE_DECIMALS_ERROR, reminderFeeOf, reminderFeeRappen,
+} from './accounting-config.validations';
 
 describe('accountingConfigValidations', () => {
+  // the model's default fees [0, 2000, 2000] need a fee account (P3-R2), so the base config links one
   const config = (patch: Partial<AccountingConfigModel> = {}): AccountingConfigModel =>
-    Object.assign(new AccountingConfigModel('tenant-1', 'org-1'), patch);
+    Object.assign(new AccountingConfigModel('tenant-1', 'org-1'), { reminderFeeAccountKey: 'org-1-6850' }, patch);
 
   it('accepts a config with no account links yet', () => {
     expect(accountingConfigValidations(config(), 'tenant-1', '').isValid()).toBe(true);
@@ -56,7 +59,6 @@ describe('accountingConfigValidations', () => {
       expect(accountingConfigValidations(config(), 'tenant-1', '').isValid()).toBe(true);
       const legacy = config() as Partial<AccountingConfigModel>;
       delete legacy.reminderTemplateId;
-      delete legacy.reminderFeeAccountKey;
       delete legacy.reminderFees;
       delete legacy.reminderGraceDays;
       delete legacy.reminderDueDays;
@@ -90,6 +92,18 @@ describe('accountingConfigValidations', () => {
       const result = accountingConfigValidations(config({ reminderFees: [0, reminderFeeRappen(1.234), 2000] }), 'tenant-1', '');
       expect(result.getErrors('reminderFee2')).toContain(REMINDER_FEE_DECIMALS_ERROR);
       expect(accountingConfigValidations(config({ reminderFees: [0, reminderFeeRappen(0.29), 2000] }), 'tenant-1', '').isValid()).toBe(true);
+    });
+
+    it('requires the fee account as soon as any level charges a fee (P3-R2)', () => {
+      const missing = accountingConfigValidations(config({ reminderFeeAccountKey: '' }), 'tenant-1', '');
+      expect(missing.getErrors('reminderFeeAccountKey')).toContain(REMINDER_FEE_ACCOUNT_REQUIRED_ERROR);
+      const legacy = config() as Partial<AccountingConfigModel>;
+      delete legacy.reminderFeeAccountKey;
+      expect(accountingConfigValidations(legacy as AccountingConfigModel, 'tenant-1', '').getErrors('reminderFeeAccountKey').length).toBeGreaterThan(0);
+      expect(accountingConfigValidations(config({ reminderFeeAccountKey: '', reminderFees: [0, 0, 0] }), 'tenant-1', '').isValid()).toBe(true);
+      expect(accountingConfigValidations(config({ reminderFeeAccountKey: '', reminderFees: [100, 0, 0] }), 'tenant-1', '').isValid()).toBe(false);
+      expect(hasReminderFee({ reminderFees: [0, 0, 0] })).toBe(false);
+      expect(hasReminderFee({} as AccountingConfigModel)).toBe(true);
     });
 
     it('reads the fee of a level, the model default when the field is missing', () => {
