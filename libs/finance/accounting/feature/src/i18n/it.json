@@ -35,6 +35,32 @@
     "costCenter": {
       "label": "Centro di costo predefinito della contabilità",
       "helper": "Si applica alle registrazioni sui conti economici senza un proprio centro di costo predefinito."
+    },
+    "reminderTemplate": {
+      "label": "Modello di sollecito",
+      "placeholder": "ID del modello",
+      "helper": "Modello usato per creare i solleciti di pagamento in PDF."
+    },
+    "reminderFeeAccount": {
+      "label": "Conto delle spese di sollecito",
+      "helper": "Le spese di sollecito vengono contabilizzate come ricavo su questo conto."
+    },
+    "reminderFee": {
+      "level1": "Spese del promemoria di pagamento (CHF)",
+      "level2": "Spese del 2° sollecito (CHF)",
+      "level3": "Spese del 3° sollecito (CHF)",
+      "placeholder": "0.00",
+      "helper": "Proposte alla creazione del sollecito e modificabili in quel momento. 0 = nessuna spesa."
+    },
+    "reminderGraceDays": {
+      "label": "Periodo di tolleranza (giorni)",
+      "placeholder": "0–365",
+      "helper": "Il giro di solleciti propone una fattura questo numero di giorni dopo la scadenza."
+    },
+    "reminderDueDays": {
+      "label": "Termine di pagamento di un sollecito (giorni)",
+      "placeholder": "0–365",
+      "helper": "Il destinatario ha questo numero di giorni per pagare dopo un sollecito."
     }
   },
   "feeSchedule": {

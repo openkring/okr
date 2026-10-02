@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { defaultReminderFee, isReminderDue, lastDueDate, mahnlaufCandidates, nextReminderLevel, ReminderLike, reminderFeeSum } from './invoice-reminder.util';
+import {
+  canCreateReminder, canEmailInvoice, defaultReminderFee, isReminderDue, lastDueDate, latestReminderWithDocument, mahnlaufCandidates, nextReminderLevel,
+  parseReminderFee, ReminderLike, reminderFeeSum, reminderInputProblem, reminderLevelKey,
+} from './invoice-reminder.util';
+import { invoiceRefusalReasons } from './invoice-position.util';
 
 const inv = (o = {}) => ({ state: 'pending', dueDate: '20261010', reminders: [] as ReminderLike[], ...o });
 
@@ -10,10 +14,10 @@ describe('invoice reminder util', () => {
     expect(nextReminderLevel([{ level: 1, date: '20261020', dueDate: '20261103' }])).toBe(2);
   });
   it('legacy reminders count as fee 0 and toward the level', () => {
-    const legacy = [{ level: 1, date: '20250101', dueDate: '20250115' }];
+    const legacy: ReminderLike[] = [{ level: 1, date: '20250101', dueDate: '20250115' }];
     expect(reminderFeeSum(legacy)).toBe(0);
     expect(nextReminderLevel(legacy)).toBe(2);
-    expect(reminderFeeSum([{ level: 1, date: 'd', dueDate: 'd', fee: 2000 }])).toBe(2000);
+    expect(reminderFeeSum([{ level: 1, date: 'd', dueDate: 'd', fee: 2000 }] as ReminderLike[])).toBe(2000);
   });
   it('due for the Mahnlauf', () => {
     expect(isReminderDue(inv(), '20261021', 10)).toBe(true);
@@ -39,5 +43,60 @@ describe('invoice reminder util', () => {
     const paid = inv({ dueDate: '20260901', state: 'paid' });
     expect(mahnlaufCandidates([a, b, c, paid], '20261115', 10)).toEqual([b, a]);
     expect(lastDueDate(a)).toBe('20261015');
+  });
+});
+
+describe('reminder actions (client)', () => {
+  const r = (level: number, documentKey = ''): ReminderLike & { documentKey: string } => ({ level, date: '20261020', dueDate: '20261103', documentKey });
+
+  it('names the level', () => {
+    expect(reminderLevelKey(1)).toBe('reminder_level_1');
+    expect(reminderLevelKey(2)).toBe('reminder_level_2');
+    expect(reminderLevelKey(3)).toBe('reminder_level_3');
+  });
+
+  it('offers a reminder on a payable invoice with a level left', () => {
+    expect(canCreateReminder(inv())).toBe(true);
+    expect(canCreateReminder(inv({ state: 'unpaid', reminders: [r(1), r(2)] }))).toBe(true);
+    expect(canCreateReminder(inv({ reminders: [r(1), r(2), r(3)] }))).toBe(false);
+    expect(canCreateReminder(inv({ state: 'paid' }))).toBe(false);
+    expect(canCreateReminder(inv({ state: 'draft' }))).toBe(false);
+  });
+
+  it('mails an issued invoice that has a PDF', () => {
+    expect(canEmailInvoice({ state: 'pending', documentKey: 'd' })).toBe(true);
+    expect(canEmailInvoice({ state: 'paid', documentKey: 'd' })).toBe(true);
+    expect(canEmailInvoice({ state: 'pending', documentKey: '' })).toBe(false);
+    expect(canEmailInvoice({ state: 'draft', documentKey: 'd' })).toBe(false);
+    expect(canEmailInvoice({ state: 'issuing', documentKey: 'd' })).toBe(false);
+    expect(canEmailInvoice({ state: 'cancelled', documentKey: 'd' })).toBe(false);
+  });
+
+  it('picks the highest reminder that has a PDF', () => {
+    expect(latestReminderWithDocument([r(1, 'a'), r(2, 'b'), r(3)])?.documentKey).toBe('b');
+    expect(latestReminderWithDocument([r(1)])).toBeUndefined();
+    expect(latestReminderWithDocument(undefined)).toBeUndefined();
+  });
+
+  it('parses a fee in CHF with at most two decimals', () => {
+    expect(parseReminderFee('20')).toBe(20);
+    expect(parseReminderFee('20,5')).toBe(20.5);
+    expect(parseReminderFee(' 0.05 ')).toBe(0.05);
+    expect(parseReminderFee(0)).toBe(0);
+    expect(parseReminderFee('-1')).toBeUndefined();
+    expect(parseReminderFee('1.234')).toBeUndefined();
+    expect(parseReminderFee('')).toBeUndefined();
+    expect(parseReminderFee('abc')).toBeUndefined();
+  });
+
+  it('checks the alert input: a full date first, then the fee', () => {
+    expect(reminderInputProblem('20261020', '20.00')).toBeUndefined();
+    expect(reminderInputProblem('', '20')).toBe('date');
+    expect(reminderInputProblem('20261340', '20')).toBe('date');
+    expect(reminderInputProblem('20261020', '-5')).toBe('fee');
+  });
+
+  it('expands the blockers of a reminder-blocked refusal', () => {
+    expect(invoiceRefusalReasons({ details: { reason: 'reminder-blocked', reasons: ['max-level', 'invalid-fee'] } })).toEqual(['max-level', 'invalid-fee']);
   });
 });

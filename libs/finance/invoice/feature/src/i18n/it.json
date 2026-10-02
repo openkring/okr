@@ -329,7 +329,22 @@
     "payment-inconsistent-state": "Qualcosa è andato storto durante la registrazione del pagamento. Riprova, per favore.",
     "cancel-period-locked": "Il periodo contabile della data di storno è chiuso. Scegli un’altra data o fai riaprire il periodo.",
     "cancel-inconsistent-state": "Qualcosa è andato storto durante lo storno. Riprova, per favore.",
-    "confirmation-no-receiver": "La fattura non ha destinatario. Senza destinatario non c’è conferma di pagamento."
+    "confirmation-no-receiver": "La fattura non ha destinatario. Senza destinatario non c’è conferma di pagamento.",
+    "no-reminder-template": "Nelle impostazioni contabili manca ancora il modello di sollecito. Aggiungilo lì.",
+    "no-reminder-fee-account": "Nelle impostazioni contabili manca ancora il conto delle spese di sollecito. Aggiungilo lì o crea il sollecito senza spese.",
+    "reminder-blocked": "Al momento non è possibile creare un sollecito per questa fattura.",
+    "max-level": "Questa fattura ha già il 3° sollecito. Non ce ne sono altri.",
+    "level-mismatch": "Nel frattempo è stato creato un altro sollecito. Ricarica l’elenco e riprova.",
+    "no-reminder-date": "La data del sollecito manca o è precedente all’ultima scadenza. Scegli una data successiva.",
+    "invalid-fee": "Le spese non sono valide. Devono essere 0 o più.",
+    "not-issued": "Questa fattura non è ancora stata emessa. Emettila prima.",
+    "no-document": "Manca il PDF, quindi non si può inviare nulla.",
+    "foreign-document": "Questo documento non appartiene a questa fattura.",
+    "no-email": "Per il destinatario non è registrato alcun indirizzo e-mail. Aggiungilo nei suoi dati di contatto o invia il PDF in un altro modo.",
+    "reminder-not-payable": "I solleciti sono possibili solo per fatture emesse ancora aperte.",
+    "reminder-period-locked": "Il periodo contabile della data del sollecito è chiuso. Scegli un’altra data o fai riaprire il periodo.",
+    "reminder-account-invalid": "Non è possibile registrare sul conto delle spese di sollecito o sul conto debitori. Scegli nelle impostazioni contabili un conto senza sottoconti.",
+    "reminder-inconsistent-state": "Qualcosa è andato storto durante la creazione del sollecito. Riprova."
   },
   "payment": {
     "label": "Registra pagamento",
@@ -396,5 +411,57 @@
     "empty": "Per quest'anno non è ancora stato inserito un piano delle quote.",
     "notMember": "Solo per i soci",
     "noAccount": "Senza conto di ricavo – completalo dopo averla ripresa"
+  },
+  "reminder": {
+    "level1": "Promemoria di pagamento",
+    "level2": "2° sollecito",
+    "level3": "3° sollecito",
+    "create": "Crea sollecito",
+    "createMessage": "Scegli la data e le spese in CHF. Le spese si aggiungono all’importo aperto.",
+    "date": "Data",
+    "fee": "Spese in CHF",
+    "createOk": "Crea",
+    "dateInvalid": "Indica una data valida.",
+    "feeInvalid": "Indica spese di 0 o più con al massimo due decimali.",
+    "conf": "{document} del {date} è stato creato. Ora sono aperti CHF {open}.",
+    "error": "Non è stato possibile creare il sollecito. Riprova più tardi.",
+    "sendNow": "{document} è stato creato. Vuoi inviarlo ora per e-mail al destinatario?",
+    "later": "Più tardi",
+    "send": "Invia sollecito",
+    "show": "Mostra sollecito",
+    "showError": "Non è stato possibile aprire il sollecito. Riprova più tardi.",
+    "list": {
+      "title": "Solleciti",
+      "due": "scadenza il",
+      "fee": "Spese",
+      "sent": "inviato",
+      "notSent": "non inviato"
+    }
+  },
+  "openAmount": {
+    "label": "Importo aperto (spese di sollecito incluse)"
+  },
+  "email": {
+    "send": "Invia per e-mail",
+    "confirm": "{document} verrà inviato all’indirizzo e-mail del destinatario.",
+    "ok": "Invia",
+    "conf": "{document} è stato inviato per e-mail il {date}.",
+    "error": "Non è stato possibile inviare l’e-mail. Riprova più tardi.",
+    "sentAt": "Inviato il {date}"
+  },
+  "document": {
+    "invoice": "Fattura {invoiceId}",
+    "reminder": "{level} per la fattura {invoiceId}"
+  },
+  "mahnlauf": {
+    "label": "Giro di solleciti",
+    "confirm": "{count} fatture sono scadute. Per ognuna viene creato il sollecito successivo con le spese impostate.",
+    "create": "Crea",
+    "createAndSend": "Crea e invia",
+    "progress": "{n} di {m}",
+    "done": "{created} solleciti su {total} sono stati creati.",
+    "sent": "Di questi, {sent} sono stati inviati per e-mail.",
+    "failed": "Non creati:",
+    "sendFailed": "Creati, ma non inviati:"
   }
 }

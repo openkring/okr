@@ -4,9 +4,9 @@ import { IonAvatar, IonCard, IonCardContent, IonChip, IonContent, IonIcon, IonIm
 import { InvoiceModel } from '@okr/shared-models';
 import { Header } from '@okr/shared-ui';
 import { PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
-import { getFullName } from '@okr/shared-util-core';
+import { fill, getFullName, prettyFormatDateTime } from '@okr/shared-util-core';
 import { AvatarPipe } from '@okr/avatar-ui';
-import { formatPaymentChf } from '@okr/finance-invoice-util';
+import { formatPaymentChf, isPayableState, openInvoiceAmount, reminderFeeSum, reminderLevelKey } from '@okr/finance-invoice-util';
 import { InvoiceStore } from './invoice.store';
 
 @Component({
@@ -112,6 +112,41 @@ import { InvoiceStore } from './invoice.store';
                 </ion-label>
               </ion-item>
             }
+            <!-- open amount incl. reminder fees (spec 1.76 D14) -->
+            @if(showOpenAmount()) {
+              <ion-item lines="none">
+                <ion-icon slot="start" src="{{'chf' | svgIcon}}" />
+                <ion-label>
+                  <p class="view-label">{{ store.i18n.open_amount_label() }}</p>
+                  <p class="view-value">CHF {{ openAmount() }}</p>
+                </ion-label>
+              </ion-item>
+            }
+            <!-- last email send of the invoice PDF -->
+            @if(sentAt().length > 0) {
+              <ion-item lines="none">
+                <ion-icon slot="start" src="{{'email' | svgIcon}}" />
+                <ion-label>
+                  <p class="view-value">{{ sentAtText() }}</p>
+                </ion-label>
+              </ion-item>
+            }
+            <!-- reminders (read-only; created through the list's "Mahnung erstellen") -->
+            @if(reminders().length > 0) {
+              <ion-item lines="none">
+                <ion-icon slot="start" src="{{'alarm' | svgIcon}}" />
+                <ion-label>
+                  <p class="view-label">{{ store.i18n.reminders_title() }}</p>
+                  @for(reminder of reminders(); track reminder.level) {
+                    <p class="view-value">
+                      {{ levelLabel(reminder.level) }} · {{ reminder.date | prettyDate }} · {{ store.i18n.reminder_due() }} {{ reminder.dueDate | prettyDate }}
+                      · {{ store.i18n.reminder_fee_short() }} CHF {{ formatChf(reminder.fee) }}
+                      · {{ reminder.isSent ? store.i18n.reminder_sent() : store.i18n.reminder_not_sent() }}
+                    </p>
+                  }
+                </ion-label>
+              </ion-item>
+            }
             <!-- notes -->
             @if(invoice.notes.length > 0) {
               <ion-item lines="none">
@@ -148,6 +183,22 @@ export class InvoiceViewModal {
   protected readonly notes = computed(() => this.invoice()?.notes ?? '');
   // legacy invoices lack the field (Firestore reads skip model defaults)
   protected readonly payments = computed(() => this.invoice()?.payments ?? []);
+
+  // legacy invoices lack the fields (Firestore reads skip model defaults); legacy reminders lack the fee
+  protected readonly reminders = computed(() =>
+    [...(this.invoice()?.reminders ?? [])].map(r => ({ ...r, fee: Number.isFinite(r.fee) ? r.fee : 0 })).sort((a, b) => (a.level ?? 0) - (b.level ?? 0)));
+  protected readonly sentAt = computed(() => this.invoice()?.sentAt ?? '');
+  protected readonly sentAtText = computed(() => fill(this.store.i18n.email_sent_at(), { date: prettyFormatDateTime(this.sentAt()) }));
+  /** shown while the invoice is open, or once reminder fees changed what is owed */
+  protected readonly showOpenAmount = computed(() => {
+    const invoice = this.invoice();
+    return !!invoice && (isPayableState(invoice.state) || reminderFeeSum(invoice.reminders) > 0);
+  });
+  protected readonly openAmount = computed(() => formatPaymentChf(openInvoiceAmount(this.invoice())));
+
+  protected levelLabel(level: number): string {
+    return this.store.i18n[reminderLevelKey(level)]();
+  }
 
   protected formatChf(rappen: number): string {
     return formatPaymentChf(rappen);

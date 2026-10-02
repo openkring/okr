@@ -44,3 +44,45 @@ export function mahnlaufCandidates<T extends { state: string; dueDate: string; r
     .filter((i) => isReminderDue(i, today, graceDays))
     .sort((a, b) => lastDueDate(a).localeCompare(lastDueDate(b)));
 }
+
+/** The i18n entry naming a reminder level: 1 = Zahlungserinnerung, 2 = 2. Mahnung, 3 = 3. Mahnung. */
+export function reminderLevelKey(level: number): 'reminder_level_1' | 'reminder_level_2' | 'reminder_level_3' {
+  if (level <= 1) return 'reminder_level_1';
+  if (level === 2) return 'reminder_level_2';
+  return 'reminder_level_3';
+}
+
+/** True when the treasurer may create the next reminder: payable and a level left. */
+export function canCreateReminder(invoice: { state: string; reminders?: ReminderLike[] }): boolean {
+  return isPayableState(invoice.state) && nextReminderLevel(invoice.reminders) <= MAX_REMINDER_LEVEL;
+}
+
+/** True when the invoice PDF can be mailed: issued (not a draft, not being issued, not cancelled) and with a document. */
+export function canEmailInvoice(invoice: { state: string; documentKey?: string }): boolean {
+  return !['draft', 'issuing', 'cancelled'].includes(invoice.state) && !!invoice.documentKey;
+}
+
+/** The highest-level reminder that has a PDF (what "Mahnung senden" mails), undefined when there is none. */
+export function latestReminderWithDocument<T extends ReminderLike & { documentKey?: string }>(reminders: T[] | undefined): T | undefined {
+  return (reminders ?? [])
+    .filter((r) => !!r.documentKey)
+    .reduce<T | undefined>((best, r) => (!best || (r.level ?? 0) > (best.level ?? 0) ? r : best), undefined);
+}
+
+/**
+ * The fee a treasurer typed, in CHF: a number ≥ 0 with at most two decimals ('20', '20.5', '20,50').
+ * undefined when the text is not such a number. The service converts to Rappen.
+ */
+export function parseReminderFee(text: unknown): number | undefined {
+  const s = String(text ?? '').trim().replace(',', '.');
+  if (!/^\d+(\.\d{1,2})?$/.test(s)) return undefined;
+  const value = Number(s);
+  return Number.isFinite(value) ? value : undefined;
+}
+
+/** Why the reminder alert's input is not accepted yet: a missing date (StoreDate) or an invalid fee. */
+export function reminderInputProblem(date: string, feeText: unknown): 'date' | 'fee' | undefined {
+  if (!/^\d{8}$/.test(date ?? '') || !isValidPartialStoreDate(date) || classifyStoreDate(date) !== 'full') return 'date';
+  if (parseReminderFee(feeText) === undefined) return 'fee';
+  return undefined;
+}

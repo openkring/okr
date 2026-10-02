@@ -9,7 +9,7 @@ import { coerceBoolean } from '@okr/shared-util-core';
 import { AccountSelect, AccountSelectI18n } from '@okr/finance-account-ui';
 import { CostCenterSelect, CostCenterSelectI18n } from '@okr/finance-cost-center-ui';
 import { leafAccounts } from '@okr/finance-account-util';
-import { AccountingI18n, accountingConfigValidations } from '@okr/finance-accounting-util';
+import { AccountingI18n, accountingConfigValidations, REMINDER_DAYS_MAX, reminderFeeOf } from '@okr/finance-accounting-util';
 
 export type { AccountingI18n };
 
@@ -19,6 +19,8 @@ export type { AccountingI18n };
  * account `okey`; without them the expense→booking posting (1.20) has no fallback account.
  * Plus the fiscal year start month (1 = calendar year), which the period assignment of bank-import
  * and OCR bookings reads, and the book default Kostenstelle — the last fallback of P&L lines (1.65).
+ * Mahnwesen (1.76 phase 3): reminder template, fee account, fees per level (CHF in the form, Rappen
+ * in the model), grace days before a Mahnlauf offers a reminder and the days a reminder grants.
  */
 @Component({
   selector: 'okr-accounting-config-form',
@@ -101,6 +103,58 @@ export type { AccountingI18n };
                   </ion-col>
                 }
               </ion-row>
+              <!-- Mahnwesen (1.76 phase 3) -->
+              <ion-row>
+                <ion-col size="12" size-md="6">
+                  <okr-text-input [i18n]="reminderTemplateI18n()" [value]="reminderTemplateId()"
+                    (valueChange)="onFieldChange('reminderTemplateId', $event)"
+                    [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="reminderTemplateIdErrors()" />
+                </ion-col>
+                <ion-col size="12" size-md="6">
+                  <okr-account-select [i18n]="reminderFeeAccountI18n()" [accounts]="leaves()"
+                    [selectedKey]="reminderFeeAccountKey()"
+                    (selectedKeyChange)="onFieldChange('reminderFeeAccountKey', $event)"
+                    [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="reminderFeeAccountKeyErrors()" />
+                </ion-col>
+              </ion-row>
+              <ion-row>
+                <ion-col size="12" size-md="4">
+                  <okr-number-input [i18n]="reminderFee1I18n()" [value]="reminderFee1Chf()"
+                    (valueChange)="onReminderFeeChange(1, $event)"
+                    [min]="0" [showHelper]="true" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="reminderFee1Errors()" />
+                </ion-col>
+                <ion-col size="12" size-md="4">
+                  <okr-number-input [i18n]="reminderFee2I18n()" [value]="reminderFee2Chf()"
+                    (valueChange)="onReminderFeeChange(2, $event)"
+                    [min]="0" [showHelper]="true" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="reminderFee2Errors()" />
+                </ion-col>
+                <ion-col size="12" size-md="4">
+                  <okr-number-input [i18n]="reminderFee3I18n()" [value]="reminderFee3Chf()"
+                    (valueChange)="onReminderFeeChange(3, $event)"
+                    [min]="0" [showHelper]="true" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="reminderFee3Errors()" />
+                </ion-col>
+              </ion-row>
+              <ion-row>
+                <ion-col size="12" size-md="6">
+                  <okr-number-input [i18n]="reminderGraceDaysI18n()" [value]="reminderGraceDays()"
+                    (valueChange)="onFieldChange('reminderGraceDays', $event)"
+                    [integer]="true" [min]="0" [max]="reminderDaysMax" [maxLength]="3" [inputMode]="'numeric'"
+                    [showHelper]="true" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="reminderGraceDaysErrors()" />
+                </ion-col>
+                <ion-col size="12" size-md="6">
+                  <okr-number-input [i18n]="reminderDueDaysI18n()" [value]="reminderDueDays()"
+                    (valueChange)="onFieldChange('reminderDueDays', $event)"
+                    [integer]="true" [min]="0" [max]="reminderDaysMax" [maxLength]="3" [inputMode]="'numeric'"
+                    [showHelper]="true" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="reminderDueDaysErrors()" />
+                </ion-col>
+              </ion-row>
             </ion-grid>
           </ion-card-content>
         </ion-card>
@@ -173,12 +227,54 @@ export class AccountingConfigForm {
     placeholder: this.i18n().fiscal_year_start_placeholder(), helper: this.i18n().fiscal_year_start_helper()
   } as NumberInputI18n));
 
+  // Mahnwesen (1.76 phase 3) — legacy config docs lack the fields: show the model defaults
+  /** kept in step with the upper bound the Vest suite enforces on grace and due days */
+  protected readonly reminderDaysMax = REMINDER_DAYS_MAX;
+  protected reminderTemplateId = linkedSignal(() => this.formData().reminderTemplateId ?? '');
+  protected reminderFeeAccountKey = linkedSignal(() => this.formData().reminderFeeAccountKey ?? '');
+  protected reminderGraceDays = linkedSignal(() => this.formData().reminderGraceDays ?? 10);
+  protected reminderDueDays = linkedSignal(() => this.formData().reminderDueDays ?? 14);
+  // the model stores Rappen, the inputs show CHF
+  protected reminderFee1Chf = computed(() => reminderFeeOf(this.formData(), 1) / 100);
+  protected reminderFee2Chf = computed(() => reminderFeeOf(this.formData(), 2) / 100);
+  protected reminderFee3Chf = computed(() => reminderFeeOf(this.formData(), 3) / 100);
+
+  protected reminderTemplateI18n = computed(() => ({
+    name: 'reminderTemplateId', label: this.i18n().reminder_template(),
+    placeholder: this.i18n().reminder_template_placeholder(), helper: this.i18n().reminder_template_helper()
+  } as TextInputI18n));
+
+  protected reminderFeeAccountI18n = computed(() => ({
+    name: 'reminderFeeAccountKey', label: this.i18n().reminder_fee_account(), helper: this.i18n().reminder_fee_account_helper()
+  } as AccountSelectI18n));
+
+  protected reminderFee1I18n = computed(() => this.feeI18n('reminderFee1', this.i18n().reminder_fee_1()));
+  protected reminderFee2I18n = computed(() => this.feeI18n('reminderFee2', this.i18n().reminder_fee_2()));
+  protected reminderFee3I18n = computed(() => this.feeI18n('reminderFee3', this.i18n().reminder_fee_3()));
+
+  protected reminderGraceDaysI18n = computed(() => ({
+    name: 'reminderGraceDays', label: this.i18n().reminder_grace_days(),
+    placeholder: this.i18n().reminder_grace_days_placeholder(), helper: this.i18n().reminder_grace_days_helper()
+  } as NumberInputI18n));
+
+  protected reminderDueDaysI18n = computed(() => ({
+    name: 'reminderDueDays', label: this.i18n().reminder_due_days(),
+    placeholder: this.i18n().reminder_due_days_placeholder(), helper: this.i18n().reminder_due_days_helper()
+  } as NumberInputI18n));
+
   private readonly validationResult = computed(() => accountingConfigValidations(this.formData(), this.tenantId(), ''));
   protected fiscalYearStartErrors = computed(() => this.validationResult().getErrors('fiscalYearStart'));
 
   protected receivablesAccountKeyErrors = computed(() => this.validationResult().getErrors('receivablesAccountKey'));
   protected invoiceTemplateIdErrors = computed(() => this.validationResult().getErrors('invoiceTemplateId'));
   protected defaultCostCenterKeyErrors = computed(() => this.validationResult().getErrors('defaultCostCenterKey'));
+  protected reminderTemplateIdErrors = computed(() => this.validationResult().getErrors('reminderTemplateId'));
+  protected reminderFeeAccountKeyErrors = computed(() => this.validationResult().getErrors('reminderFeeAccountKey'));
+  protected reminderFee1Errors = computed(() => this.validationResult().getErrors('reminderFee1'));
+  protected reminderFee2Errors = computed(() => this.validationResult().getErrors('reminderFee2'));
+  protected reminderFee3Errors = computed(() => this.validationResult().getErrors('reminderFee3'));
+  protected reminderGraceDaysErrors = computed(() => this.validationResult().getErrors('reminderGraceDays'));
+  protected reminderDueDaysErrors = computed(() => this.validationResult().getErrors('reminderDueDays'));
 
   constructor() {
     effect(() => this.valid.emit(this.validationResult().isValid()));
@@ -190,6 +286,18 @@ export class AccountingConfigForm {
 
   protected onPaymentAccountsChange(event: CustomEvent<SelectChangeEventDetail<string[]>>): void {
     this.onFieldChange('invoicePaymentAccountKeys', event.detail.value ?? []);
+  }
+
+  /** CHF from the input → whole Rappen in the model, converted here once (legacy docs: start from the defaults). */
+  protected onReminderFeeChange(level: number, chf: number): void {
+    const fees = [1, 2, 3].map(l => reminderFeeOf(this.formData(), l));
+    fees[level - 1] = Math.round(Number(chf) * 100);
+    this.dirty.emit(true);
+    this.formData.update(vm => ({ ...vm, reminderFees: fees }));
+  }
+
+  private feeI18n(name: string, label: string): NumberInputI18n {
+    return { name, label, placeholder: this.i18n().reminder_fee_placeholder(), helper: this.i18n().reminder_fee_helper() } as NumberInputI18n;
   }
 
   protected onFieldChange(fieldName: string, fieldValue: string | number | string[]): void {

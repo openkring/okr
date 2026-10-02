@@ -329,7 +329,22 @@
     "payment-inconsistent-state": "Algo ha fallado al registrar el pago. Inténtalo de nuevo, por favor.",
     "cancel-period-locked": "El periodo contable de la fecha de anulación está cerrado. Elige otra fecha o pide que se reabra el periodo.",
     "cancel-inconsistent-state": "Algo ha fallado al anular. Inténtalo de nuevo, por favor.",
-    "confirmation-no-receiver": "La factura no tiene destinatario. Sin destinatario no hay confirmación de pago."
+    "confirmation-no-receiver": "La factura no tiene destinatario. Sin destinatario no hay confirmación de pago.",
+    "no-reminder-template": "Todavía falta la plantilla de recordatorio en la configuración contable. Añádela allí.",
+    "no-reminder-fee-account": "Todavía falta la cuenta de recargos en la configuración contable. Añádela allí o crea el recordatorio sin recargo.",
+    "reminder-blocked": "Ahora mismo no se puede crear ningún recordatorio para esta factura.",
+    "max-level": "Esta factura ya tiene su 3.er recordatorio. No hay más recordatorios.",
+    "level-mismatch": "Mientras tanto se creó otro recordatorio. Vuelve a cargar la lista e inténtalo de nuevo.",
+    "no-reminder-date": "Falta la fecha del recordatorio o es anterior al último vencimiento. Elige una fecha posterior.",
+    "invalid-fee": "El recargo no es válido. Debe ser 0 o más.",
+    "not-issued": "Esta factura todavía no está emitida. Emítela primero.",
+    "no-document": "Falta el PDF, por eso no se puede enviar nada.",
+    "foreign-document": "Este documento no pertenece a esta factura.",
+    "no-email": "No hay ninguna dirección de correo electrónico del destinatario. Añádela en sus datos de contacto o envía el PDF de otra forma.",
+    "reminder-not-payable": "Los recordatorios solo son posibles para facturas emitidas que siguen pendientes.",
+    "reminder-period-locked": "El periodo contable de la fecha del recordatorio está cerrado. Elige otra fecha o pide que se vuelva a abrir el periodo.",
+    "reminder-account-invalid": "No se puede contabilizar en la cuenta de recargos o en la cuenta de deudores. Elige en la configuración contable una cuenta sin subcuentas.",
+    "reminder-inconsistent-state": "Algo salió mal al crear el recordatorio. Inténtalo de nuevo."
   },
   "payment": {
     "label": "Registrar pago",
@@ -396,5 +411,57 @@
     "empty": "Todavía no hay un plan de cuotas para este año.",
     "notMember": "Solo para socios",
     "noAccount": "Sin cuenta de ingresos – complétala después de tomarla"
+  },
+  "reminder": {
+    "level1": "Recordatorio de pago",
+    "level2": "2.º recordatorio",
+    "level3": "3.er recordatorio",
+    "create": "Crear recordatorio",
+    "createMessage": "Elige la fecha y el recargo en CHF. El recargo se suma al importe pendiente.",
+    "date": "Fecha",
+    "fee": "Recargo en CHF",
+    "createOk": "Crear",
+    "dateInvalid": "Indica una fecha válida.",
+    "feeInvalid": "Indica un recargo de 0 o más con dos decimales como máximo.",
+    "conf": "{document} del {date} está creado. Ahora quedan CHF {open} pendientes.",
+    "error": "No se pudo crear el recordatorio. Inténtalo de nuevo más tarde.",
+    "sendNow": "{document} está creado. ¿Quieres enviarlo ahora por correo electrónico al destinatario?",
+    "later": "Más tarde",
+    "send": "Enviar recordatorio",
+    "show": "Ver recordatorio",
+    "showError": "No se pudo abrir el recordatorio. Inténtalo de nuevo más tarde.",
+    "list": {
+      "title": "Recordatorios",
+      "due": "vence el",
+      "fee": "Recargo",
+      "sent": "enviado",
+      "notSent": "no enviado"
+    }
+  },
+  "openAmount": {
+    "label": "Importe pendiente (con recargos)"
+  },
+  "email": {
+    "send": "Enviar por correo electrónico",
+    "confirm": "{document} se enviará a la dirección de correo electrónico del destinatario.",
+    "ok": "Enviar",
+    "conf": "{document} se envió por correo electrónico el {date}.",
+    "error": "No se pudo enviar el correo electrónico. Inténtalo de nuevo más tarde.",
+    "sentAt": "Enviado el {date}"
+  },
+  "document": {
+    "invoice": "Factura {invoiceId}",
+    "reminder": "{level} de la factura {invoiceId}"
+  },
+  "mahnlauf": {
+    "label": "Ronda de recordatorios",
+    "confirm": "{count} facturas están vencidas. Para cada una se crea el siguiente recordatorio con el recargo configurado.",
+    "create": "Crear",
+    "createAndSend": "Crear y enviar",
+    "progress": "{n} de {m}",
+    "done": "{created} de {total} recordatorios están creados.",
+    "sent": "{sent} de ellos se enviaron por correo electrónico.",
+    "failed": "No creados:",
+    "sendFailed": "Creados, pero no enviados:"
   }
 }

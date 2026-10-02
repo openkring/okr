@@ -329,7 +329,22 @@
     "payment-inconsistent-state": "Un problème est survenu lors de la saisie du paiement. Réessaie, s’il te plaît.",
     "cancel-period-locked": "La période comptable de la date d’annulation est clôturée. Choisis une autre date ou fais rouvrir la période.",
     "cancel-inconsistent-state": "Un problème est survenu lors de l’annulation. Réessaie, s’il te plaît.",
-    "confirmation-no-receiver": "La facture n’a pas de destinataire. Sans destinataire, il n’y a pas de confirmation de paiement."
+    "confirmation-no-receiver": "La facture n’a pas de destinataire. Sans destinataire, il n’y a pas de confirmation de paiement.",
+    "no-reminder-template": "Le modèle de rappel manque encore dans les paramètres comptables. Ajoute-le là-bas.",
+    "no-reminder-fee-account": "Le compte des frais de rappel manque encore dans les paramètres comptables. Ajoute-le là-bas ou crée le rappel sans frais.",
+    "reminder-blocked": "Aucun rappel ne peut être créé pour cette facture pour le moment.",
+    "max-level": "Cette facture a déjà son 3e rappel. Il n’y en a pas d’autres.",
+    "level-mismatch": "Un autre rappel a été créé entre-temps. Recharge la liste et réessaie.",
+    "no-reminder-date": "La date du rappel manque ou précède la dernière échéance. Choisis une date plus tardive.",
+    "invalid-fee": "Les frais ne sont pas valables. Ils doivent être de 0 ou plus.",
+    "not-issued": "Cette facture n’est pas encore émise. Émets-la d’abord.",
+    "no-document": "Le PDF manque, rien ne peut donc être envoyé.",
+    "foreign-document": "Ce document n’appartient pas à cette facture.",
+    "no-email": "Aucune adresse e-mail n’est enregistrée pour le destinataire. Ajoute-la dans ses coordonnées ou envoie le PDF autrement.",
+    "reminder-not-payable": "Les rappels ne sont possibles que pour les factures émises encore ouvertes.",
+    "reminder-period-locked": "La période comptable de la date du rappel est clôturée. Choisis une autre date ou fais rouvrir la période.",
+    "reminder-account-invalid": "Le compte des frais de rappel ou le compte débiteurs ne peut pas être mouvementé. Choisis dans les paramètres comptables un compte sans sous-comptes.",
+    "reminder-inconsistent-state": "Un problème est survenu lors de la création du rappel. Réessaie."
   },
   "payment": {
     "label": "Saisir un paiement",
@@ -396,5 +411,57 @@
     "empty": "Aucun barème des cotisations n'est encore saisi pour cette année.",
     "notMember": "Réservé aux membres",
     "noAccount": "Sans compte de produits – complète-le après la reprise"
+  },
+  "reminder": {
+    "level1": "Rappel de paiement",
+    "level2": "2e rappel",
+    "level3": "3e rappel",
+    "create": "Créer un rappel",
+    "createMessage": "Choisis la date et les frais en CHF. Les frais s’ajoutent au montant ouvert.",
+    "date": "Date",
+    "fee": "Frais en CHF",
+    "createOk": "Créer",
+    "dateInvalid": "Indique une date valide.",
+    "feeInvalid": "Indique des frais de 0 ou plus avec au maximum deux décimales.",
+    "conf": "{document} du {date} est créé. Il reste CHF {open} ouverts.",
+    "error": "Le rappel n’a pas pu être créé. Réessaie plus tard.",
+    "sendNow": "{document} est créé. Veux-tu l’envoyer maintenant par e-mail au destinataire ?",
+    "later": "Plus tard",
+    "send": "Envoyer le rappel",
+    "show": "Afficher le rappel",
+    "showError": "Le rappel n’a pas pu être ouvert. Réessaie plus tard.",
+    "list": {
+      "title": "Rappels",
+      "due": "échéance le",
+      "fee": "Frais",
+      "sent": "envoyé",
+      "notSent": "pas envoyé"
+    }
+  },
+  "openAmount": {
+    "label": "Montant ouvert (frais de rappel compris)"
+  },
+  "email": {
+    "send": "Envoyer par e-mail",
+    "confirm": "{document} sera envoyé à l’adresse e-mail du destinataire.",
+    "ok": "Envoyer",
+    "conf": "{document} a été envoyé par e-mail le {date}.",
+    "error": "L’e-mail n’a pas pu être envoyé. Réessaie plus tard.",
+    "sentAt": "Envoyé le {date}"
+  },
+  "document": {
+    "invoice": "Facture {invoiceId}",
+    "reminder": "{level} pour la facture {invoiceId}"
+  },
+  "mahnlauf": {
+    "label": "Relance groupée",
+    "confirm": "{count} factures sont échues. Pour chacune, le rappel suivant est créé avec les frais configurés.",
+    "create": "Créer",
+    "createAndSend": "Créer et envoyer",
+    "progress": "{n} sur {m}",
+    "done": "{created} rappels sur {total} sont créés.",
+    "sent": "Dont {sent} envoyés par e-mail.",
+    "failed": "Pas créés :",
+    "sendFailed": "Créés, mais pas envoyés :"
   }
 }

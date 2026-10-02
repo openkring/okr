@@ -35,6 +35,32 @@
     "costCenter": {
       "label": "Standard-Kostenstelle der Buchhaltung",
       "helper": "Gilt für Buchungen auf Erfolgskonten ohne eigene Standard-Kostenstelle."
+    },
+    "reminderTemplate": {
+      "label": "Mahnungsvorlage",
+      "placeholder": "Vorlage-ID",
+      "helper": "Vorlage, mit der Zahlungserinnerungen und Mahnungen als PDF erstellt werden."
+    },
+    "reminderFeeAccount": {
+      "label": "Konto für Mahngebühren",
+      "helper": "Hier werden die Mahngebühren als Ertrag gebucht."
+    },
+    "reminderFee": {
+      "level1": "Gebühr Zahlungserinnerung (CHF)",
+      "level2": "Gebühr 2. Mahnung (CHF)",
+      "level3": "Gebühr 3. Mahnung (CHF)",
+      "placeholder": "0.00",
+      "helper": "Wird beim Erstellen vorgeschlagen und lässt sich dort anpassen. 0 = keine Gebühr."
+    },
+    "reminderGraceDays": {
+      "label": "Karenzfrist (Tage)",
+      "placeholder": "0–365",
+      "helper": "So viele Tage nach dem Fälligkeitsdatum schlägt der Mahnlauf eine Rechnung vor."
+    },
+    "reminderDueDays": {
+      "label": "Zahlungsfrist einer Mahnung (Tage)",
+      "placeholder": "0–365",
+      "helper": "So viele Tage hat der Empfänger nach einer Mahnung Zeit zum Bezahlen."
     }
   },
   "feeSchedule": {

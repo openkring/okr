@@ -35,6 +35,32 @@
     "costCenter": {
       "label": "Centro de costes predeterminado de la contabilidad",
       "helper": "Se aplica a los asientos en cuentas de resultados sin centro de costes predeterminado propio."
+    },
+    "reminderTemplate": {
+      "label": "Plantilla de recordatorio",
+      "placeholder": "ID de la plantilla",
+      "helper": "Plantilla con la que se crean los recordatorios de pago en PDF."
+    },
+    "reminderFeeAccount": {
+      "label": "Cuenta de recargos por recordatorio",
+      "helper": "Los recargos por recordatorio se contabilizan como ingreso en esta cuenta."
+    },
+    "reminderFee": {
+      "level1": "Recargo del recordatorio de pago (CHF)",
+      "level2": "Recargo del 2.º recordatorio (CHF)",
+      "level3": "Recargo del 3.er recordatorio (CHF)",
+      "placeholder": "0.00",
+      "helper": "Se propone al crear el recordatorio y se puede cambiar allí. 0 = sin recargo."
+    },
+    "reminderGraceDays": {
+      "label": "Periodo de gracia (días)",
+      "placeholder": "0–365",
+      "helper": "La ronda de recordatorios propone una factura tantos días después de su vencimiento."
+    },
+    "reminderDueDays": {
+      "label": "Plazo de pago de un recordatorio (días)",
+      "placeholder": "0–365",
+      "helper": "El destinatario tiene tantos días para pagar después de un recordatorio."
     }
   },
   "feeSchedule": {

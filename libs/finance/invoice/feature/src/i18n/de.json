@@ -329,7 +329,22 @@
     "payment-inconsistent-state": "Beim Erfassen der Zahlung ist etwas schiefgelaufen. Versuche es bitte noch einmal.",
     "cancel-period-locked": "Die Buchungsperiode zum Stornodatum ist abgeschlossen. Wähle ein anderes Datum oder lass die Periode wieder öffnen.",
     "cancel-inconsistent-state": "Beim Stornieren ist etwas schiefgelaufen. Versuche es bitte noch einmal.",
-    "confirmation-no-receiver": "Die Rechnung hat keinen Empfänger. Ohne Empfänger gibt es keine Zahlungsbestätigung."
+    "confirmation-no-receiver": "Die Rechnung hat keinen Empfänger. Ohne Empfänger gibt es keine Zahlungsbestätigung.",
+    "no-reminder-template": "In den Buchhaltungseinstellungen fehlt noch die Mahnungsvorlage. Bitte ergänze sie dort.",
+    "no-reminder-fee-account": "In den Buchhaltungseinstellungen fehlt noch das Konto für Mahngebühren. Bitte ergänze es dort oder erstelle die Mahnung ohne Gebühr.",
+    "reminder-blocked": "Für diese Rechnung kann gerade keine Mahnung erstellt werden.",
+    "max-level": "Diese Rechnung hat schon die 3. Mahnung. Weitere Mahnungen gibt es nicht.",
+    "level-mismatch": "In der Zwischenzeit wurde schon eine andere Mahnung erstellt. Lade die Liste neu und versuche es noch einmal.",
+    "no-reminder-date": "Das Datum der Mahnung fehlt oder liegt vor dem letzten Fälligkeitsdatum. Wähle ein späteres Datum.",
+    "invalid-fee": "Die Gebühr ist ungültig. Sie muss 0 oder mehr sein.",
+    "not-issued": "Diese Rechnung ist noch nicht ausgestellt. Stelle sie zuerst aus.",
+    "no-document": "Das PDF dazu fehlt. Darum kann nichts gesendet werden.",
+    "foreign-document": "Dieses Dokument gehört nicht zu dieser Rechnung.",
+    "no-email": "Für den Empfänger ist keine E-Mail-Adresse hinterlegt. Ergänze sie in seinen Kontaktdaten oder sende das PDF auf anderem Weg.",
+    "reminder-not-payable": "Mahnungen gibt es nur für ausgestellte, noch offene Rechnungen.",
+    "reminder-period-locked": "Die Buchungsperiode zum Datum der Mahnung ist abgeschlossen. Wähle ein anderes Datum oder lass die Periode wieder öffnen.",
+    "reminder-account-invalid": "Auf das Konto für Mahngebühren oder das Debitorenkonto kann nicht gebucht werden. Wähle in den Buchhaltungseinstellungen ein Konto ohne Unterkonten.",
+    "reminder-inconsistent-state": "Beim Erstellen der Mahnung ist etwas schiefgelaufen. Versuche es bitte noch einmal."
   },
   "payment": {
     "label": "Zahlung erfassen",
@@ -396,5 +411,57 @@
     "empty": "Für dieses Jahr ist noch kein Gebührenplan erfasst.",
     "notMember": "Nur für Mitglieder",
     "noAccount": "Ohne Ertragskonto – bitte nach dem Übernehmen ergänzen"
+  },
+  "reminder": {
+    "level1": "Zahlungserinnerung",
+    "level2": "2. Mahnung",
+    "level3": "3. Mahnung",
+    "create": "Mahnung erstellen",
+    "createMessage": "Wähle das Datum und die Gebühr in CHF. Die Gebühr kommt zum offenen Betrag dazu.",
+    "date": "Datum",
+    "fee": "Gebühr in CHF",
+    "createOk": "Erstellen",
+    "dateInvalid": "Bitte gib ein gültiges Datum an.",
+    "feeInvalid": "Bitte gib eine Gebühr von 0 oder mehr mit höchstens zwei Nachkommastellen an.",
+    "conf": "{document} vom {date} ist erstellt. Offen sind jetzt CHF {open}.",
+    "error": "Die Mahnung konnte nicht erstellt werden. Bitte versuche es später noch einmal.",
+    "sendNow": "{document} ist erstellt. Möchtest du sie jetzt per E-Mail an den Empfänger senden?",
+    "later": "Später",
+    "send": "Mahnung senden",
+    "show": "Mahnung anzeigen",
+    "showError": "Die Mahnung konnte nicht geöffnet werden. Bitte versuche es später noch einmal.",
+    "list": {
+      "title": "Mahnungen",
+      "due": "fällig am",
+      "fee": "Gebühr",
+      "sent": "versendet",
+      "notSent": "nicht versendet"
+    }
+  },
+  "openAmount": {
+    "label": "Offener Betrag (mit Mahngebühren)"
+  },
+  "email": {
+    "send": "Per E-Mail senden",
+    "confirm": "{document} wird an die E-Mail-Adresse des Empfängers gesendet.",
+    "ok": "Senden",
+    "conf": "{document} wurde am {date} per E-Mail gesendet.",
+    "error": "Die E-Mail konnte nicht gesendet werden. Bitte versuche es später noch einmal.",
+    "sentAt": "Versendet am {date}"
+  },
+  "document": {
+    "invoice": "Rechnung {invoiceId}",
+    "reminder": "{level} zu Rechnung {invoiceId}"
+  },
+  "mahnlauf": {
+    "label": "Mahnlauf",
+    "confirm": "{count} Rechnungen sind überfällig. Für jede wird die nächste Mahnung mit der eingestellten Gebühr erstellt.",
+    "create": "Erstellen",
+    "createAndSend": "Erstellen und senden",
+    "progress": "{n} von {m}",
+    "done": "{created} von {total} Mahnungen sind erstellt.",
+    "sent": "{sent} davon wurden per E-Mail gesendet.",
+    "failed": "Nicht erstellt:",
+    "sendFailed": "Erstellt, aber nicht gesendet:"
   }
 }

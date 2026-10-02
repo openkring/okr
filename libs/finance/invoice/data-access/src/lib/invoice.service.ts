@@ -8,7 +8,7 @@ import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import {
   BookingCollection, BookingLineCollection, BookingLineModel, BookingModel, DbQuery, InvoiceCollection, InvoiceModel, InvoicePayment,
-  InvoicePositionCollection, InvoicePositionModel, UserModel,
+  InvoicePositionCollection, InvoicePositionModel, InvoiceReminder, UserModel,
 } from '@okr/shared-models';
 import { addDuration, findByKey, getQuery, getSystemQuery, getTodayStr } from '@okr/shared-util-core';
 import { ActivityService } from '@okr/activity-data-access';
@@ -69,6 +69,27 @@ export interface CancelInvoiceResult {
 export interface PaymentConfirmationResult {
   documentKey: string;
   content: string;           // base64 PDF
+}
+
+/** The `createInvoiceReminder` callable's request (apps/functions/src/invoice/create-invoice-reminder.ts). */
+export interface CreateInvoiceReminderPayload {
+  invoiceKey: string;
+  level: number;
+  date: string;              // StoreDate
+  fee?: number;              // Rappen; omitted = the configured fee of the level
+}
+
+/** The `createInvoiceReminder` callable's result: the stored reminder and the open amount incl. fees (Rappen). */
+export interface CreateInvoiceReminderResult {
+  reminder: InvoiceReminder;
+  openAmount: number;
+}
+
+/** The `sendInvoiceEmail` callable's result. `sentAt` is a StoreDate. */
+export interface SendInvoiceEmailResult {
+  sentAt: string;
+  kind: 'invoice' | 'reminder';
+  level?: number;
 }
 
 /**
@@ -150,6 +171,33 @@ export class InvoiceService {
     const fn = httpsCallable<{ invoiceKey: string; date: string; reason: string }, CancelInvoiceResult>(this.functions(), 'cancelInvoice');
     const result = await fn({ invoiceKey, date, reason });
     void this.activityService.log('invoice', 'cancel', currentUser, `${invoiceKey}: ${result.data.stornoBookingKey}`);
+    return result.data;
+  }
+
+  /**
+   * Creates reminder `level` (spec 1.76 phase 3): PDF, finance-document and the optional fee booking, on
+   * the server. `feeChf` is CHF and converted to Rappen here, exactly once; leave it out to let the server
+   * take the configured fee of the level.
+   */
+  public async createReminder(invoiceKey: string, level: number, date: string, feeChf?: number, currentUser?: UserModel): Promise<CreateInvoiceReminderResult> {
+    const payload: CreateInvoiceReminderPayload = {
+      invoiceKey, level, date,
+      ...(feeChf === undefined ? {} : { fee: Math.round(feeChf * 100) }),
+    };
+    const fn = httpsCallable<CreateInvoiceReminderPayload, CreateInvoiceReminderResult>(this.functions(), 'createInvoiceReminder');
+    const result = await fn(payload);
+    void this.activityService.log('invoice', 'reminder', currentUser, `${invoiceKey}: ${level} (${result.data.reminder?.fee ?? 0})`);
+    return result.data;
+  }
+
+  /**
+   * Mails the invoice PDF or one of its reminder PDFs (`documentKey`) to the receiver (spec 1.76 D12). The
+   * address is read on the server and never reaches the client. Not idempotent: a second call mails again.
+   */
+  public async sendEmail(invoiceKey: string, documentKey: string, currentUser?: UserModel): Promise<SendInvoiceEmailResult> {
+    const fn = httpsCallable<{ invoiceKey: string; documentKey: string }, SendInvoiceEmailResult>(this.functions(), 'sendInvoiceEmail');
+    const result = await fn({ invoiceKey, documentKey });
+    void this.activityService.log('invoice', 'email', currentUser, `${invoiceKey}: ${documentKey}`);
     return result.data;
   }
 

@@ -205,6 +205,48 @@ export const INVOICE_I18N_KEYS = {
   issue_all_done:             PFX + 'issueAll.done',
   issue_all_failed:           PFX + 'issueAll.failed',
 
+  // phase 3 (1.76): reminders, email, Mahnlauf
+  reminder_level_1:           PFX + 'reminder.level1',
+  reminder_level_2:           PFX + 'reminder.level2',
+  reminder_level_3:           PFX + 'reminder.level3',
+  reminder_create:            PFX + 'reminder.create',
+  reminder_create_message:    PFX + 'reminder.createMessage',
+  reminder_date:              PFX + 'reminder.date',
+  reminder_fee:               PFX + 'reminder.fee',
+  reminder_create_ok:         PFX + 'reminder.createOk',
+  reminder_date_invalid:      PFX + 'reminder.dateInvalid',
+  reminder_fee_invalid:       PFX + 'reminder.feeInvalid',
+  reminder_conf:              PFX + 'reminder.conf',
+  reminder_error:             PFX + 'reminder.error',
+  reminder_send_now:          PFX + 'reminder.sendNow',
+  reminder_later:             PFX + 'reminder.later',
+  reminder_send:              PFX + 'reminder.send',
+  reminder_show:              PFX + 'reminder.show',
+  reminder_show_error:        PFX + 'reminder.showError',
+  reminders_title:            PFX + 'reminder.list.title',
+  reminder_due:               PFX + 'reminder.list.due',
+  reminder_fee_short:         PFX + 'reminder.list.fee',
+  reminder_sent:              PFX + 'reminder.list.sent',
+  reminder_not_sent:          PFX + 'reminder.list.notSent',
+  open_amount_label:          PFX + 'openAmount.label',
+  email_send:                 PFX + 'email.send',
+  email_confirm:              PFX + 'email.confirm',
+  email_ok:                   PFX + 'email.ok',
+  email_conf:                 PFX + 'email.conf',
+  email_error:                PFX + 'email.error',
+  email_sent_at:              PFX + 'email.sentAt',
+  document_invoice:           PFX + 'document.invoice',
+  document_reminder:          PFX + 'document.reminder',
+  mahnlauf:                   PFX + 'mahnlauf.label',
+  mahnlauf_confirm:           PFX + 'mahnlauf.confirm',
+  mahnlauf_create:            PFX + 'mahnlauf.create',
+  mahnlauf_create_and_send:   PFX + 'mahnlauf.createAndSend',
+  mahnlauf_progress:          PFX + 'mahnlauf.progress',
+  mahnlauf_done:              PFX + 'mahnlauf.done',
+  mahnlauf_sent:              PFX + 'mahnlauf.sent',
+  mahnlauf_failed:            PFX + 'mahnlauf.failed',
+  mahnlauf_send_failed:       PFX + 'mahnlauf.sendFailed',
+
   refusal_invalid_payment_id:       PFX + 'refusal.invalid-payment-id',
   refusal_not_a_payment_account:    PFX + 'refusal.not-a-payment-account',
   refusal_payment_blocked:          PFX + 'refusal.payment-blocked',
@@ -233,6 +275,21 @@ export const INVOICE_I18N_KEYS = {
   refusal_cancel_period_locked:     PFX + 'refusal.cancel-period-locked',
   refusal_cancel_inconsistent_state: PFX + 'refusal.cancel-inconsistent-state',
   refusal_confirmation_no_receiver: PFX + 'refusal.confirmation-no-receiver',
+  refusal_no_reminder_template:     PFX + 'refusal.no-reminder-template',
+  refusal_no_reminder_fee_account:  PFX + 'refusal.no-reminder-fee-account',
+  refusal_reminder_blocked:         PFX + 'refusal.reminder-blocked',
+  refusal_max_level:                PFX + 'refusal.max-level',
+  refusal_level_mismatch:           PFX + 'refusal.level-mismatch',
+  refusal_no_reminder_date:         PFX + 'refusal.no-reminder-date',
+  refusal_invalid_fee:              PFX + 'refusal.invalid-fee',
+  refusal_not_issued:               PFX + 'refusal.not-issued',
+  refusal_no_document:              PFX + 'refusal.no-document',
+  refusal_foreign_document:         PFX + 'refusal.foreign-document',
+  refusal_no_email:                 PFX + 'refusal.no-email',
+  refusal_reminder_not_payable:     PFX + 'refusal.reminder-not-payable',
+  refusal_reminder_period_locked:   PFX + 'refusal.reminder-period-locked',
+  refusal_reminder_account_invalid: PFX + 'refusal.reminder-account-invalid',
+  refusal_reminder_inconsistent_state: PFX + 'refusal.reminder-inconsistent-state',
 
   as_title:         '@actionsheet.title',
   ok:               '@ok',
@@ -290,10 +347,22 @@ export const INVOICE_REFUSAL_I18N: Record<string, keyof typeof INVOICE_I18N_KEYS
   'invoice-booking': 'refusal_invoice_booking',
   'booking-archived': 'refusal_booking_archived',
   'storno-before-invoice': 'refusal_storno_before_invoice',
+  // phase 3: reminders and email
+  'no-reminder-template': 'refusal_no_reminder_template',
+  'no-reminder-fee-account': 'refusal_no_reminder_fee_account',
+  'reminder-blocked': 'refusal_reminder_blocked',
+  'max-level': 'refusal_max_level',
+  'level-mismatch': 'refusal_level_mismatch',
+  'no-reminder-date': 'refusal_no_reminder_date',
+  'invalid-fee': 'refusal_invalid_fee',
+  'not-issued': 'refusal_not_issued',
+  'no-document': 'refusal_no_document',
+  'foreign-document': 'refusal_foreign_document',
+  'no-email': 'refusal_no_email',
 };
 
 /** Which invoice call failed — some reasons need a different text there (a payment's amount is not a position's). */
-export type InvoiceRefusalContext = 'payment' | 'cancel' | 'confirmation';
+export type InvoiceRefusalContext = 'payment' | 'cancel' | 'confirmation' | 'reminder';
 
 /** Per-context texts that replace the general one of the same reason. */
 export const INVOICE_REFUSAL_CONTEXT_I18N: Record<InvoiceRefusalContext, Record<string, keyof typeof INVOICE_I18N_KEYS>> = {
@@ -309,6 +378,12 @@ export const INVOICE_REFUSAL_CONTEXT_I18N: Record<InvoiceRefusalContext, Record<
   },
   confirmation: {
     'no-receiver': 'refusal_confirmation_no_receiver',
+  },
+  reminder: {
+    'not-payable': 'refusal_reminder_not_payable',
+    'period-locked': 'refusal_reminder_period_locked',
+    'account-invalid': 'refusal_reminder_account_invalid',
+    'inconsistent-state': 'refusal_reminder_inconsistent_state',
   },
 };
 

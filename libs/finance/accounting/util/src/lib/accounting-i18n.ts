@@ -29,6 +29,23 @@ export const ACCOUNTING_I18N_KEYS = {
   // Kostenrechnung (1.65): the accounting-wide fallback Kostenstelle
   cost_center:                   PFX + 'settings.costCenter.label',
   cost_center_helper:            PFX + 'settings.costCenter.helper',
+  // Mahnwesen (1.76 phase 3): reminder template, fee account, fees per level, grace and due days
+  reminder_template:             PFX + 'settings.reminderTemplate.label',
+  reminder_template_placeholder: PFX + 'settings.reminderTemplate.placeholder',
+  reminder_template_helper:      PFX + 'settings.reminderTemplate.helper',
+  reminder_fee_account:          PFX + 'settings.reminderFeeAccount.label',
+  reminder_fee_account_helper:   PFX + 'settings.reminderFeeAccount.helper',
+  reminder_fee_1:                PFX + 'settings.reminderFee.level1',
+  reminder_fee_2:                PFX + 'settings.reminderFee.level2',
+  reminder_fee_3:                PFX + 'settings.reminderFee.level3',
+  reminder_fee_placeholder:      PFX + 'settings.reminderFee.placeholder',
+  reminder_fee_helper:           PFX + 'settings.reminderFee.helper',
+  reminder_grace_days:             PFX + 'settings.reminderGraceDays.label',
+  reminder_grace_days_placeholder: PFX + 'settings.reminderGraceDays.placeholder',
+  reminder_grace_days_helper:      PFX + 'settings.reminderGraceDays.helper',
+  reminder_due_days:               PFX + 'settings.reminderDueDays.label',
+  reminder_due_days_placeholder:   PFX + 'settings.reminderDueDays.placeholder',
+  reminder_due_days_helper:        PFX + 'settings.reminderDueDays.helper',
   save:                     '@save.label',
   cancel:                   '@cancel',
 

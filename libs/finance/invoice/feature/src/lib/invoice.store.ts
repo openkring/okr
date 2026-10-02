@@ -19,11 +19,13 @@ import { I18nService } from '@okr/shared-i18n';
 import { InvoiceService } from '@okr/finance-invoice-data-access';
 import { InvoicePaymentModal } from '@okr/finance-invoice-ui';
 import {
-  buildPaymentConfirmationPayload, canCreatePaymentConfirmation, cancelInputProblem, isPayableState, draftInvoicesOf, formatPaymentChf, getInvoiceExportData,
-  INVOICE_CANCEL_REASON_LENGTH, INVOICE_I18N_KEYS, InvoiceI18n, InvoicePaymentCandidate, InvoicePaymentInput, invoiceRefusalReasons,
-  invoiceRefusalText, invoicesForList, isDraftInvoice, isRetryablePaymentRefusal, newDraftInvoice, newInvoicePaymentFormModel, newPaymentId,
-  openInvoiceAmount, PAYMENT_CONFIRMATION_TEMPLATE_ID,
+  buildPaymentConfirmationPayload, canCreatePaymentConfirmation, canCreateReminder, canEmailInvoice, cancelInputProblem, isPayableState, defaultReminderFee,
+  draftInvoicesOf, formatPaymentChf, getInvoiceExportData, INVOICE_CANCEL_REASON_LENGTH, INVOICE_I18N_KEYS, InvoiceI18n, InvoicePaymentCandidate,
+  InvoicePaymentInput, invoiceRefusalReasons, invoiceRefusalText, invoicesForList, isDraftInvoice, isRetryablePaymentRefusal, latestReminderWithDocument,
+  mahnlaufCandidates, newDraftInvoice, newInvoicePaymentFormModel, newPaymentId, nextReminderLevel, openInvoiceAmount, parseReminderFee,
+  PAYMENT_CONFIRMATION_TEMPLATE_ID, reminderInputProblem, reminderLevelKey,
 } from '@okr/finance-invoice-util';
+import { FinanceDocumentService } from '@okr/finance-accounting-data-access';
 import { AccountService } from '@okr/finance-account-data-access';
 import { AccountingStore } from '@okr/finance-accounting-feature';
 import { ReceiptParty } from '@okr/finance-booking-util';
@@ -57,6 +59,14 @@ function saveBase64Pdf(content: string, filename: string): void {
   URL.revokeObjectURL(url);
 }
 
+/** Grace days of a Mahnlauf when the accounting config predates the field (model default). */
+const DEFAULT_REMINDER_GRACE_DAYS = 10;
+
+/** A StoreDate as the user reads it (dd.MM.yyyy). */
+function viewDate(storeDate: string): string {
+  return convertDateFormatToString(storeDate, DateFormat.StoreDate, DateFormat.ViewDate, false) || storeDate;
+}
+
 /** A label for an invoice in a summary: its number, else its receiver, else its title. */
 function invoiceLabel(invoice: InvoiceModel): string {
   return invoice.invoiceId || invoice.receiver?.label || invoice.title || invoice.okey;
@@ -86,6 +96,7 @@ export const InvoiceStore = signalStore(
       personService: inject(PersonService),
       orgService: inject(OrgService),
       docGenerationService: inject(DocGenerationService),
+      financeDocumentService: inject(FinanceDocumentService),
       appStore,
       accountingStore: inject(AccountingStore),
       firestoreService: inject(FirestoreService),
@@ -136,6 +147,16 @@ export const InvoiceStore = signalStore(
     currentUser: computed(() => store.appStore.currentUser()),
     isExternallyManaged: computed(() => store.accountingStore.isExternallyManaged()),
     states: computed(() => store.appStore.getCategory('invoice_state')),
+
+    /**
+     * The invoices a Mahnlauf would remind (spec 1.76 phase 3): the due ones of the current list, the
+     * longest overdue first. Legacy config docs lack the grace days (Firestore reads skip model defaults).
+     */
+    mahnlaufInvoices: computed(() => {
+      const invoices = invoicesForList(store.allInvoicesResource.value() ?? [], store.listId(), store.appStore.currentUser()?.personKey);
+      const graceDays = store.accountingStore.config()?.reminderGraceDays ?? DEFAULT_REMINDER_GRACE_DAYS;
+      return mahnlaufCandidates(invoices, getTodayStr(), graceDays);
+    }),
 
     filteredInvoices: computed(() => {
       let invoices = store.allInvoicesResource.value() ?? [];
@@ -324,7 +345,7 @@ export const InvoiceStore = signalStore(
         try {
           const result = await store.invoiceService.recordPayment(invoice.okey, data, paymentId, store.appStore.currentUser() ?? undefined);
           // derived from the callable's answer: a re-read right after the write may still be the old snapshot
-          const open = openInvoiceAmount({ totalAmount: invoice.totalAmount, payments: result.payments });
+          const open = openInvoiceAmount({ totalAmount: invoice.totalAmount, payments: result.payments, reminders: invoice.reminders });
           await showToast(store.toastController, result.state === 'paid'
             ? store.i18n.payment_conf_paid()
             : fill(store.i18n.payment_conf(), { open: formatPaymentChf(open) }));
@@ -442,6 +463,213 @@ export const InvoiceStore = signalStore(
       const done = fill(store.i18n.issue_all_done(), { issued, total: drafts.length });
       const summary = failures.length > 0 ? `${done} ${store.i18n.issue_all_failed()} ${failures.join(' · ')}` : done;
       await confirm(store.alertController, summary, store.i18n.ok(), store.i18n.cancel(), false);
+    },
+
+    /** "Rechnung 202600001" — how a confirm alert or toast names the invoice PDF. */
+    invoiceDocumentLabel(invoice: InvoiceModel): string {
+      return fill(store.i18n.document_invoice(), { invoiceId: invoice.invoiceId || invoice.okey });
+    },
+
+    /** "2. Mahnung zu Rechnung 202600001" — how a confirm alert or toast names a reminder PDF. */
+    reminderDocumentLabel(invoice: InvoiceModel, level: number): string {
+      return fill(store.i18n.document_reminder(), { level: store.i18n[reminderLevelKey(level)](), invoiceId: invoice.invoiceId || invoice.okey });
+    },
+
+    /**
+     * Creates the next reminder of an open invoice (spec 1.76 phase 3): asks for the date (today by
+     * default) and the fee in CHF (the configured fee of the level by default), then `createInvoiceReminder`
+     * renders the PDF and books the fee. The toast names the open amount from the callable's answer; then
+     * the reminder can be mailed right away.
+     */
+    async createReminder(invoice: InvoiceModel): Promise<void> {
+      if (!canCreateReminder(invoice) || store.accountingStore.isExternallyManaged() !== false) return;
+      const config = store.accountingStore.config();
+      if (!config) {
+        await showToast(store.toastController, store.i18n.refusal_no_accounting_config());
+        return;
+      }
+      const level = nextReminderLevel(invoice.reminders);
+      const levelLabel = store.i18n[reminderLevelKey(level)]();
+      // legacy config docs lack the field (Firestore reads skip model defaults): the server then uses its default too
+      const defaultFee = formatPaymentChf(defaultReminderFee(config.reminderFees ?? [0, 2000, 2000], level));
+      const message = store.i18n.reminder_create_message();
+      let input: { date: string; fee: number } | undefined;
+      const alert = await store.alertController.create({
+        header: levelLabel,
+        message,
+        inputs: [
+          { name: 'date', type: 'date', value: getTodayStr(DateFormat.IsoDate), attributes: { 'aria-label': store.i18n.reminder_date() } },
+          { name: 'fee', type: 'text', value: defaultFee, placeholder: store.i18n.reminder_fee(),
+            attributes: { inputmode: 'decimal', 'aria-label': store.i18n.reminder_fee() } },
+        ],
+        buttons: [
+          { text: store.i18n.cancel(), role: 'cancel' },
+          {
+            text: store.i18n.reminder_create_ok(),
+            role: 'confirm',
+            handler: (values: { date?: string; fee?: string }) => {
+              const date = values?.date ? (convertDateFormatToString(values.date, DateFormat.IsoDate, DateFormat.StoreDate, false) || '') : '';
+              const problem = reminderInputProblem(date, values?.fee);
+              if (problem) {
+                // keep the alert open and say what is missing
+                alert.message = `${message} ${problem === 'date' ? store.i18n.reminder_date_invalid() : store.i18n.reminder_fee_invalid()}`;
+                return false;
+              }
+              input = { date, fee: parseReminderFee(values?.fee) ?? 0 };
+              return true;
+            },
+          },
+        ],
+      });
+      await alert.present();
+      const { role } = await alert.onDidDismiss();
+      if (role !== 'confirm' || !input) return;
+
+      let documentKey = '';
+      try {
+        const result = await store.invoiceService.createReminder(invoice.okey, level, input.date, input.fee, store.appStore.currentUser() ?? undefined);
+        documentKey = result.reminder?.documentKey ?? '';
+        // derived from the callable's answer: a re-read right after the write may still be the old snapshot
+        await showToast(store.toastController, fill(store.i18n.reminder_conf(), {
+          document: levelLabel, date: viewDate(result.reminder?.date ?? input.date), open: formatPaymentChf(result.openAmount),
+        }));
+      } catch (e) {
+        console.error('InvoiceStore.createReminder: createInvoiceReminder failed', e);
+        await showToast(store.toastController, invoiceRefusalText(invoiceRefusalReasons(e), store.i18n, store.i18n.reminder_error(), 'reminder'));
+        patchState(store, { version: store.version() + 1 });
+        return;
+      }
+      patchState(store, { version: store.version() + 1 });
+      if (!documentKey) return;
+      const label = this.reminderDocumentLabel(invoice, level);
+      const sendNow = await confirm(store.alertController, fill(store.i18n.reminder_send_now(), { document: label }),
+        store.i18n.email_ok(), store.i18n.reminder_later(), true);
+      if (sendNow) await this.sendDocument(invoice, documentKey, label, false);
+    },
+
+    /** Mails the invoice PDF to the receiver (spec 1.76 D12) after a confirmation naming the invoice. */
+    async sendInvoiceEmail(invoice: InvoiceModel): Promise<void> {
+      if (!canEmailInvoice(invoice) || store.accountingStore.isExternallyManaged() !== false) return;
+      await this.sendDocument(invoice, invoice.documentKey, this.invoiceDocumentLabel(invoice));
+    },
+
+    /** Mails the latest reminder that has a PDF to the receiver, after a confirmation naming it. */
+    async sendReminderEmail(invoice: InvoiceModel): Promise<void> {
+      const reminder = latestReminderWithDocument(invoice.reminders);
+      if (!reminder || invoice.state === 'draft' || store.accountingStore.isExternallyManaged() !== false) return;
+      await this.sendDocument(invoice, reminder.documentKey, this.reminderDocumentLabel(invoice, reminder.level));
+    },
+
+    /**
+     * Sends one document of an invoice by email. The confirmation names the document, never an address:
+     * the client does not know it (it stays on the server). A send is not idempotent, so a failure is
+     * reported and not retried.
+     */
+    async sendDocument(invoice: InvoiceModel, documentKey: string, label: string, askFirst = true): Promise<void> {
+      if (askFirst) {
+        const confirmed = await confirm(store.alertController, fill(store.i18n.email_confirm(), { document: label }),
+          store.i18n.email_ok(), store.i18n.cancel(), true);
+        if (!confirmed) return;
+      }
+      try {
+        const result = await store.invoiceService.sendEmail(invoice.okey, documentKey, store.appStore.currentUser() ?? undefined);
+        await showToast(store.toastController, fill(store.i18n.email_conf(), { document: label, date: viewDate(result.sentAt) }));
+      } catch (e) {
+        console.error('InvoiceStore.sendDocument: sendInvoiceEmail failed', e);
+        await showToast(store.toastController, invoiceRefusalText(invoiceRefusalReasons(e), store.i18n, store.i18n.email_error()));
+      }
+      patchState(store, { version: store.version() + 1 });
+    },
+
+    /**
+     * Opens the latest reminder PDF: `signFinanceDocuments` (treasurer/privileged) hands out a short-lived
+     * link to the private file, which is downloaded as a blob (a tab opened this long after the tap would
+     * be blocked), else opened directly.
+     */
+    async showReminderPdf(invoice: InvoiceModel): Promise<void> {
+      const reminder = latestReminderWithDocument(invoice.reminders);
+      if (!reminder) return;
+      try {
+        const [voucher] = await store.financeDocumentService.sign([reminder.documentKey]);
+        if (!voucher?.url) {
+          await showToast(store.toastController, store.i18n.reminder_show_error());
+          return;
+        }
+        const saved = await downloadFromUrl(voucher.url, `Mahnung-${reminder.level}-${invoice.invoiceId || invoice.okey}.pdf`);
+        if (!saved) window.open(voucher.url, '_blank');
+      } catch (e) {
+        console.error('InvoiceStore.showReminderPdf: signFinanceDocuments failed', e);
+        await showToast(store.toastController, store.i18n.reminder_show_error());
+      }
+    },
+
+    /**
+     * Mahnlauf (spec 1.76 phase 3): creates the next reminder of every due invoice of the list, one after
+     * the other, each at its own next level with the configured fee, dated today; optionally mails each
+     * one right after it was created. A refusal does not stop the run; a failed send does not undo the
+     * reminder it belongs to and is listed on its own in the summary at the end.
+     */
+    async runMahnlauf(): Promise<void> {
+      if (store.accountingStore.isExternallyManaged() !== false || !hasRole('treasurer', store.appStore.currentUser())) return;
+      const candidates = store.mahnlaufInvoices();
+      if (candidates.length === 0) return;
+      const alert = await store.alertController.create({
+        header: store.i18n.mahnlauf(),
+        message: fill(store.i18n.mahnlauf_confirm(), { count: candidates.length }),
+        buttons: [
+          { text: store.i18n.cancel(), role: 'cancel' },
+          { text: store.i18n.mahnlauf_create(), role: 'create' },
+          { text: store.i18n.mahnlauf_create_and_send(), role: 'send' },
+        ],
+      });
+      await alert.present();
+      const { role } = await alert.onDidDismiss();
+      if (role !== 'create' && role !== 'send') return;
+      const andSend = role === 'send';
+
+      const today = getTodayStr();
+      const currentUser = store.appStore.currentUser() ?? undefined;
+      const progress = await store.toastController.create({ message: fill(store.i18n.mahnlauf_progress(), { n: 0, m: candidates.length }) });
+      await progress.present();
+      let created = 0;
+      let sent = 0;
+      const failures: string[] = [];
+      const sendFailures: string[] = [];
+      for (const [i, invoice] of candidates.entries()) {
+        progress.message = fill(store.i18n.mahnlauf_progress(), { n: i + 1, m: candidates.length });
+        const level = nextReminderLevel(invoice.reminders);
+        let documentKey = '';
+        try {
+          // no fee: the server takes the configured fee of the level
+          const result = await store.invoiceService.createReminder(invoice.okey, level, today, undefined, currentUser);
+          created++;
+          documentKey = result.reminder?.documentKey ?? '';
+        } catch (e) {
+          console.error(`InvoiceStore.runMahnlauf: createInvoiceReminder failed for ${invoice.okey}`, e);
+          failures.push(`${invoiceLabel(invoice)}: ${invoiceRefusalText(invoiceRefusalReasons(e), store.i18n, store.i18n.reminder_error(), 'reminder')}`);
+          continue;
+        }
+        if (!andSend) continue;
+        if (!documentKey) {
+          sendFailures.push(`${invoiceLabel(invoice)}: ${store.i18n.refusal_no_document()}`);
+          continue;
+        }
+        try {
+          await store.invoiceService.sendEmail(invoice.okey, documentKey, currentUser);
+          sent++;
+        } catch (e) {
+          console.error(`InvoiceStore.runMahnlauf: sendInvoiceEmail failed for ${invoice.okey}`, e);
+          sendFailures.push(`${invoiceLabel(invoice)}: ${invoiceRefusalText(invoiceRefusalReasons(e), store.i18n, store.i18n.email_error())}`);
+        }
+      }
+      await progress.dismiss();
+      patchState(store, { version: store.version() + 1 });
+
+      const parts = [fill(store.i18n.mahnlauf_done(), { created, total: candidates.length })];
+      if (andSend) parts.push(fill(store.i18n.mahnlauf_sent(), { sent }));
+      if (failures.length > 0) parts.push(`${store.i18n.mahnlauf_failed()} ${failures.join(' · ')}`);
+      if (sendFailures.length > 0) parts.push(`${store.i18n.mahnlauf_send_failed()} ${sendFailures.join(' · ')}`);
+      await confirm(store.alertController, parts.join(' '), store.i18n.ok(), store.i18n.cancel(), false);
     },
 
     async export(type: string, invoices: InvoiceModel[]): Promise<void> {

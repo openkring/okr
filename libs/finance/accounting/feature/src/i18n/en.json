@@ -35,6 +35,32 @@
     "costCenter": {
       "label": "Accounting default cost centre",
       "helper": "Applies to bookings on income and expense accounts without their own default cost centre."
+    },
+    "reminderTemplate": {
+      "label": "Reminder template",
+      "placeholder": "Template ID",
+      "helper": "Template used to create payment reminders as PDF."
+    },
+    "reminderFeeAccount": {
+      "label": "Reminder fee account",
+      "helper": "Reminder fees are booked to this account as income."
+    },
+    "reminderFee": {
+      "level1": "Fee for the payment reminder (CHF)",
+      "level2": "Fee for the 2nd reminder (CHF)",
+      "level3": "Fee for the 3rd reminder (CHF)",
+      "placeholder": "0.00",
+      "helper": "Suggested when a reminder is created and can be changed there. 0 = no fee."
+    },
+    "reminderGraceDays": {
+      "label": "Grace period (days)",
+      "placeholder": "0–365",
+      "helper": "The reminder run suggests an invoice this many days after its due date."
+    },
+    "reminderDueDays": {
+      "label": "Payment period of a reminder (days)",
+      "placeholder": "0–365",
+      "helper": "The receiver has this many days to pay after a reminder."
     }
   },
   "feeSchedule": {

@@ -4,7 +4,9 @@ import {
   IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar, PopoverController,
 } from '@ionic/angular/standalone';
 import { InvoiceModel, RoleName } from '@okr/shared-models';
-import { canCreatePaymentConfirmation, isDraftInvoice, isPayableState, mayReadInvoiceDocuments } from '@okr/finance-invoice-util';
+import {
+  canCreatePaymentConfirmation, canCreateReminder, canEmailInvoice, isDraftInvoice, isPayableState, latestReminderWithDocument, mayReadInvoiceDocuments,
+} from '@okr/finance-invoice-util';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@okr/shared-util-angular';
@@ -51,12 +53,21 @@ import { InvoiceStore } from './invoice.store';
                 <ion-content>
                   <okr-menu [menuName]="contextMenuName()" />
                   <!-- not a menuItems row: it is offered only while the list holds drafts -->
-                  @if (canIssueAllDrafts()) {
+                  @if (canIssueAllDrafts() || canRunMahnlauf()) {
                     <ion-list lines="none">
-                      <ion-item button="true" detail="false" (click)="selectPopoverAction('issueAllDrafts')">
-                        <ion-icon slot="start" src="{{ 'send' | svgIcon }}" />
-                        <ion-label>{{ store.i18n.issue_all() }}</ion-label>
-                      </ion-item>
+                      @if (canIssueAllDrafts()) {
+                        <ion-item button="true" detail="false" (click)="selectPopoverAction('issueAllDrafts')">
+                          <ion-icon slot="start" src="{{ 'send' | svgIcon }}" />
+                          <ion-label>{{ store.i18n.issue_all() }}</ion-label>
+                        </ion-item>
+                      }
+                      <!-- likewise not a menuItems row: offered only while invoices of the list are due for a reminder -->
+                      @if (canRunMahnlauf()) {
+                        <ion-item button="true" detail="false" (click)="selectPopoverAction('mahnlauf')">
+                          <ion-icon slot="start" src="{{ 'alarm' | svgIcon }}" />
+                          <ion-label>{{ store.i18n.mahnlauf() }}</ion-label>
+                        </ion-item>
+                      }
                     </ion-list>
                   }
                 </ion-content>
@@ -131,6 +142,9 @@ export class InvoiceList {
   /** "Alle Entwürfe ausstellen": treasurer, native books, and only while the list holds drafts */
   protected readonly canIssueAllDrafts = computed(() =>
     this.store.isExternallyManaged() === false && hasRole('treasurer', this.currentUser()) && this.store.draftsToIssue().length > 0);
+  /** "Mahnlauf": treasurer, native books, and only while invoices of the list are due for a reminder */
+  protected readonly canRunMahnlauf = computed(() =>
+    this.store.isExternallyManaged() === false && hasRole('treasurer', this.currentUser()) && this.store.mahnlaufInvoices().length > 0);
 
   /******************************** constructor ******************************************* */
   constructor() {
@@ -197,6 +211,7 @@ export class InvoiceList {
       case 'add': await this.store.add(); break;
       case 'exportRaw': await this.store.export('raw', this.filteredInvoices()); break;
       case 'issueAllDrafts': await this.store.issueAllDrafts(); break;
+      case 'mahnlauf': await this.store.runMahnlauf(); break;
       default: error(undefined, `InvoiceList.onPopoverDismiss: unknown method ${selectedMethod}`);
     }
     this.cdr.markForCheck();
@@ -215,7 +230,9 @@ export class InvoiceList {
   /**
    * A native draft is edited, issued or deleted; `issuing` (a transient server state) only shows its
    * details. An open invoice (`pending`, or the migrated `partial` / `unpaid`) takes a payment, a
-   * `pending` one can also be cancelled — those write actions are for the treasurer. A paid invoice
+   * `pending` one can also be cancelled — those write actions are for the treasurer. The treasurer also
+   * creates the next reminder of an open invoice, mails the invoice PDF or the latest reminder PDF, and
+   * opens the latest reminder PDF (spec 1.76 phase 3). A paid invoice
    * offers its payment confirmation to whoever may read its documents (treasurer, privileged, or its
    * receiver). Every issued invoice shows its PDF.
    * Books kept in bexio are read-only here: details, PDF and the payment confirmation.
@@ -243,6 +260,16 @@ export class InvoiceList {
     } else {
       if (isPayableState(invoice.state) && this.canWriteDrafts()) {
         options.buttons.push(createActionSheetButton('invoice.payment', i18n.payment(), base, 'chf'));
+      }
+      if (canCreateReminder(invoice) && this.canWriteDrafts()) {
+        options.buttons.push(createActionSheetButton('invoice.createReminder', i18n.reminder_create(), base, 'alarm'));
+      }
+      if (canEmailInvoice(invoice) && this.canWriteDrafts()) {
+        options.buttons.push(createActionSheetButton('invoice.sendEmail', i18n.email_send(), base, 'email'));
+      }
+      if (latestReminderWithDocument(invoice.reminders) && this.canWriteDrafts()) {
+        options.buttons.push(createActionSheetButton('invoice.sendReminder', i18n.reminder_send(), base, 'mail'));
+        options.buttons.push(createActionSheetButton('invoice.showReminder', i18n.reminder_show(), base, 'download'));
       }
       if (invoice.state === 'pending' && this.canWriteDrafts()) {
         options.buttons.push(createActionSheetButton('invoice.cancelInvoice', i18n.cancel_invoice(), base, 'cancel-circle'));
@@ -275,6 +302,10 @@ export class InvoiceList {
       case 'invoice.delete': await this.store.delete(invoice); break;
       case 'invoice.payment': await this.store.recordPayment(invoice); break;
       case 'invoice.cancelInvoice': await this.store.cancelInvoice(invoice); break;
+      case 'invoice.createReminder': await this.store.createReminder(invoice); break;
+      case 'invoice.sendEmail': await this.store.sendInvoiceEmail(invoice); break;
+      case 'invoice.sendReminder': await this.store.sendReminderEmail(invoice); break;
+      case 'invoice.showReminder': await this.store.showReminderPdf(invoice); break;
     }
     this.cdr.markForCheck();
   }

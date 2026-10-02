@@ -35,6 +35,32 @@
     "costCenter": {
       "label": "Centre de coûts par défaut de la comptabilité",
       "helper": "S'applique aux écritures sur les comptes de résultat sans centre de coûts par défaut propre."
+    },
+    "reminderTemplate": {
+      "label": "Modèle de rappel",
+      "placeholder": "ID du modèle",
+      "helper": "Modèle utilisé pour créer les rappels de paiement en PDF."
+    },
+    "reminderFeeAccount": {
+      "label": "Compte des frais de rappel",
+      "helper": "Les frais de rappel sont comptabilisés comme produit sur ce compte."
+    },
+    "reminderFee": {
+      "level1": "Frais du rappel de paiement (CHF)",
+      "level2": "Frais du 2e rappel (CHF)",
+      "level3": "Frais du 3e rappel (CHF)",
+      "placeholder": "0.00",
+      "helper": "Proposés lors de la création du rappel et modifiables à ce moment-là. 0 = aucun frais."
+    },
+    "reminderGraceDays": {
+      "label": "Délai de grâce (jours)",
+      "placeholder": "0–365",
+      "helper": "La relance propose une facture ce nombre de jours après son échéance."
+    },
+    "reminderDueDays": {
+      "label": "Délai de paiement d’un rappel (jours)",
+      "placeholder": "0–365",
+      "helper": "Le destinataire a ce nombre de jours pour payer après un rappel."
     }
   },
   "feeSchedule": {

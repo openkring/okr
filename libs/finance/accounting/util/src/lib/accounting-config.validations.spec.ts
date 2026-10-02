@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { AccountingConfigModel } from '@okr/shared-models';
 
-import { accountingConfigValidations } from './accounting-config.validations';
+import { accountingConfigValidations, reminderFeeOf } from './accounting-config.validations';
 
 describe('accountingConfigValidations', () => {
   const config = (patch: Partial<AccountingConfigModel> = {}): AccountingConfigModel =>
@@ -50,5 +50,42 @@ describe('accountingConfigValidations', () => {
   it('rejects a missing accounting tenant', () => {
     const result = accountingConfigValidations(config({ accountingTenantId: '' }), 'tenant-1', '');
     expect(result.getErrors('accountingTenantId').length).toBeGreaterThan(0);
+  });
+  describe('reminder settings (1.76 phase 3)', () => {
+    it('accepts the model defaults and a legacy config without the reminder fields', () => {
+      expect(accountingConfigValidations(config(), 'tenant-1', '').isValid()).toBe(true);
+      const legacy = config() as Partial<AccountingConfigModel>;
+      delete legacy.reminderTemplateId;
+      delete legacy.reminderFeeAccountKey;
+      delete legacy.reminderFees;
+      delete legacy.reminderGraceDays;
+      delete legacy.reminderDueDays;
+      expect(accountingConfigValidations(legacy as AccountingConfigModel, 'tenant-1', '').isValid()).toBe(true);
+    });
+
+    it('accepts long template ids and fee account keys (uncapped)', () => {
+      expect(accountingConfigValidations(config({ reminderTemplateId: 't'.repeat(60), reminderFeeAccountKey: 'a'.repeat(60) }), 'tenant-1', '').isValid()).toBe(true);
+    });
+
+    it('rejects a negative or fractional fee in Rappen, per level', () => {
+      const negative = accountingConfigValidations(config({ reminderFees: [0, -100, 2000] }), 'tenant-1', '');
+      expect(negative.getErrors('reminderFee2').length).toBeGreaterThan(0);
+      expect(negative.getErrors('reminderFee1')).toEqual([]);
+      const fractional = accountingConfigValidations(config({ reminderFees: [0, 2000, 20.5] }), 'tenant-1', '');
+      expect(fractional.getErrors('reminderFee3').length).toBeGreaterThan(0);
+    });
+
+    it('accepts grace and due days from 0 to 365 and rejects others', () => {
+      expect(accountingConfigValidations(config({ reminderGraceDays: 0, reminderDueDays: 365 }), 'tenant-1', '').isValid()).toBe(true);
+      expect(accountingConfigValidations(config({ reminderGraceDays: -1 }), 'tenant-1', '').getErrors('reminderGraceDays').length).toBeGreaterThan(0);
+      expect(accountingConfigValidations(config({ reminderDueDays: 366 }), 'tenant-1', '').getErrors('reminderDueDays').length).toBeGreaterThan(0);
+      expect(accountingConfigValidations(config({ reminderDueDays: 1.5 }), 'tenant-1', '').getErrors('reminderDueDays').length).toBeGreaterThan(0);
+    });
+
+    it('reads the fee of a level, the model default when the field is missing', () => {
+      expect(reminderFeeOf({ reminderFees: [100, 200, 300] }, 3)).toBe(300);
+      expect(reminderFeeOf({ reminderFees: [100] }, 2)).toBe(0);
+      expect(reminderFeeOf({} as AccountingConfigModel, 2)).toBe(2000);
+    });
   });
 });
