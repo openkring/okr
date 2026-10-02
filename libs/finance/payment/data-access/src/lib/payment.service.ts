@@ -41,7 +41,9 @@ export class PaymentService {
       { key: 'paymentOrderKey',   operator: '==' as const, value: paymentOrderKey   },
       { key: 'accountingTenantId', operator: '==' as const, value: accountingTenantId },
     ];
-    return this.firestoreService.searchData<PaymentModel>(PaymentCollection, query);
+    // 'none': PaymentModel has no `name` (searchData's default orderBy) — ordering by it would match
+    // no document; unordered, the query is served by the declared payments index.
+    return this.firestoreService.searchData<PaymentModel>(PaymentCollection, query, 'none');
   }
 
   public listForExpense(expenseKey: string): Observable<PaymentModel[]> {
@@ -49,6 +51,6 @@ export class PaymentService {
       ...getSystemQuery(this.tenantId),
       { key: 'expenseKey', operator: '==' as const, value: expenseKey },
     ];
-    return this.firestoreService.searchData<PaymentModel>(PaymentCollection, query);
+    return this.firestoreService.searchData<PaymentModel>(PaymentCollection, query, 'none');
   }
 }
