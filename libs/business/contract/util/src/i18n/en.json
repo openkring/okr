@@ -252,5 +252,75 @@
     "earliestTermination": "Earliest termination date",
     "remindersSent": "Reminders sent",
     "reminder": "Reminder {lead} days before {date}"
+  },
+  "as": {
+    "title": "Contract",
+    "archive": "Archive"
+  },
+  "filter": {
+    "dueSoon": "Deadline within 90 days"
+  },
+  "loanTotals": "Loans in CHF: {principal}, outstanding {outstanding}",
+  "notFound": "This contract does not exist, or you may not view it.",
+  "filterType": {
+    "all": {
+      "label": "All contract types"
+    },
+    "loan": {
+      "label": "Loan"
+    },
+    "mortgage": {
+      "label": "Mortgage"
+    },
+    "partnerContract": {
+      "label": "Partner contract"
+    },
+    "mandate": {
+      "label": "Mandate"
+    },
+    "workContract": {
+      "label": "Contract for work"
+    },
+    "lease": {
+      "label": "Lease"
+    },
+    "employment": {
+      "label": "Employment contract"
+    },
+    "purchase": {
+      "label": "Purchase agreement"
+    },
+    "nda": {
+      "label": "Non-disclosure agreement"
+    },
+    "license": {
+      "label": "License agreement"
+    },
+    "serviceAgreement": {
+      "label": "Service agreement"
+    },
+    "other": {
+      "label": "Other contract"
+    }
+  },
+  "filterState": {
+    "all": {
+      "label": "All states"
+    },
+    "draft": {
+      "label": "Draft"
+    },
+    "negotiating": {
+      "label": "In negotiation"
+    },
+    "active": {
+      "label": "Active"
+    },
+    "noticeGiven": {
+      "label": "Terminated"
+    },
+    "ended": {
+      "label": "Ended"
+    }
   }
 }

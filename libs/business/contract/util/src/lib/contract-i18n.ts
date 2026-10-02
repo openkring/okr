@@ -24,6 +24,10 @@ export const CONTRACT_I18N_KEYS = {
   dossier: PFX + 'dossier', deadlines: PFX + 'deadlines',
   upload: PFX + 'upload', priorVersions: PFX + 'priorVersions', empty: PFX + 'empty',
 
+  // list + detail page
+  as_title: PFX + 'as.title', as_archive: PFX + 'as.archive', filter_dueSoon: PFX + 'filter.dueSoon',
+  loanTotals: PFX + 'loanTotals', notFound: PFX + 'notFound',
+
   // form sections
   section_general: PFX + 'section.general', section_parties: PFX + 'section.parties',
   section_term: PFX + 'section.term', section_loan: PFX + 'section.loan', section_abstract: PFX + 'section.abstract',

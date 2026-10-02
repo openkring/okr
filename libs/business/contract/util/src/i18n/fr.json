@@ -252,5 +252,75 @@
     "earliestTermination": "Date de résiliation la plus proche",
     "remindersSent": "Rappels envoyés",
     "reminder": "Rappel {lead} jours avant le {date}"
+  },
+  "as": {
+    "title": "Contrat",
+    "archive": "Archiver"
+  },
+  "filter": {
+    "dueSoon": "Échéance dans 90 jours"
+  },
+  "loanTotals": "Prêts en CHF : {principal}, dont ouvert {outstanding}",
+  "notFound": "Ce contrat n'existe pas, ou tu n'as pas le droit de le voir.",
+  "filterType": {
+    "all": {
+      "label": "Tous les types de contrat"
+    },
+    "loan": {
+      "label": "Prêt"
+    },
+    "mortgage": {
+      "label": "Hypothèque"
+    },
+    "partnerContract": {
+      "label": "Contrat de partenariat"
+    },
+    "mandate": {
+      "label": "Mandat"
+    },
+    "workContract": {
+      "label": "Contrat d'entreprise"
+    },
+    "lease": {
+      "label": "Contrat de bail"
+    },
+    "employment": {
+      "label": "Contrat de travail"
+    },
+    "purchase": {
+      "label": "Contrat de vente"
+    },
+    "nda": {
+      "label": "Accord de confidentialité"
+    },
+    "license": {
+      "label": "Contrat de licence"
+    },
+    "serviceAgreement": {
+      "label": "Contrat de prestations de services"
+    },
+    "other": {
+      "label": "Autre contrat"
+    }
+  },
+  "filterState": {
+    "all": {
+      "label": "Tous les statuts"
+    },
+    "draft": {
+      "label": "Brouillon"
+    },
+    "negotiating": {
+      "label": "En négociation"
+    },
+    "active": {
+      "label": "Actif"
+    },
+    "noticeGiven": {
+      "label": "Résilié"
+    },
+    "ended": {
+      "label": "Terminé"
+    }
   }
 }

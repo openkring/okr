@@ -252,5 +252,75 @@
     "earliestTermination": "Fecha de rescisión más temprana",
     "remindersSent": "Recordatorios enviados",
     "reminder": "Recordatorio {lead} días antes del {date}"
+  },
+  "as": {
+    "title": "Contrato",
+    "archive": "Archivar"
+  },
+  "filter": {
+    "dueSoon": "Plazo en 90 días"
+  },
+  "loanTotals": "Préstamos en CHF: {principal}, pendiente {outstanding}",
+  "notFound": "Este contrato no existe o no puedes verlo.",
+  "filterType": {
+    "all": {
+      "label": "Todos los tipos de contrato"
+    },
+    "loan": {
+      "label": "Préstamo"
+    },
+    "mortgage": {
+      "label": "Hipoteca"
+    },
+    "partnerContract": {
+      "label": "Contrato de colaboración"
+    },
+    "mandate": {
+      "label": "Encargo"
+    },
+    "workContract": {
+      "label": "Contrato de obra"
+    },
+    "lease": {
+      "label": "Contrato de alquiler"
+    },
+    "employment": {
+      "label": "Contrato de trabajo"
+    },
+    "purchase": {
+      "label": "Contrato de compraventa"
+    },
+    "nda": {
+      "label": "Acuerdo de confidencialidad"
+    },
+    "license": {
+      "label": "Contrato de licencia"
+    },
+    "serviceAgreement": {
+      "label": "Contrato de servicios"
+    },
+    "other": {
+      "label": "Otro contrato"
+    }
+  },
+  "filterState": {
+    "all": {
+      "label": "Todos los estados"
+    },
+    "draft": {
+      "label": "Borrador"
+    },
+    "negotiating": {
+      "label": "En negociación"
+    },
+    "active": {
+      "label": "Activo"
+    },
+    "noticeGiven": {
+      "label": "Rescindido"
+    },
+    "ended": {
+      "label": "Finalizado"
+    }
   }
 }

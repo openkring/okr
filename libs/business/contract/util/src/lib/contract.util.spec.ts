@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { AVATAR_INFO_SHAPE, ContractModel } from '@okr/shared-models';
-import { applyDerivedFields, derivePartyPersonKeys, formatLeadDays, isLoanType, newContractModel, newLoanTerms, parseLeadDays } from './contract.util';
+import { applyDerivedFields, derivePartyPersonKeys, formatLeadDays, isLoanType, newContractModel, newLoanTerms, parseLeadDays, sumLoans } from './contract.util';
 
 const av = (key: string, modelType: 'person' | 'org', name2 = 'X') => ({ ...AVATAR_INFO_SHAPE, key, modelType, name1: 'A', name2 });
 
@@ -69,5 +69,21 @@ describe('lead days', () => {
   it('formats', () => {
     expect(formatLeadDays([90, 30])).toBe('90, 30');
     expect(formatLeadDays(undefined)).toBe('');
+  });
+});
+
+describe('sumLoans', () => {
+  const loan = (principal: number, outstanding: number, currency: 'CHF' | 'EUR' = 'CHF') => Object.assign(new ContractModel('t1'), {
+    contractType: 'loan',
+    loan: { ...newLoanTerms(), principal: { amount: principal, currency, periodicity: 'once' }, outstanding: { amount: outstanding, currency, periodicity: 'once' } },
+  }) as ContractModel;
+
+  it('sums CHF loans only and ignores contracts without loan terms', () => {
+    expect(sumLoans([loan(100000, 80000), loan(50000, 0), loan(70000, 70000, 'EUR'), new ContractModel('t1')]))
+      .toEqual({ principal: 150000, outstanding: 80000 });
+  });
+
+  it('is zero for an empty list', () => {
+    expect(sumLoans([])).toEqual({ principal: 0, outstanding: 0 });
   });
 });

@@ -57,3 +57,13 @@ export function parseLeadDays(text: string): number[] {
 export function formatLeadDays(days: number[] | undefined): string {
   return (days ?? []).join(', ');
 }
+
+/** Sums principal and outstanding (minor units) of loan/mortgage contracts in CHF; other currencies are skipped. */
+export function sumLoans(list: ContractModel[]): { principal: number; outstanding: number } {
+  return (list ?? [])
+    .filter((c) => !!c.loan && (c.loan.principal?.currency ?? 'CHF') === 'CHF')
+    .reduce((acc, c) => ({
+      principal: acc.principal + (c.loan?.principal?.amount ?? 0),
+      outstanding: acc.outstanding + (c.loan?.outstanding?.amount ?? 0),
+    }), { principal: 0, outstanding: 0 });
+}

@@ -252,5 +252,75 @@
     "earliestTermination": "Prima data di disdetta possibile",
     "remindersSent": "Promemoria inviati",
     "reminder": "Promemoria {lead} giorni prima del {date}"
+  },
+  "as": {
+    "title": "Contratto",
+    "archive": "Archivia"
+  },
+  "filter": {
+    "dueSoon": "Scadenza entro 90 giorni"
+  },
+  "loanTotals": "Prestiti in CHF: {principal}, di cui aperto {outstanding}",
+  "notFound": "Questo contratto non esiste, oppure non puoi vederlo.",
+  "filterType": {
+    "all": {
+      "label": "Tutti i tipi di contratto"
+    },
+    "loan": {
+      "label": "Prestito"
+    },
+    "mortgage": {
+      "label": "Ipoteca"
+    },
+    "partnerContract": {
+      "label": "Contratto di partnership"
+    },
+    "mandate": {
+      "label": "Mandato"
+    },
+    "workContract": {
+      "label": "Contratto d'opera"
+    },
+    "lease": {
+      "label": "Contratto di locazione"
+    },
+    "employment": {
+      "label": "Contratto di lavoro"
+    },
+    "purchase": {
+      "label": "Contratto di compravendita"
+    },
+    "nda": {
+      "label": "Accordo di riservatezza"
+    },
+    "license": {
+      "label": "Contratto di licenza"
+    },
+    "serviceAgreement": {
+      "label": "Contratto di servizi"
+    },
+    "other": {
+      "label": "Altro contratto"
+    }
+  },
+  "filterState": {
+    "all": {
+      "label": "Tutti gli stati"
+    },
+    "draft": {
+      "label": "Bozza"
+    },
+    "negotiating": {
+      "label": "In trattativa"
+    },
+    "active": {
+      "label": "Attivo"
+    },
+    "noticeGiven": {
+      "label": "Disdetto"
+    },
+    "ended": {
+      "label": "Concluso"
+    }
   }
 }

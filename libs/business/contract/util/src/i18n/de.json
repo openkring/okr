@@ -252,5 +252,75 @@
     "earliestTermination": "Frühester Kündigungstermin",
     "remindersSent": "Verschickte Erinnerungen",
     "reminder": "Erinnerung {lead} Tage vor {date}"
+  },
+  "as": {
+    "title": "Vertrag",
+    "archive": "Archivieren"
+  },
+  "filter": {
+    "dueSoon": "Frist in 90 Tagen"
+  },
+  "loanTotals": "Darlehen in CHF: {principal}, davon offen {outstanding}",
+  "notFound": "Diesen Vertrag gibt es nicht, oder du darfst ihn nicht ansehen.",
+  "filterType": {
+    "all": {
+      "label": "Alle Vertragsarten"
+    },
+    "loan": {
+      "label": "Darlehen"
+    },
+    "mortgage": {
+      "label": "Hypothek"
+    },
+    "partnerContract": {
+      "label": "Partnervertrag"
+    },
+    "mandate": {
+      "label": "Auftrag"
+    },
+    "workContract": {
+      "label": "Werkvertrag"
+    },
+    "lease": {
+      "label": "Mietvertrag"
+    },
+    "employment": {
+      "label": "Arbeitsvertrag"
+    },
+    "purchase": {
+      "label": "Kaufvertrag"
+    },
+    "nda": {
+      "label": "Geheimhaltungsvereinbarung"
+    },
+    "license": {
+      "label": "Lizenzvertrag"
+    },
+    "serviceAgreement": {
+      "label": "Dienstleistungsvertrag"
+    },
+    "other": {
+      "label": "Anderer Vertrag"
+    }
+  },
+  "filterState": {
+    "all": {
+      "label": "Alle Status"
+    },
+    "draft": {
+      "label": "Entwurf"
+    },
+    "negotiating": {
+      "label": "In Verhandlung"
+    },
+    "active": {
+      "label": "Aktiv"
+    },
+    "noticeGiven": {
+      "label": "Gekündigt"
+    },
+    "ended": {
+      "label": "Beendet"
+    }
   }
 }
