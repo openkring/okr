@@ -7,7 +7,7 @@ import { buildExpensePayments, ExpensePaymentSource, SYSTEM_CREATOR } from '@okr
 import { getTodayStr, DateFormat } from '@okr/shared-util-core';
 
 import { emitEvent } from '../workflow/emit';
-import { collectingMessageId, collectingOrderId, expensePaymentId, expensePaymentTransition } from './expense.util';
+import { collectingMessageId, collectingOrderId, expensePaymentId, expensePaymentTransition, isLiveDone } from './expense.util';
 
 const REGION = 'europe-west6';
 const PURPOSE = 'expense-reimbursement';
@@ -59,9 +59,14 @@ async function createPayments(tenantId: string, expenseKey: string, expense: Doc
 
   // Firestore transactions require every read before the first write: read payments and order
   // candidates first, write afterwards.
-  await db.runTransaction(async (tx) => {
+  const created = await db.runTransaction(async (tx) => {
+    const expenseSnap = await tx.get(db.collection('expenses').doc(expenseKey));
     const refs = plan.drafts.map(d => db.collection(PaymentCollection).doc(expensePaymentId(expenseKey, d.ocrResultKey)));
     const snaps = await Promise.all(refs.map(r => tx.get(r)));
+    // Out-of-order delivery: the expense may have been reopened since this event was raised.
+    if (!isLiveDone(expenseSnap.data() as { status?: string; isArchived?: boolean } | undefined)) return 0;
+    const missing = plan.drafts.map((d, i) => ({ d, ref: refs[i] })).filter((_, i) => !snaps[i].exists);
+    if (missing.length === 0) return 0;   // redelivery / re-entry: never open an empty collecting order
 
     let orderId = '';
     let newOrder: { id: string; n: number } | undefined;
@@ -86,9 +91,8 @@ async function createPayments(tenantId: string, expenseKey: string, expense: Doc
         accountingTenantId: tenantId,
       });
     }
-    plan.drafts.forEach((d, i) => {
-      if (snaps[i].exists) return;   // idempotent: redelivery or re-entry into done
-      tx.create(refs[i], {
+    for (const { d, ref } of missing) {
+      tx.create(ref, {
         tenants: [tenantId], isArchived: false, paymentOrderKey: orderId, billKey: '',
         endToEndId: randomUUID().replace(/-/g, '').slice(0, 32),
         amount: { amount: d.amount, currency: d.currency, periodicity: 'one-time' },
@@ -97,9 +101,10 @@ async function createPayments(tenantId: string, expenseKey: string, expense: Doc
         status: 'draft', reasonCode: '', bookingKey: '', accountingTenantId: tenantId,
         expenseKey, ocrResultKey: d.ocrResultKey, needsReview: d.needsReview,
       });
-    });
+    }
+    return missing.length;
   });
-  logger.info(`onExpenseDone: ${plan.drafts.length} draft payment(s) for expense ${expenseKey}`);
+  logger.info(`onExpenseDone: ${created} draft payment(s) for expense ${expenseKey}`);
 }
 
 async function withdrawPayments(tenantId: string, expenseKey: string, expense: DocumentData): Promise<void> {
@@ -107,8 +112,9 @@ async function withdrawPayments(tenantId: string, expenseKey: string, expense: D
   const payments = await db.collection(PaymentCollection).where('expenseKey', '==', expenseKey).get();
   for (const p of payments.docs) {
     if (!((p.data()['tenants'] as string[] | undefined) ?? []).includes(tenantId)) continue;
-    const order = await db.collection(PaymentOrderCollection).doc(p.data()['paymentOrderKey'] as string).get();
-    if (!order.exists || order.data()?.['status'] === 'draft') {
+    const orderKey = (p.data()['paymentOrderKey'] as string | undefined) ?? '';
+    const order = orderKey ? await db.collection(PaymentOrderCollection).doc(orderKey).get() : undefined;
+    if (!order?.exists || order?.data()?.['status'] === 'draft') {
       await p.ref.delete();
       continue;
     }
@@ -119,7 +125,7 @@ async function withdrawPayments(tenantId: string, expenseKey: string, expense: D
       params: {
         amount: ((amount.amount ?? 0) / 100).toFixed(2),
         currency: amount.currency ?? 'CHF',
-        order: (order.data()?.['messageId'] as string) ?? '',
+        order: (order?.data()?.['messageId'] as string) ?? '',
       },
     });
   }

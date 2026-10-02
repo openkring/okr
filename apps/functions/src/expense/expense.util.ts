@@ -32,7 +32,7 @@ export type ExpensePaymentTransition = 'create' | 'withdraw' | 'none';
 
 type ExpenseState = { status?: string; isArchived?: boolean } | undefined;
 
-const isLiveDone = (e: ExpenseState): boolean => !!e && e.status === 'done' && e.isArchived !== true;
+export const isLiveDone = (e: ExpenseState): boolean => !!e && e.status === 'done' && e.isArchived !== true;
 
 /** Whether an expense write creates or withdraws its draft payments (spec 1.80 §4). */
 export function expensePaymentTransition(before: ExpenseState, after: ExpenseState): ExpensePaymentTransition {
