@@ -156,6 +156,13 @@ export interface SubjectDataEntry {
   readonly onErasure: 'delete' | 'anonymize' | 'retain';
   /** Fields overwritten with the pseudonym when onErasure === 'anonymize'. */
   readonly anonymizeFields?: readonly string[];
+  /**
+   * Derived fields that copy identity out of `anonymizeFields` (a search `index` built from
+   * party names). Called with the document AS ANONYMIZED (patch applied) whenever the patch
+   * touched anything; its result is merged into the patch, so the derived copy can never keep
+   * the erased name. Absent = the row has no such derived copy.
+   */
+  readonly recomputeDerived?: (anonymized: Record<string, unknown>) => Record<string, unknown>;
   /** Fields used to build an `index` export row. */
   readonly indexFields?: { title: string; date: string; route: string };
   readonly retention: RetentionRule;

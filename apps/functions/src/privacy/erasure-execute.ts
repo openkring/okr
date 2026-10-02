@@ -172,7 +172,28 @@ export function anonymizePatch(
     patch[field] = isDisplayNameField(field) ? pseudonym : '';
   }
 
+  // A derived copy of the identity (contracts.index 'p:<name1> <name2>') is recomputed from the
+  // anonymized document — otherwise the erased name survives in the search index.
+  if (entry.recomputeDerived && Object.keys(patch).length > 1) {
+    Object.assign(patch, entry.recomputeDerived(applyPatch(doc.data() ?? {}, patch)));
+  }
+
   return patch;
+}
+
+/** The document as it reads after `patch` (dotted keys are Firestore field paths). Pure. */
+function applyPatch(data: Record<string, unknown>, patch: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = structuredClone(data);
+  for (const [path, value] of Object.entries(patch)) {
+    const segments = path.split('.');
+    let node = out;
+    for (const seg of segments.slice(0, -1)) {
+      const next = node[seg];
+      node = (node[seg] = next !== null && typeof next === 'object' && !Array.isArray(next) ? next : {}) as Record<string, unknown>;
+    }
+    node[segments[segments.length - 1]] = value;
+  }
+  return out;
 }
 
 export interface DocPatch {

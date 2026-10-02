@@ -157,7 +157,36 @@ describe('anonymizePatch', () => {
       { role: 'counterparty', avatar: { key: '', name1: '', name2: pseudonym, modelType: 'person', type: '', subType: '', label: '' } },
     ]);
     expect(p['partyPersonKeys']).toEqual(['p9']);
-    expect(Object.keys(p).sort()).toEqual(['anonymizedAt', 'parties', 'partyPersonKeys']);
+    expect(Object.keys(p).sort()).toEqual(['anonymizedAt', 'index', 'parties', 'partyPersonKeys']);
+  });
+
+  it('rebuilds the contract search index from the pseudonymised parties (no erased name survives)', () => {
+    const e = mapRow('contracts');
+    const doc = snap('k7', {
+      name: 'Darlehen Müller', contractType: 'loan', contractNumber: 'D-1',
+      parties: [
+        { role: 'internal', avatar: { key: 'o1', name1: '', name2: 'Seeclub', modelType: 'org' } },
+        { role: 'counterparty', avatar: { key: 'p1', name1: 'Ann', name2: 'Müller', modelType: 'person' } },
+      ],
+      partyPersonKeys: ['p1'],
+      index: 'n:Darlehen Müller t:loan nr:D-1 p:Seeclub Ann Müller',
+    });
+    const p = anonymizePatch(e, doc, ctx, pseudonym, '20260729');
+    expect(p['index']).toBe(`n:Darlehen Müller t:loan nr:D-1 p:Seeclub ${pseudonym}`);
+    expect(String(p['index'])).not.toContain('Ann');
+  });
+
+  it('rebuilds the index when only the responsible person is erased, and not at all when untouched', () => {
+    const e = mapRow('contracts');
+    const doc = snap('k8', {
+      name: 'Miete', contractType: 'lease', contractNumber: '',
+      parties: [{ role: 'counterparty', avatar: { key: 'p9', name1: '', name2: 'Zünd', modelType: 'person' } }],
+      partyPersonKeys: ['p9'],
+      responsible: { key: 'p1', name1: 'Ann', name2: 'Müller', modelType: 'person' },
+    });
+    expect(anonymizePatch(e, doc, ctx, pseudonym, '20260729')['index']).toBe('n:Miete t:lease nr: p:Zünd');
+    const untouched = snap('k9', { name: 'X', parties: [], partyPersonKeys: ['p9'] });
+    expect(Object.keys(anonymizePatch(e, untouched, ctx, pseudonym, '20260729'))).toEqual(['anonymizedAt']);
   });
 
   it('leaves a contract untouched when the subject is not a party', () => {
@@ -187,7 +216,7 @@ describe('anonymizePatch', () => {
     expect(p['responsible.key']).toBe('');
     expect(p['responsible.name1']).toBe('');
     expect(p['responsible.name2']).toBe(pseudonym);
-    expect(Object.keys(p).sort()).toEqual(['anonymizedAt', 'responsible.key', 'responsible.name1', 'responsible.name2']);
+    expect(Object.keys(p).sort()).toEqual(['anonymizedAt', 'index', 'responsible.key', 'responsible.name1', 'responsible.name2']);
   });
 
   it('leaves the responsible fields alone when the subject is only a party', () => {

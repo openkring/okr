@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { AVATAR_INFO_SHAPE, ContractModel } from '@okr/shared-models';
 import {
-  applyDerivedFields, clearedContractFields, derivePartyPersonKeys, formatLeadDays, isLoanType, newContractModel, newLoanTerms,
+  applyDerivedFields, clearedContractFields, derivePartyPersonKeys, formatLeadDays, getContractIndex, isLoanType, newContractModel, newLoanTerms,
   parseLeadDays, sumLoans, toContractCreatePayload, toContractUpdatePayload,
 } from './contract.util';
 
@@ -113,5 +113,15 @@ describe('client write payloads', () => {
     c.responsible = { ...AVATAR_INFO_SHAPE, key: 'p1', modelType: 'person' };
     c.loan = newLoanTerms();
     expect(clearedContractFields(c)).toEqual(['notice', 'value']);
+  });
+});
+
+describe('getContractIndex', () => {
+  it('tolerates a null party or one without an avatar (legacy / anonymized docs)', () => {
+    const c = Object.assign(new ContractModel('t1'), {
+      name: 'N', contractType: 'loan', contractNumber: '1',
+      parties: [null, { role: 'guarantor' }, { role: 'counterparty', avatar: av('p1', 'person', 'Muster') }],
+    }) as unknown as ContractModel;
+    expect(getContractIndex(c)).toBe('n:N t:loan nr:1 p:A Muster');
   });
 });

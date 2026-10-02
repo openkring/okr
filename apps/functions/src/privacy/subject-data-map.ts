@@ -1,7 +1,8 @@
 import { FieldPath, Filter, getFirestore } from 'firebase-admin/firestore';
 import type { DocumentSnapshot, QueryDocumentSnapshot } from 'firebase-admin/firestore';
-import { LegacyMemberFeeCollection, MemberFeeCollection, PROSPECT_PARENT_PREFIX } from '@okr/shared-models';
+import { ContractModel, LegacyMemberFeeCollection, MemberFeeCollection, PROSPECT_PARENT_PREFIX } from '@okr/shared-models';
 import type { AvatarInfo } from '@okr/shared-models';
+import { getContractIndex } from '@okr/business-contract-util';
 import type { Blocker, SubjectCtx, SubjectDataEntry } from './types';
 
 /**
@@ -579,6 +580,9 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
       'parties[].avatar', 'partyPersonKeys',
       'responsible.key', 'responsible.name1', 'responsible.name2',
     ],
+    // `index` ('n:… p:<name1> <name2> …') copies the party names: rebuilt from the
+    // pseudonymised parties, with the same builder the client uses on save.
+    recomputeDerived: (d) => ({ index: getContractIndex({ ...new ContractModel(''), ...d } as ContractModel) }),
     retention: RETAIN_10Y,
     // Only contracts the subject is a PARTY to block — being the `responsible` person is
     // a staff function, never a reason to keep someone's data. Hence the ctx argument.

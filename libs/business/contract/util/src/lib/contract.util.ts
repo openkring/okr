@@ -12,7 +12,7 @@ export function derivePartyPersonKeys(parties: ContractParty[]): string[] {
 }
 
 export function getContractIndex(c: ContractModel): string {
-  const parties = (c.parties ?? []).map((p) => `${p.avatar.name1} ${p.avatar.name2}`.trim()).join(' ');
+  const parties = (c.parties ?? []).map((p) => `${p?.avatar?.name1 ?? ''} ${p?.avatar?.name2 ?? ''}`.trim()).filter(Boolean).join(' ');
   return `n:${c.name} t:${c.contractType} nr:${c.contractNumber} p:${parties}`;
 }
 
