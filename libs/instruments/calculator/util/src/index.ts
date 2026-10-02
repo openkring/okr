@@ -5,3 +5,4 @@ export * from './lib/calculator-format';
 export * from './lib/calculator-decimal';
 export * from './lib/calculator-entry';
 export * from './lib/calculator-infix';
+export * from './lib/calculator-rpn';
