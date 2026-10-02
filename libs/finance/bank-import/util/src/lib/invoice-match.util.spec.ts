@@ -23,44 +23,71 @@ function invoice(patch: Partial<InvoiceModel> = {}): InvoiceModel {
 
 describe('matchInvoicePayments', () => {
   it('links a credit by its camt reference and proposes the title', () => {
-    const { rows, matched } = matchInvoicePayments([row(12000, { paymentReference: REF })], [invoice()], 'Zahlung Rechnung');
+    const { rows, matched } = matchInvoicePayments([row(12000, { paymentReference: REF })], [invoice()], { titlePrefix: 'Zahlung Rechnung', receivablesAccountKey: '' });
     expect(matched).toBe(1);
     expect(rows[0].invoiceKey).toBe('inv1');
     expect(rows[0].title).toBe('Zahlung Rechnung 202600042 Hans Muster');
   });
-  it('finds a spaced reference in CSV text and keeps a title set by a rule', () => {
-    const { rows } = matchInvoicePayments([row(12000, { rawText: `Gutschrift ${spaced}`, title: 'Beitrag' })], [invoice()], 'Zahlung Rechnung');
+  it('finds a spaced reference in CSV text; the invoice title wins over a rule title', () => {
+    const { rows } = matchInvoicePayments([row(12000, { rawText: `Gutschrift ${spaced}`, title: 'Beitrag' })], [invoice()], { titlePrefix: 'Zahlung Rechnung', receivablesAccountKey: '' });
     expect(rows[0].invoiceKey).toBe('inv1');
     expect(rows[0].paymentReference).toBe(REF);
-    expect(rows[0].title).toBe('Beitrag');
+    expect(rows[0].title).toBe('Zahlung Rechnung 202600042 Hans Muster');
   });
   it('never matches a debit, even with the reference', () => {
-    const { rows, matched } = matchInvoicePayments([row(-12000, { paymentReference: REF })], [invoice()], 'x');
+    const { rows, matched } = matchInvoicePayments([row(-12000, { paymentReference: REF })], [invoice()], { titlePrefix: 'x', receivablesAccountKey: '' });
     expect(matched).toBe(0);
     expect(rows[0].invoiceKey).toBe('');
   });
   it('skips paid and cancelled invoices and other books', () => {
     for (const patch of [{ state: 'paid' }, { state: 'cancelled' }, { accountingTenantId: 'gss' }]) {
-      expect(matchInvoicePayments([row(12000, { paymentReference: REF })], [invoice(patch)], 'x').matched).toBe(0);
+      expect(matchInvoicePayments([row(12000, { paymentReference: REF })], [invoice(patch)], { titlePrefix: 'x', receivablesAccountKey: '' }).matched).toBe(0);
     }
   });
   it('leaves posted rows and already linked rows alone', () => {
     const posted = row(12000, { paymentReference: REF, status: 'posted' });
     const linked = row(13000, { paymentReference: REF, invoiceKey: 'other' });
-    const { rows, matched } = matchInvoicePayments([posted, linked], [invoice()], 'x');
+    const { rows, matched } = matchInvoicePayments([posted, linked], [invoice()], { titlePrefix: 'x', receivablesAccountKey: '' });
     expect(matched).toBe(0);
     expect(rows[0]).toBe(posted);
     expect(rows[1].invoiceKey).toBe('other');
   });
   it('ignores invoices without a reference', () => {
-    expect(matchInvoicePayments([row(12000, { rawText: '0'.repeat(27) })], [invoice({ paymentReference: '' })], 'x').matched).toBe(0);
+    expect(matchInvoicePayments([row(12000, { rawText: '0'.repeat(27) })], [invoice({ paymentReference: '' })], { titlePrefix: 'x', receivablesAccountKey: '' }).matched).toBe(0);
   });
   it('tolerates legacy rows whose paymentReference/invoiceKey are undefined', () => {
     const legacy = row(12000, { rawText: `Gutschrift ${spaced}` });
     delete (legacy as Partial<BankImportRowModel>).paymentReference;
     delete (legacy as Partial<BankImportRowModel>).invoiceKey;
-    const { rows, matched } = matchInvoicePayments([legacy], [invoice()], 'Zahlung Rechnung');
+    const { rows, matched } = matchInvoicePayments([legacy], [invoice()], { titlePrefix: 'Zahlung Rechnung', receivablesAccountKey: '' });
     expect(matched).toBe(1);
     expect(rows[0].invoiceKey).toBe('inv1');
+  });
+  it('assigns the receivables account and maps the row, overriding a rule', () => {
+    const r = row(12000, { paymentReference: REF, ruleKey: 'rule1', accountKey: 'scs-3000', title: 'Beitrag', vatCodeKey: 'v1', status: 'mapped' });
+    const { rows } = matchInvoicePayments([r], [invoice()], { titlePrefix: 'Zahlung Rechnung', receivablesAccountKey: 'scs-1100' });
+    expect(rows[0]).toMatchObject({ invoiceKey: 'inv1', accountKey: 'scs-1100', vatCodeKey: '', ruleKey: '', status: 'mapped', title: 'Zahlung Rechnung 202600042 Hans Muster' });
+  });
+  it('never touches a manual assignment', () => {
+    const r = row(12000, { paymentReference: REF, ruleKey: '', accountKey: 'scs-3000' });
+    expect(matchInvoicePayments([r], [invoice()], { titlePrefix: 'x', receivablesAccountKey: 'scs-1100' }).matched).toBe(0);
+  });
+  it('refuses an ambiguous reference', () => {
+    const { matched } = matchInvoicePayments([row(12000, { paymentReference: REF })], [invoice(), invoice({ okey: 'inv2' })], { titlePrefix: 'x', receivablesAccountKey: 'scs-1100' });
+    expect(matched).toBe(0);
+  });
+  it('without a receivables account only links', () => {
+    const { rows } = matchInvoicePayments([row(12000, { paymentReference: REF })], [invoice()], { titlePrefix: 'x', receivablesAccountKey: '' });
+    expect(rows[0].invoiceKey).toBe('inv1');
+    expect(rows[0].accountKey).toBe('');
+  });
+  it('prefers the camt reference over one found in the text', () => {
+    const other = generateQrReference(202600099);
+    const { rows } = matchInvoicePayments([row(12000, { paymentReference: REF, rawText: `Ref ${other}` })], [invoice(), invoice({ okey: 'inv9', paymentReference: other })], { titlePrefix: 'x', receivablesAccountKey: '' });
+    expect(rows[0].invoiceKey).toBe('inv1');
+  });
+  it('skips a row without amount', () => {
+    const r = row(12000, { paymentReference: REF }); delete (r as Partial<BankImportRowModel>).amount;
+    expect(matchInvoicePayments([r], [invoice()], { titlePrefix: 'x', receivablesAccountKey: '' }).matched).toBe(0);
   });
 });
