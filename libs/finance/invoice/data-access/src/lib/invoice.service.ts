@@ -27,8 +27,12 @@ export interface WriteInvoicePayload {
   positions?: InvoicePositionInput[];
 }
 
-/** How far before the invoice date a linkable bank booking may lie (a prepayment). */
-export const PAYMENT_CANDIDATE_LOOKBACK_DAYS = 90;
+/**
+ * How far before the invoice date a linkable bank booking may lie (an early payment). Kept short: the
+ * read runs forward from here, so a long look-back would spend the booking limit on bookings that
+ * cannot be the payment and push the real ones (after the invoice date) out.
+ */
+export const PAYMENT_CANDIDATE_LOOKBACK_DAYS = 7;
 
 /** The `issueInvoice` callable's result. */
 export interface IssueInvoiceResult {
@@ -164,9 +168,9 @@ export class InvoiceService {
    * from "could not load".
    *
    * Bounded in two steps: first the EARLIEST PAYMENT_CANDIDATE_BOOKING_LIMIT posted bookings dated
-   * from PAYMENT_CANDIDATE_LOOKBACK_DAYS before the invoice date on (a payment does not arrive long
-   * before its invoice), ordered by date ascending so that bookings near the invoice date are never
-   * pushed out by newer ones (needs the bookings index tenants/accountingTenantId/isArchived/status/
+   * from PAYMENT_CANDIDATE_LOOKBACK_DAYS before the invoice date on (a payment arrives after its
+   * invoice, rarely a few days before), ordered by date ascending so that bookings just after the
+   * invoice date are never pushed out by newer ones (needs the bookings index tenants/accountingTenantId/isArchived/status/
    * date ASC); then only the lines of those bookings, read with `bookingKey in [...]` in chunks of
    * BOOKING_KEY_CHUNK_SIZE. The receivables account is matched in memory.
    */
