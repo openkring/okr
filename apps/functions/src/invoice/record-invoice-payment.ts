@@ -50,6 +50,7 @@ const asInvoiceLike = (invoice: Doc): InvoiceLike => ({
   state: String(invoice['state'] ?? ''),
   totalAmount: invoice['totalAmount'] as InvoiceLike['totalAmount'],
   payments: invoice['payments'] as InvoiceLike['payments'],
+  reminders: invoice['reminders'] as InvoiceLike['reminders'], // reminder fees raise the open amount (1.76 D14)
   accountingTenantId: String(invoice['accountingTenantId'] ?? ''),
 });
 

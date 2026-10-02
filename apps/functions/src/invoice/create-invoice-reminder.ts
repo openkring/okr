@@ -143,7 +143,8 @@ export const createInvoiceReminder = onCall(
     const filename = `${invoiceId}-reminder-${lvl}.pdf`;
     const fullPath = `tenant/${tenantId}/private/finance/invoices/${invoiceKey}-reminder-${lvl}.pdf`;
     const rendered = await renderDocument(
-      { templateId, payload, options: { outputFormat: 'pdf', filename } }, uid, tenantId, { bucket: privateBucket(), path: fullPath },
+      // invoiceKey: the slip carries the invoice's QR reference on the QR-IBAN (spec 1.2)
+      { templateId, payload: { ...payload, invoiceKey }, options: { outputFormat: 'pdf', filename } }, uid, tenantId, { bucket: privateBucket(), path: fullPath },
     );
     const today = getTodayStr(DateFormat.StoreDate);
     const documentRef = db.collection(FinanceDocumentCollection).doc(key);
