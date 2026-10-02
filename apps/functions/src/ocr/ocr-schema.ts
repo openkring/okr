@@ -22,6 +22,10 @@ export const OCR_RESPONSE_SCHEMA = {
     },
     subject:              { type: Type.STRING, description: 'Short description / invoice number' },
     llmProposedAccountId: { type: Type.STRING, description: 'Best-fit account NUMBER from the provided chart, or empty' },
+    creditorIban:    { type: Type.STRING, description: 'IBAN of the payee printed on the invoice (payment details), empty if none' },
+    creditorName:    { type: Type.STRING, description: 'Name of the payee that owns creditorIban, empty if none' },
+    creditorAddress: { type: Type.STRING, description: 'Postal address of the payee: street, zip, town, country; empty if none' },
+    reference:       { type: Type.STRING, description: 'Payment reference: QR reference (27 digits), RF creditor reference, or invoice number; empty if none' },
     confidence: {
       type: Type.OBJECT,
       properties: {
@@ -44,6 +48,10 @@ export interface OcrRawExtraction {
   vatLines?: { rate: number; amount: number }[];
   subject?: string;
   llmProposedAccountId?: string;
+  creditorIban?: string;
+  creditorName?: string;
+  creditorAddress?: string;
+  reference?: string;
   confidence?: Record<string, number>;
 }
 
@@ -60,7 +68,10 @@ export function buildOcrPrompt(usage: OcrUsage, accountList: string): string {
   }
   const kind = usage === 'invoice' ? 'supplier invoice' : 'expense receipt';
   return (
-    `${base} This is a ${kind}. For llmProposedAccountId, choose the single best-fit account number ` +
+    `${base} This is a ${kind}.` +
+    ' If the document shows payment details (IBAN of the payee, payment reference), fill creditorIban, ' +
+    'creditorName, creditorAddress and reference exactly as printed; otherwise leave them empty.' +
+    ` For llmProposedAccountId, choose the single best-fit account number ` +
     `from this chart of accounts (return only the number, or empty if unsure):\n${accountList}`
   );
 }

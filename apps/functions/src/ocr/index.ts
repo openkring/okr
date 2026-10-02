@@ -14,6 +14,7 @@ import { parseOcrPath } from './ocr-path.util';
 import { toCents, ocrResultId, matchRule, resolveDebitAccount, type OcrRuleLite } from './ocr-extract.util';
 import { geminiExtract } from './gemini-extract';
 import { decodeQrBill } from './qr-bill-decode';
+import { sanitizeCreditor } from './creditor.util';
 import { costCenterKeyForLine, loadCostCenterContext } from '../cost-center/cost-center-context';
 import { emitEvent } from '../workflow/emit';
 import { getTodayStr, DateFormat } from '@okr/shared-util-core';
@@ -196,6 +197,7 @@ async function extractReceipt(opts: {
       matchedRuleKey: '', accountKey: '', llmProposedAccountKey: '',
       llmProposedAccountId: raw.llmProposedAccountId ?? '',
       qrBill,
+      ...sanitizeCreditor(raw),
       bookingKey: '', error: '',
     });
     logger.info(`extractReceipt: wrote result ${resultRef.id} (vendor="${raw.vendor}", qrBill=${qrBill ? 'yes' : 'no'})`);
@@ -205,6 +207,7 @@ async function extractReceipt(opts: {
       tenants: [tenantId], isArchived: false, index: '', ocrUsage,
       storagePath: objectName, correlationKey, documentKey: '',
       status: 'failed', bookingKey: '',
+      creditorIban: '', creditorName: '', creditorAddress: '', reference: '',
       error: error instanceof Error ? error.message : String(error),
     }, { merge: true });
     if (ocrUsage === 'expense' && correlationKey) {
