@@ -3,7 +3,7 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular
 
 import { CategoryListModel, AccountModel, RoleName, UserModel } from '@okr/shared-models';
 import { CategorySelect, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
-import { DESCRIPTION_LENGTH, NAME_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
+import { DESCRIPTION_LENGTH, LONG_NAME_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 
 import { ACCOUNT_KIND_GROUP, AccountI18n, accountValidations, getAccountKind, parentCandidates, usedAccountIds } from '@okr/finance-account-util';
@@ -15,6 +15,9 @@ export type { AccountI18n };
 /** The only two types a user may choose. `root` (a whole chart of accounts) is not edited here: it
  *  is created by "Kontoplan importieren"/addRoot and shown read-only. */
 const SELECTABLE_TYPES = ['leaf', 'group'];
+
+/** the fields that carry their own okr-error-note in the template */
+const RENDERED_FIELDS = ['id', 'name', 'type', 'parentKey', 'notes'];
 
 @Component({
   selector: 'okr-account-form',
@@ -65,6 +68,9 @@ const SELECTABLE_TYPES = ['leaf', 'group'];
                   </ion-col>
                 }
               </ion-row>
+              <!-- rules on fields this form does not show (tags, label, okey, …) would otherwise only
+                   ever manifest as a missing save banner -->
+              <okr-error-note [errors]="hiddenFieldErrors()" />
             </ion-grid>
           </ion-card-content>
         </ion-card>
@@ -92,7 +98,7 @@ export class AccountForm {
   public readonly i18n = input.required<AccountI18n>();
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   // Same cap as accountValidations, so the input counter and the Vest suite never disagree.
-  protected readonly nameMaxLength = NAME_LENGTH;
+  protected readonly nameMaxLength = LONG_NAME_LENGTH;
 
   protected okeyI18n = computed(() => ({
     name: 'okey', label: this.i18n().okey(), placeholder: this.i18n().okey_placeholder(), helper: this.i18n().okey_helper()
@@ -128,6 +134,13 @@ export class AccountForm {
   protected idErrors = computed(() => this.validationResult().getErrors('id'));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
   protected parentErrors = computed(() => this.validationResult().getErrors('parentKey'));
+  /** errors of every validated field that has no input (and thus no note) of its own in this form */
+  protected hiddenFieldErrors = computed(() => {
+    const _errors = this.validationResult().getErrors() as Record<string, string[]>;
+    return Object.entries(_errors)
+      .filter(([field]) => !RENDERED_FIELDS.includes(field))
+      .flatMap(([, messages]) => messages);
+  });
 
   protected id = linkedSignal(() => this.formData().id ?? '');
   protected name = linkedSignal(() => this.formData().name ?? '');

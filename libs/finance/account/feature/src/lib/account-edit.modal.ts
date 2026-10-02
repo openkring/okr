@@ -9,6 +9,19 @@ import { AccountForm } from '@okr/finance-account-ui';
 import { dismissOverlay } from '@okr/shared-util-angular';
 import { AccountStore } from './account.store';
 
+/**
+ * A clone to edit. Legacy scs accounts store `tags` as an array (`[]`) instead of the comma string the
+ * model declares; the Vest suite rejects that as notString on a field the form never shows, so the
+ * save banner silently never appeared. Saving writes the repaired string back.
+ */
+function cloneAccount(account: AccountModel): AccountModel | undefined {
+  const _clone = safeStructuredClone(account);
+  if (!_clone) return _clone;
+  const _tags = _clone.tags as unknown;
+  if (Array.isArray(_tags)) _clone.tags = _tags.join(',');
+  return _clone;
+}
+
 @Component({
   selector: 'okr-account-edit-modal',
   standalone: true,
@@ -52,7 +65,7 @@ export class AccountEditModal {
   protected formValid = signal(false);
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
   protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.store.i18n.cancel(), save: this.store.i18n.save()} as ChangeConfirmationI18n));
-  public formData = linkedSignal(() => safeStructuredClone(this.account()));
+  public formData = linkedSignal(() => cloneAccount(this.account()));
   protected showForm = signal(true);
 
   protected headerTitle = computed(() => {
@@ -69,7 +82,7 @@ export class AccountEditModal {
 
   public async cancel(): Promise<void> {
     this.formDirty.set(false);
-    this.formData.set(safeStructuredClone(this.account()));
+    this.formData.set(cloneAccount(this.account()));
     this.showForm.set(false);
     setTimeout(() => this.showForm.set(true), 0);
   }

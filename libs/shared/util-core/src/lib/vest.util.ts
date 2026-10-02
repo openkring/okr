@@ -4,7 +4,8 @@ import { checkDate, DateFormat, isValidPartialStoreDate } from './date.util';
 import { isArrayOfStrings, isAvatarInfo, isMoney } from './type.util';
 import { AddressableModel, AvatarInfo, DeliveryChannel, OkrModel, isAddressableModel, isBaseModel, isNamedModel, isPersistedModel, isSearchableModel, isTaggedModel, MoneyModel, NamedModel, PersistedModel, SearchableModel, TaggedModel } from '@okr/shared-models';
 
-export function baseValidations(model: OkrModel, givenTenants: string, givenTags: string, field?: string) {
+/** @param nameLength the cap on `name` for a NamedModel; a suite whose form allows longer names passes its own */
+export function baseValidations(model: OkrModel, givenTenants: string, givenTags: string, field?: string, nameLength = NAME_LENGTH) {
 
   omitWhen(!isBaseModel(model), () => {
     stringValidations('okey', model.okey, SHORT_NAME_LENGTH);
@@ -12,7 +13,7 @@ export function baseValidations(model: OkrModel, givenTenants: string, givenTags
 
   omitWhen(!isNamedModel(model), () => {
     const m = model as unknown as NamedModel;
-    stringValidations('name', m.name, NAME_LENGTH);
+    stringValidations('name', m.name, nameLength);
   });
 
   omitWhen(!isTaggedModel(model), () => {
