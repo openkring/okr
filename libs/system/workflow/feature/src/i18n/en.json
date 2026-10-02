@@ -103,6 +103,17 @@
       "menuCalled": {
         "label": "Menu entry selected"
       }
+    },
+    "contract": {
+      "deadline": {
+        "label": "Contract deadline"
+      },
+      "renewed": {
+        "label": "Contract renewed"
+      },
+      "ended": {
+        "label": "Contract ended"
+      }
     }
   },
   "workflow_probe": {

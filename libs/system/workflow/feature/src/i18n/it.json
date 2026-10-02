@@ -103,6 +103,17 @@
       "menuCalled": {
         "label": "Voce di menu selezionata"
       }
+    },
+    "contract": {
+      "deadline": {
+        "label": "Scadenza del contratto"
+      },
+      "renewed": {
+        "label": "Contratto rinnovato"
+      },
+      "ended": {
+        "label": "Contratto terminato"
+      }
     }
   },
   "workflow_probe": {
