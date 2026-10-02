@@ -40,6 +40,7 @@ export * from './lib/competition-level.model';
 export * from './lib/cost-center.model';
 export * from './lib/db-query.model';
 export * from './lib/dimensions.model';
+export * from './lib/diary-target.model';
 export * from './lib/diary.model';
 export * from './lib/diary-import.model';
 export * from './lib/document.model';

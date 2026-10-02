@@ -1,5 +1,6 @@
 import { DEFAULT_EMAIL, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS, DEFAULT_TENANTS } from '@okr/shared-constants';
 import { OkrModel, SearchableModel, TaggedModel } from './base.model';
+import { DiaryTarget } from './diary-target.model';
 import { AvatarUsage } from './enums/avatar-usage.enum';
 import { DEFAULT_DELIVERY_CHANNELS, DeliveryChannel } from './enums/delivery-type.enum';
 import { DefaultLanguage } from './enums/language.enum';
@@ -34,6 +35,8 @@ export class UserModel implements OkrModel, TaggedModel, SearchableModel {
   public personSortCriteria = PersonSortCriteria.Lastname; // Lastname
   public newsDelivery: DeliveryChannel[] = [...DEFAULT_DELIVERY_CHANNELS];
   public invoiceDelivery: DeliveryChannel[] = [...DEFAULT_DELIVERY_CHANNELS];
+  // spec 1.77 — what THIS app sends into which diary; [] = nothing (opt-in). Legacy docs lack it.
+  public diaryTargets: DiaryTarget[] = [];
   public showArchivedData = false;
   public showDebugInfo = false;
   public showHelpers = true;

@@ -204,6 +204,14 @@ export class AppConfig {
    */
   public diaryTenantId = '';
 
+  /**
+   * Travel period of this app, published for the diary transfer (spec 1.77 D7): an empty bound of
+   * a user's diary target inherits it. StoreDates; '' = this app has no travel period (e.g. a
+   * personal diary). Legacy config docs lack both — coalesce to ''.
+   */
+  public travelFrom = '';
+  public travelTo = '';
+
   // spec 1.72 §8.2 — days after completion until a task is archived automatically; 0 = never
   public taskArchiveDays = 30;
 
