@@ -50,6 +50,13 @@ describe('planTransition', () => {
     expect(planTransition(c({ endDate: '20251231', autoRenewMonths: 12 }), '20270101'))
       .toEqual({ endDate: '20271231', event: 'contract.renewed' });
   });
+  it('multi-cycle renewal rolls to the first end on/after today', () => {
+    expect(planTransition(c({ endDate: '20231231', autoRenewMonths: 12 }), '20270101'))
+      .toEqual({ endDate: '20271231', event: 'contract.renewed' });
+  });
+  it('fractional autoRenewMonths terminates (no hang)', () => {
+    expect(planTransition(c({ endDate: '20231231', autoRenewMonths: 0.5 }), '20270101')).toBeDefined();
+  });
   it('end date is today → no transition yet', () => {
     expect(planTransition(c({ endDate: '20270101' }), '20270101')).toBeUndefined();
   });

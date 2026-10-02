@@ -1,6 +1,6 @@
 import { ContractModel, ContractState, DeadlineKind } from '@okr/shared-models';
 import { addDuration, getDayDiff } from '@okr/shared-util-core';
-import { contractDeadlines } from './contract-deadline.util';
+import { contractDeadlines, MAX_CYCLES } from './contract-deadline.util';
 
 export const DEFAULT_REMINDER_LEAD_DAYS = [90, 30, 7];
 
@@ -40,7 +40,7 @@ export function planTransition(c: ContractModel, today: string): ContractTransit
   if (c.state === 'active' && c.endDate && c.endDate < today) {
     if (c.autoRenewMonths > 0) {
       let end = c.endDate;
-      while (end < today) end = addDuration(end, { months: c.autoRenewMonths });
+      for (let i = 0; i < MAX_CYCLES && end < today; i++) end = addDuration(end, { months: c.autoRenewMonths });
       return { endDate: end, event: 'contract.renewed' };
     }
     return { state: 'ended', event: 'contract.ended' };

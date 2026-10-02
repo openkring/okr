@@ -5,7 +5,7 @@ import { addDuration, DateFormat, parseDate, subDuration } from '@okr/shared-uti
 export interface ContractDeadline { kind: DeadlineKind; date: string; }
 
 /** Safety cap for renewal loops (100 years of monthly renewals). */
-const MAX_CYCLES = 1200;
+export const MAX_CYCLES = 1200;
 
 export function periodToDuration(p: NoticePeriod): Duration {
   return { [p.unit]: p.duration };
