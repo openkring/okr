@@ -39,15 +39,18 @@ export function buildConfirmationPayload(
   return buildPaymentConfirmationPayload({ ...invoice, paymentDate: payDate } as InvoiceModel, party, addr);
 }
 
-/** Finance-document fields, the same shape as the invoice PDF's (issue-invoice). */
+/**
+ * Finance-document fields, the same shape as the invoice PDF's (issue-invoice). `createdOn` is the
+ * creation date of the existing document on a re-run; it is kept, only the last-update date moves.
+ */
 export function confirmationDocumentFields(i: {
-  tenants: string[]; accountingTenantId: string; fullPath: string; filename: string; sizeBytes: number; today: string;
+  tenants: string[]; accountingTenantId: string; fullPath: string; filename: string; sizeBytes: number; today: string; createdOn?: string;
 }): Record<string, unknown> {
   return {
     tenants: i.tenants, accountingTenantId: i.accountingTenantId, isArchived: false,
     index: `n:${i.filename}`, tags: 'invoice', folderKeys: [], fullPath: i.fullPath, description: '', title: i.filename,
     altText: i.filename, type: 'finance', source: 'storage', credit: '', url: '', mimeType: 'application/pdf',
-    size: i.sizeBytes, authorKey: '', authorName: '', dateOfDocCreation: i.today,
+    size: i.sizeBytes, authorKey: '', authorName: '', dateOfDocCreation: i.createdOn || i.today,
     dateOfDocLastUpdate: i.today, locationKey: '', hash: '', priorVersionKey: '', version: '', renderings: [],
   };
 }

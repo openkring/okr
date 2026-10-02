@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { AddressModel, InvoiceModel, PersonModel } from '@okr/shared-models';
+import { AddressModel, InvoiceModel, PersonModel, UserModel } from '@okr/shared-models';
 import * as utilCore from '@okr/shared-util-core';
 
-import { buildPaymentConfirmationPayload, canCreatePaymentConfirmation } from './payment-confirmation.util';
+import { buildPaymentConfirmationPayload, canCreatePaymentConfirmation, mayReadInvoiceDocuments } from './payment-confirmation.util';
 
 // @okr/shared-util-core re-exports platform.util which imports @angular/common (isPlatformBrowser).
 vi.mock('@okr/shared-util-core', async () => {
@@ -40,6 +40,24 @@ function addr(): AddressModel {
   a.city = 'Stäfa';
   return a;
 }
+
+describe('mayReadInvoiceDocuments', () => {
+  const user = (roles: Record<string, boolean>, personKey = 'p9'): UserModel => ({ roles, personKey } as unknown as UserModel);
+  it('admits treasurer, privileged and admin for any invoice', () => {
+    for (const role of ['treasurer', 'privileged', 'admin']) {
+      expect(mayReadInvoiceDocuments(paidInvoice(), user({ registered: true, [role]: true }))).toBe(true);
+    }
+  });
+  it('admits the receiver of the invoice', () => {
+    const inv = paidInvoice();
+    expect(mayReadInvoiceDocuments(inv, user({ registered: true }, inv.receiver?.key ?? ''))).toBe(true);
+  });
+  it('refuses another member and a missing user', () => {
+    expect(mayReadInvoiceDocuments(paidInvoice(), user({ registered: true }, 'someoneElse'))).toBe(false);
+    expect(mayReadInvoiceDocuments(paidInvoice(), user({ registered: true }, ''))).toBe(false);
+    expect(mayReadInvoiceDocuments(paidInvoice(), undefined)).toBe(false);
+  });
+});
 
 describe('canCreatePaymentConfirmation', () => {
   it('is true for a paid invoice with a receiver', () => {

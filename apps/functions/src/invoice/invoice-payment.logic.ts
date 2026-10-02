@@ -41,10 +41,20 @@ export function openAmount(invoice: InvoiceLike): number {
   return Math.max(0, (invoice.totalAmount?.amount ?? 0) - paidSum(invoice));
 }
 
+/**
+ * The states that take a payment: an issued open invoice (`pending`) and the open items migrated
+ * from bexio (`partial`, `unpaid`). Keep in step with `isPayableState` in @okr/finance-invoice-util.
+ */
+export const PAYABLE_STATES: readonly string[] = ['pending', 'partial', 'unpaid'];
+
+export function isPayableState(state: string | undefined): boolean {
+  return !!state && PAYABLE_STATES.includes(state);
+}
+
 /** Refusal codes for recording a payment: not-payable, invalid-amount, overpayment, no-payment-date. */
 export function paymentBlockers(invoice: InvoiceLike, amount: number, date: string): string[] {
   const blockers: string[] = [];
-  if (invoice.state !== 'pending') blockers.push('not-payable');
+  if (!isPayableState(invoice.state)) blockers.push('not-payable');
   const valid = Number.isFinite(amount) && Number.isInteger(amount) && amount > 0;
   if (!valid) blockers.push('invalid-amount');
   else if (amount > openAmount(invoice)) blockers.push('overpayment');
@@ -52,7 +62,7 @@ export function paymentBlockers(invoice: InvoiceLike, amount: number, date: stri
   return blockers;
 }
 
-/** Appends the payment; the payment that completes the total flips the state to paid. */
+/** Appends the payment; the payment that completes the total flips the state to paid, any other keeps the state. */
 export function applyInvoicePayment(invoice: InvoiceLike, p: PaymentInput): { payments: StoredPayment[]; state: string; paymentDate?: string } {
   const payments: StoredPayment[] = [
     ...(invoice.payments ?? []).map(x => ({ date: x.date ?? '', amount: x.amount ?? 0, bankAccountKey: x.bankAccountKey ?? '', bookingKey: x.bookingKey ?? '' })),
@@ -72,10 +82,13 @@ export function paymentBookingLines(bankAccountKey: string, receivablesKey: stri
   ];
 }
 
-/** Refusal codes for linking an existing booking as payment. */
+/**
+ * Refusal codes for linking an existing booking as payment. Bookings okr writes for invoices itself
+ * (`invoice-…`) and archived bookings are refused; archived lines do not count towards the credit.
+ */
 export function linkBlockers(
-  booking: { status?: string; accountingTenantId?: string } | undefined,
-  lines: { accountKey: string; creditAmount?: { amount: number } | null }[],
+  booking: { status?: string; accountingTenantId?: string; isArchived?: boolean } | undefined,
+  lines: { accountKey: string; creditAmount?: { amount: number } | null; isArchived?: boolean }[],
   receivablesKey: string,
   accountingTenantId: string,
   amount: number,
@@ -84,9 +97,11 @@ export function linkBlockers(
 ): string[] {
   if (!booking) return ['booking-not-found'];
   const blockers: string[] = [];
+  if (bookingKey.startsWith('invoice-')) blockers.push('invoice-booking');
+  if (booking.isArchived === true) blockers.push('booking-archived');
   if (booking.status !== 'posted') blockers.push('booking-not-posted');
   if (booking.accountingTenantId !== accountingTenantId) blockers.push('foreign-booking');
-  const credited = lines.filter(l => l.accountKey === receivablesKey).reduce((s, l) => s + (l.creditAmount?.amount ?? 0), 0);
+  const credited = lines.filter(l => l.accountKey === receivablesKey && l.isArchived !== true).reduce((s, l) => s + (l.creditAmount?.amount ?? 0), 0);
   if (credited < amount) blockers.push('no-receivables-credit');
   if (alreadyLinked.includes(bookingKey)) blockers.push('already-linked');
   return blockers;
@@ -133,12 +148,25 @@ export function appendStornoNote(notes: string, viewDate: string, reason: string
   return prefix + reason.substring(0, Math.max(0, maxLength - prefix.length));
 }
 
-/** Refusal codes for cancelling: not-cancellable, has-payments, no-issue-booking. */
-export function cancelBlockers(invoice: InvoiceLike & { bookingKey?: string }, invoiceKey: string, issueBookingExists: boolean): string[] {
+/** The okr issue booking a storno can reverse: in these books, posted and not archived. */
+export function isUsableIssueBooking(
+  booking: { status?: string; accountingTenantId?: string; isArchived?: boolean } | undefined, accountingTenantId: string,
+): boolean {
+  return !!booking && booking.accountingTenantId === accountingTenantId && booking.status === 'posted' && booking.isArchived !== true;
+}
+
+/**
+ * Refusal codes for cancelling: not-cancellable, has-payments, no-issue-booking, storno-before-invoice
+ * (the storno is dated before the invoice; only checked when both dates are given).
+ */
+export function cancelBlockers(
+  invoice: InvoiceLike & { bookingKey?: string; invoiceDate?: string }, invoiceKey: string, issueBookingUsable: boolean, stornoDate?: string,
+): string[] {
   const blockers: string[] = [];
   if (invoice.state !== 'pending') blockers.push('not-cancellable');
   if ((invoice.payments ?? []).length > 0) blockers.push('has-payments');
-  if (invoice.bookingKey !== `invoice-${invoiceKey}` || !issueBookingExists) blockers.push('no-issue-booking');
+  if (invoice.bookingKey !== `invoice-${invoiceKey}` || !issueBookingUsable) blockers.push('no-issue-booking');
+  if (stornoDate && invoice.invoiceDate && stornoDate < invoice.invoiceDate) blockers.push('storno-before-invoice');
   return blockers;
 }
 

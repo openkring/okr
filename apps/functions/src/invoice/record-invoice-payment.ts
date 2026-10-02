@@ -37,7 +37,7 @@ interface RecordInvoicePaymentResult {
 }
 
 type Doc = Record<string, unknown>;
-type LineDoc = { accountKey: string; debitAmount?: { amount: number } | null; creditAmount?: { amount: number } | null };
+type LineDoc = { accountKey: string; debitAmount?: { amount: number } | null; creditAmount?: { amount: number } | null; isArchived?: boolean };
 
 function storedResult(invoice: Doc, bookingKey: string): RecordInvoicePaymentResult {
   const payments = ((invoice['payments'] as StoredPayment[] | undefined) ?? []).map((p) => ({
@@ -134,13 +134,13 @@ export const recordInvoicePayment = onCall(
         const lineSnap = booking ? await tx.get(db.collection(BOOKING_LINE_COLLECTION).where('bookingKey', '==', bookingKey)) : undefined;
         const lines = (lineSnap?.docs ?? []).map((d) => d.data() as LineDoc);
         const linkProblems = linkBlockers(
-          booking as { status?: string; accountingTenantId?: string } | undefined, lines, receivablesKey, accountingTenantId, amount,
+          booking as { status?: string; accountingTenantId?: string; isArchived?: boolean } | undefined, lines, receivablesKey, accountingTenantId, amount,
           existing.map((p) => p.bookingKey), bookingKey,
         );
         if (linkProblems.length > 0) {
           throw refuse('link-blocked', `booking ${bookingKey} cannot be linked: ${linkProblems.join(', ')}`, { reasons: linkProblems });
         }
-        const linkedBank = pickBankAccount(lines, (config['invoicePaymentAccountKeys'] as string[] | undefined) ?? []);
+        const linkedBank = pickBankAccount(lines.filter((l) => l.isArchived !== true), (config['invoicePaymentAccountKeys'] as string[] | undefined) ?? []);
         if (!linkedBank) throw refuse('no-bank-line', `booking ${bookingKey} has no debit line to take the bank account from`);
         const applied = applyInvoicePayment(asInvoiceLike(invoice), { paymentId, date, amount, bankAccountKey: linkedBank, bookingKey });
         tx.update(invoiceRef, withoutUndefined({ payments: applied.payments, state: applied.state, paymentDate: applied.paymentDate }));
@@ -165,7 +165,7 @@ export const recordInvoicePayment = onCall(
         tenants, accountingTenantId, isArchived: false,
         title, date, notes: `payment:${paymentId}`, tags: 'invoice-payment', index: invoiceBookingIndex(date, bookingNo, title, invoiceId),
         bookingNo, status: 'posted', periodKey: periodKeyFor(accountingTenantId, date, fiscalYearStart),
-        documentKeys: [], counterparty: invoice['receiver'],
+        documentKeys: invoice['documentKey'] ? [String(invoice['documentKey'])] : [], counterparty: invoice['receiver'],
       }));
       paymentBookingLines(bankAccountKey, receivablesKey, amount).forEach((line, i) => {
         const costCenterKey = ccCtx ? costCenterKeyForLine(ccCtx, line.accountKey, { explicit: '' }) : '';

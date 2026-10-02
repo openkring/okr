@@ -10,7 +10,7 @@ import { checkAppCheckToken, checkAuthentication, checkRoles, getCallerTenantId,
 import { periodKeyFor } from '../bank-import/bank-import.util';
 import { assertPeriodsOpen } from '../booking/period-lock';
 import { assertLeafAccount, loadOwnedAccountingConfig, refuse } from './invoice-context';
-import { appendStornoNote, cancelBlockers, InvoiceLike, isValidStoreDate, reversalLines } from './invoice-payment.logic';
+import { appendStornoNote, cancelBlockers, InvoiceLike, isUsableIssueBooking, isValidStoreDate, reversalLines } from './invoice-payment.logic';
 import { invoiceBookingIndex, issuePeriodKeys, withoutUndefined } from './invoice.logic';
 
 const REGION = 'europe-west6';
@@ -41,7 +41,8 @@ const toAmount = (a: Amount): { amount: number; currency: 'CHF' } | undefined =>
  * Cancel an issued, unpaid native invoice (spec 1.76, phase 2) by writing a reversal booking
  * `invoice-{key}-storno`: the issue booking's lines with debit and credit swapped, dated `date`. The
  * invoice becomes `cancelled` and gets a "[Storniert dd.MM.yyyy] reason" note. Migrated bexio invoices
- * (no okr issue booking) and invoices with payments are refused. A retry finds the storno booking
+ * (no okr issue booking), an issue booking that is not posted or archived, invoices with payments and
+ * a storno dated before the invoice date are refused. A retry finds the storno booking
  * and the cancelled state and returns the stored result without writing.
  */
 export const cancelInvoice = onCall(
@@ -91,14 +92,18 @@ export const cancelInvoice = onCall(
         throw refuse('inconsistent-state', `booking ${stornoKey} exists but invoice ${invoiceKey} is not cancelled`);
       }
       const issueSnap = await tx.get(issueRef);
-      const issueBookingExists = issueSnap.exists && issueSnap.data()?.['accountingTenantId'] === accountingTenantId;
+      // only a posted, not archived okr issue booking of these books can be reversed
+      const issueBookingUsable = isUsableIssueBooking(
+        issueSnap.exists ? (issueSnap.data() as { status?: string; accountingTenantId?: string; isArchived?: boolean }) : undefined, accountingTenantId,
+      );
 
       const blockers = cancelBlockers(
         {
           state: String(invoice['state'] ?? ''), totalAmount: invoice['totalAmount'] as InvoiceLike['totalAmount'],
           payments: invoice['payments'] as InvoiceLike['payments'], accountingTenantId, bookingKey: invoice['bookingKey'] as string | undefined,
+          invoiceDate: invoice['invoiceDate'] as string | undefined,
         },
-        invoiceKey, issueBookingExists,
+        invoiceKey, issueBookingUsable, date,
       );
       if (blockers.length > 0) {
         throw refuse('cancel-blocked', `invoice ${invoiceKey} cannot be cancelled: ${blockers.join(', ')}`, { reasons: blockers });

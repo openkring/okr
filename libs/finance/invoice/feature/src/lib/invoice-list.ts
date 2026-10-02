@@ -4,7 +4,7 @@ import {
   IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar, PopoverController,
 } from '@ionic/angular/standalone';
 import { InvoiceModel, RoleName } from '@okr/shared-models';
-import { canCreatePaymentConfirmation, isDraftInvoice } from '@okr/finance-invoice-util';
+import { canCreatePaymentConfirmation, isDraftInvoice, isPayableState, mayReadInvoiceDocuments } from '@okr/finance-invoice-util';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@okr/shared-util-angular';
@@ -214,8 +214,10 @@ export class InvoiceList {
 
   /**
    * A native draft is edited, issued or deleted; `issuing` (a transient server state) only shows its
-   * details. An open (`pending`) invoice takes a payment or is cancelled; a paid one offers its payment
-   * confirmation — those write actions are for the treasurer. Every issued invoice shows its PDF.
+   * details. An open invoice (`pending`, or the migrated `partial` / `unpaid`) takes a payment, a
+   * `pending` one can also be cancelled — those write actions are for the treasurer. A paid invoice
+   * offers its payment confirmation to whoever may read its documents (treasurer, privileged, or its
+   * receiver). Every issued invoice shows its PDF.
    * Books kept in bexio are read-only here: details, PDF and the payment confirmation.
    */
   private async addActionSheetButtons(options: ActionSheetOptions, invoice: InvoiceModel): Promise<void> {
@@ -239,11 +241,13 @@ export class InvoiceList {
       }
       options.buttons.push(createActionSheetButton('invoice.view', i18n.view(), base, 'eye-on'));
     } else {
-      if (invoice.state === 'pending' && this.canWriteDrafts()) {
+      if (isPayableState(invoice.state) && this.canWriteDrafts()) {
         options.buttons.push(createActionSheetButton('invoice.payment', i18n.payment(), base, 'chf'));
+      }
+      if (invoice.state === 'pending' && this.canWriteDrafts()) {
         options.buttons.push(createActionSheetButton('invoice.cancelInvoice', i18n.cancel_invoice(), base, 'cancel-circle'));
       }
-      if (canCreatePaymentConfirmation(invoice) && this.canWriteDrafts()) {
+      if (canCreatePaymentConfirmation(invoice) && mayReadInvoiceDocuments(invoice, this.currentUser() ?? undefined)) {
         options.buttons.push(createActionSheetButton('invoice.paymentConfirmation', i18n.payment_confirmation(), base, 'document'));
       }
       options.buttons.push(createActionSheetButton('invoice.showpdf', i18n.show_pdf(), base, 'download'));

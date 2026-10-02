@@ -218,6 +218,9 @@ export const INVOICE_I18N_KEYS = {
   refusal_not_cancellable:          PFX + 'refusal.not-cancellable',
   refusal_has_payments:             PFX + 'refusal.has-payments',
   refusal_no_issue_booking:         PFX + 'refusal.no-issue-booking',
+  refusal_invoice_booking:          PFX + 'refusal.invoice-booking',
+  refusal_booking_archived:         PFX + 'refusal.booking-archived',
+  refusal_storno_before_invoice:    PFX + 'refusal.storno-before-invoice',
   refusal_payment_invalid_amount:   PFX + 'refusal.payment-invalid-amount',
   refusal_payment_account_invalid:  PFX + 'refusal.payment-account-invalid',
   refusal_payment_period_locked:    PFX + 'refusal.payment-period-locked',
@@ -279,6 +282,9 @@ export const INVOICE_REFUSAL_I18N: Record<string, keyof typeof INVOICE_I18N_KEYS
   'not-cancellable': 'refusal_not_cancellable',
   'has-payments': 'refusal_has_payments',
   'no-issue-booking': 'refusal_no_issue_booking',
+  'invoice-booking': 'refusal_invoice_booking',
+  'booking-archived': 'refusal_booking_archived',
+  'storno-before-invoice': 'refusal_storno_before_invoice',
 };
 
 /** Which invoice call failed — some reasons need a different text there (a payment's amount is not a position's). */

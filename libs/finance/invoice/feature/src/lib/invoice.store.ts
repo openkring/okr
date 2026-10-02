@@ -19,7 +19,7 @@ import { I18nService } from '@okr/shared-i18n';
 import { InvoiceService } from '@okr/finance-invoice-data-access';
 import { InvoicePaymentModal } from '@okr/finance-invoice-ui';
 import {
-  buildPaymentConfirmationPayload, canCreatePaymentConfirmation, cancelInputProblem, draftInvoicesOf, formatPaymentChf, getInvoiceExportData,
+  buildPaymentConfirmationPayload, canCreatePaymentConfirmation, cancelInputProblem, isPayableState, draftInvoicesOf, formatPaymentChf, getInvoiceExportData,
   INVOICE_CANCEL_REASON_LENGTH, INVOICE_I18N_KEYS, InvoiceI18n, InvoicePaymentCandidate, InvoicePaymentInput, invoiceRefusalReasons,
   invoiceRefusalText, invoicesForList, isDraftInvoice, isRetryablePaymentRefusal, newDraftInvoice, newInvoicePaymentFormModel, newPaymentId,
   openInvoiceAmount, PAYMENT_CONFIRMATION_TEMPLATE_ID,
@@ -282,7 +282,7 @@ export const InvoiceStore = signalStore(
      * entered values and the same id, so a payment that did reach the server is not booked twice.
      */
     async recordPayment(invoice: InvoiceModel): Promise<void> {
-      if (invoice.state !== 'pending' || store.accountingStore.isExternallyManaged()) return;
+      if (!isPayableState(invoice.state) || store.accountingStore.isExternallyManaged()) return;
       const config = store.accountingStore.config();
       if (!config) {
         await showToast(store.toastController, store.i18n.refusal_no_accounting_config());
@@ -375,10 +375,13 @@ export const InvoiceStore = signalStore(
             handler: (values: { reason?: string; date?: string }) => {
               const reason = (values?.reason ?? '').trim();
               const date = values?.date ? (convertDateFormatToString(values.date, DateFormat.IsoDate, DateFormat.StoreDate, false) || '') : '';
-              const problem = cancelInputProblem(reason, date);
+              const problem = cancelInputProblem(reason, date, invoice.invoiceDate);
               if (problem) {
                 // keep the alert open and say what is missing
-                alert.message = `${message} ${problem === 'reason' ? store.i18n.cancel_invoice_reason_invalid() : store.i18n.cancel_invoice_date_invalid()}`;
+                const hint = problem === 'reason' ? store.i18n.cancel_invoice_reason_invalid()
+                  : problem === 'before-invoice' ? store.i18n.refusal_storno_before_invoice()
+                  : store.i18n.cancel_invoice_date_invalid();
+                alert.message = `${message} ${hint}`;
                 return false;
               }
               input = { reason, date };

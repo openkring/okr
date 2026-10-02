@@ -5,11 +5,12 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { FinanceDocumentCollection, InvoiceCollection, PersonCollection } from '@okr/shared-models';
 import { PAYMENT_CONFIRMATION_TEMPLATE_ID } from '@okr/finance-invoice-util';
 import { DateFormat, getTodayStr } from '@okr/shared-util-core';
-import { checkAppCheckToken, checkAuthentication, checkRoles, getCallerTenantId } from '@okr/shared-util-functions';
+import { checkAppCheckToken, checkAuthentication, getCallerTenantId } from '@okr/shared-util-functions';
 
 import { privateBucket } from '../_storage/private-bucket';
 import { renderDocument } from '../pdf/render-document';
 import { withoutUndefined } from './invoice.logic';
+import { checkInvoiceReadAccess } from './invoice-access';
 import { loadOwnedAccountingConfig, receiverAddress, ReceiverRef, refuse } from './invoice-context';
 import {
   buildConfirmationPayload, confirmationDocumentFields, confirmationPayDate, confirmationRefusal, ConfirmationInvoice,
@@ -31,7 +32,9 @@ interface CreatePaymentConfirmationResult {
 /**
  * Payment confirmation for a paid native invoice (spec 1.76, phase 2): renders the PDF server-side
  * into the private bucket, registers it as finance-document `invoice-{key}-confirmation` (overwritten
- * on a re-run) and returns it base64 for download. The invoice itself is not changed.
+ * on a re-run, keeping its first creation date) and returns it base64 for download. The invoice itself
+ * is not changed. Allowed for whoever may read the invoice PDF (showInvoicePdf): treasurer, privileged,
+ * admin, or the invoice's receiver for their own invoice.
  */
 export const createPaymentConfirmation = onCall(
   // Renders a PDF with Puppeteer: one request per instance, like issueInvoice.
@@ -39,7 +42,6 @@ export const createPaymentConfirmation = onCall(
   async (request: CallableRequest<CreatePaymentConfirmationData>): Promise<CreatePaymentConfirmationResult> => {
     checkAppCheckToken(request as never, CF_NAME);
     checkAuthentication(request as never, CF_NAME);
-    await checkRoles(request as never, CF_NAME, ['treasurer']);
     const tenantId = await getCallerTenantId(request as never, CF_NAME);
     const uid = request.auth?.uid ?? '';
 
@@ -52,6 +54,7 @@ export const createPaymentConfirmation = onCall(
     if (!invoice) throw new HttpsError('not-found', `invoice ${invoiceKey} not found`);
     const tenants = (invoice['tenants'] as string[] | undefined) ?? [];
     if (!tenants.includes(tenantId)) throw new HttpsError('permission-denied', 'invoice belongs to another tenant');
+    await checkInvoiceReadAccess(request as CallableRequest, CF_NAME, invoiceKey, invoice);
 
     const receiver = invoice['receiver'] as ReceiverRef;
     const reason = confirmationRefusal(String(invoice['state'] ?? ''), receiver?.key);
@@ -78,8 +81,10 @@ export const createPaymentConfirmation = onCall(
 
     const documentKey = `invoice-${invoiceKey}-confirmation`;
     const today = getTodayStr(DateFormat.StoreDate);
-    await db.collection(FinanceDocumentCollection).doc(documentKey).set(withoutUndefined(
-      confirmationDocumentFields({ tenants, accountingTenantId, fullPath, filename, sizeBytes: rendered.sizeBytes, today }),
+    const documentRef = db.collection(FinanceDocumentCollection).doc(documentKey);
+    const createdOn = String((await documentRef.get()).data()?.['dateOfDocCreation'] ?? '');
+    await documentRef.set(withoutUndefined(
+      confirmationDocumentFields({ tenants, accountingTenantId, fullPath, filename, sizeBytes: rendered.sizeBytes, today, createdOn }),
     ));
 
     // renderDocument returns only metadata; read back the file it just wrote

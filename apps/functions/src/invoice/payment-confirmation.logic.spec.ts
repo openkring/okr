@@ -54,4 +54,10 @@ describe('confirmationDocumentFields', () => {
       index: 'n:20260012-confirmation.pdf', title: '20260012-confirmation.pdf', dateOfDocCreation: '20261002',
     });
   });
+  it('keeps the original creation date on a re-run', () => {
+    const base = { tenants: ['scs'], accountingTenantId: 'scs', fullPath: 'p', filename: 'f.pdf', sizeBytes: 1, today: '20261002' };
+    expect(confirmationDocumentFields({ ...base, createdOn: '20260901' })).toMatchObject({ dateOfDocCreation: '20260901', dateOfDocLastUpdate: '20261002' });
+    expect(confirmationDocumentFields({ ...base, createdOn: '' })).toMatchObject({ dateOfDocCreation: '20261002' });
+  });
 });
+

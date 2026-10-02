@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { appendStornoNote, applyInvoicePayment, cancelBlockers, isValidStoreDate, pickBankAccount, InvoiceLike, isValidPaymentId, linkBlockers, linkDecision, openAmount, paymentBlockers, paymentBookingLines, paymentDecision, reversalLines } from './invoice-payment.logic';
+import { appendStornoNote, applyInvoicePayment, cancelBlockers, isPayableState, isUsableIssueBooking, isValidStoreDate, pickBankAccount, InvoiceLike, isValidPaymentId, linkBlockers, linkDecision, openAmount, paymentBlockers, paymentBookingLines, paymentDecision, reversalLines } from './invoice-payment.logic';
 
 const inv = (o: Partial<InvoiceLike> = {}): InvoiceLike => ({ state: 'pending', totalAmount: { amount: 67550 }, payments: [], accountingTenantId: 'scs', ...o });
 
@@ -91,5 +91,50 @@ describe('invoice payment logic', () => {
     expect(long.length).toBe(150);
     expect(long.startsWith('x'.repeat(100) + '\n[Storniert 05.10.2026] y')).toBe(true);
     expect(appendStornoNote('x'.repeat(200), '05.10.2026', 'grund', 150).startsWith('x'.repeat(200))).toBe(true);
+  });
+
+  // R10: migrated open items (partial, unpaid) take payments too
+  it('payable states are pending, partial and unpaid', () => {
+    for (const state of ['pending', 'partial', 'unpaid']) {
+      expect(isPayableState(state)).toBe(true);
+      expect(paymentBlockers(inv({ state }), 100, '20261005')).toEqual([]);
+    }
+    for (const state of ['paid', 'cancelled', 'draft', 'issuing', '']) {
+      expect(isPayableState(state)).toBe(false);
+      expect(paymentBlockers(inv({ state }), 100, '20261005')).toContain('not-payable');
+    }
+  });
+  it('a non-completing payment keeps the current state, the completing one sets paid', () => {
+    const a = applyInvoicePayment(inv({ state: 'unpaid' }), { paymentId: 'p1', date: '20261005', amount: 100, bankAccountKey: 'b', bookingKey: 'x' });
+    expect(a.state).toBe('unpaid'); expect(a.paymentDate).toBeUndefined();
+    const b = applyInvoicePayment(inv({ state: 'partial' }), { paymentId: 'p1', date: '20261005', amount: 100, bankAccountKey: 'b', bookingKey: 'x' });
+    expect(b.state).toBe('partial');
+    const c = applyInvoicePayment(inv({ state: 'unpaid' }), { paymentId: 'p1', date: '20261007', amount: 67550, bankAccountKey: 'b', bookingKey: 'x' });
+    expect(c.state).toBe('paid'); expect(c.paymentDate).toBe('20261007');
+  });
+  // R12
+  it('link refuses invoice bookings and archived bookings, and ignores archived lines', () => {
+    const lines = [{ accountKey: 'scs0077' }, { accountKey: 'scs0093', creditAmount: { amount: 67550 } }];
+    const posted = { status: 'posted', accountingTenantId: 'scs' };
+    expect(linkBlockers(posted, lines, 'scs0093', 'scs', 100, [], 'invoice-k-pay-abc12345')).toContain('invoice-booking');
+    expect(linkBlockers({ ...posted, isArchived: true }, lines, 'scs0093', 'scs', 100, [], 'b1')).toContain('booking-archived');
+    expect(linkBlockers({ ...posted, isArchived: false }, lines, 'scs0093', 'scs', 100, [], 'b1')).toEqual([]);
+    const archivedLine = [{ accountKey: 'scs0093', creditAmount: { amount: 67550 }, isArchived: true }, { accountKey: 'scs0093', creditAmount: { amount: 50 } }];
+    expect(linkBlockers(posted, archivedLine, 'scs0093', 'scs', 100, [], 'b1')).toContain('no-receivables-credit');
+    expect(linkBlockers(posted, archivedLine, 'scs0093', 'scs', 50, [], 'b1')).toEqual([]);
+  });
+  it('the issue booking counts only when posted, not archived and in the same books', () => {
+    expect(isUsableIssueBooking({ status: 'posted', accountingTenantId: 'scs' }, 'scs')).toBe(true);
+    expect(isUsableIssueBooking({ status: 'posted', accountingTenantId: 'scs', isArchived: false }, 'scs')).toBe(true);
+    expect(isUsableIssueBooking({ status: 'forReview', accountingTenantId: 'scs' }, 'scs')).toBe(false);
+    expect(isUsableIssueBooking({ status: 'posted', accountingTenantId: 'scs', isArchived: true }, 'scs')).toBe(false);
+    expect(isUsableIssueBooking({ status: 'posted', accountingTenantId: 'gss' }, 'scs')).toBe(false);
+    expect(isUsableIssueBooking(undefined, 'scs')).toBe(false);
+  });
+  it('cancel refuses a storno date before the invoice date', () => {
+    const issued = { ...inv(), bookingKey: 'invoice-k', invoiceDate: '20261002' };
+    expect(cancelBlockers(issued, 'k', true, '20261001')).toContain('storno-before-invoice');
+    expect(cancelBlockers(issued, 'k', true, '20261002')).toEqual([]);
+    expect(cancelBlockers(issued, 'k', true, '20261003')).toEqual([]);
   });
 });

@@ -158,13 +158,16 @@ export class InvoiceService {
 
   /**
    * The bank bookings a payment of this invoice may be linked to: posted bookings of the accounting
-   * tenant that credit the receivables account, newest first, at most 50, without the ones already
-   * linked on the invoice and without okr's own `invoice-…` bookings (see `invoicePaymentCandidates`).
-   * Rejects when a read fails, so the caller can tell "no candidates" from "could not load".
+   * tenant that credit the receivables account, shown newest first, at most MAX_PAYMENT_CANDIDATES,
+   * without the ones already linked on the invoice and without okr's own `invoice-…` bookings (see
+   * `invoicePaymentCandidates`). Rejects when a read fails, so the caller can tell "no candidates"
+   * from "could not load".
    *
-   * Bounded in two steps: first the newest PAYMENT_CANDIDATE_BOOKING_LIMIT posted bookings dated at
-   * most PAYMENT_CANDIDATE_LOOKBACK_DAYS before the invoice date (a payment does not arrive long before
-   * its invoice); then only the lines of those bookings, read with `bookingKey in [...]` in chunks of
+   * Bounded in two steps: first the EARLIEST PAYMENT_CANDIDATE_BOOKING_LIMIT posted bookings dated
+   * from PAYMENT_CANDIDATE_LOOKBACK_DAYS before the invoice date on (a payment does not arrive long
+   * before its invoice), ordered by date ascending so that bookings near the invoice date are never
+   * pushed out by newer ones (needs the bookings index tenants/accountingTenantId/isArchived/status/
+   * date ASC); then only the lines of those bookings, read with `bookingKey in [...]` in chunks of
    * BOOKING_KEY_CHUNK_SIZE. The receivables account is matched in memory.
    */
   public async listPaymentCandidates(invoice: InvoiceModel, receivablesAccountKey: string): Promise<InvoicePaymentCandidate[]> {
@@ -176,7 +179,7 @@ export class InvoiceService {
       { key: 'status', operator: '==', value: 'posted' },
       { key: 'date', operator: '>=', value: fromDate },
     ];
-    const bookings = await this.readOnce<BookingModel>(BookingCollection, bookingsQuery, 'date', 'desc', PAYMENT_CANDIDATE_BOOKING_LIMIT);
+    const bookings = await this.readOnce<BookingModel>(BookingCollection, bookingsQuery, 'date', 'asc', PAYMENT_CANDIDATE_BOOKING_LIMIT);
     const linked = (invoice.payments ?? []).map((p) => p.bookingKey).filter((k) => !!k);
     const linkable = linkableBookings(bookings, linked);
     if (linkable.length === 0) return [];

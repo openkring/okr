@@ -40,7 +40,7 @@ export interface InvoicePaymentInput {
 /** At most this many bookings are offered in mode `link`. */
 export const MAX_PAYMENT_CANDIDATES = 50;
 
-/** At most this many recent posted bookings are read when looking for link candidates. */
+/** At most this many posted bookings (the earliest from the look-back start on) are read when looking for link candidates. */
 export const PAYMENT_CANDIDATE_BOOKING_LIMIT = 200;
 
 /**
@@ -118,7 +118,9 @@ export function newInvoicePaymentFormModel(invoice: InvoiceModel, today: string,
 
 /**
  * The bank bookings a payment may be linked to: posted bookings with at least one line crediting
- * the receivables account, newest first, capped at MAX_PAYMENT_CANDIDATES. Left out are bookings
+ * the receivables account, newest first. Above MAX_PAYMENT_CANDIDATES the oldest ones are kept — the
+ * bookings are read from shortly before the invoice date on, so the oldest are the ones closest to
+ * the invoice and a stream of newer bookings never pushes them out. Left out are bookings
  * already linked on this invoice and the bookings okr writes for invoices itself (`invoice-…`: the
  * issue booking, a reversal, another invoice's payment) — none of them is a received payment to link.
  * @param lines the lines of the given bookings (lines on other accounts are ignored)
@@ -140,8 +142,9 @@ export function invoicePaymentCandidates(
   }
   return linkableBookings(bookings, linkedBookingKeys)
     .filter((b) => b.status === 'posted' && credited.has(b.okey))
-    .sort((a, b) => (b.date ?? '').localeCompare(a.date ?? '') || (b.bookingNo ?? 0) - (a.bookingNo ?? 0))
+    .sort((a, b) => (a.date ?? '').localeCompare(b.date ?? '') || (a.bookingNo ?? 0) - (b.bookingNo ?? 0))
     .slice(0, cap)
+    .reverse()
     .map((b) => ({
       bookingKey: b.okey, bookingNo: b.bookingNo ?? 0, date: b.date ?? '', title: b.title ?? '',
       creditedAmount: credited.get(b.okey) ?? 0,
@@ -153,12 +156,27 @@ export function draftInvoicesOf(invoices: InvoiceModel[]): InvoiceModel[] {
   return invoices.filter((i) => i.state === 'draft');
 }
 
-/** Why a cancel input is not accepted yet: an empty or too long reason, or a missing date. */
-export function cancelInputProblem(reason: string, date: string): 'reason' | 'date' | undefined {
+/**
+ * Why a cancel input is not accepted yet: an empty or too long reason, a missing date, or a date
+ * before the invoice date (`before-invoice`, the same rule as cancelInvoice's storno-before-invoice).
+ */
+export function cancelInputProblem(reason: string, date: string, invoiceDate?: string): 'reason' | 'date' | 'before-invoice' | undefined {
   const trimmed = (reason ?? '').trim();
   if (trimmed.length === 0 || trimmed.length > INVOICE_CANCEL_REASON_LENGTH) return 'reason';
   if (!/^\d{8}$/.test(date ?? '')) return 'date';
+  if (invoiceDate && date < invoiceDate) return 'before-invoice';
   return undefined;
+}
+
+/**
+ * The states that take a payment: an issued open invoice (`pending`) and the open items migrated
+ * from bexio (`partial`, `unpaid`). Same set as the recordInvoicePayment callable.
+ */
+export const PAYABLE_INVOICE_STATES: readonly string[] = ['pending', 'partial', 'unpaid'];
+
+/** True when a payment can be recorded on an invoice in this state. */
+export function isPayableState(state: string | undefined): boolean {
+  return !!state && PAYABLE_INVOICE_STATES.includes(state);
 }
 
 /**

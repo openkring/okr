@@ -5,7 +5,7 @@ import { InvoiceModel } from '@okr/shared-models';
 import { INVOICE_I18N_KEYS, INVOICE_REFUSAL_I18N, InvoiceI18n, invoiceRefusalKeys, invoiceRefusalText } from './invoice-i18n';
 import {
   BOOKING_KEY_CHUNK_SIZE, cancelInputProblem, chunked, draftInvoicesOf, linkableBookings, formatPaymentChf, INVOICE_CANCEL_REASON_LENGTH, InvoicePaymentFormModel, invoicePaymentCandidates,
-  isRetryablePaymentRefusal, MAX_PAYMENT_CANDIDATES, newInvoicePaymentFormModel, newPaymentId, openInvoiceAmount,
+  isPayableState, isRetryablePaymentRefusal, MAX_PAYMENT_CANDIDATES, newInvoicePaymentFormModel, newPaymentId, openInvoiceAmount,
 } from './invoice-payment.util';
 import { invoicePaymentValidations } from './invoice-payment.validations';
 import { invoiceRefusalReasons } from './invoice-position.util';
@@ -96,6 +96,13 @@ describe('invoicePaymentCandidates', () => {
     const result = invoicePaymentCandidates(keys.map((k) => credit(k, 100)), keys.map((k) => booking(k, '20260901')), '1100', []);
     expect(result).toHaveLength(MAX_PAYMENT_CANDIDATES);
   });
+  it('keeps the bookings closest to the invoice date when capping, shown newest first', () => {
+    const result = invoicePaymentCandidates(
+      [credit('early', 100), credit('mid', 100), credit('late', 100)],
+      [booking('late', '20261020'), booking('early', '20261001'), booking('mid', '20261010')],
+      '1100', [], 2);
+    expect(result.map((c) => c.bookingKey)).toEqual(['mid', 'early']);
+  });
 });
 
 describe('linkableBookings', () => {
@@ -132,6 +139,29 @@ describe('cancelInputProblem', () => {
   });
   it('wants a date', () => {
     expect(cancelInputProblem('ok', '')).toBe('date');
+  });
+});
+
+describe('cancelInputProblem with an invoice date', () => {
+  it('refuses a storno date before the invoice date', () => {
+    expect(cancelInputProblem('ok', '20261001', '20261002')).toBe('before-invoice');
+  });
+  it('accepts the invoice date itself and later dates', () => {
+    expect(cancelInputProblem('ok', '20261002', '20261002')).toBeUndefined();
+    expect(cancelInputProblem('ok', '20261003', '20261002')).toBeUndefined();
+  });
+  it('skips the check without an invoice date', () => {
+    expect(cancelInputProblem('ok', '20261001', '')).toBeUndefined();
+    expect(cancelInputProblem('ok', '20261001')).toBeUndefined();
+  });
+});
+
+describe('isPayableState', () => {
+  it('accepts pending, partial and unpaid', () => {
+    for (const s of ['pending', 'partial', 'unpaid']) expect(isPayableState(s)).toBe(true);
+  });
+  it('refuses paid, cancelled, draft, issuing and missing states', () => {
+    for (const s of ['paid', 'cancelled', 'draft', 'issuing', '', undefined]) expect(isPayableState(s)).toBe(false);
   });
 });
 
@@ -191,6 +221,7 @@ describe('phase-2 refusals', () => {
       'state-changed', 'no-bank-line', 'not-paid', 'no-receiver', 'period-locked', 'foreign-accounting-tenant', 'no-accounting-config',
       'bexio-backend', 'account-invalid', 'not-payable', 'invalid-amount', 'overpayment', 'no-payment-date', 'booking-not-found',
       'booking-not-posted', 'foreign-booking', 'no-receivables-credit', 'already-linked', 'not-cancellable', 'has-payments', 'no-issue-booking',
+      'invoice-booking', 'booking-archived', 'storno-before-invoice',
     ];
     expect(reasons.filter((r) => !INVOICE_REFUSAL_I18N[r])).toEqual([]);
   });
