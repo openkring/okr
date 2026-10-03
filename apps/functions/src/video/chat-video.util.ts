@@ -81,3 +81,51 @@ export function validateChatVideoRequest(data: unknown): ChatVideoRequest {
   const roomName = typeof d['roomName'] === 'string' ? d['roomName'] : '';
   return { roomId, fileName, size, mimeType, roomName };
 }
+
+const ZURICH_DAY = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Zurich', year: 'numeric', month: '2-digit', day: '2-digit' });
+
+/**
+ * The calendar day of `now` in Europe/Zurich as StoreDate (`yyyyMMdd`). Functions run in UTC; a
+ * video sent at 00:30 on New Year's Day in Zurich belongs in the NEW year's folder.
+ */
+export function zurichStoreDate(now: Date): string {
+  return ZURICH_DAY.format(now).replace(/-/g, '');
+}
+
+/**
+ * The visible document title: the original file name minus control characters and bidi overrides
+ * (U+202A–U+202E, U+2066–U+2069 — they make `evil‮vom.mov` read as `evilmov.mov`), capped at 120.
+ */
+export function safeVideoTitle(name: string): string {
+  // eslint-disable-next-line no-control-regex
+  const clean = String(name ?? '').replace(/[\u0000-\u001f\u007f‪-‮⁦-⁩]/g, '').trim();
+  return clean.slice(0, MAX_FILE_NAME) || 'video';
+}
+
+type FolderData = Record<string, unknown> | undefined;
+
+/**
+ * The room album chain must still be the one this function built: root names the room, year sits
+ * directly under root, videos directly under year, all three in the tenant and none archived. A
+ * moved folder would drop the room gate for every later video (spec 1.82 §8) and an archived one
+ * would swallow uploads that `signVideoUrls` then never signs — so refuse, never repair.
+ */
+export function assertChatFolders(
+  folders: { root: FolderData; year: FolderData; videos: FolderData },
+  keys: { root: string; year: string },
+  roomId: string,
+  tenantId: string,
+): void {
+  const sameParents = (f: FolderData, expected: string[]) => {
+    const p = f?.['parents'];
+    return Array.isArray(p) && p.length === expected.length && p.every((v, i) => v === expected[i]);
+  };
+  const live = (f: FolderData) =>
+    !!f && Array.isArray(f['tenants']) && (f['tenants'] as unknown[]).includes(tenantId) && f['isArchived'] !== true;
+  const ok =
+    (folders.root?.['matrixRoomId'] ?? '') === roomId &&
+    sameParents(folders.year, [keys.root]) &&
+    sameParents(folders.videos, [keys.year]) &&
+    live(folders.root) && live(folders.year) && live(folders.videos);
+  if (!ok) throw new HttpsError('failed-precondition', 'Room album folders are not usable.');
+}

@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { HttpsError } from 'firebase-functions/v2/https';
 
-import { chatFolderKeys, chatVideoPath, MAX_VIDEO_BYTES, safeVideoFileName, validateChatVideoRequest } from './chat-video.util';
+import {
+  assertChatFolders, chatFolderKeys, chatVideoPath, MAX_VIDEO_BYTES, safeVideoFileName, safeVideoTitle, validateChatVideoRequest, zurichStoreDate,
+} from './chat-video.util';
 import { isAlbumVideoObjectPath } from './video-sign.util';
 
 describe('chatFolderKeys', () => {
@@ -82,4 +84,52 @@ describe('validateChatVideoRequest', () => {
   it('rejects a roomId without !', () => rejects({ ...ok, roomId: 'abc:hs' }));
   it('rejects a missing fileName', () => rejects({ ...ok, fileName: undefined }));
   it('rejects a non-object', () => rejects(null));
+});
+
+describe('zurichStoreDate', () => {
+  it('uses the Zurich calendar day around New Year', () => {
+    expect(zurichStoreDate(new Date('2026-12-31T23:30:00Z'))).toBe('20270101');
+    expect(zurichStoreDate(new Date('2026-12-31T22:30:00Z'))).toBe('20261231');
+  });
+  it('handles summer time (UTC+2)', () => {
+    expect(zurichStoreDate(new Date('2026-07-14T22:30:00Z'))).toBe('20260715');
+  });
+});
+
+describe('safeVideoTitle', () => {
+  it('keeps a normal name unchanged', () => {
+    expect(safeVideoTitle('Regatta Tag 1.mov')).toBe('Regatta Tag 1.mov');
+  });
+  it('strips control and bidi-override characters', () => {
+    expect(safeVideoTitle('a\u0000b\u001fc\u007fd\u202Ee\u2066f\u2069.mov')).toBe('abcdef.mov');
+  });
+  it('caps at 120 characters', () => {
+    expect(safeVideoTitle('x'.repeat(300) + '.mov')).toHaveLength(120);
+  });
+  it('falls back when nothing visible is left', () => {
+    expect(safeVideoTitle('\u202E\u0001')).toBe('video');
+  });
+});
+
+describe('assertChatFolders', () => {
+  const k = chatFolderKeys('scs', '!abc:hs', '2026');
+  const good = () => ({
+    root: { matrixRoomId: '!abc:hs', parents: [], tenants: ['scs'], isArchived: false },
+    year: { matrixRoomId: '', parents: [k.root], tenants: ['scs'], isArchived: false },
+    videos: { matrixRoomId: '', parents: [k.year], tenants: ['scs'], isArchived: false },
+  });
+  const code = (f: ReturnType<typeof good>) => {
+    try { assertChatFolders(f, k, '!abc:hs', 'scs'); } catch (e) { return (e as HttpsError).code; }
+    return 'ok';
+  };
+  it('accepts the intact chain', () => expect(code(good())).toBe('ok'));
+  it('accepts legacy folders without isArchived', () => {
+    const f = good(); delete (f.videos as Record<string, unknown>)['isArchived'];
+    expect(code(f)).toBe('ok');
+  });
+  it('refuses a root of another room', () => { const f = good(); f.root.matrixRoomId = '!x:hs'; expect(code(f)).toBe('failed-precondition'); });
+  it('refuses a moved year folder', () => { const f = good(); f.year.parents = ['elsewhere']; expect(code(f)).toBe('failed-precondition'); });
+  it('refuses a moved videos folder', () => { const f = good(); f.videos.parents = [k.year, 'extra']; expect(code(f)).toBe('failed-precondition'); });
+  it('refuses a folder outside the tenant', () => { const f = good(); f.year.tenants = ['kring']; expect(code(f)).toBe('failed-precondition'); });
+  it('refuses an archived folder', () => { const f = good(); f.root.isArchived = true; expect(code(f)).toBe('failed-precondition'); });
 });

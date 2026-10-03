@@ -4,12 +4,14 @@ import { logger } from 'firebase-functions/v2';
 import { getFirestore, Firestore } from 'firebase-admin/firestore';
 
 import { DocumentCollection, DocumentModel, FolderCollection, FolderModel } from '@okr/shared-models';
-import { addIndexElement, DateFormat, getMimeType, getTodayStr } from '@okr/shared-util-core';
+import { addIndexElement, getMimeType } from '@okr/shared-util-core';
 import { checkAppCheckToken, checkAuthentication, getCallerTenantId } from '@okr/shared-util-functions';
 
 import { privateBucket } from '../_storage/private-bucket';
 import { getJoinedMemberIds, matrixAdminToken, requireRoomInTenant, requireUserPersonKey, serverHostname } from '../matrix-simple/shared';
-import { chatFolderKeys, chatVideoPath, MAX_VIDEO_BYTES, validateChatVideoRequest } from './chat-video.util';
+import {
+  assertChatFolders, chatFolderKeys, chatVideoPath, MAX_VIDEO_BYTES, safeVideoTitle, validateChatVideoRequest, zurichStoreDate,
+} from './chat-video.util';
 
 const CF_NAME = 'prepareChatVideoUpload';
 const ALREADY_EXISTS = 6;
@@ -52,16 +54,16 @@ function folder(tenantId: string, name: string, parents: string[], matrixRoomId:
 /**
  * Creates `folders/<key>` unless it exists. An existing folder is never overwritten (a member may
  * have renamed it); only ALREADY_EXISTS is tolerated, any other error propagates. Returns the
- * existing folder's data, or undefined when this call created it.
+ * folder as it now stands: the data written, or the existing folder's data.
  */
 async function createIfAbsent(db: Firestore, key: string, data: object): Promise<Record<string, unknown> | undefined> {
   const ref = db.collection(FolderCollection).doc(key);
   try {
     await ref.create(data);
-    return undefined;
+    return data as Record<string, unknown>;
   } catch (error) {
     if (!isAlreadyExists(error)) throw error;
-    return (await ref.get()).data() ?? {};
+    return (await ref.get()).data();
   }
 }
 
@@ -98,25 +100,41 @@ export const prepareChatVideoUpload = onCall(
       throw new HttpsError('permission-denied', 'Not a member of this room.');
     }
 
-    const today = getTodayStr(DateFormat.StoreDate);
+    const today = zurichStoreDate(new Date());
     const year = today.slice(0, 4);
     const keys = chatFolderKeys(tenantId, req.roomId, year);
     const roomName = req.roomName.trim().slice(0, MAX_ROOM_NAME);
     const rootName = roomName ? `Chat · ${roomName}` : 'Chat';
 
     const db = getFirestore();
-    const existingRoot = await createIfAbsent(db, keys.root, folder(tenantId, rootName, [], req.roomId));
-    if (existingRoot && (existingRoot['matrixRoomId'] ?? '') !== req.roomId) {
+    const root = await createIfAbsent(db, keys.root, folder(tenantId, rootName, [], req.roomId));
+    // Never create children under a root that belongs to another room.
+    if ((root?.['matrixRoomId'] ?? '') !== req.roomId) {
       logger.error(`${CF_NAME}: folder ${keys.root} exists for another room, refusing`, { roomId: req.roomId });
       throw new HttpsError('failed-precondition', 'Room album folder conflict.');
     }
-    await createIfAbsent(db, keys.year, folder(tenantId, year, [keys.root], ''));
-    await createIfAbsent(db, keys.videos, folder(tenantId, 'videos', [keys.year], ''));
+    const yearFolder = await createIfAbsent(db, keys.year, folder(tenantId, year, [keys.root], ''));
+    const videosFolder = await createIfAbsent(db, keys.videos, folder(tenantId, 'videos', [keys.year], ''));
+    try {
+      assertChatFolders({ root, year: yearFolder, videos: videosFolder }, keys, req.roomId, tenantId);
+    } catch (error) {
+      logger.error(`${CF_NAME}: room album chain under ${keys.root} was moved or archived, refusing`, { roomId: req.roomId });
+      throw error;
+    }
 
     const fullPath = chatVideoPath(tenantId, keys.videos, req.fileName, randomUUID());
     const contentType = getMimeType(fullPath) || 'application/octet-stream';
+    // Sign first: a signing failure must not leave a document behind that no upload can ever fill.
+    const [uploadUrl] = await privateBucket().file(fullPath).getSignedUrl({
+      version: 'v4',
+      action: 'write',
+      expires: Date.now() + UPLOAD_WINDOW_MS,
+      contentType,
+      extensionHeaders: { 'x-goog-content-length-range': `0,${MAX_VIDEO_BYTES}` },
+    });
+
     const doc = new DocumentModel(tenantId);
-    doc.title = req.fileName;
+    doc.title = safeVideoTitle(req.fileName);
     doc.fullPath = fullPath;
     doc.mimeType = getMimeType(fullPath) || req.mimeType;
     doc.size = req.size;
@@ -126,19 +144,11 @@ export const prepareChatVideoUpload = onCall(
     doc.dateOfDocCreation = today;
     doc.dateOfDocLastUpdate = today;
     doc.version = '1.0';
-    doc.tags = `@tag.${tenantId},@tag.chat`;
+    doc.tags = `@tag.${tenantId},@tag.album`;
     let index = addIndexElement('', 'n', doc.title);
     index = addIndexElement(index, 'm', doc.mimeType);
     doc.index = addIndexElement(index, 'f', doc.folderKeys.join(' '));
     const docRef = await db.collection(DocumentCollection).add(stripKey(doc));
-
-    const [uploadUrl] = await privateBucket().file(fullPath).getSignedUrl({
-      version: 'v4',
-      action: 'write',
-      expires: Date.now() + UPLOAD_WINDOW_MS,
-      contentType,
-      extensionHeaders: { 'x-goog-content-length-range': `0,${MAX_VIDEO_BYTES}` },
-    });
 
     logger.info(`${CF_NAME}: prepared ${docRef.id} in ${keys.videos} for tenant ${tenantId}`, { roomId: req.roomId, size: req.size });
     return { docKey: docRef.id, uploadUrl, contentType, maxBytes: MAX_VIDEO_BYTES };

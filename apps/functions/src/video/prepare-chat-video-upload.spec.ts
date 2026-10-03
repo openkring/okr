@@ -61,7 +61,7 @@ vi.mock('../_storage/private-bucket', () => ({
 }));
 
 import { DocumentCollection, FolderCollection } from '@okr/shared-models';
-import { chatFolderKeys, MAX_VIDEO_BYTES } from './chat-video.util';
+import { chatFolderKeys, MAX_VIDEO_BYTES, zurichStoreDate } from './chat-video.util';
 import { prepareChatVideoUpload } from './prepare-chat-video-upload';
 
 const ROOM = '!room:hs';
@@ -78,7 +78,7 @@ async function code(p: Promise<unknown>): Promise<string> {
   return 'resolved';
 }
 
-const year = String(new Date().getFullYear());
+const year = zurichStoreDate(new Date()).slice(0, 4);
 const keys = chatFolderKeys('scs', ROOM, year);
 
 beforeEach(() => {
@@ -128,7 +128,7 @@ describe('prepareChatVideoUpload', () => {
     expect(doc.data).not.toHaveProperty('okey');
     expect(doc.data).toMatchObject({
       title: 'clip.mov', mimeType: 'video/quicktime', size: 1234, folderKeys: [keys.videos],
-      authorKey: 'P1', tenants: ['scs'], tags: '@tag.scs,@tag.chat', version: '1.0',
+      authorKey: 'P1', tenants: ['scs'], tags: '@tag.scs,@tag.album', version: '1.0',
     });
     const fullPath = String(doc.data['fullPath']);
     expect(fullPath).toMatch(new RegExp(`^tenant/scs/folder/${keys.videos}/album/[^/]+/clip\\.mov$`));
@@ -144,13 +144,47 @@ describe('prepareChatVideoUpload', () => {
 
   it('tolerates existing folders and never overwrites them', async () => {
     state.collections[FolderCollection] = {
-      [keys.root]: { name: 'Renamed by a member', matrixRoomId: ROOM, parents: [] },
-      [keys.year]: { name: year, matrixRoomId: '', parents: [keys.root] },
-      [keys.videos]: { name: 'videos', matrixRoomId: '', parents: [keys.year] },
+      [keys.root]: { name: 'Renamed by a member', matrixRoomId: ROOM, parents: [], tenants: ['scs'] },
+      [keys.year]: { name: year, matrixRoomId: '', parents: [keys.root], tenants: ['scs'] },
+      [keys.videos]: { name: 'videos', matrixRoomId: '', parents: [keys.year], tenants: ['scs'] },
     };
     await call();
     expect(state.collections[FolderCollection][keys.root]['name']).toBe('Renamed by a member');
     expect(state.adds).toHaveLength(1);
+  });
+
+  const chain = () => ({
+    [keys.root]: { name: 'r', matrixRoomId: ROOM, parents: [], tenants: ['scs'], isArchived: false },
+    [keys.year]: { name: year, matrixRoomId: '', parents: [keys.root], tenants: ['scs'], isArchived: false },
+    [keys.videos]: { name: 'videos', matrixRoomId: '', parents: [keys.year], tenants: ['scs'], isArchived: false },
+  } as Record<string, Record<string, unknown>>);
+  it.each([
+    ['wrong parents on videos', (c: Record<string, Record<string, unknown>>) => { c[keys.videos]['parents'] = ['moved']; }],
+    ['wrong parents on year', (c: Record<string, Record<string, unknown>>) => { c[keys.year]['parents'] = ['moved']; }],
+    ['an archived videos folder', (c: Record<string, Record<string, unknown>>) => { c[keys.videos]['isArchived'] = true; }],
+    ['an archived root', (c: Record<string, Record<string, unknown>>) => { c[keys.root]['isArchived'] = true; }],
+  ])('refuses %s without a doc add or signing', async (_label, mutate) => {
+    const c = chain();
+    mutate(c);
+    state.collections[FolderCollection] = c;
+    expect(await code(call())).toBe('failed-precondition');
+    expect(state.adds).toEqual([]);
+    expect(state.signCalls).toEqual([]);
+  });
+
+  it('strips bidi overrides from the document title', async () => {
+    await call({ ...request, fileName: 'evil\u202Evom.mov' });
+    expect(state.adds[0].data['title']).toBe('evilvom.mov');
+  });
+
+  it('signs before it adds the document', async () => {
+    const order: string[] = [];
+    const sign0 = state.signCalls.push.bind(state.signCalls);
+    state.signCalls.push = (...a) => { order.push('sign'); return sign0(...a); };
+    const add0 = state.adds.push.bind(state.adds);
+    state.adds.push = (...a) => { order.push('add'); return add0(...a); };
+    await call();
+    expect(order).toEqual(['sign', 'add']);
   });
 
   it('refuses to write into a root folder that names another room', async () => {
