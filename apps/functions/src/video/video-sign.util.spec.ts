@@ -93,6 +93,14 @@ describe('isAlbumVideoObjectPath', () => {
   it('accepts nested sub-paths', () => {
     expect(isAlbumVideoObjectPath('tenant/scs/section/s1/album/ab/c/d.mp4', 'scs')).toBe(true);
   });
+  it('accepts an AVI original, case-insensitively (spec 1.82)', () => {
+    expect(isAlbumVideoObjectPath('tenant/scs/folder/f1/album/ab/clip.AVI', 'scs')).toBe(true);
+    expect(isAlbumVideoObjectPath('tenant/scs/folder/f1/album/ab/clip.avi', 'scs')).toBe(true);
+  });
+  it('still rejects other extensions and the renderings sub-folder', () => {
+    expect(isAlbumVideoObjectPath('tenant/scs/folder/f1/album/ab/clip.mkv', 'scs')).toBe(false);
+    expect(isAlbumVideoObjectPath('tenant/scs/folder/f1/album/renderings/clip.avi', 'scs')).toBe(false);
+  });
 });
 
 describe('contentDisposition', () => {

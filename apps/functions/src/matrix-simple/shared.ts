@@ -819,6 +819,22 @@ export async function getRoomTenantMarker(roomId: string, adminToken: string): P
   return Array.isArray(content.tenants) ? content.tenants : undefined;
 }
 
+/**
+ * Currently JOINED members of a room (full Matrix ids), via the Synapse admin API.
+ * Verified 2026-10-03 against Synapse source: the admin `/members` servlet calls
+ * `store.get_users_in_room`, which selects `current_state_events` with `membership = 'join'` —
+ * invited, left, banned and knocking users are NOT included. Throws on any non-2xx so
+ * access checks can fail closed.
+ */
+export async function getJoinedMemberIds(roomId: string, adminToken: string): Promise<Set<string>> {
+  const res = await fetch(`${MATRIX_HOMESERVER}/_synapse/admin/v1/rooms/${encodeURIComponent(roomId)}/members`, {
+    headers: { Authorization: `Bearer ${adminToken}` },
+  });
+  if (!res.ok) throw new Error(`getJoinedMemberIds: ${res.status} for ${roomId}`);
+  const body = (await res.json()) as { members?: string[] };
+  return new Set(body.members ?? []);
+}
+
 /** Read the tenants marker of a room; empty array when the room is unmarked OR assigned to none. */
 export async function getRoomTenants(roomId: string, adminToken: string): Promise<string[]> {
   return (await getRoomTenantMarker(roomId, adminToken)) ?? [];

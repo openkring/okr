@@ -27,14 +27,14 @@ function escapeRegExp(s: string): string {
 
 /**
  * Whether `path` has exactly the album-video layout the private-bucket Storage rule admits:
- * `tenant/<tid>/(section|folder)/<key>/album/<sub>/<rest…>.(mp4|mov)`, `<sub>` not `renderings`,
+ * `tenant/<tid>/(section|folder)/<key>/album/<sub>/<rest…>.(mp4|mov|avi)`, `<sub>` not `renderings`,
  * no empty, `.` or `..` segment. `fullPath` is author-editable document data, so anything looser
  * would let a doc author have `signVideoUrls` sign arbitrary private objects (exports, invoices).
  */
 export function isAlbumVideoObjectPath(path: string, tenantId: string): boolean {
   if (!tenantId || typeof path !== 'string') return false;
   if (path.split('/').some(seg => seg === '' || seg === '.' || seg === '..')) return false;
-  const re = new RegExp(`^tenant/${escapeRegExp(tenantId)}/(section|folder)/[^/]+/album/([^/]+)/.+\\.(mp4|mov)$`, 'i');
+  const re = new RegExp(`^tenant/${escapeRegExp(tenantId)}/(section|folder)/[^/]+/album/([^/]+)/.+\\.(mp4|mov|avi)$`, 'i');
   const m = re.exec(path);
   return !!m && m[2].toLowerCase() !== 'renderings';
 }
