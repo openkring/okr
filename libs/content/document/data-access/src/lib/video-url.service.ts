@@ -2,7 +2,7 @@ import { Injectable, signal } from '@angular/core';
 import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
-import { mergeSigned, missingKeys, settleKeys, SignedVideo } from '@okr/content-document-util';
+import { chunkKeys, mergeSigned, missingKeys, settleKeys, SignedVideo } from '@okr/content-document-util';
 
 type Req = { docKeys: string[]; download?: boolean };
 type Res = { videos: SignedVideo[]; expires: number };
@@ -28,10 +28,20 @@ export class VideoUrlService {
     return fn(req).then(r => r.data);
   }
 
-  /** Make sure posters/playback URLs for these keys are signed and fresh. Absent keys = not available. */
+  /**
+   * Make sure posters/playback URLs for these keys are signed and fresh. Absent keys = not available.
+   * The callable signs at most MAX_SIGN_KEYS per call, so a large album is signed in chunks; each
+   * chunk merges and settles on its own, and the first failure is rethrown after all have run.
+   */
   public async ensure(keys: string[]): Promise<void> {
     const todo = missingKeys(keys, this._signed(), this._expires(), Date.now());
     if (todo.length === 0) return;
+    const results = await Promise.allSettled(chunkKeys(todo).map(chunk => this.ensureChunk(chunk)));
+    const failed = results.find((r): r is PromiseRejectedResult => r.status === 'rejected');
+    if (failed) throw failed.reason;
+  }
+
+  private async ensureChunk(todo: string[]): Promise<void> {
     let res: Res;
     try {
       res = await this.call({ docKeys: todo });
@@ -57,6 +67,7 @@ export class VideoUrlService {
   /** Download URLs of several originals, for the zip download. */
   public async forDownload(keys: string[]): Promise<SignedVideo[]> {
     if (keys.length === 0) return [];
-    return (await this.call({ docKeys: keys, download: true })).videos;
+    const parts = await Promise.all(chunkKeys(keys).map(chunk => this.call({ docKeys: chunk, download: true })));
+    return parts.flatMap(p => p.videos);
   }
 }

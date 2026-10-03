@@ -4,7 +4,7 @@ import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, 
 import { ErrorNote, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { VideoConfig } from '@okr/shared-models';
 import { coerceBoolean } from '@okr/shared-util-core';
-import { parseVideoLink, videoLink } from '@okr/content-document-util';
+import { isVideoDocKey, parseVideoLink, videoLink } from '@okr/content-document-util';
 import { getFieldErrors, SectionErrors, SectionI18n } from '@okr/cms-section-util';
 
 @Component({
@@ -79,6 +79,8 @@ export class VideoConfiguration {
   public formData = model.required<VideoConfig>();
   public title = input<string>();
   public readonly readOnly = input(true);
+  /** App origins (AppStore.appLinkOrigins): [0] builds the shown link, every one is accepted when pasted. */
+  public readonly linkOrigins = input<string[]>([]);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   public readonly i18n = input.required<SectionI18n>();
 
@@ -103,7 +105,8 @@ export class VideoConfiguration {
       const key = untracked(() => this.documentKey());
       untracked(() => {
         this.source.set(key !== '' ? 'album' : 'youtube');
-        this.linkText.set(key !== '' ? videoLink(location.origin, key) : '');
+        const origin = this.linkOrigins()[0] ?? '';
+        this.linkText.set(key !== '' ? (origin ? videoLink(origin, key) : key) : '');
         this.linkInvalid.set(false);
       });
     });
@@ -175,7 +178,7 @@ export class VideoConfiguration {
       this.onFieldChange('documentKey', '');
       return;
     }
-    const key = parseVideoLink(text, location.origin) ?? (/^[A-Za-z0-9_-]{1,64}$/.test(text) ? text : '');
+    const key = parseVideoLink(text, this.linkOrigins()) ?? (isVideoDocKey(text) ? text : '');
     this.linkInvalid.set(key === '');
     if (key !== '') this.onFieldChange('documentKey', key);
   }

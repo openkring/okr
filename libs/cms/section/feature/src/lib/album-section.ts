@@ -224,7 +224,7 @@ export class AlbumSectionComponent {
         }
         // The canonical link, not the signed URL: it outlives the signing window and re-checks access.
         await showVideoView(this.modalController, { playUrl: signed.playback.url }, signed.downloadUrl ?? '', labels,
-          videoLink(location.origin, doc.okey));
+          videoLink(this.store.appStore.appOrigin(), doc.okey));
         return;
       }
       // legacy (spec 1.58): mp4 rendering in the public bucket — removed after the back-fill

@@ -889,7 +889,7 @@ export class MatrixChatService {
 
     const content: IContent = {
       msgtype: MsgType.Text,
-      body: videoLink(location.origin, data.docKey),
+      body: videoLink(this.appStore.appOrigin(), data.docKey),
       [OKR_VIDEO_FIELD]: { docKey: data.docKey, tenantId: this.appStore.tenantId() },
     };
     if (threadId) {

@@ -1,4 +1,5 @@
 import { Component, computed, effect, inject, input, untracked } from '@angular/core';
+import { AppStore } from '@okr/shared-feature';
 import { DomSanitizer } from '@angular/platform-browser';
 import { IonCard, IonCardContent, ModalController } from '@ionic/angular/standalone';
 
@@ -56,6 +57,7 @@ export class VideoSectionComponent {
   private readonly sanitizer = inject(DomSanitizer);
   private readonly modalController = inject(ModalController);
   private readonly videoUrls = inject(VideoUrlService);
+  private readonly appStore = inject(AppStore);
   protected readonly i18n = inject(I18nService).translateAll(SECTION_I18N_KEYS);
 
   constructor() {
@@ -102,7 +104,7 @@ export class VideoSectionComponent {
       linkCopied: this.i18n.album_video_link_copied()
     };
     await showVideoView(this.modalController, { playUrl: signed.playback.url }, signed.downloadUrl ?? '', labels,
-      videoLink(location.origin, key));
+      videoLink(this.appStore.appOrigin(), key));
   }
     // autoplay=1 starts the video automatically
   protected readonly title = computed(() => this.section()?.title);

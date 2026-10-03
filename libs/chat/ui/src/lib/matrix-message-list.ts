@@ -660,6 +660,8 @@ export class MatrixMessageList {
 
   // inputs
   messages = input.required<MatrixMessage[]>();
+  /** App origins a video link may carry (AppStore.appLinkOrigins) — never a raw location.origin (native: capacitor://). */
+  linkOrigins = input<string[]>([]);
   currentUserId = input<string>();
   /** C-5: whether older history may still be loaded by scrolling to the top. */
   hasMoreHistory = input<boolean>(false);
@@ -837,14 +839,15 @@ export class MatrixMessageList {
    * message) is left untouched and falls through to the existing `messageClicked`
    * action-sheet trigger.
    */
-  /** The album video a text message points at (the org.okr.video field, else a bare link on this origin). */
+  /** The album video a text message points at (the org.okr.video field, else a bare link on an app origin). */
   protected videoKeyOf(item: MatrixMessage): string | undefined {
-    return videoDocKeyOf(item.content, item.body ?? '', location.origin);
+    return videoDocKeyOf(item.content, item.body ?? '', this.linkOrigins());
   }
 
   /** True when the body is exactly the canonical link of this video — the only text a card may replace. */
   protected isCanonicalVideoBody(item: MatrixMessage, docKey: string): boolean {
-    return (item.body ?? '').trim() === videoLink(location.origin, docKey);
+    const body = (item.body ?? '').trim();
+    return this.linkOrigins().some(origin => body === videoLink(origin, docKey));
   }
 
   /** Plain-text bodies carry no markup, so urls are made clickable here. */

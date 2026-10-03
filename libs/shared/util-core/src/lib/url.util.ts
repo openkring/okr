@@ -119,3 +119,43 @@ export function getSafeReturnUrl(returnUrl: string | undefined | null): string |
   if (!returnUrl) return null;
   return isNavigableInternalPath(returnUrl) ? returnUrl : null;
 }
+
+/** Project-wide Firebase Hosting site suffix (same as FIREBASE_HOSTING_SUFFIX in @okr/aoc-util). */
+const HOSTING_SUFFIX = '54aef';
+
+/**
+ * The tenant app's public origin (no trailing slash), derived from `AppConfig.appDomain` the
+ * same way the alias functions derive it (`apps/functions/src/alias/tenant-domains.ts`): the app
+ * lives on `app.<apex>`, and `appDomain` is stored as either the apex or the `app.` form. Without
+ * a domain the Firebase Hosting default `https://<tenantId>-app-<suffix>.web.app`.
+ */
+export function publicAppOrigin(appDomain: string | undefined | null, tenantId: string): string {
+  const host = String(appDomain ?? '').trim().toLowerCase().replace(/^https?:\/\//, '').replace(/[/?#].*$/, '');
+  if (host) return `https://app.${host.startsWith('app.') ? host.slice(4) : host}`;
+  return `https://${tenantId}-app-${HOSTING_SUFFIX}.web.app`;
+}
+
+/**
+ * Whether `origin` is a real web origin other people can open. Native builds are served from
+ * `capacitor://localhost` (iOS) and `https://localhost` without a port (Android); a link built on
+ * those is useless to everyone else. `http://localhost:4200` (dev serve) counts as web.
+ */
+export function isWebOrigin(origin: string | undefined | null): boolean {
+  try {
+    const u = new URL(String(origin ?? ''));
+    if (u.protocol !== 'http:' && u.protocol !== 'https:') return false;
+    return !(u.protocol === 'https:' && u.hostname === 'localhost' && u.port === '');
+  } catch {
+    return false;
+  }
+}
+
+/** The origin to put into a shareable link: the page's own origin on the web, else the public app origin. */
+export function resolveAppOrigin(publicOrigin: string, locationOrigin: string | undefined | null): string {
+  return isWebOrigin(locationOrigin) ? String(locationOrigin) : publicOrigin;
+}
+
+/** Origins a pasted/received app link may carry: the link origin, the public origin and the page's own. */
+export function appLinkOrigins(publicOrigin: string, locationOrigin: string | undefined | null): string[] {
+  return [...new Set([resolveAppOrigin(publicOrigin, locationOrigin), publicOrigin, String(locationOrigin ?? '')].filter(o => o !== ''))];
+}

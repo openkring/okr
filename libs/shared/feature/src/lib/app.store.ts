@@ -10,7 +10,7 @@ import { App } from '@capacitor/app';
 import { AUTH, ENV, FIRESTORE, usesLocalStorageOnlySession } from '@okr/shared-config';
 import { AppConfigService, FirestoreService } from '@okr/shared-data-access';
 import { AddressDirectoryCollection, AddressDirectoryModel, AppConfig, getAddressDirectoryKey, AvailableLanguages, CategoryCollection, CategoryItemModel, CategoryListModel, DefaultLanguage, DefaultLanguageCode, GroupCollection, GroupModel, InvitationCollection, InvitationModel, OrgCollection, OrgModel, PersonCollection, PersonModel, PrivacySettings, privacyUsageToAccessor, ResourceCollection, ResourceModel, ResourceModelName, stricterAccessor, TagCollection, TagModel, TaskCollection, TaskModel, UserCollection, UserModel } from '@okr/shared-models';
-import { die, getSystemQuery, indexBy, openInvitationsOf, pickForTenant, replacePlaceholders, sortPersons, withOfflineSnapshot } from '@okr/shared-util-core';
+import { appLinkOrigins, die, getSystemQuery, indexBy, openInvitationsOf, pickForTenant, publicAppOrigin, replacePlaceholders, resolveAppOrigin, sortPersons, withOfflineSnapshot } from '@okr/shared-util-core';
 import { AppNavigationService, armStartupStallCheck, installScrollDiagnostics, isBrowser, markStartup, probeStoredSession, probeStoredSessionIdb, reportStartupTiming, VersionCheckService, resourceParams } from '@okr/shared-util-angular';
 
 import { authPhase, isDegradedBoot, openBootGate, type BootState } from './boot-readiness.util';
@@ -366,6 +366,16 @@ export const AppStore = signalStore(
         } as PrivacySettings;
       }
     ),
+    /**
+     * Origin for links other people open (video links in chat bodies, copied links): the page's
+     * own origin on the web, else the tenant's public app origin — native builds run on
+     * `capacitor://localhost` / `https://localhost`, which nobody else can open.
+     */
+    appOrigin: computed(() => resolveAppOrigin(
+      publicAppOrigin(state.appConfig().appDomain, state.tenantId()), globalThis.location?.origin)),
+    /** Origins an incoming app link may carry: the link origin, the public origin and the page's own. */
+    appLinkOrigins: computed(() => appLinkOrigins(
+      publicAppOrigin(state.appConfig().appDomain, state.tenantId()), globalThis.location?.origin)),
     // environment can be called directly on appStore:
     // e.g.  appStore.firebase.apiKey()
     // e.g. appStore.tenantId()

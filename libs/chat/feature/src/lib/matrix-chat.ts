@@ -399,6 +399,7 @@ function rejectionReasons(results: PromiseSettledResult<unknown>[]): unknown[] {
                   </div>
                 } @else {
                   <okr-matrix-message-list
+                    [linkOrigins]="store.appStore.appLinkOrigins()"
                     [messages]="messages()"
                     [currentUserId]="matrixUserId()"
                     [hasMoreHistory]="store.hasMoreHistory()"
@@ -531,6 +532,7 @@ function rejectionReasons(results: PromiseSettledResult<unknown>[]): unknown[] {
                   <div class="thread-empty">{{ store.i18n.thread_empty() }}</div>
                 } @else {
                   <okr-matrix-message-list
+                    [linkOrigins]="store.appStore.appLinkOrigins()"
                     [messages]="threadMessages()"
                     [currentUserId]="matrixUserId()"
                     [typingUsers]="[]"
@@ -740,7 +742,7 @@ export class MatrixChat implements OnDestroy {
     const keys = new Set<string>();
     for (const m of [...this.messages(), ...this.threadMessages()]) {
       if (m.type !== 'm.text' || m.isRedacted) continue;
-      const key = videoDocKeyOf(m.content, m.body ?? '', location.origin);
+      const key = videoDocKeyOf(m.content, m.body ?? '', this.store.appStore.appLinkOrigins());
       if (key) keys.add(key);
     }
     return [...keys].sort();
@@ -1352,7 +1354,7 @@ export class MatrixChat implements OnDestroy {
     };
     // The canonical link, not the signed URL: it outlives the signing window and re-checks access.
     await showVideoView(this.modalController, { playUrl: signed.playback.url }, signed.downloadUrl ?? '', labels,
-      videoLink(location.origin, docKey));
+      videoLink(this.store.appStore.appOrigin(), docKey));
   }
 
   // open the chat help modal (shortcuts + direct-vs-group explanation)

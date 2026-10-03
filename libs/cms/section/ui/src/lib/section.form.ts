@@ -365,6 +365,7 @@ import { TimelineConfiguration } from './timeline-configuration';
             <okr-video-config
               [formData]="videoConfig" (formDataChange)="onVideoConfigChange($event)"
               [resetKey]="formData().okey ?? ''"
+              [linkOrigins]="linkOrigins()"
               [i18n]="i18n()"
               [readOnly]="isReadOnly()"
               [errors]="errors()"
@@ -533,6 +534,8 @@ export class SectionForm {
   public readonly states = input.required<CategoryListModel>();
   public readonly albumStyles = input.required<CategoryListModel>();
   public readonly tenantId = input.required<string>();
+  /** App origins for album video links: [0] builds the shown link, all are accepted when pasted (AppStore.appLinkOrigins). */
+  public readonly linkOrigins = input<string[]>([]);
   public readonly readOnly = input(true);
   /** Locations offered by the weather configuration. Empty for every other section type. */
   public readonly weatherLocations = input<WeatherLocationOption[]>([]);

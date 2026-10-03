@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getDeepLinkPath, getSafeEmbedUrl, getSafeReturnUrl } from './url.util';
+import { appLinkOrigins, getDeepLinkPath, getSafeEmbedUrl, getSafeReturnUrl, isWebOrigin, publicAppOrigin, resolveAppOrigin } from './url.util';
 
 describe('url.util', () => {
   describe('getSafeEmbedUrl', () => {
@@ -111,5 +111,39 @@ describe('url.util', () => {
       expect(getSafeReturnUrl('/web/news')).toBeNull();
       expect(getSafeReturnUrl('/__/auth/action')).toBeNull();
     });
+  });
+});
+
+describe('app origin (spec 1.82: links from native builds)', () => {
+  it('derives app.<apex> from either appDomain form, like the alias functions', () => {
+    expect(publicAppOrigin('seeclub.org', 'scs')).toBe('https://app.seeclub.org');
+    expect(publicAppOrigin('app.kring.ch', 'kring')).toBe('https://app.kring.ch');
+    expect(publicAppOrigin(' https://App.P13.ch/ ', 'p13')).toBe('https://app.p13.ch');
+  });
+  it('falls back to the Firebase Hosting default without a domain', () => {
+    expect(publicAppOrigin('', 'scs')).toBe('https://scs-app-54aef.web.app');
+    expect(publicAppOrigin(undefined, 'elab')).toBe('https://elab-app-54aef.web.app');
+  });
+  it('treats the native Capacitor origins as not shareable', () => {
+    expect(isWebOrigin('capacitor://localhost')).toBe(false);
+    expect(isWebOrigin('https://localhost')).toBe(false);
+    expect(isWebOrigin('')).toBe(false);
+    expect(isWebOrigin(undefined)).toBe(false);
+  });
+  it('treats real web origins and dev serve as shareable', () => {
+    expect(isWebOrigin('https://app.seeclub.org')).toBe(true);
+    expect(isWebOrigin('http://localhost:4200')).toBe(true);
+    expect(isWebOrigin('https://scs-app-54aef.web.app')).toBe(true);
+  });
+  it('resolves to the page origin on the web and to the public origin natively', () => {
+    expect(resolveAppOrigin('https://app.seeclub.org', 'https://scs-app-54aef.web.app')).toBe('https://scs-app-54aef.web.app');
+    expect(resolveAppOrigin('https://app.seeclub.org', 'capacitor://localhost')).toBe('https://app.seeclub.org');
+    expect(resolveAppOrigin('https://app.seeclub.org', 'https://localhost')).toBe('https://app.seeclub.org');
+    expect(resolveAppOrigin('https://app.seeclub.org', undefined)).toBe('https://app.seeclub.org');
+  });
+  it('lists the link origin first, deduplicated', () => {
+    expect(appLinkOrigins('https://app.seeclub.org', 'https://app.seeclub.org')).toEqual(['https://app.seeclub.org']);
+    expect(appLinkOrigins('https://app.seeclub.org', 'http://localhost:4200')).toEqual(['http://localhost:4200', 'https://app.seeclub.org']);
+    expect(appLinkOrigins('https://app.seeclub.org', 'capacitor://localhost')).toEqual(['https://app.seeclub.org', 'capacitor://localhost']);
   });
 });

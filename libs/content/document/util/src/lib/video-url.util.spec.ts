@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { mergeSigned, missingKeys, needsResign, RESIGN_MARGIN_MS, resignDelay, settleKeys, SignedVideo } from './video-url.util';
+import { chunkKeys, MAX_SIGN_KEYS, mergeSigned, missingKeys, needsResign, RESIGN_MARGIN_MS, resignDelay, settleKeys, SignedVideo } from './video-url.util';
 
 const v = (key: string): SignedVideo => ({ key, posterUrl: 'p', playback: { kind: 'mp4', url: 'u' } });
 
@@ -67,5 +67,23 @@ describe('resignDelay', () => {
   it('is zero, never negative, for a window already inside the margin or past', () => {
     expect(resignDelay(1000, 1000 - RESIGN_MARGIN_MS + 1)).toBe(0);
     expect(resignDelay(1000, 5000)).toBe(0);
+  });
+});
+
+describe('chunkKeys', () => {
+  it('splits into chunks of at most MAX_SIGN_KEYS (the callable cap)', () => {
+    const keys = Array.from({ length: 250 }, (_, i) => `k${i}`);
+    const chunks = chunkKeys(keys);
+    expect(MAX_SIGN_KEYS).toBe(100);
+    expect(chunks.map(c => c.length)).toEqual([100, 100, 50]);
+    expect(chunks.flat()).toEqual(keys);
+  });
+  it('returns one chunk up to the cap and none for no keys', () => {
+    expect(chunkKeys(['a', 'b'])).toEqual([['a', 'b']]);
+    expect(chunkKeys(Array.from({ length: 100 }, (_, i) => `${i}`))).toHaveLength(1);
+    expect(chunkKeys([])).toEqual([]);
+  });
+  it('treats a non-positive size as 1', () => {
+    expect(chunkKeys(['a', 'b'], 0)).toEqual([['a'], ['b']]);
   });
 });

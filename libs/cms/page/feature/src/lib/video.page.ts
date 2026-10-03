@@ -1,4 +1,5 @@
 import { Component, computed, inject, input, resource } from '@angular/core';
+import { AppStore } from '@okr/shared-feature';
 import { RouterLink } from '@angular/router';
 import { IonButton, IonContent, IonIcon, ToastController } from '@ionic/angular/standalone';
 import { firstValueFrom } from 'rxjs';
@@ -82,6 +83,7 @@ export class VideoPage {
   private readonly documentService = inject(DocumentService);
   private readonly folderService = inject(FolderService);
   private readonly toastController = inject(ToastController);
+  private readonly appStore = inject(AppStore);
   protected readonly i18n = inject(I18nService).translateAll(VIDEO_PAGE_I18N_KEYS) as VideoPageI18n;
 
   // route input — withComponentInputBinding sets it to undefined when absent, hence the coalesce
@@ -143,7 +145,7 @@ export class VideoPage {
 
   /** The link is known synchronously: the clipboard write starts inside the click gesture. */
   protected async copyLink(): Promise<void> {
-    await copyToClipboardWithConfirmation(this.toastController, videoLink(window.location.origin, this.key()), this.i18n.link_copied());
+    await copyToClipboardWithConfirmation(this.toastController, videoLink(this.appStore.appOrigin(), this.key()), this.i18n.link_copied());
   }
 
   protected async download(url: string): Promise<void> {

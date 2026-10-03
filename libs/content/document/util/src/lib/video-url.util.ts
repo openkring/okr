@@ -51,3 +51,14 @@ export function mergeSigned(
 export function settleKeys(current: ReadonlySet<string>, keys: string[], newWindow: boolean): ReadonlySet<string> {
   return new Set(newWindow ? keys : [...current, ...keys]);
 }
+
+/** `signVideoUrls` signs at most this many keys per call (MAX_VIDEO_KEYS in the function). */
+export const MAX_SIGN_KEYS = 100;
+
+/** `keys` in consecutive chunks of at most `size` (a non-positive size counts as 1). */
+export function chunkKeys(keys: readonly string[], size = MAX_SIGN_KEYS): string[][] {
+  const n = Math.max(1, Math.floor(size));
+  const out: string[][] = [];
+  for (let i = 0; i < keys.length; i += n) out.push(keys.slice(i, i + n));
+  return out;
+}

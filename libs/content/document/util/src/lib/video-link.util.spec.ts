@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { OKR_VIDEO_FIELD, parseVideoLink, readOkrVideo, videoDocKeyOf, videoLink } from './video-link.util';
+import { isVideoDocKey, OKR_VIDEO_FIELD, parseVideoLink, readOkrVideo, videoDocKeyOf, videoLink } from './video-link.util';
 
 const O = 'https://app.example.org';
 
@@ -64,4 +64,23 @@ describe('videoDocKeyOf', () => {
   });
   it('falls back to the body link', () => { expect(videoDocKeyOf({}, `${O}/video/b`, O)).toBe('b'); });
   it('is undefined otherwise', () => { expect(videoDocKeyOf(undefined, 'hello', O)).toBeUndefined(); });
+});
+
+describe('reserved ids and several origins (final review)', () => {
+  const PUB = 'https://app.seeclub.org';
+  it('rejects a reserved __…__ key in a link and in the custom field', () => {
+    expect(parseVideoLink(`${O}/video/__a__`, O)).toBeUndefined();
+    expect(readOkrVideo({ [OKR_VIDEO_FIELD]: { docKey: '__a__', tenantId: 't' } })).toBeUndefined();
+    expect(isVideoDocKey('__a__')).toBe(false);
+    expect(isVideoDocKey('__a')).toBe(true);
+  });
+  it('accepts a link on any of the given origins', () => {
+    expect(parseVideoLink(`${PUB}/video/abc`, [O, PUB])).toBe('abc');
+    expect(parseVideoLink(`${O}/video/abc`, [O, PUB])).toBe('abc');
+    expect(parseVideoLink('https://evil.org/video/abc', [O, PUB])).toBeUndefined();
+    expect(videoDocKeyOf({}, `${PUB}/video/b`, [O, PUB])).toBe('b');
+  });
+  it('never matches a capacitor:// link (opaque origin), even when listed', () => {
+    expect(parseVideoLink('capacitor://localhost/video/abc', ['capacitor://localhost', PUB])).toBeUndefined();
+  });
 });

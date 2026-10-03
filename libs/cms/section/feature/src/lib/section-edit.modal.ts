@@ -46,6 +46,7 @@ import { SectionStore } from './section.store';
             [weatherLocations]="weatherLocations()"
             [allTags]="tags()"
             [tenantId]="tenantId()"
+            [linkOrigins]="store.appStore.appLinkOrigins()"
             [readOnly]="isReadOnly()"
             (valid)="formValid.set($event)"
           />
