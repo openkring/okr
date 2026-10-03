@@ -297,6 +297,7 @@ export const KlondikeStore = signalStore(
 
       /** The page left the screen: bank the running time. */
       pause(): void {
+        if (store.autoFinishing()) patchState(store, { autoFinishing: false });
         if (store.runningSince() === null) return;
         patchState(store, { now: Date.now() });
         patchState(store, { elapsedMs: store.elapsed(), runningSince: null });

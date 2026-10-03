@@ -27,7 +27,7 @@
   },
   "status": {
     "play": "Tippe eine Karte, dann legt sie sich selbst an die beste Stelle. Oder zieh sie dorthin, wo du sie haben willst.",
-    "selected": "Tippe jetzt auf den Stapel, auf den die Karte soll.",
+    "selected": "Tippe jetzt auf die Spalte oder das Feld, wohin die Karte soll.",
     "draw_next": "Das gilt ab dem nächsten Spiel.",
     "stats": "{moves} Züge · {time}",
     "best": "Bestzeit {time}",

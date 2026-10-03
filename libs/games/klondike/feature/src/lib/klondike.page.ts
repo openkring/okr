@@ -85,7 +85,7 @@ function covers(picked: Source | null, source: Source): boolean {
   standalone: true,
   providers: [KlondikeStore],
   imports: [NgTemplateOutlet, Header, IonContent, IonCard, IonCardContent, IonSelect, IonSelectOption, IonButton],
-  host: { '(document:keydown)': 'onKey($event)' },
+  host: { '(document:keydown)': 'onKey($event)', '(document:visibilitychange)': 'onVisibility()' },
   template: `
     <okr-header [i18n]="{ title: store.i18n.title() }" />
     <ion-content class="ion-padding">
@@ -182,7 +182,8 @@ function covers(picked: Source | null, source: Source): boolean {
         (pointerdown)="onPointerDown($event, c.source)"
         (pointermove)="onPointerMove($event)"
         (pointerup)="onPointerUp($event)"
-        (pointercancel)="onPointerCancel()">
+        (pointercancel)="onPointerCancel()"
+        (lostpointercapture)="onPointerCancel()">
         @if (c.faceUp) {
           <span class="kl-corner" aria-hidden="true">{{ c.rank }}<br>{{ c.suit }}</span>
           <span class="kl-pip" aria-hidden="true">{{ c.suit }}</span>
@@ -449,8 +450,15 @@ export class KlondikePage {
     this.store.pause();
   }
 
+  protected onVisibility(): void {
+    if (!this.active) return;
+    if (document.hidden) this.store.pause();
+    else this.store.resume();
+  }
+
   protected onKey(event: KeyboardEvent): void {
     if (!this.active) return;
+    if (this.drag()) return;
     const target = event.target as HTMLElement | null;
     if (target?.closest('input, textarea, ion-select, ion-popover')) return;
     if ((event.metaKey || event.ctrlKey) && !event.shiftKey && event.key.toLowerCase() === 'z') {
