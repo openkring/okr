@@ -105,7 +105,9 @@
       "error": "The video cannot be loaded right now. Please try again in a moment.",
       "title": "Video",
       "download": "Download video",
-      "close": "Close"
+      "close": "Close",
+      "copyLink": "Copy link",
+      "linkCopied": "Link copied."
     },
     "newFolder": {
       "save": "Save",

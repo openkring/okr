@@ -226,5 +226,13 @@
       "label": "Tienda",
       "description": "En la tienda se pueden vender productos. Los componentes de la tienda son una vista general con búsqueda y vistas detalladas de los productos. En el carrito de la compra (cart) se resumen los productos seleccionados con sus precios y se habilitan para el pedido con pago."
     }
+  },
+  "videoPage": {
+    "title": "Vídeo",
+    "unavailable": "Este vídeo no está disponible para ti.",
+    "toAlbum": "Ir al álbum",
+    "download": "Descargar el vídeo",
+    "copyLink": "Copiar enlace",
+    "linkCopied": "Enlace copiado."
   }
 }

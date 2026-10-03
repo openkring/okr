@@ -226,6 +226,14 @@
       "label": "Shop",
       "description": "Im Shop können Produkte verkauft werden. Bestandteile des Shops sind eine Übersicht mit Suche, Detailansichten der Produkte. Im Einkaufswagen (Cart) werden die ausgewählten Produkte mit Preisen zusammengefasst und zur Bestellung mit Zahlung freigegeben."
     }
+  },
+  "videoPage": {
+    "title": "Video",
+    "unavailable": "Dieses Video ist für dich nicht verfügbar.",
+    "toAlbum": "Zum Album",
+    "download": "Video herunterladen",
+    "copyLink": "Link kopieren",
+    "linkCopied": "Link kopiert."
   }
 }
 

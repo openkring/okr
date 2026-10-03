@@ -105,7 +105,9 @@
       "error": "Il video non si riesce a caricare al momento. Riprova tra un istante.",
       "title": "Video",
       "download": "Scarica il video",
-      "close": "Chiudi"
+      "close": "Chiudi",
+      "copyLink": "Copia link",
+      "linkCopied": "Link copiato."
     },
     "newFolder": {
       "save": "Salva",

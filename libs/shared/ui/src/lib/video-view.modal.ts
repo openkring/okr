@@ -1,10 +1,10 @@
 import { Component, OnInit, inject, input, signal } from '@angular/core';
-import { IonButton, IonButtons, IonContent, IonHeader, IonSpinner, IonTitle, IonToolbar, ModalController } from '@ionic/angular/standalone';
+import { IonButton, IonButtons, IonContent, IonHeader, IonSpinner, IonTitle, IonToolbar, ModalController, ToastController } from '@ionic/angular/standalone';
 import { getDownloadURL, ref } from 'firebase/storage';
 import { captureException } from '@sentry/angular';
 
 import { STORAGE } from '@okr/shared-config';
-import { downloadToBrowser } from '@okr/shared-util-angular';
+import { copyToClipboardWithConfirmation, downloadToBrowser } from '@okr/shared-util-angular';
 
 /**
  * Full-screen playback of one album video.
@@ -15,6 +15,9 @@ import { downloadToBrowser } from '@okr/shared-util-angular';
  * The source is either a signed imgix mp4 URL (private videos; Range verified, spec 1.82 §1) used
  * verbatim, or — for legacy videos — the Firebase download URL of the mp4 RENDERING. The download
  * button hands over the ORIGINAL.
+ *
+ * `shareUrl` (private videos only) adds a copy-link button for the canonical `/video/<docKey>`
+ * link — never the signed URL, which expires and bypasses the access check.
  */
 @Component({
   selector: 'okr-video-view-modal',
@@ -31,6 +34,9 @@ import { downloadToBrowser } from '@okr/shared-util-angular';
       <ion-toolbar color="dark">
         <ion-title>{{ title() }}</ion-title>
         <ion-buttons slot="end">
+          @if (shareUrl()) {
+            <ion-button (click)="copyLink()">{{ copyLinkLabel() }}</ion-button>
+          }
           <ion-button (click)="download()">{{ downloadLabel() }}</ion-button>
           <ion-button (click)="close()">{{ closeLabel() }}</ion-button>
         </ion-buttons>
@@ -52,6 +58,7 @@ import { downloadToBrowser } from '@okr/shared-util-angular';
 export class VideoViewModal implements OnInit {
   private readonly modalController = inject(ModalController);
   private readonly storage = inject(STORAGE);
+  private readonly toastController = inject(ToastController);
 
   // inputs (passed as componentProps)
   public storagePath = input('');                  // legacy: fullPath of the mp4 rendering (public bucket)
@@ -63,6 +70,10 @@ export class VideoViewModal implements OnInit {
   public downloadLabel = input('');
   public closeLabel = input('');
   public errorLabel = input('');
+  /** Canonical video link to copy; empty = no copy button (legacy public videos). */
+  public shareUrl = input('');
+  public copyLinkLabel = input('');
+  public linkCopiedLabel = input('');
 
   protected readonly playUrl = signal<string | undefined>(undefined);
   /** Set when the download URL could not be resolved — the spinner must not be the final state. */
@@ -96,6 +107,14 @@ export class VideoViewModal implements OnInit {
 
   protected async download(): Promise<void> {
     if (this.actionUrl()) await downloadToBrowser(this.actionUrl());
+  }
+
+  /**
+   * The URL is known up front, so the clipboard write starts inside the click gesture — no await
+   * before it (an awaited callable first lets the gesture expire and the write hangs silently).
+   */
+  protected async copyLink(): Promise<void> {
+    await copyToClipboardWithConfirmation(this.toastController, this.shareUrl(), this.linkCopiedLabel());
   }
 
   protected close(): void {

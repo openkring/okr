@@ -105,7 +105,9 @@
       "error": "Das Video lässt sich gerade nicht laden. Versuch es in einem Moment noch einmal.",
       "title": "Video",
       "download": "Video herunterladen",
-      "close": "Schliessen"
+      "close": "Schliessen",
+      "copyLink": "Link kopieren",
+      "linkCopied": "Link kopiert."
     },
     "newFolder": {
       "save": "Speichern",

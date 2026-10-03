@@ -9,7 +9,7 @@ import { downloadToBrowser, showToast } from '@okr/shared-util-angular';
 
 import { FolderBreadcrumb } from '@okr/content-folder-ui';
 import { canUploadIntoFolder } from '@okr/content-folder-util';
-import { hasRendering, resolveRendering } from '@okr/content-document-util';
+import { hasRendering, resolveRendering, videoLink } from '@okr/content-document-util';
 import { VideoUrlService } from '@okr/content-document-data-access';
 import { isPrivateVideo } from '@okr/cms-section-util';
 
@@ -206,7 +206,9 @@ export class AlbumSectionComponent {
         title: image.label || this.store.i18n.album_video_title(),
         download: this.store.i18n.album_video_download(),
         close: this.store.i18n.album_video_close(),
-        error: this.store.i18n.album_video_error()
+        error: this.store.i18n.album_video_error(),
+        copyLink: this.store.i18n.album_video_copy_link(),
+        linkCopied: this.store.i18n.album_video_link_copied()
       };
       if (isPrivateVideo(doc)) {
         let signed;
@@ -220,7 +222,9 @@ export class AlbumSectionComponent {
           await showToast(this.store.toastController, this.store.i18n.album_video_unavailable());
           return;
         }
-        await showVideoView(this.modalController, { playUrl: signed.playback.url }, signed.downloadUrl ?? '', labels);
+        // The canonical link, not the signed URL: it outlives the signing window and re-checks access.
+        await showVideoView(this.modalController, { playUrl: signed.playback.url }, signed.downloadUrl ?? '', labels,
+          videoLink(location.origin, doc.okey));
         return;
       }
       // legacy (spec 1.58): mp4 rendering in the public bucket — removed after the back-fill

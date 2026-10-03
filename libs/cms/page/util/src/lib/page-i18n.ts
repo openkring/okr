@@ -112,3 +112,15 @@ export const PAGE_I18N_KEYS = {
 } satisfies Record<string, string>;
 
 export type PageI18n = { [K in keyof typeof PAGE_I18N_KEYS]: Signal<string> };
+
+/** The `/video/:docKey` page (spec 1.82) — its own small map, so the page resolves six keys, not the whole page catalogue. */
+export const VIDEO_PAGE_I18N_KEYS = {
+  title:          PFX + 'videoPage.title',
+  unavailable:    PFX + 'videoPage.unavailable',
+  to_album:       PFX + 'videoPage.toAlbum',
+  download:       PFX + 'videoPage.download',
+  copy_link:      PFX + 'videoPage.copyLink',
+  link_copied:    PFX + 'videoPage.linkCopied',
+} satisfies Record<string, string>;
+
+export type VideoPageI18n = { [K in keyof typeof VIDEO_PAGE_I18N_KEYS]: Signal<string> };

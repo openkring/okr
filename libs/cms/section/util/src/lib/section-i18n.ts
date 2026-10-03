@@ -89,6 +89,8 @@ export const SECTION_I18N_KEYS = {
   album_video_title:                        PFX + 'album.video.title',
   album_video_download:                     PFX + 'album.video.download',
   album_video_close:                        PFX + 'album.video.close',
+  album_video_copy_link:                    PFX + 'album.video.copyLink',
+  album_video_link_copied:                  PFX + 'album.video.linkCopied',
 
   album_upload_failed:                      PFX + 'album.upload.failed',
 

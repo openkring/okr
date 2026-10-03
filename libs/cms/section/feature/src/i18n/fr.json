@@ -105,7 +105,9 @@
       "error": "La vidéo ne peut pas être chargée pour le moment. Réessaie dans un instant.",
       "title": "Vidéo",
       "download": "Télécharger la vidéo",
-      "close": "Fermer"
+      "close": "Fermer",
+      "copyLink": "Copier le lien",
+      "linkCopied": "Lien copié."
     },
     "newFolder": {
       "save": "Enregistrer",

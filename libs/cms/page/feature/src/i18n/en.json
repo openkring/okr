@@ -226,5 +226,13 @@
       "label": "Shop",
       "description": "In the shop, products can be sold. Components of the shop are an overview with search, detail views of the products. In the shopping cart, the selected products are summarized with prices and released for ordering with payment."
     }
+  },
+  "videoPage": {
+    "title": "Video",
+    "unavailable": "This video is not available to you.",
+    "toAlbum": "Go to album",
+    "download": "Download video",
+    "copyLink": "Copy link",
+    "linkCopied": "Link copied."
   }
 }

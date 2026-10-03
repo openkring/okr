@@ -313,6 +313,15 @@ const cms: BlockRoutes = {
       ],
     },
     {
+      // Canonical link of one private album video (spec 1.82): `<origin>/video/<docKey>`.
+      // Deliberately NOT under /private/ — `private/:id/:contextMenuName` would capture it.
+      // Authenticated only: the real access check is `signVideoUrls` (room membership / folder
+      // access), and every refusal renders the same neutral "not available" text.
+      path: 'video/:docKey',
+      canActivate: [isAuthenticatedGuard],
+      loadComponent: () => import('@okr/cms-page-feature').then(m => m.VideoPage),
+    },
+    {
       path: 'page',
       canActivate: [isAuthenticatedGuard],
       children: [

@@ -105,7 +105,9 @@
       "error": "El vídeo no se puede cargar ahora mismo. Vuelve a intentarlo en un momento.",
       "title": "Vídeo",
       "download": "Descargar el vídeo",
-      "close": "Cerrar"
+      "close": "Cerrar",
+      "copyLink": "Copiar enlace",
+      "linkCopied": "Enlace copiado."
     },
     "newFolder": {
       "save": "Guardar",

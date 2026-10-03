@@ -17,3 +17,4 @@ export * from './lib/menu-graph-node';
 export * from './lib/graph.page';
 export * from './lib/album.page';
 export * from './lib/public-album.page';
+export * from './lib/video.page';

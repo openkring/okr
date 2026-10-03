@@ -226,5 +226,13 @@
       "label": "Boutique",
       "description": "Dans la boutique, des produits peuvent être vendus. Les composants de la boutique sont un aperçu avec recherche, des vues détaillées des produits. Dans le panier (cart), les produits sélectionnés sont récapitulés avec les prix et validés pour la commande avec paiement."
     }
+  },
+  "videoPage": {
+    "title": "Vidéo",
+    "unavailable": "Cette vidéo n'est pas disponible pour toi.",
+    "toAlbum": "Vers l'album",
+    "download": "Télécharger la vidéo",
+    "copyLink": "Copier le lien",
+    "linkCopied": "Lien copié."
   }
 }

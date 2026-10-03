@@ -91,11 +91,13 @@ export async function showImageSlider(modalController: ModalController, images: 
 
 // Open the full-screen player for one album video. No gallery: videos deliberately stay out of
 // the prev/next paging and out of the slideshow (spec §5.3).
+// `shareUrl` (private videos, spec 1.82): the canonical /video/<docKey> link; set → copy-link button.
 export async function showVideoView(
   modalController: ModalController,
   source: { storagePath?: string; playUrl?: string },
   actionUrl: string,
-  labels: { title: string; download: string; close: string; error: string }
+  labels: { title: string; download: string; close: string; error: string; copyLink?: string; linkCopied?: string },
+  shareUrl?: string
 ): Promise<void> {
   const modal = await modalController.create({
     component: VideoViewModal,
@@ -103,7 +105,8 @@ export async function showVideoView(
     componentProps: {
       storagePath: source.storagePath ?? '', playUrl: source.playUrl ?? '', actionUrl,
       title: labels.title, downloadLabel: labels.download, closeLabel: labels.close,
-      errorLabel: labels.error
+      errorLabel: labels.error,
+      shareUrl: shareUrl ?? '', copyLinkLabel: labels.copyLink ?? '', linkCopiedLabel: labels.linkCopied ?? ''
     }
   });
   modal.present();

@@ -226,5 +226,13 @@
       "label": "Shop",
       "description": "Nello shop è possibile vendere prodotti. I componenti dello shop sono una panoramica con ricerca e viste dettagliate dei prodotti. Nel carrello (cart) i prodotti selezionati vengono riepilogati con i prezzi e abilitati per l'ordine con pagamento."
     }
+  },
+  "videoPage": {
+    "title": "Video",
+    "unavailable": "Questo video non è disponibile per te.",
+    "toAlbum": "Vai all'album",
+    "download": "Scarica il video",
+    "copyLink": "Copia link",
+    "linkCopied": "Link copiato."
   }
 }
