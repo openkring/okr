@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { missingKeys, needsResign, RESIGN_MARGIN_MS, SignedVideo } from './video-url.util';
+import { mergeSigned, missingKeys, needsResign, RESIGN_MARGIN_MS, SignedVideo } from './video-url.util';
 
 const v = (key: string): SignedVideo => ({ key, posterUrl: 'p', playback: { kind: 'mp4', url: 'u' } });
 
@@ -19,5 +19,30 @@ describe('missingKeys', () => {
   });
   it('dedupes and drops empties', () => {
     expect(missingKeys(['a', 'a', ''], {}, undefined, 0)).toEqual(['a']);
+  });
+});
+
+describe('mergeSigned', () => {
+  it('merges into the same window and keeps earlier keys', () => {
+    const r = mergeSigned({ a: v('a') }, 100, [v('b')], 100);
+    expect(Object.keys(r.signed).sort()).toEqual(['a', 'b']);
+    expect(r.expires).toBe(100);
+  });
+  it('keeps both results of overlapping first loads in the same new window', () => {
+    const first = mergeSigned({}, undefined, [v('a')], 100);
+    const second = mergeSigned(first.signed, first.expires, [v('b')], 100);
+    expect(Object.keys(second.signed).sort()).toEqual(['a', 'b']);
+    expect(second.expires).toBe(100);
+  });
+  it('resets on a newer window', () => {
+    const r = mergeSigned({ a: v('a') }, 100, [v('b')], 200);
+    expect(Object.keys(r.signed)).toEqual(['b']);
+    expect(r.expires).toBe(200);
+  });
+  it('ignores a late response from an older window', () => {
+    const cur = { a: v('a') };
+    const r = mergeSigned(cur, 200, [v('b')], 100);
+    expect(r.signed).toBe(cur);
+    expect(r.expires).toBe(200);
   });
 });

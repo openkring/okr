@@ -2,7 +2,7 @@ import { Injectable, signal } from '@angular/core';
 import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
-import { missingKeys, SignedVideo } from '@okr/content-document-util';
+import { mergeSigned, missingKeys, SignedVideo } from '@okr/content-document-util';
 
 type Req = { docKeys: string[]; download?: boolean };
 type Res = { videos: SignedVideo[]; expires: number };
@@ -25,14 +25,13 @@ export class VideoUrlService {
 
   /** Make sure posters/playback URLs for these keys are signed and fresh. Absent keys = not available. */
   public async ensure(keys: string[]): Promise<void> {
-    const stale = this.expires;
-    const todo = missingKeys(keys, this._signed(), stale, Date.now());
+    const todo = missingKeys(keys, this._signed(), this.expires, Date.now());
     if (todo.length === 0) return;
     const res = await this.call({ docKeys: todo });
-    // Same window → add to what we have; a new window → old signatures are dead, start over.
-    const base = res.expires === stale ? this._signed() : {};
-    this.expires = res.expires;
-    this._signed.set({ ...base, ...Object.fromEntries(res.videos.map(v => [v.key, v])) });
+    // Merge against the LIVE state: overlapping calls must not overwrite each other.
+    const next = mergeSigned(this._signed(), this.expires, res.videos, res.expires);
+    this.expires = next.expires;
+    this._signed.set(next.signed);
   }
 
   /** Fresh URLs incl. the original's download URL, for the player. */

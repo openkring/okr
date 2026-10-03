@@ -18,3 +18,19 @@ export function missingKeys(keys: string[], signed: Record<string, SignedVideo>,
   const unique = [...new Set(keys.filter(Boolean))];
   return needsResign(expires, nowMs) ? unique : unique.filter(k => !signed[k]);
 }
+
+/**
+ * Fold a sign response into the live state. Same window → merge; newer window → old signatures are
+ * dead, start over; older window (a late response) → drop it.
+ */
+export function mergeSigned(
+  current: Record<string, SignedVideo>,
+  currentExpires: number | undefined,
+  videos: SignedVideo[],
+  resExpires: number,
+): { signed: Record<string, SignedVideo>; expires: number | undefined } {
+  const incoming = Object.fromEntries(videos.map(v => [v.key, v]));
+  if (currentExpires !== undefined && resExpires < currentExpires) return { signed: current, expires: currentExpires };
+  if (resExpires === currentExpires) return { signed: { ...current, ...incoming }, expires: currentExpires };
+  return { signed: incoming, expires: resExpires };
+}
