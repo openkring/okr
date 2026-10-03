@@ -40,8 +40,8 @@ export function isVideoLimitError(error: unknown): error is VideoLimitError {
  * error or an abort. Carries no URL: the signed URL is a write credential and must never be logged.
  */
 export class VideoUploadError extends Error {
-  constructor(public readonly status: number) {
-    super(status ? `video upload failed with HTTP ${status}` : 'video upload failed (network or aborted)');
+  constructor(public readonly status: number, reason?: string) {
+    super(reason ?? (status ? `video upload failed with HTTP ${status}` : 'video upload failed (network or aborted)'));
     this.name = 'VideoUploadError';
     Object.setPrototypeOf(this, VideoUploadError.prototype);
   }

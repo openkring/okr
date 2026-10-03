@@ -1,9 +1,10 @@
 import { Component, OnInit, inject, input, signal } from '@angular/core';
-import { IonButton, IonButtons, IonContent, IonHeader, IonSpinner, IonTitle, IonToolbar, ModalController, ToastController } from '@ionic/angular/standalone';
+import { IonButton, IonButtons, IonContent, IonFooter, IonHeader, IonIcon, IonSpinner, IonTitle, IonToolbar, ModalController, ToastController } from '@ionic/angular/standalone';
 import { getDownloadURL, ref } from 'firebase/storage';
 import { captureException } from '@sentry/angular';
 
 import { STORAGE } from '@okr/shared-config';
+import { SvgIconPipe } from '@okr/shared-pipes';
 import { copyToClipboardWithConfirmation, downloadToBrowser } from '@okr/shared-util-angular';
 
 /**
@@ -22,24 +23,18 @@ import { copyToClipboardWithConfirmation, downloadToBrowser } from '@okr/shared-
 @Component({
   selector: 'okr-video-view-modal',
   standalone: true,
-  imports: [IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonContent, IonSpinner],
+  imports: [IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonContent, IonFooter, IonIcon, IonSpinner, SvgIconPipe],
   styles: [`
     ion-content { --background: #000; }
     .player { display: flex; align-items: center; justify-content: center; min-height: 100%; }
     video { width: 100%; max-width: 1200px; max-height: 85dvh; background: #000; }
     .player-error { max-width: 32rem; padding: 1rem; color: #fff; text-align: center; }
+    .actions { justify-content: space-evenly; }
   `],
   template: `
     <ion-header>
       <ion-toolbar color="dark">
         <ion-title>{{ title() }}</ion-title>
-        <ion-buttons slot="end">
-          @if (shareUrl()) {
-            <ion-button (click)="copyLink()">{{ copyLinkLabel() }}</ion-button>
-          }
-          <ion-button (click)="download()">{{ downloadLabel() }}</ion-button>
-          <ion-button (click)="close()">{{ closeLabel() }}</ion-button>
-        </ion-buttons>
       </ion-toolbar>
     </ion-header>
     <ion-content>
@@ -53,6 +48,24 @@ import { copyToClipboardWithConfirmation, downloadToBrowser } from '@okr/shared-
         }
       </div>
     </ion-content>
+    <!-- Icon-only actions at the bottom: text labels in the header collided with the title on phones. -->
+    <ion-footer>
+      <ion-toolbar color="dark">
+        <ion-buttons class="actions">
+          @if (shareUrl()) {
+            <ion-button (click)="copyLink()" [attr.aria-label]="copyLinkLabel()">
+              <ion-icon slot="icon-only" src="{{ 'link' | svgIcon }}" />
+            </ion-button>
+          }
+          <ion-button (click)="download()" [attr.aria-label]="downloadLabel()">
+            <ion-icon slot="icon-only" src="{{ 'download' | svgIcon }}" />
+          </ion-button>
+          <ion-button (click)="close()" [attr.aria-label]="closeLabel()">
+            <ion-icon slot="icon-only" src="{{ 'cancel' | svgIcon }}" />
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-footer>
   `
 })
 export class VideoViewModal implements OnInit {

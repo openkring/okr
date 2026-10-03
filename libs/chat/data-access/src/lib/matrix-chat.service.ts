@@ -881,6 +881,11 @@ export class MatrixChatService {
     const check = await checkVideoLimits(file);
     if (!check.ok) throw new VideoLimitError(check.reason ?? 'size', check.actual ?? 0);
 
+    // The composer materializes album videos while the picker handle is valid (see
+    // materializeFile), so `size` is the real byte count. An empty file must never reach the
+    // PUT: GCS accepts it (range 0,max), the message goes out and the card stays blank forever.
+    if (file.size === 0) throw new VideoUploadError(0, `refusing to upload empty video ${file.name}`);
+
     const fn = httpsCallable<PrepareChatVideoUploadReq, PrepareChatVideoUploadRes>(getFunctions(getApp(), 'europe-west6'), 'prepareChatVideoUpload');
     const { data } = await fn({ roomId, roomName, fileName: file.name, size: file.size, mimeType: resolveFileMimeType(file) });
 

@@ -7,10 +7,10 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { createActionSheetButton, createActionSheetOptions, QuickEntryService } from '@okr/shared-util-angular';
 import { AppStore, ModelSelectService } from '@okr/shared-feature';
 import { ButtonCopy } from '@okr/shared-ui';
-import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
+import { convertDateFormatToString, DateFormat, MAX_VIDEO_BYTES } from '@okr/shared-util-core';
 import { PersonModel } from '@okr/shared-models';
 
-import { isSupportedImageFile, materializeFile, MatrixChatI18n, MessageDraft, MentionRef, findMentionQuery, filterActiveMentions } from '@okr/chat-util';
+import { isAlbumVideoFile, isSupportedImageFile, materializeFile,MatrixChatI18n, MessageDraft, MentionRef, findMentionQuery, filterActiveMentions } from '@okr/chat-util';
 import { MentionAutocomplete, MentionPick, MENTION_ROOM, mentionListboxId, mentionOptionId } from './mention-autocomplete';
 import 'emoji-picker-element';
 
@@ -967,7 +967,7 @@ export class MatrixMessageInput {
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions): void {
     // One entry for every kind of file: the type decides the route (onFileSelected), not the button.
-    const filesBtn = createActionSheetButton('chat.attachment.files', this.i18n().attach_files(), this.imgixBaseUrl, 'attach');
+    const filesBtn = createActionSheetButton('chat.attachment.files', this.i18n().attach_files(), this.imgixBaseUrl, 'upload');
     filesBtn.handler = () => this.selectFile(this.fileAccept());
     actionSheetOptions.buttons.push(filesBtn);
 
@@ -1016,12 +1016,17 @@ export class MatrixMessageInput {
     // Queued images are not uploaded until the user presses send, which can be many seconds
     // later. Read the bytes now, while the picker's file handles are still backed by storage —
     // on iOS a handle goes stale (and reads empty, silently) once the input is cleared.
-    // See materializeFile. Non-image attachments are sent immediately, so they keep streaming
-    // straight off disk rather than being buffered in memory.
+    // See materializeFile. Album videos are read too: their PUT only starts after the limit check
+    // and the prepareChatVideoUpload callable, and a stale iOS gallery handle then uploaded a
+    // 0-byte object that rendered as a blank card (2026-10-03). Over-limit videos are refused
+    // anyway and stay handles, so nothing beyond MAX_VIDEO_BYTES is buffered. Other attachments
+    // are sent immediately, so they keep streaming straight off disk.
     const materialized = await Promise.all(images.map(f => materializeFile(f)));
+    const sent = await Promise.all(others.map(f =>
+      isAlbumVideoFile(f) && f.size <= MAX_VIDEO_BYTES ? materializeFile(f) : Promise.resolve(f)));
     input.value = '';
     for (const image of materialized) this.fileQueued.emit(image);
-    if (others.length > 0) this.filesPicked.emit(others);
+    if (sent.length > 0) this.filesPicked.emit(sent);
   }
 
   cancelReply() {
