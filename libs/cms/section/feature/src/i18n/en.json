@@ -997,6 +997,16 @@
       "label": "Base URL",
       "placeholder": "https://",
       "helper": "The base URL is prepended to a relative URL as a prefix."
+    },
+    "source": {
+      "youtube": "YouTube",
+      "album": "Album"
+    },
+    "albumLink": {
+      "label": "Video link",
+      "placeholder": "https://…/video/…",
+      "helper": "Paste the link you copied with \"Copy link\" in the video player.",
+      "error": "This link does not fit. Copy it in the video player with \"Copy link\"."
     }
   },
   "section_type": {

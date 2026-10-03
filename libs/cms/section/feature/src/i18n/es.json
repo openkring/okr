@@ -997,6 +997,16 @@
       "label": "URL base",
       "placeholder": "https://",
       "helper": "La URL base se antepone como prefijo a una URL relativa."
+    },
+    "source": {
+      "youtube": "YouTube",
+      "album": "Álbum"
+    },
+    "albumLink": {
+      "label": "Enlace del vídeo",
+      "placeholder": "https://…/video/…",
+      "helper": "Pega el enlace que copiaste con «Copiar enlace» en el reproductor de vídeo.",
+      "error": "Este enlace no sirve. Cópialo en el reproductor de vídeo con «Copiar enlace»."
     }
   },
   "section_type": {

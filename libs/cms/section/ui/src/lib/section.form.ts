@@ -807,7 +807,8 @@ export class SectionForm {
 
   private getVideoConfig(): VideoConfig | undefined {
     if (this.formData().type === 'video') {
-      return ((this.formData() as VideoSection).properties as VideoConfig);
+      const config = (this.formData() as VideoSection).properties as VideoConfig;
+      return config ? { ...config, documentKey: config.documentKey ?? '' } : config;   // legacy docs: undefined
     }
   }
 

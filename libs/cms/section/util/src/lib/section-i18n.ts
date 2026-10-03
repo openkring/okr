@@ -690,6 +690,12 @@ export const SECTION_I18N_KEYS = {
   video_baseUrl_label:                      PFX + 'video.baseUrl.label',
   video_baseUrl_placeholder:                PFX + 'video.baseUrl.placeholder',
   video_baseUrl_helper:                     PFX + 'video.baseUrl.helper',
+  video_source_youtube:                     PFX + 'video.source.youtube',
+  video_source_album:                       PFX + 'video.source.album',
+  video_albumLink_label:                    PFX + 'video.albumLink.label',
+  video_albumLink_placeholder:              PFX + 'video.albumLink.placeholder',
+  video_albumLink_helper:                   PFX + 'video.albumLink.helper',
+  video_albumLink_error:                    PFX + 'video.albumLink.error',
 
   error_save:                               PFX + 'error.save',
   error_load:                               PFX + 'error.load',

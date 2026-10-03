@@ -1,16 +1,17 @@
-import { Component, computed, inject, input, linkedSignal, model, Signal } from '@angular/core';
-import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
+import { Component, computed, input, linkedSignal, model, signal } from '@angular/core';
+import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonLabel, IonRow, IonSegment, IonSegmentButton } from '@ionic/angular/standalone';
 
 import { ErrorNote, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { VideoConfig } from '@okr/shared-models';
 import { coerceBoolean } from '@okr/shared-util-core';
+import { parseVideoLink, videoLink } from '@okr/content-document-util';
 import { getFieldErrors, SectionErrors, SectionI18n } from '@okr/cms-section-util';
 
 @Component({
   selector: 'okr-video-config',
   standalone: true,
   imports: [
-    IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonCardHeader, IonCardTitle,
+    IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonSegment, IonSegmentButton, IonLabel,
     TextInput,
     ErrorNote
   ],
@@ -22,6 +23,25 @@ import { getFieldErrors, SectionErrors, SectionI18n } from '@okr/cms-section-uti
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
+            <ion-row>
+              <ion-col size="12">
+                <ion-segment [value]="source()" (ionChange)="onSourceChange($event.detail.value)" [disabled]="isReadOnly()">
+                  <ion-segment-button value="youtube"><ion-label>{{ i18n().video_source_youtube() }}</ion-label></ion-segment-button>
+                  <ion-segment-button value="album"><ion-label>{{ i18n().video_source_album() }}</ion-label></ion-segment-button>
+                </ion-segment>
+              </ion-col>
+            </ion-row>
+            @if (source() === 'album') {
+              <ion-row>
+                <ion-col size="12">
+                  <okr-text-input [i18n]="albumLinkI18n()" [value]="linkText()" (valueChange)="onLinkChange($event)" [maxLength]=300 [readOnly]="isReadOnly()" [showHelper]=true />
+                  @if (linkInvalid()) {
+                    <okr-error-note [errors]="[i18n().video_albumLink_error()]" />
+                  }
+                  <okr-error-note [errors]="errorsFor('documentKey')" />
+                </ion-col>
+              </ion-row>
+            } @else {
             <ion-row>
               <ion-col size="12">
                 <okr-text-input [i18n]="youtubeIdI18n()" [value]="url()" (valueChange)="onFieldChange('url', $event)" [maxLength]=11 [readOnly]="isReadOnly()" [showHelper]=true />
@@ -44,6 +64,7 @@ import { getFieldErrors, SectionErrors, SectionI18n } from '@okr/cms-section-uti
                 <okr-error-note [errors]="errorsFor('baseUrl')" />
               </ion-col>
             </ion-row>
+            }
           </ion-grid>
         </ion-card-content>
       </ion-card>
@@ -66,6 +87,12 @@ export class VideoConfiguration {
   protected height = linkedSignal(() => this.formData().height ?? 'auto');
   protected frameborder = linkedSignal(() => this.formData().frameborder ?? '0');
   protected baseUrl = linkedSignal(() => this.formData().baseUrl ?? 'https://www.youtube.com/embed/');
+  protected documentKey = computed(() => this.formData().documentKey ?? '');   // legacy docs: undefined
+  /** which source the editor shows; an empty album key still keeps the album tab open */
+  protected source = linkedSignal<'youtube' | 'album'>(() => (this.documentKey() !== '' ? 'album' : 'youtube'));
+  /** the pasted text; shows the canonical link once a key is stored */
+  protected linkText = linkedSignal(() => (this.documentKey() !== '' ? videoLink(location.origin, this.documentKey()) : ''));
+  protected linkInvalid = signal(false);
   protected cardTitle = computed(() => this.title() ?? this.i18n().video_edit);
 
   protected youtubeIdI18n = computed(() => ({
@@ -103,9 +130,38 @@ export class VideoConfiguration {
     helper: this.i18n().video_baseUrl_helper(),
   } as TextInputI18n));
 
+  protected albumLinkI18n = computed(() => ({
+    name: 'albumLink',
+    label: this.i18n().video_albumLink_label(),
+    placeholder: this.i18n().video_albumLink_placeholder(),
+    helper: this.i18n().video_albumLink_helper(),
+  } as TextInputI18n));
+
   /************************************** actions *********************************************** */
   protected onFieldChange(fieldName: string, fieldValue: string | number | boolean): void {
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
+  }
+
+  protected onSourceChange(value: string | number | undefined): void {
+    const next = value === 'album' ? 'album' : 'youtube';
+    if (next === this.source()) return;
+    this.source.set(next);
+    this.linkInvalid.set(false);
+    if (next === 'youtube' && this.documentKey() !== '') this.onFieldChange('documentKey', '');
+  }
+
+  /** accepts the player's copied link or a bare key; unparseable non-empty input keeps documentKey as is */
+  protected onLinkChange(value: string): void {
+    const text = (value ?? '').trim();
+    this.linkText.set(value ?? '');
+    if (text === '') {
+      this.linkInvalid.set(false);
+      this.onFieldChange('documentKey', '');
+      return;
+    }
+    const key = parseVideoLink(text, location.origin) ?? (/^[A-Za-z0-9_-]{1,64}$/.test(text) ? text : '');
+    this.linkInvalid.set(key === '');
+    if (key !== '') this.onFieldChange('documentKey', key);
   }
 
   /** messages of a single field, for the inline <okr-error-note> */
