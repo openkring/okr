@@ -111,6 +111,18 @@ const MAX_ROOM_NAME = 80;
 export const DM_ALBUM_NAME = 'Chat · Direktnachricht';
 
 /**
+ * Joined members WITHOUT the admin bot. `setRoomTenants` force-joins `@bk2-bot` into every room it
+ * stamps — DMs included — so a raw count of 3 would turn a stamped DM into a "group room" and put the
+ * partner's name into the tenant-readable album folder (spec 1.82 §8).
+ */
+export function humanMemberCount(joined: ReadonlySet<string>, hostname: string): number {
+  const bot = `@bk2-bot:${hostname}`;
+  let n = 0;
+  for (const id of joined) if (id !== bot) n++;
+  return n;
+}
+
+/**
  * The name of a room album's root folder (spec 1.82 §8), derived on the server from the room's
  * Synapse state — never from the client, which for a DM would send the PARTNER's name and so put
  * `Chat · Anna Muster` into a tenant-readable folder list. A room is a group room when it carries

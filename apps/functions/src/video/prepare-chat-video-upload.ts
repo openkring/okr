@@ -10,7 +10,7 @@ import { checkAppCheckToken, checkAuthentication, getCallerTenantId } from '@okr
 import { privateBucket } from '../_storage/private-bucket';
 import { getJoinedMemberIds, getRoomSummary, matrixAdminToken, requireRoomInTenant, requireUserPersonKey, serverHostname } from '../matrix-simple/shared';
 import {
-  assertChatFolders, chatAlbumRootName, chatFolderKeys, chatVideoPath, MAX_VIDEO_BYTES, safeVideoTitle, validateChatVideoRequest, zurichStoreDate,
+  assertChatFolders, chatAlbumRootName, humanMemberCount, chatFolderKeys, chatVideoPath, MAX_VIDEO_BYTES, safeVideoTitle, validateChatVideoRequest, zurichStoreDate,
 } from './chat-video.util';
 
 const CF_NAME = 'prepareChatVideoUpload';
@@ -104,7 +104,7 @@ export const prepareChatVideoUpload = onCall(
     const year = today.slice(0, 4);
     const keys = chatFolderKeys(tenantId, req.roomId, year);
     // Server-derived: the client's `roomName` is the partner's name in a DM (privacy, spec 1.82 §8).
-    const rootName = chatAlbumRootName(await getRoomSummary(req.roomId, adminToken), joined.size);
+    const rootName = chatAlbumRootName(await getRoomSummary(req.roomId, adminToken), humanMemberCount(joined, serverHostname()));
 
     const db = getFirestore();
     const root = await createIfAbsent(db, keys.root, folder(tenantId, rootName, [], req.roomId));

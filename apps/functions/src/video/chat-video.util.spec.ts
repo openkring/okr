@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { HttpsError } from 'firebase-functions/v2/https';
 
 import {
-  assertChatFolders, chatAlbumRootName, chatFolderKeys, DM_ALBUM_NAME, chatVideoPath, MAX_VIDEO_BYTES, safeVideoFileName, safeVideoTitle, validateChatVideoRequest, zurichStoreDate,
+  assertChatFolders, chatAlbumRootName, humanMemberCount, chatFolderKeys, DM_ALBUM_NAME, chatVideoPath, MAX_VIDEO_BYTES, safeVideoFileName, safeVideoTitle, validateChatVideoRequest, zurichStoreDate,
 } from './chat-video.util';
 import { isAlbumVideoObjectPath } from './video-sign.util';
 
@@ -134,6 +134,17 @@ describe('assertChatFolders', () => {
   it('refuses a moved videos folder', () => { const f = good(); f.videos.parents = [k.year, 'extra']; expect(code(f)).toBe('failed-precondition'); });
   it('refuses a folder outside the tenant', () => { const f = good(); f.year.tenants = ['kring']; expect(code(f)).toBe('failed-precondition'); });
   it('refuses an archived folder', () => { const f = good(); f.root.isArchived = true; expect(code(f)).toBe('failed-precondition'); });
+});
+
+describe('humanMemberCount', () => {
+  it('does not count the admin bot, so a stamped DM stays a DM', () => {
+    const joined = new Set(['@anna:hs', '@bruno:hs', '@bk2-bot:hs']);
+    expect(humanMemberCount(joined, 'hs')).toBe(2);
+    expect(chatAlbumRootName({ name: 'Anna Muster', canonicalAlias: '' }, humanMemberCount(joined, 'hs'))).toBe(DM_ALBUM_NAME);
+  });
+  it('counts every other member', () => {
+    expect(humanMemberCount(new Set(['@a:hs', '@b:hs', '@c:hs']), 'hs')).toBe(3);
+  });
 });
 
 describe('chatAlbumRootName', () => {
