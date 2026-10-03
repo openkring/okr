@@ -1,4 +1,4 @@
-import { Component, computed, input, linkedSignal, model, signal } from '@angular/core';
+import { Component, computed, effect, input, linkedSignal, model, signal, untracked } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonLabel, IonRow, IonSegment, IonSegmentButton } from '@ionic/angular/standalone';
 
 import { ErrorNote, TextInput, TextInputI18n } from '@okr/shared-ui';
@@ -35,10 +35,11 @@ import { getFieldErrors, SectionErrors, SectionI18n } from '@okr/cms-section-uti
               <ion-row>
                 <ion-col size="12">
                   <okr-text-input [i18n]="albumLinkI18n()" [value]="linkText()" (valueChange)="onLinkChange($event)" [maxLength]=300 [readOnly]="isReadOnly()" [showHelper]=true />
-                  @if (linkInvalid()) {
+                  @if (linkEmpty()) {
+                    <okr-error-note [errors]="[i18n().video_albumLink_required()]" />
+                  } @else if (linkInvalid() || errorsFor('documentKey').length > 0) {
                     <okr-error-note [errors]="[i18n().video_albumLink_error()]" />
                   }
-                  <okr-error-note [errors]="errorsFor('documentKey')" />
                 </ion-col>
               </ion-row>
             } @else {
@@ -89,10 +90,25 @@ export class VideoConfiguration {
   protected baseUrl = linkedSignal(() => this.formData().baseUrl ?? 'https://www.youtube.com/embed/');
   protected documentKey = computed(() => this.formData().documentKey ?? '');   // legacy docs: undefined
   /** which source the editor shows; an empty album key still keeps the album tab open */
-  protected source = linkedSignal<'youtube' | 'album'>(() => (this.documentKey() !== '' ? 'album' : 'youtube'));
-  /** the pasted text; shows the canonical link once a key is stored */
-  protected linkText = linkedSignal(() => (this.documentKey() !== '' ? videoLink(location.origin, this.documentKey()) : ''));
+  protected source = signal<'youtube' | 'album'>('youtube');
+  /** the pasted text; seeded once from the stored key, edits flow one way into documentKey */
+  protected linkText = signal('');
   protected linkInvalid = signal(false);
+  protected linkEmpty = computed(() => this.source() === 'album' && this.linkText().trim() === '');
+  /** changes when a different section is loaded; re-seeds the source and link */
+  public readonly resetKey = input<string>('');
+  constructor() {
+    effect(() => {
+      this.resetKey();
+      const key = untracked(() => this.documentKey());
+      untracked(() => {
+        this.source.set(key !== '' ? 'album' : 'youtube');
+        this.linkText.set(key !== '' ? videoLink(location.origin, key) : '');
+        this.linkInvalid.set(false);
+      });
+    });
+  }
+
   protected cardTitle = computed(() => this.title() ?? this.i18n().video_edit);
 
   protected youtubeIdI18n = computed(() => ({

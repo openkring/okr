@@ -1006,7 +1006,8 @@
       "label": "Lien de la vidéo",
       "placeholder": "https://…/video/…",
       "helper": "Colle le lien que tu as copié avec «Copier le lien» dans le lecteur vidéo.",
-      "error": "Ce lien ne convient pas. Copie-le dans le lecteur vidéo avec «Copier le lien»."
+      "error": "Ce lien ne convient pas. Copie-le dans le lecteur vidéo avec «Copier le lien».",
+      "required": "Colle le lien de la vidéo."
     }
   },
   "section_type": {

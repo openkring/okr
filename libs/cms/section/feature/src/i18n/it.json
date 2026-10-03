@@ -1006,7 +1006,8 @@
       "label": "Link del video",
       "placeholder": "https://…/video/…",
       "helper": "Incolla il link che hai copiato con «Copia link» nel lettore video.",
-      "error": "Questo link non va bene. Copialo nel lettore video con «Copia link»."
+      "error": "Questo link non va bene. Copialo nel lettore video con «Copia link».",
+      "required": "Incolla il link del video."
     }
   },
   "section_type": {

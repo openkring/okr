@@ -696,6 +696,7 @@ export const SECTION_I18N_KEYS = {
   video_albumLink_placeholder:              PFX + 'video.albumLink.placeholder',
   video_albumLink_helper:                   PFX + 'video.albumLink.helper',
   video_albumLink_error:                    PFX + 'video.albumLink.error',
+  video_albumLink_required:                 PFX + 'video.albumLink.required',
 
   error_save:                               PFX + 'error.save',
   error_load:                               PFX + 'error.load',

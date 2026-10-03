@@ -1006,7 +1006,8 @@
       "label": "Enlace del vídeo",
       "placeholder": "https://…/video/…",
       "helper": "Pega el enlace que copiaste con «Copiar enlace» en el reproductor de vídeo.",
-      "error": "Este enlace no sirve. Cópialo en el reproductor de vídeo con «Copiar enlace»."
+      "error": "Este enlace no sirve. Cópialo en el reproductor de vídeo con «Copiar enlace».",
+      "required": "Pega el enlace del vídeo."
     }
   },
   "section_type": {

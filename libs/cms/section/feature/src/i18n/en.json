@@ -1006,7 +1006,8 @@
       "label": "Video link",
       "placeholder": "https://…/video/…",
       "helper": "Paste the link you copied with \"Copy link\" in the video player.",
-      "error": "This link does not fit. Copy it in the video player with \"Copy link\"."
+      "error": "This link does not fit. Copy it in the video player with \"Copy link\".",
+      "required": "Please paste the link to the video."
     }
   },
   "section_type": {

@@ -364,6 +364,7 @@ import { TimelineConfiguration } from './timeline-configuration';
           @if(videoConfig(); as videoConfig) {
             <okr-video-config
               [formData]="videoConfig" (formDataChange)="onVideoConfigChange($event)"
+              [resetKey]="formData().okey ?? ''"
               [i18n]="i18n()"
               [readOnly]="isReadOnly()"
               [errors]="errors()"

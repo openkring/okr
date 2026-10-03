@@ -1006,7 +1006,8 @@
       "label": "Video-Link",
       "placeholder": "https://…/video/…",
       "helper": "Füge den Link ein, den du im Video-Player mit «Link kopieren» kopiert hast.",
-      "error": "Dieser Link passt nicht. Kopiere ihn im Video-Player mit «Link kopieren»."
+      "error": "Dieser Link passt nicht. Kopiere ihn im Video-Player mit «Link kopieren».",
+      "required": "Bitte füge den Link zum Video ein."
     }
   },
   "section_type": {
