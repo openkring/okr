@@ -3,6 +3,8 @@ import { Component, computed, effect, inject, input, output, signal, viewChild, 
 import { IonIcon, IonChip, IonAvatar, IonSpinner } from '@ionic/angular/standalone';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
+import { VideoCard } from '@okr/shared-ui';
+import { videoDocKeyOf } from '@okr/content-document-util';
 import { MatrixMessage, MatrixReadReceipt, PersonModelName } from '@okr/shared-models';
 import { AvatarService } from '@okr/avatar-data-access';
 import { MatrixReadReceiptStrip } from './matrix-read-receipt-strip';
@@ -22,7 +24,8 @@ const MENTION_AVATAR_SIZE = 36;
     IonSpinner,
     SvgIconPipe,
     PollMessage,
-    MatrixReadReceiptStrip
+    MatrixReadReceiptStrip,
+    VideoCard
 ],
   styles: [`
     :host {
@@ -509,7 +512,22 @@ const MENTION_AVATAR_SIZE = 36;
                       } @else {
                         @switch (item.type) {
                           @case ('m.text') {
-                            @if (item.content.formatted_body) {
+                            @let videoKey = videoKeyOf(item);
+                            @if (videoKey) {
+                              <!-- An album video (spec 1.82 §8): a poster card instead of the bare link.
+                                   A playable card keeps its tap for itself; a loading or unavailable
+                                   one lets it through to the bubble's action sheet (delete, reply). -->
+                              @let card = videoCards()[videoKey];
+                              <okr-video-card
+                                [posterUrl]="card?.posterUrl ?? ''"
+                                [available]="card?.available ?? false"
+                                [loading]="card?.loading ?? true"
+                                [title]="i18n().video_card_title()"
+                                [unavailableLabel]="videoUnavailableLabel()"
+                                (clicked)="videoCardClicked.emit(videoKey)"
+                                (click)="card?.available && !card?.loading && $event.stopPropagation()"
+                              />
+                            } @else if (item.content.formatted_body) {
                               <p class="message-text" [innerHTML]="renderFormattedBody(item)"></p>
                             } @else {
                               <p class="message-text" [innerHTML]="linkify(item.body)"></p>
@@ -647,6 +665,9 @@ export class MatrixMessageList {
   /** Attachments whose download failed; any other image without a mediaUrl is still loading. */
   failedMediaIds = input<ReadonlySet<string>>(new Set());
   public readonly i18n = input.required<MatrixChatI18n>();
+  /** Signed posters of the album videos linked in this list, by docKey — owned by the feature (VideoUrlService). */
+  public readonly videoCards = input<Record<string, { posterUrl: string; available: boolean; loading: boolean }>>({});
+  public readonly videoUnavailableLabel = input('');
 
 
   messageClicked = output<MatrixMessage>();
@@ -667,6 +688,8 @@ export class MatrixMessageList {
   threadClicked = output<string>();
   pollVoteClicked = output<{ pollEventId: string; answerIds: string[] }>();
   loadOlder = output<void>();
+  /** A tap on an album video card: the docKey to play. */
+  public readonly videoCardClicked = output<string>();
 
   messagesContainer = viewChild<ElementRef>('messagesContainer');
 
@@ -810,6 +833,11 @@ export class MatrixMessageList {
    * message) is left untouched and falls through to the existing `messageClicked`
    * action-sheet trigger.
    */
+  /** The album video a text message points at (the org.okr.video field, else a bare link on this origin). */
+  protected videoKeyOf(item: MatrixMessage): string | undefined {
+    return videoDocKeyOf(item.content, item.body ?? '', location.origin);
+  }
+
   /** Plain-text bodies carry no markup, so urls are made clickable here. */
   protected linkify(body: string): string {
     return linkifyText(body ?? '');

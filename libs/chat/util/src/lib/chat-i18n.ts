@@ -140,6 +140,17 @@ export const MATRIX_CHAT_I18N_KEYS = {
   video_incoming:            PFX + 'video.incoming',
   video_connecting:          PFX + 'video.connecting',
   video_notPlayable:         PFX + 'video.notPlayable',
+  // Chat-Videos im Raum-Album (spec 1.82 §8)
+  video_card_title:          PFX + 'video.cardTitle',
+  video_uploading:           PFX + 'video.uploading',
+  video_too_large:           PFX + 'video.tooLarge',
+  video_too_long:            PFX + 'video.tooLong',
+  video_unavailable:         PFX + 'video.unavailable',
+  video_download:            PFX + 'video.download',
+  video_close:               PFX + 'video.close',
+  video_error:               PFX + 'video.error',
+  video_copy_link:           PFX + 'video.copyLink',
+  video_link_copied:         PFX + 'video.linkCopied',
 
   survey_title:              PFX + 'survey.title',
   survey_create:             PFX + 'survey.create',

@@ -178,7 +178,17 @@
   "video": {
     "incoming": "Appel vidéo entrant...",
     "connecting": "Établissement de la connexion...",
-    "notPlayable": "Cette vidéo ne peut pas être lue ici. Tu peux la télécharger et la regarder dans une autre application."
+    "notPlayable": "Cette vidéo ne peut pas être lue ici. Tu peux la télécharger et la regarder dans une autre application.",
+    "cardTitle": "Vidéo",
+    "uploading": "La vidéo est en cours d'envoi …",
+    "tooLarge": "Cette vidéo est trop grande ({size}). Tu peux envoyer des vidéos jusqu'à 200 Mo.",
+    "tooLong": "Cette vidéo dure {duration}. Tu peux envoyer des vidéos jusqu'à 2 minutes.",
+    "unavailable": "Cette vidéo n'est pas disponible pour toi.",
+    "download": "Télécharger la vidéo",
+    "close": "Fermer",
+    "error": "La vidéo ne peut pas être chargée pour le moment. Réessaie dans un instant.",
+    "copyLink": "Copier le lien",
+    "linkCopied": "Lien copié."
   },
   "survey": {
     "title": "Créer un sondage",

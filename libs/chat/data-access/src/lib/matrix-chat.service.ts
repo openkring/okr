@@ -8,8 +8,9 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 
 import { MatrixConfig, MatrixMessage, MatrixReadReceipt, MatrixRoom, TypingNotification, UserModel } from '@okr/shared-models';
 import { AppStore } from '@okr/shared-feature';
-import { debugData, debugMessage } from '@okr/shared-util-core';
-import { convertHeicToJpeg, materializeFile, resolveFileMimeType, extractVideoPoster, UploadTooLargeError, initMatrixLogLevel, ensurePromiseWithResolvers, buildMentionContent, escapeHtml, MentionRef, OKR_TENANT_EVENT, resolveMatrixDisplayName, canPostWithPower } from '@okr/chat-util';
+import { checkVideoLimits, debugData, debugMessage } from '@okr/shared-util-core';
+import { OKR_VIDEO_FIELD, videoLink } from '@okr/content-document-util';
+import { convertHeicToJpeg, materializeFile, resolveFileMimeType, extractVideoPoster, UploadTooLargeError, initMatrixLogLevel, ensurePromiseWithResolvers, buildMentionContent, escapeHtml, MentionRef, OKR_TENANT_EVENT, resolveMatrixDisplayName, canPostWithPower, VideoLimitError } from '@okr/chat-util';
 
 import { mediaMimeHint, mxcAvatarHttpUrl } from './matrix-helpers';
 import { MatrixMediaService } from './matrix-media.service';
@@ -27,6 +28,9 @@ const TOKEN_REFRESH_MARGIN_MS = 24 * 60 * 60 * 1000;
 
 /** Minimum gap between two media-401-driven re-authentications (SCS-92). */
 const MEDIA_AUTH_RECOVERY_COOLDOWN_MS = 5 * 60 * 1000;
+
+type PrepareChatVideoUploadReq = { roomId: string; roomName: string; fileName: string; size: number; mimeType: string };
+type PrepareChatVideoUploadRes = { docKey: string; uploadUrl: string; contentType: string; maxBytes: number };
 
 export interface MatrixPollData {
   question: string;
@@ -854,6 +858,67 @@ export class MatrixChatService {
     }
 
     return this.client.sendEvent(roomId, EventType.RoomMessage, content as any);
+  }
+
+  /**
+   * Send a video into the room's album instead of Synapse (spec 1.82 §8).
+   *
+   * The bytes go into the private bucket through a signed PUT that `prepareChatVideoUpload`
+   * mints after checking the room membership; the room only gets a text message with the
+   * canonical `/video/<docKey>` link plus the `org.okr.video` field. The message is sent
+   * ONLY after the PUT succeeded — a link to an object that never arrived would render as a
+   * card that stays "not available" forever.
+   *
+   * Throws VideoLimitError before any network call when the album limits are broken; the
+   * callable's FirebaseError (`functions/<code>`) and a failed PUT propagate as they are —
+   * the store decides between toast and Synapse fallback. `onUploadStart` fires right before
+   * the bytes go out — after the limit check and the callable — so a "uploading" hint never
+   * precedes a refusal.
+   */
+  async sendVideoAsAlbumLink(roomId: string, roomName: string, file: File, threadId?: string, onUploadStart?: () => void): Promise<ISendEventResponse> {
+    if (!this.client) throw new Error('Client not initialized');
+
+    const check = await checkVideoLimits(file);
+    if (!check.ok) throw new VideoLimitError(check.reason ?? 'size', check.actual ?? 0);
+
+    const fn = httpsCallable<PrepareChatVideoUploadReq, PrepareChatVideoUploadRes>(getFunctions(getApp(), 'europe-west6'), 'prepareChatVideoUpload');
+    const { data } = await fn({ roomId, roomName, fileName: file.name, size: file.size, mimeType: resolveFileMimeType(file) });
+
+    onUploadStart?.();
+    await this.putSignedUpload(data.uploadUrl, file, data.contentType, data.maxBytes);
+
+    const content: IContent = {
+      msgtype: MsgType.Text,
+      body: videoLink(location.origin, data.docKey),
+      [OKR_VIDEO_FIELD]: { docKey: data.docKey, tenantId: this.appStore.tenantId() },
+    };
+    if (threadId) {
+      content['m.relates_to'] = {
+        rel_type: RelationType.Thread,
+        event_id: threadId,
+      };
+    }
+    return this.client.sendEvent(roomId, EventType.RoomMessage, content as any);
+  }
+
+  /**
+   * PUT the file to a V4-signed upload URL. Both headers are part of the signature: any other
+   * Content-Type, or a missing content-length-range, and GCS answers 403. The URL is never
+   * logged — it is a write credential until it expires.
+   */
+  private putSignedUpload(uploadUrl: string, file: File, contentType: string, maxBytes: number): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('PUT', uploadUrl);
+      xhr.setRequestHeader('Content-Type', contentType);
+      xhr.setRequestHeader('x-goog-content-length-range', `0,${maxBytes}`);
+      xhr.onload = () => xhr.status >= 200 && xhr.status < 300
+        ? resolve()
+        : reject(new Error(`sendVideoAsAlbumLink: upload of ${file.name} failed with HTTP ${xhr.status}`));
+      xhr.onerror = () => reject(new Error(`sendVideoAsAlbumLink: upload of ${file.name} failed (network)`));
+      xhr.onabort = () => reject(new Error(`sendVideoAsAlbumLink: upload of ${file.name} aborted`));
+      xhr.send(file);
+    });
   }
 
   /**

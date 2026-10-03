@@ -178,7 +178,17 @@
   "video": {
     "incoming": "Videollamada entrante...",
     "connecting": "Estableciendo la conexión...",
-    "notPlayable": "Este vídeo no se puede reproducir aquí. Puedes descargarlo y verlo en otra aplicación."
+    "notPlayable": "Este vídeo no se puede reproducir aquí. Puedes descargarlo y verlo en otra aplicación.",
+    "cardTitle": "Vídeo",
+    "uploading": "Subiendo el vídeo …",
+    "tooLarge": "Este vídeo es demasiado grande ({size}). Puedes enviar vídeos de hasta 200 MB.",
+    "tooLong": "Este vídeo dura {duration}. Puedes enviar vídeos de hasta 2 minutos.",
+    "unavailable": "Este vídeo no está disponible para ti.",
+    "download": "Descargar el vídeo",
+    "close": "Cerrar",
+    "error": "El vídeo no se puede cargar ahora mismo. Vuelve a intentarlo en un momento.",
+    "copyLink": "Copiar enlace",
+    "linkCopied": "Enlace copiado."
   },
   "survey": {
     "title": "Crear encuesta",

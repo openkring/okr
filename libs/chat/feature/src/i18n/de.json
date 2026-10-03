@@ -178,7 +178,17 @@
   "video": {
     "incoming": "Eingehender Video-Anruf...",
     "connecting": "Verbindung wird hergestellt...",
-    "notPlayable": "Dieses Video lässt sich hier nicht abspielen. Du kannst es herunterladen und mit einer anderen App ansehen."
+    "notPlayable": "Dieses Video lässt sich hier nicht abspielen. Du kannst es herunterladen und mit einer anderen App ansehen.",
+    "cardTitle": "Video",
+    "uploading": "Das Video wird hochgeladen …",
+    "tooLarge": "Das Video ist zu gross ({size}). Du kannst Videos bis 200 MB senden.",
+    "tooLong": "Das Video ist {duration} lang. Du kannst Videos bis 2 Minuten senden.",
+    "unavailable": "Dieses Video ist für dich nicht verfügbar.",
+    "download": "Video herunterladen",
+    "close": "Schliessen",
+    "error": "Das Video lässt sich gerade nicht laden. Versuch es in einem Moment noch einmal.",
+    "copyLink": "Link kopieren",
+    "linkCopied": "Link kopiert."
   },
   "survey": {
     "title": "Umfrage erstellen",

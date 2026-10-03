@@ -5,12 +5,14 @@ import { IonCard, IonCardContent, IonHeader, IonToolbar, IonTitle, IonButtons, I
 import { captureMessage } from '@sentry/angular';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { ImageLightboxModal, LightboxImage, Spinner } from '@okr/shared-ui';
-import { debugMessage, fileSizeUnit, fill, hasRole } from '@okr/shared-util-core';
+import { ImageLightboxModal, LightboxImage, showVideoView, Spinner } from '@okr/shared-ui';
+import { debugMessage, fileSizeUnit, fill, hasRole, warn } from '@okr/shared-util-core';
 import { AlertService, createActionSheetButton, createActionSheetDivider, createActionSheetOptions, downloadFile, isBrowser, isNativePlatform, saveFile } from '@okr/shared-util-angular';
 import { MatrixMessage, PersonModelName, RoleName } from '@okr/shared-models';
 
 import { MenuService } from '@okr/cms-menu-data-access';
+import { VideoUrlService } from '@okr/content-document-data-access';
+import { videoDocKeyOf, videoLink } from '@okr/content-document-util';
 
 import { MatrixMessageInput, MatrixMessageList, MatrixRoomList, PollDetailModal } from '@okr/chat-ui';
 import { MatrixPollData } from '@okr/chat-data-access';
@@ -413,6 +415,9 @@ function rejectionReasons(results: PromiseSettledResult<unknown>[]): unknown[] {
                     (threadClicked)="onThreadClicked($event)"
                     (pollVoteClicked)="onPollVoteClicked($event)"
                     (personSelected)="onPersonSelected($event)"
+                    [videoCards]="videoCards()"
+                    [videoUnavailableLabel]="store.i18n.video_unavailable()"
+                    (videoCardClicked)="onVideoCardClicked($event)"
                   />
                 }
 
@@ -530,6 +535,9 @@ function rejectionReasons(results: PromiseSettledResult<unknown>[]): unknown[] {
                     [currentUserId]="matrixUserId()"
                     [typingUsers]="[]"
                     [i18n]="store.i18n"
+                    [videoCards]="videoCards()"
+                    [videoUnavailableLabel]="store.i18n.video_unavailable()"
+                    (videoCardClicked)="onVideoCardClicked($event)"
                     (messageClicked)="onMessageClicked($event)"
                     [failedMediaIds]="store.failedMediaIds()"
                     (imageClicked)="onImageClicked($event)"
@@ -725,6 +733,30 @@ export class MatrixChat implements OnDestroy {
   protected readonly threadRootMessage = computed(() => this.store.threadRootMessage());
   protected readonly threadReplyCounts = computed(() => this.store.threadReplyCounts());
 
+  // ─── album videos in messages (spec 1.82 §8) ─────────────────────────────────
+  private readonly videoUrls = inject(VideoUrlService);
+  /** docKeys of the album videos linked in the room and the open thread, sorted; equal by content. */
+  private readonly visibleVideoKeys = computed(() => {
+    const keys = new Set<string>();
+    for (const m of [...this.messages(), ...this.threadMessages()]) {
+      if (m.type !== 'm.text' || m.isRedacted) continue;
+      const key = videoDocKeyOf(m.content, m.body ?? '', location.origin);
+      if (key) keys.add(key);
+    }
+    return [...keys].sort();
+  }, { equal: (a, b) => a.length === b.length && a.every((k, i) => k === b[i]) });
+  /** Poster state per docKey for the message list: signed → poster, settled without signature → unavailable. */
+  protected readonly videoCards = computed(() => {
+    const signed = this.videoUrls.signed();
+    const settled = this.videoUrls.settled();
+    const cards: Record<string, { posterUrl: string; available: boolean; loading: boolean }> = {};
+    for (const key of this.visibleVideoKeys()) {
+      const video = signed[key];
+      cards[key] = { posterUrl: video?.posterUrl ?? '', available: !!video, loading: !video && !settled.has(key) };
+    }
+    return cards;
+  });
+
   // Ready state: true once the Matrix client exists; sync status shown via the banner
   protected readonly isMatrixReady = computed(() =>
     this.store.matrixUser() &&
@@ -743,6 +775,14 @@ export class MatrixChat implements OnDestroy {
 
   constructor() {
     this.trackKeyboardInset();
+
+    // Sign the posters of the album videos in view. ensure() only asks for keys it has not
+    // signed in the current window; a failure settles them as unavailable and is just logged.
+    effect(() => {
+      const keys = this.visibleVideoKeys();
+      if (keys.length === 0) return;
+      untracked(() => this.videoUrls.ensure(keys).catch(ex => warn(`MatrixChat: signing chat video posters failed: ${ex}`)));
+    });
 
     // Reactively initialize Matrix when matrixUser becomes available.
     // This handles the case where currentUser() is not yet loaded from Firestore
@@ -1287,6 +1327,32 @@ export class MatrixChat implements OnDestroy {
       console.error('Failed to send thread file:', error);
       this.reportSilentFailure('onThreadFileSent', error);
     }
+  }
+
+  /** Play an album video from its chat card: fresh signed URLs, then the shared player. */
+  protected async onVideoCardClicked(docKey: string): Promise<void> {
+    let signed;
+    try {
+      signed = await this.videoUrls.forPlayback(docKey);
+    } catch (ex) {
+      warn(`MatrixChat: signing video ${docKey} for playback failed: ${ex}`);
+      signed = undefined;   // network / App Check failure: same outcome for the member
+    }
+    if (!signed) {
+      await this.alertService.showToast(this.store.i18n.video_unavailable());
+      return;
+    }
+    const labels = {
+      title: this.store.i18n.video_card_title(),
+      download: this.store.i18n.video_download(),
+      close: this.store.i18n.video_close(),
+      error: this.store.i18n.video_error(),
+      copyLink: this.store.i18n.video_copy_link(),
+      linkCopied: this.store.i18n.video_link_copied(),
+    };
+    // The canonical link, not the signed URL: it outlives the signing window and re-checks access.
+    await showVideoView(this.modalController, { playUrl: signed.playback.url }, signed.downloadUrl ?? '', labels,
+      videoLink(location.origin, docKey));
   }
 
   // open the chat help modal (shortcuts + direct-vs-group explanation)

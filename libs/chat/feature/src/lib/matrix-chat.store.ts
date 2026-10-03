@@ -9,14 +9,14 @@ import { AlertController, ModalController, ToastController } from '@ionic/angula
 
 import { AppStore } from '@okr/shared-feature';
 import { AvatarInfo, GroupModel, MatrixMessage, MatrixReadReceipt, MatrixRoom, MatrixUser, PersonModel, ROOM_SHAPE } from '@okr/shared-models';
-import { debugMessage, getAvatarInfo } from '@okr/shared-util-core';
+import { debugMessage, fileSizeUnit, fill, formatDuration, getAvatarInfo, warn } from '@okr/shared-util-core';
 import { AlertService, copyToClipboardWithConfirmation } from '@okr/shared-util-angular';
 import { I18nService } from '@okr/shared-i18n';
 
 import { ActivityService } from '@okr/activity-data-access';
 import { AvatarService } from '@okr/avatar-data-access';
 import { MatrixChatService, MatrixPollData } from '@okr/chat-data-access';
-import { AdhocChatFormModel, filterRoomsOfTenant, findSupportRoom, serverNameOf, MATRIX_CHAT_I18N_KEYS, MatrixChatI18n, MentionRef } from '@okr/chat-util';
+import { AdhocChatFormModel, filterRoomsOfTenant, findSupportRoom, serverNameOf, MATRIX_CHAT_I18N_KEYS, MatrixChatI18n, MentionRef, isAlbumVideoFile, isVideoLimitError, videoAlbumFallsBackToSynapse } from '@okr/chat-util';
 
 import { RoomEditModal } from './room-edit.modal';
 
@@ -322,6 +322,39 @@ export const _MatrixChatStore = signalStore(
   }),
 
   withMethods((store) => {
+
+    /**
+     * Send one video into the room album (spec 1.82 §8). Answers true when the send is settled
+     * — sent, or refused with a toast — and false when the Synapse path should take the file
+     * instead (the room album was archived/moved, or Synapse could not confirm the membership).
+     * Never throws: every failure the member can see has its own toast here, so the callers'
+     * generic "x Datei(en)" toast would only repeat it.
+     */
+    const sendVideoToAlbum = async (roomId: string, file: File, threadId?: string): Promise<boolean> => {
+      // The TENANT-FILTERED list (matrix-chat skill): the raw service list spans every tenant.
+      const roomName = store.rooms().find(r => r.roomId === roomId)?.name ?? '';
+      try {
+        await store.matrixService.sendVideoAsAlbumLink(roomId, roomName, file, threadId,
+          () => void store.alertService.showToast(store.i18n.video_uploading()));
+        debugMessage(`MatrixChatStore.sendFile: Sent video ${file.name} into the album of room ${roomId}`, store.currentUser());
+        return true;
+      } catch (error) {
+        if (isVideoLimitError(error)) {
+          const message = error.reason === 'size'
+            ? fill(store.i18n.video_too_large(), { size: fileSizeUnit(error.actual) })
+            : fill(store.i18n.video_too_long(), { duration: formatDuration(error.actual) });
+          await store.alertService.showToast(message);
+          return true;
+        }
+        if (videoAlbumFallsBackToSynapse(error)) {
+          warn(`MatrixChatStore.sendFile: room album unusable for ${roomId}, sending ${file.name} via Synapse: ${error}`);
+          return false;
+        }
+        warn(`MatrixChatStore.sendFile: sending video ${file.name} into the album of ${roomId} failed: ${error}`);
+        await store.alertService.showToast(store.i18n.files_send_error());
+        return true;
+      }
+    };
 
     return {
       /******************************* Setters *************************** */
@@ -680,6 +713,10 @@ export const _MatrixChatStore = signalStore(
           console.warn('MatrixChatStore.sendFile: No room selected');
           return;
         }
+
+        // Videos the room album accepts go there (spec 1.82 §8). Every send path — single,
+        // batch, drop, thread — funnels through here, so they all take the same branch.
+        if (isAlbumVideoFile(file) && await sendVideoToAlbum(roomId, file, threadId)) return;
 
         try {
           await store.matrixService.sendFile(roomId, file, threadId);

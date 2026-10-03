@@ -178,7 +178,17 @@
   "video": {
     "incoming": "Incoming video call...",
     "connecting": "Establishing connection...",
-    "notPlayable": "This video cannot be played here. You can download it and watch it in another app."
+    "notPlayable": "This video cannot be played here. You can download it and watch it in another app.",
+    "cardTitle": "Video",
+    "uploading": "Uploading the video …",
+    "tooLarge": "This video is too large ({size}). You can send videos up to 200 MB.",
+    "tooLong": "This video is {duration} long. You can send videos up to 2 minutes.",
+    "unavailable": "This video is not available to you.",
+    "download": "Download video",
+    "close": "Close",
+    "error": "The video cannot be loaded right now. Please try again in a moment.",
+    "copyLink": "Copy link",
+    "linkCopied": "Link copied."
   },
   "survey": {
     "title": "Create survey",

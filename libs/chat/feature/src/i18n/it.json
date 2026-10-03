@@ -178,7 +178,17 @@
   "video": {
     "incoming": "Videochiamata in arrivo...",
     "connecting": "Connessione in corso...",
-    "notPlayable": "Questo video non può essere riprodotto qui. Puoi scaricarlo e guardarlo in un’altra app."
+    "notPlayable": "Questo video non può essere riprodotto qui. Puoi scaricarlo e guardarlo in un’altra app.",
+    "cardTitle": "Video",
+    "uploading": "Caricamento del video …",
+    "tooLarge": "Questo video è troppo grande ({size}). Puoi inviare video fino a 200 MB.",
+    "tooLong": "Questo video dura {duration}. Puoi inviare video fino a 2 minuti.",
+    "unavailable": "Questo video non è disponibile per te.",
+    "download": "Scarica il video",
+    "close": "Chiudi",
+    "error": "Il video non si riesce a caricare al momento. Riprova tra un istante.",
+    "copyLink": "Copia link",
+    "linkCopied": "Link copiato."
   },
   "survey": {
     "title": "Crea sondaggio",
