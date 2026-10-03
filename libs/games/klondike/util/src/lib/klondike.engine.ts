@@ -1,0 +1,77 @@
+/*
+ * Klondike, the pure rules. Every function returns a new state and never changes its input, so
+ * the store can keep earlier states as its undo stack. Piles are arrays whose LAST element is the
+ * top card.
+ */
+
+export type Suit = 'S' | 'H' | 'D' | 'C';
+export const SUITS: readonly Suit[] = ['S', 'H', 'D', 'C'];
+
+export type DrawCount = 1 | 3;
+export const DRAW_COUNTS: readonly DrawCount[] = [1, 3];
+
+/** rank: 1 = ace … 11 = jack, 12 = queen, 13 = king. */
+export type Card = { suit: Suit; rank: number; faceUp: boolean };
+
+export type KlondikeState = {
+  /** Face down; the last card is the next one drawn. */
+  stock: Card[];
+  /** Face up; only the last card is playable. */
+  waste: Card[];
+  /** Four piles, not tied to a suit until an ace lands on one. */
+  foundations: Card[][];
+  /** Seven columns. */
+  tableau: Card[][];
+  drawCount: DrawCount;
+  moves: number;
+};
+
+/** Where a move picks up cards; `card` is the index of the lowest moved card in its column. */
+export type Source =
+  | { kind: 'waste' }
+  | { kind: 'foundation'; index: number }
+  | { kind: 'tableau'; index: number; card: number };
+
+/** Where a move puts cards down. */
+export type Target =
+  | { kind: 'foundation'; index: number }
+  | { kind: 'tableau'; index: number };
+
+export type Move = { from: Source; to: Target };
+
+export const isRed = (suit: Suit): boolean => suit === 'H' || suit === 'D';
+
+export function newDeck(): Card[] {
+  return SUITS.flatMap(suit => Array.from({ length: 13 }, (_, i): Card => ({ suit, rank: i + 1, faceUp: false })));
+}
+
+/** Fisher–Yates; `rng` returns a number in [0, 1). */
+export function shuffle<T>(items: readonly T[], rng: () => number): T[] {
+  const out = [...items];
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+
+export function deal(drawCount: DrawCount, rng: () => number = Math.random): KlondikeState {
+  const deck = shuffle(newDeck(), rng);
+  const tableau: Card[][] = [];
+  let next = 0;
+  for (let col = 0; col < 7; col++) {
+    const pile = deck.slice(next, next + col + 1);
+    next += col + 1;
+    pile[pile.length - 1] = { ...pile[pile.length - 1], faceUp: true };
+    tableau.push(pile);
+  }
+  return { stock: deck.slice(next), waste: [], foundations: [[], [], [], []], tableau, drawCount, moves: 0 };
+}
+
+export function formatDuration(ms: number): string {
+  const total = Math.max(0, Math.floor(ms / 1000));
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const ss = String(total % 60).padStart(2, '0');
+  return h ? `${h}:${String(m).padStart(2, '0')}:${ss}` : `${m}:${ss}`;
+}

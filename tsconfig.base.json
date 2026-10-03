@@ -167,6 +167,8 @@
       "@okr/games-bimaru-util": ["libs/games/bimaru/util/src/index.ts"],
       "@okr/games-sudoku-feature": ["libs/games/sudoku/feature/src/index.ts"],
       "@okr/games-sudoku-util": ["libs/games/sudoku/util/src/index.ts"],
+      "@okr/games-klondike-feature": ["libs/games/klondike/feature/src/index.ts"],
+      "@okr/games-klondike-util": ["libs/games/klondike/util/src/index.ts"],
       "@okr/games-memory-feature": ["libs/games/memory/feature/src/index.ts"],
       "@okr/games-memory-util": ["libs/games/memory/util/src/index.ts"],
       "@okr/games-backgammon-feature": ["libs/games/backgammon/feature/src/index.ts"],
