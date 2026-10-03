@@ -2507,12 +2507,12 @@ const zip: FeatureBlock = {
   id: 'zip',
   bundle: 'games',
   label: '@tenant/util.feature.zip.label',
-  icon: 'grid',
+  icon: 'game-zip',
   defaultAvailability: 'ga',
   dependsOn: ['games'],
   collections: [],
   menu: [gamesMenuParent([
-    { key: 'game-zip', name: 'game-zip', url: '/zip', action: 'navigate', roleNeeded: 'registered', icon: 'grid', label: '@item.game-zip' },
+    { key: 'game-zip', name: 'game-zip', url: '/zip', action: 'navigate', roleNeeded: 'registered', icon: 'game-zip', label: '@item.game-zip' },
   ])],
 };
 
@@ -2667,12 +2667,12 @@ const jasstafel: FeatureBlock = {
   id: 'jasstafel',
   bundle: 'games',
   label: '@tenant/util.feature.jasstafel.label',
-  icon: 'chart',
+  icon: 'game-jasstafel',
   defaultAvailability: 'ga',
   dependsOn: ['games'],
   collections: [],
   menu: [gamesMenuParent([
-    { key: 'game-jasstafel', name: 'game-jasstafel', url: '/jasstafel', action: 'navigate', roleNeeded: 'registered', icon: 'chart', label: '@item.game-jasstafel' },
+    { key: 'game-jasstafel', name: 'game-jasstafel', url: '/jasstafel', action: 'navigate', roleNeeded: 'registered', icon: 'game-jasstafel', label: '@item.game-jasstafel' },
   ])],
 };
 
@@ -2690,12 +2690,12 @@ const tetris: FeatureBlock = {
   id: 'tetris',
   bundle: 'games',
   label: '@tenant/util.feature.tetris.label',
-  icon: 'grid',
+  icon: 'game-tetris',
   defaultAvailability: 'ga',
   dependsOn: ['games'],
   collections: [],
   menu: [gamesMenuParent([
-    { key: 'game-tetris', name: 'game-tetris', url: '/tetris', action: 'navigate', roleNeeded: 'registered', icon: 'grid', label: '@item.game-tetris' },
+    { key: 'game-tetris', name: 'game-tetris', url: '/tetris', action: 'navigate', roleNeeded: 'registered', icon: 'game-tetris', label: '@item.game-tetris' },
   ])],
 };
 
@@ -2712,12 +2712,12 @@ const mampf: FeatureBlock = {
   id: 'mampf',
   bundle: 'games',
   label: '@tenant/util.feature.mampf.label',
-  icon: 'target',
+  icon: 'game-mampf',
   defaultAvailability: 'ga',
   dependsOn: ['games'],
   collections: [],
   menu: [gamesMenuParent([
-    { key: 'game-mampf', name: 'game-mampf', url: '/mampf', action: 'navigate', roleNeeded: 'registered', icon: 'target', label: '@item.game-mampf' },
+    { key: 'game-mampf', name: 'game-mampf', url: '/mampf', action: 'navigate', roleNeeded: 'registered', icon: 'game-mampf', label: '@item.game-mampf' },
   ])],
 };
 
@@ -2735,12 +2735,12 @@ const wordle: FeatureBlock = {
   id: 'wordle',
   bundle: 'games',
   label: '@tenant/util.feature.wordle.label',
-  icon: 'text',
+  icon: 'game-wordle',
   defaultAvailability: 'ga',
   dependsOn: ['games'],
   collections: [],
   menu: [gamesMenuParent([
-    { key: 'game-wordle', name: 'game-wordle', url: '/wordle', action: 'navigate', roleNeeded: 'registered', icon: 'text', label: '@item.game-wordle' },
+    { key: 'game-wordle', name: 'game-wordle', url: '/wordle', action: 'navigate', roleNeeded: 'registered', icon: 'game-wordle', label: '@item.game-wordle' },
   ])],
 };
 
@@ -2758,12 +2758,12 @@ const chess: FeatureBlock = {
   id: 'chess',
   bundle: 'games',
   label: '@tenant/util.feature.chess.label',
-  icon: 'grid',
+  icon: 'game-chess',
   defaultAvailability: 'ga',
   dependsOn: ['games'],
   collections: [],
   menu: [gamesMenuParent([
-    { key: 'game-chess', name: 'game-chess', url: '/chess', action: 'navigate', roleNeeded: 'registered', icon: 'grid', label: '@item.game-chess' },
+    { key: 'game-chess', name: 'game-chess', url: '/chess', action: 'navigate', roleNeeded: 'registered', icon: 'game-chess', label: '@item.game-chess' },
   ])],
 };
 
