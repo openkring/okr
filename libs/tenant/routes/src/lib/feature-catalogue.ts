@@ -1287,6 +1287,19 @@ const memory: BlockRoutes = {
 };
 
 /**
+ * `/backgammon` — Backgammon in `libs/games/backgammon`. In memory only (settings in
+ * `localStorage`), no `:contextMenuName` segment — the same shape as `/muehle`.
+ */
+const backgammon: BlockRoutes = {
+  id: 'backgammon',
+  routes: (): Route[] => [{
+    path: 'backgammon',
+    canActivate: [isAuthenticatedGuard],
+    loadComponent: () => import('@okr/games-backgammon-feature').then(m => m.BackgammonPage),
+  }],
+};
+
+/**
  * `/jasstafel` — Jasstafel in `libs/games/jasstafel`. `localStorage` only, no
  * `:contextMenuName` segment — the same shape as `/zip`.
  */
@@ -1507,7 +1520,7 @@ const contracts: BlockRoutes = {
 };
 
 export const FEATURE_ROUTES: BlockRoutes[] = [
-  calevent, aoc, activity, task, instruments, games, quiz, zip, hearingQuiz, crossword, muehle, battleship, bimaru, sudoku, memory, jasstafel, tetris, mampf, wordle, chess,
+  calevent, aoc, activity, task, instruments, games, quiz, zip, hearingQuiz, crossword, muehle, battleship, bimaru, sudoku, memory, backgammon, jasstafel, tetris, mampf, wordle, chess,
   auth, cms, user, profile, session, security, i18n, avatar, category, comment, geo, trip, consent,
   subject, relationship, vcard,
   resource, mobility,

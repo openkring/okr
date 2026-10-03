@@ -1,0 +1,65 @@
+{
+  "title": "Backgammon",
+  "board_label": "Tavola da backgammon",
+  "config": {
+    "opponent_label": "Avversario",
+    "opponent_easy": "Computer · facile",
+    "opponent_medium": "Computer · medio",
+    "opponent_hard": "Computer · forte",
+    "opponent_human": "Due giocatori",
+    "color_label": "Giochi con",
+    "color_white": "Bianco",
+    "color_black": "Nero"
+  },
+  "action": {
+    "roll": "Tira i dadi",
+    "end_turn": "Fine turno",
+    "undo": "Passo indietro",
+    "restart": "Nuova partita"
+  },
+  "player": {
+    "white": "Bianco",
+    "black": "Nero",
+    "you": "Tu",
+    "computer": "Computer",
+    "player": "Giocatore",
+    "tray_meta": "Ancora {pips} punti · {off} portate fuori",
+    "tray_score": "Punti: {score}"
+  },
+  "board": {
+    "point": "Punta {n}",
+    "bar": "Barra",
+    "off": "Porta fuori",
+    "notation_bar": "barra",
+    "notation_off": "fuori"
+  },
+  "status": {
+    "you": "Tu",
+    "roll": "{who}: tira i dadi.",
+    "select": "{who}: scegli una pedina. Ancora da giocare: {dice}.",
+    "select_bar": "{who}: prima rimetti in gioco la pedina sulla barra. Ancora da giocare: {dice}.",
+    "target": "{who}: scegli la punta di arrivo.",
+    "done": "{who}: tutti i dadi sono giocati. Conferma con «Fine turno».",
+    "blocked": "{who}: con {dice} non c’è nessuna mossa possibile. Continua con «Fine turno».",
+    "blocked_rest": "{who}: nessun’altra mossa possibile. Continua con «Fine turno».",
+    "thinking": "Il computer ({name}) sta giocando …",
+    "win_you": "Hai vinto.",
+    "win_computer": "Vince il computer.",
+    "win_named": "Vince {name}.",
+    "kind_single": "Vittoria semplice, 1 punto.",
+    "kind_gammon": "Gammon, 2 punti.",
+    "kind_backgammon": "Backgammon, 3 punti.",
+    "info_opening": "Tiro d’apertura: Bianco {white}, Nero {black}.",
+    "info_last": "{name} ha giocato {move}.",
+    "info_none": "{name} non ha potuto muovere."
+  },
+  "rules": {
+    "title": "Regole del gioco",
+    "goal": "Scopo: porta tutte le 15 pedine nella tua casa (in basso a destra) e poi portale fuori. Vince chi le porta fuori tutte per primo.",
+    "move": "Muovere: ogni dado è una mossa a sé. Un doppio conta due volte, quindi giochi il numero quattro volte. Puoi andare su punte libere, sulle tue e su punte con una sola pedina avversaria.",
+    "hit": "Colpire: una pedina sola può essere colpita e va sulla barra. Da lì deve prima rientrare nella casa avversaria, prima che qualsiasi altra pedina possa muoversi.",
+    "must": "Obbligo: devi usare quanti più dadi possibile. Se ne entra solo uno, deve essere il più alto.",
+    "bear": "Portare fuori: solo quando tutte le tue pedine sono nella tua casa. Con un numero più alto puoi portare fuori dalla punta occupata più lontana.",
+    "score": "Punteggio: una vittoria semplice vale 1 punto. Se l’avversario non ha portato fuori nessuna pedina, è un gammon da 2 punti. Se ha ancora una pedina sulla barra o nella tua casa, è un backgammon da 3 punti."
+  }
+}

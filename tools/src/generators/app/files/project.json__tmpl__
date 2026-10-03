@@ -447,6 +447,11 @@
           },
           {
             "glob": "*.json",
+            "input": "libs/games/backgammon/feature/src/i18n",
+            "output": "./assets/i18n/games/backgammon/feature"
+          },
+          {
+            "glob": "*.json",
             "input": "libs/games/chess/feature/src/i18n",
             "output": "./assets/i18n/games/chess/feature"
           },

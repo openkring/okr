@@ -165,6 +165,9 @@
     "memory": {
       "label": "Find the pairs"
     },
+    "backgammon": {
+      "label": "Backgammon"
+    },
     "jasstafel": {
       "label": "Jass scoreboard"
     },

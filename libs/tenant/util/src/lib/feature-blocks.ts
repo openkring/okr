@@ -2394,7 +2394,7 @@ const instruments: FeatureBlock = {
  *     quiz  dependsOn ['games']  → /quiz   + one child row under `games-menu`
  *     zip   dependsOn ['games']  → /zip    + one child row under `games-menu`
  *     muehle, battleship, bimaru, hearing-quiz, jasstafel, tetris, mampf, wordle, chess — same shape (added 2026-09-28/29)
- *     sudoku, memory — same shape (added 2026-10-03)
+ *     sudoku, memory, backgammon — same shape (added 2026-10-03)
  *
  * Every game block carries `bundle: 'games'` (since 2026-09-29), so the picker lists them
  * together under «Spiele» instead of scattering them through «Spezial».
@@ -2698,6 +2698,30 @@ const memory: FeatureBlock = {
   collections: [],
   menu: [gamesMenuParent([
     { key: 'game-memory', name: 'game-memory', url: '/memory', action: 'navigate', roleNeeded: 'registered', icon: 'copy', label: '@item.game-memory' },
+  ])],
+};
+
+/**
+ * `libs/games/backgammon` — `BackgammonPage` + `BackgammonStore` at `/backgammon`, over the pure
+ * `@okr/games-backgammon-util` (rules engine with the use-all-dice rule, gammon/backgammon
+ * scoring, and a computer opponent at three levels).
+ *
+ * Against the computer or two players on one device. Only the chosen opponent and colour are
+ * kept in `localStorage` — no Firestore, hence `collections: []`. The icon is the generic
+ * `cube` (a die) until a dedicated `game-backgammon` icon is uploaded.
+ *
+ * `defaultAvailability: 'ga'`, like `muehle`: nothing tenant-side to configure.
+ */
+const backgammon: FeatureBlock = {
+  id: 'backgammon',
+  bundle: 'games',
+  label: '@tenant/util.feature.backgammon.label',
+  icon: 'cube',
+  defaultAvailability: 'ga',
+  dependsOn: ['games'],
+  collections: [],
+  menu: [gamesMenuParent([
+    { key: 'game-backgammon', name: 'game-backgammon', url: '/backgammon', action: 'navigate', roleNeeded: 'registered', icon: 'cube', label: '@item.game-backgammon' },
   ])],
 };
 
@@ -3039,7 +3063,7 @@ const contracts: FeatureBlock = {
 };
 
 export const FEATURE_BLOCKS: FeatureBlock[] = [
-  calevent, aoc, activity, task, instruments, games, quiz, zip, hearingQuiz, crossword, muehle, battleship, bimaru, sudoku, memory, jasstafel, tetris, mampf, wordle, chess,
+  calevent, aoc, activity, task, instruments, games, quiz, zip, hearingQuiz, crossword, muehle, battleship, bimaru, sudoku, memory, backgammon, jasstafel, tetris, mampf, wordle, chess,
   auth, cms, user, profile, session, security, i18n, avatar, category, comment, geo, trip, consent,
   subject, relationship, vcard,
   resource, mobility,

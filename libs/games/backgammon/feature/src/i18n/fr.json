@@ -1,0 +1,65 @@
+{
+  "title": "Backgammon",
+  "board_label": "Plateau de backgammon",
+  "config": {
+    "opponent_label": "Adversaire",
+    "opponent_easy": "Ordinateur · facile",
+    "opponent_medium": "Ordinateur · moyen",
+    "opponent_hard": "Ordinateur · fort",
+    "opponent_human": "Deux joueurs",
+    "color_label": "Tu joues",
+    "color_white": "Blanc",
+    "color_black": "Noir"
+  },
+  "action": {
+    "roll": "Lancer les dés",
+    "end_turn": "Terminer le tour",
+    "undo": "Annuler le pas",
+    "restart": "Nouvelle partie"
+  },
+  "player": {
+    "white": "Blanc",
+    "black": "Noir",
+    "you": "Toi",
+    "computer": "Ordinateur",
+    "player": "Joueur",
+    "tray_meta": "Encore {pips} points de course · {off} sortis",
+    "tray_score": "Points : {score}"
+  },
+  "board": {
+    "point": "Flèche {n}",
+    "bar": "Barre",
+    "off": "Sortir",
+    "notation_bar": "barre",
+    "notation_off": "sortie"
+  },
+  "status": {
+    "you": "Toi",
+    "roll": "{who} : lance les dés.",
+    "select": "{who} : choisis un pion. Encore à jouer : {dice}.",
+    "select_bar": "{who} : fais d’abord rentrer le pion de la barre. Encore à jouer : {dice}.",
+    "target": "{who} : choisis la flèche d’arrivée.",
+    "done": "{who} : tous les dés sont joués. Confirme avec « Terminer le tour ».",
+    "blocked": "{who} : aucun coup possible avec {dice}. Continue avec « Terminer le tour ».",
+    "blocked_rest": "{who} : plus aucun coup possible. Continue avec « Terminer le tour ».",
+    "thinking": "L’ordinateur ({name}) joue …",
+    "win_you": "Tu gagnes.",
+    "win_computer": "L’ordinateur gagne.",
+    "win_named": "{name} gagne.",
+    "kind_single": "Victoire simple, 1 point.",
+    "kind_gammon": "Gammon, 2 points.",
+    "kind_backgammon": "Backgammon, 3 points.",
+    "info_opening": "Lancer d’ouverture : Blanc {white}, Noir {black}.",
+    "info_last": "{name} a joué {move}.",
+    "info_none": "{name} n’a pas pu jouer."
+  },
+  "rules": {
+    "title": "Règles du jeu",
+    "goal": "But : amène tes 15 pions dans ton jan intérieur (en bas à droite), puis sors-les. Le premier qui a sorti tous ses pions gagne.",
+    "move": "Déplacer : chaque dé est un coup à part. Un double compte deux fois, tu joues donc le nombre quatre fois. Tu peux aller sur une flèche libre, sur les tiennes et sur une flèche où il n’y a qu’un seul pion adverse.",
+    "hit": "Frapper : un pion seul peut être frappé et va sur la barre. Il doit d’abord rentrer dans le jan intérieur adverse avant que quoi que ce soit d’autre ne bouge.",
+    "must": "Obligation : tu dois utiliser autant de dés que possible. Si un seul passe, ce doit être le plus haut.",
+    "bear": "Sortir : seulement quand tous tes pions sont dans ton jan intérieur. Avec un nombre plus haut, tu peux sortir depuis la flèche occupée la plus éloignée.",
+    "score": "Décompte : une victoire simple vaut 1 point. Si l’adversaire n’a sorti aucun pion, c’est un gammon à 2 points. S’il a encore un pion sur la barre ou dans ton jan intérieur, c’est un backgammon à 3 points."
+  }
+}

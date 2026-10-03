@@ -169,6 +169,8 @@
       "@okr/games-sudoku-util": ["libs/games/sudoku/util/src/index.ts"],
       "@okr/games-memory-feature": ["libs/games/memory/feature/src/index.ts"],
       "@okr/games-memory-util": ["libs/games/memory/util/src/index.ts"],
+      "@okr/games-backgammon-feature": ["libs/games/backgammon/feature/src/index.ts"],
+      "@okr/games-backgammon-util": ["libs/games/backgammon/util/src/index.ts"],
       "@okr/games-crossword-data-access": ["libs/games/crossword/data-access/src/index.ts"],
       "@okr/games-crossword-feature": ["libs/games/crossword/feature/src/index.ts"],
       "@okr/games-crossword-ui": ["libs/games/crossword/ui/src/index.ts"],

@@ -1,0 +1,65 @@
+{
+  "title": "Backgammon",
+  "board_label": "Backgammon-Brett",
+  "config": {
+    "opponent_label": "Gegner",
+    "opponent_easy": "Computer · leicht",
+    "opponent_medium": "Computer · mittel",
+    "opponent_hard": "Computer · stark",
+    "opponent_human": "Zwei Spieler",
+    "color_label": "Du spielst",
+    "color_white": "Weiss",
+    "color_black": "Schwarz"
+  },
+  "action": {
+    "roll": "Würfeln",
+    "end_turn": "Zug beenden",
+    "undo": "Schritt zurück",
+    "restart": "Neues Spiel"
+  },
+  "player": {
+    "white": "Weiss",
+    "black": "Schwarz",
+    "you": "Du",
+    "computer": "Computer",
+    "player": "Spieler",
+    "tray_meta": "Noch {pips} Augen · {off} abgetragen",
+    "tray_score": "Punkte: {score}"
+  },
+  "board": {
+    "point": "Feld {n}",
+    "bar": "Bar",
+    "off": "Abtragen",
+    "notation_bar": "Bar",
+    "notation_off": "ab"
+  },
+  "status": {
+    "you": "Du",
+    "roll": "{who}: Würfle.",
+    "select": "{who}: Wähle einen Stein. Noch zu ziehen: {dice}.",
+    "select_bar": "{who}: Bring zuerst den Stein auf der Bar ins Spiel. Noch zu ziehen: {dice}.",
+    "target": "{who}: Wähle das Zielfeld.",
+    "done": "{who}: Alles gezogen. Bestätige mit «Zug beenden».",
+    "blocked": "{who}: Mit {dice} ist kein Zug möglich. Weiter mit «Zug beenden».",
+    "blocked_rest": "{who}: Kein weiterer Zug möglich. Weiter mit «Zug beenden».",
+    "thinking": "Computer ({name}) ist am Zug …",
+    "win_you": "Du gewinnst.",
+    "win_computer": "Der Computer gewinnt.",
+    "win_named": "{name} gewinnt.",
+    "kind_single": "Einfacher Sieg, 1 Punkt.",
+    "kind_gammon": "Gammon, 2 Punkte.",
+    "kind_backgammon": "Backgammon, 3 Punkte.",
+    "info_opening": "Eröffnungswurf: Weiss {white}, Schwarz {black}.",
+    "info_last": "{name} zog {move}.",
+    "info_none": "{name} konnte nicht ziehen."
+  },
+  "rules": {
+    "title": "Spielregeln",
+    "goal": "Ziel: Bring alle 15 Steine in dein Heimfeld (unten rechts) und trage sie dann ab. Wer zuerst alle abgetragen hat, gewinnt.",
+    "move": "Ziehen: Jeder Würfel ist ein eigener Zug. Ein Pasch zählt doppelt, du ziehst die Zahl viermal. Du darfst auf freie Felder, auf eigene und auf Felder mit nur einem gegnerischen Stein ziehen.",
+    "hit": "Schlagen: Ein einzelner Stein wird geschlagen und kommt auf die Bar. Von dort muss er zuerst wieder im gegnerischen Heimfeld einsteigen, bevor sich etwas anderes bewegen darf.",
+    "must": "Pflicht: Du musst so viele Würfel wie möglich nutzen. Geht nur einer, muss es der höhere sein.",
+    "bear": "Abtragen: Erst wenn alle deine Steine im Heimfeld stehen. Mit einer höheren Zahl darfst du vom hintersten besetzten Feld abtragen.",
+    "score": "Wertung: Ein einfacher Sieg gibt 1 Punkt. Hat der Gegner noch keinen Stein abgetragen, ist es ein Gammon mit 2 Punkten. Steht dann noch einer seiner Steine auf der Bar oder in deinem Heimfeld, ist es ein Backgammon mit 3 Punkten."
+  }
+}

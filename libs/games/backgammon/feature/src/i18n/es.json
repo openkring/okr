@@ -1,0 +1,65 @@
+{
+  "title": "Backgammon",
+  "board_label": "Tablero de backgammon",
+  "config": {
+    "opponent_label": "Rival",
+    "opponent_easy": "Ordenador · fácil",
+    "opponent_medium": "Ordenador · medio",
+    "opponent_hard": "Ordenador · fuerte",
+    "opponent_human": "Dos jugadores",
+    "color_label": "Juegas con",
+    "color_white": "Blancas",
+    "color_black": "Negras"
+  },
+  "action": {
+    "roll": "Tirar los dados",
+    "end_turn": "Terminar turno",
+    "undo": "Paso atrás",
+    "restart": "Nueva partida"
+  },
+  "player": {
+    "white": "Blancas",
+    "black": "Negras",
+    "you": "Tú",
+    "computer": "Ordenador",
+    "player": "Jugador",
+    "tray_meta": "Faltan {pips} puntos · {off} retiradas",
+    "tray_score": "Puntos: {score}"
+  },
+  "board": {
+    "point": "Punta {n}",
+    "bar": "Barra",
+    "off": "Retirar",
+    "notation_bar": "barra",
+    "notation_off": "fuera"
+  },
+  "status": {
+    "you": "Tú",
+    "roll": "{who}: tira los dados.",
+    "select": "{who}: elige una ficha. Quedan por jugar: {dice}.",
+    "select_bar": "{who}: primero vuelve a entrar la ficha de la barra. Quedan por jugar: {dice}.",
+    "target": "{who}: elige la punta de destino.",
+    "done": "{who}: todos los dados jugados. Confirma con «Terminar turno».",
+    "blocked": "{who}: con {dice} no hay ningún movimiento posible. Sigue con «Terminar turno».",
+    "blocked_rest": "{who}: no hay más movimientos posibles. Sigue con «Terminar turno».",
+    "thinking": "El ordenador ({name}) está jugando …",
+    "win_you": "Has ganado.",
+    "win_computer": "Gana el ordenador.",
+    "win_named": "Ganan las {name}.",
+    "kind_single": "Victoria simple, 1 punto.",
+    "kind_gammon": "Gammon, 2 puntos.",
+    "kind_backgammon": "Backgammon, 3 puntos.",
+    "info_opening": "Tirada inicial: blancas {white}, negras {black}.",
+    "info_last": "{name}: {move}.",
+    "info_none": "{name}: sin movimiento posible."
+  },
+  "rules": {
+    "title": "Reglas del juego",
+    "goal": "Objetivo: lleva tus 15 fichas a tu casa (abajo a la derecha) y luego retíralas. Gana quien retire primero todas sus fichas.",
+    "move": "Mover: cada dado es un movimiento propio. Un doble cuenta dos veces, así que juegas el número cuatro veces. Puedes ir a puntas libres, a las tuyas y a puntas con una sola ficha rival.",
+    "hit": "Comer: una ficha sola puede ser comida y va a la barra. Desde allí tiene que volver a entrar en la casa rival antes de que se pueda mover cualquier otra ficha.",
+    "must": "Obligación: debes usar tantos dados como sea posible. Si solo entra uno, tiene que ser el más alto.",
+    "bear": "Retirar: solo cuando todas tus fichas están en tu casa. Con un número más alto puedes retirar desde la punta ocupada más lejana.",
+    "score": "Puntuación: una victoria simple vale 1 punto. Si el rival no ha retirado ninguna ficha, es un gammon de 2 puntos. Si además tiene una ficha en la barra o en tu casa, es un backgammon de 3 puntos."
+  }
+}

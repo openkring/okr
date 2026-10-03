@@ -72,6 +72,7 @@
     "@okr/games-bimaru-feature": "*",
     "@okr/games-sudoku-feature": "*",
     "@okr/games-memory-feature": "*",
+    "@okr/games-backgammon-feature": "*",
     "@okr/games-muehle-feature": "*",
     "@okr/games-tetris-feature": "*",
     "@okr/games-mampf-feature": "*",

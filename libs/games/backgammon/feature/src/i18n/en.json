@@ -1,0 +1,65 @@
+{
+  "title": "Backgammon",
+  "board_label": "Backgammon board",
+  "config": {
+    "opponent_label": "Opponent",
+    "opponent_easy": "Computer · easy",
+    "opponent_medium": "Computer · medium",
+    "opponent_hard": "Computer · strong",
+    "opponent_human": "Two players",
+    "color_label": "You play",
+    "color_white": "White",
+    "color_black": "Black"
+  },
+  "action": {
+    "roll": "Roll",
+    "end_turn": "End turn",
+    "undo": "Step back",
+    "restart": "New game"
+  },
+  "player": {
+    "white": "White",
+    "black": "Black",
+    "you": "You",
+    "computer": "Computer",
+    "player": "Player",
+    "tray_meta": "{pips} pips to go · {off} borne off",
+    "tray_score": "Points: {score}"
+  },
+  "board": {
+    "point": "Point {n}",
+    "bar": "Bar",
+    "off": "Bear off",
+    "notation_bar": "bar",
+    "notation_off": "off"
+  },
+  "status": {
+    "you": "You",
+    "roll": "{who}: Roll the dice.",
+    "select": "{who}: Pick a checker. Still to play: {dice}.",
+    "select_bar": "{who}: First bring the checker on the bar back in. Still to play: {dice}.",
+    "target": "{who}: Pick the target point.",
+    "done": "{who}: All dice played. Confirm with “End turn”.",
+    "blocked": "{who}: No move is possible with {dice}. Continue with “End turn”.",
+    "blocked_rest": "{who}: No further move is possible. Continue with “End turn”.",
+    "thinking": "Computer ({name}) is playing …",
+    "win_you": "You win.",
+    "win_computer": "The computer wins.",
+    "win_named": "{name} wins.",
+    "kind_single": "Single game, 1 point.",
+    "kind_gammon": "Gammon, 2 points.",
+    "kind_backgammon": "Backgammon, 3 points.",
+    "info_opening": "Opening roll: White {white}, Black {black}.",
+    "info_last": "{name} played {move}.",
+    "info_none": "{name} could not move."
+  },
+  "rules": {
+    "title": "Rules",
+    "goal": "Goal: Bring all 15 checkers into your home board (bottom right), then bear them off. The first to bear off all checkers wins.",
+    "move": "Moving: Each die is a move of its own. A double counts twice, so you play the number four times. You may move to empty points, to your own points and to points with only one opposing checker.",
+    "hit": "Hitting: A single checker can be hit and goes to the bar. From there it has to re-enter in the opponent’s home board before anything else may move.",
+    "must": "Obligation: You must use as many dice as possible. If only one fits, it has to be the higher one.",
+    "bear": "Bearing off: Only once all your checkers are in your home board. With a higher number you may bear off from the rearmost occupied point.",
+    "score": "Scoring: A single game is worth 1 point. If the opponent has not borne off any checker, it is a gammon worth 2 points. If one of their checkers is then still on the bar or in your home board, it is a backgammon worth 3 points."
+  }
+}

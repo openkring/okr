@@ -165,6 +165,9 @@
     "memory": {
       "label": "Trova le coppie"
     },
+    "backgammon": {
+      "label": "Backgammon"
+    },
     "jasstafel": {
       "label": "Lavagna del Jass"
     },
