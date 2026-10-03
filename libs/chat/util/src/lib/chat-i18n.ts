@@ -172,8 +172,7 @@ export const MATRIX_CHAT_I18N_KEYS = {
   choose_one:                PFX + 'survey.choose.one',
 
   attach_title:              PFX + 'attach.title',
-  attach_image:              PFX + 'attach.image',
-  attach_file:               PFX + 'attach.file',
+  attach_files:              PFX + 'attach.files',
   attach_position:           PFX + 'attach.position',
   attach_survey:             PFX + 'attach.survey',
 

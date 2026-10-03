@@ -361,7 +361,7 @@ import 'emoji-picker-element';
       </div>
     }
 
-    <input #fileInput type="file" class="file-input" (change)="onFileSelected($event)" [accept]="fileAccept()" />
+    <input #fileInput type="file" class="file-input" multiple (change)="onFileSelected($event)" [accept]="fileAccept()" />
   `
 })
 export class MatrixMessageInput {
@@ -441,6 +441,8 @@ export class MatrixMessageInput {
   fileQueued = output<File>();
   removeImage = output<number>();
   filesSent = output<File[]>();
+  /** Non-image files picked in one go (videos, documents, audio) — sent right away by the parent. */
+  filesPicked = output<File[]>();
 
   // signals
   protected messageText = signal<string>('');
@@ -964,13 +966,10 @@ export class MatrixMessageInput {
    * blocked when invoked after `await actionSheet.onDidDismiss()`.
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions): void {
-    const imageBtn = createActionSheetButton('chat.attachment.image', this.i18n().attach_image(), this.imgixBaseUrl, 'image');
-    imageBtn.handler = () => this.selectFile('image/*,video/*');
-    actionSheetOptions.buttons.push(imageBtn);
-
-    const fileBtn = createActionSheetButton('chat.attachment.file', this.i18n().attach_file(), this.imgixBaseUrl, 'document');
-    fileBtn.handler = () => this.selectFile('*/*');
-    actionSheetOptions.buttons.push(fileBtn);
+    // One entry for every kind of file: the type decides the route (onFileSelected), not the button.
+    const filesBtn = createActionSheetButton('chat.attachment.files', this.i18n().attach_files(), this.imgixBaseUrl, 'attach');
+    filesBtn.handler = () => this.selectFile(this.fileAccept());
+    actionSheetOptions.buttons.push(filesBtn);
 
     const positionBtn = createActionSheetButton('chat.attachment.position', this.i18n().attach_position(), this.imgixBaseUrl, 'location');
     positionBtn.handler = () => this.locationSent.emit();
@@ -1003,23 +1002,26 @@ export class MatrixMessageInput {
     }
   }
 
+  /**
+   * Routes every picked file by its type — the same split the chat's drop handler makes: images
+   * (incl. HEIC) are queued as previews and go out with "Senden"; everything else (videos → room
+   * album, documents, audio) is handed to the parent in one batch and sent right away.
+   */
   async onFileSelected(event: Event): Promise<void> {
     const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-    if (!file) return;
-    if (isSupportedImageFile(file)) {
-      // Queued images are not uploaded until the user presses send, which can be many seconds
-      // later. Read the bytes now, while the picker's file handle is still backed by storage —
-      // on iOS the handle goes stale (and reads empty, silently) once the input is cleared.
-      // See materializeFile. Non-image attachments are sent immediately, so they keep streaming
-      // straight off disk rather than being buffered in memory.
-      const materialized = await materializeFile(file);
-      input.value = '';
-      this.fileQueued.emit(materialized);
-    } else {
-      this.fileSent.emit(file);
-      input.value = '';
-    }
+    const files = Array.from(input.files ?? []);
+    if (files.length === 0) return;
+    const images = files.filter(f => isSupportedImageFile(f));
+    const others = files.filter(f => !isSupportedImageFile(f));
+    // Queued images are not uploaded until the user presses send, which can be many seconds
+    // later. Read the bytes now, while the picker's file handles are still backed by storage —
+    // on iOS a handle goes stale (and reads empty, silently) once the input is cleared.
+    // See materializeFile. Non-image attachments are sent immediately, so they keep streaming
+    // straight off disk rather than being buffered in memory.
+    const materialized = await Promise.all(images.map(f => materializeFile(f)));
+    input.value = '';
+    for (const image of materialized) this.fileQueued.emit(image);
+    if (others.length > 0) this.filesPicked.emit(others);
   }
 
   cancelReply() {

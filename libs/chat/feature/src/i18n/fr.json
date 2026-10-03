@@ -222,8 +222,7 @@
   },
   "attach": {
     "title": "Ajouter une pièce jointe",
-    "image": "Joindre une image",
-    "file": "Joindre un fichier",
+    "files": "Ajouter des fichiers",
     "position": "Envoyer la position",
     "survey": "Créer un sondage"
   },

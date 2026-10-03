@@ -443,6 +443,7 @@ function rejectionReasons(results: PromiseSettledResult<unknown>[]): unknown[] {
                     [pendingImages]="pendingImages()"
                     (messageSent)="onMessageSent($event)"
                     (fileSent)="onFileSent($event)"
+                    (filesPicked)="onFilesPicked($event)"
                     (fileQueued)="onFileQueued($event)"
                     (removeImage)="onRemoveImage($event)"
                     (filesSent)="onFilesSent($event)"
@@ -471,6 +472,7 @@ function rejectionReasons(results: PromiseSettledResult<unknown>[]): unknown[] {
                   [pendingImages]="pendingImages()"
                   (messageSent)="onMessageSent($event)"
                   (fileSent)="onFileSent($event)"
+                    (filesPicked)="onFilesPicked($event)"
                   (fileQueued)="onFileQueued($event)"
                   (removeImage)="onRemoveImage($event)"
                   (filesSent)="onFilesSent($event)"
@@ -558,6 +560,7 @@ function rejectionReasons(results: PromiseSettledResult<unknown>[]): unknown[] {
                   [isDirectRoom]="store.isCurrentRoomDirect()"
                   (messageSent)="onThreadMessageSent($event)"
                   (fileSent)="onThreadFileSent($event)"
+                  (filesPicked)="onThreadFilesPicked($event)"
                   (fileQueued)="onThreadFileQueued($event)"
                   (typing)="onTyping($event)"
                   (surveyRequested)="onSurveyRequested()"
@@ -1396,12 +1399,31 @@ export class MatrixChat implements OnDestroy {
       this.pendingImages.update(prev => [...prev, ...normalized]);
     }
 
-    if (otherFiles.length > 0) {
-      const results = await Promise.allSettled(otherFiles.map(f => this.store.sendFile(f)));
-      const errors = rejectionReasons(results);
-      if (errors.length > 0 && !(await this.showUploadLimitToast(errors))) {
-        await this.alertService.showToast(`${errors.length} ${this.store.i18n.files_send_error()}`);
-      }
+    if (otherFiles.length > 0) await this.sendNonImageFiles(otherFiles);
+  }
+
+  /** Non-image files from the "Dateien hinzufügen" picker: same route as a drop (videos → room album). */
+  protected async onFilesPicked(files: File[]): Promise<void> {
+    if (!await this.ensureAskRoom()) return;
+    await this.sendNonImageFiles(files);
+  }
+
+  /** Non-image files picked in the thread pane go into the selected thread. */
+  protected async onThreadFilesPicked(files: File[]): Promise<void> {
+    const threadId = this.store.selectedThreadId();
+    if (!threadId) return;
+    await this.sendNonImageFiles(files, threadId);
+  }
+
+  /**
+   * Sends videos, documents and audio right away — store.sendFile picks the route per file
+   * (mp4/mov/avi → room album, the rest → Synapse). One toast for all failures of the batch.
+   */
+  private async sendNonImageFiles(files: File[], threadId?: string): Promise<void> {
+    const results = await Promise.allSettled(files.map(f => this.store.sendFile(f, threadId)));
+    const errors = rejectionReasons(results);
+    if (errors.length > 0 && !(await this.showUploadLimitToast(errors))) {
+      await this.alertService.showToast(`${errors.length} ${this.store.i18n.files_send_error()}`);
     }
   }
 
