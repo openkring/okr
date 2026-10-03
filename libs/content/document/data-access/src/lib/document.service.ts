@@ -199,16 +199,19 @@ export class DocumentService {
    * Convert a file to a DocumentModel.
    * @param file the file to convert
    * @param fullPath the full path of the file (/dir/filename.extension)
+   * @param options.skipDownloadUrl leave `url` empty instead of asking the DEFAULT bucket for a
+   *   download URL — required for objects in the private bucket (album videos, spec 1.82 §4),
+   *   where getDownloadURL would throw because the object is not in the default bucket.
    * @returns the DocumentModel
    */
-  public async getDocumentFromFile(file: File, fullPath: string): Promise<DocumentModel> {
+  public async getDocumentFromFile(file: File, fullPath: string, options?: { skipDownloadUrl?: boolean }): Promise<DocumentModel> {
     const doc = new DocumentModel(this.tenantId);
     doc.fullPath = fullPath;
     doc.description = DEFAULT_NOTES;
     doc.type = DEFAULT_DOCUMENT_TYPE;
     doc.source = DEFAULT_DOCUMENT_SOURCE;
 
-    doc.url = await getDownloadURL(ref(this.storage, fullPath));
+    doc.url = options?.skipDownloadUrl ? '' : await getDownloadURL(ref(this.storage, fullPath));
     doc.dateOfDocCreation = getTodayStr();
     doc.dateOfDocLastUpdate = getTodayStr();
     doc.mimeType = resolveMimeType(file.name, file.type);

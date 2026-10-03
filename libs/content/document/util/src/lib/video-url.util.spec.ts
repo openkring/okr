@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { mergeSigned, missingKeys, needsResign, RESIGN_MARGIN_MS, settleKeys, SignedVideo } from './video-url.util';
+import { mergeSigned, missingKeys, needsResign, RESIGN_MARGIN_MS, resignDelay, settleKeys, SignedVideo } from './video-url.util';
 
 const v = (key: string): SignedVideo => ({ key, posterUrl: 'p', playback: { kind: 'mp4', url: 'u' } });
 
@@ -56,5 +56,16 @@ describe('settleKeys', () => {
   });
   it('dedupes', () => {
     expect([...settleKeys(new Set(['a']), ['a', 'a'], false)]).toEqual(['a']);
+  });
+});
+
+describe('resignDelay', () => {
+  it('is undefined without a window', () => { expect(resignDelay(undefined, 0)).toBeUndefined(); });
+  it('fires RESIGN_MARGIN_MS before the window ends', () => {
+    expect(resignDelay(10 * RESIGN_MARGIN_MS, 0)).toBe(9 * RESIGN_MARGIN_MS);
+  });
+  it('is zero, never negative, for a window already inside the margin or past', () => {
+    expect(resignDelay(1000, 1000 - RESIGN_MARGIN_MS + 1)).toBe(0);
+    expect(resignDelay(1000, 5000)).toBe(0);
   });
 });

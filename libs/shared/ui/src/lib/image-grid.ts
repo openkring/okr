@@ -85,7 +85,12 @@ import { Video } from './video';
           @for(image of images(); track $index) {
             <ion-item button (click)="imageClicked.emit(image)">
               <ion-thumbnail slot="start">
-                <img [src]="image.url | thumbnailUrl" [alt]="image.altText" />
+                @if (image.type === IT.Video && isSignedPoster(image)) {
+                  <!-- signed private poster: a complete URL, never re-prefixed (spec 1.82) -->
+                  <img [src]="image.url" [alt]="image.altText" />
+                } @else {
+                  <img [src]="image.url | thumbnailUrl" [alt]="image.altText" />
+                }
               </ion-thumbnail>
               <ion-label>{{ image.label }}</ion-label>
             </ion-item>

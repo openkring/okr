@@ -13,6 +13,15 @@ export function needsResign(expires: number | undefined, nowMs: number): boolean
   return expires === undefined || nowMs >= expires - RESIGN_MARGIN_MS;
 }
 
+/**
+ * Milliseconds until the visible tiles must be re-signed: RESIGN_MARGIN_MS before `expires`,
+ * never negative (an already-stale window re-signs at once, exactly once), undefined without a window.
+ */
+export function resignDelay(expires: number | undefined, nowMs: number): number | undefined {
+  if (expires === undefined) return undefined;
+  return Math.max(0, expires - RESIGN_MARGIN_MS - nowMs);
+}
+
 /** Keys to send to the signer: all of them once the window is stale, else only the unsigned ones. */
 export function missingKeys(keys: string[], signed: Record<string, SignedVideo>, expires: number | undefined, nowMs: number): string[] {
   const unique = [...new Set(keys.filter(Boolean))];

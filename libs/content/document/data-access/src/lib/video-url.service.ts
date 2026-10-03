@@ -15,7 +15,9 @@ type Res = { videos: SignedVideo[]; expires: number };
 @Injectable({ providedIn: 'root' })
 export class VideoUrlService {
   private readonly _signed = signal<Record<string, SignedVideo>>({});
-  private expires: number | undefined;
+  private readonly _expires = signal<number | undefined>(undefined);
+  /** End of the current signing window (epoch ms), undefined before the first answer. */
+  public readonly expires = this._expires.asReadonly();
   public readonly signed = this._signed.asReadonly();
   private readonly _settled = signal<ReadonlySet<string>>(new Set());
   /** Keys an ensure() call has answered (signed or not) in the current window: absent from `signed` but in here = not available. */
@@ -28,7 +30,7 @@ export class VideoUrlService {
 
   /** Make sure posters/playback URLs for these keys are signed and fresh. Absent keys = not available. */
   public async ensure(keys: string[]): Promise<void> {
-    const todo = missingKeys(keys, this._signed(), this.expires, Date.now());
+    const todo = missingKeys(keys, this._signed(), this._expires(), Date.now());
     if (todo.length === 0) return;
     let res: Res;
     try {
@@ -39,9 +41,9 @@ export class VideoUrlService {
       throw ex;
     }
     // Merge against the LIVE state: overlapping calls must not overwrite each other.
-    const next = mergeSigned(this._signed(), this.expires, res.videos, res.expires);
-    const newWindow = next.expires !== this.expires;
-    this.expires = next.expires;
+    const next = mergeSigned(this._signed(), this._expires(), res.videos, res.expires);
+    const newWindow = next.expires !== this._expires();
+    this._expires.set(next.expires);
     this._signed.set(next.signed);
     this._settled.set(settleKeys(this._settled(), todo, newWindow));
   }

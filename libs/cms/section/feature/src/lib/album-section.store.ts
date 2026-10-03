@@ -1,4 +1,4 @@
-import { computed, effect, inject, untracked } from '@angular/core';
+import { computed, effect, inject, signal, untracked } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withHooks, withMethods, withProps, withState } from '@ngrx/signals';
@@ -15,7 +15,7 @@ import { downloadFilesAsZip, exportCsv, getExportFileName, showToast, ZipEntry }
 import { UploadService } from '@okr/avatar-data-access';
 import { DocumentService, VideoUrlService } from '@okr/content-document-data-access';
 import { FolderService } from '@okr/content-folder-data-access';
-import { SignedVideo } from '@okr/content-document-util';
+import { resignDelay, SignedVideo } from '@okr/content-document-util';
 import { newFolderModel } from '@okr/content-folder-util';
 
 import { buildAlbumUploadPath, compareByFileName, isPrivateVideo, isVideoFileName, isVisibleInAlbum, SECTION_I18N_KEYS, toImageConfig } from '@okr/cms-section-util';
@@ -47,6 +47,9 @@ export const AlbumStore = signalStore(
     alertController: inject(AlertController),
     toastController: inject(ToastController),
     i18n: inject(I18nService).translateAll(SECTION_I18N_KEYS),
+    // Bumped once shortly before the signing window ends, so the tiles re-sign even when nothing
+    // else on screen changes (spec 1.82 §5).
+    resignTick: signal(0),
   })),
 
   withComputed((state) => ({
@@ -205,50 +208,63 @@ export const AlbumStore = signalStore(
         : `tenant/${tenantId}/${FolderModelName}/${folderKey}/album`;
       const tags = `@tag.${tenantId},@tag.${SectionModelName},@tag.album`;
 
-      for (const file of files) {
-        // Videos werden vor dem Upload geprüft: eine 200-MB-Datei erst hochzuladen und dann
-        // abzulehnen wäre die teuerste Art, Nein zu sagen. Bilder gehen ungeprüft durch.
-        const isVideo = isVideoFileName(file.name, file.type);
-        if (isVideo) {
-          const check = await checkVideoLimits(file);
-          if (!check.ok) {
-            const message = check.reason === 'size'
-              ? fill(store.i18n.album_video_too_large(), { size: fileSizeUnit(check.actual ?? 0) })
-              : fill(store.i18n.album_video_too_long(), { duration: formatDuration(check.actual ?? 0) });
-            await showToast(store.toastController, message);
-            continue;   // die übrigen Dateien der Mehrfachauswahl laufen weiter
+      // `finally`: whatever made it into Firestore before an unexpected throw (e.g. in the upload
+      // itself) still shows up in the album.
+      try {
+        for (const file of files) {
+          // Videos werden vor dem Upload geprüft: eine 200-MB-Datei erst hochzuladen und dann
+          // abzulehnen wäre die teuerste Art, Nein zu sagen. Bilder gehen ungeprüft durch.
+          const isVideo = isVideoFileName(file.name, file.type);
+          if (isVideo) {
+            const check = await checkVideoLimits(file);
+            if (!check.ok) {
+              const message = check.reason === 'size'
+                ? fill(store.i18n.album_video_too_large(), { size: fileSizeUnit(check.actual ?? 0) })
+                : fill(store.i18n.album_video_too_long(), { duration: formatDuration(check.actual ?? 0) });
+              await showToast(store.toastController, message);
+              continue;   // die übrigen Dateien der Mehrfachauswahl laufen weiter
+            }
+          }
+
+          // buildAlbumUploadPath makes the path unique by construction (a random segment, no
+          // lookup) — two members uploading their own `IMG_0042.mov` at the same moment can never
+          // agree on the same path, so the transcoder's fullPath lookup stays unambiguous. The
+          // original name is not lost: it goes into doc.title below, which is what the UI shows.
+          const fullPath = buildAlbumUploadPath(basePath, file.name);
+          // Videos go to the private bucket (spec 1.82 §4); the result is then the path, not a URL.
+          const uploaded = await store.uploadService.uploadFile(file, fullPath, file.name, isVideo ? 'private' : 'default');
+          if (!uploaded) {
+            // Ein fehlgeschlagener Upload wurde bisher wortlos übersprungen: das Modal zeigte
+            // kurz einen roten Balken, schloss sich, und das Bild fehlte einfach. Wer nicht genau
+            // hinsah, hielt den Upload für erfolgreich. Sentry erfährt den Grund in
+            // `UploadTaskModal.report`; hier bekommt die Person, die hochlädt, überhaupt erst
+            // eine Rückmeldung. `continue`, damit die übrigen Dateien einer Mehrfachauswahl
+            // weiterlaufen — genau wie bei der Video-Prüfung oben.
+            await showToast(store.toastController, fill(store.i18n.album_upload_failed(), { name: file.name }));
+            continue;
+          }
+
+          // A thrown error past this point (document creation, Firestore) used to abort the whole
+          // selection silently. Report it for this file and carry on with the rest.
+          try {
+            // Private videos have no default-bucket download URL; asking for one would throw.
+            const doc = await store.documentService.getDocumentFromFile(file, fullPath, { skipDownloadUrl: isVideo });
+            doc.url = isVideo ? '' : uploaded;
+            doc.title = file.name;
+            doc.tags = tags;
+            doc.folderKeys = [folderKey];
+            doc.authorKey = currentUser.personKey;
+            doc.authorName = `${currentUser.firstName} ${currentUser.lastName}`;
+            doc.version = '1.0';
+            await store.documentService.create(doc, currentUser);
+          } catch (ex) {
+            warn(`AlbumStore.addFiles: creating the document for ${fullPath} failed: ${ex}`);
+            await showToast(store.toastController, fill(store.i18n.album_upload_failed(), { name: file.name }));
           }
         }
-
-        // buildAlbumUploadPath makes the path unique by construction (a random segment, no
-        // lookup) — two members uploading their own `IMG_0042.mov` at the same moment can never
-        // agree on the same path, so the transcoder's fullPath lookup stays unambiguous. The
-        // original name is not lost: it goes into doc.title below, which is what the UI shows.
-        const fullPath = buildAlbumUploadPath(basePath, file.name);
-        // Videos go to the private bucket (spec 1.82 §4); the result is then the path, not a URL.
-        const uploaded = await store.uploadService.uploadFile(file, fullPath, file.name, isVideo ? 'private' : 'default');
-        if (!uploaded) {
-          // Ein fehlgeschlagener Upload wurde bisher wortlos übersprungen: das Modal zeigte
-          // kurz einen roten Balken, schloss sich, und das Bild fehlte einfach. Wer nicht genau
-          // hinsah, hielt den Upload für erfolgreich. Sentry erfährt den Grund in
-          // `UploadTaskModal.report`; hier bekommt die Person, die hochlädt, überhaupt erst
-          // eine Rückmeldung. `continue`, damit die übrigen Dateien einer Mehrfachauswahl
-          // weiterlaufen — genau wie bei der Video-Prüfung oben.
-          await showToast(store.toastController, fill(store.i18n.album_upload_failed(), { name: file.name }));
-          continue;
-        }
-
-        const doc = await store.documentService.getDocumentFromFile(file, fullPath);
-        doc.url = isVideo ? '' : uploaded;
-        doc.title = file.name;
-        doc.tags = tags;
-        doc.folderKeys = [folderKey];
-        doc.authorKey = currentUser.personKey;
-        doc.authorName = `${currentUser.firstName} ${currentUser.lastName}`;
-        doc.version = '1.0';
-        await store.documentService.create(doc, currentUser);
+      } finally {
+        store.documentsResource.reload();
       }
-      store.documentsResource.reload();
     },
 
     goUp(): void {
@@ -413,8 +429,20 @@ export const AlbumStore = signalStore(
 
   withHooks((store) => ({
     onInit(): void {
-      // Request signed posters for the private videos on screen.
+      // One timer per signing window: fires RESIGN_MARGIN_MS before it ends. Re-scheduled when
+      // the window changes; the cleanup clears it on reschedule and when the store is destroyed.
+      // A stale window yields delay 0 — one tick, and the re-sign moves `expires` on (a failed
+      // re-sign leaves it unchanged, so there is no loop).
+      effect((onCleanup) => {
+        const delay = resignDelay(store.videoUrls.expires(), Date.now());
+        if (delay === undefined) return;
+        const timer = setTimeout(() => store.resignTick.update((n) => n + 1), delay);
+        onCleanup(() => clearTimeout(timer));
+      });
+
+      // Request signed posters for the private videos on screen — again on every resign tick.
       effect(() => {
+        store.resignTick();
         const keys = store.visibleDocuments().filter(isPrivateVideo).map((d) => d.okey);
         if (keys.length > 0) {
           untracked(() => {
