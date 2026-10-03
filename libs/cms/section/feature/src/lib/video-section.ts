@@ -34,7 +34,7 @@ import { SECTION_I18N_KEYS } from '@okr/cms-section-util';
         <ion-card-content>
           @if (documentKey(); as key) {
             <okr-video-card [posterUrl]="poster()" [available]="available()" [loading]="loading()"
-              [unavailableLabel]="i18n.album_video_unavailable()" [title]="title() ?? ''" (clicked)="onPlay(key)" />
+              [unavailableLabel]="i18n.album_video_unavailable()" [title]="title()" (clicked)="onPlay(key)" />
           } @else {
           <iframe 
             id="ytplayer"
