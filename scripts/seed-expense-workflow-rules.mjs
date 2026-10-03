@@ -9,6 +9,11 @@
  * Run with:  node scripts/seed-expense-workflow-rules.mjs --dry
  *            node scripts/seed-expense-workflow-rules.mjs --tenant scs
  *            node scripts/seed-expense-workflow-rules.mjs --tenant <t> --responsibility "<name>"
+ *            node scripts/seed-expense-workflow-rules.mjs --tenant scs --only expense.paymentOrphaned
+ *
+ * `--only <event>` seeds a single trigger. Use it to add a new trigger to a tenant whose existing
+ * rules were edited by hand: an update rewrites the whole rule (steps, due date, responsibility).
+ * Rule names match the live scs rules ("Spesen …"); a name mismatch makes a run create duplicates.
  *
  * Idempotent: category items matched by `name`, i18n rows by (module, key), rules by `name` +
  * tenant. Re-running updates rather than duplicates.
@@ -30,11 +35,13 @@ const EVENT_CATEGORY = 'workflow_event';
 const I18N_MODULE = 'workflow';
 const respArg = argv.indexOf('--responsibility');
 const RESPONSIBILITY_NAME = respArg >= 0 ? argv[respArg + 1] : 'Ressort Finanzen';
+const onlyArg = argv.indexOf('--only');
+const ONLY = onlyArg >= 0 ? argv[onlyArg + 1] : '';
 
 const TRIGGERS = [
   {
     event: 'expense.created', icon: 'expense', dueInDays: 7,
-    ruleName: 'Spese eingereicht → Ressort Finanzen', i18nKey: 'expense.created',
+    ruleName: 'Spesen eingereicht → Ressort Finanzen', i18nKey: 'expense.created',
     text: {
       de: 'Spesen von {name} über {amount} {currency}',
       en: 'Expenses from {name} for {amount} {currency}',
@@ -45,7 +52,7 @@ const TRIGGERS = [
   },
   {
     event: 'expense.ocrFailed', icon: 'warning', dueInDays: 3,
-    ruleName: 'Spese OCR fehlgeschlagen → Ressort Finanzen', i18nKey: 'expense.ocrFailed',
+    ruleName: 'Spesen OCR fehlgeschlagen → Ressort Finanzen', i18nKey: 'expense.ocrFailed',
     text: {
       de: 'Beleg von {name} konnte nicht gelesen werden — bitte manuell erfassen',
       en: 'Receipt from {name} could not be read — please capture it manually',
@@ -56,7 +63,7 @@ const TRIGGERS = [
   },
   {
     event: 'expense.validated', icon: 'checkbox', dueInDays: 7,
-    ruleName: 'Spese verbucht → Ressort Finanzen prüft', i18nKey: 'expense.validated',
+    ruleName: 'Spesen verbucht → Ressort Finanzen prüft', i18nKey: 'expense.validated',
     text: {
       de: 'Spesen von {name} über {amount} {currency} prüfen',
       en: 'Review expense from {name} for {amount} {currency}',
@@ -67,7 +74,7 @@ const TRIGGERS = [
   },
   {
     event: 'expense.pendingExport', icon: 'download', dueInDays: 7,
-    ruleName: 'Spese für externe Buchhaltung → Ressort Finanzen', i18nKey: 'expense.pendingExport',
+    ruleName: 'Spesen für externe Buchhaltung → Ressort Finanzen', i18nKey: 'expense.pendingExport',
     text: {
       de: 'Spese von {name} über {amount} {currency} extern verbuchen',
       en: 'Post expense from {name} for {amount} {currency} in the external ledger',
@@ -78,7 +85,7 @@ const TRIGGERS = [
   },
   {
     event: 'expense.paymentOrphaned', icon: 'warning', dueInDays: 3,
-    ruleName: 'Spese zurückgenommen, Zahlung schon freigegeben → Ressort Finanzen', i18nKey: 'expense.paymentOrphaned',
+    ruleName: 'Spesen zurückgenommen, Zahlung schon freigegeben → Ressort Finanzen', i18nKey: 'expense.paymentOrphaned',
     text: {
       de: 'Spese von {name} wurde zurückgenommen — die Zahlung über {amount} {currency} im Auftrag {order} ist schon freigegeben',
       en: 'Expense from {name} was withdrawn — the payment of {amount} {currency} in order {order} is already approved',
@@ -142,7 +149,12 @@ async function upsertRule(trigger, responsibilityKey) {
 }
 
 async function main() {
-  console.log(`seed-expense-workflow-rules: tenant '${TENANT}'${DRY ? ' (dry run)' : ''}`);
+  console.log(`seed-expense-workflow-rules: tenant '${TENANT}'${ONLY ? `, only '${ONLY}'` : ''}${DRY ? ' (dry run)' : ''}`);
+  const triggers = ONLY ? TRIGGERS.filter((t) => t.event === ONLY) : TRIGGERS;
+  if (triggers.length === 0) {
+    console.error(`✗ no trigger for event '${ONLY}'`);
+    exit(1);
+  }
 
   const category = await findCategory(EVENT_CATEGORY);
   if (!category) {
@@ -151,7 +163,7 @@ async function main() {
   }
   const items = category.data().items ?? [];
   let added = 0;
-  for (const t of TRIGGERS) {
+  for (const t of triggers) {
     if (items.some((i) => i.name === t.event)) {
       console.log(`  category item '${t.event}' already present`);
       continue;
@@ -170,7 +182,7 @@ async function main() {
     exit(1);
   }
 
-  for (const t of TRIGGERS) {
+  for (const t of triggers) {
     await upsertI18nDefault(t.i18nKey, t.text);
     await upsertRule(t, responsibility.id);
   }
