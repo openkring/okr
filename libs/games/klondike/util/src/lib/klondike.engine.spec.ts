@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { Card, KlondikeState, Suit, deal, draw, formatDuration, newDeck, recycle } from './klondike.engine';
+import { Card, KlondikeState, Suit, canMove, deal, draw, formatDuration, move, movingCards, newDeck, recycle } from './klondike.engine';
 
 /** mulberry32 — a small seeded generator so deals are reproducible. */
 function rng(seed: number): () => number {
@@ -118,5 +118,114 @@ describe('recycle', () => {
     expect(recycle(full)).toBe(full);
     const empty = state();
     expect(recycle(empty)).toBe(empty);
+  });
+});
+
+describe('movingCards', () => {
+  it('takes the top of the waste or a foundation, and a face-up card with everything on it', () => {
+    const s = state({
+      waste: cards('3D', '9C'),
+      foundations: [cards('AS', '2S'), [], [], []],
+      tableau: cols(cards('_4C', 'KH', 'QS', 'JD')),
+    });
+    expect(movingCards(s, { kind: 'waste' })).toEqual(cards('9C'));
+    expect(movingCards(s, { kind: 'foundation', index: 0 })).toEqual(cards('2S'));
+    expect(movingCards(s, { kind: 'tableau', index: 0, card: 2 })).toEqual(cards('QS', 'JD'));
+  });
+
+  it('takes nothing from a face-down card or an empty pile', () => {
+    const s = state({ tableau: cols(cards('_4C', 'KH')) });
+    expect(movingCards(s, { kind: 'tableau', index: 0, card: 0 })).toEqual([]);
+    expect(movingCards(s, { kind: 'tableau', index: 1, card: 0 })).toEqual([]);
+    expect(movingCards(s, { kind: 'waste' })).toEqual([]);
+  });
+});
+
+describe('canMove onto the tableau', () => {
+  const t = (index: number) => ({ kind: 'tableau' as const, index });
+
+  it('needs the opposite colour and one rank lower', () => {
+    const s = state({ tableau: cols(cards('8S'), cards('7H'), cards('7C'), cards('6H')) });
+    expect(canMove(s, { kind: 'tableau', index: 1, card: 0 }, t(0))).toBe(true);
+    expect(canMove(s, { kind: 'tableau', index: 2, card: 0 }, t(0))).toBe(false); // same colour
+    expect(canMove(s, { kind: 'tableau', index: 3, card: 0 }, t(0))).toBe(false); // two ranks lower
+  });
+
+  it('accepts only a king, or a run starting with a king, on an empty column', () => {
+    const s = state({ tableau: cols([], cards('_3C', 'KH', 'QS'), cards('QD')) });
+    expect(canMove(s, { kind: 'tableau', index: 1, card: 1 }, t(0))).toBe(true);
+    expect(canMove(s, { kind: 'tableau', index: 2, card: 0 }, t(0))).toBe(false);
+  });
+
+  it('never moves a pile onto itself', () => {
+    const s = state({ tableau: cols(cards('8S', '7H')) });
+    expect(canMove(s, { kind: 'tableau', index: 0, card: 1 }, t(0))).toBe(false);
+  });
+
+  it('takes cards from the waste and back from a foundation', () => {
+    const s = state({
+      waste: cards('5D'),
+      foundations: [cards('AS', '2S'), [], [], []],
+      tableau: cols(cards('6S'), cards('3H')),
+    });
+    expect(canMove(s, { kind: 'waste' }, t(0))).toBe(true);
+    expect(canMove(s, { kind: 'foundation', index: 0 }, t(1))).toBe(true);
+  });
+});
+
+describe('canMove onto a foundation', () => {
+  const f = (index: number) => ({ kind: 'foundation' as const, index });
+
+  it('starts with an ace and goes up in the same suit', () => {
+    const s = state({
+      waste: cards('AH'),
+      foundations: [cards('AS'), [], [], []],
+      tableau: cols(cards('2S'), cards('2D'), cards('3S', '2H')),
+    });
+    expect(canMove(s, { kind: 'waste' }, f(1))).toBe(true);
+    expect(canMove(s, { kind: 'tableau', index: 0, card: 0 }, f(0))).toBe(true);
+    expect(canMove(s, { kind: 'tableau', index: 1, card: 0 }, f(0))).toBe(false); // other suit
+    expect(canMove(s, { kind: 'tableau', index: 0, card: 0 }, f(1))).toBe(false); // not an ace
+  });
+
+  it('takes a single card only, and never from another foundation', () => {
+    const s = state({
+      foundations: [cards('AS'), cards('AH'), [], []],
+      tableau: cols(cards('3D', '2S')),
+    });
+    expect(canMove(s, { kind: 'tableau', index: 0, card: 0 }, f(0))).toBe(false); // a run of two
+    expect(canMove(s, { kind: 'foundation', index: 0 }, f(2))).toBe(false);
+  });
+});
+
+describe('move', () => {
+  it('moves the run, turns the uncovered card face up and counts one move', () => {
+    const s = move(
+      state({ tableau: cols([], cards('_3C', 'KH', 'QS')) }),
+      { kind: 'tableau', index: 1, card: 1 },
+      { kind: 'tableau', index: 0 },
+    );
+    expect(s.tableau[0]).toEqual(cards('KH', 'QS'));
+    expect(s.tableau[1]).toEqual(cards('3C'));
+    expect(s.moves).toBe(1);
+  });
+
+  it('moves the top of the waste onto a foundation', () => {
+    const s = move(state({ waste: cards('9C', 'AH') }), { kind: 'waste' }, { kind: 'foundation', index: 2 });
+    expect(s.waste).toEqual(cards('9C'));
+    expect(s.foundations[2]).toEqual(cards('AH'));
+  });
+
+  it('returns the same state for an illegal move', () => {
+    const s = state({ tableau: cols(cards('8S'), cards('7S')) });
+    expect(move(s, { kind: 'tableau', index: 1, card: 0 }, { kind: 'tableau', index: 0 })).toBe(s);
+  });
+
+  it('never changes the state it was given, so undo can restore it', () => {
+    const s = state({ tableau: cols([], cards('_3C', 'KH', 'QS')), waste: cards('AH') });
+    const before = JSON.stringify(s);
+    move(s, { kind: 'tableau', index: 1, card: 1 }, { kind: 'tableau', index: 0 });
+    move(s, { kind: 'waste' }, { kind: 'foundation', index: 0 });
+    expect(JSON.stringify(s)).toBe(before);
   });
 });

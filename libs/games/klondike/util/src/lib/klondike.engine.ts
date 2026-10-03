@@ -92,3 +92,66 @@ export function recycle(state: KlondikeState): KlondikeState {
   const stock = [...state.waste].reverse().map(card => ({ ...card, faceUp: false }));
   return { ...state, stock, waste: [], moves: state.moves + 1 };
 }
+
+/** The cards a move from `from` would pick up; empty when nothing can be picked up there. */
+export function movingCards(state: KlondikeState, from: Source): Card[] {
+  switch (from.kind) {
+    case 'waste':
+      return state.waste.slice(-1);
+    case 'foundation':
+      return (state.foundations[from.index] ?? []).slice(-1);
+    case 'tableau': {
+      const col = state.tableau[from.index] ?? [];
+      return col[from.card]?.faceUp ? col.slice(from.card) : [];
+    }
+  }
+}
+
+function fitsFoundation(pile: readonly Card[], card: Card): boolean {
+  const top = pile[pile.length - 1];
+  return top ? top.suit === card.suit && card.rank === top.rank + 1 : card.rank === 1;
+}
+
+function fitsTableau(pile: readonly Card[], card: Card): boolean {
+  const top = pile[pile.length - 1];
+  if (!top) return card.rank === 13;
+  return top.faceUp && isRed(top.suit) !== isRed(card.suit) && card.rank === top.rank - 1;
+}
+
+export function canMove(state: KlondikeState, from: Source, to: Target): boolean {
+  const cards = movingCards(state, from);
+  if (!cards.length) return false;
+  if (to.kind === 'foundation') {
+    const pile = state.foundations[to.index];
+    if (!pile || from.kind === 'foundation' || cards.length !== 1) return false;
+    return fitsFoundation(pile, cards[0]);
+  }
+  const pile = state.tableau[to.index];
+  if (!pile || (from.kind === 'tableau' && from.index === to.index)) return false;
+  return fitsTableau(pile, cards[0]);
+}
+
+/**
+ * Plays the move, or returns `state` itself when it is illegal. A face-down card left on top of
+ * the source column turns face up as part of the same move.
+ */
+export function move(state: KlondikeState, from: Source, to: Target): KlondikeState {
+  if (!canMove(state, from, to)) return state;
+  const cards = movingCards(state, from);
+  const waste = from.kind === 'waste' ? state.waste.slice(0, -1) : state.waste;
+  const foundations = [...state.foundations];
+  const tableau = [...state.tableau];
+
+  if (from.kind === 'foundation') foundations[from.index] = foundations[from.index].slice(0, -1);
+  if (from.kind === 'tableau') {
+    const rest = tableau[from.index].slice(0, from.card);
+    const top = rest[rest.length - 1];
+    if (top && !top.faceUp) rest[rest.length - 1] = { ...top, faceUp: true };
+    tableau[from.index] = rest;
+  }
+
+  if (to.kind === 'foundation') foundations[to.index] = [...foundations[to.index], ...cards];
+  else tableau[to.index] = [...tableau[to.index], ...cards];
+
+  return { ...state, waste, foundations, tableau, moves: state.moves + 1 };
+}
