@@ -242,6 +242,13 @@ const MENTION_AVATAR_SIZE = 36;
       opacity: 0.75;
     }
 
+    /* Album video card (spec 1.82): a bit larger than the 72px photo thumbs, far smaller than the
+       old inline player. Without an explicit width the card shrinks to its play badge in the bubble. */
+    .chat-video-card {
+      width: 240px;
+      max-width: 100%;
+    }
+
     .message-video {
       max-width: 100%;
       /* Cap the height so a portrait phone clip cannot fill the whole timeline. */
@@ -518,7 +525,7 @@ const MENTION_AVATAR_SIZE = 36;
                                    VideoCard stops only the poster tap; the title, a loading or an
                                    unavailable card let the tap through to the bubble's action sheet. -->
                               @let card = videoCards()[videoKey];
-                              <okr-video-card
+                              <okr-video-card class="chat-video-card"
                                 [posterUrl]="card?.posterUrl ?? ''"
                                 [available]="card?.available ?? false"
                                 [loading]="card?.loading ?? true"
