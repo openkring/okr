@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  albumFolderKeyOfPath, contentDisposition, isAlbumVideoObjectPath, MAX_VIDEO_KEYS, MP4_PARAMS, validVideoKeys, videoAccessPath, WINDOW_MS, windowExpiry,
+  albumFolderKeyOfPath, contentDisposition, isAlbumVideoObjectPath, isSafeDocId, MAX_VIDEO_KEYS, MP4_PARAMS, validVideoKeys, videoAccessPath, WINDOW_MS, windowExpiry,
 } from './video-sign.util';
 
 const HOUR = 3600 * 1000;
@@ -41,6 +41,18 @@ describe('validVideoKeys', () => {
   });
   it('drops keys that are not a single document id', () => {
     expect(validVideoKeys(['a/b', '.', '..', 'ok'])).toEqual(['ok']);
+  });
+  it('drops reserved __…__ ids and ids over 128 characters', () => {
+    expect(validVideoKeys(['__a__', '____', 'x'.repeat(129), 'x'.repeat(128), 'ok'])).toEqual(['x'.repeat(128), 'ok']);
+  });
+});
+
+describe('isSafeDocId', () => {
+  it.each(['abc', 'A-b_9', '__a', 'a__', 'chat_0123456789abcdef0123_2026_videos', 'x'.repeat(128)])('accepts %s', id => {
+    expect(isSafeDocId(id)).toBe(true);
+  });
+  it.each(['', '.', '..', 'a/b', '__a__', '____', 'x'.repeat(129), 'a b', 'a.b', 3, undefined, null])('rejects %s', id => {
+    expect(isSafeDocId(id)).toBe(false);
   });
 });
 
@@ -112,6 +124,13 @@ describe('albumFolderKeyOfPath', () => {
     expect(albumFolderKeyOfPath('tenant/kring/folder/f1/album/ab/clip.mp4', 'scs')).toBeUndefined();
     expect(albumFolderKeyOfPath('tenant/scs/folder/f1/files/clip.mp4', 'scs')).toBeUndefined();
     expect(albumFolderKeyOfPath('tenant/sXs/folder/f1/album/ab/clip.mp4', 's.s')).toBeUndefined();
+  });
+  it('is undefined for an unsafe key or a path that fails the album-video layout', () => {
+    expect(albumFolderKeyOfPath('tenant/scs/folder/../album/ab/clip.mp4', 'scs')).toBeUndefined();
+    expect(albumFolderKeyOfPath('tenant/scs/folder/__a__/album/ab/clip.mp4', 'scs')).toBeUndefined();
+    expect(albumFolderKeyOfPath(`tenant/scs/folder/${'k'.repeat(129)}/album/ab/clip.mp4`, 'scs')).toBeUndefined();
+    expect(albumFolderKeyOfPath('tenant/scs/folder/f1/album/ab/clip.pdf', 'scs')).toBeUndefined();
+    expect(albumFolderKeyOfPath('tenant/scs/folder/f1/album/renderings/clip.mp4', 'scs')).toBeUndefined();
   });
 });
 

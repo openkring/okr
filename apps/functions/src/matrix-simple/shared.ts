@@ -835,6 +835,27 @@ export async function getJoinedMemberIds(roomId: string, adminToken: string): Pr
   return new Set(body.members ?? []);
 }
 
+/**
+ * A room's display name and canonical alias via the Synapse admin room-details API — the read
+ * `getRoomDetails` and `assignMatrixRoomTenants` already use; it needs no membership, so the bot
+ * is never joined into a DM just to read its name. Undefined on any failure (callers fall back).
+ */
+export async function getRoomSummary(
+  roomId: string,
+  adminToken: string,
+): Promise<{ name: string; canonicalAlias: string } | undefined> {
+  try {
+    const res = await fetch(`${MATRIX_HOMESERVER}/_synapse/admin/v1/rooms/${encodeURIComponent(roomId)}`, {
+      headers: { Authorization: `Bearer ${adminToken}` },
+    });
+    if (!res.ok) return undefined;
+    const body = (await res.json()) as { name?: string | null; canonical_alias?: string | null };
+    return { name: String(body.name ?? ''), canonicalAlias: String(body.canonical_alias ?? '') };
+  } catch {
+    return undefined;
+  }
+}
+
 /** Read the tenants marker of a room; empty array when the room is unmarked OR assigned to none. */
 export async function getRoomTenants(roomId: string, adminToken: string): Promise<string[]> {
   return (await getRoomTenantMarker(roomId, adminToken)) ?? [];

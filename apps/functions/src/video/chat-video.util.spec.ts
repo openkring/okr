@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { HttpsError } from 'firebase-functions/v2/https';
 
 import {
-  assertChatFolders, chatFolderKeys, chatVideoPath, MAX_VIDEO_BYTES, safeVideoFileName, safeVideoTitle, validateChatVideoRequest, zurichStoreDate,
+  assertChatFolders, chatAlbumRootName, chatFolderKeys, DM_ALBUM_NAME, chatVideoPath, MAX_VIDEO_BYTES, safeVideoFileName, safeVideoTitle, validateChatVideoRequest, zurichStoreDate,
 } from './chat-video.util';
 import { isAlbumVideoObjectPath } from './video-sign.util';
 
@@ -115,8 +115,8 @@ describe('assertChatFolders', () => {
   const k = chatFolderKeys('scs', '!abc:hs', '2026');
   const good = () => ({
     root: { matrixRoomId: '!abc:hs', parents: [], tenants: ['scs'], isArchived: false },
-    year: { matrixRoomId: '', parents: [k.root], tenants: ['scs'], isArchived: false },
-    videos: { matrixRoomId: '', parents: [k.year], tenants: ['scs'], isArchived: false },
+    year: { matrixRoomId: '!abc:hs', parents: [k.root], tenants: ['scs'], isArchived: false },
+    videos: { matrixRoomId: '!abc:hs', parents: [k.year], tenants: ['scs'], isArchived: false },
   });
   const code = (f: ReturnType<typeof good>) => {
     try { assertChatFolders(f, k, '!abc:hs', 'scs'); } catch (e) { return (e as HttpsError).code; }
@@ -127,9 +127,33 @@ describe('assertChatFolders', () => {
     const f = good(); delete (f.videos as Record<string, unknown>)['isArchived'];
     expect(code(f)).toBe('ok');
   });
+  it('refuses a videos folder without the room', () => { const f = good(); f.videos.matrixRoomId = ''; expect(code(f)).toBe('failed-precondition'); });
+  it('refuses a year folder without the room', () => { const f = good(); f.year.matrixRoomId = ''; expect(code(f)).toBe('failed-precondition'); });
   it('refuses a root of another room', () => { const f = good(); f.root.matrixRoomId = '!x:hs'; expect(code(f)).toBe('failed-precondition'); });
   it('refuses a moved year folder', () => { const f = good(); f.year.parents = ['elsewhere']; expect(code(f)).toBe('failed-precondition'); });
   it('refuses a moved videos folder', () => { const f = good(); f.videos.parents = [k.year, 'extra']; expect(code(f)).toBe('failed-precondition'); });
   it('refuses a folder outside the tenant', () => { const f = good(); f.year.tenants = ['kring']; expect(code(f)).toBe('failed-precondition'); });
   it('refuses an archived folder', () => { const f = good(); f.root.isArchived = true; expect(code(f)).toBe('failed-precondition'); });
+});
+
+describe('chatAlbumRootName', () => {
+  it('shows the name of a group-alias room', () => {
+    expect(chatAlbumRootName({ name: 'Vorstand', canonicalAlias: '#group_vorstand:hs' }, 2)).toBe('Chat · Vorstand');
+    expect(chatAlbumRootName({ name: 'Support', canonicalAlias: '#ask_support_p1:hs' }, 2)).toBe('Chat · Support');
+  });
+  it('shows the name of a room with more than two joined members', () => {
+    expect(chatAlbumRootName({ name: 'Grill', canonicalAlias: '' }, 3)).toBe('Chat · Grill');
+  });
+  it('never shows the name of a two-member room without a group alias (a DM)', () => {
+    expect(chatAlbumRootName({ name: 'Anna Muster', canonicalAlias: '' }, 2)).toBe(DM_ALBUM_NAME);
+    expect(chatAlbumRootName({ name: 'Anna Muster', canonicalAlias: '#anna:hs' }, 1)).toBe(DM_ALBUM_NAME);
+  });
+  it('is the DM name when the room cannot be read', () => {
+    expect(chatAlbumRootName(undefined, 5)).toBe(DM_ALBUM_NAME);
+  });
+  it('sanitizes and caps the name, and falls back to "Chat" for a nameless group room', () => {
+    expect(chatAlbumRootName({ name: 'a\u202Eb\u0000c', canonicalAlias: '#group_x:hs' }, 2)).toBe('Chat · abc');
+    expect(chatAlbumRootName({ name: 'x'.repeat(200), canonicalAlias: '#group_x:hs' }, 2)).toBe('Chat · ' + 'x'.repeat(80));
+    expect(chatAlbumRootName({ name: ' \u202E ', canonicalAlias: '#group_x:hs' }, 2)).toBe('Chat');
+  });
 });

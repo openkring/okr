@@ -6,10 +6,19 @@ type Data = Record<string, unknown> | undefined;
 const state = vi.hoisted(() => ({
   collections: {} as Record<string, Record<string, Record<string, unknown>>>,
   getAllCalls: [] as string[][],
+  docIds: [] as string[],
 }));
 
 vi.mock('firebase-admin/firestore', () => {
-  const ref = (collection: string, id: string) => ({
+  // Like the Admin SDK: `doc()` THROWS for a reserved `__…__` id, a `/`, `.`/`..` or an empty id.
+  const ref = (collection: string, id: string) => {
+    state.docIds.push(id);
+    if (id === '' || id === '.' || id === '..' || id.includes('/') || /^__.*__$/.test(id)) {
+      throw new Error(`Invalid document id: ${id}`);
+    }
+    return refOk(collection, id);
+  };
+  const refOk = (collection: string, id: string) => ({
     collection, id,
     get: async () => {
       const data: Data = state.collections[collection]?.[id];
@@ -67,6 +76,7 @@ async function call(docKeys: string[]): Promise<string[]> {
 
 beforeEach(() => {
   state.getAllCalls = [];
+  state.docIds = [];
   members = {};
   state.collections = {
     users: { u1: { personKey: 'P1' } },
@@ -86,6 +96,13 @@ beforeEach(() => {
       brokenChain: video('brokenChain', 'orphanChild'),
       // Lives in a room-B album, file path in room A's album: needs both rooms.
       twoRooms: { ...video('twoRooms', 'otherRoot'), fullPath: 'tenant/scs/folder/month/album/ab/two.mp4' },
+      // Unsafe document ids in author-editable fields: must be denied, never thrown.
+      slashFolder: { ...video('slashFolder', 'pf'), folderKeys: ['a/b'] },
+      reservedFolder: { ...video('reservedFolder', 'pf'), folderKeys: ['pf', '__a__'] },
+      longFolder: { ...video('longFolder', 'pf'), folderKeys: ['x'.repeat(129)] },
+      reservedPath: { ...video('reservedPath', 'pf'), fullPath: 'tenant/scs/folder/__a__/album/ab/x.mp4' },
+      dotPath: { ...video('dotPath', 'pf'), fullPath: 'tenant/scs/folder/../album/ab/x.mp4' },
+      badAncestor: video('badAncestor', 'badParentChild'),
     },
     [FolderCollection]: {
       pf: folder(),                                  // legacy: no matrixRoomId field at all
@@ -94,6 +111,7 @@ beforeEach(() => {
       month: folder(['year']),
       otherRoot: folder([], '!other:hs'),
       orphanChild: folder(['vanished']),
+      badParentChild: folder(['__x__']),
     },
   };
   vi.stubGlobal('fetch', fetchMock);
@@ -179,5 +197,18 @@ describe('signVideoUrls room audience', () => {
     const [url, init] = fetchMock.mock.calls[0] as unknown as [string, { headers: Record<string, string> }];
     expect(url).not.toContain('secret-');
     expect(init.headers['Authorization']).toBe('Bearer secret-MATRIX_ADMIN_TOKEN');
+  });
+
+  it('filters unsafe requested keys without throwing and signs the good ones', async () => {
+    const bad = ['__a__', 'a/b', '..', '.', 'k'.repeat(129)];
+    expect(await call([...bad, 'plain'])).toEqual(['plain']);
+    for (const b of bad) expect(state.docIds).not.toContain(b);
+  });
+
+  it('denies docs whose start or ancestor keys are unsafe, without throwing, and keeps the batch', async () => {
+    const keys = ['slashFolder', 'reservedFolder', 'longFolder', 'reservedPath', 'dotPath', 'badAncestor', 'plain'];
+    expect(await call(keys)).toEqual(['plain']);
+    // None of the unsafe ids ever reached `db.doc()` (it would have thrown).
+    for (const b of ['a/b', '__a__', 'x'.repeat(129), '..', '__x__']) expect(state.docIds).not.toContain(b);
   });
 });

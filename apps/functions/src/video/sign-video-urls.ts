@@ -10,7 +10,7 @@ import { IMGIX_PRIVATE_HOST, signImgixUrl } from '../_storage/imgix-sign';
 import { privateBucket } from '../_storage/private-bucket';
 import { getJoinedMemberIds, matrixAdminToken, requireUserPersonKey, serverHostname } from '../matrix-simple/shared';
 import { Audience, audienceOf, MAX_FOLDER_DEPTH, missingAncestors } from './video-audience.util';
-import { albumFolderKeyOfPath, contentDisposition, MP4_PARAMS, POSTER_PARAMS, validVideoKeys, videoAccessPath, windowExpiry } from './video-sign.util';
+import { albumFolderKeyOfPath, contentDisposition, isSafeDocId, MP4_PARAMS, POSTER_PARAMS, validVideoKeys, videoAccessPath, windowExpiry } from './video-sign.util';
 
 const CF_NAME = 'signVideoUrls';
 const imgixPrivateToken = defineSecret('IMGIX_PRIVATE_TOKEN');
@@ -47,17 +47,28 @@ export const signVideoUrls = onCall(
     // Start keys per doc: its folderKeys PLUS the folder its (author-editable) fullPath names.
     const startKeys = docs.map(d => {
       const data = d.data();
-      const pathKey = albumFolderKeyOfPath(String(data?.['fullPath'] ?? ''), tenantId);
-      return [...((data?.['folderKeys'] as string[] | undefined) ?? []), ...(pathKey ? [pathKey] : [])];
+      const path = String(data?.['fullPath'] ?? '');
+      // A folder path without a usable key (unsafe id) yields the unsafe key '/': never loaded,
+      // so the chain stays unresolved and the doc is denied. Same for a non-string folderKeys entry.
+      const pathKey = albumFolderKeyOfPath(path, tenantId) ?? (path.startsWith(`tenant/${tenantId}/folder/`) ? '/' : undefined);
+      const raw: unknown = data?.['folderKeys'];
+      const fk = Array.isArray(raw) ? raw.map(k => (typeof k === 'string' ? k : '/')) : [];
+      return [...fk, ...(pathKey ? [pathKey] : [])];
     });
-    const folderKeys = [...new Set(startKeys.flat())].filter(k => typeof k === 'string' && k.length > 0);
-    const folderSnaps = folderKeys.length ? await db.getAll(...folderKeys.map(k => db.collection(FolderCollection).doc(k))) : [];
-    const folders: Record<string, Record<string, unknown> | undefined> = Object.fromEntries(folderSnaps.map(s => [s.id, s.data()]));
-    // Load the ancestor chains too: a chat room album names its room on the ROOT folder only.
-    let miss: string[];
-    for (let rounds = 0; (miss = missingAncestors(folders)).length && rounds < MAX_FOLDER_DEPTH; rounds++) {
-      const snaps = await db.getAll(...miss.map(k => db.collection(FolderCollection).doc(k)));
+    // Only safe ids reach `doc()`/`getAll` — one throwing id would fail every video of the call.
+    // An unsafe key is never loaded, so its chain stays unresolved and that doc is denied.
+    const folders: Record<string, Record<string, unknown> | undefined> = Object.create(null);
+    const load = async (ks: string[]) => {
+      const safe = [...new Set(ks)].filter(isSafeDocId);
+      if (safe.length === 0) return;
+      const snaps = await db.getAll(...safe.map(k => db.collection(FolderCollection).doc(k)));
       for (const s of snaps) folders[s.id] = s.data();
+    };
+    await load(startKeys.flat());
+    // Load the ancestor chains too: a member-made sub-folder inherits its room through `parents`.
+    let miss: string[];
+    for (let rounds = 0; (miss = missingAncestors(folders).filter(isSafeDocId)).length && rounds < MAX_FOLDER_DEPTH; rounds++) {
+      await load(miss);
     }
     const audiences: Audience[] = startKeys.map(k => audienceOf(k, folders));
     const joined = await roomMembership(audiences.flatMap(a => a.rooms), request.auth?.uid ?? '');

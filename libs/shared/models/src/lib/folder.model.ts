@@ -22,9 +22,10 @@ export class FolderModel implements OkrModel, NamedModel, SearchableModel, Tagge
   // the first image found in the folder — the behaviour that was hardcoded before.
   public coverDocumentKey = DEFAULT_KEY;
 
-  // Matrix room id whose CURRENT members may play this folder's videos (spec 1.82 §8). Set only on
-  // the root folder of a chat room album; descendants inherit it through `parents`. Empty = no
-  // room audience (the folder's videos are tenant-wide, like any album). Written by Cloud Functions.
+  // Matrix room id whose CURRENT members may play this folder's videos (spec 1.82 §8). Set on all
+  // three folders of a chat room album (root, year, videos) — the private Storage rule reads only
+  // the upload path's own folder; signVideoUrls also walks `parents`, so a sub-folder a member adds
+  // inherits it. Empty = no room audience (tenant-wide, like any album). Written by Cloud Functions.
   public matrixRoomId = '';
   public tags = DEFAULT_TAGS;
   public tenants: string[] = DEFAULT_TENANTS;

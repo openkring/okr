@@ -8,15 +8,14 @@ import { addIndexElement, getMimeType } from '@okr/shared-util-core';
 import { checkAppCheckToken, checkAuthentication, getCallerTenantId } from '@okr/shared-util-functions';
 
 import { privateBucket } from '../_storage/private-bucket';
-import { getJoinedMemberIds, matrixAdminToken, requireRoomInTenant, requireUserPersonKey, serverHostname } from '../matrix-simple/shared';
+import { getJoinedMemberIds, getRoomSummary, matrixAdminToken, requireRoomInTenant, requireUserPersonKey, serverHostname } from '../matrix-simple/shared';
 import {
-  assertChatFolders, chatFolderKeys, chatVideoPath, MAX_VIDEO_BYTES, safeVideoTitle, validateChatVideoRequest, zurichStoreDate,
+  assertChatFolders, chatAlbumRootName, chatFolderKeys, chatVideoPath, MAX_VIDEO_BYTES, safeVideoTitle, validateChatVideoRequest, zurichStoreDate,
 } from './chat-video.util';
 
 const CF_NAME = 'prepareChatVideoUpload';
 const ALREADY_EXISTS = 6;
 const UPLOAD_WINDOW_MS = 15 * 60 * 1000;
-const MAX_ROOM_NAME = 80;
 
 export interface ChatVideoUpload {
   docKey: string;
@@ -70,8 +69,9 @@ async function createIfAbsent(db: Firestore, key: string, data: object): Promise
 /**
  * A chat video becomes a document in the room's album in the private bucket (spec 1.82 §8): the
  * function checks that the caller is a CURRENT joined member of the room (live from Synapse, before
- * any write), creates the room album's three folders if absent (`Chat · <room>` → `<year>` →
- * `videos`, deterministic keys so concurrent senders share them), adds the document and returns a
+ * any write), creates the room album's three folders if absent (`Chat · <room>` — or
+ * `Chat · Direktnachricht`, see chatAlbumRootName — → `<year>` → `videos`, all three naming the
+ * room, deterministic keys so concurrent senders share them), adds the document and returns a
  * signed v4 PUT URL bound to the content type and the size limit. The client uploads with exactly
  * `Content-Type: <contentType>` and `x-goog-content-length-range: 0,<maxBytes>`.
  */
@@ -103,8 +103,8 @@ export const prepareChatVideoUpload = onCall(
     const today = zurichStoreDate(new Date());
     const year = today.slice(0, 4);
     const keys = chatFolderKeys(tenantId, req.roomId, year);
-    const roomName = req.roomName.trim().slice(0, MAX_ROOM_NAME);
-    const rootName = roomName ? `Chat · ${roomName}` : 'Chat';
+    // Server-derived: the client's `roomName` is the partner's name in a DM (privacy, spec 1.82 §8).
+    const rootName = chatAlbumRootName(await getRoomSummary(req.roomId, adminToken), joined.size);
 
     const db = getFirestore();
     const root = await createIfAbsent(db, keys.root, folder(tenantId, rootName, [], req.roomId));
@@ -113,8 +113,10 @@ export const prepareChatVideoUpload = onCall(
       logger.error(`${CF_NAME}: folder ${keys.root} exists for another room, refusing`, { roomId: req.roomId });
       throw new HttpsError('failed-precondition', 'Room album folder conflict.');
     }
-    const yearFolder = await createIfAbsent(db, keys.year, folder(tenantId, year, [keys.root], ''));
-    const videosFolder = await createIfAbsent(db, keys.videos, folder(tenantId, 'videos', [keys.year], ''));
+    // All three folders name the room: the Storage rule `folderHasNoRoom` reads only the folder
+    // the upload path names (the videos folder), never its ancestors.
+    const yearFolder = await createIfAbsent(db, keys.year, folder(tenantId, year, [keys.root], req.roomId));
+    const videosFolder = await createIfAbsent(db, keys.videos, folder(tenantId, 'videos', [keys.year], req.roomId));
     try {
       assertChatFolders({ root, year: yearFolder, videos: videosFolder }, keys, req.roomId, tenantId);
     } catch (error) {

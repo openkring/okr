@@ -15,8 +15,10 @@ service firebase.storage {
     // By extension, never by contentType — see storage.rules isVideoUpload().
     function isVideoUpload() { return request.resource.name.lower().matches('.*[.](mp4|mov|avi)'); }
     // A folder that carries a room audience (chat room album) takes no client write: those videos
-    // arrive only via the signed URL from prepareChatVideoUpload, which bypasses rules. Legacy
-    // folder docs have no matrixRoomId (read as ''). A missing folder doc errors, which denies.
+    // arrive only via the signed URL from prepareChatVideoUpload, which bypasses rules. Only the
+    // path's own folder is read (no ancestor walk in rules), so prepareChatVideoUpload stamps the
+    // room on all three album folders. Legacy folder docs have no matrixRoomId (read as ''). A
+    // missing folder doc errors, which denies.
     function folderHasNoRoom(key) {
       return firestore.get(/databases/(default)/documents/folders/$(key)).data.get('matrixRoomId', '') == '';
     }

@@ -15,10 +15,22 @@ export function windowExpiry(nowMs: number): number {
   return Math.ceil((nowMs + MIN_VALIDITY_MS) / WINDOW_MS) * WINDOW_MS;
 }
 
+const SAFE_DOC_ID = /^(?!__.*__$)[A-Za-z0-9_-]{1,128}$/;
+
+/**
+ * Whether `id` can be handed to `db.doc()` / `getAll` without the Admin SDK throwing: no `/`, no
+ * `.`/`..`, not a reserved `__…__` id, at most 128 characters. Document ids, `folderKeys` and
+ * `fullPath` are author-editable, and a single throwing id would reject the WHOLE signing call —
+ * every video of the album or room for everyone. Unsafe ids are filtered or denied, never thrown.
+ * (Firestore ids may hold more characters; every id this app writes is `[A-Za-z0-9_-]`.)
+ */
+export function isSafeDocId(id: unknown): id is string {
+  return typeof id === 'string' && SAFE_DOC_ID.test(id);
+}
+
 export function validVideoKeys(keys: unknown): string[] {
   if (!Array.isArray(keys)) return [];
-  const ok = (k: unknown): k is string => typeof k === 'string' && k.length > 0 && !k.includes('/') && k !== '.' && k !== '..';
-  return [...new Set(keys.filter(ok))].slice(0, MAX_VIDEO_KEYS);
+  return [...new Set(keys.filter(isSafeDocId))].slice(0, MAX_VIDEO_KEYS);
 }
 
 function escapeRegExp(s: string): string {
@@ -55,14 +67,15 @@ export function contentDisposition(title: string, path: string): string {
 }
 
 /**
- * The folder key of a `tenant/<tid>/folder/<key>/album/…` path, or undefined (section albums,
- * other tenants, non-album paths). `fullPath` is author-editable, so the room gate must also
+ * The folder key of a `tenant/<tid>/folder/<key>/album/…` video path, or undefined (section albums,
+ * other tenants, non-album or non-video paths, keys that are not a safe document id). `fullPath` is author-editable, so the room gate must also
  * walk the folder the PATH names, not only the document's `folderKeys` (spec 1.82 §8).
  */
 export function albumFolderKeyOfPath(path: string, tenantId: string): string | undefined {
-  if (!tenantId || typeof path !== 'string') return undefined;
+  // Only a path that passes the album-video layout check, and only a key `db.doc()` accepts.
+  if (!isAlbumVideoObjectPath(path, tenantId)) return undefined;
   const m = new RegExp(`^tenant/${escapeRegExp(tenantId)}/folder/([^/]+)/album/`).exec(path);
-  return m?.[1];
+  return isSafeDocId(m?.[1]) ? m[1] : undefined;
 }
 
 type Data = Record<string, unknown> | undefined;

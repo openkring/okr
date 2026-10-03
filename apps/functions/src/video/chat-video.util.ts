@@ -17,6 +17,7 @@ export interface ChatVideoRequest {
   fileName: string;
   size: number;
   mimeType: string;
+  /** Accepted for backward compatibility with older clients; never used (see chatAlbumRootName). */
   roomName: string;
 }
 
@@ -97,15 +98,40 @@ export function zurichStoreDate(now: Date): string {
  * (U+202A–U+202E, U+2066–U+2069 — they make `evil‮vom.mov` read as `evilmov.mov`), capped at 120.
  */
 export function safeVideoTitle(name: string): string {
+  return visibleText(name).slice(0, MAX_FILE_NAME) || 'video';
+}
+
+/** `name` minus control characters and bidi overrides, trimmed. */
+function visibleText(name: string): string {
   // eslint-disable-next-line no-control-regex
-  const clean = String(name ?? '').replace(/[\u0000-\u001f\u007f‪-‮⁦-⁩]/g, '').trim();
-  return clean.slice(0, MAX_FILE_NAME) || 'video';
+  return String(name ?? '').replace(/[\u0000-\u001f\u007f‪-‮⁦-⁩]/g, '').trim();
+}
+
+const MAX_ROOM_NAME = 80;
+export const DM_ALBUM_NAME = 'Chat · Direktnachricht';
+
+/**
+ * The name of a room album's root folder (spec 1.82 §8), derived on the server from the room's
+ * Synapse state — never from the client, which for a DM would send the PARTNER's name and so put
+ * `Chat · Anna Muster` into a tenant-readable folder list. A room is a group room when it carries
+ * a `#group_`/`#ask_` alias or has more than two joined members; only then is its name shown.
+ * Anything else — a DM, or an unreadable room (`summary` undefined) — is `Chat · Direktnachricht`.
+ * A group room without a name is just `Chat`.
+ */
+export function chatAlbumRootName(summary: { name: string; canonicalAlias: string } | undefined, joinedCount: number): string {
+  if (!summary) return DM_ALBUM_NAME;
+  const alias = summary.canonicalAlias.split(':')[0].replace(/^#/, '').toLowerCase();
+  const groupRoom = alias.startsWith('group_') || alias.startsWith('ask_') || joinedCount > 2;
+  if (!groupRoom) return DM_ALBUM_NAME;
+  const name = visibleText(summary.name).slice(0, MAX_ROOM_NAME).trim();
+  return name ? `Chat · ${name}` : 'Chat';
 }
 
 type FolderData = Record<string, unknown> | undefined;
 
 /**
- * The room album chain must still be the one this function built: root names the room, year sits
+ * The room album chain must still be the one this function built: all three folders name the
+ * room (the Storage rule `folderHasNoRoom` reads only the upload path's own folder), year sits
  * directly under root, videos directly under year, all three in the tenant and none archived. A
  * moved folder would drop the room gate for every later video (spec 1.82 §8) and an archived one
  * would swallow uploads that `signVideoUrls` then never signs — so refuse, never repair.
@@ -122,8 +148,10 @@ export function assertChatFolders(
   };
   const live = (f: FolderData) =>
     !!f && Array.isArray(f['tenants']) && (f['tenants'] as unknown[]).includes(tenantId) && f['isArchived'] !== true;
+  // Every folder must name the room: the client Storage rule reads only the path's own folder.
+  const sameRoom = (f: FolderData) => (f?.['matrixRoomId'] ?? '') === roomId;
   const ok =
-    (folders.root?.['matrixRoomId'] ?? '') === roomId &&
+    sameRoom(folders.root) && sameRoom(folders.year) && sameRoom(folders.videos) &&
     sameParents(folders.year, [keys.root]) &&
     sameParents(folders.videos, [keys.year]) &&
     live(folders.root) && live(folders.year) && live(folders.videos);
