@@ -312,9 +312,9 @@ describe('deriveEnabledFeatures — against the real catalogue', () => {
       })
       .map(b => b.id);
 
-    // `instruments` declares no menu at all — the documented coverage gap. `vcard` used to be
-    // listed here too; it is now `core: true` (unioned in regardless of menu evidence), which
-    // is exactly the fix for its half of the gap.
+    // `instruments` used to be listed here (it declared no menu at all); since 2026-10-03 it owns
+    // the `calculator` row (spec 1.81), which closes its half of the gap. `vcard` left the list
+    // earlier by becoming `core: true` (unioned in regardless of menu evidence).
     //
     // `weather` (2026-08-29) is here BY DESIGN, not as a gap. Its widgets are CMS section
     // variants, not menu entries, so there is no menu key to own — and being un-inferable is
@@ -328,6 +328,6 @@ describe('deriveEnabledFeatures — against the real catalogue', () => {
     // root nav of a tenant that has the umbrella on but no game enabled. Being un-inferable is
     // harmless here: `resolveWithDeps` closes every game's `dependsOn: ['games']` over the
     // umbrella, so evidence for a GAME already switches it on.
-    expect(withoutExclusive).toEqual(['instruments', 'games', 'weather']);
+    expect(withoutExclusive).toEqual(['games', 'weather']);
   });
 });

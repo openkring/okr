@@ -2364,7 +2364,17 @@ const instruments: FeatureBlock = {
   // docs the screens have no add/export action and are reachable only by typing a URL. Authoring
   // them is a data change (and the values would be guesses); cataloguing invented docs would
   // seed them into all 16 tenants.
-  menu: [],
+  //
+  // The one exception is the Rechner (spec 1.81, 2026-10-03): `/calculator` needs no context
+  // wrapper and no data, so its row is catalogued — every tenant with `instruments` enabled
+  // gets it on the next picker save (after a functions deploy, FEATURE_BLOCKS is baked into
+  // `applyFeatureSelection`). Any logged-in member may use it, matching `isAuthenticatedGuard`.
+  menu: [
+    {
+      key: 'calculator', name: 'calculator', url: '/calculator',
+      action: 'navigate', roleNeeded: 'registered', icon: 'calculator', label: '@item.calculator',
+    },
+  ],
 };
 
 /**
