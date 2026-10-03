@@ -7,7 +7,7 @@ import { UploadTask, getDownloadURL } from 'firebase/storage';
 
 import { captureMessage } from '@sentry/angular';
 
-import { uploadToFirebaseStorage } from '@okr/shared-config';
+import { StorageBucket, uploadToFirebaseStorage } from '@okr/shared-config';
 import { dismissOverlay } from '@okr/shared-util-angular';
 import { describeUploadError } from '@okr/shared-util-core';
 
@@ -17,6 +17,8 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 export interface UploadEntry {
   file: File;
   fullPath: string;
+  /** Target bucket; 'private' = write-only for clients, result is the fullPath (spec 1.82). */
+  bucket?: StorageBucket;
 }
 
 interface UploadState {
@@ -116,7 +118,7 @@ export class UploadTaskModal implements OnInit {
     let completedCount = 0;
 
     this.uploads().forEach((entry, index) => {
-      const task = uploadToFirebaseStorage(entry.fullPath, entry.file);
+      const task = uploadToFirebaseStorage(entry.fullPath, entry.file, entry.bucket);
 
       this.uploadStates.update(states => {
         const updated = [...states];
@@ -154,7 +156,11 @@ export class UploadTaskModal implements OnInit {
         () => {
           // task.on() does not await this callback: an uncaught rejection here would surface as an
           // unhandled rejection AND leave completedCount short, so the modal would never dismiss.
-          getDownloadURL(task.snapshot.ref)
+          // No client read on the private bucket — the path is the success signal (spec 1.82 §4).
+          const urlPromise: Promise<string> = entry.bucket === 'private'
+            ? Promise.resolve(entry.fullPath)
+            : getDownloadURL(task.snapshot.ref);
+          urlPromise
             .then((url) => {
               downloadUrls[index] = url;
               this.uploadStates.update(states => {

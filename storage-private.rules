@@ -1,0 +1,28 @@
+rules_version = '2';
+
+// The private bucket (spec 1.74, 1.82). Clients never READ here — delivery is signed URLs from
+// Cloud Functions (signVideoUrls, signFinanceDocuments). The only client write is an album video
+// upload. Finance files, exports and everything else written by the Admin SDK need no grant.
+service firebase.storage {
+  match /b/{bucket}/o {
+    function userPath() { return /databases/(default)/documents/users/$(request.auth.uid); }
+    function inTenant(tenantId) {
+      return request.auth != null && firestore.exists(userPath())
+        && (tenantId in firestore.get(userPath()).data.tenants);
+    }
+    // Same 200 MB as MAX_VIDEO_BYTES (libs/shared/util-core/src/lib/video.util.ts).
+    function videoSizeOk() { return request.resource.size < 200 * 1024 * 1024; }
+    // By extension, never by contentType — see storage.rules isVideoUpload().
+    function isVideoUpload() { return request.resource.name.lower().matches('.*[.](mp4|mov)'); }
+
+    match /tenant/{tenantId}/{modelType}/{key}/album/{sub}/{path=**} {
+      allow create: if inTenant(tenantId)
+        && (modelType == 'section' || modelType == 'folder')
+        && sub != 'renderings'
+        && isVideoUpload() && videoSizeOk();
+    }
+    match /{all=**} {
+      allow read, write: if false;
+    }
+  }
+}

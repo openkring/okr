@@ -12,8 +12,16 @@ export const STORAGE = new InjectionToken('Firebase storage', {
   } 
 });
 
-export function uploadToFirebaseStorage(path: string, file: File): UploadTask {
-  const _storage = getBkStorage();
+export type StorageBucket = 'default' | 'private';
+const BUCKET_URLS: Record<StorageBucket, string> = {
+  default: 'gs://bkaiser-org.appspot.com',
+  // spec 1.82: album videos. Write-only for clients (storage-private.rules); delivery is signed.
+  private: 'gs://bkaiser-org-private',
+};
+export const PRIVATE_BUCKET_URL = BUCKET_URLS.private;
+
+export function uploadToFirebaseStorage(path: string, file: File, bucket: StorageBucket = 'default'): UploadTask {
+  const _storage = getBkStorage(bucket);
   const _ref = ref(_storage, path);
   return uploadBytesResumable(_ref, file);
 }
@@ -22,10 +30,10 @@ export function uploadToFirebaseStorage(path: string, file: File): UploadTask {
 // you need to grant access to the bucket for the app you are using with gsutil tool
 // gsutil -m acl ch -r -u service-<project number>@gcp-sa-firebasestorage.iam.gserviceaccount.com gs://bkaiser-org.appspot.com
 // see: https://firebase.google.com/docs/storage/web/start?_gl=1*1mibu5l*_up*MQ..*_ga*OTYxNzQxOTMxLjE3MjU1MjMzNTQ.*_ga_CW55HF8NVT*MTcyNTUyMzM1NC4xLjAuMTcyNTUyMzM1NC4wLjAuMA..
-export function getBkStorage(): FirebaseStorage {
+export function getBkStorage(bucket: StorageBucket = 'default'): FirebaseStorage {
   try {
     const _firebaseApp = getApp();
-    const _storage = getStorage(_firebaseApp, 'gs://bkaiser-org.appspot.com');
+    const _storage = getStorage(_firebaseApp, BUCKET_URLS[bucket]);
   
     const _env = Inject(ENV) as OkrEnvironment;
     if (_env.useEmulators) {

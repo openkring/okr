@@ -1348,9 +1348,10 @@
     "rules": "firestore.rules",
     "indexes": "firestore.indexes.json"
   },
-  "storage": {
-    "rules": "storage.rules"
-  },
+  "storage": [
+    { "bucket": "bkaiser-org.appspot.com", "rules": "storage.rules" },
+    { "bucket": "bkaiser-org-private", "rules": "storage-private.rules" }
+  ],
   "functions": {
     "source": "dist/apps/functions",
     "codebase": "default",
