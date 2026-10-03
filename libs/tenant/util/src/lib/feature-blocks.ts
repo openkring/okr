@@ -2738,12 +2738,12 @@ const klondike: FeatureBlock = {
   id: 'klondike',
   bundle: 'games',
   label: '@tenant/util.feature.klondike.label',
-  icon: 'card',
+  icon: 'game-klondike',
   defaultAvailability: 'ga',
   dependsOn: ['games'],
   collections: [],
   menu: [gamesMenuParent([
-    { key: 'game-klondike', name: 'game-klondike', url: '/klondike', action: 'navigate', roleNeeded: 'registered', icon: 'card', label: '@item.game-klondike' },
+    { key: 'game-klondike', name: 'game-klondike', url: '/klondike', action: 'navigate', roleNeeded: 'registered', icon: 'game-klondike', label: '@item.game-klondike' },
   ])],
 };
 
