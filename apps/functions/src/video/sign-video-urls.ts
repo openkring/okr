@@ -9,8 +9,8 @@ import { checkAppCheckToken, checkAuthentication, getCallerTenantId } from '@okr
 import { IMGIX_PRIVATE_HOST, signImgixUrl } from '../_storage/imgix-sign';
 import { privateBucket } from '../_storage/private-bucket';
 import { getJoinedMemberIds, matrixAdminToken, requireUserPersonKey, serverHostname } from '../matrix-simple/shared';
-import { audienceRoomOf, MAX_FOLDER_DEPTH, missingAncestors } from './video-audience.util';
-import { contentDisposition, MP4_PARAMS, POSTER_PARAMS, validVideoKeys, videoAccessPath, windowExpiry } from './video-sign.util';
+import { Audience, audienceOf, MAX_FOLDER_DEPTH, missingAncestors } from './video-audience.util';
+import { albumFolderKeyOfPath, contentDisposition, MP4_PARAMS, POSTER_PARAMS, validVideoKeys, videoAccessPath, windowExpiry } from './video-sign.util';
 
 const CF_NAME = 'signVideoUrls';
 const imgixPrivateToken = defineSecret('IMGIX_PRIVATE_TOKEN');
@@ -44,7 +44,13 @@ export const signVideoUrls = onCall(
 
     const db = getFirestore();
     const docs = await db.getAll(...keys.map(k => db.collection(DocumentCollection).doc(k)));
-    const folderKeys = [...new Set(docs.flatMap(d => (d.data()?.['folderKeys'] as string[] | undefined) ?? []))].filter(Boolean);
+    // Start keys per doc: its folderKeys PLUS the folder its (author-editable) fullPath names.
+    const startKeys = docs.map(d => {
+      const data = d.data();
+      const pathKey = albumFolderKeyOfPath(String(data?.['fullPath'] ?? ''), tenantId);
+      return [...((data?.['folderKeys'] as string[] | undefined) ?? []), ...(pathKey ? [pathKey] : [])];
+    });
+    const folderKeys = [...new Set(startKeys.flat())].filter(k => typeof k === 'string' && k.length > 0);
     const folderSnaps = folderKeys.length ? await db.getAll(...folderKeys.map(k => db.collection(FolderCollection).doc(k))) : [];
     const folders: Record<string, Record<string, unknown> | undefined> = Object.fromEntries(folderSnaps.map(s => [s.id, s.data()]));
     // Load the ancestor chains too: a chat room album names its room on the ROOT folder only.
@@ -53,8 +59,8 @@ export const signVideoUrls = onCall(
       const snaps = await db.getAll(...miss.map(k => db.collection(FolderCollection).doc(k)));
       for (const s of snaps) folders[s.id] = s.data();
     }
-    const rooms = docs.map(d => audienceRoomOf((d.data()?.['folderKeys'] as string[] | undefined) ?? [], folders));
-    const joined = await roomMembership(rooms, request.auth?.uid ?? '');
+    const audiences: Audience[] = startKeys.map(k => audienceOf(k, folders));
+    const joined = await roomMembership(audiences.flatMap(a => a.rooms), request.auth?.uid ?? '');
 
     const token = imgixPrivateToken.value();
     const expSeconds = Math.floor(expires / 1000);
@@ -62,7 +68,8 @@ export const signVideoUrls = onCall(
     const signed = await Promise.all(keys.map(async (key, i): Promise<SignedVideo | null> => {
       const path = videoAccessPath(docs[i].data(), folders, tenantId);
       if (!path) return null;
-      if (rooms[i] && !joined.get(rooms[i])) return null;
+      // Fail closed: an unresolved folder chain, or any room the caller is not joined in.
+      if (audiences[i].unresolved || audiences[i].rooms.some(r => !joined.get(r))) return null;
       // One failing item (a GCS hiccup, a signBlob quota) must not reject the whole album page.
       try {
         const [exists] = await bucket.file(path).exists();

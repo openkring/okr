@@ -54,6 +54,17 @@ export function contentDisposition(title: string, path: string): string {
   return `attachment; filename="${ascii}"; filename*=UTF-8''${encoded}`;
 }
 
+/**
+ * The folder key of a `tenant/<tid>/folder/<key>/album/…` path, or undefined (section albums,
+ * other tenants, non-album paths). `fullPath` is author-editable, so the room gate must also
+ * walk the folder the PATH names, not only the document's `folderKeys` (spec 1.82 §8).
+ */
+export function albumFolderKeyOfPath(path: string, tenantId: string): string | undefined {
+  if (!tenantId || typeof path !== 'string') return undefined;
+  const m = new RegExp(`^tenant/${escapeRegExp(tenantId)}/folder/([^/]+)/album/`).exec(path);
+  return m?.[1];
+}
+
 type Data = Record<string, unknown> | undefined;
 
 /**

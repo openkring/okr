@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  contentDisposition, isAlbumVideoObjectPath, MAX_VIDEO_KEYS, MP4_PARAMS, validVideoKeys, videoAccessPath, WINDOW_MS, windowExpiry,
+  albumFolderKeyOfPath, contentDisposition, isAlbumVideoObjectPath, MAX_VIDEO_KEYS, MP4_PARAMS, validVideoKeys, videoAccessPath, WINDOW_MS, windowExpiry,
 } from './video-sign.util';
 
 const HOUR = 3600 * 1000;
@@ -100,6 +100,18 @@ describe('isAlbumVideoObjectPath', () => {
   it('still rejects other extensions and the renderings sub-folder', () => {
     expect(isAlbumVideoObjectPath('tenant/scs/folder/f1/album/ab/clip.mkv', 'scs')).toBe(false);
     expect(isAlbumVideoObjectPath('tenant/scs/folder/f1/album/renderings/clip.avi', 'scs')).toBe(false);
+  });
+});
+
+describe('albumFolderKeyOfPath', () => {
+  it('returns the folder key of a folder album path', () => {
+    expect(albumFolderKeyOfPath('tenant/scs/folder/f1/album/ab/clip.mp4', 'scs')).toBe('f1');
+  });
+  it('is undefined for a section path, another tenant or a non-album path', () => {
+    expect(albumFolderKeyOfPath('tenant/scs/section/s1/album/ab/clip.mp4', 'scs')).toBeUndefined();
+    expect(albumFolderKeyOfPath('tenant/kring/folder/f1/album/ab/clip.mp4', 'scs')).toBeUndefined();
+    expect(albumFolderKeyOfPath('tenant/scs/folder/f1/files/clip.mp4', 'scs')).toBeUndefined();
+    expect(albumFolderKeyOfPath('tenant/sXs/folder/f1/album/ab/clip.mp4', 's.s')).toBeUndefined();
   });
 });
 
