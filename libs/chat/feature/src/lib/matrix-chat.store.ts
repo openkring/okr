@@ -5,6 +5,7 @@ import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { map, of, startWith, switchMap, timer } from 'rxjs';
 import { Visibility, type MatrixCall } from 'matrix-js-sdk';
+import { captureMessage } from '@sentry/angular';
 import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
 
 import { AppStore } from '@okr/shared-feature';
@@ -16,7 +17,7 @@ import { I18nService } from '@okr/shared-i18n';
 import { ActivityService } from '@okr/activity-data-access';
 import { AvatarService } from '@okr/avatar-data-access';
 import { MatrixChatService, MatrixPollData } from '@okr/chat-data-access';
-import { AdhocChatFormModel, filterRoomsOfTenant, findSupportRoom, serverNameOf, MATRIX_CHAT_I18N_KEYS, MatrixChatI18n, MentionRef, isAlbumVideoFile, isVideoLimitError, videoAlbumFallsBackToSynapse } from '@okr/chat-util';
+import { AdhocChatFormModel, filterRoomsOfTenant, findSupportRoom, serverNameOf, MATRIX_CHAT_I18N_KEYS, MatrixChatI18n, MentionRef, callableErrorCode, isAlbumVideoFile, isVideoLimitError, isVideoUploadError, videoAlbumFallsBackToSynapse } from '@okr/chat-util';
 
 import { RoomEditModal } from './room-edit.modal';
 
@@ -323,6 +324,28 @@ export const _MatrixChatStore = signalStore(
 
   withMethods((store) => {
 
+    /** Synchronous, TENANT-FILTERED snapshot of the rooms — bypasses the rxResource async lag. */
+    const roomsSync = (): MatrixRoom[] => filterRoomsOfTenant(
+      store.matrixService.roomsCurrentValue,
+      store.appStore.allGroupsAndChats(),
+      new Set(store.appStore.allPersons().map((p: PersonModel) => p.okey.toLowerCase())),
+      store.appStore.tenantId(),
+      store.homeServer(),
+    );
+
+    /**
+     * Report an album-path failure to Sentry (console output never reaches it). Tags only: no
+     * signed URL, no file name, no key containing "auth" (Sentry scrubs those).
+     */
+    const reportVideoAlbumFailure = (error: unknown, level: 'warning' | 'error'): void => {
+      const httpStatus = isVideoUploadError(error) ? error.status : undefined;
+      const code = httpStatus !== undefined ? 'put' : (callableErrorCode(error) ?? 'unknown');
+      captureMessage(`MatrixChatStore.sendFile: chat video album ${level === 'warning' ? 'fallback to Synapse' : 'send failed'} (${code})`, {
+        level,
+        tags: { context: 'chat-video-album', code, ...(httpStatus !== undefined ? { httpStatus: String(httpStatus) } : {}) },
+      });
+    };
+
     /**
      * Send one video into the room album (spec 1.82 §8). Answers true when the send is settled
      * — sent, or refused with a toast — and false when the Synapse path should take the file
@@ -332,7 +355,8 @@ export const _MatrixChatStore = signalStore(
      */
     const sendVideoToAlbum = async (roomId: string, file: File, threadId?: string): Promise<boolean> => {
       // The TENANT-FILTERED list (matrix-chat skill): the raw service list spans every tenant.
-      const roomName = store.rooms().find(r => r.roomId === roomId)?.name ?? '';
+      // Fallback: the synchronous snapshot while rooms() has not caught up yet (same filter).
+      const roomName = (store.rooms().find(r => r.roomId === roomId) ?? roomsSync().find(r => r.roomId === roomId))?.name ?? '';
       try {
         await store.matrixService.sendVideoAsAlbumLink(roomId, roomName, file, threadId,
           () => void store.alertService.showToast(store.i18n.video_uploading()));
@@ -348,9 +372,11 @@ export const _MatrixChatStore = signalStore(
         }
         if (videoAlbumFallsBackToSynapse(error)) {
           warn(`MatrixChatStore.sendFile: room album unusable for ${roomId}, sending ${file.name} via Synapse: ${error}`);
+          reportVideoAlbumFailure(error, 'warning');
           return false;
         }
         warn(`MatrixChatStore.sendFile: sending video ${file.name} into the album of ${roomId} failed: ${error}`);
+        reportVideoAlbumFailure(error, 'error');
         await store.alertService.showToast(store.i18n.files_send_error());
         return true;
       }
@@ -370,13 +396,7 @@ export const _MatrixChatStore = signalStore(
        * in the elab app while the room list itself correctly shows "no rooms found".
        */
       getRoomsSync(): MatrixRoom[] {
-        return filterRoomsOfTenant(
-          store.matrixService.roomsCurrentValue,
-          store.appStore.allGroupsAndChats(),
-          new Set(store.appStore.allPersons().map((p: PersonModel) => p.okey.toLowerCase())),
-          store.appStore.tenantId(),
-          store.homeServer(),
-        );
+        return roomsSync();
       },
 
       setCurrentRoom(roomId: string | undefined): void {

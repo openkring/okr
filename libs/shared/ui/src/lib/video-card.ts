@@ -47,7 +47,7 @@ import { SvgIconPipe } from '@okr/shared-pipes';
     } @else {
       <div class="poster clickable" role="button" tabindex="0"
            [style.background-image]="backgroundImage()"
-           (click)="clicked.emit()" (keydown.enter)="clicked.emit()" (keydown.space)="clicked.emit()">
+           (click)="activate($event)" (keydown.enter)="activate($event)" (keydown.space)="activate($event)">
         <ion-icon class="play-marker" src="{{ 'play' | svgIcon }}" />
       </div>
     }
@@ -64,6 +64,16 @@ export class VideoCard {
   public unavailableLabel = input('');
 
   public clicked = output<void>();
+
+  /**
+   * The poster consumes its own activation: a host that reacts to clicks on a surrounding element
+   * (a chat bubble opens its action sheet) keeps that reaction for the title and everything else,
+   * but a tap on the poster only plays.
+   */
+  protected activate(event: Event): void {
+    event.stopPropagation();
+    this.clicked.emit();
+  }
 
   /** The signed poster URL is used verbatim; an empty URL leaves the neutral surface colour. */
   protected readonly backgroundImage = computed(() => this.posterUrl() ? `url("${this.posterUrl()}")` : 'none');

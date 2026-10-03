@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { isAlbumVideoFile, isVideoLimitError, VideoLimitError, videoAlbumFallsBackToSynapse } from './video-album.util';
+import { callableErrorCode, isAlbumVideoFile, isVideoLimitError, isVideoUploadError, VideoLimitError, VideoUploadError, videoAlbumFallsBackToSynapse } from './video-album.util';
 
 function file(name: string, type = ''): File {
   return new File(['x'], name, { type });
@@ -47,5 +47,24 @@ describe('videoAlbumFallsBackToSynapse', () => {
     expect(videoAlbumFallsBackToSynapse({ code: 'functions/invalid-argument' })).toBe(false);
     expect(videoAlbumFallsBackToSynapse(new Error('PUT failed'))).toBe(false);
     expect(videoAlbumFallsBackToSynapse(undefined)).toBe(false);
+  });
+});
+
+describe('VideoUploadError', () => {
+  it('carries the status, never a URL, and is recognised by name', () => {
+    const err = new VideoUploadError(403);
+    expect(err.status).toBe(403);
+    expect(err.message).not.toMatch(/https?:/);
+    expect(isVideoUploadError(err)).toBe(true);
+    expect(isVideoUploadError(new Error('x'))).toBe(false);
+  });
+});
+
+describe('callableErrorCode', () => {
+  it('strips the functions/ prefix and ignores everything else', () => {
+    expect(callableErrorCode({ code: 'functions/permission-denied' })).toBe('permission-denied');
+    expect(callableErrorCode({ code: 'storage/unauthorized' })).toBeUndefined();
+    expect(callableErrorCode(new Error('x'))).toBeUndefined();
+    expect(callableErrorCode(null)).toBeUndefined();
   });
 });

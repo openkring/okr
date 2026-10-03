@@ -36,6 +36,30 @@ export function isVideoLimitError(error: unknown): error is VideoLimitError {
 }
 
 /**
+ * The signed PUT into the private bucket failed. `status` is the HTTP status, 0 for a network
+ * error or an abort. Carries no URL: the signed URL is a write credential and must never be logged.
+ */
+export class VideoUploadError extends Error {
+  constructor(public readonly status: number) {
+    super(status ? `video upload failed with HTTP ${status}` : 'video upload failed (network or aborted)');
+    this.name = 'VideoUploadError';
+    Object.setPrototypeOf(this, VideoUploadError.prototype);
+  }
+}
+
+/** True if the given value is a VideoUploadError, safe across bundle boundaries. */
+export function isVideoUploadError(error: unknown): error is VideoUploadError {
+  return error instanceof VideoUploadError
+    || (error as Error | null)?.name === 'VideoUploadError';
+}
+
+/** The `functions/<code>` of a callable error, else undefined. */
+export function callableErrorCode(error: unknown): string | undefined {
+  const code = (error as { code?: unknown } | null)?.code;
+  return typeof code === 'string' && code.startsWith('functions/') ? code.slice('functions/'.length) : undefined;
+}
+
+/**
  * Whether a failed `prepareChatVideoUpload` should fall back to the Synapse attachment path.
  *
  * `failed-precondition` (the room album was archived or moved) and `unavailable` (Synapse could

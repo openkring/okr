@@ -4,7 +4,7 @@ import { IonIcon, IonChip, IonAvatar, IonSpinner } from '@ionic/angular/standalo
 
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { VideoCard } from '@okr/shared-ui';
-import { videoDocKeyOf } from '@okr/content-document-util';
+import { videoDocKeyOf, videoLink } from '@okr/content-document-util';
 import { MatrixMessage, MatrixReadReceipt, PersonModelName } from '@okr/shared-models';
 import { AvatarService } from '@okr/avatar-data-access';
 import { MatrixReadReceiptStrip } from './matrix-read-receipt-strip';
@@ -515,8 +515,8 @@ const MENTION_AVATAR_SIZE = 36;
                             @let videoKey = videoKeyOf(item);
                             @if (videoKey) {
                               <!-- An album video (spec 1.82 §8): a poster card instead of the bare link.
-                                   A playable card keeps its tap for itself; a loading or unavailable
-                                   one lets it through to the bubble's action sheet (delete, reply). -->
+                                   VideoCard stops only the poster tap; the title, a loading or an
+                                   unavailable card let the tap through to the bubble's action sheet. -->
                               @let card = videoCards()[videoKey];
                               <okr-video-card
                                 [posterUrl]="card?.posterUrl ?? ''"
@@ -525,8 +525,12 @@ const MENTION_AVATAR_SIZE = 36;
                                 [title]="i18n().video_card_title()"
                                 [unavailableLabel]="videoUnavailableLabel()"
                                 (clicked)="videoCardClicked.emit(videoKey)"
-                                (click)="card?.available && !card?.loading && $event.stopPropagation()"
                               />
+                              @if (!isCanonicalVideoBody(item, videoKey)) {
+                                <!-- A field-carrying message with any other body: show the text too,
+                                     so a forged org.okr.video field can never hide what was written. -->
+                                <p class="message-text" [innerHTML]="linkify(item.body)"></p>
+                              }
                             } @else if (item.content.formatted_body) {
                               <p class="message-text" [innerHTML]="renderFormattedBody(item)"></p>
                             } @else {
@@ -836,6 +840,11 @@ export class MatrixMessageList {
   /** The album video a text message points at (the org.okr.video field, else a bare link on this origin). */
   protected videoKeyOf(item: MatrixMessage): string | undefined {
     return videoDocKeyOf(item.content, item.body ?? '', location.origin);
+  }
+
+  /** True when the body is exactly the canonical link of this video — the only text a card may replace. */
+  protected isCanonicalVideoBody(item: MatrixMessage, docKey: string): boolean {
+    return (item.body ?? '').trim() === videoLink(location.origin, docKey);
   }
 
   /** Plain-text bodies carry no markup, so urls are made clickable here. */

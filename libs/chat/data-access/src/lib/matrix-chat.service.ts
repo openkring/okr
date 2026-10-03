@@ -10,7 +10,7 @@ import { MatrixConfig, MatrixMessage, MatrixReadReceipt, MatrixRoom, TypingNotif
 import { AppStore } from '@okr/shared-feature';
 import { checkVideoLimits, debugData, debugMessage } from '@okr/shared-util-core';
 import { OKR_VIDEO_FIELD, videoLink } from '@okr/content-document-util';
-import { convertHeicToJpeg, materializeFile, resolveFileMimeType, extractVideoPoster, UploadTooLargeError, initMatrixLogLevel, ensurePromiseWithResolvers, buildMentionContent, escapeHtml, MentionRef, OKR_TENANT_EVENT, resolveMatrixDisplayName, canPostWithPower, VideoLimitError } from '@okr/chat-util';
+import { convertHeicToJpeg, materializeFile, resolveFileMimeType, extractVideoPoster, UploadTooLargeError, initMatrixLogLevel, ensurePromiseWithResolvers, buildMentionContent, escapeHtml, MentionRef, OKR_TENANT_EVENT, resolveMatrixDisplayName, canPostWithPower, VideoLimitError, VideoUploadError } from '@okr/chat-util';
 
 import { mediaMimeHint, mxcAvatarHttpUrl } from './matrix-helpers';
 import { MatrixMediaService } from './matrix-media.service';
@@ -912,11 +912,9 @@ export class MatrixChatService {
       xhr.open('PUT', uploadUrl);
       xhr.setRequestHeader('Content-Type', contentType);
       xhr.setRequestHeader('x-goog-content-length-range', `0,${maxBytes}`);
-      xhr.onload = () => xhr.status >= 200 && xhr.status < 300
-        ? resolve()
-        : reject(new Error(`sendVideoAsAlbumLink: upload of ${file.name} failed with HTTP ${xhr.status}`));
-      xhr.onerror = () => reject(new Error(`sendVideoAsAlbumLink: upload of ${file.name} failed (network)`));
-      xhr.onabort = () => reject(new Error(`sendVideoAsAlbumLink: upload of ${file.name} aborted`));
+      xhr.onload = () => xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(new VideoUploadError(xhr.status));
+      xhr.onerror = () => reject(new VideoUploadError(0));
+      xhr.onabort = () => reject(new VideoUploadError(0));
       xhr.send(file);
     });
   }
