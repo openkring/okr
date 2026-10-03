@@ -1,4 +1,4 @@
-import { Component, DestroyRef, computed, inject } from '@angular/core';
+import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import {
   IonButton,
@@ -11,7 +11,7 @@ import {
 
 import { Header } from '@okr/shared-ui';
 import { fill } from '@okr/shared-util-core';
-import { Card, Source, Suit } from '@okr/games-klondike-util';
+import { Card, Source, Suit, Target, movingCards } from '@okr/games-klondike-util';
 
 import { KlondikeStore } from './klondike.store';
 
@@ -21,6 +21,31 @@ const SUIT_INDEX: Record<Suit, number> = { S: 0, H: 1, D: 2, C: 3 };
 /** Vertical step between stacked cards in a column, in card widths. */
 const STEP_DOWN = 0.16;
 const STEP_UP = 0.3;
+
+/** Pixels the pointer must travel before a press becomes a drag, so a tap stays a tap. */
+const DRAG_THRESHOLD = 6;
+
+type Drag = {
+  from: Source;
+  pointerId: number;
+  startX: number;
+  startY: number;
+  x: number;
+  y: number;
+  /** Where the card was grabbed, relative to its top-left corner. */
+  dx: number;
+  dy: number;
+  width: number;
+  started: boolean;
+};
+
+/** The pile under a screen point, read from the `data-pile` attribute of the board elements. */
+function pileAt(x: number, y: number): Target | null {
+  const el = document.elementFromPoint(x, y)?.closest<HTMLElement>('[data-pile]');
+  const [kind, index] = (el?.dataset['pile'] ?? '').split('-');
+  if (kind !== 'tableau' && kind !== 'foundation') return null;
+  return { kind, index: Number(index) };
+}
 
 export type CardView = {
   key: string;
@@ -33,6 +58,7 @@ export type CardView = {
   /** Distance from the top of the column, in card widths. */
   off: number;
   selected: boolean;
+  lifted: boolean;
 };
 
 type ColumnView = { index: number; cards: CardView[]; span: number };
@@ -136,12 +162,27 @@ function covers(picked: Source | null, source: Source): boolean {
           }
         </section>
       </div>
+      @if (ghost(); as g) {
+        <div class="kl-ghost" aria-hidden="true"
+          [style.left.px]="g.left" [style.top.px]="g.top" [style.width.px]="g.width" [style.--kl-cw]="g.width + 'px'">
+          @for (c of g.cards; track c.key) {
+            <div class="kl-card" [class.red]="c.red" [style.--kl-off]="c.off">
+              <span class="kl-corner">{{ c.rank }}<br>{{ c.suit }}</span>
+              <span class="kl-pip">{{ c.suit }}</span>
+            </div>
+          }
+        </div>
+      }
     </ion-content>
 
     <ng-template #cardTpl let-c>
       <button type="button" class="kl-card" [class.down]="!c.faceUp" [class.red]="c.red" [class.sel]="c.selected"
-        [style.--kl-off]="c.off" [attr.aria-label]="c.label" [attr.aria-pressed]="c.selected"
-        (click)="onCard(c.source)">
+        [class.lifted]="c.lifted" [style.--kl-off]="c.off" [attr.aria-label]="c.label" [attr.aria-pressed]="c.selected"
+        (click)="onCard(c.source)"
+        (pointerdown)="onPointerDown($event, c.source)"
+        (pointermove)="onPointerMove($event)"
+        (pointerup)="onPointerUp($event)"
+        (pointercancel)="onPointerCancel()">
         @if (c.faceUp) {
           <span class="kl-corner" aria-hidden="true">{{ c.rank }}<br>{{ c.suit }}</span>
           <span class="kl-pip" aria-hidden="true">{{ c.suit }}</span>
@@ -230,6 +271,12 @@ function covers(picked: Source | null, source: Source): boolean {
 
     .kl-finish { margin-top: 0.75rem; }
 
+    /* a face-up card can be dragged, so the finger must not scroll the page from it */
+    .kl-card:not(.down) { touch-action: none; }
+    .kl-card.lifted { opacity: 0.35; }
+    .kl-ghost { position: fixed; z-index: 1000; pointer-events: none; aspect-ratio: 5 / 7; }
+    .kl-ghost .kl-card { box-shadow: 0 6px 14px rgba(0, 0, 0, 0.35); }
+
     @media (prefers-reduced-motion: no-preference) {
       .kl-card { transition: top 0.12s ease-out; }
     }
@@ -284,6 +331,59 @@ export class KlondikePage {
     return count ? fill(this.store.i18n.stock(), { count }) : this.store.i18n.stock_empty();
   });
 
+  protected readonly drag = signal<Drag | null>(null);
+  /** A finished drag is followed by a click on the same card; it must not count as a tap. */
+  private suppressClickUntil = 0;
+
+  /** The picked-up cards following the pointer. */
+  protected readonly ghost = computed(() => {
+    const d = this.drag();
+    if (!d?.started) return null;
+    const cards = movingCards(this.store.game(), d.from).map((card, i) => this.view(card, d.from, i * STEP_UP, false));
+    return { left: d.x - d.dx, top: d.y - d.dy, width: d.width, cards };
+  });
+
+  protected onPointerDown(event: PointerEvent, source: Source): void {
+    if (!event.isPrimary || event.button !== 0 || this.store.won() || this.store.autoFinishing()) return;
+    if (!movingCards(this.store.game(), source).length) return;
+    const el = event.currentTarget as HTMLElement;
+    const rect = el.getBoundingClientRect();
+    el.setPointerCapture(event.pointerId);
+    this.drag.set({
+      from: source,
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      x: event.clientX,
+      y: event.clientY,
+      dx: event.clientX - rect.left,
+      dy: event.clientY - rect.top,
+      width: rect.width,
+      started: false,
+    });
+  }
+
+  protected onPointerMove(event: PointerEvent): void {
+    const d = this.drag();
+    if (!d || d.pointerId !== event.pointerId) return;
+    const started = d.started || Math.hypot(event.clientX - d.startX, event.clientY - d.startY) > DRAG_THRESHOLD;
+    this.drag.set({ ...d, x: event.clientX, y: event.clientY, started });
+  }
+
+  protected onPointerUp(event: PointerEvent): void {
+    const d = this.drag();
+    if (!d || d.pointerId !== event.pointerId) return;
+    this.drag.set(null);
+    if (!d.started) return; // a tap: the click handler takes it
+    this.suppressClickUntil = Date.now() + 400;
+    const to = pileAt(event.clientX, event.clientY);
+    if (to) this.store.drop(d.from, to);
+  }
+
+  protected onPointerCancel(): void {
+    this.drag.set(null);
+  }
+
   protected view(card: Card, source: Source, off: number, selected: boolean): CardView {
     const names = this.names();
     const label = card.faceUp
@@ -299,6 +399,7 @@ export class KlondikePage {
       label,
       off,
       selected,
+      lifted: !!this.drag()?.started && covers(this.drag()?.from ?? null, source),
     };
   }
 
@@ -311,6 +412,7 @@ export class KlondikePage {
   }
 
   protected onCard(source: Source): void {
+    if (Date.now() < this.suppressClickUntil) return;
     this.store.tapCard(source);
   }
 
