@@ -25,7 +25,7 @@ import { AddressService } from '@okr/subject-address-data-access';
 import { PersonService } from '@okr/subject-person-data-access';
 import { PERSON_EDIT_MODAL } from '@okr/subject-person-ui';
 import { browseUrl } from '@okr/subject-address-util';
-import { MemberInvoiceService } from '@okr/finance-invoice-feature';
+import type { MemberInvoiceService } from '@okr/finance-invoice-feature';
 import { VcardExportService, VcardExportTarget } from '@okr/vcard-feature';
 
 import { MemberNewModal } from './member-new.modal';
@@ -80,7 +80,11 @@ export const _MembershipStore = signalStore(
     appStore: inject(AppStore),
     firestoreService: inject(FirestoreService),
     modalController: inject(ModalController),
-    memberInvoiceService: inject(MemberInvoiceService),
+    // Lazy: the invoice feature barrel carries the whole native-invoicing UI (list, accordion,
+    // aging, categories, cost centers) — a static import here put ~100 KB raw of it into every
+    // tenant's eager dashboard bundle and broke the release budget (v7.39.0).
+    memberInvoiceService: lazyService<MemberInvoiceService>(inject(Injector), () =>
+      import('@okr/finance-invoice-feature').then(m => m.MemberInvoiceService)),
     toastController: inject(ToastController),
     alertController: inject(AlertController),
     router: inject(Router),
@@ -1009,7 +1013,7 @@ export const _MembershipStore = signalStore(
 
       /** bexio while the own books are bexio-managed, natively after the cut-over (spec 1.68). */
       async createInvoice(membership: MembershipModel): Promise<void> {
-        await store.memberInvoiceService.createFor(membership);
+        await (await store.memberInvoiceService()).createFor(membership);
       }
     }
   }),
