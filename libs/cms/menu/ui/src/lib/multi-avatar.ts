@@ -1,18 +1,18 @@
-import { Component, computed, inject, input } from '@angular/core';
-import { IonBadge, IonIcon, IonAvatar, IonImg, IonItem, IonLabel, PopoverController } from '@ionic/angular/standalone';
+import { Component, computed, input } from '@angular/core';
+import { IonBadge, IonIcon, IonAvatar, IonImg, IonItem, IonLabel } from '@ionic/angular/standalone';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { extractFirstPartOfOptionalTupel } from '@okr/shared-util-core';
 
 import { AvatarPipe } from '@okr/avatar-ui';
 
-import { MenuInfoPopover } from './menu-info.popover';
+import { MenuInfo } from './menu-info';
 
 @Component({
   selector: 'okr-multi-avatar',
   standalone: true,
   imports: [
-    SvgIconPipe, AvatarPipe,
+    SvgIconPipe, AvatarPipe, MenuInfo,
     IonBadge, IonIcon, IonAvatar, IonImg, IonItem, IonLabel
   ],
   styles: [`
@@ -57,9 +57,6 @@ import { MenuInfoPopover } from './menu-info.popover';
       }
     }
 
-    /* the optional info-circle on the right; only rendered when an info text is set */
-    ion-icon.info { margin-inline: 8px 0; color: var(--ion-color-medium); cursor: pointer; flex: none; }
-
     .logo-avatar {
       height: 25px;
       width: 25px;
@@ -79,8 +76,7 @@ import { MenuInfoPopover } from './menu-info.popover';
               <ion-badge slot="end" color="danger">{{ badge() }}</ion-badge>
             }
             @if(info()) {
-              <ion-icon slot="end" class="info" src="{{ 'info-circle' | svgIcon }}" role="button" tabindex="0"
-                [attr.aria-label]="info()" (click)="showInfo($event)" (keydown.enter)="showInfo($event)" />
+              <okr-menu-info slot="end" [text]="info()" />
             }
           </ion-item>
         } @else {
@@ -94,8 +90,7 @@ import { MenuInfoPopover } from './menu-info.popover';
                 <ion-badge slot="end" color="danger">{{ badge() }}</ion-badge>
               }
               @if(info()) {
-                <ion-icon slot="end" class="info" src="{{ 'info-circle' | svgIcon }}" role="button" tabindex="0"
-                  [attr.aria-label]="info()" (click)="showInfo($event)" (keydown.enter)="showInfo($event)" />
+                <okr-menu-info slot="end" [text]="info()" />
               }
             </ion-item>
           } 
@@ -111,8 +106,7 @@ import { MenuInfoPopover } from './menu-info.popover';
 
             </label>
             @if(info()) {
-              <ion-icon slot="end" class="info" src="{{ 'info-circle' | svgIcon }}" role="button" tabindex="0"
-                [attr.aria-label]="info()" (click)="showInfo($event)" (keydown.enter)="showInfo($event)" />
+              <okr-menu-info slot="end" [text]="info()" />
             }
           </ion-item>
         } @else {
@@ -123,8 +117,7 @@ import { MenuInfoPopover } from './menu-info.popover';
               <ion-badge slot="end" color="danger">{{ badge() }}</ion-badge>
             }
             @if(info()) {
-              <ion-icon slot="end" class="info" src="{{ 'info-circle' | svgIcon }}" role="button" tabindex="0"
-                [attr.aria-label]="info()" (click)="showInfo($event)" (keydown.enter)="showInfo($event)" />
+              <okr-menu-info slot="end" [text]="info()" />
             }
           </ion-item>
         }
@@ -139,28 +132,12 @@ export class MultiAvatar {
   /** translated info text; when set, an info-circle on the right opens it in a popover */
   public info = input<string>('');
 
-  private readonly popoverController = inject(PopoverController);
-
   protected name = computed(() => {
     const icon = this.icon();
     if (icon.startsWith('@@')) return icon.substring(2, 3);
     if (icon.startsWith('//')) return icon.substring(2);
     return undefined;
   });
-
-  /** Opens the info text without triggering the row's own action or closing a surrounding menu popover. */
-  protected async showInfo(event: Event): Promise<void> {
-    event.stopPropagation();
-    event.preventDefault();
-    const popover = await this.popoverController.create({
-      component: MenuInfoPopover,
-      componentProps: { text: this.info() },
-      event,
-      side: 'bottom',
-      alignment: 'end',
-    });
-    await popover.present();
-  }
 
   protected getModelName(key: string): string {
     return extractFirstPartOfOptionalTupel(key);

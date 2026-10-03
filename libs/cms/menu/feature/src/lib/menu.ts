@@ -6,7 +6,7 @@ import { Spinner } from '@okr/shared-ui';
 import { debugData, hasRole } from '@okr/shared-util-core';
 import { DEFAULT_MENU_ACTION } from '@okr/shared-constants';
 
-import { MultiAvatar } from '@okr/cms-menu-ui';
+import { MenuInfo, MultiAvatar } from '@okr/cms-menu-ui';
 import { isMenuBlocked, nextVisitedKeys } from '@okr/cms-menu-util';
 
 import { MenuStore } from './menu.store';
@@ -15,10 +15,12 @@ import { MenuStore } from './menu.store';
   selector: 'okr-menu',
   standalone: true,
   imports: [
-    forwardRef(() => Menu), Spinner, MultiAvatar,
+    forwardRef(() => Menu), Spinner, MultiAvatar, MenuInfo,
     IonList, IonItem, IonLabel, IonAccordionGroup, IonAccordion, IonItemDivider
   ],
   styles: [`
+    /* the info-circle on a sub-menu header sits on the primary colour */
+    okr-menu-info.on-primary { --okr-menu-info-color: var(--ion-color-primary-contrast); }
       ion-icon { color: var(--ion-color-dark); }
     @media (prefers-color-scheme: dark) {
       ion-icon { color: var(--ion-color-white); }
@@ -51,6 +53,9 @@ import { MenuStore } from './menu.store';
                 <ion-accordion [value]="menuItem.name" toggle-icon-slot="start" >
                   <ion-item slot="header" color="primary">
                     <ion-label>{{ menuStore.translatedMenuLabel() }}</ion-label>
+                    @if(menuStore.translatedMenuInfo(); as info) {
+                      <okr-menu-info slot="end" class="on-primary" [text]="info" />
+                    }
                   </ion-item>
                   <div slot="content">
                     @if (expanded()) {

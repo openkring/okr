@@ -80,6 +80,12 @@ import { MenuI18n, menuItemValidations } from '@okr/cms-menu-util';
                   <okr-text-input [i18n]="labelI18n()" [value]="label()" (valueChange)="onFieldChange('label', $event)" [showHelper]=true [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
                   <okr-error-note [errors]="labelErrors()" />
                 </ion-col>
+
+                <!-- optional: shown via an info-circle on the right of the sub-menu header -->
+                <ion-col size="12">
+                  <okr-text-input [i18n]="infoI18n()" [value]="info()" (valueChange)="onFieldChange('info', $event)" [showHelper]=true [maxLength]="descriptionLength" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="infoErrors()" />
+                </ion-col>
               </ion-row>
             }
 
