@@ -176,6 +176,13 @@ export const _MenuStore = signalStore(
       ),
       { initialValue: '' }
     ),
+    /** The row's info text: plain text passes through, an '@…' key is translated; '' = no info icon. */
+    translatedMenuInfo: toSignal(
+      toObservable(computed(() => store.menu()?.info?.trim() ?? '')).pipe(
+        switchMap(info => store.i18nService.translate(info)),
+      ),
+      { initialValue: '' }
+    ),
   })),
 
   withMethods((store) => {

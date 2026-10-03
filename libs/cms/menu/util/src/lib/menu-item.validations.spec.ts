@@ -48,3 +48,18 @@ describe('menuItemValidations messages', () => {
     }
   });
 });
+
+describe('menuItemValidations: info', () => {
+  const sub = { menuItems: [] };
+
+  it('accepts a row without info (every existing doc) and an empty, plain or @key info', () => {
+    for (const info of [undefined, '', 'Öffnet die Mitgliederliste', '@cms/menu/feature.info.label']) {
+      expect(menuItemValidations(menuItem({ ...sub, info })).getErrors('info')).toEqual([]);
+    }
+  });
+
+  it('rejects a non-string info and one longer than DESCRIPTION_LENGTH', () => {
+    expect(menuItemValidations(menuItem({ ...sub, info: 42 as unknown as string })).hasErrors('info')).toBe(true);
+    expect(menuItemValidations(menuItem({ ...sub, info: 'x'.repeat(10_000) })).hasErrors('info')).toBe(true);
+  });
+});

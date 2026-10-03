@@ -38,6 +38,10 @@ export const MENU_I18N_KEYS = {
   label_alt_placeholder:          PFX + 'label_alt.placeholder',
   label_alt_helper:               PFX + 'label_alt.helper',
 
+  info_label:                     PFX + 'info.label',
+  info_placeholder:               PFX + 'info.placeholder',
+  info_helper:                    PFX + 'info.helper',
+
   url_placeholder:                PFX + 'url.placeholder',
   url_helper:                     PFX + 'url.helper',
   url_label:                      PFX + 'url.label',

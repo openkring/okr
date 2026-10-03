@@ -199,6 +199,11 @@
     "placeholder": "Name",
     "helper": "Only for the «Toggle» action: label for the active state."
   },
+  "info": {
+    "label": "Info text",
+    "placeholder": "Short note about this menu item",
+    "helper": "Shown via an info icon on the right of the menu. Plain text or a translation key starting with @."
+  },
   "url": {
     "label": "URL",
     "placeholder": "/route/to/page",

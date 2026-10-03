@@ -199,6 +199,11 @@
     "placeholder": "Nombre",
     "helper": "Solo para la acción «Toggle»: denominación para el estado activo."
   },
+  "info": {
+    "label": "Texto informativo",
+    "placeholder": "Nota breve sobre esta entrada del menú",
+    "helper": "Se muestra mediante un icono de información a la derecha del menú. Un texto o una clave de traducción que empieza por @."
+  },
   "url": {
     "label": "URL",
     "placeholder": "/route/to/page",

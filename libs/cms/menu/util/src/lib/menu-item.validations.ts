@@ -29,6 +29,10 @@ export const menuItemValidations = staticSuite((model: MenuItemModel, tenants: s
   stringValidations('description', model.description, DESCRIPTION_LENGTH);
   stringValidations('label', model.label, SHORT_NAME_LENGTH);
   stringValidations('icon', model.icon);
+  // optional, and absent on every existing row — only checked once it is set
+  omitWhen(model.info === undefined, () => {
+    stringValidations('info', model.info, DESCRIPTION_LENGTH);
+  });
   stringValidations('roleNeeded', model.roleNeeded, undefined, 0, true);
 
   omitWhen(model.data === undefined, () => {

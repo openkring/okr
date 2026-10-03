@@ -65,6 +65,12 @@ import { MenuI18n, menuItemValidations } from '@okr/cms-menu-util';
                   [maxLength]="longNameLength" />
                   <okr-error-note [errors]="urlErrors()" />
                 </ion-col>
+
+                <!-- optional: shown via an info-circle on the right of the menu row -->
+                <ion-col size="12">
+                  <okr-text-input [i18n]="infoI18n()" [value]="info()" (valueChange)="onFieldChange('info', $event)" [showHelper]=true [maxLength]="descriptionLength" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="infoErrors()" />
+                </ion-col>
               </ion-row>
             }
 
@@ -157,6 +163,10 @@ export class MenuForm {
     name: 'labelAlt', label: this.i18n().label_alt_label(), placeholder: this.i18n().label_alt_placeholder(), helper: this.i18n().label_alt_helper()
   } as TextInputI18n));
 
+  protected infoI18n = computed(() => ({
+    name: 'info', label: this.i18n().info_label(), placeholder: this.i18n().info_placeholder(), helper: this.i18n().info_helper()
+  } as TextInputI18n));
+
   protected descriptionI18n = computed(() => ({
     name: 'description', label: this.i18n().description_label(), placeholder: this.i18n().description_placeholder()
   } as NotesInputI18n));
@@ -182,6 +192,7 @@ export class MenuForm {
   protected iconErrors = computed(() => this.validationResult().getErrors('icon'));
   protected labelErrors = computed(() => this.validationResult().getErrors('label'));
   protected urlErrors = computed(() => this.validationResult().getErrors('url'));
+  protected infoErrors = computed(() => this.validationResult().getErrors('info'));
 
   constructor() { effect(() => this.valid.emit(this.validationResult().isValid())); }
 
@@ -191,6 +202,7 @@ export class MenuForm {
   protected iconAlt = linkedSignal(() => this.formData().iconAlt ?? '');
   protected label = linkedSignal(() => this.formData().label ?? '');
   protected labelAlt = linkedSignal(() => this.formData().labelAlt ?? '');
+  protected info = linkedSignal(() => this.formData().info ?? '');
   protected url = linkedSignal(() => this.formData().url ?? DEFAULT_URL);
   protected data = linkedSignal(() => this.formData().data ?? []);
   protected tags = linkedSignal(() => this.formData().tags ?? DEFAULT_TAGS);

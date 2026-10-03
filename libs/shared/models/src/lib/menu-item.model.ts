@@ -15,6 +15,9 @@ export class MenuItemModel implements OkrModel, NamedModel, SearchableModel, Tag
   // The base icon/label are shown while it is inactive (false).
   public iconAlt?: string; // alternate icon for the active toggle state (e.g. eye-off)
   public labelAlt?: string; // alternate label (i18n) for the active toggle state
+  // optional info text, plain or an i18n key ('@…'); when set, the menu row shows an
+  // info-circle on its right that opens the text in a popover
+  public info?: string;
   /**
    * Set when a tenant customised a globally shared, catalogue-owned menu item: the doc
    * was copied, the tenant removed from the shared doc's `tenants[]`, and this points at

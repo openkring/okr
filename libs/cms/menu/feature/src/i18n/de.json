@@ -199,6 +199,11 @@
     "placeholder": "Name",
     "helper": "Nur bei Aktion «Toggle»: Bezeichnung für den aktiven Zustand."
   },
+  "info": {
+    "label": "Info-Text",
+    "placeholder": "Kurzer Hinweis zu diesem Menüpunkt",
+    "helper": "Wird über ein Info-Symbol rechts im Menü angezeigt. Ein Text oder ein Übersetzungsschlüssel, der mit @ beginnt."
+  },
   "url": {
     "label": "URL",
     "placeholder": "/route/to/page",
