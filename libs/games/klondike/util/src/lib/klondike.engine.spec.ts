@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { Card, KlondikeState, Suit, canMove, deal, draw, formatDuration, move, movingCards, newDeck, recycle } from './klondike.engine';
+import { Card, KlondikeState, SUITS, Suit, bestTarget, canAutoFinish, canMove, isWon, nextAutoFinishMove, deal, draw, formatDuration, move, movingCards, newDeck, recycle } from './klondike.engine';
 
 /** mulberry32 — a small seeded generator so deals are reproducible. */
 function rng(seed: number): () => number {
@@ -227,5 +227,62 @@ describe('move', () => {
     move(s, { kind: 'tableau', index: 1, card: 1 }, { kind: 'tableau', index: 0 });
     move(s, { kind: 'waste' }, { kind: 'foundation', index: 0 });
     expect(JSON.stringify(s)).toBe(before);
+  });
+});
+
+describe('bestTarget', () => {
+  it('prefers a foundation', () => {
+    const s = state({ waste: cards('AH'), tableau: cols(cards('2S')) });
+    expect(bestTarget(s, { kind: 'waste' })).toEqual({ kind: 'foundation', index: 0 });
+  });
+
+  it('prefers a column with cards over an empty one', () => {
+    const s = state({ tableau: cols([], cards('KS'), cards('_4C', 'QD')) });
+    expect(bestTarget(s, { kind: 'tableau', index: 2, card: 1 })).toEqual({ kind: 'tableau', index: 1 });
+  });
+
+  it('moves a king to an empty column', () => {
+    const s = state({ tableau: cols([], cards('_4C', 'KH')) });
+    expect(bestTarget(s, { kind: 'tableau', index: 1, card: 1 })).toEqual({ kind: 'tableau', index: 0 });
+  });
+
+  it('leaves a run that already starts a column where it is', () => {
+    const s = state({ tableau: cols([], cards('KH', 'QS')) });
+    expect(bestTarget(s, { kind: 'tableau', index: 1, card: 0 })).toBeUndefined();
+  });
+
+  it('finds nothing when no move is legal', () => {
+    const s = state({ waste: cards('9C'), tableau: cols(cards('KH')) });
+    expect(bestTarget(s, { kind: 'waste' })).toBeUndefined();
+  });
+});
+
+describe('auto-finish and win', () => {
+  const allUp = () => state({
+    foundations: [cards('AS'), cards('AH'), [], []],
+    tableau: cols(cards('3S', '2H'), cards('2S')),
+  });
+
+  it('is possible only with stock and waste empty and every card face up', () => {
+    expect(canAutoFinish(allUp())).toBe(true);
+    expect(canAutoFinish({ ...allUp(), stock: cards('_AD') })).toBe(false);
+    expect(canAutoFinish({ ...allUp(), waste: cards('AD') })).toBe(false);
+    expect(canAutoFinish(state({ tableau: cols(cards('_3S', '2H')) }))).toBe(false);
+  });
+
+  it('plays the lowest top card first', () => {
+    expect(nextAutoFinishMove(allUp())).toEqual({
+      from: { kind: 'tableau', index: 0, card: 1 },
+      to: { kind: 'foundation', index: 1 },
+    });
+  });
+
+  it('is won with all 52 cards on the foundations', () => {
+    const full = SUITS.map(suit => Array.from({ length: 13 }, (_, i) => ({ suit, rank: i + 1, faceUp: true })));
+    const won = state({ foundations: full });
+    expect(isWon(won)).toBe(true);
+    expect(canAutoFinish(won)).toBe(false);
+    expect(nextAutoFinishMove(won)).toBeUndefined();
+    expect(isWon(allUp())).toBe(false);
   });
 });

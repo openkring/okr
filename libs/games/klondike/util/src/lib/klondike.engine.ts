@@ -155,3 +155,58 @@ export function move(state: KlondikeState, from: Source, to: Target): KlondikeSt
 
   return { ...state, waste, foundations, tableau, moves: state.moves + 1 };
 }
+
+/**
+ * Where a single tap sends the card: a foundation first, then a column with cards (left to
+ * right), then an empty column. A run that already starts a column gains nothing from moving to
+ * another empty one, so it gets no target.
+ */
+export function bestTarget(state: KlondikeState, from: Source): Target | undefined {
+  const cards = movingCards(state, from);
+  if (!cards.length) return undefined;
+  if (cards.length === 1 && from.kind !== 'foundation') {
+    for (let index = 0; index < state.foundations.length; index++) {
+      const to: Target = { kind: 'foundation', index };
+      if (canMove(state, from, to)) return to;
+    }
+  }
+  let empty: Target | undefined;
+  for (let index = 0; index < state.tableau.length; index++) {
+    const to: Target = { kind: 'tableau', index };
+    if (!canMove(state, from, to)) continue;
+    if (state.tableau[index].length) return to;
+    empty ??= to;
+  }
+  if (empty && from.kind === 'tableau' && from.card === 0) return undefined;
+  return empty;
+}
+
+export function isWon(state: KlondikeState): boolean {
+  return state.foundations.reduce((n, pile) => n + pile.length, 0) === 52;
+}
+
+/** Nothing hidden and nothing left to draw: the rest plays itself. */
+export function canAutoFinish(state: KlondikeState): boolean {
+  return !isWon(state) && !state.stock.length && !state.waste.length
+    && state.tableau.every(col => col.every(card => card.faceUp));
+}
+
+/** The next card to send home during auto-finish: the lowest top card that fits a foundation. */
+export function nextAutoFinishMove(state: KlondikeState): Move | undefined {
+  let best: Move | undefined;
+  let bestRank = 14;
+  state.tableau.forEach((col, index) => {
+    const top = col[col.length - 1];
+    if (!top || top.rank >= bestRank) return;
+    const from: Source = { kind: 'tableau', index, card: col.length - 1 };
+    for (let f = 0; f < state.foundations.length; f++) {
+      const to: Target = { kind: 'foundation', index: f };
+      if (canMove(state, from, to)) {
+        best = { from, to };
+        bestRank = top.rank;
+        return;
+      }
+    }
+  });
+  return best;
+}
