@@ -2707,8 +2707,7 @@ const memory: FeatureBlock = {
  * scoring, and a computer opponent at three levels).
  *
  * Against the computer or two players on one device. Only the chosen opponent and colour are
- * kept in `localStorage` — no Firestore, hence `collections: []`. The icon is the generic
- * `cube` (a die) until a dedicated `game-backgammon` icon is uploaded.
+ * kept in `localStorage` — no Firestore, hence `collections: []`.
  *
  * `defaultAvailability: 'ga'`, like `muehle`: nothing tenant-side to configure.
  */
@@ -2716,12 +2715,12 @@ const backgammon: FeatureBlock = {
   id: 'backgammon',
   bundle: 'games',
   label: '@tenant/util.feature.backgammon.label',
-  icon: 'cube',
+  icon: 'game-backgammon',
   defaultAvailability: 'ga',
   dependsOn: ['games'],
   collections: [],
   menu: [gamesMenuParent([
-    { key: 'game-backgammon', name: 'game-backgammon', url: '/backgammon', action: 'navigate', roleNeeded: 'registered', icon: 'cube', label: '@item.game-backgammon' },
+    { key: 'game-backgammon', name: 'game-backgammon', url: '/backgammon', action: 'navigate', roleNeeded: 'registered', icon: 'game-backgammon', label: '@item.game-backgammon' },
   ])],
 };
 
