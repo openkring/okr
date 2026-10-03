@@ -34,3 +34,11 @@ export function mergeSigned(
   if (resExpires === currentExpires) return { signed: { ...current, ...incoming }, expires: currentExpires };
   return { signed: incoming, expires: resExpires };
 }
+
+/**
+ * Keys a sign call has ANSWERED (signed or not) in the current window. A new window invalidates
+ * the earlier answers, so the set starts over; within a window it only grows.
+ */
+export function settleKeys(current: ReadonlySet<string>, keys: string[], newWindow: boolean): ReadonlySet<string> {
+  return new Set(newWindow ? keys : [...current, ...keys]);
+}

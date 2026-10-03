@@ -4,6 +4,7 @@ import { AlbumSection, ImageConfig, ImageType } from '@okr/shared-models';
 import { SvgIconPipe, ThumbnailUrlPipe } from '@okr/shared-pipes';
 import { browse, CategorySelect, ImageGrid, Label, openImageGallery, showVideoView, Spinner } from '@okr/shared-ui';
 import { I18nService } from '@okr/shared-i18n';
+import { warn } from '@okr/shared-util-core';
 import { downloadToBrowser, showToast } from '@okr/shared-util-angular';
 
 import { FolderBreadcrumb } from '@okr/content-folder-ui';
@@ -120,7 +121,7 @@ import { AlbumStore } from './album-section.store';
 
           @if(images().length > 0) {
             <okr-image-grid [images]="images()" [imageStyle]="imageStyle()" [imgixBaseUrl]="imgixBaseUrl()"
-              [albumStyle]="albumStyle()" [pendingLabel]="store.i18n.album_video_pending()" [unavailableLabel]="store.i18n.album_video_unavailable()" (imageClicked)="onImageClicked($event)" />
+              [albumStyle]="albumStyle()" [pendingLabel]="''" [unavailableLabel]="store.i18n.album_video_unavailable()" (imageClicked)="onImageClicked($event)" />
           } @else if(folders().length === 0 || !foldersVisible()) {
             <okr-label>{{ store.i18n.album_empty() }}</okr-label>
           }
@@ -211,7 +212,8 @@ export class AlbumSectionComponent {
         let signed;
         try {
           signed = await this.videoUrls.forPlayback(doc.okey);
-        } catch {
+        } catch (ex) {
+          warn(`AlbumSection: signing video for playback failed: ${ex}`);
           signed = undefined;   // network / App Check failure: same outcome for the member
         }
         if (!signed) {

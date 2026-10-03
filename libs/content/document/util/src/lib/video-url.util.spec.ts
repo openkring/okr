@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { mergeSigned, missingKeys, needsResign, RESIGN_MARGIN_MS, SignedVideo } from './video-url.util';
+import { mergeSigned, missingKeys, needsResign, RESIGN_MARGIN_MS, settleKeys, SignedVideo } from './video-url.util';
 
 const v = (key: string): SignedVideo => ({ key, posterUrl: 'p', playback: { kind: 'mp4', url: 'u' } });
 
@@ -44,5 +44,17 @@ describe('mergeSigned', () => {
     const r = mergeSigned(cur, 200, [v('b')], 100);
     expect(r.signed).toBe(cur);
     expect(r.expires).toBe(200);
+  });
+});
+
+describe('settleKeys', () => {
+  it('adds keys within the same window', () => {
+    expect([...settleKeys(new Set(['a']), ['b'], false)].sort()).toEqual(['a', 'b']);
+  });
+  it('replaces the set on a new window', () => {
+    expect([...settleKeys(new Set(['a']), ['b'], true)]).toEqual(['b']);
+  });
+  it('dedupes', () => {
+    expect([...settleKeys(new Set(['a']), ['a', 'a'], false)]).toEqual(['a']);
   });
 });

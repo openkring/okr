@@ -120,10 +120,12 @@ export const AlbumStore = signalStore(
       return state.documents()
         .filter((doc) => (doc.folderKeys ?? []).includes(folderKey) && isVisibleInAlbum(doc, config))
         .map((doc) => {
-          const config = toImageConfig(doc);
-          if (!isPrivateVideo(doc)) return config;
+          const base = toImageConfig(doc);
+          if (!isPrivateVideo(doc)) return base;
           const signed = state.videoUrls.signed()[doc.okey];
-          return signed ? { ...config, url: signed.posterUrl } : config;
+          if (signed) return { ...base, url: signed.posterUrl };
+          // not yet answered = neutral loading tile; answered without it = "not available"
+          return state.videoUrls.settled().has(doc.okey) ? base : { ...base, pending: true };
         });
     }),
 

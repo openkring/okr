@@ -2,7 +2,7 @@ import { Injectable, signal } from '@angular/core';
 import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
-import { mergeSigned, missingKeys, SignedVideo } from '@okr/content-document-util';
+import { mergeSigned, missingKeys, settleKeys, SignedVideo } from '@okr/content-document-util';
 
 type Req = { docKeys: string[]; download?: boolean };
 type Res = { videos: SignedVideo[]; expires: number };
@@ -17,6 +17,9 @@ export class VideoUrlService {
   private readonly _signed = signal<Record<string, SignedVideo>>({});
   private expires: number | undefined;
   public readonly signed = this._signed.asReadonly();
+  private readonly _settled = signal<ReadonlySet<string>>(new Set());
+  /** Keys an ensure() call has answered (signed or not) in the current window: absent from `signed` but in here = not available. */
+  public readonly settled = this._settled.asReadonly();
 
   private call(req: Req): Promise<Res> {
     const fn = httpsCallable<Req, Res>(getFunctions(getApp(), 'europe-west6'), 'signVideoUrls');
@@ -27,11 +30,20 @@ export class VideoUrlService {
   public async ensure(keys: string[]): Promise<void> {
     const todo = missingKeys(keys, this._signed(), this.expires, Date.now());
     if (todo.length === 0) return;
-    const res = await this.call({ docKeys: todo });
+    let res: Res;
+    try {
+      res = await this.call({ docKeys: todo });
+    } catch (ex) {
+      // Settle on failure too, so the tile turns "not available" instead of loading forever.
+      this._settled.set(settleKeys(this._settled(), todo, false));
+      throw ex;
+    }
     // Merge against the LIVE state: overlapping calls must not overwrite each other.
     const next = mergeSigned(this._signed(), this.expires, res.videos, res.expires);
+    const newWindow = next.expires !== this.expires;
     this.expires = next.expires;
     this._signed.set(next.signed);
+    this._settled.set(settleKeys(this._settled(), todo, newWindow));
   }
 
   /** Fresh URLs incl. the original's download URL, for the player. */
