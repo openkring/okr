@@ -12,8 +12,9 @@ import { downloadToBrowser } from '@okr/shared-util-angular';
  * A plain <video>, not okr-video: the ix-player is the HLS player for the StreamingVideo path,
  * while the transcoding function hands us a finished H.264 mp4 that every browser plays natively.
  *
- * The source is the Firebase download URL of the mp4 RENDERING — Firebase answers range requests
- * reliably, which is what makes seeking work. The download button hands over the ORIGINAL.
+ * The source is either a signed imgix mp4 URL (private videos; Range verified, spec 1.82 §1) used
+ * verbatim, or — for legacy videos — the Firebase download URL of the mp4 RENDERING. The download
+ * button hands over the ORIGINAL.
  */
 @Component({
   selector: 'okr-video-view-modal',
@@ -53,7 +54,10 @@ export class VideoViewModal implements OnInit {
   private readonly storage = inject(STORAGE);
 
   // inputs (passed as componentProps)
-  public storagePath = input.required<string>();   // fullPath of the mp4 rendering
+  public storagePath = input('');                  // legacy: fullPath of the mp4 rendering (public bucket)
+  // aliased on purpose: `playUrl` is already the resolved-source signal below (spec 1.82 brief)
+  // eslint-disable-next-line @angular-eslint/no-input-rename
+  public playUrlInput = input('', { alias: 'playUrl' });   // signed imgix mp4 URL of a private video
   public actionUrl = input('');                    // download URL of the original
   public title = input('');
   public downloadLabel = input('');
@@ -78,6 +82,7 @@ export class VideoViewModal implements OnInit {
    * content, and without it the report cannot be told apart from any other failed video.
    */
   public async ngOnInit(): Promise<void> {
+    if (this.playUrlInput()) { this.playUrl.set(this.playUrlInput()); return; }
     try {
       this.playUrl.set(await getDownloadURL(ref(this.storage, this.storagePath())));
     } catch (ex) {

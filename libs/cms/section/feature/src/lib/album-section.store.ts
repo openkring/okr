@@ -1,23 +1,24 @@
-import { computed, inject } from '@angular/core';
+import { computed, effect, inject, untracked } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
-import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
+import { patchState, signalStore, withComputed, withHooks, withMethods, withProps, withState } from '@ngrx/signals';
 import { of } from 'rxjs';
 
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { ALBUM_CONFIG_SHAPE, AlbumConfig, DocumentCollection, DocumentModel, FolderModel, FolderModelName, ImageConfig, ImageType, SectionModelName } from '@okr/shared-models';
-import { checkVideoLimits, debugMessage, fileSizeUnit, fill, formatDuration, getSystemQuery } from '@okr/shared-util-core';
+import { checkVideoLimits, debugMessage, fileSizeUnit, fill, formatDuration, getSystemQuery, warn } from '@okr/shared-util-core';
 import { showImageSlider } from '@okr/shared-ui';
 import { downloadFilesAsZip, exportCsv, getExportFileName, showToast, ZipEntry } from '@okr/shared-util-angular';
 
 import { UploadService } from '@okr/avatar-data-access';
-import { DocumentService } from '@okr/content-document-data-access';
+import { DocumentService, VideoUrlService } from '@okr/content-document-data-access';
 import { FolderService } from '@okr/content-folder-data-access';
+import { SignedVideo } from '@okr/content-document-util';
 import { newFolderModel } from '@okr/content-folder-util';
 
-import { buildAlbumUploadPath, compareByFileName, isVisibleInAlbum, SECTION_I18N_KEYS, toImageConfig } from '@okr/cms-section-util';
+import { buildAlbumUploadPath, compareByFileName, isPrivateVideo, isVideoFileName, isVisibleInAlbum, SECTION_I18N_KEYS, toImageConfig } from '@okr/cms-section-util';
 
 export interface AlbumState {
   config: AlbumConfig;
@@ -41,6 +42,7 @@ export const AlbumStore = signalStore(
     folderService: inject(FolderService),
     documentService: inject(DocumentService),
     uploadService: inject(UploadService),
+    videoUrls: inject(VideoUrlService),
     modalController: inject(ModalController),
     alertController: inject(AlertController),
     toastController: inject(ToastController),
@@ -117,7 +119,12 @@ export const AlbumStore = signalStore(
       const folderKey = state.currentFolderKey();
       return state.documents()
         .filter((doc) => (doc.folderKeys ?? []).includes(folderKey) && isVisibleInAlbum(doc, config))
-        .map(toImageConfig);
+        .map((doc) => {
+          const config = toImageConfig(doc);
+          if (!isPrivateVideo(doc)) return config;
+          const signed = state.videoUrls.signed()[doc.okey];
+          return signed ? { ...config, url: signed.posterUrl } : config;
+        });
     }),
 
     // subfolders with their cover image (= first image document inside the folder, falling back to
@@ -199,7 +206,8 @@ export const AlbumStore = signalStore(
       for (const file of files) {
         // Videos werden vor dem Upload geprüft: eine 200-MB-Datei erst hochzuladen und dann
         // abzulehnen wäre die teuerste Art, Nein zu sagen. Bilder gehen ungeprüft durch.
-        if (file.type.startsWith('video/')) {
+        const isVideo = isVideoFileName(file.name, file.type);
+        if (isVideo) {
           const check = await checkVideoLimits(file);
           if (!check.ok) {
             const message = check.reason === 'size'
@@ -215,8 +223,9 @@ export const AlbumStore = signalStore(
         // agree on the same path, so the transcoder's fullPath lookup stays unambiguous. The
         // original name is not lost: it goes into doc.title below, which is what the UI shows.
         const fullPath = buildAlbumUploadPath(basePath, file.name);
-        const downloadUrl = await store.uploadService.uploadFile(file, fullPath, file.name);
-        if (!downloadUrl) {
+        // Videos go to the private bucket (spec 1.82 §4); the result is then the path, not a URL.
+        const uploaded = await store.uploadService.uploadFile(file, fullPath, file.name, isVideo ? 'private' : 'default');
+        if (!uploaded) {
           // Ein fehlgeschlagener Upload wurde bisher wortlos übersprungen: das Modal zeigte
           // kurz einen roten Balken, schloss sich, und das Bild fehlte einfach. Wer nicht genau
           // hinsah, hielt den Upload für erfolgreich. Sentry erfährt den Grund in
@@ -228,7 +237,7 @@ export const AlbumStore = signalStore(
         }
 
         const doc = await store.documentService.getDocumentFromFile(file, fullPath);
-        doc.url = downloadUrl;
+        doc.url = isVideo ? '' : uploaded;
         doc.title = file.name;
         doc.tags = tags;
         doc.folderKeys = [folderKey];
@@ -283,9 +292,21 @@ export const AlbumStore = signalStore(
       await confirm.present();
       if ((await confirm.onDidDismiss()).role !== 'confirm') return;
 
+      // Private originals are signed on demand; a failed signing counts as "skipped" for those files.
+      const privateKeys = documents.filter(isPrivateVideo).map((d) => d.okey);
+      const signed: SignedVideo[] = [];
+      for (let i = 0; i < privateKeys.length; i += 100) {
+        try {
+          signed.push(...await store.videoUrls.forDownload(privateKeys.slice(i, i + 100)));
+        } catch (ex) {
+          warn(`AlbumStore.downloadAll: signing private originals failed: ${ex}`);
+        }
+      }
+      const downloadUrl = (doc: DocumentModel): string =>
+        isPrivateVideo(doc) ? signed.find((s) => s.key === doc.okey)?.downloadUrl ?? '' : doc.url;
       const entries: ZipEntry[] = documents
-        .filter((doc) => !!doc.url)
-        .map((doc) => ({ url: doc.url, fileName: doc.fullPath.split('/').pop() || doc.okey }));
+        .map((doc) => ({ url: downloadUrl(doc), fileName: doc.fullPath.split('/').pop() || doc.okey }))
+        .filter((e) => !!e.url);
       const { zipped, failed } = await downloadFilesAsZip(entries, getExportFileName(folderName, 'zip'));
 
       const message = failed.length === 0
@@ -385,6 +406,20 @@ export const AlbumStore = signalStore(
       await store.folderService.update({ ...folder, coverDocumentKey }, currentUser);
       store.foldersResource.reload();
       store.currentFolderResource.reload();
+    }
+  })),
+
+  withHooks((store) => ({
+    onInit(): void {
+      // Request signed posters for the private videos on screen.
+      effect(() => {
+        const keys = store.visibleDocuments().filter(isPrivateVideo).map((d) => d.okey);
+        if (keys.length > 0) {
+          untracked(() => {
+            store.videoUrls.ensure(keys).catch((ex) => warn(`AlbumStore: signing video posters failed: ${ex}`));
+          });
+        }
+      });
     }
   }))
 );

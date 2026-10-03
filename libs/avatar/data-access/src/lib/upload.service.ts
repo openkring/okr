@@ -6,7 +6,7 @@ import { FilePicker } from "@capawesome/capacitor-file-picker";
 import { ModalController } from "@ionic/angular/standalone";
 import { firstValueFrom } from "rxjs";
 
-import { attestAppCheck, ENV, isAttested } from "@okr/shared-config";
+import { attestAppCheck, ENV, isAttested, StorageBucket } from "@okr/shared-config";
 import { DocumentModel, DocumentModelName, IMAGE_STYLE_SHAPE, UserModel } from "@okr/shared-models";
 import { error } from "@okr/shared-util-angular";
 import { extractCredit, getImgixJsonUrl, ImageCreditMetaData, isPhotoCancellation, sanitizeFileName, warn } from "@okr/shared-util-core";
@@ -56,10 +56,11 @@ export class UploadService {
    * @param file the file to upload
    * @param fullPath the full path where the file should be uploaded, e.g. 'orgs/1234/images/profile.jpg'
    * @param title the title of the upload task, e.g. 'Upload Profile Image'
+   * @param bucket 'private' uploads to the private bucket; the result is then the path, not a URL
    * @returns the download URL of the uploaded image
    */
-  public async uploadFile(file: File, fullPath: string, title: string): Promise<string | undefined> {
-    const urls = await this.uploadFiles([{ file, fullPath }], title);
+  public async uploadFile(file: File, fullPath: string, title: string, bucket: StorageBucket = 'default'): Promise<string | undefined> {
+    const urls = await this.uploadFiles([{ file, fullPath, bucket }], title);
     return urls?.[0];
   }
 

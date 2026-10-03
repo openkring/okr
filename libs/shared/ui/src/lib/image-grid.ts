@@ -4,7 +4,7 @@ import { IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonList, IonRow, IonThumbn
 
 import { BackgroundStyle, ImageConfig, ImageStyle, ImageType } from '@okr/shared-models';
 import { JpgUrlPipe, PdfUrlPipe, SvgIconPipe, ThumbnailUrlPipe } from '@okr/shared-pipes';
-import { getBackgroundStyle } from '@okr/shared-util-core';
+import { getBackgroundStyle, getPosterStyle } from '@okr/shared-util-core';
 
 import { Video } from './video';
 
@@ -52,10 +52,16 @@ import { Video } from './video';
                 @case(IT.Video) {
                   @if (isPending(image)) {
                     <div class="video-tile pending">{{ pendingLabel() }}</div>
-                  } @else {
+                  } @else if (isSignedPoster(image)) {
+                    <div class="video-tile" [ngStyle]="posterStyle(image)" (click)="imageClicked.emit(image)">
+                      <ion-icon class="play-badge" src="{{ 'play' | svgIcon }}" />
+                    </div>
+                  } @else if (image.url) {
                     <div class="video-tile" [ngStyle]="backgroundStyle(image)" (click)="imageClicked.emit(image)">
                       <ion-icon class="play-badge" src="{{ 'play' | svgIcon }}" />
                     </div>
+                  } @else {
+                    <div class="video-tile pending">{{ unavailableLabel() }}</div>
                   }
                 }
                 @case(IT.Pdf) { <img [src]="image.url | pdfUrl" [alt]="image.altText" (click)="imageClicked.emit(image)" /> }
@@ -97,10 +103,16 @@ import { Video } from './video';
                   @case(IT.Video) {
                     @if (isPending(image)) {
                       <div class="video-tile pending">{{ pendingLabel() }}</div>
-                    } @else {
+                    } @else if (isSignedPoster(image)) {
+                      <div class="video-tile" [ngStyle]="posterStyle(image)" (click)="imageClicked.emit(image)">
+                        <ion-icon class="play-badge" src="{{ 'play' | svgIcon }}" />
+                      </div>
+                    } @else if (image.url) {
                       <div class="video-tile" [ngStyle]="backgroundStyle(image)" (click)="imageClicked.emit(image)">
                         <ion-icon class="play-badge" src="{{ 'play' | svgIcon }}" />
                       </div>
+                    } @else {
+                      <div class="video-tile pending">{{ unavailableLabel() }}</div>
                     }
                   }
                   @default {
@@ -123,12 +135,23 @@ export class ImageGrid {
   public albumStyle = input('grid');
   /** Beschriftung der Wartekachel, solange die Function noch transkodiert. */
   public pendingLabel = input('');
+  /** Beschriftung für ein privates Video, das für die Person nicht verfügbar ist. */
+  public unavailableLabel = input('');
 
   // outputs
   public imageClicked = output<ImageConfig>();
 
   // passing constants to template
   protected IT = ImageType;
+
+  /** A private video's poster is a complete signed URL (spec 1.82) — never re-prefixed. */
+  protected isSignedPoster(image: ImageConfig): boolean {
+    return image.url.startsWith('https://');
+  }
+
+  protected posterStyle(image: ImageConfig): BackgroundStyle {
+    return getPosterStyle(image.url);
+  }
 
   protected backgroundStyle(image: ImageConfig): BackgroundStyle {
     return getBackgroundStyle(this.imgixBaseUrl(), this.imageStyle(), image.url, image);

@@ -9,6 +9,8 @@ import { downloadToBrowser, showToast } from '@okr/shared-util-angular';
 import { FolderBreadcrumb } from '@okr/content-folder-ui';
 import { canUploadIntoFolder } from '@okr/content-folder-util';
 import { hasRendering, resolveRendering } from '@okr/content-document-util';
+import { VideoUrlService } from '@okr/content-document-data-access';
+import { isPrivateVideo } from '@okr/cms-section-util';
 
 
 import { AlbumStore } from './album-section.store';
@@ -118,7 +120,7 @@ import { AlbumStore } from './album-section.store';
 
           @if(images().length > 0) {
             <okr-image-grid [images]="images()" [imageStyle]="imageStyle()" [imgixBaseUrl]="imgixBaseUrl()"
-              [albumStyle]="albumStyle()" [pendingLabel]="store.i18n.album_video_pending()" (imageClicked)="onImageClicked($event)" />
+              [albumStyle]="albumStyle()" [pendingLabel]="store.i18n.album_video_pending()" [unavailableLabel]="store.i18n.album_video_unavailable()" (imageClicked)="onImageClicked($event)" />
           } @else if(folders().length === 0 || !foldersVisible()) {
             <okr-label>{{ store.i18n.album_empty() }}</okr-label>
           }
@@ -131,6 +133,7 @@ export class AlbumSectionComponent {
   private readonly modalController = inject(ModalController);
   private readonly alertController = inject(AlertController);
   private readonly i18nService = inject(I18nService);
+  protected readonly videoUrls = inject(VideoUrlService);
   protected store = inject(AlbumStore);
 
   // inputs
@@ -195,19 +198,35 @@ export class AlbumSectionComponent {
   protected async onImageClicked(image: ImageConfig): Promise<void> {
     if (this.editMode()) return;
     if (image.type === ImageType.Video) {
-      // Das Dokument trägt das mp4-Rendering; ohne es läuft die Transkodierung noch.
       const doc = this.store.visibleDocuments().find((d) => d.okey === image.documentKey);
-      if (!doc || !hasRendering(doc, 'mp4')) {
-        await showToast(this.store.toastController, this.store.i18n.album_video_pending());
-        return;
-      }
+      if (!doc) return;
       // i18n über den Store, wie album_style_header und album_cover_apply daneben.
-      await showVideoView(this.modalController, resolveRendering(doc, 'mp4'), image.actionUrl, {
+      const labels = {
         title: image.label || this.store.i18n.album_video_title(),
         download: this.store.i18n.album_video_download(),
         close: this.store.i18n.album_video_close(),
         error: this.store.i18n.album_video_error()
-      });
+      };
+      if (isPrivateVideo(doc)) {
+        let signed;
+        try {
+          signed = await this.videoUrls.forPlayback(doc.okey);
+        } catch {
+          signed = undefined;   // network / App Check failure: same outcome for the member
+        }
+        if (!signed) {
+          await showToast(this.store.toastController, this.store.i18n.album_video_unavailable());
+          return;
+        }
+        await showVideoView(this.modalController, { playUrl: signed.playback.url }, signed.downloadUrl ?? '', labels);
+        return;
+      }
+      // legacy (spec 1.58): mp4 rendering in the public bucket — removed after the back-fill
+      if (!hasRendering(doc, 'mp4')) {
+        await showToast(this.store.toastController, this.store.i18n.album_video_pending());
+        return;
+      }
+      await showVideoView(this.modalController, { storagePath: resolveRendering(doc, 'mp4') }, image.actionUrl, labels);
       return;
     }
     if (image.type !== ImageType.Image) {

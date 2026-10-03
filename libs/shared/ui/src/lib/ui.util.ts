@@ -93,7 +93,7 @@ export async function showImageSlider(modalController: ModalController, images: 
 // the prev/next paging and out of the slideshow (spec §5.3).
 export async function showVideoView(
   modalController: ModalController,
-  storagePath: string,
+  source: { storagePath?: string; playUrl?: string },
   actionUrl: string,
   labels: { title: string; download: string; close: string; error: string }
 ): Promise<void> {
@@ -101,7 +101,7 @@ export async function showVideoView(
     component: VideoViewModal,
     cssClass: 'full-modal',
     componentProps: {
-      storagePath, actionUrl,
+      storagePath: source.storagePath ?? '', playUrl: source.playUrl ?? '', actionUrl,
       title: labels.title, downloadLabel: labels.download, closeLabel: labels.close,
       errorLabel: labels.error
     }
