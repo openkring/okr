@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  contentDisposition, isAlbumVideoObjectPath, MAX_VIDEO_KEYS, validVideoKeys, videoAccessPath, WINDOW_MS, windowExpiry,
+  contentDisposition, isAlbumVideoObjectPath, MAX_VIDEO_KEYS, MP4_PARAMS, validVideoKeys, videoAccessPath, WINDOW_MS, windowExpiry,
 } from './video-sign.util';
 
 const HOUR = 3600 * 1000;
@@ -22,6 +22,14 @@ describe('windowExpiry', () => {
   });
   it('lands on a window boundary', () => {
     expect(windowExpiry(Date.UTC(2026, 9, 3, 1)) % WINDOW_MS).toBe(0);
+  });
+});
+
+describe('MP4_PARAMS', () => {
+  // imgix scales UP to h=720 without fit=max: a 320x240 camera AVI came back as 960x720 and a
+  // 640x360 clip as 1280x720 at twice the bytes (measured 2026-10-03 on bkaiser-private).
+  it('caps at 720 lines without upscaling smaller videos', () => {
+    expect(MP4_PARAMS).toMatchObject({ fm: 'mp4', h: 720, fit: 'max' });
   });
 });
 

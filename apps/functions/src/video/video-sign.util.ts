@@ -6,7 +6,9 @@ export const MAX_VIDEO_KEYS = 100;
 
 /** imgix video params — values confirmed by the spike (spec 1.82 §9). */
 export const POSTER_PARAMS = { 'video-thumbnail-time': 2, fm: 'jpg', w: 600 } as const;
-export const MP4_PARAMS = { fm: 'mp4', h: 720 } as const;
+// `fit: 'max'` caps at 720 lines but never scales up — without it imgix enlarged a 320×240
+// camera AVI to 960×720 and a 640×360 clip to 1280×720 at twice the bytes (2026-10-03).
+export const MP4_PARAMS = { fm: 'mp4', h: 720, fit: 'max' } as const;
 
 /** End of the window that leaves at least one hour of validity, on a WINDOW_MS boundary. */
 export function windowExpiry(nowMs: number): number {
