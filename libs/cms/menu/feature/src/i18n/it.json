@@ -202,7 +202,7 @@
   "info": {
     "label": "Testo informativo",
     "placeholder": "Breve nota su questa voce di menu",
-    "helper": "Mostrato tramite un’icona info a destra del menu. Un testo o una chiave di traduzione che inizia con @."
+    "helper": "Mostrato in una finestra tramite un’icona info a destra del menu. Un testo formattato, oppure solo una chiave di traduzione che inizia con @."
   },
   "url": {
     "label": "URL",

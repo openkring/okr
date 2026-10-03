@@ -13,6 +13,7 @@
     "@okr/shared-pipes": "*",
     "@okr/shared-ui": "*",
     "@okr/shared-util-core": "*",
-    "@okr/cms-menu-util": "*"
+    "@okr/cms-menu-util": "*",
+    "@okr/shared-ui-editor": "*"
   }
 }

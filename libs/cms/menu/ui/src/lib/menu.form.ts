@@ -1,20 +1,21 @@
 import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
-import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 
 import { DEFAULT_MENU_ACTION, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ROLE, DEFAULT_TAGS, DEFAULT_URL, DESCRIPTION_LENGTH, LONG_NAME_LENGTH, NAME_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { BaseProperty, CategoryListModel, MenuItemModel, RoleName, UserModel } from '@okr/shared-models';
 import { CategorySelect, Chips, ErrorNote, NotesInput, NotesInputI18n, StringList, TextInput, TextInputI18n, UrlInput, UrlInputI18n, IconInput } from '@okr/shared-ui';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 
-import { MenuI18n, menuItemValidations } from '@okr/cms-menu-util';
+import { MenuI18n, menuItemValidations, normalizeMenuInfo } from '@okr/cms-menu-util';
+import { OkrEditor } from '@okr/shared-ui-editor';
 
 @Component({
   selector: 'okr-menu-item-form',
   standalone: true,
   imports: [
     TextInput, UrlInput, CategorySelect, Chips, NotesInput, StringList, ErrorNote,
-    IonGrid, IonRow, IonCol, IonCard, IonCardContent,
-    IconInput
+    IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonItem, IonLabel,
+    IconInput, OkrEditor
 ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
@@ -68,7 +69,10 @@ import { MenuI18n, menuItemValidations } from '@okr/cms-menu-util';
 
                 <!-- optional: shown via an info-circle on the right of the menu row -->
                 <ion-col size="12">
-                  <okr-text-input [i18n]="infoI18n()" [value]="info()" (valueChange)="onFieldChange('info', $event)" [showHelper]=true [maxLength]="descriptionLength" [readOnly]="isReadOnly()" />
+                  <ion-item lines="none" class="info-label">
+                    <ion-label>{{ i18n().info_label() }}<p>{{ i18n().info_helper() }}</p></ion-label>
+                  </ion-item>
+                  <okr-editor [content]="info()" (contentChange)="onInfoChange($event)" [readOnly]="isReadOnly()" [copyable]="false" [buttonCopyI18n]="{}" />
                   <okr-error-note [errors]="infoErrors()" />
                 </ion-col>
               </ion-row>
@@ -83,7 +87,10 @@ import { MenuI18n, menuItemValidations } from '@okr/cms-menu-util';
 
                 <!-- optional: shown via an info-circle on the right of the sub-menu header -->
                 <ion-col size="12">
-                  <okr-text-input [i18n]="infoI18n()" [value]="info()" (valueChange)="onFieldChange('info', $event)" [showHelper]=true [maxLength]="descriptionLength" [readOnly]="isReadOnly()" />
+                  <ion-item lines="none" class="info-label">
+                    <ion-label>{{ i18n().info_label() }}<p>{{ i18n().info_helper() }}</p></ion-label>
+                  </ion-item>
+                  <okr-editor [content]="info()" (contentChange)="onInfoChange($event)" [readOnly]="isReadOnly()" [copyable]="false" [buttonCopyI18n]="{}" />
                   <okr-error-note [errors]="infoErrors()" />
                 </ion-col>
               </ion-row>
@@ -169,10 +176,6 @@ export class MenuForm {
     name: 'labelAlt', label: this.i18n().label_alt_label(), placeholder: this.i18n().label_alt_placeholder(), helper: this.i18n().label_alt_helper()
   } as TextInputI18n));
 
-  protected infoI18n = computed(() => ({
-    name: 'info', label: this.i18n().info_label(), placeholder: this.i18n().info_placeholder(), helper: this.i18n().info_helper()
-  } as TextInputI18n));
-
   protected descriptionI18n = computed(() => ({
     name: 'description', label: this.i18n().description_label(), placeholder: this.i18n().description_placeholder()
   } as NotesInputI18n));
@@ -224,6 +227,15 @@ export class MenuForm {
   protected onFieldChange(fieldName: string, fieldValue: string | string[] | number | BaseProperty[]): void {
     this.dirty.emit(true);
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
+  }
+
+  /**
+   * The editor normalises its content on load ('' → '<p></p>') and reports that as a change;
+   * only a real edit may mark the form dirty, or the save bar would show on every open.
+   */
+  protected onInfoChange(html: string): void {
+    if (normalizeMenuInfo(html) === normalizeMenuInfo(this.info())) return;
+    this.onFieldChange('info', html);
   }
 
   protected hasRole(role: RoleName): boolean {

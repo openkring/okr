@@ -22,7 +22,7 @@ import { AuthService } from '@okr/auth-data-access';
 import { ActivityService } from '@okr/activity-data-access';
 
 import { MenuService } from '@okr/cms-menu-data-access';
-import { getTarget, isMenuItem } from '@okr/cms-menu-util';
+import { getTarget, isMenuItem, menuInfoKey, normalizeMenuInfo } from '@okr/cms-menu-util';
 
 import { FeatureStore } from '@okr/tenant-feature';
 import { blockOwnersOfMenuKey, classifyMenuOwnership, FEATURE_BLOCKS } from '@okr/tenant-util';
@@ -176,10 +176,13 @@ export const _MenuStore = signalStore(
       ),
       { initialValue: '' }
     ),
-    /** The row's info text: plain text passes through, an '@…' key is translated; '' = no info icon. */
+    /** The row's info as HTML: an '@…' key is translated (its value may be HTML); '' = no info icon. */
     translatedMenuInfo: toSignal(
-      toObservable(computed(() => store.menu()?.info?.trim() ?? '')).pipe(
-        switchMap(info => store.i18nService.translate(info)),
+      toObservable(computed(() => normalizeMenuInfo(store.menu()?.info))).pipe(
+        switchMap(info => {
+          const key = menuInfoKey(info);
+          return key ? store.i18nService.translate(key) : of(info);
+        }),
       ),
       { initialValue: '' }
     ),

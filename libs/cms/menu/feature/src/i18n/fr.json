@@ -202,7 +202,7 @@
   "info": {
     "label": "Texte d’info",
     "placeholder": "Courte remarque sur cette entrée de menu",
-    "helper": "Affiché via une icône d’info à droite du menu. Un texte ou une clé de traduction commençant par @."
+    "helper": "Affiché dans une fenêtre via une icône d’info à droite du menu. Un texte mis en forme, ou seulement une clé de traduction commençant par @."
   },
   "url": {
     "label": "URL",

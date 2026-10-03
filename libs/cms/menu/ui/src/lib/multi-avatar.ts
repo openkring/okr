@@ -76,7 +76,7 @@ import { MenuInfo } from './menu-info';
               <ion-badge slot="end" color="danger">{{ badge() }}</ion-badge>
             }
             @if(info()) {
-              <okr-menu-info slot="end" [text]="info()" />
+              <okr-menu-info slot="end" [text]="info()" [title]="label() ?? ''" />
             }
           </ion-item>
         } @else {
@@ -90,7 +90,7 @@ import { MenuInfo } from './menu-info';
                 <ion-badge slot="end" color="danger">{{ badge() }}</ion-badge>
               }
               @if(info()) {
-                <okr-menu-info slot="end" [text]="info()" />
+                <okr-menu-info slot="end" [text]="info()" [title]="label() ?? ''" />
               }
             </ion-item>
           } 
@@ -106,7 +106,7 @@ import { MenuInfo } from './menu-info';
 
             </label>
             @if(info()) {
-              <okr-menu-info slot="end" [text]="info()" />
+              <okr-menu-info slot="end" [text]="info()" [title]="label() ?? ''" />
             }
           </ion-item>
         } @else {
@@ -117,7 +117,7 @@ import { MenuInfo } from './menu-info';
               <ion-badge slot="end" color="danger">{{ badge() }}</ion-badge>
             }
             @if(info()) {
-              <okr-menu-info slot="end" [text]="info()" />
+              <okr-menu-info slot="end" [text]="info()" [title]="label() ?? ''" />
             }
           </ion-item>
         }
@@ -129,7 +129,7 @@ export class MultiAvatar {
   public label = input<string>();
   public badge = input<number>(0);
   public safariWorkaround = input<boolean>(false);
-  /** translated info text; when set, an info-circle on the right opens it in a popover */
+  /** info as HTML (translated); when set, an info-circle on the right opens it in a modal */
   public info = input<string>('');
 
   protected name = computed(() => {

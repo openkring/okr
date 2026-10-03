@@ -54,7 +54,7 @@ import { MenuStore } from './menu.store';
                   <ion-item slot="header" color="primary">
                     <ion-label>{{ menuStore.translatedMenuLabel() }}</ion-label>
                     @if(menuStore.translatedMenuInfo(); as info) {
-                      <okr-menu-info slot="end" class="on-primary" [text]="info" />
+                      <okr-menu-info slot="end" class="on-primary" [text]="info" [title]="menuStore.translatedMenuLabel()" />
                     }
                   </ion-item>
                   <div slot="content">
