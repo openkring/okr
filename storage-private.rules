@@ -13,11 +13,17 @@ service firebase.storage {
     // Same 200 MB as MAX_VIDEO_BYTES (libs/shared/util-core/src/lib/video.util.ts).
     function videoSizeOk() { return request.resource.size < 200 * 1024 * 1024; }
     // By extension, never by contentType — see storage.rules isVideoUpload().
-    function isVideoUpload() { return request.resource.name.lower().matches('.*[.](mp4|mov)'); }
+    function isVideoUpload() { return request.resource.name.lower().matches('.*[.](mp4|mov|avi)'); }
+    // A folder that carries a room audience (chat room album) takes no client write: those videos
+    // arrive only via the signed URL from prepareChatVideoUpload, which bypasses rules. Legacy
+    // folder docs have no matrixRoomId (read as ''). A missing folder doc errors, which denies.
+    function folderHasNoRoom(key) {
+      return firestore.get(/databases/(default)/documents/folders/$(key)).data.get('matrixRoomId', '') == '';
+    }
 
     match /tenant/{tenantId}/{modelType}/{key}/album/{sub}/{path=**} {
       allow create: if inTenant(tenantId)
-        && (modelType == 'section' || modelType == 'folder')
+        && (modelType == 'section' || (modelType == 'folder' && folderHasNoRoom(key)))
         && sub != 'renderings'
         && isVideoUpload() && videoSizeOk();
     }
