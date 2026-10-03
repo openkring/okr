@@ -48,6 +48,16 @@ describe('readOkrVideo', () => {
   });
 });
 
+describe('readOkrVideo docKey validation', () => {
+  const f = (docKey: string) => readOkrVideo({ [OKR_VIDEO_FIELD]: { docKey, tenantId: 't' } });
+  it('rejects unsafe keys', () => {
+    for (const k of ['a/b', '..', 'a'.repeat(65), 'a b']) expect(f(k)).toBeUndefined();
+  });
+  it('accepts a 20-char Firestore id', () => {
+    expect(f('AbCdEfGhIjKlMnOpQrSt')).toEqual({ docKey: 'AbCdEfGhIjKlMnOpQrSt', tenantId: 't' });
+  });
+});
+
 describe('videoDocKeyOf', () => {
   it('prefers the field over the body', () => {
     expect(videoDocKeyOf({ [OKR_VIDEO_FIELD]: { docKey: 'f', tenantId: 't' } }, `${O}/video/b`, O)).toBe('f');

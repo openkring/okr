@@ -33,7 +33,7 @@ export function readOkrVideo(content: unknown): { docKey: string; tenantId: stri
   const v = (content as Record<string, unknown>)[OKR_VIDEO_FIELD];
   if (typeof v !== 'object' || v === null) return undefined;
   const { docKey, tenantId } = v as Record<string, unknown>;
-  if (typeof docKey !== 'string' || docKey === '' || typeof tenantId !== 'string') return undefined;
+  if (typeof docKey !== 'string' || !KEY_RE.test(docKey) || typeof tenantId !== 'string') return undefined;
   return { docKey, tenantId };
 }
 
