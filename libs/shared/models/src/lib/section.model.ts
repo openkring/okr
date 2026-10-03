@@ -669,6 +669,7 @@ export interface VideoConfig {
   height: string; // the height of the video, default is auto
   frameborder: string; // default 0
   baseUrl: string; // default is https://www.youtube.com/embed/
+  documentKey: string; // album video (DocumentModel okey, spec 1.82 §7.3); set → card instead of the iframe
 }
 
 // --------------------------------------- FORM ----------------------------------------

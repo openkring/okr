@@ -218,7 +218,8 @@ export const VIDEO_CONFIG_SHAPE = {
     width: '100%',
     height: 'auto',
     frameborder: '0px',
-    baseUrl: 'https://www.youtube.com/embed/'
+    baseUrl: 'https://www.youtube.com/embed/',
+    documentKey: ''
 } as VideoConfig;
 
 // --------------------------------------- CONCRETE SECTION SHAPES ----------------------------------------
