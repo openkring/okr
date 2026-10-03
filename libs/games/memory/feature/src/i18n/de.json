@@ -1,0 +1,39 @@
+{
+  "title": "Paare finden",
+  "desc": "Decke immer zwei Karten auf. Zeigen sie dasselbe Bild, bleiben sie offen. Sonst merkst du dir, wo sie liegen, und versuchst es weiter.",
+  "option": {
+    "size_label": "Grösse",
+    "size_small": "Klein (8 Paare)",
+    "size_medium": "Mittel (12 Paare)",
+    "size_large": "Gross (18 Paare)",
+    "theme_label": "Bilder",
+    "theme_animals": "Tiere",
+    "theme_food": "Essen",
+    "theme_sport": "Sport",
+    "players_label": "Spieler",
+    "players_one": "Allein",
+    "players_two": "Zu zweit"
+  },
+  "action": {
+    "new_game": "Neues Spiel"
+  },
+  "score": {
+    "moves": "Züge: {count}",
+    "best": "Bestwert: {moves} Züge in {time}",
+    "player": "Spieler {n}"
+  },
+  "card": {
+    "hidden": "Karte {n}, verdeckt",
+    "open": "Karte {n}: {face}"
+  },
+  "status": {
+    "play": "Tippe auf eine Karte, um sie aufzudecken.",
+    "turn": "Spieler {n} ist am Zug.",
+    "match": "Ein Paar. Weiter so.",
+    "match_again": "Ein Paar. Spieler {n} ist nochmals am Zug.",
+    "solved": "Alle Paare gefunden, in {moves} Zügen und {time}.",
+    "solved_best": "Alle Paare gefunden, in {moves} Zügen und {time}. Das ist dein neuer Bestwert.",
+    "winner": "Spieler {n} gewinnt mit {count} Paaren.",
+    "draw": "Unentschieden, ihr habt beide {count} Paare."
+  }
+}

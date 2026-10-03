@@ -1,0 +1,39 @@
+{
+  "title": "Find the pairs",
+  "desc": "Turn over two cards at a time. If they show the same picture, they stay open. Otherwise, remember where they are and keep going.",
+  "option": {
+    "size_label": "Size",
+    "size_small": "Small (8 pairs)",
+    "size_medium": "Medium (12 pairs)",
+    "size_large": "Large (18 pairs)",
+    "theme_label": "Pictures",
+    "theme_animals": "Animals",
+    "theme_food": "Food",
+    "theme_sport": "Sport",
+    "players_label": "Players",
+    "players_one": "Solo",
+    "players_two": "Two players"
+  },
+  "action": {
+    "new_game": "New game"
+  },
+  "score": {
+    "moves": "Moves: {count}",
+    "best": "Best: {moves} moves in {time}",
+    "player": "Player {n}"
+  },
+  "card": {
+    "hidden": "Card {n}, face down",
+    "open": "Card {n}: {face}"
+  },
+  "status": {
+    "play": "Tap a card to turn it over.",
+    "turn": "Player {n}'s turn.",
+    "match": "A pair. Keep going.",
+    "match_again": "A pair. Player {n} goes again.",
+    "solved": "All pairs found, in {moves} moves and {time}.",
+    "solved_best": "All pairs found, in {moves} moves and {time}. That's your new best.",
+    "winner": "Player {n} wins with {count} pairs.",
+    "draw": "A draw, you both have {count} pairs."
+  }
+}

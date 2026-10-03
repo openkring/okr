@@ -437,6 +437,16 @@
           },
           {
             "glob": "*.json",
+            "input": "libs/games/sudoku/feature/src/i18n",
+            "output": "./assets/i18n/games/sudoku/feature"
+          },
+          {
+            "glob": "*.json",
+            "input": "libs/games/memory/feature/src/i18n",
+            "output": "./assets/i18n/games/memory/feature"
+          },
+          {
+            "glob": "*.json",
             "input": "libs/games/chess/feature/src/i18n",
             "output": "./assets/i18n/games/chess/feature"
           },

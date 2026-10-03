@@ -159,6 +159,12 @@
     "bimaru": {
       "label": "Bimaru"
     },
+    "sudoku": {
+      "label": "Sudoku"
+    },
+    "memory": {
+      "label": "Trova le coppie"
+    },
     "jasstafel": {
       "label": "Lavagna del Jass"
     },

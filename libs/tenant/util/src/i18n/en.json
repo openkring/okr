@@ -159,6 +159,12 @@
     "bimaru": {
       "label": "Bimaru"
     },
+    "sudoku": {
+      "label": "Sudoku"
+    },
+    "memory": {
+      "label": "Find the pairs"
+    },
     "jasstafel": {
       "label": "Jass scoreboard"
     },

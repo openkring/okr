@@ -1,0 +1,39 @@
+{
+  "title": "Trova le coppie",
+  "desc": "Scopri sempre due carte. Se mostrano la stessa immagine, restano aperte. Altrimenti ricorda dove sono e continua.",
+  "option": {
+    "size_label": "Dimensione",
+    "size_small": "Piccolo (8 coppie)",
+    "size_medium": "Medio (12 coppie)",
+    "size_large": "Grande (18 coppie)",
+    "theme_label": "Immagini",
+    "theme_animals": "Animali",
+    "theme_food": "Cibo",
+    "theme_sport": "Sport",
+    "players_label": "Giocatori",
+    "players_one": "Da solo",
+    "players_two": "In due"
+  },
+  "action": {
+    "new_game": "Nuova partita"
+  },
+  "score": {
+    "moves": "Mosse: {count}",
+    "best": "Record: {moves} mosse in {time}",
+    "player": "Giocatore {n}"
+  },
+  "card": {
+    "hidden": "Carta {n}, coperta",
+    "open": "Carta {n}: {face}"
+  },
+  "status": {
+    "play": "Tocca una carta per scoprirla.",
+    "turn": "Tocca al giocatore {n}.",
+    "match": "Una coppia. Continua così.",
+    "match_again": "Una coppia. Il giocatore {n} gioca ancora.",
+    "solved": "Tutte le coppie trovate, in {moves} mosse e {time}.",
+    "solved_best": "Tutte le coppie trovate, in {moves} mosse e {time}. È il tuo nuovo record.",
+    "winner": "Il giocatore {n} vince con {count} coppie.",
+    "draw": "Pareggio, avete entrambi {count} coppie."
+  }
+}

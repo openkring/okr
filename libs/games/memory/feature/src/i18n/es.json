@@ -1,0 +1,39 @@
+{
+  "title": "Encuentra las parejas",
+  "desc": "Da la vuelta siempre a dos cartas. Si muestran la misma imagen, se quedan abiertas. Si no, recuerda dónde están y sigue.",
+  "option": {
+    "size_label": "Tamaño",
+    "size_small": "Pequeño (8 parejas)",
+    "size_medium": "Mediano (12 parejas)",
+    "size_large": "Grande (18 parejas)",
+    "theme_label": "Imágenes",
+    "theme_animals": "Animales",
+    "theme_food": "Comida",
+    "theme_sport": "Deporte",
+    "players_label": "Jugadores",
+    "players_one": "Solo",
+    "players_two": "Dos jugadores"
+  },
+  "action": {
+    "new_game": "Nueva partida"
+  },
+  "score": {
+    "moves": "Jugadas: {count}",
+    "best": "Récord: {moves} jugadas en {time}",
+    "player": "Jugador {n}"
+  },
+  "card": {
+    "hidden": "Carta {n}, boca abajo",
+    "open": "Carta {n}: {face}"
+  },
+  "status": {
+    "play": "Toca una carta para darle la vuelta.",
+    "turn": "Le toca al jugador {n}.",
+    "match": "Una pareja. Sigue así.",
+    "match_again": "Una pareja. El jugador {n} vuelve a jugar.",
+    "solved": "Todas las parejas encontradas, en {moves} jugadas y {time}.",
+    "solved_best": "Todas las parejas encontradas, en {moves} jugadas y {time}. Es tu nuevo récord.",
+    "winner": "El jugador {n} gana con {count} parejas.",
+    "draw": "Empate, los dos tenéis {count} parejas."
+  }
+}

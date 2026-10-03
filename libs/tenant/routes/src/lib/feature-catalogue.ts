@@ -1261,6 +1261,32 @@ const bimaru: BlockRoutes = {
 };
 
 /**
+ * `/sudoku` — Sudoku in `libs/games/sudoku`. `localStorage` only, no `:contextMenuName`
+ * segment — the same shape as `/zip`.
+ */
+const sudoku: BlockRoutes = {
+  id: 'sudoku',
+  routes: (): Route[] => [{
+    path: 'sudoku',
+    canActivate: [isAuthenticatedGuard],
+    loadComponent: () => import('@okr/games-sudoku-feature').then(m => m.SudokuPage),
+  }],
+};
+
+/**
+ * `/memory` — Pairs («Paare finden») in `libs/games/memory`. `localStorage` only, no
+ * `:contextMenuName` segment — the same shape as `/zip`.
+ */
+const memory: BlockRoutes = {
+  id: 'memory',
+  routes: (): Route[] => [{
+    path: 'memory',
+    canActivate: [isAuthenticatedGuard],
+    loadComponent: () => import('@okr/games-memory-feature').then(m => m.MemoryPage),
+  }],
+};
+
+/**
  * `/jasstafel` — Jasstafel in `libs/games/jasstafel`. `localStorage` only, no
  * `:contextMenuName` segment — the same shape as `/zip`.
  */
@@ -1481,7 +1507,7 @@ const contracts: BlockRoutes = {
 };
 
 export const FEATURE_ROUTES: BlockRoutes[] = [
-  calevent, aoc, activity, task, instruments, games, quiz, zip, hearingQuiz, crossword, muehle, battleship, bimaru, jasstafel, tetris, mampf, wordle, chess,
+  calevent, aoc, activity, task, instruments, games, quiz, zip, hearingQuiz, crossword, muehle, battleship, bimaru, sudoku, memory, jasstafel, tetris, mampf, wordle, chess,
   auth, cms, user, profile, session, security, i18n, avatar, category, comment, geo, trip, consent,
   subject, relationship, vcard,
   resource, mobility,

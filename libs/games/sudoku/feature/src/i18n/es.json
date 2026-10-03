@@ -1,0 +1,35 @@
+{
+  "title": "Sudoku",
+  "desc": "Rellena la cuadrícula para que cada fila, cada columna y cada bloque de 3×3 contenga los números del 1 al 9 una sola vez. Cada sudoku tiene una sola solución.",
+  "option": {
+    "difficulty_label": "Dificultad",
+    "difficulty_easy": "Fácil",
+    "difficulty_medium": "Medio",
+    "difficulty_hard": "Difícil"
+  },
+  "action": {
+    "undo": "Deshacer",
+    "hint": "Pista",
+    "check": "Comprobar",
+    "new_game": "Nuevo sudoku",
+    "erase": "Borrar",
+    "notes": "Notas"
+  },
+  "cell": {
+    "empty": "vacía",
+    "label": "{at}: {value}",
+    "notes": "notas {list}",
+    "digit": "Número {digit}"
+  },
+  "status": {
+    "play": "Elige una casilla y toca un número. Con «Notas» apuntas los números posibles.",
+    "select": "Elige primero una casilla.",
+    "errors": "{count} casillas no son correctas, están marcadas en rojo.",
+    "error_one": "Una casilla no es correcta, está marcada en rojo.",
+    "no_errors": "Por ahora todo es correcto.",
+    "hint": "Pista: la casilla {at} ya está rellenada.",
+    "no_hint": "No queda nada por rellenar.",
+    "solved": "Resuelto en {time}.",
+    "solved_hints": "Resuelto en {time}, con {count} pistas."
+  }
+}

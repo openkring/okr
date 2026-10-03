@@ -1,0 +1,39 @@
+{
+  "title": "Trouver les paires",
+  "desc": "Retourne toujours deux cartes. Si elles montrent la même image, elles restent ouvertes. Sinon, retiens leur place et continue.",
+  "option": {
+    "size_label": "Taille",
+    "size_small": "Petit (8 paires)",
+    "size_medium": "Moyen (12 paires)",
+    "size_large": "Grand (18 paires)",
+    "theme_label": "Images",
+    "theme_animals": "Animaux",
+    "theme_food": "Nourriture",
+    "theme_sport": "Sport",
+    "players_label": "Joueurs",
+    "players_one": "Seul",
+    "players_two": "À deux"
+  },
+  "action": {
+    "new_game": "Nouvelle partie"
+  },
+  "score": {
+    "moves": "Coups : {count}",
+    "best": "Record : {moves} coups en {time}",
+    "player": "Joueur {n}"
+  },
+  "card": {
+    "hidden": "Carte {n}, retournée",
+    "open": "Carte {n} : {face}"
+  },
+  "status": {
+    "play": "Touche une carte pour la retourner.",
+    "turn": "C'est au tour du joueur {n}.",
+    "match": "Une paire. Continue.",
+    "match_again": "Une paire. Le joueur {n} rejoue.",
+    "solved": "Toutes les paires trouvées, en {moves} coups et {time}.",
+    "solved_best": "Toutes les paires trouvées, en {moves} coups et {time}. C'est ton nouveau record.",
+    "winner": "Le joueur {n} gagne avec {count} paires.",
+    "draw": "Égalité, vous avez chacun {count} paires."
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "title": "Sudoku",
+  "desc": "Fill the grid so that every row, every column and every 3×3 box contains the numbers 1 to 9 exactly once. Every puzzle has exactly one solution.",
+  "option": {
+    "difficulty_label": "Difficulty",
+    "difficulty_easy": "Easy",
+    "difficulty_medium": "Medium",
+    "difficulty_hard": "Hard"
+  },
+  "action": {
+    "undo": "Undo",
+    "hint": "Hint",
+    "check": "Check",
+    "new_game": "New puzzle",
+    "erase": "Erase",
+    "notes": "Notes"
+  },
+  "cell": {
+    "empty": "empty",
+    "label": "{at}: {value}",
+    "notes": "notes {list}",
+    "digit": "Number {digit}"
+  },
+  "status": {
+    "play": "Pick a cell and tap a number. Use «Notes» to jot down possible numbers.",
+    "select": "Pick a cell first.",
+    "errors": "{count} cells are wrong; they are outlined in red.",
+    "error_one": "One cell is wrong; it is outlined in red.",
+    "no_errors": "Everything is correct so far.",
+    "hint": "Hint: cell {at} is now filled in.",
+    "no_hint": "There is nothing left to fill in.",
+    "solved": "Solved in {time}.",
+    "solved_hints": "Solved in {time}, with {count} hints."
+  }
+}

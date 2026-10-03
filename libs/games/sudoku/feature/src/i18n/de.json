@@ -1,0 +1,35 @@
+{
+  "title": "Sudoku",
+  "desc": "Fülle das Raster so aus, dass in jeder Zeile, jeder Spalte und jedem 3×3-Block die Zahlen 1 bis 9 genau einmal vorkommen. Jedes Rätsel hat genau eine Lösung.",
+  "option": {
+    "difficulty_label": "Schwierigkeit",
+    "difficulty_easy": "Leicht",
+    "difficulty_medium": "Mittel",
+    "difficulty_hard": "Schwer"
+  },
+  "action": {
+    "undo": "Widerrufen",
+    "hint": "Tipp",
+    "check": "Prüfen",
+    "new_game": "Neues Rätsel",
+    "erase": "Löschen",
+    "notes": "Notizen"
+  },
+  "cell": {
+    "empty": "leer",
+    "label": "{at}: {value}",
+    "notes": "Notizen {list}",
+    "digit": "Zahl {digit}"
+  },
+  "status": {
+    "play": "Wähle ein Feld und tippe eine Zahl. Mit «Notizen» merkst du dir mögliche Zahlen.",
+    "select": "Wähle zuerst ein Feld.",
+    "errors": "{count} Felder stimmen nicht, sie sind rot umrandet.",
+    "error_one": "Ein Feld stimmt nicht, es ist rot umrandet.",
+    "no_errors": "Bisher stimmt alles.",
+    "hint": "Tipp: Feld {at} ist jetzt ausgefüllt.",
+    "no_hint": "Es gibt nichts mehr auszufüllen.",
+    "solved": "Gelöst in {time}.",
+    "solved_hints": "Gelöst in {time}, mit {count} Tipps."
+  }
+}

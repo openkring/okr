@@ -2394,6 +2394,7 @@ const instruments: FeatureBlock = {
  *     quiz  dependsOn ['games']  → /quiz   + one child row under `games-menu`
  *     zip   dependsOn ['games']  → /zip    + one child row under `games-menu`
  *     muehle, battleship, bimaru, hearing-quiz, jasstafel, tetris, mampf, wordle, chess — same shape (added 2026-09-28/29)
+ *     sudoku, memory — same shape (added 2026-10-03)
  *
  * Every game block carries `bundle: 'games'` (since 2026-09-29), so the picker lists them
  * together under «Spiele» instead of scattering them through «Spezial».
@@ -2651,6 +2652,52 @@ const bimaru: FeatureBlock = {
   collections: [],
   menu: [gamesMenuParent([
     { key: 'game-bimaru', name: 'game-bimaru', url: '/bimaru', action: 'navigate', roleNeeded: 'registered', icon: 'compass', label: '@item.game-bimaru' },
+  ])],
+};
+
+/**
+ * `libs/games/sudoku` — `SudokuPage` + `SudokuStore` at `/sudoku`, over the pure
+ * `@okr/games-sudoku-util` (a generator that proves each puzzle has one solution, three
+ * difficulty levels, notes, hints and error check).
+ *
+ * The running game is kept in `localStorage` only, so a reload resumes it — no service, no
+ * Firestore, hence `collections: []`.
+ *
+ * `defaultAvailability: 'ga'`, like `bimaru`: nothing tenant-side to configure.
+ */
+const sudoku: FeatureBlock = {
+  id: 'sudoku',
+  bundle: 'games',
+  label: '@tenant/util.feature.sudoku.label',
+  icon: 'grid',
+  defaultAvailability: 'ga',
+  dependsOn: ['games'],
+  collections: [],
+  menu: [gamesMenuParent([
+    { key: 'game-sudoku', name: 'game-sudoku', url: '/sudoku', action: 'navigate', roleNeeded: 'registered', icon: 'grid', label: '@item.game-sudoku' },
+  ])],
+};
+
+/**
+ * `libs/games/memory` — `MemoryPage` + `MemoryStore` at `/memory`, over the pure
+ * `@okr/games-memory-util` (deal, turn rules, one or two players on one device).
+ *
+ * Pairs: turn two cards at a time and find the matching faces. Shown as «Paare finden», never
+ * as «Memory», which is a Ravensburger trademark; `memory` is only the internal id. Settings and
+ * the best solo result per size live in `localStorage` — no Firestore, hence `collections: []`.
+ *
+ * `defaultAvailability: 'ga'`, like `bimaru`: nothing tenant-side to configure.
+ */
+const memory: FeatureBlock = {
+  id: 'memory',
+  bundle: 'games',
+  label: '@tenant/util.feature.memory.label',
+  icon: 'copy',
+  defaultAvailability: 'ga',
+  dependsOn: ['games'],
+  collections: [],
+  menu: [gamesMenuParent([
+    { key: 'game-memory', name: 'game-memory', url: '/memory', action: 'navigate', roleNeeded: 'registered', icon: 'copy', label: '@item.game-memory' },
   ])],
 };
 
@@ -2992,7 +3039,7 @@ const contracts: FeatureBlock = {
 };
 
 export const FEATURE_BLOCKS: FeatureBlock[] = [
-  calevent, aoc, activity, task, instruments, games, quiz, zip, hearingQuiz, crossword, muehle, battleship, bimaru, jasstafel, tetris, mampf, wordle, chess,
+  calevent, aoc, activity, task, instruments, games, quiz, zip, hearingQuiz, crossword, muehle, battleship, bimaru, sudoku, memory, jasstafel, tetris, mampf, wordle, chess,
   auth, cms, user, profile, session, security, i18n, avatar, category, comment, geo, trip, consent,
   subject, relationship, vcard,
   resource, mobility,

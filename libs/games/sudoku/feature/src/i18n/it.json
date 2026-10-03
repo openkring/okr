@@ -1,0 +1,35 @@
+{
+  "title": "Sudoku",
+  "desc": "Riempi la griglia in modo che ogni riga, ogni colonna e ogni blocco 3×3 contenga i numeri da 1 a 9 una sola volta. Ogni rompicapo ha una sola soluzione.",
+  "option": {
+    "difficulty_label": "Difficoltà",
+    "difficulty_easy": "Facile",
+    "difficulty_medium": "Medio",
+    "difficulty_hard": "Difficile"
+  },
+  "action": {
+    "undo": "Annulla",
+    "hint": "Suggerimento",
+    "check": "Verifica",
+    "new_game": "Nuovo rompicapo",
+    "erase": "Cancella",
+    "notes": "Note"
+  },
+  "cell": {
+    "empty": "vuota",
+    "label": "{at}: {value}",
+    "notes": "note {list}",
+    "digit": "Numero {digit}"
+  },
+  "status": {
+    "play": "Scegli una casella e tocca un numero. Con «Note» annoti i numeri possibili.",
+    "select": "Scegli prima una casella.",
+    "errors": "{count} caselle sono sbagliate, sono bordate di rosso.",
+    "error_one": "Una casella è sbagliata, è bordata di rosso.",
+    "no_errors": "Finora è tutto giusto.",
+    "hint": "Suggerimento: la casella {at} ora è compilata.",
+    "no_hint": "Non c'è più niente da compilare.",
+    "solved": "Risolto in {time}.",
+    "solved_hints": "Risolto in {time}, con {count} suggerimenti."
+  }
+}
