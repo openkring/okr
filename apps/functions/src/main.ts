@@ -414,6 +414,8 @@ export { generateDunningPdf } from './payment/generate-dunning-pdf';
 // exportMyData zips + signs the caller's own export, reapPrivacyExports reaps stale artifacts
 // signFinanceDocuments: short-lived links to vouchers in the private bucket (spec 1.74)
 export const signFinanceDocuments = FinanceDocument.signFinanceDocuments;
+// signVideoUrls: signed imgix poster/mp4 URLs for album videos in the private bucket (spec 1.82)
+export const signVideoUrls = Video.signVideoUrls;
 export const exportMyData = Privacy.exportMyData;
 export const reapPrivacyExports = Privacy.reapPrivacyExports;
 
