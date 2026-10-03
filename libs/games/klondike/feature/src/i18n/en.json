@@ -1,0 +1,37 @@
+{
+  "title": "Patience",
+  "desc": "Move every card to the four foundations, one suit each, from ace to king. In the columns you build down in alternating colours; only a king fits into an empty column.",
+  "option": {
+    "draw_label": "Draw",
+    "draw_one": "One at a time",
+    "draw_three": "Three at a time"
+  },
+  "action": {
+    "undo": "Undo",
+    "new_game": "New game",
+    "auto_finish": "Finish automatically"
+  },
+  "pile": {
+    "stock": "Stock, {count} cards",
+    "stock_empty": "Stock empty, tap to turn it over",
+    "waste": "Waste",
+    "foundation": "Foundation {n}, empty",
+    "column_empty": "Column {n}, empty"
+  },
+  "card": {
+    "label": "{rank} of {suit}",
+    "hidden": "face-down card",
+    "ranks_short": "A,2,3,4,5,6,7,8,9,10,J,Q,K",
+    "ranks_long": "Ace,Two,Three,Four,Five,Six,Seven,Eight,Nine,Ten,Jack,Queen,King",
+    "suits": "Spades,Hearts,Diamonds,Clubs"
+  },
+  "status": {
+    "play": "Tap a card and it moves to the best spot by itself. Or drag it where you want it.",
+    "selected": "Now tap the pile the card should go to.",
+    "draw_next": "This applies from the next game.",
+    "stats": "{moves} moves · {time}",
+    "best": "Best time {time}",
+    "won": "Done in {time} with {moves} moves.",
+    "won_best": "Done in {time} with {moves} moves. That is your new best time."
+  }
+}

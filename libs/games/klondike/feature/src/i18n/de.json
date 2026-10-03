@@ -1,0 +1,37 @@
+{
+  "title": "Patience",
+  "desc": "Lege alle Karten nach Farben geordnet vom Ass bis zum König auf die vier Zielfelder. In den Spalten legst du absteigend und abwechselnd rot und schwarz an; in eine leere Spalte passt nur ein König.",
+  "option": {
+    "draw_label": "Karten ziehen",
+    "draw_one": "Eine aufs Mal",
+    "draw_three": "Drei aufs Mal"
+  },
+  "action": {
+    "undo": "Widerrufen",
+    "new_game": "Neues Spiel",
+    "auto_finish": "Automatisch beenden"
+  },
+  "pile": {
+    "stock": "Stapel, {count} Karten",
+    "stock_empty": "Stapel leer, tippen zum Umdrehen",
+    "waste": "Ablage",
+    "foundation": "Zielfeld {n}, leer",
+    "column_empty": "Spalte {n}, leer"
+  },
+  "card": {
+    "label": "{suit} {rank}",
+    "hidden": "verdeckte Karte",
+    "ranks_short": "A,2,3,4,5,6,7,8,9,10,B,D,K",
+    "ranks_long": "Ass,Zwei,Drei,Vier,Fünf,Sechs,Sieben,Acht,Neun,Zehn,Bube,Dame,König",
+    "suits": "Pik,Herz,Karo,Kreuz"
+  },
+  "status": {
+    "play": "Tippe eine Karte, dann legt sie sich selbst an die beste Stelle. Oder zieh sie dorthin, wo du sie haben willst.",
+    "selected": "Tippe jetzt auf den Stapel, auf den die Karte soll.",
+    "draw_next": "Das gilt ab dem nächsten Spiel.",
+    "stats": "{moves} Züge · {time}",
+    "best": "Bestzeit {time}",
+    "won": "Geschafft in {time} mit {moves} Zügen.",
+    "won_best": "Geschafft in {time} mit {moves} Zügen. Das ist deine neue Bestzeit."
+  }
+}

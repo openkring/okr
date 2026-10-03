@@ -1,0 +1,37 @@
+{
+  "title": "Solitario",
+  "desc": "Lleva todas las cartas a las cuatro bases, un palo en cada una, del as al rey. En las columnas bajas alternando rojo y negro; en una columna vacía solo cabe un rey.",
+  "option": {
+    "draw_label": "Robar",
+    "draw_one": "De una en una",
+    "draw_three": "De tres en tres"
+  },
+  "action": {
+    "undo": "Deshacer",
+    "new_game": "Nueva partida",
+    "auto_finish": "Terminar automáticamente"
+  },
+  "pile": {
+    "stock": "Mazo, {count} cartas",
+    "stock_empty": "Mazo vacío, toca para darle la vuelta",
+    "waste": "Descarte",
+    "foundation": "Base {n}, vacía",
+    "column_empty": "Columna {n}, vacía"
+  },
+  "card": {
+    "label": "{rank} de {suit}",
+    "hidden": "carta boca abajo",
+    "ranks_short": "A,2,3,4,5,6,7,8,9,10,J,Q,K",
+    "ranks_long": "As,Dos,Tres,Cuatro,Cinco,Seis,Siete,Ocho,Nueve,Diez,Jota,Reina,Rey",
+    "suits": "picas,corazones,diamantes,tréboles"
+  },
+  "status": {
+    "play": "Toca una carta y se coloca sola en el mejor sitio. O arrástrala adonde quieras.",
+    "selected": "Ahora toca la pila donde debe ir la carta.",
+    "draw_next": "Se aplica a partir de la próxima partida.",
+    "stats": "{moves} movimientos · {time}",
+    "best": "Mejor tiempo {time}",
+    "won": "Hecho en {time} con {moves} movimientos.",
+    "won_best": "Hecho en {time} con {moves} movimientos. Es tu nuevo mejor tiempo."
+  }
+}

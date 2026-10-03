@@ -1,0 +1,37 @@
+{
+  "title": "Solitario",
+  "desc": "Porta tutte le carte sulle quattro basi, un seme ciascuna, dall'asso al re. Nelle colonne scendi alternando rosso e nero; in una colonna vuota va solo un re.",
+  "option": {
+    "draw_label": "Pesca",
+    "draw_one": "Una alla volta",
+    "draw_three": "Tre alla volta"
+  },
+  "action": {
+    "undo": "Annulla",
+    "new_game": "Nuova partita",
+    "auto_finish": "Termina automaticamente"
+  },
+  "pile": {
+    "stock": "Mazzo, {count} carte",
+    "stock_empty": "Mazzo vuoto, tocca per girarlo",
+    "waste": "Scarti",
+    "foundation": "Base {n}, vuota",
+    "column_empty": "Colonna {n}, vuota"
+  },
+  "card": {
+    "label": "{rank} di {suit}",
+    "hidden": "carta coperta",
+    "ranks_short": "A,2,3,4,5,6,7,8,9,10,J,Q,K",
+    "ranks_long": "Asso,Due,Tre,Quattro,Cinque,Sei,Sette,Otto,Nove,Dieci,Fante,Donna,Re",
+    "suits": "picche,cuori,quadri,fiori"
+  },
+  "status": {
+    "play": "Tocca una carta e si sposta da sola nel posto migliore. Oppure trascinala dove vuoi.",
+    "selected": "Ora tocca la pila su cui deve andare la carta.",
+    "draw_next": "Vale dalla prossima partita.",
+    "stats": "{moves} mosse · {time}",
+    "best": "Miglior tempo {time}",
+    "won": "Fatto in {time} con {moves} mosse.",
+    "won_best": "Fatto in {time} con {moves} mosse. È il tuo nuovo miglior tempo."
+  }
+}

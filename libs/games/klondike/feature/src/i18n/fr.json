@@ -1,0 +1,37 @@
+{
+  "title": "Patience",
+  "desc": "Range toutes les cartes sur les quatre fondations, une couleur chacune, de l'as au roi. Dans les colonnes, tu descends en alternant rouge et noir ; seul un roi va dans une colonne vide.",
+  "option": {
+    "draw_label": "Piocher",
+    "draw_one": "Une à la fois",
+    "draw_three": "Trois à la fois"
+  },
+  "action": {
+    "undo": "Annuler",
+    "new_game": "Nouvelle partie",
+    "auto_finish": "Terminer automatiquement"
+  },
+  "pile": {
+    "stock": "Pioche, {count} cartes",
+    "stock_empty": "Pioche vide, touche pour la retourner",
+    "waste": "Défausse",
+    "foundation": "Fondation {n}, vide",
+    "column_empty": "Colonne {n}, vide"
+  },
+  "card": {
+    "label": "{rank} de {suit}",
+    "hidden": "carte retournée",
+    "ranks_short": "A,2,3,4,5,6,7,8,9,10,V,D,R",
+    "ranks_long": "As,Deux,Trois,Quatre,Cinq,Six,Sept,Huit,Neuf,Dix,Valet,Dame,Roi",
+    "suits": "pique,cœur,carreau,trèfle"
+  },
+  "status": {
+    "play": "Touche une carte et elle se place toute seule au meilleur endroit. Ou fais-la glisser où tu veux.",
+    "selected": "Touche maintenant la pile où la carte doit aller.",
+    "draw_next": "Cela s'applique à la prochaine partie.",
+    "stats": "{moves} coups · {time}",
+    "best": "Meilleur temps {time}",
+    "won": "Réussi en {time} avec {moves} coups.",
+    "won_best": "Réussi en {time} avec {moves} coups. C'est ton nouveau meilleur temps."
+  }
+}
