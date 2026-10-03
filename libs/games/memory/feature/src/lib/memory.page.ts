@@ -87,7 +87,7 @@ type Option<T> = { value: T; label: () => string };
           }
         </div>
 
-        <section class="mm-board" [style.grid-template-columns]="'repeat(' + cols() + ', 1fr)'">
+        <section class="mm-board" [style.grid-template-columns]="'repeat(' + cols() + ', minmax(0, 1fr))'">
           @for (card of cards(); track card.i) {
             <button type="button" class="mm-card" [class.up]="card.up" [class.found]="card.found"
               [attr.aria-label]="card.label" [disabled]="card.found || store.solved()" (click)="store.flip(card.i)">
@@ -133,7 +133,7 @@ type Option<T> = { value: T; label: () => string };
     .mm-player.active { border-color: var(--mm-back); font-weight: 600; }
 
     .mm-board { display: grid; gap: 6px; width: min(100%, 34rem); margin: 0 auto; touch-action: manipulation; user-select: none; }
-    .mm-card { padding: 0; border: 0; background: none; aspect-ratio: 1; perspective: 600px; cursor: pointer; }
+    .mm-card { min-width: 0; padding: 0; border: 0; background: none; aspect-ratio: 1; perspective: 600px; cursor: pointer; }
     .mm-card:disabled { cursor: default; opacity: 1; }
     .mm-card:focus-visible { outline: 2px solid var(--mm-back); outline-offset: 2px; border-radius: 8px; }
     .mm-inner {

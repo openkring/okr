@@ -149,15 +149,21 @@ const NOTE_SLOTS = [1, 2, 3, 4, 5, 6, 7, 8, 9];
     .sd-buttons { display: flex; flex-wrap: wrap; gap: 0.25rem; margin-top: 0.75rem; }
 
     .sd-board-wrap { width: min(100%, 30rem); margin: 0 auto; }
+    /*
+     * Tracks are minmax(0, 1fr), never bare 1fr (= minmax(auto, 1fr)): with auto minimums
+     * Chromium sizes the columns from the buttons' min-content and the board overflows to the
+     * right and over the number pad. The height comes from the square cells alone; the board
+     * itself has no aspect-ratio, which would fight the cells' own.
+     */
     .sd-board {
-      display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px;
+      display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2px;
       padding: 2px; background: var(--sd-line); border-radius: 4px;
-      aspect-ratio: 1; user-select: none; touch-action: manipulation;
+      user-select: none; touch-action: manipulation;
     }
-    .sd-box { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; }
+    .sd-box { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; min-width: 0; }
 
     .cell {
-      position: relative; display: grid; place-items: center; padding: 0; border: 0;
+      position: relative; display: grid; place-items: center; min-width: 0; padding: 0; border: 0;
       background: var(--sd-cell); aspect-ratio: 1; cursor: pointer;
       font-size: clamp(1rem, 5.5vw, 1.6rem); color: var(--sd-entry); font-variant-numeric: tabular-nums;
     }
@@ -177,9 +183,9 @@ const NOTE_SLOTS = [1, 2, 3, 4, 5, 6, 7, 8, 9];
     }
     .sd-notes i { display: grid; place-items: center; font-style: normal; }
 
-    .sd-pad { display: grid; grid-template-columns: repeat(9, 1fr); gap: 4px; margin-top: 1rem; }
+    .sd-pad { display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); gap: 4px; margin-top: 1rem; }
     .sd-digit {
-      padding: 0.6rem 0; border: 1px solid var(--sd-line); border-radius: 6px;
+      min-width: 0; padding: 0.6rem 0; border: 1px solid var(--sd-line); border-radius: 6px;
       background: var(--sd-cell); color: var(--sd-entry); font-size: 1.25rem; cursor: pointer;
     }
     .sd-digit:hover:not(:disabled) { background: var(--sd-peer); }
