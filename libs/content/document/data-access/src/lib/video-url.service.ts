@@ -1,0 +1,49 @@
+import { Injectable, signal } from '@angular/core';
+import { getApp } from 'firebase/app';
+import { getFunctions, httpsCallable } from 'firebase/functions';
+
+import { missingKeys, SignedVideo } from '@okr/content-document-util';
+
+type Req = { docKeys: string[]; download?: boolean };
+type Res = { videos: SignedVideo[]; expires: number };
+
+/**
+ * Album videos live in the private bucket (spec 1.82). The client never reads them directly:
+ * `signVideoUrls` checks access and returns signed URLs valid for a fixed window. This service is
+ * the only caller; it keeps one window's signatures and re-signs when the window runs out.
+ */
+@Injectable({ providedIn: 'root' })
+export class VideoUrlService {
+  private readonly _signed = signal<Record<string, SignedVideo>>({});
+  private expires: number | undefined;
+  public readonly signed = this._signed.asReadonly();
+
+  private call(req: Req): Promise<Res> {
+    const fn = httpsCallable<Req, Res>(getFunctions(getApp(), 'europe-west6'), 'signVideoUrls');
+    return fn(req).then(r => r.data);
+  }
+
+  /** Make sure posters/playback URLs for these keys are signed and fresh. Absent keys = not available. */
+  public async ensure(keys: string[]): Promise<void> {
+    const stale = this.expires;
+    const todo = missingKeys(keys, this._signed(), stale, Date.now());
+    if (todo.length === 0) return;
+    const res = await this.call({ docKeys: todo });
+    // Same window → add to what we have; a new window → old signatures are dead, start over.
+    const base = res.expires === stale ? this._signed() : {};
+    this.expires = res.expires;
+    this._signed.set({ ...base, ...Object.fromEntries(res.videos.map(v => [v.key, v])) });
+  }
+
+  /** Fresh URLs incl. the original's download URL, for the player. */
+  public async forPlayback(key: string): Promise<SignedVideo | undefined> {
+    const res = await this.call({ docKeys: [key], download: true });
+    return res.videos[0];
+  }
+
+  /** Download URLs of several originals, for the zip download. */
+  public async forDownload(keys: string[]): Promise<SignedVideo[]> {
+    if (keys.length === 0) return [];
+    return (await this.call({ docKeys: keys, download: true })).videos;
+  }
+}
