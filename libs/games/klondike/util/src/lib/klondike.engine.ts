@@ -75,3 +75,20 @@ export function formatDuration(ms: number): string {
   const ss = String(total % 60).padStart(2, '0');
   return h ? `${h}:${String(m).padStart(2, '0')}:${ss}` : `${m}:${ss}`;
 }
+
+/** Turns `drawCount` cards (or what is left) from the stock onto the waste. */
+export function draw(state: KlondikeState): KlondikeState {
+  if (!state.stock.length) return state;
+  const n = Math.min(state.drawCount, state.stock.length);
+  const stock = state.stock.slice(0, state.stock.length - n);
+  // taken one at a time from the top, so the last one taken ends on top of the waste
+  const drawn = state.stock.slice(state.stock.length - n).reverse().map(card => ({ ...card, faceUp: true }));
+  return { ...state, stock, waste: [...state.waste, ...drawn], moves: state.moves + 1 };
+}
+
+/** With the stock empty: the waste, turned over, becomes the stock again. Unlimited passes. */
+export function recycle(state: KlondikeState): KlondikeState {
+  if (state.stock.length || !state.waste.length) return state;
+  const stock = [...state.waste].reverse().map(card => ({ ...card, faceUp: false }));
+  return { ...state, stock, waste: [], moves: state.moves + 1 };
+}

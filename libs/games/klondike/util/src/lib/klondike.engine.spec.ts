@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { Card, KlondikeState, Suit, deal, formatDuration, newDeck } from './klondike.engine';
+import { Card, KlondikeState, Suit, deal, draw, formatDuration, newDeck, recycle } from './klondike.engine';
 
 /** mulberry32 — a small seeded generator so deals are reproducible. */
 function rng(seed: number): () => number {
@@ -75,5 +75,48 @@ describe('formatDuration', () => {
     expect(formatDuration(0)).toBe('0:00');
     expect(formatDuration(65_000)).toBe('1:05');
     expect(formatDuration(3_723_000)).toBe('1:02:03');
+  });
+});
+
+describe('draw', () => {
+  it('turns one card onto the waste in draw 1', () => {
+    const s = draw(state({ stock: cards('_2S', '_3S', '_4S') }));
+    expect(s.waste).toEqual(cards('4S'));
+    expect(s.stock).toEqual(cards('_2S', '_3S'));
+    expect(s.moves).toBe(1);
+  });
+
+  it('turns three cards in draw 3, the third one ending on top', () => {
+    const s = draw(state({ drawCount: 3, stock: cards('_2S', '_3S', '_4S', '_5S') }));
+    expect(s.waste).toEqual(cards('5S', '4S', '3S'));
+    expect(s.stock).toEqual(cards('_2S'));
+  });
+
+  it('turns what is left when fewer than three cards remain', () => {
+    const s = draw(state({ drawCount: 3, stock: cards('_2S', '_3S') }));
+    expect(s.waste).toEqual(cards('3S', '2S'));
+    expect(s.stock).toEqual([]);
+  });
+
+  it('does nothing on an empty stock', () => {
+    const s = state({ waste: cards('AS') });
+    expect(draw(s)).toBe(s);
+  });
+});
+
+describe('recycle', () => {
+  it('turns the waste back into the stock so the first card comes again first', () => {
+    const s = recycle(state({ waste: cards('AS', '2S', '3S'), moves: 4 }));
+    expect(s.stock).toEqual(cards('_3S', '_2S', '_AS'));
+    expect(s.waste).toEqual([]);
+    expect(s.moves).toBe(5);
+    expect(draw(s).waste).toEqual(cards('AS'));
+  });
+
+  it('does nothing while the stock still has cards or the waste is empty', () => {
+    const full = state({ stock: cards('_2S'), waste: cards('AS') });
+    expect(recycle(full)).toBe(full);
+    const empty = state();
+    expect(recycle(empty)).toBe(empty);
   });
 });
