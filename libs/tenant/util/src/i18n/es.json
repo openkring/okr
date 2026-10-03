@@ -168,6 +168,9 @@
     "backgammon": {
       "label": "Backgammon"
     },
+    "klondike": {
+      "label": "Solitario"
+    },
     "jasstafel": {
       "label": "Marcador de Jass"
     },

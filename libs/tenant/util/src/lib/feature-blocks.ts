@@ -2394,7 +2394,7 @@ const instruments: FeatureBlock = {
  *     quiz  dependsOn ['games']  → /quiz   + one child row under `games-menu`
  *     zip   dependsOn ['games']  → /zip    + one child row under `games-menu`
  *     muehle, battleship, bimaru, hearing-quiz, jasstafel, tetris, mampf, wordle, chess — same shape (added 2026-09-28/29)
- *     sudoku, memory, backgammon — same shape (added 2026-10-03)
+ *     sudoku, memory, backgammon, klondike — same shape (added 2026-10-03)
  *
  * Every game block carries `bundle: 'games'` (since 2026-09-29), so the picker lists them
  * together under «Spiele» instead of scattering them through «Spezial».
@@ -2721,6 +2721,29 @@ const backgammon: FeatureBlock = {
   collections: [],
   menu: [gamesMenuParent([
     { key: 'game-backgammon', name: 'game-backgammon', url: '/backgammon', action: 'navigate', roleNeeded: 'registered', icon: 'game-backgammon', label: '@item.game-backgammon' },
+  ])],
+};
+
+/**
+ * `libs/games/klondike` — `KlondikePage` + `KlondikeStore` at `/klondike`, over the pure
+ * `@okr/games-klondike-util` (deal, Klondike move rules, draw 1 or 3, auto-finish).
+ *
+ * Shown as «Patience», never as «Solitaire», which is close to Microsoft's product name;
+ * `klondike` is only the internal id. The running game and the best time per draw rule live in
+ * `localStorage` — no Firestore, hence `collections: []`.
+ *
+ * `defaultAvailability: 'ga'`, like `bimaru`: nothing tenant-side to configure.
+ */
+const klondike: FeatureBlock = {
+  id: 'klondike',
+  bundle: 'games',
+  label: '@tenant/util.feature.klondike.label',
+  icon: 'card',
+  defaultAvailability: 'ga',
+  dependsOn: ['games'],
+  collections: [],
+  menu: [gamesMenuParent([
+    { key: 'game-klondike', name: 'game-klondike', url: '/klondike', action: 'navigate', roleNeeded: 'registered', icon: 'card', label: '@item.game-klondike' },
   ])],
 };
 
@@ -3062,7 +3085,7 @@ const contracts: FeatureBlock = {
 };
 
 export const FEATURE_BLOCKS: FeatureBlock[] = [
-  calevent, aoc, activity, task, instruments, games, quiz, zip, hearingQuiz, crossword, muehle, battleship, bimaru, sudoku, memory, backgammon, jasstafel, tetris, mampf, wordle, chess,
+  calevent, aoc, activity, task, instruments, games, quiz, zip, hearingQuiz, crossword, muehle, battleship, bimaru, sudoku, memory, backgammon, klondike, jasstafel, tetris, mampf, wordle, chess,
   auth, cms, user, profile, session, security, i18n, avatar, category, comment, geo, trip, consent,
   subject, relationship, vcard,
   resource, mobility,

@@ -168,6 +168,9 @@
     "backgammon": {
       "label": "Backgammon"
     },
+    "klondike": {
+      "label": "Patience"
+    },
     "jasstafel": {
       "label": "Jasstafel"
     },

@@ -452,6 +452,11 @@
           },
           {
             "glob": "*.json",
+            "input": "libs/games/klondike/feature/src/i18n",
+            "output": "./assets/i18n/games/klondike/feature"
+          },
+          {
+            "glob": "*.json",
             "input": "libs/games/chess/feature/src/i18n",
             "output": "./assets/i18n/games/chess/feature"
           },

@@ -1300,6 +1300,19 @@ const backgammon: BlockRoutes = {
 };
 
 /**
+ * `/klondike` — Patience (Klondike) in `libs/games/klondike`. `localStorage` only, no
+ * `:contextMenuName` segment — the same shape as `/zip`.
+ */
+const klondike: BlockRoutes = {
+  id: 'klondike',
+  routes: (): Route[] => [{
+    path: 'klondike',
+    canActivate: [isAuthenticatedGuard],
+    loadComponent: () => import('@okr/games-klondike-feature').then(m => m.KlondikePage),
+  }],
+};
+
+/**
  * `/jasstafel` — Jasstafel in `libs/games/jasstafel`. `localStorage` only, no
  * `:contextMenuName` segment — the same shape as `/zip`.
  */
@@ -1520,7 +1533,7 @@ const contracts: BlockRoutes = {
 };
 
 export const FEATURE_ROUTES: BlockRoutes[] = [
-  calevent, aoc, activity, task, instruments, games, quiz, zip, hearingQuiz, crossword, muehle, battleship, bimaru, sudoku, memory, backgammon, jasstafel, tetris, mampf, wordle, chess,
+  calevent, aoc, activity, task, instruments, games, quiz, zip, hearingQuiz, crossword, muehle, battleship, bimaru, sudoku, memory, backgammon, klondike, jasstafel, tetris, mampf, wordle, chess,
   auth, cms, user, profile, session, security, i18n, avatar, category, comment, geo, trip, consent,
   subject, relationship, vcard,
   resource, mobility,
