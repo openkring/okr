@@ -22,6 +22,7 @@ import {
 // Re-exported here so `main.ts` reaches both video triggers through the same `Video` namespace.
 export { onAlbumSourceDeleted } from './reap-renderings';
 export { signVideoUrls } from './sign-video-urls';
+export { prepareChatVideoUpload } from './prepare-chat-video-upload';
 
 const REGION = 'europe-west6';
 const DOCS_COLLECTION = 'docs';

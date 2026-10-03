@@ -416,6 +416,8 @@ export { generateDunningPdf } from './payment/generate-dunning-pdf';
 export const signFinanceDocuments = FinanceDocument.signFinanceDocuments;
 // signVideoUrls: signed imgix poster/mp4 URLs for album videos in the private bucket (spec 1.82)
 export const signVideoUrls = Video.signVideoUrls;
+// prepareChatVideoUpload: chat video → room album in the private bucket, signed upload URL (spec 1.82 §8)
+export const prepareChatVideoUpload = Video.prepareChatVideoUpload;
 export const exportMyData = Privacy.exportMyData;
 export const reapPrivacyExports = Privacy.reapPrivacyExports;
 
