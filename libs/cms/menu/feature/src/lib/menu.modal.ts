@@ -13,6 +13,17 @@ import { dismissOverlay } from '@okr/shared-util-angular';
 
 import { MenuStore } from './menu.store';
 
+/**
+ * A clone of the stored item with the fields the Vest suite requires to be strings.
+ * Menu rows seeded from the feature catalogue were written without `description` (and Firestore
+ * reads never apply model defaults), so `stringValidations('description', undefined)` failed with
+ * «Wert darf nicht undefined sein» and the save bar never appeared, whatever field was edited.
+ */
+function withFormDefaults(item: MenuItemModel): MenuItemModel | undefined {
+  const clone = safeStructuredClone(item);
+  return clone && { ...clone, description: clone.description ?? '' };
+}
+
 @Component({
   selector: 'okr-menu-modal',
   standalone: true,
@@ -67,7 +78,7 @@ export class MenuModal {
   protected formDirty = signal(false);
   protected formValid = signal(false);
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
-  protected formData = linkedSignal(() => safeStructuredClone(this.menuItem()));
+  protected formData = linkedSignal(() => withFormDefaults(this.menuItem()));
   protected showForm = signal(true);
 
   // derived signals
@@ -84,7 +95,7 @@ export class MenuModal {
 
   public async cancel(): Promise<void> {
     this.formDirty.set(false);
-    this.formData.set(safeStructuredClone(this.menuItem()));  // reset the form
+    this.formData.set(withFormDefaults(this.menuItem()));  // reset the form
     // This destroys and recreates the <form scVestForm> → Vest fully resets
     this.showForm.set(false);
     setTimeout(() => this.showForm.set(true), 0);

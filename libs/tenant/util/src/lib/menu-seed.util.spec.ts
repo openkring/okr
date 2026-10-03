@@ -113,6 +113,13 @@ describe('planMenuOps', () => {
     expect(ops[0].key).toBe('calevent-all');
     expect(ops[0].fields.okey).toBe('calevent-all');
   });
+
+  it('a freshly created doc carries the empty description/tags/data the menu editor requires', () => {
+    // Without `description` the editor's Vest suite reported «Wert darf nicht undefined sein»
+    // and a catalogue-seeded row could never be saved there.
+    const ops = planMenuOps([spec], 'p13', new Map());
+    expect(ops[0].fields).toMatchObject({ description: '', tags: '', data: [] });
+  });
 });
 
 describe('planMenuOps is additive only', () => {

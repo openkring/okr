@@ -337,6 +337,9 @@ export function planMenuOps(
           // Toggle rows only; spread so a non-toggle spec writes no empty keys.
           ...(spec.iconAlt ? { iconAlt: spec.iconAlt } : {}),
           ...(spec.labelAlt ? { labelAlt: spec.labelAlt } : {}),
+          // Same empty defaults as the root-menu seed: the menu editor's Vest suite requires
+          // `description` to be a string, so a row written without it could never be saved there.
+          description: '', tags: '', data: [],
           tenants: [tenantId],
           menuItems: (spec.children ?? []).map(c => c.key),
           // Both REQUIRED for the doc to actually render, not just for shape/search
