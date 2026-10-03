@@ -8,7 +8,7 @@ import { checkAppCheckToken, checkAuthentication, getCallerTenantId } from '@okr
 
 import { IMGIX_PRIVATE_HOST, signImgixUrl } from '../_storage/imgix-sign';
 import { privateBucket } from '../_storage/private-bucket';
-import { MP4_PARAMS, POSTER_PARAMS, validVideoKeys, videoAccessPath, windowExpiry } from './video-sign.util';
+import { contentDisposition, MP4_PARAMS, POSTER_PARAMS, validVideoKeys, videoAccessPath, windowExpiry } from './video-sign.util';
 
 const CF_NAME = 'signVideoUrls';
 const imgixPrivateToken = defineSecret('IMGIX_PRIVATE_TOKEN');
@@ -49,21 +49,26 @@ export const signVideoUrls = onCall(
     const signed = await Promise.all(keys.map(async (key, i): Promise<SignedVideo | null> => {
       const path = videoAccessPath(docs[i].data(), folders, tenantId);
       if (!path) return null;
-      const [exists] = await bucket.file(path).exists();
-      if (!exists) return null;
-      const video: SignedVideo = {
-        key,
-        posterUrl: signImgixUrl(IMGIX_PRIVATE_HOST, token, path, { ...POSTER_PARAMS, expires: expSeconds }),
-        playback: { kind: 'mp4', url: signImgixUrl(IMGIX_PRIVATE_HOST, token, path, { ...MP4_PARAMS, expires: expSeconds }) },
-      };
-      if (request.data?.download) {
-        const name = String(docs[i].data()?.['title'] || path.split('/').pop() || key).replace(/[^\x20-\x7e]|"/g, '_');
-        [video.downloadUrl] = await bucket.file(path).getSignedUrl({
-          version: 'v4', action: 'read', expires,
-          responseDisposition: `attachment; filename="${name}"`,
-        });
+      // One failing item (a GCS hiccup, a signBlob quota) must not reject the whole album page.
+      try {
+        const [exists] = await bucket.file(path).exists();
+        if (!exists) return null;
+        const video: SignedVideo = {
+          key,
+          posterUrl: signImgixUrl(IMGIX_PRIVATE_HOST, token, path, { ...POSTER_PARAMS, expires: expSeconds }),
+          playback: { kind: 'mp4', url: signImgixUrl(IMGIX_PRIVATE_HOST, token, path, { ...MP4_PARAMS, expires: expSeconds }) },
+        };
+        if (request.data?.download) {
+          [video.downloadUrl] = await bucket.file(path).getSignedUrl({
+            version: 'v4', action: 'read', expires,
+            responseDisposition: contentDisposition(String(docs[i].data()?.['title'] ?? ''), path),
+          });
+        }
+        return video;
+      } catch (error) {
+        logger.warn(`${CF_NAME}: could not sign video ${key}`, { error: String(error) });
+        return null;
       }
-      return video;
     }));
     const videos = signed.filter((v): v is SignedVideo => v !== null);
     logger.info(`${CF_NAME}: signed ${videos.length}/${keys.length} video(s) for tenant ${tenantId}`);

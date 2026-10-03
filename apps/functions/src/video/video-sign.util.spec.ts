@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { MAX_VIDEO_KEYS, validVideoKeys, videoAccessPath, WINDOW_MS, windowExpiry } from './video-sign.util';
+import {
+  contentDisposition, isAlbumVideoObjectPath, MAX_VIDEO_KEYS, validVideoKeys, videoAccessPath, WINDOW_MS, windowExpiry,
+} from './video-sign.util';
 
 const HOUR = 3600 * 1000;
 const doc = (over: Record<string, unknown> = {}) => ({
@@ -29,6 +31,9 @@ describe('validVideoKeys', () => {
     expect(validVideoKeys('a')).toEqual([]);
     expect(validVideoKeys(Array.from({ length: 150 }, (_, i) => `k${i}`))).toHaveLength(MAX_VIDEO_KEYS);
   });
+  it('drops keys that are not a single document id', () => {
+    expect(validVideoKeys(['a/b', '.', '..', 'ok'])).toEqual(['ok']);
+  });
 });
 
 describe('videoAccessPath', () => {
@@ -52,5 +57,52 @@ describe('videoAccessPath', () => {
   });
   it('accepts a document without folders (document list upload)', () => {
     expect(videoAccessPath(doc({ folderKeys: [] }), {}, 'scs')).not.toBeNull();
+  });
+});
+
+describe('videoAccessPath — only the album video layout (confused-deputy guard)', () => {
+  const folders = { f1: folder() };
+  const reject = (fullPath: string) => expect(videoAccessPath(doc({ fullPath, mimeType: 'video/mp4' }), folders, 'scs')).toBeNull();
+  it('rejects a private export disguised as a video', () => { reject('tenant/scs/private/exports/u1/export.zip'); });
+  it('rejects an invoice', () => { reject('tenant/scs/private/finance/invoices/k.pdf'); });
+  it('rejects a rendering', () => { reject('tenant/scs/section/s1/album/renderings/v1.mp4'); });
+  it('rejects dot-dot traversal', () => { reject('tenant/scs/section/s1/album/ab/../../../private/x.mov'); });
+  it('rejects a document-list path', () => { reject('tenant/scs/document/x.mov'); });
+  it('accepts a folder album video with an upper-case extension', () => {
+    expect(videoAccessPath(doc({ fullPath: 'tenant/scs/folder/f1/album/ab12/IMG_1.MOV' }), folders, 'scs'))
+      .toBe('tenant/scs/folder/f1/album/ab12/IMG_1.MOV');
+  });
+});
+
+describe('isAlbumVideoObjectPath', () => {
+  it('rejects empty segments and a file directly under album/', () => {
+    expect(isAlbumVideoObjectPath('tenant/scs/section/s1/album//x.mov', 'scs')).toBe(false);
+    expect(isAlbumVideoObjectPath('tenant/scs/section/s1/album/x.mov', 'scs')).toBe(false);
+  });
+  it('does not treat the tenant id as a pattern', () => {
+    expect(isAlbumVideoObjectPath('tenant/sXs/section/s1/album/ab/x.mov', 's.s')).toBe(false);
+  });
+  it('accepts nested sub-paths', () => {
+    expect(isAlbumVideoObjectPath('tenant/scs/section/s1/album/ab/c/d.mp4', 'scs')).toBe(true);
+  });
+});
+
+describe('contentDisposition', () => {
+  it('carries an ASCII fallback and the UTF-8 original', () => {
+    const d = contentDisposition('Rückblick.mov', 'tenant/scs/section/s1/album/ab/x.mov');
+    expect(d).toContain('filename="R_ckblick.mov"');
+    expect(d).toContain("filename*=UTF-8''R%C3%BCckblick.mov");
+  });
+  it('appends the extension of the path when the title has none', () => {
+    const d = contentDisposition('Regatta', 'tenant/scs/section/s1/album/ab/IMG_1.mov');
+    expect(d).toContain('filename="Regatta.mov"');
+    expect(d).toContain("filename*=UTF-8''Regatta.mov");
+  });
+  it('sanitizes quote and backslash in the fallback', () => {
+    const d = contentDisposition('a"b\\c.mp4', 'tenant/scs/section/s1/album/ab/x.mp4');
+    expect(d).toContain('filename="a_b_c.mp4"');
+  });
+  it('falls back to the file name for an empty title', () => {
+    expect(contentDisposition('', 'tenant/scs/section/s1/album/ab/IMG_1.MOV')).toContain('filename="IMG_1.MOV"');
   });
 });

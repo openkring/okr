@@ -15,7 +15,41 @@ export function windowExpiry(nowMs: number): number {
 
 export function validVideoKeys(keys: unknown): string[] {
   if (!Array.isArray(keys)) return [];
-  return [...new Set(keys.filter((k): k is string => typeof k === 'string' && k.length > 0))].slice(0, MAX_VIDEO_KEYS);
+  const ok = (k: unknown): k is string => typeof k === 'string' && k.length > 0 && !k.includes('/') && k !== '.' && k !== '..';
+  return [...new Set(keys.filter(ok))].slice(0, MAX_VIDEO_KEYS);
+}
+
+function escapeRegExp(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
+ * Whether `path` has exactly the album-video layout the private-bucket Storage rule admits:
+ * `tenant/<tid>/(section|folder)/<key>/album/<sub>/<rest…>.(mp4|mov)`, `<sub>` not `renderings`,
+ * no empty, `.` or `..` segment. `fullPath` is author-editable document data, so anything looser
+ * would let a doc author have `signVideoUrls` sign arbitrary private objects (exports, invoices).
+ */
+export function isAlbumVideoObjectPath(path: string, tenantId: string): boolean {
+  if (!tenantId || typeof path !== 'string') return false;
+  if (path.split('/').some(seg => seg === '' || seg === '.' || seg === '..')) return false;
+  const re = new RegExp(`^tenant/${escapeRegExp(tenantId)}/(section|folder)/[^/]+/album/([^/]+)/.+\\.(mp4|mov)$`, 'i');
+  const m = re.exec(path);
+  return !!m && m[2].toLowerCase() !== 'renderings';
+}
+
+/**
+ * `Content-Disposition` for the download of an original: an ASCII `filename` fallback (non-ASCII,
+ * `"` and `\` replaced by `_`) plus the RFC 5987 `filename*` with the UTF-8 original. The name
+ * keeps the extension of `path` when the title has none.
+ */
+export function contentDisposition(title: string, path: string): string {
+  const base = path.split('/').pop() ?? '';
+  const pathExt = /\.[^./]+$/.exec(base)?.[0] ?? '';
+  let name = (title ?? '').trim() || base || 'video';
+  if (pathExt && !/\.[^./\s]+$/.test(name)) name += pathExt;
+  const ascii = name.replace(/[^\x20-\x7e]|["\\]/g, '_');
+  const encoded = encodeURIComponent(name).replace(/['()*]/g, c => '%' + c.charCodeAt(0).toString(16).toUpperCase());
+  return `attachment; filename="${ascii}"; filename*=UTF-8''${encoded}`;
 }
 
 type Data = Record<string, unknown> | undefined;
@@ -31,7 +65,7 @@ export function videoAccessPath(doc: Data, folders: Record<string, Data>, tenant
   const path = String(doc['fullPath'] ?? '');
   const mime = String(doc['mimeType'] ?? '').toLowerCase();
   if (!tenants.includes(tenantId) || doc['isArchived'] === true || !mime.startsWith('video/')) return null;
-  if (!path.startsWith(`tenant/${tenantId}/`)) return null;
+  if (!isAlbumVideoObjectPath(path, tenantId)) return null;
   const folderKeys = (doc['folderKeys'] as string[] | undefined) ?? [];
   if (folderKeys.length === 0) return path;
   const live = folderKeys.some(k => {
