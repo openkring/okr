@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { ALBUM_CONFIG_SHAPE, AlbumConfig, DocumentModel, DocumentRendering, ImageType } from '@okr/shared-models';
 
-import { buildAlbumUploadPath, compareByFileName, getAlbumFileName, getDocumentImageType, isVisibleInAlbum, toImageConfig } from './album.util';
+import { buildAlbumUploadPath, compareByFileName, getAlbumFileName, getDocumentImageType, isPrivateVideo, isVideoFileName, isVisibleInAlbum, toImageConfig } from './album.util';
 
 function doc(overrides: Partial<DocumentModel> = {}): DocumentModel {
   return { ...new DocumentModel('p13'), okey: 'd1', fullPath: 'tenant/p13/document/img.jpg', mimeType: 'image/jpeg', ...overrides };
@@ -59,13 +59,16 @@ describe('toImageConfig for videos', () => {
     const config = toImageConfig(videoDoc([
       { format: 'jpg', fullPath: 'tenant/scs/section/s1/album/renderings/doc1.jpg',
         mimeType: 'image/jpeg', size: 1, generator: 'ffmpeg' },
+      { format: 'mp4', fullPath: 'tenant/scs/section/s1/album/renderings/doc1.mp4',
+        mimeType: 'video/mp4', size: 1, generator: 'ffmpeg' },
     ]));
     expect(config.url).toBe('tenant/scs/section/s1/album/renderings/doc1.jpg');
     expect(config.type).toBe(ImageType.Video);
   });
 
-  it('falls back to the original while the rendering is still missing', () => {
-    const config = toImageConfig(videoDoc([]));
+  it('falls back to the original while the rendering is still missing (legacy video)', () => {
+    const config = toImageConfig(videoDoc([{ format: 'mp4', fullPath: 'tenant/scs/section/s1/album/renderings/doc1.mp4',
+        mimeType: 'video/mp4', size: 1, generator: 'ffmpeg' }]));
     expect(config.url).toBe('tenant/scs/section/s1/album/clip.mov');
   });
 
@@ -74,8 +77,8 @@ describe('toImageConfig for videos', () => {
     expect(config.documentKey).toBe('doc1');
   });
 
-  it('marks a video without an mp4 rendering as pending', () => {
-    expect(toImageConfig(videoDoc([])).pending).toBe(true);
+  it('does not mark a video without an mp4 rendering as pending: it is private (spec 1.82)', () => {
+    expect(toImageConfig(videoDoc([])).pending).toBeUndefined();
   });
 
   it('is not pending once the mp4 rendering exists', () => {
@@ -97,13 +100,13 @@ describe('toImageConfig for videos', () => {
     expect(config.url).toBe('tenant/scs/section/s1/album/clip.mov');     // aber kein Poster
   });
 
-  it('keeps poster and playability independent: a jpg without an mp4 has a poster but is not ready', () => {
+  it('treats a jpg without an mp4 as a private video: no url, not pending (poster is signed)', () => {
     const config = toImageConfig(videoDoc([
       { format: 'jpg', fullPath: 'tenant/scs/section/s1/album/renderings/doc1.jpg',
         mimeType: 'image/jpeg', size: 1, generator: 'ffmpeg' },
     ]));
-    expect(config.url).toBe('tenant/scs/section/s1/album/renderings/doc1.jpg'); // Poster da
-    expect(config.pending).toBe(true);                                          // aber noch nicht abspielbar
+    expect(config.url).toBe('');
+    expect(config.pending).toBeUndefined();
   });
 
   it('leaves an image untouched', () => {
@@ -188,4 +191,35 @@ describe('compareByFileName', () => {
     expect([...docs].sort(compareByFileName).map((d) => d.fullPath))
       .toEqual(['a/aaaaaaaa-alpha.jpg', 'a/zzzzzzzz-beta.jpg']);
   });
+});
+
+function videoDoc(renderings: Partial<DocumentRendering>[] = []): DocumentModel {
+  return doc({ okey: 'v1', mimeType: 'video/quicktime', fullPath: 'tenant/scs/section/s1/album/ab/clip.mov', url: '', renderings: renderings as DocumentRendering[] });
+}
+
+describe('isPrivateVideo', () => {
+  it('is true for a video without an mp4 rendering', () => { expect(isPrivateVideo(videoDoc())).toBe(true); });
+  it('is false for a legacy video with an mp4 rendering', () => {
+    expect(isPrivateVideo(videoDoc([{ format: 'mp4', fullPath: 'tenant/scs/section/s1/album/ab/renderings/v1.mp4' }]))).toBe(false);
+  });
+  it('is false for an image', () => {
+    expect(isPrivateVideo(doc())).toBe(false);
+  });
+});
+
+describe('toImageConfig for a private video', () => {
+  it('has no url, no actionUrl and is not pending', () => {
+    const c = toImageConfig(videoDoc());
+    expect(c.type).toBe(ImageType.Video);
+    expect(c.url).toBe('');
+    expect(c.actionUrl).toBe('');
+    expect(c.pending).toBeUndefined();
+    expect(c.documentKey).toBe('v1');
+  });
+});
+
+describe('isVideoFileName', () => {
+  it('detects a .mov with an empty browser type', () => { expect(isVideoFileName('IMG_0042.MOV', '')).toBe(true); });
+  it('detects by declared type', () => { expect(isVideoFileName('clip', 'video/mp4')).toBe(true); });
+  it('rejects a photo', () => { expect(isVideoFileName('IMG_0042.HEIC', '')).toBe(false); });
 });

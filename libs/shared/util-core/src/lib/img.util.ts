@@ -336,3 +336,18 @@ export function getBackgroundStyle(imgixBaseUrl: string, imageStyle: ImageStyle,
     'border': '1px'
   };
 }
+
+/**
+ * Background for a video poster that is already a complete, signed URL (spec 1.82). Must not go
+ * through `getBackgroundStyle`, which prefixes the public imgix host and appends params — both
+ * would break the signature.
+ */
+export function getPosterStyle(url: string): BackgroundStyle {
+  return {
+    'background-image': `url(${url})`,
+    'min-height': '200px',
+    'background-size': 'cover',
+    'background-position': 'center',
+    'border': '1px'
+  };
+}

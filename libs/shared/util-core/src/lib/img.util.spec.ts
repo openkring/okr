@@ -13,6 +13,7 @@ import {
     getImgixPdfUrl,
     getImgixThumbnailUrl,
     getImgixUrl,
+    getPosterStyle,
     getImgixUrlWithAutoParams,
     getSizedImgixParamsByExtension,
     getThumbnailUrl,
@@ -649,5 +650,12 @@ describe('img.util', () => {
       const long = 'x'.repeat(300);
       expect(extractCredit({ IPTC: { CopyrightNotice: long } })).toHaveLength(150);
     });
+  });
+});
+describe('getPosterStyle', () => {
+  it('uses the signed url verbatim', () => {
+    const url = 'https://bkaiser-private.imgix.net/tenant/scs/x.mov?fm=jpg&expires=1&s=abc';
+    expect(getPosterStyle(url)['background-image']).toBe(`url(${url})`);
+    expect(getPosterStyle(url)['background-size']).toBe('cover');
   });
 });

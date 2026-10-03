@@ -1,6 +1,6 @@
 import { AlbumConfig, DocumentModel, ImageConfig, ImageType } from "@okr/shared-models";
 import { hasRendering, resolveRendering } from "@okr/content-document-util";
-import { generateRandomString, sanitizeFileName } from "@okr/shared-util-core";
+import { generateRandomString, resolveMimeType, sanitizeFileName } from "@okr/shared-util-core";
 // getBackgroundStyle moved to @okr/shared-util-core so shared-ui's image grid can use it too;
 // re-exported here because callers (and their imports) still name it as an album helper.
 export { getBackgroundStyle } from "@okr/shared-util-core";
@@ -64,6 +64,14 @@ export function toImageConfig(doc: DocumentModel): ImageConfig {
   const fileName = doc.fullPath.split('/').pop() ?? doc.fullPath;
   const type = getDocumentImageType(doc.mimeType);
   const isVideo = type === ImageType.Video;
+  // Private video (spec 1.82): the poster is a signed URL merged in by the album store.
+  if (isPrivateVideo(doc)) {
+    return {
+      label: doc.title || fileName, type, url: '', actionUrl: '',
+      altText: doc.altText || doc.title || fileName, overlay: '',
+      documentKey: doc.okey, credit: doc.credit
+    };
+  }
   // Ein Video wird als sein Poster-Frame dargestellt: das Original ist für imgix nur ein
   // Byte-Strom (Spec §7.1), das jpg-Rendering dagegen ein gewöhnliches Bild. Fehlt es noch,
   // liefert resolveRendering den Originalpfad und `pending` trägt den Wartezustand.
@@ -78,6 +86,20 @@ export function toImageConfig(doc: DocumentModel): ImageConfig {
     credit: doc.credit,
     ...(isVideo && !hasRendering(doc, 'mp4') ? { pending: true } : {})
   };
+}
+
+/**
+ * A video whose original lives in the private bucket (spec 1.82). The transition rule: a video
+ * that still carries an mp4 rendering is a legacy public-bucket video and plays as before; the
+ * back-fill clears renderings when it moves the file, which flips it to private.
+ */
+export function isPrivateVideo(doc: DocumentModel): boolean {
+  return getDocumentImageType(doc.mimeType) === ImageType.Video && !hasRendering(doc, 'mp4');
+}
+
+/** Video by resolved mime type — `File.type` alone is empty for a .mov in Chrome/Firefox. */
+export function isVideoFileName(name: string, type: string): boolean {
+  return resolveMimeType(name, type).startsWith('video/');
 }
 
 export function getDocumentImageType(mimeType: string): ImageType {
