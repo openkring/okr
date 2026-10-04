@@ -12,7 +12,7 @@ import { chipMatches, debugItemLoaded, getAvatarInfo, getAvatarInfoForCurrentUse
 import { resourceParams } from '@okr/shared-util-angular';
 
 import { TaskService } from '@okr/task-data-access';
-import { assignMissingRanks, buildTaskListQueries, canChangeTask, canCreateTask, canDeleteTask, getCompletionPatch, groupTasksByState, isTask, TASK_I18N_KEYS, TaskBoardColumn, TaskSettings } from '@okr/task-util';
+import { assignMissingRanks, buildTaskListQueries, canChangeTask, canCreateTask, canDeleteTask, getCompletionPatch, groupTasksByState, isClosedGroup, isTask, TASK_I18N_KEYS, TaskBoardColumn, TaskSettings } from '@okr/task-util';
 
 /** The payload of a Kanban drag-and-drop. `columnTasks` is the target column, ordered, without the moved task. */
 export type TaskMove = {
@@ -71,10 +71,15 @@ export const TaskStore = signalStore(
         personKey: store.appStore.currentUser()?.personKey,
         tenantId: store.appStore.tenantId(),
         archived: store.showArchived(),
+        closed: isClosedGroup(store.appStore.getGroup(store.calendarName())),
       })),
       stream: ({ params }) => {
         if (!params.calendarName || !params.tenantId) return of([]);
         const kind = params.calendarName === 'all' ? 'all' : params.calendarName === 'my' ? 'my' : 'shared';
+        // spec 1.75: a closed group's tasks are refused on the direct query; fetch them via the callable
+        if (kind === 'shared' && params.closed) {
+          return store.taskService.listClosedGroupTasks(params.calendarName, params.tenantId, params.archived);
+        }
         const queries = buildTaskListQueries({
           kind, tenantId: params.tenantId, personKey: params.personKey,
           shareKey: kind === 'shared' ? params.calendarName : undefined,
@@ -227,7 +232,9 @@ export const TaskStore = signalStore(
       }
 
       await store.taskService.saveBoardPosition(task, store.currentUser());
-      // no reload(): searchData() is an rxfire real-time stream, so the write comes back on its own
+      // searchData() is an rxfire real-time stream, so the write comes back on its own — except
+      // for a closed group's fetched list (spec 1.75)
+      this.reloadIfFetched();
     },
 
     async export(type: string): Promise<void> {
@@ -276,7 +283,8 @@ export const TaskStore = signalStore(
           } else {
             await store.taskService.update(data, store.currentUser());
           }
-          // no reload(): the lists are rxfire real-time streams
+          // the lists are rxfire real-time streams, except a closed group's fetched list (spec 1.75)
+          this.reloadIfFetched();
         }
       }
     },
@@ -306,6 +314,14 @@ export const TaskStore = signalStore(
       }
     },
 
+    /**
+     * A closed group's list is fetched through the listGroupTasks callable, not streamed (spec 1.75),
+     * so it does not see the caller's own writes — reload it after each one. A no-op for streams.
+     */
+    reloadIfFetched(): void {
+      if (isClosedGroup(store.appStore.getGroup(store.calendarName()))) store.tasksResource.reload();
+    },
+
     /** A new task belongs to the list it was created in: the group calendar, else the tenant's own. */
     getDefaultCalendars(): string[] {
       const calendar = store.calendarName();
@@ -317,18 +333,21 @@ export const TaskStore = signalStore(
       // without this, a task typed into a group's quick entry never showed in that group's list
       if (task.calendars.length === 0) task.calendars = this.getDefaultCalendars();
       await store.taskService.create(task, store.currentUser());
+      this.reloadIfFetched();
     },
 
     /** Archive a task (soft delete). Gated here, not only in the ActionSheet. */
     async delete(task?: TaskModel): Promise<void> {
       if (!task || task.isArchived || !this.canDeleteTask(task)) return;
       await store.taskService.delete(task, store.currentUser());
+      this.reloadIfFetched();
     },
 
     /** Restore an archived task (spec §10). Same permission as delete/archive. Gated here, not only in the ActionSheet. */
     async restore(task?: TaskModel): Promise<void> {
       if (!task || !this.canDeleteTask(task)) return;
       await store.taskService.restore(task, store.currentUser());
+      this.reloadIfFetched();
     },
 
     /** Toggle completion: open → done today, done → planned. Never mutates the streamed task. */
@@ -337,6 +356,7 @@ export const TaskStore = signalStore(
       // while showing archived tasks, but refuse the write here too (defence in depth).
       if (task.isArchived || !this.canChangeTask(task)) return;
       await store.taskService.saveCompletion(task, getCompletionPatch(task, getTodayStr()), store.currentUser());
+      this.reloadIfFetched();
     },
 
     async selectPerson(): Promise<PersonModel | undefined> {

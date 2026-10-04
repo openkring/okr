@@ -1,5 +1,7 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, combineLatest, map, of } from 'rxjs';
+import { Observable, catchError, combineLatest, from, map, of } from 'rxjs';
+import { getApp } from 'firebase/app';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 
 import { FirestoreService } from '@okr/shared-data-access';
 import { DbQuery, TaskCollection, TaskModel, UserModel } from '@okr/shared-models';
@@ -15,6 +17,7 @@ import { PFX } from './scope';
 export class TaskService {
   private readonly firestoreService = inject(FirestoreService);
   private readonly activityService = inject(ActivityService);
+  private readonly functions = getFunctions(getApp(), 'europe-west6');
   private i18nService = inject(I18nService);
 
   // i18n
@@ -150,6 +153,23 @@ export class TaskService {
         for (const t of lists.flat()) byKey.set(t.okey, t);
         return [...byKey.values()].sort((a, b) => (a.dueDate ?? '').localeCompare(b.dueDate ?? ''));
       })
+    );
+  }
+
+  /**
+   * The tasks of a closed group (spec 1.75), fetched once through the membership-checked callable:
+   * the read rule refuses the direct shareKey query for non-staff. Not realtime, not offline.
+   * A refused caller (not a member) gets an empty list.
+   */
+  public listClosedGroupTasks(groupKey: string, tenantId: string, archived: boolean): Observable<TaskModel[]> {
+    const fn = httpsCallable<{ groupKey: string; tenantId: string; archived: boolean }, { tasks: TaskModel[] }>(
+      this.functions, 'listGroupTasks');
+    return from(fn({ groupKey, tenantId, archived })).pipe(
+      map(res => res.data.tasks),
+      catchError(err => {
+        console.error(`TaskService.listClosedGroupTasks(${groupKey}): ${err?.code ?? err}`);
+        return of([] as TaskModel[]);
+      }),
     );
   }
 

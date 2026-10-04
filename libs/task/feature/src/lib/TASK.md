@@ -46,7 +46,7 @@ otherwise the next `taskDaily` run would archive it again.
 
 | Action | Who |
 |---|---|
-| read | author, assignee, staff (privileged/eventAdmin); anyone in the tenant if `shareKey != ''` |
+| read | author, assignee, staff (privileged/eventAdmin); anyone in the tenant if `shareKey != ''`, unless it names a closed group (spec 1.75) |
 | create | registered members as author; privileged in someone else's name |
 | update | author, assignee, staff; changing `author.key` is privileged-only |
 | archive / restore | author, privileged (`canDeleteTask`) |
@@ -56,11 +56,23 @@ Group admins get no extra writes (decided 2026-09-30); `groupAdmin` only lets th
 query must filter on what the rule checks (`author.key`, `assignee.key`, `shareKey`), otherwise
 Firestore rejects the whole query — see `buildTaskListQueries`.
 
+### Closed groups (spec 1.75)
+
+A group with `chatMode == 'members'` is closed: the rule (`taskShareOpen`, one `get()` on
+`groups/{shareKey}`) no longer admits its tasks to the whole tenant, so the direct
+`shareKey == <groupKey>` query is refused for non-staff. Members read the list through the
+`listGroupTasks` callable instead, which checks an active membership with the Admin SDK
+(`isActiveGroupMembership`). Author, assignee and staff still read single tasks and their «my»
+lists directly. Meeting keys and keys that name no group keep the behaviour above.
+
 ## Cloud Functions (`apps/functions/src/task`)
 
 - `onTaskWritten` — pushes the assignee on create, reassignment or reopen (never to oneself), and
   syncs the assignee's diary: a completed task's name goes into `done` of the day entry in
   every diary tenant of the assignee's `UserModel.diaryTargets` (shared with the Jasstafel, spec 1.77), a reopen removes it (`appendToDiary`).
+- `listGroupTasks` — callable (spec 1.75): a closed group's tasks for staff and active members;
+  refuses an open group (`failed-precondition`), another tenant (`permission-denied`) and a
+  non-member (`permission-denied`).
 - `taskDaily` — 07:00 Europe/Zurich: archives tasks completed more than `AppConfig.taskArchiveDays`
   (default 30, `0` = never) ago, and pushes a reminder for tasks due today.
 
@@ -89,6 +101,9 @@ Key resources (spec 1.72 §3.2, §4.1 — every reader is scoped, not client-fil
   `assignee.key == personKey` ∪ `author.key == personKey` (merged by `okey`, open tasks only),
   any other value → `shareKey == calendarName` (a group key or `meeting.<okey>`). `showArchived`
   switches the `isArchived` filter. `TaskService.listByQueries` runs the query set and merges it.
+  A closed group (`isClosedGroup`) goes through `TaskService.listClosedGroupTasks` (the
+  `listGroupTasks` callable) instead: fetched once, not streamed, no offline cache, so every write
+  in the store ends with `reloadIfFetched()`.
 - `taskResource` — single task by `taskKey`, via `TaskService.read` (direct `readModel`).
 
 The `tasks` computed signal reads `tasksResource` directly (the query already scopes it) and
