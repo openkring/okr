@@ -544,6 +544,15 @@ service cloud.firestore {
       return taskAuthor(data)
              || (callerPersonKey() != '' && data.get('assignee', {}).get('key', '') == callerPersonKey());
     }
+    // spec 1.75: a shared task is tenant-readable unless its shareKey names a closed group
+    // (chatMode 'members'); those are read through the listGroupTasks callable. Meeting keys
+    // and keys that name no group keep the spec 1.72 behaviour.
+    function taskShareOpen(data) {
+      let k = data.get('shareKey', '');
+      return k != '' && (k.matches('^meeting[.].*')
+        || !exists(/databases/$(database)/documents/groups/$(k))
+        || get(/databases/$(database)/documents/groups/$(k)).data.get('chatMode', 'shared') != 'members');
+    }
     function taskStaff() {
       return isPrivileged() || hasRole('eventAdmin');
     }
@@ -562,7 +571,7 @@ service cloud.firestore {
     // release, then deploy rules last (plan Task 9).
     match /tasks/{id} {
       allow read: if tenantRead() && (resource == null
-        || taskStaff() || taskMember(resource.data) || resource.data.get('shareKey', '') != '');
+        || taskStaff() || taskMember(resource.data) || taskShareOpen(resource.data));
       // only privileged may create a task in someone else's name (spec §2)
       allow create: if tenantCreate() && (isPrivileged() || taskAuthor(request.resource.data));
       // tenantUpdate(): the caller's tenant must be on the stored doc, not just on the new one

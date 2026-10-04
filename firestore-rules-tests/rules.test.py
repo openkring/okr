@@ -280,6 +280,13 @@ seed("tasks/tkA",    {"tenants": ["t1"], "isArchived": False, "shareKey": "", "n
                       "state": "planned", "completionDate": ""})
 seed("tasks/tkArch", {"tenants": ["t1"], "isArchived": True, "shareKey": "", "name": "Done",
                       "author": {"key": "pE", "name1": "E"}, "state": "done", "completionDate": "20260801"})
+# closed-group tasks (spec 1.75): gClosed is chatMode 'members', gOpen is not.
+seed("groups/gOpen",   {"tenants": ["t1"], "chatMode": "ask"})
+seed("groups/gClosed", {"tenants": ["t1"], "chatMode": "members"})
+for key, okey in [("gOpen", "tkOpen"), ("gClosed", "tkClosed"), ("meeting.m1", "tkMeet"), ("gNone", "tkNone")]:
+    seed(f"tasks/{okey}", {"tenants": ["t1"], "isArchived": False, "shareKey": key, "name": okey,
+                           "author": {"key": "pE", "name1": "E"}, "assignee": {"key": "pZ", "name1": "Z"},
+                           "state": "planned", "completionDate": ""})
 
 A, B, C, D = jwt("uidA"), jwt("uidB"), jwt("uidC"), jwt("uidD")
 E, M, P = jwt("uidE"), jwt("uidM"), jwt("uidP")
@@ -693,6 +700,11 @@ single_cases = [
     ("userD(admin t1) PATCH login-throttle/x -> DENY", False, PATCH, "login-throttle/x", D,
      body({"count": 0}), ["count"]),
 
+    # closed-group tasks (spec 1.75)
+    ("plain A GET tkClosed -> DENY (closed group)", False, GET, "tasks/tkClosed", A, None, None),
+    ("author E GET tkClosed -> ALLOW", True, GET, "tasks/tkClosed", E, None, None),
+    ("privileged P GET tkClosed -> ALLOW", True, GET, "tasks/tkClosed", P, None, None),
+    ("plain A GET tkOpen -> ALLOW", True, GET, "tasks/tkOpen", A, None, None),
     # tasks (spec 1.72): author lock — order matters, the last case changes tkA's author
     ("assignee A PATCH tkA.name -> ALLOW", True, PATCH, "tasks/tkA", A, body({"name": "Task A2"}), ["name"]),
     ("assignee A PATCH tkA.author -> self -> DENY (takeover)", False, PATCH, "tasks/tkA", A,
@@ -790,6 +802,7 @@ parent_cases = [
 # EXACTLY the client query shapes of ContractService.listStaff / listMine (filters + orderBy name),
 # so a drift in the client query fails here instead of as a 403 in the app.
 STAFF = [("isArchived", "EQUAL", False), ("tenants", "ARRAY_CONTAINS", "t1")]
+SHARED = lambda k: [("isArchived", "EQUAL", False), ("tenants", "ARRAY_CONTAINS", "t1"), ("shareKey", "EQUAL", k)]
 STAFF_NON_STRICT = STAFF + [("isStrictlyConfidential", "EQUAL", False)]
 MY = lambda pk: [("partyPersonKeys", "ARRAY_CONTAINS", pk), ("isArchived", "EQUAL", False)]
 field_cases = [
@@ -804,6 +817,12 @@ field_cases = [
     # regression: getSystemQuery's array-contains-any [t1, system] is unprovable for the staff leg
     ("userT(treasurer) LIST contracts tenants any-of [t1, system] -> DENY (getSystemQuery shape)", False, "contracts",
      [("isArchived", "EQUAL", False), ("tenants", "ARRAY_CONTAINS_ANY", ["t1", "system"])], T),
+    # tasks (spec 1.75): the group-view query; a closed group is staff-only on the direct path
+    ("userA LIST tasks shareKey gOpen -> ALLOW", True, "tasks", SHARED("gOpen"), A),
+    ("userA LIST tasks shareKey gClosed -> DENY (closed group)", False, "tasks", SHARED("gClosed"), A),
+    ("userP(privileged) LIST tasks shareKey gClosed -> ALLOW", True, "tasks", SHARED("gClosed"), P),
+    ("userA LIST tasks shareKey meeting.m1 -> ALLOW (meeting key)", True, "tasks", SHARED("meeting.m1"), A),
+    ("userA LIST tasks shareKey gNone -> ALLOW (no such group)", True, "tasks", SHARED("gNone"), A),
 ]
 
 
