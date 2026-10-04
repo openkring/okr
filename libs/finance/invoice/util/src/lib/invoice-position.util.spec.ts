@@ -54,8 +54,8 @@ describe('toPositionInputs', () => {
     p.accountKey = 'k';
     const legacy = { ...new InvoicePositionModel('scs'), accountKey: undefined } as unknown as InvoicePositionModel;
     expect(toPositionInputs([p, legacy])).toEqual([
-      { name: 'Beitrag', amount: 120.5, accountKey: 'k', description: '' },
-      { name: '', amount: 0, accountKey: '', description: '' },
+      { type: 'fix', name: 'Beitrag', amount: 120.5, accountKey: 'k', description: '' },
+      { type: 'fix', name: '', amount: 0, accountKey: '', description: '' },
     ]);
   });
 });

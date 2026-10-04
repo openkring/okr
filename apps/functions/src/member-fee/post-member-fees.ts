@@ -133,8 +133,9 @@ export const postMemberFees = onCall(
       const batch = db.batch();
       batch.set(invoiceRef, withoutUndefined(removeKeyFromOkrModel(invoice)));
 
-      for (const p of billedPositions(fee)) {
+      for (const [index, p] of billedPositions(fee).entries()) {
         const position = new InvoicePositionModel(tenantId);
+        position.sortOrder = index; // spec 1.84 K3
         position.invoiceKey = invoiceKey;
         position.name = p.label;
         position.amount = p.amount;

@@ -271,7 +271,10 @@
       "name": "Gib der Position eine Bezeichnung.",
       "nameLength": "Die Bezeichnung ist zu lang.",
       "amount": "Der Betrag muss grösser als 0 sein.",
-      "account": "Wähle ein Konto."
+      "account": "Wähle ein Konto.",
+      "text": "Gib einen Text ein.",
+      "discount": "Der Rabatt muss grösser als 0 sein.",
+      "discountPercent": "Der Rabatt muss zwischen 0 und 100 % liegen."
     },
     "kind": {
       "standard": "Standard",
@@ -280,6 +283,17 @@
       "discount": "Rabatt",
       "subtotal": "Zwischentotal",
       "pageBreak": "Seitenumbruch"
+    },
+    "moveUp": "Nach oben schieben",
+    "moveDown": "Nach unten schieben",
+    "text": {
+      "label": "Text",
+      "placeholder": "z.B. ein Hinweis zur Rechnung"
+    },
+    "discount": {
+      "account": "Konto (leer: mindert die Positionen darüber)",
+      "percent": "Rabatt in %",
+      "amount": "Rabatt (CHF)"
     }
   },
   "issue": {
@@ -290,7 +304,7 @@
   },
   "refusal": {
     "no-positions": "Die Rechnung hat noch keine Positionen. Füge zuerst mindestens eine Position hinzu.",
-    "position-without-account": "Bei mindestens einer Position fehlt das Ertragskonto. Wähle für jede Position ein Konto.",
+    "position-without-account": "Bei mindestens einer Position fehlt das Konto. Wähle für jede Position ein Konto.",
     "invalid-amount": "Mindestens eine Position hat keinen gültigen Betrag. Prüfe die Beträge.",
     "total-not-positive": "Das Total der Rechnung muss grösser als 0 sein.",
     "no-receivables-account": "In den Buchhaltungseinstellungen fehlt noch das Debitorenkonto. Bitte ergänze es dort.",
@@ -364,7 +378,8 @@
     "waive-period-locked": "Die Buchungsperiode zum Datum des Erlasses ist abgeschlossen. Wähle ein anderes Datum oder lass die Periode wieder öffnen.",
     "waive-inconsistent-state": "Beim Erlassen der Gebühr ist etwas schiefgelaufen. Versuche es bitte noch einmal.",
     "waive-not-payable": "Eine Gebühr kann nur bei einer ausgestellten, noch offenen Rechnung erlassen werden.",
-    "email-already-waived": "Die Gebühr dieser Mahnung ist erlassen, das PDF zeigt sie aber noch. Darum wird es nicht versendet."
+    "email-already-waived": "Die Gebühr dieser Mahnung ist erlassen, das PDF zeigt sie aber noch. Darum wird es nicht versendet.",
+    "discount-without-base": "Ein Rabatt ohne Konto steht über allen Positionen und kann nichts mindern. Verschiebe ihn unter die Positionen oder wähle ein Konto."
   },
   "paymentReference": {
     "label": "Zahlungsreferenz"

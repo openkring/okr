@@ -61,6 +61,10 @@
       "label": "Plazo de pago de un recordatorio (días)",
       "placeholder": "0–365",
       "helper": "El destinatario tiene tantos días para pagar después de un recordatorio."
+    },
+    "discountAccount": {
+      "label": "Cuenta de descuentos",
+      "helper": "Valor predeterminado para nuevos descuentos en facturas, p. ej. 3800 Deducciones de ventas. Vacía: el descuento reduce los ingresos de las posiciones de arriba, solo se contabiliza el importe neto."
     }
   },
   "feeSchedule": {

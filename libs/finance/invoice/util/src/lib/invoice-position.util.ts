@@ -1,16 +1,23 @@
 import { AccountModel, InvoiceModel, InvoicePositionModel } from '@okr/shared-models';
+import { InvoiceLayoutPositionType, isMoneyPosition, isRebatePosition } from '@okr/shared-util-core';
 
 import { leafAccounts } from '@okr/finance-account-util';
 
 /**
  * One position of a native invoice as the client sends it to `writeInvoice` — the same shape as the
  * functions' `PositionInput` (the client cannot import apps/functions). `amount` is a CHF decimal.
+ * `type` is the kind (spec 1.84): a money type ('fix', 'rebate', …) or a layout kind ('text',
+ * 'subtotal', 'pageBreak'); missing = 'fix'. A discount ('rebate') holds its negative result in
+ * `amount` and, in percent mode, the rate in `discountPercent`. `discountMode` is editor state only.
  */
 export interface InvoicePositionInput {
+  type?: string;
   name: string;
   amount: number;
   accountKey: string;
   description?: string;
+  discountPercent?: number;
+  discountMode?: 'percent' | 'amount';
 }
 
 /** The header fields `writeInvoice` accepts (everything else on a draft is set by the server). */
@@ -48,24 +55,92 @@ export function newInvoicePosition(): InvoicePositionInput {
   return { name: '', amount: 0, accountKey: '' };
 }
 
+/** The label a new subtotal line starts with; the treasurer may change it. German: printed as is. */
+export const SUBTOTAL_DEFAULT_NAME = 'Zwischentotal';
+/** The label a new discount line starts with. German: printed as is. */
+export const REBATE_DEFAULT_NAME = 'Rabatt';
+
+/** A text, subtotal or page-break line: no amount, no account (spec 1.84 K2). */
+export function newLayoutPosition(type: InvoiceLayoutPositionType): InvoicePositionInput {
+  return { type, name: type === 'subtotal' ? SUBTOTAL_DEFAULT_NAME : '', amount: 0, accountKey: '' };
+}
+
+/**
+ * A discount line in percent mode, booked on `accountKey` — the books' `discountAccountKey`; '' lets
+ * the discount reduce the revenue accounts above it (spec 1.84 K6).
+ */
+export function newRebatePosition(accountKey: string): InvoicePositionInput {
+  return { type: 'rebate', name: REBATE_DEFAULT_NAME, amount: 0, accountKey, discountPercent: 0, discountMode: 'percent' };
+}
+
+/** Sum in CHF of the money positions above `index` — what a subtotal shows and a percent discount applies to. */
+export function subtotalAt(positions: InvoicePositionInput[], index: number): number {
+  return positionsTotal(positions.slice(0, Math.max(0, index)));
+}
+
+/**
+ * Recomputes every percent discount from the running total above it, in order, rounded to Rappen
+ * (spec 1.84 K5) — so a second discount sees the first. Fixed-amount discounts and all other
+ * positions are returned unchanged.
+ */
+export function applyDiscounts(positions: InvoicePositionInput[]): InvoicePositionInput[] {
+  let runningRappen = 0;
+  return positions.map((p) => {
+    let next = p;
+    if (isRebatePosition(p) && p.discountMode !== 'amount') {
+      const percent = Number.isFinite(p.discountPercent) ? (p.discountPercent as number) : 0;
+      // `|| 0` turns -0 (a discount on nothing) into a plain 0
+      next = { ...p, amount: -Math.round(runningRappen * percent / 100) / 100 || 0 };
+    }
+    if (isMoneyPosition(next)) runningRappen += toRappen(Number.isFinite(next.amount) ? next.amount : 0);
+    return next;
+  });
+}
+
+/** Moves one item up (-1) or down (+1); a move past either end leaves the list as it is. */
+export function moveItem<T>(list: readonly T[], index: number, direction: -1 | 1): T[] {
+  const target = index + direction;
+  if (index < 0 || index >= list.length || target < 0 || target >= list.length) return [...list];
+  const copy = [...list];
+  [copy[index], copy[target]] = [copy[target], copy[index]];
+  return copy;
+}
+
 /** CHF decimal to integer Rappen — the server's single rounding rule. */
 export function toRappen(amount: number): number {
   return Math.round(amount * 100);
 }
 
-/** Sum of the positions in CHF, added up in Rappen so no float drift shows in the total. */
+/**
+ * Sum of the money positions in CHF (discounts subtract, layout lines count nothing), added up in
+ * Rappen so no float drift shows in the total.
+ */
 export function positionsTotal(positions: InvoicePositionInput[]): number {
-  return positions.reduce((sum, p) => sum + toRappen(Number.isFinite(p.amount) ? p.amount : 0), 0) / 100;
+  return positions
+    .filter((p) => isMoneyPosition(p))
+    .reduce((sum, p) => sum + toRappen(Number.isFinite(p.amount) ? p.amount : 0), 0) / 100;
 }
 
-/** Stored positions back into the editable shape (legacy rows may lack fields — coalesce). */
+/**
+ * Stored positions back into the editable shape, in `sortOrder` (stable, so legacy rows without it
+ * keep the read order). Legacy rows may lack fields — coalesce. A discount gets its editor mode back.
+ */
 export function toPositionInputs(positions: InvoicePositionModel[]): InvoicePositionInput[] {
-  return positions.map((p) => ({
-    name: p.name ?? '',
-    amount: Number(p.amount ?? 0),
-    accountKey: p.accountKey ?? '',
-    description: p.description ?? '',
-  }));
+  return positions
+    .map((p, i) => ({ p, i, order: Number.isFinite(p.sortOrder) ? Number(p.sortOrder) : Number.MAX_SAFE_INTEGER }))
+    .sort((a, b) => a.order - b.order || a.i - b.i)
+    .map(({ p }): InvoicePositionInput => {
+      const input: InvoicePositionInput = {
+        type: p.invoicePositionType || 'fix',
+        name: p.name ?? '',
+        amount: Number(p.amount ?? 0),
+        accountKey: p.accountKey ?? '',
+        description: p.description ?? '',
+      };
+      if (!isRebatePosition(input)) return input;
+      const discountPercent = Number(p.discountPercent ?? 0);
+      return { ...input, discountPercent, discountMode: discountPercent > 0 ? 'percent' : 'amount' };
+    });
 }
 
 /** The header payload for `writeInvoice`: only the fields the callable accepts. */

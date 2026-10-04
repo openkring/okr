@@ -61,6 +61,10 @@
       "label": "Payment period of a reminder (days)",
       "placeholder": "0–365",
       "helper": "The receiver has this many days to pay after a reminder."
+    },
+    "discountAccount": {
+      "label": "Discount account",
+      "helper": "Default for new discounts on invoices, e.g. 3800 sales deductions. Empty: the discount reduces the revenue of the items above it, only the net amount is booked."
     }
   },
   "feeSchedule": {

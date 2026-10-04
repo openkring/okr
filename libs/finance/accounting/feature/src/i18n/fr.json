@@ -61,6 +61,10 @@
       "label": "Délai de paiement d’un rappel (jours)",
       "placeholder": "0–365",
       "helper": "Le destinataire a ce nombre de jours pour payer après un rappel."
+    },
+    "discountAccount": {
+      "label": "Compte de rabais",
+      "helper": "Valeur par défaut pour les nouveaux rabais sur les factures, p. ex. 3800 Diminutions de produits. Vide : le rabais réduit les produits des positions au-dessus, seul le montant net est comptabilisé."
     }
   },
   "feeSchedule": {

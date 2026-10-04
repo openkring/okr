@@ -87,6 +87,11 @@ describe('addPickedPosition', () => {
     expect(addPickedPosition([{ name: '', amount: 0, accountKey: '' }], picked)).toEqual([picked]);
   });
 
+  it('keeps an empty page-break line', () => {
+    const pageBreak = { type: 'pageBreak', name: '', amount: 0, accountKey: '' };
+    expect(addPickedPosition([pageBreak], picked)).toEqual([pageBreak, picked]);
+  });
+
   it('appends after real positions', () => {
     const existing = { name: 'Schrank', amount: 120, accountKey: 'scs3010' };
     expect(addPickedPosition([existing], picked)).toEqual([existing, picked]);

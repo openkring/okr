@@ -271,7 +271,10 @@
       "name": "Give the item a description.",
       "nameLength": "The description is too long.",
       "amount": "The amount must be greater than 0.",
-      "account": "Choose an account."
+      "account": "Choose an account.",
+      "text": "Enter a text.",
+      "discount": "The discount must be greater than 0.",
+      "discountPercent": "The discount must be between 0 and 100 %."
     },
     "kind": {
       "standard": "Standard",
@@ -280,6 +283,17 @@
       "discount": "Discount",
       "subtotal": "Subtotal",
       "pageBreak": "Page break"
+    },
+    "moveUp": "Move up",
+    "moveDown": "Move down",
+    "text": {
+      "label": "Text",
+      "placeholder": "e.g. a note on the invoice"
+    },
+    "discount": {
+      "account": "Account (empty: reduces the items above)",
+      "percent": "Discount in %",
+      "amount": "Discount (CHF)"
     }
   },
   "issue": {
@@ -364,7 +378,8 @@
     "waive-period-locked": "The booking period for the date of the waiver is closed. Choose another date or have the period reopened.",
     "waive-inconsistent-state": "Something went wrong while waiving the fee. Please try again.",
     "waive-not-payable": "A fee can only be waived on an issued invoice that is still open.",
-    "email-already-waived": "The fee of this reminder is waived, but the PDF still shows it. So it is not sent."
+    "email-already-waived": "The fee of this reminder is waived, but the PDF still shows it. So it is not sent.",
+    "discount-without-base": "A discount without an account stands above all items and has nothing to reduce. Move it below the items or choose an account."
   },
   "paymentReference": {
     "label": "Payment reference"

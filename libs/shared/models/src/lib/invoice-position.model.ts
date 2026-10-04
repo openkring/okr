@@ -13,6 +13,7 @@ export class InvoicePositionModel implements OkrModel, NamedModel, SearchableMod
   public firstName = DEFAULT_NAME;
   public lastName = DEFAULT_NAME;
   public invoiceKey = DEFAULT_KEY; // ref to InvoiceModel.okey
+  // money: 'fix' | 'unit' | 'hours' | 'days' | 'deduction' | 'rebate'; layout (no amount, no account, spec 1.84): 'text' | 'subtotal' | 'pageBreak'
   public invoicePositionType = DEFAULT_INVOICE_POSITION_TYPE;
   public invoicePositionUsage = DEFAULT_INVOICE_POSITION_USAGE;
   public year = 0;
@@ -22,6 +23,10 @@ export class InvoicePositionModel implements OkrModel, NamedModel, SearchableMod
   public bookingAccountId = DEFAULT_ID;   // Bexio account ID (kept for Bexio compatibility)
   public accountKey = '';                 // ref to AccountModel (revenue account in okr chart of accounts)
   public vatCodeKey = '';                 // ref to VatCodeModel
+  // display order on the invoice (spec 1.84 K3); written by writeInvoice as the editor's list index
+  public sortOrder = 0;
+  // rebate positions only: the rate in percent; 0 = a fixed amount (spec 1.84 K4). `amount` holds the result.
+  public discountPercent = 0;
 
   // Stamped (StoreDateTime) when a data-subject erasure pseudonymized this record
   // (privacy 1.19, D-P5-6): the name fields and the person link are overwritten, the

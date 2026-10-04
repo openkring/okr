@@ -271,7 +271,10 @@
       "name": "Dale una descripción a la posición.",
       "nameLength": "La descripción es demasiado larga.",
       "amount": "El importe debe ser mayor que 0.",
-      "account": "Elige una cuenta."
+      "account": "Elige una cuenta.",
+      "text": "Escribe un texto.",
+      "discount": "El descuento debe ser mayor que 0.",
+      "discountPercent": "El descuento debe estar entre 0 y 100 %."
     },
     "kind": {
       "standard": "Estándar",
@@ -280,6 +283,17 @@
       "discount": "Descuento",
       "subtotal": "Subtotal",
       "pageBreak": "Salto de página"
+    },
+    "moveUp": "Subir",
+    "moveDown": "Bajar",
+    "text": {
+      "label": "Texto",
+      "placeholder": "p. ej. una nota sobre la factura"
+    },
+    "discount": {
+      "account": "Cuenta (vacía: reduce las posiciones de arriba)",
+      "percent": "Descuento en %",
+      "amount": "Descuento (CHF)"
     }
   },
   "issue": {
@@ -364,7 +378,8 @@
     "waive-period-locked": "El periodo contable de la fecha de la condonación está cerrado. Elige otra fecha o haz que se vuelva a abrir el periodo.",
     "waive-inconsistent-state": "Algo salió mal al condonar la tarifa. Inténtalo de nuevo.",
     "waive-not-payable": "Una tarifa solo se puede condonar en una factura emitida que siga abierta.",
-    "email-already-waived": "La tarifa de este recordatorio está condonada, pero el PDF todavía la muestra. Por eso no se envía."
+    "email-already-waived": "La tarifa de este recordatorio está condonada, pero el PDF todavía la muestra. Por eso no se envía.",
+    "discount-without-base": "Un descuento sin cuenta está por encima de todas las posiciones y no puede reducir nada. Muévelo debajo de las posiciones o elige una cuenta."
   },
   "paymentReference": {
     "label": "Referencia de pago"

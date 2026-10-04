@@ -92,7 +92,8 @@ export function feeOptionToPosition(option: FeePickOption): InvoicePositionInput
  * pick replaces that blank row instead of leaving an invalid empty position above it.
  */
 export function addPickedPosition(positions: readonly InvoicePositionInput[], picked: InvoicePositionInput): InvoicePositionInput[] {
-  const blank = positions.findIndex(p => !p.name && !p.amount && !p.accountKey);
+  // only an empty standard row: a page break is empty too, but deliberately placed
+  const blank = positions.findIndex(p => (!p.type || p.type === 'fix') && !p.name && !p.amount && !p.accountKey);
   if (blank === -1) return [...positions, picked];
   return positions.map((p, i) => (i === blank ? picked : p));
 }

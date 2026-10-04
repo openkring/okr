@@ -9,7 +9,9 @@
     "defaultOrientation": "portrait",
     "attachQrSlip": true,
     "qrSlipWithAmount": true,
-    "tenants": ["scs"]
+    "tenants": [
+      "scs"
+    ]
   },
   "invoiceNumber": "REA-260501",
   "title": "Mitgliederbeitrag 2026",
@@ -23,10 +25,36 @@
   "zipCode": "8712",
   "city": "Stäfa",
   "countryCode": "CH",
-  "amount": "525.50",
+  "amount": "500.00",
   "positions": [
-    { "name": "Mitgliederbeitrag", "amount": "350.00", "description": "pro rata verrechnet, 7 Monate" },
-    { "name": "Bootsplatz", "amount": "175.50" }
+    {
+      "kind": "position",
+      "name": "Mitgliederbeitrag",
+      "amount": "350.00",
+      "description": "pro rata verrechnet für 7 von 12 Monaten (voller Jahresbetrag CHF 600.00)"
+    },
+    {
+      "kind": "position",
+      "name": "Bootsplatz",
+      "amount": "175.50"
+    },
+    {
+      "kind": "rebate",
+      "isRebate": true,
+      "name": "Rabatt",
+      "amount": "-25.50"
+    },
+    {
+      "kind": "subtotal",
+      "isSubtotal": true,
+      "name": "Zwischentotal",
+      "amount": "500.00"
+    },
+    {
+      "kind": "text",
+      "isText": true,
+      "name": "Der Bootsplatz gilt für die Saison April bis Oktober."
+    }
   ],
   "qrMessage": "Rechnung REA-260501",
   "payee": {

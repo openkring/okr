@@ -17,6 +17,8 @@ export const ACCOUNTING_I18N_KEYS = {
   payables_account_helper:  PFX + 'settings.payablesAccount.helper',
   receivables_account:         PFX + 'settings.receivablesAccount.label',
   receivables_account_helper:  PFX + 'settings.receivablesAccount.helper',
+  discount_account:            PFX + 'settings.discountAccount.label',
+  discount_account_helper:     PFX + 'settings.discountAccount.helper',
   invoice_template:            PFX + 'settings.invoiceTemplate.label',
   invoice_template_placeholder: PFX + 'settings.invoiceTemplate.placeholder',
   invoice_template_helper:     PFX + 'settings.invoiceTemplate.helper',

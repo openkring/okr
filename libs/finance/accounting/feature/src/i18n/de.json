@@ -61,6 +61,10 @@
       "label": "Zahlungsfrist einer Mahnung (Tage)",
       "placeholder": "0–365",
       "helper": "So viele Tage hat der Empfänger nach einer Mahnung Zeit zum Bezahlen."
+    },
+    "discountAccount": {
+      "label": "Rabattkonto",
+      "helper": "Vorgabe für neue Rabatte auf Rechnungen, z.B. 3800 Erlösminderungen. Leer: der Rabatt mindert die Erträge der Positionen darüber, gebucht wird nur der Nettobetrag."
     }
   },
   "feeSchedule": {

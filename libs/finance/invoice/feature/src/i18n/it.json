@@ -271,7 +271,10 @@
       "name": "Dai una descrizione alla posizione.",
       "nameLength": "La descrizione è troppo lunga.",
       "amount": "L'importo deve essere maggiore di 0.",
-      "account": "Scegli un conto."
+      "account": "Scegli un conto.",
+      "text": "Inserisci un testo.",
+      "discount": "Lo sconto deve essere maggiore di 0.",
+      "discountPercent": "Lo sconto deve essere tra 0 e 100 %."
     },
     "kind": {
       "standard": "Standard",
@@ -280,6 +283,17 @@
       "discount": "Sconto",
       "subtotal": "Subtotale",
       "pageBreak": "Interruzione di pagina"
+    },
+    "moveUp": "Sposta in alto",
+    "moveDown": "Sposta in basso",
+    "text": {
+      "label": "Testo",
+      "placeholder": "p. es. una nota sulla fattura"
+    },
+    "discount": {
+      "account": "Conto (vuoto: riduce le posizioni sopra)",
+      "percent": "Sconto in %",
+      "amount": "Sconto (CHF)"
     }
   },
   "issue": {
@@ -364,7 +378,8 @@
     "waive-period-locked": "Il periodo contabile alla data del condono è chiuso. Scegli un’altra data o fai riaprire il periodo.",
     "waive-inconsistent-state": "Qualcosa è andato storto nel condonare le spese. Riprova, per favore.",
     "waive-not-payable": "Le spese si possono condonare solo su una fattura emessa e ancora aperta.",
-    "email-already-waived": "Le spese di questo sollecito sono condonate, ma il PDF le mostra ancora. Per questo non viene inviato."
+    "email-already-waived": "Le spese di questo sollecito sono condonate, ma il PDF le mostra ancora. Per questo non viene inviato.",
+    "discount-without-base": "Uno sconto senza conto sta sopra tutte le posizioni e non può ridurre nulla. Spostalo sotto le posizioni o scegli un conto."
   },
   "paymentReference": {
     "label": "Riferimento di pagamento"

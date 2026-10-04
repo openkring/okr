@@ -18,7 +18,8 @@ import { FeePositionSelectModal, InvoiceEditForm } from '@okr/finance-invoice-ui
 import { MembershipService } from '@okr/relationship-membership-data-access';
 import {
   addPickedPosition, feeOptionToPosition, FeePickOption, feePickOptions, INVOICE_I18N_KEYS, InvoiceI18n,
-  InvoicePositionInput, isDraftInvoice, MAX_INVOICE_POSITIONS, newInvoicePosition, toCategoryPriceLists, toPositionInputs,
+  applyDiscounts, InvoicePositionInput, isDraftInvoice, MAX_INVOICE_POSITIONS, newInvoicePosition, newLayoutPosition, newRebatePosition,
+  toCategoryPriceLists, toPositionInputs,
 } from '@okr/finance-invoice-util';
 
 /** What the modal dismisses with on confirm. */
@@ -176,34 +177,40 @@ export class InvoiceEditModal {
     return undefined;
   }
 
-  /**
-   * «Position hinzufügen»: the kinds of position an invoice can get. Text, Rabatt, Zwischentotal
-   * and Seitenumbruch are listed but disabled until invoice positions carry a kind and an order.
-   */
+  /** «Position hinzufügen»: the kinds of position an invoice can get (spec 1.84); the new one goes to the end */
   protected async selectPositionKind(): Promise<void> {
     if (this.isReadOnly() || this.positions().length >= MAX_INVOICE_POSITIONS) return;
     const options = createActionSheetOptions(this.i18n.positions_add());
     options.buttons = [
       createActionSheetButton('position.standard', this.i18n.positions_kind_standard(), this.imgixBaseUrl, 'add'),
       createActionSheetButton('position.fees', this.i18n.positions_kind_fees(), this.imgixBaseUrl, 'list'),
-      { ...createActionSheetButton('position.text', this.i18n.positions_kind_text(), this.imgixBaseUrl, 'text'), disabled: true },
-      { ...createActionSheetButton('position.discount', this.i18n.positions_kind_discount(), this.imgixBaseUrl, 'remove'), disabled: true },
-      { ...createActionSheetButton('position.subtotal', this.i18n.positions_kind_subtotal(), this.imgixBaseUrl, 'wallet'), disabled: true },
-      { ...createActionSheetButton('position.pageBreak', this.i18n.positions_kind_pageBreak(), this.imgixBaseUrl, 'documents'), disabled: true },
+      createActionSheetButton('position.text', this.i18n.positions_kind_text(), this.imgixBaseUrl, 'text'),
+      createActionSheetButton('position.discount', this.i18n.positions_kind_discount(), this.imgixBaseUrl, 'remove'),
+      createActionSheetButton('position.subtotal', this.i18n.positions_kind_subtotal(), this.imgixBaseUrl, 'wallet'),
+      createActionSheetButton('position.pageBreak', this.i18n.positions_kind_pageBreak(), this.imgixBaseUrl, 'documents'),
       createActionSheetButton('cancel', this.i18n.cancel(), this.imgixBaseUrl, 'cancel'),
     ];
     const sheet = await this.actionSheetController.create(options);
     await sheet.present();
     const { data } = await sheet.onDidDismiss();
     switch (data?.action) {
-      case 'position.standard':
-        this.formDirty.set(true);
-        this.positions.update(list => [...list, newInvoicePosition()]);
+      case 'position.standard': this.appendPosition(newInvoicePosition()); break;
+      case 'position.fees': await this.selectFeePosition(); break;
+      case 'position.text': this.appendPosition(newLayoutPosition('text')); break;
+      case 'position.subtotal': this.appendPosition(newLayoutPosition('subtotal')); break;
+      case 'position.pageBreak': this.appendPosition(newLayoutPosition('pageBreak')); break;
+      case 'position.discount': {
+        // the books' discount account; '' = the discount reduces the revenue above it (spec 1.84 K6)
+        const config = await firstValueFrom(this.accountingConfigService.read(this.invoice().accountingTenantId));
+        this.appendPosition(newRebatePosition(config?.discountAccountKey ?? ''));
         break;
-      case 'position.fees':
-        await this.selectFeePosition();
-        break;
+      }
     }
+  }
+
+  private appendPosition(position: InvoicePositionInput): void {
+    this.formDirty.set(true);
+    this.positions.update(list => applyDiscounts([...list, position]));
   }
 
   /**
@@ -236,7 +243,7 @@ export class InvoiceEditModal {
     const { data, role } = await modal.onWillDismiss<FeePickOption>();
     if (role !== 'confirm' || !data) return;
     this.formDirty.set(true);
-    this.positions.update(list => addPickedPosition(list, feeOptionToPosition(data)));
+    this.positions.update(list => applyDiscounts(addPickedPosition(list, feeOptionToPosition(data))));
   }
 
   /** the receiver's current membership in the books' owner org; undefined = not a member */

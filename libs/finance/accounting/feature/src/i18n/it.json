@@ -61,6 +61,10 @@
       "label": "Termine di pagamento di un sollecito (giorni)",
       "placeholder": "0–365",
       "helper": "Il destinatario ha questo numero di giorni per pagare dopo un sollecito."
+    },
+    "discountAccount": {
+      "label": "Conto sconti",
+      "helper": "Predefinito per i nuovi sconti sulle fatture, p. es. 3800 Diminuzioni di ricavi. Vuoto: lo sconto riduce i ricavi delle posizioni sopra, si contabilizza solo l'importo netto."
     }
   },
   "feeSchedule": {

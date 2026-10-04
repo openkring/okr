@@ -16,6 +16,7 @@ export function toAccountingConfigFormData(config: AccountingConfigModel): Accou
     employeePayablesAccountKey: config.employeePayablesAccountKey ?? '',
     receivablesAccountKey: config.receivablesAccountKey ?? '',
     invoiceTemplateId: config.invoiceTemplateId ?? '',
+    discountAccountKey: config.discountAccountKey ?? '',
     invoicePaymentAccountKeys: [...(config.invoicePaymentAccountKeys ?? [])],
     defaultCostCenterKey: config.defaultCostCenterKey ?? '',
     fiscalYearStart: config.fiscalYearStart ?? 1,

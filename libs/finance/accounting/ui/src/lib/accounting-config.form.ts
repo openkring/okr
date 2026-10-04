@@ -84,6 +84,12 @@ export type { AccountingI18n };
                   </ion-select>
                   <ion-note>{{ i18n().payment_accounts_helper() }}</ion-note>
                 </ion-col>
+                <ion-col size="12" size-md="6">
+                  <okr-account-select [i18n]="discountAccountI18n()" [accounts]="leaves()"
+                    [selectedKey]="discountAccountKey()"
+                    (selectedKeyChange)="onFieldChange('discountAccountKey', $event)"
+                    [readOnly]="isReadOnly()" />
+                </ion-col>
               </ion-row>
               <ion-row>
                 <ion-col size="12" size-md="6">
@@ -198,6 +204,8 @@ export class AccountingConfigForm {
   protected employeePayablesAccountKey = linkedSignal(() => this.formData().employeePayablesAccountKey ?? '');
   protected receivablesAccountKey = linkedSignal(() => this.formData().receivablesAccountKey ?? '');
   protected invoiceTemplateId = linkedSignal(() => this.formData().invoiceTemplateId ?? '');
+  // legacy config docs predate the field (spec 1.84): '' = a discount reduces the revenue above it
+  protected discountAccountKey = linkedSignal(() => this.formData().discountAccountKey ?? '');
   // legacy config docs predate the field: '' = keine Kostenstelle
   protected defaultCostCenterKey = linkedSignal(() => this.formData().defaultCostCenterKey ?? '');
   // Invoice templates only, but never drop the stored one: a config pointing at a template of
@@ -226,6 +234,10 @@ export class AccountingConfigForm {
 
   protected receivablesAccountI18n = computed(() => ({
     name: 'receivablesAccountKey', label: this.i18n().receivables_account(), helper: this.i18n().receivables_account_helper()
+  } as AccountSelectI18n));
+
+  protected discountAccountI18n = computed(() => ({
+    name: 'discountAccountKey', label: this.i18n().discount_account(), helper: this.i18n().discount_account_helper()
   } as AccountSelectI18n));
 
   protected costCenterI18n = computed(() => ({

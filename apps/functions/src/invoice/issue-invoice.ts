@@ -16,7 +16,7 @@ import { privateBucket } from '../_storage/private-bucket';
 import { renderDocument } from '../pdf/render-document';
 import {
   buildInvoicePayload, finalizeDecision, invoiceBookingIndex, invoiceBookingLines, issueBlockers, issueHeaderBlockers, issueOutcome,
-  issuePeriodKeys, PositionInput, withoutUndefined,
+  issuePeriodKeys, PositionInput, sortPositions, withoutUndefined,
 } from './invoice.logic';
 import { assertLeafAccount, loadOwnedAccountingConfig, receiverAddress, refuse } from './invoice-context';
 
@@ -48,15 +48,18 @@ function storedResult(invoice: InvoiceDoc): IssueInvoiceResult {
 
 async function readPositions(db: Firestore, invoiceKey: string): Promise<PositionInput[]> {
   const snap = await db.collection(InvoicePositionCollection).where('invoiceKey', '==', invoiceKey).get();
-  return snap.docs
+  return sortPositions(snap.docs
     .map((d) => d.data())
     .filter((p) => p['isArchived'] !== true)
-    .map((p) => ({
+    .map((p): PositionInput => ({
+      type: String(p['invoicePositionType'] ?? '') || 'fix',
       name: String(p['name'] ?? ''),
       amount: typeof p['amount'] === 'number' ? p['amount'] : Number.NaN,
       accountKey: String(p['accountKey'] ?? ''),
       description: String(p['description'] ?? ''),
-    }));
+      discountPercent: Number(p['discountPercent'] ?? 0),
+      ...(typeof p['sortOrder'] === 'number' ? { sortOrder: p['sortOrder'] } : {}),
+    })));
 }
 
 /** Every reason this invoice cannot be issued (empty = it can). */
@@ -245,7 +248,8 @@ export const issueInvoice = onCall(
         if (decision === 'return-stored') return storedResult(current); // a concurrent run won: write nothing
         if (decision === 'refuse') throw refuse('state-changed', `invoice ${invoiceKey} changed while it was issued`);
         await assertPeriodsOpen(db, periodKeys, tx);
-        for (const key of [...new Set([receivablesKey, ...positions.map((p) => p.accountKey)])]) {
+        // layout lines and a spread discount carry no account (spec 1.84)
+        for (const key of [...new Set([receivablesKey, ...positions.map((p) => p.accountKey).filter((k) => k.trim())])]) {
           await assertLeafAccount(db, accountingTenantId, key, tx);
         }
         let bookingNo = 0;

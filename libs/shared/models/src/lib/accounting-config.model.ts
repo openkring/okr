@@ -90,6 +90,7 @@ export class AccountingConfigModel implements OkrModel {
   public invoicePaymentAccountKeys: string[] = []; // leaf accounts a payment may be posted to (spec 1.76 D11)
   public reminderTemplateId = '';                // templates/{id} rendered by createInvoiceReminder (spec 1.76 D13)
   public reminderFeeAccountKey = '';             // leaf account credited with the reminder fee (spec 1.76 D14)
+  public discountAccountKey = '';                // preset for a new Rabatt position; '' = the discount reduces the revenue accounts above it (spec 1.84 K6)
   public reminderFees: number[] = [...DEFAULT_REMINDER_FEES]; // Rappen per reminder level 1..3 (spec 1.76 D14)
   public reminderGraceDays = DEFAULT_REMINDER_GRACE_DAYS; // days after the last due date before a Mahnlauf offers a reminder (spec 1.76 D15)
   public reminderDueDays = DEFAULT_REMINDER_DUE_DAYS;     // days a reminder grants to pay (spec 1.76 D13)

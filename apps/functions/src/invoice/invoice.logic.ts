@@ -1,11 +1,19 @@
-import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
+import { convertDateFormatToString, DateFormat, isMoneyPosition, isRebatePosition } from '@okr/shared-util-core';
 import { touchedPeriodKeys } from '../booking/period-lock';
 
+/**
+ * One invoice position. `type` is the kind (spec 1.84): a money type ('fix', 'rebate', …; missing =
+ * 'fix') or a layout kind ('text', 'subtotal', 'pageBreak') that carries no amount and no account.
+ * A discount ('rebate') holds its negative result in `amount`.
+ */
 export interface PositionInput {
+  type?: string;
   name: string;
   amount: number; // CHF
   accountKey: string;
   description?: string;
+  discountPercent?: number;
+  sortOrder?: number;
 }
 
 export interface PostalAddress {
@@ -27,28 +35,72 @@ export function toRappen(amount: number): number {
   return Math.round(amount * 100);
 }
 
-/** Sum of all positions in Rappen (integer, no float drift). */
-export function totalRappen(positions: PositionInput[]): number {
-  return positions.reduce((sum, p) => sum + toRappen(p.amount), 0);
+/** Positions in `sortOrder`; ties and legacy rows without one keep the order they were read in. */
+export function sortPositions<T extends { sortOrder?: number }>(positions: T[]): T[] {
+  return positions
+    .map((p, i) => ({ p, i, order: Number.isFinite(p.sortOrder) ? Number(p.sortOrder) : Number.MAX_SAFE_INTEGER }))
+    .sort((a, b) => a.order - b.order || a.i - b.i)
+    .map(({ p }) => p);
 }
+
+/** Sum of the money positions in Rappen (integer, no float drift); layout lines count nothing. */
+export function totalRappen(positions: PositionInput[]): number {
+  return positions.filter((p) => isMoneyPosition(p)).reduce((sum, p) => sum + toRappen(p.amount), 0);
+}
+
+/** A discount without its own account is spread over the revenue above it (spec 1.84 K6). */
+const isSpreadDiscount = (p: PositionInput): boolean => isRebatePosition(p) && !p.accountKey?.trim();
 
 /** Reasons why a draft cannot be issued. An empty array means it can. */
 export function issueBlockers(positions: PositionInput[], receivablesAccountKey: string): string[] {
   const blockers: string[] = [];
-  if (positions.length === 0) blockers.push('no-positions');
-  if (positions.some((p) => !p.accountKey?.trim())) blockers.push('position-without-account');
-  if (positions.some((p) => !Number.isFinite(p.amount) || toRappen(p.amount) === 0)) blockers.push('invalid-amount');
+  const money = positions.filter((p) => isMoneyPosition(p));
+  if (money.length === 0) blockers.push('no-positions');
+  if (money.some((p) => !isSpreadDiscount(p) && !p.accountKey?.trim())) blockers.push('position-without-account');
+  if (money.some((p) => !Number.isFinite(p.amount) || toRappen(p.amount) === 0)) blockers.push('invalid-amount');
+  if (money.some((p, i) => isSpreadDiscount(p) && spreadBase(money.slice(0, i)).length === 0)) blockers.push('discount-without-base');
   if (totalRappen(positions) <= 0) blockers.push('total-not-positive');
   if (!receivablesAccountKey) blockers.push('no-receivables-account');
   return blockers;
 }
 
-/** Debit receivables with the total, credit each revenue account once (first-seen order). */
+/** The positions a spread discount reduces: the positive positions with an account above it. */
+function spreadBase(above: PositionInput[]): PositionInput[] {
+  return above.filter((p) => !isRebatePosition(p) && p.accountKey?.trim() && toRappen(p.amount) > 0);
+}
+
+/**
+ * Splits `rappen` over the base positions in proportion to their amounts, largest remainder first,
+ * so the parts add up to exactly `rappen`.
+ */
+function spread(rappen: number, base: PositionInput[]): { accountKey: string; rappen: number }[] {
+  const weights = base.map((p) => toRappen(p.amount));
+  const sum = weights.reduce((s, w) => s + w, 0);
+  if (sum === 0) return [];
+  const exact = weights.map((w) => (rappen * w) / sum);
+  const parts = exact.map((e) => Math.trunc(e));
+  let rest = rappen - parts.reduce((s, x) => s + x, 0);
+  const byRemainder = exact.map((e, i) => ({ i, r: Math.abs(e - parts[i]) })).sort((a, b) => b.r - a.r || a.i - b.i);
+  for (const { i } of byRemainder) {
+    if (rest === 0) break;
+    parts[i] += Math.sign(rest);
+    rest -= Math.sign(rest);
+  }
+  return base.map((p, i) => ({ accountKey: p.accountKey, rappen: parts[i] }));
+}
+
+/**
+ * Debit receivables with the total, credit each account once (first-seen order); layout lines book
+ * nothing. A discount with an account debits it; one without is spread over the revenue above it,
+ * so only net amounts reach the ledger (spec 1.84 K6). Positions must come in `sortOrder`.
+ */
 export function invoiceBookingLines(positions: PositionInput[], receivablesAccountKey: string): BookingLineInput[] {
   const credits = new Map<string, number>();
-  for (const p of positions) {
-    credits.set(p.accountKey, (credits.get(p.accountKey) ?? 0) + toRappen(p.amount));
-  }
+  const money = positions.filter((p) => isMoneyPosition(p));
+  money.forEach((p, i) => {
+    const parts = isSpreadDiscount(p) ? spread(toRappen(p.amount), spreadBase(money.slice(0, i))) : [{ accountKey: p.accountKey, rappen: toRappen(p.amount) }];
+    for (const part of parts) credits.set(part.accountKey, (credits.get(part.accountKey) ?? 0) + part.rappen);
+  });
   return [
     { accountKey: receivablesAccountKey, debitAmount: { amount: totalRappen(positions), currency: 'CHF' } },
     ...[...credits]
@@ -99,10 +151,30 @@ export function buildInvoicePayload(i: {
     dueDate: viewDate(i.dueDate),
     ...recipientFields(i.receiver, i.address),
     amount: chf(totalRappen(i.positions)),
-    // `description` only when set, so a template's `{{#if description}}` never prints an empty line (1.79 §3.6)
-    positions: i.positions.map((p) => ({ name: p.name, amount: chf(toRappen(p.amount)), ...(p.description ? { description: p.description } : {}) })),
+    positions: payloadPositions(i.positions),
     qrMessage: `Rechnung ${i.invoiceId}`,
   };
+}
+
+/**
+ * The positions as the template sees them, in the given order (spec 1.84 §6): each with its `kind` and,
+ * for Handlebars, a boolean flag per non-standard kind. A subtotal carries the sum of the money
+ * positions above it; text and page-break lines carry no amount. `description` only when set, so a
+ * template's `{{#if description}}` never prints an empty line (1.79 §3.6).
+ */
+function payloadPositions(positions: PositionInput[]): Record<string, unknown>[] {
+  let running = 0;
+  return positions.map((p) => {
+    const description = p.description ? { description: p.description } : {};
+    switch (p.type) {
+      case 'text': return { kind: 'text', isText: true, name: p.name, ...description };
+      case 'pageBreak': return { kind: 'pageBreak', isPageBreak: true, name: p.name };
+      case 'subtotal': return { kind: 'subtotal', isSubtotal: true, name: p.name, amount: chf(running) };
+    }
+    running += toRappen(p.amount);
+    const kind = isRebatePosition(p) ? { kind: 'rebate', isRebate: true } : { kind: 'position' };
+    return { ...kind, name: p.name, amount: chf(toRappen(p.amount)), ...description };
+  });
 }
 
 /**

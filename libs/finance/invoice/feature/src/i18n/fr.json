@@ -271,7 +271,10 @@
       "name": "Donne une désignation à la position.",
       "nameLength": "La désignation est trop longue.",
       "amount": "Le montant doit être supérieur à 0.",
-      "account": "Choisis un compte."
+      "account": "Choisis un compte.",
+      "text": "Saisis un texte.",
+      "discount": "Le rabais doit être supérieur à 0.",
+      "discountPercent": "Le rabais doit être entre 0 et 100 %."
     },
     "kind": {
       "standard": "Standard",
@@ -280,6 +283,17 @@
       "discount": "Rabais",
       "subtotal": "Sous-total",
       "pageBreak": "Saut de page"
+    },
+    "moveUp": "Monter",
+    "moveDown": "Descendre",
+    "text": {
+      "label": "Texte",
+      "placeholder": "p. ex. une remarque sur la facture"
+    },
+    "discount": {
+      "account": "Compte (vide : réduit les positions au-dessus)",
+      "percent": "Rabais en %",
+      "amount": "Rabais (CHF)"
     }
   },
   "issue": {
@@ -364,7 +378,8 @@
     "waive-period-locked": "La période comptable à la date de l’annulation est clôturée. Choisis une autre date ou fais rouvrir la période.",
     "waive-inconsistent-state": "Un problème est survenu lors de l’annulation des frais. Réessaie, s’il te plaît.",
     "waive-not-payable": "Des frais ne peuvent être annulés que sur une facture émise et encore ouverte.",
-    "email-already-waived": "Les frais de ce rappel sont annulés, mais le PDF les affiche encore. Il n’est donc pas envoyé."
+    "email-already-waived": "Les frais de ce rappel sont annulés, mais le PDF les affiche encore. Il n’est donc pas envoyé.",
+    "discount-without-base": "Un rabais sans compte se trouve au-dessus de toutes les positions et ne peut rien réduire. Déplace-le sous les positions ou choisis un compte."
   },
   "paymentReference": {
     "label": "Référence de paiement"

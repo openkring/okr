@@ -66,7 +66,7 @@ describe('buildInvoicePayload', () => {
     const p = buildInvoicePayload({ ...base, address: { streetName: 'Seestrasse', streetNumber: '5', zipCode: '8712', city: 'Stäfa', countryCode: 'CH' } });
     expect(p).toMatchObject({ firstName: 'Anna', lastName: 'Muster', streetName: 'Seestrasse', zipCode: '8712', city: 'Stäfa',
       invoiceNumber: '202600001', date: '01.10.2026', dueDate: '31.10.2026', amount: '675.50', qrMessage: 'Rechnung 202600001' });
-    expect(p['positions']).toEqual([{ name: 'Beitrag', amount: '600.00' }, { name: 'Bootsplatz', amount: '75.50' }]);
+    expect(p['positions']).toEqual([{ kind: 'position', name: 'Beitrag', amount: '600.00' }, { kind: 'position', name: 'Bootsplatz', amount: '75.50' }]);
   });
 
   it('passes a position description to the template and omits an empty one (spec 1.79 §3.6)', () => {
@@ -75,8 +75,8 @@ describe('buildInvoicePayload', () => {
       { ...pos(75, 'scs0284', 'SRV'), description: '' },
     ] });
     expect(p['positions']).toEqual([
-      { name: 'Jahresbeitrag', amount: '350.00', description: 'pro rata verrechnet, 7 Monate' },
-      { name: 'SRV', amount: '75.00' },
+      { kind: 'position', name: 'Jahresbeitrag', amount: '350.00', description: 'pro rata verrechnet, 7 Monate' },
+      { kind: 'position', name: 'SRV', amount: '75.00' },
     ]);
   });
 

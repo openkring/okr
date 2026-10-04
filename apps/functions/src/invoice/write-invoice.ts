@@ -8,6 +8,8 @@ import { generateRandomString, removeKeyFromOkrModel } from '@okr/shared-util-co
 import { checkAppCheckToken, checkAuthentication, checkRoles, getCallerTenantId } from '@okr/shared-util-functions';
 
 import { isBexioBackend } from '../bexio/backend-gate';
+import { isMoneyPosition, isRebatePosition } from '@okr/shared-util-core';
+
 import { draftWriteRefusal, PositionInput, totalRappen, withoutUndefined } from './invoice.logic';
 
 const REGION = 'europe-west6';
@@ -97,6 +99,10 @@ export const writeInvoice = onCall(
       if (positions.some((p) => !p || typeof p.amount !== 'number' || !Number.isFinite(p.amount))) {
         throw new HttpsError('invalid-argument', 'every position needs a finite numeric amount');
       }
+      // a discount lowers the total; a draft may still hold 0 while the treasurer fills it in
+      if (positions.some((p) => isRebatePosition(p) && p.amount > 0)) {
+        throw new HttpsError('invalid-argument', 'a discount must not be positive');
+      }
     }
     const h = d.invoice ?? {};
     const invoiceDate = h.invoiceDate !== undefined ? checkStoreDate(h.invoiceDate, 'invoiceDate') : undefined;
@@ -160,18 +166,23 @@ export const writeInvoice = onCall(
       invoice.index = getInvoiceIndex(invoice);
       tx.set(invoiceRef, withoutUndefined(removeKeyFromOkrModel(invoice)));
 
-      for (const p of positions) {
+      positions.forEach((p, index) => {
         const position = new InvoicePositionModel(tenantId);
+        const money = isMoneyPosition(p);
         position.tenants = invoice.tenants;
         position.invoiceKey = invoiceKey;
+        position.invoicePositionType = p.type || 'fix';
+        position.sortOrder = index; // the editor's order (spec 1.84 K3)
         position.name = String(p.name ?? '').slice(0, MAX_POSITION_NAME_LENGTH);
         position.description = String(p.description ?? '').slice(0, MAX_POSITION_DESCRIPTION_LENGTH);
-        position.amount = p.amount;
+        // layout lines carry no amount and no account, whatever the client sent (spec 1.84 K2)
+        position.amount = money ? p.amount : 0;
         position.currency = 'CHF';
-        position.accountKey = String(p.accountKey ?? '');
-        position.isBillable = true;
+        position.accountKey = money ? String(p.accountKey ?? '') : '';
+        position.discountPercent = isRebatePosition(p) ? Math.min(100, Math.max(0, Number(p.discountPercent) || 0)) : 0;
+        position.isBillable = money;
         tx.set(db.collection(InvoicePositionCollection).doc(generateRandomString(20)), withoutUndefined(removeKeyFromOkrModel(position)));
-      }
+      });
     });
 
     logger.info(`${CF_NAME}: ${mode} draft ${invoiceKey} (${positions.length} position(s)) for tenant ${tenantId}`);
