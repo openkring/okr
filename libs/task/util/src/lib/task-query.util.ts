@@ -73,3 +73,21 @@ export function isActiveGroupMembership(
   const exit = m.dateOfExit ?? '';
   return exit === '' || exit >= today;
 }
+
+export type TaskListSource = 'direct' | 'callable' | 'wait';
+
+/**
+ * Where a task list is read from (spec 1.75). A group list waits until the groups are loaded:
+ * before that a closed group is indistinguishable from an open one, and querying it directly
+ * would be refused (and trigger App Check re-attestation). Meeting keys never name a group.
+ */
+export function getTaskListSource(
+  kind: TaskListScope['kind'],
+  shareKey: string,
+  group: Pick<GroupModel, 'chatMode'> | undefined,
+  groupsLoaded: boolean,
+): TaskListSource {
+  if (kind !== 'shared' || shareKey.startsWith('meeting.')) return 'direct';
+  if (isClosedGroup(group)) return 'callable';
+  return groupsLoaded ? 'direct' : 'wait';
+}

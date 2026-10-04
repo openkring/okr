@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { TaskModel } from '@okr/shared-models';
-import { buildTaskListQueries, getTaskShareKey, isActiveGroupMembership, isClosedGroup, isTaskStaff } from './task-query.util';
+import { buildTaskListQueries, getTaskShareKey, getTaskListSource, isActiveGroupMembership, isClosedGroup, isTaskStaff } from './task-query.util';
 
 function task(calendars: string[] | undefined, relatedKey = ''): TaskModel {
   const t = new TaskModel('scs');
@@ -100,5 +100,26 @@ describe('isActiveGroupMembership', () => {
   it('counts only person memberships in a group', () => {
     expect(isActiveGroupMembership({ ...m, orgModelType: 'org' }, '20261004')).toBe(false);
     expect(isActiveGroupMembership({ ...m, memberModelType: 'org' }, '20261004')).toBe(false);
+  });
+});
+
+describe('getTaskListSource', () => {
+  const closed = { chatMode: 'members' } as const;
+  const open = { chatMode: 'ask' } as const;
+  it('reads my and all lists directly', () => {
+    expect(getTaskListSource('my', '', undefined, false)).toBe('direct');
+    expect(getTaskListSource('all', '', undefined, false)).toBe('direct');
+  });
+  it('reads a meeting list directly, without waiting for the groups', () =>
+    expect(getTaskListSource('shared', 'meeting.m1', undefined, false)).toBe('direct'));
+  it('waits while the groups are loading, so a closed group is never queried directly (cold start)', () =>
+    expect(getTaskListSource('shared', 'gClosed', undefined, false)).toBe('wait'));
+  it('uses the callable for a closed group', () => {
+    expect(getTaskListSource('shared', 'gClosed', closed, true)).toBe('callable');
+    expect(getTaskListSource('shared', 'gClosed', closed, false)).toBe('callable');
+  });
+  it('reads an open or unknown group directly once the groups are loaded', () => {
+    expect(getTaskListSource('shared', 'gOpen', open, true)).toBe('direct');
+    expect(getTaskListSource('shared', 'gNone', undefined, true)).toBe('direct');
   });
 });

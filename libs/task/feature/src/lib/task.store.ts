@@ -12,7 +12,7 @@ import { chipMatches, debugItemLoaded, getAvatarInfo, getAvatarInfoForCurrentUse
 import { resourceParams } from '@okr/shared-util-angular';
 
 import { TaskService } from '@okr/task-data-access';
-import { assignMissingRanks, buildTaskListQueries, canChangeTask, canCreateTask, canDeleteTask, getCompletionPatch, groupTasksByState, isClosedGroup, isTask, TASK_I18N_KEYS, TaskBoardColumn, TaskSettings } from '@okr/task-util';
+import { assignMissingRanks, buildTaskListQueries, canChangeTask, canCreateTask, canDeleteTask, getCompletionPatch, getTaskListSource, groupTasksByState, isClosedGroup, isTask, TASK_I18N_KEYS, TaskBoardColumn, TaskSettings } from '@okr/task-util';
 
 /** The payload of a Kanban drag-and-drop. `columnTasks` is the target column, ordered, without the moved task. */
 export type TaskMove = {
@@ -71,13 +71,17 @@ export const TaskStore = signalStore(
         personKey: store.appStore.currentUser()?.personKey,
         tenantId: store.appStore.tenantId(),
         archived: store.showArchived(),
-        closed: isClosedGroup(store.appStore.getGroup(store.calendarName())),
+        groupChatMode: store.appStore.getGroup(store.calendarName())?.chatMode,  // not the whole doc: any field change would re-run
+        groupsLoaded: !!store.appStore.currentUser() && !store.appStore.groupsResource.isLoading(),
       })),
       stream: ({ params }) => {
         if (!params.calendarName || !params.tenantId) return of([]);
         const kind = params.calendarName === 'all' ? 'all' : params.calendarName === 'my' ? 'my' : 'shared';
         // spec 1.75: a closed group's tasks are refused on the direct query; fetch them via the callable
-        if (kind === 'shared' && params.closed) {
+        const source = getTaskListSource(kind, params.calendarName,
+          params.groupChatMode ? { chatMode: params.groupChatMode } : undefined, params.groupsLoaded);
+        if (source === 'wait') return of([]);
+        if (source === 'callable') {
           return store.taskService.listClosedGroupTasks(params.calendarName, params.tenantId, params.archived);
         }
         const queries = buildTaskListQueries({

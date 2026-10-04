@@ -104,6 +104,8 @@ Key resources (spec 1.72 §3.2, §4.1 — every reader is scoped, not client-fil
   A closed group (`isClosedGroup`) goes through `TaskService.listClosedGroupTasks` (the
   `listGroupTasks` callable) instead: fetched once, not streamed, no offline cache, so every write
   in the store ends with `reloadIfFetched()`.
+  `getTaskListSource` decides the path; a group list waits (empty) until `AppStore` has loaded the
+  groups, so a cold start never queries a closed group directly.
 - `taskResource` — single task by `taskKey`, via `TaskService.read` (direct `readModel`).
 
 The `tasks` computed signal reads `tasksResource` directly (the query already scopes it) and
