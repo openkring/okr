@@ -295,6 +295,8 @@ export const cleanupOrphanSessions = Session.cleanupOrphanSessions;
 export const onTaskWritten = Task.onTaskWritten;
 // task daily job: auto-archive completed tasks + due-today reminder (spec 1.72 §7.2, §8)
 export const taskDaily = Task.taskDaily;
+// closed-group task list: membership check for chatMode 'members' groups (spec 1.75)
+export const listGroupTasks = Task.listGroupTasks;
 
 // trip statistics
 export const onTripWrite             = Trip.onTripWrite;

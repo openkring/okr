@@ -9,6 +9,7 @@ import { decideDiaryTransition, decideTaskPush, TASK_LIST_URL, type TaskDocLike 
 import { applyTaskToDiary } from './task-diary';
 
 export { taskDaily } from './task-daily';
+export { listGroupTasks } from './list-group-tasks';
 
 const REGION = 'europe-west6';
 const TASK_COLLECTION = 'tasks';
