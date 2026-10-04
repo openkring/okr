@@ -260,7 +260,7 @@
       "placeholder": "0.00"
     },
     "account": {
-      "label": "Ertragskonto"
+      "label": "Konto"
     },
     "add": "Position hinzufügen",
     "remove": "Position entfernen",
@@ -271,9 +271,16 @@
       "name": "Gib der Position eine Bezeichnung.",
       "nameLength": "Die Bezeichnung ist zu lang.",
       "amount": "Der Betrag muss grösser als 0 sein.",
-      "account": "Wähle ein Ertragskonto."
+      "account": "Wähle ein Konto."
     },
-    "fromFeeSchedule": "Aus Gebührenplan übernehmen"
+    "kind": {
+      "standard": "Standard",
+      "fees": "Gebühren",
+      "text": "Text",
+      "discount": "Rabatt",
+      "subtotal": "Zwischentotal",
+      "pageBreak": "Seitenumbruch"
+    }
   },
   "issue": {
     "label": "Rechnung ausstellen",
@@ -359,7 +366,9 @@
     "waive-not-payable": "Eine Gebühr kann nur bei einer ausgestellten, noch offenen Rechnung erlassen werden.",
     "email-already-waived": "Die Gebühr dieser Mahnung ist erlassen, das PDF zeigt sie aber noch. Darum wird es nicht versendet."
   },
-  "paymentReference": { "label": "Zahlungsreferenz" },
+  "paymentReference": {
+    "label": "Zahlungsreferenz"
+  },
   "payment": {
     "label": "Zahlung erfassen",
     "title": "Zahlung erfassen",

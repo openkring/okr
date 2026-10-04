@@ -51,15 +51,15 @@ import { InvoicePositionsForm } from './invoice-positions.form';
               <ion-row>
                 <ion-col size="12">
                   <ion-item lines="none" class="receiver">
+                    @if (!isReadOnly()) {
+                      <ion-button slot="start" fill="clear" (click)="receiverSelect.emit()" [attr.aria-label]="i18n().receiver_select()">
+                        <ion-icon slot="icon-only" src="{{ 'person-add' | svgIcon }}" />
+                      </ion-button>
+                    }
                     <ion-label>
                       <ion-note>{{ i18n().receiver_label() }}</ion-note>
                       <div>{{ receiverName() || i18n().receiver_none() }}</div>
                     </ion-label>
-                    @if (!isReadOnly()) {
-                      <ion-button slot="end" fill="clear" size="small" (click)="receiverSelect.emit()" [attr.aria-label]="i18n().receiver_select()">
-                        <ion-icon slot="icon-only" src="{{ 'person' | svgIcon }}" />
-                      </ion-button>
-                    }
                   </ion-item>
                 </ion-col>
               </ion-row>
@@ -110,7 +110,7 @@ import { InvoicePositionsForm } from './invoice-positions.form';
           [readOnly]="isReadOnly()"
           (dirty)="dirty.emit($event)"
           (valid)="positionsValid.set($event)"
-          (feeSelect)="feeSelect.emit()"
+          (positionAdd)="positionAdd.emit()"
         />
 
         <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)"
@@ -140,8 +140,8 @@ export class InvoiceEditForm {
   public readonly valid = output<boolean>();
   /** the parent opens the person/org picker and writes the receiver back into formData */
   public readonly receiverSelect = output<void>();
-  /** the parent opens the fee-schedule picker and appends the pick to the positions (spec 1.78) */
-  public readonly feeSelect = output<void>();
+  /** the parent opens the menu of position kinds and appends the new position */
+  public readonly positionAdd = output<void>();
 
   protected readonly positionsValid = signal(false);
 

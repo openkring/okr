@@ -260,7 +260,7 @@
       "placeholder": "0.00"
     },
     "account": {
-      "label": "Compte de produits"
+      "label": "Compte"
     },
     "add": "Ajouter une position",
     "remove": "Supprimer la position",
@@ -271,9 +271,16 @@
       "name": "Donne une désignation à la position.",
       "nameLength": "La désignation est trop longue.",
       "amount": "Le montant doit être supérieur à 0.",
-      "account": "Choisis un compte de produits."
+      "account": "Choisis un compte."
     },
-    "fromFeeSchedule": "Reprendre du barème des cotisations"
+    "kind": {
+      "standard": "Standard",
+      "fees": "Frais",
+      "text": "Texte",
+      "discount": "Rabais",
+      "subtotal": "Sous-total",
+      "pageBreak": "Saut de page"
+    }
   },
   "issue": {
     "label": "Émettre la facture",
@@ -359,7 +366,9 @@
     "waive-not-payable": "Des frais ne peuvent être annulés que sur une facture émise et encore ouverte.",
     "email-already-waived": "Les frais de ce rappel sont annulés, mais le PDF les affiche encore. Il n’est donc pas envoyé."
   },
-  "paymentReference": { "label": "Référence de paiement" },
+  "paymentReference": {
+    "label": "Référence de paiement"
+  },
   "payment": {
     "label": "Saisir un paiement",
     "title": "Saisir un paiement",

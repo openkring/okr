@@ -260,7 +260,7 @@
       "placeholder": "0.00"
     },
     "account": {
-      "label": "Cuenta de ingresos"
+      "label": "Cuenta"
     },
     "add": "Añadir posición",
     "remove": "Quitar posición",
@@ -271,9 +271,16 @@
       "name": "Dale una descripción a la posición.",
       "nameLength": "La descripción es demasiado larga.",
       "amount": "El importe debe ser mayor que 0.",
-      "account": "Elige una cuenta de ingresos."
+      "account": "Elige una cuenta."
     },
-    "fromFeeSchedule": "Tomar del plan de cuotas"
+    "kind": {
+      "standard": "Estándar",
+      "fees": "Tasas",
+      "text": "Texto",
+      "discount": "Descuento",
+      "subtotal": "Subtotal",
+      "pageBreak": "Salto de página"
+    }
   },
   "issue": {
     "label": "Emitir factura",
@@ -359,7 +366,9 @@
     "waive-not-payable": "Una tarifa solo se puede condonar en una factura emitida que siga abierta.",
     "email-already-waived": "La tarifa de este recordatorio está condonada, pero el PDF todavía la muestra. Por eso no se envía."
   },
-  "paymentReference": { "label": "Referencia de pago" },
+  "paymentReference": {
+    "label": "Referencia de pago"
+  },
   "payment": {
     "label": "Registrar pago",
     "title": "Registrar pago",

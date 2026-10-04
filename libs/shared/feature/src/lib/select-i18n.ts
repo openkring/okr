@@ -33,7 +33,12 @@ export const SHARED_FEATURE_I18N_KEYS = {
   location_segment_map:   PFX + 'location.segment.map',
   location_map_select:    PFX + 'location.map.select',
   location_map_copy_w3w:  PFX + 'location.map.copy_w3w',
-  location_map_copied:    PFX + 'location.map.copied'
+  location_map_copied:    PFX + 'location.map.copied',
+
+  segment_person: PFX + 'segment.person',
+  segment_org:    PFX + 'segment.org',
+  segment_group:  PFX + 'segment.group',
+  multi_select:   '@select.label',
 
 } satisfies Record<string, string>;
 export type SharedFeatureI18n = { [K in keyof typeof SHARED_FEATURE_I18N_KEYS]: Signal<string> };

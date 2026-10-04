@@ -2,7 +2,7 @@ import { Component, computed, effect, inject, input, linkedSignal } from '@angul
 import { FormsModule } from '@angular/forms';
 import { IonAvatar, IonContent, IonImg, IonItem, IonLabel, IonList, IonSegment, IonSegmentButton, ModalController } from '@ionic/angular/standalone';
 
-import { GroupModelName, OrgModel, OrgModelName, PersonModel, PersonModelName, UserModel } from '@okr/shared-models';
+import { GroupModelName, OrgModelName, PersonModelName, UserModel } from '@okr/shared-models';
 import { FullNamePipe } from '@okr/shared-pipes';
 
 import { EmptyList, Header, Spinner } from '@okr/shared-ui';
@@ -11,9 +11,7 @@ import { AvatarPipe } from '@okr/avatar-ui';
 import { GroupSelectStore } from './group-select.store';
 import { OrgSelectStore } from './org-select.store';
 import { PersonSelectStore } from './person-select.store';
-import { TranslatePipe } from '@okr/shared-i18n';
 import { dismissOverlay } from '@okr/shared-util-angular';
-import { AsyncPipe } from '@angular/common';
 
 export type MultiSelectSegment = 'org' | 'group' | 'person';
 
@@ -22,7 +20,6 @@ export type MultiSelectSegment = 'org' | 'group' | 'person';
   standalone: true,
   imports: [
     FormsModule,
-    TranslatePipe, AsyncPipe,
     Header, Spinner, FullNamePipe, AvatarPipe, EmptyList,
     IonContent, IonItem, IonLabel, IonAvatar, IonImg, IonList,
     IonSegment, IonSegmentButton,
@@ -33,12 +30,14 @@ export type MultiSelectSegment = 'org' | 'group' | 'person';
     ion-avatar { width: 30px; height: 30px; background-color: var(--ion-color-light); }
     ion-list { padding: 0px; }
     ion-segment { margin: 8px 0; }
+    /* list-modal sets --border-* on the modal; ion-segment-button reads the same variables */
+    ion-segment-button { --border-width: 0; --border-style: none; min-width: 0; }
   `],
   template: `
     <okr-header
       [(searchTerm)]="searchTerm"
       [isSearchable]="true"
-      [i18n]="{ title: ('@sselect.label' | translate | async) ?? 'select' }"
+      [i18n]="{ title: headerTitle() }"
       [isModal]="true"
     />
     <ion-content>
@@ -46,7 +45,7 @@ export type MultiSelectSegment = 'org' | 'group' | 'person';
         <ion-segment [(ngModel)]="activeSegment">
           @for(segment of segments(); track segment) {
             <ion-segment-button [value]="segment">
-              <ion-label>{{ ('@select.' + segment) | translate | async  }}</ion-label>
+              <ion-label>{{ segmentLabel(segment) }}</ion-label>
             </ion-segment-button>
           }
         </ion-segment>
@@ -121,6 +120,8 @@ export class MultiSelectModal {
   public contents = input.required<string>();
   public selectedTag = input.required<string>();
   public currentUser = input.required<UserModel>();
+  /** the translated header title; empty = the generic «Auswählen» */
+  public title = input('');
 
   protected segments = computed<MultiSelectSegment[]>(() =>
     this.contents()
@@ -128,6 +129,8 @@ export class MultiSelectModal {
       .map(s => s.trim() as MultiSelectSegment)
       .filter(s => ['org', 'group', 'person'].includes(s))
   );
+
+  protected readonly headerTitle = computed(() => this.title() || this.orgSelectStore.i18n.multi_select());
 
   protected activeSegment = linkedSignal<MultiSelectSegment>(() => this.segments()[0] ?? 'org');
   protected searchTerm = linkedSignal(() => this.orgSelectStore.searchTerm());
@@ -167,6 +170,15 @@ export class MultiSelectModal {
       this.groupSelectStore.setSearchTerm(term);
       this.personSelectStore.setSearchTerm(term);
     });
+  }
+
+  protected segmentLabel(segment: MultiSelectSegment): string {
+    const i18n = this.orgSelectStore.i18n;
+    switch (segment) {
+      case 'person': return i18n.segment_person();
+      case 'group': return i18n.segment_group();
+      default: return i18n.segment_org();
+    }
   }
 
   public select(modelType: MultiSelectSegment, okey: string): Promise<boolean> {

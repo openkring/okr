@@ -1,6 +1,7 @@
 import type {
   FeePositionRule, FeeScheduleEntry, MemberFeePosition, MembershipModel,
 } from '@okr/shared-models';
+import { proRataDescription, proRataMonths } from '@okr/shared-util-core';
 
 /** Everything the derivation needs that is not on the membership itself. */
 export interface FeeContext {
@@ -73,32 +74,8 @@ export function buildPositions(
   });
 }
 
-const STORE_DATE = /^\d{8}$/;
-
-/** The month (1–12) of a StoreDate when it falls in `year`, otherwise undefined. */
-function monthIn(date: string, year: number): number | undefined {
-  if (!STORE_DATE.test(date ?? '')) return undefined;
-  return Number(date.substring(0, 4)) === year ? Number(date.substring(4, 6)) : undefined;
-}
-
-/**
- * Months of membership in `year`, counted inclusively (spec 1.79 P2): entry month to December in
- * the entry year, January to the exit month in the exit year. 12 when neither falls in the year
- * (also for an empty or unparsable date), 0 when the member is outside the year altogether.
- */
-export function proRataMonths(entry: string, exit: string, year: number): number {
-  const entryYear = STORE_DATE.test(entry ?? '') ? Number(entry.substring(0, 4)) : 0;
-  const exitYear = STORE_DATE.test(exit ?? '') ? Number(exit.substring(0, 4)) : 0;
-  if (entryYear > year || (exitYear > 0 && exitYear < year)) return 0;
-  const start = monthIn(entry, year) ?? 1;
-  const end = monthIn(exit, year) ?? 12;
-  return Math.max(0, end - start + 1);
-}
-
-/** The text printed under a pro-rata position on the invoice. German: it goes onto the PDF as is. */
-export function proRataDescription(months: number): string {
-  return `pro rata verrechnet, ${months} ${months === 1 ? 'Monat' : 'Monate'}`;
-}
+// moved to shared-util-core so the invoice fee picker can share them without pulling in this lib
+export { proRataDescription, proRataMonths };
 
 /**
  * Rescale a position to `months` of its yearly price, in whole francs (spec 1.79 P3). 12 or more
@@ -111,7 +88,7 @@ export function applyProRata(p: MemberFeePosition, months: number): MemberFeePos
   const { proRataMonths: _months, description: _text, ...rest } = p;
   if (months >= 12 || yearly === 0) return { ...rest, yearlyAmount: yearly, amount: yearly };
   return { ...rest, yearlyAmount: yearly, amount: Math.round(yearly * months / 12),
-    proRataMonths: months, description: proRataDescription(months) };
+    proRataMonths: months, description: proRataDescription(months, yearly) };
 }
 
 /**

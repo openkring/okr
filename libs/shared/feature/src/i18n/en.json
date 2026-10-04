@@ -45,5 +45,10 @@
   "offline": {
     "notice": "No connection. You are seeing the data loaded last.",
     "online": "Connected again."
+  },
+  "segment": {
+    "person": "Person",
+    "org": "Organisation",
+    "group": "Group"
   }
 }

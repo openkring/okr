@@ -1,4 +1,5 @@
 import { CategoryListModel, FeePositionRule } from '@okr/shared-models';
+import { proRataDescription, proRataMonths } from '@okr/shared-util-core';
 
 import { InvoicePositionInput } from './invoice-position.util';
 
@@ -8,7 +9,8 @@ import { InvoicePositionInput } from './invoice-position.util';
  *
  * Unlike the annual member-fee run (`buildPositions`), the flag and rule predicates are NOT
  * evaluated here — picking a position is the treasurer's explicit decision to charge it. Only a
- * category position depends on the receiver: it needs their membership category.
+ * category position depends on the receiver: it needs their membership category. A `proRata` rule
+ * is billed by the receiver's months of membership in the year, like the member-fee run does.
  */
 
 /** category-list name -> category -> price, the same flat shape `FeeContext.categoryLists` uses */
@@ -20,6 +22,10 @@ export interface FeePickContext {
   defaultCategoryList: string;
   /** the receiver's membership category in the owner org; undefined = not a member */
   receiverCategory?: string;
+  /** the receiver's membership in the owner org — its dates drive a `proRata` rule */
+  receiverMembership?: { dateOfEntry: string; dateOfExit: string };
+  /** the fee schedule's year; a `proRata` rule counts the months of membership in it */
+  year?: number;
 }
 
 export interface FeePickOption {
@@ -30,6 +36,10 @@ export interface FeePickOption {
   disabledReason?: 'notMember';
   /** the position carries no revenue account — it can be picked, but must be completed */
   missingAccount: boolean;
+  /** set when a `proRata` rule bills fewer than 12 months */
+  proRataMonths?: number;
+  /** the full yearly price a pro-rata `amount` was scaled from */
+  yearlyAmount?: number;
 }
 
 /** Flattens category lists to `listName -> category -> price`; an item without a price counts 0. */
@@ -47,20 +57,34 @@ export function feePickOptions(rules: readonly FeePositionRule[], ctx: FeePickCo
   return rules.map(rule => {
     const missingAccount = !rule.accountKey;
     if (rule.source !== 'category') {
-      return { rule, amount: roundChf(rule.amount ?? 0), missingAccount };
+      return withProRata({ rule, amount: roundChf(rule.amount ?? 0), missingAccount }, ctx);
     }
     if (!ctx.receiverCategory) {
       return { rule, amount: 0, disabledReason: 'notMember', missingAccount };
     }
     const list = rule.categoryList || ctx.defaultCategoryList;
     const amount = ctx.categoryLists[list]?.[ctx.receiverCategory] ?? 0;
-    return { rule, amount: roundChf(amount), missingAccount };
+    return withProRata({ rule, amount: roundChf(amount), missingAccount }, ctx);
   });
+}
+
+/**
+ * Scales a `proRata` option to the receiver's months of membership in the year, in whole francs —
+ * the rule of `applyProRata` in the member-fee run. Without a membership, or with 0 or 12 months,
+ * the yearly price stays.
+ */
+function withProRata(option: FeePickOption, ctx: FeePickContext): FeePickOption {
+  const membership = ctx.receiverMembership;
+  if (!option.rule.proRata || !membership || !ctx.year) return option;
+  const months = proRataMonths(membership.dateOfEntry, membership.dateOfExit, ctx.year);
+  if (months <= 0 || months >= 12 || option.amount === 0) return option;
+  return { ...option, amount: Math.round(option.amount * months / 12), proRataMonths: months, yearlyAmount: option.amount };
 }
 
 /** The invoice position for a picked option — what `writeInvoice` accepts, nothing more. */
 export function feeOptionToPosition(option: FeePickOption): InvoicePositionInput {
-  return { name: option.rule.label, amount: option.amount, accountKey: option.rule.accountKey ?? '' };
+  const position: InvoicePositionInput = { name: option.rule.label, amount: option.amount, accountKey: option.rule.accountKey ?? '' };
+  return option.proRataMonths ? { ...position, description: proRataDescription(option.proRataMonths, option.yearlyAmount) } : position;
 }
 
 /**

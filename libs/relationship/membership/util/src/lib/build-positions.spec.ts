@@ -180,11 +180,11 @@ describe('proRataMonths', () => {
 describe('applyProRata', () => {
   const p = {
     key: 'JB', usage: 'membershipFee', type: 'fix', label: 'Jahresbeitrag', amount: 350, accountKey: 'a',
-    vatCodeKey: '', yearlyAmount: 600, proRataMonths: 7, description: 'pro rata verrechnet, 7 Monate',
+    vatCodeKey: '', yearlyAmount: 600, proRataMonths: 7, description: 'pro rata verrechnet für 7 von 12 Monaten (voller Jahresbetrag CHF 600.00)',
   } as MemberFeePosition;
 
   it('recomputes amount and text from the yearly amount', () => {
-    expect(applyProRata(p, 3)).toMatchObject({ amount: 150, proRataMonths: 3, description: 'pro rata verrechnet, 3 Monate' });
+    expect(applyProRata(p, 3)).toMatchObject({ amount: 150, proRataMonths: 3, description: 'pro rata verrechnet für 3 von 12 Monaten (voller Jahresbetrag CHF 600.00)' });
   });
 
   it('restores the full year at 12 months and drops months and text (no undefined keys)', () => {
@@ -196,7 +196,7 @@ describe('applyProRata', () => {
   });
 
   it('rounds to whole francs', () => expect(applyProRata({ ...p, yearlyAmount: 300 }, 7).amount).toBe(175));
-  it('says Monat in the singular', () => expect(applyProRata(p, 1).description).toBe('pro rata verrechnet, 1 Monat'));
+  it('names the months and the yearly price', () => expect(applyProRata(p, 1).description).toBe('pro rata verrechnet für 1 von 12 Monaten (voller Jahresbetrag CHF 600.00)'));
 });
 
 describe('buildPositions with proRata', () => {
@@ -206,7 +206,7 @@ describe('buildPositions with proRata', () => {
 
   it('bills a June entry at 7/12', () => {
     const [jb] = buildPositions(membership({ dateOfEntry: '20260615' }), schedule([jbRule]), prices);
-    expect(jb).toMatchObject({ amount: 350, proRataMonths: 7, yearlyAmount: 600, description: 'pro rata verrechnet, 7 Monate' });
+    expect(jb).toMatchObject({ amount: 350, proRataMonths: 7, yearlyAmount: 600, description: 'pro rata verrechnet für 7 von 12 Monaten (voller Jahresbetrag CHF 600.00)' });
   });
 
   it('bills a March exit at 3/12', () => {

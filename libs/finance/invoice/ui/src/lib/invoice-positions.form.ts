@@ -7,16 +7,18 @@ import { ErrorNote, NumberInput, NumberInputI18n, TextInput, TextInputI18n } fro
 import { coerceBoolean } from '@okr/shared-util-core';
 
 import { AccountSelect, AccountSelectI18n } from '@okr/finance-account-ui';
+import { leafAccounts } from '@okr/finance-account-util';
 import {
   INVOICE_POSITION_NAME_LENGTH, InvoiceI18n, InvoicePositionInput, invoicePositionsValidations, MAX_INVOICE_POSITIONS,
-  newInvoicePosition, positionsTotal, revenueAccounts,
+  positionsTotal,
 } from '@okr/finance-invoice-util';
 
 type PositionField = 'name' | 'amount' | 'accountKey';
 
 /**
- * The positions of a native invoice (spec 1.76): one row per position with name, amount in CHF and
- * revenue account (leaf accounts of the classes 3 and 4), a running total and "Position hinzufügen".
+ * The positions of a native invoice (spec 1.76): one row per position with account (any leaf),
+ * name and amount in CHF, a running total and an add button whose
+ * menu of position kinds the parent opens.
  * Valid when there is at least one position and each has a name, an amount above zero and an account.
  * Embedded as its own card in InvoiceEditForm; read-only unless the invoice is a draft.
  */
@@ -32,6 +34,7 @@ type PositionField = 'name' | 'amount' | 'accountKey';
     @media (width <= 600px) { ion-card { margin: 5px; } }
     .position { border-bottom: 1px solid var(--ion-color-light, #f4f5f8); }
     .total { font-weight: 600; }
+    .description { display: block; padding: 0 16px 8px; font-size: 0.8rem; }
   `],
   template: `
     @if (showForm()) {
@@ -43,30 +46,35 @@ type PositionField = 'name' | 'amount' | 'accountKey';
           <ion-grid>
             @for (position of positions(); track $index; let i = $index) {
               <ion-row class="position">
-                <ion-col size="12" size-md="5">
-                  <okr-text-input [i18n]="nameI18n()" [value]="position.name"
-                    (valueChange)="onPositionChange(i, 'name', $event)"
-                    [maxLength]="nameLength" [readOnly]="isReadOnly()" />
-                  <okr-error-note [errors]="rowErrors()[i]?.name ?? []" />
-                </ion-col>
-                <ion-col size="5" size-md="2">
-                  <okr-number-input [i18n]="amountI18n()" [value]="position.amount"
-                    (valueChange)="onAmountChange(i, $event)"
-                    [min]="0" [readOnly]="isReadOnly()" />
-                  <okr-error-note [errors]="rowErrors()[i]?.amount ?? []" />
-                </ion-col>
-                <ion-col [size]="isReadOnly() ? 7 : 5" size-md="4">
+                <ion-col size="12" size-md="4">
                   <okr-account-select [i18n]="accountI18n()" [accounts]="selectableAccounts()"
                     [selectedKey]="position.accountKey"
                     (selectedKeyChange)="onPositionChange(i, 'accountKey', $event)"
                     [allowEmpty]="false" [readOnly]="isReadOnly()" />
                   <okr-error-note [errors]="rowErrors()[i]?.accountKey ?? []" />
                 </ion-col>
+                <ion-col [size]="isReadOnly() ? 12 : 7" size-md="5">
+                  <okr-text-input [i18n]="nameI18n()" [value]="position.name"
+                    (valueChange)="onPositionChange(i, 'name', $event)"
+                    [maxLength]="nameLength" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="rowErrors()[i]?.name ?? []" />
+                </ion-col>
+                <ion-col size="3" size-md="2">
+                  <okr-number-input [i18n]="amountI18n()" [value]="position.amount"
+                    (valueChange)="onAmountChange(i, $event)"
+                    [min]="0" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="rowErrors()[i]?.amount ?? []" />
+                </ion-col>
                 @if (!isReadOnly()) {
                   <ion-col size="2" size-md="1" class="ion-align-self-center ion-text-end">
                     <ion-button fill="clear" color="medium" (click)="removePosition(i)" [attr.aria-label]="i18n().positions_remove()">
                       <ion-icon slot="icon-only" src="{{ 'trash' | svgIcon }}" />
                     </ion-button>
+                  </ion-col>
+                }
+                @if (position.description) {
+                  <ion-col size="12">
+                    <ion-note class="description">{{ position.description }}</ion-note>
                   </ion-col>
                 }
               </ion-row>
@@ -79,14 +87,9 @@ type PositionField = 'name' | 'amount' | 'accountKey';
             <ion-row>
               <ion-col size="12" size-md="6">
                 @if (canAdd()) {
-                  <ion-button fill="clear" (click)="addPosition()">
-                    <ion-icon slot="start" src="{{ 'add-circle' | svgIcon }}" />
-                    {{ i18n().positions_add() }}
-                  </ion-button>
-                  <!-- the parent (feature layer) opens the fee-schedule picker and writes the pick back -->
-                  <ion-button fill="clear" (click)="feeSelect.emit()">
-                    <ion-icon slot="start" src="{{ 'list' | svgIcon }}" />
-                    {{ i18n().positions_fromFeeSchedule() }}
+                  <!-- the parent (feature layer) offers the kinds of position and writes the new one back -->
+                  <ion-button fill="clear" (click)="positionAdd.emit()" [attr.aria-label]="i18n().positions_add()">
+                    <ion-icon slot="icon-only" src="{{ 'add-circle' | svgIcon }}" />
                   </ion-button>
                 }
               </ion-col>
@@ -110,7 +113,7 @@ export class InvoicePositionsForm {
   // inputs
   public readonly i18n = input.required<InvoiceI18n>();
   public readonly positions = model.required<InvoicePositionInput[]>();
-  /** the whole chart of accounts; only the revenue leaves are offered */
+  /** the whole chart of accounts; every leaf account is offered (posting needs a leaf) */
   public readonly accounts = input<AccountModel[]>([]);
   public readonly readOnly = input(true);
   public readonly showForm = input(true);
@@ -118,11 +121,11 @@ export class InvoicePositionsForm {
   // outputs
   public readonly dirty = output<boolean>();
   public readonly valid = output<boolean>();
-  /** «Aus Gebührenplan übernehmen» (spec 1.78) — the parent opens the picker */
-  public readonly feeSelect = output<void>();
+  /** «Position hinzufügen» — the parent opens the menu of position kinds (Standard, Gebühren, …) */
+  public readonly positionAdd = output<void>();
 
   protected readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()));
-  protected readonly selectableAccounts = computed(() => revenueAccounts(this.accounts()));
+  protected readonly selectableAccounts = computed(() => leafAccounts(this.accounts()));
   protected readonly total = computed(() => positionsTotal(this.positions()).toFixed(2));
   protected readonly canAdd = computed(() => !this.isReadOnly() && this.positions().length < MAX_INVOICE_POSITIONS);
 
@@ -159,12 +162,6 @@ export class InvoicePositionsForm {
     const amount = Number(value);
     // two decimals: the server books Rappen
     this.update(index, { amount: Number.isFinite(amount) ? Math.round(amount * 100) / 100 : 0 });
-  }
-
-  protected addPosition(): void {
-    if (!this.canAdd()) return;
-    this.dirty.emit(true);
-    this.positions.update((list) => [...list, newInvoicePosition()]);
   }
 
   protected removePosition(index: number): void {

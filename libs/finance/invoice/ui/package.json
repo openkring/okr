@@ -15,6 +15,7 @@
     "@okr/finance-account-ui": "*",
     "@okr/shared-pipes": "*",
     "@okr/shared-util-angular": "*",
-    "@okr/shared-i18n": "*"
+    "@okr/shared-i18n": "*",
+    "@okr/finance-account-util": "*"
   }
 }

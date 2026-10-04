@@ -3,12 +3,12 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { ActionSheetController, IonContent, ModalController } from '@ionic/angular/standalone';
 import { firstValueFrom, of } from 'rxjs';
 
-import { AppStore, ModelSelectService } from '@okr/shared-feature';
+import { AppStore, MultiSelectModal } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { AvatarInfo, InvoiceModel, MembershipModel, UserModel } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header, Spinner } from '@okr/shared-ui';
-import { dismissOverlay } from '@okr/shared-util-angular';
-import { coerceBoolean, DateFormat, getTodayStr, getYear, isAfterDate, safeStructuredClone } from '@okr/shared-util-core';
+import { createActionSheetButton, createActionSheetOptions, dismissOverlay } from '@okr/shared-util-angular';
+import { coerceBoolean, DateFormat, getAvatarInfo, getTodayStr, getYear, isAfterDate, safeStructuredClone } from '@okr/shared-util-core';
 
 import { AccountService } from '@okr/finance-account-data-access';
 import { AccountingConfigService } from '@okr/finance-accounting-data-access';
@@ -18,7 +18,7 @@ import { FeePositionSelectModal, InvoiceEditForm } from '@okr/finance-invoice-ui
 import { MembershipService } from '@okr/relationship-membership-data-access';
 import {
   addPickedPosition, feeOptionToPosition, FeePickOption, feePickOptions, INVOICE_I18N_KEYS, InvoiceI18n,
-  InvoicePositionInput, isDraftInvoice, newInvoicePosition, toCategoryPriceLists, toPositionInputs,
+  InvoicePositionInput, isDraftInvoice, MAX_INVOICE_POSITIONS, newInvoicePosition, toCategoryPriceLists, toPositionInputs,
 } from '@okr/finance-invoice-util';
 
 /** What the modal dismisses with on confirm. */
@@ -30,7 +30,7 @@ export interface InvoiceEditResult {
 /**
  * Edits a native draft invoice with its positions (spec 1.76); anything but a draft is shown
  * read-only. Lives in the feature lib because it loads the positions and the chart of accounts and
- * picks the receiver with ModelSelectService. Dismisses with `InvoiceEditResult` on confirm — the
+ * picks the receiver with MultiSelectModal. Dismisses with `InvoiceEditResult` on confirm — the
  * caller writes it through `writeInvoice`.
  */
 @Component({
@@ -66,7 +66,7 @@ export interface InvoiceEditResult {
             (dirty)="formDirty.set($event)"
             (valid)="formValid.set($event)"
             (receiverSelect)="selectReceiver()"
-            (feeSelect)="selectFeePosition()"
+            (positionAdd)="selectPositionKind()"
           />
         }
       }
@@ -76,12 +76,12 @@ export interface InvoiceEditResult {
 export class InvoiceEditModal {
   private readonly modalController = inject(ModalController);
   private readonly actionSheetController = inject(ActionSheetController);
-  private readonly modelSelectService = inject(ModelSelectService);
   private readonly invoiceService = inject(InvoiceService);
   private readonly accountService = inject(AccountService);
   private readonly accountingConfigService = inject(AccountingConfigService);
   private readonly membershipService = inject(MembershipService);
   private readonly appStore = inject(AppStore);
+  private readonly imgixBaseUrl = this.appStore.env.services.imgixBaseUrl;
   // direct inject, no store: the store opens this modal, importing it back would be circular
   protected readonly i18n = inject(I18nService).translateAll(INVOICE_I18N_KEYS) as InvoiceI18n;
 
@@ -150,24 +150,59 @@ export class InvoiceEditModal {
     this.formData.set(data);
   }
 
+  /** one picker with a segment each for persons and orgs; persons first */
   protected async selectReceiver(): Promise<void> {
     if (this.isReadOnly()) return;
-    const sheet = await this.actionSheetController.create({
-      header: this.i18n.receiver_select(),
-      buttons: [
-        { text: this.i18n.receiver_person(), role: 'person' },
-        { text: this.i18n.receiver_org(), role: 'org' },
-        { text: this.i18n.cancel(), role: 'cancel' },
-      ],
+    const modal = await this.modalController.create({
+      component: MultiSelectModal,
+      cssClass: 'list-modal',
+      componentProps: { contents: 'person,org', selectedTag: '', currentUser: this.currentUser(), title: this.i18n.receiver_select() },
     });
-    await sheet.present();
-    const { role } = await sheet.onDidDismiss();
-    let receiver: AvatarInfo | undefined;
-    if (role === 'person') receiver = await this.modelSelectService.selectPersonAvatar();
-    else if (role === 'org') receiver = await this.modelSelectService.selectOrgAvatar();
+    await modal.present();
+    const { data, role } = await modal.onWillDismiss<string>();
+    if (role !== 'confirm' || !data) return;
+    const receiver = this.toReceiver(data);
     if (receiver) {
       this.formDirty.set(true);
       this.formData.update((vm) => (vm ? { ...vm, receiver } : vm));
+    }
+  }
+
+  /** MultiSelectModal answers `modelType.okey`; resolve it against the loaded persons and orgs */
+  private toReceiver(selection: string): AvatarInfo | undefined {
+    const [modelType, key] = selection.split('.');
+    if (modelType === 'person') return getAvatarInfo(this.appStore.allPersons().find(p => p.okey === key), 'person');
+    if (modelType === 'org') return getAvatarInfo(this.appStore.allOrgs().find(o => o.okey === key), 'org');
+    return undefined;
+  }
+
+  /**
+   * «Position hinzufügen»: the kinds of position an invoice can get. Text, Rabatt, Zwischentotal
+   * and Seitenumbruch are listed but disabled until invoice positions carry a kind and an order.
+   */
+  protected async selectPositionKind(): Promise<void> {
+    if (this.isReadOnly() || this.positions().length >= MAX_INVOICE_POSITIONS) return;
+    const options = createActionSheetOptions(this.i18n.positions_add());
+    options.buttons = [
+      createActionSheetButton('position.standard', this.i18n.positions_kind_standard(), this.imgixBaseUrl, 'add'),
+      createActionSheetButton('position.fees', this.i18n.positions_kind_fees(), this.imgixBaseUrl, 'list'),
+      { ...createActionSheetButton('position.text', this.i18n.positions_kind_text(), this.imgixBaseUrl, 'text'), disabled: true },
+      { ...createActionSheetButton('position.discount', this.i18n.positions_kind_discount(), this.imgixBaseUrl, 'remove'), disabled: true },
+      { ...createActionSheetButton('position.subtotal', this.i18n.positions_kind_subtotal(), this.imgixBaseUrl, 'wallet'), disabled: true },
+      { ...createActionSheetButton('position.pageBreak', this.i18n.positions_kind_pageBreak(), this.imgixBaseUrl, 'documents'), disabled: true },
+      createActionSheetButton('cancel', this.i18n.cancel(), this.imgixBaseUrl, 'cancel'),
+    ];
+    const sheet = await this.actionSheetController.create(options);
+    await sheet.present();
+    const { data } = await sheet.onDidDismiss();
+    switch (data?.action) {
+      case 'position.standard':
+        this.formDirty.set(true);
+        this.positions.update(list => [...list, newInvoicePosition()]);
+        break;
+      case 'position.fees':
+        await this.selectFeePosition();
+        break;
     }
   }
 
@@ -176,21 +211,25 @@ export class InvoiceEditModal {
    * invoice's books, priced for the receiver, and adds the picked position. The owner org of the
    * books is orgs/{accountingTenantId}; its membershipCategoryKey is the default price list.
    */
-  protected async selectFeePosition(): Promise<void> {
+  private async selectFeePosition(): Promise<void> {
     if (this.isReadOnly()) return;
     const accountingTenantId = this.invoice().accountingTenantId;
     const config = await firstValueFrom(this.accountingConfigService.read(accountingTenantId));
     const year = getYear();
     const rules = config?.feeSchedule?.find(entry => entry.year === year)?.positions ?? [];
     const ownerOrg = this.appStore.allOrgs().find(org => org.okey === accountingTenantId);
+    const membership = await this.receiverMembership(accountingTenantId);
     const options = feePickOptions(rules, {
       categoryLists: toCategoryPriceLists(this.appStore.allCategories()),
       defaultCategoryList: ownerOrg?.membershipCategoryKey || 'mcat',
-      receiverCategory: await this.receiverCategory(accountingTenantId),
+      receiverCategory: membership?.category,
+      receiverMembership: membership,
+      year,
     });
 
     const modal = await this.modalController.create({
       component: FeePositionSelectModal,
+      cssClass: 'list-modal-wide',
       componentProps: { options, i18n: this.i18n },
     });
     await modal.present();
@@ -200,8 +239,8 @@ export class InvoiceEditModal {
     this.positions.update(list => addPickedPosition(list, feeOptionToPosition(data)));
   }
 
-  /** the receiver's current membership category in the books' owner org; undefined = not a member */
-  private async receiverCategory(orgKey: string): Promise<string | undefined> {
+  /** the receiver's current membership in the books' owner org; undefined = not a member */
+  private async receiverMembership(orgKey: string): Promise<MembershipModel | undefined> {
     const receiver = this.formData()?.receiver;
     if (!receiver?.key) return undefined;
     const today = getTodayStr(DateFormat.StoreDate);
@@ -209,7 +248,7 @@ export class InvoiceEditModal {
       this.membershipService.listMembershipsOfMember(receiver.key, receiver.modelType, 'org'));
     return memberships.find((m: MembershipModel) =>
       m.orgKey === orgKey && isAfterDate(m.dateOfExit, today) && (m.state === 'active' || m.state === 'passive')
-    )?.category;
+    );
   }
 
   protected async save(): Promise<void> {

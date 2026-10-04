@@ -45,5 +45,10 @@
   "offline": {
     "notice": "Sin conexión. Ves los últimos datos cargados.",
     "online": "Conexión restablecida."
+  },
+  "segment": {
+    "person": "Persona",
+    "org": "Organización",
+    "group": "Grupo"
   }
 }

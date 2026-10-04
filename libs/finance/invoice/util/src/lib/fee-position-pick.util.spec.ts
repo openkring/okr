@@ -43,6 +43,34 @@ describe('feePickOptions', () => {
   it('marks a position without a revenue account', () => {
     expect(feePickOptions([rule({ accountKey: '' })], ctx)[0].missingAccount).toBe(true);
   });
+
+  describe('pro rata (spec 1.79)', () => {
+    const entering = { ...ctx, year: 2026, receiverMembership: { dateOfEntry: '20260915', dateOfExit: '99991231' } };
+
+    it('bills the months of membership in the entry year, in whole francs', () => {
+      const [option] = feePickOptions([rule({ proRata: true })], entering);
+      expect(option.amount).toBe(200);
+      expect(option.proRataMonths).toBe(4);
+    });
+
+    it('bills the full year for a member of the whole year', () => {
+      const [option] = feePickOptions([rule({ proRata: true })],
+        { ...entering, receiverMembership: { dateOfEntry: '20180101', dateOfExit: '99991231' } });
+      expect(option.amount).toBe(600);
+      expect(option.proRataMonths).toBeUndefined();
+    });
+
+    it('leaves a rule without proRata at its yearly price', () => {
+      expect(feePickOptions([rule()], entering)[0].amount).toBe(600);
+    });
+
+    it('carries the months into the position description', () => {
+      const [option] = feePickOptions([rule({ proRata: true })], entering);
+      expect(feeOptionToPosition(option)).toEqual({
+        name: 'Jahresbeitrag', amount: 200, accountKey: 'scs3000', description: 'pro rata verrechnet für 4 von 12 Monaten (voller Jahresbetrag CHF 600.00)',
+      });
+    });
+  });
 });
 
 describe('feeOptionToPosition', () => {

@@ -4,6 +4,8 @@ import { IonContent, IonItem, IonLabel, IonList, IonNote, ModalController } from
 import { Header } from '@okr/shared-ui';
 import { dismissOverlay } from '@okr/shared-util-angular';
 
+import { proRataDescription } from '@okr/shared-util-core';
+
 import { FeePickOption, InvoiceI18n } from '@okr/finance-invoice-util';
 
 /**
@@ -35,6 +37,9 @@ import { FeePickOption, InvoiceI18n } from '@okr/finance-invoice-util';
                 } @else if (option.missingAccount) {
                   <p class="warning">{{ i18n().feeSelect_noAccount() }}</p>
                 }
+                @if (option.proRataMonths) {
+                  <p>{{ proRataText(option.proRataMonths, option.yearlyAmount) }}</p>
+                }
               </ion-label>
               @if (!option.disabledReason) {
                 <ion-note slot="end">CHF {{ formatAmount(option.amount) }}</ion-note>
@@ -51,6 +56,11 @@ export class FeePositionSelectModal {
 
   public readonly options = input<FeePickOption[]>([]);
   public readonly i18n = input.required<InvoiceI18n>();
+
+  /** the same text the position carries onto the invoice */
+  protected proRataText(months: number, yearlyAmount?: number): string {
+    return proRataDescription(months, yearlyAmount);
+  }
 
   protected formatAmount(amount: number): string {
     return amount.toFixed(2);

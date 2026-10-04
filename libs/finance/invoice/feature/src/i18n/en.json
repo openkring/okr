@@ -260,7 +260,7 @@
       "placeholder": "0.00"
     },
     "account": {
-      "label": "Revenue account"
+      "label": "Account"
     },
     "add": "Add item",
     "remove": "Remove item",
@@ -271,9 +271,16 @@
       "name": "Give the item a description.",
       "nameLength": "The description is too long.",
       "amount": "The amount must be greater than 0.",
-      "account": "Choose a revenue account."
+      "account": "Choose an account."
     },
-    "fromFeeSchedule": "Take from fee schedule"
+    "kind": {
+      "standard": "Standard",
+      "fees": "Fees",
+      "text": "Text",
+      "discount": "Discount",
+      "subtotal": "Subtotal",
+      "pageBreak": "Page break"
+    }
   },
   "issue": {
     "label": "Issue invoice",
@@ -359,7 +366,9 @@
     "waive-not-payable": "A fee can only be waived on an issued invoice that is still open.",
     "email-already-waived": "The fee of this reminder is waived, but the PDF still shows it. So it is not sent."
   },
-  "paymentReference": { "label": "Payment reference" },
+  "paymentReference": {
+    "label": "Payment reference"
+  },
   "payment": {
     "label": "Record payment",
     "title": "Record payment",

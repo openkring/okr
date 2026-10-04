@@ -209,6 +209,7 @@ export const InvoiceStore = signalStore(
       const invoice = newDraftInvoice(store.appStore.tenantId(), store.accountingStore.accountingTenantId(), getTodayStr());
       const modal = await store.modalController.create({
         component: InvoiceEditModal,
+        cssClass: 'wide-modal',
         componentProps: {
           invoice,
           currentUser: store.appStore.currentUser(),
@@ -228,6 +229,7 @@ export const InvoiceStore = signalStore(
     async edit(invoice: InvoiceModel, readOnly = false): Promise<void> {
       const modal = await store.modalController.create({
         component: InvoiceEditModal,
+        cssClass: 'wide-modal',
         componentProps: {
           invoice: { ...invoice },
           currentUser: store.appStore.currentUser(),

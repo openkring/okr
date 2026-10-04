@@ -260,7 +260,7 @@
       "placeholder": "0.00"
     },
     "account": {
-      "label": "Conto ricavi"
+      "label": "Conto"
     },
     "add": "Aggiungi posizione",
     "remove": "Rimuovi posizione",
@@ -271,9 +271,16 @@
       "name": "Dai una descrizione alla posizione.",
       "nameLength": "La descrizione è troppo lunga.",
       "amount": "L'importo deve essere maggiore di 0.",
-      "account": "Scegli un conto ricavi."
+      "account": "Scegli un conto."
     },
-    "fromFeeSchedule": "Riprendi dal piano delle quote"
+    "kind": {
+      "standard": "Standard",
+      "fees": "Tasse",
+      "text": "Testo",
+      "discount": "Sconto",
+      "subtotal": "Subtotale",
+      "pageBreak": "Interruzione di pagina"
+    }
   },
   "issue": {
     "label": "Emetti fattura",
@@ -359,7 +366,9 @@
     "waive-not-payable": "Le spese si possono condonare solo su una fattura emessa e ancora aperta.",
     "email-already-waived": "Le spese di questo sollecito sono condonate, ma il PDF le mostra ancora. Per questo non viene inviato."
   },
-  "paymentReference": { "label": "Riferimento di pagamento" },
+  "paymentReference": {
+    "label": "Riferimento di pagamento"
+  },
   "payment": {
     "label": "Registra pagamento",
     "title": "Registra pagamento",
