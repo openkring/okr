@@ -1,4 +1,4 @@
-import { DbQuery, TaskModel } from '@okr/shared-models';
+import { DbQuery, GroupModel, MembershipModel, TaskModel } from '@okr/shared-models';
 import { getArchiveInclusiveQuery } from '@okr/shared-util-core';
 
 /*-------------------------- visibility --------------------------------*/
@@ -51,4 +51,25 @@ export function buildTaskListQueries(scope: TaskListScope): DbQuery[][] {
     case 'all':
       return [base()];
   }
+}
+
+/*-------------------------- closed groups (spec 1.75) --------------------------------*/
+/** A group whose chat admits members only also keeps its tasks to its members. */
+export function isClosedGroup(group: Pick<GroupModel, 'chatMode'> | undefined): boolean {
+  return group?.chatMode === 'members';
+}
+
+/** Mirrors taskStaff() in firestore.rules: admin, privileged or eventAdmin. */
+export function isTaskStaff(roles: Record<string, boolean> | undefined): boolean {
+  return roles?.['admin'] === true || roles?.['privileged'] === true || roles?.['eventAdmin'] === true;
+}
+
+/** A person's membership in a group that is not archived and not yet exited (today = StoreDate). */
+export function isActiveGroupMembership(
+  m: Pick<MembershipModel, 'isArchived' | 'dateOfExit' | 'orgModelType' | 'memberModelType'>,
+  today: string,
+): boolean {
+  if (m.isArchived || m.orgModelType !== 'group' || m.memberModelType !== 'person') return false;
+  const exit = m.dateOfExit ?? '';
+  return exit === '' || exit >= today;
 }
