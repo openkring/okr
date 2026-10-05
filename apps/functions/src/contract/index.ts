@@ -209,3 +209,4 @@ export const signContractDocuments = onCall({ ...CALLABLE, secrets: [imgixPrivat
 });
 
 export { requestContract } from './request-contract';
+export { getContractRequestStatus } from './contract-request-status';

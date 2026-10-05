@@ -45,7 +45,7 @@ export function splitMessageKey(messageKey: string): { module: string; key: stri
  * German only — a task name is written once, for one assignee, and every tenant today
  * runs on the default language.
  */
-async function translate(tenantId: string, messageKey: string, params: Record<string, string>): Promise<string> {
+export async function translateMessage(tenantId: string, messageKey: string, params: Record<string, string>): Promise<string> {
   if (!messageKey) return '';
   const db = getFirestore();
   const { module, key } = splitMessageKey(messageKey);
@@ -425,7 +425,7 @@ export function createFirestoreDeps(): WorkflowDeps {
       logger.info(`${CF_NAME}: approval ${approvalRef.id} (${a.kind}) for ${a.subjectKey} → ${a.approver?.key ?? 'unassigned'}`);
     },
 
-    translate,
+    translate: translateMessage,
 
     async logActivity(tenantId, payload): Promise<void> {
       await logWorkflowActivity(tenantId, payload);
