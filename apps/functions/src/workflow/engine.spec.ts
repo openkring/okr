@@ -921,4 +921,36 @@ describe('fileContract', () => {
     expect(deps.contracts).toHaveLength(0);
     expect(deps.chats[0].body).toContain('/contract/detail/c0');
   });
+
+  // The real translate fills single-brace params and leaves unknown ones literal.
+  const fill = async (_t: string, _key: string, params: Record<string, string>) =>
+    'Vertrag: {contractLink}'.replace(/\{(\w+)\}/g, (m, k: string) => params[k] ?? m);
+
+  it('kind missing: contractLink reads «wird nachgereicht» and the chat has no placeholder', async () => {
+    const deps = fakeDeps({ ...base, contractKind: undefined });
+    deps.translate = fill;
+    await runAction(fileRule, completed(), deps);
+    expect(deps.contracts).toHaveLength(0);
+    expect(deps.chats[0].body).toBe('Vertrag: wird nachgereicht');
+    expect(deps.chats[0].body).not.toContain('{contractLink}');
+    expect(deps.activities.some((a) => String(a['error']).includes('contract kind or applicant missing'))).toBe(true);
+  });
+
+  it('appBaseUrl throws: the contract is filed, the link reads «wird nachgereicht», the error is logged', async () => {
+    const deps = fakeDeps(base);
+    deps.translate = fill;
+    deps.appBaseUrl = async () => { throw new Error('no domain'); };
+    await runAction(fileRule, completed(), deps);
+    expect(deps.contracts).toHaveLength(1);
+    expect(deps.chats[0].body).toBe('Vertrag: wird nachgereicht');
+    expect(deps.activities.some((a) => String(a['error']).includes('no domain'))).toBe(true);
+  });
+
+  it('filing throws: the next chat still gets a readable contractLink', async () => {
+    const deps = fakeDeps(base);
+    deps.translate = fill;
+    deps.fileSignedContract = async () => { throw new Error('gcs down'); };
+    await runAction(fileRule, completed(), deps);
+    expect(deps.chats[0].body).toBe('Vertrag: wird nachgereicht');
+  });
 });

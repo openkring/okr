@@ -442,8 +442,15 @@ async function signContract(rule: WorkflowRuleDoc, step: WorkflowActionStepDoc, 
   });
 }
 
+/** What a member reads in place of the link when filing did not produce one (de-only, like the workflow messages). */
+const CONTRACT_LINK_PENDING = 'wird nachgereicht';
+
 async function fileContract(rule: WorkflowRuleDoc, step: WorkflowActionStepDoc, ctx: WorkflowContext, deps: WorkflowDeps): Promise<void> {
   const fail = (error: string) => deps.logActivity(ctx.tenantId, { rule: rule.okey, event: ctx.event, action: 'fileContract', error });
+  // shared ctx: the next openChat step of this rule renders {contractLink}. Set it first, so every
+  // failure branch — including a throw, after which runAction still runs the later steps — leaves
+  // readable text instead of a literal placeholder in the chat.
+  ctx.params['contractLink'] = CONTRACT_LINK_PENDING;
   const kind = (step.actionArg ?? '').trim();
   const approvalKey = ctx.params['approvalKey'] ?? '';
   const signedPdfPath = ctx.params['signedPdfPath'] ?? '';
@@ -457,8 +464,11 @@ async function fileContract(rule: WorkflowRuleDoc, step: WorkflowActionStepDoc, 
     contractKey = await deps.fileSignedContract({ tenantId: ctx.tenantId, kind, kindDoc, applicant,
       orgKey: kindDoc.orgKey ?? ctx.tenantId, signedPdfPath, sourceRef, today: ctx.today });
   }
-  // shared ctx: the next openChat step of this rule renders {contractLink}
-  ctx.params['contractLink'] = `${await deps.appBaseUrl(ctx.tenantId)}/contract/detail/${contractKey}`;
+  try {
+    ctx.params['contractLink'] = `${await deps.appBaseUrl(ctx.tenantId)}/contract/detail/${contractKey}`;
+  } catch (e) {
+    await fail(`contract ${contractKey} filed, but no app link: ${e instanceof Error ? e.message : String(e)}`);
+  }
 }
 
 /**
