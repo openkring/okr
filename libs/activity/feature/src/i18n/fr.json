@@ -14,6 +14,6 @@
     "users": "Utilisateurs",
     "logins": "Connexions",
     "errors": "Erreurs",
-    "usage": "Temps d'utilisation (min)"
+    "usage": "Temps d'utilisation (h)"
   }
 }

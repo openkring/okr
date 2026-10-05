@@ -14,6 +14,6 @@
     "users": "Benutzer",
     "logins": "Anmeldungen",
     "errors": "Fehler",
-    "usage": "Nutzungszeit (Min.)"
+    "usage": "Nutzungszeit (Std.)"
   }
 }

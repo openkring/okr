@@ -23,7 +23,7 @@ const PALETTE = {
 
 /**
  * Daily usage of the tenant over the statistics window: users, successful logins and auth errors
- * as lines, and usage time in minutes as bars below. Two grids with one shared date axis instead
+ * as lines, and usage time in hours as bars below. Two grids with one shared date axis instead
  * of a second y-scale; hovering either shows the whole day.
  *
  * echarts itself is loaded on demand by the provider, so it stays out of every eager bundle.
@@ -93,14 +93,14 @@ export class ActivityStatsChart {
       ],
       yAxis: [
         { type: 'value', gridIndex: 0, minInterval: 1, axisLabel, splitLine },
-        { type: 'value', gridIndex: 1, minInterval: 1, axisLabel, splitLine, splitNumber: 2 },
+        { type: 'value', gridIndex: 1, axisLabel, splitLine, splitNumber: 2 },
       ],
       series: [
         line(l.users, c.users, stats.map(s => s.users)),
         line(l.logins, c.logins, stats.map(s => s.logins)),
         line(l.errors, c.errors, stats.map(s => s.errors)),
         {
-          name: l.usage, type: 'bar', data: stats.map(s => s.usageMinutes), color: c.usage,
+          name: l.usage, type: 'bar', data: stats.map(s => Math.round(s.usageMinutes / 6) / 10), color: c.usage,
           xAxisIndex: 1, yAxisIndex: 1, barMaxWidth: 12, itemStyle: { borderRadius: [4, 4, 0, 0] },
         },
       ],
