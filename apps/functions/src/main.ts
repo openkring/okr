@@ -333,6 +333,7 @@ export const esignDelete             = Esign.esignDelete;
 export const esignSendByEmail        = Esign.esignSendByEmail;
 export const esignWebhook            = Esign.esignWebhook;
 export const esignArchiveSigned      = Esign.esignArchiveSigned;
+export const esignWorkflowEvents     = Esign.esignWorkflowEvents;
 
 // form submission + JS token endpoint
 export const getFormToken = Forms.getFormToken;

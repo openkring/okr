@@ -7,3 +7,4 @@ export { esignDelete }           from './esign-delete';
 export { esignSendByEmail }      from './esign-send-by-email';
 export { esignWebhook }          from './esign-webhook';
 export { esignArchiveSigned }    from './esign-archive-signed';
+export { esignWorkflowEvents }   from './esign-workflow-events';
