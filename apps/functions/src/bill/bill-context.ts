@@ -1,5 +1,5 @@
 import { HttpsError } from 'firebase-functions/v2/https';
-import type { Firestore } from 'firebase-admin/firestore';
+import type { Firestore, Transaction } from 'firebase-admin/firestore';
 
 import { BillCollection } from '@okr/shared-models';
 
@@ -47,4 +47,13 @@ export function payablesKeyOf(config: Record<string, unknown>, accountingTenantI
   const key = String(config['payablesAccountKey'] ?? '');
   if (!key) throw refuse('no-payables-account', `${accountingTenantId} has no payables account`);
   return key;
+}
+
+/** True when none of the given periods is locked (reads only — inside a transaction, before the first write). */
+export async function isPeriodOpen(db: Firestore, tx: Transaction, periodKeys: string[]): Promise<boolean> {
+  for (const key of periodKeys) {
+    const snap = await tx.get(db.collection('periods').doc(key));
+    if (snap.exists && snap.data()?.['isLocked'] === true) return false;
+  }
+  return true;
 }

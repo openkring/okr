@@ -11,14 +11,14 @@ import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { AccountModel, AvatarInfo, BillCollection, BillModel, OrgModel } from '@okr/shared-models';
-import { confirm, exportCsv, showToast } from '@okr/shared-util-angular';
+import { confirm, exportCsv, resourceParams, showToast } from '@okr/shared-util-angular';
 import { debugListLoaded, fill, getAvatarInfo, getSystemQuery, getTodayStr, getYear, nameMatches } from '@okr/shared-util-core';
 
 import { BillService } from '@okr/finance-bill-data-access';
 import { BillPaymentModal } from '@okr/finance-bill-ui';
 import {
-  BILL_I18N_KEYS, BillI18n, BillPaymentCandidate, BillPaymentInput, billDisplayState, billPaymentFromDate, billPaymentHints, billRefusalReasons, billRefusalText,
-  earliestPaymentFromDate, getBillExportData, isDraftBill, isPayableBill, isRetryableBillPaymentRefusal, linkedBillPaymentKeys, newBill, newBillLine,
+  BILL_I18N_KEYS, BillI18n, BillPaymentCandidate, BillPaymentInput, billDisplayState, billPaymentHintWindow, billPaymentHints, billPaymentWindow, billRefusalReasons, billRefusalText,
+  getBillExportData, isDraftBill, isPayableBill, isRetryableBillPaymentRefusal, linkedBillPaymentKeys, newBill, newBillLine,
   newBillPaymentFormModel, openBillAmount,
 } from '@okr/finance-bill-util';
 import { newPaymentId } from '@okr/finance-invoice-util';
@@ -129,18 +129,23 @@ export const BillStore = signalStore(
    * name a payables account; a failed read just shows no hints.
    */
   withProps((store) => ({
+    // resourceParams: value-compared, so a bill stream emission that changes nothing relevant does not re-read
     paymentCandidatesResource: rxResource({
-      params: () => ({
-        accountingTenantId: store.accountingStore.accountingTenantId(),
-        payablesAccountKey: store.payablesAccountKey(),
-        fromDate: earliestPaymentFromDate(store.openBills()),
-        linkedKeys: store.linkedPaymentKeys().join(','),
-        external: store.accountingStore.isExternallyManaged(),
+      params: resourceParams(() => {
+        const window = billPaymentHintWindow(store.openBills(), getTodayStr());
+        return {
+          accountingTenantId: store.accountingStore.accountingTenantId(),
+          payablesAccountKey: store.payablesAccountKey(),
+          fromDate: window?.from ?? '',
+          toDate: window?.to ?? '',
+          linkedKeys: store.linkedPaymentKeys().join(','),
+          external: store.accountingStore.isExternallyManaged(),
+        };
       }),
       stream: ({ params }) => {
         if (!params.payablesAccountKey || !params.fromDate || params.external) return of([] as BillPaymentCandidate[]);
         return from(store.billService.listPaymentCandidates(params.accountingTenantId, params.payablesAccountKey,
-          params.linkedKeys ? params.linkedKeys.split(',') : [], params.fromDate, 500)
+          params.linkedKeys ? params.linkedKeys.split(',') : [], params.fromDate, params.toDate, 2000)
           .catch((e) => {
             console.error('BillStore.paymentCandidates: loading the bookings failed', e);
             return [] as BillPaymentCandidate[];
@@ -155,7 +160,8 @@ export const BillStore = signalStore(
       const candidates = store.paymentCandidatesResource.value() ?? [];
       const byKey = new Map(candidates.map((c) => [c.bookingKey, c]));
       const hints = new Map<string, BillPaymentCandidate>();
-      for (const [billKey, bookingKey] of billPaymentHints(store.openBills(), candidates)) {
+      const window = billPaymentHintWindow(store.openBills(), getTodayStr());
+      for (const [billKey, bookingKey] of billPaymentHints(window?.bills ?? [], candidates)) {
         const candidate = byKey.get(bookingKey);
         if (candidate) hints.set(billKey, candidate);
       }
@@ -320,10 +326,11 @@ export const BillStore = signalStore(
       }
       // The link candidates are read only when the dialog shows mode link, once per dialog; a failed
       // read is forgotten so that a reopened dialog tries again.
+      const window = billPaymentWindow(bill, getTodayStr());
       let candidatesRead: Promise<BillPaymentCandidate[]> | undefined;
       const loadCandidates = (): Promise<BillPaymentCandidate[]> =>
         candidatesRead ??= store.billService.listPaymentCandidates(bill.accountingTenantId, payablesAccountKey,
-          store.linkedPaymentKeys(), billPaymentFromDate(bill)).catch((e) => {
+          store.linkedPaymentKeys(), window?.from ?? '', window?.to ?? '').catch((e) => {
           candidatesRead = undefined;
           throw e;
         });
@@ -361,7 +368,8 @@ export const BillStore = signalStore(
           payment = {
             ...payment, mode: data.mode, date: data.date, amount: data.amount,
             bankAccountKey: data.bankAccountKey || payment.bankAccountKey, bookingKey: data.bookingKey,
-            bookingAmount: (candidate?.debitedAmount ?? 0) / 100,
+            // a booking the dialog's read does not list (e.g. the hint) keeps the amount it was opened with
+            bookingAmount: candidate ? candidate.debitedAmount / 100 : (data.bookingKey === payment.bookingKey ? payment.bookingAmount : 0),
           };
         }
       }

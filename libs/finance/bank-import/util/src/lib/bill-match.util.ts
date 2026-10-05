@@ -37,7 +37,8 @@ export function matchBillPayments(
   opts: { titlePrefix: string; payablesAccountKey: string },
 ): { rows: BankImportRowModel[]; matched: number } {
   const open = bills.filter((b) => !!b.okey && PAYABLE_STATES.includes(b.state) && openAmount(b) > 0);
-  const used = new Set<string>();
+  // a bill already claimed by a row (an earlier import or «Regeln anwenden») is not offered again
+  const used = new Set<string>(rows.map((r) => r.billKey ?? '').filter((k) => k.length > 0));
   let matched = 0;
   const out = rows.map((r) => {
     if (r.status === 'posted' || r.invoiceKey || r.billKey || (r.amount?.amount ?? 0) >= 0) return r;

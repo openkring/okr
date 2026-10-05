@@ -199,7 +199,8 @@
     "no-account": "Cada línea necesita una cuenta.",
     "no-bill-date": "Indica la fecha de la factura.",
     "too-many-lines": "Una factura de proveedor puede tener como máximo 50 líneas.",
-    "cost-center-invalid": "Uno de los centros de coste no se puede usar."
+    "cost-center-invalid": "Uno de los centros de coste no se puede usar.",
+    "before-bill-date": "El asiento elegido tiene una fecha demasiado anterior a la fecha de la factura."
   },
   "line": {
     "list": {

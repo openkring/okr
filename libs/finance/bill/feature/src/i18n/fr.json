@@ -199,7 +199,8 @@
     "no-account": "Chaque ligne a besoin d’un compte.",
     "no-bill-date": "Indique la date de la facture.",
     "too-many-lines": "Une facture fournisseur peut avoir au plus 50 lignes.",
-    "cost-center-invalid": "Un des centres de coûts ne peut pas être utilisé."
+    "cost-center-invalid": "Un des centres de coûts ne peut pas être utilisé.",
+    "before-bill-date": "L'écriture choisie est datée trop longtemps avant la date de la facture."
   },
   "line": {
     "list": {

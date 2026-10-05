@@ -80,6 +80,12 @@ describe('bill payment rules', () => {
       expect(check({ lines: [{ ...debit('scs0121', 3900), isArchived: true }] as never })).toContain('no-payables-debit');
     });
     it('refuses a booking already linked on any bill', () => expect(check({ linked: ['12040'] })).toContain('already-linked'));
+    it('refuses a booking dated more than the look-back before the bill date', () => {
+      const b = (date: string) => billLinkBlockers({ ...posted, date }, lines, 'scs0121', 'scs', 3900, [], 'k', '20260901');
+      expect(b('20260802')).toEqual([]);
+      expect(b('20260801')).toContain('before-bill-date');
+      expect(billLinkBlockers({ ...posted, date: '20200101' }, lines, 'scs0121', 'scs', 3900, [], 'k')).toEqual([]);
+    });
   });
 
   it('collects every linked payment booking key of a list of bills', () => {

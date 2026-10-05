@@ -167,6 +167,8 @@
   },
   "write": {
     "failed": "L'écriture n'a pas pu être enregistrée.",
-    "costCenterInvalid": "Le centre de coûts choisi n'est plus actif — choisis-en un autre."
+    "costCenterInvalid": "Le centre de coûts choisi n'est plus actif — choisis-en un autre.",
+    "billBooking": "Cette écriture appartient à une facture fournisseur et ne se modifie pas ici. Supprime-la si la facture doit redevenir un brouillon.",
+    "billHasPayments": "La facture fournisseur de cette écriture a déjà des paiements. Retire d'abord les paiements, puis tu peux supprimer l'écriture."
   }
 }

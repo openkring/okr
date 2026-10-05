@@ -420,6 +420,8 @@ export const BookingStore = signalStore(
     },
 
     async openEdit(booking: BookingModel, lines: BookingLineModel[], readOnly = true): Promise<void> {
+      // a supplier bill's own booking mirrors the bill (spec 1.85): shown, never edited — writeBooking refuses it
+      if ((booking.okey ?? '').startsWith('bill-')) readOnly = true;
       const modal = await store.modalController.create({
         component: BookingEditModal,
         componentProps: this.modalProps(booking, lines, readOnly),
@@ -478,6 +480,8 @@ export const BookingStore = signalStore(
       switch (bookingWriteErrorReason(error)) {
         case 'period-locked':       return store.i18n.period_locked();
         case 'cost-center-invalid': return store.i18n.write_costCenterInvalid();
+        case 'bill-booking':        return store.i18n.write_billBooking();
+        case 'bill-has-payments':   return store.i18n.write_billHasPayments();
         default:                    return undefined;
       }
     },

@@ -549,6 +549,8 @@ describe('bookingWriteErrorReason', () => {
   it('reads the reason a ledger callable attaches to its HttpsError', () => {
     expect(bookingWriteErrorReason({ details: { reason: 'period-locked' } })).toBe('period-locked');
     expect(bookingWriteErrorReason({ details: { reason: 'cost-center-invalid', costCenterKey: 'k' } })).toBe('cost-center-invalid');
+    expect(bookingWriteErrorReason({ details: { reason: 'bill-booking' } })).toBe('bill-booking');
+    expect(bookingWriteErrorReason({ details: { reason: 'bill-has-payments' } })).toBe('bill-has-payments');
   });
   it('is undefined for an unknown reason, no details or a non-object', () => {
     expect(bookingWriteErrorReason({ details: { reason: 'other' } })).toBeUndefined();

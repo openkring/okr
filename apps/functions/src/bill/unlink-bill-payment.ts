@@ -8,7 +8,8 @@ import { checkAppCheckToken, checkAuthentication, checkRoles, getCallerTenantId 
 import { refuse } from '../invoice/invoice-context';
 import { withoutUndefined } from '../invoice/invoice.logic';
 import { billAfterPaymentRemoval, BillLike, billPaymentNote, StoredBillPayment, withoutNoteLine } from './bill-payment.logic';
-import { loadBillConfig, loadOwnBill } from './bill-context';
+import { isPeriodOpen, loadBillConfig, loadOwnBill } from './bill-context';
+import { touchedPeriodKeys } from '../booking/period-lock';
 
 const REGION = 'europe-west6';
 const CF_NAME = 'unlinkBillPayment';
@@ -40,7 +41,9 @@ export const unlinkBillPayment = onCall(
     const db = getFirestore();
     const billRef = db.collection(BillCollection).doc(billKey);
     const pre = await loadOwnBill(db, tenantId, billKey);
-    await loadBillConfig(db, tenantId, billKey, String(pre['accountingTenantId'] ?? ''));
+    const accountingTenantId = String(pre['accountingTenantId'] ?? '');
+    const config = await loadBillConfig(db, tenantId, billKey, accountingTenantId);
+    const fiscalYearStart = Number(config['fiscalYearStart'] ?? 1) || 1;
     const bookingRef = db.collection(BOOKING_COLLECTION).doc(bookingKey);
 
     const result = await db.runTransaction(async (tx) => {
@@ -53,8 +56,12 @@ export const unlinkBillPayment = onCall(
       };
       const after = billAfterPaymentRemoval(like, bookingKey);
       if (!after) return { state: like.state, payments: (like.payments ?? []) as StoredBillPayment[] };
+      // the note is removed only in an open period (GebüV: closed books stay as they are)
+      const bookingPeriodOpen = booking
+        ? await isPeriodOpen(db, tx, touchedPeriodKeys(accountingTenantId, [String(booking['date'] ?? '')], fiscalYearStart))
+        : false;
       tx.update(billRef, { payments: after.payments, state: after.state, paymentDate: after.paymentDate });
-      if (booking) {
+      if (booking && bookingPeriodOpen) {
         const notes = withoutNoteLine(String(booking['notes'] ?? ''), billPaymentNote(String(bill['billId'] ?? ''), String(bill['title'] ?? '')));
         tx.update(bookingRef, withoutUndefined({ notes }));
       }

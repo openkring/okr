@@ -506,10 +506,11 @@ export function copyBooking(
 }
 
 /** The reasons a ledger callable (`writeBooking`, `reviewBooking`) attaches to a refusal that get their own toast. */
-export type BookingWriteErrorReason = 'period-locked' | 'cost-center-invalid';
+export type BookingWriteErrorReason = 'period-locked' | 'cost-center-invalid' | 'bill-booking' | 'bill-has-payments';
 
 /** The `details.reason` of a refused ledger write, when it is one the UI explains; undefined otherwise. */
 export function bookingWriteErrorReason(error: unknown): BookingWriteErrorReason | undefined {
   const reason = (error as { details?: { reason?: unknown } } | undefined)?.details?.reason;
-  return reason === 'period-locked' || reason === 'cost-center-invalid' ? reason : undefined;
+  return reason === 'period-locked' || reason === 'cost-center-invalid' || reason === 'bill-booking' || reason === 'bill-has-payments'
+    ? reason : undefined;
 }

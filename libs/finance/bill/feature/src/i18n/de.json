@@ -199,7 +199,8 @@
     "no-account": "Jede Zeile braucht ein Konto.",
     "no-bill-date": "Gib das Rechnungsdatum an.",
     "too-many-lines": "Eine Lieferantenrechnung kann höchstens 50 Zeilen haben.",
-    "cost-center-invalid": "Eine der Kostenstellen kann nicht verwendet werden."
+    "cost-center-invalid": "Eine der Kostenstellen kann nicht verwendet werden.",
+    "before-bill-date": "Die gewählte Buchung liegt zu weit vor dem Rechnungsdatum."
   },
   "line": {
     "list": {

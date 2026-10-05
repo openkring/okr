@@ -167,6 +167,8 @@
   },
   "write": {
     "failed": "Die Buchung konnte nicht gespeichert werden.",
-    "costCenterInvalid": "Die gewählte Kostenstelle ist nicht mehr aktiv — bitte wähle eine andere."
+    "costCenterInvalid": "Die gewählte Kostenstelle ist nicht mehr aktiv — bitte wähle eine andere.",
+    "billBooking": "Diese Buchung gehört zu einer Lieferantenrechnung und wird nicht hier bearbeitet. Lösche sie, wenn die Rechnung wieder ein Entwurf werden soll.",
+    "billHasPayments": "Die Lieferantenrechnung dieser Buchung hat schon Zahlungen. Entferne zuerst die Zahlungen, dann kannst du die Buchung löschen."
   }
 }

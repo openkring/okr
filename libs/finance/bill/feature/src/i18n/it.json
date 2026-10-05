@@ -199,7 +199,8 @@
     "no-account": "Ogni riga ha bisogno di un conto.",
     "no-bill-date": "Indica la data della fattura.",
     "too-many-lines": "Una fattura del fornitore può avere al massimo 50 righe.",
-    "cost-center-invalid": "Uno dei centri di costo non può essere usato."
+    "cost-center-invalid": "Uno dei centri di costo non può essere usato.",
+    "before-bill-date": "La registrazione scelta è datata troppo prima della data della fattura."
   },
   "line": {
     "list": {

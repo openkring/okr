@@ -6,7 +6,7 @@ import { BillCollection } from '@okr/shared-models';
 import { checkAppCheckToken, checkAuthentication, checkRoles, getCallerTenantId, nextBookingNo } from '@okr/shared-util-functions';
 
 import { periodKeyFor } from '../bank-import/bank-import.util';
-import { assertPeriodsOpen } from '../booking/period-lock';
+import { assertPeriodsOpen, touchedPeriodKeys } from '../booking/period-lock';
 import { costCenterKeyForLine, loadCostCenterContext } from '../cost-center/cost-center-context';
 import { assertLeafAccount, refuse } from '../invoice/invoice-context';
 import { isValidPaymentId, isValidStoreDate, linkDecision, paymentDecision } from '../invoice/invoice-payment.logic';
@@ -15,7 +15,7 @@ import {
   applyBillPayment, BillLike, billLinkBlockers, billPaymentBlockers, billPaymentBookingLines, billPaymentNote, linkedPaymentKeys, StoredBillPayment,
   withNoteLine,
 } from './bill-payment.logic';
-import { loadBillConfig, loadOwnBill, payablesKeyOf } from './bill-context';
+import { isPeriodOpen, loadBillConfig, loadOwnBill, payablesKeyOf } from './bill-context';
 
 const REGION = 'europe-west6';
 const CF_NAME = 'recordBillPayment';
@@ -135,14 +135,17 @@ export const recordBillPayment = onCall(
         const books = await tx.get(db.collection(BillCollection).where('accountingTenantId', '==', accountingTenantId));
         const linkedElsewhere = linkedPaymentKeys(books.docs.map((d) => d.data() as { payments?: { bookingKey?: string }[] }));
         const linkProblems = billLinkBlockers(
-          booking as { status?: string; accountingTenantId?: string; isArchived?: boolean } | undefined, lines, payablesKey, accountingTenantId, amount,
-          linkedElsewhere, bookingKey,
+          booking as { status?: string; accountingTenantId?: string; isArchived?: boolean; date?: string } | undefined, lines, payablesKey, accountingTenantId,
+          amount, linkedElsewhere, bookingKey, String(bill['billDate'] ?? ''),
         );
         if (linkProblems.length > 0) {
           throw refuse('link-blocked', `booking ${bookingKey} cannot be linked: ${linkProblems.join(', ')}`, { reasons: linkProblems });
         }
+        // the booking's note and counterparty are touched only in an open period (GebüV: closed books stay as they are)
+        const bookingPeriodOpen = await isPeriodOpen(db, tx, touchedPeriodKeys(accountingTenantId, [String(booking?.['date'] ?? '')], fiscalYearStart));
         const applied = applyBillPayment(asBillLike(bill), { date, amount, bookingKey });
         tx.update(billRef, withoutUndefined({ payments: applied.payments, state: applied.state, paymentDate: applied.paymentDate }));
+        if (!bookingPeriodOpen) return { state: applied.state, payments: applied.payments, bookingKey };
         const note = withNoteLine(String(booking?.['notes'] ?? ''), billPaymentNote(String(bill['billId'] ?? ''), String(bill['title'] ?? '')), MAX_NOTES_LENGTH);
         const counterparty = booking?.['counterparty'] as { key?: string; label?: string } | null | undefined;
         tx.update(bookingRef, withoutUndefined({

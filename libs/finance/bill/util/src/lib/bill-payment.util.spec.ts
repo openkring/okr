@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { BillModel } from '@okr/shared-models';
 
 import {
-  billPaymentCandidates, billPaymentHints, billRefusalReasons, earliestPaymentFromDate, isPayableBill, isRetryableBillPaymentRefusal,
+  billPaymentCandidates, billPaymentHintWindow, billPaymentHints, billPaymentWindow, billRefusalReasons, earliestPaymentFromDate, isPayableBill, isRetryableBillPaymentRefusal,
   linkedBillPaymentKeys, newBillPaymentFormModel, openBillAmount,
 } from './bill-payment.util';
 import { billPaymentValidations } from './bill-payment.validations';
@@ -75,6 +75,19 @@ describe('bill payment util', () => {
 
     it('matches the open rest of a partly paid bill', () =>
       expect(billPaymentHints([bill({ payments: [{ date: '1', amount: 900, type: 'MANUAL', bookingKey: 'a' }] })], [c('p1', '20260910', 3000)]).get('b1')).toBe('p1'));
+  });
+
+  it('the window of a bill: look-back before the bill date, look-ahead after the due date, never past today', () => {
+    expect(billPaymentWindow(bill({ dueDate: '20261001' }), '20261005')).toEqual({ from: '20260802', to: '20261005' });
+    expect(billPaymentWindow(bill({ dueDate: '20261001' }), '20271231')).toEqual({ from: '20260802', to: '20270330' });
+    expect(billPaymentWindow(bill({ billDate: '' }), '20261005')).toBeUndefined();
+  });
+
+  it('hints only look at open bills of the last year', () => {
+    const w = billPaymentHintWindow([bill({ okey: 'old', billDate: '20200101' }), bill()], '20261005');
+    expect(w?.bills.map((b) => b.okey)).toEqual(['b1']);
+    expect(w).toMatchObject({ from: '20260802', to: '20261005' });
+    expect(billPaymentHintWindow([bill({ billDate: '20200101' })], '20261005')).toBeUndefined();
   });
 
   it('the earliest start date of several bills', () => {

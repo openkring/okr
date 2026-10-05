@@ -9,6 +9,7 @@ import { assertExplicitCostCenter, costCenterKeyForLine, loadCostCenterContext }
 import { assertPeriodsOpen, loadFiscalYearStart, touchedPeriodKeys } from './period-lock';
 import { BillCollection, InvoiceCollection } from '@okr/shared-models';
 import { billAfterPaymentRemoval, invoiceAfterPaymentRemoval, issueBookingBillKey } from '../bill/bill-payment.logic';
+import { isBexioBackend } from '../bexio/backend-gate';
 
 const REGION = 'europe-west6';
 const CF_NAME = 'reviewBooking';
@@ -265,13 +266,16 @@ export const writeBooking = onCall(
     if (mode === 'delete') {
       const acct = existing?.['accountingTenantId'] as string;
       await assertPeriodsOpen(db, touchedPeriodKeys(acct, [existing?.['date'] as string], await loadFiscalYearStart(db, acct)));
-      const cleanup = await paymentCleanup(db, bookingKey, acct);
-      const batch = db.batch();
-      for (const ref of oldLineRefs) batch.delete(ref);
-      batch.delete(bookingRef);
-      for (const { ref, patch } of cleanup) batch.update(ref, patch);
-      await batch.commit();
-      logger.info(`${WRITE_CF_NAME}: deleted booking ${bookingKey} (tenant=${tenantId}, ${cleanup.length} bill/invoice doc(s) cleaned up)`);
+      const bexioBooks = isBexioBackend((await db.collection('accounting-configs').doc(acct).get()).data() as { accountingBackend?: string } | undefined);
+      // one transaction: the bills/invoices read for the clean-up cannot be overwritten by a payment recorded meanwhile
+      const cleaned = await db.runTransaction(async (tx) => {
+        const cleanup = bexioBooks ? [] : await paymentCleanup(db, tx, bookingKey, acct);
+        for (const ref of oldLineRefs) tx.delete(ref);
+        tx.delete(bookingRef);
+        for (const { ref, patch } of cleanup) tx.update(ref, patch);
+        return cleanup.length;
+      });
+      logger.info(`${WRITE_CF_NAME}: deleted booking ${bookingKey} (tenant=${tenantId}, ${cleaned} bill/invoice doc(s) cleaned up)`);
       return { bookingKey, bookingNo: 0 };
     }
 
@@ -351,17 +355,17 @@ export const writeBooking = onCall(
  *   `bill-has-payments` while it carries payments — those are undone first);
  * - a payment booking: the payment that points at it is removed from every bill and invoice, and
  *   state and payment date are derived again.
- * Plain reads before the delete batch; the books are small enough to scan (writeBooking reads the
- * whole ledger on create anyway).
+ * Transactional reads (before the deletes); the books are small enough to scan (writeBooking reads the
+ * whole ledger on create anyway). Not called for bexio books — those are never written natively.
  */
 async function paymentCleanup(
-  db: FirebaseFirestore.Firestore, bookingKey: string, accountingTenantId: string,
+  db: FirebaseFirestore.Firestore, tx: FirebaseFirestore.Transaction, bookingKey: string, accountingTenantId: string,
 ): Promise<{ ref: FirebaseFirestore.DocumentReference; patch: Record<string, unknown> }[]> {
   const patches: { ref: FirebaseFirestore.DocumentReference; patch: Record<string, unknown> }[] = [];
   const issuedBillKey = issueBookingBillKey(bookingKey);
   if (issuedBillKey) {
     const billRef = db.collection(BillCollection).doc(issuedBillKey);
-    const bill = (await billRef.get()).data();
+    const bill = (await tx.get(billRef)).data();
     if (bill && ((bill['bookingKeys'] as string[] | undefined) ?? []).includes(bookingKey)) {
       if (((bill['payments'] as unknown[] | undefined) ?? []).length > 0) {
         throw new HttpsError('failed-precondition', `bill ${issuedBillKey} has payments — remove them before its booking`, { reason: 'bill-has-payments' });
@@ -370,10 +374,8 @@ async function paymentCleanup(
     }
   }
   if (!accountingTenantId) return patches;
-  const [bills, invoices] = await Promise.all([
-    db.collection(BillCollection).where('accountingTenantId', '==', accountingTenantId).get(),
-    db.collection(InvoiceCollection).where('accountingTenantId', '==', accountingTenantId).get(),
-  ]);
+  const bills = await tx.get(db.collection(BillCollection).where('accountingTenantId', '==', accountingTenantId));
+  const invoices = await tx.get(db.collection(InvoiceCollection).where('accountingTenantId', '==', accountingTenantId));
   for (const doc of bills.docs) {
     const d = doc.data();
     const after = billAfterPaymentRemoval({

@@ -199,7 +199,8 @@
     "no-account": "Every line needs an account.",
     "no-bill-date": "Enter the bill date.",
     "too-many-lines": "A supplier bill can have at most 50 lines.",
-    "cost-center-invalid": "One of the cost centres cannot be used."
+    "cost-center-invalid": "One of the cost centres cannot be used.",
+    "before-bill-date": "The chosen booking is dated too long before the bill date."
   },
   "line": {
     "list": {

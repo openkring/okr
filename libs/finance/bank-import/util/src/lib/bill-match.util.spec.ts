@@ -54,6 +54,12 @@ describe('matchBillPayments', () => {
     expect(rows[1].billKey ?? '').toBe('');
   });
 
+  it('does not offer a bill another row already claims', () => {
+    const { rows, matched } = matchBillPayments([row({ okey: 'r0', billKey: 'b1', status: 'mapped' }), row()], [bill()], opts);
+    expect(matched).toBe(0);
+    expect(rows[1].billKey ?? '').toBe('');
+  });
+
   it('matches the open rest of a partly paid bill; a legacy bill without payments is fully open', () => {
     const partly = bill({ payments: [{ date: '1', amount: 900, type: 'MANUAL', bookingKey: 'a' }] });
     expect(matchBillPayments([row({ amount: { amount: -3000, currency: 'CHF', periodicity: 'one-time' } })], [partly], opts).matched).toBe(1);

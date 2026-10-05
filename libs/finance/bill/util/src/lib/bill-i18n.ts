@@ -160,6 +160,7 @@ export const BILL_I18N_KEYS = {
   refusal_no_bill_date:           PFX + 'refusal.no-bill-date',
   refusal_too_many_lines:         PFX + 'refusal.too-many-lines',
   refusal_cost_center_invalid:    PFX + 'refusal.cost-center-invalid',
+  refusal_before_bill_date:       PFX + 'refusal.before-bill-date',
 
   as_title:             '@actionsheet.title',
   cancel:               '@cancel',
@@ -206,6 +207,7 @@ export const BILL_REFUSAL_I18N: Record<string, keyof typeof BILL_I18N_KEYS> = {
   'no-bill-date': 'refusal_no_bill_date',
   'too-many-lines': 'refusal_too_many_lines',
   'cost-center-invalid': 'refusal_cost_center_invalid',
+  'before-bill-date': 'refusal_before_bill_date',
 };
 
 /** The i18n entries for the given reasons (unknown reasons dropped, no duplicates). */

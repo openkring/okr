@@ -4,7 +4,12 @@
  * here. All amounts are Rappen.
  */
 
+import { addDuration } from '@okr/shared-util-core';
+
 import { openAmount as openInvoiceAmount } from '../invoice/invoice-payment.logic';
+
+/** A booking this many days before the bill date may still pay it (a payment entered before the bill); same as the client. */
+export const BILL_PAYMENT_LOOKBACK_DAYS = 30;
 
 export interface StoredBillPayment {
   date: string;
@@ -86,20 +91,24 @@ export function billPaymentBookingLines(payablesKey: string, bankAccountKey: str
 /**
  * Refusal codes for linking an existing booking as a bill payment. Bookings okr writes for bills or
  * invoices itself (`bill-…`, `invoice-…`) and archived bookings are refused; the booking must debit the
- * payables account with at least the amount (archived lines do not count), and must not pay another bill.
+ * payables account with at least the amount (archived lines do not count), must not pay another bill, and
+ * must not be dated more than BILL_PAYMENT_LOOKBACK_DAYS before the bill date (when one is given).
  * @param linkedElsewhere every payment booking key already stored on any bill of these books
  */
 export function billLinkBlockers(
-  booking: { status?: string; accountingTenantId?: string; isArchived?: boolean } | undefined,
+  booking: { status?: string; accountingTenantId?: string; isArchived?: boolean; date?: string } | undefined,
   lines: { accountKey: string; debitAmount?: { amount: number } | null; isArchived?: boolean }[],
   payablesKey: string,
   accountingTenantId: string,
   amount: number,
   linkedElsewhere: string[],
   bookingKey: string,
+  billDate = '',
 ): string[] {
   if (!booking) return ['booking-not-found'];
   const blockers: string[] = [];
+  // spec B2: not before the bill date (minus the look-back the client uses for its candidates)
+  if (billDate && booking.date && booking.date < addDuration(billDate, { days: -BILL_PAYMENT_LOOKBACK_DAYS })) blockers.push('before-bill-date');
   if (bookingKey.startsWith('bill-') || bookingKey.startsWith('invoice-')) blockers.push('own-booking');
   if (booking.isArchived === true) blockers.push('booking-archived');
   if (booking.status !== 'posted') blockers.push('booking-not-posted');

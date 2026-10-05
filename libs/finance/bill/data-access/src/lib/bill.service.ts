@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { getApp } from 'firebase/app';
-import { collection, getDocs, limit, query } from 'firebase/firestore';
+import { collection, getDocs, limit, query, QueryDocumentSnapshot, startAfter } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
 import { ENV } from '@okr/shared-config';
@@ -13,7 +13,7 @@ import { findByKey, getQuery, getSystemQuery } from '@okr/shared-util-core';
 import { ActivityService } from '@okr/activity-data-access';
 
 import {
-  BILL_PAYMENT_BOOKING_LIMIT, BillPaymentCandidate, BillPaymentInput, billPaymentCandidates, isPayableBill, MAX_BILL_PAYMENT_CANDIDATES,
+  BILL_PAYMENT_BOOKING_PAGE, BILL_PAYMENT_BOOKING_PAGES, BillPaymentCandidate, BillPaymentInput, billPaymentCandidates, isPayableBill, MAX_BILL_PAYMENT_CANDIDATES,
   openBillAmount,
 } from '@okr/finance-bill-util';
 
@@ -111,33 +111,47 @@ export class BillService {
   }
 
   /**
-   * The posted bookings that debit the payables account from `fromDate` on — the link candidates of a
-   * bill payment and the source of the payment hints. Bookings already linked on any bill are left
-   * out. Rejects on a failed read, so the caller can tell "none" from "could not load".
+   * The posted bookings dated `fromDate`..`toDate` that debit the payables account — the link
+   * candidates of a bill payment and the source of the payment hints. The window is read oldest first
+   * in pages (at most BILL_PAYMENT_BOOKING_PAGES × BILL_PAYMENT_BOOKING_PAGE bookings), each page's
+   * lines in chunks. Bookings already linked on any bill are left out. Rejects on a failed read, so the
+   * caller can tell "none" from "could not load".
    */
   public async listPaymentCandidates(
-    accountingTenantId: string, payablesAccountKey: string, linkedBookingKeys: string[], fromDate: string, cap = MAX_BILL_PAYMENT_CANDIDATES,
+    accountingTenantId: string, payablesAccountKey: string, linkedBookingKeys: string[], fromDate: string, toDate: string,
+    cap = MAX_BILL_PAYMENT_CANDIDATES,
   ): Promise<BillPaymentCandidate[]> {
-    if (!payablesAccountKey || !accountingTenantId) return [];
-    const bookingsQuery: DbQuery[] = [
+    if (!payablesAccountKey || !accountingTenantId || !fromDate || toDate < fromDate) return [];
+    const linked = new Set(linkedBookingKeys);
+    const constraints = getQuery([
       ...getSystemQuery(this.env.tenantId),
       { key: 'accountingTenantId', operator: '==', value: accountingTenantId },
       { key: 'status', operator: '==', value: 'posted' },
       { key: 'date', operator: '>=', value: fromDate },
-    ];
-    const linked = new Set(linkedBookingKeys);
-    const bookings = (await this.readOnce<BookingModel>(BookingCollection, bookingsQuery, 'date', 'asc', BILL_PAYMENT_BOOKING_LIMIT))
-      .filter((b) => !linked.has(b.okey) && !b.okey.startsWith('bill-') && !b.okey.startsWith('invoice-'));
-    if (bookings.length === 0) return [];
-    const keys = bookings.map((b) => b.okey);
-    const chunks: string[][] = [];
-    for (let i = 0; i < keys.length; i += BOOKING_KEY_CHUNK_SIZE) chunks.push(keys.slice(i, i + BOOKING_KEY_CHUNK_SIZE));
-    const lines = await Promise.all(chunks.map((chunk) => this.readOnce<BookingLineModel>(BookingLineCollection, [
-      ...getSystemQuery(this.env.tenantId),
-      { key: 'accountingTenantId', operator: '==', value: accountingTenantId },
-      { key: 'bookingKey', operator: 'in', value: chunk },
-    ], 'none')));
-    return billPaymentCandidates(lines.flat(), bookings, payablesAccountKey, linkedBookingKeys, fromDate, cap);
+      { key: 'date', operator: '<=', value: toDate },
+    ], 'date', 'asc');
+    const bookings: BookingModel[] = [];
+    const lines: BookingLineModel[] = [];
+    let last: QueryDocumentSnapshot | undefined;
+    for (let page = 0; page < BILL_PAYMENT_BOOKING_PAGES; page++) {
+      const pageQuery = query(collection(this.firestoreService.firestore, BookingCollection), ...constraints,
+        ...(last ? [startAfter(last)] : []), limit(BILL_PAYMENT_BOOKING_PAGE));
+      const snapshot = await getDocs(pageQuery);
+      const pageBookings = snapshot.docs.map((d) => ({ ...d.data(), okey: d.id }) as BookingModel)
+        .filter((b) => !linked.has(b.okey) && !b.okey.startsWith('bill-') && !b.okey.startsWith('invoice-'));
+      bookings.push(...pageBookings);
+      const keys = pageBookings.map((b) => b.okey);
+      for (let i = 0; i < keys.length; i += BOOKING_KEY_CHUNK_SIZE) {
+        lines.push(...await this.readOnce<BookingLineModel>(BookingLineCollection, [
+          ...getSystemQuery(this.env.tenantId),
+          { key: 'accountingTenantId', operator: '==', value: accountingTenantId },
+          { key: 'bookingKey', operator: 'in', value: keys.slice(i, i + BOOKING_KEY_CHUNK_SIZE) },
+        ], 'none'));
+      }
+      if (snapshot.docs.length < BILL_PAYMENT_BOOKING_PAGE) break;
+      last = snapshot.docs[snapshot.docs.length - 1];
+    }
+    return billPaymentCandidates(lines, bookings, payablesAccountKey, linkedBookingKeys, fromDate, cap);
   }
 
   /**

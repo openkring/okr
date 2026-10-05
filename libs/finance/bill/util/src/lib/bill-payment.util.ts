@@ -44,8 +44,17 @@ export const MAX_BILL_PAYMENT_CANDIDATES = 50;
 /** Bookings this many days before the bill date may still pay it (a payment entered before the bill). */
 export const BILL_PAYMENT_LOOKBACK_DAYS = 30;
 
-/** At most this many posted bookings (the earliest from the look-back start on) are read for candidates. */
-export const BILL_PAYMENT_BOOKING_LIMIT = 300;
+/** Posted bookings are read in pages of this size (oldest first) when looking for candidates. */
+export const BILL_PAYMENT_BOOKING_PAGE = 300;
+
+/** At most this many pages are read: 2'100 bookings, more than a busy club books in a year. */
+export const BILL_PAYMENT_BOOKING_PAGES = 7;
+
+/** A payment is looked for up to this many days after the later of bill and due date. */
+export const BILL_PAYMENT_LOOKAHEAD_DAYS = 180;
+
+/** Payment hints are only computed for open bills dated within this many days (old migrated open items would widen the read). */
+export const BILL_PAYMENT_HINT_MAX_AGE_DAYS = 365;
 
 /** The states that take a payment: an open bill (`todo`) and one bexio marked `overdue`. Same set as recordBillPayment. */
 export const PAYABLE_BILL_STATES: readonly string[] = ['todo', 'overdue'];
@@ -155,6 +164,28 @@ export function billPaymentHints(
     hints.set(bill.okey, match.bookingKey);
   }
   return hints;
+}
+
+/**
+ * The date window in which a bill's payment is looked for: from the bill date minus the look-back to
+ * the later of bill and due date plus the look-ahead, but never past today. Undefined without a bill date.
+ */
+export function billPaymentWindow(bill: Pick<BillModel, 'billDate' | 'dueDate'>, today: string): { from: string; to: string } | undefined {
+  if (!bill.billDate) return undefined;
+  const latest = (bill.dueDate ?? '') > bill.billDate ? bill.dueDate : bill.billDate;
+  const end = addDuration(latest, { days: BILL_PAYMENT_LOOKAHEAD_DAYS });
+  return { from: billPaymentFromDate(bill), to: end < today ? end : today };
+}
+
+/**
+ * The open bills that get a payment hint (dated within BILL_PAYMENT_HINT_MAX_AGE_DAYS) and the one
+ * window that covers them all (earliest start until today); undefined when there is none.
+ */
+export function billPaymentHintWindow(openBills: BillModel[], today: string): { bills: BillModel[]; from: string; to: string } | undefined {
+  const oldest = addDuration(today, { days: -BILL_PAYMENT_HINT_MAX_AGE_DAYS });
+  const bills = openBills.filter((b) => !!b.billDate && b.billDate >= oldest);
+  const from = earliestPaymentFromDate(bills);
+  return from ? { bills, from, to: today } : undefined;
 }
 
 /** The earliest day any of the bills may be paid from (for one candidate read covering all of them), or ''. */
