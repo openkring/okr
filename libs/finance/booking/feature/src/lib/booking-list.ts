@@ -108,7 +108,7 @@ function parseAmount(amount: string): number {
           }
           @let row = entry.row;
           <ion-item button [detail]="false" (click)="showActions(row)" [class.for-review]="isForReview(row)"
-            [class.selected]="isSelected(row)" [attr.data-booking]="row.booking.okey">
+            [class.cancelled]="isCancelled(row)" [class.selected]="isSelected(row)" [attr.data-booking]="row.booking.okey">
             <ion-grid>
               <ion-row>
                 <ion-col size="3" size-md="2">
@@ -147,7 +147,7 @@ function parseAmount(amount: string): number {
           <!-- the parts of an expanded split booking: Soll against Haben with the part's own text and amount -->
           @if(isExpanded(row)) {
             @for(part of row.parts; track part.okey) {
-              <ion-item button [detail]="false" (click)="showActions(row)" class="part" [class.for-review]="isForReview(row)">
+              <ion-item button [detail]="false" (click)="showActions(row)" class="part" [class.for-review]="isForReview(row)" [class.cancelled]="isCancelled(row)">
                 <ion-grid>
                   <ion-row>
                     <ion-col size="3" size-md="2"></ion-col>
@@ -197,6 +197,8 @@ function parseAmount(amount: string): number {
     ion-item.part { font-size: 0.85rem; --min-height: 36px; color: var(--ion-color-medium-shade); }
     ion-item-divider { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; }
     ion-item.for-review { --background: rgba(var(--ion-color-warning-rgb), 0.12); }
+    /* cancelled bookings stay listed (GebüV) but count nowhere: greyed out under "Alle" */
+    ion-item.cancelled { --color: var(--ion-color-medium); opacity: 0.6; }
     ion-item.selected { --background: rgba(var(--ion-color-primary-rgb), 0.14); }
   `],
 })
@@ -313,6 +315,10 @@ export class BookingList {
 
   protected isSelected(row: JournalRow): boolean {
     return !!this.selectedKey() && row.booking.okey === this.selectedKey();
+  }
+
+  protected isCancelled(row: JournalRow): boolean {
+    return row.booking.status === 'cancelled';
   }
 
   protected isForReview(row: JournalRow): boolean {
