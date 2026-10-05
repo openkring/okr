@@ -392,21 +392,6 @@ async function deliverOverChannels(
   });
 }
 
-/**
- * Execute a single step. Most actions address the SAME resolved responsible person — a rule
- * can never name a free-text recipient, which is what keeps it from being a spam gun any
- * tenant admin can point anywhere (spec 2026-08-15 §2.2). `openChat` is the one exception: it
- * addresses a GROUP and is dispatched before the assignee is resolved, so it still runs when
- * the responsibility is vacant or misconfigured.
- *
- * Deduplication of `openTask`: an open task with the same relatedKey AND the same assignee
- * means this consequence is already pending — without it every re-trigger (a corrected exit
- * date, a sweep re-run, a name change re-writing the document) would produce another task.
- * This key does NOT include the step index (it is stored on the task document and read by
- * other code paths, so it cannot grow one now): two `openTask` steps of the same rule
- * addressing the same assignee dedup against EACH OTHER, not just against re-triggers. A rule
- * that genuinely needs two tasks for the same event has to be configured as two rules.
- */
 /** responsible → active delegate, inside the responsibility's validity window; no fallbacks — a contract
  *  must never be signed by a tenant admin standing in for an unfilled role. */
 export function responsibleOf(r: ResponsibilityDoc | undefined, today: string): AvatarInfo | undefined {
@@ -461,6 +446,21 @@ async function fileContract(rule: WorkflowRuleDoc, ctx: WorkflowContext, deps: W
   await deps.logActivity(ctx.tenantId, { rule: rule.okey, event: ctx.event, action: 'fileContract', error: 'fileContract not implemented' });
 }
 
+/**
+ * Execute a single step. Most actions address the SAME resolved responsible person — a rule
+ * can never name a free-text recipient, which is what keeps it from being a spam gun any
+ * tenant admin can point anywhere (spec 2026-08-15 §2.2). `openChat` is the one exception: it
+ * addresses a GROUP and is dispatched before the assignee is resolved, so it still runs when
+ * the responsibility is vacant or misconfigured.
+ *
+ * Deduplication of `openTask`: an open task with the same relatedKey AND the same assignee
+ * means this consequence is already pending — without it every re-trigger (a corrected exit
+ * date, a sweep re-run, a name change re-writing the document) would produce another task.
+ * This key does NOT include the step index (it is stored on the task document and read by
+ * other code paths, so it cannot grow one now): two `openTask` steps of the same rule
+ * addressing the same assignee dedup against EACH OTHER, not just against re-triggers. A rule
+ * that genuinely needs two tasks for the same event has to be configured as two rules.
+ */
 export async function runStep(
   rule: WorkflowRuleDoc,
   step: WorkflowActionStepDoc,

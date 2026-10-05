@@ -146,10 +146,30 @@ export function createFirestoreDeps(): WorkflowDeps {
     },
 
     async queueContractSigning(r): Promise<void> {
-      await enqueue(db, r.tenantId, r.ruleKey, 'signContract', {
-        templateId: r.templateId, payloadJson: JSON.stringify(r.payload), filename: r.filename,
-        documentName: r.documentName, sourceRef: r.sourceRef, personKey: r.personKey, kind: r.kind,
-      });
+      // Deterministic id: a re-fired approval.decided before the outbox dispatches (so before an
+      // esign doc exists for hasEsignRun to find) must not queue a second signing.
+      const id = `signContract_${r.sourceRef.replace(/[^A-Za-z0-9_-]/g, '_')}`;
+      const doc: OutboxDoc = {
+        tenants: [r.tenantId],
+        kind: 'signContract',
+        ruleKey: r.ruleKey,
+        day: getTodayStr(DateFormat.StoreDate),
+        state: 'pending',
+        payload: {
+          templateId: r.templateId, payloadJson: JSON.stringify(r.payload), filename: r.filename,
+          documentName: r.documentName, sourceRef: r.sourceRef, personKey: r.personKey, kind: r.kind,
+        },
+      };
+      try {
+        await db.collection(WorkflowOutboxCollection).doc(id).create(doc);
+      } catch (e) {
+        if ((e as { code?: number }).code === 6) {   // gRPC ALREADY_EXISTS
+          logger.info(`${CF_NAME}: signContract already queued for ${r.sourceRef} (tenant ${r.tenantId})`);
+          return;
+        }
+        throw e;
+      }
+      logger.info(`${CF_NAME}: queued signContract for rule ${r.ruleKey} (tenant ${r.tenantId})`);
     },
 
     async responsibility(key, tenantId): Promise<ResponsibilityDoc | undefined> {

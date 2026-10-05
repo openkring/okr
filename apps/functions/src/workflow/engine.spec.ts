@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { AvatarInfo, DeliveryChannel } from '@okr/shared-models';
 
-import { MAX_RULE_SENDS_PER_DAY, SUBJECT_RECIPIENT, isDelegateActive, isResponsibilityValid, resolveAssignee, runAction, runProbe, runWorkflowWith } from './engine';
+import { MAX_RULE_SENDS_PER_DAY, SUBJECT_RECIPIENT, isDelegateActive, isResponsibilityValid, resolveAssignee, responsibleOf, runAction, runProbe, runWorkflowWith } from './engine';
 import { PostalAddress } from '../contract/contract-request.util';
 import { ContractKindDoc, ContractSigningRequest, EsignRequest, InvoiceDoc, InvoiceWithPositions, LetterPdfRequest, LetterPdfResult, NewApproval, NewTask, OpenChatRoomRequest, OutgoingChatMessage, OutgoingEmail, OwnershipDoc, ResponsibilityDoc, WorkflowActionStepDoc, WorkflowContext, WorkflowDeps, WorkflowRuleDoc } from './types';
 
@@ -850,5 +850,37 @@ describe('signContract', () => {
     const deps = fakeDeps(base);
     await runAction(signRule, ctx({ personKey: 'anna', params: {} }), deps);
     expect(deps.signings).toHaveLength(0);
+  });
+
+  it('aborts when there is no postal address', async () => {
+    const deps = fakeDeps({ ...base, postal: undefined });
+    await runAction(signRule, approved(), deps);
+    expect(deps.signings).toHaveLength(0);
+    expect(deps.activities.some((a) => String(a['error']).includes('postal'))).toBe(true);
+  });
+
+  it('aborts and logs when a role is vacant (archived responsibility, no admin fallback)', async () => {
+    const deps = fakeDeps({ ...base, responsibilities: { president: { isArchived: true, responsibleAvatar: avatar('dieter') } }, tenantAdmin: avatar('admin') });
+    await runAction(signRule, approved(), deps);
+    expect(deps.signings).toHaveLength(0);
+    expect(deps.activities.some((a) => String(a['error']).includes('no responsible person'))).toBe(true);
+  });
+
+  describe('responsibleOf', () => {
+    const resp = avatar('resp');
+    const del = avatar('del');
+    it('is undefined for undefined, archived and out-of-window responsibilities', () => {
+      expect(responsibleOf(undefined, TODAY)).toBeUndefined();
+      expect(responsibleOf({ responsibleAvatar: resp, isArchived: true }, TODAY)).toBeUndefined();
+      expect(responsibleOf({ responsibleAvatar: resp, validTo: '20260101' }, TODAY)).toBeUndefined();
+      expect(responsibleOf({ responsibleAvatar: resp, validFrom: '20270101' }, TODAY)).toBeUndefined();
+    });
+    it('chooses the active delegate over the responsible', () => {
+      expect(responsibleOf({ responsibleAvatar: resp, delegateAvatar: del, delegateValidFrom: '20260801', delegateValidTo: '20260831' }, TODAY)).toBe(del);
+    });
+    it('chooses the responsible when the delegate window is over, undefined when vacant', () => {
+      expect(responsibleOf({ responsibleAvatar: resp, delegateAvatar: del, delegateValidTo: '20260101' }, TODAY)).toBe(resp);
+      expect(responsibleOf({ responsibleAvatar: avatar('') }, TODAY)).toBeUndefined();
+    });
   });
 });
