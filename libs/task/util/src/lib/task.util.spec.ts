@@ -64,6 +64,10 @@ describe('Task Utils', () => {
   });
 
   describe('getRelatedRoute', () => {
+    it('links an approval task to the approval inbox', () => {
+      expect(getRelatedRoute('approval.a1')).toBe('/approval/all');
+    });
+
     it('should return the detail route of a linkable model type', () => {
       expect(getRelatedRoute('person.p1')).toBe('/person/p1');
       expect(getRelatedRoute('group.g1')).toBe('/group/g1');

@@ -24,6 +24,9 @@
     "@okr/cms-menu-feature": "*",
     "@okr/task-data-access": "*",
     "@okr/task-util": "*",
-    "@okr/task-ui": "*"
+    "@okr/task-ui": "*",
+    "@okr/system-workflow-data-access": "*",
+    "@okr/system-workflow-ui": "*",
+    "@okr/system-workflow-util": "*"
   }
 }

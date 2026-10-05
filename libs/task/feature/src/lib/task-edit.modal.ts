@@ -1,16 +1,22 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
+import { of, switchMap } from 'rxjs';
 import { IonAccordionGroup, IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { LowercaseWordMask } from '@okr/shared-config';
-import { CategoryListModel, TaskModel, TaskModelName, UserModel } from '@okr/shared-models';
+import { I18nService } from '@okr/shared-i18n';
+import { ApprovalModelName, CategoryListModel, TaskModel, TaskModelName, UserModel } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header, StringList } from '@okr/shared-ui';
-import { coerceBoolean, hasRole, newAvatarInfo, safeStructuredClone } from '@okr/shared-util-core';
+import { coerceBoolean, hasRole, newAvatarInfo, safeStructuredClone, warn } from '@okr/shared-util-core';
 
 import { CommentsAccordion } from '@okr/comment-feature';
 import { TaskForm } from '@okr/task-ui';
 import { AvatarSelect } from '@okr/avatar-ui';
-import { dismissOverlay, navigateByUrl } from '@okr/shared-util-angular';
+import { AlertService, dismissOverlay, navigateByUrl } from '@okr/shared-util-angular';
+import { ApprovalService } from '@okr/system-workflow-data-access';
+import { ApprovalDecisionCard } from '@okr/system-workflow-ui';
+import { WORKFLOW_I18N_KEYS, WorkflowI18n, canDecideApproval, canWithdrawApproval } from '@okr/system-workflow-util';
 
 import { TaskStore } from './task.store';
 
@@ -19,7 +25,7 @@ import { TaskStore } from './task.store';
   standalone: true,
   imports: [
     Header, ChangeConfirmation, TaskForm, CommentsAccordion,
-    AvatarSelect, StringList,
+    AvatarSelect, StringList, ApprovalDecisionCard,
     IonContent, IonAccordionGroup
   ],
   providers: [TaskStore],
@@ -32,6 +38,10 @@ import { TaskStore } from './task.store';
       <okr-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
+      @if(approval(); as approval) {
+        <okr-approval-decision-card [approval]="approval" [i18n]="workflowI18n"
+          [canDecide]="canDecide()" [canWithdraw]="canWithdraw()" (decided)="onDecided($event)" />
+      }
       @if(formData(); as formData) {
         <okr-task-form
           [i18n]="store.i18n"
@@ -98,6 +108,9 @@ export class TaskEditModal {
   private readonly modalController = inject(ModalController);
   private readonly router = inject(Router);
   protected readonly store = inject(TaskStore);
+  private readonly approvalService = inject(ApprovalService);
+  private readonly alertService = inject(AlertService);
+  protected readonly workflowI18n = inject(I18nService).translateAll(WORKFLOW_I18N_KEYS) as WorkflowI18n;
 
   // inputs
   public task = input.required<TaskModel>();
@@ -134,6 +147,25 @@ export class TaskEditModal {
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
   protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.store.i18n.cancel(), save: this.store.i18n.save()} as ChangeConfirmationI18n));
 
+  /** spec 1.88 §5.7 — the approval this task was opened for, if any */
+  protected readonly approvalKey = computed(() => {
+    const rk = this.task().relatedKey ?? '';
+    return rk.startsWith(`${ApprovalModelName}.`) ? rk.slice(ApprovalModelName.length + 1) : '';
+  });
+  protected readonly approval = toSignal(
+    toObservable(this.approvalKey).pipe(switchMap((key) => (key ? this.approvalService.read(key) : of(undefined)))),
+  );
+  private readonly myPersonKey = computed(() => this.currentUser()?.personKey ?? '');
+  private readonly isAdmin = computed(() => hasRole('admin', this.currentUser()));
+  protected readonly canDecide = computed(() => {
+    const a = this.approval();
+    return !!a && canDecideApproval(a, this.myPersonKey(), this.isAdmin());
+  });
+  protected readonly canWithdraw = computed(() => {
+    const a = this.approval();
+    return !!a && canWithdrawApproval(a, this.myPersonKey(), this.isAdmin());
+  });
+
   // passing constants to template
   protected calendarMask = LowercaseWordMask;
 
@@ -147,6 +179,20 @@ export class TaskEditModal {
     if (!url) return;
     await dismissOverlay(this.modalController);
     await navigateByUrl(this.router, url);
+  }
+
+  /** decideApproval sets the task done server-side; this modal never saves the task for a decision. */
+  protected async onDecided(d: { decision: 'approve' | 'reject' | 'withdraw'; note: string }): Promise<void> {
+    const key = this.approvalKey();
+    if (!key) return;
+    try {
+      await this.approvalService.decide(key, d.decision, d.note);
+      await dismissOverlay(this.modalController);
+    } catch (error) {
+      // never swallow: a failed decision would look like a successful one
+      warn('TaskEditModal.onDecided: ' + error);
+      this.alertService.error(`${this.workflowI18n.approval_decided_error()} ${error instanceof Error ? error.message : ''}`);
+    }
   }
 
   public async cancel(): Promise<void> {
