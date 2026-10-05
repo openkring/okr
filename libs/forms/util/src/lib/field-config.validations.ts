@@ -9,9 +9,9 @@ import { isDisplayField } from './field-kind';
 /** A field key becomes a property name of the submitted document: camelCase — a lower-case letter, then letters and digits (e.g. firstName). */
 export const FIELD_KEY_PATTERN = /^[a-z][a-zA-Z0-9]*$/;
 
-/** The cap on `label`: static text of a label element is prose, a field label is a short name. */
+/** The cap on `label`: the static text of a label or paragraph element is prose, a field label is a short name. */
 export function fieldLabelLength(field: Pick<Field, 'type'>): number {
-  return field.type === 'label' ? DESCRIPTION_LENGTH : LONG_NAME_LENGTH;
+  return field.type === 'label' || field.type === 'paragraph' ? DESCRIPTION_LENGTH : LONG_NAME_LENGTH;
 }
 
 /**

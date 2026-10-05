@@ -15,7 +15,7 @@ import { fieldConfigValidations, fieldLabelLength, FormI18n, isDisplayField } fr
 
 const FIELD_WIDTHS: Field['width'][] = ['full', 'half', 'third'];
 
-/** Configures one form-builder field: label/text, key, width, required, category, help and placeholder. */
+/** Configures one form-builder field: label/text, key, width, required, category, paragraph style, help and placeholder. */
 @Component({
   selector: 'okr-field-config-form',
   standalone: true,
@@ -30,11 +30,23 @@ const FIELD_WIDTHS: Field['width'][] = ['full', 'half', 'third'];
         <ion-card>
           <ion-card-content class="ion-no-padding">
             <ion-grid>
-              @if (formData().type === 'label') {
+              @if (isTextElement()) {
                 <ion-row>
                   <ion-col size="12">
                     <okr-notes-input [i18n]="textI18n()" [value]="label()" (valueChange)="onFieldChange('label', $event)"
                       [maxLength]="labelLength()" [readOnly]="isReadOnly()" [errors]="labelErrors()" />
+                  </ion-col>
+                </ion-row>
+              }
+              @if (formData().type === 'paragraph') {
+                <ion-row>
+                  <ion-col size="12" size-md="6">
+                    <okr-checkbox [i18n]="isIndentedI18n()" [checked]="isIndented()" (checkedChange)="onFieldChange('isIndented', $event)"
+                      [toggle]="true" justify="space-between" labelPlacement="start" [readOnly]="isReadOnly()" />
+                  </ion-col>
+                  <ion-col size="12" size-md="6">
+                    <okr-checkbox [i18n]="isSmallI18n()" [checked]="isSmall()" (checkedChange)="onFieldChange('isSmall', $event)"
+                      [toggle]="true" justify="space-between" labelPlacement="start" [readOnly]="isReadOnly()" />
                   </ion-col>
                 </ion-row>
               }
@@ -134,6 +146,17 @@ export class FieldConfigForm {
   // computed field accessors
   protected readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   protected readonly isDisplay = computed(() => isDisplayField(this.formData().type));
+  /** display elements whose static text is entered as prose */
+  protected readonly isTextElement = computed(() => this.formData().type === 'label' || this.formData().type === 'paragraph');
+  // a paragraph is indented and small unless switched off
+  protected readonly isIndented = computed(() => {
+    const fd = this.formData();
+    return fd.type === 'paragraph' ? fd.isIndented !== false : false;
+  });
+  protected readonly isSmall = computed(() => {
+    const fd = this.formData();
+    return fd.type === 'paragraph' ? fd.isSmall !== false : false;
+  });
   protected readonly labelLength = computed(() => fieldLabelLength(this.formData()));
   protected readonly label = computed(() => this.formData().label ?? '');
   protected readonly key = computed(() => this.formData().key ?? '');
@@ -164,6 +187,12 @@ export class FieldConfigForm {
   protected readonly widthLabels = computed(() => [
     this.i18n().field_width_full(), this.i18n().field_width_half(), this.i18n().field_width_third(),
   ]);
+  protected readonly isIndentedI18n = computed<CheckboxI18n>(() => ({
+    name: 'isIndented', label: this.i18n().field_is_indented(), helper: '',
+  }));
+  protected readonly isSmallI18n = computed<CheckboxI18n>(() => ({
+    name: 'isSmall', label: this.i18n().field_is_small(), helper: '',
+  }));
   protected readonly requiredI18n = computed<CheckboxI18n>(() => ({
     name: 'required', label: this.i18n().required(), helper: '',
   }));

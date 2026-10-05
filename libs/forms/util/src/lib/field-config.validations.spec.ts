@@ -35,7 +35,13 @@ describe('fieldConfigValidations', () => {
     expect(fieldConfigValidations({ ...base, type: 'category', categoryName: 'gender' } as Field).isValid()).toBe(true);
   });
 
-  it('allows prose length for the text of a label element only', () => {
+  it('requires the text of a paragraph but no key', () => {
+    expect(fieldConfigValidations({ ...base, type: 'paragraph', label: 'Bitte beachten…', key: '' } as Field).isValid()).toBe(true);
+    expect(fieldConfigValidations({ ...base, type: 'paragraph', label: '', key: '' } as Field).hasErrors('label')).toBe(true);
+  });
+
+  it('allows prose length for the text of a label or paragraph element only', () => {
     expect(fieldLabelLength({ type: 'label' })).toBeGreaterThan(fieldLabelLength({ type: 'text' }));
+    expect(fieldLabelLength({ type: 'paragraph' })).toBe(fieldLabelLength({ type: 'label' }));
   });
 });

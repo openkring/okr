@@ -18,6 +18,7 @@ describe('categoryNamesOf', () => {
 describe('isDisplayField', () => {
   it('treats label and divider as display-only', () => {
     expect(isDisplayField('label')).toBe(true);
+    expect(isDisplayField('paragraph')).toBe(true);
     expect(isDisplayField('category')).toBe(false);
   });
 });

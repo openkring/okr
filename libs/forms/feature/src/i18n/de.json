@@ -37,7 +37,9 @@
     "key_helper": "Unter diesem Namen wird die Antwort gespeichert, in camelCase: klein beginnen, jedes weitere Wort gross (z.B. firstName).",
     "key_invalid": "Schreibe den Feldnamen in camelCase: nur Buchstaben und Ziffern, klein beginnen (z.B. firstName).",
     "category": "Kategorie *",
-    "category_helper": "Aus dieser Liste wählt die ausfüllende Person einen Eintrag."
+    "category_helper": "Aus dieser Liste wählt die ausfüllende Person einen Eintrag.",
+    "is_indented": "Eingerückt",
+    "is_small": "Kleine Schrift"
   },
   "canvas_empty": "Ziehe Felder aus der Bibliothek hierher.",
   "library": "Feldbibliothek",

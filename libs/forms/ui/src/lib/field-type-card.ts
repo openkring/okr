@@ -11,7 +11,7 @@ export interface FieldTypeDef {
 }
 
 export const FIELD_TYPE_DEFS: FieldTypeDef[] = [
-  { type: 'text',      label: 'Text',      icon: 'text',         description: 'Single- or multi-line text input' },
+  { type: 'text',      label: 'Textfeld',  icon: 'text',         description: 'Single- or multi-line text input' },
   { type: 'email',     label: 'Email',     icon: 'mail',         description: 'Email address with RFC 5322 validation' },
   { type: 'number',    label: 'Number',    icon: 'calendar-number',   description: 'Numeric input with min/max/step' },
   { type: 'phone',     label: 'Phone',     icon: 'tel',         description: 'International phone number (E.164)' },
@@ -29,6 +29,7 @@ export const FIELD_TYPE_DEFS: FieldTypeDef[] = [
   { type: 'avatar',    label: 'Avatar',    icon: 'person',       description: 'Select person/org/resource (auth only)' },
   { type: 'category',  label: 'Kategorie', icon: 'list',         description: 'Single-select from a category list' },
   { type: 'label',     label: 'Label',     icon: 'info-circle', description: 'Static text — no input, not submitted' },
+  { type: 'paragraph', label: 'Text',      icon: 'document',     description: 'Paragraph of text, optionally indented and small — not submitted' },
   { type: 'divider',   label: 'Divider',   icon: 'remove',       description: 'Visual separator line' },
 ];
 

@@ -37,7 +37,9 @@
     "key_helper": "La risposta viene salvata con questo nome, in camelCase: inizia in minuscolo, ogni parola successiva in maiuscolo (ad es. firstName).",
     "key_invalid": "Scrivi il nome del campo in camelCase: solo lettere e cifre, iniziando in minuscolo (ad es. firstName).",
     "category": "Categoria *",
-    "category_helper": "Chi compila il modulo sceglie una voce da questo elenco."
+    "category_helper": "Chi compila il modulo sceglie una voce da questo elenco.",
+    "is_indented": "Rientrato",
+    "is_small": "Carattere piccolo"
   },
   "canvas_empty": "Trascina qui i campi dalla libreria.",
   "library": "Libreria di campi",

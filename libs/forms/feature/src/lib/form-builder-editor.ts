@@ -28,6 +28,7 @@ function newField(type: FieldType, order: number): Field {
     case 'checkbox': return { ...base, type };
     case 'avatar': return { ...base, type, avatarType: 'person' };
     case 'category': return { ...base, type, categoryName: '' };
+    case 'paragraph': return { ...base, type, isIndented: true, isSmall: true };
     default: return { ...base, type } as Field;
   }
 }

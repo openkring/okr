@@ -1,9 +1,9 @@
 import { Field, FieldType } from '@okr/shared-models';
 
 /** Element types that only display content — they hold no value and are never submitted. */
-export const DISPLAY_FIELD_TYPES: readonly FieldType[] = ['label', 'divider'];
+export const DISPLAY_FIELD_TYPES: readonly FieldType[] = ['label', 'paragraph', 'divider'];
 
-/** True for display-only elements (label, divider). */
+/** True for display-only elements (label, paragraph, divider). */
 export function isDisplayField(type: FieldType): boolean {
   return DISPLAY_FIELD_TYPES.includes(type);
 }

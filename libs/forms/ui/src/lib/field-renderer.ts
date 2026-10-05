@@ -39,6 +39,9 @@ const ERROR_KEYS: [string, string][] = [
     :host { display: block; }
     .help-text   { font-size: 12px; color: var(--ion-color-medium); padding: 2px 16px 4px; }
     .static-label { padding: 8px 16px; white-space: pre-wrap; }
+    .paragraph { margin: 0; padding: 8px 16px; white-space: pre-wrap; }
+    .paragraph.indented { padding-left: 32px; }
+    .paragraph.small { font-size: 0.85em; color: var(--ion-color-medium-shade); }
     .field-divider { border: none; border-top: 1px solid var(--ion-color-step-200, #ccc); margin: 12px 16px; }
   `],
   template: `
@@ -105,6 +108,9 @@ const ERROR_KEYS: [string, string][] = [
       }
       @case ('label') {
         <div class="static-label">{{ field().label }}</div>
+      }
+      @case ('paragraph') {
+        <p class="paragraph" [class.indented]="$any(field()).isIndented !== false" [class.small]="$any(field()).isSmall !== false">{{ field().label }}</p>
       }
       @case ('divider') {
         <hr class="field-divider" />

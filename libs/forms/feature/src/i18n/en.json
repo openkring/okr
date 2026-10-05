@@ -37,7 +37,9 @@
     "key_helper": "The answer is stored under this name, in camelCase: start lower-case, capitalise each further word (e.g. firstName).",
     "key_invalid": "Write the field name in camelCase: letters and digits only, starting lower-case (e.g. firstName).",
     "category": "Category *",
-    "category_helper": "The person filling in the form picks one entry from this list."
+    "category_helper": "The person filling in the form picks one entry from this list.",
+    "is_indented": "Indented",
+    "is_small": "Small print"
   },
   "canvas_empty": "Drag fields here from the library.",
   "library": "Field library",

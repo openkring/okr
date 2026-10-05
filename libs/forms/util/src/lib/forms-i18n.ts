@@ -92,6 +92,8 @@ export const FORM_I18N_KEYS = {
   field_key_helper:           PFX + 'field.key_helper',
   field_category:             PFX + 'field.category',
   field_category_helper:      PFX + 'field.category_helper',
+  field_is_indented:          PFX + 'field.is_indented',
+  field_is_small:             PFX + 'field.is_small',
   field_width_full:           PFX + 'field.width_full',
   field_width_half:           PFX + 'field.width_half',
   field_width_third:          PFX + 'field.width_third',

@@ -64,9 +64,12 @@ export class FieldConfigModal {
     setTimeout(() => this.showForm.set(true), 0);
   }
 
-  // a category field must carry its categoryName key, else the Vest error has no form node to land on
+  // a category field must carry its categoryName key, else the Vest error has no form node to land on;
+  // a paragraph gets its defaults (indented, small) spelled out
   private cloneField(): Field {
     const clone = safeStructuredClone(this.field()) ?? this.field();
-    return clone.type === 'category' ? { ...clone, categoryName: clone.categoryName ?? '' } : clone;
+    if (clone.type === 'category') return { ...clone, categoryName: clone.categoryName ?? '' };
+    if (clone.type === 'paragraph') return { ...clone, isIndented: clone.isIndented ?? true, isSmall: clone.isSmall ?? true };
+    return clone;
   }
 }

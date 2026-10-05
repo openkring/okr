@@ -9,7 +9,7 @@ export type FieldType =
   | 'text' | 'email' | 'number' | 'phone' | 'iban' | 'password'
   | 'dropdown' | 'checkbox' | 'radio' | 'file' | 'images'
   | 'date' | 'time' | 'signature' | 'rating' | 'avatar' | 'category'
-  | 'label' | 'divider';
+  | 'label' | 'paragraph' | 'divider';
 
 export interface FieldOption { label: string; value: string; }
 
@@ -45,13 +45,15 @@ export interface AvatarField extends FieldBase { type: 'avatar'; avatarType: 'pe
 export interface CategoryField extends FieldBase { type: 'category'; categoryName: string; }
 // Display-only elements — no input value, never submitted. `label` holds the static text.
 export interface LabelField extends FieldBase { type: 'label'; }
+// A paragraph of static text (held in `label`); both flags default to true when absent.
+export interface ParagraphField extends FieldBase { type: 'paragraph'; isIndented?: boolean; isSmall?: boolean; }
 export interface DividerField extends FieldBase { type: 'divider'; }
 
 export type Field =
   | TextField | EmailField | NumberField | PhoneField | IbanField | PasswordField
   | DropdownField | CheckboxField | RadioField | FileField | ImagesField
   | DateField | TimeField | SignatureField | RatingField | AvatarField | CategoryField
-  | LabelField | DividerField;
+  | LabelField | ParagraphField | DividerField;
 
 // ──────────────────────────────────────────
 // Submission target

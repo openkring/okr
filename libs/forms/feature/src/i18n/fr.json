@@ -37,7 +37,9 @@
     "key_helper": "La réponse est enregistrée sous ce nom, en camelCase : commence en minuscule, chaque mot suivant avec une majuscule (p. ex. firstName).",
     "key_invalid": "Écris le nom du champ en camelCase : uniquement des lettres et des chiffres, en commençant par une minuscule (p. ex. firstName).",
     "category": "Catégorie *",
-    "category_helper": "La personne qui remplit le formulaire choisit une entrée de cette liste."
+    "category_helper": "La personne qui remplit le formulaire choisit une entrée de cette liste.",
+    "is_indented": "En retrait",
+    "is_small": "Petits caractères"
   },
   "canvas_empty": "Faites glisser les champs de la bibliothèque ici.",
   "library": "Bibliothèque de champs",
