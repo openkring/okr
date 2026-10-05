@@ -4,6 +4,7 @@
 // the webhook: the record is the state, so a replayed webhook or a manual status fix produces the same
 // events, and the archive trigger's signedPdfPath write is visible here without coupling the two.
 import { onDocumentUpdated } from 'firebase-functions/v2/firestore';
+import { logger } from 'firebase-functions/v2';
 import { getFirestore } from 'firebase-admin/firestore';
 import { ApprovalCollection, EsignCollection } from '@okr/shared-models';
 import { emitEvent } from '../workflow/emit';
@@ -54,8 +55,15 @@ export const esignWorkflowEvents = onDocumentUpdated(
     if (!before || !after) return;
     const events = esignTransitions(before, after, event.params['esignId']);
     if (!events.length) return;
-    const approval = (await getFirestore().collection(ApprovalCollection).doc(events[0].params['approvalKey']).get()).data();
-    if (!approval) return;
+    const esignId = event.params['esignId'];
+    const approvalKey = events[0].params['approvalKey'];
+    const approval = (await getFirestore().collection(ApprovalCollection).doc(approvalKey).get()).data();
+    if (!approval) {
+      // The run's events are dropped: without the approval there is no member to address.
+      logger.warn('esignWorkflowEvents: approval missing, events dropped',
+        { esignId, approvalKey, events: events.map((e) => e.event) });
+      return;
+    }
     const tenantId = String(after['tenantId'] ?? '');
     for (const e of events) {
       await emitEvent(e.event, tenantId, e.relatedKey, {
