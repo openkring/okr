@@ -441,9 +441,23 @@ async function signContract(rule: WorkflowRuleDoc, step: WorkflowActionStepDoc, 
   });
 }
 
-/** Task 8 replaces this stub. */
-async function fileContract(rule: WorkflowRuleDoc, ctx: WorkflowContext, deps: WorkflowDeps): Promise<void> {
-  await deps.logActivity(ctx.tenantId, { rule: rule.okey, event: ctx.event, action: 'fileContract', error: 'fileContract not implemented' });
+async function fileContract(rule: WorkflowRuleDoc, step: WorkflowActionStepDoc, ctx: WorkflowContext, deps: WorkflowDeps): Promise<void> {
+  const fail = (error: string) => deps.logActivity(ctx.tenantId, { rule: rule.okey, event: ctx.event, action: 'fileContract', error });
+  const kind = (step.actionArg ?? '').trim();
+  const approvalKey = ctx.params['approvalKey'] ?? '';
+  const signedPdfPath = ctx.params['signedPdfPath'] ?? '';
+  if (!kind || !approvalKey || !signedPdfPath || !ctx.personKey) return fail('fileContract needs kind, approvalKey, signedPdfPath and a person');
+  const sourceRef = `approval.${approvalKey}`;
+  let contractKey = await deps.contractBySourceRef(sourceRef, ctx.tenantId);
+  if (!contractKey) {
+    const kindDoc = await deps.contractKind(kind, ctx.tenantId);
+    const applicant = await deps.avatarFor(ctx.personKey, ctx.tenantId);
+    if (!kindDoc || !applicant?.key) return fail('contract kind or applicant missing');
+    contractKey = await deps.fileSignedContract({ tenantId: ctx.tenantId, kind, kindDoc, applicant,
+      orgKey: kindDoc.orgKey ?? ctx.tenantId, signedPdfPath, sourceRef, today: ctx.today });
+  }
+  // shared ctx: the next openChat step of this rule renders {contractLink}
+  ctx.params['contractLink'] = `${await deps.appBaseUrl(ctx.tenantId)}/contract/detail/${contractKey}`;
 }
 
 /**
@@ -477,7 +491,7 @@ export async function runStep(
 
   // signContract / fileContract address no assignee — the signers come from the contract kind.
   if (action === 'signContract') { await signContract(rule, step, ctx, deps); return; }
-  if (action === 'fileContract') { await fileContract(rule, ctx, deps); return; }   // Task 8
+  if (action === 'fileContract') { await fileContract(rule, step, ctx, deps); return; }
 
   // openChat addresses a GROUP, so it neither needs nor waits for a resolved assignee — a rule
   // whose responsibility is unfilled must still be able to open the conversation.

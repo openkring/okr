@@ -1,0 +1,63 @@
+// apps/functions/src/contract/file-contract.ts
+//
+// A fully signed DeepSign PDF becomes a contract dossier (spec 1.87 §6.6). The PDF is COPIED from the
+// default bucket (esign archive) into the private bucket where contract files live.
+import { getFirestore } from 'firebase-admin/firestore';
+import { getStorage } from 'firebase-admin/storage';
+import { AvatarInfo, ContractCollection, ContractDocumentCollection, ContractModel, NoticePeriod } from '@okr/shared-models';
+import { applyDerivedFields } from '@okr/business-contract-util';
+import { privateBucket } from '../_storage/private-bucket';
+import { buildContractDocumentStamp, contractDocumentPath } from './contract-document.util';
+import type { FileContractRequest } from '../workflow/types';
+
+const months = (v: string | undefined): NoticePeriod | undefined =>
+  Number(v) > 0 ? { duration: Number(v), unit: 'months' } : undefined;
+
+export function buildSignedContract(req: FileContractRequest, orgAvatar: AvatarInfo): ContractModel {
+  const c = new ContractModel(req.tenantId);
+  const applicantName = `${req.applicant.name1 ?? ''} ${req.applicant.name2 ?? ''}`.trim();
+  c.name = (req.kindDoc.contractName || `${req.kindDoc.name ?? req.kind} {name}`).replace('{name}', applicantName).trim();
+  c.contractType = (req.kindDoc.contractType ?? 'lease') as ContractModel['contractType'];
+  c.state = 'active';
+  c.parties = [{ role: 'internal', avatar: orgAvatar }, { role: 'counterparty', avatar: req.applicant }];
+  c.signingDate = req.today;
+  c.startDate = req.today;
+  c.endDate = '';
+  c.notice = { ours: months(req.kindDoc.terms?.['noticeOursMonths']), theirs: months(req.kindDoc.terms?.['noticeTheirsMonths']), to: 'monthEnd' };
+  c.tags = `contract:${req.kind}`;
+  c.sourceRef = req.sourceRef;
+  c.confidentiality = 'internal';
+  return applyDerivedFields(c, req.today);
+}
+
+export async function fileSignedContract(req: FileContractRequest): Promise<string> {
+  const db = getFirestore();
+  const org = (await db.collection('orgs').doc(req.orgKey).get()).data() ?? {};
+  const orgAvatar: AvatarInfo = { key: req.orgKey, name1: '', name2: String(org['name'] ?? req.orgKey),
+    modelType: 'org', type: '', subType: '', label: '' };
+  const contract = buildSignedContract(req, orgAvatar);
+  const contractRef = db.collection(ContractCollection).doc();
+  const docRef = db.collection(ContractDocumentCollection).doc();
+  const path = contractDocumentPath(req.tenantId, contractRef.id, docRef.id, 'signed.pdf');
+
+  const [buffer] = await getStorage().bucket().file(req.signedPdfPath).download();
+  await privateBucket().file(path).save(buffer, { metadata: { contentType: 'application/pdf' } });
+
+  const title = `${contract.name} (unterschrieben)`;
+  const { okey, ...contractDoc } = contract;
+  void okey;
+  contractDoc.documents = [{ docKey: docRef.id, role: 'contract', title, docState: 'signed' }];
+  const batch = db.batch();
+  batch.set(contractRef, contractDoc);
+  batch.set(docRef, {
+    isArchived: false, index: `n:${title}`, tags: '', folderKeys: [],
+    fullPath: path, description: '', title, altText: title, type: 'legal', source: 'storage', credit: '', url: '',
+    mimeType: 'application/pdf', size: buffer.length,
+    authorKey: '', authorName: 'DeepSign', dateOfDocCreation: req.today, dateOfDocLastUpdate: req.today,
+    locationKey: '', hash: '', priorVersionKey: '', version: '1', renderings: [],
+    contractKey: contractRef.id,
+    ...buildContractDocumentStamp(contractDoc as unknown as Record<string, unknown>),
+  });
+  await batch.commit();
+  return contractRef.id;
+}

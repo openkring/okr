@@ -4,7 +4,7 @@ import { AvatarInfo, DeliveryChannel } from '@okr/shared-models';
 
 import { MAX_RULE_SENDS_PER_DAY, SUBJECT_RECIPIENT, isDelegateActive, isResponsibilityValid, resolveAssignee, responsibleOf, runAction, runProbe, runWorkflowWith } from './engine';
 import { PostalAddress } from '../contract/contract-request.util';
-import { ContractKindDoc, ContractSigningRequest, EsignRequest, InvoiceDoc, InvoiceWithPositions, LetterPdfRequest, LetterPdfResult, NewApproval, NewTask, OpenChatRoomRequest, OutgoingChatMessage, OutgoingEmail, OwnershipDoc, ResponsibilityDoc, WorkflowActionStepDoc, WorkflowContext, WorkflowDeps, WorkflowRuleDoc } from './types';
+import { ContractKindDoc, ContractSigningRequest, EsignRequest, FileContractRequest, InvoiceDoc, InvoiceWithPositions, LetterPdfRequest, LetterPdfResult, NewApproval, NewTask, OpenChatRoomRequest, OutgoingChatMessage, OutgoingEmail, OwnershipDoc, ResponsibilityDoc, WorkflowActionStepDoc, WorkflowContext, WorkflowDeps, WorkflowRuleDoc } from './types';
 
 const TENANT = 'scs';
 const TODAY = '20260813';
@@ -37,6 +37,7 @@ function rule(overrides: Partial<WorkflowRuleDoc> = {}): WorkflowRuleDoc {
 }
 
 interface Fake extends WorkflowDeps {
+  contracts: FileContractRequest[];
   tasks: NewTask[];
   activities: Record<string, unknown>[];
   emails: OutgoingEmail[];
@@ -59,6 +60,7 @@ function fakeDeps(over: Partial<{
   contractKind?: ContractKindDoc;
   postal?: PostalAddress;
   esignRun?: boolean;
+  existingContract?: string;
   emails?: Record<string, string>;
   groupAdmin?: AvatarInfo;
   tenantAdmin?: AvatarInfo;
@@ -80,9 +82,11 @@ function fakeDeps(over: Partial<{
   const chats: OpenChatRoomRequest[] = [];
   const letters: LetterPdfRequest[] = [];
   const signings: ContractSigningRequest[] = [];
+  const contracts: FileContractRequest[] = [];
   const channelAsks: { personKey: string; tenantId: string; kind: string }[] = [];
   return {
     signings,
+    contracts,
     tasks,
     activities,
     emails,
@@ -98,6 +102,9 @@ function fakeDeps(over: Partial<{
     postalAddressFor: async () => over.postal,
     hasEsignRun: async () => over.esignRun ?? false,
     queueContractSigning: async (r) => { signings.push(r); },
+    contractBySourceRef: async () => over.existingContract,
+    fileSignedContract: async (r) => { contracts.push(r); return 'c1'; },
+    appBaseUrl: async () => 'https://app.seeclub.org',
     matrixIdFor: async () => over.matrixId ?? '',
     deliveryChannelsFor: async (personKey, tenantId, kind): Promise<DeliveryChannel[]> => {
       channelAsks.push({ personKey, tenantId, kind });
@@ -882,5 +889,36 @@ describe('signContract', () => {
       expect(responsibleOf({ responsibleAvatar: resp, delegateAvatar: del, delegateValidTo: '20260101' }, TODAY)).toBe(resp);
       expect(responsibleOf({ responsibleAvatar: avatar('') }, TODAY)).toBeUndefined();
     });
+  });
+});
+
+describe('fileContract', () => {
+  const completed = () => ctx({
+    event: 'esign.completed', personKey: 'anna', relatedKey: 'approval.ap1',
+    params: { kind: 'skiffPlatz', approvalKey: 'ap1', signedPdfPath: 'tenants/scs/esign/e1/signed.pdf', esignId: 'e1' },
+  });
+  const fileRule = rule({ steps: [
+    { action: 'fileContract', actionArg: 'skiffPlatz' },
+    { action: 'openChat', actionArg: 'Ausschuss Boote', messageKey: '@workflow/messages.contractFiled' },
+  ] });
+  const base = {
+    contractKind: { name: 'Skiff-Lagerplatz', orgKey: 'scs', contractType: 'lease' } as ContractKindDoc,
+    requester: { key: 'anna', name1: 'Anna', name2: 'Muster', modelType: 'person', type: '', subType: '', label: '' } as AvatarInfo,
+  };
+
+  it('files the contract and hands the link to the next step', async () => {
+    const deps = fakeDeps(base);
+    deps.translate = async (_t, key, params) => `${key}|${params['contractLink']}`;
+    await runAction(fileRule, completed(), deps);
+    expect(deps.contracts[0]).toMatchObject({ sourceRef: 'approval.ap1', signedPdfPath: 'tenants/scs/esign/e1/signed.pdf', orgKey: 'scs' });
+    expect(deps.chats[0].body).toBe('@workflow/messages.contractFiled|https://app.seeclub.org/contract/detail/c1');
+  });
+
+  it('fileContract is idempotent', async () => {
+    const deps = fakeDeps({ ...base, existingContract: 'c0' });
+    deps.translate = async (_t, key, params) => `${key}|${params['contractLink']}`;
+    await runAction(fileRule, completed(), deps);
+    expect(deps.contracts).toHaveLength(0);
+    expect(deps.chats[0].body).toContain('/contract/detail/c0');
   });
 });

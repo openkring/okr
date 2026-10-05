@@ -11,10 +11,12 @@
 import { getFirestore } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/v2';
 
-import { ApprovalCollection, ApprovalModel, ApprovalModelName, AvatarInfo, ContractKindCollection, DeliveryChannel, EsignCollection, TaskModel, WorkflowRuleCollection } from '@okr/shared-models';
+import { ApprovalCollection, ApprovalModel, ApprovalModelName, AvatarInfo, ContractCollection, ContractKindCollection, DeliveryChannel, EsignCollection, TaskModel, WorkflowRuleCollection } from '@okr/shared-models';
 import { DateFormat, getTodayStr, toDeliveryChannels } from '@okr/shared-util-core';
 import { getTaskIndex } from '@okr/task-util';
 
+import { fileSignedContract } from '../contract/file-contract';
+import { appBaseUrl } from '../alias/tenant-domains';
 import { PostalAddress, formatPostalAddress } from '../contract/contract-request.util';
 import { shiftDaysBack } from '../auth/account-sync.decide';
 import { serverHostname } from '../matrix-simple/shared';
@@ -144,6 +146,15 @@ export function createFirestoreDeps(): WorkflowDeps {
       const snap = await db.collection(EsignCollection).where('sourceRef', '==', sourceRef).get();
       return snap.docs.some((d) => !['rejected', 'withdrawn', 'error'].includes(String(d.data()['documentStatus'] ?? '')));
     },
+
+    async contractBySourceRef(sourceRef, tenantId): Promise<string | undefined> {
+      const snap = await db.collection(ContractCollection).where('sourceRef', '==', sourceRef).get();
+      return snap.docs.find((d) => ((d.data()['tenants'] as string[]) ?? []).includes(tenantId))?.id;
+    },
+
+    fileSignedContract,
+
+    appBaseUrl,
 
     async queueContractSigning(r): Promise<void> {
       // Deterministic id: a re-fired approval.decided before the outbox dispatches (so before an

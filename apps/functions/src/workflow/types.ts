@@ -132,6 +132,12 @@ export interface ContractKindDoc {
   isArchived?: boolean;
 }
 
+export interface FileContractRequest {
+  tenantId: string; kind: string; kindDoc: ContractKindDoc;
+  applicant: AvatarInfo; orgKey: string;
+  signedPdfPath: string; sourceRef: string; today: string;
+}
+
 export interface ContractSigningRequest {
   tenantId: string; ruleKey: string;
   templateId: string;
@@ -226,4 +232,9 @@ export interface WorkflowDeps {
   /** a non-terminal-failure esign run with this sourceRef exists (idempotency of signContract) */
   hasEsignRun(sourceRef: string): Promise<boolean>;
   queueContractSigning(req: ContractSigningRequest): Promise<void>;
+  /** okey of the contract already filed for this sourceRef (idempotency of fileContract) */
+  contractBySourceRef(sourceRef: string, tenantId: string): Promise<string | undefined>;
+  /** copies the signed PDF into the private bucket and creates the `signed` contract dossier */
+  fileSignedContract(req: FileContractRequest): Promise<string>;
+  appBaseUrl(tenantId: string): Promise<string>;
 }
