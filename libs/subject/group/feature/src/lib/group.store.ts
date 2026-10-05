@@ -1,4 +1,4 @@
-import { computed, inject, Injector } from '@angular/core';
+import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { firstValueFrom, map, of } from 'rxjs';
 import { Router } from '@angular/router';
@@ -9,7 +9,7 @@ import { Photo } from '@capacitor/camera';
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore, PersonSelectModal, PersonSelectResult } from '@okr/shared-feature';
 import { ArticleSection, AvatarInfo, CalendarCollection, CalendarModel, ChatSection, ColorIonic, GroupCollection, GroupModel, GroupModelName, ImageActionType, MembershipModel, PageCollection, PageModel, PersonModel, SectionCollection, ViewPosition } from '@okr/shared-models';
-import { AlertService, AppNavigationService, lazyService, navigateByUrl } from '@okr/shared-util-angular';
+import { AlertService, AppNavigationService, navigateByUrl } from '@okr/shared-util-angular';
 import { chipMatches, debugData, debugItemLoaded, debugListLoaded, fill, generateRandomString, getAvatarInfo, getAvatarInfoForCurrentUser, getSystemQuery, isGroup, isPerson, nameMatches } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
 
@@ -52,8 +52,6 @@ export const GroupStore = signalStore(
     alertService: inject(AlertService),
     toastController: inject(ToastController),
     // Lazy: a static import here would drag matrix-js-sdk before the LCP (spec 1.49, F1).
-    chatService: lazyService(inject(Injector), () =>
-      import('@okr/chat-data-access').then(m => m.MatrixChatService)),
     i18nService: inject(I18nService)
   })),
   withProps((store) => ({
@@ -311,12 +309,14 @@ export const GroupStore = signalStore(
               await this.createGroupPage(data, 'content', store.i18n.content(), articleId);
             }
 
-            // create default chat section/page and chat room
+            // create default chat section/page. The Matrix room is NOT created here: the
+            // admins' memberships written above fire onMembershipWritten, whose
+            // resolveGroupRoom creates it as @bk2-bot (alias, tenant marker, matrixRoomId).
+            // A room created on the user's own account made them its creator, and since room
+            // version 12 a creator can never be removed — not even by the bot.
             if (data.hasChat) {
               const chatId = await this.createChatSection(data);
               await this.createGroupPage(data, 'chat', store.i18n.chat_group_name(), chatId);
-              const matrix = await store.chatService();
-              await matrix.createGroupRoom(data.okey, [], store.i18n.chat_group_name() + ': ' + data.name);
             }
           } else {
             await store.groupService.update(data, store.currentUser());
