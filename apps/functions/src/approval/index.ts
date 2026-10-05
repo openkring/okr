@@ -19,6 +19,7 @@ import { DateFormat, getTodayStr } from '@okr/shared-util-core';
 
 import { emitEvent } from '../workflow/emit';
 import { resolveWriteBack } from './write-back';
+import { approvalSubjectPersonKey } from './approval-person';
 
 const REGION = 'europe-west6';
 const CF_NAME = 'decideApproval';
@@ -154,6 +155,7 @@ export const onApprovalDecided = onDocumentUpdated(
     // about the reservation or application, not about the approval bookkeeping.
     await emitEvent('approval.decided', tenantId, subjectKey, {
       subjectName: (after['subjectName'] as string) ?? '',
+      personKey: approvalSubjectPersonKey(after),
       params: {
         decision: state,
         kind: (after['kind'] as string) ?? '',
