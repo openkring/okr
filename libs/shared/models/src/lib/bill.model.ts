@@ -27,7 +27,7 @@ export class BillModel implements OkrModel, SearchableModel, TaggedModel {
   public bexioUrl = DEFAULT_URL; // URL to bexio invoice
   public attachments: string[] = []; // finance-documents okeys ('bexio-file-…', spec 1.68); legacy: bexio file UUIDs
   public payments: BillPayment[] = []; // outgoing payments, oldest first
-  public bookingAccount: string = '';  // migrated bexio bills: comma-separated account okeys; native bills use `lines`
+  public bookingAccount = '';          // migrated bexio bills: comma-separated account okeys; native bills use `lines`
   public lines: BillLine[] = [];       // native bill lines (spec 1.85 Q2); [] on migrated bills
   public paymentReference = '';        // creditor reference (QRR/SCOR) from the QR-bill, normalized (spec 1.85)
   public creditorIban = '';            // the vendor's IBAN from the QR-bill (spec 1.85)
