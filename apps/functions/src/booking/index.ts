@@ -7,6 +7,8 @@ import { convertDateFormatToString, DateFormat, getTodayStr } from '@okr/shared-
 
 import { assertExplicitCostCenter, costCenterKeyForLine, loadCostCenterContext } from '../cost-center/cost-center-context';
 import { assertPeriodsOpen, loadFiscalYearStart, touchedPeriodKeys } from './period-lock';
+import { BillCollection, InvoiceCollection } from '@okr/shared-models';
+import { billAfterPaymentRemoval, invoiceAfterPaymentRemoval, issueBookingBillKey } from '../bill/bill-payment.logic';
 
 const REGION = 'europe-west6';
 const CF_NAME = 'reviewBooking';
@@ -249,6 +251,10 @@ export const writeBooking = onCall(
       if (existing['status'] === 'forReview') {
         throw new HttpsError('failed-precondition', 'a forReview booking is changed through reviewBooking');
       }
+      // a bill's own booking mirrors the bill (spec 1.85): delete it (→ the bill is a draft again) instead of editing it
+      if (mode === 'update' && d.bookingKey.startsWith('bill-')) {
+        throw new HttpsError('failed-precondition', `booking ${d.bookingKey} belongs to a bill — delete it instead`, { reason: 'bill-booking' });
+      }
     }
 
     const bookingKey = mode === 'create' ? db.collection(BOOKING_COLLECTION).doc().id : d.bookingKey!;
@@ -259,11 +265,13 @@ export const writeBooking = onCall(
     if (mode === 'delete') {
       const acct = existing?.['accountingTenantId'] as string;
       await assertPeriodsOpen(db, touchedPeriodKeys(acct, [existing?.['date'] as string], await loadFiscalYearStart(db, acct)));
+      const cleanup = await paymentCleanup(db, bookingKey, acct);
       const batch = db.batch();
       for (const ref of oldLineRefs) batch.delete(ref);
       batch.delete(bookingRef);
+      for (const { ref, patch } of cleanup) batch.update(ref, patch);
       await batch.commit();
-      logger.info(`${WRITE_CF_NAME}: deleted booking ${bookingKey} (tenant=${tenantId})`);
+      logger.info(`${WRITE_CF_NAME}: deleted booking ${bookingKey} (tenant=${tenantId}, ${cleanup.length} bill/invoice doc(s) cleaned up)`);
       return { bookingKey, bookingNo: 0 };
     }
 
@@ -336,6 +344,52 @@ export const writeBooking = onCall(
     return { bookingKey, bookingNo };
   },
 );
+
+/**
+ * What deleting a booking does to the bills and invoices of the same books (spec 1.85 Q3):
+ * - the native issue booking `bill-{key}` of a bill: the bill goes back to `draft` (refused with
+ *   `bill-has-payments` while it carries payments — those are undone first);
+ * - a payment booking: the payment that points at it is removed from every bill and invoice, and
+ *   state and payment date are derived again.
+ * Plain reads before the delete batch; the books are small enough to scan (writeBooking reads the
+ * whole ledger on create anyway).
+ */
+async function paymentCleanup(
+  db: FirebaseFirestore.Firestore, bookingKey: string, accountingTenantId: string,
+): Promise<{ ref: FirebaseFirestore.DocumentReference; patch: Record<string, unknown> }[]> {
+  const patches: { ref: FirebaseFirestore.DocumentReference; patch: Record<string, unknown> }[] = [];
+  const issuedBillKey = issueBookingBillKey(bookingKey);
+  if (issuedBillKey) {
+    const billRef = db.collection(BillCollection).doc(issuedBillKey);
+    const bill = (await billRef.get()).data();
+    if (bill && ((bill['bookingKeys'] as string[] | undefined) ?? []).includes(bookingKey)) {
+      if (((bill['payments'] as unknown[] | undefined) ?? []).length > 0) {
+        throw new HttpsError('failed-precondition', `bill ${issuedBillKey} has payments — remove them before its booking`, { reason: 'bill-has-payments' });
+      }
+      patches.push({ ref: billRef, patch: { state: 'draft', bookingKeys: [] } });
+    }
+  }
+  if (!accountingTenantId) return patches;
+  const [bills, invoices] = await Promise.all([
+    db.collection(BillCollection).where('accountingTenantId', '==', accountingTenantId).get(),
+    db.collection(InvoiceCollection).where('accountingTenantId', '==', accountingTenantId).get(),
+  ]);
+  for (const doc of bills.docs) {
+    const d = doc.data();
+    const after = billAfterPaymentRemoval({
+      state: String(d['state'] ?? ''), totalAmount: d['totalAmount'], payments: d['payments'], accountingTenantId,
+    }, bookingKey);
+    if (after) patches.push({ ref: doc.ref, patch: { payments: after.payments, state: after.state, paymentDate: after.paymentDate } });
+  }
+  for (const doc of invoices.docs) {
+    const d = doc.data();
+    const after = invoiceAfterPaymentRemoval({
+      state: String(d['state'] ?? ''), bookingKey: d['bookingKey'], totalAmount: d['totalAmount'], payments: d['payments'], reminders: d['reminders'],
+    }, bookingKey);
+    if (after) patches.push({ ref: doc.ref, patch: { payments: after.payments, state: after.state, paymentDate: after.paymentDate } });
+  }
+  return patches;
+}
 
 /**
  * The review task opened for this booking, or '' if none.
