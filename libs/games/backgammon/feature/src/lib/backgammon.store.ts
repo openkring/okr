@@ -1,6 +1,9 @@
-import { computed, inject } from '@angular/core';
+import { PLATFORM_ID, computed, inject } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { patchState, signalStore, withComputed, withHooks, withMethods, withProps, withState } from '@ngrx/signals';
 
+import { ActivityService } from '@okr/activity-data-access';
+import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import {
   BACKGAMMON_I18N_KEYS,
@@ -111,6 +114,9 @@ export const BackgammonStore = signalStore(
   }),
 
   withProps(() => ({
+    _browser: isPlatformBrowser(inject(PLATFORM_ID)),
+    _appStore: inject(AppStore),
+    _activityService: inject(ActivityService),
     i18n: inject(I18nService).translateAll(BACKGAMMON_I18N_KEYS) as BackgammonI18n,
     _timer: { handle: undefined as ReturnType<typeof setTimeout> | undefined, generation: 0 },
   })),
@@ -143,6 +149,10 @@ export const BackgammonStore = signalStore(
       store._timer.generation++;
     }
 
+    function logGame(action: 'start' | 'finish'): void {
+      store._activityService.logGame('backgammon', action, store._appStore.currentUser);
+    }
+
     /** Re-selects the bar while checkers wait there, since nothing else may move. */
     const autoSelect = (game: BgState): BgFrom | null => (game.bar[game.turn] > 0 && legalSteps(game).length ? 'bar' : null);
 
@@ -161,6 +171,7 @@ export const BackgammonStore = signalStore(
           lastTurn: { player: winner, steps: store.steps() },
           thinking: false,
         });
+        logGame('finish');
       }
     }
 
@@ -209,6 +220,7 @@ export const BackgammonStore = signalStore(
         writeSettings(mode, human);
         const same = mode === store.mode() && human === store.human();
         patchState(store, freshGame(mode, human, same ? store.score() : { W: 0, B: 0 }));
+        logGame('start');
         maybeComputer();
       },
 
@@ -259,8 +271,12 @@ export const BackgammonStore = signalStore(
   }),
 
   withHooks(store => ({
-    // The computer may have won the opening roll, in which case it opens.
-    onInit: () => store._start(),
+    // Nothing is saved, so opening the page always deals a new game. The computer may have won
+    // the opening roll, in which case it opens.
+    onInit: () => {
+      if (store._browser) store._activityService.logGame('backgammon', 'start', store._appStore.currentUser);
+      store._start();
+    },
     onDestroy: () => store._cancelComputer(),
   })),
 );

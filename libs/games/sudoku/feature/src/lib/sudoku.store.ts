@@ -1,7 +1,9 @@
 import { PLATFORM_ID, computed, inject } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
+import { patchState, signalStore, withComputed, withHooks, withMethods, withProps, withState } from '@ngrx/signals';
 
+import { ActivityService } from '@okr/activity-data-access';
+import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { fill } from '@okr/shared-util-core';
 import {
@@ -93,6 +95,12 @@ function freshGame(difficulty: SudokuDifficulty): GameFields {
   };
 }
 
+/** True if an unfinished game is saved, i.e. opening the page resumes it rather than dealing a new one. */
+function hasResumableGame(browser: boolean): boolean {
+  const saved = browser ? parseGame(read(SUDOKU_GAME_KEY)) : null;
+  return !!saved && !saved.solved;
+}
+
 /** The saved game if there is an unfinished one, otherwise a fresh deal. */
 function initialGame(browser: boolean): GameFields {
   const saved = browser ? parseGame(read(SUDOKU_GAME_KEY)) : null;
@@ -122,6 +130,8 @@ function initialGame(browser: boolean): GameFields {
 export const SudokuStore = signalStore(
   withProps(() => ({
     _browser: isPlatformBrowser(inject(PLATFORM_ID)),
+    _appStore: inject(AppStore),
+    _activityService: inject(ActivityService),
     i18n: inject(I18nService).translateAll(SUDOKU_I18N_KEYS) as SudokuI18n,
   })),
 
@@ -168,6 +178,10 @@ export const SudokuStore = signalStore(
       write(SUDOKU_GAME_KEY, serializeGame(game));
     }
 
+    function logGame(action: 'start' | 'finish'): void {
+      store._activityService.logGame('sudoku', action, store._appStore.currentUser);
+    }
+
     function commit(values: number[], notes: number[], hinted: number[] = store.hinted()): void {
       const history = [...store.history(), { values: store.values(), notes: store.notes(), hinted: store.hinted() }];
       patchState(store, { values, notes, hinted, history, showErrors: false, status: null });
@@ -182,6 +196,7 @@ export const SudokuStore = signalStore(
             ? { key: 'status_solved_hints', params: { time, count: hints } }
             : { key: 'status_solved', params: { time } },
         });
+        logGame('finish');
       }
       persist();
     }
@@ -201,6 +216,7 @@ export const SudokuStore = signalStore(
       newGame(difficulty: SudokuDifficulty = store.difficulty()): void {
         patchState(store, { ...freshGame(difficulty), selected: null });
         persist();
+        logGame('start');
       },
 
       select(i: number): void {
@@ -280,5 +296,15 @@ export const SudokuStore = signalStore(
         });
       },
     };
+  }),
+
+  withHooks({
+    // Opening the page without a saved game deals a fresh one: that is a start too. A resumed
+    // game was already logged when it was dealt.
+    onInit(store) {
+      if (store._browser && !hasResumableGame(store._browser)) {
+        store._activityService.logGame('sudoku', 'start', store._appStore.currentUser);
+      }
+    },
   }),
 );

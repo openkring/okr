@@ -8,6 +8,7 @@ import { QuizStore } from './quiz.store';
 @Component({
   selector: 'okr-quiz-page',
   standalone: true,
+  providers: [QuizStore],
   imports: [
     Header,
     IonContent, IonCard, IonCardContent, IonGrid, IonRow, IonCol, IonButton

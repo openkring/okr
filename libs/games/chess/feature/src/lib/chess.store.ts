@@ -1,6 +1,9 @@
-import { computed, inject } from '@angular/core';
+import { PLATFORM_ID, computed, inject } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { patchState, signalStore, withComputed, withHooks, withMethods, withProps, withState } from '@ngrx/signals';
 
+import { ActivityService } from '@okr/activity-data-access';
+import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import {
   CHESS_I18N_KEYS, ChessI18n, ChessSettings, ClockState, Color, DEFAULT_SETTINGS, GameResult,
@@ -80,6 +83,11 @@ function freshGame(settings: ChessSettings): GameFields {
   };
 }
 
+/** True if a game is saved, i.e. opening the page restores it (finished or not) rather than starting a new one. */
+function hasSavedGame(): boolean {
+  return parseSavedGame(readJson(GAME_KEY)) !== null;
+}
+
 function initialState(): ChessStoreState {
   const extras = { now: Date.now(), storageOk: true, workerFailed: false };
   const saved = parseSavedGame(readJson(GAME_KEY));
@@ -112,6 +120,9 @@ export const ChessStore = signalStore(
   withState<ChessStoreState>(initialState),
 
   withProps(() => ({
+    _browser: isPlatformBrowser(inject(PLATFORM_ID)),
+    _appStore: inject(AppStore),
+    _activityService: inject(ActivityService),
     i18n: inject(I18nService).translateAll(CHESS_I18N_KEYS) as ChessI18n,
     _engine: {
       worker: null as Worker | null,
@@ -167,6 +178,10 @@ export const ChessStore = signalStore(
 
   withMethods(store => {
     const isHuman = (c: Color) => store.settings().mode === 'human' || c === store.settings().human;
+
+    function logGame(action: 'start' | 'finish'): void {
+      store._activityService.logGame('chess', action, store._appStore.currentUser);
+    }
 
     function save(): void {
       const clock = store.clock();
@@ -296,6 +311,8 @@ export const ChessStore = signalStore(
       });
       const after = store.clock();
       if (store.result() && after) patchState(store, { clock: pauseClock(after, now) });
+      // Only legal moves reach here, so the game was still open before this one.
+      if (store.result()) logGame('finish');
       save();
       maybeComputer();
     }
@@ -308,6 +325,7 @@ export const ChessStore = signalStore(
         clock: clock ? pauseClock(clock, Date.now()) : null,
       });
       save();
+      logGame('finish');
     }
 
     /** A tap or drop on `to` with a piece selected: move, ask for the promotion, or deselect. */
@@ -408,6 +426,7 @@ export const ChessStore = signalStore(
         cancelEngine();
         patchState(store, freshGame(settings));
         save();
+        logGame('start');
         maybeComputer();
       },
 
@@ -429,6 +448,11 @@ export const ChessStore = signalStore(
 
   withHooks(store => ({
     onInit(): void {
+      // Without a saved game the page opens on a new one: that is a start too. A restored game
+      // was already logged when it began.
+      if (store._browser && !hasSavedGame()) {
+        store._activityService.logGame('chess', 'start', store._appStore.currentUser);
+      }
       store._engine.tick = setInterval(() => store._tick(), TICK_MS);
       // The computer opens when the person plays black, and a restored game may wait for it.
       store._start();

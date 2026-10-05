@@ -1,6 +1,9 @@
-import { computed, inject } from '@angular/core';
-import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
+import { PLATFORM_ID, computed, inject } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { patchState, signalStore, withComputed, withHooks, withMethods, withProps, withState } from '@ngrx/signals';
 
+import { ActivityService } from '@okr/activity-data-access';
+import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { fill } from '@okr/shared-util-core';
 import {
@@ -77,6 +80,9 @@ export const BimaruStore = signalStore(
   withState<BimaruState>(() => ({ size: DEFAULT_SIZE, ...freshGame(DEFAULT_SIZE) })),
 
   withProps(() => ({
+    _browser: isPlatformBrowser(inject(PLATFORM_ID)),
+    _appStore: inject(AppStore),
+    _activityService: inject(ActivityService),
     i18n: inject(I18nService).translateAll(BIMARU_I18N_KEYS) as BimaruI18n,
   })),
 
@@ -98,6 +104,10 @@ export const BimaruStore = signalStore(
   })),
 
   withMethods(store => {
+    function logGame(action: 'start' | 'finish'): void {
+      store._activityService.logGame('bimaru', action, store._appStore.currentUser);
+    }
+
     function commit(marks: Mark[][], fixed: string[] = store.fixed()): void {
       const history = [...store.history(), { marks: store.marks(), fixed: store.fixed() }];
       patchState(store, { marks, fixed, history, showErrors: false, status: null });
@@ -111,12 +121,14 @@ export const BimaruStore = signalStore(
             ? { key: 'status_solved_hints', params: { time, count: hints } }
             : { key: 'status_solved', params: { time } },
         });
+        logGame('finish');
       }
     }
 
     return {
       newGame(size: BimaruSize = store.size()): void {
         patchState(store, { size, ...freshGame(size) });
+        logGame('start');
       },
 
       /** Tap on a cell: unknown → water → ship → unknown. Revealed cells stay as they are. */
@@ -165,6 +177,13 @@ export const BimaruStore = signalStore(
         });
       },
     };
+  }),
+
+  withHooks({
+    // Nothing is saved, so opening the page always deals a new puzzle: that is a start too.
+    onInit(store) {
+      if (store._browser) store._activityService.logGame('bimaru', 'start', store._appStore.currentUser);
+    },
   }),
 );
 

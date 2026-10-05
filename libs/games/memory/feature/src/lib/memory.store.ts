@@ -2,6 +2,8 @@ import { PLATFORM_ID, computed, inject } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { patchState, signalStore, withComputed, withHooks, withMethods, withProps, withState } from '@ngrx/signals';
 
+import { ActivityService } from '@okr/activity-data-access';
+import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { fill } from '@okr/shared-util-core';
 import {
@@ -83,6 +85,8 @@ export const MemoryStore = signalStore(
   withProps(() => ({
     _browser: isPlatformBrowser(inject(PLATFORM_ID)),
     _timer: { handle: undefined as ReturnType<typeof setTimeout> | undefined },
+    _appStore: inject(AppStore),
+    _activityService: inject(ActivityService),
     i18n: inject(I18nService).translateAll(MEMORY_I18N_KEYS) as MemoryI18n,
   })),
 
@@ -119,6 +123,10 @@ export const MemoryStore = signalStore(
       patchState(store, { board: closeMiss(store.board()), status: null });
     }
 
+    function logGame(action: 'start' | 'finish'): void {
+      store._activityService.logGame('memory', action, store._appStore.currentUser);
+    }
+
     function finish(board: MemoryBoard): void {
       const solvedAt = Date.now();
       const ms = solvedAt - (store.startedAt() ?? solvedAt);
@@ -138,6 +146,7 @@ export const MemoryStore = signalStore(
         status = { key: 'status_solved', params: { moves: board.moves, time: formatDuration(ms) } };
       }
       patchState(store, { solvedAt, status });
+      logGame('finish');
     }
 
     return {
@@ -147,6 +156,7 @@ export const MemoryStore = signalStore(
         const config = { ...store.config(), ...change };
         if (store._browser) write(MEMORY_CONFIG_KEY, JSON.stringify(config));
         patchState(store, { config, ...fresh(config) });
+        logGame('start');
       },
 
       /** Tap on a card. Tapping while a miss is still showing turns the miss over first. */
@@ -175,6 +185,10 @@ export const MemoryStore = signalStore(
   }),
 
   withHooks(store => ({
+    // The board is not saved, so every page open deals a fresh game: that is a start too.
+    onInit: () => {
+      if (store._browser) store._activityService.logGame('memory', 'start', store._appStore.currentUser);
+    },
     onDestroy: () => store._cancelTimer(),
   })),
 );

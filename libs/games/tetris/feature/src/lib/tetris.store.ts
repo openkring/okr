@@ -2,6 +2,8 @@ import { PLATFORM_ID, computed, inject } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
+import { ActivityService } from '@okr/activity-data-access';
+import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import {
   ClearEvent,
@@ -89,6 +91,8 @@ export const TetrisStore = signalStore(
   }),
 
   withProps(() => ({
+    _appStore: inject(AppStore),
+    _activityService: inject(ActivityService),
     i18n: inject(I18nService).translateAll(TETRIS_I18N_KEYS) as TetrisI18n,
     /** When each held input fires next (`performance.now()` time). */
     _held: new Map<TetrisHeld, number>(),
@@ -110,12 +114,18 @@ export const TetrisStore = signalStore(
       store._lastHorizontal.dir = null;
     }
 
+    function logGame(action: 'start' | 'finish'): void {
+      store._activityService.logGame('tetris', action, store._appStore.currentUser);
+    }
+
     function finish(game: TetrisState): void {
+      if (store.status() === 'over') return;
       releaseAll();
       write(GAME_KEY, null);
       const newBest = game.score > store.best();
       if (newBest) write(BEST_KEY, String(game.score));
       patchState(store, { game, status: 'over', newBest, best: Math.max(store.best(), game.score) });
+      logGame('finish');
     }
 
     function apply(next: TetrisState): void {
@@ -149,6 +159,7 @@ export const TetrisStore = signalStore(
         releaseAll();
         write(GAME_KEY, null);
         patchState(store, { game: createGame(newSeed()), status: 'running', newBest: false });
+        logGame('start');
       },
 
       pause,

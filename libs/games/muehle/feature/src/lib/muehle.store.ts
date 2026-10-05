@@ -1,6 +1,9 @@
-import { computed, inject } from '@angular/core';
+import { PLATFORM_ID, computed, inject } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { patchState, signalStore, withComputed, withHooks, withMethods, withProps, withState } from '@ngrx/signals';
 
+import { ActivityService } from '@okr/activity-data-access';
+import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import {
   Difficulty,
@@ -98,8 +101,13 @@ export const MuehleStore = signalStore(
   }),
 
   withProps(() => ({
+    _browser: isPlatformBrowser(inject(PLATFORM_ID)),
+    _appStore: inject(AppStore),
+    _activityService: inject(ActivityService),
     i18n: inject(I18nService).translateAll(MUEHLE_I18N_KEYS) as MuehleI18n,
     _timer: { handle: undefined as ReturnType<typeof setTimeout> | undefined, generation: 0 },
+    /** Undo can reopen a finished game; the finish is logged only the first time it ends. */
+    _finishLogged: { value: false },
   })),
 
   withComputed(store => {
@@ -116,6 +124,10 @@ export const MuehleStore = signalStore(
 
   withMethods(store => {
     const isHuman = (p: Player) => store.mode() === 'human' || p === store.human();
+
+    function logGame(action: 'start' | 'finish'): void {
+      store._activityService.logGame('muehle', action, store._appStore.currentUser);
+    }
 
     function cancelComputer(): void {
       clearTimeout(store._timer.handle);
@@ -150,6 +162,10 @@ export const MuehleStore = signalStore(
         selected: null,
         pending: null,
       });
+      if (store.current().result && !store._finishLogged.value) {
+        store._finishLogged.value = true;
+        logGame('finish');
+      }
       maybeComputer();
     }
 
@@ -167,6 +183,8 @@ export const MuehleStore = signalStore(
         cancelComputer();
         writeSettings(mode, human);
         patchState(store, freshGame(mode, human));
+        store._finishLogged.value = false;
+        logGame('start');
         maybeComputer();
       },
 
@@ -231,8 +249,12 @@ export const MuehleStore = signalStore(
   }),
 
   withHooks(store => ({
-    // The person may have chosen black last time, in which case the computer opens.
-    onInit: () => store._start(),
+    // Nothing is saved, so opening the page always starts a new game. The person may have chosen
+    // black last time, in which case the computer opens.
+    onInit: () => {
+      if (store._browser) store._activityService.logGame('muehle', 'start', store._appStore.currentUser);
+      store._start();
+    },
     onDestroy: () => store._cancelComputer(),
   })),
 );

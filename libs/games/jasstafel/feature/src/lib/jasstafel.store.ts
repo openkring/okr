@@ -7,6 +7,7 @@ import {
   JassChalkUnit, PLAYER_COUNTS, addChalk, addHand, createGame, deleteHand as deleteHandAt, handFromForm, newHandForm, nextTrumpMaker, normalizeConfig, parsePending,
   parseStoredGame, replaceHand, stats, totals, undoLast, jassConfigValidations, validateHand, winner,
 } from '@okr/games-jasstafel-util';
+import { ActivityService } from '@okr/activity-data-access';
 import { DiaryLineService } from '@okr/content-diary-data-access';
 import { AppStore, ModelSelectService } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
@@ -88,6 +89,9 @@ export const JasstafelStore = signalStore(
     appStore: inject(AppStore),
     diaryLineService: inject(DiaryLineService),
     _storage: { ok: true } as StorageFlag,
+    _activityService: inject(ActivityService),
+    /** The game whose finish was last logged, so an undo and a re-decided result is not a second finish. */
+    _finishLogged: { id: undefined as string | undefined },
   })),
 
   withComputed(store => ({
@@ -114,6 +118,10 @@ export const JasstafelStore = signalStore(
   })),
 
   withMethods(store => {
+    function logGame(action: 'start' | 'finish'): void {
+      store._activityService.logGame('jasstafel', action, store.appStore.currentUser);
+    }
+
     function persist(): void {
       write(GAME_KEY, store.game(), store._storage);
       write(CONFIG_KEY, store.config(), store._storage);
@@ -127,7 +135,13 @@ export const JasstafelStore = signalStore(
       let game = next;
       if (game) {
         const done = winner(game) !== undefined;
-        if (done && !game.finishedAt) game = { ...game, finishedAt: getTodayStr(DateFormat.StoreDateTime) };
+        if (done && !game.finishedAt) {
+          game = { ...game, finishedAt: getTodayStr(DateFormat.StoreDateTime) };
+          if (store._finishLogged.id !== game.id) {
+            store._finishLogged.id = game.id;
+            logGame('finish');
+          }
+        }
         // an undo re-opens the game: its diary mark goes with it, so the corrected result can be sent again
         if (!done && game.finishedAt) game = { ...game, finishedAt: undefined, diaryAt: undefined };
         const id = game.id;
@@ -156,6 +170,7 @@ export const JasstafelStore = signalStore(
       const bid = store.variant() === 'bueter' ? store.config().bueterBid : undefined;
       patchState(store, { pendingAnnounced: null });
       setGame(createGame(store.variant(), players, store.config(), { bid, bueterIdx: store.bueterIdx() }));
+      logGame('start');
     }
 
     async function editHand(index: number): Promise<void> {
@@ -183,6 +198,8 @@ export const JasstafelStore = signalStore(
         const rawArchive = read<unknown[]>(ARCHIVE_KEY, store._storage);
         const archive = (Array.isArray(rawArchive) ? rawArchive : []).map(parseStoredGame).filter((g): g is JassGame => !!g);
         const seats = game ? game.players.map(p => p.avatar) : [null, null, null, null];
+        // a resumed game was logged when it was started; one restored already decided is not finished again
+        if (game?.finishedAt) store._finishLogged.id = game.id;
         patchState(store, {
           config, game, archive, seats, pendingAnnounced, variant: game?.variant ?? 'schieber', bueterIdx: game?.bueterIdx ?? 0,
           storageOk: store._storage.ok,

@@ -1,7 +1,9 @@
 import { PLATFORM_ID, computed, inject } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
+import { patchState, signalStore, withComputed, withHooks, withMethods, withProps, withState } from '@ngrx/signals';
 
+import { ActivityService } from '@okr/activity-data-access';
+import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { DateFormat, convertDateFormatToString, fill, getTodayStr } from '@okr/shared-util-core';
 import {
@@ -72,13 +74,19 @@ function write(key: string, value: string): void {
  * - endless: the saved round if it has the requested length; else a random word.
  */
 function loadGame(config: WordleConfig, today: string, browser: boolean): WordleGame {
-  const saved = browser ? parseGame(read(wordleGameKey(config.mode, config.length))) : null;
+  const saved = savedGame(config, today, browser);
+  if (saved) return saved;
   if (config.mode === 'daily') {
-    if (saved?.mode === 'daily' && saved.day === today) return saved;
     return { mode: 'daily', day: today, length: config.length, maxTries: config.maxTries, solution: dailyWord(today, config.length), guesses: [] };
   }
-  if (saved?.mode === 'endless' && saved.length === config.length) return saved;
   return dealEndless(config);
+}
+
+/** The saved round `loadGame` would resume for these settings, or null if it deals a fresh one. */
+function savedGame(config: WordleConfig, today: string, browser: boolean): WordleGame | null {
+  const saved = browser ? parseGame(read(wordleGameKey(config.mode, config.length))) : null;
+  if (config.mode === 'daily') return saved?.mode === 'daily' && saved.day === today ? saved : null;
+  return saved?.mode === 'endless' && saved.length === config.length ? saved : null;
 }
 
 function dealEndless(config: WordleConfig, previous?: string): WordleGame {
@@ -113,6 +121,8 @@ export const WordleStore = signalStore(
   withProps(() => ({
     i18n: inject(I18nService).translateAll(WORDLE_I18N_KEYS) as WordleI18n,
     _browser: isPlatformBrowser(inject(PLATFORM_ID)),
+    _appStore: inject(AppStore),
+    _activityService: inject(ActivityService),
   })),
 
   withComputed(store => ({
@@ -168,6 +178,10 @@ export const WordleStore = signalStore(
       if (store._browser) write(WORDLE_CONFIG_KEY, JSON.stringify(config));
     }
 
+    function logGame(action: 'start' | 'finish'): void {
+      store._activityService.logGame('wordle', action, store._appStore.currentUser);
+    }
+
     function loadStats(config: WordleConfig): WordleStats {
       return parseStats(store._browser ? read(wordleStatsKey(config.mode, config.length)) : null);
     }
@@ -175,6 +189,7 @@ export const WordleStore = signalStore(
     /** Applies new settings and shows the round that belongs to them. */
     function reconfigure(config: WordleConfig): void {
       saveConfig(config);
+      const fresh = !savedGame(config, store.today(), store._browser);
       patchState(store, {
         config,
         game: loadGame(config, store.today(), store._browser),
@@ -182,6 +197,7 @@ export const WordleStore = signalStore(
         stats: loadStats(config),
         notice: null,
       });
+      if (fresh) logGame('start');
     }
 
     return {
@@ -234,6 +250,8 @@ export const WordleStore = signalStore(
           if (store._browser) write(wordleStatsKey(game.mode, game.length), JSON.stringify(stats));
         }
         patchState(store, { game, row: '', stats, notice: null });
+        // submitGuess refuses a finished round, so this fires once, on the guess that ends it.
+        if (gameStatus(game) !== 'playing') logGame('finish');
       },
 
       /** Endless only: deal the next random word with the current settings. */
@@ -242,6 +260,7 @@ export const WordleStore = signalStore(
         const game = dealEndless(store.config(), store.game().solution);
         saveGame(game);
         patchState(store, { game, row: '', notice: null });
+        logGame('start');
       },
 
       /**
@@ -268,5 +287,15 @@ export const WordleStore = signalStore(
         patchState(store, { notice });
       },
     };
+  }),
+
+  withHooks({
+    // Opening the page without a saved round for the current settings deals a fresh one: that is
+    // a start too. A resumed round (or today's daily, already played) was logged when it was dealt.
+    onInit(store) {
+      if (store._browser && !savedGame(store.config(), store.today(), store._browser)) {
+        store._activityService.logGame('wordle', 'start', store._appStore.currentUser);
+      }
+    },
   }),
 );

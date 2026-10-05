@@ -1,6 +1,8 @@
 import { computed, inject } from '@angular/core';
 import { patchState, signalStore, withComputed, withHooks, withMethods, withProps, withState } from '@ngrx/signals';
 
+import { ActivityService } from '@okr/activity-data-access';
+import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { fill } from '@okr/shared-util-core';
 import {
@@ -97,6 +99,8 @@ export const BattleshipStore = signalStore(
   }),
 
   withProps(() => ({
+    _appStore: inject(AppStore),
+    _activityService: inject(ActivityService),
     i18n: inject(I18nService).translateAll(BATTLESHIP_I18N_KEYS) as BattleshipI18n,
     _timer: { handle: undefined as ReturnType<typeof setTimeout> | undefined, generation: 0 },
   })),
@@ -134,6 +138,10 @@ export const BattleshipStore = signalStore(
   })),
 
   withMethods(store => {
+    function logGame(action: 'start' | 'finish'): void {
+      store._activityService.logGame('battleship', action, store._appStore.currentUser);
+    }
+
     function cancelTimer(): void {
       clearTimeout(store._timer.handle);
       store._timer.handle = undefined;
@@ -164,6 +172,7 @@ export const BattleshipStore = signalStore(
 
       if (outcome.gameOver) {
         patchState(store, { phase: 'over', turn: null, status: [{ key: 'status_lost', params: { shots: shots.ai } }] });
+        logGame('finish');
         return;
       }
       const msg = shotPart(outcome, shot, 'status_enemy');
@@ -251,6 +260,8 @@ export const BattleshipStore = signalStore(
           shots: { player: 0, ai: 0 },
           status: [{ key: 'status_your_turn' }],
         });
+        // The game starts with the battle; placing ships alone is no game yet.
+        logGame('start');
       },
 
       shootAt(r: number, c: number): void {
@@ -265,6 +276,7 @@ export const BattleshipStore = signalStore(
 
         if (outcome.gameOver) {
           patchState(store, { phase: 'over', turn: null, status: [{ key: 'status_won', params: { shots: shots.player } }] });
+          logGame('finish');
           return;
         }
         const msg = shotPart(outcome, [r, c], 'status_you');

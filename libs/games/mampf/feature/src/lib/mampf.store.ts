@@ -2,6 +2,8 @@ import { PLATFORM_ID, inject } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { patchState, signalStore, withMethods, withProps, withState } from '@ngrx/signals';
 
+import { ActivityService } from '@okr/activity-data-access';
+import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import {
   DEFAULT_MAMPF_SETTINGS,
@@ -78,6 +80,8 @@ export const MampfStore = signalStore(
   withProps(() => ({
     i18n: inject(I18nService).translateAll(MAMPF_I18N_KEYS) as MampfI18n,
     _browser: isPlatformBrowser(inject(PLATFORM_ID)),
+    _appStore: inject(AppStore),
+    _activityService: inject(ActivityService),
   })),
 
   withMethods(store => {
@@ -90,16 +94,22 @@ export const MampfStore = signalStore(
       });
     }
 
+    function logGame(action: 'start' | 'finish'): void {
+      store._activityService.logGame('mampf', action, store._appStore.currentUser);
+    }
+
     return {
       persist,
 
       /** A new game starts: forget the previous game's record flag. */
       begin(): void {
         patchState(store, { newHigh: false });
+        logGame('start');
       },
 
       /** Copies what the HUD shows from the running game; stores the high score at game over. */
       sync(game: GameState): void {
+        const ended = game.status === 'gameOver' && store.status() !== 'gameOver';
         const high = game.score > store.highScore();
         patchState(store, {
           status: game.status,
@@ -109,6 +119,7 @@ export const MampfStore = signalStore(
           ...(high ? { highScore: game.score, newHigh: true } : {}),
         });
         if (game.status === 'gameOver') persist();
+        if (ended) logGame('finish');
       },
 
       markPaused(): void {

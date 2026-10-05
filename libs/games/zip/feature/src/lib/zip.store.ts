@@ -1,6 +1,9 @@
-import { computed, inject } from '@angular/core';
-import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
+import { PLATFORM_ID, computed, inject } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { patchState, signalStore, withComputed, withHooks, withMethods, withProps, withState } from '@ngrx/signals';
 
+import { ActivityService } from '@okr/activity-data-access';
+import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { fill } from '@okr/shared-util-core';
 import {
@@ -74,6 +77,11 @@ export const ZipStore = signalStore(
   withState<ZipState>(() => freshState(ZIP_DEFAULT_CONFIG)),
 
   withProps(() => ({
+    _browser: isPlatformBrowser(inject(PLATFORM_ID)),
+    _appStore: inject(AppStore),
+    _activityService: inject(ActivityService),
+    /** Whether this board's finish was logged: undo reopens a solved board, re-solving it is no new finish. */
+    _finishLogged: { done: false },
     i18n: inject(I18nService).translateAll(ZIP_I18N_KEYS) as ZipI18n,
   })),
 
@@ -125,6 +133,10 @@ export const ZipStore = signalStore(
   })),
 
   withMethods(store => {
+    function logGame(action: 'start' | 'finish'): void {
+      store._activityService.logGame('zip', action, store._appStore.currentUser);
+    }
+
     /**
      * Replaces the path, remembering the old one so undo can bring it back, and stamps the
      * finish time the moment the board comes out solved.
@@ -142,12 +154,18 @@ export const ZipStore = signalStore(
         blockedCell: undefined,
         finishedAt: solved ? Date.now() : state.finishedAt,
       }));
+      if (solved && !store._finishLogged.done) {
+        store._finishLogged.done = true;
+        logGame('finish');
+      }
     }
 
     return {
       /** Deals a new board. Falls back to the current config when none is given. */
       newGame(config?: ZipConfig): void {
         patchState(store, freshState(config ?? store.config()));
+        store._finishLogged.done = false;
+        logGame('start');
       },
 
       setSize(size: number): void {
@@ -228,5 +246,14 @@ export const ZipStore = signalStore(
         return checkpointNumberAt(cell, store.puzzle().checkpoints);
       },
     };
+  }),
+
+  withHooks({
+    // Nothing is persisted, so opening the page always deals a fresh board: that is a start too.
+    onInit(store) {
+      if (store._browser) {
+        store._activityService.logGame('zip', 'start', store._appStore.currentUser);
+      }
+    },
   }),
 );

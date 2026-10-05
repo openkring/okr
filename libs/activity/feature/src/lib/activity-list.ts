@@ -49,6 +49,8 @@ import { ActivityStore } from './activity.store';
               <ion-label class="action">{{ activity.action }}</ion-label>
               @if(activity.scope === 'auth') {
                 <ion-label class="author">{{ activity.payload }}</ion-label>
+              } @else if(activity.scope === 'game') {
+                <ion-label class="author">{{ activity.payload }} · {{ activity.author?.name1 }} {{ activity.author?.name2 }}</ion-label>
               } @else {
                 <ion-label class="author">{{ activity.author?.name1 }} {{ activity.author?.name2 }}</ion-label>
               }
@@ -73,6 +75,7 @@ export class ActivityList {
   }
 
   protected getScopeIcon(activity: ActivityModel): string {
+    if (activity.scope === 'game') return 'game-' + activity.payload;
     const map: Record<string, string> = {
       auth: 'lock-closed', person: 'person', org: 'org', group: 'group',
       membership: 'membership', calevent: 'calendar-number', task: 'checkbox-circle',

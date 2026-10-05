@@ -2,6 +2,8 @@ import { computed, effect, inject, untracked } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withHooks, withMethods, withProps, withState } from '@ngrx/signals';
 
+import { ActivityService } from '@okr/activity-data-access';
+import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 
 import { CrosswordTopicService } from '@okr/games-crossword-data-access';
@@ -39,6 +41,8 @@ export type CrosswordState = {
   finishedAt: number | undefined;
   /** Guards the one-time seed from `loadProgress` — see the store's doc comment. */
   progressSeeded: boolean;
+  /** Set once this board's solve was logged, so un-solving and re-solving it is not a second finish. */
+  finishLogged: boolean;
 };
 
 const initialState: CrosswordState = {
@@ -50,6 +54,7 @@ const initialState: CrosswordState = {
   startedAt: Date.now(),
   finishedAt: undefined,
   progressSeeded: false,
+  finishLogged: false,
 };
 
 /**
@@ -70,6 +75,8 @@ export const CrosswordStore = signalStore(
 
   withProps(() => ({
     topicService: inject(CrosswordTopicService),
+    _appStore: inject(AppStore),
+    _activityService: inject(ActivityService),
     i18n: inject(I18nService).translateAll(CROSSWORD_I18N_KEYS) as CrosswordI18n,
   })),
 
@@ -127,6 +134,10 @@ export const CrosswordStore = signalStore(
   })),
 
   withMethods(store => {
+    function logGame(action: 'start' | 'finish'): void {
+      store._activityService.logGame('crossword', action, store._appStore.currentUser);
+    }
+
     /**
      * Persists `filled` for this device, then re-checks for a solve — either edge. Fixing the
      * solve stamps `finishedAt` (freezing the page's clock); editing a solved board back to
@@ -139,6 +150,10 @@ export const CrosswordStore = signalStore(
       patchState(store, { filled, checking: false });
       if (topic?.grid) saveProgress(topic.okey, topic.grid, filled);
       patchState(store, { finishedAt: finishedAtAfterEdit(wasSolved, store.solved(), store.finishedAt(), Date.now()) });
+      if (store.solved() && !wasSolved && !store.finishLogged()) {
+        patchState(store, { finishLogged: true });
+        logGame('finish');
+      }
     }
 
     return {
@@ -261,8 +276,10 @@ export const CrosswordStore = signalStore(
           checking: false,
           startedAt: Date.now(),
           finishedAt: undefined,
+          finishLogged: false,
         });
         if (topic?.grid) saveProgress(topic.okey, topic.grid, new Map());
+        logGame('start');
       },
     };
   }),
@@ -280,13 +297,17 @@ export const CrosswordStore = signalStore(
           if (store.progressSeeded()) return;
           const topic = store.topic();
           if (!topic?.grid) return;
-          patchState(store, { filled: loadProgress(topic.okey, topic.grid), progressSeeded: true });
+          const filled = loadProgress(topic.okey, topic.grid);
+          patchState(store, { filled, progressSeeded: true });
+          // An empty board is a new game on the picked topic; a board with saved letters resumes
+          // one that was already logged when it began.
+          if (filled.size === 0) store._activityService.logGame('crossword', 'start', store._appStore.currentUser);
           // A board restored already solved must not read as freshly finished — `solved()` was
           // never given a rising edge to catch (there was no earlier, unsolved `filled` to
           // compare against), so without this the clock keeps ticking on a done puzzle. Stamping
           // `startedAt` rather than `Date.now()` gives it a duration of 0 rather than an
           // arbitrary "time to load the page".
-          if (store.solved()) patchState(store, { finishedAt: store.startedAt() });
+          if (store.solved()) patchState(store, { finishedAt: store.startedAt(), finishLogged: true });
         });
       });
     },

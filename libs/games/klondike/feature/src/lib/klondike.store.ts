@@ -1,7 +1,9 @@
 import { PLATFORM_ID, computed, inject } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
+import { patchState, signalStore, withComputed, withHooks, withMethods, withProps, withState } from '@ngrx/signals';
 
+import { ActivityService } from '@okr/activity-data-access';
+import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { fill } from '@okr/shared-util-core';
 import {
@@ -96,6 +98,12 @@ function freshFields(drawCount: DrawCount): Pick<KlondikeStoreState,
   };
 }
 
+/** True if an unfinished game is saved, i.e. opening the page resumes it rather than dealing a new one. */
+function hasResumableGame(browser: boolean): boolean {
+  const saved = browser ? parseGame(read(KLONDIKE_GAME_KEY)) : null;
+  return !!saved && !saved.won;
+}
+
 /** The saved game if there is an unfinished one, otherwise a fresh deal. */
 function initialState(browser: boolean): KlondikeStoreState {
   const saved = browser ? parseGame(read(KLONDIKE_GAME_KEY)) : null;
@@ -126,6 +134,8 @@ function asTarget(source: Source): Target | null {
 export const KlondikeStore = signalStore(
   withProps(() => ({
     _browser: isPlatformBrowser(inject(PLATFORM_ID)),
+    _appStore: inject(AppStore),
+    _activityService: inject(ActivityService),
     i18n: inject(I18nService).translateAll(KLONDIKE_I18N_KEYS) as KlondikeI18n,
   })),
 
@@ -171,6 +181,10 @@ export const KlondikeStore = signalStore(
       }));
     }
 
+    function logGame(action: 'start' | 'finish'): void {
+      store._activityService.logGame('klondike', action, store._appStore.currentUser);
+    }
+
     function finish(): void {
       const ms = store.elapsed();
       const drawCount = store.game().drawCount;
@@ -178,6 +192,7 @@ export const KlondikeStore = signalStore(
       const best = newBest ? { ...store.best(), [String(drawCount)]: ms } : store.best();
       patchState(store, { won: true, elapsedMs: ms, runningSince: null, newBest, best, autoFinishing: false, selected: null });
       if (newBest && store._browser) write(KLONDIKE_BEST_KEY, serializeBest(best));
+      logGame('finish');
     }
 
     /** Takes a new position: pushes the old one for undo, starts the clock on the first move. */
@@ -202,6 +217,7 @@ export const KlondikeStore = signalStore(
       newGame(drawCount: DrawCount = store.drawNext()): void {
         patchState(store, freshFields(drawCount));
         persist();
+        logGame('start');
       },
 
       /** The draw rule applies to the next game; an untouched deal is simply redealt. */
@@ -315,5 +331,15 @@ export const KlondikeStore = signalStore(
         patchState(store, { now: Date.now() });
       },
     };
+  }),
+
+  withHooks({
+    // Opening the page without a saved game deals a fresh one: that is a start too. A resumed
+    // game was already logged when it was dealt.
+    onInit(store) {
+      if (store._browser && !hasResumableGame(store._browser)) {
+        store._activityService.logGame('klondike', 'start', store._appStore.currentUser);
+      }
+    },
   }),
 );

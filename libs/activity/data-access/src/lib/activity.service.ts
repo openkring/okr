@@ -1,5 +1,6 @@
-import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Injectable, Injector, Signal, inject } from '@angular/core';
+import { toObservable } from '@angular/core/rxjs-interop';
+import { Observable, filter, firstValueFrom, timeout } from 'rxjs';
 
 import { ensureAppCheckToken, ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
@@ -17,6 +18,7 @@ export class ActivityService {
   private readonly firestoreService = inject(FirestoreService);
   private readonly env = inject(ENV);
   private readonly i18nService = inject(I18nService);
+  private readonly injector = inject(Injector);
   private readonly i18n = this.i18nService.translateAll({
     delete_conf:  PFX + 'delete.conf',
     delete_error: PFX + 'delete.error',
@@ -57,6 +59,28 @@ export class ActivityService {
       console.warn(`ActivityService.log(${scope}/${action}): failed (check Firestore rules for activities collection):`, ex);
       return undefined;
     }
+  }
+
+  /**
+   * Log that the current user started or finished a game.
+   * Only the game key is recorded (e.g. 'sudoku', matching the 'game-<key>' icon) — never a score,
+   * time or outcome. Fire-and-forget: a game must never wait for or fail on the audit write.
+   *
+   * Takes the current-user SIGNAL, not its value: a game deals its first hand while the store
+   * initialises, and after a hard reload on a game route the user document is still loading then.
+   * The entry is written once the user is known; it is dropped if that takes longer than a minute.
+   */
+  public logGame(game: string, action: 'start' | 'finish', currentUser: Signal<UserModel | undefined>): void {
+    const user = currentUser();
+    if (user) {
+      void this.log('game', action, user, game);
+      return;
+    }
+    firstValueFrom(toObservable(currentUser, { injector: this.injector }).pipe(
+      filter((u): u is UserModel => !!u),
+      timeout({ first: 60000 }),
+    )).then(u => this.log('game', action, u, game))
+      .catch(() => undefined);
   }
 
   /**
