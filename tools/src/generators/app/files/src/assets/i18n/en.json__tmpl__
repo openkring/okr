@@ -154,6 +154,7 @@
   "workrel": "Employment",
   "year": "Year",
   "allYears": "All years",
+  "upcomingMonths": "Upcoming",
   "altText": {
     "label": "Alt text",
     "placeholder": "Text",

@@ -12,7 +12,7 @@ import { from, firstValueFrom, map, of } from 'rxjs';
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore, ModelSelectService } from '@okr/shared-feature';
 import { Attendee, AvatarInfo, CalendarCollection, CalendarModel, CalEventCollection, CalEventModel, CalEventModelName, CategoryListModel, InvitationCollection, InvitationModel } from '@okr/shared-models';
-import { addDuration, calculateRecurringDates, chipMatches, compareDate, DateFormat, debugListLoaded, extractSecondPartOfOptionalTupel, generateRandomString, getAttendee, getAvatarInfoForCurrentUser, getDayDiff, getArchiveInclusiveQuery, getFullName, getSystemQuery, getTodayStr, fill, isCalendarPublic, isAfterDate, isAfterOrEqualDate, nameMatches, pad, prettyFormatDate, removeKeyFromOkrModel, warn } from '@okr/shared-util-core';
+import { addDuration, calculateRecurringDates, chipMatches, compareDate, DateFormat, debugListLoaded, extractSecondPartOfOptionalTupel, generateRandomString, getAttendee, getAvatarInfoForCurrentUser, getDayDiff, getArchiveInclusiveQuery, getFullName, getSystemQuery, getTodayStr, fill, isCalendarPublic, isAfterDate, isAfterOrEqualDate, isInRollingWindow, nameMatches, pad, prettyFormatDate, removeKeyFromOkrModel, warn, YEAR_ROLLING_WINDOW } from '@okr/shared-util-core';
 import { confirm, copyToClipboardDeferred, error, lazyService, navigateByUrl, notify, okrPrompt, showToast } from '@okr/shared-util-angular';
 import { InvitationService } from '@okr/relationship-invitation-data-access';
 import type { InvitePersonsFormData, InvitePersonsI18n } from '@okr/relationship-invitation-util';
@@ -72,7 +72,7 @@ export const initialState: CalEventState = {
   searchTerm: '',
   selectedTag: '',
   selectedCategory: 'all',
-  selectedYear: new Date().getFullYear()
+  selectedYear: YEAR_ROLLING_WINDOW   // default: last month + next three months, so the turn of the year never hides upcoming events
 };
 
 export const CalEventStore = signalStore(
@@ -207,6 +207,7 @@ export const CalEventStore = signalStore(
         const allEvents$ = store.appStore.firestoreService.searchData<CalEventModel>(CalEventCollection, query, 'startDate', 'asc');
         const maxEvents = store.maxEvents();
         const yearFilterActive = params.selectedYear !== new Date().getFullYear();
+        const rollingWindow = params.selectedYear === YEAR_ROLLING_WINDOW;
         return allEvents$.pipe(
           map(events => {
             const seen = new Set<string>();
@@ -225,8 +226,14 @@ export const CalEventStore = signalStore(
               })) {
                 continue;
               }
+              // Rolling window (98): applied here, before maxEvents counts, because yearMatches()
+              // lets every sentinel below 1000 pass.
+              if (rollingWindow && !isInRollingWindow(e.startDate, e.endDate)) {
+                continue;
+              }
               // Filter by showPastEvents/showUpcomingEvents for all calendar types.
-              // Skipped when a year other than the current one is selected (99 = all years):
+              // Skipped when a year other than the current one is selected (99 = all years,
+              // 98 = rolling window, which brings its own lower bound of one month back):
               // otherwise this cutoff would drop every past event before yearMatches() ever
               // runs, making 'Alle Jahre' and any past year silently empty.
               if (!yearFilterActive) {

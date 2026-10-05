@@ -2,6 +2,7 @@ import { END_FUTURE_DATE_STR, MAX_YEAR, MIN_YEAR } from '@okr/shared-constants';
 import { describe, expect, it } from 'vitest';
 import {
     checkYearRange,
+    isInRollingWindow,
     classifyStoreDate,
     compareDate,
     addDuration,
@@ -690,4 +691,42 @@ describe('addDuration / subDuration', () => {
         expect(subDuration('20260824', { days: 0 })).toEqual('20260824');
         expect(addDuration('20260824', { days: 0 })).toEqual('20260824');
     });
+});
+
+describe('isInRollingWindow', () => {
+  const today = new Date(2026, 9, 5);   // 5 Oct 2026 -> window 20260905..20270105
+
+  it('includes events inside the window', () => {
+    expect(isInRollingWindow('20261005', undefined, today)).toBe(true);
+    expect(isInRollingWindow('20260905', undefined, today)).toBe(true);
+    expect(isInRollingWindow('20270105', undefined, today)).toBe(true);
+  });
+
+  it('excludes events outside the window', () => {
+    expect(isInRollingWindow('20260904', undefined, today)).toBe(false);
+    expect(isInRollingWindow('20270106', undefined, today)).toBe(false);
+  });
+
+  it('includes a multi-day event that started before the window and ends inside it', () => {
+    expect(isInRollingWindow('20260820', '20260910', today)).toBe(true);
+    expect(isInRollingWindow('20260820', '20260904', today)).toBe(false);
+  });
+
+  it('treats an invalid or earlier endDate as a single-day event', () => {
+    expect(isInRollingWindow('20260801', '99991231x', today)).toBe(false);
+    expect(isInRollingWindow('20260801', '20260701', today)).toBe(false);
+  });
+
+  it('clamps the day at month ends', () => {
+    // 31 March - 1 month = 28 Feb 2027, + 3 months = 30 June 2027
+    const endOfMarch = new Date(2027, 2, 31);
+    expect(isInRollingWindow('20270228', undefined, endOfMarch)).toBe(true);
+    expect(isInRollingWindow('20270227', undefined, endOfMarch)).toBe(false);
+    expect(isInRollingWindow('20270630', undefined, endOfMarch)).toBe(true);
+    expect(isInRollingWindow('20270701', undefined, endOfMarch)).toBe(false);
+  });
+
+  it('lets invalid start dates pass', () => {
+    expect(isInRollingWindow('', undefined, today)).toBe(true);
+  });
 });

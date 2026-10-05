@@ -2,7 +2,7 @@ import { Component, computed, input, model } from '@angular/core';
 import { IonLabel, IonSelect, IonSelectOption } from '@ionic/angular/standalone';
 import { AsyncPipe } from '@angular/common';
 
-import { coerceBoolean, getYear } from '@okr/shared-util-core';
+import { coerceBoolean, getYear, YEAR_ROLLING_WINDOW } from '@okr/shared-util-core';
 import { TranslatePipe } from '@okr/shared-i18n';
 
 @Component({
@@ -38,6 +38,9 @@ import { TranslatePipe } from '@okr/shared-i18n';
       label-placement="floating"
       interface="popover"
       [compareWith]="compareWith">
+      @if(shouldShowRollingWindow()) {
+        <ion-select-option [value]="rollingWindow">{{ '@upcomingMonths' | translate | async }}</ion-select-option>
+      }
       @if(shouldShowAllYears()) {
         <ion-select-option [value]="99">{{ '@allYears' | translate | async }}</ion-select-option>
       }
@@ -53,12 +56,15 @@ export class YearSelect {
   public selectedYear = model<number>(getYear());   // default is current year
   public label = input('@year');
   public showAllYears = input(false); // if true, all years are shown
+  public showRollingWindow = input(false); // if true, the rolling window 'Demnächst' (YEAR_ROLLING_WINDOW) is offered
   public readOnly = input.required<boolean>();
   public years = input.required<number[]>();    // default are the last 8 years including the current year
 
   // coerced boolean inputs
   protected shouldShowAllYears = computed(() => coerceBoolean(this.showAllYears()));
+  protected shouldShowRollingWindow = computed(() => coerceBoolean(this.showRollingWindow()));
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
+  protected readonly rollingWindow = YEAR_ROLLING_WINDOW;
 
   /**
    * Compare two Years.

@@ -646,6 +646,32 @@ export function copyDate(origDate: Date): Date {
 }
 
 /**
+ * Year-filter sentinel for the rolling window "Demnächst": the last month plus the next three
+ * months around today. Like 99 (= all years) it is below 1000, so `yearMatches` lets every event pass —
+ * a list that offers it must apply `isInRollingWindow` itself.
+ */
+export const YEAR_ROLLING_WINDOW = 98;
+
+/**
+ * True if the event [startDate, endDate] overlaps the rolling window from one month before `today` to
+ * three months after it (both ends inclusive). Dates are StoreDates (yyyymmdd); a missing or invalid
+ * endDate counts as a single-day event. Invalid start dates pass, mirroring `yearMatches`.
+ */
+export function isInRollingWindow(startDate: string, endDate?: string, today = new Date(), monthsBack = 1, monthsAhead = 3): boolean {
+  if (!startDate || startDate.length !== 8) return true;
+  const toStoreDate = (d: Date) => `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
+  // shift by whole months, clamping the day so that e.g. 31 March - 1 month is 28/29 Feb, not 3 March
+  const shift = (months: number) => {
+    const lastDay = new Date(today.getFullYear(), today.getMonth() + months + 1, 0).getDate();
+    return new Date(today.getFullYear(), today.getMonth() + months, Math.min(today.getDate(), lastDay));
+  };
+  const from = toStoreDate(shift(-monthsBack));
+  const to = toStoreDate(shift(monthsAhead));
+  const end = endDate && endDate.length === 8 && endDate >= startDate ? endDate : startDate;
+  return end >= from && startDate <= to;
+}
+
+/**
  * creates an array of years
  * e.g. [2022, 2021, 2020, 2019, 2018, 2017, 2016, 2015]
  * default is to return the eight last years plus the current year and the following year

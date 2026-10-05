@@ -11,7 +11,7 @@ import { ModelSelectService } from '@okr/shared-feature';
 import { PartPipe, SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { AppNavigationService, confirm, createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error, isBrowser, keepDefaultTrue, lazyService, navigateByUrl, okrPrompt, QuickEntryService } from '@okr/shared-util-angular';
-import { convertDateFormatToString, DateFormat, addTime, debugData, extractFirstPartOfOptionalTupel, getAttendanceColor, getAttendanceIcon, getAttendanceState, getAvatarInfo, getIsoDateTime, isCalendarPublic, fill, getYear, getYearList, hasRole, parseEventString, warn } from '@okr/shared-util-core';
+import { convertDateFormatToString, DateFormat, addTime, debugData, extractFirstPartOfOptionalTupel, getAttendanceColor, getAttendanceIcon, getAttendanceState, getAvatarInfo, getIsoDateTime, isCalendarPublic, fill, getYear, getYearList, hasRole, parseEventString, warn, YEAR_ROLLING_WINDOW } from '@okr/shared-util-core';
 
 import { Menu } from '@okr/cms-menu-feature';
 import { AvatarDisplay } from '@okr/avatar-ui';
@@ -233,7 +233,7 @@ type CalEventSortField = 'date' | 'topic' | 'location' | 'organiser';
             (searchTermChanged)="onSearchtermChange($event)"
             (tagChanged)="onTagSelected($event)" [tags]="tags()"
             (typeChanged)="onTypeSelected($event)" [types]="types()"
-            (yearChanged)="onYearSelected($event)" [years]="years()" [selectedYear]="store.selectedYear()"
+            (yearChanged)="onYearSelected($event)" [years]="years()" [selectedYear]="store.selectedYear()" [showRollingWindow]="true"
           />
         }
 
@@ -361,9 +361,10 @@ export class CalEventList implements OnInit {
   public contextMenuName = input.required<string>(); // the name of the context menu to use or 'disable' to disable the header toolbar with the context menu
   public color = input('secondary');
   public view = input<'list' | 'grid'>('grid'); // initial view mode
-  // initial year filter; 99 = all years. Query params arrive as strings, hence the Number() transform
-  // (unbound route inputs arrive as undefined -> NaN -> falls back to the current year).
-  public year = input(getYear(), { transform: (value: unknown) => Number(value) || getYear() });
+  // initial year filter; 99 = all years, 98 = rolling window (last month + next three months).
+  // Query params arrive as strings, hence the Number() transform (unbound route inputs arrive as
+  // undefined -> NaN -> falls back to the rolling window).
+  public year = input(YEAR_ROLLING_WINDOW, { transform: (value: unknown) => Number(value) || YEAR_ROLLING_WINDOW });
   public showMenu = input<boolean>(true);   // for /public/calendar
   // withComponentInputBinding() sets unbound route inputs to undefined, overriding the input(true)
   // default — keepDefaultTrue restores the intended default while an explicit [x]="false" still wins.
@@ -739,7 +740,7 @@ export class CalEventList implements OnInit {
       if (year === this.navigatedYear) return;
       this.navigatedYear = year;
       const currentYear = new Date().getFullYear();
-      if (year === currentYear || year === 99) {   // 99 = all years -> today, not the oldest event
+      if (year === currentYear || year === 99 || year === YEAR_ROLLING_WINDOW) {   // 99 = all years, 98 = rolling window -> today, not the oldest event
         this.calendarRef()?.instance.getApi()?.today();
       } else {
         const first = events[0];
