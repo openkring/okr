@@ -175,5 +175,19 @@
   "validation": {
     "reminderFeeDecimals": "Indica el importe con dos decimales como máximo.",
     "reminderFeeAccountRequired": "Los recargos de recordatorio necesitan una cuenta de ingresos. Elige una o pon todos los recargos a 0."
+  },
+  "ledger": {
+    "bookings": "Asientos",
+    "accounts": "Cuentas contables",
+    "debit": "Debe",
+    "credit": "Haber",
+    "showJournal": "Mostrar en el diario",
+    "showDetails": "Mostrar detalles",
+    "loadError": "No se han podido cargar los asientos. Vuelve a intentarlo más tarde.",
+    "status": {
+      "draft": "borrador",
+      "forReview": "por revisar",
+      "cancelled": "anulado"
+    }
   }
 }

@@ -46,6 +46,21 @@
     },
     {
       "path": "../util/tsconfig.lib.json"
+    },
+    {
+      "path": "../../booking/data-access/tsconfig.lib.json"
+    },
+    {
+      "path": "../../../shared/pipes/tsconfig.lib.json"
+    },
+    {
+      "path": "../../../subject/org/data-access/tsconfig.lib.json"
+    },
+    {
+      "path": "../../../subject/org/ui/tsconfig.lib.json"
+    },
+    {
+      "path": "../../../subject/person/ui/tsconfig.lib.json"
     }
   ]
 }

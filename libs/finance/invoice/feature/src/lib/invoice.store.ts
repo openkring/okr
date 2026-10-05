@@ -20,7 +20,7 @@ import { InvoiceService } from '@okr/finance-invoice-data-access';
 import { InvoicePaymentModal } from '@okr/finance-invoice-ui';
 import {
   buildPaymentConfirmationPayload, canCreatePaymentConfirmation, canCreateReminder, canEmailInvoice, cancelInputProblem, isPayableState, defaultReminderFee,
-  draftInvoicesOf, formatPaymentChf, getInvoiceExportData, INVOICE_CANCEL_REASON_LENGTH, INVOICE_I18N_KEYS, InvoiceI18n, InvoicePaymentCandidate,
+  draftInvoicesOf, formatPaymentChf, invoiceDisplayState, getInvoiceExportData, INVOICE_CANCEL_REASON_LENGTH, INVOICE_I18N_KEYS, InvoiceI18n, InvoicePaymentCandidate,
   InvoicePaymentInput, invoiceRefusalReasons, invoiceRefusalText, invoicesForList, isDraftInvoice, isRetryablePaymentRefusal, latestReminderWithDocument,
   mahnlaufCandidates, newDraftInvoice, newInvoicePaymentFormModel, newPaymentId, nextReminderLevel, openInvoiceAmount, parseReminderFee,
   PAYMENT_CONFIRMATION_TEMPLATE_ID, reminderInputProblem, reminderLevelKey, waivableReminder, waiveInputProblem, WAIVE_REASON_MAX,
@@ -164,7 +164,9 @@ export const InvoiceStore = signalStore(
       // filter by state
       const selectedState = store.selectedState();
       if (selectedState !== 'all') {
-        invoices = invoices.filter(i => i.state === selectedState);
+        // 'overdue' is computed (open and past due), so filter on the state the list shows
+        const today = getTodayStr();
+        invoices = invoices.filter(i => invoiceDisplayState(i, today) === selectedState);
       }
 
       // filter by year

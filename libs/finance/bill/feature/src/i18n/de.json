@@ -103,5 +103,8 @@
       "label": "Zu bezahlen",
       "description": "Die Rechnung ist erfasst und muss noch bezahlt werden."
     }
+  },
+  "vendor": {
+    "label": "Lieferant"
   }
 }

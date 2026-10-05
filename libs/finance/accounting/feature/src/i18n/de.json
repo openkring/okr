@@ -175,5 +175,19 @@
   "validation": {
     "reminderFeeDecimals": "Bitte gib den Betrag mit höchstens zwei Nachkommastellen an.",
     "reminderFeeAccountRequired": "Für Mahngebühren braucht es ein Ertragskonto. Wähle eines aus oder setze alle Gebühren auf 0."
+  },
+  "ledger": {
+    "bookings": "Buchungen",
+    "accounts": "Buchungskonten",
+    "debit": "Soll",
+    "credit": "Haben",
+    "showJournal": "Im Journal anzeigen",
+    "showDetails": "Details anzeigen",
+    "loadError": "Die Buchungen konnten nicht geladen werden. Versuche es später noch einmal.",
+    "status": {
+      "draft": "Entwurf",
+      "forReview": "zur Prüfung",
+      "cancelled": "storniert"
+    }
   }
 }

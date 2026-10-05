@@ -175,5 +175,19 @@
   "validation": {
     "reminderFeeDecimals": "Please enter the amount with at most two decimal places.",
     "reminderFeeAccountRequired": "Reminder fees need a revenue account. Choose one or set all fees to 0."
+  },
+  "ledger": {
+    "bookings": "Bookings",
+    "accounts": "Booking accounts",
+    "debit": "Debit",
+    "credit": "Credit",
+    "showJournal": "Show in journal",
+    "showDetails": "Show details",
+    "loadError": "The bookings could not be loaded. Please try again later.",
+    "status": {
+      "draft": "draft",
+      "forReview": "for review",
+      "cancelled": "cancelled"
+    }
   }
 }

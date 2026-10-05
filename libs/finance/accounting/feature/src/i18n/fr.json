@@ -175,5 +175,19 @@
   "validation": {
     "reminderFeeDecimals": "Indique le montant avec au maximum deux décimales.",
     "reminderFeeAccountRequired": "Les frais de rappel ont besoin d’un compte de produits. Choisis-en un ou mets tous les frais à 0."
+  },
+  "ledger": {
+    "bookings": "Écritures",
+    "accounts": "Comptes comptables",
+    "debit": "Débit",
+    "credit": "Crédit",
+    "showJournal": "Afficher dans le journal",
+    "showDetails": "Afficher les détails",
+    "loadError": "Les écritures n’ont pas pu être chargées. Réessaie plus tard.",
+    "status": {
+      "draft": "brouillon",
+      "forReview": "à vérifier",
+      "cancelled": "annulée"
+    }
   }
 }

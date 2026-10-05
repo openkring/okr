@@ -10,6 +10,18 @@ export const ACCOUNTING_I18N_KEYS = {
   voucher_title:      PFX + 'voucher.title',
   voucher_load_error: PFX + 'voucher.loadError',
 
+  // ledger card: the bookings / booking accounts of an invoice or bill
+  ledger_bookings:         PFX + 'ledger.bookings',
+  ledger_accounts:         PFX + 'ledger.accounts',
+  ledger_debit:            PFX + 'ledger.debit',
+  ledger_credit:           PFX + 'ledger.credit',
+  ledger_show_journal:     PFX + 'ledger.showJournal',
+  ledger_show_details:     PFX + 'ledger.showDetails',
+  ledger_load_error:       PFX + 'ledger.loadError',
+  ledger_status_draft:     PFX + 'ledger.status.draft',
+  ledger_status_forReview: PFX + 'ledger.status.forReview',
+  ledger_status_cancelled: PFX + 'ledger.status.cancelled',
+
   settings_title:           PFX + 'settings.title',
   expense_account:          PFX + 'settings.expenseAccount.label',
   expense_account_helper:   PFX + 'settings.expenseAccount.helper',

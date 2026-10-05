@@ -103,5 +103,8 @@
       "label": "Por pagar",
       "description": "La factura está registrada y aún debe pagarse."
     }
+  },
+  "vendor": {
+    "label": "Proveedor"
   }
 }

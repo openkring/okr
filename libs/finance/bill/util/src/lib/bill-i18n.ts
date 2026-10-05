@@ -16,6 +16,11 @@ export const BILL_I18N_KEYS = {
   amount:               PFX + 'amount.label',
   notes:                PFX + 'notes.label',
   state:                PFX + 'state.label',
+  vendor:               PFX + 'vendor.label',
+  state_draft:          PFX + 'bill_state.draft.label',
+  state_todo:           PFX + 'bill_state.todo.label',
+  state_paid:           PFX + 'bill_state.paid.label',
+  state_overdue:        PFX + 'bill_state.overdue.label',
 
   list_title:           PFX + 'list.title',
 

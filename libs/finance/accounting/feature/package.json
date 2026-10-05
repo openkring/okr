@@ -21,6 +21,11 @@
     "@okr/finance-accounting-util": "*",
     "@okr/finance-cost-center-data-access": "*",
     "@okr/content-pdf-template-data-access": "*",
-    "@okr/category-feature": "*"
+    "@okr/category-feature": "*",
+    "@okr/shared-pipes": "*",
+    "@okr/finance-booking-data-access": "*",
+    "@okr/subject-org-data-access": "*",
+    "@okr/subject-org-ui": "*",
+    "@okr/subject-person-ui": "*"
   }
 }

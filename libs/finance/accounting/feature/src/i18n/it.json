@@ -175,5 +175,19 @@
   "validation": {
     "reminderFeeDecimals": "Indica l’importo con al massimo due decimali.",
     "reminderFeeAccountRequired": "Le spese di sollecito richiedono un conto ricavi. Scegline uno o imposta tutte le spese a 0."
+  },
+  "ledger": {
+    "bookings": "Registrazioni",
+    "accounts": "Conti contabili",
+    "debit": "Dare",
+    "credit": "Avere",
+    "showJournal": "Mostra nel giornale",
+    "showDetails": "Mostra dettagli",
+    "loadError": "Non è stato possibile caricare le registrazioni. Riprova più tardi.",
+    "status": {
+      "draft": "bozza",
+      "forReview": "da verificare",
+      "cancelled": "stornata"
+    }
   }
 }

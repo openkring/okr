@@ -1,12 +1,15 @@
 import { Component, computed, inject, input } from '@angular/core';
-import { IonAvatar, IonCard, IonCardContent, IonChip, IonContent, IonIcon, IonImg, IonItem, IonLabel } from '@ionic/angular/standalone';
+import { IonAvatar, IonButton, IonCard, IonCardContent, IonChip, IonContent, IonIcon, IonImg, IonItem, IonLabel } from '@ionic/angular/standalone';
 
 import { InvoiceModel } from '@okr/shared-models';
-import { Header } from '@okr/shared-ui';
+import { formatMinorAmount, Header } from '@okr/shared-ui';
 import { PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
-import { fill, formatQrReference, getFullName, prettyFormatDate, prettyFormatDateTime } from '@okr/shared-util-core';
+import { fill, formatQrReference, getFullName, getTodayStr, prettyFormatDate, prettyFormatDateTime } from '@okr/shared-util-core';
 import { AvatarPipe } from '@okr/avatar-ui';
-import { formatPaymentChf, isPayableState, openInvoiceAmount, reminderLevelKey } from '@okr/finance-invoice-util';
+import { AvatarDetailService, LedgerBookings } from '@okr/finance-accounting-feature';
+import {
+  invoiceAccountKeys, invoiceBookingKeys, invoiceDisplayState, invoiceStateColor, invoiceStateLabel, isOverdueInvoice, isPayableState, openInvoiceAmount, reminderLevelKey,
+} from '@okr/finance-invoice-util';
 import { InvoiceStore } from './invoice.store';
 
 @Component({
@@ -15,12 +18,13 @@ import { InvoiceStore } from './invoice.store';
   providers: [InvoiceStore],
   imports: [
     SvgIconPipe, PrettyDatePipe, AvatarPipe,
-    Header,
-    IonContent, IonCard, IonIcon, IonLabel, IonCardContent, IonItem, IonChip, IonAvatar, IonImg
+    Header, LedgerBookings,
+    IonContent, IonCard, IonIcon, IonLabel, IonCardContent, IonItem, IonChip, IonAvatar, IonImg, IonButton
   ],
   styles: [`
     @media (width <= 600px) { ion-card { margin: 5px;} }
     .view-label { font-size: 0.8rem }
+    .overdue { color: var(--ion-color-danger); }
   `],
   template: `
     <okr-header [i18n]="{ title: store.i18n.view() }" [isModal]="true" />
@@ -46,6 +50,9 @@ import { InvoiceStore } from './invoice.store';
                   <p class="view-label">{{ store.i18n.receiver_label() }}</p>
                   <p class="view-value">{{ receiverName() }}</p>
                 </ion-label>
+                <ion-button slot="end" fill="clear" [title]="store.i18n.receiver_label()" (click)="showReceiver()">
+                  <ion-icon slot="icon-only" src="{{ 'link' | svgIcon }}" />
+                </ion-button>
               </ion-item>
             }
             <!-- title -->
@@ -69,7 +76,7 @@ import { InvoiceStore } from './invoice.store';
               <ion-icon slot="start" src="{{'calendar-number' | svgIcon}}" />
               <ion-label>
                 <p class="view-label">{{ store.i18n.due_date_label() }}</p>
-                <p class="view-value">{{ dueDate() | prettyDate }}</p>
+                <p class="view-value" [class.overdue]="isOverdue()">{{ dueDate() | prettyDate }}</p>
               </ion-label>
             </ion-item>
             <!-- amount -->
@@ -77,7 +84,7 @@ import { InvoiceStore } from './invoice.store';
               <ion-icon slot="start" src="{{'chf' | svgIcon}}" />
               <ion-label>
                 <p class="view-label">{{ store.i18n.amount_label() }}</p>
-                <p class="view-value">{{ amount() }}</p>
+                <p class="view-value" [class.overdue]="isOverdue()">{{ amount() }}</p>
               </ion-label>
             </ion-item>
             <!-- state -->
@@ -85,8 +92,8 @@ import { InvoiceStore } from './invoice.store';
               <ion-icon slot="start" src="{{'target' | svgIcon}}" />
               <ion-label>
                 <p class="view-label">{{ store.i18n.state_label() }}</p>
-                <ion-chip [outline]="true" size="small" [color]="getStateColor(state())">
-                  {{ state() }}
+                <ion-chip [outline]="true" size="small" [color]="stateColor()">
+                  {{ stateLabel() }}
                 </ion-chip>
               </ion-label>
             </ion-item>
@@ -172,12 +179,17 @@ import { InvoiceStore } from './invoice.store';
             }
           </ion-card-content>
         </ion-card>
+        <!-- issue, payment, reminder fee and storno bookings, each account linked to the journal;
+             a migrated invoice has none: the bank accounts of its payments instead -->
+        <okr-ledger-bookings [accountingTenantId]="invoice.accountingTenantId" [bookingKeys]="bookingKeys()"
+          [accountKeys]="accountKeys()" [date]="invoice.invoiceDate" />
       }
     </ion-content>
   `
 })
 export class InvoiceViewModal {
   protected readonly store = inject(InvoiceStore);
+  private readonly avatarDetailService = inject(AvatarDetailService);
 
   public readonly invoice = input.required<InvoiceModel>();
 
@@ -190,8 +202,14 @@ export class InvoiceViewModal {
   protected readonly invoiceId = computed(() => this.invoice()?.invoiceId ?? '');
   protected readonly invoiceDate = computed(() => this.invoice()?.invoiceDate ?? '');
   protected readonly dueDate = computed(() => this.invoice()?.dueDate ?? '');
-  protected readonly amount = computed(() => ((this.invoice()?.totalAmount?.amount ?? 0) / 100).toFixed(2));
-  protected readonly state = computed(() => this.invoice()?.state ?? 'draft');
+  protected readonly amount = computed(() => formatMinorAmount(this.invoice()?.totalAmount?.amount ?? 0));
+  private readonly today = getTodayStr();
+  protected readonly isOverdue = computed(() => isOverdueInvoice(this.invoice(), this.today));
+  protected readonly state = computed(() => invoiceDisplayState(this.invoice(), this.today));
+  protected readonly stateColor = computed(() => invoiceStateColor(this.state()));
+  protected readonly stateLabel = computed(() => invoiceStateLabel(this.state(), this.store.i18n));
+  protected readonly bookingKeys = computed(() => invoiceBookingKeys(this.invoice()));
+  protected readonly accountKeys = computed(() => invoiceAccountKeys(this.invoice()));
   protected readonly paymentDate = computed(() => this.invoice()?.paymentDate ?? '');
   protected readonly paymentReference = computed(() => formatQrReference(this.invoice()?.paymentReference));
   protected readonly notes = computed(() => this.invoice()?.notes ?? '');
@@ -205,7 +223,7 @@ export class InvoiceViewModal {
   protected readonly sentAtText = computed(() => fill(this.store.i18n.email_sent_at(), { date: prettyFormatDateTime(this.sentAt()) }));
   /** shown while the invoice is open (pending, partial, unpaid) — not for a paid or cancelled one */
   protected readonly showOpenAmount = computed(() => isPayableState(this.invoice()?.state));
-  protected readonly openAmount = computed(() => formatPaymentChf(openInvoiceAmount(this.invoice())));
+  protected readonly openAmount = computed(() => formatMinorAmount(openInvoiceAmount(this.invoice())));
 
   protected levelLabel(level: number): string {
     return this.store.i18n[reminderLevelKey(level)]();
@@ -216,15 +234,10 @@ export class InvoiceViewModal {
   }
 
   protected formatChf(rappen: number): string {
-    return formatPaymentChf(rappen);
+    return formatMinorAmount(rappen);
   }
 
-  protected getStateColor(state: string): string {
-    switch(state) {
-      case 'paid': return 'success';
-      case 'overdue': return 'danger';
-      case 'draft': return 'warning';
-    }
-    return '';
+  protected async showReceiver(): Promise<void> {
+    await this.avatarDetailService.show(this.invoice()?.receiver);
   }
 }

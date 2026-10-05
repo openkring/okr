@@ -5,12 +5,12 @@ import {
 } from '@ionic/angular/standalone';
 import { InvoiceModel, RoleName } from '@okr/shared-models';
 import {
-  canCreatePaymentConfirmation, canCreateReminder, canEmailInvoice, isDraftInvoice, isPayableState, isWaivedReminder, latestReminderWithDocument, mayReadInvoiceDocuments, waivableReminder,
+  canCreatePaymentConfirmation, canCreateReminder, canEmailInvoice, invoiceDisplayState, invoiceStateColor, invoiceStateLabel, isDraftInvoice, isOverdueInvoice, isPayableState, isWaivedReminder, latestReminderWithDocument, mayReadInvoiceDocuments, waivableReminder,
 } from '@okr/finance-invoice-util';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
+import { EmptyList, formatMinorAmount, ListFilter, Spinner } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@okr/shared-util-angular';
-import { DateFormat, convertDateFormatToString, getYear, getYearList, hasRole } from '@okr/shared-util-core';
+import { DateFormat, convertDateFormatToString, getTodayStr, getYear, getYearList, hasRole } from '@okr/shared-util-core';
 
 import { AvatarPipe } from '@okr/avatar-ui';
 import { Menu } from '@okr/cms-menu-feature';
@@ -34,6 +34,7 @@ import { InvoiceStore } from './invoice.store';
     .inv-title { font-size: 1rem; }
     .amount { text-align: right; }
     .state { text-align: right; }
+    .overdue { color: var(--ion-color-danger); }
     ion-chip { font-size: 0.8rem; padding-top: 0px; padding-bottom: 0px; height: 12px; }
     ion-avatar { height: 30px; width: 30px; }
   `],
@@ -92,7 +93,7 @@ import { InvoiceStore } from './invoice.store';
       } @else {
         <ion-grid>
           @for(invoice of filteredInvoices(); track invoice.okey) {
-            <ion-row (click)="showActions(invoice)">
+            <ion-row [class.overdue]="isOverdue(invoice)" (click)="showActions(invoice)">
               <ion-col size="2" class="ion-align-self-center">{{ formatDate(invoice.invoiceDate) }}</ion-col>
               <ion-col size="1">
                 @if(invoice.receiver; as r) {
@@ -107,10 +108,10 @@ import { InvoiceStore } from './invoice.store';
                   <p class="inv-title">{{ invoice.title }}</p>
                 </ion-label>
               </ion-col>
-              <ion-col size="2"class="ion-align-self-center ion-text-end">{{ getAmount(invoice.totalAmount?.amount)}}</ion-col>
+              <ion-col size="2" class="ion-align-self-center ion-text-end">{{ getAmount(invoice.totalAmount?.amount) }}</ion-col>
               <ion-col size="2" class="state">
-                <ion-chip [outline]="true" size="small" [color]="getStateColor(invoice.state)">
-                  {{ getStateLabel(invoice.state) }}
+                <ion-chip [outline]="true" size="small" [color]="getStateColor(displayState(invoice))">
+                  {{ getStateLabel(displayState(invoice)) }}
                 </ion-chip>
               </ion-col>
             </ion-row>
@@ -132,6 +133,7 @@ export class InvoiceList {
 
   // computed
   protected readonly popupId = computed(() => `c_invoices_${this.listId()}`);
+  private readonly today = getTodayStr();
   protected readonly isLoading = computed(() => this.store.isLoading());
   protected readonly filteredInvoices = computed(() => this.store.filteredInvoices());
   protected readonly filteredCount = computed(() => this.filteredInvoices().length);
@@ -171,32 +173,24 @@ export class InvoiceList {
 
   protected getAmount(cents?: number): string {
     if (cents === undefined) return '';
-    return (cents / 100).toFixed(2);
+    return formatMinorAmount(cents);
+  }
+
+  /** overdue = open and past its due date; computed, the stored state stays `pending` */
+  protected isOverdue(invoice: InvoiceModel): boolean {
+    return isOverdueInvoice(invoice, this.today);
+  }
+
+  protected displayState(invoice: InvoiceModel): string {
+    return invoiceDisplayState(invoice, this.today);
   }
 
   protected getStateColor(state: string): string {
-    switch(state) {
-      case 'paid': return 'success';
-      case 'overdue': return 'danger';
-      case 'pending': return 'warning';
-      case 'issuing': return 'warning';
-      case 'draft': return 'medium';
-      case 'cancelled': return 'medium';
-    }
-    return '';
+    return invoiceStateColor(state);
   }
 
   protected getStateLabel(state: string): string {
-    const i18n = this.store.i18n;
-    switch(state) {
-      case 'draft': return i18n.state_draft();
-      case 'pending': return i18n.state_pending();
-      case 'issuing': return i18n.state_pending();
-      case 'paid': return i18n.state_paid();
-      case 'overdue': return i18n.state_overdue();
-      case 'cancelled': return i18n.state_cancelled();
-    }
-    return state;
+    return invoiceStateLabel(state, this.store.i18n);
   }
 
   protected formatDate(storeDate: string): string {

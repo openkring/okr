@@ -103,5 +103,8 @@
       "label": "À payer",
       "description": "La facture est saisie et doit encore être payée."
     }
+  },
+  "vendor": {
+    "label": "Fournisseur"
   }
 }

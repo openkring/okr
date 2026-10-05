@@ -103,5 +103,8 @@
       "label": "To pay",
       "description": "The bill is recorded and still has to be paid."
     }
+  },
+  "vendor": {
+    "label": "Supplier"
   }
 }

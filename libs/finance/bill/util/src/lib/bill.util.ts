@@ -1,6 +1,8 @@
 import { BillModel } from '@okr/shared-models';
 import { addIndexElement } from '@okr/shared-util-core';
 
+import { BillI18n } from './bill-i18n';
+
 export function newBill(tenantId: string): BillModel {
   return new BillModel(tenantId);
 }
@@ -33,4 +35,50 @@ export function getBillExportData(bills: BillModel[]): string[][] {
     bill.vendor ? (bill.vendor.label || bill.vendor.name1 || '') : '',
   ]);
   return [headers, ...rows];
+}
+
+/**
+ * A bill that is still to pay (`todo`) past its due date, or one bexio already marks overdue.
+ * @param today StoreDate (yyyyMMdd); the due date itself is not overdue yet
+ */
+export function isOverdueBill(bill: BillModel, today: string): boolean {
+  if (bill.state === 'overdue') return true;
+  const dueDate = bill.dueDate ?? '';
+  return bill.state === 'todo' && dueDate.length > 0 && dueDate < today;
+}
+
+/** The state to show and filter on: `overdue` for an overdue bill, otherwise the stored state. */
+export function billDisplayState(bill: BillModel, today: string): string {
+  return isOverdueBill(bill, today) ? 'overdue' : bill.state;
+}
+
+/**
+ * The booking accounts of a bill as account okeys. A bill has no booking of its own: bexio hands
+ * over only the accounts it was booked on, stored comma-separated in `bookingAccount`.
+ */
+export function billAccountKeys(bill: BillModel): string[] {
+  const keys = (bill.bookingAccount ?? '').split(',').map(k => k.trim()).filter(k => k.length > 0);
+  return [...new Set(keys)];
+}
+
+/** The chip color of a bill state (as {@link billDisplayState} returns it). */
+export function billStateColor(state: string): string {
+  switch (state) {
+    case 'paid': return 'success';
+    case 'overdue': return 'danger';
+    case 'draft': return 'warning';
+    case 'todo': return 'primary';
+  }
+  return '';
+}
+
+/** The label of a bill state; an unknown state shows itself. */
+export function billStateLabel(state: string, i18n: BillI18n): string {
+  switch (state) {
+    case 'draft': return i18n.state_draft();
+    case 'todo': return i18n.state_todo();
+    case 'paid': return i18n.state_paid();
+    case 'overdue': return i18n.state_overdue();
+  }
+  return state;
 }

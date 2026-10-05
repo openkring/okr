@@ -11,10 +11,10 @@ import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { BillCollection, BillModel } from '@okr/shared-models';
 import { confirm, exportCsv } from '@okr/shared-util-angular';
-import { debugListLoaded, getSystemQuery, getYear, nameMatches } from '@okr/shared-util-core';
+import { debugListLoaded, getSystemQuery, getTodayStr, getYear, nameMatches } from '@okr/shared-util-core';
 
 import { BillService } from '@okr/finance-bill-data-access';
-import { BILL_I18N_KEYS, BillI18n, getBillExportData, newBill } from '@okr/finance-bill-util';
+import { BILL_I18N_KEYS, BillI18n, billDisplayState, getBillExportData, newBill } from '@okr/finance-bill-util';
 import { AccountingStore } from '@okr/finance-accounting-feature';
 
 import { BillEditModal } from './bill-edit.modal';
@@ -116,7 +116,9 @@ export const BillStore = signalStore(
       // filter by state
       const selectedState = store.selectedState();
       if (selectedState !== 'all') {
-        bills = bills.filter(b => b.state === selectedState);
+        // 'overdue' is also computed (to pay and past due), so filter on the state the list shows
+        const today = getTodayStr();
+        bills = bills.filter(b => billDisplayState(b, today) === selectedState);
       }
 
       // filter by year

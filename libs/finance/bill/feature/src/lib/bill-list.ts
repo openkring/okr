@@ -3,9 +3,10 @@ import { ActionSheetController, IonAvatar, IonButton, IonButtons, IonChip, IonCo
 
 import { BillModel, RoleName } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
+import { EmptyList, formatMinorAmount, ListFilter, Spinner } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@okr/shared-util-angular';
-import { DateFormat, convertDateFormatToString, getYear, getYearList, hasRole } from '@okr/shared-util-core';
+import { DateFormat, convertDateFormatToString, getTodayStr, getYear, getYearList, hasRole } from '@okr/shared-util-core';
+import { billDisplayState, billStateColor, billStateLabel, isOverdueBill } from '@okr/finance-bill-util';
 
 import { AvatarPipe } from '@okr/avatar-ui';
 import { Menu } from '@okr/cms-menu-feature';
@@ -29,6 +30,7 @@ import { BillStore } from './bill.store';
     .bill-title { font-size: 1rem; }
     .amount { text-align: right; }
     .state { text-align: right; }
+    .overdue { color: var(--ion-color-danger); }
     ion-chip { font-size: 0.8rem; padding-top: 0px; padding-bottom: 0px; height: 12px; }
     ion-avatar { height: 30px; width: 30px; }
   `],
@@ -69,7 +71,7 @@ import { BillStore } from './bill.store';
       } @else {
         <ion-grid>
           @for(bill of filteredBills(); track bill.okey) {
-            <ion-row (click)="showActions(bill)">
+            <ion-row [class.overdue]="isOverdue(bill)" (click)="showActions(bill)">
               <ion-col size="2" class="ion-align-self-center">{{ formatDate(bill.billDate) }}</ion-col>
               <ion-col size="1">
                 @if(bill.vendor; as v) {
@@ -86,8 +88,8 @@ import { BillStore } from './bill.store';
               </ion-col>
               <ion-col size="2" class="ion-align-self-center ion-text-end">{{ getAmount(bill.totalAmount?.amount) }}</ion-col>
               <ion-col size="2" class="state">
-                <ion-chip [outline]="true" size="small" [color]="getStateColor(bill.state)">
-                  {{ bill.state }}
+                <ion-chip [outline]="true" size="small" [color]="getStateColor(displayState(bill))">
+                  {{ getStateLabel(displayState(bill)) }}
                 </ion-chip>
               </ion-col>
             </ion-row>
@@ -113,6 +115,7 @@ export class BillList {
   protected readonly currentUser = computed(() => this.store.appStore.currentUser());
   protected readonly imgixBaseUrl = computed(() => this.store.appStore.env.services.imgixBaseUrl);
   protected readonly popupId = computed(() => `c_bills_${this.listId()}`);
+  private readonly today = getTodayStr();
   protected years = computed(() => getYearList(getYear(), 8));
   protected states = computed(() => this.store.states());
 
@@ -143,17 +146,24 @@ export class BillList {
 
   protected getAmount(cents?: number): string {
     if (cents === undefined) return '';
-    return (cents / 100).toFixed(2);
+    return formatMinorAmount(cents);
+  }
+
+  /** overdue = to pay and past its due date (or marked overdue by bexio) */
+  protected isOverdue(bill: BillModel): boolean {
+    return isOverdueBill(bill, this.today);
+  }
+
+  protected displayState(bill: BillModel): string {
+    return billDisplayState(bill, this.today);
   }
 
   protected getStateColor(state: string): string {
-    switch (state) {
-      case 'paid': return 'success';
-      case 'overdue': return 'danger';
-      case 'draft': return 'warning';
-      case 'todo': return 'primary';
-    }
-    return '';
+    return billStateColor(state);
+  }
+
+  protected getStateLabel(state: string): string {
+    return billStateLabel(state, this.store.i18n);
   }
 
   /******************************* actions *************************************** */
