@@ -166,3 +166,21 @@ export function issueBookingBillKey(bookingKey: string): string | undefined {
   const m = /^bill-([A-Za-z0-9]+)$/.exec(bookingKey);
   return m ? m[1] : undefined;
 }
+
+/** The note a linked booking carries (spec 1.85 B5): which bill it pays; the marker makes it findable. */
+export function billPaymentNote(billId: string, title: string): string {
+  return `Zahlung Kreditor ${[billId, title].filter((s) => !!s).join(' ')} [bill-payment]`;
+}
+
+/** The notes with `line` appended on its own line (not twice); capped at `maxLength` without cutting existing notes. */
+export function withNoteLine(notes: string, line: string, maxLength: number): string {
+  const lines = (notes ?? '').split('\n');
+  if (lines.includes(line)) return notes ?? '';
+  const prefix = notes ? `${notes}\n` : '';
+  return prefix + line.substring(0, Math.max(0, maxLength - prefix.length));
+}
+
+/** The notes without the line `line` (unlink). */
+export function withoutNoteLine(notes: string, line: string): string {
+  return (notes ?? '').split('\n').filter((l) => l !== line).join('\n');
+}

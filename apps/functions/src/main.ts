@@ -26,6 +26,7 @@ import * as Video from './video';
 import * as Expense from './expense';
 import * as Booking from './booking';
 import * as Invoice from './invoice';
+import * as Bill from './bill';
 import * as BankImport from './bank-import';
 import * as Email from './email';
 import * as Bexio from './bexio';
@@ -276,6 +277,8 @@ export const createPaymentConfirmation = Invoice.createPaymentConfirmation;
 export const createInvoiceReminder = Invoice.createInvoiceReminder;
 export const sendInvoiceEmail = Invoice.sendInvoiceEmail;
 export const waiveReminderFee = Invoice.waiveReminderFee;
+export const recordBillPayment = Bill.recordBillPayment;
+export const unlinkBillPayment = Bill.unlinkBillPayment;
 // bank import: the only write path from bank-import-rows into the ledger (spec 1.60 §7)
 export const postBankImport = BankImport.postBankImport;
 // bexio journal import: mapped entries posted directly as bookings (spec 1.60 §12)

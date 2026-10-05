@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  applyBillPayment, billAfterPaymentRemoval, billLinkBlockers, BillLike, billPaymentBlockers, billPaymentBookingLines, invoiceAfterPaymentRemoval,
-  isPayableBill, issueBookingBillKey, linkedPaymentKeys, openBillAmount,
+  applyBillPayment, billAfterPaymentRemoval, billLinkBlockers, BillLike, billPaymentBlockers, billPaymentBookingLines, billPaymentNote, invoiceAfterPaymentRemoval,
+  isPayableBill, issueBookingBillKey, linkedPaymentKeys, openBillAmount, withNoteLine, withoutNoteLine,
 } from './bill-payment.logic';
 
 const bill = (o: Partial<BillLike> = {}): BillLike => ({ state: 'todo', totalAmount: { amount: 3900 }, payments: [], accountingTenantId: 'scs', billDate: '20260901', ...o });
@@ -129,5 +129,17 @@ describe('bill payment rules', () => {
     expect(issueBookingBillKey('bill-AbC123-pay-xyz')).toBeUndefined();
     expect(issueBookingBillKey('12040')).toBeUndefined();
     expect(issueBookingBillKey('bill-')).toBeUndefined();
+  });
+});
+
+describe('booking note of a linked payment', () => {
+  it('adds the marker line once and removes it again', () => {
+    const line = billPaymentNote('00986', 'DSL 09');
+    expect(line).toBe('Zahlung Kreditor 00986 DSL 09 [bill-payment]');
+    const once = withNoteLine('BA DSL', line, 500);
+    expect(once).toBe('BA DSL\nZahlung Kreditor 00986 DSL 09 [bill-payment]');
+    expect(withNoteLine(once, line, 500)).toBe(once);
+    expect(withNoteLine('', line, 500)).toBe(line);
+    expect(withoutNoteLine(once, line)).toBe('BA DSL');
   });
 });
