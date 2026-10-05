@@ -3,10 +3,11 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, IonContent, IonNote, ModalController } from '@ionic/angular/standalone';
 import { from, of } from 'rxjs';
 
+import { CategoryListModel } from '@okr/shared-models';
 import { Header, Spinner } from '@okr/shared-ui';
 import { dismissOverlay } from '@okr/shared-util-angular';
 
-import { FormSubmitService } from '@okr/forms-data-access';
+import { FormCategoryService, FormSubmitService } from '@okr/forms-data-access';
 import { FormRenderer } from './form-renderer';
 
 /** The strings the modal needs. `SectionI18n` is a superset, so a section store's resolved
@@ -71,6 +72,7 @@ export interface FormModalI18n {
             [submitLabel]="i18n().form_submit()"
             [submitting]="submitting()"
             [jsToken]="jsToken()"
+            [categories]="categoriesResource.value() ?? []"
             (submitted)="onSubmit($event)"
           />
         }
@@ -84,12 +86,15 @@ export class FormModal {
   private readonly modalController = inject(ModalController);
   private readonly alertController = inject(AlertController);
   private readonly formSubmitService = inject(FormSubmitService);
+  private readonly formCategoryService = inject(FormCategoryService);
 
   // inputs — set as componentProps by whatever opens the modal
   public readonly formKey = input.required<string>();
   public readonly tenantId = input.required<string>();
   public readonly title = input('');
   public readonly i18n = input.required<FormModalI18n>();
+  /** the category lists the caller already has (signed-in AppStore); missing ones are fetched */
+  public readonly categories = input<CategoryListModel[]>([]);
   /** whether file uploads are encrypted at rest; a button config has no section to read it from */
   public readonly encryptFileUpload = input(false);
   public readonly showCaptcha = input(false);
@@ -110,6 +115,12 @@ export class FormModal {
   protected readonly definition = computed(() => {
     const val = this.definitionResource.value();
     return Array.isArray(val) ? val[0] : val;
+  });
+
+  /** the lists of the form's category fields — fetched for anonymous visitors, who have no AppStore categories */
+  protected readonly categoriesResource = rxResource({
+    params: () => ({ def: this.definition(), tenantId: this.tenantId(), known: this.categories() }),
+    stream: ({ params }) => from(this.formCategoryService.fetchCategories(params.def, params.tenantId, params.known)),
   });
 
   constructor() {

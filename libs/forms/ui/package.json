@@ -12,6 +12,8 @@
     "@okr/shared-ui": "*",
     "@okr/shared-pipes": "*",
     "@okr/shared-util-core": "*",
-    "@okr/forms-util": "*"
+    "@okr/forms-util": "*",
+    "@okr/shared-util-angular": "*",
+    "@okr/shared-constants": "*"
   }
 }

@@ -9,7 +9,7 @@ import { I18nService } from '@okr/shared-i18n';
 import { Spinner } from '@okr/shared-ui';
 import { FormSection } from '@okr/shared-models';
 
-import { FormSubmitService } from '@okr/forms-data-access';
+import { FormCategoryService, FormSubmitService } from '@okr/forms-data-access';
 import { FormRenderer } from '@okr/forms-ui';
 import { SECTION_I18N_KEYS } from '@okr/cms-section-util';
 
@@ -53,6 +53,7 @@ const FormSectionStore = signalStore(
               [submitLabel]="store.i18n.form_submit()"
               [submitting]="submitting()"
               [jsToken]="jsToken()"
+              [categories]="categoriesResource.value() ?? []"
               (submitted)="onSubmit($event)"
             />
           }
@@ -67,6 +68,7 @@ export class FormSectionComponent {
   protected readonly store = inject(FormSectionStore);
   private readonly alertController = inject(AlertController);
   private readonly formSubmitService = inject(FormSubmitService);
+  private readonly formCategoryService = inject(FormCategoryService);
 
   public readonly section = input.required<FormSection>();
   public readonly editMode = input(false);
@@ -89,6 +91,13 @@ export class FormSectionComponent {
   protected readonly definition = computed(() => {
     const val = this.definitionResource.value();
     return Array.isArray(val) ? val[0] : val;
+  });
+
+  /** the lists of the form's category fields — fetched for anonymous visitors, who have no AppStore categories */
+  protected readonly categoriesResource = rxResource({
+    params: () => ({ def: this.definition(), known: this.store.appStore.allCategories() }),
+    stream: ({ params }) =>
+      from(this.formCategoryService.fetchCategories(params.def, this.store.appStore.tenantId(), params.known)),
   });
 
   constructor() {

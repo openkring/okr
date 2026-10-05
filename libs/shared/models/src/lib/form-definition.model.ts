@@ -8,7 +8,7 @@ import { OkrModel, NamedModel, TaggedModel } from './base.model';
 export type FieldType =
   | 'text' | 'email' | 'number' | 'phone' | 'iban' | 'password'
   | 'dropdown' | 'checkbox' | 'radio' | 'file' | 'images'
-  | 'date' | 'time' | 'signature' | 'rating' | 'avatar'
+  | 'date' | 'time' | 'signature' | 'rating' | 'avatar' | 'category'
   | 'label' | 'divider';
 
 export interface FieldOption { label: string; value: string; }
@@ -41,6 +41,8 @@ export interface TimeField extends FieldBase { type: 'time'; min?: string; max?:
 export interface SignatureField extends FieldBase { type: 'signature'; }
 export interface RatingField extends FieldBase { type: 'rating'; scale?: number; allowHalf?: boolean; }
 export interface AvatarField extends FieldBase { type: 'avatar'; avatarType: 'person' | 'org' | 'resource'; multi?: boolean; }
+// Single-select from a CategoryListModel (`categories` collection); `categoryName` is its name, the value is the item name.
+export interface CategoryField extends FieldBase { type: 'category'; categoryName: string; }
 // Display-only elements — no input value, never submitted. `label` holds the static text.
 export interface LabelField extends FieldBase { type: 'label'; }
 export interface DividerField extends FieldBase { type: 'divider'; }
@@ -48,7 +50,7 @@ export interface DividerField extends FieldBase { type: 'divider'; }
 export type Field =
   | TextField | EmailField | NumberField | PhoneField | IbanField | PasswordField
   | DropdownField | CheckboxField | RadioField | FileField | ImagesField
-  | DateField | TimeField | SignatureField | RatingField | AvatarField
+  | DateField | TimeField | SignatureField | RatingField | AvatarField | CategoryField
   | LabelField | DividerField;
 
 // ──────────────────────────────────────────

@@ -27,6 +27,7 @@ export const FIELD_TYPE_DEFS: FieldTypeDef[] = [
   { type: 'signature', label: 'Signature', icon: 'shield',       description: 'Client-side signature capture' },
   { type: 'rating',    label: 'Rating',    icon: 'star',         description: 'Star rating (1–5 by default)' },
   { type: 'avatar',    label: 'Avatar',    icon: 'person',       description: 'Select person/org/resource (auth only)' },
+  { type: 'category',  label: 'Kategorie', icon: 'list',         description: 'Single-select from a category list' },
   { type: 'label',     label: 'Label',     icon: 'info-circle', description: 'Static text — no input, not submitted' },
   { type: 'divider',   label: 'Divider',   icon: 'remove',       description: 'Visual separator line' },
 ];

@@ -122,7 +122,8 @@ export class FormSubmitService {
     def: FormDefinitionModel,
     opts: UploadOptions,
   ): Promise<Record<string, unknown>> {
-    const hasFiles = Object.values(values).some(v => v instanceof File);
+    const isFileList = (v: unknown): v is File[] => Array.isArray(v) && v.length > 0 && v.every(f => f instanceof File);
+    const hasFiles = Object.values(values).some(v => v instanceof File || isFileList(v));
     if (!hasFiles) return values;
 
     const { uploadToFirebaseStorage } = await import('@okr/shared-config');
@@ -136,29 +137,34 @@ export class FormSubmitService {
       if (!password) throw new Error('Encryption password not provided');
     }
 
-    for (const [key, val] of Object.entries(result)) {
-      if (!(val instanceof File)) continue;
-      const path = `forms/${def.formKey}/${crypto.randomUUID()}-${sanitizeFileName(val.name)}`;
-
+    const uploadOne = async (file: File): Promise<UploadedFileRef> => {
+      const path = `forms/${def.formKey}/${crypto.randomUUID()}-${sanitizeFileName(file.name)}`;
       if (opts.encryptFileUpload && def.encryptionSalt && password) {
         const { encryptFile } = await import('@okr/forms-util');
-        const encrypted = await encryptFile(val, password, def.encryptionSalt);
-        const encBlob = new File([encrypted.ciphertext], val.name + '.enc', { type: 'application/octet-stream' });
+        const encrypted = await encryptFile(file, password, def.encryptionSalt);
+        const encBlob = new File([encrypted.ciphertext], file.name + '.enc', { type: 'application/octet-stream' });
         const url = await this.upload(uploadToFirebaseStorage(path + '.enc', encBlob), getDownloadURL);
-        const ivBase64 = btoa(String.fromCharCode(...encrypted.iv));
-        result[key] = {
-          encryptedName: btoa(val.name),
-          ivBase64,
+        return {
+          encryptedName: btoa(file.name),
+          ivBase64: btoa(String.fromCharCode(...encrypted.iv)),
           saltBase64: def.encryptionSalt,
-          mimeType: val.type,
-          sizeBytes: val.size,
+          mimeType: file.type,
+          sizeBytes: file.size,
           storageUrl: url,
-        } satisfies UploadedFileRef;
-      } else {
-        const url = await this.upload(uploadToFirebaseStorage(path, val), getDownloadURL);
-        result[key] = {
-          name: val.name, mimeType: val.type, sizeBytes: val.size, storageUrl: url,
-        } satisfies UploadedFileRef;
+        };
+      }
+      const url = await this.upload(uploadToFirebaseStorage(path, file), getDownloadURL);
+      return { name: file.name, mimeType: file.type, sizeBytes: file.size, storageUrl: url };
+    };
+
+    // a field allowing several files holds File[] — each one is uploaded and becomes its own reference
+    for (const [key, val] of Object.entries(result)) {
+      if (val instanceof File) {
+        result[key] = await uploadOne(val);
+      } else if (isFileList(val)) {
+        const refs: UploadedFileRef[] = [];
+        for (const file of val) refs.push(await uploadOne(file));
+        result[key] = refs;
       }
     }
     return result;

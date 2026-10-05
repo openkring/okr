@@ -11,15 +11,13 @@ import { Field, FieldType, FormDefinitionModel } from '@okr/shared-models';
 import { FormDefinitionService } from '@okr/forms-data-access';
 import { FORM_I18N_KEYS, FormI18n } from '@okr/forms-util';
 import { I18nService } from '@okr/shared-i18n';
-import { FIELD_TYPE_DEFS, FieldTypeDef, FieldTypeLibrary, FormRenderer } from '@okr/forms-ui';
+import { FIELD_TYPE_DEFS, FieldConfigModal, FieldTypeDef, FieldTypeLibrary, FormRenderer } from '@okr/forms-ui';
 import { dismissOverlay } from '@okr/shared-util-angular';
-
-import { FieldConfigModal } from './field-config.modal';
 
 function newField(type: FieldType, order: number): Field {
   const base = {
     id: crypto.randomUUID(),
-    key: `field_${order}`,
+    key: `field${order}`,
     label: FIELD_TYPE_DEFS.find((d: FieldTypeDef) => d.type === type)?.label ?? type,
     required: false,
     width: 'full' as const,
@@ -29,6 +27,7 @@ function newField(type: FieldType, order: number): Field {
     case 'dropdown': case 'radio': return { ...base, type, options: [] };
     case 'checkbox': return { ...base, type };
     case 'avatar': return { ...base, type, avatarType: 'person' };
+    case 'category': return { ...base, type, categoryName: '' };
     default: return { ...base, type } as Field;
   }
 }
@@ -114,7 +113,7 @@ function newField(type: FieldType, order: number): Field {
               <div class="canvas-empty">{{ i18n.preview_empty() }}</div>
             } @else {
               <div style="padding: 8px 16px 24px;">
-                <okr-form-renderer [definition]="previewDefinition()" [showSubmit]="false" />
+                <okr-form-renderer [definition]="previewDefinition()" [categories]="appStore.allCategories()" [showSubmit]="false" />
               </div>
             }
           } @else {
@@ -140,7 +139,7 @@ function newField(type: FieldType, order: number): Field {
 export class FormBuilderEditor {
   private readonly modalController = inject(ModalController);
   private readonly formDefinitionService = inject(FormDefinitionService);
-  private readonly appStore = inject(AppStore);
+  protected readonly appStore = inject(AppStore);
 
   public readonly form = input.required<FormDefinitionModel>();
 
@@ -192,7 +191,13 @@ export class FormBuilderEditor {
   protected async editField(field: Field): Promise<void> {
     const modal = await this.modalController.create({
       component: FieldConfigModal,
-      componentProps: { field },
+      // list-modal-wide draws the border that sets it apart from the editor behind it; auto-height shrinks it to its content
+      cssClass: 'list-modal-wide auto-height-modal',
+      componentProps: {
+        field,
+        i18n: this.i18n,
+        categoryNames: this.appStore.allCategories().map(c => c.name),
+      },
     });
     await modal.present();
     const { data, role } = await modal.onDidDismiss<Field>();

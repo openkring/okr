@@ -186,6 +186,7 @@ export class ButtonSectionComponent {
         tenantId: this.store.tenantId(),
         title: this.title() ?? '',
         i18n: this.store.i18n,
+        categories: this.store.appStore.allCategories(),
       },
     });
     await modal.present();

@@ -69,6 +69,8 @@ function buildField(template: FieldTemplate, order: number): Field {
       return { ...base, type: template.type, options: template.options };
     case 'avatar':
       return { ...base, type: template.type, avatarType: 'person' };
+    case 'category':
+      return { ...base, type: template.type, categoryName: '' };
     default:
       return { ...base, type: template.type } as Field;
   }
