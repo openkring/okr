@@ -393,6 +393,7 @@ export function createFirestoreDeps(): WorkflowDeps {
       approval.approver = a.approver;
       approval.ruleKey = a.ruleKey;
       approval.writeBack = a.writeBack;
+      approval.requestDate = getTodayStr(DateFormat.StoreDateTime);   // spec 1.88 §4.2
       approval.index = `k:${a.kind} s:${a.subjectKey} n:${a.subjectName}`.toLowerCase();
 
       const approvalRef = db.collection(ApprovalCollection).doc();

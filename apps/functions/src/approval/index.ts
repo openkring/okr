@@ -13,7 +13,8 @@ import { onDocumentUpdated } from 'firebase-functions/v2/firestore';
 import { logger } from 'firebase-functions/v2';
 import { getFirestore } from 'firebase-admin/firestore';
 
-import { ApprovalCollection, ApprovalState, MAX_DECISION_NOTE_LENGTH } from '@okr/shared-models';
+import { ApprovalCollection, ApprovalState, AvatarInfo, MAX_DECISION_NOTE_LENGTH } from '@okr/shared-models';
+import { buildDecisionPatch } from './decision';
 import { checkAppCheckToken, checkAuthentication, getCallerTenantId } from '@okr/shared-util-functions';
 import { DateFormat, getTodayStr } from '@okr/shared-util-core';
 
@@ -89,11 +90,8 @@ export const decideApproval = onCall(
     }
 
     const state = OUTCOME[decision];
-    await ref.set({
-      state,
-      decisionDate: getTodayStr(DateFormat.StoreDateTime),
-      decisionNote: note,
-    }, { merge: true });
+    const decidedBy = await deciderAvatar(db, callerPersonKey);
+    await ref.set(buildDecisionPatch(state, note, decidedBy, getTodayStr(DateFormat.StoreDateTime)), { merge: true });
 
     // The approver's task is done — or cancelled, when the request was withdrawn.
     const taskKey = (approval['taskKey'] as string) ?? '';
@@ -112,6 +110,15 @@ export const decideApproval = onCall(
 async function hasAdminRole(db: FirebaseFirestore.Firestore, uid: string): Promise<boolean> {
   const roles = (await db.collection('users').doc(uid).get()).data()?.['roles'] as Record<string, boolean> | undefined;
   return roles?.['admin'] === true;
+}
+
+/** The caller as an AvatarInfo, from their person document; undefined for a user without one. */
+async function deciderAvatar(db: FirebaseFirestore.Firestore, personKey: string): Promise<AvatarInfo | undefined> {
+  if (!personKey) return undefined;
+  const p = (await db.collection('persons').doc(personKey).get()).data();
+  if (!p) return undefined;
+  return { key: personKey, name1: String(p['firstName'] ?? ''), name2: String(p['lastName'] ?? ''),
+    modelType: 'person', type: '', subType: '', label: '' };
 }
 
 /**
