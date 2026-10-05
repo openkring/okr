@@ -13,6 +13,12 @@ import type { FileContractRequest } from '../workflow/types';
 const months = (v: string | undefined): NoticePeriod | undefined =>
   Number(v) > 0 ? { duration: Number(v), unit: 'months' } : undefined;
 
+/** Deterministic ids: one approval can only ever produce one contract dossier, even on overlapping deliveries. */
+export function signedContractIds(sourceRef: string): { contractId: string; documentId: string } {
+  const contractId = `sr_${sourceRef.replace(/[^A-Za-z0-9_-]/g, '_')}`;
+  return { contractId, documentId: `${contractId}_signed` };
+}
+
 export function buildSignedContract(req: FileContractRequest, orgAvatar: AvatarInfo): ContractModel {
   const c = new ContractModel(req.tenantId);
   const applicantName = `${req.applicant.name1 ?? ''} ${req.applicant.name2 ?? ''}`.trim();
@@ -36,8 +42,9 @@ export async function fileSignedContract(req: FileContractRequest): Promise<stri
   const orgAvatar: AvatarInfo = { key: req.orgKey, name1: '', name2: String(org['name'] ?? req.orgKey),
     modelType: 'org', type: '', subType: '', label: '' };
   const contract = buildSignedContract(req, orgAvatar);
-  const contractRef = db.collection(ContractCollection).doc();
-  const docRef = db.collection(ContractDocumentCollection).doc();
+  const ids = signedContractIds(req.sourceRef);
+  const contractRef = db.collection(ContractCollection).doc(ids.contractId);
+  const docRef = db.collection(ContractDocumentCollection).doc(ids.documentId);
   const path = contractDocumentPath(req.tenantId, contractRef.id, docRef.id, 'signed.pdf');
 
   const [buffer] = await getStorage().bucket().file(req.signedPdfPath).download();
@@ -48,8 +55,8 @@ export async function fileSignedContract(req: FileContractRequest): Promise<stri
   void okey;
   contractDoc.documents = [{ docKey: docRef.id, role: 'contract', title, docState: 'signed' }];
   const batch = db.batch();
-  batch.set(contractRef, contractDoc);
-  batch.set(docRef, {
+  batch.create(contractRef, contractDoc);
+  batch.create(docRef, {
     isArchived: false, index: `n:${title}`, tags: '', folderKeys: [],
     fullPath: path, description: '', title, altText: title, type: 'legal', source: 'storage', credit: '', url: '',
     mimeType: 'application/pdf', size: buffer.length,
@@ -58,6 +65,11 @@ export async function fileSignedContract(req: FileContractRequest): Promise<stri
     contractKey: contractRef.id,
     ...buildContractDocumentStamp(contractDoc as unknown as Record<string, unknown>),
   });
-  await batch.commit();
+  try {
+    await batch.commit();
+  } catch (e) {
+    // gRPC ALREADY_EXISTS: a parallel delivery filed this approval first — that is the result we want.
+    if ((e as { code?: number }).code !== 6) throw e;
+  }
   return contractRef.id;
 }

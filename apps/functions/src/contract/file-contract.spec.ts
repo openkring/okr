@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildSignedContract } from './file-contract';
+import { buildSignedContract, signedContractIds } from './file-contract';
 
 describe('buildSignedContract', () => {
   const anna = { key: 'anna', name1: 'Anna', name2: 'Muster', modelType: 'person', type: '', subType: '', label: '' };
@@ -19,5 +19,12 @@ describe('buildSignedContract', () => {
   });
   it('takes the notice periods from the kind terms', () => {
     expect(c.notice).toEqual({ ours: { duration: 6, unit: 'months' }, theirs: { duration: 1, unit: 'months' }, to: 'monthEnd' });
+  });
+});
+
+describe('signedContractIds', () => {
+  it('derives stable, id-safe ids from the sourceRef', () => {
+    expect(signedContractIds('approval.ap1')).toEqual({ contractId: 'sr_approval_ap1', documentId: 'sr_approval_ap1_signed' });
+    expect(signedContractIds('approval.ap1')).toEqual(signedContractIds('approval.ap1'));
   });
 });
