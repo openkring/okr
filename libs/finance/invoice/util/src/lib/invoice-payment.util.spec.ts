@@ -6,6 +6,7 @@ import { INVOICE_I18N_KEYS, INVOICE_REFUSAL_I18N, InvoiceI18n, invoiceRefusalKey
 import {
   BOOKING_KEY_CHUNK_SIZE, cancelInputProblem, chunked, draftInvoicesOf, linkableBookings, formatPaymentChf, INVOICE_CANCEL_REASON_LENGTH, InvoicePaymentFormModel, invoicePaymentCandidates,
   isPayableState, isRetryablePaymentRefusal, MAX_PAYMENT_CANDIDATES, newInvoicePaymentFormModel, newPaymentId, openInvoiceAmount,
+  InvoicePaymentCandidate, invoicePaymentHints, invoicePaymentHintWindow, linkedInvoicePaymentKeys,
 } from './invoice-payment.util';
 import { invoicePaymentValidations } from './invoice-payment.validations';
 import { invoiceRefusalReasons } from './invoice-position.util';
@@ -235,5 +236,63 @@ describe('phase-2 refusals', () => {
     expect(invoiceRefusalKeys(['no-receiver'], 'confirmation')).toEqual(['refusal_confirmation_no_receiver']);
     expect(invoiceRefusalText(['overpayment', 'no-payment-date'], i18n, 'fallback', 'payment')).toBe('refusal_overpayment refusal_no_payment_date');
     expect(invoiceRefusalText([], i18n, 'fallback', 'payment')).toBe('fallback');
+  });
+});
+
+describe('invoice payment hints (spec 1.86)', () => {
+  function inv(okey: string, date: string, total: number, state = 'pending'): InvoiceModel {
+    const i = invoice(total, [], state);
+    i.okey = okey;
+    i.invoiceDate = date;
+    return i;
+  }
+  function cand(bookingKey: string, date: string, creditedAmount: number, bookingNo = 1): InvoicePaymentCandidate {
+    return { bookingKey, bookingNo, date, title: bookingKey, creditedAmount };
+  }
+
+  it('picks the earliest booking crediting exactly the open amount', () => {
+    const hints = invoicePaymentHints([inv('a', '20260901', 5000)], [cand('late', '20260920', 5000), cand('early', '20260910', 5000), cand('other', '20260905', 4000)]);
+    expect(hints.get('a')).toBe('early');
+  });
+  it('accepts a booking up to 7 days before the invoice date, not 8', () => {
+    expect(invoicePaymentHints([inv('a', '20260910', 5000)], [cand('b', '20260903', 5000)]).get('a')).toBe('b');
+    expect(invoicePaymentHints([inv('a', '20260910', 5000)], [cand('b', '20260902', 5000)]).has('a')).toBe(false);
+  });
+  it('uses one booking for one invoice only, oldest invoice first', () => {
+    const hints = invoicePaymentHints([inv('new', '20260905', 5000), inv('old', '20260901', 5000)], [cand('b', '20260910', 5000)]);
+    expect(hints.get('old')).toBe('b');
+    expect(hints.has('new')).toBe(false);
+  });
+  it('gives no hint to an invoice that cannot take a payment', () => {
+    for (const state of ['draft', 'paid', 'cancelled']) {
+      expect(invoicePaymentHints([inv('a', '20260901', 5000, state)], [cand('b', '20260910', 5000)]).size).toBe(0);
+    }
+  });
+  it('includes unwaived reminder fees in the amount to match', () => {
+    const i = inv('a', '20260901', 5000);
+    i.reminders = [{ level: 1, date: '20261001', dueDate: '', isSent: true, documentKey: '', fee: 1000, bookingKey: '', waivedAt: '', waiveBookingKey: '' }];
+    expect(invoicePaymentHints([i], [cand('b', '20261005', 6000)]).get('a')).toBe('b');
+  });
+
+  it('the window leaves out invoices older than 365 days and ends today', () => {
+    const w = invoicePaymentHintWindow([inv('old', '20250101', 1), inv('a', '20260901', 1)], '20261005');
+    expect(w?.invoices.map((i) => i.okey)).toEqual(['a']);
+    expect(w?.from).toBe('20260825');
+    expect(w?.to).toBe('20261005');
+  });
+  it('has no window without a recent invoice', () => {
+    expect(invoicePaymentHintWindow([inv('old', '20250101', 1)], '20261005')).toBeUndefined();
+  });
+
+  it('collects the linked payment bookings of all invoices', () => {
+    const a = invoice(100, [50]);
+    const b = invoice(100, [50]);
+    b.payments[0].bookingKey = '';
+    expect(linkedInvoicePaymentKeys([a, b])).toEqual(['b0']);
+  });
+
+  it('a preselected booking opens mode link with its date and amount', () => {
+    const form = newInvoicePaymentFormModel(invoice(5000), '20261005', ['bank'], cand('b', '20260910', 7000));
+    expect(form).toMatchObject({ mode: 'link', date: '20260910', amount: 50, bookingKey: 'b', bookingAmount: 70, openAmount: 50 });
   });
 });

@@ -1,4 +1,5 @@
 import { BookingLineModel, BookingModel, InvoiceModel } from '@okr/shared-models';
+import { addDuration } from '@okr/shared-util-core';
 
 /** How a received payment is recorded (spec 1.76 phase 2): book it now, or point at an existing bank booking. */
 export type InvoicePaymentMode = 'post' | 'link';
@@ -113,11 +114,21 @@ export function formatPaymentChf(rappen: number): string {
 
 /**
  * The initial form of a payment dialog: dated today, the full open amount, mode `post` when the
- * accounting config names payment accounts (the first one preselected), otherwise `link`.
+ * accounting config names payment accounts (the first one preselected), otherwise `link`. A
+ * preselected booking (the list's payment hint, spec 1.86) opens mode `link` with its amount and date.
  */
-export function newInvoicePaymentFormModel(invoice: InvoiceModel, today: string, paymentAccountKeys: string[]): InvoicePaymentFormModel {
+export function newInvoicePaymentFormModel(
+  invoice: InvoiceModel, today: string, paymentAccountKeys: string[], preselect?: InvoicePaymentCandidate,
+): InvoicePaymentFormModel {
   const open = openInvoiceAmount(invoice) / 100;
   const canPost = paymentAccountKeys.length > 0;
+  if (preselect) {
+    const bookingAmount = preselect.creditedAmount / 100;
+    return {
+      mode: 'link', date: preselect.date || today, amount: Math.min(bookingAmount, open),
+      bankAccountKey: canPost ? paymentAccountKeys[0] : '', bookingKey: preselect.bookingKey, openAmount: open, bookingAmount,
+    };
+  }
   return {
     mode: canPost ? 'post' : 'link',
     date: today,
@@ -162,6 +173,54 @@ export function invoicePaymentCandidates(
       bookingKey: b.okey, bookingNo: b.bookingNo ?? 0, date: b.date ?? '', title: b.title ?? '',
       creditedAmount: credited.get(b.okey) ?? 0,
     }));
+}
+
+/** Payment hints are only computed for open invoices dated within this many days (spec 1.86 phase 1). */
+export const INVOICE_PAYMENT_HINT_MAX_AGE_DAYS = 365;
+
+/** A booking this many days before the invoice date may still be its payment (as in the payment dialog). */
+export const INVOICE_PAYMENT_HINT_LOOKBACK_DAYS = 7;
+
+/** Every payment booking already linked on one of the invoices. */
+export function linkedInvoicePaymentKeys(invoices: Pick<InvoiceModel, 'payments'>[]): string[] {
+  return invoices.flatMap((i) => (i.payments ?? []).map((p) => p?.bookingKey ?? '')).filter((k) => !!k);
+}
+
+/**
+ * The likely payment of each open invoice (spec 1.86 phase 1): a candidate that credits exactly the
+ * open amount, dated no earlier than the invoice date minus the look-back. Invoices are served oldest
+ * first and each booking is used for one invoice only; among several matches the earliest booking wins.
+ * @returns invoiceKey → bookingKey (invoices without a match are absent)
+ */
+export function invoicePaymentHints(
+  invoices: InvoiceModel[], candidates: InvoicePaymentCandidate[], lookbackDays = INVOICE_PAYMENT_HINT_LOOKBACK_DAYS,
+): Map<string, string> {
+  const hints = new Map<string, string>();
+  const used = new Set<string>();
+  const open = invoices
+    .filter((i) => isPayableState(i.state) && openInvoiceAmount(i) > 0 && !!i.okey && !!i.invoiceDate)
+    .sort((a, b) => a.invoiceDate.localeCompare(b.invoiceDate) || a.okey.localeCompare(b.okey));
+  const sorted = [...candidates].sort((a, b) => a.date.localeCompare(b.date) || a.bookingNo - b.bookingNo);
+  for (const invoice of open) {
+    const amount = openInvoiceAmount(invoice);
+    const from = addDuration(invoice.invoiceDate, { days: -lookbackDays });
+    const match = sorted.find((c) => !used.has(c.bookingKey) && c.creditedAmount === amount && c.date >= from);
+    if (!match) continue;
+    used.add(match.bookingKey);
+    hints.set(invoice.okey, match.bookingKey);
+  }
+  return hints;
+}
+
+/**
+ * The open invoices that get a payment hint (dated within INVOICE_PAYMENT_HINT_MAX_AGE_DAYS) and the
+ * one read window that covers them all (earliest look-back start until today); undefined when there is none.
+ */
+export function invoicePaymentHintWindow(openInvoices: InvoiceModel[], today: string): { invoices: InvoiceModel[]; from: string; to: string } | undefined {
+  const oldest = addDuration(today, { days: -INVOICE_PAYMENT_HINT_MAX_AGE_DAYS });
+  const invoices = openInvoices.filter((i) => !!i.invoiceDate && i.invoiceDate >= oldest);
+  const starts = invoices.map((i) => addDuration(i.invoiceDate, { days: -INVOICE_PAYMENT_HINT_LOOKBACK_DAYS })).sort();
+  return starts.length > 0 ? { invoices, from: starts[0], to: today } : undefined;
 }
 
 /** The drafts among the given invoices — what "Alle Entwürfe ausstellen" issues. */
