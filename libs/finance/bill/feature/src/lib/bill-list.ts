@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, effect, inject, input, untracked } from '@angular/core';
+import { Router } from '@angular/router';
 import { ActionSheetController, IonAvatar, IonButton, IonButtons, IonChip, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonLabel, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { BillModel, RoleName } from '@okr/shared-models';
@@ -108,6 +109,7 @@ export class BillList {
   protected readonly store = inject(BillStore);
   private readonly actionSheetController = inject(ActionSheetController);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly router = inject(Router);
 
   // inputs
   public readonly listId = input.required<string>();
@@ -196,6 +198,8 @@ export class BillList {
       case 'add': await this.store.add(); break;
       case 'scan': await this.store.scan(); break;
       case 'exportRaw': await this.store.export('raw', this.filteredBills()); break;
+      // Offene Posten (spec 1.86): the reconciliation of these books
+      case 'openItems': await this.router.navigate(['/accounting', this.store.accountingStore.accountingTenantId(), 'open-items']); break;
       default: error(undefined, `BillList.onPopoverDismiss: unknown method ${selectedMethod}`);
     }
     this.cdr.markForCheck();

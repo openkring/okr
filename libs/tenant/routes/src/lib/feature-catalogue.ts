@@ -819,6 +819,11 @@ const finance: BlockRoutes = {
           loadComponent: () => import('@okr/finance-reporting-feature').then(m => m.CashFlowPage),
         },
         {
+          // Offene Posten (spec 1.86): open bills/invoices reconciled against Kreditoren/Debitoren.
+          path: 'open-items',
+          loadComponent: () => import('@okr/finance-reporting-feature').then(m => m.OpenItemsPage),
+        },
+        {
           path: 'assets',
           loadComponent: () => import('@okr/finance-asset-feature').then(m => m.AssetList),
         },

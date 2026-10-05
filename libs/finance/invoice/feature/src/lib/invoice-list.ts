@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, effect, inject, input, untracked } from '@angular/core';
+import { Router } from '@angular/router';
 import {
   ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonChip, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg,
   IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar, PopoverController,
@@ -130,6 +131,7 @@ export class InvoiceList {
   protected readonly store = inject(InvoiceStore);
   private readonly actionSheetController = inject(ActionSheetController);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly router = inject(Router);
   private readonly popoverController = inject(PopoverController);
 
   // inputs
@@ -226,6 +228,8 @@ export class InvoiceList {
     switch (selectedMethod) {
       case 'add': await this.store.add(); break;
       case 'exportRaw': await this.store.export('raw', this.filteredInvoices()); break;
+      // Offene Posten (spec 1.86): the reconciliation of these books
+      case 'openItems': await this.router.navigate(['/accounting', this.store.accountingStore.accountingTenantId(), 'open-items']); break;
       case 'issueAllDrafts': await this.store.issueAllDrafts(); break;
       case 'mahnlauf': await this.store.runMahnlauf(); break;
       default: error(undefined, `InvoiceList.onPopoverDismiss: unknown method ${selectedMethod}`);

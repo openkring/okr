@@ -1455,11 +1455,13 @@ const finance: FeatureBlock = {
     { key: 'c-invoice', name: 'c-invoice', url: '', action: 'context', roleNeeded: 'treasurer', icon: 'help-circle', label: '', children: [
       { key: 'invoice-add', name: 'invoice-add', url: 'add', action: 'call', roleNeeded: 'treasurer', icon: 'add-circle', label: '@item.invoice-add' },
       { key: 'invoice-export-raw', name: 'invoice-export-raw', url: 'exportRaw', action: 'call', roleNeeded: 'treasurer', icon: 'download', label: '@item.invoice-export-raw' },
+      { key: 'invoice-open-items', name: 'invoice-open-items', url: 'openItems', action: 'call', roleNeeded: 'treasurer', icon: 'checkmark', label: '@item.invoice-open-items' },
     ] },
     { key: 'c-bill', name: 'c-bill', url: '', action: 'context', roleNeeded: 'treasurer', icon: 'help-circle', label: '', children: [
       { key: 'bill-add', name: 'bill-add', url: 'add', action: 'call', roleNeeded: 'treasurer', icon: 'add', label: '@item.bill-add' },
       { key: 'bill-scan', name: 'bill-scan', url: 'scan', action: 'call', roleNeeded: 'treasurer', icon: 'scan', label: '@item.bill-scan' },
       { key: 'bill-export-raw', name: 'bill-export-raw', url: 'exportRaw', action: 'call', roleNeeded: 'treasurer', icon: 'download', label: '@item.bill-export-raw' },
+      { key: 'bill-open-items', name: 'bill-open-items', url: 'openItems', action: 'call', roleNeeded: 'treasurer', icon: 'checkmark', label: '@item.bill-open-items' },
     ] },
     { key: 'c-account', name: 'c-account', url: '', action: 'context', roleNeeded: 'treasurer', icon: 'help-circle', label: '', children: [
       // Shared leaf (see `c-contentpage`): view mode navigates, edit mode opens the row's action sheet.
@@ -1511,6 +1513,8 @@ const finance: FeatureBlock = {
         { key: 'accounting-journal', name: 'accounting-journal', url: '/accounting/@TID@/journal/c-journal', action: 'navigate', roleNeeded: 'treasurer', icon: 'list', label: '@item.accounting-journal' },
         { key: 'accounting-bills', name: 'accounting-bills', url: '/accounting/@TID@/bill/all/c-bill', action: 'navigate', roleNeeded: 'treasurer', icon: 'invoice', label: '@item.accounting-bills' },
         { key: 'accounting-invoices', name: 'accounting-invoices', url: '/accounting/@TID@/invoice/all/c-invoice', action: 'navigate', roleNeeded: 'treasurer', icon: 'invoice', label: '@item.accounting-invoices' },
+        // Offene Posten (spec 1.86) — next to the two document lists it reconciles.
+        { key: 'accounting-open-items', name: 'accounting-open-items', url: '/accounting/@TID@/open-items', action: 'navigate', roleNeeded: 'treasurer', icon: 'checkmark', label: '@item.accounting-open-items' },
         { key: 'accounting-periods', name: 'accounting-periods', url: '/accounting/@TID@/periods/c-period', action: 'navigate', roleNeeded: 'treasurer', icon: 'calendar', label: '@item.accounting-periods' },
         { key: 'accounting-balance', name: 'accounting-balance', url: '/accounting/@TID@/balance/c-report', action: 'navigate', roleNeeded: 'treasurer', icon: 'chart', label: '@item.accounting-balance' },
         { key: 'accounting-income-statement', name: 'accounting-income-statement', url: '/accounting/@TID@/income-statement/c-report', action: 'navigate', roleNeeded: 'treasurer', icon: 'chart', label: '@item.accounting-income-statement' },
