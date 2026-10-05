@@ -70,13 +70,20 @@ describe('invoiceBookingKeys', () => {
     ]);
   });
 
+  it('lists the bexio bookings of a migrated invoice, then its payments', () => {
+    const inv = invoice({ state: 'paid', bookingKeys: ['6278', '6279'], payments: [payment('6300')] });
+    expect(invoiceBookingKeys(inv)).toEqual(['6278', '6279', '6300']);
+  });
+
   it('adds the storno booking of a cancelled invoice', () => {
     expect(invoiceBookingKeys(invoice({ state: 'cancelled', bookingKey: 'invoice-inv1' }))).toEqual(['invoice-inv1', 'invoice-inv1-storno']);
+    expect(invoiceBookingKeys(invoice({ state: 'cancelled', bookingKeys: ['6278'] }))).toEqual(['6278']);
   });
 
   it('skips empty keys, duplicates and legacy docs without the arrays', () => {
     const inv = invoice({ state: 'paid', bookingKey: 'invoice-inv1', payments: [payment(''), payment('invoice-inv1')] });
     (inv as Partial<InvoiceModel>).reminders = undefined;
+    (inv as Partial<InvoiceModel>).bookingKeys = undefined;
     expect(invoiceBookingKeys(inv)).toEqual(['invoice-inv1']);
   });
 });

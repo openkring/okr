@@ -3,7 +3,7 @@ import { IonAvatar, IonButton, IonCard, IonCardContent, IonChip, IonContent, Ion
 
 import { AvatarPipe } from '@okr/avatar-ui';
 import { AvatarDetailService, LedgerBookings, VoucherTiles } from '@okr/finance-accounting-feature';
-import { billAccountKeys, billDisplayState, billStateColor, billStateLabel, isOverdueBill } from '@okr/finance-bill-util';
+import { billAccountKeys, billBookingKeys, billDisplayState, billStateColor, billStateLabel, isOverdueBill } from '@okr/finance-bill-util';
 import { BillModel } from '@okr/shared-models';
 import { formatMinorAmount, Header } from '@okr/shared-ui';
 import { PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
@@ -119,8 +119,9 @@ import { BillStore } from './bill.store';
             }
           </ion-card-content>
         </ion-card>
-        <!-- a bill has no booking of its own: its booking accounts, each linked to the journal -->
-        <okr-ledger-bookings [accountingTenantId]="bill.accountingTenantId" [accountKeys]="accountKeys()" [date]="bill.billDate" />
+        <!-- the linked bookings (bill + payments); an unlinked bill: its booking accounts. Each account links to the journal -->
+        <okr-ledger-bookings [accountingTenantId]="bill.accountingTenantId" [bookingKeys]="bookingKeys()"
+          [accountKeys]="accountKeys()" [date]="bill.billDate" />
       }
       <!-- attachments migrated from bexio: finance-documents okeys, files in the private bucket (spec 1.74) -->
       <okr-voucher-tiles [documentKeys]="voucherKeys()" />
@@ -144,6 +145,7 @@ export class BillViewModal {
   protected readonly stateColor = computed(() => billStateColor(this.state()));
   protected readonly stateLabel = computed(() => billStateLabel(this.state(), this.store.i18n));
   protected readonly accountKeys = computed(() => billAccountKeys(this.bill()));
+  protected readonly bookingKeys = computed(() => billBookingKeys(this.bill()));
   protected readonly vendorName = computed(() => {
     const vendor = this.bill()?.vendor;
     return vendor ? vendor.label || getFullName(vendor.name1, vendor.name2) : '';

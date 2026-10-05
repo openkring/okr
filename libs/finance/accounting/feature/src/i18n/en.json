@@ -65,6 +65,16 @@
     "discountAccount": {
       "label": "Discount account",
       "helper": "Default for new discounts on invoices, e.g. 3800 sales deductions. Empty: the discount reduces the revenue of the items above it, only the net amount is booked."
+    },
+    "incomingPaymentLabel": {
+      "label": "Label for incoming payment",
+      "placeholder": "GS",
+      "helper": "Shown in booking texts instead of «Zahlungseingang». The stored text stays unchanged. Leave empty to show the word."
+    },
+    "outgoingPaymentLabel": {
+      "label": "Label for outgoing payment",
+      "placeholder": "BA",
+      "helper": "Shown in booking texts instead of «Zahlungsausgang». The stored text stays unchanged. Leave empty to show the word."
     }
   },
   "feeSchedule": {

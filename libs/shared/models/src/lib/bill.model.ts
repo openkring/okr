@@ -28,6 +28,7 @@ export class BillModel implements OkrModel, SearchableModel, TaggedModel {
   public attachments: string[] = []; // finance-documents okeys ('bexio-file-…', spec 1.68); legacy: bexio file UUIDs
   public payments: BillPayment[] = []; // outgoing payments, oldest first
   public bookingAccount: string = '';
+  public bookingKeys: string[] = [];  // the bexio journal bookings of the bill (one per bill line), linked by scripts/link-bexio-ledger.mjs; [] = not linked
 
   // bill sender (person or org) Rechnungssteller
   public vendor: AvatarInfo | undefined;
@@ -47,5 +48,6 @@ export class BillModel implements OkrModel, SearchableModel, TaggedModel {
 export const BillCollection = 'bills';
 export const BillModelName = 'bill';
 
-/** An outgoing payment of a bill. date = execution date (StoreDate), amount in Rappen, type = bexio payment_type. */
-export interface BillPayment { date: string; amount: number; type: string; }
+/** An outgoing payment of a bill. date = execution date (StoreDate), amount in Rappen, type = bexio payment_type.
+ *  bookingKey = the booking that paid it (a bexio journal row, linked by scripts/link-bexio-ledger.mjs); '' or absent = not linked. */
+export interface BillPayment { date: string; amount: number; type: string; bookingKey?: string; }

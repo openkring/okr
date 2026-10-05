@@ -85,6 +85,9 @@
     },
     {
       "path": "../../../content/pdf-template/data-access/tsconfig.lib.json"
+    },
+    {
+      "path": "../../accounting/util/tsconfig.lib.json"
     }
   ]
 }

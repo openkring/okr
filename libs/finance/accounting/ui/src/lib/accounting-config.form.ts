@@ -1,9 +1,10 @@
 import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonNote, IonRow, IonSelect, IonSelectOption, SelectChangeEventDetail } from '@ionic/angular/standalone';
 
-import { NumberInput, NumberInputI18n, ErrorNote } from '@okr/shared-ui';
+import { NumberInput, NumberInputI18n, ErrorNote, TextInput, TextInputI18n } from '@okr/shared-ui';
 
-import { AccountingConfigModel, AccountModel, CostCenterModel, TemplateModel } from '@okr/shared-models';
+import { SHORT_NAME_LENGTH } from '@okr/shared-constants';
+import { AccountingConfigModel, AccountModel, CostCenterModel, DEFAULT_INCOMING_PAYMENT_LABEL, DEFAULT_OUTGOING_PAYMENT_LABEL, TemplateModel } from '@okr/shared-models';
 import { coerceBoolean } from '@okr/shared-util-core';
 
 import { AccountSelect, AccountSelectI18n } from '@okr/finance-account-ui';
@@ -26,7 +27,7 @@ export type { AccountingI18n };
   selector: 'okr-accounting-config-form',
   standalone: true,
   imports: [
-    ErrorNote, AccountSelect, CostCenterSelect, NumberInput, IonSelect, IonSelectOption, IonNote, IonGrid, IonRow, IonCol, IonCard, IonCardContent],
+    ErrorNote, AccountSelect, CostCenterSelect, NumberInput, TextInput, IonSelect, IonSelectOption, IonNote, IonGrid, IonRow, IonCol, IonCard, IonCardContent],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px; } }`],
   template: `
     @if (showForm()) {
@@ -171,6 +172,21 @@ export type { AccountingI18n };
                   <okr-error-note [errors]="reminderDueDaysErrors()" />
                 </ion-col>
               </ion-row>
+              <!-- how the journal shows bexio's payment words (display only, the stored text stays) -->
+              <ion-row>
+                <ion-col size="12" size-md="6">
+                  <okr-text-input [i18n]="incomingPaymentLabelI18n()" [value]="incomingPaymentLabel()"
+                    (valueChange)="onFieldChange('incomingPaymentLabel', $event)"
+                    [maxLength]="paymentLabelLength" [showHelper]="true" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="incomingPaymentLabelErrors()" />
+                </ion-col>
+                <ion-col size="12" size-md="6">
+                  <okr-text-input [i18n]="outgoingPaymentLabelI18n()" [value]="outgoingPaymentLabel()"
+                    (valueChange)="onFieldChange('outgoingPaymentLabel', $event)"
+                    [maxLength]="paymentLabelLength" [showHelper]="true" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="outgoingPaymentLabelErrors()" />
+                </ion-col>
+              </ion-row>
             </ion-grid>
           </ion-card-content>
         </ion-card>
@@ -253,6 +269,19 @@ export class AccountingConfigForm {
   /** kept in step with the upper bound the Vest suite enforces on grace and due days */
   protected readonly reminderDaysMax = REMINDER_DAYS_MAX;
   protected readonly reminderDaysLength = String(REMINDER_DAYS_MAX).length;
+  /** kept in step with the cap the Vest suite enforces on the two payment labels */
+  protected readonly paymentLabelLength = SHORT_NAME_LENGTH;
+  // legacy config docs predate the fields: the defaults GS / BA
+  protected incomingPaymentLabel = linkedSignal(() => this.formData().incomingPaymentLabel ?? DEFAULT_INCOMING_PAYMENT_LABEL);
+  protected outgoingPaymentLabel = linkedSignal(() => this.formData().outgoingPaymentLabel ?? DEFAULT_OUTGOING_PAYMENT_LABEL);
+  protected incomingPaymentLabelI18n = computed(() => ({
+    name: 'incomingPaymentLabel', label: this.i18n().incoming_payment_label(),
+    placeholder: this.i18n().incoming_payment_label_placeholder(), helper: this.i18n().incoming_payment_label_helper()
+  } as TextInputI18n));
+  protected outgoingPaymentLabelI18n = computed(() => ({
+    name: 'outgoingPaymentLabel', label: this.i18n().outgoing_payment_label(),
+    placeholder: this.i18n().outgoing_payment_label_placeholder(), helper: this.i18n().outgoing_payment_label_helper()
+  } as TextInputI18n));
   protected reminderTemplateId = linkedSignal(() => this.formData().reminderTemplateId ?? '');
   protected reminderFeeAccountKey = linkedSignal(() => this.formData().reminderFeeAccountKey ?? '');
   protected reminderGraceDays = linkedSignal(() => this.formData().reminderGraceDays ?? 10);
@@ -301,6 +330,8 @@ export class AccountingConfigForm {
   protected reminderFee3Errors = computed(() => this.validationResult().getErrors('reminderFee3'));
   protected reminderGraceDaysErrors = computed(() => this.validationResult().getErrors('reminderGraceDays'));
   protected reminderDueDaysErrors = computed(() => this.validationResult().getErrors('reminderDueDays'));
+  protected incomingPaymentLabelErrors = computed(() => this.validationResult().getErrors('incomingPaymentLabel'));
+  protected outgoingPaymentLabelErrors = computed(() => this.validationResult().getErrors('outgoingPaymentLabel'));
 
   constructor() {
     effect(() => this.valid.emit(this.validationResult().isValid()));

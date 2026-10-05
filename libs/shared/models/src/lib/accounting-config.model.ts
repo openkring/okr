@@ -58,6 +58,13 @@ export interface FeeScheduleEntry {
 export const DEFAULT_REMINDER_FEES: readonly number[] = [0, 0, 0];
 /** Days after the last due date before a Mahnlauf offers a reminder (spec 1.76 D15). */
 export const DEFAULT_REMINDER_GRACE_DAYS = 10;
+
+/** Shown instead of bexio's journal texts "Zahlungseingang" / "Zahlungsausgang" (display only, the stored text stays). */
+export const DEFAULT_INCOMING_PAYMENT_LABEL = 'GS';
+export const DEFAULT_OUTGOING_PAYMENT_LABEL = 'BA';
+/** The bexio journal words the two labels replace (case-sensitive). */
+export const INCOMING_PAYMENT_TEXT = 'Zahlungseingang';
+export const OUTGOING_PAYMENT_TEXT = 'Zahlungsausgang';
 /** Days a reminder grants to pay (spec 1.76 D13). */
 export const DEFAULT_REMINDER_DUE_DAYS = 14;
 
@@ -95,6 +102,8 @@ export class AccountingConfigModel implements OkrModel {
   public reminderGraceDays = DEFAULT_REMINDER_GRACE_DAYS; // days after the last due date before a Mahnlauf offers a reminder (spec 1.76 D15)
   public reminderDueDays = DEFAULT_REMINDER_DUE_DAYS;     // days a reminder grants to pay (spec 1.76 D13)
   public reviewAssigneePersonKey = ''; // treasurer person.okey who reviews OCR bookings; '' → first treasurer
+  public incomingPaymentLabel = DEFAULT_INCOMING_PAYMENT_LABEL; // shown instead of "Zahlungseingang" in booking texts (display only); '' = unchanged
+  public outgoingPaymentLabel = DEFAULT_OUTGOING_PAYMENT_LABEL; // shown instead of "Zahlungsausgang" in booking texts (display only); '' = unchanged
 
   constructor(tenantId: string, accountingTenantId: string) {
     this.tenants = [tenantId];

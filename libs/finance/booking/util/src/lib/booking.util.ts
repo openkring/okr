@@ -1,5 +1,5 @@
 import { AccountModel, AvatarInfo, BookingLineModel, BookingModel, MoneyModel } from '@okr/shared-models';
-import { convertDateFormatToString, CostCenterLike, DateFormat, isActiveLeafCostCenter, isProfitAndLossAccountId, resolveCostCenterKey } from '@okr/shared-util-core';
+import { convertDateFormatToString, CostCenterLike, DateFormat, getFullName, isActiveLeafCostCenter, isProfitAndLossAccountId, resolveCostCenterKey } from '@okr/shared-util-core';
 
 /**
  * One part of a split booking, as shown when the journal row is expanded: a Soll account against a
@@ -31,6 +31,7 @@ export interface JournalRow {
   creditAccountName: string;  // account name(s) of the credit line(s), comma-joined ('' when unknown)
   debitAccountName: string;
   accountName: string;    // booking title / description text
+  counterparty: string;   // the counterparty's name when the text does not already name it, else ''
   amount: string;         // balanced booking total, formatted (e.g. 1'234.50)
   currency: string;
   parts: JournalPart[];   // the lines of a split booking (expandable in the list); [] for a plain one
@@ -146,6 +147,7 @@ export function toJournalRow(
     creditAccountName: [...creditNames].join(', '),
     debitAccountName: [...debitNames].join(', '),
     accountName: booking.title,
+    counterparty: journalCounterparty(booking),
     amount: formatMinorAmount(total),
     currency,
     parts: isSplitBooking(lines) ? toJournalParts(lines, accountIdByKey, accountNameByKey) : [],
@@ -191,11 +193,24 @@ export function toAccountJournalRows(
 }
 
 /** Case-insensitive match of a journal row against a free-text search term. */
+/**
+ * The counterparty's name for the journal row, so a bare bexio text ("Zahlungseingang") says who
+ * paid; '' without a counterparty or when the title already names it (okr's own texts often do).
+ */
+export function journalCounterparty(booking: BookingModel): string {
+  const cp = booking.counterparty;
+  if (!cp?.key) return '';
+  const name = (cp.label || getFullName(cp.name1, cp.name2)).trim();
+  if (!name) return '';
+  return (booking.title ?? '').toLowerCase().includes(name.toLowerCase()) ? '' : name;
+}
+
 export function matchesJournalSearch(row: JournalRow, term: string): boolean {
   const t = term.trim().toLowerCase();
   if (!t) return true;
   return (
     row.accountName.toLowerCase().includes(t) ||
+    (row.counterparty ?? '').toLowerCase().includes(t) ||
     row.parts.some(p => p.text.toLowerCase().includes(t)) ||
     row.creditAccount.toLowerCase().includes(t) ||
     row.debitAccount.toLowerCase().includes(t) ||

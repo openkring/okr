@@ -9,7 +9,7 @@ import { FieldValue } from 'firebase-admin/firestore';
 
 import {
   accountOkey, commentOkey, fileOkey, filePath, financeDocument, invoicePdfOkey, isoToStoreDate,
-  journalLineAmounts, mapBillPayment, mapBillState, mapComment, mapInvoicePayment, mapInvoiceState, mapReminder, hasNativeActivity, mergeArchivedPayments, mergeArchivedReminders, reminderPdfOkey, staleIds, deletableStale, toRappen,
+  journalLineAmounts, mapBillPayment, mapBillState, mapComment, mapInvoicePayment, mapInvoiceState, mapReminder, hasNativeActivity, mergeArchivedBillPayments, mergeArchivedPayments, mergeArchivedReminders, reminderPdfOkey, staleIds, deletableStale, toRappen,
 } from './mappers.mjs';
 
 export const STEPS = {};
@@ -369,7 +369,7 @@ STEPS['bill-payments'] = async ({ db, bexio, tenantId, dry }) => {
     const own = (r?.data ?? []).filter(p => p.bill_id == null || String(p.bill_id) === b.id || (foreignPayments++, false));
     const list = own.map(mapBillPayment).sort((x, y) => x.date.localeCompare(y.date));
     payments += list.length;
-    pushChanges(ops, b.ref, b.data(), { payments: list, paymentDate: list.at(-1)?.date ?? '' });
+    pushChanges(ops, b.ref, b.data(), { payments: mergeArchivedBillPayments(b.get('payments'), list), paymentDate: list.at(-1)?.date ?? '' });
   }
   return { bills, payments, foreignPayments, writes: await commitOps(db, ops, dry) };
 };

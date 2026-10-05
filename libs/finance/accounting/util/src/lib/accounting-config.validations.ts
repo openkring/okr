@@ -69,4 +69,7 @@ export const accountingConfigValidations = staticSuite(
     });
     numberValidations('reminderGraceDays', model.reminderGraceDays ?? DEFAULT_REMINDER_GRACE_DAYS, true, 0, REMINDER_DAYS_MAX);
     numberValidations('reminderDueDays', model.reminderDueDays ?? DEFAULT_REMINDER_DUE_DAYS, true, 0, REMINDER_DAYS_MAX);
+    // journal display labels for bexio's payment words: free text, '' keeps the word; legacy docs lack them
+    stringValidations('incomingPaymentLabel', model.incomingPaymentLabel ?? '', SHORT_NAME_LENGTH);
+    stringValidations('outgoingPaymentLabel', model.outgoingPaymentLabel ?? '', SHORT_NAME_LENGTH);
   });

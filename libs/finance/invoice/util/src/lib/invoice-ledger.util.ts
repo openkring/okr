@@ -20,16 +20,17 @@ export function invoiceDisplayState(invoice: InvoiceModel, today: string): strin
 }
 
 /**
- * Every booking of an invoice in ledger order: the issue booking, the payments (posted or linked),
- * each reminder fee and its waiver, and the storno of a cancelled invoice (spec 1.76). The storno
- * key is derived — the invoice does not store it; a missing booking is simply not found.
+ * Every booking of an invoice in ledger order: the issue booking (native) or the bexio bookings of a
+ * migrated invoice (one per line), the payments (posted or linked), each reminder fee and its waiver,
+ * and the storno of a cancelled invoice (spec 1.76). The storno key is derived — the invoice does not
+ * store it; a missing booking is simply not found.
  */
 export function invoiceBookingKeys(invoice: InvoiceModel): string[] {
-  const keys = [invoice.bookingKey];
+  const keys = [invoice.bookingKey, ...(invoice.bookingKeys ?? [])];
   // legacy invoices lack the arrays (Firestore reads skip model defaults)
   for (const p of invoice.payments ?? []) keys.push(p.bookingKey);
   for (const r of invoice.reminders ?? []) keys.push(r.bookingKey, r.waiveBookingKey);
-  if (invoice.state === 'cancelled' && invoice.bookingKey) keys.push(`${invoice.bookingKey}-storno`);
+  if (invoice.state === 'cancelled' && invoice.bookingKey.startsWith('invoice-')) keys.push(`${invoice.bookingKey}-storno`);
   return [...new Set(keys.filter(k => !!k))];
 }
 

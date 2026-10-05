@@ -60,6 +60,12 @@ export const ACCOUNTING_I18N_KEYS = {
   reminder_due_days:               PFX + 'settings.reminderDueDays.label',
   reminder_due_days_placeholder:   PFX + 'settings.reminderDueDays.placeholder',
   reminder_due_days_helper:        PFX + 'settings.reminderDueDays.helper',
+  incoming_payment_label:             PFX + 'settings.incomingPaymentLabel.label',
+  incoming_payment_label_placeholder: PFX + 'settings.incomingPaymentLabel.placeholder',
+  incoming_payment_label_helper:      PFX + 'settings.incomingPaymentLabel.helper',
+  outgoing_payment_label:             PFX + 'settings.outgoingPaymentLabel.label',
+  outgoing_payment_label_placeholder: PFX + 'settings.outgoingPaymentLabel.placeholder',
+  outgoing_payment_label_helper:      PFX + 'settings.outgoingPaymentLabel.helper',
   save:                     '@save.label',
   cancel:                   '@cancel',
 

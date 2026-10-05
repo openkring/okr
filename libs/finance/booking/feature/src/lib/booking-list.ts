@@ -131,7 +131,7 @@ function parseAmount(amount: string): number {
                   {{ row.creditAccount }}
                   @if (row.creditAccountName) { <br /><ion-note class="account-name">{{ row.creditAccountName }}</ion-note> }
                 </ion-col>
-                <ion-col size="5" [sizeMd]="textSizeMd()">{{ row.accountName }}</ion-col>
+                <ion-col size="5" [sizeMd]="textSizeMd()">{{ row.accountName }}@if (row.counterparty) {<ion-note> · {{ row.counterparty }}</ion-note>}</ion-col>
                 <ion-col size="4" size-md="2" class="ion-text-end">
                   {{ row.amount }}
                   <!-- no room for a sixth column on a phone: the saldo rides under the amount there -->

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   isoToStoreDate, toRappen, accountOkey, mapInvoiceState, mapBillState, fileOkey, filePath,
   mapInvoicePayment, mapReminder, mapComment, mapBillPayment, staleIds, journalLineAmounts, isNativeReminder, mergeArchivedReminders, mergeArchivedPayments, hasNativeActivity, deletableStale,
+  isBexioJournalKey, mergeArchivedBillPayments,
 } from './mappers.mjs';
 
 test('dates and money', () => {
@@ -105,4 +106,33 @@ test('deletableStale keeps stale invoices that carry okr activity and reports th
   const doc = (id, data) => ({ id, data: () => data });
   const local = [doc('1', {}), doc('2', { payments: [{ bookingKey: 'invoice-2-pay-Ab12Cd34Ef' }] }), doc('3', {}), doc('invoice-x', {})];
   assert.deepEqual(deletableStale(local, ['3']), { deletable: ['1'], skipped: ['2'] });
+});
+
+test('bexio journal ids are told apart from okr booking keys', () => {
+  assert.equal(isBexioJournalKey('12054'), true);
+  for (const k of ['', 'invoice-2094', 'invoice-2094-pay-a', 'bank-x-1', 'journal-scs-12', undefined]) assert.equal(isBexioJournalKey(k), false);
+});
+
+test('a re-run keeps the bexio journal links of scripts/link-bexio-ledger.mjs and does not duplicate them', () => {
+  const existing = [
+    { date: '20260917', amount: 30000, bankAccountKey: 'scs0077', bookingKey: '12054' },          // linked bexio payment
+    { date: '20260920', amount: 5000, bankAccountKey: 'scs0077', bookingKey: 'invoice-2094-pay-a' }, // recorded in okr
+  ];
+  const archived = [{ date: '20260917', amount: 30000, bankAccountKey: 'scs0077', bookingKey: '' }];
+  assert.deepEqual(mergeArchivedPayments(existing, archived), [
+    { date: '20260917', amount: 30000, bankAccountKey: 'scs0077', bookingKey: '12054' },
+    { date: '20260920', amount: 5000, bankAccountKey: 'scs0077', bookingKey: 'invoice-2094-pay-a' },
+  ]);
+  // a linked bexio payment is no okr activity
+  assert.equal(hasNativeActivity({ payments: [existing[0]] }), false);
+  assert.equal(hasNativeActivity({ payments: existing }), true);
+});
+
+test('bill payments keep their journal links on a re-run, each link once', () => {
+  const existing = [{ date: '20260914', amount: 100, type: 'RECONCILED', bookingKey: '12063' }];
+  const archived = [{ date: '20260914', amount: 100, type: 'RECONCILED' }, { date: '20260914', amount: 100, type: 'RECONCILED' }];
+  assert.deepEqual(mergeArchivedBillPayments(existing, archived), [
+    { date: '20260914', amount: 100, type: 'RECONCILED', bookingKey: '12063' },
+    { date: '20260914', amount: 100, type: 'RECONCILED' },
+  ]);
 });

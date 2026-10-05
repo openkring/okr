@@ -13,7 +13,9 @@ import { resourceParams } from '@okr/shared-util-angular';
 import { convertDateFormatToString, DateFormat, hasRole } from '@okr/shared-util-core';
 import { AccountService } from '@okr/finance-account-data-access';
 import { BookingLineService, BookingService } from '@okr/finance-booking-data-access';
-import { ACCOUNTING_I18N_KEYS, AccountingI18n, ledgerAccounts, ledgerBookings, storeDateYear } from '@okr/finance-accounting-util';
+import { ACCOUNTING_I18N_KEYS, AccountingI18n, ledgerAccounts, ledgerBookings, paymentLabelText, storeDateYear } from '@okr/finance-accounting-util';
+
+import { AccountingStore } from './accounting.store';
 
 /**
  * The ledger side of a document in its view modal: the bookings of an invoice with their lines, or
@@ -48,7 +50,7 @@ import { ACCOUNTING_I18N_KEYS, AccountingI18n, ledgerAccounts, ledgerBookings, s
             @for (booking of bookings(); track booking.bookingKey) {
               <div class="booking">
                 <div class="booking-head">
-                  {{ viewDate(booking.date) }} · {{ booking.bookingNo }} · {{ booking.title }}
+                  {{ viewDate(booking.date) }} · {{ booking.bookingNo }} · {{ bookingTitle(booking.title) }}
                   @if (booking.status !== 'posted') { · {{ statusLabel(booking.status) }} }
                 </div>
                 @for (line of booking.lines; track $index) {
@@ -80,6 +82,7 @@ import { ACCOUNTING_I18N_KEYS, AccountingI18n, ledgerAccounts, ledgerBookings, s
 })
 export class LedgerBookings {
   private readonly appStore = inject(AppStore);
+  private readonly accountingStore = inject(AccountingStore);
   private readonly bookingService = inject(BookingService);
   private readonly bookingLineService = inject(BookingLineService);
   private readonly accountService = inject(AccountService);
@@ -126,6 +129,11 @@ export class LedgerBookings {
 
   protected viewDate(storeDate: string): string {
     return convertDateFormatToString(storeDate, DateFormat.StoreDate, DateFormat.ViewDate, false) || storeDate;
+  }
+
+  /** bexio's "Zahlungseingang" / "Zahlungsausgang" as the configured labels (GS / BA) — display only */
+  protected bookingTitle(title: string): string {
+    return paymentLabelText(title, this.accountingStore.config());
   }
 
   protected formatAmount(minor: number): string {

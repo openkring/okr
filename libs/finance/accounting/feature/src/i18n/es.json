@@ -65,6 +65,16 @@
     "discountAccount": {
       "label": "Cuenta de descuentos",
       "helper": "Valor predeterminado para nuevos descuentos en facturas, p. ej. 3800 Deducciones de ventas. Vacía: el descuento reduce los ingresos de las posiciones de arriba, solo se contabiliza el importe neto."
+    },
+    "incomingPaymentLabel": {
+      "label": "Etiqueta de pago recibido",
+      "placeholder": "GS",
+      "helper": "Se muestra en los textos de los asientos en lugar de «Zahlungseingang». El texto guardado no cambia. Déjalo vacío para mostrar la palabra."
+    },
+    "outgoingPaymentLabel": {
+      "label": "Etiqueta de pago emitido",
+      "placeholder": "BA",
+      "helper": "Se muestra en los textos de los asientos en lugar de «Zahlungsausgang». El texto guardado no cambia. Déjalo vacío para mostrar la palabra."
     }
   },
   "feeSchedule": {

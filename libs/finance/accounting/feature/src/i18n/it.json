@@ -65,6 +65,16 @@
     "discountAccount": {
       "label": "Conto sconti",
       "helper": "Predefinito per i nuovi sconti sulle fatture, p. es. 3800 Diminuzioni di ricavi. Vuoto: lo sconto riduce i ricavi delle posizioni sopra, si contabilizza solo l'importo netto."
+    },
+    "incomingPaymentLabel": {
+      "label": "Etichetta pagamento in entrata",
+      "placeholder": "GS",
+      "helper": "Mostrata nei testi delle registrazioni al posto di «Zahlungseingang». Il testo salvato resta invariato. Lascia vuoto per mostrare la parola."
+    },
+    "outgoingPaymentLabel": {
+      "label": "Etichetta pagamento in uscita",
+      "placeholder": "BA",
+      "helper": "Mostrata nei testi delle registrazioni al posto di «Zahlungsausgang». Il testo salvato resta invariato. Lascia vuoto per mostrare la parola."
     }
   },
   "feeSchedule": {

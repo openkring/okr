@@ -65,6 +65,16 @@
     "discountAccount": {
       "label": "Compte de rabais",
       "helper": "Valeur par défaut pour les nouveaux rabais sur les factures, p. ex. 3800 Diminutions de produits. Vide : le rabais réduit les produits des positions au-dessus, seul le montant net est comptabilisé."
+    },
+    "incomingPaymentLabel": {
+      "label": "Libellé paiement reçu",
+      "placeholder": "GS",
+      "helper": "Affiché dans les textes d’écriture à la place de « Zahlungseingang ». Le texte enregistré reste inchangé. Laisse vide pour afficher le mot."
+    },
+    "outgoingPaymentLabel": {
+      "label": "Libellé paiement émis",
+      "placeholder": "BA",
+      "helper": "Affiché dans les textes d’écriture à la place de « Zahlungsausgang ». Le texte enregistré reste inchangé. Laisse vide pour afficher le mot."
     }
   },
   "feeSchedule": {

@@ -3,6 +3,7 @@ import { AccountModel, AvatarInfo, BookingLineModel, BookingModel } from '@okr/s
 import { bookingValidations } from './booking.validations';
 import {
   addBookingPart,
+  journalCounterparty,
   isSplitBookingTitle,
   removeBookingPart,
   splitBookingTitle,
@@ -146,6 +147,7 @@ describe('matchesJournalSearch', () => {
     creditAccountName: '',
     debitAccountName: '',
     accountName: 'Mitgliederbeitrag',
+    counterparty: 'Arsenij Laier',
     amount: '100.00',
     currency: 'CHF',
     parts: [{ okey: '0', debitAccountId: '1020', debitAccountName: 'Bank', creditAccountId: '3407', creditAccountName: 'Spenden', text: 'Spende Jugend', amount: '100.00' }],
@@ -162,6 +164,9 @@ describe('matchesJournalSearch', () => {
     expect(matchesJournalSearch(row, '100.00')).toBe(true);
     expect(matchesJournalSearch(row, '42')).toBe(true);
   });
+  it('matches the counterparty', () => {
+    expect(matchesJournalSearch(row, 'laier')).toBe(true);
+  });
   it('matches the text of a split booking\'s parts', () => {
     expect(matchesJournalSearch(row, 'jugend')).toBe(true);
   });
@@ -176,7 +181,7 @@ describe('journalToRows', () => {
       booking: makeBooking(),
       okey: 'b1', lineKey: '', date: '15.03.2026', year: 2026, parts: [],
       creditAccount: '1020', debitAccount: '6000', creditAccountName: '', debitAccountName: '',
-      accountName: 'Mitgliederbeitrag', amount: '100.00', currency: 'CHF',
+      accountName: 'Mitgliederbeitrag', counterparty: '', amount: '100.00', currency: 'CHF',
     };
     const rows = journalToRows([row], { date: 'Datum', credit: 'Haben', debit: 'Soll', name: 'Text', amount: 'Betrag' });
     expect(rows[0]).toEqual(['Datum', 'Haben', 'Soll', 'Text', 'Betrag']);
@@ -579,5 +584,24 @@ describe('accountDefaultCostCenterKey', () => {
     expect(accountDefaultCostCenterKey('a6500', accounts, centers, 'cc-old')).toBe('');
     expect(accountDefaultCostCenterKey('a1020', accounts, centers, 'cc-jun')).toBe('');
     expect(accountDefaultCostCenterKey('a6500', accounts, centers, '')).toBe('');
+  });
+});
+
+describe('journalCounterparty', () => {
+  const cp = (label: string, name1 = '', name2 = ''): AvatarInfo => ({ key: 'p1', modelType: 'person', label, name1, name2, type: '', subType: '' }) as AvatarInfo;
+  const booking = (title: string, counterparty?: AvatarInfo) => Object.assign(new BookingModel('scs'), { title, counterparty });
+
+  it('names the counterparty of a bare text', () => {
+    expect(journalCounterparty(booking('Zahlungseingang', cp('Arsenij Laier')))).toBe('Arsenij Laier');
+  });
+  it('falls back to the name fields', () => {
+    expect(journalCounterparty(booking('Zahlungseingang', cp('', 'Arsenij', 'Laier')))).toBe('Arsenij Laier');
+  });
+  it('is empty when the title already names it, case-insensitively', () => {
+    expect(journalCounterparty(booking('Spende arsenij laier', cp('Arsenij Laier')))).toBe('');
+  });
+  it('is empty without a counterparty', () => {
+    expect(journalCounterparty(booking('Zahlungseingang'))).toBe('');
+    expect(journalCounterparty(booking('Zahlungseingang', { ...cp('X'), key: '' } as AvatarInfo))).toBe('');
   });
 });

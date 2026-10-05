@@ -13,6 +13,7 @@ import { getTodayStr, getYear } from '@okr/shared-util-core';
 import { exportCsv } from '@okr/shared-util-angular';
 
 import { AccountingStore } from '@okr/finance-accounting-feature';
+import { paymentLabelText } from '@okr/finance-accounting-util';
 import { CostCenterStore } from '@okr/finance-cost-center-feature';
 import { AccountService } from '@okr/finance-account-data-access';
 import { VatCodeService } from '@okr/finance-vat-code-data-access';
@@ -149,10 +150,16 @@ export const BookingStore = signalStore(
       const accountNameByKey = store.accountNameByKey();
       const linesByBooking = store.linesByBooking();
       const accountKey = store.accountKey();
+      // bexio's "Zahlungseingang" / "Zahlungsausgang" shown as the configured labels (GS / BA) — display only
+      const config = store.accountingStore.config();
+      const labelled = (r: JournalRow): JournalRow => ({
+        ...r, accountName: paymentLabelText(r.accountName, config), parts: r.parts.map(p => ({ ...p, text: paymentLabelText(p.text, config) })),
+      });
       return store.bookings()
         .flatMap(b => accountKey
           ? toAccountJournalRows(b, linesByBooking.get(b.okey) ?? [], accountKey, accountIdByKey, accountNameByKey)
           : [toJournalRow(b, linesByBooking.get(b.okey) ?? [], accountIdByKey, accountNameByKey)])
+        .map(labelled)
         .sort((a, b) => (b.booking.date ?? '').localeCompare(a.booking.date ?? '') || b.booking.bookingNo - a.booking.bookingNo);
     }),
     // Distinct booking years (desc), always including the current year for the filter.

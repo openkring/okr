@@ -35,6 +35,7 @@
     "@okr/subject-org-feature": "*",
     "@okr/comment-feature": "*",
     "@okr/content-document-feature": "*",
-    "@okr/subject-address-util": "*"
+    "@okr/subject-address-util": "*",
+    "@okr/finance-accounting-util": "*"
   }
 }

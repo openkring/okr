@@ -65,6 +65,16 @@
     "discountAccount": {
       "label": "Rabattkonto",
       "helper": "Vorgabe für neue Rabatte auf Rechnungen, z.B. 3800 Erlösminderungen. Leer: der Rabatt mindert die Erträge der Positionen darüber, gebucht wird nur der Nettobetrag."
+    },
+    "incomingPaymentLabel": {
+      "label": "Bezeichnung Zahlungseingang",
+      "placeholder": "GS",
+      "helper": "Wird in Buchungstexten anstelle von «Zahlungseingang» angezeigt. Der gespeicherte Text bleibt unverändert. Leer lassen, um das Wort zu zeigen."
+    },
+    "outgoingPaymentLabel": {
+      "label": "Bezeichnung Zahlungsausgang",
+      "placeholder": "BA",
+      "helper": "Wird in Buchungstexten anstelle von «Zahlungsausgang» angezeigt. Der gespeicherte Text bleibt unverändert. Leer lassen, um das Wort zu zeigen."
     }
   },
   "feeSchedule": {

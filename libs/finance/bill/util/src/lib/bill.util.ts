@@ -82,3 +82,10 @@ export function billStateLabel(state: string, i18n: BillI18n): string {
   }
   return state;
 }
+
+/** The bookings of a bill in ledger order: its own bookings (one per bill line), then the payments; [] while not linked. */
+export function billBookingKeys(bill: BillModel): string[] {
+  // legacy bills lack the fields (Firestore reads skip model defaults)
+  const keys = [...(bill.bookingKeys ?? []), ...(bill.payments ?? []).map(p => p.bookingKey ?? '')];
+  return [...new Set(keys.filter(k => k.length > 0))];
+}

@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { AccountingConfigModel, DEFAULT_REMINDER_FEES } from '@okr/shared-models';
 
 import { accountingConfigValidations } from './accounting-config.validations';
-import { toAccountingConfigFormData } from './accounting-config.util';
+import { paymentLabelText, toAccountingConfigFormData } from './accounting-config.util';
 
 /** A config doc as Firestore returns it before 1.65/1.76: the newer fields are simply absent. */
 function legacyConfig(): AccountingConfigModel {
@@ -64,5 +64,43 @@ describe('toAccountingConfigFormData', () => {
     const stored = { ...legacyConfig(), invoicePaymentAccountKeys: ['scs-1020'] } as AccountingConfigModel;
     toAccountingConfigFormData(stored).invoicePaymentAccountKeys.push('x');
     expect(stored.invoicePaymentAccountKeys).toEqual(['scs-1020']);
+  });
+});
+
+describe('paymentLabelText', () => {
+  const config = { incomingPaymentLabel: 'GS', outgoingPaymentLabel: 'BA' };
+
+  it('replaces the bexio payment words, case-sensitively', () => {
+    expect(paymentLabelText('Zahlungseingang', config)).toBe('GS');
+    expect(paymentLabelText('(Zahlungsausgang) Belastungen Mobile Banking (3)', config)).toBe('(BA) Belastungen Mobile Banking (3)');
+    expect(paymentLabelText('zahlungseingang', config)).toBe('zahlungseingang');
+  });
+
+  it('replaces every occurrence and leaves other texts alone', () => {
+    expect(paymentLabelText('Zahlungseingang / Zahlungseingang', config)).toBe('GS / GS');
+    expect(paymentLabelText('Jahresbeitrag 2026', config)).toBe('Jahresbeitrag 2026');
+  });
+
+  it('keeps the word when a label is empty, and uses the defaults without a config', () => {
+    expect(paymentLabelText('Zahlungseingang', { incomingPaymentLabel: '', outgoingPaymentLabel: 'BA' })).toBe('Zahlungseingang');
+    expect(paymentLabelText('Zahlungsausgang', undefined)).toBe('BA');
+    expect(paymentLabelText('Zahlungseingang', {} as typeof config)).toBe('GS');
+  });
+});
+
+describe('payment labels in the form data', () => {
+  it('seeds the defaults on a legacy config and keeps stored values', () => {
+    const legacy = { ...new AccountingConfigModel('scs', 'scs') } as Partial<AccountingConfigModel>;
+    delete legacy.incomingPaymentLabel;
+    delete legacy.outgoingPaymentLabel;
+    expect(toAccountingConfigFormData(legacy as AccountingConfigModel)).toMatchObject({ incomingPaymentLabel: 'GS', outgoingPaymentLabel: 'BA' });
+    const own = { ...new AccountingConfigModel('scs', 'scs'), incomingPaymentLabel: 'Gutschrift', outgoingPaymentLabel: '' };
+    expect(toAccountingConfigFormData(own)).toMatchObject({ incomingPaymentLabel: 'Gutschrift', outgoingPaymentLabel: '' });
+  });
+
+  it('accepts short labels and empty ones, rejects overlong ones', () => {
+    const base = toAccountingConfigFormData(new AccountingConfigModel('scs', 'scs'));
+    expect(accountingConfigValidations({ ...base, incomingPaymentLabel: '' }, 'scs', '').getErrors('incomingPaymentLabel')).toEqual([]);
+    expect(accountingConfigValidations({ ...base, outgoingPaymentLabel: 'x'.repeat(31) }, 'scs', '').getErrors('outgoingPaymentLabel').length).toBeGreaterThan(0);
   });
 });

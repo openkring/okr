@@ -81,20 +81,56 @@ export function mergeArchivedReminders(existing, archived) {
 }
 
 /**
- * The payments to store on a re-run: the archived bexio payments plus every payment recorded in okr
- * since the migration (recordInvoicePayment sets a bookingKey; archived bexio payments carry ''),
- * oldest first. Without this a re-run would wipe native payments and leave their bookings orphaned.
+ * True for the okey of a synced bexio journal row (bexio's numeric journal id, e.g. '12054'). okr's
+ * own booking keys never are (`invoice-…`, `bank-…`, `journal-…`). A payment linked to such a row
+ * by scripts/link-bexio-ledger.mjs is still an archived bexio payment, not one recorded in okr.
+ */
+export function isBexioJournalKey(key) {
+  return typeof key === 'string' && /^\d+$/.test(key);
+}
+
+/** A payment recorded in okr since the migration: it carries an okr booking key. */
+function isNativePayment(p) {
+  return typeof p?.bookingKey === 'string' && p.bookingKey !== '' && !isBexioJournalKey(p.bookingKey);
+}
+
+/**
+ * Archived payments keep the bexio journal link an existing payment of the same date and amount
+ * (and bank account, when both name one) already carries, so a re-run does not drop the links of
+ * scripts/link-bexio-ledger.mjs. Each existing link is used once.
+ */
+function keepLedgerLinks(existing, archived) {
+  const linked = (existing ?? []).filter(p => isBexioJournalKey(p?.bookingKey));
+  return archived.map(a => {
+    const i = linked.findIndex(p => p.date === a.date && p.amount === a.amount
+      && (!p.bankAccountKey || !a.bankAccountKey || p.bankAccountKey === a.bankAccountKey));
+    if (i < 0) return a;
+    const [match] = linked.splice(i, 1);
+    return { ...a, bookingKey: match.bookingKey };
+  });
+}
+
+/**
+ * The payments to store on a re-run: the archived bexio payments (with their bexio journal links)
+ * plus every payment recorded in okr since the migration (recordInvoicePayment sets an okr
+ * bookingKey; archived bexio payments carry '' or a bexio journal id), oldest first. Without this a
+ * re-run would wipe native payments and leave their bookings orphaned.
  */
 export function mergeArchivedPayments(existing, archived) {
-  const native = (existing ?? []).filter(p => typeof p?.bookingKey === 'string' && p.bookingKey !== '');
-  return [...archived, ...native].sort((a, b) => String(a.date).localeCompare(String(b.date)));
+  const native = (existing ?? []).filter(isNativePayment);
+  return [...keepLedgerLinks(existing, archived), ...native].sort((a, b) => String(a.date).localeCompare(String(b.date)));
+}
+
+/** The bill payments to store on a re-run: bexio's list, with the journal links already made. */
+export function mergeArchivedBillPayments(existing, archived) {
+  return keepLedgerLinks(existing, archived);
 }
 
 /** True when okr has recorded payments or reminders on this invoice since the migration (bexio no longer knows its state). */
 export function hasNativeActivity(data) {
   const payments = Array.isArray(data?.payments) ? data.payments : [];
   const reminders = Array.isArray(data?.reminders) ? data.reminders : [];
-  return payments.some(p => typeof p?.bookingKey === 'string' && p.bookingKey !== '') || reminders.some(isNativeReminder);
+  return payments.some(isNativePayment) || reminders.some(isNativeReminder);
 }
 
 /** CommentModel shape (libs/shared/models/src/lib/comment.model.ts). All bexio comments are internal (spec §5 Q3). */
