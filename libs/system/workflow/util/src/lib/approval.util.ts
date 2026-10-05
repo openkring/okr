@@ -26,6 +26,25 @@ export function isUnassigned(approval: ApprovalModel): boolean {
   return !approval.approver?.key && (approval.state ?? 'pending') === 'pending';
 }
 
+/*-------------------------- permissions --------------------------------*/
+/** Mirrors decideApproval: the snapshotted approver or an admin, and only while pending. */
+export function canDecideApproval(approval: ApprovalModel, myPersonKey: string, isAdmin: boolean): boolean {
+  if ((approval.state ?? 'pending') !== 'pending') return false;
+  return isAdmin || (!!myPersonKey && (approval.approver?.key ?? '') === myPersonKey);
+}
+
+/** Withdrawing is a cancellation: the requester may do it too. */
+export function canWithdrawApproval(approval: ApprovalModel, myPersonKey: string, isAdmin: boolean): boolean {
+  if ((approval.state ?? 'pending') !== 'pending') return false;
+  return canDecideApproval(approval, myPersonKey, isAdmin) || (!!myPersonKey && (approval.requestedBy?.key ?? '') === myPersonKey);
+}
+
+/** Who decided — `decidedBy` since spec 1.88, the approver on older approvals. */
+export function deciderName(approval: ApprovalModel): string {
+  const a = approval.decidedBy ?? approval.approver;
+  return `${a?.name1 ?? ''} ${a?.name2 ?? ''}`.trim();
+}
+
 /** Ionic colour per state, for the list badge. */
 export function approvalStateColor(state: ApprovalState | string): string {
   switch (state) {

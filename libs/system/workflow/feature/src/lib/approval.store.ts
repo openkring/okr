@@ -12,7 +12,7 @@ import { buildExportTable, debugListLoaded, getSystemQuery, hasRole, nameMatches
 import { AlertService, exportCsv, getExportFileName, showToast } from '@okr/shared-util-angular';
 
 import { ApprovalService } from '@okr/system-workflow-data-access';
-import { WORKFLOW_I18N_KEYS, WorkflowI18n, getApprovalExportColumns, isUnassigned } from '@okr/system-workflow-util';
+import { WORKFLOW_I18N_KEYS, WorkflowI18n, canDecideApproval, canWithdrawApproval, getApprovalExportColumns, isUnassigned } from '@okr/system-workflow-util';
 
 /** Which slice of the tenant's approvals the list shows. */
 export type ApprovalScope = 'mine' | 'unassigned' | 'all';
@@ -99,13 +99,11 @@ export const ApprovalStore = signalStore(
      * UI from offering a button that would be refused.
      */
     canDecide(approval: ApprovalModel): boolean {
-      if ((approval.state ?? 'pending') !== 'pending') return false;
-      return store.isAdmin() || (approval.approver?.key ?? '') === store.myPersonKey();
+      return canDecideApproval(approval, store.myPersonKey(), store.isAdmin());
     },
 
     canWithdraw(approval: ApprovalModel): boolean {
-      if ((approval.state ?? 'pending') !== 'pending') return false;
-      return this.canDecide(approval) || (approval.requestedBy?.key ?? '') === store.myPersonKey();
+      return canWithdrawApproval(approval, store.myPersonKey(), store.isAdmin());
     },
 
     async open(approval: ApprovalModel): Promise<void> {
