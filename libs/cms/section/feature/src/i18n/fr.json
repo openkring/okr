@@ -129,13 +129,13 @@
       "ok": "Envoyer la demande",
       "cancel": "Annuler"
     },
-    "requested": "Ta demande est en route. Tu peux suivre la suite dans le chat avec le comité.",
+    "requested": "Ta demande est en route. Tu trouveras la réponse dans le chat.",
     "refused": {
       "notActive": "Tu peux faire une demande en tant que membre actif.",
       "openRequest": "Tu as déjà une demande en cours ou un contrat valable.",
       "noAddress": "Ajoute d'abord ton adresse postale dans ton profil.",
       "cooldown": "Ta demande vient d'être envoyée.",
-      "alreadyOwned": "Tu en as déjà un, une deuxième demande n'est pas nécessaire."
+      "alreadyOwned": "Tu as déjà cela. Une deuxième demande n'est pas nécessaire."
     },
     "status": {
       "chat": "chat"

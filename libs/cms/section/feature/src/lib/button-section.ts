@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
+import { Component, DestroyRef, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow, ModalController } from '@ionic/angular/standalone';
 import {} from '@capacitor/google-maps';
 
@@ -153,9 +153,16 @@ export class ButtonSectionComponent {
   });
   private readonly isContractButton = computed(() => this.section()?.properties?.action?.type === ButtonAction.Contract);
 
+  private readonly destroyRef = inject(DestroyRef);
+  private refetchTimer: ReturnType<typeof setTimeout> | undefined;
+  /** the section key while the status must be loaded, '' otherwise; a primitive, so a re-emitted section object with the same okey does not refetch */
+  private readonly statusKey = computed(() => (this.isContractButton() && !this.editMode() ? this.sectionKey() : ''));
+  private readonly sectionKey = computed(() => this.section()?.okey ?? '');
+
   constructor() {
+    this.destroyRef.onDestroy(() => clearTimeout(this.refetchTimer));
     effect(() => {
-      if (this.isContractButton() && !this.editMode() && this.section()?.okey) untracked(() => void this.loadRequestStatus());
+      if (this.statusKey()) untracked(() => void this.loadRequestStatus());
     });
   }
 
@@ -272,7 +279,8 @@ export class ButtonSectionComponent {
   private async afterRequested(): Promise<void> {
     this.justRequested.set(true);
     await this.toast(this.store.i18n.contract_requested());
-    setTimeout(() => void this.loadRequestStatus(), 4000);
+    clearTimeout(this.refetchTimer);
+    this.refetchTimer = setTimeout(() => void this.loadRequestStatus(), 4000);
   }
 
   private async toast(message: string): Promise<void> {

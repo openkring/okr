@@ -129,13 +129,13 @@
       "ok": "Antrag stellen",
       "cancel": "Abbrechen"
     },
-    "requested": "Dein Antrag ist unterwegs. Den weiteren Verlauf findest du im Chat mit dem Ausschuss.",
+    "requested": "Dein Antrag ist unterwegs. Die Antwort findest du im Chat.",
     "refused": {
       "notActive": "Einen Antrag kannst du als Aktivmitglied stellen.",
       "openRequest": "Du hast bereits einen offenen Antrag oder einen gültigen Vertrag.",
       "noAddress": "Bitte ergänze zuerst deine Postadresse in deinem Profil.",
       "cooldown": "Dein Antrag wurde eben erst übermittelt.",
-      "alreadyOwned": "Du hast bereits einen. Ein zweiter Antrag ist nicht nötig."
+      "alreadyOwned": "Das hast du bereits. Ein zweiter Antrag ist nicht nötig."
     },
     "status": {
       "chat": "Chat"

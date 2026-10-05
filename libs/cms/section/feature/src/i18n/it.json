@@ -129,13 +129,13 @@
       "ok": "Invia richiesta",
       "cancel": "Annulla"
     },
-    "requested": "La tua richiesta è in viaggio. Puoi seguire gli sviluppi nella chat con il comitato.",
+    "requested": "La tua richiesta è in viaggio. Troverai la risposta in chat.",
     "refused": {
       "notActive": "Puoi inviare una richiesta come membro attivo.",
       "openRequest": "Hai già una richiesta aperta o un contratto valido.",
       "noAddress": "Aggiungi prima il tuo indirizzo postale nel tuo profilo.",
       "cooldown": "La tua richiesta è stata appena inviata.",
-      "alreadyOwned": "Ne hai già uno, non serve una seconda richiesta."
+      "alreadyOwned": "Ce l'hai già. Non serve una seconda richiesta."
     },
     "status": {
       "chat": "chat"
