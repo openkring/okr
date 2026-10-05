@@ -36,6 +36,9 @@
     "@okr/comment-feature": "*",
     "@okr/content-document-feature": "*",
     "@okr/subject-address-util": "*",
-    "@okr/finance-accounting-util": "*"
+    "@okr/finance-accounting-util": "*",
+    "@okr/shared-data-access": "*",
+    "@okr/finance-invoice-util": "*",
+    "@okr/finance-bill-util": "*"
   }
 }

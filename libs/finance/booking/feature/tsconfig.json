@@ -88,6 +88,15 @@
     },
     {
       "path": "../../accounting/util/tsconfig.lib.json"
+    },
+    {
+      "path": "../../../shared/data-access/tsconfig.lib.json"
+    },
+    {
+      "path": "../../invoice/util/tsconfig.lib.json"
+    },
+    {
+      "path": "../../bill/util/tsconfig.lib.json"
     }
   ]
 }

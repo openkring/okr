@@ -9,6 +9,8 @@
     "showDebit": "Mostra conto dare",
     "showCounterparty": "Mostra controparte",
     "noCounterparty": "Questa registrazione non ha una controparte.",
+    "showInvoice": "Mostra fattura",
+    "showBill": "Mostra fattura fornitore",
     "selectAccount": "Quale conto vuoi visualizzare?"
   },
   "cancel": {

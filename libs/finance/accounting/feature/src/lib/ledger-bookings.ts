@@ -13,14 +13,16 @@ import { resourceParams } from '@okr/shared-util-angular';
 import { convertDateFormatToString, DateFormat, hasRole } from '@okr/shared-util-core';
 import { AccountService } from '@okr/finance-account-data-access';
 import { BookingLineService, BookingService } from '@okr/finance-booking-data-access';
-import { ACCOUNTING_I18N_KEYS, AccountingI18n, ledgerAccounts, ledgerBookings, paymentLabelText, storeDateYear } from '@okr/finance-accounting-util';
+import { ACCOUNTING_I18N_KEYS, AccountingI18n, LedgerAccount, ledgerAccounts, ledgerBookings, paymentLabelText, storeDateYear } from '@okr/finance-accounting-util';
 
 import { AccountingStore } from './accounting.store';
 
 /**
- * The ledger side of a document in its view modal: the bookings of an invoice with their lines, or
- * the booking accounts of a bill (which has no booking of its own). Every account carries a link
- * that closes the modal and opens the journal filtered on that account, in the booking's year.
+ * The ledger side of a document in its view modal: the bookings of an invoice or bill, or
+ * the booking accounts of a bill (which has no booking of its own). A booking is one row as in the
+ * journal (date, Soll, Haben, text, amount); its link closes the modal and opens the unfiltered
+ * journal in the booking's year with that booking selected. A bare account links to the journal
+ * filtered on it.
  * Treasurer only — the journal, bookings and booking lines are not readable for anyone else.
  */
 @Component({
@@ -29,12 +31,21 @@ import { AccountingStore } from './accounting.store';
   imports: [SvgIconPipe, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonNote, IonButton, IonIcon],
   styles: [`
     @media (width <= 600px) { ion-card { margin: 5px; } }
-    .booking { margin-bottom: 12px; }
-    .booking-head { font-size: 0.8rem; color: var(--ion-color-medium); }
-    .line { display: flex; align-items: center; gap: 8px; }
-    .side { width: 3.5rem; font-size: 0.8rem; color: var(--ion-color-medium); }
-    .account { flex: 1; }
+    ion-card-content { container-type: inline-size; }
+    .row { display: grid; grid-template-columns: 5.5rem 1fr 1fr 2fr 6rem 28px; gap: 8px; align-items: start; padding: 6px 0; }
+    .row + .row { border-top: 1px solid var(--ion-color-light-shade); }
+    .row.head { font-size: 0.8rem; font-weight: 600; color: var(--ion-color-medium); padding-top: 0; }
+    .account-name, .status { display: block; font-size: 0.75rem; color: var(--ion-color-medium); }
+    .phone-accounts { display: none; font-size: 0.8rem; color: var(--ion-color-medium); }
     .amount { text-align: right; font-variant-numeric: tabular-nums; }
+    /* no room for the Soll/Haben columns on a narrow card: the account numbers lead the text there */
+    @container (width <= 440px) {
+      .row { grid-template-columns: 5rem 1fr 5.5rem 28px; }
+      .debit, .credit { display: none; }
+      .phone-accounts { display: block; }
+    }
+    .line { display: flex; align-items: center; gap: 8px; }
+    .account { flex: 1; }
     ion-button { --padding-start: 4px; --padding-end: 4px; margin: 0; height: 24px; }
   `],
   template: `
@@ -47,22 +58,36 @@ import { AccountingStore } from './accounting.store';
           @if (ledger.error()) {
             <ion-note color="danger">{{ i18n.ledger_load_error() }}</ion-note>
           } @else if (isBookingMode()) {
+            <div class="row head">
+              <span>{{ i18n.ledger_date() }}</span>
+              <span class="debit">{{ i18n.ledger_debit() }}</span>
+              <span class="credit">{{ i18n.ledger_credit() }}</span>
+              <span>{{ i18n.ledger_text() }}</span>
+              <span class="amount">{{ i18n.ledger_amount() }}</span>
+              <span></span>
+            </div>
             @for (booking of bookings(); track booking.bookingKey) {
-              <div class="booking">
-                <div class="booking-head">
-                  {{ viewDate(booking.date) }} · {{ booking.bookingNo }} · {{ bookingTitle(booking.title) }}
-                  @if (booking.status !== 'posted') { · {{ statusLabel(booking.status) }} }
-                </div>
-                @for (line of booking.lines; track $index) {
-                  <div class="line">
-                    <span class="side">{{ line.side === 'debit' ? i18n.ledger_debit() : i18n.ledger_credit() }}</span>
-                    <span class="account">{{ line.accountId }} {{ line.accountName }}</span>
-                    <ion-button fill="clear" size="small" [title]="i18n.ledger_show_journal()" (click)="openJournal(line.accountKey, booking.date)">
-                      <ion-icon slot="icon-only" src="{{ 'link' | svgIcon }}" />
-                    </ion-button>
-                    <span class="amount">{{ formatAmount(line.amount) }}</span>
-                  </div>
-                }
+              <div class="row">
+                <span>{{ viewDate(booking.date) }}</span>
+                <span class="debit">
+                  @for (account of booking.debit; track account.accountKey) {
+                    <div>{{ account.accountId }}<span class="account-name">{{ account.accountName }}</span></div>
+                  }
+                </span>
+                <span class="credit">
+                  @for (account of booking.credit; track account.accountKey) {
+                    <div>{{ account.accountId }}<span class="account-name">{{ account.accountName }}</span></div>
+                  }
+                </span>
+                <span>
+                  <span class="phone-accounts">{{ accountIds(booking.debit) }} / {{ accountIds(booking.credit) }}</span>
+                  {{ bookingTitle(booking.title) }}
+                  @if (booking.status !== 'posted') { <span class="status">{{ statusLabel(booking.status) }}</span> }
+                </span>
+                <span class="amount">{{ formatAmount(booking.amount) }}</span>
+                <ion-button fill="clear" size="small" [title]="i18n.ledger_show_journal()" (click)="openBooking(booking.bookingKey, booking.date)">
+                  <ion-icon slot="icon-only" src="{{ 'link' | svgIcon }}" />
+                </ion-button>
               </div>
             }
           } @else {
@@ -136,6 +161,10 @@ export class LedgerBookings {
     return paymentLabelText(title, this.accountingStore.config());
   }
 
+  protected accountIds(accounts: LedgerAccount[]): string {
+    return accounts.map(a => a.accountId).join(', ');
+  }
+
   protected formatAmount(minor: number): string {
     return formatMinorAmount(minor);
   }
@@ -147,6 +176,14 @@ export class LedgerBookings {
       case 'cancelled': return this.i18n.ledger_status_cancelled();
     }
     return status;
+  }
+
+  /** Closes the view modal and opens the unfiltered journal in the booking's year, with the booking selected. */
+  protected async openBooking(bookingKey: string, storeDate: string): Promise<void> {
+    const year = storeDateYear(storeDate);
+    await this.modalController.dismiss().catch(() => undefined);
+    await this.router.navigate(['/accounting', this.accountingTenantId(), 'journal', 'c-journal'],
+      { queryParams: { bookingKey, ...(year ? { year } : {}) } });
   }
 
   /** Closes the view modal and opens the journal filtered on the account, in the year of `storeDate`. */

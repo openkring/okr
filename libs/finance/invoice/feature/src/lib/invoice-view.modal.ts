@@ -179,7 +179,7 @@ import { InvoiceStore } from './invoice.store';
             }
           </ion-card-content>
         </ion-card>
-        <!-- issue, payment, reminder fee and storno bookings, each account linked to the journal;
+        <!-- issue, payment, reminder fee and storno bookings as journal rows, each linked to its booking in the journal;
              a migrated invoice has none: the bank accounts of its payments instead -->
         <okr-ledger-bookings [accountingTenantId]="invoice.accountingTenantId" [bookingKeys]="bookingKeys()"
           [accountKeys]="accountKeys()" [date]="invoice.invoiceDate" />

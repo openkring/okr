@@ -9,6 +9,8 @@
     "showDebit": "Soll-Konto anzeigen",
     "showCounterparty": "Gegenpartei anzeigen",
     "noCounterparty": "Diese Buchung hat keine Gegenpartei.",
+    "showInvoice": "Rechnung anzeigen",
+    "showBill": "Lieferanten-Rechnung anzeigen",
     "selectAccount": "Welches Konto möchtest du anzeigen?"
   },
   "cancel": {

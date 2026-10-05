@@ -9,6 +9,8 @@
     "showDebit": "Mostrar cuenta de debe",
     "showCounterparty": "Mostrar contraparte",
     "noCounterparty": "Este asiento no tiene contraparte.",
+    "showInvoice": "Mostrar factura",
+    "showBill": "Mostrar factura de proveedor",
     "selectAccount": "¿Qué cuenta quieres ver?"
   },
   "cancel": {

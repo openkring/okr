@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, effect, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, effect, inject, input, untracked } from '@angular/core';
 import {
   ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonChip, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg,
   IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar, PopoverController,
@@ -130,6 +130,9 @@ export class InvoiceList {
   // inputs
   public readonly listId = input.required<string>();  // all, my, personKey
   public readonly contextMenuName = input.required<string>();
+  // `?invoiceKey=<okey>` (query param): the journal's "Rechnung anzeigen" opens that invoice's view modal here
+  public readonly invoiceKey = input<string | undefined>();
+  private openedKey = '';
 
   // computed
   protected readonly popupId = computed(() => `c_invoices_${this.listId()}`);
@@ -153,6 +156,15 @@ export class InvoiceList {
     effect(() => {
       const listId = this.listId();
       if (listId) this.store.setListId(listId);
+    });
+    // once the list is loaded; only once per key, so closing the modal does not reopen it
+    effect(() => {
+      const key = this.invoiceKey() ?? '';
+      if (!key || key === this.openedKey) return;
+      const invoice = (this.store.allInvoicesResource.value() ?? []).find(d => d.okey === key);
+      if (!invoice) return;
+      this.openedKey = key;
+      void untracked(() => this.store.view(invoice));
     });
   }
 

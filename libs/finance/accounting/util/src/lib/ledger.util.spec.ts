@@ -37,7 +37,7 @@ describe('ledgerAccounts', () => {
 });
 
 describe('ledgerBookings', () => {
-  it('lists the bookings in key order with their lines, debit first', () => {
+  it('lists the bookings in key order as journal rows: Soll and Haben accounts and the total', () => {
     const bookings = [booking('inv-pay', { bookingNo: 9, date: '20260201' }), booking('inv')];
     const lines = [
       line('inv', 'scs-3400', 0, 12000), line('inv', 'scs-1100', 12000, 0),
@@ -46,18 +46,27 @@ describe('ledgerBookings', () => {
     ];
     const result = ledgerBookings(['inv', 'inv-pay'], bookings, lines, accounts);
     expect(result.map(b => b.bookingKey)).toEqual(['inv', 'inv-pay']);
-    expect(result[0]).toMatchObject({ date: '20260115', bookingNo: 7, title: 'Rechnung 1', status: 'posted' });
-    expect(result[0].lines).toEqual([
-      { accountKey: 'scs-1100', accountId: '1100', accountName: 'Debitoren', side: 'debit', amount: 12000 },
-      { accountKey: 'scs-3400', accountId: '3400', accountName: 'Mitgliederbeiträge', side: 'credit', amount: 12000 },
-    ]);
-    expect(result[1].lines.map(l => `${l.side}:${l.accountId}`)).toEqual(['debit:1020', 'credit:1100']);
+    expect(result[0]).toMatchObject({ date: '20260115', bookingNo: 7, title: 'Rechnung 1', status: 'posted', amount: 12000 });
+    expect(result[0].debit).toEqual([{ accountKey: 'scs-1100', accountId: '1100', accountName: 'Debitoren' }]);
+    expect(result[0].credit).toEqual([{ accountKey: 'scs-3400', accountId: '3400', accountName: 'Mitgliederbeiträge' }]);
+    expect(result[1].debit.map(a => a.accountId)).toEqual(['1020']);
+    expect(result[1].credit.map(a => a.accountId)).toEqual(['1100']);
+  });
+
+  it('lists each account of a split booking once per side, by account number', () => {
+    const lines = [
+      line('inv', 'scs-3400', 0, 8000), line('inv', 'scs-1100', 12000, 0), line('inv', 'scs-3400', 0, 1000),
+      line('inv', 'scs-1020', 0, 3000),
+    ];
+    const result = ledgerBookings(['inv'], [booking('inv')], lines, accounts);
+    expect(result[0].credit.map(a => a.accountId)).toEqual(['1020', '3400']);
+    expect(result[0].amount).toBe(12000);
   });
 
   it('skips keys without a loaded booking and duplicate keys', () => {
     const result = ledgerBookings(['inv', 'inv-storno', 'inv'], [booking('inv')], [], accounts);
     expect(result.map(b => b.bookingKey)).toEqual(['inv']);
-    expect(result[0].lines).toEqual([]);
+    expect(result[0]).toMatchObject({ debit: [], credit: [], amount: 0 });
   });
 });
 

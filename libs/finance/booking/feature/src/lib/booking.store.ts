@@ -8,8 +8,9 @@ import { take } from 'rxjs/operators';
 
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
-import { BookingLineModel, BookingModel, OrgModelName, PersonModelName } from '@okr/shared-models';
-import { getTodayStr, getYear } from '@okr/shared-util-core';
+import { FirestoreService } from '@okr/shared-data-access';
+import { BillCollection, BillModel, BookingLineModel, BookingModel, InvoiceCollection, InvoiceModel, OrgModelName, PersonModelName } from '@okr/shared-models';
+import { getSystemQuery, getTodayStr, getYear } from '@okr/shared-util-core';
 import { exportCsv } from '@okr/shared-util-angular';
 
 import { AccountingStore } from '@okr/finance-accounting-feature';
@@ -20,6 +21,8 @@ import { VatCodeService } from '@okr/finance-vat-code-data-access';
 import { BookingLineService, BookingService, ReviewBookingLine } from '@okr/finance-booking-data-access';
 import { fiscalYear, fiscalYearOf } from '@okr/finance-reporting-util';
 import { PeriodService } from '@okr/finance-period-data-access';
+import { invoiceBookingKeys } from '@okr/finance-invoice-util';
+import { billBookingKeys } from '@okr/finance-bill-util';
 import {
   BOOKING_ACTIONS,
   BookingAction,
@@ -81,6 +84,7 @@ export const BookingStore = signalStore(
     injector: inject(Injector),
     router: inject(Router),
     vatCodeService: inject(VatCodeService),
+    firestoreService: inject(FirestoreService),
   })),
   withProps(store => ({
     i18n: store.i18nService.translateAll(BOOKING_I18N_KEYS),
@@ -98,6 +102,19 @@ export const BookingStore = signalStore(
     }),
     periodsResource: rxResource({
       stream: () => store.periodService.list(store.accountingStore.accountingTenantId()),
+    }),
+    // the books' invoices and bills, for "Rechnung anzeigen" — the same queries the invoice/bill lists run
+    invoicesResource: rxResource({
+      stream: () => store.firestoreService.searchData<InvoiceModel>(InvoiceCollection, [
+        ...getSystemQuery(store.appStore.tenantId()),
+        { key: 'accountingTenantId', operator: '==' as const, value: store.accountingStore.accountingTenantId() },
+      ], 'invoiceDate', 'desc'),
+    }),
+    billsResource: rxResource({
+      stream: () => store.firestoreService.searchData<BillModel>(BillCollection, [
+        ...getSystemQuery(store.appStore.tenantId()),
+        { key: 'accountingTenantId', operator: '==' as const, value: store.accountingStore.accountingTenantId() },
+      ], 'billDate', 'desc'),
     }),
   })),
   withComputed(store => ({
@@ -120,6 +137,20 @@ export const BookingStore = signalStore(
     monthLabel: computed(() => {
       const month = store.selectedMonth();
       return month > 0 ? `${String(month).padStart(2, '0')}.${store.selectedYear()}` : '';
+    }),
+    /**
+     * The invoice or bill a booking belongs to, by booking okey: the reverse of the documents' own
+     * links (issue, payment, reminder and storno bookings; migrated bexio rows in `bookingKeys`).
+     */
+    documentByBookingKey: computed(() => {
+      const map = new Map<string, { kind: 'invoice' | 'bill'; key: string }>();
+      for (const invoice of store.invoicesResource.value() ?? []) {
+        for (const key of invoiceBookingKeys(invoice)) map.set(key, { kind: 'invoice', key: invoice.okey });
+      }
+      for (const bill of store.billsResource.value() ?? []) {
+        for (const key of billBookingKeys(bill)) if (!map.has(key)) map.set(key, { kind: 'bill', key: bill.okey });
+      }
+      return map;
     }),
     accountIdByKey: computed(() => {
       const map = new Map<string, string>();
@@ -314,6 +345,18 @@ export const BookingStore = signalStore(
     async showAccount(accountKey: string): Promise<void> {
       if (!accountKey) return;
       await store.router.navigate(['/accounting', store.accountingTenantId(), 'journal', 'c-journal'], { queryParams: { accountKey } });
+    },
+
+    /** "Rechnung anzeigen": the invoice or bill list, which opens that document's view modal. */
+    async showDocument(booking: BookingModel): Promise<void> {
+      const doc = this.documentOf(booking);
+      if (!doc) return;
+      await store.router.navigate(['/accounting', store.accountingTenantId(), doc.kind, 'all', `c-${doc.kind}`],
+        { queryParams: doc.kind === 'invoice' ? { invoiceKey: doc.key } : { billKey: doc.key } });
+    },
+
+    documentOf(booking: BookingModel): { kind: 'invoice' | 'bill'; key: string } | undefined {
+      return store.documentByBookingKey().get(booking.okey);
     },
 
     /** The month badge's cancel: back to the whole selected year; status, search and account stay as they are. */

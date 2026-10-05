@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input, signal } from '@angular/core';
+import { Component, computed, effect, ElementRef, inject, input, signal, untracked } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonItemDivider, IonLabel, IonList, IonMenuButton, IonNote, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { BookingLineModel, BookingModel, RoleName } from '@okr/shared-models';
@@ -107,7 +107,8 @@ function parseAmount(amount: string): number {
             <ion-item-divider color="light"><ion-label>{{ entry.divider }}</ion-label></ion-item-divider>
           }
           @let row = entry.row;
-          <ion-item button [detail]="false" (click)="showActions(row)" [class.for-review]="isForReview(row)">
+          <ion-item button [detail]="false" (click)="showActions(row)" [class.for-review]="isForReview(row)"
+            [class.selected]="isSelected(row)" [attr.data-booking]="row.booking.okey">
             <ion-grid>
               <ion-row>
                 <ion-col size="3" size-md="2">
@@ -131,7 +132,7 @@ function parseAmount(amount: string): number {
                   {{ row.creditAccount }}
                   @if (row.creditAccountName) { <br /><ion-note class="account-name">{{ row.creditAccountName }}</ion-note> }
                 </ion-col>
-                <ion-col size="5" [sizeMd]="textSizeMd()">{{ row.accountName }}@if (row.counterparty) {<ion-note> · {{ row.counterparty }}</ion-note>}</ion-col>
+                <ion-col size="5" [sizeMd]="textSizeMd()">{{ row.accountName }}@if (row.counterparty) { · {{ row.counterparty }}}</ion-col>
                 <ion-col size="4" size-md="2" class="ion-text-end">
                   {{ row.amount }}
                   <!-- no room for a sixth column on a phone: the saldo rides under the amount there -->
@@ -196,12 +197,14 @@ function parseAmount(amount: string): number {
     ion-item.part { font-size: 0.85rem; --min-height: 36px; color: var(--ion-color-medium-shade); }
     ion-item-divider { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; }
     ion-item.for-review { --background: rgba(var(--ion-color-warning-rgb), 0.12); }
+    ion-item.selected { --background: rgba(var(--ion-color-primary-rgb), 0.14); }
   `],
 })
 export class BookingList {
   protected readonly store = inject(BookingStore);
   private readonly actionSheetController = inject(ActionSheetController);
   private readonly imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 
   public readonly contextMenuName = input.required<string>();
   // `?accountKey=<okey>` (query param, bound by withComponentInputBinding): show only bookings with a
@@ -211,6 +214,28 @@ export class BookingList {
   // bookings. `month` is omitted for an annual period.
   public readonly year = input<string | undefined>();
   public readonly month = input<string | undefined>();
+  // `?bookingKey=<okey>` (query param): the ledger card of an invoice/bill view modal opens the
+  // unfiltered journal (with `year`) here — the booking is selected and scrolled into view.
+  public readonly bookingKey = input<string | undefined>();
+
+  /** The booking last opened from here or linked to: highlighted until another row is tapped. */
+  private readonly selectedKey = signal('');
+  /** The linked booking still to scroll into view once its row is rendered (rows load after the route opens). */
+  private pendingScrollKey = '';
+  private readonly syncBookingKey = effect(() => {
+    const key = this.bookingKey() ?? '';
+    this.selectedKey.set(key);
+    this.pendingScrollKey = key;
+  });
+  private readonly scrollToBooking = effect(() => {
+    const rows = this.visibleRows();
+    const key = untracked(() => this.pendingScrollKey);
+    if (!key || !rows.some(entry => entry.row.booking.okey === key)) return;
+    this.pendingScrollKey = '';
+    requestAnimationFrame(() => this.host.nativeElement
+      .querySelector(`ion-item[data-booking="${CSS.escape(key)}"]`)
+      ?.scrollIntoView({ block: 'center', behavior: 'smooth' }));
+  });
 
   private readonly syncAccountKey = effect(() => this.store.setAccountKey(this.accountKey() ?? ''));
   private readonly syncPeriod = effect(() => {
@@ -286,6 +311,10 @@ export class BookingList {
     });
   }
 
+  protected isSelected(row: JournalRow): boolean {
+    return !!this.selectedKey() && row.booking.okey === this.selectedKey();
+  }
+
   protected isForReview(row: JournalRow): boolean {
     return isForReview(row.booking);
   }
@@ -318,6 +347,7 @@ export class BookingList {
   /*-------------------------- per-item action sheet --------------------------------*/
   protected async showActions(row: JournalRow): Promise<void> {
     const booking = row.booking;
+    this.selectedKey.set(booking.okey);
     const lines = this.store.linesByBooking().get(booking.okey) ?? [];
     const actions = this.store.availableActions(booking);
     const options = createActionSheetOptions(this.store.i18n.as_title());
@@ -326,11 +356,16 @@ export class BookingList {
   }
 
   private addActionSheetButtons(options: ActionSheetOptions, actions: BookingAction[], booking: BookingModel): void {
-    // Where the money went: the two accounts and the counterparty, before anything that changes the booking.
+    // Where the money went: the two accounts, the counterparty and the invoice/bill, before anything that changes the booking.
     options.buttons.push(createActionSheetButton('booking.showCredit', this.store.i18n.as_show_credit(), this.imgixBaseUrl, 'eye-on'));
     options.buttons.push(createActionSheetButton('booking.showDebit', this.store.i18n.as_show_debit(), this.imgixBaseUrl, 'eye-on'));
     if (booking.counterparty?.key) {
       options.buttons.push(createActionSheetButton('booking.showCounterparty', this.store.i18n.as_show_counterparty(), this.imgixBaseUrl, 'person'));
+    }
+    const doc = this.store.documentOf(booking);
+    if (doc) {
+      const label = doc.kind === 'invoice' ? this.store.i18n.as_show_invoice() : this.store.i18n.as_show_bill();
+      options.buttons.push(createActionSheetButton('booking.showDocument', label, this.imgixBaseUrl, 'invoice'));
     }
     options.buttons.push(createActionSheetDivider());
     // Treasurer decision on an OCR-proposed booking comes first — it is why the row was opened.
@@ -374,6 +409,7 @@ export class BookingList {
     if (action === 'booking.showCredit') { await this.showSideAccount(lines, 'credit'); return; }
     if (action === 'booking.showDebit') { await this.showSideAccount(lines, 'debit'); return; }
     if (action === 'booking.showCounterparty') { await this.store.showCounterparty(booking); return; }
+    if (action === 'booking.showDocument') { await this.store.showDocument(booking); return; }
     if (action === 'booking.approve') { await this.store.approve(booking); return; }
     if (action === 'booking.review')  { await this.store.openReview(booking, lines); return; }
     if (action === 'booking.reject')  { await this.store.reject(booking); return; }

@@ -53,6 +53,8 @@ export const BOOKING_I18N_KEYS = {
   as_select_account:           PFX + 'as.selectAccount',
   as_show_counterparty:        PFX + 'as.showCounterparty',
   as_no_counterparty:          PFX + 'as.noCounterparty',
+  as_show_invoice:             PFX + 'as.showInvoice',
+  as_show_bill:                PFX + 'as.showBill',
   // edit modal + form
   modal_create:                PFX + 'modal.create',
   modal_edit:                  PFX + 'modal.edit',

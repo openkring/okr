@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, effect, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, effect, inject, input, untracked } from '@angular/core';
 import { ActionSheetController, IonAvatar, IonButton, IonButtons, IonChip, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonLabel, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { BillModel, RoleName } from '@okr/shared-models';
@@ -107,6 +107,9 @@ export class BillList {
   // inputs
   public readonly listId = input.required<string>();
   public readonly contextMenuName = input.required<string>();
+  // `?billKey=<okey>` (query param): the journal's "Lieferanten-Rechnung anzeigen" opens that bill's view modal here
+  public readonly billKey = input<string | undefined>();
+  private openedKey = '';
 
   // computed
   protected readonly isLoading = computed(() => this.store.isLoading());
@@ -123,6 +126,15 @@ export class BillList {
     effect(() => {
       const listId = this.listId();
       if (listId) this.store.setListId(listId);
+    });
+    // once the list is loaded; only once per key, so closing the modal does not reopen it
+    effect(() => {
+      const key = this.billKey() ?? '';
+      if (!key || key === this.openedKey) return;
+      const bill = (this.store.allBillsResource.value() ?? []).find(d => d.okey === key);
+      if (!bill) return;
+      this.openedKey = key;
+      void untracked(() => this.store.view(bill));
     });
   }
 

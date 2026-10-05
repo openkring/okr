@@ -9,6 +9,8 @@
     "showDebit": "Show debit account",
     "showCounterparty": "Show counterparty",
     "noCounterparty": "This booking has no counterparty.",
+    "showInvoice": "Show invoice",
+    "showBill": "Show supplier bill",
     "selectAccount": "Which account do you want to show?"
   },
   "cancel": {

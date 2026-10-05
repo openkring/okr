@@ -119,7 +119,7 @@ import { BillStore } from './bill.store';
             }
           </ion-card-content>
         </ion-card>
-        <!-- the linked bookings (bill + payments); an unlinked bill: its booking accounts. Each account links to the journal -->
+        <!-- the linked bookings (bill + payments) as journal rows, each linked to its booking in the journal; an unlinked bill: its booking accounts -->
         <okr-ledger-bookings [accountingTenantId]="bill.accountingTenantId" [bookingKeys]="bookingKeys()"
           [accountKeys]="accountKeys()" [date]="bill.billDate" />
       }

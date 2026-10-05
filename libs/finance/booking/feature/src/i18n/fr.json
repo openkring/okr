@@ -9,6 +9,8 @@
     "showDebit": "Afficher le compte débit",
     "showCounterparty": "Afficher la contrepartie",
     "noCounterparty": "Cette écriture n'a pas de contrepartie.",
+    "showInvoice": "Afficher la facture",
+    "showBill": "Afficher la facture fournisseur",
     "selectAccount": "Quel compte veux-tu afficher ?"
   },
   "cancel": {
