@@ -133,6 +133,8 @@ export const SECTION_I18N_KEYS = {
   contract_refused_openRequest:             PFX + 'contract.refused.openRequest',
   contract_refused_noAddress:               PFX + 'contract.refused.noAddress',
   contract_refused_cooldown:                PFX + 'contract.refused.cooldown',
+  contract_refused_alreadyOwned:            PFX + 'contract.refused.alreadyOwned',
+  contract_status_chat:                     PFX + 'contract.status.chat',
   contract_error:                           PFX + 'contract.error',
   button_action_label:                      PFX + 'button.action.label',
   button_style_title:                       PFX + 'button.style.title',

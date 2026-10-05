@@ -134,7 +134,11 @@
       "notActive": "You can submit a request as an active member.",
       "openRequest": "You already have an open request or a valid contract.",
       "noAddress": "Please add your postal address to your profile first.",
-      "cooldown": "Your request has only just been submitted."
+      "cooldown": "Your request has only just been submitted.",
+      "alreadyOwned": "You already have one, so there is no need to request another."
+    },
+    "status": {
+      "chat": "chat"
     },
     "error": "The request could not be submitted. Please try again later."
   },

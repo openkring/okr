@@ -134,7 +134,11 @@
       "notActive": "Tu peux faire une demande en tant que membre actif.",
       "openRequest": "Tu as déjà une demande en cours ou un contrat valable.",
       "noAddress": "Ajoute d'abord ton adresse postale dans ton profil.",
-      "cooldown": "Ta demande vient d'être envoyée."
+      "cooldown": "Ta demande vient d'être envoyée.",
+      "alreadyOwned": "Tu en as déjà un, une deuxième demande n'est pas nécessaire."
+    },
+    "status": {
+      "chat": "chat"
     },
     "error": "La demande n'a pas pu être envoyée. Réessaie plus tard."
   },

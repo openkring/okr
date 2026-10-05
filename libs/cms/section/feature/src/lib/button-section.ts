@@ -1,15 +1,15 @@
-import { Component, computed, inject, input } from '@angular/core';
+import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow, ModalController } from '@ionic/angular/standalone';
 import {} from '@capacitor/google-maps';
 
-import { ButtonSection, ViewPosition } from '@okr/shared-models';
+import { ButtonAction, ButtonSection, ViewPosition } from '@okr/shared-models';
 import { OptionalCardHeader, Spinner } from '@okr/shared-ui';
 import { fill, warn } from '@okr/shared-util-core';
 
 import { isReservation } from '@okr/relationship-reservation-util';
 import { ReservationService } from '@okr/relationship-reservation-data-access';
 
-import { ButtonWidget, EmergencyButtonWidget } from '@okr/cms-section-ui';
+import { ButtonWidget, EmergencyButtonWidget, RequestStatusNote } from '@okr/cms-section-ui';
 import { resolveButtonModal } from '@okr/cms-section-util';
 import { SectionStore } from './section.store';
 
@@ -17,13 +17,15 @@ import { SectionStore } from './section.store';
 type ContractRequestResult =
   | { preview: { name: string; street: string; zipCity: string; date: string; kindName: string } }
   | { requested: true }
-  | { refused: 'notActive' | 'openRequest' | 'noAddress' | 'cooldown' };
+  | { refused: 'notActive' | 'alreadyOwned' | 'openRequest' | 'noAddress' | 'cooldown' };
+/** Result of `getContractRequestStatus` (spec 1.88 §5.3). */
+type RequestStatus = { state: 'none' | 'pending' | 'approved' | 'owned' | 'notActive'; text: string; roomId?: string };
 
 @Component({
   selector: 'okr-button-section',
   standalone: true,
   imports: [
-    Spinner, ButtonWidget, EmergencyButtonWidget, OptionalCardHeader,
+    Spinner, ButtonWidget, EmergencyButtonWidget, RequestStatusNote, OptionalCardHeader,
     IonCard, IonCardContent, IonGrid, IonRow, IonCol
   ],
   providers: [SectionStore],
@@ -56,7 +58,7 @@ type ContractRequestResult =
               <ion-grid>
                 <ion-row>
                   <ion-col [size]="colSizeButton()">
-                    <okr-button-widget [section]="section" [i18n]="store.i18n" [editMode]="editMode()" (clicked)="onClick($event)" (workflow)="onWorkflow()" (contract)="onContract()" />
+                    <okr-button-widget [class.ion-hide]="buttonHidden()" [section]="section" [i18n]="store.i18n" [editMode]="editMode()" (clicked)="onClick($event)" (workflow)="onWorkflow()" (contract)="onContract()" />
                   </ion-col>
                   <ion-col [size]="colSizeText()">
                     <div [innerHTML]="content()"></div>
@@ -71,7 +73,7 @@ type ContractRequestResult =
                     <div [innerHTML]="content()"></div>
                   </ion-col>
                   <ion-col [size]="colSizeButton()">
-                    <okr-button-widget [section]="section" [i18n]="store.i18n" [editMode]="editMode()" (clicked)="onClick($event)" (workflow)="onWorkflow()" (contract)="onContract()" />
+                    <okr-button-widget [class.ion-hide]="buttonHidden()" [section]="section" [i18n]="store.i18n" [editMode]="editMode()" (clicked)="onClick($event)" (workflow)="onWorkflow()" (contract)="onContract()" />
                   </ion-col>
                 </ion-row>
               </ion-grid>
@@ -80,7 +82,7 @@ type ContractRequestResult =
               <ion-grid>
                 <ion-row>
                   <ion-col size="12">
-                    <okr-button-widget [section]="section" [i18n]="store.i18n" [editMode]="editMode()" (clicked)="onClick($event)" (workflow)="onWorkflow()" (contract)="onContract()" />
+                    <okr-button-widget [class.ion-hide]="buttonHidden()" [section]="section" [i18n]="store.i18n" [editMode]="editMode()" (clicked)="onClick($event)" (workflow)="onWorkflow()" (contract)="onContract()" />
                   </ion-col>
                 </ion-row>
                 <ion-row>
@@ -99,16 +101,21 @@ type ContractRequestResult =
                 </ion-row>
                 <ion-row>
                   <ion-col size="12">
-                    <okr-button-widget [section]="section" [i18n]="store.i18n" [editMode]="editMode()" (clicked)="onClick($event)" (workflow)="onWorkflow()" (contract)="onContract()" />
+                    <okr-button-widget [class.ion-hide]="buttonHidden()" [section]="section" [i18n]="store.i18n" [editMode]="editMode()" (clicked)="onClick($event)" (workflow)="onWorkflow()" (contract)="onContract()" />
                   </ion-col>
                 </ion-row>
               </ion-grid>
             }
             @default {  <!-- VP.None -->
-              <okr-button-widget [section]="section" [i18n]="store.i18n" [editMode]="editMode()" (clicked)="onClick($event)" (workflow)="onWorkflow()" (contract)="onContract()" />
+              <okr-button-widget [class.ion-hide]="buttonHidden()" [section]="section" [i18n]="store.i18n" [editMode]="editMode()" (clicked)="onClick($event)" (workflow)="onWorkflow()" (contract)="onContract()" />
             }
           }
         }
+          @if (requestStatus(); as status) {
+            @if (status.state !== 'none' && status.text) {
+              <okr-request-status-note [text]="status.text" [roomId]="status.roomId" [linkLabel]="store.i18n.contract_status_chat()" />
+            }
+          }
         </ion-card-content>
       </ion-card>
     } @else {
@@ -135,6 +142,40 @@ export class ButtonSectionComponent {
   protected readonly subTitle = computed(() => this.section()?.subTitle);
 
   public VP = ViewPosition;
+
+  protected readonly requestStatus = signal<RequestStatus | undefined>(undefined);
+  /** set right after a successful request until the re-fetched status arrives */
+  protected readonly justRequested = signal(false);
+  /** Review Focus 5: no status (loading, failed, or a kind without texts) → the button stays */
+  protected readonly buttonHidden = computed(() => {
+    const s = this.requestStatus();
+    return this.justRequested() || (!!s && s.state !== 'none' && s.text.length > 0);
+  });
+  private readonly isContractButton = computed(() => this.section()?.properties?.action?.type === ButtonAction.Contract);
+
+  constructor() {
+    effect(() => {
+      if (this.isContractButton() && !this.editMode() && this.section()?.okey) untracked(() => void this.loadRequestStatus());
+    });
+  }
+
+  private async loadRequestStatus(): Promise<void> {
+    const sectionKey = this.section()?.okey ?? '';
+    if (!sectionKey) return;
+    try {
+      const { getFunctions, httpsCallable } = await import('firebase/functions');
+      const { getApp } = await import('firebase/app');
+      const fn = httpsCallable<{ tenantId: string; sectionKey: string }, RequestStatus>(
+        getFunctions(getApp(), 'europe-west6'), 'getContractRequestStatus');
+      this.requestStatus.set((await fn({ tenantId: this.store.tenantId(), sectionKey })).data);
+    } catch (ex) {
+      // the page must stay usable: keep the button, no toast
+      warn('ButtonSectionComponent.loadRequestStatus: ' + ex);
+    } finally {
+      // an empty text (e.g. Skiffplatz) or a failed fetch must not keep the button hidden
+      this.justRequested.set(false);
+    }
+  }
 
   /**
    * A button's config string decides what opens (spec 2026-08-29 §6a). Until this became a
@@ -188,9 +229,10 @@ export class ButtonSectionComponent {
     const sectionKey = this.section()?.okey ?? '';
     if (!sectionKey) return;
     const i18n = this.store.i18n;
-    const refusal = (r: 'notActive' | 'openRequest' | 'noAddress' | 'cooldown'): string => {
+    const refusal = (r: 'notActive' | 'alreadyOwned' | 'openRequest' | 'noAddress' | 'cooldown'): string => {
       const texts = {
         notActive: i18n.contract_refused_notActive,
+        alreadyOwned: i18n.contract_refused_alreadyOwned,
         openRequest: i18n.contract_refused_openRequest,
         noAddress: i18n.contract_refused_noAddress,
         cooldown: i18n.contract_refused_cooldown,
@@ -205,6 +247,7 @@ export class ButtonSectionComponent {
       const tenantId = this.store.tenantId();
       const first = (await fn({ tenantId, sectionKey, confirm: false })).data;
       if ('refused' in first) { await this.toast(refusal(first.refused)); return; }
+      if ('requested' in first) { await this.afterRequested(); return; }
       if (!('preview' in first)) return;
       const alert = await this.store.alertController.create({
         header: fill(i18n.contract_confirm_header(), first.preview),
@@ -217,11 +260,19 @@ export class ButtonSectionComponent {
       await alert.present();
       if ((await alert.onDidDismiss()).role !== 'confirm') return;
       const second = (await fn({ tenantId, sectionKey, confirm: true })).data;
-      await this.toast('refused' in second ? refusal(second.refused) : i18n.contract_requested());
+      if ('refused' in second) { await this.toast(refusal(second.refused)); return; }
+      await this.afterRequested();
     } catch (ex) {
       warn('ButtonSectionComponent.onContract: ' + ex);
       await this.toast(i18n.contract_error());
     }
+  }
+
+  /** spec 1.88 §5.4: hide the button at once; the approval is created asynchronously, so re-fetch after a moment */
+  private async afterRequested(): Promise<void> {
+    this.justRequested.set(true);
+    await this.toast(this.store.i18n.contract_requested());
+    setTimeout(() => void this.loadRequestStatus(), 4000);
   }
 
   private async toast(message: string): Promise<void> {

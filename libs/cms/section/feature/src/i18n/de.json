@@ -134,7 +134,11 @@
       "notActive": "Einen Antrag kannst du als Aktivmitglied stellen.",
       "openRequest": "Du hast bereits einen offenen Antrag oder einen gültigen Vertrag.",
       "noAddress": "Bitte ergänze zuerst deine Postadresse in deinem Profil.",
-      "cooldown": "Dein Antrag wurde eben erst übermittelt."
+      "cooldown": "Dein Antrag wurde eben erst übermittelt.",
+      "alreadyOwned": "Du hast bereits einen. Ein zweiter Antrag ist nicht nötig."
+    },
+    "status": {
+      "chat": "Chat"
     },
     "error": "Der Antrag konnte nicht übermittelt werden. Bitte versuche es später nochmals."
   },

@@ -134,7 +134,11 @@
       "notActive": "Puoi inviare una richiesta come membro attivo.",
       "openRequest": "Hai già una richiesta aperta o un contratto valido.",
       "noAddress": "Aggiungi prima il tuo indirizzo postale nel tuo profilo.",
-      "cooldown": "La tua richiesta è stata appena inviata."
+      "cooldown": "La tua richiesta è stata appena inviata.",
+      "alreadyOwned": "Ne hai già uno, non serve una seconda richiesta."
+    },
+    "status": {
+      "chat": "chat"
     },
     "error": "Non è stato possibile inviare la richiesta. Riprova più tardi."
   },

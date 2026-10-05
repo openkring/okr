@@ -134,7 +134,11 @@
       "notActive": "Puedes enviar una solicitud como miembro activo.",
       "openRequest": "Ya tienes una solicitud abierta o un contrato válido.",
       "noAddress": "Primero añade tu dirección postal en tu perfil.",
-      "cooldown": "Tu solicitud se acaba de enviar."
+      "cooldown": "Tu solicitud se acaba de enviar.",
+      "alreadyOwned": "Ya tienes uno, no hace falta una segunda solicitud."
+    },
+    "status": {
+      "chat": "chat"
     },
     "error": "No se pudo enviar la solicitud. Inténtalo de nuevo más tarde."
   },
