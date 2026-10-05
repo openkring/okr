@@ -76,6 +76,9 @@
     "workflow": {
       "label": "Trigger workflow",
       "description": "Fire an event. What happens next is configured as a rule."
+    },
+    "contract": {
+      "label": "Request a contract"
     }
   },
   "color": {

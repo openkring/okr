@@ -106,6 +106,9 @@ export class ContractModel implements OkrModel, NamedModel, SearchableModel, Tag
 
   public loan: LoanTerms | undefined;
 
+  /** '<modelType>.<okey>' of what produced the contract, e.g. 'approval.<okey>' (spec 1.87 §4.3); '' = manual */
+  public sourceRef = '';
+
   constructor(tenantId: string) {
     this.tenants = [tenantId];
   }

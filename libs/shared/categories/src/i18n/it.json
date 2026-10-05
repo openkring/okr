@@ -76,6 +76,9 @@
     "workflow": {
       "label": "Attiva un workflow",
       "description": "Attiva un evento. Ciò che segue si configura come una regola."
+    },
+    "contract": {
+      "label": "Richiedere un contratto"
     }
   },
   "color": {

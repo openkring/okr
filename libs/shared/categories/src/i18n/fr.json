@@ -76,6 +76,9 @@
     "workflow": {
       "label": "Déclencher un workflow",
       "description": "Déclencher un événement. Ce qui suit se configure comme une règle."
+    },
+    "contract": {
+      "label": "Demander un contrat"
     }
   },
   "color": {

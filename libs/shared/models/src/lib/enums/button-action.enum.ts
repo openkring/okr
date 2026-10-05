@@ -9,4 +9,5 @@ export enum ButtonAction {
   // ever be APPENDED. Inserting one renumbers every later value and silently re-points
   // every button document already in the database.
   Workflow, // fire a workflow event (ui.buttonClicked); the consequence is configured as a rule
+  Contract, // request a contract (spec 1.87): action.url carries the contract kind, e.g. 'skiffPlatz'
 }

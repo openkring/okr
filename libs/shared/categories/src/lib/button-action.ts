@@ -52,5 +52,12 @@ export const ButtonActions: ButtonActionCategory[] = [
     i18nBase: '@shared/categories.buttonAction.workflow',
     // 'process' — verified present in the icons catalogue; 'flash' and 'hand-left' are not
     icon: 'process'
+  },
+  {
+    id: ButtonAction.Contract,
+    abbreviation: 'CTRC',
+    name: 'contract',
+    i18nBase: '@shared/categories.buttonAction.contract',
+    icon: 'contract'
   }
 ]

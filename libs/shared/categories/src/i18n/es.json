@@ -76,6 +76,9 @@
     "workflow": {
       "label": "Activar flujo de trabajo",
       "description": "Lanzar un evento. Lo que ocurre después se configura como una regla."
+    },
+    "contract": {
+      "label": "Solicitar un contrato"
     }
   },
   "color": {
