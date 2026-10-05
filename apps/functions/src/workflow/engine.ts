@@ -427,7 +427,8 @@ async function signContract(rule: WorkflowRuleDoc, step: WorkflowActionStepDoc, 
   }
   let signatureBlocks: SignatureBlock[];
   try {
-    signatureBlocks = buildSignatureBlocks(kindDoc.signers ?? [], resolved);
+    // Order syntax unverified (spec 1.87 / plan Task 10) — bare `#deepsign#<email>#` is the form verified by meeting minutes; the approval already gates the run.
+    signatureBlocks = buildSignatureBlocks(kindDoc.signers ?? [], resolved, { ordered: false });
   } catch (e) {
     return fail(e instanceof Error ? e.message : String(e));   // 'signer N (…) has no email'
   }

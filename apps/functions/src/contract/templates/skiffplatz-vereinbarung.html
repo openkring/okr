@@ -1,14 +1,14 @@
-<!--
-  Skiff-Lagerplatz agreement (spec 1.87), transcribed 1:1 from "Vereinbarung Skiff Lagerplatz", September 2024.
-  Placeholders: logoUrl (raster URL of the tenant logo, see the logo skill; omitted when empty), applicant.name,
-  applicant.street, applicant.zipCity, terms.rent, terms.insurance, terms.total, date, signatureBlocks[]
-  (pattern, name, label). The .pattern text is scanned by DeepSign from the rendered PDF: keep it visible
-  (never white text or display:none).
--->
 <!doctype html>
 <html lang="de">
 <head>
 <meta charset="utf-8">
+<!--
+  Skiff-Lagerplatz agreement (spec 1.87), transcribed 1:1 from "Vereinbarung Skiff Lagerplatz", September 2024.
+  Placeholders: applicant.name, applicant.street, applicant.zipCity, terms.rent, terms.insurance, terms.total, date,
+  signatureBlocks[] (pattern, name, label). Logo: template-version asset named "logo" via {{assetUrl "logo"}}
+  (attached when the template is seeded). The .pattern text is scanned by DeepSign from the rendered PDF: keep it
+  visible (never white text or display:none).
+-->
 <title>Vereinbarung für die Miete eines Skiff-Lagerplatzes</title>
 <style>
   @page { size: A4; margin: 20mm 20mm 18mm 20mm; }
@@ -35,7 +35,7 @@
 </style>
 </head>
 <body>
-{{#if logoUrl}}<div class="logo"><img src="{{logoUrl}}" alt="Seeclub Stäfa"></div>{{/if}}
+<div class="logo"><img src="{{assetUrl "logo"}}" alt="Seeclub Stäfa"></div>
 
 <h1>Vereinbarung für die Miete eines Skiff-Lagerplatzes</h1>
 
