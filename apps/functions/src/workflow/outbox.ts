@@ -16,6 +16,7 @@
 import { onDocumentCreated } from 'firebase-functions/v2/firestore';
 import { logger } from 'firebase-functions/v2';
 import { getFirestore } from 'firebase-admin/firestore';
+import { getStorage } from 'firebase-admin/storage';
 
 import { getAppEmailConfig } from '../auth/email-templates';
 import { DEFAULT_EMAIL_PROVIDER, sendEmailViaProvider } from '../auth/email-transport';
@@ -126,6 +127,15 @@ export async function dispatch(doc: OutboxDoc): Promise<void> {
         }, 'system', tenantId);
         await startSignatureRun({ tenantId, storagePath: rendered.storagePath, documentName: p['documentName'],
           sourceRef: p['sourceRef'], sendMail: 'all' });
+        // DeepSign holds its own copy now. The rendered contract sits in the default bucket under
+        // a tenant-readable prefix, so it goes; the esignList record keeps `storagePath` only as
+        // metadata (esignDelete removes it with not-found ignored). Cleanup never fails the run.
+        try {
+          await getStorage().bucket().file(rendered.storagePath).delete({ ignoreNotFound: true });
+        } catch (e) {
+          logger.warn(`${CF_NAME}: could not delete rendered contract PDF for ${p['sourceRef']}`,
+            { error: e instanceof Error ? e.message : String(e) });
+        }
       } catch (error) {
         // The member was told "approved, the contract follows" — the chat must hear that it did not.
         await emitEvent('esign.failed', tenantId, p['sourceRef'], { personKey: p['personKey'],

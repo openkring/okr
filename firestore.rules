@@ -861,7 +861,15 @@ service cloud.firestore {
     }
     match /esignList/{esignId} {
       // esign records carry a singular tenantId field (not a tenants[] array).
-      allow read:  if userExists() && (resource == null || callerTenants().hasAny([resource.data.tenantId]));
+      // Contract-request runs (sourceRef 'approval.<okey>', spec 1.87) point at a member's contract
+      // PDF: readable only by the esign operators — contentAdmin (the esign route's gate) and
+      // privileged/admin. Rules are not filters: the esign screen's tenantId-only list query must
+      // stay provable for its contentAdmin-only users, hence isContentManager(), not
+      // isPrivileged(). Every other record (meeting.<okey>, uploads) keeps the tenant rule.
+      allow read:  if userExists() && (resource == null || (
+                      callerTenants().hasAny([resource.data.tenantId]) && (
+                        !resource.data.get('sourceRef', '').matches('approval[.].*')
+                        || isContentManager())));
       allow write: if false;
     }
     match /esignAudit/{tenantId}/{subcollection=**} {

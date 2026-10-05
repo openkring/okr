@@ -2,6 +2,7 @@
 //
 // A fully signed DeepSign PDF becomes a contract dossier (spec 1.87 §6.6). The PDF is COPIED from the
 // default bucket (esign archive) into the private bucket where contract files live.
+import { logger } from 'firebase-functions/v2';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
 import { AvatarInfo, ContractCollection, ContractDocumentCollection, ContractModel, NoticePeriod } from '@okr/shared-models';
@@ -36,6 +37,20 @@ export function buildSignedContract(req: FileContractRequest, orgAvatar: AvatarI
   return applyDerivedFields(c, req.today);
 }
 
+/**
+ * The esign archive copy sits in the default bucket under a tenant-readable prefix; once the
+ * contract dossier holds its private-bucket copy, the archive copy goes. Never throws: the
+ * contract is filed, a stray file is a cleanup matter, not a failed workflow step.
+ */
+async function removeEsignCopy(signedPdfPath: string, sourceRef: string): Promise<void> {
+  try {
+    await getStorage().bucket().file(signedPdfPath).delete({ ignoreNotFound: true });
+  } catch (e) {
+    logger.warn(`fileSignedContract: could not delete the esign copy for ${sourceRef}`,
+      { error: e instanceof Error ? e.message : String(e) });
+  }
+}
+
 export async function fileSignedContract(req: FileContractRequest): Promise<string> {
   const db = getFirestore();
   const org = (await db.collection('orgs').doc(req.orgKey).get()).data() ?? {};
@@ -46,6 +61,13 @@ export async function fileSignedContract(req: FileContractRequest): Promise<stri
   const contractRef = db.collection(ContractCollection).doc(ids.contractId);
   const docRef = db.collection(ContractDocumentCollection).doc(ids.documentId);
   const path = contractDocumentPath(req.tenantId, contractRef.id, docRef.id, 'signed.pdf');
+
+  // A re-delivered esign.completed after a successful filing: the archive copy may already be
+  // gone, so do not try to download it again.
+  if ((await contractRef.get()).exists) {
+    await removeEsignCopy(req.signedPdfPath, req.sourceRef);
+    return contractRef.id;
+  }
 
   const [buffer] = await getStorage().bucket().file(req.signedPdfPath).download();
   await privateBucket().file(path).save(buffer, { metadata: { contentType: 'application/pdf' } });
@@ -71,5 +93,6 @@ export async function fileSignedContract(req: FileContractRequest): Promise<stri
     // gRPC ALREADY_EXISTS: a parallel delivery filed this approval first — that is the result we want.
     if ((e as { code?: number }).code !== 6) throw e;
   }
+  await removeEsignCopy(req.signedPdfPath, req.sourceRef);
   return contractRef.id;
 }

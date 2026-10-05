@@ -7,7 +7,16 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const rendered: unknown[] = [];
 const runs: Record<string, unknown>[] = [];
 const emitted: { event: string; relatedKey: string; opts: Record<string, unknown> }[] = [];
+const deleted: { path: string; opts: unknown }[] = [];
 let renderFails = false;
+let runFails = false;
+let deleteFails = false;
+
+vi.mock('firebase-admin/storage', () => ({
+  getStorage: () => ({ bucket: () => ({ file: (path: string) => ({
+    delete: async (opts: unknown) => { if (deleteFails) throw new Error('gcs down'); deleted.push({ path, opts }); },
+  }) }) }),
+}));
 
 vi.mock('../pdf/render-document', () => ({
   renderDocument: async (req: unknown) => {
@@ -17,7 +26,7 @@ vi.mock('../pdf/render-document', () => ({
   },
 }));
 vi.mock('../esign/esign-send-document', () => ({
-  startSignatureRun: async (o: Record<string, unknown>) => { runs.push(o); return { esignId: 'e1', documentId: 'd1', signees: [] }; },
+  startSignatureRun: async (o: Record<string, unknown>) => { if (runFails) throw new Error('deepsign 500'); runs.push(o); return { esignId: 'e1', documentId: 'd1', signees: [] }; },
 }));
 vi.mock('./emit', () => ({
   emitEvent: async (event: string, _t: string, relatedKey: string, opts: Record<string, unknown>) => { emitted.push({ event, relatedKey, opts }); },
@@ -35,7 +44,10 @@ const doc = (): OutboxDoc => ({
   },
 });
 
-beforeEach(() => { rendered.length = 0; runs.length = 0; emitted.length = 0; renderFails = false; });
+beforeEach(() => {
+  rendered.length = 0; runs.length = 0; emitted.length = 0; deleted.length = 0;
+  renderFails = false; runFails = false; deleteFails = false;
+});
 
 describe('outbox signContract', () => {
   it('renders the template, then starts a run with the sourceRef', async () => {
@@ -49,5 +61,20 @@ describe('outbox signContract', () => {
     expect(emitted[0]).toMatchObject({ event: 'esign.failed', relatedKey: 'approval.ap1' });
     expect(emitted[0].opts).toMatchObject({ personKey: 'anna', params: { kind: 'skiffPlatz', reason: 'setup', approvalKey: 'ap1' } });
     expect(runs).toHaveLength(0);
+  });
+  it('deletes the rendered PDF from the default bucket after a successful run', async () => {
+    await dispatch(doc());
+    expect(deleted).toEqual([{ path: 'generated-docs/scs/system/x.pdf', opts: { ignoreNotFound: true } }]);
+  });
+  it('keeps the rendered PDF when the run fails', async () => {
+    runFails = true;
+    await expect(dispatch(doc())).rejects.toThrow('deepsign 500');
+    expect(deleted).toHaveLength(0);
+    expect(emitted[0]).toMatchObject({ event: 'esign.failed' });
+  });
+  it('does not fail the dispatch when the cleanup delete fails', async () => {
+    deleteFails = true;
+    await expect(dispatch(doc())).resolves.toBeUndefined();
+    expect(runs).toHaveLength(1);
   });
 });
