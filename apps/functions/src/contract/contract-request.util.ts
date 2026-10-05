@@ -66,6 +66,21 @@ function ownsResource(input: EligibilityInput): boolean {
   return (input.ownerships ?? []).some((o) => isActiveOwnership(o, type, input.today));
 }
 
+/**
+ * An approved request of a signer-less kind is consumed once an unarchived ownership of the
+ * resource type (active or ended) starts on or after the request day. Without a request day it
+ * can only be proven consumed by an active ownership.
+ */
+export function isConsumedApproval(a: DocData, ownerships: DocData[], resourceType: string, today: string): boolean {
+  const day = str(a['requestDate']).slice(0, 8);
+  if (!day) return ownerships.some((o) => isActiveOwnership(o, resourceType, today));
+  return ownerships.some((o) => {
+    if (o['isArchived'] === true || !resourceType || str(o['resourceType']) !== resourceType) return false;
+    const from = str(o['validFrom']).slice(0, 8);
+    return from !== '' && from >= day;
+  });
+}
+
 function hasOpenRequest(input: EligibilityInput): boolean {
   const tag = `contract:${input.kind}`;
   const contractOpen = input.contracts.some((c) =>
@@ -89,7 +104,7 @@ function hasOpenRequest(input: EligibilityInput): boolean {
     if (state !== 'approved') return false;
     // spec 1.88 D5: a kind without signers has no contract to wait for — an approved request
     // stays open until the handover is recorded as an ownership
-    if (input.hasSigners === false) return !ownsResource(input);
+    if (input.hasSigners === false) return !isConsumedApproval(a, input.ownerships ?? [], input.resourceType ?? '', input.today);
     return !filed.has(sourceRef) && signingAlive(sourceRef);
   });
 }
@@ -124,13 +139,22 @@ export function newestApproval(approvals: StatusApproval[], kind: string): Statu
     .sort((x, y) => requestedAt(y).localeCompare(requestedAt(x)))[0];
 }
 
-/** spec 1.88 §5.3 — first match wins; mirrors the eligibility so both can never disagree. */
+/** The most recently requested OPEN approval: pending, or approved and not yet consumed by an ownership. */
+export function newestOpenApproval(approvals: StatusApproval[], input: EligibilityInput): StatusApproval | undefined {
+  return approvals
+    .filter((a) => a.isArchived !== true && a.kind === input.kind)
+    .filter((a) => a.state === 'pending' || (a.state === 'approved' &&
+      !isConsumedApproval({ requestDate: requestedAt(a) }, input.ownerships ?? [], input.resourceType ?? '', input.today)))
+    .sort((x, y) => requestedAt(y).localeCompare(requestedAt(x)))[0];
+}
+
+/** spec 1.88 §5.3 — first match wins; for kinds without signers it agrees with the eligibility (signer kinds carry no statusMessages, so their status is never shown). */
 export function deriveRequestState(input: EligibilityInput & { statusApprovals: StatusApproval[] }): ContractRequestState {
   if (checkContractEligibility({ ...input, eligibility: input.eligibility.filter((e) => e === 'activeMember') }) === 'notActive') {
     return 'notActive';
   }
   if (input.resourceType && ownsResource(input)) return 'owned';
-  const newest = newestApproval(input.statusApprovals, input.kind);
+  const newest = newestOpenApproval(input.statusApprovals, input);
   if (newest?.state === 'pending') return 'pending';
   if (newest?.state === 'approved') return 'approved';
   return 'none';

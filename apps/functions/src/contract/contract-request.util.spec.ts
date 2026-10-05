@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildContractPayload, buildSignatureBlocks, checkContractEligibility, formatPostalAddress, isActiveMembership, isActiveOwnership,
-  deriveRequestState, newestApproval, requestStatusParams, type StatusApproval,
+  deriveRequestState, newestApproval, newestOpenApproval, requestStatusParams, type StatusApproval,
 } from './contract-request.util';
 
 const TODAY = '20261005';
@@ -277,5 +277,50 @@ describe('requestStatusParams', () => {
   });
   it('is date-less without an approval', () => {
     expect(requestStatusParams(undefined, 'K', 'N')).toEqual({ date: '', responsible: 'N', kind: 'K' });
+  });
+});
+
+describe('consumed approvals (fix round 1)', () => {
+  const locker = {
+    eligibility: ['activeMember', 'noOpenRequest', 'noActiveOwnership'],
+    orgKey: 'scs', kind: 'wardrobeLocker', today: TODAY,
+    memberships: [m()], contracts: [] as Record<string, unknown>[], esignRuns: [] as Record<string, unknown>[],
+    postalAddress: undefined, resourceType: 'locker', requiresAddress: false, hasSigners: false,
+  };
+  const appr = (over: Record<string, unknown> = {}) =>
+    ({ kind: 'wardrobeLocker', state: 'approved', okey: 'a1', requestDate: '20260101 0900', ...over });
+  const sap = (over: Partial<StatusApproval> = {}): StatusApproval =>
+    ({ okey: 'a1', state: 'approved', kind: 'wardrobeLocker', requestDate: '20260101 0900', createTime: '20260101 0900', ...over });
+  const returned = [own({ validFrom: '20260110', validTo: '20260901' })];
+  const before = [own({ validFrom: '20251201', validTo: '20260901' })];
+
+  it('a returned locker does not block a new request', () => {
+    expect(checkContractEligibility({ ...locker, approvals: [appr()], ownerships: returned })).toBeUndefined();
+    expect(deriveRequestState({ ...locker, approvals: [appr()], ownerships: returned, statusApprovals: [sap()] })).toBe('none');
+  });
+  it('an ownership that started before the request day does not consume it', () => {
+    expect(checkContractEligibility({ ...locker, approvals: [appr()], ownerships: before })).toBe('openRequest');
+    expect(deriveRequestState({ ...locker, approvals: [appr()], ownerships: before, statusApprovals: [sap()] })).toBe('approved');
+  });
+  it('approved without any ownership is open', () => {
+    expect(checkContractEligibility({ ...locker, approvals: [appr()], ownerships: [] })).toBe('openRequest');
+    expect(deriveRequestState({ ...locker, approvals: [appr()], ownerships: [], statusApprovals: [sap()] })).toBe('approved');
+  });
+  it('an older pending behind a newer rejected stays pending', () => {
+    const approvals = [
+      appr({ okey: 'p', state: 'pending', requestDate: '20260101 0900' }),
+      appr({ okey: 'r', state: 'rejected', requestDate: '20261001 0900' }),
+    ];
+    const statusApprovals = [
+      sap({ okey: 'p', state: 'pending' }),
+      sap({ okey: 'r', state: 'rejected', requestDate: '20261001 0900' }),
+    ];
+    expect(checkContractEligibility({ ...locker, approvals, ownerships: [] })).toBe('openRequest');
+    expect(deriveRequestState({ ...locker, approvals, ownerships: [], statusApprovals })).toBe('pending');
+    expect(newestOpenApproval(statusApprovals, { ...locker, approvals, ownerships: [] })?.okey).toBe('p');
+  });
+  it('a legacy approval without requestDate and an ended ownership stays open', () => {
+    const ended = [own({ validFrom: '20260110', validTo: '20260901' })];
+    expect(checkContractEligibility({ ...locker, approvals: [appr({ requestDate: '' })], ownerships: ended })).toBe('openRequest');
   });
 });
