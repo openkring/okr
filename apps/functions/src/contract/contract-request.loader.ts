@@ -47,7 +47,9 @@ export async function loadRequestContext(
 
   const resourceType = String(kindDoc['resourceType'] ?? '');
   const requiresAddress = kindDoc['requiresAddress'] !== false;
-  const hasSigners = ((kindDoc['signers'] as unknown[]) ?? []).length > 0;
+  // a legacy kind document without a `signers` field is a signer kind (matches EligibilityInput.hasSigners)
+  const signers = kindDoc['signers'] as unknown[] | undefined;
+  const hasSigners = signers === undefined || signers === null ? true : signers.length > 0;
   const eligibilityList = (kindDoc['eligibility'] as string[]) ?? [];
 
   const today = getTodayStr(DateFormat.StoreDate);
@@ -97,7 +99,7 @@ export async function loadRequestContext(
   // Only approved, unfiled approvals of this kind need their signature runs: a run that ended
   // rejected/withdrawn/error must not block a new request forever.
   const filed = new Set(ownContracts.map((c) => String(c['sourceRef'] ?? '')));
-  const awaitingSignature = ownApprovals
+  const awaitingSignature = !hasSigners ? [] : ownApprovals
     .filter((a) => a['isArchived'] !== true && a['kind'] === kind && a['state'] === 'approved')
     .map((a) => `approval.${a['okey']}`)
     .filter((ref) => !filed.has(ref));

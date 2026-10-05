@@ -167,7 +167,7 @@ export const onApprovalDecided = onDocumentUpdated(
         decision: state,
         kind: (after['kind'] as string) ?? '',
         approvalKey: event.params['id'],
-        approverName: avatarName(after['approver']),
+        approverName: avatarName(after['approver']) || avatarName(after['decidedBy']),
         note: (after['decisionNote'] as string) ?? '',
       },
     });
