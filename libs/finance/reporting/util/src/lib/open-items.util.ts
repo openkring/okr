@@ -1,4 +1,5 @@
 import { BillModel, BookingLineModel, BookingModel, InvoiceModel } from '@okr/shared-models';
+import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
 
 /**
  * Offene-Posten-Abstimmung (spec 1.86): the open bills (invoices) at a cut-off date against the balance
@@ -205,4 +206,19 @@ export function computeOpenItems(input: OpenItemsInput): OpenItemsResult {
     unclaimedPayments, unclaimedCharges, openWithoutBooking,
     carriedForward: difference - explained,
   };
+}
+
+/** A CSV cell, quoted when it holds the separator, a quote or a line break. */
+function csvCell(value: string): string {
+  return /[;"\n]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value;
+}
+
+/**
+ * The open documents as CSV (the Offene-Posten-Liste for the closing, spec 1.86): view date, document
+ * label and open amount in CHF; `;`-separated like the other finance exports.
+ */
+export function openItemsToCsv(documents: OpenItemDocument[]): string {
+  const viewDate = (d: string) => convertDateFormatToString(d, DateFormat.StoreDate, DateFormat.ViewDate, false) || d;
+  const rows = documents.map((d) => [viewDate(d.date), csvCell(d.label), (d.openAmount / 100).toFixed(2)].join(';'));
+  return ['date;document;open', ...rows].join('\n');
 }

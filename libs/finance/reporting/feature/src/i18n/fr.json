@@ -67,5 +67,25 @@
     "filter": "Centre de coûts",
     "all": "Tous les centres de coûts",
     "none": "Sans centre de coûts"
+  },
+  "openItems": {
+    "title": "Postes ouverts",
+    "cutoff": "Date de référence",
+    "scope": "Rapproché depuis le {date}",
+    "payables": "Créanciers",
+    "receivables": "Débiteurs",
+    "open_total": "Postes ouverts",
+    "balance": "Solde du compte",
+    "difference": "Différence",
+    "documents": "{count} pièces ouvertes",
+    "unclaimed_payments": "Paiements sans pièce",
+    "unclaimed_charges": "Écritures sans pièce",
+    "open_without_booking": "Pièces ouvertes sans écriture sur le compte",
+    "carried_forward": "Différence avant le {date}",
+    "not_configured": "Aucun compte n'est défini pour cette comptabilité. Tu peux le choisir dans les réglages de la comptabilité.",
+    "reconciled": "Les postes ouverts et le solde du compte concordent.",
+    "export": "Exporter les postes ouverts",
+    "export_conf": "{count} postes ouverts exportés",
+    "external": "Le rapprochement n'existe que pour les comptabilités que tu tiens ici."
   }
 }

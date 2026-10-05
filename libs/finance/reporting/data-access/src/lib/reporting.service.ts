@@ -3,7 +3,7 @@ import { firstValueFrom, Observable } from 'rxjs';
 
 import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
-import { BookingCollection, BookingLineCollection, BookingLineModel, BookingModel } from '@okr/shared-models';
+import { BillCollection, BillModel, BookingCollection, BookingLineCollection, BookingLineModel, BookingModel, InvoiceCollection, InvoiceModel } from '@okr/shared-models';
 import { getSystemQuery } from '@okr/shared-util-core';
 import { AccountBalanceEntry, aggregateAccountBalances, downloadCsv, exportToCsv } from '@okr/finance-reporting-util';
 
@@ -29,6 +29,24 @@ export class ReportingService {
     ];
     // 'none': a line has no `name` — the default orderBy('name') would drop every document
     return this.firestoreService.searchData<BookingLineModel>(BookingLineCollection, query, 'none');
+  }
+
+  /** The bills of the books (Offene Posten, spec 1.86), oldest first. */
+  public getBills(accountingTenantId: string): Observable<BillModel[]> {
+    const query = [
+      ...getSystemQuery(this.tenantId),
+      { key: 'accountingTenantId', operator: '==' as const, value: accountingTenantId },
+    ];
+    return this.firestoreService.searchData<BillModel>(BillCollection, query, 'billDate', 'asc');
+  }
+
+  /** The invoices of the books (Offene Posten, spec 1.86), oldest first. */
+  public getInvoices(accountingTenantId: string): Observable<InvoiceModel[]> {
+    const query = [
+      ...getSystemQuery(this.tenantId),
+      { key: 'accountingTenantId', operator: '==' as const, value: accountingTenantId },
+    ];
+    return this.firestoreService.searchData<InvoiceModel>(InvoiceCollection, query, 'invoiceDate', 'asc');
   }
 
   public async getAccountBalances(accountingTenantId: string): Promise<AccountBalanceEntry[]> {

@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { BillModel, BookingLineModel, BookingModel, InvoiceModel, MoneyModel } from '@okr/shared-models';
 
 import {
-  billClaimsBooking, billOpenAmountAt, computeOpenItems, invoiceClaimsBooking, invoiceOpenAmountAt, OpenItemsResult,
+  billClaimsBooking, billOpenAmountAt, computeOpenItems, invoiceClaimsBooking, invoiceOpenAmountAt, openItemsToCsv, OpenItemsResult,
 } from './open-items.util';
 
 const PAYABLES = 'acc-2000';
@@ -273,5 +273,19 @@ describe('computeOpenItems — receivables', () => {
     });
     expect(r.documents.map((d) => [d.kind, d.key, d.openAmount])).toEqual([['invoice', 'b', 200], ['invoice', 'a', 300]]);
     expect(r.difference).toBe(0);
+  });
+});
+
+describe('openItemsToCsv', () => {
+  it('writes one row per document with the open amount in CHF', () => {
+    const csv = openItemsToCsv([
+      { kind: 'bill', key: 'b1', label: 'DSL; 09', date: '20260901', openAmount: 3900 },
+      { kind: 'invoice', key: 'i1', label: 'R-1', date: '20261002', openAmount: 12345 },
+    ]);
+    expect(csv.split('\n')).toEqual([
+      'date;document;open',
+      '01.09.2026;"DSL; 09";39.00',
+      '02.10.2026;R-1;123.45',
+    ]);
   });
 });

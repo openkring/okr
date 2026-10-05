@@ -67,5 +67,25 @@
     "filter": "Cost centre",
     "all": "All cost centres",
     "none": "No cost centre"
+  },
+  "openItems": {
+    "title": "Open items",
+    "cutoff": "Cut-off date",
+    "scope": "Reconciled from {date}",
+    "payables": "Payables",
+    "receivables": "Receivables",
+    "open_total": "Open items",
+    "balance": "Account balance",
+    "difference": "Difference",
+    "documents": "{count} open documents",
+    "unclaimed_payments": "Payments without a document",
+    "unclaimed_charges": "Bookings without a document",
+    "open_without_booking": "Open documents without a booking on the account",
+    "carried_forward": "Difference before {date}",
+    "not_configured": "No account is set for these books. You can choose it in the accounting settings.",
+    "reconciled": "Open items and account balance match.",
+    "export": "Export open items",
+    "export_conf": "{count} open items exported",
+    "external": "The reconciliation is only available for books you keep here."
   }
 }

@@ -67,5 +67,25 @@
     "filter": "Centro de costes",
     "all": "Todos los centros de costes",
     "none": "Sin centro de costes"
+  },
+  "openItems": {
+    "title": "Partidas abiertas",
+    "cutoff": "Fecha de corte",
+    "scope": "Conciliado desde el {date}",
+    "payables": "Acreedores",
+    "receivables": "Deudores",
+    "open_total": "Partidas abiertas",
+    "balance": "Saldo de la cuenta",
+    "difference": "Diferencia",
+    "documents": "{count} documentos abiertos",
+    "unclaimed_payments": "Pagos sin documento",
+    "unclaimed_charges": "Asientos sin documento",
+    "open_without_booking": "Documentos abiertos sin asiento en la cuenta",
+    "carried_forward": "Diferencia antes del {date}",
+    "not_configured": "No hay ninguna cuenta definida para esta contabilidad. Puedes elegirla en los ajustes de la contabilidad.",
+    "reconciled": "Las partidas abiertas y el saldo de la cuenta coinciden.",
+    "export": "Exportar partidas abiertas",
+    "export_conf": "{count} partidas abiertas exportadas",
+    "external": "La conciliación solo existe para las contabilidades que llevas aquí."
   }
 }
