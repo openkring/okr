@@ -3,7 +3,8 @@ import { describe, expect, it } from 'vitest';
 import { AvatarInfo, DeliveryChannel } from '@okr/shared-models';
 
 import { MAX_RULE_SENDS_PER_DAY, SUBJECT_RECIPIENT, isDelegateActive, isResponsibilityValid, resolveAssignee, runAction, runProbe, runWorkflowWith } from './engine';
-import { EsignRequest, InvoiceDoc, InvoiceWithPositions, LetterPdfRequest, LetterPdfResult, NewApproval, NewTask, OpenChatRoomRequest, OutgoingChatMessage, OutgoingEmail, OwnershipDoc, ResponsibilityDoc, WorkflowActionStepDoc, WorkflowContext, WorkflowDeps, WorkflowRuleDoc } from './types';
+import { PostalAddress } from '../contract/contract-request.util';
+import { ContractKindDoc, ContractSigningRequest, EsignRequest, InvoiceDoc, InvoiceWithPositions, LetterPdfRequest, LetterPdfResult, NewApproval, NewTask, OpenChatRoomRequest, OutgoingChatMessage, OutgoingEmail, OwnershipDoc, ResponsibilityDoc, WorkflowActionStepDoc, WorkflowContext, WorkflowDeps, WorkflowRuleDoc } from './types';
 
 const TENANT = 'scs';
 const TODAY = '20260813';
@@ -44,6 +45,7 @@ interface Fake extends WorkflowDeps {
   approvals: NewApproval[];
   chats: OpenChatRoomRequest[];
   letters: LetterPdfRequest[];
+  signings: ContractSigningRequest[];
   /** every deliveryChannelsFor call, so the `kind` the engine asked for is testable */
   channelAsks: { personKey: string; tenantId: string; kind: string }[];
 }
@@ -53,6 +55,11 @@ function fakeDeps(over: Partial<{
   ownerships: OwnershipDoc[];
   invoices: InvoiceDoc[];
   responsibility?: ResponsibilityDoc;
+  responsibilities?: Record<string, ResponsibilityDoc>;
+  contractKind?: ContractKindDoc;
+  postal?: PostalAddress;
+  esignRun?: boolean;
+  emails?: Record<string, string>;
   groupAdmin?: AvatarInfo;
   tenantAdmin?: AvatarInfo;
   openTask: boolean;
@@ -72,8 +79,10 @@ function fakeDeps(over: Partial<{
   const approvals: NewApproval[] = [];
   const chats: OpenChatRoomRequest[] = [];
   const letters: LetterPdfRequest[] = [];
+  const signings: ContractSigningRequest[] = [];
   const channelAsks: { personKey: string; tenantId: string; kind: string }[] = [];
   return {
+    signings,
     tasks,
     activities,
     emails,
@@ -84,7 +93,11 @@ function fakeDeps(over: Partial<{
     letters,
     channelAsks,
     avatarFor: async () => over.requester,
-    emailFor: async () => over.email ?? '',
+    emailFor: async (k) => over.emails?.[k] ?? over.email ?? '',
+    contractKind: async () => over.contractKind,
+    postalAddressFor: async () => over.postal,
+    hasEsignRun: async () => over.esignRun ?? false,
+    queueContractSigning: async (r) => { signings.push(r); },
     matrixIdFor: async () => over.matrixId ?? '',
     deliveryChannelsFor: async (personKey, tenantId, kind): Promise<DeliveryChannel[]> => {
       channelAsks.push({ personKey, tenantId, kind });
@@ -105,7 +118,7 @@ function fakeDeps(over: Partial<{
     rules: async () => over.rules ?? [],
     ownerships: async () => over.ownerships ?? [],
     invoices: async () => over.invoices ?? [],
-    responsibility: async () => over.responsibility,
+    responsibility: async (key) => over.responsibilities?.[key] ?? over.responsibility,
     groupAdmin: async () => over.groupAdmin,
     tenantAdmin: async () => over.tenantAdmin,
     hasOpenTask: async () => over.openTask ?? false,
@@ -780,5 +793,62 @@ describe('deliverNotice / deliverInvoice', () => {
     await runAction(rule({ steps: [step({ action: 'deliverInvoice', actionArg: 'invoice-template' })] }), ctx({ relatedKey: 'invoice.i1' }), deps);
     expect(deps.letters[0].payload['invoice']).toEqual(invoice.invoice);
     expect(deps.letters[0].payload['positions']).toEqual(invoice.positions);
+  });
+});
+
+describe('signContract', () => {
+  const kindDoc: ContractKindDoc = {
+    name: 'Skiff-Lagerplatz', templateKey: 'skiffplatz-vereinbarung', terms: { rent: '600.00' },
+    signers: [
+      { role: 'applicant', responsibilityKey: '', signOrder: 0, label: 'Mieterin / Mieter' },
+      { role: 'responsibility', responsibilityKey: 'president', signOrder: 1, label: 'Präsident SCS' },
+    ],
+  };
+  const approved = () => ctx({
+    event: 'approval.decided', personKey: 'anna', relatedKey: 'person.anna',
+    params: { decision: 'approved', kind: 'skiffPlatz', approvalKey: 'ap1' },
+  });
+  const signRule = rule({ steps: [step({ action: 'signContract', actionArg: 'skiffPlatz' })] });
+  const base = {
+    contractKind: kindDoc,
+    postal: { street: 'Seestrasse 1', zipCity: '8712 Stäfa' },
+    requester: { key: 'anna', name1: 'Anna', name2: 'Muster', modelType: 'person', type: '', subType: '', label: '' } as AvatarInfo,
+    responsibilities: { president: { responsibleAvatar: { key: 'dieter', name1: 'Dieter', name2: 'Widmer' } as AvatarInfo } },
+    emails: { anna: 'anna@example.ch', dieter: 'dieter@example.ch' },
+  };
+
+  it('queues one signing with the applicant and the resolved officials', async () => {
+    const deps = fakeDeps(base);
+    await runAction(signRule, approved(), deps);
+    expect(deps.signings).toHaveLength(1);
+    const s = deps.signings[0];
+    expect(s).toMatchObject({ templateId: 'skiffplatz-vereinbarung', sourceRef: 'approval.ap1', personKey: 'anna', kind: 'skiffPlatz' });
+    const blocks = (s.payload['signatureBlocks'] as { name: string }[]).map((b) => b.name);
+    expect(blocks).toEqual(['Anna Muster', 'Dieter Widmer']);
+  });
+
+  it('does not wait on a resolved assignee', async () => {
+    const deps = fakeDeps(base);
+    await runAction(signRule, approved(), deps);
+    expect(deps.signings).toHaveLength(1);
+  });
+
+  it('aborts when a signer has no email', async () => {
+    const deps = fakeDeps({ ...base, emails: { anna: 'anna@example.ch' } });
+    await runAction(signRule, approved(), deps);
+    expect(deps.signings).toHaveLength(0);
+    expect(deps.activities.some((a) => String(a['error']).includes('email'))).toBe(true);
+  });
+
+  it('is idempotent on an existing run', async () => {
+    const deps = fakeDeps({ ...base, esignRun: true });
+    await runAction(signRule, approved(), deps);
+    expect(deps.signings).toHaveLength(0);
+  });
+
+  it('refuses an event without an approvalKey', async () => {
+    const deps = fakeDeps(base);
+    await runAction(signRule, ctx({ personKey: 'anna', params: {} }), deps);
+    expect(deps.signings).toHaveLength(0);
   });
 });

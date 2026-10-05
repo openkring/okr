@@ -11,16 +11,17 @@
 import { getFirestore } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/v2';
 
-import { ApprovalCollection, ApprovalModel, ApprovalModelName, AvatarInfo, DeliveryChannel, TaskModel, WorkflowRuleCollection } from '@okr/shared-models';
+import { ApprovalCollection, ApprovalModel, ApprovalModelName, AvatarInfo, ContractKindCollection, DeliveryChannel, EsignCollection, TaskModel, WorkflowRuleCollection } from '@okr/shared-models';
 import { DateFormat, getTodayStr, toDeliveryChannels } from '@okr/shared-util-core';
 import { getTaskIndex } from '@okr/task-util';
 
+import { PostalAddress, formatPostalAddress } from '../contract/contract-request.util';
 import { shiftDaysBack } from '../auth/account-sync.decide';
 import { serverHostname } from '../matrix-simple/shared';
 import { renderDocument } from '../pdf';
 import { SYSTEM_AUTHOR, logWorkflowActivity } from './activity';
 import { OutboxDoc, WorkflowOutboxCollection } from './outbox';
-import { InvoiceDoc, InvoiceWithPositions, LetterPdfResult, NewTask, OwnershipDoc, ResponsibilityDoc, WorkflowDeps, WorkflowRuleDoc } from './types';
+import { ContractKindDoc, InvoiceDoc, InvoiceWithPositions, LetterPdfResult, NewTask, OwnershipDoc, ResponsibilityDoc, WorkflowDeps, WorkflowRuleDoc } from './types';
 
 const CF_NAME = 'workflow';
 
@@ -124,6 +125,31 @@ export function createFirestoreDeps(): WorkflowDeps {
       return snap.docs
         .map((d) => d.data() as InvoiceDoc & { tenants?: string[] })
         .filter((i) => (i.tenants ?? []).includes(tenantId));
+    },
+
+    async contractKind(kind, tenantId): Promise<ContractKindDoc | undefined> {
+      const d = (await db.collection(ContractKindCollection).doc(kind).get()).data();
+      if (!d || !((d['tenants'] as string[]) ?? []).includes(tenantId)) return undefined;
+      return d as ContractKindDoc;
+    },
+
+    async postalAddressFor(personKey, tenantId): Promise<PostalAddress | undefined> {
+      const snap = await db.collection('addresses').where('parentKey', '==', `person.${personKey}`).get();
+      const postal = snap.docs.map((d) => d.data())
+        .filter((a) => !a['isArchived'] && a['addressChannel'] === 'postal' && ((a['tenants'] as string[]) ?? []).includes(tenantId));
+      return formatPostalAddress(postal.find((a) => a['isFavorite'] === true) ?? postal[0]);
+    },
+
+    async hasEsignRun(sourceRef): Promise<boolean> {
+      const snap = await db.collection(EsignCollection).where('sourceRef', '==', sourceRef).get();
+      return snap.docs.some((d) => !['rejected', 'withdrawn', 'error'].includes(String(d.data()['documentStatus'] ?? '')));
+    },
+
+    async queueContractSigning(r): Promise<void> {
+      await enqueue(db, r.tenantId, r.ruleKey, 'signContract', {
+        templateId: r.templateId, payloadJson: JSON.stringify(r.payload), filename: r.filename,
+        documentName: r.documentName, sourceRef: r.sourceRef, personKey: r.personKey, kind: r.kind,
+      });
     },
 
     async responsibility(key, tenantId): Promise<ResponsibilityDoc | undefined> {

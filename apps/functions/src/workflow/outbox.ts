@@ -32,7 +32,7 @@ export const WorkflowOutboxCollection = 'workflow-outbox';
 
 export interface OutboxDoc {
   tenants: string[];
-  kind: 'sendEmail' | 'sendMessage' | 'esign' | 'openChat';
+  kind: 'sendEmail' | 'sendMessage' | 'esign' | 'openChat' | 'signContract';
   ruleKey: string;
   day: string;                       // StoreDate — the per-rule daily cap counts on this
   state?: 'pending' | 'sent' | 'failed';

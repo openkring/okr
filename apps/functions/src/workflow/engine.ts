@@ -15,6 +15,8 @@
 
 import { AvatarInfo, DeliveryChannel } from '@okr/shared-models';
 
+import { ResolvedSigner, SignatureBlock, buildContractPayload, buildSignatureBlocks } from '../contract/contract-request.util';
+
 import { OwnershipDoc, ResponsibilityDoc, WorkflowActionStepDoc, WorkflowContext, WorkflowDeps, WorkflowRuleDoc } from './types';
 
 /** Invoice states that count as open. `draft`, `paid` and `cancelled` do not. */
@@ -175,7 +177,7 @@ export async function resolveAssignee(
 }
 
 /** Every action the engine understands. An unknown one fails closed and is logged. */
-export const KNOWN_ACTIONS = ['openTask', 'sendEmail', 'sendMessage', 'esign', 'requestApproval', 'openChat', 'deliverNotice', 'deliverInvoice'];
+export const KNOWN_ACTIONS = ['openTask', 'sendEmail', 'sendMessage', 'esign', 'requestApproval', 'openChat', 'deliverNotice', 'deliverInvoice', 'signContract', 'fileContract'];
 
 /**
  * Four eyes: nobody approves their own request.
@@ -405,6 +407,60 @@ async function deliverOverChannels(
  * addressing the same assignee dedup against EACH OTHER, not just against re-triggers. A rule
  * that genuinely needs two tasks for the same event has to be configured as two rules.
  */
+/** responsible → active delegate, inside the responsibility's validity window; no fallbacks — a contract
+ *  must never be signed by a tenant admin standing in for an unfilled role. */
+export function responsibleOf(r: ResponsibilityDoc | undefined, today: string): AvatarInfo | undefined {
+  if (!r || r.isArchived || !isResponsibilityValid(r, today)) return undefined;
+  if (isDelegateActive(r, today)) return r.delegateAvatar;
+  return r.responsibleAvatar?.key ? r.responsibleAvatar : undefined;
+}
+
+async function signContract(rule: WorkflowRuleDoc, step: WorkflowActionStepDoc, ctx: WorkflowContext, deps: WorkflowDeps): Promise<void> {
+  const fail = (error: string) => deps.logActivity(ctx.tenantId, { rule: rule.okey, event: ctx.event, action: 'signContract', error });
+  const kind = (step.actionArg ?? '').trim();
+  const approvalKey = ctx.params['approvalKey'] ?? '';
+  if (!kind || !approvalKey || !ctx.personKey) return fail('signContract needs a kind, an approvalKey and a subject person');
+  const sourceRef = `approval.${approvalKey}`;
+  if (await deps.hasEsignRun(sourceRef)) {
+    await deps.logActivity(ctx.tenantId, { rule: rule.okey, event: ctx.event, skipped: 'esign run exists', sourceRef });
+    return;
+  }
+  const kindDoc = await deps.contractKind(kind, ctx.tenantId);
+  if (!kindDoc || kindDoc.isArchived || !kindDoc.templateKey) return fail(`contract kind '${kind}' not configured`);
+  const applicant = await deps.avatarFor(ctx.personKey, ctx.tenantId);
+  const postal = await deps.postalAddressFor(ctx.personKey, ctx.tenantId);
+  if (!applicant?.key || !postal) return fail('applicant has no person or postal address');
+  const fullName = (a: AvatarInfo) => `${a.name1 ?? ''} ${a.name2 ?? ''}`.trim();
+
+  const resolved: ResolvedSigner[] = [];
+  for (const s of kindDoc.signers ?? []) {
+    const who = s.role === 'applicant'
+      ? applicant
+      : responsibleOf(await deps.responsibility(s.responsibilityKey, ctx.tenantId), ctx.today);
+    if (!who?.key) return fail(`signer '${s.label}' has no responsible person`);
+    resolved.push({ name: fullName(who), email: await deps.emailFor(who.key, ctx.tenantId) });
+  }
+  let signatureBlocks: SignatureBlock[];
+  try {
+    signatureBlocks = buildSignatureBlocks(kindDoc.signers ?? [], resolved);
+  } catch (e) {
+    return fail(e instanceof Error ? e.message : String(e));   // 'signer N (…) has no email'
+  }
+  await deps.queueContractSigning({
+    tenantId: ctx.tenantId, ruleKey: rule.okey, templateId: kindDoc.templateKey,
+    payload: buildContractPayload({ applicant: { name: fullName(applicant), ...postal }, today: ctx.today,
+      terms: kindDoc.terms ?? {}, signatureBlocks }),
+    filename: `${kind}-${approvalKey}.pdf`,
+    documentName: `${fullName(applicant)} — ${kindDoc.name ?? kind}`,
+    sourceRef, personKey: ctx.personKey, kind,
+  });
+}
+
+/** Task 8 replaces this stub. */
+async function fileContract(rule: WorkflowRuleDoc, ctx: WorkflowContext, deps: WorkflowDeps): Promise<void> {
+  await deps.logActivity(ctx.tenantId, { rule: rule.okey, event: ctx.event, action: 'fileContract', error: 'fileContract not implemented' });
+}
+
 export async function runStep(
   rule: WorkflowRuleDoc,
   step: WorkflowActionStepDoc,
@@ -418,6 +474,10 @@ export async function runStep(
     await deps.logActivity(ctx.tenantId, { rule: rule.okey, event: ctx.event, error: `unknown action '${action}'` });
     return;
   }
+
+  // signContract / fileContract address no assignee — the signers come from the contract kind.
+  if (action === 'signContract') { await signContract(rule, step, ctx, deps); return; }
+  if (action === 'fileContract') { await fileContract(rule, ctx, deps); return; }   // Task 8
 
   // openChat addresses a GROUP, so it neither needs nor waits for a resolved assignee — a rule
   // whose responsibility is unfilled must still be able to open the conversation.

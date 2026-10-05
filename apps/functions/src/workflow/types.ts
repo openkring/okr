@@ -6,7 +6,9 @@
 // Read-side document shapes are inlined subsets (same pattern as account-sync.decide.ts
 // and task/index.ts); the write side builds a real TaskModel in firestore-deps.ts.
 
-import { AvatarInfo, DeliveryChannel } from '@okr/shared-models';
+import { AvatarInfo, ContractSigner, DeliveryChannel } from '@okr/shared-models';
+
+import { PostalAddress } from '../contract/contract-request.util';
 
 /** What the engine is told about the event that fired. */
 export interface WorkflowContext {
@@ -124,6 +126,23 @@ export interface EsignRequest {
   relatedKey: string;
 }
 
+export interface ContractKindDoc {
+  name?: string; templateKey?: string; contractType?: string; contractName?: string;
+  askGroupKey?: string; orgKey?: string; signers?: ContractSigner[]; terms?: Record<string, string>;
+  isArchived?: boolean;
+}
+
+export interface ContractSigningRequest {
+  tenantId: string; ruleKey: string;
+  templateId: string;
+  payload: Record<string, unknown>;
+  filename: string;            // e.g. 'skiffPlatz-<approvalKey>.pdf'
+  documentName: string;        // shown in DeepSign, e.g. 'Anna Muster — Skiff-Lagerplatz'
+  sourceRef: string;           // 'approval.<okey>'
+  personKey: string;           // the applicant — for esign.failed
+  kind: string;
+}
+
 export interface NewApproval {
   tenantId: string;
   kind: string;
@@ -202,4 +221,9 @@ export interface WorkflowDeps {
   /** i18nTenantOverride → i18nDefault; `{placeholder}`s are filled from params */
   translate(tenantId: string, messageKey: string, params: Record<string, string>): Promise<string>;
   logActivity(tenantId: string, payload: Record<string, unknown>): Promise<void>;
+  contractKind(kind: string, tenantId: string): Promise<ContractKindDoc | undefined>;
+  postalAddressFor(personKey: string, tenantId: string): Promise<PostalAddress | undefined>;
+  /** a non-terminal-failure esign run with this sourceRef exists (idempotency of signContract) */
+  hasEsignRun(sourceRef: string): Promise<boolean>;
+  queueContractSigning(req: ContractSigningRequest): Promise<void>;
 }
