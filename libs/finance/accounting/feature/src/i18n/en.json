@@ -32,6 +32,14 @@
       "label": "Payment accounts",
       "helper": "An invoice payment may be booked to these accounts."
     },
+    "billPayablesAccount": {
+      "label": "Payables account",
+      "helper": "Open supplier bills stay here until they are paid."
+    },
+    "billPaymentAccounts": {
+      "label": "Payment accounts for supplier bills",
+      "helper": "A supplier bill may be paid from these accounts."
+    },
     "costCenter": {
       "label": "Accounting default cost centre",
       "helper": "Applies to bookings on income and expense accounts without their own default cost centre."

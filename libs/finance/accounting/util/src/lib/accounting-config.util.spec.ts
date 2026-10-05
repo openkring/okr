@@ -49,6 +49,16 @@ describe('toAccountingConfigFormData', () => {
     expect(data.invoicePaymentAccountKeys).toEqual([]);
     expect(data.defaultCostCenterKey).toBe('');
     expect(data.fiscalYearStart).toBe(1);
+    expect(data.payablesAccountKey).toBe('');
+    expect(data.billPaymentAccountKeys).toEqual([]);
+  });
+
+  it('keeps and copies the bill payment fields (spec 1.85)', () => {
+    const stored = { ...legacyConfig(), payablesAccountKey: 'scs0121', billPaymentAccountKeys: ['scs0077'] } as AccountingConfigModel;
+    const data = toAccountingConfigFormData(stored);
+    expect([data.payablesAccountKey, data.billPaymentAccountKeys]).toEqual(['scs0121', ['scs0077']]);
+    data.billPaymentAccountKeys.push('x');
+    expect(stored.billPaymentAccountKeys).toEqual(['scs0077']);
   });
 
   it('keeps every stored value', () => {

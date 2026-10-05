@@ -32,6 +32,14 @@
       "label": "Zahlungskonten",
       "helper": "Auf diese Konten darf eine Rechnungszahlung gebucht werden."
     },
+    "billPayablesAccount": {
+      "label": "Kreditorenkonto",
+      "helper": "Hier landen die offenen Lieferantenrechnungen, bis sie bezahlt sind."
+    },
+    "billPaymentAccounts": {
+      "label": "Zahlungskonten für Lieferantenrechnungen",
+      "helper": "Von diesen Konten darf eine Lieferantenrechnung bezahlt werden."
+    },
     "costCenter": {
       "label": "Standard-Kostenstelle der Buchhaltung",
       "helper": "Gilt für Buchungen auf Erfolgskonten ohne eigene Standard-Kostenstelle."

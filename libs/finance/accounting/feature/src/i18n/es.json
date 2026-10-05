@@ -32,6 +32,14 @@
       "label": "Cuentas de pago",
       "helper": "El pago de una factura puede contabilizarse en estas cuentas."
     },
+    "billPayablesAccount": {
+      "label": "Cuenta de proveedores",
+      "helper": "Las facturas de proveedores abiertas quedan aquí hasta que se pagan."
+    },
+    "billPaymentAccounts": {
+      "label": "Cuentas de pago para facturas de proveedores",
+      "helper": "Una factura de proveedor puede pagarse desde estas cuentas."
+    },
     "costCenter": {
       "label": "Centro de costes predeterminado de la contabilidad",
       "helper": "Se aplica a los asientos en cuentas de resultados sin centro de costes predeterminado propio."

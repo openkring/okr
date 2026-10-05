@@ -95,6 +95,8 @@ export class AccountingConfigModel implements OkrModel {
   public receivablesAccountKey = '';             // Debitoren leaf (scs: 1100) — invoices post here on issue (spec 1.76 D5)
   public invoiceTemplateId = '';                 // templates/{id} rendered by issueInvoice (spec 1.76 D7)
   public invoicePaymentAccountKeys: string[] = []; // leaf accounts a payment may be posted to (spec 1.76 D11)
+  public payablesAccountKey = '';                // Kreditoren leaf (scs: 2000) — bills post here, bill payments clear it (spec 1.85 B6)
+  public billPaymentAccountKeys: string[] = [];  // leaf accounts a bill payment may be posted from (spec 1.85 B6)
   public reminderTemplateId = '';                // templates/{id} rendered by createInvoiceReminder (spec 1.76 D13)
   public reminderFeeAccountKey = '';             // leaf account credited with the reminder fee (spec 1.76 D14)
   public discountAccountKey = '';                // preset for a new Rabatt position; '' = the discount reduces the revenue accounts above it (spec 1.84 K6)

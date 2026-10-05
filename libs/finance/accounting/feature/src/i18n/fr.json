@@ -32,6 +32,14 @@
       "label": "Comptes de paiement",
       "helper": "Le paiement d'une facture peut être comptabilisé sur ces comptes."
     },
+    "billPayablesAccount": {
+      "label": "Compte fournisseurs",
+      "helper": "Les factures fournisseurs ouvertes restent ici jusqu'à leur paiement."
+    },
+    "billPaymentAccounts": {
+      "label": "Comptes de paiement des factures fournisseurs",
+      "helper": "Une facture fournisseur peut être payée depuis ces comptes."
+    },
     "costCenter": {
       "label": "Centre de coûts par défaut de la comptabilité",
       "helper": "S'applique aux écritures sur les comptes de résultat sans centre de coûts par défaut propre."

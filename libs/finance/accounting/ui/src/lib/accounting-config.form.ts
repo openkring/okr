@@ -94,6 +94,24 @@ export type { AccountingI18n };
               </ion-row>
               <ion-row>
                 <ion-col size="12" size-md="6">
+                  <okr-account-select [i18n]="billPayablesAccountI18n()" [accounts]="leaves()"
+                    [selectedKey]="payablesAccountKey()"
+                    (selectedKeyChange)="onFieldChange('payablesAccountKey', $event)"
+                    [readOnly]="isReadOnly()" />
+                </ion-col>
+                <ion-col size="12" size-md="6">
+                  <ion-select [label]="i18n().bill_payment_accounts()" labelPlacement="floating" [multiple]="true"
+                    [value]="billPaymentAccountKeys()" [disabled]="isReadOnly()"
+                    (ionChange)="onBillPaymentAccountsChange($event)">
+                    @for (account of paymentAccountChoices(); track account.okey) {
+                      <ion-select-option [value]="account.okey">{{ account.id }} — {{ account.name }}</ion-select-option>
+                    }
+                  </ion-select>
+                  <ion-note>{{ i18n().bill_payment_accounts_helper() }}</ion-note>
+                </ion-col>
+              </ion-row>
+              <ion-row>
+                <ion-col size="12" size-md="6">
                   <okr-number-input [i18n]="fiscalYearStartI18n()" [value]="fiscalYearStart()"
                     (valueChange)="onFieldChange('fiscalYearStart', $event)"
                     [integer]="true" [min]="1" [max]="12" [maxLength]="2" [inputMode]="'numeric'"
@@ -233,6 +251,9 @@ export class AccountingConfigForm {
       .sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''));
   });
   protected invoicePaymentAccountKeys = linkedSignal(() => this.formData().invoicePaymentAccountKeys ?? []);
+  // spec 1.85 B6 — legacy config docs predate both fields
+  protected payablesAccountKey = linkedSignal(() => this.formData().payablesAccountKey ?? '');
+  protected billPaymentAccountKeys = linkedSignal(() => this.formData().billPaymentAccountKeys ?? []);
   /** leaf accounts of class 1 (assets): the accounts an invoice payment may be posted to */
   protected leaves = computed(() => leafAccounts(this.accounts()));
   protected paymentAccountChoices = computed(() =>
@@ -250,6 +271,10 @@ export class AccountingConfigForm {
 
   protected receivablesAccountI18n = computed(() => ({
     name: 'receivablesAccountKey', label: this.i18n().receivables_account(), helper: this.i18n().receivables_account_helper()
+  } as AccountSelectI18n));
+
+  protected billPayablesAccountI18n = computed(() => ({
+    name: 'payablesAccountKey', label: this.i18n().bill_payables_account(), helper: this.i18n().bill_payables_account_helper()
   } as AccountSelectI18n));
 
   protected discountAccountI18n = computed(() => ({
@@ -347,6 +372,10 @@ export class AccountingConfigForm {
 
   protected onPaymentAccountsChange(event: CustomEvent<SelectChangeEventDetail<string[]>>): void {
     this.onFieldChange('invoicePaymentAccountKeys', event.detail.value ?? []);
+  }
+
+  protected onBillPaymentAccountsChange(event: CustomEvent<SelectChangeEventDetail<string[]>>): void {
+    this.onFieldChange('billPaymentAccountKeys', event.detail.value ?? []);
   }
 
   /** CHF from the input → Rappen in the model, converted here once; more than two decimals stay a fraction the suite rejects (legacy docs: start from the defaults). */

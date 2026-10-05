@@ -32,6 +32,14 @@
       "label": "Conti di pagamento",
       "helper": "Il pagamento di una fattura può essere registrato su questi conti."
     },
+    "billPayablesAccount": {
+      "label": "Conto creditori",
+      "helper": "Le fatture dei fornitori aperte restano qui finché non sono pagate."
+    },
+    "billPaymentAccounts": {
+      "label": "Conti di pagamento per le fatture dei fornitori",
+      "helper": "Una fattura di un fornitore può essere pagata da questi conti."
+    },
     "costCenter": {
       "label": "Centro di costo predefinito della contabilità",
       "helper": "Si applica alle registrazioni sui conti economici senza un proprio centro di costo predefinito."

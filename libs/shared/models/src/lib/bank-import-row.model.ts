@@ -40,6 +40,7 @@ export class BankImportRowModel implements OkrModel {
   public bankReference = '';
   public paymentReference = '';           // creditor reference (QRR/SCOR) from camt or found in the text, normalized; spec 1.2
   public invoiceKey = '';                 // invoice this credit pays (matched by paymentReference); '' = none
+  public billKey = '';                    // bill this debit pays (matched by reference or amount + vendor, spec 1.85); '' = none
   public saldo: MoneyModel | undefined;
 
   public title = '';

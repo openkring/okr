@@ -27,7 +27,10 @@ export class BillModel implements OkrModel, SearchableModel, TaggedModel {
   public bexioUrl = DEFAULT_URL; // URL to bexio invoice
   public attachments: string[] = []; // finance-documents okeys ('bexio-file-…', spec 1.68); legacy: bexio file UUIDs
   public payments: BillPayment[] = []; // outgoing payments, oldest first
-  public bookingAccount: string = '';
+  public bookingAccount: string = '';  // migrated bexio bills: comma-separated account okeys; native bills use `lines`
+  public lines: BillLine[] = [];       // native bill lines (spec 1.85 Q2); [] on migrated bills
+  public paymentReference = '';        // creditor reference (QRR/SCOR) from the QR-bill, normalized (spec 1.85)
+  public creditorIban = '';            // the vendor's IBAN from the QR-bill (spec 1.85)
   public bookingKeys: string[] = [];  // the bexio journal bookings of the bill (one per bill line), linked by scripts/link-bexio-ledger.mjs; [] = not linked
 
   // bill sender (person or org) Rechnungssteller
@@ -48,6 +51,17 @@ export class BillModel implements OkrModel, SearchableModel, TaggedModel {
 export const BillCollection = 'bills';
 export const BillModelName = 'bill';
 
-/** An outgoing payment of a bill. date = execution date (StoreDate), amount in Rappen, type = bexio payment_type.
- *  bookingKey = the booking that paid it (a bexio journal row, linked by scripts/link-bexio-ledger.mjs); '' or absent = not linked. */
-export interface BillPayment { date: string; amount: number; type: string; bookingKey?: string; }
+/** An outgoing payment of a bill. date = execution date (StoreDate), amount in Rappen, type = bexio payment_type
+ *  or 'MANUAL' (recorded in okr, spec 1.85). bookingKey = the booking that paid it (a bexio journal row linked by
+ *  scripts/link-bexio-ledger.mjs, or one linked/posted by recordBillPayment); '' or absent = not linked.
+ *  bankAccountKey = the account the payment left from (recordBillPayment, mode post). */
+export interface BillPayment { date: string; amount: number; type: string; bookingKey?: string; bankAccountKey?: string; }
+
+/** One line of a native bill (spec 1.85 Q2): booked as a debit on `accountKey`. amount in Rappen, gross. */
+export interface BillLine {
+  title: string;
+  accountKey: string;      // leaf expense/asset account okey
+  amount: number;          // Rappen, > 0
+  vatCodeKey: string;      // '' = none
+  costCenterKey: string;   // '' = account default
+}
