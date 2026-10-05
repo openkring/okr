@@ -292,15 +292,37 @@ describe('consumed approvals (fix round 1)', () => {
   const sap = (over: Partial<StatusApproval> = {}): StatusApproval =>
     ({ okey: 'a1', state: 'approved', kind: 'wardrobeLocker', requestDate: '20260101 0900', createTime: '20260101 0900', ...over });
   const returned = [own({ validFrom: '20260110', validTo: '20260901' })];
-  const before = [own({ validFrom: '20251201', validTo: '20260901' })];
+  const before = [own({ validFrom: '20251201', validTo: '20251231' })];
 
   it('a returned locker does not block a new request', () => {
     expect(checkContractEligibility({ ...locker, approvals: [appr()], ownerships: returned })).toBeUndefined();
     expect(deriveRequestState({ ...locker, approvals: [appr()], ownerships: returned, statusApprovals: [sap()] })).toBe('none');
   });
-  it('an ownership that started before the request day does not consume it', () => {
+  it('an ownership that ended before the request day does not consume it', () => {
     expect(checkContractEligibility({ ...locker, approvals: [appr()], ownerships: before })).toBe('openRequest');
     expect(deriveRequestState({ ...locker, approvals: [appr()], ownerships: before, statusApprovals: [sap()] })).toBe('approved');
+  });
+  it('a backdated handover (starts before the request day, still running) consumes it', () => {
+    const a = [appr({ requestDate: '20261005 0900' })];
+    const sa = [sap({ requestDate: '20261005 0900' })];
+    const o = [own({ validFrom: '20260101', validTo: '20261231' })];
+    expect(checkContractEligibility({ ...locker, approvals: a, ownerships: o })).toBe('alreadyOwned');
+    expect(deriveRequestState({ ...locker, approvals: a, ownerships: o, statusApprovals: sa })).toBe('owned');
+  });
+  it('a backdated handover that was returned later stays consumed', () => {
+    const a = [appr({ requestDate: '20261005 0900' })];
+    const sa = [sap({ requestDate: '20261005 0900' })];
+    const o = [own({ validFrom: '20260101', validTo: '20261020' })];
+    const t = { ...locker, today: '20261101' };
+    expect(checkContractEligibility({ ...t, approvals: a, ownerships: o })).toBeUndefined();
+    expect(deriveRequestState({ ...t, approvals: a, ownerships: o, statusApprovals: sa })).toBe('none');
+  });
+  it('an ownership that ended before the request is not consuming', () => {
+    const a = [appr({ requestDate: '20261005 0900' })];
+    const sa = [sap({ requestDate: '20261005 0900' })];
+    const o = [own({ validFrom: '20260101', validTo: '20260901' })];
+    expect(checkContractEligibility({ ...locker, approvals: a, ownerships: o })).toBe('openRequest');
+    expect(deriveRequestState({ ...locker, approvals: a, ownerships: o, statusApprovals: sa })).toBe('approved');
   });
   it('approved without any ownership is open', () => {
     expect(checkContractEligibility({ ...locker, approvals: [appr()], ownerships: [] })).toBe('openRequest');

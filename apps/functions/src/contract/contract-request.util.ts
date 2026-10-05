@@ -68,7 +68,8 @@ function ownsResource(input: EligibilityInput): boolean {
 
 /**
  * An approved request of a signer-less kind is consumed once an unarchived ownership of the
- * resource type (active or ended) starts on or after the request day. Without a request day it
+ * resource type exists whose validity has not ended before the request day (validTo empty or on/after
+ * it). validFrom does not matter, so a backdated handover consumes it too. Without a request day it
  * can only be proven consumed by an active ownership.
  */
 export function isConsumedApproval(a: DocData, ownerships: DocData[], resourceType: string, today: string): boolean {
@@ -76,8 +77,8 @@ export function isConsumedApproval(a: DocData, ownerships: DocData[], resourceTy
   if (!day) return ownerships.some((o) => isActiveOwnership(o, resourceType, today));
   return ownerships.some((o) => {
     if (o['isArchived'] === true || !resourceType || str(o['resourceType']) !== resourceType) return false;
-    const from = str(o['validFrom']).slice(0, 8);
-    return from !== '' && from >= day;
+    const to = str(o['validTo']).slice(0, 8);
+    return to === '' || to >= day;
   });
 }
 
