@@ -112,7 +112,7 @@ export type EmitUiEventResult =
  * A transaction and not a read-then-write: two taps that arrive together would both read an
  * old timestamp and both pass.
  */
-async function claimCooldown(db: Firestore, uid: string, sourceKey: string, nowMs: number): Promise<boolean> {
+export async function claimCooldown(db: Firestore, uid: string, sourceKey: string, nowMs: number): Promise<boolean> {
   const ref = db.collection(COOLDOWN_COLLECTION).doc(cooldownDocId(uid, sourceKey));
   return db.runTransaction(async (tx) => {
     const snap = await tx.get(ref);

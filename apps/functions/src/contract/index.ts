@@ -207,3 +207,5 @@ export const signContractDocuments = onCall({ ...CALLABLE, secrets: [imgixPrivat
   logger.info(`${cf}: signed ${documents.length}/${keys.length} for tenant ${viewer.tenantId}`);
   return { documents };
 });
+
+export { requestContract } from './request-contract';

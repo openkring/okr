@@ -478,5 +478,6 @@ export const onContractWritten = Contract.onContractWritten;
 export const requestContractUpload = Contract.requestContractUpload;
 export const registerContractDocument = Contract.registerContractDocument;
 export const signContractDocuments = Contract.signContractDocuments;
+export const requestContract = Contract.requestContract;
 // on-demand Gemini abstract of a contract file (spec 1.5 §7.3)
 export { summarizeContract } from './contract/summarize';
