@@ -71,6 +71,7 @@ export const WORKFLOW_I18N_KEYS = {
   approval_state_label:       UI + 'approval.state.label',
   approval_approver_label:    UI + 'approval.approver.label',
   approval_requester_label:   UI + 'approval.requester.label',
+  approval_requestDate_label: UI + 'approval.requestDate.label',
   approval_decisionDate_label: UI + 'approval.decisionDate.label',
   approval_note_label:        UI + 'approval.note.label',
   approval_note_placeholder:  UI + 'approval.note.placeholder',

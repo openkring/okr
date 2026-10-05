@@ -72,6 +72,9 @@
     "requester": {
       "label": "Demandé par"
     },
+    "requestDate": {
+      "label": "Demandé le"
+    },
     "decisionDate": {
       "label": "Décidé le"
     },

@@ -3,7 +3,7 @@ import { IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel,
 
 import { ApprovalModel, MAX_DECISION_NOTE_LENGTH } from '@okr/shared-models';
 import { NotesInput, NotesInputI18n } from '@okr/shared-ui';
-import { coerceBoolean } from '@okr/shared-util-core';
+import { coerceBoolean, prettyFormatDateTime } from '@okr/shared-util-core';
 
 import { WorkflowI18n, approvalStateColor, deciderName } from '@okr/system-workflow-util';
 
@@ -67,6 +67,18 @@ import { WorkflowI18n, approvalStateColor, deciderName } from '@okr/system-workf
               </ion-item>
             </ion-col>
           </ion-row>
+          @if (requestDate()) {
+            <ion-row>
+              <ion-col size="12">
+                <ion-item lines="none">
+                  <ion-label>
+                    <p>{{ i18n().approval_requestDate_label() }}</p>
+                    <h3>{{ requestDate() }}</h3>
+                  </ion-label>
+                </ion-item>
+              </ion-col>
+            </ion-row>
+          }
           @if (isDecided()) {
             <ion-row>
               <ion-col size="12">
@@ -122,6 +134,7 @@ export class ApprovalDecisionCard {
   protected readonly state = computed(() => this.approval()?.state ?? 'pending');
   protected readonly stateColor = computed(() => approvalStateColor(this.state()));
   protected readonly isDecided = computed(() => this.state() !== 'pending');
+  protected readonly requestDate = computed(() => prettyFormatDateTime(this.approval()?.requestDate ?? ''));
   protected readonly decisionDate = computed(() => this.approval()?.decisionDate ?? '');
   protected readonly decisionNote = computed(() => this.approval()?.decisionNote ?? '');
   protected readonly requesterName = computed(() => avatarName(this.approval()?.requestedBy));
