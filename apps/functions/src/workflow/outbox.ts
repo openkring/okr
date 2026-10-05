@@ -24,6 +24,8 @@ import { logWorkflowActivity } from './activity';
 import { matrixBotToken, postGroupChatMessage, sendBotDirectMessage } from './matrix-bot';
 import { ALL_ESIGN_SECRETS } from '../esign/shared';
 import { startSignatureRun } from '../esign/esign-send-document';
+import { renderDocument } from '../pdf/render-document';
+import { emitEvent } from './emit';
 
 const REGION = 'europe-west6';
 const CF_NAME = 'onWorkflowOutbox';
@@ -109,10 +111,28 @@ export async function dispatch(doc: OutboxDoc): Promise<void> {
         tenantId,
         storagePath: p['storagePath'],
         documentName: p['documentName'],
-        signeePersonKey: p['signeePersonKey'],
         sourceRef: p['relatedKey'],
       });
       logger.info(`${CF_NAME}: rule ${doc.ruleKey} started an esign run for ${p['relatedKey']}`);
+      return;
+    }
+    case 'signContract': {
+      try {
+        const rendered = await renderDocument({
+          templateId: p['templateId'],
+          payload: JSON.parse(p['payloadJson'] || '{}'),
+          options: { outputFormat: 'pdf', format: 'A4', orientation: 'portrait', filename: p['filename'],
+            storageMode: 'persist', metadata: { entityType: 'approval', entityId: p['sourceRef'] } },
+        }, 'system', tenantId);
+        await startSignatureRun({ tenantId, storagePath: rendered.storagePath, documentName: p['documentName'],
+          sourceRef: p['sourceRef'], sendMail: 'all' });
+      } catch (error) {
+        // The member was told "approved, the contract follows" — the chat must hear that it did not.
+        await emitEvent('esign.failed', tenantId, p['sourceRef'], { personKey: p['personKey'],
+          params: { kind: p['kind'], reason: 'setup', approvalKey: p['sourceRef'].slice('approval.'.length) } });
+        throw error;
+      }
+      logger.info(`${CF_NAME}: rule ${doc.ruleKey} started contract signing for ${p['sourceRef']}`);
       return;
     }
     case 'openChat': {
@@ -147,6 +167,9 @@ export const onWorkflowOutbox = onDocumentCreated(
     document: `${WorkflowOutboxCollection}/{id}`,
     region: REGION,
     secrets: [...EMAIL_SECRETS, matrixBotToken, matrixAdminToken, ...ALL_ESIGN_SECRETS],
+    // headless Chrome for signContract (pdf/generate-document.ts uses the same 2 GiB)
+    memory: '2GiB',
+    timeoutSeconds: 300,
   },
   async (event) => {
     const snap = event.data;
