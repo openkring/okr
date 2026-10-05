@@ -74,6 +74,53 @@ export function formatReceiptTime(ts: number): string {
   return `Gelesen ${new Date(ts).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', hour12: false })}`;
 }
 
+/** One row of the read-receipt popover: who read the message, and how they reacted to it. */
+export interface ReceiptRow {
+  userId: string;
+  displayName: string;
+  avatarUrl?: string;
+  /** read time — absent for someone who reacted but whose read marker has moved on */
+  ts?: number;
+  emojis: string[];
+}
+
+/**
+ * Merge a message's read receipts with its reactions into the popover rows.
+ *
+ * A receipt marks only a person's LATEST read message, so whoever reacted to this message
+ * and then read further has no receipt here. They are appended after the readers (reacting
+ * implies having read), resolved through `knownUsers` — the receipts of the whole room, which
+ * cover every member with a read marker — and fall back to the Matrix localpart.
+ * The current user is skipped on both sides, as the receipts already do.
+ */
+export function buildReceiptRows(
+  receipts: Array<{ userId: string; displayName: string; avatarUrl?: string; ts: number }>,
+  reactions: Map<string, Set<string>> | undefined,
+  knownUsers: Map<string, { displayName: string; avatarUrl?: string }>,
+  currentUserId?: string,
+): ReceiptRow[] {
+  const emojisByUser = new Map<string, string[]>();
+  for (const [emoji, users] of reactions ?? []) {
+    for (const userId of users) {
+      if (userId === currentUserId) continue;
+      emojisByUser.set(userId, [...(emojisByUser.get(userId) ?? []), emoji]);
+    }
+  }
+  const rows: ReceiptRow[] = receipts.map((r) => ({ ...r, emojis: emojisByUser.get(r.userId) ?? [] }));
+  const readers = new Set(receipts.map((r) => r.userId));
+  for (const [userId, emojis] of emojisByUser) {
+    if (readers.has(userId)) continue;
+    const known = knownUsers.get(userId);
+    rows.push({
+      userId,
+      displayName: known?.displayName ?? resolveMatrixDisplayName(undefined, userId),
+      avatarUrl: known?.avatarUrl,
+      emojis,
+    });
+  }
+  return rows;
+}
+
 /**
  * Resolve a human-readable name for a Matrix user: the profile display name
  * (provisioned from the person's full name) or, if unset, the localpart of the

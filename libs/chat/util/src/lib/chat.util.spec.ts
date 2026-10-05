@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildReceiptAriaLabel, filterRoomsOfTenant, isBridgedRoom, isForeignRoom, serverNameOf, isRoomClassifiable, findSupportRoom, isBridgeGhost, hashUserIdToColor, formatReceiptTime, isRenderableChatEvent, linkifyText, resolveMatrixDisplayName, canPostWithPower, groupRoomAliasLocalpart, groupKeyFromRoomAlias, isRoomGoneError, askRoomAliasLocalpart, shouldDeferAskRoom, findGroupOfRoom } from './chat.util';
+import { buildReceiptAriaLabel, buildReceiptRows, filterRoomsOfTenant, isBridgedRoom, isForeignRoom, serverNameOf, isRoomClassifiable, findSupportRoom, isBridgeGhost, hashUserIdToColor, formatReceiptTime, isRenderableChatEvent, linkifyText, resolveMatrixDisplayName, canPostWithPower, groupRoomAliasLocalpart, groupKeyFromRoomAlias, isRoomGoneError, askRoomAliasLocalpart, shouldDeferAskRoom, findGroupOfRoom } from './chat.util';
 
 describe('buildReceiptAriaLabel', () => {
   it('returns empty string for no receipts', () => {
@@ -538,5 +538,37 @@ describe('findGroupOfRoom', () => {
 
   it('does not match an empty stored id against an empty room id', () => {
     expect(findGroupOfRoom(groups, '', undefined)).toBeUndefined();
+  });
+});
+
+describe('buildReceiptRows', () => {
+  const alice = { userId: '@alice:hs', displayName: 'Alice', ts: 1000 };
+  const bob = { userId: '@bob:hs', displayName: 'Bob', ts: 2000 };
+
+  it('attaches each reader\'s reactions to their row', () => {
+    const reactions = new Map([['👍', new Set(['@alice:hs'])], ['❤️', new Set(['@alice:hs'])]]);
+    expect(buildReceiptRows([alice, bob], reactions, new Map())).toEqual([
+      { ...alice, emojis: ['👍', '❤️'] },
+      { ...bob, emojis: [] },
+    ]);
+  });
+
+  it('appends reactors whose read marker moved on, resolved through known users', () => {
+    const reactions = new Map([['👍', new Set(['@carol:hs', '@dave:hs'])]]);
+    const known = new Map([['@carol:hs', { displayName: 'Carol', avatarUrl: 'blob:c' }]]);
+    expect(buildReceiptRows([alice], reactions, known)).toEqual([
+      { ...alice, emojis: [] },
+      { userId: '@carol:hs', displayName: 'Carol', avatarUrl: 'blob:c', emojis: ['👍'] },
+      { userId: '@dave:hs', displayName: 'dave', avatarUrl: undefined, emojis: ['👍'] },
+    ]);
+  });
+
+  it('skips the current user\'s own reactions', () => {
+    const reactions = new Map([['👍', new Set(['@me:hs'])]]);
+    expect(buildReceiptRows([alice], reactions, new Map(), '@me:hs')).toEqual([{ ...alice, emojis: [] }]);
+  });
+
+  it('returns just the readers without reactions', () => {
+    expect(buildReceiptRows([alice], undefined, new Map())).toEqual([{ ...alice, emojis: [] }]);
   });
 });

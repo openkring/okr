@@ -483,7 +483,7 @@ const MENTION_AVATAR_SIZE = 36;
                     {{ item.messages.length > 1 ? item.messages.length + ' ' + i18n().images() + ' · ' : '' }}{{ formatTime(item.timestamp) }}
                   </div>
                   @if (receiptsByEventId().get(item.messages[0].eventId); as receipts) {
-                    <okr-matrix-read-receipt-strip [receipts]="receipts" />
+                    <okr-matrix-read-receipt-strip [receipts]="receipts" [reactions]="item.messages[0].reactions" [knownUsers]="knownUsers()" [currentUserId]="currentUserId()" />
                   }
                 </div>
               </div>
@@ -635,7 +635,7 @@ const MENTION_AVATAR_SIZE = 36;
                     }
                     <div class="message-timestamp">{{ formatTime(item.timestamp) }}</div>
                     @if (receiptsByEventId().get(item.eventId); as receipts) {
-                      <okr-matrix-read-receipt-strip [receipts]="receipts" />
+                      <okr-matrix-read-receipt-strip [receipts]="receipts" [reactions]="item.reactions" [knownUsers]="knownUsers()" [currentUserId]="currentUserId()" />
                     }
                     @if (threadReplyCounts().get(item.eventId); as replyCount) {
                       <div class="thread-indicator" role="button" tabindex="0" [attr.aria-label]="i18n().thread_open()" (click)="threadClicked.emit(item.eventId)" (keydown.enter)="threadClicked.emit(item.eventId)">
@@ -675,6 +675,14 @@ export class MatrixMessageList {
   typingUsers = input<string[]>([]);
   threadReplyCounts = input<Map<string, number>>(new Map());
   receiptsByEventId = input<Map<string, MatrixReadReceipt[]>>(new Map());
+  /** every room member with a read marker, by user id — names the reactors in the receipt popover */
+  protected readonly knownUsers = computed(() => {
+    const users = new Map<string, MatrixReadReceipt>();
+    for (const receipts of this.receiptsByEventId().values()) {
+      for (const r of receipts) users.set(r.userId, r);
+    }
+    return users;
+  });
   /** Attachments whose download failed; any other image without a mediaUrl is still loading. */
   failedMediaIds = input<ReadonlySet<string>>(new Set());
   public readonly i18n = input.required<MatrixChatI18n>();

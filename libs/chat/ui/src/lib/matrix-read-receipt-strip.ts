@@ -2,7 +2,7 @@ import { Component, computed, input, signal } from '@angular/core';
 import { IonAvatar, IonItem, IonLabel, IonList, IonPopover } from '@ionic/angular/standalone';
 
 import { MatrixReadReceipt } from '@okr/shared-models';
-import { buildReceiptAriaLabel, hashUserIdToColor, formatReceiptTime } from '@okr/chat-util';
+import { buildReceiptAriaLabel, buildReceiptRows, hashUserIdToColor, formatReceiptTime } from '@okr/chat-util';
 
 @Component({
   selector: 'okr-matrix-read-receipt-strip',
@@ -91,6 +91,11 @@ import { buildReceiptAriaLabel, hashUserIdToColor, formatReceiptTime } from '@ok
       font-size: 0.75rem;
       color: var(--ion-color-medium);
     }
+
+    .popover-reactions {
+      font-size: 1.1rem;
+      letter-spacing: 2px;
+    }
   `],
   template: `
     <div class="receipt-strip" (click)="openPopover($event)">
@@ -117,7 +122,7 @@ import { buildReceiptAriaLabel, hashUserIdToColor, formatReceiptTime } from '@ok
     >
       <ng-template>
         <ion-list lines="none">
-          @for (r of receipts(); track r.userId) {
+          @for (r of rows(); track r.userId) {
             <ion-item>
               <ion-avatar slot="start">
                 @if (r.avatarUrl) {
@@ -130,8 +135,13 @@ import { buildReceiptAriaLabel, hashUserIdToColor, formatReceiptTime } from '@ok
               </ion-avatar>
               <ion-label>
                 <p class="popover-name">{{ r.displayName }}</p>
-                <p class="popover-time">{{ formatTime(r.ts) }}</p>
+                @if (r.ts) {
+                  <p class="popover-time">{{ formatTime(r.ts) }}</p>
+                }
               </ion-label>
+              @if (r.emojis.length > 0) {
+                <span slot="end" class="popover-reactions" [attr.aria-label]="r.emojis.join(' ')">{{ r.emojis.join('') }}</span>
+              }
             </ion-item>
           }
         </ion-list>
@@ -141,12 +151,19 @@ import { buildReceiptAriaLabel, hashUserIdToColor, formatReceiptTime } from '@ok
 })
 export class MatrixReadReceiptStrip {
   public receipts = input<MatrixReadReceipt[]>([]);
+  /** the message's reactions (emoji → user ids), shown per person in the popover */
+  public reactions = input<Map<string, Set<string>> | undefined>(undefined);
+  /** name/avatar of every room member with a read marker — resolves reactors who read on */
+  public knownUsers = input<Map<string, MatrixReadReceipt>>(new Map());
+  public currentUserId = input<string | undefined>(undefined);
 
   protected readonly popoverOpen = signal(false);
   protected readonly popoverEvent = signal<Event | undefined>(undefined);
 
   protected readonly visibleReceipts = computed(() => this.receipts().slice(0, 4));
   protected readonly overflowCount = computed(() => Math.max(0, this.receipts().length - 4));
+  protected readonly rows = computed(() =>
+    buildReceiptRows(this.receipts(), this.reactions(), this.knownUsers(), this.currentUserId()));
   protected readonly ariaLabel = computed(() => buildReceiptAriaLabel(this.receipts()));
 
   protected openPopover(event: Event): void {
