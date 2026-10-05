@@ -431,9 +431,6 @@ importers:
       nx:
         specifier: 21.4.1
         version: 21.4.1(@swc-node/register@1.9.2(@swc/core@1.5.29(@swc/helpers@0.5.18))(@swc/types@0.1.25)(supports-color@8.1.1)(typescript@5.9.3))(@swc/core@1.5.29(@swc/helpers@0.5.18))
-      pnpm:
-        specifier: 10.15.0
-        version: 10.15.0
       prettier:
         specifier: ^2.8.8
         version: 2.8.8
@@ -10344,11 +10341,6 @@ packages:
 
   png-js@1.0.0:
     resolution: {integrity: sha512-k+YsbhpA9e+EFfKjTCH3VW6aoKlyNYI6NYdTfDL4CIvFnvsuO84ttonmZE7rc+v23SLTH8XX+5w/Ak9v0xGY4g==}
-
-  pnpm@10.15.0:
-    resolution: {integrity: sha512-SG68JZ0+mZpOhpHOA7XKxKccvso5Nyqbdiy1AM/fCHPiyxar49lRse4s8BJQPwJ7mLZYTk3yJSTgx0UNnseqew==}
-    engines: {node: '>=18.12'}
-    hasBin: true
 
   portfinder@1.0.38:
     resolution: {integrity: sha512-rEwq/ZHlJIKw++XtLAO8PPuOQA/zaPJOZJ37BVuN97nLpMJeuDVLVGRwbFoBgLudgdTMP2hdRJP++H+8QOA3vg==}
@@ -24979,8 +24971,6 @@ snapshots:
       xmlbuilder: 15.1.1
 
   png-js@1.0.0: {}
-
-  pnpm@10.15.0: {}
 
   portfinder@1.0.38:
     dependencies:
