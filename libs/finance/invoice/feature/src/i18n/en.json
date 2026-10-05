@@ -424,6 +424,9 @@
       "amountAboveBooking": "The amount is higher than the credit of the chosen bank booking.",
       "bankAccountRequired": "Choose the bank account the money arrived on.",
       "bookingRequired": "Choose the bank booking that records the payment."
+    },
+    "hint": {
+      "label": "Possible payment"
     }
   },
   "cancelInvoice": {

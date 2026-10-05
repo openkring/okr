@@ -4,13 +4,13 @@ import { AlertController, ModalController, ToastController } from '@ionic/angula
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { getApp } from 'firebase/app';
 import { connectFunctionsEmulator, getFunctions, httpsCallable } from 'firebase/functions';
-import { firstValueFrom, of } from 'rxjs';
+import { firstValueFrom, from, of } from 'rxjs';
 import { take } from 'rxjs/operators';
 
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
 import { AccountModel, DEFAULT_REMINDER_GRACE_DAYS, InvoiceCollection, InvoiceModel, OrgModelName, PersonModelName } from '@okr/shared-models';
-import { confirm, exportCsv, showToast } from '@okr/shared-util-angular';
+import { confirm, exportCsv, resourceParams, showToast } from '@okr/shared-util-angular';
 import {
   convertDateFormatToString, DateFormat, debugListLoaded, fill, getSystemQuery, getTodayStr, getYear, hasRole, nameMatches,
 } from '@okr/shared-util-core';
@@ -20,7 +20,7 @@ import { InvoiceService } from '@okr/finance-invoice-data-access';
 import { InvoicePaymentModal } from '@okr/finance-invoice-ui';
 import {
   buildPaymentConfirmationPayload, canCreatePaymentConfirmation, canCreateReminder, canEmailInvoice, cancelInputProblem, isPayableState, defaultReminderFee,
-  draftInvoicesOf, formatPaymentChf, invoiceDisplayState, getInvoiceExportData, INVOICE_CANCEL_REASON_LENGTH, INVOICE_I18N_KEYS, InvoiceI18n, InvoicePaymentCandidate,
+  draftInvoicesOf, formatPaymentChf, invoiceDisplayState, invoicePaymentHints, invoicePaymentHintWindow, linkedInvoicePaymentKeys, getInvoiceExportData, INVOICE_CANCEL_REASON_LENGTH, INVOICE_I18N_KEYS, InvoiceI18n, InvoicePaymentCandidate,
   InvoicePaymentInput, invoiceRefusalReasons, invoiceRefusalText, invoicesForList, isDraftInvoice, isRetryablePaymentRefusal, latestReminderWithDocument,
   mahnlaufCandidates, newDraftInvoice, newInvoicePaymentFormModel, newPaymentId, nextReminderLevel, openInvoiceAmount, parseReminderFee,
   PAYMENT_CONFIRMATION_TEMPLATE_ID, reminderInputProblem, reminderLevelKey, waivableReminder, waiveInputProblem, WAIVE_REASON_MAX,
@@ -140,7 +140,59 @@ export const InvoiceStore = signalStore(
   })),
 
   withComputed((store) => ({
+    /** the open invoices of the books — the ones a payment can be recorded on */
+    openInvoices: computed(() => (store.allInvoicesResource.value() ?? []).filter((i) => isPayableState(i.state) && openInvoiceAmount(i) > 0)),
+    /** every payment booking already linked on an invoice of these books */
+    linkedPaymentKeys: computed(() => linkedInvoicePaymentKeys(store.allInvoicesResource.value() ?? [])),
+    // legacy config docs lack the field (Firestore reads skip model defaults)
+    receivablesAccountKey: computed(() => store.accountingStore.config()?.receivablesAccountKey ?? ''),
+  })),
+
+  /**
+   * Payment hints (spec 1.86 phase 1, the twin of the bill hints): the posted bookings that credit the
+   * receivables account with exactly the open amount of an open invoice. Read once per list load, only
+   * while an open invoice exists and the books name a receivables account; a failed read shows no hints.
+   */
+  withProps((store) => ({
+    // resourceParams: value-compared, so an invoice stream emission that changes nothing relevant does not re-read
+    paymentCandidatesResource: rxResource({
+      params: resourceParams(() => {
+        const window = invoicePaymentHintWindow(store.openInvoices(), getTodayStr());
+        return {
+          accountingTenantId: store.accountingStore.accountingTenantId(),
+          receivablesAccountKey: store.receivablesAccountKey(),
+          fromDate: window?.from ?? '',
+          toDate: window?.to ?? '',
+          linkedKeys: store.linkedPaymentKeys().join(','),
+          external: store.accountingStore.isExternallyManaged(),
+        };
+      }),
+      stream: ({ params }) => {
+        if (!params.receivablesAccountKey || !params.fromDate || params.external) return of([] as InvoicePaymentCandidate[]);
+        return from(store.invoiceService.listPaymentHintCandidates(params.accountingTenantId, params.receivablesAccountKey,
+          params.linkedKeys ? params.linkedKeys.split(',') : [], params.fromDate, params.toDate)
+          .catch((e) => {
+            console.error('InvoiceStore.paymentCandidates: loading the bookings failed', e);
+            return [] as InvoicePaymentCandidate[];
+          }));
+      },
+    }),
+  })),
+
+  withComputed((store) => ({
     isLoading: computed(() => store.allInvoicesResource.isLoading()),
+    /** invoiceKey → candidate booking of the likely payment */
+    paymentHints: computed(() => {
+      const candidates = store.paymentCandidatesResource.value() ?? [];
+      const byKey = new Map(candidates.map((c) => [c.bookingKey, c]));
+      const hints = new Map<string, InvoicePaymentCandidate>();
+      const window = invoicePaymentHintWindow(store.openInvoices(), getTodayStr());
+      for (const [invoiceKey, bookingKey] of invoicePaymentHints(window?.invoices ?? [], candidates)) {
+        const candidate = byKey.get(bookingKey);
+        if (candidate) hints.set(invoiceKey, candidate);
+      }
+      return hints;
+    }),
     currentUser: computed(() => store.appStore.currentUser()),
     isExternallyManaged: computed(() => store.accountingStore.isExternallyManaged()),
     states: computed(() => store.appStore.getCategory('invoice_state')),
@@ -302,8 +354,9 @@ export const InvoiceStore = signalStore(
      * then calls `recordInvoicePayment`. One `paymentId` per dialog: when the call fails with a reason
      * the treasurer can fix (or no reason at all — a network error), the dialog opens again with the
      * entered values and the same id, so a payment that did reach the server is not booked twice.
+     * @param preselect the hinted booking (spec 1.86): the dialog opens in mode link with it selected
      */
-    async recordPayment(invoice: InvoiceModel): Promise<void> {
+    async recordPayment(invoice: InvoiceModel, preselect?: InvoicePaymentCandidate): Promise<void> {
       if (!isPayableState(invoice.state) || store.accountingStore.isExternallyManaged()) return;
       const config = store.accountingStore.config();
       if (!config) {
@@ -333,7 +386,7 @@ export const InvoiceStore = signalStore(
         });
       const paymentAccounts = accounts.filter((a) => paymentAccountKeys.includes(a.okey));
       const paymentId = newPaymentId();
-      let payment = newInvoicePaymentFormModel(invoice, getTodayStr(), paymentAccounts.map((a) => a.okey));
+      let payment = newInvoicePaymentFormModel(invoice, getTodayStr(), paymentAccounts.map((a) => a.okey), preselect);
 
       for (;;) {
         const modal = await store.modalController.create({
@@ -365,7 +418,8 @@ export const InvoiceStore = signalStore(
           payment = {
             ...payment, mode: data.mode, date: data.date, amount: data.amount,
             bankAccountKey: data.bankAccountKey || payment.bankAccountKey, bookingKey: data.bookingKey,
-            bookingAmount: (candidate?.creditedAmount ?? 0) / 100,
+            // a booking the dialog's read does not list (e.g. the hint) keeps the amount it was opened with
+            bookingAmount: candidate ? candidate.creditedAmount / 100 : (data.bookingKey === payment.bookingKey ? payment.bookingAmount : 0),
           };
         }
       }

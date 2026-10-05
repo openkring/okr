@@ -424,6 +424,9 @@
       "amountAboveBooking": "Der Betrag ist höher als die Gutschrift der gewählten Bankbuchung.",
       "bankAccountRequired": "Wähle das Bankkonto, auf dem das Geld eingegangen ist.",
       "bookingRequired": "Wähle die Bankbuchung, mit der die Zahlung verbucht ist."
+    },
+    "hint": {
+      "label": "Mögliche Zahlung"
     }
   },
   "cancelInvoice": {

@@ -424,6 +424,9 @@
       "amountAboveBooking": "L’importo supera l’accredito della registrazione bancaria scelta.",
       "bankAccountRequired": "Scegli il conto bancario su cui è arrivato il denaro.",
       "bookingRequired": "Scegli la registrazione bancaria che riporta il pagamento."
+    },
+    "hint": {
+      "label": "Pagamento possibile"
     }
   },
   "cancelInvoice": {

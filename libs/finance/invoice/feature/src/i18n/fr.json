@@ -424,6 +424,9 @@
       "amountAboveBooking": "Le montant dépasse le crédit de l’écriture bancaire choisie.",
       "bankAccountRequired": "Choisis le compte bancaire sur lequel l’argent est arrivé.",
       "bookingRequired": "Choisis l’écriture bancaire qui enregistre le paiement."
+    },
+    "hint": {
+      "label": "Paiement possible"
     }
   },
   "cancelInvoice": {

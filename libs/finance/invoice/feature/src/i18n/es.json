@@ -424,6 +424,9 @@
       "amountAboveBooking": "El importe es mayor que el abono del asiento bancario elegido.",
       "bankAccountRequired": "Elige la cuenta bancaria a la que llegó el dinero.",
       "bookingRequired": "Elige el asiento bancario que registra el pago."
+    },
+    "hint": {
+      "label": "Pago posible"
     }
   },
   "cancelInvoice": {

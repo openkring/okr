@@ -93,7 +93,7 @@ import { InvoiceStore } from './invoice.store';
       } @else {
         <ion-grid>
           @for(invoice of filteredInvoices(); track invoice.okey) {
-            <ion-row [class.overdue]="isOverdue(invoice)" (click)="showActions(invoice)">
+            <ion-row [class.overdue]="isOverdue(invoice) && !hasHint(invoice)" (click)="showActions(invoice)">
               <ion-col size="2" class="ion-align-self-center">{{ formatDate(invoice.invoiceDate) }}</ion-col>
               <ion-col size="1">
                 @if(invoice.receiver; as r) {
@@ -110,9 +110,14 @@ import { InvoiceStore } from './invoice.store';
               </ion-col>
               <ion-col size="2" class="ion-align-self-center ion-text-end">{{ getAmount(invoice.totalAmount?.amount) }}</ion-col>
               <ion-col size="2" class="state">
-                <ion-chip [outline]="true" size="small" [color]="getStateColor(displayState(invoice))">
-                  {{ getStateLabel(displayState(invoice)) }}
-                </ion-chip>
+                @if(hasHint(invoice)) {
+                  <!-- a booking that probably paid this invoice exists (spec 1.86) -->
+                  <ion-chip [outline]="true" size="small" color="warning">{{ store.i18n.payment_hint() }}</ion-chip>
+                } @else {
+                  <ion-chip [outline]="true" size="small" [color]="getStateColor(displayState(invoice))">
+                    {{ getStateLabel(displayState(invoice)) }}
+                  </ion-chip>
+                }
               </ion-col>
             </ion-row>
           }
@@ -191,6 +196,11 @@ export class InvoiceList {
   /** overdue = open and past its due date; computed, the stored state stays `pending` */
   protected isOverdue(invoice: InvoiceModel): boolean {
     return isOverdueInvoice(invoice, this.today);
+  }
+
+  /** a booking that probably paid this open invoice exists (spec 1.86) */
+  protected hasHint(invoice: InvoiceModel): boolean {
+    return this.store.paymentHints().has(invoice.okey);
   }
 
   protected displayState(invoice: InvoiceModel): string {
@@ -314,7 +324,7 @@ export class InvoiceList {
       case 'invoice.edit': await this.store.edit(invoice, false); break;
       case 'invoice.issue': await this.store.issue(invoice); break;
       case 'invoice.delete': await this.store.delete(invoice); break;
-      case 'invoice.payment': await this.store.recordPayment(invoice); break;
+      case 'invoice.payment': await this.store.recordPayment(invoice, this.store.paymentHints().get(invoice.okey)); break;
       case 'invoice.cancelInvoice': await this.store.cancelInvoice(invoice); break;
       case 'invoice.waiveFee': await this.store.waiveReminderFee(invoice); break;
       case 'invoice.createReminder': await this.store.createReminder(invoice); break;

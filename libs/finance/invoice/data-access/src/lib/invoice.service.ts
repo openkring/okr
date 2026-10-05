@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { getApp } from 'firebase/app';
-import { collection, getDocs, limit, query } from 'firebase/firestore';
+import { collection, getDocs, limit, query, QueryDocumentSnapshot, startAfter } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
 import { ENV } from '@okr/shared-config';
@@ -33,6 +33,11 @@ export interface WriteInvoicePayload {
  * cannot be the payment and push the real ones (after the invoice date) out.
  */
 export const PAYMENT_CANDIDATE_LOOKBACK_DAYS = 7;
+
+/** Payment hints (spec 1.86): posted bookings are read in pages of this size, oldest first … */
+export const PAYMENT_HINT_BOOKING_PAGE = 300;
+/** … at most this many pages (2'100 bookings, more than a busy club books in a year). */
+export const PAYMENT_HINT_BOOKING_PAGES = 7;
 
 /** The `issueInvoice` callable's result. */
 export interface IssueInvoiceResult {
@@ -261,6 +266,45 @@ export class InvoiceService {
         { key: 'bookingKey', operator: 'in', value: keys },
       ], 'none')));
     return invoicePaymentCandidates(lineChunks.flat(), linkable, receivablesAccountKey, linked);
+  }
+
+  /**
+   * The candidates for the list's payment hints (spec 1.86): posted bookings dated `fromDate` to
+   * `toDate` that credit the receivables account, without the ones already linked on an invoice and the
+   * ones okr writes for invoices itself. Reads the bookings in pages (oldest first) and their lines in
+   * `bookingKey in` chunks, like the bill hints (spec 1.85 Q4).
+   */
+  public async listPaymentHintCandidates(
+    accountingTenantId: string, receivablesAccountKey: string, linkedBookingKeys: string[], fromDate: string, toDate: string,
+  ): Promise<InvoicePaymentCandidate[]> {
+    if (!receivablesAccountKey || !accountingTenantId || !fromDate || toDate < fromDate) return [];
+    const constraints = getQuery([
+      ...getSystemQuery(this.env.tenantId),
+      { key: 'accountingTenantId', operator: '==', value: accountingTenantId },
+      { key: 'status', operator: '==', value: 'posted' },
+      { key: 'date', operator: '>=', value: fromDate },
+      { key: 'date', operator: '<=', value: toDate },
+    ], 'date', 'asc');
+    const bookings: BookingModel[] = [];
+    const lines: BookingLineModel[] = [];
+    let last: QueryDocumentSnapshot | undefined;
+    for (let page = 0; page < PAYMENT_HINT_BOOKING_PAGES; page++) {
+      const pageQuery = query(collection(this.firestoreService.firestore, BookingCollection), ...constraints,
+        ...(last ? [startAfter(last)] : []), limit(PAYMENT_HINT_BOOKING_PAGE));
+      const snapshot = await getDocs(pageQuery);
+      const pageBookings = linkableBookings(snapshot.docs.map((d) => ({ ...d.data(), okey: d.id }) as BookingModel), linkedBookingKeys);
+      bookings.push(...pageBookings);
+      for (const keys of chunked(pageBookings.map((b) => b.okey), BOOKING_KEY_CHUNK_SIZE)) {
+        lines.push(...await this.readOnce<BookingLineModel>(BookingLineCollection, [
+          ...getSystemQuery(this.env.tenantId),
+          { key: 'accountingTenantId', operator: '==', value: accountingTenantId },
+          { key: 'bookingKey', operator: 'in', value: keys },
+        ], 'none'));
+      }
+      if (snapshot.docs.length < PAYMENT_HINT_BOOKING_PAGE) break;
+      last = snapshot.docs[snapshot.docs.length - 1];
+    }
+    return invoicePaymentCandidates(lines, bookings, receivablesAccountKey, linkedBookingKeys, PAYMENT_HINT_BOOKING_PAGE * PAYMENT_HINT_BOOKING_PAGES);
   }
 
   public async writeViaFunction(payload: WriteInvoicePayload): Promise<{ invoiceKey: string }> {
