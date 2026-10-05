@@ -6,6 +6,7 @@
   "status": { "unmapped": "abierta", "mapped": "asignada", "posted": "contabilizada", "error": "Error", "all": "todas", "open": "no contabilizada" },
   "header": { "date": "Fecha", "title": "Texto de contabilización", "payee": "Contraparte", "amount": "Importe" },
   "invoice": { "paymentTitle": "Pago factura", "chip": "Factura" },
+  "bill": { "paymentTitle": "Pago a proveedor", "chip": "Factura de proveedor" },
   "fee": { "label": "Comisión", "netLabel": "neto" },
   "import": {
     "file": "Importar archivo",
@@ -18,6 +19,8 @@
       "unmapped": "sin regla, abiertas",
       "invoices": "Facturas asignadas",
       "invoicesFailed": "Esta vez no se pudieron asignar las facturas.",
+      "bills": "facturas de proveedores asignadas",
+      "billsFailed": "Esta vez no se pudieron asignar las facturas de proveedores.",
       "warnings": "Avisos"
     },
     "cancelled": "La importación se canceló. No se guardó nada."
@@ -54,7 +57,9 @@
       "overpayment": "El pago supera el importe pendiente. El asiento está registrado; salda la factura a mano.",
       "notPayable": "La factura ya está pagada o anulada.",
       "noReceivablesCredit": "La línea no se contabilizó en la cuenta de deudores, por eso la factura sigue abierta.",
-      "other": "No se pudo registrar el pago en la factura automáticamente. El asiento está registrado; revisa la factura."
+      "other": "No se pudo registrar el pago en la factura automáticamente. El asiento está registrado; revisa la factura.",
+      "billLine": "Factura de proveedor no saldada: {bill} – {reason}",
+      "noPayablesDebit": "La fila no se contabilizó en la cuenta de proveedores, por eso la factura del proveedor sigue abierta."
     }
   },
   "applyRules": { "label": "Aplicar reglas", "conf": "Las reglas se aplicaron a todas las líneas abiertas." },

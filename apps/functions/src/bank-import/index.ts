@@ -5,13 +5,14 @@ import { getFirestore, Transaction } from 'firebase-admin/firestore';
 import { checkAppCheckToken, checkAuthentication, checkRoles, getCallerTenantId, isBalanced, nextBookingNo } from '@okr/shared-util-functions';
 import { DateFormat, getTodayStr } from '@okr/shared-util-core';
 
-import { InvoiceCollection } from '@okr/shared-models';
+import { BillCollection, InvoiceCollection } from '@okr/shared-models';
 
 import {
-  buildBankBookingHeader, buildBankBookingLines, feeAmountOf, hasFeeLine, invoiceSettlement, isValidSplit, periodKeyFor, ProfileDoc, receivablesCredit, RowDoc,
-  splitsOf, withCostCenterKeys,
+  billSettlement, buildBankBookingHeader, buildBankBookingLines, feeAmountOf, hasFeeLine, invoiceSettlement, isValidSplit, payablesDebit, periodKeyFor, ProfileDoc,
+  receivablesCredit, RowDoc, splitsOf, withCostCenterKeys,
 } from './bank-import.util';
 import { InvoiceLike } from '../invoice/invoice-payment.logic';
+import { BillLike } from '../bill/bill-payment.logic';
 import { isBexioBackend } from '../bexio/backend-gate';
 import { costCenterKeyForLine, loadCostCenterContext } from '../cost-center/cost-center-context';
 
@@ -29,8 +30,8 @@ const MAX_ROWS = 100;
 // splitTitle: base main name of a split booking in the caller's language (e.g. 'Sammelbuchung').
 interface PostBankImportData { accountingTenantId: string; rowKeys?: string[]; splitTitle?: string; }
 interface Failure { rowKey: string; reason: string; }
-/** A posted row whose matched invoice was left untouched; `reason` is the comma-joined skip code. */
-interface Unsettled { rowKey: string; invoiceKey: string; reason: string; }
+/** A posted row whose matched invoice (or bill, spec 1.85: `billKey` set) was left untouched; `reason` is the comma-joined skip code. */
+interface Unsettled { rowKey: string; invoiceKey: string; billKey?: string; reason: string; }
 
 /** The fields the payment rules and the tenant check read, from a raw invoice document; undefined stays undefined. */
 function asInvoiceLike(doc: Record<string, unknown> | undefined): (InvoiceLike & { tenants: string[] }) | undefined {
@@ -46,6 +47,18 @@ function asInvoiceLike(doc: Record<string, unknown> | undefined): (InvoiceLike &
     accountingTenantId: String(doc['accountingTenantId'] ?? ''),
   };
   return invoice;
+}
+
+/** The fields the bill payment rules and the tenant check read, from a raw bill document. */
+function asBillLike(doc: Record<string, unknown> | undefined): (BillLike & { tenants: string[] }) | undefined {
+  if (!doc) return undefined;
+  return {
+    tenants: (doc['tenants'] as string[] | undefined) ?? [],
+    state: String(doc['state'] ?? ''),
+    totalAmount: doc['totalAmount'] as BillLike['totalAmount'],
+    payments: (doc['payments'] as BillLike['payments']) ?? [],
+    accountingTenantId: String(doc['accountingTenantId'] ?? ''),
+  };
 }
 
 /** Thrown inside the per-row transaction; the code lands on the row's `error` field. */
@@ -76,6 +89,7 @@ export const postBankImport = onCall(
     const configSnap = await db.collection(CONFIG_COLLECTION).doc(accountingTenantId).get();
     const fiscalYearStart = Number(configSnap.data()?.['fiscalYearStart'] ?? 1) || 1;
     const receivablesKey = String(configSnap.data()?.['receivablesAccountKey'] ?? '');
+    const payablesKey = String(configSnap.data()?.['payablesAccountKey'] ?? '');
     const settlementBooks = { accountingTenantId, tenantId, bexioBackend: isBexioBackend(configSnap.data() as { accountingBackend?: string } | undefined) };
 
     // ---- candidate rows (mapped, this tenant + accounting tenant), file order = importedAt asc, date asc ----
@@ -176,6 +190,21 @@ export const postBankImport = onCall(
               skip = receivablesKey ? 'not-a-chf-credit' : 'no-receivables-account';
             }
           }
+          // spec 1.85 phase 2: a debit matched to a bill and booked against the payables account settles it
+          // the same way. Never blocks the booking; bexio books are never read.
+          let billPatch: Record<string, unknown> | undefined;
+          const billRef = row.billKey ? db.collection(BillCollection).doc(row.billKey) : undefined;
+          if (billRef) {
+            if (row.amount.amount < 0 && row.amount.currency === 'CHF' && payablesKey) {
+              const amount = payablesDebit(lines as { accountKey: string; debitAmount?: { amount: number } | null }[], payablesKey);
+              const bill = settlementBooks.bexioBackend ? undefined : asBillLike((await tx.get(billRef)).data());
+              const settlement = billSettlement(bill, settlementBooks, amount, row.date, bookingKey, profile.accountKey);
+              if ('patch' in settlement) billPatch = settlement.patch;
+              else skip = settlement.skip;
+            } else {
+              skip = payablesKey ? 'not-a-chf-debit' : 'no-payables-account';
+            }
+          }
           const year = Number(row.date.substring(0, 4));
           // Follow-up: this reads the whole ledger of the accounting tenant per row to compute
           // nextBookingNo. MAX_ROWS=100 is the mitigation for now; the real fix is a narrow read
@@ -190,14 +219,17 @@ export const postBankImport = onCall(
           for (const line of lines) tx.set(db.collection(BOOKING_LINE_COLLECTION).doc(), line);
           tx.update(rowRef, { status: 'posted', bookingKey, postedAt: now, error: '' });
           if (invoiceRef && invoicePatch) tx.update(invoiceRef, invoicePatch);
-          return { outcome: 'posted', unsettled: skip && row.invoiceKey ? { invoiceKey: row.invoiceKey, reason: skip } : undefined };
+          if (billRef && billPatch) tx.update(billRef, billPatch);
+          const unsettledRow = skip && row.invoiceKey ? { invoiceKey: row.invoiceKey, reason: skip }
+            : skip && row.billKey ? { invoiceKey: '', billKey: row.billKey, reason: skip } : undefined;
+          return { outcome: 'posted', unsettled: unsettledRow };
         });
         posted += 1;
         logger.info(`${CF_NAME}: ${rowRef.id} ${outcome.outcome} (tenant=${tenantId})`);
         // reported only once the transaction committed: a retried attempt must not be counted twice
         if (outcome.unsettled) {
           unsettled.push({ rowKey: rowRef.id, ...outcome.unsettled });
-          logger.warn(`${CF_NAME}: ${rowRef.id} invoice ${outcome.unsettled.invoiceKey} not settled (${outcome.unsettled.reason})`);
+          logger.warn(`${CF_NAME}: ${rowRef.id} ${outcome.unsettled.billKey ? `bill ${outcome.unsettled.billKey}` : `invoice ${outcome.unsettled.invoiceKey}`} not settled (${outcome.unsettled.reason})`);
         }
       } catch (e) {
         const code = e instanceof RowError ? e.code : 'unknown';

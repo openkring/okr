@@ -12,7 +12,8 @@ import { findByKey, getQuery, getSystemQuery } from '@okr/shared-util-core';
 import { ActivityService } from '@okr/activity-data-access';
 
 import {
-  BILL_PAYMENT_BOOKING_LIMIT, BillPaymentCandidate, BillPaymentInput, billPaymentCandidates, getBillIndex, MAX_BILL_PAYMENT_CANDIDATES,
+  BILL_PAYMENT_BOOKING_LIMIT, BillPaymentCandidate, BillPaymentInput, billPaymentCandidates, getBillIndex, isPayableBill, MAX_BILL_PAYMENT_CANDIDATES,
+  openBillAmount,
 } from '@okr/finance-bill-util';
 
 /**
@@ -78,6 +79,19 @@ export class BillService {
   }
 
   /*-------------------------- payments (spec 1.85) --------------------------*/
+
+  /**
+   * The open bills of one set of books — the bank import's match candidates (spec 1.85 phase 2).
+   * Tenant-scoped through getSystemQuery; rejects on a failed read, so an import never runs against a
+   * silently empty candidate list.
+   */
+  public async listOpen(accountingTenantId: string): Promise<BillModel[]> {
+    const bills = await this.readOnce<BillModel>(BillCollection, [
+      ...getSystemQuery(this.env.tenantId),
+      { key: 'accountingTenantId', operator: '==', value: accountingTenantId },
+    ], 'none');
+    return bills.filter((b) => isPayableBill(b) && openBillAmount(b) > 0);
+  }
 
   /**
    * The posted bookings that debit the payables account from `fromDate` on — the link candidates of a

@@ -98,6 +98,9 @@ const STATUS_FILTERS: BankImportStatusFilter[] = ['open', 'all', 'unmapped', 'ma
                 @if (row.invoiceKey) {
                   <ion-chip color="success">{{ store.i18n.invoice_chip() }}</ion-chip>
                 }
+                @if (row.billKey) {
+                  <ion-chip color="success">{{ store.i18n.bill_chip() }}</ion-chip>
+                }
                 @if (row.status === 'error') {
                   <ion-note color="danger">{{ store.errorText(row.error) }}</ion-note>
                 }

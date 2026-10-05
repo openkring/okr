@@ -6,6 +6,7 @@
   "status": { "unmapped": "offen", "mapped": "zugeordnet", "posted": "gebucht", "error": "Fehler", "all": "alle", "open": "nicht gebucht" },
   "header": { "date": "Datum", "title": "Buchungstext", "payee": "Gegenpartei", "amount": "Betrag" },
   "invoice": { "paymentTitle": "Zahlung Rechnung", "chip": "Rechnung" },
+  "bill": { "paymentTitle": "Zahlung Kreditor", "chip": "Lieferantenrechnung" },
   "fee": { "label": "Gebühr", "netLabel": "netto" },
   "import": {
     "file": "Datei importieren",
@@ -18,6 +19,8 @@
       "unmapped": "ohne Regel, offen",
       "invoices": "Rechnungen zugeordnet",
       "invoicesFailed": "Rechnungen konnten diesmal nicht zugeordnet werden.",
+      "bills": "Lieferantenrechnungen zugeordnet",
+      "billsFailed": "Lieferantenrechnungen konnten diesmal nicht zugeordnet werden.",
       "warnings": "Hinweise"
     },
     "cancelled": "Der Import wurde abgebrochen. Es wurde nichts gespeichert."
@@ -54,7 +57,9 @@
       "overpayment": "Die Zahlung ist höher als der offene Betrag. Die Buchung ist erfasst, bitte gleiche die Rechnung von Hand aus.",
       "notPayable": "Die Rechnung ist bereits bezahlt oder storniert.",
       "noReceivablesCredit": "Die Zeile wurde nicht auf das Debitorenkonto gebucht, darum bleibt die Rechnung offen.",
-      "other": "Die Zahlung konnte nicht automatisch auf der Rechnung erfasst werden. Die Buchung ist erfasst, bitte prüfe die Rechnung."
+      "other": "Die Zahlung konnte nicht automatisch auf der Rechnung erfasst werden. Die Buchung ist erfasst, bitte prüfe die Rechnung.",
+      "billLine": "Lieferantenrechnung nicht ausgeglichen: {bill} – {reason}",
+      "noPayablesDebit": "Die Zeile wurde nicht auf das Kreditorenkonto gebucht, darum bleibt die Lieferantenrechnung offen."
     }
   },
   "applyRules": { "label": "Regeln anwenden", "conf": "Die Regeln wurden auf alle offenen Zeilen angewendet." },

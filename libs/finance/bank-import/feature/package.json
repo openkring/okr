@@ -32,6 +32,7 @@
     "@okr/finance-bank-rule-util": "*",
     "@okr/finance-bank-import-data-access": "*",
     "@okr/finance-bank-import-util": "*",
-    "@okr/finance-bank-import-ui": "*"
+    "@okr/finance-bank-import-ui": "*",
+    "@okr/finance-bill-data-access": "*"
   }
 }

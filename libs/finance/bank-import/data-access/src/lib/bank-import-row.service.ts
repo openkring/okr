@@ -15,11 +15,11 @@ import { BANK_IMPORT_I18N_KEYS, PostJournalImportPayload, PostJournalImportResul
 
 /** `splitTitle`: base main name of a split booking in the user's language, e.g. 'Sammelbuchung'. */
 export interface PostBankImportPayload { accountingTenantId: string; rowKeys?: string[]; splitTitle?: string; }
-/** `unsettled`: posted rows whose matched invoice was left open (reason = comma-joined server skip codes). */
+/** `unsettled`: posted rows whose matched invoice or bill was left open (reason = comma-joined server skip codes; `billKey` set for a bill, spec 1.85). */
 export interface PostBankImportResult {
   posted: number;
   failed: { rowKey: string; reason: string }[];
-  unsettled: { rowKey: string; invoiceKey: string; reason: string }[];
+  unsettled: { rowKey: string; invoiceKey: string; billKey?: string; reason: string }[];
 }
 
 @Injectable({ providedIn: 'root' })

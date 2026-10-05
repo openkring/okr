@@ -1,4 +1,5 @@
 import { applyInvoicePayment, InvoiceLike, paymentBlockers, paymentDecision } from '../invoice/invoice-payment.logic';
+import { applyBillPayment, BillLike, billPaymentBlockers } from '../bill/bill-payment.logic';
 
 /** One further part of a split assignment; `amount` is a positive magnitude in minor units. */
 export interface SplitDoc { title: string; accountKey: string; vatCodeKey?: string; amount: number; }
@@ -13,6 +14,7 @@ export interface RowDoc {
   status: string; bankProfileKey: string; accountingTenantId: string; tenants: string[];
   ruleKey?: string;
   invoiceKey?: string;                                // set by the QR-reference matcher (spec 1.2 §4.2)
+  billKey?: string;                                   // set by the bill matcher (spec 1.85 phase 2)
 }
 export interface ProfileDoc { accountKey: string; feeAccountKey?: string; accountingTenantId: string; isArchived?: boolean; }
 
@@ -163,6 +165,36 @@ export function invoiceSettlement(
   const blockers = paymentBlockers(invoice, amount, date);
   if (blockers.length > 0) return { skip: blockers.join(',') };
   const applied = applyInvoicePayment(invoice, { paymentId: bookingKey, date, amount, bankAccountKey, bookingKey });
+  return { patch: { payments: applied.payments, state: applied.state, ...(applied.paymentDate ? { paymentDate: applied.paymentDate } : {}) } };
+}
+
+/*-------------------------- bill settlement (spec 1.85 phase 2) ---------------------------*/
+/** The amount a bank booking debits to the payables account (Kreditoren), in minor units — what was paid on the bill. */
+export function payablesDebit(
+  lines: { accountKey: string; debitAmount?: { amount: number; currency?: string } | null }[], payablesKey: string,
+): number {
+  if (!payablesKey) return 0;
+  return lines.filter(l => l.accountKey === payablesKey).reduce((sum, l) => sum + (l.debitAmount?.amount ?? 0), 0);
+}
+
+/**
+ * The bill patch a posted bank debit writes, or why it does not settle the bill — the twin of
+ * `invoiceSettlement`: bexio-backend, missing, other-tenant (the row's billKey is client-written),
+ * other-books, no-payables-debit, already-recorded, or the comma-joined `billPaymentBlockers` codes.
+ * Same write shape as `recordBillPayment` (mode link).
+ */
+export function billSettlement(
+  bill: (BillLike & { tenants?: string[] }) | undefined, books: SettlementBooks, amount: number, date: string, bookingKey: string, bankAccountKey: string,
+): { patch: Record<string, unknown> } | { skip: string } {
+  if (books.bexioBackend) return { skip: 'bexio-backend' };
+  if (!bill) return { skip: 'missing' };
+  if (!(bill.tenants ?? []).includes(books.tenantId)) return { skip: 'other-tenant' };
+  if (bill.accountingTenantId !== books.accountingTenantId) return { skip: 'other-books' };
+  if (!(amount > 0)) return { skip: 'no-payables-debit' };
+  if ((bill.payments ?? []).some(p => p.bookingKey === bookingKey)) return { skip: 'already-recorded' };
+  const blockers = billPaymentBlockers(bill, amount, date);
+  if (blockers.length > 0) return { skip: blockers.join(',') };
+  const applied = applyBillPayment(bill, { date, amount, bookingKey, bankAccountKey });
   return { patch: { payments: applied.payments, state: applied.state, ...(applied.paymentDate ? { paymentDate: applied.paymentDate } : {}) } };
 }
 

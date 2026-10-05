@@ -8,7 +8,7 @@ import { of } from 'rxjs';
 import { BANK_IMPORT_MIMETYPES } from '@okr/shared-constants';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
-import { BankImportRowModel, BankImportRowStatus, InvoiceModel, BankProfileModel, BankRuleModel } from '@okr/shared-models';
+import { BankImportRowModel, BankImportRowStatus, BillModel, InvoiceModel, BankProfileModel, BankRuleModel } from '@okr/shared-models';
 import { AlertService, resourceParams } from '@okr/shared-util-angular';
 import { DateFormat, fill, getTodayStr } from '@okr/shared-util-core';
 
@@ -18,8 +18,10 @@ import { AccountingStore } from '@okr/finance-accounting-feature';
 import { leafAccounts } from '@okr/finance-account-util';
 import { BankImportRowService, PostBankImportResult } from '@okr/finance-bank-import-data-access';
 import {
-  BANK_IMPORT_I18N_KEYS, BankImportError, computeImportKeys, isPdfFile, matchInvoicePayments, parseStatement, ParsedWarning, toImportRows, unsettledReasonKey,
+  BANK_IMPORT_I18N_KEYS, BankImportError, computeImportKeys, isPdfFile, matchBillPayments, matchInvoicePayments, parseStatement, ParsedWarning, toImportRows,
+  unsettledReasonKey,
 } from '@okr/finance-bank-import-util';
+import { BillService } from '@okr/finance-bill-data-access';
 import { BankProfileService } from '@okr/finance-bank-profile-data-access';
 import { BankProfileStore } from '@okr/finance-bank-profile-feature';
 import { BankRuleService } from '@okr/finance-bank-rule-data-access';
@@ -43,6 +45,7 @@ export const BankImportStore = signalStore(
     accountService: inject(AccountService),
     vatCodeService: inject(VatCodeService),
     invoiceService: inject(InvoiceService),
+    billService: inject(BillService),
     accountingStore: inject(AccountingStore),
     profileStore: inject(BankProfileStore),
     ruleStore: inject(BankRuleStore),
@@ -83,6 +86,8 @@ export const BankImportStore = signalStore(
     // The matcher pre-assigns this account; without it a linked row would keep a rule's revenue account
     // and never be revisited (revenue booked twice). '' = config not loaded or no account configured.
     receivablesAccountKey: computed(() => store.accountingStore.configLoaded() ? (store.accountingStore.config()?.receivablesAccountKey ?? '') : ''),
+    // spec 1.85: debits are linked to open bills only once the payables account is known (same reason as above)
+    payablesAccountKey: computed(() => store.accountingStore.configLoaded() ? (store.accountingStore.config()?.payablesAccountKey ?? '') : ''),
   })),
   withComputed(store => ({
     counts: computed(() => {
@@ -197,9 +202,14 @@ export const BankImportStore = signalStore(
           invoicesFailed = true;
         }
       }
-      const { rows: mapped, matched } = receivablesAccountKey
+      const { rows: invoiceMatched, matched } = receivablesAccountKey
         ? matchInvoicePayments(ruled, invoices, { titlePrefix: store.i18n.invoice_payment_title(), receivablesAccountKey })
         : { rows: ruled, matched: 0 };
+      // debits that pay an open bill (spec 1.85 phase 2), after the invoices; only with a known payables account
+      const { bills, billsFailed } = await this.readOpenBills(accountingTenantId);
+      const { rows: mapped, matched: billsMatched } = store.payablesAccountKey()
+        ? matchBillPayments(invoiceMatched, bills, { titlePrefix: store.i18n.bill_payment_title(), payablesAccountKey: store.payablesAccountKey() })
+        : { rows: invoiceMatched, matched: 0 };
       if (mapped.length > 0) {
         const ok = await store.rowService.createMany(mapped);
         if (!ok) {
@@ -218,6 +228,7 @@ export const BankImportStore = signalStore(
         `${store.i18n.import_summary_mapped()}: ${mapped.filter(r => r.status === 'mapped').length}`,
         `${store.i18n.import_summary_unmapped()}: ${mapped.filter(r => r.status === 'unmapped').length}`,
         invoicesFailed ? store.i18n.import_summary_invoices_failed() : `${store.i18n.import_summary_invoices()}: ${matched}`,
+        ...(store.payablesAccountKey() ? [billsFailed ? store.i18n.import_summary_bills_failed() : `${store.i18n.import_summary_bills()}: ${billsMatched}`] : []),
         ...(warnings.length ? [`${store.i18n.import_summary_warnings()}:`, ...warnings.map(w => store.warningText(w))] : []),
       ].join('\n');
       await store.alertService.confirm(`${store.i18n.import_summary_title()}\n${summary}`);
@@ -243,16 +254,22 @@ export const BankImportStore = signalStore(
             invoicesFailed = true;
           }
         }
-        const rows = receivablesAccountKey
+        const invoiceMatched = receivablesAccountKey
           ? matchInvoicePayments(ruled, invoices, { titlePrefix: store.i18n.invoice_payment_title(), receivablesAccountKey }).rows
           : ruled;
+        const { bills, billsFailed } = await this.readOpenBills(store.accountingTenantId());
+        const rows = store.payablesAccountKey()
+          ? matchBillPayments(invoiceMatched, bills, { titlePrefix: store.i18n.bill_payment_title(), payablesAccountKey: store.payablesAccountKey() }).rows
+          : invoiceMatched;
         const changed = rows.filter((r, i) => r.status !== open[i].status || r.ruleKey !== open[i].ruleKey || r.title !== open[i].title || r.accountKey !== open[i].accountKey
-          || r.invoiceKey !== open[i].invoiceKey || r.paymentReference !== open[i].paymentReference || r.vatCodeKey !== open[i].vatCodeKey
+          || r.invoiceKey !== open[i].invoiceKey || (r.billKey ?? '') !== (open[i].billKey ?? '') || r.paymentReference !== open[i].paymentReference || r.vatCodeKey !== open[i].vatCodeKey
           || (r.splits?.length ?? 0) !== (open[i].splits?.length ?? 0));
         const ok = changed.length === 0 ? true : await store.rowService.updateMany(changed);
         store.rowsResource.reload();
         if (!ok) { await store.alertService.confirm(store.i18n.update_error()); return; }
-        await store.alertService.showToast(invoicesFailed ? `${store.i18n.apply_rules_conf()} ${store.i18n.import_summary_invoices_failed()}` : store.i18n.apply_rules_conf());
+        const failedNote = [invoicesFailed ? store.i18n.import_summary_invoices_failed() : '', billsFailed ? store.i18n.import_summary_bills_failed() : '']
+          .filter((t) => !!t).join(' ');
+        await store.alertService.showToast(failedNote ? `${store.i18n.apply_rules_conf()} ${failedNote}` : store.i18n.apply_rules_conf());
       } catch (ex) {
         console.error('BankImportStore.applyRulesToOpenRows -> ERROR:', ex);
         store.rowsResource.reload();
@@ -279,16 +296,26 @@ export const BankImportStore = signalStore(
           `${store.i18n.post_summary_failed()}: ${total.failed.length}`,
           ...total.failed.map(f => `${f.rowKey.slice(0, 8)}… ${store.errorText(f.reason)}`),
           // the booking is posted; the matched invoice stays open — the treasurer settles it by hand
-          ...total.unsettled.map(u => fill(store.i18n.post_unsettled(), {
-            invoice: titles.get(u.rowKey) || u.invoiceKey,
-            reason: store.i18n[unsettledReasonKey(u.reason)](),
-          })),
+          ...total.unsettled.map(u => u.billKey
+            ? fill(store.i18n.post_unsettled_bill(), { bill: titles.get(u.rowKey) || u.billKey, reason: store.i18n[unsettledReasonKey(u.reason)]() })
+            : fill(store.i18n.post_unsettled(), { invoice: titles.get(u.rowKey) || u.invoiceKey, reason: store.i18n[unsettledReasonKey(u.reason)]() })),
         ];
         await store.alertService.confirm(`${store.i18n.post_summary_title()}\n${lines.join('\n')}`);
       } catch (ex) {
         console.error('BankImportStore.post -> ERROR:', ex);
         store.rowsResource.reload();
         await store.alertService.confirm(store.errorText('unknown'));
+      }
+    },
+
+    /** The open bills to match debits against (spec 1.85); [] without a payables account. A failed read is reported, never thrown. */
+    async readOpenBills(accountingTenantId: string): Promise<{ bills: BillModel[]; billsFailed: boolean }> {
+      if (!store.payablesAccountKey()) return { bills: [], billsFailed: false };
+      try {
+        return { bills: await store.billService.listOpen(accountingTenantId), billsFailed: false };
+      } catch (ex) {
+        console.error('BankImportStore.readOpenBills -> bills unreadable:', ex);
+        return { bills: [], billsFailed: true };
       }
     },
 

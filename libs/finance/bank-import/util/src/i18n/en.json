@@ -6,6 +6,7 @@
   "status": { "unmapped": "open", "mapped": "mapped", "posted": "posted", "error": "Error", "all": "all", "open": "not posted" },
   "header": { "date": "Date", "title": "Booking text", "payee": "Payee", "amount": "Amount" },
   "invoice": { "paymentTitle": "Payment invoice", "chip": "Invoice" },
+  "bill": { "paymentTitle": "Supplier payment", "chip": "Supplier bill" },
   "fee": { "label": "Fee", "netLabel": "net" },
   "import": {
     "file": "Import file",
@@ -18,6 +19,8 @@
       "unmapped": "without a rule, open",
       "invoices": "Invoices matched",
       "invoicesFailed": "Invoices could not be matched this time.",
+      "bills": "supplier bills matched",
+      "billsFailed": "Supplier bills could not be matched this time.",
       "warnings": "Notices"
     },
     "cancelled": "The import was cancelled. Nothing was saved."
@@ -54,7 +57,9 @@
       "overpayment": "The payment is higher than the open amount. The booking is recorded; please settle the invoice by hand.",
       "notPayable": "The invoice is already paid or cancelled.",
       "noReceivablesCredit": "The line was not booked to the receivables account, so the invoice stays open.",
-      "other": "The payment could not be recorded on the invoice automatically. The booking is recorded; please check the invoice."
+      "other": "The payment could not be recorded on the invoice automatically. The booking is recorded; please check the invoice.",
+      "billLine": "Supplier bill not settled: {bill} – {reason}",
+      "noPayablesDebit": "The row was not booked on the payables account, so the supplier bill stays open."
     }
   },
   "applyRules": { "label": "Apply rules", "conf": "The rules were applied to all open lines." },

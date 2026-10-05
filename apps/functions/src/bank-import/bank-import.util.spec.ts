@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildBankBookingHeader, buildBankBookingLines, feeAmountOf, hasFeeLine, invoiceSettlement, isValidSplit, mainPartAmountOf, receivablesCredit, withCostCenterKeys, buildJournalBookingHeader, buildJournalBookingLines, fiscalYear, JournalEntry, periodKeyFor, RowDoc } from './bank-import.util';
+import { buildBankBookingHeader, buildBankBookingLines, feeAmountOf, hasFeeLine, invoiceSettlement, billSettlement, payablesDebit, isValidSplit, mainPartAmountOf, receivablesCredit, withCostCenterKeys, buildJournalBookingHeader, buildJournalBookingLines, fiscalYear, JournalEntry, periodKeyFor, RowDoc } from './bank-import.util';
 
 const row = (p: Partial<RowDoc>): RowDoc => ({
   importKey: 'k', date: '20250714', rawText: 'KAUF BEXIO AG', payee: 'BEXIO AG', title: 'Bexio', accountKey: '6570', vatCodeKey: 'VST',
@@ -282,4 +282,30 @@ describe('invoiceSettlement (spec 1.2 §4.3 / 1.76 D6 link rule)', () => {
     const paid = [{ date: '20260901', amount: 10000, bankAccountKey: 'scs-1020', bookingKey: 'bank-a' }];
     expect(settle(invoice({ state: 'paid', payments: paid }))).toEqual({ skip: 'not-payable,overpayment' });
   });
+});
+
+describe('billSettlement (spec 1.85 phase 2)', () => {
+  const bill = (p: Record<string, unknown> = {}) => ({
+    state: 'todo', totalAmount: { amount: 3900 }, payments: [], accountingTenantId: 'scs', tenants: ['scs'], ...p,
+  });
+  const books = { accountingTenantId: 'scs', tenantId: 'scs', bexioBackend: false };
+  const settle = (b: ReturnType<typeof bill> | undefined, amount = 3900, bk = books) => billSettlement(b, bk, amount, '20260903', 'bank-k', 'scs0077');
+
+  it('the payables debit of a bank booking settles the bill', () => {
+    expect(settle(bill())).toEqual({ patch: {
+      payments: [{ date: '20260903', amount: 3900, type: 'MANUAL', bookingKey: 'bank-k', bankAccountKey: 'scs0077' }], state: 'paid', paymentDate: '20260903',
+    } });
+  });
+  it('a partial debit keeps the bill open', () => expect(settle(bill(), 1000)).toMatchObject({ patch: { state: 'todo' } }));
+  it('skips bexio books, missing, foreign and other books, no debit, replays and closed bills', () => {
+    expect(settle(bill(), 3900, { ...books, bexioBackend: true })).toEqual({ skip: 'bexio-backend' });
+    expect(settle(undefined)).toEqual({ skip: 'missing' });
+    expect(settle(bill({ tenants: ['gss'] }))).toEqual({ skip: 'other-tenant' });
+    expect(settle(bill({ accountingTenantId: 'gss' }))).toEqual({ skip: 'other-books' });
+    expect(settle(bill(), 0)).toEqual({ skip: 'no-payables-debit' });
+    expect(settle(bill({ payments: [{ date: '1', amount: 100, type: 'MANUAL', bookingKey: 'bank-k' }] }))).toEqual({ skip: 'already-recorded' });
+    expect(settle(bill({ state: 'paid' }))).toEqual({ skip: 'not-payable' });
+  });
+  it('payablesDebit sums the debit lines on the payables account', () =>
+    expect(payablesDebit([{ accountKey: 'scs0121', debitAmount: { amount: 3900 } }, { accountKey: 'scs0077', creditAmount: { amount: 3900 } }], 'scs0121')).toBe(3900));
 });

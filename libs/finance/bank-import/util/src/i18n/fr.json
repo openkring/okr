@@ -6,6 +6,7 @@
   "status": { "unmapped": "ouverte", "mapped": "attribuée", "posted": "comptabilisée", "error": "Erreur", "all": "toutes", "open": "non comptabilisée" },
   "header": { "date": "Date", "title": "Texte de comptabilisation", "payee": "Contrepartie", "amount": "Montant" },
   "invoice": { "paymentTitle": "Paiement facture", "chip": "Facture" },
+  "bill": { "paymentTitle": "Paiement fournisseur", "chip": "Facture fournisseur" },
   "fee": { "label": "Frais", "netLabel": "net" },
   "import": {
     "file": "Importer un fichier",
@@ -18,6 +19,8 @@
       "unmapped": "sans règle, ouvertes",
       "invoices": "Factures attribuées",
       "invoicesFailed": "Les factures n'ont pas pu être attribuées cette fois.",
+      "bills": "factures fournisseurs attribuées",
+      "billsFailed": "Les factures fournisseurs n'ont pas pu être attribuées cette fois.",
       "warnings": "Remarques"
     },
     "cancelled": "L'import a été annulé. Rien n'a été enregistré."
@@ -54,7 +57,9 @@
       "overpayment": "Le paiement dépasse le montant ouvert. L'écriture est enregistrée, solde la facture à la main.",
       "notPayable": "La facture est déjà payée ou annulée.",
       "noReceivablesCredit": "La ligne n'a pas été comptabilisée sur le compte débiteurs, la facture reste donc ouverte.",
-      "other": "Le paiement n'a pas pu être enregistré automatiquement sur la facture. L'écriture est enregistrée, vérifie la facture."
+      "other": "Le paiement n'a pas pu être enregistré automatiquement sur la facture. L'écriture est enregistrée, vérifie la facture.",
+      "billLine": "Facture fournisseur non soldée : {bill} – {reason}",
+      "noPayablesDebit": "La ligne n'a pas été comptabilisée sur le compte fournisseurs, la facture fournisseur reste donc ouverte."
     }
   },
   "applyRules": { "label": "Appliquer les règles", "conf": "Les règles ont été appliquées à toutes les lignes ouvertes." },

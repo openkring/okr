@@ -6,6 +6,7 @@
   "status": { "unmapped": "aperta", "mapped": "assegnata", "posted": "registrata", "error": "Errore", "all": "tutte", "open": "non registrata" },
   "header": { "date": "Data", "title": "Testo di registrazione", "payee": "Controparte", "amount": "Importo" },
   "invoice": { "paymentTitle": "Pagamento fattura", "chip": "Fattura" },
+  "bill": { "paymentTitle": "Pagamento fornitore", "chip": "Fattura fornitore" },
   "fee": { "label": "Commissione", "netLabel": "netto" },
   "import": {
     "file": "Importa file",
@@ -18,6 +19,8 @@
       "unmapped": "senza regola, aperte",
       "invoices": "Fatture abbinate",
       "invoicesFailed": "Questa volta non è stato possibile abbinare le fatture.",
+      "bills": "fatture dei fornitori abbinate",
+      "billsFailed": "Questa volta non è stato possibile abbinare le fatture dei fornitori.",
       "warnings": "Avvisi"
     },
     "cancelled": "L'importazione è stata annullata. Non è stato salvato nulla."
@@ -54,7 +57,9 @@
       "overpayment": "Il pagamento supera l'importo aperto. La registrazione è fatta; salda la fattura a mano.",
       "notPayable": "La fattura è già pagata o annullata.",
       "noReceivablesCredit": "La riga non è stata registrata sul conto debitori, quindi la fattura resta aperta.",
-      "other": "Non è stato possibile registrare il pagamento sulla fattura in automatico. La registrazione è fatta; controlla la fattura."
+      "other": "Non è stato possibile registrare il pagamento sulla fattura in automatico. La registrazione è fatta; controlla la fattura.",
+      "billLine": "Fattura del fornitore non saldata: {bill} – {reason}",
+      "noPayablesDebit": "La riga non è stata registrata sul conto creditori, quindi la fattura del fornitore resta aperta."
     }
   },
   "applyRules": { "label": "Applica regole", "conf": "Le regole sono state applicate a tutte le righe aperte." },
