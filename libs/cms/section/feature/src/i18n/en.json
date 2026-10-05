@@ -122,6 +122,22 @@
     "label": "Article",
     "zoomed": "Enlarged image view"
   },
+  "contract": {
+    "confirm": {
+      "header": "Apply for {kindName}",
+      "message": "Is your information correct? {name}, {street}, {zipCity}. Date: {date}. Once approved, you will receive the contract by email to sign.",
+      "ok": "Submit request",
+      "cancel": "Cancel"
+    },
+    "requested": "Your request is on its way. You can follow the progress in the chat with the committee.",
+    "refused": {
+      "notActive": "You can submit a request as an active member.",
+      "openRequest": "You already have an open request or a valid contract.",
+      "noAddress": "Please add your postal address to your profile first.",
+      "cooldown": "Your request has only just been submitted."
+    },
+    "error": "The request could not be submitted. Please try again later."
+  },
   "button": {
     "name": "Button",
     "label": "Button",

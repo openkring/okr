@@ -122,6 +122,22 @@
     "label": "Artikel",
     "zoomed": "Vergrösserte Bildansicht"
   },
+  "contract": {
+    "confirm": {
+      "header": "{kindName} beantragen",
+      "message": "Stimmen deine Angaben? {name}, {street}, {zipCity}. Datum: {date}. Nach der Bewilligung bekommst du den Vertrag per E-Mail zum Unterschreiben.",
+      "ok": "Antrag stellen",
+      "cancel": "Abbrechen"
+    },
+    "requested": "Dein Antrag ist unterwegs. Den weiteren Verlauf findest du im Chat mit dem Ausschuss.",
+    "refused": {
+      "notActive": "Einen Antrag kannst du als Aktivmitglied stellen.",
+      "openRequest": "Du hast bereits einen offenen Antrag oder einen gültigen Vertrag.",
+      "noAddress": "Bitte ergänze zuerst deine Postadresse in deinem Profil.",
+      "cooldown": "Dein Antrag wurde eben erst übermittelt."
+    },
+    "error": "Der Antrag konnte nicht übermittelt werden. Bitte versuche es später nochmals."
+  },
   "button": {
     "name": "Button",
     "label": "Button",

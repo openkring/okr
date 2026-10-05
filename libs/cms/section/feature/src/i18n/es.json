@@ -122,6 +122,22 @@
     "label": "Artículo",
     "zoomed": "Vista de imagen ampliada"
   },
+  "contract": {
+    "confirm": {
+      "header": "Solicitar {kindName}",
+      "message": "¿Son correctos tus datos? {name}, {street}, {zipCity}. Fecha: {date}. Tras la aprobación recibirás el contrato por correo electrónico para firmarlo.",
+      "ok": "Enviar solicitud",
+      "cancel": "Cancelar"
+    },
+    "requested": "Tu solicitud está en camino. Puedes seguir el proceso en el chat con el comité.",
+    "refused": {
+      "notActive": "Puedes enviar una solicitud como miembro activo.",
+      "openRequest": "Ya tienes una solicitud abierta o un contrato válido.",
+      "noAddress": "Primero añade tu dirección postal en tu perfil.",
+      "cooldown": "Tu solicitud se acaba de enviar."
+    },
+    "error": "No se pudo enviar la solicitud. Inténtalo de nuevo más tarde."
+  },
   "button": {
     "name": "Botón",
     "label": "Botón",

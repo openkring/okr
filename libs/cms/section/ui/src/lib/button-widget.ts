@@ -61,6 +61,8 @@ export class ButtonWidget {
   /** ButtonAction.Workflow: the press itself is the event. Deliberately NOT `clicked`, whose
    *  payload is the modal-config string the section resolves through the modal registry. */
   public workflow = output<void>();
+  /** ButtonAction.Contract (spec 1.87): the section runs the request; the kind is read server-side. */
+  public contract = output<void>();
 
   private readonly imgixBaseUrl = this.env.services.imgixBaseUrl;
 
@@ -122,6 +124,10 @@ export class ButtonWidget {
     // single most likely implementation bug in spec 2026-08-29 §2, and it is called out there.
     if (this.actionType() === ButtonAction.Workflow) {
       this.workflow.emit();
+      return;
+    }
+    if (this.actionType() === ButtonAction.Contract) {
+      this.contract.emit();
       return;
     }
     const url = this.url();

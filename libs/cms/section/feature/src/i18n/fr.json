@@ -122,6 +122,22 @@
     "label": "Article",
     "zoomed": "Vue d'image agrandie"
   },
+  "contract": {
+    "confirm": {
+      "header": "Demander : {kindName}",
+      "message": "Tes informations sont-elles correctes ? {name}, {street}, {zipCity}. Date : {date}. Une fois la demande approuvée, tu recevras le contrat par e-mail pour le signer.",
+      "ok": "Envoyer la demande",
+      "cancel": "Annuler"
+    },
+    "requested": "Ta demande est en route. Tu peux suivre la suite dans le chat avec le comité.",
+    "refused": {
+      "notActive": "Tu peux faire une demande en tant que membre actif.",
+      "openRequest": "Tu as déjà une demande en cours ou un contrat valable.",
+      "noAddress": "Ajoute d'abord ton adresse postale dans ton profil.",
+      "cooldown": "Ta demande vient d'être envoyée."
+    },
+    "error": "La demande n'a pas pu être envoyée. Réessaie plus tard."
+  },
   "button": {
     "name": "Bouton",
     "label": "Bouton",

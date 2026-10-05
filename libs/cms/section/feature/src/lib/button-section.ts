@@ -4,7 +4,7 @@ import {} from '@capacitor/google-maps';
 
 import { ButtonSection, ViewPosition } from '@okr/shared-models';
 import { OptionalCardHeader, Spinner } from '@okr/shared-ui';
-import { warn } from '@okr/shared-util-core';
+import { fill, warn } from '@okr/shared-util-core';
 
 import { isReservation } from '@okr/relationship-reservation-util';
 import { ReservationService } from '@okr/relationship-reservation-data-access';
@@ -13,7 +13,11 @@ import { ButtonWidget, EmergencyButtonWidget } from '@okr/cms-section-ui';
 import { resolveButtonModal } from '@okr/cms-section-util';
 import { SectionStore } from './section.store';
 
-
+/** Result of the `requestContract` callable (spec 1.87); re-declared, the client never imports functions code. */
+type ContractRequestResult =
+  | { preview: { name: string; street: string; zipCity: string; date: string; kindName: string } }
+  | { requested: true }
+  | { refused: 'notActive' | 'openRequest' | 'noAddress' | 'cooldown' };
 
 @Component({
   selector: 'okr-button-section',
@@ -52,7 +56,7 @@ import { SectionStore } from './section.store';
               <ion-grid>
                 <ion-row>
                   <ion-col [size]="colSizeButton()">
-                    <okr-button-widget [section]="section" [i18n]="store.i18n" [editMode]="editMode()" (clicked)="onClick($event)" (workflow)="onWorkflow()" />
+                    <okr-button-widget [section]="section" [i18n]="store.i18n" [editMode]="editMode()" (clicked)="onClick($event)" (workflow)="onWorkflow()" (contract)="onContract()" />
                   </ion-col>
                   <ion-col [size]="colSizeText()">
                     <div [innerHTML]="content()"></div>
@@ -67,7 +71,7 @@ import { SectionStore } from './section.store';
                     <div [innerHTML]="content()"></div>
                   </ion-col>
                   <ion-col [size]="colSizeButton()">
-                    <okr-button-widget [section]="section" [i18n]="store.i18n" [editMode]="editMode()" (clicked)="onClick($event)" (workflow)="onWorkflow()" />
+                    <okr-button-widget [section]="section" [i18n]="store.i18n" [editMode]="editMode()" (clicked)="onClick($event)" (workflow)="onWorkflow()" (contract)="onContract()" />
                   </ion-col>
                 </ion-row>
               </ion-grid>
@@ -76,7 +80,7 @@ import { SectionStore } from './section.store';
               <ion-grid>
                 <ion-row>
                   <ion-col size="12">
-                    <okr-button-widget [section]="section" [i18n]="store.i18n" [editMode]="editMode()" (clicked)="onClick($event)" (workflow)="onWorkflow()" />
+                    <okr-button-widget [section]="section" [i18n]="store.i18n" [editMode]="editMode()" (clicked)="onClick($event)" (workflow)="onWorkflow()" (contract)="onContract()" />
                   </ion-col>
                 </ion-row>
                 <ion-row>
@@ -95,13 +99,13 @@ import { SectionStore } from './section.store';
                 </ion-row>
                 <ion-row>
                   <ion-col size="12">
-                    <okr-button-widget [section]="section" [i18n]="store.i18n" [editMode]="editMode()" (clicked)="onClick($event)" (workflow)="onWorkflow()" />
+                    <okr-button-widget [section]="section" [i18n]="store.i18n" [editMode]="editMode()" (clicked)="onClick($event)" (workflow)="onWorkflow()" (contract)="onContract()" />
                   </ion-col>
                 </ion-row>
               </ion-grid>
             }
             @default {  <!-- VP.None -->
-              <okr-button-widget [section]="section" [i18n]="store.i18n" [editMode]="editMode()" (clicked)="onClick($event)" (workflow)="onWorkflow()" />
+              <okr-button-widget [section]="section" [i18n]="store.i18n" [editMode]="editMode()" (clicked)="onClick($event)" (workflow)="onWorkflow()" (contract)="onContract()" />
             }
           }
         }
@@ -174,6 +178,55 @@ export class ButtonSectionComponent {
       // A failed trigger must never break the page. The cooldown path does not throw at all.
       warn('ButtonSectionComponent.onWorkflow: ' + ex);
     }
+  }
+
+  /**
+   * ButtonAction.Contract (spec 1.87 §6.1). Two calls: the first returns the preview or a refusal —
+   * so an ineligible member never sees the dialog — the second submits.
+   */
+  protected async onContract(): Promise<void> {
+    const sectionKey = this.section()?.okey ?? '';
+    if (!sectionKey) return;
+    const i18n = this.store.i18n;
+    const refusal = (r: 'notActive' | 'openRequest' | 'noAddress' | 'cooldown'): string => {
+      const texts = {
+        notActive: i18n.contract_refused_notActive,
+        openRequest: i18n.contract_refused_openRequest,
+        noAddress: i18n.contract_refused_noAddress,
+        cooldown: i18n.contract_refused_cooldown,
+      };
+      return texts[r]();
+    };
+    try {
+      const { getFunctions, httpsCallable } = await import('firebase/functions');
+      const { getApp } = await import('firebase/app');
+      const fn = httpsCallable<{ tenantId: string; sectionKey: string; confirm: boolean }, ContractRequestResult>(
+        getFunctions(getApp(), 'europe-west6'), 'requestContract');
+      const tenantId = this.store.tenantId();
+      const first = (await fn({ tenantId, sectionKey, confirm: false })).data;
+      if ('refused' in first) { await this.toast(refusal(first.refused)); return; }
+      if (!('preview' in first)) return;
+      const alert = await this.store.alertController.create({
+        header: fill(i18n.contract_confirm_header(), first.preview),
+        message: fill(i18n.contract_confirm_message(), first.preview),
+        buttons: [
+          { text: i18n.contract_confirm_cancel(), role: 'cancel' },
+          { text: i18n.contract_confirm_ok(), role: 'confirm' },
+        ],
+      });
+      await alert.present();
+      if ((await alert.onDidDismiss()).role !== 'confirm') return;
+      const second = (await fn({ tenantId, sectionKey, confirm: true })).data;
+      await this.toast('refused' in second ? refusal(second.refused) : i18n.contract_requested());
+    } catch (ex) {
+      warn('ButtonSectionComponent.onContract: ' + ex);
+      await this.toast(i18n.contract_error());
+    }
+  }
+
+  private async toast(message: string): Promise<void> {
+    const t = await this.store.toastController.create({ message, duration: 4000, position: 'bottom' });
+    await t.present();
   }
 
   /** Any form-builder definition, behind any button, with no code per form. */

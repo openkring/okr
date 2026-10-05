@@ -122,6 +122,22 @@
     "label": "Articolo",
     "zoomed": "Vista immagine ingrandita"
   },
+  "contract": {
+    "confirm": {
+      "header": "Richiedi: {kindName}",
+      "message": "I tuoi dati sono corretti? {name}, {street}, {zipCity}. Data: {date}. Dopo l'approvazione riceverai il contratto per e-mail da firmare.",
+      "ok": "Invia richiesta",
+      "cancel": "Annulla"
+    },
+    "requested": "La tua richiesta è in viaggio. Puoi seguire gli sviluppi nella chat con il comitato.",
+    "refused": {
+      "notActive": "Puoi inviare una richiesta come membro attivo.",
+      "openRequest": "Hai già una richiesta aperta o un contratto valido.",
+      "noAddress": "Aggiungi prima il tuo indirizzo postale nel tuo profilo.",
+      "cooldown": "La tua richiesta è stata appena inviata."
+    },
+    "error": "Non è stato possibile inviare la richiesta. Riprova più tardi."
+  },
   "button": {
     "name": "Pulsante",
     "label": "Pulsante",
