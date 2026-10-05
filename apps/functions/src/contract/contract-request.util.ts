@@ -20,8 +20,12 @@ export interface EligibilityInput {
   memberships: DocData[];        // the person's memberships (any org)
   approvals: DocData[];          // approvals whose subjectKey is 'person.<key>', each with its `okey`
   contracts: DocData[];          // contracts listing the person in partyPersonKeys
+  esignRuns: DocData[];          // esignList records of the approved approvals (`sourceRef`, `documentStatus`)
   postalAddress: PostalAddress | undefined;
 }
+
+/** Terminal esign states that will never produce a signed PDF. */
+const DEAD_RUN = ['rejected', 'withdrawn', 'error'];
 
 const str = (v: unknown): string => (v === undefined || v === null ? '' : String(v)).trim();
 
@@ -46,12 +50,20 @@ function hasOpenRequest(input: EligibilityInput): boolean {
   if (contractOpen) return true;
   // pending = waiting for the committee; approved WITHOUT a filed contract = signing in progress
   // (the contract only exists once signed). An approved request whose contract exists is decided
-  // by that contract's state above.
+  // by that contract's state above. Signing is in progress while there is no run yet (being set
+  // up) or at least one run is still alive; when every run ended rejected/withdrawn/error the
+  // request is dead and must not block a new one forever.
   const filed = new Set(input.contracts.map((c) => str(c['sourceRef'])));
+  const signingAlive = (sourceRef: string): boolean => {
+    const runs = input.esignRuns.filter((r) => str(r['sourceRef']) === sourceRef);
+    return runs.length === 0 || runs.some((r) => !DEAD_RUN.includes(str(r['documentStatus'])));
+  };
   return input.approvals.some((a) => {
     if (a['isArchived'] === true || str(a['kind']) !== input.kind) return false;
     const state = str(a['state']);
-    return state === 'pending' || (state === 'approved' && !filed.has(`approval.${str(a['okey'])}`));
+    if (state === 'pending') return true;
+    const sourceRef = `approval.${str(a['okey'])}`;
+    return state === 'approved' && !filed.has(sourceRef) && signingAlive(sourceRef);
   });
 }
 

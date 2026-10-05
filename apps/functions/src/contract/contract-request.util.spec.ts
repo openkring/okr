@@ -33,6 +33,7 @@ describe('checkContractEligibility', () => {
     memberships: [m()],
     approvals: [] as Record<string, unknown>[],
     contracts: [] as Record<string, unknown>[],
+    esignRuns: [] as Record<string, unknown>[],
     postalAddress: { street: 'Seestrasse 1', zipCity: '8712 Stäfa' },
   };
   it('passes an active member without open requests', () => {
@@ -49,6 +50,25 @@ describe('checkContractEligibility', () => {
   });
   it('refuses an approved request whose contract is not filed yet (signing in progress)', () => {
     expect(checkContractEligibility({ ...base, approvals: [{ okey: 'ap1', kind: 'skiffPlatz', state: 'approved' }] })).toBe('openRequest');
+  });
+  const approvedAp1 = [{ okey: 'ap1', kind: 'skiffPlatz', state: 'approved' }];
+  it('an approved request whose every signature run failed does not block a new one', () => {
+    expect(checkContractEligibility({ ...base, approvals: approvedAp1, esignRuns: [
+      { sourceRef: 'approval.ap1', documentStatus: 'rejected' },
+      { sourceRef: 'approval.ap1', documentStatus: 'withdrawn' },
+      { sourceRef: 'approval.ap1', documentStatus: 'error' },
+    ] })).toBeUndefined();
+  });
+  it('an approved request with one live signature run stays open', () => {
+    expect(checkContractEligibility({ ...base, approvals: approvedAp1, esignRuns: [
+      { sourceRef: 'approval.ap1', documentStatus: 'rejected' },
+      { sourceRef: 'approval.ap1', documentStatus: 'in-progress' },
+    ] })).toBe('openRequest');
+  });
+  it('an approved request without any signature run yet stays open (signing being set up)', () => {
+    expect(checkContractEligibility({ ...base, approvals: approvedAp1, esignRuns: [
+      { sourceRef: 'approval.other', documentStatus: 'rejected' },
+    ] })).toBe('openRequest');
   });
   it('an approved request whose contract has ended does not block a new one', () => {
     expect(checkContractEligibility({ ...base,

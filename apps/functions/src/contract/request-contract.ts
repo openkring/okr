@@ -5,7 +5,7 @@ import { onCall, CallableRequest, HttpsError } from 'firebase-functions/v2/https
 import { getFirestore } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/v2';
 import {
-  ApprovalCollection, ButtonAction, ContractCollection, ContractKindCollection, SectionCollection,
+  ApprovalCollection, ButtonAction, ContractCollection, ContractKindCollection, EsignCollection, SectionCollection,
 } from '@okr/shared-models';
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
 import { DateFormat, convertDateFormatToString, getTodayStr } from '@okr/shared-util-core';
@@ -69,12 +69,28 @@ export const requestContract = onCall(
       .filter((a) => !a['isArchived'] && a['addressChannel'] === 'postal' && inTenant(a));
     const postalAddress = formatPostalAddress(postal.find((a) => a['isFavorite'] === true) ?? postal[0]);
 
+    const ownApprovals = approvals.docs.map((d) => ({ ...d.data(), okey: d.id } as DocData)).filter(inTenant);
+    const ownContracts = contracts.docs.map((d) => d.data()).filter(inTenant);
+    // Only approved, unfiled approvals of this kind need their signature runs: a run that ended
+    // rejected/withdrawn/error must not block a new request forever.
+    const filed = new Set(ownContracts.map((c) => String(c['sourceRef'] ?? '')));
+    const awaitingSignature = ownApprovals
+      .filter((a) => a['isArchived'] !== true && a['kind'] === kind && a['state'] === 'approved')
+      .map((a) => `approval.${a['okey']}`)
+      .filter((ref) => !filed.has(ref));
+    const runSnaps = await Promise.all(awaitingSignature.map((ref) =>
+      db.collection(EsignCollection).where('sourceRef', '==', ref).get()));
+    // esign records carry a singular tenantId, not tenants[]
+    const esignRuns = runSnaps.flatMap((s) => s.docs.map((d) => d.data()))
+      .filter((r) => r['tenantId'] === tenantId);
+
     const refusal = checkContractEligibility({
       eligibility: (kindDoc['eligibility'] as string[]) ?? [],
       orgKey: String(kindDoc['orgKey'] ?? ''), kind, today,
       memberships: memberships.docs.map((d) => d.data()).filter(inTenant),
-      approvals: approvals.docs.map((d) => ({ ...d.data(), okey: d.id })).filter(inTenant),
-      contracts: contracts.docs.map((d) => d.data()).filter(inTenant),
+      approvals: ownApprovals,
+      contracts: ownContracts,
+      esignRuns,
       postalAddress,
     });
     if (refusal) return { refused: refusal };
