@@ -165,10 +165,13 @@ export const InvoiceStore = signalStore(
           toDate: window?.to ?? '',
           linkedKeys: store.linkedPaymentKeys().join(','),
           external: store.accountingStore.isExternallyManaged(),
+          // only a treasurer can record the payment, and only the books' full list knows every linked
+          // booking — «Meine Rechnungen» holds the member's own invoices, so its hints would be wrong
+          enabled: hasRole('treasurer', store.appStore.currentUser()) && store.listId() !== 'my',
         };
       }),
       stream: ({ params }) => {
-        if (!params.receivablesAccountKey || !params.fromDate || params.external) return of([] as InvoicePaymentCandidate[]);
+        if (!params.enabled || !params.receivablesAccountKey || !params.fromDate || params.external) return of([] as InvoicePaymentCandidate[]);
         return from(store.invoiceService.listPaymentHintCandidates(params.accountingTenantId, params.receivablesAccountKey,
           params.linkedKeys ? params.linkedKeys.split(',') : [], params.fromDate, params.toDate)
           .catch((e) => {

@@ -19,6 +19,15 @@ export interface OpenItemDocument {
   openAmount: number;   // Rappen open at the cut-off
 }
 
+/**
+ * A document of the scope whose own bookings on the account do not add up to its open amount at the
+ * cut-off: booked with another amount, booked on another account, or paid by a booking off the account.
+ */
+export interface OpenItemsDocumentDifference extends OpenItemDocument {
+  bookedAmount: number;  // net of the document's bookings on the account (loading the account = +)
+  delta: number;         // openAmount - bookedAmount: its share of the difference
+}
+
 /** A booking on the account that no document claims; `amount` is always positive. */
 export interface OpenItemsBooking {
   bookingKey: string;
@@ -39,8 +48,8 @@ export interface OpenItemsResult {
   documents: OpenItemDocument[];          // open at the cut-off, oldest first
   unclaimedPayments: OpenItemsBooking[];  // clear the account without a document
   unclaimedCharges: OpenItemsBooking[];   // load the account without a document
-  openWithoutBooking: OpenItemDocument[]; // open, but none of its bookings is on the account
-  carriedForward: number;                 // the part of the difference not explained by the rows
+  documentDifferences: OpenItemsDocumentDifference[]; // dated in the scope, booked differently from their open amount
+  carriedForward: number;                 // what the documents and bookings dated before the scope start leave
 }
 
 export interface OpenItemsInput {
@@ -56,7 +65,7 @@ export interface OpenItemsInput {
 
 /** States in which a document is not (yet / any more) an open item. */
 const NOT_OPEN_BILL_STATES = ['draft'];
-const NOT_OPEN_INVOICE_STATES = ['draft', 'issuing', 'cancelled'];
+const NOT_OPEN_INVOICE_STATES = ['draft', 'issuing'];
 
 /** Sum of the payments dated on or before the cut-off. */
 function paidUntil(payments: { date: string; amount: number }[] | undefined, cutoff: string): number {
@@ -64,27 +73,29 @@ function paidUntil(payments: { date: string; amount: number }[] | undefined, cut
 }
 
 /**
- * A migrated document marked paid whose payments do not cover it (bexio carried no payment rows): it
- * counts as paid on its `paymentDate`, or always when that is empty.
+ * A migrated document marked paid without any payment rows (bexio carried none): it counts as paid on
+ * its `paymentDate`, or always when that is empty. A document with payments is judged by their dates.
  */
-function paidByState(state: string, paymentDate: string, cutoff: string): boolean {
-  return state === 'paid' && (!paymentDate || paymentDate <= cutoff);
+function paidByState(state: string, paymentDate: string, payments: unknown[] | undefined, cutoff: string): boolean {
+  return state === 'paid' && (payments ?? []).length === 0 && (!paymentDate || paymentDate <= cutoff);
 }
 
 /** Rappen open on a bill at the cut-off: total minus the payments made by then, never negative. */
 export function billOpenAmountAt(bill: BillModel, cutoff: string): number {
   if (bill.isArchived === true || NOT_OPEN_BILL_STATES.includes(bill.state) || !bill.billDate || bill.billDate > cutoff) return 0;
-  if (paidByState(bill.state, bill.paymentDate ?? '', cutoff)) return 0;
+  if (paidByState(bill.state, bill.paymentDate ?? '', bill.payments, cutoff)) return 0;
   return Math.max(0, (bill.totalAmount?.amount ?? 0) - paidUntil(bill.payments, cutoff));
 }
 
 /**
  * Rappen open on an invoice at the cut-off: total plus the reminder fees charged by then and not waived
- * by then, minus the payments received by then, never negative.
+ * by then, minus the payments received by then, never negative. A cancelled invoice stays open until
+ * its storno date (`cancelledOn`, the date of `invoice-{key}-storno`); without one it is not open.
  */
-export function invoiceOpenAmountAt(invoice: InvoiceModel, cutoff: string): number {
+export function invoiceOpenAmountAt(invoice: InvoiceModel, cutoff: string, cancelledOn = ''): number {
   if (invoice.isArchived === true || NOT_OPEN_INVOICE_STATES.includes(invoice.state) || !invoice.invoiceDate || invoice.invoiceDate > cutoff) return 0;
-  if (paidByState(invoice.state, invoice.paymentDate ?? '', cutoff)) return 0;
+  if (invoice.state === 'cancelled' && (!cancelledOn || cancelledOn <= cutoff)) return 0;
+  if (paidByState(invoice.state, invoice.paymentDate ?? '', invoice.payments, cutoff)) return 0;
   const fees = (invoice.reminders ?? []).reduce((sum, r) => {
     const charged = !!r?.date && r.date <= cutoff;
     const waived = !!r?.waivedAt && r.waivedAt <= cutoff;
@@ -134,31 +145,35 @@ function emptyResult(input: OpenItemsInput): OpenItemsResult {
   return {
     side: input.side, configured: false, cutoff: input.cutoff, start: input.start,
     openTotal: 0, balance: 0, difference: 0,
-    documents: [], unclaimedPayments: [], unclaimedCharges: [], openWithoutBooking: [], carriedForward: 0,
+    documents: [], unclaimedPayments: [], unclaimedCharges: [], documentDifferences: [], carriedForward: 0,
   };
 }
 
 /**
- * Reconciles one side of the books at the cut-off (spec 1.86 D3–D5). The groups and the carried-forward
- * line always add up to the difference:
- * `difference = Σ unclaimedPayments + Σ openWithoutBooking − Σ unclaimedCharges + carriedForward`.
+ * Reconciles one side of the books at the cut-off (spec 1.86 D3–D5). Every posted booking on the
+ * account up to the cut-off belongs to the first document that claims it, or to none. Then
+ * `difference = Σ unclaimedPayments − Σ unclaimedCharges + Σ documentDifferences.delta + carriedForward`,
+ * where the listed rows cover the scope (dated from `start`) and `carriedForward` is exactly what the
+ * documents and unclaimed bookings dated before the scope start contribute.
  */
 export function computeOpenItems(input: OpenItemsInput): OpenItemsResult {
   const { side, accountKey, cutoff, start } = input;
   if (!accountKey) return emptyResult(input);
 
-  // the open documents of this side
+  // a cancelled invoice is open until its storno booking — look the date up among all bookings
+  const bookingDates = new Map(input.bookings.filter((b) => b.status === 'posted' && b.isArchived !== true).map((b) => [b.okey, b.date ?? '']));
   const documents: (OpenItemDocument & { claims: (bookingKey: string) => boolean })[] = side === 'payables'
-    ? input.bills.map((b) => ({
-      kind: 'bill' as const, key: b.okey, label: billLabel(b), date: b.billDate, openAmount: billOpenAmountAt(b, cutoff),
+    ? input.bills.filter((b) => !NOT_OPEN_BILL_STATES.includes(b.state)).map((b) => ({
+      kind: 'bill' as const, key: b.okey, label: billLabel(b), date: b.billDate ?? '', openAmount: billOpenAmountAt(b, cutoff),
       claims: (k: string) => billClaimsBooking(b, k),
     }))
-    : input.invoices.map((i) => ({
-      kind: 'invoice' as const, key: i.okey, label: invoiceLabel(i), date: i.invoiceDate, openAmount: invoiceOpenAmountAt(i, cutoff),
+    : input.invoices.filter((i) => !NOT_OPEN_INVOICE_STATES.includes(i.state)).map((i) => ({
+      kind: 'invoice' as const, key: i.okey, label: invoiceLabel(i), date: i.invoiceDate ?? '',
+      openAmount: invoiceOpenAmountAt(i, cutoff, bookingDates.get(`invoice-${i.okey}-storno`) ?? ''),
       claims: (k: string) => invoiceClaimsBooking(i, k),
     }));
-  const open = documents.filter((d) => d.openAmount > 0)
-    .sort((a, b) => a.date.localeCompare(b.date) || a.key.localeCompare(b.key));
+  documents.sort((a, b) => a.date.localeCompare(b.date) || a.key.localeCompare(b.key));
+  const open = documents.filter((d) => d.openAmount > 0);
 
   // the account's net movement per posted booking up to the cut-off, signed so that + loads the account
   const bookingsByKey = new Map<string, BookingModel>();
@@ -175,7 +190,8 @@ export function computeOpenItems(input: OpenItemsInput): OpenItemsResult {
   }
   const balance = [...net.values()].reduce((s, v) => s + v, 0);
 
-  // bookings on the account that no document of this side claims, from the scope start on
+  // each booking on the account goes to the first (oldest) document that claims it
+  const booked = new Map<string, number>();
   const unclaimedPayments: OpenItemsBooking[] = [];
   const unclaimedCharges: OpenItemsBooking[] = [];
   const sortedKeys = [...net.keys()].sort((a, b) => {
@@ -185,25 +201,33 @@ export function computeOpenItems(input: OpenItemsInput): OpenItemsResult {
   });
   for (const key of sortedKeys) {
     const amount = net.get(key) ?? 0;
+    const owner = documents.find((d) => d.claims(key));
+    if (owner) {
+      booked.set(owner.key, (booked.get(owner.key) ?? 0) + amount);
+      continue;
+    }
     const b = bookingsByKey.get(key) as BookingModel;
-    if (amount === 0 || b.date < start || documents.some((d) => d.claims(key))) continue;
+    if (amount === 0 || b.date < start) continue;
     const row = { bookingKey: key, bookingNo: b.bookingNo ?? 0, date: b.date, title: b.title ?? '', amount: Math.abs(amount) };
     (amount < 0 ? unclaimedPayments : unclaimedCharges).push(row);
   }
 
-  // open documents of the scope none of whose bookings touches the account
-  const onAccount = [...net.keys()];
-  const openWithoutBooking = open
-    .filter((d) => d.date >= start && !onAccount.some((k) => d.claims(k)))
-    .map(toDocument);
+  // documents of the scope whose bookings on the account do not match what is open
+  const documentDifferences: OpenItemsDocumentDifference[] = documents
+    .filter((d) => d.date >= start && d.date <= cutoff)
+    .map((d) => {
+      const bookedAmount = booked.get(d.key) ?? 0;
+      return { ...toDocument(d), bookedAmount, delta: d.openAmount - bookedAmount };
+    })
+    .filter((d) => d.delta !== 0);
 
   const openTotal = open.reduce((s, d) => s + d.openAmount, 0);
   const difference = openTotal - balance;
-  const explained = sumAmounts(unclaimedPayments) + openWithoutBooking.reduce((s, d) => s + d.openAmount, 0) - sumAmounts(unclaimedCharges);
+  const explained = sumAmounts(unclaimedPayments) - sumAmounts(unclaimedCharges) + documentDifferences.reduce((s, d) => s + d.delta, 0);
   return {
     side, configured: true, cutoff, start, openTotal, balance, difference,
     documents: open.map(toDocument),
-    unclaimedPayments, unclaimedCharges, openWithoutBooking,
+    unclaimedPayments, unclaimedCharges, documentDifferences,
     carriedForward: difference - explained,
   };
 }

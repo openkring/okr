@@ -11,7 +11,7 @@ import { formatMinorAmount, Spinner } from '@okr/shared-ui';
 import { convertDateFormatToString, DateFormat, fill } from '@okr/shared-util-core';
 
 import { ReadOnlyBanner } from '@okr/finance-accounting-feature';
-import { OpenItemsResult } from '@okr/finance-reporting-util';
+import { OpenItemsDocumentDifference, OpenItemsResult } from '@okr/finance-reporting-util';
 
 import { OpenItemsStore } from './open-items.store';
 
@@ -121,13 +121,16 @@ import { OpenItemsStore } from './open-items.store';
                       }
                     </ion-list>
                   }
-                  @if (result.openWithoutBooking.length > 0) {
+                  @if (result.documentDifferences.length > 0) {
                     <ion-list>
-                      <ion-list-header>{{ store.i18n.open_items_open_without_booking() }}</ion-list-header>
-                      @for (doc of result.openWithoutBooking; track doc.key) {
+                      <ion-list-header>{{ store.i18n.open_items_document_differences() }}</ion-list-header>
+                      @for (doc of result.documentDifferences; track doc.key) {
                         <ion-item button (click)="store.openDocument(doc)">
-                          <ion-label>{{ store.viewDate(doc.date) }} · {{ doc.label }}</ion-label>
-                          <ion-note slot="end">{{ amount(doc.openAmount) }}</ion-note>
+                          <ion-label>
+                            {{ store.viewDate(doc.date) }} · {{ doc.label }}
+                            <p>{{ differenceDetail(doc) }}</p>
+                          </ion-label>
+                          <ion-note slot="end">{{ amount(doc.delta) }}</ion-note>
                         </ion-item>
                       }
                     </ion-list>
@@ -179,6 +182,10 @@ export class OpenItemsPage {
 
   protected carriedLabel(result: OpenItemsResult): string {
     return fill(this.store.i18n.open_items_carried_forward(), { date: this.store.viewDate(result.start) });
+  }
+
+  protected differenceDetail(doc: OpenItemsDocumentDifference): string {
+    return fill(this.store.i18n.open_items_difference_detail(), { open: this.amount(doc.openAmount), booked: this.amount(doc.bookedAmount) });
   }
 
   protected amount(rappen: number): string {

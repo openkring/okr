@@ -82,7 +82,7 @@ function receivables(input: { invoices?: InvoiceModel[]; entries?: ReturnType<ty
 /** the reconciliation identity every result must satisfy */
 function explained(r: OpenItemsResult): number {
   const sum = (xs: { amount: number }[]) => xs.reduce((s, x) => s + x.amount, 0);
-  return sum(r.unclaimedPayments) + r.openWithoutBooking.reduce((s, d) => s + d.openAmount, 0) - sum(r.unclaimedCharges) + r.carriedForward;
+  return sum(r.unclaimedPayments) + r.documentDifferences.reduce((s, d) => s + d.delta, 0) - sum(r.unclaimedCharges) + r.carriedForward;
 }
 
 describe('billOpenAmountAt', () => {
@@ -168,7 +168,7 @@ describe('computeOpenItems — payables', () => {
     expect(r.documents.map((d) => d.key)).toEqual(['b1']);
     expect(r.unclaimedPayments).toEqual([]);
     expect(r.unclaimedCharges).toEqual([]);
-    expect(r.openWithoutBooking).toEqual([]);
+    expect(r.documentDifferences).toEqual([]);
   });
 
   it('shows a payment booked without linking it (the DSL 09 case)', () => {
@@ -191,8 +191,8 @@ describe('computeOpenItems — payables', () => {
     const b = bill('b1', '20260301', 5000);
     b.bookingKeys = ['m1'];
     const r = payables({ bills: [b], entries: [entry('m1', '20260301', EXPENSE, BANK, 5000)] });
-    expect(r.openWithoutBooking.map((d) => [d.key, d.openAmount])).toEqual([['b1', 5000]]);
-    expect(r.difference).toBe(5000);
+    expect(r.documentDifferences.map((d) => [d.key, d.openAmount, d.bookedAmount, d.delta])).toEqual([['b1', 5000, 0, 5000]]);
+    expect(r).toMatchObject({ difference: 5000, carriedForward: 0 });
     expect(explained(r)).toBe(r.difference);
   });
 
@@ -230,6 +230,39 @@ describe('computeOpenItems — payables', () => {
     expect(r.unclaimedCharges).toEqual([]);
   });
 
+  it('lists a bill whose booking on the account differs from its amount, not as carried forward', () => {
+    const b = bill('b1', '20260301', 50000);
+    b.bookingKeys = ['m1'];
+    const r = payables({ bills: [b], entries: [entry('m1', '20260301', EXPENSE, PAYABLES, 48000)] });
+    expect(r.documentDifferences.map((d) => [d.key, d.openAmount, d.bookedAmount, d.delta])).toEqual([['b1', 50000, 48000, 2000]]);
+    expect(r).toMatchObject({ difference: 2000, carriedForward: 0 });
+  });
+
+  it('lists a paid bill whose linked payment booking is not on the account', () => {
+    const b = bill('b1', '20260301', 5000, 'paid');
+    b.bookingKeys = ['bill-b1'];
+    b.payments = [{ date: '20260310', amount: 5000, type: 'MANUAL', bookingKey: 'x1' }];
+    const r = payables({ bills: [b], entries: [entry('bill-b1', '20260301', EXPENSE, PAYABLES, 5000), entry('x1', '20260310', EXPENSE, BANK, 5000)] });
+    expect(r.documentDifferences.map((d) => [d.key, d.openAmount, d.bookedAmount, d.delta])).toEqual([['b1', 0, 5000, -5000]]);
+    expect(r).toMatchObject({ difference: -5000, carriedForward: 0 });
+    expect(explained(r)).toBe(r.difference);
+  });
+
+  it('keeps a bill marked paid open at a cut-off before its recorded payment', () => {
+    const b = bill('b1', '20260901', 10000, 'paid');
+    b.paymentDate = '';
+    b.payments = [{ date: '20261010', amount: 10000, type: 'MANUAL' }];
+    expect(billOpenAmountAt(b, '20260930')).toBe(10000);
+  });
+
+  it('counts a document dated before the scope start and its bookings as carried forward only', () => {
+    const b = bill('b1', '20251201', 7000);
+    b.bookingKeys = ['k1'];
+    const r = payables({ bills: [b], entries: [entry('k1', '20251201', EXPENSE, PAYABLES, 6000)] });
+    expect(r.documentDifferences).toEqual([]);
+    expect(r).toMatchObject({ difference: 1000, carriedForward: 1000 });
+  });
+
   it('reports not configured without an account', () => {
     const r = payables({ bills: [bill('b1', '20260101', 100)], accountKey: '' });
     expect(r).toMatchObject({ configured: false, openTotal: 0, balance: 0, difference: 0, carriedForward: 0 });
@@ -260,6 +293,18 @@ describe('computeOpenItems — receivables', () => {
     });
     expect(r).toMatchObject({ openTotal: 0, balance: 0, difference: 0, carriedForward: 0 });
     expect(r.documents).toEqual([]);
+  });
+
+  it('keeps a cancelled invoice open until the date of its storno', () => {
+    const i = invoice('i1', '20260601', 30000, 'cancelled');
+    i.bookingKey = 'invoice-i1';
+    const entries = [entry('invoice-i1', '20260601', RECEIVABLES, REVENUE, 30000), entry('invoice-i1-storno', '20261115', REVENUE, RECEIVABLES, 30000)];
+    expect(receivables({ invoices: [i], entries, cutoff: '20260930' })).toMatchObject({ openTotal: 30000, balance: 30000, difference: 0 });
+    expect(receivables({ invoices: [i], entries, cutoff: '20261130' })).toMatchObject({ openTotal: 0, balance: 0, difference: 0 });
+  });
+
+  it('a cancelled invoice without a storno booking is not open', () => {
+    expect(receivables({ invoices: [invoice('i1', '20260601', 30000, 'cancelled')] })).toMatchObject({ openTotal: 0 });
   });
 
   it('lists the open documents oldest first with their open amount at the cut-off', () => {

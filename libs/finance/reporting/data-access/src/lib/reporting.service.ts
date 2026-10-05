@@ -31,22 +31,22 @@ export class ReportingService {
     return this.firestoreService.searchData<BookingLineModel>(BookingLineCollection, query, 'none');
   }
 
-  /** The bills of the books (Offene Posten, spec 1.86), oldest first. */
+  /** The bills of the books (Offene Posten, spec 1.86); desc = the index the bill list uses, the util re-sorts. */
   public getBills(accountingTenantId: string): Observable<BillModel[]> {
     const query = [
       ...getSystemQuery(this.tenantId),
       { key: 'accountingTenantId', operator: '==' as const, value: accountingTenantId },
     ];
-    return this.firestoreService.searchData<BillModel>(BillCollection, query, 'billDate', 'asc');
+    return this.firestoreService.searchData<BillModel>(BillCollection, query, 'billDate', 'desc');
   }
 
-  /** The invoices of the books (Offene Posten, spec 1.86), oldest first. */
+  /** The invoices of the books (Offene Posten, spec 1.86); desc = the index the invoice list uses, the util re-sorts. */
   public getInvoices(accountingTenantId: string): Observable<InvoiceModel[]> {
     const query = [
       ...getSystemQuery(this.tenantId),
       { key: 'accountingTenantId', operator: '==' as const, value: accountingTenantId },
     ];
-    return this.firestoreService.searchData<InvoiceModel>(InvoiceCollection, query, 'invoiceDate', 'asc');
+    return this.firestoreService.searchData<InvoiceModel>(InvoiceCollection, query, 'invoiceDate', 'desc');
   }
 
   public async getAccountBalances(accountingTenantId: string): Promise<AccountBalanceEntry[]> {
