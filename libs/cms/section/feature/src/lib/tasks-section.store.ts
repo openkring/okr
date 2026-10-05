@@ -11,7 +11,6 @@ import { I18nService } from '@okr/shared-i18n';
 
 import { SECTION_I18N_KEYS } from '@okr/cms-section-util';
 import { TaskService } from '@okr/task-data-access';
-import { TaskEditModal } from '@okr/task-feature';
 import { canChangeTask, canDeleteTask, getCompletionPatch, isTask } from '@okr/task-util';
 import { resourceParams } from '@okr/shared-util-angular';
 
@@ -78,6 +77,8 @@ export const TasksStore = signalStore(
       },
 
     async edit(task: TaskModel, readOnly = true): Promise<void> {
+      // dynamic: a static import puts the task feature (and the workflow ui it pulls in) into the dashboard closure
+      const { TaskEditModal } = await import('@okr/task-feature');
       const modal = await store.modalController.create({
         component: TaskEditModal,
         componentProps: {

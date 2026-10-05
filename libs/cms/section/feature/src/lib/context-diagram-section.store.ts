@@ -18,7 +18,6 @@ import { ResponsibilityService } from '@okr/relationship-responsibility-data-acc
 import { PersonService } from '@okr/subject-person-data-access';
 import { AvatarService } from '@okr/avatar-data-access';
 import { GROUP_EDIT_MODAL } from '@okr/subject-group-ui';
-import { OrgEditModal } from '@okr/subject-org-feature';
 import { SECTION_I18N_KEYS } from '@okr/cms-section-util';
 
 // ---------------------------------------------------------------------------
@@ -211,6 +210,8 @@ export const ContextDiagramStore = signalStore(
       } else if (modelType === OrgModelName) {
         const org = store.appStore.getOrg(key);
         if (!org) return;
+        // dynamic: a static import puts the org feature (and the bill feature it pulls in) into the dashboard closure
+        const { OrgEditModal } = await import('@okr/subject-org-feature');
         const modal = await store.modalController.create({
           component: OrgEditModal,
           cssClass: 'wide-modal',

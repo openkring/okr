@@ -12,7 +12,6 @@ import { of } from 'rxjs';
 
 import { GroupService } from '@okr/subject-group-data-access';
 import { GROUP_EDIT_MODAL } from '@okr/subject-group-ui';
-import { OrgEditModal } from '@okr/subject-org-feature';
 import { isOrgchartBlocked, nextOrgchartVisitedKeys, SECTION_I18N_KEYS } from '@okr/cms-section-util';
 
 export interface OrgchartTreeNode {
@@ -197,6 +196,8 @@ export const OrgchartStore = signalStore(
       if (node.modelType === 'org') {
         const org = store.appStore.allOrgs().find(o => o.okey === node.okey);
         if (!org) return;
+        // dynamic: a static import puts the org feature (and the bill feature it pulls in) into the dashboard closure
+        const { OrgEditModal } = await import('@okr/subject-org-feature');
         const modal = await store.modalController.create({
           component: OrgEditModal,
           cssClass: 'wide-modal',
