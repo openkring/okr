@@ -2211,7 +2211,9 @@ const activity: FeatureBlock = {
  * `@okr/shared-*`, `@okr/comment-feature`, `@okr/cms-menu-feature`, `@okr/avatar-*` (three
  * `core: true` blocks, which by the settled convention are never declared) and
  * `@okr/activity-data-access` (`task.service.ts` — `ActivityService.log`, the settled no-edge
- * class). Notably NO `@okr/subject-*` import, which is what makes the reverse edge safe.
+ * class). Since spec 1.88 `task-feature` (`task-edit.modal.ts`) also imports the core
+ * `@okr/system-workflow-*` libs (approval decision card, `ApprovalService`) — the workflow libs are
+ * core, so no block edge is needed. Notably NO `@okr/subject-*` import, which is what makes the reverse edge safe.
  *
  * WHO DEPENDS ON THIS BLOCK, and who deliberately does not — read together, none tells the
  * whole story alone:
