@@ -23,6 +23,7 @@ export const NON_PERSONAL_COLLECTIONS: ReadonlySet<string> = new Set([
   'calendars',
   'categories',
   'commissionEntries',
+  'contract-kinds',
   'cost-centers',
   'crosswordTopics',
   'erasure-log',
