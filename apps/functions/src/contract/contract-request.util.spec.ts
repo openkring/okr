@@ -1,7 +1,7 @@
 // apps/functions/src/contract/contract-request.util.spec.ts
 import { describe, expect, it } from 'vitest';
 import {
-  buildContractPayload, buildSignatureBlocks, checkContractEligibility, formatPostalAddress, isActiveMembership,
+  buildContractPayload, buildSignatureBlocks, checkContractEligibility, formatPostalAddress, isActiveMembership, isActiveOwnership,
 } from './contract-request.util';
 
 const TODAY = '20261005';
@@ -134,5 +134,86 @@ describe('buildContractPayload', () => {
       applicant: { name: 'Anna Muster', street: 'Seestrasse 1', zipCity: '8712 Stäfa' },
       date: '05.10.2026', terms: { rent: '600.00' }, signatureBlocks: [],
     });
+  });
+});
+
+const own = (over: Record<string, unknown> = {}) => ({
+  resourceType: 'locker', isArchived: false, validFrom: '20240101', validTo: '99991231', ...over,
+});
+
+describe('isActiveOwnership', () => {
+  it('an open ownership of the type is active', () => {
+    expect(isActiveOwnership(own(), 'locker', TODAY)).toBe(true);
+  });
+  it('an empty validFrom counts as open', () => {
+    expect(isActiveOwnership(own({ validFrom: '' }), 'locker', TODAY)).toBe(true);
+  });
+  it('an ended ownership is not active, even with state active', () => {
+    expect(isActiveOwnership(own({ validTo: '20261004', state: 'active' }), 'locker', TODAY)).toBe(false);
+  });
+  it('an ownership ending today is still active', () => {
+    expect(isActiveOwnership(own({ validTo: TODAY }), 'locker', TODAY)).toBe(true);
+  });
+  it('a future, archived or other-type ownership is not active', () => {
+    expect(isActiveOwnership(own({ validFrom: '20270101' }), 'locker', TODAY)).toBe(false);
+    expect(isActiveOwnership(own({ isArchived: true }), 'locker', TODAY)).toBe(false);
+    expect(isActiveOwnership(own({ resourceType: 'key' }), 'locker', TODAY)).toBe(false);
+  });
+});
+
+describe('checkContractEligibility — kinds without signers (spec 1.88)', () => {
+  const locker = {
+    eligibility: ['activeMember', 'noOpenRequest', 'noActiveOwnership'],
+    orgKey: 'scs', kind: 'wardrobeLocker', today: TODAY,
+    memberships: [m()],
+    approvals: [] as Record<string, unknown>[],
+    contracts: [] as Record<string, unknown>[],
+    esignRuns: [] as Record<string, unknown>[],
+    postalAddress: undefined,
+    ownerships: [] as Record<string, unknown>[],
+    resourceType: 'locker', requiresAddress: false, hasSigners: false,
+  };
+  it('passes without a postal address when the kind does not require one', () => {
+    expect(checkContractEligibility(locker)).toBeUndefined();
+  });
+  it('refuses a member who already owns one', () => {
+    expect(checkContractEligibility({ ...locker, ownerships: [own()] })).toBe('alreadyOwned');
+  });
+  it('notActive wins over alreadyOwned', () => {
+    expect(checkContractEligibility({ ...locker, memberships: [], ownerships: [own()] })).toBe('notActive');
+  });
+  it('an ended ownership does not block', () => {
+    expect(checkContractEligibility({ ...locker, ownerships: [own({ validTo: '20250101' })] })).toBeUndefined();
+  });
+  it('an approved request without an ownership is still open', () => {
+    expect(checkContractEligibility({ ...locker, approvals: [{ kind: 'wardrobeLocker', state: 'approved', okey: 'a1' }] }))
+      .toBe('openRequest');
+  });
+  it('a rejected request does not block', () => {
+    expect(checkContractEligibility({ ...locker, approvals: [{ kind: 'wardrobeLocker', state: 'rejected', okey: 'a1' }] }))
+      .toBeUndefined();
+  });
+  it('without resourceType, noActiveOwnership checks nothing', () => {
+    expect(checkContractEligibility({ ...locker, resourceType: '', ownerships: [own()] })).toBeUndefined();
+  });
+});
+
+describe('checkContractEligibility — legacy Skiffplatz kind document (Review Focus 1)', () => {
+  it('without the new fields an approved request still follows the signature-run rule', () => {
+    const legacy = {
+      eligibility: ['activeMember', 'noOpenRequest'], orgKey: 'scs', kind: 'skiffPlatz', today: TODAY,
+      memberships: [m()], contracts: [],
+      approvals: [{ kind: 'skiffPlatz', state: 'approved', okey: 'a1' }],
+      esignRuns: [{ sourceRef: 'approval.a1', documentStatus: 'rejected' }],
+      postalAddress: { street: 'Seestrasse 1', zipCity: '8712 Stäfa' },
+    };
+    expect(checkContractEligibility(legacy)).toBeUndefined();
+  });
+  it('without the new fields a missing address is still refused', () => {
+    const legacy = {
+      eligibility: ['activeMember'], orgKey: 'scs', kind: 'skiffPlatz', today: TODAY,
+      memberships: [m()], approvals: [], contracts: [], esignRuns: [], postalAddress: undefined,
+    };
+    expect(checkContractEligibility(legacy)).toBe('noAddress');
   });
 });

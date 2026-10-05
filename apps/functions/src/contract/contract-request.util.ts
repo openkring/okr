@@ -6,7 +6,7 @@ import { ContractSigner } from '@okr/shared-models';
 import { DateFormat, convertDateFormatToString } from '@okr/shared-util-core';
 
 export type DocData = Record<string, unknown>;
-export type EligibilityRefusal = 'notActive' | 'openRequest' | 'noAddress';
+export type EligibilityRefusal = 'notActive' | 'alreadyOwned' | 'openRequest' | 'noAddress';
 
 export interface PostalAddress { street: string; zipCity: string; }
 export interface ResolvedSigner { name: string; email: string; }
@@ -22,6 +22,10 @@ export interface EligibilityInput {
   contracts: DocData[];          // contracts listing the person in partyPersonKeys
   esignRuns: DocData[];          // esignList records of the approved approvals (`sourceRef`, `documentStatus`)
   postalAddress: PostalAddress | undefined;
+  ownerships?: DocData[];        // the person's ownerships (spec 1.88), loaded only for 'noActiveOwnership'
+  resourceType?: string;         // the kind's resource type, '' = none
+  requiresAddress?: boolean;     // undefined = true (legacy kind documents)
+  hasSigners?: boolean;          // undefined = true (legacy kind documents)
 }
 
 /** Terminal esign states that will never produce a signed PDF. */
@@ -41,6 +45,25 @@ export function isActiveMembership(m: DocData, orgKey: string, today: string): b
   if (from && today < from) return false;
   if (to && today > to) return false;
   return true;
+}
+
+/**
+ * Active = an unarchived ownership of the resource type whose validity window contains today
+ * (spec 1.88 D3). `state` is NOT trusted, for the same reason as in isActiveMembership.
+ */
+export function isActiveOwnership(o: DocData, resourceType: string, today: string): boolean {
+  if (o['isArchived'] === true) return false;
+  if (!resourceType || str(o['resourceType']) !== resourceType) return false;
+  const from = str(o['validFrom']);
+  const to = str(o['validTo']);
+  if (from && today < from) return false;
+  if (to && today > to) return false;
+  return true;
+}
+
+function ownsResource(input: EligibilityInput): boolean {
+  const type = input.resourceType ?? '';
+  return (input.ownerships ?? []).some((o) => isActiveOwnership(o, type, input.today));
 }
 
 function hasOpenRequest(input: EligibilityInput): boolean {
@@ -63,7 +86,11 @@ function hasOpenRequest(input: EligibilityInput): boolean {
     const state = str(a['state']);
     if (state === 'pending') return true;
     const sourceRef = `approval.${str(a['okey'])}`;
-    return state === 'approved' && !filed.has(sourceRef) && signingAlive(sourceRef);
+    if (state !== 'approved') return false;
+    // spec 1.88 D5: a kind without signers has no contract to wait for — an approved request
+    // stays open until the handover is recorded as an ownership
+    if (input.hasSigners === false) return !ownsResource(input);
+    return !filed.has(sourceRef) && signingAlive(sourceRef);
   });
 }
 
@@ -71,8 +98,9 @@ function hasOpenRequest(input: EligibilityInput): boolean {
 export function checkContractEligibility(input: EligibilityInput): EligibilityRefusal | undefined {
   if (input.eligibility.includes('activeMember') &&
       !input.memberships.some((m) => isActiveMembership(m, input.orgKey, input.today))) return 'notActive';
+  if (input.eligibility.includes('noActiveOwnership') && ownsResource(input)) return 'alreadyOwned';
   if (input.eligibility.includes('noOpenRequest') && hasOpenRequest(input)) return 'openRequest';
-  if (!input.postalAddress) return 'noAddress';
+  if (input.requiresAddress !== false && !input.postalAddress) return 'noAddress';
   return undefined;
 }
 
