@@ -39,6 +39,7 @@
     "@okr/forms-data-access": "*",
     "@okr/forms-ui": "*",
     "@okr/chat-data-access": "*",
+    "@okr/chat-util": "*",
     "@capacitor/core": "*",
     "@capacitor/geolocation": "*",
     "@okr/content-folder-data-access": "*",

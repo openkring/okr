@@ -46,7 +46,7 @@ const GROUP_COLLECTION = 'groups';
  * `whoami(MATRIX_BOT_TOKEN)`, so pointing that secret at a differently-named account silently
  * un-protects it. Keep them in step.
  */
-const SERVICE_ACCOUNT_LOCALPARTS = new Set(['bk2-bot', 'okrbot', 'bruno']);
+export const SERVICE_ACCOUNT_LOCALPARTS = new Set(['bk2-bot', 'okrbot', 'bruno']);
 
 // Inlined subset of MembershipModel to avoid monorepo cross-bundle imports
 // (same pattern as task/index.ts and calendar/index.ts).
@@ -254,7 +254,7 @@ export interface GroupRoomDrift {
  * Read a room's `m.room.member` state as `localpart → displayname`, counting `join`
  * and `invite` alike (an outstanding invite is a seat that will be taken).
  */
-async function readRoomMemberState(roomId: string, adminToken: string): Promise<Map<string, string>> {
+export async function readRoomMemberState(roomId: string, adminToken: string): Promise<Map<string, string>> {
   const resp = await fetch(
     `${MATRIX_HOMESERVER}/_synapse/admin/v1/rooms/${encodeURIComponent(roomId)}/state`,
     { headers: { Authorization: `Bearer ${adminToken}` } }

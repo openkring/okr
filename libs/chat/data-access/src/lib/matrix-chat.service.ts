@@ -1121,10 +1121,13 @@ export class MatrixChatService {
     const room = this.client.getRoom(roomId);
     if (!room) return;
     const events = room.getLiveTimeline().getEvents();
-    // Walk back to find the latest event that is not a state event
+    // The receipt goes on the latest event of ANY kind, state included. The server counts
+    // notifications AFTER the receipted event, so receipting the last message while a later
+    // join/leave/rename sits behind it leaves that event counted — an unread badge that no
+    // amount of opening the room clears. Skip only unsent local echoes (no server id yet).
     for (let i = events.length - 1; i >= 0; i--) {
       const event = events[i];
-      if (event.getId() && !event.isState()) {
+      if (event.getId() && !event.status) {
         // Unthreaded receipt (3rd arg): clears BOTH main-timeline and thread
         // notifications. getUnreadNotificationCount('total') sums main + every thread,
         // so a threaded receipt leaves thread notifications as a phantom unread badge.

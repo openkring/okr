@@ -18,6 +18,7 @@ import * as MatrixMembershipSync from './matrix-simple/membership-sync';
 import * as MatrixPostPolicy from './matrix-simple/post-policy-sync';
 import * as MatrixGroupNameSync from './matrix-simple/group-name-sync';
 import * as MatrixGroupChatCleanup from './matrix-simple/group-chat-cleanup';
+import * as MatrixChatModeSync from './matrix-simple/chat-mode-sync';
 import * as Rag from './rag';
 import * as Ocr from './ocr';
 import * as Vectorize from './vectorize';
@@ -143,6 +144,8 @@ export const onGroupPostPolicyWritten = MatrixPostPolicy.onGroupPostPolicyWritte
 export const onGroupNameWritten = MatrixGroupNameSync.onGroupNameWritten;
 // Gruppe abgeloest/archiviert/geloescht → Chatraum nachziehen (Marker leeren bzw. purgen)
 export const onGroupChatCleanup = MatrixGroupChatCleanup.onGroupChatCleanup;
+// geschlossene Gruppe (chatMode 'members') / Admin entfernt → Nicht-Mitglieder aus dem Raum
+export const onGroupChatModeWritten = MatrixChatModeSync.onGroupChatModeWritten;
 export const sweepRoomPostPolicies = MatrixPostPolicy.sweepRoomPostPolicies;
 export const syncRoomPostPolicy = MatrixPostPolicy.syncRoomPostPolicy;
 // group-room drift: report room members without a membership, and prune them on demand

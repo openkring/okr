@@ -35,6 +35,7 @@
     { "path": "../../../calevent/ui/tsconfig.lib.json" },
     { "path": "../../../calevent/util/tsconfig.lib.json" },
     { "path": "../../../chat/data-access/tsconfig.lib.json" },
+    { "path": "../../../chat/util/tsconfig.lib.json" },
     { "path": "../../page/data-access/tsconfig.lib.json" },
     { "path": "../data-access/tsconfig.lib.json" },
     { "path": "../ui/tsconfig.lib.json" },

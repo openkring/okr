@@ -5,13 +5,17 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { catchError, combineLatest, from, map, of, startWith, switchMap } from 'rxjs';
 
 import { AppStore } from '@okr/shared-feature';
-import { MatrixRoom } from '@okr/shared-models';
+import { MatrixRoom, PersonModel } from '@okr/shared-models';
 import { I18nService } from '@okr/shared-i18n';
 import { SECTION_I18N_KEYS } from '@okr/cms-section-util';
 
+type ChatUtil = typeof import('@okr/chat-util');
+
 type MessagesSnapshot = {
   status: 'loading' | 'error' | 'ready';
+  /** unread rooms of EVERY tenant — the tenant filter is applied in `rooms` below */
   rooms: MatrixRoom[];
+  chatUtil?: ChatUtil;
 };
 
 export type MessagesState = {
@@ -33,12 +37,11 @@ export const MessagesStore = signalStore(
   })),
   withProps((store) => ({
     roomsWithUnreadResource: rxResource({
-      params: () => ({
-        maxItems: store.maxItems(),
-      }),
-      stream: ({ params }) => {
-        return from(store.matrixService()).pipe(
-          switchMap(svc => {
+      stream: () => {
+        // chat-util is loaded with the service, not statically: its barrel reaches into
+        // matrix-js-sdk, which must stay out of the dashboard's eager bundle (spec 1.49, F1).
+        return from(Promise.all([store.matrixService(), import('@okr/chat-util')])).pipe(
+          switchMap(([svc, chatUtil]) => {
             // Start the Matrix client as soon as this section is on screen — the dashboard is
             // the landing page, so this is the earliest useful moment. Idempotent and
             // promise-cached (ARCH-1): a later chat page or the early-init listener reuse it.
@@ -55,7 +58,7 @@ export const MessagesStore = signalStore(
                 // `rooms` is [] before the initial sync, which is indistinguishable from a
                 // user without unread rooms — only roomsLoaded tells the two apart.
                 if (!roomsLoaded) {
-                  return { status: initFailed || syncState === 'ERROR' ? 'error' : 'loading', rooms: [] };
+                  return { status: initFailed || syncState === 'ERROR' ? 'error' : 'loading', rooms: [], chatUtil };
                 }
                 const unreadRooms = rooms
                   .filter(r => r.unreadCount > 0)
@@ -65,10 +68,7 @@ export const MessagesStore = signalStore(
                     const bTime = b.lastMessage?.timestamp ?? 0;
                     return bTime - aTime;
                   });
-                return {
-                  status: 'ready',
-                  rooms: params.maxItems !== undefined ? unreadRooms.slice(0, params.maxItems) : unreadRooms,
-                };
+                return { status: 'ready', rooms: unreadRooms, chatUtil };
               }),
             );
           }),
@@ -79,7 +79,23 @@ export const MessagesStore = signalStore(
 
   withComputed((state) => {
     return {
-      rooms: computed(() => state.roomsWithUnreadResource.value()?.rooms ?? []),
+      // `svc.rooms` is the RAW joined-room list and spans every tenant (one Matrix account per
+      // person). Filter it exactly like MatrixChatStore.rooms does, or the dashboard shows
+      // unread rooms of another tenant's app — the "second leak" of the matrix-chat skill.
+      rooms: computed(() => {
+        const snapshot = state.roomsWithUnreadResource.value();
+        if (!snapshot?.chatUtil) return [];
+        const { filterRoomsOfTenant, serverNameOf } = snapshot.chatUtil;
+        const rooms = filterRoomsOfTenant(
+          snapshot.rooms,
+          state.appStore.allGroupsAndChats(),
+          new Set(state.appStore.allPersons().map((p: PersonModel) => p.okey.toLowerCase())),
+          state.appStore.tenantId(),
+          serverNameOf(state.appStore.env.services.matrixHomeserver),
+        );
+        const maxItems = state.maxItems();
+        return maxItems !== undefined ? rooms.slice(0, maxItems) : rooms;
+      }),
       // Loading until the room list reflects the initial sync (module load + client start +
       // first /sync); never "no messages" before that.
       isLoading: computed(() => (state.roomsWithUnreadResource.value()?.status ?? 'loading') === 'loading'),
