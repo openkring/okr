@@ -1,0 +1,95 @@
+<!--
+  Skiff-Lagerplatz agreement (spec 1.87), transcribed 1:1 from "Vereinbarung Skiff Lagerplatz", September 2024.
+  Placeholders: logoUrl (raster URL of the tenant logo, see the logo skill; omitted when empty), applicant.name,
+  applicant.street, applicant.zipCity, terms.rent, terms.insurance, terms.total, date, signatureBlocks[]
+  (pattern, name, label). The .pattern text is scanned by DeepSign from the rendered PDF: keep it visible
+  (never white text or display:none).
+-->
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Vereinbarung für die Miete eines Skiff-Lagerplatzes</title>
+<style>
+  @page { size: A4; margin: 20mm 20mm 18mm 20mm; }
+  body { font-family: Helvetica, Arial, sans-serif; font-size: 10.5pt; line-height: 1.35; color: #000; margin: 0; }
+  .logo { text-align: right; height: 28mm; }
+  .logo img { height: 26mm; }
+  h1 { font-size: 13pt; margin: 8mm 0 6mm; }
+  h2 { font-size: 10.5pt; margin: 6mm 0 1.5mm; }
+  p { margin: 0 0 1mm; }
+  .party { margin: 3mm 0 6mm; }
+  .party td { padding: 1.5mm 0; }
+  .party td:first-child { width: 32mm; }
+  .price { border-collapse: collapse; width: 100%; max-width: 120mm; margin-top: 4mm; }
+  .price td { padding: 0; }
+  .price td.amt { text-align: right; white-space: nowrap; }
+  .price tr.ins td.amt { border-bottom: 1px solid #000; }
+  .price tr.total td { font-weight: bold; }
+  .date { margin-top: 10mm; }
+  .signatures { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8mm; margin-top: 14mm; }
+  .sig .pattern { font-size: 9pt; color: #000; background: #fff; min-height: 12mm; }
+  .sig-name, .sig-label { font-size: 10.5pt; }
+  .sig-line { border-top: 1px dotted #000; }
+  .version { font-size: 8pt; margin-top: 16mm; }
+</style>
+</head>
+<body>
+{{#if logoUrl}}<div class="logo"><img src="{{logoUrl}}" alt="Seeclub Stäfa"></div>{{/if}}
+
+<h1>Vereinbarung für die Miete eines Skiff-Lagerplatzes</h1>
+
+<h2>Mieterin/Mieter</h2>
+<table class="party">
+  <tr><td>Vorname, Name:</td><td>{{applicant.name}}</td></tr>
+  <tr><td>Adresse:</td><td>{{applicant.street}}, {{applicant.zipCity}}</td></tr>
+</table>
+
+<p>Voraussetzung für die Miete eines Skiff-Lagerplatzes ist die Aktivmitgliedschaft im Seeclub Stäfa (SCS).</p>
+<p>Der SCS als Vermieter stellt der Mieterin/dem Mieter einen Lagerplatz für einen Skiff (inkl. 1 Ausleger und 2 Ruder) zur Verfügung.</p>
+
+<h2>Beginn und Dauer</h2>
+<p>Die Miete startet im Monat der Unterzeichnung und endet im Monat der Entfernung des Boots.</p>
+<p>Beim Versicherungsanteil gilt keine pro rata Verrechnung.</p>
+
+<h2>Jahresmiete</h2>
+<p>Die Jahresmiete wird jährlich mit dem Mitgliederbeitrag verrechnet.</p>
+<table class="price">
+  <tr><td>Jahresmiete Skiff-Lagerplatz</td><td class="amt">CHF {{terms.rent}}.-</td></tr>
+  <tr class="ins"><td>Versicherungsanteil</td><td class="amt">CHF {{terms.insurance}}.-</td></tr>
+  <tr class="total"><td>Total</td><td class="amt">CHF {{terms.total}}.-</td></tr>
+</table>
+
+<h2>Kündigung</h2>
+<p>Die Vereinbarung kann durch den SCS jederzeit schriftlich mit einer Kündigungsfrist von sechs Monaten gekündigt werden.</p>
+<p>Es besteht kein dauernder Anspruch auf den Bootsplatz; insbesondere kann der Platz durch den SCS bei geringer Kilometerleistung gekündigt werden.</p>
+<p>Der Austritt aus dem SCS oder der Übertritt in eine Passivmitgliedschaft bewirken die gleichzeitige Kündigung dieser Vereinbarung.</p>
+<p>Die Mieterin/der Mieter kann die Vereinbarung jederzeit schriftlich auf Monatsende kündigen.</p>
+<p>Die Mieterin/der Mieter verpflichtet sich, das Boot bis zum Kündigungstermin zu entfernen.</p>
+
+<h2>Haftung und Versicherung</h2>
+<p>Der SCS übernimmt keine Haftung für irgendwelche Schäden am Skiff oder an den Rudern.</p>
+<p>Privatskiff und Ruder sind durch den SCS zusammen mit den Clubbooten gegen Feuer und Elementarschäden versichert. Die Mieterin/der Mieter hat dafür die vom SCS in Rechnung gestellte Kostenbeteiligung zu bezahlen.</p>
+
+<h2>Weitere Bestimmungen</h2>
+<p>Der Platz im Bootshaus wird vom Ressort Boote festgelegt und kann jederzeit verlegt werden.</p>
+<p>Für die Lagerung sind die Ausleger zu demontieren. Pro Boot darf nur ein Paar Ruder gelagert werden.</p>
+<p>Beim Verkauf des Skiffs kann der Bootsplatz nicht an eine andere Person übertragen werden.</p>
+<p>Änderungen dieser Vereinbarung bedürfen der Schriftform.</p>
+
+<p class="date">Datum: {{date}}</p>
+
+<div class="signatures">
+  {{#each signatureBlocks}}
+  <div class="sig">
+    <div class="pattern">{{pattern}}</div>
+    <div class="sig-line"></div>
+    <div class="sig-name">{{name}}</div>
+    <div class="sig-label">{{label}}</div>
+  </div>
+  {{/each}}
+</div>
+
+<p class="version">September 2024</p>
+</body>
+</html>
