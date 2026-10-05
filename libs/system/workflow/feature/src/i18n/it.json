@@ -113,6 +113,20 @@
       },
       "ended": {
         "label": "Contratto terminato"
+      },
+      "requested": {
+        "label": "Contratto richiesto"
+      }
+    },
+    "esign": {
+      "signeeCompleted": {
+        "label": "Contratto firmato (una persona)"
+      },
+      "completed": {
+        "label": "Contratto firmato da tutti"
+      },
+      "failed": {
+        "label": "Firma del contratto non riuscita"
       }
     }
   },
@@ -192,6 +206,12 @@
     },
     "deliverInvoice": {
       "label": "Inviare una fattura"
+    },
+    "signContract": {
+      "label": "Inviare il contratto da firmare"
+    },
+    "fileContract": {
+      "label": "Archiviare il contratto"
     }
   }
 }

@@ -113,6 +113,20 @@
       },
       "ended": {
         "label": "Vertrag beendet"
+      },
+      "requested": {
+        "label": "Vertrag beantragt"
+      }
+    },
+    "esign": {
+      "signeeCompleted": {
+        "label": "Vertrag unterschrieben (eine Person)"
+      },
+      "completed": {
+        "label": "Vertrag vollständig unterschrieben"
+      },
+      "failed": {
+        "label": "Vertragsunterschrift fehlgeschlagen"
       }
     }
   },
@@ -192,6 +206,12 @@
     },
     "deliverInvoice": {
       "label": "Rechnung senden"
+    },
+    "signContract": {
+      "label": "Vertrag zur Unterschrift senden"
+    },
+    "fileContract": {
+      "label": "Vertrag ablegen"
     }
   }
 }
