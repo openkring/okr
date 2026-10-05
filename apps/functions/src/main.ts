@@ -279,6 +279,8 @@ export const sendInvoiceEmail = Invoice.sendInvoiceEmail;
 export const waiveReminderFee = Invoice.waiveReminderFee;
 export const recordBillPayment = Bill.recordBillPayment;
 export const unlinkBillPayment = Bill.unlinkBillPayment;
+export const writeBill = Bill.writeBill;
+export const bookBill = Bill.bookBill;
 // bank import: the only write path from bank-import-rows into the ledger (spec 1.60 §7)
 export const postBankImport = BankImport.postBankImport;
 // bexio journal import: mapped entries posted directly as bookings (spec 1.60 §12)
