@@ -106,5 +106,86 @@
   },
   "vendor": {
     "label": "Proveedor"
+  },
+  "payment": {
+    "label": "Registrar pago",
+    "title": "Registrar pago",
+    "conf": "El pago está registrado. Quedan abiertos CHF {open}.",
+    "conf_paid": "El pago está registrado. La factura del proveedor ya está pagada.",
+    "error": "No se pudo registrar el pago. Inténtalo de nuevo más tarde.",
+    "mode": {
+      "post": "Contabilizar pago",
+      "link": "Vincular asiento"
+    },
+    "date": {
+      "label": "Fecha de pago",
+      "placeholder": "dd.mm.aaaa",
+      "helper": "El día en que el dinero salió de la cuenta."
+    },
+    "amount": {
+      "label": "Importe (CHF)",
+      "placeholder": "0.00",
+      "helper": "Aún abierto: CHF {open}. No puedes registrar más."
+    },
+    "bankAccount": {
+      "label": "Pagado desde",
+      "helper": "El dinero salió de esta cuenta."
+    },
+    "booking": {
+      "label": "Asiento",
+      "helper": "Elige el asiento que ya contiene el pago.",
+      "none": "No hay ningún asiento que coincida. Debe estar contabilizado y cargar la cuenta de proveedores.",
+      "failed": "No se pudieron cargar los asientos. Aun así puedes contabilizar el pago."
+    },
+    "notConfigured": "Aún falta la cuenta de proveedores. La defines en los ajustes de contabilidad.",
+    "list": {
+      "title": "Pagos"
+    },
+    "hint": {
+      "label": "Pago posible",
+      "text": "Pago posible encontrado: {booking}",
+      "link": "Vincular"
+    },
+    "unlink": {
+      "label": "Desvincular",
+      "confirm": "¿Desvincular este pago de la factura del proveedor? El asiento se queda en el diario.",
+      "conf": "El vínculo se ha eliminado.",
+      "error": "No se pudo eliminar el vínculo. Inténtalo de nuevo más tarde."
+    },
+    "validation": {
+      "dateRequired": "Indica cuándo salió el dinero de la cuenta.",
+      "amountPositive": "El importe debe ser mayor que 0.",
+      "amountTooHigh": "El importe es mayor que lo que queda abierto en la factura del proveedor.",
+      "amountAboveBooking": "El importe es mayor que el cargo del asiento elegido.",
+      "bankAccountRequired": "Elige la cuenta de la que salió el dinero.",
+      "bookingRequired": "Elige el asiento que contiene el pago."
+    }
+  },
+  "refusal": {
+    "not-payable": "No se puede registrar un pago para esta factura del proveedor. Solo es posible en una factura contabilizada y aún abierta.",
+    "overpayment": "El importe es mayor que lo que queda abierto en la factura del proveedor.",
+    "no-payment-date": "Indica cuándo salió el dinero de la cuenta.",
+    "invalid-amount": "El importe no es válido. Debe ser mayor que 0.",
+    "payment-blocked": "Este pago no se puede registrar.",
+    "link-blocked": "Este asiento no se puede vincular con la factura del proveedor.",
+    "booking-not-found": "El asiento elegido ya no existe.",
+    "own-booking": "okr escribió este asiento para una factura. No puede ser un pago.",
+    "booking-archived": "El asiento elegido está archivado.",
+    "booking-not-posted": "El asiento elegido no está contabilizado.",
+    "foreign-booking": "El asiento elegido pertenece a otra contabilidad.",
+    "no-payables-debit": "El asiento elegido no carga la cuenta de proveedores con este importe.",
+    "already-linked": "El asiento elegido ya está vinculado a una factura del proveedor.",
+    "not-a-payment-account": "Las facturas de proveedores no se pueden pagar desde esta cuenta. Elige una de las cuentas de los ajustes de contabilidad.",
+    "account-invalid": "Una de las cuentas no se puede usar. Elige una cuenta sin subcuentas.",
+    "period-locked": "El periodo contable de esta fecha está cerrado. Elige otra fecha o haz que se vuelva a abrir el periodo.",
+    "state-changed": "La factura del proveedor se modificó entretanto. Inténtalo de nuevo.",
+    "bexio-backend": "Esta contabilidad se lleva en bexio. Las facturas de proveedores las gestionas allí.",
+    "no-accounting-config": "Esta contabilidad aún no está configurada. Configúrala primero.",
+    "foreign-accounting-tenant": "Esta contabilidad no pertenece a tu club.",
+    "no-payables-account": "Aún falta la cuenta de proveedores. La defines en los ajustes de contabilidad.",
+    "inconsistent-state": "Algo salió mal al guardar. Inténtalo de nuevo.",
+    "invalid-payment-id": "No se pudo identificar el pago. Cierra la ventana e inténtalo de nuevo.",
+    "posted-payment": "Este pago se contabilizó en okr. Elimina su asiento en el diario.",
+    "not-found": "La factura del proveedor ya no existe."
   }
 }

@@ -106,5 +106,86 @@
   },
   "vendor": {
     "label": "Fournisseur"
+  },
+  "payment": {
+    "label": "Saisir un paiement",
+    "title": "Saisir un paiement",
+    "conf": "Le paiement est saisi. Il reste CHF {open} à payer.",
+    "conf_paid": "Le paiement est saisi. La facture fournisseur est maintenant payée.",
+    "error": "Le paiement n'a pas pu être saisi. Réessaie plus tard.",
+    "mode": {
+      "post": "Comptabiliser le paiement",
+      "link": "Lier une écriture"
+    },
+    "date": {
+      "label": "Date de paiement",
+      "placeholder": "jj.mm.aaaa",
+      "helper": "Le jour où l'argent est sorti du compte."
+    },
+    "amount": {
+      "label": "Montant (CHF)",
+      "placeholder": "0.00",
+      "helper": "Reste ouvert : CHF {open}. Tu ne peux pas saisir plus."
+    },
+    "bankAccount": {
+      "label": "Payé depuis",
+      "helper": "L'argent est sorti de ce compte."
+    },
+    "booking": {
+      "label": "Écriture",
+      "helper": "Choisis l'écriture qui enregistre déjà le paiement.",
+      "none": "Aucune écriture ne correspond. Elle doit être comptabilisée et débiter le compte fournisseurs.",
+      "failed": "Les écritures n'ont pas pu être chargées. Tu peux quand même comptabiliser le paiement."
+    },
+    "notConfigured": "Le compte fournisseurs n'est pas encore défini. Tu le choisis dans les paramètres de la comptabilité.",
+    "list": {
+      "title": "Paiements"
+    },
+    "hint": {
+      "label": "Paiement possible",
+      "text": "Paiement possible trouvé : {booking}",
+      "link": "Lier"
+    },
+    "unlink": {
+      "label": "Supprimer le lien",
+      "confirm": "Détacher ce paiement de la facture fournisseur ? L'écriture reste dans le journal.",
+      "conf": "Le lien est supprimé.",
+      "error": "Le lien n'a pas pu être supprimé. Réessaie plus tard."
+    },
+    "validation": {
+      "dateRequired": "Indique quand l'argent est sorti du compte.",
+      "amountPositive": "Le montant doit être supérieur à 0.",
+      "amountTooHigh": "Le montant dépasse ce qui reste ouvert sur la facture fournisseur.",
+      "amountAboveBooking": "Le montant dépasse le débit de l'écriture choisie.",
+      "bankAccountRequired": "Choisis le compte d'où l'argent est sorti.",
+      "bookingRequired": "Choisis l'écriture qui enregistre le paiement."
+    }
+  },
+  "refusal": {
+    "not-payable": "Aucun paiement ne peut être saisi pour cette facture fournisseur. Cela n'est possible que pour une facture comptabilisée et encore ouverte.",
+    "overpayment": "Le montant dépasse ce qui reste ouvert sur la facture fournisseur.",
+    "no-payment-date": "Indique quand l'argent est sorti du compte.",
+    "invalid-amount": "Le montant n'est pas valable. Il doit être supérieur à 0.",
+    "payment-blocked": "Ce paiement ne peut pas être saisi.",
+    "link-blocked": "Cette écriture ne peut pas être liée à la facture fournisseur.",
+    "booking-not-found": "L'écriture choisie n'existe plus.",
+    "own-booking": "okr a écrit cette écriture lui-même pour une facture. Elle ne peut pas être un paiement.",
+    "booking-archived": "L'écriture choisie est archivée.",
+    "booking-not-posted": "L'écriture choisie n'est pas comptabilisée.",
+    "foreign-booking": "L'écriture choisie appartient à une autre comptabilité.",
+    "no-payables-debit": "L'écriture choisie ne débite pas le compte fournisseurs de ce montant.",
+    "already-linked": "L'écriture choisie est déjà liée à une facture fournisseur.",
+    "not-a-payment-account": "Les factures fournisseurs ne peuvent pas être payées depuis ce compte. Choisis un des comptes des paramètres de la comptabilité.",
+    "account-invalid": "Un des comptes ne peut pas être utilisé. Choisis un compte sans sous-comptes.",
+    "period-locked": "La période comptable de cette date est clôturée. Choisis une autre date ou fais rouvrir la période.",
+    "state-changed": "La facture fournisseur a été modifiée entre-temps. Réessaie.",
+    "bexio-backend": "Cette comptabilité est tenue dans bexio. Tu traites les factures fournisseurs là-bas.",
+    "no-accounting-config": "Cette comptabilité n'est pas encore configurée. Configure-la d'abord.",
+    "foreign-accounting-tenant": "Cette comptabilité n'appartient pas à ton club.",
+    "no-payables-account": "Le compte fournisseurs n'est pas encore défini. Tu le choisis dans les paramètres de la comptabilité.",
+    "inconsistent-state": "Quelque chose s'est mal passé lors de l'enregistrement. Réessaie.",
+    "invalid-payment-id": "Le paiement n'a pas pu être identifié. Ferme la fenêtre et réessaie.",
+    "posted-payment": "Ce paiement a été comptabilisé dans okr. Supprime plutôt son écriture dans le journal.",
+    "not-found": "La facture fournisseur n'existe plus."
   }
 }

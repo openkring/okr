@@ -1,0 +1,116 @@
+import { Component, computed, effect, inject, input, linkedSignal, signal, untracked } from '@angular/core';
+import { IonContent, ModalController } from '@ionic/angular/standalone';
+
+import { AccountModel } from '@okr/shared-models';
+import { I18nService } from '@okr/shared-i18n';
+import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
+import { dismissOverlay } from '@okr/shared-util-angular';
+import { safeStructuredClone } from '@okr/shared-util-core';
+
+import { BILL_I18N_KEYS, BillI18n, BillPaymentCandidate, BillPaymentFormModel, BillPaymentInput } from '@okr/finance-bill-util';
+
+import { BillPaymentForm } from './bill-payment.form';
+
+/**
+ * The payment dialog of a bill (spec 1.85): header + change-confirmation + BillPaymentForm. It only
+ * collects the input and returns it as `BillPaymentInput` (role `confirm`); the store calls
+ * `recordBillPayment`. The form starts prefilled (today, the open amount, the first payment account —
+ * or the hinted booking), which already is a complete payment — so it starts dirty and "Speichern" is
+ * offered at once. "Abbrechen" closes the dialog without recording anything.
+ * The bookings for mode `link` are read lazily, through `loadCandidates`, the first time that mode is
+ * shown — a payment booked on an account never reads them.
+ */
+@Component({
+  selector: 'okr-bill-payment-modal',
+  standalone: true,
+  imports: [Header, ChangeConfirmation, BillPaymentForm, IonContent],
+  template: `
+    <okr-header [i18n]="{ title: i18n.payment_title() }" [isModal]="true" />
+    @if (showConfirmation()) {
+      <okr-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
+    }
+    <ion-content class="ion-no-padding">
+      @if (formData(); as formData) {
+        <okr-bill-payment-form
+          [formData]="formData"
+          (formDataChange)="onFormDataChange($event)"
+          [i18n]="i18n"
+          [accounts]="accounts()"
+          [candidates]="candidates()"
+          [candidatesFailed]="candidatesFailed()"
+          [candidatesLoading]="candidatesLoading()"
+          [readOnly]="false"
+          [showForm]="showForm()"
+          (dirty)="formDirty.set($event)"
+          (valid)="formValid.set($event)"
+        />
+      }
+    </ion-content>
+  `
+})
+export class BillPaymentModal {
+  private readonly modalController = inject(ModalController);
+  protected readonly i18n = inject(I18nService).translateAll(BILL_I18N_KEYS) as BillI18n;
+
+  // inputs
+  public readonly payment = input.required<BillPaymentFormModel>();
+  public readonly accounts = input<AccountModel[]>([]);
+  /** reads the link candidates; called once, when mode `link` is first shown */
+  public readonly loadCandidates = input<() => Promise<BillPaymentCandidate[]>>(() => Promise.resolve([]));
+
+  // link candidates, loaded on demand
+  protected readonly candidates = signal<BillPaymentCandidate[]>([]);
+  protected readonly candidatesFailed = signal(false);
+  protected readonly candidatesLoading = signal(false);
+  private candidatesRequested = false;
+
+  // signals
+  protected formDirty = signal(true);
+  protected formValid = signal(false);
+  public formData = linkedSignal(() => safeStructuredClone(this.payment()));
+  protected showForm = signal(true);
+
+  // derived
+  protected showConfirmation = computed(() => this.formValid() && this.formDirty());
+  protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.i18n.cancel(), save: this.i18n.save() } as ChangeConfirmationI18n));
+
+  constructor() {
+    effect(() => {
+      if (this.formData()?.mode !== 'link' || this.candidatesRequested) return;
+      this.candidatesRequested = true;
+      untracked(() => void this.readCandidates());
+    });
+  }
+
+  private async readCandidates(): Promise<void> {
+    this.candidatesLoading.set(true);
+    try {
+      this.candidates.set(await this.loadCandidates()());
+    } catch (e) {
+      console.error('BillPaymentModal: loading the bookings failed', e);
+      this.candidatesFailed.set(true);
+    } finally {
+      this.candidatesLoading.set(false);
+    }
+  }
+
+  /******************************* actions *************************************** */
+  public async save(): Promise<void> {
+    const f = this.formData();
+    if (!f) return;
+    const result: BillPaymentInput = {
+      mode: f.mode, date: f.date, amount: f.amount,
+      bankAccountKey: f.mode === 'post' ? f.bankAccountKey : '',
+      bookingKey: f.mode === 'link' ? f.bookingKey : '',
+    };
+    await dismissOverlay(this.modalController, result, 'confirm');
+  }
+
+  public async cancel(): Promise<void> {
+    await dismissOverlay(this.modalController, null, 'cancel');
+  }
+
+  protected onFormDataChange(formData: BillPaymentFormModel): void {
+    this.formData.set(formData);
+  }
+}

@@ -106,5 +106,86 @@
   },
   "vendor": {
     "label": "Fornitore"
+  },
+  "payment": {
+    "label": "Registra pagamento",
+    "title": "Registra pagamento",
+    "conf": "Il pagamento è registrato. Restano aperti CHF {open}.",
+    "conf_paid": "Il pagamento è registrato. La fattura del fornitore ora è pagata.",
+    "error": "Non è stato possibile registrare il pagamento. Riprova più tardi.",
+    "mode": {
+      "post": "Contabilizza pagamento",
+      "link": "Collega registrazione"
+    },
+    "date": {
+      "label": "Data di pagamento",
+      "placeholder": "gg.mm.aaaa",
+      "helper": "Il giorno in cui il denaro è uscito dal conto."
+    },
+    "amount": {
+      "label": "Importo (CHF)",
+      "placeholder": "0.00",
+      "helper": "Ancora aperto: CHF {open}. Non puoi registrare di più."
+    },
+    "bankAccount": {
+      "label": "Pagato da",
+      "helper": "Il denaro è uscito da questo conto."
+    },
+    "booking": {
+      "label": "Registrazione",
+      "helper": "Scegli la registrazione che contiene già il pagamento.",
+      "none": "Nessuna registrazione corrisponde. Deve essere contabilizzata e addebitare il conto creditori.",
+      "failed": "Non è stato possibile caricare le registrazioni. Puoi comunque contabilizzare il pagamento."
+    },
+    "notConfigured": "Manca ancora il conto creditori per le fatture dei fornitori. Lo imposti nelle impostazioni della contabilità.",
+    "list": {
+      "title": "Pagamenti"
+    },
+    "hint": {
+      "label": "Pagamento possibile",
+      "text": "Pagamento possibile trovato: {booking}",
+      "link": "Collega"
+    },
+    "unlink": {
+      "label": "Scollega",
+      "confirm": "Scollegare questo pagamento dalla fattura del fornitore? La registrazione resta nel giornale.",
+      "conf": "Il collegamento è stato rimosso.",
+      "error": "Non è stato possibile rimuovere il collegamento. Riprova più tardi."
+    },
+    "validation": {
+      "dateRequired": "Indica quando il denaro è uscito dal conto.",
+      "amountPositive": "L'importo deve essere maggiore di 0.",
+      "amountTooHigh": "L'importo supera quanto resta aperto sulla fattura del fornitore.",
+      "amountAboveBooking": "L'importo supera l'addebito della registrazione scelta.",
+      "bankAccountRequired": "Scegli il conto da cui è uscito il denaro.",
+      "bookingRequired": "Scegli la registrazione che contiene il pagamento."
+    }
+  },
+  "refusal": {
+    "not-payable": "Per questa fattura del fornitore non si può registrare un pagamento. È possibile solo per una fattura contabilizzata e ancora aperta.",
+    "overpayment": "L'importo supera quanto resta aperto sulla fattura del fornitore.",
+    "no-payment-date": "Indica quando il denaro è uscito dal conto.",
+    "invalid-amount": "L'importo non è valido. Deve essere maggiore di 0.",
+    "payment-blocked": "Questo pagamento non può essere registrato.",
+    "link-blocked": "Questa registrazione non può essere collegata alla fattura del fornitore.",
+    "booking-not-found": "La registrazione scelta non esiste più.",
+    "own-booking": "okr ha scritto questa registrazione per una fattura. Non può essere un pagamento.",
+    "booking-archived": "La registrazione scelta è archiviata.",
+    "booking-not-posted": "La registrazione scelta non è contabilizzata.",
+    "foreign-booking": "La registrazione scelta appartiene a un'altra contabilità.",
+    "no-payables-debit": "La registrazione scelta non addebita il conto creditori con questo importo.",
+    "already-linked": "La registrazione scelta è già collegata a una fattura del fornitore.",
+    "not-a-payment-account": "Le fatture dei fornitori non possono essere pagate da questo conto. Scegli uno dei conti delle impostazioni della contabilità.",
+    "account-invalid": "Su uno dei conti non si può registrare. Scegli un conto senza sottoconti.",
+    "period-locked": "Il periodo contabile di questa data è chiuso. Scegli un’altra data o fai riaprire il periodo.",
+    "state-changed": "La fattura del fornitore è stata modificata nel frattempo. Riprova.",
+    "bexio-backend": "Questa contabilità è tenuta in bexio. Le fatture dei fornitori le gestisci lì.",
+    "no-accounting-config": "Questa contabilità non è ancora configurata. Configurala prima.",
+    "foreign-accounting-tenant": "Questa contabilità non appartiene al tuo club.",
+    "no-payables-account": "Manca ancora il conto creditori per le fatture dei fornitori. Lo imposti nelle impostazioni della contabilità.",
+    "inconsistent-state": "Qualcosa è andato storto durante il salvataggio. Riprova.",
+    "invalid-payment-id": "Non è stato possibile identificare il pagamento. Chiudi la finestra e riprova.",
+    "posted-payment": "Questo pagamento è stato contabilizzato in okr. Elimina invece la sua registrazione nel giornale.",
+    "not-found": "La fattura del fornitore non esiste più."
   }
 }

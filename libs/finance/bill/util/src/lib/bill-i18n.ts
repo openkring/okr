@@ -65,6 +65,63 @@ export const BILL_I18N_KEYS = {
   qr_content_label:     PFX + 'qr.content.label',
   qr_content_placeholder: PFX + 'qr.content.placeholder',
 
+  // payments (spec 1.85)
+  payment:                        PFX + 'payment.label',
+  payment_title:                  PFX + 'payment.title',
+  payment_conf:                   PFX + 'payment.conf',
+  payment_conf_paid:              PFX + 'payment.conf_paid',
+  payment_error:                  PFX + 'payment.error',
+  payment_mode_post:              PFX + 'payment.mode.post',
+  payment_mode_link:              PFX + 'payment.mode.link',
+  payment_date_input_label:       PFX + 'payment.date.label',
+  payment_date_input_placeholder: PFX + 'payment.date.placeholder',
+  payment_date_input_helper:      PFX + 'payment.date.helper',
+  payment_amount_label:           PFX + 'payment.amount.label',
+  payment_amount_placeholder:     PFX + 'payment.amount.placeholder',
+  payment_amount_helper:          PFX + 'payment.amount.helper',
+  payment_bankAccount_label:      PFX + 'payment.bankAccount.label',
+  payment_bankAccount_helper:     PFX + 'payment.bankAccount.helper',
+  payment_booking_label:          PFX + 'payment.booking.label',
+  payment_booking_helper:         PFX + 'payment.booking.helper',
+  payment_booking_none:           PFX + 'payment.booking.none',
+  payment_booking_failed:         PFX + 'payment.booking.failed',
+  payment_not_configured:         PFX + 'payment.notConfigured',
+  payments_title:                 PFX + 'payment.list.title',
+  payment_hint:                   PFX + 'payment.hint.label',
+  payment_hint_text:              PFX + 'payment.hint.text',
+  payment_hint_link:              PFX + 'payment.hint.link',
+  unlink:                         PFX + 'payment.unlink.label',
+  unlink_confirm:                 PFX + 'payment.unlink.confirm',
+  unlink_conf:                    PFX + 'payment.unlink.conf',
+  unlink_error:                   PFX + 'payment.unlink.error',
+
+  // refusals of the bill callables (details.reason / details.reasons)
+  refusal_not_payable:            PFX + 'refusal.not-payable',
+  refusal_overpayment:            PFX + 'refusal.overpayment',
+  refusal_no_payment_date:        PFX + 'refusal.no-payment-date',
+  refusal_invalid_amount:         PFX + 'refusal.invalid-amount',
+  refusal_payment_blocked:        PFX + 'refusal.payment-blocked',
+  refusal_link_blocked:           PFX + 'refusal.link-blocked',
+  refusal_booking_not_found:      PFX + 'refusal.booking-not-found',
+  refusal_own_booking:            PFX + 'refusal.own-booking',
+  refusal_booking_archived:       PFX + 'refusal.booking-archived',
+  refusal_booking_not_posted:     PFX + 'refusal.booking-not-posted',
+  refusal_foreign_booking:        PFX + 'refusal.foreign-booking',
+  refusal_no_payables_debit:      PFX + 'refusal.no-payables-debit',
+  refusal_already_linked:         PFX + 'refusal.already-linked',
+  refusal_not_a_payment_account:  PFX + 'refusal.not-a-payment-account',
+  refusal_account_invalid:        PFX + 'refusal.account-invalid',
+  refusal_period_locked:          PFX + 'refusal.period-locked',
+  refusal_state_changed:          PFX + 'refusal.state-changed',
+  refusal_bexio_backend:          PFX + 'refusal.bexio-backend',
+  refusal_no_accounting_config:   PFX + 'refusal.no-accounting-config',
+  refusal_foreign_accounting_tenant: PFX + 'refusal.foreign-accounting-tenant',
+  refusal_no_payables_account:    PFX + 'refusal.no-payables-account',
+  refusal_inconsistent_state:     PFX + 'refusal.inconsistent-state',
+  refusal_invalid_payment_id:     PFX + 'refusal.invalid-payment-id',
+  refusal_posted_payment:         PFX + 'refusal.posted-payment',
+  refusal_not_found:              PFX + 'refusal.not-found',
+
   as_title:             '@actionsheet.title',
   cancel:               '@cancel',
   ok:                   '@ok',
@@ -72,3 +129,43 @@ export const BILL_I18N_KEYS = {
 } satisfies Record<string, string>;
 
 export type BillI18n = { [K in keyof typeof BILL_I18N_KEYS]: Signal<string> };
+
+/** Server refusal reason → i18n entry (unknown reasons fall back to the caller's general text). */
+export const BILL_REFUSAL_I18N: Record<string, keyof typeof BILL_I18N_KEYS> = {
+  'not-payable': 'refusal_not_payable',
+  'overpayment': 'refusal_overpayment',
+  'no-payment-date': 'refusal_no_payment_date',
+  'invalid-amount': 'refusal_invalid_amount',
+  'payment-blocked': 'refusal_payment_blocked',
+  'link-blocked': 'refusal_link_blocked',
+  'booking-not-found': 'refusal_booking_not_found',
+  'own-booking': 'refusal_own_booking',
+  'booking-archived': 'refusal_booking_archived',
+  'booking-not-posted': 'refusal_booking_not_posted',
+  'foreign-booking': 'refusal_foreign_booking',
+  'no-payables-debit': 'refusal_no_payables_debit',
+  'already-linked': 'refusal_already_linked',
+  'not-a-payment-account': 'refusal_not_a_payment_account',
+  'account-invalid': 'refusal_account_invalid',
+  'period-locked': 'refusal_period_locked',
+  'state-changed': 'refusal_state_changed',
+  'bexio-backend': 'refusal_bexio_backend',
+  'no-accounting-config': 'refusal_no_accounting_config',
+  'foreign-accounting-tenant': 'refusal_foreign_accounting_tenant',
+  'no-payables-account': 'refusal_no_payables_account',
+  'inconsistent-state': 'refusal_inconsistent_state',
+  'invalid-payment-id': 'refusal_invalid_payment_id',
+  'posted-payment': 'refusal_posted_payment',
+  'not-found': 'refusal_not_found',
+};
+
+/** The i18n entries for the given reasons (unknown reasons dropped, no duplicates). */
+export function billRefusalKeys(reasons: string[]): (keyof typeof BILL_I18N_KEYS)[] {
+  return [...new Set(reasons.map((r) => BILL_REFUSAL_I18N[r]).filter((k) => !!k))];
+}
+
+/** The friendly text for a failed bill call: the texts of the known reasons, joined; `fallback` when none is known. */
+export function billRefusalText(reasons: string[], i18n: BillI18n, fallback: string): string {
+  const texts = billRefusalKeys(reasons).map((k) => i18n[k]());
+  return texts.length > 0 ? texts.join(' ') : fallback;
+}

@@ -106,5 +106,86 @@
   },
   "vendor": {
     "label": "Supplier"
+  },
+  "payment": {
+    "label": "Record payment",
+    "title": "Record payment",
+    "conf": "The payment is recorded. CHF {open} is still open.",
+    "conf_paid": "The payment is recorded. The supplier bill is now paid.",
+    "error": "The payment could not be recorded. Please try again later.",
+    "mode": {
+      "post": "Book payment",
+      "link": "Link booking"
+    },
+    "date": {
+      "label": "Payment date",
+      "placeholder": "dd.mm.yyyy",
+      "helper": "The day the money left the account."
+    },
+    "amount": {
+      "label": "Amount (CHF)",
+      "placeholder": "0.00",
+      "helper": "Still open: CHF {open}. You cannot record more."
+    },
+    "bankAccount": {
+      "label": "Paid from",
+      "helper": "The money left this account."
+    },
+    "booking": {
+      "label": "Booking",
+      "helper": "Choose the booking that already records the payment.",
+      "none": "There is no matching booking. It must be posted and debit the payables account.",
+      "failed": "The bookings could not be loaded. You can still book the payment."
+    },
+    "notConfigured": "The payables account for supplier bills is not set yet. You set it in the accounting settings.",
+    "list": {
+      "title": "Payments"
+    },
+    "hint": {
+      "label": "Possible payment",
+      "text": "Possible payment found: {booking}",
+      "link": "Link"
+    },
+    "unlink": {
+      "label": "Unlink",
+      "confirm": "Unlink this payment from the supplier bill? The booking stays in the journal.",
+      "conf": "The link is removed.",
+      "error": "The link could not be removed. Please try again later."
+    },
+    "validation": {
+      "dateRequired": "Enter when the money left the account.",
+      "amountPositive": "The amount must be greater than 0.",
+      "amountTooHigh": "The amount is higher than what is still open on the supplier bill.",
+      "amountAboveBooking": "The amount is higher than the debit of the chosen booking.",
+      "bankAccountRequired": "Choose the account the money left from.",
+      "bookingRequired": "Choose the booking that records the payment."
+    }
+  },
+  "refusal": {
+    "not-payable": "No payment can be recorded for this supplier bill. That only works for a booked bill that is still open.",
+    "overpayment": "The amount is higher than what is still open on the supplier bill.",
+    "no-payment-date": "Enter when the money left the account.",
+    "invalid-amount": "The amount is not valid. It must be greater than 0.",
+    "payment-blocked": "This payment cannot be recorded.",
+    "link-blocked": "This booking cannot be linked to the supplier bill.",
+    "booking-not-found": "The chosen booking no longer exists.",
+    "own-booking": "okr wrote this booking for a bill itself. It cannot be a payment.",
+    "booking-archived": "The chosen booking is archived.",
+    "booking-not-posted": "The chosen booking is not posted.",
+    "foreign-booking": "The chosen booking belongs to other books.",
+    "no-payables-debit": "The chosen booking does not debit the payables account with this amount.",
+    "already-linked": "The chosen booking is already linked to a supplier bill.",
+    "not-a-payment-account": "Supplier bills cannot be paid from this account. Choose one of the accounts in the accounting settings.",
+    "account-invalid": "One of the accounts cannot be booked on. Choose an account without sub-accounts.",
+    "period-locked": "The accounting period of this date is closed. Choose another date or have the period reopened.",
+    "state-changed": "The supplier bill was changed in the meantime. Please try again.",
+    "bexio-backend": "These books are kept in bexio. You edit supplier bills there.",
+    "no-accounting-config": "These books are not set up yet. Please set them up first.",
+    "foreign-accounting-tenant": "These books do not belong to your club.",
+    "no-payables-account": "The payables account for supplier bills is not set yet. You set it in the accounting settings.",
+    "inconsistent-state": "Something went wrong while saving. Please try again.",
+    "invalid-payment-id": "The payment could not be identified. Close the window and try again.",
+    "posted-payment": "This payment was booked in okr. Delete its booking in the journal instead.",
+    "not-found": "The supplier bill no longer exists."
   }
 }

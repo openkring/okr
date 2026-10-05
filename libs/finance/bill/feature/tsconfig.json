@@ -58,6 +58,8 @@
     },
     {
       "path": "../util/tsconfig.lib.json"
-    }
+    },
+    { "path": "../../account/data-access/tsconfig.lib.json" },
+    { "path": "../../invoice/util/tsconfig.lib.json" }
   ]
 }

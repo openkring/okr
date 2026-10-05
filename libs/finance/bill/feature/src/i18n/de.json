@@ -106,5 +106,86 @@
   },
   "vendor": {
     "label": "Lieferant"
+  },
+  "payment": {
+    "label": "Zahlung erfassen",
+    "title": "Zahlung erfassen",
+    "conf": "Die Zahlung ist erfasst. Es ist noch CHF {open} offen.",
+    "conf_paid": "Die Zahlung ist erfasst. Die Lieferantenrechnung ist jetzt bezahlt.",
+    "error": "Die Zahlung konnte nicht erfasst werden. Bitte versuche es später noch einmal.",
+    "mode": {
+      "post": "Zahlung buchen",
+      "link": "Buchung verknüpfen"
+    },
+    "date": {
+      "label": "Zahlungsdatum",
+      "placeholder": "dd.mm.yyyy",
+      "helper": "Der Tag, an dem das Geld abgeflossen ist."
+    },
+    "amount": {
+      "label": "Betrag (CHF)",
+      "placeholder": "0.00",
+      "helper": "Noch offen: CHF {open}. Mehr kannst du nicht erfassen."
+    },
+    "bankAccount": {
+      "label": "Bezahlt von",
+      "helper": "Von diesem Konto ist das Geld abgeflossen."
+    },
+    "booking": {
+      "label": "Buchung",
+      "helper": "Wähle die Buchung, mit der die Zahlung schon in der Buchhaltung steht.",
+      "none": "Es gibt keine passende Buchung. Sie muss verbucht sein und das Kreditorenkonto belasten.",
+      "failed": "Die Buchungen konnten nicht geladen werden. Du kannst die Zahlung trotzdem buchen."
+    },
+    "notConfigured": "Für Lieferantenrechnungen fehlt noch das Kreditorenkonto. Du legst es in den Buchhaltungseinstellungen fest.",
+    "list": {
+      "title": "Zahlungen"
+    },
+    "hint": {
+      "label": "Mögliche Zahlung",
+      "text": "Mögliche Zahlung gefunden: {booking}",
+      "link": "Verknüpfen"
+    },
+    "unlink": {
+      "label": "Verknüpfung lösen",
+      "confirm": "Soll diese Zahlung von der Lieferantenrechnung gelöst werden? Die Buchung bleibt im Journal.",
+      "conf": "Die Verknüpfung ist gelöst.",
+      "error": "Die Verknüpfung konnte nicht gelöst werden. Bitte versuche es später noch einmal."
+    },
+    "validation": {
+      "dateRequired": "Gib an, wann das Geld abgeflossen ist.",
+      "amountPositive": "Der Betrag muss grösser als 0 sein.",
+      "amountTooHigh": "Der Betrag ist höher als der noch offene Betrag der Lieferantenrechnung.",
+      "amountAboveBooking": "Der Betrag ist höher als die Belastung der gewählten Buchung.",
+      "bankAccountRequired": "Wähle das Konto, von dem das Geld abgeflossen ist.",
+      "bookingRequired": "Wähle die Buchung, mit der die Zahlung verbucht ist."
+    }
+  },
+  "refusal": {
+    "not-payable": "Für diese Lieferantenrechnung kann keine Zahlung erfasst werden. Das geht nur bei einer verbuchten, noch offenen Rechnung.",
+    "overpayment": "Der Betrag ist höher als der noch offene Betrag der Lieferantenrechnung.",
+    "no-payment-date": "Gib an, wann das Geld abgeflossen ist.",
+    "invalid-amount": "Der Betrag ist ungültig. Er muss grösser als 0 sein.",
+    "payment-blocked": "Diese Zahlung kann nicht erfasst werden.",
+    "link-blocked": "Diese Buchung kann nicht mit der Lieferantenrechnung verknüpft werden.",
+    "booking-not-found": "Die gewählte Buchung gibt es nicht mehr.",
+    "own-booking": "Diese Buchung hat okr selbst für eine Rechnung geschrieben. Sie kann keine Zahlung sein.",
+    "booking-archived": "Die gewählte Buchung ist archiviert.",
+    "booking-not-posted": "Die gewählte Buchung ist nicht verbucht.",
+    "foreign-booking": "Die gewählte Buchung gehört zu einer anderen Buchhaltung.",
+    "no-payables-debit": "Die gewählte Buchung belastet das Kreditorenkonto nicht mit diesem Betrag.",
+    "already-linked": "Die gewählte Buchung ist schon mit einer Lieferantenrechnung verknüpft.",
+    "not-a-payment-account": "Von diesem Konto können keine Lieferantenrechnungen bezahlt werden. Wähle eines der Konten aus den Buchhaltungseinstellungen.",
+    "account-invalid": "Auf eines der Konten kann nicht gebucht werden. Wähle ein Konto ohne Unterkonten.",
+    "period-locked": "Die Buchungsperiode zu diesem Datum ist abgeschlossen. Wähle ein anderes Datum oder lass die Periode wieder öffnen.",
+    "state-changed": "Die Lieferantenrechnung wurde in der Zwischenzeit verändert. Versuche es bitte noch einmal.",
+    "bexio-backend": "Diese Buchhaltung wird in bexio geführt. Lieferantenrechnungen bearbeitest du dort.",
+    "no-accounting-config": "Für diese Buchhaltung fehlen noch die Einstellungen. Bitte richte sie zuerst ein.",
+    "foreign-accounting-tenant": "Diese Buchhaltung gehört nicht zu deinem Verein.",
+    "no-payables-account": "Für Lieferantenrechnungen fehlt noch das Kreditorenkonto. Du legst es in den Buchhaltungseinstellungen fest.",
+    "inconsistent-state": "Beim Speichern ist etwas schiefgelaufen. Versuche es bitte noch einmal.",
+    "invalid-payment-id": "Die Zahlung konnte nicht eindeutig erkannt werden. Schliesse das Fenster und versuche es noch einmal.",
+    "posted-payment": "Diese Zahlung wurde in okr gebucht. Lösche dafür ihre Buchung im Journal.",
+    "not-found": "Die Lieferantenrechnung gibt es nicht mehr."
   }
 }

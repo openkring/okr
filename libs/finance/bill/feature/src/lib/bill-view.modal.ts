@@ -1,13 +1,13 @@
 import { Component, computed, inject, input } from '@angular/core';
-import { IonAvatar, IonButton, IonCard, IonCardContent, IonChip, IonContent, IonIcon, IonImg, IonItem, IonLabel } from '@ionic/angular/standalone';
+import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonChip, IonContent, IonIcon, IonImg, IonItem, IonLabel, IonNote, ModalController } from '@ionic/angular/standalone';
 
 import { AvatarPipe } from '@okr/avatar-ui';
 import { AvatarDetailService, LedgerBookings, VoucherTiles } from '@okr/finance-accounting-feature';
-import { billAccountKeys, billBookingKeys, billDisplayState, billStateColor, billStateLabel, isOverdueBill } from '@okr/finance-bill-util';
-import { BillModel } from '@okr/shared-models';
+import { billAccountKeys, billBookingKeys, billDisplayState, billStateColor, billStateLabel, isOverdueBill, isPayableBill } from '@okr/finance-bill-util';
+import { BillModel, BillPayment } from '@okr/shared-models';
 import { formatMinorAmount, Header } from '@okr/shared-ui';
 import { PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
-import { getFullName, getTodayStr } from '@okr/shared-util-core';
+import { convertDateFormatToString, DateFormat, fill, getFullName, getTodayStr, hasRole } from '@okr/shared-util-core';
 import { BillStore } from './bill.store';
 
 
@@ -19,7 +19,7 @@ import { BillStore } from './bill.store';
     VoucherTiles, LedgerBookings,
     SvgIconPipe, PrettyDatePipe, AvatarPipe,
     Header,
-    IonContent, IonCard, IonCardContent, IonIcon, IonItem, IonLabel, IonChip, IonAvatar, IonImg, IonButton
+    IonContent, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonIcon, IonItem, IonLabel, IonChip, IonAvatar, IonImg, IonButton, IonNote
   ],
   styles: [`
     @media (width <= 600px) { ion-card { margin: 5px; } }
@@ -117,8 +117,43 @@ import { BillStore } from './bill.store';
                 </ion-label>
               </ion-item>
             }
+            <!-- a booking that probably paid this bill (spec 1.85 Q4) -->
+            @if(hint(); as hint) {
+              <ion-item lines="none" color="warning">
+                <ion-icon slot="start" src="{{'link' | svgIcon}}" />
+                <ion-label class="ion-text-wrap">{{ hintText() }}</ion-label>
+                @if(canPay()) {
+                  <ion-button slot="end" fill="outline" (click)="recordPayment(true)">{{ store.i18n.payment_hint_link() }}</ion-button>
+                }
+              </ion-item>
+            }
+            @if(canPay()) {
+              <ion-button expand="block" fill="outline" (click)="recordPayment(false)">
+                <ion-icon slot="start" src="{{'chf' | svgIcon}}" />
+                {{ store.i18n.payment() }}
+              </ion-button>
+            }
           </ion-card-content>
         </ion-card>
+        <!-- payments (spec 1.85): a linked one can be unlinked, a posted one is undone by deleting its booking -->
+        @if(payments().length > 0) {
+          <ion-card>
+            <ion-card-header><ion-card-title>{{ store.i18n.payments_title() }}</ion-card-title></ion-card-header>
+            <ion-card-content class="ion-no-padding">
+              @for(payment of payments(); track $index) {
+                <ion-item lines="none">
+                  <ion-label>{{ payment.date | prettyDate }}</ion-label>
+                  <ion-note slot="end">CHF {{ formatAmount(payment.amount) }}</ion-note>
+                  @if(canUnlink(payment)) {
+                    <ion-button slot="end" fill="clear" [title]="store.i18n.unlink()" (click)="unlink(payment)">
+                      <ion-icon slot="icon-only" src="{{ 'cancel-circle' | svgIcon }}" />
+                    </ion-button>
+                  }
+                </ion-item>
+              }
+            </ion-card-content>
+          </ion-card>
+        }
         <!-- the linked bookings (bill + payments) as journal rows, each linked to its booking in the journal; an unlinked bill: its booking accounts -->
         <okr-ledger-bookings [accountingTenantId]="bill.accountingTenantId" [bookingKeys]="bookingKeys()"
           [accountKeys]="accountKeys()" [date]="bill.billDate" />
@@ -131,6 +166,7 @@ import { BillStore } from './bill.store';
 export class BillViewModal {
   protected readonly store = inject(BillStore);
   private readonly avatarDetailService = inject(AvatarDetailService);
+  private readonly modalController = inject(ModalController);
 
   public readonly bill = input.required<BillModel>();
 
@@ -154,6 +190,40 @@ export class BillViewModal {
   protected readonly notes = computed(() => this.bill()?.notes ?? '');
   // legacy bills still hold bexio file UUIDs — only migrated keys are vouchers
   protected readonly voucherKeys = computed(() => (this.bill()?.attachments ?? []).filter(a => a.startsWith('bexio-file-')));
+
+  // payments (spec 1.85)
+  protected readonly payments = computed(() => this.bill()?.payments ?? []);
+  private readonly isTreasurer = computed(() => hasRole('treasurer', this.store.appStore.currentUser()));
+  protected readonly canPay = computed(() => this.isTreasurer() && !this.store.isExternallyManaged() && isPayableBill(this.bill()));
+  protected readonly hint = computed(() => this.store.paymentHints().get(this.bill()?.okey ?? ''));
+  protected readonly hintText = computed(() => {
+    const c = this.hint();
+    if (!c) return '';
+    const date = convertDateFormatToString(c.date, DateFormat.StoreDate, DateFormat.ViewDate, false) || c.date;
+    const no = c.bookingNo > 0 ? `#${c.bookingNo} · ` : '';
+    return fill(this.store.i18n.payment_hint_text(), { booking: `${date} · ${no}${c.title} · CHF ${formatMinorAmount(c.debitedAmount)}` });
+  });
+
+  protected formatAmount(rappen: number): string {
+    return formatMinorAmount(rappen ?? 0);
+  }
+
+  /** a linked payment of a native book; one okr posted itself (`bill-{key}-pay-…`) is undone in the journal */
+  protected canUnlink(payment: BillPayment): boolean {
+    const key = payment.bookingKey ?? '';
+    return this.isTreasurer() && !this.store.isExternallyManaged() && key.length > 0 && !key.startsWith(`bill-${this.bill()?.okey}-pay-`);
+  }
+
+  /** Opens the payment dialog (with the hinted booking when `useHint`); a recorded payment closes the view — the list shows the new state. */
+  protected async recordPayment(useHint: boolean): Promise<void> {
+    const recorded = await this.store.recordPayment(this.bill(), useHint ? this.hint() : undefined);
+    if (recorded) await this.modalController.dismiss(null, 'confirm');
+  }
+
+  protected async unlink(payment: BillPayment): Promise<void> {
+    const unlinked = await this.store.unlinkPayment(this.bill(), payment.bookingKey ?? '');
+    if (unlinked) await this.modalController.dismiss(null, 'confirm');
+  }
 
   protected async showVendor(): Promise<void> {
     await this.avatarDetailService.show(this.bill()?.vendor);

@@ -1,20 +1,28 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { AlertController, ModalController } from '@ionic/angular/standalone';
+import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { getApp } from 'firebase/app';
 import { connectFunctionsEmulator, getFunctions, httpsCallable } from 'firebase/functions';
-import { of } from 'rxjs';
+import { firstValueFrom, from, of } from 'rxjs';
+import { take } from 'rxjs/operators';
 
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
-import { BillCollection, BillModel } from '@okr/shared-models';
-import { confirm, exportCsv } from '@okr/shared-util-angular';
-import { debugListLoaded, getSystemQuery, getTodayStr, getYear, nameMatches } from '@okr/shared-util-core';
+import { AccountModel, BillCollection, BillModel } from '@okr/shared-models';
+import { confirm, exportCsv, showToast } from '@okr/shared-util-angular';
+import { debugListLoaded, fill, getSystemQuery, getTodayStr, getYear, nameMatches } from '@okr/shared-util-core';
 
 import { BillService } from '@okr/finance-bill-data-access';
-import { BILL_I18N_KEYS, BillI18n, billDisplayState, getBillExportData, newBill } from '@okr/finance-bill-util';
+import { BillPaymentModal } from '@okr/finance-bill-ui';
+import {
+  BILL_I18N_KEYS, BillI18n, BillPaymentCandidate, BillPaymentInput, billDisplayState, billPaymentFromDate, billPaymentHints, billRefusalReasons, billRefusalText,
+  earliestPaymentFromDate, getBillExportData, isPayableBill, isRetryableBillPaymentRefusal, linkedBillPaymentKeys, newBill, newBillPaymentFormModel,
+  openBillAmount,
+} from '@okr/finance-bill-util';
+import { newPaymentId } from '@okr/finance-invoice-util';
+import { AccountService } from '@okr/finance-account-data-access';
 import { AccountingStore } from '@okr/finance-accounting-feature';
 
 import { BillEditModal } from './bill-edit.modal';
@@ -63,6 +71,8 @@ export const BillStore = signalStore(
       firestoreService: inject(FirestoreService),
       modalController: inject(ModalController),
       alertController: inject(AlertController),
+      toastController: inject(ToastController),
+      accountService: inject(AccountService),
       functions,
       i18nService: inject(I18nService),
     };
@@ -94,6 +104,52 @@ export const BillStore = signalStore(
   })),
 
   withComputed((store) => ({
+    /** the payables account of the books (spec 1.85); '' = not configured (legacy config docs lack it) */
+    payablesAccountKey: computed(() => store.accountingStore.config()?.payablesAccountKey ?? ''),
+    /** the open bills of the books — the ones a payment can be recorded on */
+    openBills: computed(() => (store.allBillsResource.value() ?? []).filter((b) => isPayableBill(b) && openBillAmount(b) > 0)),
+    /** every payment booking already linked on a bill of these books */
+    linkedPaymentKeys: computed(() => linkedBillPaymentKeys(store.allBillsResource.value() ?? [])),
+  })),
+
+  /**
+   * Payment hints (spec 1.85 Q4): the posted bookings that debit the payables account with exactly the
+   * open amount of an open bill. Read once per list load, only while an open bill exists and the books
+   * name a payables account; a failed read just shows no hints.
+   */
+  withProps((store) => ({
+    paymentCandidatesResource: rxResource({
+      params: () => ({
+        accountingTenantId: store.accountingStore.accountingTenantId(),
+        payablesAccountKey: store.payablesAccountKey(),
+        fromDate: earliestPaymentFromDate(store.openBills()),
+        linkedKeys: store.linkedPaymentKeys().join(','),
+        external: store.accountingStore.isExternallyManaged(),
+      }),
+      stream: ({ params }) => {
+        if (!params.payablesAccountKey || !params.fromDate || params.external) return of([] as BillPaymentCandidate[]);
+        return from(store.billService.listPaymentCandidates(params.accountingTenantId, params.payablesAccountKey,
+          params.linkedKeys ? params.linkedKeys.split(',') : [], params.fromDate, 500)
+          .catch((e) => {
+            console.error('BillStore.paymentCandidates: loading the bookings failed', e);
+            return [] as BillPaymentCandidate[];
+          }));
+      },
+    }),
+  })),
+
+  withComputed((store) => ({
+    /** billKey → candidate booking of the likely payment */
+    paymentHints: computed(() => {
+      const candidates = store.paymentCandidatesResource.value() ?? [];
+      const byKey = new Map(candidates.map((c) => [c.bookingKey, c]));
+      const hints = new Map<string, BillPaymentCandidate>();
+      for (const [billKey, bookingKey] of billPaymentHints(store.openBills(), candidates)) {
+        const candidate = byKey.get(bookingKey);
+        if (candidate) hints.set(billKey, candidate);
+      }
+      return hints;
+    }),
     isLoading: computed(() => store.allBillsResource.isLoading()),
     currentUser: computed(() => store.appStore.currentUser()),
     isExternallyManaged: computed(() => store.accountingStore.isExternallyManaged()),
@@ -198,6 +254,99 @@ export const BillStore = signalStore(
           await store.billService.update(data, store.appStore.currentUser() ?? undefined);
         }
         patchState(store, { version: store.version() + 1 });
+      }
+    },
+
+    /**
+     * Records an outgoing payment on an open bill (spec 1.85): opens the payment dialog, then calls
+     * `recordBillPayment`. One `paymentId` per dialog: when the call fails with a reason the treasurer
+     * can fix (or no reason at all — a network error), the dialog opens again with the entered values
+     * and the same id, so a payment that did reach the server is not booked twice.
+     * @param preselect the hinted booking (Q4): the dialog opens in mode link with it selected
+     */
+    async recordPayment(bill: BillModel, preselect?: BillPaymentCandidate): Promise<boolean> {
+      if (!isPayableBill(bill) || store.accountingStore.isExternallyManaged()) return false;
+      const config = store.accountingStore.config();
+      const payablesAccountKey = config?.payablesAccountKey ?? '';
+      if (!config || !payablesAccountKey) {
+        await showToast(store.toastController, store.i18n.payment_not_configured());
+        return false;
+      }
+      // legacy config docs lack the field (Firestore reads skip model defaults)
+      const paymentAccountKeys = config.billPaymentAccountKeys ?? [];
+      let accounts: AccountModel[] = [];
+      try {
+        accounts = paymentAccountKeys.length > 0
+          ? await firstValueFrom(store.accountService.list(bill.accountingTenantId).pipe(take(1)))
+          : [];
+      } catch (e) {
+        console.error('BillStore.recordPayment: loading the accounts failed', e);
+        await showToast(store.toastController, store.i18n.payment_error());
+        return false;
+      }
+      // The link candidates are read only when the dialog shows mode link, once per dialog; a failed
+      // read is forgotten so that a reopened dialog tries again.
+      let candidatesRead: Promise<BillPaymentCandidate[]> | undefined;
+      const loadCandidates = (): Promise<BillPaymentCandidate[]> =>
+        candidatesRead ??= store.billService.listPaymentCandidates(bill.accountingTenantId, payablesAccountKey,
+          store.linkedPaymentKeys(), billPaymentFromDate(bill)).catch((e) => {
+          candidatesRead = undefined;
+          throw e;
+        });
+      const paymentAccounts = accounts.filter((a) => paymentAccountKeys.includes(a.okey));
+      const paymentId = newPaymentId();
+      let payment = newBillPaymentFormModel(bill, getTodayStr(), paymentAccounts.map((a) => a.okey), preselect);
+
+      for (;;) {
+        const modal = await store.modalController.create({
+          component: BillPaymentModal,
+          componentProps: { payment, accounts: paymentAccounts, loadCandidates },
+        });
+        await modal.present();
+        const { data, role } = await modal.onWillDismiss<BillPaymentInput>();
+        if (role !== 'confirm' || !data) return false;
+        try {
+          const result = await store.billService.recordPayment(bill.okey, data, paymentId, store.appStore.currentUser() ?? undefined);
+          // derived from the callable's answer: a re-read right after the write may still be the old snapshot
+          const open = openBillAmount({ totalAmount: bill.totalAmount, payments: result.payments });
+          await showToast(store.toastController, result.state === 'paid'
+            ? store.i18n.payment_conf_paid()
+            : fill(store.i18n.payment_conf(), { open: (open / 100).toFixed(2) }));
+          patchState(store, { version: store.version() + 1 });
+          return true;
+        } catch (e) {
+          console.error('BillStore.recordPayment: recordBillPayment failed', e);
+          const reasons = billRefusalReasons(e);
+          await showToast(store.toastController, billRefusalText(reasons, store.i18n, store.i18n.payment_error()));
+          if (!isRetryableBillPaymentRefusal(reasons)) {
+            patchState(store, { version: store.version() + 1 });
+            return false;
+          }
+          const candidates = data.mode === 'link' ? await loadCandidates().catch(() => [] as BillPaymentCandidate[]) : [];
+          const candidate = candidates.find((c) => c.bookingKey === data.bookingKey);
+          payment = {
+            ...payment, mode: data.mode, date: data.date, amount: data.amount,
+            bankAccountKey: data.bankAccountKey || payment.bankAccountKey, bookingKey: data.bookingKey,
+            bookingAmount: (candidate?.debitedAmount ?? 0) / 100,
+          };
+        }
+      }
+    },
+
+    /** Removes a linked payment after a confirmation; the booking stays in the journal (spec 1.85 B8). */
+    async unlinkPayment(bill: BillModel, bookingKey: string): Promise<boolean> {
+      if (store.accountingStore.isExternallyManaged()) return false;
+      const confirmed = await confirm(store.alertController, store.i18n.unlink_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
+      if (!confirmed) return false;
+      try {
+        await store.billService.unlinkPayment(bill.okey, bookingKey, store.appStore.currentUser() ?? undefined);
+        await showToast(store.toastController, store.i18n.unlink_conf());
+        patchState(store, { version: store.version() + 1 });
+        return true;
+      } catch (e) {
+        console.error('BillStore.unlinkPayment: unlinkBillPayment failed', e);
+        await showToast(store.toastController, billRefusalText(billRefusalReasons(e), store.i18n, store.i18n.unlink_error()));
+        return false;
       }
     },
 

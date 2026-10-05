@@ -20,6 +20,8 @@
     "@okr/finance-accounting-feature": "*",
     "@okr/finance-bill-data-access": "*",
     "@okr/finance-bill-ui": "*",
-    "@okr/finance-bill-util": "*"
+    "@okr/finance-bill-util": "*",
+    "@okr/finance-account-data-access": "*",
+    "@okr/finance-invoice-util": "*"
   }
 }
