@@ -6,6 +6,7 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
 
+import { ActivityStatsChart } from './activity-stats-chart';
 import { ActivityStore } from './activity.store';
 
 @Component({
@@ -13,7 +14,7 @@ import { ActivityStore } from './activity.store';
   standalone: true,
   imports: [
     SvgIconPipe,
-    EmptyList, ListFilter, Spinner,
+    EmptyList, ListFilter, Spinner, ActivityStatsChart,
     IonHeader, IonToolbar, IonButtons, IonTitle, IonMenuButton, IonIcon,
     IonContent, IonItem, IonLabel, IonList,
   ],
@@ -36,6 +37,9 @@ import { ActivityStore } from './activity.store';
     </ion-header>
 
     <ion-content>
+      @if(!store.isLoading()) {
+        <okr-activity-stats-chart [stats]="store.dailyStats()" [labels]="statsLabels()" />
+      }
       @if(store.isLoading()) {
         <okr-spinner />
       } @else if(store.activities().length === 0) {
@@ -67,6 +71,14 @@ export class ActivityList {
 
   // inputs
   // no contextmenu nor listId needed
+
+  protected readonly statsLabels = computed(() => ({
+    title:  this.store.i18n.stats_title(),
+    users:  this.store.i18n.stats_users(),
+    logins: this.store.i18n.stats_logins(),
+    errors: this.store.i18n.stats_errors(),
+    usage:  this.store.i18n.stats_usage(),
+  }));
 
   // methods
   protected formatTimestamp(ts: string): string {

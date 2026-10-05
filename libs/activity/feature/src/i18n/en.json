@@ -8,5 +8,12 @@
   "payload": "Content",
   "view": {
     "title": "Show activity"
+  },
+  "stats": {
+    "title": "Usage over the last 30 days",
+    "users": "Users",
+    "logins": "Logins",
+    "errors": "Errors",
+    "usage": "Usage time (min)"
   }
 }

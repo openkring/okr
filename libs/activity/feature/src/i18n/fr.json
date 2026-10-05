@@ -8,5 +8,12 @@
   "payload": "Contenu",
   "view": {
     "title": "Afficher l'activité"
+  },
+  "stats": {
+    "title": "Utilisation des 30 derniers jours",
+    "users": "Utilisateurs",
+    "logins": "Connexions",
+    "errors": "Erreurs",
+    "usage": "Temps d'utilisation (min)"
   }
 }
