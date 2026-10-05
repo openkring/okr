@@ -15,6 +15,10 @@ export interface ContractSigner {
   label: string;               // printed under the signature line, e.g. 'Präsident SCS'
 }
 
+/** What the member sees under a request button (spec 1.88 §5.3). Derived, never stored. */
+export type ContractRequestState = 'none' | 'pending' | 'approved' | 'owned' | 'notActive';
+export const CONTRACT_REQUEST_STATES: ContractRequestState[] = ['none', 'pending', 'approved', 'owned', 'notActive'];
+
 export class ContractKindModel {
   public okey = DEFAULT_KEY;
   public tenants: string[] = DEFAULT_TENANTS;
@@ -25,9 +29,12 @@ export class ContractKindModel {
   public contractName = '';               // '{kindName} {name}' placeholders: {name} = applicant
   public askGroupKey = '';                // groups/<key> with chatMode 'ask'
   public orgKey = '';                     // membership org and the internal contract party
-  public eligibility: string[] = [];      // 'activeMember' | 'noOpenRequest'
+  public eligibility: string[] = [];      // 'activeMember' | 'noOpenRequest' | 'noActiveOwnership'
   public signers: ContractSigner[] = [];
   public terms: Record<string, string> = {};
+  public resourceType = '';               // 'locker' | 'key' — for the 'noActiveOwnership' check; '' = none (spec 1.88)
+  public requiresAddress = true;          // false: no postal-address check and no confirmation preview
+  public statusMessages: Partial<Record<ContractRequestState, string>> = {}; // i18n keys; empty = no status line
 
   constructor(tenantId: string) {
     this.tenants = [tenantId];

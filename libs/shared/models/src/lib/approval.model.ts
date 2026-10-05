@@ -35,6 +35,8 @@ export class ApprovalModel implements OkrModel, SearchableModel, TaggedModel {
   public ruleKey = '';                       // the workflow rule that asked — the audit trail
   public taskKey = '';                       // the task opened for the approver
   public writeBack = '';                     // 'collection.field' patched on decision, '' = none
+  public requestDate = '';                   // StoreDateTime, set by createApproval (spec 1.88 §4.2); '' on legacy docs
+  public decidedBy: AvatarInfo | undefined;  // who actually decided — the approver OR an admin; undefined while pending / on legacy docs
 
   constructor(tenantId: string) {
     this.tenants = [tenantId];
