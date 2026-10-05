@@ -27,9 +27,6 @@
       "path": "../../../shared/data-access/tsconfig.lib.json"
     },
     {
-      "path": "../../../shared/i18n/tsconfig.lib.json"
-    },
-    {
       "path": "../../../shared/models/tsconfig.lib.json"
     },
     {

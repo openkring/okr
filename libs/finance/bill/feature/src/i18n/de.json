@@ -61,7 +61,9 @@
   },
   "delete": {
     "label": "Rechnung löschen",
-    "confirm": "Soll die Rechnung wirklich gelöscht werden ?"
+    "confirm": "Soll die Rechnung wirklich gelöscht werden ?",
+    "conf": "Die Lieferantenrechnung ist gelöscht.",
+    "error": "Die Lieferantenrechnung konnte nicht gelöscht werden. Bitte versuche es später noch einmal."
   },
   "qr": {
     "title": "QR-Rechnung scannen",
@@ -105,7 +107,9 @@
     }
   },
   "vendor": {
-    "label": "Lieferant"
+    "label": "Lieferant",
+    "select": "Lieferant wählen",
+    "none": "Noch kein Lieferant gewählt"
   },
   "payment": {
     "label": "Zahlung erfassen",
@@ -186,6 +190,64 @@
     "inconsistent-state": "Beim Speichern ist etwas schiefgelaufen. Versuche es bitte noch einmal.",
     "invalid-payment-id": "Die Zahlung konnte nicht eindeutig erkannt werden. Schliesse das Fenster und versuche es noch einmal.",
     "posted-payment": "Diese Zahlung wurde in okr gebucht. Lösche dafür ihre Buchung im Journal.",
-    "not-found": "Die Lieferantenrechnung gibt es nicht mehr."
+    "not-found": "Die Lieferantenrechnung gibt es nicht mehr.",
+    "book-blocked": "Die Lieferantenrechnung kann noch nicht verbucht werden.",
+    "not-draft": "Nur ein Entwurf kann geändert oder verbucht werden. Lösche zuerst die Buchung im Journal.",
+    "already-booked": "Die Lieferantenrechnung ist schon verbucht.",
+    "no-lines": "Die Lieferantenrechnung hat noch keine Zeilen.",
+    "zero-amount": "Jede Zeile braucht einen Betrag grösser als 0.",
+    "no-account": "Jede Zeile braucht ein Konto.",
+    "no-bill-date": "Gib das Rechnungsdatum an.",
+    "too-many-lines": "Eine Lieferantenrechnung kann höchstens 50 Zeilen haben.",
+    "cost-center-invalid": "Eine der Kostenstellen kann nicht verwendet werden."
+  },
+  "line": {
+    "list": {
+      "title": "Positionen"
+    },
+    "add": "Zeile hinzufügen",
+    "remove": "Zeile entfernen",
+    "account": {
+      "label": "Konto",
+      "helper": "Auf dieses Konto wird der Betrag gebucht."
+    },
+    "title": {
+      "label": "Text",
+      "placeholder": "z. B. Internet September",
+      "helper": "Erscheint als Text der Buchungszeile."
+    },
+    "amount": {
+      "label": "Betrag (CHF)",
+      "placeholder": "0.00",
+      "helper": "Betrag inklusive MWST."
+    },
+    "total": "Total",
+    "validation": {
+      "linesRequired": "Füge mindestens eine Zeile hinzu.",
+      "tooManyLines": "Eine Lieferantenrechnung kann höchstens 50 Zeilen haben.",
+      "accountRequired": "Wähle ein Konto.",
+      "amountPositive": "Der Betrag muss grösser als 0 sein.",
+      "titleTooLong": "Der Text ist zu lang."
+    }
+  },
+  "reference": {
+    "label": "Referenz",
+    "placeholder": "QR-Referenz",
+    "helper": "Die Zahlungsreferenz von der QR-Rechnung."
+  },
+  "iban": {
+    "label": "IBAN des Lieferanten",
+    "placeholder": "CH..",
+    "helper": "Auf dieses Konto wird die Rechnung bezahlt."
+  },
+  "book": {
+    "label": "Verbuchen",
+    "confirm": "Soll die Lieferantenrechnung jetzt verbucht werden? Danach kann sie nicht mehr bearbeitet werden, ausser du löschst ihre Buchung im Journal.",
+    "conf": "Die Lieferantenrechnung ist verbucht.",
+    "error": "Die Lieferantenrechnung konnte nicht verbucht werden. Bitte versuche es später noch einmal."
+  },
+  "save": {
+    "conf": "Die Lieferantenrechnung ist gespeichert.",
+    "error": "Die Lieferantenrechnung konnte nicht gespeichert werden. Bitte versuche es später noch einmal."
   }
 }

@@ -3,3 +3,5 @@ export * from './lib/bill.util';
 export * from './lib/bill.validations';
 export * from './lib/bill-payment.util';
 export * from './lib/bill-payment.validations';
+export * from './lib/bill-line.util';
+export * from './lib/bill-line.validations';

@@ -6,13 +6,14 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 
 import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
-import { I18nService } from '@okr/shared-i18n';
-import { BillCollection, BillModel, BillPayment, BookingCollection, BookingLineCollection, BookingLineModel, BookingModel, DbQuery, UserModel } from '@okr/shared-models';
+import {
+  AvatarInfo, BillCollection, BillLine, BillModel, BillPayment, BookingCollection, BookingLineCollection, BookingLineModel, BookingModel, DbQuery, UserModel,
+} from '@okr/shared-models';
 import { findByKey, getQuery, getSystemQuery } from '@okr/shared-util-core';
 import { ActivityService } from '@okr/activity-data-access';
 
 import {
-  BILL_PAYMENT_BOOKING_LIMIT, BillPaymentCandidate, BillPaymentInput, billPaymentCandidates, getBillIndex, isPayableBill, MAX_BILL_PAYMENT_CANDIDATES,
+  BILL_PAYMENT_BOOKING_LIMIT, BillPaymentCandidate, BillPaymentInput, billPaymentCandidates, isPayableBill, MAX_BILL_PAYMENT_CANDIDATES,
   openBillAmount,
 } from '@okr/finance-bill-util';
 
@@ -22,12 +23,21 @@ import {
  */
 const BOOKING_KEY_CHUNK_SIZE = 15;
 
+interface WriteBillPayload {
+  mode: 'create' | 'update' | 'delete';
+  billKey?: string;
+  accountingTenantId?: string;
+  bill?: {
+    billId: string; title: string; billDate: string; dueDate: string; vendor: AvatarInfo | null; notes: string; paymentReference: string; creditorIban: string;
+  };
+  lines?: BillLine[];
+}
+
 export interface RecordBillPaymentResult { state: string; payments: BillPayment[]; bookingKey: string; }
 interface RecordBillPaymentPayload {
   billKey: string; mode: 'post' | 'link'; paymentId: string; date: string; amount: number; bankAccountKey?: string; bookingKey?: string;
 }
 
-const PFX = '@finance/bill/data-access.';
 
 @Injectable({
   providedIn: 'root'
@@ -36,15 +46,6 @@ export class BillService {
   private readonly env = inject(ENV);
   private readonly firestoreService = inject(FirestoreService);
   private readonly activityService = inject(ActivityService);
-  private readonly i18nService = inject(I18nService);
-  private readonly i18n = this.i18nService.translateAll({
-    create_conf:  PFX + 'create.conf',
-    create_error: PFX + 'create.error',
-    update_conf:  PFX + 'update.conf',
-    update_error: PFX + 'update.error',
-    delete_conf:  PFX + 'delete.conf',
-    delete_error: PFX + 'delete.error',
-  });
 
   public list(): Observable<BillModel[]> {
     return this.firestoreService.searchData<BillModel>(
@@ -59,23 +60,39 @@ export class BillService {
     return findByKey<BillModel>(this.list(), key);
   }
 
-  public async create(bill: BillModel, currentUser?: UserModel): Promise<string | undefined> {
-    bill.index = getBillIndex(bill);
-    const key = await this.firestoreService.createModel<BillModel>(BillCollection, bill, this.i18n.create_conf(), this.i18n.create_error(), currentUser);
-    void this.activityService.log('bill', 'create', currentUser, `${key}: ${bill.billId}`);
-    return key;
+  /*-------------------------- native bills (spec 1.85 phase 3) --------------------------*/
+  // `bills` is CF-write-only (firestore.rules): every write goes through writeBill / bookBill.
+
+  /** Creates or updates a draft bill with its lines; returns the bill key. Rejects with the callable's error. */
+  public async write(mode: 'create' | 'update', bill: BillModel, lines: BillLine[], currentUser?: UserModel): Promise<string> {
+    const payload: WriteBillPayload = {
+      mode,
+      ...(mode === 'create' ? { accountingTenantId: bill.accountingTenantId } : { billKey: bill.okey }),
+      bill: {
+        billId: bill.billId ?? '', title: bill.title ?? '', billDate: bill.billDate ?? '', dueDate: bill.dueDate ?? '',
+        vendor: bill.vendor ?? null, notes: bill.notes ?? '', paymentReference: bill.paymentReference ?? '', creditorIban: bill.creditorIban ?? '',
+      },
+      lines,
+    };
+    const fn = httpsCallable<WriteBillPayload, { billKey: string }>(this.functions(), 'writeBill');
+    const result = await fn(payload);
+    void this.activityService.log('bill', mode, currentUser, `${result.data.billKey}: ${bill.billId}`);
+    return result.data.billKey;
   }
 
-  public async update(bill: BillModel, currentUser?: UserModel): Promise<string | undefined> {
-    bill.index = getBillIndex(bill);
-    const key = await this.firestoreService.updateModel<BillModel>(BillCollection, bill, false, this.i18n.update_conf(), this.i18n.update_error(), currentUser);
-    void this.activityService.log('bill', 'update', currentUser, `${key}: ${bill.billId}`);
-    return key;
-  }
-
+  /** Deletes a draft bill (a booked one is refused: its booking is deleted in the journal first). */
   public async delete(bill: BillModel, currentUser?: UserModel): Promise<void> {
-    await this.firestoreService.deleteModel<BillModel>(BillCollection, bill, this.i18n.delete_conf(), this.i18n.delete_error(), currentUser);
+    const fn = httpsCallable<WriteBillPayload, { billKey: string }>(this.functions(), 'writeBill');
+    await fn({ mode: 'delete', billKey: bill.okey });
     void this.activityService.log('bill', 'delete', currentUser, `${bill.okey}: ${bill.billId}`);
+  }
+
+  /** Books a draft bill (issue booking `bill-{key}`); the bill becomes `todo`. */
+  public async book(billKey: string, currentUser?: UserModel): Promise<{ bookingKey: string; bookingNo: number; state: string }> {
+    const fn = httpsCallable<{ billKey: string }, { bookingKey: string; bookingNo: number; state: string }>(this.functions(), 'bookBill');
+    const result = await fn({ billKey });
+    void this.activityService.log('bill', 'book', currentUser, `${billKey}: ${result.data.bookingKey}`);
+    return result.data;
   }
 
   /*-------------------------- payments (spec 1.85) --------------------------*/

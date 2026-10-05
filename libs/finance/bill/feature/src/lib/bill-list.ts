@@ -6,7 +6,7 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, formatMinorAmount, ListFilter, Spinner } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@okr/shared-util-angular';
 import { DateFormat, convertDateFormatToString, getTodayStr, getYear, getYearList, hasRole } from '@okr/shared-util-core';
-import { billDisplayState, billStateColor, billStateLabel, isOverdueBill, isPayableBill } from '@okr/finance-bill-util';
+import { billDisplayState, billStateColor, billStateLabel, isDraftBill, isOverdueBill, isPayableBill } from '@okr/finance-bill-util';
 
 import { AvatarPipe } from '@okr/avatar-ui';
 import { Menu } from '@okr/cms-menu-feature';
@@ -208,13 +208,16 @@ export class BillList {
     if (bill.attachments.length > 0) {
       options.buttons.push(createActionSheetButton('bill.download', this.store.i18n.download(), base, 'download'));
     }
-    if (!this.store.isExternallyManaged() && hasRole('treasurer', this.currentUser()) && isPayableBill(bill)) {
-      options.buttons.push(createActionSheetButton('bill.payment', this.store.i18n.payment(), base, 'chf'));
-    }
-    if (!this.store.isExternallyManaged() && this.canChange()) {
-      options.buttons.push(createActionSheetButton('bill.edit', this.store.i18n.update(), base, 'edit'));
-      if (this.hasRole('admin')) {
+    // native books, treasurer only (the bill callables check the same): a draft is edited, booked or
+    // deleted; an open bill takes a payment (spec 1.85)
+    if (!this.store.isExternallyManaged() && hasRole('treasurer', this.currentUser())) {
+      if (isDraftBill(bill)) {
+        options.buttons.push(createActionSheetButton('bill.edit', this.store.i18n.update(), base, 'edit'));
+        options.buttons.push(createActionSheetButton('bill.book', this.store.i18n.book(), base, 'checkmark'));
         options.buttons.push(createActionSheetButton('bill.delete', this.store.i18n.delete(), base, 'trash'));
+      }
+      if (isPayableBill(bill)) {
+        options.buttons.push(createActionSheetButton('bill.payment', this.store.i18n.payment(), base, 'chf'));
       }
     }
     options.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), base, 'cancel'));
@@ -228,6 +231,7 @@ export class BillList {
       case 'bill.download': await this.store.showPdf(bill); break;
       case 'bill.payment': await this.store.recordPayment(bill, this.store.paymentHints().get(bill.okey)); break;
       case 'bill.edit': await this.store.edit(bill); break;
+      case 'bill.book': await this.store.book(bill); break;
       case 'bill.delete': await this.store.delete(bill); break;
     }
     this.cdr.markForCheck();

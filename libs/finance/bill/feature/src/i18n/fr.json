@@ -61,7 +61,9 @@
   },
   "delete": {
     "label": "Supprimer la facture",
-    "confirm": "Voulez-vous vraiment supprimer la facture ?"
+    "confirm": "Voulez-vous vraiment supprimer la facture ?",
+    "conf": "La facture fournisseur est supprimée.",
+    "error": "La facture fournisseur n'a pas pu être supprimée. Réessaie plus tard."
   },
   "qr": {
     "title": "Scanner la facture QR",
@@ -105,7 +107,9 @@
     }
   },
   "vendor": {
-    "label": "Fournisseur"
+    "label": "Fournisseur",
+    "select": "Choisir le fournisseur",
+    "none": "Aucun fournisseur choisi"
   },
   "payment": {
     "label": "Saisir un paiement",
@@ -186,6 +190,64 @@
     "inconsistent-state": "Quelque chose s'est mal passé lors de l'enregistrement. Réessaie.",
     "invalid-payment-id": "Le paiement n'a pas pu être identifié. Ferme la fenêtre et réessaie.",
     "posted-payment": "Ce paiement a été comptabilisé dans okr. Supprime plutôt son écriture dans le journal.",
-    "not-found": "La facture fournisseur n'existe plus."
+    "not-found": "La facture fournisseur n'existe plus.",
+    "book-blocked": "La facture fournisseur ne peut pas encore être comptabilisée.",
+    "not-draft": "Seul un brouillon peut être modifié ou comptabilisé. Supprime d'abord son écriture dans le journal.",
+    "already-booked": "La facture fournisseur est déjà comptabilisée.",
+    "no-lines": "La facture fournisseur n'a pas encore de lignes.",
+    "zero-amount": "Chaque ligne a besoin d’un montant supérieur à 0.",
+    "no-account": "Chaque ligne a besoin d’un compte.",
+    "no-bill-date": "Indique la date de la facture.",
+    "too-many-lines": "Une facture fournisseur peut avoir au plus 50 lignes.",
+    "cost-center-invalid": "Un des centres de coûts ne peut pas être utilisé."
+  },
+  "line": {
+    "list": {
+      "title": "Positions"
+    },
+    "add": "Ajouter une ligne",
+    "remove": "Supprimer la ligne",
+    "account": {
+      "label": "Compte",
+      "helper": "Le montant est comptabilisé sur ce compte."
+    },
+    "title": {
+      "label": "Texte",
+      "placeholder": "p. ex. Internet septembre",
+      "helper": "Apparaît comme texte de la ligne d'écriture."
+    },
+    "amount": {
+      "label": "Montant (CHF)",
+      "placeholder": "0.00",
+      "helper": "Montant TVA comprise."
+    },
+    "total": "Total",
+    "validation": {
+      "linesRequired": "Ajoute au moins une ligne.",
+      "tooManyLines": "Une facture fournisseur peut avoir au plus 50 lignes.",
+      "accountRequired": "Choisis un compte.",
+      "amountPositive": "Le montant doit être supérieur à 0.",
+      "titleTooLong": "Le texte est trop long."
+    }
+  },
+  "reference": {
+    "label": "Référence",
+    "placeholder": "Référence QR",
+    "helper": "La référence de paiement de la facture QR."
+  },
+  "iban": {
+    "label": "IBAN du fournisseur",
+    "placeholder": "CH..",
+    "helper": "La facture est payée sur ce compte."
+  },
+  "book": {
+    "label": "Comptabiliser",
+    "confirm": "Comptabiliser la facture fournisseur maintenant ? Ensuite elle ne peut plus être modifiée, sauf si tu supprimes son écriture dans le journal.",
+    "conf": "La facture fournisseur est comptabilisée.",
+    "error": "La facture fournisseur n'a pas pu être comptabilisée. Réessaie plus tard."
+  },
+  "save": {
+    "conf": "La facture fournisseur est enregistrée.",
+    "error": "La facture fournisseur n'a pas pu être enregistrée. Réessaie plus tard."
   }
 }

@@ -10,22 +10,22 @@ import { take } from 'rxjs/operators';
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
-import { AccountModel, BillCollection, BillModel } from '@okr/shared-models';
+import { AccountModel, AvatarInfo, BillCollection, BillModel, OrgModel } from '@okr/shared-models';
 import { confirm, exportCsv, showToast } from '@okr/shared-util-angular';
-import { debugListLoaded, fill, getSystemQuery, getTodayStr, getYear, nameMatches } from '@okr/shared-util-core';
+import { debugListLoaded, fill, getAvatarInfo, getSystemQuery, getTodayStr, getYear, nameMatches } from '@okr/shared-util-core';
 
 import { BillService } from '@okr/finance-bill-data-access';
 import { BillPaymentModal } from '@okr/finance-bill-ui';
 import {
   BILL_I18N_KEYS, BillI18n, BillPaymentCandidate, BillPaymentInput, billDisplayState, billPaymentFromDate, billPaymentHints, billRefusalReasons, billRefusalText,
-  earliestPaymentFromDate, getBillExportData, isPayableBill, isRetryableBillPaymentRefusal, linkedBillPaymentKeys, newBill, newBillPaymentFormModel,
-  openBillAmount,
+  earliestPaymentFromDate, getBillExportData, isDraftBill, isPayableBill, isRetryableBillPaymentRefusal, linkedBillPaymentKeys, newBill, newBillLine,
+  newBillPaymentFormModel, openBillAmount,
 } from '@okr/finance-bill-util';
 import { newPaymentId } from '@okr/finance-invoice-util';
 import { AccountService } from '@okr/finance-account-data-access';
 import { AccountingStore } from '@okr/finance-accounting-feature';
 
-import { BillEditModal } from './bill-edit.modal';
+import { BillEditModal, BillEditResult } from './bill-edit.modal';
 import { BillQrScanModal } from './bill-qr-scan.modal';
 
 export type { BillI18n };
@@ -38,6 +38,15 @@ interface ParsedQrInvoice {
   reference: string;
   creditorName: string;
   dueDate: string;     // store date (yyyymmdd)
+}
+
+/** The org whose name equals the QR-bill creditor (case- and space-insensitive), as vendor; undefined when none or several match. */
+function vendorByName(orgs: OrgModel[], creditorName: string): AvatarInfo | undefined {
+  const norm = (s: string | undefined): string => (s ?? '').toLowerCase().replace(/\s+/g, ' ').trim();
+  const name = norm(creditorName);
+  if (!name) return undefined;
+  const hits = orgs.filter((o) => norm(o.name) === name);
+  return hits.length === 1 ? getAvatarInfo(hits[0], 'org') : undefined;
 }
 
 export type BillState = {
@@ -104,6 +113,8 @@ export const BillStore = signalStore(
   })),
 
   withComputed((store) => ({
+    /** the account a new bill line starts on (the books' default expense account; '' when not configured) */
+    defaultExpenseAccountKey: computed(() => store.accountingStore.config()?.defaultExpenseAccountKey ?? ''),
     /** the payables account of the books (spec 1.85); '' = not configured (legacy config docs lack it) */
     payablesAccountKey: computed(() => store.accountingStore.config()?.payablesAccountKey ?? ''),
     /** the open bills of the books — the ones a payment can be recorded on */
@@ -211,9 +222,12 @@ export const BillStore = signalStore(
       if (store.accountingStore.isExternallyManaged()) return;
       const bill = newBill(store.appStore.tenantId());
       bill.accountingTenantId = store.accountingStore.accountingTenantId();
+      bill.billDate = getTodayStr();
+      bill.lines = [newBillLine(store.defaultExpenseAccountKey())];
       await this.openEdit(bill, true);
     },
 
+    /** A new draft from a scanned QR-bill: reference, IBAN, due date, vendor (by name) and one line with the amount. */
     async scan(): Promise<void> {
       if (store.accountingStore.isExternallyManaged()) return;
       const scanModal = await store.modalController.create({ component: BillQrScanModal });
@@ -222,11 +236,13 @@ export const BillStore = signalStore(
       if (role !== 'confirm' || !parsed) return;
       const bill = newBill(store.appStore.tenantId());
       bill.accountingTenantId = store.accountingStore.accountingTenantId();
-      bill.billId = parsed.reference ?? '';
+      bill.billDate = getTodayStr();
       bill.title = parsed.creditorName ?? '';
       bill.dueDate = parsed.dueDate ?? '';
-      bill.state = 'todo';
-      bill.totalAmount = { amount: parsed.amount ?? 0, currency: parsed.currency ?? 'CHF', periodicity: 'one-time' };
+      bill.paymentReference = parsed.reference ?? '';
+      bill.creditorIban = parsed.iban ?? '';
+      bill.vendor = vendorByName(store.appStore.allOrgs(), parsed.creditorName ?? '');
+      bill.lines = [newBillLine(store.defaultExpenseAccountKey(), parsed.amount ?? 0, parsed.creditorName ?? '')];
       await this.openEdit(bill, true);
     },
 
@@ -235,6 +251,7 @@ export const BillStore = signalStore(
       await this.openEdit({ ...bill }, false);
     },
 
+    /** Opens the edit modal and writes the result through `writeBill` (drafts only; anything else opens read-only). */
     async openEdit(bill: BillModel, isNew: boolean): Promise<void> {
       const modal = await store.modalController.create({
         component: BillEditModal,
@@ -243,18 +260,35 @@ export const BillStore = signalStore(
           currentUser: store.appStore.currentUser(),
           isNew,
           readOnly: false,
+          defaultAccountKey: store.defaultExpenseAccountKey(),
         },
       });
       await modal.present();
-      const { data, role } = await modal.onWillDismiss<BillModel>();
-      if (role === 'confirm' && data) {
-        if (isNew) {
-          await store.billService.create(data, store.appStore.currentUser() ?? undefined);
-        } else {
-          await store.billService.update(data, store.appStore.currentUser() ?? undefined);
-        }
-        patchState(store, { version: store.version() + 1 });
+      const { data, role } = await modal.onWillDismiss<BillEditResult>();
+      if (role !== 'confirm' || !data) return;
+      try {
+        await store.billService.write(isNew ? 'create' : 'update', data.bill, data.lines, store.appStore.currentUser() ?? undefined);
+        await showToast(store.toastController, store.i18n.save_conf());
+      } catch (e) {
+        console.error('BillStore.openEdit: writeBill failed', e);
+        await showToast(store.toastController, billRefusalText(billRefusalReasons(e), store.i18n, store.i18n.save_error()));
       }
+      patchState(store, { version: store.version() + 1 });
+    },
+
+    /** «Verbuchen»: books a draft as `bill-{key}` (expense lines / payables) after a confirmation. */
+    async book(bill: BillModel): Promise<void> {
+      if (!isDraftBill(bill) || store.accountingStore.isExternallyManaged()) return;
+      const confirmed = await confirm(store.alertController, store.i18n.book_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
+      if (!confirmed) return;
+      try {
+        await store.billService.book(bill.okey, store.appStore.currentUser() ?? undefined);
+        await showToast(store.toastController, store.i18n.book_conf());
+      } catch (e) {
+        console.error('BillStore.book: bookBill failed', e);
+        await showToast(store.toastController, billRefusalText(billRefusalReasons(e), store.i18n, store.i18n.book_error()));
+      }
+      patchState(store, { version: store.version() + 1 });
     },
 
     /**
@@ -350,11 +384,18 @@ export const BillStore = signalStore(
       }
     },
 
+    /** Deletes a draft bill (a booked one: its booking is deleted in the journal first, which returns it to draft). */
     async delete(bill: BillModel): Promise<void> {
-      if (store.accountingStore.isExternallyManaged()) return;
+      if (!isDraftBill(bill) || store.accountingStore.isExternallyManaged()) return;
       const confirmed = await confirm(store.alertController, store.i18n.delete_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
       if (!confirmed) return;
-      await store.billService.delete(bill, store.appStore.currentUser() ?? undefined);
+      try {
+        await store.billService.delete(bill, store.appStore.currentUser() ?? undefined);
+        await showToast(store.toastController, store.i18n.delete_conf());
+      } catch (e) {
+        console.error('BillStore.delete: writeBill failed', e);
+        await showToast(store.toastController, billRefusalText(billRefusalReasons(e), store.i18n, store.i18n.delete_error()));
+      }
       patchState(store, { version: store.version() + 1 });
     },
 

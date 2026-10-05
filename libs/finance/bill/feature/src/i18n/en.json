@@ -61,7 +61,9 @@
   },
   "delete": {
     "label": "Delete invoice",
-    "confirm": "Do you really want to delete the invoice ?"
+    "confirm": "Do you really want to delete the invoice ?",
+    "conf": "The supplier bill is deleted.",
+    "error": "The supplier bill could not be deleted. Please try again later."
   },
   "qr": {
     "title": "Scan QR invoice",
@@ -105,7 +107,9 @@
     }
   },
   "vendor": {
-    "label": "Supplier"
+    "label": "Supplier",
+    "select": "Choose supplier",
+    "none": "No supplier chosen yet"
   },
   "payment": {
     "label": "Record payment",
@@ -186,6 +190,64 @@
     "inconsistent-state": "Something went wrong while saving. Please try again.",
     "invalid-payment-id": "The payment could not be identified. Close the window and try again.",
     "posted-payment": "This payment was booked in okr. Delete its booking in the journal instead.",
-    "not-found": "The supplier bill no longer exists."
+    "not-found": "The supplier bill no longer exists.",
+    "book-blocked": "The supplier bill cannot be booked yet.",
+    "not-draft": "Only a draft can be changed or booked. Delete its booking in the journal first.",
+    "already-booked": "The supplier bill is already booked.",
+    "no-lines": "The supplier bill has no lines yet.",
+    "zero-amount": "Every line needs an amount greater than 0.",
+    "no-account": "Every line needs an account.",
+    "no-bill-date": "Enter the bill date.",
+    "too-many-lines": "A supplier bill can have at most 50 lines.",
+    "cost-center-invalid": "One of the cost centres cannot be used."
+  },
+  "line": {
+    "list": {
+      "title": "Lines"
+    },
+    "add": "Add line",
+    "remove": "Remove line",
+    "account": {
+      "label": "Account",
+      "helper": "The amount is booked on this account."
+    },
+    "title": {
+      "label": "Text",
+      "placeholder": "e.g. Internet September",
+      "helper": "Shown as the text of the booking line."
+    },
+    "amount": {
+      "label": "Amount (CHF)",
+      "placeholder": "0.00",
+      "helper": "Amount including VAT."
+    },
+    "total": "Total",
+    "validation": {
+      "linesRequired": "Add at least one line.",
+      "tooManyLines": "A supplier bill can have at most 50 lines.",
+      "accountRequired": "Choose an account.",
+      "amountPositive": "The amount must be greater than 0.",
+      "titleTooLong": "The text is too long."
+    }
+  },
+  "reference": {
+    "label": "Reference",
+    "placeholder": "QR reference",
+    "helper": "The payment reference from the QR-bill."
+  },
+  "iban": {
+    "label": "Supplier IBAN",
+    "placeholder": "CH..",
+    "helper": "The bill is paid to this account."
+  },
+  "book": {
+    "label": "Book",
+    "confirm": "Book the supplier bill now? After that it cannot be edited unless you delete its booking in the journal.",
+    "conf": "The supplier bill is booked.",
+    "error": "The supplier bill could not be booked. Please try again later."
+  },
+  "save": {
+    "conf": "The supplier bill is saved.",
+    "error": "The supplier bill could not be saved. Please try again later."
   }
 }

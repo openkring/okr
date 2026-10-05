@@ -34,6 +34,8 @@
     },
     { "path": "../../account/ui/tsconfig.lib.json" },
     { "path": "../../../shared/i18n/tsconfig.lib.json" },
-    { "path": "../../../shared/util-angular/tsconfig.lib.json" }
+    { "path": "../../../shared/util-angular/tsconfig.lib.json" },
+    { "path": "../../account/util/tsconfig.lib.json" },
+    { "path": "../../../shared/pipes/tsconfig.lib.json" }
   ]
 }

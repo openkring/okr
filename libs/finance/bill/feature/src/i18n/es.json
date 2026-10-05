@@ -61,7 +61,9 @@
   },
   "delete": {
     "label": "Eliminar factura",
-    "confirm": "¿Desea realmente eliminar la factura ?"
+    "confirm": "¿Desea realmente eliminar la factura ?",
+    "conf": "La factura del proveedor está eliminada.",
+    "error": "No se pudo eliminar la factura del proveedor. Inténtalo de nuevo más tarde."
   },
   "qr": {
     "title": "Escanear factura QR",
@@ -105,7 +107,9 @@
     }
   },
   "vendor": {
-    "label": "Proveedor"
+    "label": "Proveedor",
+    "select": "Elegir proveedor",
+    "none": "Aún no se ha elegido proveedor"
   },
   "payment": {
     "label": "Registrar pago",
@@ -186,6 +190,64 @@
     "inconsistent-state": "Algo salió mal al guardar. Inténtalo de nuevo.",
     "invalid-payment-id": "No se pudo identificar el pago. Cierra la ventana e inténtalo de nuevo.",
     "posted-payment": "Este pago se contabilizó en okr. Elimina su asiento en el diario.",
-    "not-found": "La factura del proveedor ya no existe."
+    "not-found": "La factura del proveedor ya no existe.",
+    "book-blocked": "La factura del proveedor aún no se puede contabilizar.",
+    "not-draft": "Solo un borrador se puede modificar o contabilizar. Elimina primero su asiento en el diario.",
+    "already-booked": "La factura del proveedor ya está contabilizada.",
+    "no-lines": "La factura del proveedor aún no tiene líneas.",
+    "zero-amount": "Cada línea necesita un importe mayor que 0.",
+    "no-account": "Cada línea necesita una cuenta.",
+    "no-bill-date": "Indica la fecha de la factura.",
+    "too-many-lines": "Una factura de proveedor puede tener como máximo 50 líneas.",
+    "cost-center-invalid": "Uno de los centros de coste no se puede usar."
+  },
+  "line": {
+    "list": {
+      "title": "Posiciones"
+    },
+    "add": "Añadir línea",
+    "remove": "Quitar línea",
+    "account": {
+      "label": "Cuenta",
+      "helper": "El importe se contabiliza en esta cuenta."
+    },
+    "title": {
+      "label": "Texto",
+      "placeholder": "p. ej. Internet septiembre",
+      "helper": "Aparece como texto de la línea del asiento."
+    },
+    "amount": {
+      "label": "Importe (CHF)",
+      "placeholder": "0.00",
+      "helper": "Importe con IVA incluido."
+    },
+    "total": "Total",
+    "validation": {
+      "linesRequired": "Añade al menos una línea.",
+      "tooManyLines": "Una factura de proveedor puede tener como máximo 50 líneas.",
+      "accountRequired": "Elige una cuenta.",
+      "amountPositive": "El importe debe ser mayor que 0.",
+      "titleTooLong": "El texto es demasiado largo."
+    }
+  },
+  "reference": {
+    "label": "Referencia",
+    "placeholder": "Referencia QR",
+    "helper": "La referencia de pago de la factura QR."
+  },
+  "iban": {
+    "label": "IBAN del proveedor",
+    "placeholder": "CH..",
+    "helper": "La factura se paga a esta cuenta."
+  },
+  "book": {
+    "label": "Contabilizar",
+    "confirm": "¿Contabilizar ahora la factura del proveedor? Después ya no se puede editar, salvo que elimines su asiento en el diario.",
+    "conf": "La factura del proveedor está contabilizada.",
+    "error": "No se pudo contabilizar la factura del proveedor. Inténtalo de nuevo más tarde."
+  },
+  "save": {
+    "conf": "La factura del proveedor está guardada.",
+    "error": "No se pudo guardar la factura del proveedor. Inténtalo de nuevo más tarde."
   }
 }

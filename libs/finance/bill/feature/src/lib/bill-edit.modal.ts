@@ -1,17 +1,31 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
-import { IonContent } from '@ionic/angular/standalone';
-import { ModalController } from '@ionic/angular/standalone';
+import { rxResource } from '@angular/core/rxjs-interop';
+import { IonContent, ModalController } from '@ionic/angular/standalone';
+import { of } from 'rxjs';
 
+import { AppStore, MultiSelectModal } from '@okr/shared-feature';
+import { AccountService } from '@okr/finance-account-data-access';
 import { VoucherTiles } from '@okr/finance-accounting-feature';
-import { BillModel, UserModel } from '@okr/shared-models';
+import { AvatarInfo, BillLine, BillModel, UserModel } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
-import { coerceBoolean, safeStructuredClone } from '@okr/shared-util-core';
+import { coerceBoolean, getAvatarInfo, safeStructuredClone } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
 
 import { BillEditForm } from '@okr/finance-bill-ui';
-import { BILL_I18N_KEYS, BillI18n } from '@okr/finance-bill-util';
+import { BILL_I18N_KEYS, BillI18n, isDraftBill, toBillLines } from '@okr/finance-bill-util';
 import { dismissOverlay } from '@okr/shared-util-angular';
 
+/** What the modal dismisses with on confirm. */
+export interface BillEditResult {
+  bill: BillModel;
+  lines: BillLine[];
+}
+
+/**
+ * Edits a native draft bill with its lines (spec 1.85 phase 3); anything but a draft is shown
+ * read-only. Lives in the feature lib because it loads the chart of accounts and picks the vendor with
+ * MultiSelectModal. Dismisses with `BillEditResult` on confirm — the store writes it through `writeBill`.
+ */
 @Component({
   selector: 'okr-bill-edit-modal',
   standalone: true,
@@ -31,12 +45,17 @@ import { dismissOverlay } from '@okr/shared-util-angular';
         <okr-bill-edit-form
           [formData]="formData"
           (formDataChange)="onFormDataChange($event)"
+          [lines]="lines()"
+          (linesChange)="lines.set($event)"
+          [accounts]="accounts()"
+          [defaultAccountKey]="defaultAccountKey()"
           [currentUser]="currentUser()"
           [readOnly]="isReadOnly()"
           [isNew]="isNew()"
           [i18n]="i18n"
           (dirty)="formDirty.set($event)"
           (valid)="formValid.set($event)"
+          (vendorSelect)="selectVendor()"
         />
       }
       <!-- attachments migrated from bexio: finance-documents okeys, files in the private bucket (spec 1.74) -->
@@ -46,33 +65,76 @@ import { dismissOverlay } from '@okr/shared-util-angular';
 })
 export class BillEditModal {
   private readonly modalController = inject(ModalController);
+  private readonly accountService = inject(AccountService);
+  private readonly appStore = inject(AppStore);
+  // direct inject, no store: the store opens this modal, importing it back would be circular
   protected readonly i18n = inject(I18nService).translateAll(BILL_I18N_KEYS) as BillI18n;
 
   // inputs
   public readonly bill = input.required<BillModel>();
-  // legacy bills still hold bexio file UUIDs — only migrated keys are vouchers
-  protected readonly voucherKeys = computed(() => (this.bill()?.attachments ?? []).filter(a => a.startsWith('bexio-file-')));
   public readonly currentUser = input.required<UserModel>();
   public readonly isNew = input.required<boolean>();
   public readonly readOnly = input(true);
+  /** the account a new line starts on (the books' default expense account) */
+  public readonly defaultAccountKey = input('');
+
+  // legacy bills still hold bexio file UUIDs — only migrated keys are vouchers
+  protected readonly voucherKeys = computed(() => (this.bill()?.attachments ?? []).filter(a => a.startsWith('bexio-file-')));
 
   // signals
-  protected readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   protected formData = linkedSignal(() => safeStructuredClone(this.bill()));
+  protected readonly lines = linkedSignal(() => toBillLines(this.bill()));
   protected formDirty = signal(false);
   protected formValid = signal(false);
 
+  private readonly accountsResource = rxResource({
+    params: () => ({ accountingTenantId: this.bill().accountingTenantId }),
+    stream: ({ params }) => params.accountingTenantId ? this.accountService.list(params.accountingTenantId) : of([]),
+  });
+  protected readonly accounts = computed(() => this.accountsResource.value() ?? []);
+
   // computed
+  /** only a draft can be changed; booked and paid bills are frozen (their booking is deleted in the journal first) */
+  protected readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()) || !isDraftBill(this.bill()));
   protected readonly showConfirmation = computed(() => this.formValid() && this.formDirty() && !this.isReadOnly());
   protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.i18n.cancel(), save: this.i18n.save() } as ChangeConfirmationI18n));
-  protected readonly headerTitle = computed(() => this.isNew() ? this.i18n.create() : this.i18n.update());
+  protected readonly headerTitle = computed(() => this.isNew() ? this.i18n.create() : (this.isReadOnly() ? this.i18n.view() : this.i18n.update()));
 
   protected onFormDataChange(data: BillModel): void {
     this.formData.set(data);
   }
 
+  /** one picker with a segment each for orgs and persons; orgs first — most vendors are companies */
+  protected async selectVendor(): Promise<void> {
+    if (this.isReadOnly()) return;
+    const modal = await this.modalController.create({
+      component: MultiSelectModal,
+      cssClass: 'list-modal',
+      componentProps: { contents: 'org,person', selectedTag: '', currentUser: this.currentUser(), title: this.i18n.vendor_select() },
+    });
+    await modal.present();
+    const { data, role } = await modal.onWillDismiss<string>();
+    if (role !== 'confirm' || !data) return;
+    const vendor = this.toVendor(data);
+    if (vendor) {
+      this.formDirty.set(true);
+      this.formData.update((vm) => (vm ? { ...vm, vendor } : vm));
+    }
+  }
+
+  /** MultiSelectModal answers `modelType.okey`; resolve it against the loaded persons and orgs */
+  private toVendor(selection: string): AvatarInfo | undefined {
+    const [modelType, key] = selection.split('.');
+    if (modelType === 'person') return getAvatarInfo(this.appStore.allPersons().find(p => p.okey === key), 'person');
+    if (modelType === 'org') return getAvatarInfo(this.appStore.allOrgs().find(o => o.okey === key), 'org');
+    return undefined;
+  }
+
   protected async save(): Promise<void> {
-    await dismissOverlay(this.modalController, this.formData(), 'confirm');
+    const bill = this.formData();
+    if (!bill) return;
+    const result: BillEditResult = { bill, lines: this.lines() };
+    await dismissOverlay(this.modalController, result, 'confirm');
   }
 
   protected async cancel(): Promise<void> {

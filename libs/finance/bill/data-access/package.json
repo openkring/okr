@@ -10,7 +10,6 @@
     "@okr/activity-data-access": "*",
     "@okr/shared-config": "*",
     "@okr/shared-data-access": "*",
-    "@okr/shared-i18n": "*",
     "@okr/shared-models": "*",
     "@okr/shared-util-core": "*",
     "@okr/finance-bill-util": "*"
