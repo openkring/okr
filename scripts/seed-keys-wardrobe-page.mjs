@@ -39,7 +39,9 @@
  * Requires:  gcloud auth application-default login  (or GOOGLE_APPLICATION_CREDENTIALS)
  *
  * Idempotent: i18n rows by (module, key), rules by `name` + tenant, sections / page / menu row by
- * fixed ids, the parent menu's children by membership. Nothing is ever removed.
+ * fixed ids, the parent menu's children by membership. Nothing is ever removed. Two guards keep a
+ * re-run from undoing --request-flow: a section already on Contract (7) and an interim rule
+ * already archived are left unchanged.
  * --request-flow: kinds by fixed id (set), i18n rows by (module, key), rules by name + tenant,
  * section switch and rule archiving are updates.
  */
@@ -255,6 +257,10 @@ async function seedRules() {
   for (const b of BUTTONS) {
     const snap = await db.collection('workflow-rules').where('name', '==', b.rule).get();
     const existing = snap.docs.find((d) => (d.data().tenants ?? []).includes(TENANT));
+    if (existing?.data().isArchived === true) {
+      console.log(`  rule "${b.rule}" archived by the request flow — left unchanged`);
+      continue;
+    }
     const rule = {
       tenants: [TENANT], isArchived: false,
       index: `n:${b.rule} e:ui.buttonClicked r:${KEY_RESPONSIBILITY}`,
@@ -273,6 +279,11 @@ async function seedRules() {
 
 async function seedSections() {
   for (const b of BUTTONS) {
+    const current = (await db.collection('sections').doc(b.id).get()).data();
+    if (current?.properties?.action?.type === BUTTON_ACTION_CONTRACT) {
+      console.log(`  sections/${b.id} already switched to the request flow (Contract) — left unchanged`);
+      continue;
+    }
     // `name` IS what the rule matches on — emitUiEvent reads it from this document
     const section = {
       tenants: [TENANT], isArchived: false, state: 'published',
