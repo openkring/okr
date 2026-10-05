@@ -80,7 +80,7 @@ type ComposerSegment = 'editor' | 'preview' | 'list';
 
     <ion-content class="ion-no-padding">
       @if (showForm()) {
-        <form novalidate>
+        <form novalidate (submit)="$event.preventDefault()">
           <!-- Editor: sender, subject, attachments and the message body. -->
           @if (activeSegment() === 'editor') {
             <ion-card>

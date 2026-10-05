@@ -20,7 +20,9 @@ import type { OkrEditor } from '@okr/shared-ui-editor';
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
   @if (showForm()) {
-    <form novalidate>
+    <!-- ngx-editor's toolbar buttons carry no type="button", so Enter in any input (e.g. «Untermenü
+         hinzufügen») natively submits this form and reloads the page. Saving runs via change-confirmation. -->
+    <form novalidate (submit)="$event.preventDefault()">
 
       <ion-card>
         <ion-card-content class="ion-no-padding">
