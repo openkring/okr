@@ -2,6 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildContractPayload, buildSignatureBlocks, checkContractEligibility, formatPostalAddress, isActiveMembership, isActiveOwnership,
+  deriveRequestState, newestApproval, requestStatusParams, type StatusApproval,
 } from './contract-request.util';
 
 const TODAY = '20261005';
@@ -215,5 +216,66 @@ describe('checkContractEligibility — legacy Skiffplatz kind document (Review F
       memberships: [m()], approvals: [], contracts: [], esignRuns: [], postalAddress: undefined,
     };
     expect(checkContractEligibility(legacy)).toBe('noAddress');
+  });
+});
+
+describe('deriveRequestState', () => {
+  const sa = (over: Partial<StatusApproval> = {}): StatusApproval => ({
+    okey: 'a1', state: 'pending', kind: 'wardrobeLocker', requestDate: '20261005 1000', createTime: '20261005 1000', ...over,
+  });
+  const base = {
+    eligibility: ['activeMember', 'noOpenRequest', 'noActiveOwnership'],
+    orgKey: 'scs', kind: 'wardrobeLocker', today: TODAY,
+    memberships: [m()], approvals: [], contracts: [], esignRuns: [], postalAddress: undefined,
+    ownerships: [] as Record<string, unknown>[], resourceType: 'locker', requiresAddress: false, hasSigners: false,
+    statusApprovals: [] as StatusApproval[],
+  };
+  it('none without anything', () => {
+    expect(deriveRequestState(base)).toBe('none');
+  });
+  it('notActive for a non-member, even with an ownership', () => {
+    expect(deriveRequestState({ ...base, memberships: [], ownerships: [own()] })).toBe('notActive');
+  });
+  it('owned with an active ownership, even with a pending request', () => {
+    expect(deriveRequestState({ ...base, ownerships: [own()], statusApprovals: [sa()] })).toBe('owned');
+  });
+  it('pending / approved from the newest approval', () => {
+    expect(deriveRequestState({ ...base, statusApprovals: [sa()] })).toBe('pending');
+    expect(deriveRequestState({ ...base, statusApprovals: [sa({ state: 'approved' })] })).toBe('approved');
+  });
+  it('rejected or withdrawn falls back to none', () => {
+    expect(deriveRequestState({ ...base, statusApprovals: [sa({ state: 'rejected' })] })).toBe('none');
+    expect(deriveRequestState({ ...base, statusApprovals: [sa({ state: 'withdrawn' })] })).toBe('none');
+  });
+  it('the newest approval wins (Review Focus 3)', () => {
+    const old = sa({ okey: 'old', state: 'rejected', requestDate: '20260101 0900' });
+    const neu = sa({ okey: 'new', state: 'pending', requestDate: '20261001 0900' });
+    expect(deriveRequestState({ ...base, statusApprovals: [neu, old] })).toBe('pending');
+    const p = sa({ okey: 'p', state: 'pending', requestDate: '20260101 0900' });
+    const a = sa({ okey: 'a', state: 'approved', requestDate: '20261001 0900' });
+    expect(deriveRequestState({ ...base, statusApprovals: [p, a] })).toBe('approved');
+  });
+  it('a legacy approval without requestDate is ordered by createTime', () => {
+    const legacy = sa({ okey: 'l', state: 'approved', requestDate: '', createTime: '20261002 0800' });
+    const older = sa({ okey: 'o', state: 'rejected', requestDate: '20260101 0900' });
+    expect(newestApproval([older, legacy], 'wardrobeLocker')?.okey).toBe('l');
+  });
+  it('ignores archived and other-kind approvals', () => {
+    expect(deriveRequestState({ ...base, statusApprovals: [sa({ isArchived: true }), sa({ kind: 'boathouseKey' })] })).toBe('none');
+  });
+});
+
+describe('requestStatusParams', () => {
+  it('formats the request date and names the approver', () => {
+    const a: StatusApproval = { okey: 'a1', state: 'pending', kind: 'k', requestDate: '20261005 1030', createTime: '',
+      approver: { name1: 'Nadia', name2: 'Hungerbühler' } };
+    expect(requestStatusParams(a, 'Garderobenkasten', 'X')).toEqual({ date: '05.10.2026', responsible: 'Nadia Hungerbühler', kind: 'Garderobenkasten' });
+  });
+  it('falls back to createTime and to the fallback responsible', () => {
+    const a: StatusApproval = { okey: 'a1', state: 'pending', kind: 'k', requestDate: '', createTime: '20261003 0800' };
+    expect(requestStatusParams(a, 'K', 'Nadia Hungerbühler')).toEqual({ date: '03.10.2026', responsible: 'Nadia Hungerbühler', kind: 'K' });
+  });
+  it('is date-less without an approval', () => {
+    expect(requestStatusParams(undefined, 'K', 'N')).toEqual({ date: '', responsible: 'N', kind: 'K' });
   });
 });

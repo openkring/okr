@@ -2,7 +2,7 @@
 //
 // Pure helpers of the contract request flow (spec 1.87 §6.2, §6.4). No Firestore here: the
 // callable and the workflow deps load the documents, these functions decide.
-import { ContractSigner } from '@okr/shared-models';
+import { ContractRequestState, ContractSigner } from '@okr/shared-models';
 import { DateFormat, convertDateFormatToString } from '@okr/shared-util-core';
 
 export type DocData = Record<string, unknown>;
@@ -102,6 +102,51 @@ export function checkContractEligibility(input: EligibilityInput): EligibilityRe
   if (input.eligibility.includes('noOpenRequest') && hasOpenRequest(input)) return 'openRequest';
   if (input.requiresAddress !== false && !input.postalAddress) return 'noAddress';
   return undefined;
+}
+
+/** An approval as the status needs it; `createTime` is the snapshot's create time as StoreDateTime. */
+export interface StatusApproval {
+  okey: string;
+  state: string;
+  kind: string;
+  isArchived?: boolean;
+  requestDate: string;           // '' on approvals created before spec 1.88
+  createTime: string;
+  approver?: { name1?: string; name2?: string };
+}
+
+const requestedAt = (a: StatusApproval): string => a.requestDate || a.createTime;
+
+/** The most recently requested, unarchived approval of the kind. */
+export function newestApproval(approvals: StatusApproval[], kind: string): StatusApproval | undefined {
+  return approvals
+    .filter((a) => a.isArchived !== true && a.kind === kind)
+    .sort((x, y) => requestedAt(y).localeCompare(requestedAt(x)))[0];
+}
+
+/** spec 1.88 §5.3 — first match wins; mirrors the eligibility so both can never disagree. */
+export function deriveRequestState(input: EligibilityInput & { statusApprovals: StatusApproval[] }): ContractRequestState {
+  if (checkContractEligibility({ ...input, eligibility: input.eligibility.filter((e) => e === 'activeMember') }) === 'notActive') {
+    return 'notActive';
+  }
+  if (input.resourceType && ownsResource(input)) return 'owned';
+  const newest = newestApproval(input.statusApprovals, input.kind);
+  if (newest?.state === 'pending') return 'pending';
+  if (newest?.state === 'approved') return 'approved';
+  return 'none';
+}
+
+/** `{date}`, `{responsible}`, `{kind}` for the status texts. `{link}` is filled on the client. */
+export function requestStatusParams(
+  a: StatusApproval | undefined, kindName: string, fallbackResponsible: string,
+): Record<string, string> {
+  const at = a ? requestedAt(a).slice(0, 8) : '';
+  const approver = `${a?.approver?.name1 ?? ''} ${a?.approver?.name2 ?? ''}`.trim();
+  return {
+    date: at ? convertDateFormatToString(at, DateFormat.StoreDate, DateFormat.ViewDate) : '',
+    responsible: approver || fallbackResponsible,
+    kind: kindName,
+  };
 }
 
 export function formatPostalAddress(a: DocData | undefined): PostalAddress | undefined {
