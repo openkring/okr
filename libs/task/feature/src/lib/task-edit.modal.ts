@@ -1,7 +1,7 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
-import { of, switchMap } from 'rxjs';
+import { catchError, of, switchMap } from 'rxjs';
 import { IonAccordionGroup, IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { LowercaseWordMask } from '@okr/shared-config';
@@ -153,7 +153,7 @@ export class TaskEditModal {
     return rk.startsWith(`${ApprovalModelName}.`) ? rk.slice(ApprovalModelName.length + 1) : '';
   });
   protected readonly approval = toSignal(
-    toObservable(this.approvalKey).pipe(switchMap((key) => (key ? this.approvalService.read(key) : of(undefined)))),
+    toObservable(this.approvalKey).pipe(switchMap((key) => (key ? this.approvalService.read(key).pipe(catchError(() => of(undefined))) : of(undefined)))),
   );
   private readonly myPersonKey = computed(() => this.currentUser()?.personKey ?? '');
   private readonly isAdmin = computed(() => hasRole('admin', this.currentUser()));
