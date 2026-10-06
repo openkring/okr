@@ -44,7 +44,9 @@
   },
   "offline": {
     "notice": "Sin conexión. Ves los últimos datos cargados.",
-    "online": "Conexión restablecida."
+    "online": "Conexión restablecida.",
+    "stuck": "Se interrumpió la conexión. Recarga la app para continuar.",
+    "reload": "Recargar"
   },
   "segment": {
     "person": "Persona",

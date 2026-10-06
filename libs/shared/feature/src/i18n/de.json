@@ -44,7 +44,9 @@
   },
   "offline": {
     "notice": "Keine Verbindung. Du siehst die zuletzt geladenen Daten.",
-    "online": "Wieder verbunden."
+    "online": "Wieder verbunden.",
+    "stuck": "Die Verbindung wurde unterbrochen. Lade die App neu, um weiterzumachen.",
+    "reload": "Neu laden"
   },
   "segment": {
     "person": "Person",

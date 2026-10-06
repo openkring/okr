@@ -27,7 +27,15 @@ export class OfflineNoticeService {
     this.started = true;
     window.addEventListener('offline', () => void this.showOffline());
     window.addEventListener('online', () => void this.showOnline());
+    // A wake from sleep can deliver 'offline' but never the matching 'online': re-check whenever
+    // the app comes back to the foreground.
+    document.addEventListener('visibilitychange', () => this.sync());
     if (isBrowserOffline()) void this.showOffline();
+  }
+
+  /** Drop the offline toast if the browser is online again (also called by WakeWatchdogService). */
+  public sync(): void {
+    if (this.toast && !isBrowserOffline()) void this.showOnline();
   }
 
   private async showOffline(): Promise<void> {
@@ -43,6 +51,8 @@ export class OfflineNoticeService {
     });
     void this.toast.onDidDismiss().then(() => this.toast = undefined);
     await this.toast.present();
+    // 'online' may have fired while the toast was being created; showOnline() saw no toast then.
+    this.sync();
   }
 
   private async showOnline(): Promise<void> {

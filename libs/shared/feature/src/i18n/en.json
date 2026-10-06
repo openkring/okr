@@ -44,7 +44,9 @@
   },
   "offline": {
     "notice": "No connection. You are seeing the data loaded last.",
-    "online": "Connected again."
+    "online": "Connected again.",
+    "stuck": "The connection was interrupted. Reload the app to continue.",
+    "reload": "Reload"
   },
   "segment": {
     "person": "Person",
