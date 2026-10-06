@@ -78,7 +78,11 @@ function debtorAgent(bic: string | undefined): string {
   return `<DbtrAgt><FinInstnId>${id}</FinInstnId></DbtrAgt>`;
 }
 
-/** The pain.001.001.09 document for one payment order (spec 1.80 §5.2). Pure. */
+/**
+ * The pain.001.001.09 document for one payment order (spec 1.80 §5.2). Pure.
+ * BtchBookg=false asks the bank for one debit per payment instead of one collective debit per order,
+ * so the bank statement import can match each debit to its bill (amount, reference).
+ */
 export function buildPain001Xml(input: Pain001Input): string {
   const isoDate = input.executionDate.length === 8
     ? convertDateFormatToString(input.executionDate, DateFormat.StoreDate, DateFormat.IsoDate)
@@ -107,6 +111,7 @@ export function buildPain001Xml(input: Pain001Input): string {
     <PmtInf>
       <PmtInfId>${escapeXml(input.msgId)}-1</PmtInfId>
       <PmtMtd>TRF</PmtMtd>
+      <BtchBookg>false</BtchBookg>
       <ReqdExctnDt><Dt>${isoDate}</Dt></ReqdExctnDt>
       <Dbtr><Nm>${escapeXml(input.debtorName)}</Nm></Dbtr>
       <DbtrAcct><Id><IBAN>${normalizeIban(input.debtorIban)}</IBAN></Id></DbtrAcct>

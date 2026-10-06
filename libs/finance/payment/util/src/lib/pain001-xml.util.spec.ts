@@ -40,6 +40,10 @@ describe('buildPain001Xml', () => {
     expect(xml).toContain('<DbtrAgt><FinInstnId><BICFI>ZKBKCHZZ80A</BICFI></FinInstnId></DbtrAgt>');
     expect(xml).not.toContain('NOTPROVIDED');
   });
+  it('asks for single bookings (BtchBookg false) right after PmtMtd', () => {
+    const xml = buildPain001Xml({ ...base, payments: [pay({}), pay({})] });
+    expect(xml).toMatch(/<PmtMtd>TRF<\/PmtMtd>\s*<BtchBookg>false<\/BtchBookg>\s*<ReqdExctnDt>/);
+  });
   it('formats amounts with two decimals', () => {
     const xml = buildPain001Xml({ ...base, payments: [pay({})] });
     expect(xml).toContain('<InstdAmt Ccy="CHF">125.50</InstdAmt>');
