@@ -3,7 +3,7 @@ import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTi
 
 import { AvatarPipe } from '@okr/avatar-ui';
 import { AvatarDetailService, LedgerBookings, VoucherTiles } from '@okr/finance-accounting-feature';
-import { billAccountKeys, billBookingKeys, billDisplayState, billStateColor, billStateLabel, isOverdueBill, isPayableBill } from '@okr/finance-bill-util';
+import { billAccountKeys, billBookingAmounts, billBookingKeys, billDisplayState, billStateColor, billStateLabel, isOverdueBill, isPayableBill } from '@okr/finance-bill-util';
 import { BillModel, BillPayment } from '@okr/shared-models';
 import { formatMinorAmount, Header } from '@okr/shared-ui';
 import { PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
@@ -156,7 +156,7 @@ import { BillStore } from './bill.store';
         }
         <!-- the linked bookings (bill + payments) as journal rows, each linked to its booking in the journal; an unlinked bill: its booking accounts -->
         <okr-ledger-bookings [accountingTenantId]="bill.accountingTenantId" [bookingKeys]="bookingKeys()"
-          [accountKeys]="accountKeys()" [date]="bill.billDate" />
+          [bookingAmounts]="bookingAmounts()" [accountKeys]="accountKeys()" [date]="bill.billDate" />
       }
       <!-- attachments migrated from bexio: finance-documents okeys, files in the private bucket (spec 1.74) -->
       <okr-voucher-tiles [documentKeys]="voucherKeys()" />
@@ -182,6 +182,7 @@ export class BillViewModal {
   protected readonly stateLabel = computed(() => billStateLabel(this.state(), this.store.i18n));
   protected readonly accountKeys = computed(() => billAccountKeys(this.bill()));
   protected readonly bookingKeys = computed(() => billBookingKeys(this.bill()));
+  protected readonly bookingAmounts = computed(() => billBookingAmounts(this.bill()));
   protected readonly vendorName = computed(() => {
     const vendor = this.bill()?.vendor;
     return vendor ? vendor.label || getFullName(vendor.name1, vendor.name2) : '';

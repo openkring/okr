@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { InvoiceModel, InvoicePayment, InvoiceReminder } from '@okr/shared-models';
 
-import { invoiceAccountKeys, invoiceBookingKeys, invoiceDisplayState, isOverdueInvoice } from './invoice-ledger.util';
+import { invoiceAccountKeys, invoiceBookingAmounts, invoiceBookingKeys, invoiceDisplayState, isOverdueInvoice } from './invoice-ledger.util';
 
 function invoice(patch: Partial<InvoiceModel>): InvoiceModel {
   return Object.assign(new InvoiceModel('scs'), { okey: 'inv1' }, patch);
@@ -98,5 +98,18 @@ describe('invoiceAccountKeys', () => {
     const inv = invoice({});
     (inv as Partial<InvoiceModel>).payments = undefined;
     expect(invoiceAccountKeys(inv)).toEqual([]);
+  });
+});
+
+describe('invoiceBookingAmounts', () => {
+  it('maps each payment booking to the invoice\'s own amount, skipping empty keys', () => {
+    const inv = invoice({ payments: [payment('bank-x'), payment(''), { ...payment('bank-y'), amount: 30 }, payment('bank-y')] });
+    expect(invoiceBookingAmounts(inv)).toEqual({ 'bank-x': 100, 'bank-y': 130 });
+  });
+
+  it('is empty for a legacy invoice without payments', () => {
+    const inv = invoice({});
+    (inv as Partial<InvoiceModel>).payments = undefined;
+    expect(invoiceBookingAmounts(inv)).toEqual({});
   });
 });

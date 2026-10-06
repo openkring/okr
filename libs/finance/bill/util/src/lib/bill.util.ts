@@ -89,3 +89,15 @@ export function billBookingKeys(bill: BillModel): string[] {
   const keys = [...(bill.bookingKeys ?? []), ...(bill.payments ?? []).map(p => p.bookingKey ?? '')];
   return [...new Set(keys.filter(k => k.length > 0))];
 }
+
+/**
+ * The bill's own share of each payment booking (bookingKey → Rappen). A collective bank payment
+ * settles several bills in one booking; its ledger row shows this bill's amount, not the booking total.
+ */
+export function billBookingAmounts(bill: BillModel): Record<string, number> {
+  const amounts: Record<string, number> = {};
+  for (const p of bill.payments ?? []) {
+    if (p.bookingKey) amounts[p.bookingKey] = (amounts[p.bookingKey] ?? 0) + (p.amount ?? 0);
+  }
+  return amounts;
+}

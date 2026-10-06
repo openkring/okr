@@ -63,6 +63,15 @@ describe('ledgerBookings', () => {
     expect(result[0].amount).toBe(12000);
   });
 
+  it('shows the document own share of a collective payment instead of the booking total', () => {
+    const lines = [
+      line('pay', 'scs-2000', 25510, 0), line('pay', 'scs-2000', 25510, 0), line('pay', 'scs-1020', 0, 51020),
+      line('bill', 'scs-6050', 25510, 0), line('bill', 'scs-2000', 0, 25510),
+    ];
+    const result = ledgerBookings(['bill', 'pay'], [booking('bill'), booking('pay')], lines, accounts, { pay: 25510 });
+    expect(result.map(b => b.amount)).toEqual([25510, 25510]);
+  });
+
   it('skips keys without a loaded booking and duplicate keys', () => {
     const result = ledgerBookings(['inv', 'inv-storno', 'inv'], [booking('inv')], [], accounts);
     expect(result.map(b => b.bookingKey)).toEqual(['inv']);

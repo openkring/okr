@@ -20,7 +20,7 @@ import { AccountingStore } from './accounting.store';
 /**
  * The ledger side of a document in its view modal: the bookings of an invoice or bill, or
  * the booking accounts of a bill (which has no booking of its own). A booking is one row as in the
- * journal (date, Soll, Haben, text, amount); its link closes the modal and opens the unfiltered
+ * journal (date, Soll, Haben, text, amount — the document's own share where given); its link closes the modal and opens the unfiltered
  * journal in the booking's year with that booking selected. A bare account links to the journal
  * filtered on it.
  * Treasurer only — the journal, bookings and booking lines are not readable for anyone else.
@@ -119,6 +119,8 @@ export class LedgerBookings {
   public readonly accountingTenantId = input.required<string>();
   /** booking okeys in ledger order (invoice); takes precedence over accountKeys */
   public readonly bookingKeys = input<string[]>([]);
+  /** the document's own share of a booking (bookingKey → minor units), e.g. its part of a collective payment */
+  public readonly bookingAmounts = input<Record<string, number>>({});
   /** account okeys without bookings (bill) */
   public readonly accountKeys = input<string[]>([]);
   /** StoreDate whose year the journal opens on for accountKeys (e.g. the bill date) */
@@ -146,7 +148,7 @@ export class LedgerBookings {
 
   protected readonly bookings = computed(() => {
     const data = this.ledger.value();
-    return data ? ledgerBookings(this.bookingKeys(), data.bookings, data.lines, data.accounts) : [];
+    return data ? ledgerBookings(this.bookingKeys(), data.bookings, data.lines, data.accounts, this.bookingAmounts()) : [];
   });
   protected readonly accounts = computed(() => ledgerAccounts(this.accountKeys(), this.ledger.value()?.accounts ?? []));
   protected readonly isVisible = computed(() =>

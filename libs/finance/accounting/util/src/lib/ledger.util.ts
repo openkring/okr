@@ -12,7 +12,7 @@ export interface LedgerBooking {
   status: BookingStatus;
   debit: LedgerAccount[];   // the distinct Soll accounts, by account number
   credit: LedgerAccount[];  // the distinct Haben accounts, by account number
-  amount: number;           // the balanced total (Σ credit) in minor units
+  amount: number;           // the document's share in minor units, else the balanced total (Σ credit)
 }
 
 /** The accounts in the given order, resolved to number and name. */
@@ -29,8 +29,11 @@ export function ledgerAccounts(accountKeys: string[], accounts: AccountModel[]):
  * accounts (each once, by account number — a split booking has several on one side) and its total.
  * A key without a loaded booking is skipped: a derived key (e.g. a storno that was never posted) or
  * a booking deleted since.
+ * `amounts` holds the document's own share of a booking (bookingKey → minor units): a collective
+ * payment settles several documents in one booking, and its total is not this document's amount.
  */
-export function ledgerBookings(bookingKeys: string[], bookings: BookingModel[], lines: BookingLineModel[], accounts: AccountModel[]): LedgerBooking[] {
+export function ledgerBookings(bookingKeys: string[], bookings: BookingModel[], lines: BookingLineModel[], accounts: AccountModel[],
+  amounts: Record<string, number> = {}): LedgerBooking[] {
   const bookingByKey = new Map(bookings.map(b => [b.okey, b]));
   const linesByBooking = new Map<string, BookingLineModel[]>();
   for (const line of lines) {
@@ -51,7 +54,7 @@ export function ledgerBookings(bookingKeys: string[], bookings: BookingModel[], 
       bookingKey: key, date: booking.date, bookingNo: booking.bookingNo, title: booking.title, status: booking.status,
       debit: sideAccounts(bookingLines.filter(l => (l.debitAmount?.amount ?? 0) !== 0)),
       credit: sideAccounts(creditLines),
-      amount: creditLines.reduce((sum, l) => sum + (l.creditAmount?.amount ?? 0), 0),
+      amount: amounts[key] ?? creditLines.reduce((sum, l) => sum + (l.creditAmount?.amount ?? 0), 0),
     });
   }
   return result;

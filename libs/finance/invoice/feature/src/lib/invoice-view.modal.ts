@@ -8,7 +8,7 @@ import { fill, formatQrReference, getFullName, getTodayStr, prettyFormatDate, pr
 import { AvatarPipe } from '@okr/avatar-ui';
 import { AvatarDetailService, LedgerBookings } from '@okr/finance-accounting-feature';
 import {
-  invoiceAccountKeys, invoiceBookingKeys, invoiceDisplayState, invoiceStateColor, invoiceStateLabel, isOverdueInvoice, isPayableState, openInvoiceAmount, reminderLevelKey,
+  invoiceAccountKeys, invoiceBookingAmounts, invoiceBookingKeys, invoiceDisplayState, invoiceStateColor, invoiceStateLabel, isOverdueInvoice, isPayableState, openInvoiceAmount, reminderLevelKey,
 } from '@okr/finance-invoice-util';
 import { InvoiceStore } from './invoice.store';
 
@@ -182,7 +182,7 @@ import { InvoiceStore } from './invoice.store';
         <!-- issue, payment, reminder fee and storno bookings as journal rows, each linked to its booking in the journal;
              a migrated invoice has none: the bank accounts of its payments instead -->
         <okr-ledger-bookings [accountingTenantId]="invoice.accountingTenantId" [bookingKeys]="bookingKeys()"
-          [accountKeys]="accountKeys()" [date]="invoice.invoiceDate" />
+          [bookingAmounts]="bookingAmounts()" [accountKeys]="accountKeys()" [date]="invoice.invoiceDate" />
       }
     </ion-content>
   `
@@ -209,6 +209,7 @@ export class InvoiceViewModal {
   protected readonly stateColor = computed(() => invoiceStateColor(this.state()));
   protected readonly stateLabel = computed(() => invoiceStateLabel(this.state(), this.store.i18n));
   protected readonly bookingKeys = computed(() => invoiceBookingKeys(this.invoice()));
+  protected readonly bookingAmounts = computed(() => invoiceBookingAmounts(this.invoice()));
   protected readonly accountKeys = computed(() => invoiceAccountKeys(this.invoice()));
   protected readonly paymentDate = computed(() => this.invoice()?.paymentDate ?? '');
   protected readonly paymentReference = computed(() => formatQrReference(this.invoice()?.paymentReference));

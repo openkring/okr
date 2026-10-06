@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { BillModel } from '@okr/shared-models';
-import { billAccountKeys, billBookingKeys, billDisplayState, getBillIndex, isOverdueBill, newBill } from './bill.util';
+import { billAccountKeys, billBookingAmounts, billBookingKeys, billDisplayState, getBillIndex, isOverdueBill, newBill } from './bill.util';
 
 describe('newBill', () => {
   it('creates a BillModel with the given tenantId', () => {
@@ -73,5 +73,19 @@ describe('billBookingKeys', () => {
   it('is empty for an unlinked or legacy bill', () => {
     expect(billBookingKeys(newBill('scs'))).toEqual([]);
     expect(billBookingKeys(Object.assign(newBill('scs'), { bookingKeys: undefined, payments: undefined }))).toEqual([]);
+  });
+});
+
+describe('billBookingAmounts', () => {
+  it('maps each payment booking to the bill\'s own amount, adding payments that share a booking', () => {
+    const b = Object.assign(newBill('scs'), {
+      payments: [{ date: '20260909', amount: 25510, type: '', bookingKey: 'pay-1' }, { date: '20260910', amount: 100, type: '' },
+        { date: '20260911', amount: 50, type: '', bookingKey: 'pay-2' }, { date: '20260912', amount: 25, type: '', bookingKey: 'pay-2' }],
+    });
+    expect(billBookingAmounts(b)).toEqual({ 'pay-1': 25510, 'pay-2': 75 });
+  });
+
+  it('is empty for a legacy bill without payments', () => {
+    expect(billBookingAmounts(Object.assign(newBill('scs'), { payments: undefined }))).toEqual({});
   });
 });

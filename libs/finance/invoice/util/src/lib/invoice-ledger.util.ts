@@ -34,6 +34,18 @@ export function invoiceBookingKeys(invoice: InvoiceModel): string[] {
   return [...new Set(keys.filter(k => !!k))];
 }
 
+/**
+ * The invoice's own share of each payment booking (bookingKey → Rappen). A collective bank receipt
+ * settles several invoices in one booking; its ledger row shows this invoice's amount, not the booking total.
+ */
+export function invoiceBookingAmounts(invoice: InvoiceModel): Record<string, number> {
+  const amounts: Record<string, number> = {};
+  for (const p of invoice.payments ?? []) {
+    if (p.bookingKey) amounts[p.bookingKey] = (amounts[p.bookingKey] ?? 0) + (p.amount ?? 0);
+  }
+  return amounts;
+}
+
 /** The chip color of an invoice state (as {@link invoiceDisplayState} returns it). */
 export function invoiceStateColor(state: string): string {
   switch (state) {
