@@ -30,7 +30,7 @@ interface SectionDoc {
   type?: string;
   title?: string;
   subTitle?: string;
-  content?: { htmlContent?: string };
+  content?: { htmlContent?: string; position?: number; colSize?: number };
   properties?: Record<string, unknown> & {
     titleI18n?: I18nString;
     subTitleI18n?: I18nString;
@@ -40,6 +40,24 @@ interface SectionDoc {
 }
 
 type SanitizeFn = (html: string) => string;
+
+export type ArticleImagePosition = 'none' | 'top' | 'bottom' | 'left' | 'right';
+
+// Mirrors ViewPosition (shared-models) and the app's ArticleSectionComponent: several
+// images always render on top, a single one at content.position, and left/right use
+// content.colSize (of 12, default 6) as the image column width.
+const VIEW_POSITIONS: ArticleImagePosition[] = ['none', 'top', 'bottom', 'left', 'right'];
+
+export function articleImageLayout(
+  imageCount: number,
+  position: number | undefined,
+  colSize: number | undefined,
+): { imagePosition: ArticleImagePosition; imageColSize: number } {
+  const size = typeof colSize === 'number' && colSize >= 1 && colSize <= 11 ? colSize : 6;
+  if (imageCount === 0) return { imagePosition: 'none', imageColSize: size };
+  if (imageCount > 1) return { imagePosition: 'top', imageColSize: size };
+  return { imagePosition: VIEW_POSITIONS[position ?? 0] ?? 'none', imageColSize: size };
+}
 
 function mapSection(s: SectionDoc, nestedSections: Map<string, SectionDoc>, sanitize: SanitizeFn): unknown {
   const type = s.type ?? 'article';
@@ -124,8 +142,19 @@ function mapSection(s: SectionDoc, nestedSections: Map<string, SectionDoc>, sani
     }
 
     case 'article':
-    default:
-      return { type: 'article', title, subTitle, content: articleHtml };
+    default: {
+      const images = ((props['images'] as StoredImage[] | undefined) ?? [])
+        .map(mapImage)
+        .filter((i): i is { url: string; alt: string } => !!i);
+      const content = s.content as { position?: number; colSize?: number } | undefined;
+      const layout = articleImageLayout(images.length, content?.position, content?.colSize);
+      // A position of 'none' hides the images in the app as well.
+      return {
+        type: 'article', title, subTitle, content: articleHtml,
+        images: layout.imagePosition === 'none' ? [] : images,
+        ...layout,
+      };
+    }
   }
 }
 
