@@ -1,16 +1,18 @@
-import { Component, computed, inject, input, model, output } from '@angular/core';
+import { Component, computed, effect, inject, input, model, output } from '@angular/core';
+import { form } from '@angular/forms/signals';
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonIcon, IonImg, IonItem, IonLabel, IonList } from '@ionic/angular/standalone';
 
 import { AvatarInfo, UserModel } from '@okr/shared-models';
 import { ModelSelectService } from '@okr/shared-feature';
 import { COMMENT_LENGTH } from '@okr/shared-constants';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { TextareaInput, TextInputI18n } from '@okr/shared-ui';
+import { ErrorNote, TextareaInput, TextInputI18n } from '@okr/shared-ui';
+import { validateVestTree } from '@okr/shared-util-angular';
 import { coerceBoolean, getAvatarName } from '@okr/shared-util-core';
 import { AvatarPipe } from '@okr/avatar-ui';
 import { getDefaultIcon } from '@okr/avatar-util';
 
-import { InvitePersonsFormData, InvitePersonsI18n } from '@okr/relationship-invitation-util';
+import { InvitePersonsFormData, InvitePersonsI18n, invitePersonsValidations } from '@okr/relationship-invitation-util';
 
 /**
  * Wen einladen, und mit welcher Nachricht.
@@ -24,15 +26,12 @@ import { InvitePersonsFormData, InvitePersonsI18n } from '@okr/relationship-invi
  * die signierten Links darin (onInvitationCreated, emailWithoutAccount) — das loest Entscheidung 9
  * der Spec „Offene Anlaesse" ab, die nur registrierte Benutzer zuliess. Eine Person muss es aber
  * geben (und sie braucht eine E-Mail-Adresse), freie Adressen gibt es hier bewusst nicht.
- *
- * Kein Vest-Suite: das einzige Kriterium ist „mindestens eine Person", und das prueft `valid`
- * direkt. Eine Suite ohne Regel waere Zeremonie.
  */
 @Component({
   selector: 'okr-invite-persons-form',
   standalone: true,
   imports: [
-    AvatarPipe, SvgIconPipe, TextareaInput,
+    AvatarPipe, SvgIconPipe, TextareaInput, ErrorNote,
     IonCard, IonCardContent, IonButton, IonIcon, IonList, IonItem, IonAvatar, IonImg, IonLabel,
   ],
   styles: [`
@@ -56,6 +55,7 @@ import { InvitePersonsFormData, InvitePersonsI18n } from '@okr/relationship-invi
                 </ion-button>
               </div>
             }
+            <okr-error-note [errors]="inviteesErrors()" />
             @if (invitees().length > 0) {
               <ion-list>
                 @for (avatar of invitees(); track avatar.key) {
@@ -73,6 +73,7 @@ import { InvitePersonsFormData, InvitePersonsI18n } from '@okr/relationship-invi
             }
             <okr-textarea-input [i18n]="messageI18n()" [value]="message()" (valueChange)="onMessageChange($event)"
               [maxLength]="messageLength" [rows]="3" [showHelper]="true" [readOnly]="isReadOnly()" />
+            <okr-error-note [errors]="messageErrors()" />
           </ion-card-content>
         </ion-card>
       </form>
@@ -98,6 +99,22 @@ export class InvitePersonsForm {
   public readonly valid = output<boolean>();
 
   protected readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()));
+
+  protected readonly inviteForm = form(this.formData, (path) =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    validateVestTree(path, invitePersonsValidations as any));
+
+  // per-field errors for the notes; per-invitee key errors are folded into the list's note
+  private readonly validationResult = computed(() => invitePersonsValidations(this.formData()));
+  protected readonly messageErrors = computed(() => this.validationResult().getErrors('message'));
+  protected readonly inviteesErrors = computed(() => {
+    const all = this.validationResult().getErrors();
+    return Object.entries(all).filter(([key]) => key === 'invitees' || key.startsWith('invitees[')).flatMap(([, messages]) => messages);
+  });
+
+  constructor() {
+    effect(() => this.valid.emit(this.inviteForm().valid()));
+  }
   protected readonly message = computed(() => this.formData()?.message ?? '');
   protected readonly messageLength = COMMENT_LENGTH;
   protected readonly defaultIcon = getDefaultIcon('person');
@@ -137,17 +154,10 @@ export class InvitePersonsForm {
   protected onMessageChange(message: string): void {
     this.dirty.emit(true);
     this.formData.update(data => ({ ...data, message }));
-    this.emitValid();
   }
 
   public setInvitees(invitees: AvatarInfo[]): void {
     this.dirty.emit(true);
     this.formData.update(data => ({ ...data, invitees }));
-    this.emitValid();
-  }
-
-  /** An invitation without a recipient is the only invalid state. */
-  private emitValid(): void {
-    this.valid.emit((this.formData()?.invitees ?? []).length > 0);
   }
 }

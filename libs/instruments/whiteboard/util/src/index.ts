@@ -4,3 +4,4 @@ export * from './lib/whiteboard.util';
 export * from './lib/whiteboard.validations';
 export * from './lib/whiteboard-i18n';
 export * from './lib/scope';
+export * from './lib/whiteboard-item.validations';

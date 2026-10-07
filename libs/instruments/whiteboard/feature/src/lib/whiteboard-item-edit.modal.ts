@@ -35,6 +35,7 @@ import { dismissOverlay } from '@okr/shared-util-angular';
           [readOnly]="isReadOnly()"
           [i18n]="i18n"
           (dirty)="formDirty.set($event)"
+          (valid)="formValid.set($event)"
         />
       }
       @if (!isReadOnly()) {
@@ -57,10 +58,11 @@ export class WhiteboardItemEditModal {
   protected readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
   protected formDirty = signal(false);
+  protected formValid = signal(false);
   public itemData = linkedSignal(() => safeStructuredClone(this.item()));
 
   protected readonly headerTitle = computed(() => this.isReadOnly() ? this.i18n.view_label() : this.i18n.edit_label());
-  protected readonly showConfirmation = computed(() => this.formDirty());
+  protected readonly showConfirmation = computed(() => this.formValid() && this.formDirty());
   protected readonly changeConfirmationI18n = computed(() => ({
     cancel: this.i18n.changeConfirmation_cancel(),
     save: this.i18n.changeConfirmation_ok(),
