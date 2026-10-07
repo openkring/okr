@@ -154,6 +154,8 @@ export const MATRIX_CHAT_I18N_KEYS = {
 
   survey_title:              PFX + 'survey.title',
   survey_create:             PFX + 'survey.create',
+  survey_edit:               PFX + 'survey.edit',
+  answer_locked:             PFX + 'survey.answer.locked',
   allowMultipleAnswers_label:  PFX + 'survey.allowMultipleAnswers.label',
   allowMultipleAnswers_helper: PFX + 'survey.allowMultipleAnswers.helper',
   question_label:            PFX + 'survey.question.label',

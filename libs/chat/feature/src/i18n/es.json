@@ -193,6 +193,7 @@
   "survey": {
     "title": "Crear encuesta",
     "create": "Crear encuesta",
+    "edit": "Editar encuesta",
     "allowMultipleAnswers": {
       "label": "Varias opciones posibles",
       "helper": "Se pueden elegir varias opciones para la misma pregunta (opción múltiple)."
@@ -203,7 +204,8 @@
     },
     "answer": {
       "create": "Opciones",
-      "add": "Añadir opción"
+      "add": "Añadir opción",
+      "locked": "Opciones existentes (ya se ha votado)"
     },
     "results": {
       "show": "Mostrar los resultados de la votación",

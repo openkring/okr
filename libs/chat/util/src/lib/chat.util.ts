@@ -452,8 +452,8 @@ export function linkifyText(text: string): string {
  *   applied to the original bubble instead of rendering as one of its own.
  */
 export function isRenderableChatEvent(type: string, relatesTo?: { rel_type?: string; event_id?: string }): boolean {
-  if (type === 'org.matrix.msc3381.poll.start') return true;
-  if (type !== 'm.room.message') return false;
+  if (type !== 'm.room.message' && type !== 'org.matrix.msc3381.poll.start') return false;
+  // An edit — of a message or of a poll — patches its original instead of rendering on its own.
   return !(relatesTo?.rel_type === 'm.replace' && !!relatesTo.event_id);
 }
 

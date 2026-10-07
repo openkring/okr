@@ -9,7 +9,7 @@ import { AppStore } from '@okr/shared-feature';
 import { debugData, debugMessage } from '@okr/shared-util-core';
 import {
   EvictedRooms, evictedRoomsStorageKey, evictionAction, isRenderableChatEvent, isRoomGoneError,
-  mediaRetryDelayMs, parseEvictedRooms, recordEvictedRoom,
+  mediaRetryDelayMs, parseEvictedRooms, parsePollContent, recordEvictedRoom,
 } from '@okr/chat-util';
 import { AvatarService } from '@okr/avatar-data-access';
 
@@ -161,6 +161,11 @@ export class MatrixMessageService {
       const targetId = event.getContent()?.['m.relates_to']?.event_id as string | undefined;
       if (targetId) this.refreshMessageReactions(targetId, room);
     } else if (eventType === 'org.matrix.msc3381.poll.start') {
+      const relatesTo = event.getContent()?.['m.relates_to'];
+      if (relatesTo?.rel_type === RelationType.Replace && relatesTo?.event_id) {
+        this.applyMessageEdit(relatesTo.event_id as string, event, room);
+        return;
+      }
       this.handleNewMessage(event, room);
       const pollId = event.getId();
       if (pollId) this.refreshPollTally(pollId, room);
@@ -784,14 +789,7 @@ export class MatrixMessageService {
     let pollAnswers: Array<{ id: string; body: string }> | undefined;
     let maxSelections: number | undefined;
     if (eventType === 'org.matrix.msc3381.poll.start') {
-      const rawAnswers = content['org.matrix.msc3381.poll']?.answers;
-      if (Array.isArray(rawAnswers)) {
-        pollAnswers = rawAnswers.map((a: any) => ({
-          id: String(a.id),
-          body: a['org.matrix.msc3381.poll.answer']?.body ?? String(a.id)
-        }));
-      }
-      maxSelections = content['org.matrix.msc3381.poll']?.max_selections ?? 1;
+      ({ answers: pollAnswers, maxSelections } = parsePollContent(content));
     }
 
     return {
@@ -831,10 +829,17 @@ export class MatrixMessageService {
     const newContent = editEvent.getContent()?.['m.new_content'];
     if (!newContent) return;
     const updated = [...msgs];
+    const content = { ...msgs[idx].content, ...newContent };
+    // A poll edit may change answers and single/multiple choice — re-derive both from the
+    // new content; the tally stays, because answer ids survive an edit.
+    const pollFields = msgs[idx].type === 'org.matrix.msc3381.poll.start'
+      ? (({ answers, maxSelections }) => ({ pollAnswers: answers, maxSelections }))(parsePollContent(content))
+      : {};
     updated[idx] = {
       ...msgs[idx],
+      ...pollFields,
       body: newContent.body ?? msgs[idx].body,
-      content: { ...msgs[idx].content, ...newContent },
+      content,
       isEdited: true,
     };
     subject.next(updated);

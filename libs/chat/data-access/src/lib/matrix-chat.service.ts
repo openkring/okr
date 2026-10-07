@@ -10,7 +10,7 @@ import { MatrixConfig, MatrixMessage, MatrixReadReceipt, MatrixRoom, TypingNotif
 import { AppStore } from '@okr/shared-feature';
 import { checkVideoLimits, debugData, debugMessage } from '@okr/shared-util-core';
 import { OKR_VIDEO_FIELD, videoLink } from '@okr/content-document-util';
-import { convertHeicToJpeg, materializeFile, resolveFileMimeType, extractVideoPoster, UploadTooLargeError, initMatrixLogLevel, ensurePromiseWithResolvers, buildMentionContent, escapeHtml, MentionRef, OKR_TENANT_EVENT, resolveMatrixDisplayName, canPostWithPower, VideoLimitError, VideoUploadError } from '@okr/chat-util';
+import { convertHeicToJpeg, materializeFile, resolveFileMimeType, extractVideoPoster, UploadTooLargeError, initMatrixLogLevel, ensurePromiseWithResolvers, buildMentionContent, escapeHtml, MentionRef, OKR_TENANT_EVENT, resolveMatrixDisplayName, canPostWithPower, VideoLimitError, VideoUploadError, buildPollContent, PollAnswerDef, POLL_START_EVENT } from '@okr/chat-util';
 
 import { mediaMimeHint, mxcAvatarHttpUrl } from './matrix-helpers';
 import { MatrixMediaService } from './matrix-media.service';
@@ -988,21 +988,23 @@ export class MatrixChatService {
    */
   async sendPoll(roomId: string, data: MatrixPollData): Promise<void> {
     if (!this.client) throw new Error('Client not initialized');
+    const answers = data.answers.map((body, i) => ({ id: String(i + 1), body }));
+    await this.client.sendEvent(roomId, POLL_START_EVENT as any, buildPollContent(data.question, answers, data.maxSelections ?? 1) as any);
+  }
 
-    const answers = data.answers.map((body, i) => ({
-      id: String(i + 1),
-      'org.matrix.msc3381.poll.answer': { msgtype: 'm.text', body }
-    }));
-    const fallback = `${data.question}\n${data.answers.map((a, i) => `${i + 1}. ${a}`).join('\n')}`;
-
-    await this.client.sendEvent(roomId, 'org.matrix.msc3381.poll.start' as any, {
-      'org.matrix.msc3381.poll': {
-        question: { msgtype: 'm.text', body: data.question },
-        kind: 'org.matrix.msc3381.poll.disclosed',
-        max_selections: data.maxSelections ?? 1,
-        answers
-      },
-      body: fallback
+  /**
+   * Edit a poll (MSC3381 + m.replace). Only the poll's own sender may do this: other clients
+   * ignore a replacement from anybody else. `answers` must keep the ids of answers already
+   * voted on — see buildEditedPollAnswers.
+   */
+  async editPoll(roomId: string, pollEventId: string, question: string, answers: PollAnswerDef[], maxSelections: number): Promise<void> {
+    if (!this.client) throw new Error('Client not initialized');
+    const newContent = buildPollContent(question, answers, maxSelections);
+    await this.client.sendEvent(roomId, POLL_START_EVENT as any, {
+      ...newContent,
+      body: `* ${newContent['body']}`,
+      'm.new_content': newContent,
+      'm.relates_to': { rel_type: RelationType.Replace, event_id: pollEventId },
     } as any);
   }
 

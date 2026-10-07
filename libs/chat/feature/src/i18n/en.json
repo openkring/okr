@@ -193,6 +193,7 @@
   "survey": {
     "title": "Create survey",
     "create": "Create survey",
+    "edit": "Edit survey",
     "allowMultipleAnswers": {
       "label": "Multiple answers possible",
       "helper": "Several answers can be given for the same question (multiple choice)."
@@ -203,7 +204,8 @@
     },
     "answer": {
       "create": "Options",
-      "add": "Add option"
+      "add": "Add option",
+      "locked": "Existing options (votes have been cast)"
     },
     "results": {
       "show": "Show voting results",

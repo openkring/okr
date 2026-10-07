@@ -342,6 +342,10 @@ describe('isRenderableChatEvent', () => {
     expect(isRenderableChatEvent('m.room.message', { rel_type: 'm.replace', event_id: '$a' })).toBe(false);
   });
 
+  it('drops a poll edit (applied to the original poll instead)', () => {
+    expect(isRenderableChatEvent('org.matrix.msc3381.poll.start', { rel_type: 'm.replace', event_id: '$a' })).toBe(false);
+  });
+
   it('keeps a reply, which relates but is its own bubble', () => {
     expect(isRenderableChatEvent('m.room.message', { rel_type: 'm.thread', event_id: '$a' })).toBe(true);
   });

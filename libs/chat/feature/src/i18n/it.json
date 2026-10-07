@@ -193,6 +193,7 @@
   "survey": {
     "title": "Crea sondaggio",
     "create": "Crea sondaggio",
+    "edit": "Modifica sondaggio",
     "allowMultipleAnswers": {
       "label": "Più opzioni possibili",
       "helper": "Si possono scegliere più opzioni per la stessa domanda (scelta multipla)."
@@ -203,7 +204,8 @@
     },
     "answer": {
       "create": "Opzioni",
-      "add": "Aggiungi opzione"
+      "add": "Aggiungi opzione",
+      "locked": "Opzioni esistenti (sono già stati espressi voti)"
     },
     "results": {
       "show": "Mostra i risultati della votazione",

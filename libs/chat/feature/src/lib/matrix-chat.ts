@@ -16,7 +16,7 @@ import { videoDocKeyOf, videoLink } from '@okr/content-document-util';
 
 import { MatrixMessageInput, MatrixMessageList, MatrixRoomList, PollDetailModal } from '@okr/chat-ui';
 import { MatrixPollData } from '@okr/chat-data-access';
-import { convertHeicToJpeg, groupRoomAliasLocalpart, shouldDeferAskRoom, isSupportedImageFile, isUploadTooLargeError, filterRoomsByName, resolveInitialRoomId, MessageDraft, UploadTooLargeError } from '@okr/chat-util';
+import { buildEditedPollAnswers, canEditPoll, parsePollContent, convertHeicToJpeg, groupRoomAliasLocalpart, shouldDeferAskRoom, isSupportedImageFile, isUploadTooLargeError, filterRoomsByName, resolveInitialRoomId, MessageDraft, UploadTooLargeError } from '@okr/chat-util';
 
 import { MatrixChatStore } from './matrix-chat.store';
 import { PollCreateModal } from './poll-create.modal';
@@ -1513,11 +1513,12 @@ export class MatrixChat implements OnDestroy {
     const isPoll = message.type === 'org.matrix.msc3381.poll.start';
 
     // Poll-specific actions are merged into this single message action sheet (no separate poll sheet):
-    // everyone can view the results, react, reply and open a thread; the author can end a running poll.
+    // everyone can view the results, react, reply and open a thread; the author can edit or end a running poll.
     // Layout: [results, end] | [react, reply, thread] | [message operations] — two dividers separate them.
     if (isPoll) {
       actionSheetOptions.buttons.push(createActionSheetButton('poll.viewVotes', this.store.i18n.results_title(), this.imgixBaseUrl, 'chart'));
       if (isAuthor && !message.pollEnded) {
+        actionSheetOptions.buttons.push(createActionSheetButton('poll.edit', this.store.i18n.survey_edit(), this.imgixBaseUrl, 'edit'));
         actionSheetOptions.buttons.push(createActionSheetButton('poll.end', this.store.i18n.survey_end(), this.imgixBaseUrl, 'cancel-circle'));
       }
       actionSheetOptions.buttons.push(createActionSheetDivider());
@@ -1528,8 +1529,7 @@ export class MatrixChat implements OnDestroy {
     }
 
     if (isAuthor) { // author of message
-      // Polls are intentionally not editable (like WhatsApp/Telegram): once sent they can only be ended
-      // or deleted, so answer ids can never drift out from under already-cast votes.
+      // Polls get their own edit action above (poll.edit), which keeps answer ids stable under cast votes.
       if (!isPoll) {
         actionSheetOptions.buttons.push(createActionSheetButton('chat.message.edit', this.store.i18n.msg_edit(), this.imgixBaseUrl, 'edit'));
       }
@@ -1606,10 +1606,45 @@ export class MatrixChat implements OnDestroy {
         case 'poll.viewVotes':
           await this.openPollDetail(message);
           break;
+        case 'poll.edit':
+          await this.openPollEdit(message);
+          break;
         case 'poll.end':
           await this.onPollEndClicked({ pollEventId: message.eventId });
           break;
       }
+    }
+  }
+
+  /**
+   * Let the author edit a running poll. Without votes everything may change; once somebody has
+   * voted, the existing answers stay fixed (new ones can be added) and multiple choice stays
+   * multiple choice — votes reference answers by id, see buildEditedPollAnswers.
+   */
+  private async openPollEdit(message: MatrixMessage): Promise<void> {
+    const original = parsePollContent(message.content);
+    const hasVotes = Object.values(message.pollVotes ?? {}).some(count => count > 0);
+    const modal = await this.modalController.create({
+      component: PollCreateModal,
+      componentProps: {
+        poll: { question: original.question, answers: original.answers.map(a => a.body), maxSelections: original.maxSelections },
+        lockedAnswers: hasVotes ? original.answers.map(a => a.body) : [],
+        lockMultiple: hasVotes && original.maxSelections > 1,
+      },
+    });
+    await modal.present();
+    const { data, role } = await modal.onDidDismiss<MatrixPollData>();
+    if (role !== 'confirm' || !data) return;
+    const edited = {
+      question: data.question,
+      answers: buildEditedPollAnswers(original.answers, data.answers, hasVotes),
+      maxSelections: data.maxSelections ?? 1,
+    };
+    if (!canEditPoll(original, edited, hasVotes)) return;
+    try {
+      await this.store.editPoll(message.eventId, edited);
+    } catch (error) {
+      console.error('MatrixChat: Failed to edit poll:', error);
     }
   }
 

@@ -17,7 +17,7 @@ import { I18nService } from '@okr/shared-i18n';
 import { ActivityService } from '@okr/activity-data-access';
 import { AvatarService } from '@okr/avatar-data-access';
 import { MatrixChatService, MatrixPollData } from '@okr/chat-data-access';
-import { AdhocChatFormModel, filterRoomsOfTenant, findSupportRoom, serverNameOf, MATRIX_CHAT_I18N_KEYS, MatrixChatI18n, MentionRef, callableErrorCode, isAlbumVideoFile, isVideoLimitError, isVideoUploadError, videoAlbumFallsBackToSynapse } from '@okr/chat-util';
+import { AdhocChatFormModel, PollDef, filterRoomsOfTenant, findSupportRoom, serverNameOf, MATRIX_CHAT_I18N_KEYS, MatrixChatI18n, MentionRef, callableErrorCode, isAlbumVideoFile, isVideoLimitError, isVideoUploadError, videoAlbumFallsBackToSynapse } from '@okr/chat-util';
 
 import { RoomEditModal } from './room-edit.modal';
 
@@ -814,6 +814,24 @@ export const _MatrixChatStore = signalStore(
           await store.matrixService.sendPollEnd(roomId, pollEventId);
         } catch (error) {
           console.error('MatrixChatStore.endPoll: Failed to end poll:', error);
+          throw error;
+        }
+      },
+
+      /**
+       * Edit a running poll — only its own sender can (other clients ignore anybody else's
+       * replacement). The caller has already resolved the answer ids via buildEditedPollAnswers.
+       */
+      async editPoll(pollEventId: string, poll: PollDef): Promise<void> {
+        const roomId = store.currentRoomId();
+        if (!roomId) {
+          console.warn('MatrixChatStore.editPoll: No room selected');
+          return;
+        }
+        try {
+          await store.matrixService.editPoll(roomId, pollEventId, poll.question, poll.answers, poll.maxSelections);
+        } catch (error) {
+          console.error('MatrixChatStore.editPoll: Failed to edit poll:', error);
           throw error;
         }
       },

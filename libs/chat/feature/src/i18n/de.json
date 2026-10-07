@@ -193,6 +193,7 @@
   "survey": {
     "title": "Umfrage erstellen",
     "create": "Umfrage erstellen",
+    "edit": "Umfrage bearbeiten",
     "allowMultipleAnswers": {
       "label": "Mehrere Antworten möglich",
       "helper": "Es können mehrere Antworten auf die gleiche Frage gegeben werden (Multiple Choice)."
@@ -203,7 +204,8 @@
     },
     "answer": {
       "create": "Optionen",
-      "add": "Option hinzufügen"
+      "add": "Option hinzufügen",
+      "locked": "Bisherige Optionen (es wurde schon abgestimmt)"
     },
     "results": {
       "show": "Abstimmungsergebnisse anzeigen",

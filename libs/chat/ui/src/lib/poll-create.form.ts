@@ -14,6 +14,7 @@ export interface PollCreateFormI18n {
   question_placeholder: Signal<string>;
   answer_create: Signal<string>;
   answer_add: Signal<string>;
+  answer_locked: Signal<string>;
 }
 
 @Component({
@@ -40,6 +41,15 @@ export interface PollCreateFormI18n {
         />
       </ion-item>
 
+      <!-- Answers already voted on: shown, but fixed (votes reference them by id) -->
+      @if (lockedAnswers().length > 0) {
+        <okr-strings
+          [strings]="lockedAnswers()"
+          [title]="i18n().answer_locked()"
+          [readOnly]="true"
+        />
+      }
+
       <!-- Answers via okr-strings -->
       <okr-strings
         [(strings)]="answers"
@@ -56,7 +66,7 @@ export interface PollCreateFormI18n {
       <okr-checkbox
         [i18n]="allowMultipleAnswersI18n()"
         [(checked)]="allowMultipleAnswers"
-        [readOnly]="false"
+        [readOnly]="lockMultiple()"
       />
     </ion-list>
   `
@@ -70,6 +80,13 @@ export class PollCreateForm implements OnInit {
    * modal, because the pickers live in a feature lib this ui lib must not depend on.
    */
   public quickEntryResolver = input<QuickEntryResolver>();
+  /**
+   * Edit mode, once votes exist: these leading answers are shown read-only and always emitted
+   * unchanged, so only new answers can be appended (see buildEditedPollAnswers).
+   */
+  public lockedAnswers = input<string[]>([]);
+  /** Edit mode, once votes exist on a multiple-choice poll: it may not become single choice. */
+  public lockMultiple = input(false);
   public formDataChange = output<MatrixPollData>();
   public valid = output<boolean>();
 
@@ -89,7 +106,7 @@ export class PollCreateForm implements OnInit {
     effect(() => {
       const data: MatrixPollData = {
         question: this.question(),
-        answers: this.answers(),
+        answers: [...this.lockedAnswers(), ...this.answers()],
         maxSelections: this.allowMultipleAnswers() ? 20 : 1,
       };
       this.formDataChange.emit(data);
@@ -99,7 +116,7 @@ export class PollCreateForm implements OnInit {
 
   ngOnInit(): void {
     this.question.set(this.formData().question);
-    this.answers.set([...this.formData().answers]);
+    this.answers.set(this.formData().answers.slice(this.lockedAnswers().length));
     this.allowMultipleAnswers.set((this.formData().maxSelections ?? 1) > 1);
   }
 }
