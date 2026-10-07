@@ -161,6 +161,8 @@
       "expense": "Gastos",
       "report": "Informe",
       "dunning": "Recordatorio de pago",
+      "contract": "Contrato",
+      "confirmation": "Confirmación",
       "other": "Otros"
     },
     "output_format": "Formato de salida",

@@ -29,7 +29,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const TEMPLATES_DIR = join(__dirname, 'templates');
 
 // ---- valid enum values (mirror libs/shared/models/.../pdf-template.model.ts) ----
-const CATEGORIES = ['invoice', 'expense', 'report', 'dunning', 'other'];
+const CATEGORIES = ['invoice', 'expense', 'report', 'dunning', 'contract', 'confirmation', 'other'];
 const LANGUAGES = ['de', 'fr', 'it', 'en'];
 const OUTPUT_FORMATS = ['pdf', 'docx', 'html'];
 const ORIENTATIONS = ['portrait', 'landscape'];

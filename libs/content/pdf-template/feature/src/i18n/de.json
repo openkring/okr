@@ -161,6 +161,8 @@
       "expense": "Spesen",
       "report": "Bericht",
       "dunning": "Mahnung",
+      "contract": "Vertrag",
+      "confirmation": "Bestätigung",
       "other": "Sonstiges"
     },
     "output_format": "Ausgabeformat",

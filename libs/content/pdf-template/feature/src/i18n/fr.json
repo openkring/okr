@@ -161,6 +161,8 @@
       "expense": "Frais",
       "report": "Rapport",
       "dunning": "Rappel",
+      "contract": "Contrat",
+      "confirmation": "Confirmation",
       "other": "Autre"
     },
     "output_format": "Format de sortie",

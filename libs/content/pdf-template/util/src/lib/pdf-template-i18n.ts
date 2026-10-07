@@ -64,6 +64,8 @@ export const TEMPLATE_I18N_KEYS = {
   cat_expense:         PFX + 'edit.category.expense',
   cat_report:          PFX + 'edit.category.report',
   cat_dunning:         PFX + 'edit.category.dunning',
+  cat_contract:        PFX + 'edit.category.contract',
+  cat_confirmation:    PFX + 'edit.category.confirmation',
   cat_other:           PFX + 'edit.category.other',
   output_format:       PFX + 'edit.output_format',
   sample_data:         PFX + 'edit.sample_data',

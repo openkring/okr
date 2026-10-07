@@ -118,6 +118,8 @@ type EditorTab = 'metadata' | 'html' | 'css' | 'preview';
               <ion-select-option value="expense">{{ store.i18n.cat_expense() }}</ion-select-option>
               <ion-select-option value="report">{{ store.i18n.cat_report() }}</ion-select-option>
               <ion-select-option value="dunning">{{ store.i18n.cat_dunning() }}</ion-select-option>
+              <ion-select-option value="contract">{{ store.i18n.cat_contract() }}</ion-select-option>
+              <ion-select-option value="confirmation">{{ store.i18n.cat_confirmation() }}</ion-select-option>
               <ion-select-option value="other">{{ store.i18n.cat_other() }}</ion-select-option>
             </ion-select>
           </ion-item>

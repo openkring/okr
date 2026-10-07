@@ -161,6 +161,8 @@
       "expense": "Expenses",
       "report": "Report",
       "dunning": "Dunning letter",
+      "contract": "Contract",
+      "confirmation": "Confirmation",
       "other": "Other"
     },
     "output_format": "Output format",

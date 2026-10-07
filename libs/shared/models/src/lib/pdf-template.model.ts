@@ -8,7 +8,7 @@ export const DocGenerationCollection = 'docGenerations';
 
 export type TemplateStatus = 'draft' | 'published' | 'archived';
 export type TemplateOutputFormat = 'pdf' | 'docx' | 'html';
-export type TemplateCategory = 'invoice' | 'expense' | 'report' | 'dunning' | 'other';
+export type TemplateCategory = 'invoice' | 'expense' | 'report' | 'dunning' | 'contract' | 'confirmation' | 'other';
 export type TemplateLanguage = 'de' | 'fr' | 'it' | 'en';
 export type DocGenerationStatus = 'success' | 'failed';
 

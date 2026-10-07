@@ -161,6 +161,8 @@
       "expense": "Spese",
       "report": "Rapporto",
       "dunning": "Sollecito",
+      "contract": "Contratto",
+      "confirmation": "Conferma",
       "other": "Altro"
     },
     "output_format": "Formato di output",
