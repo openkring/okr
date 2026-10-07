@@ -4,7 +4,7 @@ import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent } from '@ionic/angular/standalone';
 
 import { DESCRIPTION_LENGTH } from '@okr/shared-constants';
-import { NotesInput, NotesInputI18n } from '@okr/shared-ui';
+import { ErrorNote, TextareaInput, TextInputI18n } from '@okr/shared-ui';
 import { coerceBoolean } from '@okr/shared-util-core';
 import { validateVestTree } from '@okr/shared-util-angular';
 import { TemplateI18n, TemplatePublishFormModel, templatePublishValidations } from '@okr/content-pdf-template-util';
@@ -13,16 +13,17 @@ import { TemplateI18n, TemplatePublishFormModel, templatePublishValidations } fr
 @Component({
   selector: 'okr-template-publish-form',
   standalone: true,
-  imports: [NotesInput, IonCard, IonCardContent],
+  imports: [TextareaInput, ErrorNote, IonCard, IonCardContent],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
     @if (showForm()) {
       <form novalidate>
         <ion-card>
           <ion-card-content class="ion-no-padding">
-            <okr-notes-input [i18n]="changelogI18n()" [value]="changelog()"
+            <okr-textarea-input [i18n]="changelogI18n()" [value]="changelog()"
               (valueChange)="onFieldChange('changelog', $event)"
-              [maxLength]="descriptionLength" [errors]="changelogErrors()" [readOnly]="isReadOnly()" />
+              [maxLength]="descriptionLength" [rows]="4" [readOnly]="isReadOnly()" />
+            <okr-error-note [errors]="changelogErrors()" />
           </ion-card-content>
         </ion-card>
       </form>
@@ -57,7 +58,7 @@ export class TemplatePublishForm {
     name: 'changelog',
     label: this.i18n().publish_changelog(),
     placeholder: this.i18n().publish_changelog_ph(),
-  } as NotesInputI18n));
+  } as TextInputI18n));
 
   protected onFieldChange(fieldName: keyof TemplatePublishFormModel, fieldValue: string): void {
     this.dirty.emit(true);
