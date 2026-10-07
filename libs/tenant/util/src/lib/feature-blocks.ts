@@ -2577,13 +2577,13 @@ const crossword: FeatureBlock = {
   id: 'crossword',
   bundle: 'games',
   label: '@tenant/util.feature.crossword.label',
-  icon: 'grid',
+  icon: 'game-crossword',
   defaultAvailability: 'beta',
   dependsOn: ['games'],
   collections: ['crosswordTopics'],
   menu: [
     gamesMenuParent([
-      { key: 'game-crossword', name: 'game-crossword', url: '/crossword/all/c-crossword', action: 'navigate', roleNeeded: 'registered', icon: 'grid', label: '@item.game-crossword' },
+      { key: 'game-crossword', name: 'game-crossword', url: '/crossword/all/c-crossword', action: 'navigate', roleNeeded: 'registered', icon: 'game-crossword', label: '@item.game-crossword' },
     ]),
     { key: 'c-crossword', name: 'c-crossword', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'grid', label: '', children: [
       { key: 'editmode-toggle', name: 'editmode-toggle', url: 'toggleEditMode', action: 'toggle', roleNeeded: 'registered', icon: 'edit', label: '@item.editmode-toggle' },
@@ -2606,12 +2606,12 @@ const muehle: FeatureBlock = {
   id: 'muehle',
   bundle: 'games',
   label: '@tenant/util.feature.muehle.label',
-  icon: 'radio-button-on',
+  icon: 'game-muehle',
   defaultAvailability: 'ga',
   dependsOn: ['games'],
   collections: [],
   menu: [gamesMenuParent([
-    { key: 'game-muehle', name: 'game-muehle', url: '/muehle', action: 'navigate', roleNeeded: 'registered', icon: 'radio-button-on', label: '@item.game-muehle' },
+    { key: 'game-muehle', name: 'game-muehle', url: '/muehle', action: 'navigate', roleNeeded: 'registered', icon: 'game-muehle', label: '@item.game-muehle' },
   ])],
 };
 
@@ -2652,12 +2652,12 @@ const bimaru: FeatureBlock = {
   id: 'bimaru',
   bundle: 'games',
   label: '@tenant/util.feature.bimaru.label',
-  icon: 'compass',
+  icon: 'game-bimaru',
   defaultAvailability: 'ga',
   dependsOn: ['games'],
   collections: [],
   menu: [gamesMenuParent([
-    { key: 'game-bimaru', name: 'game-bimaru', url: '/bimaru', action: 'navigate', roleNeeded: 'registered', icon: 'compass', label: '@item.game-bimaru' },
+    { key: 'game-bimaru', name: 'game-bimaru', url: '/bimaru', action: 'navigate', roleNeeded: 'registered', icon: 'game-bimaru', label: '@item.game-bimaru' },
   ])],
 };
 
@@ -2675,12 +2675,12 @@ const sudoku: FeatureBlock = {
   id: 'sudoku',
   bundle: 'games',
   label: '@tenant/util.feature.sudoku.label',
-  icon: 'grid',
+  icon: 'game-sudoku',
   defaultAvailability: 'ga',
   dependsOn: ['games'],
   collections: [],
   menu: [gamesMenuParent([
-    { key: 'game-sudoku', name: 'game-sudoku', url: '/sudoku', action: 'navigate', roleNeeded: 'registered', icon: 'grid', label: '@item.game-sudoku' },
+    { key: 'game-sudoku', name: 'game-sudoku', url: '/sudoku', action: 'navigate', roleNeeded: 'registered', icon: 'game-sudoku', label: '@item.game-sudoku' },
   ])],
 };
 
