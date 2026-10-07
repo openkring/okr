@@ -2,6 +2,8 @@
 {{!--
   Rechnung – Seeclub Stäfa (scs-rechnung)
   HTML/Handlebars template for PDF rendering (Puppeteer-friendly: @page A4, no external fonts).
+  Layout, logo and typography follow the Zahlungsbestätigung; the letter fits on page 1 and the
+  QR-bill slip, appended by the caller, is page 2.
 
   Context (buildInvoicePayload in apps/functions/src/invoice/invoice.logic.ts):
     invoiceNumber, title, date, dueDate (DD.MM.YYYY), greeting, firstName, lastName,
@@ -9,8 +11,10 @@
     positions [{ kind, name, amount?, description?, isText?, isRebate?, isSubtotal?, isPageBreak? }], qrMessage
     (kind = position | rebate | text | subtotal | pageBreak, spec 1.84: text has no amount, a subtotal
     carries the sum above it, a page break starts a new page)
-  plus payee.* (name, iban, street, buildingNumber, zip, city, country), resolved server-side.
-  The logo URL is fixed. The QR-bill slip is appended by the caller.
+  plus payee.* (name, iban, qrIban, regularIban, street, buildingNumber, zip, city, country), resolved
+  server-side. payee.iban is the favorite account and may be the QR-IBAN, which only takes payments
+  with a QR reference — a plain transfer must go to payee.regularIban.
+  The logo URL is fixed.
 --}}
 <html lang="de">
 <head>
@@ -23,6 +27,7 @@
 
   :root {
     --ink: #1a1a1a;
+    --muted: #555555;
     --accent: #1d70b8;      /* title blue */
     --margin: 25mm;
   }
@@ -49,7 +54,7 @@
     position: relative;
     width: 210mm;
     min-height: 297mm;
-    padding: 20mm var(--margin) 20mm var(--margin);
+    padding: 20mm var(--margin) 28mm var(--margin);
   }
 
   /* ---- Header: logo left, sender block right ---- */
@@ -87,55 +92,61 @@
     line-height: 1.45;
   }
 
-  /* ---- Title (two lines) ---- */
+  /* ---- Body ---- */
   .title {
     color: var(--accent);
     font-size: 17pt;
     font-weight: 400;
     line-height: 1.3;
-    margin-top: 22mm;
-    margin-bottom: 9mm;
+    margin-top: 18mm;
+    margin-bottom: 7mm;
   }
 
   p {
-    margin: 0 0 5mm 0;
+    margin: 0 0 4mm 0;
   }
 
   .greeting {
-    margin-bottom: 7mm;
+    margin-bottom: 5mm;
   }
 
-  /* ---- Date / due-date row (4 columns) ---- */
-  .meta-row {
+  /* ---- Label / value rows ---- */
+  .field {
     display: flex;
-    margin-bottom: 4mm;
+    margin-bottom: 2mm;
   }
 
-  .meta-row .c-label-1 { flex: 0 0 35mm; }
-  .meta-row .c-value-1 { flex: 0 0 38mm; }
-  .meta-row .c-label-2 { flex: 0 0 40mm; }
-  .meta-row .c-value-2 { flex: 1 1 auto; }
+  .field .label {
+    width: 42mm;
+    flex: 0 0 42mm;
+  }
 
+  .fields {
+    margin-bottom: 5mm;
+  }
+
+  /* ---- Positions ---- */
   .positions {
-    width: 113mm;
+    width: 100%;
     border-collapse: collapse;
-    margin-bottom: 7mm;
+    margin-bottom: 6mm;
   }
 
-  .positions td { padding: 1.5mm 0; vertical-align: top; }
-  .positions .pos-desc { font-size: 8pt; color: #555; margin-top: 0.5mm; }
-  .positions td.amount { text-align: right; white-space: nowrap; padding-left: 6mm; }
+  .positions td { padding: 1.2mm 0; vertical-align: top; }
+  .positions .pos-desc { font-size: 8.5pt; color: var(--muted); margin-top: 0.5mm; }
+  .positions td.amount { text-align: right; white-space: nowrap; padding-left: 6mm; width: 35mm; }
   .positions tr.total td { border-top: 0.3mm solid var(--ink); font-weight: 700; }
   .positions tr.subtotal td { border-top: 0.2mm solid var(--ink); font-weight: 700; }
   .positions tr.page-break { break-after: page; }
   .positions tr.page-break td { padding: 0; }
+  .positions tr { break-inside: avoid; }
 
   .closing {
-    margin-top: 9mm;
+    margin-top: 7mm;
   }
 
   .signature {
-    margin-top: 9mm;
+    margin-top: 5mm;
   }
 
   /* ---- Footer pinned to bottom margin ---- */
@@ -188,11 +199,15 @@
 
     <p class="greeting">{{greeting}},</p>
 
-    <div class="meta-row">
-      <div class="c-label-1">Datum:</div>
-      <div class="c-value-1">{{date}}</div>
-      <div class="c-label-2">Zahlbar bis:</div>
-      <div class="c-value-2">{{dueDate}}</div>
+    <div class="fields">
+      <div class="field">
+        <div class="label">Rechnungsdatum:</div>
+        <div class="value">{{date}}</div>
+      </div>
+      <div class="field">
+        <div class="label">Zahlbar bis:</div>
+        <div class="value">{{dueDate}}</div>
+      </div>
     </div>
 
     <table class="positions">
@@ -203,22 +218,20 @@
       {{/if}}{{/each}}<tr class="total"><td>Total</td><td class="amount">CHF {{amount}}</td></tr>
     </table>
 
-    <p>Vielen Dank, dass du die Rechnung bis zum {{dueDate}} auf das Konto von {{payee.name}} (IBAN {{payee.iban}}) bezahlst.</p>
-
-    <p>Bitte verwende den QR-Code Einzahlungsschein auf der nächsten Seite oder überweise den Betrag direkt auf die IBAN.</p>
+    <p>Bitte bezahle den Betrag bis zum {{dueDate}} mit dem QR-Einzahlungsschein auf der nächsten Seite{{#if payee.regularIban}} oder überweise ihn auf das Konto von {{payee.name}}, IBAN {{formatIban payee.regularIban}}{{/if}}.</p>
 
     <p class="closing">Herzlichen Dank und freundliche Grüsse</p>
 
     <div class="signature">
-      <div>Kassier</div>
+      <div>Bruno Kaiser, Kassier</div>
       <div>{{payee.name}}</div>
     </div>
 
     <footer class="footer">
-      <div class="left">{{payee.iban}}</div>
+      <div class="left">{{formatIban payee.regularIban}}</div>
       <div class="right">
-        {{payee.name}}<br>
-        {{payee.street}} {{payee.buildingNumber}}, {{payee.zip}} {{payee.city}}
+        079 790 8929<br>
+        <a href="mailto:bruno@seeclub.org">bruno@seeclub.org</a>
       </div>
     </footer>
 

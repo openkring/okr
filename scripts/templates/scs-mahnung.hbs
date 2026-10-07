@@ -2,13 +2,17 @@
 {{!--
   Zahlungserinnerung / Mahnung – Seeclub Stäfa (scs-mahnung)
   HTML/Handlebars template for PDF rendering (Puppeteer-friendly: @page A4, no external fonts).
+  Layout, logo and typography follow the Zahlungsbestätigung; the letter fits on page 1 and the
+  QR-bill slip over the amount due (payload.amount), appended by the caller, is page 2.
 
   Context (buildReminderPayload in apps/functions/src/invoice/reminder-payload.logic.ts):
     heading, levelText, invoiceId, invoiceTitle, invoiceDate, reminderDate, dueDate (DD.MM.YYYY),
-    firstName, lastName, streetName, streetNumber, zipCode, city, countryCode,
+    greeting, firstName, lastName, streetName, streetNumber, zipCode, city, countryCode,
     totalAmount, feesTotal, paidTotal, amountDue ("220.00"), qrMessage
-  plus payee.* (name, iban, street, buildingNumber, zip, city, country), resolved server-side.
-  The QR-bill slip over the amount due (payload.amount) is appended by the caller.
+  plus payee.* (name, iban, qrIban, regularIban, street, buildingNumber, zip, city, country), resolved
+  server-side. payee.iban is the favorite account and may be the QR-IBAN, which only takes payments
+  with a QR reference — a plain transfer must go to payee.regularIban.
+  The logo URL is fixed.
 --}}
 <html lang="de">
 <head>
@@ -21,6 +25,7 @@
 
   :root {
     --ink: #1a1a1a;
+    --muted: #555555;
     --accent: #1d70b8;      /* title blue */
     --margin: 25mm;
   }
@@ -47,7 +52,7 @@
     position: relative;
     width: 210mm;
     min-height: 297mm;
-    padding: 20mm var(--margin) 20mm var(--margin);
+    padding: 20mm var(--margin) 28mm var(--margin);
   }
 
   /* ---- Header: logo left, sender block right ---- */
@@ -85,51 +90,61 @@
     line-height: 1.45;
   }
 
-  /* ---- Title (two lines) ---- */
+  /* ---- Body ---- */
   .title {
     color: var(--accent);
     font-size: 17pt;
     font-weight: 400;
     line-height: 1.3;
-    margin-top: 22mm;
-    margin-bottom: 9mm;
+    margin-top: 18mm;
+    margin-bottom: 7mm;
   }
 
   p {
-    margin: 0 0 5mm 0;
+    margin: 0 0 4mm 0;
   }
 
   .greeting {
-    margin-bottom: 7mm;
+    margin-bottom: 5mm;
   }
 
-  /* ---- Date / due-date row (4 columns) ---- */
-  .meta-row {
+  /* ---- Label / value rows ---- */
+  .field {
     display: flex;
-    margin-bottom: 4mm;
+    margin-bottom: 2mm;
   }
 
-  .meta-row .c-label-1 { flex: 0 0 35mm; }
-  .meta-row .c-value-1 { flex: 0 0 38mm; }
-  .meta-row .c-label-2 { flex: 0 0 40mm; }
-  .meta-row .c-value-2 { flex: 1 1 auto; }
+  .field .label {
+    width: 42mm;
+    flex: 0 0 42mm;
+  }
 
+  .fields {
+    margin-bottom: 5mm;
+  }
+
+  /* ---- Positions ---- */
   .positions {
-    width: 113mm;
+    width: 100%;
     border-collapse: collapse;
-    margin-bottom: 7mm;
+    margin-bottom: 6mm;
   }
 
-  .positions td { padding: 1.5mm 0; vertical-align: top; }
-  .positions td.amount { text-align: right; white-space: nowrap; padding-left: 6mm; }
+  .positions td { padding: 1.2mm 0; vertical-align: top; }
+  .positions .pos-desc { font-size: 8.5pt; color: var(--muted); margin-top: 0.5mm; }
+  .positions td.amount { text-align: right; white-space: nowrap; padding-left: 6mm; width: 35mm; }
   .positions tr.total td { border-top: 0.3mm solid var(--ink); font-weight: 700; }
+  .positions tr.subtotal td { border-top: 0.2mm solid var(--ink); font-weight: 700; }
+  .positions tr.page-break { break-after: page; }
+  .positions tr.page-break td { padding: 0; }
+  .positions tr { break-inside: avoid; }
 
   .closing {
-    margin-top: 9mm;
+    margin-top: 7mm;
   }
 
   .signature {
-    margin-top: 9mm;
+    margin-top: 5mm;
   }
 
   /* ---- Footer pinned to bottom margin ---- */
@@ -184,36 +199,38 @@
 
     <p>{{levelText}}</p>
 
-    <div class="meta-row">
-      <div class="c-label-1">Datum:</div>
-      <div class="c-value-1">{{reminderDate}}</div>
-      <div class="c-label-2">Zahlbar bis:</div>
-      <div class="c-value-2">{{dueDate}}</div>
+    <div class="fields">
+      <div class="field">
+        <div class="label">Datum:</div>
+        <div class="value">{{reminderDate}}</div>
+      </div>
+      <div class="field">
+        <div class="label">Zahlbar bis:</div>
+        <div class="value">{{dueDate}}</div>
+      </div>
     </div>
 
     <table class="positions">
-      <tr><td>Rechnung {{invoiceId}} vom {{invoiceDate}}<br>{{invoiceTitle}}</td><td class="amount">CHF {{totalAmount}}</td></tr>
+      <tr><td>Rechnung {{invoiceId}} vom {{invoiceDate}}<div class="pos-desc">{{invoiceTitle}}</div></td><td class="amount">CHF {{totalAmount}}</td></tr>
       <tr><td>Mahngebühren</td><td class="amount">CHF {{feesTotal}}</td></tr>
       <tr><td>bereits bezahlt</td><td class="amount">CHF {{paidTotal}}</td></tr>
-      <tr class="total"><td>offener Betrag</td><td class="amount">CHF {{amountDue}}</td></tr>
+      <tr class="total"><td>Offener Betrag</td><td class="amount">CHF {{amountDue}}</td></tr>
     </table>
 
-    <p>Bitte überweise den offenen Betrag bis {{dueDate}} auf das Konto von {{payee.name}} (IBAN {{payee.iban}}).</p>
-
-    <p>Bitte verwende den QR-Code Einzahlungsschein auf der nächsten Seite oder überweise den Betrag direkt auf die IBAN. Falls du inzwischen bezahlt hast, betrachte dieses Schreiben als gegenstandslos.</p>
+    <p>Bitte bezahle den offenen Betrag bis zum {{dueDate}} mit dem QR-Einzahlungsschein auf der nächsten Seite{{#if payee.regularIban}} oder überweise ihn auf das Konto von {{payee.name}}, IBAN {{formatIban payee.regularIban}}{{/if}}. Falls du inzwischen bezahlt hast, betrachte dieses Schreiben als gegenstandslos.</p>
 
     <p class="closing">Herzlichen Dank und freundliche Grüsse</p>
 
     <div class="signature">
-      <div>Kassier</div>
+      <div>Bruno Kaiser, Kassier</div>
       <div>{{payee.name}}</div>
     </div>
 
     <footer class="footer">
-      <div class="left">{{payee.iban}}</div>
+      <div class="left">{{formatIban payee.regularIban}}</div>
       <div class="right">
-        {{payee.name}}<br>
-        {{payee.street}} {{payee.buildingNumber}}, {{payee.zip}} {{payee.city}}
+        079 790 8929<br>
+        <a href="mailto:bruno@seeclub.org">bruno@seeclub.org</a>
       </div>
     </footer>
 
