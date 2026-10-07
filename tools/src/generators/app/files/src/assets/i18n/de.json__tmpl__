@@ -451,6 +451,7 @@
     "tenantsType": "Die Mandanten müssen aus einem Array von Strings bestehen.",
     "tenantsLength": "Es muss mind. ein Mandant existieren.",
     "urlStart": "Die URL muss mit https:// oder assets oder tenant oder / starten.",
+    "imageUrlStart": "Die Bild-Adresse muss mit https://, assets/ oder tenant beginnen.",
     "urlValid": "Die URL muss ein gültiges Format haben.",
     "urlValidProtocol": "Die URL muss ein gültiges Protokoll haben (https://).",
     "urlHost": "Die URL muss einen gültigen Hostnamen haben.",

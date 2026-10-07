@@ -63,6 +63,9 @@
       },
       "ocrFailed": {
         "label": "Beleg-Erkennung fehlgeschlagen"
+      },
+      "paymentOrphaned": {
+        "label": "Spesenzahlung bereits im Zahlungsauftrag"
       }
     },
     "form": {

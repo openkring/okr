@@ -451,6 +451,7 @@
     "tenantsType": "The tenants must consist of an array of strings.",
     "tenantsLength": "At least one tenant must exist.",
     "urlStart": "The URL must start with https:// or assets or tenant or /.",
+    "imageUrlStart": "The image address must start with https://, assets/ or tenant.",
     "urlValid": "The URL must have a valid format.",
     "urlValidProtocol": "The URL must have a valid protocol (https://).",
     "urlHost": "The URL must have a valid host name.",

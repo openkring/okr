@@ -451,6 +451,7 @@
     "tenantsType": "Los inquilinos deben consistir en un array de strings.",
     "tenantsLength": "Debe existir al menos un inquilino.",
     "urlStart": "La URL debe empezar por https:// o assets o tenant o /.",
+    "imageUrlStart": "La dirección de la imagen debe empezar por https://, assets/ o tenant.",
     "urlValid": "La URL debe tener un formato válido.",
     "urlValidProtocol": "La URL debe tener un protocolo válido (https://).",
     "urlHost": "La URL debe tener un nombre de host válido.",

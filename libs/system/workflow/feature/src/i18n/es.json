@@ -63,6 +63,9 @@
       },
       "ocrFailed": {
         "label": "Error al leer el justificante"
+      },
+      "paymentOrphaned": {
+        "label": "Pago de gastos ya incluido en una orden de pago"
       }
     },
     "form": {

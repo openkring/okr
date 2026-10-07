@@ -451,6 +451,7 @@
     "tenantsType": "Les locataires doivent être composés d'un tableau de chaînes de caractères.",
     "tenantsLength": "Il doit exister au moins un locataire.",
     "urlStart": "L'URL doit commencer par https:// ou assets ou tenant ou /.",
+    "imageUrlStart": "L'adresse de l'image doit commencer par https://, assets/ ou tenant.",
     "urlValid": "L'URL doit avoir un format valide.",
     "urlValidProtocol": "L'URL doit avoir un protocole valide (https://).",
     "urlHost": "L'URL doit avoir un nom d'hôte valide.",

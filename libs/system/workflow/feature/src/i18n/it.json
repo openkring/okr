@@ -63,6 +63,9 @@
       },
       "ocrFailed": {
         "label": "Lettura del giustificativo non riuscita"
+      },
+      "paymentOrphaned": {
+        "label": "Pagamento spese già in un ordine di pagamento"
       }
     },
     "form": {

@@ -63,6 +63,9 @@
       },
       "ocrFailed": {
         "label": "Échec de la lecture du justificatif"
+      },
+      "paymentOrphaned": {
+        "label": "Paiement de frais déjà dans un ordre de paiement"
       }
     },
     "form": {
