@@ -23,6 +23,7 @@
     "@okr/finance-invoice-ui": "*",
     "@okr/finance-invoice-util": "*",
     "@okr/content-pdf-template-data-access": "*",
+    "@okr/content-pdf-template-ui": "*",
     "@okr/subject-address-data-access": "*",
     "@okr/subject-org-data-access": "*",
     "@okr/subject-person-data-access": "*",

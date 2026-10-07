@@ -4,7 +4,7 @@ export { recordInvoicePayment } from './record-invoice-payment';
 export { cancelInvoice } from './cancel-invoice';
 export { createPaymentConfirmation } from './payment-confirmation';
 export { createInvoiceReminder } from './create-invoice-reminder';
-export { sendInvoiceEmail } from './send-invoice-email';
+export { getInvoiceEmailDraft, sendInvoiceEmail } from './send-invoice-email';
 export { waiveReminderFee } from './waive-reminder-fee';
 export { previewInvoicePdf } from './preview-invoice';
 export { markInvoiceSent } from './mark-invoice-sent';

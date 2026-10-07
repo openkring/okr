@@ -504,9 +504,7 @@
   },
   "email": {
     "send": "Envoyer par e-mail",
-    "confirm": "{document} sera envoyé à l’adresse e-mail du destinataire.",
     "ok": "Envoyer",
-    "conf": "{document} a été envoyé par e-mail le {date}.",
     "error": "L’e-mail n’a pas pu être envoyé. Réessaie plus tard.",
     "sentAt": "Envoyé le {date}",
     "post": "Marquer comme envoyée par la poste",

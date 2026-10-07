@@ -504,9 +504,7 @@
   },
   "email": {
     "send": "Send by email",
-    "confirm": "{document} will be sent to the receiver's email address.",
     "ok": "Send",
-    "conf": "{document} was sent by email on {date}.",
     "error": "The email could not be sent. Please try again later.",
     "sentAt": "Sent on {date}",
     "post": "Mark as sent by post",

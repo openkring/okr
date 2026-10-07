@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { emailDocumentKind, invoiceEmailAsksPayment, invoiceEmailHtml, invoiceEmailSubject, recipientDirectoryId, scrubEmailAddresses, sendRefusal } from './send-invoice-email.logic';
+import { emailDocumentKind, invoiceEmailAsksPayment, invoiceEmailHtml, invoiceEmailSubject, MAX_INLINE_ATTACHMENT_BYTES, normalizeComposedMail, recipientDirectoryId, scrubEmailAddresses, sendRefusal } from './send-invoice-email.logic';
 
 describe('emailDocumentKind', () => {
   const invoice = { documentKey: 'invoice-a', reminders: [{ level: 1, date: '', dueDate: '', documentKey: 'invoice-a-reminder-1' }, { level: 2, date: '', dueDate: '', documentKey: 'invoice-a-reminder-2' }] };
@@ -111,5 +111,40 @@ describe('sendRefusal', () => {
     expect(sendRefusal('reminder', 'pending', '')).toBeUndefined();
     expect(sendRefusal('invoice', 'pending', '20261101')).toBeUndefined();
     expect(sendRefusal('reminder', 'paid', '20261101')).toBe('not-payable');
+  });
+});
+
+describe('normalizeComposedMail', () => {
+  const base = { to: ['anna@example.ch'], subject: 'Rechnung 1', html: '<p>Hallo</p>' };
+
+  it('accepts a plain mail and falls back to the tenant sender', () => {
+    const r = normalizeComposedMail(base, 'kassier@seeclub.org');
+    expect(r).toEqual({ ok: true, mail: { to: ['anna@example.ch'], cc: [], bcc: [], from: 'kassier@seeclub.org', subject: 'Rechnung 1', html: '<p>Hallo</p>', extraAttachments: [] } });
+  });
+
+  it('keeps cc, bcc, an own sender and trims addresses', () => {
+    const r = normalizeComposedMail({ ...base, to: [' anna@example.ch '], cc: ['b@example.ch'], bcc: ['c@example.ch', ''], from: 'bruno@seeclub.org' }, 'x@seeclub.org');
+    expect(r.ok && r.mail).toMatchObject({ to: ['anna@example.ch'], cc: ['b@example.ch'], bcc: ['c@example.ch'], from: 'bruno@seeclub.org' });
+  });
+
+  it('refuses a mail without a valid recipient', () => {
+    expect(normalizeComposedMail({ ...base, to: [] }, 'x@y.ch')).toEqual({ ok: false, reason: 'bad-recipients' });
+    expect(normalizeComposedMail({ ...base, to: ['no-address'] }, 'x@y.ch')).toEqual({ ok: false, reason: 'bad-recipients' });
+    expect(normalizeComposedMail({ ...base, cc: ['a@b.ch, c@d.ch'] }, 'x@y.ch')).toEqual({ ok: false, reason: 'bad-recipients' });
+    expect(normalizeComposedMail({ ...base, to: 'anna@example.ch' }, 'x@y.ch')).toEqual({ ok: false, reason: 'bad-recipients' });
+  });
+
+  it('refuses a malformed sender, an empty subject and an empty body', () => {
+    expect(normalizeComposedMail({ ...base, from: 'kassier' }, 'x@y.ch')).toEqual({ ok: false, reason: 'bad-from' });
+    expect(normalizeComposedMail({ ...base, subject: '  ' }, 'x@y.ch')).toEqual({ ok: false, reason: 'no-subject' });
+    expect(normalizeComposedMail({ ...base, html: '<p></p>' }, 'x@y.ch')).toEqual({ ok: false, reason: 'no-body' });
+  });
+
+  it('accepts inline attachments only, within the size cap', () => {
+    const ok = normalizeComposedMail({ ...base, extraAttachments: [{ filename: 'a.txt', contentBase64: 'aGk=', contentType: 'text/plain' }] }, 'x@y.ch');
+    expect(ok.ok && ok.mail.extraAttachments).toEqual([{ filename: 'a.txt', contentBase64: 'aGk=', contentType: 'text/plain' }]);
+    expect(normalizeComposedMail({ ...base, extraAttachments: [{ storagePath: 'tenant/scs/x.pdf' }] }, 'x@y.ch')).toEqual({ ok: false, reason: 'bad-attachment' });
+    const huge = 'A'.repeat(Math.ceil(MAX_INLINE_ATTACHMENT_BYTES * 4 / 3) + 8);
+    expect(normalizeComposedMail({ ...base, extraAttachments: [{ filename: 'big.bin', contentBase64: huge }] }, 'x@y.ch')).toEqual({ ok: false, reason: 'bad-attachment' });
   });
 });

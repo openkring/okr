@@ -31,6 +31,20 @@ import { DocEmailService, InlineAttachment } from '@okr/content-pdf-template-dat
 /** Reject files larger than this client-side (the CF caps inline attachments at 8 MB). */
 const MAX_ATTACHMENT_BYTES = 7 * 1024 * 1024;
 
+/**
+ * A composed mail as handed to a caller-supplied send handler: recipients, sender, subject, the branded
+ * HTML exactly as previewed, and the files added in the composer. The caller attaches its own document.
+ */
+export interface ComposedEmail {
+  to: string[];
+  cc: string[];
+  bcc: string[];
+  from: string;
+  subject: string;
+  html: string;
+  extraAttachments: InlineAttachment[];
+}
+
 /** The three views of the composer: write the mail, see it rendered, check the recipients. */
 type ComposerSegment = 'editor' | 'preview' | 'list';
 
@@ -226,6 +240,15 @@ export class EmailComposerModal {
   /** Filename of that document — drives the attachment chip and the subject prefix. */
   public readonly filename      = input<string>('');
   public readonly outputFormat  = input<'pdf' | 'docx' | 'html'>('pdf');
+  /** Prefilled sender, subject and body (HTML); empty = the composer's own defaults. */
+  public readonly fromDefault    = input<string>('');
+  public readonly subjectDefault = input<string>('');
+  public readonly bodyDefault    = input<string>('');
+  /**
+   * Sends the mail instead of the generic document mailer (e.g. an invoice, whose PDF and sent mark the
+   * server handles). It throws to report a failure; the composer then stays open with the error.
+   */
+  public readonly sendHandler    = input<((mail: ComposedEmail) => Promise<void>) | undefined>(undefined);
 
   protected readonly activeSegment = signal<ComposerSegment>('editor');
 
@@ -321,7 +344,7 @@ export class EmailComposerModal {
     // is still pristine.
     effect(() => {
       const prefix = this.i18n.subject_prefix();
-      if (prefix.length === 0 || this.filename().length === 0) return;
+      if (prefix.length === 0 || this.filename().length === 0 || this.subjectDefault().length > 0) return;
       untracked(() => {
         if (this.isDirty()) return;
         this.formData.update((vm) => ({ ...vm, subject: `${prefix} ${this.filename()}` }));
@@ -387,12 +410,13 @@ export class EmailComposerModal {
     const fallback = this.defaultAddress();
     const prefix = untracked(() => this.i18n.subject_prefix());
     return {
-      to: this.to() || fallback,
-      from: fallback,
+      // a caller-sent mail (invoice) never defaults to the club's own address: an empty `to` stays empty
+      to: this.to() || (this.sendHandler() ? '' : fallback),
+      from: this.fromDefault() || fallback,
       cc: this.cc(),
       bcc: this.bcc(),
-      subject: this.initialSubject(prefix),
-      body: '<p></p>',
+      subject: this.subjectDefault() || this.initialSubject(prefix),
+      body: this.bodyDefault() || '<p></p>',
     };
   }
 
@@ -488,9 +512,13 @@ export class EmailComposerModal {
         filename: this.filename(),
         extraAttachments: this.extraAttachments(),
       };
+      const handler = this.sendHandler();
       // A bulk send (bcc list) runs server-side: the job survives closing this modal. A single
       // mail goes straight through the callable so the provider error surfaces immediately.
-      if (request.bcc.length > 0) {
+      if (handler) {
+        const { to, cc, bcc, from, subject, extraAttachments } = request;
+        await handler({ to, cc, bcc, from, subject, html, extraAttachments });
+      } else if (request.bcc.length > 0) {
         await this.awaitJob(await this.docEmailService.queueBulkEmail(request));
       } else {
         await this.docEmailService.sendDocumentByEmail(request);

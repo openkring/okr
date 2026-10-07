@@ -16,7 +16,7 @@ import {
 } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
 
-import { InvoiceService } from '@okr/finance-invoice-data-access';
+import { InvoiceEmailDraft, InvoiceService } from '@okr/finance-invoice-data-access';
 import { InvoicePaymentModal } from '@okr/finance-invoice-ui';
 import {
   buildPaymentConfirmationPayload, canCreatePaymentConfirmation, canCreateReminder, canEmailInvoice, cancelInputProblem, isPayableState, defaultReminderFee,
@@ -31,6 +31,8 @@ import { AccountingStore } from '@okr/finance-accounting-feature';
 import { ReceiptParty } from '@okr/finance-booking-util';
 import { downloadFromUrl } from '@okr/finance-reporting-util';
 import { DocGenerationService } from '@okr/content-pdf-template-data-access';
+// type-only: the composer itself is imported dynamically in sendDocument (no static edge into the ui lib)
+import type { ComposedEmail } from '@okr/content-pdf-template-ui';
 import { AddressService } from '@okr/subject-address-data-access';
 import { getDirectoryPostalAddress, readsAddressVault } from '@okr/subject-address-util';
 import { OrgService } from '@okr/subject-org-data-access';
@@ -662,16 +664,16 @@ export const InvoiceStore = signalStore(
       const label = this.reminderDocumentLabel(invoice, level);
       const sendNow = await confirm(store.alertController, fill(store.i18n.reminder_send_now(), { document: label }),
         store.i18n.email_ok(), store.i18n.reminder_later(), true);
-      if (sendNow) await this.sendDocument(invoice, documentKey, label, false);
+      if (sendNow) await this.sendDocument(invoice, documentKey, label);
     },
 
-    /** Mails the invoice PDF to the receiver (spec 1.76 D12) after a confirmation naming the invoice. */
+    /** Mails the invoice PDF (spec 1.76 D12) through the email composer. */
     async sendInvoiceEmail(invoice: InvoiceModel): Promise<void> {
       if (!canEmailInvoice(invoice) || store.accountingStore.isExternallyManaged() !== false) return;
       await this.sendDocument(invoice, invoice.documentKey, this.invoiceDocumentLabel(invoice));
     },
 
-    /** Mails the latest reminder that has a PDF to the receiver, after a confirmation naming it. */
+    /** Mails the latest reminder that has a PDF through the email composer. */
     async sendReminderEmail(invoice: InvoiceModel): Promise<void> {
       const reminder = latestReminderWithDocument(invoice.reminders);
       // a paid or cancelled invoice gets no reminder mail (the server refuses it too)
@@ -680,23 +682,47 @@ export const InvoiceStore = signalStore(
     },
 
     /**
-     * Sends one document of an invoice by email. The confirmation names the document, never an address:
-     * the client does not know it (it stays on the server). A send is not idempotent, so a failure is
-     * reported and not retried.
+     * Sends one document of an invoice by email through the email composer: it opens with the server's
+     * suggestion (the receiver's favourite email, the tenant sender, the fixed subject and body) and the
+     * treasurer may change recipients (to/cc/bcc), sender, subject and body or add files. The server attaches
+     * the PDF and marks the invoice/reminder as sent. A send is not idempotent, so a failure is reported
+     * in the composer and not retried.
      */
-    async sendDocument(invoice: InvoiceModel, documentKey: string, label: string, askFirst = true): Promise<void> {
-      if (askFirst) {
-        const confirmed = await confirm(store.alertController, fill(store.i18n.email_confirm(), { document: label }),
-          store.i18n.email_ok(), store.i18n.cancel(), true);
-        if (!confirmed) return;
-      }
+    async sendDocument(invoice: InvoiceModel, documentKey: string, label: string): Promise<void> {
+      let draft: InvoiceEmailDraft;
       try {
-        const result = await store.invoiceService.sendEmail(invoice.okey, documentKey, store.appStore.currentUser() ?? undefined);
-        await showToast(store.toastController, fill(store.i18n.email_conf(), { document: label, date: viewDate(result.sentAt) }));
+        draft = await store.invoiceService.getEmailDraft(invoice.okey, documentKey);
       } catch (e) {
-        console.error('InvoiceStore.sendDocument: sendInvoiceEmail failed', e);
+        console.error('InvoiceStore.sendDocument: getInvoiceEmailDraft failed', e);
         await showToast(store.toastController, invoiceRefusalText(invoiceRefusalReasons(e), store.i18n, store.i18n.email_error(), 'email'));
+        return;
       }
+      const currentUser = store.appStore.currentUser() ?? undefined;
+      const sendHandler = async (mail: ComposedEmail): Promise<void> => {
+        try {
+          await store.invoiceService.sendEmail(invoice.okey, documentKey, currentUser, mail);
+        } catch (e) {
+          console.error('InvoiceStore.sendDocument: sendInvoiceEmail failed', e);
+          // the composer shows this text and stays open
+          throw new Error(invoiceRefusalText(invoiceRefusalReasons(e), store.i18n, store.i18n.email_error(), 'email'));
+        }
+      };
+      // dynamic: the composer lib is only needed once somebody sends a mail
+      const { EmailComposerModal } = await import('@okr/content-pdf-template-ui');
+      const modal = await store.modalController.create({
+        component: EmailComposerModal,
+        componentProps: {
+          to: draft.to,
+          fromDefault: draft.from,
+          subjectDefault: draft.subject,
+          bodyDefault: draft.body,
+          filename: draft.filename || `${label}.pdf`,
+          sendHandler,
+        },
+        cssClass: 'wide-modal',
+      });
+      await modal.present();
+      await modal.onDidDismiss();
       patchState(store, { version: store.version() + 1 });
     },
 

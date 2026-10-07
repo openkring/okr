@@ -72,3 +72,72 @@ export function recipientDirectoryId(tenantId: string, receiver: { key?: string;
 export function scrubEmailAddresses(message: string): string {
   return message.replace(/[^\s@<>]+@[^\s@<>]+/g, '[email]');
 }
+
+/** A file the treasurer added in the composer, sent inline (base64). The invoice/reminder PDF is never one of these. */
+export interface InlineMailAttachment {
+  filename: string;
+  contentBase64: string;
+  contentType?: string;
+}
+
+/** The mail as the treasurer composed it (spec 1.76 D12, composer): replaces recipient, subject and body. */
+export interface ComposedInvoiceMail {
+  to?: unknown;
+  cc?: unknown;
+  bcc?: unknown;
+  from?: unknown;
+  subject?: unknown;
+  html?: unknown;
+  extraAttachments?: unknown;
+}
+
+export interface NormalizedInvoiceMail {
+  to: string[];
+  cc: string[];
+  bcc: string[];
+  from: string;
+  subject: string;
+  html: string;
+  extraAttachments: InlineMailAttachment[];
+}
+
+const EMAIL_PATTERN = /^[^\s@<>,;]+@[^\s@<>,;]+\.[^\s@<>,;]+$/;
+/** Same cap as the generic sendEmail callable: an inline attachment is base64 in a callable payload. */
+export const MAX_INLINE_ATTACHMENT_BYTES = 8 * 1024 * 1024;
+
+const addressList = (value: unknown): string[] | undefined => {
+  if (value === undefined || value === null) return [];
+  if (!Array.isArray(value)) return undefined;
+  const list = value.map((v) => (typeof v === 'string' ? v.trim() : '')).filter((v) => v.length > 0);
+  return list.every((v) => EMAIL_PATTERN.test(v)) ? list : undefined;
+};
+
+/**
+ * Check a composed invoice mail and bring it into shape, or name what is wrong: at least one valid `to`,
+ * only valid addresses in cc/bcc, a non-empty subject and body, a `from` that looks like an address (or
+ * none: the tenant sender is used), and only inline attachments within the size cap. Storage paths are
+ * not accepted here — the invoice's own PDF is attached by the server.
+ */
+export function normalizeComposedMail(mail: ComposedInvoiceMail, defaultFrom: string):
+  { ok: true; mail: NormalizedInvoiceMail } | { ok: false; reason: 'bad-recipients' | 'bad-from' | 'no-subject' | 'no-body' | 'bad-attachment' } {
+  const to = addressList(mail.to);
+  const cc = addressList(mail.cc);
+  const bcc = addressList(mail.bcc);
+  if (!to || to.length === 0 || !cc || !bcc) return { ok: false, reason: 'bad-recipients' };
+  const fromRaw = typeof mail.from === 'string' ? mail.from.trim() : '';
+  if (fromRaw && !EMAIL_PATTERN.test(fromRaw)) return { ok: false, reason: 'bad-from' };
+  const subject = typeof mail.subject === 'string' ? mail.subject.trim() : '';
+  if (!subject) return { ok: false, reason: 'no-subject' };
+  const html = typeof mail.html === 'string' ? mail.html : '';
+  if (html.replace(/<[^>]*>/g, '').trim().length === 0) return { ok: false, reason: 'no-body' };
+  const rawAttachments = mail.extraAttachments ?? [];
+  if (!Array.isArray(rawAttachments)) return { ok: false, reason: 'bad-attachment' };
+  const extraAttachments: InlineMailAttachment[] = [];
+  for (const a of rawAttachments) {
+    const item = a as Partial<InlineMailAttachment> | null;
+    if (!item || typeof item.filename !== 'string' || !item.filename || typeof item.contentBase64 !== 'string') return { ok: false, reason: 'bad-attachment' };
+    if (Math.floor(item.contentBase64.length * 3 / 4) > MAX_INLINE_ATTACHMENT_BYTES) return { ok: false, reason: 'bad-attachment' };
+    extraAttachments.push({ filename: item.filename, contentBase64: item.contentBase64, ...(typeof item.contentType === 'string' && item.contentType ? { contentType: item.contentType } : {}) });
+  }
+  return { ok: true, mail: { to, cc, bcc, from: fromRaw || defaultFrom, subject, html, extraAttachments } };
+}

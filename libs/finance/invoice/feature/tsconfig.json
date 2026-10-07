@@ -60,6 +60,7 @@
       "path": "../util/tsconfig.lib.json"
     },
     {"path": "../../../content/pdf-template/data-access/tsconfig.lib.json"},
+    {"path": "../../../content/pdf-template/ui/tsconfig.lib.json"},
     {"path": "../../booking/util/tsconfig.lib.json"},
     {"path": "../../reporting/util/tsconfig.lib.json"},
     {"path": "../../../subject/address/data-access/tsconfig.lib.json"},

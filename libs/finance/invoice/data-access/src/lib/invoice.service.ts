@@ -104,6 +104,26 @@ export interface SendInvoiceEmailResult {
   level?: number;
 }
 
+/** The `getInvoiceEmailDraft` callable's result: what the email composer opens with. */
+export interface InvoiceEmailDraft {
+  to: string;
+  from: string;
+  subject: string;
+  body: string;
+  filename: string;
+}
+
+/** A mail as composed by the treasurer; the server attaches the invoice/reminder PDF itself. */
+export interface ComposedInvoiceMail {
+  to: string[];
+  cc: string[];
+  bcc: string[];
+  from: string;
+  subject: string;
+  html: string;
+  extraAttachments: { filename: string; contentBase64: string; contentType?: string }[];
+}
+
 /**
  * Invoices and their positions are written by Cloud Functions only (firestore.rules: `allow write:
  * if false`): drafts through `writeInvoice`, issuing through `issueInvoice` (spec 1.76). Every write
@@ -214,12 +234,22 @@ export class InvoiceService {
   }
 
   /**
-   * Mails the invoice PDF or one of its reminder PDFs (`documentKey`) to the receiver (spec 1.76 D12). The
-   * address is read on the server and never reaches the client. Not idempotent: a second call mails again.
+   * The suggested mail for the invoice PDF or one of its reminder PDFs: the receiver's favourite email
+   * (`''` when there is none), the tenant sender, the fixed subject and body. Treasurer-only.
    */
-  public async sendEmail(invoiceKey: string, documentKey: string, currentUser?: UserModel): Promise<SendInvoiceEmailResult> {
-    const fn = httpsCallable<{ invoiceKey: string; documentKey: string }, SendInvoiceEmailResult>(this.functions(), 'sendInvoiceEmail');
-    const result = await fn({ invoiceKey, documentKey });
+  public async getEmailDraft(invoiceKey: string, documentKey: string): Promise<InvoiceEmailDraft> {
+    const fn = httpsCallable<{ invoiceKey: string; documentKey: string }, InvoiceEmailDraft>(this.functions(), 'getInvoiceEmailDraft');
+    return (await fn({ invoiceKey, documentKey })).data;
+  }
+
+  /**
+   * Mails the invoice PDF or one of its reminder PDFs (`documentKey`) (spec 1.76 D12). With `mail` (the
+   * composer) the treasurer's recipients, subject and body are used; without it (Mahnlauf) the fixed text
+   * goes to the receiver's favourite email. The server attaches the PDF. Not idempotent: a second call mails again.
+   */
+  public async sendEmail(invoiceKey: string, documentKey: string, currentUser?: UserModel, mail?: ComposedInvoiceMail): Promise<SendInvoiceEmailResult> {
+    const fn = httpsCallable<{ invoiceKey: string; documentKey: string; mail?: ComposedInvoiceMail }, SendInvoiceEmailResult>(this.functions(), 'sendInvoiceEmail');
+    const result = await fn(mail ? { invoiceKey, documentKey, mail } : { invoiceKey, documentKey });
     void this.activityService.log('invoice', 'email', currentUser, `${invoiceKey}: ${documentKey}`);
     return result.data;
   }
