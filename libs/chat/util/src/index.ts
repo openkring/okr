@@ -1,6 +1,7 @@
 export * from './lib/room.validations';
 export * from './lib/adhoc-chat.model';
 export * from './lib/adhoc-chat.validations';
+export * from './lib/poll.validations';
 export * from './lib/chat.util';
 export * from './lib/group-messages.util';
 export * from './lib/image.util';

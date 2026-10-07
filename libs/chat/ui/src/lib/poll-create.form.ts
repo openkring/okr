@@ -1,11 +1,13 @@
-import { Component, OnInit, computed, effect, input, output, signal, Signal } from '@angular/core';
+import { Component, computed, effect, input, model, output, Signal } from '@angular/core';
+import { form } from '@angular/forms/signals';
 import { IonItem, IonInput, IonList } from '@ionic/angular/standalone';
 
 import { AnyCharacterMask } from '@okr/shared-config';
-import { Checkbox, CheckboxI18n, StringList } from '@okr/shared-ui';
-import { QuickEntryResolver } from '@okr/shared-util-angular';
+import { Checkbox, CheckboxI18n, ErrorNote, StringList } from '@okr/shared-ui';
+import { QuickEntryResolver, validateVestTree } from '@okr/shared-util-angular';
 
 import { MatrixPollData } from '@okr/chat-data-access';
+import { POLL_ANSWER_LENGTH, POLL_QUESTION_LENGTH, pollValidations } from '@okr/chat-util';
 
 export interface PollCreateFormI18n {
   allowMultipleAnswers_label: Signal<string>;
@@ -21,7 +23,7 @@ export interface PollCreateFormI18n {
   selector: 'okr-poll-create-form',
   standalone: true,
   imports: [
-    StringList, Checkbox,
+    StringList, Checkbox, ErrorNote,
     IonItem, IonInput, IonList
   ],
   template: `
@@ -33,13 +35,14 @@ export interface PollCreateFormI18n {
           labelPlacement="floating"
           [placeholder]="i18n().question_placeholder()"
           [value]="question()"
-          (ionInput)="question.set($any($event).detail.value ?? '')"
-          [maxlength]="255"
+          (ionInput)="onFieldChange('question', $any($event).detail.value ?? '')"
+          [maxlength]="questionLength"
           [counter]="true"
           inputMode="text"
           type="text"
         />
       </ion-item>
+      <okr-error-note [errors]="questionErrors()" />
 
       <!-- Answers already voted on: shown, but fixed (votes reference them by id) -->
       @if (lockedAnswers().length > 0) {
@@ -52,29 +55,32 @@ export interface PollCreateFormI18n {
 
       <!-- Answers via okr-strings -->
       <okr-strings
-        [(strings)]="answers"
+        [strings]="answers()"
+        (stringsChange)="onAnswersChange($event)"
         [title]="i18n().answer_create()"
         [add]="i18n().answer_add()"
         [readOnly]="false"
         [mask]="anyCharMask"
-        [maxLength]="100"
+        [maxLength]="answerLength"
         [lowercase]="false"
         [quickEntryResolver]="quickEntryResolver()"
       />
+      <okr-error-note [errors]="answersErrors()" />
 
       <!-- Multiple answers toggle -->
       <okr-checkbox
         [i18n]="allowMultipleAnswersI18n()"
-        [(checked)]="allowMultipleAnswers"
+        [checked]="allowMultipleAnswers()"
+        (checkedChange)="onFieldChange('maxSelections', $event ? multipleSelections : 1)"
         [readOnly]="lockMultiple()"
       />
     </ion-list>
   `
 })
-export class PollCreateForm implements OnInit {
+export class PollCreateForm {
   // inputs
   public readonly i18n = input.required<PollCreateFormI18n>();
-  public formData = input.required<MatrixPollData>();
+  public formData = model.required<MatrixPollData>();
   /**
    * Quick entry for survey answers ('//' date, '!!' location). Supplied by the parent
    * modal, because the pickers live in a feature lib this ui lib must not depend on.
@@ -87,8 +93,28 @@ export class PollCreateForm implements OnInit {
   public lockedAnswers = input<string[]>([]);
   /** Edit mode, once votes exist on a multiple-choice poll: it may not become single choice. */
   public lockMultiple = input(false);
-  public formDataChange = output<MatrixPollData>();
   public valid = output<boolean>();
+
+  /** kept in step with the caps the Vest suite enforces on these fields */
+  protected readonly questionLength = POLL_QUESTION_LENGTH;
+  protected readonly answerLength = POLL_ANSWER_LENGTH;
+  /** maxSelections written for "several answers" (the Matrix maximum of answers) */
+  protected readonly multipleSelections = 20;
+
+  // The suite skips the per-answer rules for locked answers — their count comes from the input.
+  private readonly suiteWithContext = (model: MatrixPollData, field?: string) =>
+    pollValidations(model, this.lockedAnswers().length, field);
+  protected readonly pollForm = form(this.formData, (path) =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    validateVestTree(path, this.suiteWithContext as any));
+
+  // per-field errors for the notes; per-answer errors are folded into the list's note
+  private readonly validationResult = computed(() => pollValidations(this.formData(), this.lockedAnswers().length));
+  protected readonly questionErrors = computed(() => this.validationResult().getErrors('question'));
+  protected readonly answersErrors = computed(() =>
+    Object.entries(this.validationResult().getErrors())
+      .filter(([key]) => key === 'answers' || key.startsWith('answers['))
+      .flatMap(([, messages]) => messages));
 
   protected allowMultipleAnswersI18n = computed(() => ({
     name: 'allowMultipleAnswers',
@@ -98,25 +124,22 @@ export class PollCreateForm implements OnInit {
 
   protected readonly anyCharMask = AnyCharacterMask;
 
-  protected question = signal('');
-  protected answers = signal<string[]>([]);
-  protected allowMultipleAnswers = signal(false);
+  // field mirrors; edits go through formData so the parent always holds what is shown
+  protected readonly question = computed(() => this.formData()?.question ?? '');
+  /** only the editable answers — locked ones lead formData.answers and are shown separately */
+  protected readonly answers = computed(() => (this.formData()?.answers ?? []).slice(this.lockedAnswers().length));
+  protected readonly allowMultipleAnswers = computed(() => (this.formData()?.maxSelections ?? 1) > 1);
 
   constructor() {
-    effect(() => {
-      const data: MatrixPollData = {
-        question: this.question(),
-        answers: [...this.lockedAnswers(), ...this.answers()],
-        maxSelections: this.allowMultipleAnswers() ? 20 : 1,
-      };
-      this.formDataChange.emit(data);
-      this.valid.emit(data.question.trim().length > 0 && data.answers.length >= 2);
-    });
+    effect(() => this.valid.emit(this.pollForm().valid()));
   }
 
-  ngOnInit(): void {
-    this.question.set(this.formData().question);
-    this.answers.set(this.formData().answers.slice(this.lockedAnswers().length));
-    this.allowMultipleAnswers.set((this.formData().maxSelections ?? 1) > 1);
+  protected onFieldChange(fieldName: 'question' | 'maxSelections', fieldValue: string | number): void {
+    this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
+  }
+
+  /** locked answers stay first and unchanged; only new answers can be edited or appended */
+  protected onAnswersChange(answers: string[]): void {
+    this.formData.update((vm) => ({ ...vm, answers: [...this.lockedAnswers(), ...answers] }));
   }
 }

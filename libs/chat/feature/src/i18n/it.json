@@ -231,7 +231,9 @@
   "and": "e",
   "validation": {
     "nameRequired": "Il nome è obbligatorio.",
-    "membersRequired": "Scegli almeno una persona."
+    "membersRequired": "Scegli almeno una persona.",
+    "pollAnswersTooFew": "Un sondaggio richiede almeno due opzioni.",
+    "pollAnswersTooMany": "Un sondaggio può avere al massimo 20 opzioni."
   },
   "askRoom": {
     "hint": "Ancora nessuna conversazione. Il tuo messaggio arriva a tutti i membri di {group}."
