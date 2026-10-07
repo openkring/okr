@@ -237,8 +237,8 @@ describe('FirestoreService.searchData', () => {
     const sub = svc.searchData('sessions', QUERY, 'startedAt', 'desc').subscribe();
     await vi.advanceTimersByTimeAsync(10_000);   // far beyond the backoff of both retries
 
-    expect(subscriptions).toBe(3);               // initial + DENIAL_RETRIES, then it gives up
-    expect(debug).toHaveBeenCalledTimes(2);
+    expect(subscriptions).toBe(3);               // initial + DENIAL_RETRIES, then the fast budget is spent
+    expect(debug).toHaveBeenCalledTimes(3);      // two fast retries + the scheduled slow re-attempt (15 s)
     expect(error).toHaveBeenCalled();            // the denial finally surfaces instead of looping
     sub.unsubscribe();
     debug.mockRestore();
@@ -270,6 +270,73 @@ describe('FirestoreService.searchData', () => {
 
     expect(attestAppCheckMock).not.toHaveBeenCalled();
     error.mockRestore();
+  });
+
+  // 2026-10-07: right after a site-data wipe a second app window got EVERY listener denied at
+  // once; the two fast retries were spent within two seconds, each stream completed as empty, and
+  // nothing ever tried again — the window stayed empty until a manual reload, although the denial
+  // had long cleared. The fallback still arrives at once (nothing may hang on it), but the
+  // listener re-attaches itself later.
+  it('re-attaches a denied listener later, after the fast budget is spent', async () => {
+    vi.useFakeTimers();
+    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    vi.spyOn(console, 'debug').mockImplementation(() => undefined);
+    collectionDataMock.mockReturnValue(failsThenEmits(3, [{ okey: 's1' }]));   // initial + 2 fast retries
+    const svc = makeService({ uid: 'u1' });
+
+    const emitted: unknown[][] = [];
+    const sub = svc.searchData<{ okey: string }>('sessions', QUERY, 'startedAt', 'desc').subscribe(v => emitted.push(v));
+    await vi.advanceTimersByTimeAsync(5_000);
+    expect(emitted).toEqual([[]]);                   // fallback at once, no spinner left hanging
+
+    await vi.advanceTimersByTimeAsync(15_000);
+    expect(emitted).toEqual([[], [{ okey: 's1' }]]);   // the slow re-attempt recovered it
+
+    sub.unsubscribe();
+    error.mockRestore();
+    vi.restoreAllMocks();
+    vi.useRealTimers();
+  });
+
+  it('gives up for good after the slow re-attempts, and a later subscription starts over', async () => {
+    vi.useFakeTimers();
+    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    vi.spyOn(console, 'debug').mockImplementation(() => undefined);
+    let subscriptions = 0;
+    collectionDataMock.mockReturnValue(defer(() => { subscriptions++; return throwError(() => permissionDenied()); }));
+    const svc = makeService({ uid: 'u1' });
+
+    let completed = false;
+    const sub = svc.searchData('sessions', QUERY, 'startedAt', 'desc').subscribe({ complete: () => { completed = true; } });
+    await vi.advanceTimersByTimeAsync(60 * 60_000);
+
+    // 1 initial + 3 slow re-attempts, each with its own fast budget of 1 + DENIAL_RETRIES.
+    expect(subscriptions).toBe(12);
+    expect(completed).toBe(true);
+    sub.unsubscribe();
+
+    // Evicted on giving up: a later subscription builds a fresh listener.
+    collectionDataMock.mockReturnValue(of([{ okey: 's2' }]));
+    const rows = await firstValueFrom(svc.searchData('sessions', QUERY, 'startedAt', 'desc'));
+    expect(rows).toEqual([{ okey: 's2' }]);
+
+    error.mockRestore();
+    vi.restoreAllMocks();
+    vi.useRealTimers();
+  });
+
+  it('never re-attaches a listener denied after sign-out', async () => {
+    vi.useFakeTimers();
+    let subscriptions = 0;
+    collectionDataMock.mockReturnValue(defer(() => { subscriptions++; return throwError(() => permissionDenied()); }));
+    const svc = makeService(null);   // signed out
+
+    const sub = svc.searchData('sessions', QUERY, 'startedAt', 'desc').subscribe();
+    await vi.advanceTimersByTimeAsync(60 * 60_000);
+
+    expect(subscriptions).toBe(1);
+    sub.unsubscribe();
+    vi.useRealTimers();
   });
 });
 
@@ -313,6 +380,26 @@ describe('FirestoreService.readModel', () => {
     const svc = makeService();
     const user = await firstValueFrom(svc.readModel('users', 'u1'));
     expect(user).toBeUndefined();
+  });
+
+  // The stream behind AppStore.currentUserResource: an `undefined` fallback puts the boot on the
+  // "could not finish starting" panel, and the later re-attempt must be able to take it off again.
+  it('heals the own user doc from undefined once a later re-attempt is allowed', async () => {
+    vi.useFakeTimers();
+    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    vi.spyOn(console, 'debug').mockImplementation(() => undefined);
+    docDataMock.mockReturnValue(failsThenEmits(3, { okey: 'u1' }));
+    const svc = makeService({ uid: 'u1' });
+
+    const emitted: unknown[] = [];
+    const sub = svc.readModel('users', 'u1').subscribe(v => emitted.push(v));
+    await vi.advanceTimersByTimeAsync(20_000);
+
+    expect(emitted).toEqual([undefined, { okey: 'u1' }]);
+    sub.unsubscribe();
+    error.mockRestore();
+    vi.restoreAllMocks();
+    vi.useRealTimers();
   });
 });
 

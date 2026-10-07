@@ -26,7 +26,7 @@ import { ToastController } from '@ionic/angular/standalone';
 import { captureMessage } from '@sentry/angular';
 import { arrayRemove, collection, deleteDoc, doc, getDoc, getDocs, query, runTransaction, setDoc, updateDoc, WriteBatch, writeBatch } from 'firebase/firestore';
 import { collectionData, docData } from 'rxfire/firestore';
-import { catchError, defer, delay, firstValueFrom, from, MonoTypeOperatorFunction, Observable, of, ReplaySubject, retry, share, tap, timer } from 'rxjs';
+import { catchError, concat, defer, delay, firstValueFrom, from, MonoTypeOperatorFunction, Observable, of, ReplaySubject, retry, share, switchMap, tap, timer } from 'rxjs';
 
 import { attestAppCheck, AUTH, ENV, FIRESTORE, isAttested, isFirestoreInitializedCheck, type AppCheckOutcome } from '@okr/shared-config';
 import { OkrModel, CommentCollection, CommentModel, DbQuery, PersonCollection, PersonModel, UserModel } from "@okr/shared-models";
@@ -106,6 +106,19 @@ export class FirestoreService {
   private static readonly DENIAL_BACKOFF_MS = 1_000;
 
   /**
+   * When a listener denied while signed in is re-attached once more, AFTER the fast budget above
+   * is spent — one entry per slow re-attempt, then it gives up for good.
+   *
+   * The fast budget is about an expired token and is spent within two seconds. Some denials clear
+   * later: on 2026-10-07 a second app window, started right after a site-data wipe, had every
+   * listener denied at once (its own users/{uid} included); the fast retries were gone before the
+   * cause cleared, every stream completed with its fallback, and nothing ever subscribed again —
+   * the window sat signed-in-but-empty until a manual reload. Each slow re-attempt starts with a
+   * fresh fast budget. A genuine rules defect costs three extra round trips over six minutes.
+   */
+  private static readonly DENIAL_SLOW_RETRY_MS = [15_000, 60_000, 300_000];
+
+  /**
    * Re-attach an open listener that the server killed with PERMISSION_DENIED **while a user is
    * still signed in** — the App-Check-expiry-on-resume case.
    *
@@ -177,6 +190,42 @@ export class FirestoreService {
           },
         }),
       );
+    });
+  }
+
+  /**
+   * Settle a failed listener with its fallback value — and, for a denial while signed in, keep
+   * trying to bring it back (see {@link DENIAL_SLOW_RETRY_MS}).
+   *
+   * The fallback goes out at once either way: consumers (rxResource, the boot gates) must never
+   * hang on a stream that is merely waiting for a re-attempt. A later success simply emits the
+   * real value after it, which is what lets `AppStore.isDegradedSession` heal itself.
+   *
+   * `evict` runs only when the stream ends for good, so the shared listener stays cached (and
+   * de-duplicated) while it is still recovering.
+   *
+   * @param context the call site, e.g. `searchData(persons)`
+   * @param fallback what consumers see while the listener is failed
+   * @param evict drops the cache entry once the stream is finished
+   */
+  private settleFailedListener<T>(context: string, fallback: T, evict: () => void): MonoTypeOperatorFunction<T> {
+    return (source: Observable<T>) => defer(() => {
+      let slowAttempts = 0;
+      const settle = (err: unknown, caught: Observable<T>): Observable<T> => {
+        this.reportStreamError(context, err);
+        const signedInDenial = (err as { code?: string } | null)?.code === 'permission-denied' && !!this.auth.currentUser;
+        const wait = signedInDenial ? FirestoreService.DENIAL_SLOW_RETRY_MS[slowAttempts] : undefined;
+        if (wait === undefined) {
+          evict();
+          return of(fallback);
+        }
+        slowAttempts++;
+        console.debug(`FirestoreService.${context}: listener still denied, re-attaching in ${wait / 1000} s (slow attempt ${slowAttempts}).`);
+        // `caught` is this very pipe: resubscribing it re-opens the listener behind the fast
+        // token recovery, and lands back here (same counter) if it is denied again.
+        return concat(of(fallback), timer(wait).pipe(switchMap(() => caught)));
+      };
+      return source.pipe(catchError(settle));
     });
   }
 
@@ -513,8 +562,9 @@ export class FirestoreService {
    * refresh (SCS-1E) which the callers' synchronous try/catch cannot see: unguarded it lands in
    * a consuming rxResource whose .value() re-throws inside change detection and crashes the app.
    * Emitting undefined reads as "no current user" to the downstream guards, which short-circuit
-   * to empty lists — the correct sign-out behaviour. The poisoned entry is evicted so a later
-   * re-subscription builds a fresh listener.
+   * to empty lists — the correct sign-out behaviour. A denial while still signed in is
+   * re-attached later and can heal the undefined; any other failure evicts the poisoned entry so
+   * a later re-subscription builds a fresh listener (see settleFailedListener).
    *
    * @param path the full document path, `collection/key`
    * @param withOkey attach the Firestore document id as `okey` (models yes, plain objects no)
@@ -531,11 +581,9 @@ export class FirestoreService {
     ).pipe(
       // Survive a resume-time App Check expiry before treating the denial as final.
       this.recoverFromTokenDenial<T>(`sharedDoc(${path})`),
-      catchError((err) => {
-        this.reportStreamError(`sharedDoc(${path})`, err);
+      this.settleFailedListener<T | undefined>(`sharedDoc(${path})`, undefined, () => {
         this.docCache.delete(cacheKey);
         firestoreSubscriptionMonitor.closed(cacheKey);
-        return of(undefined);
       }),
       // Messpunkt VOR share: echte Snapshots. Siehe FirestoreSubscriptionMonitor.
       tap(() => firestoreSubscriptionMonitor.sourceEmitted(cacheKey)),
@@ -844,17 +892,16 @@ export class FirestoreService {
       // catchError guards against ASYNC stream errors (e.g. a transient Firestore Listen
       // PERMISSION_DENIED during token refresh, SCS-13) which the outer try/catch — synchronous
       // only — cannot catch. Without it the error propagates into any consuming rxResource, whose
-      // .value() then re-throws inside change detection and crashes the app. We log, evict the
-      // poisoned cache entry so a later reload()/re-subscription rebuilds a fresh listener, and
-      // fall back to an empty list.
+      // .value() then re-throws inside change detection and crashes the app. We log and fall back
+      // to an empty list. A denial while signed in is re-attached later; anything else evicts the
+      // poisoned cache entry so a later reload()/re-subscription rebuilds a fresh listener (see
+      // settleFailedListener).
       const shared$ = (collectionData(queryRef, { idField: 'okey' }) as Observable<T[]>).pipe(
         // Survive a resume-time App Check expiry before treating the denial as final.
         this.recoverFromTokenDenial<T[]>(`searchData(${collectionName})`),
-        catchError((err) => {
-          this.reportStreamError(`searchData(${collectionName})`, err);
+        this.settleFailedListener<T[]>(`searchData(${collectionName})`, [], () => {
           this.queryCache.delete(cacheKey);
           firestoreSubscriptionMonitor.closed(cacheKey);
-          return of<T[]>([]);
         }),
         // Keep the listener AND the last snapshot alive for 30 s after the last unsubscribe.
         // shareReplay({refCount: true}) tore both down the instant a list view was destroyed, so
