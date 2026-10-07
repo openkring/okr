@@ -6,10 +6,9 @@ import { ChFutureDate, LowercaseWordMask } from '@okr/shared-config';
 import { DEFAULT_CALENDARS, DEFAULT_CALEVENT_TYPE, DEFAULT_DATE, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PERIODICITY, DEFAULT_TAGS, DEFAULT_TIME, DEFAULT_URL, MAX_DATES_PER_SERIES, NAME_LENGTH } from '@okr/shared-constants';
 import { AvatarInfo, CalEventModel, CategoryListModel, LocationModel, RoleName, UserModel } from '@okr/shared-models';
 import { AddChip, CategorySelect, Checkbox, CheckboxI18n, Chips, DateInput, DateInputI18n, ErrorNote, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringList, TextInput, TextInputI18n, TimeInput, TimeInputI18n, UrlInput, UrlInputI18n } from '@okr/shared-ui';
-import { validateVestTree } from '@okr/shared-util-angular';
+import { MODEL_SELECTOR, validateVestTree } from '@okr/shared-util-angular';
 import { coerceBoolean, convertDateFormatToString, DateFormat, extractFirstPartOfOptionalTupel, fill, hasRole } from '@okr/shared-util-core';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { ModelSelectService } from '@okr/shared-feature';
 
 import { Avatars } from '@okr/avatar-ui';
 import { CaleventI18n, calEventValidations, formatDurationLabel, getWeekdayIndex, isPersonalCalevent, previewSeries } from '@okr/calevent-util';
@@ -327,7 +326,7 @@ const DEFAULT_RECURRING_PERIODICITY = 'weekly';
 `
 })
 export class CalEventForm {
-  private readonly modelSelectService = inject(ModelSelectService);
+  private readonly modelSelectService = inject(MODEL_SELECTOR);
 
   // inputs
   public readonly i18n = input.required<CaleventI18n>();

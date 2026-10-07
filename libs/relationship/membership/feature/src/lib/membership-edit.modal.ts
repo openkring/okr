@@ -44,6 +44,7 @@ import { dismissOverlay } from '@okr/shared-util-angular';
               [formData]="formData"
               (formDataChange)="onFormDataChange($event)"
               [currentUser]="currentUser"
+              [locale]="appStore.appConfig().locale"
               [membershipCategories]="currentMcat()"
               [allTags]="tags()"
               [readOnly]="isReadOnly()"

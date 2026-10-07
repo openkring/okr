@@ -8,7 +8,7 @@ import * as Sentry from '@sentry/angular';
 import { ENV } from '@okr/shared-config';
 import { AvailableLanguages, DefaultLanguageCode } from '@okr/shared-models';
 import { ChunkLoadErrorHandler, isBrowser, httpBreadcrumbInterceptor, VersionCheckService } from '@okr/shared-util-angular';
-import { AppStore, SentryContextService } from '@okr/shared-feature';
+import { AppStore, provideModelSelector, SentryContextService } from '@okr/shared-feature';
 import { GROUP_EDIT_MODAL } from '@okr/subject-group-ui';
 import { ORG_EDIT_MODAL } from '@okr/subject-org-ui';
 import { PERSON_EDIT_MODAL } from '@okr/subject-person-ui';
@@ -50,6 +50,7 @@ if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
 export const appConfig: ApplicationConfig = {
   providers: [
     provideZonelessChangeDetection(),
+    provideModelSelector(),
     { provide: ENV, useValue: environment },
     // Loaders, not classes: the classes would bind the person/group feature trees into main
     // (spec 1.49, Task 5d). The section stores that open these modals await the loader.

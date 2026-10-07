@@ -1,34 +1,21 @@
-import { inject, Injectable } from "@angular/core";
+import { inject, Injectable, Provider } from "@angular/core";
 import { ModalController } from "@ionic/angular/standalone";
 
 import { AppStore, GroupSelectModal, OrgSelectModal, PersonSelectModal, ResourceSelectModal, ResponsibilitySelectModal } from "@okr/shared-feature";
 import { isLocation, isOrg, isPerson, isResource } from "@okr/shared-util-core";
 import { AvatarInfo, GroupModel, LocationModel, OrgModel, PersonModel, ResourceModel, ResponsibilityModel } from "@okr/shared-models";
 import { DEFAULT_LABEL, DEFAULT_TAGS } from "@okr/shared-constants";
+import { MODEL_SELECTOR, ModelSelector, PersonSelectOptions } from "@okr/shared-util-angular";
 
 import { LocationSelectModal, LocationSelectResult } from "./location-select.modal";
 import { PersonSelectResult } from "./person-select.modal";
 import { ResourceSelectResult } from "./resource-select.modal";
 import { normalizeWhitespace } from "./location-select.store";
 
-/**
- * Narrows who the person picker offers. Both are opt-in: without them the picker behaves as before.
- */
-export type PersonSelectOptions = {
-  /**
-   * Tenant id: two-level lookup — persons holding an app account in THAT tenant first, everybody
-   * else below a divider (the invite path). A tenant rather than a boolean because an account
-   * belongs to exactly one tenant.
-   */
-  accountsFirst?: string;
-  /** okeys never offered, e.g. those the caller has already picked. */
-  excludeKeys?: string[];
-};
-
 @Injectable({
     providedIn: 'root'
 })
-export class ModelSelectService {
+export class ModelSelectService implements ModelSelector {
   private readonly modalController = inject(ModalController);
   private readonly appStore = inject(AppStore);
     
@@ -250,4 +237,9 @@ export class ModelSelectService {
     }
     return undefined;
   }
+}
+
+/** Binds MODEL_SELECTOR (used by ui-layer forms) to ModelSelectService. Register once in every app.config.ts. */
+export function provideModelSelector(): Provider {
+  return { provide: MODEL_SELECTOR, useExisting: ModelSelectService };
 }

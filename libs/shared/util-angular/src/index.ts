@@ -30,3 +30,4 @@ export * from './lib/session-probe';
 export * from './lib/startup-timing';
 export * from './lib/lazy-service';
 export * from './lib/scroll-diagnostics';
+export * from './lib/model-selector';

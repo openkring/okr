@@ -5,9 +5,8 @@ import { AlbumConfig, AlbumSection, ArticleSection, AvatarInfo, ButtonActionConf
 import { Chips, ErrorNote, ImageConfigEdit, NotesInput, NotesInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, debugFormModel, hasRole, sanitizeFileName } from '@okr/shared-util-core';
 import { DEFAULT_LABEL, DEFAULT_NOTES, DEFAULT_TAGS, IMAGE_MIMETYPES } from '@okr/shared-constants';
-import { ModelSelectService } from '@okr/shared-feature';
 import { UploadService } from '@okr/avatar-data-access';
-import { confirm, validateVestTree } from '@okr/shared-util-angular';
+import { confirm, MODEL_SELECTOR, validateVestTree } from '@okr/shared-util-angular';
 import { AlertController, IonItem, IonToggle } from '@ionic/angular/standalone';
 import { ChartOption, getInlineErrorFields, getRemainingErrors, SectionErrors, SectionI18n, validateSection } from '@okr/cms-section-util';
 
@@ -478,7 +477,7 @@ import { TimelineConfiguration } from './timeline-configuration';
  * Invalid fields surface through `<okr-error-note>` and the form emits its `valid` state.
  */
 export class SectionForm {
-  private readonly modelSelectService = inject(ModelSelectService);
+  private readonly modelSelectService = inject(MODEL_SELECTOR);
   private readonly uploadService = inject(UploadService);
   private readonly alertController = inject(AlertController);
 

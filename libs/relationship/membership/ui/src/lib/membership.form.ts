@@ -1,16 +1,15 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input, model, output } from '@angular/core';
 import { form } from '@angular/forms/signals';
-import { IonAvatar, IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonNote, IonRow, ModalController } from '@ionic/angular/standalone';
+import { IonAvatar, IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonNote, IonRow } from '@ionic/angular/standalone';
 
-import { BexioIdMask } from '@okr/shared-config';
+import { BexioIdMask, ENV } from '@okr/shared-config';
 import { ABBREVIATION_LENGTH, BEXIO_ID_LENGTH, DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, DEFAULT_MSTATE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORG_TYPE, DEFAULT_TAGS, END_FUTURE_DATE_STR, SHORT_NAME_LENGTH } from '@okr/shared-constants';
-import { AppStore, OrgSelectModal, PersonSelectModal, PersonSelectResult } from '@okr/shared-feature';
-import { CategoryListModel, MembershipModel, PersonModel, PrivacySettings, RoleName, UserModel, REBATE_REASON_VALUES } from '@okr/shared-models';
+import { CategoryListModel, MembershipModel, PrivacySettings, RoleName, UserModel, REBATE_REASON_VALUES } from '@okr/shared-models';
 import { TranslatePipe } from '@okr/shared-i18n';
 import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n , ErrorNote} from '@okr/shared-ui';
-import { validateVestTree } from '@okr/shared-util-angular';
-import { areTagsVisible, coerceBoolean, getFullName, getItemLabel, hasRole, isOrg, isPerson } from '@okr/shared-util-core';
+import { MODEL_SELECTOR, validateVestTree } from '@okr/shared-util-angular';
+import { areTagsVisible, coerceBoolean, getFullName, getItemLabel, hasRole } from '@okr/shared-util-core';
 
 import { MembershipI18n, membershipValidations } from '@okr/relationship-membership-util';
 import { AvatarPipe } from '@okr/avatar-ui';
@@ -208,8 +207,8 @@ export class MembershipForm {
   protected readonly shortNameLength = SHORT_NAME_LENGTH;
   /** kept in step with the cap the Vest suite enforces on this field */
   protected readonly abbreviationLength = ABBREVIATION_LENGTH;
-  private readonly modalController = inject(ModalController);
-  private readonly appStore = inject(AppStore);
+  private readonly modelSelector = inject(MODEL_SELECTOR);
+  private readonly tenantId = inject(ENV).tenantId;
 
   // i18n — all field translations come from the i18n input
   protected okeyI18n = computed(() => ({ name: 'okey', label: this.i18n().key(), placeholder: '', helper: '' }) as TextInputI18n);
@@ -244,13 +243,13 @@ export class MembershipForm {
   // The suite needs the tenant and the tags, which validateVestTree does not pass — so the bridge
   // calls it through a closure that adds them (same context as validationResult below).
   private readonly suiteWithContext = (model: MembershipModel, field?: string) =>
-    membershipValidations(model, this.appStore.env.tenantId, this.allTags(), field);
+    membershipValidations(model, this.tenantId, this.allTags(), field);
   protected readonly membershipForm = form(this.formData, (path) =>
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     validateVestTree(path, this.suiteWithContext as any));
 
   // validation and errors
-  private readonly validationResult = computed(() => membershipValidations(this.formData(), this.appStore.env.tenantId, this.allTags()));
+  private readonly validationResult = computed(() => membershipValidations(this.formData(), this.tenantId, this.allTags()));
   protected dateOfEntryErrors = computed(() => this.validationResult().getErrors('dateOfEntry'));
   protected dateOfExitErrors = computed(() => this.validationResult().getErrors('dateOfExit'));
   protected memberAbbreviationErrors = computed(() => this.validationResult().getErrors('memberAbbreviation'));
@@ -294,7 +293,7 @@ export class MembershipForm {
   protected readonly tags = computed(() => this.formData().tags ?? DEFAULT_TAGS);
   protected readonly notes = computed(() => this.formData().notes ?? DEFAULT_NOTES);
   protected membershipState = computed(() => this.formData().state ?? DEFAULT_MSTATE);
-  protected readonly locale = computed(() => this.appStore.appConfig().locale);
+  public readonly locale = input.required<string>();
   protected okey = computed(() => this.formData().okey ?? '');
 
   // passing constants to template
@@ -330,58 +329,34 @@ export class MembershipForm {
   }
 
   protected async selectPerson(): Promise<void> {
-    const modal = await this.modalController.create({
-      component: PersonSelectModal,
-      cssClass: 'list-modal',
-      componentProps: {
-        selectedTag: '',
-        currentUser: this.currentUser()
-      }
-    });
-    await modal.present();
-    const { data: result, role } = await modal.onWillDismiss<PersonSelectResult>();
-    const data = result?.kind === 'predefined' ? result.person : undefined;
-    if (role === 'confirm') {
-      if (data && isPerson(data, this.appStore.tenantId())) {
-        const person: PersonModel = data;
-        this.formData.update((vm) => ({
-          ...vm,
-          memberKey: person.okey,
-          memberName1: person.firstName,
-          memberName2: person.lastName,
-          memberModelType: 'person',
-          memberType: person.gender,
-          // person.dateOfBirth was stripped (spec 1.19 Phase 4): reset the birth year;
-          // the membership store resolves it from the vault on save.
-          memberBirthYear: '',
-          memberIsDeceased: person.isDeceased ?? false,
-          memberDeathYear: person.deathYear ?? '',
-          memberZipCode: person.favZipCode,
-          memberBexioId: person.bexioId
-        }));
-      }
+    const person = await this.modelSelector.selectPerson();
+    if (person) {
+      this.formData.update((vm) => ({
+        ...vm,
+        memberKey: person.okey,
+        memberName1: person.firstName,
+        memberName2: person.lastName,
+        memberModelType: 'person',
+        memberType: person.gender,
+        // person.dateOfBirth was stripped (spec 1.19 Phase 4): reset the birth year;
+        // the membership store resolves it from the vault on save.
+        memberBirthYear: '',
+        memberIsDeceased: person.isDeceased ?? false,
+        memberDeathYear: person.deathYear ?? '',
+        memberZipCode: person.favZipCode,
+        memberBexioId: person.bexioId
+      }));
     }
   }
 
   protected async selectOrg(): Promise<void> {
-    const modal = await this.modalController.create({
-      component: OrgSelectModal,
-      cssClass: 'list-modal',
-      componentProps: {
-        selectedTag: 'all',
-        currentUser: this.currentUser()
-      }
-    });
-    await modal.present();
-    const { data, role } = await modal.onWillDismiss();
-    if (role === 'confirm') {
-      if (isOrg(data, this.appStore.tenantId())) {
-        this.formData.update((vm) => ({
-          ...vm,
-          orgKey: data.okey,
-          orgName: data.name,
-        }));
-      }
+    const org = await this.modelSelector.selectOrg('all');
+    if (org) {
+      this.formData.update((vm) => ({
+        ...vm,
+        orgKey: org.okey,
+        orgName: org.name,
+      }));
     }
   }
 

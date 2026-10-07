@@ -3,12 +3,12 @@ import { form } from '@angular/forms/signals';
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonIcon, IonImg, IonItem, IonLabel, IonList } from '@ionic/angular/standalone';
 
 import { AvatarInfo, UserModel } from '@okr/shared-models';
-import { ModelSelectService } from '@okr/shared-feature';
 import { COMMENT_LENGTH } from '@okr/shared-constants';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { ErrorNote, TextareaInput, TextInputI18n } from '@okr/shared-ui';
 import { validateVestTree } from '@okr/shared-util-angular';
 import { coerceBoolean, getAvatarName } from '@okr/shared-util-core';
+import { MODEL_SELECTOR } from '@okr/shared-util-angular';
 import { AvatarPipe } from '@okr/avatar-ui';
 import { getDefaultIcon } from '@okr/avatar-util';
 
@@ -81,7 +81,7 @@ import { InvitePersonsFormData, InvitePersonsI18n, invitePersonsValidations } fr
   `,
 })
 export class InvitePersonsForm {
-  private readonly modelSelectService = inject(ModelSelectService);
+  private readonly modelSelectService = inject(MODEL_SELECTOR);
 
   // inputs
   public readonly i18n = input.required<InvitePersonsI18n>();
