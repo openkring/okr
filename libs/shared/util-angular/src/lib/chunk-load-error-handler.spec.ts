@@ -56,7 +56,7 @@ describe('ChunkLoadErrorHandler', () => {
   it('escalates the repeat failure to a cache teardown instead of a second plain reload (SCS-1A)', async () => {
     const unregister = vi.fn().mockResolvedValue(true);
     Object.defineProperty(navigator, 'serviceWorker', {
-      value: { getRegistrations: vi.fn().mockResolvedValue([{ unregister }]) },
+      value: { getRegistrations: vi.fn().mockResolvedValue([{ scope: 'https://app.test/', unregister }]) },
       configurable: true,
     });
     const cacheDelete = vi.fn().mockResolvedValue(true);
@@ -202,7 +202,7 @@ describe('forceBootRecovery', () => {
     sessionStorage.setItem(BOOT_FAILURE_RELOAD_KEY, String(Date.now()));
     const unregister = vi.fn().mockResolvedValue(true);
     Object.defineProperty(navigator, 'serviceWorker', {
-      value: { getRegistrations: vi.fn().mockResolvedValue([{ unregister }]) },
+      value: { getRegistrations: vi.fn().mockResolvedValue([{ scope: 'https://app.test/', unregister }]) },
       configurable: true,
     });
     const cacheDelete = vi.fn().mockResolvedValue(true);
@@ -216,6 +216,30 @@ describe('forceBootRecovery', () => {
     expect(sessionStorage.getItem(BOOT_FAILURE_RELOAD_KEY)).toBeNull();
     expect(unregister).toHaveBeenCalledTimes(1);
     expect(cacheDelete).toHaveBeenCalledWith('ngsw:1');
+    expect(reload).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the FCM worker, whose unregistering would revoke the push subscription', async () => {
+    const ngswUnregister = vi.fn().mockResolvedValue(true);
+    const fcmUnregister = vi.fn().mockResolvedValue(true);
+    Object.defineProperty(navigator, 'serviceWorker', {
+      value: {
+        getRegistrations: vi.fn().mockResolvedValue([
+          { scope: 'https://app.test/', unregister: ngswUnregister },
+          { scope: 'https://app.test/firebase-cloud-messaging-push-scope', unregister: fcmUnregister },
+        ]),
+      },
+      configurable: true,
+    });
+    Object.defineProperty(window, 'caches', {
+      value: { keys: vi.fn().mockResolvedValue([]), delete: vi.fn() },
+      configurable: true,
+    });
+
+    await forceBootRecovery();
+
+    expect(ngswUnregister).toHaveBeenCalledTimes(1);
+    expect(fcmUnregister).not.toHaveBeenCalled();
     expect(reload).toHaveBeenCalledTimes(1);
   });
 

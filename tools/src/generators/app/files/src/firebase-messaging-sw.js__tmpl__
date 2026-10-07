@@ -12,6 +12,12 @@ firebase.initializeApp(firebaseConfig);
 
 const messaging = firebase.messaging();
 
+// Same rendition the manifest uses for its 192 px icon. Absent okrTenantId (an old generated
+// firebase-config.js) → no icon, and the browser shows its own.
+const appIconUrl = typeof okrTenantId === 'string' && okrTenantId
+  ? `https://bkaiser.imgix.net/tenant/${okrTenantId}/logo/logo-master.png?w=192&h=192&fm=png&auto=`
+  : '';
+
 // Handle background messages
 messaging.onBackgroundMessage(payload => {
   console.log('[firebase-messaging-sw.js] Received background message:', payload);
@@ -26,6 +32,10 @@ messaging.onBackgroundMessage(payload => {
     const pushTenant = payload.data?.tenantId;
     const ownTenant = typeof okrTenantId === 'string' ? okrTenantId : '';
     if (pushTenant && ownTenant && pushTenant !== ownTenant) {
+      // ⚠️ This must stay the ONLY path that ends without showNotification(). Firefox gives
+      // each site a small budget of pushes that show no notification (~16, refilled when the
+      // user visits the site) and then REVOKES the push subscription — the token turns
+      // "not registered" and every later push is lost. Do not add more silent drops here.
       console.log(`[firebase-messaging-sw.js] Dropped push for tenant ${pushTenant} (this app is ${ownTenant})`);
       return;
     }
@@ -58,8 +68,10 @@ messaging.onBackgroundMessage(payload => {
 
   const notificationOptions = {
     body: payload.data?.body || payload.notification?.body || 'You have unread messages',
-    icon: '/assets/icons/icon-192x192.png',
-    badge: '/assets/icons/badge-72x72.png',
+    // The tenant logo as a PNG rendition from imgix (imgix cannot rasterize SVG — see the
+    // `logo` skill). No `badge`: it is drawn as a monochrome silhouette, so a full-bleed logo
+    // becomes a white square; the browser's default is better.
+    ...(appIconUrl && { icon: appIconUrl }),
     data: payload.data,
     // Per-room tag: a shared tag makes a second sender's message REPLACE the first one's
     // banner instead of stacking, so one of the two is never seen.
@@ -86,27 +98,33 @@ self.addEventListener('notificationclick', event => {
   }
 
   if (event.action === 'open' || !event.action) {
-    // Open the app and navigate to the chat
-    const urlToOpen = event.notification.data?.url || '/';
-    
-    event.waitUntil(
-      clients.matchAll({ type: 'window', includeUncontrolled: true })
-        .then(clientList => {
-          // If app is already open, focus it
-          for (const client of clientList) {
-            if (client.url.includes(self.registration.scope) && 'focus' in client) {
-              return client.focus().then(() => {
-                if ('navigate' in client) {
-                  return client.navigate(urlToOpen);
-                }
-              });
-            }
-          }
-          // Otherwise, open a new window
-          if (clients.openWindow) {
-            return clients.openWindow(urlToOpen);
-          }
-        })
-    );
+    const urlToOpen = new URL(event.notification.data?.url || '/', self.location.origin).href;
+    event.waitUntil(focusOrOpen(urlToOpen));
   }
 });
+
+/**
+ * Bring an open app window to the front and route it to `url`, or open a new window.
+ *
+ * Match on ORIGIN, not on `self.registration.scope`: this worker lives at
+ * /firebase-cloud-messaging-push-scope, a path no app URL contains, so a scope match never
+ * found the open app and every click opened another tab.
+ *
+ * `navigate()` only works on a window this worker controls. App windows are controlled by
+ * ngsw (scope '/'), so it normally rejects; the page then routes itself on the
+ * 'notification-click' message (FcmService.notificationClicks).
+ */
+async function focusOrOpen(url) {
+  const windows = await clients.matchAll({ type: 'window', includeUncontrolled: true });
+  const sameOrigin = windows.filter(client => new URL(client.url).origin === self.location.origin);
+  const client = sameOrigin.find(c => c.focused) || sameOrigin[0];
+  if (!client) {
+    return clients.openWindow ? clients.openWindow(url) : undefined;
+  }
+  await client.focus().catch(() => {});
+  try {
+    await client.navigate(url);
+  } catch {
+    client.postMessage({ type: 'notification-click', url });
+  }
+}

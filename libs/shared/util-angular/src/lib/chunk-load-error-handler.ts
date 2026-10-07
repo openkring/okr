@@ -189,8 +189,13 @@ export async function forceBootRecovery(): Promise<void> {
   } catch { /* storage denied — see recoverFromBootFailure */ }
   try {
     if ('serviceWorker' in navigator) {
+      // Keep the FCM worker (scope /firebase-cloud-messaging-push-scope): unregistering it
+      // revokes the push subscription, and the device gets no notification until the app
+      // registers a new token. It caches nothing, so it cannot pin a broken build.
       const regs = await navigator.serviceWorker.getRegistrations();
-      await Promise.all(regs.map(r => r.unregister()));
+      await Promise.all(regs
+        .filter(r => !r.scope.includes('/firebase-cloud-messaging-push-scope'))
+        .map(r => r.unregister()));
     }
   } catch { /* denied or unsupported */ }
   try {

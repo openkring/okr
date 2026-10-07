@@ -147,11 +147,13 @@ export class MatrixInitializationService {
           // Show a notification via the service worker — works on all platforms including iOS Safari.
           // new Notification() from the main thread is blocked on iOS and unreliable on Android
           // when a service worker is active; SW.showNotification() is the correct cross-platform API.
+          // Through the FCM worker's registration, not `ready` (ngsw): only the FCM worker's
+          // notificationclick opens `data.url`.
           if (Notification.permission === 'granted' && 'serviceWorker' in navigator) {
-            navigator.serviceWorker.ready.then(sw => {
-              sw.showNotification(`📹 Video-Anruf von ${callerName}`, {
+            this.fcmService.getPushRegistration().then(sw => {
+              sw?.showNotification(`📹 Video-Anruf von ${callerName}`, {
                 body: roomName ? `In ${roomName}` : 'Eingehender Video-Anruf',
-                icon: '/assets/icons/icon-192x192.png',
+                icon: `${this.appStore.services.imgixBaseUrl()}/tenant/${this.appStore.tenantId()}/logo/logo-master.png?w=192&h=192&fm=png&auto=`,
                 tag: 'video-call',
                 requireInteraction: true,
                 data: { url },
@@ -165,6 +167,10 @@ export class MatrixInitializationService {
           }
         });
 
+        // A tapped notification whose worker could not route the open window itself
+        // (see focusOrOpen in firebase-messaging-sw.js).
+        this.fcmService.notificationClicks().subscribe(url => this.router.navigateByUrl(url));
+
         // Close chat banners for rooms that are no longer unread. Nothing else ever closes a
         // displayed notification (only notificationclick does), so a DM the user already read
         // or answered — here or on another device — kept sitting in the OS notification centre.
@@ -172,7 +178,8 @@ export class MatrixInitializationService {
         // only signal. Video-call banners are left alone: they ring with requireInteraction.
         const closeReadNotifications = async () => {
           if (!('serviceWorker' in navigator)) return;
-          const reg = await navigator.serviceWorker.getRegistration().catch(() => null);
+          // The FCM worker's registration: the banners are its own, ngsw's lists none of them.
+          const reg = await this.fcmService.getPushRegistration().catch(() => undefined);
           // Safari on macOS only exposes getNotifications() in an installed PWA (SCS-4N).
           if (!reg || typeof reg.getNotifications !== 'function') return;
           const unread = new Set(this.matrixChatStore.unreadRooms().map(r => r.roomId));

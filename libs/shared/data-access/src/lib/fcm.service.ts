@@ -4,11 +4,14 @@ import { PushNotifications } from '@capacitor/push-notifications';
 import { getApp } from 'firebase/app';
 import { getMessaging, getToken, onMessage, isSupported as isMessagingSupported, Messaging } from 'firebase/messaging';
 import { getFirestore, doc, setDoc, deleteDoc, serverTimestamp, collection, query, where, documentId, getDocs, writeBatch } from 'firebase/firestore';
-import { Observable, from, of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { EMPTY, Observable, from, fromEvent, of } from 'rxjs';
+import { catchError, filter, map } from 'rxjs/operators';
 
 import { ENV } from '@okr/shared-config';
 import { isBrowser } from '@okr/shared-util-core';
+
+/** Where the Firebase Messaging SDK registers firebase-messaging-sw.js (its DEFAULT_SW_SCOPE). */
+const FCM_SW_SCOPE = '/firebase-cloud-messaging-push-scope';
 
 /**
  * Service for Firebase Cloud Messaging (FCM) push notifications.
@@ -201,6 +204,36 @@ export class FcmService {
       });
       return () => unsubscribe();
     });
+  }
+
+  /**
+   * The service-worker registration that shows push banners: the FCM worker, registered by the
+   * SDK at FCM_SW_SCOPE. `navigator.serviceWorker.ready` / `getRegistration()` return ngsw's
+   * root-scope registration instead, whose notificationclick ignores `data.url` and whose
+   * getNotifications() never lists a banner the FCM worker showed. Falls back to `ready`
+   * before the first getToken() has registered the FCM worker.
+   */
+  async getPushRegistration(): Promise<ServiceWorkerRegistration | undefined> {
+    if (!isBrowser(this.platformId) || !('serviceWorker' in navigator)) return undefined;
+    const reg = await navigator.serviceWorker.getRegistration(FCM_SW_SCOPE).catch(() => undefined);
+    return reg ?? navigator.serviceWorker.ready;
+  }
+
+  /**
+   * In-app path of a tapped notification, when the FCM worker could not navigate the open
+   * window itself (it does not control it — ngsw does) and posted it here instead.
+   */
+  notificationClicks(): Observable<string> {
+    if (!isBrowser(this.platformId) || !('serviceWorker' in navigator)) return EMPTY;
+    return fromEvent<MessageEvent>(navigator.serviceWorker, 'message').pipe(
+      map((event) => {
+        const data = event.data as { type?: string; url?: string } | undefined;
+        if (data?.type !== 'notification-click' || typeof data.url !== 'string') return null;
+        const url = new URL(data.url, location.origin);
+        return url.origin === location.origin ? url.pathname + url.search + url.hash : null;
+      }),
+      filter((path): path is string => path !== null),
+    );
   }
 
   /**
