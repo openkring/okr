@@ -13,6 +13,9 @@ overrides:
   'vitest@<3.2.6': ^3.2.6
   '@vitest/ui@<3.2.6': ^3.2.6
   '@vitest/coverage-v8@<3.2.6': ^3.2.6
+  # node-fetch@2 loads whatwg-url@5 -> tr46@0.0.3, which require()s the deprecated
+  # node:punycode builtin (DEP0040). node-fetch only uses it as a fallback for url.URL.
+  'whatwg-url@5.0.0': ^14.2.0
 
 allowBuilds:
   '@firebase/util': true
