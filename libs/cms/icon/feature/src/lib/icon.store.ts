@@ -8,6 +8,7 @@ import { getMetadata, listAll, ref } from 'firebase/storage';
 import { STORAGE } from '@okr/shared-config';
 import { AppStore } from '@okr/shared-feature';
 import { IconModel } from '@okr/shared-models';
+import { resourceParams } from '@okr/shared-util-angular';
 import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, nameMatches, sanitizeFileName } from '@okr/shared-util-core';
 
 import { UploadService } from '@okr/avatar-data-access';
@@ -48,12 +49,12 @@ export const IconStore = signalStore(
   })),
   withProps((store) => ({
     iconsResource: rxResource({
-      params: () => ({ 
-        currentUser: store.appStore.currentUser() 
-      }),
-      stream: ({ params }) =>
+      // Keyed on the user's okey, not the UserModel: the AppStore hands out a new object on every
+      // Firestore tick of users/{uid}, and each new reference reloaded the whole icon list.
+      params: resourceParams(() => store.appStore.currentUser()?.okey),
+      stream: () =>
         store.iconService.list().pipe(
-          debugListLoaded<IconModel>('IconStore.iconsResource', params.currentUser)
+          debugListLoaded<IconModel>('IconStore.iconsResource', store.appStore.currentUser())
         ),
     }),
   })),
