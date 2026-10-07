@@ -32,6 +32,13 @@ import { captureMessage, flush } from '@sentry/angular';
  */
 const FIRESTORE_QUEUE_FAILED_RE = /FIRESTORE \([\d.]+\) INTERNAL ASSERTION FAILED/i;
 
+/**
+ * Tag on the recovery's own report. `beforeSend` drops everything while a recovery is in flight
+ * EXCEPT events carrying this tag — otherwise it swallowed the very report this module exists to
+ * send (SCS-4P and SCS-C3 have no "auto-reloading" event between them).
+ */
+export const FIRESTORE_QUEUE_FAILURE_TAG = 'firestoreQueueFailure';
+
 /** sessionStorage key recording when we last auto-reloaded to recover a failed Firestore queue. */
 export const FIRESTORE_QUEUE_RELOAD_KEY = 'okr-firestore-queue-reload-at';
 
@@ -98,7 +105,7 @@ export function recoverFromFirestoreQueueFailure(error: unknown): boolean {
   // the message verbatim rather than summarising it.
   captureMessage('Firestore AsyncQueue failed — auto-reloading', {
     level: 'error',
-    tags: { firestoreQueueFailure: 'true' },
+    tags: { [FIRESTORE_QUEUE_FAILURE_TAG]: 'true' },
     extra: { assertion: messageOf(error).slice(0, 2000), url: window.location?.href },
   });
   // The reload tears the page down; without a flush the report never leaves the client.

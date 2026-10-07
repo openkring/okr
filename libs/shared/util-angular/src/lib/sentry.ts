@@ -4,7 +4,7 @@ import type { BrowserOptions, ErrorEvent, EventHint } from '@sentry/angular';
 import { redactSensitive, stripPii } from '@okr/shared-util-core';
 import { catchError } from 'rxjs';
 import { isStaleChunkRecoveryInFlight } from './chunk-load-error-handler';
-import { isFirestoreQueueRecoveryInFlight } from './firestore-queue-recovery';
+import { FIRESTORE_QUEUE_FAILURE_TAG, isFirestoreQueueRecoveryInFlight } from './firestore-queue-recovery';
 import { isAnalyticsInitInFlight } from './analytics-init-window';
 import { getRecentFailedRequests, hasRecentFailedRequest } from './failed-request-recorder';
 import { getDeviceSupportTags } from './device-support';
@@ -42,7 +42,9 @@ export function beforeSend(event: ErrorEvent, _hint: EventHint): ErrorEvent | nu
   // failure is reported ONCE, explicitly and with the underlying fault attached, by
   // recoverFromFirestoreQueueFailure; drop the flood that follows it. When the loop guard
   // suppresses the reload (reloading did not help) the flag stays false and events go through.
-  if (isFirestoreQueueRecoveryInFlight()) return null;
+  // The explicit report itself is tagged and must pass: the flag is already set when Sentry
+  // runs beforeSend on it, so without the exemption the recovery silenced its own report.
+  if (isFirestoreQueueRecoveryInFlight() && event.tags?.[FIRESTORE_QUEUE_FAILURE_TAG] !== 'true') return null;
 
   // Injected in-app-browser script, not our code (SCS-4A): the Google iOS app scans the
   // page with a recursive DOM walker (findTopmostVisibleElement → isOpaqueElement → isImage)

@@ -132,6 +132,29 @@ describe('beforeSend', () => {
     expect(freshBeforeSend(event(), {})).toBeNull();
   });
 
+  it('drops the b815 flood but keeps the Firestore recovery\'s own report (SCS-4P, SCS-C3)', async () => {
+    vi.resetModules();
+    const { recoverFromFirestoreQueueFailure, FIRESTORE_QUEUE_FAILURE_TAG } = await import('./firestore-queue-recovery');
+    const { beforeSend: freshBeforeSend } = await import('./sentry');
+
+    sessionStorage.clear();
+    vi.stubGlobal('location', Object.assign(new URL('https://seeclub.org/'), { reload: vi.fn() }));
+    expect(recoverFromFirestoreQueueFailure(new Error('FIRESTORE (12.16.0) INTERNAL ASSERTION FAILED: Unexpected state (ID: b815)'))).toBe(true);
+
+    const flood = { environment: 'production', message: 'FIRESTORE (12.16.0) INTERNAL ASSERTION FAILED' } as ErrorEvent;
+    expect(freshBeforeSend(flood, {})).toBeNull();
+
+    // The one report that says the queue died and why. The flag is set before captureMessage
+    // runs, and Sentry calls beforeSend asynchronously anyway, so the flag alone dropped it —
+    // in two incidents not a single "auto-reloading" event ever reached Sentry.
+    const report = {
+      environment: 'production',
+      message: 'Firestore AsyncQueue failed — auto-reloading',
+      tags: { [FIRESTORE_QUEUE_FAILURE_TAG]: 'true' },
+    } as ErrorEvent;
+    expect(freshBeforeSend(report, {})).not.toBeNull();
+  });
+
   it('keeps events from Capacitor native shells (localhost without an explicit port)', () => {
     vi.stubGlobal('location', new URL('https://localhost/home'));
     const event = { environment: 'production', message: 'boom' } as ErrorEvent;
