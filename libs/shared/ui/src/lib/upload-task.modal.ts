@@ -7,9 +7,9 @@ import { UploadTask, getDownloadURL } from 'firebase/storage';
 
 import { captureMessage } from '@sentry/angular';
 
-import { StorageBucket, uploadToFirebaseStorage } from '@okr/shared-config';
+import { StorageBucket, attestAppCheck, uploadToFirebaseStorage } from '@okr/shared-config';
 import { dismissOverlay } from '@okr/shared-util-angular';
-import { describeUploadError } from '@okr/shared-util-core';
+import { describeUploadError, isRetryableUploadError } from '@okr/shared-util-core';
 
 import { Header } from './header';
 import { SvgIconPipe } from '@okr/shared-pipes';
@@ -20,6 +20,9 @@ export interface UploadEntry {
   /** Target bucket; 'private' = write-only for clients, result is the fullPath (spec 1.82). */
   bucket?: StorageBucket;
 }
+
+/** One retry after a retryable failure (dropped connection, stale App Check token). */
+const MAX_UPLOAD_ATTEMPTS = 2;
 
 interface UploadState {
   name: string;
@@ -101,6 +104,8 @@ export class UploadTaskModal implements OnInit {
 
   // state
   public uploadStates = signal<UploadState[]>([]);
+  private downloadUrls: (string | undefined)[] = [];
+  private completedCount = 0;
 
   ngOnInit() {
     this.uploadStates.set(
@@ -114,78 +119,85 @@ export class UploadTaskModal implements OnInit {
       }))
     );
 
-    const downloadUrls: (string | undefined)[] = new Array(this.uploads().length).fill(undefined);
-    let completedCount = 0;
+    this.downloadUrls = new Array(this.uploads().length).fill(undefined);
+    this.uploads().forEach((entry, index) => this.startUpload(entry, index, 1));
+  }
 
-    this.uploads().forEach((entry, index) => {
-      const task = uploadToFirebaseStorage(entry.fullPath, entry.file, entry.bucket);
+  private startUpload(entry: UploadEntry, index: number, attempt: number): void {
+    const task = uploadToFirebaseStorage(entry.fullPath, entry.file, entry.bucket);
+    this.setState(index, { task, state: 'running', percentage: 0, bytesTransferred: 0 });
 
-      this.uploadStates.update(states => {
-        const updated = [...states];
-        updated[index] = { ...updated[index], task, state: 'running' };
-        return updated;
-      });
-
-      task.on(
-        'state_changed',
-        (snapshot) => {
-          this.uploadStates.update(states => {
-            const updated = [...states];
-            updated[index] = {
-              ...updated[index],
-              percentage: (snapshot.bytesTransferred / snapshot.totalBytes) * 100,
-              bytesTransferred: snapshot.bytesTransferred,
-              totalBytes: snapshot.totalBytes,
-              state: snapshot.state as UploadState['state'],
-            };
-            return updated;
-          });
-        },
-        (ex) => {
-          this.report('upload', entry, ex);
-          this.uploadStates.update(states => {
-            const updated = [...states];
-            updated[index] = { ...updated[index], state: 'error' };
-            return updated;
-          });
-          completedCount++;
-          if (completedCount === this.uploads().length) {
-            dismissOverlay(this.modalController, downloadUrls, 'confirm');
-          }
-        },
-        () => {
-          // task.on() does not await this callback: an uncaught rejection here would surface as an
-          // unhandled rejection AND leave completedCount short, so the modal would never dismiss.
-          // No client read on the private bucket — the path is the success signal (spec 1.82 §4).
-          const urlPromise: Promise<string> = entry.bucket === 'private'
-            ? Promise.resolve(entry.fullPath)
-            : getDownloadURL(task.snapshot.ref);
-          urlPromise
-            .then((url) => {
-              downloadUrls[index] = url;
-              this.uploadStates.update(states => {
-                const updated = [...states];
-                updated[index] = { ...updated[index], state: 'success', downloadUrl: url };
-                return updated;
-              });
-            })
-            .catch((ex) => {
-              this.report('getDownloadURL', entry, ex);
-              this.uploadStates.update(states => {
-                const updated = [...states];
-                updated[index] = { ...updated[index], state: 'error' };
-                return updated;
-              });
-            })
-            .finally(() => {
-              completedCount++;
-              if (completedCount === this.uploads().length) {
-                dismissOverlay(this.modalController, downloadUrls, 'confirm');
-              }
-            });
+    task.on(
+      'state_changed',
+      (snapshot) => {
+        this.setState(index, {
+          percentage: (snapshot.bytesTransferred / snapshot.totalBytes) * 100,
+          bytesTransferred: snapshot.bytesTransferred,
+          totalBytes: snapshot.totalBytes,
+          state: snapshot.state as UploadState['state'],
+        });
+      },
+      (ex) => {
+        const willRetry = attempt < MAX_UPLOAD_ATTEMPTS && isRetryableUploadError(describeUploadError(ex).code);
+        this.report('upload', entry, ex, attempt, willRetry);
+        if (willRetry) {
+          void this.retryUpload(entry, index, attempt + 1);
+          return;
         }
-      );
+        this.setState(index, { state: 'error' });
+        this.markCompleted();
+      },
+      () => {
+        // task.on() does not await this callback: an uncaught rejection here would surface as an
+        // unhandled rejection AND leave completedCount short, so the modal would never dismiss.
+        // No client read on the private bucket — the path is the success signal (spec 1.82 §4).
+        const urlPromise: Promise<string> = entry.bucket === 'private'
+          ? Promise.resolve(entry.fullPath)
+          : getDownloadURL(task.snapshot.ref);
+        urlPromise
+          .then((url) => {
+            this.downloadUrls[index] = url;
+            this.setState(index, { state: 'success', downloadUrl: url });
+          })
+          .catch((ex) => {
+            this.report('getDownloadURL', entry, ex, attempt, false);
+            this.setState(index, { state: 'error' });
+          })
+          .finally(() => this.markCompleted());
+      }
+    );
+  }
+
+  /**
+   * Second (and last) attempt after a retryable failure. A dropped mobile connection and an App
+   * Check token that went stale mid-upload both look like this, and `UploadService` attested only
+   * once, BEFORE the first attempt — so re-attest (forced: the cached token may be the rejected
+   * one) and start the upload from scratch. Attestation failure is not fatal, same reasoning as
+   * `UploadService.attestBeforeUpload`: upload anyway and let the backend decide.
+   */
+  private async retryUpload(entry: UploadEntry, index: number, attempt: number): Promise<void> {
+    this.setState(index, { state: 'pending', percentage: 0, bytesTransferred: 0 });
+    try {
+      await attestAppCheck(undefined, true);
+    } catch {
+      // ignore — see above
+    }
+    this.startUpload(entry, index, attempt);
+  }
+
+  private setState(index: number, patch: Partial<UploadState>): void {
+    this.uploadStates.update(states => {
+      const updated = [...states];
+      updated[index] = { ...updated[index], ...patch };
+      return updated;
     });
+  }
+
+  private markCompleted(): void {
+    this.completedCount++;
+    if (this.completedCount === this.uploads().length) {
+      dismissOverlay(this.modalController, this.downloadUrls, 'confirm');
+    }
   }
 
   /**
@@ -203,12 +215,19 @@ export class UploadTaskModal implements OnInit {
    * mobile connection is a normal outcome of a hostile network, not a crash — and the SDK's
    * error object carries no useful stack (it is constructed, not thrown from our code).
    */
-  private report(stage: 'upload' | 'getDownloadURL', entry: UploadEntry, ex: unknown): void {
-    const { code, message } = describeUploadError(ex);
+  private report(
+    stage: 'upload' | 'getDownloadURL', entry: UploadEntry, ex: unknown, attempt: number, willRetry: boolean
+  ): void {
+    const { code, message, status, serverResponse } = describeUploadError(ex);
+    // A failure we are about to retry is a warning; only the attempt the user sees fail is an error.
     captureMessage(`Upload failed (${stage}): ${code}`, {
-      level: 'error',
-      tags: { uploadStage: stage, uploadErrorCode: code },
+      level: willRetry ? 'warning' : 'error',
+      tags: {
+        uploadStage: stage, uploadErrorCode: code, uploadAttempt: attempt, uploadWillRetry: willRetry,
+        uploadHttpStatus: status ?? 'none',
+      },
       extra: {
+        serverResponse: serverResponse ?? '(none)',
         fullPath: entry.fullPath,
         fileName: entry.file.name,
         fileSize: entry.file.size,

@@ -25,6 +25,28 @@ describe('describeUploadError', () => {
     });
   });
 
+  it('reads status and serverResponse off prototype getters, like StorageError has them', () => {
+    class FakeStorageError extends Error {
+      public readonly code = 'storage/unknown';
+      private readonly customData = { serverResponse: '{"error":{"code":412}}' };
+      public get status(): number { return 412; }
+      public get serverResponse(): string { return this.customData.serverResponse; }
+    }
+    expect(describeUploadError(new FakeStorageError('unknown error'))).toEqual({
+      code: 'storage/unknown',
+      message: 'unknown error',
+      status: 412,
+      serverResponse: '{"error":{"code":412}}',
+    });
+  });
+
+  it('keeps a 0 status but omits an empty serverResponse', () => {
+    const ex = firebaseError('storage/unknown', 'no reply');
+    Object.defineProperty(ex, 'status', { value: 0, enumerable: false });
+    Object.defineProperty(ex, 'serverResponse', { value: null, enumerable: false });
+    expect(describeUploadError(ex)).toEqual({ code: 'storage/unknown', message: 'no reply', status: 0 });
+  });
+
   it('falls back to `unknown` when there is no code', () => {
     expect(describeUploadError(new Error('boom'))).toEqual({ code: 'unknown', message: 'boom' });
   });
@@ -51,6 +73,7 @@ describe('isRetryableUploadError', () => {
     expect(isRetryableUploadError('storage/unauthorized')).toBe(true);
     expect(isRetryableUploadError('storage/retry-limit-exceeded')).toBe(true);
     expect(isRetryableUploadError('storage/unknown')).toBe(true);
+    expect(isRetryableUploadError('storage/unauthorized-app')).toBe(true);
   });
 
   it('does not retry a full bucket, a cancellation or an expired session', () => {

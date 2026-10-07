@@ -20,26 +20,43 @@
  * - `storage/retry-limit-exceeded` — the connection died mid-upload; the classic mobile case.
  * - `storage/canceled`          — the user (or a teardown) aborted the task.
  * - `storage/unauthenticated`   — the Firebase Auth session expired.
+ * - `storage/unauthorized-app`  — the backend rejected the App Check token (a 401 whose body
+ *                                 names App Check); a fresh attestation can fix it.
+ * - `storage/unknown`           — the server answered with a status the SDK has no code for
+ *                                 (anything but 401/402/403 that it does not retry). Only
+ *                                 `status` and `serverResponse` say what it really was.
  */
 export interface UploadErrorInfo {
   /** The Firebase error code, e.g. `storage/unauthorized`, or `unknown` when there is none. */
   code: string;
   /** The human-readable message, or a last-resort stringification. */
   message: string;
+  /** HTTP status of the failed request (`StorageError.status`); 0 when no response arrived. */
+  status?: number;
+  /** Response body the server sent with the failure (`StorageError.serverResponse`), if any. */
+  serverResponse?: string;
 }
 
 export function describeUploadError(ex: unknown): UploadErrorInfo {
   if (typeof ex === 'string') return { code: 'unknown', message: ex };
   if (!ex || typeof ex !== 'object') return { code: 'unknown', message: String(ex) };
 
-  const candidate = ex as { code?: unknown; message?: unknown; name?: unknown };
+  const candidate = ex as {
+    code?: unknown; message?: unknown; name?: unknown; status?: unknown; serverResponse?: unknown;
+  };
   const code = typeof candidate.code === 'string' && candidate.code ? candidate.code : 'unknown';
   const message = typeof candidate.message === 'string' && candidate.message
     ? candidate.message
     : typeof candidate.name === 'string' && candidate.name
       ? candidate.name
       : String(ex);
-  return { code, message };
+  const info: UploadErrorInfo = { code, message };
+  // Both are prototype getters on StorageError — never own keys, so read them explicitly.
+  if (typeof candidate.status === 'number') info.status = candidate.status;
+  if (typeof candidate.serverResponse === 'string' && candidate.serverResponse) {
+    info.serverResponse = candidate.serverResponse;
+  }
+  return info;
 }
 
 /**
@@ -50,5 +67,6 @@ export function describeUploadError(ex: unknown): UploadErrorInfo {
 export function isRetryableUploadError(code: string): boolean {
   return code === 'storage/retry-limit-exceeded'
     || code === 'storage/unauthorized'
+    || code === 'storage/unauthorized-app'
     || code === 'storage/unknown';
 }
