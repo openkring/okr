@@ -8,3 +8,4 @@ export * from './lib/tag-string.validations';
 export * from './lib/kiosk.util';
 export * from './lib/chat-room-filter.util';
 export * from './lib/login-id-admin.util';
+export * from './lib/aoc-website.validations';

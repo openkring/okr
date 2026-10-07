@@ -896,6 +896,14 @@
       "label": "Editar texto del sitio web",
       "conf": "El texto del sitio web se ha modificado.",
       "error": "No se pudo guardar el cambio."
+    },
+    "de": {
+      "label": "Texto alemán",
+      "placeholder": "Texto en alemán"
+    },
+    "en": {
+      "label": "Texto inglés",
+      "placeholder": "Texto en inglés"
     }
   },
   "switcher": {

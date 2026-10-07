@@ -1,5 +1,5 @@
 {
-  "extends": "../../../../tsconfig.base.json",
+  "extends": "../../../tsconfig.base.json",
   "compilerOptions": {
     "noEmit": true,
     "types": [
@@ -30,25 +30,25 @@
   ],
   "references": [
     {
-      "path": "../../../shared/models/tsconfig.lib.json"
+      "path": "../../shared/models/tsconfig.lib.json"
     },
     {
-      "path": "../../../shared/constants/tsconfig.lib.json"
+      "path": "../../shared/util-core/tsconfig.lib.json"
     },
     {
-      "path": "../../../shared/util-core/tsconfig.lib.json"
+      "path": "../../shared/i18n/tsconfig.lib.json"
     },
     {
-      "path": "../../../subject/application/util/tsconfig.lib.json"
+      "path": "../util/tsconfig.lib.json"
     },
     {
-      "path": "../../../shared/config/tsconfig.lib.json"
+      "path": "../../shared/ui/tsconfig.lib.json"
     },
     {
-      "path": "../../../shared/ui/tsconfig.lib.json"
+      "path": "../../shared/ui-editor/tsconfig.lib.json"
     },
     {
-      "path": "../../../shared/util-angular/tsconfig.lib.json"
+      "path": "../../shared/util-angular/tsconfig.lib.json"
     }
   ]
 }

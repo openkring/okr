@@ -8,6 +8,9 @@ const libraryConfig = defineConfig({
   cacheDir: '../../../../node_modules/.vite/libs/subject/application/util',
   plugins: [nxViteTsPaths(), nxCopyAssetsPlugin(['*.md'])],
   test: {
+    // application.validations imports @okr/subject-person-util (Ionic-coupled barrel);
+    // inline @ionic so Vite resolves its directory imports instead of failing ESM resolution.
+    server: { deps: { inline: [/@ionic\/angular/, /@ionic\/core/] } },
     coverage: {
       reportsDirectory: '../../../../coverage/libs/subject/application/util',
       provider: 'v8' as const,

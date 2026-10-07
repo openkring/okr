@@ -896,6 +896,14 @@
       "label": "Website Text ändern",
       "conf": "Der Website Text wurde geändert.",
       "error": "Die Änderung konnte nicht gespeichert werden."
+    },
+    "de": {
+      "label": "Deutscher Text",
+      "placeholder": "Text auf Deutsch"
+    },
+    "en": {
+      "label": "Englischer Text",
+      "placeholder": "Text auf Englisch"
     }
   },
   "switcher": {

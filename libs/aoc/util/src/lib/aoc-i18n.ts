@@ -700,6 +700,10 @@ export const AOC_I18N_KEYS = {
   website_title:                      PFX + 'website.title',
   website_key:                        PFX + 'website.key',
   website_is_html:                    PFX + 'website.isHtml',
+  website_de_label:                   PFX + 'website.de.label',
+  website_de_placeholder:             PFX + 'website.de.placeholder',
+  website_en_label:                   PFX + 'website.en.label',
+  website_en_placeholder:             PFX + 'website.en.placeholder',
   website_list_title:                 PFX + 'website.list.title',
 
   website_create_label:               PFX + 'website.create.label',

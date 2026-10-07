@@ -896,6 +896,14 @@
       "label": "Edit website text",
       "conf": "The website text was changed.",
       "error": "The change could not be saved."
+    },
+    "de": {
+      "label": "German text",
+      "placeholder": "Text in German"
+    },
+    "en": {
+      "label": "English text",
+      "placeholder": "Text in English"
     }
   },
   "switcher": {

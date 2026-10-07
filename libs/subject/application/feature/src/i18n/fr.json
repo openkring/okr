@@ -74,7 +74,11 @@
   },
   "validation": {
     "email_required": "L'e-mail est obligatoire (soit le demandeur, soit le parent).",
-    "phone_required": "Le téléphone est obligatoire (soit le demandeur, soit le parent)."
+    "phone_required": "Le téléphone est obligatoire (soit le demandeur, soit le parent).",
+    "required": "Merci de remplir ce champ.",
+    "choice": "Choisis une des options.",
+    "date_of_birth": "Indique la date de naissance complète (jour, mois et année).",
+    "email_invalid": "Indique une adresse e-mail valide."
   },
   "section": {
     "person": "Personne",

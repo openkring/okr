@@ -14,7 +14,7 @@ import { MembershipStore } from '@okr/relationship-membership-feature';
 
 import { ApplicationService } from '@okr/application-data-access';
 import { APPLICATION_I18N_KEYS, matchesStateFilter, stateColor } from '@okr/application-util';
-import { ApplicationEditModal } from './application-edit.modal';
+import { ApplicationEditModal } from '@okr/application-ui';
 
 
 export const ApplicationStore = signalStore(
@@ -90,7 +90,10 @@ export const ApplicationStore = signalStore(
         componentProps: { application: app, currentUser: cu, i18n: store.i18n }
       });
       await modal.present();
-      await modal.onWillDismiss();
+      const { data, role } = await modal.onWillDismiss<ApplicationModel>();
+      if (role === 'confirm' && data) {
+        await store.applicationService.update(data, cu);
+      }
       store.applicationsResource.reload();
     },
 

@@ -1,41 +1,51 @@
-import { create, enforce, omitWhen, test } from 'vest';
+import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 import { ApplicationModel } from '@okr/shared-models';
 import { ssnValidations } from '@okr/subject-person-util';
 import { needsSsn } from './application.util';
 
+// Vest messages are i18n keys: okr-error-note resolves any message starting with '@'.
+const PFX = '@subject/application/feature.validation.';
+const REQUIRED      = PFX + 'required';
+const CHOICE        = PFX + 'choice';
+const DATE_OF_BIRTH = PFX + 'date_of_birth';
+const EMAIL_INVALID = PFX + 'email_invalid';
+
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export const applicationValidationSuite = create((app: ApplicationModel, field?: string) => {
-  test('firstName',     '@application/field.first_name',     () => { enforce(app.firstName).isNotBlank(); });
-  test('lastName',      '@application/field.last_name',      () => { enforce(app.lastName).isNotBlank(); });
-  test('gender',        '@application/field.gender',         () => { enforce(app.gender).inside(['male', 'female']); });
-  test('dateOfBirth',   '@application/field.date_of_birth',  () => { enforce(app.dateOfBirth).matches(/^\d{8}$/); });
-  test('streetName',    '@application/field.street_name',    () => { enforce(app.streetName).isNotBlank(); });
-  test('streetNumber',  '@application/field.street_number',  () => { enforce(app.streetNumber).isNotBlank(); });
-  test('zipCode',       '@application/field.zip_code',       () => { enforce(app.zipCode).isNotBlank(); });
-  test('city',          '@application/field.city',           () => { enforce(app.city).isNotBlank(); });
-  test('countryCode',   '@application/field.country_code',   () => { enforce(app.countryCode).isNotBlank(); });
-  test('applicationAs', '@application/field.application_as', () => { enforce(app.applicationAs).inside(['youth', 'adult', 'transfer']); });
+/** Validates an application (membership request) in the edit modal. */
+export const applicationValidations = staticSuite((app: ApplicationModel, field?: string) => {
+  if (field) only(field);
+
+  test('firstName',     REQUIRED,      () => { enforce(app.firstName).isNotBlank(); });
+  test('lastName',      REQUIRED,      () => { enforce(app.lastName).isNotBlank(); });
+  test('gender',        CHOICE,        () => { enforce(app.gender).inside(['male', 'female']); });
+  test('dateOfBirth',   DATE_OF_BIRTH, () => { enforce(app.dateOfBirth).matches(/^\d{8}$/); });
+  test('streetName',    REQUIRED,      () => { enforce(app.streetName).isNotBlank(); });
+  test('streetNumber',  REQUIRED,      () => { enforce(app.streetNumber).isNotBlank(); });
+  test('zipCode',       REQUIRED,      () => { enforce(app.zipCode).isNotBlank(); });
+  test('city',          REQUIRED,      () => { enforce(app.city).isNotBlank(); });
+  test('countryCode',   REQUIRED,      () => { enforce(app.countryCode).isNotBlank(); });
+  test('applicationAs', CHOICE,        () => { enforce(app.applicationAs).inside(['youth', 'adult', 'transfer']); });
 
   omitWhen(!needsSsn(app), () => {
-    test('ssnId', '@application/field.ssn', () => { enforce(app.ssnId).isNotBlank(); });
+    test('ssnId', REQUIRED, () => { enforce(app.ssnId).isNotBlank(); });
     ssnValidations('ssnId', app.ssnId);
   });
 
-  omitWhen(!app.email,       () => { test('email',       '@application/field.email',        () => { enforce(app.email).matches(EMAIL_RE); }); });
-  omitWhen(!app.parentEmail, () => { test('parentEmail', '@application/field.parent_email', () => { enforce(app.parentEmail).matches(EMAIL_RE); }); });
+  omitWhen(!app.email,       () => { test('email',       EMAIL_INVALID, () => { enforce(app.email).matches(EMAIL_RE); }); });
+  omitWhen(!app.parentEmail, () => { test('parentEmail', EMAIL_INVALID, () => { enforce(app.parentEmail).matches(EMAIL_RE); }); });
 
   if (app.applicationAs !== 'youth') {
-    test('email', '@application/field.email', () => { enforce(app.email).isNotBlank(); });
-    test('phone', '@application/field.phone', () => { enforce(app.phone).isNotBlank(); });
+    test('email', REQUIRED, () => { enforce(app.email).isNotBlank(); });
+    test('phone', REQUIRED, () => { enforce(app.phone).isNotBlank(); });
   } else {
-    test('parentFirstName', '@application/field.parent_first_name', () => { enforce(app.parentFirstName).isNotBlank(); });
-    test('parentLastName',  '@application/field.parent_last_name',  () => { enforce(app.parentLastName).isNotBlank(); });
+    test('parentFirstName', REQUIRED, () => { enforce(app.parentFirstName).isNotBlank(); });
+    test('parentLastName',  REQUIRED, () => { enforce(app.parentLastName).isNotBlank(); });
 
-    test('email', '@application/validation.email_required_either', () => {
+    test('email', PFX + 'email_required', () => {
       enforce(!!app.email || !!app.parentEmail).isTruthy();
     });
-    test('phone', '@application/validation.phone_required_either', () => {
+    test('phone', PFX + 'phone_required', () => {
       enforce(!!app.phone || !!app.parentPhone).isTruthy();
     });
   }

@@ -74,7 +74,11 @@
   },
   "validation": {
     "email_required": "E-Mail ist erforderlich (entweder Antragsteller/in oder Elternteil).",
-    "phone_required": "Telefon ist erforderlich (entweder Antragsteller/in oder Elternteil)."
+    "phone_required": "Telefon ist erforderlich (entweder Antragsteller/in oder Elternteil).",
+    "required": "Bitte füll dieses Feld aus.",
+    "choice": "Bitte wähl eine der Möglichkeiten aus.",
+    "date_of_birth": "Bitte gib das Geburtsdatum vollständig ein (Tag, Monat und Jahr).",
+    "email_invalid": "Bitte gib eine gültige E-Mail-Adresse ein."
   },
   "section": {
     "person": "Person",

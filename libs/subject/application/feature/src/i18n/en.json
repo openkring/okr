@@ -74,7 +74,11 @@
   },
   "validation": {
     "email_required": "Email is required (either applicant or parent).",
-    "phone_required": "Phone is required (either applicant or parent)."
+    "phone_required": "Phone is required (either applicant or parent).",
+    "required": "Please fill in this field.",
+    "choice": "Please choose one of the options.",
+    "date_of_birth": "Please enter the full date of birth (day, month and year).",
+    "email_invalid": "Please enter a valid email address."
   },
   "section": {
     "person": "Person",

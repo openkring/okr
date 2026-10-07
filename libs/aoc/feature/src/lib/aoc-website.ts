@@ -14,7 +14,7 @@ import { createActionSheetButton, createActionSheetOptions } from '@okr/shared-u
 import { SvgIconPipe } from '@okr/shared-pipes';
 
 import { AocWebsiteStore } from './aoc-website.store';
-import { AocWebsiteEditModal } from './aoc-website-edit.modal';
+import { AocWebsiteEditModal } from '@okr/aoc-ui';
 
 @Component({
   selector: 'okr-aoc-website',

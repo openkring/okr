@@ -896,6 +896,14 @@
       "label": "Modifier le texte du site web",
       "conf": "Le texte du site web a été modifié.",
       "error": "La modification n'a pas pu être enregistrée."
+    },
+    "de": {
+      "label": "Texte allemand",
+      "placeholder": "Texte en allemand"
+    },
+    "en": {
+      "label": "Texte anglais",
+      "placeholder": "Texte en anglais"
     }
   },
   "switcher": {

@@ -896,6 +896,14 @@
       "label": "Modificare il testo del sito web",
       "conf": "Il testo del sito web è stato modificato.",
       "error": "Impossibile salvare la modifica."
+    },
+    "de": {
+      "label": "Testo tedesco",
+      "placeholder": "Testo in tedesco"
+    },
+    "en": {
+      "label": "Testo inglese",
+      "placeholder": "Testo in inglese"
     }
   },
   "switcher": {
