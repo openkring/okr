@@ -1,1 +1,1 @@
-export * from './lib/ownership-form';
+export * from './lib/ownership.form';

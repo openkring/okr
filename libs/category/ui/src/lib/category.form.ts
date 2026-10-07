@@ -1,9 +1,11 @@
-import { Component, computed, effect, input, linkedSignal, model, output, Signal } from '@angular/core';
+import { Component, computed, effect, input, model, output, Signal } from '@angular/core';
+import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
 import { CategoryI18n, categoryListValidations } from '@okr/category-util';
 import { CategoryItemModel, CategoryListModel, RoleName, UserModel } from '@okr/shared-models';
 import { CategoryItems, Checkbox, CheckboxI18n, Chips, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { validateVestTree } from '@okr/shared-util-angular';
 import { coerceBoolean, debugFormModel, hasRole } from '@okr/shared-util-core';
 import { DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS, DESCRIPTION_LENGTH, NAME_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 
@@ -87,11 +89,19 @@ export class CategoryListForm {
   public dirty = output<boolean>();
   public valid = output<boolean>();
 
+  // The suite needs tenants and tags, which validateVestTree does not pass — so the bridge
+  // calls it through a closure that adds them.
+  private readonly suiteWithContext = (model: CategoryListModel, field?: string) =>
+    categoryListValidations(model, this.tenants(), this.allTags(), field);
+  protected readonly categoryForm = form(this.formData, (path) =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    validateVestTree(path, this.suiteWithContext as any));
+
   constructor() {
-    effect(() => this.valid.emit(this.validationResult().isValid()));
+    effect(() => this.valid.emit(this.categoryForm().valid()));
   }
 
-  // validation and errors
+  // per-field errors for the notes under each field
   private readonly validationResult = computed(() => categoryListValidations(this.formData(), this.tenants(), this.allTags()));
   protected translateItemsErrors = computed(() => this.validationResult().getErrors('translateItems'));
   protected notesErrors = computed(() => this.validationResult().getErrors('notes'));
@@ -99,12 +109,12 @@ export class CategoryListForm {
   protected i18nScopeErrors = computed(() => this.validationResult().getErrors('i18n'));
 
   // fields
-  protected name = linkedSignal(() => this.formData().name ?? DEFAULT_NAME);
-  protected i18nScope = linkedSignal(() => this.formData().i18n ?? '');
-  protected notes = linkedSignal(() => this.formData().notes ?? DEFAULT_NOTES);
-  protected tags = linkedSignal(() => this.formData().tags ?? DEFAULT_TAGS);
-  protected items = linkedSignal(() => this.formData().items ?? []);
-  protected translateItems = linkedSignal(() => this.formData().translateItems ?? false);
+  protected name = computed(() => this.formData().name ?? DEFAULT_NAME);
+  protected i18nScope = computed(() => this.formData().i18n ?? '');
+  protected notes = computed(() => this.formData().notes ?? DEFAULT_NOTES);
+  protected tags = computed(() => this.formData().tags ?? DEFAULT_TAGS);
+  protected items = computed(() => this.formData().items ?? []);
+  protected translateItems = computed(() => this.formData().translateItems ?? false);
   protected okey = computed(() => this.formData().okey ?? '');
   /** membership categories are price lists (the fee schedule reads them); any list that already carries a price stays editable */
   protected hasPrice = computed(() => this.name().startsWith('mcat') || this.items().some(item => (item.price ?? 0) > 0));

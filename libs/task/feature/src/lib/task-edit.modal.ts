@@ -198,7 +198,7 @@ export class TaskEditModal {
   public async cancel(): Promise<void> {
     this.formDirty.set(false);
     this.formData.set(safeStructuredClone(this.task()));  // reset the form
-    // This destroys and recreates the <form scVestForm> → Vest fully resets
+    // re-mount the form so its field state (touched, error notes) starts fresh
     this.showForm.set(false);
     setTimeout(() => this.showForm.set(true), 0);
   }

@@ -216,7 +216,6 @@ export class GroupViewPage implements ViewWillEnter {
     source: () => this.group(),
     computation: (group, previous) => group ? safeStructuredClone(group) : previous?.value,
   });
-  protected showForm = signal(true);
 
   // derived signals and fields
   protected readonly avatarTitle = computed(() => this.name() ?? DEFAULT_NAME);
@@ -463,9 +462,6 @@ export class GroupViewPage implements ViewWillEnter {
   protected async cancel(): Promise<void> {
     this.formDirty.set(false);
     this.formData.set(safeStructuredClone(this.group()));  // reset the form
-      // This destroys and recreates the <form scVestForm> → Vest fully resets
-    this.showForm.set(false);
-    setTimeout(() => this.showForm.set(true), 0);
   }
 
   /******************************* helpers *************************************** */

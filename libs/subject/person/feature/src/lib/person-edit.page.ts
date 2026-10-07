@@ -180,7 +180,7 @@ export class PersonEditPage implements ViewWillEnter   {
     if (person) {
       this.seed(person);  // reset the form (person document + vault-backed ssn/dob)
     }
-    // This destroys and recreates the <form scVestForm> → Vest fully resets
+    // re-mount the form so its field state (touched, error notes) starts fresh
     this.showForm.set(false);
     setTimeout(() => {
       this.showForm.set(true);

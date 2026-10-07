@@ -29,13 +29,9 @@ export function validateVestTree<T>(
     const errors: { kind: string; message: string; fieldTree: FieldTree<unknown> }[] = [];
 
     for (const [key, messages] of Object.entries(fieldErrors)) {
-      const fieldTree = resolveFieldTree(ctx.fieldTree, key);
-      if (!fieldTree) {
-        if (typeof ngDevMode !== 'undefined' && ngDevMode) {
-          console.warn(`[vest-bridge] No FieldTree node for Vest key "${key}". Error dropped.`);
-        }
-        continue;
-      }
+      // A key without a FieldTree node (a field missing on a legacy doc, a cross-field rule name)
+      // lands on the root: dropping it would let the form report valid while the suite fails.
+      const fieldTree = resolveFieldTree(ctx.fieldTree, key) ?? ctx.fieldTree;
       for (const message of messages) {
         errors.push({ kind: `vest.${key}`, message, fieldTree });
       }

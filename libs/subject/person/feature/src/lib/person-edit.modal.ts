@@ -157,7 +157,7 @@ export class PersonEditModal {
     this.formDirty.set(false);
     this.formData.set(safeStructuredClone(this.person()));  // reset the form
     void this.hydrateSensitive(this.personKey());           // ...and re-read ssn/dob (not on the person document)
-    // This destroys and recreates the <form scVestForm> → Vest fully resets
+    // re-mount the form so its field state (touched, error notes) starts fresh
     this.showForm.set(false);
     setTimeout(() => this.showForm.set(true), 0);
   }

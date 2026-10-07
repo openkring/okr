@@ -7,7 +7,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { validateVestTree } from './vest-bridge';
 
 /**
- * `resolveFieldTree` in vest-bridge.ts SILENTLY DROPS any Vest error key it cannot resolve onto
+ * `resolveFieldTree` in vest-bridge.ts used to SILENTLY DROP any Vest error key it could not resolve onto
  * the Angular `FieldTree` (a `console.warn` under `ngDevMode`, nothing thrown) — a form that
  * looks INVALID to Vest would then report VALID to Angular, and a user could save invalid data
  * with no visible error and no change-confirmation bar. `workflow-rule.form.ts` (system/workflow/ui)
@@ -82,5 +82,24 @@ describe('validateVestTree — array path through a real Angular Signal Forms fo
     expect(tree().valid()).toBe(false);
     expect(tree.steps[0].messageKey().valid()).toBe(false);
     expect(tree.steps[0].messageKey().errors().length).toBeGreaterThan(0);
+  });
+
+  it('keeps the form invalid when a Vest key has no FieldTree node (field missing on a legacy doc)', async () => {
+    appRef = await makeAppRef();
+    // Firestore docs written before a field existed come back without the property at all —
+    // a mandatory rule on it fails under a key the FieldTree cannot resolve.
+    const legacySuite = staticSuite((model: Partial<Model> & { ghost?: string }, field?: string) => {
+      if (field) only(field);
+      test('ghost', 'required', () => { enforce(model.ghost ?? '').isNotBlank(); });
+    });
+    const model = signal<Partial<Model> & { ghost?: string }>({ name: 'x' });
+
+    const tree = runInInjectionContext(appRef.injector, () =>
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      form(model, (path) => validateVestTree(path, legacySuite as any)),
+    );
+    appRef.tick();
+
+    expect(tree().valid()).toBe(false);
   });
 });
