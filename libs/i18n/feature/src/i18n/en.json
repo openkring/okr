@@ -1,14 +1,19 @@
 {
   "module": {
     "label": "Module",
-    "prompt": "Module (e.g. chat/feature)"
+    "prompt": "Module (e.g. chat/feature)",
+    "placeholder": "e.g. chat/feature",
+    "helper": "The area of the app the text belongs to."
   },
   "key": {
     "label": "Key",
-    "prompt": "Key (e.g. fields.reconnecting)"
+    "prompt": "Key (e.g. fields.reconnecting)",
+    "placeholder": "e.g. fields.reconnecting",
+    "helper": "The name of the text within that area."
   },
   "isHtml": {
-    "label": "HTML content"
+    "label": "HTML content",
+    "helper": "Turn this on if the text contains formatting such as links or bold text."
   },
   "create": {
     "label": "Create translation",
@@ -42,6 +47,24 @@
     },
     "list": {
       "title": "All overrides"
+    }
+  },
+  "lang": {
+    "placeholder": "Text in this language",
+    "de": {
+      "label": "German"
+    },
+    "en": {
+      "label": "English"
+    },
+    "fr": {
+      "label": "French"
+    },
+    "es": {
+      "label": "Spanish"
+    },
+    "it": {
+      "label": "Italian"
     }
   }
 }

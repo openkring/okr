@@ -1,0 +1,27 @@
+{
+  "name": "i18n-util",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/i18n/util/src",
+  "prefix": "okr",
+  "projectType": "library",
+  "tags": ["type:util", "scope:i18n", "platform:mobile", "platform:web"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/i18n/util",
+        "main": "libs/i18n/util/src/index.ts",
+        "tsConfig": "libs/i18n/util/tsconfig.lib.json",
+        "assets": ["libs/i18n/util/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "test": {
+      "executor": "@nx/vite:test",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": { "configFile": "libs/i18n/util/vite.config.ts" }
+    },
+    "lint": { "executor": "@nx/eslint:lint" }
+  }
+}

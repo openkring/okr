@@ -1,14 +1,19 @@
 {
   "module": {
     "label": "Module",
-    "prompt": "Module (p. ex. chat/feature)"
+    "prompt": "Module (p. ex. chat/feature)",
+    "placeholder": "p. ex. chat/feature",
+    "helper": "La partie de l'app à laquelle le texte appartient."
   },
   "key": {
     "label": "Clé",
-    "prompt": "Clé (p. ex. fields.reconnecting)"
+    "prompt": "Clé (p. ex. fields.reconnecting)",
+    "placeholder": "p. ex. fields.reconnecting",
+    "helper": "Le nom du texte dans cette partie."
   },
   "isHtml": {
-    "label": "Contenu HTML"
+    "label": "Contenu HTML",
+    "helper": "Active cette option si le texte contient une mise en forme, comme des liens ou du gras."
   },
   "create": {
     "label": "Créer une traduction",
@@ -42,6 +47,24 @@
     },
     "list": {
       "title": "Tous les remplacements"
+    }
+  },
+  "lang": {
+    "placeholder": "Texte dans cette langue",
+    "de": {
+      "label": "Allemand"
+    },
+    "en": {
+      "label": "Anglais"
+    },
+    "fr": {
+      "label": "Français"
+    },
+    "es": {
+      "label": "Espagnol"
+    },
+    "it": {
+      "label": "Italien"
     }
   }
 }

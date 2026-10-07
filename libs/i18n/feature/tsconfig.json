@@ -18,6 +18,9 @@
   "exclude": ["dist/**/*"],
   "references": [
     {
+      "path": "../ui/tsconfig.lib.json"
+    },
+    {
       "path": "../../shared/models/tsconfig.lib.json"
     },
     {

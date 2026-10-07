@@ -1,0 +1,22 @@
+{
+  "name": "i18n-ui",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/i18n/ui/src",
+  "prefix": "okr",
+  "projectType": "library",
+  "tags": ["type:ui", "scope:i18n", "platform:mobile", "platform:web"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/i18n/ui",
+        "main": "libs/i18n/ui/src/index.ts",
+        "tsConfig": "libs/i18n/ui/tsconfig.lib.json",
+        "assets": ["libs/i18n/ui/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": { "executor": "@nx/eslint:lint" }
+  }
+}

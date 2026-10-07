@@ -1,14 +1,19 @@
 {
   "module": {
     "label": "Modul",
-    "prompt": "Modul (z.B. chat/feature)"
+    "prompt": "Modul (z.B. chat/feature)",
+    "placeholder": "z.B. chat/feature",
+    "helper": "Der Bereich der App, zu dem der Text gehört."
   },
   "key": {
     "label": "Schlüssel",
-    "prompt": "Schlüssel (z.B. fields.reconnecting)"
+    "prompt": "Schlüssel (z.B. fields.reconnecting)",
+    "placeholder": "z.B. fields.reconnecting",
+    "helper": "Der Name des Textes innerhalb des Bereichs."
   },
   "isHtml": {
-    "label": "HTML-Inhalt"
+    "label": "HTML-Inhalt",
+    "helper": "Schalte das ein, wenn der Text Formatierungen wie Links oder Fettschrift enthält."
   },
   "create": {
     "label": "Übersetzunge erstellen",
@@ -42,6 +47,24 @@
     },
     "list": {
       "title": "Alle Überschreibungen"
+    }
+  },
+  "lang": {
+    "placeholder": "Text in dieser Sprache",
+    "de": {
+      "label": "Deutsch"
+    },
+    "en": {
+      "label": "Englisch"
+    },
+    "fr": {
+      "label": "Französisch"
+    },
+    "es": {
+      "label": "Spanisch"
+    },
+    "it": {
+      "label": "Italienisch"
     }
   }
 }

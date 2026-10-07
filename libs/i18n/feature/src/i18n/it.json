@@ -1,14 +1,19 @@
 {
   "module": {
     "label": "Modulo",
-    "prompt": "Modulo (ad es. chat/feature)"
+    "prompt": "Modulo (ad es. chat/feature)",
+    "placeholder": "p. es. chat/feature",
+    "helper": "La parte dell'app a cui appartiene il testo."
   },
   "key": {
     "label": "Chiave",
-    "prompt": "Chiave (ad es. fields.reconnecting)"
+    "prompt": "Chiave (ad es. fields.reconnecting)",
+    "placeholder": "p. es. fields.reconnecting",
+    "helper": "Il nome del testo all'interno di quella parte."
   },
   "isHtml": {
-    "label": "Contenuto HTML"
+    "label": "Contenuto HTML",
+    "helper": "Attiva questa opzione se il testo contiene formattazione, come link o grassetto."
   },
   "create": {
     "label": "Crea traduzione",
@@ -42,6 +47,24 @@
     },
     "list": {
       "title": "Tutte le sostituzioni"
+    }
+  },
+  "lang": {
+    "placeholder": "Testo in questa lingua",
+    "de": {
+      "label": "Tedesco"
+    },
+    "en": {
+      "label": "Inglese"
+    },
+    "fr": {
+      "label": "Francese"
+    },
+    "es": {
+      "label": "Spagnolo"
+    },
+    "it": {
+      "label": "Italiano"
     }
   }
 }

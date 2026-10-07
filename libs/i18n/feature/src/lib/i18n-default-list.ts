@@ -14,7 +14,7 @@ import { createActionSheetButton, createActionSheetOptions } from '@okr/shared-u
 import { SvgIconPipe } from '@okr/shared-pipes';
 
 import { I18nDefaultStore } from './i18n-default.store';
-import { I18nDefaultEditModal } from './i18n-default-edit.modal';
+import { I18nDefaultEditModal } from '@okr/i18n-ui';
 
 @Component({
   selector: 'okr-i18n-default-list',

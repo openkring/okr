@@ -14,7 +14,7 @@ import { createActionSheetButton, createActionSheetOptions } from '@okr/shared-u
 import { SvgIconPipe } from '@okr/shared-pipes';
 
 import { I18nOverrideStore } from './i18n-override.store';
-import { I18nOverrideEditModal } from './i18n-override-edit.modal';
+import { I18nOverrideEditModal } from '@okr/i18n-ui';
 
 @Component({
   selector: 'okr-i18n-override-list',
