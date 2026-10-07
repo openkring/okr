@@ -136,7 +136,7 @@ import { ExpenseListId, ExpenseStore } from './expense.store';
                   <span>{{ expense.userName }}</span>
                 </ion-col>
               }
-              <ion-col>{{ expense.abstract }}@if (hasReceipt(expense)) {<ion-icon class="attach-icon" src="{{ 'attach' | svgIcon }}" aria-hidden="true" />}</ion-col>
+              <ion-col>{{ expense.abstract }}@if (hasReceipt(expense)) {<ion-icon class="attach-icon" src="{{ 'attachment' | svgIcon }}" aria-hidden="true" />}</ion-col>
               <ion-col size="2" class="num">{{ amount(expense) }} {{ expense.currency }}</ion-col>
             </ion-row>
           }
@@ -154,7 +154,7 @@ import { ExpenseListId, ExpenseStore } from './expense.store';
                 </ion-avatar>
               }
               <ion-label>
-                <h3>{{ expense.abstract }}@if (hasReceipt(expense)) {<ion-icon class="attach-icon" src="{{ 'attach' | svgIcon }}" aria-hidden="true" />}</h3>
+                <h3>{{ expense.abstract }}@if (hasReceipt(expense)) {<ion-icon class="attach-icon" src="{{ 'attachment' | svgIcon }}" aria-hidden="true" />}</h3>
                 <p>{{ viewDate(expense) }} · {{ amount(expense) }} {{ expense.currency }}</p>
                 @if (showSubmitter() && expense.userName) {
                   <p>{{ expense.userName }}</p>

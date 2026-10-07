@@ -104,13 +104,13 @@ type ComposerSegment = 'editor' | 'preview' | 'list';
                     <ion-col size="9">
                       @if (filename().length > 0) {
                         <ion-chip [outline]="true">
-                          <ion-icon src="{{ 'attach' | svgIcon }}" />
+                          <ion-icon src="{{ 'attachment' | svgIcon }}" />
                           <ion-label>{{ filename() }}</ion-label>
                         </ion-chip>
                       }
                       @for (att of extraAttachments(); track att.filename) {
                         <ion-chip [outline]="true">
-                          <ion-icon src="{{ 'attach' | svgIcon }}" />
+                          <ion-icon src="{{ 'attachment' | svgIcon }}" />
                           <ion-label>{{ att.filename }}</ion-label>
                           <ion-icon src="{{ 'cancel' | svgIcon }}" (click)="removeAttachment(att.filename)" />
                         </ion-chip>

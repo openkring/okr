@@ -107,7 +107,7 @@ import { InvoiceStore } from './invoice.store';
               <ion-col>
                 <ion-label>
                   <span class="inv-id">{{ invoice.invoiceId }}</span>
-                  @if(hasVoucher(invoice)) { <ion-icon class="attach-icon" src="{{ 'attach' | svgIcon }}" aria-hidden="true" /> }
+                  @if(hasVoucher(invoice)) { <ion-icon class="attach-icon" src="{{ 'attachment' | svgIcon }}" aria-hidden="true" /> }
                   <p class="inv-title">{{ invoice.title }}</p>
                 </ion-label>
               </ion-col>

@@ -85,7 +85,7 @@ import { BillStore } from './bill.store';
               <ion-col>
                 <ion-label>
                   <span class="bill-id">{{ bill.billId }}</span>
-                  @if(hasVoucher(bill)) { <ion-icon class="attach-icon" src="{{ 'attach' | svgIcon }}" aria-hidden="true" /> }
+                  @if(hasVoucher(bill)) { <ion-icon class="attach-icon" src="{{ 'attachment' | svgIcon }}" aria-hidden="true" /> }
                   <p class="bill-title">{{ bill.title }}</p>
                 </ion-label>
               </ion-col>
