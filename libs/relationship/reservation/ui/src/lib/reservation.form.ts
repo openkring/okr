@@ -1,8 +1,10 @@
-import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, effect, input, model, output } from '@angular/core';
+import { form } from '@angular/forms/signals';
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 import { DEFAULT_CURRENCY, DEFAULT_DATE, DEFAULT_KEY, DEFAULT_PERIODICITY, DEFAULT_RES_REASON, DEFAULT_RES_STATE, DEFAULT_TIME, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { CategoryListModel, MoneyModel, ReservationModel, RoleName, UserModel } from '@okr/shared-models';
 import { CategorySelect, Checkbox, CheckboxI18n, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n, TimeInput, TimeInputI18n , ErrorNote} from '@okr/shared-ui';
+import { validateVestTree } from '@okr/shared-util-angular';
 import { coerceBoolean, getAvatarName, hasRole } from '@okr/shared-util-core';
 
 import { reservationValidations, ReservationI18n } from '@okr/relationship-reservation-util';
@@ -226,7 +228,15 @@ export class ReservationForm {
   protected startTimeI18n = computed(() => ({ name: 'startTime', label: this.i18n().startTime_label(), placeholder: this.i18n().startTime_placeholder() } as TimeInputI18n));
   protected fullDayI18n   = computed(() => ({ name: 'fullDay', label: this.i18n().fullDay_label(), helper: this.i18n().fullDay_helper() } as CheckboxI18n));
 
-  // validation and errors
+  // The suite needs the tenant and tags, which validateVestTree does not pass — so the bridge
+  // calls it through a closure that adds them.
+  private readonly suiteWithContext = (model: ReservationModel, field?: string) =>
+    reservationValidations(model, this.tenantId(), this.allTags(), field);
+  protected readonly reservationForm = form(this.formData, (path) =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    validateVestTree(path, this.suiteWithContext as any));
+
+  // per-field errors for the notes under each field
   private readonly validationResult = computed(() => reservationValidations(this.formData(), this.tenantId(), this.allTags()));
   protected endDateErrors = computed(() => this.validationResult().getErrors('endDate'));
   protected reasonErrors = computed(() => this.validationResult().getErrors('reason'));
@@ -238,42 +248,42 @@ export class ReservationForm {
   protected refErrors = computed(() => this.validationResult().getErrors('ref'));
 
   // fields
-  protected reserverAvatar = linkedSignal(() => this.formData().reserver);
+  protected reserverAvatar = computed(() => this.formData().reserver);
   protected reserverName = computed(() => getAvatarName(this.reserverAvatar(), this.currentUser()?.nameDisplay));
   protected reserverModelType = computed(() => this.reserverAvatar()?.modelType as string ?? 'person');
   protected reserverKey = computed(() => this.reserverAvatar()?.key ?? DEFAULT_KEY);
   protected reserverAvatarKey = computed(() => `${this.reserverModelType()}.${this.reserverKey()}`);
 
-  protected resourceAvatar = linkedSignal(() => this.formData().resource);
+  protected resourceAvatar = computed(() => this.formData().resource);
   protected resourceName = computed(() => getAvatarName(this.resourceAvatar()));
   protected resourceType = computed(() => this.resourceAvatar()?.type ?? '');
   protected resourceKey = computed(() => this.resourceAvatar()?.key ?? DEFAULT_KEY);
   protected resourceAvatarKey = computed(() => `resource.${this.resourceType()}:${this.resourceKey()}`);
 
-  protected startDate = linkedSignal(() => this.formData().startDate ?? DEFAULT_DATE);
-  protected startTime = linkedSignal(() => this.formData().startTime ?? DEFAULT_TIME);
-  protected durationMinutes = linkedSignal(() => this.formData().durationMinutes);
-  protected endDate = linkedSignal(() => this.formData().endDate ?? this.startDate());
-  protected fullDay = linkedSignal(() => this.formData().fullDay ?? false);
+  protected startDate = computed(() => this.formData().startDate ?? DEFAULT_DATE);
+  protected startTime = computed(() => this.formData().startTime ?? DEFAULT_TIME);
+  protected durationMinutes = computed(() => this.formData().durationMinutes);
+  protected endDate = computed(() => this.formData().endDate ?? this.startDate());
+  protected fullDay = computed(() => this.formData().fullDay ?? false);
 
-  protected participants = linkedSignal(() => this.formData().participants ?? '');
-  protected area = linkedSignal(() => this.formData().area ?? '');
-  protected ref = linkedSignal(() => this.formData().ref ?? '');
-  protected state = linkedSignal(() => this.formData().state ?? DEFAULT_RES_STATE);
-  protected reason = linkedSignal(() => this.formData().reason ?? DEFAULT_RES_REASON);
-  protected order = linkedSignal(() => this.formData().order ?? 0);
-  protected price = linkedSignal(() => this.formData().price);
+  protected participants = computed(() => this.formData().participants ?? '');
+  protected area = computed(() => this.formData().area ?? '');
+  protected ref = computed(() => this.formData().ref ?? '');
+  protected state = computed(() => this.formData().state ?? DEFAULT_RES_STATE);
+  protected reason = computed(() => this.formData().reason ?? DEFAULT_RES_REASON);
+  protected order = computed(() => this.formData().order ?? 0);
+  protected price = computed(() => this.formData().price);
   // displayed amount; may be empty (no price) — the cast lets the number input render an empty field instead of snapping to 0
-  protected amount = linkedSignal(() => this.price()?.amount as number);
-  protected currency = linkedSignal(() => this.price()?.currency ?? DEFAULT_CURRENCY);
-  protected tags = linkedSignal(() => this.formData().tags ?? '');
-  protected notes = linkedSignal(() => this.formData().notes ?? '');
-  protected name = linkedSignal(() => this.formData().name ?? '');
-  protected description = linkedSignal(() => this.formData().description ?? '');
+  protected amount = computed(() => this.price()?.amount as number);
+  protected currency = computed(() => this.price()?.currency ?? DEFAULT_CURRENCY);
+  protected tags = computed(() => this.formData().tags ?? '');
+  protected notes = computed(() => this.formData().notes ?? '');
+  protected name = computed(() => this.formData().name ?? '');
+  protected description = computed(() => this.formData().description ?? '');
   protected okey = computed(() => this.formData().okey ?? '');
 
   constructor() {
-    effect(() => this.valid.emit(this.validationResult().isValid()));
+    effect(() => this.valid.emit(this.reservationForm().valid()));
   }
 
   /******************************* actions *************************************** */

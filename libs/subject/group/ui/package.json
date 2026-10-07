@@ -13,7 +13,8 @@
     "@okr/shared-i18n": "*",
     "@okr/shared-ui": "*",
     "@okr/shared-util-core": "*",
-    "@okr/subject-group-util": "*"
+    "@okr/subject-group-util": "*",
+    "@okr/shared-util-angular": "*",
+    "@angular/forms": "*"
   }
 }
-

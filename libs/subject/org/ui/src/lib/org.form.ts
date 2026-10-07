@@ -1,9 +1,11 @@
-import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, effect, input, model, output } from '@angular/core';
+import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
 import { BexioIdMask, ChVatMask } from '@okr/shared-config';
 import { CategoryListModel, OrgModel, RoleName, UserModel } from '@okr/shared-models';
 import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, TextInput, TextInputI18n , ErrorNote} from '@okr/shared-ui';
+import { validateVestTree } from '@okr/shared-util-angular';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 
 import { OrgI18n, orgValidations } from '@okr/subject-org-util';
@@ -126,9 +128,16 @@ export class OrgForm {
   public dirty = output<boolean>();
   public valid = output<boolean>();
 
-  constructor() { effect(() => this.valid.emit(this.validationResult().isValid())); }
+  constructor() { effect(() => this.valid.emit(this.orgForm().valid())); }
 
   // validation and errors
+  // The suite needs tenantId and allTags, which validateVestTree does not pass — so the bridge
+  // calls it through a closure that adds them.
+  private readonly suiteWithContext = (model: OrgModel, field?: string) =>
+    orgValidations(model, this.tenantId(), this.allTags(), field);
+  protected readonly orgForm = form(this.formData, (path) =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    validateVestTree(path, this.suiteWithContext as any));
   private readonly validationResult = computed(() => orgValidations(this.formData(), this.tenantId(), this.allTags()));
   protected dateOfFoundationErrors = computed(() => this.validationResult().getErrors('dateOfFoundation'));
   protected dateOfLiquidationErrors = computed(() => this.validationResult().getErrors('dateOfLiquidation'));
@@ -139,14 +148,14 @@ export class OrgForm {
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
 
   // fields
-  protected type = linkedSignal(() => this.formData().type ?? 'association');
-  protected name = linkedSignal(() => this.formData().name ?? '');
-  protected dateOfFoundation = linkedSignal(() => this.formData().dateOfFoundation ?? '');
-  protected dateOfLiquidation = linkedSignal(() => this.formData().dateOfLiquidation ?? '');
-  protected taxId = linkedSignal(() => this.formData().taxId ?? '');
-  protected bexioId = linkedSignal(() => this.formData().bexioId ?? '');
-  protected tags = linkedSignal(() => this.formData().tags ?? '');
-  protected notes = linkedSignal(() => this.formData().notes ?? '');
+  protected readonly type = computed(() => this.formData().type ?? 'association');
+  protected readonly name = computed(() => this.formData().name ?? '');
+  protected readonly dateOfFoundation = computed(() => this.formData().dateOfFoundation ?? '');
+  protected readonly dateOfLiquidation = computed(() => this.formData().dateOfLiquidation ?? '');
+  protected readonly taxId = computed(() => this.formData().taxId ?? '');
+  protected readonly bexioId = computed(() => this.formData().bexioId ?? '');
+  protected readonly tags = computed(() => this.formData().tags ?? '');
+  protected readonly notes = computed(() => this.formData().notes ?? '');
   protected okey = computed(() => this.formData().okey ?? '');
 
   // passing constants to template

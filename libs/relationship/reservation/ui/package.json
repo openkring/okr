@@ -13,6 +13,8 @@
     "@okr/shared-categories": "*",
     "@okr/shared-ui": "*",
     "@okr/shared-util-core": "*",
-    "@okr/relationship-reservation-util": "*"
+    "@okr/shared-util-angular": "*",
+    "@okr/relationship-reservation-util": "*",
+    "@angular/forms": "*"
   }
 }

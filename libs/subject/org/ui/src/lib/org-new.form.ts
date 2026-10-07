@@ -1,9 +1,11 @@
-import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, effect, input, model, output } from '@angular/core';
+import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
 import { BexioIdMask, ChVatMask } from '@okr/shared-config';
 import { CategoryListModel, City, RoleName, UserModel } from '@okr/shared-models';
 import { CategorySelect, Chips, CountrySelect, CountrySelectI18n, DateInput, DateInputI18n, EmailInput, EmailInputI18n, ErrorNote, NotesInput, NotesInputI18n, PhoneInput, PhoneInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { validateVestTree } from '@okr/shared-util-angular';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 import { CITY_LENGTH, DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_ID, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORG_TYPE, DEFAULT_PHONE, DEFAULT_TAGS, DEFAULT_URL, DESCRIPTION_LENGTH, EMAIL_LENGTH, NAME_LENGTH, NUMBER_LENGTH, PHONE_LENGTH, SHORT_NAME_LENGTH, ZIP_LENGTH } from '@okr/shared-constants';
 
@@ -101,7 +103,7 @@ import { ZefixLookup } from './zefix-lookup';
                 <okr-phone [i18n]="phoneI18n()" [value]="phone()" (valueChange)="onFieldChange('phone', $event)" [maxLength]="phoneLength" [readOnly]="isReadOnly()" />
                 <okr-error-note [errors]="phoneErrors()" />
               </ion-col>
-              <ion-col size="12">
+              <ion-col size="12" size-md="6">
                 <okr-email [i18n]="emailI18n()" [value]="email()" (valueChange)="onFieldChange('email', $event)" [maxLength]="emailLength" [readOnly]="isReadOnly()" />
                 <okr-error-note [errors]="emailErrors()" />                                                                                                                     
               </ion-col>
@@ -191,9 +193,12 @@ export class OrgNewForm {
   public dirty = output<boolean>();
   public valid = output<boolean>();
   
-  constructor() { effect(() => this.valid.emit(this.validationResult().isValid())); }
+  constructor() { effect(() => this.valid.emit(this.orgNewForm().valid())); }
 
   // validation and errors
+  protected readonly orgNewForm = form(this.formData, (path) =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    validateVestTree(path, orgNewFormValidations as any));
   private readonly validationResult = computed(() => orgNewFormValidations(this.formData()));
   protected dateOfFoundationErrors = computed(() => this.validationResult().getErrors('dateOfFoundation'));
   protected dateOfLiquidationErrors = computed(() => this.validationResult().getErrors('dateOfLiquidation'));
@@ -211,22 +216,22 @@ export class OrgNewForm {
   protected urlErrors = computed(() => this.validationResult().getErrors('url'));
 
   // fields
-  protected type = linkedSignal(() => this.formData().type ?? DEFAULT_ORG_TYPE);
-  protected name = linkedSignal(() => this.formData().name ?? DEFAULT_NAME);
-  protected dateOfFoundation = linkedSignal(() => this.formData().dateOfFoundation ?? DEFAULT_DATE);
-  protected dateOfLiquidation = linkedSignal(() => this.formData().dateOfLiquidation ?? DEFAULT_DATE);
-  protected streetName = linkedSignal(() => this.formData().streetName ?? DEFAULT_NAME);
-  protected streetNumber = linkedSignal(() => this.formData().streetNumber ?? '');
-  protected zipCode = linkedSignal(() => this.formData().zipCode ?? '');
-  protected city = linkedSignal(() => this.formData().city ?? '');
-  protected countryCode = linkedSignal(() => this.formData().countryCode ?? '');
-  protected phone = linkedSignal(() => this.formData().phone ?? DEFAULT_PHONE);
-  protected email = linkedSignal(() => this.formData().email ?? DEFAULT_EMAIL);
-  protected url = linkedSignal(() => this.formData().url ?? DEFAULT_URL);
-  protected taxId = linkedSignal(() => this.formData().taxId ?? DEFAULT_ID);
-  protected bexioId = linkedSignal(() => this.formData().bexioId ?? DEFAULT_ID);
-  protected tags = linkedSignal(() => this.formData().tags ?? DEFAULT_TAGS);
-  protected notes = linkedSignal(() => this.formData().notes ?? DEFAULT_NOTES);
+  protected readonly type = computed(() => this.formData().type ?? DEFAULT_ORG_TYPE);
+  protected readonly name = computed(() => this.formData().name ?? DEFAULT_NAME);
+  protected readonly dateOfFoundation = computed(() => this.formData().dateOfFoundation ?? DEFAULT_DATE);
+  protected readonly dateOfLiquidation = computed(() => this.formData().dateOfLiquidation ?? DEFAULT_DATE);
+  protected readonly streetName = computed(() => this.formData().streetName ?? DEFAULT_NAME);
+  protected readonly streetNumber = computed(() => this.formData().streetNumber ?? '');
+  protected readonly zipCode = computed(() => this.formData().zipCode ?? '');
+  protected readonly city = computed(() => this.formData().city ?? '');
+  protected readonly countryCode = computed(() => this.formData().countryCode ?? '');
+  protected readonly phone = computed(() => this.formData().phone ?? DEFAULT_PHONE);
+  protected readonly email = computed(() => this.formData().email ?? DEFAULT_EMAIL);
+  protected readonly url = computed(() => this.formData().url ?? DEFAULT_URL);
+  protected readonly taxId = computed(() => this.formData().taxId ?? DEFAULT_ID);
+  protected readonly bexioId = computed(() => this.formData().bexioId ?? DEFAULT_ID);
+  protected readonly tags = computed(() => this.formData().tags ?? DEFAULT_TAGS);
+  protected readonly notes = computed(() => this.formData().notes ?? DEFAULT_NOTES);
 
   // passing constants to template
   protected bexioMask = BexioIdMask;

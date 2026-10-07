@@ -1,9 +1,11 @@
-import { Component, computed, effect, input, linkedSignal, model, output } from "@angular/core";
+import { Component, computed, effect, input, model, output } from "@angular/core";
+import { form } from "@angular/forms/signals";
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonRow } from "@ionic/angular/standalone";
 
 import { PhotoUsages, PrivacyUsages } from "@okr/shared-categories";
 import { PrivacyUsage, UserModel } from "@okr/shared-models";
-import { CategoryOld, CategoryOldI18n, Checkbox, CheckboxI18n } from "@okr/shared-ui";
+import { CategoryOld, CategoryOldI18n, Checkbox, CheckboxI18n, ErrorNote } from "@okr/shared-ui";
+import { validateVestTree } from "@okr/shared-util-angular";
 import { coerceBoolean } from "@okr/shared-util-core";
 
 import { USER_PRIVACY_FORM_SHAPE, UserI18n, UserPrivacyFormModel, userPrivacyFormValidations } from "@okr/user-util";
@@ -12,7 +14,7 @@ import { USER_PRIVACY_FORM_SHAPE, UserI18n, UserPrivacyFormModel, userPrivacyFor
   selector: 'okr-user-privacy-form',
   standalone: true,
   imports: [
-    CategoryOld, Checkbox,
+    CategoryOld, Checkbox, ErrorNote,
     IonCard, IonCardHeader, IonCardContent, IonCardTitle,
     IonGrid, IonRow, IonCol, IonItem, IonLabel
   ],
@@ -29,21 +31,27 @@ import { USER_PRIVACY_FORM_SHAPE, UserI18n, UserPrivacyFormModel, userPrivacyFor
             <ion-row>
               <ion-col size="12" size-md="6">
                 <okr-category-old [i18n]="usageImagesI18n()" [value]="usageImages()" (valueChange)="onFieldChange('usageImages', $event)" [categories]="photoUsages" [readOnly]="readOnly()" />
+                <okr-error-note [errors]="usageImagesErrors()" />
               </ion-col>
               <ion-col size="12" size-md="6">
                 <okr-category-old [i18n]="usageDateOfBirthI18n()" [value]="usageDateOfBirth()" (valueChange)="onFieldChange('usageDateOfBirth', $event)" [categories]="privacyUsages" [readOnly]="readOnly()" />
+                <okr-error-note [errors]="usageDateOfBirthErrors()" />
               </ion-col>
               <ion-col size="12" size-md="6">
                 <okr-category-old [i18n]="usagePostalAddressI18n()" [value]="usagePostalAddress()" (valueChange)="onFieldChange('usagePostalAddress', $event)" [categories]="privacyUsages" [readOnly]="readOnly()" />
+                <okr-error-note [errors]="usagePostalAddressErrors()" />
               </ion-col>
               <ion-col size="12" size-md="6">
                 <okr-category-old [i18n]="usageEmailI18n()" [value]="usageEmail()" (valueChange)="onFieldChange('usageEmail', $event)" [categories]="privacyUsages" [readOnly]="readOnly()" />
+                <okr-error-note [errors]="usageEmailErrors()" />
               </ion-col>
               <ion-col size="12" size-md="6">
                 <okr-category-old [i18n]="usagePhoneI18n()" [value]="usagePhone()" (valueChange)="onFieldChange('usagePhone', $event)" [categories]="privacyUsages" [readOnly]="readOnly()" />
+                <okr-error-note [errors]="usagePhoneErrors()" />
               </ion-col>
               <ion-col size="12" size-md="6">
                 <okr-category-old [i18n]="usageNameI18n()" [value]="usageName()" (valueChange)="onFieldChange('usageName', $event)" [categories]="privacyUsages" [readOnly]="readOnly()" />
+                <okr-error-note [errors]="usageNameErrors()" />
               </ion-col>
             </ion-row>
             @if(isScs()) {
@@ -88,16 +96,26 @@ export class UserPrivacyForm {
 
   // validation and errors
   protected readonly shape = USER_PRIVACY_FORM_SHAPE;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  protected readonly privacyForm = form(this.formData, (path) => validateVestTree(path, userPrivacyFormValidations as any));
+
+  // per-field errors for the notes under each field
   private readonly validationResult = computed(() => userPrivacyFormValidations(this.formData()));
+  protected readonly usageImagesErrors = computed(() => this.validationResult().getErrors('usageImages'));
+  protected readonly usageDateOfBirthErrors = computed(() => this.validationResult().getErrors('usageDateOfBirth'));
+  protected readonly usagePostalAddressErrors = computed(() => this.validationResult().getErrors('usagePostalAddress'));
+  protected readonly usageEmailErrors = computed(() => this.validationResult().getErrors('usageEmail'));
+  protected readonly usagePhoneErrors = computed(() => this.validationResult().getErrors('usagePhone'));
+  protected readonly usageNameErrors = computed(() => this.validationResult().getErrors('usageName'));
 
   // fields
-  protected usageImages = linkedSignal(() => this.formData().usageImages ?? PrivacyUsage.Restricted);
-  protected usageDateOfBirth = linkedSignal(() => this.formData().usageDateOfBirth ?? PrivacyUsage.Restricted);
-  protected usagePostalAddress = linkedSignal(() => this.formData().usagePostalAddress ?? PrivacyUsage.Restricted);
-  protected usageEmail = linkedSignal(() => this.formData().usageEmail ?? PrivacyUsage.Restricted);
-  protected usagePhone = linkedSignal(() => this.formData().usagePhone ?? PrivacyUsage.Restricted);
-  protected usageName = linkedSignal(() => this.formData().usageName ?? PrivacyUsage.Restricted);
-  protected srvEmail = linkedSignal(() => this.formData().srvEmail ?? false);
+  protected readonly usageImages = computed(() => this.formData().usageImages ?? PrivacyUsage.Restricted);
+  protected readonly usageDateOfBirth = computed(() => this.formData().usageDateOfBirth ?? PrivacyUsage.Restricted);
+  protected readonly usagePostalAddress = computed(() => this.formData().usagePostalAddress ?? PrivacyUsage.Restricted);
+  protected readonly usageEmail = computed(() => this.formData().usageEmail ?? PrivacyUsage.Restricted);
+  protected readonly usagePhone = computed(() => this.formData().usagePhone ?? PrivacyUsage.Restricted);
+  protected readonly usageName = computed(() => this.formData().usageName ?? PrivacyUsage.Restricted);
+  protected readonly srvEmail = computed(() => this.formData().srvEmail ?? false);
   protected isScs = computed(() => this.currentUser()?.tenants.includes('scs') || this.currentUser()?.tenants.includes('test'));
 
 // passing constants to template
@@ -106,7 +124,7 @@ export class UserPrivacyForm {
   protected photoUsages = PhotoUsages;
 
   constructor() {
-    effect(() => this.valid.emit(this.validationResult().isValid()));
+    effect(() => this.valid.emit(this.privacyForm().valid()));
   }
 
   protected onFieldChange(fieldName: string, fieldValue: string | string[] | number | boolean): void {

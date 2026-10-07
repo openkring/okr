@@ -1,4 +1,5 @@
-import { Component, Signal, computed, effect, input, linkedSignal, model, output, signal } from '@angular/core';
+import { Component, Signal, computed, effect, input, model, output, signal } from '@angular/core';
+import { form } from '@angular/forms/signals';
 import {
   IonButton, IonCol, IonGrid, IonIcon, IonItem, IonLabel,
   IonList, IonRow, IonSelect, IonSelectOption, IonTextarea,
@@ -6,7 +7,7 @@ import {
 
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { ErrorNote, TextInput, TextInputI18n } from '@okr/shared-ui';
-import { formatIban, IbanFormat } from '@okr/shared-util-angular';
+import { formatIban, IbanFormat, validateVestTree } from '@okr/shared-util-angular';
 
 import { ALLOWED_CURRENCIES, ExpenseFormValue, expenseValidations } from '@okr/finance-expense-util';
 
@@ -162,21 +163,27 @@ export class ExpenseForm {
   protected readonly currencies = ALLOWED_CURRENCIES;
   protected readonly formatIban = (iban: string) => formatIban(iban, IbanFormat.Friendly);
 
+  // the suite takes only (model, field?), so the bridge gets it directly
+  protected readonly expenseForm = form(this.formData, (path) =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    validateVestTree(path, expenseValidations as any));
+
   private readonly result = computed(() => expenseValidations(this.formData()));
   protected readonly abstractErrors = computed(() => this.result().getErrors('abstract'));
   protected readonly amountErrors   = computed(() => this.result().getErrors('amountCHF'));
   protected readonly currencyErrors = computed(() => this.result().getErrors('currency'));
   protected readonly ibanErrors     = computed(() => this.result().getErrors('iban'));
 
-  protected abstract    = linkedSignal(() => this.formData().abstract);
-  protected amountCHF   = linkedSignal(() => this.formData().amountCHF);
-  protected currency    = linkedSignal(() => this.formData().currency);
-  protected transferTo  = linkedSignal(() => this.formData().transferTo);
-  protected iban        = linkedSignal(() => this.formData().iban);
-  protected note        = linkedSignal(() => this.formData().note);
+  protected readonly abstract = computed(() => this.formData()?.abstract);
+  protected readonly amountCHF = computed(() => this.formData()?.amountCHF);
+  protected readonly currency = computed(() => this.formData()?.currency);
+  protected readonly transferTo = computed(() => this.formData()?.transferTo);
+  protected readonly iban = computed(() => this.formData()?.iban);
+  protected readonly note = computed(() => this.formData()?.note);
 
   protected amountCHFStr  = computed(() => this.amountCHF() > 0 ? String(this.amountCHF()) : '');
   protected readonly hasFavoriteIban = computed(() => this.favoriteIban().trim().length > 0);
+  // genuine local UI state (which IBAN widget is shown), not a formData field — stays a signal
   /** True once the user chose to redirect the transfer to a different IBAN than their saved one. */
   protected readonly editingIban = signal(false);
 
@@ -187,7 +194,7 @@ export class ExpenseForm {
   }
 
   constructor() {
-    effect(() => this.valid.emit(this.result().isValid()));
+    effect(() => this.valid.emit(this.expenseForm().valid()));
   }
 
   protected abstractI18n = computed(() => ({

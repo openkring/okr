@@ -16,6 +16,7 @@
     "@okr/shared-pipes": "*",
     "@okr/shared-util-angular": "*",
     "@okr/shared-i18n": "*",
-    "@okr/finance-account-util": "*"
+    "@okr/finance-account-util": "*",
+    "@angular/forms": "*"
   }
 }

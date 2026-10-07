@@ -16,6 +16,8 @@
     "@okr/relationship-invitation-util": "*",
     "@okr/avatar-ui": "*",
     "@okr/avatar-util": "*",
-    "@okr/shared-pipes": "*"
+    "@okr/shared-pipes": "*",
+    "@okr/shared-util-angular": "*",
+    "@angular/forms": "*"
   }
 }

@@ -1,4 +1,5 @@
-import { Component, computed, effect, inject, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, effect, inject, input, model, output } from '@angular/core';
+import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonRow, ToastController } from '@ionic/angular/standalone';
 
 import { CategoryListModel, DocumentModel, RoleName, UserModel } from '@okr/shared-models';
@@ -6,7 +7,7 @@ import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInput
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 import { DEFAULT_DATE, DEFAULT_NOTES, DEFAULT_TAGS, LONG_NAME_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { FileLogoPipe, SvgIconPipe, ThumbnailUrlPipe } from '@okr/shared-pipes';
-import { copyToClipboard, showToast } from '@okr/shared-util-angular';
+import { copyToClipboard, showToast, validateVestTree } from '@okr/shared-util-angular';
 import { ENV } from '@okr/shared-config';
 
 import { DocumentI18n, documentValidations } from '@okr/content-document-util';
@@ -172,7 +173,15 @@ export class DocumentForm {
   public valid = output<boolean>();
   public priorVersionClicked = output<string>();
 
-  constructor() { effect(() => this.valid.emit(this.validationResult().isValid())); }
+  // The suite needs the tenant id and the tags, which validateVestTree does not pass — so the bridge
+  // calls it through a closure that adds them.
+  private readonly suiteWithContext = (model: DocumentModel, field?: string) =>
+    documentValidations(model, this.env.tenantId, this.allTags(), field);
+  protected readonly documentForm = form(this.formData, (path) =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    validateVestTree(path, this.suiteWithContext as any));
+
+  constructor() { effect(() => this.valid.emit(this.documentForm().valid())); }
 
   // validations and errors
   private readonly validationResult = computed(() => documentValidations(this.formData(), this.env.tenantId, this.allTags()));
@@ -190,24 +199,24 @@ export class DocumentForm {
   protected versionErrors = computed(() => this.validationResult().getErrors('version'));
 
   // fields
-  protected fullPath = linkedSignal(() => this.formData().fullPath ?? '');
-  protected title = linkedSignal(() => this.formData().title ?? '');
-  protected altText = linkedSignal(() => this.formData().altText ?? '');
-  protected credit = linkedSignal(() => this.formData().credit ?? '');
-  protected type = linkedSignal(() => this.formData().type ?? '');
-  protected source = linkedSignal(() => this.formData().source ?? '');
-  protected url = linkedSignal(() => this.formData().url ?? '');
-  protected mimeType = linkedSignal(() => this.formData().mimeType ?? '');
-  protected authorKey = linkedSignal(() => this.formData().authorKey ?? '');
-  protected authorName = linkedSignal(() => this.formData().authorName ?? '');
-  protected dateOfDocCreation = linkedSignal(() => this.formData().dateOfDocCreation ?? DEFAULT_DATE);
-  protected dateOfDocLastUpdate = linkedSignal(() => this.formData().dateOfDocLastUpdate ?? DEFAULT_DATE);
-  protected locationKey = linkedSignal(() => this.formData().locationKey ?? '');
-  protected hash = linkedSignal(() => this.formData().hash ?? '');
-  protected priorVersionKey = linkedSignal(() => this.formData().priorVersionKey ?? '');
-  protected version = linkedSignal(() => this.formData().version ?? '');
-  protected description = linkedSignal(() => this.formData().description ?? DEFAULT_NOTES);
-  protected tags = linkedSignal(() => this.formData().tags ?? DEFAULT_TAGS);
+  protected readonly fullPath = computed(() => this.formData()?.fullPath ?? '');
+  protected readonly title = computed(() => this.formData()?.title ?? '');
+  protected readonly altText = computed(() => this.formData()?.altText ?? '');
+  protected readonly credit = computed(() => this.formData()?.credit ?? '');
+  protected readonly type = computed(() => this.formData()?.type ?? '');
+  protected readonly source = computed(() => this.formData()?.source ?? '');
+  protected readonly url = computed(() => this.formData()?.url ?? '');
+  protected readonly mimeType = computed(() => this.formData()?.mimeType ?? '');
+  protected readonly authorKey = computed(() => this.formData()?.authorKey ?? '');
+  protected readonly authorName = computed(() => this.formData()?.authorName ?? '');
+  protected readonly dateOfDocCreation = computed(() => this.formData()?.dateOfDocCreation ?? DEFAULT_DATE);
+  protected readonly dateOfDocLastUpdate = computed(() => this.formData()?.dateOfDocLastUpdate ?? DEFAULT_DATE);
+  protected readonly locationKey = computed(() => this.formData()?.locationKey ?? '');
+  protected readonly hash = computed(() => this.formData()?.hash ?? '');
+  protected readonly priorVersionKey = computed(() => this.formData()?.priorVersionKey ?? '');
+  protected readonly version = computed(() => this.formData()?.version ?? '');
+  protected readonly description = computed(() => this.formData()?.description ?? DEFAULT_NOTES);
+  protected readonly tags = computed(() => this.formData()?.tags ?? DEFAULT_TAGS);
   protected okey = computed(() => this.formData().okey ?? '');
 
   protected okeyI18n = computed(() => ({

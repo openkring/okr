@@ -1,4 +1,5 @@
-import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, effect, input, model, output } from '@angular/core';
+import { form } from '@angular/forms/signals';
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 
 import { BexioIdMask, ChSsnMask } from '@okr/shared-config';
@@ -6,7 +7,7 @@ import { CategoryListModel, City, RoleName, UserModel } from '@okr/shared-models
 import { CategorySelect, Checkbox, CheckboxI18n, Chips, CountrySelect, CountrySelectI18n, DateInput, DateInputI18n, EmailInput, EmailInputI18n, ErrorNote, NotesInput, NotesInputI18n, PhoneInput, PhoneInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, getTodayStr, hasRole } from '@okr/shared-util-core';
 import { CITY_LENGTH, DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, DEFAULT_LOCALE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PHONE, DEFAULT_TAGS, DEFAULT_URL, DESCRIPTION_LENGTH, EMAIL_LENGTH, NUMBER_LENGTH, PHONE_LENGTH, SHORT_NAME_LENGTH, ZIP_LENGTH } from '@okr/shared-constants';
-import { AhvFormat, formatAhv } from '@okr/shared-util-angular';
+import { AhvFormat, formatAhv, validateVestTree } from '@okr/shared-util-angular';
 
 import { AvatarPipe } from '@okr/avatar-ui';
 import { CitySearch } from '@okr/subject-swisscities-ui';
@@ -255,11 +256,11 @@ import { PersonLookup } from './person-lookup';
                 </ion-col>
               </ion-row>
               <ion-row>
-                <ion-col size="12">
+                <ion-col size="12" size-md="6">
                   <okr-cat-select [category]="membershipCategories()" [selectedItemName]="currentMembershipCategoryItem()" (selectedItemNameChange)="onFieldChange('membershipCategory', $event)" [readOnly]="isReadOnly()" />
                   <okr-error-note [errors]="membershipCategoryErrors()" />
                 </ion-col>
-                <ion-col size="12">
+                <ion-col size="12" size-md="6">
                   <okr-date-input [i18n]="dateOfEntryI18n()" [storeDate]="dateOfEntry()" (storeDateChange)="onFieldChange('dateOfEntry', $event)" [readOnly]="isReadOnly()" />
                   <okr-error-note [errors]="dateOfEntryErrors()" />
                 </ion-col>      
@@ -339,6 +340,9 @@ export class PersonNewForm {
   public selectClicked = output<void>();
 
  // validation and errors
+  protected readonly personNewForm = form(this.formData, (path) =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    validateVestTree(path, personNewFormValidations as any));
   private readonly validationResult = computed(() => personNewFormValidations(this.formData()));
   protected dateOfBirthErrors = computed(() => this.validationResult().getErrors('dateOfBirth'));
   protected dateOfDeathErrors = computed(() => this.validationResult().getErrors('dateOfDeath'));
@@ -358,32 +362,32 @@ export class PersonNewForm {
   protected webErrors = computed(() => this.validationResult().getErrors('web'));
 
   // fields
-  protected firstName = linkedSignal(() => this.formData().firstName ?? DEFAULT_NAME);
-  protected lastName = linkedSignal(() => this.formData().lastName ?? DEFAULT_NAME);
-  protected dateOfBirth = linkedSignal(() => this.formData().dateOfBirth ?? DEFAULT_DATE);
-  protected dateOfDeath = linkedSignal(() => this.formData().dateOfDeath ?? DEFAULT_DATE);
-  protected gender = linkedSignal(() => this.formData().gender ?? DEFAULT_GENDER);
-  protected ssnId = linkedSignal(() => formatAhv(this.formData().ssnId ?? '', AhvFormat.Friendly));
-  protected bexioId = linkedSignal(() => this.formData().bexioId ?? DEFAULT_ID);
-  protected tags = linkedSignal(() => this.formData().tags ?? DEFAULT_TAGS);
-  protected notes = linkedSignal(() => this.formData().notes ?? DEFAULT_NOTES);
-  protected shouldAddMembership = linkedSignal(() => this.formData().shouldAddMembership ?? false);
+  protected readonly firstName = computed(() => this.formData().firstName ?? DEFAULT_NAME);
+  protected readonly lastName = computed(() => this.formData().lastName ?? DEFAULT_NAME);
+  protected readonly dateOfBirth = computed(() => this.formData().dateOfBirth ?? DEFAULT_DATE);
+  protected readonly dateOfDeath = computed(() => this.formData().dateOfDeath ?? DEFAULT_DATE);
+  protected readonly gender = computed(() => this.formData().gender ?? DEFAULT_GENDER);
+  protected readonly ssnId = computed(() => formatAhv(this.formData().ssnId ?? '', AhvFormat.Friendly));
+  protected readonly bexioId = computed(() => this.formData().bexioId ?? DEFAULT_ID);
+  protected readonly tags = computed(() => this.formData().tags ?? DEFAULT_TAGS);
+  protected readonly notes = computed(() => this.formData().notes ?? DEFAULT_NOTES);
+  protected readonly shouldAddMembership = computed(() => this.formData().shouldAddMembership ?? false);
 
   // address
-  protected streetName = linkedSignal(() => this.formData().streetName ?? DEFAULT_NAME);
-  protected streetNumber = linkedSignal(() => this.formData().streetNumber ?? '');
-  protected zipCode = linkedSignal(() => this.formData().zipCode ?? '');
-  protected city = linkedSignal(() => this.formData().city ?? '');
-  protected countryCode = linkedSignal(() => this.formData().countryCode ?? '');
-  protected phone = linkedSignal(() => this.formData().phone ?? DEFAULT_PHONE);
-  protected email = linkedSignal(() => this.formData().email ?? DEFAULT_EMAIL);
-  protected web = linkedSignal(() => this.formData().web ?? DEFAULT_URL);
+  protected readonly streetName = computed(() => this.formData().streetName ?? DEFAULT_NAME);
+  protected readonly streetNumber = computed(() => this.formData().streetNumber ?? '');
+  protected readonly zipCode = computed(() => this.formData().zipCode ?? '');
+  protected readonly city = computed(() => this.formData().city ?? '');
+  protected readonly countryCode = computed(() => this.formData().countryCode ?? '');
+  protected readonly phone = computed(() => this.formData().phone ?? DEFAULT_PHONE);
+  protected readonly email = computed(() => this.formData().email ?? DEFAULT_EMAIL);
+  protected readonly web = computed(() => this.formData().web ?? DEFAULT_URL);
 
   // membership
-  protected orgKey = linkedSignal(() => this.formData().orgKey ?? DEFAULT_KEY);
-  protected orgName = linkedSignal(() => this.formData().orgName ?? DEFAULT_NAME);
-  protected currentMembershipCategoryItem = linkedSignal(() => this.formData().membershipCategory ?? '');
-  protected dateOfEntry = linkedSignal(() => this.formData().dateOfEntry ?? getTodayStr());
+  protected readonly orgKey = computed(() => this.formData().orgKey ?? DEFAULT_KEY);
+  protected readonly orgName = computed(() => this.formData().orgName ?? DEFAULT_NAME);
+  protected readonly currentMembershipCategoryItem = computed(() => this.formData().membershipCategory ?? '');
+  protected readonly dateOfEntry = computed(() => this.formData().dateOfEntry ?? getTodayStr());
 
   // passing constants to template
   protected bexioMask = BexioIdMask;
@@ -391,7 +395,7 @@ export class PersonNewForm {
 
   constructor() {
     effect(() => {
-      this.valid.emit(this.validationResult().isValid());
+      this.valid.emit(this.personNewForm().valid());
     });
   }
 

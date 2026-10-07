@@ -1,8 +1,10 @@
-import { Component, computed, effect, linkedSignal, model, output, input } from '@angular/core';
+import { Component, computed, effect, model, output, input } from '@angular/core';
+import { form } from '@angular/forms/signals';
 import { IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
 import { AuthCredentials } from '@okr/shared-models';
 import { EmailInput, EmailInputI18n, ErrorNote, PasswordInput, PasswordInputI18n } from '@okr/shared-ui';
+import { validateVestTree } from '@okr/shared-util-angular';
 
 import { authCredentialsValidations, AuthI18n } from '@okr/auth-util';
 
@@ -119,11 +121,19 @@ export class LoginForm {
   public validChange = output<boolean>();
 
   // fields — read from vm; writes go back through handler methods
-  protected loginEmail = linkedSignal(() => this.vm().loginEmail);
-  protected loginPassword = linkedSignal(() => this.vm().loginPassword);
+  protected readonly loginEmail = computed(() => this.vm().loginEmail);
+  protected readonly loginPassword = computed(() => this.vm().loginPassword);
+
+  // The suite takes the context (login / email / password) as its third argument, which
+  // validateVestTree does not pass — so the bridge calls it through a closure that adds it.
+  private readonly suiteWithContext = (model: AuthCredentials, field?: string) =>
+    authCredentialsValidations(model, field, this.context());
+  protected readonly loginForm = form(this.vm, (path) =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    validateVestTree(path, this.suiteWithContext as any));
 
   constructor() {
-    effect(() => this.validChange.emit(this.validationResult().isValid()));
+    effect(() => this.validChange.emit(this.loginForm().valid()));
   }
 
   protected onEmailChange(value: string): void {

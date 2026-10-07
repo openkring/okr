@@ -1,4 +1,5 @@
-import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, effect, input, model, output } from '@angular/core';
+import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
 import { BexioIdMask, ChSsnMask } from '@okr/shared-config';
@@ -7,7 +8,7 @@ import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInput
 import { areNotesVisible, areTagsVisible, coerceBoolean, hasRole, isVaultFieldVisible, isVisibleToUser } from '@okr/shared-util-core';
 import { PersonFormModel, personValidations, PersonI18n } from '@okr/subject-person-util';
 import { BEXIO_ID_LENGTH, DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
-import { AhvFormat, formatAhv } from '@okr/shared-util-angular';
+import { AhvFormat, formatAhv, validateVestTree } from '@okr/shared-util-angular';
 
 @Component({
   selector: 'okr-person-form',
@@ -130,9 +131,16 @@ export class PersonForm {
   public dirty = output<boolean>();
   public valid = output<boolean>();
 
-  constructor() { effect(() => this.valid.emit(this.validationResult().isValid())); }
+  constructor() { effect(() => this.valid.emit(this.personForm().valid())); }
 
   // validation and errors
+  // The suite needs tenantId and allTags, which validateVestTree does not pass — so the bridge
+  // calls it through a closure that adds them.
+  private readonly suiteWithContext = (model: PersonFormModel, field?: string) =>
+    personValidations(model, this.tenantId(), this.allTags(), field);
+  protected readonly personForm = form(this.formData, (path) =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    validateVestTree(path, this.suiteWithContext as any));
   private readonly validationResult = computed(() => personValidations(this.formData(), this.tenantId(), this.allTags()));
   protected dateOfBirthErrors = computed(() => this.validationResult().getErrors('dateOfBirth'));
   protected dateOfDeathErrors = computed(() => this.validationResult().getErrors('dateOfDeath'));
@@ -144,15 +152,15 @@ export class PersonForm {
   protected lastNameErrors = computed(() => this.validationResult().getErrors('lastName'));
 
   // fields
-  protected firstName = linkedSignal(() => this.formData().firstName ?? DEFAULT_NAME);
-  protected lastName = linkedSignal(() => this.formData().lastName ?? DEFAULT_NAME);
-  protected dateOfBirth = linkedSignal(() => this.formData().dateOfBirth ?? DEFAULT_DATE);
-  protected dateOfDeath = linkedSignal(() => this.formData().dateOfDeath ?? DEFAULT_DATE);
-  protected gender = linkedSignal(() => this.formData().gender ?? DEFAULT_GENDER);
-  protected ssnId = linkedSignal(() => formatAhv(this.formData().ssnId ?? '', AhvFormat.Friendly));
-  protected bexioId = linkedSignal(() => this.formData().bexioId ?? DEFAULT_ID);
-  protected tags = linkedSignal(() => this.formData().tags ?? DEFAULT_TAGS);
-  protected notes = linkedSignal(() => this.formData().notes ?? DEFAULT_NOTES);
+  protected readonly firstName = computed(() => this.formData().firstName ?? DEFAULT_NAME);
+  protected readonly lastName = computed(() => this.formData().lastName ?? DEFAULT_NAME);
+  protected readonly dateOfBirth = computed(() => this.formData().dateOfBirth ?? DEFAULT_DATE);
+  protected readonly dateOfDeath = computed(() => this.formData().dateOfDeath ?? DEFAULT_DATE);
+  protected readonly gender = computed(() => this.formData().gender ?? DEFAULT_GENDER);
+  protected readonly ssnId = computed(() => formatAhv(this.formData().ssnId ?? '', AhvFormat.Friendly));
+  protected readonly bexioId = computed(() => this.formData().bexioId ?? DEFAULT_ID);
+  protected readonly tags = computed(() => this.formData().tags ?? DEFAULT_TAGS);
+  protected readonly notes = computed(() => this.formData().notes ?? DEFAULT_NOTES);
   protected okey = computed(() => this.formData().okey ?? '');
   protected areNotesVisible = computed(() => areNotesVisible(this.currentUser(), this.priv(), this.notes(), this.isReadOnly()));
 

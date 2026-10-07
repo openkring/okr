@@ -13,7 +13,9 @@
     "@okr/shared-i18n": "*",
     "@okr/shared-ui": "*",
     "@okr/shared-util-core": "*",
+    "@okr/shared-util-angular": "*",
     "@okr/avatar-ui": "*",
-    "@okr/relationship-personal-rel-util": "*"
+    "@okr/relationship-personal-rel-util": "*",
+    "@angular/forms": "*"
   }
 }

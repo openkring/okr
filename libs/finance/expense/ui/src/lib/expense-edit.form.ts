@@ -1,4 +1,5 @@
-import { Component, computed, effect, input, linkedSignal, model, output, signal, Signal, untracked } from '@angular/core';
+import { Component, computed, effect, input, model, output, signal, Signal, untracked } from '@angular/core';
+import { form } from '@angular/forms/signals';
 import {
   IonAvatar, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonImg, IonItem, IonLabel,
   IonNote, IonRow, IonSelect, IonSelectOption,
@@ -6,7 +7,7 @@ import {
 
 import { AccountModel, CategoryListModel, CostCenterModel, ExpenseModel } from '@okr/shared-models';
 import { ButtonCopy, CategorySelect, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
-import { formatIban, IbanFormat } from '@okr/shared-util-angular';
+import { formatIban, IbanFormat, validateVestTree } from '@okr/shared-util-angular';
 import { coerceBoolean, convertDateFormatToString, DateFormat, getThumbnailUrl, isProfitAndLossAccountId } from '@okr/shared-util-core';
 
 import { AvatarPipe } from '@okr/avatar-ui';
@@ -327,7 +328,7 @@ export class ExpenseEditForm {
   protected readonly abstractLength = 200;
 
   constructor() {
-    effect(() => this.valid.emit(this.validationResult().isValid()));
+    effect(() => this.valid.emit(this.expenseEditForm().valid()));
     // Seed the amount field from the model ONCE per form instance (and again when the parent
     // toggles showForm to reset it). It must NEVER be re-derived from `amountTotal` while the
     // user types: cents -> string is not idempotent ('2' would snap to '2.00', and the next
@@ -342,22 +343,25 @@ export class ExpenseEditForm {
     });
   }
 
-  // validation and errors
+  // validation and errors — the suite takes only (model, field?), so the bridge gets it directly
+  protected readonly expenseEditForm = form(this.formData, (path) =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    validateVestTree(path, expenseEditValidations as any));
   private readonly validationResult = computed(() => expenseEditValidations(this.formData()));
   protected readonly abstractErrors = computed(() => this.validationResult().getErrors('abstract'));
   protected readonly amountErrors   = computed(() => this.validationResult().getErrors('amountTotal'));
   protected readonly currencyErrors = computed(() => this.validationResult().getErrors('currency'));
 
   // fields
-  protected abstract   = linkedSignal(() => this.formData().abstract ?? '');
-  protected currency   = linkedSignal(() => this.formData().currency ?? 'CHF');
-  protected transferTo = linkedSignal(() => this.formData().transferTo ?? 'me');
-  protected accountKey = linkedSignal(() => this.formData().accountKey ?? '');
+  protected readonly abstract = computed(() => this.formData()?.abstract ?? '');
+  protected readonly currency = computed(() => this.formData()?.currency ?? 'CHF');
+  protected readonly transferTo = computed(() => this.formData()?.transferTo ?? 'me');
+  protected readonly accountKey = computed(() => this.formData()?.accountKey ?? '');
   protected showCostCenter = computed(() =>
     this.costCentersEnabled() && isProfitAndLossAccountId(this.accounts().find(a => a.okey === this.accountKey())?.id));
-  protected costCenterId = linkedSignal(() => this.formData().costCenterId ?? '');
-  protected note       = linkedSignal(() => this.formData().note ?? '');
-  protected status     = linkedSignal(() => this.formData().status ?? 'draft');
+  protected readonly costCenterId = computed(() => this.formData()?.costCenterId ?? '');
+  protected readonly note = computed(() => this.formData()?.note ?? '');
+  protected readonly status = computed(() => this.formData()?.status ?? 'draft');
 
   // read-only parts
   /** creationDateTime is a StoreDateTime; non-strict conversion yields '' for legacy docs without one. */

@@ -1,9 +1,11 @@
-import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, effect, input, model, output } from '@angular/core';
+import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 
 import { CaseInsensitiveWordMask } from '@okr/shared-config';
 import { CategoryListModel, PageModel, RoleName, UserModel } from '@okr/shared-models';
 import { ButtonCopy, ButtonCopyI18n, CategorySelect, Chips, ErrorNote, NotesInput, NotesInputI18n, StringList, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { validateVestTree } from '@okr/shared-util-angular';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 import { DEFAULT_BLOG_TYPE, DEFAULT_CONTENT_STATE, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PAGE_TYPE, DEFAULT_TAGS, DEFAULT_TITLE, DESCRIPTION_LENGTH, NAME_LENGTH } from '@okr/shared-constants';
 
@@ -107,7 +109,15 @@ export class PageForm {
   public dirty = output<boolean>();
   public valid = output<boolean>();
 
-  // validation and errors
+  // The suite needs tenants and tags, which validateVestTree does not pass — so the bridge
+  // calls it through a closure that adds them.
+  private readonly suiteWithContext = (model: PageModel, field?: string) =>
+    pageValidations(model, this.tenantId(), this.allTags(), field);
+  protected readonly pageForm = form(this.formData, (path) =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    validateVestTree(path, this.suiteWithContext as any));
+
+  // per-field errors for the notes under each field
   private readonly validationResult = computed(() => pageValidations(this.formData(), this.tenantId(), this.allTags()));
   protected stateErrors = computed(() => this.validationResult().getErrors('state'));
   protected typeErrors = computed(() => this.validationResult().getErrors('type'));
@@ -117,19 +127,19 @@ export class PageForm {
 
   // fields
   protected okey = computed(() => this.formData().okey ?? DEFAULT_KEY);
-  protected sections = linkedSignal(() => this.formData().sections ?? []);
-  protected name = linkedSignal(() => this.formData().name ?? DEFAULT_NAME);
-  protected title = linkedSignal(() => this.formData().title ?? DEFAULT_TITLE);
-  protected type = linkedSignal(() => this.formData().type ?? DEFAULT_PAGE_TYPE);
-  protected blogType = linkedSignal(() => this.formData().blogType ?? DEFAULT_BLOG_TYPE);
-  protected state = linkedSignal(() => this.formData().state ?? DEFAULT_CONTENT_STATE);
-  protected tags = linkedSignal(() => this.formData().tags ?? DEFAULT_TAGS);
-  protected notes = linkedSignal(() => this.formData().notes ?? DEFAULT_NOTES);
+  protected sections = computed(() => this.formData().sections ?? []);
+  protected name = computed(() => this.formData().name ?? DEFAULT_NAME);
+  protected title = computed(() => this.formData().title ?? DEFAULT_TITLE);
+  protected type = computed(() => this.formData().type ?? DEFAULT_PAGE_TYPE);
+  protected blogType = computed(() => this.formData().blogType ?? DEFAULT_BLOG_TYPE);
+  protected state = computed(() => this.formData().state ?? DEFAULT_CONTENT_STATE);
+  protected tags = computed(() => this.formData().tags ?? DEFAULT_TAGS);
+  protected notes = computed(() => this.formData().notes ?? DEFAULT_NOTES);
 
   // passing constants to template
   protected mask = CaseInsensitiveWordMask;
 
-  constructor() { effect(() => this.valid.emit(this.validationResult().isValid())); }
+  constructor() { effect(() => this.valid.emit(this.pageForm().valid())); }
 
   protected readonly buttonCopyI18n = computed(() => ({ copy_conf: this.i18n().copy_conf() } as ButtonCopyI18n));
 

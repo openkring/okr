@@ -1,10 +1,12 @@
-import { Component, computed, effect, input, linkedSignal, model, output, Signal } from '@angular/core';
+import { Component, computed, effect, input, model, output, Signal } from '@angular/core';
+import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
 import { CaseInsensitiveWordMask, LatitudeMask, LongitudeMask, What3WordMask } from '@okr/shared-config';
 import { CategoryListModel, LocationModel, RoleName, UserModel } from '@okr/shared-models';
 import { CategorySelect, Chips, ErrorNote, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
+import { validateVestTree } from '@okr/shared-util-angular';
 
 import { locationValidations } from '@okr/location-util';
 import { DESCRIPTION_LENGTH, NAME_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
@@ -148,7 +150,15 @@ export class LocationForm {
   public dirty = output<boolean>();
   public valid = output<boolean>();
 
-  constructor() { effect(() => this.valid.emit(this.validationResult().isValid())); }
+  // The suite needs the tenant id and the tags, which validateVestTree does not pass — so the bridge
+  // calls it through a closure that adds them.
+  private readonly suiteWithContext = (model: LocationModel, field?: string) =>
+    locationValidations(model, this.tenantId(), this.allTags(), field);
+  protected readonly locationForm = form(this.formData, (path) =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    validateVestTree(path, this.suiteWithContext as any));
+
+  constructor() { effect(() => this.valid.emit(this.locationForm().valid())); }
 
   // validation and errors
   private readonly validationResult = computed(() => locationValidations(this.formData(), this.tenantId(), this.allTags()));
@@ -162,18 +172,18 @@ export class LocationForm {
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
 
   // fields
-  protected name = linkedSignal(() => this.formData().name ?? '');
-  protected locationType = linkedSignal(() => this.formData().type ?? 'geomarker');
-  protected latitude = linkedSignal(() => this.formData().latitude + '');
-  protected longitude = linkedSignal(() => this.formData().longitude + '');
-  protected placeId = linkedSignal(() => this.formData().placeId ?? '');
-  protected what3words = linkedSignal(() => this.formData().what3words ?? '');
-  protected seaLevel = linkedSignal(() => this.formData().seaLevel ?? 0);
-  protected speed = linkedSignal(() => this.formData().speed ?? 0);
-  protected direction = linkedSignal(() => this.formData().direction ?? 0);
-  protected distance = linkedSignal(() => this.formData().distance ?? 0);
-  protected tags = linkedSignal(() => this.formData().tags ?? '');
-  protected notes = linkedSignal(() => this.formData().notes ?? '');
+  protected readonly name = computed(() => this.formData()?.name ?? '');
+  protected readonly locationType = computed(() => this.formData()?.type ?? 'geomarker');
+  protected readonly latitude = computed(() => this.formData()?.latitude + '');
+  protected readonly longitude = computed(() => this.formData()?.longitude + '');
+  protected readonly placeId = computed(() => this.formData()?.placeId ?? '');
+  protected readonly what3words = computed(() => this.formData()?.what3words ?? '');
+  protected readonly seaLevel = computed(() => this.formData()?.seaLevel ?? 0);
+  protected readonly speed = computed(() => this.formData()?.speed ?? 0);
+  protected readonly direction = computed(() => this.formData()?.direction ?? 0);
+  protected readonly distance = computed(() => this.formData()?.distance ?? 0);
+  protected readonly tags = computed(() => this.formData()?.tags ?? '');
+  protected readonly notes = computed(() => this.formData()?.notes ?? '');
   protected okey = computed(() => this.formData().okey ?? '');
 
   // passing constants to template
@@ -263,7 +273,7 @@ export class LocationForm {
   protected onFieldChange(fieldName: string, fieldValue: string | number | boolean): void {
     this.dirty.emit(true);
     if (fieldName === 'what3words') {
-      let value = fieldValue as string;
+      const value = fieldValue as string;
       if (value.startsWith('///')) {
         fieldValue = value.substring(3); // strip the leading ///
       }

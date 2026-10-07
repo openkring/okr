@@ -1,9 +1,11 @@
-import { Component, computed, effect, input, linkedSignal, model, output } from "@angular/core";
+import { Component, computed, effect, input, model, output } from "@angular/core";
+import { form } from "@angular/forms/signals";
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonRow } from "@ionic/angular/standalone";
 
 import { AvatarUsages, Languages, NameDisplays, PersonSortCriterias } from "@okr/shared-categories";
 import { AvatarUsage, Language, NameDisplay, UserModel } from "@okr/shared-models";
 import { CategoryOld, CategoryOldI18n, Checkbox, CheckboxI18n, ErrorNote } from "@okr/shared-ui";
+import { validateVestTree } from "@okr/shared-util-angular";
 import { coerceBoolean } from "@okr/shared-util-core";
 
 import { USER_DISPLAY_FORM_SHAPE, UserDisplayFormModel, userDisplayFormValidations, UserI18n } from "@okr/user-util";
@@ -80,19 +82,23 @@ export class UserDisplayForm {
 
   // validation and errors
   protected readonly shape = USER_DISPLAY_FORM_SHAPE;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  protected readonly displayForm = form(this.formData, (path) => validateVestTree(path, userDisplayFormValidations as any));
+
+  // per-field errors for the notes under each field
   private readonly validationResult = computed(() => userDisplayFormValidations(this.formData()));
 
   protected showArchivedDataErrors = computed(() => this.validationResult().getErrors('showArchivedData'));
   protected showDebugInfoErrors = computed(() => this.validationResult().getErrors('showDebugInfo'));
   protected showHelpersErrors = computed(() => this.validationResult().getErrors('showHelpers'));
   // fields
-  protected avatarUsage = linkedSignal(() => this.formData().avatarUsage);
-  protected personSortCriteria = linkedSignal(() => this.formData().personSortCriteria);
-  protected userLanguage = linkedSignal(() => this.formData().userLanguage);
-  protected nameDisplay = linkedSignal(() => this.formData().nameDisplay);
-  protected showArchivedData = linkedSignal(() => this.formData().showArchivedData);
-  protected showDebugInfo = linkedSignal(() => this.formData().showDebugInfo);
-  protected showHelpers = linkedSignal(() => this.formData().showHelpers);
+  protected readonly avatarUsage = computed(() => this.formData().avatarUsage);
+  protected readonly personSortCriteria = computed(() => this.formData().personSortCriteria);
+  protected readonly userLanguage = computed(() => this.formData().userLanguage);
+  protected readonly nameDisplay = computed(() => this.formData().nameDisplay);
+  protected readonly showArchivedData = computed(() => this.formData().showArchivedData);
+  protected readonly showDebugInfo = computed(() => this.formData().showDebugInfo);
+  protected readonly showHelpers = computed(() => this.formData().showHelpers);
 
   // passing constants to template
   protected readonly avatarUsages = AvatarUsages;
@@ -101,9 +107,7 @@ export class UserDisplayForm {
   protected readonly nameDisplays = NameDisplays;
 
   constructor() {
-    effect(() => {
-      this.valid.emit(this.validationResult().isValid());
-    });
+    effect(() => this.valid.emit(this.displayForm().valid()));
   }
 
   protected onFieldChange(fieldName: string, fieldValue: boolean | AvatarUsage | Language | NameDisplay): void {

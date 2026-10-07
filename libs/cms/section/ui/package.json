@@ -19,7 +19,7 @@
     "@okr/shared-util-core": "*",
     "@okr/shared-util-angular": "*",
     "@okr/cms-section-util": "*",
-    "@okr/content-document-util": "*"
+    "@okr/content-document-util": "*",
+    "@angular/forms": "*"
   }
 }
-

@@ -14,6 +14,8 @@
     "@okr/shared-util-core": "*",
     "@okr/shared-pipes": "*",
     "@okr/subject-person-util": "*",
-    "@okr/subject-person-data-access": "*"
+    "@okr/subject-person-data-access": "*",
+    "@okr/shared-util-angular": "*",
+    "@angular/forms": "*"
   }
 }

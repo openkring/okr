@@ -1,9 +1,11 @@
-import { Component, ComponentRef, computed, DestroyRef, effect, inject, input, linkedSignal, model, output, signal, untracked, viewChild, ViewContainerRef } from '@angular/core';
+import { Component, ComponentRef, computed, DestroyRef, effect, inject, input, model, output, signal, untracked, viewChild, ViewContainerRef } from '@angular/core';
+import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 
 import { DEFAULT_MENU_ACTION, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ROLE, DEFAULT_TAGS, DEFAULT_URL, DESCRIPTION_LENGTH, LONG_NAME_LENGTH, NAME_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { BaseProperty, CategoryListModel, MenuItemModel, RoleName, UserModel } from '@okr/shared-models';
 import { CategorySelect, Chips, ErrorNote, NotesInput, NotesInputI18n, StringList, TextInput, TextInputI18n, UrlInput, UrlInputI18n, IconInput } from '@okr/shared-ui';
+import { validateVestTree } from '@okr/shared-util-angular';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 
 import { MenuI18n, menuItemValidations, normalizeMenuInfo } from '@okr/cms-menu-util';
@@ -194,7 +196,15 @@ export class MenuForm {
   public valid = output<boolean>();
   public iconSelectClicked = output<'icon' | 'iconAlt'>();
 
-  // validation and errors
+  // The suite needs tenants and tags, which validateVestTree does not pass — so the bridge
+  // calls it through a closure that adds them.
+  private readonly suiteWithContext = (model: MenuItemModel, field?: string) =>
+    menuItemValidations(model, this.tenantId(), this.allTags(), field);
+  protected readonly menuForm = form(this.formData, (path) =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    validateVestTree(path, this.suiteWithContext as any));
+
+  // per-field errors for the notes under each field
   private readonly validationResult = computed(() => menuItemValidations(this.formData(), this.tenantId(), this.allTags()));
   protected actionErrors = computed(() => this.validationResult().getErrors('action'));
   protected roleNeededErrors = computed(() => this.validationResult().getErrors('roleNeeded'));
@@ -215,7 +225,7 @@ export class MenuForm {
   private creatingInfoEditor = false;
 
   constructor() {
-    effect(() => this.valid.emit(this.validationResult().isValid()));
+    effect(() => this.valid.emit(this.menuForm().valid()));
     // Pattern A (lazy-loading skill): synchronous effect body, async work started inside it.
     effect(() => {
       const host = this.infoEditorHost();
@@ -256,19 +266,19 @@ export class MenuForm {
   }
 
   // fields
-  protected name = linkedSignal(() => this.formData().name ?? DEFAULT_NAME);
-  protected icon = linkedSignal(() => this.formData().icon ?? '');
-  protected iconAlt = linkedSignal(() => this.formData().iconAlt ?? '');
-  protected label = linkedSignal(() => this.formData().label ?? '');
-  protected labelAlt = linkedSignal(() => this.formData().labelAlt ?? '');
-  protected info = linkedSignal(() => this.formData().info ?? '');
-  protected url = linkedSignal(() => this.formData().url ?? DEFAULT_URL);
-  protected data = linkedSignal(() => this.formData().data ?? []);
-  protected tags = linkedSignal(() => this.formData().tags ?? DEFAULT_TAGS);
-  protected description = linkedSignal(() => this.formData().description ?? DEFAULT_NOTES);
-  protected roleNeeded = linkedSignal(() => this.formData().roleNeeded ?? DEFAULT_ROLE);
-  protected menuAction = linkedSignal(() => this.formData().action ?? DEFAULT_MENU_ACTION);
-  protected menuItems = linkedSignal(() => this.formData().menuItems ?? []);
+  protected name = computed(() => this.formData().name ?? DEFAULT_NAME);
+  protected icon = computed(() => this.formData().icon ?? '');
+  protected iconAlt = computed(() => this.formData().iconAlt ?? '');
+  protected label = computed(() => this.formData().label ?? '');
+  protected labelAlt = computed(() => this.formData().labelAlt ?? '');
+  protected info = computed(() => this.formData().info ?? '');
+  protected url = computed(() => this.formData().url ?? DEFAULT_URL);
+  protected data = computed(() => this.formData().data ?? []);
+  protected tags = computed(() => this.formData().tags ?? DEFAULT_TAGS);
+  protected description = computed(() => this.formData().description ?? DEFAULT_NOTES);
+  protected roleNeeded = computed(() => this.formData().roleNeeded ?? DEFAULT_ROLE);
+  protected menuAction = computed(() => this.formData().action ?? DEFAULT_MENU_ACTION);
+  protected menuItems = computed(() => this.formData().menuItems ?? []);
 
   // passing constants to template
   protected nameLength = NAME_LENGTH;

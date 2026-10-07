@@ -14,6 +14,8 @@
     "@okr/shared-ui": "*",
     "@okr/shared-util-core": "*",
     "@okr/cms-menu-util": "*",
-    "@okr/shared-ui-editor": "*"
+    "@okr/shared-ui-editor": "*",
+    "@okr/shared-util-angular": "*",
+    "@angular/forms": "*"
   }
 }

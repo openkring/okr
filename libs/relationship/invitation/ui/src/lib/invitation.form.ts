@@ -1,9 +1,11 @@
-import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
-import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonRow, ModalController } from '@ionic/angular/standalone';
+import { Component, computed, effect, input, model, output } from '@angular/core';
+import { form } from '@angular/forms/signals';
+import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 
 import { DEFAULT_DATETIME, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS, DESCRIPTION_LENGTH, NAME_LENGTH } from '@okr/shared-constants';
 import { AvatarInfo, RoleName, InvitationModel, UserModel, DEFAULT_INVITATION_STATE, DEFAULT_INVITATION_ROLE } from '@okr/shared-models';
 import { Chips, NotesInput, NotesInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { validateVestTree } from '@okr/shared-util-angular';
 import { coerceBoolean, DateFormat, getTodayStr, hasRole } from '@okr/shared-util-core';
 import { PrettyDatePipe, PrettyDateTimePipe } from '@okr/shared-pipes';
 import { AvatarDisplay, AvatarInput } from '@okr/avatar-ui';
@@ -141,6 +143,11 @@ export class InvitationForm {
   public valid = output<boolean>();
   public selectClicked = output<'inviter' | 'invitee'>();
 
+  // signal form — wraps formData with the Vest suite (it only takes (model, field?))
+  protected readonly invitationForm = form(this.formData, (path) =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    validateVestTree(path, invitationValidations as any));
+
   // validation and errors
   private readonly validationResult = computed(() => invitationValidations(this.formData()));
   protected notesErrors = computed(() => this.validationResult().getErrors('notes'));
@@ -149,22 +156,22 @@ export class InvitationForm {
   // fields
   protected inviterAvatar = computed(() => createPersonAvatar(this.formData().inviterKey, this.formData().inviterFirstName, this.formData().inviterLastName));
   protected inviteeAvatar = computed(() => createPersonAvatar(this.formData().inviteeKey, this.formData().inviteeFirstName, this.formData().inviteeLastName));
-  protected calEventKey = linkedSignal(() => this.formData().caleventKey);
-  protected name = linkedSignal(() => this.formData().name ?? DEFAULT_NAME);
-  protected date = linkedSignal(() => this.formData().date ?? getTodayStr());
-  protected state = linkedSignal(() => this.formData().state ?? DEFAULT_INVITATION_STATE);
-  protected role = linkedSignal(() => this.formData().role ?? DEFAULT_INVITATION_ROLE);
-  protected sentAt = linkedSignal(() => this.formData().sentAt ?? getTodayStr(DateFormat.StoreDateTime));
-  protected respondedAt = linkedSignal(() => this.formData().respondedAt ?? DEFAULT_DATETIME);
-  protected tags = linkedSignal(() => this.formData().tags ?? DEFAULT_TAGS);
-  protected notes = linkedSignal(() => this.formData().notes ?? DEFAULT_NOTES);
+  protected readonly calEventKey = computed(() => this.formData().caleventKey);
+  protected readonly name = computed(() => this.formData().name ?? DEFAULT_NAME);
+  protected readonly date = computed(() => this.formData().date ?? getTodayStr());
+  protected readonly state = computed(() => this.formData().state ?? DEFAULT_INVITATION_STATE);
+  protected readonly role = computed(() => this.formData().role ?? DEFAULT_INVITATION_ROLE);
+  protected readonly sentAt = computed(() => this.formData().sentAt ?? getTodayStr(DateFormat.StoreDateTime));
+  protected readonly respondedAt = computed(() => this.formData().respondedAt ?? DEFAULT_DATETIME);
+  protected readonly tags = computed(() => this.formData().tags ?? DEFAULT_TAGS);
+  protected readonly notes = computed(() => this.formData().notes ?? DEFAULT_NOTES);
   protected okey = computed(() => this.formData().okey ?? '');
 
   // passing constants to template
   protected nameLength = NAME_LENGTH;
 
   constructor() {
-    effect(() => this.valid.emit(this.validationResult().isValid()));
+    effect(() => this.valid.emit(this.invitationForm().valid()));
   }
 
   /******************************* actions *************************************** */

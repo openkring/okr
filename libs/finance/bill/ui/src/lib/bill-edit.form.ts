@@ -1,10 +1,12 @@
 import { Component, computed, effect, input, model, output, signal } from '@angular/core';
+import { form } from '@angular/forms/signals';
 import { IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonNote, IonRow } from '@ionic/angular/standalone';
 
 import { DEFAULT_NOTES, DEFAULT_TAGS, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { AccountModel, BillLine, BillModel, UserModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { DateInput, DateInputI18n, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { validateVestTree } from '@okr/shared-util-angular';
 import { coerceBoolean, getFullName } from '@okr/shared-util-core';
 
 import { BILL_IBAN_LENGTH, BILL_REFERENCE_LENGTH, BillI18n, billValidations } from '@okr/finance-bill-util';
@@ -99,7 +101,8 @@ export class BillEditForm {
   protected readonly ibanLength = BILL_IBAN_LENGTH;
 
   // inputs
-  public readonly formData = input.required<BillModel>();
+  /** a model (not input + output) so the signal form can wrap it; its formDataChange output is what the parent binds */
+  public readonly formData = model.required<BillModel>();
   public readonly lines = model.required<BillLine[]>();
   public readonly accounts = input<AccountModel[]>([]);
   public readonly defaultAccountKey = input('');
@@ -111,7 +114,6 @@ export class BillEditForm {
   public readonly i18n = input.required<BillI18n>();
 
   // outputs
-  public readonly formDataChange = output<BillModel>();
   public readonly dirty = output<boolean>();
   public readonly valid = output<boolean>();
   /** the parent opens the person/org picker and writes the vendor back into formData */
@@ -119,6 +121,14 @@ export class BillEditForm {
 
   protected readonly linesValid = signal(false);
   protected readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()));
+  // The suite needs the tags, which validateVestTree does not pass — so the bridge calls it
+  // through a closure that adds them.
+  private readonly suiteWithContext = (model: BillModel, field?: string) =>
+    billValidations(model, '', this.allTags(), field);
+  protected readonly billForm = form(this.formData, (path) =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    validateVestTree(path, this.suiteWithContext as any));
+
   private readonly validationResult = computed(() => billValidations(this.formData(), '', this.allTags()));
   protected billDateErrors = computed(() => this.validationResult().getErrors('billDate'));
   protected dueDateErrors = computed(() => this.validationResult().getErrors('dueDate'));
@@ -128,7 +138,7 @@ export class BillEditForm {
   protected creditorIbanErrors = computed(() => this.validationResult().getErrors('creditorIban'));
 
   constructor() {
-    effect(() => this.valid.emit(this.validationResult().isValid() && this.linesValid()));
+    effect(() => this.valid.emit(this.billForm().valid() && this.linesValid()));
   }
 
   // field accessors
@@ -165,7 +175,7 @@ export class BillEditForm {
 
   protected onFieldChange(fieldName: string, fieldValue: string | string[]): void {
     this.dirty.emit(true);
-    this.formDataChange.emit({ ...this.formData(), [fieldName]: fieldValue });
+    this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
   }
 
   protected onLinesChange(lines: BillLine[]): void {

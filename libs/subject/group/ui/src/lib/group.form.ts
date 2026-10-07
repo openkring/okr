@@ -1,8 +1,10 @@
-import { Component, computed, effect, input, linkedSignal, model, output, signal } from '@angular/core';
+import { Component, computed, effect, input, model, output, signal } from '@angular/core';
+import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonRow, IonToggle } from '@ionic/angular/standalone';
 
 import { AvatarInfo, GroupModel, RoleName, UserModel } from '@okr/shared-models';
 import { ButtonCopy, ButtonCopyI18n, Checkbox, CheckboxI18n, Chips, IconInput, NotesInput, NotesInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n , ErrorNote} from '@okr/shared-ui';
+import { validateVestTree } from '@okr/shared-util-angular';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 
 import { Avatars } from '@okr/avatar-ui';
@@ -264,9 +266,16 @@ export class GroupForm {
   public iconSelectClicked = output<void>();
   public showPersonOutput = output<string>();
 
-  constructor() { effect(() => this.valid.emit(this.validationResult().isValid())); }
+  constructor() { effect(() => this.valid.emit(this.groupForm().valid())); }
 
   // validation and errors
+  // The suite needs tenantId and allTags, which validateVestTree does not pass — so the bridge
+  // calls it through a closure that adds them.
+  private readonly suiteWithContext = (model: GroupModel, field?: string) =>
+    groupValidations(model, this.tenantId(), this.allTags(), field);
+  protected readonly groupForm = form(this.formData, (path) =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    validateVestTree(path, this.suiteWithContext as any));
   private readonly validationResult = computed(() => groupValidations(this.formData(), this.tenantId(), this.allTags()));
   protected hasCalendarErrors = computed(() => this.validationResult().getErrors('hasCalendar'));
   protected hasChatErrors = computed(() => this.validationResult().getErrors('hasChat'));
@@ -279,30 +288,30 @@ export class GroupForm {
   protected okeyErrors = computed(() => this.validationResult().getErrors('okey'));
 
   // fields
-  protected name = linkedSignal(() => this.formData().name ?? '');
-  protected okey = linkedSignal(() => this.formData().okey ?? '');
+  protected readonly name = computed(() => this.formData().name ?? '');
+  protected readonly okey = computed(() => this.formData().okey ?? '');
   // Live read-only preview of the key that will be derived from the name on save.
   protected groupIdPreview = computed(() => getGroupKeyFromName(this.name(), this.tenantId()));
-  protected icon = linkedSignal(() => this.formData().icon ?? '');
+  protected readonly icon = computed(() => this.formData().icon ?? '');
 
   // admin
-  protected admins = linkedSignal(() => this.formData().admins);
+  protected readonly admins = computed(() => this.formData().admins);
 
-  protected tags = linkedSignal(() => this.formData().tags ?? '');
-  protected notes = linkedSignal(() => this.formData().notes ?? '');
-  protected visibility = linkedSignal(() => this.formData().visibility ?? '');
-  protected notifyType = linkedSignal(() => this.formData().notifyType ?? 'memberOnly');
+  protected readonly tags = computed(() => this.formData().tags ?? '');
+  protected readonly notes = computed(() => this.formData().notes ?? '');
+  protected readonly visibility = computed(() => this.formData().visibility ?? '');
+  protected readonly notifyType = computed(() => this.formData().notifyType ?? 'memberOnly');
   protected readonly notifyTypeOptions = ['memberOnly', 'membersAndMatchingVisibility'];
-  protected chatMode = linkedSignal(() => this.formData().chatMode ?? 'shared');
+  protected readonly chatMode = computed(() => this.formData().chatMode ?? 'shared');
   protected readonly chatModeOptions = ['shared', 'ask', 'members'];
-  protected postPolicy = linkedSignal(() => this.formData().postPolicy ?? 'all');
+  protected readonly postPolicy = computed(() => this.formData().postPolicy ?? 'all');
   protected readonly postPolicyOptions = ['all', 'privileged'];
-  protected hasContent = linkedSignal(() => this.formData().hasContent ?? true);
-  protected hasChat = linkedSignal(() => this.formData().hasChat ?? true);
-  protected hasCalendar = linkedSignal(() => this.formData().hasCalendar ?? true);
-  protected hasTasks = linkedSignal(() => this.formData().hasTasks ?? true);
-  protected hasFiles = linkedSignal(() => this.formData().hasFiles ?? true);
-  protected hasMembers = linkedSignal(() => this.formData().hasMembers ?? true);
+  protected readonly hasContent = computed(() => this.formData().hasContent ?? true);
+  protected readonly hasChat = computed(() => this.formData().hasChat ?? true);
+  protected readonly hasCalendar = computed(() => this.formData().hasCalendar ?? true);
+  protected readonly hasTasks = computed(() => this.formData().hasTasks ?? true);
+  protected readonly hasFiles = computed(() => this.formData().hasFiles ?? true);
+  protected readonly hasMembers = computed(() => this.formData().hasMembers ?? true);
 
   /******************************* actions *************************************** */
   protected onFieldChange(fieldName: string, fieldValue: string | string[] | number | boolean | AvatarInfo[]): void {

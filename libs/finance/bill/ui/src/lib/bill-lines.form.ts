@@ -1,9 +1,11 @@
 import { Component, computed, effect, input, model, output } from '@angular/core';
+import { form } from '@angular/forms/signals';
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonIcon, IonLabel, IonRow } from '@ionic/angular/standalone';
 
 import { AccountModel, BillLine } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { ErrorNote, formatMinorAmount, NumberInput, NumberInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { validateVestTree } from '@okr/shared-util-angular';
 import { coerceBoolean } from '@okr/shared-util-core';
 
 import { AccountSelect, AccountSelectI18n } from '@okr/finance-account-ui';
@@ -101,11 +103,17 @@ export class BillLinesForm {
   public readonly dirty = output<boolean>();
   public readonly valid = output<boolean>();
 
+  // The suite validates the line list (not a formData object) and takes only (lines, field?),
+  // so the signal form wraps the writable `lines` model and the bridge gets the suite directly.
+  protected readonly linesForm = form(this.lines, (path) =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    validateVestTree(path, billLinesValidations as any));
+
   private readonly validationResult = computed(() => billLinesValidations(this.lines()));
   protected readonly listErrors = computed(() => this.validationResult().getErrors('lines'));
 
   constructor() {
-    effect(() => this.valid.emit(this.validationResult().isValid()));
+    effect(() => this.valid.emit(this.linesForm().valid()));
   }
 
   protected readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()));

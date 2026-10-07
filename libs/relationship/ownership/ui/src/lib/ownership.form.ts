@@ -1,9 +1,11 @@
-import { Component, computed, effect, input, linkedSignal, model, output, Signal } from '@angular/core';
+import { Component, computed, effect, input, model, output, Signal } from '@angular/core';
+import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
-import { OwnershipModel, RoleName, UserModel } from '@okr/shared-models';
+import { CurrencyCode, MoneyModel, OwnershipModel, RoleName, UserModel } from '@okr/shared-models';
 import { DEFAULT_CURRENCY } from '@okr/shared-constants';
-import { Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { Chips, DateInput, ErrorNote, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { validateVestTree } from '@okr/shared-util-angular';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 
 import { ownershipValidations } from '@okr/relationship-ownership-util';
@@ -38,7 +40,7 @@ export interface OwnershipFormI18n {
   selector: 'okr-ownership-form',
   standalone: true,
   imports: [
-    Chips, NotesInput, DateInput, TextInput, NumberInput,
+    Chips, NotesInput, DateInput, TextInput, NumberInput, ErrorNote,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -80,18 +82,20 @@ export interface OwnershipFormI18n {
               <ion-row>
                 <ion-col size="12" size-md="6">
                   <okr-date-input [i18n]="validFromI18n()" [storeDate]="validFrom()" (storeDateChange)="onFieldChange('validFrom', $event)" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="validFromErrors()" />
                 </ion-col>
 
                 <ion-col size="12" size-md="6">
                   <okr-date-input [i18n]="validToI18n()" [storeDate]="validTo()" (storeDateChange)="onFieldChange('validTo', $event)" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="validToErrors()" />
                 </ion-col>
 
                 <ion-col size="12" size-md="6">
-                  <okr-number-input [i18n]="priceI18n()" [value]="amount()" (valueChange)="onFieldChange('amount', $event)" [maxLength]=6 [readOnly]="isReadOnly()" />
+                  <okr-number-input [i18n]="priceI18n()" [value]="amount()" (valueChange)="onPriceChange('amount', $event)" [maxLength]=6 [readOnly]="isReadOnly()" />
                 </ion-col>
 
                 <ion-col size="12" size-md="6">
-                  <okr-text-input [i18n]="currencyI18n()" [value]="currency()" (valueChange)="onFieldChange('currency', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />
+                  <okr-text-input [i18n]="currencyI18n()" [value]="currency()" (valueChange)="onPriceChange('currency', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />
                 </ion-col>
               </ion-row>
             </ion-grid>
@@ -136,30 +140,57 @@ export class OwnershipForm {
   public dirty = output<boolean>();
   public valid = output<boolean>();
 
-  // validation
+  // The suite needs tenants and tags, which validateVestTree does not pass — so the bridge
+  // calls it through a closure that adds them (same context as validationResult below).
+  private readonly suiteWithContext = (model: OwnershipModel, field?: string) =>
+    ownershipValidations(model, this.tenantId(), this.allTags(), field);
+  protected readonly ownershipForm = form(this.formData, (path) =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    validateVestTree(path, this.suiteWithContext as any));
+
+  // validation and errors
   private readonly validationResult = computed(() => ownershipValidations(this.formData(), this.tenantId(), this.allTags()));
+  protected validFromErrors = computed(() => this.validationResult().getErrors('validFrom'));
+  protected validToErrors = computed(() => this.validationResult().getErrors('validTo'));
 
   // fields
-  protected ownerName1 = linkedSignal(() => this.formData().ownerName1 ?? ''); 
-  protected ownerName2 = linkedSignal(() => this.formData().ownerName2 ?? ''); 
-  protected ownerModelType = linkedSignal(() => this.formData().ownerModelType ?? 'person');
-  protected validFrom = linkedSignal(() => this.formData().validFrom ?? '');
-  protected validTo = linkedSignal(() => this.formData().validTo ?? '');
-  protected price = linkedSignal(() => this.formData().price);
-  protected amount = linkedSignal(() => this.price()?.amount ?? 0);
-  protected currency = linkedSignal(() => this.price()?.currency ?? DEFAULT_CURRENCY);
-  protected tags = linkedSignal(() => this.formData().tags ?? '');
-  protected notes = linkedSignal(() => this.formData().notes ?? '');
+  protected readonly ownerName1 = computed(() => this.formData().ownerName1 ?? ''); 
+  protected readonly ownerName2 = computed(() => this.formData().ownerName2 ?? ''); 
+  protected readonly ownerModelType = computed(() => this.formData().ownerModelType ?? 'person');
+  protected readonly validFrom = computed(() => this.formData().validFrom ?? '');
+  protected readonly validTo = computed(() => this.formData().validTo ?? '');
+  protected readonly price = computed(() => this.formData().price);
+  protected readonly amount = computed(() => this.price()?.amount ?? 0);
+  protected readonly currency = computed(() => this.price()?.currency ?? DEFAULT_CURRENCY);
+  protected readonly tags = computed(() => this.formData().tags ?? '');
+  protected readonly notes = computed(() => this.formData().notes ?? '');
   protected okey = computed(() => this.formData().okey ?? '');
 
   constructor() {
-    effect(() => this.valid.emit(this.validationResult().isValid()));
+    effect(() => this.valid.emit(this.ownershipForm().valid()));
   }
 
   /******************************* actions *************************************** */
   protected onFieldChange(fieldName: string, fieldValue: string | string[] | number): void {
     this.dirty.emit(true);
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
+  }
+
+  /**
+   * amount and currency live inside `price` (a MoneyModel), not on the ownership itself — writing
+   * them as top-level keys (as before) left the saved price unchanged.
+   */
+  protected onPriceChange(fieldName: 'amount' | 'currency', fieldValue: string | number): void {
+    this.dirty.emit(true);
+    this.formData.update((vm) => {
+      const price = vm.price ?? new MoneyModel(0);
+      return {
+        ...vm,
+        price: fieldName === 'amount'
+          ? { ...price, amount: Number(fieldValue) }
+          : { ...price, currency: fieldValue as CurrencyCode }
+      };
+    });
   }
 
   protected hasRole(role: RoleName): boolean {

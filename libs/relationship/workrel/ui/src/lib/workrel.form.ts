@@ -1,7 +1,9 @@
-import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, effect, input, model, output } from '@angular/core';
+import { form } from '@angular/forms/signals';
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 import { CategoryListModel, RoleName, UserModel, WorkrelModel } from '@okr/shared-models';
 import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n , ErrorNote} from '@okr/shared-ui';
+import { validateVestTree } from '@okr/shared-util-angular';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 import { DEFAULT_CURRENCY, DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORDER, DEFAULT_ORG_TYPE, DEFAULT_PRICE, DEFAULT_TAGS, DEFAULT_WORKREL_STATE, DEFAULT_WORKREL_TYPE, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { FullNamePipe } from '@okr/shared-pipes';
@@ -179,7 +181,15 @@ export class WorkrelForm {
   protected validFromI18n = computed(() => ({ name: 'validFrom', label: this.i18n().validFrom_label(), placeholder: this.i18n().validFrom_placeholder(), helper: this.i18n().validFrom_helper() } as DateInputI18n));
   protected validToI18n = computed(() => ({ name: 'validTo', label: this.i18n().validTo_label(), placeholder: this.i18n().validTo_placeholder(), helper: this.i18n().validTo_helper() } as DateInputI18n));
 
-  // validation and errors
+  // The suite needs the tenant and tags, which validateVestTree does not pass — so the bridge
+  // calls it through a closure that adds them.
+  private readonly suiteWithContext = (model: WorkrelModel, field?: string) =>
+    workrelValidations(model, this.tenantId(), this.allTags(), field);
+  protected readonly workrelForm = form(this.formData, (path) =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    validateVestTree(path, this.suiteWithContext as any));
+
+  // per-field errors for the notes under each field
   private readonly validationResult = computed(() => workrelValidations(this.formData(), this.tenantId(), this.allTags()));
   protected periodicityErrors = computed(() => this.validationResult().getErrors('periodicity'));
   protected stateErrors = computed(() => this.validationResult().getErrors('state'));
@@ -202,22 +212,22 @@ export class WorkrelForm {
   protected objectName = computed(() => this.formData().objectName ?? DEFAULT_NAME);
   protected objectType = computed(() => this.formData().objectType ?? DEFAULT_ORG_TYPE);
 
-  // linked signals for two-way binding
-  protected type = linkedSignal(() => this.formData().type ?? DEFAULT_WORKREL_TYPE);
-  protected label = linkedSignal(() => this.formData().label ?? DEFAULT_LABEL);
-  protected validFrom = linkedSignal(() => this.formData().validFrom ?? DEFAULT_DATE);
-  protected validTo = linkedSignal(() => this.formData().validTo ?? DEFAULT_DATE);
-  protected tags = linkedSignal(() => this.formData().tags ?? DEFAULT_TAGS);
-  protected notes = linkedSignal(() => this.formData().notes ?? DEFAULT_NOTES);
-  protected price = linkedSignal(() => this.formData().price ?? DEFAULT_PRICE);
-  protected currency = linkedSignal(() => this.formData().currency ?? DEFAULT_CURRENCY);
-  protected periodicity = linkedSignal(() => this.formData().periodicity ?? 'monthly');
-  protected order = linkedSignal(() => this.formData().order ?? DEFAULT_ORDER);
-  protected state = linkedSignal(() => this.formData().state ?? DEFAULT_WORKREL_STATE);
+  // read-only mirrors of formData (writes go through onFieldChange)
+  protected type = computed(() => this.formData().type ?? DEFAULT_WORKREL_TYPE);
+  protected label = computed(() => this.formData().label ?? DEFAULT_LABEL);
+  protected validFrom = computed(() => this.formData().validFrom ?? DEFAULT_DATE);
+  protected validTo = computed(() => this.formData().validTo ?? DEFAULT_DATE);
+  protected tags = computed(() => this.formData().tags ?? DEFAULT_TAGS);
+  protected notes = computed(() => this.formData().notes ?? DEFAULT_NOTES);
+  protected price = computed(() => this.formData().price ?? DEFAULT_PRICE);
+  protected currency = computed(() => this.formData().currency ?? DEFAULT_CURRENCY);
+  protected periodicity = computed(() => this.formData().periodicity ?? 'monthly');
+  protected order = computed(() => this.formData().order ?? DEFAULT_ORDER);
+  protected state = computed(() => this.formData().state ?? DEFAULT_WORKREL_STATE);
   protected okey = computed(() => this.formData().okey ?? DEFAULT_KEY);
 
   constructor() {
-    effect(() => this.valid.emit(this.validationResult().isValid()));
+    effect(() => this.valid.emit(this.workrelForm().valid()));
   }
 
   /******************************* actions *************************************** */

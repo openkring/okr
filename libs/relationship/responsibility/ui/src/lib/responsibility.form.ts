@@ -1,8 +1,10 @@
-import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, effect, input, model, output } from '@angular/core';
+import { form } from '@angular/forms/signals';
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonRow, IonText } from '@ionic/angular/standalone';
 import { DEFAULT_DATE, WORD_LENGTH } from '@okr/shared-constants';
 import { ResponsibilityModel, RoleName, UserModel } from '@okr/shared-models';
 import { ButtonCopy, ButtonCopyI18n, DateInput, DateInputI18n, ErrorNote, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { validateVestTree } from '@okr/shared-util-angular';
 import { getAvatarName, hasRole } from '@okr/shared-util-core';
 
 import { isDelegateActive, responsibilityValidations, ResponsibilityI18n } from '@okr/relationship-responsibility-util';
@@ -152,7 +154,15 @@ export class ResponsibilityForm {
   public selectDelegate = output<void>();
   public clearDelegate = output<void>();
 
-  // validation and errors
+  // The suite needs the tenant, which validateVestTree does not pass — so the bridge
+  // calls it through a closure that adds it.
+  private readonly suiteWithContext = (model: ResponsibilityModel, field?: string) =>
+    responsibilityValidations(model, this.tenantId(), field);
+  protected readonly responsibilityForm = form(this.formData, (path) =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    validateVestTree(path, this.suiteWithContext as any));
+
+  // per-field errors for the notes under each field
   private readonly validationResult = computed(() => responsibilityValidations(this.formData(), this.tenantId()));
   protected delegateValidFromErrors = computed(() => this.validationResult().getErrors('delegateValidFrom'));
   protected delegateValidToErrors = computed(() => this.validationResult().getErrors('delegateValidTo'));
@@ -162,12 +172,12 @@ export class ResponsibilityForm {
   protected okeyErrors = computed(() => this.validationResult().getErrors('okey'));
 
   // fields
-  protected okey = linkedSignal(() => this.formData().okey ?? '');
-  protected name = linkedSignal(() => this.formData().name ?? '');
-  protected validFrom = linkedSignal(() => this.formData().validFrom ?? DEFAULT_DATE);
-  protected validTo = linkedSignal(() => this.formData().validTo ?? DEFAULT_DATE);
-  protected delegateValidFrom = linkedSignal(() => this.formData().delegateValidFrom ?? DEFAULT_DATE);
-  protected delegateValidTo = linkedSignal(() => this.formData().delegateValidTo ?? DEFAULT_DATE);
+  protected okey = computed(() => this.formData().okey ?? '');
+  protected name = computed(() => this.formData().name ?? '');
+  protected validFrom = computed(() => this.formData().validFrom ?? DEFAULT_DATE);
+  protected validTo = computed(() => this.formData().validTo ?? DEFAULT_DATE);
+  protected delegateValidFrom = computed(() => this.formData().delegateValidFrom ?? DEFAULT_DATE);
+  protected delegateValidTo = computed(() => this.formData().delegateValidTo ?? DEFAULT_DATE);
   protected responsibleName = computed(() => getAvatarName(this.formData().responsibleAvatar) || this.i18n().responsible_unset());
   protected delegateName = computed(() => getAvatarName(this.formData().delegateAvatar) || this.i18n().delegate_unset());
   protected delegateExpired = computed(() => !isDelegateActive(this.formData()));
@@ -177,7 +187,7 @@ export class ResponsibilityForm {
   protected readonly maxWordLength = WORD_LENGTH;
 
   constructor() {
-    effect(() => this.valid.emit(this.validationResult().isValid()));
+    effect(() => this.valid.emit(this.responsibilityForm().valid()));
   }
 
   /******************************* actions *************************************** */

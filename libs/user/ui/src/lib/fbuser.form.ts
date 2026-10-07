@@ -1,8 +1,10 @@
-import { Component, computed, effect, input, linkedSignal, model, output } from "@angular/core";
+import { Component, computed, effect, input, model, output } from "@angular/core";
+import { form } from "@angular/forms/signals";
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonRow } from "@ionic/angular/standalone";
 
 import { FirebaseUserModel, UserModel } from "@okr/shared-models";
 import { Checkbox, CheckboxI18n, EmailInput, EmailInputI18n, ErrorNote, PhoneInput, PhoneInputI18n, TextInput, TextInputI18n } from "@okr/shared-ui";
+import { validateVestTree } from "@okr/shared-util-angular";
 import { coerceBoolean } from "@okr/shared-util-core";
 
 import { FIREBASE_USER_SHAPE, firebaseUserFormValidations, UserI18n } from "@okr/user-util";
@@ -112,6 +114,10 @@ export class FbuserForm {
 
   // validation and errors
   protected readonly shape = FIREBASE_USER_SHAPE;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  protected readonly fbuserForm = form(this.formData, (path) => validateVestTree(path, firebaseUserFormValidations as any));
+
+  // per-field errors for the notes under each field
   private readonly validationResult = computed(() => firebaseUserFormValidations(this.formData()));
   protected disabledErrors = computed(() => this.validationResult().getErrors('disabled'));
   protected emailVerifiedErrors = computed(() => this.validationResult().getErrors('emailVerified'));
@@ -122,18 +128,16 @@ export class FbuserForm {
   protected phoneError = computed(() => this.validationResult().getErrors('phone'));
 
   // fields
-  protected uid = linkedSignal(() => this.formData().uid ?? '');
-  protected email = linkedSignal(() => this.formData().email ?? '');
-  protected displayName = linkedSignal(() => this.formData().displayName ?? '');
-  protected emailVerified = linkedSignal(() => this.formData().emailVerified ?? false);
-  protected disabled = linkedSignal(() => this.formData().disabled ?? false);
-  protected phone = linkedSignal(() => this.formData().phone ?? '');
-  protected photoUrl = linkedSignal(() => this.formData().photoUrl ?? '');
+  protected readonly uid = computed(() => this.formData().uid ?? '');
+  protected readonly email = computed(() => this.formData().email ?? '');
+  protected readonly displayName = computed(() => this.formData().displayName ?? '');
+  protected readonly emailVerified = computed(() => this.formData().emailVerified ?? false);
+  protected readonly disabled = computed(() => this.formData().disabled ?? false);
+  protected readonly phone = computed(() => this.formData().phone ?? '');
+  protected readonly photoUrl = computed(() => this.formData().photoUrl ?? '');
 
   constructor() {
-    effect(() => {
-      this.valid.emit(this.validationResult().isValid());
-    });
+    effect(() => this.valid.emit(this.fbuserForm().valid()));
   }
 
   protected onFieldChange(fieldName: string, fieldValue: string | boolean): void {

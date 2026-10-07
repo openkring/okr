@@ -20,6 +20,7 @@
     "@okr/avatar-ui": "*",
     "@okr/shared-feature": "*",
     "@okr/subject-address-util": "*",
-    "@okr/subject-swisscities-ui": "*"
+    "@okr/subject-swisscities-ui": "*",
+    "@angular/forms": "*"
   }
 }

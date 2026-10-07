@@ -1,8 +1,10 @@
-import { Component, computed, effect, input, linkedSignal, model, output } from "@angular/core";
+import { Component, computed, effect, input, model, output } from "@angular/core";
+import { form } from "@angular/forms/signals";
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonRow } from "@ionic/angular/standalone";
 
 import { DeliveryChannel, UserModel } from "@okr/shared-models";
 import { DeliveryChannelsControl, DeliveryChannelsI18n, ErrorNote } from "@okr/shared-ui";
+import { validateVestTree } from "@okr/shared-util-angular";
 import { coerceBoolean, toEditableChannels } from "@okr/shared-util-core";
 
 import { USER_NOTIFICATION_FORM_SHAPE, UserI18n, UserNotificationFormModel, userNotificationFormValidations } from "@okr/user-util";
@@ -66,6 +68,10 @@ export class UserNotificationForm {
 
   // validation and errors
   protected readonly shape = USER_NOTIFICATION_FORM_SHAPE;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  protected readonly notificationForm = form(this.formData, (path) => validateVestTree(path, userNotificationFormValidations as any));
+
+  // per-field errors for the notes under each field
   private readonly validationResult = computed(() => userNotificationFormValidations(this.formData()));
   protected newsDeliveryErrors = computed(() => this.validationResult().getErrors('newsDelivery'));
   protected invoiceDeliveryErrors = computed(() => this.validationResult().getErrors('invoiceDelivery'));
@@ -73,13 +79,11 @@ export class UserNotificationForm {
   // computed fields
   // An already migrated list passes through UNCHANGED — an empty one included, because that is
   // the state the error notes above report; only a legacy value is converted.
-  protected newsDelivery = linkedSignal(() => toEditableChannels(this.formData().newsDelivery));
-  protected invoiceDelivery = linkedSignal(() => toEditableChannels(this.formData().invoiceDelivery));
+  protected readonly newsDelivery = computed(() => toEditableChannels(this.formData().newsDelivery));
+  protected readonly invoiceDelivery = computed(() => toEditableChannels(this.formData().invoiceDelivery));
 
   constructor() {
-    effect(() => {
-      this.valid.emit(this.validationResult().isValid());
-    });
+    effect(() => this.valid.emit(this.notificationForm().valid()));
   }
 
   protected onFieldChange(fieldName: string, fieldValue: DeliveryChannel[]): void {

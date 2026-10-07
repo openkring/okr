@@ -1,9 +1,11 @@
-import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, effect, input, model, output } from '@angular/core';
+import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
 import { CategoryListModel, AccountModel, CostCenterModel, RoleName, UserModel } from '@okr/shared-models';
 import { CategorySelect, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { DESCRIPTION_LENGTH, LONG_NAME_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
+import { validateVestTree } from '@okr/shared-util-angular';
 import { coerceBoolean, fill, hasRole, isActiveLeafCostCenter, isProfitAndLossAccountId } from '@okr/shared-util-core';
 
 import { CostCenterSelect, CostCenterSelectI18n } from '@okr/finance-cost-center-ui';
@@ -162,6 +164,14 @@ export class AccountForm {
   public dirty = output<boolean>();
   public valid = output<boolean>();
 
+  // The suite needs the tenant and the account numbers already in use (duplicate check), which
+  // validateVestTree does not pass — so the bridge calls it through a closure that adds them.
+  private readonly suiteWithContext = (model: AccountModel, field?: string) =>
+    accountValidations(model, this.tenantId(), '', usedAccountIds(this.accounts(), model), field);
+  protected readonly accountForm = form(this.formData, (path) =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    validateVestTree(path, this.suiteWithContext as any));
+
   private readonly validationResult = computed(() =>
     accountValidations(this.formData(), this.tenantId(), '', usedAccountIds(this.accounts(), this.formData())));
   protected typeErrors = computed(() => this.validationResult().getErrors('type'));
@@ -177,12 +187,12 @@ export class AccountForm {
       .flatMap(([, messages]) => messages);
   });
 
-  protected id = linkedSignal(() => this.formData().id ?? '');
-  protected name = linkedSignal(() => this.formData().name ?? '');
-  protected type = linkedSignal(() => this.formData().type ?? '');
-  protected parentKey = linkedSignal(() => this.formData().parentKey ?? '');
-  protected notes = linkedSignal(() => this.formData().notes ?? '');
-  protected costCenterKey = linkedSignal(() => this.formData().costCenterKey ?? '');
+  protected readonly id = computed(() => this.formData()?.id ?? '');
+  protected readonly name = computed(() => this.formData()?.name ?? '');
+  protected readonly type = computed(() => this.formData()?.type ?? '');
+  protected readonly parentKey = computed(() => this.formData()?.parentKey ?? '');
+  protected readonly notes = computed(() => this.formData()?.notes ?? '');
+  protected readonly costCenterKey = computed(() => this.formData()?.costCenterKey ?? '');
   protected showCostCenter = computed(() => this.costCentersEnabled() && isProfitAndLossAccountId(this.formData().id));
   protected okey = computed(() => this.formData().okey ?? '');
   protected isRoot = computed(() => this.formData().type === 'root');
@@ -214,7 +224,7 @@ export class AccountForm {
   protected parentAccounts = computed(() => parentCandidates(this.accounts(), this.formData()));
 
   constructor() {
-    effect(() => this.valid.emit(this.validationResult().isValid()));
+    effect(() => this.valid.emit(this.accountForm().valid()));
   }
 
   protected onFieldChange(fieldName: string, fieldValue: string | number | boolean): void {

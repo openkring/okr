@@ -1,8 +1,10 @@
-import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, effect, input, model, output } from '@angular/core';
+import { form } from '@angular/forms/signals';
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonInput, IonItem, IonRow } from '@ionic/angular/standalone';
 import { DEFAULT_CURRENCY, DEFAULT_LABEL, DEFAULT_LOCALE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PRICE, DEFAULT_TAGS, DEFAULT_TRANSFER_STATE, DEFAULT_TRANSFER_TYPE, DESCRIPTION_LENGTH, NAME_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { AvatarInfo, CategoryListModel, RoleName, TransferModel, UserModel } from '@okr/shared-models';
 import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n , ErrorNote} from '@okr/shared-ui';
+import { validateVestTree } from '@okr/shared-util-angular';
 import { coerceBoolean, getTodayStr, hasRole } from '@okr/shared-util-core';
 
 import { Avatars } from '@okr/avatar-ui';
@@ -158,7 +160,15 @@ export class TransferForm {
   public selectResource = output<boolean>();
   public showPersonOutput = output<string>();
 
-  // validation and errors
+  // The suite needs the tenant and tags, which validateVestTree does not pass — so the bridge
+  // calls it through a closure that adds them.
+  private readonly suiteWithContext = (model: TransferModel, field?: string) =>
+    transferValidations(model, this.tenantId(), this.allTags(), field);
+  protected readonly transferForm = form(this.formData, (path) =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    validateVestTree(path, this.suiteWithContext as any));
+
+  // per-field errors for the notes under each field
   private readonly validationResult = computed(() => transferValidations(this.formData(), this.tenantId(), this.allTags()));
   protected dateOfTransferErrors = computed(() => this.validationResult().getErrors('dateOfTransfer'));
   protected periodicityErrors = computed(() => this.validationResult().getErrors('periodicity'));
@@ -170,21 +180,21 @@ export class TransferForm {
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
 
   // fields
-  protected tags = linkedSignal(() => this.formData().tags ?? DEFAULT_TAGS);
-  protected notes = linkedSignal(() => this.formData().notes ?? DEFAULT_NOTES);
-  protected name = linkedSignal(() => this.formData().name ?? DEFAULT_NAME);
+  protected tags = computed(() => this.formData().tags ?? DEFAULT_TAGS);
+  protected notes = computed(() => this.formData().notes ?? DEFAULT_NOTES);
+  protected name = computed(() => this.formData().name ?? DEFAULT_NAME);
 
-  protected subjects = linkedSignal(() => this.formData().subjects ?? []);
-  protected objects = linkedSignal(() => this.formData().objects ?? []);
+  protected subjects = computed(() => this.formData().subjects ?? []);
+  protected objects = computed(() => this.formData().objects ?? []);
 
-  protected dateOfTransfer = linkedSignal(() => this.formData().dateOfTransfer ?? getTodayStr());
+  protected dateOfTransfer = computed(() => this.formData().dateOfTransfer ?? getTodayStr());
   protected resourceName = computed(() => this.formData().resource?.name2 ?? DEFAULT_NAME);
-  protected type = linkedSignal(() => this.formData().type ?? DEFAULT_TRANSFER_TYPE);
-  protected state = linkedSignal(() => this.formData().state ?? DEFAULT_TRANSFER_STATE);
-  protected label = linkedSignal(() => this.formData().label ?? DEFAULT_LABEL);
-  protected price = linkedSignal(() => this.formData().price ?? DEFAULT_PRICE);
-  protected currency = linkedSignal(() => this.formData().currency ?? DEFAULT_CURRENCY);
-  protected periodicity = linkedSignal(() => this.formData().periodicity ?? 'yearly');
+  protected type = computed(() => this.formData().type ?? DEFAULT_TRANSFER_TYPE);
+  protected state = computed(() => this.formData().state ?? DEFAULT_TRANSFER_STATE);
+  protected label = computed(() => this.formData().label ?? DEFAULT_LABEL);
+  protected price = computed(() => this.formData().price ?? DEFAULT_PRICE);
+  protected currency = computed(() => this.formData().currency ?? DEFAULT_CURRENCY);
+  protected periodicity = computed(() => this.formData().periodicity ?? 'yearly');
 
   protected nameI18n = computed(() => ({
     name:        'name',
@@ -231,11 +241,12 @@ export class TransferForm {
   protected nameLength = NAME_LENGTH;
   
   constructor() {
-    effect(() => this.valid.emit(this.validationResult().isValid()));
+    effect(() => this.valid.emit(this.transferForm().valid()));
   }
 
   protected onResourceNameChange($event: Event): void {
     const resourceName = ($event.target as HTMLInputElement).value ?? '';
+    this.dirty.emit(true);
     this.formData.update(vm => ({ ...vm, resource: { ...vm.resource, name2: resourceName } }));
   }
 

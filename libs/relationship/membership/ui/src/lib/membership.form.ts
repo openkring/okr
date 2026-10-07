@@ -1,5 +1,6 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, effect, inject, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, effect, inject, input, model, output } from '@angular/core';
+import { form } from '@angular/forms/signals';
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonNote, IonRow, ModalController } from '@ionic/angular/standalone';
 
 import { BexioIdMask } from '@okr/shared-config';
@@ -8,6 +9,7 @@ import { AppStore, OrgSelectModal, PersonSelectModal, PersonSelectResult } from 
 import { CategoryListModel, MembershipModel, PersonModel, PrivacySettings, RoleName, UserModel, REBATE_REASON_VALUES } from '@okr/shared-models';
 import { TranslatePipe } from '@okr/shared-i18n';
 import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n , ErrorNote} from '@okr/shared-ui';
+import { validateVestTree } from '@okr/shared-util-angular';
 import { areTagsVisible, coerceBoolean, getFullName, getItemLabel, hasRole, isOrg, isPerson } from '@okr/shared-util-core';
 
 import { MembershipI18n, membershipValidations } from '@okr/relationship-membership-util';
@@ -239,6 +241,14 @@ export class MembershipForm {
   public dirty = output<boolean>();
   public valid = output<boolean>();
 
+  // The suite needs the tenant and the tags, which validateVestTree does not pass — so the bridge
+  // calls it through a closure that adds them (same context as validationResult below).
+  private readonly suiteWithContext = (model: MembershipModel, field?: string) =>
+    membershipValidations(model, this.appStore.env.tenantId, this.allTags(), field);
+  protected readonly membershipForm = form(this.formData, (path) =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    validateVestTree(path, this.suiteWithContext as any));
+
   // validation and errors
   private readonly validationResult = computed(() => membershipValidations(this.formData(), this.appStore.env.tenantId, this.allTags()));
   protected dateOfEntryErrors = computed(() => this.validationResult().getErrors('dateOfEntry'));
@@ -251,40 +261,40 @@ export class MembershipForm {
 
   // fields
   protected isNew = computed(() => !this.formData().okey);
-  protected memberKey = linkedSignal(() => this.formData().memberKey ?? '');
+  protected readonly memberKey = computed(() => this.formData().memberKey ?? '');
   protected memberName1 = computed(() => this.formData().memberName1 ?? DEFAULT_NAME);
   protected memberName2 = computed(() => this.formData().memberName2 ?? DEFAULT_NAME);
-  protected memberName = linkedSignal(() => getFullName(this.formData().memberName1, this.formData().memberName2, this.currentUser()?.nameDisplay));
+  protected readonly memberName = computed(() => getFullName(this.formData().memberName1, this.formData().memberName2, this.currentUser()?.nameDisplay));
   protected memberModelType = computed(() => this.formData().memberModelType ?? 'person');
   protected memberGender = computed(() => this.formData().memberType ?? DEFAULT_GENDER);
   protected memberOrgType = computed(() => this.formData().memberType ?? DEFAULT_ORG_TYPE);
-  protected memberNickName = linkedSignal(() => this.formData().memberNickName ?? DEFAULT_NAME);
-  protected memberAbbreviation = linkedSignal(() => this.formData().memberAbbreviation ?? '');
+  protected readonly memberNickName = computed(() => this.formData().memberNickName ?? DEFAULT_NAME);
+  protected readonly memberAbbreviation = computed(() => this.formData().memberAbbreviation ?? '');
   protected memberZipCode = computed(() => this.formData().memberZipCode ?? '');
-  protected memberBexioId = linkedSignal(() => this.formData().memberBexioId ?? '');
+  protected readonly memberBexioId = computed(() => this.formData().memberBexioId ?? '');
   protected orgKey = computed(() => this.formData().orgKey ?? DEFAULT_KEY);
   protected defaultIcon = computed(() => this.formData().orgModelType);
   protected orgAvatar = computed(() => `${this.formData().orgModelType}.${this.orgKey()}`);
-  protected orgName = linkedSignal(() => this.formData().orgName ?? '');
+  protected readonly orgName = computed(() => this.formData().orgName ?? '');
   protected memberId = computed(() => this.formData().memberId ?? DEFAULT_ID);
-  protected dateOfEntry = linkedSignal(() => this.formData().dateOfEntry ?? DEFAULT_DATE);
-  protected dateOfExit = linkedSignal(() => this.formData().dateOfExit ?? DEFAULT_DATE);
-  protected currentMembershipCategoryItem = linkedSignal(() => this.formData().category ?? '');
+  protected readonly dateOfEntry = computed(() => this.formData().dateOfEntry ?? DEFAULT_DATE);
+  protected readonly dateOfExit = computed(() => this.formData().dateOfExit ?? DEFAULT_DATE);
+  protected readonly currentMembershipCategoryItem = computed(() => this.formData().category ?? '');
   // the configured category item (e.g. A1, J, K); resolved to its i18n key if the category is translated
   protected categoryLabel = computed(() => {
     const categories = this.membershipCategories();
     return categories ? getItemLabel(categories, this.formData().category) : this.formData().category;
   });
-  protected orgFunction = linkedSignal(() => this.formData().orgFunction ?? '');
+  protected readonly orgFunction = computed(() => this.formData().orgFunction ?? '');
   protected order = computed(() => this.formData().order ?? 0);
   protected relLog = computed(() => this.formData().relLog ?? '');
   protected relIsLast = computed(() => this.formData().relIsLast ?? true);
-  protected rebate = linkedSignal(() => this.formData().rebate ?? 0);
+  protected readonly rebate = computed(() => this.formData().rebate ?? 0);
   protected rebateReason = computed(() => this.formData().rebateReason ?? 'none');
-  protected tags = linkedSignal(() => this.formData().tags ?? DEFAULT_TAGS);
-  protected notes = linkedSignal(() => this.formData().notes ?? DEFAULT_NOTES);
+  protected readonly tags = computed(() => this.formData().tags ?? DEFAULT_TAGS);
+  protected readonly notes = computed(() => this.formData().notes ?? DEFAULT_NOTES);
   protected membershipState = computed(() => this.formData().state ?? DEFAULT_MSTATE);
-  protected readonly locale = linkedSignal(() => this.appStore.appConfig().locale);
+  protected readonly locale = computed(() => this.appStore.appConfig().locale);
   protected okey = computed(() => this.formData().okey ?? '');
 
   // passing constants to template
@@ -298,10 +308,10 @@ export class MembershipForm {
 
   constructor() {
     effect(() => {
-      const result = this.validationResult();
+      const isValid = this.membershipForm().valid();
       // a disabled save button is otherwise silent — name the offending fields
-      if (!result.isValid()) console.warn('MembershipForm: form is invalid:', result.getErrors());
-      this.valid.emit(result.isValid());
+      if (!isValid) console.warn('MembershipForm: form is invalid:', this.validationResult().getErrors());
+      this.valid.emit(isValid);
     });
   }
 

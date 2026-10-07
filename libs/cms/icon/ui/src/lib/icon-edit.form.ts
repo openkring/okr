@@ -1,10 +1,12 @@
-import { Component, computed, effect, input, linkedSignal, model, output, Signal } from '@angular/core';
+import { Component, computed, effect, input, model, output, Signal } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
+import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 
 import { iconValidations } from '@okr/cms-icon-util';
 import { IconModel, RoleName, UserModel } from '@okr/shared-models';
 import { Chips, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { validateVestTree } from '@okr/shared-util-angular';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 import { DEFAULT_INDEX, DEFAULT_NOTES, DEFAULT_TAGS } from '@okr/shared-constants';
 
@@ -113,23 +115,31 @@ export class IconEditForm {
   public dirty = output<boolean>();
   public valid = output<boolean>();
 
-  // validation
+  // The suite needs tenants and tags, which validateVestTree does not pass — so the bridge
+  // calls it through a closure that adds them.
+  private readonly suiteWithContext = (model: IconModel, field?: string) =>
+    iconValidations(model, this.tenants(), this.allTags(), field);
+  protected readonly iconForm = form(this.formData, (path) =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    validateVestTree(path, this.suiteWithContext as any));
+
+  // per-field errors for the notes under each field
   private readonly validationResult = computed(() => iconValidations(this.formData(), this.tenants(), this.allTags()));
   protected fullPathErrors = computed(() => this.validationResult().getErrors('fullPath'));
   protected indexErrors = computed(() => this.validationResult().getErrors('index'));
 
-  constructor() { effect(() => this.valid.emit(this.validationResult().isValid())); }
+  constructor() { effect(() => this.valid.emit(this.iconForm().valid())); }
 
   // fields
   protected okey = computed(() => this.formData().okey ?? '');
-  protected name = linkedSignal(() => this.formData().name ?? '');
-  protected type = linkedSignal(() => this.formData().type ?? '');
-  protected fullPath = linkedSignal(() => this.formData().fullPath ?? '');
-  protected index = linkedSignal(() => this.formData().index ?? DEFAULT_INDEX);
-  protected notes = linkedSignal(() => this.formData().notes ?? DEFAULT_NOTES);
-  protected tags = linkedSignal(() => this.formData().tags ?? DEFAULT_TAGS);
-  protected size = linkedSignal(() => this.formData().size ?? 0);
-  protected updated = linkedSignal(() => this.formData().updated ?? '');
+  protected name = computed(() => this.formData().name ?? '');
+  protected type = computed(() => this.formData().type ?? '');
+  protected fullPath = computed(() => this.formData().fullPath ?? '');
+  protected index = computed(() => this.formData().index ?? DEFAULT_INDEX);
+  protected notes = computed(() => this.formData().notes ?? DEFAULT_NOTES);
+  protected tags = computed(() => this.formData().tags ?? DEFAULT_TAGS);
+  protected size = computed(() => this.formData().size ?? 0);
+  protected updated = computed(() => this.formData().updated ?? '');
 
   protected okeyI18n = computed(() => ({
     name: 'okey',

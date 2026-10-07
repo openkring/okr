@@ -1,8 +1,10 @@
-import { ChangeDetectionStrategy, Component, computed, effect, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, input, model, output } from '@angular/core';
+import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonNote, IonRow } from '@ionic/angular/standalone';
 
 import { CategoryListModel, INVOICE_STATE_VALUES, MemberFeeModel, MemberFeePosition, UserModel } from '@okr/shared-models';
 import { NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n , ErrorNote} from '@okr/shared-ui';
+import { validateVestTree } from '@okr/shared-util-angular';
 import { getAgeFromBirthYear } from '@okr/shared-util-core';
 
 import { MembershipI18n, applyProRata, getFeeTotal, memberFeeValidations, positionAmountField } from '@okr/relationship-membership-util';
@@ -30,7 +32,7 @@ interface PositionRow {
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px; } }`],
   template: `
-    @if (showForm() && formData(); as fd) {
+    @if (showForm()) {
       <form novalidate>
 
         <ion-card>
@@ -52,12 +54,12 @@ interface PositionRow {
                 @for (row of positionRows(); track row.index) {
                   <ion-col size="12" size-md="6">
                     <okr-number-input [i18n]="row.i18n" [value]="row.amount"
-                      (valueChange)="onPositionAmountChange(row.index, $event, fd)"
+                      (valueChange)="onPositionAmountChange(row.index, $event)"
                       [readOnly]="readOnly()" />
                     <okr-error-note [errors]="row.errors" />
                     @if (row.yearlyAmount !== undefined) {
                       <okr-number-input [i18n]="proRataMonthsI18n()" [value]="row.months"
-                        (valueChange)="onPositionMonthsChange(row.index, $event, fd)"
+                        (valueChange)="onPositionMonthsChange(row.index, $event)"
                         [min]="1" [max]="12" [showHelper]="true" [readOnly]="readOnly()" />
                       @if (row.description) {
                         <ion-item lines="none"><ion-note>{{ row.description }}</ion-note></ion-item>
@@ -80,8 +82,8 @@ interface PositionRow {
               <ion-row>
                 <ion-col size="12" size-md="6">
                   <okr-string-select [i18n]="invoiceStateI18n()"
-                    [selectedString]="fd.state"
-                    (selectedStringChange)="onFieldChange('state', $event, fd)"
+                    [selectedString]="state()"
+                    (selectedStringChange)="onFieldChange('state', $event)"
                     [readOnly]="readOnly()"
                     [stringList]="invoiceStateList" />
                   <okr-error-note [errors]="stateErrors()" />
@@ -90,7 +92,7 @@ interface PositionRow {
             </ion-grid>
           </ion-card-content>
         </ion-card>
-        <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event, fd)" [readOnly]="false" />
+        <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="false" />
       </form>
     }
   `
@@ -103,7 +105,8 @@ export class MemberFeeEditForm {
 
   // inputs
   public readonly i18n = input.required<MembershipI18n>();
-  public formData = input<MemberFeeModel | undefined>(undefined);
+  /** the parent always has a fee (its `fee` input is required), so the model is required too — form() needs a defined value */
+  public readonly formData = model.required<MemberFeeModel>();
   public currentUser = input<UserModel | undefined>(undefined);
   public showForm = input(true);
   public readOnly = input(false);
@@ -112,24 +115,31 @@ export class MemberFeeEditForm {
   // signals
   public dirty = output<boolean>();
   public valid = output<boolean>();
-  public formDataChange = output<MemberFeeModel>();
 
   // computed
   protected age = computed(() => {
-    const age = getAgeFromBirthYear(this.formData()?.memberBirthYear);
+    const age = getAgeFromBirthYear(this.formData().memberBirthYear);
     return age >= 0 ? age : '';
   });
-  protected category = computed(() => this.formData()?.category ?? '');
-  protected bexioId = computed(() => this.formData()?.memberBexioId ?? '');
-  protected notes = computed(() => this.formData()?.notes ?? '');
-  protected positions = computed((): MemberFeePosition[] => this.formData()?.positions ?? []);
+  protected category = computed(() => this.formData().category ?? '');
+  protected bexioId = computed(() => this.formData().memberBexioId ?? '');
+  protected notes = computed(() => this.formData().notes ?? '');
+  protected positions = computed((): MemberFeePosition[] => this.formData().positions ?? []);
   protected total = computed(() => getFeeTotal(this.positions()).toFixed(2));
 
-  private readonly validationResult = computed(() => {
-    const fd = this.formData();
-    return fd ? memberFeeValidations(fd, '', '') : null;
-  });
-  protected stateErrors = computed(() => this.validationResult()?.getErrors('state') ?? []);
+  protected state = computed(() => this.formData().state ?? '');
+
+  // The suite takes tenants and tags (for baseValidations), which validateVestTree does not pass —
+  // so the bridge calls it through a closure. The fee form has always validated them as '' (it
+  // neither edits tenants nor tags); keep that so validity is unchanged.
+  private readonly suiteWithContext = (model: MemberFeeModel, field?: string) =>
+    memberFeeValidations(model, '', '', field);
+  protected readonly memberFeeForm = form(this.formData, (path) =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    validateVestTree(path, this.suiteWithContext as any));
+
+  private readonly validationResult = computed(() => memberFeeValidations(this.formData(), '', ''));
+  protected stateErrors = computed(() => this.validationResult().getErrors('state'));
 
   /**
    * The suite files a position's failures under `positions[<i>].amount`, so each note has to read
@@ -137,7 +147,7 @@ export class MemberFeeEditForm {
    * banner would be the only symptom.
    */
   protected positionRows = computed((): PositionRow[] => {
-    const allErrors = this.validationResult()?.getErrors() ?? {};
+    const allErrors = this.validationResult().getErrors();
     return this.positions().map((position, index) => {
       const field = positionAmountField(index);
       return {
@@ -157,29 +167,33 @@ export class MemberFeeEditForm {
   protected readonly invoiceStateList = [...INVOICE_STATE_VALUES];
 
   constructor() {
-    effect(() => this.valid.emit(this.validationResult()?.isValid() ?? true));
+    effect(() => this.valid.emit(this.memberFeeForm().valid()));
   }
 
-  protected onFieldChange(field: keyof MemberFeeModel, value: unknown, fd: MemberFeeModel): void {
+  protected onFieldChange(field: keyof MemberFeeModel, value: unknown): void {
     this.dirty.emit(true);
-    this.formDataChange.emit({ ...fd, [field]: value });
+    this.formData.update(fd => ({ ...fd, [field]: value }));
   }
 
   /** Never mutate the array in place — a new array is what makes the computeds (and the banner) refresh. */
-  protected onPositionAmountChange(index: number, value: number, fd: MemberFeeModel): void {
+  protected onPositionAmountChange(index: number, value: number): void {
     this.dirty.emit(true);
-    const positions = (fd.positions ?? []).map((p, i) => i === index ? { ...p, amount: Number(value) } : p);
-    this.formDataChange.emit({ ...fd, positions });
+    this.formData.update(fd => ({
+      ...fd,
+      positions: (fd.positions ?? []).map((p, i) => i === index ? { ...p, amount: Number(value) } : p)
+    }));
   }
 
   /**
    * Rescale a pro-rata position to the months the treasurer enters (spec 1.79 §3.4): 12 restores
    * the full year. A typed amount (onPositionAmountChange) is never overwritten here — it wins.
    */
-  protected onPositionMonthsChange(index: number, value: number, fd: MemberFeeModel): void {
+  protected onPositionMonthsChange(index: number, value: number): void {
     const months = Math.min(12, Math.max(1, Math.round(Number(value) || 12)));
     this.dirty.emit(true);
-    const positions = (fd.positions ?? []).map((p, i) => i === index ? applyProRata(p, months) : p);
-    this.formDataChange.emit({ ...fd, positions });
+    this.formData.update(fd => ({
+      ...fd,
+      positions: (fd.positions ?? []).map((p, i) => i === index ? applyProRata(p, months) : p)
+    }));
   }
 }

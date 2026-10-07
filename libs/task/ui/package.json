@@ -15,6 +15,7 @@
     "@okr/shared-i18n": "*",
     "@okr/shared-util-core": "*",
     "@okr/shared-util-angular": "*",
-    "@okr/task-util": "*"
+    "@okr/task-util": "*",
+    "@angular/forms": "*"
   }
 }

@@ -10,6 +10,8 @@
     "@okr/shared-models": "*",
     "@okr/shared-ui": "*",
     "@okr/shared-util-core": "*",
-    "@okr/content-document-util": "*"
+    "@okr/content-document-util": "*",
+    "@okr/shared-util-angular": "*",
+    "@angular/forms": "*"
   }
 }

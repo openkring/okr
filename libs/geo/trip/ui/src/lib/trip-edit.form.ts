@@ -1,4 +1,4 @@
-import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, effect, input, model, output } from '@angular/core';
 import { form } from '@angular/forms/signals';
 import { IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 
@@ -225,9 +225,9 @@ export class TripEditForm {
     return isTrainingCrewBoat(boat.subType, this.boats().find(b => b.okey === boat.key)?.seats ?? 0);
   });
   protected selectedLocationKey = computed(() => this.formData().locations?.[0] ?? '');
-  protected notes = linkedSignal(() => this.formData().notes ?? DEFAULT_NOTES);
+  protected notes = computed(() => this.formData().notes ?? DEFAULT_NOTES);
   protected notesI18n = computed(() => ({ name: 'notes', label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder() } as NotesInputI18n));
-  protected participants = linkedSignal(() => this.formData()?.participants ?? []);
+  protected participants = computed(() => this.formData()?.participants ?? []);
   // no `?? 0` fallback: a cleared field must stay empty instead of snapping back to a value
   protected distance = computed(() => this.formData().distance);
 

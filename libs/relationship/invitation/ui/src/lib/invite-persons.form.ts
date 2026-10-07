@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, inject, input, model, output } from '@angular/core';
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonIcon, IonImg, IonItem, IonLabel, IonList } from '@ionic/angular/standalone';
 
 import { AvatarInfo, UserModel } from '@okr/shared-models';
@@ -106,7 +106,7 @@ export class InvitePersonsForm {
    * Seeded from the model and written back through {@link setInvitees} — the same path the message
    * takes, so `dirty`/`valid` stay in step whether a person is added or removed.
    */
-  protected readonly invitees = linkedSignal(() => this.formData()?.invitees ?? []);
+  protected readonly invitees = computed(() => this.formData()?.invitees ?? []);
 
   protected messageI18n = computed(() => ({
     name: 'message',

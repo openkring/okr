@@ -1,11 +1,13 @@
-import { Component, computed, effect, inject, input, linkedSignal, model, output, signal } from "@angular/core";
+import { Component, computed, effect, inject, input, model, output, signal } from "@angular/core";
+import { form } from "@angular/forms/signals";
 import { IonAccordion, IonButton, IonCol, IonGrid, IonItem, IonLabel, IonRow, ModalController } from "@ionic/angular/standalone";
 
 import { AvatarUsages, LanguageCategory, Languages, NameDisplays, PersonSortCriterias } from "@okr/shared-categories";
 import { AvatarUsage, DefaultLanguage, NameDisplay, PersonSortCriteria, RoleName, UserModel } from "@okr/shared-models";
 import { FcmService } from "@okr/shared-data-access";
 import { CategoryOld, CategoryOldI18n, Checkbox, CheckboxI18n, DeliveryChannelsControl, DeliveryChannelsI18n, ErrorNote, TextInput, TextInputI18n } from "@okr/shared-ui";
-import { coerceBoolean, hasRole, isValidForFields, toEditableChannels } from "@okr/shared-util-core";
+import { validateVestTree } from "@okr/shared-util-angular";
+import { coerceBoolean, hasRole, toEditableChannels } from "@okr/shared-util-core";
 
 import { userValidations } from "@okr/user-util";
 import { ProfileI18n } from "@okr/profile-util";
@@ -187,11 +189,22 @@ export class ProfileSettingsAccordion {
   // reads skip model defaults, and the migration runs after the release). Validating the raw
   // value would fail `notArray` for every un-migrated user and hide the save bar with nothing
   // on screen to explain it — so validate a normalised copy.
-  private readonly validatedData = computed<UserModel>(() => ({
-    ...this.formData(),
-    newsDelivery: toEditableChannels(this.formData().newsDelivery),
-    invoiceDelivery: toEditableChannels(this.formData().invoiceDelivery),
-  }));
+  private readonly validatedData = computed<UserModel>(() => this.normalise(this.formData()));
+  // validatedData() is a computed and cannot back a signal form, so the form wraps formData and
+  // the closure applies the same normalisation (plus tenantId/tags, which validateVestTree does
+  // not pass) before calling the suite.
+  private readonly suiteWithContext = (model: UserModel, field?: string) =>
+    userValidations(this.normalise(model), this.tenantId(), this.tags(), field);
+  protected readonly settingsForm = form(this.formData, (path) =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    validateVestTree(path, this.suiteWithContext as any));
+  // The user suite also validates fields this accordion never shows (index, loginEmail,
+  // personKey, tags); an error there must not silently disable the save — the isValidForFields
+  // rule, read off the signal form (error kind = `vest.<field>`).
+  private readonly editedFieldsValid = computed(() =>
+    !this.settingsForm().errorSummary().some((e) => EDITED_FIELDS.includes(e.kind.replace(/^vest\./, ''))));
+
+  // per-field errors for the notes under each field
   private readonly validationResult = computed(() => userValidations(this.validatedData(), this.tenantId(), this.tags()));
   protected showArchivedDataErrors = computed(() => this.validationResult().getErrors('showArchivedData'));
   protected showDebugInfoErrors = computed(() => this.validationResult().getErrors('showDebugInfo'));
@@ -204,20 +217,20 @@ export class ProfileSettingsAccordion {
   protected showHelper = computed(() => this.currentUser()?.showHelpers ?? true);
 
   // fields
-  protected language = linkedSignal(() => this.formData().userLanguage ?? DefaultLanguage);
-  protected showDebugInfo = linkedSignal(() => this.formData().showDebugInfo ?? false);
-  protected showArchivedData = linkedSignal(() => this.formData().showArchivedData ?? false);
-  protected showHelpers = linkedSignal(() => this.formData().showHelpers ?? true);
-  protected useTouchId = linkedSignal(() => this.formData().useTouchId ?? false);
-  protected useFaceId = linkedSignal(() => this.formData().useFaceId ?? false);
-  protected avatarUsage = linkedSignal(() => this.formData().avatarUsage ?? AvatarUsage.PhotoFirst);
-  protected gravatarEmail = linkedSignal(() => this.formData().gravatarEmail ?? '');
-  protected nameDisplay = linkedSignal(() => this.formData().nameDisplay ?? NameDisplay.FirstLast);
+  protected readonly language = computed(() => this.formData().userLanguage ?? DefaultLanguage);
+  protected readonly showDebugInfo = computed(() => this.formData().showDebugInfo ?? false);
+  protected readonly showArchivedData = computed(() => this.formData().showArchivedData ?? false);
+  protected readonly showHelpers = computed(() => this.formData().showHelpers ?? true);
+  protected readonly useTouchId = computed(() => this.formData().useTouchId ?? false);
+  protected readonly useFaceId = computed(() => this.formData().useFaceId ?? false);
+  protected readonly avatarUsage = computed(() => this.formData().avatarUsage ?? AvatarUsage.PhotoFirst);
+  protected readonly gravatarEmail = computed(() => this.formData().gravatarEmail ?? '');
+  protected readonly nameDisplay = computed(() => this.formData().nameDisplay ?? NameDisplay.FirstLast);
   // Lastname, to match UserModel's default and convertUserToForm() — showing Fullname here made the
   // picker disagree with the order the list actually used.
-  protected personSortCriteria = linkedSignal(() => this.formData().personSortCriteria ?? PersonSortCriteria.Lastname);
-  protected newsDelivery = linkedSignal(() => toEditableChannels(this.formData().newsDelivery));
-  protected invoiceDelivery = linkedSignal(() => toEditableChannels(this.formData().invoiceDelivery));
+  protected readonly personSortCriteria = computed(() => this.formData().personSortCriteria ?? PersonSortCriteria.Lastname);
+  protected readonly newsDelivery = computed(() => toEditableChannels(this.formData().newsDelivery));
+  protected readonly invoiceDelivery = computed(() => toEditableChannels(this.formData().invoiceDelivery));
 
   // passing constants to template
   protected avatarUsages = AvatarUsages;
@@ -226,9 +239,7 @@ export class ProfileSettingsAccordion {
   protected personSortCriterias = PersonSortCriterias;
 
   constructor() {
-    // The user suite also validates fields this accordion never shows (index, loginEmail,
-    // personKey, tags); an error there must not silently disable the save — see isValidForFields.
-    effect(() => this.valid.emit(isValidForFields(this.validationResult(), EDITED_FIELDS)));
+    effect(() => this.valid.emit(this.editedFieldsValid()));
   }
 
   protected async enableNotifications(): Promise<void> {
@@ -256,6 +267,14 @@ export class ProfileSettingsAccordion {
   }
 
   /******************************* helpers *************************************** */
+  private normalise(user: UserModel): UserModel {
+    return {
+      ...user,
+      newsDelivery: toEditableChannels(user.newsDelivery),
+      invoiceDelivery: toEditableChannels(user.invoiceDelivery),
+    };
+  }
+
 
   protected hasRole(role: RoleName): boolean {
     return hasRole(role, this.currentUser());

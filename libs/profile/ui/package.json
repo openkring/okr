@@ -14,7 +14,8 @@
     "@okr/shared-ui": "*",
     "@okr/shared-data-access": "*",
     "@okr/shared-util-core": "*",
-    "@okr/subject-person-util": "*"
+    "@okr/subject-person-util": "*",
+    "@okr/shared-util-angular": "*",
+    "@angular/forms": "*"
   }
 }
-

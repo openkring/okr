@@ -11,7 +11,9 @@
     "@okr/shared-models": "*",
     "@okr/shared-ui": "*",
     "@okr/shared-util-core": "*",
-    "@okr/cms-icon-util": "*"
+    "@okr/cms-icon-util": "*",
+    "@okr/shared-util-angular": "*",
+    "@angular/forms": "*"
   },
   "module": "./src/index.js",
   "type": "module"

@@ -1,8 +1,10 @@
-import { Component, computed, effect, input, linkedSignal, model, output } from "@angular/core";
+import { Component, computed, effect, input, model, output } from "@angular/core";
+import { form } from "@angular/forms/signals";
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonRow } from "@ionic/angular/standalone";
 
 import { RoleName, UserModel } from "@okr/shared-models";
 import { EmailInput, EmailInputI18n, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from "@okr/shared-ui";
+import { validateVestTree } from "@okr/shared-util-angular";
 import { coerceBoolean, hasRole } from "@okr/shared-util-core";
 
 import { USER_FORM_SHAPE, UserI18n, UserModelFormModel, userModelFormValidations } from "@okr/user-util";
@@ -119,6 +121,10 @@ export class UserModelForm {
 
   // validation and errors
   protected readonly shape = USER_FORM_SHAPE;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  protected readonly modelForm = form(this.formData, (path) => validateVestTree(path, userModelFormValidations as any));
+
+  // per-field errors for the notes under each field
   private readonly validationResult = computed(() => userModelFormValidations(this.formData()));
   protected gravatarEmailErrors = computed(() => this.validationResult().getErrors('gravatarEmail'));
   protected loginEmailErrors = computed(() => this.validationResult().getErrors('loginEmail'));
@@ -129,23 +135,21 @@ export class UserModelForm {
   protected personKeyErrors = computed(() => this.validationResult().getErrors('personKey'));
 
   // fields
-  protected okey = linkedSignal(() => this.formData().okey);
-  protected tenants = linkedSignal(() => {
+  protected readonly okey = computed(() => this.formData().okey);
+  protected readonly tenants = computed(() => {
     const tenants = this.formData().tenants;
     return Array.isArray(tenants) ? tenants.join(',') : tenants;
   });
-  protected personKey = linkedSignal(() => this.formData().personKey);
-  protected firstName = linkedSignal(() => this.formData().firstName);
-  protected lastName = linkedSignal(() => this.formData().lastName);
-  protected loginEmail = linkedSignal(() => this.formData().loginEmail);
-  protected loginId = linkedSignal(() => this.formData().loginId ?? '');
-  protected gravatarEmail = linkedSignal(() => this.formData().gravatarEmail);
-  protected notes = linkedSignal(() => this.formData().notes);
+  protected readonly personKey = computed(() => this.formData().personKey);
+  protected readonly firstName = computed(() => this.formData().firstName);
+  protected readonly lastName = computed(() => this.formData().lastName);
+  protected readonly loginEmail = computed(() => this.formData().loginEmail);
+  protected readonly loginId = computed(() => this.formData().loginId ?? '');
+  protected readonly gravatarEmail = computed(() => this.formData().gravatarEmail);
+  protected readonly notes = computed(() => this.formData().notes);
 
   constructor() {
-    effect(() => {
-      this.valid.emit(this.validationResult().isValid());
-    });
+    effect(() => this.valid.emit(this.modelForm().valid()));
   }
 
   protected onFieldChange(fieldName: string, fieldValue: string | string[] | number | boolean): void {

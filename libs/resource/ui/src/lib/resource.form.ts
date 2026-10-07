@@ -1,9 +1,11 @@
-import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, effect, input, model, output } from '@angular/core';
+import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
 import { BaseProperty, CategoryListModel, ResourceModel, RoleName, UserModel } from '@okr/shared-models';
 import { CategorySelect, Chips, Color, ErrorNote, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, PropertyList, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, getYear, hasRole } from '@okr/shared-util-core';
+import { validateVestTree } from '@okr/shared-util-angular';
 import { DEFAULT_CAR_TYPE, DEFAULT_GENDER, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PET_TYPE, DEFAULT_PRICE, DEFAULT_RBOAT_TYPE, DEFAULT_RBOAT_USAGE, DEFAULT_TAGS, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 
 import { getUsageForYear, ResourceI18n, resourceValidations, getKeyNr, getLockerNr, setUsageFromYear } from '@okr/resource-util';
@@ -319,7 +321,7 @@ import { getUsageForYear, ResourceI18n, resourceValidations, getKeyNr, getLocker
           }
         }
 
-        <!-- one-way + explicit write-back: a two-way binding onto the local 'data' linkedSignal
+        <!-- one-way + explicit write-back: a two-way binding onto a local copy of 'data'
              never reached formData and never marked the form dirty, so adding or removing a
              property silently did nothing. -->
         <okr-property-list [properties]="data()" (propertiesChange)="onFieldChange('data', $event)" />
@@ -359,7 +361,15 @@ export class ResourceForm {
   public dirty = output<boolean>();
   public valid = output<boolean>();
 
-  constructor() { effect(() => this.valid.emit(this.validationResult().isValid())); }
+  // The suite needs the tenant id and the tags, which validateVestTree does not pass — so the bridge
+  // calls it through a closure that adds them.
+  private readonly suiteWithContext = (model: ResourceModel, field?: string) =>
+    resourceValidations(model, this.tenantId(), this.allTags(), field);
+  protected readonly resourceForm = form(this.formData, (path) =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    validateVestTree(path, this.suiteWithContext as any));
+
+  constructor() { effect(() => this.valid.emit(this.resourceForm().valid())); }
 
   // validation and errors
   private readonly validationResult = computed(() => resourceValidations(this.formData(), this.tenantId(), this.allTags()));
@@ -380,23 +390,23 @@ export class ResourceForm {
     .flatMap(([, messages]) => messages));
 
   // fields
-  protected name = linkedSignal(() => this.formData().name ?? DEFAULT_NAME);
-  protected resourceType = linkedSignal(() => this.formData().type ?? '');
-  protected subType = linkedSignal(() => this.formData().subType ?? this.getDefaultType(this.formData().type ?? ''));
+  protected readonly name = computed(() => this.formData()?.name ?? DEFAULT_NAME);
+  protected readonly resourceType = computed(() => this.formData()?.type ?? '');
+  protected readonly subType = computed(() => this.formData()?.subType ?? this.getDefaultType(this.formData().type ?? ''));
   /**
    * `ResourceModel.usage` carries one entry per season; the picker shows the current one.
    * Changing it moves this season AND every later one, leaving earlier ones alone — a boat is
    * re-classed from now on, its history stays what it was (setUsageFromYear).
    */
-  protected usage = linkedSignal(() => getUsageForYear(this.formData().usage, getYear()) || DEFAULT_RBOAT_USAGE);
-  protected load = linkedSignal(() => this.formData().load ?? '');
-  protected currentValue = linkedSignal(() => this.formData().currentValue ?? DEFAULT_PRICE);
-  protected hexColor = linkedSignal(() => this.formData().color ?? '');
-  protected keyNr = linkedSignal(() => getKeyNr(this.formData()) ?? 0);
-  protected lockerNr = linkedSignal(() => getLockerNr(this.formData()) ?? 0);
-  protected data = linkedSignal(() => this.formData().data ?? []);
-  protected tags = linkedSignal(() => this.formData().tags ?? DEFAULT_TAGS);
-  protected description = linkedSignal(() => this.formData().description ?? DEFAULT_NOTES);
+  protected readonly usage = computed(() => getUsageForYear(this.formData()?.usage, getYear()) || DEFAULT_RBOAT_USAGE);
+  protected readonly load = computed(() => this.formData()?.load ?? '');
+  protected readonly currentValue = computed(() => this.formData()?.currentValue ?? DEFAULT_PRICE);
+  protected readonly hexColor = computed(() => this.formData()?.color ?? '');
+  protected readonly keyNr = computed(() => getKeyNr(this.formData()) ?? 0);
+  protected readonly lockerNr = computed(() => getLockerNr(this.formData()) ?? 0);
+  protected readonly data = computed(() => this.formData()?.data ?? []);
+  protected readonly tags = computed(() => this.formData()?.tags ?? DEFAULT_TAGS);
+  protected readonly description = computed(() => this.formData()?.description ?? DEFAULT_NOTES);
   protected okey = computed(() => this.formData().okey ?? DEFAULT_NAME);
 
   protected okeyI18n = computed(() => ({

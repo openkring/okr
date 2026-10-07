@@ -1,8 +1,10 @@
-import { Component, computed, effect, input, linkedSignal, model, output } from "@angular/core";
+import { Component, computed, effect, input, model, output } from "@angular/core";
+import { form } from "@angular/forms/signals";
 import { IonAccordion, IonCol, IonGrid, IonItem, IonLabel, IonRow } from "@ionic/angular/standalone";
 
 import { DiarySource, DiaryTarget, UserModel } from "@okr/shared-models";
 import { Checkbox, CheckboxI18n, DateInput, DateInputI18n, ErrorNote } from "@okr/shared-ui";
+import { validateVestTree } from "@okr/shared-util-angular";
 import { coerceBoolean, convertDateFormatToString, DateFormat } from "@okr/shared-util-core";
 import { diaryTransferValidations, mergeDiaryTargets, ProfileI18n } from "@okr/profile-util";
 
@@ -112,12 +114,19 @@ export class ProfileDiaryTransferAccordion {
   public readonly dirty = output<boolean>();
   public readonly valid = output<boolean>();
 
-  // One target per offered diary. Derived from formData (seeded once by the page), never from a
-  // live store stream — a re-emission there would discard what the user has ticked so far.
-  protected readonly targets = linkedSignal(() =>
-    mergeDiaryTargets(this.formData().diaryTargets ?? [], this.diaries().map((d) => d.tenantId)));
+  // One target per offered diary, derived from formData. A pure mirror: every edit goes through
+  // applyTargets into formData, and mergeDiaryTargets is idempotent, so nothing local can be lost.
+  protected readonly targets = computed(() => this.mergeTargets(this.formData()));
 
-  // validation and errors
+  // The suite validates the merged targets, not the UserModel — targets() is a computed and cannot
+  // back a signal form, so the form wraps formData and the closure derives the same targets.
+  private readonly suiteWithContext = (model: UserModel, field?: string) =>
+    diaryTransferValidations(this.mergeTargets(model), field);
+  protected readonly diaryTransferForm = form(this.formData, (path) =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    validateVestTree(path, this.suiteWithContext as any));
+
+  // per-field errors for the notes under each field
   private readonly validationResult = computed(() => diaryTransferValidations(this.targets()));
   protected readonly diaryTargetsErrors = computed(() => this.validationResult().getErrors('diaryTargets'));
 
@@ -135,7 +144,7 @@ export class ProfileDiaryTransferAccordion {
   });
 
   constructor() {
-    effect(() => this.valid.emit(this.validationResult().isValid()));
+    effect(() => this.valid.emit(this.diaryTransferForm().valid()));
   }
 
   /******************************* actions *************************************** */
@@ -158,11 +167,14 @@ export class ProfileDiaryTransferAccordion {
 
   private applyTargets(newTargets: DiaryTarget[]): void {
     this.dirty.emit(true);
-    this.targets.set(newTargets);
     this.formData.update((u) => ({ ...u, diaryTargets: newTargets }));
   }
 
   /******************************* helpers *************************************** */
+  private mergeTargets(user: UserModel): DiaryTarget[] {
+    return mergeDiaryTargets(user.diaryTargets ?? [], this.diaries().map((d) => d.tenantId));
+  }
+
   protected sourceLabel(source: DiarySource): string {
     switch (source) {
       case 'taskDone': return this.i18n().diaryTransfer_source_taskDone();

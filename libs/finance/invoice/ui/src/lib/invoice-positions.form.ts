@@ -1,4 +1,5 @@
 import { Component, computed, effect, input, model, output } from '@angular/core';
+import { form } from '@angular/forms/signals';
 import {
   IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonNote, IonRow,
   IonSegment, IonSegmentButton,
@@ -7,6 +8,7 @@ import {
 import { AccountModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { ErrorNote, NumberInput, NumberInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { validateVestTree } from '@okr/shared-util-angular';
 import { coerceBoolean, isRebatePosition } from '@okr/shared-util-core';
 
 import { AccountSelect, AccountSelectI18n } from '@okr/finance-account-ui';
@@ -211,6 +213,11 @@ export class InvoicePositionsForm {
   protected readonly total = computed(() => positionsTotal(this.positions()).toFixed(2));
   protected readonly canAdd = computed(() => !this.isReadOnly() && this.positions().length < MAX_INVOICE_POSITIONS);
 
+  // The suite validates the position list (not a formData object) and takes only (positions, field?),
+  // so the signal form wraps the writable `positions` model and the bridge gets the suite directly.
+  protected readonly positionsForm = form(this.positions, (path) =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    validateVestTree(path, invoicePositionsValidations as any));
   private readonly validationResult = computed(() => invoicePositionsValidations(this.positions()));
   protected readonly listErrors = computed(() => this.validationResult().getErrors('positions'));
   protected readonly rowErrors = computed(() => {
@@ -246,7 +253,7 @@ export class InvoicePositionsForm {
   } as AccountSelectI18n));
 
   constructor() {
-    effect(() => this.valid.emit(this.validationResult().isValid()));
+    effect(() => this.valid.emit(this.positionsForm().valid()));
   }
 
   protected kindOf(p: InvoicePositionInput): RowKind {

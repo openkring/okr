@@ -1,4 +1,5 @@
-import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, effect, input, model, output } from '@angular/core';
+import { form } from '@angular/forms/signals';
 import { AsyncPipe } from '@angular/common';
 import { IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonRow, IonTextarea } from '@ionic/angular/standalone';
 
@@ -8,6 +9,7 @@ import { CategoryListModel, RoleName, TaskModel, UserModel } from '@okr/shared-m
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { CategorySelect, Chips, DateInput, DateInputI18n, ErrorNote, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, getCategoryIcon, getItemLabel, getNextCategoryName, hasRole } from '@okr/shared-util-core';
+import { validateVestTree } from '@okr/shared-util-angular';
 import { getRelatedIcon, getRelatedModelType, getRelatedRoute, TaskI18n, taskValidations } from '@okr/task-util';
 
 @Component({
@@ -158,7 +160,15 @@ export class TaskForm {
   public valid = output<boolean>();
   public relatedClicked = output<string>();   // the url of the related record
 
-  constructor() { effect(() => this.valid.emit(this.validationResult().isValid())); }
+  // The suite needs the tenant id and the tags, which validateVestTree does not pass — so the bridge
+  // calls it through a closure that adds them.
+  private readonly suiteWithContext = (model: TaskModel, field?: string) =>
+    taskValidations(model, this.tenantId(), this.allTags(), field);
+  protected readonly taskForm = form(this.formData, (path) =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    validateVestTree(path, this.suiteWithContext as any));
+
+  constructor() { effect(() => this.valid.emit(this.taskForm().valid())); }
 
   // validation and errors
   private readonly validationResult = computed(() => taskValidations(this.formData(), this.tenantId(), this.allTags()));
@@ -170,14 +180,14 @@ export class TaskForm {
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
 
   // fields
-  protected name = linkedSignal(() => this.formData().name);
-  protected dueDate = linkedSignal(() => this.formData().dueDate);
-  protected completionDate = linkedSignal(() => this.formData().completionDate);
-  protected state = linkedSignal(() => this.formData().state);
-  protected priority = linkedSignal(() => this.formData().priority);
-  protected importance = linkedSignal(() => this.formData().importance);
-  protected tags = linkedSignal(() => this.formData().tags ?? DEFAULT_TAGS);
-  protected notes = linkedSignal(() => this.formData().notes ?? DEFAULT_NOTES);
+  protected readonly name = computed(() => this.formData()?.name);
+  protected readonly dueDate = computed(() => this.formData()?.dueDate);
+  protected readonly completionDate = computed(() => this.formData()?.completionDate);
+  protected readonly state = computed(() => this.formData()?.state);
+  protected readonly priority = computed(() => this.formData()?.priority);
+  protected readonly importance = computed(() => this.formData()?.importance);
+  protected readonly tags = computed(() => this.formData()?.tags ?? DEFAULT_TAGS);
+  protected readonly notes = computed(() => this.formData()?.notes ?? DEFAULT_NOTES);
   protected okey = computed(() => this.formData().okey ?? '');
 
   // The state is a click-through icon in front of the name: one tap advances to the next item

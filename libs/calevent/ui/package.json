@@ -17,6 +17,7 @@
     "@okr/shared-pipes": "*",
     "@okr/shared-i18n": "*",
     "@okr/calevent-util": "*",
-    "@okr/calevent-data-access": "*"
+    "@okr/calevent-data-access": "*",
+    "@angular/forms": "*"
   }
 }

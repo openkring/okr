@@ -1,7 +1,9 @@
-import { Component, computed, effect, input, linkedSignal, output, signal } from '@angular/core';
+import { Component, computed, effect, input, model, output, signal } from '@angular/core';
+import { form } from '@angular/forms/signals';
 import { IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonList, IonRow } from '@ionic/angular/standalone';
 
 import { DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n , ErrorNote} from '@okr/shared-ui';
+import { validateVestTree } from '@okr/shared-util-angular';
 import { coerceBoolean } from '@okr/shared-util-core';
 import { SvgIconPipe } from '@okr/shared-pipes';
 
@@ -27,13 +29,13 @@ import { SHORT_NAME_LENGTH } from '@okr/shared-constants';
           <ion-card-content class="ion-no-padding">
             <ion-grid>
               <ion-row>
-                <ion-col size="8">
+                <ion-col size="12" size-md="8">
                   <okr-text-input [i18n]="titleI18n()" [value]="title()"
                     (valueChange)="onFieldChange('title', $event)"
                     [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
                   <okr-error-note [errors]="titleErrors()" />
                 </ion-col>
-                <ion-col size="4">
+                <ion-col size="12" size-md="4">
                   <okr-text-input [i18n]="bexioIdI18n()" [value]="bexioId()"
                     (valueChange)="onFieldChange('bexioId', $event)"
                     [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
@@ -41,13 +43,13 @@ import { SHORT_NAME_LENGTH } from '@okr/shared-constants';
                 </ion-col>
               </ion-row>
               <ion-row>
-                <ion-col size="6">
+                <ion-col size="12" size-md="6">
                   <okr-date-input [i18n]="validFromI18n()" [storeDate]="validFrom()"
                     (storeDateChange)="onFieldChange('validFrom', $event)"
                     [readOnly]="isReadOnly()" />
                   <okr-error-note [errors]="validFromErrors()" />
                 </ion-col>
-                <ion-col size="6">
+                <ion-col size="12" size-md="6">
                   <okr-date-input [i18n]="validToI18n()" [storeDate]="validTo()"
                     (storeDateChange)="onFieldChange('validTo', $event)"
                     [readOnly]="isReadOnly()" />
@@ -150,7 +152,8 @@ import { SHORT_NAME_LENGTH } from '@okr/shared-constants';
 export class BexioInvoiceNewForm {
   /** kept in step with the cap the Vest suite enforces on this field */
   protected readonly shortNameLength = SHORT_NAME_LENGTH;
-  public readonly formData = input.required<BexioInvoiceFormModel>();
+  /** a model (not input + output) so the signal form can wrap it; its formDataChange output is what the parent binds */
+  public readonly formData = model.required<BexioInvoiceFormModel>();
   public readonly readOnly = input(false);
   public readonly showForm = input(true);
   public readonly i18n = input.required<InvoiceI18n>();
@@ -192,11 +195,14 @@ export class BexioInvoiceNewForm {
   protected templateI18n        = computed(() => ({ name: 'template',        label: this.i18n().template_label()        } as StringSelectI18n));
   protected defaultPositionI18n = computed(() => ({ name: 'defaultPosition', label: this.i18n().defaultPosition_label() } as StringSelectI18n));
 
-  public readonly formDataChange = output<BexioInvoiceFormModel>();
   public readonly dirty = output<boolean>();
   public readonly valid = output<boolean>();
 
   protected readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()));
+  // the suite takes only (model, field?), so the bridge gets it directly
+  protected readonly invoiceForm = form(this.formData, (path) =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    validateVestTree(path, bexioInvoiceValidations as any));
   private readonly validationResult = computed(() => bexioInvoiceValidations(this.formData()));
   protected validFromErrors = computed(() => this.validationResult().getErrors('validFrom'));
   protected validToErrors = computed(() => this.validationResult().getErrors('validTo'));
@@ -204,7 +210,7 @@ export class BexioInvoiceNewForm {
   protected titleErrors = computed(() => this.validationResult().getErrors('title'));
 
   constructor() {
-    effect(() => this.valid.emit(this.validationResult().isValid()));
+    effect(() => this.valid.emit(this.invoiceForm().valid()));
   }
 
   protected readonly title = computed(() => this.formData()?.title ?? '');
@@ -213,7 +219,7 @@ export class BexioInvoiceNewForm {
   protected readonly footer = computed(() => this.formData()?.footer ?? '');
   protected readonly validFrom = computed(() => this.formData()?.validFrom ?? '');
   protected readonly validTo = computed(() => this.formData()?.validTo ?? '');
-  protected readonly positions = linkedSignal<BexioInvoicePosition[]>(() => this.formData()?.positions ?? []);
+  protected readonly positions = computed<BexioInvoicePosition[]>(() => this.formData()?.positions ?? []);
 
   protected readonly templateNames = BexioTemplates.map(t => t.name);
   protected readonly selectedTemplateName = computed(() => {
@@ -222,15 +228,15 @@ export class BexioInvoiceNewForm {
   });
 
   protected readonly defaultPositionNames = DefaultInvoicePositions.map(p => p.name);
+  // genuine local UI state (the preset picked before «add»), not a formData field — stays a signal
   protected readonly selectedDefaultName = signal(DefaultInvoicePositions[0].name);
 
   protected addDefaultPosition(): void {
     const def = DefaultInvoicePositions.find(p => p.name === this.selectedDefaultName());
     if (!def) return;
     const updated = [...this.positions(), defaultInvoicePositionToBexio(def)];
-    this.positions.set(updated);
     this.dirty.emit(true);
-    this.formDataChange.emit({ ...this.formData(), positions: updated });
+    this.formData.update((vm) => ({ ...vm, positions: updated }));
   }
 
   protected toNumber(value: string): number {
@@ -244,47 +250,42 @@ export class BexioInvoiceNewForm {
 
   protected onFieldChange(fieldName: string, fieldValue: string): void {
     this.dirty.emit(true);
-    this.formDataChange.emit({ ...this.formData(), [fieldName]: fieldValue });
+    this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
   }
 
   protected onPositionFieldChange(index: number, field: keyof BexioInvoicePosition, value: string): void {
     const updated = this.positions().map((p, i) =>
       i === index ? { ...p, [field]: field === 'account_id' ? parseInt(value, 10) : value } : p
     );
-    this.positions.set(updated);
     this.dirty.emit(true);
-    this.formDataChange.emit({ ...this.formData(), positions: updated });
+    this.formData.update((vm) => ({ ...vm, positions: updated }));
   }
 
   protected onPositionPriceChange(index: number, value: number | null): void {
     const updated = this.positions().map((p, i) =>
       i === index ? { ...p, unit_price: (value ?? 0).toFixed(2) } : p
     );
-    this.positions.set(updated);
     this.dirty.emit(true);
-    this.formDataChange.emit({ ...this.formData(), positions: updated });
+    this.formData.update((vm) => ({ ...vm, positions: updated }));
   }
 
   protected onPositionAmountChange(index: number, value: number | null): void {
     const updated = this.positions().map((p, i) =>
       i === index ? { ...p, amount: String(value ?? 1) } : p
     );
-    this.positions.set(updated);
     this.dirty.emit(true);
-    this.formDataChange.emit({ ...this.formData(), positions: updated });
+    this.formData.update((vm) => ({ ...vm, positions: updated }));
   }
 
   protected addPosition(): void {
     const updated = [...this.positions(), { text: '', unit_price: '0.00', account_id: 0, amount: '1' }];
-    this.positions.set(updated);
     this.dirty.emit(true);
-    this.formDataChange.emit({ ...this.formData(), positions: updated });
+    this.formData.update((vm) => ({ ...vm, positions: updated }));
   }
 
   protected removePosition(index: number): void {
     const updated = this.positions().filter((_, i) => i !== index);
-    this.positions.set(updated);
     this.dirty.emit(true);
-    this.formDataChange.emit({ ...this.formData(), positions: updated });
+    this.formData.update((vm) => ({ ...vm, positions: updated }));
   }
 }

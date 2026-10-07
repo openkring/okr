@@ -11,6 +11,8 @@
     "@okr/shared-constants": "*",
     "@okr/shared-ui": "*",
     "@okr/shared-util-core": "*",
-    "@okr/relationship-responsibility-util": "*"
+    "@okr/shared-util-angular": "*",
+    "@okr/relationship-responsibility-util": "*",
+    "@angular/forms": "*"
   }
 }

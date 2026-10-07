@@ -1,10 +1,12 @@
-import { Component, computed, effect, input, linkedSignal, model, output } from "@angular/core";
+import { Component, computed, effect, input, model, output } from "@angular/core";
+import { form } from "@angular/forms/signals";
 import { IonAccordion, IonCol, IonGrid, IonItem, IonLabel, IonRow } from "@ionic/angular/standalone";
 
 import { PhotoUsages, PrivacyUsages } from "@okr/shared-categories";
 import { PrivacyUsage, UserModel } from "@okr/shared-models";
-import { CategoryOld, CategoryOldI18n, Checkbox, CheckboxI18n } from "@okr/shared-ui";
-import { coerceBoolean, isValidForFields } from "@okr/shared-util-core";
+import { CategoryOld, CategoryOldI18n, Checkbox, CheckboxI18n, ErrorNote } from "@okr/shared-ui";
+import { validateVestTree } from "@okr/shared-util-angular";
+import { coerceBoolean } from "@okr/shared-util-core";
 
 import { PersonFormModel, personValidations } from "@okr/subject-person-util";
 import { ProfileI18n } from "@okr/profile-util";
@@ -17,7 +19,7 @@ const EDITED_FIELDS = ['usageImages', 'usageDateOfBirth', 'usagePostalAddress', 
   standalone: true,
   imports: [
     IonAccordion, IonItem, IonLabel, IonGrid, IonRow, IonCol,
-    CategoryOld, Checkbox
+    CategoryOld, Checkbox, ErrorNote
   ],
   styles: [`
     ion-icon { padding-right: 5px; }
@@ -43,21 +45,27 @@ const EDITED_FIELDS = ['usageImages', 'usageDateOfBirth', 'usagePostalAddress', 
             <ion-row> 
               <ion-col size="12" size-md="6">
                 <okr-category-old [i18n]="usageImagesI18n()" [value]="usageImages()" (valueChange)="onUsageChange('usageImages', $event)" [categories]="photoUsages" [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="usageImagesErrors()" />
               </ion-col>
               <ion-col size="12" size-md="6">
                 <okr-category-old [i18n]="usageDateOfBirthI18n()" [value]="usageDateOfBirth()" (valueChange)="onUsageChange('usageDateOfBirth', $event)" [categories]="privacyUsages" [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="usageDateOfBirthErrors()" />
               </ion-col>
               <ion-col size="12" size-md="6">
                 <okr-category-old [i18n]="usagePostalAddressI18n()" [value]="usagePostalAddress()" (valueChange)="onUsageChange('usagePostalAddress', $event)" [categories]="privacyUsages" [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="usagePostalAddressErrors()" />
               </ion-col>
               <ion-col size="12" size-md="6">
                 <okr-category-old [i18n]="usageEmailI18n()" [value]="usageEmail()" (valueChange)="onUsageChange('usageEmail', $event)" [categories]="privacyUsages" [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="usageEmailErrors()" />
               </ion-col>
               <ion-col size="12" size-md="6">
                 <okr-category-old [i18n]="usagePhoneI18n()" [value]="usagePhone()" (valueChange)="onUsageChange('usagePhone', $event)" [categories]="privacyUsages" [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="usagePhoneErrors()" />
               </ion-col>
               <ion-col size="12" size-md="6">
                 <okr-category-old [i18n]="usageNameI18n()" [value]="usageName()" (valueChange)="onUsageChange('usageName', $event)" [categories]="privacyUsages" [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="usageNameErrors()" />
               </ion-col>
             </ion-row>
             @if(isScs()) {
@@ -111,18 +119,38 @@ export class ProfilePrivacyAccordion {
   public dirty = output<boolean>();
   public valid = output<boolean>();
 
-  // validation and errors (usage* validity comes from the person)
+  // usage* validity comes from the person, so the signal form wraps personFormData. The suite
+  // needs tenantId and tags, which validateVestTree does not pass — so the bridge calls it through
+  // a closure that adds them.
+  private readonly suiteWithContext = (model: PersonFormModel, field?: string) =>
+    personValidations(model, this.tenantId(), this.tags(), field);
+  protected readonly privacyForm = form(this.personFormData, (path) =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    validateVestTree(path, this.suiteWithContext as any));
+  // Only the usage* preferences are edited here; the rest of the person suite (tags, index,
+  // notes, …) is data this accordion never shows and must not gate its save — the
+  // isValidForFields rule, read off the signal form (error kind = `vest.<field>`).
+  private readonly editedFieldsValid = computed(() =>
+    !this.privacyForm().errorSummary().some((e) => EDITED_FIELDS.includes(e.kind.replace(/^vest\./, ''))));
+
+  // per-field errors for the notes under each field
   private readonly validationResult = computed(() => personValidations(this.personFormData(), this.tenantId(), this.tags()));
+  protected readonly usageImagesErrors = computed(() => this.validationResult().getErrors('usageImages'));
+  protected readonly usageDateOfBirthErrors = computed(() => this.validationResult().getErrors('usageDateOfBirth'));
+  protected readonly usagePostalAddressErrors = computed(() => this.validationResult().getErrors('usagePostalAddress'));
+  protected readonly usageEmailErrors = computed(() => this.validationResult().getErrors('usageEmail'));
+  protected readonly usagePhoneErrors = computed(() => this.validationResult().getErrors('usagePhone'));
+  protected readonly usageNameErrors = computed(() => this.validationResult().getErrors('usageName'));
 
   // fields
-  protected usageImages = linkedSignal(() => this.personFormData().usageImages ?? PrivacyUsage.Public);
-  protected usageDateOfBirth = linkedSignal(() => this.personFormData().usageDateOfBirth ?? PrivacyUsage.Restricted);
-  protected usagePostalAddress = linkedSignal(() => this.personFormData().usagePostalAddress ?? PrivacyUsage.Restricted);
-  protected usageEmail = linkedSignal(() => this.personFormData().usageEmail ?? PrivacyUsage.Restricted);
-  protected usagePhone = linkedSignal(() => this.personFormData().usagePhone ?? PrivacyUsage.Restricted);
-  protected usageName = linkedSignal(() => this.personFormData().usageName ?? PrivacyUsage.Restricted);
+  protected readonly usageImages = computed(() => this.personFormData().usageImages ?? PrivacyUsage.Public);
+  protected readonly usageDateOfBirth = computed(() => this.personFormData().usageDateOfBirth ?? PrivacyUsage.Restricted);
+  protected readonly usagePostalAddress = computed(() => this.personFormData().usagePostalAddress ?? PrivacyUsage.Restricted);
+  protected readonly usageEmail = computed(() => this.personFormData().usageEmail ?? PrivacyUsage.Restricted);
+  protected readonly usagePhone = computed(() => this.personFormData().usagePhone ?? PrivacyUsage.Restricted);
+  protected readonly usageName = computed(() => this.personFormData().usageName ?? PrivacyUsage.Restricted);
   protected isScs = computed(() => this.currentUser()?.tenants.includes('scs') || this.currentUser()?.tenants.includes('test'));
-  protected srvEmail = linkedSignal(() => this.formData().srvEmail ?? true);
+  protected readonly srvEmail = computed(() => this.formData().srvEmail ?? true);
   protected showHelper = computed(() => this.currentUser()?.showHelpers ?? true);
 
   // passing constants to template
@@ -130,9 +158,7 @@ export class ProfilePrivacyAccordion {
   protected photoUsages = PhotoUsages;
 
   constructor() {
-    // Only the usage* preferences are edited here; the rest of the person suite (tags, index,
-    // notes, …) is data this accordion never shows and must not gate its save — see isValidForFields.
-    effect(() => this.valid.emit(isValidForFields(this.validationResult(), EDITED_FIELDS)));
+    effect(() => this.valid.emit(this.editedFieldsValid()));
   }
 
   /******************************* actions *************************************** */

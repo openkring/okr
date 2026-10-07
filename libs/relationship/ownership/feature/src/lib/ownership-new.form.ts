@@ -1,10 +1,12 @@
-import { Component, computed, effect, inject, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, effect, inject, input, model, output } from '@angular/core';
+import { form } from '@angular/forms/signals';
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonRow, ModalController } from '@ionic/angular/standalone';
 
 import { AvatarPipe } from '@okr/avatar-ui';
 import { AppStore, OrgSelectModal, PersonSelectModal, PersonSelectResult, ResourceSelectModal } from '@okr/shared-feature';
 import { OwnershipModel, OwnershipModelName, ResourceModelName, UserModel } from '@okr/shared-models';
 import { DateInput, DateInputI18n, ErrorNote } from '@okr/shared-ui';
+import { validateVestTree } from '@okr/shared-util-angular';
 import { coerceBoolean, getAvatarKey, getCategoryIcon, getFullName, getTodayStr, isOrg, isPerson, isResource } from '@okr/shared-util-core';
 
 import { ownershipValidations } from '@okr/relationship-ownership-util';
@@ -94,6 +96,14 @@ export class OwnershipNewForm {
   public dirty = output<boolean>();
   public valid = output<boolean>();
 
+  // The suite needs the tenant and the ownership tags, which validateVestTree does not pass — so
+  // the bridge calls it through a closure that adds them (same context as validationResult below).
+  private readonly suiteWithContext = (model: OwnershipModel, field?: string) =>
+    ownershipValidations(model, this.appStore.tenantId(), this.appStore.getTags(OwnershipModelName), field);
+  protected readonly ownershipNewForm = form(this.formData, (path) =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    validateVestTree(path, this.suiteWithContext as any));
+
   // validation and errors
   private readonly validationResult = computed(() => ownershipValidations(this.formData(), this.appStore.tenantId(), this.appStore.getTags(OwnershipModelName)));
 
@@ -106,18 +116,19 @@ export class OwnershipNewForm {
   protected resourceType = computed(() => this.formData().resourceType ?? '');
   protected resourceModelType = computed(() => this.formData().resourceModelType ?? '');
   protected resourceName = computed(() => this.formData().resourceName ?? '');
-  protected validFrom = linkedSignal(() => this.formData().validFrom ?? getTodayStr());
+  protected readonly validFrom = computed(() => this.formData().validFrom ?? getTodayStr());
   protected locale = computed(() => this.appStore.appConfig().locale);
 
   private rboatTypes = computed(() => this.appStore.tryGetCategory('rboat_type'));
   private resourceTypes = computed(() => this.appStore.tryGetCategory('resource_type'));
 
   constructor() {
-    effect(() => this.valid.emit(this.validationResult().isValid()));
+    effect(() => this.valid.emit(this.ownershipNewForm().valid()));
   }
 
   /******************************* actions *************************************** */
   protected onFieldChange(fieldName: string, fieldValue: string | string[] | number): void {
+    this.dirty.emit(true);
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
   }
 

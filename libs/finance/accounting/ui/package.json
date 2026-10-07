@@ -18,6 +18,7 @@
     "@okr/shared-pipes": "*",
     "@okr/shared-util-angular": "*",
     "@okr/finance-accounting-util": "*",
-    "@okr/finance-cost-center-ui": "*"
+    "@okr/finance-cost-center-ui": "*",
+    "@angular/forms": "*"
   }
 }

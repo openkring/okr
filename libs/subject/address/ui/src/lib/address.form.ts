@@ -1,8 +1,10 @@
-import { Component, computed, effect, input, linkedSignal, model, output, untracked } from '@angular/core';
+import { Component, computed, effect, input, model, output, untracked } from '@angular/core';
+import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
 import { AddressModel, CategoryListModel, City, RoleName, UserModel } from '@okr/shared-models';
 import { CategorySelect, Checkbox, CheckboxI18n, Chips, CountrySelect, CountrySelectI18n, EmailInput, EmailInputI18n, ErrorNote, IbanInput, IbanInputI18n, NotesInput, NotesInputI18n, PhoneInput, PhoneInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { validateVestTree } from '@okr/shared-util-angular';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 import { CITY_LENGTH, DEFAULT_ADDRESS_CHANNEL, DEFAULT_COUNTRY, DEFAULT_NOTES, DEFAULT_TAGS, EMAIL_LENGTH, NAME_LENGTH, NUMBER_LENGTH, PHONE_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 
@@ -224,7 +226,7 @@ export class AddressForm {
   public valid = output<boolean>();
   
   constructor() {
-    effect(() => this.valid.emit(this.validationResult().isValid()));
+    effect(() => this.valid.emit(this.addressForm().valid()));
     // a postal address without a country defaults to CH, so that the default is also stored
     effect(() => {
       const _data = this.formData();
@@ -234,6 +236,13 @@ export class AddressForm {
   }
 
   // validation and errors
+  // The suite needs tenantId and allTags, which validateVestTree does not pass — so the bridge
+  // calls it through a closure that adds them.
+  private readonly suiteWithContext = (model: AddressModel, field?: string) =>
+    addressValidations(model, this.tenantId(), this.allTags(), field);
+  protected readonly addressForm = form(this.formData, (path) =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    validateVestTree(path, this.suiteWithContext as any));
   private readonly validationResult = computed(() => addressValidations(this.formData(), this.tenantId(), this.allTags()));
   protected addressChannelErrors = computed(() => this.validationResult().getErrors('addressChannel'));
   protected addressUsageErrors = computed(() => this.validationResult().getErrors('addressUsage'));
@@ -252,26 +261,26 @@ export class AddressForm {
   protected urlError = computed(() => this.validationResult().getErrors('url'));
 
   // fields
-  protected addressChannel = linkedSignal(() => this.formData()?.addressChannel ?? DEFAULT_ADDRESS_CHANNEL);
-  protected addressChannelLabel = linkedSignal(() => this.formData()?.addressChannelLabel ?? '');
-  protected addressUsage = linkedSignal(() => this.formData()?.addressUsage ?? (this.formData().parentKey.startsWith('org') ? 'work' : 'home'));
-  protected addressUsageLabel = linkedSignal(() => this.formData()?.addressUsageLabel ?? '');
-  protected email = linkedSignal(() => this.formData()?.email ?? '');
-  protected phone = linkedSignal(() => this.formData()?.phone ?? '');
-  protected streetName = linkedSignal(() => this.formData()?.streetName ?? '');
-  protected streetNumber = linkedSignal(() => this.formData()?.streetNumber ?? '');
-  protected addressValue2 = linkedSignal(() => this.formData()?.addressValue2 ?? '');
-  protected countryCode = linkedSignal(() => this.formData()?.countryCode || DEFAULT_COUNTRY);
-  protected zipCode = linkedSignal(() => this.formData()?.zipCode ?? '');
-  protected city = linkedSignal(() => this.formData()?.city ?? '');
-  protected url = linkedSignal(() => this.formData()?.url ?? '');
-  protected iban = linkedSignal(() => this.formData()?.iban ?? '');
+  protected readonly addressChannel = computed(() => this.formData()?.addressChannel ?? DEFAULT_ADDRESS_CHANNEL);
+  protected readonly addressChannelLabel = computed(() => this.formData()?.addressChannelLabel ?? '');
+  protected readonly addressUsage = computed(() => this.formData()?.addressUsage ?? (this.formData().parentKey.startsWith('org') ? 'work' : 'home'));
+  protected readonly addressUsageLabel = computed(() => this.formData()?.addressUsageLabel ?? '');
+  protected readonly email = computed(() => this.formData()?.email ?? '');
+  protected readonly phone = computed(() => this.formData()?.phone ?? '');
+  protected readonly streetName = computed(() => this.formData()?.streetName ?? '');
+  protected readonly streetNumber = computed(() => this.formData()?.streetNumber ?? '');
+  protected readonly addressValue2 = computed(() => this.formData()?.addressValue2 ?? '');
+  protected readonly countryCode = computed(() => this.formData()?.countryCode || DEFAULT_COUNTRY);
+  protected readonly zipCode = computed(() => this.formData()?.zipCode ?? '');
+  protected readonly city = computed(() => this.formData()?.city ?? '');
+  protected readonly url = computed(() => this.formData()?.url ?? '');
+  protected readonly iban = computed(() => this.formData()?.iban ?? '');
   protected isFavorite = computed(() => this.formData()?.isFavorite ?? false);
   protected isCc = computed(() => this.formData()?.isCc ?? false);
   protected isFavorable = computed(() => this.formData()?.isCc === false);
-  protected notes = linkedSignal(() => this.formData()?.notes ?? DEFAULT_NOTES);
-  protected tags = linkedSignal(() => this.formData()?.tags ?? DEFAULT_TAGS);
-  protected okey = linkedSignal(() => this.formData()?.okey ?? '');
+  protected readonly notes = computed(() => this.formData()?.notes ?? DEFAULT_NOTES);
+  protected readonly tags = computed(() => this.formData()?.tags ?? DEFAULT_TAGS);
+  protected readonly okey = computed(() => this.formData()?.okey ?? '');
 
   /******************************* actions *************************************** */
   protected onCitySelected(city: City): void {

@@ -13,7 +13,9 @@
     "@okr/shared-pipes": "*",
     "@okr/shared-ui": "*",
     "@okr/shared-util-core": "*",
+    "@okr/shared-util-angular": "*",
     "@okr/avatar-ui": "*",
-    "@okr/relationship-workrel-util": "*"
+    "@okr/relationship-workrel-util": "*",
+    "@angular/forms": "*"
   }
 }

@@ -1,8 +1,10 @@
-import { Component, computed, effect, input, linkedSignal, model, output } from "@angular/core";
+import { Component, computed, effect, input, model, output } from "@angular/core";
+import { form } from "@angular/forms/signals";
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonRow } from "@ionic/angular/standalone";
 
 import { CategoryListModel, UserModel } from "@okr/shared-models";
 import { Checkbox, CheckboxI18n, Chips, ErrorNote } from "@okr/shared-ui";
+import { validateVestTree } from "@okr/shared-util-angular";
 import { coerceBoolean, getCategoryItemNames } from "@okr/shared-util-core";
 
 import { flattenRoles, structureRoles, UserAuthFormModel, userAuthFormValidations, UserI18n } from "@okr/user-util";
@@ -65,18 +67,22 @@ export class UserAuthForm {
   public valid = output<boolean>();
 
   // validation and errors
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  protected readonly authForm = form(this.formData, (path) => validateVestTree(path, userAuthFormValidations as any));
+
+  // per-field errors for the notes under each field
   private readonly validationResult = computed(() => userAuthFormValidations(this.formData()));
 
   protected useFaceIdErrors = computed(() => this.validationResult().getErrors('useFaceId'));
   protected useTouchIdErrors = computed(() => this.validationResult().getErrors('useTouchId'));
   // fields
-  protected useTouchId = linkedSignal(() => this.formData().useTouchId ?? false);
-  protected useFaceId = linkedSignal(() => this.formData().useFaceId ?? false);
-  protected roles = linkedSignal(() => flattenRoles(this.formData().roles ?? { 'registered': true }));
+  protected readonly useTouchId = computed(() => this.formData().useTouchId ?? false);
+  protected readonly useFaceId = computed(() => this.formData().useFaceId ?? false);
+  protected readonly roles = computed(() => flattenRoles(this.formData().roles ?? { 'registered': true }));
   protected allRoleNames = computed(() => getCategoryItemNames(this.allRoles()));
 
   constructor() {
-    effect(() => this.valid.emit(this.validationResult().isValid()));
+    effect(() => this.valid.emit(this.authForm().valid()));
   }
 
   /******************************* actions *************************************** */

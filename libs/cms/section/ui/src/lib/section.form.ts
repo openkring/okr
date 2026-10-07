@@ -1,4 +1,5 @@
-import { Component, computed, effect, inject, input, linkedSignal, model, output, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, model, output, signal } from '@angular/core';
+import { form } from '@angular/forms/signals';
 
 import { AlbumConfig, AlbumSection, ArticleSection, AvatarInfo, ButtonActionConfig, ButtonSection, ButtonStyle, CalendarSection, CategoryListModel, ChartSection, ChatConfig, ChatSection, EDITOR_CONFIG_SHAPE, MemberAgeSection, MemberCatConfig, MemberCatSection, RagConfig, RagSection, EditorConfig, EventsConfig, EventsSection, HeroSection, IconConfig, IframeConfig, IframeSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, ImageType, InvitationsConfig, InvitationsSection, MapConfig, MapSection, PeopleConfig, PeopleSection, ResponsibilityConfig, ResponsibilitySection, RoleName, SankeyConfig, SankeySection, SpiderConfig, SpiderSection, TocConfig, TocSection, TestimonialConfig, TestimonialSection, TimelineConfig, TimelineSection, SectionModel, SectionModelName, SliderSection, TableGrid, TableSection, TableStyle, TrackerConfig, TrackerSection, UserModel, VideoConfig, VideoSection, WeatherConfig, WeatherSection } from '@okr/shared-models';
 import { Chips, ErrorNote, ImageConfigEdit, NotesInput, NotesInputI18n } from '@okr/shared-ui';
@@ -6,7 +7,7 @@ import { coerceBoolean, debugFormModel, hasRole, sanitizeFileName } from '@okr/s
 import { DEFAULT_LABEL, DEFAULT_NOTES, DEFAULT_TAGS, IMAGE_MIMETYPES } from '@okr/shared-constants';
 import { ModelSelectService } from '@okr/shared-feature';
 import { UploadService } from '@okr/avatar-data-access';
-import { confirm } from '@okr/shared-util-angular';
+import { confirm, validateVestTree } from '@okr/shared-util-angular';
 import { AlertController, IonItem, IonToggle } from '@ionic/angular/standalone';
 import { ChartOption, getInlineErrorFields, getRemainingErrors, SectionErrors, SectionI18n, validateSection } from '@okr/cms-section-util';
 
@@ -494,7 +495,7 @@ export class SectionForm {
   );
 
   constructor() {
-    effect(() => this.valid.emit(this.validationResult().isValid()));
+    effect(() => this.valid.emit(this.sectionForm().valid()));
   }
 
   // i18n
@@ -541,46 +542,53 @@ export class SectionForm {
   public readonly weatherLocations = input<WeatherLocationOption[]>([]);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
-  // derived linked signals
+  // The per-type suite is picked at runtime from formData().type (validateSection), so the
+  // bridge calls the registry through a closure; validateSection takes no field argument.
+  private readonly suiteWithContext = (model: SectionModel) => validateSection(model);
+  protected readonly sectionForm = form(this.formData, (path) =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    validateVestTree(path, this.suiteWithContext as any));
+
+  // derived read-only mirrors of formData (every change is written back to formData)
   protected sectionKey = computed(() => this.formData().okey);
-  protected directory = linkedSignal(() => this.formData().type === 'album' ? (this.formData() as any).directory ?? '' : '' );
-  protected content = linkedSignal(() => this.getContent());
-  protected albumConfig = linkedSignal(() => this.getAlbumConfig());
-  protected images = linkedSignal(() => this.getImages());
+  protected directory = computed(() => this.formData().type === 'album' ? (this.formData() as any).directory ?? '' : '' );
+  protected content = computed(() => this.getContent());
+  protected albumConfig = computed(() => this.getAlbumConfig());
+  protected images = computed(() => this.getImages());
   protected storagePath = computed(() => `tenant/${this.tenantId()}/section/${this.sectionKey()}`);
-  protected imageStyle = linkedSignal(() => this.getImageStyle());
-  protected buttonActionConfig = linkedSignal(() => this.getButtonActionConfig());
-  protected buttonStyle = linkedSignal(() => this.getButtonStyle());
-  protected iconConfig = linkedSignal(() => this.getIconConfig());
-  protected chatConfig = linkedSignal(() => this.getChatConfig());
-  protected calendarConfig = linkedSignal(() => this.getCalendarConfig());
-  protected chartConfig = linkedSignal(() => this.getChartConfig());
-  protected sankeyConfig = linkedSignal(() => this.getSankeyConfig());
-  protected spiderConfig = linkedSignal(() => this.getSpiderConfig());
-  protected tocConfig = linkedSignal(() => this.getTocConfig());
-  protected testimonialConfig = linkedSignal(() => this.getTestimonialConfig());
-  protected timelineConfig = linkedSignal(() => this.getTimelineConfig());
-  protected memberConfig = linkedSignal(() => this.getMemberConfig());
-  protected ragConfig = linkedSignal(() => this.getRagConfig());
-  protected eventsConfig = linkedSignal(() => this.getEventsConfig());
-  protected invitationsConfig = linkedSignal(() => this.getInvitationsConfig());
-  protected logoConfig = linkedSignal(() => this.getLogoConfig());
-  protected heroConfig = linkedSignal(() => this.getHeroConfig());
-  protected iframeConfig = linkedSignal(() => this.getIframeConfig());
-  protected weatherConfig = linkedSignal(() => this.getWeatherConfig());
-  protected mapConfig = linkedSignal(() => this.getMapConfig());
-  protected peopleConfig = linkedSignal(() => this.getPeopleConfig());
-  protected responsibilityConfig = linkedSignal(() => this.getResponsibilityConfig());
-  protected headerData = linkedSignal(() => this.getHeaderData());
-  protected bodyData = linkedSignal(() => this.getBodyData());
-  protected tableGrid = linkedSignal(() => this.getTableGrid());
-  protected headerStyle = linkedSignal(() => this.getHeaderStyle());
-  protected bodyStyle = linkedSignal(() => this.getBodyStyle());
+  protected imageStyle = computed(() => this.getImageStyle());
+  protected buttonActionConfig = computed(() => this.getButtonActionConfig());
+  protected buttonStyle = computed(() => this.getButtonStyle());
+  protected iconConfig = computed(() => this.getIconConfig());
+  protected chatConfig = computed(() => this.getChatConfig());
+  protected calendarConfig = computed(() => this.getCalendarConfig());
+  protected chartConfig = computed(() => this.getChartConfig());
+  protected sankeyConfig = computed(() => this.getSankeyConfig());
+  protected spiderConfig = computed(() => this.getSpiderConfig());
+  protected tocConfig = computed(() => this.getTocConfig());
+  protected testimonialConfig = computed(() => this.getTestimonialConfig());
+  protected timelineConfig = computed(() => this.getTimelineConfig());
+  protected memberConfig = computed(() => this.getMemberConfig());
+  protected ragConfig = computed(() => this.getRagConfig());
+  protected eventsConfig = computed(() => this.getEventsConfig());
+  protected invitationsConfig = computed(() => this.getInvitationsConfig());
+  protected logoConfig = computed(() => this.getLogoConfig());
+  protected heroConfig = computed(() => this.getHeroConfig());
+  protected iframeConfig = computed(() => this.getIframeConfig());
+  protected weatherConfig = computed(() => this.getWeatherConfig());
+  protected mapConfig = computed(() => this.getMapConfig());
+  protected peopleConfig = computed(() => this.getPeopleConfig());
+  protected responsibilityConfig = computed(() => this.getResponsibilityConfig());
+  protected headerData = computed(() => this.getHeaderData());
+  protected bodyData = computed(() => this.getBodyData());
+  protected tableGrid = computed(() => this.getTableGrid());
+  protected headerStyle = computed(() => this.getHeaderStyle());
+  protected bodyStyle = computed(() => this.getBodyStyle());
   
-  protected trackerConfig = linkedSignal(() => this.getTrackerConfig());
-  protected videoConfig = linkedSignal(() => this.getVideoConfig());
-  protected tags = linkedSignal(() => this.formData().tags ?? DEFAULT_TAGS);
-  protected notes = linkedSignal(() => this.formData().notes ?? DEFAULT_NOTES);
+  protected trackerConfig = computed(() => this.getTrackerConfig());
+  protected videoConfig = computed(() => this.getVideoConfig());
+  protected tags = computed(() => this.formData().tags ?? DEFAULT_TAGS);
+  protected notes = computed(() => this.formData().notes ?? DEFAULT_NOTES);
   protected showAdvanced = signal(false);
 
   /************************************** actions *********************************************** */

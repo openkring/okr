@@ -1,8 +1,10 @@
-import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, effect, input, model, output } from '@angular/core';
+import { form } from '@angular/forms/signals';
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 import { CategoryListModel, PersonalRelModel, RoleName, UserModel } from '@okr/shared-models';
 import { FullNamePipe } from '@okr/shared-pipes';
 import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, TextInput, TextInputI18n , ErrorNote} from '@okr/shared-ui';
+import { validateVestTree } from '@okr/shared-util-angular';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 import { DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PERSONAL_REL, DEFAULT_TAGS, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 
@@ -142,7 +144,15 @@ export class PersonalRelForm {
   public selectPerson = output<boolean>();
   public showPersonOutput = output<string>();
 
-  // validation and errors
+  // The suite needs tenants and tags, which validateVestTree does not pass — so the bridge
+  // calls it through a closure that adds them.
+  private readonly suiteWithContext = (model: PersonalRelModel, field?: string) =>
+    personalRelValidations(model, this.tenants(), this.allTags(), field);
+  protected readonly personalRelForm = form(this.formData, (path) =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    validateVestTree(path, this.suiteWithContext as any));
+
+  // per-field errors for the notes under each field
   private readonly validationResult = computed(() => personalRelValidations(this.formData(), this.tenants(), this.allTags()));
   protected typeErrors = computed(() => this.validationResult().getErrors('type'));
   protected validFromErrors = computed(() => this.validationResult().getErrors('validFrom'));
@@ -151,28 +161,28 @@ export class PersonalRelForm {
   protected notesErrors = computed(() => this.validationResult().getErrors('notes'));
 
   // fields
-  protected subjectKey = linkedSignal(() => this.formData().subjectKey ?? DEFAULT_KEY);
-  protected subjectFirstName = linkedSignal(() => this.formData().subjectFirstName ?? DEFAULT_NAME);
-  protected subjectLastName = linkedSignal(() => this.formData().subjectLastName ?? DEFAULT_NAME);
-  protected subjectGender = linkedSignal(() => this.formData().subjectGender ?? DEFAULT_GENDER);
+  protected subjectKey = computed(() => this.formData().subjectKey ?? DEFAULT_KEY);
+  protected subjectFirstName = computed(() => this.formData().subjectFirstName ?? DEFAULT_NAME);
+  protected subjectLastName = computed(() => this.formData().subjectLastName ?? DEFAULT_NAME);
+  protected subjectGender = computed(() => this.formData().subjectGender ?? DEFAULT_GENDER);
   protected subjectAvatarKey = computed(() => 'person.' + this.subjectKey());
   protected objectAvatarKey = computed(() => 'person.' + this.objectKey());
 
-  protected objectKey = linkedSignal(() => this.formData().objectKey ?? DEFAULT_KEY);
-  protected objectFirstName = linkedSignal(() => this.formData().objectFirstName ?? DEFAULT_NAME);
-  protected objectLastName = linkedSignal(() => this.formData().objectLastName ?? DEFAULT_NAME);
-  protected objectGender = linkedSignal(() => this.formData().objectGender ?? DEFAULT_GENDER);
+  protected objectKey = computed(() => this.formData().objectKey ?? DEFAULT_KEY);
+  protected objectFirstName = computed(() => this.formData().objectFirstName ?? DEFAULT_NAME);
+  protected objectLastName = computed(() => this.formData().objectLastName ?? DEFAULT_NAME);
+  protected objectGender = computed(() => this.formData().objectGender ?? DEFAULT_GENDER);
 
-  protected type = linkedSignal(() => this.formData().type ?? DEFAULT_PERSONAL_REL);
-  protected label = linkedSignal(() => this.formData().label ?? DEFAULT_LABEL);
-  protected validFrom = linkedSignal(() => this.formData().validFrom ?? DEFAULT_DATE);
-  protected validTo = linkedSignal(() => this.formData().validTo ?? DEFAULT_DATE);
-  protected tags = linkedSignal(() => this.formData().tags ?? DEFAULT_TAGS);
-  protected notes = linkedSignal(() => this.formData().notes ?? DEFAULT_NOTES);
+  protected type = computed(() => this.formData().type ?? DEFAULT_PERSONAL_REL);
+  protected label = computed(() => this.formData().label ?? DEFAULT_LABEL);
+  protected validFrom = computed(() => this.formData().validFrom ?? DEFAULT_DATE);
+  protected validTo = computed(() => this.formData().validTo ?? DEFAULT_DATE);
+  protected tags = computed(() => this.formData().tags ?? DEFAULT_TAGS);
+  protected notes = computed(() => this.formData().notes ?? DEFAULT_NOTES);
   protected okey = computed(() => this.formData().okey ?? DEFAULT_KEY);
 
   constructor() {
-    effect(() => this.valid.emit(this.validationResult().isValid()));
+    effect(() => this.valid.emit(this.personalRelForm().valid()));
   }
 
   /******************************* actions *************************************** */

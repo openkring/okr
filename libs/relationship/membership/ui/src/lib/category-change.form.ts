@@ -1,9 +1,11 @@
-import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, effect, input, model, output } from '@angular/core';
+import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 
 import { CategoryListModel, UserModel } from '@okr/shared-models';
 import { CategorySelect, DateInput, DateInputI18n, ErrorNote } from '@okr/shared-ui';
 import { DEFAULT_DATE, DEFAULT_NAME } from '@okr/shared-constants';
+import { validateVestTree } from '@okr/shared-util-angular';
 import { coerceBoolean } from '@okr/shared-util-core';
 
 import { CategoryChangeFormModel, categoryChangeFormValidations, MembershipI18n } from '@okr/relationship-membership-util';
@@ -86,6 +88,11 @@ export class CategoryChangeForm {
   public dirty = output<boolean>();
   public valid = output<boolean>();
 
+  // signal form — wraps formData with the Vest suite (it only takes (model, field?))
+  protected readonly categoryChangeForm = form(this.formData, (path) =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    validateVestTree(path, categoryChangeFormValidations as any));
+
   // validation and errors
   private readonly validationResult = computed(() => categoryChangeFormValidations(this.formData()));
 
@@ -95,11 +102,11 @@ export class CategoryChangeForm {
   protected name = computed(() => this.formData().memberName ?? DEFAULT_NAME); 
   protected orgName = computed(() => this.formData().orgName ?? DEFAULT_NAME);
   protected oldCategory = computed(() => this.formData().membershipCategoryOld ?? '');
-  protected newCategory = linkedSignal(() => this.formData().membershipCategoryNew ?? '');
-  protected dateOfChange = linkedSignal(() => this.formData().dateOfChange ?? DEFAULT_DATE);
+  protected readonly newCategory = computed(() => this.formData().membershipCategoryNew ?? '');
+  protected readonly dateOfChange = computed(() => this.formData().dateOfChange ?? DEFAULT_DATE);
 
   constructor() {
-    effect(() => this.valid.emit(this.validationResult().isValid()));
+    effect(() => this.valid.emit(this.categoryChangeForm().valid()));
   }
 
   /******************************* actions *************************************** */

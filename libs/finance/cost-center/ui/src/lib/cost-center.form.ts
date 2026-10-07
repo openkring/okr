@@ -1,4 +1,4 @@
-import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, effect, input, model, output } from '@angular/core';
 import { form } from '@angular/forms/signals';
 import { IonButton, IonButtons, IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonNote, IonRow } from '@ionic/angular/standalone';
 
@@ -144,12 +144,12 @@ export class CostCenterForm {
   protected notesErrors = computed(() => this.validationResult().getErrors('notes'));
 
   // fields
-  protected id = linkedSignal(() => this.formData().id ?? '');
-  protected name = linkedSignal(() => this.formData().name ?? '');
-  protected parentKey = linkedSignal(() => this.formData().parentKey ?? '');
-  protected type = linkedSignal(() => this.formData().type ?? 'leaf');
+  protected id = computed(() => this.formData().id ?? '');
+  protected name = computed(() => this.formData().name ?? '');
+  protected parentKey = computed(() => this.formData().parentKey ?? '');
+  protected type = computed(() => this.formData().type ?? 'leaf');
   protected responsibilityKey = computed(() => this.formData().responsibilityKey ?? '');
-  protected notes = linkedSignal(() => this.formData().notes ?? '');
+  protected notes = computed(() => this.formData().notes ?? '');
 
   protected responsibilityName = computed(() => {
     const _key = this.responsibilityKey();

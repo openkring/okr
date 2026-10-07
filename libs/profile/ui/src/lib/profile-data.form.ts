@@ -1,12 +1,13 @@
-import { Component, computed, effect, input, linkedSignal, model, output } from "@angular/core";
+import { Component, computed, effect, input, model, output } from "@angular/core";
+import { form } from "@angular/forms/signals";
 import { IonAccordion, IonCol, IonGrid, IonItem, IonLabel, IonRow } from "@ionic/angular/standalone";
 
 import { ChSsnMask } from "@okr/shared-config";
 import { CategoryListModel, UserModel } from "@okr/shared-models";
 import { CategorySelect, DateInput, DateInputI18n, ErrorNote, TextInput, TextInputI18n } from "@okr/shared-ui";
-import { coerceBoolean, isValidForFields } from "@okr/shared-util-core";
+import { coerceBoolean } from "@okr/shared-util-core";
 import { DEFAULT_GENDER } from "@okr/shared-constants";
-import { AhvFormat, formatAhv } from "@okr/shared-util-angular";
+import { AhvFormat, formatAhv, validateVestTree } from "@okr/shared-util-angular";
 
 import { PersonFormModel, personValidations } from "@okr/subject-person-util";
 import { ProfileI18n } from '@okr/profile-util';
@@ -98,7 +99,19 @@ export class ProfileDataAccordion {
   public dirty = output<boolean>();
   public valid = output<boolean>();
 
-  // validation and errors
+  // The suite needs tenantId and tags, which validateVestTree does not pass — so the bridge
+  // calls it through a closure that adds them.
+  private readonly suiteWithContext = (model: PersonFormModel, field?: string) =>
+    personValidations(model, this.tenantId(), this.tags(), field);
+  protected readonly dataForm = form(this.formData, (path) =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    validateVestTree(path, this.suiteWithContext as any));
+  // Only the ssn is editable here (dob and gender are rendered read-only), so only its errors may
+  // gate the save — the isValidForFields rule, read off the signal form (error kind = `vest.<field>`).
+  private readonly editedFieldsValid = computed(() =>
+    !this.dataForm().errorSummary().some((e) => EDITED_FIELDS.includes(e.kind.replace(/^vest\./, ''))));
+
+  // per-field errors for the notes under each field
   private readonly validationResult = computed(() => personValidations(this.formData(), this.tenantId(), this.tags()));
   protected ssnIdErrors = computed(() => this.validationResult().getErrors('ssnId'));
   protected dobI18n = computed(() => ({
@@ -116,18 +129,16 @@ export class ProfileDataAccordion {
   } as TextInputI18n));
 
   // fields
-  protected dateOfBirth = linkedSignal(() => this.formData().dateOfBirth ?? '');
-  protected gender = linkedSignal(() => this.formData().gender ?? DEFAULT_GENDER);
-  protected ssnId = linkedSignal(() => formatAhv(this.formData().ssnId ?? '', AhvFormat.Friendly));
+  protected readonly dateOfBirth = computed(() => this.formData().dateOfBirth ?? '');
+  protected readonly gender = computed(() => this.formData().gender ?? DEFAULT_GENDER);
+  protected readonly ssnId = computed(() => formatAhv(this.formData().ssnId ?? '', AhvFormat.Friendly));
   protected showHelper = computed(() => this.currentUser()?.showHelpers ?? true);
 
   // passing constants to template
   protected ssnMask = ChSsnMask;
 
   constructor() {
-    // Only the ssn is editable here (dob and gender are rendered read-only), so only its
-    // validity may gate the save — see isValidForFields.
-    effect(() => this.valid.emit(isValidForFields(this.validationResult(), EDITED_FIELDS)));
+    effect(() => this.valid.emit(this.editedFieldsValid()));
   }
 
   protected onFieldChange(fieldName: string, fieldValue: string | number | boolean): void {

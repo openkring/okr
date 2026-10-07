@@ -1,10 +1,12 @@
 import { Component, computed, effect, input, model, output, signal } from '@angular/core';
+import { form } from '@angular/forms/signals';
 import { IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonNote, IonRow } from '@ionic/angular/standalone';
 
 import { DEFAULT_NOTES, DEFAULT_TAGS, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { AccountModel, InvoiceModel, UserModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { DateInput, DateInputI18n, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { validateVestTree } from '@okr/shared-util-angular';
 import { coerceBoolean } from '@okr/shared-util-core';
 
 import { INVOICE_NOTES_LENGTH, InvoiceI18n, InvoicePositionInput, invoiceValidations, positionsTotal } from '@okr/finance-invoice-util';
@@ -125,7 +127,8 @@ export class InvoiceEditForm {
   /** kept in step with the cap the Vest suite enforces on the notes */
   protected readonly notesLength = INVOICE_NOTES_LENGTH;
 
-  public readonly formData = input.required<InvoiceModel>();
+  /** a model (not input + output) so the signal form can wrap it; its formDataChange output is what the parent binds */
+  public readonly formData = model.required<InvoiceModel>();
   public readonly positions = model<InvoicePositionInput[]>([]);
   /** the chart of accounts of the invoice's books; the positions offer its revenue leaves */
   public readonly accounts = input<AccountModel[]>([]);
@@ -135,7 +138,6 @@ export class InvoiceEditForm {
   public readonly showForm = input(true);
   public readonly i18n = input.required<InvoiceI18n>();
 
-  public readonly formDataChange = output<InvoiceModel>();
   public readonly dirty = output<boolean>();
   public readonly valid = output<boolean>();
   /** the parent opens the person/org picker and writes the receiver back into formData */
@@ -162,6 +164,13 @@ export class InvoiceEditForm {
   protected paymentDateI18n = computed(() => ({ name: 'paymentDate', label: this.i18n().payment_date_label(), placeholder: this.i18n().payment_date_placeholder(), helper: this.i18n().payment_date_helper() } as DateInputI18n));
 
   protected readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()));
+  // The suite needs the tags, which validateVestTree does not pass — so the bridge calls it
+  // through a closure that adds them.
+  private readonly suiteWithContext = (model: InvoiceModel, field?: string) =>
+    invoiceValidations(model, '', this.allTags(), field);
+  protected readonly invoiceForm = form(this.formData, (path) =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    validateVestTree(path, this.suiteWithContext as any));
   private readonly validationResult = computed(() =>
     invoiceValidations(this.formData(), '', this.allTags())
   );
@@ -171,7 +180,7 @@ export class InvoiceEditForm {
   protected notesErrors = computed(() => this.validationResult().getErrors('notes'));
 
   constructor() {
-    effect(() => this.valid.emit(this.validationResult().isValid() && this.positionsValid()));
+    effect(() => this.valid.emit(this.invoiceForm().valid() && this.positionsValid()));
   }
 
   protected readonly title = computed(() => this.formData()?.title ?? '');
@@ -203,7 +212,7 @@ export class InvoiceEditForm {
 
   protected onFieldChange(fieldName: string, fieldValue: string | string[]): void {
     this.dirty.emit(true);
-    this.formDataChange.emit({ ...this.formData(), [fieldName]: fieldValue });
+    this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
   }
 
   protected onPositionsChange(positions: InvoicePositionInput[]): void {

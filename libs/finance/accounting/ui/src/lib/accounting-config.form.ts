@@ -1,10 +1,12 @@
-import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, effect, input, model, output } from '@angular/core';
+import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonNote, IonRow, IonSelect, IonSelectOption, SelectChangeEventDetail } from '@ionic/angular/standalone';
 
 import { NumberInput, NumberInputI18n, ErrorNote, TextInput, TextInputI18n } from '@okr/shared-ui';
 
 import { SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { AccountingConfigModel, AccountModel, CostCenterModel, DEFAULT_INCOMING_PAYMENT_LABEL, DEFAULT_OUTGOING_PAYMENT_LABEL, TemplateModel } from '@okr/shared-models';
+import { validateVestTree } from '@okr/shared-util-angular';
 import { coerceBoolean } from '@okr/shared-util-core';
 
 import { AccountSelect, AccountSelectI18n } from '@okr/finance-account-ui';
@@ -234,14 +236,14 @@ export class AccountingConfigForm {
 
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
-  protected defaultExpenseAccountKey = linkedSignal(() => this.formData().defaultExpenseAccountKey ?? '');
-  protected employeePayablesAccountKey = linkedSignal(() => this.formData().employeePayablesAccountKey ?? '');
-  protected receivablesAccountKey = linkedSignal(() => this.formData().receivablesAccountKey ?? '');
-  protected invoiceTemplateId = linkedSignal(() => this.formData().invoiceTemplateId ?? '');
+  protected readonly defaultExpenseAccountKey = computed(() => this.formData()?.defaultExpenseAccountKey ?? '');
+  protected readonly employeePayablesAccountKey = computed(() => this.formData()?.employeePayablesAccountKey ?? '');
+  protected readonly receivablesAccountKey = computed(() => this.formData()?.receivablesAccountKey ?? '');
+  protected readonly invoiceTemplateId = computed(() => this.formData()?.invoiceTemplateId ?? '');
   // legacy config docs predate the field (spec 1.84): '' = a discount reduces the revenue above it
-  protected discountAccountKey = linkedSignal(() => this.formData().discountAccountKey ?? '');
+  protected readonly discountAccountKey = computed(() => this.formData()?.discountAccountKey ?? '');
   // legacy config docs predate the field: '' = keine Kostenstelle
-  protected defaultCostCenterKey = linkedSignal(() => this.formData().defaultCostCenterKey ?? '');
+  protected readonly defaultCostCenterKey = computed(() => this.formData()?.defaultCostCenterKey ?? '');
   // Invoice templates only, but never drop the stored one: a config pointing at a template of
   // another category (or one not yet loaded) must still show its value instead of a blank select.
   protected templateChoices = computed(() => {
@@ -250,16 +252,16 @@ export class AccountingConfigForm {
       .filter(t => t.category === 'invoice' || t.okey === id)
       .sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''));
   });
-  protected invoicePaymentAccountKeys = linkedSignal(() => this.formData().invoicePaymentAccountKeys ?? []);
+  protected readonly invoicePaymentAccountKeys = computed(() => this.formData()?.invoicePaymentAccountKeys ?? []);
   // spec 1.85 B6 — legacy config docs predate both fields
-  protected payablesAccountKey = linkedSignal(() => this.formData().payablesAccountKey ?? '');
-  protected billPaymentAccountKeys = linkedSignal(() => this.formData().billPaymentAccountKeys ?? []);
+  protected readonly payablesAccountKey = computed(() => this.formData()?.payablesAccountKey ?? '');
+  protected readonly billPaymentAccountKeys = computed(() => this.formData()?.billPaymentAccountKeys ?? []);
   /** leaf accounts of class 1 (assets): the accounts an invoice payment may be posted to */
   protected leaves = computed(() => leafAccounts(this.accounts()));
   protected paymentAccountChoices = computed(() =>
     this.leaves().filter(a => String(a.id).replace(/^0+/, '').startsWith('1')).sort((a, b) => a.id.localeCompare(b.id)));
   // Legacy config docs predate the field; coalesce to the calendar year like the Cloud Functions do.
-  protected fiscalYearStart = linkedSignal(() => this.formData().fiscalYearStart ?? 1);
+  protected readonly fiscalYearStart = computed(() => this.formData()?.fiscalYearStart ?? 1);
 
   protected expenseAccountI18n = computed(() => ({
     name: 'defaultExpenseAccountKey', label: this.i18n().expense_account(), helper: this.i18n().expense_account_helper()
@@ -297,8 +299,8 @@ export class AccountingConfigForm {
   /** kept in step with the cap the Vest suite enforces on the two payment labels */
   protected readonly paymentLabelLength = SHORT_NAME_LENGTH;
   // legacy config docs predate the fields: the defaults GS / BA
-  protected incomingPaymentLabel = linkedSignal(() => this.formData().incomingPaymentLabel ?? DEFAULT_INCOMING_PAYMENT_LABEL);
-  protected outgoingPaymentLabel = linkedSignal(() => this.formData().outgoingPaymentLabel ?? DEFAULT_OUTGOING_PAYMENT_LABEL);
+  protected readonly incomingPaymentLabel = computed(() => this.formData()?.incomingPaymentLabel ?? DEFAULT_INCOMING_PAYMENT_LABEL);
+  protected readonly outgoingPaymentLabel = computed(() => this.formData()?.outgoingPaymentLabel ?? DEFAULT_OUTGOING_PAYMENT_LABEL);
   protected incomingPaymentLabelI18n = computed(() => ({
     name: 'incomingPaymentLabel', label: this.i18n().incoming_payment_label(),
     placeholder: this.i18n().incoming_payment_label_placeholder(), helper: this.i18n().incoming_payment_label_helper()
@@ -307,10 +309,10 @@ export class AccountingConfigForm {
     name: 'outgoingPaymentLabel', label: this.i18n().outgoing_payment_label(),
     placeholder: this.i18n().outgoing_payment_label_placeholder(), helper: this.i18n().outgoing_payment_label_helper()
   } as TextInputI18n));
-  protected reminderTemplateId = linkedSignal(() => this.formData().reminderTemplateId ?? '');
-  protected reminderFeeAccountKey = linkedSignal(() => this.formData().reminderFeeAccountKey ?? '');
-  protected reminderGraceDays = linkedSignal(() => this.formData().reminderGraceDays ?? 10);
-  protected reminderDueDays = linkedSignal(() => this.formData().reminderDueDays ?? 14);
+  protected readonly reminderTemplateId = computed(() => this.formData()?.reminderTemplateId ?? '');
+  protected readonly reminderFeeAccountKey = computed(() => this.formData()?.reminderFeeAccountKey ?? '');
+  protected readonly reminderGraceDays = computed(() => this.formData()?.reminderGraceDays ?? 10);
+  protected readonly reminderDueDays = computed(() => this.formData()?.reminderDueDays ?? 14);
   // the model stores Rappen, the inputs show CHF
   protected reminderFee1Chf = computed(() => reminderFeeOf(this.formData(), 1) / 100);
   protected reminderFee2Chf = computed(() => reminderFeeOf(this.formData(), 2) / 100);
@@ -342,6 +344,14 @@ export class AccountingConfigForm {
     placeholder: this.i18n().reminder_due_days_placeholder(), helper: this.i18n().reminder_due_days_helper()
   } as NumberInputI18n));
 
+  // The suite needs the tenant (and an empty tag list), which validateVestTree does not pass —
+  // so the bridge calls it through a closure that adds them.
+  private readonly suiteWithContext = (model: AccountingConfigModel, field?: string) =>
+    accountingConfigValidations(model, this.tenantId(), '', field);
+  protected readonly accountingConfigForm = form(this.formData, (path) =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    validateVestTree(path, this.suiteWithContext as any));
+
   private readonly validationResult = computed(() => accountingConfigValidations(this.formData(), this.tenantId(), ''));
   protected fiscalYearStartErrors = computed(() => this.validationResult().getErrors('fiscalYearStart'));
 
@@ -359,7 +369,7 @@ export class AccountingConfigForm {
   protected outgoingPaymentLabelErrors = computed(() => this.validationResult().getErrors('outgoingPaymentLabel'));
 
   constructor() {
-    effect(() => this.valid.emit(this.validationResult().isValid()));
+    effect(() => this.valid.emit(this.accountingConfigForm().valid()));
   }
 
   protected onInvoiceTemplateChange(event: CustomEvent<SelectChangeEventDetail<string>>): void {

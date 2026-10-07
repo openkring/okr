@@ -1,10 +1,12 @@
-import { Component, computed, effect, inject, input, linkedSignal, model, output, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, model, output, signal } from '@angular/core';
+import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonList, IonNote, IonRow } from '@ionic/angular/standalone';
 
 import { ChFutureDate, LowercaseWordMask } from '@okr/shared-config';
 import { DEFAULT_CALENDARS, DEFAULT_CALEVENT_TYPE, DEFAULT_DATE, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PERIODICITY, DEFAULT_TAGS, DEFAULT_TIME, DEFAULT_URL, MAX_DATES_PER_SERIES, NAME_LENGTH } from '@okr/shared-constants';
 import { AvatarInfo, CalEventModel, CategoryListModel, LocationModel, RoleName, UserModel } from '@okr/shared-models';
 import { AddChip, CategorySelect, Checkbox, CheckboxI18n, Chips, DateInput, DateInputI18n, ErrorNote, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringList, TextInput, TextInputI18n, TimeInput, TimeInputI18n, UrlInput, UrlInputI18n } from '@okr/shared-ui';
+import { validateVestTree } from '@okr/shared-util-angular';
 import { coerceBoolean, convertDateFormatToString, DateFormat, extractFirstPartOfOptionalTupel, fill, hasRole } from '@okr/shared-util-core';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { ModelSelectService } from '@okr/shared-feature';
@@ -349,9 +351,17 @@ export class CalEventForm {
   public valid = output<boolean>();
   public calendarSelectClicked = output<void>();
 
-  constructor() { effect(() => this.valid.emit(this.validationResult().isValid())); }
+  constructor() { effect(() => this.valid.emit(this.caleventForm().valid())); }
 
-  // validation and errors
+  // The suite needs tenantId and tags, which validateVestTree does not pass — so the bridge
+  // calls it through a closure that adds them.
+  private readonly suiteWithContext = (model: CalEventModel, field?: string) =>
+    calEventValidations(model, this.tenantId(), this.allTags(), field);
+  protected readonly caleventForm = form(this.formData, (path) =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    validateVestTree(path, this.suiteWithContext as any));
+
+  // per-field errors for the notes under each field (and the catch-all)
   private readonly validationResult = computed(() => calEventValidations(this.formData(), this.tenantId(), this.allTags()));
   protected periodicityErrors = computed(() => this.validationResult().getErrors('periodicity'));
   protected startDateErrors = computed(() => this.validationResult().getErrors('startDate'));
@@ -397,18 +407,18 @@ export class CalEventForm {
   }
 
   // fields
-  protected okey = linkedSignal(() => this.formData().okey ?? '');
-  protected seriesId = linkedSignal(() => this.formData().seriesId ?? '');
-  protected type = linkedSignal(() => this.formData().type ?? DEFAULT_CALEVENT_TYPE);
-  protected name = linkedSignal(() => this.formData().name ?? DEFAULT_NAME);
-  protected fullDay = linkedSignal(() => this.formData().fullDay ?? false);
+  protected okey = computed(() => this.formData().okey ?? '');
+  protected seriesId = computed(() => this.formData().seriesId ?? '');
+  protected type = computed(() => this.formData().type ?? DEFAULT_CALEVENT_TYPE);
+  protected name = computed(() => this.formData().name ?? DEFAULT_NAME);
+  protected fullDay = computed(() => this.formData().fullDay ?? false);
   // ?? 0: every event written before maxAttendees existed reads back undefined
-  protected maxAttendees = linkedSignal(() => this.formData().maxAttendees ?? 0);
-  protected startDate = linkedSignal(() => this.formData().startDate ?? DEFAULT_DATE);
-  protected startTime = linkedSignal(() => this.formData().startTime ?? DEFAULT_TIME);
-  protected endDate = linkedSignal(() => this.formData().endDate ?? this.startDate());
-  protected durationMinutes = linkedSignal(() => this.formData().durationMinutes);
-  protected periodicity = linkedSignal(() => this.formData().periodicity ?? DEFAULT_PERIODICITY);
+  protected maxAttendees = computed(() => this.formData().maxAttendees ?? 0);
+  protected startDate = computed(() => this.formData().startDate ?? DEFAULT_DATE);
+  protected startTime = computed(() => this.formData().startTime ?? DEFAULT_TIME);
+  protected endDate = computed(() => this.formData().endDate ?? this.startDate());
+  protected durationMinutes = computed(() => this.formData().durationMinutes);
+  protected periodicity = computed(() => this.formData().periodicity ?? DEFAULT_PERIODICITY);
   protected isRecurring = computed(() => !!this.periodicity() && this.periodicity() !== DEFAULT_PERIODICITY);
   /**
    * A poll-born series: the organizer confirmed several dates of a Terminumfrage. Those dates are
@@ -471,12 +481,12 @@ export class CalEventForm {
   /** Shown right under the start-date field, for single events as well as series. */
   protected startWeekday = computed(() => this.weekdayLabel(this.startDate()));
   protected isPollSeries = computed(() => this.formData().pollMultiSelect === true);
-  protected repeatUntilDate = linkedSignal(() => this.formData().repeatUntilDate ?? DEFAULT_DATE);
-  protected url = linkedSignal(() => this.formData().url ?? DEFAULT_URL);
-  protected urlLabel = linkedSignal(() => this.formData().urlLabel ?? DEFAULT_LABEL);
-  protected locationKey = linkedSignal(() => this.formData().locationKey ?? DEFAULT_KEY);
+  protected repeatUntilDate = computed(() => this.formData().repeatUntilDate ?? DEFAULT_DATE);
+  protected url = computed(() => this.formData().url ?? DEFAULT_URL);
+  protected urlLabel = computed(() => this.formData().urlLabel ?? DEFAULT_LABEL);
+  protected locationKey = computed(() => this.formData().locationKey ?? DEFAULT_KEY);
   // the field shows the readable part of 'name@okey' (or the free text if no location was picked)
-  protected locationLabel = linkedSignal(() => extractFirstPartOfOptionalTupel(this.formData().locationKey ?? '', '@'));
+  protected locationLabel = computed(() => extractFirstPartOfOptionalTupel(this.formData().locationKey ?? '', '@'));
   /** the url/urlLabel pair is revealed by the add-chip; a link that is already set shows anyway */
   private linkRequested = signal(false);
   protected showLinkFields = computed(() => this.linkRequested() || this.url().length > 0);
@@ -487,10 +497,10 @@ export class CalEventForm {
     if (term.length === 0) return [];
     return this.locations().filter(loc => loc.name.toLowerCase().includes(term)).slice(0, MAX_LOCATION_SUGGESTIONS);
   });
-  protected tags = linkedSignal(() => this.formData().tags ?? DEFAULT_TAGS);
-  protected description = linkedSignal(() => this.formData().description ?? DEFAULT_NOTES);
-  protected calendars = linkedSignal(() => this.formData().calendars ?? DEFAULT_CALENDARS);
-  protected responsiblePersons = linkedSignal(() => {
+  protected tags = computed(() => this.formData().tags ?? DEFAULT_TAGS);
+  protected description = computed(() => this.formData().description ?? DEFAULT_NOTES);
+  protected calendars = computed(() => this.formData().calendars ?? DEFAULT_CALENDARS);
+  protected responsiblePersons = computed(() => {
   const raw = this.formData().responsiblePersons ?? [];
   return raw.map(p => ({
     key: p.key ?? '',
@@ -620,9 +630,8 @@ export class CalEventForm {
   public async selectPerson(): Promise<void> {
     const avatar = await this.modelSelectService.selectPersonAvatar('', DEFAULT_LABEL);
     if (avatar) {
-        const responsiblePersons = this.responsiblePersons();
-        responsiblePersons.push(avatar);
-        this.onFieldChange('responsiblePersons', responsiblePersons);
+        // a new array: responsiblePersons() is a computed mirror of formData and must not be mutated
+        this.onFieldChange('responsiblePersons', [...this.responsiblePersons(), avatar]);
     }
   }
 
@@ -671,15 +680,14 @@ export class CalEventForm {
   }
 
   /** free text: kept as-is, so an unknown location stays a plain label */
+  // the label is a computed mirror of formData.locationKey: writing locationKey updates it
   protected onLocationInput(value: string): void {
-    this.locationLabel.set(value);
     this.locationSuggestOpen.set(true);
     this.onFieldChange('locationKey', value);
   }
 
   protected selectLocation(location: LocationModel): void {
     this.locationSuggestOpen.set(false);
-    this.locationLabel.set(location.name);
     this.onFieldChange('locationKey', `${location.name}@${location.okey}`);
   }
 

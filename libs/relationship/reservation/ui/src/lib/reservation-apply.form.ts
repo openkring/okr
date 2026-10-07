@@ -1,8 +1,10 @@
-import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, effect, input, model, output } from '@angular/core';
+import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonRow } from '@ionic/angular/standalone';
 import { DEFAULT_DATE, DEFAULT_KEY, DEFAULT_RES_REASON, DEFAULT_TIME, DESCRIPTION_LENGTH, NAME_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { CategoryListModel, ReservationApplyModel, RoleName, UserModel } from '@okr/shared-models';
 import { CategorySelect, Checkbox, CheckboxI18n, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n, TimeInput, TimeInputI18n , ErrorNote} from '@okr/shared-ui';
+import { validateVestTree } from '@okr/shared-util-angular';
 import { getAvatarName, hasRole } from '@okr/shared-util-core';
 
 import { reservationApplyValidations, ReservationI18n } from '@okr/relationship-reservation-util';
@@ -211,7 +213,12 @@ export class ReservationApplyForm {
   protected fullDayI18n    = computed(() => ({ name: 'fullDay',      label: this.i18n().fullDay_label(),      helper: this.i18n().fullDay_helper()      } as CheckboxI18n));
   protected isConfirmedI18n = computed(() => ({ name: 'bhresconf',   label: this.i18n().confirmed_label(),  helper: this.i18n().confirmed_helper()  } as CheckboxI18n));
   
-  // validation and errors
+  // the suite only takes (model, field?), so the bridge calls it directly
+  protected readonly reservationApplyForm = form(this.formData, (path) =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    validateVestTree(path, reservationApplyValidations as any));
+
+  // per-field errors for the notes under each field (and the invalid-field labels for the parent)
   private readonly validationResult = computed(() => reservationApplyValidations(this.formData()));
   protected endDateErrors = computed(() => this.validationResult().getErrors('endDate'));
   protected isConfirmedErrors = computed(() => this.validationResult().getErrors('isConfirmed'));
@@ -223,32 +230,32 @@ export class ReservationApplyForm {
   protected participantsErrors = computed(() => this.validationResult().getErrors('participants'));
 
   // fields
-  protected reserverAvatar = linkedSignal(() => this.formData().reserver);
+  protected reserverAvatar = computed(() => this.formData().reserver);
   protected reserverName = computed(() => getAvatarName(this.reserverAvatar(), this.currentUser()?.nameDisplay));
   protected reserverModelType = computed(() => this.reserverAvatar()?.modelType as string ?? 'person');
   protected reserverKey = computed(() => this.reserverAvatar()?.key ?? DEFAULT_KEY);
   protected reserverAvatarKey = computed(() => `${this.reserverModelType()}.${this.reserverKey()}`);
 
-  protected resourceAvatar = linkedSignal(() => this.formData().resource);
+  protected resourceAvatar = computed(() => this.formData().resource);
   protected resourceName = computed(() => getAvatarName(this.resourceAvatar()));
   protected resourceType = computed(() => this.resourceAvatar()?.type ?? '');
   protected resourceKey = computed(() => this.resourceAvatar()?.key ?? DEFAULT_KEY);
   protected resourceAvatarKey = computed(() => `resource.${this.resourceType()}:${this.resourceKey()}`);
 
-  protected startDate = linkedSignal(() => this.formData().startDate ?? DEFAULT_DATE);
-  protected startTime = linkedSignal(() => this.formData().startTime ?? DEFAULT_TIME);
-  protected durationMinutes = linkedSignal(() => this.formData().durationMinutes ?? 60);
-  protected endDate = linkedSignal(() => this.formData().endDate ?? this.startDate());
-  protected fullDay = linkedSignal(() => this.formData().fullDay ?? false);
-  protected company = linkedSignal(() => this.formData().company ?? '');
-  protected usesTent = linkedSignal(() => this.formData().usesTent ?? false);
-  protected isConfirmed = linkedSignal(() => this.formData().isConfirmed ?? false);
+  protected startDate = computed(() => this.formData().startDate ?? DEFAULT_DATE);
+  protected startTime = computed(() => this.formData().startTime ?? DEFAULT_TIME);
+  protected durationMinutes = computed(() => this.formData().durationMinutes ?? 60);
+  protected endDate = computed(() => this.formData().endDate ?? this.startDate());
+  protected fullDay = computed(() => this.formData().fullDay ?? false);
+  protected company = computed(() => this.formData().company ?? '');
+  protected usesTent = computed(() => this.formData().usesTent ?? false);
+  protected isConfirmed = computed(() => this.formData().isConfirmed ?? false);
 
-  protected participants = linkedSignal(() => this.formData().participants ?? '');
-  protected area = linkedSignal(() => this.formData().area ?? '');
-  protected reason = linkedSignal(() => this.formData().reason ?? DEFAULT_RES_REASON);
-  protected name = linkedSignal(() => this.formData().name ?? '');
-  protected description = linkedSignal(() => this.formData().description ?? '');
+  protected participants = computed(() => this.formData().participants ?? '');
+  protected area = computed(() => this.formData().area ?? '');
+  protected reason = computed(() => this.formData().reason ?? DEFAULT_RES_REASON);
+  protected name = computed(() => this.formData().name ?? '');
+  protected description = computed(() => this.formData().description ?? '');
 
   /** maps a vest field name onto the label the user actually sees on the form */
   private readonly fieldLabels = computed<Record<string, string>>(() => ({
@@ -270,7 +277,7 @@ export class ReservationApplyForm {
 
   constructor() {
     effect(() => {
-      this.valid.emit(this.validationResult().isValid());
+      this.valid.emit(this.reservationApplyForm().valid());
       this.invalidFields.emit(this.invalidFieldLabels());
     });
   }

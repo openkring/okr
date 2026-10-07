@@ -34,17 +34,19 @@ import { MemberFeesStore } from './member-fee.store';
         modelType="person"
         [readOnly]="true"
       />
-      <okr-member-fee-edit-form
-        [formData]="formData()"
-        [currentUser]="currentUser()"
-        [membershipCategories]="mcat()"
-        [showForm]="showForm()"
-        [readOnly]="readOnly()"
-        [i18n]="store.i18n"
-        (dirty)="manualDirty.set($event)"
-        (valid)="formValid.set($event)"
-        (formDataChange)="formData.set($event)"
-      />
+      @if (formData(); as fee) {
+        <okr-member-fee-edit-form
+          [formData]="fee"
+          [currentUser]="currentUser()"
+          [membershipCategories]="mcat()"
+          [showForm]="showForm()"
+          [readOnly]="readOnly()"
+          [i18n]="store.i18n"
+          (dirty)="manualDirty.set($event)"
+          (valid)="formValid.set($event)"
+          (formDataChange)="formData.set($event)"
+        />
+      }
     </ion-content>
   `
 })
