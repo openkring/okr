@@ -210,7 +210,7 @@
     "pdf": "Scaricare la fattura in PDF",
     "pdf_error": "Non è stato possibile caricare la fattura in PDF. Riprova più tardi.",
     "pdf_missing": "Per questa fattura non c'è ancora un PDF.",
-    "preview": "Anteprima",
+    "preview": "Mostra anteprima",
     "preview_error": "Non è stato possibile creare l'anteprima."
   },
   "paymentConfirmation": {

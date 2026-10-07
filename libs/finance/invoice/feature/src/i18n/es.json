@@ -210,7 +210,7 @@
     "pdf": "Descargar factura como PDF",
     "pdf_error": "No se pudo cargar la factura como PDF. Inténtalo de nuevo más tarde.",
     "pdf_missing": "Todavía no hay un PDF para esta factura.",
-    "preview": "Vista previa",
+    "preview": "Mostrar vista previa",
     "preview_error": "No se pudo crear la vista previa."
   },
   "paymentConfirmation": {

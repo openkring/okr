@@ -210,7 +210,7 @@
     "pdf": "Rechnung als PDF herunterladen",
     "pdf_error": "Die Rechnung konnte nicht als PDF geladen werden. Bitte versuche es später noch einmal.",
     "pdf_missing": "Für diese Rechnung gibt es noch kein PDF.",
-    "preview": "Vorschau",
+    "preview": "Vorschau anzeigen",
     "preview_error": "Die Vorschau konnte nicht erstellt werden."
   },
   "paymentConfirmation": {

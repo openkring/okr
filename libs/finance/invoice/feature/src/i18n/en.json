@@ -210,7 +210,7 @@
     "pdf": "Download invoice as PDF",
     "pdf_error": "The invoice could not be loaded as a PDF. Please try again later.",
     "pdf_missing": "There is no PDF for this invoice yet.",
-    "preview": "Preview",
+    "preview": "Show preview",
     "preview_error": "The preview could not be created."
   },
   "paymentConfirmation": {
