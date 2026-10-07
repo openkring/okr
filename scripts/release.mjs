@@ -175,6 +175,13 @@ async function releaseApp(app) {
   try { run('pnpm', ['run', 'testlibs']); }
   catch { abort('Tests failed — release aborted (no version bump made).'); }
 
+  // 1a. form/modal structure gate (building-forms skill): these break no build and no test — a
+  //     hand-built modal or an unsatisfiable Vest cap compiles green and only shows up as a missing
+  //     save banner in production.
+  console.log('\n[1/6] Checking forms and modals (pnpm check-forms)…');
+  try { run('node', ['scripts/check-forms.mjs']); }
+  catch { abort('check-forms failed — release aborted (no version bump made). Fix the findings above.'); }
+
   // 1b. catalogue drift gate — does `feature-blocks.ts` still agree with the live menu docs?
   //     Placed here, before the bump, for the same reason the test gate is first: it is cheap
   //     and a failure means nothing has been changed yet.

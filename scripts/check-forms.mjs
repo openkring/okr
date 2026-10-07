@@ -7,6 +7,10 @@
  *   1. no length cap on a selector value, a generated value, or a foreign key
  *   2. a template [maxLength] must be the constant the suite enforces, bound as a member
  *   3. every validated field must render its errors under itself
+ *   4. a modal that collects input is header + change-confirmation + one form component:
+ *      no raw Ionic inputs or [(ngModel)] typed into the modal, and a modal that renders an
+ *      okr-*-form shows okr-change-confirmation. Pickers, wizards and tools that are not
+ *      edit dialogs are listed in MODAL_ALLOWLIST, each with its reason.
  *
  * Usage: node scripts/check-forms.mjs   (exit 1 on any finding — CI friendly)
  */
@@ -134,10 +138,65 @@ for (const path of [...files('*.form.ts'), ...files('*-edit.modal.ts')]) {
   }
 }
 
+// ---------------------------------------------------------------- modals (rule 4)
+/**
+ * Modals that take input but are not edit dialogs, so a save banner would be wrong. Every entry
+ * needs a reason. The list only shrinks: an entry whose file is gone or no longer trips the rule
+ * is reported as stale. Adding an entry is a design decision — not a way to silence the check.
+ */
+const MODAL_ALLOWLIST = {
+  'libs/shared/ui/src/lib/date-time-select.modal.ts': 'picker: date (+ optional time), confirmed by OK',
+  'libs/shared/ui/src/lib/date-picker.modal.ts': 'picker: ion-datetime calendar',
+  'libs/shared/ui/src/lib/date-select.modal.ts': 'picker: ion-datetime calendar',
+  'libs/shared/ui/src/lib/time-select.modal.ts': 'picker: ion-datetime time wheel',
+  'libs/shared/ui/src/lib/duration-picker.modal.ts': 'picker: ion-datetime duration wheels',
+  'libs/tenant/ui/src/lib/block-enable.modal.ts': 'confirmation: choose which menu rows to attach when enabling a feature block',
+  'libs/aoc/feature/src/lib/tenant-allocation-confirm.modal.ts': 'consent dialog: confirm a tenant allocation (spec 1.47)',
+  'libs/content/document/feature/src/lib/vectorize.modal.ts': 'tool: tune and re-run an SVG trace',
+  'libs/finance/expense/feature/src/lib/expense-detail.modal.ts': 'read-only view: renders the edit form in readOnly mode, nothing to save',
+  'libs/auth/feature/src/lib/login.modal.ts': 'auth form with its own submit, nothing is edited',
+  'libs/shared/ui/src/lib/distribution-list.modal.ts': 'picker: choose recipients for the email composer',
+  'libs/calevent/ui/src/lib/regression-selection.modal.ts': 'picker: scope of a series change (this / future / all)',
+  'libs/calevent/ui/src/lib/organiser-contact.modal.ts': 'action picker: whom to contact and how',
+  'libs/calevent/ui/src/lib/calendar-sync.modal.ts': 'tool: shows / copies / resets a subscription link',
+  'libs/vcard/feature/src/lib/vcard-import-review.modal.ts': 'wizard step: review parsed cards before import',
+  'libs/vcard/feature/src/lib/vcard-export-scope.modal.ts': 'picker: export scope toggles',
+  'libs/profile/feature/src/lib/data-erasure.modal.ts': 'destructive confirmation: type-to-confirm erasure',
+  'libs/forms/feature/src/lib/decrypt-files.modal.ts': 'tool: password to decrypt files, nothing is saved',
+  'libs/forms/feature/src/lib/section-encryption-setup.modal.ts': 'confirmation: shows a generated password, acknowledge to activate',
+  'libs/cms/section/feature/src/lib/message-center.modal.ts': 'tool: composes and sends messages',
+  'libs/content/esign/feature/src/lib/esign-send-document.modal.ts': 'wizard: upload, assign signees, send',
+};
+
+const RAW_INPUT = /<ion-(input|textarea|select|checkbox|toggle|radio-group|range|datetime)\b/;
+// [(ngModel)] on a segment or searchbar is navigation / filtering, not data entry
+const NG_MODEL = /<ion-(?!segment|searchbar)[a-z-]+[^>]*\[\(ngModel\)\]|^\s*\[\(ngModel\)\]/;
+const modalHits = new Map();
+for (const path of execSync(`find libs apps -name '*.modal.ts' -not -path '*/node_modules/*' -not -path 'apps/*/node_modules/*'`, { encoding: 'utf8' })
+  .split('\n').filter(Boolean).sort()) {
+  const lines = readFileSync(path, 'utf8').split('\n');
+  const src = lines.join('\n');
+  const hits = [];
+  lines.forEach((line, i) => {
+    if (RAW_INPUT.test(line)) hits.push([i + 1, `raw ${line.match(RAW_INPUT)[0]}> in a modal — move the field into an okr-*-form built from shared/ui primitives`]);
+    else if (NG_MODEL.test(line)) hits.push([i + 1, '[(ngModel)] in a modal — edit through a form component (formData + onFieldChange)']);
+  });
+  if (/<okr-[a-z-]+-form\b/.test(src) && !src.includes('okr-change-confirmation'))
+    hits.push([1, 'renders a form but no okr-change-confirmation — the parent drives saving through the banner']);
+  if (hits.length) modalHits.set(path, hits);
+}
+for (const [path, hits] of modalHits) {
+  if (path in MODAL_ALLOWLIST) continue;
+  for (const [line, msg] of hits) report(path, line, `rule 4: ${msg}`);
+}
+for (const path of Object.keys(MODAL_ALLOWLIST)) {
+  if (!modalHits.has(path)) report(path, 1, 'rule 4: stale MODAL_ALLOWLIST entry (file gone or now compliant) — remove it');
+}
+
 if (findings.length) {
   console.error(`check-forms: ${findings.length} finding(s)\n`);
   for (const f of findings) console.error('  ' + f);
-  console.error('\nSee the `building-forms` skill: "The three length rules" and "Per-field error notes are mandatory".');
+  console.error('\nSee the `building-forms` skill: "The three length rules", "Per-field error notes are mandatory" and "The parent (edit modal or page)".');
   process.exit(1);
 }
 console.log('check-forms: ok');

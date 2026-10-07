@@ -12,7 +12,24 @@
   },
   "sandbox": {
     "network": {
-      "allowedDomains": ["www.google-analytics.com"]
+      "allowedDomains": [
+        "www.google-analytics.com"
+      ]
     }
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/check-forms-hook.mjs\"",
+            "timeout": 60,
+            "statusMessage": "check-forms"
+          }
+        ]
+      }
+    ]
   }
 }
