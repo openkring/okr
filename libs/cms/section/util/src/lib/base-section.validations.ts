@@ -1,11 +1,10 @@
-import { only, staticSuite } from 'vest';
+import { staticSuite } from 'vest';
 
 import { DESCRIPTION_LENGTH, LONG_NAME_LENGTH, NAME_LENGTH } from '@okr/shared-constants';
 import { ColorIonic, SectionModel } from '@okr/shared-models';
 import { booleanValidations, categoryValidations, stringValidations } from '@okr/shared-util-core';
 
-export const baseSectionValidations = staticSuite((model: SectionModel, field?: string) => {
-  if (field) only(field);
+export const baseSectionValidations = staticSuite((model: SectionModel) => {
 
   stringValidations('okey', model.okey);
   // Caps must match the maxLength the form actually offers, otherwise the counter invites

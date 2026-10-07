@@ -4,7 +4,7 @@ import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, 
 
 import { AvatarInfo, GroupModel, RoleName, UserModel } from '@okr/shared-models';
 import { ButtonCopy, ButtonCopyI18n, Checkbox, CheckboxI18n, Chips, IconInput, NotesInput, NotesInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n , ErrorNote} from '@okr/shared-ui';
-import { validateVestTree } from '@okr/shared-util-angular';
+import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 
 import { Avatars } from '@okr/avatar-ui';
@@ -271,12 +271,12 @@ export class GroupForm {
   // validation and errors
   // The suite needs tenantId and allTags, which validateVestTree does not pass — so the bridge
   // calls it through a closure that adds them.
-  private readonly suiteWithContext = (model: GroupModel, field?: string) =>
-    groupValidations(model, this.tenantId(), this.allTags(), field);
+  private readonly suiteWithContext = (model: GroupModel) =>
+    groupValidations(model, this.tenantId(), this.allTags());
   protected readonly groupForm = form(this.formData, (path) =>
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     validateVestTree(path, this.suiteWithContext as any));
-  private readonly validationResult = computed(() => groupValidations(this.formData(), this.tenantId(), this.allTags()));
+  private readonly validationResult = vestErrors(this.groupForm);
   protected hasCalendarErrors = computed(() => this.validationResult().getErrors('hasCalendar'));
   protected hasChatErrors = computed(() => this.validationResult().getErrors('hasChat'));
   protected hasContentErrors = computed(() => this.validationResult().getErrors('hasContent'));

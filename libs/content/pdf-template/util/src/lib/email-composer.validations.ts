@@ -1,5 +1,5 @@
 // libs/content/pdf-template/util/src/lib/email-composer.validations.ts
-import { enforce, only, staticSuite, test } from 'vest';
+import { enforce, staticSuite, test } from 'vest';
 import { parseEmails } from './email-html.util';
 
 // Vest messages are i18n keys: okr-error-note resolves any message starting with '@'.
@@ -19,8 +19,7 @@ function looksLikeEmail(email: string): boolean {
   return email.includes('@') && email.includes('.');
 }
 
-export const emailComposerValidations = staticSuite((model: EmailComposerFormModel, field?: string) => {
-  if (field) only(field);
+export const emailComposerValidations = staticSuite((model: EmailComposerFormModel) => {
 
   test('to', '@content/pdf-template/feature.validation.to_required', () => {
     enforce(parseEmails(model.to).length).greaterThan(0);

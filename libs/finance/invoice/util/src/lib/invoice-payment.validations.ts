@@ -1,4 +1,4 @@
-import { enforce, omitWhen, only, staticSuite, test } from 'vest';
+import { enforce, omitWhen, staticSuite, test } from 'vest';
 
 import { dateValidations } from '@okr/shared-util-core';
 
@@ -14,8 +14,7 @@ const toRappen = (chf: number): number => Math.round(chf * 100);
  * and — by mode — the bank account to book on or the bank booking to link (whose receivables credit
  * must cover the amount). The server checks all of it again; this only keeps the dialog honest.
  */
-export const invoicePaymentValidations = staticSuite((model: InvoicePaymentFormModel, field?: string) => {
-  if (field) only(field);
+export const invoicePaymentValidations = staticSuite((model: InvoicePaymentFormModel) => {
 
   test('date', VPFX + 'dateRequired', () => {
     enforce(model.date ?? '').isNotBlank();

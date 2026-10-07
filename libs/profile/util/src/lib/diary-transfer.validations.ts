@@ -1,10 +1,9 @@
-import { enforce, only, staticSuite, test } from 'vest';
+import { enforce, staticSuite, test } from 'vest';
 
 import { DiaryTarget } from '@okr/shared-models';
 
 /** Spec 1.77 §5.3 — one rule per column: `von` must not be after `bis` (both optional). */
-export const diaryTransferValidations = staticSuite((targets: DiaryTarget[], field?: string) => {
-  if (field) only(field);
+export const diaryTransferValidations = staticSuite((targets: DiaryTarget[]) => {
   // Also the suite's one always-present rule: Vest reports a suite without any test as not
   // valid, and a user with no diary columns yet must still be able to save.
   test('diaryTargets', 'notArray', () => {

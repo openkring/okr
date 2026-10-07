@@ -1,12 +1,11 @@
 
-import { only, staticSuite } from 'vest';
+import { staticSuite } from 'vest';
 
 import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { booleanValidations, numberValidations, stringValidations } from '@okr/shared-util-core';
 import { MatrixRoom } from '@okr/shared-models';
 
-export const roomValidations = staticSuite((model: MatrixRoom, field?: string) => {
-  if (field) only(field);
+export const roomValidations = staticSuite((model: MatrixRoom) => {
 
   stringValidations('roomId', model.roomId);
   stringValidations('name', model.name, SHORT_NAME_LENGTH, 4, true);

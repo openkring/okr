@@ -1,14 +1,13 @@
-import { omitWhen, only, staticSuite } from 'vest';
+import { omitWhen, staticSuite } from 'vest';
 
 import { HeroSection } from '@okr/shared-models';
 
 import { baseSectionValidations } from './base-section.validations';
 import { imageStyleValidations, optionalImageSlotValidations } from './image.validations';
 
-export const heroSectionValidations = staticSuite((model: HeroSection, field?: string) => {
-  if (field) only(field);
+export const heroSectionValidations = staticSuite((model: HeroSection) => {
 
-  baseSectionValidations(model, field);
+  baseSectionValidations(model);
 
   // logo / hero: ImageConfig — both single slots, both optional on older stored sections.
   optionalImageSlotValidations('logo', model.properties?.logo);

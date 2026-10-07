@@ -1,4 +1,4 @@
-import { enforce, only, staticSuite, test } from 'vest';
+import { enforce, staticSuite, test } from 'vest';
 
 import { LONG_NAME_LENGTH, NAME_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { WorkflowRuleModel } from '@okr/shared-models';
@@ -6,10 +6,9 @@ import { baseValidations, numberValidations, stringValidations } from '@okr/shar
 
 import { actionNeedsArg, probeNeedsArg } from './workflow-rule.util';
 
-export const workflowRuleValidations = staticSuite((model: WorkflowRuleModel, tenants: string, tags: string, field?: string) => {
-  if (field) only(field);
+export const workflowRuleValidations = staticSuite((model: WorkflowRuleModel, tenants: string, tags: string) => {
 
-  baseValidations(model, tenants, tags, field);
+  baseValidations(model, tenants, tags);
   // the limits mirror the form's maxLength per field. They used to be SHORT_NAME_LENGTH (30)
   // across the board, which every real rule exceeded on `name` ('Kategoriewechsel → Materialwart'),
   // `probe` ('categoryIs:passive,hasActiveOwnerships') and `messageKey` (a scoped i18n key) — the

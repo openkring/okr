@@ -1,11 +1,10 @@
-import { enforce, omitWhen, only, staticSuite, test } from 'vest';
+import { enforce, omitWhen, staticSuite, test } from 'vest';
 
 import { BEXIO_ID_LENGTH, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { OrgModel } from '@okr/shared-models';
 import { dateValidations, isAfterDate, stringValidations } from '@okr/shared-util-core';
 
-export const orgValidations = staticSuite((model: OrgModel, tenants: string, tags: string, field?: string) => {
-  if (field) only(field);
+export const orgValidations = staticSuite((model: OrgModel, tenants: string, tags: string) => {
 
   stringValidations('name', model.name, SHORT_NAME_LENGTH, 3, true);
   stringValidations('type', model.type);

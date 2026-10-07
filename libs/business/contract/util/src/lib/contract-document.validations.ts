@@ -1,4 +1,4 @@
-import { enforce, only, staticSuite, test } from 'vest';
+import { enforce, staticSuite, test } from 'vest';
 import { LONG_NAME_LENGTH } from '@okr/shared-constants';
 import { ContractDocState, ContractDocumentRole } from '@okr/shared-models';
 import { stringValidations } from '@okr/shared-util-core';
@@ -26,8 +26,7 @@ export function newContractDocumentUploadData(): ContractDocumentUploadData {
 
 const V = '@business/contract/util.validation.';
 
-export const contractDocumentUploadValidations = staticSuite((model: ContractDocumentUploadData, field?: string) => {
-  if (field) only(field);
+export const contractDocumentUploadValidations = staticSuite((model: ContractDocumentUploadData) => {
   test('role', V + 'docRole', () => { enforce(CONTRACT_DOCUMENT_ROLES.includes(model.role)).isTruthy(); });
   test('docState', V + 'docState', () => { enforce(CONTRACT_DOC_STATES.includes(model.docState)).isTruthy(); });
   stringValidations('title', model.title, LONG_NAME_LENGTH);

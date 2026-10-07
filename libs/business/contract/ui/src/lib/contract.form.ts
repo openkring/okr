@@ -9,7 +9,7 @@ import {
   AmountInput, AmountInputI18n, Chips, DateInput, DateInputI18n, ErrorNote, NotesInput, NotesInputI18n,
   NumberInput, NumberInputI18n, StringSelect, StringSelectI18n, TextareaInput, TextInput, TextInputI18n,
 } from '@okr/shared-ui';
-import { validateVestTree } from '@okr/shared-util-angular';
+import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 
 import { AvatarLabel, AvatarSelect } from '@okr/avatar-ui';
@@ -366,12 +366,16 @@ export class ContractForm {
   public readonly selectClicked = output<ContractSelectTarget>();
   public readonly summarizeClicked = output<void>();
 
+  // The suite needs this.tenantId(), this.allTags(), which validateVestTree does not pass — so the bridge
+  // calls it through a closure that adds them.
+  private readonly suiteWithContext = (model: ContractModel) =>
+    contractValidations(model, this.tenantId(), this.allTags());
   protected readonly contractForm = form(this.formData, (path) =>
-    validateVestTree(path, contractValidations as any),
+    validateVestTree(path, this.suiteWithContext as any),
   );
 
   // per-field Vest errors for the notes under each field (validateVestTree calls the suite with the model alone)
-  private readonly validationResult = computed(() => contractValidations(this.formData(), this.tenantId(), this.allTags()));
+  private readonly validationResult = vestErrors(this.contractForm);
   private errorsOf(field: string): string[] {
     return this.validationResult().getErrors(field);
   }

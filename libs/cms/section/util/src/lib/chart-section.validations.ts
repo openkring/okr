@@ -1,13 +1,12 @@
-import { only, staticSuite } from 'vest';
+import { staticSuite } from 'vest';
 
 import { ChartSection } from '@okr/shared-models';
 
 import { baseSectionValidations } from './base-section.validations';
 
-export const chartSectionValidations = staticSuite((model: ChartSection, field?: string) => {
-  if (field) only(field);
+export const chartSectionValidations = staticSuite((model: ChartSection) => {
 
-  baseSectionValidations(model, field);
+  baseSectionValidations(model);
 
     // tbd: properties: EChartsOption (from ECharts)
 });

@@ -2,7 +2,7 @@ import { EMAIL_LENGTH, PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, PASSWORD_SET_MI
 import { AuthCredentials } from '@okr/shared-models';
 import { stringValidations } from '@okr/shared-util-core';
 import { isLoginIdInput, isValidLoginId, normalizeLoginIdInput } from '@okr/user-util';
-import { enforce, only, staticSuite, test } from 'vest';
+import { enforce, staticSuite, test } from 'vest';
 
 export type AuthCredentialsContext = 'login' | 'email' | 'password';
 
@@ -36,27 +36,24 @@ const passwordTests = (model: AuthCredentials, minLength: number) => {
   stringValidations('loginPassword', model.loginPassword, PASSWORD_MAX_LENGTH, minLength, true);
 };
 
-export const loginValidations = staticSuite((model: AuthCredentials, field?: string) => {
-  if (field) only(field);
+export const loginValidations = staticSuite((model: AuthCredentials) => {
   emailTests(model);
   passwordTests(model, PASSWORD_MIN_LENGTH);
 });
 
-export const emailValidations = staticSuite((model: AuthCredentials, field?: string) => {
-  if (field) only(field);
+export const emailValidations = staticSuite((model: AuthCredentials) => {
   emailTests(model);
 });
 
 /** Used when a NEW password is being chosen — see passwordTests for why the floor is higher. */
-export const passwordValidations = staticSuite((model: AuthCredentials, field?: string) => {
-  if (field) only(field);
+export const passwordValidations = staticSuite((model: AuthCredentials) => {
   passwordTests(model, PASSWORD_SET_MIN_LENGTH);
 });
 
-export const authCredentialsValidations = (model: AuthCredentials, field?: string, context: AuthCredentialsContext = 'login'): ReturnType<typeof loginValidations> => {
+export const authCredentialsValidations = (model: AuthCredentials, context: AuthCredentialsContext = 'login'): ReturnType<typeof loginValidations> => {
   switch (context) {
-    case 'email': return emailValidations(model, field);
-    case 'password': return passwordValidations(model, field);
-    default: return loginValidations(model, field);
+    case 'email': return emailValidations(model);
+    case 'password': return passwordValidations(model);
+    default: return loginValidations(model);
   }
 };

@@ -1,4 +1,4 @@
-import { only, staticSuite } from 'vest';
+import { staticSuite } from 'vest';
 
 import { LONG_NAME_LENGTH } from '@okr/shared-constants';
 import { MeetingModel } from '@okr/shared-models';
@@ -6,10 +6,9 @@ import { avatarValidations, baseValidations, dateValidations, stringValidations,
 
 export const MEETING_STATES = ['draft', 'invited', 'held', 'approved'];
 
-export const meetingValidations = staticSuite((model: MeetingModel, tenants: string, tags: string, field?: string) => {
-  if (field) only(field);
+export const meetingValidations = staticSuite((model: MeetingModel, tenants: string, tags: string) => {
 
-  baseValidations(model, tenants, tags, field);
+  baseValidations(model, tenants, tags);
   stringValidations('name', model.name, LONG_NAME_LENGTH, 1, true);
   stringValidations('groupKey', model.groupKey);
   stringValidations('locationKey', model.locationKey);

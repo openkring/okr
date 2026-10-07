@@ -4,7 +4,7 @@ import { IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, 
 
 import { Checkbox, CheckboxI18n, ErrorNote, NotesInput, NotesInputI18n } from '@okr/shared-ui';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { validateVestTree } from '@okr/shared-util-angular';
+import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, getFullName } from '@okr/shared-util-core';
 
 import { TripI18n, TripReport, tripReportValidations } from '@okr/trip-util';
@@ -154,7 +154,7 @@ export class TripReportForm {
   } as CheckboxI18n));
 
   // validation and errors
-  private readonly validationResult = computed(() => tripReportValidations(this.formData()));
+  private readonly validationResult = vestErrors(this.reportForm);
   protected personErrors = computed(() => this.validationResult().getErrors('person'));
   protected messageErrors = computed(() => this.validationResult().getErrors('message'));
 

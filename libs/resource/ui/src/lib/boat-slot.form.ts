@@ -5,7 +5,7 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular
 import { BOAT_SLOT_COLORS, BOAT_STRATEGY_TYPES, BoatSlotLabel, DEFAULT_SWISSLOS_PERCENT } from '@okr/shared-models';
 import { Checkbox, CheckboxI18n, ErrorNote, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { coerceBoolean } from '@okr/shared-util-core';
-import { validateVestTree } from '@okr/shared-util-angular';
+import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 
 import { boatSlotValidations, ResourceI18n } from '@okr/resource-util';
 import { SHORT_NAME_LENGTH } from '@okr/shared-constants';
@@ -110,7 +110,7 @@ export class BoatSlotForm {
 
   // per-field Vest errors for the notes under each field. validateVestTree calls the suite
   // with the model alone, so this mirrors exactly what drives the form's validity.
-  private readonly validationResult = computed(() => boatSlotValidations(this.formData() as any));
+  private readonly validationResult = vestErrors(this.slotForm);
   protected isStrategyRelevantErrors = computed(() => this.validationResult().getErrors('isStrategyRelevant'));
   protected textErrors = computed(() => this.validationResult().getErrors('text'));
   constructor() {

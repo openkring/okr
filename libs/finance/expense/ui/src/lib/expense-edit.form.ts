@@ -7,7 +7,7 @@ import {
 
 import { AccountModel, CategoryListModel, CostCenterModel, ExpenseModel } from '@okr/shared-models';
 import { ButtonCopy, CategorySelect, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
-import { formatIban, IbanFormat, validateVestTree } from '@okr/shared-util-angular';
+import { formatIban, IbanFormat, validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, convertDateFormatToString, DateFormat, getThumbnailUrl, isProfitAndLossAccountId } from '@okr/shared-util-core';
 
 import { AvatarPipe } from '@okr/avatar-ui';
@@ -347,7 +347,7 @@ export class ExpenseEditForm {
   protected readonly expenseEditForm = form(this.formData, (path) =>
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     validateVestTree(path, expenseEditValidations as any));
-  private readonly validationResult = computed(() => expenseEditValidations(this.formData()));
+  private readonly validationResult = vestErrors(this.expenseEditForm);
   protected readonly abstractErrors = computed(() => this.validationResult().getErrors('abstract'));
   protected readonly amountErrors   = computed(() => this.validationResult().getErrors('amountTotal'));
   protected readonly currencyErrors = computed(() => this.validationResult().getErrors('currency'));

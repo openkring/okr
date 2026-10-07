@@ -6,7 +6,7 @@ import { DESCRIPTION_LENGTH } from '@okr/shared-constants';
 import { CostCenterModel, CostCenterType, ResponsibilityModel, RoleName, UserModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { ErrorNote, NotesInput, NotesInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
-import { validateVestTree } from '@okr/shared-util-angular';
+import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 
 import {
@@ -129,13 +129,13 @@ export class CostCenterForm {
 
   // The suite needs the other cost centres (unique number, cycle, leaf-has-children), which
   // validateVestTree does not pass — so the bridge calls it through a closure that adds them.
-  private readonly suiteWithContext = (model: CostCenterFormModel, field?: string) =>
-    costCenterValidations(model, this.costCenters(), field);
+  private readonly suiteWithContext = (model: CostCenterFormModel) =>
+    costCenterValidations(model, this.costCenters());
   protected readonly costCenterForm = form(this.formData, (path) =>
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     validateVestTree(path, this.suiteWithContext as any));
 
-  private readonly validationResult = computed(() => costCenterValidations(this.formData(), this.costCenters()));
+  private readonly validationResult = vestErrors(this.costCenterForm);
   protected idErrors = computed(() => this.validationResult().getErrors('id'));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
   protected parentKeyErrors = computed(() => this.validationResult().getErrors('parentKey'));

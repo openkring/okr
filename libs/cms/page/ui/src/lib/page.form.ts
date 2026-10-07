@@ -5,7 +5,7 @@ import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, 
 import { CaseInsensitiveWordMask } from '@okr/shared-config';
 import { CategoryListModel, PageModel, RoleName, UserModel } from '@okr/shared-models';
 import { ButtonCopy, ButtonCopyI18n, CategorySelect, Chips, ErrorNote, NotesInput, NotesInputI18n, StringList, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
-import { validateVestTree } from '@okr/shared-util-angular';
+import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 import { DEFAULT_BLOG_TYPE, DEFAULT_CONTENT_STATE, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PAGE_TYPE, DEFAULT_TAGS, DEFAULT_TITLE, DESCRIPTION_LENGTH, NAME_LENGTH } from '@okr/shared-constants';
 
@@ -111,14 +111,14 @@ export class PageForm {
 
   // The suite needs tenants and tags, which validateVestTree does not pass — so the bridge
   // calls it through a closure that adds them.
-  private readonly suiteWithContext = (model: PageModel, field?: string) =>
-    pageValidations(model, this.tenantId(), this.allTags(), field);
+  private readonly suiteWithContext = (model: PageModel) =>
+    pageValidations(model, this.tenantId(), this.allTags());
   protected readonly pageForm = form(this.formData, (path) =>
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     validateVestTree(path, this.suiteWithContext as any));
 
   // per-field errors for the notes under each field
-  private readonly validationResult = computed(() => pageValidations(this.formData(), this.tenantId(), this.allTags()));
+  private readonly validationResult = vestErrors(this.pageForm);
   protected stateErrors = computed(() => this.validationResult().getErrors('state'));
   protected typeErrors = computed(() => this.validationResult().getErrors('type'));
   protected notesErrors = computed(() => this.validationResult().getErrors('notes'));

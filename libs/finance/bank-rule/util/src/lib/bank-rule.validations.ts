@@ -1,13 +1,12 @@
-import { only, staticSuite, test, enforce } from 'vest';
+import { staticSuite, test, enforce } from 'vest';
 
 import { BankRuleModel } from '@okr/shared-models';
 import { baseValidations, numberValidations, stringValidations } from '@okr/shared-util-core';
 
 export const bankRuleValidations = staticSuite(
-  (model: BankRuleModel, tenants: string, tags: string, field?: string) => {
-    if (field) only(field);
+  (model: BankRuleModel, tenants: string, tags: string) => {
 
-    baseValidations(model, tenants, tags, field);
+    baseValidations(model, tenants, tags);
     stringValidations('term', model.term, 200, 1, true);
     // 100 = the form's maxLength for the Buchungstext. A cap below what the input accepts
     // invalidates the form with no visible error.

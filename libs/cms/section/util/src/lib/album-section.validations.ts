@@ -1,4 +1,4 @@
-import { only, staticSuite } from 'vest';
+import { staticSuite } from 'vest';
 
 import { LONG_NAME_LENGTH } from '@okr/shared-constants';
 import { AlbumSection, GalleryEffect, ImageActionType } from '@okr/shared-models';
@@ -7,10 +7,9 @@ import { booleanValidations, categoryValidations, numberValidations, stringValid
 import { baseSectionValidations } from './base-section.validations';
 
 
-export const albumSectionValidations = staticSuite((model: AlbumSection, field?: string) => {
-  if (field) only(field);
+export const albumSectionValidations = staticSuite((model: AlbumSection) => {
 
-  baseSectionValidations(model, field);
+  baseSectionValidations(model);
 
     stringValidations('folder', model.properties?.folder, LONG_NAME_LENGTH);
     stringValidations('albumStyle', model.properties?.albumStyle);

@@ -5,7 +5,7 @@ import { IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, 
 import { AvatarInfo, CategoryItemModel, CategoryListModel, LocationModel, ResourceModel, RoleName, TripModel, UserModel } from '@okr/shared-models';
 import { DateInput, DateInputI18n, ErrorNote, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TimeInput, TimeInputI18n } from '@okr/shared-ui';
 import { debugFormModel, getDurationLabel, hasRole } from '@okr/shared-util-core';
-import { validateVestTree } from '@okr/shared-util-angular';
+import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { DEFAULT_NOTES } from '@okr/shared-constants';
 import { SvgIconPipe } from '@okr/shared-pipes';
 
@@ -205,7 +205,7 @@ export class TripEditForm {
   protected endTimeI18n = computed(() => ({ name: 'endTime', label: this.i18n().end_time_label(), placeholder: this.i18n().end_time_placeholder() } as TimeInputI18n));
 
   // per-field errors: without them a mistyped date would silently hide the save banner
-  private readonly validationResult = computed(() => tripValidationSuite(this.formData()));
+  private readonly validationResult = vestErrors(this.tripForm);
   protected startDateErrors = computed(() => this.validationResult().getErrors('startDate'));
   protected startTimeErrors = computed(() => this.validationResult().getErrors('startTime'));
   protected endDateErrors = computed(() => this.validationResult().getErrors('endDate'));

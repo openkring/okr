@@ -4,7 +4,7 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular
 
 import { DESCRIPTION_LENGTH, LONG_NAME_LENGTH } from '@okr/shared-constants';
 import { Checkbox, CheckboxI18n, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
-import { validateVestTree } from '@okr/shared-util-angular';
+import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean } from '@okr/shared-util-core';
 import { I18nEntryFormModel, I18nEntryI18n, i18nEntryValidations } from '@okr/i18n-util';
 
@@ -114,7 +114,7 @@ export class I18nEntryForm {
   protected readonly isHtml = computed(() => this.formData()?.isHtml ?? false);
 
   // per-field errors, straight from the suite
-  private readonly validationResult = computed(() => i18nEntryValidations(this.formData()));
+  private readonly validationResult = vestErrors(this.entryForm);
   protected readonly moduleErrors = computed(() => this.validationResult().getErrors('module'));
   protected readonly keyErrors = computed(() => this.validationResult().getErrors('key'));
   protected readonly deErrors = computed(() => this.validationResult().getErrors('de'));

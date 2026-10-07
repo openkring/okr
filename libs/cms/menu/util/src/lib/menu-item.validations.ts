@@ -1,5 +1,5 @@
 
-import { enforce, omitWhen, only, staticSuite, test } from 'vest';
+import { enforce, omitWhen, staticSuite, test } from 'vest';
 
 // Vest messages are BARE keys, never '@'-prefixed: okr-error-note resolves a message
 // without '@' as `validation.<key>` from the app's main bundle, which is where these
@@ -10,8 +10,7 @@ import { DESCRIPTION_LENGTH, LONG_NAME_LENGTH, SHORT_NAME_LENGTH } from '@okr/sh
 import { MenuItemModel } from '@okr/shared-models';
 import { booleanValidations, isArrayOfBaseProperties, isArrayOfStrings, numberValidations, stringValidations, urlValidations } from '@okr/shared-util-core';
 
-export const menuItemValidations = staticSuite((model: MenuItemModel, tenants: string, tags: string, field?: string) => {
-  if (field) only(field);
+export const menuItemValidations = staticSuite((model: MenuItemModel, tenants: string, tags: string) => {
 
   stringValidations('okey', model.okey);
   stringValidations('name', model.name, SHORT_NAME_LENGTH);

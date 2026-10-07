@@ -1,4 +1,4 @@
-import { only, staticSuite } from 'vest';
+import { staticSuite } from 'vest';
 
 import { SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { stringValidations } from '@okr/shared-util-core';
@@ -17,8 +17,7 @@ export interface TagStringFormData {
   it: string;
 }
 
-export const tagStringValidations = staticSuite((model: TagStringFormData, field?: string) => {
-  if (field) only(field);
+export const tagStringValidations = staticSuite((model: TagStringFormData) => {
 
   // the key is the only mandatory field — an empty language means "no override for that language"
   stringValidations('key', model.key, SHORT_NAME_LENGTH, 1, true);

@@ -1,4 +1,4 @@
-import { enforce, omitWhen, only, staticSuite, test } from 'vest';
+import { enforce, omitWhen, staticSuite, test } from 'vest';
 
 import { dateValidations } from '@okr/shared-util-core';
 
@@ -14,8 +14,7 @@ const toRappen = (chf: number): number => Math.round(chf * 100);
  * by mode — the account the money left from or the booking to link (whose payables debit must cover
  * the amount). The server checks all of it again; this only keeps the dialog honest.
  */
-export const billPaymentValidations = staticSuite((model: BillPaymentFormModel, field?: string) => {
-  if (field) only(field);
+export const billPaymentValidations = staticSuite((model: BillPaymentFormModel) => {
 
   test('date', VPFX + 'dateRequired', () => {
     enforce(model.date ?? '').isNotBlank();

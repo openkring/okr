@@ -7,7 +7,7 @@ import { CategoryListModel, City, RoleName, UserModel } from '@okr/shared-models
 import { CategorySelect, Chips, DateInput, DateInputI18n, EmailInput, EmailInputI18n, ErrorNote, NotesInput, NotesInputI18n, PhoneInput, PhoneInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, getTodayStr, hasRole } from '@okr/shared-util-core';
 import { CITY_LENGTH, DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, DEFAULT_LOCALE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PHONE, DEFAULT_TAGS, DEFAULT_URL, DESCRIPTION_LENGTH, EMAIL_LENGTH, NUMBER_LENGTH, PHONE_LENGTH, SHORT_NAME_LENGTH, ZIP_LENGTH } from '@okr/shared-constants';
-import { AhvFormat, formatAhv, validateVestTree } from '@okr/shared-util-angular';
+import { AhvFormat, formatAhv, validateVestTree, vestErrors } from '@okr/shared-util-angular';
 
 import { AvatarPipe } from '@okr/avatar-ui';
 import { CitySearch } from '@okr/subject-swisscities-ui';
@@ -227,7 +227,7 @@ export class MemberNewForm {
     validateVestTree(path, memberNewFormValidations as any));
 
   // validation and errors
-  private readonly validationResult = computed(() => memberNewFormValidations(this.formData()));
+  private readonly validationResult = vestErrors(this.memberNewForm);
   protected categoryErrors = computed(() => this.validationResult().getErrors('category'));
   protected dateOfBirthErrors = computed(() => this.validationResult().getErrors('dateOfBirth'));
   protected dateOfDeathErrors = computed(() => this.validationResult().getErrors('dateOfDeath'));

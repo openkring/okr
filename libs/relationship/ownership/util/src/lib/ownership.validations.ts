@@ -1,14 +1,13 @@
-import { enforce, omitWhen, only, staticSuite, test } from 'vest';
+import { enforce, omitWhen, staticSuite, test } from 'vest';
 
 import { ABBREVIATION_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@okr/shared-constants';
 import { OwnershipModel } from '@okr/shared-models';
 import { baseValidations, dateValidations, isAfterDate, numberValidations, stringValidations } from '@okr/shared-util-core';
 
-export const ownershipValidations = staticSuite((model: OwnershipModel, tenants: string, tags: string, field?: string) => {
-  if (field) only(field);
+export const ownershipValidations = staticSuite((model: OwnershipModel, tenants: string, tags: string) => {
 
   // base
-  baseValidations(model, tenants, tags, field);
+  baseValidations(model, tenants, tags);
 
   // owner
   stringValidations('ownerKey', model.ownerKey);

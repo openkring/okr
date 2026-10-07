@@ -6,7 +6,7 @@ import { NumberInput, NumberInputI18n, ErrorNote, TextInput, TextInputI18n } fro
 
 import { SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { AccountingConfigModel, AccountModel, CostCenterModel, DEFAULT_INCOMING_PAYMENT_LABEL, DEFAULT_OUTGOING_PAYMENT_LABEL, TemplateModel } from '@okr/shared-models';
-import { validateVestTree } from '@okr/shared-util-angular';
+import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean } from '@okr/shared-util-core';
 
 import { AccountSelect, AccountSelectI18n } from '@okr/finance-account-ui';
@@ -346,13 +346,13 @@ export class AccountingConfigForm {
 
   // The suite needs the tenant (and an empty tag list), which validateVestTree does not pass —
   // so the bridge calls it through a closure that adds them.
-  private readonly suiteWithContext = (model: AccountingConfigModel, field?: string) =>
-    accountingConfigValidations(model, this.tenantId(), '', field);
+  private readonly suiteWithContext = (model: AccountingConfigModel) =>
+    accountingConfigValidations(model, this.tenantId(), '');
   protected readonly accountingConfigForm = form(this.formData, (path) =>
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     validateVestTree(path, this.suiteWithContext as any));
 
-  private readonly validationResult = computed(() => accountingConfigValidations(this.formData(), this.tenantId(), ''));
+  private readonly validationResult = vestErrors(this.accountingConfigForm);
   protected fiscalYearStartErrors = computed(() => this.validationResult().getErrors('fiscalYearStart'));
 
   protected receivablesAccountKeyErrors = computed(() => this.validationResult().getErrors('receivablesAccountKey'));

@@ -1,4 +1,4 @@
-import { only, staticSuite } from 'vest';
+import { staticSuite } from 'vest';
 
 import { NAME_LENGTH } from '@okr/shared-constants';
 import { VatCodeModel } from '@okr/shared-models';
@@ -12,8 +12,7 @@ export const VAT_CODE_NAME_LENGTH = NAME_LENGTH;
  * only keeps code and name within the input's cap, the rate a number ≥ 0 and both validity dates
  * real StoreDates (or empty — an empty validTo means open-ended). Account and direction are picked from a list.
  */
-export const vatCodeValidations = staticSuite((model: VatCodeModel, field?: string) => {
-  if (field) only(field);
+export const vatCodeValidations = staticSuite((model: VatCodeModel) => {
 
   stringValidations('code', model.code, VAT_CODE_NAME_LENGTH);
   stringValidations('name', model.name, VAT_CODE_NAME_LENGTH);

@@ -8,7 +8,7 @@ import {
   CategorySelect, Checkbox, CheckboxI18n, Chips, DateInput, DateInputI18n, ErrorNote, NotesInput,
   NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n,
 } from '@okr/shared-ui';
-import { validateVestTree } from '@okr/shared-util-angular';
+import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 import {
   AliasI18n, aliasTargetTypeCategory, aliasTrackingSettingCategory, aliasValidations,
@@ -141,8 +141,12 @@ export class AliasForm {
   public readonly dirty = output<boolean>();
   public readonly valid = output<boolean>();
 
+  // The suite needs this.tenantId(), (this.allTags() ?? '') as string, which validateVestTree does not pass — so the bridge
+  // calls it through a closure that adds them.
+  private readonly suiteWithContext = (model: AliasModel) =>
+    aliasValidations(model, this.tenantId(), (this.allTags() ?? '') as string);
   protected readonly aliasForm = form(this.formData, (path) =>
-    validateVestTree(path, aliasValidations as any),
+    validateVestTree(path, this.suiteWithContext as any),
   );
 
   constructor() {
@@ -225,9 +229,7 @@ export class AliasForm {
     helper: this.i18n().field_notes_helper(),
   } as NotesInputI18n));
 
-  private readonly validationResult = computed(() =>
-    aliasValidations(this.formData(), this.tenantId(), (this.allTags() ?? '') as string),
-  );
+  private readonly validationResult = vestErrors(this.aliasForm);
   protected notesErrors = computed(() => this.validationResult().getErrors('notes'));
   protected readonly spaceErrors = computed(() => this.validationResult().getErrors('space'));
   protected readonly aliasErrors = computed(() => this.validationResult().getErrors('alias'));

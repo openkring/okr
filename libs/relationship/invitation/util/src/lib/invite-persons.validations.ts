@@ -1,4 +1,4 @@
-import { enforce, only, staticSuite, test } from 'vest';
+import { enforce, staticSuite, test } from 'vest';
 
 import { COMMENT_LENGTH } from '@okr/shared-constants';
 import { stringValidations } from '@okr/shared-util-core';
@@ -10,8 +10,7 @@ import { InvitePersonsFormData } from './invite-persons.model';
  * (sonst entsteht kein Einladungsdokument), und die Nachricht innerhalb der Kommentarlaenge.
  * Die Nachricht ist freiwillig.
  */
-export const invitePersonsValidations = staticSuite((data: InvitePersonsFormData, field?: string) => {
-  if (field) only(field);
+export const invitePersonsValidations = staticSuite((data: InvitePersonsFormData) => {
 
   test('invitees', 'required', () => {
     enforce(Array.isArray(data.invitees) && data.invitees.length > 0).isTruthy();

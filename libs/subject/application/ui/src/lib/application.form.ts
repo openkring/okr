@@ -10,7 +10,7 @@ import {
   CountrySelect, CountrySelectI18n, DateInput, DateInputI18n, EmailInput, EmailInputI18n, ErrorNote,
   PhoneInput, PhoneInputI18n, RadioGroup, RadioGroupI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n
 } from '@okr/shared-ui';
-import { AhvFormat, formatAhv, validateVestTree } from '@okr/shared-util-angular';
+import { AhvFormat, formatAhv, validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean } from '@okr/shared-util-core';
 import { ApplicationI18n, applicationValidations, needsSsn } from '@okr/application-util';
 
@@ -249,7 +249,7 @@ export class ApplicationForm {
   protected readonly applicationAs = computed(() => this.formData().applicationAs ?? '');
 
   // errors
-  private readonly validationResult = computed(() => applicationValidations(this.formData()));
+  private readonly validationResult = vestErrors(this.applicationForm);
   protected readonly firstNameErrors = computed(() => this.validationResult().getErrors('firstName'));
   protected readonly lastNameErrors = computed(() => this.validationResult().getErrors('lastName'));
   protected readonly genderErrors = computed(() => this.validationResult().getErrors('gender'));

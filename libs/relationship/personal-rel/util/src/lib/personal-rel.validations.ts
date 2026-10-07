@@ -1,12 +1,11 @@
 
-import { enforce, omitWhen, only, staticSuite, test } from 'vest';
+import { enforce, omitWhen, staticSuite, test } from 'vest';
 
 import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@okr/shared-constants';
 import { PersonalRelModel } from '@okr/shared-models';
 import { dateValidations, isAfterOrEqualDate, stringValidations } from '@okr/shared-util-core';
 
-export const personalRelValidations = staticSuite((model: PersonalRelModel, tenants: string, tags: string, field?: string) => {
-  if (field) only(field);
+export const personalRelValidations = staticSuite((model: PersonalRelModel, tenants: string, tags: string) => {
 
   stringValidations('okey', model.okey);
   //tagValidations('tags', model.tags);

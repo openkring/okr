@@ -7,7 +7,7 @@ import { DESCRIPTION_LENGTH } from '@okr/shared-constants';
 import { CrosswordEntry, CrosswordTopicModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { ErrorNote, NotesInput, NotesInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
-import { validateVestTree } from '@okr/shared-util-angular';
+import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, fill } from '@okr/shared-util-core';
 
 import {
@@ -155,7 +155,7 @@ export class CrosswordTopicForm {
   // every field's errors are available for the notes below (the same 1-arg call `validateVestTree`
   // itself makes; see crosswordTopicSuite's doc comment for the (model, tenants, tags, field?)
   // signature `baseValidations` needs).
-  private readonly validationResult = computed(() => crosswordTopicSuite(this.formData()));
+  private readonly validationResult = vestErrors(this.topicForm);
   protected titleErrors = computed(() => this.validationResult().getErrors('title'));
   protected descriptionErrors = computed(() => this.validationResult().getErrors('description'));
   /** Also carries the clue-too-long message — filed under 'entries', the resolvable model field. */

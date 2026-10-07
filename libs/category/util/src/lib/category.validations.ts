@@ -2,19 +2,17 @@ import { ABBREVIATION_LENGTH, DESCRIPTION_LENGTH, NAME_LENGTH, SHORT_NAME_LENGTH
 import { CategoryItemModel, CategoryListModel } from '@okr/shared-models';
 import { baseValidations, booleanValidations, numberValidations, stringValidations } from '@okr/shared-util-core';
 
-import { omitWhen, only, staticSuite } from 'vest';
+import { omitWhen, staticSuite } from 'vest';
 
-export const categoryListValidations = staticSuite((model: CategoryListModel, tenants: string, tags: string, field?: string) => {
-  if (field) only(field);
+export const categoryListValidations = staticSuite((model: CategoryListModel, tenants: string, tags: string) => {
 
-  baseValidations(model, tenants, tags, field);
+  baseValidations(model, tenants, tags);
   stringValidations('i18n', model.i18n, NAME_LENGTH);
   stringValidations('notes', model.notes, DESCRIPTION_LENGTH);
   booleanValidations('translateItems', model.translateItems);
 });
 
-export const categoryItemValidations = staticSuite((model: CategoryItemModel, field?: string) => {
-  if (field) only(field);
+export const categoryItemValidations = staticSuite((model: CategoryItemModel) => {
 
   // Every rule below `name` used to pass `model.name` — a copy/paste sweep. `price` was the worst:
   // numberValidations on a string failed for every item, so the category item form could never be

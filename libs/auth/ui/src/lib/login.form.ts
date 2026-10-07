@@ -4,7 +4,7 @@ import { IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
 import { AuthCredentials } from '@okr/shared-models';
 import { EmailInput, EmailInputI18n, ErrorNote, PasswordInput, PasswordInputI18n } from '@okr/shared-ui';
-import { validateVestTree } from '@okr/shared-util-angular';
+import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 
 import { authCredentialsValidations, AuthI18n } from '@okr/auth-util';
 
@@ -124,10 +124,10 @@ export class LoginForm {
   protected readonly loginEmail = computed(() => this.vm().loginEmail);
   protected readonly loginPassword = computed(() => this.vm().loginPassword);
 
-  // The suite takes the context (login / email / password) as its third argument, which
+  // The suite takes the context (login / email / password) as its second argument, which
   // validateVestTree does not pass — so the bridge calls it through a closure that adds it.
-  private readonly suiteWithContext = (model: AuthCredentials, field?: string) =>
-    authCredentialsValidations(model, field, this.context());
+  private readonly suiteWithContext = (model: AuthCredentials) =>
+    authCredentialsValidations(model, this.context());
   protected readonly loginForm = form(this.vm, (path) =>
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     validateVestTree(path, this.suiteWithContext as any));
@@ -144,10 +144,8 @@ export class LoginForm {
     this.vm.update(v => ({ ...v, loginPassword: value }));
   }
 
-  // errors — computed from vest validation result
-  private readonly validationResult = computed(() =>
-    authCredentialsValidations(this.vm(), undefined, this.context()),
-  );
+  // errors — read off the signal form (one suite run)
+  private readonly validationResult = vestErrors(this.loginForm);
   protected emailErrors = computed(() => this.validationResult().getErrors('loginEmail'));
   protected passwordErrors = computed(() => this.validationResult().getErrors('loginPassword'));
 }

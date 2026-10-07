@@ -1,5 +1,5 @@
 
-import { only, staticSuite } from 'vest';
+import { staticSuite } from 'vest';
 
 import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { ReservationModel } from '@okr/shared-models';
@@ -7,10 +7,9 @@ import { avatarValidations, baseValidations, dateValidations, moneyValidations, 
 
 import { LOCK_REASONS } from './reservation.util';
 
-export const reservationValidations = staticSuite((model: ReservationModel, tenants: string, tags: string, field?: string) => {
-  if (field) only(field);
+export const reservationValidations = staticSuite((model: ReservationModel, tenants: string, tags: string) => {
 
-  baseValidations(model, tenants, tags, field);
+  baseValidations(model, tenants, tags);
   avatarValidations('reserver', model.reserver);
   avatarValidations('resource', model.resource);
 

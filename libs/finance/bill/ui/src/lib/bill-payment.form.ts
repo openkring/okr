@@ -4,7 +4,7 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonNote, I
 
 import { AccountModel } from '@okr/shared-models';
 import { DateInput, DateInputI18n, ErrorNote, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n } from '@okr/shared-ui';
-import { validateVestTree } from '@okr/shared-util-angular';
+import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, convertDateFormatToString, DateFormat, fill } from '@okr/shared-util-core';
 
 import { AccountSelect, AccountSelectI18n } from '@okr/finance-account-ui';
@@ -115,7 +115,7 @@ export class BillPaymentForm {
   );
 
   // per-field Vest errors; validateVestTree calls the suite with the model alone, like this
-  private readonly validationResult = computed(() => billPaymentValidations(this.formData()));
+  private readonly validationResult = vestErrors(this.paymentForm);
   protected readonly dateErrors = computed(() => this.validationResult().getErrors('date'));
   protected readonly amountErrors = computed(() => this.validationResult().getErrors('amount'));
   protected readonly bankAccountKeyErrors = computed(() => this.validationResult().getErrors('bankAccountKey'));

@@ -1,4 +1,4 @@
-import { only, staticSuite } from 'vest';
+import { staticSuite } from 'vest';
 
 import { ChatSection } from '@okr/shared-models';
 import { stringValidations } from '@okr/shared-util-core';
@@ -6,10 +6,9 @@ import { DESCRIPTION_LENGTH, NAME_LENGTH, URL_LENGTH, WORD_LENGTH } from '@okr/s
 
 import { baseSectionValidations } from './base-section.validations';
 
-export const chatSectionValidations = staticSuite((model: ChatSection, field?: string) => {
-  if (field) only(field);
+export const chatSectionValidations = staticSuite((model: ChatSection) => {
 
-  baseSectionValidations(model, field);
+  baseSectionValidations(model);
 
   // Prefixed with 'chat.': plain 'name' and 'type' would collide with the base section's own
   // name/type, and both fields would then show each other's errors.

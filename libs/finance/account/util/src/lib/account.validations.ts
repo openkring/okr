@@ -1,4 +1,4 @@
-import { enforce, omitWhen, only, staticSuite, test } from 'vest';
+import { enforce, omitWhen, staticSuite, test } from 'vest';
 
 import { DESCRIPTION_LENGTH, LONG_NAME_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { AccountModel } from '@okr/shared-models';
@@ -9,13 +9,12 @@ import { baseValidations, stringValidations } from '@okr/shared-util-core';
  *                number of the account being edited (see usedAccountIds) — a number must stay
  *                unique, otherwise a booking cannot tell the two accounts apart.
  */
-export const accountValidations = staticSuite((model: AccountModel, tenants: string, tags: string, usedIds: string[] = [], field?: string) => {
-  if (field) only(field);
+export const accountValidations = staticSuite((model: AccountModel, tenants: string, tags: string, usedIds: string[] = []) => {
 
   // account names run long (bank accounts carry their IBAN), so the name cap is LONG_NAME_LENGTH — passed
   // to baseValidations as well, whose default NAME_LENGTH would otherwise still reject 51–100 characters.
   // The text input's counter (account.form.ts) uses the same constant.
-  baseValidations(model, tenants, tags, field, LONG_NAME_LENGTH);  // okey, tenants, isArchived
+  baseValidations(model, tenants, tags, LONG_NAME_LENGTH);  // okey, tenants, isArchived
   stringValidations('name', model.name, LONG_NAME_LENGTH, 1, true);
   stringValidations('id', model.id, SHORT_NAME_LENGTH);
   stringValidations('type', model.type, undefined, 0, true);

@@ -5,7 +5,7 @@ import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, 
 import { AvatarUsages, Languages, NameDisplays, PersonSortCriterias } from "@okr/shared-categories";
 import { AvatarUsage, Language, NameDisplay, UserModel } from "@okr/shared-models";
 import { CategoryOld, CategoryOldI18n, Checkbox, CheckboxI18n, ErrorNote } from "@okr/shared-ui";
-import { validateVestTree } from "@okr/shared-util-angular";
+import { validateVestTree, vestErrors } from "@okr/shared-util-angular";
 import { coerceBoolean } from "@okr/shared-util-core";
 
 import { USER_DISPLAY_FORM_SHAPE, UserDisplayFormModel, userDisplayFormValidations, UserI18n } from "@okr/user-util";
@@ -86,7 +86,7 @@ export class UserDisplayForm {
   protected readonly displayForm = form(this.formData, (path) => validateVestTree(path, userDisplayFormValidations as any));
 
   // per-field errors for the notes under each field
-  private readonly validationResult = computed(() => userDisplayFormValidations(this.formData()));
+  private readonly validationResult = vestErrors(this.displayForm);
 
   protected showArchivedDataErrors = computed(() => this.validationResult().getErrors('showArchivedData'));
   protected showDebugInfoErrors = computed(() => this.validationResult().getErrors('showDebugInfo'));

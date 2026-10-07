@@ -1,11 +1,10 @@
-import { only, staticSuite } from 'vest';
+import { staticSuite } from 'vest';
 
 import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { TransferModel } from '@okr/shared-models';
 import { booleanValidations, dateValidations, numberValidations, stringValidations } from '@okr/shared-util-core';
 
-export const transferValidations = staticSuite((model: TransferModel, tenants: string, tags: string, field?: string) => {
-  if (field) only(field);
+export const transferValidations = staticSuite((model: TransferModel, tenants: string, tags: string) => {
 
   stringValidations('okey', model.okey);
   booleanValidations('isArchived', model.isArchived);

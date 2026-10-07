@@ -1,4 +1,4 @@
-import { enforce, omitWhen, only, staticSuite, test } from 'vest';
+import { enforce, omitWhen, staticSuite, test } from 'vest';
 
 import { SchedulePollFormData } from './schedule-poll.model';
 
@@ -19,8 +19,7 @@ export const DEFAULT_POLL_TIME = '07:00';
  * Only the draft phase validates anything: once the poll is live the columns are frozen and the
  * member is merely toggling cells, which can never be invalid.
  */
-export const schedulePollValidations = staticSuite((model: SchedulePollFormData, field?: string) => {
-  if (field) only(field);
+export const schedulePollValidations = staticSuite((model: SchedulePollFormData) => {
 
   omitWhen(!model.isDraft, () => {
     // bare key: ErrorNote resolves it as 'validation.<key>' in the main bundle

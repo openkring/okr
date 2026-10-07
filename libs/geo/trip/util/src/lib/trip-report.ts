@@ -1,4 +1,4 @@
-import { staticSuite, only, test, enforce } from 'vest';
+import { staticSuite, test, enforce } from 'vest';
 
 import { DESCRIPTION_LENGTH } from '@okr/shared-constants';
 import { AvatarInfo } from '@okr/shared-models';
@@ -20,8 +20,7 @@ export function newTripReport(boat?: AvatarInfo, person?: AvatarInfo): TripRepor
   return { boat, person, message: '', lockBoat: false };
 }
 
-export const tripReportValidations = staticSuite((report: TripReport, field?: string) => {
-  if (field) only(field);
+export const tripReportValidations = staticSuite((report: TripReport) => {
 
   // the boat is optional: a bug report (or a damage found outside a trip) has no boat
   // mandatory: the kiosk is a shared account, so the report must say who is reporting

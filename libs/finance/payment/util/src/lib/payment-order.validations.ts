@@ -1,4 +1,4 @@
-import { only, staticSuite } from 'vest';
+import { staticSuite } from 'vest';
 
 import { PaymentOrderModel } from '@okr/shared-models';
 import { dateValidations, stringValidations } from '@okr/shared-util-core';
@@ -8,8 +8,7 @@ import { dateValidations, stringValidations } from '@okr/shared-util-core';
  * condition the old dialog put on its Save button); the date must be a real StoreDate. The
  * delivery method is picked from a list.
  */
-export const paymentOrderValidations = staticSuite((model: PaymentOrderModel, field?: string) => {
-  if (field) only(field);
+export const paymentOrderValidations = staticSuite((model: PaymentOrderModel) => {
 
   stringValidations('debitAccountKey', model.debitAccountKey, undefined, 0, true);
   stringValidations('executionDate', model.executionDate, undefined, 0, true);

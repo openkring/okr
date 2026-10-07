@@ -1,13 +1,12 @@
-import { enforce, omitWhen, only, staticSuite, test } from 'vest';
+import { enforce, omitWhen, staticSuite, test } from 'vest';
 
 import { LONG_NAME_LENGTH, MAX_DATES_PER_SERIES, NAME_LENGTH } from '@okr/shared-constants';
 import { CalEventModel } from '@okr/shared-models';
 import { baseValidations, calculateRecurringDates, dateValidations, isAfterOrEqualDate, numberValidations, stringValidations } from '@okr/shared-util-core';
 
-export const calEventValidations = staticSuite((model: CalEventModel, tenants: string, tags: string, field?: string) => {
-  if (field) only(field);
+export const calEventValidations = staticSuite((model: CalEventModel, tenants: string, tags: string) => {
 
-  baseValidations(model, tenants, tags, field);
+  baseValidations(model, tenants, tags);
   // The name is what a member recognises the appointment by, and what the duplicate check compares
   // events on. It was optional until now: baseValidations calls stringValidations WITHOUT the
   // isMandatory flag, and that same flag also gates the length cap — so `name` was checked for

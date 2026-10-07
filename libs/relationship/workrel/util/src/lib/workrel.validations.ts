@@ -1,12 +1,11 @@
 
-import { enforce, omitWhen, only, staticSuite, test } from 'vest';
+import { enforce, omitWhen, staticSuite, test } from 'vest';
 
 import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@okr/shared-constants';
 import { WorkrelModel } from '@okr/shared-models';
 import { dateValidations, isAfterOrEqualDate, numberValidations, stringValidations } from '@okr/shared-util-core';
 
-export const workrelValidations = staticSuite((model: WorkrelModel, tenants: string, tags: string, field?: string) => {
-  if (field) only(field);
+export const workrelValidations = staticSuite((model: WorkrelModel, tenants: string, tags: string) => {
 
   stringValidations('okey', model.okey);
  // tagValidations('tags', model.tags);

@@ -1,13 +1,11 @@
-import { only, staticSuite } from 'vest';
+import { staticSuite } from 'vest';
 
 import { DESCRIPTION_LENGTH, NAME_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { stringValidations } from '@okr/shared-util-core';
 
 import { UserModelFormModel } from './user-model-form.model';
 
-export const userModelFormValidations = staticSuite((model: UserModelFormModel, field?: string) => {
-  only(field);
-
+export const userModelFormValidations = staticSuite((model: UserModelFormModel) => {
   stringValidations('okey', model.okey);
   stringValidations('personKey', model.personKey);
   stringValidations('firstName', model.firstName, NAME_LENGTH);

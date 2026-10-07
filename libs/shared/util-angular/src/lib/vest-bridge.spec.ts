@@ -1,10 +1,10 @@
 import { provideZonelessChangeDetection, runInInjectionContext, signal, type ApplicationRef } from '@angular/core';
 import { createApplication } from '@angular/platform-browser';
 import { form } from '@angular/forms/signals';
-import { enforce, only, staticSuite, test } from 'vest';
+import { enforce, staticSuite, test } from 'vest';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { validateVestTree } from './vest-bridge';
+import { validateVestTree, vestErrors } from './vest-bridge';
 
 /**
  * `resolveFieldTree` in vest-bridge.ts used to SILENTLY DROP any Vest error key it could not resolve onto
@@ -27,8 +27,7 @@ interface Model {
 }
 
 /** Mirrors the shape of workflow-rule.validations.ts: one root-key error, one bracketed-array-key error. */
-const suite = staticSuite((model: Model, field?: string) => {
-  if (field) only(field);
+const suite = staticSuite((model: Model) => {
   test('name', 'required', () => { enforce(model.name).isNotBlank(); });
   model.steps.forEach((s, i) => {
     test(`steps[${i}].messageKey`, 'required', () => { enforce(s.messageKey).isNotBlank(); });
@@ -88,8 +87,7 @@ describe('validateVestTree — array path through a real Angular Signal Forms fo
     appRef = await makeAppRef();
     // Firestore docs written before a field existed come back without the property at all —
     // a mandatory rule on it fails under a key the FieldTree cannot resolve.
-    const legacySuite = staticSuite((model: Partial<Model> & { ghost?: string }, field?: string) => {
-      if (field) only(field);
+    const legacySuite = staticSuite((model: Partial<Model> & { ghost?: string }) => {
       test('ghost', 'required', () => { enforce(model.ghost ?? '').isNotBlank(); });
     });
     const model = signal<Partial<Model> & { ghost?: string }>({ name: 'x' });
@@ -101,5 +99,56 @@ describe('validateVestTree — array path through a real Angular Signal Forms fo
     appRef.tick();
 
     expect(tree().valid()).toBe(false);
+  });
+});
+
+describe('vestErrors — the error notes read off the signal form, one suite run', () => {
+  let appRef: ApplicationRef | undefined;
+
+  afterEach(() => {
+    appRef?.destroy();
+    appRef = undefined;
+  });
+
+  it('answers getErrors(key) and getErrors() like the Vest result', async () => {
+    appRef = await makeAppRef();
+    const model = signal<Model>({ name: '', steps: [{ messageKey: 'ok' }, { messageKey: '' }] });
+    const tree = runInInjectionContext(appRef.injector, () => form(model, (path) => validateVestTree(path, suite)));
+    const errors = vestErrors(tree);
+    appRef.tick();
+
+    const direct = suite(model());
+    expect(errors().getErrors('name')).toEqual(direct.getErrors('name'));
+    expect(errors().getErrors('steps[1].messageKey')).toEqual(direct.getErrors('steps[1].messageKey'));
+    expect(errors().getErrors('steps[0].messageKey')).toEqual([]);
+    expect(errors().getErrors()).toEqual(direct.getErrors());
+  });
+
+  it('follows the model: errors clear once the value is fixed', async () => {
+    appRef = await makeAppRef();
+    const model = signal<Model>({ name: '', steps: [] });
+    const tree = runInInjectionContext(appRef.injector, () => form(model, (path) => validateVestTree(path, suite)));
+    const errors = vestErrors(tree);
+    appRef.tick();
+    expect(errors().getErrors('name').length).toBeGreaterThan(0);
+
+    model.set({ name: 'Kategoriewechsel', steps: [] });
+    appRef.tick();
+    expect(errors().getErrors('name')).toEqual([]);
+    expect(errors().getErrors()).toEqual({});
+  });
+
+  it('keeps the key of an error that landed on the root (no FieldTree node)', async () => {
+    appRef = await makeAppRef();
+    const ghostSuite = staticSuite((m: Partial<Model> & { ghost?: string }) => {
+      test('ghost', 'required', () => { enforce(m.ghost ?? '').isNotBlank(); });
+    });
+    const model = signal<Partial<Model> & { ghost?: string }>({ name: 'x' });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const tree = runInInjectionContext(appRef.injector, () => form(model, (path) => validateVestTree(path, ghostSuite as any)));
+    const errors = vestErrors(tree);
+    appRef.tick();
+
+    expect(errors().getErrors('ghost')).toEqual(['required']);
   });
 });

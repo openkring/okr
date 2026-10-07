@@ -1,4 +1,4 @@
-import { only, staticSuite } from 'vest';
+import { staticSuite } from 'vest';
 
 import { DESCRIPTION_LENGTH } from '@okr/shared-constants';
 import { WhiteboardItem } from '@okr/shared-models';
@@ -9,8 +9,7 @@ import { stringValidations } from '@okr/shared-util-core';
  * Position, size, kind and owner are set by the canvas, not typed, so they carry no rules here.
  * The colour comes from the picker ('' = theme default), so it is checked for type only, never capped.
  */
-export const whiteboardItemValidations = staticSuite((item: WhiteboardItem, field?: string) => {
-  if (field) only(field);
+export const whiteboardItemValidations = staticSuite((item: WhiteboardItem) => {
 
   stringValidations('text', item.text, DESCRIPTION_LENGTH);
   stringValidations('color', item.color);

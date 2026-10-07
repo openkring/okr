@@ -1,4 +1,4 @@
-import { enforce, only, staticSuite, test } from 'vest';
+import { enforce, staticSuite, test } from 'vest';
 
 import { BillLine } from '@okr/shared-models';
 
@@ -11,8 +11,7 @@ const VPFX = '@finance/bill/feature.line.validation.';
  * and an amount above 0, and a title within the server's cap. Errors are filed per row as
  * `lines[i].accountKey` / `lines[i].amount` / `lines[i].title`, and `lines` for the list itself.
  */
-export const billLinesValidations = staticSuite((lines: BillLine[], field?: string) => {
-  if (field) only(field);
+export const billLinesValidations = staticSuite((lines: BillLine[]) => {
 
   test('lines', VPFX + 'linesRequired', () => {
     enforce((lines ?? []).length).greaterThan(0);

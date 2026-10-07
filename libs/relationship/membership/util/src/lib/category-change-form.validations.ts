@@ -1,13 +1,12 @@
 
-import { only, staticSuite } from 'vest';
+import { staticSuite } from 'vest';
 
 import { SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { dateValidations, stringValidations } from '@okr/shared-util-core';
 
 import { CategoryChangeFormModel } from './category-change-form.model';
 
-export const categoryChangeFormValidations = staticSuite((model: CategoryChangeFormModel, field?: string) => {
-  if (field) only(field);
+export const categoryChangeFormValidations = staticSuite((model: CategoryChangeFormModel) => {
 
   stringValidations('okey', model.okey);
   stringValidations('memberName', model.memberName, SHORT_NAME_LENGTH);

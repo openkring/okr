@@ -5,7 +5,7 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular
 import { FolderModel, RoleName, UserModel } from '@okr/shared-models';
 import { Checkbox, CheckboxI18n, Chips, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
-import { validateVestTree } from '@okr/shared-util-angular';
+import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { DEFAULT_NOTES, DEFAULT_TAGS, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 
 import { FolderI18n, folderValidations, hasPublicFolderTag, isPublicFolderKey, setFolderPublicTag } from '@okr/content-folder-util';
@@ -91,14 +91,18 @@ export class FolderForm {
   public readonly valid = output<boolean>();
 
   // signal form — wraps formData with Vest validation
+  // The suite needs '', this.allTags(), which validateVestTree does not pass — so the bridge
+  // calls it through a closure that adds them.
+  private readonly suiteWithContext = (model: FolderModel) =>
+    folderValidations(model, '', this.allTags());
   protected readonly folderForm = form(this.formData, (path) =>
-    validateVestTree(path, folderValidations as any),
+    validateVestTree(path, this.suiteWithContext as any),
   );
 
 
   // per-field Vest errors for the notes under each field. validateVestTree calls the suite
   // with the model alone, so this mirrors exactly what drives the form's validity.
-  private readonly validationResult = computed(() => folderValidations(this.formData() as any, '', this.allTags()));
+  private readonly validationResult = vestErrors(this.folderForm);
   protected descriptionErrors = computed(() => this.validationResult().getErrors('description'));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
   protected titleErrors = computed(() => this.validationResult().getErrors('title'));

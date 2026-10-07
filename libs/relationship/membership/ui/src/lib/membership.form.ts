@@ -8,7 +8,7 @@ import { ABBREVIATION_LENGTH, BEXIO_ID_LENGTH, DEFAULT_DATE, DEFAULT_GENDER, DEF
 import { CategoryListModel, MembershipModel, PrivacySettings, RoleName, UserModel, REBATE_REASON_VALUES } from '@okr/shared-models';
 import { TranslatePipe } from '@okr/shared-i18n';
 import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n , ErrorNote} from '@okr/shared-ui';
-import { MODEL_SELECTOR, validateVestTree } from '@okr/shared-util-angular';
+import { MODEL_SELECTOR, validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { areTagsVisible, coerceBoolean, getFullName, getItemLabel, hasRole } from '@okr/shared-util-core';
 
 import { MembershipI18n, membershipValidations } from '@okr/relationship-membership-util';
@@ -242,14 +242,14 @@ export class MembershipForm {
 
   // The suite needs the tenant and the tags, which validateVestTree does not pass — so the bridge
   // calls it through a closure that adds them (same context as validationResult below).
-  private readonly suiteWithContext = (model: MembershipModel, field?: string) =>
-    membershipValidations(model, this.tenantId, this.allTags(), field);
+  private readonly suiteWithContext = (model: MembershipModel) =>
+    membershipValidations(model, this.tenantId, this.allTags());
   protected readonly membershipForm = form(this.formData, (path) =>
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     validateVestTree(path, this.suiteWithContext as any));
 
   // validation and errors
-  private readonly validationResult = computed(() => membershipValidations(this.formData(), this.tenantId, this.allTags()));
+  private readonly validationResult = vestErrors(this.membershipForm);
   protected dateOfEntryErrors = computed(() => this.validationResult().getErrors('dateOfEntry'));
   protected dateOfExitErrors = computed(() => this.validationResult().getErrors('dateOfExit'));
   protected memberAbbreviationErrors = computed(() => this.validationResult().getErrors('memberAbbreviation'));

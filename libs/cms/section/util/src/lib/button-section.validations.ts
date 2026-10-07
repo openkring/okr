@@ -1,4 +1,4 @@
-import { only, staticSuite } from 'vest';
+import { staticSuite } from 'vest';
 
 import { ButtonAction, ButtonSection, ColorIonic } from '@okr/shared-models';
 import { categoryValidations, numberValidations, stringValidations } from '@okr/shared-util-core';
@@ -6,10 +6,9 @@ import { COMMENT_LENGTH, LONG_NAME_LENGTH, NAME_LENGTH, URL_LENGTH, WORD_LENGTH 
 
 import { baseSectionValidations } from './base-section.validations';
 
-export const buttonSectionValidations = staticSuite((model: ButtonSection, field?: string) => {
-    if (field) only(field);
+export const buttonSectionValidations = staticSuite((model: ButtonSection) => {
 
-    baseSectionValidations(model, field);
+    baseSectionValidations(model);
 
     // guard nested config objects with ?. — older stored sections may lack icon/style/action
     stringValidations('icon.name', model.properties?.icon?.name);

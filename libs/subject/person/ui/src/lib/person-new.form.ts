@@ -7,7 +7,7 @@ import { CategoryListModel, City, RoleName, UserModel } from '@okr/shared-models
 import { CategorySelect, Checkbox, CheckboxI18n, Chips, CountrySelect, CountrySelectI18n, DateInput, DateInputI18n, EmailInput, EmailInputI18n, ErrorNote, NotesInput, NotesInputI18n, PhoneInput, PhoneInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, getTodayStr, hasRole } from '@okr/shared-util-core';
 import { CITY_LENGTH, DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, DEFAULT_LOCALE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PHONE, DEFAULT_TAGS, DEFAULT_URL, DESCRIPTION_LENGTH, EMAIL_LENGTH, NUMBER_LENGTH, PHONE_LENGTH, SHORT_NAME_LENGTH, ZIP_LENGTH } from '@okr/shared-constants';
-import { AhvFormat, formatAhv, validateVestTree } from '@okr/shared-util-angular';
+import { AhvFormat, formatAhv, validateVestTree, vestErrors } from '@okr/shared-util-angular';
 
 import { AvatarPipe } from '@okr/avatar-ui';
 import { CitySearch } from '@okr/subject-swisscities-ui';
@@ -343,7 +343,7 @@ export class PersonNewForm {
   protected readonly personNewForm = form(this.formData, (path) =>
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     validateVestTree(path, personNewFormValidations as any));
-  private readonly validationResult = computed(() => personNewFormValidations(this.formData()));
+  private readonly validationResult = vestErrors(this.personNewForm);
   protected dateOfBirthErrors = computed(() => this.validationResult().getErrors('dateOfBirth'));
   protected dateOfDeathErrors = computed(() => this.validationResult().getErrors('dateOfDeath'));
   protected dateOfEntryErrors = computed(() => this.validationResult().getErrors('dateOfEntry'));

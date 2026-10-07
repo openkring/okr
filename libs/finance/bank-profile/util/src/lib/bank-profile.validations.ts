@@ -1,12 +1,11 @@
-import { only, omitWhen, staticSuite, test, enforce } from 'vest';
+import { omitWhen, staticSuite, test, enforce } from 'vest';
 
 import { BankProfileModel } from '@okr/shared-models';
 import { baseValidations, stringValidations } from '@okr/shared-util-core';
 
 export const bankProfileValidations = staticSuite(
-  (model: BankProfileModel, tenants: string, tags: string, field?: string) => {
-    if (field) only(field);
-    baseValidations(model, tenants, tags, field);
+  (model: BankProfileModel, tenants: string, tags: string) => {
+    baseValidations(model, tenants, tags);
     stringValidations('iban', model.iban, 34, 15, true);
     stringValidations('bankName', model.bankName, 50, 1, true);   // 50 = the form's maxLength
     stringValidations('accountKey', model.accountKey, undefined, 1, true);

@@ -1,4 +1,4 @@
-import { enforce, only, staticSuite, test } from 'vest';
+import { enforce, staticSuite, test } from 'vest';
 
 import { MemberFeeModel } from '@okr/shared-models';
 import { baseValidations, numberValidations } from '@okr/shared-util-core';
@@ -12,10 +12,9 @@ export function positionAmountField(index: number): string {
   return `positions[${index}].amount`;
 }
 
-export const memberFeeValidations = staticSuite((model: MemberFeeModel, tenants: string, tags: string, field?: string) => {
-  if (field) only(field);
+export const memberFeeValidations = staticSuite((model: MemberFeeModel, tenants: string, tags: string) => {
 
-  baseValidations(model, tenants, tags, field);
+  baseValidations(model, tenants, tags);
 
   // One rule set per position. `key`, `usage`, `type` and `label` come from the fee schedule —
   // generated/selector values that must never carry a length cap (building-forms, rule 1).

@@ -4,7 +4,7 @@ import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, 
 
 import { DeliveryChannel, UserModel } from "@okr/shared-models";
 import { DeliveryChannelsControl, DeliveryChannelsI18n, ErrorNote } from "@okr/shared-ui";
-import { validateVestTree } from "@okr/shared-util-angular";
+import { validateVestTree, vestErrors } from "@okr/shared-util-angular";
 import { coerceBoolean, toEditableChannels } from "@okr/shared-util-core";
 
 import { USER_NOTIFICATION_FORM_SHAPE, UserI18n, UserNotificationFormModel, userNotificationFormValidations } from "@okr/user-util";
@@ -72,7 +72,7 @@ export class UserNotificationForm {
   protected readonly notificationForm = form(this.formData, (path) => validateVestTree(path, userNotificationFormValidations as any));
 
   // per-field errors for the notes under each field
-  private readonly validationResult = computed(() => userNotificationFormValidations(this.formData()));
+  private readonly validationResult = vestErrors(this.notificationForm);
   protected newsDeliveryErrors = computed(() => this.validationResult().getErrors('newsDelivery'));
   protected invoiceDeliveryErrors = computed(() => this.validationResult().getErrors('invoiceDelivery'));
 

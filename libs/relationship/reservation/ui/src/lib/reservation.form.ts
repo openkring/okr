@@ -4,7 +4,7 @@ import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTi
 import { DEFAULT_CURRENCY, DEFAULT_DATE, DEFAULT_KEY, DEFAULT_PERIODICITY, DEFAULT_RES_REASON, DEFAULT_RES_STATE, DEFAULT_TIME, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { CategoryListModel, MoneyModel, ReservationModel, RoleName, UserModel } from '@okr/shared-models';
 import { CategorySelect, Checkbox, CheckboxI18n, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n, TimeInput, TimeInputI18n , ErrorNote} from '@okr/shared-ui';
-import { validateVestTree } from '@okr/shared-util-angular';
+import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, getAvatarName, hasRole } from '@okr/shared-util-core';
 
 import { reservationValidations, ReservationI18n } from '@okr/relationship-reservation-util';
@@ -230,14 +230,14 @@ export class ReservationForm {
 
   // The suite needs the tenant and tags, which validateVestTree does not pass — so the bridge
   // calls it through a closure that adds them.
-  private readonly suiteWithContext = (model: ReservationModel, field?: string) =>
-    reservationValidations(model, this.tenantId(), this.allTags(), field);
+  private readonly suiteWithContext = (model: ReservationModel) =>
+    reservationValidations(model, this.tenantId(), this.allTags());
   protected readonly reservationForm = form(this.formData, (path) =>
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     validateVestTree(path, this.suiteWithContext as any));
 
   // per-field errors for the notes under each field
-  private readonly validationResult = computed(() => reservationValidations(this.formData(), this.tenantId(), this.allTags()));
+  private readonly validationResult = vestErrors(this.reservationForm);
   protected endDateErrors = computed(() => this.validationResult().getErrors('endDate'));
   protected reasonErrors = computed(() => this.validationResult().getErrors('reason'));
   protected startDateErrors = computed(() => this.validationResult().getErrors('startDate'));

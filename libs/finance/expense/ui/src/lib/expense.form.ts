@@ -7,7 +7,7 @@ import {
 
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { ErrorNote, TextInput, TextInputI18n } from '@okr/shared-ui';
-import { formatIban, IbanFormat, validateVestTree } from '@okr/shared-util-angular';
+import { formatIban, IbanFormat, validateVestTree, vestErrors } from '@okr/shared-util-angular';
 
 import { ALLOWED_CURRENCIES, ExpenseFormValue, expenseValidations } from '@okr/finance-expense-util';
 
@@ -168,7 +168,7 @@ export class ExpenseForm {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     validateVestTree(path, expenseValidations as any));
 
-  private readonly result = computed(() => expenseValidations(this.formData()));
+  private readonly result = vestErrors(this.expenseForm);
   protected readonly abstractErrors = computed(() => this.result().getErrors('abstract'));
   protected readonly amountErrors   = computed(() => this.result().getErrors('amountCHF'));
   protected readonly currencyErrors = computed(() => this.result().getErrors('currency'));

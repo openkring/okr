@@ -1,11 +1,10 @@
-import { only, staticSuite } from 'vest';
+import { staticSuite } from 'vest';
 
 import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { GroupModel } from '@okr/shared-models';
 import { booleanValidations, stringValidations } from '@okr/shared-util-core';
 
-export const groupValidations = staticSuite((model: GroupModel, tenants: string, tags: string, field?: string) => {
-  if (field) only(field);
+export const groupValidations = staticSuite((model: GroupModel, tenants: string, tags: string) => {
 
   stringValidations('okey', model.okey);
   stringValidations('name', model.name, SHORT_NAME_LENGTH, 3, true);

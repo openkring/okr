@@ -5,7 +5,7 @@ import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, 
 import { CoiffeurRow, JassConfig, JassI18n, JassVariant, jassConfigValidations } from '@okr/games-jasstafel-util';
 import { SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { ErrorNote, NumberInput, NumberInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
-import { validateVestTree } from '@okr/shared-util-angular';
+import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 
 /**
  * The settings of the start screen, only those of the chosen variant: `section='main'` shows the
@@ -110,7 +110,7 @@ export class JassSettingsForm {
   protected readonly editableRows = computed<CoiffeurRow[]>(() =>
     [...this.formData().coiffeurRows, { id: '', label: '', multiplier: this.formData().coiffeurRows.length + 1 }]);
 
-  private readonly result = computed(() => jassConfigValidations(this.formData()));
+  private readonly result = vestErrors(this.settingsForm);
   protected readonly schieberTargetErrors = computed(() => this.result().getErrors('schieberTarget'));
   protected readonly bueterPairTargetErrors = computed(() => this.result().getErrors('bueterPairTarget'));
   protected readonly bueterBidErrors = computed(() => this.result().getErrors('bueterBid'));

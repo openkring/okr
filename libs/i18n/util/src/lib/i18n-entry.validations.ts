@@ -1,4 +1,4 @@
-import { only, staticSuite } from 'vest';
+import { staticSuite } from 'vest';
 
 import { DESCRIPTION_LENGTH, LONG_NAME_LENGTH } from '@okr/shared-constants';
 import { stringValidations } from '@okr/shared-util-core';
@@ -44,8 +44,7 @@ export function normalizeI18nEntry<T extends Partial<I18nEntryFormModel>>(entry:
  * module + key are typed by the admin (e.g. `chat/feature` · `fields.reconnecting`); the five texts are prose.
  * Nothing is mandatory — the previous hand-built modal enforced no rules either.
  */
-export const i18nEntryValidations = staticSuite((model: I18nEntryFormModel, field?: string) => {
-  if (field) only(field);
+export const i18nEntryValidations = staticSuite((model: I18nEntryFormModel) => {
 
   stringValidations('module', model.module, LONG_NAME_LENGTH);
   stringValidations('key', model.key, LONG_NAME_LENGTH);

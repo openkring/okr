@@ -1,4 +1,4 @@
-import { enforce, omitWhen, only, staticSuite, test } from 'vest';
+import { enforce, omitWhen, staticSuite, test } from 'vest';
 
 import { SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { InvoiceModel } from '@okr/shared-models';
@@ -7,10 +7,9 @@ import { baseValidations, dateValidations, isAfterDate, stringValidations } from
 /** writeInvoice keeps at most this many characters of an invoice's notes. */
 export const INVOICE_NOTES_LENGTH = 2000;
 
-export const invoiceValidations = staticSuite((model: InvoiceModel, tenants: string, tags: string, field?: string) => {
-  if (field) only(field);
+export const invoiceValidations = staticSuite((model: InvoiceModel, tenants: string, tags: string) => {
 
-  baseValidations(model, tenants, tags, field);
+  baseValidations(model, tenants, tags);
   stringValidations('title', model.title, SHORT_NAME_LENGTH);
   stringValidations('invoiceId', model.invoiceId, SHORT_NAME_LENGTH);
   // the server's own cap (writeInvoice cuts longer notes), not DESCRIPTION_LENGTH: a longer note would

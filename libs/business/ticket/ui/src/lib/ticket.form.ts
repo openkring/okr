@@ -5,7 +5,7 @@ import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCol, IonGri
 import { TicketModel, UserModel } from '@okr/shared-models';
 import { CategorySelect, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { coerceBoolean } from '@okr/shared-util-core';
-import { validateVestTree } from '@okr/shared-util-angular';
+import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 
 import { SHORT_NAME_LENGTH } from '@okr/shared-constants';
 
@@ -143,14 +143,18 @@ export class TicketForm {
   public readonly dirty = output<boolean>();
   public readonly valid = output<boolean>();
 
+  // The suite needs this.tenantId(), '', which validateVestTree does not pass — so the bridge
+  // calls it through a closure that adds them.
+  private readonly suiteWithContext = (model: TicketModel) =>
+    ticketValidations(model, this.tenantId(), '');
   protected readonly ticketForm = form(this.formData, (path) =>
-    validateVestTree(path, ticketValidations as any),
+    validateVestTree(path, this.suiteWithContext as any),
   );
 
 
   // per-field Vest errors for the notes under each field. validateVestTree calls the suite
   // with the model alone, so this mirrors exactly what drives the form's validity.
-  private readonly validationResult = computed(() => ticketValidations(this.formData() as any, this.tenantId(), ''));
+  private readonly validationResult = vestErrors(this.ticketForm);
   protected classificationReasonErrors = computed(() => this.validationResult().getErrors('classificationReason'));
   protected fixVersionErrors = computed(() => this.validationResult().getErrors('fixVersion'));
   constructor() {

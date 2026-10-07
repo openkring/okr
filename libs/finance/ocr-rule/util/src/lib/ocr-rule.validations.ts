@@ -1,4 +1,4 @@
-import { enforce, only, staticSuite, test } from 'vest';
+import { enforce, staticSuite, test } from 'vest';
 
 import { DESCRIPTION_LENGTH, LONG_NAME_LENGTH } from '@okr/shared-constants';
 import { OcrRuleModel } from '@okr/shared-models';
@@ -31,8 +31,7 @@ export function fromOcrRuleFormModel(formModel: OcrRuleFormModel): OcrRuleModel 
  * The OCR rule dialog never blocked saving on content (party, account etc. are all optional), so the
  * suite only guards the typed text lengths and that the rank is a number.
  */
-export const ocrRuleValidations = staticSuite((model: OcrRuleFormModel, field?: string) => {
-  if (field) only(field);
+export const ocrRuleValidations = staticSuite((model: OcrRuleFormModel) => {
 
   stringValidations('party', model.party ?? '', LONG_NAME_LENGTH);
   stringValidations('aliasText', model.aliasText ?? '', DESCRIPTION_LENGTH);

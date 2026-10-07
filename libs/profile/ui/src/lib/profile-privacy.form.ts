@@ -5,7 +5,7 @@ import { IonAccordion, IonCol, IonGrid, IonItem, IonLabel, IonRow } from "@ionic
 import { PhotoUsages, PrivacyUsages } from "@okr/shared-categories";
 import { PrivacyUsage, UserModel } from "@okr/shared-models";
 import { CategoryOld, CategoryOldI18n, Checkbox, CheckboxI18n, ErrorNote } from "@okr/shared-ui";
-import { validateVestTree } from "@okr/shared-util-angular";
+import { validateVestTree, vestErrors } from "@okr/shared-util-angular";
 import { coerceBoolean } from "@okr/shared-util-core";
 
 import { PersonFormModel, personValidations } from "@okr/subject-person-util";
@@ -122,8 +122,8 @@ export class ProfilePrivacyAccordion {
   // usage* validity comes from the person, so the signal form wraps personFormData. The suite
   // needs tenantId and tags, which validateVestTree does not pass — so the bridge calls it through
   // a closure that adds them.
-  private readonly suiteWithContext = (model: PersonFormModel, field?: string) =>
-    personValidations(model, this.tenantId(), this.tags(), field);
+  private readonly suiteWithContext = (model: PersonFormModel) =>
+    personValidations(model, this.tenantId(), this.tags());
   protected readonly privacyForm = form(this.personFormData, (path) =>
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     validateVestTree(path, this.suiteWithContext as any));
@@ -134,7 +134,7 @@ export class ProfilePrivacyAccordion {
     !this.privacyForm().errorSummary().some((e) => EDITED_FIELDS.includes(e.kind.replace(/^vest\./, ''))));
 
   // per-field errors for the notes under each field
-  private readonly validationResult = computed(() => personValidations(this.personFormData(), this.tenantId(), this.tags()));
+  private readonly validationResult = vestErrors(this.privacyForm);
   protected readonly usageImagesErrors = computed(() => this.validationResult().getErrors('usageImages'));
   protected readonly usageDateOfBirthErrors = computed(() => this.validationResult().getErrors('usageDateOfBirth'));
   protected readonly usagePostalAddressErrors = computed(() => this.validationResult().getErrors('usagePostalAddress'));

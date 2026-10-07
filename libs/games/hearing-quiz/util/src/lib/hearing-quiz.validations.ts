@@ -1,4 +1,4 @@
-import { enforce, omitWhen, only, staticSuite, test } from 'vest';
+import { enforce, omitWhen, staticSuite, test } from 'vest';
 
 import { DESCRIPTION_LENGTH, LONG_NAME_LENGTH, NAME_LENGTH } from '@okr/shared-constants';
 import { HearingQuizNodeModel } from '@okr/shared-models';
@@ -18,10 +18,9 @@ export const HQ_HINT_LENGTH = DESCRIPTION_LENGTH;
  * Folder: a title. Question: title, prompt, a clip, 2–6 distinct non-blank answers and a
  * correct answer that points at one of them. `type` and `parentKey` are selector values: no caps.
  */
-export const hearingQuizNodeValidations = staticSuite((model: HearingQuizNodeModel, tenants: string, tags: string, field?: string) => {
-  if (field) only(field);
+export const hearingQuizNodeValidations = staticSuite((model: HearingQuizNodeModel, tenants: string, tags: string) => {
 
-  baseValidations(model, tenants, tags, field);
+  baseValidations(model, tenants, tags);
   stringValidations('title', model.title, HQ_TITLE_LENGTH, 0, true);
   stringValidations('type', model.type, undefined, 0, true);
 

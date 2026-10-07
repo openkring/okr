@@ -1,12 +1,11 @@
 
-import { only, staticSuite } from 'vest';
+import { staticSuite } from 'vest';
 
 import { DESCRIPTION_LENGTH, NAME_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { ReservationApplyModel } from '@okr/shared-models';
 import { avatarValidations, booleanValidations, dateValidations, stringValidations } from '@okr/shared-util-core';
 
-export const reservationApplyValidations = staticSuite((model: ReservationApplyModel, field?: string) => {
-  if (field) only(field);
+export const reservationApplyValidations = staticSuite((model: ReservationApplyModel) => {
 
   // NAME_LENGTH (not SHORT_NAME_LENGTH): must stay in sync with the [maxLength] of the name field
   // in reservation-apply.form.ts, otherwise the input accepts names the suite silently rejects.

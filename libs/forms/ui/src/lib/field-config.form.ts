@@ -9,7 +9,7 @@ import {
   StringSelect, StringSelectI18n, TextInput, TextInputI18n,
 } from '@okr/shared-ui';
 import { coerceBoolean } from '@okr/shared-util-core';
-import { validateVestTree } from '@okr/shared-util-angular';
+import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 
 import { fieldConfigValidations, fieldLabelLength, FormI18n, isDisplayField } from '@okr/forms-util';
 
@@ -132,7 +132,7 @@ export class FieldConfigForm {
   );
 
   // per-field Vest errors for the notes under each field
-  private readonly validationResult = computed(() => fieldConfigValidations(this.formData()));
+  private readonly validationResult = vestErrors(this.fieldConfigForm);
   protected labelErrors = computed(() => this.validationResult().getErrors('label'));
   protected keyErrors = computed(() => this.validationResult().getErrors('key'));
   protected categoryNameErrors = computed(() => this.validationResult().getErrors('categoryName'));

@@ -1,12 +1,11 @@
-import { only, staticSuite } from 'vest';
+import { staticSuite } from 'vest';
 
 import { ResponsibilityModel } from '@okr/shared-models';
 import { avatarValidations, baseValidations, dateValidations, stringValidations } from '@okr/shared-util-core';
 
-export const responsibilityValidations = staticSuite((model: ResponsibilityModel, tenants: string, field?: string) => {
-  if (field) only(field);
+export const responsibilityValidations = staticSuite((model: ResponsibilityModel, tenants: string) => {
 
-  baseValidations(model, tenants, '', field);
+  baseValidations(model, tenants, '');
 
   avatarValidations('responsibleAvatar', model.responsibleAvatar);
   dateValidations('validFrom', model.validFrom);

@@ -4,7 +4,7 @@ import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol
 import { DEFAULT_CURRENCY, DEFAULT_LABEL, DEFAULT_LOCALE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PRICE, DEFAULT_TAGS, DEFAULT_TRANSFER_STATE, DEFAULT_TRANSFER_TYPE, DESCRIPTION_LENGTH, NAME_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { AvatarInfo, CategoryListModel, RoleName, TransferModel, UserModel } from '@okr/shared-models';
 import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n , ErrorNote} from '@okr/shared-ui';
-import { validateVestTree } from '@okr/shared-util-angular';
+import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, getTodayStr, hasRole } from '@okr/shared-util-core';
 
 import { Avatars } from '@okr/avatar-ui';
@@ -162,14 +162,14 @@ export class TransferForm {
 
   // The suite needs the tenant and tags, which validateVestTree does not pass — so the bridge
   // calls it through a closure that adds them.
-  private readonly suiteWithContext = (model: TransferModel, field?: string) =>
-    transferValidations(model, this.tenantId(), this.allTags(), field);
+  private readonly suiteWithContext = (model: TransferModel) =>
+    transferValidations(model, this.tenantId(), this.allTags());
   protected readonly transferForm = form(this.formData, (path) =>
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     validateVestTree(path, this.suiteWithContext as any));
 
   // per-field errors for the notes under each field
-  private readonly validationResult = computed(() => transferValidations(this.formData(), this.tenantId(), this.allTags()));
+  private readonly validationResult = vestErrors(this.transferForm);
   protected dateOfTransferErrors = computed(() => this.validationResult().getErrors('dateOfTransfer'));
   protected periodicityErrors = computed(() => this.validationResult().getErrors('periodicity'));
   protected typeErrors = computed(() => this.validationResult().getErrors('type'));

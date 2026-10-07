@@ -8,7 +8,7 @@ import {
 import { AccountModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { ErrorNote, NumberInput, NumberInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
-import { validateVestTree } from '@okr/shared-util-angular';
+import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, isRebatePosition } from '@okr/shared-util-core';
 
 import { AccountSelect, AccountSelectI18n } from '@okr/finance-account-ui';
@@ -218,7 +218,7 @@ export class InvoicePositionsForm {
   protected readonly positionsForm = form(this.positions, (path) =>
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     validateVestTree(path, invoicePositionsValidations as any));
-  private readonly validationResult = computed(() => invoicePositionsValidations(this.positions()));
+  private readonly validationResult = vestErrors(this.positionsForm);
   protected readonly listErrors = computed(() => this.validationResult().getErrors('positions'));
   protected readonly rowErrors = computed(() => {
     const result = this.validationResult();

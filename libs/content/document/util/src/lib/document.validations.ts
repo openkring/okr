@@ -1,13 +1,12 @@
-import { enforce, omitWhen, only, staticSuite, test } from 'vest';
+import { enforce, omitWhen, staticSuite, test } from 'vest';
 
 import { LONG_NAME_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@okr/shared-constants';
 import { DocumentModel } from '@okr/shared-models';
 import { baseValidations, compareDate, dateValidations, isFutureDate, numberValidations, stringValidations } from '@okr/shared-util-core';
 
-export const documentValidations = staticSuite((model: DocumentModel, tenants: string, tags: string, field?: string) => {
-  if (field) only(field);
+export const documentValidations = staticSuite((model: DocumentModel, tenants: string, tags: string) => {
 
-  baseValidations(model, tenants, tags, field);
+  baseValidations(model, tenants, tags);
   stringValidations('docType', model.type, WORD_LENGTH);
   stringValidations('fullPath', model.fullPath);
   stringValidations('mimeType', model.mimeType, SHORT_NAME_LENGTH);

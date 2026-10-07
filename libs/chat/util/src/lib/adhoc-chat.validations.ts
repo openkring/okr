@@ -1,4 +1,4 @@
-import { enforce, only, staticSuite, test } from 'vest';
+import { enforce, staticSuite, test } from 'vest';
 
 import { SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { stringValidations } from '@okr/shared-util-core';
@@ -14,8 +14,7 @@ import { ADHOC_CHAT_MAX_MEMBERS, AdhocChatFormModel } from './adhoc-chat.model';
  *   eine Aufzaehlung von Vornamen, die in der Raumliste niemand wiedererkennt, und er
  *   veraltet, sobald jemand geht.
  */
-export const adhocChatValidations = staticSuite((model: AdhocChatFormModel, field?: string) => {
-  if (field) only(field);
+export const adhocChatValidations = staticSuite((model: AdhocChatFormModel) => {
 
   const memberCount = model.members?.length ?? 0;
 

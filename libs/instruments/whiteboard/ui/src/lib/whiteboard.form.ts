@@ -5,7 +5,7 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonRow, Io
 import { DEFAULT_NOTES, DEFAULT_TAGS, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { RoleName, UserModel, WhiteboardModel } from '@okr/shared-models';
 import { Chips, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
-import { validateVestTree } from '@okr/shared-util-angular';
+import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 
 import { WhiteboardI18n, whiteboardValidations } from '@okr/instruments-whiteboard-util';
@@ -81,14 +81,18 @@ export class WhiteboardForm {
   public readonly dirty = output<boolean>();
   public readonly valid = output<boolean>();
 
+  // The suite needs '', this.allTags(), which validateVestTree does not pass — so the bridge
+  // calls it through a closure that adds them.
+  private readonly suiteWithContext = (model: WhiteboardModel) =>
+    whiteboardValidations(model, '', this.allTags());
   protected readonly whiteboardForm = form(this.formData, (path) =>
-    validateVestTree(path, whiteboardValidations as any),
+    validateVestTree(path, this.suiteWithContext as any),
   );
 
 
   // per-field Vest errors for the notes under each field. validateVestTree calls the suite
   // with the model alone, so this mirrors exactly what drives the form's validity.
-  private readonly validationResult = computed(() => whiteboardValidations(this.formData() as any, '', this.allTags()));
+  private readonly validationResult = vestErrors(this.whiteboardForm);
   protected descriptionErrors = computed(() => this.validationResult().getErrors('description'));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
   constructor() {

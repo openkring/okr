@@ -6,7 +6,7 @@ import {
   JASS_MULTIPLIERS, JassGame, JassHandFormModel, JassI18n, handFromForm, handValues, jassHandValidations, withCounterPoints,
 } from '@okr/games-jasstafel-util';
 import { Checkbox, CheckboxI18n, ErrorNote, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n } from '@okr/shared-ui';
-import { validateVestTree } from '@okr/shared-util-angular';
+import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 
 import { JassAvatar } from './jass-avatar';
 
@@ -118,7 +118,7 @@ export class JassHandForm {
     effect(() => this.valid.emit(this.handForm().valid()));
   }
 
-  private readonly result = computed(() => jassHandValidations(this.formData()));
+  private readonly result = vestErrors(this.handForm);
   protected readonly trumpErrors = computed(() => this.result().getErrors('trump'));
   protected readonly multiplierErrors = computed(() => this.result().getErrors('multiplier'));
   protected readonly sideIdErrors = computed(() => this.result().getErrors('sideId'));

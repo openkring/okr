@@ -6,7 +6,7 @@ import { AvatarInfo, UserModel } from '@okr/shared-models';
 import { COMMENT_LENGTH } from '@okr/shared-constants';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { ErrorNote, TextareaInput, TextInputI18n } from '@okr/shared-ui';
-import { validateVestTree } from '@okr/shared-util-angular';
+import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, getAvatarName } from '@okr/shared-util-core';
 import { MODEL_SELECTOR } from '@okr/shared-util-angular';
 import { AvatarPipe } from '@okr/avatar-ui';
@@ -105,7 +105,7 @@ export class InvitePersonsForm {
     validateVestTree(path, invitePersonsValidations as any));
 
   // per-field errors for the notes; per-invitee key errors are folded into the list's note
-  private readonly validationResult = computed(() => invitePersonsValidations(this.formData()));
+  private readonly validationResult = vestErrors(this.inviteForm);
   protected readonly messageErrors = computed(() => this.validationResult().getErrors('message'));
   protected readonly inviteesErrors = computed(() => {
     const all = this.validationResult().getErrors();

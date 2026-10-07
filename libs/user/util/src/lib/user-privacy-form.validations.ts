@@ -1,13 +1,11 @@
-import { only, staticSuite } from 'vest';
+import { staticSuite } from 'vest';
 
 import { PrivacyUsage } from '@okr/shared-models';
 import { categoryValidations } from '@okr/shared-util-core';
 
 import { UserPrivacyFormModel } from './user-privacy-form.model';
 
-export const userPrivacyFormValidations = staticSuite((model: UserPrivacyFormModel, field?: string) => {
-  only(field);
-
+export const userPrivacyFormValidations = staticSuite((model: UserPrivacyFormModel) => {
   categoryValidations('usageImages', model.usageImages, PrivacyUsage);
   categoryValidations('usageDateOfBirth', model.usageDateOfBirth, PrivacyUsage);
   categoryValidations('usagePostalAddress', model.usagePostalAddress, PrivacyUsage);

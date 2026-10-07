@@ -5,7 +5,7 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular
 import { CategoryListModel, AccountModel, CostCenterModel, RoleName, UserModel } from '@okr/shared-models';
 import { CategorySelect, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { DESCRIPTION_LENGTH, LONG_NAME_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
-import { validateVestTree } from '@okr/shared-util-angular';
+import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, fill, hasRole, isActiveLeafCostCenter, isProfitAndLossAccountId } from '@okr/shared-util-core';
 
 import { CostCenterSelect, CostCenterSelectI18n } from '@okr/finance-cost-center-ui';
@@ -166,14 +166,13 @@ export class AccountForm {
 
   // The suite needs the tenant and the account numbers already in use (duplicate check), which
   // validateVestTree does not pass — so the bridge calls it through a closure that adds them.
-  private readonly suiteWithContext = (model: AccountModel, field?: string) =>
-    accountValidations(model, this.tenantId(), '', usedAccountIds(this.accounts(), model), field);
+  private readonly suiteWithContext = (model: AccountModel) =>
+    accountValidations(model, this.tenantId(), '', usedAccountIds(this.accounts(), model));
   protected readonly accountForm = form(this.formData, (path) =>
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     validateVestTree(path, this.suiteWithContext as any));
 
-  private readonly validationResult = computed(() =>
-    accountValidations(this.formData(), this.tenantId(), '', usedAccountIds(this.accounts(), this.formData())));
+  private readonly validationResult = vestErrors(this.accountForm);
   protected typeErrors = computed(() => this.validationResult().getErrors('type'));
   protected notesErrors = computed(() => this.validationResult().getErrors('notes'));
   protected idErrors = computed(() => this.validationResult().getErrors('id'));

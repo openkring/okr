@@ -7,7 +7,7 @@ import { CategoryListModel, UserModel } from "@okr/shared-models";
 import { CategorySelect, DateInput, DateInputI18n, ErrorNote, TextInput, TextInputI18n } from "@okr/shared-ui";
 import { coerceBoolean } from "@okr/shared-util-core";
 import { DEFAULT_GENDER } from "@okr/shared-constants";
-import { AhvFormat, formatAhv, validateVestTree } from "@okr/shared-util-angular";
+import { AhvFormat, formatAhv, validateVestTree, vestErrors } from "@okr/shared-util-angular";
 
 import { PersonFormModel, personValidations } from "@okr/subject-person-util";
 import { ProfileI18n } from '@okr/profile-util';
@@ -101,8 +101,8 @@ export class ProfileDataAccordion {
 
   // The suite needs tenantId and tags, which validateVestTree does not pass — so the bridge
   // calls it through a closure that adds them.
-  private readonly suiteWithContext = (model: PersonFormModel, field?: string) =>
-    personValidations(model, this.tenantId(), this.tags(), field);
+  private readonly suiteWithContext = (model: PersonFormModel) =>
+    personValidations(model, this.tenantId(), this.tags());
   protected readonly dataForm = form(this.formData, (path) =>
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     validateVestTree(path, this.suiteWithContext as any));
@@ -112,7 +112,7 @@ export class ProfileDataAccordion {
     !this.dataForm().errorSummary().some((e) => EDITED_FIELDS.includes(e.kind.replace(/^vest\./, ''))));
 
   // per-field errors for the notes under each field
-  private readonly validationResult = computed(() => personValidations(this.formData(), this.tenantId(), this.tags()));
+  private readonly validationResult = vestErrors(this.dataForm);
   protected ssnIdErrors = computed(() => this.validationResult().getErrors('ssnId'));
   protected dobI18n = computed(() => ({
     name: 'dateOfBirth',

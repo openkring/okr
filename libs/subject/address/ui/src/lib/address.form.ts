@@ -4,7 +4,7 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular
 
 import { AddressModel, CategoryListModel, City, RoleName, UserModel } from '@okr/shared-models';
 import { CategorySelect, Checkbox, CheckboxI18n, Chips, CountrySelect, CountrySelectI18n, EmailInput, EmailInputI18n, ErrorNote, IbanInput, IbanInputI18n, NotesInput, NotesInputI18n, PhoneInput, PhoneInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
-import { validateVestTree } from '@okr/shared-util-angular';
+import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 import { CITY_LENGTH, DEFAULT_ADDRESS_CHANNEL, DEFAULT_COUNTRY, DEFAULT_NOTES, DEFAULT_TAGS, DESCRIPTION_LENGTH, EMAIL_LENGTH, NAME_LENGTH, NUMBER_LENGTH, PHONE_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 
@@ -240,12 +240,12 @@ export class AddressForm {
   // validation and errors
   // The suite needs tenantId and allTags, which validateVestTree does not pass — so the bridge
   // calls it through a closure that adds them.
-  private readonly suiteWithContext = (model: AddressModel, field?: string) =>
-    addressValidations(model, this.tenantId(), this.allTags(), field);
+  private readonly suiteWithContext = (model: AddressModel) =>
+    addressValidations(model, this.tenantId(), this.allTags());
   protected readonly addressForm = form(this.formData, (path) =>
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     validateVestTree(path, this.suiteWithContext as any));
-  private readonly validationResult = computed(() => addressValidations(this.formData(), this.tenantId(), this.allTags()));
+  private readonly validationResult = vestErrors(this.addressForm);
   protected addressChannelErrors = computed(() => this.validationResult().getErrors('addressChannel'));
   protected addressUsageErrors = computed(() => this.validationResult().getErrors('addressUsage'));
   protected isCcErrors = computed(() => this.validationResult().getErrors('isCc'));

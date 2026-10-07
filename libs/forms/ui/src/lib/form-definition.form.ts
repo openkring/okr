@@ -9,7 +9,7 @@ import {
   StringSelect, StringSelectI18n, TextInput, TextInputI18n,
 } from '@okr/shared-ui';
 import { coerceBoolean, fill } from '@okr/shared-util-core';
-import { validateVestTree } from '@okr/shared-util-angular';
+import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 
 import { FORM_MAPPINGS, FormI18n, formDefinitionValidations, getPrefillFields } from '@okr/forms-util';
 
@@ -128,7 +128,7 @@ export class FormDefinitionForm {
   protected readonly formDefinitionForm = form(this.formData, (path) => validateVestTree(path, formDefinitionValidations as any));
 
   // per-field Vest errors for the notes under each field
-  private readonly validationResult = computed(() => formDefinitionValidations(this.formData()));
+  private readonly validationResult = vestErrors(this.formDefinitionForm);
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
   protected descriptionErrors = computed(() => this.validationResult().getErrors('description'));
   protected mappingKeyErrors = computed(() => this.validationResult().getErrors('target.mappingKey'));

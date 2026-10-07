@@ -4,7 +4,7 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonLabel, IonRow } from '@ion
 
 import { DESCRIPTION_LENGTH } from '@okr/shared-constants';
 import { NotesInput, NotesInputI18n } from '@okr/shared-ui';
-import { validateVestTree } from '@okr/shared-util-angular';
+import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean } from '@okr/shared-util-core';
 import {
   BexioPosition, getAccountDescription, MemberFeeUploadFormModel, memberFeeUploadValidations, MembershipI18n,
@@ -92,7 +92,7 @@ export class MemberFeeUploadForm {
   protected readonly header = computed(() => this.formData()?.header ?? '');
   protected readonly footer = computed(() => this.formData()?.footer ?? '');
 
-  private readonly validationResult = computed(() => memberFeeUploadValidations(this.formData()));
+  private readonly validationResult = vestErrors(this.uploadForm);
   protected readonly headerErrors = computed(() => this.validationResult().getErrors('header'));
   protected readonly footerErrors = computed(() => this.validationResult().getErrors('footer'));
 

@@ -56,10 +56,4 @@ describe('applicationValidations', () => {
     });
     expect(applicationValidations(youth).hasErrors('ssnId')).toBe(true);
   });
-
-  it('validates a single field when asked', () => {
-    const result = applicationValidations(validAdult({ firstName: '', city: '' }), 'firstName');
-    expect(result.hasErrors('firstName')).toBe(true);
-    expect(result.hasErrors('city')).toBe(false);
-  });
 });

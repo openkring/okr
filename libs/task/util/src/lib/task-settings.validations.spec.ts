@@ -39,9 +39,4 @@ describe('taskSettingsValidations', () => {
     expect(result.isValid()).toBe(false);
     expect(result.getErrors('taskArchiveDays').length).toBeGreaterThan(0);
   });
-
-  it('re-validates a single field with only()', () => {
-    const result = taskSettingsValidations(model({ taskArchiveDays: -1 }), 'taskArchiveDays');
-    expect(result.getErrors('taskArchiveDays').length).toBeGreaterThan(0);
-  });
 });

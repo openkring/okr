@@ -1,13 +1,12 @@
-import { enforce, only, staticSuite, test } from 'vest';
+import { enforce, staticSuite, test } from 'vest';
 
 import { DESCRIPTION_LENGTH, NAME_LENGTH } from '@okr/shared-constants';
 import { PageModel } from '@okr/shared-models';
 import { baseValidations, isArrayOfStrings, stringValidations } from '@okr/shared-util-core';
 
-export const pageValidations = staticSuite((model: PageModel, tenants: string, tags: string, field?: string) => {
-  if (field) only(field);
+export const pageValidations = staticSuite((model: PageModel, tenants: string, tags: string) => {
 
-  baseValidations(model, tenants, tags, field);
+  baseValidations(model, tenants, tags);
 
   stringValidations('title', model.title, NAME_LENGTH);
   // meta: MetaTag[] = [];        // meta tags for SEO

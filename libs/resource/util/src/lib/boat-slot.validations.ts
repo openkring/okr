@@ -1,4 +1,4 @@
-import { only, staticSuite } from 'vest';
+import { staticSuite } from 'vest';
 
 import { SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { BOAT_SLOT_NO_COLOR, BoatSlotLabel } from '@okr/shared-models';
@@ -8,8 +8,7 @@ import { booleanValidations, numberValidations, stringValidations } from '@okr/s
  * A Bootseinteilung slot label is a free planning note — no key, no tenants, so this suite
  * deliberately skips baseValidations. Both fields are optional; an empty text clears the slot.
  */
-export const boatSlotValidations = staticSuite((model: BoatSlotLabel, field?: string) => {
-  if (field) only(field);
+export const boatSlotValidations = staticSuite((model: BoatSlotLabel) => {
 
   stringValidations('text', model.text, SHORT_NAME_LENGTH);
   stringValidations('color', model.color, SHORT_NAME_LENGTH);

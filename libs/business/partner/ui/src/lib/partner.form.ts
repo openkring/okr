@@ -6,7 +6,7 @@ import { DEFAULT_NOTES, DEFAULT_TAGS, SHORT_NAME_LENGTH } from '@okr/shared-cons
 import { PartnerModel, RoleName, UserModel } from '@okr/shared-models';
 import { CategorySelect, Chips, DateInput, DateInputI18n, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
-import { validateVestTree } from '@okr/shared-util-angular';
+import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 
 import { PartnerI18n, partnerStatusCategory, partnerValidations } from '@okr/business-partner-util';
 
@@ -101,14 +101,18 @@ export class PartnerForm {
   public readonly dirty = output<boolean>();
   public readonly valid = output<boolean>();
 
+  // The suite needs this.tenantId(), this.allTags(), which validateVestTree does not pass — so the bridge
+  // calls it through a closure that adds them.
+  private readonly suiteWithContext = (model: PartnerModel) =>
+    partnerValidations(model, this.tenantId(), this.allTags());
   protected readonly partnerForm = form(this.formData, (path) =>
-    validateVestTree(path, partnerValidations as any),
+    validateVestTree(path, this.suiteWithContext as any),
   );
 
 
   // per-field Vest errors for the notes under each field. validateVestTree calls the suite
   // with the model alone, so this mirrors exactly what drives the form's validity.
-  private readonly validationResult = computed(() => partnerValidations(this.formData() as any, this.tenantId(), this.allTags()));
+  private readonly validationResult = vestErrors(this.partnerForm);
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
   protected orgKeyErrors = computed(() => this.validationResult().getErrors('orgKey'));
   protected serviceUidErrors = computed(() => this.validationResult().getErrors('serviceUid'));

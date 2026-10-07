@@ -5,7 +5,7 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonNote, I
 import { LONG_NAME_LENGTH } from '@okr/shared-constants';
 import { ContractDocumentRef } from '@okr/shared-models';
 import { ErrorNote, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
-import { validateVestTree } from '@okr/shared-util-angular';
+import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean } from '@okr/shared-util-core';
 
 import {
@@ -100,7 +100,7 @@ export class ContractDocumentUploadForm {
   protected readonly uploadForm = form(this.formData, (path) =>
     validateVestTree(path, contractDocumentUploadValidations as any),
   );
-  private readonly validationResult = computed(() => contractDocumentUploadValidations(this.formData()));
+  private readonly validationResult = vestErrors(this.uploadForm);
   protected fileNameErrors = computed(() => this.validationResult().getErrors('fileName'));
   protected titleErrors = computed(() => this.validationResult().getErrors('title'));
   protected roleErrors = computed(() => this.validationResult().getErrors('role'));

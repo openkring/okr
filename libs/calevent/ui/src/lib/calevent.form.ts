@@ -6,7 +6,7 @@ import { ChFutureDate, LowercaseWordMask } from '@okr/shared-config';
 import { DEFAULT_CALENDARS, DEFAULT_CALEVENT_TYPE, DEFAULT_DATE, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PERIODICITY, DEFAULT_TAGS, DEFAULT_TIME, DEFAULT_URL, MAX_DATES_PER_SERIES, NAME_LENGTH } from '@okr/shared-constants';
 import { AvatarInfo, CalEventModel, CategoryListModel, LocationModel, RoleName, UserModel } from '@okr/shared-models';
 import { AddChip, CategorySelect, Checkbox, CheckboxI18n, Chips, DateInput, DateInputI18n, ErrorNote, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringList, TextInput, TextInputI18n, TimeInput, TimeInputI18n, UrlInput, UrlInputI18n } from '@okr/shared-ui';
-import { MODEL_SELECTOR, validateVestTree } from '@okr/shared-util-angular';
+import { MODEL_SELECTOR, validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, convertDateFormatToString, DateFormat, extractFirstPartOfOptionalTupel, fill, hasRole } from '@okr/shared-util-core';
 import { SvgIconPipe } from '@okr/shared-pipes';
 
@@ -354,14 +354,14 @@ export class CalEventForm {
 
   // The suite needs tenantId and tags, which validateVestTree does not pass — so the bridge
   // calls it through a closure that adds them.
-  private readonly suiteWithContext = (model: CalEventModel, field?: string) =>
-    calEventValidations(model, this.tenantId(), this.allTags(), field);
+  private readonly suiteWithContext = (model: CalEventModel) =>
+    calEventValidations(model, this.tenantId(), this.allTags());
   protected readonly caleventForm = form(this.formData, (path) =>
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     validateVestTree(path, this.suiteWithContext as any));
 
   // per-field errors for the notes under each field (and the catch-all)
-  private readonly validationResult = computed(() => calEventValidations(this.formData(), this.tenantId(), this.allTags()));
+  private readonly validationResult = vestErrors(this.caleventForm);
   protected periodicityErrors = computed(() => this.validationResult().getErrors('periodicity'));
   protected startDateErrors = computed(() => this.validationResult().getErrors('startDate'));
   protected typeErrors = computed(() => this.validationResult().getErrors('type'));

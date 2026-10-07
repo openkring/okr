@@ -4,7 +4,7 @@ import { IonItem, IonInput, IonList } from '@ionic/angular/standalone';
 
 import { AnyCharacterMask } from '@okr/shared-config';
 import { Checkbox, CheckboxI18n, ErrorNote, StringList } from '@okr/shared-ui';
-import { QuickEntryResolver, validateVestTree } from '@okr/shared-util-angular';
+import { QuickEntryResolver, validateVestTree, vestErrors } from '@okr/shared-util-angular';
 
 import { MatrixPollData } from '@okr/chat-data-access';
 import { POLL_ANSWER_LENGTH, POLL_QUESTION_LENGTH, pollValidations } from '@okr/chat-util';
@@ -102,14 +102,14 @@ export class PollCreateForm {
   protected readonly multipleSelections = 20;
 
   // The suite skips the per-answer rules for locked answers — their count comes from the input.
-  private readonly suiteWithContext = (model: MatrixPollData, field?: string) =>
-    pollValidations(model, this.lockedAnswers().length, field);
+  private readonly suiteWithContext = (model: MatrixPollData) =>
+    pollValidations(model, this.lockedAnswers().length);
   protected readonly pollForm = form(this.formData, (path) =>
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     validateVestTree(path, this.suiteWithContext as any));
 
   // per-field errors for the notes; per-answer errors are folded into the list's note
-  private readonly validationResult = computed(() => pollValidations(this.formData(), this.lockedAnswers().length));
+  private readonly validationResult = vestErrors(this.pollForm);
   protected readonly questionErrors = computed(() => this.validationResult().getErrors('question'));
   protected readonly answersErrors = computed(() =>
     Object.entries(this.validationResult().getErrors())

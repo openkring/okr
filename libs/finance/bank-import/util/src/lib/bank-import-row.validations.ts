@@ -1,4 +1,4 @@
-import { enforce, only, staticSuite, test } from 'vest';
+import { enforce, staticSuite, test } from 'vest';
 
 import { BankImportRowModel } from '@okr/shared-models';
 import { stringValidations } from '@okr/shared-util-core';
@@ -21,8 +21,7 @@ export const BANK_IMPORT_TITLE_LENGTH = 100;
  * so this suite has no business judging it.
  */
 export const bankImportRowValidations = staticSuite(
-  (model: BankImportRowModel, tenants: string, tags: string, field?: string) => {
-    if (field) only(field);
+  (model: BankImportRowModel, tenants: string, tags: string) => {
 
     stringValidations('title', model.title, BANK_IMPORT_TITLE_LENGTH, 1, true);
     stringValidations('accountKey', model.accountKey, undefined, 1, true);

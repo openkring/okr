@@ -1,4 +1,4 @@
-import { enforce, omitWhen, only, staticSuite, test } from 'vest';
+import { enforce, omitWhen, staticSuite, test } from 'vest';
 
 import { CITY_LENGTH, DESCRIPTION_LENGTH, EMAIL_LENGTH, NUMBER_LENGTH, PHONE_LENGTH, SHORT_NAME_LENGTH, ZIP_LENGTH } from '@okr/shared-constants';
 import { classifyStoreDate, dateValidations, getYear, isFutureDate, isStoreDateOrderValid, partialDateValidations, stringValidations } from '@okr/shared-util-core';
@@ -6,8 +6,7 @@ import { classifyStoreDate, dateValidations, getYear, isFutureDate, isStoreDateO
 import { PersonNewFormModel } from './person-new-form.model';
 import { ssnValidations } from './ssn.validations';
 
-export const personNewFormValidations = staticSuite((model: PersonNewFormModel, field?: string) => {
-  if (field) only(field);
+export const personNewFormValidations = staticSuite((model: PersonNewFormModel) => {
 
   stringValidations('firstName', model.firstName, SHORT_NAME_LENGTH);
   stringValidations('lastName', model.lastName, SHORT_NAME_LENGTH, 2, true);

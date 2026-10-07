@@ -6,7 +6,7 @@ import { AvatarUsages, LanguageCategory, Languages, NameDisplays, PersonSortCrit
 import { AvatarUsage, DefaultLanguage, NameDisplay, PersonSortCriteria, RoleName, UserModel } from "@okr/shared-models";
 import { FcmService } from "@okr/shared-data-access";
 import { CategoryOld, CategoryOldI18n, Checkbox, CheckboxI18n, DeliveryChannelsControl, DeliveryChannelsI18n, ErrorNote, TextInput, TextInputI18n } from "@okr/shared-ui";
-import { validateVestTree } from "@okr/shared-util-angular";
+import { validateVestTree, vestErrors } from "@okr/shared-util-angular";
 import { coerceBoolean, hasRole, toEditableChannels } from "@okr/shared-util-core";
 
 import { userValidations } from "@okr/user-util";
@@ -189,12 +189,10 @@ export class ProfileSettingsAccordion {
   // reads skip model defaults, and the migration runs after the release). Validating the raw
   // value would fail `notArray` for every un-migrated user and hide the save bar with nothing
   // on screen to explain it — so validate a normalised copy.
-  private readonly validatedData = computed<UserModel>(() => this.normalise(this.formData()));
-  // validatedData() is a computed and cannot back a signal form, so the form wraps formData and
-  // the closure applies the same normalisation (plus tenantId/tags, which validateVestTree does
-  // not pass) before calling the suite.
-  private readonly suiteWithContext = (model: UserModel, field?: string) =>
-    userValidations(this.normalise(model), this.tenantId(), this.tags(), field);
+  // The form wraps formData and the closure applies the normalisation (plus tenantId/tags, which
+  // validateVestTree does not pass) before calling the suite.
+  private readonly suiteWithContext = (model: UserModel) =>
+    userValidations(this.normalise(model), this.tenantId(), this.tags());
   protected readonly settingsForm = form(this.formData, (path) =>
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     validateVestTree(path, this.suiteWithContext as any));
@@ -205,7 +203,7 @@ export class ProfileSettingsAccordion {
     !this.settingsForm().errorSummary().some((e) => EDITED_FIELDS.includes(e.kind.replace(/^vest\./, ''))));
 
   // per-field errors for the notes under each field
-  private readonly validationResult = computed(() => userValidations(this.validatedData(), this.tenantId(), this.tags()));
+  private readonly validationResult = vestErrors(this.settingsForm);
   protected showArchivedDataErrors = computed(() => this.validationResult().getErrors('showArchivedData'));
   protected showDebugInfoErrors = computed(() => this.validationResult().getErrors('showDebugInfo'));
   protected showHelpersErrors = computed(() => this.validationResult().getErrors('showHelpers'));

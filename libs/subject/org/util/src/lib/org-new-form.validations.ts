@@ -1,12 +1,11 @@
-import { enforce, omitWhen, only, staticSuite, test } from 'vest';
+import { enforce, omitWhen, staticSuite, test } from 'vest';
 
 import { CITY_LENGTH, DESCRIPTION_LENGTH, EMAIL_LENGTH, NAME_LENGTH, NUMBER_LENGTH, PHONE_LENGTH, SHORT_NAME_LENGTH, ZIP_LENGTH } from '@okr/shared-constants';
 import { dateValidations, isAfterDate, stringValidations } from '@okr/shared-util-core';
 
 import { OrgNewFormModel } from './org-new-form.model';
 
-export const orgNewFormValidations = staticSuite((model: OrgNewFormModel, field?: string) => {
-  if (field) only(field);
+export const orgNewFormValidations = staticSuite((model: OrgNewFormModel) => {
 
   stringValidations('name', model.name, NAME_LENGTH, 3, true);
   stringValidations('type', model.type);

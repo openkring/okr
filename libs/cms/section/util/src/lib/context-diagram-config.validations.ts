@@ -1,4 +1,4 @@
-import { only, staticSuite } from 'vest';
+import { staticSuite } from 'vest';
 
 import { ContextDiagramConfig } from '@okr/shared-models';
 
@@ -14,6 +14,5 @@ export function newContextDiagramConfigFormModel(config: ContextDiagramConfig, s
  * every combination is valid (the former modal accepted any combination as well).
  * The suite exists so the form follows the standard Signal Forms + Vest wiring.
  */
-export const contextDiagramConfigValidations = staticSuite((_model: ContextDiagramConfigFormModel, field?: string) => {
-  if (field) only(field);
+export const contextDiagramConfigValidations = staticSuite((_model: ContextDiagramConfigFormModel) => {
 });

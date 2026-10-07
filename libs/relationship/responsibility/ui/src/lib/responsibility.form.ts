@@ -4,7 +4,7 @@ import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol
 import { DEFAULT_DATE, WORD_LENGTH } from '@okr/shared-constants';
 import { ResponsibilityModel, RoleName, UserModel } from '@okr/shared-models';
 import { ButtonCopy, ButtonCopyI18n, DateInput, DateInputI18n, ErrorNote, TextInput, TextInputI18n } from '@okr/shared-ui';
-import { validateVestTree } from '@okr/shared-util-angular';
+import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { getAvatarName, hasRole } from '@okr/shared-util-core';
 
 import { isDelegateActive, responsibilityValidations, ResponsibilityI18n } from '@okr/relationship-responsibility-util';
@@ -156,14 +156,14 @@ export class ResponsibilityForm {
 
   // The suite needs the tenant, which validateVestTree does not pass — so the bridge
   // calls it through a closure that adds it.
-  private readonly suiteWithContext = (model: ResponsibilityModel, field?: string) =>
-    responsibilityValidations(model, this.tenantId(), field);
+  private readonly suiteWithContext = (model: ResponsibilityModel) =>
+    responsibilityValidations(model, this.tenantId());
   protected readonly responsibilityForm = form(this.formData, (path) =>
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     validateVestTree(path, this.suiteWithContext as any));
 
   // per-field errors for the notes under each field
-  private readonly validationResult = computed(() => responsibilityValidations(this.formData(), this.tenantId()));
+  private readonly validationResult = vestErrors(this.responsibilityForm);
   protected delegateValidFromErrors = computed(() => this.validationResult().getErrors('delegateValidFrom'));
   protected delegateValidToErrors = computed(() => this.validationResult().getErrors('delegateValidTo'));
   protected validFromErrors = computed(() => this.validationResult().getErrors('validFrom'));

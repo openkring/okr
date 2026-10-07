@@ -17,8 +17,8 @@ import { trackerSectionValidations } from './tracker-section.validations';
 import { videoSectionValidations } from './video-section.validations';
 import { weatherSectionValidations } from './weather-section.validations';
 
-/** A section vest suite: takes the section model (and an optional field) and returns the run result. */
-export type SectionSuite = (model: SectionModel, field?: string) => ReturnType<typeof baseSectionValidations>;
+/** A section vest suite: takes the section model and returns the run result. */
+export type SectionSuite = (model: SectionModel) => ReturnType<typeof baseSectionValidations>;
 
 /**
  * Maps each section type to its vest suite. Types without a dedicated suite fall back to

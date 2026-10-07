@@ -1,4 +1,4 @@
-import { enforce, only, staticSuite, test } from 'vest';
+import { enforce, staticSuite, test } from 'vest';
 
 import { DESCRIPTION_LENGTH, NAME_LENGTH, WORD_LENGTH } from '@okr/shared-constants';
 import { AliasSpaceModel } from '@okr/shared-models';
@@ -16,10 +16,9 @@ const SPACE_NAME_PATTERN = /^[a-z][a-z0-9-]*$/;
  * prüft nur die Form.
  */
 export const aliasSpaceValidations = staticSuite(
-  (model: AliasSpaceModel, tenants: string, tags: string, field?: string) => {
-    if (field) only(field);
+  (model: AliasSpaceModel, tenants: string, tags: string) => {
 
-    baseValidations(model, tenants, tags, field);
+    baseValidations(model, tenants, tags);
 
     stringValidations('name', model.name, WORD_LENGTH);
     stringValidations('label', model.label, NAME_LENGTH);

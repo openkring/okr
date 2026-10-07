@@ -5,7 +5,7 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonRow, IonSelect, I
 import { InstrumentTopic } from '@okr/shared-models';
 import { ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { coerceBoolean } from '@okr/shared-util-core';
-import { validateVestTree } from '@okr/shared-util-angular';
+import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 
 import { InstrumentI18n, topicValidations } from '@okr/instruments-util';
 import { DESCRIPTION_LENGTH, LONG_NAME_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
@@ -95,7 +95,7 @@ export class TopicForm {
 
   // per-field Vest errors for the notes under each field. validateVestTree calls the suite
   // with the model alone, so this mirrors exactly what drives the form's validity.
-  private readonly validationResult = computed(() => topicValidations(this.formData() as any));
+  private readonly validationResult = vestErrors(this.topicForm);
   protected descriptionErrors = computed(() => this.validationResult().getErrors('description'));
   protected labelErrors = computed(() => this.validationResult().getErrors('label'));
   constructor() {

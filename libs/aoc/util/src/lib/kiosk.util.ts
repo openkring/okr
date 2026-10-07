@@ -1,4 +1,4 @@
-import { only, staticSuite } from 'vest';
+import { staticSuite } from 'vest';
 
 import { DESCRIPTION_LENGTH } from '@okr/shared-constants';
 import { numberValidations, stringValidations } from '@okr/shared-util-core';
@@ -57,8 +57,7 @@ export interface KioskMessageFormData {
   countdown: number;
 }
 
-export const kioskMessageValidations = staticSuite((model: KioskMessageFormData, field?: string) => {
-  if (field) only(field);
+export const kioskMessageValidations = staticSuite((model: KioskMessageFormData) => {
 
   stringValidations('message', model.message, DESCRIPTION_LENGTH, 1, true);
   // the seconds only have to make sense while the countdown is switched on

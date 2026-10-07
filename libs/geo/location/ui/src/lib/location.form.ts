@@ -6,7 +6,7 @@ import { CaseInsensitiveWordMask, LatitudeMask, LongitudeMask, What3WordMask } f
 import { CategoryListModel, LocationModel, RoleName, UserModel } from '@okr/shared-models';
 import { CategorySelect, Chips, ErrorNote, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
-import { validateVestTree } from '@okr/shared-util-angular';
+import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 
 import { locationValidations } from '@okr/location-util';
 import { DESCRIPTION_LENGTH, NAME_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
@@ -152,8 +152,8 @@ export class LocationForm {
 
   // The suite needs the tenant id and the tags, which validateVestTree does not pass — so the bridge
   // calls it through a closure that adds them.
-  private readonly suiteWithContext = (model: LocationModel, field?: string) =>
-    locationValidations(model, this.tenantId(), this.allTags(), field);
+  private readonly suiteWithContext = (model: LocationModel) =>
+    locationValidations(model, this.tenantId(), this.allTags());
   protected readonly locationForm = form(this.formData, (path) =>
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     validateVestTree(path, this.suiteWithContext as any));
@@ -161,7 +161,7 @@ export class LocationForm {
   constructor() { effect(() => this.valid.emit(this.locationForm().valid())); }
 
   // validation and errors
-  private readonly validationResult = computed(() => locationValidations(this.formData(), this.tenantId(), this.allTags()));
+  private readonly validationResult = vestErrors(this.locationForm);
   protected typeErrors = computed(() => this.validationResult().getErrors('type'));
   protected directionErrors = computed(() => this.validationResult().getErrors('direction'));
   protected latitudeErrors = computed(() => this.validationResult().getErrors('latitude'));

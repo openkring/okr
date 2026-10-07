@@ -1,14 +1,13 @@
-import { each, omitWhen, only, staticSuite } from 'vest';
+import { each, omitWhen, staticSuite } from 'vest';
 
 import { ArticleSection } from '@okr/shared-models';
 
 import { baseSectionValidations } from './base-section.validations';
 import { imageConfigValidations, imageStyleValidations } from './image.validations';
 
-export const articleSectionValidations = staticSuite((model: ArticleSection, field?: string) => {
-  if (field) only(field);
+export const articleSectionValidations = staticSuite((model: ArticleSection) => {
 
-  baseSectionValidations(model, field);
+  baseSectionValidations(model);
 
   // images: ImageConfig[]
   // note: omitWhen always runs its callback (it only omits the tests inside), so the

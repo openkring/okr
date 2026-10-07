@@ -8,7 +8,7 @@ import { CategoryListModel, RoleName, UserModel, WorkflowActionStep, WorkflowRul
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { CategorySelect, Chips, ErrorNote, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, getItemLabel, hasRole } from '@okr/shared-util-core';
-import { validateVestTree } from '@okr/shared-util-angular';
+import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { DEFAULT_NOTES, DEFAULT_TAGS, LONG_NAME_LENGTH, NAME_LENGTH } from '@okr/shared-constants';
 
 import { ResponsibilityOption, WRITE_BACK_OPTIONS, WorkflowI18n, actionNeedsArg, addWorkflowStep, getWorkflowStepSummary, getWorkflowSteps, isApprovalAction, isWorkflowStepComplete, patchWorkflowStep, probeNeedsArg, removeWorkflowStep, setWorkflowStepAction, workflowRuleValidations } from '@okr/system-workflow-util';
@@ -268,14 +268,18 @@ export class WorkflowRuleForm {
   public readonly valid = output<boolean>();
 
   // signal form — wraps formData with Vest validation
+  // The suite needs '', this.allTags(), which validateVestTree does not pass — so the bridge
+  // calls it through a closure that adds them.
+  private readonly suiteWithContext = (model: WorkflowRuleModel) =>
+    workflowRuleValidations(model, '', this.allTags());
   protected readonly ruleForm = form(this.formData, (path) =>
-    validateVestTree(path, workflowRuleValidations as any),
+    validateVestTree(path, this.suiteWithContext as any),
   );
 
 
   // per-field Vest errors for the notes under each field. validateVestTree calls the suite
   // with the model alone, so this mirrors exactly what drives the form's validity.
-  private readonly validationResult = computed(() => workflowRuleValidations(this.formData() as any, '', this.allTags()));
+  private readonly validationResult = vestErrors(this.ruleForm);
   protected eventErrors = computed(() => this.validationResult().getErrors('event'));
   protected probeErrors = computed(() => this.validationResult().getErrors('probe'));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));

@@ -5,7 +5,7 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular
 import { MatrixRoom, UserModel } from '@okr/shared-models';
 import { Checkbox, CheckboxI18n, ErrorNote, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n, UrlInput, UrlInputI18n } from '@okr/shared-ui';
 import { DEFAULT_NAME, DEFAULT_URL, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
-import { validateVestTree } from '@okr/shared-util-angular';
+import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 
 import { roomValidations } from '@okr/chat-util';
 
@@ -99,7 +99,7 @@ export class RoomEditForm {
   protected readonly roomForm = form(this.formData, (path) =>
     validateVestTree(path, roomValidations),
   );
-  private readonly validationResult = computed(() => roomValidations(this.formData()));
+  private readonly validationResult = vestErrors(this.roomForm);
   protected isDirectErrors = computed(() => this.validationResult().getErrors('isDirect'));
   protected roomIdErrors = computed(() => this.validationResult().getErrors('roomId'));
   protected topicErrors = computed(() => this.validationResult().getErrors('topic'));

@@ -4,7 +4,7 @@ import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, 
 
 import { FirebaseUserModel, UserModel } from "@okr/shared-models";
 import { Checkbox, CheckboxI18n, EmailInput, EmailInputI18n, ErrorNote, PhoneInput, PhoneInputI18n, TextInput, TextInputI18n } from "@okr/shared-ui";
-import { validateVestTree } from "@okr/shared-util-angular";
+import { validateVestTree, vestErrors } from "@okr/shared-util-angular";
 import { coerceBoolean } from "@okr/shared-util-core";
 
 import { FIREBASE_USER_SHAPE, firebaseUserFormValidations, UserI18n } from "@okr/user-util";
@@ -118,7 +118,7 @@ export class FbuserForm {
   protected readonly fbuserForm = form(this.formData, (path) => validateVestTree(path, firebaseUserFormValidations as any));
 
   // per-field errors for the notes under each field
-  private readonly validationResult = computed(() => firebaseUserFormValidations(this.formData()));
+  private readonly validationResult = vestErrors(this.fbuserForm);
   protected disabledErrors = computed(() => this.validationResult().getErrors('disabled'));
   protected emailVerifiedErrors = computed(() => this.validationResult().getErrors('emailVerified'));
   protected displayNameErrors = computed(() => this.validationResult().getErrors('displayName'));

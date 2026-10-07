@@ -1,4 +1,4 @@
-import { enforce, only, staticSuite, test } from 'vest';
+import { enforce, staticSuite, test } from 'vest';
 
 import { DESCRIPTION_LENGTH } from '@okr/shared-constants';
 import { stringValidations } from '@okr/shared-util-core';
@@ -16,8 +16,7 @@ export function newBillQrScanFormModel(): BillQrScanFormModel {
 }
 
 /** The scan dialog only ever required some content before it could be processed. */
-export const billQrScanValidations = staticSuite((model: BillQrScanFormModel, field?: string) => {
-  if (field) only(field);
+export const billQrScanValidations = staticSuite((model: BillQrScanFormModel) => {
 
   stringValidations('qrContent', model.qrContent ?? '', DESCRIPTION_LENGTH);
   test('qrContent', VPFX + 'contentRequired', () => {

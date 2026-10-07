@@ -1,12 +1,11 @@
-import { omitWhen, only, staticSuite } from 'vest';
+import { omitWhen, staticSuite } from 'vest';
 
 import { SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { FeePositionRule } from '@okr/shared-models';
 import { numberValidations, stringValidations } from '@okr/shared-util-core';
 
 export const feePositionValidations = staticSuite(
-  (model: FeePositionRule, field?: string) => {
-    if (field) only(field);
+  (model: FeePositionRule) => {
 
     stringValidations('key', model.key, SHORT_NAME_LENGTH, 1, true);
     stringValidations('label', model.label, SHORT_NAME_LENGTH, 1, true);

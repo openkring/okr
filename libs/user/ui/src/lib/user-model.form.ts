@@ -4,7 +4,7 @@ import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, 
 
 import { RoleName, UserModel } from "@okr/shared-models";
 import { EmailInput, EmailInputI18n, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from "@okr/shared-ui";
-import { validateVestTree } from "@okr/shared-util-angular";
+import { validateVestTree, vestErrors } from "@okr/shared-util-angular";
 import { coerceBoolean, hasRole } from "@okr/shared-util-core";
 
 import { USER_FORM_SHAPE, UserI18n, UserModelFormModel, userModelFormValidations } from "@okr/user-util";
@@ -125,7 +125,7 @@ export class UserModelForm {
   protected readonly modelForm = form(this.formData, (path) => validateVestTree(path, userModelFormValidations as any));
 
   // per-field errors for the notes under each field
-  private readonly validationResult = computed(() => userModelFormValidations(this.formData()));
+  private readonly validationResult = vestErrors(this.modelForm);
   protected gravatarEmailErrors = computed(() => this.validationResult().getErrors('gravatarEmail'));
   protected loginEmailErrors = computed(() => this.validationResult().getErrors('loginEmail'));
   protected firstNameErrors = computed(() => this.validationResult().getErrors('firstName'));

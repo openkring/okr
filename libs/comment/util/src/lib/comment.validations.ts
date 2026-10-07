@@ -1,12 +1,11 @@
-import { enforce, only, staticSuite, test } from 'vest';
+import { enforce, staticSuite, test } from 'vest';
 
 import { CommentModel } from '@okr/shared-models';
 import { baseValidations, dateValidations, stringValidations } from '@okr/shared-util-core';
 
-export const commentValidations = staticSuite((model: CommentModel, tenants: string, tags: string, field?: string) => {
-  if (field) only(field);
+export const commentValidations = staticSuite((model: CommentModel, tenants: string, tags: string) => {
 
-  baseValidations(model, tenants, tags, field);
+  baseValidations(model, tenants, tags);
   stringValidations('authorKey', model.authorKey, undefined, 5, true);
   dateValidations('creationDateTime', model.creationDateTime);
   stringValidations('parentKey', model.parentKey, undefined, 5, true);

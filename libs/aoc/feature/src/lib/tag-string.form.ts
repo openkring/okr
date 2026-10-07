@@ -5,7 +5,7 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular
 import { AvailableLanguages } from '@okr/shared-models';
 import { ErrorNote, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { coerceBoolean } from '@okr/shared-util-core';
-import { validateVestTree } from '@okr/shared-util-angular';
+import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 
 import { TagStringFormData, tagStringValidations } from '@okr/aoc-util';
 import { SHORT_NAME_LENGTH } from '@okr/shared-constants';
@@ -80,7 +80,7 @@ export class TagStringForm {
 
   // per-field Vest errors for the notes under each field. validateVestTree calls the suite
   // with the model alone, so this mirrors exactly what drives the form's validity.
-  private readonly validationResult = computed(() => tagStringValidations(this.formData() as any));
+  private readonly validationResult = vestErrors(this.tagStringForm);
   protected keyErrors = computed(() => this.validationResult().getErrors('key'));
   constructor() {
     effect(() => this.valid.emit(this.tagStringForm().valid()));

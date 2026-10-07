@@ -1,4 +1,4 @@
-import { enforce, omitWhen, only, staticSuite, test } from 'vest';
+import { enforce, omitWhen, staticSuite, test } from 'vest';
 
 import { CITY_LENGTH, DESCRIPTION_LENGTH, EMAIL_LENGTH, NAME_LENGTH, NUMBER_LENGTH, PHONE_LENGTH, SHORT_NAME_LENGTH, ZIP_LENGTH } from '@okr/shared-constants';
 import { AddressModel } from '@okr/shared-models';
@@ -14,10 +14,9 @@ function zipMaxLength(countryCode: string): number {
   return ZIP_MAX_LENGTH[(countryCode ?? '').toUpperCase()] ?? DEFAULT_ZIP_MAX_LENGTH;
 }
 
-export const addressValidations = staticSuite((model: AddressModel, tenants: string, tags: string, field?: string) => {
-  if (field) only(field);
+export const addressValidations = staticSuite((model: AddressModel, tenants: string, tags: string) => {
 
-  baseValidations(model, tenants, tags, field);
+  baseValidations(model, tenants, tags);
   stringValidations('addressChannel', model.addressChannel);
   stringValidations('addressChannelLabel', model.addressChannelLabel, SHORT_NAME_LENGTH);
   stringValidations('addressUsage', model.addressUsage);

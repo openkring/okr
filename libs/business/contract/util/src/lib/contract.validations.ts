@@ -1,11 +1,10 @@
-import { enforce, only, staticSuite, test } from 'vest';
+import { enforce, staticSuite, test } from 'vest';
 import { SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { CONTRACT_STATES, CONTRACT_TYPES, ContractModel } from '@okr/shared-models';
 import { baseValidations, dateValidations, numberValidations, stringValidations } from '@okr/shared-util-core';
 
-export const contractValidations = staticSuite((model: ContractModel, tenants: string, tags: string, field?: string) => {
-  if (field) only(field);
-  baseValidations(model, tenants, tags, field);
+export const contractValidations = staticSuite((model: ContractModel, tenants: string, tags: string) => {
+  baseValidations(model, tenants, tags);
   stringValidations('name', model.name, SHORT_NAME_LENGTH, 1, true);
   stringValidations('contractNumber', model.contractNumber, SHORT_NAME_LENGTH);
   test('contractType', '@business/contract/util.validation.type', () => { enforce(CONTRACT_TYPES.includes(model.contractType)).isTruthy(); });
@@ -38,8 +37,7 @@ export interface ContractNoticeData {
   noticeGivenBy: 'us' | 'them' | '';
 }
 
-export const contractNoticeValidations = staticSuite((model: ContractNoticeData, field?: string) => {
-  if (field) only(field);
+export const contractNoticeValidations = staticSuite((model: ContractNoticeData) => {
   dateValidations('noticeGivenDate', model.noticeGivenDate);
   test('noticeGivenDate', '@business/contract/util.validation.noticeDate', () => { enforce(model.noticeGivenDate).isNotEmpty(); });
   test('noticeGivenBy', '@business/contract/util.validation.noticeBy', () => { enforce(['us', 'them'].includes(model.noticeGivenBy)).isTruthy(); });

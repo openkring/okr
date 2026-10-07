@@ -1,13 +1,12 @@
-import { only, staticSuite } from 'vest';
+import { staticSuite } from 'vest';
 
 import { SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { AvatarUsage, Language, NameDisplay, PersonSortCriteria, PrivacyUsage, UserModel } from '@okr/shared-models';
 import { baseValidations, booleanValidations, categoryValidations, deliveryChannelsValidations, stringValidations } from '@okr/shared-util-core';
 
-export const userValidations = staticSuite((model: UserModel, tenants: string, tags: string, field?: string) => {
-  if (field) only(field);
+export const userValidations = staticSuite((model: UserModel, tenants: string, tags: string) => {
 
-  baseValidations(model, tenants, tags, field);
+  baseValidations(model, tenants, tags);
   stringValidations('loginEmail', model.loginEmail, SHORT_NAME_LENGTH);
   stringValidations('personKey', model.personKey);
   stringValidations('firstName', model.firstName, SHORT_NAME_LENGTH);

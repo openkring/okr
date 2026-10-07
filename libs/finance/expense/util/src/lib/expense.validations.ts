@@ -1,4 +1,4 @@
-import { enforce, omitWhen, only, staticSuite, test } from 'vest';
+import { enforce, omitWhen, staticSuite, test } from 'vest';
 
 import { ExpenseModel, ExpenseTransferTo } from '@okr/shared-models';
 import { ibanValidations } from '@okr/subject-address-util';
@@ -18,8 +18,7 @@ export interface ExpenseFormValue {
   note: string;
 }
 
-export const expenseValidations = staticSuite((model: ExpenseFormValue, field?: string) => {
-  if (field) only(field);
+export const expenseValidations = staticSuite((model: ExpenseFormValue) => {
 
   test('abstract', '@finance/expense/feature.validation.abstractRequired', () => {
     enforce(model.abstract).isNotEmpty();
@@ -75,8 +74,7 @@ export interface ExpenseEditFormValue {
  * amount in cents (`amountTotal`) and owns no IBAN, so the create suite's `amountCHF`/`iban`
  * tests do not apply. The message keys are shared with the create suite.
  */
-export const expenseEditValidations = staticSuite((model: ExpenseEditFormValue, field?: string) => {
-  if (field) only(field);
+export const expenseEditValidations = staticSuite((model: ExpenseEditFormValue) => {
 
   test('abstract', '@finance/expense/feature.validation.abstractRequired', () => {
     enforce(model.abstract).isNotEmpty();

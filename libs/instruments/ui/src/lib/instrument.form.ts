@@ -6,7 +6,7 @@ import { DEFAULT_NOTES, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@okr/share
 import { InstrumentModel } from '@okr/shared-models';
 import { ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { coerceBoolean } from '@okr/shared-util-core';
-import { validateVestTree } from '@okr/shared-util-angular';
+import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 
 import { InstrumentI18n, instrumentValidations } from '@okr/instruments-util';
 
@@ -58,14 +58,18 @@ export class InstrumentForm {
   public readonly dirty = output<boolean>();
   public readonly valid = output<boolean>();
 
+  // The suite needs '', '', which validateVestTree does not pass — so the bridge
+  // calls it through a closure that adds them.
+  private readonly suiteWithContext = (model: InstrumentModel) =>
+    instrumentValidations(model, '', '');
   protected readonly instrumentForm = form(this.formData, (path) =>
-    validateVestTree(path, instrumentValidations as any),
+    validateVestTree(path, this.suiteWithContext as any),
   );
 
 
   // per-field Vest errors for the notes under each field. validateVestTree calls the suite
   // with the model alone, so this mirrors exactly what drives the form's validity.
-  private readonly validationResult = computed(() => instrumentValidations(this.formData() as any, '', ''));
+  private readonly validationResult = vestErrors(this.instrumentForm);
   protected descriptionErrors = computed(() => this.validationResult().getErrors('description'));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
   constructor() {

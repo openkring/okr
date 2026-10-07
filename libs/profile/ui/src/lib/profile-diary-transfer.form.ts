@@ -4,7 +4,7 @@ import { IonAccordion, IonCol, IonGrid, IonItem, IonLabel, IonRow } from "@ionic
 
 import { DiarySource, DiaryTarget, UserModel } from "@okr/shared-models";
 import { Checkbox, CheckboxI18n, DateInput, DateInputI18n, ErrorNote } from "@okr/shared-ui";
-import { validateVestTree } from "@okr/shared-util-angular";
+import { validateVestTree, vestErrors } from "@okr/shared-util-angular";
 import { coerceBoolean, convertDateFormatToString, DateFormat } from "@okr/shared-util-core";
 import { diaryTransferValidations, mergeDiaryTargets, ProfileI18n } from "@okr/profile-util";
 
@@ -120,14 +120,14 @@ export class ProfileDiaryTransferAccordion {
 
   // The suite validates the merged targets, not the UserModel — targets() is a computed and cannot
   // back a signal form, so the form wraps formData and the closure derives the same targets.
-  private readonly suiteWithContext = (model: UserModel, field?: string) =>
-    diaryTransferValidations(this.mergeTargets(model), field);
+  private readonly suiteWithContext = (model: UserModel) =>
+    diaryTransferValidations(this.mergeTargets(model));
   protected readonly diaryTransferForm = form(this.formData, (path) =>
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     validateVestTree(path, this.suiteWithContext as any));
 
   // per-field errors for the notes under each field
-  private readonly validationResult = computed(() => diaryTransferValidations(this.targets()));
+  private readonly validationResult = vestErrors(this.diaryTransferForm);
   protected readonly diaryTargetsErrors = computed(() => this.validationResult().getErrors('diaryTargets'));
 
   protected readonly columns = computed(() => {

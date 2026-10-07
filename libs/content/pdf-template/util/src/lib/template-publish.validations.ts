@@ -1,5 +1,5 @@
 // libs/content/pdf-template/util/src/lib/template-publish.validations.ts
-import { enforce, only, staticSuite, test } from 'vest';
+import { enforce, staticSuite, test } from 'vest';
 import { DESCRIPTION_LENGTH } from '@okr/shared-constants';
 import { stringValidations } from '@okr/shared-util-core';
 
@@ -14,8 +14,7 @@ export function newTemplatePublishFormModel(): TemplatePublishFormModel {
   return { changelog: '' };
 }
 
-export const templatePublishValidations = staticSuite((model: TemplatePublishFormModel, field?: string) => {
-  if (field) only(field);
+export const templatePublishValidations = staticSuite((model: TemplatePublishFormModel) => {
 
   stringValidations('changelog', model.changelog, DESCRIPTION_LENGTH);
   test('changelog', '@content/pdf-template/feature.validation.changelog_required', () => {

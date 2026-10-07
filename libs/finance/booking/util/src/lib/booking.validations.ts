@@ -1,4 +1,4 @@
-import { enforce, only, staticSuite, test } from 'vest';
+import { enforce, staticSuite, test } from 'vest';
 
 import { stringValidations } from '@okr/shared-util-core';
 
@@ -8,8 +8,7 @@ const PFX = '@finance/booking/feature.validation.';
 
 /** The booking form: a title, a StoreDate, and at least one complete debit/credit pair. */
 export const bookingValidations = staticSuite(
-  (model: BookingFormData, tenants: string, tags: string, field?: string) => {
-    if (field) only(field);
+  (model: BookingFormData, tenants: string, tags: string) => {
 
     stringValidations('title', model.title, 100, 1, true);
     test('date', PFX + 'date', () => {

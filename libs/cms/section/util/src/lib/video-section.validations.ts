@@ -1,4 +1,4 @@
-import { omitWhen, only, staticSuite, test, enforce } from 'vest';
+import { omitWhen, staticSuite, test, enforce } from 'vest';
 
 import { VideoSection } from '@okr/shared-models';
 import { stringValidations } from '@okr/shared-util-core';
@@ -8,10 +8,9 @@ import { baseSectionValidations } from './base-section.validations';
 
 const DOCUMENT_KEY_PATTERN = /^[A-Za-z0-9_-]{1,64}$/;
 
-export const videoSectionValidations = staticSuite((model: VideoSection, field?: string) => {
-  if (field) only(field);
+export const videoSectionValidations = staticSuite((model: VideoSection) => {
 
-  baseSectionValidations(model, field);
+  baseSectionValidations(model);
 
     // album source (spec 1.82): a stored documentKey replaces the YouTube url, which is then not required
     const documentKey = model.properties?.documentKey ?? '';

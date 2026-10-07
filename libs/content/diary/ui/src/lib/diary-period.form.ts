@@ -4,7 +4,7 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonNote, IonRow } fr
 
 import { DiaryPeriod } from '@okr/shared-models';
 import { DateInput, DateInputI18n, ErrorNote } from '@okr/shared-ui';
-import { validateVestTree } from '@okr/shared-util-angular';
+import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 
 import { DiaryI18n, diaryPeriodValidations } from '@okr/content-diary-util';
 
@@ -64,7 +64,7 @@ export class DiaryPeriodForm {
   protected readonly periodForm = form(this.formData, (path) =>
     validateVestTree(path, diaryPeriodValidations as any));
 
-  private readonly validationResult = computed(() => diaryPeriodValidations(this.formData()));
+  private readonly validationResult = vestErrors(this.periodForm);
   protected travelFromErrors = computed(() => this.validationResult().getErrors('travelFrom'));
   protected travelToErrors = computed(() => this.validationResult().getErrors('travelTo'));
 

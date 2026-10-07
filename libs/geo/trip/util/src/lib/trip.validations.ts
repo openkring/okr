@@ -1,12 +1,11 @@
-import { enforce, omitWhen, only, staticSuite, test } from 'vest';
+import { enforce, omitWhen, staticSuite, test } from 'vest';
 
 import { TripModel } from '@okr/shared-models';
 import { dateValidations, timeValidations } from '@okr/shared-util-core';
 
 import { formatTripTime, MAX_TRIP_DISTANCE_KM } from './trip.util';
 
-export const tripValidationSuite = staticSuite((trip: TripModel, field?: string) => {
-  if (field) only(field);
+export const tripValidationSuite = staticSuite((trip: TripModel) => {
 
   dateValidations('startDate', trip.startDate);
   // legacy trips store the time as 'HHmm'; normalise before validating, otherwise checkTime

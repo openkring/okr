@@ -1,14 +1,13 @@
-import { enforce, omitWhen, only, staticSuite, test } from 'vest';
+import { enforce, omitWhen, staticSuite, test } from 'vest';
 import 'vest/enforce/compounds';
 
 import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@okr/shared-constants';
 import { ResourceModel } from '@okr/shared-models';
 import { baseValidations, isArrayOfBaseProperties, numberValidations, stringValidations } from '@okr/shared-util-core';
 
-export const resourceValidations = staticSuite((model: ResourceModel, tenants: string, tags: string, field?: string) => {
-  if (field) only(field);
+export const resourceValidations = staticSuite((model: ResourceModel, tenants: string, tags: string) => {
 
-  baseValidations(model, tenants, tags, field);
+  baseValidations(model, tenants, tags);
 
   stringValidations('name', model.name, SHORT_NAME_LENGTH);
   // Mirrors baseValidations, like every sibling suite does. Uncapped: `index` is generated

@@ -1,4 +1,4 @@
-import { enforce, omitWhen, only, staticSuite, test } from 'vest';
+import { enforce, omitWhen, staticSuite, test } from 'vest';
 
 import { DESCRIPTION_LENGTH, NAME_LENGTH, WORD_LENGTH } from '@okr/shared-constants';
 import { AliasModel } from '@okr/shared-models';
@@ -14,10 +14,9 @@ import { isSafeTargetUrl } from './alias.util';
  * Autorität — diese Suite ist Bequemlichkeit, keine Sicherheitsgrenze.
  */
 export const aliasValidations = staticSuite(
-  (model: AliasModel, tenants: string, tags: string, field?: string) => {
-    if (field) only(field);
+  (model: AliasModel, tenants: string, tags: string) => {
 
-    baseValidations(model, tenants, tags, field);
+    baseValidations(model, tenants, tags);
 
     stringValidations('space', model.space, WORD_LENGTH);
     stringValidations('alias', model.alias, WORD_LENGTH);

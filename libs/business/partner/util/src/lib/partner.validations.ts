@@ -1,4 +1,4 @@
-import { only, staticSuite } from 'vest';
+import { staticSuite } from 'vest';
 
 import { SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { PartnerModel } from '@okr/shared-models';
@@ -11,10 +11,9 @@ import { baseValidations, stringValidations } from '@okr/shared-util-core';
  * block a save on data the user cannot fix.
  */
 export const partnerValidations = staticSuite(
-  (model: PartnerModel, tenants: string, tags: string, field?: string) => {
-    if (field) only(field);
+  (model: PartnerModel, tenants: string, tags: string) => {
 
-    baseValidations(model, tenants, tags, field);
+    baseValidations(model, tenants, tags);
     stringValidations('name', model.name, SHORT_NAME_LENGTH);
     stringValidations('orgKey', model.orgKey);
     stringValidations('serviceUid', model.serviceUid, SHORT_NAME_LENGTH);

@@ -1,4 +1,4 @@
-import { enforce, only, staticSuite, test } from 'vest';
+import { enforce, staticSuite, test } from 'vest';
 
 import { isInteger } from '@okr/shared-util-core';
 
@@ -23,8 +23,7 @@ export type TaskSettings = {
 export const TASK_ARCHIVE_DAYS_MIN = 0;
 export const TASK_ARCHIVE_DAYS_MAX = 3650;
 
-export const taskSettingsValidations = staticSuite((model: TaskSettings, field?: string) => {
-  if (field) only(field);
+export const taskSettingsValidations = staticSuite((model: TaskSettings) => {
 
   // Messages are '@'-prefixed scoped i18n keys (TASK_I18N_KEYS.validations_*), not bare Vest
   // test names — ErrorNote.translate() resolves a bare name against the app's main bundle

@@ -6,7 +6,7 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonRow } f
 import { iconValidations } from '@okr/cms-icon-util';
 import { IconModel, RoleName, UserModel } from '@okr/shared-models';
 import { Chips, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
-import { validateVestTree } from '@okr/shared-util-angular';
+import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 import { DEFAULT_INDEX, DEFAULT_NOTES, DEFAULT_TAGS } from '@okr/shared-constants';
 
@@ -117,14 +117,14 @@ export class IconEditForm {
 
   // The suite needs tenants and tags, which validateVestTree does not pass — so the bridge
   // calls it through a closure that adds them.
-  private readonly suiteWithContext = (model: IconModel, field?: string) =>
-    iconValidations(model, this.tenants(), this.allTags(), field);
+  private readonly suiteWithContext = (model: IconModel) =>
+    iconValidations(model, this.tenants(), this.allTags());
   protected readonly iconForm = form(this.formData, (path) =>
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     validateVestTree(path, this.suiteWithContext as any));
 
   // per-field errors for the notes under each field
-  private readonly validationResult = computed(() => iconValidations(this.formData(), this.tenants(), this.allTags()));
+  private readonly validationResult = vestErrors(this.iconForm);
   protected fullPathErrors = computed(() => this.validationResult().getErrors('fullPath'));
   protected indexErrors = computed(() => this.validationResult().getErrors('index'));
 

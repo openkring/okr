@@ -1,4 +1,4 @@
-import { enforce, only, staticSuite, test } from 'vest';
+import { enforce, staticSuite, test } from 'vest';
 
 import { SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { TicketModel } from '@okr/shared-models';
@@ -13,10 +13,9 @@ import { baseValidations, stringValidations } from '@okr/shared-util-core';
  * the ingest-written heartbeat.
  */
 export const ticketValidations = staticSuite(
-  (model: TicketModel, tenants: string, tags: string, field?: string) => {
-    if (field) only(field);
+  (model: TicketModel, tenants: string, tags: string) => {
 
-    baseValidations(model, tenants, tags, field);
+    baseValidations(model, tenants, tags);
     stringValidations('name', model.name, SHORT_NAME_LENGTH);
     stringValidations('fixVersion', model.fixVersion, SHORT_NAME_LENGTH);
 

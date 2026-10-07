@@ -5,7 +5,7 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular
 import { CategoryI18n, categoryListValidations } from '@okr/category-util';
 import { CategoryItemModel, CategoryListModel, RoleName, UserModel } from '@okr/shared-models';
 import { CategoryItems, Checkbox, CheckboxI18n, Chips, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
-import { validateVestTree } from '@okr/shared-util-angular';
+import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, debugFormModel, hasRole } from '@okr/shared-util-core';
 import { DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS, DESCRIPTION_LENGTH, NAME_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 
@@ -91,8 +91,8 @@ export class CategoryListForm {
 
   // The suite needs tenants and tags, which validateVestTree does not pass — so the bridge
   // calls it through a closure that adds them.
-  private readonly suiteWithContext = (model: CategoryListModel, field?: string) =>
-    categoryListValidations(model, this.tenants(), this.allTags(), field);
+  private readonly suiteWithContext = (model: CategoryListModel) =>
+    categoryListValidations(model, this.tenants(), this.allTags());
   protected readonly categoryForm = form(this.formData, (path) =>
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     validateVestTree(path, this.suiteWithContext as any));
@@ -102,7 +102,7 @@ export class CategoryListForm {
   }
 
   // per-field errors for the notes under each field
-  private readonly validationResult = computed(() => categoryListValidations(this.formData(), this.tenants(), this.allTags()));
+  private readonly validationResult = vestErrors(this.categoryForm);
   protected translateItemsErrors = computed(() => this.validationResult().getErrors('translateItems'));
   protected notesErrors = computed(() => this.validationResult().getErrors('notes'));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));

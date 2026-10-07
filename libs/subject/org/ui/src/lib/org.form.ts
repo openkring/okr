@@ -5,7 +5,7 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular
 import { BexioIdMask, ChVatMask } from '@okr/shared-config';
 import { CategoryListModel, OrgModel, RoleName, UserModel } from '@okr/shared-models';
 import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, TextInput, TextInputI18n , ErrorNote} from '@okr/shared-ui';
-import { validateVestTree } from '@okr/shared-util-angular';
+import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 
 import { OrgI18n, orgValidations } from '@okr/subject-org-util';
@@ -133,12 +133,12 @@ export class OrgForm {
   // validation and errors
   // The suite needs tenantId and allTags, which validateVestTree does not pass — so the bridge
   // calls it through a closure that adds them.
-  private readonly suiteWithContext = (model: OrgModel, field?: string) =>
-    orgValidations(model, this.tenantId(), this.allTags(), field);
+  private readonly suiteWithContext = (model: OrgModel) =>
+    orgValidations(model, this.tenantId(), this.allTags());
   protected readonly orgForm = form(this.formData, (path) =>
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     validateVestTree(path, this.suiteWithContext as any));
-  private readonly validationResult = computed(() => orgValidations(this.formData(), this.tenantId(), this.allTags()));
+  private readonly validationResult = vestErrors(this.orgForm);
   protected dateOfFoundationErrors = computed(() => this.validationResult().getErrors('dateOfFoundation'));
   protected dateOfLiquidationErrors = computed(() => this.validationResult().getErrors('dateOfLiquidation'));
   protected typeErrors = computed(() => this.validationResult().getErrors('type'));

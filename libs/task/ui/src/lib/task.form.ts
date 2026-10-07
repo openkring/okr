@@ -9,7 +9,7 @@ import { CategoryListModel, RoleName, TaskModel, UserModel } from '@okr/shared-m
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { CategorySelect, Chips, DateInput, DateInputI18n, ErrorNote, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, getCategoryIcon, getItemLabel, getNextCategoryName, hasRole } from '@okr/shared-util-core';
-import { validateVestTree } from '@okr/shared-util-angular';
+import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { getRelatedIcon, getRelatedModelType, getRelatedRoute, TaskI18n, taskValidations } from '@okr/task-util';
 
 @Component({
@@ -162,8 +162,8 @@ export class TaskForm {
 
   // The suite needs the tenant id and the tags, which validateVestTree does not pass — so the bridge
   // calls it through a closure that adds them.
-  private readonly suiteWithContext = (model: TaskModel, field?: string) =>
-    taskValidations(model, this.tenantId(), this.allTags(), field);
+  private readonly suiteWithContext = (model: TaskModel) =>
+    taskValidations(model, this.tenantId(), this.allTags());
   protected readonly taskForm = form(this.formData, (path) =>
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     validateVestTree(path, this.suiteWithContext as any));
@@ -171,7 +171,7 @@ export class TaskForm {
   constructor() { effect(() => this.valid.emit(this.taskForm().valid())); }
 
   // validation and errors
-  private readonly validationResult = computed(() => taskValidations(this.formData(), this.tenantId(), this.allTags()));
+  private readonly validationResult = vestErrors(this.taskForm);
   protected completionDateErrors = computed(() => this.validationResult().getErrors('completionDate'));
   protected dueDateErrors = computed(() => this.validationResult().getErrors('dueDate'));
   protected importanceErrors = computed(() => this.validationResult().getErrors('importance'));

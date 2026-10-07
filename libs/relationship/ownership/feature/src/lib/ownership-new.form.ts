@@ -6,7 +6,7 @@ import { AvatarPipe } from '@okr/avatar-ui';
 import { AppStore, OrgSelectModal, PersonSelectModal, PersonSelectResult, ResourceSelectModal } from '@okr/shared-feature';
 import { OwnershipModel, OwnershipModelName, ResourceModelName, UserModel } from '@okr/shared-models';
 import { DateInput, DateInputI18n, ErrorNote } from '@okr/shared-ui';
-import { validateVestTree } from '@okr/shared-util-angular';
+import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, getAvatarKey, getCategoryIcon, getFullName, getTodayStr, isOrg, isPerson, isResource } from '@okr/shared-util-core';
 
 import { ownershipValidations } from '@okr/relationship-ownership-util';
@@ -98,14 +98,14 @@ export class OwnershipNewForm {
 
   // The suite needs the tenant and the ownership tags, which validateVestTree does not pass — so
   // the bridge calls it through a closure that adds them (same context as validationResult below).
-  private readonly suiteWithContext = (model: OwnershipModel, field?: string) =>
-    ownershipValidations(model, this.appStore.tenantId(), this.appStore.getTags(OwnershipModelName), field);
+  private readonly suiteWithContext = (model: OwnershipModel) =>
+    ownershipValidations(model, this.appStore.tenantId(), this.appStore.getTags(OwnershipModelName));
   protected readonly ownershipNewForm = form(this.formData, (path) =>
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     validateVestTree(path, this.suiteWithContext as any));
 
   // validation and errors
-  private readonly validationResult = computed(() => ownershipValidations(this.formData(), this.appStore.tenantId(), this.appStore.getTags(OwnershipModelName)));
+  private readonly validationResult = vestErrors(this.ownershipNewForm);
 
   protected validFromErrors = computed(() => this.validationResult().getErrors('validFrom'));
   // fields

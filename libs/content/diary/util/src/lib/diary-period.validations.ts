@@ -1,4 +1,4 @@
-import { enforce, only, staticSuite, test } from 'vest';
+import { enforce, staticSuite, test } from 'vest';
 
 import { DiaryPeriod } from '@okr/shared-models';
 
@@ -9,8 +9,7 @@ import { DiaryPeriod } from '@okr/shared-models';
  * also the suite's always-present rule: Vest reports a suite in which no test ran as not valid,
  * and an empty, open period must still be saveable.
  */
-export const diaryPeriodValidations = staticSuite((model: DiaryPeriod, field?: string) => {
-  if (field) only(field);
+export const diaryPeriodValidations = staticSuite((model: DiaryPeriod) => {
   test('travelTo', '@content/diary/feature.period.error', () => {
     const from = model?.travelFrom ?? '';
     const to = model?.travelTo ?? '';

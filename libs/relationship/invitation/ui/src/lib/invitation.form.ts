@@ -5,7 +5,7 @@ import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, 
 import { DEFAULT_DATETIME, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS, DESCRIPTION_LENGTH, NAME_LENGTH } from '@okr/shared-constants';
 import { AvatarInfo, RoleName, InvitationModel, UserModel, DEFAULT_INVITATION_STATE, DEFAULT_INVITATION_ROLE } from '@okr/shared-models';
 import { Chips, NotesInput, NotesInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
-import { validateVestTree } from '@okr/shared-util-angular';
+import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, DateFormat, getTodayStr, hasRole } from '@okr/shared-util-core';
 import { PrettyDatePipe, PrettyDateTimePipe } from '@okr/shared-pipes';
 import { AvatarDisplay, AvatarInput } from '@okr/avatar-ui';
@@ -149,7 +149,7 @@ export class InvitationForm {
     validateVestTree(path, invitationValidations as any));
 
   // validation and errors
-  private readonly validationResult = computed(() => invitationValidations(this.formData()));
+  private readonly validationResult = vestErrors(this.invitationForm);
   protected notesErrors = computed(() => this.validationResult().getErrors('notes'));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
 

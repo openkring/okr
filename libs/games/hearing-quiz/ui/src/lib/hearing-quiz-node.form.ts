@@ -6,7 +6,7 @@ import { DESCRIPTION_LENGTH } from '@okr/shared-constants';
 import { HearingQuizAnswer, HearingQuizNodeModel, HearingQuizNodeType } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { Checkbox, CheckboxI18n, ErrorNote, NotesInput, NotesInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
-import { validateVestTree } from '@okr/shared-util-angular';
+import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean } from '@okr/shared-util-core';
 
 import {
@@ -214,11 +214,15 @@ export class HearingQuizNodeForm {
   public readonly audioSelected = output<File>();
   public readonly hintImageSelected = output<File>();
 
+  // The suite needs '', '', which validateVestTree does not pass — so the bridge
+  // calls it through a closure that adds them.
+  private readonly suiteWithContext = (model: HearingQuizNodeModel) =>
+    hearingQuizNodeValidations(model, '', '');
   protected readonly nodeForm = form(this.formData, (path) =>
-    validateVestTree(path, hearingQuizNodeValidations as any),
+    validateVestTree(path, this.suiteWithContext as any),
   );
 
-  private readonly validationResult = computed(() => hearingQuizNodeValidations(this.formData(), '', ''));
+  private readonly validationResult = vestErrors(this.nodeForm);
   protected titleErrors = computed(() => this.validationResult().getErrors('title'));
   protected typeErrors = computed(() => this.validationResult().getErrors('type'));
   protected parentErrors = computed(() => this.validationResult().getErrors('parentKey'));

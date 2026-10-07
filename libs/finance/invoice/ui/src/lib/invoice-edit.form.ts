@@ -6,7 +6,7 @@ import { DEFAULT_NOTES, DEFAULT_TAGS, SHORT_NAME_LENGTH } from '@okr/shared-cons
 import { AccountModel, InvoiceModel, UserModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { DateInput, DateInputI18n, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
-import { validateVestTree } from '@okr/shared-util-angular';
+import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean } from '@okr/shared-util-core';
 
 import { INVOICE_NOTES_LENGTH, InvoiceI18n, InvoicePositionInput, invoiceValidations, positionsTotal } from '@okr/finance-invoice-util';
@@ -166,14 +166,12 @@ export class InvoiceEditForm {
   protected readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   // The suite needs the tags, which validateVestTree does not pass — so the bridge calls it
   // through a closure that adds them.
-  private readonly suiteWithContext = (model: InvoiceModel, field?: string) =>
-    invoiceValidations(model, '', this.allTags(), field);
+  private readonly suiteWithContext = (model: InvoiceModel) =>
+    invoiceValidations(model, '', this.allTags());
   protected readonly invoiceForm = form(this.formData, (path) =>
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     validateVestTree(path, this.suiteWithContext as any));
-  private readonly validationResult = computed(() =>
-    invoiceValidations(this.formData(), '', this.allTags())
-  );
+  private readonly validationResult = vestErrors(this.invoiceForm);
   protected dueDateErrors = computed(() => this.validationResult().getErrors('dueDate'));
   protected invoiceDateErrors = computed(() => this.validationResult().getErrors('invoiceDate'));
   protected titleErrors = computed(() => this.validationResult().getErrors('title'));

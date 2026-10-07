@@ -1,4 +1,4 @@
-import { enforce, only, staticSuite, test } from 'vest';
+import { enforce, staticSuite, test } from 'vest';
 
 import { SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { AccountingConfigModel, DEFAULT_REMINDER_DUE_DAYS, DEFAULT_REMINDER_FEES, DEFAULT_REMINDER_GRACE_DAYS } from '@okr/shared-models';
@@ -36,10 +36,9 @@ export function hasReminderFee(model: Pick<AccountingConfigModel, 'reminderFees'
 }
 
 export const accountingConfigValidations = staticSuite(
-  (model: AccountingConfigModel, tenants: string, tags: string, field?: string) => {
-    if (field) only(field);
+  (model: AccountingConfigModel, tenants: string, tags: string) => {
 
-    baseValidations(model, tenants, tags, field);  // okey, tenants, isArchived
+    baseValidations(model, tenants, tags);  // okey, tenants, isArchived
     stringValidations('accountingTenantId', model.accountingTenantId, SHORT_NAME_LENGTH, 1, true);
     // Both account links are optional (empty = not linked yet), but must stay account okeys.
     stringValidations('defaultExpenseAccountKey', model.defaultExpenseAccountKey);

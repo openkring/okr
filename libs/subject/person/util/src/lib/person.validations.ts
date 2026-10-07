@@ -1,4 +1,4 @@
-import { enforce, omitWhen, only, staticSuite, test } from 'vest';
+import { enforce, omitWhen, staticSuite, test } from 'vest';
 
 import { BEXIO_ID_LENGTH, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { PrivacyUsage } from '@okr/shared-models';
@@ -9,10 +9,9 @@ import { ssnValidations } from './ssn.validations';
 
 // Validates the person edit/profile form data: PersonFormModel keeps the vault-backed
 // ssn/dob fields that were stripped from PersonModel (spec 1.19 Phase 4).
-export const personValidations = staticSuite((model: PersonFormModel, tenants: string, tags: string, field?: string) => {
-  if (field) only(field);
+export const personValidations = staticSuite((model: PersonFormModel, tenants: string, tags: string) => {
 
-  baseValidations(model, tenants, tags, field);
+  baseValidations(model, tenants, tags);
   // `index` is generated (get<Model>Index) and the service overwrites it at save time, AFTER
   // this suite runs — a cap here can only reject a value the user cannot see or edit, so the
   // form would just never offer its save bar. Left uncapped on purpose; see vest.util.

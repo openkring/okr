@@ -1,4 +1,4 @@
-import { only, staticSuite } from 'vest';
+import { staticSuite } from 'vest';
 
 import { WebsiteContentModel } from '@okr/shared-models';
 import { stringValidations } from '@okr/shared-util-core';
@@ -9,8 +9,7 @@ import { stringValidations } from '@okr/shared-util-core';
  * language texts are strings (empty is fine). No length cap — an HTML text may be long, and the
  * key is not edited here (it is chosen when the text is created).
  */
-export const aocWebsiteValidations = staticSuite((model: WebsiteContentModel, field?: string) => {
-  if (field) only(field);
+export const aocWebsiteValidations = staticSuite((model: WebsiteContentModel) => {
 
   stringValidations('de', model.de);
   stringValidations('en', model.en);

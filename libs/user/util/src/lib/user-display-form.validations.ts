@@ -1,13 +1,11 @@
-import { only, staticSuite } from 'vest';
+import { staticSuite } from 'vest';
 
 import { AvatarUsage, Language, NameDisplay, PersonSortCriteria } from '@okr/shared-models';
 import { booleanValidations, categoryValidations } from '@okr/shared-util-core';
 
 import { UserDisplayFormModel } from './user-display-form.model';
 
-export const userDisplayFormValidations = staticSuite((model: UserDisplayFormModel, field?: string) => {
-  only(field);
-
+export const userDisplayFormValidations = staticSuite((model: UserDisplayFormModel) => {
   categoryValidations('avatarUsage', model.avatarUsage, AvatarUsage);
   categoryValidations('personSortCriteria', model.personSortCriteria, PersonSortCriteria);
   categoryValidations('userLanguage', model.userLanguage, Language);

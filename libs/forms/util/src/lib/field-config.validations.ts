@@ -1,4 +1,4 @@
-import { enforce, omitWhen, only, staticSuite, test } from 'vest';
+import { enforce, omitWhen, staticSuite, test } from 'vest';
 
 import { DESCRIPTION_LENGTH, LONG_NAME_LENGTH, NAME_LENGTH } from '@okr/shared-constants';
 import { Field } from '@okr/shared-models';
@@ -18,8 +18,7 @@ export function fieldLabelLength(field: Pick<Field, 'type'>): number {
  * Validates one form-builder field as configured in the field-config modal.
  * Display elements (label, divider) carry no key; a divider carries no label either.
  */
-export const fieldConfigValidations = staticSuite((model: Field, field?: string) => {
-  if (field) only(field);
+export const fieldConfigValidations = staticSuite((model: Field) => {
 
   omitWhen(model.type === 'divider', () => {
     stringValidations('label', model.label, fieldLabelLength(model), 0, true);

@@ -5,7 +5,7 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular
 import { CurrencyCode, MoneyModel, OwnershipModel, RoleName, UserModel } from '@okr/shared-models';
 import { DEFAULT_CURRENCY } from '@okr/shared-constants';
 import { Chips, DateInput, ErrorNote, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
-import { validateVestTree } from '@okr/shared-util-angular';
+import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 
 import { ownershipValidations } from '@okr/relationship-ownership-util';
@@ -142,14 +142,14 @@ export class OwnershipForm {
 
   // The suite needs tenants and tags, which validateVestTree does not pass — so the bridge
   // calls it through a closure that adds them (same context as validationResult below).
-  private readonly suiteWithContext = (model: OwnershipModel, field?: string) =>
-    ownershipValidations(model, this.tenantId(), this.allTags(), field);
+  private readonly suiteWithContext = (model: OwnershipModel) =>
+    ownershipValidations(model, this.tenantId(), this.allTags());
   protected readonly ownershipForm = form(this.formData, (path) =>
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     validateVestTree(path, this.suiteWithContext as any));
 
   // validation and errors
-  private readonly validationResult = computed(() => ownershipValidations(this.formData(), this.tenantId(), this.allTags()));
+  private readonly validationResult = vestErrors(this.ownershipForm);
   protected validFromErrors = computed(() => this.validationResult().getErrors('validFrom'));
   protected validToErrors = computed(() => this.validationResult().getErrors('validTo'));
 

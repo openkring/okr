@@ -1,4 +1,4 @@
-import { enforce, only, staticSuite, test } from 'vest';
+import { enforce, staticSuite, test } from 'vest';
 import { DESCRIPTION_LENGTH } from '@okr/shared-constants';
 import { CrosswordTopicModel } from '@okr/shared-models';
 import { baseValidations, stringValidations } from '@okr/shared-util-core';
@@ -33,14 +33,12 @@ export const MIN_ENTRIES = 5;
  * `libs/shared/util-angular/src/lib/vest-bridge.spec.ts` for the same failure mode proven in
  * general.
  *
- * A `staticSuite`, like the rest of the repo: the form runs it per field through
- * `validateVestTree` AND in full for the error notes, and a stateful `create()` suite shared by
- * both callers made each result depend on which one ran last.
+ * A `staticSuite`, like the rest of the repo: it runs inside `validateVestTree`, and a stateful
+ * `create()` suite made each result depend on the previous run.
  */
-export const crosswordTopicSuite = staticSuite((model: CrosswordTopicModel, tenants = '', tags = '', field?: string) => {
-  if (field) only(field);
+export const crosswordTopicSuite = staticSuite((model: CrosswordTopicModel, tenants = '', tags = '') => {
 
-  baseValidations(model, tenants, tags, field);
+  baseValidations(model, tenants, tags);
   stringValidations('title', model.title, MAX_TITLE_LENGTH, 0, true);
   stringValidations('description', model.description, DESCRIPTION_LENGTH);
 

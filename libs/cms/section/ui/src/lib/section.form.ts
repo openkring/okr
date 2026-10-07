@@ -6,7 +6,7 @@ import { Chips, ErrorNote, ImageConfigEdit, NotesInput, NotesInputI18n } from '@
 import { coerceBoolean, debugFormModel, hasRole, sanitizeFileName } from '@okr/shared-util-core';
 import { DEFAULT_LABEL, DEFAULT_NOTES, DEFAULT_TAGS, IMAGE_MIMETYPES } from '@okr/shared-constants';
 import { UploadService } from '@okr/avatar-data-access';
-import { confirm, MODEL_SELECTOR, validateVestTree } from '@okr/shared-util-angular';
+import { confirm, MODEL_SELECTOR, validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { AlertController, IonItem, IonToggle } from '@ionic/angular/standalone';
 import { ChartOption, getInlineErrorFields, getRemainingErrors, SectionErrors, SectionI18n, validateSection } from '@okr/cms-section-util';
 
@@ -485,7 +485,6 @@ export class SectionForm {
   public readonly valid = output<boolean>();
 
   // validation (per-type suite, picked from formData().type)
-  private readonly validationResult = computed(() => validateSection(this.formData()));
   /** handed to every configuration child so each field can show its own error note */
   protected readonly errors = computed(() => this.validationResult().getErrors() as SectionErrors);
   /** errors of fields that no child renders — shown at the end of the form */
@@ -547,6 +546,7 @@ export class SectionForm {
   protected readonly sectionForm = form(this.formData, (path) =>
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     validateVestTree(path, this.suiteWithContext as any));
+  private readonly validationResult = vestErrors(this.sectionForm);
 
   // derived read-only mirrors of formData (every change is written back to formData)
   protected sectionKey = computed(() => this.formData().okey);

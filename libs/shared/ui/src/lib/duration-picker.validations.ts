@@ -1,4 +1,4 @@
-import { enforce, only, staticSuite, test } from 'vest';
+import { enforce, staticSuite, test } from 'vest';
 
 /**
  * Form model of the {@link DurationPickerModal}. `from`/`to` are ISO strings in the
@@ -11,8 +11,7 @@ export interface DurationPickerFormModel {
   to: string;
 }
 
-export const durationPickerValidations = staticSuite((model: DurationPickerFormModel, field?: string) => {
-  if (field) only(field);
+export const durationPickerValidations = staticSuite((model: DurationPickerFormModel) => {
 
   test('from', '@validation.duration.fromRequired', () => {
     enforce(model.from).isNotBlank();

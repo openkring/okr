@@ -4,7 +4,7 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonNote, I
 
 import { CategoryListModel, INVOICE_STATE_VALUES, MemberFeeModel, MemberFeePosition, UserModel } from '@okr/shared-models';
 import { NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n , ErrorNote} from '@okr/shared-ui';
-import { validateVestTree } from '@okr/shared-util-angular';
+import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { getAgeFromBirthYear } from '@okr/shared-util-core';
 
 import { MembershipI18n, applyProRata, getFeeTotal, memberFeeValidations, positionAmountField } from '@okr/relationship-membership-util';
@@ -132,13 +132,13 @@ export class MemberFeeEditForm {
   // The suite takes tenants and tags (for baseValidations), which validateVestTree does not pass —
   // so the bridge calls it through a closure. The fee form has always validated them as '' (it
   // neither edits tenants nor tags); keep that so validity is unchanged.
-  private readonly suiteWithContext = (model: MemberFeeModel, field?: string) =>
-    memberFeeValidations(model, '', '', field);
+  private readonly suiteWithContext = (model: MemberFeeModel) =>
+    memberFeeValidations(model, '', '');
   protected readonly memberFeeForm = form(this.formData, (path) =>
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     validateVestTree(path, this.suiteWithContext as any));
 
-  private readonly validationResult = computed(() => memberFeeValidations(this.formData(), '', ''));
+  private readonly validationResult = vestErrors(this.memberFeeForm);
   protected stateErrors = computed(() => this.validationResult().getErrors('state'));
 
   /**

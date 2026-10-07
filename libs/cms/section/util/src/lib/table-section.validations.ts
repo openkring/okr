@@ -1,13 +1,12 @@
-import { only, staticSuite } from 'vest';
+import { staticSuite } from 'vest';
 
 import { TableSection } from '@okr/shared-models';
 
 import { baseSectionValidations } from './base-section.validations';
 
-export const tableSectionValidations = staticSuite((model: TableSection, field?: string) => {
-    if (field) only(field);
+export const tableSectionValidations = staticSuite((model: TableSection) => {
 
-    baseSectionValidations(model, field);
+    baseSectionValidations(model);
 
     /* tbd:
 

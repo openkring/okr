@@ -5,7 +5,7 @@ import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, 
 import { PhotoUsages, PrivacyUsages } from "@okr/shared-categories";
 import { PrivacyUsage, UserModel } from "@okr/shared-models";
 import { CategoryOld, CategoryOldI18n, Checkbox, CheckboxI18n, ErrorNote } from "@okr/shared-ui";
-import { validateVestTree } from "@okr/shared-util-angular";
+import { validateVestTree, vestErrors } from "@okr/shared-util-angular";
 import { coerceBoolean } from "@okr/shared-util-core";
 
 import { USER_PRIVACY_FORM_SHAPE, UserI18n, UserPrivacyFormModel, userPrivacyFormValidations } from "@okr/user-util";
@@ -100,7 +100,7 @@ export class UserPrivacyForm {
   protected readonly privacyForm = form(this.formData, (path) => validateVestTree(path, userPrivacyFormValidations as any));
 
   // per-field errors for the notes under each field
-  private readonly validationResult = computed(() => userPrivacyFormValidations(this.formData()));
+  private readonly validationResult = vestErrors(this.privacyForm);
   protected readonly usageImagesErrors = computed(() => this.validationResult().getErrors('usageImages'));
   protected readonly usageDateOfBirthErrors = computed(() => this.validationResult().getErrors('usageDateOfBirth'));
   protected readonly usagePostalAddressErrors = computed(() => this.validationResult().getErrors('usagePostalAddress'));

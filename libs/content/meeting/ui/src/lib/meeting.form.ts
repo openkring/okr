@@ -5,7 +5,7 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular
 import { DEFAULT_NOTES, DEFAULT_TAGS, LONG_NAME_LENGTH } from '@okr/shared-constants';
 import { AgendaItem, MeetingModel, RoleName, UserModel } from '@okr/shared-models';
 import { Chips, DateInput, DateInputI18n, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n, TimeInput, TimeInputI18n } from '@okr/shared-ui';
-import { validateVestTree } from '@okr/shared-util-angular';
+import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 
 import { MeetingI18n, meetingValidations } from '@okr/content-meeting-util';
@@ -97,14 +97,18 @@ export class MeetingForm {
   public readonly addTask = output<AgendaItem>();
 
   // signal form — wraps formData with Vest validation
+  // The suite needs '', this.allTags(), which validateVestTree does not pass — so the bridge
+  // calls it through a closure that adds them.
+  private readonly suiteWithContext = (model: MeetingModel) =>
+    meetingValidations(model, '', this.allTags());
   protected readonly meetingForm = form(this.formData, (path) =>
-    validateVestTree(path, meetingValidations as any),
+    validateVestTree(path, this.suiteWithContext as any),
   );
 
 
   // per-field Vest errors for the notes under each field. validateVestTree calls the suite
   // with the model alone, so this mirrors exactly what drives the form's validity.
-  private readonly validationResult = computed(() => meetingValidations(this.formData() as any, '', this.allTags()));
+  private readonly validationResult = vestErrors(this.meetingForm);
   protected meetingDateErrors = computed(() => this.validationResult().getErrors('meetingDate'));
   protected startTimeErrors = computed(() => this.validationResult().getErrors('startTime'));
   protected locationKeyErrors = computed(() => this.validationResult().getErrors('locationKey'));

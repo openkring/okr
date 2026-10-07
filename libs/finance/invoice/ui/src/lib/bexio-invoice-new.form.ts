@@ -3,7 +3,7 @@ import { form } from '@angular/forms/signals';
 import { IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonList, IonRow } from '@ionic/angular/standalone';
 
 import { DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n , ErrorNote} from '@okr/shared-ui';
-import { validateVestTree } from '@okr/shared-util-angular';
+import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean } from '@okr/shared-util-core';
 import { SvgIconPipe } from '@okr/shared-pipes';
 
@@ -203,7 +203,7 @@ export class BexioInvoiceNewForm {
   protected readonly invoiceForm = form(this.formData, (path) =>
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     validateVestTree(path, bexioInvoiceValidations as any));
-  private readonly validationResult = computed(() => bexioInvoiceValidations(this.formData()));
+  private readonly validationResult = vestErrors(this.invoiceForm);
   protected validFromErrors = computed(() => this.validationResult().getErrors('validFrom'));
   protected validToErrors = computed(() => this.validationResult().getErrors('validTo'));
   protected bexioIdErrors = computed(() => this.validationResult().getErrors('bexioId'));

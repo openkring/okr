@@ -4,7 +4,7 @@ import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, 
 
 import { CategoryListModel, UserModel } from "@okr/shared-models";
 import { Checkbox, CheckboxI18n, Chips, ErrorNote } from "@okr/shared-ui";
-import { validateVestTree } from "@okr/shared-util-angular";
+import { validateVestTree, vestErrors } from "@okr/shared-util-angular";
 import { coerceBoolean, getCategoryItemNames } from "@okr/shared-util-core";
 
 import { flattenRoles, structureRoles, UserAuthFormModel, userAuthFormValidations, UserI18n } from "@okr/user-util";
@@ -71,7 +71,7 @@ export class UserAuthForm {
   protected readonly authForm = form(this.formData, (path) => validateVestTree(path, userAuthFormValidations as any));
 
   // per-field errors for the notes under each field
-  private readonly validationResult = computed(() => userAuthFormValidations(this.formData()));
+  private readonly validationResult = vestErrors(this.authForm);
 
   protected useFaceIdErrors = computed(() => this.validationResult().getErrors('useFaceId'));
   protected useTouchIdErrors = computed(() => this.validationResult().getErrors('useTouchId'));

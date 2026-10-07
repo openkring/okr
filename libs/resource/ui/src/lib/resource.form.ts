@@ -5,7 +5,7 @@ import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, 
 import { BaseProperty, CategoryListModel, ResourceModel, RoleName, UserModel } from '@okr/shared-models';
 import { CategorySelect, Chips, Color, ErrorNote, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, PropertyList, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, getYear, hasRole } from '@okr/shared-util-core';
-import { validateVestTree } from '@okr/shared-util-angular';
+import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { DEFAULT_CAR_TYPE, DEFAULT_GENDER, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PET_TYPE, DEFAULT_PRICE, DEFAULT_RBOAT_TYPE, DEFAULT_RBOAT_USAGE, DEFAULT_TAGS, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 
 import { getUsageForYear, ResourceI18n, resourceValidations, getKeyNr, getLockerNr, setUsageFromYear } from '@okr/resource-util';
@@ -363,8 +363,8 @@ export class ResourceForm {
 
   // The suite needs the tenant id and the tags, which validateVestTree does not pass — so the bridge
   // calls it through a closure that adds them.
-  private readonly suiteWithContext = (model: ResourceModel, field?: string) =>
-    resourceValidations(model, this.tenantId(), this.allTags(), field);
+  private readonly suiteWithContext = (model: ResourceModel) =>
+    resourceValidations(model, this.tenantId(), this.allTags());
   protected readonly resourceForm = form(this.formData, (path) =>
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     validateVestTree(path, this.suiteWithContext as any));
@@ -372,7 +372,7 @@ export class ResourceForm {
   constructor() { effect(() => this.valid.emit(this.resourceForm().valid())); }
 
   // validation and errors
-  private readonly validationResult = computed(() => resourceValidations(this.formData(), this.tenantId(), this.allTags()));
+  private readonly validationResult = vestErrors(this.resourceForm);
   protected descriptionErrors = computed(() => this.validationResult().getErrors('description'));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
   protected loadErrors = computed(() => this.validationResult().getErrors('load'));

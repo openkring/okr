@@ -1,13 +1,12 @@
-import { only, staticSuite } from 'vest';
+import { staticSuite } from 'vest';
 
 import { DESCRIPTION_LENGTH } from '@okr/shared-constants';
 import { TaskModel } from '@okr/shared-models';
 import { avatarValidations, baseValidations, dateValidations, stringValidations } from '@okr/shared-util-core';
 
-export const taskValidations = staticSuite((model: TaskModel, tenants: string, tags: string, field?: string) => {
-  if (field) only(field);
+export const taskValidations = staticSuite((model: TaskModel, tenants: string, tags: string) => {
 
-  baseValidations(model, tenants, tags, field);
+  baseValidations(model, tenants, tags);
   stringValidations('notes', model.notes, DESCRIPTION_LENGTH);
 
   avatarValidations('author', model.author);

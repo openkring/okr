@@ -3,7 +3,7 @@ import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
 import { ErrorNote, NumberInput, NumberInputI18n } from '@okr/shared-ui';
-import { validateVestTree } from '@okr/shared-util-angular';
+import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 
 import { TASK_ARCHIVE_DAYS_MAX, TASK_ARCHIVE_DAYS_MIN, TaskI18n, TaskSettings, taskSettingsValidations } from '@okr/task-util';
 
@@ -56,7 +56,7 @@ export class TaskSettingsForm {
   protected readonly settingsForm = form(this.formData, (path) =>
     validateVestTree(path, taskSettingsValidations as any));
 
-  private readonly validationResult = computed(() => taskSettingsValidations(this.formData()));
+  private readonly validationResult = vestErrors(this.settingsForm);
   protected taskArchiveDaysErrors = computed(() => this.validationResult().getErrors('taskArchiveDays'));
 
   constructor() {

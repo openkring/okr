@@ -1,4 +1,4 @@
-import { enforce, only, staticSuite, test } from 'vest';
+import { enforce, staticSuite, test } from 'vest';
 
 import { LONG_NAME_LENGTH } from '@okr/shared-constants';
 
@@ -18,8 +18,7 @@ export const INVOICE_POSITION_NAME_LENGTH = LONG_NAME_LENGTH;
  * subtotal and page break nothing. Per-row failures are filed as `<index>.<field>` so the form shows
  * each note under its own row.
  */
-export const invoicePositionsValidations = staticSuite((positions: InvoicePositionInput[], field?: string) => {
-  if (field) only(field);
+export const invoicePositionsValidations = staticSuite((positions: InvoicePositionInput[]) => {
   const list = positions ?? [];
 
   test('positions', PFX + 'empty', () => {

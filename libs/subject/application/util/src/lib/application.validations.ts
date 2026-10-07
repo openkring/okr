@@ -1,4 +1,4 @@
-import { enforce, omitWhen, only, staticSuite, test } from 'vest';
+import { enforce, omitWhen, staticSuite, test } from 'vest';
 import { ApplicationModel } from '@okr/shared-models';
 import { ssnValidations } from '@okr/subject-person-util';
 import { needsSsn } from './application.util';
@@ -13,8 +13,7 @@ const EMAIL_INVALID = PFX + 'email_invalid';
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /** Validates an application (membership request) in the edit modal. */
-export const applicationValidations = staticSuite((app: ApplicationModel, field?: string) => {
-  if (field) only(field);
+export const applicationValidations = staticSuite((app: ApplicationModel) => {
 
   test('firstName',     REQUIRED,      () => { enforce(app.firstName).isNotBlank(); });
   test('lastName',      REQUIRED,      () => { enforce(app.lastName).isNotBlank(); });

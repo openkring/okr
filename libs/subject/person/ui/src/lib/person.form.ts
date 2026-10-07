@@ -8,7 +8,7 @@ import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInput
 import { areNotesVisible, areTagsVisible, coerceBoolean, hasRole, isVaultFieldVisible, isVisibleToUser } from '@okr/shared-util-core';
 import { PersonFormModel, personValidations, PersonI18n } from '@okr/subject-person-util';
 import { BEXIO_ID_LENGTH, DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
-import { AhvFormat, formatAhv, validateVestTree } from '@okr/shared-util-angular';
+import { AhvFormat, formatAhv, validateVestTree, vestErrors } from '@okr/shared-util-angular';
 
 @Component({
   selector: 'okr-person-form',
@@ -136,12 +136,12 @@ export class PersonForm {
   // validation and errors
   // The suite needs tenantId and allTags, which validateVestTree does not pass — so the bridge
   // calls it through a closure that adds them.
-  private readonly suiteWithContext = (model: PersonFormModel, field?: string) =>
-    personValidations(model, this.tenantId(), this.allTags(), field);
+  private readonly suiteWithContext = (model: PersonFormModel) =>
+    personValidations(model, this.tenantId(), this.allTags());
   protected readonly personForm = form(this.formData, (path) =>
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     validateVestTree(path, this.suiteWithContext as any));
-  private readonly validationResult = computed(() => personValidations(this.formData(), this.tenantId(), this.allTags()));
+  private readonly validationResult = vestErrors(this.personForm);
   protected dateOfBirthErrors = computed(() => this.validationResult().getErrors('dateOfBirth'));
   protected dateOfDeathErrors = computed(() => this.validationResult().getErrors('dateOfDeath'));
   protected genderErrors = computed(() => this.validationResult().getErrors('gender'));

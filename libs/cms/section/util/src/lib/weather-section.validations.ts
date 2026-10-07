@@ -1,4 +1,4 @@
-import { enforce, only, staticSuite, test } from 'vest';
+import { enforce, staticSuite, test } from 'vest';
 
 import { WeatherSection, WeatherVariant } from '@okr/shared-models';
 
@@ -14,10 +14,9 @@ const VARIANTS: WeatherVariant[] = [
 export const MAP_MIN_LOCATIONS = 2;
 export const MAP_MAX_LOCATIONS = 10;
 
-export const weatherSectionValidations = staticSuite((model: WeatherSection, field?: string) => {
-  if (field) only(field);
+export const weatherSectionValidations = staticSuite((model: WeatherSection) => {
 
-  baseSectionValidations(model, field);
+  baseSectionValidations(model);
 
   test('variant', 'weatherVariant', () => {
     enforce(VARIANTS.includes(model.properties?.variant)).isTruthy();

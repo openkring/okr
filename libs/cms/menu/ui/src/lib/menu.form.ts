@@ -5,7 +5,7 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonRow } f
 import { DEFAULT_MENU_ACTION, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ROLE, DEFAULT_TAGS, DEFAULT_URL, DESCRIPTION_LENGTH, LONG_NAME_LENGTH, NAME_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { BaseProperty, CategoryListModel, MenuItemModel, RoleName, UserModel } from '@okr/shared-models';
 import { CategorySelect, Chips, ErrorNote, NotesInput, NotesInputI18n, StringList, TextInput, TextInputI18n, UrlInput, UrlInputI18n, IconInput } from '@okr/shared-ui';
-import { validateVestTree } from '@okr/shared-util-angular';
+import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 
 import { MenuI18n, menuItemValidations, normalizeMenuInfo } from '@okr/cms-menu-util';
@@ -198,14 +198,14 @@ export class MenuForm {
 
   // The suite needs tenants and tags, which validateVestTree does not pass — so the bridge
   // calls it through a closure that adds them.
-  private readonly suiteWithContext = (model: MenuItemModel, field?: string) =>
-    menuItemValidations(model, this.tenantId(), this.allTags(), field);
+  private readonly suiteWithContext = (model: MenuItemModel) =>
+    menuItemValidations(model, this.tenantId(), this.allTags());
   protected readonly menuForm = form(this.formData, (path) =>
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     validateVestTree(path, this.suiteWithContext as any));
 
   // per-field errors for the notes under each field
-  private readonly validationResult = computed(() => menuItemValidations(this.formData(), this.tenantId(), this.allTags()));
+  private readonly validationResult = vestErrors(this.menuForm);
   protected actionErrors = computed(() => this.validationResult().getErrors('action'));
   protected roleNeededErrors = computed(() => this.validationResult().getErrors('roleNeeded'));
   protected descriptionErrors = computed(() => this.validationResult().getErrors('description'));

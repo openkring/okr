@@ -5,7 +5,7 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonLabel, I
 import { CategoryListModel, UserModel } from '@okr/shared-models';
 import { CategorySelect, DateInput, DateInputI18n, ErrorNote } from '@okr/shared-ui';
 import { DEFAULT_DATE, DEFAULT_NAME } from '@okr/shared-constants';
-import { validateVestTree } from '@okr/shared-util-angular';
+import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean } from '@okr/shared-util-core';
 
 import { CategoryChangeFormModel, categoryChangeFormValidations, MembershipI18n } from '@okr/relationship-membership-util';
@@ -94,7 +94,7 @@ export class CategoryChangeForm {
     validateVestTree(path, categoryChangeFormValidations as any));
 
   // validation and errors
-  private readonly validationResult = computed(() => categoryChangeFormValidations(this.formData()));
+  private readonly validationResult = vestErrors(this.categoryChangeForm);
 
   protected dateOfChangeErrors = computed(() => this.validationResult().getErrors('dateOfChange'));
   protected membershipCategoryNewErrors = computed(() => this.validationResult().getErrors('membershipCategoryNew'));

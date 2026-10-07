@@ -10,7 +10,7 @@ import {
   TextInput, TextInputI18n,
 } from '@okr/shared-ui';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
-import { validateVestTree } from '@okr/shared-util-angular';
+import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { DEFAULT_TAGS, LONG_NAME_LENGTH } from '@okr/shared-constants';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { Avatars } from '@okr/avatar-ui';
@@ -193,7 +193,11 @@ export class DiaryForm {
   public readonly personSelectClicked = output<void>();
 
   // signal form — wraps formData with Vest validation
-  protected readonly diaryForm = form(this.formData, (path) => validateVestTree(path, diaryValidations as any));
+  // The suite needs (this.tenantId() ?? '') as string, (this.allTags() ?? '') as string, which validateVestTree does not pass — so the bridge
+  // calls it through a closure that adds them.
+  private readonly suiteWithContext = (model: DiaryModel) =>
+    diaryValidations(model, (this.tenantId() ?? '') as string, (this.allTags() ?? '') as string);
+  protected readonly diaryForm = form(this.formData, (path) => validateVestTree(path, this.suiteWithContext as any));
 
   constructor() {
     effect(() => this.valid.emit(this.diaryForm().valid()));
@@ -218,9 +222,7 @@ export class DiaryForm {
 
   // per-field Vest errors are read from a direct suite call (menu.form.ts/alias.form.ts pattern) —
   // the Signal Form wrapper above drives overall validity, not per-field error text.
-  private readonly validationResult = computed(() =>
-    diaryValidations(this.formData(), (this.tenantId() ?? '') as string, (this.allTags() ?? '') as string),
-  );
+  private readonly validationResult = vestErrors(this.diaryForm);
   protected customLocationLabelErrors = computed(() => this.validationResult().getErrors('customLocationLabel'));
   protected textErrors = computed(() => this.validationResult().getErrors('text'));
   protected titleErrors = computed(() => this.validationResult().getErrors('title'));

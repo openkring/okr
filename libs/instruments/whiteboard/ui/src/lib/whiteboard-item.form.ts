@@ -5,7 +5,7 @@ import { IonChip, IonLabel } from '@ionic/angular/standalone';
 import { WhiteboardItem } from '@okr/shared-models';
 import { DESCRIPTION_LENGTH } from '@okr/shared-constants';
 import { Color, ErrorNote, NotesInput, NotesInputI18n } from '@okr/shared-ui';
-import { validateVestTree } from '@okr/shared-util-angular';
+import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean } from '@okr/shared-util-core';
 
 import { WhiteboardI18n, whiteboardItemValidations } from '@okr/instruments-whiteboard-util';
@@ -50,7 +50,7 @@ export class WhiteboardItemForm {
     validateVestTree(path, whiteboardItemValidations as any));
 
   // per-field errors for the notes under each field
-  private readonly validationResult = computed(() => whiteboardItemValidations(this.item()));
+  private readonly validationResult = vestErrors(this.itemForm);
   protected readonly textErrors = computed(() => this.validationResult().getErrors('text'));
   protected readonly colorErrors = computed(() => this.validationResult().getErrors('color'));
 

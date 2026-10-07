@@ -1,4 +1,4 @@
-import { enforce, omitWhen, only, staticSuite, test } from 'vest';
+import { enforce, omitWhen, staticSuite, test } from 'vest';
 
 import { DESCRIPTION_LENGTH } from '@okr/shared-constants';
 import { CostCenterModel, CostCenterType } from '@okr/shared-models';
@@ -24,8 +24,7 @@ export const COST_CENTER_NAME_LENGTH = 60;
  *                 must stay unique among them, a move must not create a cycle, a leaf has no
  *                 children and a parent is a root or a group.
  */
-export const costCenterValidations = staticSuite((model: CostCenterFormModel, existing: CostCenterModel[] = [], field?: string) => {
-  if (field) only(field);
+export const costCenterValidations = staticSuite((model: CostCenterFormModel, existing: CostCenterModel[] = []) => {
 
   stringValidations('id', model.id, COST_CENTER_ID_LENGTH, 1, true);
   stringValidations('name', model.name, COST_CENTER_NAME_LENGTH, 1, true);

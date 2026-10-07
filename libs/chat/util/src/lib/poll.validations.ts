@@ -1,4 +1,4 @@
-import { enforce, only, staticSuite, test } from 'vest';
+import { enforce, staticSuite, test } from 'vest';
 
 import { stringValidations } from '@okr/shared-util-core';
 
@@ -22,8 +22,7 @@ export type PollFormData = {
  * aber nicht einzeln geprueft: sie sind nicht editierbar und koennen aus einem anderen Matrix-Client
  * stammen, ein Fehler dort wuerde die Umfrage unspeicherbar machen.
  */
-export const pollValidations = staticSuite((data: PollFormData, lockedCount = 0, field?: string) => {
-  if (field) only(field);
+export const pollValidations = staticSuite((data: PollFormData, lockedCount = 0) => {
 
   stringValidations('question', data.question?.trim(), POLL_QUESTION_LENGTH, 0, true);
 

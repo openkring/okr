@@ -1,4 +1,4 @@
-import { enforce, omitWhen, only, staticSuite, test } from 'vest';
+import { enforce, omitWhen, staticSuite, test } from 'vest';
 
 import { validateBid } from './jass.engine';
 import { JassHandFormModel } from './jass-hand.form-model';
@@ -7,8 +7,7 @@ import { CARD_POINTS, JASS_MULTIPLIERS, JassConfig } from './jass.types';
 const isIntIn = (v: number, min: number, max: number) => Number.isInteger(v) && v >= min && v <= max;
 
 /** Messages are scoped i18n keys; `okr-error-note` resolves them through `I18nService`. */
-export const jassHandValidations = staticSuite((model: JassHandFormModel, field?: string) => {
-  if (field) only(field);
+export const jassHandValidations = staticSuite((model: JassHandFormModel) => {
 
   omitWhen(model.variant !== 'coiffeur', () => {
     test('trump', '@games/jasstafel/feature.error.trump', () => {
@@ -49,8 +48,7 @@ export const jassHandValidations = staticSuite((model: JassHandFormModel, field?
   });
 });
 
-export const jassConfigValidations = staticSuite((model: JassConfig, field?: string) => {
-  if (field) only(field);
+export const jassConfigValidations = staticSuite((model: JassConfig) => {
   test('schieberTarget', '@games/jasstafel/feature.error.target', () => {
     enforce(isIntIn(model.schieberTarget, 100, 10000)).isTruthy();
   });

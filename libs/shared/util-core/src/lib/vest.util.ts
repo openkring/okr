@@ -5,7 +5,7 @@ import { isArrayOfStrings, isAvatarInfo, isMoney } from './type.util';
 import { AddressableModel, AvatarInfo, DeliveryChannel, OkrModel, isAddressableModel, isBaseModel, isNamedModel, isPersistedModel, isSearchableModel, isTaggedModel, MoneyModel, NamedModel, PersistedModel, SearchableModel, TaggedModel } from '@okr/shared-models';
 
 /** @param nameLength the cap on `name` for a NamedModel; a suite whose form allows longer names passes its own */
-export function baseValidations(model: OkrModel, givenTenants: string, givenTags: string, field?: string, nameLength = NAME_LENGTH) {
+export function baseValidations(model: OkrModel, givenTenants: string, givenTags: string, nameLength = NAME_LENGTH) {
 
   omitWhen(!isBaseModel(model), () => {
     stringValidations('okey', model.okey, SHORT_NAME_LENGTH);
@@ -377,8 +377,8 @@ export function isValidForFields(result: { hasErrors: (fieldName?: string) => bo
 export function tagValidations(fieldName: string, tags: unknown, givenTags?: string) {
   stringValidations(fieldName, tags, LONG_NAME_LENGTH);
   // No configured list to compare against. The Signal Forms bridge (validateVestTree) calls a
-  // suite with the MODEL ONLY, so every `(model, tenants, tags, field)` suite reaches this with
-  // `givenTags === undefined` — which used to throw inside splitTags and take the whole modal
+  // suite with the MODEL ONLY unless the form wraps it in a context closure, so a
+  // `(model, tenants, tags)` suite can reach this with `givenTags === undefined` — which used to throw inside splitTags and take the whole modal
   // down with it (blank modal, bare toolbar). Checking against an empty list is not the fallback
   // either: that would invalidate every tagged model on a field most forms never render.
   if (!givenTags) return;

@@ -1,4 +1,4 @@
-import { only, staticSuite } from 'vest';
+import { staticSuite } from 'vest';
 
 import { DESCRIPTION_LENGTH } from '@okr/shared-constants';
 import { stringValidations } from '@okr/shared-util-core';
@@ -25,8 +25,7 @@ export function newMemberFeeUploadFormModel(): MemberFeeUploadFormModel {
 }
 
 /** Both texts are optional; the only rule is the long-text cap the notes input enforces anyway. */
-export const memberFeeUploadValidations = staticSuite((model: MemberFeeUploadFormModel, field?: string) => {
-  if (field) only(field);
+export const memberFeeUploadValidations = staticSuite((model: MemberFeeUploadFormModel) => {
 
   stringValidations('header', model.header, DESCRIPTION_LENGTH);
   stringValidations('footer', model.footer, DESCRIPTION_LENGTH);

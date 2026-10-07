@@ -5,7 +5,7 @@ import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol
 import { AccountModel, BillLine } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { ErrorNote, formatMinorAmount, NumberInput, NumberInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
-import { validateVestTree } from '@okr/shared-util-angular';
+import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean } from '@okr/shared-util-core';
 
 import { AccountSelect, AccountSelectI18n } from '@okr/finance-account-ui';
@@ -109,7 +109,7 @@ export class BillLinesForm {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     validateVestTree(path, billLinesValidations as any));
 
-  private readonly validationResult = computed(() => billLinesValidations(this.lines()));
+  private readonly validationResult = vestErrors(this.linesForm);
   protected readonly listErrors = computed(() => this.validationResult().getErrors('lines'));
 
   constructor() {

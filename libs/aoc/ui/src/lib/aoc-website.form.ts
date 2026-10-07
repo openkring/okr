@@ -5,7 +5,7 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular
 import { WebsiteContentModel } from '@okr/shared-models';
 import { ButtonCopyI18n, Checkbox, CheckboxI18n, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { OkrEditor } from '@okr/shared-ui-editor';
-import { validateVestTree } from '@okr/shared-util-angular';
+import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean } from '@okr/shared-util-core';
 import { AocI18n, aocWebsiteValidations } from '@okr/aoc-util';
 
@@ -88,7 +88,7 @@ export class AocWebsiteForm {
   protected readonly en = computed(() => this.formData()?.en ?? '');
 
   // errors
-  private readonly validationResult = computed(() => aocWebsiteValidations(this.formData()));
+  private readonly validationResult = vestErrors(this.websiteForm);
   protected readonly deErrors = computed(() => this.validationResult().getErrors('de'));
   protected readonly enErrors = computed(() => this.validationResult().getErrors('en'));
 

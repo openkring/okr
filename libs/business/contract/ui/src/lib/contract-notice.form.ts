@@ -3,7 +3,7 @@ import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 
 import { DateInput, DateInputI18n, ErrorNote, StringSelect, StringSelectI18n } from '@okr/shared-ui';
-import { validateVestTree } from '@okr/shared-util-angular';
+import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean } from '@okr/shared-util-core';
 
 import { ContractI18n, ContractNoticeData, contractNoticeValidations } from '@okr/business-contract-util';
@@ -66,7 +66,7 @@ export class ContractNoticeForm {
   protected readonly noticeForm = form(this.formData, (path) =>
     validateVestTree(path, contractNoticeValidations as any),
   );
-  private readonly validationResult = computed(() => contractNoticeValidations(this.formData()));
+  private readonly validationResult = vestErrors(this.noticeForm);
   protected noticeGivenDateErrors = computed(() => this.validationResult().getErrors('noticeGivenDate'));
   protected noticeGivenByErrors = computed(() => this.validationResult().getErrors('noticeGivenBy'));
 

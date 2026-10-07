@@ -1,11 +1,10 @@
-import { only, staticSuite } from 'vest';
+import { staticSuite } from 'vest';
 
 import { WORD_LENGTH } from '@okr/shared-constants';
 import { ActivityModel } from '@okr/shared-models';
 import { avatarValidations, dateTimeValidations, stringValidations } from '@okr/shared-util-core';
 
-export const activityValidations = staticSuite((model: ActivityModel, tenants: string, field?: string) => {
-  if (field) only(field);
+export const activityValidations = staticSuite((model: ActivityModel, tenants: string) => {
 
   dateTimeValidations('timestamp', model.timestamp);
   stringValidations('scope', model.scope, WORD_LENGTH);

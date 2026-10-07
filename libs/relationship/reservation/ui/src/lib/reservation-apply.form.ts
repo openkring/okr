@@ -4,7 +4,7 @@ import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, 
 import { DEFAULT_DATE, DEFAULT_KEY, DEFAULT_RES_REASON, DEFAULT_TIME, DESCRIPTION_LENGTH, NAME_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { CategoryListModel, ReservationApplyModel, RoleName, UserModel } from '@okr/shared-models';
 import { CategorySelect, Checkbox, CheckboxI18n, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n, TimeInput, TimeInputI18n , ErrorNote} from '@okr/shared-ui';
-import { validateVestTree } from '@okr/shared-util-angular';
+import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { getAvatarName, hasRole } from '@okr/shared-util-core';
 
 import { reservationApplyValidations, ReservationI18n } from '@okr/relationship-reservation-util';
@@ -219,7 +219,7 @@ export class ReservationApplyForm {
     validateVestTree(path, reservationApplyValidations as any));
 
   // per-field errors for the notes under each field (and the invalid-field labels for the parent)
-  private readonly validationResult = computed(() => reservationApplyValidations(this.formData()));
+  private readonly validationResult = vestErrors(this.reservationApplyForm);
   protected endDateErrors = computed(() => this.validationResult().getErrors('endDate'));
   protected isConfirmedErrors = computed(() => this.validationResult().getErrors('isConfirmed'));
   protected reasonErrors = computed(() => this.validationResult().getErrors('reason'));

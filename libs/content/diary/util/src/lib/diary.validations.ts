@@ -1,4 +1,4 @@
-import { enforce, only, staticSuite, test } from 'vest';
+import { enforce, staticSuite, test } from 'vest';
 
 import { DESCRIPTION_LENGTH, LONG_NAME_LENGTH } from '@okr/shared-constants';
 import { DiaryModel } from '@okr/shared-models';
@@ -9,10 +9,9 @@ import { diaryDateMatchesScope } from './diary-date.util';
 const SCOPES = new Set(['day', 'month', 'year']);
 const STATUSES = new Set(['draft', 'final']);
 
-export const diaryValidations = staticSuite((model: DiaryModel, tenants: string, tags: string, field?: string) => {
-  if (field) only(field);
+export const diaryValidations = staticSuite((model: DiaryModel, tenants: string, tags: string) => {
 
-  baseValidations(model, tenants, tags, field);
+  baseValidations(model, tenants, tags);
   stringValidations('title', model.title, LONG_NAME_LENGTH);
   stringValidations('text', model.text, DESCRIPTION_LENGTH * 10);
   stringValidations('customLocationLabel', model.customLocationLabel, LONG_NAME_LENGTH);

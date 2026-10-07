@@ -7,7 +7,7 @@ import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInput
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 import { DEFAULT_DATE, DEFAULT_NOTES, DEFAULT_TAGS, LONG_NAME_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { FileLogoPipe, SvgIconPipe, ThumbnailUrlPipe } from '@okr/shared-pipes';
-import { copyToClipboard, showToast, validateVestTree } from '@okr/shared-util-angular';
+import { copyToClipboard, showToast, validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { ENV } from '@okr/shared-config';
 
 import { DocumentI18n, documentValidations } from '@okr/content-document-util';
@@ -175,8 +175,8 @@ export class DocumentForm {
 
   // The suite needs the tenant id and the tags, which validateVestTree does not pass — so the bridge
   // calls it through a closure that adds them.
-  private readonly suiteWithContext = (model: DocumentModel, field?: string) =>
-    documentValidations(model, this.env.tenantId, this.allTags(), field);
+  private readonly suiteWithContext = (model: DocumentModel) =>
+    documentValidations(model, this.env.tenantId, this.allTags());
   protected readonly documentForm = form(this.formData, (path) =>
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     validateVestTree(path, this.suiteWithContext as any));
@@ -184,7 +184,7 @@ export class DocumentForm {
   constructor() { effect(() => this.valid.emit(this.documentForm().valid())); }
 
   // validations and errors
-  private readonly validationResult = computed(() => documentValidations(this.formData(), this.env.tenantId, this.allTags()));
+  private readonly validationResult = vestErrors(this.documentForm);
   protected dateOfDocCreationErrors = computed(() => this.validationResult().getErrors('dateOfDocCreation'));
   protected dateOfDocLastUpdateErrors = computed(() => this.validationResult().getErrors('dateOfDocLastUpdate'));
   protected altTextErrors = computed(() => this.validationResult().getErrors('altText'));

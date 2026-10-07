@@ -12,7 +12,7 @@ import {
 } from '@okr/shared-ui';
 import { coerceBoolean, getItemLabel } from '@okr/shared-util-core';
 import { TranslatePipe } from '@okr/shared-i18n';
-import { validateVestTree } from '@okr/shared-util-angular';
+import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 
 import { AccountSelect, AccountSelectI18n } from '@okr/finance-account-ui';
 import {
@@ -210,7 +210,7 @@ export class FeePositionForm {
 
   // per-field Vest errors. validateVestTree calls the suite with the model alone, so this
   // mirrors exactly what drives the form's validity.
-  private readonly validationResult = computed(() => feePositionValidations(this.formData()));
+  private readonly validationResult = vestErrors(this.feePositionForm);
   protected keyErrors = computed(() => this.validationResult().getErrors('key'));
   protected labelErrors = computed(() => this.validationResult().getErrors('label'));
   protected usageErrors = computed(() => this.validationResult().getErrors('usage'));
