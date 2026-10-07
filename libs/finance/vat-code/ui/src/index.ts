@@ -1,1 +1,2 @@
-// vat-code/ui: no components yet, populated in future tasks
+export * from './lib/vat-code.form';
+export * from './lib/vat-code-edit.modal';

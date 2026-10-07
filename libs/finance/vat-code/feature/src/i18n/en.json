@@ -21,5 +21,20 @@
   },
   "seed": {
     "label": "Create standard VAT codes"
+  },
+  "name": {
+    "label": "Name"
+  },
+  "direction": {
+    "label": "Type",
+    "input": "Input tax",
+    "output": "Output tax"
+  },
+  "validFrom": {
+    "label": "Valid from"
+  },
+  "validTo": {
+    "label": "Valid until",
+    "helper": "Leave empty if the code has no end date."
   }
 }

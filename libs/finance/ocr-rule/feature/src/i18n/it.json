@@ -30,6 +30,9 @@
     "vat": "Codice IVA (facoltativo)",
     "cost_center": "Centro di costo (facoltativo)",
     "rank": "Rango",
-    "active": "Attivo"
+    "active": "Attivo",
+    "validation": {
+      "rankNumber": "Inserisci un numero come rango."
+    }
   }
 }

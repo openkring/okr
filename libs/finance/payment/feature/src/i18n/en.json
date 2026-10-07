@@ -24,7 +24,17 @@
     "approve": "Approve",
     "approve_blocked": "Approval not possible yet",
     "action_error": "That did not work. Please try again.",
-    "edit": "Edit"
+    "edit": "Edit",
+    "debit_account": {
+      "label": "Debit account",
+      "helper": "Your own bank account the payments are made from."
+    },
+    "delivery": {
+      "label": "Transfer to the bank",
+      "pain001_download": "Download pain.001 file",
+      "bexio_api": "Via bexio",
+      "ebics": "EBICS"
+    }
   },
   "blocker": {
     "not_draft": "This order has already been approved.",

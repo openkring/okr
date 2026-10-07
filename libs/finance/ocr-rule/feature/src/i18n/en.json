@@ -30,6 +30,9 @@
     "vat": "VAT code (optional)",
     "cost_center": "Cost center (optional)",
     "rank": "Rank",
-    "active": "Active"
+    "active": "Active",
+    "validation": {
+      "rankNumber": "Enter a number as the rank."
+    }
   }
 }

@@ -24,7 +24,17 @@
     "approve": "Aprobar",
     "approve_blocked": "La aprobación aún no es posible",
     "action_error": "No ha funcionado. Por favor, inténtalo de nuevo.",
-    "edit": "Editar"
+    "edit": "Editar",
+    "debit_account": {
+      "label": "Cuenta de cargo",
+      "helper": "Tu propia cuenta bancaria desde la que salen los pagos."
+    },
+    "delivery": {
+      "label": "Envío al banco",
+      "pain001_download": "Descargar archivo pain.001",
+      "bexio_api": "A través de bexio",
+      "ebics": "EBICS"
+    }
   },
   "blocker": {
     "not_draft": "Esta orden ya está aprobada.",

@@ -8,6 +8,7 @@ const libraryConfig = defineConfig({
   cacheDir: '../../../../node_modules/.vite/libs/finance/asset/util',
   plugins: [nxViteTsPaths(), nxCopyAssetsPlugin(['*.md'])],
   test: {
+    setupFiles: ['./test-setup.ts'],
     coverage: {
       reportsDirectory: '../../../../coverage/libs/finance/asset/util',
       provider: 'v8' as const,

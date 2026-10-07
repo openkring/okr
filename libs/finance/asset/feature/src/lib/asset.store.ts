@@ -55,7 +55,7 @@ export const AssetStore = signalStore(
 
     },
     async openEdit(asset: AssetModel, readOnly = true): Promise<void> {
-      const { AssetEditModal } = await import('./asset-edit.modal');
+      const { AssetEditModal } = await import('@okr/finance-asset-ui');
       const modal = await store.modalController.create({
         component: AssetEditModal,
         componentProps: {
@@ -63,6 +63,8 @@ export const AssetStore = signalStore(
           categories: store.categories(),
           readOnly,
           currentUser: store.currentUser(),
+          costCenters: store.costCenterStore.costCenters(),
+          costCenterEnabled: store.costCenterStore.isEnabled(),
         },
       });
       modal.present();

@@ -71,6 +71,11 @@
     "content": {
       "label": "Contenuto QR (fotocamera o manuale)",
       "placeholder": "SPC | 0200 | …"
+    },
+    "validation": {
+      "contentRequired": "Incolla o scansiona il contenuto del codice QR.",
+      "parseFailed": "Non siamo riusciti a leggere questo codice QR. Controlla che il contenuto sia completo.",
+      "failed": "L’elaborazione non è riuscita. Riprova, per favore."
     }
   },
   "readonly": {

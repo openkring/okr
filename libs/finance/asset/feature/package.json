@@ -21,6 +21,7 @@
     "@okr/finance-asset-ui": "*",
     "@okr/finance-cost-center-feature": "*",
     "@okr/finance-cost-center-ui": "*",
-    "@okr/finance-account-data-access": "*"
+    "@okr/finance-account-data-access": "*",
+    "@okr/shared-pipes": "*"
   }
 }

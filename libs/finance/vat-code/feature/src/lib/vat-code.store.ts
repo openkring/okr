@@ -13,7 +13,7 @@ import { AccountingStore } from '@okr/finance-accounting-feature';
 import { VatCodeService } from '@okr/finance-vat-code-data-access';
 import { VAT_CODE_I18N_KEYS, VatCodeI18n } from '@okr/finance-vat-code-util';
 
-import { VatCodeEditModal } from './vat-code-edit.modal';
+import { VatCodeEditModal } from '@okr/finance-vat-code-ui';
 
 export const VatCodeStore = signalStore(
   withState({}),

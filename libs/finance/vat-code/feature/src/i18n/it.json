@@ -21,5 +21,20 @@
   },
   "seed": {
     "label": "Crea i codici IVA standard"
+  },
+  "name": {
+    "label": "Denominazione"
+  },
+  "direction": {
+    "label": "Tipo",
+    "input": "Imposta precedente",
+    "output": "IVA dovuta"
+  },
+  "validFrom": {
+    "label": "Valido dal"
+  },
+  "validTo": {
+    "label": "Valido fino al",
+    "helper": "Lascia vuoto se il codice non ha una data di fine."
   }
 }

@@ -64,6 +64,8 @@ export const BILL_I18N_KEYS = {
   qr_process:           PFX + 'qr.process',
   qr_content_label:     PFX + 'qr.content.label',
   qr_content_placeholder: PFX + 'qr.content.placeholder',
+  qr_error_parse:       PFX + 'qr.validation.parseFailed',
+  qr_error_failed:      PFX + 'qr.validation.failed',
 
   // payments (spec 1.85)
   payment:                        PFX + 'payment.label',

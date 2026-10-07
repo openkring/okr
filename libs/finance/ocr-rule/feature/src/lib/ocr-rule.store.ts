@@ -16,8 +16,7 @@ import { leafAccounts } from '@okr/finance-account-util';
 import { VatCodeService } from '@okr/finance-vat-code-data-access';
 import { OcrRuleService } from '@okr/finance-ocr-rule-data-access';
 import { OCR_RULE_I18N_KEYS, normalizeParty } from '@okr/finance-ocr-rule-util';
-
-import { OcrRuleEditModal } from './ocr-rule-edit.modal';
+import { CostCenterStore } from '@okr/finance-cost-center-feature';
 
 export const OcrRuleStore = signalStore(
   withState({}),
@@ -27,6 +26,7 @@ export const OcrRuleStore = signalStore(
     accountStore: inject(AccountStore),
     vatCodeService: inject(VatCodeService),
     accountingStore: inject(AccountingStore),
+    costCenterStore: inject(CostCenterStore),
     appStore: inject(AppStore),
     modalController: inject(ModalController),
     i18nService: inject(I18nService),
@@ -68,9 +68,14 @@ export const OcrRuleStore = signalStore(
     },
 
     async openEdit(rule: OcrRuleModel, readOnly = true): Promise<void> {
+      // dynamic import keeps the modal (and its form) out of the store's static graph
+      const { OcrRuleEditModal } = await import('@okr/finance-ocr-rule-ui');
       const modal = await store.modalController.create({
         component: OcrRuleEditModal,
-        componentProps: { rule, readOnly, accounts: store.accounts(), vatCodes: store.vatCodes() },
+        componentProps: {
+          rule, readOnly, accounts: store.accounts(), vatCodes: store.vatCodes(),
+          costCenters: store.costCenterStore.costCenters(), costCentersEnabled: store.costCenterStore.isEnabled(),
+        },
       });
       modal.present();
       const { data, role } = await modal.onDidDismiss();

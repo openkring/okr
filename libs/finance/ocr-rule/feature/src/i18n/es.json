@@ -30,6 +30,9 @@
     "vat": "Código de IVA (opcional)",
     "cost_center": "Centro de costes (opcional)",
     "rank": "Rango",
-    "active": "Activo"
+    "active": "Activo",
+    "validation": {
+      "rankNumber": "Introduce un número como rango."
+    }
   }
 }

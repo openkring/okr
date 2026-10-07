@@ -30,6 +30,9 @@
     "vat": "MWST-Code (optional)",
     "cost_center": "Kostenstelle (optional)",
     "rank": "Rang",
-    "active": "Aktiv"
+    "active": "Aktiv",
+    "validation": {
+      "rankNumber": "Gib als Rang eine Zahl ein."
+    }
   }
 }

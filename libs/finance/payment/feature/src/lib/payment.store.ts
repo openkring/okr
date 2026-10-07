@@ -9,17 +9,19 @@ import { downloadTextFile } from '@okr/shared-util-angular';
 import { I18nService } from '@okr/shared-i18n';
 import { PaymentModel, PaymentOrderModel } from '@okr/shared-models';
 
+import { AccountService } from '@okr/finance-account-data-access';
 import { AccountingStore } from '@okr/finance-accounting-feature';
 import { PaymentOrderService, PaymentService } from '@okr/finance-payment-data-access';
 import { PAYMENT_I18N_KEYS, PaymentI18n } from '@okr/finance-payment-util';
 
-import { PaymentOrderEditModal } from './payment-order-edit.modal';
+import { PaymentOrderEditModal } from '@okr/finance-payment-ui';
 
 export const PaymentStore = signalStore(
   withState({}),
   withProps(() => ({
     paymentOrderService: inject(PaymentOrderService),
     paymentService: inject(PaymentService),
+    accountService: inject(AccountService),
     accountingStore: inject(AccountingStore),
     appStore: inject(AppStore),
     modalController: inject(ModalController),
@@ -40,9 +42,21 @@ export const PaymentStore = signalStore(
           ? store.paymentOrderService.list(params.accountingTenantId)
           : of([]),
     }),
+    // the debit (own bank) account picker in the edit modal
+    accountsResource: rxResource({
+      params: () => ({
+        currentUser: store.appStore.currentUser(),
+        accountingTenantId: store.accountingStore.accountingTenantId(),
+      }),
+      stream: ({ params }) =>
+        params.currentUser && params.accountingTenantId
+          ? store.accountService.list(params.accountingTenantId)
+          : of([]),
+    }),
   })),
   withComputed(store => ({
     orders: computed(() => store.ordersResource.value() ?? []),
+    accounts: computed(() => store.accountsResource.value() ?? []),
     isLoading: computed(() => store.ordersResource.isLoading()),
     currentUser: computed(() => store.appStore.currentUser()),
     currentUserKey: computed(() => store.appStore.currentUser()?.okey ?? ''),
@@ -60,7 +74,7 @@ export const PaymentStore = signalStore(
     async openEdit(order: PaymentOrderModel, readOnly = true): Promise<void> {
       const modal = await store.modalController.create({
         component: PaymentOrderEditModal,
-        componentProps: { order, readOnly, currentUser: store.currentUser() },
+        componentProps: { order, readOnly, currentUser: store.currentUser(), accounts: store.accounts() },
       });
       modal.present();
       const { data, role } = await modal.onDidDismiss();

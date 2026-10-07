@@ -21,5 +21,20 @@
   },
   "seed": {
     "label": "Standard-MWST-Codes erstellen"
+  },
+  "name": {
+    "label": "Bezeichnung"
+  },
+  "direction": {
+    "label": "Art",
+    "input": "Vorsteuer",
+    "output": "Umsatzsteuer"
+  },
+  "validFrom": {
+    "label": "Gültig ab"
+  },
+  "validTo": {
+    "label": "Gültig bis",
+    "helper": "Leer lassen, wenn der Code unbefristet gilt."
   }
 }

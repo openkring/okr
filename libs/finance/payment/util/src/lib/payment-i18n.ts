@@ -32,6 +32,14 @@ export const PAYMENT_I18N_KEYS = {
   execution_label:   PFX + 'order.execution',
   created_by_label:  PFX + 'order.created_by',
   approved_by_label: PFX + 'order.approved_by',
+
+  debit_account_label:  PFX + 'order.debit_account.label',
+  debit_account_helper: PFX + 'order.debit_account.helper',
+  delivery_label:       PFX + 'order.delivery.label',
+  delivery_pain001:     PFX + 'order.delivery.pain001_download',
+  delivery_bexio:       PFX + 'order.delivery.bexio_api',
+  delivery_ebics:       PFX + 'order.delivery.ebics',
+  save:                 '@save.label',
 } satisfies Record<string, string>;
 
 export type PaymentI18n = { [K in keyof typeof PAYMENT_I18N_KEYS]: Signal<string> };

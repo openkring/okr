@@ -71,6 +71,11 @@
     "content": {
       "label": "Contenu QR (caméra ou saisie manuelle)",
       "placeholder": "SPC | 0200 | …"
+    },
+    "validation": {
+      "contentRequired": "Colle ou scanne le contenu du code QR.",
+      "parseFailed": "Nous n’avons pas pu lire ce code QR. Vérifie que le contenu est complet.",
+      "failed": "Le traitement n’a pas fonctionné. Réessaie, s’il te plaît."
     }
   },
   "readonly": {

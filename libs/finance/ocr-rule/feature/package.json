@@ -22,6 +22,7 @@
     "@okr/finance-ocr-rule-data-access": "*",
     "@okr/finance-ocr-rule-util": "*",
     "@okr/finance-cost-center-feature": "*",
-    "@okr/finance-cost-center-ui": "*"
+    "@okr/finance-account-util": "*",
+    "@okr/finance-ocr-rule-ui": "*"
   }
 }

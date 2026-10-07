@@ -30,6 +30,9 @@
     "vat": "Code TVA (facultatif)",
     "cost_center": "Centre de coûts (facultatif)",
     "rank": "Rang",
-    "active": "Actif"
+    "active": "Actif",
+    "validation": {
+      "rankNumber": "Saisis un nombre comme rang."
+    }
   }
 }

@@ -21,5 +21,20 @@
   },
   "seed": {
     "label": "Crear los códigos de IVA estándar"
+  },
+  "name": {
+    "label": "Denominación"
+  },
+  "direction": {
+    "label": "Tipo",
+    "input": "IVA soportado",
+    "output": "IVA repercutido"
+  },
+  "validFrom": {
+    "label": "Válido desde"
+  },
+  "validTo": {
+    "label": "Válido hasta",
+    "helper": "Déjalo vacío si el código no tiene fecha de fin."
   }
 }

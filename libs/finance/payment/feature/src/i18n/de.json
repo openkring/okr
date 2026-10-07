@@ -24,7 +24,17 @@
     "approve": "Freigeben",
     "approve_blocked": "Freigabe noch nicht möglich",
     "action_error": "Das hat leider nicht geklappt. Bitte versuche es noch einmal.",
-    "edit": "Bearbeiten"
+    "edit": "Bearbeiten",
+    "debit_account": {
+      "label": "Belastungskonto",
+      "helper": "Das eigene Bankkonto, von dem die Zahlungen abgehen."
+    },
+    "delivery": {
+      "label": "Übermittlung an die Bank",
+      "pain001_download": "pain.001-Datei herunterladen",
+      "bexio_api": "Über bexio",
+      "ebics": "EBICS"
+    }
   },
   "blocker": {
     "not_draft": "Dieser Auftrag ist schon freigegeben.",

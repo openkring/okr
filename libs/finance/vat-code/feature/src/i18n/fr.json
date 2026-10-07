@@ -21,5 +21,20 @@
   },
   "seed": {
     "label": "Créer les codes TVA standard"
+  },
+  "name": {
+    "label": "Désignation"
+  },
+  "direction": {
+    "label": "Type",
+    "input": "Impôt préalable",
+    "output": "TVA due"
+  },
+  "validFrom": {
+    "label": "Valable dès"
+  },
+  "validTo": {
+    "label": "Valable jusqu'au",
+    "helper": "Laisse vide si le code n'a pas de date de fin."
   }
 }

@@ -18,6 +18,7 @@
     "@okr/finance-booking-data-access": "*",
     "@okr/finance-payment-data-access": "*",
     "@okr/finance-payment-util": "*",
-    "@okr/finance-payment-ui": "*"
+    "@okr/finance-payment-ui": "*",
+    "@okr/finance-account-data-access": "*"
   }
 }
