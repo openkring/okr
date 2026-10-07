@@ -3,6 +3,7 @@ import { logger } from 'firebase-functions/v2';
 import { getFirestore } from 'firebase-admin/firestore';
 
 import { InvoiceCollection } from '@okr/shared-models';
+import { generateQrReference } from '@okr/shared-util-core';
 import { checkAppCheckToken, checkAuthentication, checkRoles, getCallerTenantId } from '@okr/shared-util-functions';
 
 import { privateBucket } from '../_storage/private-bucket';
@@ -14,13 +15,20 @@ import { readPositions } from './issue-invoice';
 const REGION = 'europe-west6';
 const CF_NAME = 'previewInvoicePdf';
 
+/**
+ * A draft has no number and so no QR reference yet. The preview carries an all-zero placeholder
+ * reference so its slip shows the QR-IBAN, exactly as the issued invoice will; it matches no invoice.
+ */
+const PREVIEW_QR_REFERENCE = generateQrReference(0);
+
 interface PreviewInvoiceData {
   invoiceKey?: string;
 }
 
 /**
  * Render a draft invoice as PDF for a look before issuing it. Nothing is numbered, booked or registered:
- * the number reads "ENTWURF" and the QR slip carries no reference (regular IBAN). The file is overwritten
+ * the number reads "ENTWURF" and the QR slip carries the placeholder reference on the QR-IBAN (as the issued
+ * invoice will, with its real reference); a payee without a QR-IBAN gets the regular IBAN. The file is overwritten
  * on every call in the private bucket (invoices carry receiver PII; the default bucket is readable via
  * imgix) and returned as base64, like showInvoicePdf. Treasurer-only.
  */
@@ -65,7 +73,7 @@ export const previewInvoicePdf = onCall(
         address: await receiverAddress(db, receiver, tenantId),
       }),
       options: { outputFormat: 'pdf', filename },
-    }, uid, tenantId, { bucket: privateBucket(), path: fullPath });
+    }, uid, tenantId, { bucket: privateBucket(), path: fullPath }, PREVIEW_QR_REFERENCE);
 
     const [bytes] = await privateBucket().file(fullPath).download();
     logger.info(`${CF_NAME}: previewed ${invoiceKey} (${bytes.length} bytes)`);

@@ -95,7 +95,8 @@ export async function renderDocument(
   req: GenerateDocumentRequest,
   uid: string,
   tenantId: string,
-  sink?: RenderSink
+  sink?: RenderSink,
+  slipReference?: string,
 ): Promise<GenerateDocumentResponse> {
   const { templateId, html: rawHtml, payload = {}, options = {} } = req;
   const userId = uid;
@@ -169,7 +170,9 @@ export async function renderDocument(
     // Append the QR payment slip as a second page (PDF output only). With payload.invoiceKey the
     // slip carries that invoice's QR reference on the QR-IBAN (spec 1.2 §3.3); else NON as before.
     if (tmpl.attachQrSlip && outputFormat === 'pdf') {
-      const reference = await readInvoiceReference(db, tenantId, payload['invoiceKey']);
+      // slipReference is a server-side override (the draft preview's placeholder); it is not part of
+      // the request, so a generateDocument caller cannot put an arbitrary reference on a slip.
+      const reference = slipReference ?? await readInvoiceReference(db, tenantId, payload['invoiceKey']);
       let selected;
       try {
         selected = selectSlipAccount(payee, reference);

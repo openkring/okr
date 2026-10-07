@@ -211,7 +211,8 @@
     "pdf_error": "Die Rechnung konnte nicht als PDF geladen werden. Bitte versuche es später noch einmal.",
     "pdf_missing": "Für diese Rechnung gibt es noch kein PDF.",
     "preview": "Vorschau anzeigen",
-    "preview_error": "Die Vorschau konnte nicht erstellt werden."
+    "preview_error": "Die Vorschau konnte nicht erstellt werden.",
+    "preview_progress": "Das PDF mit der Vorschau wird erstellt"
   },
   "paymentConfirmation": {
     "label": "Zahlungsbestätigung erstellen",

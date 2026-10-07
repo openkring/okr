@@ -211,7 +211,8 @@
     "pdf_error": "Non è stato possibile caricare la fattura in PDF. Riprova più tardi.",
     "pdf_missing": "Per questa fattura non c'è ancora un PDF.",
     "preview": "Mostra anteprima",
-    "preview_error": "Non è stato possibile creare l'anteprima."
+    "preview_error": "Non è stato possibile creare l'anteprima.",
+    "preview_progress": "Il PDF dell'anteprima è in preparazione"
   },
   "paymentConfirmation": {
     "label": "Crea conferma di pagamento",

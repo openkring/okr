@@ -1,6 +1,8 @@
 // apps/functions/src/pdf/generate-document.ts
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 
+import { getCallerTenantId } from '@okr/shared-util-functions';
+
 import { checkRateLimit } from './rate-limiter';
 import { resolveIsAdmin } from './resolve-admin';
 import { renderDocument } from './render-document';
@@ -33,9 +35,9 @@ export const generateDocument = onCall<GenerateDocumentRequest, Promise<Generate
     }
 
     const userId = request.auth.uid;
-    const tenantId = typeof request.auth.token['tenantId'] === 'string'
-      ? request.auth.token['tenantId']
-      : 'default';
+    // The caller's tenant from users/{uid}: no tenantId claim is minted in this project, and the
+    // former 'default' fallback resolved the payee to a non-existent org (no IBAN for the QR slip).
+    const tenantId = await getCallerTenantId(request as never, 'generateDocument');
     const isAdmin: boolean = await resolveIsAdmin(
       userId,
       request.auth.token as unknown as Record<string, unknown>

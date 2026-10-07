@@ -211,7 +211,8 @@
     "pdf_error": "No se pudo cargar la factura como PDF. Inténtalo de nuevo más tarde.",
     "pdf_missing": "Todavía no hay un PDF para esta factura.",
     "preview": "Mostrar vista previa",
-    "preview_error": "No se pudo crear la vista previa."
+    "preview_error": "No se pudo crear la vista previa.",
+    "preview_progress": "Se está creando el PDF de la vista previa"
   },
   "paymentConfirmation": {
     "label": "Crear confirmación de pago",

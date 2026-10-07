@@ -211,7 +211,8 @@
     "pdf_error": "The invoice could not be loaded as a PDF. Please try again later.",
     "pdf_missing": "There is no PDF for this invoice yet.",
     "preview": "Show preview",
-    "preview_error": "The preview could not be created."
+    "preview_error": "The preview could not be created.",
+    "preview_progress": "The preview PDF is being created"
   },
   "paymentConfirmation": {
     "label": "Create payment confirmation",

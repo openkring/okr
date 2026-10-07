@@ -211,7 +211,8 @@
     "pdf_error": "La facture n'a pas pu être chargée au format PDF. Merci de réessayer plus tard.",
     "pdf_missing": "Il n'y a pas encore de PDF pour cette facture.",
     "preview": "Afficher l'aperçu",
-    "preview_error": "L'aperçu n'a pas pu être créé."
+    "preview_error": "L'aperçu n'a pas pu être créé.",
+    "preview_progress": "Le PDF de l'aperçu est en cours de création"
   },
   "paymentConfirmation": {
     "label": "Créer une confirmation de paiement",
