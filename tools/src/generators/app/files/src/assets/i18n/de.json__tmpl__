@@ -473,8 +473,8 @@
     "later": "Später"
   },
   "boot": {
-    "degraded1": "Die App konnte wegen einer langsamen Verbindung nicht vollständig geladen werden.",
-    "degraded2": "Prüfe deine Internetverbindung und versuche es nochmals.",
+    "degraded1": "Die App konnte nicht vollständig starten.",
+    "degraded2": "Versuche es nochmals. Hilft das nicht, schliesse alle anderen Fenster und Tabs dieser App und versuche es dann erneut.",
     "retry": "Erneut versuchen"
   }
 }

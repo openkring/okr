@@ -473,8 +473,8 @@
     "later": "Plus tard"
   },
   "boot": {
-    "degraded1": "L’application n’a pas pu être entièrement chargée en raison d’une connexion lente.",
-    "degraded2": "Vérifie ta connexion internet et réessaie.",
+    "degraded1": "L’application n’a pas pu démarrer complètement.",
+    "degraded2": "Réessaie. Si cela ne suffit pas, ferme toutes les autres fenêtres et onglets de cette application, puis réessaie.",
     "retry": "Réessayer"
   }
 }

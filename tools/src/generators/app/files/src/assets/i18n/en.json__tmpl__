@@ -473,8 +473,8 @@
     "later": "Later"
   },
   "boot": {
-    "degraded1": "The app could not be fully loaded because of a slow connection.",
-    "degraded2": "Please check your internet connection and try again.",
+    "degraded1": "The app could not finish starting.",
+    "degraded2": "Please try again. If that does not help, close all other windows and tabs of this app and try once more.",
     "retry": "Try again"
   }
 }

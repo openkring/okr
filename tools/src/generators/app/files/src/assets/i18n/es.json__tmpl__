@@ -473,8 +473,8 @@
     "later": "Más tarde"
   },
   "boot": {
-    "degraded1": "La aplicación no se pudo cargar por completo debido a una conexión lenta.",
-    "degraded2": "Comprueba tu conexión a internet e inténtalo de nuevo.",
+    "degraded1": "La aplicación no pudo iniciarse por completo.",
+    "degraded2": "Inténtalo de nuevo. Si no funciona, cierra todas las demás ventanas y pestañas de esta aplicación y vuelve a intentarlo.",
     "retry": "Volver a intentarlo"
   }
 }
