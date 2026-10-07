@@ -130,12 +130,23 @@
       "conf": "Los cambios se han guardado."
     },
     "download": {
-      "enterInvoiceId": "Introducir ID de factura:"
+      "enterInvoiceId": "Introduce el número de factura de Bexio",
+      "invoiceIdPlaceholder": "p. ej. 12345",
+      "invoiceIdInvalid": "El número de factura solo contiene cifras, p. ej. 12345."
     },
     "upload": {
       "label": "Revisión de factura",
       "conf": "La factura se ha subido a Bexio.",
-      "noBexioId": "La factura no se puede subir porque falta el ID de Bexio."
+      "noBexioId": "La factura no se puede subir porque falta el ID de Bexio.",
+      "header": {
+        "label": "Texto superior",
+        "placeholder": "Aparece en la factura encima de las posiciones"
+      },
+      "footer": {
+        "label": "Texto inferior",
+        "placeholder": "Aparece en la factura debajo de las posiciones"
+      },
+      "send": "Enviar a Bexio"
     },
     "totals": {
       "label": "Resumen de tasas"

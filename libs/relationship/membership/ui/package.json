@@ -15,6 +15,11 @@
     "@okr/shared-pipes": "*",
     "@okr/shared-ui": "*",
     "@okr/shared-util-core": "*",
-    "@okr/relationship-membership-util": "*"
+    "@okr/relationship-membership-util": "*",
+    "@okr/shared-util-angular": "*",
+    "@okr/avatar-ui": "*",
+    "@okr/shared-feature": "*",
+    "@okr/subject-address-util": "*",
+    "@okr/subject-swisscities-ui": "*"
   }
 }

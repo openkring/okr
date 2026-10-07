@@ -130,12 +130,23 @@
       "conf": "The changes were saved."
     },
     "download": {
-      "enterInvoiceId": "Enter invoice ID:"
+      "enterInvoiceId": "Enter the invoice number from Bexio",
+      "invoiceIdPlaceholder": "e.g. 12345",
+      "invoiceIdInvalid": "The invoice number consists of digits only, e.g. 12345."
     },
     "upload": {
       "label": "Invoice review",
       "conf": "Invoice was uploaded to Bexio.",
-      "noBexioId": "The invoice cannot be uploaded because the Bexio ID is missing."
+      "noBexioId": "The invoice cannot be uploaded because the Bexio ID is missing.",
+      "header": {
+        "label": "Text above",
+        "placeholder": "Appears on the invoice above the items"
+      },
+      "footer": {
+        "label": "Text below",
+        "placeholder": "Appears on the invoice below the items"
+      },
+      "send": "Send to Bexio"
     },
     "totals": {
       "label": "Fee overview"

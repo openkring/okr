@@ -130,12 +130,23 @@
       "conf": "Le modifiche sono state salvate."
     },
     "download": {
-      "enterInvoiceId": "Inserire l'ID della fattura:"
+      "enterInvoiceId": "Inserisci il numero di fattura di Bexio",
+      "invoiceIdPlaceholder": "p. es. 12345",
+      "invoiceIdInvalid": "Il numero di fattura contiene solo cifre, p. es. 12345."
     },
     "upload": {
       "label": "Controllo della fattura",
       "conf": "La fattura è stata caricata su Bexio.",
-      "noBexioId": "La fattura non può essere caricata perché manca l'ID Bexio."
+      "noBexioId": "La fattura non può essere caricata perché manca l'ID Bexio.",
+      "header": {
+        "label": "Testo in alto",
+        "placeholder": "Appare sulla fattura sopra le posizioni"
+      },
+      "footer": {
+        "label": "Testo in basso",
+        "placeholder": "Appare sulla fattura sotto le posizioni"
+      },
+      "send": "Invia a Bexio"
     },
     "totals": {
       "label": "Panoramica delle tariffe"

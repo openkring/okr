@@ -10,7 +10,7 @@ import { of } from 'rxjs';
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
 import { AccountingConfigModel, ExportFormat, FeeScheduleEntry, INVOICE_STATE, MembershipCollection, MembershipModel, OwnershipCollection, OwnershipModel, MemberFeeCollection, MemberFeeModel } from '@okr/shared-models';
-import { confirm, exportCsv, showToast } from '@okr/shared-util-angular';
+import { confirm, exportCsv, okrPrompt, showToast } from '@okr/shared-util-angular';
 import { DateFormat, debugListLoaded, fill, generateRandomString, getDataRow, getFullName, getSystemQuery, getTodayStr, getYear, isAfterDate, nameMatches } from '@okr/shared-util-core';
 import { ExportFormats } from '@okr/shared-categories';
 import { I18nService } from '@okr/shared-i18n';
@@ -20,10 +20,9 @@ import { AccountingConfigService } from '@okr/finance-accounting-data-access';
 import { MemberFeeService, getTemplateId } from '@okr/relationship-membership-data-access';
 
 import { MembershipEditModal } from './membership-edit.modal';
-import { MemberFeeInvoiceIdModal } from './member-fee-invoice-id.modal';
-import { MemberFeeUploadModal } from './member-fee-upload.modal';
 import { MemberFeesTotalsModal } from './member-fee-totals.modal';
-import { buildPositions, getFeeTotal, rebatePosition, MEMBERSHIP_I18N_KEYS } from '@okr/relationship-membership-util';
+import { BexioPosition, buildPositions, getFeeTotal, rebatePosition, MEMBERSHIP_I18N_KEYS } from '@okr/relationship-membership-util';
+import { MemberFeeUploadModal } from '@okr/relationship-membership-ui';
 
 export type MemberFeesState = {
   searchTerm: string;
@@ -460,14 +459,15 @@ export const _MemberFeesStore = signalStore(
       let invoiceBexioId = fee.invoiceBexioId;
 
       if (!invoiceBexioId) {
-        const modal = await store.modalController.create({
-          component: MemberFeeInvoiceIdModal,
-          componentProps: { fee },
-        });
-        await modal.present();
-        const { data, role } = await modal.onWillDismiss<{ invoiceId: string }>();
-        if (role !== 'confirm' || !data?.invoiceId) return;
-        invoiceBexioId = data.invoiceId;
+        const entered = (await okrPrompt(store.alertController,
+          store.i18n.memberFee_download_enterInvoiceId(), store.i18n.memberFee_download_invoiceId_placeholder(),
+          store.i18n.ok(), store.i18n.cancel()))?.trim();
+        if (!entered) return;   // cancelled, or confirmed without a value
+        if (!/^\d+$/.test(entered)) {   // the old numeric input accepted digits only
+          await showToast(store.toastController, store.i18n.memberFee_download_invoiceId_invalid());
+          return;
+        }
+        invoiceBexioId = entered;
         const updated: MemberFeeModel = { ...fee, invoiceBexioId };
         await store.memberFeeService.save(updated, store.appStore.currentUser() ?? undefined);
         patchState(store, { version: store.version() + 1 });
@@ -606,7 +606,7 @@ function deriveFee(
  * category ("SCS Jahresbeitrag Aktiv A1"), every other line was its plain label. Without it a
  * Bexio invoice no longer says which membership category it bills.
  */
-function buildBexioPositions(fee: MemberFeeModel, categoryLabel = ''): { text: string; unit_price: number; account_id: number; amount: number }[] {
+function buildBexioPositions(fee: MemberFeeModel, categoryLabel = ''): BexioPosition[] {
   return (fee.positions ?? [])
     .filter(p => p.amount !== 0)
     .map(p => ({

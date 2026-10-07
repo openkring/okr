@@ -130,12 +130,23 @@
       "conf": "Die Aenderungen wurden gespeichert."
     },
     "download": {
-      "enterInvoiceId": "Rechnungs-ID eingeben:"
+      "enterInvoiceId": "Gib die Rechnungsnummer aus Bexio ein",
+      "invoiceIdPlaceholder": "z.B. 12345",
+      "invoiceIdInvalid": "Die Rechnungsnummer besteht nur aus Ziffern, z.B. 12345."
     },
     "upload": {
       "label": "Rechnungsprüfung",
       "conf": "Rechnung wurde zu Bexio hochgeladen.",
-      "noBexioId": "Die Rechnung kann nicht hochgeladen werden, weil die BexioID fehlt."
+      "noBexioId": "Die Rechnung kann nicht hochgeladen werden, weil die BexioID fehlt.",
+      "header": {
+        "label": "Text oben",
+        "placeholder": "Erscheint auf der Rechnung über den Positionen"
+      },
+      "footer": {
+        "label": "Text unten",
+        "placeholder": "Erscheint auf der Rechnung unter den Positionen"
+      },
+      "send": "An Bexio senden"
     },
     "totals": {
       "label": "Gebühren-Übersicht"

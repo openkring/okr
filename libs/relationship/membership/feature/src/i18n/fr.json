@@ -130,12 +130,23 @@
       "conf": "Les modifications ont été enregistrées."
     },
     "download": {
-      "enterInvoiceId": "Saisir l'ID de la facture :"
+      "enterInvoiceId": "Saisis le numéro de facture de Bexio",
+      "invoiceIdPlaceholder": "p. ex. 12345",
+      "invoiceIdInvalid": "Le numéro de facture ne contient que des chiffres, p. ex. 12345."
     },
     "upload": {
       "label": "Contrôle de la facture",
       "conf": "La facture a été téléversée vers Bexio.",
-      "noBexioId": "La facture ne peut pas être téléversée car l'ID Bexio est manquant."
+      "noBexioId": "La facture ne peut pas être téléversée car l'ID Bexio est manquant.",
+      "header": {
+        "label": "Texte en haut",
+        "placeholder": "Apparaît sur la facture au-dessus des positions"
+      },
+      "footer": {
+        "label": "Texte en bas",
+        "placeholder": "Apparaît sur la facture sous les positions"
+      },
+      "send": "Envoyer à Bexio"
     },
     "totals": {
       "label": "Aperçu des frais"

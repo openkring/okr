@@ -1,6 +1,7 @@
 export * from './lib/bexio.util';
 export * from './lib/membership-i18n';
 export * from './lib/member-fee.validations';
+export * from './lib/member-fee-upload.validations';
 export * from './lib/build-positions';
 export * from './lib/category-change-form.model';
 export * from './lib/category-change-form.validations';
