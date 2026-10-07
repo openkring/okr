@@ -180,6 +180,7 @@
     "from_invalid": "Dirección de remitente no válida.",
     "subject_required": "Se requiere un asunto.",
     "cc_invalid": "Dirección CC no válida.",
-    "bcc_invalid": "Dirección CCO no válida."
+    "bcc_invalid": "Dirección CCO no válida.",
+    "changelog_required": "Describe brevemente qué ha cambiado en esta versión."
   }
 }

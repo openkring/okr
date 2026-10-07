@@ -180,6 +180,7 @@
     "from_invalid": "Indirizzo mittente non valido.",
     "subject_required": "È richiesto un oggetto.",
     "cc_invalid": "Indirizzo Cc non valido.",
-    "bcc_invalid": "Indirizzo Ccn non valido."
+    "bcc_invalid": "Indirizzo Ccn non valido.",
+    "changelog_required": "Descrivi brevemente cosa è cambiato in questa versione."
   }
 }

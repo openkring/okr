@@ -180,6 +180,7 @@
     "from_invalid": "Adresse d’expéditeur non valide.",
     "subject_required": "Un objet est requis.",
     "cc_invalid": "Adresse Cc non valide.",
-    "bcc_invalid": "Adresse Cci non valide."
+    "bcc_invalid": "Adresse Cci non valide.",
+    "changelog_required": "Décris brièvement ce qui a changé dans cette version."
   }
 }

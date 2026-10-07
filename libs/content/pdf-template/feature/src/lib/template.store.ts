@@ -158,9 +158,8 @@ export const TemplateStore = signalStore(
     },
 
     async openPublishDialog(templateKey: string, versionNum: number): Promise<boolean> {
-      // Lazy import to avoid circular reference at module load time
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { TemplatePublishModal } = await import('./template-publish.modal' as any);
+      // Lazy import: keeps the modal out of the store's static import graph
+      const { TemplatePublishModal } = await import('@okr/content-pdf-template-ui');
       const modal = await store.modalController.create({
         component: TemplatePublishModal,
         componentProps: { versionNum },

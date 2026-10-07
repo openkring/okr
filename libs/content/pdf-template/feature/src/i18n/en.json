@@ -180,6 +180,7 @@
     "from_invalid": "Invalid sender address.",
     "subject_required": "A subject is required.",
     "cc_invalid": "Invalid CC address.",
-    "bcc_invalid": "Invalid BCC address."
+    "bcc_invalid": "Invalid BCC address.",
+    "changelog_required": "Briefly describe what changed in this version."
   }
 }
