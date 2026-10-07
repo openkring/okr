@@ -6,7 +6,7 @@ import { AddressModel, CategoryListModel, City, RoleName, UserModel } from '@okr
 import { CategorySelect, Checkbox, CheckboxI18n, Chips, CountrySelect, CountrySelectI18n, EmailInput, EmailInputI18n, ErrorNote, IbanInput, IbanInputI18n, NotesInput, NotesInputI18n, PhoneInput, PhoneInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { validateVestTree } from '@okr/shared-util-angular';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
-import { CITY_LENGTH, DEFAULT_ADDRESS_CHANNEL, DEFAULT_COUNTRY, DEFAULT_NOTES, DEFAULT_TAGS, EMAIL_LENGTH, NAME_LENGTH, NUMBER_LENGTH, PHONE_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
+import { CITY_LENGTH, DEFAULT_ADDRESS_CHANNEL, DEFAULT_COUNTRY, DEFAULT_NOTES, DEFAULT_TAGS, DESCRIPTION_LENGTH, EMAIL_LENGTH, NAME_LENGTH, NUMBER_LENGTH, PHONE_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 
 import { CitySearch } from '@okr/subject-swisscities-ui';
 import { addressValidations, AddressesI18n } from '@okr/subject-address-util';
@@ -173,7 +173,7 @@ import { addressValidations, AddressesI18n } from '@okr/subject-address-util';
     }
     
     @if(hasRole('admin')) {
-      <okr-notes-input [i18n]="notesI18n()" [value]="notes()" [readOnly]="isReadOnly()" />
+      <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="notesErrors()" />
     }
   </form>
   }
@@ -192,6 +192,8 @@ export class AddressForm {
   protected readonly numberLength = NUMBER_LENGTH;
   /** kept in step with the cap the Vest suite enforces on this field */
   protected readonly cityLength = CITY_LENGTH;
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly descriptionLength = DESCRIPTION_LENGTH;
   protected okeyI18n              = computed(() => ({ name: 'okey',              label: this.i18n().okey_label(),              placeholder: this.i18n().okey_placeholder(),              helper: this.i18n().okey_helper()              } as TextInputI18n));
   protected addressChannelLabelI18n = computed(() => ({ name: 'addressChannelLabel', label: this.i18n().channel_label(), placeholder: this.i18n().channel_placeholder(), helper: this.i18n().channel_helper() } as TextInputI18n));
   protected addressUsageLabelI18n = computed(() => ({ name: 'addressUsageLabel', label: this.i18n().usage_label(), placeholder: this.i18n().usage_placeholder(), helper: this.i18n().usage_helper() } as TextInputI18n));
@@ -247,6 +249,7 @@ export class AddressForm {
   protected addressChannelErrors = computed(() => this.validationResult().getErrors('addressChannel'));
   protected addressUsageErrors = computed(() => this.validationResult().getErrors('addressUsage'));
   protected isCcErrors = computed(() => this.validationResult().getErrors('isCc'));
+  protected notesErrors = computed(() => this.validationResult().getErrors('notes'));
   protected isFavoriteErrors = computed(() => this.validationResult().getErrors('isFavorite'));
   protected addressValue2Errors = computed(() => this.validationResult().getErrors('addressValue2'));
   protected cityErrors = computed(() => this.validationResult().getErrors('city'));
