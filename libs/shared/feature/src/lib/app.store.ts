@@ -461,15 +461,16 @@ export const AppStore = signalStore(
     // in the DOM — destroying the outlet mid-transition crashes Ionic's StackController
     // ("can't access property 'commit'").
     isAppReady: computed(() => store.isDataReady() || store.readinessTimedOut()),
-    // The two ways a boot can stall long enough that the user deserves an explanation and a way
-    // out, instead of a spinner that never ends:
+    // The three ways a boot can stall long enough that the user deserves an explanation and a
+    // way out, instead of a spinner that never ends (decided in isDegradedBoot):
     //
     //   1. Authenticated, but the UserModel never loaded and the readiness watchdog has since
     //      fired — the users/{uid} read stalled rather than returning. In practice a slow or
     //      blocked network (e.g. Firefox under strict tracking protection forcing long-polling).
-    //      Scoped to the timeout path only: a fast missing-doc / permission-denied read settles
-    //      isDataReady WITHOUT firing the watchdog, so that genuinely-broken-account case never
-    //      shows the (misleading) slow-network message.
+    //   1b. Authenticated, and the users/{uid} read RETURNED without a UserModel (missing doc,
+    //      denied read, corrupted local cache). isDataReady lets navigation through for it, but
+    //      without a UserModel the user is treated as a visitor and isUserSessionReady keeps the
+    //      menu on its spinner forever — so it gets the panel too (2026-10-07).
     //   2. Auth never settled at all — fbUser is still undefined, i.e. onAuthStateChanged has
     //      not emitted even once. This window used to have NO upper bound whatsoever: the
     //      readiness watchdog arms only while `authed` is true, and during auth restore it is
@@ -478,11 +479,12 @@ export const AppStore = signalStore(
     //      would run the role guards against an apparently-anonymous user and bounce a
     //      signed-in one to the login page. Offering the reload is the honest exit.
     //
-    // Both are self-healing: if the pending read or the auth restore finally resolves, the
+    // All are self-healing: if the pending read or the auth restore finally resolves, the
     // underlying signal changes and this flips back to false.
     isDegradedSession: computed(() => isDegradedBoot({
       phase: authPhase(store.fbUser()),
       hasCurrentUser: !!store.currentUser(),
+      userReadSettled: !store.currentUserResource.isLoading(),
       categoriesLoading: store.categoriesResource.isLoading(),
       readinessTimedOut: store.readinessTimedOut(),
       authRestoreTimedOut: store.authRestoreTimedOut(),
@@ -783,6 +785,7 @@ export const AppStore = signalStore(
       const bootState = (): BootState => ({
         phase: authPhase(store.fbUser()),
         hasCurrentUser: !!store.currentUser(),
+        userReadSettled: !store.currentUserResource.isLoading(),
         categoriesLoading: store.categoriesResource.isLoading(),
         readinessTimedOut: store.readinessTimedOut(),
         authRestoreTimedOut: store.authRestoreTimedOut(),

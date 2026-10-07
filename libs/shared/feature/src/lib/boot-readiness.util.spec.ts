@@ -5,6 +5,7 @@ import { authPhase, isDegradedBoot, openBootGate, type BootState } from './boot-
 const base: BootState = {
   phase: 'signedOut',
   hasCurrentUser: false,
+  userReadSettled: false,
   categoriesLoading: false,
   readinessTimedOut: false,
   authRestoreTimedOut: false,
@@ -66,13 +67,28 @@ describe('isDegradedBoot', () => {
     expect(isDegradedBoot({ ...base, phase: 'signedIn', readinessTimedOut: true })).toBe(true);
   });
 
-  it('stays quiet for a settled-but-empty session, which is a broken account and not a slow network', () => {
-    // No watchdog fired: the read came back fast, it just yielded nothing.
-    expect(isDegradedBoot({ ...base, phase: 'signedIn' })).toBe(false);
+  /**
+   * The 2026-10-07 regression: the users/{uid} read came back fast but empty (a denied or
+   * corrupted-cache read). No watchdog fired, so the app let the signed-in user through as a
+   * visitor — on /public/welcome, with a menu spinner that never ended and no message at all.
+   * Waiting cannot fix that state; only the panel's reload can.
+   */
+  it('offers the way out for a signed-in session whose user read settled empty', () => {
+    expect(isDegradedBoot({ ...base, phase: 'signedIn', userReadSettled: true })).toBe(true);
+  });
+
+  it('stays quiet while the user read is still in flight', () => {
+    expect(isDegradedBoot({ ...base, phase: 'signedIn', userReadSettled: false })).toBe(false);
   });
 
   it('drops the panel again when the UserModel finally arrives', () => {
     expect(isDegradedBoot({ ...base, phase: 'signedIn', hasCurrentUser: true, readinessTimedOut: true }))
       .toBe(false);
+    expect(isDegradedBoot({ ...base, phase: 'signedIn', hasCurrentUser: true, userReadSettled: true }))
+      .toBe(false);
+  });
+
+  it('never shows the panel to a signed-out visitor', () => {
+    expect(isDegradedBoot({ ...base, phase: 'signedOut', userReadSettled: true })).toBe(false);
   });
 });

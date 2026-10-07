@@ -27,6 +27,12 @@ export type BootState = {
   phase: AuthPhase;
   /** The UserModel for the signed-in user has loaded. */
   hasCurrentUser: boolean;
+  /**
+   * The `users/{uid}` read has settled (it is no longer loading) — with or without a UserModel.
+   * Settled AND no UserModel is the broken session: a missing doc, a denied read, or a corrupted
+   * local Firestore cache answering "no such document".
+   */
+  userReadSettled: boolean;
   /** The categories resource is still in flight. */
   categoriesLoading: boolean;
   /** The readiness watchdog fired: an authenticated user's `users/{uid}` read never returned. */
@@ -56,18 +62,27 @@ export function openBootGate(state: BootState): BootGate {
 }
 
 /**
- * Whether to replace the endless boot spinner with the "slow connection — reload" panel.
+ * Whether to replace the endless boot spinner with the "the app could not finish starting —
+ * reload" panel.
  *
- * Two stalls qualify, and only after their watchdog has fired:
- *  - an authenticated user whose UserModel never loaded (`readinessTimedOut`), and
- *  - auth that never settled at all (`authRestoreTimedOut`).
+ * Three stalls qualify:
+ *  - auth that never settled at all, once its watchdog fired (`authRestoreTimedOut`);
+ *  - an authenticated user whose UserModel read never returned, once its watchdog fired
+ *    (`readinessTimedOut`);
+ *  - an authenticated user whose UserModel read RETURNED, but empty (`userReadSettled`).
  *
- * A fast missing-doc or permission-denied read settles readiness WITHOUT firing a watchdog, so
- * that genuinely-broken-account case never shows the (misleading) slow-connection message.
- * Both conditions are self-healing: if the pending read or the auth restore finally resolves,
- * the inputs change and this goes back to false.
+ * The third needs no watchdog because waiting cannot fix it. It used to be let through
+ * silently: navigation opened, the role guards saw no user and treated the signed-in user as a
+ * visitor (`/public/welcome`), and the menu — gated on `isUserSessionReady` — showed its spinner
+ * forever, with no message and no way out but a reload nobody suggested (2026-10-07, a corrupted
+ * local Firestore cache that answered "no such document" for `users/owner_scs`).
+ *
+ * All three are self-healing: if the pending read or the auth restore finally resolves (the
+ * user-doc listener keeps retrying a denial, see FirestoreService), the inputs change and this
+ * goes back to false.
  */
 export function isDegradedBoot(state: BootState): boolean {
   if (state.authRestoreTimedOut && state.phase === 'restoring') return true;
-  return state.readinessTimedOut && state.phase === 'signedIn' && !state.hasCurrentUser;
+  if (state.phase !== 'signedIn' || state.hasCurrentUser) return false;
+  return state.readinessTimedOut || state.userReadSettled;
 }
