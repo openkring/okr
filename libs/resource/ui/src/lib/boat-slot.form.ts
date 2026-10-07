@@ -27,7 +27,7 @@ import { SHORT_NAME_LENGTH } from '@okr/shared-constants';
           <ion-card-content class="ion-no-padding">
             <ion-grid>
               <ion-row>
-                <ion-col size="12">
+                <ion-col size="12" size-md="6">
                   <!-- an occupied slot carries the boat's name; only a free slot names its planned boat -->
                   @if (boatName()) {
                     <okr-text-input [i18n]="boatNameI18n()" [value]="boatName()" [readOnly]="true" />
@@ -37,9 +37,7 @@ import { SHORT_NAME_LENGTH } from '@okr/shared-constants';
                     <okr-error-note [errors]="textErrors()" />
                   }
                 </ion-col>
-              </ion-row>
-              <ion-row>
-                <ion-col size="12">
+                <ion-col size="12" size-md="6">
                   <okr-string-select [i18n]="colorI18n()" [selectedString]="color()"
                     (selectedStringChange)="onFieldChange('color', $event)"
                     [stringList]="colors" [labels]="colorLabels()" [readOnly]="isReadOnly()" />
@@ -55,14 +53,12 @@ import { SHORT_NAME_LENGTH } from '@okr/shared-constants';
               </ion-row>
               @if (isStrategyRelevant()) {
                 <ion-row>
-                  <ion-col size="12">
+                  <ion-col size="12" size-md="6">
                     <okr-string-select [i18n]="typeI18n()" [selectedString]="strategyType()"
                       (selectedStringChange)="onFieldChange('strategyType', $event)"
                       [stringList]="strategyTypes" [labels]="strategyTypeLabels()" [readOnly]="isReadOnly()" />
                   </ion-col>
-                </ion-row>
-                <ion-row>
-                  <ion-col size="12">
+                  <ion-col size="12" size-md="6">
                     <okr-number-input [i18n]="priceI18n()" [value]="price()"
                       (valueChange)="onNumberChange('price', $event)" [readOnly]="isReadOnly()" />
                   </ion-col>
@@ -70,13 +66,11 @@ import { SHORT_NAME_LENGTH } from '@okr/shared-constants';
                 <!-- funding applies to a purchase only; a sale brings money in -->
                 @if (strategyType() === 'buy') {
                   <ion-row>
-                    <ion-col size="12">
+                    <ion-col size="12" size-md="6">
                       <okr-number-input [i18n]="swisslosI18n()" [value]="swisslos()" [max]="100"
                         (valueChange)="onNumberChange('swisslos', $event)" [readOnly]="isReadOnly()" />
                     </ion-col>
-                  </ion-row>
-                  <ion-row>
-                    <ion-col size="12">
+                    <ion-col size="12" size-md="6">
                       <okr-number-input [i18n]="donationsI18n()" [value]="donations()"
                         (valueChange)="onNumberChange('donations', $event)" [readOnly]="isReadOnly()" />
                     </ion-col>
