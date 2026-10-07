@@ -12,6 +12,7 @@ import { assertLeafAccount, refuse } from '../invoice/invoice-context';
 import { issuePeriodKeys, withoutUndefined } from '../invoice/invoice.logic';
 import { billBookingLines, BillLineInput, bookBlockers } from './bill.logic';
 import { loadBillConfig, loadOwnBill } from './bill-context';
+import { writeFinanceHistory } from '../finance-history/finance-history';
 
 const REGION = 'europe-west6';
 const CF_NAME = 'bookBill';
@@ -103,6 +104,7 @@ export const bookBill = onCall(
       tx.update(billRef, { state: 'todo', bookingKeys: [bookingKey] });
       return { bookingKey, bookingNo, state: 'todo' };
     });
+    await writeFinanceHistory(db, { tenantId, uid: request.auth?.uid, parentKey: `bill.${billKey}`, kind: 'billBooked', details: String(result.bookingNo) });
     logger.info(`${CF_NAME}: booked ${billKey} as ${bookingKey} (no=${result.bookingNo}, tenant=${tenantId})`);
     return result;
   },

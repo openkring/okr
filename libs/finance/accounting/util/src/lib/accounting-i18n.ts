@@ -6,6 +6,10 @@ export const ACCOUNTING_I18N_KEYS = {
   read_only_title: PFX + 'readonly.title',
   read_only_msg:   PFX + 'readonly.msg',
 
+  // Verlauf of an invoice or bill (finance-comments); the event labels are resolved per entry by CommentTextPipe
+  history_title: PFX + 'history.title',
+  history_empty: PFX + 'history.empty',
+
   // voucher tiles (Belege) on bookings and bills, spec 1.74
   voucher_title:      PFX + 'voucher.title',
   voucher_load_error: PFX + 'voucher.loadError',

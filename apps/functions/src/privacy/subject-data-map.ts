@@ -1474,9 +1474,10 @@ export async function resolveDocs(entry: SubjectDataEntry, ctx: SubjectCtx): Pro
 //   the files sit in the private bucket. No person FK: reachable only transitively through
 //   the record that names them (bookings.documentKeys, invoices.documentKey/reminders,
 //   bills.attachments), whose rows already cover the subject. Treasurer-only read.
-// gap: finance-comments — internal bexio invoice comments (spec 1.68), linked by
-//   parentKey 'invoice.<okey>' only; free text may name a person. Reachable through the
-//   invoices row. Treasurer-only read.
+// gap: finance-comments — the Verlauf of invoices and bills: bexio comments (spec 1.68), events
+//   written by the invoice/bill Cloud Functions (may list email recipients) and treasurer notes,
+//   linked by parentKey 'invoice.<okey>' / 'bill.<okey>' only; free text may name a person.
+//   Reachable through the invoices/bills row. Treasurer-only read.
 // gap: bank-import-rows — counterparty name extracted from a bank statement line (payee,
 //   rawText), no subject link (no personKey); the same name lands on the posted booking's
 //   counterparty, so erasure/anonymisation follows the bookings row (spec 1.60)

@@ -186,6 +186,22 @@
       }
     }
   },
+  "history": {
+    "title": "History",
+    "empty": "No entries yet.",
+    "issued": "Invoice issued, no.",
+    "email": "Sent by email",
+    "post": "Marked as sent by post",
+    "reminder": "Reminder created, level",
+    "reminderWaived": "Reminder fee waived, level",
+    "payment": "Payment recorded",
+    "paymentConfirmation": "Payment confirmation created",
+    "cancelled": "Cancelled",
+    "billCreated": "Bill entered",
+    "billBooked": "Bill booked, booking no.",
+    "billPayment": "Payment recorded",
+    "billPaymentUnlinked": "Payment link removed"
+  },
   "voucher": {
     "title": "Vouchers",
     "loadError": "The vouchers could not be loaded. Please try again later."

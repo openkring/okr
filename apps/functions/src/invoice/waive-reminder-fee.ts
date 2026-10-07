@@ -13,6 +13,7 @@ import { assertLeafAccount, loadOwnedAccountingConfig, refuse } from './invoice-
 import { appendNote, InvoiceLike, isUsableIssueBooking, openAmount, reversalLines, waiverOutcome } from './invoice-payment.logic';
 import { coalesceReminder, reminderKey, ReminderLike, storedReminder, waiveBlockers, waiverKey } from './invoice-reminder.logic';
 import { invoiceBookingIndex, issuePeriodKeys, withoutUndefined } from './invoice.logic';
+import { chfText, historyDetails, writeFinanceHistory } from '../finance-history/finance-history';
 
 const REGION = 'europe-west6';
 const CF_NAME = 'waiveReminderFee';
@@ -174,6 +175,7 @@ export const waiveReminderFee = onCall(
       }));
       return { reminder: waived, openAmount: openAmount({ ...asInvoiceLike(invoice), reminders }), state: outcome.state };
     });
+    await writeFinanceHistory(db, { tenantId, uid: request.auth?.uid, parentKey: `invoice.${invoiceKey}`, kind: 'reminderWaived', details: historyDetails(`${lvl}`, chfText(result.reminder.fee ?? 0), reason) });
     logger.info(`${CF_NAME}: waived fee of reminder ${lvl} on ${invoiceKey} (tenant=${tenantId}, booking=${key})`);
     return result;
   },

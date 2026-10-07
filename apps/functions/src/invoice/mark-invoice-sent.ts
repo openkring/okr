@@ -7,6 +7,7 @@ import { DateFormat, getTodayStr } from '@okr/shared-util-core';
 import { checkAppCheckToken, checkAuthentication, checkRoles, getCallerTenantId } from '@okr/shared-util-functions';
 
 import { refuse } from './invoice-context';
+import { writeFinanceHistory } from '../finance-history/finance-history';
 
 const REGION = 'europe-west6';
 const CF_NAME = 'markInvoiceSent';
@@ -45,6 +46,7 @@ export const markInvoiceSent = onCall(
       }
       tx.update(invoiceRef, { sentAt, sentVia: 'post' });
     });
+    await writeFinanceHistory(db, { tenantId, uid: request.auth?.uid, parentKey: `invoice.${invoiceKey}`, kind: 'post' });
     logger.info(`${CF_NAME}: ${invoiceKey} marked as sent by post (tenant=${tenantId})`);
     return { sentAt };
   },

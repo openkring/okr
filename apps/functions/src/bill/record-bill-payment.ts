@@ -16,6 +16,8 @@ import {
   withNoteLine,
 } from './bill-payment.logic';
 import { isPeriodOpen, loadBillConfig, loadOwnBill, payablesKeyOf } from './bill-context';
+import { chfText, historyDetails, writeFinanceHistory } from '../finance-history/finance-history';
+import { viewDate } from '../invoice/invoice.logic';
 
 const REGION = 'europe-west6';
 const CF_NAME = 'recordBillPayment';
@@ -188,6 +190,7 @@ export const recordBillPayment = onCall(
       tx.update(billRef, withoutUndefined({ payments: applied.payments, state: applied.state, paymentDate: applied.paymentDate }));
       return { state: applied.state, payments: applied.payments, bookingKey };
     });
+    await writeFinanceHistory(db, { tenantId, uid: request.auth?.uid, parentKey: `bill.${billKey}`, kind: 'billPayment', details: historyDetails(chfText(amount), viewDate(date), mode === 'link' && `↔ ${bookingKey}`) });
     logger.info(`${CF_NAME}: ${mode} payment on ${billKey} (tenant=${tenantId}, booking=${bookingKey})`);
     return result;
   },

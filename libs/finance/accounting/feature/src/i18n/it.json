@@ -186,6 +186,22 @@
       }
     }
   },
+  "history": {
+    "title": "Cronologia",
+    "empty": "Ancora nessuna voce.",
+    "issued": "Fattura emessa, n.",
+    "email": "Inviata per e-mail",
+    "post": "Segnata come inviata per posta",
+    "reminder": "Sollecito creato, livello",
+    "reminderWaived": "Spese di sollecito condonate, livello",
+    "payment": "Pagamento registrato",
+    "paymentConfirmation": "Conferma di pagamento creata",
+    "cancelled": "Annullata",
+    "billCreated": "Fattura fornitore registrata",
+    "billBooked": "Fattura fornitore contabilizzata, registrazione n.",
+    "billPayment": "Pagamento registrato",
+    "billPaymentUnlinked": "Collegamento del pagamento rimosso"
+  },
   "voucher": {
     "title": "Giustificativi",
     "loadError": "Non è stato possibile caricare i giustificativi. Riprova più tardi."

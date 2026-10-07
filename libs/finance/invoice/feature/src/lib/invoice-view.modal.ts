@@ -6,7 +6,7 @@ import { formatMinorAmount, Header } from '@okr/shared-ui';
 import { PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
 import { fill, formatQrReference, getFullName, getTodayStr, hasRole, prettyFormatDate } from '@okr/shared-util-core';
 import { AvatarPipe } from '@okr/avatar-ui';
-import { AvatarDetailService, LedgerBookings, VoucherTiles } from '@okr/finance-accounting-feature';
+import { AvatarDetailService, FinanceHistory, LedgerBookings, VoucherTiles } from '@okr/finance-accounting-feature';
 import {
   invoiceAccountKeys, invoiceBookingAmounts, invoiceVoucherKeys, isDraftInvoice, invoiceBookingKeys, invoiceDisplayState, invoiceStateColor, invoiceStateLabel, isOverdueInvoice, isPayableState, openInvoiceAmount, reminderLevelKey,
 } from '@okr/finance-invoice-util';
@@ -18,7 +18,7 @@ import { InvoiceStore } from './invoice.store';
   providers: [InvoiceStore],
   imports: [
     SvgIconPipe, PrettyDatePipe, AvatarPipe,
-    Header, LedgerBookings, VoucherTiles,
+    Header, LedgerBookings, VoucherTiles, FinanceHistory,
     IonContent, IonCard, IonIcon, IonLabel, IonCardContent, IonItem, IonChip, IonAvatar, IonImg, IonButton
   ],
   styles: [`
@@ -195,6 +195,8 @@ import { InvoiceStore } from './invoice.store';
         <!-- the issued invoice PDF and its reminder PDFs (finance-documents), treasurer/privileged only -->
         @if(mayReadVouchers()) {
           <okr-voucher-tiles [documentKeys]="voucherKeys()" />
+          <!-- Verlauf: events written by the Cloud Functions, bexio comments and the treasurer's notes -->
+          <okr-finance-history [parentKey]="'invoice.' + invoice.okey" />
         }
       }
     </ion-content>

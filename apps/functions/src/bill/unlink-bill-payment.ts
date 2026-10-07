@@ -10,6 +10,7 @@ import { withoutUndefined } from '../invoice/invoice.logic';
 import { billAfterPaymentRemoval, BillLike, billPaymentNote, StoredBillPayment, withoutNoteLine } from './bill-payment.logic';
 import { isPeriodOpen, loadBillConfig, loadOwnBill } from './bill-context';
 import { touchedPeriodKeys } from '../booking/period-lock';
+import { writeFinanceHistory } from '../finance-history/finance-history';
 
 const REGION = 'europe-west6';
 const CF_NAME = 'unlinkBillPayment';
@@ -67,6 +68,7 @@ export const unlinkBillPayment = onCall(
       }
       return { state: after.state, payments: after.payments };
     });
+    await writeFinanceHistory(db, { tenantId, uid: request.auth?.uid, parentKey: `bill.${billKey}`, kind: 'billPaymentUnlinked', details: `↔ ${bookingKey}` });
     logger.info(`${CF_NAME}: unlinked ${bookingKey} from bill ${billKey} (tenant=${tenantId})`);
     return result;
   },

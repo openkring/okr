@@ -2,7 +2,7 @@ import { Component, computed, inject, input } from '@angular/core';
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonChip, IonContent, IonIcon, IonImg, IonItem, IonLabel, IonNote, ModalController } from '@ionic/angular/standalone';
 
 import { AvatarPipe } from '@okr/avatar-ui';
-import { AvatarDetailService, LedgerBookings, VoucherTiles } from '@okr/finance-accounting-feature';
+import { AvatarDetailService, FinanceHistory, LedgerBookings, VoucherTiles } from '@okr/finance-accounting-feature';
 import { billAccountKeys, billBookingAmounts, billBookingKeys, billDisplayState, billStateColor, billStateLabel, billVoucherKeys, isOverdueBill, isPayableBill } from '@okr/finance-bill-util';
 import { BillModel, BillPayment } from '@okr/shared-models';
 import { formatMinorAmount, Header } from '@okr/shared-ui';
@@ -16,7 +16,7 @@ import { BillStore } from './bill.store';
   standalone: true,
   providers: [BillStore],
   imports: [
-    VoucherTiles, LedgerBookings,
+    VoucherTiles, LedgerBookings, FinanceHistory,
     SvgIconPipe, PrettyDatePipe, AvatarPipe,
     Header,
     IonContent, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonIcon, IonItem, IonLabel, IonChip, IonAvatar, IonImg, IonButton, IonNote
@@ -160,6 +160,10 @@ import { BillStore } from './bill.store';
       }
       <!-- attachments migrated from bexio: finance-documents okeys, files in the private bucket (spec 1.74) -->
       <okr-voucher-tiles [documentKeys]="voucherKeys()" />
+      <!-- Verlauf: events written by the Cloud Functions and the treasurer's notes -->
+      @if (mayReadHistory() && bill().okey) {
+        <okr-finance-history [parentKey]="'bill.' + bill().okey" />
+      }
     </ion-content>
   `
 })
@@ -195,6 +199,8 @@ export class BillViewModal {
   // payments (spec 1.85)
   protected readonly payments = computed(() => this.bill()?.payments ?? []);
   private readonly isTreasurer = computed(() => hasRole('treasurer', this.store.appStore.currentUser()));
+  /** the Verlauf (finance-comments) is treasurer/privileged only, like the vouchers */
+  protected readonly mayReadHistory = computed(() => this.isTreasurer() || hasRole('privileged', this.store.appStore.currentUser()));
   protected readonly canPay = computed(() => this.isTreasurer() && !this.store.isExternallyManaged() && isPayableBill(this.bill()));
   protected readonly hint = computed(() => this.store.paymentHints().get(this.bill()?.okey ?? ''));
   protected readonly hintText = computed(() => {

@@ -15,6 +15,7 @@ import { loadOwnedAccountingConfig, receiverAddress, ReceiverRef, refuse } from 
 import {
   buildConfirmationPayload, confirmationDocumentFields, confirmationPayDate, confirmationRefusal, ConfirmationInvoice,
 } from './payment-confirmation.logic';
+import { writeFinanceHistory } from '../finance-history/finance-history';
 
 const REGION = 'europe-west6';
 const CF_NAME = 'createPaymentConfirmation';
@@ -89,6 +90,7 @@ export const createPaymentConfirmation = onCall(
 
     // renderDocument returns only metadata; read back the file it just wrote
     const [bytes] = await bucket.file(fullPath).download();
+    await writeFinanceHistory(db, { tenantId, uid, parentKey: `invoice.${invoiceKey}`, kind: 'paymentConfirmation' });
     logger.info(`${CF_NAME}: ${invoiceKey} (tenant=${tenantId})`);
     return { documentKey, content: bytes.toString('base64') };
   },

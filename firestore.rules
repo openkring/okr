@@ -615,7 +615,18 @@ service cloud.firestore {
     // (members' receipts, internal notes) — treasurer/privileged only, never client-written.
     // The files themselves are under tenant/{tid}/private/**, which only Cloud Functions reach.
     match /finance-documents/{id} { allow read: if tenantRead() && (isPrivileged() || hasRole('treasurer')); allow write: if false; }
-    match /finance-comments/{id}  { allow read: if tenantRead() && (isPrivileged() || hasRole('treasurer')); allow write: if false; }
+    // finance-comments is the Verlauf of invoices and bills: bexio comments (tags 'bexio'), events written by
+    // the Cloud Functions (tags 'system,<kind>') and notes the treasurer adds in the app — the only client write:
+    // a create tagged 'note' on an invoice/bill, authored by the caller. Never updated or deleted (audit trail).
+    match /finance-comments/{id}  {
+      allow read: if tenantRead() && (isPrivileged() || hasRole('treasurer'));
+      allow create: if tenantCreate() && (isPrivileged() || hasRole('treasurer'))
+        && request.resource.data.tags == 'note'
+        && request.resource.data.parentKey.matches('^(invoice|bill)[.].+')
+        && request.resource.data.authorKey == userData().personKey
+        && request.resource.data.isArchived == false;
+      allow update, delete: if false;
+    }
     match /booking-lines/{id}      { allow read: if tenantRead(); allow write: if false; }
     match /bookings/{id}          { allow read: if tenantRead(); allow write: if false; }
     match /exchange-rates/{id}    { allow read: if tenantRead(); allow write: if false; }

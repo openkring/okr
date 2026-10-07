@@ -19,6 +19,7 @@ import {
   issuePeriodKeys, PositionInput, sortPositions, withoutUndefined,
 } from './invoice.logic';
 import { assertLeafAccount, loadOwnedAccountingConfig, receiverAddress, refuse } from './invoice-context';
+import { writeFinanceHistory } from '../finance-history/finance-history';
 
 const REGION = 'europe-west6';
 const CF_NAME = 'issueInvoice';
@@ -291,6 +292,7 @@ export const issueInvoice = onCall(
         return { invoiceNo, documentKey, bookingKey };
       });
       committed = true;
+      await writeFinanceHistory(db, { tenantId, uid, parentKey: `invoice.${invoiceKey}`, kind: 'issued', details: invoiceId });
       logger.info(`${CF_NAME}: issued ${invoiceKey} as ${invoiceId} (tenant=${tenantId})`);
       return result;
     } catch (e) {

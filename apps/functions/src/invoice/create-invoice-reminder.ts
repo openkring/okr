@@ -17,8 +17,9 @@ import { confirmationDocumentFields } from './payment-confirmation.logic';
 import {
   coalesceReminder, defaultReminderFee, MAX_REMINDER_LEVEL, reminderBlockers, reminderDueDate, reminderFeeLines, reminderKey, ReminderLike, storedReminder,
 } from './invoice-reminder.logic';
-import { invoiceBookingIndex, issuePeriodKeys, recipientFields, withoutUndefined } from './invoice.logic';
+import { invoiceBookingIndex, issuePeriodKeys, recipientFields, viewDate, withoutUndefined } from './invoice.logic';
 import { buildReminderPayload } from './reminder-payload.logic';
+import { chfText, historyDetails, writeFinanceHistory } from '../finance-history/finance-history';
 
 const REGION = 'europe-west6';
 const CF_NAME = 'createInvoiceReminder';
@@ -206,6 +207,7 @@ export const createInvoiceReminder = onCall(
       tx.update(invoiceRef, withoutUndefined({ reminders }));
       return { reminder, openAmount: openAmount({ ...asInvoiceLike(invoice), reminders }) };
     });
+    await writeFinanceHistory(db, { tenantId, uid: request.auth?.uid, parentKey: `invoice.${invoiceKey}`, kind: 'reminder', details: historyDetails(`${lvl}`, viewDate(String(date ?? '')), fee > 0 && chfText(fee)) });
     logger.info(`${CF_NAME}: reminder ${lvl} on ${invoiceKey} (tenant=${tenantId}, fee=${fee})`);
     return result;
   },

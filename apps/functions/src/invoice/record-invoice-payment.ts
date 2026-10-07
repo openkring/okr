@@ -13,7 +13,8 @@ import {
   applyInvoicePayment, InvoiceLike, isValidPaymentId, isValidStoreDate, linkBlockers, linkDecision, paymentBlockers, paymentBookingLines,
   paymentDecision, pickBankAccount, StoredPayment,
 } from './invoice-payment.logic';
-import { invoiceBookingIndex, issuePeriodKeys, withoutUndefined } from './invoice.logic';
+import { invoiceBookingIndex, issuePeriodKeys, viewDate, withoutUndefined } from './invoice.logic';
+import { chfText, historyDetails, writeFinanceHistory } from '../finance-history/finance-history';
 
 const REGION = 'europe-west6';
 const CF_NAME = 'recordInvoicePayment';
@@ -181,6 +182,7 @@ export const recordInvoicePayment = onCall(
       tx.update(invoiceRef, withoutUndefined({ payments: applied.payments, state: applied.state, paymentDate: applied.paymentDate }));
       return { state: applied.state, payments: applied.payments, bookingKey };
     });
+    await writeFinanceHistory(db, { tenantId, uid: request.auth?.uid, parentKey: `invoice.${invoiceKey}`, kind: 'payment', details: historyDetails(chfText(amount), viewDate(date), mode === 'link' && `↔ ${bookingKey}`) });
     logger.info(`${CF_NAME}: ${mode} payment on ${invoiceKey} (tenant=${tenantId}, booking=${bookingKey})`);
     return result;
   },

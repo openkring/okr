@@ -213,12 +213,14 @@ import { CommentListI18n, isImageFile } from '@okr/comment-util';
       </div>
 
       <div class="buttons-row">
-        <ion-button fill="clear" class="action-button" color="secondary"
-          [disabled]="isBusy()"
-          [attr.aria-label]="i18n().attach()"
-          (click)="attachRequested.emit()">
-          <ion-icon slot="icon-only" src="{{ 'add-circle' | svgIcon }}" />
-        </ion-button>
+        @if (canAttach()) {
+          <ion-button fill="clear" class="action-button" color="secondary"
+            [disabled]="isBusy()"
+            [attr.aria-label]="i18n().attach()"
+            (click)="attachRequested.emit()">
+            <ion-icon slot="icon-only" src="{{ 'add-circle' | svgIcon }}" />
+          </ion-button>
+        }
 
         <div class="emoji-picker-wrapper">
           <ion-button fill="clear" class="action-button" color="medium"
@@ -255,6 +257,8 @@ export class CommentComposer {
   public readonly pendingFiles = input<File[]>([]);
   /** true while the store uploads the attachments; blocks a second send */
   public readonly isBusy = input<boolean>(false);
+  /** false hides the attach button (e.g. finance notes, whose files would belong in the private bucket) */
+  public readonly canAttach = input<boolean>(true);
 
   // outputs
   public readonly sent = output<string>();

@@ -26,6 +26,8 @@
     "@okr/finance-booking-data-access": "*",
     "@okr/subject-org-data-access": "*",
     "@okr/subject-org-ui": "*",
-    "@okr/subject-person-ui": "*"
+    "@okr/subject-person-ui": "*",
+    "@okr/comment-ui": "*",
+    "@okr/comment-util": "*"
   }
 }

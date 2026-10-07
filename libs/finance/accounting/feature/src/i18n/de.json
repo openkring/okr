@@ -186,6 +186,22 @@
       }
     }
   },
+  "history": {
+    "title": "Verlauf",
+    "empty": "Noch keine Einträge.",
+    "issued": "Rechnung gestellt, Nr.",
+    "email": "Per E-Mail gesendet",
+    "post": "Als per Post versandt markiert",
+    "reminder": "Mahnung erstellt, Stufe",
+    "reminderWaived": "Mahngebühr erlassen, Stufe",
+    "payment": "Zahlung erfasst",
+    "paymentConfirmation": "Zahlungsbestätigung erstellt",
+    "cancelled": "Storniert",
+    "billCreated": "Kreditor erfasst",
+    "billBooked": "Kreditor gebucht, Buchung Nr.",
+    "billPayment": "Zahlung erfasst",
+    "billPaymentUnlinked": "Zahlungsverknüpfung aufgehoben"
+  },
   "voucher": {
     "title": "Belege",
     "loadError": "Die Belege konnten nicht geladen werden. Versuche es später noch einmal."

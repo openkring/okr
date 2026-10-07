@@ -5,3 +5,4 @@ export * from './lib/accounting-settings.page';
 export * from './lib/voucher-tiles';
 export * from './lib/ledger-bookings';
 export * from './lib/avatar-detail.service';
+export * from './lib/finance-history';

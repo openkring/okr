@@ -18,6 +18,7 @@ import {
   ComposedInvoiceMail, emailDocumentKind, invoiceEmailAsksPayment, invoiceEmailHtml, invoiceEmailSubject,
   normalizeComposedMail, recipientDirectoryId, scrubEmailAddresses, sendRefusal,
 } from './send-invoice-email.logic';
+import { emailDetails, writeFinanceHistory } from '../finance-history/finance-history';
 
 const REGION = 'europe-west6';
 const CF_NAME = 'sendInvoiceEmail';
@@ -210,6 +211,11 @@ export const sendInvoiceEmail = onCall(
       throw new HttpsError('internal', 'The email could not be sent.');
     }
     logger.info(`${CF_NAME}: ${target.kind} ${documentKey} mailed (recipients=${recipients}, composed=${!!request.data?.mail})`);
+
+    await writeFinanceHistory(db, {
+      tenantId, uid: request.auth?.uid, parentKey: `invoice.${invoiceRef.id}`, kind: 'email',
+      details: emailDetails({ to, cc, bcc, subject, filename: prepared.filename, extraFiles: extra.map((a) => a.filename) }),
+    });
 
     const sentAt = getTodayStr(DateFormat.StoreDate);
     const result: SendInvoiceEmailResult = target.kind === 'invoice' ? { sentAt, kind: 'invoice' } : { sentAt, kind: 'reminder', level };

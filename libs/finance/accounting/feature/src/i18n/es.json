@@ -186,6 +186,22 @@
       }
     }
   },
+  "history": {
+    "title": "Historial",
+    "empty": "Todavía no hay entradas.",
+    "issued": "Factura emitida, n.º",
+    "email": "Enviada por correo electrónico",
+    "post": "Marcada como enviada por correo postal",
+    "reminder": "Recordatorio creado, nivel",
+    "reminderWaived": "Gastos de recordatorio condonados, nivel",
+    "payment": "Pago registrado",
+    "paymentConfirmation": "Confirmación de pago creada",
+    "cancelled": "Anulada",
+    "billCreated": "Factura de proveedor registrada",
+    "billBooked": "Factura de proveedor contabilizada, asiento n.º",
+    "billPayment": "Pago registrado",
+    "billPaymentUnlinked": "Vínculo de pago eliminado"
+  },
   "voucher": {
     "title": "Justificantes",
     "loadError": "No se han podido cargar los justificantes. Vuelve a intentarlo más tarde."

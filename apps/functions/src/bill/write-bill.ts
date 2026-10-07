@@ -11,6 +11,7 @@ import { refuse } from '../invoice/invoice-context';
 import { withoutUndefined } from '../invoice/invoice.logic';
 import { billTotal, cleanBillLines, draftWriteRefusal } from './bill.logic';
 import { loadBillConfig } from './bill-context';
+import { chfText, writeFinanceHistory } from '../finance-history/finance-history';
 
 const REGION = 'europe-west6';
 const CF_NAME = 'writeBill';
@@ -143,6 +144,9 @@ export const writeBill = onCall(
       tx.set(billRef, withoutUndefined(removeKeyFromOkrModel(bill)));
     });
 
+    if (mode === 'create') {
+      await writeFinanceHistory(db, { tenantId, uid: request.auth?.uid, parentKey: `bill.${billKey}`, kind: 'billCreated', details: chfText(billTotal(lines)) });
+    }
     logger.info(`${CF_NAME}: ${mode} draft ${billKey} (${lines.length} line(s)) for tenant ${tenantId}`);
     return { billKey };
   },

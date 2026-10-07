@@ -186,6 +186,22 @@
       }
     }
   },
+  "history": {
+    "title": "Historique",
+    "empty": "Aucune entrée pour l’instant.",
+    "issued": "Facture émise, n°",
+    "email": "Envoyée par e-mail",
+    "post": "Marquée comme envoyée par la poste",
+    "reminder": "Rappel créé, niveau",
+    "reminderWaived": "Frais de rappel annulés, niveau",
+    "payment": "Paiement saisi",
+    "paymentConfirmation": "Confirmation de paiement créée",
+    "cancelled": "Annulée",
+    "billCreated": "Facture fournisseur saisie",
+    "billBooked": "Facture fournisseur comptabilisée, écriture n°",
+    "billPayment": "Paiement saisi",
+    "billPaymentUnlinked": "Lien de paiement supprimé"
+  },
   "voucher": {
     "title": "Justificatifs",
     "loadError": "Les justificatifs n’ont pas pu être chargés. Réessaie plus tard."

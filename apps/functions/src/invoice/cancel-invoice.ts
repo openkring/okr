@@ -13,6 +13,7 @@ import { assertLeafAccount, loadOwnedAccountingConfig, refuse } from './invoice-
 import { appendStornoNote, cancelBlockers, InvoiceLike, isUsableIssueBooking, isValidStoreDate, stornoSourceLines } from './invoice-payment.logic';
 import { unwaivedFeeKeys } from './invoice-reminder.logic';
 import { invoiceBookingIndex, issuePeriodKeys, withoutUndefined } from './invoice.logic';
+import { historyDetails, writeFinanceHistory } from '../finance-history/finance-history';
 
 const REGION = 'europe-west6';
 const CF_NAME = 'cancelInvoice';
@@ -172,6 +173,7 @@ export const cancelInvoice = onCall(
       tx.update(invoiceRef, { state: 'cancelled', notes });
       return { state: 'cancelled', stornoBookingKey: stornoKey };
     });
+    await writeFinanceHistory(db, { tenantId, uid: request.auth?.uid, parentKey: `invoice.${invoiceKey}`, kind: 'cancelled', details: historyDetails(reason) });
     logger.info(`${CF_NAME}: cancelled ${invoiceKey} (tenant=${tenantId}, booking=${stornoKey})`);
     return result;
   },
