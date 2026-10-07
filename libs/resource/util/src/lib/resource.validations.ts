@@ -6,7 +6,6 @@ import { ResourceModel } from '@okr/shared-models';
 import { baseValidations, isArrayOfBaseProperties, numberValidations, stringValidations } from '@okr/shared-util-core';
 
 export const resourceValidations = staticSuite((model: ResourceModel, tenants: string, tags: string) => {
-
   baseValidations(model, tenants, tags);
 
   stringValidations('name', model.name, SHORT_NAME_LENGTH);

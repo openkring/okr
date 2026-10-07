@@ -20,7 +20,6 @@ export const DEFAULT_POLL_TIME = '07:00';
  * member is merely toggling cells, which can never be invalid.
  */
 export const schedulePollValidations = staticSuite((model: SchedulePollFormData) => {
-
   omitWhen(!model.isDraft, () => {
     // bare key: ErrorNote resolves it as 'validation.<key>' in the main bundle
     test('name', 'schedulePollNameMandatory', () => {

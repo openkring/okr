@@ -5,7 +5,6 @@ import { ActivityModel } from '@okr/shared-models';
 import { avatarValidations, dateTimeValidations, stringValidations } from '@okr/shared-util-core';
 
 export const activityValidations = staticSuite((model: ActivityModel, tenants: string) => {
-
   dateTimeValidations('timestamp', model.timestamp);
   stringValidations('scope', model.scope, WORD_LENGTH);
   stringValidations('action', model.action);

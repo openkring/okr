@@ -19,7 +19,6 @@ export const HQ_HINT_LENGTH = DESCRIPTION_LENGTH;
  * correct answer that points at one of them. `type` and `parentKey` are selector values: no caps.
  */
 export const hearingQuizNodeValidations = staticSuite((model: HearingQuizNodeModel, tenants: string, tags: string) => {
-
   baseValidations(model, tenants, tags);
   stringValidations('title', model.title, HQ_TITLE_LENGTH, 0, true);
   stringValidations('type', model.type, undefined, 0, true);

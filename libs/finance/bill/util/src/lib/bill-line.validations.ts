@@ -12,7 +12,6 @@ const VPFX = '@finance/bill/feature.line.validation.';
  * `lines[i].accountKey` / `lines[i].amount` / `lines[i].title`, and `lines` for the list itself.
  */
 export const billLinesValidations = staticSuite((lines: BillLine[]) => {
-
   test('lines', VPFX + 'linesRequired', () => {
     enforce((lines ?? []).length).greaterThan(0);
   });

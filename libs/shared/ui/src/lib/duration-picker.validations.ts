@@ -12,7 +12,6 @@ export interface DurationPickerFormModel {
 }
 
 export const durationPickerValidations = staticSuite((model: DurationPickerFormModel) => {
-
   test('from', '@validation.duration.fromRequired', () => {
     enforce(model.from).isNotBlank();
   });

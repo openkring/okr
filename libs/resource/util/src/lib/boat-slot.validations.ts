@@ -9,7 +9,6 @@ import { booleanValidations, numberValidations, stringValidations } from '@okr/s
  * deliberately skips baseValidations. Both fields are optional; an empty text clears the slot.
  */
 export const boatSlotValidations = staticSuite((model: BoatSlotLabel) => {
-
   stringValidations('text', model.text, SHORT_NAME_LENGTH);
   stringValidations('color', model.color, SHORT_NAME_LENGTH);
   booleanValidations('isStrategyRelevant', model.isStrategyRelevant);

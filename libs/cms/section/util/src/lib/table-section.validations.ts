@@ -5,7 +5,6 @@ import { TableSection } from '@okr/shared-models';
 import { baseSectionValidations } from './base-section.validations';
 
 export const tableSectionValidations = staticSuite((model: TableSection) => {
-
     baseSectionValidations(model);
 
     /* tbd:

@@ -5,7 +5,6 @@ import { baseValidations, booleanValidations, numberValidations, stringValidatio
 import { omitWhen, staticSuite } from 'vest';
 
 export const categoryListValidations = staticSuite((model: CategoryListModel, tenants: string, tags: string) => {
-
   baseValidations(model, tenants, tags);
   stringValidations('i18n', model.i18n, NAME_LENGTH);
   stringValidations('notes', model.notes, DESCRIPTION_LENGTH);
@@ -13,7 +12,6 @@ export const categoryListValidations = staticSuite((model: CategoryListModel, te
 });
 
 export const categoryItemValidations = staticSuite((model: CategoryItemModel) => {
-
   // Every rule below `name` used to pass `model.name` — a copy/paste sweep. `price` was the worst:
   // numberValidations on a string failed for every item, so the category item form could never be
   // saved and the change-confirmation banner never appeared.

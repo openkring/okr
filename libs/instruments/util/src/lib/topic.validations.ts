@@ -9,7 +9,6 @@ import { stringValidations } from '@okr/shared-util-core';
  * label is mandatory; description is optional.
  */
 export const topicValidations = staticSuite((model: InstrumentTopic) => {
-
   stringValidations('label', model.label, SHORT_NAME_LENGTH, 1, true);
   stringValidations('description', model.description, DESCRIPTION_LENGTH);
 });

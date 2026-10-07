@@ -5,7 +5,6 @@ import { OrgModel } from '@okr/shared-models';
 import { dateValidations, isAfterDate, stringValidations } from '@okr/shared-util-core';
 
 export const orgValidations = staticSuite((model: OrgModel, tenants: string, tags: string) => {
-
   stringValidations('name', model.name, SHORT_NAME_LENGTH, 3, true);
   stringValidations('type', model.type);
   dateValidations('dateOfFoundation', model.dateOfFoundation);

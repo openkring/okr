@@ -5,7 +5,6 @@ import { PageModel } from '@okr/shared-models';
 import { baseValidations, isArrayOfStrings, stringValidations } from '@okr/shared-util-core';
 
 export const pageValidations = staticSuite((model: PageModel, tenants: string, tags: string) => {
-
   baseValidations(model, tenants, tags);
 
   stringValidations('title', model.title, NAME_LENGTH);

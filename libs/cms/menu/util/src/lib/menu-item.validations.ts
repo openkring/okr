@@ -11,7 +11,6 @@ import { MenuItemModel } from '@okr/shared-models';
 import { booleanValidations, isArrayOfBaseProperties, isArrayOfStrings, numberValidations, stringValidations, urlValidations } from '@okr/shared-util-core';
 
 export const menuItemValidations = staticSuite((model: MenuItemModel, tenants: string, tags: string) => {
-
   stringValidations('okey', model.okey);
   stringValidations('name', model.name, SHORT_NAME_LENGTH);
 //  tenantValidations(model.tenants);

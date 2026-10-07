@@ -5,7 +5,6 @@ import { AvatarUsage, Language, NameDisplay, PersonSortCriteria, PrivacyUsage, U
 import { baseValidations, booleanValidations, categoryValidations, deliveryChannelsValidations, stringValidations } from '@okr/shared-util-core';
 
 export const userValidations = staticSuite((model: UserModel, tenants: string, tags: string) => {
-
   baseValidations(model, tenants, tags);
   stringValidations('loginEmail', model.loginEmail, SHORT_NAME_LENGTH);
   stringValidations('personKey', model.personKey);

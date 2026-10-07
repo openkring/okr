@@ -6,7 +6,6 @@ import { dateValidations, timeValidations } from '@okr/shared-util-core';
 import { formatTripTime, MAX_TRIP_DISTANCE_KM } from './trip.util';
 
 export const tripValidationSuite = staticSuite((trip: TripModel) => {
-
   dateValidations('startDate', trip.startDate);
   // legacy trips store the time as 'HHmm'; normalise before validating, otherwise checkTime
   // rejects every trip written before the 'HH:mm' form and the admin cannot correct it

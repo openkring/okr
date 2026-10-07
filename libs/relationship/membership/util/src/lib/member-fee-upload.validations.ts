@@ -26,7 +26,6 @@ export function newMemberFeeUploadFormModel(): MemberFeeUploadFormModel {
 
 /** Both texts are optional; the only rule is the long-text cap the notes input enforces anyway. */
 export const memberFeeUploadValidations = staticSuite((model: MemberFeeUploadFormModel) => {
-
   stringValidations('header', model.header, DESCRIPTION_LENGTH);
   stringValidations('footer', model.footer, DESCRIPTION_LENGTH);
 });

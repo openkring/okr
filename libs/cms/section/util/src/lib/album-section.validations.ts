@@ -8,7 +8,6 @@ import { baseSectionValidations } from './base-section.validations';
 
 
 export const albumSectionValidations = staticSuite((model: AlbumSection) => {
-
   baseSectionValidations(model);
 
     stringValidations('folder', model.properties?.folder, LONG_NAME_LENGTH);

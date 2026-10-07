@@ -10,7 +10,6 @@ import { stringValidations } from '@okr/shared-util-core';
  * The field list is edited in the form builder and not validated here.
  */
 export const formDefinitionValidations = staticSuite((model: FormDefinitionModel) => {
-
   stringValidations('name', model.name, LONG_NAME_LENGTH, 0, true);
   stringValidations('description', model.description ?? '', DESCRIPTION_LENGTH);
 

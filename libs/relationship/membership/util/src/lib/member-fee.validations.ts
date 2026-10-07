@@ -13,7 +13,6 @@ export function positionAmountField(index: number): string {
 }
 
 export const memberFeeValidations = staticSuite((model: MemberFeeModel, tenants: string, tags: string) => {
-
   baseValidations(model, tenants, tags);
 
   // One rule set per position. `key`, `usage`, `type` and `label` come from the fee schedule —

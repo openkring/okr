@@ -32,7 +32,6 @@ export function fromOcrRuleFormModel(formModel: OcrRuleFormModel): OcrRuleModel 
  * suite only guards the typed text lengths and that the rank is a number.
  */
 export const ocrRuleValidations = staticSuite((model: OcrRuleFormModel) => {
-
   stringValidations('party', model.party ?? '', LONG_NAME_LENGTH);
   stringValidations('aliasText', model.aliasText ?? '', DESCRIPTION_LENGTH);
   test('rank', VPFX + 'rankNumber', () => {

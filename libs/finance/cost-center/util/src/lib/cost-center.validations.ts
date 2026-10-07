@@ -25,7 +25,6 @@ export const COST_CENTER_NAME_LENGTH = 60;
  *                 children and a parent is a root or a group.
  */
 export const costCenterValidations = staticSuite((model: CostCenterFormModel, existing: CostCenterModel[] = []) => {
-
   stringValidations('id', model.id, COST_CENTER_ID_LENGTH, 1, true);
   stringValidations('name', model.name, COST_CENTER_NAME_LENGTH, 1, true);
   stringValidations('type', model.type, undefined, 0, true);

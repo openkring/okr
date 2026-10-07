@@ -58,7 +58,6 @@ export interface KioskMessageFormData {
 }
 
 export const kioskMessageValidations = staticSuite((model: KioskMessageFormData) => {
-
   stringValidations('message', model.message, DESCRIPTION_LENGTH, 1, true);
   // the seconds only have to make sense while the countdown is switched on
   if (model.withCountdown) {

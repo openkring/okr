@@ -17,7 +17,6 @@ export function newBillQrScanFormModel(): BillQrScanFormModel {
 
 /** The scan dialog only ever required some content before it could be processed. */
 export const billQrScanValidations = staticSuite((model: BillQrScanFormModel) => {
-
   stringValidations('qrContent', model.qrContent ?? '', DESCRIPTION_LENGTH);
   test('qrContent', VPFX + 'contentRequired', () => {
     enforce(model.qrContent ?? '').isNotBlank();

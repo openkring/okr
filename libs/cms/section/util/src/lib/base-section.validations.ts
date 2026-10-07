@@ -5,7 +5,6 @@ import { ColorIonic, SectionModel } from '@okr/shared-models';
 import { booleanValidations, categoryValidations, stringValidations } from '@okr/shared-util-core';
 
 export const baseSectionValidations = staticSuite((model: SectionModel) => {
-
   stringValidations('okey', model.okey);
   // Caps must match the maxLength the form actually offers, otherwise the counter invites
   // input that the suite then rejects as 'tooLong'. okr-text-input defaults to NAME_LENGTH.

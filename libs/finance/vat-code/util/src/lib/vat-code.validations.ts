@@ -13,7 +13,6 @@ export const VAT_CODE_NAME_LENGTH = NAME_LENGTH;
  * real StoreDates (or empty — an empty validTo means open-ended). Account and direction are picked from a list.
  */
 export const vatCodeValidations = staticSuite((model: VatCodeModel) => {
-
   stringValidations('code', model.code, VAT_CODE_NAME_LENGTH);
   stringValidations('name', model.name, VAT_CODE_NAME_LENGTH);
   numberValidations('rate', model.rate ?? 0, false, 0);

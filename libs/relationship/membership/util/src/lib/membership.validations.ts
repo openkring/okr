@@ -6,7 +6,6 @@ import { MembershipModel } from '@okr/shared-models';
 import { baseValidations, booleanValidations, dateValidations, isAfterDate, numberValidations, stringValidations } from '@okr/shared-util-core';
 
 export const membershipValidations = staticSuite((model: MembershipModel, tenants: string, tags: string) => {
-
   baseValidations(model, tenants, tags);
 
   // subject

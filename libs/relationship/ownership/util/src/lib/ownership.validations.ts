@@ -5,7 +5,6 @@ import { OwnershipModel } from '@okr/shared-models';
 import { baseValidations, dateValidations, isAfterDate, numberValidations, stringValidations } from '@okr/shared-util-core';
 
 export const ownershipValidations = staticSuite((model: OwnershipModel, tenants: string, tags: string) => {
-
   // base
   baseValidations(model, tenants, tags);
 

@@ -37,7 +37,6 @@ export const MIN_ENTRIES = 5;
  * `create()` suite made each result depend on the previous run.
  */
 export const crosswordTopicSuite = staticSuite((model: CrosswordTopicModel, tenants = '', tags = '') => {
-
   baseValidations(model, tenants, tags);
   stringValidations('title', model.title, MAX_TITLE_LENGTH, 0, true);
   stringValidations('description', model.description, DESCRIPTION_LENGTH);

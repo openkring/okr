@@ -15,7 +15,6 @@ function zipMaxLength(countryCode: string): number {
 }
 
 export const addressValidations = staticSuite((model: AddressModel, tenants: string, tags: string) => {
-
   baseValidations(model, tenants, tags);
   stringValidations('addressChannel', model.addressChannel);
   stringValidations('addressChannelLabel', model.addressChannelLabel, SHORT_NAME_LENGTH);

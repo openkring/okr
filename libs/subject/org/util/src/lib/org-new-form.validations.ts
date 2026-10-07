@@ -6,7 +6,6 @@ import { dateValidations, isAfterDate, stringValidations } from '@okr/shared-uti
 import { OrgNewFormModel } from './org-new-form.model';
 
 export const orgNewFormValidations = staticSuite((model: OrgNewFormModel) => {
-
   stringValidations('name', model.name, NAME_LENGTH, 3, true);
   stringValidations('type', model.type);
   dateValidations('dateOfFoundation', model.dateOfFoundation);

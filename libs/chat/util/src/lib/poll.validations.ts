@@ -23,7 +23,6 @@ export type PollFormData = {
  * stammen, ein Fehler dort wuerde die Umfrage unspeicherbar machen.
  */
 export const pollValidations = staticSuite((data: PollFormData, lockedCount = 0) => {
-
   stringValidations('question', data.question?.trim(), POLL_QUESTION_LENGTH, 0, true);
 
   const answers = data.answers ?? [];

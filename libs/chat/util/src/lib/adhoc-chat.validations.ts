@@ -15,7 +15,6 @@ import { ADHOC_CHAT_MAX_MEMBERS, AdhocChatFormModel } from './adhoc-chat.model';
  *   veraltet, sobald jemand geht.
  */
 export const adhocChatValidations = staticSuite((model: AdhocChatFormModel) => {
-
   const memberCount = model.members?.length ?? 0;
 
   stringValidations('name', model.name, SHORT_NAME_LENGTH);

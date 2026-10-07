@@ -10,7 +10,6 @@ const SCOPES = new Set(['day', 'month', 'year']);
 const STATUSES = new Set(['draft', 'final']);
 
 export const diaryValidations = staticSuite((model: DiaryModel, tenants: string, tags: string) => {
-
   baseValidations(model, tenants, tags);
   stringValidations('title', model.title, LONG_NAME_LENGTH);
   stringValidations('text', model.text, DESCRIPTION_LENGTH * 10);

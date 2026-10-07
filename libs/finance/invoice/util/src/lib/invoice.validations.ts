@@ -8,7 +8,6 @@ import { baseValidations, dateValidations, isAfterDate, stringValidations } from
 export const INVOICE_NOTES_LENGTH = 2000;
 
 export const invoiceValidations = staticSuite((model: InvoiceModel, tenants: string, tags: string) => {
-
   baseValidations(model, tenants, tags);
   stringValidations('title', model.title, SHORT_NAME_LENGTH);
   stringValidations('invoiceId', model.invoiceId, SHORT_NAME_LENGTH);

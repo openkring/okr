@@ -10,7 +10,6 @@ import { baseValidations, stringValidations } from '@okr/shared-util-core';
  *                unique, otherwise a booking cannot tell the two accounts apart.
  */
 export const accountValidations = staticSuite((model: AccountModel, tenants: string, tags: string, usedIds: string[] = []) => {
-
   // account names run long (bank accounts carry their IBAN), so the name cap is LONG_NAME_LENGTH — passed
   // to baseValidations as well, whose default NAME_LENGTH would otherwise still reject 51–100 characters.
   // The text input's counter (account.form.ts) uses the same constant.

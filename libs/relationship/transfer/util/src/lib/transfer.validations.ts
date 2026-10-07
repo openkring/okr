@@ -5,7 +5,6 @@ import { TransferModel } from '@okr/shared-models';
 import { booleanValidations, dateValidations, numberValidations, stringValidations } from '@okr/shared-util-core';
 
 export const transferValidations = staticSuite((model: TransferModel, tenants: string, tags: string) => {
-
   stringValidations('okey', model.okey);
   booleanValidations('isArchived', model.isArchived);
   // `index` is generated (get<Model>Index) and the service overwrites it at save time, AFTER

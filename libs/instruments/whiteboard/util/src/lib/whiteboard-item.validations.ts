@@ -10,7 +10,6 @@ import { stringValidations } from '@okr/shared-util-core';
  * The colour comes from the picker ('' = theme default), so it is checked for type only, never capped.
  */
 export const whiteboardItemValidations = staticSuite((item: WhiteboardItem) => {
-
   stringValidations('text', item.text, DESCRIPTION_LENGTH);
   stringValidations('color', item.color);
 });

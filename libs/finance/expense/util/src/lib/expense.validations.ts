@@ -19,7 +19,6 @@ export interface ExpenseFormValue {
 }
 
 export const expenseValidations = staticSuite((model: ExpenseFormValue) => {
-
   test('abstract', '@finance/expense/feature.validation.abstractRequired', () => {
     enforce(model.abstract).isNotEmpty();
   });
@@ -75,7 +74,6 @@ export interface ExpenseEditFormValue {
  * tests do not apply. The message keys are shared with the create suite.
  */
 export const expenseEditValidations = staticSuite((model: ExpenseEditFormValue) => {
-
   test('abstract', '@finance/expense/feature.validation.abstractRequired', () => {
     enforce(model.abstract).isNotEmpty();
   });

@@ -6,7 +6,6 @@ import { booleanValidations, numberValidations, stringValidations } from '@okr/s
 import { MatrixRoom } from '@okr/shared-models';
 
 export const roomValidations = staticSuite((model: MatrixRoom) => {
-
   stringValidations('roomId', model.roomId);
   stringValidations('name', model.name, SHORT_NAME_LENGTH, 4, true);
   stringValidations('avatar', model.avatar);

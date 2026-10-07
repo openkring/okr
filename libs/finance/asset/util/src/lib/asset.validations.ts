@@ -13,7 +13,6 @@ export const ASSET_NAME_LENGTH = NAME_LENGTH;
  * and the useful life a whole number of months ≥ 0. Category and Kostenstelle are picked from a list.
  */
 export const assetValidations = staticSuite((model: AssetModel) => {
-
   stringValidations('name', model.name, ASSET_NAME_LENGTH);
   stringValidations('assetNo', model.assetNo, ASSET_NAME_LENGTH);
   dateValidations('acquisitionDate', model.acquisitionDate ?? '');

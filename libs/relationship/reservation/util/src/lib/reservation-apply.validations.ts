@@ -6,7 +6,6 @@ import { ReservationApplyModel } from '@okr/shared-models';
 import { avatarValidations, booleanValidations, dateValidations, stringValidations } from '@okr/shared-util-core';
 
 export const reservationApplyValidations = staticSuite((model: ReservationApplyModel) => {
-
   // NAME_LENGTH (not SHORT_NAME_LENGTH): must stay in sync with the [maxLength] of the name field
   // in reservation-apply.form.ts, otherwise the input accepts names the suite silently rejects.
   stringValidations('name', model.name, NAME_LENGTH, 5, true);

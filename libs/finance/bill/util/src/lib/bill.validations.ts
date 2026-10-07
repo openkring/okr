@@ -11,7 +11,6 @@ import { BILL_IBAN_LENGTH, BILL_REFERENCE_LENGTH } from './bill-line.util';
  * server-owned and not edited in the form; the lines have their own suite (billLinesValidations).
  */
 export const billValidations = staticSuite((model: BillModel, tenants: string, tags: string) => {
-
   baseValidations(model, tenants, tags);
   stringValidations('title', model.title, SHORT_NAME_LENGTH);
   stringValidations('billId', model.billId, SHORT_NAME_LENGTH);

@@ -8,7 +8,6 @@ import { avatarValidations, baseValidations, dateValidations, moneyValidations, 
 import { LOCK_REASONS } from './reservation.util';
 
 export const reservationValidations = staticSuite((model: ReservationModel, tenants: string, tags: string) => {
-
   baseValidations(model, tenants, tags);
   avatarValidations('reserver', model.reserver);
   avatarValidations('resource', model.resource);

@@ -5,7 +5,6 @@ import { DocumentModel } from '@okr/shared-models';
 import { baseValidations, compareDate, dateValidations, isFutureDate, numberValidations, stringValidations } from '@okr/shared-util-core';
 
 export const documentValidations = staticSuite((model: DocumentModel, tenants: string, tags: string) => {
-
   baseValidations(model, tenants, tags);
   stringValidations('docType', model.type, WORD_LENGTH);
   stringValidations('fullPath', model.fullPath);

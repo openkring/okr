@@ -6,7 +6,6 @@ import { PersonalRelModel } from '@okr/shared-models';
 import { dateValidations, isAfterOrEqualDate, stringValidations } from '@okr/shared-util-core';
 
 export const personalRelValidations = staticSuite((model: PersonalRelModel, tenants: string, tags: string) => {
-
   stringValidations('okey', model.okey);
   //tagValidations('tags', model.tags);
   stringValidations('notes', model.notes, DESCRIPTION_LENGTH);

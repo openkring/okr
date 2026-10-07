@@ -7,7 +7,6 @@ import { dateValidations, stringValidations } from '@okr/shared-util-core';
 import { CategoryChangeFormModel } from './category-change-form.model';
 
 export const categoryChangeFormValidations = staticSuite((model: CategoryChangeFormModel) => {
-
   stringValidations('okey', model.okey);
   stringValidations('memberName', model.memberName, SHORT_NAME_LENGTH);
   stringValidations('orgName', model.orgName, SHORT_NAME_LENGTH);

@@ -7,7 +7,6 @@ import { baseValidations, numberValidations, stringValidations } from '@okr/shar
 import { actionNeedsArg, probeNeedsArg } from './workflow-rule.util';
 
 export const workflowRuleValidations = staticSuite((model: WorkflowRuleModel, tenants: string, tags: string) => {
-
   baseValidations(model, tenants, tags);
   // the limits mirror the form's maxLength per field. They used to be SHORT_NAME_LENGTH (30)
   // across the board, which every real rule exceeded on `name` ('Kategoriewechsel → Materialwart'),

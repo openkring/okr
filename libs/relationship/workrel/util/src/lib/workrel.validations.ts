@@ -6,7 +6,6 @@ import { WorkrelModel } from '@okr/shared-models';
 import { dateValidations, isAfterOrEqualDate, numberValidations, stringValidations } from '@okr/shared-util-core';
 
 export const workrelValidations = staticSuite((model: WorkrelModel, tenants: string, tags: string) => {
-
   stringValidations('okey', model.okey);
  // tagValidations('tags', model.tags);
   stringValidations('notes', model.notes, DESCRIPTION_LENGTH);

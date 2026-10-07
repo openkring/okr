@@ -7,7 +7,6 @@ import { PersonNewFormModel } from './person-new-form.model';
 import { ssnValidations } from './ssn.validations';
 
 export const personNewFormValidations = staticSuite((model: PersonNewFormModel) => {
-
   stringValidations('firstName', model.firstName, SHORT_NAME_LENGTH);
   stringValidations('lastName', model.lastName, SHORT_NAME_LENGTH, 2, true);
   stringValidations('gender', model.gender);

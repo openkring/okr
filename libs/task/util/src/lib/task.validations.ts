@@ -5,7 +5,6 @@ import { TaskModel } from '@okr/shared-models';
 import { avatarValidations, baseValidations, dateValidations, stringValidations } from '@okr/shared-util-core';
 
 export const taskValidations = staticSuite((model: TaskModel, tenants: string, tags: string) => {
-
   baseValidations(model, tenants, tags);
   stringValidations('notes', model.notes, DESCRIPTION_LENGTH);
 

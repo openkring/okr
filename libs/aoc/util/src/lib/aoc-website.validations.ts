@@ -10,7 +10,6 @@ import { stringValidations } from '@okr/shared-util-core';
  * key is not edited here (it is chosen when the text is created).
  */
 export const aocWebsiteValidations = staticSuite((model: WebsiteContentModel) => {
-
   stringValidations('de', model.de);
   stringValidations('en', model.en);
 });

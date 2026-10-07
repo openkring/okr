@@ -6,7 +6,6 @@ import { classifyStoreDate, dateValidations, getYear, isFutureDate, isStoreDateO
 import { MemberNewFormModel } from './member-new-form.model';
 
 export const memberNewFormValidations = staticSuite((model: MemberNewFormModel) => {
-
   stringValidations('firstName', model.firstName, SHORT_NAME_LENGTH);
   stringValidations('lastName', model.lastName, SHORT_NAME_LENGTH, 4, true);
   stringValidations('gender', model.gender);

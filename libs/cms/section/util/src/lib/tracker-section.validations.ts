@@ -7,7 +7,6 @@ import { WORD_LENGTH } from '@okr/shared-constants';
 import { baseSectionValidations } from './base-section.validations';
 
 export const trackerSectionValidations = staticSuite((model: TrackerSection) => {
-
   baseSectionValidations(model);
 
     booleanValidations('autostart', model.properties?.autostart);

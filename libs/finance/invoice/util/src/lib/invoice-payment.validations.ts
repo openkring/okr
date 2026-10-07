@@ -15,7 +15,6 @@ const toRappen = (chf: number): number => Math.round(chf * 100);
  * must cover the amount). The server checks all of it again; this only keeps the dialog honest.
  */
 export const invoicePaymentValidations = staticSuite((model: InvoicePaymentFormModel) => {
-
   test('date', VPFX + 'dateRequired', () => {
     enforce(model.date ?? '').isNotBlank();
   });

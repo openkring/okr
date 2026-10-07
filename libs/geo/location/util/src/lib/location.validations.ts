@@ -6,7 +6,6 @@ import { LocationModel } from '@okr/shared-models';
 import { baseValidations, numberValidations, stringValidations } from '@okr/shared-util-core';
 
 export const locationValidations = staticSuite((model: LocationModel, tenants: string, tags: string) => {
-
   baseValidations(model, tenants, tags);  // okey, tenants, isArchived
   // `index` is generated (get<Model>Index) and the service overwrites it at save time, AFTER
   // this suite runs — a cap here can only reject a value the user cannot see or edit, so the

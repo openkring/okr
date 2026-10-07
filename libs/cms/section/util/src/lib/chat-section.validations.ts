@@ -7,7 +7,6 @@ import { DESCRIPTION_LENGTH, NAME_LENGTH, URL_LENGTH, WORD_LENGTH } from '@okr/s
 import { baseSectionValidations } from './base-section.validations';
 
 export const chatSectionValidations = staticSuite((model: ChatSection) => {
-
   baseSectionValidations(model);
 
   // Prefixed with 'chat.': plain 'name' and 'type' would collide with the base section's own

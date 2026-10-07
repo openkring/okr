@@ -5,7 +5,6 @@ import { CalEventModel } from '@okr/shared-models';
 import { baseValidations, calculateRecurringDates, dateValidations, isAfterOrEqualDate, numberValidations, stringValidations } from '@okr/shared-util-core';
 
 export const calEventValidations = staticSuite((model: CalEventModel, tenants: string, tags: string) => {
-
   baseValidations(model, tenants, tags);
   // The name is what a member recognises the appointment by, and what the duplicate check compares
   // events on. It was optional until now: baseValidations calls stringValidations WITHOUT the

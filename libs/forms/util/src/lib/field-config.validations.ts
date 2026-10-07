@@ -19,7 +19,6 @@ export function fieldLabelLength(field: Pick<Field, 'type'>): number {
  * Display elements (label, divider) carry no key; a divider carries no label either.
  */
 export const fieldConfigValidations = staticSuite((model: Field) => {
-
   omitWhen(model.type === 'divider', () => {
     stringValidations('label', model.label, fieldLabelLength(model), 0, true);
   });

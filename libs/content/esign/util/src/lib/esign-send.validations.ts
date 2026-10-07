@@ -13,7 +13,6 @@ export interface EsignSendFormModel {
 }
 
 export const esignSendValidations = staticSuite((model: EsignSendFormModel) => {
-
   // initiatorAliasName is required by the esignSendDocument Cloud Function.
   stringValidations('initiatorAliasName', model.initiatorAliasName, SHORT_NAME_LENGTH, 1, true);
   stringValidations('comment', model.comment, 1000);

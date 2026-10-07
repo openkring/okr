@@ -15,7 +15,6 @@ export function newTemplatePublishFormModel(): TemplatePublishFormModel {
 }
 
 export const templatePublishValidations = staticSuite((model: TemplatePublishFormModel) => {
-
   stringValidations('changelog', model.changelog, DESCRIPTION_LENGTH);
   test('changelog', '@content/pdf-template/feature.validation.changelog_required', () => {
     enforce(model.changelog).isNotBlank();

@@ -18,7 +18,6 @@ export interface TagStringFormData {
 }
 
 export const tagStringValidations = staticSuite((model: TagStringFormData) => {
-
   // the key is the only mandatory field — an empty language means "no override for that language"
   stringValidations('key', model.key, SHORT_NAME_LENGTH, 1, true);
   stringValidations('de', model.de, SHORT_NAME_LENGTH);

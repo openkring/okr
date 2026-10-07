@@ -6,7 +6,6 @@ import { baseSectionValidations } from './base-section.validations';
 import { imageStyleValidations, optionalImageSlotValidations } from './image.validations';
 
 export const heroSectionValidations = staticSuite((model: HeroSection) => {
-
   baseSectionValidations(model);
 
   // logo / hero: ImageConfig — both single slots, both optional on older stored sections.

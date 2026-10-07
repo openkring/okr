@@ -8,7 +8,6 @@ const isIntIn = (v: number, min: number, max: number) => Number.isInteger(v) && 
 
 /** Messages are scoped i18n keys; `okr-error-note` resolves them through `I18nService`. */
 export const jassHandValidations = staticSuite((model: JassHandFormModel) => {
-
   omitWhen(model.variant !== 'coiffeur', () => {
     test('trump', '@games/jasstafel/feature.error.trump', () => {
       enforce(model.trumpOptions.includes(model.trump)).isTruthy();

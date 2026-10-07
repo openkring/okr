@@ -6,7 +6,6 @@ import { baseSectionValidations } from './base-section.validations';
 import { imageConfigValidations, imageStyleValidations } from './image.validations';
 
 export const sliderSectionValidations = staticSuite((model: SliderSection) => {
-
     baseSectionValidations(model);
 
     // images: ImageConfig[]

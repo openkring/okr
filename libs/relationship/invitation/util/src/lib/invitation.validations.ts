@@ -5,7 +5,6 @@ import { InvitationModel } from '@okr/shared-models';
 import { booleanValidations, dateTimeValidations, dateValidations, stringValidations } from '@okr/shared-util-core';
 
 export const invitationValidations = staticSuite((model: InvitationModel) => {
-
   stringValidations('okey', model.okey);
   booleanValidations('isArchived', model.isArchived);
   // `index` is generated (get<Model>Index) and the service overwrites it at save time, AFTER

@@ -7,7 +7,6 @@ import { COMMENT_LENGTH, LONG_NAME_LENGTH, NAME_LENGTH, URL_LENGTH, WORD_LENGTH 
 import { baseSectionValidations } from './base-section.validations';
 
 export const buttonSectionValidations = staticSuite((model: ButtonSection) => {
-
     baseSectionValidations(model);
 
     // guard nested config objects with ?. — older stored sections may lack icon/style/action

@@ -6,7 +6,6 @@ import { booleanValidations, numberValidations } from '@okr/shared-util-core';
 import { baseSectionValidations } from './base-section.validations';
 
 export const mapSectionValidations = staticSuite((model: MapSection) => {
-
     baseSectionValidations(model);
 
     numberValidations('centerLatitude', model.properties?.centerLatitude, false, -90, 90);

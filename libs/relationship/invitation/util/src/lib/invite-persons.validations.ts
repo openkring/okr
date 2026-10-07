@@ -11,7 +11,6 @@ import { InvitePersonsFormData } from './invite-persons.model';
  * Die Nachricht ist freiwillig.
  */
 export const invitePersonsValidations = staticSuite((data: InvitePersonsFormData) => {
-
   test('invitees', 'required', () => {
     enforce(Array.isArray(data.invitees) && data.invitees.length > 0).isTruthy();
   });

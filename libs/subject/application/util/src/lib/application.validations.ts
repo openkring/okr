@@ -14,7 +14,6 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /** Validates an application (membership request) in the edit modal. */
 export const applicationValidations = staticSuite((app: ApplicationModel) => {
-
   test('firstName',     REQUIRED,      () => { enforce(app.firstName).isNotBlank(); });
   test('lastName',      REQUIRED,      () => { enforce(app.lastName).isNotBlank(); });
   test('gender',        CHOICE,        () => { enforce(app.gender).inside(['male', 'female']); });

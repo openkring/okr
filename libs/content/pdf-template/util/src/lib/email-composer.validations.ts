@@ -20,7 +20,6 @@ function looksLikeEmail(email: string): boolean {
 }
 
 export const emailComposerValidations = staticSuite((model: EmailComposerFormModel) => {
-
   test('to', '@content/pdf-template/feature.validation.to_required', () => {
     enforce(parseEmails(model.to).length).greaterThan(0);
   });

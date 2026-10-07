@@ -7,7 +7,6 @@ import { COMMENT_LENGTH, URL_LENGTH } from '@okr/shared-constants';
 import { baseSectionValidations } from './base-section.validations';
 
 export const iframeSectionValidations = staticSuite((model: IframeSection) => {
-
   baseSectionValidations(model);
 
   // caps mirror the maxLength of the fields in iframe-configuration (okr-text-input / okr-url)

@@ -21,7 +21,6 @@ export function newTripReport(boat?: AvatarInfo, person?: AvatarInfo): TripRepor
 }
 
 export const tripReportValidations = staticSuite((report: TripReport) => {
-
   // the boat is optional: a bug report (or a damage found outside a trip) has no boat
   // mandatory: the kiosk is a shared account, so the report must say who is reporting
   test('person', '@geo/trip/feature.report.person.required', () => {

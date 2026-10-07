@@ -5,7 +5,6 @@ import { GroupModel } from '@okr/shared-models';
 import { booleanValidations, stringValidations } from '@okr/shared-util-core';
 
 export const groupValidations = staticSuite((model: GroupModel, tenants: string, tags: string) => {
-
   stringValidations('okey', model.okey);
   stringValidations('name', model.name, SHORT_NAME_LENGTH, 3, true);
   stringValidations('notes', model.notes, DESCRIPTION_LENGTH);

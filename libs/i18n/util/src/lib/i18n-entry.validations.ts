@@ -45,7 +45,6 @@ export function normalizeI18nEntry<T extends Partial<I18nEntryFormModel>>(entry:
  * Nothing is mandatory — the previous hand-built modal enforced no rules either.
  */
 export const i18nEntryValidations = staticSuite((model: I18nEntryFormModel) => {
-
   stringValidations('module', model.module, LONG_NAME_LENGTH);
   stringValidations('key', model.key, LONG_NAME_LENGTH);
   stringValidations('de', model.de, DESCRIPTION_LENGTH);
