@@ -119,17 +119,17 @@ export async function renderDocument(
     const tmpl = templateSnap.data() as TemplateModel;
 
     if (tmpl.status === 'archived') {
-      throw new HttpsError('failed-precondition', 'Template is archived');
+      throw new HttpsError('failed-precondition', 'Template is archived', { reason: 'template-archived' });
     }
     if (!tmpl.currentVersion && tmpl.status !== 'draft') {
-      throw new HttpsError('failed-precondition', 'Template has no published version');
+      throw new HttpsError('failed-precondition', 'Template has no published version', { reason: 'template-unpublished' });
     }
 
     resolvedVersion = req.templateVersion ?? tmpl.currentVersion;
     templateName = tmpl.name;
 
     if (resolvedVersion === undefined || resolvedVersion === 0) {
-      throw new HttpsError('failed-precondition', 'Template has no published version');
+      throw new HttpsError('failed-precondition', 'Template has no published version', { reason: 'template-unpublished' });
     }
 
     const versionSnap = await db
@@ -177,7 +177,8 @@ export async function renderDocument(
         const code = e instanceof SlipAccountError ? e.code : 'no-iban';
         throw new HttpsError('failed-precondition', code === 'no-iban'
           ? 'No payee IBAN configured for organisation'
-          : 'Payee has only a QR-IBAN; this document has no QR reference');
+          : 'Payee has only a QR-IBAN; this document has no QR reference',
+          { reason: code === 'no-iban' ? 'no-payee-iban' : 'qr-iban-needs-reference' });
       }
       const slipData = buildQrSlipData(payee, payload, !!tmpl.qrSlipWithAmount, selected);
       htmlToRender += buildQrSlipPageHtml(renderQrSlipSvg(slipData));

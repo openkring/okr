@@ -224,6 +224,20 @@ export class InvoiceService {
     return result.data;
   }
 
+  /** Renders a draft as PDF on the server (number «ENTWURF», nothing booked or stored as voucher); returns it as base64. */
+  public async preview(invoiceKey: string): Promise<{ content: string }> {
+    const fn = httpsCallable<{ invoiceKey: string }, { content: string }>(this.functions(), 'previewInvoicePdf');
+    return (await fn({ invoiceKey })).data;
+  }
+
+  /** Records that an issued invoice was sent by post today (`sentAt`, `sentVia = 'post'`). */
+  public async markSentByPost(invoiceKey: string, currentUser?: UserModel): Promise<{ sentAt: string }> {
+    const fn = httpsCallable<{ invoiceKey: string }, { sentAt: string }>(this.functions(), 'markInvoiceSent');
+    const result = await fn({ invoiceKey });
+    void this.activityService.log('invoice', 'post', currentUser, invoiceKey);
+    return result.data;
+  }
+
   /** Renders the payment confirmation of a paid invoice on the server; returns it as base64 PDF. */
   public async createPaymentConfirmation(invoiceKey: string): Promise<PaymentConfirmationResult> {
     const fn = httpsCallable<{ invoiceKey: string }, PaymentConfirmationResult>(this.functions(), 'createPaymentConfirmation');

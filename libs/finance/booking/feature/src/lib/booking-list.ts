@@ -132,7 +132,7 @@ function parseAmount(amount: string): number {
                   {{ row.creditAccount }}
                   @if (row.creditAccountName) { <br /><ion-note class="account-name">{{ row.creditAccountName }}</ion-note> }
                 </ion-col>
-                <ion-col size="5" [sizeMd]="textSizeMd()">{{ row.accountName }}@if (row.counterparty) { · {{ row.counterparty }}}</ion-col>
+                <ion-col size="5" [sizeMd]="textSizeMd()">{{ row.accountName }}@if (row.counterparty) { · {{ row.counterparty }}}@if (hasVoucher(row)) {<ion-icon class="attach-icon" src="{{ 'attach' | svgIcon }}" aria-hidden="true" />}</ion-col>
                 <ion-col size="4" size-md="2" class="ion-text-end">
                   {{ row.amount }}
                   <!-- no room for a sixth column on a phone: the saldo rides under the amount there -->
@@ -175,6 +175,7 @@ function parseAmount(amount: string): number {
   </ion-content>
   `,
   styles: [`
+    .attach-icon { font-size: 0.9rem; vertical-align: middle; margin-left: 4px; color: var(--ion-color-medium); }
     .clickable { cursor: pointer; user-select: none; }
     .account-badge {
       margin-left: 0.5rem; padding: 0.1rem 0.45rem;
@@ -319,6 +320,11 @@ export class BookingList {
 
   protected isCancelled(row: JournalRow): boolean {
     return row.booking.status === 'cancelled';
+  }
+
+  /** the booking has at least one Beleg (legacy bookings only carry documentKey) */
+  protected hasVoucher(row: JournalRow): boolean {
+    return (row.booking.documentKeys?.length ?? 0) > 0 || !!row.booking.documentKey;
   }
 
   protected isForReview(row: JournalRow): boolean {

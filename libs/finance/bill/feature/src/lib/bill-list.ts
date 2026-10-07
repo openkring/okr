@@ -7,7 +7,7 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, formatMinorAmount, ListFilter, Spinner } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@okr/shared-util-angular';
 import { DateFormat, convertDateFormatToString, getTodayStr, getYear, getYearList, hasRole } from '@okr/shared-util-core';
-import { billDisplayState, billStateColor, billStateLabel, isDraftBill, isOverdueBill, isPayableBill } from '@okr/finance-bill-util';
+import { billDisplayState, billStateColor, billStateLabel, billVoucherKeys, isDraftBill, isOverdueBill, isPayableBill } from '@okr/finance-bill-util';
 
 import { AvatarPipe } from '@okr/avatar-ui';
 import { Menu } from '@okr/cms-menu-feature';
@@ -27,6 +27,7 @@ import { BillStore } from './bill.store';
     IonContent, IonLabel, IonGrid, IonRow, IonCol, IonAvatar, IonImg, IonChip
   ],
   styles: [`
+    .attach-icon { font-size: 0.9rem; vertical-align: middle; margin-left: 4px; color: var(--ion-color-medium); }
     .bill-id { font-size: 0.8rem; }
     .bill-title { font-size: 1rem; }
     .amount { text-align: right; }
@@ -84,6 +85,7 @@ import { BillStore } from './bill.store';
               <ion-col>
                 <ion-label>
                   <span class="bill-id">{{ bill.billId }}</span>
+                  @if(hasVoucher(bill)) { <ion-icon class="attach-icon" src="{{ 'attach' | svgIcon }}" aria-hidden="true" /> }
                   <p class="bill-title">{{ bill.title }}</p>
                 </ion-label>
               </ion-col>
@@ -174,6 +176,11 @@ export class BillList {
   }
 
   /** a booking that probably paid this open bill exists (spec 1.85 Q4) */
+  /** at least one Beleg (finance-document) */
+  protected hasVoucher(bill: BillModel): boolean {
+    return billVoucherKeys(bill).length > 0;
+  }
+
   protected hasHint(bill: BillModel): boolean {
     return this.store.paymentHints().has(bill.okey);
   }

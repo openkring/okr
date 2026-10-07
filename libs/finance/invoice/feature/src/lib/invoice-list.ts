@@ -6,7 +6,7 @@ import {
 } from '@ionic/angular/standalone';
 import { InvoiceModel, RoleName } from '@okr/shared-models';
 import {
-  canCreatePaymentConfirmation, canCreateReminder, canEmailInvoice, invoiceDisplayState, invoiceStateColor, invoiceStateLabel, isDraftInvoice, isOverdueInvoice, isPayableState, isWaivedReminder, latestReminderWithDocument, mayReadInvoiceDocuments, waivableReminder,
+  canCreatePaymentConfirmation, canCreateReminder, canEmailInvoice, hasInvoiceVoucher, invoiceDisplayState, invoiceStateColor, invoiceStateLabel, isDraftInvoice, isOverdueInvoice, isPayableState, isWaivedReminder, latestReminderWithDocument, mayReadInvoiceDocuments, waivableReminder,
 } from '@okr/finance-invoice-util';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, formatMinorAmount, ListFilter, Spinner } from '@okr/shared-ui';
@@ -31,6 +31,7 @@ import { InvoiceStore } from './invoice.store';
     IonContent, IonLabel, IonGrid, IonRow, IonCol, IonAvatar, IonImg, IonChip, IonList, IonItem
   ],
   styles: [`
+    .attach-icon { font-size: 0.9rem; vertical-align: middle; margin-left: 4px; color: var(--ion-color-medium); }
     .inv-id { font-size: 0.8rem; }
     .inv-title { font-size: 1rem; }
     .amount { text-align: right; }
@@ -106,6 +107,7 @@ import { InvoiceStore } from './invoice.store';
               <ion-col>
                 <ion-label>
                   <span class="inv-id">{{ invoice.invoiceId }}</span>
+                  @if(hasVoucher(invoice)) { <ion-icon class="attach-icon" src="{{ 'attach' | svgIcon }}" aria-hidden="true" /> }
                   <p class="inv-title">{{ invoice.title }}</p>
                 </ion-label>
               </ion-col>
@@ -201,6 +203,11 @@ export class InvoiceList {
   }
 
   /** a booking that probably paid this open invoice exists (spec 1.86) */
+  /** at least one Beleg: the issued PDF or a reminder PDF */
+  protected hasVoucher(invoice: InvoiceModel): boolean {
+    return hasInvoiceVoucher(invoice);
+  }
+
   protected hasHint(invoice: InvoiceModel): boolean {
     return this.store.paymentHints().has(invoice.okey);
   }
@@ -267,6 +274,7 @@ export class InvoiceList {
     } else if (isDraftInvoice(invoice)) {
       if (this.canWriteDrafts()) {
         options.buttons.push(createActionSheetButton('invoice.edit', i18n.update(), base, 'edit'));
+        options.buttons.push(createActionSheetButton('invoice.preview', i18n.show_preview(), base, 'eye-on'));
         options.buttons.push(createActionSheetButton('invoice.issue', i18n.issue(), base, 'send'));
         options.buttons.push(createActionSheetButton('invoice.delete', i18n.delete(), base, 'trash'));
       } else {
@@ -290,6 +298,10 @@ export class InvoiceList {
       }
       if (canEmailInvoice(invoice) && this.canWriteDrafts()) {
         options.buttons.push(createActionSheetButton('invoice.sendEmail', i18n.email_send(), base, 'email'));
+      }
+      if (canEmailInvoice(invoice) && this.canWriteDrafts()) {
+        // printed and mailed by hand: there is no other way to tell the system
+        options.buttons.push(createActionSheetButton('invoice.markPost', i18n.email_post(), base, 'mail'));
       }
       if (latestReminderWithDocument(invoice.reminders) && this.canWriteDrafts()) {
         // a paid or cancelled invoice gets no reminder mail; its reminder PDF can still be opened
@@ -333,6 +345,8 @@ export class InvoiceList {
       case 'invoice.waiveFee': await this.store.waiveReminderFee(invoice); break;
       case 'invoice.createReminder': await this.store.createReminder(invoice); break;
       case 'invoice.sendEmail': await this.store.sendInvoiceEmail(invoice); break;
+      case 'invoice.preview': await this.store.preview(invoice); break;
+      case 'invoice.markPost': await this.store.markSentByPost(invoice); break;
       case 'invoice.sendReminder': await this.store.sendReminderEmail(invoice); break;
       case 'invoice.showReminder': await this.store.showReminderPdf(invoice); break;
     }

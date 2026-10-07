@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { InvoiceModel, InvoicePayment, InvoiceReminder } from '@okr/shared-models';
 
-import { invoiceAccountKeys, invoiceBookingAmounts, invoiceBookingKeys, invoiceDisplayState, isOverdueInvoice } from './invoice-ledger.util';
+import { hasInvoiceVoucher, invoiceAccountKeys, invoiceBookingAmounts, invoiceBookingKeys, invoiceVoucherKeys, invoiceDisplayState, isOverdueInvoice } from './invoice-ledger.util';
 
 function invoice(patch: Partial<InvoiceModel>): InvoiceModel {
   return Object.assign(new InvoiceModel('scs'), { okey: 'inv1' }, patch);
@@ -111,5 +111,23 @@ describe('invoiceBookingAmounts', () => {
     const inv = invoice({});
     (inv as Partial<InvoiceModel>).payments = undefined;
     expect(invoiceBookingAmounts(inv)).toEqual({});
+  });
+});
+
+describe('invoiceVoucherKeys', () => {
+  it('lists the invoice PDF, then the reminder PDFs, once each and without empty keys', () => {
+    const inv = invoice({ documentKey: 'invoice-inv1', reminders: [reminder({ documentKey: 'rem-1' }), reminder({ level: 2 }), reminder({ level: 3, documentKey: 'rem-1' })] });
+    expect(invoiceVoucherKeys(inv)).toEqual(['invoice-inv1', 'rem-1']);
+    expect(hasInvoiceVoucher(inv)).toBe(true);
+  });
+
+  it('is empty for a draft, a legacy invoice and no invoice', () => {
+    const legacy = invoice({});
+    (legacy as Partial<InvoiceModel>).reminders = undefined;
+    (legacy as Partial<InvoiceModel>).documentKey = undefined;
+    expect(invoiceVoucherKeys(invoice({ state: 'draft' }))).toEqual([]);
+    expect(invoiceVoucherKeys(legacy)).toEqual([]);
+    expect(invoiceVoucherKeys(undefined)).toEqual([]);
+    expect(hasInvoiceVoucher(legacy)).toBe(false);
   });
 });

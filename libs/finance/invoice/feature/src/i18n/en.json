@@ -209,7 +209,9 @@
     "label": "Show invoice details",
     "pdf": "Download invoice as PDF",
     "pdf_error": "The invoice could not be loaded as a PDF. Please try again later.",
-    "pdf_missing": "There is no PDF for this invoice yet."
+    "pdf_missing": "There is no PDF for this invoice yet.",
+    "preview": "Preview",
+    "preview_error": "The preview could not be created."
   },
   "paymentConfirmation": {
     "label": "Create payment confirmation",
@@ -298,9 +300,9 @@
   },
   "issue": {
     "label": "Issue invoice",
-    "confirm": "The invoice now gets its number and is booked. After that you can no longer change it.",
+    "confirm": "The invoice now gets its number and its PDF and is booked. After that you can no longer change it. It is not sent yet – you do that afterwards by email or by post.",
     "conf": "Invoice {invoiceId} has been issued",
-    "error": "The invoice could not be issued."
+    "error": "The invoice was not issued and not sent. It stays a draft."
   },
   "refusal": {
     "no-positions": "The invoice has no items yet. Add at least one item first.",
@@ -379,7 +381,10 @@
     "waive-inconsistent-state": "Something went wrong while waiving the fee. Please try again.",
     "waive-not-payable": "A fee can only be waived on an issued invoice that is still open.",
     "email-already-waived": "The fee of this reminder is waived, but the PDF still shows it. So it is not sent.",
-    "discount-without-base": "A discount without an account stands above all items and has nothing to reduce. Move it below the items or choose an account."
+    "discount-without-base": "A discount without an account stands above all items and has nothing to reduce. Move it below the items or choose an account.",
+    "no-payee-iban": "No IBAN is stored for the club. Add a bank account to the club so the payment slip can be created.",
+    "qr-iban-needs-reference": "Only a QR-IBAN is stored for the club. This payment slip also needs the regular IBAN.",
+    "template-unpublished": "The invoice template is not published. Publish it in the templates first."
   },
   "paymentReference": {
     "label": "Payment reference"
@@ -502,7 +507,14 @@
     "ok": "Send",
     "conf": "{document} was sent by email on {date}.",
     "error": "The email could not be sent. Please try again later.",
-    "sentAt": "Sent on {date}"
+    "sentAt": "Sent on {date}",
+    "post": "Mark as sent by post",
+    "postConfirm": "The invoice will be marked as sent by post today.",
+    "postOk": "Mark",
+    "postConf": "The invoice is marked as sent by post.",
+    "postError": "The invoice could not be marked.",
+    "sentByPost": "Sent by post on {date}",
+    "sentByEmail": "Sent by email on {date}"
   },
   "document": {
     "invoice": "Invoice {invoiceId}",

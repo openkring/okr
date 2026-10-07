@@ -3,7 +3,7 @@ import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTi
 
 import { AvatarPipe } from '@okr/avatar-ui';
 import { AvatarDetailService, LedgerBookings, VoucherTiles } from '@okr/finance-accounting-feature';
-import { billAccountKeys, billBookingAmounts, billBookingKeys, billDisplayState, billStateColor, billStateLabel, isOverdueBill, isPayableBill } from '@okr/finance-bill-util';
+import { billAccountKeys, billBookingAmounts, billBookingKeys, billDisplayState, billStateColor, billStateLabel, billVoucherKeys, isOverdueBill, isPayableBill } from '@okr/finance-bill-util';
 import { BillModel, BillPayment } from '@okr/shared-models';
 import { formatMinorAmount, Header } from '@okr/shared-ui';
 import { PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
@@ -190,7 +190,7 @@ export class BillViewModal {
   protected readonly paymentDate = computed(() => this.bill()?.paymentDate ?? '');
   protected readonly notes = computed(() => this.bill()?.notes ?? '');
   // legacy bills still hold bexio file UUIDs — only migrated keys are vouchers
-  protected readonly voucherKeys = computed(() => (this.bill()?.attachments ?? []).filter(a => a.startsWith('bexio-file-')));
+  protected readonly voucherKeys = computed(() => billVoucherKeys(this.bill()));
 
   // payments (spec 1.85)
   protected readonly payments = computed(() => this.bill()?.payments ?? []);

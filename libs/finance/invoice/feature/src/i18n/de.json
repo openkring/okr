@@ -209,7 +209,9 @@
     "label": "Rechnungsdetails anzeigen",
     "pdf": "Rechnung als PDF herunterladen",
     "pdf_error": "Die Rechnung konnte nicht als PDF geladen werden. Bitte versuche es später noch einmal.",
-    "pdf_missing": "Für diese Rechnung gibt es noch kein PDF."
+    "pdf_missing": "Für diese Rechnung gibt es noch kein PDF.",
+    "preview": "Vorschau",
+    "preview_error": "Die Vorschau konnte nicht erstellt werden."
   },
   "paymentConfirmation": {
     "label": "Zahlungsbestätigung erstellen",
@@ -298,9 +300,9 @@
   },
   "issue": {
     "label": "Rechnung ausstellen",
-    "confirm": "Die Rechnung bekommt jetzt ihre Nummer und wird verbucht. Danach kannst du sie nicht mehr ändern.",
+    "confirm": "Die Rechnung bekommt jetzt ihre Nummer, ihr PDF und wird verbucht. Danach kannst du sie nicht mehr ändern. Versendet wird sie dabei noch nicht – das machst du danach per E-Mail oder per Post.",
     "conf": "Rechnung {invoiceId} ist ausgestellt",
-    "error": "Die Rechnung konnte nicht ausgestellt werden."
+    "error": "Die Rechnung wurde nicht ausgestellt und nicht versendet. Sie bleibt ein Entwurf."
   },
   "refusal": {
     "no-positions": "Die Rechnung hat noch keine Positionen. Füge zuerst mindestens eine Position hinzu.",
@@ -379,7 +381,10 @@
     "waive-inconsistent-state": "Beim Erlassen der Gebühr ist etwas schiefgelaufen. Versuche es bitte noch einmal.",
     "waive-not-payable": "Eine Gebühr kann nur bei einer ausgestellten, noch offenen Rechnung erlassen werden.",
     "email-already-waived": "Die Gebühr dieser Mahnung ist erlassen, das PDF zeigt sie aber noch. Darum wird es nicht versendet.",
-    "discount-without-base": "Ein Rabatt ohne Konto steht über allen Positionen und kann nichts mindern. Verschiebe ihn unter die Positionen oder wähle ein Konto."
+    "discount-without-base": "Ein Rabatt ohne Konto steht über allen Positionen und kann nichts mindern. Verschiebe ihn unter die Positionen oder wähle ein Konto.",
+    "no-payee-iban": "Für den Verein ist keine IBAN hinterlegt. Ergänze beim Verein eine Bankverbindung, damit der Einzahlungsschein erstellt werden kann.",
+    "qr-iban-needs-reference": "Für den Verein ist nur eine QR-IBAN hinterlegt. Für diesen Einzahlungsschein braucht es zusätzlich die normale IBAN.",
+    "template-unpublished": "Die Rechnungsvorlage ist nicht veröffentlicht. Veröffentliche sie zuerst in den Vorlagen."
   },
   "paymentReference": {
     "label": "Zahlungsreferenz"
@@ -502,7 +507,14 @@
     "ok": "Senden",
     "conf": "{document} wurde am {date} per E-Mail gesendet.",
     "error": "Die E-Mail konnte nicht gesendet werden. Bitte versuche es später noch einmal.",
-    "sentAt": "Versendet am {date}"
+    "sentAt": "Versendet am {date}",
+    "post": "Als per Post versendet markieren",
+    "postConfirm": "Die Rechnung wird als heute per Post versendet markiert.",
+    "postOk": "Markieren",
+    "postConf": "Die Rechnung ist als per Post versendet markiert.",
+    "postError": "Die Rechnung konnte nicht markiert werden.",
+    "sentByPost": "Per Post versendet am {date}",
+    "sentByEmail": "Per E-Mail versendet am {date}"
   },
   "document": {
     "invoice": "Rechnung {invoiceId}",

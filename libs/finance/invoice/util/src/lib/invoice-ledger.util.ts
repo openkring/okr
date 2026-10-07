@@ -81,3 +81,16 @@ export function invoiceAccountKeys(invoice: InvoiceModel): string[] {
   const keys = (invoice.payments ?? []).map(p => p.bankAccountKey);
   return [...new Set(keys.filter(k => !!k))];
 }
+
+/** The finance-documents of an invoice for its Belege card: the invoice PDF, then its reminder PDFs. */
+export function invoiceVoucherKeys(invoice: InvoiceModel | undefined): string[] {
+  if (!invoice) return [];
+  // legacy invoices lack the fields (Firestore reads skip model defaults)
+  const keys = [invoice.documentKey ?? '', ...(invoice.reminders ?? []).map(r => r.documentKey ?? '')];
+  return [...new Set(keys.filter(k => k.length > 0))];
+}
+
+/** Whether an invoice has at least one PDF (Beleg): the issued invoice or a reminder. */
+export function hasInvoiceVoucher(invoice: InvoiceModel): boolean {
+  return invoiceVoucherKeys(invoice).length > 0;
+}

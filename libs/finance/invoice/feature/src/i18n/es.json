@@ -209,7 +209,9 @@
     "label": "Mostrar detalles de la factura",
     "pdf": "Descargar factura como PDF",
     "pdf_error": "No se pudo cargar la factura como PDF. Inténtalo de nuevo más tarde.",
-    "pdf_missing": "Todavía no hay un PDF para esta factura."
+    "pdf_missing": "Todavía no hay un PDF para esta factura.",
+    "preview": "Vista previa",
+    "preview_error": "No se pudo crear la vista previa."
   },
   "paymentConfirmation": {
     "label": "Crear confirmación de pago",
@@ -298,9 +300,9 @@
   },
   "issue": {
     "label": "Emitir factura",
-    "confirm": "La factura recibe ahora su número y se contabiliza. Después ya no podrás modificarla.",
+    "confirm": "La factura recibe ahora su número y su PDF y se contabiliza. Después ya no podrás modificarla. Todavía no se envía – eso lo haces después por e-mail o por correo postal.",
     "conf": "La factura {invoiceId} está emitida",
-    "error": "No se pudo emitir la factura."
+    "error": "La factura no se emitió ni se envió. Sigue siendo un borrador."
   },
   "refusal": {
     "no-positions": "La factura todavía no tiene posiciones. Añade primero al menos una posición.",
@@ -379,7 +381,10 @@
     "waive-inconsistent-state": "Algo salió mal al condonar la tarifa. Inténtalo de nuevo.",
     "waive-not-payable": "Una tarifa solo se puede condonar en una factura emitida que siga abierta.",
     "email-already-waived": "La tarifa de este recordatorio está condonada, pero el PDF todavía la muestra. Por eso no se envía.",
-    "discount-without-base": "Un descuento sin cuenta está por encima de todas las posiciones y no puede reducir nada. Muévelo debajo de las posiciones o elige una cuenta."
+    "discount-without-base": "Un descuento sin cuenta está por encima de todas las posiciones y no puede reducir nada. Muévelo debajo de las posiciones o elige una cuenta.",
+    "no-payee-iban": "No hay ningún IBAN guardado para el club. Añade una cuenta bancaria al club para que se pueda crear el recibo de pago.",
+    "qr-iban-needs-reference": "Para el club solo hay un QR-IBAN guardado. Este recibo de pago también necesita el IBAN normal.",
+    "template-unpublished": "La plantilla de factura no está publicada. Publícala primero en las plantillas."
   },
   "paymentReference": {
     "label": "Referencia de pago"
@@ -502,7 +507,14 @@
     "ok": "Enviar",
     "conf": "{document} se envió por correo electrónico el {date}.",
     "error": "No se pudo enviar el correo electrónico. Inténtalo de nuevo más tarde.",
-    "sentAt": "Enviado el {date}"
+    "sentAt": "Enviado el {date}",
+    "post": "Marcar como enviada por correo postal",
+    "postConfirm": "La factura se marcará como enviada hoy por correo postal.",
+    "postOk": "Marcar",
+    "postConf": "La factura está marcada como enviada por correo postal.",
+    "postError": "No se pudo marcar la factura.",
+    "sentByPost": "Enviada por correo postal el {date}",
+    "sentByEmail": "Enviada por e-mail el {date}"
   },
   "document": {
     "invoice": "Factura {invoiceId}",

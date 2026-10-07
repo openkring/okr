@@ -34,6 +34,7 @@ import { ExpenseListId, ExpenseStore } from './expense.store';
     IonGrid, IonRow, IonCol, IonAvatar, IonImg,
   ],
   styles: [`
+    .attach-icon { font-size: 0.9rem; vertical-align: middle; margin-left: 4px; color: var(--ion-color-medium); }
     ion-avatar { width: 30px; height: 30px; background-color: var(--ion-color-light); }
     .header-row {
       font-weight: 600;
@@ -135,7 +136,7 @@ import { ExpenseListId, ExpenseStore } from './expense.store';
                   <span>{{ expense.userName }}</span>
                 </ion-col>
               }
-              <ion-col>{{ expense.abstract }}</ion-col>
+              <ion-col>{{ expense.abstract }}@if (hasReceipt(expense)) {<ion-icon class="attach-icon" src="{{ 'attach' | svgIcon }}" aria-hidden="true" />}</ion-col>
               <ion-col size="2" class="num">{{ amount(expense) }} {{ expense.currency }}</ion-col>
             </ion-row>
           }
@@ -153,7 +154,7 @@ import { ExpenseListId, ExpenseStore } from './expense.store';
                 </ion-avatar>
               }
               <ion-label>
-                <h3>{{ expense.abstract }}</h3>
+                <h3>{{ expense.abstract }}@if (hasReceipt(expense)) {<ion-icon class="attach-icon" src="{{ 'attach' | svgIcon }}" aria-hidden="true" />}</h3>
                 <p>{{ viewDate(expense) }} · {{ amount(expense) }} {{ expense.currency }}</p>
                 @if (showSubmitter() && expense.userName) {
                   <p>{{ expense.userName }}</p>
@@ -201,6 +202,11 @@ export class ExpenseList {
   }
 
   /** creationDateTime is a StoreDateTime; non-strict conversion yields '' for legacy docs without one. */
+  /** at least one uploaded receipt */
+  protected hasReceipt(expense: ExpenseModel): boolean {
+    return (expense.receiptCount ?? 0) > 0;
+  }
+
   protected viewDate(expense: ExpenseModel): string {
     return convertDateFormatToString(expense.creationDateTime, DateFormat.StoreDateTime, DateFormat.ViewDate, false);
   }

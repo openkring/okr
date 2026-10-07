@@ -4,11 +4,11 @@ import { IonAvatar, IonButton, IonCard, IonCardContent, IonChip, IonContent, Ion
 import { InvoiceModel } from '@okr/shared-models';
 import { formatMinorAmount, Header } from '@okr/shared-ui';
 import { PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
-import { fill, formatQrReference, getFullName, getTodayStr, prettyFormatDate, prettyFormatDateTime } from '@okr/shared-util-core';
+import { fill, formatQrReference, getFullName, getTodayStr, hasRole, prettyFormatDate } from '@okr/shared-util-core';
 import { AvatarPipe } from '@okr/avatar-ui';
-import { AvatarDetailService, LedgerBookings } from '@okr/finance-accounting-feature';
+import { AvatarDetailService, LedgerBookings, VoucherTiles } from '@okr/finance-accounting-feature';
 import {
-  invoiceAccountKeys, invoiceBookingAmounts, invoiceBookingKeys, invoiceDisplayState, invoiceStateColor, invoiceStateLabel, isOverdueInvoice, isPayableState, openInvoiceAmount, reminderLevelKey,
+  invoiceAccountKeys, invoiceBookingAmounts, invoiceVoucherKeys, isDraftInvoice, invoiceBookingKeys, invoiceDisplayState, invoiceStateColor, invoiceStateLabel, isOverdueInvoice, isPayableState, openInvoiceAmount, reminderLevelKey,
 } from '@okr/finance-invoice-util';
 import { InvoiceStore } from './invoice.store';
 
@@ -18,7 +18,7 @@ import { InvoiceStore } from './invoice.store';
   providers: [InvoiceStore],
   imports: [
     SvgIconPipe, PrettyDatePipe, AvatarPipe,
-    Header, LedgerBookings,
+    Header, LedgerBookings, VoucherTiles,
     IonContent, IonCard, IonIcon, IonLabel, IonCardContent, IonItem, IonChip, IonAvatar, IonImg, IonButton
   ],
   styles: [`
@@ -139,10 +139,10 @@ import { InvoiceStore } from './invoice.store';
                 </ion-label>
               </ion-item>
             }
-            <!-- last email send of the invoice PDF -->
+            <!-- last send of the invoice PDF, by email or by post -->
             @if(sentAt().length > 0) {
               <ion-item lines="none">
-                <ion-icon slot="start" src="{{'email' | svgIcon}}" />
+                <ion-icon slot="start" src="{{ (sentVia() === 'post' ? 'mail' : 'email') | svgIcon}}" />
                 <ion-label>
                   <p class="view-value">{{ sentAtText() }}</p>
                 </ion-label>
@@ -183,6 +183,19 @@ import { InvoiceStore } from './invoice.store';
              a migrated invoice has none: the bank accounts of its payments instead -->
         <okr-ledger-bookings [accountingTenantId]="invoice.accountingTenantId" [bookingKeys]="bookingKeys()"
           [bookingAmounts]="bookingAmounts()" [accountKeys]="accountKeys()" [date]="invoice.invoiceDate" />
+        <!-- a draft has no PDF yet: render a preview on demand (nothing numbered or booked) -->
+        @if(canPreview()) {
+          <ion-item lines="none">
+            <ion-button slot="end" fill="outline" (click)="store.preview(invoice)">
+              <ion-icon slot="start" src="{{'eye-on' | svgIcon}}" />
+              {{ store.i18n.show_preview() }}
+            </ion-button>
+          </ion-item>
+        }
+        <!-- the issued invoice PDF and its reminder PDFs (finance-documents), treasurer/privileged only -->
+        @if(mayReadVouchers()) {
+          <okr-voucher-tiles [documentKeys]="voucherKeys()" />
+        }
       }
     </ion-content>
   `
@@ -221,7 +234,20 @@ export class InvoiceViewModal {
   protected readonly reminders = computed(() =>
     [...(this.invoice()?.reminders ?? [])].map(r => ({ ...r, fee: Number.isFinite(r.fee) ? r.fee : 0 })).sort((a, b) => (a.level ?? 0) - (b.level ?? 0)));
   protected readonly sentAt = computed(() => this.invoice()?.sentAt ?? '');
-  protected readonly sentAtText = computed(() => fill(this.store.i18n.email_sent_at(), { date: prettyFormatDateTime(this.sentAt()) }));
+  protected readonly sentVia = computed(() => this.invoice()?.sentVia ?? '');
+  // sentAt is a StoreDate; an invoice sent before sentVia existed says only "Versendet am"
+  protected readonly sentAtText = computed(() => {
+    const via = this.sentVia();
+    const text = via === 'post' ? this.store.i18n.email_sent_by_post() : via === 'email' ? this.store.i18n.email_sent_by_email() : this.store.i18n.email_sent_at();
+    return fill(text, { date: prettyFormatDate(this.sentAt()) });
+  });
+  protected readonly voucherKeys = computed(() => invoiceVoucherKeys(this.invoice()));
+  protected readonly mayReadVouchers = computed(() => {
+    const user = this.store.appStore.currentUser();
+    return hasRole('treasurer', user) || hasRole('privileged', user);
+  });
+  protected readonly canPreview = computed(() => isDraftInvoice(this.invoice()) && hasRole('treasurer', this.store.appStore.currentUser())
+    && this.store.accountingStore.isExternallyManaged() === false);
   /** shown while the invoice is open (pending, partial, unpaid) — not for a paid or cancelled one */
   protected readonly showOpenAmount = computed(() => isPayableState(this.invoice()?.state));
   protected readonly openAmount = computed(() => formatMinorAmount(openInvoiceAmount(this.invoice())));

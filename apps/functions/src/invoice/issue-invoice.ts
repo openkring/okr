@@ -46,7 +46,7 @@ function storedResult(invoice: InvoiceDoc): IssueInvoiceResult {
   };
 }
 
-async function readPositions(db: Firestore, invoiceKey: string): Promise<PositionInput[]> {
+export async function readPositions(db: Firestore, invoiceKey: string): Promise<PositionInput[]> {
   const snap = await db.collection(InvoicePositionCollection).where('invoiceKey', '==', invoiceKey).get();
   return sortPositions(snap.docs
     .map((d) => d.data())

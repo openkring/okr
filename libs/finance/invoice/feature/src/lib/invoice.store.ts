@@ -10,7 +10,7 @@ import { take } from 'rxjs/operators';
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
 import { AccountModel, DEFAULT_REMINDER_GRACE_DAYS, InvoiceCollection, InvoiceModel, OrgModelName, PersonModelName } from '@okr/shared-models';
-import { confirm, exportCsv, resourceParams, showToast } from '@okr/shared-util-angular';
+import { confirm, exportCsv, notify, resourceParams, showToast } from '@okr/shared-util-angular';
 import {
   convertDateFormatToString, DateFormat, debugListLoaded, fill, getSystemQuery, getTodayStr, getYear, hasRole, nameMatches,
 } from '@okr/shared-util-core';
@@ -347,7 +347,9 @@ export const InvoiceStore = signalStore(
         await showToast(store.toastController, fill(store.i18n.issue_conf(), { invoiceId: String(result.invoiceNo) }));
       } catch (e) {
         console.error('InvoiceStore.issue: issueInvoice failed', e);
-        await showToast(store.toastController, invoiceRefusalText(invoiceRefusalReasons(e), store.i18n, store.i18n.issue_error()));
+        // an alert, not a toast: the treasurer must see that nothing was issued or sent, and why
+        const reason = invoiceRefusalText(invoiceRefusalReasons(e), store.i18n, '');
+        await notify(store.alertController, store.i18n.issue(), [store.i18n.issue_error(), reason].filter(t => !!t).join(' '), store.i18n.ok());
       }
       patchState(store, { version: store.version() + 1 });
     },
@@ -793,6 +795,34 @@ export const InvoiceStore = signalStore(
       if (type === 'raw') {
         await exportCsv(getInvoiceExportData(invoices), 'invoices.xlsx', 'Invoices');
       }
+    },
+
+    /** A draft as PDF (spec: draft preview): rendered on the server, nothing numbered or booked. */
+    async preview(invoice: InvoiceModel): Promise<void> {
+      if (!isDraftInvoice(invoice)) return;
+      try {
+        const result = await store.invoiceService.preview(invoice.okey);
+        saveBase64Pdf(result.content, `Entwurf-${invoice.okey}.pdf`);
+      } catch (e) {
+        console.error('InvoiceStore.preview: previewInvoicePdf failed', e);
+        const reason = invoiceRefusalText(invoiceRefusalReasons(e), store.i18n, '');
+        await notify(store.alertController, store.i18n.show_preview(), [store.i18n.show_preview_error(), reason].filter(t => !!t).join(' '), store.i18n.ok());
+      }
+    },
+
+    /** Records that an issued invoice was printed and sent by post today. */
+    async markSentByPost(invoice: InvoiceModel): Promise<void> {
+      if (!canEmailInvoice(invoice)) return;
+      const confirmed = await confirm(store.alertController, store.i18n.email_post_confirm(), store.i18n.email_post_ok(), store.i18n.cancel(), true);
+      if (!confirmed) return;
+      try {
+        await store.invoiceService.markSentByPost(invoice.okey, store.appStore.currentUser() ?? undefined);
+        await showToast(store.toastController, store.i18n.email_post_conf());
+      } catch (e) {
+        console.error('InvoiceStore.markSentByPost: markInvoiceSent failed', e);
+        await showToast(store.toastController, invoiceRefusalText(invoiceRefusalReasons(e), store.i18n, store.i18n.email_post_error()));
+      }
+      patchState(store, { version: store.version() + 1 });
     },
 
     async showPdf(invoice: InvoiceModel): Promise<void> {

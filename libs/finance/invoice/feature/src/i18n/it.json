@@ -209,7 +209,9 @@
     "label": "Mostrare i dettagli della fattura",
     "pdf": "Scaricare la fattura in PDF",
     "pdf_error": "Non è stato possibile caricare la fattura in PDF. Riprova più tardi.",
-    "pdf_missing": "Per questa fattura non c'è ancora un PDF."
+    "pdf_missing": "Per questa fattura non c'è ancora un PDF.",
+    "preview": "Anteprima",
+    "preview_error": "Non è stato possibile creare l'anteprima."
   },
   "paymentConfirmation": {
     "label": "Crea conferma di pagamento",
@@ -298,9 +300,9 @@
   },
   "issue": {
     "label": "Emetti fattura",
-    "confirm": "La fattura riceve ora il suo numero e viene contabilizzata. Dopo non potrai più modificarla.",
+    "confirm": "La fattura riceve ora il suo numero e il suo PDF e viene contabilizzata. Dopo non potrai più modificarla. Non viene ancora inviata – lo fai dopo per e-mail o per posta.",
     "conf": "La fattura {invoiceId} è stata emessa",
-    "error": "Non è stato possibile emettere la fattura."
+    "error": "La fattura non è stata emessa né inviata. Resta una bozza."
   },
   "refusal": {
     "no-positions": "La fattura non ha ancora posizioni. Aggiungi prima almeno una posizione.",
@@ -379,7 +381,10 @@
     "waive-inconsistent-state": "Qualcosa è andato storto nel condonare le spese. Riprova, per favore.",
     "waive-not-payable": "Le spese si possono condonare solo su una fattura emessa e ancora aperta.",
     "email-already-waived": "Le spese di questo sollecito sono condonate, ma il PDF le mostra ancora. Per questo non viene inviato.",
-    "discount-without-base": "Uno sconto senza conto sta sopra tutte le posizioni e non può ridurre nulla. Spostalo sotto le posizioni o scegli un conto."
+    "discount-without-base": "Uno sconto senza conto sta sopra tutte le posizioni e non può ridurre nulla. Spostalo sotto le posizioni o scegli un conto.",
+    "no-payee-iban": "Per il club non è registrato nessun IBAN. Aggiungi un conto bancario al club, così la polizza di versamento può essere creata.",
+    "qr-iban-needs-reference": "Per il club è registrato solo un QR-IBAN. Questa polizza di versamento ha bisogno anche dell'IBAN normale.",
+    "template-unpublished": "Il modello di fattura non è pubblicato. Pubblicalo prima nei modelli."
   },
   "paymentReference": {
     "label": "Riferimento di pagamento"
@@ -502,7 +507,14 @@
     "ok": "Invia",
     "conf": "{document} è stato inviato per e-mail il {date}.",
     "error": "Non è stato possibile inviare l’e-mail. Riprova più tardi.",
-    "sentAt": "Inviato il {date}"
+    "sentAt": "Inviato il {date}",
+    "post": "Segna come inviata per posta",
+    "postConfirm": "La fattura viene segnata come inviata per posta oggi.",
+    "postOk": "Segna",
+    "postConf": "La fattura è segnata come inviata per posta.",
+    "postError": "Non è stato possibile segnare la fattura.",
+    "sentByPost": "Inviata per posta il {date}",
+    "sentByEmail": "Inviata per e-mail il {date}"
   },
   "document": {
     "invoice": "Fattura {invoiceId}",

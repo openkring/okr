@@ -12,7 +12,7 @@ import { coerceBoolean, getAvatarInfo, safeStructuredClone } from '@okr/shared-u
 import { I18nService } from '@okr/shared-i18n';
 
 import { BillEditForm } from '@okr/finance-bill-ui';
-import { BILL_I18N_KEYS, BillI18n, isDraftBill, toBillLines } from '@okr/finance-bill-util';
+import { BILL_I18N_KEYS, BillI18n, billVoucherKeys, isDraftBill, toBillLines } from '@okr/finance-bill-util';
 import { dismissOverlay } from '@okr/shared-util-angular';
 
 /** What the modal dismisses with on confirm. */
@@ -79,7 +79,7 @@ export class BillEditModal {
   public readonly defaultAccountKey = input('');
 
   // legacy bills still hold bexio file UUIDs — only migrated keys are vouchers
-  protected readonly voucherKeys = computed(() => (this.bill()?.attachments ?? []).filter(a => a.startsWith('bexio-file-')));
+  protected readonly voucherKeys = computed(() => billVoucherKeys(this.bill()));
 
   // signals
   protected formData = linkedSignal(() => safeStructuredClone(this.bill()));

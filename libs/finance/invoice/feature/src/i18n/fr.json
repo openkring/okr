@@ -209,7 +209,9 @@
     "label": "Afficher les détails de la facture",
     "pdf": "Télécharger la facture au format PDF",
     "pdf_error": "La facture n'a pas pu être chargée au format PDF. Merci de réessayer plus tard.",
-    "pdf_missing": "Il n'y a pas encore de PDF pour cette facture."
+    "pdf_missing": "Il n'y a pas encore de PDF pour cette facture.",
+    "preview": "Aperçu",
+    "preview_error": "L'aperçu n'a pas pu être créé."
   },
   "paymentConfirmation": {
     "label": "Créer une confirmation de paiement",
@@ -298,9 +300,9 @@
   },
   "issue": {
     "label": "Émettre la facture",
-    "confirm": "La facture reçoit maintenant son numéro et est comptabilisée. Ensuite, tu ne pourras plus la modifier.",
+    "confirm": "La facture reçoit maintenant son numéro et son PDF et est comptabilisée. Ensuite, tu ne pourras plus la modifier. Elle n'est pas encore envoyée – tu le fais ensuite par e-mail ou par la poste.",
     "conf": "La facture {invoiceId} est émise",
-    "error": "La facture n'a pas pu être émise."
+    "error": "La facture n'a pas été émise ni envoyée. Elle reste un brouillon."
   },
   "refusal": {
     "no-positions": "La facture n'a pas encore de positions. Ajoute d'abord au moins une position.",
@@ -379,7 +381,10 @@
     "waive-inconsistent-state": "Un problème est survenu lors de l’annulation des frais. Réessaie, s’il te plaît.",
     "waive-not-payable": "Des frais ne peuvent être annulés que sur une facture émise et encore ouverte.",
     "email-already-waived": "Les frais de ce rappel sont annulés, mais le PDF les affiche encore. Il n’est donc pas envoyé.",
-    "discount-without-base": "Un rabais sans compte se trouve au-dessus de toutes les positions et ne peut rien réduire. Déplace-le sous les positions ou choisis un compte."
+    "discount-without-base": "Un rabais sans compte se trouve au-dessus de toutes les positions et ne peut rien réduire. Déplace-le sous les positions ou choisis un compte.",
+    "no-payee-iban": "Aucun IBAN n'est enregistré pour le club. Ajoute une coordonnée bancaire au club pour que le bulletin de versement puisse être créé.",
+    "qr-iban-needs-reference": "Seul un QR-IBAN est enregistré pour le club. Ce bulletin de versement a aussi besoin de l'IBAN normal.",
+    "template-unpublished": "Le modèle de facture n'est pas publié. Publie-le d'abord dans les modèles."
   },
   "paymentReference": {
     "label": "Référence de paiement"
@@ -502,7 +507,14 @@
     "ok": "Envoyer",
     "conf": "{document} a été envoyé par e-mail le {date}.",
     "error": "L’e-mail n’a pas pu être envoyé. Réessaie plus tard.",
-    "sentAt": "Envoyé le {date}"
+    "sentAt": "Envoyé le {date}",
+    "post": "Marquer comme envoyée par la poste",
+    "postConfirm": "La facture sera marquée comme envoyée par la poste aujourd'hui.",
+    "postOk": "Marquer",
+    "postConf": "La facture est marquée comme envoyée par la poste.",
+    "postError": "La facture n'a pas pu être marquée.",
+    "sentByPost": "Envoyée par la poste le {date}",
+    "sentByEmail": "Envoyée par e-mail le {date}"
   },
   "document": {
     "invoice": "Facture {invoiceId}",

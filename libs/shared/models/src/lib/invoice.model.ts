@@ -37,7 +37,8 @@ export class InvoiceModel implements OkrModel, SearchableModel, TaggedModel {
   public documentKey = '';          // the invoice PDF (finance-documents okey, spec 1.68)
   public payments: InvoicePayment[] = [];   // received payments, oldest first
   public reminders: InvoiceReminder[] = []; // Mahnungen, oldest first
-  public sentAt = '';               // StoreDate (yyyyMMdd) of the last email send of the invoice PDF; '' = never (spec 1.76 D13)
+  public sentAt = '';               // StoreDate (yyyyMMdd) of the last send of the invoice PDF (email or post, see sentVia); '' = never (spec 1.76 D13)
+  public sentVia: InvoiceSentVia | '' = '';  // how the invoice was sent: 'email' (sendInvoiceEmail) or 'post' (marked by hand); '' = unknown / not sent
 
   // Stamped (StoreDateTime) when a data-subject erasure pseudonymized this record
   // (privacy 1.19, D-P5-6): the name fields and the person link are overwritten, the
@@ -57,6 +58,9 @@ export type VAT_TYPE = 'included' | 'excluded' | 'exempt';
 
 /** A payment received on an invoice. date = StoreDate, amount in Rappen, bankAccountKey = AccountModel okey or ''.
  *  bookingKey = the booking that settled it (posted by recordInvoicePayment, or linked; a numeric bexio journal row id for a migrated payment); '' = not linked. */
+/** How an issued invoice reached its receiver. */
+export type InvoiceSentVia = 'email' | 'post';
+
 export interface InvoicePayment { date: string; amount: number; bankAccountKey: string; bookingKey: string; }
 
 /** A reminder (Mahnung). date/dueDate = StoreDate, documentKey = its PDF in finance-documents or ''. */

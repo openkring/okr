@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { BillModel } from '@okr/shared-models';
-import { billAccountKeys, billBookingAmounts, billBookingKeys, billDisplayState, getBillIndex, isOverdueBill, newBill } from './bill.util';
+import { billAccountKeys, billBookingAmounts, billBookingKeys, billVoucherKeys, billDisplayState, getBillIndex, isOverdueBill, newBill } from './bill.util';
 
 describe('newBill', () => {
   it('creates a BillModel with the given tenantId', () => {
@@ -87,5 +87,17 @@ describe('billBookingAmounts', () => {
 
   it('is empty for a legacy bill without payments', () => {
     expect(billBookingAmounts(Object.assign(newBill('scs'), { payments: undefined }))).toEqual({});
+  });
+});
+
+describe('billVoucherKeys', () => {
+  it('keeps the finance-documents and drops the raw bexio uuids of legacy bills', () => {
+    const b = Object.assign(newBill('scs'), { attachments: ['bexio-file-1', '3f2a-uuid', 'bexio-file-2'] });
+    expect(billVoucherKeys(b)).toEqual(['bexio-file-1', 'bexio-file-2']);
+  });
+
+  it('is empty without attachments or without a bill', () => {
+    expect(billVoucherKeys(Object.assign(newBill('scs'), { attachments: undefined }))).toEqual([]);
+    expect(billVoucherKeys(undefined)).toEqual([]);
   });
 });

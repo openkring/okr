@@ -140,7 +140,7 @@ export const sendInvoiceEmail = onCall(
         const fresh = (await tx.get(invoiceRef)).data();
         if (!fresh) return;
         if (target.kind === 'invoice') {
-          tx.update(invoiceRef, { sentAt });
+          tx.update(invoiceRef, { sentAt, sentVia: 'email' });
         } else {
           const list = ((fresh['reminders'] as ReminderLike[] | undefined) ?? []).map((r) => coalesceReminder(r.level === level ? { ...r, isSent: true } : r));
           tx.update(invoiceRef, withoutUndefined({ reminders: list }));
