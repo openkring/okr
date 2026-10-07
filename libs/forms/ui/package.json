@@ -14,6 +14,7 @@
     "@okr/shared-util-core": "*",
     "@okr/forms-util": "*",
     "@okr/shared-util-angular": "*",
-    "@okr/shared-constants": "*"
+    "@okr/shared-constants": "*",
+    "@okr/shared-i18n": "*"
   }
 }

@@ -12,7 +12,7 @@ import { FormDefinitionService } from '@okr/forms-data-access';
 import { FORM_I18N_KEYS, FormI18n, FORM_MAPPINGS, getPrefillFields, isInputField } from '@okr/forms-util';
 export type { FormI18n };
 
-import { FormDefinitionEditModal } from './form-definition-edit.modal';
+import { FormDefinitionEditModal } from '@okr/forms-ui';
 import { FormBuilderEditor } from './form-builder-editor';
 
 export type FormDefinitionState = {
@@ -76,7 +76,11 @@ export const FormDefinitionStore = signalStore(
         componentProps: { form, mode: 'create' },
       });
       await modal.present();
-      await modal.onDidDismiss();
+      const { data, role } = await modal.onDidDismiss<FormDefinitionModel>();
+      if (role === 'confirm' && data) {
+        data.tenants = [store.appStore.tenantId()];
+        await store.formDefinitionService.create(data, store.currentUser());
+      }
       store.formsResource.reload();
     },
 
@@ -88,7 +92,10 @@ export const FormDefinitionStore = signalStore(
         componentProps: { form, mode: 'edit' },
       });
       await modal.present();
-      await modal.onDidDismiss();
+      const { data, role } = await modal.onDidDismiss<FormDefinitionModel>();
+      if (role === 'confirm' && data) {
+        await store.formDefinitionService.update(data, store.currentUser());
+      }
       store.formsResource.reload();
     },
 

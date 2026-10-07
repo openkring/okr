@@ -25,3 +25,5 @@ export * from './lib/testimonial-configuration';
 export * from './lib/timeline-configuration';
 export * from './lib/weather-configuration';
 export * from './lib/request-status-note';
+export * from './lib/context-diagram-config.form';
+export * from './lib/context-diagram-config.modal';

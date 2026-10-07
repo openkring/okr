@@ -6,3 +6,4 @@ export * from './lib/field-kind';
 export * from './lib/form-crypto';
 export * from './lib/forms-i18n';
 export * from './lib/field-config.validations';
+export * from './lib/form-definition.validations';

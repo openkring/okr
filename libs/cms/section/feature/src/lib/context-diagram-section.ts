@@ -12,7 +12,7 @@ import { hasRole } from '@okr/shared-util-core';
 
 import { SectionService } from '@okr/cms-section-data-access';
 import { ContextDiagramStore, ContextDiagramNode, ContextDiagramEdge } from './context-diagram-section.store';
-import { ContextDiagramConfigModal } from './context-diagram-config.modal';
+import { ContextDiagramConfigModal } from '@okr/cms-section-ui';
 
 @Component({
   selector: 'okr-context-diagram-section',

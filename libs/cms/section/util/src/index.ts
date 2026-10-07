@@ -30,3 +30,4 @@ export * from './lib/weather-section.validations';
 export * from './lib/modal-registry';
 export * from './lib/list-reservation.util';
 export * from './lib/section-errors';
+export * from './lib/context-diagram-config.validations';
