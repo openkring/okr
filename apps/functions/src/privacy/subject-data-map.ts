@@ -753,6 +753,20 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     retention: CLUB_RECORD,
   },
   {
+    // spec 3.14: a project groups tasks; its only person link is the flat `projectManager` avatar.
+    collection: 'projects',
+    dataClass: 'content',
+    tier: 'T4',
+    onTenantExit: 'anonymize',
+    find: (c: SubjectCtx) => db().collection('projects').where('projectManager.key', '==', c.personKey),
+    tenantScope: 'tenantsArray',
+    onExport: 'index',
+    indexFields: { title: 'name', date: 'startDate', route: '/projects' },
+    onErasure: 'anonymize',       // the project stays, the manager's name does not
+    anonymizeFields: ['projectManager.key', 'projectManager.name1', 'projectManager.name2'],
+    retention: CLUB_RECORD,
+  },
+  {
     collection: 'meetings',
     dataClass: 'content',
     tier: 'T4',            // Vereinsdokumentation — the minutes are the association's record

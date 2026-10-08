@@ -193,6 +193,7 @@ describe('find() query shapes', () => {
     expect(fields(record('personal-rels')).sort()).toEqual(['objectKey', 'subjectKey']);
     expect(fields(record('invitations')).sort()).toEqual(['inviteeKey', 'inviterKey']);
     expect(fields(record('tasks')).sort()).toEqual(['assignee.key', 'author.key']);
+    expect(fields(record('projects'))).toEqual(['projectManager.key']);
   });
 
   it('scopes esignList by its SINGULAR tenantId field', () => {
