@@ -1397,6 +1397,10 @@ export async function resolveDocs(entry: SubjectDataEntry, ctx: SubjectCtx): Pro
 //   template/group/org keys, signer roles + responsibility keys, terms. No natural person's data.
 // not personal data: cost-centers — a Kostenstelle (1.65): Ressort name/number, a tree link
 //   (parentKey) and a `responsibilityKey` reference. No natural person's data is stored on it.
+// not personal data: budget-versions — a budget version (1.65 phase 2): name, fiscalYear, status
+//   and the approval reference. No natural person's data.
+// not personal data: budget-lines — one budget cell (1.65 phase 2): costCenterKey, accountKey and
+//   an amount under a version. No natural person's data.
 // not personal data: commissionEntries — a ledger line (C3 §7): partnerKey, tenantId, band,
 //   amounts. No natural person appears on it; the contact-of-record stays on the metering
 //   record it was derived from.
