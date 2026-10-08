@@ -205,7 +205,10 @@
     "no-bill-date": "Enter the bill date.",
     "too-many-lines": "A supplier bill can have at most 50 lines.",
     "cost-center-invalid": "One of the cost centres cannot be used.",
-    "before-bill-date": "The chosen booking is dated too long before the bill date."
+    "before-bill-date": "The chosen booking is dated too long before the bill date.",
+    "scan-not-found": "We can no longer find the uploaded document. Please upload it again.",
+    "scan-wrong-usage": "This document does not belong to a supplier bill.",
+    "scan-already-attached": "This document is already attached to another bill."
   },
   "line": {
     "list": {
@@ -255,5 +258,12 @@
   "save": {
     "conf": "The supplier bill is saved.",
     "error": "The supplier bill could not be saved. Please try again later."
+  },
+  "upload": {
+    "reading": "Reading the bill …",
+    "cancel": "Cancel",
+    "failed": "We could not read the bill. Please fill in the fields yourself.",
+    "currency_note": "Currency {currency} — please check",
+    "duplicate": "A similar bill already exists: «{title}» of {date}. Check whether you are entering it twice."
   }
 }

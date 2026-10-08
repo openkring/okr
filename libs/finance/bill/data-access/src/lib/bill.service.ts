@@ -31,6 +31,8 @@ interface WriteBillPayload {
     billId: string; title: string; billDate: string; dueDate: string; vendor: AvatarInfo | null; notes: string; paymentReference: string; creditorIban: string;
   };
   lines?: BillLine[];
+  /** create only: the ocr-results id of an uploaded scan; writeBill keeps the scan as the bill's voucher (spec 1.91) */
+  ocrResultKey?: string;
 }
 
 export interface RecordBillPaymentResult { state: string; payments: BillPayment[]; bookingKey: string; }
@@ -63,8 +65,11 @@ export class BillService {
   /*-------------------------- native bills (spec 1.85 phase 3) --------------------------*/
   // `bills` is CF-write-only (firestore.rules): every write goes through writeBill / bookBill.
 
-  /** Creates or updates a draft bill with its lines; returns the bill key. Rejects with the callable's error. */
-  public async write(mode: 'create' | 'update', bill: BillModel, lines: BillLine[], currentUser?: UserModel): Promise<string> {
+  /**
+   * Creates or updates a draft bill with its lines; returns the bill key. Rejects with the callable's error.
+   * @param ocrResultKey create only: the uploaded scan that becomes the voucher ('' = none)
+   */
+  public async write(mode: 'create' | 'update', bill: BillModel, lines: BillLine[], currentUser?: UserModel, ocrResultKey = ''): Promise<string> {
     const payload: WriteBillPayload = {
       mode,
       ...(mode === 'create' ? { accountingTenantId: bill.accountingTenantId } : { billKey: bill.okey }),
@@ -73,6 +78,7 @@ export class BillService {
         vendor: bill.vendor ?? null, notes: bill.notes ?? '', paymentReference: bill.paymentReference ?? '', creditorIban: bill.creditorIban ?? '',
       },
       lines,
+      ...(mode === 'create' && ocrResultKey ? { ocrResultKey } : {}),
     };
     const fn = httpsCallable<WriteBillPayload, { billKey: string }>(this.functions(), 'writeBill');
     const result = await fn(payload);

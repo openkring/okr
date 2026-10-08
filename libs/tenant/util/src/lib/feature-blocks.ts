@@ -1460,6 +1460,7 @@ const finance: FeatureBlock = {
     { key: 'c-bill', name: 'c-bill', url: '', action: 'context', roleNeeded: 'treasurer', icon: 'help-circle', label: '', children: [
       { key: 'bill-add', name: 'bill-add', url: 'add', action: 'call', roleNeeded: 'treasurer', icon: 'add', label: '@item.bill-add' },
       { key: 'bill-scan', name: 'bill-scan', url: 'scan', action: 'call', roleNeeded: 'treasurer', icon: 'scan', label: '@item.bill-scan' },
+      { key: 'bill-upload', name: 'bill-upload', url: 'upload', action: 'call', roleNeeded: 'treasurer', icon: 'upload', label: '@item.bill-upload' },
       { key: 'bill-export-raw', name: 'bill-export-raw', url: 'exportRaw', action: 'call', roleNeeded: 'treasurer', icon: 'download', label: '@item.bill-export-raw' },
       { key: 'bill-open-items', name: 'bill-open-items', url: 'openItems', action: 'call', roleNeeded: 'treasurer', icon: 'checkmark', label: '@item.bill-open-items' },
     ] },

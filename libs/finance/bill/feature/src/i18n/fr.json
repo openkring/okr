@@ -205,7 +205,10 @@
     "no-bill-date": "Indique la date de la facture.",
     "too-many-lines": "Une facture fournisseur peut avoir au plus 50 lignes.",
     "cost-center-invalid": "Un des centres de coûts ne peut pas être utilisé.",
-    "before-bill-date": "L'écriture choisie est datée trop longtemps avant la date de la facture."
+    "before-bill-date": "L'écriture choisie est datée trop longtemps avant la date de la facture.",
+    "scan-not-found": "Nous ne trouvons plus le justificatif téléversé. Téléverse-le à nouveau, s'il te plaît.",
+    "scan-wrong-usage": "Ce justificatif n'appartient pas à une facture fournisseur.",
+    "scan-already-attached": "Ce justificatif est déjà joint à une autre facture."
   },
   "line": {
     "list": {
@@ -255,5 +258,12 @@
   "save": {
     "conf": "La facture fournisseur est enregistrée.",
     "error": "La facture fournisseur n'a pas pu être enregistrée. Réessaie plus tard."
+  },
+  "upload": {
+    "reading": "Lecture de la facture …",
+    "cancel": "Annuler",
+    "failed": "Nous n'avons pas pu lire la facture. Remplis les champs toi-même, s'il te plaît.",
+    "currency_note": "Devise {currency} — vérifie-la, s'il te plaît",
+    "duplicate": "Une facture similaire existe déjà : «{title}» du {date}. Vérifie que tu ne la saisis pas deux fois."
   }
 }

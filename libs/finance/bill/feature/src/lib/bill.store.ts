@@ -1,25 +1,28 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
+import { AlertController, LoadingController, ModalController, ToastController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { getApp } from 'firebase/app';
 import { connectFunctionsEmulator, getFunctions, httpsCallable } from 'firebase/functions';
-import { firstValueFrom, from, of } from 'rxjs';
+import { firstValueFrom, from, of, Subscription } from 'rxjs';
 import { take } from 'rxjs/operators';
 
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
-import { AccountModel, BillCollection, BillModel } from '@okr/shared-models';
+import { AccountModel, BillCollection, BillModel, OcrResultCollection, OcrResultModel } from '@okr/shared-models';
 import { confirm, exportCsv, resourceParams, showToast } from '@okr/shared-util-angular';
-import { debugListLoaded, fill, getSystemQuery, getTodayStr, getYear, nameMatches } from '@okr/shared-util-core';
+import {
+  convertDateFormatToString, DateFormat, debugListLoaded, fill, generateRandomString, getSystemQuery, getTodayStr, getYear, nameMatches, sanitizeFileName,
+} from '@okr/shared-util-core';
+import { UploadService } from '@okr/avatar-data-access';
 
 import { BillService } from '@okr/finance-bill-data-access';
 import { BillPaymentModal } from '@okr/finance-bill-ui';
 import {
-  BILL_I18N_KEYS, BillI18n, BillPaymentCandidate, BillPaymentInput, billDisplayState, billPaymentHintWindow, billPaymentHints, billPaymentWindow, billRefusalReasons, billRefusalText,
-  getBillExportData, isDraftBill, isPayableBill, isRetryableBillPaymentRefusal, linkedBillPaymentKeys, newBill, newBillLine,
-  newBillPaymentFormModel, openBillAmount, vendorByName,
+  BILL_I18N_KEYS, BillI18n, BillPaymentCandidate, BillPaymentInput, billDisplayState, billDuplicateHint, billFromQr, billFromScan, billPaymentHintWindow, billPaymentHints,
+  billPaymentWindow, billRefusalReasons, billRefusalText, getBillExportData, isDraftBill, isPayableBill, isRetryableBillPaymentRefusal, linkedBillPaymentKeys, newBill,
+  newBillLine, newBillPaymentFormModel, openBillAmount,
 } from '@okr/finance-bill-util';
 import { newPaymentId } from '@okr/finance-invoice-util';
 import { AccountService } from '@okr/finance-account-data-access';
@@ -37,8 +40,14 @@ interface ParsedQrInvoice {
   currency: string;
   reference: string;
   creditorName: string;
-  dueDate: string;     // store date (yyyymmdd)
+  message: string;     // the unstructured message of the QR-bill ('' when absent)
+  dueDate: string;     // always '' — a QR-bill carries no due date
 }
+
+/** The supported scan formats of «Rechnung hochladen» (the OCR pipeline reads PDFs and images). */
+const BILL_SCAN_MIME_TYPES = ['application/pdf', 'image/jpeg', 'image/png', 'image/heic', 'image/heif'];
+/** How long the upload waits for the OCR result before the treasurer fills the draft by hand. */
+const BILL_SCAN_TIMEOUT_MS = 60_000;
 
 export type BillState = {
   listId: string;         // 'all' | 'my' | vendorKey
@@ -72,6 +81,8 @@ export const BillStore = signalStore(
       modalController: inject(ModalController),
       alertController: inject(AlertController),
       toastController: inject(ToastController),
+      loadingController: inject(LoadingController),
+      uploadService: inject(UploadService),
       accountService: inject(AccountService),
       functions,
       i18nService: inject(I18nService),
@@ -224,7 +235,7 @@ export const BillStore = signalStore(
       await this.openEdit(bill, true);
     },
 
-    /** A new draft from a scanned QR-bill: reference, IBAN, due date, vendor (by name) and one line with the amount. */
+    /** A new draft from a scanned QR-bill: reference, IBAN, vendor (by name) and one line with the amount and message (shared with «Rechnung hochladen»). */
     async scan(): Promise<void> {
       if (store.accountingStore.isExternallyManaged()) return;
       const scanModal = await store.modalController.create({ component: BillQrScanModal });
@@ -234,13 +245,84 @@ export const BillStore = signalStore(
       const bill = newBill(store.appStore.tenantId());
       bill.accountingTenantId = store.accountingStore.accountingTenantId();
       bill.billDate = getTodayStr();
-      bill.title = parsed.creditorName ?? '';
-      bill.dueDate = parsed.dueDate ?? '';
-      bill.paymentReference = parsed.reference ?? '';
-      bill.creditorIban = parsed.iban ?? '';
-      bill.vendor = vendorByName(store.appStore.allOrgs(), parsed.creditorName ?? '');
-      bill.lines = [newBillLine(store.defaultExpenseAccountKey(), parsed.amount ?? 0, parsed.creditorName ?? '')];
+      billFromQr(bill, {
+        iban: parsed.iban ?? '', amount: parsed.amount ?? 0, currency: parsed.currency ?? 'CHF', reference: parsed.reference ?? '',
+        creditorName: parsed.creditorName ?? '', message: parsed.message ?? '',
+      }, store.appStore.allOrgs(), store.defaultExpenseAccountKey());
       await this.openEdit(bill, true);
+    },
+
+    /**
+     * «Rechnung hochladen» (spec 1.91): upload → OCR stage ①/② → prefilled draft; the scan becomes the voucher on save.
+     * The draft opens even when the read fails, times out or is cancelled — the treasurer then fills it by hand.
+     */
+    async upload(): Promise<void> {
+      if (store.accountingStore.isExternallyManaged()) return;
+      const file = await store.uploadService.pickFile(BILL_SCAN_MIME_TYPES);
+      if (!file) return;
+      const tenantId = store.appStore.tenantId();
+      const scanKey = generateRandomString(20);
+      let result: OcrResultModel | undefined;
+      let seenKey = '';          // the result id once stage ① has written, even if stage ② never finishes
+      let uploaded = false;
+      try {
+        // the upload shows its own progress modal, so the loading overlay only covers the OCR wait
+        uploaded = !!await store.uploadService.uploadFile(file, `tenant/${tenantId}/ocr/bill/${scanKey}/${sanitizeFileName(file.name)}`, file.name);
+      } catch (e) {
+        console.error('BillStore.upload: upload failed', e);
+      }
+      if (uploaded) {
+        const loading = await store.loadingController.create({ message: store.i18n.upload_reading(), backdropDismiss: true });
+        await loading.present();
+        let sub: Subscription | undefined;
+        let timer: ReturnType<typeof setTimeout> | undefined;
+        try {
+          result = await Promise.race([
+            new Promise<OcrResultModel>((resolve) => {
+              sub = store.firestoreService.searchData<OcrResultModel>(OcrResultCollection, [
+                { key: 'tenants', operator: 'array-contains', value: tenantId },
+                { key: 'correlationKey', operator: '==', value: scanKey },
+              ], 'none').subscribe((rs) => {
+                seenKey ||= rs[0]?.okey ?? '';
+                const done = rs.find((r) => r.status === 'processed' || r.status === 'failed');
+                if (done) resolve(done);
+              });
+            }),
+            loading.onDidDismiss().then(() => undefined),     // the treasurer cancelled
+            new Promise<undefined>((res) => { timer = setTimeout(() => res(undefined), BILL_SCAN_TIMEOUT_MS); }),
+          ]);
+        } catch (e) {
+          console.error('BillStore.upload: waiting for the OCR result failed', e);
+        } finally {
+          sub?.unsubscribe();
+          clearTimeout(timer);
+          await loading.dismiss().catch(() => undefined);
+        }
+      }
+      // Firestore reads skip model defaults: lay the raw doc over a fresh model
+      const scan = result?.status === 'processed' ? Object.assign(new OcrResultModel(tenantId), result) : undefined;
+      if (!scan) await showToast(store.toastController, store.i18n.upload_failed());
+      const bill = billFromScan(scan ?? new OcrResultModel(tenantId), {
+        tenantId, accountingTenantId: store.accountingStore.accountingTenantId(), orgs: store.appStore.allOrgs(),
+        defaultAccountKey: store.defaultExpenseAccountKey(), today: getTodayStr(), currencyNote: store.i18n.upload_currency_note(),
+      });
+      // the voucher is attached on save even when the read failed or was cancelled — writeBill finds the result by key
+      const ocrResultKey = !uploaded ? '' : (result?.okey || seenKey || await this.ocrResultKeyOf(scanKey));
+      await this.openEdit(bill, true, ocrResultKey);
+    },
+
+    /** The result id of a scan whose wait was cut short ('' when stage ① has not written yet or the read fails). */
+    async ocrResultKeyOf(scanKey: string): Promise<string> {
+      try {
+        const rs = await store.firestoreService.getDataOnce<OcrResultModel>(OcrResultCollection, [
+          { key: 'tenants', operator: 'array-contains', value: store.appStore.tenantId() },
+          { key: 'correlationKey', operator: '==', value: scanKey },
+        ], 'none');
+        return rs[0]?.okey ?? '';
+      } catch (e) {
+        console.error('BillStore.ocrResultKeyOf: reading the OCR result failed', e);
+        return '';
+      }
     },
 
     async edit(bill: BillModel): Promise<void> {
@@ -248,8 +330,18 @@ export const BillStore = signalStore(
       await this.openEdit({ ...bill }, false);
     },
 
-    /** Opens the edit modal and writes the result through `writeBill` (drafts only; anything else opens read-only). */
-    async openEdit(bill: BillModel, isNew: boolean): Promise<void> {
+    /**
+     * Opens the edit modal and writes the result through `writeBill` (drafts only; anything else opens read-only).
+     * @param ocrResultKey a new bill from «Rechnung hochladen»: the scan that becomes its voucher
+     */
+    async openEdit(bill: BillModel, isNew: boolean, ocrResultKey = ''): Promise<void> {
+      const dup = isNew ? billDuplicateHint(bill, store.allBillsResource.value() ?? []) : undefined;
+      const duplicateNote = dup
+        ? fill(store.i18n.upload_duplicate(), {
+          title: dup.title || dup.billId,
+          date: convertDateFormatToString(dup.billDate, DateFormat.StoreDate, DateFormat.ViewDate, false) || dup.billDate,
+        })
+        : '';
       const modal = await store.modalController.create({
         component: BillEditModal,
         componentProps: {
@@ -258,13 +350,14 @@ export const BillStore = signalStore(
           isNew,
           readOnly: false,
           defaultAccountKey: store.defaultExpenseAccountKey(),
+          duplicateNote,
         },
       });
       await modal.present();
       const { data, role } = await modal.onWillDismiss<BillEditResult>();
       if (role !== 'confirm' || !data) return;
       try {
-        await store.billService.write(isNew ? 'create' : 'update', data.bill, data.lines, store.appStore.currentUser() ?? undefined);
+        await store.billService.write(isNew ? 'create' : 'update', data.bill, data.lines, store.appStore.currentUser() ?? undefined, isNew ? ocrResultKey : '');
         await showToast(store.toastController, store.i18n.save_conf());
       } catch (e) {
         console.error('BillStore.openEdit: writeBill failed', e);

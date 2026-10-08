@@ -1,6 +1,6 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { IonContent, ModalController } from '@ionic/angular/standalone';
+import { IonContent, IonItem, IonNote, ModalController } from '@ionic/angular/standalone';
 import { of } from 'rxjs';
 
 import { AppStore, MultiSelectModal } from '@okr/shared-feature';
@@ -32,7 +32,7 @@ export interface BillEditResult {
   imports: [
     VoucherTiles,
     Header, ChangeConfirmation, BillEditForm,
-    IonContent,
+    IonContent, IonItem, IonNote,
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
@@ -41,6 +41,12 @@ export interface BillEditResult {
       <okr-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
+      <!-- same markup as okr-error-note, which cannot take a filled-in text (it translates its input as a key) -->
+      @if(duplicateNote(); as duplicateNote) {
+        <ion-item lines="none">
+          <ion-note color="warning">{{ duplicateNote }}</ion-note>
+        </ion-item>
+      }
       @if(formData(); as formData) {
         <okr-bill-edit-form
           [formData]="formData"
@@ -77,6 +83,8 @@ export class BillEditModal {
   public readonly readOnly = input(true);
   /** the account a new line starts on (the books' default expense account) */
   public readonly defaultAccountKey = input('');
+  /** a new bill that looks like one already captured (spec 1.91): the warning shown above the form; '' = none */
+  public readonly duplicateNote = input('');
 
   // legacy bills still hold bexio file UUIDs — only migrated keys are vouchers
   protected readonly voucherKeys = computed(() => billVoucherKeys(this.bill()));

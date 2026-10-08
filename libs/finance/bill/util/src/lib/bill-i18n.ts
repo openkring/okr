@@ -163,6 +163,16 @@ export const BILL_I18N_KEYS = {
   refusal_too_many_lines:         PFX + 'refusal.too-many-lines',
   refusal_cost_center_invalid:    PFX + 'refusal.cost-center-invalid',
   refusal_before_bill_date:       PFX + 'refusal.before-bill-date',
+  refusal_scan_not_found:         PFX + 'refusal.scan-not-found',
+  refusal_scan_wrong_usage:       PFX + 'refusal.scan-wrong-usage',
+  refusal_scan_already_attached:  PFX + 'refusal.scan-already-attached',
+
+  // «Rechnung hochladen» (spec 1.91)
+  upload_reading:                 PFX + 'upload.reading',
+  upload_cancel:                  PFX + 'upload.cancel',
+  upload_failed:                  PFX + 'upload.failed',
+  upload_currency_note:           PFX + 'upload.currency_note',
+  upload_duplicate:               PFX + 'upload.duplicate',
 
   as_title:             '@actionsheet.title',
   cancel:               '@cancel',
@@ -210,6 +220,9 @@ export const BILL_REFUSAL_I18N: Record<string, keyof typeof BILL_I18N_KEYS> = {
   'too-many-lines': 'refusal_too_many_lines',
   'cost-center-invalid': 'refusal_cost_center_invalid',
   'before-bill-date': 'refusal_before_bill_date',
+  'scan-not-found': 'refusal_scan_not_found',
+  'scan-wrong-usage': 'refusal_scan_wrong_usage',
+  'scan-already-attached': 'refusal_scan_already_attached',
 };
 
 /** The i18n entries for the given reasons (unknown reasons dropped, no duplicates). */

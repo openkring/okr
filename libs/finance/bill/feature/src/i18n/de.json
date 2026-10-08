@@ -205,7 +205,10 @@
     "no-bill-date": "Gib das Rechnungsdatum an.",
     "too-many-lines": "Eine Lieferantenrechnung kann höchstens 50 Zeilen haben.",
     "cost-center-invalid": "Eine der Kostenstellen kann nicht verwendet werden.",
-    "before-bill-date": "Die gewählte Buchung liegt zu weit vor dem Rechnungsdatum."
+    "before-bill-date": "Die gewählte Buchung liegt zu weit vor dem Rechnungsdatum.",
+    "scan-not-found": "Den hochgeladenen Beleg finden wir nicht mehr. Lade ihn bitte nochmals hoch.",
+    "scan-wrong-usage": "Dieser Beleg gehört nicht zu einer Kreditorenrechnung.",
+    "scan-already-attached": "Dieser Beleg hängt schon an einer anderen Rechnung."
   },
   "line": {
     "list": {
@@ -255,5 +258,12 @@
   "save": {
     "conf": "Die Lieferantenrechnung ist gespeichert.",
     "error": "Die Lieferantenrechnung konnte nicht gespeichert werden. Bitte versuche es später noch einmal."
+  },
+  "upload": {
+    "reading": "Rechnung wird gelesen …",
+    "cancel": "Abbrechen",
+    "failed": "Die Rechnung konnten wir nicht lesen. Fülle die Felder bitte selbst aus.",
+    "currency_note": "Währung {currency} — bitte prüfen",
+    "duplicate": "Eine ähnliche Rechnung gibt es schon: «{title}» vom {date}. Prüfe, ob du sie doppelt erfasst."
   }
 }

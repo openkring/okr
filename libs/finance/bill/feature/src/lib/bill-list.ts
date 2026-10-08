@@ -204,6 +204,7 @@ export class BillList {
     switch (selectedMethod) {
       case 'add': await this.store.add(); break;
       case 'scan': await this.store.scan(); break;
+      case 'upload': await this.store.upload(); break;
       case 'exportRaw': await this.store.export('raw', this.filteredBills()); break;
       // Offene Posten (spec 1.86): the reconciliation of these books
       case 'openItems': await this.router.navigate(['/accounting', this.store.accountingStore.accountingTenantId(), 'open-items']); break;

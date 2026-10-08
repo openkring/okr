@@ -205,7 +205,10 @@
     "no-bill-date": "Indica la fecha de la factura.",
     "too-many-lines": "Una factura de proveedor puede tener como máximo 50 líneas.",
     "cost-center-invalid": "Uno de los centros de coste no se puede usar.",
-    "before-bill-date": "El asiento elegido tiene una fecha demasiado anterior a la fecha de la factura."
+    "before-bill-date": "El asiento elegido tiene una fecha demasiado anterior a la fecha de la factura.",
+    "scan-not-found": "Ya no encontramos el justificante subido. Súbelo de nuevo, por favor.",
+    "scan-wrong-usage": "Este justificante no pertenece a una factura de proveedor.",
+    "scan-already-attached": "Este justificante ya está adjunto a otra factura."
   },
   "line": {
     "list": {
@@ -255,5 +258,12 @@
   "save": {
     "conf": "La factura del proveedor está guardada.",
     "error": "No se pudo guardar la factura del proveedor. Inténtalo de nuevo más tarde."
+  },
+  "upload": {
+    "reading": "Leyendo la factura …",
+    "cancel": "Cancelar",
+    "failed": "No hemos podido leer la factura. Rellena tú los campos, por favor.",
+    "currency_note": "Moneda {currency} — revísala, por favor",
+    "duplicate": "Ya existe una factura similar: «{title}» del {date}. Comprueba que no la registras dos veces."
   }
 }

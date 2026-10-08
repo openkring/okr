@@ -15,6 +15,7 @@
     "@okr/shared-ui": "*",
     "@okr/shared-util-angular": "*",
     "@okr/shared-util-core": "*",
+    "@okr/avatar-data-access": "*",
     "@okr/avatar-ui": "*",
     "@okr/cms-menu-feature": "*",
     "@okr/finance-accounting-feature": "*",
