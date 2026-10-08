@@ -1,4 +1,5 @@
 import { AccountModel, BudgetLineModel, CostCenterModel } from '@okr/shared-models';
+import { accountParts, compareAccountIds, zeroTotals } from './budget-rows.util';
 import { CostCenterCell, CostCenterRollUp, leafCostCenters, rollUpCostCenters, sortCostCenterTree } from '@okr/finance-cost-center-util';
 
 /** One cell of a Kostenstelle: budget (from the version's line, 0 when unbudgeted) and the actual of the fiscal year (minor units, natural sign). */
@@ -36,8 +37,7 @@ export interface BudgetGrid {
   unassigned: CostCenterRollUp;
 }
 
-const zero = () => ({ actual: 0, budget: 0, compare: 0 });
-const emptyRollUp = (): CostCenterRollUp => ({ revenue: zero(), expense: zero() });
+const emptyRollUp = (): CostCenterRollUp => ({ revenue: zeroTotals(), expense: zeroTotals() });
 
 /** revenue − expense of one total (natural sign each), for budget, actual or both. */
 export function netOf(totals: CostCenterRollUp, field: 'budget' | 'actual'): number {
@@ -63,15 +63,15 @@ export function buildBudgetGrid(
     cells
       .filter(c => c.costCenterKey === centerKey)
       .map(c => {
-        const account = accountByKey.get(c.accountKey);
+        const { account, id, name } = accountParts(accountByKey, c.accountKey);
         const line = live.find(l => l.costCenterKey === centerKey && l.accountKey === c.accountKey);
         return {
-          line, costCenterKey: centerKey, accountKey: c.accountKey, account, accountId: account?.id ?? '', accountName: account?.name ?? '',
+          line, costCenterKey: centerKey, accountKey: c.accountKey, account, accountId: id, accountName: name,
           budgeted: !!line, budget: c.budget, actual: c.actual, remaining: c.budget - c.actual,
         };
       })
       .filter(r => r.budgeted || r.actual !== 0)
-      .sort((a, b) => a.accountId.localeCompare(b.accountId, 'de', { numeric: true }));
+      .sort((a, b) => compareAccountIds(a.accountId, b.accountId));
 
   const tree = sortCostCenterTree(costCenters);
   const sections: BudgetGridSection[] = tree.map(({ center, depth }) => {

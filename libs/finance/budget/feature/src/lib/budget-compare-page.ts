@@ -68,7 +68,7 @@ import { BudgetStore } from './budget.store';
           </ion-select>
           <ion-select interface="popover" [label]="store.i18n.compare_versionB()" labelPlacement="stacked" [value]="bKey()" (ionChange)="onB($event.detail.value)">
             <ion-select-option value="">{{ store.i18n.compare_noneB() }}</ion-select-option>
-            @for (v of yearVersions(); track v.okey) {
+            @for (v of versionsForB(); track v.okey) {
               <ion-select-option [value]="v.okey">{{ v.name }}</ion-select-option>
             }
           </ion-select>
@@ -161,6 +161,8 @@ export class BudgetComparePage {
   /** the live versions of the chosen year (archived ones cannot be compared) */
   protected readonly yearVersions = computed(() =>
     this.store.allVersions().filter(v => !v.isArchived && v.fiscalYear === this.year()).sort((x, y) => (x.name ?? '').localeCompare(y.name ?? '')));
+  /** B can be any other version of the year: A itself is not offered */
+  protected readonly versionsForB = computed(() => this.yearVersions().filter(v => v.okey !== this.aKey()));
   protected readonly versionA = computed(() => this.yearVersions().find(v => v.okey === this.aKey()));
   protected readonly versionB = computed(() => this.yearVersions().find(v => v.okey === this.bKey()));
   protected readonly nameA = computed(() => this.versionA()?.name ?? '');
@@ -211,7 +213,7 @@ export class BudgetComparePage {
         const year = fromUrl?.fiscalYear ?? this.store.currentFiscalYear();
         this.year.set(year);
         this.aKey.set(fromUrl?.okey ?? defaultCompareVersion(versions, year)?.okey ?? '');
-        const bVersion = b ? versions.find(v => v.okey === b && !v.isArchived && v.fiscalYear === year) : undefined;
+        const bVersion = b ? versions.find(v => v.okey === b && !v.isArchived && v.fiscalYear === year && v.okey !== this.aKey()) : undefined;
         this.bKey.set(bVersion?.okey ?? '');
         this.initialized.set(true);
       });
@@ -240,6 +242,7 @@ export class BudgetComparePage {
   }
 
   protected onB(key: string): void {
+    if (key === this.aKey()) return;
     this.bKey.set(key ?? '');
   }
 

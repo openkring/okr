@@ -1,6 +1,7 @@
 import { AccountModel, BudgetVersionModel, CostCenterModel } from '@okr/shared-models';
 import { CellSide, CostCenterCell, CostCenterRollUp, CostCenterTotals, costCenterLabel, NO_COST_CENTER_KEY, sortCostCenterTree } from '@okr/finance-cost-center-util';
 
+import { accountParts, addTotals as sum, compareAccountIds, isZeroTotals as isZero, zeroTotals } from './budget-rows.util';
 import { newestApprovedBudget } from './budget.util';
 
 /**
@@ -47,9 +48,6 @@ export function usedPercent(actual: number, budget: number): number | undefined 
   return budget === 0 ? undefined : Math.round((actual / budget) * 100);
 }
 
-const sum = (a: CostCenterTotals, b: CostCenterTotals): CostCenterTotals =>
-  ({ actual: a.actual + b.actual, budget: a.budget + b.budget, compare: a.compare + b.compare });
-const isZero = (t: CostCenterTotals): boolean => t.actual === 0 && t.budget === 0 && t.compare === 0;
 const toTotals = (c: CostCenterCell): CostCenterTotals => ({ actual: c.actual, budget: c.budget, compare: c.compare });
 
 /**
@@ -70,14 +68,14 @@ export function buildComparisonRows(
 
   const accountRows = (parentId: string, list: CostCenterCell[], depth: number): ComparisonRow[] => {
     const byAccount = new Map<string, CostCenterTotals>();
-    for (const c of list) byAccount.set(c.accountKey, sum(byAccount.get(c.accountKey) ?? { actual: 0, budget: 0, compare: 0 }, toTotals(c)));
+    for (const c of list) byAccount.set(c.accountKey, sum(byAccount.get(c.accountKey) ?? zeroTotals(), toTotals(c)));
     return [...byAccount.entries()]
       .filter(([, t]) => !isZero(t))
       .map(([accountKey, t]) => {
-        const a = accountByKey.get(accountKey);
-        return { ...t, accountKey, id: a?.id ?? '', name: a?.name ?? accountKey };
+        const { id, name } = accountParts(accountByKey, accountKey);
+        return { ...t, accountKey, id, name: name || accountKey };
       })
-      .sort((x, y) => x.id.localeCompare(y.id, 'de', { numeric: true }))
+      .sort((x, y) => compareAccountIds(x.id, y.id))
       .map(x => row(`account:${parentId}:${x.accountKey}`, 'account', depth, `${x.id} ${x.name}`.trim(), false, false, x));
   };
 
@@ -88,30 +86,32 @@ export function buildComparisonRows(
     tree.filter(t => (t.center.parentKey && known.has(t.center.parentKey) ? t.center.parentKey : '') === parentKey).map(t => t.center);
 
   const centerRows = (center: CostCenterModel, depth: number): ComparisonRow[] => {
-    const totals = rollUp.get(center.okey)?.[side];
-    if (!totals || isZero(totals)) return [];
-    const key = `center:${center.okey}`;
     const own = sideCells.filter(c => c.costCenterKey === center.okey);
-    const kids = childrenOf(center.okey);
-    const expandable = own.some(c => !isZero(toTotals(c))) || kids.some(k => centerRows(k, depth + 1).length > 0);
+    // children are built once; a centre stays when it or any descendant has an amount (own totals may net to zero)
+    const kidRows = childrenOf(center.okey).map(k => centerRows(k, depth + 1));
+    const hasKids = kidRows.some(r => r.length > 0);
+    const totals = rollUp.get(center.okey)?.[side] ?? zeroTotals();
+    if (isZero(totals) && !hasKids && !own.some(c => !isZero(toTotals(c)))) return [];
+    const key = `center:${center.okey}`;
+    const expandable = own.some(c => !isZero(toTotals(c))) || hasKids;
     const expanded = expandable && expandedKeys.has(key);
     const out = [row(key, 'center', depth, costCenterLabel(center), expandable, expanded, totals)];
     if (expanded) {
       out.push(...accountRows(center.okey, own, depth + 1));
-      for (const k of kids) out.push(...centerRows(k, depth + 1));
+      for (const r of kidRows) out.push(...r);
     }
     return out;
   };
 
   const rows: ComparisonRow[] = [];
-  let total: CostCenterTotals = { actual: 0, budget: 0, compare: 0 };
+  let total: CostCenterTotals = zeroTotals();
   for (const root of childrenOf('')) {
     const r = centerRows(root, 0);
     if (r.length > 0) { rows.push(...r); total = sum(total, r[0]); }
   }
 
   const bucket = (id: 'none' | 'unknown', list: CostCenterCell[]): void => {
-    const t = list.reduce((acc, c) => sum(acc, toTotals(c)), { actual: 0, budget: 0, compare: 0 });
+    const t = list.reduce((acc, c) => sum(acc, toTotals(c)), zeroTotals());
     if (isZero(t)) return;
     const key = `bucket:${id}`;
     const children = accountRows(id, list, 1);

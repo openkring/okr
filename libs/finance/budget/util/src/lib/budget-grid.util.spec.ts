@@ -51,7 +51,7 @@ describe('buildBudgetGrid', () => {
 
   const sum = (rows: { actual: number; budget: number }[]) => ({ a: rows.reduce((t, r) => t + r.actual, 0), b: rows.reduce((t, r) => t + r.budget, 0) });
   const booking = (costCenterKey: string, accountKey: string, debit: number) =>
-    ({ ...new BookingLineModel('scs', 'scs', 'bk1'), costCenterKey, accountKey, debitAmount: new MoneyModel(debit, 'CHF') });
+    ({ ...new BookingLineModel('scs', 'scs'), bookingKey: 'bk1', costCenterKey, accountKey, debitAmount: new MoneyModel(debit, 'CHF') });
 
   it('unbudgeted actuals on a budgeted leaf become a «nicht budgetiert» row; footer = Σ rows', () => {
     const jl = [line('l1', 'jun', 'a4000', 10000)];

@@ -93,6 +93,16 @@ describe('buildComparisonRows', () => {
     expect(kids.reduce((s, r) => s + r.budget, 0)).toBe(sport.budget);
   });
 
+  it('keeps a centre whose own totals net to zero while its children have amounts', () => {
+    const net = [
+      { costCenterKey: 'jun', accountKey: 'a4000', side: 'expense' as const, actual: 500, budget: 0, compare: 0 },
+      { costCenterKey: 'sen', accountKey: 'a4000', side: 'expense' as const, actual: -500, budget: 0, compare: 0 },
+    ];
+    const r = buildComparisonRows(net, rollUpCostCenters(net, centers), centers, accounts, new Set(['center:sport']), 'expense');
+    expect(keys(r.rows)).toEqual(['center:sport', 'center:jun', 'center:sen']);
+    expect(r.rows[0].expandable).toBe(true);
+  });
+
   it('revenue side is separate', () => {
     expect(build([], 'revenue').rows).toEqual([]);
   });
