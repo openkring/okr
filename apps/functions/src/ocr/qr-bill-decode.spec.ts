@@ -31,6 +31,15 @@ function qrJpeg(text: string): Buffer {
   return jpeg.encode({ data, width: px, height: px }, 95).data;
 }
 
+/** The same code with black and white swapped (light modules on a dark background). */
+function invertedQrJpeg(text: string): Buffer {
+  const img = jpeg.decode(qrJpeg(text), { useTArray: true });
+  for (let i = 0; i < img.data.length; i += 4) {
+    img.data[i] = 255 - img.data[i]; img.data[i + 1] = 255 - img.data[i + 1]; img.data[i + 2] = 255 - img.data[i + 2];
+  }
+  return jpeg.encode({ data: Buffer.from(img.data), width: img.width, height: img.height }, 95).data;
+}
+
 const blank = (): Buffer => jpeg.encode({ data: Buffer.alloc(200 * 200 * 4, 255), width: 200, height: 200 }, 90).data;
 
 function mockPages(pages: Buffer[]): ReturnType<typeof vi.fn> {
@@ -77,8 +86,52 @@ describe('decodeQrBill', () => {
   it('reads every page, and nothing more, when there is no bill', async () => {
     const fetchMock = mockPages([blank(), blank()]);
     expect(await decodeQrBill('tenant/scs/ocr/expense/e1/a.pdf', 'application/pdf')).toBe('');
-    // metadata + 2 pages × 2 widths
+    // metadata + 2 pages × (payment strip + full page)
     expect(fetchMock).toHaveBeenCalledTimes(5);
+  });
+
+  it('renders the payment part of a PDF page first — the bottom strip at 1600 px', async () => {
+    const fetchMock = mockPages([qrJpeg(BILL)]);
+    expect(await decodeQrBill('tenant/scs/ocr/bill/k1/r.pdf', 'application/pdf')).not.toBe('');
+    const renders = fetchMock.mock.calls.map(([url]) => url as string).filter((u) => !u.includes('fm=json'));
+    expect(renders).toHaveLength(1);
+    expect(renders[0]).toContain('w=1600');
+    expect(renders[0]).toContain('fit=crop');
+    expect(renders[0]).toContain('crop=bottom');
+    expect(renders[0]).toContain('ar=2:1');
+  });
+
+  it('falls back to the full page when the payment strip holds no bill', async () => {
+    const fetchMock = vi.fn(async (url: string) => url.includes('fm=json')
+      ? new Response(JSON.stringify({ PDF: { PageCount: 1 } }), { status: 200 })
+      : new Response(new Uint8Array(url.includes('crop=bottom') ? blank() : qrJpeg(BILL)), { status: 200 }));
+    vi.stubGlobal('fetch', fetchMock);
+    expect(await decodeQrBill('tenant/scs/ocr/bill/k1/r.pdf', 'application/pdf')).not.toBe('');
+    const renders = fetchMock.mock.calls.map(([url]) => url as string).filter((u) => !u.includes('fm=json'));
+    expect(renders).toHaveLength(2);
+    expect(renders[1]).not.toContain('crop=');
+  });
+
+  it('never renders a PDF page at 2400 px', async () => {
+    const fetchMock = mockPages([blank(), blank()]);
+    await decodeQrBill('tenant/scs/ocr/bill/k1/r.pdf', 'application/pdf');
+    const renders = fetchMock.mock.calls.map(([url]) => url as string).filter((u) => !u.includes('fm=json'));
+    expect(renders.every((u) => u.includes('w=1600'))).toBe(true);
+  });
+
+  it('still reads a photo uncropped at 1600 px, then 2400 px', async () => {
+    const fetchMock = mockPages([blank()]);
+    expect(await decodeQrBill('tenant/scs/ocr/expense/e1/photo.jpg', 'image/jpeg')).toBe('');
+    const renders = fetchMock.mock.calls.map(([url]) => url as string);
+    expect(renders).toHaveLength(2);
+    expect(renders[0]).toContain('w=1600');
+    expect(renders[1]).toContain('w=2400');
+    expect(renders.some((u) => u.includes('crop='))).toBe(false);
+  });
+
+  it('does not try an inverted code — a QR-bill is printed dark on light', async () => {
+    mockPages([invertedQrJpeg(BILL)]);
+    expect(await decodeQrBill('tenant/scs/ocr/expense/e1/photo.jpg', 'image/jpeg')).toBe('');
   });
 
   it('ignores a QR code that is not a bill', async () => {

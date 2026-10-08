@@ -14,14 +14,24 @@ const IMGIX_BASE = process.env['OCR_IMGIX_BASE'] || 'https://bkaiser.imgix.net';
 
 /** Safety cap for the page scan; a longer PDF only has its last pages read. */
 const MAX_PDF_PAGES = 30;
-/** 1600 px reads every A4 QR-bill we tried; 2400 rescues small codes on photographed receipts. */
-const WIDTHS = [1600, 2400];
+/**
+ * What to render, in order. Every rendering is decoded to raw RGBA (1600 px of A4 ≈ 14 MB, 2400 px
+ * ≈ 32 MB) plus jsQR's own maps, so each one is chosen for its chance of finding the code:
+ * - a PDF page is rendered sharply, and its QR-bill is by standard the payment part — the bottom
+ *   105 mm of the A4 page (`ar=2:1`, cropped from the bottom): that strip at 1600 px is a third of
+ *   the pixels and reads every bill we tried; only an unusual layout needs the full page after it.
+ * - a photo has no fixed layout and often a small code: the full image at 1600, then 2400 px.
+ */
+interface Rendering { width: number; paymentPart: boolean; }
+const PDF_RENDERINGS: Rendering[] = [{ width: 1600, paymentPart: true }, { width: 1600, paymentPart: false }];
+const PHOTO_RENDERINGS: Rendering[] = [{ width: 1600, paymentPart: false }, { width: 2400, paymentPart: false }];
 
 const IMAGE_TYPES = /^image\/(jpeg|png|heic|heif|webp|gif|tiff)$/i;
 
-function renderUrl(objectName: string, width: number, page?: number): string {
+function renderUrl(objectName: string, { width, paymentPart }: Rendering, page?: number): string {
   const path = objectName.split('/').map(encodeURIComponent).join('/');
-  return `${IMGIX_BASE}/${path}?fm=jpg&q=95&w=${width}${page ? `&page=${page}` : ''}`;
+  const crop = paymentPart ? '&fit=crop&crop=bottom&ar=2:1' : '';
+  return `${IMGIX_BASE}/${path}?fm=jpg&q=95&w=${width}${crop}${page ? `&page=${page}` : ''}`;
 }
 
 /** The page count imgix reports for a PDF (`fm=json` → `PDF.PageCount`); 1 when it tells nothing. */
@@ -38,7 +48,9 @@ async function decodeAt(url: string): Promise<string | undefined> {
   const res = await fetch(url);
   if (!res.ok) throw new Error(`imgix ${res.status} for ${url}`);
   const img = jpeg.decode(Buffer.from(await res.arrayBuffer()), { useTArray: true, maxMemoryUsageInMB: 512 });
-  const code = jsQR(new Uint8ClampedArray(img.data.buffer, img.data.byteOffset, img.data.byteLength), img.width, img.height);
+  // a QR-bill is printed dark on light: the inverted attempt (jsQR's default) only costs a second map
+  const code = jsQR(new Uint8ClampedArray(img.data.buffer, img.data.byteOffset, img.data.byteLength), img.width, img.height,
+    { inversionAttempts: 'dontInvert' });
   return code?.data;
 }
 
@@ -57,11 +69,14 @@ export async function decodeQrBill(objectName: string, contentType: string): Pro
     // scan from the back, which usually finds it on the first rendering.
     const pageCount = isPdf ? await pdfPageCount(objectName) : 1;
     const lastPage = Math.max(1, pageCount - MAX_PDF_PAGES + 1);
+    const renderings = isPdf ? PDF_RENDERINGS : PHOTO_RENDERINGS;
     for (let page = pageCount; page >= lastPage; page--) {
-      for (const width of WIDTHS) {
-        const text = await decodeAt(renderUrl(objectName, width, isPdf ? page : undefined));
+      for (const rendering of renderings) {
+        const text = await decodeAt(renderUrl(objectName, rendering, isPdf ? page : undefined));
         if (text && isSwissQrBill(text)) return stripQrBillDebtor(text);
-        if (text) break;   // a QR code, but not a bill — a bigger rendering will not change that
+        // a QR code that is not a bill: a bigger rendering will not change that, but a strip may
+        // have cut off the bill while catching another code, so only the full view settles it
+        if (text && !rendering.paymentPart) break;
       }
     }
   } catch (error: unknown) {
