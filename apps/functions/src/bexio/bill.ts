@@ -5,6 +5,7 @@ import { logger } from 'firebase-functions/v2';
 import axios from 'axios';
 import * as admin from 'firebase-admin';
 
+import { FinanceDocumentCollection } from '@okr/shared-models';
 import { addDuration, getTodayStr, DateFormat } from '@okr/shared-util-core';
 
 import { bexioApiKey, bexioTenantId, BEXIO_BASE_V4 } from './shared';
@@ -152,11 +153,12 @@ export const showBillPdf = onCall(
     await checkRoles(request as never, CF_NAME, ['treasurer', 'privileged']);
 
     // migrated from bexio (spec 1.68): bill.attachments now hold finance-documents okeys
-    if (attachmentId.startsWith('bexio-file-')) {
+    if (attachmentId.startsWith('bexio-file-') || attachmentId.startsWith('bill-')) {
       const tenantId = await getCallerTenantId(request as never, CF_NAME);
+      const doc = (await admin.firestore().collection(FinanceDocumentCollection).doc(attachmentId).get()).data();
       const local = await readFinanceDocument(admin.firestore(), privateBucket(), attachmentId, [tenantId]);
       if (!local) throw new HttpsError('not-found', 'Document not found');
-      return { content: local };
+      return { content: local, mimeType: String(doc?.['mimeType'] || 'application/pdf') };
     }
 
     logger.info(`${CF_NAME}: fetching PDF for attachment ${attachmentId}`);
@@ -170,7 +172,7 @@ export const showBillPdf = onCall(
       );
       const content = Buffer.from(response.data as ArrayBuffer).toString('base64');
       logger.info(`${CF_NAME}: fetched PDF for attachment ${attachmentId}, ${content.length} base64 chars`);
-      return { content };
+      return { content, mimeType: 'application/pdf' };
     } catch (error: unknown) {
       if (axios.isAxiosError(error)) {
         const status = error.response?.status;

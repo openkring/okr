@@ -425,16 +425,18 @@ export const BillStore = signalStore(
     async showPdf(bill: BillModel): Promise<void> {
       const attachmentId = bill.attachments[0];
       if (!attachmentId) return;
-      const fn = httpsCallable<{ attachmentId: string }, { content: string }>(
+      const fn = httpsCallable<{ attachmentId: string }, { content: string; mimeType?: string }>(
         store.functions, 'showBillPdf'
       );
       const result = await fn({ attachmentId });
       const bytes = Uint8Array.from(atob(result.data.content), c => c.charCodeAt(0));
-      const blob = new Blob([bytes], { type: 'application/pdf' });
+      const mimeType = result.data.mimeType ?? 'application/pdf';
+      const blob = new Blob([bytes], { type: mimeType });
+      const extension = ({ 'application/pdf': 'pdf', 'image/jpeg': 'jpg', 'image/png': 'png', 'image/heic': 'heic' } as Record<string, string>)[mimeType] ?? 'pdf';
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${bill.billId}.pdf`;
+      a.download = `${bill.billId}.${extension}`;
       a.click();
       URL.revokeObjectURL(url);
     },

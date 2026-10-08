@@ -2,7 +2,7 @@ import { onCall, CallableRequest, HttpsError } from 'firebase-functions/v2/https
 import { logger } from 'firebase-functions/v2';
 import { getFirestore } from 'firebase-admin/firestore';
 
-import { AvatarInfo, BillCollection, BillModel } from '@okr/shared-models';
+import { AvatarInfo, BillCollection, BillModel, OcrResultCollection } from '@okr/shared-models';
 import { getBillIndex } from '@okr/finance-bill-util';
 import { generateRandomString, normalizeQrReference, removeKeyFromOkrModel } from '@okr/shared-util-core';
 import { checkAppCheckToken, checkAuthentication, checkRoles, getCallerTenantId } from '@okr/shared-util-functions';
@@ -11,6 +11,7 @@ import { refuse } from '../invoice/invoice-context';
 import { withoutUndefined } from '../invoice/invoice.logic';
 import { billTotal, cleanBillLines, draftWriteRefusal } from './bill.logic';
 import { loadBillConfig } from './bill-context';
+import { attachBillScan, billScanRefusal } from './bill-voucher';
 import { chfText, writeFinanceHistory } from '../finance-history/finance-history';
 
 const REGION = 'europe-west6';
@@ -40,6 +41,7 @@ interface WriteBillData {
   accountingTenantId?: string;   // create only
   bill?: BillHeaderInput;
   lines?: unknown;
+  ocrResultKey?: string;         // create only: the uploaded bill scan to keep as voucher
 }
 
 function checkStoreDate(value: unknown, field: string): string {
@@ -109,6 +111,12 @@ export const writeBill = onCall(
     if (mode === 'create' && !accountingTenantId) throw new HttpsError('invalid-argument', 'accountingTenantId is required');
     if (accountingTenantId) await loadBillConfig(db, tenantId, billKey, accountingTenantId);
 
+    const ocrResultKey = mode === 'create' && typeof d.ocrResultKey === 'string' ? d.ocrResultKey : '';
+    if (ocrResultKey) {
+      const reason = billScanRefusal((await db.collection(OcrResultCollection).doc(ocrResultKey).get()).data(), tenantId);
+      if (reason) throw refuse(reason, `bill scan ${ocrResultKey}: ${reason}`);
+    }
+
     await db.runTransaction(async (tx) => {
       const existing = mode === 'create' ? undefined : (await tx.get(billRef)).data();
       if (existing && !((existing['tenants'] as string[] | undefined) ?? []).includes(tenantId)) {
@@ -146,6 +154,11 @@ export const writeBill = onCall(
 
     if (mode === 'create') {
       await writeFinanceHistory(db, { tenantId, uid: request.auth?.uid, parentKey: `bill.${billKey}`, kind: 'billCreated', details: chfText(billTotal(lines)) });
+    }
+    if (ocrResultKey) {
+      // Q6: a failed copy never fails the save - the bill stays without a voucher and the treasurer re-uploads.
+      await attachBillScan(db, tenantId, accountingTenantId, billKey, ocrResultKey)
+        .catch((e) => logger.error(`${CF_NAME}: attaching scan ${ocrResultKey} to ${billKey} failed`, e));
     }
     logger.info(`${CF_NAME}: ${mode} draft ${billKey} (${lines.length} line(s)) for tenant ${tenantId}`);
     return { billKey };
