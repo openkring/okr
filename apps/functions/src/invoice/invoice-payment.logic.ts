@@ -40,6 +40,7 @@ const paidSum = (invoice: InvoiceLike): number => (invoice.payments ?? []).reduc
 export interface ReminderLike {
   level: number; date: string; dueDate: string; isSent?: boolean; documentKey?: string; fee?: number; bookingKey?: string;
   waivedAt?: string; waiveBookingKey?: string; // fee waiver (spec 1.76 D18); waivedAt non-empty = waived
+  templateId?: string; templateName?: string; sentAt?: string; sentVia?: 'email' | 'post' | ''; requestId?: string; // spec 1.90
 }
 
 /** A reminder whose fee was waived (spec 1.76 D18): `waivedAt` is non-empty. */

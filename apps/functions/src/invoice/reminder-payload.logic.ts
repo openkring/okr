@@ -2,8 +2,7 @@
 
 import { chf, viewDate } from './invoice.logic';
 import { ReminderLike, reminderFeeSum } from './invoice-payment.logic';
-
-export const REMINDER_HEADINGS: Record<number, string> = { 1: 'Zahlungserinnerung', 2: '2. Mahnung', 3: '3. Mahnung' };
+import { reminderDisplayName } from './invoice-reminder.logic';
 
 export const REMINDER_LEVEL_TEXTS: Record<number, string> = {
   1: 'Vielleicht ist unsere Rechnung untergegangen. Wir bitten dich, den offenen Betrag bis zum unten genannten Datum zu überweisen.',
@@ -21,6 +20,7 @@ export interface ReminderPayloadInput {
     reminders?: ReminderLike[];
   };
   level: number;
+  templateName: string;
   date: string;
   dueDate: string;
   fee: number; // the reminder being created (not yet in invoice.reminders)
@@ -37,11 +37,12 @@ export function buildReminderPayload(i: ReminderPayloadInput): Record<string, un
   const feesTotal = reminderFeeSum(inv.reminders) + i.fee;
   const paidTotal = (inv.payments ?? []).reduce((s, p) => s + p.amount, 0);
   const amountDue = Math.max(0, total + feesTotal - paidTotal);
-  const level = Math.min(Math.max(i.level, 1), 3);
+  const textLevel = Math.min(Math.max(i.level, 1), 3); // legacy wording for the old scs-mahnung template
   return {
     ...i.recipient,
-    heading: REMINDER_HEADINGS[level],
-    levelText: REMINDER_LEVEL_TEXTS[level],
+    heading: reminderDisplayName({ level: i.level, templateName: i.templateName }),
+    level: i.level,
+    levelText: REMINDER_LEVEL_TEXTS[textLevel],
     invoiceId: inv.invoiceId,
     invoiceTitle: inv.title,
     invoiceDate: viewDate(inv.invoiceDate),

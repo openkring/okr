@@ -11,37 +11,67 @@ import { isPayableState, isValidStoreDate, isWaivedReminder, PaymentBookingLine,
 export type { ReminderLike };
 export { reminderFeeSum };
 
-export const MAX_REMINDER_LEVEL = 3;
-
 /** Highest existing level + 1; 1 when there is none. */
 export function nextReminderLevel(reminders: ReminderLike[] | undefined): number {
   return (reminders ?? []).reduce((m, r) => Math.max(m, r.level ?? 0), 0) + 1;
 }
 
-/** Refusal codes for a reminder: not-payable, max-level, level-mismatch, no-reminder-date, invalid-fee. */
-export function reminderBlockers(invoice: { state: string; reminders?: ReminderLike[] }, level: number, date: string, fee: number): string[] {
+/** Refusal codes for a reminder (spec 1.90): not-payable, no-reminder-date, invalid-fee. The level is the server's. */
+export function reminderBlockers(invoice: { state: string }, date: string, fee: number): string[] {
   const blockers: string[] = [];
   if (!isPayableState(invoice.state)) blockers.push('not-payable');
-  if (level > MAX_REMINDER_LEVEL) blockers.push('max-level');
-  if (level !== nextReminderLevel(invoice.reminders)) blockers.push('level-mismatch');
   if (!isValidStoreDate(date)) blockers.push('no-reminder-date');
   if (!Number.isInteger(fee) || fee < 0) blockers.push('invalid-fee');
   return blockers;
 }
 
-/** The stored reminder of this level, if any. */
-export function storedReminder(reminders: ReminderLike[] | undefined, level: number): ReminderLike | undefined {
-  return (reminders ?? []).find(r => r.level === level);
+/** The reminder an earlier call with this idempotency key stored, if any. */
+export function reminderByRequest(reminders: ReminderLike[] | undefined, requestId: string): ReminderLike | undefined {
+  if (!requestId) return undefined;
+  return (reminders ?? []).find((r) => r.requestId === requestId);
+}
+
+/** A client idempotency key: 1-64 characters of letters, digits and dashes (crypto.randomUUID fits). */
+export function isValidRequestId(id: unknown): id is string {
+  return typeof id === 'string' && /^[A-Za-z0-9-]{1,64}$/.test(id);
 }
 
 /**
- * The configured fee of a level (fees[level-1]), never negative. A config without the field (legacy
- * doc) uses the model default DEFAULT_REMINDER_FEES, like the settings form (ruling P3-R2); a level
- * missing from a stored list is 0.
+ * Why a template cannot render a reminder: unknown, of another tenant, archived or not published
+ * (`no-reminder-template`), or not of category dunning (`template-not-dunning`).
  */
-export function defaultReminderFee(fees: readonly number[] | undefined, level: number): number {
-  const fee = (fees ?? DEFAULT_REMINDER_FEES)[level - 1];
-  return Number.isFinite(fee) ? Math.max(0, fee as number) : 0;
+export function dunningTemplateRefusal(template: Record<string, unknown> | undefined, tenantId: string): 'no-reminder-template' | 'template-not-dunning' | undefined {
+  if (!template) return 'no-reminder-template';
+  if (!((template['tenants'] as string[] | undefined) ?? []).includes(tenantId)) return 'no-reminder-template';
+  if (template['isArchived'] === true || template['status'] !== 'published') return 'no-reminder-template';
+  if (template['category'] !== 'dunning') return 'template-not-dunning';
+  return undefined;
+}
+
+/** The default fee (Rappen) for a template with QR slip: reminderFee, else the legacy reminderFees[1], else the model default. */
+export function configReminderFee(config: Record<string, unknown>): number {
+  const direct = config['reminderFee'];
+  const legacy = (config['reminderFees'] as number[] | undefined)?.[1];
+  const fee = Number.isFinite(direct) ? (direct as number) : Number.isFinite(legacy) ? (legacy as number) : DEFAULT_REMINDER_FEES[1];
+  return Math.max(0, fee);
+}
+
+/** The reminder's name: the template name it was created with, else the 1.76 level naming (spec 1.90 D7). */
+export function reminderDisplayName(r: { level: number; templateName?: string }): string {
+  if (r.templateName) return r.templateName;
+  return (r.level ?? 1) <= 1 ? 'Zahlungserinnerung' : `${r.level}. Mahnung`;
+}
+
+/** The reminder list with the reminder of `documentKey` marked as sent; undefined when no reminder has that key. */
+export function markReminderSent(reminders: ReminderLike[] | undefined, documentKey: string, sentAt: string, via: 'email' | 'post'): ReminderLike[] | undefined {
+  const list = reminders ?? [];
+  if (!list.some((r) => r.documentKey === documentKey)) return undefined;
+  return list.map((r) => coalesceReminder(r.documentKey === documentKey ? { ...r, isSent: true, sentAt, sentVia: via } : r));
+}
+
+/** The stored reminder of this level, if any. */
+export function storedReminder(reminders: ReminderLike[] | undefined, level: number): ReminderLike | undefined {
+  return (reminders ?? []).find(r => r.level === level);
 }
 
 /** The reminder's due date: the reminder date plus the given days. */
@@ -60,10 +90,9 @@ export function lastDueDate(invoice: { dueDate: string; reminders?: ReminderLike
   return last.dueDate || last.date;
 }
 
-/** Payable, a level left, and the last due date plus the grace days lies before today. */
+/** Payable and the last due date plus the grace days lies before today. */
 export function isReminderDue(invoice: { state: string; dueDate: string; reminders?: ReminderLike[] }, today: string, graceDays: number): boolean {
   if (!isPayableState(invoice.state)) return false;
-  if (nextReminderLevel(invoice.reminders) > MAX_REMINDER_LEVEL) return false;
   const base = lastDueDate(invoice);
   if (!isValidStoreDate(base)) return false;
   return addDuration(base, { days: graceDays }) < today;
@@ -120,4 +149,5 @@ export const coalesceReminder = (r: ReminderLike): ReminderLike => ({
   level: r.level ?? 0, date: r.date ?? '', dueDate: r.dueDate ?? '', isSent: r.isSent ?? false,
   documentKey: r.documentKey ?? '', fee: Number.isFinite(r.fee) ? (r.fee as number) : 0, bookingKey: r.bookingKey ?? '',
   waivedAt: r.waivedAt ?? '', waiveBookingKey: r.waiveBookingKey ?? '',
+  templateId: r.templateId ?? '', templateName: r.templateName ?? '', sentAt: r.sentAt ?? '', sentVia: r.sentVia ?? '', requestId: r.requestId ?? '',
 });
