@@ -137,7 +137,7 @@
       "label": "Proyecto"
     },
     "details": {
-      "toggle": "Moneda extranjera, IVA, centro de costes e intercambio de cuentas"
+      "toggle": "Moneda extranjera, IVA, centro de costes, proyecto e intercambio de cuentas"
     },
     "line": {
       "add": "Añadir línea",

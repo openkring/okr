@@ -137,7 +137,7 @@
       "label": "Project"
     },
     "details": {
-      "toggle": "Foreign currency, VAT, cost centre and swap accounts"
+      "toggle": "Foreign currency, VAT, cost centre, project and swap accounts"
     },
     "line": {
       "add": "Add line",

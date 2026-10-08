@@ -3,7 +3,7 @@ import { logger } from 'firebase-functions/v2';
 import { Firestore, getFirestore } from 'firebase-admin/firestore';
 
 import { checkAppCheckToken, checkAuthentication, checkRoles, getCallerTenantId, formatRejectNote, isBalanced, nextBookingNo } from '@okr/shared-util-functions';
-import { convertDateFormatToString, DateFormat, getTodayStr, isAssignableProject, isProfitAndLossAccountId } from '@okr/shared-util-core';
+import { convertDateFormatToString, DateFormat, getTodayStr, isAssignableProject, projectKeyForLine } from '@okr/shared-util-core';
 
 import { assertExplicitCostCenter, costCenterKeyForLine, loadCostCenterContext } from '../cost-center/cost-center-context';
 import { assertPeriodsOpen, loadFiscalYearStart, touchedPeriodKeys } from './period-lock';
@@ -42,12 +42,6 @@ async function assertProjectsAssignable(
       throw new HttpsError('invalid-argument', `project-invalid: ${keys[i]}`, { reason: 'project-invalid', projectKey: keys[i] });
     }
   });
-}
-
-/** The Kostenträger written on a line: explicit only, P&L accounts only; '' otherwise (legacy = absent = ''). */
-function projectKeyForLine(ctx: { accounts: Map<string, { id?: string }> }, line: { accountKey: string; projectKey?: string }): string {
-  const key = (line.projectKey ?? '').trim();
-  return key && isProfitAndLossAccountId(ctx.accounts.get(line.accountKey)?.id) ? key : '';
 }
 
 interface ReviewLine {
@@ -199,7 +193,7 @@ export const reviewBooking = onCall(
             tenants: [tenantId], isArchived: false,
             bookingKey, accountKey: line.accountKey,
             ...(costCenterKey ? { costCenterKey } : {}),
-            projectKey: projectKeyForLine(reviewCtx!, line),
+            projectKey: projectKeyForLine(reviewCtx!.accounts, line),
             ...(line.debitAmount ? { debitAmount: { ...line.debitAmount, periodicity: 'one-time' } } : {}),
             ...(line.creditAmount ? { creditAmount: { ...line.creditAmount, periodicity: 'one-time' } } : {}),
             accountingTenantId,
@@ -365,7 +359,7 @@ export const writeBooking = onCall(
           tenants: [tenantId], isArchived: false,
           bookingKey, accountKey: line.accountKey, accountingTenantId,
           ...(costCenterKey ? { costCenterKey } : {}),
-          projectKey: projectKeyForLine(ctx, line),
+          projectKey: projectKeyForLine(ctx.accounts, line),
           ...(line.debitAmount ? { debitAmount: { ...line.debitAmount, periodicity: 'one-time' } } : {}),
           ...(line.creditAmount ? { creditAmount: { ...line.creditAmount, periodicity: 'one-time' } } : {}),
           ...(line.amountFx ? { amountFx: { ...line.amountFx, periodicity: 'one-time' } } : {}),

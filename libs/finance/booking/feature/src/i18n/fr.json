@@ -137,7 +137,7 @@
       "label": "Projet"
     },
     "details": {
-      "toggle": "Devise étrangère, TVA, centre de coûts et inversion des comptes"
+      "toggle": "Devise étrangère, TVA, centre de coûts, projet et inversion des comptes"
     },
     "line": {
       "add": "Ajouter une ligne",

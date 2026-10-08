@@ -1,5 +1,5 @@
 import { AccountModel, AvatarInfo, BookingLineModel, BookingModel, MoneyModel } from '@okr/shared-models';
-import { convertDateFormatToString, CostCenterLike, DateFormat, getFullName, isActiveLeafCostCenter, isProfitAndLossAccountId, resolveCostCenterKey } from '@okr/shared-util-core';
+import { convertDateFormatToString, CostCenterLike, DateFormat, getFullName, isActiveLeafCostCenter, isAssignableProject, isProfitAndLossAccountId, ProjectLike, resolveCostCenterKey } from '@okr/shared-util-core';
 
 /**
  * One part of a split booking, as shown when the journal row is expanded: a Soll account against a
@@ -476,13 +476,15 @@ export function pairsTotal(pairs: BookingPair[]): number {
  * booking number when it is saved.
  * With `costCenters` given, a copied Kostenstelle that is no longer an active leaf of the booking's
  * accounting tenant (archived, turned into a group, …) is dropped: `writeBooking` would refuse it
- * as a new key, and the editor's picker could not show it.
+ * as a new key, and the editor's picker could not show it. Likewise, with `projects` given, a copied
+ * project that is archived or of another tenant is dropped.
  */
 export function copyBooking(
   booking: BookingModel,
   lines: BookingLineModel[],
   date: string,
   costCenters?: CostCenterLike[],
+  projects?: (ProjectLike & { okey: string })[],
 ): { booking: BookingModel; lines: BookingLineModel[] } {
   const tenantId = booking.tenants[0] ?? '';
   const copy = new BookingModel(tenantId, booking.accountingTenantId);
@@ -505,7 +507,8 @@ export function copyBooking(
       const costCenterKey = line.costCenterKey ?? '';
       copiedLine.costCenterKey = !costCenters || isActiveLeafCostCenter(costCenterKey, booking.accountingTenantId, costCenters)
         ? costCenterKey : '';
-      copiedLine.projectKey = line.projectKey ?? '';
+      const projectKey = line.projectKey ?? '';
+      copiedLine.projectKey = !projects || isAssignableProject(projects.find(p => p.okey === projectKey), tenantId) ? projectKey : '';
       return copiedLine;
     }),
   };

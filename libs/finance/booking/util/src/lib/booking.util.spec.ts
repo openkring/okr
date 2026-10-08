@@ -657,6 +657,16 @@ describe('Kostenträger (projectKey) on pairs and lines', () => {
     expect(copy.lines.map(l => l.projectKey)).toEqual(['p1', '']);
   });
 
+  it('copyBooking drops an archived or foreign project when the projects are passed', () => {
+    const booking = new BookingModel('scs', 'scs');
+    const mk = (k: string): BookingLineModel => { const l = new BookingLineModel('scs', 'scs'); l.accountKey = 'scs-6300'; l.projectKey = k; return l; };
+    const projects = [
+      { okey: 'p-act', tenants: ['scs'] }, { okey: 'p-old', tenants: ['scs'], isArchived: true }, { okey: 'p-other', tenants: ['kring'] },
+    ];
+    const copy = copyBooking(booking, [mk('p-act'), mk('p-old'), mk('p-other'), mk('p-gone'), mk('')], '20250916', undefined, projects);
+    expect(copy.lines.map(l => l.projectKey)).toEqual(['p-act', '', '', '', '']);
+  });
+
   it('explains a project-invalid refusal', () => {
     expect(bookingWriteErrorReason({ details: { reason: 'project-invalid' } })).toBe('project-invalid');
   });

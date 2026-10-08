@@ -309,11 +309,11 @@ export class BookingForm {
     return this.costCentersEnabled() && isProfitAndLossAccountId(this.accounts().find(a => a.okey === accountKey)?.id);
   }
 
-  protected showDebitProject(pair: BookingPair): boolean { return this.showProject(pair.debitAccountKey); }
-  protected showCreditProject(pair: BookingPair): boolean { return this.showProject(pair.creditAccountKey); }
-  /** A Kostenträger sits on P&L lines only, and only when the tenant has projects at all. */
-  private showProject(accountKey: string): boolean {
-    return this.projects().length > 0 && isProfitAndLossAccountId(this.accounts().find(a => a.okey === accountKey)?.id);
+  protected showDebitProject(pair: BookingPair): boolean { return this.showProject(pair.debitAccountKey, pair.debitProjectKey); }
+  protected showCreditProject(pair: BookingPair): boolean { return this.showProject(pair.creditAccountKey, pair.creditProjectKey); }
+  /** A Kostenträger sits on P&L lines only, and only when there is an active project to pick (or the side already carries one). */
+  private showProject(accountKey: string, projectKey: string): boolean {
+    return (this.projects().some(p => !p.isArchived) || !!projectKey) && isProfitAndLossAccountId(this.accounts().find(a => a.okey === accountKey)?.id);
   }
 
   /** An empty Kostenstelle is saved with the account's (or the book's) default (writeBooking): say so on the empty option. */

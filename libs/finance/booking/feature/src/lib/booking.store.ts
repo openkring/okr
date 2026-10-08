@@ -421,7 +421,8 @@ export const BookingStore = signalStore(
       // drop copied Kostenstellen that are no longer active leaves — but only once they are loaded,
       // an empty list while loading would strip every key
       const costCenters = store.costCenterStore.isLoading() ? undefined : store.costCenterStore.costCenters();
-      const copy = copyBooking(booking, lines, getTodayStr(), costCenters);
+      const copy = copyBooking(booking, lines, getTodayStr(), costCenters,
+        store.projectsResource.isLoading() ? undefined : (store.projectsResource.value() ?? []));
       await this.openEdit(copy.booking, copy.lines, false);
     },
 

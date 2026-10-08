@@ -39,7 +39,7 @@ import { BOOKING_I18N_KEYS, BookingFormData, BookingI18n, pairsToLines, toBookin
           [accounts]="accounts()"
           [vatCodes]="vatCodes()"
           [costCenters]="costCenterStore.costCenters()"
-          [projects]="projects()"
+          [projects]="ledgerProjects()"
           [costCentersEnabled]="costCenterStore.isEnabled()"
           [bookDefaultCostCenterKey]="bookDefaultCostCenterKey()"
           [locale]="locale()"
@@ -91,6 +91,8 @@ export class BookingEditModal {
   protected readonly parentKey = computed(() => `${BookingModelName}.${this.booking().okey}`);
   // legacy docs predate the field — coalesce
   protected readonly voucherKeys = computed(() => this.booking().documentKeys ?? []);
+  /** like the Kostenstellen: no picker on an externally managed (bexio) ledger */
+  protected readonly ledgerProjects = computed(() => this.accountingStore.isExternallyManaged() ? [] : this.projects());
   protected formDirty = signal(false);
   protected formValid = signal(false);
   public formData = linkedSignal<BookingFormData>(() => this.initialFormData());
