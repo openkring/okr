@@ -1,0 +1,120 @@
+{
+  "budgets": "Versioni del budget",
+  "list": {
+    "title": "Budget"
+  },
+  "grid": {
+    "title": "Budget",
+    "empty": "Questa versione non ha ancora righe."
+  },
+  "compare": {
+    "title": "Confronto budget-consuntivo",
+    "empty": "Per quest'esercizio non c'è nulla da confrontare."
+  },
+  "empty": "Ancora nessun budget. Crea un nuovo budget dal menu in alto a destra.",
+  "noApproved": "Per quest'esercizio non è ancora stato approvato alcun budget.",
+  "noCostCenter": "senza centro di costo",
+  "fiscalYear": {
+    "select": "Scegli l'esercizio",
+    "label": "Esercizio",
+    "helper": "L'esercizio a cui si riferisce questo budget. Quando la versione ha delle righe, l'anno resta fisso."
+  },
+  "status": {
+    "draft": "Bozza",
+    "approved": "approvato",
+    "superseded": "sostituito",
+    "archived": "archiviato"
+  },
+  "kind": {
+    "label": "Tipo",
+    "budget": "Budget",
+    "forecast": "Previsione"
+  },
+  "body": {
+    "gv": "Assemblea generale",
+    "board": "Comitato"
+  },
+  "action": {
+    "newVersion": "Nuova versione",
+    "copyFrom": "Nuova versione da questa",
+    "approve": "Approva",
+    "archive": "Archivia",
+    "compare": "Confronta",
+    "addLine": "Aggiungi riga",
+    "view": "Mostra",
+    "update": "Modifica",
+    "open": "Apri",
+    "deleteLine": "Elimina riga"
+  },
+  "confirm": {
+    "approve": "Una volta approvata, questa versione non potrà più essere modificata. Vuoi approvarla adesso?",
+    "archive": "Vuoi archiviare questa bozza?",
+    "copy": "La nuova versione è stata creata con {count} righe di «{name}».",
+    "deleteLine": "Vuoi eliminare questa riga?"
+  },
+  "toast": {
+    "approved": "La versione è stata approvata.",
+    "frozen": "Nel frattempo questa versione è stata approvata o archiviata e non può più essere modificata. Ricarica la pagina per vedere lo stato attuale.",
+    "error": "Purtroppo non ha funzionato. Riprova più tardi."
+  },
+  "col": {
+    "budget": "Budget",
+    "actual": "Consuntivo",
+    "remaining": "Disponibile",
+    "used": "% utilizzato",
+    "difference": "Scostamento"
+  },
+  "name": {
+    "label": "Nome",
+    "placeholder": "p. es. Budget AG 2027",
+    "helper": "Il nome di questa versione, per riconoscerla in seguito."
+  },
+  "notes": {
+    "label": "Note",
+    "placeholder": "Note su questa versione"
+  },
+  "baseVersion": {
+    "label": "Basata su"
+  },
+  "approvedAt": {
+    "label": "Approvato il",
+    "placeholder": "Data dell'approvazione"
+  },
+  "approve": {
+    "supersedes": "Questa approvazione sostituisce «{name}».",
+    "supersedesNone": "Per quest'anno non è ancora stata approvata alcuna versione."
+  },
+  "approvedBy": {
+    "label": "Approvato da",
+    "invalid": "Scegli l'assemblea generale o il comitato."
+  },
+  "approvalRef": {
+    "label": "Riferimento dell'approvazione",
+    "placeholder": "p. es. verbale dell'AG del 20.11.2026",
+    "helper": "Dove è registrata l'approvazione, per poterla ritrovare in seguito."
+  },
+  "costCenterKey": {
+    "label": "Centro di costo",
+    "helper": "Il centro di costo per cui è previsto questo importo.",
+    "notLeaf": "Scegli un centro di costo, non un gruppo."
+  },
+  "accountKey": {
+    "label": "Conto",
+    "helper": "Il tipo di costo o ricavo per cui è previsto questo importo.",
+    "notBudgetable": "Scegli un conto di costi o ricavi senza sottoconti.",
+    "duplicate": "Questa versione ha già una riga per questo centro di costo e questo conto."
+  },
+  "amount": {
+    "label": "Importo",
+    "helper": "Importo previsto per l'intero esercizio, come numero positivo – le uscite per i costi, le entrate per i ricavi.",
+    "negative": "L'importo non può essere negativo."
+  },
+  "archiveState": {
+    "active": {
+      "label": "Attive"
+    },
+    "archived": {
+      "label": "Archiviate"
+    }
+  }
+}

@@ -1,0 +1,120 @@
+{
+  "budgets": "Versiones del presupuesto",
+  "list": {
+    "title": "Presupuestos"
+  },
+  "grid": {
+    "title": "Presupuesto",
+    "empty": "Esta versión todavía no tiene líneas."
+  },
+  "compare": {
+    "title": "Comparación presupuesto-real",
+    "empty": "No hay nada que comparar para este ejercicio."
+  },
+  "empty": "Todavía no hay presupuestos. Crea uno nuevo desde el menú arriba a la derecha.",
+  "noApproved": "Todavía no se ha aprobado ningún presupuesto para este ejercicio.",
+  "noCostCenter": "sin centro de coste",
+  "fiscalYear": {
+    "select": "Elegir ejercicio",
+    "label": "Ejercicio",
+    "helper": "El ejercicio al que corresponde este presupuesto. En cuanto la versión tiene líneas, el año queda fijo."
+  },
+  "status": {
+    "draft": "Borrador",
+    "approved": "aprobado",
+    "superseded": "sustituido",
+    "archived": "archivado"
+  },
+  "kind": {
+    "label": "Tipo",
+    "budget": "Presupuesto",
+    "forecast": "Previsión"
+  },
+  "body": {
+    "gv": "Asamblea general",
+    "board": "Junta directiva"
+  },
+  "action": {
+    "newVersion": "Nueva versión",
+    "copyFrom": "Nueva versión a partir de esta",
+    "approve": "Aprobar",
+    "archive": "Archivar",
+    "compare": "Comparar",
+    "addLine": "Añadir línea",
+    "view": "Ver",
+    "update": "Editar",
+    "open": "Abrir",
+    "deleteLine": "Eliminar línea"
+  },
+  "confirm": {
+    "approve": "Una vez aprobada, esta versión ya no se podrá cambiar. ¿Quieres aprobarla ahora?",
+    "archive": "¿Quieres archivar este borrador?",
+    "copy": "La nueva versión se ha creado con {count} líneas de «{name}».",
+    "deleteLine": "¿Quieres eliminar esta línea?"
+  },
+  "toast": {
+    "approved": "La versión ha sido aprobada.",
+    "frozen": "Mientras tanto, esta versión ha sido aprobada o archivada y ya no se puede cambiar. Vuelve a cargar la página para ver el estado actual.",
+    "error": "Lamentablemente no ha funcionado. Vuelve a intentarlo más tarde."
+  },
+  "col": {
+    "budget": "Presupuesto",
+    "actual": "Real",
+    "remaining": "Disponible",
+    "used": "% utilizado",
+    "difference": "Diferencia"
+  },
+  "name": {
+    "label": "Nombre",
+    "placeholder": "p. ej. Presupuesto AG 2027",
+    "helper": "Cómo se llama esta versión, para que la reconozcas más tarde."
+  },
+  "notes": {
+    "label": "Notas",
+    "placeholder": "Notas sobre esta versión"
+  },
+  "baseVersion": {
+    "label": "Basada en"
+  },
+  "approvedAt": {
+    "label": "Aprobado el",
+    "placeholder": "Fecha de la aprobación"
+  },
+  "approve": {
+    "supersedes": "Esta aprobación sustituye a «{name}».",
+    "supersedesNone": "Todavía no se ha aprobado ninguna versión para este año."
+  },
+  "approvedBy": {
+    "label": "Aprobado por",
+    "invalid": "Elige la asamblea general o la junta directiva."
+  },
+  "approvalRef": {
+    "label": "Referencia de la aprobación",
+    "placeholder": "p. ej. acta de la AG del 20.11.2026",
+    "helper": "Dónde consta la aprobación, para poder consultarla más tarde."
+  },
+  "costCenterKey": {
+    "label": "Centro de coste",
+    "helper": "El centro de coste para el que se planifica este importe.",
+    "notLeaf": "Elige un centro de coste, no un grupo."
+  },
+  "accountKey": {
+    "label": "Cuenta",
+    "helper": "El tipo de gasto o ingreso para el que se planifica este importe.",
+    "notBudgetable": "Elige una cuenta de gastos o ingresos sin subcuentas.",
+    "duplicate": "Esta versión ya tiene una línea para este centro de coste y esta cuenta."
+  },
+  "amount": {
+    "label": "Importe",
+    "helper": "Importe previsto para todo el ejercicio, como número positivo: los gastos en las cuentas de gastos, los ingresos en las de ingresos.",
+    "negative": "El importe no puede ser negativo."
+  },
+  "archiveState": {
+    "active": {
+      "label": "Activas"
+    },
+    "archived": {
+      "label": "Archivadas"
+    }
+  }
+}

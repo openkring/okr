@@ -21,6 +21,7 @@ export const BUDGET_I18N_KEYS = {
   status_draft:         PFX + 'status.draft',
   status_approved:      PFX + 'status.approved',
   status_superseded:    PFX + 'status.superseded',
+  status_archived:      PFX + 'status.archived',
 
   kind_budget:          PFX + 'kind.budget',
   kind_forecast:        PFX + 'kind.forecast',
@@ -36,10 +37,13 @@ export const BUDGET_I18N_KEYS = {
   addLine:              PFX + 'action.addLine',
   view:                 PFX + 'action.view',
   update:               PFX + 'action.update',
+  open:                 PFX + 'action.open',
+  deleteLine:           PFX + 'action.deleteLine',
 
   approve_conf:         PFX + 'confirm.approve',
   archive_conf:         PFX + 'confirm.archive',
   copy_conf:            PFX + 'confirm.copy',
+  deleteLine_conf:      PFX + 'confirm.deleteLine',
 
   toast_approved:       PFX + 'toast.approved',
   toast_frozen:         PFX + 'toast.frozen',

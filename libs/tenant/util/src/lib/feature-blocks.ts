@@ -1389,6 +1389,8 @@ const finance: FeatureBlock = {
   // ExchangeRateCollection, ExpenseCollection, ExpenseDocumentCollection, InvoiceCollection,
   // OcrRuleCollection, PaymentCollection, PaymentOrderCollection, PeriodCollection,
   // VatCodeCollection — grepped, not guessed).
+  // `budget-versions` / `budget-lines` (BudgetVersionCollection, BudgetLineCollection) followed
+  // with BudgetService (spec 1.65 phase 2).
   //
   // The last two have NO client-side reference and are listed deliberately, because this
   // array is what a later retention pass acts on and an omission there is silent data
@@ -1405,7 +1407,7 @@ const finance: FeatureBlock = {
   collections: [
     'accounts', 'accounting-configs', 'assets', 'asset-categories', 'asset-movements',
     'bank-import-rows', 'bank-profiles', 'bank-rules',
-    'bills', 'bookings', 'booking-lines', 'cost-centers', 'exchange-rates', 'expenses', 'expense-documents',
+    'bills', 'bookings', 'booking-lines', 'budget-lines', 'budget-versions', 'cost-centers', 'exchange-rates', 'expenses', 'expense-documents',
     'invoices', 'invoice-positions', 'ocr-rules', 'ocr-results', 'payments', 'payment-orders',
     'periods', 'vat-codes',
   ],
@@ -1479,6 +1481,11 @@ const finance: FeatureBlock = {
       { key: 'cost-center-migrate-free-text', name: 'cost-center-migrate-free-text', url: 'migrate-free-text', action: 'call', roleNeeded: 'treasurer', icon: 'sync', label: '@item.cost-center-migrate-free-text' },
       { key: 'cost-center-migrate-backfill', name: 'cost-center-migrate-backfill', url: 'migrate-backfill', action: 'call', roleNeeded: 'treasurer', icon: 'download', label: '@item.cost-center-migrate-backfill' },
     ] },
+    // Budget version list (spec 1.65 phase 2): a first version of a fiscal year, and the Soll-Ist comparison; the rest lives on the row's action sheet.
+    { key: 'c-budget', name: 'c-budget', url: '', action: 'context', roleNeeded: 'treasurer', icon: 'help-circle', label: '', children: [
+      { key: 'budget-add', name: 'budget-add', url: 'add', action: 'call', roleNeeded: 'treasurer', icon: 'add-circle', label: '@item.budget-add' },
+      { key: 'budget-compare', name: 'budget-compare', url: 'compare', action: 'call', roleNeeded: 'treasurer', icon: 'swap-horizontal', label: '@item.budget-compare' },
+    ] },
     { key: 'c-period', name: 'c-period', url: '', action: 'context', roleNeeded: 'treasurer', icon: 'help-circle', label: '', children: [
       { key: 'period-create', name: 'period-create', url: 'create', action: 'call', roleNeeded: 'treasurer', icon: 'add', label: '@item.period-create' },
     ] },
@@ -1513,6 +1520,8 @@ const finance: FeatureBlock = {
         { key: 'accounting-accounts', name: 'accounting-accounts', url: '/accounting/@TID@/account/c-account', action: 'navigate', roleNeeded: 'treasurer', icon: 'account', label: '@item.accounting-accounts' },
         // Kostenstellen (spec 1.65) — next to the Kontoplan, its sibling master data.
         { key: 'accounting-cost-centers', name: 'accounting-cost-centers', url: '/accounting/@TID@/cost-center/c-cost-center', action: 'navigate', roleNeeded: 'treasurer', icon: 'target', label: '@item.accounting-cost-centers' },
+        // Budgets (spec 1.65 phase 2) — versions per fiscal year on Kostenstelle × Konto, right after the Kostenstellen.
+        { key: 'accounting-budgets', name: 'accounting-budgets', url: '/accounting/@TID@/budget/c-budget', action: 'navigate', roleNeeded: 'treasurer', icon: 'moneybag', label: '@item.accounting-budgets' },
         { key: 'accounting-journal', name: 'accounting-journal', url: '/accounting/@TID@/journal/c-journal', action: 'navigate', roleNeeded: 'treasurer', icon: 'list', label: '@item.accounting-journal' },
         { key: 'accounting-bills', name: 'accounting-bills', url: '/accounting/@TID@/bill/all/c-bill', action: 'navigate', roleNeeded: 'treasurer', icon: 'invoice', label: '@item.accounting-bills' },
         { key: 'accounting-invoices', name: 'accounting-invoices', url: '/accounting/@TID@/invoice/all/c-invoice', action: 'navigate', roleNeeded: 'treasurer', icon: 'invoice', label: '@item.accounting-invoices' },

@@ -779,6 +779,15 @@ const finance: BlockRoutes = {
           children: [{ path: ':contextMenuName', loadComponent: () => import('@okr/finance-cost-center-feature').then(m => m.CostCenterList) }],
         },
         {
+          // Budgets (spec 1.65 phase 2): versions per fiscal year, grid, Soll-Ist comparison; treasurer via the shell's guard.
+          // The grid (`version/:versionKey`) and the comparison (`compare`) join this list once their pages exist;
+          // both must stay ABOVE `:contextMenuName`, which would otherwise swallow `compare`.
+          path: 'budget',
+          children: [
+            { path: ':contextMenuName', loadComponent: () => import('@okr/finance-budget-feature').then(m => m.BudgetVersionList) },
+          ],
+        },
+        {
           // Account links and fiscal year start of this accounting tenant (`accounting-settings` row).
           path: 'settings',
           loadComponent: () => import('@okr/finance-accounting-feature').then(m => m.AccountingSettingsPage),

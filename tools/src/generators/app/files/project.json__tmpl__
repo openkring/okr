@@ -347,6 +347,16 @@
           },
           {
             "glob": "*.json",
+            "input": "libs/finance/budget/data-access/src/i18n",
+            "output": "./assets/i18n/finance/budget/data-access"
+          },
+          {
+            "glob": "*.json",
+            "input": "libs/finance/budget/feature/src/i18n",
+            "output": "./assets/i18n/finance/budget/feature"
+          },
+          {
+            "glob": "*.json",
             "input": "libs/finance/cost-center/data-access/src/i18n",
             "output": "./assets/i18n/finance/cost-center/data-access"
           },

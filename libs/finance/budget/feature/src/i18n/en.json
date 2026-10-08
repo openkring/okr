@@ -1,0 +1,120 @@
+{
+  "budgets": "Budget versions",
+  "list": {
+    "title": "Budgets"
+  },
+  "grid": {
+    "title": "Budget",
+    "empty": "This version has no lines yet."
+  },
+  "compare": {
+    "title": "Budget vs. actual",
+    "empty": "There is nothing to compare for this fiscal year."
+  },
+  "empty": "No budgets yet. Create a new budget from the menu at the top right.",
+  "noApproved": "No budget has been approved for this fiscal year yet.",
+  "noCostCenter": "no cost centre",
+  "fiscalYear": {
+    "select": "Choose fiscal year",
+    "label": "Fiscal year",
+    "helper": "The fiscal year this budget is for. Once the version has lines, the year stays fixed."
+  },
+  "status": {
+    "draft": "Draft",
+    "approved": "approved",
+    "superseded": "superseded",
+    "archived": "archived"
+  },
+  "kind": {
+    "label": "Kind",
+    "budget": "Budget",
+    "forecast": "Forecast"
+  },
+  "body": {
+    "gv": "General meeting",
+    "board": "Board"
+  },
+  "action": {
+    "newVersion": "New version",
+    "copyFrom": "New version from this",
+    "approve": "Approve",
+    "archive": "Archive",
+    "compare": "Compare",
+    "addLine": "Add line",
+    "view": "View",
+    "update": "Edit",
+    "open": "Open",
+    "deleteLine": "Delete line"
+  },
+  "confirm": {
+    "approve": "Once approved, this version can no longer be changed. Do you want to approve it now?",
+    "archive": "Do you want to archive this draft?",
+    "copy": "The new version has been created with {count} lines from «{name}».",
+    "deleteLine": "Do you want to delete this line?"
+  },
+  "toast": {
+    "approved": "The version has been approved.",
+    "frozen": "This version has meanwhile been approved or archived and can no longer be changed. Reload the page to see the current state.",
+    "error": "Unfortunately that did not work. Please try again later."
+  },
+  "col": {
+    "budget": "Budget",
+    "actual": "Actual",
+    "remaining": "Remaining",
+    "used": "% used",
+    "difference": "Difference"
+  },
+  "name": {
+    "label": "Name",
+    "placeholder": "e.g. Budget GM 2027",
+    "helper": "What this version is called, so you can recognise it later."
+  },
+  "notes": {
+    "label": "Notes",
+    "placeholder": "Notes on this version"
+  },
+  "baseVersion": {
+    "label": "Based on"
+  },
+  "approvedAt": {
+    "label": "Approved on",
+    "placeholder": "Date of approval"
+  },
+  "approve": {
+    "supersedes": "This approval replaces «{name}».",
+    "supersedesNone": "No version has been approved for this year yet."
+  },
+  "approvedBy": {
+    "label": "Approved by",
+    "invalid": "Choose the general meeting or the board."
+  },
+  "approvalRef": {
+    "label": "Approval reference",
+    "placeholder": "e.g. GM minutes of 20.11.2026",
+    "helper": "Where the approval is recorded, so it can be looked up later."
+  },
+  "costCenterKey": {
+    "label": "Cost centre",
+    "helper": "The cost centre this amount is planned for.",
+    "notLeaf": "Choose a cost centre, not a group."
+  },
+  "accountKey": {
+    "label": "Account",
+    "helper": "The kind of expense or income this amount is planned for.",
+    "notBudgetable": "Choose an expense or income account without sub-accounts.",
+    "duplicate": "This version already has a line for this cost centre and account."
+  },
+  "amount": {
+    "label": "Amount",
+    "helper": "Planned amount for the whole fiscal year, as a positive number – spending for expenses, income for revenue.",
+    "negative": "The amount must not be negative."
+  },
+  "archiveState": {
+    "active": {
+      "label": "Active"
+    },
+    "archived": {
+      "label": "Archived"
+    }
+  }
+}

@@ -1,0 +1,120 @@
+{
+  "budgets": "Budgetversionen",
+  "list": {
+    "title": "Budgets"
+  },
+  "grid": {
+    "title": "Budget",
+    "empty": "Diese Version hat noch keine Zeilen."
+  },
+  "compare": {
+    "title": "Soll-Ist-Vergleich",
+    "empty": "Für dieses Geschäftsjahr gibt es nichts zu vergleichen."
+  },
+  "empty": "Noch keine Budgets vorhanden. Lege über das Menü oben rechts ein neues Budget an.",
+  "noApproved": "Für dieses Geschäftsjahr ist noch kein Budget freigegeben.",
+  "noCostCenter": "ohne Kostenstelle",
+  "fiscalYear": {
+    "select": "Geschäftsjahr wählen",
+    "label": "Geschäftsjahr",
+    "helper": "Für welches Geschäftsjahr dieses Budget gilt. Sobald die Version Zeilen hat, bleibt das Jahr fest."
+  },
+  "status": {
+    "draft": "Entwurf",
+    "approved": "freigegeben",
+    "superseded": "ersetzt",
+    "archived": "archiviert"
+  },
+  "kind": {
+    "label": "Art",
+    "budget": "Budget",
+    "forecast": "Hochrechnung"
+  },
+  "body": {
+    "gv": "Generalversammlung",
+    "board": "Vorstand"
+  },
+  "action": {
+    "newVersion": "Neue Version",
+    "copyFrom": "Neue Version davon",
+    "approve": "Freigeben",
+    "archive": "Archivieren",
+    "compare": "Vergleichen",
+    "addLine": "Zeile hinzufügen",
+    "view": "Anzeigen",
+    "update": "Bearbeiten",
+    "open": "Öffnen",
+    "deleteLine": "Zeile löschen"
+  },
+  "confirm": {
+    "approve": "Nach der Freigabe lässt sich diese Version nicht mehr ändern. Möchtest du sie jetzt freigeben?",
+    "archive": "Möchtest du diesen Entwurf archivieren?",
+    "copy": "Die neue Version ist angelegt und hat {count} Zeilen von «{name}» übernommen.",
+    "deleteLine": "Möchtest du diese Zeile löschen?"
+  },
+  "toast": {
+    "approved": "Die Version ist freigegeben.",
+    "frozen": "Diese Version ist inzwischen freigegeben oder archiviert und lässt sich nicht mehr ändern. Lade die Seite neu, um den aktuellen Stand zu sehen.",
+    "error": "Das hat leider nicht geklappt. Versuche es später noch einmal."
+  },
+  "col": {
+    "budget": "Budget",
+    "actual": "Ist",
+    "remaining": "Verfügbar",
+    "used": "% genutzt",
+    "difference": "Abweichung"
+  },
+  "name": {
+    "label": "Name",
+    "placeholder": "z.B. Budget GV 2027",
+    "helper": "Wie diese Version heisst, damit du sie später wiedererkennst."
+  },
+  "notes": {
+    "label": "Notizen",
+    "placeholder": "Notizen zu dieser Version"
+  },
+  "baseVersion": {
+    "label": "Basiert auf"
+  },
+  "approvedAt": {
+    "label": "Freigegeben am",
+    "placeholder": "Datum der Freigabe"
+  },
+  "approve": {
+    "supersedes": "Diese Freigabe ersetzt «{name}».",
+    "supersedesNone": "Für dieses Jahr ist noch keine Version freigegeben."
+  },
+  "approvedBy": {
+    "label": "Freigegeben durch",
+    "invalid": "Wähle die Generalversammlung oder den Vorstand."
+  },
+  "approvalRef": {
+    "label": "Beleg der Freigabe",
+    "placeholder": "z.B. GV-Protokoll vom 20.11.2026",
+    "helper": "Wo die Freigabe festgehalten ist, damit man sie später nachlesen kann."
+  },
+  "costCenterKey": {
+    "label": "Kostenstelle",
+    "helper": "Für welche Kostenstelle dieser Betrag geplant ist.",
+    "notLeaf": "Wähle eine Kostenstelle, keine Gruppe."
+  },
+  "accountKey": {
+    "label": "Konto",
+    "helper": "Für welche Art Aufwand oder Ertrag dieser Betrag geplant ist.",
+    "notBudgetable": "Wähle ein Aufwands- oder Ertragskonto ohne Unterkonten.",
+    "duplicate": "Für diese Kostenstelle und dieses Konto gibt es in dieser Version schon eine Zeile."
+  },
+  "amount": {
+    "label": "Betrag",
+    "helper": "Geplanter Betrag für das ganze Geschäftsjahr, als positive Zahl – bei Aufwand die Ausgaben, bei Ertrag die Einnahmen.",
+    "negative": "Der Betrag darf nicht negativ sein."
+  },
+  "archiveState": {
+    "active": {
+      "label": "Aktive"
+    },
+    "archived": {
+      "label": "Archivierte"
+    }
+  }
+}
