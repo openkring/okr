@@ -25,10 +25,17 @@ describe('checkVideoLimits', () => {
   });
 
   it('accepts a file at exactly the size limit when the duration cannot be probed', async () => {
-    // jsdom has no media stack: loadedmetadata never fires, the probe times out and the
-    // size check alone decides. That is the documented fallback (spec §4).
-    const result = await checkVideoLimits(fakeFile(MAX_VIDEO_BYTES));
-    expect(result.ok).toBe(true);
+    // No object-URL support means no probe, so the size check alone decides. That is the
+    // documented fallback (spec §4). Vitest 4's jsdom exposes Node's createObjectURL, which
+    // rejects the fake File, so remove it for this test.
+    const original = URL.createObjectURL;
+    Object.defineProperty(URL, 'createObjectURL', { value: undefined, configurable: true, writable: true });
+    try {
+      const result = await checkVideoLimits(fakeFile(MAX_VIDEO_BYTES));
+      expect(result.ok).toBe(true);
+    } finally {
+      Object.defineProperty(URL, 'createObjectURL', { value: original, configurable: true, writable: true });
+    }
   });
 
   it('exposes the limits it enforces', () => {

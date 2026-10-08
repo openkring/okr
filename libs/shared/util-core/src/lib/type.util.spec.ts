@@ -91,7 +91,9 @@ describe('type.util', () => {
   const mockWarn = vi.mocked(logUtil.warn);
 
   beforeEach(() => {
-    vi.clearAllMocks();
+    // resetAllMocks, not clearAllMocks: Vitest 4's restoreAllMocks no longer drops a
+    // mockDie.mockImplementation(throw) set by an earlier test.
+    vi.resetAllMocks();
   });
 
   afterEach(() => {

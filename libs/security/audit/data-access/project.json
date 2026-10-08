@@ -17,9 +17,11 @@
         "updateBuildableProjectDepsInPackageJson": false
       }
     },
-    "lint": { "executor": "@nx/eslint:lint" },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    },
     "test": {
-      "executor": "@nx/vite:test",
+      "executor": "@nx/vitest:test",
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
       "options": {
         "configFile": "libs/security/audit/data-access/vite.config.ts"

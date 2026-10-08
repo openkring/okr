@@ -4,12 +4,7 @@
   "sourceRoot": "apps/functions/src",
   "projectType": "application",
   "tags": ["type:app", "scope:functions", "platform:node"],
-  "implicitDependencies": [
-    "shared-constants",
-    "shared-models",
-    "shared-util-core",
-    "shared-util-functions"
-  ],
+  "implicitDependencies": ["shared-constants", "shared-models", "shared-util-core", "shared-util-functions"],
   "targets": {
     "format": {
       "executor": "nx:run-commands",
@@ -39,21 +34,7 @@
         "declaration": false,
         "format": ["cjs"],
         "platform": "node",
-        "external": [
-          "firebase-admin",
-          "firebase-functions",
-          "@google-cloud/*",
-          "pdfkit",
-          "swissqrbill",
-          "puppeteer-core",
-          "@sparticuz/chromium",
-          "@neplex/vectorizer",
-          "ffmpeg-static",
-          "handlebars",
-          "html-to-docx",
-          "sanitize-html",
-          "cors"
-        ],
+        "external": ["firebase-admin", "firebase-functions", "@google-cloud/*", "pdfkit", "swissqrbill", "puppeteer-core", "@sparticuz/chromium", "@neplex/vectorizer", "ffmpeg-static", "handlebars", "html-to-docx", "sanitize-html", "cors"],
         "esbuildOptions": {
           "logLevel": "info",
           "keepNames": true
@@ -84,7 +65,7 @@
       }
     },
     "test": {
-      "executor": "@nx/vite:test",
+      "executor": "@nx/vitest:test",
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
       "options": {
         "configFile": "apps/functions/vite.config.ts"

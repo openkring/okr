@@ -7,7 +7,7 @@
   "tags": ["type:data-access", "scope:trip", "platform:mobile", "platform:web"],
   "targets": {
     "test": {
-      "executor": "@nx/vite:test",
+      "executor": "@nx/vitest:test",
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
       "options": {
         "configFile": "libs/geo/trip/data-access/vite.config.ts"

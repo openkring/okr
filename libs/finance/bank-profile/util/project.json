@@ -18,10 +18,14 @@
       }
     },
     "test": {
-      "executor": "@nx/vite:test",
+      "executor": "@nx/vitest:test",
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
-      "options": { "configFile": "libs/finance/bank-profile/util/vite.config.ts" }
+      "options": {
+        "configFile": "libs/finance/bank-profile/util/vite.config.ts"
+      }
     },
-    "lint": { "executor": "@nx/eslint:lint" }
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
   }
 }

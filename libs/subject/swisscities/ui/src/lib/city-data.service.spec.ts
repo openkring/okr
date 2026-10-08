@@ -1,9 +1,12 @@
-import { describe, it, expect, vi } from 'vitest';
+import { afterEach, describe, it, expect, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { PLATFORM_ID } from '@angular/core';
 import { CityDataService } from './city-data.service';
 
 describe('CityDataService', () => {
+  // Vitest 4 returns the existing spy on a re-spied method, so calls would carry over.
+  afterEach(() => vi.restoreAllMocks());
+
   function make(platform: string = 'browser') {
     TestBed.configureTestingModule({
       providers: [CityDataService, { provide: PLATFORM_ID, useValue: platform }],
