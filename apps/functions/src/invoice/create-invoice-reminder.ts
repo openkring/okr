@@ -16,7 +16,7 @@ import { InvoiceLike, isValidStoreDate, openAmount } from './invoice-payment.log
 import { confirmationDocumentFields } from './payment-confirmation.logic';
 import {
   coalesceReminder, configReminderFee, dunningTemplateRefusal, isValidRequestId, nextReminderLevel, reminderBlockers, reminderByRequest,
-  reminderDueDate, reminderFeeLines, reminderKey, ReminderLike,
+  reminderDueDate, reminderFeeLines, reminderKey, ReminderLike, storedReminder,
 } from './invoice-reminder.logic';
 import { invoiceBookingIndex, issuePeriodKeys, recipientFields, viewDate, withoutUndefined } from './invoice.logic';
 import { buildReminderPayload } from './reminder-payload.logic';
@@ -96,7 +96,9 @@ export const createInvoiceReminder = onCall(
     const config = await loadOwnedAccountingConfig(db, tenantId, invoiceKey, accountingTenantId, 'reminded');
 
     // idempotency: a retry of the same call returns what the first one stored
-    const already = reminderByRequest(pre['reminders'] as ReminderLike[] | undefined, requestId);
+    // a legacy call also matches by level: reminders stored before 1.90 carry no requestId
+    const already = reminderByRequest(pre['reminders'] as ReminderLike[] | undefined, requestId)
+      ?? (legacy ? storedReminder(pre['reminders'] as ReminderLike[] | undefined, data.level as number) : undefined);
     if (already) return storedResult(pre, already);
 
     // ---- 2. template, fee accounts, blockers ----
@@ -165,9 +167,9 @@ export const createInvoiceReminder = onCall(
         throw refuse('state-changed', `invoice ${invoiceKey} changed while the reminder was created`);
       }
       const current = invoice['reminders'] as ReminderLike[] | undefined;
-      const stored = reminderByRequest(current, requestId);
+      const stored = reminderByRequest(current, requestId) ?? (legacy ? storedReminder(current, data.level as number) : undefined);
       if (stored) return storedResult(invoice, stored);
-      // another call took this running number meanwhile: the PDF path would collide
+      // another call took this running number meanwhile: refuse (its PDF may have been overwritten by this call's render — rare race, see 1.90 final review)
       if (nextReminderLevel(current) !== lvl) throw refuse('state-changed', `invoice ${invoiceKey} got another reminder meanwhile`);
       const fresh = reminderBlockers(reminderAsLike(invoice), date, fee);
       if (fresh.length > 0) {
