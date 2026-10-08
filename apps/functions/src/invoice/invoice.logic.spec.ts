@@ -197,11 +197,20 @@ describe('invoiceBookingIndex', () => {
 
 describe('recipientFields', () => {
   it('greets a person by first name and carries the address', () => {
-    const r = recipientFields({ name1: 'Anna', name2: 'Muster', modelType: 'person' }, { streetName: 'Weg', streetNumber: '3', zipCode: '8000', city: 'Zürich', countryCode: 'CH' });
-    expect(r).toMatchObject({ firstName: 'Anna', lastName: 'Muster', greeting: 'Liebe/r Anna', streetName: 'Weg', streetNumber: '3', zipCode: '8000', city: 'Zürich', countryCode: 'CH' });
+    const r = recipientFields({ name1: 'Anna', name2: 'Muster', modelType: 'person' }, { streetName: 'Weg', streetNumber: '3', zipCode: '8000', city: 'Zürich', countryCode: 'CH' }, 'female');
+    expect(r).toMatchObject({ firstName: 'Anna', lastName: 'Muster', greeting: 'Liebe Anna', streetName: 'Weg', streetNumber: '3', zipCode: '8000', city: 'Zürich', countryCode: 'CH' });
   });
+  it('greets by gender like the payment confirmation: female → Liebe, otherwise Lieber', () => {
+    expect(recipientFields({ name1: 'Peter', name2: 'Muster', modelType: 'person' }, undefined, 'male')['greeting']).toBe('Lieber Peter');
+    expect(recipientFields({ name1: 'Kim', name2: 'Muster', modelType: 'person' }, undefined, 'other')['greeting']).toBe('Lieber Kim');
+    expect(recipientFields({ name1: 'Kim', name2: 'Muster', modelType: 'person' })['greeting']).toBe('Lieber Kim');
+  });
+  it('a person without first name gets the neutral greeting', () =>
+    expect(recipientFields({ name1: '', name2: 'Muster', modelType: 'person' }, undefined, 'female')['greeting']).toBe('Guten Tag'));
+  it('the invoice payload carries the gendered greeting', () =>
+    expect(buildInvoicePayload({ invoiceId: '1', title: 't', invoiceDate: '20261001', dueDate: '20261031', receiver: { name1: 'Anna', name2: 'M', modelType: 'person' }, positions: [], gender: 'female' })['greeting']).toBe('Liebe Anna'));
   it('greets an org neutrally and defaults a missing address', () => {
-    const r = recipientFields({ name1: '', name2: 'Verein', modelType: 'org' });
+    const r = recipientFields({ name1: '', name2: 'Verein', modelType: 'org' }, undefined, 'female');
     expect(r['greeting']).toBe('Guten Tag');
     expect(r).toMatchObject({ streetName: '', city: '', countryCode: 'CH' });
   });

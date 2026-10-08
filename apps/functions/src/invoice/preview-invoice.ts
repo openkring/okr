@@ -9,7 +9,7 @@ import { checkAppCheckToken, checkAuthentication, checkRoles, getCallerTenantId 
 import { privateBucket } from '../_storage/private-bucket';
 import { renderDocument } from '../pdf/render-document';
 import { buildInvoicePayload } from './invoice.logic';
-import { loadOwnedAccountingConfig, receiverAddress, ReceiverRef, refuse } from './invoice-context';
+import { loadOwnedAccountingConfig, receiverAddress, receiverGender, ReceiverRef, refuse } from './invoice-context';
 import { readPositions } from './issue-invoice';
 
 const REGION = 'europe-west6';
@@ -71,6 +71,7 @@ export const previewInvoicePdf = onCall(
         receiver: { name1: receiver?.name1 ?? '', name2: receiver?.name2 ?? '', modelType: receiver?.modelType ?? '' },
         positions,
         address: await receiverAddress(db, receiver, tenantId),
+        gender: await receiverGender(db, receiver),
       }),
       options: { outputFormat: 'pdf', filename },
     }, uid, tenantId, { bucket: privateBucket(), path: fullPath }, PREVIEW_QR_REFERENCE);

@@ -18,7 +18,7 @@ import {
   buildInvoicePayload, finalizeDecision, invoiceBookingIndex, invoiceBookingLines, issueBlockers, issueHeaderBlockers, issueOutcome,
   issuePeriodKeys, PositionInput, sortPositions, withoutUndefined,
 } from './invoice.logic';
-import { assertLeafAccount, loadOwnedAccountingConfig, receiverAddress, refuse } from './invoice-context';
+import { assertLeafAccount, loadOwnedAccountingConfig, receiverAddress, receiverGender, refuse } from './invoice-context';
 import { writeFinanceHistory } from '../finance-history/finance-history';
 
 const REGION = 'europe-west6';
@@ -208,6 +208,7 @@ export const issueInvoice = onCall(
 
       // ---- 5./6. address and PDF (slow, idempotent: deterministic path) ----
       const address = await receiverAddress(db, receiver, tenantId);
+      const gender = await receiverGender(db, receiver);
       const filename = `${invoiceId}.pdf`;
       const fullPath = `tenant/${tenantId}/private/finance/invoices/${invoiceKey}.pdf`;
       const rendered = await renderDocument({
@@ -221,6 +222,7 @@ export const issueInvoice = onCall(
             receiver: { name1: receiver?.name1 ?? '', name2: receiver?.name2 ?? '', modelType: receiver?.modelType ?? '' },
             positions,
             address,
+            gender,
           }),
           invoiceKey,
         },

@@ -1,7 +1,7 @@
 import { HttpsError } from 'firebase-functions/v2/https';
 import type { Firestore, Transaction } from 'firebase-admin/firestore';
 
-import { AddressCollection, AddressModel } from '@okr/shared-models';
+import { AddressCollection, AddressModel, PersonCollection } from '@okr/shared-models';
 import { pickFavoriteByChannel, scopeToTenant } from '@okr/shared-util-functions';
 
 import type { PostalAddress } from './invoice.logic';
@@ -51,6 +51,13 @@ export async function assertLeafAccount(db: Firestore, accountingTenantId: strin
 }
 
 export type ReceiverRef = { key?: string; name1?: string; name2?: string; modelType?: string } | undefined;
+
+/** The receiving person's gender (PersonModel.gender) for the greeting; undefined for an org or an unknown person. */
+export async function receiverGender(db: Firestore, receiver: ReceiverRef): Promise<string | undefined> {
+  if (receiver?.modelType !== 'person' || !receiver.key) return undefined;
+  const gender = (await db.collection(PersonCollection).doc(receiver.key).get()).data()?.['gender'];
+  return typeof gender === 'string' ? gender : undefined;
+}
 
 /** The receiver's favourite postal address collected by this tenant (D-L1), or undefined. */
 export async function receiverAddress(db: Firestore, receiver: ReceiverRef, tenantId: string): Promise<PostalAddress | undefined> {

@@ -118,14 +118,16 @@ export const viewDate = (d: string): string => convertDateFormatToString(d, Date
 
 /** Recipient name, greeting and postal address fields shared by the invoice and reminder payloads. */
 export function recipientFields(
-  receiver: { name1?: string; name2?: string; modelType?: string } | undefined, address?: PostalAddress,
+  receiver: { name1?: string; name2?: string; modelType?: string } | undefined, address?: PostalAddress, gender?: string,
 ): Record<string, string> {
   const firstName = receiver?.name1 ?? '';
   const isPerson = receiver?.modelType === 'person';
+  // same rule as the payment confirmation: female → Liebe, any other value → Lieber
+  const salutation = gender === 'female' ? 'Liebe' : 'Lieber';
   return {
     firstName,
     lastName: receiver?.name2 ?? '',
-    greeting: isPerson && firstName ? `Liebe/r ${firstName}` : 'Guten Tag',
+    greeting: isPerson && firstName ? `${salutation} ${firstName}` : 'Guten Tag',
     streetName: address?.streetName ?? '',
     streetNumber: address?.streetNumber ?? '',
     zipCode: address?.zipCode ?? '',
@@ -143,13 +145,14 @@ export function buildInvoicePayload(i: {
   receiver: { name1: string; name2: string; modelType: string };
   positions: PositionInput[];
   address?: PostalAddress;
+  gender?: string; // the receiving person's gender (PersonModel.gender), for the greeting
 }): Record<string, unknown> {
   return {
     invoiceNumber: i.invoiceId,
     title: i.title,
     date: viewDate(i.invoiceDate),
     dueDate: viewDate(i.dueDate),
-    ...recipientFields(i.receiver, i.address),
+    ...recipientFields(i.receiver, i.address, i.gender),
     amount: chf(totalRappen(i.positions)),
     positions: payloadPositions(i.positions),
     qrMessage: `Rechnung ${i.invoiceId}`,

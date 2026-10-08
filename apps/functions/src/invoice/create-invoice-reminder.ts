@@ -11,7 +11,7 @@ import { assertPeriodsOpen } from '../booking/period-lock';
 import { costCenterKeyForLine, loadCostCenterContext } from '../cost-center/cost-center-context';
 import { privateBucket } from '../_storage/private-bucket';
 import { renderDocument } from '../pdf/render-document';
-import { assertLeafAccount, loadOwnedAccountingConfig, receiverAddress, ReceiverRef, refuse } from './invoice-context';
+import { assertLeafAccount, loadOwnedAccountingConfig, receiverAddress, receiverGender, ReceiverRef, refuse } from './invoice-context';
 import { InvoiceLike, isValidStoreDate, openAmount } from './invoice-payment.logic';
 import { confirmationDocumentFields } from './payment-confirmation.logic';
 import {
@@ -135,13 +135,14 @@ export const createInvoiceReminder = onCall(
     const dueDate = reminderDueDate(date, dueDays);
     const receiver = pre['receiver'] as ReceiverRef;
     const address = await receiverAddress(db, receiver, tenantId);
+    const gender = await receiverGender(db, receiver);
     const payload = buildReminderPayload({
       invoice: {
         invoiceId: String(pre['invoiceId'] ?? invoiceKey), invoiceDate: String(pre['invoiceDate'] ?? ''), title: String(pre['title'] ?? ''),
         totalAmount: pre['totalAmount'] as { amount: number } | undefined, payments: pre['payments'] as { amount: number }[] | undefined,
         reminders: pre['reminders'] as ReminderLike[] | undefined,
       },
-      level: lvl, templateName, date, dueDate, fee, recipient: recipientFields(receiver, address),
+      level: lvl, templateName, date, dueDate, fee, recipient: recipientFields(receiver, address, gender),
     });
     const invoiceId = String(pre['invoiceId'] ?? invoiceKey);
     const filename = `${invoiceId}-reminder-${lvl}.pdf`;
