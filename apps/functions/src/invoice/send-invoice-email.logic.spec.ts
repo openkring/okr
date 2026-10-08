@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { emailDocumentKind, invoiceEmailAsksPayment, invoiceEmailHtml, invoiceEmailSubject, MAX_INLINE_ATTACHMENT_BYTES, normalizeComposedMail, recipientDirectoryId, scrubEmailAddresses, sendRefusal } from './send-invoice-email.logic';
+import { emailDocumentKind, invoiceEmailAsksPayment, invoiceEmailHtml, invoiceEmailSubject, reminderMailFilename, MAX_INLINE_ATTACHMENT_BYTES, normalizeComposedMail, recipientDirectoryId, scrubEmailAddresses, sendRefusal } from './send-invoice-email.logic';
 
 describe('emailDocumentKind', () => {
   const invoice = { documentKey: 'invoice-a', reminders: [{ level: 1, date: '', dueDate: '', documentKey: 'invoice-a-reminder-1' }, { level: 2, date: '', dueDate: '', documentKey: 'invoice-a-reminder-2' }] };
@@ -11,15 +11,22 @@ describe('emailDocumentKind', () => {
 });
 
 describe('invoiceEmailSubject', () => {
-  it('invoice', () => expect(invoiceEmailSubject('invoice', 0, '202600001', 'Seeclub Stäfa')).toBe('Rechnung 202600001 – Seeclub Stäfa'));
-  it('level 1 is a Zahlungserinnerung', () => expect(invoiceEmailSubject('reminder', 1, '202600001', 'Seeclub Stäfa')).toBe('Zahlungserinnerung zu Rechnung 202600001 – Seeclub Stäfa'));
-  it('level 2', () => expect(invoiceEmailSubject('reminder', 2, '202600001', 'Seeclub Stäfa')).toBe('2. Mahnung zu Rechnung 202600001 – Seeclub Stäfa'));
-  it('level 3', () => expect(invoiceEmailSubject('reminder', 3, '1', 'X')).toBe('3. Mahnung zu Rechnung 1 – X'));
+  it('reminder subject uses the reminder name', () =>
+    expect(invoiceEmailSubject('reminder', 'Mahnung', '202600001', 'Seeclub Stäfa')).toBe('Mahnung zu Rechnung 202600001 – Seeclub Stäfa'));
+  it('invoice subject ignores the name', () =>
+    expect(invoiceEmailSubject('invoice', '', '202600001', 'Seeclub Stäfa')).toBe('Rechnung 202600001 – Seeclub Stäfa'));
+});
+
+describe('reminderMailFilename', () => {
+  it('reminder filename from the name', () =>
+    expect(reminderMailFilename('Letzte Mahnung', '202600001')).toBe('Letzte-Mahnung-202600001.pdf'));
+  it('reminder filename strips unsafe characters', () =>
+    expect(reminderMailFilename('Mahnung / 2', '202600001')).toBe('Mahnung-2-202600001.pdf'));
 });
 
 describe('invoiceEmailHtml', () => {
   it('invoice body carries id, amount, date and sign-off', () => {
-    const html = invoiceEmailHtml('invoice', 0, '202600001', '120.50', '31.10.2026', 'Seeclub');
+    const html = invoiceEmailHtml('invoice', '', '202600001', '120.50', '31.10.2026', 'Seeclub');
     expect(html).toContain('die Rechnung 202600001');
     expect(html).toContain('CHF 120.50 bis 31.10.2026');
     expect(html).toContain('Freundliche Grüsse');
@@ -27,13 +34,13 @@ describe('invoiceEmailHtml', () => {
     expect(html).not.toContain('!');
   });
   it('reminder body names the reminder and the open amount', () => {
-    const html = invoiceEmailHtml('reminder', 2, '7', '30.00', '15.11.2026', 'Seeclub');
+    const html = invoiceEmailHtml('reminder', '2. Mahnung', '7', '30.00', '15.11.2026', 'Seeclub');
     expect(html).toContain('2. Mahnung zu Rechnung 7');
     expect(html).toContain('offenen Betrag von CHF 30.00 bis 15.11.2026');
-    expect(invoiceEmailHtml('reminder', 1, '7', '1.00', 'd', 'o')).toContain('die Zahlungserinnerung zu Rechnung 7');
+    expect(invoiceEmailHtml('reminder', 'Zahlungserinnerung', '202600001', '120.00', '31.10.2026', 'SCS')).toContain('die Zahlungserinnerung zu Rechnung 202600001');
   });
   it('escapes markup in invoiceId and orgName', () => {
-    const html = invoiceEmailHtml('invoice', 0, '<script>a</script>', '1.00', 'd', '<b>x</b>');
+    const html = invoiceEmailHtml('invoice', '', '<script>a</script>', '1.00', 'd', '<b>x</b>');
     expect(html).not.toContain('<script>');
     expect(html).not.toContain('<b>');
     expect(html).toContain('&lt;script&gt;');
@@ -52,18 +59,18 @@ describe('invoice mail without a payment request (P3-R3)', () => {
     expect(invoiceEmailAsksPayment(undefined, 500)).toBe(false);
   });
   it('the neutral body names the invoice and asks for nothing', () => {
-    const html = invoiceEmailHtml('invoice', 0, '202600001', '0.00', '31.10.2026', 'Seeclub', false);
+    const html = invoiceEmailHtml('invoice', '', '202600001', '0.00', '31.10.2026', 'Seeclub', false);
     expect(html).toBe('<p>Hallo,</p><p>im Anhang findest du die Rechnung 202600001.</p><p>Freundliche Grüsse<br>Seeclub</p>');
     expect(html).not.toContain('überweise');
     expect(html).not.toContain('CHF');
   });
   it('the neutral body escapes its inputs too', () => {
-    const html = invoiceEmailHtml('invoice', 0, '<i>1</i>', '', '', '<b>x</b>', false);
+    const html = invoiceEmailHtml('invoice', '', '<i>1</i>', '', '', '<b>x</b>', false);
     expect(html).not.toContain('<i>');
     expect(html).not.toContain('<b>');
   });
   it('a reminder always asks for payment (it is only sent while payable)', () => {
-    expect(invoiceEmailHtml('reminder', 2, '7', '30.00', '15.11.2026', 'Seeclub', false)).toContain('offenen Betrag von CHF 30.00');
+    expect(invoiceEmailHtml('reminder', '2. Mahnung', '7', '30.00', '15.11.2026', 'Seeclub', false)).toContain('offenen Betrag von CHF 30.00');
   });
 });
 
@@ -78,7 +85,7 @@ describe('recipientDirectoryId', () => {
 describe('invoiceEmailHtml without a due date', () => {
   it('omits the bis clause', () => {
     for (const kind of ['invoice', 'reminder'] as const) {
-      const html = invoiceEmailHtml(kind, 1, '7', '30.00', '', 'Seeclub');
+      const html = invoiceEmailHtml(kind, 'Zahlungserinnerung', '7', '30.00', '', 'Seeclub');
       expect(html).toContain('CHF 30.00.');
       expect(html).not.toContain(' bis');
     }

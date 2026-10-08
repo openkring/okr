@@ -32,11 +32,15 @@ export function invoiceEmailAsksPayment(state: string | undefined, openAmountRap
   return isPayableState(state) && openAmountRappen > 0;
 }
 
-const reminderName = (level: number): string => (level <= 1 ? 'Zahlungserinnerung' : `${level}. Mahnung`);
-
-export function invoiceEmailSubject(kind: EmailKind, level: number, invoiceId: string, orgName: string): string {
-  const what = kind === 'invoice' ? 'Rechnung' : `${reminderName(level)} zu Rechnung`;
+export function invoiceEmailSubject(kind: EmailKind, reminderName: string, invoiceId: string, orgName: string): string {
+  const what = kind === 'invoice' ? 'Rechnung' : `${reminderName} zu Rechnung`;
   return `${what} ${invoiceId} – ${orgName}`;
+}
+
+/** Filename of a reminder PDF in a mail or download: the reminder name, dash-joined, then the invoice number. */
+export function reminderMailFilename(reminderName: string, invoiceId: string): string {
+  const name = reminderName.replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-+|-+$/g, '') || 'Mahnung';
+  return `${name}-${invoiceId}.pdf`;
 }
 
 const escapeHtml = (s: string): string =>
@@ -47,7 +51,7 @@ const escapeHtml = (s: string): string =>
  * invoice already paid, or nothing open) the invoice body only names the attachment — no payment request.
  */
 export function invoiceEmailHtml(
-  kind: EmailKind, level: number, invoiceId: string, amountDueChf: string, dueDateView: string, orgName: string, asksPayment = true,
+  kind: EmailKind, reminderName: string, invoiceId: string, amountDueChf: string, dueDateView: string, orgName: string, asksPayment = true,
 ): string {
   const id = escapeHtml(invoiceId);
   const signature = `<p>Freundliche Grüsse<br>${escapeHtml(orgName)}</p>`;
@@ -57,7 +61,7 @@ export function invoiceEmailHtml(
   const until = due ? ` bis ${due}` : '';
   const sentence = kind === 'invoice'
     ? `im Anhang findest du die Rechnung ${id}. Bitte überweise CHF ${amount}${until}.`
-    : `im Anhang findest du die ${escapeHtml(reminderName(level))} zu Rechnung ${id}. Bitte überweise den offenen Betrag von CHF ${amount}${until}.`;
+    : `im Anhang findest du die ${escapeHtml(reminderName)} zu Rechnung ${id}. Bitte überweise den offenen Betrag von CHF ${amount}${until}.`;
   return `<p>Hallo,</p><p>${sentence} Vielen Dank.</p>${signature}`;
 }
 

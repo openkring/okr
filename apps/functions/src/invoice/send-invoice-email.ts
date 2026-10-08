@@ -12,11 +12,11 @@ import { privateBucket } from '../_storage/private-bucket';
 import { reportToSentry } from '../srv/sentry';
 import { loadOwnedAccountingConfig, ReceiverRef, refuse } from './invoice-context';
 import { InvoiceLike, openAmount, ReminderLike } from './invoice-payment.logic';
-import { coalesceReminder, lastDueDate } from './invoice-reminder.logic';
+import { lastDueDate, markReminderSent, reminderDisplayName } from './invoice-reminder.logic';
 import { chf, viewDate, withoutUndefined } from './invoice.logic';
 import {
   ComposedInvoiceMail, emailDocumentKind, invoiceEmailAsksPayment, invoiceEmailHtml, invoiceEmailSubject,
-  normalizeComposedMail, recipientDirectoryId, scrubEmailAddresses, sendRefusal,
+  normalizeComposedMail, recipientDirectoryId, reminderMailFilename, scrubEmailAddresses, sendRefusal,
 } from './send-invoice-email.logic';
 import { emailDetails, writeFinanceHistory } from '../finance-history/finance-history';
 
@@ -27,6 +27,8 @@ const DRAFT_CF_NAME = 'getInvoiceEmailDraft';
 interface InvoiceEmailRequest {
   invoiceKey?: string;
   documentKey?: string;
+  /** A reminder mail also carries the invoice PDF (spec 1.90). Ignored for the invoice mail itself. */
+  attachInvoice?: boolean;
 }
 
 interface SendInvoiceEmailData extends InvoiceEmailRequest {
@@ -62,6 +64,9 @@ interface PreparedInvoiceMail {
   html: string;
   pdfPath: string;
   filename: string;
+  /** Storage path of the invoice PDF to attach to a reminder mail, '' when not attached. */
+  invoicePdfPath: string;
+  invoiceFilename: string;
 }
 
 /**
@@ -86,8 +91,10 @@ async function prepareInvoiceMail(db: Firestore, tenantId: string, data: Invoice
   const target = emailDocumentKind({ documentKey: String(invoice['documentKey'] ?? ''), reminders }, documentKey);
   if (!target) throw refuse('foreign-document', `document ${documentKey} does not belong to invoice ${invoiceKey}`);
   const level = target.kind === 'reminder' ? target.level : 0;
+  const reminder = target.kind === 'reminder' ? reminders?.find((r) => r.documentKey === documentKey) : undefined;
+  const name = reminder ? reminderDisplayName(reminder) : '';
   // defense in depth: the app offers "Mahnung senden" only on open invoices, "Rechnung senden" never on a cancelled one
-  const waivedAt = target.kind === 'reminder' ? String(reminders?.find((r) => r.level === target.level)?.waivedAt ?? '') : '';
+  const waivedAt = String(reminder?.waivedAt ?? '');
   const refusal = sendRefusal(target.kind, String(invoice['state'] ?? ''), waivedAt);
   if (refusal === 'not-payable') throw refuse('not-payable', `invoice ${invoiceKey} is ${String(invoice['state'] ?? '')}: no reminder mail`);
   if (refusal === 'already-waived') throw refuse('already-waived', `reminder ${level} of invoice ${invoiceKey} has its fee waived: no reminder mail`);
@@ -96,6 +103,15 @@ async function prepareInvoiceMail(db: Firestore, tenantId: string, data: Invoice
   const document = (await db.collection(FinanceDocumentCollection).doc(documentKey).get()).data();
   const pdfPath = String(document?.['fullPath'] ?? '');
   if (!document || !pdfPath || !((document['tenants'] as string[] | undefined) ?? []).includes(tenantId)) throw refuse('no-document', `finance-document ${documentKey} not found`);
+
+  const attachInvoice = target.kind === 'reminder' && data.attachInvoice === true;
+  let invoicePdfPath = '';
+  if (attachInvoice) {
+    const invoiceDocKey = String(invoice['documentKey'] ?? '');
+    const invoiceDoc = invoiceDocKey ? (await db.collection(FinanceDocumentCollection).doc(invoiceDocKey).get()).data() : undefined;
+    invoicePdfPath = String(invoiceDoc?.['fullPath'] ?? '');
+    if (!invoicePdfPath) throw refuse('no-document', `invoice ${invoiceKey} has no PDF to attach`);
+  }
 
   const dirId = recipientDirectoryId(tenantId, (invoice['receiver'] as ReceiverRef) ?? {});
   const dir = dirId ? (await db.collection('address-directory').doc(dirId).get()).data() : undefined;
@@ -112,16 +128,17 @@ async function prepareInvoiceMail(db: Firestore, tenantId: string, data: Invoice
     reminders,
   };
   const dueDate = target.kind === 'reminder'
-    ? String(reminders?.find((r) => r.level === level)?.dueDate ?? '')
+    ? String(reminder?.dueDate ?? '')
     : String(invoice['dueDate'] || lastDueDate({ dueDate: '', reminders }));
   const open = openAmount(likeInvoice);
   return {
     invoiceRef, target, level, favEmail,
     from: emailConfig.from,
-    subject: invoiceEmailSubject(target.kind, level, invoiceId, orgName),
-    html: invoiceEmailHtml(target.kind, level, invoiceId, chf(open), dueDate ? viewDate(dueDate) : '', orgName, invoiceEmailAsksPayment(likeInvoice.state, open)),
+    subject: invoiceEmailSubject(target.kind, name, invoiceId, orgName),
+    html: invoiceEmailHtml(target.kind, name, invoiceId, chf(open), dueDate ? viewDate(dueDate) : '', orgName, invoiceEmailAsksPayment(likeInvoice.state, open)),
     pdfPath,
-    filename: target.kind === 'invoice' ? `${invoiceId}.pdf` : `Mahnung-${level}-${invoiceId}.pdf`,
+    filename: target.kind === 'invoice' ? `${invoiceId}.pdf` : reminderMailFilename(name, invoiceId),
+    invoicePdfPath, invoiceFilename: `${invoiceId}.pdf`,
   };
 }
 
@@ -142,7 +159,7 @@ export const getInvoiceEmailDraft = onCall(
   async (request: CallableRequest<InvoiceEmailRequest>): Promise<InvoiceEmailDraft> => {
     const tenantId = await guard(request, DRAFT_CF_NAME);
     const prepared = await prepareInvoiceMail(getFirestore(), tenantId, request.data ?? {});
-    return { to: prepared.favEmail, from: prepared.from, subject: prepared.subject, body: prepared.html, filename: prepared.filename };
+    return { to: prepared.favEmail, from: prepared.from, subject: prepared.subject, body: prepared.html, filename: prepared.invoicePdfPath ? `${prepared.filename} + ${prepared.invoiceFilename}` : prepared.filename };
   },
 );
 
@@ -187,7 +204,18 @@ export const sendInvoiceEmail = onCall(
       logger.error(`${CF_NAME}: PDF of ${documentKey} could not be read`, { detail: String((e as Error)?.message ?? e).slice(0, 300) });
       throw refuse('no-document', `the PDF of ${documentKey} is missing`);
     }
-    const attachments: EmailAttachment[] = [{ filename: prepared.filename, content, contentType: 'application/pdf' }, ...extra];
+    const attachments: EmailAttachment[] = [{ filename: prepared.filename, content, contentType: 'application/pdf' }];
+    if (prepared.invoicePdfPath) {
+      try {
+        const [invoiceContent] = await privateBucket().file(prepared.invoicePdfPath).download();
+        attachments.push({ filename: prepared.invoiceFilename, content: invoiceContent, contentType: 'application/pdf' });
+      } catch (e) {
+        logger.error(`${CF_NAME}: invoice PDF of ${invoiceRef.id} could not be read`, { detail: String((e as Error)?.message ?? e).slice(0, 300) });
+        throw refuse('no-document', `the PDF of invoice ${invoiceRef.id} is missing`);
+      }
+    }
+    attachments.push(...extra);
+    const attachedLabel = prepared.invoicePdfPath ? `${prepared.filename} + ${prepared.invoiceFilename}` : prepared.filename;
 
     const providerSnap = await db.collection('app-config').doc(tenantId).get();
     const provider = String(providerSnap.data()?.['emailProvider'] ?? DEFAULT_EMAIL_PROVIDER);
@@ -214,7 +242,7 @@ export const sendInvoiceEmail = onCall(
 
     await writeFinanceHistory(db, {
       tenantId, uid: request.auth?.uid, parentKey: `invoice.${invoiceRef.id}`, kind: 'email',
-      details: emailDetails({ to, cc, bcc, subject, filename: prepared.filename, extraFiles: extra.map((a) => a.filename) }),
+      details: emailDetails({ to, cc, bcc, subject, filename: attachedLabel, extraFiles: extra.map((a) => a.filename) }),
     });
 
     const sentAt = getTodayStr(DateFormat.StoreDate);
@@ -226,8 +254,8 @@ export const sendInvoiceEmail = onCall(
         if (target.kind === 'invoice') {
           tx.update(invoiceRef, { sentAt, sentVia: 'email' });
         } else {
-          const list = ((fresh['reminders'] as ReminderLike[] | undefined) ?? []).map((r) => coalesceReminder(r.level === level ? { ...r, isSent: true } : r));
-          tx.update(invoiceRef, withoutUndefined({ reminders: list }));
+          const list = markReminderSent(fresh['reminders'] as ReminderLike[] | undefined, documentKey, sentAt, 'email');
+          if (list) tx.update(invoiceRef, withoutUndefined({ reminders: list }));
         }
       });
     } catch (e) {

@@ -7,13 +7,18 @@ import { DateFormat, getTodayStr } from '@okr/shared-util-core';
 import { checkAppCheckToken, checkAuthentication, checkRoles, getCallerTenantId } from '@okr/shared-util-functions';
 
 import { refuse } from './invoice-context';
+import { ReminderLike } from './invoice-payment.logic';
+import { markReminderSent, reminderDisplayName } from './invoice-reminder.logic';
+import { withoutUndefined } from './invoice.logic';
 import { writeFinanceHistory } from '../finance-history/finance-history';
+import { historyDetails } from '../finance-history/finance-history.logic';
 
 const REGION = 'europe-west6';
 const CF_NAME = 'markInvoiceSent';
 
 interface MarkInvoiceSentData {
   invoiceKey?: string;
+  documentKey?: string; // a reminder's key marks that reminder (spec 1.90); absent = the invoice
 }
 
 /**
@@ -34,11 +39,21 @@ export const markInvoiceSent = onCall(
     const db = getFirestore();
     const invoiceRef = db.collection(InvoiceCollection).doc(invoiceKey);
     const sentAt = getTodayStr(DateFormat.StoreDate);
+    let reminderName = '';
     await db.runTransaction(async (tx) => {
       const invoice = (await tx.get(invoiceRef)).data();
       if (!invoice) throw new HttpsError('not-found', `invoice ${invoiceKey} not found`);
       if (!((invoice['tenants'] as string[] | undefined) ?? []).includes(tenantId)) {
         throw new HttpsError('permission-denied', 'invoice belongs to another tenant');
+      }
+      const documentKey = request.data?.documentKey;
+      if (typeof documentKey === 'string' && documentKey && documentKey !== invoice['documentKey']) {
+        // a reminder sent by post: recording a fact, allowed in every invoice state (spec 1.90 §5.3)
+        const list = markReminderSent(invoice['reminders'] as ReminderLike[] | undefined, documentKey, sentAt, 'post');
+        if (!list) throw refuse('foreign-document', `document ${documentKey} does not belong to invoice ${invoiceKey}`);
+        tx.update(invoiceRef, withoutUndefined({ reminders: list }));
+        reminderName = reminderDisplayName(list.find((r) => r.documentKey === documentKey) as ReminderLike);
+        return;
       }
       const state = String(invoice['state'] ?? '');
       if (state === 'draft' || state === 'issuing' || state === 'cancelled' || !invoice['documentKey']) {
@@ -46,7 +61,7 @@ export const markInvoiceSent = onCall(
       }
       tx.update(invoiceRef, { sentAt, sentVia: 'post' });
     });
-    await writeFinanceHistory(db, { tenantId, uid: request.auth?.uid, parentKey: `invoice.${invoiceKey}`, kind: 'post' });
+    await writeFinanceHistory(db, { tenantId, uid: request.auth?.uid, parentKey: `invoice.${invoiceKey}`, kind: 'post', details: reminderName ? historyDetails(reminderName) : undefined });
     logger.info(`${CF_NAME}: ${invoiceKey} marked as sent by post (tenant=${tenantId})`);
     return { sentAt };
   },
