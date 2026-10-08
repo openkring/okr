@@ -139,6 +139,52 @@
       "density": "SPARSE_ALL"
     },
     {
+      "collectionGroup": "budget-versions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "tenants",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "accountingTenantId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "fiscalYear",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "budget-lines",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "tenants",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "accountingTenantId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "versionKey",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
       "collectionGroup": "activities",
       "queryScope": "COLLECTION",
       "fields": [

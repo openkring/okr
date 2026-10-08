@@ -50,3 +50,20 @@ export function isBudgetableAccount(account: AccountModel, accounts: AccountMode
   if (account.isArchived || !isProfitAndLossAccountId(account.id)) return false;
   return !accounts.some(a => a.parentKey === account.okey && !a.isArchived);
 }
+
+/**
+ * Splits writes into Firestore batches (limit 500). The first chunk keeps `firstReserved` slots for
+ * documents written alongside (the version doc), so 900 items → 399 / 400 / 101. No items still
+ * yields one empty chunk, because the version itself must be written.
+ */
+export function chunkWrites<T>(items: T[], size = 400, firstReserved = 1): T[][] {
+  const chunks: T[][] = [];
+  let i = 0;
+  let take = Math.max(1, size - firstReserved);
+  do {
+    chunks.push(items.slice(i, i + take));
+    i += take;
+    take = size;
+  } while (i < items.length);
+  return chunks;
+}

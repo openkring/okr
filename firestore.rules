@@ -348,6 +348,27 @@ service cloud.firestore {
     match /accounts/{id}           { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
     // Kostenstellen (spec 1.65 §8.3): treasurer/admin only; archive instead of delete.
     match /cost-centers/{id} { allow read: if tenantRead() && (hasRole('treasurer') || isAdmin()); allow create, update: if (hasRole('treasurer') || isAdmin()) && tenantCreateOrDetach(); allow delete: if false; }
+
+    // Budgets (spec 1.65 §8.3): treasurer/admin only. approved → only superseded; superseded frozen.
+    // A budget line may be written only while its version is a draft (getAfter: a copy creates the
+    // version and its first lines in one batch).
+    function isTreasurerOrAdmin() { return hasRole('treasurer') || isAdmin(); }
+    match /budget-versions/{id} {
+      allow read: if tenantRead() && isTreasurerOrAdmin();
+      allow create: if isTreasurerOrAdmin() && tenantCreateOrDetach() && request.resource.data.status == 'draft';
+      allow update: if isTreasurerOrAdmin() && tenantCreateOrDetach() && (
+        resource.data.status == 'draft'
+        || (resource.data.status == 'approved' && request.resource.data.status == 'superseded'
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])));
+      allow delete: if false;
+    }
+    match /budget-lines/{id} {
+      allow read: if tenantRead() && isTreasurerOrAdmin();
+      allow create, update: if isTreasurerOrAdmin() && tenantCreateOrDetach()
+        && getAfter(/databases/$(database)/documents/budget-versions/$(request.resource.data.versionKey)).data.status == 'draft';
+      allow delete: if isTreasurerOrAdmin() && tenantDelete()
+        && get(/databases/$(database)/documents/budget-versions/$(resource.data.versionKey)).data.status == 'draft';
+    }
     // Activities are the audit log. Authenticated tenant members write normal activities.
     // Auth-scope events (login/logout) are logged by ActivityService.logAuth pre-auth or
     // during the post-signIn token-propagation race, i.e. with request.auth == null. Allow

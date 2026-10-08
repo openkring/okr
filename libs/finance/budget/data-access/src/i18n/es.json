@@ -1,0 +1,14 @@
+{
+  "create": {
+    "conf": "La versión del presupuesto se ha creado.",
+    "error": "No se ha podido crear la versión del presupuesto."
+  },
+  "update": {
+    "conf": "Los cambios se han guardado.",
+    "error": "No se han podido guardar los cambios."
+  },
+  "archive": {
+    "conf": "La versión del presupuesto se ha archivado.",
+    "error": "No se ha podido archivar la versión del presupuesto."
+  }
+}

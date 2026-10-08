@@ -1,0 +1,14 @@
+{
+  "create": {
+    "conf": "The budget version was created.",
+    "error": "The budget version could not be created."
+  },
+  "update": {
+    "conf": "The changes were saved.",
+    "error": "The changes could not be saved."
+  },
+  "archive": {
+    "conf": "The budget version was archived.",
+    "error": "The budget version could not be archived."
+  }
+}

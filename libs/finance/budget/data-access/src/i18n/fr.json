@@ -1,0 +1,14 @@
+{
+  "create": {
+    "conf": "La version du budget a été créée.",
+    "error": "La version du budget n'a pas pu être créée."
+  },
+  "update": {
+    "conf": "Les modifications ont été enregistrées.",
+    "error": "Les modifications n'ont pas pu être enregistrées."
+  },
+  "archive": {
+    "conf": "La version du budget a été archivée.",
+    "error": "La version du budget n'a pas pu être archivée."
+  }
+}

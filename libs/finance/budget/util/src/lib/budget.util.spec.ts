@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { AccountModel, BudgetLineModel, BudgetVersionModel, MoneyModel } from '@okr/shared-models';
 
-import { budgetCellKey, copyBudgetLines, isBudgetableAccount, isVersionEditable, newestApprovedBudget, planApproval } from './budget.util';
+import { budgetCellKey, chunkWrites, copyBudgetLines, isBudgetableAccount, isVersionEditable, newestApprovedBudget, planApproval } from './budget.util';
 
 const v = (okey: string, p: Partial<BudgetVersionModel>): BudgetVersionModel =>
   ({ ...new BudgetVersionModel('scs', 'scs', 2027), okey, ...p });
@@ -71,5 +71,21 @@ describe('isBudgetableAccount', () => {
   it('archived -> false', () => {
     const arch = acct('a6100', '6100', { isArchived: true });
     expect(isBudgetableAccount(arch, [arch])).toBe(false);
+  });
+});
+
+describe('chunkWrites', () => {
+  const items = (n: number) => Array.from({ length: n }, (_, i) => i);
+  it('splits 900 items into 399 / 400 / 101 (first batch keeps a slot for the version doc)', () => {
+    expect(chunkWrites(items(900)).map(c => c.length)).toEqual([399, 400, 101]);
+  });
+  it('returns one empty chunk for no items so the version is still written', () => {
+    expect(chunkWrites([])).toEqual([[]]);
+  });
+  it('keeps 399 items in a single chunk', () => {
+    expect(chunkWrites(items(399)).map(c => c.length)).toEqual([399]);
+  });
+  it('preserves order and loses nothing', () => {
+    expect(chunkWrites(items(900)).flat()).toEqual(items(900));
   });
 });

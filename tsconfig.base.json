@@ -88,6 +88,7 @@
       "@okr/finance-cost-center-feature": ["libs/finance/cost-center/feature/src/index.ts"],
       "@okr/finance-cost-center-ui": ["libs/finance/cost-center/ui/src/index.ts"],
       "@okr/finance-cost-center-util": ["libs/finance/cost-center/util/src/index.ts"],
+      "@okr/finance-budget-data-access": ["libs/finance/budget/data-access/src/index.ts"],
       "@okr/finance-budget-util": ["libs/finance/budget/util/src/index.ts"],
       "@okr/finance-accounting-data-access": ["libs/finance/accounting/data-access/src/index.ts"],
       "@okr/finance-accounting-feature": ["libs/finance/accounting/feature/src/index.ts"],
