@@ -1,5 +1,6 @@
+import { generateQrReference, isValidQrReference } from '@okr/shared-util-core';
 import { describe, expect, it } from 'vitest';
-import { coalesceReminder, configReminderFee, dunningTemplateRefusal, isReminderDue, isValidRequestId, lastDueDate, legacyLevelFee, markReminderSent, nextReminderLevel, ReminderLike, reminderBlockers, reminderByRequest, reminderDisplayName, reminderDueDate, reminderFeeLines, reminderFeeSum, reminderKey, unwaivedFeeKeys, waiveBlockers, waiverKey } from './invoice-reminder.logic';
+import { coalesceReminder, configReminderFee, dunningTemplateRefusal, isReminderDue, isValidRequestId, lastDueDate, legacyLevelFee, markReminderSent, nextReminderLevel, missingQrReference, ReminderLike, reminderBlockers, reminderByRequest, reminderDisplayName, reminderDueDate, reminderFeeLines, reminderFeeSum, reminderKey, unwaivedFeeKeys, waiveBlockers, waiverKey } from './invoice-reminder.logic';
 
 const inv = (o = {}) => ({ state: 'pending', dueDate: '20261010', reminders: [] as ReminderLike[], ...o });
 
@@ -154,4 +155,20 @@ describe('legacyLevelFee (pre-1.90 clients charge the fee of the requested level
     expect(legacyLevelFee({ reminderFees: [1000] }, 3)).toBe(0);
     expect(legacyLevelFee({ reminderFees: [1000, 2500, 4000] }, 0)).toBe(0);
   });
+});
+
+describe('missingQrReference (migrated invoices, spec 1.90)', () => {
+  it('derives a reference from the numeric bexio key of a migrated invoice', () => {
+    const ref = missingQrReference({ okey: '1912', invoiceId: 'REA-01912', paymentReference: '' });
+    expect(ref).toBe(generateQrReference('9900001912'));
+    expect(isValidQrReference(ref)).toBe(true);
+  });
+  it('falls back to the digits of the invoice id', () =>
+    expect(missingQrReference({ okey: 'abc', invoiceId: 'REA-02076' })).toBe(generateQrReference('9900002076')));
+  it('never collides with a native reference (year * 100000 + n)', () =>
+    expect(missingQrReference({ okey: '202600001', invoiceId: 'REA-202600001' })).not.toBe(generateQrReference(202600001)));
+  it('keeps an existing reference', () =>
+    expect(missingQrReference({ okey: '1912', invoiceId: 'REA-01912', paymentReference: '000000000000000002026000014' })).toBeUndefined());
+  it('gives up without any digits', () => expect(missingQrReference({ okey: 'abc', invoiceId: 'REA-X' })).toBeUndefined());
+  it('gives up on numbers too long for the namespace', () => expect(missingQrReference({ okey: '123456789', invoiceId: '' })).toBeUndefined());
 });

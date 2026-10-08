@@ -15,7 +15,7 @@ import { assertLeafAccount, loadOwnedAccountingConfig, receiverAddress, receiver
 import { InvoiceLike, isValidStoreDate, openAmount } from './invoice-payment.logic';
 import { confirmationDocumentFields } from './payment-confirmation.logic';
 import {
-  coalesceReminder, dunningTemplateRefusal, isValidRequestId, legacyLevelFee, nextReminderLevel, reminderBlockers, reminderByRequest,
+  coalesceReminder, missingQrReference, dunningTemplateRefusal, isValidRequestId, legacyLevelFee, nextReminderLevel, reminderBlockers, reminderByRequest,
   reminderDueDate, reminderFeeLines, reminderKey, ReminderLike, storedReminder,
 } from './invoice-reminder.logic';
 import { invoiceBookingIndex, issuePeriodKeys, recipientFields, viewDate, withoutUndefined } from './invoice.logic';
@@ -129,6 +129,16 @@ export const createInvoiceReminder = onCall(
       await assertPeriodsOpen(db, issuePeriodKeys(accountingTenantId, date, fiscalYearStart));
     }
     const lvl = nextReminderLevel(pre['reminders'] as ReminderLike[] | undefined);
+
+    // ---- 2b. a migrated invoice gets its QR reference now, so the slip uses the QR-IBAN (spec 1.90) ----
+    const reference = missingQrReference({ okey: invoiceKey, invoiceId: String(pre['invoiceId'] ?? ''), paymentReference: String(pre['paymentReference'] ?? '') });
+    if (reference) {
+      await db.runTransaction(async (tx) => {
+        const current = (await tx.get(invoiceRef)).data();
+        if (current && !String(current['paymentReference'] ?? '').trim()) tx.update(invoiceRef, { paymentReference: reference });
+      });
+      logger.info(`${CF_NAME}: ${invoiceKey} got QR reference ${reference} for its reminder slip`);
+    }
 
     // ---- 3. render outside the transaction, register the document ----
     const key = reminderKey(invoiceKey, lvl);

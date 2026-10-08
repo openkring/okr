@@ -5,7 +5,7 @@
  */
 
 import { DEFAULT_REMINDER_FEES } from '@okr/shared-models';
-import { addDuration } from '@okr/shared-util-core';
+import { addDuration, generateQrReference, normalizeQrReference } from '@okr/shared-util-core';
 import { isPayableState, isValidStoreDate, isWaivedReminder, PaymentBookingLine, ReminderLike, reminderFeeSum } from './invoice-payment.logic';
 
 export type { ReminderLike };
@@ -162,3 +162,21 @@ export const coalesceReminder = (r: ReminderLike): ReminderLike => ({
   waivedAt: r.waivedAt ?? '', waiveBookingKey: r.waiveBookingKey ?? '',
   templateId: r.templateId ?? '', templateName: r.templateName ?? '', sentAt: r.sentAt ?? '', sentVia: r.sentVia ?? '', requestId: r.requestId ?? '',
 });
+
+/** Namespace prefix of references given to migrated invoices; native ones are year * 100000 + n (9 digits). */
+const MIGRATED_REFERENCE_PREFIX = '99';
+const MIGRATED_NUMBER_DIGITS = 8;
+
+/**
+ * The QR reference a migrated (bexio) invoice gets when its first reminder is created, so the reminder slip can
+ * use the QR-IBAN and the payment is matched on import (spec 1.90). Derived from the numeric bexio key (or the
+ * digits of the invoice id) in its own namespace `99nnnnnnnn`, so it is deterministic and never collides with a
+ * native reference. undefined when the invoice already has a reference or no usable number.
+ */
+export function missingQrReference(invoice: { okey?: string; invoiceId?: string; paymentReference?: string }): string | undefined {
+  if (normalizeQrReference(invoice.paymentReference)) return undefined;
+  const fromKey = /^\d+$/.test(invoice.okey ?? '') ? (invoice.okey as string) : '';
+  const digits = String(Number(fromKey || (invoice.invoiceId ?? '').replace(/\D/g, '') || 'NaN'));
+  if (!/^\d+$/.test(digits) || digits === '0' || digits.length > MIGRATED_NUMBER_DIGITS) return undefined;
+  return generateQrReference(MIGRATED_REFERENCE_PREFIX + digits.padStart(MIGRATED_NUMBER_DIGITS, '0'));
+}
