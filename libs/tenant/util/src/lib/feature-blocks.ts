@@ -890,8 +890,8 @@ const subject: FeatureBlock = {
   // WHY AN EDGE HERE BUT CO-DECLARATION FOR `chat`, and why this one does NOT close a cycle —
   // the two questions are the same question. The handoff note left this branch open on
   // purpose: an edge is correct only if `task` does not itself depend on `subject`. RE-VERIFIED
-  // at the time of writing rather than inherited: every `@okr/*` import under `libs/task` is
-  // `@okr/task-*`, `@okr/shared-*`, `@okr/comment-feature`, `@okr/cms-menu-feature`,
+  // at the time of writing rather than inherited: every `@okr/*` import under `libs/project/task` is
+  // `@okr/project-task-*`, `@okr/shared-*`, `@okr/comment-feature`, `@okr/cms-menu-feature`,
   // `@okr/avatar-*` (all three `core: true`) and `@okr/activity-data-access` (the settled
   // no-edge class) — no `@okr/subject-*` lib anywhere. `task` therefore ships `dependsOn: []`
   // and this edge leaves the graph acyclic; the guard in
@@ -2204,13 +2204,13 @@ const activity: FeatureBlock = {
 };
 
 /**
- * `libs/task/{data-access,feature,ui,util}` — the shared todo list. `TaskList` renders both the
+ * `libs/project/task/{data-access,feature,ui,util}` — the shared todo list. `TaskList` renders both the
  * tenant-wide list (`/task/all/c-tasks`) and a member's own (`/task/my/c-tasks`), and is ALSO
  * embedded, un-routed, in two other places: the group view's "Aufgaben" segment
  * (`group-view.page.ts:18`) and, through `TaskEditModal`, finance's expense screen
  * (`expense.store.ts:123`) and the CMS `tasks` section (`tasks-section.store.ts:14`).
  *
- * `dependsOn: []` — verified by listing every `@okr/*` import under `libs/task`: `@okr/task-*`,
+ * `dependsOn: []` — verified by listing every `@okr/*` import under `libs/project/task`: `@okr/project-task-*`,
  * `@okr/shared-*`, `@okr/comment-feature`, `@okr/cms-menu-feature`, `@okr/avatar-*` (three
  * `core: true` blocks, which by the settled convention are never declared) and
  * `@okr/activity-data-access` (`task.service.ts` — `ActivityService.log`, the settled no-edge
@@ -2341,7 +2341,7 @@ const task: FeatureBlock = {
  * `InstrumentTopic` carries a polymorphic `sourceType`/`sourceKey` pair documented as
  * `'task' | 'objective' | 'risk'`, i.e. a topic card may LINK to a task. That is not an edge and
  * not even a code dependency — the primitive renders a source chip from display data handed to
- * it and emits an intent; it imports nothing from `@okr/task-*` (grepped).
+ * it and emits an intent; it imports nothing from `@okr/project-task-*` (grepped).
  *
  * NOTHING DEPENDS ON IT either: before this task, the only files outside `libs/instruments`
  * naming an `@okr/instruments-*` alias at all were `apps/scs-app/src/app/app.routes.ts` and the
