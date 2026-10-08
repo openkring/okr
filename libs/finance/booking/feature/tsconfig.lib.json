@@ -32,6 +32,7 @@
     { "path": "../../period/data-access/tsconfig.lib.json" },
     { "path": "../../reporting/util/tsconfig.lib.json" },
     { "path": "../../vat-code/data-access/tsconfig.lib.json" },
+    { "path": "../../../project/project/data-access/tsconfig.lib.json" },
     { "path": "../../../shared/data-access/tsconfig.lib.json" },
     { "path": "../../../shared/feature/tsconfig.lib.json" },
     { "path": "../../../shared/i18n/tsconfig.lib.json" },

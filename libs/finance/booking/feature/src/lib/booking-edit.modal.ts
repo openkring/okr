@@ -3,7 +3,7 @@ import { ActionSheetController, IonAccordionGroup, IonCard, IonCardContent, IonC
 
 import { ModelSelectService } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
-import { AccountModel, AvatarInfo, BookingLineModel, BookingModel, BookingModelName, UserModel, VatCodeModel } from '@okr/shared-models';
+import { AccountModel, AvatarInfo, BookingLineModel, BookingModel, BookingModelName, ProjectModel, UserModel, VatCodeModel } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
 import { dismissOverlay } from '@okr/shared-util-angular';
 import { coerceBoolean, safeStructuredClone } from '@okr/shared-util-core';
@@ -39,6 +39,7 @@ import { BOOKING_I18N_KEYS, BookingFormData, BookingI18n, pairsToLines, toBookin
           [accounts]="accounts()"
           [vatCodes]="vatCodes()"
           [costCenters]="costCenterStore.costCenters()"
+          [projects]="projects()"
           [costCentersEnabled]="costCenterStore.isEnabled()"
           [bookDefaultCostCenterKey]="bookDefaultCostCenterKey()"
           [locale]="locale()"
@@ -80,6 +81,8 @@ export class BookingEditModal {
   public readonly currentUser = input<UserModel | undefined>(undefined);
   public readonly accounts = input<AccountModel[]>([]);
   public readonly vatCodes = input<VatCodeModel[]>([]);
+  /** all projects of the tenant incl. archived (Kostenträger picker) */
+  public readonly projects = input<ProjectModel[]>([]);
   public readonly locale = input('de-ch');
 
   protected readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()));

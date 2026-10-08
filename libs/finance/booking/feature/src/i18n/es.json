@@ -133,6 +133,9 @@
     "costCenter": {
       "label": "Centro de costes"
     },
+    "project": {
+      "label": "Proyecto"
+    },
     "details": {
       "toggle": "Moneda extranjera, IVA, centro de costes e intercambio de cuentas"
     },
@@ -168,6 +171,7 @@
   "write": {
     "failed": "No se ha podido guardar el asiento.",
     "costCenterInvalid": "El centro de costes elegido ya no está activo — elige otro.",
+    "projectInvalid": "El proyecto elegido ya no está activo — elige otro.",
     "billBooking": "Este asiento pertenece a una factura de proveedor y no se edita aquí. Elimínalo si la factura debe volver a ser un borrador.",
     "billHasPayments": "La factura de proveedor de este asiento ya tiene pagos. Quita primero los pagos y después podrás eliminar el asiento."
   }

@@ -15,6 +15,7 @@
     "@okr/shared-util-angular": "*",
     "@okr/finance-account-ui": "*",
     "@okr/finance-cost-center-ui": "*",
+    "@okr/project-project-ui": "*",
     "@okr/finance-booking-util": "*",
     "@okr/avatar-ui": "*"
   }

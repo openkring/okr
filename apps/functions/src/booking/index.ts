@@ -1,9 +1,9 @@
 import { onCall, CallableRequest, HttpsError } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
-import { getFirestore } from 'firebase-admin/firestore';
+import { Firestore, getFirestore } from 'firebase-admin/firestore';
 
 import { checkAppCheckToken, checkAuthentication, checkRoles, getCallerTenantId, formatRejectNote, isBalanced, nextBookingNo } from '@okr/shared-util-functions';
-import { convertDateFormatToString, DateFormat, getTodayStr } from '@okr/shared-util-core';
+import { convertDateFormatToString, DateFormat, getTodayStr, isAssignableProject, isProfitAndLossAccountId } from '@okr/shared-util-core';
 
 import { assertExplicitCostCenter, costCenterKeyForLine, loadCostCenterContext } from '../cost-center/cost-center-context';
 import { assertPeriodsOpen, loadFiscalYearStart, touchedPeriodKeys } from './period-lock';
@@ -23,11 +23,39 @@ const USERS_COLLECTION = 'users';
 
 const MAX_REASON_LENGTH = 500;
 
+const PROJECT_COLLECTION = 'projects';
+
+/**
+ * Kostenträger per line (spec 3.14 Phase 4): every distinct project key of the request must be an
+ * active project of the app tenant (projects live in the okr tenant, not in the accounting tenant) —
+ * a key already stored on that booking is grandfathered, like a Kostenstelle. Plain reads: call before the transaction.
+ */
+async function assertProjectsAssignable(
+  database: Firestore, tenantId: string, lines: { projectKey?: string }[], oldLineDocs: { data(): Record<string, unknown> }[],
+): Promise<void> {
+  const grandfathered = new Set(oldLineDocs.map(s => ((s.data()['projectKey'] as string | undefined) ?? '').trim()).filter(k => !!k));
+  const keys = [...new Set(lines.map(l => (l.projectKey ?? '').trim()).filter(k => !!k && !grandfathered.has(k)))];
+  if (keys.length === 0) return;
+  const snaps = await database.getAll(...keys.map(k => database.collection(PROJECT_COLLECTION).doc(k)));
+  snaps.forEach((snap, i) => {
+    if (!isAssignableProject(snap.data() as { isArchived?: boolean; tenants?: string[] } | undefined, tenantId)) {
+      throw new HttpsError('invalid-argument', `project-invalid: ${keys[i]}`, { reason: 'project-invalid', projectKey: keys[i] });
+    }
+  });
+}
+
+/** The Kostenträger written on a line: explicit only, P&L accounts only; '' otherwise (legacy = absent = ''). */
+function projectKeyForLine(ctx: { accounts: Map<string, { id?: string }> }, line: { accountKey: string; projectKey?: string }): string {
+  const key = (line.projectKey ?? '').trim();
+  return key && isProfitAndLossAccountId(ctx.accounts.get(line.accountKey)?.id) ? key : '';
+}
+
 interface ReviewLine {
   accountKey: string;
   debitAmount?: { amount: number; currency: string } | null;
   creditAmount?: { amount: number; currency: string } | null;
   costCenterKey?: string;
+  projectKey?: string;
 }
 
 interface ReviewBookingData {
@@ -111,6 +139,7 @@ export const reviewBooking = onCall(
     );
     if (decision === 'approve' && newLines && reviewCtx) {
       for (const line of newLines) assertExplicitCostCenter(reviewCtx, line.accountKey, line.costCenterKey, reviewGrandfathered);
+      await assertProjectsAssignable(db, tenantId, newLines, oldLineDocs);
     }
     const reviewer = decision === 'reject' ? await reviewerName(db, request.auth!.uid) : '';
     const fiscalYearStart = decision === 'approve' ? await loadFiscalYearStart(db, pre['accountingTenantId'] as string) : 1;
@@ -170,6 +199,7 @@ export const reviewBooking = onCall(
             tenants: [tenantId], isArchived: false,
             bookingKey, accountKey: line.accountKey,
             ...(costCenterKey ? { costCenterKey } : {}),
+            projectKey: projectKeyForLine(reviewCtx!, line),
             ...(line.debitAmount ? { debitAmount: { ...line.debitAmount, periodicity: 'one-time' } } : {}),
             ...(line.creditAmount ? { creditAmount: { ...line.creditAmount, periodicity: 'one-time' } } : {}),
             accountingTenantId,
@@ -202,6 +232,7 @@ interface WriteLine {
   vatCodeKey?: string;
   description?: string;
   costCenterKey?: string;
+  projectKey?: string;
 }
 
 interface WriteBookingData {
@@ -304,6 +335,7 @@ export const writeBooking = onCall(
       oldLineDocs.map(s => (s.data()['costCenterKey'] as string | undefined) ?? '').filter(k => !!k),
     );
     for (const line of lines) assertExplicitCostCenter(ctx, line.accountKey, line.costCenterKey, grandfathered);
+    await assertProjectsAssignable(db, tenantId, lines, oldLineDocs);
 
     const bookingNo = await db.runTransaction(async (tx) => {
       await assertPeriodsOpen(db, periodKeys, tx);
@@ -333,6 +365,7 @@ export const writeBooking = onCall(
           tenants: [tenantId], isArchived: false,
           bookingKey, accountKey: line.accountKey, accountingTenantId,
           ...(costCenterKey ? { costCenterKey } : {}),
+          projectKey: projectKeyForLine(ctx, line),
           ...(line.debitAmount ? { debitAmount: { ...line.debitAmount, periodicity: 'one-time' } } : {}),
           ...(line.creditAmount ? { creditAmount: { ...line.creditAmount, periodicity: 'one-time' } } : {}),
           ...(line.amountFx ? { amountFx: { ...line.amountFx, periodicity: 'one-time' } } : {}),

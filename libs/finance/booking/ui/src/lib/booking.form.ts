@@ -2,7 +2,7 @@ import { Component, computed, effect, input, model, output, signal } from '@angu
 import { form } from '@angular/forms/signals';
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonImg, IonItem, IonLabel, IonNote, IonRow } from '@ionic/angular/standalone';
 
-import { AccountModel, AvatarInfo, CostCenterModel, RoleName, UserModel, VatCodeModel } from '@okr/shared-models';
+import { AccountModel, AvatarInfo, CostCenterModel, ProjectModel, RoleName, UserModel, VatCodeModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { AmountInput, AmountInputI18n, DateInput, DateInputI18n, ErrorNote, NotesInput, NotesInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { validateVestTree } from '@okr/shared-util-angular';
@@ -11,6 +11,7 @@ import { coerceBoolean, hasRole, isProfitAndLossAccountId } from '@okr/shared-ut
 import { AvatarPipe } from '@okr/avatar-ui';
 import { AccountSelect, AccountSelectI18n } from '@okr/finance-account-ui';
 import { CostCenterSelect, CostCenterSelectI18n } from '@okr/finance-cost-center-ui';
+import { ProjectSelect } from '@okr/project-project-ui';
 import { accountDefaultCostCenterKey, addBookingPart, BOOKING_LINE_TEXT_LENGTH, BookingFormData, BookingI18n, BookingPair, bookingValidations, counterpartyLabel, formatMinorAmount, pairsTotal, removeBookingPart, withPairAccount, withSplitTitle } from '@okr/finance-booking-util';
 
 /**
@@ -25,7 +26,7 @@ import { accountDefaultCostCenterKey, addBookingPart, BOOKING_LINE_TEXT_LENGTH, 
   selector: 'okr-booking-form',
   standalone: true,
   imports: [
-    SvgIconPipe, DateInput, TextInput, AmountInput, StringSelect, NotesInput, ErrorNote, AccountSelect, CostCenterSelect,
+    SvgIconPipe, DateInput, TextInput, AmountInput, StringSelect, NotesInput, ErrorNote, AccountSelect, CostCenterSelect, ProjectSelect,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonButton, IonIcon, IonItem, IonLabel, IonNote, IonAvatar, IonImg, AvatarPipe,
   ],
   styles: [`
@@ -154,6 +155,22 @@ import { accountDefaultCostCenterKey, addBookingPart, BOOKING_LINE_TEXT_LENGTH, 
                       </ion-col>
                     </ion-row>
                   }
+                  @if (showDebitProject(pair) || showCreditProject(pair)) {
+                    <ion-row class="details-row ion-align-items-center">
+                      <ion-col size="12" [sizeMd]="accountColMd()">
+                        @if (showDebitProject(pair)) {
+                          <okr-project-select [projects]="projects()" [label]="i18n().form_project_label()"
+                            [selectedKey]="pair.debitProjectKey" (selectedKeyChange)="onPairChange(i, 'debitProjectKey', $event)" [readOnly]="isReadOnly()" />
+                        }
+                      </ion-col>
+                      <ion-col size="12" [sizeMd]="accountColMd()">
+                        @if (showCreditProject(pair)) {
+                          <okr-project-select [projects]="projects()" [label]="i18n().form_project_label()"
+                            [selectedKey]="pair.creditProjectKey" (selectedKeyChange)="onPairChange(i, 'creditProjectKey', $event)" [readOnly]="isReadOnly()" />
+                        }
+                      </ion-col>
+                    </ion-row>
+                  }
                   <ion-row class="details-row ion-align-items-center">
                     <ion-col size="12" size-md="1" class="ion-text-center">
                       @if (!isReadOnly()) {
@@ -206,6 +223,8 @@ export class BookingForm {
   public readonly accounts = input<AccountModel[]>([]);
   public readonly vatCodes = input<VatCodeModel[]>([]);
   public readonly costCenters = input<CostCenterModel[]>([]);
+  /** all projects incl. archived — the Kostenträger picker is shown when there is at least one */
+  public readonly projects = input<ProjectModel[]>([]);
   /** `AccountingConfig.defaultCostCenterKey` — fills a P&L line whose account has no default; '' = none */
   public readonly bookDefaultCostCenterKey = input('');
   /** Kostenstellen only exist on the native ledger; a bexio ledger gets no picker. */
@@ -290,6 +309,13 @@ export class BookingForm {
     return this.costCentersEnabled() && isProfitAndLossAccountId(this.accounts().find(a => a.okey === accountKey)?.id);
   }
 
+  protected showDebitProject(pair: BookingPair): boolean { return this.showProject(pair.debitAccountKey); }
+  protected showCreditProject(pair: BookingPair): boolean { return this.showProject(pair.creditAccountKey); }
+  /** A Kostenträger sits on P&L lines only, and only when the tenant has projects at all. */
+  private showProject(accountKey: string): boolean {
+    return this.projects().length > 0 && isProfitAndLossAccountId(this.accounts().find(a => a.okey === accountKey)?.id);
+  }
+
   /** An empty Kostenstelle is saved with the account's (or the book's) default (writeBooking): say so on the empty option. */
   protected hasCostCenterFallback(accountKey: string): boolean {
     return !!accountDefaultCostCenterKey(accountKey, this.accounts(), this.costCenters(), this.bookDefaultCostCenterKey());
@@ -305,7 +331,8 @@ export class BookingForm {
     this.dirty.emit(true);
     this.formData.update((vm) => ({ ...vm, pairs: vm.pairs.map((p, i) => i === index
       ? { ...p, debitAccountKey: p.creditAccountKey, creditAccountKey: p.debitAccountKey,
-          debitCostCenterKey: p.creditCostCenterKey, creditCostCenterKey: p.debitCostCenterKey, vatSide: p.vatSide === 'debit' ? 'credit' : 'debit',
+          debitCostCenterKey: p.creditCostCenterKey, creditCostCenterKey: p.debitCostCenterKey,
+          debitProjectKey: p.creditProjectKey, creditProjectKey: p.debitProjectKey, vatSide: p.vatSide === 'debit' ? 'credit' : 'debit',
           descriptionSide: p.descriptionSide === 'debit' ? 'credit' : 'debit' }
       : p) }));
   }

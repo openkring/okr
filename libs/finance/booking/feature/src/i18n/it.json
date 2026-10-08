@@ -133,6 +133,9 @@
     "costCenter": {
       "label": "Centro di costo"
     },
+    "project": {
+      "label": "Progetto"
+    },
     "details": {
       "toggle": "Valuta estera, IVA, centro di costo e scambio dei conti"
     },
@@ -168,6 +171,7 @@
   "write": {
     "failed": "La registrazione non è stata salvata.",
     "costCenterInvalid": "Il centro di costo scelto non è più attivo — scegline un altro.",
+    "projectInvalid": "Il progetto scelto non è più attivo — scegline un altro.",
     "billBooking": "Questa registrazione appartiene a una fattura del fornitore e non si modifica qui. Eliminala se la fattura deve tornare una bozza.",
     "billHasPayments": "La fattura del fornitore di questa registrazione ha già dei pagamenti. Rimuovi prima i pagamenti, poi puoi eliminare la registrazione."
   }

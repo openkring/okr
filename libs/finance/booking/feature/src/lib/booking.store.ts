@@ -16,6 +16,7 @@ import { exportCsv } from '@okr/shared-util-angular';
 import { AccountingStore } from '@okr/finance-accounting-feature';
 import { paymentLabelText } from '@okr/finance-accounting-util';
 import { CostCenterStore } from '@okr/finance-cost-center-feature';
+import { ProjectService } from '@okr/project-project-data-access';
 import { AccountService } from '@okr/finance-account-data-access';
 import { VatCodeService } from '@okr/finance-vat-code-data-access';
 import { BookingLineService, BookingService, ReviewBookingLine } from '@okr/finance-booking-data-access';
@@ -71,6 +72,7 @@ export const BookingStore = signalStore(
     periodService: inject(PeriodService),
     accountingStore: inject(AccountingStore),
     costCenterStore: inject(CostCenterStore),
+    projectService: inject(ProjectService),
     appStore: inject(AppStore),
     modalController: inject(ModalController),
     alertController: inject(AlertController),
@@ -93,6 +95,10 @@ export const BookingStore = signalStore(
     }),
     linesResource: rxResource({
       stream: () => store.bookingLineService.list(store.accountingStore.accountingTenantId()),
+    }),
+    // all projects incl. archived: the picker offers only active ones but still names an archived selected one
+    projectsResource: rxResource({
+      stream: () => store.projectService.listAll(),
     }),
     accountsResource: rxResource({
       stream: () => store.accountService.list(store.accountingStore.accountingTenantId(), 'id', 'asc'),
@@ -337,7 +343,7 @@ export const BookingStore = signalStore(
     modalProps(booking: BookingModel, lines: BookingLineModel[], readOnly: boolean): Record<string, unknown> {
       return {
         booking, lines, readOnly, currentUser: store.currentUser(),
-        accounts: store.accountsResource.value() ?? [], vatCodes: store.vatCodesResource.value() ?? [], locale: store.locale(),
+        accounts: store.accountsResource.value() ?? [], projects: store.projectsResource.value() ?? [], vatCodes: store.vatCodesResource.value() ?? [], locale: store.locale(),
       };
     },
 
@@ -480,6 +486,7 @@ export const BookingStore = signalStore(
       switch (bookingWriteErrorReason(error)) {
         case 'period-locked':       return store.i18n.period_locked();
         case 'cost-center-invalid': return store.i18n.write_costCenterInvalid();
+        case 'project-invalid':     return store.i18n.write_projectInvalid();
         case 'bill-booking':        return store.i18n.write_billBooking();
         case 'bill-has-payments':   return store.i18n.write_billHasPayments();
         default:                    return undefined;
@@ -540,6 +547,7 @@ export const BookingStore = signalStore(
             debitAmount:  l.debitAmount  ? { amount: l.debitAmount.amount,  currency: l.debitAmount.currency }  : null,
             creditAmount: l.creditAmount ? { amount: l.creditAmount.amount, currency: l.creditAmount.currency } : null,
             costCenterKey: l.costCenterKey ?? '',
+            projectKey: l.projectKey ?? '',
           })),
         },
       });

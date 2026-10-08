@@ -18,6 +18,7 @@
     "@okr/cms-menu-feature": "*",
     "@okr/finance-accounting-feature": "*",
     "@okr/finance-cost-center-feature": "*",
+    "@okr/project-project-data-access": "*",
     "@okr/finance-booking-data-access": "*",
     "@okr/finance-booking-util": "*",
     "@okr/finance-booking-ui": "*",
