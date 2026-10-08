@@ -78,7 +78,11 @@
     },
     "cancelled": {
       "label": "Annullato"
-    }
+    },
+    "all": {
+      "label": "Tutti gli stati"
+    },
+    "label": "Stato"
   },
   "open": "Apri",
   "delete": "Elimina",

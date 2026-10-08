@@ -78,7 +78,11 @@
     },
     "cancelled": {
       "label": "Annulé"
-    }
+    },
+    "all": {
+      "label": "Tous les statuts"
+    },
+    "label": "Statut"
   },
   "open": "Ouvrir",
   "delete": "Supprimer",

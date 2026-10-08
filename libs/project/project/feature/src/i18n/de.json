@@ -78,7 +78,11 @@
     },
     "cancelled": {
       "label": "Abgebrochen"
-    }
+    },
+    "all": {
+      "label": "Alle Stati"
+    },
+    "label": "Status"
   },
   "open": "Öffnen",
   "delete": "Löschen",
