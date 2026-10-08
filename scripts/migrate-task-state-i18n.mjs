@@ -39,11 +39,16 @@ for (const doc of snap.docs) {
 console.log(`${DRY_RUN ? '[DRY RUN] would update' : 'updated'} ${updated} of ${snap.size}`);
 
 // Report only: runtime i18n rows keyed on the old scope (module 'task/feature', 'task/data-access', ...).
+// Read-only and after the migration: a failure here (e.g. a missing index) must not look like a failed migration.
 for (const collection of ['i18nTenantOverride', 'i18nDefault']) {
-  const rows = await db.collection(collection).where('module', '>=', 'task/').where('module', '<', 'task0').get();
-  for (const doc of rows.docs) {
-    const d = doc.data();
-    console.log(`REVIEW ${collection}/${doc.id}: module=${d.module} key=${d.key} tenantId=${d.tenantId ?? '-'}`);
+  try {
+    const rows = await db.collection(collection).where('module', '>=', 'task/').where('module', '<', 'task0').get();
+    for (const doc of rows.docs) {
+      const d = doc.data();
+      console.log(`REVIEW ${collection}/${doc.id}: module=${d.module} key=${d.key} tenantId=${d.tenantId ?? '-'}`);
+    }
+    console.log(`${collection}: ${rows.size} row(s) with module task/*  (not changed)`);
+  } catch (error) {
+    console.warn(`${collection}: could not list rows with module task/* (${error?.message ?? error}) — check them by hand`);
   }
-  console.log(`${collection}: ${rows.size} row(s) with module task/*  (not changed)`);
 }
