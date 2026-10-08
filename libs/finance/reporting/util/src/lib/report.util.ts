@@ -204,6 +204,17 @@ export const ALL_COST_CENTERS = '';
 /** ER filter value: the "ohne Kostenstelle" bucket. */
 export const NO_COST_CENTER = '__none__';
 
+/** A booking-line dimension a result can be cut by. */
+export type LineDimension = 'costCenterKey' | 'projectKey';
+
+/**
+ * Lines whose `dimension` value is in `keys`. Legacy lines lack the field and count as empty
+ * (`''`), so they are kept only when `keys` contains `''`.
+ */
+export function filterLinesByDimension(lines: BookingLineModel[], dimension: LineDimension, keys: Set<string>): BookingLineModel[] {
+  return lines.filter(l => keys.has(l[dimension] ?? ''));
+}
+
 /**
  * Lines of one Kostenstelle subtree (spec 1.65 §1 criterion 2). `subtreeKeys` = the selected node
  * and its descendants (`costCenterSubtreeKeys`). Missing keys on legacy lines count as empty.
@@ -211,7 +222,7 @@ export const NO_COST_CENTER = '__none__';
 export function filterLinesByCostCenter(lines: BookingLineModel[], selection: string, subtreeKeys: Set<string>): BookingLineModel[] {
   if (selection === ALL_COST_CENTERS) return lines;
   if (selection === NO_COST_CENTER) return lines.filter(l => !(l.costCenterKey ?? ''));
-  return lines.filter(l => subtreeKeys.has(l.costCenterKey ?? ''));
+  return filterLinesByDimension(lines, 'costCenterKey', subtreeKeys);
 }
 
 /**

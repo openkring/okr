@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { AccountModel, BookingLineModel, BookingModel, MoneyModel } from '@okr/shared-models';
 
 import {
-  accountClass, ALL_COST_CENTERS, buildReportRows, effectiveCostCenterSelection, defaultExpandedKeys, fiscalYear, fiscalYearOf, filterLinesByCostCenter, NO_COST_CENTER, reportToCsv, signedBalance, sumLinesByAccount, totalForClasses, yearResult,
+  accountClass, ALL_COST_CENTERS, buildReportRows, effectiveCostCenterSelection, defaultExpandedKeys, fiscalYear, fiscalYearOf, filterLinesByCostCenter, filterLinesByDimension, NO_COST_CENTER, reportToCsv, signedBalance, sumLinesByAccount, totalForClasses, yearResult,
 } from './report.util';
 
 function account(okey: string, id: string, name: string, parentKey = '', type = 'leaf'): AccountModel {
@@ -195,6 +195,22 @@ describe('filterLinesByCostCenter', () => {
       + sum(filterLinesByCostCenter(lines, NO_COST_CENTER, new Set()));
     expect(parts).toBe(sum(lines));
   });
+});
+
+describe('filterLinesByDimension', () => {
+  const pl = (debit: number, projectKey?: string): BookingLineModel =>
+    ({ ...line('b1', 'a6000', debit, 0), projectKey }) as BookingLineModel;
+  const lines = [pl(10, 'p1'), pl(20, 'p2'), pl(30, ''), pl(40, undefined)];
+  const amounts = (ls: BookingLineModel[]): (number | undefined)[] => ls.map(l => l.debitAmount?.amount);
+
+  it('keeps lines whose projectKey is in the set', () =>
+    expect(amounts(filterLinesByDimension(lines, 'projectKey', new Set(['p1'])))).toEqual([10]));
+  it('excludes a legacy line without projectKey for { p1 }', () =>
+    expect(filterLinesByDimension([pl(40, undefined)], 'projectKey', new Set(['p1']))).toEqual([]));
+  it('treats a missing value as empty', () =>
+    expect(amounts(filterLinesByDimension(lines, 'projectKey', new Set(['']))) ).toEqual([30, 40]));
+  it('filters by costCenterKey too', () =>
+    expect(filterLinesByDimension([{ ...pl(1), costCenterKey: 'c' } as BookingLineModel], 'costCenterKey', new Set(['c']))).toHaveLength(1));
 });
 
 describe('effectiveCostCenterSelection', () => {

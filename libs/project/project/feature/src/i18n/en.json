@@ -49,7 +49,10 @@
     "label": "Result",
     "income": "Income",
     "expense": "Expenses",
-    "total": "Total"
+    "total": "Total",
+    "empty": "No bookings have been recorded for this project yet.",
+    "pdfTitle": "Project result {name}",
+    "periodAll": "All fiscal years"
   },
   "duplicate": "Duplicate project",
   "duplicateConfirm": "The project is copied with all its tasks. The dates are shifted to the new start.",

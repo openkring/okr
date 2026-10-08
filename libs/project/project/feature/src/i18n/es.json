@@ -49,7 +49,10 @@
     "label": "Resultado",
     "income": "Ingresos",
     "expense": "Gastos",
-    "total": "Total"
+    "total": "Total",
+    "empty": "Todavía no se han registrado asientos para este proyecto.",
+    "pdfTitle": "Resultado del proyecto {name}",
+    "periodAll": "Todos los ejercicios"
   },
   "duplicate": "Duplicar proyecto",
   "duplicateConfirm": "El proyecto se copia con todas sus tareas. Las fechas se desplazan al nuevo inicio.",

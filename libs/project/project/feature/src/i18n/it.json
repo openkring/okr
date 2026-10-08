@@ -49,7 +49,10 @@
     "label": "Risultato",
     "income": "Entrate",
     "expense": "Uscite",
-    "total": "Totale"
+    "total": "Totale",
+    "empty": "Per questo progetto non sono ancora state registrate scritture.",
+    "pdfTitle": "Risultato del progetto {name}",
+    "periodAll": "Tutti gli esercizi"
   },
   "duplicate": "Duplica progetto",
   "duplicateConfirm": "Il progetto viene copiato con tutte le sue attività. Le date vengono spostate sul nuovo inizio.",

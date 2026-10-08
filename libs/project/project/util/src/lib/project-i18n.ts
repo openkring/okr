@@ -44,6 +44,9 @@ export const PROJECT_I18N_KEYS = {
   resultIncome:      PFX + 'result.income',
   resultExpense:     PFX + 'result.expense',
   resultTotal:       PFX + 'result.total',
+  resultEmpty:       PFX + 'result.empty',
+  resultPdfTitle:    PFX + 'result.pdfTitle',
+  resultPeriodAll:   PFX + 'result.periodAll',
   exportPdf:         PFX + 'exportPdf',
   context_add:       PFX + 'context.add',
 

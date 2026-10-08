@@ -6,20 +6,21 @@ import { EmptyList, Spinner } from '@okr/shared-ui';
 import { getProjectParentKey } from '@okr/project-project-util';
 import { TaskList } from '@okr/project-task-feature';
 
+import { ProjectResult } from './project-result';
 import { ProjectStore } from './project.store';
 
-type ProjectSegment = 'tasks';
+type ProjectSegment = 'tasks' | 'result';
 
 /**
  * The detail page of one project (`/projects/:projectKey`): header with name and edit button,
- * and the «Aufgaben» segment — the project's tasks as list or board. The «Ergebnis» segment
- * follows with the project result view.
+ * and the «Aufgaben» segment — the project's tasks as list or board. The «Ergebnis» segment shows the
+ * project result (Einnahmen/Ausgaben from the booking lines, PDF).
  */
 @Component({
   selector: 'okr-project-page',
   standalone: true,
   imports: [
-    SvgIconPipe, Spinner, EmptyList, TaskList,
+    SvgIconPipe, Spinner, EmptyList, TaskList, ProjectResult,
     IonBackButton, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonContent, IonSegment, IonSegmentButton, IonLabel
   ],
   providers: [ProjectStore],
@@ -43,6 +44,9 @@ type ProjectSegment = 'tasks';
           <ion-segment-button value="tasks">
             <ion-label>{{ store.i18n.tasks() }}</ion-label>
           </ion-segment-button>
+          <ion-segment-button value="result">
+            <ion-label>{{ store.i18n.result() }}</ion-label>
+          </ion-segment-button>
         </ion-segment>
       </ion-toolbar>
     </ion-header>
@@ -55,6 +59,8 @@ type ProjectSegment = 'tasks';
       } @else {
         @if (segment() === 'tasks') {
           <okr-task-list [listId]="parentKey()" contextMenuName="c-tasks" color="light" [showMenuButton]="false" />
+        } @else {
+          <okr-project-result [projectKey]="projectKey()" [projectName]="store.project()?.name ?? ''" />
         }
       }
     </ion-content>

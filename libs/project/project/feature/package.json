@@ -21,6 +21,11 @@
     "@okr/project-project-ui": "*",
     "@okr/project-project-util": "*",
     "@okr/project-task-data-access": "*",
-    "@okr/project-task-feature": "*"
+    "@okr/project-task-feature": "*",
+    "@okr/content-pdf-template-data-access": "*",
+    "@okr/finance-account-data-access": "*",
+    "@okr/finance-reporting-data-access": "*",
+    "@okr/finance-reporting-ui": "*",
+    "@okr/finance-reporting-util": "*"
   }
 }
