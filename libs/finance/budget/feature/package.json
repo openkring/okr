@@ -20,7 +20,9 @@
     "@okr/finance-budget-data-access": "*",
     "@okr/finance-budget-ui": "*",
     "@okr/finance-budget-util": "*",
+    "@okr/finance-booking-util": "*",
     "@okr/finance-cost-center-feature": "*",
+    "@okr/finance-cost-center-util": "*",
     "@okr/finance-reporting-data-access": "*",
     "@okr/finance-reporting-util": "*"
   }

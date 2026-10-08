@@ -353,7 +353,7 @@ export const BudgetStore = signalStore(
        * version is a live draft on native books and the user is a treasurer. A new cell takes the
        * books' functional currency.
        */
-      async editLine(versionKey: string, line?: BudgetLineModel): Promise<void> {
+      async editLine(versionKey: string, line?: BudgetLineModel, costCenterKey = ''): Promise<void> {
         const _version = liveVersion(versionKey);
         if (!_version) return;
         const _readOnly = !store.isEnabled() || !isVersionEditable(_version);
@@ -362,7 +362,10 @@ export const BudgetStore = signalStore(
           return;
         }
         const _line = line ?? new BudgetLineModel(store.appStore.tenantId(), store.accountingTenantId(), versionKey);
-        if (!line) _line.amount = new MoneyModel(0, store.functionalCurrency());
+        if (!line) {
+          _line.amount = new MoneyModel(0, store.functionalCurrency());
+          _line.costCenterKey = costCenterKey; // prefilled by the card's «Zeile hinzufügen»
+        }
         const _accounts = await loadAccountsNow();
 
         const { BudgetLineEditModal } = await import('@okr/finance-budget-ui');

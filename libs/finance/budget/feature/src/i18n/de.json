@@ -5,7 +5,14 @@
   },
   "grid": {
     "title": "Budget",
-    "empty": "Diese Version hat noch keine Zeilen."
+    "empty": "Diese Version hat noch keine Zeilen.",
+    "expense": "Aufwand",
+    "revenue": "Ertrag",
+    "net": "Ergebnis",
+    "total": "Total",
+    "unassigned": "Ohne Kostenstelle gebucht",
+    "frozen": "Diese Version ist freigegeben und kann nicht mehr geändert werden.",
+    "notFound": "Diese Budgetversion gibt es nicht."
   },
   "compare": {
     "title": "Soll-Ist-Vergleich",

@@ -5,7 +5,14 @@
   },
   "grid": {
     "title": "Budget",
-    "empty": "Cette version n'a pas encore de lignes."
+    "empty": "Cette version n'a pas encore de lignes.",
+    "expense": "Charges",
+    "revenue": "Produits",
+    "net": "Résultat",
+    "total": "Total",
+    "unassigned": "Comptabilisé sans centre de coûts",
+    "frozen": "Cette version est approuvée et ne peut plus être modifiée.",
+    "notFound": "Cette version du budget n'existe pas."
   },
   "compare": {
     "title": "Comparaison budget-réel",

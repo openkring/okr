@@ -5,7 +5,14 @@
   },
   "grid": {
     "title": "Budget",
-    "empty": "Questa versione non ha ancora righe."
+    "empty": "Questa versione non ha ancora righe.",
+    "expense": "Costi",
+    "revenue": "Ricavi",
+    "net": "Risultato",
+    "total": "Totale",
+    "unassigned": "Registrato senza centro di costo",
+    "frozen": "Questa versione è approvata e non può più essere modificata.",
+    "notFound": "Questa versione del budget non esiste."
   },
   "compare": {
     "title": "Confronto budget-consuntivo",

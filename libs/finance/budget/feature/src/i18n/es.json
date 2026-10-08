@@ -5,7 +5,14 @@
   },
   "grid": {
     "title": "Presupuesto",
-    "empty": "Esta versión todavía no tiene líneas."
+    "empty": "Esta versión todavía no tiene líneas.",
+    "expense": "Gastos",
+    "revenue": "Ingresos",
+    "net": "Resultado",
+    "total": "Total",
+    "unassigned": "Contabilizado sin centro de costes",
+    "frozen": "Esta versión está aprobada y ya no se puede modificar.",
+    "notFound": "Esta versión del presupuesto no existe."
   },
   "compare": {
     "title": "Comparación presupuesto-real",

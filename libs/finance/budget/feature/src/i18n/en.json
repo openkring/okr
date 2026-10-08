@@ -5,7 +5,14 @@
   },
   "grid": {
     "title": "Budget",
-    "empty": "This version has no lines yet."
+    "empty": "This version has no lines yet.",
+    "expense": "Expenses",
+    "revenue": "Revenue",
+    "net": "Result",
+    "total": "Total",
+    "unassigned": "Booked without cost centre",
+    "frozen": "This version is approved and can no longer be changed.",
+    "notFound": "This budget version does not exist."
   },
   "compare": {
     "title": "Budget vs. actual",
