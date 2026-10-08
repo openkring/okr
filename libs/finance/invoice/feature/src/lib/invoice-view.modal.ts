@@ -170,7 +170,8 @@ import { InvoiceStore } from './invoice.store';
                 </ion-item>
               }
               @if(canCreateReminder()) {
-                <ion-item lines="none" button="true" [detail]="false" (click)="store.createReminder(live())">
+                <!-- this modal has its own store: wait until its templates are loaded, else createReminder would see none -->
+                <ion-item lines="none" button="true" [detail]="false" [disabled]="store.dunningTemplatesResource.isLoading()" (click)="store.createReminder(live())">
                   <ion-icon slot="start" src="{{'add' | svgIcon}}" />
                   <ion-label>{{ store.i18n.reminder_create() }}</ion-label>
                 </ion-item>

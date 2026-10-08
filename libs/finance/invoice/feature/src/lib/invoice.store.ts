@@ -145,8 +145,15 @@ export const InvoiceStore = signalStore(
         ).pipe(debugListLoaded('InvoiceStore.allInvoices', params.currentUser));
       },
     }),
-    /** every template of the tenant; the dunning ones are filtered in dunningTemplates (spec 1.90) */
-    dunningTemplatesResource: rxResource({ stream: () => store.templateService.list() }),
+    /**
+     * every template of the tenant; the dunning ones are filtered in dunningTemplates (spec 1.90). Only a
+     * treasurer creates reminders: for anybody else params is undefined, so rxResource never loads (value undefined → []).
+     * A primitive param, so a currentUser re-emission does not re-read.
+     */
+    dunningTemplatesResource: rxResource({
+      params: () => (hasRole('treasurer', store.appStore.currentUser()) ? true : undefined),
+      stream: () => store.templateService.list(),
+    }),
   })),
 
   withComputed((store) => ({
