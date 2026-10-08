@@ -18,6 +18,7 @@ export * from './lib/base.model';
 export * from './lib/bill.model';
 export * from './lib/booking-line.model';
 export * from './lib/booking.model';
+export * from './lib/budget.model';
 export * from './lib/payment-order.model';
 export * from './lib/payment.model';
 export * from './lib/period.model';
