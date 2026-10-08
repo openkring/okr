@@ -63,6 +63,8 @@
       "path": "../util/tsconfig.lib.json"
     },
     { "path": "../../account/data-access/tsconfig.lib.json" },
-    { "path": "../../invoice/util/tsconfig.lib.json" }
+    { "path": "../../invoice/util/tsconfig.lib.json" },
+    { "path": "../../cost-center/feature/tsconfig.lib.json" },
+    { "path": "../../../project/project/data-access/tsconfig.lib.json" }
   ]
 }

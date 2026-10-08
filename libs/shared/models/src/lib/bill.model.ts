@@ -64,4 +64,5 @@ export interface BillLine {
   amount: number;          // Rappen, > 0
   vatCodeKey: string;      // '' = none
   costCenterKey: string;   // '' = account default
+  projectKey: string;      // ref ProjectModel — Kostenträger; '' = no project (spec 1.92 D1)
 }

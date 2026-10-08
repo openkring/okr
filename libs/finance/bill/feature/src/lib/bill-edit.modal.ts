@@ -5,7 +5,9 @@ import { of } from 'rxjs';
 
 import { AppStore, MultiSelectModal } from '@okr/shared-feature';
 import { AccountService } from '@okr/finance-account-data-access';
-import { VoucherTiles } from '@okr/finance-accounting-feature';
+import { AccountingStore, VoucherTiles } from '@okr/finance-accounting-feature';
+import { CostCenterStore } from '@okr/finance-cost-center-feature';
+import { ProjectService } from '@okr/project-project-data-access';
 import { AvatarInfo, BillLine, BillModel, UserModel } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
 import { coerceBoolean, getAvatarInfo, safeStructuredClone } from '@okr/shared-util-core';
@@ -55,6 +57,10 @@ export interface BillEditResult {
           (linesChange)="lines.set($event)"
           [accounts]="accounts()"
           [defaultAccountKey]="defaultAccountKey()"
+          [costCenters]="costCenterStore.costCenters()"
+          [costCentersEnabled]="costCenterStore.isEnabled()"
+          [bookDefaultCostCenterKey]="bookDefaultCostCenterKey()"
+          [projects]="ledgerProjects()"
           [currentUser]="currentUser()"
           [readOnly]="isReadOnly()"
           [isNew]="isNew()"
@@ -73,6 +79,9 @@ export class BillEditModal {
   private readonly modalController = inject(ModalController);
   private readonly accountService = inject(AccountService);
   private readonly appStore = inject(AppStore);
+  private readonly accountingStore = inject(AccountingStore);
+  private readonly projectService = inject(ProjectService);
+  protected readonly costCenterStore = inject(CostCenterStore);
   // direct inject, no store: the store opens this modal, importing it back would be circular
   protected readonly i18n = inject(I18nService).translateAll(BILL_I18N_KEYS) as BillI18n;
 
@@ -101,6 +110,11 @@ export class BillEditModal {
     stream: ({ params }) => params.accountingTenantId ? this.accountService.list(params.accountingTenantId) : of([]),
   });
   protected readonly accounts = computed(() => this.accountsResource.value() ?? []);
+  // all projects incl. archived: the picker offers only active ones but still names an archived selected one (spec 3.14)
+  private readonly projectsResource = rxResource({ stream: () => this.projectService.listAll() });
+  /** like the Kostenstellen: no picker on an externally managed (bexio) ledger */
+  protected readonly ledgerProjects = computed(() => this.accountingStore.isExternallyManaged() ? [] : (this.projectsResource.value() ?? []));
+  protected readonly bookDefaultCostCenterKey = computed(() => this.accountingStore.config()?.defaultCostCenterKey ?? '');
 
   // computed
   /** only a draft can be changed; booked and paid bills are frozen (their booking is deleted in the journal first) */

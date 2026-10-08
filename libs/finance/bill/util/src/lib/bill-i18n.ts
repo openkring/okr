@@ -105,6 +105,8 @@ export const BILL_I18N_KEYS = {
   line_remove:                    PFX + 'line.remove',
   line_account_label:             PFX + 'line.account.label',
   line_account_helper:            PFX + 'line.account.helper',
+  line_cost_center_label:         PFX + 'line.costCenter.label',
+  line_project_label:             PFX + 'line.project.label',
   line_title_label:               PFX + 'line.title.label',
   line_title_placeholder:         PFX + 'line.title.placeholder',
   line_title_helper:              PFX + 'line.title.helper',

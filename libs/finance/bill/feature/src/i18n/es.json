@@ -220,6 +220,12 @@
       "label": "Cuenta",
       "helper": "El importe se contabiliza en esta cuenta."
     },
+    "costCenter": {
+      "label": "Centro de costes"
+    },
+    "project": {
+      "label": "Proyecto"
+    },
     "title": {
       "label": "Texto",
       "placeholder": "p. ej. Internet septiembre",

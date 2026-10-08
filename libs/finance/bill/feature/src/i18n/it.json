@@ -220,6 +220,12 @@
       "label": "Conto",
       "helper": "L'importo viene registrato su questo conto."
     },
+    "costCenter": {
+      "label": "Centro di costo"
+    },
+    "project": {
+      "label": "Progetto"
+    },
     "title": {
       "label": "Testo",
       "placeholder": "p. es. Internet settembre",

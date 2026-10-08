@@ -1,4 +1,5 @@
-import { BillLine, BillModel } from '@okr/shared-models';
+import { AccountModel, BillLine, BillModel } from '@okr/shared-models';
+import { CostCenterLike, isProfitAndLossAccountId, ProjectLike, resolveCostCenterKey } from '@okr/shared-util-core';
 
 /** writeBill keeps at most this many lines (server: MAX_BILL_LINES). */
 export const MAX_BILL_LINES = 50;
@@ -11,7 +12,7 @@ export const BILL_IBAN_LENGTH = 34;
 
 /** A new, empty bill line on `accountKey` (the books' default expense account, or ''). */
 export function newBillLine(accountKey = '', amount = 0, title = ''): BillLine {
-  return { title, accountKey, amount, vatCodeKey: '', costCenterKey: '' };
+  return { title, accountKey, amount, vatCodeKey: '', costCenterKey: '', projectKey: '' };
 }
 
 /** Σ line amounts in Rappen. */
@@ -27,6 +28,40 @@ export function isDraftBill(bill: Pick<BillModel, 'state' | 'bookingKeys'> | und
 /** The editable copy of a bill's lines (legacy docs lack `lines`). */
 export function toBillLines(bill: Pick<BillModel, 'lines'> | undefined): BillLine[] {
   return (bill?.lines ?? []).map((l) => ({
-    title: l.title ?? '', accountKey: l.accountKey ?? '', amount: l.amount ?? 0, vatCodeKey: l.vatCodeKey ?? '', costCenterKey: l.costCenterKey ?? '',
+    title: l.title ?? '', accountKey: l.accountKey ?? '', amount: l.amount ?? 0, vatCodeKey: l.vatCodeKey ?? '', costCenterKey: l.costCenterKey ?? '', projectKey: l.projectKey ?? '',
   }));
+}
+
+type AccountLike = Pick<AccountModel, 'okey' | 'id'>;
+
+/** A Kostenstelle / Kostenträger sits on profit-and-loss lines only (spec 3.14, 1.65). */
+function isPnlLine(line: Pick<BillLine, 'accountKey'>, accounts: AccountLike[]): boolean {
+  return isProfitAndLossAccountId(accounts.find((a) => a.okey === line.accountKey)?.id);
+}
+
+/** The cost-centre picker is offered on P&L lines when cost centres are enabled (not on externally managed books). */
+export function showLineCostCenter(line: Pick<BillLine, 'accountKey'>, accounts: AccountLike[], costCentersEnabled: boolean): boolean {
+  return costCentersEnabled && isPnlLine(line, accounts);
+}
+
+/** The project picker: a P&L line, and an active project to pick or the line already carries one (same gate as the booking form). */
+export function showLineProject(line: Pick<BillLine, 'accountKey' | 'projectKey'>, accounts: AccountLike[], projects: (ProjectLike & { okey?: string })[]): boolean {
+  return (projects.some((p) => !p.isArchived) || !!line.projectKey) && isPnlLine(line, accounts);
+}
+
+/** The Kostenstelle bookBill fills into a line saved without one (account default, else book default) — '' = none. */
+export function lineCostCenterFallback(
+  line: Pick<BillLine, 'accountKey'>, accounts: (AccountModel)[], costCenters: CostCenterLike[], bookDefault = '',
+): string {
+  return resolveCostCenterKey({ account: accounts.find((a) => a.okey === line.accountKey), costCenters, bookDefault });
+}
+
+/**
+ * The line on another account. Moving to a balance-sheet account drops Kostenstelle and Kostenträger
+ * (they sit on P&L lines only); an account that is not in `accounts` (list not loaded) changes nothing else.
+ */
+export function withLineAccount(line: BillLine, accountKey: string, accounts: AccountLike[]): BillLine {
+  const next = { ...line, accountKey };
+  const known = accounts.some((a) => a.okey === accountKey);
+  return known && !isPnlLine(next, accounts) ? { ...next, costCenterKey: '', projectKey: '' } : next;
 }

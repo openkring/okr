@@ -18,6 +18,8 @@
     { "path": "../../account/ui/tsconfig.lib.json" },
     { "path": "../../account/util/tsconfig.lib.json" },
     { "path": "../util/tsconfig.lib.json" },
+    { "path": "../../cost-center/ui/tsconfig.lib.json" },
+    { "path": "../../../project/project/ui/tsconfig.lib.json" },
     { "path": "../../../shared/constants/tsconfig.lib.json" },
     { "path": "../../../shared/i18n/tsconfig.lib.json" },
     { "path": "../../../shared/models/tsconfig.lib.json" },

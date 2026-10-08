@@ -23,6 +23,8 @@
     "@okr/finance-bill-ui": "*",
     "@okr/finance-bill-util": "*",
     "@okr/finance-account-data-access": "*",
+    "@okr/finance-cost-center-feature": "*",
+    "@okr/project-project-data-access": "*",
     "@okr/finance-invoice-util": "*"
   }
 }

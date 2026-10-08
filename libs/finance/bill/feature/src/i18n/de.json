@@ -220,6 +220,12 @@
       "label": "Konto",
       "helper": "Auf dieses Konto wird der Betrag gebucht."
     },
+    "costCenter": {
+      "label": "Kostenstelle"
+    },
+    "project": {
+      "label": "Projekt"
+    },
     "title": {
       "label": "Text",
       "placeholder": "z. B. Internet September",

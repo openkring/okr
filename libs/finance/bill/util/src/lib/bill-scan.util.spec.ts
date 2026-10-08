@@ -20,7 +20,7 @@ describe('billFromScan', () => {
     expect(b.billId).toBe('R-1');
     expect(b.billDate).toBe('20260901');
     expect(b.dueDate).toBe('20261001');
-    expect(b.lines).toEqual([{ title: 'DSL 09', accountKey: 'acc-6510', amount: 3900, vatCodeKey: 'v81', costCenterKey: 'cc1' }]);
+    expect(b.lines).toEqual([{ title: 'DSL 09', accountKey: 'acc-6510', amount: 3900, vatCodeKey: 'v81', costCenterKey: 'cc1', projectKey: '' }]);
     expect(b.notes).toBe('Internet September');
     expect(b.accountingTenantId).toBe('scs');
   });
@@ -53,7 +53,7 @@ describe('billFromScan', () => {
 
   it('survives an empty result', () => {
     const b = billFromScan(scan({}), ctx);
-    expect(b.lines).toEqual([{ title: '', accountKey: 'acc-def', amount: 0, vatCodeKey: '', costCenterKey: '' }]);
+    expect(b.lines).toEqual([{ title: '', accountKey: 'acc-def', amount: 0, vatCodeKey: '', costCenterKey: '', projectKey: '' }]);
     expect(b.billDate).toBe('20261008');
   });
 

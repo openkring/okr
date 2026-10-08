@@ -220,6 +220,12 @@
       "label": "Compte",
       "helper": "Le montant est comptabilisé sur ce compte."
     },
+    "costCenter": {
+      "label": "Centre de coûts"
+    },
+    "project": {
+      "label": "Projet"
+    },
     "title": {
       "label": "Texte",
       "placeholder": "p. ex. Internet septembre",

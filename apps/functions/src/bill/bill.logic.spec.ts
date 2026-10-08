@@ -2,16 +2,16 @@ import { describe, expect, it } from 'vitest';
 
 import { billBookingLines, billTotal, bookBlockers, cleanBillLines, draftWriteRefusal, MAX_BILL_LINES } from './bill.logic';
 
-const line = (o: Record<string, unknown> = {}) => ({ title: 'Internet', accountKey: 'scs0238', amount: 3900, vatCodeKey: '', costCenterKey: '', ...o });
+const line = (o: Record<string, unknown> = {}) => ({ title: 'Internet', accountKey: 'scs0238', amount: 3900, vatCodeKey: '', costCenterKey: '', projectKey: '', ...o });
 
 describe('bill logic', () => {
   describe('cleanBillLines', () => {
-    it('keeps the five fields, trims and caps the title', () => {
+    it('keeps the six fields, trims and caps the title', () => {
       expect(cleanBillLines([{ ...line({ title: '  DSL  ' }), extra: 'x' }])).toEqual([line({ title: 'DSL' })]);
       expect(cleanBillLines([line({ title: 'x'.repeat(300) })])[0].title).toHaveLength(200);
     });
     it('fills missing strings with empty ones (a draft may be incomplete)', () =>
-      expect(cleanBillLines([{ amount: 0 }])).toEqual([{ title: '', accountKey: '', amount: 0, vatCodeKey: '', costCenterKey: '' }]));
+      expect(cleanBillLines([{ amount: 0 }])).toEqual([{ title: '', accountKey: '', amount: 0, vatCodeKey: '', costCenterKey: '', projectKey: '' }]));
     it('refuses a non-array, too many lines, fractional or negative amounts', () => {
       expect(() => cleanBillLines('x')).toThrow();
       expect(() => cleanBillLines(Array.from({ length: MAX_BILL_LINES + 1 }, () => line()))).toThrow();
@@ -19,15 +19,21 @@ describe('bill logic', () => {
       expect(() => cleanBillLines([line({ amount: -1 })])).toThrow();
       expect(() => cleanBillLines([null])).toThrow();
     });
+    it('keeps a trimmed projectKey and refuses a malformed one', () => {
+      expect(cleanBillLines([line({ projectKey: ' p1 ' })])[0].projectKey).toBe('p1');
+      expect(() => cleanBillLines([line({ projectKey: 'a/b' })])).toThrow();
+      expect(() => cleanBillLines([line({ projectKey: 5 })])).toThrow();
+      expect(cleanBillLines([{ amount: 1 }])[0].projectKey).toBe('');
+    });
     it('undefined is an empty list', () => expect(cleanBillLines(undefined)).toEqual([]));
   });
 
   it('total = Σ line amounts', () => expect(billTotal([line(), line({ amount: 100 })])).toBe(4000));
 
   it('booking lines: one debit per bill line, one credit on payables for the total', () => {
-    expect(billBookingLines([line(), line({ title: 'Router', accountKey: 'scs0240', amount: 100, vatCodeKey: 'vst', costCenterKey: 'cc1' })], 'scs0121')).toEqual([
+    expect(billBookingLines([line(), line({ title: 'Router', accountKey: 'scs0240', amount: 100, vatCodeKey: 'vst', costCenterKey: 'cc1', projectKey: 'p1' })], 'scs0121')).toEqual([
       { accountKey: 'scs0238', debitAmount: { amount: 3900, currency: 'CHF' }, description: 'Internet' },
-      { accountKey: 'scs0240', debitAmount: { amount: 100, currency: 'CHF' }, description: 'Router', vatCodeKey: 'vst', costCenterKey: 'cc1' },
+      { accountKey: 'scs0240', debitAmount: { amount: 100, currency: 'CHF' }, description: 'Router', vatCodeKey: 'vst', costCenterKey: 'cc1', projectKey: 'p1' },
       { accountKey: 'scs0121', creditAmount: { amount: 4000, currency: 'CHF' } },
     ]);
   });

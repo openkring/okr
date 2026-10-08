@@ -2,27 +2,29 @@ import { Component, computed, effect, input, model, output } from '@angular/core
 import { form } from '@angular/forms/signals';
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonIcon, IonLabel, IonRow } from '@ionic/angular/standalone';
 
-import { AccountModel, BillLine } from '@okr/shared-models';
+import { AccountModel, BillLine, CostCenterModel, ProjectModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { ErrorNote, formatMinorAmount, NumberInput, NumberInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean } from '@okr/shared-util-core';
 
 import { AccountSelect, AccountSelectI18n } from '@okr/finance-account-ui';
+import { CostCenterSelect, CostCenterSelectI18n } from '@okr/finance-cost-center-ui';
+import { ProjectSelect } from '@okr/project-project-ui';
 import { leafAccounts } from '@okr/finance-account-util';
-import { BILL_LINE_TITLE_LENGTH, BillI18n, billLinesTotal, billLinesValidations, MAX_BILL_LINES, newBillLine } from '@okr/finance-bill-util';
+import { BILL_LINE_TITLE_LENGTH, BillI18n, billLinesTotal, billLinesValidations, lineCostCenterFallback, MAX_BILL_LINES, newBillLine, showLineCostCenter, showLineProject, withLineAccount } from '@okr/finance-bill-util';
 
 /**
  * The lines of a native bill (spec 1.85 Q2), one row each: account (any leaf), text, amount in CHF,
  * remove. «Zeile hinzufügen» appends a line on the books' default expense account. The total is the
  * sum of the lines. Valid when there is at least one line and every line has an account and an amount
- * above 0. Embedded as its own card in BillEditForm; read-only unless the bill is a draft.
+ * above 0. On P&L lines a Kostenstelle and a Kostenträger can be picked (spec 1.92). Embedded as its own card in BillEditForm; read-only unless the bill is a draft.
  */
 @Component({
   selector: 'okr-bill-lines-form',
   standalone: true,
   imports: [
-    SvgIconPipe, ErrorNote, TextInput, NumberInput, AccountSelect,
+    SvgIconPipe, ErrorNote, TextInput, NumberInput, AccountSelect, CostCenterSelect, ProjectSelect,
     IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonRow, IonCol, IonButton, IonIcon, IonLabel,
   ],
   styles: [`
@@ -63,6 +65,23 @@ import { BILL_LINE_TITLE_LENGTH, BillI18n, billLinesTotal, billLinesValidations,
                   }
                 </ion-col>
               </ion-row>
+              @if (showCostCenter(line) || showProject(line)) {
+                <ion-row class="line ion-align-items-center">
+                  <ion-col size="12" size-md="6">
+                    @if (showCostCenter(line)) {
+                      <okr-cost-center-select [i18n]="costCenterI18n()" [costCenters]="costCenters()"
+                        [emptyIsFallback]="hasCostCenterFallback(line)"
+                        [selectedKey]="line.costCenterKey" (selectedKeyChange)="onLineChange(i, 'costCenterKey', $event)" [readOnly]="isReadOnly()" />
+                    }
+                  </ion-col>
+                  <ion-col size="12" size-md="6">
+                    @if (showProject(line)) {
+                      <okr-project-select [projects]="projects()" [label]="i18n().line_project_label()"
+                        [selectedKey]="line.projectKey" (selectedKeyChange)="onLineChange(i, 'projectKey', $event)" [readOnly]="isReadOnly()" />
+                    }
+                  </ion-col>
+                </ion-row>
+              }
             }
             <okr-error-note [errors]="listErrors()" />
             <ion-row class="ion-align-items-center">
@@ -96,6 +115,13 @@ export class BillLinesForm {
   public readonly accounts = input<AccountModel[]>([]);
   /** the account a new line starts on (the books' default expense account) */
   public readonly defaultAccountKey = input('');
+  /** the Kostenstellen of the app tenant (spec 1.65) — the picker is offered on P&L lines when `costCentersEnabled` */
+  public readonly costCenters = input<CostCenterModel[]>([]);
+  public readonly costCentersEnabled = input(false);
+  /** `AccountingConfig.defaultCostCenterKey` — fills a P&L line whose account has no default; '' = none */
+  public readonly bookDefaultCostCenterKey = input('');
+  /** all projects incl. archived — the Kostenträger picker is shown when there is at least one active one (spec 3.14) */
+  public readonly projects = input<ProjectModel[]>([]);
   public readonly readOnly = input(true);
   public readonly showForm = input(true);
 
@@ -130,13 +156,24 @@ export class BillLinesForm {
     name: 'lineAmount', label: this.i18n().line_amount_label(), placeholder: this.i18n().line_amount_placeholder(), helper: this.i18n().line_amount_helper(),
   } as NumberInputI18n));
 
+  protected readonly costCenterI18n = computed(() => ({ name: 'lineCostCenter', label: this.i18n().line_cost_center_label() } as CostCenterSelectI18n));
+
+  protected showCostCenter(line: BillLine): boolean { return showLineCostCenter(line, this.accounts(), this.costCentersEnabled()); }
+  protected showProject(line: BillLine): boolean { return showLineProject(line, this.accounts(), this.projects()); }
+  protected hasCostCenterFallback(line: BillLine): boolean {
+    return !!lineCostCenterFallback(line, this.accounts(), this.costCenters(), this.bookDefaultCostCenterKey());
+  }
+
   protected errorsOf(i: number, field: 'accountKey' | 'amount' | 'title'): string[] {
     return this.validationResult().getErrors(`lines[${i}].${field}`);
   }
 
-  protected onLineChange(i: number, field: 'accountKey' | 'title', value: string): void {
+  protected onLineChange(i: number, field: 'accountKey' | 'title' | 'costCenterKey' | 'projectKey', value: string): void {
     this.dirty.emit(true);
-    this.lines.update((lines) => lines.map((l, j) => (j === i ? { ...l, [field]: value } : l)));
+    this.lines.update((lines) => lines.map((l, j) => {
+      if (j !== i) return l;
+      return field === 'accountKey' ? withLineAccount(l, value, this.accounts()) : { ...l, [field]: value };
+    }));
   }
 
   /** CHF from the input → Rappen in the model, converted here once */

@@ -36,6 +36,8 @@
     { "path": "../../../shared/i18n/tsconfig.lib.json" },
     { "path": "../../../shared/util-angular/tsconfig.lib.json" },
     { "path": "../../account/util/tsconfig.lib.json" },
-    { "path": "../../../shared/pipes/tsconfig.lib.json" }
+    { "path": "../../../shared/pipes/tsconfig.lib.json" },
+    { "path": "../../cost-center/ui/tsconfig.lib.json" },
+    { "path": "../../../project/project/ui/tsconfig.lib.json" }
   ]
 }

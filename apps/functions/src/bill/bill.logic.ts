@@ -4,12 +4,16 @@
  */
 import { HttpsError } from 'firebase-functions/v2/https';
 
+import { assertProjectKeyShapes } from '../project/project-context';
+
 export interface BillLineInput {
   title: string;
   accountKey: string;
   amount: number;
   vatCodeKey: string;
   costCenterKey: string;
+  /** Kostenträger (spec 1.92 D1); legacy stored lines lack it */
+  projectKey?: string;
 }
 
 export interface BillBookingLine {
@@ -19,6 +23,7 @@ export interface BillBookingLine {
   description?: string;
   vatCodeKey?: string;
   costCenterKey?: string;
+  projectKey?: string;
 }
 
 export const MAX_BILL_LINES = 50;
@@ -34,6 +39,7 @@ export function cleanBillLines(input: unknown): BillLineInput[] {
   if (input === undefined || input === null) return [];
   if (!Array.isArray(input)) throw new HttpsError('invalid-argument', 'lines must be an array');
   if (input.length > MAX_BILL_LINES) throw new HttpsError('invalid-argument', 'too-many-lines', { reason: 'too-many-lines' });
+  assertProjectKeyShapes(input.filter((l) => !!l && typeof l === 'object') as { projectKey?: unknown }[]);
   return input.map((l, i) => {
     if (!l || typeof l !== 'object') throw new HttpsError('invalid-argument', `line ${i} must be an object`);
     const o = l as Record<string, unknown>;
@@ -47,6 +53,7 @@ export function cleanBillLines(input: unknown): BillLineInput[] {
       amount,
       vatCodeKey: str(o['vatCodeKey']),
       costCenterKey: str(o['costCenterKey']),
+      projectKey: str(o['projectKey']),
     };
   });
 }
@@ -63,6 +70,7 @@ export function billBookingLines(lines: BillLineInput[], payablesKey: string): B
     ...(l.title ? { description: l.title } : {}),
     ...(l.vatCodeKey ? { vatCodeKey: l.vatCodeKey } : {}),
     ...(l.costCenterKey ? { costCenterKey: l.costCenterKey } : {}),
+    ...(l.projectKey ? { projectKey: l.projectKey } : {}),
   }));
   return [...debits, { accountKey: payablesKey, creditAmount: { amount: billTotal(lines), currency: 'CHF' } }];
 }

@@ -3,6 +3,7 @@ import { logger } from 'firebase-functions/v2';
 import { getFirestore } from 'firebase-admin/firestore';
 
 import { BillCollection } from '@okr/shared-models';
+import { projectKeyForLine } from '@okr/shared-util-core';
 import { checkAppCheckToken, checkAuthentication, checkRoles, getCallerTenantId, isBalanced, nextBookingNo } from '@okr/shared-util-functions';
 
 import { periodKeyFor } from '../bank-import/bank-import.util';
@@ -12,6 +13,7 @@ import { assertLeafAccount, refuse } from '../invoice/invoice-context';
 import { issuePeriodKeys, withoutUndefined } from '../invoice/invoice.logic';
 import { billBookingLines, BillLineInput, bookBlockers } from './bill.logic';
 import { loadBillConfig, loadOwnBill } from './bill-context';
+import { assertProjectKeyShapes, assertProjectsAssignable } from '../project/project-context';
 import { writeFinanceHistory } from '../finance-history/finance-history';
 
 const REGION = 'europe-west6';
@@ -22,7 +24,7 @@ const BOOKING_LINE_COLLECTION = 'booking-lines';
 /**
  * Books a draft bill (spec 1.85 phase 3): writes the issue booking `bill-{key}` — one debit per bill
  * line on its expense account (with its VAT code and Kostenstelle), one credit on the payables account
- * for the total — dated the bill date, and sets the bill to `todo`. `bookingNo` is assigned inside the
+ * for the total — dated the bill date (Kostenstelle and Kostenträger per debit line, the payables line carries none), and sets the bill to `todo`. `bookingNo` is assigned inside the
  * transaction; the period lock is checked. Idempotent: a bill already carrying its booking returns it.
  * Deleting the booking in the journal returns the bill to `draft` (writeBooking clean-up).
  */
@@ -55,6 +57,11 @@ export const bookBill = onCall(
     const preLines = (pre['lines'] as BillLineInput[] | undefined) ?? [];
     const ccCtx = await loadCostCenterContext(db, tenantId, accountingTenantId, [...preLines.map((l) => l.accountKey), payablesKey].filter((k) => !!k));
 
+    // Kostenträger (spec 1.92 D2): plain reads before the transaction, like writeBooking; the lines are re-checked against this set inside it
+    assertProjectKeyShapes(preLines);
+    await assertProjectsAssignable(db, tenantId, preLines);
+    const checkedProjectKeys = new Set(preLines.map((l) => (l.projectKey ?? '').trim()).filter((k) => !!k));
+
     const result = await db.runTransaction(async (tx) => {
       // reads (all before any write)
       const bill = (await tx.get(billRef)).data();
@@ -73,6 +80,9 @@ export const bookBill = onCall(
         await assertLeafAccount(db, accountingTenantId, accountKey, tx);
       }
       for (const l of lines) assertExplicitCostCenter(ccCtx, l.accountKey, l.costCenterKey, new Set());
+      if (lines.some((l) => !!(l.projectKey ?? '').trim() && !checkedProjectKeys.has((l.projectKey ?? '').trim()))) {
+        throw refuse('state-changed', `bill ${billKey} changed while it was booked`);
+      }
       const ledger = await tx.get(db.collection(BOOKING_COLLECTION).where('accountingTenantId', '==', accountingTenantId));
       const bookingNo = nextBookingNo(ledger.docs.map((s) => s.data() as { date?: string; bookingNo?: number }), Number(billDate.substring(0, 4)));
 
@@ -95,6 +105,7 @@ export const bookBill = onCall(
         tx.set(db.collection(BOOKING_LINE_COLLECTION).doc(`${bookingKey}-${i}`), withoutUndefined({
           tenants, accountingTenantId, isArchived: false, bookingKey, accountKey: line.accountKey,
           ...(costCenterKey ? { costCenterKey } : {}),
+          projectKey: projectKeyForLine(ccCtx.accounts, line),
           ...(line.debitAmount ? { debitAmount: { ...line.debitAmount, periodicity: 'one-time' } } : {}),
           ...(line.creditAmount ? { creditAmount: { ...line.creditAmount, periodicity: 'one-time' } } : {}),
           ...(line.vatCodeKey ? { vatCodeKey: line.vatCodeKey } : {}),

@@ -1,11 +1,12 @@
 import { onCall, CallableRequest, HttpsError } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
-import { Firestore, getFirestore } from 'firebase-admin/firestore';
+import { getFirestore } from 'firebase-admin/firestore';
 
 import { checkAppCheckToken, checkAuthentication, checkRoles, getCallerTenantId, formatRejectNote, isBalanced, nextBookingNo } from '@okr/shared-util-functions';
-import { carryOverProjectKeys, convertDateFormatToString, DateFormat, getTodayStr, isAssignableProject, isProjectKeyShapeValid, projectKeyForLine } from '@okr/shared-util-core';
+import { carryOverProjectKeys, convertDateFormatToString, DateFormat, getTodayStr, projectKeyForLine } from '@okr/shared-util-core';
 
 import { assertExplicitCostCenter, costCenterKeyForLine, loadCostCenterContext } from '../cost-center/cost-center-context';
+import { assertProjectKeyShapes, assertProjectsAssignable } from '../project/project-context';
 import { assertPeriodsOpen, loadFiscalYearStart, touchedPeriodKeys } from './period-lock';
 import { BillCollection, InvoiceCollection } from '@okr/shared-models';
 import { billAfterPaymentRemoval, invoiceAfterPaymentRemoval, issueBookingBillKey } from '../bill/bill-payment.logic';
@@ -23,34 +24,9 @@ const USERS_COLLECTION = 'users';
 
 const MAX_REASON_LENGTH = 500;
 
-const PROJECT_COLLECTION = 'projects';
-
-/**
- * Kostenträger per line (spec 3.14 Phase 4): every distinct project key of the request must be an
- * active project of the app tenant (projects live in the okr tenant, not in the accounting tenant) —
- * a key already stored on that booking is grandfathered, like a Kostenstelle. Plain reads: call before the transaction.
- */
-async function assertProjectsAssignable(
-  database: Firestore, tenantId: string, lines: { projectKey?: string }[], oldLineDocs: { data(): Record<string, unknown> }[],
-): Promise<void> {
-  const grandfathered = new Set(oldLineDocs.map(s => ((s.data()['projectKey'] as string | undefined) ?? '').trim()).filter(k => !!k));
-  const keys = [...new Set(lines.map(l => (l.projectKey ?? '').trim()).filter(k => !!k && !grandfathered.has(k)))];
-  if (keys.length === 0) return;
-  const snaps = await database.getAll(...keys.map(k => database.collection(PROJECT_COLLECTION).doc(k)));
-  snaps.forEach((snap, i) => {
-    if (!isAssignableProject(snap.data() as { isArchived?: boolean; tenants?: string[] } | undefined, tenantId)) {
-      throw new HttpsError('invalid-argument', `project-invalid: ${keys[i]}`, { reason: 'project-invalid', projectKey: keys[i] });
-    }
-  });
-}
-
-/** A projectKey must be absent or a string without '/' — anything else would crash in .trim() or doc(). */
-function assertProjectKeyShapes(lines: { projectKey?: unknown }[]): void {
-  for (const line of lines) {
-    if (!isProjectKeyShapeValid(line.projectKey)) {
-      throw new HttpsError('invalid-argument', 'project-invalid: malformed projectKey', { reason: 'project-invalid' });
-    }
-  }
+/** The Kostenträger already stored on a booking's lines — grandfathered when the booking is rewritten. */
+function storedProjectKeys(oldLineDocs: { data(): Record<string, unknown> }[]): Set<string> {
+  return new Set(oldLineDocs.map(s => ((s.data()['projectKey'] as string | undefined) ?? '').trim()).filter(k => !!k));
 }
 
 interface ReviewLine {
@@ -145,7 +121,7 @@ export const reviewBooking = onCall(
     );
     if (decision === 'approve' && newLines && reviewCtx) {
       for (const line of newLines) assertExplicitCostCenter(reviewCtx, line.accountKey, line.costCenterKey, reviewGrandfathered);
-      await assertProjectsAssignable(db, tenantId, reviewLines ?? [], oldLineDocs);
+      await assertProjectsAssignable(db, tenantId, reviewLines ?? [], storedProjectKeys(oldLineDocs));
     }
     const reviewer = decision === 'reject' ? await reviewerName(db, request.auth!.uid) : '';
     const fiscalYearStart = decision === 'approve' ? await loadFiscalYearStart(db, pre['accountingTenantId'] as string) : 1;
@@ -343,7 +319,7 @@ export const writeBooking = onCall(
       oldLineDocs.map(s => (s.data()['costCenterKey'] as string | undefined) ?? '').filter(k => !!k),
     );
     for (const line of lines) assertExplicitCostCenter(ctx, line.accountKey, line.costCenterKey, grandfathered);
-    await assertProjectsAssignable(db, tenantId, lines, oldLineDocs);
+    await assertProjectsAssignable(db, tenantId, lines, storedProjectKeys(oldLineDocs));
 
     const bookingNo = await db.runTransaction(async (tx) => {
       await assertPeriodsOpen(db, periodKeys, tx);

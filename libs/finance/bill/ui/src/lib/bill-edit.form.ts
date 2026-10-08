@@ -3,7 +3,7 @@ import { form } from '@angular/forms/signals';
 import { IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonNote, IonRow } from '@ionic/angular/standalone';
 
 import { DEFAULT_NOTES, DEFAULT_TAGS, SHORT_NAME_LENGTH } from '@okr/shared-constants';
-import { AccountModel, BillLine, BillModel, UserModel } from '@okr/shared-models';
+import { AccountModel, BillLine, BillModel, CostCenterModel, ProjectModel, UserModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { DateInput, DateInputI18n, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
@@ -87,7 +87,8 @@ import { BillLinesForm } from './bill-lines.form';
         </ion-card>
 
         <okr-bill-lines-form [i18n]="i18n()" [lines]="lines()" (linesChange)="onLinesChange($event)" [accounts]="accounts()"
-          [defaultAccountKey]="defaultAccountKey()" [readOnly]="isReadOnly()" (dirty)="dirty.emit($event)" (valid)="linesValid.set($event)" />
+          [defaultAccountKey]="defaultAccountKey()" [costCenters]="costCenters()" [costCentersEnabled]="costCentersEnabled()"
+          [bookDefaultCostCenterKey]="bookDefaultCostCenterKey()" [projects]="projects()" [readOnly]="isReadOnly()" (dirty)="dirty.emit($event)" (valid)="linesValid.set($event)" />
 
         <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
       </form>
@@ -106,6 +107,11 @@ export class BillEditForm {
   public readonly lines = model.required<BillLine[]>();
   public readonly accounts = input<AccountModel[]>([]);
   public readonly defaultAccountKey = input('');
+  /** Kostenstellen / Kostenträger for the line pickers (spec 1.92); passed through to the lines form */
+  public readonly costCenters = input<CostCenterModel[]>([]);
+  public readonly costCentersEnabled = input(false);
+  public readonly bookDefaultCostCenterKey = input('');
+  public readonly projects = input<ProjectModel[]>([]);
   public readonly currentUser = input<UserModel | undefined>();
   public readonly allTags = input(DEFAULT_TAGS);
   public readonly readOnly = input(true);
