@@ -110,7 +110,10 @@ async function prepareInvoiceMail(db: Firestore, tenantId: string, data: Invoice
     const invoiceDocKey = String(invoice['documentKey'] ?? '');
     const invoiceDoc = invoiceDocKey ? (await db.collection(FinanceDocumentCollection).doc(invoiceDocKey).get()).data() : undefined;
     invoicePdfPath = String(invoiceDoc?.['fullPath'] ?? '');
-    if (!invoicePdfPath) throw refuse('no-document', `invoice ${invoiceKey} has no PDF to attach`);
+    // same tenant check as for the main document: never attach another tenant's PDF
+    if (!invoiceDoc || !invoicePdfPath || !((invoiceDoc['tenants'] as string[] | undefined) ?? []).includes(tenantId)) {
+      throw refuse('no-document', `invoice ${invoiceKey} has no PDF to attach`);
+    }
   }
 
   const dirId = recipientDirectoryId(tenantId, (invoice['receiver'] as ReceiverRef) ?? {});
