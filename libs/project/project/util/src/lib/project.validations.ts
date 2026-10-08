@@ -1,4 +1,4 @@
-import { enforce, omitWhen, only, staticSuite, test } from 'vest';
+import { enforce, omitWhen, staticSuite, test } from 'vest';
 
 import { DESCRIPTION_LENGTH, LONG_NAME_LENGTH } from '@okr/shared-constants';
 import { dateValidations, stringValidations } from '@okr/shared-util-core';
@@ -15,9 +15,7 @@ export interface ProjectFormModel {
 
 export const PROJECT_NAME_LENGTH = LONG_NAME_LENGTH;
 
-export const projectValidations = staticSuite((model: ProjectFormModel, field?: string) => {
-  if (field) only(field);
-
+export const projectValidations = staticSuite((model: ProjectFormModel) => {
   stringValidations('name', model.name, PROJECT_NAME_LENGTH, 1, true);
   stringValidations('description', model.description, DESCRIPTION_LENGTH);
   dateValidations('startDate', model.startDate);

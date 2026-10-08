@@ -6,7 +6,7 @@ import { AvatarSelect } from '@okr/avatar-ui';
 import { DEFAULT_NOTES, DEFAULT_TAGS, DESCRIPTION_LENGTH } from '@okr/shared-constants';
 import { AvatarInfo, CategoryListModel, ProjectModel, RoleName, UserModel } from '@okr/shared-models';
 import { CategorySelect, Chips, DateInput, DateInputI18n, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
-import { MODEL_SELECTOR, validateVestTree } from '@okr/shared-util-angular';
+import { MODEL_SELECTOR, validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, hasRole, newAvatarInfo } from '@okr/shared-util-core';
 import { PROJECT_NAME_LENGTH, ProjectI18n, projectValidations } from '@okr/project-project-util';
 
@@ -104,8 +104,8 @@ export class ProjectForm {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     validateVestTree(path, projectValidations as any));
 
-  // per-field Vest errors for the notes under each field (validateVestTree calls the suite with the model alone)
-  private readonly validationResult = computed(() => projectValidations(this.formData()));
+  // per-field Vest errors for the notes under each field, read off the signal form (one Vest run per change)
+  private readonly validationResult = vestErrors(this.projectForm);
   protected readonly nameErrors = computed(() => this.validationResult().getErrors('name'));
   protected readonly descriptionErrors = computed(() => this.validationResult().getErrors('description'));
   protected readonly startDateErrors = computed(() => this.validationResult().getErrors('startDate'));
