@@ -89,7 +89,7 @@ import { TaskStore } from './task.store';
             </ion-label>
             @if (!isReadOnly()) {
               <ion-button slot="end" fill="clear" (click)="selectShareGroup()">{{ store.i18n.shareGroupSelect() }}</ion-button>
-              @if (formData().shareKey) {
+              @if (formData()?.shareKey) {
                 <ion-button slot="end" fill="clear" (click)="onFieldChange('shareKey', '')">{{ store.i18n.shareGroupClear() }}</ion-button>
               }
             }

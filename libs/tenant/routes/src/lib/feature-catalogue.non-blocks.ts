@@ -49,6 +49,12 @@ export const NON_BLOCK_DOMAINS: Record<string, string> = {
   // blocks would not turn it red. Recorded, not fixed; fixing it means teaching the test which
   // directories are containers, which is the same open question as the paragraph above.
   content: 'container directory (2026-08-14 move); its subdomains are catalogued individually as `document`, `esign`, `pdf-template` and `meeting`',
+  // The `project` CONTAINER (spec 3.14 A11), created when `libs/task` moved into `libs/project/task`
+  // and `libs/project/project` was added beside it. Same shape as `content` above: the container is
+  // judged at the top level only, and its product surface is ONE block, `task`, whose id is a SKU
+  // key that must not be renamed. The `task` block owns both subdomains: `tasks` and `projects`
+  // collections, the `/task` and `/projects` routes, and the project menu rows.
+  project: 'container directory (spec 3.14); both subdomains (`task`, `project`) are catalogued together as the `task` block',
   // `libs/system/workflow/**` (spec 1.35). The rule ENGINE runs in a Cloud Function and fires
   // on every membership write regardless of any tenant setting, so a block toggle could not
   // turn the behaviour off — it would only hide the admin screen and leave rules running

@@ -47,6 +47,14 @@ export const PROJECT_I18N_KEYS = {
   exportPdf:         PFX + 'exportPdf',
   context_add:       PFX + 'context.add',
 
+  open:              PFX + 'open',
+  delete:            PFX + 'delete',
+  deleteConfirm:     PFX + 'deleteConfirm',
+  empty:             PFX + 'empty',
+  copySuffix:        PFX + 'copySuffix',
+  duplicated:        PFX + 'duplicated',
+  notFound:          PFX + 'notFound',
+
   validation_endBeforeStart: PFX + 'validation.endBeforeStart',
 } satisfies Record<string, string>;
 

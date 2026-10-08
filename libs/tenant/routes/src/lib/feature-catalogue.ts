@@ -1118,6 +1118,15 @@ const task: BlockRoutes = {
     path: 'task',
     canActivate: [isAuthenticatedGuard],
     children: [{ path: ':listId/:contextMenuName', loadComponent: () => import('@okr/project-task-feature').then(m => m.TaskList), data: { color: 'secondary' } }],
+  }, {
+    // spec 3.14 — projects group tasks; staff only (R2: the `projects` rule writes for privileged).
+    // Navigation hiding is not privacy: the collection itself is tenant-readable.
+    path: 'projects',
+    canActivate: [isPrivilegedGuard],
+    children: [
+      { path: ':listId/:contextMenuName', loadComponent: () => import('@okr/project-project-feature').then(m => m.ProjectList) },
+      { path: ':projectKey', loadComponent: () => import('@okr/project-project-feature').then(m => m.ProjectPage) },
+    ],
   }],
 };
 

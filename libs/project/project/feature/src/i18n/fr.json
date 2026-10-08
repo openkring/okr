@@ -75,5 +75,12 @@
     "cancelled": {
       "label": "Annulé"
     }
-  }
+  },
+  "open": "Ouvrir",
+  "delete": "Supprimer",
+  "deleteConfirm": "Veux-tu vraiment supprimer ce projet ? Ses tâches sont conservées et retournent dans la liste sans projet.",
+  "empty": "Aucun projet trouvé.",
+  "copySuffix": "(copie)",
+  "duplicated": "Projet dupliqué. Tâches copiées ({count})",
+  "notFound": "Ce projet n'existe pas."
 }

@@ -75,5 +75,12 @@
     "cancelled": {
       "label": "Abgebrochen"
     }
-  }
+  },
+  "open": "Öffnen",
+  "delete": "Löschen",
+  "deleteConfirm": "Möchtest du dieses Projekt wirklich löschen? Die Aufgaben bleiben erhalten und wandern zurück in die Liste ohne Projekt.",
+  "empty": "Keine Projekte gefunden.",
+  "copySuffix": "(Kopie)",
+  "duplicated": "Projekt dupliziert. Kopierte Aufgaben ({count})",
+  "notFound": "Dieses Projekt gibt es nicht."
 }

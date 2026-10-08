@@ -75,5 +75,12 @@
     "cancelled": {
       "label": "Cancelled"
     }
-  }
+  },
+  "open": "Open",
+  "delete": "Delete",
+  "deleteConfirm": "Do you really want to delete this project? Its tasks are kept and move back to the list without a project.",
+  "empty": "No projects found.",
+  "copySuffix": "(copy)",
+  "duplicated": "Project duplicated. Tasks copied ({count})",
+  "notFound": "This project does not exist."
 }

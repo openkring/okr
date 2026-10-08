@@ -75,5 +75,12 @@
     "cancelled": {
       "label": "Annullato"
     }
-  }
+  },
+  "open": "Apri",
+  "delete": "Elimina",
+  "deleteConfirm": "Vuoi davvero eliminare questo progetto? Le sue attività vengono conservate e tornano nell'elenco senza progetto.",
+  "empty": "Nessun progetto trovato.",
+  "copySuffix": "(copia)",
+  "duplicated": "Progetto duplicato. Attività copiate ({count})",
+  "notFound": "Questo progetto non esiste."
 }

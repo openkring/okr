@@ -2272,12 +2272,17 @@ const task: FeatureBlock = {
   // see the `forms` block) — a Cloud-Function write into THIS block's collection, which is why
   // it is listed here and not there: `collections` records ownership, and the retention pass
   // must find `tasks` exactly once.
-  collections: ['tasks'],
+  collections: ['tasks', 'projects'],
   menu: [
     // Both verbatim off the live docs. `task-all` is `tenants: ['test','scs']`, `task-my`
     // `['scs']` — so most tenants have neither row today.
     { key: 'task-all', name: 'task-all', url: '/task/all/c-tasks', action: 'navigate', roleNeeded: 'privileged', icon: 'todo', label: '@item.task-all' },
     { key: 'task-my', name: 'task-my', url: '/task/my/c-tasks', action: 'navigate', roleNeeded: 'registered', icon: 'todo', label: '@item.task-my' },
+    // spec 3.14 — the project list (staff only, like `task-all`) and its context menu.
+    { key: 'project-all', name: 'project-all', url: '/projects/all/c-projects', action: 'navigate', roleNeeded: 'privileged', icon: 'folder', label: '@item.project-all' },
+    { key: 'c-projects', name: 'c-projects', url: '', action: 'context', roleNeeded: 'privileged', icon: 'help-circle', label: '', children: [
+      { key: 'project-add', name: 'project-add', url: 'add', action: 'call', roleNeeded: 'privileged', icon: 'add-circle', label: '@item.project-add' },
+    ] },
     // `c-tasks` — catalogued here, on the block whose `TaskList.onPopoverDismiss` dispatches all
     // three children (`add`, `export`, `toggleFilter`), exactly as `c-folder` sits on the
     // `document` block that dispatches it rather than on the folder domain it is named after.

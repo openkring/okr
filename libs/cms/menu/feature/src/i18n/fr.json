@@ -517,6 +517,8 @@
     "journal-export": "Exporter le journal",
     "journal-import-bexio": "Importer le journal bexio",
     "journal-import-bank": "Importer un relevé bancaire",
+    "project-add": "Ajouter un projet",
+    "project-all": "Projets",
     "task-add": "Créer une nouvelle tâche",
     "task-all": "Toutes les tâches",
     "task-archived": "Afficher les archivées",
