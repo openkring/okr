@@ -10,16 +10,16 @@ import { take } from 'rxjs/operators';
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
-import { AccountModel, AvatarInfo, BillCollection, BillModel, OrgModel } from '@okr/shared-models';
+import { AccountModel, BillCollection, BillModel } from '@okr/shared-models';
 import { confirm, exportCsv, resourceParams, showToast } from '@okr/shared-util-angular';
-import { debugListLoaded, fill, getAvatarInfo, getSystemQuery, getTodayStr, getYear, nameMatches } from '@okr/shared-util-core';
+import { debugListLoaded, fill, getSystemQuery, getTodayStr, getYear, nameMatches } from '@okr/shared-util-core';
 
 import { BillService } from '@okr/finance-bill-data-access';
 import { BillPaymentModal } from '@okr/finance-bill-ui';
 import {
   BILL_I18N_KEYS, BillI18n, BillPaymentCandidate, BillPaymentInput, billDisplayState, billPaymentHintWindow, billPaymentHints, billPaymentWindow, billRefusalReasons, billRefusalText,
   getBillExportData, isDraftBill, isPayableBill, isRetryableBillPaymentRefusal, linkedBillPaymentKeys, newBill, newBillLine,
-  newBillPaymentFormModel, openBillAmount,
+  newBillPaymentFormModel, openBillAmount, vendorByName,
 } from '@okr/finance-bill-util';
 import { newPaymentId } from '@okr/finance-invoice-util';
 import { AccountService } from '@okr/finance-account-data-access';
@@ -38,15 +38,6 @@ interface ParsedQrInvoice {
   reference: string;
   creditorName: string;
   dueDate: string;     // store date (yyyymmdd)
-}
-
-/** The org whose name equals the QR-bill creditor (case- and space-insensitive), as vendor; undefined when none or several match. */
-function vendorByName(orgs: OrgModel[], creditorName: string): AvatarInfo | undefined {
-  const norm = (s: string | undefined): string => (s ?? '').toLowerCase().replace(/\s+/g, ' ').trim();
-  const name = norm(creditorName);
-  if (!name) return undefined;
-  const hits = orgs.filter((o) => norm(o.name) === name);
-  return hits.length === 1 ? getAvatarInfo(hits[0], 'org') : undefined;
 }
 
 export type BillState = {

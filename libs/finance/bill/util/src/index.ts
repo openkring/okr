@@ -6,3 +6,4 @@ export * from './lib/bill-payment.validations';
 export * from './lib/bill-line.util';
 export * from './lib/bill-line.validations';
 export * from './lib/bill-qr-scan.validations';
+export * from './lib/bill-scan.util';
