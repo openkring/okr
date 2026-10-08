@@ -10,9 +10,10 @@ export const TASK_I18N_KEYS = {
   empty_my:                       PFX + 'empty-my',
   archived_count:                 PFX + 'archived_count',
 
-  calendarName_label:              PFX + 'calendar.name.label',
-  calendarName_description:        PFX + 'calendar.name.description',
-  calendarName_addLabel:           PFX + 'calendar.name.addLabel',
+  shareGroupLabel:                PFX + 'shareGroup.label',
+  shareGroupNone:                 PFX + 'shareGroup.none',
+  shareGroupSelect:               PFX + 'shareGroup.select',
+  shareGroupClear:                PFX + 'shareGroup.clear',
 
   quick_entry_label:              PFX + 'taskQuickEntry.label',
   quick_entry_placeholder:        PFX + 'taskQuickEntry.placeholder',

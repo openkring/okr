@@ -402,6 +402,7 @@ function buildTask(meetingId, meetingDate, secretary, t, n) {
       rank: '',
       relatedModelType: 'meeting',
       relatedKey: `meeting.${meetingId}`,
+      shareKey: `meeting.${meetingId}`,
     },
   };
 }

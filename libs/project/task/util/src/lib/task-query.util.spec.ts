@@ -1,23 +1,25 @@
 import { describe, expect, it } from 'vitest';
 import { TaskModel } from '@okr/shared-models';
-import { buildTaskListQueries, getTaskShareKey, getTaskListSource, isActiveGroupMembership, isClosedGroup, isTaskStaff } from './task-query.util';
-
-function task(calendars: string[] | undefined, relatedKey = ''): TaskModel {
-  const t = new TaskModel('scs');
-  (t as unknown as { calendars?: string[] }).calendars = calendars;
-  t.relatedKey = relatedKey;
-  return t;
-}
+import { buildTaskListQueries, getDefaultShareKey, getTaskShareKey, getTaskListSource, isActiveGroupMembership, isClosedGroup, isTaskStaff } from './task-query.util';
 
 describe('getTaskShareKey', () => {
-  it('is empty for a personal task in the tenant calendar', () => expect(getTaskShareKey(task(['scs']))).toBe(''));
-  it('is empty for a legacy task without calendars', () => expect(getTaskShareKey(task(undefined))).toBe(''));
-  it('is empty for an empty calendar list', () => expect(getTaskShareKey(task([]))).toBe(''));
-  it('is the group key for a group calendar', () => expect(getTaskShareKey(task(['grp1']))).toBe('grp1'));
-  it('skips the tenant key next to a group', () => expect(getTaskShareKey(task(['scs', 'grp1']))).toBe('grp1'));
-  it('is the relatedKey for a meeting action item', () => expect(getTaskShareKey(task(['scs'], 'meeting.m1'))).toBe('meeting.m1'));
-  it('prefers the meeting over a group calendar', () => expect(getTaskShareKey(task(['grp1'], 'meeting.m1'))).toBe('meeting.m1'));
-  it('is empty for other related records', () => expect(getTaskShareKey(task(['scs'], 'trip.t1'))).toBe(''));
+  it('returns the meeting relatedKey for an action item, whatever shareKey says', () => {
+    expect(getTaskShareKey({ relatedKey: 'meeting.m1', shareKey: 'g1' })).toBe('meeting.m1');
+  });
+  it('keeps an explicitly written group key', () => {
+    expect(getTaskShareKey({ relatedKey: '', shareKey: 'g1' })).toBe('g1');
+  });
+  it('keeps an explicit unshare — an empty shareKey stays empty', () => {
+    expect(getTaskShareKey({ relatedKey: '', shareKey: '' })).toBe('');
+  });
+  it('coalesces legacy docs without the fields', () => {
+    expect(getTaskShareKey({} as Pick<TaskModel, 'shareKey' | 'relatedKey'>)).toBe('');
+  });
+});
+
+describe('getDefaultShareKey', () => {
+  it.each(['', 'all', 'my'])('is private for list %s', l => expect(getDefaultShareKey(l)).toBe(''));
+  it('uses the group key of a group list', () => expect(getDefaultShareKey('g1')).toBe('g1'));
 });
 
 describe('buildTaskListQueries', () => {

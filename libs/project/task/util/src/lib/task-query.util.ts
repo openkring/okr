@@ -3,17 +3,19 @@ import { getArchiveInclusiveQuery } from '@okr/shared-util-core';
 
 /*-------------------------- visibility --------------------------------*/
 /**
- * Who besides author/assignee/staff may read this task (spec 1.72 §4)? '' = nobody (private).
- * A meeting action item → its relatedKey ('meeting.<okey>'); a task in a group calendar → the
- * group key (first calendar that is not one of the task's tenants). Stored denormalised as
- * `shareKey`: Firestore rules only admit a list query that filters on the field the rule checks,
- * and a query may carry just one array filter (tenants), so `calendars` cannot serve.
+ * The reader scope written with the task (spec 4.106 §4, 3.14 Phase 2). A meeting action item is
+ * always scoped to its meeting; otherwise the explicitly chosen group key is kept as is — `calendars[]`
+ * is no longer read (it used to carry the group id; scripts/migrate-task-calendars.mjs strips it).
  */
-export function getTaskShareKey(task: Pick<TaskModel, 'calendars' | 'tenants' | 'relatedKey'>): string {
+export function getTaskShareKey(task: Pick<TaskModel, 'shareKey' | 'relatedKey'>): string {
   const relatedKey = task.relatedKey ?? '';
   if (relatedKey.startsWith('meeting.')) return relatedKey;
-  const tenants = task.tenants ?? [];
-  return (task.calendars ?? []).find(c => !tenants.includes(c)) ?? '';
+  return task.shareKey ?? '';
+}
+
+/** The scope a task created from a list gets: private on the tenant-wide lists, else the group. */
+export function getDefaultShareKey(listName: string): string {
+  return listName === '' || listName === 'all' || listName === 'my' ? '' : listName;
 }
 
 /*-------------------------- queries --------------------------------*/

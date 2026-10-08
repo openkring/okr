@@ -5,12 +5,11 @@
   "empty": "Aucune tâche trouvée.",
   "empty-my": "Félicitations ! - Vous n'avez aucune tâche en cours.",
   "archived_count": "archivées",
-  "calendar": {
-    "name": {
-      "label": "Calendrier",
-      "description": "L'événement est inscrit dans ces calendriers.",
-      "addLabel": "Ajouter un nom de calendrier"
-    }
+  "shareGroup": {
+    "label": "Partagé avec le groupe",
+    "none": "Visible uniquement par toi, la personne assignée et le comité",
+    "select": "Choisir un groupe",
+    "clear": "Ne plus partager"
   },
   "taskQuickEntry": {
     "label": "Saisie rapide",

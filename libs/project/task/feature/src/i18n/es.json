@@ -5,12 +5,11 @@
   "empty": "No se encontraron tareas.",
   "empty-my": "¡Enhorabuena ! - No tiene tareas pendientes.",
   "archived_count": "archivadas",
-  "calendar": {
-    "name": {
-      "label": "Calendario",
-      "description": "El evento se registra en estos calendarios.",
-      "addLabel": "Añadir nombre de calendario"
-    }
+  "shareGroup": {
+    "label": "Compartido con el grupo",
+    "none": "Solo visible para ti, la persona asignada y la junta directiva",
+    "select": "Elegir grupo",
+    "clear": "Dejar de compartir"
   },
   "taskQuickEntry": {
     "label": "Entrada rápida",

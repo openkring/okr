@@ -5,14 +5,14 @@ import { of } from 'rxjs';
 import { ModalController } from '@ionic/angular/standalone';
 
 import { AppConfigService } from '@okr/shared-data-access';
-import { AppStore, PersonSelectModal, PersonSelectResult } from '@okr/shared-feature';
+import { AppStore, GroupSelectModal, PersonSelectModal, PersonSelectResult } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
-import { PersonModel, TaskModel } from '@okr/shared-models';
+import { GroupModel, PersonModel, TaskModel } from '@okr/shared-models';
 import { chipMatches, debugItemLoaded, getAvatarInfo, getAvatarInfoForCurrentUser, getTodayStr, hasRole, isPerson, nameMatches, rankBetween } from '@okr/shared-util-core';
 import { resourceParams } from '@okr/shared-util-angular';
 
 import { TaskService } from '@okr/project-task-data-access';
-import { assignMissingRanks, buildTaskListQueries, canChangeTask, canCreateTask, canDeleteTask, getCompletionPatch, getTaskListSource, groupTasksByState, isClosedGroup, isTask, TASK_I18N_KEYS, TaskBoardColumn, TaskSettings } from '@okr/project-task-util';
+import { assignMissingRanks, buildTaskListQueries, canChangeTask, canCreateTask, canDeleteTask, getCompletionPatch, getDefaultShareKey, getTaskListSource, groupTasksByState, isClosedGroup, isTask, TASK_I18N_KEYS, TaskBoardColumn, TaskSettings } from '@okr/project-task-util';
 
 /** The payload of a Kanban drag-and-drop. `columnTasks` is the target column, ordered, without the moved task. */
 export type TaskMove = {
@@ -257,7 +257,7 @@ export const TaskStore = signalStore(
       const task = new TaskModel(store.tenantId());
       task.author = author;
       task.assignee = author; // by default, the task is self-assigned, user can change this in the edit modal
-      task.calendars = this.getDefaultCalendars();
+      task.shareKey = getDefaultShareKey(store.calendarName());
       await this.edit(task, false);
     },
 
@@ -326,16 +326,10 @@ export const TaskStore = signalStore(
       if (isClosedGroup(store.appStore.getGroup(store.calendarName()))) store.tasksResource.reload();
     },
 
-    /** A new task belongs to the list it was created in: the group calendar, else the tenant's own. */
-    getDefaultCalendars(): string[] {
-      const calendar = store.calendarName();
-      return (!calendar || calendar === 'all' || calendar === 'my') ? [store.tenantId()] : [calendar];
-    },
-
     async quickEntry(task: TaskModel): Promise<void> {
       if (!this.canCreateTask()) return;
       // without this, a task typed into a group's quick entry never showed in that group's list
-      if (task.calendars.length === 0) task.calendars = this.getDefaultCalendars();
+      if (!task.shareKey) task.shareKey = getDefaultShareKey(store.calendarName());
       await store.taskService.create(task, store.currentUser());
       this.reloadIfFetched();
     },
@@ -381,6 +375,20 @@ export const TaskStore = signalStore(
         }
       }
       return undefined;
+    },
+
+    async selectGroup(): Promise<GroupModel | undefined> {
+      const modal = await store.modalController.create({
+        component: GroupSelectModal,
+        cssClass: 'list-modal',
+        componentProps: {
+          selectedTag: '',
+          currentUser: store.currentUser()
+        }
+      });
+      modal.present();
+      const { data, role } = await modal.onWillDismiss<GroupModel>();
+      return role === 'confirm' && data ? data : undefined;
     },
 
     getTitleLabel(readOnly: boolean, key?: string): string {

@@ -5,12 +5,11 @@
   "empty": "Nessuna attività trovata.",
   "empty-my": "Congratulazioni ! - Non hai attività in sospeso.",
   "archived_count": "archiviate",
-  "calendar": {
-    "name": {
-      "label": "Calendario",
-      "description": "L'evento viene registrato in questi calendari.",
-      "addLabel": "Aggiungi nome del calendario"
-    }
+  "shareGroup": {
+    "label": "Condiviso con il gruppo",
+    "none": "Visibile solo a te, alla persona assegnata e al comitato",
+    "select": "Scegli gruppo",
+    "clear": "Non condividere più"
   },
   "taskQuickEntry": {
     "label": "Inserimento rapido",

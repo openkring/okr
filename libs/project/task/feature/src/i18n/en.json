@@ -5,12 +5,11 @@
   "empty": "No todos found.",
   "empty-my": "Congratulations ! - You have no open tasks.",
   "archived_count": "archived",
-  "calendar": {
-    "name": {
-      "label": "Calendar",
-      "description": "The event is entered in these calendars.",
-      "addLabel": "Add calendar name"
-    }
+  "shareGroup": {
+    "label": "Shared with group",
+    "none": "Only visible to you, the assigned person and the board",
+    "select": "Choose group",
+    "clear": "Stop sharing"
   },
   "taskQuickEntry": {
     "label": "Quick entry",

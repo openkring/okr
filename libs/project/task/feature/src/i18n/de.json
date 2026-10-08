@@ -5,12 +5,11 @@
   "empty": "Keine Todos gefunden.",
   "empty-my": "Gratulation ! - Du hast keine offenen Aufgaben.",
   "archived_count": "archiviert",
-  "calendar": {
-    "name": {
-      "label": "Kalender",
-      "description": "In diesen Kalendern wird das Ereignis eingetragen.",
-      "addLabel": "Kalendername hinzufügen"
-    }
+  "shareGroup": {
+    "label": "Geteilt mit Gruppe",
+    "none": "Nur für dich, die zugewiesene Person und den Vorstand sichtbar",
+    "select": "Gruppe wählen",
+    "clear": "Nicht mehr teilen"
   },
   "taskQuickEntry": {
     "label": "Schnelleingabe",

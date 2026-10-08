@@ -2,12 +2,11 @@ import { Component, computed, inject, input, linkedSignal, signal } from '@angul
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { catchError, of, switchMap } from 'rxjs';
-import { IonAccordionGroup, IonContent, ModalController } from '@ionic/angular/standalone';
+import { IonAccordionGroup, IonButton, IonContent, IonItem, IonLabel, ModalController } from '@ionic/angular/standalone';
 
-import { LowercaseWordMask } from '@okr/shared-config';
 import { I18nService } from '@okr/shared-i18n';
 import { ApprovalModelName, CategoryListModel, TaskModel, TaskModelName, UserModel } from '@okr/shared-models';
-import { ChangeConfirmation, ChangeConfirmationI18n, Header, StringList } from '@okr/shared-ui';
+import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
 import { coerceBoolean, hasRole, newAvatarInfo, safeStructuredClone, warn } from '@okr/shared-util-core';
 
 import { CommentsAccordion } from '@okr/comment-feature';
@@ -25,8 +24,8 @@ import { TaskStore } from './task.store';
   standalone: true,
   imports: [
     Header, ChangeConfirmation, TaskForm, CommentsAccordion,
-    AvatarSelect, StringList, ApprovalDecisionCard,
-    IonContent, IonAccordionGroup
+    AvatarSelect, ApprovalDecisionCard,
+    IonContent, IonAccordionGroup, IonButton, IonItem, IonLabel
   ],
   providers: [TaskStore],
   template: `
@@ -81,15 +80,20 @@ import { TaskStore } from './task.store';
           (selectClicked)="selectPerson('author')"
           />
 
-        <okr-strings
-          [strings]="calendars()"
-          (stringsChange)="onFieldChange('calendars', $event)"
-          [mask]="calendarMask"
-          [maxLength]="20"
-          [readOnly]="isReadOnly()"
-          [title]="store.i18n.calendarName_label()"
-          [description]="store.i18n.calendarName_description()"
-          [add]="store.i18n.calendarName_addLabel()" />
+        @if (!isMeetingTask()) {
+          <ion-item lines="none">
+            <ion-label>
+              <h3>{{ store.i18n.shareGroupLabel() }}</h3>
+              <p>{{ shareGroupName() || store.i18n.shareGroupNone() }}</p>
+            </ion-label>
+            @if (!isReadOnly()) {
+              <ion-button slot="end" fill="clear" (click)="selectShareGroup()">{{ store.i18n.shareGroupSelect() }}</ion-button>
+              @if (formData().shareKey) {
+                <ion-button slot="end" fill="clear" (click)="onFieldChange('shareKey', '')">{{ store.i18n.shareGroupClear() }}</ion-button>
+              }
+            }
+          </ion-item>
+        }
       }
 
       <!-- Commenting is NOT part of editing the task: a viewer may always answer a
@@ -129,14 +133,18 @@ export class TaskEditModal {
   public formData = linkedSignal(() => safeStructuredClone(this.task()));
   protected showForm = signal(true);
   protected isNew = computed(() => (this.task().okey ?? '').length === 0);
-  // shared with the form; drives name, author + calendars here. A new task opens expanded: the
+  // shared with the form; drives name, author + share group here. A new task opens expanded: the
   // simplified view shows the name only as a title, so an empty new task could not be named.
   protected showAdvanced = linkedSignal(() => this.isNew());
 
   // derived
   protected headerTitle = computed(() => this.store.getTitleLabel(this.isReadOnly(), this.task().okey, ));
   protected readonly parentKey = computed(() => `${TaskModelName}.${this.task().okey}`);
-  protected calendars = linkedSignal(() => (this.formData()?.calendars ?? []) as string[]);
+  protected readonly isMeetingTask = computed(() => (this.formData()?.relatedKey ?? '').startsWith('meeting.'));
+  protected readonly shareGroupName = computed(() => {
+    const key = this.formData()?.shareKey ?? '';
+    return key ? (this.store.appStore.getGroup(key)?.name ?? key) : '';
+  });
   // no fallback to the current user: an empty author/assignee must look empty, since that is what is saved
   protected author = computed(() => this.formData()?.author);
   protected assignee = computed(() => this.formData()?.assignee);
@@ -165,9 +173,6 @@ export class TaskEditModal {
     const a = this.approval();
     return !!a && canWithdrawApproval(a, this.myPersonKey(), this.isAdmin());
   });
-
-  // passing constants to template
-  protected calendarMask = LowercaseWordMask;
 
  /******************************* actions *************************************** */
   public async save(): Promise<void> {
@@ -213,6 +218,11 @@ export class TaskEditModal {
 
   protected onFormDataChange(formData: TaskModel): void {
     this.formData.set(formData);
+  }
+
+  protected async selectShareGroup(): Promise<void> {
+    const group = await this.store.selectGroup();
+    if (group) this.onFieldChange('shareKey', group.okey);
   }
 
   protected async selectPerson(type: 'author' | 'assignee'): Promise<void> {
