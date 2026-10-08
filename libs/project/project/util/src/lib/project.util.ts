@@ -1,5 +1,5 @@
 import { ProjectModel, ProjectModelName, TaskModel } from '@okr/shared-models';
-import { addDuration, addIndexElement, isType } from '@okr/shared-util-core';
+import { addDuration, addIndexElement, DateFormat, isType, parseDate } from '@okr/shared-util-core';
 
 export function isProject(x: unknown, tenantId: string): x is ProjectModel {
   return isType(x, new ProjectModel(tenantId));
@@ -34,6 +34,8 @@ export function getProjectKeyOfParent(parentKey: string | undefined): string {
 export function shiftStoreDate(date: string | undefined, days: number): string {
   const d = date ?? '';
   if (days === 0 || !/^\d{8}$/.test(d)) return d;
+  // an invalid calendar date ('20260230', '00000000') must not abort a whole duplicate: addDuration die()s on it
+  if (!parseDate(d, DateFormat.StoreDate, true)) return d;
   return addDuration(d, { days });
 }
 
