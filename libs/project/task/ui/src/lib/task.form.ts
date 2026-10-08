@@ -128,12 +128,14 @@ import { getRelatedIcon, getRelatedModelType, getRelatedRoute, TaskI18n, taskVal
                   </ion-item>
                 </ion-col>
               </ion-row>
-              <ion-row>
-                <ion-col size="12" size-md="6">
-                  <okr-project-select [projects]="projects()" [label]="i18n().project_label()"
-                    [selectedKey]="projectKey()" (selectedKeyChange)="onProjectChange($event)" [readOnly]="isReadOnly()" />
-                </ion-col>
-              </ion-row>
+              @if(showProject()) {
+                <ion-row>
+                  <ion-col size="12" size-md="6">
+                    <okr-project-select [projects]="projects()" [label]="i18n().project_label()"
+                      [selectedKey]="projectKey()" (selectedKeyChange)="onProjectChange($event)" [readOnly]="isReadOnly()" />
+                  </ion-col>
+                </ion-row>
+              }
             }
           </ion-grid>
         </ion-card-content>
@@ -198,6 +200,8 @@ export class TaskForm {
   protected readonly tags = computed(() => this.formData()?.tags ?? DEFAULT_TAGS);
   protected readonly notes = computed(() => this.formData()?.notes ?? DEFAULT_NOTES);
   protected readonly projectKey = computed(() => getProjectKeyOfParent(this.formData()?.parentKey));
+  // like the booking form: the picker only shows when there is something to pick or a link to keep visible
+  protected readonly showProject = computed(() => this.projects().some(p => !p.isArchived) || !!this.projectKey());
   protected okey = computed(() => this.formData().okey ?? '');
 
   // The state is a click-through icon in front of the name: one tap advances to the next item

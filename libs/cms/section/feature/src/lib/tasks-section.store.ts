@@ -1,4 +1,4 @@
-import { computed, inject } from '@angular/core';
+import { computed, inject, Injector } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { of } from 'rxjs';
@@ -29,6 +29,7 @@ export const TasksStore = signalStore(
     appStore: inject(AppStore),
     taskService: inject(TaskService),
     modalController: inject(ModalController),
+    injector: inject(Injector),
     i18n: inject(I18nService).translateAll(SECTION_I18N_KEYS)
   })),
   withProps((store) => ({
@@ -78,7 +79,7 @@ export const TasksStore = signalStore(
 
     async edit(task: TaskModel, readOnly = true): Promise<void> {
       // dynamic: a static import puts the task feature (and the workflow ui it pulls in) into the dashboard closure
-      const { TaskEditModal } = await import('@okr/project-task-feature');
+      const { TaskEditModal, loadTaskProjects } = await import('@okr/project-task-feature');
       const modal = await store.modalController.create({
         component: TaskEditModal,
         componentProps: {
@@ -89,6 +90,7 @@ export const TasksStore = signalStore(
           states: store.states(),
           priorities: store.priorities(),
           importances: store.importances(),
+          projects: await loadTaskProjects(store.injector),
           readOnly
         }
       });
