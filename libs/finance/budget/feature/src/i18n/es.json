@@ -12,6 +12,9 @@
     "total": "Total",
     "unassigned": "Contabilizado sin centro de costes",
     "frozen": "Esta versión está aprobada y ya no se puede modificar.",
+    "frozenSuperseded": "Esta versión ha sido sustituida por una versión aprobada más reciente y ya no se puede modificar.",
+    "frozenArchived": "Esta versión está archivada y ya no se puede modificar. Con «Nueva versión a partir de esta» puedes seguir con una copia.",
+    "frozenExternal": "La contabilidad se gestiona externamente. Aquí solo puedes consultar los presupuestos.",
     "notFound": "Esta versión del presupuesto no existe.",
     "unbudgeted": "sin presupuestar"
   },

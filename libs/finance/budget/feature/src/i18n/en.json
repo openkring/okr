@@ -12,6 +12,9 @@
     "total": "Total",
     "unassigned": "Booked without cost centre",
     "frozen": "This version is approved and can no longer be changed.",
+    "frozenSuperseded": "This version has been replaced by a newer approved version and can no longer be changed.",
+    "frozenArchived": "This version is archived and can no longer be changed. Use \"New version from this\" to continue with a copy.",
+    "frozenExternal": "The books are managed externally. You can only view budgets here.",
     "notFound": "This budget version does not exist.",
     "unbudgeted": "not budgeted"
   },

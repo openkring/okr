@@ -1,5 +1,5 @@
 import { AccountModel } from '@okr/shared-models';
-import { CostCenterTotals } from '@okr/finance-cost-center-util';
+import { CellSide, CostCenterTotals } from '@okr/finance-cost-center-util';
 
 /** Shared by the grid and the comparison rows: totals arithmetic and how an account row is named and ordered. */
 export const zeroTotals = (): CostCenterTotals => ({ actual: 0, budget: 0, compare: 0 });
@@ -17,3 +17,9 @@ export function accountParts(accountByKey: ReadonlyMap<string, AccountModel>, ac
 
 /** Order by account number, numerically. */
 export const compareAccountIds = (a: string, b: string): number => a.localeCompare(b, 'de', { numeric: true });
+
+/** More actual than budget is bad for an expense, less for a revenue (`diff` = actual − budget). */
+export const isOver = (side: CellSide, diff: number): boolean => (side === 'expense' ? diff > 0 : diff < 0);
+
+/** The net result (revenue − expense) is bad when it stays below the budgeted one (`diff` = actual − budget). */
+export const isNetOver = (diff: number): boolean => diff < 0;

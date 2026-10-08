@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
 import { AccountModel, BookingLineModel, BudgetLineModel, CostCenterModel, MoneyModel } from '@okr/shared-models';
-import { aggregateByCostCenter } from '@okr/finance-cost-center-util';
+import { aggregateByCostCenter, rollUpCostCenters } from '@okr/finance-cost-center-util';
 
+import { buildComparisonRows } from './budget-compare.util';
 import { buildBudgetGrid, netOf } from './budget-grid.util';
 
 const cc = (okey: string, id: string, parentKey: string, type: 'root' | 'group' | 'leaf'): CostCenterModel =>
@@ -84,10 +85,40 @@ describe('buildBudgetGrid', () => {
     expect(grid.total.expense.budget).toBe(10000);
   });
 
-  it('unassigned actuals stay out of the grand total', () => {
+  it('unassigned actuals are their own bucket and part of the grand total', () => {
     const c = aggregateByCostCenter([booking('', 'a4000', 50)], accounts, []);
     const grid = buildBudgetGrid(c, [], centers, accounts, false);
     expect(grid.unassigned.expense.actual).toBe(50);
-    expect(grid.total.expense.actual).toBe(0);
+    expect(grid.unknown.expense.actual).toBe(0);
+    expect(grid.total.expense.actual).toBe(50);
+  });
+
+  it('cells on an unknown Kostenstelle do not vanish: own bucket, counted in the total', () => {
+    const c = aggregateByCostCenter([booking('gone', 'a4000', 70)], accounts, [line('l9', 'gone', 'a4000', 900)]);
+    const grid = buildBudgetGrid(c, [], centers, accounts, false);
+    expect(grid.unknown.expense).toEqual({ actual: 70, budget: 900, compare: 0 });
+    expect(grid.sections).toEqual([]);
+    expect(grid.total.expense.actual).toBe(70);
+  });
+
+  it('grand total equals the comparison section totals for the same cells (incl. both buckets)', () => {
+    const jl = [line('l1', 'jun', 'a4000', 10000), line('l3', 'sen', 'a3000', 50000), line('l8', '', 'a4000', 300), line('l9', 'gone', 'a3000', 40)];
+    const bl = [booking('jun', 'a4000', 4000), booking('', 'a4100', 25), booking('gone', 'a4000', 7), booking('sport', 'a4000', 11)];
+    const c = aggregateByCostCenter(bl, accounts, jl);
+    const grid = buildBudgetGrid(c, jl, centers, accounts, false);
+    const rollUp = rollUpCostCenters(c, centers);
+    for (const side of ['expense', 'revenue'] as const) {
+      const total = buildComparisonRows(c, rollUp, centers, accounts, new Set(), side).total;
+      expect(grid.total[side].actual).toBe(total.actual);
+      expect(grid.total[side].budget).toBe(total.budget);
+    }
+    expect(grid.unassigned.expense.actual).toBe(25);
+    expect(grid.unknown.expense.actual).toBe(7);
+  });
+
+  it('carries the side of each row', () => {
+    const grid = buildBudgetGrid(cells, lines, centers, accounts, false);
+    expect(grid.sections.find(s => s.center.okey === 'sen')?.rows[0].side).toBe('revenue');
+    expect(grid.sections.find(s => s.center.okey === 'jun')?.rows[0].side).toBe('expense');
   });
 });

@@ -12,6 +12,9 @@
     "total": "Total",
     "unassigned": "Ohne Kostenstelle gebucht",
     "frozen": "Diese Version ist freigegeben und kann nicht mehr geändert werden.",
+    "frozenSuperseded": "Diese Version wurde durch eine neuere freigegebene Version ersetzt und lässt sich nicht mehr ändern.",
+    "frozenArchived": "Diese Version ist archiviert und lässt sich nicht mehr ändern. Über «Neue Version davon» kannst du eine Kopie weiterbearbeiten.",
+    "frozenExternal": "Die Buchhaltung wird extern geführt. Budgets kannst du hier nur ansehen.",
     "notFound": "Diese Budgetversion gibt es nicht.",
     "unbudgeted": "nicht budgetiert"
   },

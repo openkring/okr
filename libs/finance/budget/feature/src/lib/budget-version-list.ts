@@ -168,9 +168,10 @@ export class BudgetVersionList {
   private addActionSheetButtons(options: ActionSheetOptions, version: BudgetVersionModel): void {
     if (!this.store.isEnabled()) return; // externally managed books: no actions at all
     options.buttons.push(createActionSheetButton('budget.open', this.store.i18n.open(), this.imgixBaseUrl, 'grid'));
-    if (this.canChange() && !version.isArchived) {
+    if (this.canChange()) {
+      // an archived version is read-only, but a copy of it is a new draft — otherwise archiving is a dead end
       options.buttons.push(createActionSheetButton('budget.copy', this.store.i18n.copyFrom(), this.imgixBaseUrl, 'copy'));
-      if (isVersionEditable(version)) {
+      if (!version.isArchived && isVersionEditable(version)) {
         options.buttons.push(createActionSheetButton('budget.approve', this.store.i18n.approve(), this.imgixBaseUrl, 'checkmark'));
         options.buttons.push(createActionSheetButton('budget.edit', this.store.i18n.update(), this.imgixBaseUrl, 'edit'));
         options.buttons.push(createActionSheetButton('budget.archive', this.store.i18n.archive(), this.imgixBaseUrl, 'archive'));

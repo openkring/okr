@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
+import { Component, computed, DestroyRef, effect, inject, input, signal, untracked } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
   IonBackButton, IonButtons, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonContent, IonHeader, IonIcon, IonItem, IonLabel,
@@ -9,7 +9,7 @@ import { EmptyList, Spinner } from '@okr/shared-ui';
 
 import { ReadOnlyBanner } from '@okr/finance-accounting-feature';
 import { formatMinorAmount } from '@okr/finance-booking-util';
-import { buildComparisonRows, ComparisonRow, ComparisonSection, defaultCompareVersion, usedPercent } from '@okr/finance-budget-util';
+import { buildComparisonRows, ComparisonRow, ComparisonSection, defaultCompareVersion, isNetOver, isOver, usedPercent } from '@okr/finance-budget-util';
 import { aggregateByCostCenter, CellSide, postedLinesInRange, rollUpCostCenters } from '@okr/finance-cost-center-util';
 import { fiscalYear } from '@okr/finance-reporting-util';
 
@@ -52,7 +52,7 @@ import { BudgetStore } from './budget.store';
 
     <ion-content>
       <okr-read-only-banner />
-      @if (store.isLoading()) {
+      @if (store.isLoading() || store.costCenterStore.isLoading()) {
         <okr-spinner />
       } @else {
         <div class="pickers">
@@ -133,7 +133,7 @@ import { BudgetStore } from './budget.store';
                 <span>{{ fmt(net().budget) }}</span>
                 @if (versionB()) { <span>{{ fmt(net().compare) }}</span> }
                 <span>{{ fmt(net().actual) }}</span>
-                <span [class.negative]="net().actual - net().budget < 0">{{ fmt(net().actual - net().budget) }}</span></span></div>
+                <span [class.negative]="netOver(net().actual - net().budget)">{{ fmt(net().actual - net().budget) }}</span></span></div>
             </ion-card-content>
           </ion-card>
         }
@@ -200,7 +200,8 @@ export class BudgetComparePage {
   });
 
   constructor() {
-    effect(() => { if (this.store.isEnabled()) this.store.loadActuals(); });
+    this.store.loadActuals();
+    inject(DestroyRef).onDestroy(() => this.store.releaseActuals());
 
     // Take the URL once the versions are known; afterwards the pickers own the state.
     effect(() => {
@@ -264,7 +265,11 @@ export class BudgetComparePage {
 
   /** more actual than budget is bad for an expense, less for a revenue */
   protected isOver(side: CellSide, diff: number): boolean {
-    return side === 'expense' ? diff > 0 : diff < 0;
+    return isOver(side, diff);
+  }
+
+  protected netOver(diff: number): boolean {
+    return isNetOver(diff);
   }
 
   protected usedOf(actual: number, budget: number): number | undefined {

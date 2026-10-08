@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input } from '@angular/core';
+import { Component, computed, DestroyRef, inject, input } from '@angular/core';
 import {
   ActionSheetController, ActionSheetOptions, IonBackButton, IonButton, IonButtons, IonCard, IonCardContent, IonCardHeader,
   IonCardTitle, IonChip, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonNote, IonTitle, IonToolbar
@@ -12,8 +12,8 @@ import { BudgetStatus } from '@okr/shared-models';
 
 import { ReadOnlyBanner } from '@okr/finance-accounting-feature';
 import { formatMinorAmount } from '@okr/finance-booking-util';
-import { buildBudgetGrid, BudgetGridRow, BudgetGridSection, isVersionEditable, netOf } from '@okr/finance-budget-util';
-import { aggregateByCostCenter, costCenterLabel, postedLinesInRange } from '@okr/finance-cost-center-util';
+import { buildBudgetGrid, BudgetGridRow, BudgetGridSection, isNetOver, isOver, isVersionEditable, netOf } from '@okr/finance-budget-util';
+import { aggregateByCostCenter, CellSide, CostCenterRollUp, costCenterLabel, postedLinesInRange } from '@okr/finance-cost-center-util';
 import { fiscalYear } from '@okr/finance-reporting-util';
 
 import { BudgetStore } from './budget.store';
@@ -62,13 +62,13 @@ import { BudgetStore } from './budget.store';
 
     <ion-content>
       <okr-read-only-banner />
-      @if (store.isLoading() || store.actualsLoading()) {
+      @if (store.isLoading() || store.costCenterStore.isLoading() || store.actualsLoading()) {
         <okr-spinner />
       } @else if (!version()) {
         <okr-empty-list [message]="store.i18n.grid_notFound()" />
       } @else {
         @if (!editable()) {
-          <ion-note color="warning" class="frozen">{{ store.i18n.grid_frozen() }}</ion-note>
+          <ion-note color="warning" class="frozen">{{ frozenNotice() }}</ion-note>
         }
         @if (grid().sections.length === 0) {
           <okr-empty-list [message]="store.i18n.grid_empty()" />
@@ -105,7 +105,7 @@ import { BudgetStore } from './budget.store';
                         <div class="amounts">
                           <span><small class="head ion-hide-sm-up">{{ store.i18n.col_budget() }}</small> {{ fmt(row.budget) }}</span>
                           <span><small class="head ion-hide-sm-up">{{ store.i18n.col_actual() }}</small> {{ fmt(row.actual) }}</span>
-                          <span [class.negative]="row.remaining < 0"><small class="head ion-hide-sm-up">{{ store.i18n.col_remaining() }}</small> {{ fmt(row.remaining) }}</span>
+                          <span [class.negative]="over(row.side, row.remaining)"><small class="head ion-hide-sm-up">{{ store.i18n.col_remaining() }}</small> {{ fmt(row.remaining) }}</span>
                         </div>
                       </ion-label>
                     </ion-item>
@@ -120,9 +120,9 @@ import { BudgetStore } from './budget.store';
                 @if (section.isLeaf) {
                   <div class="footer">
                     <div class="footer-row head"><span>&nbsp;</span><span class="amounts"><span>{{ store.i18n.col_budget() }}</span><span>{{ store.i18n.col_actual() }}</span><span>{{ store.i18n.col_remaining() }}</span></span></div>
-                    <div class="footer-row"><span>{{ store.i18n.grid_expense() }}</span><span class="amounts"><span>{{ fmt(section.totals.expense.budget) }}</span><span>{{ fmt(section.totals.expense.actual) }}</span><span>{{ fmt(section.totals.expense.budget - section.totals.expense.actual) }}</span></span></div>
-                    <div class="footer-row"><span>{{ store.i18n.grid_revenue() }}</span><span class="amounts"><span>{{ fmt(section.totals.revenue.budget) }}</span><span>{{ fmt(section.totals.revenue.actual) }}</span><span>{{ fmt(section.totals.revenue.budget - section.totals.revenue.actual) }}</span></span></div>
-                    <div class="footer-row"><span>{{ store.i18n.grid_net() }}</span><span class="amounts"><span>{{ fmt(net(section, 'budget')) }}</span><span>{{ fmt(net(section, 'actual')) }}</span><span>{{ fmt(net(section, 'budget') - net(section, 'actual')) }}</span></span></div>
+                    <div class="footer-row"><span>{{ store.i18n.grid_expense() }}</span><span class="amounts"><span>{{ fmt(section.totals.expense.budget) }}</span><span>{{ fmt(section.totals.expense.actual) }}</span><span [class.negative]="over('expense', section.totals.expense.budget - section.totals.expense.actual)">{{ fmt(section.totals.expense.budget - section.totals.expense.actual) }}</span></span></div>
+                    <div class="footer-row"><span>{{ store.i18n.grid_revenue() }}</span><span class="amounts"><span>{{ fmt(section.totals.revenue.budget) }}</span><span>{{ fmt(section.totals.revenue.actual) }}</span><span [class.negative]="over('revenue', section.totals.revenue.budget - section.totals.revenue.actual)">{{ fmt(section.totals.revenue.budget - section.totals.revenue.actual) }}</span></span></div>
+                    <div class="footer-row"><span>{{ store.i18n.grid_net() }}</span><span class="amounts"><span>{{ fmt(net(section, 'budget')) }}</span><span>{{ fmt(net(section, 'actual')) }}</span><span [class.negative]="netOver(net(section, 'budget') - net(section, 'actual'))">{{ fmt(net(section, 'budget') - net(section, 'actual')) }}</span></span></div>
                   </div>
                 }
               </ion-card-content>
@@ -133,15 +133,23 @@ import { BudgetStore } from './budget.store';
         <ion-card class="grand">
           <ion-card-header><ion-card-title>{{ store.i18n.grid_total() }}</ion-card-title></ion-card-header>
           <ion-card-content>
-            <div class="footer-row head"><span>&nbsp;</span><span class="amounts"><span>{{ store.i18n.col_budget() }}</span><span>{{ store.i18n.col_actual() }}</span><span>{{ store.i18n.col_remaining() }}</span></span></div>
-            <div class="footer-row"><span>{{ store.i18n.grid_expense() }}</span><span class="amounts"><span>{{ fmt(grid().total.expense.budget) }}</span><span>{{ fmt(grid().total.expense.actual) }}</span><span>{{ fmt(grid().total.expense.budget - grid().total.expense.actual) }}</span></span></div>
-            <div class="footer-row"><span>{{ store.i18n.grid_revenue() }}</span><span class="amounts"><span>{{ fmt(grid().total.revenue.budget) }}</span><span>{{ fmt(grid().total.revenue.actual) }}</span><span>{{ fmt(grid().total.revenue.budget - grid().total.revenue.actual) }}</span></span></div>
-            <div class="footer-row footer"><span>{{ store.i18n.grid_net() }}</span><span class="amounts"><span>{{ fmt(totalNet('budget')) }}</span><span>{{ fmt(totalNet('actual')) }}</span><span>{{ fmt(totalNet('budget') - totalNet('actual')) }}</span></span></div>
-            @if (hasUnassigned()) {
+            @if (hasBucket(grid().unassigned)) {
               <p class="head">{{ store.i18n.grid_unassigned() }} ({{ store.i18n.noCostCenter() }})</p>
-              <div class="footer-row"><span>{{ store.i18n.grid_expense() }}</span><span class="amounts"><span>{{ fmt(grid().unassigned.expense.actual) }}</span></span></div>
-              <div class="footer-row"><span>{{ store.i18n.grid_revenue() }}</span><span class="amounts"><span>{{ fmt(grid().unassigned.revenue.actual) }}</span></span></div>
+              <div class="footer-row head"><span>&nbsp;</span><span class="amounts"><span>{{ store.i18n.col_budget() }}</span><span>{{ store.i18n.col_actual() }}</span><span>{{ store.i18n.col_remaining() }}</span></span></div>
+              <div class="footer-row"><span>{{ store.i18n.grid_expense() }}</span><span class="amounts"><span>{{ fmt(grid().unassigned.expense.budget) }}</span><span>{{ fmt(grid().unassigned.expense.actual) }}</span><span [class.negative]="over('expense', grid().unassigned.expense.budget - grid().unassigned.expense.actual)">{{ fmt(grid().unassigned.expense.budget - grid().unassigned.expense.actual) }}</span></span></div>
+              <div class="footer-row"><span>{{ store.i18n.grid_revenue() }}</span><span class="amounts"><span>{{ fmt(grid().unassigned.revenue.budget) }}</span><span>{{ fmt(grid().unassigned.revenue.actual) }}</span><span [class.negative]="over('revenue', grid().unassigned.revenue.budget - grid().unassigned.revenue.actual)">{{ fmt(grid().unassigned.revenue.budget - grid().unassigned.revenue.actual) }}</span></span></div>
             }
+            @if (hasBucket(grid().unknown)) {
+              <p class="head">{{ store.i18n.compare_unknownCenter() }}</p>
+              <div class="footer-row head"><span>&nbsp;</span><span class="amounts"><span>{{ store.i18n.col_budget() }}</span><span>{{ store.i18n.col_actual() }}</span><span>{{ store.i18n.col_remaining() }}</span></span></div>
+              <div class="footer-row"><span>{{ store.i18n.grid_expense() }}</span><span class="amounts"><span>{{ fmt(grid().unknown.expense.budget) }}</span><span>{{ fmt(grid().unknown.expense.actual) }}</span><span [class.negative]="over('expense', grid().unknown.expense.budget - grid().unknown.expense.actual)">{{ fmt(grid().unknown.expense.budget - grid().unknown.expense.actual) }}</span></span></div>
+              <div class="footer-row"><span>{{ store.i18n.grid_revenue() }}</span><span class="amounts"><span>{{ fmt(grid().unknown.revenue.budget) }}</span><span>{{ fmt(grid().unknown.revenue.actual) }}</span><span [class.negative]="over('revenue', grid().unknown.revenue.budget - grid().unknown.revenue.actual)">{{ fmt(grid().unknown.revenue.budget - grid().unknown.revenue.actual) }}</span></span></div>
+            }
+            <p class="head">{{ store.i18n.grid_total() }}</p>
+            <div class="footer-row head"><span>&nbsp;</span><span class="amounts"><span>{{ store.i18n.col_budget() }}</span><span>{{ store.i18n.col_actual() }}</span><span>{{ store.i18n.col_remaining() }}</span></span></div>
+            <div class="footer-row"><span>{{ store.i18n.grid_expense() }}</span><span class="amounts"><span>{{ fmt(grid().total.expense.budget) }}</span><span>{{ fmt(grid().total.expense.actual) }}</span><span [class.negative]="over('expense', grid().total.expense.budget - grid().total.expense.actual)">{{ fmt(grid().total.expense.budget - grid().total.expense.actual) }}</span></span></div>
+            <div class="footer-row"><span>{{ store.i18n.grid_revenue() }}</span><span class="amounts"><span>{{ fmt(grid().total.revenue.budget) }}</span><span>{{ fmt(grid().total.revenue.actual) }}</span><span [class.negative]="over('revenue', grid().total.revenue.budget - grid().total.revenue.actual)">{{ fmt(grid().total.revenue.budget - grid().total.revenue.actual) }}</span></span></div>
+            <div class="footer-row footer"><span>{{ store.i18n.grid_net() }}</span><span class="amounts"><span>{{ fmt(totalNet('budget')) }}</span><span>{{ fmt(totalNet('actual')) }}</span><span [class.negative]="netOver(totalNet('budget') - totalNet('actual'))">{{ fmt(totalNet('budget') - totalNet('actual')) }}</span></span></div>
           </ion-card-content>
         </ion-card>
       }
@@ -176,13 +184,32 @@ export class BudgetGridPage {
     const cells = aggregateByCostCenter(lines, this.store.accounts(), versionLines);
     return buildBudgetGrid(cells, versionLines, costCenters, this.store.accounts(), this.canChange());
   });
-  protected readonly hasUnassigned = computed(() => {
-    const u = this.grid().unassigned;
-    return u.expense.actual !== 0 || u.revenue.actual !== 0;
+
+  /** why the grid cannot be changed — worded per state (superseded, archived, external books, approved) */
+  protected readonly frozenNotice = computed(() => {
+    const v = this.version();
+    if (!this.store.isEnabled()) return this.store.i18n.grid_frozenExternal();
+    if (v?.isArchived) return this.store.i18n.grid_frozenArchived();
+    if (v?.status === 'superseded') return this.store.i18n.grid_frozenSuperseded();
+    return this.store.i18n.grid_frozen();
   });
 
   constructor() {
-    effect(() => { if (this.store.isEnabled()) this.store.loadActuals(); });
+    this.store.loadActuals();
+    inject(DestroyRef).onDestroy(() => this.store.releaseActuals());
+  }
+
+  protected hasBucket(b: CostCenterRollUp): boolean {
+    return [b.expense, b.revenue].some(t => t.actual !== 0 || t.budget !== 0);
+  }
+
+  /** `remaining` = budget − actual, so the comparison's «over» runs on its negation */
+  protected over(side: CellSide, remaining: number): boolean {
+    return isOver(side, -remaining);
+  }
+
+  protected netOver(remaining: number): boolean {
+    return isNetOver(-remaining);
   }
 
   protected fmt(minor: number): string {

@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { ToastController } from '@ionic/angular/standalone';
-import { doc } from 'firebase/firestore';
+import { deleteDoc, doc } from 'firebase/firestore';
 import { Observable } from 'rxjs';
 
 import { ENV } from '@okr/shared-config';
@@ -114,12 +114,18 @@ export class BudgetService {
    * version is a draft.
    */
   public async deleteLine(line: BudgetLineModel): Promise<boolean> {
-    const deleted = await this.firestoreService.deleteObject(BudgetLineCollection, line.okey);
-    if (deleted === undefined) {
+    // not FirestoreService.deleteObject: on failure it toasts an English technical message of its own, and
+    // this method already shows the translated one — the user sees exactly one toast.
+    if (!line.okey) return false;
+    try {
+      await deleteDoc(doc(this.firestoreService.firestore, `${BudgetLineCollection}/${line.okey}`));
+      return true;
+    } catch (ex) {
+      console.error(`BudgetService.deleteLine(${line.okey}) -> ERROR: `, ex);
       const toast = await this.toastController.create({ message: this.i18n.delete_error(), duration: 3000 });
       await toast.present();
+      return false;
     }
-    return deleted !== undefined;
   }
 
   /*-------------------------- helpers --------------------------------*/

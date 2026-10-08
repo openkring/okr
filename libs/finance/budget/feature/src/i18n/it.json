@@ -12,6 +12,9 @@
     "total": "Totale",
     "unassigned": "Registrato senza centro di costo",
     "frozen": "Questa versione è approvata e non può più essere modificata.",
+    "frozenSuperseded": "Questa versione è stata sostituita da una versione approvata più recente e non può più essere modificata.",
+    "frozenArchived": "Questa versione è archiviata e non può più essere modificata. Con «Nuova versione da questa» puoi continuare con una copia.",
+    "frozenExternal": "La contabilità è gestita esternamente. Qui puoi solo consultare i budget.",
     "notFound": "Questa versione del budget non esiste.",
     "unbudgeted": "non a budget"
   },

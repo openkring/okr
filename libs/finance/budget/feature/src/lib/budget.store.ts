@@ -1,8 +1,8 @@
 import { computed, inject } from '@angular/core';
-import { rxResource } from '@angular/core/rxjs-interop';
+import { rxResource, toObservable } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
-import { firstValueFrom, of } from 'rxjs';
+import { filter, firstValueFrom, of, timeout } from 'rxjs';
 
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
@@ -35,15 +35,15 @@ export type BudgetState = {
   archiveFilter: BudgetArchiveFilter;
   /** set by editLine / a grid page: the Kontoplan of the books (cheap, no journal) */
   accountsNeeded: boolean;
-  /** set by a page that shows actuals (grid, comparison): streams the whole journal of the books */
-  actualsNeeded: boolean;
+  /** how many live pages (grid, comparison) show actuals; > 0 streams the whole journal of the books */
+  actualsUsers: number;
 };
 
 export const initialBudgetState: BudgetState = {
   searchTerm: '',
   archiveFilter: 'active',
   accountsNeeded: false,
-  actualsNeeded: false,
+  actualsUsers: 0,
 };
 
 /** True for a Firestore rules rejection — the client error carries `code: 'permission-denied'`. */
@@ -76,8 +76,17 @@ export const BudgetStore = signalStore(
     alertService: inject(AlertService),
     i18nService: inject(I18nService),
   })),
-  withProps((store) => ({
+  withProps((store) => {
+    /**
+     * The journal streams only for a live page, once the config is known and the books are native
+     * (an external backend owns its books, D9 — nothing to compare there).
+     */
+    const actualsActive = computed(() =>
+      store.actualsUsers() > 0 && store.accountingStore.configLoaded() && !store.accountingStore.isExternallyManaged());
+    return {
     i18n: store.i18nService.translateAll(BUDGET_I18N_KEYS) as BudgetI18n,
+    /** emits true once the accounting config has answered (see `awaitConfig`) */
+    configLoaded$: toObservable(store.accountingStore.configLoaded),
     versionsResource: rxResource({
       params: resourceParams(() => ({ id: store.accountingStore.accountingTenantId() })),
       stream: ({ params }) => params.id ? store.budgetService.listVersions(params.id) : of([]),
@@ -88,19 +97,20 @@ export const BudgetStore = signalStore(
     }),
     // idle (undefined params) until editLine or a page with actuals asks for them
     accountsResource: rxResource({
-      params: resourceParams(() => store.accountsNeeded() || store.actualsNeeded()
+      params: resourceParams(() => store.accountsNeeded() || actualsActive()
         ? { id: store.accountingStore.accountingTenantId() } : undefined),
       stream: ({ params }) => params.id ? store.accountService.list(params.id) : of([]),
     }),
     bookingsResource: rxResource({
-      params: resourceParams(() => store.actualsNeeded() ? { id: store.accountingStore.accountingTenantId() } : undefined),
+      params: resourceParams(() => actualsActive() ? { id: store.accountingStore.accountingTenantId() } : undefined),
       stream: ({ params }) => params.id ? store.reportingService.getJournalEntries(params.id) : of([]),
     }),
     bookingLinesResource: rxResource({
-      params: resourceParams(() => store.actualsNeeded() ? { id: store.accountingStore.accountingTenantId() } : undefined),
+      params: resourceParams(() => actualsActive() ? { id: store.accountingStore.accountingTenantId() } : undefined),
       stream: ({ params }) => params.id ? store.reportingService.getAllLines(params.id) : of([]),
     }),
-  })),
+    };
+  }),
 
   withComputed((state) => ({
     /** every version of the books, archived included */
@@ -111,7 +121,10 @@ export const BudgetStore = signalStore(
     accounts: computed(() => state.accountsResource.value() ?? []),
     bookings: computed(() => state.bookingsResource.value() ?? []),
     bookingLines: computed(() => state.bookingLinesResource.value() ?? []),
-    actualsLoading: computed(() => state.accountsResource.isLoading() || state.bookingsResource.isLoading() || state.bookingLinesResource.isLoading()),
+    /** true while a page waits for actuals: the config is not known yet (nothing streams before), or a stream is loading */
+    actualsLoading: computed(() =>
+      (state.actualsUsers() > 0 && !state.accountingStore.configLoaded())
+      || state.accountsResource.isLoading() || state.bookingsResource.isLoading() || state.bookingLinesResource.isLoading()),
     fiscalYearStart: computed(() => state.accountingStore.config()?.fiscalYearStart ?? 1),
     functionalCurrency: computed(() => state.accountingStore.config()?.functionalCurrency ?? 'CHF'),
     accountingTenantId: computed(() => state.accountingStore.accountingTenantId()),
@@ -200,6 +213,18 @@ export const BudgetStore = signalStore(
       return _tenant ? await firstValueFrom(store.accountService.list(_tenant)) : [];
     };
 
+    /** Waits (max 5 s) for the accounting config, so a new cell does not take the CHF fallback currency; else the error toast. */
+    const awaitConfig = async (): Promise<boolean> => {
+      if (store.accountingStore.configLoaded()) return true;
+      try {
+        await firstValueFrom(store.configLoaded$.pipe(filter(loaded => loaded), timeout(5000)));
+        return true;
+      } catch {
+        await store.alertService.showToast(store.i18n.toast_error());
+        return false;
+      }
+    };
+
     return {
       setSearchTerm(searchTerm: string): void {
         patchState(store, { searchTerm });
@@ -210,9 +235,17 @@ export const BudgetStore = signalStore(
         patchState(store, { archiveFilter: _filter });
       },
 
-      /** The grid and the comparison call this: accounts, posted bookings and their lines start streaming. */
+      /**
+       * The grid and the comparison call this once when they are created: accounts, posted bookings and their
+       * lines start streaming (after the config is loaded, native books only). Pair it with `releaseActuals()`.
+       */
       loadActuals(): void {
-        if (!store.actualsNeeded()) patchState(store, { actualsNeeded: true });
+        patchState(store, { actualsUsers: store.actualsUsers() + 1 });
+      },
+
+      /** The page that called `loadActuals()` is gone; the last one out stops the journal stream. */
+      releaseActuals(): void {
+        patchState(store, { actualsUsers: Math.max(0, store.actualsUsers() - 1) });
       },
 
       /** The Kontoplan alone (account names in the grid, the line modal) — no journal. */
@@ -238,7 +271,7 @@ export const BudgetStore = signalStore(
        * has no version yet, else the next one (budgets are mostly prepared ahead).
        */
       async newVersion(year?: number): Promise<void> {
-        if (!store.isEnabled()) return;
+        if (!store.isEnabled() || !await awaitConfig()) return;
         const _current = store.currentFiscalYear();
         const _taken = (y: number) => store.allVersions().some(v => !v.isArchived && v.fiscalYear === y);
         const _year = year ?? (_taken(_current) ? _current + 1 : _current);
@@ -253,7 +286,7 @@ export const BudgetStore = signalStore(
        * starts empty, so the copy gets its own name (and the modal's save banner appears once it is typed).
        */
       async copyFrom(base: BudgetVersionModel): Promise<void> {
-        if (!store.isEnabled()) return;
+        if (!store.isEnabled() || !await awaitConfig()) return;
         const _next = new BudgetVersionModel(store.appStore.tenantId(), store.accountingTenantId(), base.fiscalYear);
         _next.kind = base.kind ?? 'budget';
         _next.name = '';
@@ -361,6 +394,7 @@ export const BudgetStore = signalStore(
           await store.alertService.showToast(store.i18n.toast_frozen());
           return;
         }
+        if (!line && !await awaitConfig()) return; // a new cell takes the books' currency: wait for the config
         const _line = line ?? new BudgetLineModel(store.appStore.tenantId(), store.accountingTenantId(), versionKey);
         if (!line) {
           _line.amount = new MoneyModel(0, store.functionalCurrency());
