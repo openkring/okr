@@ -1,4 +1,5 @@
 import { inject, Injectable } from '@angular/core';
+import { ToastController } from '@ionic/angular/standalone';
 import { doc } from 'firebase/firestore';
 import { Observable } from 'rxjs';
 
@@ -18,6 +19,7 @@ export class BudgetService {
   private readonly env = inject(ENV);
   private readonly firestoreService = inject(FirestoreService);
   private readonly i18nService = inject(I18nService);
+  private readonly toastController = inject(ToastController);
 
   private readonly i18n = this.i18nService.translateAll({
     create_conf:   PFX + 'create.conf',
@@ -26,6 +28,7 @@ export class BudgetService {
     update_error:  PFX + 'update.error',
     archive_conf:  PFX + 'archive.conf',
     archive_error: PFX + 'archive.error',
+    delete_error:  PFX + 'delete.error',
   });
 
   private readonly tenantId = this.env.tenantId;
@@ -75,7 +78,7 @@ export class BudgetService {
     const chunks = chunkWrites(lines);
     for (const [index, chunk] of chunks.entries()) {
       const batch = this.firestoreService.getBatch();
-      if (index === 0) batch.set(doc(this.firestoreService.firestore, `${BudgetVersionCollection}/${versionKey}`), this.persisted({ ...next, status: 'draft' }));
+      if (index === 0) batch.set(doc(this.firestoreService.firestore, `${BudgetVersionCollection}/${versionKey}`), this.persisted({ ...next, status: 'draft', approvedAt: '', approvedBy: '', approvalRef: '' }));
       for (const line of chunk) {
         const key = generateRandomString(20);
         batch.set(doc(this.firestoreService.firestore, `${BudgetLineCollection}/${key}`), this.persisted(line));
@@ -110,8 +113,13 @@ export class BudgetService {
    * point at one), so the deleting-models archive rule does not apply. The Firestore rule only allows it while the
    * version is a draft.
    */
-  public async deleteLine(line: BudgetLineModel): Promise<void> {
-    await this.firestoreService.deleteObject(BudgetLineCollection, line.okey);
+  public async deleteLine(line: BudgetLineModel): Promise<boolean> {
+    const deleted = await this.firestoreService.deleteObject(BudgetLineCollection, line.okey);
+    if (deleted === undefined) {
+      const toast = await this.toastController.create({ message: this.i18n.delete_error(), duration: 3000 });
+      await toast.present();
+    }
+    return deleted !== undefined;
   }
 
   /*-------------------------- helpers --------------------------------*/

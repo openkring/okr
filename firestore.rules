@@ -356,18 +356,26 @@ service cloud.firestore {
     match /budget-versions/{id} {
       allow read: if tenantRead() && isTreasurerOrAdmin();
       allow create: if isTreasurerOrAdmin() && tenantCreateOrDetach() && request.resource.data.status == 'draft';
-      allow update: if isTreasurerOrAdmin() && tenantCreateOrDetach() && (
-        resource.data.status == 'draft'
+      // update: tenantUpdate() also checks the OLD tenants, so another tenant's treasurer cannot rewrite them.
+      allow update: if isTreasurerOrAdmin() && tenantUpdate() && (
+        (resource.data.status == 'draft' && resource.data.get('isArchived', false) == false)
         || (resource.data.status == 'approved' && request.resource.data.status == 'superseded'
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])));
       allow delete: if false;
     }
     match /budget-lines/{id} {
       allow read: if tenantRead() && isTreasurerOrAdmin();
-      allow create, update: if isTreasurerOrAdmin() && tenantCreateOrDetach()
-        && getAfter(/databases/$(database)/documents/budget-versions/$(request.resource.data.versionKey)).data.status == 'draft';
+      allow create: if isTreasurerOrAdmin() && tenantCreateOrDetach()
+        && getAfter(/databases/$(database)/documents/budget-versions/$(request.resource.data.versionKey)).data.status == 'draft'
+        && getAfter(/databases/$(database)/documents/budget-versions/$(request.resource.data.versionKey)).data.get('isArchived', false) == false;
+      // update: a cell cannot move between versions, and its (current) version must be a live draft.
+      allow update: if isTreasurerOrAdmin() && tenantUpdate()
+        && request.resource.data.versionKey == resource.data.versionKey
+        && get(/databases/$(database)/documents/budget-versions/$(resource.data.versionKey)).data.status == 'draft'
+        && get(/databases/$(database)/documents/budget-versions/$(resource.data.versionKey)).data.get('isArchived', false) == false;
       allow delete: if isTreasurerOrAdmin() && tenantDelete()
-        && get(/databases/$(database)/documents/budget-versions/$(resource.data.versionKey)).data.status == 'draft';
+        && get(/databases/$(database)/documents/budget-versions/$(resource.data.versionKey)).data.status == 'draft'
+        && get(/databases/$(database)/documents/budget-versions/$(resource.data.versionKey)).data.get('isArchived', false) == false;
     }
     // Activities are the audit log. Authenticated tenant members write normal activities.
     // Auth-scope events (login/logout) are logged by ActivityService.logAuth pre-auth or

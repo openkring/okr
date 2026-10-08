@@ -10,5 +10,8 @@
   "archive": {
     "conf": "The budget version was archived.",
     "error": "The budget version could not be archived."
+  },
+  "delete": {
+    "error": "The cell could not be deleted."
   }
 }

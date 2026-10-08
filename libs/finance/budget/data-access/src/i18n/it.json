@@ -10,5 +10,8 @@
   "archive": {
     "conf": "La versione del budget è stata archiviata.",
     "error": "La versione del budget non ha potuto essere archiviata."
+  },
+  "delete": {
+    "error": "La cella non ha potuto essere eliminata."
   }
 }
