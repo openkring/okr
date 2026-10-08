@@ -385,7 +385,8 @@
     "discount-without-base": "A discount without an account stands above all items and has nothing to reduce. Move it below the items or choose an account.",
     "no-payee-iban": "No IBAN is stored for the club. Add a bank account to the club so the payment slip can be created.",
     "qr-iban-needs-reference": "Only a QR-IBAN is stored for the club. This payment slip also needs the regular IBAN.",
-    "template-unpublished": "The invoice template is not published. Publish it in the templates first."
+    "template-unpublished": "The invoice template is not published. Publish it in the templates first.",
+    "template-not-dunning": "This template is not a template for reminders. Choose another one."
   },
   "paymentReference": {
     "label": "Payment reference"
@@ -483,6 +484,27 @@
       "fee": "Fee",
       "sent": "sent",
       "notSent": "not sent"
+    },
+    "attachInvoice": "Attach invoice",
+    "channel": {
+      "email": "Email",
+      "post": "Post"
+    },
+    "template": "Template",
+    "noTemplates": "There is no template for reminders yet. Create one in the templates with the category Dunning.",
+    "openAfter": "The open amount will then be CHF {open}.",
+    "download": "Download PDF",
+    "sendEmail": "Send by email",
+    "sendEmailWithInvoice": "Send by email, with invoice",
+    "postConfirm": "Mark as sent by post?",
+    "postConfirmAll": "Mark all {count} as sent by post?",
+    "postConf": "Marked as sent by post.",
+    "mahnlaufSelect": "These invoices will get a reminder:",
+    "validation": {
+      "templateRequired": "Choose a template.",
+      "dateRequired": "Please enter a valid date.",
+      "feeInvalid": "Please enter a fee of 0 or more with at most two decimal places.",
+      "selectionRequired": "Choose at least one invoice."
     }
   },
   "waiveFee": {

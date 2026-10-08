@@ -385,7 +385,8 @@
     "discount-without-base": "Un rabais sans compte se trouve au-dessus de toutes les positions et ne peut rien réduire. Déplace-le sous les positions ou choisis un compte.",
     "no-payee-iban": "Aucun IBAN n'est enregistré pour le club. Ajoute une coordonnée bancaire au club pour que le bulletin de versement puisse être créé.",
     "qr-iban-needs-reference": "Seul un QR-IBAN est enregistré pour le club. Ce bulletin de versement a aussi besoin de l'IBAN normal.",
-    "template-unpublished": "Le modèle de facture n'est pas publié. Publie-le d'abord dans les modèles."
+    "template-unpublished": "Le modèle de facture n'est pas publié. Publie-le d'abord dans les modèles.",
+    "template-not-dunning": "Ce modèle n'est pas un modèle de rappel. Choisis-en un autre."
   },
   "paymentReference": {
     "label": "Référence de paiement"
@@ -483,6 +484,27 @@
       "fee": "Frais",
       "sent": "envoyé",
       "notSent": "pas envoyé"
+    },
+    "attachInvoice": "Joindre la facture",
+    "channel": {
+      "email": "E-mail",
+      "post": "Courrier"
+    },
+    "template": "Modèle",
+    "noTemplates": "Il n'y a pas encore de modèle pour les rappels. Crée-en un dans les modèles avec la catégorie Rappels.",
+    "openAfter": "Le solde ouvert sera alors de CHF {open}.",
+    "download": "Télécharger le PDF",
+    "sendEmail": "Envoyer par e-mail",
+    "sendEmailWithInvoice": "Envoyer par e-mail, avec la facture",
+    "postConfirm": "Marquer comme envoyé par courrier ?",
+    "postConfirmAll": "Marquer les {count} comme envoyés par courrier ?",
+    "postConf": "Marqué comme envoyé par courrier.",
+    "mahnlaufSelect": "Ces factures recevront un rappel :",
+    "validation": {
+      "templateRequired": "Choisis un modèle.",
+      "dateRequired": "Indique une date valide.",
+      "feeInvalid": "Indique des frais de 0 ou plus, avec au maximum deux décimales.",
+      "selectionRequired": "Choisis au moins une facture."
     }
   },
   "waiveFee": {

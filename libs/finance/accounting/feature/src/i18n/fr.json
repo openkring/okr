@@ -45,9 +45,9 @@
       "helper": "S'applique aux écritures sur les comptes de résultat sans centre de coûts par défaut propre."
     },
     "reminderTemplate": {
-      "label": "Modèle de rappel",
+      "label": "Modèle de rappel proposé",
       "placeholder": "Choisis un modèle",
-      "helper": "Modèle utilisé pour créer les rappels de paiement en PDF."
+      "helper": "Ce modèle est présélectionné dans la fenêtre «Créer un rappel». Tu peux y choisir n'importe quel modèle de rappel."
     },
     "reminderFeeAccount": {
       "label": "Compte des frais de rappel",
@@ -58,7 +58,8 @@
       "level2": "Frais du 2e rappel (CHF)",
       "level3": "Frais du 3e rappel (CHF)",
       "placeholder": "0.00",
-      "helper": "Proposés lors de la création du rappel et modifiables à ce moment-là. 0 = aucun frais."
+      "helper": "Proposés lors de la création du rappel et modifiables à ce moment-là. 0 = aucun frais.",
+      "default": "Frais (par défaut)"
     },
     "reminderGraceDays": {
       "label": "Délai de grâce (jours)",

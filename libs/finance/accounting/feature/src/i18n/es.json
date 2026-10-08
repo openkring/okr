@@ -45,9 +45,9 @@
       "helper": "Se aplica a los asientos en cuentas de resultados sin centro de costes predeterminado propio."
     },
     "reminderTemplate": {
-      "label": "Plantilla de recordatorio",
+      "label": "Plantilla de recordatorio propuesta",
       "placeholder": "Elige una plantilla",
-      "helper": "Plantilla con la que se crean los recordatorios de pago en PDF."
+      "helper": "Esta plantilla está preseleccionada en el cuadro «Crear recordatorio». Allí puedes elegir cualquier plantilla de recordatorios."
     },
     "reminderFeeAccount": {
       "label": "Cuenta de recargos por recordatorio",
@@ -58,7 +58,8 @@
       "level2": "Recargo del 2.º recordatorio (CHF)",
       "level3": "Recargo del 3.er recordatorio (CHF)",
       "placeholder": "0.00",
-      "helper": "Se propone al crear el recordatorio y se puede cambiar allí. 0 = sin recargo."
+      "helper": "Se propone al crear el recordatorio y se puede cambiar allí. 0 = sin recargo.",
+      "default": "Recargo (predeterminado)"
     },
     "reminderGraceDays": {
       "label": "Periodo de gracia (días)",

@@ -45,9 +45,9 @@
       "helper": "Si applica alle registrazioni sui conti economici senza un proprio centro di costo predefinito."
     },
     "reminderTemplate": {
-      "label": "Modello di sollecito",
+      "label": "Modello di sollecito proposto",
       "placeholder": "Scegli un modello",
-      "helper": "Modello usato per creare i solleciti di pagamento in PDF."
+      "helper": "Questo modello è preselezionato nella finestra «Crea sollecito». Lì puoi scegliere qualsiasi modello di sollecito."
     },
     "reminderFeeAccount": {
       "label": "Conto delle spese di sollecito",
@@ -58,7 +58,8 @@
       "level2": "Spese del 2° sollecito (CHF)",
       "level3": "Spese del 3° sollecito (CHF)",
       "placeholder": "0.00",
-      "helper": "Proposte alla creazione del sollecito e modificabili in quel momento. 0 = nessuna spesa."
+      "helper": "Proposte alla creazione del sollecito e modificabili in quel momento. 0 = nessuna spesa.",
+      "default": "Spese (predefinite)"
     },
     "reminderGraceDays": {
       "label": "Periodo di tolleranza (giorni)",

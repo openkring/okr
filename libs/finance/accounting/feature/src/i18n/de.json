@@ -45,9 +45,9 @@
       "helper": "Gilt für Buchungen auf Erfolgskonten ohne eigene Standard-Kostenstelle."
     },
     "reminderTemplate": {
-      "label": "Mahnungsvorlage",
+      "label": "Vorgeschlagene Vorlage für Mahnungen",
       "placeholder": "Vorlage wählen",
-      "helper": "Vorlage, mit der Zahlungserinnerungen und Mahnungen als PDF erstellt werden."
+      "helper": "Diese Vorlage ist im Dialog «Mahnung erstellen» vorausgewählt. Du kannst dort jede Vorlage für Mahnungen wählen."
     },
     "reminderFeeAccount": {
       "label": "Konto für Mahngebühren",
@@ -58,7 +58,8 @@
       "level2": "Gebühr 2. Mahnung (CHF)",
       "level3": "Gebühr 3. Mahnung (CHF)",
       "placeholder": "0.00",
-      "helper": "Wird beim Erstellen vorgeschlagen und lässt sich dort anpassen. 0 = keine Gebühr."
+      "helper": "Wird beim Erstellen vorgeschlagen und lässt sich dort anpassen. 0 = keine Gebühr.",
+      "default": "Gebühr (Standard)"
     },
     "reminderGraceDays": {
       "label": "Karenzfrist (Tage)",

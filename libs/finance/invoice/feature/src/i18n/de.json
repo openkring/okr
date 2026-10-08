@@ -385,7 +385,8 @@
     "discount-without-base": "Ein Rabatt ohne Konto steht über allen Positionen und kann nichts mindern. Verschiebe ihn unter die Positionen oder wähle ein Konto.",
     "no-payee-iban": "Für den Verein ist keine IBAN hinterlegt. Ergänze beim Verein eine Bankverbindung, damit der Einzahlungsschein erstellt werden kann.",
     "qr-iban-needs-reference": "Für den Verein ist nur eine QR-IBAN hinterlegt. Für diesen Einzahlungsschein braucht es zusätzlich die normale IBAN.",
-    "template-unpublished": "Die Rechnungsvorlage ist nicht veröffentlicht. Veröffentliche sie zuerst in den Vorlagen."
+    "template-unpublished": "Die Rechnungsvorlage ist nicht veröffentlicht. Veröffentliche sie zuerst in den Vorlagen.",
+    "template-not-dunning": "Diese Vorlage ist keine Vorlage für Mahnungen. Wähle eine andere."
   },
   "paymentReference": {
     "label": "Zahlungsreferenz"
@@ -483,6 +484,27 @@
       "fee": "Gebühr",
       "sent": "versendet",
       "notSent": "nicht versendet"
+    },
+    "attachInvoice": "Rechnung anhängen",
+    "channel": {
+      "email": "E-Mail",
+      "post": "Post"
+    },
+    "template": "Vorlage",
+    "noTemplates": "Es gibt noch keine Vorlage für Mahnungen. Lege sie in den Vorlagen mit der Kategorie Mahnwesen an.",
+    "openAfter": "Offen sind dann CHF {open}.",
+    "download": "PDF herunterladen",
+    "sendEmail": "Per E-Mail senden",
+    "sendEmailWithInvoice": "Per E-Mail senden, mit Rechnung",
+    "postConfirm": "Als per Post versendet markieren?",
+    "postConfirmAll": "Alle {count} als per Post versendet markieren?",
+    "postConf": "Als per Post versendet markiert.",
+    "mahnlaufSelect": "Diese Rechnungen bekommen eine Mahnung:",
+    "validation": {
+      "templateRequired": "Wähle eine Vorlage.",
+      "dateRequired": "Bitte gib ein gültiges Datum an.",
+      "feeInvalid": "Bitte gib eine Gebühr von 0 oder mehr mit höchstens zwei Nachkommastellen an.",
+      "selectionRequired": "Wähle mindestens eine Rechnung."
     }
   },
   "waiveFee": {

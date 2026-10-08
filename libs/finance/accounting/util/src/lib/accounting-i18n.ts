@@ -63,6 +63,7 @@ export const ACCOUNTING_I18N_KEYS = {
   reminder_fee_1:                PFX + 'settings.reminderFee.level1',
   reminder_fee_2:                PFX + 'settings.reminderFee.level2',
   reminder_fee_3:                PFX + 'settings.reminderFee.level3',
+  reminder_fee_default:          PFX + 'settings.reminderFee.default',
   reminder_fee_placeholder:      PFX + 'settings.reminderFee.placeholder',
   reminder_fee_helper:           PFX + 'settings.reminderFee.helper',
   reminder_grace_days:             PFX + 'settings.reminderGraceDays.label',

@@ -385,7 +385,8 @@
     "discount-without-base": "Uno sconto senza conto sta sopra tutte le posizioni e non può ridurre nulla. Spostalo sotto le posizioni o scegli un conto.",
     "no-payee-iban": "Per il club non è registrato nessun IBAN. Aggiungi un conto bancario al club, così la polizza di versamento può essere creata.",
     "qr-iban-needs-reference": "Per il club è registrato solo un QR-IBAN. Questa polizza di versamento ha bisogno anche dell'IBAN normale.",
-    "template-unpublished": "Il modello di fattura non è pubblicato. Pubblicalo prima nei modelli."
+    "template-unpublished": "Il modello di fattura non è pubblicato. Pubblicalo prima nei modelli.",
+    "template-not-dunning": "Questo modello non è un modello per solleciti. Scegline un altro."
   },
   "paymentReference": {
     "label": "Riferimento di pagamento"
@@ -483,6 +484,27 @@
       "fee": "Spese",
       "sent": "inviato",
       "notSent": "non inviato"
+    },
+    "attachInvoice": "Allega la fattura",
+    "channel": {
+      "email": "E-mail",
+      "post": "Posta"
+    },
+    "template": "Modello",
+    "noTemplates": "Non esiste ancora un modello per i solleciti. Creane uno nei modelli con la categoria Solleciti.",
+    "openAfter": "L'importo aperto sarà quindi di CHF {open}.",
+    "download": "Scarica il PDF",
+    "sendEmail": "Invia per e-mail",
+    "sendEmailWithInvoice": "Invia per e-mail, con la fattura",
+    "postConfirm": "Segnare come inviato per posta?",
+    "postConfirmAll": "Segnare tutti i {count} come inviati per posta?",
+    "postConf": "Segnato come inviato per posta.",
+    "mahnlaufSelect": "Queste fatture riceveranno un sollecito:",
+    "validation": {
+      "templateRequired": "Scegli un modello.",
+      "dateRequired": "Inserisci una data valida.",
+      "feeInvalid": "Inserisci spese di 0 o più, con al massimo due decimali.",
+      "selectionRequired": "Scegli almeno una fattura."
     }
   },
   "waiveFee": {

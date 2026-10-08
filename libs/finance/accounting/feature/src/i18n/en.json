@@ -45,9 +45,9 @@
       "helper": "Applies to bookings on income and expense accounts without their own default cost centre."
     },
     "reminderTemplate": {
-      "label": "Reminder template",
+      "label": "Suggested template for reminders",
       "placeholder": "Choose a template",
-      "helper": "Template used to create payment reminders as PDF."
+      "helper": "This template is preselected in the «Create reminder» dialog. You can choose any reminder template there."
     },
     "reminderFeeAccount": {
       "label": "Reminder fee account",
@@ -58,7 +58,8 @@
       "level2": "Fee for the 2nd reminder (CHF)",
       "level3": "Fee for the 3rd reminder (CHF)",
       "placeholder": "0.00",
-      "helper": "Suggested when a reminder is created and can be changed there. 0 = no fee."
+      "helper": "Suggested when a reminder is created and can be changed there. 0 = no fee.",
+      "default": "Fee (default)"
     },
     "reminderGraceDays": {
       "label": "Grace period (days)",

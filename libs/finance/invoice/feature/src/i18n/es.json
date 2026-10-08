@@ -385,7 +385,8 @@
     "discount-without-base": "Un descuento sin cuenta está por encima de todas las posiciones y no puede reducir nada. Muévelo debajo de las posiciones o elige una cuenta.",
     "no-payee-iban": "No hay ningún IBAN guardado para el club. Añade una cuenta bancaria al club para que se pueda crear el recibo de pago.",
     "qr-iban-needs-reference": "Para el club solo hay un QR-IBAN guardado. Este recibo de pago también necesita el IBAN normal.",
-    "template-unpublished": "La plantilla de factura no está publicada. Publícala primero en las plantillas."
+    "template-unpublished": "La plantilla de factura no está publicada. Publícala primero en las plantillas.",
+    "template-not-dunning": "Esta plantilla no es una plantilla de recordatorios. Elige otra."
   },
   "paymentReference": {
     "label": "Referencia de pago"
@@ -483,6 +484,27 @@
       "fee": "Recargo",
       "sent": "enviado",
       "notSent": "no enviado"
+    },
+    "attachInvoice": "Adjuntar la factura",
+    "channel": {
+      "email": "Correo electrónico",
+      "post": "Correo postal"
+    },
+    "template": "Plantilla",
+    "noTemplates": "Todavía no hay ninguna plantilla para recordatorios. Crea una en las plantillas con la categoría Recordatorios.",
+    "openAfter": "El importe pendiente será entonces de CHF {open}.",
+    "download": "Descargar el PDF",
+    "sendEmail": "Enviar por correo electrónico",
+    "sendEmailWithInvoice": "Enviar por correo electrónico, con la factura",
+    "postConfirm": "¿Marcar como enviado por correo postal?",
+    "postConfirmAll": "¿Marcar los {count} como enviados por correo postal?",
+    "postConf": "Marcado como enviado por correo postal.",
+    "mahnlaufSelect": "Estas facturas recibirán un recordatorio:",
+    "validation": {
+      "templateRequired": "Elige una plantilla.",
+      "dateRequired": "Introduce una fecha válida.",
+      "feeInvalid": "Introduce un recargo de 0 o más, con un máximo de dos decimales.",
+      "selectionRequired": "Elige al menos una factura."
     }
   },
   "waiveFee": {
