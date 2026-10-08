@@ -23,7 +23,7 @@ import {
   draftInvoicesOf, formatPaymentChf, invoiceDisplayState, invoicePaymentHints, invoicePaymentHintWindow, linkedInvoicePaymentKeys, getInvoiceExportData, INVOICE_CANCEL_REASON_LENGTH, INVOICE_I18N_KEYS, InvoiceI18n, InvoicePaymentCandidate,
   InvoicePaymentInput, invoiceRefusalReasons, invoiceRefusalText, invoicesForList, isDraftInvoice, isRetryablePaymentRefusal,
   mahnlaufCandidates, newDraftInvoice, newInvoicePaymentFormModel, newPaymentId, newReminderFormModel, openInvoiceAmount,
-  PAYMENT_CONFIRMATION_TEMPLATE_ID, ReminderCandidate, reminderDisplayName, ReminderFormResult, waivableReminder, waiveInputProblem, WAIVE_REASON_MAX,
+  PAYMENT_CONFIRMATION_TEMPLATE_ID, pendingRequestId, PendingReminderRequest, ReminderCandidate, reminderDisplayName, ReminderFormResult, reminderInputKey, waivableReminder, waiveInputProblem, WAIVE_REASON_MAX,
 } from '@okr/finance-invoice-util';
 import { AccountService } from '@okr/finance-account-data-access';
 import { AccountingStore } from '@okr/finance-accounting-feature';
@@ -69,6 +69,13 @@ function viewDate(storeDate: string): string {
 function invoiceLabel(invoice: InvoiceModel): string {
   return invoice.invoiceId || invoice.receiver?.label || invoice.title || invoice.okey;
 }
+
+/**
+ * The requestIds of reminder creates that have not succeeded yet, per invoice okey (module-level, so the list's
+ * store and the detail modal's own store share them). A retry with identical input reuses the id, so a create
+ * that the server finished after the client timed out is returned instead of being created a second time.
+ */
+const pendingReminderRequests = new Map<string, PendingReminderRequest>();
 
 const initialState: InvoiceState = {
   listId: 'all',
@@ -651,8 +658,10 @@ export const InvoiceStore = signalStore(
 
       let reminder: InvoiceReminder | undefined;
       try {
-        const result = await store.invoiceService.createReminder(invoice.okey, { templateId: data.templateId, date: data.date, feeChf: data.feeChf },
-          crypto.randomUUID(), store.appStore.currentUser() ?? undefined);
+        const input = { templateId: data.templateId, date: data.date, feeChf: data.feeChf };
+        const requestId = pendingRequestId(pendingReminderRequests, invoice.okey, reminderInputKey(input), () => crypto.randomUUID());
+        const result = await store.invoiceService.createReminder(invoice.okey, input, requestId, store.appStore.currentUser() ?? undefined);
+        pendingReminderRequests.delete(invoice.okey);
         reminder = result.reminder;
         // derived from the callable's answer: a re-read right after the write may still be the old snapshot
         await showToast(store.toastController, fill(store.i18n.reminder_conf(), {
@@ -828,8 +837,10 @@ export const InvoiceStore = signalStore(
         progress.message = fill(store.i18n.mahnlauf_progress(), { n: i + 1, m: selected.length });
         let documentKey = '';
         try {
-          const result = await store.invoiceService.createReminder(invoice.okey, { templateId: data.templateId, date: data.date, feeChf: data.feeChf },
-            crypto.randomUUID(), currentUser);
+          const input = { templateId: data.templateId, date: data.date, feeChf: data.feeChf };
+          const requestId = pendingRequestId(pendingReminderRequests, invoice.okey, reminderInputKey(input), () => crypto.randomUUID());
+          const result = await store.invoiceService.createReminder(invoice.okey, input, requestId, currentUser);
+          pendingReminderRequests.delete(invoice.okey);
           created++;
           documentKey = result.reminder?.documentKey ?? '';
         } catch (e) {

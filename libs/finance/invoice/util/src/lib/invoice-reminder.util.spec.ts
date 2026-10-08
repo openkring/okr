@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   applyTemplateDefaults, canCreateReminder, canEmailInvoice, configReminderFee, dunningTemplates, isReminderDue, lastDueDate, mahnlaufCandidates,
-  newReminderFormModel, nextReminderLevel, parseReminderFee, ReminderLike, reminderDefaults, reminderDisplayName, reminderFeeSum, reminderLevelKey,
+  newReminderFormModel, nextReminderLevel, parseReminderFee, pendingRequestId, ReminderLike, reminderDefaults, reminderDisplayName, reminderFeeSum, reminderLevelKey,
   waivableReminder, waiveInputProblem,
 } from './invoice-reminder.util';
 import { invoiceRefusalReasons } from './invoice-position.util';
@@ -191,5 +191,37 @@ describe('1.90 reminder form rules', () => {
     expect(canCreateReminder({ state: 'unpaid', reminders: three })).toBe(true);
     expect(isReminderDue({ state: 'unpaid', dueDate: '20260901', reminders: three }, '20261101', 10)).toBe(true);
     expect(mahnlaufCandidates([{ state: 'unpaid', dueDate: '20260901', reminders: three }], '20261101', 10)).toHaveLength(1);
+  });
+});
+
+describe('pendingRequestId', () => {
+  const ids = () => { let n = 0; return () => `id${++n}`; };
+
+  it('creates and stores a new id for an unknown invoice', () => {
+    const pending = new Map<string, { key: string; requestId: string }>();
+    expect(pendingRequestId(pending, 'inv1', 'k1', ids())).toBe('id1');
+    expect(pending.get('inv1')).toEqual({ key: 'k1', requestId: 'id1' });
+  });
+
+  it('reuses the stored id while the input is identical (client-timeout retry)', () => {
+    const pending = new Map<string, { key: string; requestId: string }>();
+    const next = ids();
+    const first = pendingRequestId(pending, 'inv1', 'k1', next);
+    expect(pendingRequestId(pending, 'inv1', 'k1', next)).toBe(first);
+  });
+
+  it('creates a new id when the input changed', () => {
+    const pending = new Map<string, { key: string; requestId: string }>();
+    const next = ids();
+    pendingRequestId(pending, 'inv1', 'k1', next);
+    expect(pendingRequestId(pending, 'inv1', 'k2', next)).toBe('id2');
+    expect(pending.get('inv1')).toEqual({ key: 'k2', requestId: 'id2' });
+  });
+
+  it('keeps invoices apart', () => {
+    const pending = new Map<string, { key: string; requestId: string }>();
+    const next = ids();
+    expect(pendingRequestId(pending, 'inv1', 'k1', next)).toBe('id1');
+    expect(pendingRequestId(pending, 'inv2', 'k1', next)).toBe('id2');
   });
 });

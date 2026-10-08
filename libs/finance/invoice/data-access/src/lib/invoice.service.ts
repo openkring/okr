@@ -228,7 +228,9 @@ export class InvoiceService {
    */
   public async createReminder(invoiceKey: string, input: { templateId: string; date: string; feeChf: number }, requestId: string, currentUser?: UserModel): Promise<CreateInvoiceReminderResult> {
     const payload: CreateInvoiceReminderPayload = { invoiceKey, templateId: input.templateId, date: input.date, fee: Math.round(input.feeChf * 100), requestId };
-    const fn = httpsCallable<CreateInvoiceReminderPayload, CreateInvoiceReminderResult>(this.functions(), 'createInvoiceReminder');
+    const fn = httpsCallable<CreateInvoiceReminderPayload, CreateInvoiceReminderResult>(this.functions(), 'createInvoiceReminder',
+      // the server may run up to 120 s; the SDK default of 70 s would give up on a create that still succeeds
+      { timeout: 130_000 });
     const result = await fn(payload);
     void this.activityService.log('invoice', 'reminder', currentUser, `${invoiceKey}: ${result.data.reminder?.level ?? 0} ${input.templateId} (${result.data.reminder?.fee ?? 0})`);
     return result.data;

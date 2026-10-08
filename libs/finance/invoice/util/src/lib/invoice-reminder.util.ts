@@ -159,3 +159,24 @@ export function reminderDisplayName(r: { level: number; templateName?: string },
   if (r.level === 2) return i18n.reminder_level_2();
   return i18n.reminder_level_3();
 }
+
+/** A requestId waiting for a successful createInvoiceReminder, with the input it was made for. */
+export interface PendingReminderRequest { key: string; requestId: string }
+
+/**
+ * The requestId for creating a reminder on `invoiceKey`: the pending one while the input (`inputKey`) is
+ * unchanged, so a retry after a client timeout returns the stored reminder instead of creating a second one;
+ * else a new one from `newId`, stored in `pending`. The caller deletes the entry once a create succeeded.
+ */
+export function pendingRequestId(pending: Map<string, PendingReminderRequest>, invoiceKey: string, inputKey: string, newId: () => string): string {
+  const existing = pending.get(invoiceKey);
+  if (existing && existing.key === inputKey) return existing.requestId;
+  const requestId = newId();
+  pending.set(invoiceKey, { key: inputKey, requestId });
+  return requestId;
+}
+
+/** The input key pendingRequestId compares: template, date and fee of a reminder request. */
+export function reminderInputKey(input: { templateId: string; date: string; feeChf: number }): string {
+  return JSON.stringify({ templateId: input.templateId, date: input.date, feeChf: input.feeChf });
+}
