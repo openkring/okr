@@ -89,6 +89,9 @@ export function planBillDetailsUpdate(bill: BillDetailsBill, input: BillDetailsI
     if (bill.state === 'paid') return { refusal: 'bill-paid' };
     billPatch[field] = input[field];
   }
+  // only bexio-migrated bills are stored as 'overdue', and isOverdueBill trusts that regardless of the date;
+  // a new due date resets it to 'todo' so the display-time derivation decides again
+  if (billPatch['dueDate'] !== undefined && bill.state === 'overdue') billPatch['state'] = 'todo';
   for (const field of ['title', 'notes'] as const) {
     if (changed(field)) billPatch[field] = input[field];
   }

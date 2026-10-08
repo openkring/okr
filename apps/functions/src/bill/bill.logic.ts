@@ -16,6 +16,9 @@ export interface BillLineInput {
   projectKey?: string;
 }
 
+/** A line as cleanBillLines returns it: every field filled. */
+export type CleanBillLine = BillLineInput & { projectKey: string };
+
 export interface BillBookingLine {
   accountKey: string;
   debitAmount?: { amount: number; currency: 'CHF' };
@@ -35,7 +38,7 @@ const str = (v: unknown): string => (typeof v === 'string' ? v.trim() : '');
  * The lines as the client may send them: at most MAX_BILL_LINES, each amount a non-negative integer
  * (Rappen; a draft may still hold 0), strings trimmed, unknown fields dropped. Throws invalid-argument.
  */
-export function cleanBillLines(input: unknown): BillLineInput[] {
+export function cleanBillLines(input: unknown): CleanBillLine[] {
   if (input === undefined || input === null) return [];
   if (!Array.isArray(input)) throw new HttpsError('invalid-argument', 'lines must be an array');
   if (input.length > MAX_BILL_LINES) throw new HttpsError('invalid-argument', 'too-many-lines', { reason: 'too-many-lines' });

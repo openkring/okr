@@ -11,7 +11,7 @@ import { assertPeriodsOpen } from '../booking/period-lock';
 import { assertExplicitCostCenter, costCenterKeyForLine, loadCostCenterContext } from '../cost-center/cost-center-context';
 import { refuse } from '../invoice/invoice-context';
 import { withoutUndefined } from '../invoice/invoice.logic';
-import { assertProjectKeyShapes, assertProjectsAssignable } from '../project/project-context';
+import { assertProjectKeyShapes, assertProjectsAssignable, assertProjectsOnProfitAndLoss } from '../project/project-context';
 import { writeFinanceHistory } from '../finance-history/finance-history';
 import { BillLineInput } from './bill.logic';
 import { BillDetailsBill, BillDetailsInput, planBillDetailsUpdate } from './bill-details.logic';
@@ -118,6 +118,7 @@ export const updateBillDetails = onCall(
     }
     const projectLines = prePlan.linePatches.filter((p) => p.patch.projectKey !== undefined).map((p) => ({ projectKey: p.patch.projectKey }));
     await assertProjectsAssignable(db, tenantId, projectLines);
+    assertProjectsOnProfitAndLoss(ccCtx.accounts, prePlan.linePatches.filter((p) => !!p.patch.projectKey).map((p) => ({ accountKey: preLines[p.index].accountKey, projectKey: p.patch.projectKey })));
     for (const { index, patch } of prePlan.linePatches) {
       if (patch.projectKey !== undefined) checked.add(`pk:${index}:${patch.projectKey}`);
     }
@@ -143,6 +144,7 @@ export const updateBillDetails = onCall(
         if (patch.projectKey !== undefined && !checked.has(`pk:${index}:${patch.projectKey}`)) throw refuse('state-changed', `bill ${billKey} changed while it was edited`);
       }
 
+      assertProjectsOnProfitAndLoss(ccCtx.accounts, plan.linePatches.filter((p) => !!p.patch.projectKey).map((p) => ({ accountKey: lines[p.index].accountKey, projectKey: p.patch.projectKey })));
       if (plan.touchesLedger && booking) {
         const periodKey = String(booking['periodKey'] ?? '') || periodKeyFor(accountingTenantId, String(booking['date'] ?? ''), fiscalYearStart);
         await assertPeriodsOpen(db, [periodKey], tx);

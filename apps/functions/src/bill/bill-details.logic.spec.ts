@@ -81,6 +81,18 @@ describe('planBillDetailsUpdate', () => {
     });
   });
 
+  it('a changed due date resets a stored overdue (bexio) bill to todo, other states keep theirs', () => {
+    expect(plan(bill({ state: 'overdue' }), { dueDate: '20261101' }).billPatch).toEqual({ dueDate: '20261101', state: 'todo' });
+    expect(plan(bill({ state: 'overdue' }), { notes: 'x' }).billPatch).toEqual({ notes: 'x' });
+    expect(plan(bill(), { dueDate: '20261101' }).billPatch).toEqual({ dueDate: '20261101' });
+  });
+
+  it('a cleared title is a change and leaves the booking title with the bill id only', () => {
+    const p = plan(bill(), { title: '' });
+    expect(p.billPatch['title']).toBe('');
+    expect(p.bookingPatch?.title).toBe('Kreditor RE-1');
+  });
+
   describe('payment data', () => {
     it('dueDate, paymentReference and creditorIban are bill-only', () => {
       const p = plan(bill(), { dueDate: '20261101', paymentReference: 'R1', creditorIban: 'CH93' });
@@ -92,6 +104,8 @@ describe('planBillDetailsUpdate', () => {
         expect(plan(bill({ state: 'paid' }), input)).toEqual({ refusal: 'bill-paid' });
       }
     });
+    it('refuses the whole request when payment fields change together with notes (nothing is applied)', () =>
+      expect(plan(bill({ state: 'paid' }), { notes: 'x', dueDate: '20261101' })).toEqual({ refusal: 'bill-paid' }));
     it('a resent unchanged value on a paid bill is fine', () =>
       expect(plan(bill({ state: 'paid' }), { dueDate: '20261001' })).toMatchObject({ billPatch: {} }));
   });

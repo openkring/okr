@@ -13,7 +13,8 @@ import { assertLeafAccount, refuse } from '../invoice/invoice-context';
 import { issuePeriodKeys, withoutUndefined } from '../invoice/invoice.logic';
 import { billBookingLines, BillLineInput, bookBlockers } from './bill.logic';
 import { loadBillConfig, loadOwnBill } from './bill-context';
-import { assertProjectKeyShapes, assertProjectsAssignable } from '../project/project-context';
+import { billBookingIndex, billBookingTitle } from './bill-details.logic';
+import { assertProjectKeyShapes, assertProjectsAssignable, assertProjectsOnProfitAndLoss } from '../project/project-context';
 import { writeFinanceHistory } from '../finance-history/finance-history';
 
 const REGION = 'europe-west6';
@@ -60,6 +61,7 @@ export const bookBill = onCall(
     // Kostenträger (spec 1.92 D2): plain reads before the transaction, like writeBooking; the lines are re-checked against this set inside it
     assertProjectKeyShapes(preLines);
     await assertProjectsAssignable(db, tenantId, preLines);
+    assertProjectsOnProfitAndLoss(ccCtx.accounts, preLines);
     const checkedProjectKeys = new Set(preLines.map((l) => (l.projectKey ?? '').trim()).filter((k) => !!k));
 
     const result = await db.runTransaction(async (tx) => {
@@ -80,6 +82,7 @@ export const bookBill = onCall(
         await assertLeafAccount(db, accountingTenantId, accountKey, tx);
       }
       for (const l of lines) assertExplicitCostCenter(ccCtx, l.accountKey, l.costCenterKey, new Set());
+      assertProjectsOnProfitAndLoss(ccCtx.accounts, lines);
       if (lines.some((l) => !!(l.projectKey ?? '').trim() && !checkedProjectKeys.has((l.projectKey ?? '').trim()))) {
         throw refuse('state-changed', `bill ${billKey} changed while it was booked`);
       }
@@ -92,10 +95,10 @@ export const bookBill = onCall(
       // writes
       const tenants = (bill['tenants'] as string[] | undefined) ?? [tenantId];
       const billId = String(bill['billId'] ?? '');
-      const title = `Kreditor ${[billId, String(bill['title'] ?? '')].filter((s) => !!s).join(' ')}`.slice(0, 200);
+      const title = billBookingTitle(billId, String(bill['title'] ?? ''));
       tx.set(bookingRef, withoutUndefined({
         tenants, accountingTenantId, isArchived: false,
-        title, date: billDate, notes: '', tags: 'bill', index: `d:${billDate} no:${bookingNo} n:${title}`,
+        title, date: billDate, notes: '', tags: 'bill', index: billBookingIndex(billDate, bookingNo, title),
         bookingNo, status: 'posted', periodKey: periodKeyFor(accountingTenantId, billDate, fiscalYearStart),
         documentKeys: ((bill['attachments'] as string[] | undefined) ?? []).filter((a) => a.startsWith('bexio-file-') || a.startsWith('bill-')),
         counterparty: bill['vendor'] ?? null,

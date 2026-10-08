@@ -1,7 +1,7 @@
 import { HttpsError } from 'firebase-functions/v2/https';
 import { Firestore } from 'firebase-admin/firestore';
 
-import { isAssignableProject, isProjectKeyShapeValid } from '@okr/shared-util-core';
+import { isAssignableProject, isProfitAndLossAccountId, isProjectKeyShapeValid } from '@okr/shared-util-core';
 
 const PROJECT_COLLECTION = 'projects';
 
@@ -29,6 +29,21 @@ export function assertProjectKeyShapes(lines: { projectKey?: unknown }[]): void 
   for (const line of lines) {
     if (!isProjectKeyShapeValid(line.projectKey)) {
       throw new HttpsError('invalid-argument', 'project-invalid: malformed projectKey', { reason: 'project-invalid' });
+    }
+  }
+}
+
+/**
+ * A Kostenträger belongs on a profit-and-loss line only. Refuses (instead of silently dropping, as
+ * `projectKeyForLine` does) a non-empty projectKey on a line whose account is not P&L or is unknown.
+ */
+export function assertProjectsOnProfitAndLoss(
+  accounts: Map<string, { id?: string }>, lines: { accountKey: string; projectKey?: string }[],
+): void {
+  for (const line of lines) {
+    const key = (line.projectKey ?? '').trim();
+    if (key && !isProfitAndLossAccountId(accounts.get(line.accountKey)?.id)) {
+      throw new HttpsError('invalid-argument', `project-invalid: ${key}`, { reason: 'project-invalid', projectKey: key });
     }
   }
 }
