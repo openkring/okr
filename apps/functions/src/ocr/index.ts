@@ -230,7 +230,11 @@ async function extractReceipt(opts: {
 }
 
 export const onOcrFileFinalized = onObjectFinalized(
-  { region: REGION, secrets: [geminiApiKey] },
+  // 1GiB, not the 256MiB default: the shared bundle alone takes ~135MiB, then the downloaded file
+  // (/tmp is memory on Cloud Run), its base64 copy for Gemini and each decoded QR rendering
+  // (~14MB at 1600px, ~32MB at 2400px) come on top. A second upload on a warm instance hit
+  // 267MiB and died before writing its ocr-results doc (2026-10-08, bill scan).
+  { region: REGION, secrets: [geminiApiKey], memory: '1GiB' },
   async (event) => {
     const objectName = event.data.name;
     const bucketName = event.data.bucket;
