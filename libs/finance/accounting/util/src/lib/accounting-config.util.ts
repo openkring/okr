@@ -3,6 +3,8 @@ import {
   INCOMING_PAYMENT_TEXT, OUTGOING_PAYMENT_TEXT,
 } from '@okr/shared-models';
 
+import { reminderFeeOf } from './accounting-config.validations';
+
 /**
  * The editable copy of a stored accounting config. Firestore returns raw documents, so a config
  * written before a field existed (1.65 `defaultCostCenterKey`, 1.76 invoicing) simply lacks it —
@@ -30,6 +32,7 @@ export function toAccountingConfigFormData(config: AccountingConfigModel): Accou
     reminderTemplateId: config.reminderTemplateId ?? '',
     reminderFeeAccountKey: config.reminderFeeAccountKey ?? '',
     reminderFees: [...(config.reminderFees ?? DEFAULT_REMINDER_FEES)],
+    reminderFee: reminderFeeOf(config),
     reminderGraceDays: config.reminderGraceDays ?? DEFAULT_REMINDER_GRACE_DAYS,
     reminderDueDays: config.reminderDueDays ?? DEFAULT_REMINDER_DUE_DAYS,
     incomingPaymentLabel: config.incomingPaymentLabel ?? DEFAULT_INCOMING_PAYMENT_LABEL,

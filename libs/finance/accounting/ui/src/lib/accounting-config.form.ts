@@ -157,23 +157,11 @@ export type { AccountingI18n };
                 </ion-col>
               </ion-row>
               <ion-row>
-                <ion-col size="12" size-md="4">
-                  <okr-number-input [i18n]="reminderFee1I18n()" [value]="reminderFee1Chf()"
-                    (valueChange)="onReminderFeeChange(1, $event)"
+                <ion-col size="12" size-md="6">
+                  <okr-number-input [i18n]="reminderFeeI18n()" [value]="reminderFeeChf()"
+                    (valueChange)="onReminderFeeChange($event)"
                     [min]="0" [showHelper]="true" [readOnly]="isReadOnly()" />
-                  <okr-error-note [errors]="reminderFee1Errors()" />
-                </ion-col>
-                <ion-col size="12" size-md="4">
-                  <okr-number-input [i18n]="reminderFee2I18n()" [value]="reminderFee2Chf()"
-                    (valueChange)="onReminderFeeChange(2, $event)"
-                    [min]="0" [showHelper]="true" [readOnly]="isReadOnly()" />
-                  <okr-error-note [errors]="reminderFee2Errors()" />
-                </ion-col>
-                <ion-col size="12" size-md="4">
-                  <okr-number-input [i18n]="reminderFee3I18n()" [value]="reminderFee3Chf()"
-                    (valueChange)="onReminderFeeChange(3, $event)"
-                    [min]="0" [showHelper]="true" [readOnly]="isReadOnly()" />
-                  <okr-error-note [errors]="reminderFee3Errors()" />
+                  <okr-error-note [errors]="reminderFeeErrors()" />
                 </ion-col>
               </ion-row>
               <ion-row>
@@ -314,9 +302,7 @@ export class AccountingConfigForm {
   protected readonly reminderGraceDays = computed(() => this.formData()?.reminderGraceDays ?? 10);
   protected readonly reminderDueDays = computed(() => this.formData()?.reminderDueDays ?? 14);
   // the model stores Rappen, the inputs show CHF
-  protected reminderFee1Chf = computed(() => reminderFeeOf(this.formData(), 1) / 100);
-  protected reminderFee2Chf = computed(() => reminderFeeOf(this.formData(), 2) / 100);
-  protected reminderFee3Chf = computed(() => reminderFeeOf(this.formData(), 3) / 100);
+  protected reminderFeeChf = computed(() => reminderFeeOf(this.formData()) / 100);
 
   // Dunning templates only, but never drop the stored one (same rule as the invoice template).
   protected reminderTemplateChoices = computed(() => {
@@ -330,9 +316,7 @@ export class AccountingConfigForm {
     name: 'reminderFeeAccountKey', label: this.i18n().reminder_fee_account(), helper: this.i18n().reminder_fee_account_helper()
   } as AccountSelectI18n));
 
-  protected reminderFee1I18n = computed(() => this.feeI18n('reminderFee1', this.i18n().reminder_fee_1()));
-  protected reminderFee2I18n = computed(() => this.feeI18n('reminderFee2', this.i18n().reminder_fee_2()));
-  protected reminderFee3I18n = computed(() => this.feeI18n('reminderFee3', this.i18n().reminder_fee_3()));
+  protected reminderFeeI18n = computed(() => this.feeI18n('reminderFee', this.i18n().reminder_fee_default()));
 
   protected reminderGraceDaysI18n = computed(() => ({
     name: 'reminderGraceDays', label: this.i18n().reminder_grace_days(),
@@ -360,9 +344,7 @@ export class AccountingConfigForm {
   protected defaultCostCenterKeyErrors = computed(() => this.validationResult().getErrors('defaultCostCenterKey'));
   protected reminderTemplateIdErrors = computed(() => this.validationResult().getErrors('reminderTemplateId'));
   protected reminderFeeAccountKeyErrors = computed(() => this.validationResult().getErrors('reminderFeeAccountKey'));
-  protected reminderFee1Errors = computed(() => this.validationResult().getErrors('reminderFee1'));
-  protected reminderFee2Errors = computed(() => this.validationResult().getErrors('reminderFee2'));
-  protected reminderFee3Errors = computed(() => this.validationResult().getErrors('reminderFee3'));
+  protected reminderFeeErrors = computed(() => this.validationResult().getErrors('reminderFee'));
   protected reminderGraceDaysErrors = computed(() => this.validationResult().getErrors('reminderGraceDays'));
   protected reminderDueDaysErrors = computed(() => this.validationResult().getErrors('reminderDueDays'));
   protected incomingPaymentLabelErrors = computed(() => this.validationResult().getErrors('incomingPaymentLabel'));
@@ -388,12 +370,10 @@ export class AccountingConfigForm {
     this.onFieldChange('billPaymentAccountKeys', event.detail.value ?? []);
   }
 
-  /** CHF from the input → Rappen in the model, converted here once; more than two decimals stay a fraction the suite rejects (legacy docs: start from the defaults). */
-  protected onReminderFeeChange(level: number, chf: number): void {
-    const fees = [1, 2, 3].map(l => reminderFeeOf(this.formData(), l));
-    fees[level - 1] = reminderFeeRappen(chf);
+  /** CHF from the input → Rappen in the model, converted here once; more than two decimals stay a fraction the suite rejects. */
+  protected onReminderFeeChange(chf: number): void {
     this.dirty.emit(true);
-    this.formData.update(vm => ({ ...vm, reminderFees: fees }));
+    this.formData.update(vm => ({ ...vm, reminderFee: reminderFeeRappen(chf) }));
   }
 
   private feeI18n(name: string, label: string): NumberInputI18n {

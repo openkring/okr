@@ -69,12 +69,12 @@ describe('accountingConfigValidations', () => {
       expect(accountingConfigValidations(config({ reminderTemplateId: 't'.repeat(60), reminderFeeAccountKey: 'a'.repeat(60) }), 'tenant-1', '').isValid()).toBe(true);
     });
 
-    it('rejects a negative or fractional fee in Rappen, per level', () => {
-      const negative = accountingConfigValidations(config({ reminderFees: [0, -100, 2000] }), 'tenant-1', '');
-      expect(negative.getErrors('reminderFee2').length).toBeGreaterThan(0);
-      expect(negative.getErrors('reminderFee1')).toEqual([]);
-      const fractional = accountingConfigValidations(config({ reminderFees: [0, 2000, 20.5] }), 'tenant-1', '');
-      expect(fractional.getErrors('reminderFee3').length).toBeGreaterThan(0);
+    it('rejects a negative or fractional default fee in Rappen', () => {
+      const negative = accountingConfigValidations(config({ reminderFee: -100 }), 'tenant-1', '');
+      expect(negative.getErrors('reminderFee').length).toBeGreaterThan(0);
+      const fractional = accountingConfigValidations(config({ reminderFee: 2050.5 }), 'tenant-1', '');
+      expect(fractional.hasErrors('reminderFee')).toBe(true);
+      expect(accountingConfigValidations(config({ reminderFee: 2000 }), 'tenant-1', '').getErrors('reminderFee')).toEqual([]);
     });
 
     it('accepts grace and due days from 0 to 365 and rejects others', () => {
@@ -89,29 +89,30 @@ describe('accountingConfigValidations', () => {
       expect(reminderFeeRappen(0.29)).toBe(29);
       expect(reminderFeeRappen(12.5)).toBe(1250);
       expect(Number.isInteger(reminderFeeRappen(1.234))).toBe(false);
-      const result = accountingConfigValidations(config({ reminderFees: [0, reminderFeeRappen(1.234), 2000] }), 'tenant-1', '');
-      expect(result.getErrors('reminderFee2')).toContain(REMINDER_FEE_DECIMALS_ERROR);
-      expect(accountingConfigValidations(config({ reminderFees: [0, reminderFeeRappen(0.29), 2000] }), 'tenant-1', '').isValid()).toBe(true);
+      const result = accountingConfigValidations(config({ reminderFee: reminderFeeRappen(1.234) }), 'tenant-1', '');
+      expect(result.getErrors('reminderFee')).toContain(REMINDER_FEE_DECIMALS_ERROR);
+      expect(accountingConfigValidations(config({ reminderFee: reminderFeeRappen(0.29) }), 'tenant-1', '').isValid()).toBe(true);
     });
 
     it('requires the fee account as soon as any level charges a fee (P3-R2)', () => {
-      const missing = accountingConfigValidations(config({ reminderFeeAccountKey: '', reminderFees: [0, 2000, 2000] }), 'tenant-1', '');
+      const missing = accountingConfigValidations(config({ reminderFeeAccountKey: '', reminderFee: 2000 }), 'tenant-1', '');
       expect(missing.getErrors('reminderFeeAccountKey')).toContain(REMINDER_FEE_ACCOUNT_REQUIRED_ERROR);
       const legacy = config() as Partial<AccountingConfigModel>;
       delete legacy.reminderFeeAccountKey;
       delete legacy.reminderFees;
       // a legacy config without fees uses the default [0, 0, 0] and needs no fee account
       expect(accountingConfigValidations(legacy as AccountingConfigModel, 'tenant-1', '').getErrors('reminderFeeAccountKey')).toEqual([]);
-      expect(accountingConfigValidations(config({ reminderFeeAccountKey: '', reminderFees: [0, 0, 0] }), 'tenant-1', '').isValid()).toBe(true);
-      expect(accountingConfigValidations(config({ reminderFeeAccountKey: '', reminderFees: [100, 0, 0] }), 'tenant-1', '').isValid()).toBe(false);
-      expect(hasReminderFee({ reminderFees: [0, 0, 0] })).toBe(false);
+      expect(accountingConfigValidations(config({ reminderFeeAccountKey: '', reminderFee: 0 }), 'tenant-1', '').isValid()).toBe(true);
+      expect(accountingConfigValidations(config({ reminderFeeAccountKey: '', reminderFee: 100 }), 'tenant-1', '').isValid()).toBe(false);
+      expect(hasReminderFee({ reminderFee: 0, reminderFees: [0, 0, 0] })).toBe(false);
       expect(hasReminderFee({} as AccountingConfigModel)).toBe(false);
     });
 
-    it('reads the fee of a level, the model default when the field is missing', () => {
-      expect(reminderFeeOf({ reminderFees: [100, 200, 300] }, 3)).toBe(300);
-      expect(reminderFeeOf({ reminderFees: [100] }, 2)).toBe(0);
-      expect(reminderFeeOf({} as AccountingConfigModel, 2)).toBe(0);
+    it('default fee with legacy fallback', () => {
+      expect(reminderFeeOf({ reminderFee: 3000, reminderFees: [0, 2500, 4000] })).toBe(3000);
+      expect(reminderFeeOf({ reminderFees: [0, 2500, 4000] } as never)).toBe(2500);
+      expect(reminderFeeOf({} as AccountingConfigModel)).toBe(0);
+      expect(hasReminderFee({ reminderFee: 0, reminderFees: [0, 0, 0] })).toBe(false);
     });
   });
 });

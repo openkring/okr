@@ -19,7 +19,7 @@ describe('toAccountingConfigFormData', () => {
     const seeded = toAccountingConfigFormData(legacyConfig());
     // the seeded default fees [0, 0, 0] need no fee account
     expect(accountingConfigValidations(seeded, 'scs', '').getErrors('reminderFeeAccountKey')).toEqual([]);
-    const withFee = { ...seeded, reminderFees: [0, 2000, 2000] };
+    const withFee = { ...seeded, reminderFee: 2000 };
     expect(accountingConfigValidations(withFee, 'scs', '').getErrors('reminderFeeAccountKey').length).toBeGreaterThan(0);
     expect(accountingConfigValidations({ ...withFee, reminderFeeAccountKey: 'scs-6850' }, 'scs', '').getErrors('reminderFeeAccountKey')).toEqual([]);
   });
@@ -40,6 +40,14 @@ describe('toAccountingConfigFormData', () => {
       .toEqual(['tpl-r', 'scs-6850', [500, 1000, 0], 0, 30]);
     data.reminderFees.push(1);
     expect(stored.reminderFees).toEqual([500, 1000, 0]);
+  });
+
+  it('carries the default fee, taken from the legacy reminderFees[1] when missing (1.90)', () => {
+    expect(toAccountingConfigFormData(legacyConfig()).reminderFee).toBe(0);
+    const legacyFees = { ...legacyConfig(), reminderFees: [0, 2500, 4000] } as AccountingConfigModel;
+    expect(toAccountingConfigFormData(legacyFees).reminderFee).toBe(2500);
+    const stored = { ...legacyFees, reminderFee: 3000 } as AccountingConfigModel;
+    expect(toAccountingConfigFormData(stored).reminderFee).toBe(3000);
   });
 
   it('fills the missing fields with their model defaults', () => {

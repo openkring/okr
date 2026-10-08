@@ -24,15 +24,15 @@ export function reminderFeeRappen(chf: number): number {
   return Math.abs(rappen - rounded) < 1e-6 ? rounded : rappen;
 }
 
-/** The reminder fee of a level in Rappen as the form shows it; legacy configs lack the field (model default). */
-export function reminderFeeOf(model: Pick<AccountingConfigModel, 'reminderFees'>, level: number): number {
-  const fees = model.reminderFees ?? DEFAULT_REMINDER_FEES;
-  return fees[level - 1] ?? 0;
+/** The default reminder fee in Rappen as the form shows it; legacy configs carry only reminderFees (spec 1.90). */
+export function reminderFeeOf(model: Pick<AccountingConfigModel, 'reminderFee' | 'reminderFees'>): number {
+  if (Number.isFinite(model.reminderFee)) return model.reminderFee;
+  return (model.reminderFees ?? DEFAULT_REMINDER_FEES)[1] ?? 0;
 }
 
-/** True when any of the three reminder levels charges a fee (> 0 Rappen). */
-export function hasReminderFee(model: Pick<AccountingConfigModel, 'reminderFees'>): boolean {
-  return [1, 2, 3].some((level) => reminderFeeOf(model, level) > 0);
+/** True when the default reminder fee is > 0 Rappen. */
+export function hasReminderFee(model: Pick<AccountingConfigModel, 'reminderFee' | 'reminderFees'>): boolean {
+  return reminderFeeOf(model) > 0;
 }
 
 export const accountingConfigValidations = staticSuite(
@@ -56,12 +56,8 @@ export const accountingConfigValidations = staticSuite(
     stringValidations('reminderTemplateId', model.reminderTemplateId ?? '');
     stringValidations('reminderFeeAccountKey', model.reminderFeeAccountKey ?? '');
     // fees are whole Rappen ≥ 0; a fraction means the CHF input had more than two decimals (reminderFeeRappen)
-    numberValidations('reminderFee1', reminderFeeOf(model, 1), false, 0);
-    test('reminderFee1', REMINDER_FEE_DECIMALS_ERROR, () => { enforce(Number.isInteger(reminderFeeOf(model, 1))).isTruthy(); });
-    numberValidations('reminderFee2', reminderFeeOf(model, 2), false, 0);
-    test('reminderFee2', REMINDER_FEE_DECIMALS_ERROR, () => { enforce(Number.isInteger(reminderFeeOf(model, 2))).isTruthy(); });
-    numberValidations('reminderFee3', reminderFeeOf(model, 3), false, 0);
-    test('reminderFee3', REMINDER_FEE_DECIMALS_ERROR, () => { enforce(Number.isInteger(reminderFeeOf(model, 3))).isTruthy(); });
+    numberValidations('reminderFee', reminderFeeOf(model), false, 0);
+    test('reminderFee', REMINDER_FEE_DECIMALS_ERROR, () => { enforce(Number.isInteger(reminderFeeOf(model))).isTruthy(); });
     // a fee is booked to the fee account: without one createInvoiceReminder refuses (no-reminder-fee-account)
     test('reminderFeeAccountKey', REMINDER_FEE_ACCOUNT_REQUIRED_ERROR, () => {
       enforce(!hasReminderFee(model) || !!(model.reminderFeeAccountKey ?? '')).isTruthy();
