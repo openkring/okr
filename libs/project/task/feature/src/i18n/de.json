@@ -11,6 +11,9 @@
     "select": "Gruppe wählen",
     "clear": "Nicht mehr teilen"
   },
+  "project": {
+    "label": "Projekt"
+  },
   "taskQuickEntry": {
     "label": "Schnelleingabe",
     "placeholder": "Text [@Person] [//Datum]",

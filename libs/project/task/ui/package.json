@@ -16,6 +16,8 @@
     "@okr/shared-util-core": "*",
     "@okr/shared-util-angular": "*",
     "@okr/project-task-util": "*",
-    "@angular/forms": "*"
+    "@angular/forms": "*",
+    "@okr/project-project-ui": "*",
+    "@okr/project-project-util": "*"
   }
 }

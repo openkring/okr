@@ -11,6 +11,9 @@
     "select": "Choose group",
     "clear": "Stop sharing"
   },
+  "project": {
+    "label": "Project"
+  },
   "taskQuickEntry": {
     "label": "Quick entry",
     "placeholder": "Text [@Person] [//Date]",

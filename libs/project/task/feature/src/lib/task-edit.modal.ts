@@ -5,7 +5,7 @@ import { catchError, of, switchMap } from 'rxjs';
 import { IonAccordionGroup, IonButton, IonContent, IonItem, IonLabel, ModalController } from '@ionic/angular/standalone';
 
 import { I18nService } from '@okr/shared-i18n';
-import { ApprovalModelName, CategoryListModel, TaskModel, TaskModelName, UserModel } from '@okr/shared-models';
+import { ApprovalModelName, CategoryListModel, ProjectModel, TaskModel, TaskModelName, UserModel } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
 import { coerceBoolean, hasRole, newAvatarInfo, safeStructuredClone, warn } from '@okr/shared-util-core';
 
@@ -53,6 +53,7 @@ import { TaskStore } from './task.store';
           [states]="states()"
           [priorities]="priorities()"
           [importances]="importances()"
+          [projects]="projects()"
           [readOnly]="isReadOnly()"
           [(showAdvanced)]="showAdvanced"
           (dirty)="formDirty.set($event)"
@@ -124,6 +125,7 @@ export class TaskEditModal {
   public readonly states = input.required<CategoryListModel>();
   public readonly priorities = input.required<CategoryListModel>();
   public readonly importances = input.required<CategoryListModel>();
+  public readonly projects = input<ProjectModel[]>([]);
   public readOnly = input(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   

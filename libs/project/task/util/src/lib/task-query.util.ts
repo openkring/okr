@@ -15,14 +15,25 @@ export function getTaskShareKey(task: Pick<TaskModel, 'shareKey' | 'relatedKey'>
 
 /** The scope a task created from a list gets: private on the tenant-wide lists, else the group. */
 export function getDefaultShareKey(listName: string): string {
-  return listName === '' || listName === 'all' || listName === 'my' ? '' : listName;
+  return listName === '' || listName === 'all' || listName === 'my' || isProjectList(listName) ? '' : listName;
+}
+
+/** A list named 'project.<okey>' shows the tasks of one project (spec 3.14). */
+function isProjectList(listName: string): boolean {
+  return listName.startsWith('project.');
+}
+
+/** The parent a task created from a list gets: the project of a project list, else the backlog (''). */
+export function getDefaultParentKey(listName: string): string {
+  return isProjectList(listName) ? listName : '';
 }
 
 /*-------------------------- queries --------------------------------*/
 export type TaskListScope = {
-  kind: 'my' | 'all' | 'shared';
+  kind: 'my' | 'all' | 'shared' | 'parent';
   tenantId: string;
   personKey?: string;   // 'my'
+  parentKey?: string;   // 'parent': 'project.<okey>'
   shareKey?: string;    // 'shared': a group key or 'meeting.<okey>'
   archived?: boolean;   // true = the archived view (spec §10)
   openOnly?: boolean;   // only not-yet-completed tasks; ignored for the archived view
@@ -50,6 +61,9 @@ export function buildTaskListQueries(scope: TaskListScope): DbQuery[][] {
     case 'shared':
       if (!scope.shareKey) return [];
       return [[...base(), { key: 'shareKey', operator: '==', value: scope.shareKey }]];
+    case 'parent':
+      if (!scope.parentKey) return [];
+      return [[...base(), { key: 'parentKey', operator: '==', value: scope.parentKey }]];
     case 'all':
       return [base()];
   }

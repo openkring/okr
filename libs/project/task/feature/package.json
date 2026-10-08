@@ -27,6 +27,7 @@
     "@okr/project-task-ui": "*",
     "@okr/system-workflow-data-access": "*",
     "@okr/system-workflow-ui": "*",
-    "@okr/system-workflow-util": "*"
+    "@okr/system-workflow-util": "*",
+    "@okr/project-project-data-access": "*"
   }
 }

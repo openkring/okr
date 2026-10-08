@@ -17,10 +17,12 @@
   "references": [
     { "path": "../../../activity/data-access/tsconfig.lib.json" },
     { "path": "../util/tsconfig.lib.json" },
+    { "path": "../../task/data-access/tsconfig.lib.json" },
     { "path": "../../../shared/config/tsconfig.lib.json" },
     { "path": "../../../shared/data-access/tsconfig.lib.json" },
     { "path": "../../../shared/i18n/tsconfig.lib.json" },
     { "path": "../../../shared/models/tsconfig.lib.json" },
+    { "path": "../../../shared/util-angular/tsconfig.lib.json" },
     { "path": "../../../shared/util-core/tsconfig.lib.json" }
   ]
 }

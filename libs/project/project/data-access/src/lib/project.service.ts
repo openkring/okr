@@ -6,8 +6,10 @@ import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
 import { ProjectCollection, ProjectModel, UserModel } from '@okr/shared-models';
+import { AlertService } from '@okr/shared-util-angular';
 import { findByKey, getArchiveInclusiveQuery, getSystemQuery } from '@okr/shared-util-core';
-import { getProjectIndex } from '@okr/project-project-util';
+import { getProjectIndex, getProjectParentKey } from '@okr/project-project-util';
+import { TaskService } from '@okr/project-task-data-access';
 
 import { PFX } from './scope';
 
@@ -19,6 +21,8 @@ export class ProjectService {
   private readonly firestoreService = inject(FirestoreService);
   private readonly activityService = inject(ActivityService);
   private readonly i18nService = inject(I18nService);
+  private readonly taskService = inject(TaskService);
+  private readonly alertService = inject(AlertService);
 
   protected readonly i18n = this.i18nService.translateAll({
     create_conf: PFX + 'create.conf',
@@ -26,7 +30,8 @@ export class ProjectService {
     update_conf: PFX + 'update.conf',
     update_error: PFX + 'update.error',
     delete_conf: PFX + 'delete.conf',
-    delete_error: PFX + 'delete.error'
+    delete_error: PFX + 'delete.error',
+    delete_detached: PFX + 'delete.detached'
   });
 
   /*-------------------------- CRUD operations --------------------------------*/
@@ -62,12 +67,14 @@ export class ProjectService {
    * detaches the current tenant from `tenants`, or archives the document when it was the last one.
    * Never write `isArchived = true` here.
    *
-   * SEAM (Task 7): the tasks that point at this project (`TaskModel.parentKey = 'project.<okey>'`)
-   * must move back to the backlog (`parentKey = ''`) before the project disappears. That detach step
-   * belongs right before the deleteModel call below; it is deliberately not part of this task.
+   * Invariant 3: the tasks that point at this project (`TaskModel.parentKey = 'project.<okey>'`,
+   * archived ones too) move back to the backlog first. If that fails the project stays; the call
+   * throws before anything is deleted.
    */
   public async delete(project: ProjectModel, currentUser?: UserModel): Promise<void> {
     const payload = `${project.okey}: ${project.name}`;
+    const detached = await this.taskService.detachParent(getProjectParentKey(project.okey), this.env.tenantId);
+    if (detached > 0) void this.alertService.showToast(this.i18n.delete_detached().replace('{count}', String(detached)));
     await this.firestoreService.deleteModel<ProjectModel>(ProjectCollection, project, this.i18n.delete_conf(), this.i18n.delete_error(), currentUser);
     void this.activityService.log('project', 'delete', currentUser, payload);
   }

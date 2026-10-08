@@ -9,6 +9,7 @@
   },
   "delete": {
     "conf": "Il progetto è stato eliminato.",
-    "error": "Non è stato possibile eliminare il progetto."
+    "error": "Non è stato possibile eliminare il progetto.",
+    "detached": "{count} attività sono tornate nel backlog."
   }
 }

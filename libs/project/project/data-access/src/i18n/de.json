@@ -9,6 +9,7 @@
   },
   "delete": {
     "conf": "Das Projekt wurde gelöscht.",
-    "error": "Das Projekt konnte nicht gelöscht werden."
+    "error": "Das Projekt konnte nicht gelöscht werden.",
+    "detached": "{count} Aufgaben sind zurück im Backlog."
   }
 }

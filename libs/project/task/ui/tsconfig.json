@@ -43,6 +43,12 @@
     },
     {
       "path": "../util/tsconfig.lib.json"
+    },
+    {
+      "path": "../../project/ui/tsconfig.lib.json"
+    },
+    {
+      "path": "../../project/util/tsconfig.lib.json"
     }
   ]
 }

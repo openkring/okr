@@ -5,11 +5,13 @@ import { IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, 
 
 import { DEFAULT_NOTES, DEFAULT_TAGS, LONG_NAME_LENGTH } from '@okr/shared-constants';
 import { TranslatePipe } from '@okr/shared-i18n';
-import { CategoryListModel, RoleName, TaskModel, UserModel } from '@okr/shared-models';
+import { CategoryListModel, ProjectModel, RoleName, TaskModel, UserModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { CategorySelect, Chips, DateInput, DateInputI18n, ErrorNote, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, getCategoryIcon, getItemLabel, getNextCategoryName, hasRole } from '@okr/shared-util-core';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
+import { ProjectSelect } from '@okr/project-project-ui';
+import { getProjectKeyOfParent, getProjectParentKey } from '@okr/project-project-util';
 import { getRelatedIcon, getRelatedModelType, getRelatedRoute, TaskI18n, taskValidations } from '@okr/project-task-util';
 
 @Component({
@@ -17,7 +19,7 @@ import { getRelatedIcon, getRelatedModelType, getRelatedRoute, TaskI18n, taskVal
   standalone: true,
   imports: [
     DateInput, CategorySelect, Chips,
-    TextInput, ErrorNote, SvgIconPipe, TranslatePipe, AsyncPipe,
+    TextInput, ErrorNote, ProjectSelect, SvgIconPipe, TranslatePipe, AsyncPipe,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonLabel, IonItem, IonIcon, IonButton, IonTextarea
 ],
   styles: [`
@@ -126,6 +128,12 @@ import { getRelatedIcon, getRelatedModelType, getRelatedRoute, TaskI18n, taskVal
                   </ion-item>
                 </ion-col>
               </ion-row>
+              <ion-row>
+                <ion-col size="12" size-md="6">
+                  <okr-project-select [projects]="projects()" [label]="i18n().project_label()"
+                    [selectedKey]="projectKey()" (selectedKeyChange)="onProjectChange($event)" [readOnly]="isReadOnly()" />
+                </ion-col>
+              </ion-row>
             }
           </ion-grid>
         </ion-card-content>
@@ -149,6 +157,7 @@ export class TaskForm {
   public readonly states = input.required<CategoryListModel>();
   public readonly priorities = input.required<CategoryListModel>();
   public readonly importances = input.required<CategoryListModel>();
+  public readonly projects = input<ProjectModel[]>([]);   // archived ones included, so a linked archived project keeps its name
   public readonly readOnly = input(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
@@ -188,6 +197,7 @@ export class TaskForm {
   protected readonly importance = computed(() => this.formData()?.importance);
   protected readonly tags = computed(() => this.formData()?.tags ?? DEFAULT_TAGS);
   protected readonly notes = computed(() => this.formData()?.notes ?? DEFAULT_NOTES);
+  protected readonly projectKey = computed(() => getProjectKeyOfParent(this.formData()?.parentKey));
   protected okey = computed(() => this.formData().okey ?? '');
 
   // The state is a click-through icon in front of the name: one tap advances to the next item
@@ -239,6 +249,10 @@ export class TaskForm {
   protected onFieldChange(fieldName: string, fieldValue: string | number | boolean): void {
     this.dirty.emit(true);
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
+  }
+
+  protected onProjectChange(projectKey: string): void {
+    this.onFieldChange('parentKey', getProjectParentKey(projectKey));
   }
 
   /** Advance the task to the next state (the click-through order of the task_state category). */

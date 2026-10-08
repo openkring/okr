@@ -1,11 +1,12 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, catchError, combineLatest, from, map, of } from 'rxjs';
+import { Observable, catchError, combineLatest, firstValueFrom, from, map, of } from 'rxjs';
 import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
 import { FirestoreService } from '@okr/shared-data-access';
 import { DbQuery, TaskCollection, TaskModel, UserModel } from '@okr/shared-models';
 import { I18nService } from '@okr/shared-i18n';
+import { getArchiveInclusiveQuery } from '@okr/shared-util-core';
 
 import { getRestorePatch, getTaskIndex, getTaskShareKey } from '@okr/project-task-util';
 import { ActivityService } from '@okr/activity-data-access';
@@ -171,6 +172,30 @@ export class TaskService {
         return of([] as TaskModel[]);
       }),
     );
+  }
+
+  /**
+   * The tasks of one parent (a project: 'project.<okey>'), archived and not archived, of the tenant.
+   * Unordered at the database — equality on tenants + parentKey is served by the single-field
+   * indexes, no composite index needed — and sorted by dueDate on the client.
+   */
+  public listByParent(parentKey: string, tenantId: string): Observable<TaskModel[]> {
+    if (!parentKey || !tenantId) return of([]);
+    const query: DbQuery[] = [...getArchiveInclusiveQuery(tenantId), { key: 'parentKey', operator: '==', value: parentKey }];
+    return this.firestoreService.searchData<TaskModel>(TaskCollection, query, 'none').pipe(
+      map(tasks => [...tasks].sort((a, b) => (a.dueDate ?? '').localeCompare(b.dueDate ?? ''))));
+  }
+
+  /**
+   * Moves every task of a parent back to the backlog (`parentKey = ''`), archived ones included
+   * (invariant 3: no task may point at a project that is gone). Silent bookkeeping — no toast per
+   * task; the caller reports the count.
+   * @returns the number of tasks that were detached
+   */
+  public async detachParent(parentKey: string, tenantId: string): Promise<number> {
+    const tasks = await firstValueFrom(this.listByParent(parentKey, tenantId));
+    await Promise.all(tasks.map(task => this.firestoreService.updateObject(TaskCollection, task.okey, { parentKey: '' }, false)));
+    return tasks.length;
   }
 
   /*-------------------------- export --------------------------------*/

@@ -11,6 +11,9 @@
     "select": "Scegli gruppo",
     "clear": "Non condividere più"
   },
+  "project": {
+    "label": "Progetto"
+  },
   "taskQuickEntry": {
     "label": "Inserimento rapido",
     "placeholder": "Testo [@Person] [//Date]",

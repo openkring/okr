@@ -67,6 +67,9 @@
     },
     {
       "path": "../ui/tsconfig.lib.json"
+    },
+    {
+      "path": "../../project/data-access/tsconfig.lib.json"
     }
   ]
 }

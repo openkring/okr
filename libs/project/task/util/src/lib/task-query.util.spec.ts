@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { TaskModel } from '@okr/shared-models';
-import { buildTaskListQueries, getDefaultShareKey, getTaskShareKey, getTaskListSource, isActiveGroupMembership, isClosedGroup, isTaskStaff } from './task-query.util';
+import { buildTaskListQueries, getDefaultParentKey, getDefaultShareKey, getTaskShareKey, getTaskListSource, isActiveGroupMembership, isClosedGroup, isTaskStaff } from './task-query.util';
 
 describe('getTaskShareKey', () => {
   it('returns the meeting relatedKey for an action item, whatever shareKey says', () => {
@@ -124,4 +124,20 @@ describe('getTaskListSource', () => {
     expect(getTaskListSource('shared', 'gOpen', open, true)).toBe('direct');
     expect(getTaskListSource('shared', 'gNone', undefined, true)).toBe('direct');
   });
+});
+
+describe('project lists (parent kind)', () => {
+  it('queries a project list by parentKey', () => {
+    const qs = buildTaskListQueries({ kind: 'parent', tenantId: 'scs', personKey: 'p', parentKey: 'project.a', archived: false });
+    expect(qs).toHaveLength(1);
+    expect(qs[0]).toContainEqual({ key: 'parentKey', operator: '==', value: 'project.a' });
+  });
+  it('returns no query for an empty parent', () =>
+    expect(buildTaskListQueries({ kind: 'parent', tenantId: 'scs', personKey: 'p', parentKey: '', archived: false })).toEqual([]));
+  it('creates project-list tasks unshared and parented', () => {
+    expect(getDefaultShareKey('project.a')).toBe('');
+    expect(getDefaultParentKey('project.a')).toBe('project.a');
+    expect(getDefaultParentKey('g1')).toBe('');
+  });
+  it('reads a project list directly', () => expect(getTaskListSource('parent', 'project.a', undefined, false)).toBe('direct'));
 });

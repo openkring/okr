@@ -15,6 +15,8 @@ export const TASK_I18N_KEYS = {
   shareGroupSelect:               PFX + 'shareGroup.select',
   shareGroupClear:                PFX + 'shareGroup.clear',
 
+  project_label:                  PFX + 'project.label',
+
   quick_entry_label:              PFX + 'taskQuickEntry.label',
   quick_entry_placeholder:        PFX + 'taskQuickEntry.placeholder',
   quick_entry_helper:             PFX + 'taskQuickEntry.helper',

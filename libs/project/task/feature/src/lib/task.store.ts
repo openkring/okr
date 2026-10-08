@@ -11,8 +11,9 @@ import { GroupModel, PersonModel, TaskModel } from '@okr/shared-models';
 import { chipMatches, debugItemLoaded, getAvatarInfo, getAvatarInfoForCurrentUser, getTodayStr, hasRole, isPerson, nameMatches, rankBetween } from '@okr/shared-util-core';
 import { resourceParams } from '@okr/shared-util-angular';
 
+import { ProjectService } from '@okr/project-project-data-access';
 import { TaskService } from '@okr/project-task-data-access';
-import { assignMissingRanks, buildTaskListQueries, canChangeTask, canCreateTask, canDeleteTask, getCompletionPatch, getDefaultShareKey, getTaskListSource, groupTasksByState, isClosedGroup, isTask, TASK_I18N_KEYS, TaskBoardColumn, TaskSettings } from '@okr/project-task-util';
+import { assignMissingRanks, buildTaskListQueries, canChangeTask, canCreateTask, canDeleteTask, getCompletionPatch, getDefaultParentKey, getDefaultShareKey, getTaskListSource, groupTasksByState, isClosedGroup, isTask, TASK_I18N_KEYS, TaskBoardColumn, TaskSettings } from '@okr/project-task-util';
 
 /** The payload of a Kanban drag-and-drop. `columnTasks` is the target column, ordered, without the moved task. */
 export type TaskMove = {
@@ -58,6 +59,7 @@ export const TaskStore = signalStore(
   withState(initialState),
   withProps(() => ({
     taskService: inject(TaskService),
+    projectService: inject(ProjectService),
     appStore: inject(AppStore),
     appConfigService: inject(AppConfigService),
     modalController: inject(ModalController),
@@ -76,7 +78,8 @@ export const TaskStore = signalStore(
       })),
       stream: ({ params }) => {
         if (!params.calendarName || !params.tenantId) return of([]);
-        const kind = params.calendarName === 'all' ? 'all' : params.calendarName === 'my' ? 'my' : 'shared';
+        const isProjectList = params.calendarName.startsWith('project.');
+        const kind = params.calendarName === 'all' ? 'all' : params.calendarName === 'my' ? 'my' : isProjectList ? 'parent' : 'shared';
         // spec 1.75: a closed group's tasks are refused on the direct query; fetch them via the callable
         const source = getTaskListSource(kind, params.calendarName,
           params.groupChatMode ? { chatMode: params.groupChatMode } : undefined, params.groupsLoaded);
@@ -87,10 +90,15 @@ export const TaskStore = signalStore(
         const queries = buildTaskListQueries({
           kind, tenantId: params.tenantId, personKey: params.personKey,
           shareKey: kind === 'shared' ? params.calendarName : undefined,
+          parentKey: kind === 'parent' ? params.calendarName : undefined,
           archived: params.archived, openOnly: kind === 'my',
         });
         return store.taskService.listByQueries(queries);
       }
+    }),
+    // archived projects included: a task may still point at one, and the picker must show its name
+    projectsResource: rxResource({
+      stream: () => store.projectService.listAll(),
     }),
     taskResource: rxResource({
       params: () => ({
@@ -127,6 +135,7 @@ export const TaskStore = signalStore(
 
     // task
     task: computed(() => state.taskResource.value()),
+    projects: computed(() => state.projectsResource.value() ?? []),
 
     // other
     isLoading: computed(() => state.tasksResource.isLoading() || state.taskResource.isLoading()),
@@ -258,6 +267,7 @@ export const TaskStore = signalStore(
       task.author = author;
       task.assignee = author; // by default, the task is self-assigned, user can change this in the edit modal
       task.shareKey = getDefaultShareKey(store.calendarName());
+      task.parentKey = getDefaultParentKey(store.calendarName());
       await this.edit(task, false);
     },
 
@@ -273,6 +283,7 @@ export const TaskStore = signalStore(
           states: store.states(),
           priorities: store.priorities(),
           importances: store.importances(),
+          projects: store.projects(),
           readOnly
         }
       });
@@ -330,6 +341,7 @@ export const TaskStore = signalStore(
       if (!this.canCreateTask()) return;
       // without this, a task typed into a group's quick entry never showed in that group's list
       if (!task.shareKey) task.shareKey = getDefaultShareKey(store.calendarName());
+      if (!task.parentKey) task.parentKey = getDefaultParentKey(store.calendarName());
       await store.taskService.create(task, store.currentUser());
       this.reloadIfFetched();
     },
