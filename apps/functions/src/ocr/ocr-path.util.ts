@@ -1,6 +1,6 @@
-export type OcrUsage = 'invoice' | 'expense' | 'paper';
+export type OcrUsage = 'invoice' | 'expense' | 'paper' | 'bill';
 
-const OCR_USAGES: readonly OcrUsage[] = ['invoice', 'expense', 'paper'];
+const OCR_USAGES: readonly OcrUsage[] = ['invoice', 'expense', 'paper', 'bill'];
 
 export interface OcrPathParts {
   tenantId: string;

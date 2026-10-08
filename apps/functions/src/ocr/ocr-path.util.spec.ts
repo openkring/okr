@@ -27,4 +27,9 @@ describe('parseOcrPath', () => {
       tenantId: 'scs', ocrUsage: 'expense', correlationKey: 'exp1', fileName: 'beleg.pdf',
     });
   });
+  it('parses the bill usage with a scan key', () => {
+    expect(parseOcrPath('tenant/scs/ocr/bill/scan123/rechnung.pdf')).toEqual({
+      tenantId: 'scs', ocrUsage: 'bill', correlationKey: 'scan123', fileName: 'rechnung.pdf',
+    });
+  });
 });

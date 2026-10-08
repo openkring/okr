@@ -3,7 +3,7 @@ import { DEFAULT_CURRENCY, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_TENANTS } from '@
 import { OkrModel, SearchableModel } from './base.model';
 
 /** What an uploaded document is used for — drives extraction schema + post-processing. */
-export type OcrUsage = 'invoice' | 'expense' | 'paper';
+export type OcrUsage = 'invoice' | 'expense' | 'paper' | 'bill';
 
 /** 'extracted' = fields written by stage ①; 'processed' = stage ② finished (booking made or n/a); 'failed' = extraction error. */
 export type OcrResultStatus = 'extracted' | 'processed' | 'failed';
@@ -50,11 +50,25 @@ export class OcrResultModel implements OkrModel, SearchableModel {
   public creditorAddress = '';
   public reference = '';
 
+  // Read by Gemini for all finance usages (spec 1.91 Q2); '' when absent.
+  public invoiceNumber = '';
+  public dueDate = '';              // yyyymmdd
+
+  // The QR-bill parsed by stage ② for usage 'bill' (spec 1.91 Q4); '' when qrBill is ''.
+  public qrAmount = -1;             // Rappen; -1 = no QR-bill or amount left open
+  public qrCurrency = '';
+  public qrIban = '';
+  public qrReference = '';          // normalized QRR/SCOR; '' for NON
+  public qrCreditorName = '';
+  public qrMessage = '';            // unstructured message
+
   // resolution (stage ②)
   public matchedRuleKey = '';       // '' if no rule matched
   public accountKey = '';           // resolved debit account (rule → llm → default)
   public llmProposedAccountKey = ''; // low-confidence hint when no rule matched
   public llmProposedAccountId = ''; // transient: the account NUMBER Gemini proposed; stage ② resolves it to llmProposedAccountKey
+  public vatCodeKey = '';           // usage 'bill': rule VAT code, else the input code matching the single VAT rate
+  public costCenterKey = '';        // usage 'bill': the matched rule's cost centre
 
   // post-processing
   public bookingKey = '';           // set by stage ②; '' guards idempotency
