@@ -56,6 +56,17 @@ export function configReminderFee(config: Record<string, unknown>): number {
   return Math.max(0, fee);
 }
 
+/**
+ * The default fee (Rappen) of a legacy (pre-1.90) call for `level`: reminderFees[level - 1], else
+ * DEFAULT_REMINDER_FEES[level - 1]; 0 when that entry is missing, not finite or negative. Old clients asked
+ * for a level, so they are charged that level's fee, not the 1.90 single reminderFee.
+ */
+export function legacyLevelFee(config: Record<string, unknown>, level: number): number {
+  const fees = Array.isArray(config['reminderFees']) ? (config['reminderFees'] as unknown[]) : DEFAULT_REMINDER_FEES;
+  const fee = Number.isInteger(level) && level >= 1 ? fees[level - 1] : undefined;
+  return typeof fee === 'number' && Number.isFinite(fee) ? Math.max(0, fee) : 0;
+}
+
 /** The reminder's name: the template name it was created with, else the 1.76 level naming (spec 1.90 D7). */
 export function reminderDisplayName(r: { level: number; templateName?: string }): string {
   if (r.templateName) return r.templateName;

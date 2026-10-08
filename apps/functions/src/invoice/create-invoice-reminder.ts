@@ -15,7 +15,7 @@ import { assertLeafAccount, loadOwnedAccountingConfig, receiverAddress, Receiver
 import { InvoiceLike, isValidStoreDate, openAmount } from './invoice-payment.logic';
 import { confirmationDocumentFields } from './payment-confirmation.logic';
 import {
-  coalesceReminder, configReminderFee, dunningTemplateRefusal, isValidRequestId, nextReminderLevel, reminderBlockers, reminderByRequest,
+  coalesceReminder, dunningTemplateRefusal, isValidRequestId, legacyLevelFee, nextReminderLevel, reminderBlockers, reminderByRequest,
   reminderDueDate, reminderFeeLines, reminderKey, ReminderLike, storedReminder,
 } from './invoice-reminder.logic';
 import { invoiceBookingIndex, issuePeriodKeys, recipientFields, viewDate, withoutUndefined } from './invoice.logic';
@@ -104,7 +104,8 @@ export const createInvoiceReminder = onCall(
     // ---- 2. template, fee accounts, blockers ----
     const templateId = legacy ? String(config['reminderTemplateId'] ?? '') : String(data.templateId ?? '').trim();
     if (!templateId) throw legacy ? refuse('no-reminder-template', `${accountingTenantId} has no reminder template`) : new HttpsError('invalid-argument', 'templateId is required');
-    const fee = data.fee ?? (legacy ? configReminderFee(config) : undefined); // null counts as omitted
+    // null counts as omitted; a legacy call is charged the fee of the level it asked for
+    const fee = data.fee ?? (legacy ? legacyLevelFee(config, data.level as number) : undefined);
     if (typeof fee !== 'number') throw new HttpsError('invalid-argument', 'fee is required (Rappen)');
     const template = (await db.collection(TemplateCollection).doc(templateId).get()).data();
     const templateRefusal = dunningTemplateRefusal(template, tenantId);

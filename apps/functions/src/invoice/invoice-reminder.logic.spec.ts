@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { coalesceReminder, configReminderFee, dunningTemplateRefusal, isReminderDue, isValidRequestId, lastDueDate, markReminderSent, nextReminderLevel, ReminderLike, reminderBlockers, reminderByRequest, reminderDisplayName, reminderDueDate, reminderFeeLines, reminderFeeSum, reminderKey, unwaivedFeeKeys, waiveBlockers, waiverKey } from './invoice-reminder.logic';
+import { coalesceReminder, configReminderFee, dunningTemplateRefusal, isReminderDue, isValidRequestId, lastDueDate, legacyLevelFee, markReminderSent, nextReminderLevel, ReminderLike, reminderBlockers, reminderByRequest, reminderDisplayName, reminderDueDate, reminderFeeLines, reminderFeeSum, reminderKey, unwaivedFeeKeys, waiveBlockers, waiverKey } from './invoice-reminder.logic';
 
 const inv = (o = {}) => ({ state: 'pending', dueDate: '20261010', reminders: [] as ReminderLike[], ...o });
 
@@ -134,5 +134,24 @@ describe('1.90 free dunning rules', () => {
   });
   it('coalesces the new fields', () => {
     expect(coalesceReminder({ level: 1, date: 'd', dueDate: 'd' })).toMatchObject({ templateId: '', templateName: '', sentAt: '', sentVia: '', requestId: '' });
+  });
+});
+
+describe('legacyLevelFee (pre-1.90 clients charge the fee of the requested level)', () => {
+  it('picks reminderFees[level - 1]', () => {
+    expect(legacyLevelFee({ reminderFees: [1000, 2500, 4000] }, 1)).toBe(1000);
+    expect(legacyLevelFee({ reminderFees: [1000, 2500, 4000] }, 3)).toBe(4000);
+  });
+  it('ignores reminderFee (the 1.90 single fee)', () => {
+    expect(legacyLevelFee({ reminderFee: 3000, reminderFees: [1000, 2500, 4000] }, 1)).toBe(1000);
+  });
+  it('falls back to DEFAULT_REMINDER_FEES when the list is missing', () => {
+    expect(legacyLevelFee({}, 2)).toBe(0); // DEFAULT_REMINDER_FEES[1]
+  });
+  it('a negative, NaN or missing entry is 0', () => {
+    expect(legacyLevelFee({ reminderFees: [-500, 2500, 4000] }, 1)).toBe(0);
+    expect(legacyLevelFee({ reminderFees: [Number.NaN, 2500, 4000] }, 1)).toBe(0);
+    expect(legacyLevelFee({ reminderFees: [1000] }, 3)).toBe(0);
+    expect(legacyLevelFee({ reminderFees: [1000, 2500, 4000] }, 0)).toBe(0);
   });
 });
