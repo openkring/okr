@@ -322,6 +322,7 @@
       "@okr/project-task-feature": ["libs/project/task/feature/src/index.ts"],
       "@okr/project-task-ui": ["libs/project/task/ui/src/index.ts"],
       "@okr/project-task-util": ["libs/project/task/util/src/index.ts"],
+      "@okr/project-project-util": ["libs/project/project/util/src/index.ts"],
       "@okr/tenant-data-access": ["libs/tenant/data-access/src/index.ts"],
       "@okr/tenant-feature": ["libs/tenant/feature/src/index.ts"],
       "@okr/tenant-routes": ["libs/tenant/routes/src/index.ts"],
