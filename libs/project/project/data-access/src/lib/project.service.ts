@@ -1,12 +1,12 @@
 import { inject, Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { map, Observable } from 'rxjs';
 
 import { ActivityService } from '@okr/activity-data-access';
 import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
 import { ProjectCollection, ProjectModel, UserModel } from '@okr/shared-models';
-import { findByKey, getSystemQuery } from '@okr/shared-util-core';
+import { findByKey, getArchiveInclusiveQuery, getSystemQuery } from '@okr/shared-util-core';
 import { getProjectIndex } from '@okr/project-project-util';
 
 import { PFX } from './scope';
@@ -41,9 +41,9 @@ export class ProjectService {
     return key;
   }
 
-  /** Returns the project with the given key (undefined when unknown). */
+  /** Returns the project with the given key, archived ones included (undefined when unknown). */
   public read(key: string): Observable<ProjectModel | undefined> {
-    return findByKey<ProjectModel>(this.list(), key);
+    return findByKey<ProjectModel>(this.listAll(), key);
   }
 
   /**
@@ -80,5 +80,15 @@ export class ProjectService {
    */
   public list(orderBy = 'startDate', sortOrder = 'desc'): Observable<ProjectModel[]> {
     return this.firestoreService.searchData<ProjectModel>(ProjectCollection, getSystemQuery(this.env.tenantId), orderBy, sortOrder);
+  }
+
+  /**
+   * All projects of the current tenant, archived ones included, newest start first. Feed this to
+   * `okr-project-select` so an archived project that is still referenced keeps its name.
+   * Needs no composite index: unordered query, sorted on the client.
+   */
+  public listAll(): Observable<ProjectModel[]> {
+    return this.firestoreService.searchData<ProjectModel>(ProjectCollection, getArchiveInclusiveQuery(this.env.tenantId), 'none').pipe(
+      map(projects => [...projects].sort((a, b) => (b.startDate ?? '').localeCompare(a.startDate ?? ''))));
   }
 }

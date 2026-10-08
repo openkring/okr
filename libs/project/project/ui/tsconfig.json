@@ -2,11 +2,17 @@
   "extends": "../../../../tsconfig.base.json",
   "compilerOptions": {
     "noEmit": true,
-    "types": ["node", "vitest"],
+    "types": [
+      "node",
+      "vitest"
+    ],
     "declaration": true,
     "module": "preserve",
     "moduleResolution": "bundler",
-    "lib": ["dom", "es2022"]
+    "lib": [
+      "dom",
+      "es2022"
+    ]
   },
   "angularCompilerOptions": {
     "strictTemplates": true,
@@ -14,17 +20,23 @@
     "disableTypeScriptVersionCheck": true,
     "compileNonExportedClasses": true
   },
-  "include": ["src/**/*", "**/*.spec.ts", "**/*.test.ts"],
-  "exclude": ["dist/**/*"],
+  "include": [
+    "src/**/*",
+    "**/*.spec.ts",
+    "**/*.test.ts"
+  ],
+  "exclude": [
+    "dist/**/*"
+  ],
   "references": [
+    {
+      "path": "../../../avatar/ui/tsconfig.lib.json"
+    },
     {
       "path": "../../../shared/models/tsconfig.lib.json"
     },
     {
       "path": "../../../shared/constants/tsconfig.lib.json"
-    },
-    {
-      "path": "../../../shared/categories/tsconfig.lib.json"
     },
     {
       "path": "../../../shared/ui/tsconfig.lib.json"
