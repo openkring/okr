@@ -208,7 +208,11 @@
     "before-bill-date": "El asiento elegido tiene una fecha demasiado anterior a la fecha de la factura.",
     "scan-not-found": "Ya no encontramos el justificante subido. Súbelo de nuevo, por favor.",
     "scan-wrong-usage": "Este justificante no pertenece a una factura de proveedor.",
-    "scan-already-attached": "Este justificante ya está adjunto a otra factura."
+    "scan-already-attached": "Este justificante ya está adjunto a otra factura.",
+    "project-invalid": "No se puede usar uno de los proyectos. Elige un proyecto activo o deja el campo vacío.",
+    "not-booked": "Aquí solo se puede editar una factura de proveedor contabilizada.",
+    "bill-paid": "La factura de proveedor ya está pagada. El vencimiento, la referencia y el IBAN ya no se pueden cambiar.",
+    "line-count": "Las líneas de la factura de proveedor han cambiado. Ábrela de nuevo e inténtalo otra vez."
   },
   "line": {
     "list": {
@@ -270,5 +274,11 @@
     "failed": "No hemos podido leer la factura. Rellena tú los campos, por favor.",
     "currency_note": "Moneda {currency} — revísala, por favor",
     "duplicate": "Ya existe una factura similar: «{title}» del {date}. Comprueba que no la registras dos veces."
+  },
+  "details": {
+    "label": "Editar detalles",
+    "conf": "Los cambios se han guardado.",
+    "error": "No se pudieron guardar los cambios. Inténtalo de nuevo más tarde.",
+    "periodLocked": "El periodo contable de esta factura está cerrado. Solo se pueden cambiar las notas. Para lo demás, pide que se reabra el periodo."
   }
 }

@@ -208,7 +208,11 @@
     "before-bill-date": "La registrazione scelta è datata troppo prima della data della fattura.",
     "scan-not-found": "Non troviamo più il giustificativo caricato. Caricalo di nuovo, per favore.",
     "scan-wrong-usage": "Questo giustificativo non appartiene a una fattura fornitore.",
-    "scan-already-attached": "Questo giustificativo è già allegato a un'altra fattura."
+    "scan-already-attached": "Questo giustificativo è già allegato a un'altra fattura.",
+    "project-invalid": "Uno dei progetti non può essere usato. Scegli un progetto attivo o lascia il campo vuoto.",
+    "not-booked": "Qui si può modificare solo una fattura fornitore contabilizzata.",
+    "bill-paid": "La fattura fornitore è già pagata. Scadenza, riferimento e IBAN non si possono più modificare.",
+    "line-count": "Le righe della fattura fornitore sono cambiate. Riaprila e riprova."
   },
   "line": {
     "list": {
@@ -270,5 +274,11 @@
     "failed": "Non siamo riusciti a leggere la fattura. Compila tu i campi, per favore.",
     "currency_note": "Valuta {currency} — controllala, per favore",
     "duplicate": "Esiste già una fattura simile: «{title}» del {date}. Controlla di non registrarla due volte."
+  },
+  "details": {
+    "label": "Modifica i dettagli",
+    "conf": "Le modifiche sono salvate.",
+    "error": "Non è stato possibile salvare le modifiche. Riprova più tardi.",
+    "periodLocked": "Il periodo contabile di questa fattura è chiuso. Si possono ancora modificare solo le note. Per il resto, fai riaprire il periodo."
   }
 }

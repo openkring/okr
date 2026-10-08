@@ -33,7 +33,7 @@ import { BILL_LINE_TITLE_LENGTH, BillI18n, billLinesTotal, billLinesValidations,
     .total { font-weight: 600; }
   `],
   template: `
-    @if (showForm()) {
+    @if (showForm() && !noLinesToEdit()) {
       <ion-card>
         <ion-card-header>
           <ion-card-title>{{ i18n().lines_title() }}</ion-card-title>
@@ -44,7 +44,7 @@ import { BILL_LINE_TITLE_LENGTH, BillI18n, billLinesTotal, billLinesValidations,
               <ion-row class="line ion-align-items-center">
                 <ion-col size="12" size-md="4">
                   <okr-account-select [i18n]="accountI18n()" [accounts]="selectableAccounts()" [selectedKey]="line.accountKey"
-                    (selectedKeyChange)="onLineChange(i, 'accountKey', $event)" [allowEmpty]="false" [readOnly]="isReadOnly()" />
+                    (selectedKeyChange)="onLineChange(i, 'accountKey', $event)" [allowEmpty]="false" [readOnly]="structureLocked()" />
                   <okr-error-note [errors]="errorsOf(i, 'accountKey')" />
                 </ion-col>
                 <ion-col size="12" size-md="4">
@@ -54,11 +54,11 @@ import { BILL_LINE_TITLE_LENGTH, BillI18n, billLinesTotal, billLinesValidations,
                 </ion-col>
                 <ion-col size="10" size-md="3">
                   <okr-number-input [i18n]="amountI18n()" [value]="line.amount / 100" (valueChange)="onAmountChange(i, $event)"
-                    [min]="0" [readOnly]="isReadOnly()" />
+                    [min]="0" [readOnly]="structureLocked()" />
                   <okr-error-note [errors]="errorsOf(i, 'amount')" />
                 </ion-col>
                 <ion-col size="2" size-md="1">
-                  @if (!isReadOnly()) {
+                  @if (!structureLocked()) {
                     <ion-button fill="clear" [title]="i18n().line_remove()" (click)="removeLine(i)">
                       <ion-icon slot="icon-only" src="{{ 'trash' | svgIcon }}" />
                     </ion-button>
@@ -86,7 +86,7 @@ import { BILL_LINE_TITLE_LENGTH, BillI18n, billLinesTotal, billLinesValidations,
             <okr-error-note [errors]="listErrors()" />
             <ion-row class="ion-align-items-center">
               <ion-col size="6">
-                @if (!isReadOnly() && lines().length < maxLines) {
+                @if (!structureLocked() && lines().length < maxLines) {
                   <ion-button fill="clear" (click)="addLine()">
                     <ion-icon slot="start" src="{{ 'add' | svgIcon }}" />
                     {{ i18n().line_add() }}
@@ -123,6 +123,11 @@ export class BillLinesForm {
   /** all projects incl. archived — the Kostenträger picker is shown when there is at least one active one (spec 3.14) */
   public readonly projects = input<ProjectModel[]>([]);
   public readonly readOnly = input(true);
+  /**
+   * 'details' = a booked or paid bill (spec 1.92): only the line text, Kostenstelle and Kostenträger can change;
+   * account, amount and the number of lines stay as booked.
+   */
+  public readonly mode = input<'draft' | 'details'>('draft');
   public readonly showForm = input(true);
 
   // outputs
@@ -139,10 +144,14 @@ export class BillLinesForm {
   protected readonly listErrors = computed(() => this.validationResult().getErrors('lines'));
 
   constructor() {
-    effect(() => this.valid.emit(this.linesForm().valid()));
+    // a bill migrated from bexio has no lines to edit: nothing to validate
+    effect(() => this.valid.emit(this.linesForm().valid() || this.noLinesToEdit()));
   }
 
   protected readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()));
+  /** account, amount and add/remove: draft only */
+  protected readonly structureLocked = computed(() => this.isReadOnly() || this.mode() === 'details');
+  protected readonly noLinesToEdit = computed(() => this.mode() === 'details' && this.lines().length === 0);
   protected readonly selectableAccounts = computed(() => leafAccounts(this.accounts()));
   protected readonly total = computed(() => formatMinorAmount(billLinesTotal(this.lines())));
 

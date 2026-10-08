@@ -25,7 +25,8 @@ export interface BillEditResult {
 
 /**
  * Edits a native draft bill with its lines (spec 1.85 phase 3); anything but a draft is shown
- * read-only. Lives in the feature lib because it loads the chart of accounts and picks the vendor with
+ * read-only — unless `mode` is 'details' (spec 1.92): a booked or paid bill whose texts, notes, payment
+ * data and line Kostenstelle / Kostenträger can still be changed. Lives in the feature lib because it loads the chart of accounts and picks the vendor with
  * MultiSelectModal. Dismisses with `BillEditResult` on confirm — the store writes it through `writeBill`.
  */
 @Component({
@@ -64,6 +65,7 @@ export interface BillEditResult {
           [currentUser]="currentUser()"
           [readOnly]="isReadOnly()"
           [isNew]="isNew()"
+          [mode]="mode()"
           [i18n]="i18n"
           (dirty)="formDirty.set($event)"
           (valid)="formValid.set($event)"
@@ -90,6 +92,8 @@ export class BillEditModal {
   public readonly currentUser = input.required<UserModel>();
   public readonly isNew = input.required<boolean>();
   public readonly readOnly = input(true);
+  /** 'details': edit the details of a booked or paid bill (the store saves them through `updateBillDetails`) */
+  public readonly mode = input<'draft' | 'details'>('draft');
   /** the account a new line starts on (the books' default expense account) */
   public readonly defaultAccountKey = input('');
   /** a new bill that looks like one already captured (spec 1.91): the warning shown above the form; '' = none */
@@ -117,11 +121,15 @@ export class BillEditModal {
   protected readonly bookDefaultCostCenterKey = computed(() => this.accountingStore.config()?.defaultCostCenterKey ?? '');
 
   // computed
-  /** only a draft can be changed; booked and paid bills are frozen (their booking is deleted in the journal first) */
-  protected readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()) || !isDraftBill(this.bill()));
+  /** only a draft can be changed in full; booked and paid bills take the details mode, else they are frozen */
+  protected readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()) || (this.mode() === 'draft' && !isDraftBill(this.bill())));
   protected readonly showConfirmation = computed(() => this.formValid() && this.formDirty() && !this.isReadOnly());
   protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.i18n.cancel(), save: this.i18n.save() } as ChangeConfirmationI18n));
-  protected readonly headerTitle = computed(() => this.isNew() ? this.i18n.create() : (this.isReadOnly() ? this.i18n.view() : this.i18n.update()));
+  protected readonly headerTitle = computed(() => {
+    if (this.isNew()) return this.i18n.create();
+    if (this.isReadOnly()) return this.i18n.view();
+    return this.mode() === 'details' ? this.i18n.details_update() : this.i18n.update();
+  });
 
   protected onFormDataChange(data: BillModel): void {
     this.formData.set(data);

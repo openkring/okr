@@ -38,6 +38,8 @@ import { accountDefaultCostCenterKey, addBookingPart, BOOKING_LINE_TEXT_LENGTH, 
     .line-tools { display: flex; justify-content: flex-end; gap: 0.25rem; }
     .line-tools ion-button { --padding-start: 4px; --padding-end: 4px; }
     .line-tools ion-icon { font-size: 1.3rem; }
+    /* the chevron toggle: Ionic's clear-button hover is nearly invisible, so give this one button a visible hover */
+    .line-tools ion-button.details-toggle { --background-hover: var(--ion-color-medium); --background-hover-opacity: 0.25; --border-radius: 6px; }
     .details-row { background: rgba(var(--ion-color-light-rgb), 0.5); }
     .total { text-align: end; font-weight: 600; padding: 0.5rem 1rem; }
     .counterparty { --min-height: 44px; }
@@ -125,7 +127,7 @@ import { accountDefaultCostCenterKey, addBookingPart, BOOKING_LINE_TEXT_LENGTH, 
                   </ion-col>
                   <ion-col size="4" size-md="1">
                     <div class="line-tools">
-                      <ion-button fill="clear" size="small" (click)="toggleDetails(i)" [title]="i18n().form_details_toggle()">
+                      <ion-button class="details-toggle" fill="clear" size="small" (click)="toggleDetails(i)" [title]="i18n().form_details_toggle()">
                         <ion-icon slot="icon-only" src="{{ (isExpanded(i) ? 'chevron-up' : 'chevron-down') | svgIcon }}" />
                       </ion-button>
                       @if (!isReadOnly() && isSplit()) {

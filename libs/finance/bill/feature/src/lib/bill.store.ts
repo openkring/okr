@@ -20,7 +20,7 @@ import { UploadService } from '@okr/avatar-data-access';
 import { BillService } from '@okr/finance-bill-data-access';
 import { BillPaymentModal } from '@okr/finance-bill-ui';
 import {
-  BILL_I18N_KEYS, BillI18n, BillPaymentCandidate, BillPaymentInput, billDisplayState, billDuplicateHint, billFromQr, billFromScan, billPaymentHintWindow, billPaymentHints,
+  BILL_I18N_KEYS, BillI18n, BillPaymentCandidate, BillPaymentInput, billDetailsPayload, billDisplayState, billDuplicateHint, billFromQr, billFromScan, billPaymentHintWindow, billPaymentHints,
   billPaymentWindow, billRefusalReasons, billRefusalText, getBillExportData, isDraftBill, isPayableBill, isRetryableBillPaymentRefusal, linkedBillPaymentKeys, newBill,
   newBillLine, newBillPaymentFormModel, openBillAmount,
 } from '@okr/finance-bill-util';
@@ -370,6 +370,39 @@ export const BillStore = signalStore(
       } catch (e) {
         console.error('BillStore.openEdit: writeBill failed', e);
         await showToast(store.toastController, billRefusalText(billRefusalReasons(e), store.i18n, store.i18n.save_error()));
+      }
+      patchState(store, { version: store.version() + 1 });
+    },
+
+    /**
+     * «Details bearbeiten» (spec 1.92): a booked or paid bill of a native book. Opens the modal in details mode and
+     * saves through `updateBillDetails`, which updates the bill and its booking together; a refusal is shown as text.
+     */
+    async editDetails(bill: BillModel): Promise<void> {
+      if (isDraftBill(bill) || store.accountingStore.isExternallyManaged()) return;
+      const modal = await store.modalController.create({
+        component: BillEditModal,
+        componentProps: {
+          bill: { ...bill },
+          currentUser: store.appStore.currentUser(),
+          isNew: false,
+          readOnly: false,
+          mode: 'details',
+          defaultAccountKey: store.defaultExpenseAccountKey(),
+        },
+      });
+      await modal.present();
+      const { data, role } = await modal.onWillDismiss<BillEditResult>();
+      if (role !== 'confirm' || !data) return;
+      try {
+        await store.billService.updateDetails(billDetailsPayload(data.bill, data.lines), store.appStore.currentUser() ?? undefined);
+        await showToast(store.toastController, store.i18n.details_conf());
+      } catch (e) {
+        console.error('BillStore.editDetails: updateBillDetails failed', e);
+        const reasons = billRefusalReasons(e);
+        // the general period text speaks of a payment date; here the bill's own period is closed
+        const text = reasons.includes('period-locked') ? store.i18n.details_period_locked() : billRefusalText(reasons, store.i18n, store.i18n.details_error());
+        await showToast(store.toastController, text);
       }
       patchState(store, { version: store.version() + 1 });
     },

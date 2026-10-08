@@ -230,6 +230,10 @@ export class BillList {
         options.buttons.push(createActionSheetButton('bill.book', this.store.i18n.book(), base, 'checkmark'));
         options.buttons.push(createActionSheetButton('bill.delete', this.store.i18n.delete(), base, 'trash'));
       }
+      // booked and paid bills: texts, notes, payment data, Kostenstelle and Kostenträger (spec 1.92)
+      if (!isDraftBill(bill)) {
+        options.buttons.push(createActionSheetButton('bill.details', this.store.i18n.details_update(), base, 'edit'));
+      }
       if (isPayableBill(bill)) {
         options.buttons.push(createActionSheetButton('bill.payment', this.store.i18n.payment(), base, 'chf'));
       }
@@ -244,6 +248,7 @@ export class BillList {
       case 'bill.view': await this.store.view(bill); break;
       case 'bill.download': await this.store.showPdf(bill); break;
       case 'bill.payment': await this.store.recordPayment(bill, this.store.paymentHints().get(bill.okey)); break;
+      case 'bill.details': await this.store.editDetails(bill); break;
       case 'bill.edit': await this.store.edit(bill); break;
       case 'bill.book': await this.store.book(bill); break;
       case 'bill.delete': await this.store.delete(bill); break;

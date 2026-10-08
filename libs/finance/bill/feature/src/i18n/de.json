@@ -208,7 +208,11 @@
     "before-bill-date": "Die gewählte Buchung liegt zu weit vor dem Rechnungsdatum.",
     "scan-not-found": "Den hochgeladenen Beleg finden wir nicht mehr. Lade ihn bitte nochmals hoch.",
     "scan-wrong-usage": "Dieser Beleg gehört nicht zu einer Kreditorenrechnung.",
-    "scan-already-attached": "Dieser Beleg hängt schon an einer anderen Rechnung."
+    "scan-already-attached": "Dieser Beleg hängt schon an einer anderen Rechnung.",
+    "project-invalid": "Eines der Projekte kann nicht verwendet werden. Wähle ein aktives Projekt oder lass das Feld leer.",
+    "not-booked": "Nur eine verbuchte Lieferantenrechnung lässt sich hier bearbeiten.",
+    "bill-paid": "Die Lieferantenrechnung ist schon bezahlt. Fälligkeit, Referenz und IBAN lassen sich nicht mehr ändern.",
+    "line-count": "Die Zeilen der Lieferantenrechnung haben sich verändert. Öffne sie neu und versuche es noch einmal."
   },
   "line": {
     "list": {
@@ -270,5 +274,11 @@
     "failed": "Die Rechnung konnten wir nicht lesen. Fülle die Felder bitte selbst aus.",
     "currency_note": "Währung {currency} — bitte prüfen",
     "duplicate": "Eine ähnliche Rechnung gibt es schon: «{title}» vom {date}. Prüfe, ob du sie doppelt erfasst."
+  },
+  "details": {
+    "label": "Details bearbeiten",
+    "conf": "Die Änderungen sind gespeichert.",
+    "error": "Die Änderungen konnten nicht gespeichert werden. Bitte versuche es später noch einmal.",
+    "periodLocked": "Die Buchungsperiode dieser Rechnung ist abgeschlossen. Nur die Notizen lassen sich noch ändern. Für alles andere lass die Periode wieder öffnen."
   }
 }

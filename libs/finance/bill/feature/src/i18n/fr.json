@@ -208,7 +208,11 @@
     "before-bill-date": "L'écriture choisie est datée trop longtemps avant la date de la facture.",
     "scan-not-found": "Nous ne trouvons plus le justificatif téléversé. Téléverse-le à nouveau, s'il te plaît.",
     "scan-wrong-usage": "Ce justificatif n'appartient pas à une facture fournisseur.",
-    "scan-already-attached": "Ce justificatif est déjà joint à une autre facture."
+    "scan-already-attached": "Ce justificatif est déjà joint à une autre facture.",
+    "project-invalid": "Un des projets ne peut pas être utilisé. Choisis un projet actif ou laisse le champ vide.",
+    "not-booked": "Seule une facture fournisseur comptabilisée peut être modifiée ici.",
+    "bill-paid": "La facture fournisseur est déjà payée. L’échéance, la référence et l’IBAN ne peuvent plus être modifiés.",
+    "line-count": "Les lignes de la facture fournisseur ont changé. Rouvre-la et réessaie."
   },
   "line": {
     "list": {
@@ -270,5 +274,11 @@
     "failed": "Nous n'avons pas pu lire la facture. Remplis les champs toi-même, s'il te plaît.",
     "currency_note": "Devise {currency} — vérifie-la, s'il te plaît",
     "duplicate": "Une facture similaire existe déjà : «{title}» du {date}. Vérifie que tu ne la saisis pas deux fois."
+  },
+  "details": {
+    "label": "Modifier les détails",
+    "conf": "Les modifications sont enregistrées.",
+    "error": "Les modifications n’ont pas pu être enregistrées. Réessaie plus tard.",
+    "periodLocked": "La période comptable de cette facture est clôturée. Seules les notes peuvent encore être modifiées. Pour le reste, fais rouvrir la période."
   }
 }

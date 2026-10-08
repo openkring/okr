@@ -124,6 +124,10 @@ export const BILL_I18N_KEYS = {
   book_confirm:                   PFX + 'book.confirm',
   book_conf:                      PFX + 'book.conf',
   book_error:                     PFX + 'book.error',
+  details_update:                 PFX + 'details.label',
+  details_conf:                   PFX + 'details.conf',
+  details_error:                  PFX + 'details.error',
+  details_period_locked:          PFX + 'details.periodLocked',
   save_conf:                      PFX + 'save.conf',
   save_error:                     PFX + 'save.error',
   delete_conf:                    PFX + 'delete.conf',
@@ -168,6 +172,10 @@ export const BILL_I18N_KEYS = {
   refusal_scan_not_found:         PFX + 'refusal.scan-not-found',
   refusal_scan_wrong_usage:       PFX + 'refusal.scan-wrong-usage',
   refusal_scan_already_attached:  PFX + 'refusal.scan-already-attached',
+  refusal_project_invalid:        PFX + 'refusal.project-invalid',
+  refusal_not_booked:             PFX + 'refusal.not-booked',
+  refusal_bill_paid:              PFX + 'refusal.bill-paid',
+  refusal_line_count:             PFX + 'refusal.line-count',
 
   // «Rechnung hochladen» (spec 1.91)
   upload_reading:                 PFX + 'upload.reading',
@@ -224,6 +232,10 @@ export const BILL_REFUSAL_I18N: Record<string, keyof typeof BILL_I18N_KEYS> = {
   'scan-not-found': 'refusal_scan_not_found',
   'scan-wrong-usage': 'refusal_scan_wrong_usage',
   'scan-already-attached': 'refusal_scan_already_attached',
+  'project-invalid': 'refusal_project_invalid',
+  'not-booked': 'refusal_not_booked',
+  'bill-paid': 'refusal_bill_paid',
+  'line-count': 'refusal_line_count',
 };
 
 /** The i18n entries for the given reasons (unknown reasons dropped, no duplicates). */

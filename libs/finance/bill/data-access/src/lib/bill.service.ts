@@ -13,7 +13,7 @@ import { findByKey, getQuery, getSystemQuery } from '@okr/shared-util-core';
 import { ActivityService } from '@okr/activity-data-access';
 
 import {
-  BILL_PAYMENT_BOOKING_PAGE, BILL_PAYMENT_BOOKING_PAGES, BillPaymentCandidate, BillPaymentInput, billPaymentCandidates, isPayableBill, MAX_BILL_PAYMENT_CANDIDATES,
+  BILL_PAYMENT_BOOKING_PAGE, BillDetailsPayload, BILL_PAYMENT_BOOKING_PAGES, BillPaymentCandidate, BillPaymentInput, billPaymentCandidates, isPayableBill, MAX_BILL_PAYMENT_CANDIDATES,
   openBillAmount,
 } from '@okr/finance-bill-util';
 
@@ -98,6 +98,17 @@ export class BillService {
     const fn = httpsCallable<{ billKey: string }, { bookingKey: string; bookingNo: number; state: string }>(this.functions(), 'bookBill');
     const result = await fn({ billKey });
     void this.activityService.log('bill', 'book', currentUser, `${billKey}: ${result.data.bookingKey}`);
+    return result.data;
+  }
+
+  /**
+   * Edits the details of a booked or paid bill and of its booking (spec 1.92): texts, notes, payment data
+   * and per line the title, Kostenstelle and Kostenträger. Rejects with the callable's error (`details.reason`).
+   */
+  public async updateDetails(payload: BillDetailsPayload, currentUser?: UserModel): Promise<{ billKey: string; changed: boolean }> {
+    const fn = httpsCallable<BillDetailsPayload, { billKey: string; changed: boolean }>(this.functions(), 'updateBillDetails');
+    const result = await fn(payload);
+    void this.activityService.log('bill', 'details', currentUser, payload.billKey);
     return result.data;
   }
 

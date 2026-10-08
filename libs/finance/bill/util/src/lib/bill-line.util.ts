@@ -65,3 +65,38 @@ export function withLineAccount(line: BillLine, accountKey: string, accounts: Ac
   const known = accounts.some((a) => a.okey === accountKey);
   return known && !isPnlLine(next, accounts) ? { ...next, costCenterKey: '', projectKey: '' } : next;
 }
+
+/** The request of the `updateBillDetails` callable (spec 1.92); lines are positional, same length as the stored lines. */
+export interface BillDetailsPayload {
+  billKey: string;
+  title: string;
+  notes: string;
+  dueDate?: string;
+  paymentReference?: string;
+  creditorIban?: string;
+  lines?: { title: string; costCenterKey: string; projectKey: string }[];
+}
+
+/** A paid bill keeps its payment data; the server refuses a changed value, so the form sends none (spec 1.92 §3). */
+export function isBillPaymentDataEditable(bill: Pick<BillModel, 'state'> | undefined): boolean {
+  return bill?.state !== 'paid';
+}
+
+/**
+ * The details of a booked bill as the callable takes them: title and notes always; due date, reference
+ * and IBAN only while not fully paid; per line the title, Kostenstelle and Kostenträger. A bill without
+ * lines (migrated from bexio) sends the header fields only. The server treats unchanged values as no-ops,
+ * so the whole form is sent.
+ */
+export function billDetailsPayload(bill: BillModel, lines: BillLine[]): BillDetailsPayload {
+  const payload: BillDetailsPayload = { billKey: bill.okey, title: bill.title ?? '', notes: bill.notes ?? '' };
+  if (isBillPaymentDataEditable(bill)) {
+    payload.dueDate = bill.dueDate ?? '';
+    payload.paymentReference = bill.paymentReference ?? '';
+    payload.creditorIban = bill.creditorIban ?? '';
+  }
+  if (lines.length > 0) {
+    payload.lines = lines.map((l) => ({ title: l.title ?? '', costCenterKey: l.costCenterKey ?? '', projectKey: l.projectKey ?? '' }));
+  }
+  return payload;
+}

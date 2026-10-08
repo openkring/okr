@@ -9,7 +9,7 @@ import { DateInput, DateInputI18n, ErrorNote, NotesInput, NotesInputI18n, TextIn
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, getFullName } from '@okr/shared-util-core';
 
-import { BILL_IBAN_LENGTH, BILL_REFERENCE_LENGTH, BillI18n, billValidations } from '@okr/finance-bill-util';
+import { BILL_IBAN_LENGTH, BILL_REFERENCE_LENGTH, BillI18n, billValidations, isBillPaymentDataEditable } from '@okr/finance-bill-util';
 
 import { BillLinesForm } from './bill-lines.form';
 
@@ -36,7 +36,7 @@ import { BillLinesForm } from './bill-lines.form';
               <ion-row>
                 <ion-col size="12">
                   <ion-item lines="none">
-                    @if(!isReadOnly()) {
+                    @if(!structureLocked()) {
                       <ion-button slot="start" fill="clear" (click)="vendorSelect.emit()" [attr.aria-label]="i18n().vendor_select()">
                         <ion-icon slot="icon-only" src="{{ 'search' | svgIcon }}" />
                       </ion-button>
@@ -51,34 +51,34 @@ import { BillLinesForm } from './bill-lines.form';
               <ion-row>
                 <ion-col size="12" size-md="4">
                   <okr-text-input [i18n]="billIdI18n()" [value]="billId()" (valueChange)="onFieldChange('billId', $event)"
-                    [autofocus]="true" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
+                    [autofocus]="!structureLocked()" [maxLength]="shortNameLength" [readOnly]="structureLocked()" />
                   <okr-error-note [errors]="billIdErrors()" />
                 </ion-col>
                 <ion-col size="12" size-md="8">
                   <okr-text-input [i18n]="titleI18n()" [value]="title()" (valueChange)="onFieldChange('title', $event)"
-                    [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
+                    [autofocus]="structureLocked() && !isReadOnly()" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
                   <okr-error-note [errors]="titleErrors()" />
                 </ion-col>
               </ion-row>
               <ion-row>
                 <ion-col size="12" size-md="6">
-                  <okr-date-input [i18n]="billDateI18n()" [storeDate]="billDate()" (storeDateChange)="onFieldChange('billDate', $event)" [readOnly]="isReadOnly()" />
+                  <okr-date-input [i18n]="billDateI18n()" [storeDate]="billDate()" (storeDateChange)="onFieldChange('billDate', $event)" [readOnly]="structureLocked()" />
                   <okr-error-note [errors]="billDateErrors()" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
-                  <okr-date-input [i18n]="dueDateI18n()" [storeDate]="dueDate()" (storeDateChange)="onFieldChange('dueDate', $event)" [readOnly]="isReadOnly()" />
+                  <okr-date-input [i18n]="dueDateI18n()" [storeDate]="dueDate()" (storeDateChange)="onFieldChange('dueDate', $event)" [readOnly]="paymentDataLocked()" />
                   <okr-error-note [errors]="dueDateErrors()" />
                 </ion-col>
               </ion-row>
               <ion-row>
                 <ion-col size="12" size-md="6">
                   <okr-text-input [i18n]="referenceI18n()" [value]="paymentReference()" (valueChange)="onFieldChange('paymentReference', $event)"
-                    [maxLength]="referenceLength" [readOnly]="isReadOnly()" />
+                    [maxLength]="referenceLength" [readOnly]="paymentDataLocked()" />
                   <okr-error-note [errors]="paymentReferenceErrors()" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
                   <okr-text-input [i18n]="ibanI18n()" [value]="creditorIban()" (valueChange)="onFieldChange('creditorIban', $event)"
-                    [maxLength]="ibanLength" [readOnly]="isReadOnly()" />
+                    [maxLength]="ibanLength" [readOnly]="paymentDataLocked()" />
                   <okr-error-note [errors]="creditorIbanErrors()" />
                 </ion-col>
               </ion-row>
@@ -88,7 +88,7 @@ import { BillLinesForm } from './bill-lines.form';
 
         <okr-bill-lines-form [i18n]="i18n()" [lines]="lines()" (linesChange)="onLinesChange($event)" [accounts]="accounts()"
           [defaultAccountKey]="defaultAccountKey()" [costCenters]="costCenters()" [costCentersEnabled]="costCentersEnabled()"
-          [bookDefaultCostCenterKey]="bookDefaultCostCenterKey()" [projects]="projects()" [readOnly]="isReadOnly()" (dirty)="dirty.emit($event)" (valid)="linesValid.set($event)" />
+          [bookDefaultCostCenterKey]="bookDefaultCostCenterKey()" [projects]="projects()" [readOnly]="isReadOnly()" [mode]="mode()" (dirty)="dirty.emit($event)" (valid)="linesValid.set($event)" />
 
         <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
       </form>
@@ -116,6 +116,8 @@ export class BillEditForm {
   public readonly allTags = input(DEFAULT_TAGS);
   public readonly readOnly = input(true);
   public readonly isNew = input(false);
+  /** 'details' = a booked or paid bill (spec 1.92): vendor, number and bill date stay as booked; due date, reference and IBAN only while unpaid */
+  public readonly mode = input<'draft' | 'details'>('draft');
   public readonly showForm = input(true);
   public readonly i18n = input.required<BillI18n>();
 
@@ -127,6 +129,10 @@ export class BillEditForm {
 
   protected readonly linesValid = signal(false);
   protected readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()));
+  /** vendor, bill number and bill date: draft only */
+  protected readonly structureLocked = computed(() => this.isReadOnly() || this.mode() === 'details');
+  /** due date, reference and IBAN: draft, or booked but not yet paid */
+  protected readonly paymentDataLocked = computed(() => this.isReadOnly() || (this.mode() === 'details' && !isBillPaymentDataEditable(this.formData())));
   // The suite needs the tags, which validateVestTree does not pass — so the bridge calls it
   // through a closure that adds them.
   private readonly suiteWithContext = (model: BillModel) =>

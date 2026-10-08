@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { BillModel } from '@okr/shared-models';
 
-import { billLinesTotal, isDraftBill, lineCostCenterFallback, newBillLine, showLineCostCenter, showLineProject, toBillLines, withLineAccount } from './bill-line.util';
+import { billDetailsPayload, billLinesTotal, isDraftBill, lineCostCenterFallback, newBillLine, showLineCostCenter, showLineProject, toBillLines, withLineAccount } from './bill-line.util';
 import { billLinesValidations } from './bill-line.validations';
 
 describe('bill lines', () => {
@@ -68,5 +68,31 @@ describe('bill lines', () => {
       expect(withLineAccount(l, 'exp', accounts)).toMatchObject({ accountKey: 'exp', costCenterKey: 'cc1', projectKey: 'p1' });
       expect(withLineAccount(l, 'zzz', [])).toMatchObject({ accountKey: 'zzz', costCenterKey: 'cc1', projectKey: 'p1' });
     });
+  });
+});
+
+describe('billDetailsPayload', () => {
+  const bill = { okey: 'b1', title: 'T', notes: 'N', dueDate: '20261101', paymentReference: 'R', creditorIban: 'CH93', state: 'todo' } as BillModel;
+  const lines = [{ ...newBillLine('a', 100, 'x'), costCenterKey: 'cc', projectKey: 'p' }];
+
+  it('sends the header, the payment data and the editable line fields', () => {
+    expect(billDetailsPayload(bill, lines)).toEqual({
+      billKey: 'b1', title: 'T', notes: 'N', dueDate: '20261101', paymentReference: 'R', creditorIban: 'CH93',
+      lines: [{ title: 'x', costCenterKey: 'cc', projectKey: 'p' }],
+    });
+  });
+
+  it('leaves the payment data out of a paid bill', () => {
+    const p = billDetailsPayload({ ...bill, state: 'paid' } as BillModel, lines);
+    expect(p.dueDate).toBeUndefined();
+    expect(p.paymentReference).toBeUndefined();
+    expect(p.creditorIban).toBeUndefined();
+  });
+
+  it('sends no lines for a bill without any and coalesces legacy gaps', () => {
+    const p = billDetailsPayload({ okey: 'b1', state: 'todo' } as BillModel, []);
+    expect(p.lines).toBeUndefined();
+    expect(p).toMatchObject({ title: '', notes: '', dueDate: '' });
+    expect(billDetailsPayload(bill, [{ title: 'x', accountKey: 'a', amount: 1 } as never]).lines).toEqual([{ title: 'x', costCenterKey: '', projectKey: '' }]);
   });
 });

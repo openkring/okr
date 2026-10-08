@@ -208,7 +208,11 @@
     "before-bill-date": "The chosen booking is dated too long before the bill date.",
     "scan-not-found": "We can no longer find the uploaded document. Please upload it again.",
     "scan-wrong-usage": "This document does not belong to a supplier bill.",
-    "scan-already-attached": "This document is already attached to another bill."
+    "scan-already-attached": "This document is already attached to another bill.",
+    "project-invalid": "One of the projects cannot be used. Pick an active project or leave the field empty.",
+    "not-booked": "Only a booked supplier bill can be edited here.",
+    "bill-paid": "The supplier bill is already paid. Due date, reference and IBAN can no longer be changed.",
+    "line-count": "The lines of the supplier bill have changed. Open it again and try once more."
   },
   "line": {
     "list": {
@@ -270,5 +274,11 @@
     "failed": "We could not read the bill. Please fill in the fields yourself.",
     "currency_note": "Currency {currency} — please check",
     "duplicate": "A similar bill already exists: «{title}» of {date}. Check whether you are entering it twice."
+  },
+  "details": {
+    "label": "Edit details",
+    "conf": "Your changes are saved.",
+    "error": "The changes could not be saved. Please try again later.",
+    "periodLocked": "The booking period of this bill is closed. Only the notes can still be changed. For anything else, have the period reopened."
   }
 }
