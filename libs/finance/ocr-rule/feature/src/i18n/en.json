@@ -6,7 +6,8 @@
   "usage": {
     "invoice": "Invoice",
     "expense": "Expenses",
-    "paper": "Receipt"
+    "paper": "Receipt",
+    "bill": "Supplier bill"
   },
   "inactive": "inactive",
   "actionsheet": {
@@ -23,6 +24,7 @@
     "usage_expense": "Expense",
     "usage_invoice": "Invoice",
     "usage_paper": "Receipt (paper)",
+    "usage_bill": "Supplier bill (bill)",
     "party": "Party (supplier)",
     "aliases": "Aliases (comma-separated)",
     "stored_as": "stored as:",

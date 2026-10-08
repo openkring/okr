@@ -6,7 +6,8 @@
   "usage": {
     "invoice": "Facture",
     "expense": "Frais",
-    "paper": "Justificatif"
+    "paper": "Justificatif",
+    "bill": "Facture fournisseur"
   },
   "inactive": "inactif",
   "actionsheet": {
@@ -23,6 +24,7 @@
     "usage_expense": "Frais (expense)",
     "usage_invoice": "Facture (invoice)",
     "usage_paper": "Justificatif (paper)",
+    "usage_bill": "Facture fournisseur (bill)",
     "party": "Partie (fournisseur)",
     "aliases": "Alias (séparés par des virgules)",
     "stored_as": "enregistré comme :",

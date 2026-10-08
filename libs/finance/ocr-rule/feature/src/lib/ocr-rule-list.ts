@@ -90,6 +90,7 @@ export class OcrRuleList {
       case 'invoice': return this.store.i18n.usage_invoice();
       case 'expense': return this.store.i18n.usage_expense();
       case 'paper': return this.store.i18n.usage_paper();
+      case 'bill': return this.store.i18n.usage_bill();
       default: return usage;
     }
   }

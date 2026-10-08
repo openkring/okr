@@ -12,7 +12,7 @@ import { AccountSelect, AccountSelectI18n } from '@okr/finance-account-ui';
 import { CostCenterSelect, CostCenterSelectI18n } from '@okr/finance-cost-center-ui';
 import { normalizeParty, OcrRuleFormModel, OcrRuleI18n, ocrRuleValidations } from '@okr/finance-ocr-rule-util';
 
-const USAGES = ['expense', 'invoice', 'paper'];
+const USAGES = ['expense', 'invoice', 'paper', 'bill'];
 
 /** Vendor → account mapping used by the OCR pipeline. The parent modal drives saving. */
 @Component({
@@ -129,7 +129,7 @@ export class OcrRuleForm {
   // '' first: the VAT code is optional
   protected readonly vatCodeList = computed(() => ['', ...this.vatCodes().map(v => v.code)]);
   protected readonly vatCodeLabels = computed(() => ['—', ...this.vatCodes().map(v => `${v.code} — ${v.name}`)]);
-  protected readonly usageLabels = computed(() => [this.i18n().f_usage_expense(), this.i18n().f_usage_invoice(), this.i18n().f_usage_paper()]);
+  protected readonly usageLabels = computed(() => [this.i18n().f_usage_expense(), this.i18n().f_usage_invoice(), this.i18n().f_usage_paper(), this.i18n().f_usage_bill()]);
 
   protected readonly usageI18n = computed(() => ({ name: 'ocrUsage', label: this.i18n().f_usage() } as StringSelectI18n));
   protected readonly partyI18n = computed(() => ({

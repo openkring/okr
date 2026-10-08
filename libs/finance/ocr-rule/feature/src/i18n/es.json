@@ -6,7 +6,8 @@
   "usage": {
     "invoice": "Factura",
     "expense": "Gastos",
-    "paper": "Comprobante"
+    "paper": "Comprobante",
+    "bill": "Factura de proveedor"
   },
   "inactive": "inactivo",
   "actionsheet": {
@@ -23,6 +24,7 @@
     "usage_expense": "Gastos (expense)",
     "usage_invoice": "Factura (invoice)",
     "usage_paper": "Comprobante (paper)",
+    "usage_bill": "Factura de proveedor (bill)",
     "party": "Parte (proveedor)",
     "aliases": "Alias (separados por comas)",
     "stored_as": "se guarda como:",

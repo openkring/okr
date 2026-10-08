@@ -6,7 +6,8 @@
   "usage": {
     "invoice": "Fattura",
     "expense": "Spese",
-    "paper": "Ricevuta"
+    "paper": "Ricevuta",
+    "bill": "Fattura fornitore"
   },
   "inactive": "inattivo",
   "actionsheet": {
@@ -23,6 +24,7 @@
     "usage_expense": "Spese (expense)",
     "usage_invoice": "Fattura (invoice)",
     "usage_paper": "Giustificativo (paper)",
+    "usage_bill": "Fattura fornitore (bill)",
     "party": "Parte (fornitore)",
     "aliases": "Alias (separati da virgole)",
     "stored_as": "salvato come:",

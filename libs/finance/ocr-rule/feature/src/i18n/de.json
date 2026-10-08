@@ -6,7 +6,8 @@
   "usage": {
     "invoice": "Rechnung",
     "expense": "Spesen",
-    "paper": "Beleg"
+    "paper": "Beleg",
+    "bill": "Kreditorenrechnung"
   },
   "inactive": "inaktiv",
   "actionsheet": {
@@ -23,6 +24,7 @@
     "usage_expense": "Spesen (expense)",
     "usage_invoice": "Rechnung (invoice)",
     "usage_paper": "Beleg (paper)",
+    "usage_bill": "Kreditorenrechnung (bill)",
     "party": "Partei (Lieferant)",
     "aliases": "Aliase (kommagetrennt)",
     "stored_as": "wird gespeichert als:",
