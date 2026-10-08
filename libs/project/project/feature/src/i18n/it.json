@@ -87,5 +87,6 @@
   "copySuffix": "(copia)",
   "duplicated": "Progetto duplicato. Attività copiate ({count})",
   "notFound": "Questo progetto non esiste.",
-  "duplicatedPartial": "Copiate solo {count} attività su {total}. Controlla il nuovo progetto."
+  "duplicatedPartial": "Copiate solo {count} attività su {total}. Controlla il nuovo progetto.",
+  "duplicateFailed": "Non è stato possibile leggere le attività del progetto. Non è stato duplicato nulla. Controlla la tua connessione e riprova."
 }

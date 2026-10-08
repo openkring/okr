@@ -195,6 +195,17 @@ export class TaskService {
   }
 
   /**
+   * The tasks of one parent like `listByParent`, but one fresh server read (not the cache-first
+   * listener) that REJECTS when the read fails — for callers that must not mistake a failed read
+   * for an empty parent (e.g. duplicating a project).
+   */
+  public async listByParentStrict(parentKey: string, tenantId: string): Promise<TaskModel[]> {
+    if (!parentKey || !tenantId) return [];
+    const tasks = await this.firestoreService.getDataOnceStrict<TaskModel>(TaskCollection, this.parentQuery(parentKey, tenantId));
+    return [...tasks].sort((a, b) => (a.dueDate ?? '').localeCompare(b.dueDate ?? ''));
+  }
+
+  /**
    * Moves every task of a parent back to the backlog (`parentKey = ''`), archived ones included
    * (invariant 3: no task may point at a project that is gone). Reads a fresh server snapshot (not
    * the cache-first listener) and writes silently; the caller reports the count.

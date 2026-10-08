@@ -87,5 +87,6 @@
   "copySuffix": "(copy)",
   "duplicated": "Project duplicated. Tasks copied ({count})",
   "notFound": "This project does not exist.",
-  "duplicatedPartial": "Only {count} of {total} tasks copied. Please check the new project."
+  "duplicatedPartial": "Only {count} of {total} tasks copied. Please check the new project.",
+  "duplicateFailed": "The tasks of the project could not be read. Nothing was duplicated. Check your connection and try again."
 }

@@ -2,13 +2,13 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
-import { firstValueFrom, of } from 'rxjs';
+import { of } from 'rxjs';
 import { ModalController } from '@ionic/angular/standalone';
 
 import { DEFAULT_PROJECT_STATE, DEFAULT_TAGS, DEFAULT_TASK_STATE } from '@okr/shared-constants';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
-import { ProjectModel } from '@okr/shared-models';
+import { ProjectModel, TaskModel } from '@okr/shared-models';
 import { AlertService } from '@okr/shared-util-angular';
 import { chipMatches, getDayDiff, nameMatches } from '@okr/shared-util-core';
 import { duplicateProjectTasks, getProjectParentKey, isProject, PROJECT_I18N_KEYS } from '@okr/project-project-util';
@@ -174,10 +174,20 @@ export const ProjectStore = signalStore(
       };
       const copy = await this.openEditModal(draft);
       if (!copy) return;
+
+      // One fresh server read before anything is written: a failed read must not pass for an
+      // empty project (the cache-first listener would answer [] offline and report success).
+      let tasks: TaskModel[];
+      try {
+        tasks = await store.taskService.listByParentStrict(getProjectParentKey(source.okey), store.tenantId());
+      } catch (ex) {
+        console.error('ProjectStore.duplicate: reading the tasks of the source project failed', ex);
+        store.alertService.error(store.i18n.duplicateFailed());
+        return;
+      }
       const newKey = await store.projectService.create(copy, store.currentUser());
       if (!newKey) return;
 
-      const tasks = await firstValueFrom(store.taskService.listByParent(getProjectParentKey(source.okey), store.tenantId()));
       // getDayDiff answers -1 for an unparsable date: only call it for two full StoreDates
       const delta = STORE_DATE.test(source.startDate ?? '') && STORE_DATE.test(copy.startDate ?? '')
         ? getDayDiff(source.startDate, copy.startDate)

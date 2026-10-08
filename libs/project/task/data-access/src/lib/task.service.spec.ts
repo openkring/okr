@@ -53,3 +53,29 @@ describe('TaskService.detachParent', () => {
     await expect(makeService().detachParent('project.p', 'scs')).rejects.toThrow('1 of 2');
   });
 });
+
+describe('TaskService.listByParentStrict', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('answers the tasks of the parent sorted by dueDate', async () => {
+    firestore.getDataOnceStrict.mockResolvedValue([{ okey: 'b', dueDate: '20261102' }, { okey: 'a', dueDate: '20261101' }]);
+    const tasks = await makeService().listByParentStrict('project.p', 'scs');
+    expect(tasks.map(t => t.okey)).toEqual(['a', 'b']);
+    expect(firestore.getDataOnceStrict).toHaveBeenCalledWith('tasks', expect.arrayContaining([{ key: 'parentKey', operator: '==', value: 'project.p' }]));
+  });
+
+  it('answers an empty list for a parent without tasks', async () => {
+    firestore.getDataOnceStrict.mockResolvedValue([]);
+    expect(await makeService().listByParentStrict('project.p', 'scs')).toEqual([]);
+  });
+
+  it('rejects when the server read fails', async () => {
+    firestore.getDataOnceStrict.mockRejectedValue(new Error('offline'));
+    await expect(makeService().listByParentStrict('project.p', 'scs')).rejects.toThrow('offline');
+  });
+
+  it('answers an empty list without parent or tenant, no read', async () => {
+    expect(await makeService().listByParentStrict('', 'scs')).toEqual([]);
+    expect(firestore.getDataOnceStrict).not.toHaveBeenCalled();
+  });
+});

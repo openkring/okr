@@ -87,5 +87,6 @@
   "copySuffix": "(Kopie)",
   "duplicated": "Projekt dupliziert. Kopierte Aufgaben ({count})",
   "notFound": "Dieses Projekt gibt es nicht.",
-  "duplicatedPartial": "Nur {count} von {total} Aufgaben kopiert. Prüfe das neue Projekt."
+  "duplicatedPartial": "Nur {count} von {total} Aufgaben kopiert. Prüfe das neue Projekt.",
+  "duplicateFailed": "Die Aufgaben des Projekts konnten nicht gelesen werden. Es wurde nichts dupliziert. Prüfe deine Verbindung und versuche es nochmals."
 }

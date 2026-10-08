@@ -87,5 +87,6 @@
   "copySuffix": "(copie)",
   "duplicated": "Projet dupliqué. Tâches copiées ({count})",
   "notFound": "Ce projet n'existe pas.",
-  "duplicatedPartial": "Seulement {count} tâches sur {total} copiées. Vérifie le nouveau projet."
+  "duplicatedPartial": "Seulement {count} tâches sur {total} copiées. Vérifie le nouveau projet.",
+  "duplicateFailed": "Les tâches du projet n'ont pas pu être lues. Rien n'a été dupliqué. Vérifie ta connexion et réessaie."
 }

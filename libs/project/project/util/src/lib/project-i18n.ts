@@ -59,6 +59,7 @@ export const PROJECT_I18N_KEYS = {
   duplicated:        PFX + 'duplicated',
   notFound:          PFX + 'notFound',
   duplicatedPartial: PFX + 'duplicatedPartial',
+  duplicateFailed:   PFX + 'duplicateFailed',
 
   validation_endBeforeStart: PFX + 'validation.endBeforeStart',
 } satisfies Record<string, string>;
