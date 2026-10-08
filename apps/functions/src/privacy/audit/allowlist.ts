@@ -20,6 +20,8 @@ export const NON_PERSONAL_COLLECTIONS: ReadonlySet<string> = new Set([
   'bank-rules',
   'boat-targets',
   'booking-lines',
+  'budget-lines',
+  'budget-versions',
   'calendars',
   'categories',
   'commissionEntries',
