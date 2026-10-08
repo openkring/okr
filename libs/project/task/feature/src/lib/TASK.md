@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Task domain models to-do items and work tasks assigned within the application. Tasks have an author, an assignee, a state lifecycle, priority, importance, a due date, and an optional completion date. They can optionally appear in calendars. Access is restricted to the author, the assignee, and staff (privileged/eventAdmin); tasks shared with a group or meeting are readable by the whole tenant (spec 1.72).
+The Task domain models to-do items and work tasks assigned within the application. Tasks have an author, an assignee, a state lifecycle, priority, importance, a due date, and an optional completion date. `calendars` is reserved for a future calendar display and is not a scope. Access is restricted to the author, the assignee, and staff (privileged/eventAdmin); tasks shared with a group or meeting are readable by the whole tenant (spec 1.72).
 
 ## Firestore Collection
 
@@ -26,8 +26,8 @@ Collection name: `tasks`
 | `completionDate` | string | Actual completion date; empty string means not yet completed |
 | `priority` | string | Priority level (from `priority` category: `low`, `medium`, `high`) |
 | `importance` | string | Importance level (from `importance` category: `low`, `medium`, `high`) |
-| `calendars` | string[] | Calendar keys this task should appear in |
-| `shareKey` | string | Derived on every write by `getTaskShareKey`: `''` = private, `'meeting.<okey>'` for a meeting action item, else the group key from `calendars`. The rules and the group/meeting list queries filter on it (spec 1.72 §4) |
+| `calendars` | string[] | Reserved for a future calendar display; not a scope |
+| `shareKey` | string | Written by the client (`getDefaultShareKey` on create, the group picker on edit); `'meeting.<okey>'` for action items, forced by `getTaskShareKey`. `''` = private. The rules and the group/meeting list queries filter on it (spec 1.72 §4) |
 
 ## Completion Logic
 
@@ -140,4 +140,4 @@ Key actions:
 
 ## Library Path
 
-`@okr/project-task-feature` (`libs/task/feature/src/lib/`)
+`@okr/project-task-feature` (`libs/project/task/feature/src/lib/`)

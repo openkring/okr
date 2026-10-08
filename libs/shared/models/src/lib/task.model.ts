@@ -20,14 +20,16 @@ export class TaskModel implements OkrModel, PersistedModel, NamedModel, Searchab
   public priority = DEFAULT_PRIORITY; // Priority: 0: low, 1: medium, 2: high
   public importance = DEFAULT_IMPORTANCE; // Importance: 0: low, 1: medium, 2: high
 
-  // a task is visible to the author, the assignee, and privileged Users by default
-  // the visibility can be extended to the group it belongs to, 
+  // Who may read a task (spec 4.106, enforced in firestore.rules): the author, the assignee and staff;
+  // the whole tenant too when `shareKey` names an open group or a meeting. `calendars` plays no part.
 
-  // a task can be shown on its due date in calendars
+  // a task can be shown on its due date in calendars — reserved for that unbuilt feature; it no longer
+  // carries group ids (spec 3.14 Phase 2)
   public calendars: string[] = [];
 
   // denormalised reader scope (spec 1.72 §4): '' = private; a group key or 'meeting.<okey>' =
-  // readable by the whole tenant. Computed by getTaskShareKey on every write; legacy docs lack it.
+  // readable by the whole tenant. Written by the client (the list's group on create, the group picker
+  // on edit); getTaskShareKey forces 'meeting.<okey>' for meeting action items. Legacy docs lack it.
   public shareKey = '';
 
   // fractional Kanban rank within its (state) partition; '' = not yet ranked (sorts by dueDate)

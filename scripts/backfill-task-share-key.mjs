@@ -1,4 +1,6 @@
 /**
+ * HISTORIC — superseded by scripts/migrate-task-calendars.mjs (spec 3.14 Phase 2); its calendars-based derivation no longer matches getTaskShareKey. Do not re-run.
+ *
  * One-time / idempotent backfill of TaskModel.shareKey (spec 1.72 §4).
  *
  * WHY: shareKey is a denormalised reader scope written on every create/update by
