@@ -1,7 +1,7 @@
+import { isProfitAndLossAccountId } from './cost-center.util';
+
 /** Minimal shape of a project — structural, so Cloud Functions can pass raw Firestore docs. */
 export interface ProjectLike { isArchived?: boolean; tenants?: string[] }
-
-import { isProfitAndLossAccountId } from './cost-center.util';
 
 /**
  * A project a booking line may point at as Kostenträger (spec 3.14 Phase 4): it exists, is not
