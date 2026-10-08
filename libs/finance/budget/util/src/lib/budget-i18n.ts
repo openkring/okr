@@ -19,6 +19,7 @@ export const BUDGET_I18N_KEYS = {
   grid_total:           PFX + 'grid.total',
   grid_unassigned:      PFX + 'grid.unassigned',
   grid_frozen:          PFX + 'grid.frozen',
+  grid_unbudgeted:      PFX + 'grid.unbudgeted',
   grid_notFound:        PFX + 'grid.notFound',
   compare_empty:        PFX + 'compare.empty',
   noApproved:           PFX + 'noApproved',

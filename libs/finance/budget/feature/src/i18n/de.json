@@ -12,7 +12,8 @@
     "total": "Total",
     "unassigned": "Ohne Kostenstelle gebucht",
     "frozen": "Diese Version ist freigegeben und kann nicht mehr geändert werden.",
-    "notFound": "Diese Budgetversion gibt es nicht."
+    "notFound": "Diese Budgetversion gibt es nicht.",
+    "unbudgeted": "nicht budgetiert"
   },
   "compare": {
     "title": "Soll-Ist-Vergleich",

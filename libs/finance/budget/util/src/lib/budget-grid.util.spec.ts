@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { AccountModel, BudgetLineModel, CostCenterModel, MoneyModel } from '@okr/shared-models';
+import { AccountModel, BookingLineModel, BudgetLineModel, CostCenterModel, MoneyModel } from '@okr/shared-models';
 import { aggregateByCostCenter } from '@okr/finance-cost-center-util';
 
 import { buildBudgetGrid, netOf } from './budget-grid.util';
@@ -47,5 +47,47 @@ describe('buildBudgetGrid', () => {
     const archived = [{ ...line('x', 'jun', 'a4000', 999), isArchived: true }];
     const grid = buildBudgetGrid(aggregateByCostCenter([], accounts, archived), archived, centers, accounts, false);
     expect(grid.sections).toEqual([]);
+  });
+
+  const sum = (rows: { actual: number; budget: number }[]) => ({ a: rows.reduce((t, r) => t + r.actual, 0), b: rows.reduce((t, r) => t + r.budget, 0) });
+  const booking = (costCenterKey: string, accountKey: string, debit: number) =>
+    ({ ...new BookingLineModel('scs', 'scs', 'bk1'), costCenterKey, accountKey, debitAmount: new MoneyModel(debit, 'CHF') });
+
+  it('unbudgeted actuals on a budgeted leaf become a «nicht budgetiert» row; footer = Σ rows', () => {
+    const jl = [line('l1', 'jun', 'a4000', 10000)];
+    const bl = [booking('jun', 'a4000', 4000), booking('jun', 'a4100', 2500)];
+    const c = aggregateByCostCenter(bl, accounts, jl);
+    const grid = buildBudgetGrid(c, jl, centers, accounts, false);
+    const jun = grid.sections.find(s => s.center.okey === 'jun')!;
+    expect(jun.rows.map(r => [r.accountId, r.budgeted, r.budget, r.actual])).toEqual([['4000', true, 10000, 4000], ['4100', false, 0, 2500]]);
+    expect(jun.rows[1].line).toBeUndefined();
+    expect(sum(jun.rows)).toEqual({ a: jun.totals.expense.actual, b: jun.totals.expense.budget });
+    expect(grid.total.expense.actual).toBe(6500);
+  });
+
+  it('frozen: a leaf with actuals but no cells is shown', () => {
+    const c = aggregateByCostCenter([booking('adm', 'a4000', 700)], accounts, []);
+    const grid = buildBudgetGrid(c, [], centers, accounts, false);
+    expect(grid.sections.map(s => s.center.okey)).toEqual(['adm']);
+    expect(grid.sections[0].rows[0].budgeted).toBe(false);
+  });
+
+  it('actuals on a group are rows of the group and counted once in the grand total', () => {
+    const jl = [line('l1', 'jun', 'a4000', 10000)];
+    const c = aggregateByCostCenter([booking('sport', 'a4000', 300), booking('jun', 'a4000', 100)], accounts, jl);
+    const grid = buildBudgetGrid(c, jl, centers, accounts, false);
+    const sport = grid.sections.find(s => s.center.okey === 'sport')!;
+    expect(sport.isLeaf).toBe(false);
+    expect(sport.rows.map(r => r.actual)).toEqual([300]);
+    expect(sport.totals.expense.actual).toBe(400); // header roll-up
+    expect(grid.total.expense.actual).toBe(400);   // not 800
+    expect(grid.total.expense.budget).toBe(10000);
+  });
+
+  it('unassigned actuals stay out of the grand total', () => {
+    const c = aggregateByCostCenter([booking('', 'a4000', 50)], accounts, []);
+    const grid = buildBudgetGrid(c, [], centers, accounts, false);
+    expect(grid.unassigned.expense.actual).toBe(50);
+    expect(grid.total.expense.actual).toBe(0);
   });
 });

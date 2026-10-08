@@ -8,11 +8,11 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, Spinner } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions } from '@okr/shared-util-angular';
 import { hasRole } from '@okr/shared-util-core';
-import { BudgetLineModel, BudgetStatus } from '@okr/shared-models';
+import { BudgetStatus } from '@okr/shared-models';
 
 import { ReadOnlyBanner } from '@okr/finance-accounting-feature';
 import { formatMinorAmount } from '@okr/finance-booking-util';
-import { buildBudgetGrid, BudgetGridSection, isVersionEditable, netOf } from '@okr/finance-budget-util';
+import { buildBudgetGrid, BudgetGridRow, BudgetGridSection, isVersionEditable, netOf } from '@okr/finance-budget-util';
 import { aggregateByCostCenter, costCenterLabel, postedLinesInRange } from '@okr/finance-cost-center-util';
 import { fiscalYear } from '@okr/finance-reporting-util';
 
@@ -53,7 +53,7 @@ import { BudgetStore } from './budget.store';
         @if (version(); as v) {
           <ion-buttons slot="end">
             <ion-chip color="light">{{ yearLabel() }}</ion-chip>
-            <ion-chip color="light" class="ion-hide-sm-down">{{ kindLabel() }}</ion-chip>
+            <ion-chip color="light">{{ kindLabel() }}</ion-chip>
             <ion-chip [color]="statusColor(v.status)">{{ statusLabel(v.status) }}</ion-chip>
           </ion-buttons>
         }
@@ -82,11 +82,12 @@ import { BudgetStore } from './budget.store';
                 <span>{{ store.i18n.grid_revenue() }} {{ fmt(section.totals.revenue.budget) }} / {{ fmt(section.totals.revenue.actual) }}</span>
               </div>
             </div>
-          } @else {
+          }
+          @if (section.isLeaf || section.rows.length > 0) {
             <ion-card>
-              <ion-card-header>
-                <ion-card-title>{{ label(section) }}</ion-card-title>
-              </ion-card-header>
+              @if (section.isLeaf) {
+                <ion-card-header><ion-card-title>{{ label(section) }}</ion-card-title></ion-card-header>
+              }
               <ion-card-content>
                 <ion-list lines="inset">
                   <ion-item lines="none" class="head">
@@ -95,10 +96,12 @@ import { BudgetStore } from './budget.store';
                       <span>{{ store.i18n.col_budget() }}</span><span>{{ store.i18n.col_actual() }}</span><span>{{ store.i18n.col_remaining() }}</span>
                     </div>
                   </ion-item>
-                  @for (row of section.rows; track row.line.okey) {
-                    <ion-item button [detail]="false" (click)="showActions(row.line)">
+                  @for (row of section.rows; track row.costCenterKey + '|' + row.accountKey) {
+                    <ion-item [button]="rowTappable(row)" [detail]="false" (click)="onRow(row)">
                       <ion-label class="ion-text-wrap">
-                        <h3>{{ row.accountId }} {{ row.accountName }}</h3>
+                        <h3>{{ row.accountId }} {{ row.accountName }}
+                          @if (!row.budgeted) { <ion-chip color="warning">{{ store.i18n.grid_unbudgeted() }}</ion-chip> }
+                        </h3>
                         <div class="amounts">
                           <span><small class="head ion-hide-sm-up">{{ store.i18n.col_budget() }}</small> {{ fmt(row.budget) }}</span>
                           <span><small class="head ion-hide-sm-up">{{ store.i18n.col_actual() }}</small> {{ fmt(row.actual) }}</span>
@@ -108,17 +111,20 @@ import { BudgetStore } from './budget.store';
                     </ion-item>
                   }
                 </ion-list>
-                @if (canChange()) {
+                @if (section.isLeaf && canChange()) {
                   <ion-button fill="clear" size="small" (click)="add(section)">
                     <ion-icon slot="start" src="{{ 'add-circle' | svgIcon }}" />
                     {{ store.i18n.addLine() }}
                   </ion-button>
                 }
-                <div class="footer">
-                  <div class="footer-row"><span>{{ store.i18n.grid_expense() }}</span><span class="amounts"><span>{{ fmt(section.totals.expense.budget) }}</span><span>{{ fmt(section.totals.expense.actual) }}</span></span></div>
-                  <div class="footer-row"><span>{{ store.i18n.grid_revenue() }}</span><span class="amounts"><span>{{ fmt(section.totals.revenue.budget) }}</span><span>{{ fmt(section.totals.revenue.actual) }}</span></span></div>
-                  <div class="footer-row"><span>{{ store.i18n.grid_net() }}</span><span class="amounts"><span>{{ fmt(net(section, 'budget')) }}</span><span>{{ fmt(net(section, 'actual')) }}</span></span></div>
-                </div>
+                @if (section.isLeaf) {
+                  <div class="footer">
+                    <div class="footer-row head"><span>&nbsp;</span><span class="amounts"><span>{{ store.i18n.col_budget() }}</span><span>{{ store.i18n.col_actual() }}</span><span>{{ store.i18n.col_remaining() }}</span></span></div>
+                    <div class="footer-row"><span>{{ store.i18n.grid_expense() }}</span><span class="amounts"><span>{{ fmt(section.totals.expense.budget) }}</span><span>{{ fmt(section.totals.expense.actual) }}</span><span>{{ fmt(section.totals.expense.budget - section.totals.expense.actual) }}</span></span></div>
+                    <div class="footer-row"><span>{{ store.i18n.grid_revenue() }}</span><span class="amounts"><span>{{ fmt(section.totals.revenue.budget) }}</span><span>{{ fmt(section.totals.revenue.actual) }}</span><span>{{ fmt(section.totals.revenue.budget - section.totals.revenue.actual) }}</span></span></div>
+                    <div class="footer-row"><span>{{ store.i18n.grid_net() }}</span><span class="amounts"><span>{{ fmt(net(section, 'budget')) }}</span><span>{{ fmt(net(section, 'actual')) }}</span><span>{{ fmt(net(section, 'budget') - net(section, 'actual')) }}</span></span></div>
+                  </div>
+                }
               </ion-card-content>
             </ion-card>
           }
@@ -127,9 +133,10 @@ import { BudgetStore } from './budget.store';
         <ion-card class="grand">
           <ion-card-header><ion-card-title>{{ store.i18n.grid_total() }}</ion-card-title></ion-card-header>
           <ion-card-content>
-            <div class="footer-row"><span>{{ store.i18n.grid_expense() }}</span><span class="amounts"><span>{{ fmt(grid().total.expense.budget) }}</span><span>{{ fmt(grid().total.expense.actual) }}</span></span></div>
-            <div class="footer-row"><span>{{ store.i18n.grid_revenue() }}</span><span class="amounts"><span>{{ fmt(grid().total.revenue.budget) }}</span><span>{{ fmt(grid().total.revenue.actual) }}</span></span></div>
-            <div class="footer-row footer"><span>{{ store.i18n.grid_net() }}</span><span class="amounts"><span>{{ fmt(totalNet('budget')) }}</span><span>{{ fmt(totalNet('actual')) }}</span></span></div>
+            <div class="footer-row head"><span>&nbsp;</span><span class="amounts"><span>{{ store.i18n.col_budget() }}</span><span>{{ store.i18n.col_actual() }}</span><span>{{ store.i18n.col_remaining() }}</span></span></div>
+            <div class="footer-row"><span>{{ store.i18n.grid_expense() }}</span><span class="amounts"><span>{{ fmt(grid().total.expense.budget) }}</span><span>{{ fmt(grid().total.expense.actual) }}</span><span>{{ fmt(grid().total.expense.budget - grid().total.expense.actual) }}</span></span></div>
+            <div class="footer-row"><span>{{ store.i18n.grid_revenue() }}</span><span class="amounts"><span>{{ fmt(grid().total.revenue.budget) }}</span><span>{{ fmt(grid().total.revenue.actual) }}</span><span>{{ fmt(grid().total.revenue.budget - grid().total.revenue.actual) }}</span></span></div>
+            <div class="footer-row footer"><span>{{ store.i18n.grid_net() }}</span><span class="amounts"><span>{{ fmt(totalNet('budget')) }}</span><span>{{ fmt(totalNet('actual')) }}</span><span>{{ fmt(totalNet('budget') - totalNet('actual')) }}</span></span></div>
             @if (hasUnassigned()) {
               <p class="head">{{ store.i18n.grid_unassigned() }} ({{ store.i18n.noCostCenter() }})</p>
               <div class="footer-row"><span>{{ store.i18n.grid_expense() }}</span><span class="amounts"><span>{{ fmt(grid().unassigned.expense.actual) }}</span></span></div>
@@ -214,12 +221,22 @@ export class BudgetGridPage {
     await this.store.editLine(this.versionKey(), undefined, section.center.okey);
   }
 
+  /** An unbudgeted row is only tappable on a draft (it starts a budget cell); the others always (read-only modal when frozen). */
+  protected rowTappable(row: BudgetGridRow): boolean {
+    return row.budgeted || this.canChange();
+  }
+
   /** A row opens the line modal (read-only when frozen); the sheet only offers edit and delete on a draft. */
-  protected async showActions(line: BudgetLineModel): Promise<void> {
-    if (!this.canChange()) {
-      await this.store.editLine(this.versionKey(), line);
+  protected async onRow(row: BudgetGridRow): Promise<void> {
+    if (!row.line) {
+      if (this.canChange()) await this.store.editLine(this.versionKey(), undefined, row.costCenterKey, row.accountKey);
       return;
     }
+    if (!this.canChange()) {
+      await this.store.editLine(this.versionKey(), row.line);
+      return;
+    }
+    const line = row.line;
     const options: ActionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
     options.buttons.push(createActionSheetButton('budget.line.edit', this.store.i18n.update(), this.imgixBaseUrl, 'edit'));
     options.buttons.push(createActionSheetButton('budget.line.delete', this.store.i18n.deleteLine(), this.imgixBaseUrl, 'trash'));

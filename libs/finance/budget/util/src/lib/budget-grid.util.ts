@@ -1,12 +1,16 @@
 import { AccountModel, BudgetLineModel, CostCenterModel } from '@okr/shared-models';
 import { CostCenterCell, CostCenterRollUp, leafCostCenters, rollUpCostCenters, sortCostCenterTree } from '@okr/finance-cost-center-util';
 
-/** One budget cell of a Kostenstelle: the line, its account and the actual of the fiscal year (minor units, natural sign). */
+/** One cell of a Kostenstelle: budget (from the version's line, 0 when unbudgeted) and the actual of the fiscal year (minor units, natural sign). */
 export interface BudgetGridRow {
-  line: BudgetLineModel;
+  /** the version's budget line; undefined for a cell that only has actuals («nicht budgetiert») */
+  line: BudgetLineModel | undefined;
+  costCenterKey: string;
+  accountKey: string;
   account: AccountModel | undefined;
   accountId: string;
   accountName: string;
+  budgeted: boolean;
   budget: number;
   actual: number;
   /** budget − actual */
@@ -16,21 +20,24 @@ export interface BudgetGridRow {
 export interface BudgetGridSection {
   center: CostCenterModel;
   depth: number;
-  /** a leaf shows a card with rows; any other node is a section title with its rolled-up totals */
+  /** a leaf shows a card with footer; any other node is a section title with its rolled-up totals */
   isLeaf: boolean;
+  /** the cells booked directly on this Kostenstelle (on a group only for a former leaf that got children) */
   rows: BudgetGridRow[];
+  /** a leaf: Σ rows. A group: the roll-up of its whole subtree. */
   totals: CostCenterRollUp;
 }
 
 export interface BudgetGrid {
   sections: BudgetGridSection[];
-  /** totals over all Kostenstellen (without the bucket «ohne Kostenstelle») */
+  /** Σ of every cell on a Kostenstelle (each cell once, no roll-up double counting) */
   total: CostCenterRollUp;
   /** actuals booked without a Kostenstelle — budget never sits there */
   unassigned: CostCenterRollUp;
 }
 
 const zero = () => ({ actual: 0, budget: 0, compare: 0 });
+const emptyRollUp = (): CostCenterRollUp => ({ revenue: zero(), expense: zero() });
 
 /** revenue − expense of one total (natural sign each), for budget, actual or both. */
 export function netOf(totals: CostCenterRollUp, field: 'budget' | 'actual'): number {
@@ -38,9 +45,10 @@ export function netOf(totals: CostCenterRollUp, field: 'budget' | 'actual'): num
 }
 
 /**
- * The budget grid of one version (spec 1.65 phase 2): per Kostenstelle in tree order, the rows are the version's cells
- * (sorted by account number) with the actual of the fiscal year. Draft pages show every active leaf (so a cell can be
- * added), frozen versions only the leaves that have cells. A group is kept when a descendant is shown.
+ * The budget grid of one version (spec 1.65 phase 2): per Kostenstelle in tree order, the rows are every cell of
+ * the Kostenstelle — the version's budget lines and the cells that only have actuals — sorted by account number.
+ * Every amount in a footer is the sum of the rows above it. Drafts show every active leaf (so a cell can be
+ * added); otherwise a Kostenstelle is shown when it has rows. A group is shown when it or a descendant is shown.
  * `cells` come from `aggregateByCostCenter(lines of the year, accounts, versionLines)`.
  */
 export function buildBudgetGrid(
@@ -48,35 +56,42 @@ export function buildBudgetGrid(
 ): BudgetGrid {
   const rollUp = rollUpCostCenters(cells, costCenters);
   const accountByKey = new Map(accounts.map(a => [a.okey, a]));
-  const actualOf = new Map(cells.map(c => [`${c.costCenterKey}|${c.accountKey}`, c.actual]));
   const leafKeys = new Set(leafCostCenters(costCenters).map(c => c.okey));
   const live = versionLines.filter(l => !l.isArchived);
 
-  const rowsOf = (centerKey: string): BudgetGridRow[] => {
-    const seen = new Set<string>();
-    const out: BudgetGridRow[] = [];
-    for (const line of live.filter(l => l.costCenterKey === centerKey)) {
-      if (seen.has(line.accountKey)) continue; // validation forbids duplicates; the first one wins
-      seen.add(line.accountKey);
-      const account = accountByKey.get(line.accountKey);
-      const budget = live.filter(l => l.costCenterKey === centerKey && l.accountKey === line.accountKey)
-        .reduce((sum, l) => sum + (l.amount?.amount ?? 0), 0);
-      const actual = actualOf.get(`${centerKey}|${line.accountKey}`) ?? 0;
-      out.push({ line, account, accountId: account?.id ?? '', accountName: account?.name ?? '', budget, actual, remaining: budget - actual });
-    }
-    return out.sort((a, b) => a.accountId.localeCompare(b.accountId, 'de', { numeric: true }));
-  };
+  const rowsOf = (centerKey: string): BudgetGridRow[] =>
+    cells
+      .filter(c => c.costCenterKey === centerKey)
+      .map(c => {
+        const account = accountByKey.get(c.accountKey);
+        const line = live.find(l => l.costCenterKey === centerKey && l.accountKey === c.accountKey);
+        return {
+          line, costCenterKey: centerKey, accountKey: c.accountKey, account, accountId: account?.id ?? '', accountName: account?.name ?? '',
+          budgeted: !!line, budget: c.budget, actual: c.actual, remaining: c.budget - c.actual,
+        };
+      })
+      .filter(r => r.budgeted || r.actual !== 0)
+      .sort((a, b) => a.accountId.localeCompare(b.accountId, 'de', { numeric: true }));
 
   const tree = sortCostCenterTree(costCenters);
   const sections: BudgetGridSection[] = tree.map(({ center, depth }) => {
-    const isLeaf = leafKeys.has(center.okey) || !tree.some(t => t.center.parentKey === center.okey);
-    return { center, depth, isLeaf, rows: isLeaf ? rowsOf(center.okey) : [], totals: rollUp.get(center.okey) ?? { revenue: zero(), expense: zero() } };
+    const isLeaf = !tree.some(t => t.center.parentKey === center.okey);
+    const rows = rowsOf(center.okey);
+    let totals = rollUp.get(center.okey) ?? emptyRollUp();
+    if (isLeaf) { // a leaf's footer is exactly the sum of its rows
+      totals = emptyRollUp();
+      for (const r of rows) {
+        const side = cells.find(c => c.costCenterKey === r.costCenterKey && c.accountKey === r.accountKey)?.side ?? 'expense';
+        totals[side].actual += r.actual;
+        totals[side].budget += r.budget;
+      }
+    }
+    return { center, depth, isLeaf, rows, totals };
   });
 
-  // visibility: leaves with rows (or any active leaf in a draft); groups when a descendant is visible
   const visible = new Set<string>();
   for (const s of sections) {
-    if (s.isLeaf && (s.rows.length > 0 || (editable && leafKeys.has(s.center.okey)))) visible.add(s.center.okey);
+    if (s.rows.length > 0 || (s.isLeaf && editable && leafKeys.has(s.center.okey))) visible.add(s.center.okey);
   }
   const byKey = new Map(costCenters.map(c => [c.okey, c]));
   for (const key of [...visible]) {
@@ -85,16 +100,16 @@ export function buildBudgetGrid(
     while (parent && !guard.has(parent)) { guard.add(parent); visible.add(parent); parent = byKey.get(parent)?.parentKey; }
   }
 
-  const total: CostCenterRollUp = { revenue: zero(), expense: zero() };
-  for (const s of sections.filter(x => x.isLeaf)) {
-    for (const side of ['revenue', 'expense'] as const) {
-      total[side].actual += s.totals[side].actual;
-      total[side].budget += s.totals[side].budget;
-    }
+  const known = new Set(costCenters.map(c => c.okey));
+  const total = emptyRollUp();
+  for (const c of cells) {
+    if (!known.has(c.costCenterKey)) continue;
+    total[c.side].actual += c.actual;
+    total[c.side].budget += c.budget;
   }
   return {
     sections: sections.filter(s => visible.has(s.center.okey)),
     total,
-    unassigned: rollUp.get('') ?? { revenue: zero(), expense: zero() },
+    unassigned: rollUp.get('') ?? emptyRollUp(),
   };
 }

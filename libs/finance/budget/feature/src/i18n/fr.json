@@ -12,7 +12,8 @@
     "total": "Total",
     "unassigned": "Comptabilisé sans centre de coûts",
     "frozen": "Cette version est approuvée et ne peut plus être modifiée.",
-    "notFound": "Cette version du budget n'existe pas."
+    "notFound": "Cette version du budget n'existe pas.",
+    "unbudgeted": "non budgété"
   },
   "compare": {
     "title": "Comparaison budget-réel",

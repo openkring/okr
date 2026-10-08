@@ -12,7 +12,8 @@
     "total": "Totale",
     "unassigned": "Registrato senza centro di costo",
     "frozen": "Questa versione è approvata e non può più essere modificata.",
-    "notFound": "Questa versione del budget non esiste."
+    "notFound": "Questa versione del budget non esiste.",
+    "unbudgeted": "non a budget"
   },
   "compare": {
     "title": "Confronto budget-consuntivo",
