@@ -85,7 +85,7 @@ NgRx Signal Store (provided at component level). State:
 
 | State field | Description |
 |---|---|
-| `calendarName` | `'all'`, `'my'`, or a specific calendar key |
+| `calendarName` | `'all'`, `'my'`, or a group key / `meeting.<okey>` |
 | `maxItems` | Optional limit on returned items (used in summary widgets) |
 | `showArchived` | Archived view (spec §10); toggled by the list's «Archiv»-Filter |
 | `taskKey` | Key of a single task to load individually |

@@ -27,7 +27,7 @@ const db = getFirestore();
 const DRY_RUN = process.argv.includes('--dry');
 
 const groupKeys = new Set((await db.collection('groups').get()).docs.map(d => d.id));
-const stats = { seen: 0, updated: 0, shareKeyChanged: 0, calendarsStripped: 0, leftovers: 0 };
+const stats = { seen: 0, updated: 0, shareKeyChanged: 0, calendarsStripped: 0, leftovers: 0, keptPrivate: 0 };
 const samples = [];
 
 const snap = await db.collection('tasks').get();
@@ -37,9 +37,22 @@ for (const doc of snap.docs) {
   const tenants = t.tenants ?? [];
   const calendars = t.calendars ?? [];
   const relatedKey = t.relatedKey ?? '';
-  // the scope this task has today — identical to the 4.106 derivation, so nobody gains or loses access
+  // the scope this task has today. A stored shareKey (even an explicit '') is authoritative: an
+  // explicit '' stays private, so legacy calendars[] never re-share a task someone unshared.
+  // calendars[] is consulted only for a task whose shareKey field is absent (pre-4.106 legacy).
+  const stored = t.shareKey;
+  const hasStored = stored !== undefined && stored !== null;
   const shareKey = relatedKey.startsWith('meeting.') ? relatedKey
-    : (t.shareKey || calendars.find(c => !tenants.includes(c)) || '');
+    : (hasStored ? stored : (calendars.find(c => !tenants.includes(c)) ?? ''));
+  if (stored === '' && calendars.some(c => groupKeys.has(c))) {
+    stats.keptPrivate++;
+    console.log(`keep private ${doc.id}: shareKey is '' but calendars hold a group key (not re-shared)`);
+  }
+  const groupsInCalendars = calendars.filter(c => groupKeys.has(c));
+  if (groupsInCalendars.length > 1) {
+    const extra = groupsInCalendars.filter(c => c !== shareKey);
+    console.log(`strip ${doc.id}: extra group keys ${extra.join(',')}`);
+  }
   const kept = calendars.filter(c => !tenants.includes(c) && !groupKeys.has(c) && c !== shareKey);
   if (kept.length) {
     stats.leftovers++;
