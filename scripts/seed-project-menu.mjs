@@ -28,6 +28,9 @@
  *   node scripts/seed-project-menu.mjs              # dry run (default)
  *   node scripts/seed-project-menu.mjs --dry-run    # dry run (explicit)
  *   node scripts/seed-project-menu.mjs --apply      # perform the writes
+ *   add --no-parents to write only the three documents and leave every parent menu untouched:
+ *   nothing references them yet, so a client released BEFORE 3.14 shows no new row. Use it to
+ *   test against the shared database before the release; run again without it afterwards.
  *
  * Requires: gcloud auth application-default login (or GOOGLE_APPLICATION_CREDENTIALS).
  */
@@ -63,6 +66,7 @@ function newDoc(spec, tenants) {
 }
 
 const apply = process.argv.includes('--apply');
+const noParents = process.argv.includes('--no-parents');
 
 async function main() {
   if (!getApps().length) initializeApp();
@@ -113,7 +117,10 @@ async function main() {
   }
 
   // 3. hang the row after task-all into every parent that lists it (shared + forks)
-  const parents = (await menuItems.where('menuItems', 'array-contains', ANCHOR).get()).docs.filter(d => d.data().isArchived !== true);
+  if (noParents) {
+    console.log(`\n  skip    parent menus (--no-parents): '${ROW}' is not inserted after '${ANCHOR}'`);
+  }
+  const parents = noParents ? [] : (await menuItems.where('menuItems', 'array-contains', ANCHOR).get()).docs.filter(d => d.data().isArchived !== true);
   for (const snap of parents) {
     const children = snap.data().menuItems ?? [];
     if (children.includes(ROW)) {
