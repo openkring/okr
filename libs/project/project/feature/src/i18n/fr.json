@@ -1,0 +1,79 @@
+{
+  "title": "Projet",
+  "plural": "Projets",
+  "create": {
+    "label": "Nouveau projet"
+  },
+  "update": {
+    "label": "Modifier le projet"
+  },
+  "view": {
+    "label": "Projet"
+  },
+  "name": {
+    "label": "Nom",
+    "placeholder": "Nom du projet",
+    "helper": "Comment s'appelle le projet ?"
+  },
+  "description": {
+    "label": "Description",
+    "placeholder": "De quoi parle ce projet ?"
+  },
+  "startDate": {
+    "label": "Début",
+    "placeholder": "Quand le projet commence-t-il ?"
+  },
+  "endDate": {
+    "label": "Fin",
+    "placeholder": "Quand le projet doit-il être terminé ?"
+  },
+  "projectManager": {
+    "label": "Responsable du projet",
+    "note": "Cette personne dirige le projet.",
+    "select": "Choisir une personne"
+  },
+  "state": {
+    "label": "Statut"
+  },
+  "notes": {
+    "label": "Notes",
+    "placeholder": "Autres notes sur le projet"
+  },
+  "select": {
+    "search": "Chercher un projet",
+    "notFound": "Aucun projet trouvé."
+  },
+  "archived": "archivé",
+  "tasks": "Tâches",
+  "result": {
+    "label": "Résultat",
+    "income": "Recettes",
+    "expense": "Dépenses",
+    "total": "Total"
+  },
+  "duplicate": "Dupliquer le projet",
+  "duplicateConfirm": "Le projet est copié avec toutes ses tâches. Les dates sont décalées sur le nouveau début.",
+  "backlog": "Sans projet",
+  "noProject": "Aucun projet",
+  "exportPdf": "Exporter en PDF",
+  "context": {
+    "add": "Ajouter un projet"
+  },
+  "validation": {
+    "endBeforeStart": "La fin ne peut pas précéder le début."
+  },
+  "project_state": {
+    "planned": {
+      "label": "Prévu"
+    },
+    "active": {
+      "label": "En cours"
+    },
+    "completed": {
+      "label": "Terminé"
+    },
+    "cancelled": {
+      "label": "Annulé"
+    }
+  }
+}

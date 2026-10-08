@@ -587,6 +587,16 @@
           },
           {
             "glob": "*.json",
+            "input": "libs/project/project/data-access/src/i18n",
+            "output": "./assets/i18n/project/project/data-access"
+          },
+          {
+            "glob": "*.json",
+            "input": "libs/project/project/feature/src/i18n",
+            "output": "./assets/i18n/project/project/feature"
+          },
+          {
+            "glob": "*.json",
             "input": "libs/project/task/data-access/src/i18n",
             "output": "./assets/i18n/project/task/data-access"
           },

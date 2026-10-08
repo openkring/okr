@@ -1,0 +1,79 @@
+{
+  "title": "Projekt",
+  "plural": "Projekte",
+  "create": {
+    "label": "Neues Projekt"
+  },
+  "update": {
+    "label": "Projekt ändern"
+  },
+  "view": {
+    "label": "Projekt"
+  },
+  "name": {
+    "label": "Name",
+    "placeholder": "Name des Projekts",
+    "helper": "Wie soll das Projekt heissen?"
+  },
+  "description": {
+    "label": "Beschreibung",
+    "placeholder": "Worum geht es in diesem Projekt?"
+  },
+  "startDate": {
+    "label": "Beginn",
+    "placeholder": "Wann startet das Projekt?"
+  },
+  "endDate": {
+    "label": "Ende",
+    "placeholder": "Wann soll das Projekt abgeschlossen sein?"
+  },
+  "projectManager": {
+    "label": "Projektleitung",
+    "note": "Diese Person leitet das Projekt.",
+    "select": "Person wählen"
+  },
+  "state": {
+    "label": "Status"
+  },
+  "notes": {
+    "label": "Notizen",
+    "placeholder": "Weitere Notizen zum Projekt"
+  },
+  "select": {
+    "search": "Projekt suchen",
+    "notFound": "Kein Projekt gefunden."
+  },
+  "archived": "archiviert",
+  "tasks": "Aufgaben",
+  "result": {
+    "label": "Ergebnis",
+    "income": "Einnahmen",
+    "expense": "Ausgaben",
+    "total": "Total"
+  },
+  "duplicate": "Projekt duplizieren",
+  "duplicateConfirm": "Das Projekt wird mit allen Aufgaben kopiert. Die Termine werden auf den neuen Beginn verschoben.",
+  "backlog": "Ohne Projekt",
+  "noProject": "Kein Projekt",
+  "exportPdf": "Als PDF exportieren",
+  "context": {
+    "add": "Projekt hinzufügen"
+  },
+  "validation": {
+    "endBeforeStart": "Das Ende darf nicht vor dem Beginn liegen."
+  },
+  "project_state": {
+    "planned": {
+      "label": "Geplant"
+    },
+    "active": {
+      "label": "Laufend"
+    },
+    "completed": {
+      "label": "Abgeschlossen"
+    },
+    "cancelled": {
+      "label": "Abgebrochen"
+    }
+  }
+}

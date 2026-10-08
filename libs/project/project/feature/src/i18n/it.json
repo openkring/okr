@@ -1,0 +1,79 @@
+{
+  "title": "Progetto",
+  "plural": "Progetti",
+  "create": {
+    "label": "Nuovo progetto"
+  },
+  "update": {
+    "label": "Modifica progetto"
+  },
+  "view": {
+    "label": "Progetto"
+  },
+  "name": {
+    "label": "Nome",
+    "placeholder": "Nome del progetto",
+    "helper": "Come si chiama il progetto?"
+  },
+  "description": {
+    "label": "Descrizione",
+    "placeholder": "Di cosa tratta questo progetto?"
+  },
+  "startDate": {
+    "label": "Inizio",
+    "placeholder": "Quando inizia il progetto?"
+  },
+  "endDate": {
+    "label": "Fine",
+    "placeholder": "Quando deve essere concluso il progetto?"
+  },
+  "projectManager": {
+    "label": "Responsabile del progetto",
+    "note": "Questa persona guida il progetto.",
+    "select": "Scegli una persona"
+  },
+  "state": {
+    "label": "Stato"
+  },
+  "notes": {
+    "label": "Note",
+    "placeholder": "Altre note sul progetto"
+  },
+  "select": {
+    "search": "Cerca progetto",
+    "notFound": "Nessun progetto trovato."
+  },
+  "archived": "archiviato",
+  "tasks": "Attività",
+  "result": {
+    "label": "Risultato",
+    "income": "Entrate",
+    "expense": "Uscite",
+    "total": "Totale"
+  },
+  "duplicate": "Duplica progetto",
+  "duplicateConfirm": "Il progetto viene copiato con tutte le sue attività. Le date vengono spostate sul nuovo inizio.",
+  "backlog": "Senza progetto",
+  "noProject": "Nessun progetto",
+  "exportPdf": "Esporta come PDF",
+  "context": {
+    "add": "Aggiungi progetto"
+  },
+  "validation": {
+    "endBeforeStart": "La fine non può essere prima dell'inizio."
+  },
+  "project_state": {
+    "planned": {
+      "label": "Pianificato"
+    },
+    "active": {
+      "label": "In corso"
+    },
+    "completed": {
+      "label": "Concluso"
+    },
+    "cancelled": {
+      "label": "Annullato"
+    }
+  }
+}

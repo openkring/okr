@@ -1,0 +1,79 @@
+{
+  "title": "Project",
+  "plural": "Projects",
+  "create": {
+    "label": "New project"
+  },
+  "update": {
+    "label": "Edit project"
+  },
+  "view": {
+    "label": "Project"
+  },
+  "name": {
+    "label": "Name",
+    "placeholder": "Name of the project",
+    "helper": "What should the project be called?"
+  },
+  "description": {
+    "label": "Description",
+    "placeholder": "What is this project about?"
+  },
+  "startDate": {
+    "label": "Start",
+    "placeholder": "When does the project start?"
+  },
+  "endDate": {
+    "label": "End",
+    "placeholder": "When should the project be finished?"
+  },
+  "projectManager": {
+    "label": "Project manager",
+    "note": "This person leads the project.",
+    "select": "Choose person"
+  },
+  "state": {
+    "label": "Status"
+  },
+  "notes": {
+    "label": "Notes",
+    "placeholder": "More notes about the project"
+  },
+  "select": {
+    "search": "Search project",
+    "notFound": "No project found."
+  },
+  "archived": "archived",
+  "tasks": "Tasks",
+  "result": {
+    "label": "Result",
+    "income": "Income",
+    "expense": "Expenses",
+    "total": "Total"
+  },
+  "duplicate": "Duplicate project",
+  "duplicateConfirm": "The project is copied with all its tasks. The dates are shifted to the new start.",
+  "backlog": "No project",
+  "noProject": "No project",
+  "exportPdf": "Export as PDF",
+  "context": {
+    "add": "Add project"
+  },
+  "validation": {
+    "endBeforeStart": "The end must not be before the start."
+  },
+  "project_state": {
+    "planned": {
+      "label": "Planned"
+    },
+    "active": {
+      "label": "Active"
+    },
+    "completed": {
+      "label": "Completed"
+    },
+    "cancelled": {
+      "label": "Cancelled"
+    }
+  }
+}

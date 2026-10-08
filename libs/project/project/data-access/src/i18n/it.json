@@ -1,0 +1,14 @@
+{
+  "create": {
+    "conf": "Il progetto è stato creato.",
+    "error": "Non è stato possibile creare il progetto."
+  },
+  "update": {
+    "conf": "Le modifiche sono state salvate.",
+    "error": "Non è stato possibile salvare le modifiche."
+  },
+  "delete": {
+    "conf": "Il progetto è stato eliminato.",
+    "error": "Non è stato possibile eliminare il progetto."
+  }
+}
