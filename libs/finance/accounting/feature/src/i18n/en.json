@@ -54,9 +54,6 @@
       "helper": "Reminder fees are booked to this account as income."
     },
     "reminderFee": {
-      "level1": "Fee for the payment reminder (CHF)",
-      "level2": "Fee for the 2nd reminder (CHF)",
-      "level3": "Fee for the 3rd reminder (CHF)",
       "placeholder": "0.00",
       "helper": "Suggested when a reminder is created and can be changed there. 0 = no fee.",
       "default": "Fee (default)"
@@ -209,7 +206,7 @@
   },
   "validation": {
     "reminderFeeDecimals": "Please enter the amount with at most two decimal places.",
-    "reminderFeeAccountRequired": "Reminder fees need a revenue account. Choose one or set all fees to 0."
+    "reminderFeeAccountRequired": "Reminder fees need a revenue account. Choose one or set the fee to 0."
   },
   "ledger": {
     "bookings": "Bookings",

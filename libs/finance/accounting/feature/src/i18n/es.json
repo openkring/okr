@@ -54,9 +54,6 @@
       "helper": "Los recargos por recordatorio se contabilizan como ingreso en esta cuenta."
     },
     "reminderFee": {
-      "level1": "Recargo del recordatorio de pago (CHF)",
-      "level2": "Recargo del 2.º recordatorio (CHF)",
-      "level3": "Recargo del 3.er recordatorio (CHF)",
       "placeholder": "0.00",
       "helper": "Se propone al crear el recordatorio y se puede cambiar allí. 0 = sin recargo.",
       "default": "Recargo (predeterminado)"
@@ -209,7 +206,7 @@
   },
   "validation": {
     "reminderFeeDecimals": "Indica el importe con dos decimales como máximo.",
-    "reminderFeeAccountRequired": "Los recargos de recordatorio necesitan una cuenta de ingresos. Elige una o pon todos los recargos a 0."
+    "reminderFeeAccountRequired": "Los recargos de recordatorio necesitan una cuenta de ingresos. Elige una o pon el recargo a 0."
   },
   "ledger": {
     "bookings": "Asientos",

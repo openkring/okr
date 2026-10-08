@@ -54,9 +54,6 @@
       "helper": "Les frais de rappel sont comptabilisés comme produit sur ce compte."
     },
     "reminderFee": {
-      "level1": "Frais du rappel de paiement (CHF)",
-      "level2": "Frais du 2e rappel (CHF)",
-      "level3": "Frais du 3e rappel (CHF)",
       "placeholder": "0.00",
       "helper": "Proposés lors de la création du rappel et modifiables à ce moment-là. 0 = aucun frais.",
       "default": "Frais (par défaut)"
@@ -209,7 +206,7 @@
   },
   "validation": {
     "reminderFeeDecimals": "Indique le montant avec au maximum deux décimales.",
-    "reminderFeeAccountRequired": "Les frais de rappel ont besoin d’un compte de produits. Choisis-en un ou mets tous les frais à 0."
+    "reminderFeeAccountRequired": "Les frais de rappel ont besoin d’un compte de produits. Choisis-en un ou mets les frais à 0."
   },
   "ledger": {
     "bookings": "Écritures",

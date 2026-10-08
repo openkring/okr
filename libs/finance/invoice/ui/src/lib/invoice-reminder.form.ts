@@ -86,11 +86,14 @@ import {
               } @else {
                 <ion-row>
                   <ion-col size="12">
+                    <ion-item lines="none">
+                      <ion-note>{{ i18n().reminder_mahnlauf_select() }}</ion-note>
+                    </ion-item>
                     <ion-list>
                       @for (c of candidates(); track c.key) {
                         <ion-item lines="none">
                           <ion-checkbox [checked]="isSelected(c.key)" (ionChange)="onSelectionChange(c.key, $event.detail.checked)"
-                            [disabled]="isReadOnly()">{{ c.label }} · CHF {{ c.openAmountChf.toFixed(2) }} · {{ c.lastReminder }}</ion-checkbox>
+                            [disabled]="isReadOnly()">{{ c.label }} · CHF {{ formatChf(c.openAmountChf) }}@if (c.lastReminder) { · {{ c.lastReminder }}}</ion-checkbox>
                         </ion-item>
                       }
                     </ion-list>
@@ -140,6 +143,10 @@ export class InvoiceReminderForm {
 
   constructor() {
     effect(() => this.valid.emit(this.reminderForm().valid()));
+  }
+
+  protected formatChf(chf: number): string {
+    return formatPaymentChf(Math.round(chf * 100));
   }
 
   // field accessors

@@ -634,6 +634,10 @@ export const InvoiceStore = signalStore(
         return;
       }
       const templates = store.dunningTemplates();
+      if (templates.length === 0) {
+        await showToast(store.toastController, store.i18n.refusal_no_reminder_template());
+        return;
+      }
       const feeRappen = configReminderFee(config);
       // legacy config docs lack the field (Firestore reads skip model defaults)
       const model = newReminderFormModel(templates, config.reminderTemplateId ?? '', feeRappen, openInvoiceAmount(invoice), getTodayStr());
@@ -661,16 +665,20 @@ export const InvoiceStore = signalStore(
         return;
       }
       patchState(store, { version: store.version() + 1 });
-      if (!reminder?.documentKey) return;
+      if (!reminder?.documentKey) {
+        await showToast(store.toastController, store.i18n.refusal_no_document());
+        return;
+      }
       if (data.channel === 'email') {
         await this.sendDocument(invoice, reminder.documentKey, this.reminderDocumentLabel(invoice, reminder), data.attachInvoice);
       } else {
-        await this.printAndMarkPosted(invoice, [{ invoiceKey: invoice.okey, documentKey: reminder.documentKey, attachInvoice: data.attachInvoice }]);
+        await this.printAndMarkPosted([{ invoiceKey: invoice.okey, documentKey: reminder.documentKey, attachInvoice: data.attachInvoice }],
+          new Map([[invoice.okey, invoiceLabel(invoice)]]));
       }
     },
 
     /** Prints the reminders (merged in chunks of 50, invoice attached on request), then asks once whether they went out by post. */
-    async printAndMarkPosted(invoice: InvoiceModel | undefined, items: ReminderPrintItem[]): Promise<void> {
+    async printAndMarkPosted(items: ReminderPrintItem[], labels: Map<string, string> = new Map()): Promise<void> {
       if (items.length === 0) return;
       for (let i = 0; i < items.length; i += 50) {
         if (!(await this.downloadPrint(items.slice(i, i + 50)))) return;
@@ -685,7 +693,7 @@ export const InvoiceStore = signalStore(
           await store.invoiceService.markSentByPost(item.invoiceKey, currentUser, item.documentKey);
         } catch (e) {
           console.error(`InvoiceStore.printAndMarkPosted: markInvoiceSent failed for ${item.invoiceKey}`, e);
-          failed.push(invoice?.okey === item.invoiceKey ? invoiceLabel(invoice) : item.invoiceKey);
+          failed.push(labels.get(item.invoiceKey) ?? item.invoiceKey);
         }
       }
       patchState(store, { version: store.version() + 1 });
@@ -784,6 +792,10 @@ export const InvoiceStore = signalStore(
       const config = store.accountingStore.config();
       if (due.length === 0 || !config) return;
       const templates = store.dunningTemplates();
+      if (templates.length === 0) {
+        await showToast(store.toastController, store.i18n.refusal_no_reminder_template());
+        return;
+      }
       const feeRappen = configReminderFee(config);
       const candidates: ReminderCandidate[] = due.map((invoice) => {
         const last = [...(invoice.reminders ?? [])].sort((a, b) => (b.level ?? 0) - (a.level ?? 0))[0];
@@ -849,7 +861,7 @@ export const InvoiceStore = signalStore(
       if (failures.length > 0) parts.push(`${store.i18n.mahnlauf_failed()} ${failures.join(' · ')}`);
       if (sendFailures.length > 0) parts.push(`${store.i18n.mahnlauf_send_failed()} ${sendFailures.join(' · ')}`);
       await confirm(store.alertController, parts.join(' '), store.i18n.ok(), store.i18n.cancel(), false);
-      if (toPrint.length > 0) await this.printAndMarkPosted(undefined, toPrint);
+      if (toPrint.length > 0) await this.printAndMarkPosted(toPrint, new Map(selected.map((i) => [i.okey, invoiceLabel(i)] as const)));
     },
 
     async export(type: string, invoices: InvoiceModel[]): Promise<void> {

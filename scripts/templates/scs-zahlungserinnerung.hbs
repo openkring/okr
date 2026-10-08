@@ -211,7 +211,7 @@
       <tr class="total"><td>Offener Betrag</td><td class="amount">CHF {{amountDue}}</td></tr>
     </table>
 
-    <p>Bitte überweise den offenen Betrag bis zum {{dueDate}} auf das Konto von {{payee.name}}{{#if payee.regularIban}}, IBAN {{formatIban payee.regularIban}}{{/if}}, und gib dabei «Rechnung {{invoiceId}}» an. Falls du inzwischen bezahlt hast, betrachte dieses Schreiben als gegenstandslos.</p>
+    <p>Bitte überweise den offenen Betrag bis zum {{dueDate}} auf das Konto von {{payee.name}}.{{#if payee.regularIban}} IBAN: {{formatIban payee.regularIban}}.{{/if}} Gib dabei «Rechnung {{invoiceId}}» an. Falls du inzwischen bezahlt hast, betrachte dieses Schreiben als gegenstandslos.</p>
 
     <p class="closing">Herzlichen Dank und freundliche Grüsse</p>
 

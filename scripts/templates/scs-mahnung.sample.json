@@ -40,6 +40,7 @@
   "payee": {
     "name": "Seeclub Stäfa",
     "iban": "CH00 0000 0000 0000 0000 0",
+    "regularIban": "CH00 0000 0000 0000 0000 0",
     "street": "Seestrasse",
     "buildingNumber": "1",
     "zip": "8712",

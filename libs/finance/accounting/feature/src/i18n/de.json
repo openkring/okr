@@ -54,9 +54,6 @@
       "helper": "Hier werden die Mahngebühren als Ertrag gebucht."
     },
     "reminderFee": {
-      "level1": "Gebühr Zahlungserinnerung (CHF)",
-      "level2": "Gebühr 2. Mahnung (CHF)",
-      "level3": "Gebühr 3. Mahnung (CHF)",
       "placeholder": "0.00",
       "helper": "Wird beim Erstellen vorgeschlagen und lässt sich dort anpassen. 0 = keine Gebühr.",
       "default": "Gebühr (Standard)"
@@ -209,7 +206,7 @@
   },
   "validation": {
     "reminderFeeDecimals": "Bitte gib den Betrag mit höchstens zwei Nachkommastellen an.",
-    "reminderFeeAccountRequired": "Für Mahngebühren braucht es ein Ertragskonto. Wähle eines aus oder setze alle Gebühren auf 0."
+    "reminderFeeAccountRequired": "Für Mahngebühren braucht es ein Ertragskonto. Wähle eines aus oder setze die Gebühr auf 0."
   },
   "ledger": {
     "bookings": "Buchungen",
