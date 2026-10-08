@@ -17,7 +17,14 @@
   },
   "compare": {
     "title": "Budget vs. actual",
-    "empty": "There is nothing to compare for this fiscal year."
+    "empty": "There is nothing to compare for this fiscal year.",
+    "versionA": "Version A (target)",
+    "versionB": "Compare with",
+    "noneB": "no comparison",
+    "unknownCenter": "unknown cost centre",
+    "noVersion": "There is no version for this fiscal year yet.",
+    "expand": "Expand",
+    "collapse": "Collapse"
   },
   "empty": "No budgets yet. Create a new budget from the menu at the top right.",
   "noApproved": "No budget has been approved for this fiscal year yet.",

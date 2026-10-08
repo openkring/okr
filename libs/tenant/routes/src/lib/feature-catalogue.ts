@@ -780,11 +780,12 @@ const finance: BlockRoutes = {
         },
         {
           // Budgets (spec 1.65 phase 2): versions per fiscal year, grid, Soll-Ist comparison; treasurer via the shell's guard.
-          // The comparison (`compare`) joins this list once its page exists; `version/:versionKey` and `compare`
+          // `version/:versionKey` and `compare`
           // must stay ABOVE `:contextMenuName`, which would otherwise swallow `compare`.
           path: 'budget',
           children: [
             { path: 'version/:versionKey', loadComponent: () => import('@okr/finance-budget-feature').then(m => m.BudgetGridPage) },
+            { path: 'compare', loadComponent: () => import('@okr/finance-budget-feature').then(m => m.BudgetComparePage) },
             { path: ':contextMenuName', loadComponent: () => import('@okr/finance-budget-feature').then(m => m.BudgetVersionList) },
           ],
         },

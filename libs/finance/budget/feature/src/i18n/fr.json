@@ -17,7 +17,14 @@
   },
   "compare": {
     "title": "Comparaison budget-réel",
-    "empty": "Il n'y a rien à comparer pour cet exercice."
+    "empty": "Il n'y a rien à comparer pour cet exercice.",
+    "versionA": "Version A (cible)",
+    "versionB": "Comparer avec",
+    "noneB": "aucune comparaison",
+    "unknownCenter": "centre de coûts inconnu",
+    "noVersion": "Cet exercice n’a pas encore de version.",
+    "expand": "Développer",
+    "collapse": "Réduire"
   },
   "empty": "Pas encore de budget. Crée un nouveau budget depuis le menu en haut à droite.",
   "noApproved": "Aucun budget n'a encore été approuvé pour cet exercice.",

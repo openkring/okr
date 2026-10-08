@@ -17,7 +17,14 @@
   },
   "compare": {
     "title": "Soll-Ist-Vergleich",
-    "empty": "Für dieses Geschäftsjahr gibt es nichts zu vergleichen."
+    "empty": "Für dieses Geschäftsjahr gibt es nichts zu vergleichen.",
+    "versionA": "Version A (Soll)",
+    "versionB": "Vergleich mit",
+    "noneB": "kein Vergleich",
+    "unknownCenter": "unbekannte Kostenstelle",
+    "noVersion": "Für dieses Geschäftsjahr gibt es noch keine Version.",
+    "expand": "Aufklappen",
+    "collapse": "Zuklappen"
   },
   "empty": "Noch keine Budgets vorhanden. Lege über das Menü oben rechts ein neues Budget an.",
   "noApproved": "Für dieses Geschäftsjahr ist noch kein Budget freigegeben.",

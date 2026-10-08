@@ -17,7 +17,14 @@
   },
   "compare": {
     "title": "Confronto budget-consuntivo",
-    "empty": "Per quest'esercizio non c'è nulla da confrontare."
+    "empty": "Per quest'esercizio non c'è nulla da confrontare.",
+    "versionA": "Versione A (obiettivo)",
+    "versionB": "Confronta con",
+    "noneB": "nessun confronto",
+    "unknownCenter": "centro di costo sconosciuto",
+    "noVersion": "Per quest’esercizio non c’è ancora nessuna versione.",
+    "expand": "Espandi",
+    "collapse": "Comprimi"
   },
   "empty": "Ancora nessun budget. Crea un nuovo budget dal menu in alto a destra.",
   "noApproved": "Per quest'esercizio non è ancora stato approvato alcun budget.",
