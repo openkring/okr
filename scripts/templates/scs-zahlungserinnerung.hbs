@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 {{!--
-  Mahnung (scs-mahnung) – Seeclub Stäfa
-  Formal-friendly reminder with fees; the QR-bill slip over the amount due (payload.amount) is appended as page 2.
+  Zahlungserinnerung (scs-zahlungserinnerung) – Seeclub Stäfa
+  Informal reminder, no QR-bill slip; fee line only when feesTotal is not 0.00.
   Layout, logo and typography follow the Zahlungsbestätigung. Context (buildReminderPayload in
   apps/functions/src/invoice/reminder-payload.logic.ts): heading (= template name), invoiceId, invoiceTitle,
   invoiceDate, reminderDate, dueDate (DD.MM.YYYY), greeting, firstName, lastName, streetName, streetNumber,
@@ -191,7 +191,7 @@
 
     <p class="greeting">{{greeting}},</p>
 
-    <p>Leider haben wir deine Zahlung noch nicht erhalten. Wir bitten dich, den offenen Betrag inklusive Mahngebühren bis zum {{dueDate}} zu begleichen.</p>
+    <p>Vielleicht ist unsere Rechnung untergegangen. Das kann passieren. Wir erinnern dich deshalb freundlich an die offene Zahlung und freuen uns, wenn du sie bis zum {{dueDate}} erledigst.</p>
 
     <div class="fields">
       <div class="field">
@@ -206,12 +206,12 @@
 
     <table class="positions">
       <tr><td>Rechnung {{invoiceId}} vom {{invoiceDate}}<div class="pos-desc">{{invoiceTitle}}</div></td><td class="amount">CHF {{totalAmount}}</td></tr>
-      <tr><td>Mahngebühren</td><td class="amount">CHF {{feesTotal}}</td></tr>
+      {{#ifEquals feesTotal "0.00"}}{{else}}<tr><td>Mahngebühren</td><td class="amount">CHF {{feesTotal}}</td></tr>{{/ifEquals}}
       <tr><td>bereits bezahlt</td><td class="amount">CHF {{paidTotal}}</td></tr>
       <tr class="total"><td>Offener Betrag</td><td class="amount">CHF {{amountDue}}</td></tr>
     </table>
 
-    <p>Bitte bezahle den offenen Betrag von CHF {{amountDue}} bis zum {{dueDate}} mit dem QR-Einzahlungsschein auf der nächsten Seite{{#if payee.regularIban}} oder überweise ihn auf das Konto von {{payee.name}}, IBAN {{formatIban payee.regularIban}}{{/if}}. Falls du inzwischen bezahlt hast, betrachte dieses Schreiben als gegenstandslos.</p>
+    <p>Bitte überweise den offenen Betrag bis zum {{dueDate}} auf das Konto von {{payee.name}}{{#if payee.regularIban}}, IBAN {{formatIban payee.regularIban}}{{/if}}, und gib dabei «Rechnung {{invoiceId}}» an. Falls du inzwischen bezahlt hast, betrachte dieses Schreiben als gegenstandslos.</p>
 
     <p class="closing">Herzlichen Dank und freundliche Grüsse</p>
 
