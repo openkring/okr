@@ -109,7 +109,7 @@ describe('billOpenAmountAt', () => {
 
 describe('invoiceOpenAmountAt', () => {
   function reminder(date: string, fee: number, waivedAt = '') {
-    return { level: 1, date, dueDate: '', isSent: true, documentKey: '', fee, bookingKey: '', waivedAt, waiveBookingKey: '' };
+    return { level: 1, templateId: '', templateName: '', sentAt: '', sentVia: '', requestId: '', date, dueDate: '', isSent: true, documentKey: '', fee, bookingKey: '', waivedAt, waiveBookingKey: '' };
   }
   it('adds the reminder fees charged by the cut-off', () => {
     const i = invoice('i1', '20260101', 10000);
@@ -152,7 +152,7 @@ describe('claims', () => {
     const i = invoice('i1', '20260101', 100);
     i.bookingKeys = ['900'];
     i.payments = [{ date: '20260201', amount: 100, bankAccountKey: BANK, bookingKey: 'bank-y-2' }];
-    i.reminders = [{ level: 1, date: '', dueDate: '', isSent: true, documentKey: '', fee: 0, bookingKey: 'r-1', waivedAt: '', waiveBookingKey: 'w-1' }];
+    i.reminders = [{ level: 1, templateId: '', templateName: '', sentAt: '', sentVia: '', requestId: '', date: '', dueDate: '', isSent: true, documentKey: '', fee: 0, bookingKey: 'r-1', waivedAt: '', waiveBookingKey: 'w-1' }];
     for (const key of ['900', 'bank-y-2', 'r-1', 'w-1']) expect(invoiceClaimsBooking(i, key)).toBe(true);
     expect(invoiceClaimsBooking(i, 'other')).toBe(false);
   });

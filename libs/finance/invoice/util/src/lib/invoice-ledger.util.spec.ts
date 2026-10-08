@@ -9,7 +9,7 @@ function invoice(patch: Partial<InvoiceModel>): InvoiceModel {
 }
 
 function reminder(patch: Partial<InvoiceReminder>): InvoiceReminder {
-  return { level: 1, date: '20260101', dueDate: '20260110', isSent: false, documentKey: '', fee: 0, bookingKey: '', waivedAt: '', waiveBookingKey: '', ...patch };
+  return { level: 1, templateId: '', templateName: '', sentAt: '', sentVia: '', requestId: '', date: '20260101', dueDate: '20260110', isSent: false, documentKey: '', fee: 0, bookingKey: '', waivedAt: '', waiveBookingKey: '', ...patch };
 }
 
 function payment(bookingKey: string): InvoicePayment {

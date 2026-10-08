@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  canCreateReminder, canEmailInvoice, defaultReminderFee, isReminderDue, lastDueDate, latestReminderWithDocument, mahnlaufCandidates, nextReminderLevel,
-  parseReminderFee, ReminderLike, reminderFeeSum, reminderInputProblem, reminderLevelKey, waivableReminder, waiveInputProblem,
+  applyTemplateDefaults, canCreateReminder, canEmailInvoice, configReminderFee, dunningTemplates, isReminderDue, lastDueDate, mahnlaufCandidates,
+  newReminderFormModel, nextReminderLevel, parseReminderFee, ReminderLike, reminderDefaults, reminderDisplayName, reminderFeeSum, reminderLevelKey,
+  waivableReminder, waiveInputProblem,
 } from './invoice-reminder.util';
 import { invoiceRefusalReasons } from './invoice-position.util';
 import { invoiceRefusalKeys } from './invoice-i18n';
@@ -26,20 +27,10 @@ describe('invoice reminder util', () => {
     expect(isReminderDue(inv(), '20261020', 10)).toBe(false);
     expect(isReminderDue(inv({ reminders: [{ level: 1, date: '20261021', dueDate: '20261104' }] }), '20261110', 10)).toBe(false);
     expect(isReminderDue(inv({ state: 'paid' }), '20261231', 10)).toBe(false);
-    const three = [1, 2, 3].map(level => ({ level, date: '20250101', dueDate: '20250115' }));
-    expect(isReminderDue(inv({ reminders: three }), '20261231', 10)).toBe(false);
   });
   it('an invalid due date is never due and does not throw', () => {
     expect(isReminderDue(inv({ dueDate: '20261399' }), '20261231', 10)).toBe(false);
     expect(mahnlaufCandidates([inv({ dueDate: '20261399' })], '20261231', 10)).toEqual([]);
-  });
-  it('default fee', () => {
-    expect(defaultReminderFee([0, 2000, 2000], 2)).toBe(2000);
-    expect(defaultReminderFee(undefined, 1)).toBe(0);
-    expect(defaultReminderFee(undefined, 2)).toBe(0);
-    expect(defaultReminderFee(undefined, 3)).toBe(0);
-    expect(defaultReminderFee([500], 2)).toBe(0);
-    expect(defaultReminderFee([-5], 1)).toBe(0);
   });
   it('a legacy reminder without dueDate counts from its date', () => {
     const legacy = inv({ dueDate: '20261001', reminders: [{ level: 1, date: '20261020', dueDate: '' }] });
@@ -66,10 +57,9 @@ describe('reminder actions (client)', () => {
     expect(reminderLevelKey(3)).toBe('reminder_level_3');
   });
 
-  it('offers a reminder on a payable invoice with a level left', () => {
+  it('offers a reminder on a payable invoice ', () => {
     expect(canCreateReminder(inv())).toBe(true);
     expect(canCreateReminder(inv({ state: 'unpaid', reminders: [r(1), r(2)] }))).toBe(true);
-    expect(canCreateReminder(inv({ reminders: [r(1), r(2), r(3)] }))).toBe(false);
     expect(canCreateReminder(inv({ state: 'paid' }))).toBe(false);
     expect(canCreateReminder(inv({ state: 'draft' }))).toBe(false);
   });
@@ -83,12 +73,6 @@ describe('reminder actions (client)', () => {
     expect(canEmailInvoice({ state: 'cancelled', documentKey: 'd' })).toBe(false);
   });
 
-  it('picks the highest reminder that has a PDF', () => {
-    expect(latestReminderWithDocument([r(1, 'a'), r(2, 'b'), r(3)])?.documentKey).toBe('b');
-    expect(latestReminderWithDocument([r(1)])).toBeUndefined();
-    expect(latestReminderWithDocument(undefined)).toBeUndefined();
-  });
-
   it('parses a fee in CHF with at most two decimals', () => {
     expect(parseReminderFee('20')).toBe(20);
     expect(parseReminderFee('20,5')).toBe(20.5);
@@ -98,13 +82,6 @@ describe('reminder actions (client)', () => {
     expect(parseReminderFee('1.234')).toBeUndefined();
     expect(parseReminderFee('')).toBeUndefined();
     expect(parseReminderFee('abc')).toBeUndefined();
-  });
-
-  it('checks the alert input: a full date first, then the fee', () => {
-    expect(reminderInputProblem('20261020', '20.00')).toBeUndefined();
-    expect(reminderInputProblem('', '20')).toBe('date');
-    expect(reminderInputProblem('20261340', '20')).toBe('date');
-    expect(reminderInputProblem('20261020', '-5')).toBe('fee');
   });
 
   it('names a refused reminder mail of a paid or cancelled invoice in the email context', () => {
@@ -171,5 +148,48 @@ describe('reminder actions (client)', () => {
       expect(invoiceRefusalKeys(['account-invalid'], 'waive')).toEqual(['refusal_reminder_account_invalid']);
       expect(invoiceRefusalKeys(['already-waived'], 'email')).toEqual(['refusal_email_already_waived']);
     });
+  });
+});
+
+const tplQr = { okey: 'mahnung', name: 'Mahnung', category: 'dunning', status: 'published', isArchived: false, attachQrSlip: true };
+const tplInf = { okey: 'erinnerung', name: 'Zahlungserinnerung', category: 'dunning', status: 'published', isArchived: false, attachQrSlip: false };
+const names = { reminder_level_1: () => 'Zahlungserinnerung', reminder_level_2: () => '2. Mahnung', reminder_level_3: () => '3. Mahnung' } as never;
+
+describe('1.90 reminder form rules', () => {
+  it('lists published dunning templates only', () => {
+    const list = [tplQr, tplInf, { ...tplQr, okey: 'x', status: 'draft' }, { ...tplQr, okey: 'y', category: 'invoice' }, { ...tplQr, okey: 'z', isArchived: true }];
+    expect(dunningTemplates(list).map(t => t.okey)).toEqual(['mahnung', 'erinnerung']);
+  });
+  it('fee default with legacy fallback', () => {
+    expect(configReminderFee({ reminderFee: 3000 })).toBe(3000);
+    expect(configReminderFee({ reminderFees: [0, 2500, 4000] })).toBe(2500);
+    expect(configReminderFee(undefined)).toBeGreaterThanOrEqual(0);
+  });
+  it('defaults follow the QR slip', () => {
+    expect(reminderDefaults(tplQr, 2000)).toEqual({ feeChf: 20, channel: 'post', attachInvoice: false });
+    expect(reminderDefaults(tplInf, 2000)).toEqual({ feeChf: 0, channel: 'email', attachInvoice: true });
+    expect(reminderDefaults(undefined, 2000)).toEqual({ feeChf: 0, channel: 'email', attachInvoice: true });
+  });
+  it('a template change keeps what the treasurer touched', () => {
+    const m = newReminderFormModel([tplInf, tplQr], 'erinnerung', 2000, 12000, '20261008');
+    expect(m).toMatchObject({ templateId: 'erinnerung', feeChf: 0, channel: 'email', attachInvoice: true, openAmountChf: 120, date: '20261008' });
+    const switched = applyTemplateDefaults({ ...m, templateId: 'mahnung', channel: 'email' }, tplQr, 2000, new Set(['channel']));
+    expect(switched).toMatchObject({ templateId: 'mahnung', feeChf: 20, channel: 'email', attachInvoice: false });
+  });
+  it('preselects the configured template, else the first', () => {
+    expect(newReminderFormModel([tplInf, tplQr], 'mahnung', 2000, 0, '20261008').templateId).toBe('mahnung');
+    expect(newReminderFormModel([tplInf, tplQr], 'gone', 2000, 0, '20261008').templateId).toBe('erinnerung');
+    expect(newReminderFormModel([], '', 2000, 0, '20261008').templateId).toBe('');
+  });
+  it('display name falls back for legacy reminders', () => {
+    expect(reminderDisplayName({ level: 2, templateName: 'Mahnung' }, names)).toBe('Mahnung');
+    expect(reminderDisplayName({ level: 1 }, names)).toBe('Zahlungserinnerung');
+    expect(reminderDisplayName({ level: 3, templateName: '' }, names)).toBe('3. Mahnung');
+  });
+  it('no level limit', () => {
+    const three: ReminderLike[] = [1, 2, 3].map(level => ({ level, date: '20261001', dueDate: '20261010' }));
+    expect(canCreateReminder({ state: 'unpaid', reminders: three })).toBe(true);
+    expect(isReminderDue({ state: 'unpaid', dueDate: '20260901', reminders: three }, '20261101', 10)).toBe(true);
+    expect(mahnlaufCandidates([{ state: 'unpaid', dueDate: '20260901', reminders: three }], '20261101', 10)).toHaveLength(1);
   });
 });

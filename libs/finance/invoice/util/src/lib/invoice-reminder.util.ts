@@ -1,29 +1,20 @@
 import { DEFAULT_REMINDER_FEES } from '@okr/shared-models';
 import { addDuration, classifyStoreDate, isValidPartialStoreDate } from '@okr/shared-util-core';
 
+import type { InvoiceI18n } from './invoice-i18n';
 import { isPayableState, isWaivedReminder, reminderFeeSum, WAIVE_REASON_MAX } from './invoice-payment.util';
 
 export { reminderFeeSum };
 
-/** At most this many reminders per invoice (server mirror: MAX_REMINDER_LEVEL). */
-export const MAX_REMINDER_LEVEL = 3;
-
 /** The reminder fields the rules read; InvoiceModel's reminders satisfy it. */
-export interface ReminderLike { level: number; date: string; dueDate: string; fee?: number; bookingKey?: string; waivedAt?: string }
+export interface ReminderLike {
+  level: number; date: string; dueDate: string; fee?: number; bookingKey?: string; waivedAt?: string;
+  documentKey?: string; templateName?: string; sentAt?: string; sentVia?: string;
+}
 
 /** Highest existing level + 1; 1 when there is none. */
 export function nextReminderLevel(reminders: ReminderLike[] | undefined): number {
   return (reminders ?? []).reduce((m, r) => Math.max(m, r.level ?? 0), 0) + 1;
-}
-
-/**
- * The configured fee of a level (fees[level-1]), never negative. A config without the field (legacy
- * doc) uses the model default DEFAULT_REMINDER_FEES, like the settings form (ruling P3-R2); a level
- * missing from a stored list is 0.
- */
-export function defaultReminderFee(fees: readonly number[] | undefined, level: number): number {
-  const fee = (fees ?? DEFAULT_REMINDER_FEES)[level - 1];
-  return Number.isFinite(fee) ? Math.max(0, fee as number) : 0;
 }
 
 /**
@@ -37,10 +28,9 @@ export function lastDueDate(invoice: { dueDate: string; reminders?: ReminderLike
   return last.dueDate || last.date;
 }
 
-/** Payable, a level left, and the last due date plus the grace days lies before today. */
+/** Payable (no level limit, spec 1.90), and the last due date plus the grace days lies before today. */
 export function isReminderDue(invoice: { state: string; dueDate: string; reminders?: ReminderLike[] }, today: string, graceDays: number): boolean {
   if (!isPayableState(invoice.state)) return false;
-  if (nextReminderLevel(invoice.reminders) > MAX_REMINDER_LEVEL) return false;
   const base = lastDueDate(invoice);
   if (typeof base !== 'string' || classifyStoreDate(base) !== 'full' || !isValidPartialStoreDate(base)) return false;
   return addDuration(base, { days: graceDays }) < today;
@@ -60,9 +50,9 @@ export function reminderLevelKey(level: number): 'reminder_level_1' | 'reminder_
   return 'reminder_level_3';
 }
 
-/** True when the treasurer may create the next reminder: payable and a level left. */
+/** True when the treasurer may create a reminder: the invoice is payable (spec 1.90: no level limit). */
 export function canCreateReminder(invoice: { state: string; reminders?: ReminderLike[] }): boolean {
-  return isPayableState(invoice.state) && nextReminderLevel(invoice.reminders) <= MAX_REMINDER_LEVEL;
+  return isPayableState(invoice.state);
 }
 
 /**
@@ -71,13 +61,6 @@ export function canCreateReminder(invoice: { state: string; reminders?: Reminder
  */
 export function canEmailInvoice(invoice: { state: string; documentKey?: string }): boolean {
   return !['draft', 'issuing', 'cancelled'].includes(invoice.state) && !!invoice.documentKey;
-}
-
-/** The highest-level reminder that has a PDF (what "Mahnung senden" mails), undefined when there is none. */
-export function latestReminderWithDocument<T extends ReminderLike & { documentKey?: string }>(reminders: T[] | undefined): T | undefined {
-  return (reminders ?? [])
-    .filter((r) => !!r.documentKey)
-    .reduce<T | undefined>((best, r) => (!best || (r.level ?? 0) > (best.level ?? 0) ? r : best), undefined);
 }
 
 /**
@@ -89,13 +72,6 @@ export function parseReminderFee(text: unknown): number | undefined {
   if (!/^\d+(\.\d{1,2})?$/.test(s)) return undefined;
   const value = Number(s);
   return Number.isFinite(value) ? value : undefined;
-}
-
-/** Why the reminder alert's input is not accepted yet: a missing date (StoreDate) or an invalid fee. */
-export function reminderInputProblem(date: string, feeText: unknown): 'date' | 'fee' | undefined {
-  if (!/^\d{8}$/.test(date ?? '') || !isValidPartialStoreDate(date) || classifyStoreDate(date) !== 'full') return 'date';
-  if (parseReminderFee(feeText) === undefined) return 'fee';
-  return undefined;
 }
 
 /**
@@ -115,4 +91,71 @@ export function waiveInputProblem(reason: string, date: string): 'reason' | 'dat
   if (trimmed.length < 1 || trimmed.length > WAIVE_REASON_MAX) return 'reason';
   if (!/^\d{8}$/.test(date ?? '') || !isValidPartialStoreDate(date) || classifyStoreDate(date) !== 'full') return 'date';
   return undefined;
+}
+
+export type ReminderChannel = 'email' | 'post';
+export type ReminderDefaultField = 'feeChf' | 'channel' | 'attachInvoice';
+
+export interface ReminderTemplateLike { okey: string; name: string; category?: string; status?: string; isArchived?: boolean; attachQrSlip?: boolean }
+
+/** The reminder dialog (spec 1.90 §6.2); `selectedKeys` are the chosen invoices of a Mahnlauf, unused for one invoice. */
+export interface ReminderFormModel {
+  templateId: string; date: string; feeChf: number; channel: ReminderChannel; attachInvoice: boolean; openAmountChf: number; selectedKeys: string[];
+}
+
+/** What the dialog returns (role `confirm`). */
+export interface ReminderFormResult {
+  templateId: string; templateName: string; date: string; feeChf: number; channel: ReminderChannel; attachInvoice: boolean; selectedKeys: string[];
+}
+
+/** One due invoice in the Mahnlauf dialog. */
+export interface ReminderCandidate { key: string; label: string; openAmountChf: number; lastReminder: string }
+
+/** The templates a reminder may use: category dunning, published, not archived. */
+export function dunningTemplates<T extends ReminderTemplateLike>(templates: T[]): T[] {
+  return templates.filter((t) => t.category === 'dunning' && t.status === 'published' && !t.isArchived);
+}
+
+/** Rappen; reminderFee, else the legacy reminderFees[1], else the model default (spec 1.90 §4.2). */
+export function configReminderFee(config: { reminderFee?: number; reminderFees?: number[] } | undefined): number {
+  const direct = config?.reminderFee;
+  const legacy = config?.reminderFees?.[1];
+  const fee = Number.isFinite(direct) ? (direct as number) : Number.isFinite(legacy) ? (legacy as number) : DEFAULT_REMINDER_FEES[1];
+  return Math.max(0, fee);
+}
+
+/** D3: a template with QR slip replaces the invoice (fee, post, no attachment); one without is informal (no fee, email, attachment). */
+export function reminderDefaults(template: ReminderTemplateLike | undefined, configFeeRappen: number): Pick<ReminderFormModel, ReminderDefaultField> {
+  return template?.attachQrSlip
+    ? { feeChf: configFeeRappen / 100, channel: 'post', attachInvoice: false }
+    : { feeChf: 0, channel: 'email', attachInvoice: true };
+}
+
+/** The model after a template change: its defaults, except for the fields the treasurer changed by hand. */
+export function applyTemplateDefaults(model: ReminderFormModel, template: ReminderTemplateLike | undefined, configFeeRappen: number,
+  touched: ReadonlySet<ReminderDefaultField>): ReminderFormModel {
+  const defaults = reminderDefaults(template, configFeeRappen);
+  const next = { ...model };
+  (Object.keys(defaults) as ReminderDefaultField[]).forEach((field) => {
+    if (!touched.has(field)) (next as Record<ReminderDefaultField, unknown>)[field] = defaults[field];
+  });
+  return next;
+}
+
+export function newReminderFormModel(templates: ReminderTemplateLike[], preselectedId: string, configFeeRappen: number,
+  openAmountRappen: number, today: string, selectedKeys: string[] = []): ReminderFormModel {
+  const template = templates.find((t) => t.okey === preselectedId) ?? templates[0];
+  return {
+    templateId: template?.okey ?? '', date: today, openAmountChf: openAmountRappen / 100, selectedKeys,
+    ...reminderDefaults(template, configFeeRappen),
+  };
+}
+
+/** The reminder's name: its template name, else the 1.76 level naming (spec 1.90 D7). */
+export function reminderDisplayName(r: { level: number; templateName?: string },
+  i18n: Pick<InvoiceI18n, 'reminder_level_1' | 'reminder_level_2' | 'reminder_level_3'>): string {
+  if (r.templateName) return r.templateName;
+  if ((r.level ?? 1) <= 1) return i18n.reminder_level_1();
+  if (r.level === 2) return i18n.reminder_level_2();
+  return i18n.reminder_level_3();
 }

@@ -270,7 +270,7 @@ describe('invoice payment hints (spec 1.86)', () => {
   });
   it('includes unwaived reminder fees in the amount to match', () => {
     const i = inv('a', '20260901', 5000);
-    i.reminders = [{ level: 1, date: '20261001', dueDate: '', isSent: true, documentKey: '', fee: 1000, bookingKey: '', waivedAt: '', waiveBookingKey: '' }];
+    i.reminders = [{ level: 1, templateId: '', templateName: '', sentAt: '', sentVia: '', requestId: '', date: '20261001', dueDate: '', isSent: true, documentKey: '', fee: 1000, bookingKey: '', waivedAt: '', waiveBookingKey: '' }];
     expect(invoicePaymentHints([i], [cand('b', '20261005', 6000)]).get('a')).toBe('b');
   });
 
