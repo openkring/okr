@@ -815,6 +815,11 @@
             "input": "libs/user/feature/src/i18n",
             "output": "./assets/i18n/user/feature"
           },
+          {
+            "glob": "*.json",
+            "input": "libs/project/task/feature/src/i18n",
+            "output": "./assets/i18n/task/feature"
+          },
           "apps/<%= tenantId %>-app/src/firebase-messaging-sw.js",
           "apps/<%= tenantId %>-app/src/firebase-config.js",
           {

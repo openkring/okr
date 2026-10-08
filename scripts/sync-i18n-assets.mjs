@@ -79,7 +79,19 @@ function updateProjectJson(label, projectJsonPath, i18nEntries) {
 const libs = findI18nLibs();
 console.log(`Found ${libs.length} libs with i18n files`);
 
-const i18nEntries = libs.map(makeEntry);
+// Legacy aliases: a lib that moved keeps publishing its i18n under the old asset path for one
+// release, so clients and stored category labels that still use the old scope keep resolving.
+// Spec 3.14 moved libs/task/feature to libs/project/task/feature (the task_state category labels
+// switch from '@task/feature' to '@project/task/feature').
+// TODO: remove the task/feature alias in the release after 3.14.
+const LEGACY_ALIASES = [
+  { input: 'libs/project/task/feature/src/i18n', output: './assets/i18n/task/feature' },
+];
+
+const i18nEntries = [
+  ...libs.map(makeEntry),
+  ...LEGACY_ALIASES.map(a => ({ glob: '*.json', input: a.input, output: a.output })),
+];
 
 const apps = readdirSync(join(ROOT, 'apps')).filter(
   a => existsSync(join(ROOT, 'apps', a, 'project.json'))
