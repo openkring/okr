@@ -194,7 +194,8 @@ export class InvoiceReminderForm {
     const fee = Number(value);
     this.touch('feeChf');
     this.dirty.emit(true);
-    this.formData.update((vm) => ({ ...vm, feeChf: Number.isFinite(fee) ? Math.round(fee * 100) / 100 : 0 }));
+    // no rounding: the Vest rule (at most two decimals) must see 20.555 to show its error; empty input counts as 0
+    this.formData.update((vm) => ({ ...vm, feeChf: Number.isFinite(fee) ? fee : 0 }));
   }
 
   protected onChannelChange(value: unknown): void {
