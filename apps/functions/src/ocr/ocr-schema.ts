@@ -20,7 +20,9 @@ export const OCR_RESPONSE_SCHEMA = {
         required: ['rate', 'amount'],
       },
     },
-    subject:              { type: Type.STRING, description: 'Short description / invoice number' },
+    subject:              { type: Type.STRING, description: 'Short description of what was bought or billed' },
+    invoiceNumber: { type: Type.STRING, description: 'Invoice number as printed (Rechnungsnummer), empty if none' },
+    dueDate:       { type: Type.STRING, description: 'Payment due date as 8 digits yyyymmdd, empty if none' },
     llmProposedAccountId: { type: Type.STRING, description: 'Best-fit account NUMBER from the provided chart, or empty' },
     creditorIban:    { type: Type.STRING, description: 'IBAN of the payee printed on the invoice (payment details), empty if none' },
     creditorName:    { type: Type.STRING, description: 'Name of the payee that owns creditorIban, empty if none' },
@@ -47,6 +49,8 @@ export interface OcrRawExtraction {
   currency: string;
   vatLines?: { rate: number; amount: number }[];
   subject?: string;
+  invoiceNumber?: string;
+  dueDate?: string;
   llmProposedAccountId?: string;
   creditorIban?: string;
   creditorName?: string;
@@ -66,9 +70,11 @@ export function buildOcrPrompt(usage: OcrUsage, accountList: string): string {
   if (usage === 'paper') {
     return `${base} This is a generic document; set grossAmount to 0 if there is no total.`;
   }
-  const kind = usage === 'invoice' ? 'supplier invoice' : 'expense receipt';
+  const kind = usage === 'expense' ? 'expense receipt' : 'supplier invoice';
   return (
     `${base} This is a ${kind}.` +
+    ' Fill invoiceNumber with the invoice number and dueDate (yyyymmdd) with the payment due date if printed; ' +
+    'compute dueDate from a payment term like "30 Tage netto" and the invoice date; otherwise leave them empty.' +
     ' If the document shows payment details (IBAN of the payee, payment reference), fill creditorIban, ' +
     'creditorName, creditorAddress and reference exactly as printed; otherwise leave them empty.' +
     ` For llmProposedAccountId, choose the single best-fit account number ` +

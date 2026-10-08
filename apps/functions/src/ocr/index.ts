@@ -182,7 +182,9 @@ async function extractReceipt(opts: {
       geminiExtract(apiKey, tempFilePath, contentType, ocrUsage, accountList),
       decodeQrBill(objectName, contentType),
     ]);
-    const documentKey = await createVoucher(tenantId, objectName, bucketName, contentType, size, downloadToken);
+    const documentKey = ocrUsage === 'bill'
+      ? ''   // a bill's voucher is created by writeBill in finance-documents (spec 1.91 §5)
+      : await createVoucher(tenantId, objectName, bucketName, contentType, size, downloadToken);
     await resultRef.set({
       tenants: [tenantId], isArchived: false, index: '', ocrUsage,
       storagePath: objectName, correlationKey, documentKey,
@@ -193,6 +195,8 @@ async function extractReceipt(opts: {
       currency: raw.currency || 'CHF',
       vatLines: (raw.vatLines ?? []).map(v => ({ rate: v.rate ?? 0, amount: toCents(v.amount) })),
       subject: raw.subject ?? '',
+      invoiceNumber: (raw.invoiceNumber ?? '').trim().slice(0, 50),
+      dueDate: (raw.dueDate ?? '').replace(/\D/g, '').slice(0, 8),
       confidence: raw.confidence ?? {},
       matchedRuleKey: '', accountKey: '', llmProposedAccountKey: '',
       llmProposedAccountId: raw.llmProposedAccountId ?? '',
@@ -208,6 +212,7 @@ async function extractReceipt(opts: {
       storagePath: objectName, correlationKey, documentKey: '',
       status: 'failed', bookingKey: '',
       creditorIban: '', creditorName: '', creditorAddress: '', reference: '',
+      invoiceNumber: '', dueDate: '',
       error: error instanceof Error ? error.message : String(error),
     }, { merge: true });
     if (ocrUsage === 'expense' && correlationKey) {
