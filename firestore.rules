@@ -581,6 +581,13 @@ service cloud.firestore {
           : (taskStaff() || taskMember(resource.data)));
       allow delete: if tenantDelete() && isPrivileged();
     }
+    // spec 3.14 R2: project names are tenant-readable (task and booking pickers); only staff
+    // create or change projects. Tasks keep their own rules — a project grants no task access.
+    match /projects/{id} {
+      allow read: if tenantRead();
+      allow create, update: if tenantCreateOrDetach() && isPrivileged();
+      allow delete: if tenantDelete() && isPrivileged();
+    }
     match /transfers/{id}          { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
     match /trips/{id}              { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
     match /websiteContent/{id}     { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }

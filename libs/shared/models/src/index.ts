@@ -104,6 +104,7 @@ export * from './lib/swisscities.model';
 export * from './lib/city.model';
 export * from './lib/tag.model';
 export * from './lib/task.model';
+export * from './lib/project.model';
 export * from './lib/transfer.model';
 export * from './lib/trip.model';
 export * from './lib/user.model';

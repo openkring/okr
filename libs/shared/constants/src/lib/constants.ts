@@ -87,6 +87,7 @@ export const DEFAULT_RES_REASON = 'social';
 export const DEFAULT_RES_STATE = 'initial';
 export const DEFAULT_SECTION_TYPE = 'article';
 export const DEFAULT_TASK_STATE = 'initial';
+export const DEFAULT_PROJECT_STATE = 'planned';
 export const DEFAULT_TRANSFER_TYPE = 'purchase';
 export const DEFAULT_TRANSFER_STATE = 'initial';
 export const DEFAULT_WORKREL_TYPE = 'employee';

@@ -35,6 +35,10 @@ export class TaskModel implements OkrModel, PersistedModel, NamedModel, Searchab
   // fractional Kanban rank within its (state) partition; '' = not yet ranked (sorts by dueDate)
   public rank = '';
 
+  // the container this task belongs to, as '<modelType>.<okey>' (e.g. 'project.abc'); '' = backlog.
+  // At most one (spec 3.14 D2); generic so later parents (retro, risk, …) need no new field.
+  public parentKey = DEFAULT_KEY;
+
   // What this task is about — set by the workflow engine (spec 1.35), used for the
   // back-link in the task UI and to deduplicate re-triggered tasks. Legacy documents
   // read these as undefined (Firestore reads do not apply model defaults), so every

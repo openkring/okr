@@ -19,6 +19,7 @@ export class BookingLineModel implements OkrModel {
   public vatCodeKey = '';                    // ref to VatCodeModel (Phase 3)
   public description = '';                   // line text, e.g. one part of a split bank booking; '' = the booking's title
   public costCenterKey = '';                 // ref CostCenterModel (leaf); '' = ohne Kostenstelle. P&L lines only.
+  public projectKey = '';                    // ref ProjectModel — Kostenträger; '' = ohne Projekt (spec 3.14 D8)
   public accountingTenantId = '';
 
   constructor(tenantId: string, accountingTenantId: string) {
