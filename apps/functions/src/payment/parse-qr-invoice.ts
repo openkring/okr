@@ -1,34 +1,34 @@
 import { onCall, HttpsError, CallableRequest } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
-import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
+import { parseSwissQrBill } from '@okr/shared-util-core';
 
 interface ParseQrInvoiceData {
   qrContent: string;
 }
 
-interface ParsedQrInvoice {
+export interface ParsedQrInvoice {
   iban: string;
-  amount: number;
+  amount: number;        // Rappen; 0 = amount left open
   currency: string;
-  reference: string;
+  reference: string;     // '' for reference type NON
   creditorName: string;
-  dueDate: string;
+  message: string;
+  dueDate: string;       // always '': the Swiss QR-bill carries no due date (kept for the client contract)
 }
 
-function parseQrContent(raw: string): ParsedQrInvoice {
-  const lines = raw.split('\n').map(l => l.trim());
-  if (lines[0] !== 'SPC') throw new Error('Not a valid Swiss QR bill (missing SPC header)');
-  const iban = lines[3] ?? '';
-  const amountStr = lines[18] ?? '0';
-  const currency = lines[19] ?? 'CHF';
-  const reference = lines[27] ?? '';
-  const creditorName = lines[5] ?? '';
-  const dueDateRaw = lines[29] ?? '';
-  const dueDate = dueDateRaw
-    ? convertDateFormatToString(dueDateRaw, DateFormat.IsoDate, DateFormat.StoreDate)
-    : '';
-  const amount = Math.round(parseFloat(amountStr) * 100);
-  return { iban, amount, currency, reference, creditorName, dueDate };
+export function parseQrContent(raw: string): ParsedQrInvoice {
+  const qr = parseSwissQrBill(raw.trim());
+  if (!qr) throw new Error('Not a valid Swiss QR bill');
+  const amount = qr.amount ? Math.round(parseFloat(qr.amount) * 100) : 0;
+  return {
+    iban: qr.iban,
+    amount: Number.isFinite(amount) ? amount : 0,
+    currency: qr.currency || 'CHF',
+    reference: qr.referenceType === 'NON' ? '' : qr.reference,
+    creditorName: qr.creditorName,
+    message: qr.message,
+    dueDate: '',
+  };
 }
 
 export const parseQrInvoice = onCall(
