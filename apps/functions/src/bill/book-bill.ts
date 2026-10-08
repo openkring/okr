@@ -61,6 +61,8 @@ export const bookBill = onCall(
     // Kostenträger (spec 1.92 D2): plain reads before the transaction, like writeBooking; the lines are re-checked against this set inside it
     assertProjectKeyShapes(preLines);
     await assertProjectsAssignable(db, tenantId, preLines);
+    // the account existence / leaf check first, so an unknown account is reported as such and not as 'project-invalid'
+    for (const accountKey of new Set(preLines.map((l) => l.accountKey))) await assertLeafAccount(db, accountingTenantId, accountKey);
     assertProjectsOnProfitAndLoss(ccCtx.accounts, preLines);
     const checkedProjectKeys = new Set(preLines.map((l) => (l.projectKey ?? '').trim()).filter((k) => !!k));
 

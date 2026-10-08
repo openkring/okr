@@ -4,7 +4,7 @@ import { SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { BillModel } from '@okr/shared-models';
 import { baseValidations, dateValidations, isAfterDate, stringValidations } from '@okr/shared-util-core';
 
-import { BILL_IBAN_LENGTH, BILL_REFERENCE_LENGTH } from './bill-line.util';
+import { BILL_IBAN_LENGTH, BILL_REFERENCE_LENGTH, BILL_TITLE_MAX_LENGTH } from './bill-line.util';
 
 /**
  * The header of a native draft bill (spec 1.85). State, total, payments and payment date are
@@ -35,10 +35,13 @@ export const billValidations = staticSuite((model: BillModel, tenants: string, t
  * change is validated, so a legacy or migrated bill (missing billId / billDate, odd locked values) can
  * be saved. Title always; due date, reference and IBAN only while not paid; the due-date-after-bill-date
  * rule only for a due date that differs from the stored one.
- * @param stored the bill as loaded, before the edit
+ * @param stored the bill as loaded, before the edit (title and due date)
  */
-export const billDetailsValidations = staticSuite((model: BillModel, stored: Pick<BillModel, 'dueDate'>) => {
-  stringValidations('title', model.title, SHORT_NAME_LENGTH);
+export const billDetailsValidations = staticSuite((model: BillModel, stored: Pick<BillModel, 'dueDate'> & { title?: string }) => {
+  // an untouched title is never re-validated (migrated / scanned names can exceed 30); a changed one is held to the server limit
+  omitWhen(stored?.title !== undefined && (model.title ?? '') === stored.title, () => {
+    stringValidations('title', model.title, BILL_TITLE_MAX_LENGTH);
+  });
   omitWhen(model.state === 'paid', () => {
     dateValidations('dueDate', model.dueDate);
     stringValidations('paymentReference', model.paymentReference ?? '', BILL_REFERENCE_LENGTH);

@@ -9,6 +9,8 @@ export const BILL_LINE_TITLE_LENGTH = 200;
 export const BILL_REFERENCE_LENGTH = 40;
 /** An IBAN has at most 34 characters. */
 export const BILL_IBAN_LENGTH = 34;
+/** the title limit the Cloud Functions enforce (write-bill / update-bill-details); migrated and scanned titles can exceed SHORT_NAME_LENGTH */
+export const BILL_TITLE_MAX_LENGTH = 200;
 
 /** A new, empty bill line on `accountKey` (the books' default expense account, or ''). */
 export function newBillLine(accountKey = '', amount = 0, title = ''): BillLine {

@@ -9,7 +9,7 @@ import { DateInput, DateInputI18n, ErrorNote, NotesInput, NotesInputI18n, TextIn
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, getFullName } from '@okr/shared-util-core';
 
-import { BILL_IBAN_LENGTH, BILL_REFERENCE_LENGTH, BillI18n, billDetailsValidations, billValidations, isBillPaymentDataEditable } from '@okr/finance-bill-util';
+import { BILL_IBAN_LENGTH, BILL_REFERENCE_LENGTH, BILL_TITLE_MAX_LENGTH, BillI18n, billDetailsValidations, billValidations, isBillPaymentDataEditable } from '@okr/finance-bill-util';
 
 import { BillLinesForm } from './bill-lines.form';
 
@@ -56,7 +56,7 @@ import { BillLinesForm } from './bill-lines.form';
                 </ion-col>
                 <ion-col size="12" size-md="8">
                   <okr-text-input [i18n]="titleI18n()" [value]="title()" (valueChange)="onFieldChange('title', $event)"
-                    [autofocus]="structureLocked() && !isReadOnly()" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
+                    [autofocus]="structureLocked() && !isReadOnly()" [maxLength]="titleMaxLength()" [readOnly]="isReadOnly()" />
                   <okr-error-note [errors]="titleErrors()" />
                 </ion-col>
               </ion-row>
@@ -98,6 +98,8 @@ import { BillLinesForm } from './bill-lines.form';
 export class BillEditForm {
   /** kept in step with the caps the Vest suite enforces on these fields */
   protected readonly shortNameLength = SHORT_NAME_LENGTH;
+  /** details mode enforces the server's title limit (suite and template share it); draft keeps the short name length */
+  protected readonly titleMaxLength = computed(() => (this.mode() === 'details' ? BILL_TITLE_MAX_LENGTH : SHORT_NAME_LENGTH));
   protected readonly referenceLength = BILL_REFERENCE_LENGTH;
   protected readonly ibanLength = BILL_IBAN_LENGTH;
 
@@ -120,6 +122,8 @@ export class BillEditForm {
   public readonly mode = input<'draft' | 'details'>('draft');
   /** details mode: the due date as stored, so the due-date-after-bill-date rule applies only to a changed one */
   public readonly storedDueDate = input('');
+  /** details mode: the title as stored, so an untouched (possibly over-long migrated) title is not re-validated */
+  public readonly storedTitle = input<string | undefined>(undefined);
   public readonly showForm = input(true);
   public readonly i18n = input.required<BillI18n>();
 
@@ -138,7 +142,7 @@ export class BillEditForm {
   // The suite needs the tags, which validateVestTree does not pass — so the bridge calls it
   // through a closure that adds them.
   private readonly suiteWithContext = (model: BillModel) =>
-    this.mode() === 'details' ? billDetailsValidations(model, { dueDate: this.storedDueDate() }) : billValidations(model, '', this.allTags());
+    this.mode() === 'details' ? billDetailsValidations(model, { dueDate: this.storedDueDate(), title: this.storedTitle() }) : billValidations(model, '', this.allTags());
   protected readonly billForm = form(this.formData, (path) =>
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     validateVestTree(path, this.suiteWithContext as any));

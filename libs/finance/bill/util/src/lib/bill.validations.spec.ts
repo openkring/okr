@@ -28,6 +28,19 @@ describe('billDetailsValidations', () => {
   it('refuses a too long title', () => {
     expect(billDetailsValidations(bill({ title: 'x'.repeat(500) }), { dueDate: '20261001' }).isValid()).toBe(false);
   });
+
+  it('accepts an unchanged 120-char title', () => {
+    const title = 'x'.repeat(120);
+    expect(billDetailsValidations(bill({ title }), { dueDate: '20261001', title }).isValid()).toBe(true);
+  });
+
+  it('refuses a changed 250-char title', () => {
+    expect(billDetailsValidations(bill({ title: 'x'.repeat(250) }), { dueDate: '20261001', title: 'old' }).isValid()).toBe(false);
+  });
+
+  it('accepts a changed 150-char title', () => {
+    expect(billDetailsValidations(bill({ title: 'x'.repeat(150) }), { dueDate: '20261001', title: 'old' }).isValid()).toBe(true);
+  });
 });
 
 describe('billLineDetailsValidations', () => {
