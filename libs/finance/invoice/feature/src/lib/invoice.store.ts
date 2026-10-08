@@ -9,28 +9,27 @@ import { take } from 'rxjs/operators';
 
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
-import { AccountModel, DEFAULT_REMINDER_GRACE_DAYS, InvoiceCollection, InvoiceModel, OrgModelName, PersonModelName } from '@okr/shared-models';
+import { AccountModel, DEFAULT_REMINDER_GRACE_DAYS, InvoiceCollection, InvoiceModel, InvoiceReminder, OrgModelName, PersonModelName } from '@okr/shared-models';
 import { confirm, exportCsv, notify, resourceParams, showToast } from '@okr/shared-util-angular';
 import {
   convertDateFormatToString, DateFormat, debugListLoaded, fill, getSystemQuery, getTodayStr, getYear, hasRole, nameMatches,
 } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
 
-import { InvoiceEmailDraft, InvoiceService } from '@okr/finance-invoice-data-access';
-import { InvoicePaymentModal } from '@okr/finance-invoice-ui';
+import { InvoiceEmailDraft, InvoiceService, ReminderPrintItem } from '@okr/finance-invoice-data-access';
+import { InvoicePaymentModal, InvoiceReminderModal } from '@okr/finance-invoice-ui';
 import {
-  buildPaymentConfirmationPayload, canCreatePaymentConfirmation, canCreateReminder, canEmailInvoice, cancelInputProblem, isPayableState, defaultReminderFee,
+  buildPaymentConfirmationPayload, canCreatePaymentConfirmation, canCreateReminder, canEmailInvoice, cancelInputProblem, configReminderFee, dunningTemplates, isPayableState,
   draftInvoicesOf, formatPaymentChf, invoiceDisplayState, invoicePaymentHints, invoicePaymentHintWindow, linkedInvoicePaymentKeys, getInvoiceExportData, INVOICE_CANCEL_REASON_LENGTH, INVOICE_I18N_KEYS, InvoiceI18n, InvoicePaymentCandidate,
-  InvoicePaymentInput, invoiceRefusalReasons, invoiceRefusalText, invoicesForList, isDraftInvoice, isRetryablePaymentRefusal, latestReminderWithDocument,
-  mahnlaufCandidates, newDraftInvoice, newInvoicePaymentFormModel, newPaymentId, nextReminderLevel, openInvoiceAmount, parseReminderFee,
-  PAYMENT_CONFIRMATION_TEMPLATE_ID, reminderInputProblem, reminderLevelKey, waivableReminder, waiveInputProblem, WAIVE_REASON_MAX,
+  InvoicePaymentInput, invoiceRefusalReasons, invoiceRefusalText, invoicesForList, isDraftInvoice, isRetryablePaymentRefusal,
+  mahnlaufCandidates, newDraftInvoice, newInvoicePaymentFormModel, newPaymentId, newReminderFormModel, openInvoiceAmount,
+  PAYMENT_CONFIRMATION_TEMPLATE_ID, ReminderCandidate, reminderDisplayName, ReminderFormResult, waivableReminder, waiveInputProblem, WAIVE_REASON_MAX,
 } from '@okr/finance-invoice-util';
-import { FinanceDocumentService } from '@okr/finance-accounting-data-access';
 import { AccountService } from '@okr/finance-account-data-access';
 import { AccountingStore } from '@okr/finance-accounting-feature';
 import { ReceiptParty } from '@okr/finance-booking-util';
 import { downloadFromUrl } from '@okr/finance-reporting-util';
-import { DocGenerationService } from '@okr/content-pdf-template-data-access';
+import { DocGenerationService, TemplateService } from '@okr/content-pdf-template-data-access';
 // type-only: the composer itself is imported dynamically in sendDocument (no static edge into the ui lib)
 import type { ComposedEmail } from '@okr/content-pdf-template-ui';
 import { AddressService } from '@okr/subject-address-data-access';
@@ -95,7 +94,7 @@ export const InvoiceStore = signalStore(
       personService: inject(PersonService),
       orgService: inject(OrgService),
       docGenerationService: inject(DocGenerationService),
-      financeDocumentService: inject(FinanceDocumentService),
+      templateService: inject(TemplateService),
       appStore,
       accountingStore: inject(AccountingStore),
       firestoreService: inject(FirestoreService),
@@ -139,6 +138,8 @@ export const InvoiceStore = signalStore(
         ).pipe(debugListLoaded('InvoiceStore.allInvoices', params.currentUser));
       },
     }),
+    /** every template of the tenant; the dunning ones are filtered in dunningTemplates (spec 1.90) */
+    dunningTemplatesResource: rxResource({ stream: () => store.templateService.list() }),
   })),
 
   withComputed((store) => ({
@@ -148,6 +149,8 @@ export const InvoiceStore = signalStore(
     linkedPaymentKeys: computed(() => linkedInvoicePaymentKeys(store.allInvoicesResource.value() ?? [])),
     // legacy config docs lack the field (Firestore reads skip model defaults)
     receivablesAccountKey: computed(() => store.accountingStore.config()?.receivablesAccountKey ?? ''),
+    /** the templates a reminder may use: category dunning, published, not archived (spec 1.90) */
+    dunningTemplates: computed(() => dunningTemplates(store.dunningTemplatesResource.value() ?? [])),
   })),
 
   /**
@@ -495,7 +498,7 @@ export const InvoiceStore = signalStore(
     async waiveReminderFee(invoice: InvoiceModel): Promise<void> {
       const reminder = waivableReminder(invoice);
       if (!reminder || store.accountingStore.isExternallyManaged() !== false) return;
-      const levelLabel = store.i18n[reminderLevelKey(reminder.level)]();
+      const levelLabel = this.reminderName(reminder);
       const message = store.i18n.waive_fee_message();
       let input: { reason: string; date: string } | undefined;
       const alert = await store.alertController.create({
@@ -589,16 +592,39 @@ export const InvoiceStore = signalStore(
       return fill(store.i18n.document_invoice(), { invoiceId: invoice.invoiceId || invoice.okey });
     },
 
-    /** "2. Mahnung zu Rechnung 202600001" — how a confirm alert or toast names a reminder PDF. */
-    reminderDocumentLabel(invoice: InvoiceModel, level: number): string {
-      return fill(store.i18n.document_reminder(), { level: store.i18n[reminderLevelKey(level)](), invoiceId: invoice.invoiceId || invoice.okey });
+    /** A reminder's name: its template name, else the 1.76 level naming (spec 1.90 D7). */
+    reminderName(reminder: { level: number; templateName?: string }): string {
+      return reminderDisplayName(reminder, store.i18n);
+    },
+
+    /** "Mahnung zu Rechnung 202600001" — how a confirm alert or toast names a reminder PDF. */
+    reminderDocumentLabel(invoice: InvoiceModel, reminder: { level: number; templateName?: string }): string {
+      return fill(store.i18n.document_reminder(), { level: this.reminderName(reminder), invoiceId: invoice.invoiceId || invoice.okey });
     },
 
     /**
-     * Creates the next reminder of an open invoice (spec 1.76 phase 3): asks for the date (today by
-     * default) and the fee in CHF (the configured fee of the level by default), then `createInvoiceReminder`
-     * renders the PDF and books the fee. The toast names the open amount from the callable's answer; then
-     * the reminder can be mailed right away.
+     * Downloads a signed print PDF of reminders (merged, the invoice attached on request) from
+     * `getReminderPrintPdf`; falls back to opening the link when the blob download is blocked.
+     * @returns false when the PDF could not be made (the toast says why)
+     */
+    async downloadPrint(items: ReminderPrintItem[]): Promise<boolean> {
+      try {
+        const { url, filename } = await store.invoiceService.getReminderPrintPdf(items);
+        const saved = await downloadFromUrl(url, filename);
+        if (!saved) window.open(url, '_blank');
+        return true;
+      } catch (e) {
+        console.error('InvoiceStore.downloadPrint: getReminderPrintPdf failed', e);
+        await showToast(store.toastController, invoiceRefusalText(invoiceRefusalReasons(e), store.i18n, store.i18n.reminder_show_error(), 'reminder'));
+        return false;
+      }
+    },
+
+    /**
+     * Creates a reminder of an open invoice (spec 1.90): the reminder dialog asks for the dunning template,
+     * date, fee, channel and whether to attach the invoice; `createInvoiceReminder` renders the PDF and books
+     * the fee. The toast names the open amount from the callable's answer; then the reminder goes out by
+     * email (composer) or by post (print PDF, then marked as posted on confirmation).
      */
     async createReminder(invoice: InvoiceModel): Promise<void> {
       if (!canCreateReminder(invoice) || store.accountingStore.isExternallyManaged() !== false) return;
@@ -607,51 +633,26 @@ export const InvoiceStore = signalStore(
         await showToast(store.toastController, store.i18n.refusal_no_accounting_config());
         return;
       }
-      const level = nextReminderLevel(invoice.reminders);
-      const levelLabel = store.i18n[reminderLevelKey(level)]();
-      // legacy config docs lack the field (Firestore reads skip model defaults): defaultReminderFee then
-      // uses the model default DEFAULT_REMINDER_FEES, exactly like the server (ruling P3-R2)
-      const defaultFee = formatPaymentChf(defaultReminderFee(config.reminderFees, level));
-      const message = store.i18n.reminder_create_message();
-      let input: { date: string; fee: number } | undefined;
-      const alert = await store.alertController.create({
-        header: levelLabel,
-        message,
-        inputs: [
-          { name: 'date', type: 'date', value: getTodayStr(DateFormat.IsoDate), attributes: { 'aria-label': store.i18n.reminder_date() } },
-          { name: 'fee', type: 'text', value: defaultFee, placeholder: store.i18n.reminder_fee(),
-            attributes: { inputmode: 'decimal', 'aria-label': store.i18n.reminder_fee() } },
-        ],
-        buttons: [
-          { text: store.i18n.cancel(), role: 'cancel' },
-          {
-            text: store.i18n.reminder_create_ok(),
-            role: 'confirm',
-            handler: (values: { date?: string; fee?: string }) => {
-              const date = values?.date ? (convertDateFormatToString(values.date, DateFormat.IsoDate, DateFormat.StoreDate, false) || '') : '';
-              const problem = reminderInputProblem(date, values?.fee);
-              if (problem) {
-                // keep the alert open and say what is missing
-                alert.message = `${message} ${problem === 'date' ? store.i18n.reminder_date_invalid() : store.i18n.reminder_fee_invalid()}`;
-                return false;
-              }
-              input = { date, fee: parseReminderFee(values?.fee) ?? 0 };
-              return true;
-            },
-          },
-        ],
+      const templates = store.dunningTemplates();
+      const feeRappen = configReminderFee(config);
+      // legacy config docs lack the field (Firestore reads skip model defaults)
+      const model = newReminderFormModel(templates, config.reminderTemplateId ?? '', feeRappen, openInvoiceAmount(invoice), getTodayStr());
+      const modal = await store.modalController.create({
+        component: InvoiceReminderModal,
+        componentProps: { model, templates, configFeeRappen: feeRappen },
       });
-      await alert.present();
-      const { role } = await alert.onDidDismiss();
-      if (role !== 'confirm' || !input) return;
+      await modal.present();
+      const { data, role } = await modal.onWillDismiss<ReminderFormResult>();
+      if (role !== 'confirm' || !data) return;
 
-      let documentKey = '';
+      let reminder: InvoiceReminder | undefined;
       try {
-        const result = await store.invoiceService.createReminder(invoice.okey, level, input.date, input.fee, store.appStore.currentUser() ?? undefined);
-        documentKey = result.reminder?.documentKey ?? '';
+        const result = await store.invoiceService.createReminder(invoice.okey, { templateId: data.templateId, date: data.date, feeChf: data.feeChf },
+          crypto.randomUUID(), store.appStore.currentUser() ?? undefined);
+        reminder = result.reminder;
         // derived from the callable's answer: a re-read right after the write may still be the old snapshot
         await showToast(store.toastController, fill(store.i18n.reminder_conf(), {
-          document: levelLabel, date: viewDate(result.reminder?.date ?? input.date), open: formatPaymentChf(result.openAmount),
+          document: data.templateName, date: viewDate(result.reminder?.date ?? data.date), open: formatPaymentChf(result.openAmount),
         }));
       } catch (e) {
         console.error('InvoiceStore.createReminder: createInvoiceReminder failed', e);
@@ -660,11 +661,35 @@ export const InvoiceStore = signalStore(
         return;
       }
       patchState(store, { version: store.version() + 1 });
-      if (!documentKey) return;
-      const label = this.reminderDocumentLabel(invoice, level);
-      const sendNow = await confirm(store.alertController, fill(store.i18n.reminder_send_now(), { document: label }),
-        store.i18n.email_ok(), store.i18n.reminder_later(), true);
-      if (sendNow) await this.sendDocument(invoice, documentKey, label);
+      if (!reminder?.documentKey) return;
+      if (data.channel === 'email') {
+        await this.sendDocument(invoice, reminder.documentKey, this.reminderDocumentLabel(invoice, reminder), data.attachInvoice);
+      } else {
+        await this.printAndMarkPosted(invoice, [{ invoiceKey: invoice.okey, documentKey: reminder.documentKey, attachInvoice: data.attachInvoice }]);
+      }
+    },
+
+    /** Prints the reminders (merged in chunks of 50, invoice attached on request), then asks once whether they went out by post. */
+    async printAndMarkPosted(invoice: InvoiceModel | undefined, items: ReminderPrintItem[]): Promise<void> {
+      if (items.length === 0) return;
+      for (let i = 0; i < items.length; i += 50) {
+        if (!(await this.downloadPrint(items.slice(i, i + 50)))) return;
+      }
+      const question = items.length === 1 ? store.i18n.reminder_post_confirm() : fill(store.i18n.reminder_post_confirm_all(), { count: items.length });
+      const posted = await confirm(store.alertController, question, store.i18n.email_post_ok(), store.i18n.reminder_later(), true);
+      if (!posted) return;
+      const currentUser = store.appStore.currentUser() ?? undefined;
+      const failed: string[] = [];
+      for (const item of items) {
+        try {
+          await store.invoiceService.markSentByPost(item.invoiceKey, currentUser, item.documentKey);
+        } catch (e) {
+          console.error(`InvoiceStore.printAndMarkPosted: markInvoiceSent failed for ${item.invoiceKey}`, e);
+          failed.push(invoice?.okey === item.invoiceKey ? invoiceLabel(invoice) : item.invoiceKey);
+        }
+      }
+      patchState(store, { version: store.version() + 1 });
+      await showToast(store.toastController, failed.length === 0 ? store.i18n.reminder_post_conf() : `${store.i18n.email_post_error()} ${failed.join(', ')}`);
     },
 
     /** Mails the invoice PDF (spec 1.76 D12) through the email composer. */
@@ -673,25 +698,45 @@ export const InvoiceStore = signalStore(
       await this.sendDocument(invoice, invoice.documentKey, this.invoiceDocumentLabel(invoice));
     },
 
-    /** Mails the latest reminder that has a PDF through the email composer. */
-    async sendReminderEmail(invoice: InvoiceModel): Promise<void> {
-      const reminder = latestReminderWithDocument(invoice.reminders);
+    /** Mails one reminder PDF through the email composer, the invoice attached on request. */
+    async sendReminderEmail(invoice: InvoiceModel, reminder: InvoiceReminder, attachInvoice = false): Promise<void> {
       // a paid or cancelled invoice gets no reminder mail (the server refuses it too)
-      if (!reminder || !isPayableState(invoice.state) || store.accountingStore.isExternallyManaged() !== false) return;
-      await this.sendDocument(invoice, reminder.documentKey, this.reminderDocumentLabel(invoice, reminder.level));
+      if (!isPayableState(invoice.state) || store.accountingStore.isExternallyManaged() !== false || !reminder.documentKey) return;
+      await this.sendDocument(invoice, reminder.documentKey, this.reminderDocumentLabel(invoice, reminder), attachInvoice);
+    },
+
+    /** Downloads one reminder PDF (signed print link, no invoice attached). */
+    async downloadReminderPdf(invoice: InvoiceModel, reminder: InvoiceReminder): Promise<void> {
+      if (!reminder.documentKey) return;
+      await this.downloadPrint([{ invoiceKey: invoice.okey, documentKey: reminder.documentKey, attachInvoice: false }]);
+    },
+
+    /** Records that one reminder was printed and sent by post today. */
+    async markReminderPosted(invoice: InvoiceModel, reminder: InvoiceReminder): Promise<void> {
+      if (!reminder.documentKey) return;
+      const ok = await confirm(store.alertController, store.i18n.reminder_post_confirm(), store.i18n.email_post_ok(), store.i18n.cancel(), true);
+      if (!ok) return;
+      try {
+        await store.invoiceService.markSentByPost(invoice.okey, store.appStore.currentUser() ?? undefined, reminder.documentKey);
+        await showToast(store.toastController, store.i18n.reminder_post_conf());
+      } catch (e) {
+        console.error('InvoiceStore.markReminderPosted: markInvoiceSent failed', e);
+        await showToast(store.toastController, invoiceRefusalText(invoiceRefusalReasons(e), store.i18n, store.i18n.email_post_error()));
+      }
+      patchState(store, { version: store.version() + 1 });
     },
 
     /**
      * Sends one document of an invoice by email through the email composer: it opens with the server's
      * suggestion (the receiver's favourite email, the tenant sender, the fixed subject and body) and the
      * treasurer may change recipients (to/cc/bcc), sender, subject and body or add files. The server attaches
-     * the PDF and marks the invoice/reminder as sent. A send is not idempotent, so a failure is reported
-     * in the composer and not retried.
+     * the PDF (and the invoice PDF when `attachInvoice`) and marks the invoice/reminder as sent. A send is not
+     * idempotent, so a failure is reported in the composer and not retried.
      */
-    async sendDocument(invoice: InvoiceModel, documentKey: string, label: string): Promise<void> {
+    async sendDocument(invoice: InvoiceModel, documentKey: string, label: string, attachInvoice = false): Promise<void> {
       let draft: InvoiceEmailDraft;
       try {
-        draft = await store.invoiceService.getEmailDraft(invoice.okey, documentKey);
+        draft = await store.invoiceService.getEmailDraft(invoice.okey, documentKey, attachInvoice);
       } catch (e) {
         console.error('InvoiceStore.sendDocument: getInvoiceEmailDraft failed', e);
         await showToast(store.toastController, invoiceRefusalText(invoiceRefusalReasons(e), store.i18n, store.i18n.email_error(), 'email'));
@@ -700,7 +745,7 @@ export const InvoiceStore = signalStore(
       const currentUser = store.appStore.currentUser() ?? undefined;
       const sendHandler = async (mail: ComposedEmail): Promise<void> => {
         try {
-          await store.invoiceService.sendEmail(invoice.okey, documentKey, currentUser, mail);
+          await store.invoiceService.sendEmail(invoice.okey, documentKey, currentUser, mail, attachInvoice);
         } catch (e) {
           console.error('InvoiceStore.sendDocument: sendInvoiceEmail failed', e);
           // the composer shows this text and stays open
@@ -727,66 +772,52 @@ export const InvoiceStore = signalStore(
     },
 
     /**
-     * Opens the latest reminder PDF: `signFinanceDocuments` (treasurer/privileged) hands out a short-lived
-     * link to the private file, which is downloaded as a blob (a tab opened this long after the tap would
-     * be blocked), else opened directly.
-     */
-    async showReminderPdf(invoice: InvoiceModel): Promise<void> {
-      const reminder = latestReminderWithDocument(invoice.reminders);
-      if (!reminder) return;
-      try {
-        const [voucher] = await store.financeDocumentService.sign([reminder.documentKey]);
-        if (!voucher?.url) {
-          await showToast(store.toastController, store.i18n.reminder_show_error());
-          return;
-        }
-        const saved = await downloadFromUrl(voucher.url, `Mahnung-${reminder.level}-${invoice.invoiceId || invoice.okey}.pdf`);
-        if (!saved) window.open(voucher.url, '_blank');
-      } catch (e) {
-        console.error('InvoiceStore.showReminderPdf: signFinanceDocuments failed', e);
-        await showToast(store.toastController, store.i18n.reminder_show_error());
-      }
-    },
-
-    /**
-     * Mahnlauf (spec 1.76 phase 3): creates the next reminder of every due invoice of the list, one after
-     * the other, each at its own next level with the configured fee, dated today; optionally mails each
-     * one right after it was created. A refusal does not stop the run; a failed send does not undo the
-     * reminder it belongs to and is listed on its own in the summary at the end.
+     * Mahnlauf (spec 1.90): the reminder dialog lists the due invoices of the list (all selected) and asks
+     * once for template, date, fee, channel and attachment; then a reminder is created for every selected
+     * invoice, one after the other. Email: each one is mailed right away (no composer). Post: the PDFs are
+     * printed merged at the end, then marked as posted on confirmation. A refusal does not stop the run;
+     * a failed send does not undo its reminder and is listed on its own in the summary.
      */
     async runMahnlauf(): Promise<void> {
       if (store.accountingStore.isExternallyManaged() !== false || !hasRole('treasurer', store.appStore.currentUser())) return;
-      const candidates = store.mahnlaufInvoices();
-      if (candidates.length === 0) return;
-      const alert = await store.alertController.create({
-        header: store.i18n.mahnlauf(),
-        message: candidates.length === 1 ? store.i18n.mahnlauf_confirm_one() : fill(store.i18n.mahnlauf_confirm(), { count: candidates.length }),
-        buttons: [
-          { text: store.i18n.cancel(), role: 'cancel' },
-          { text: store.i18n.mahnlauf_create(), role: 'create' },
-          { text: store.i18n.mahnlauf_create_and_send(), role: 'send' },
-        ],
+      const due = store.mahnlaufInvoices();
+      const config = store.accountingStore.config();
+      if (due.length === 0 || !config) return;
+      const templates = store.dunningTemplates();
+      const feeRappen = configReminderFee(config);
+      const candidates: ReminderCandidate[] = due.map((invoice) => {
+        const last = [...(invoice.reminders ?? [])].sort((a, b) => (b.level ?? 0) - (a.level ?? 0))[0];
+        return {
+          key: invoice.okey, label: invoiceLabel(invoice), openAmountChf: openInvoiceAmount(invoice) / 100,
+          lastReminder: last ? `${this.reminderName(last)} ${viewDate(last.date)}` : '',
+        };
       });
-      await alert.present();
-      const { role } = await alert.onDidDismiss();
-      if (role !== 'create' && role !== 'send') return;
-      const andSend = role === 'send';
+      // legacy config docs lack the field (Firestore reads skip model defaults)
+      const model = newReminderFormModel(templates, config.reminderTemplateId ?? '', feeRappen, 0, getTodayStr(), due.map((i) => i.okey));
+      const modal = await store.modalController.create({
+        component: InvoiceReminderModal,
+        componentProps: { model, templates, configFeeRappen: feeRappen, candidates },
+      });
+      await modal.present();
+      const { data, role } = await modal.onWillDismiss<ReminderFormResult>();
+      if (role !== 'confirm' || !data) return;
 
-      const today = getTodayStr();
+      const selected = due.filter((i) => data.selectedKeys.includes(i.okey));
+      if (selected.length === 0) return;
       const currentUser = store.appStore.currentUser() ?? undefined;
-      const progress = await store.toastController.create({ message: fill(store.i18n.mahnlauf_progress(), { n: 0, m: candidates.length }) });
+      const progress = await store.toastController.create({ message: fill(store.i18n.mahnlauf_progress(), { n: 0, m: selected.length }) });
       await progress.present();
       let created = 0;
       let sent = 0;
       const failures: string[] = [];
       const sendFailures: string[] = [];
-      for (const [i, invoice] of candidates.entries()) {
-        progress.message = fill(store.i18n.mahnlauf_progress(), { n: i + 1, m: candidates.length });
-        const level = nextReminderLevel(invoice.reminders);
+      const toPrint: ReminderPrintItem[] = [];
+      for (const [i, invoice] of selected.entries()) {
+        progress.message = fill(store.i18n.mahnlauf_progress(), { n: i + 1, m: selected.length });
         let documentKey = '';
         try {
-          // no fee: the server takes the configured fee of the level
-          const result = await store.invoiceService.createReminder(invoice.okey, level, today, undefined, currentUser);
+          const result = await store.invoiceService.createReminder(invoice.okey, { templateId: data.templateId, date: data.date, feeChf: data.feeChf },
+            crypto.randomUUID(), currentUser);
           created++;
           documentKey = result.reminder?.documentKey ?? '';
         } catch (e) {
@@ -794,13 +825,16 @@ export const InvoiceStore = signalStore(
           failures.push(`${invoiceLabel(invoice)}: ${invoiceRefusalText(invoiceRefusalReasons(e), store.i18n, store.i18n.reminder_error(), 'reminder')}`);
           continue;
         }
-        if (!andSend) continue;
         if (!documentKey) {
           sendFailures.push(`${invoiceLabel(invoice)}: ${store.i18n.refusal_no_document()}`);
           continue;
         }
+        if (data.channel === 'post') {
+          toPrint.push({ invoiceKey: invoice.okey, documentKey, attachInvoice: data.attachInvoice });
+          continue;
+        }
         try {
-          await store.invoiceService.sendEmail(invoice.okey, documentKey, currentUser);
+          await store.invoiceService.sendEmail(invoice.okey, documentKey, currentUser, undefined, data.attachInvoice);
           sent++;
         } catch (e) {
           console.error(`InvoiceStore.runMahnlauf: sendInvoiceEmail failed for ${invoice.okey}`, e);
@@ -810,11 +844,12 @@ export const InvoiceStore = signalStore(
       await progress.dismiss();
       patchState(store, { version: store.version() + 1 });
 
-      const parts = [fill(store.i18n.mahnlauf_done(), { created, total: candidates.length })];
-      if (andSend) parts.push(fill(store.i18n.mahnlauf_sent(), { sent }));
+      const parts = [fill(store.i18n.mahnlauf_done(), { created, total: selected.length })];
+      if (data.channel === 'email') parts.push(fill(store.i18n.mahnlauf_sent(), { sent }));
       if (failures.length > 0) parts.push(`${store.i18n.mahnlauf_failed()} ${failures.join(' · ')}`);
       if (sendFailures.length > 0) parts.push(`${store.i18n.mahnlauf_send_failed()} ${sendFailures.join(' · ')}`);
       await confirm(store.alertController, parts.join(' '), store.i18n.ok(), store.i18n.cancel(), false);
+      if (toPrint.length > 0) await this.printAndMarkPosted(undefined, toPrint);
     },
 
     async export(type: string, invoices: InvoiceModel[]): Promise<void> {
