@@ -61,7 +61,7 @@ Invoke the matching skill **before** starting work in its area — each one carr
 Docs are organised by **type**: `planning/ideas/` (seed/stub specs), `planning/specs/` (all spec & design docs,
 kept here for their whole life), `planning/plans/` (implementation plans), `planning/reference/` (reference
 docs). Specs are **not moved on completion**; status lives in `planning/PENDING_IMPLEMENTATION.md` (the TOC,
-chapters 1–3), `planning/DONE_IMPLEMENTATION.md` (chapter 4, fully implemented) and
+chapters 1–3 and 7 «To test»), `planning/DONE_IMPLEMENTATION.md` (chapter 4, fully implemented) and
 `planning/LATER_IMPLEMENTATION.md` (chapters 5–6, later · cancelled) via each entry's
 `State:` field. `docs/done/` is retired (archive for superseded docs only).
 **This overrides the superpowers defaults:** the `brainstorming` skill must save design docs to
