@@ -9,7 +9,7 @@ import { firstValueFrom } from "rxjs";
 import { attestAppCheck, ENV, isAttested, StorageBucket } from "@okr/shared-config";
 import { DocumentModel, DocumentModelName, IMAGE_STYLE_SHAPE, UserModel } from "@okr/shared-models";
 import { error } from "@okr/shared-util-angular";
-import { extractCredit, getImgixJsonUrl, ImageCreditMetaData, isPhotoCancellation, sanitizeFileName, warn } from "@okr/shared-util-core";
+import { extractCredit, getImgixJsonUrl, ImageCreditMetaData, isPhotoCancellation, sanitizeFileName, warn, withResolvedMimeType } from "@okr/shared-util-core";
 import { buildDocumentModel } from "@okr/content-document-util";
 import { DocumentService } from "@okr/content-document-data-access";
 import { DEFAULT_MIMETYPES } from "@okr/shared-constants";
@@ -72,10 +72,12 @@ export class UploadService {
    */
   public async uploadFiles(uploads: UploadEntry[], title: string): Promise<(string | undefined)[] | undefined> {
     await this.attestBeforeUpload();
+    // a HEIC photo picked in Chrome/Firefox has no type; Storage would store it without contentType
+    const typedUploads = uploads.map(u => ({ ...u, file: withResolvedMimeType(u.file) }));
     const modal = await this.modalController.create({
       component: UploadTaskModal,
       cssClass: 'upload-modal',
-      componentProps: { uploads, title }
+      componentProps: { uploads: typedUploads, title }
     });
     modal.present();
     try {

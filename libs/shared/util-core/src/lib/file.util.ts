@@ -200,6 +200,18 @@ export function resolveMimeType(fileName: string, declaredMimeType: string | und
   return declaredMimeType && declaredMimeType.length > 0 ? declaredMimeType : getMimeType(fileName);
 }
 
+/**
+ * The file with its type resolved by {@link resolveMimeType}, for an upload: Storage stores
+ * `File.type` as the object's contentType, and a HEIC photo picked in Chrome/Firefox has none —
+ * the OCR pipeline then hands Gemini `application/octet-stream` and cannot read it (spec 1.91).
+ * Returns the same instance when the browser knew the type or the extension is unknown.
+ */
+export function withResolvedMimeType(file: File): File {
+  if (file.type) return file;
+  const type = resolveMimeType(file.name, file.type);
+  return type ? new File([file], file.name, { type, lastModified: file.lastModified }) : file;
+}
+
 export function getExtensionFromMimeType(mimeType: string): string {
   return mime.getExtension(mimeType) ?? '';
 }

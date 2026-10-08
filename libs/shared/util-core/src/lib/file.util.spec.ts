@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_ACCEPT_ATTRIBUTE, DEFAULT_MIMETYPES } from '@okr/shared-constants';
-import { baseName, dirName, fileExtension, fileName, fileSizeUnit, isPhotoCancellation, isVideo, resolveMimeType, sanitizeFileName, suffixFileName } from './file.util';
+import { baseName, dirName, fileExtension, fileName, fileSizeUnit, isPhotoCancellation, isVideo, resolveMimeType, sanitizeFileName, suffixFileName, withResolvedMimeType } from './file.util';
 
 describe('file.util', () => {
 
@@ -238,5 +238,24 @@ describe('video formats', () => {
   it('classifies both containers as video', () => {
     expect(isVideo('clip.mp4')).toBe(true);
     expect(isVideo('clip.mov')).toBe(true);
+  });
+});
+
+describe('withResolvedMimeType', () => {
+  it('fills the type of a HEIC photo the browser could not decode (Chrome/Firefox report "")', () => {
+    const file = withResolvedMimeType(new File(['x'], 'IMG_0042.heic', { type: '' }));
+    expect(file.type).toBe('image/heic');
+    expect(file.name).toBe('IMG_0042.heic');
+    expect(file.size).toBe(1);
+  });
+
+  it('keeps a file whose type the browser already knows (same instance)', () => {
+    const file = new File(['x'], 'rechnung.pdf', { type: 'application/pdf' });
+    expect(withResolvedMimeType(file)).toBe(file);
+  });
+
+  it('keeps a file whose extension is unknown', () => {
+    const file = new File(['x'], 'README', { type: '' });
+    expect(withResolvedMimeType(file)).toBe(file);
   });
 });
