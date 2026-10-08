@@ -92,7 +92,8 @@ export class BillEditModal {
   // signals
   protected formData = linkedSignal(() => safeStructuredClone(this.bill()));
   protected readonly lines = linkedSignal(() => toBillLines(this.bill()));
-  protected formDirty = signal(false);
+  // a new bill starts dirty: a scanned or uploaded draft is already complete, so «Speichern» must show without an edit
+  protected formDirty = linkedSignal(() => this.isNew());
   protected formValid = signal(false);
 
   private readonly accountsResource = rxResource({
