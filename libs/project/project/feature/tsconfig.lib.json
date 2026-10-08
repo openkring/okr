@@ -19,7 +19,9 @@
     { "path": "../../../cms/menu/feature/tsconfig.lib.json" },
     { "path": "../../../content/pdf-template/data-access/tsconfig.lib.json" },
     { "path": "../../../finance/account/data-access/tsconfig.lib.json" },
+    { "path": "../../../finance/accounting/data-access/tsconfig.lib.json" },
     { "path": "../../../finance/reporting/data-access/tsconfig.lib.json" },
+    { "path": "../../../finance/reporting/feature/tsconfig.lib.json" },
     { "path": "../../../finance/reporting/ui/tsconfig.lib.json" },
     { "path": "../../../finance/reporting/util/tsconfig.lib.json" },
     { "path": "../data-access/tsconfig.lib.json" },
@@ -34,6 +36,7 @@
     { "path": "../../../shared/pipes/tsconfig.lib.json" },
     { "path": "../../../shared/ui/tsconfig.lib.json" },
     { "path": "../../../shared/util-angular/tsconfig.lib.json" },
-    { "path": "../../../shared/util-core/tsconfig.lib.json" }
+    { "path": "../../../shared/util-core/tsconfig.lib.json" },
+    { "path": "../../../subject/address/data-access/tsconfig.lib.json" }
   ]
 }

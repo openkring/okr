@@ -52,7 +52,8 @@
     "total": "Total",
     "empty": "Für dieses Projekt sind noch keine Buchungen erfasst.",
     "pdfTitle": "Projektergebnis {name}",
-    "periodAll": "Alle Buchungsjahre"
+    "periodAll": "Alle Buchungsjahre",
+    "books": "Buchhaltung: {tenant}"
   },
   "duplicate": "Projekt duplizieren",
   "duplicateConfirm": "Das Projekt wird mit allen Aufgaben kopiert. Die Termine werden auf den neuen Beginn verschoben.",

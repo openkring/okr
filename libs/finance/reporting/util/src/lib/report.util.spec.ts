@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { AccountModel, BookingLineModel, BookingModel, MoneyModel } from '@okr/shared-models';
 
 import {
-  accountClass, ALL_COST_CENTERS, buildReportRows, effectiveCostCenterSelection, defaultExpandedKeys, fiscalYear, fiscalYearOf, filterLinesByCostCenter, filterLinesByDimension, NO_COST_CENTER, reportToCsv, signedBalance, sumLinesByAccount, totalForClasses, yearResult,
+  accountClass, ALL_COST_CENTERS, buildProjectResultRows, buildReportRows, effectiveCostCenterSelection, defaultExpandedKeys, fiscalYear, fiscalYearOf, filterLinesByCostCenter, filterLinesByDimension, NO_COST_CENTER, reportToCsv, signedBalance, sumLinesByAccount, totalForClasses, yearResult,
 } from './report.util';
 
 function account(okey: string, id: string, name: string, parentKey = '', type = 'leaf'): AccountModel {
@@ -220,4 +220,27 @@ describe('effectiveCostCenterSelection', () => {
   it('valid key is kept', () => expect(effectiveCostCenterSelection('cc-jun', true, options)).toBe('cc-jun'));
   it('bucket kept when listed', () => expect(effectiveCostCenterSelection(NO_COST_CENTER, true, options)).toBe(NO_COST_CENTER));
   it('bucket dropped when not listed', () => expect(effectiveCostCenterSelection(NO_COST_CENTER, true, [ALL_COST_CENTERS])).toBe(ALL_COST_CENTERS));
+});
+
+describe('buildProjectResultRows', () => {
+  const chart = [...CHART, account('a4', '4', 'Aufwand Material', 'root', 'group'), account('a4000', '4000', 'Material', 'a4'),
+    account('a7', '7', 'Übriger Erfolg', 'root', 'group'), account('a7000', '7000', 'Nebenertrag', 'a7')];
+  const labels = { income: 'Einnahmen', expense: 'Ausgaben', profit: 'Gewinn', loss: 'Verlust' };
+  const lines = [line('b1', 'a3000', 0, 1000), line('b1', 'a4000', 300, 0), line('b1', 'a7000', 0, 50), line('b1', 'a1020', 750, 0)];
+  const amounts = sumLinesByAccount(lines, [booking('b1', '20250601')], '', '');
+
+  it('nets revenue + übriger Erfolg - expense, the same as yearResult', () => {
+    const { rows, net } = buildProjectResultRows(chart, amounts, labels);
+    expect(net).toBe(yearResult(chart, amounts));
+    expect(net).toBe(1000 + 50 - 300);
+    const last = rows[rows.length - 1];
+    expect(last).toMatchObject({ kind: 'result', name: 'Gewinn', current: 750 });
+  });
+  it('lists the class 7 account and names a negative net Verlust', () => {
+    const { rows, net } = buildProjectResultRows(chart, sumLinesByAccount([line('b1', 'a4000', 300, 0)], [booking('b1', '20250601')], '', ''), labels);
+    expect(net).toBe(-300);
+    expect(rows[rows.length - 1].name).toBe('Verlust');
+    const withOther = buildProjectResultRows(chart, amounts, labels).rows;
+    expect(withOther.some(r => r.id === '7000' && r.current === 50)).toBe(true);
+  });
 });

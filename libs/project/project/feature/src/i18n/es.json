@@ -52,7 +52,8 @@
     "total": "Total",
     "empty": "Todavía no se han registrado asientos para este proyecto.",
     "pdfTitle": "Resultado del proyecto {name}",
-    "periodAll": "Todos los ejercicios"
+    "periodAll": "Todos los ejercicios",
+    "books": "Contabilidad: {tenant}"
   },
   "duplicate": "Duplicar proyecto",
   "duplicateConfirm": "El proyecto se copia con todas sus tareas. Las fechas se desplazan al nuevo inicio.",

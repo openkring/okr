@@ -26,6 +26,9 @@
     "@okr/finance-account-data-access": "*",
     "@okr/finance-reporting-data-access": "*",
     "@okr/finance-reporting-ui": "*",
-    "@okr/finance-reporting-util": "*"
+    "@okr/finance-reporting-util": "*",
+    "@okr/finance-accounting-data-access": "*",
+    "@okr/finance-reporting-feature": "*",
+    "@okr/subject-address-data-access": "*"
   }
 }

@@ -52,7 +52,8 @@
     "total": "Total",
     "empty": "Aucune écriture n'a encore été enregistrée pour ce projet.",
     "pdfTitle": "Résultat du projet {name}",
-    "periodAll": "Tous les exercices"
+    "periodAll": "Tous les exercices",
+    "books": "Comptabilité : {tenant}"
   },
   "duplicate": "Dupliquer le projet",
   "duplicateConfirm": "Le projet est copié avec toutes ses tâches. Les dates sont décalées sur le nouveau début.",

@@ -1,6 +1,6 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { IonButton, IonCol, IonGrid, IonIcon, IonLabel, IonRow, IonToolbar } from '@ionic/angular/standalone';
+import { IonButton, IonCol, IonGrid, IonIcon, IonLabel, IonNote, IonRow, IonToolbar } from '@ionic/angular/standalone';
 import { of } from 'rxjs';
 
 import { AppStore } from '@okr/shared-feature';
@@ -11,11 +11,14 @@ import { AlertService, resourceParams } from '@okr/shared-util-angular';
 import { convertDateFormatToString, DateFormat, fill, getTodayStr } from '@okr/shared-util-core';
 
 import { DocGenerationService } from '@okr/content-pdf-template-data-access';
+import { AccountingConfigService } from '@okr/finance-accounting-data-access';
 import { AccountService } from '@okr/finance-account-data-access';
+import { AddressService } from '@okr/subject-address-data-access';
+import { loadOrgAddressLine } from '@okr/finance-reporting-feature';
 import { ReportingService } from '@okr/finance-reporting-data-access';
 import {
-  buildReportDocument, buildReportRows, downloadFromUrl, filterLinesByDimension, REPORTING_I18N_KEYS, ReportDocumentLabels,
-  ReportingI18n, ReportRow, sumLinesByAccount, totalForClasses,
+  buildProjectResultRows, buildReportDocument, downloadFromUrl, filterLinesByDimension, REPORTING_I18N_KEYS, ReportDocumentLabels,
+  ReportingI18n, ReportRow, sumLinesByAccount,
 } from '@okr/finance-reporting-util';
 import { ReportTable } from '@okr/finance-reporting-ui';
 import { PROJECT_I18N_KEYS } from '@okr/project-project-util';
@@ -29,7 +32,7 @@ import { PROJECT_I18N_KEYS } from '@okr/project-project-util';
 @Component({
   selector: 'okr-project-result',
   standalone: true,
-  imports: [SvgIconPipe, Spinner, EmptyList, ReportTable, IonToolbar, IonButton, IonIcon, IonGrid, IonRow, IonCol, IonLabel],
+  imports: [SvgIconPipe, Spinner, EmptyList, ReportTable, IonToolbar, IonButton, IonIcon, IonGrid, IonRow, IonCol, IonLabel, IonNote],
   template: `
     @if (isLoading()) {
       <okr-spinner />
@@ -37,6 +40,7 @@ import { PROJECT_I18N_KEYS } from '@okr/project-project-util';
       <okr-empty-list [message]="i18n.resultEmpty()" />
     } @else {
       <ion-toolbar>
+        <ion-note slot="start" class="ion-padding-start">{{ booksNote() }}</ion-note>
         <ion-button slot="end" fill="clear" (click)="exportPdf()">
           <ion-icon slot="start" src="{{ 'document' | svgIcon }}" />
           {{ i18n.exportPdf() }}
@@ -51,7 +55,7 @@ import { PROJECT_I18N_KEYS } from '@okr/project-project-util';
           </ion-row>
         </ion-grid>
       </ion-toolbar>
-      <okr-report-table [rows]="rows()" />
+      <okr-report-table [rows]="rows()" [showPrevious]="false" [interactive]="false" />
     }
   `
 })
@@ -61,6 +65,8 @@ export class ProjectResult {
   private readonly reportingService = inject(ReportingService);
   private readonly docGenerationService = inject(DocGenerationService);
   private readonly alertService = inject(AlertService);
+  private readonly configService = inject(AccountingConfigService);
+  private readonly addressService = inject(AddressService);
   private readonly i18nService = inject(I18nService);
 
   public readonly projectKey = input.required<string>();
@@ -85,33 +91,27 @@ export class ProjectResult {
     stream: ({ params }) => params.id ? this.reportingService.getAllLines(params.id) : of([]),
   });
 
+  private readonly configResource = rxResource({
+    params: resourceParams(() => ({ id: this.accountingTenantId() })),
+    stream: ({ params }) => params.id ? this.configService.read(params.id) : of(undefined),
+  });
+  private readonly currency = computed(() => this.configResource.value()?.functionalCurrency ?? 'CHF');
+  protected readonly booksNote = computed(() => fill(this.i18n.resultBooks(), { tenant: this.accountingTenantId() }));
+
   protected readonly isLoading = computed(() =>
     this.accountsResource.isLoading() || this.bookingsResource.isLoading() || this.linesResource.isLoading());
 
   /** Only this project's lines — all fiscal years (a project's actuals span years). */
   private readonly projectLines = computed(() =>
     filterLinesByDimension(this.linesResource.value() ?? [], 'projectKey', new Set([this.projectKey()])));
-  protected readonly hasLines = computed(() => this.projectLines().length > 0);
-
   private readonly amounts = computed(() => sumLinesByAccount(this.projectLines(), this.bookingsResource.value() ?? [], '', ''));
+  /** Only posted amounts count: a project with unposted bookings only shows the empty state. */
+  protected readonly hasLines = computed(() => this.amounts().size > 0);
 
-  /** Einnahmen, Ausgaben, then the total (Einnahmen − Ausgaben). Zero accounts are hidden. */
-  protected readonly rows = computed<ReportRow[]>(() => {
-    const accounts = this.accountsResource.value() ?? [];
-    const cur = this.amounts(), none = new Map();
-    const expanded = accounts.map(a => a.okey);   // fully expanded: the result is a flat statement
-    const income = buildReportRows(accounts, ['revenue'], cur, none, expanded, false);
-    const expense = buildReportRows(accounts, ['expense'], cur, none, expanded, false);
-    const synthetic = (okey: string, kind: 'total' | 'result', name: string, current: number): ReportRow =>
-      ({ okey, id: '', name, depth: 0, kind, hasChildren: false, isExpanded: false, current, previous: 0 });
-    const incomeTotal = totalForClasses(accounts, ['revenue'], cur);
-    const expenseTotal = totalForClasses(accounts, ['expense'], cur);
-    return [
-      ...income, synthetic('total-income', 'total', this.i18n.resultIncome(), incomeTotal),
-      ...expense, synthetic('total-expense', 'total', this.i18n.resultExpense(), expenseTotal),
-      synthetic('project-result', 'result', this.i18n.resultTotal(), incomeTotal - expenseTotal),
-    ];
-  });
+  /** Einnahmen, Ausgaben, übriger Erfolg, then the net (Gewinn / Verlust) — same rule as the Erfolgsrechnung. */
+  protected readonly rows = computed<ReportRow[]>(() => buildProjectResultRows(
+    this.accountsResource.value() ?? [], this.amounts(),
+    { income: this.i18n.resultIncome(), expense: this.i18n.resultExpense(), profit: this.reporting.year_profit(), loss: this.reporting.year_loss() }).rows);
 
   protected async exportPdf(): Promise<void> {
     try {
@@ -124,18 +124,20 @@ export class ProjectResult {
         created: this.reporting.pdf_created(),
         address: this.reporting.pdf_address(),
         period: this.reporting.pdf_period(),
-        periodValue: this.i18n.resultPeriodAll(),
-        amounts: fill(this.reporting.pdf_amounts(), { currency: 'CHF' }),
+        periodValue: `${this.i18n.resultPeriodAll()} · ${this.booksNote()}`,
+        amounts: fill(this.reporting.pdf_amounts(), { currency: this.currency() }),
         watermark: '',
         colAccount: this.reporting.col_account(),
         colName: this.reporting.col_name(),
         colCurrent: this.i18n.resultTotal(),
         colPrevious: '',
       };
+      const orgKey = this.appStore.appConfig().ownerOrgId || tenantId;
       const html = buildReportDocument(this.rows(), {
         variant: 'final',
-        orgName: this.appStore.getOrg(this.appStore.appConfig().ownerOrgId || tenantId)?.name ?? tenantId,
-        orgAddress: '',
+        showPrevious: false,
+        orgName: this.appStore.getOrg(orgKey)?.name ?? tenantId,
+        orgAddress: await loadOrgAddressLine(this.addressService, orgKey),
         generatedOn: view,
         labels,
       });

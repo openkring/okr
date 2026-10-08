@@ -29,12 +29,12 @@ import { ReportRow } from '@okr/finance-reporting-util';
   template: `
     <ion-list lines="inset">
       @for (row of rows(); track row.okey) {
-        <ion-item [button]="row.hasChildren || row.kind === 'account'" [detail]="false" (click)="onRowClick(row)"
+        <ion-item [button]="interactive() && (row.hasChildren || row.kind === 'account')" [detail]="false" (click)="onRowClick(row)"
           [class]="row.kind" [style.padding-inline-start.px]="row.depth * 16">
           <ion-grid>
             <ion-row>
               <ion-col size-md="2" class="ion-hide-sm-down">{{ row.id }}</ion-col>
-              <ion-col size="6" size-md="6">
+              <ion-col [attr.size]="showPrevious() ? 6 : 9" [attr.size-md]="showPrevious() ? 6 : 8">
                 @if (row.hasChildren) {
                   <ion-icon class="chevron" src="{{ (row.isExpanded ? 'chevron-down' : 'chevron-forward') | svgIcon }}" />
                 } @else if (row.kind === 'account') {
@@ -43,7 +43,9 @@ import { ReportRow } from '@okr/finance-reporting-util';
                 {{ row.name }}
               </ion-col>
               <ion-col size="3" size-md="2" class="ion-text-end amount">{{ format(row.current) }}</ion-col>
-              <ion-col size="3" size-md="2" class="ion-text-end amount previous">{{ format(row.previous) }}</ion-col>
+              @if (showPrevious()) {
+                <ion-col size="3" size-md="2" class="ion-text-end amount previous">{{ format(row.previous) }}</ion-col>
+              }
             </ion-row>
           </ion-grid>
         </ion-item>
@@ -53,11 +55,16 @@ import { ReportRow } from '@okr/finance-reporting-util';
 })
 export class ReportTable {
   public readonly rows = input.required<ReportRow[]>();
+  /** false drops the previous-year column (single-amount statements such as the project result). */
+  public readonly showPrevious = input(true);
+  /** false renders plain rows: no button look, no toggling, no account selection. */
+  public readonly interactive = input(true);
   public readonly groupToggled = output<string>();
   /** A leaf account row was tapped: the page opens the journal filtered by this account and the selected year. */
   public readonly accountSelected = output<string>();
 
   protected onRowClick(row: ReportRow): void {
+    if (!this.interactive()) return;
     if (row.hasChildren) this.groupToggled.emit(row.okey);
     else if (row.kind === 'account') this.accountSelected.emit(row.okey);
   }

@@ -48,6 +48,8 @@ export interface ReportDocumentOptions {
   /** Rendered date, e.g. «08.09.2025». */
   readonly generatedOn: string;
   readonly labels: ReportDocumentLabels;
+  /** false drops the previous-year column. Default true. */
+  readonly showPrevious?: boolean;
 }
 
 export function escapeHtml(value: string): string {
@@ -64,18 +66,19 @@ export function formatReportAmount(minor: number): string {
   return (minor / 100).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-function row(r: ReportRow): string {
+function row(r: ReportRow, showPrevious: boolean): string {
   const indent = r.depth * 12;
   return `<tr class="${r.kind}">
     <td class="account">${escapeHtml(r.id)}</td>
     <td class="name" style="padding-left:${indent + 6}px">${escapeHtml(r.name)}</td>
     <td class="amount">${formatReportAmount(r.current)}</td>
-    <td class="amount previous">${formatReportAmount(r.previous)}</td>
+    ${showPrevious ? `<td class="amount previous">${formatReportAmount(r.previous)}</td>` : ''}
   </tr>`;
 }
 
 export function buildReportDocument(rows: readonly ReportRow[], options: ReportDocumentOptions): string {
   const l = options.labels;
+  const showPrevious = options.showPrevious ?? true;
   const addressLine = options.orgAddress
     ? `${options.orgName}, ${options.orgAddress}`
     : options.orgName;
@@ -124,9 +127,9 @@ ${watermark}
     <th>${escapeHtml(l.colAccount)}</th>
     <th>${escapeHtml(l.colName)}</th>
     <th class="amount">${escapeHtml(l.colCurrent)}</th>
-    <th class="amount">${escapeHtml(l.colPrevious)}</th>
+    ${showPrevious ? `<th class="amount">${escapeHtml(l.colPrevious)}</th>` : ''}
   </tr></thead>
-  <tbody>${rows.map(row).join('')}</tbody>
+  <tbody>${rows.map(r => row(r, showPrevious)).join('')}</tbody>
 </table>
 </body></html>`;
 }

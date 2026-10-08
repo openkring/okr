@@ -232,3 +232,30 @@ export function filterLinesByCostCenter(lines: BookingLineModel[], selection: st
 export function effectiveCostCenterSelection(selected: string, enabled: boolean, optionKeys: string[]): string {
   return enabled && optionKeys.includes(selected) ? selected : ALL_COST_CENTERS;
 }
+
+export interface ProjectResultLabels { income: string; expense: string; profit: string; loss: string }
+
+/**
+ * The single-column result of a dimension slice (project result): Ertrag, Aufwand and übriger
+ * Erfolg (class `result`, accounts 7-9) with their totals, closed by the net — computed by the
+ * same rule as the Erfolgsrechnung (`yearResult`: revenue + result − expense).
+ * `amounts` = the slice's `sumLinesByAccount`. No previous-year values.
+ */
+export function buildProjectResultRows(
+  accounts: AccountModel[], amounts: Map<string, DebitCredit>, labels: ProjectResultLabels,
+): { rows: ReportRow[]; net: number } {
+  const none = new Map<string, DebitCredit>();
+  const expanded = accounts.map(a => a.okey);   // flat statement: every group open
+  const synthetic = (okey: string, kind: 'total' | 'result', name: string, current: number): ReportRow =>
+    ({ okey, id: '', name, depth: 0, kind, hasChildren: false, isExpanded: false, current, previous: 0 });
+  const build = (cls: AccountClass): ReportRow[] => buildReportRows(accounts, [cls], amounts, none, expanded, false);
+  const other = build('result');
+  const net = yearResult(accounts, amounts);
+  const rows = [
+    ...build('revenue'), synthetic('total-income', 'total', labels.income, totalForClasses(accounts, ['revenue'], amounts)),
+    ...build('expense'), synthetic('total-expense', 'total', labels.expense, totalForClasses(accounts, ['expense'], amounts)),
+    ...other,
+    synthetic('project-result', 'result', net < 0 ? labels.loss : labels.profit, net),
+  ];
+  return { rows, net };
+}

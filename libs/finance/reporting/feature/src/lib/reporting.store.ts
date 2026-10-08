@@ -3,7 +3,7 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { ActionSheetController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
-import { firstValueFrom, of } from 'rxjs';
+import { of } from 'rxjs';
 
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
@@ -21,7 +21,8 @@ import {
   ReportDocumentLabels, ReportingI18n, ReportRow, reportToCsv, ReportVariant, sumLinesByAccount, totalForClasses, yearResult,
 } from '@okr/finance-reporting-util';
 import { AddressService } from '@okr/subject-address-data-access';
-import { stringifyPostalAddress } from '@okr/subject-address-util';
+
+import { loadOrgAddressLine } from './reporting-address';
 
 export type ReportKind = 'balance' | 'income';
 
@@ -282,12 +283,7 @@ export const ReportingStore = signalStore(
 
     /** The org's own postal address as one line, or '' when it has none / cannot be read. */
     async orgAddressLine(): Promise<string> {
-      try {
-        const address = await firstValueFrom(store.addressService.getFavoritePostalAddress(`org.${store.reportOrgKey()}`));
-        return address ? stringifyPostalAddress(address, 'de') : '';
-      } catch {
-        return '';   // the document is still valid without the street line
-      }
+      return loadOrgAddressLine(store.addressService, store.reportOrgKey());
     },
 
     /**

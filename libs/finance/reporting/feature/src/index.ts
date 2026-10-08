@@ -4,3 +4,4 @@ export * from './lib/cash-flow-page';
 export * from './lib/reporting.store';
 export * from './lib/open-items-page';
 export * from './lib/open-items.store';
+export * from './lib/reporting-address';
