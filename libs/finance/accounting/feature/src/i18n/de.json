@@ -198,7 +198,8 @@
     "billCreated": "Kreditor erfasst",
     "billBooked": "Kreditor gebucht, Buchung Nr.",
     "billPayment": "Zahlung erfasst",
-    "billPaymentUnlinked": "Zahlungsverknüpfung aufgehoben"
+    "billPaymentUnlinked": "Zahlungsverknüpfung aufgehoben",
+    "billDetailsUpdated": "Kreditor-Details bearbeitet"
   },
   "voucher": {
     "title": "Belege",

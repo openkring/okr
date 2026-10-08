@@ -198,7 +198,8 @@
     "billCreated": "Fattura fornitore registrata",
     "billBooked": "Fattura fornitore contabilizzata, registrazione n.",
     "billPayment": "Pagamento registrato",
-    "billPaymentUnlinked": "Collegamento del pagamento rimosso"
+    "billPaymentUnlinked": "Collegamento del pagamento rimosso",
+    "billDetailsUpdated": "Dettagli della fattura fornitore modificati"
   },
   "voucher": {
     "title": "Giustificativi",
