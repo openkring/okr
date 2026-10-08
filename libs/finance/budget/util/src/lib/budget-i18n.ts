@@ -35,6 +35,7 @@ export const BUDGET_I18N_KEYS = {
   compare:              PFX + 'action.compare',
   addLine:              PFX + 'action.addLine',
   view:                 PFX + 'action.view',
+  update:               PFX + 'action.update',
 
   approve_conf:         PFX + 'confirm.approve',
   archive_conf:         PFX + 'confirm.archive',
@@ -60,8 +61,13 @@ export const BUDGET_I18N_KEYS = {
   notes:                PFX + 'notes.label',
   notes_placeholder:    PFX + 'notes.placeholder',
 
+  baseVersion:          PFX + 'baseVersion.label',
+
   // approval form
   approvedAt:           PFX + 'approvedAt.label',
+  approvedAt_placeholder: PFX + 'approvedAt.placeholder',
+  approve_supersedes:   PFX + 'approve.supersedes',
+  approve_supersedesNone: PFX + 'approve.supersedesNone',
   approvedBy:           PFX + 'approvedBy.label',
   approvedBy_invalid:   PFX + 'approvedBy.invalid',
   approvalRef:          PFX + 'approvalRef.label',
