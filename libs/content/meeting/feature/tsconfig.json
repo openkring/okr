@@ -66,7 +66,7 @@
       "path": "../../../shared/util-core/tsconfig.lib.json"
     },
     {
-      "path": "../../../task/data-access/tsconfig.lib.json"
+      "path": "../../../project/task/data-access/tsconfig.lib.json"
     }
   ]
 }

@@ -54,7 +54,7 @@
       "path": "../../../subject/application/util/tsconfig.lib.json"
     },
     {
-      "path": "../../../task/data-access/tsconfig.lib.json"
+      "path": "../../../project/task/data-access/tsconfig.lib.json"
     }
   ]
 }

@@ -93,7 +93,7 @@
       "path": "../../../cms/page/feature/tsconfig.lib.json"
     },
     {
-      "path": "../../../task/feature/tsconfig.lib.json"
+      "path": "../../../project/task/feature/tsconfig.lib.json"
     }
   ]
 }

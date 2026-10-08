@@ -126,10 +126,10 @@
       "path": "../../../subject/person/feature/tsconfig.lib.json"
     },
     {
-      "path": "../../../task/data-access/tsconfig.lib.json"
+      "path": "../../../project/task/data-access/tsconfig.lib.json"
     },
     {
-      "path": "../../../task/feature/tsconfig.lib.json"
+      "path": "../../../project/task/feature/tsconfig.lib.json"
     },
     {
       "path": "../../../chat/data-access/tsconfig.lib.json"
