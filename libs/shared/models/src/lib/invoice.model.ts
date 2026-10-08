@@ -63,11 +63,20 @@ export type InvoiceSentVia = 'email' | 'post';
 
 export interface InvoicePayment { date: string; amount: number; bankAccountKey: string; bookingKey: string; }
 
+/** How a reminder was sent: by the email composer / Mahnlauf, or marked by hand as posted (spec 1.90). */
+export type InvoiceReminderSentVia = 'email' | 'post';
+
 /** A reminder (Mahnung). date/dueDate = StoreDate, documentKey = its PDF in finance-documents or ''. */
-export interface InvoiceReminder { level: number; date: string; dueDate: string; isSent: boolean; documentKey: string;
+export interface InvoiceReminder { level: number; // running number 1, 2, 3, … (spec 1.90 D4); keys the PDF and the fee booking
+  date: string; dueDate: string; isSent: boolean; documentKey: string;
   fee: number;         // Rappen charged with this reminder; 0 = none / migrated (spec 1.76 D14)
   bookingKey: string;  // fee booking `invoice-{key}-reminder-{level}`; '' = no fee booked (spec 1.76 D14)
   waivedAt: string;        // StoreDate of the fee waiver; '' = not waived (spec 1.76 D18)
   waiveBookingKey: string; // waiver booking `invoice-{key}-reminder-{level}-waiver`; '' = not waived (spec 1.76 D18)
+  templateId: string;      // templates/{id} the PDF was rendered with; '' = legacy (spec 1.90)
+  templateName: string;    // snapshot of the template name at creation; '' = legacy → level naming (spec 1.90 D7)
+  sentAt: string;          // StoreDate of the last send (email or post); '' = not sent (spec 1.90)
+  sentVia: InvoiceReminderSentVia | ''; // '' = unknown / not sent (spec 1.90)
+  requestId: string;       // idempotency key of the create call; '' = legacy (spec 1.90)
 }
 export const VAT_TYPE_VALUES = ['included', 'excluded', 'exempt'] as const satisfies VAT_TYPE[];
