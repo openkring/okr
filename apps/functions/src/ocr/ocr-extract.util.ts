@@ -5,6 +5,7 @@ export interface OcrRuleLite {
   aliases: string[];
   accountKey: string;
   costCenterId?: string;
+  vatCode?: string;
   rank: number;
   active: boolean;
 }

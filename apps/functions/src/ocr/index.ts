@@ -14,6 +14,7 @@ import { parseOcrPath } from './ocr-path.util';
 import { toCents, ocrResultId, matchRule, resolveDebitAccount, type OcrRuleLite } from './ocr-extract.util';
 import { geminiExtract } from './gemini-extract';
 import { decodeQrBill } from './qr-bill-decode';
+import { qrFieldsOf, pickVatCodeKey, type VatCodeLite } from './bill-scan.util';
 import { sanitizeCreditor } from './creditor.util';
 import { costCenterKeyForLine, loadCostCenterContext } from '../cost-center/cost-center-context';
 import { emitEvent } from '../workflow/emit';
@@ -33,6 +34,7 @@ const BOOKING_LINE_COLLECTION = 'booking-lines';
 const TASK_COLLECTION = 'tasks';
 const USERS_COLLECTION = 'users';
 const EXPENSE_COLLECTION = 'expenses';
+const VAT_CODE_COLLECTION = 'vat-codes';
 
 /**
  * One OCR failure, recorded and announced.
@@ -265,6 +267,8 @@ interface OcrResultDoc {
   currency: string;
   subject: string;
   llmProposedAccountId?: string;
+  qrBill?: string;
+  vatLines?: { rate: number; amount: number }[];
   bookingKey: string;
   taskKey?: string;
   tenants: string[];
@@ -278,7 +282,7 @@ export const onOcrResultWritten = onDocumentWritten(
 
     // Only act on a freshly extracted result that has no booking yet, for a finance usage.
     if (after.status !== 'extracted' || after.bookingKey) return;
-    if (after.ocrUsage !== 'expense' && after.ocrUsage !== 'invoice') {
+    if (after.ocrUsage !== 'expense' && after.ocrUsage !== 'invoice' && after.ocrUsage !== 'bill') {
       // paper (or anything non-finance): mark processed, nothing else.
       if (after.ocrUsage === 'paper') {
         await event.data!.after!.ref.set({ status: 'processed' }, { merge: true });
@@ -291,6 +295,11 @@ export const onOcrResultWritten = onDocumentWritten(
     const accountingTenantId = tenantId;
     const db = getFirestore();
     const resultRef = event.data!.after!.ref;
+
+    if (after.ocrUsage === 'bill') {
+      await handleBillScanResult(tenantId, after, resultRef);
+      return;
+    }
 
     // Guard: accounting must be configured and native (external backends own their ledger).
     const cfgSnap = await db.collection(ACCOUNTING_CONFIG_COLLECTION).doc(accountingTenantId).get();
@@ -397,6 +406,29 @@ export const onOcrResultWritten = onDocumentWritten(
     logger.info(`onOcrResultWritten: booking ${bookingRef.id} forReview (rule=${rule?.okey ?? 'none'})`);
   },
 );
+
+/** Usage 'bill' (spec 1.91 §4.2): resolve account, VAT, cost centre and the QR fields — never a booking or a task. */
+async function handleBillScanResult(tenantId: string, after: OcrResultDoc, resultRef: FirebaseFirestore.DocumentReference): Promise<void> {
+  const db = getFirestore();
+  const accountingTenantId = tenantId;
+  const cfg = (await db.collection(ACCOUNTING_CONFIG_COLLECTION).doc(accountingTenantId).get()).data() ?? {};
+  const rulesSnap = await db.collection(OCR_RULE_COLLECTION).where('tenants', 'array-contains', tenantId).get();
+  const rules = rulesSnap.docs.map(d => ({ okey: d.id, ...(d.data() as Record<string, unknown>) })) as unknown as OcrRuleLite[];
+  const qr = qrFieldsOf(after.qrBill ?? '');
+  const rule = matchRule(rules, 'bill', qr.qrCreditorName || after.vendor);
+  const llmAccountKey = await accountKeyById(accountingTenantId, after.llmProposedAccountId ?? '');
+  const accountKey = resolveDebitAccount(rule?.accountKey ?? '', llmAccountKey, cfg['defaultExpenseAccountKey'] ?? '');
+  const vatSnap = await db.collection(VAT_CODE_COLLECTION)
+    .where('tenants', 'array-contains', tenantId).where('accountingTenantId', '==', accountingTenantId).get();
+  const codes = vatSnap.docs.map(d => ({ okey: d.id, ...(d.data() as Record<string, unknown>) })) as unknown as VatCodeLite[];
+  await resultRef.set({
+    status: 'processed',
+    matchedRuleKey: rule?.okey ?? '', accountKey, llmProposedAccountKey: llmAccountKey,
+    vatCodeKey: pickVatCodeKey(rule?.vatCode ?? '', after.vatLines ?? [], codes, after.invoiceDate || getTodayStr(DateFormat.StoreDate)),
+    costCenterKey: rule?.costCenterId ?? '',
+    ...qr,
+  }, { merge: true });
+}
 
 /**
  * Expense usage: aggregate all receipts belonging to one expense into exactly ONE forReview
