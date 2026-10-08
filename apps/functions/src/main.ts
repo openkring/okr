@@ -252,6 +252,7 @@ export const onRagFileDeleted = Rag.onRagFileDeleted;
 export const onOcrFileFinalized = Ocr.onOcrFileFinalized;
 export const onOcrResultWritten = Ocr.onOcrResultWritten;
 export const redoExpenseOcr = Ocr.redoExpenseOcr;
+export const reapBillScans = Ocr.reapBillScans;
 // document renderings: raster → SVG (vtracer)
 export const vectorizeDocument = Vectorize.vectorizeDocument;
 // storage trigger: album videos → playable mp4 + poster frame (ffmpeg renderings)
