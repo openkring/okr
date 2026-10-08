@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, catchError, combineLatest, firstValueFrom, from, map, of } from 'rxjs';
+import { Observable, catchError, combineLatest, from, map, of } from 'rxjs';
 import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
@@ -174,27 +174,35 @@ export class TaskService {
     );
   }
 
+  /** Equality on tenants (array-contains-any) + parentKey, archived and not archived. */
+  private parentQuery(parentKey: string, tenantId: string): DbQuery[] {
+    return [...getArchiveInclusiveQuery(tenantId), { key: 'parentKey', operator: '==', value: parentKey }];
+  }
+
   /**
    * The tasks of one parent (a project: 'project.<okey>'), archived and not archived, of the tenant.
-   * Unordered at the database — equality on tenants + parentKey is served by the single-field
-   * indexes, no composite index needed — and sorted by dueDate on the client.
+   * Unordered at the database, sorted by dueDate on the client.
    */
   public listByParent(parentKey: string, tenantId: string): Observable<TaskModel[]> {
     if (!parentKey || !tenantId) return of([]);
-    const query: DbQuery[] = [...getArchiveInclusiveQuery(tenantId), { key: 'parentKey', operator: '==', value: parentKey }];
-    return this.firestoreService.searchData<TaskModel>(TaskCollection, query, 'none').pipe(
+    return this.firestoreService.searchData<TaskModel>(TaskCollection, this.parentQuery(parentKey, tenantId), 'none').pipe(
       map(tasks => [...tasks].sort((a, b) => (a.dueDate ?? '').localeCompare(b.dueDate ?? ''))));
   }
 
   /**
    * Moves every task of a parent back to the backlog (`parentKey = ''`), archived ones included
-   * (invariant 3: no task may point at a project that is gone). Silent bookkeeping — no toast per
-   * task; the caller reports the count.
+   * (invariant 3: no task may point at a project that is gone). Reads a fresh server snapshot (not
+   * the cache-first listener) and writes silently; the caller reports the count.
+   * REJECTS when the read fails or any single update fails — never returns a count that hides a failure.
    * @returns the number of tasks that were detached
    */
   public async detachParent(parentKey: string, tenantId: string): Promise<number> {
-    const tasks = await firstValueFrom(this.listByParent(parentKey, tenantId));
-    await Promise.all(tasks.map(task => this.firestoreService.updateObject(TaskCollection, task.okey, { parentKey: '' }, false)));
+    if (!parentKey || !tenantId) return 0;
+    const tasks = await this.firestoreService.getDataOnceStrict<TaskModel>(TaskCollection, this.parentQuery(parentKey, tenantId));
+    const results = await Promise.allSettled(
+      tasks.map(task => this.firestoreService.updateObjectStrict(TaskCollection, task.okey, { parentKey: '' })));
+    const failed = results.filter(r => r.status === 'rejected').length;
+    if (failed > 0) throw new Error(`TaskService.detachParent(${parentKey}): ${failed} of ${tasks.length} tasks could not be detached.`);
     return tasks.length;
   }
 

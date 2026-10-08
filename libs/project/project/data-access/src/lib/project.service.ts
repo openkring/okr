@@ -68,8 +68,8 @@ export class ProjectService {
    * Never write `isArchived = true` here.
    *
    * Invariant 3: the tasks that point at this project (`TaskModel.parentKey = 'project.<okey>'`,
-   * archived ones too) move back to the backlog first. If that fails the project stays; the call
-   * throws before anything is deleted.
+   * archived ones too) move back to the backlog first. If reading or detaching any of them fails,
+   * detachParent rejects, deleteModel is NOT called (the project stays) and the error propagates to the caller.
    */
   public async delete(project: ProjectModel, currentUser?: UserModel): Promise<void> {
     const payload = `${project.okey}: ${project.name}`;

@@ -10,6 +10,6 @@
   "delete": {
     "conf": "The project was deleted.",
     "error": "The project could not be deleted.",
-    "detached": "{count} tasks went back to the backlog."
+    "detached": "The tasks of this project no longer belong to a project ({count})."
   }
 }

@@ -970,6 +970,29 @@ export class FirestoreService {
     }
   }
 
+  /**
+   * Like getDataOnce, but a failed read REJECTS instead of looking like an empty result. For callers
+   * that act on the result (e.g. detaching every child of a record before deleting it), where
+   * "0 documents" and "could not read" must not be confused. Single getDocs snapshot, server when online.
+   */
+  public async getDataOnceStrict<T>(collectionName: string, dbQuery: DbQuery[]): Promise<T[]> {
+    if (!isBrowser(this.platformId) || !isFirestoreInitializedCheck()) {
+      throw new Error(`FirestoreService.getDataOnceStrict(${collectionName}): Firestore is not available.`);
+    }
+    const queryRef = query(collection(this.firestore, collectionName), ...getQuery(dbQuery, 'none'));
+    const snapshot = await getDocs(queryRef);
+    return snapshot.docs.map(d => ({ ...d.data(), okey: d.id })) as T[];
+  }
+
+  /**
+   * Like updateObject (merge, no overwrite), but silent and strict: no toast, and a failed write
+   * REJECTS instead of returning undefined. For bulk bookkeeping where the caller reports one summary.
+   */
+  public async updateObjectStrict(collectionName: string, key: string, object: Record<string, unknown>): Promise<void> {
+    if (!collectionName || !key) throw new Error('FirestoreService.updateObjectStrict: collectionName and key are mandatory.');
+    await updateDoc(doc(this.firestore, `${collectionName}/${key}`), { ...object });
+  }
+
   public listAllObjects<T>(collectionName: string, addOkey = false): Observable<T[]> {
     const collectionRef = collection(this.firestore, collectionName);
     const queryRef = query(collectionRef);
