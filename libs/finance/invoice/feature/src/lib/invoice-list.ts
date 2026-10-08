@@ -6,7 +6,7 @@ import {
 } from '@ionic/angular/standalone';
 import { InvoiceModel, RoleName } from '@okr/shared-models';
 import {
-  canCreatePaymentConfirmation, canCreateReminder, canEmailInvoice, hasInvoiceVoucher, invoiceDisplayState, invoiceStateColor, invoiceStateLabel, isDraftInvoice, isOverdueInvoice, isPayableState, isWaivedReminder, latestReminderWithDocument, mayReadInvoiceDocuments, waivableReminder,
+  canCreatePaymentConfirmation, canCreateReminder, canEmailInvoice, hasInvoiceVoucher, invoiceDisplayState, invoiceStateColor, invoiceStateLabel, isDraftInvoice, isOverdueInvoice, isPayableState, mayReadInvoiceDocuments, waivableReminder,
 } from '@okr/finance-invoice-util';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, formatMinorAmount, ListFilter, Spinner } from '@okr/shared-ui';
@@ -305,14 +305,6 @@ export class InvoiceList {
         // printed and mailed by hand: there is no other way to tell the system
         options.buttons.push(createActionSheetButton('invoice.markPost', i18n.email_post(), base, 'mail'));
       }
-      if (latestReminderWithDocument(invoice.reminders) && this.canWriteDrafts()) {
-        // a paid or cancelled invoice gets no reminder mail; its reminder PDF can still be opened
-        // a reminder whose fee was waived is not mailed: its PDF still shows the fee
-        if (isPayableState(invoice.state) && !isWaivedReminder(latestReminderWithDocument(invoice.reminders))) {
-          options.buttons.push(createActionSheetButton('invoice.sendReminder', i18n.reminder_send(), base, 'mail'));
-        }
-        options.buttons.push(createActionSheetButton('invoice.showReminder', i18n.reminder_show(), base, 'download'));
-      }
       if (invoice.state === 'pending' && this.canWriteDrafts()) {
         options.buttons.push(createActionSheetButton('invoice.cancelInvoice', i18n.cancel_invoice(), base, 'cancel-circle'));
       }
@@ -349,8 +341,6 @@ export class InvoiceList {
       case 'invoice.sendEmail': await this.store.sendInvoiceEmail(invoice); break;
       case 'invoice.preview': await this.store.preview(invoice); break;
       case 'invoice.markPost': await this.store.markSentByPost(invoice); break;
-      case 'invoice.sendReminder': await this.store.sendReminderEmail(invoice); break;
-      case 'invoice.showReminder': await this.store.showReminderPdf(invoice); break;
     }
     this.cdr.markForCheck();
   }

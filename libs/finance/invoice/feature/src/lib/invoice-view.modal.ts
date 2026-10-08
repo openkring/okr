@@ -1,14 +1,15 @@
 import { Component, computed, inject, input } from '@angular/core';
+import { ActionSheetButton, ActionSheetController } from '@ionic/angular';
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonChip, IonContent, IonIcon, IonImg, IonItem, IonLabel } from '@ionic/angular/standalone';
 
-import { InvoiceModel } from '@okr/shared-models';
+import { InvoiceModel, InvoiceReminder } from '@okr/shared-models';
 import { formatMinorAmount, Header } from '@okr/shared-ui';
 import { PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
 import { fill, formatQrReference, getFullName, getTodayStr, hasRole, prettyFormatDate } from '@okr/shared-util-core';
 import { AvatarPipe } from '@okr/avatar-ui';
 import { AvatarDetailService, FinanceHistory, LedgerBookings, VoucherTiles } from '@okr/finance-accounting-feature';
 import {
-  invoiceAccountKeys, invoiceBookingAmounts, invoiceVoucherKeys, isDraftInvoice, invoiceBookingKeys, invoiceDisplayState, invoiceStateColor, invoiceStateLabel, isOverdueInvoice, isPayableState, openInvoiceAmount, reminderLevelKey,
+  invoiceAccountKeys, invoiceBookingAmounts, invoiceVoucherKeys, isDraftInvoice, invoiceBookingKeys, invoiceDisplayState, invoiceStateColor, invoiceStateLabel, isOverdueInvoice, isPayableState, openInvoiceAmount, canCreateReminder, waivableReminder,
 } from '@okr/finance-invoice-util';
 import { InvoiceStore } from './invoice.store';
 
@@ -148,24 +149,32 @@ import { InvoiceStore } from './invoice.store';
                 </ion-label>
               </ion-item>
             }
-            <!-- reminders (read-only; created through the list's "Mahnung erstellen") -->
-            @if(reminders().length > 0) {
+            <!-- reminders: one line per reminder, tap for its actions (treasurer) -->
+            @if(reminders().length > 0 || canCreateReminder()) {
               <ion-item lines="none">
                 <ion-icon slot="start" src="{{'alarm' | svgIcon}}" />
-                <ion-label>
-                  <p class="view-label">{{ store.i18n.reminders_title() }}</p>
-                  @for(reminder of reminders(); track reminder.documentKey || $index) {
+                <ion-label><p class="view-label">{{ store.i18n.reminders_title() }}</p></ion-label>
+              </ion-item>
+              @for(reminder of reminders(); track reminder.documentKey || $index) {
+                <ion-item lines="none" [button]="canAct()" [detail]="false" (click)="reminderActions(reminder)">
+                  <ion-label class="ion-text-wrap">
                     <p class="view-value">
-                      {{ levelLabel(reminder.level) }} · {{ reminder.date | prettyDate }} · {{ store.i18n.reminder_due() }} {{ reminder.dueDate | prettyDate }}
+                      {{ store.reminderName(reminder) }} · {{ reminder.date | prettyDate }} · {{ store.i18n.reminder_due() }} {{ reminder.dueDate | prettyDate }}
                       · {{ store.i18n.reminder_fee_short() }} CHF {{ formatChf(reminder.fee) }}
                       @if(reminder.waivedAt) {
                         · {{ waivedText(reminder.waivedAt) }}
                       }
-                      · {{ reminder.isSent ? store.i18n.reminder_sent() : store.i18n.reminder_not_sent() }}
+                      · {{ sentText(reminder) }}
                     </p>
-                  }
-                </ion-label>
-              </ion-item>
+                  </ion-label>
+                </ion-item>
+              }
+              @if(canCreateReminder()) {
+                <ion-item lines="none" button="true" [detail]="false" (click)="store.createReminder(live())">
+                  <ion-icon slot="start" src="{{'add' | svgIcon}}" />
+                  <ion-label>{{ store.i18n.reminder_create() }}</ion-label>
+                </ion-item>
+              }
             }
             <!-- notes -->
             @if(invoice.notes.length > 0) {
@@ -205,8 +214,13 @@ import { InvoiceStore } from './invoice.store';
 export class InvoiceViewModal {
   protected readonly store = inject(InvoiceStore);
   private readonly avatarDetailService = inject(AvatarDetailService);
+  private readonly actionSheetController = inject(ActionSheetController);
 
   public readonly invoice = input.required<InvoiceModel>();
+
+  /** the invoice as the store streams it now (a new reminder shows without reopening); the input until it is loaded */
+  protected readonly live = computed(() =>
+    (this.store.allInvoicesResource.value() ?? []).find((i) => i.okey === this.invoice().okey) ?? this.invoice());
 
   protected readonly receiverName = computed(() => {
     const receiver = this.invoice()?.receiver;
@@ -234,9 +248,9 @@ export class InvoiceViewModal {
 
   // legacy invoices lack the fields (Firestore reads skip model defaults); legacy reminders lack the fee
   protected readonly reminders = computed(() =>
-    [...(this.invoice()?.reminders ?? [])].map(r => ({ ...r, fee: Number.isFinite(r.fee) ? r.fee : 0 })).sort((a, b) => (a.level ?? 0) - (b.level ?? 0)));
-  protected readonly sentAt = computed(() => this.invoice()?.sentAt ?? '');
-  protected readonly sentVia = computed(() => this.invoice()?.sentVia ?? '');
+    [...(this.live()?.reminders ?? [])].map(r => ({ ...r, fee: Number.isFinite(r.fee) ? r.fee : 0 })).sort((a, b) => (a.level ?? 0) - (b.level ?? 0)));
+  protected readonly sentAt = computed(() => this.live()?.sentAt ?? '');
+  protected readonly sentVia = computed(() => this.live()?.sentVia ?? '');
   // sentAt is a StoreDate; an invoice sent before sentVia existed says only "Versendet am"
   protected readonly sentAtText = computed(() => {
     const via = this.sentVia();
@@ -251,11 +265,39 @@ export class InvoiceViewModal {
   protected readonly canPreview = computed(() => isDraftInvoice(this.invoice()) && hasRole('treasurer', this.store.appStore.currentUser())
     && this.store.accountingStore.isExternallyManaged() === false);
   /** shown while the invoice is open (pending, partial, unpaid) — not for a paid or cancelled one */
-  protected readonly showOpenAmount = computed(() => isPayableState(this.invoice()?.state));
-  protected readonly openAmount = computed(() => formatMinorAmount(openInvoiceAmount(this.invoice())));
+  protected readonly showOpenAmount = computed(() => isPayableState(this.live()?.state));
+  protected readonly openAmount = computed(() => formatMinorAmount(openInvoiceAmount(this.live())));
 
-  protected levelLabel(level: number): string {
-    return this.store.i18n[reminderLevelKey(level)]();
+  protected readonly canAct = computed(() => hasRole('treasurer', this.store.appStore.currentUser()) && this.store.accountingStore.isExternallyManaged() === false);
+  protected readonly canCreateReminder = computed(() => this.canAct() && canCreateReminder(this.live()));
+
+  protected sentText(reminder: InvoiceReminder): string {
+    if (!reminder.isSent) return this.store.i18n.reminder_not_sent();
+    const text = reminder.sentVia === 'post' ? this.store.i18n.email_sent_by_post() : reminder.sentVia === 'email' ? this.store.i18n.email_sent_by_email() : this.store.i18n.reminder_sent();
+    return reminder.sentAt ? fill(text, { date: prettyFormatDate(reminder.sentAt) }) : this.store.i18n.reminder_sent();
+  }
+
+  protected async reminderActions(reminder: InvoiceReminder): Promise<void> {
+    if (!this.canAct()) return;
+    const invoice = this.live();
+    const buttons: ActionSheetButton[] = [{ text: this.store.i18n.reminder_download(), data: 'download' }];
+    if (isPayableState(invoice.state) && !reminder.waivedAt) {
+      buttons.push({ text: this.store.i18n.reminder_send_email(), data: 'email' });
+      buttons.push({ text: this.store.i18n.reminder_send_email_with_invoice(), data: 'emailWithInvoice' });
+    }
+    buttons.push({ text: this.store.i18n.email_post(), data: 'post' });
+    if (waivableReminder(invoice)?.documentKey === reminder.documentKey) buttons.push({ text: this.store.i18n.waive_fee(), data: 'waive' });
+    buttons.push({ text: this.store.i18n.cancel(), role: 'cancel', data: 'cancel' });
+    const sheet = await this.actionSheetController.create({ header: this.store.reminderName(reminder), buttons });
+    await sheet.present();
+    const { data } = await sheet.onDidDismiss();
+    switch (data) {
+      case 'download': await this.store.downloadReminderPdf(invoice, reminder); break;
+      case 'email': await this.store.sendReminderEmail(invoice, reminder, false); break;
+      case 'emailWithInvoice': await this.store.sendReminderEmail(invoice, reminder, true); break;
+      case 'post': await this.store.markReminderPosted(invoice, reminder); break;
+      case 'waive': await this.store.waiveReminderFee(invoice); break;
+    }
   }
 
   protected waivedText(waivedAt: string): string {
