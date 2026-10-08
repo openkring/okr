@@ -18,6 +18,7 @@ import { TaskService } from '@okr/project-task-data-access';
 export type ProjectState = {
   // the detail page
   projectKey: string;
+  listEnabled: boolean;   // the list component turns this on; the detail page never loads the whole list
 
   // filter
   searchTerm: string;
@@ -27,6 +28,7 @@ export type ProjectState = {
 
 export const initialState: ProjectState = {
   projectKey: '',
+  listEnabled: false,
   searchTerm: '',
   selectedTag: '',
   selectedState: 'all',
@@ -53,6 +55,7 @@ export const ProjectStore = signalStore(
   withProps((store) => ({
     i18n: store.i18nService.translateAll(PROJECT_I18N_KEYS),
     projectsResource: rxResource({
+      params: () => store.listEnabled() ? true : undefined,
       stream: () => store.projectService.list(),
     }),
     // archived projects included: a link to one must still open
@@ -94,6 +97,9 @@ export const ProjectStore = signalStore(
     },
 
     /******************************** setters ******************************************* */
+    enableList() {
+      patchState(store, { listEnabled: true });
+    },
     setProjectKey(projectKey: string) {
       patchState(store, { projectKey });
     },
@@ -177,12 +183,14 @@ export const ProjectStore = signalStore(
         ? getDayDiff(source.startDate, copy.startDate)
         : 0;
       const firstState = store.appStore.getCategory('task_state')?.items?.[0]?.name ?? DEFAULT_TASK_STATE;
+      const copies = duplicateProjectTasks(tasks, delta, getProjectParentKey(newKey), firstState);
       let copied = 0;
-      for (const t of duplicateProjectTasks(tasks, delta, getProjectParentKey(newKey), firstState)) {
-        await store.taskService.create(t, store.currentUser());
-        copied++;
+      for (const t of copies) {
+        // create() never throws: it answers undefined on failure. Silent = one summary toast below.
+        if (await store.taskService.create(t, store.currentUser(), { silent: true })) copied++;
       }
-      void store.alertService.showToast(store.i18n.duplicated().replace('{count}', String(copied)));
+      const message = copied === copies.length ? store.i18n.duplicated() : store.i18n.duplicatedPartial();
+      void store.alertService.showToast(message.replace('{count}', String(copied)).replace('{total}', String(copies.length)));
       this.reload();
       await store.router.navigate(['/projects', newKey]);
     },

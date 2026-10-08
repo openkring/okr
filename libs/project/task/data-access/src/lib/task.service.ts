@@ -36,12 +36,17 @@ export class TaskService {
    * Create a new task in the database.
    * @param task the TaskModel to store in the database
    * @param currentUser the current user (used as the author of the initial comment)
+   * @param options `silent`: no confirmation toast, no error toast and no initial comment — for bulk
+   *   creation (duplicating a project), where the caller reports once from the returned keys
    * @returns the document id of the newly created task or undefined if the operation failed
    */
-  public async create(task: TaskModel, currentUser: UserModel | undefined): Promise<string | undefined> {
+  public async create(task: TaskModel, currentUser: UserModel | undefined, options?: { silent?: boolean }): Promise<string | undefined> {
     task.index = getTaskIndex(task);
     task.shareKey = getTaskShareKey(task);
-    const key = await this.firestoreService.createModel<TaskModel>(TaskCollection, task, this.i18n.create_conf(), this.i18n.create_error(), currentUser);
+    const silent = options?.silent === true;
+    const key = silent
+      ? await this.firestoreService.createModel<TaskModel>(TaskCollection, task, undefined, this.i18n.create_error(), undefined, true)
+      : await this.firestoreService.createModel<TaskModel>(TaskCollection, task, this.i18n.create_conf(), this.i18n.create_error(), currentUser);
     const payload = `${key}: ${task.name}/${task.state}`;
     void this.activityService.log('task', 'create', currentUser, payload);
     return key;

@@ -82,5 +82,6 @@
   "empty": "No se han encontrado proyectos.",
   "copySuffix": "(copia)",
   "duplicated": "Proyecto duplicado. Tareas copiadas ({count})",
-  "notFound": "Este proyecto no existe."
+  "notFound": "Este proyecto no existe.",
+  "duplicatedPartial": "Solo se copiaron {count} de {total} tareas. Revisa el nuevo proyecto."
 }

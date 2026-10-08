@@ -54,6 +54,7 @@ export const PROJECT_I18N_KEYS = {
   copySuffix:        PFX + 'copySuffix',
   duplicated:        PFX + 'duplicated',
   notFound:          PFX + 'notFound',
+  duplicatedPartial: PFX + 'duplicatedPartial',
 
   validation_endBeforeStart: PFX + 'validation.endBeforeStart',
 } satisfies Record<string, string>;

@@ -6,6 +6,7 @@ import {
   IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar
 } from '@ionic/angular/standalone';
 
+import { DEFAULT_PROJECT_STATE } from '@okr/shared-constants';
 import { AvatarPipe } from '@okr/avatar-ui';
 import { Menu } from '@okr/cms-menu-feature';
 import { ProjectModel } from '@okr/shared-models';
@@ -98,11 +99,15 @@ export class ProjectList {
   public readonly listId = input.required<string>();
   public readonly contextMenuName = input.required<string>();
 
+  constructor() {
+    this.store.enableList();
+  }
+
   protected readonly filteredCount = computed(() => this.store.filteredProjects().length);
   protected readonly popupId = computed(() => `c_projects_${this.listId()}`);
 
   protected stateKey(project: ProjectModel): string {
-    return `${PROJECT_I18N_SCOPE}.project_state.${project.state}.label`;
+    return `${PROJECT_I18N_SCOPE}.project_state.${(project.state ?? DEFAULT_PROJECT_STATE)}.label`;
   }
 
   /*-------------------------- context menu --------------------------------*/

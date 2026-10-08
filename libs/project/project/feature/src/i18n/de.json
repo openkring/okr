@@ -82,5 +82,6 @@
   "empty": "Keine Projekte gefunden.",
   "copySuffix": "(Kopie)",
   "duplicated": "Projekt dupliziert. Kopierte Aufgaben ({count})",
-  "notFound": "Dieses Projekt gibt es nicht."
+  "notFound": "Dieses Projekt gibt es nicht.",
+  "duplicatedPartial": "Nur {count} von {total} Aufgaben kopiert. Prüfe das neue Projekt."
 }
