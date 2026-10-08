@@ -1,6 +1,6 @@
 import { Component, computed, inject, input } from '@angular/core';
-import { ActionSheetButton, ActionSheetController } from '@ionic/angular';
-import { IonAvatar, IonButton, IonCard, IonCardContent, IonChip, IonContent, IonIcon, IonImg, IonItem, IonLabel } from '@ionic/angular/standalone';
+import type { ActionSheetButton } from '@ionic/angular';
+import { ActionSheetController, IonAvatar, IonButton, IonCard, IonCardContent, IonChip, IonContent, IonIcon, IonImg, IonItem, IonLabel } from '@ionic/angular/standalone';
 
 import { InvoiceModel, InvoiceReminder } from '@okr/shared-models';
 import { formatMinorAmount, Header } from '@okr/shared-ui';
@@ -219,8 +219,12 @@ export class InvoiceViewModal {
   public readonly invoice = input.required<InvoiceModel>();
 
   /** the invoice as the store streams it now (a new reminder shows without reopening); the input until it is loaded */
-  protected readonly live = computed(() =>
-    (this.store.allInvoicesResource.value() ?? []).find((i) => i.okey === this.invoice().okey) ?? this.invoice());
+  protected readonly live = computed(() => {
+    const input = this.invoice();
+    // only treasurer/privileged may stream all invoices; for others the resource errors and value() throws
+    if (!this.mayReadVouchers() || !this.store.allInvoicesResource.hasValue()) return input;
+    return (this.store.allInvoicesResource.value() ?? []).find((i) => i.okey === input.okey) ?? input;
+  });
 
   protected readonly receiverName = computed(() => {
     const receiver = this.invoice()?.receiver;
