@@ -261,7 +261,7 @@
   },
   "book": {
     "label": "Contabilizar",
-    "confirm": "¿Contabilizar ahora la factura del proveedor? Después ya no se puede editar, salvo que elimines su asiento en el diario.",
+    "confirm": "¿Quieres contabilizar ahora la factura de proveedor? Después, el proveedor, la fecha, las cuentas y los importes solo se podrán cambiar si eliminas su asiento en el diario.",
     "conf": "La factura del proveedor está contabilizada.",
     "error": "No se pudo contabilizar la factura del proveedor. Inténtalo de nuevo más tarde."
   },
@@ -279,6 +279,6 @@
     "label": "Editar detalles",
     "conf": "Los cambios se han guardado.",
     "error": "No se pudieron guardar los cambios. Inténtalo de nuevo más tarde.",
-    "periodLocked": "El periodo contable de esta factura está cerrado. Solo se pueden cambiar las notas. Para lo demás, pide que se reabra el periodo."
+    "periodLocked": "Este periodo está cerrado. Solo se pueden cambiar las notas, el vencimiento, la referencia y el IBAN."
   }
 }

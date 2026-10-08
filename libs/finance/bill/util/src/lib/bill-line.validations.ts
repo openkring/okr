@@ -30,3 +30,12 @@ export const billLinesValidations = staticSuite((lines: BillLine[]) => {
     });
   });
 });
+
+/** The lines of a booked or paid bill (spec 1.92): only the editable line title is checked; account and amount stay as booked. */
+export const billLineDetailsValidations = staticSuite((lines: BillLine[]) => {
+  (lines ?? []).forEach((line, i) => {
+    test(`lines[${i}].title`, VPFX + 'titleTooLong', () => {
+      enforce((line.title ?? '').length).lessThanOrEquals(BILL_LINE_TITLE_LENGTH);
+    });
+  });
+});

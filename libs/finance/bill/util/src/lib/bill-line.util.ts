@@ -1,5 +1,5 @@
 import { AccountModel, BillLine, BillModel } from '@okr/shared-models';
-import { CostCenterLike, isProfitAndLossAccountId, ProjectLike, resolveCostCenterKey } from '@okr/shared-util-core';
+import { CostCenterLike, normalizeQrReference, isProfitAndLossAccountId, ProjectLike, resolveCostCenterKey } from '@okr/shared-util-core';
 
 /** writeBill keeps at most this many lines (server: MAX_BILL_LINES). */
 export const MAX_BILL_LINES = 50;
@@ -89,14 +89,17 @@ export function isBillPaymentDataEditable(bill: Pick<BillModel, 'state'> | undef
  * so the whole form is sent.
  */
 export function billDetailsPayload(bill: BillModel, lines: BillLine[]): BillDetailsPayload {
-  const payload: BillDetailsPayload = { billKey: bill.okey, title: bill.title ?? '', notes: bill.notes ?? '' };
+  // normalised like the callable's cleanInput, so an untouched value never counts as changed
+  const payload: BillDetailsPayload = { billKey: bill.okey, title: (bill.title ?? '').trim().slice(0, 200), notes: (bill.notes ?? '').slice(0, 2000) };
   if (isBillPaymentDataEditable(bill)) {
-    payload.dueDate = bill.dueDate ?? '';
-    payload.paymentReference = bill.paymentReference ?? '';
-    payload.creditorIban = bill.creditorIban ?? '';
+    payload.dueDate = (bill.dueDate ?? '').trim();
+    payload.paymentReference = normalizeQrReference((bill.paymentReference ?? '').trim().slice(0, 40));
+    payload.creditorIban = (bill.creditorIban ?? '').trim().slice(0, 34).replace(/\s+/g, '').toUpperCase();
   }
   if (lines.length > 0) {
-    payload.lines = lines.map((l) => ({ title: l.title ?? '', costCenterKey: l.costCenterKey ?? '', projectKey: l.projectKey ?? '' }));
+    payload.lines = lines.map((l) => ({
+      title: (l.title ?? '').trim().slice(0, 200), costCenterKey: (l.costCenterKey ?? '').trim(), projectKey: (l.projectKey ?? '').trim(),
+    }));
   }
   return payload;
 }

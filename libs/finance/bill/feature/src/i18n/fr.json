@@ -261,7 +261,7 @@
   },
   "book": {
     "label": "Comptabiliser",
-    "confirm": "Comptabiliser la facture fournisseur maintenant ? Ensuite elle ne peut plus être modifiée, sauf si tu supprimes son écriture dans le journal.",
+    "confirm": "Veux-tu comptabiliser la facture fournisseur maintenant ? Ensuite, le fournisseur, la date, les comptes et les montants ne pourront être modifiés que si tu supprimes son écriture dans le journal.",
     "conf": "La facture fournisseur est comptabilisée.",
     "error": "La facture fournisseur n'a pas pu être comptabilisée. Réessaie plus tard."
   },
@@ -279,6 +279,6 @@
     "label": "Modifier les détails",
     "conf": "Les modifications sont enregistrées.",
     "error": "Les modifications n’ont pas pu être enregistrées. Réessaie plus tard.",
-    "periodLocked": "La période comptable de cette facture est clôturée. Seules les notes peuvent encore être modifiées. Pour le reste, fais rouvrir la période."
+    "periodLocked": "Cette période est clôturée. Seuls les notes, l’échéance, la référence et l’IBAN peuvent encore être modifiés."
   }
 }

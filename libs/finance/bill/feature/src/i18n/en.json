@@ -261,7 +261,7 @@
   },
   "book": {
     "label": "Book",
-    "confirm": "Book the supplier bill now? After that it cannot be edited unless you delete its booking in the journal.",
+    "confirm": "Should the supplier bill be booked now? Afterwards, the supplier, date, accounts and amounts can only be changed if you delete its booking in the journal.",
     "conf": "The supplier bill is booked.",
     "error": "The supplier bill could not be booked. Please try again later."
   },
@@ -279,6 +279,6 @@
     "label": "Edit details",
     "conf": "Your changes are saved.",
     "error": "The changes could not be saved. Please try again later.",
-    "periodLocked": "The booking period of this bill is closed. Only the notes can still be changed. For anything else, have the period reopened."
+    "periodLocked": "This period is closed. Only notes, due date, reference and IBAN can still be changed."
   }
 }

@@ -12,7 +12,7 @@ import { AccountSelect, AccountSelectI18n } from '@okr/finance-account-ui';
 import { CostCenterSelect, CostCenterSelectI18n } from '@okr/finance-cost-center-ui';
 import { ProjectSelect } from '@okr/project-project-ui';
 import { leafAccounts } from '@okr/finance-account-util';
-import { BILL_LINE_TITLE_LENGTH, BillI18n, billLinesTotal, billLinesValidations, lineCostCenterFallback, MAX_BILL_LINES, newBillLine, showLineCostCenter, showLineProject, withLineAccount } from '@okr/finance-bill-util';
+import { BILL_LINE_TITLE_LENGTH, BillI18n, billLinesTotal, billLineDetailsValidations, billLinesValidations, lineCostCenterFallback, MAX_BILL_LINES, newBillLine, showLineCostCenter, showLineProject, withLineAccount } from '@okr/finance-bill-util';
 
 /**
  * The lines of a native bill (spec 1.85 Q2), one row each: account (any leaf), text, amount in CHF,
@@ -138,7 +138,7 @@ export class BillLinesForm {
   // so the signal form wraps the writable `lines` model and the bridge gets the suite directly.
   protected readonly linesForm = form(this.lines, (path) =>
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    validateVestTree(path, billLinesValidations as any));
+    validateVestTree(path, ((lines: BillLine[]) => this.mode() === 'details' ? billLineDetailsValidations(lines) : billLinesValidations(lines)) as any));
 
   private readonly validationResult = vestErrors(this.linesForm);
   protected readonly listErrors = computed(() => this.validationResult().getErrors('lines'));

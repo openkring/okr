@@ -29,3 +29,28 @@ export const billValidations = staticSuite((model: BillModel, tenants: string, t
     }
   );
 });
+
+/**
+ * The header of a BOOKED or paid bill in details mode (spec 1.92): only what the treasurer can still
+ * change is validated, so a legacy or migrated bill (missing billId / billDate, odd locked values) can
+ * be saved. Title always; due date, reference and IBAN only while not paid; the due-date-after-bill-date
+ * rule only for a due date that differs from the stored one.
+ * @param stored the bill as loaded, before the edit
+ */
+export const billDetailsValidations = staticSuite((model: BillModel, stored: Pick<BillModel, 'dueDate'>) => {
+  stringValidations('title', model.title, SHORT_NAME_LENGTH);
+  omitWhen(model.state === 'paid', () => {
+    dateValidations('dueDate', model.dueDate);
+    stringValidations('paymentReference', model.paymentReference ?? '', BILL_REFERENCE_LENGTH);
+    stringValidations('creditorIban', model.creditorIban ?? '', BILL_IBAN_LENGTH);
+  });
+  omitWhen(
+    model.state === 'paid' || (model.dueDate ?? '') === (stored?.dueDate ?? '')
+      || !model.billDate || !model.dueDate || model.billDate.length !== 8 || model.dueDate.length !== 8,
+    () => {
+      test('dueDate', '@bill.validation.dueDateAfterBillDate', () => {
+        enforce(isAfterDate(model.dueDate, model.billDate)).isTruthy();
+      });
+    }
+  );
+});

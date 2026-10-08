@@ -261,7 +261,7 @@
   },
   "book": {
     "label": "Contabilizza",
-    "confirm": "Contabilizzare ora la fattura del fornitore? Poi non potrà più essere modificata, a meno che tu elimini la sua registrazione nel giornale.",
+    "confirm": "Vuoi contabilizzare ora la fattura fornitore? Dopo, fornitore, data, conti e importi si potranno modificare solo se elimini la sua registrazione nel giornale.",
     "conf": "La fattura del fornitore è contabilizzata.",
     "error": "Non è stato possibile contabilizzare la fattura del fornitore. Riprova più tardi."
   },
@@ -279,6 +279,6 @@
     "label": "Modifica i dettagli",
     "conf": "Le modifiche sono salvate.",
     "error": "Non è stato possibile salvare le modifiche. Riprova più tardi.",
-    "periodLocked": "Il periodo contabile di questa fattura è chiuso. Si possono ancora modificare solo le note. Per il resto, fai riaprire il periodo."
+    "periodLocked": "Questo periodo è chiuso. Si possono ancora modificare solo note, scadenza, riferimento e IBAN."
   }
 }

@@ -9,7 +9,7 @@ import { DateInput, DateInputI18n, ErrorNote, NotesInput, NotesInputI18n, TextIn
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, getFullName } from '@okr/shared-util-core';
 
-import { BILL_IBAN_LENGTH, BILL_REFERENCE_LENGTH, BillI18n, billValidations, isBillPaymentDataEditable } from '@okr/finance-bill-util';
+import { BILL_IBAN_LENGTH, BILL_REFERENCE_LENGTH, BillI18n, billDetailsValidations, billValidations, isBillPaymentDataEditable } from '@okr/finance-bill-util';
 
 import { BillLinesForm } from './bill-lines.form';
 
@@ -118,6 +118,8 @@ export class BillEditForm {
   public readonly isNew = input(false);
   /** 'details' = a booked or paid bill (spec 1.92): vendor, number and bill date stay as booked; due date, reference and IBAN only while unpaid */
   public readonly mode = input<'draft' | 'details'>('draft');
+  /** details mode: the due date as stored, so the due-date-after-bill-date rule applies only to a changed one */
+  public readonly storedDueDate = input('');
   public readonly showForm = input(true);
   public readonly i18n = input.required<BillI18n>();
 
@@ -136,7 +138,7 @@ export class BillEditForm {
   // The suite needs the tags, which validateVestTree does not pass — so the bridge calls it
   // through a closure that adds them.
   private readonly suiteWithContext = (model: BillModel) =>
-    billValidations(model, '', this.allTags());
+    this.mode() === 'details' ? billDetailsValidations(model, { dueDate: this.storedDueDate() }) : billValidations(model, '', this.allTags());
   protected readonly billForm = form(this.formData, (path) =>
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     validateVestTree(path, this.suiteWithContext as any));

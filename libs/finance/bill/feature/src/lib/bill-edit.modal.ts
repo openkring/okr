@@ -66,6 +66,7 @@ export interface BillEditResult {
           [readOnly]="isReadOnly()"
           [isNew]="isNew()"
           [mode]="mode()"
+          [storedDueDate]="bill().dueDate"
           [i18n]="i18n"
           (dirty)="formDirty.set($event)"
           (valid)="formValid.set($event)"

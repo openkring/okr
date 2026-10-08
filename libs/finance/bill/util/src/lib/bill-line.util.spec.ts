@@ -95,4 +95,13 @@ describe('billDetailsPayload', () => {
     expect(p).toMatchObject({ title: '', notes: '', dueDate: '' });
     expect(billDetailsPayload(bill, [{ title: 'x', accountKey: 'a', amount: 1 } as never]).lines).toEqual([{ title: 'x', costCenterKey: '', projectKey: '' }]);
   });
+
+  it('normalises like the callable so an untouched value is no change', () => {
+    const p = billDetailsPayload({ ...bill, title: '  T  ', paymentReference: ' 21 00000 00003 13947 14300 09017 ', creditorIban: 'ch93 0076 2011' } as BillModel,
+      [{ ...newBillLine('a', 1, ' x '), costCenterKey: ' cc ' }]);
+    expect(p.title).toBe('T');
+    expect(p.paymentReference).toBe('210000000003139471430009017');
+    expect(p.creditorIban).toBe('CH930076' + '2011');
+    expect(p.lines).toEqual([{ title: 'x', costCenterKey: 'cc', projectKey: '' }]);
+  });
 });

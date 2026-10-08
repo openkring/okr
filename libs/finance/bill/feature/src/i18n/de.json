@@ -261,7 +261,7 @@
   },
   "book": {
     "label": "Verbuchen",
-    "confirm": "Soll die Lieferantenrechnung jetzt verbucht werden? Danach kann sie nicht mehr bearbeitet werden, ausser du löschst ihre Buchung im Journal.",
+    "confirm": "Soll die Lieferantenrechnung jetzt verbucht werden? Lieferant, Datum, Konten und Beträge lassen sich danach nur noch ändern, wenn du ihre Buchung im Journal löschst.",
     "conf": "Die Lieferantenrechnung ist verbucht.",
     "error": "Die Lieferantenrechnung konnte nicht verbucht werden. Bitte versuche es später noch einmal."
   },
@@ -279,6 +279,6 @@
     "label": "Details bearbeiten",
     "conf": "Die Änderungen sind gespeichert.",
     "error": "Die Änderungen konnten nicht gespeichert werden. Bitte versuche es später noch einmal.",
-    "periodLocked": "Die Buchungsperiode dieser Rechnung ist abgeschlossen. Nur die Notizen lassen sich noch ändern. Für alles andere lass die Periode wieder öffnen."
+    "periodLocked": "Diese Periode ist abgeschlossen. Nur Notizen, Fälligkeit, Referenz und IBAN lassen sich noch ändern."
   }
 }
