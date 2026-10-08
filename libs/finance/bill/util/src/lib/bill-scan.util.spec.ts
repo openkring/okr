@@ -37,6 +37,12 @@ describe('billFromScan', () => {
     expect(b.notes).toBe('');
   });
 
+  it('falls back to the Gemini vendor when the QR creditor name matches no org', () => {
+    const b = billFromScan(scan({ vendor: 'iWay AG', qrCreditorName: 'iWay AG, Zürich', qrAmount: 3900 }), ctx);
+    expect(b.title).toBe('iWay AG, Zürich');
+    expect(b.vendor?.key).toBe('o1');
+  });
+
   it('uses Gemini for an open QR amount', () => {
     expect(billFromScan(scan({ qrAmount: -1, qrCreditorName: 'Spende', grossAmount: 5000 }), ctx).lines[0].amount).toBe(5000);
   });

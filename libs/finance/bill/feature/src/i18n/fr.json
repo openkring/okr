@@ -260,8 +260,7 @@
     "error": "La facture fournisseur n'a pas pu être enregistrée. Réessaie plus tard."
   },
   "upload": {
-    "reading": "Lecture de la facture …",
-    "cancel": "Annuler",
+    "reading": "Lecture de la facture … Touche à côté pour annuler.",
     "failed": "Nous n'avons pas pu lire la facture. Remplis les champs toi-même, s'il te plaît.",
     "currency_note": "Devise {currency} — vérifie-la, s'il te plaît",
     "duplicate": "Une facture similaire existe déjà : «{title}» du {date}. Vérifie que tu ne la saisis pas deux fois."

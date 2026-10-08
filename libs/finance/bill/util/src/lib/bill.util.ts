@@ -102,7 +102,10 @@ export function billBookingAmounts(bill: BillModel): Record<string, number> {
   return amounts;
 }
 
-/** The finance-documents (Belege) of a bill; legacy bills hold raw bexio uuids, which are not files here. */
+/**
+ * The finance-documents (Belege) of a bill: bexio-synced ones (`bexio-file-…`) and the one uploaded via
+ * «Rechnung hochladen» (`bill-{billKey}`). Legacy bills hold raw bexio uuids, which are not files here.
+ */
 export function billVoucherKeys(bill: BillModel | undefined): string[] {
-  return (bill?.attachments ?? []).filter(a => a.startsWith('bexio-file-'));
+  return (bill?.attachments ?? []).filter(a => a.startsWith('bexio-file-') || a.startsWith('bill-'));
 }

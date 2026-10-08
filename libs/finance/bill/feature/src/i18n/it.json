@@ -260,8 +260,7 @@
     "error": "Non è stato possibile salvare la fattura del fornitore. Riprova più tardi."
   },
   "upload": {
-    "reading": "Lettura della fattura …",
-    "cancel": "Annulla",
+    "reading": "Lettura della fattura … Tocca fuori per annullare.",
     "failed": "Non siamo riusciti a leggere la fattura. Compila tu i campi, per favore.",
     "currency_note": "Valuta {currency} — controllala, per favore",
     "duplicate": "Esiste già una fattura simile: «{title}» del {date}. Controlla di non registrarla due volte."

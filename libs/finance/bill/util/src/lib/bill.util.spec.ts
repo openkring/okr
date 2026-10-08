@@ -96,6 +96,11 @@ describe('billVoucherKeys', () => {
     expect(billVoucherKeys(b)).toEqual(['bexio-file-1', 'bexio-file-2']);
   });
 
+  it('keeps a voucher uploaded via «Rechnung hochladen» (bill-<billKey>)', () => {
+    const b = Object.assign(newBill('scs'), { attachments: ['bill-b1', '3f2a-uuid', 'bexio-file-1'] });
+    expect(billVoucherKeys(b)).toEqual(['bill-b1', 'bexio-file-1']);
+  });
+
   it('is empty without attachments or without a bill', () => {
     expect(billVoucherKeys(Object.assign(newBill('scs'), { attachments: undefined }))).toEqual([]);
     expect(billVoucherKeys(undefined)).toEqual([]);

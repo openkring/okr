@@ -39,6 +39,8 @@ export function billFromScan(r: OcrResultModel, ctx: { tenantId: string; account
     creditorName: name,
     message: r.qrMessage || r.subject || '',
   }, ctx.orgs, r.accountKey || ctx.defaultAccountKey);
+  // The QR creditor name often carries a suffix (city, legal form); Gemini's vendor may still match an org (spec §6).
+  if (!bill.vendor && r.vendor) bill.vendor = vendorByName(ctx.orgs, r.vendor);
   bill.lines[0].vatCodeKey = r.vatCodeKey ?? '';
   bill.lines[0].costCenterKey = r.costCenterKey ?? '';
   bill.billId = r.invoiceNumber ?? '';

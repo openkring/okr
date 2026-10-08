@@ -168,7 +168,11 @@ export class UploadService {
   private pickFilesNative(mimeTypes: string[], multiple: boolean): Promise<File[]> {
     const input = document.createElement('input');
     input.type = 'file';
-    input.accept = mimeTypes.join(',');
+    // A browser that cannot decode HEIC reports an empty type and greys the file out unless the bare
+    // extension is accepted too (see DEFAULT_ACCEPT_ATTRIBUTE); the native FilePicker takes mime types only.
+    const extensions = [['image/heic', '.heic'], ['image/heif', '.heif']]
+      .filter(([mime, ext]) => mimeTypes.includes(mime) && !mimeTypes.includes(ext)).map(([, ext]) => ext);
+    input.accept = [...mimeTypes, ...extensions].join(',');
     input.multiple = multiple;
     input.style.cssText = 'position:fixed;top:0;left:0;width:0;height:0;overflow:hidden;opacity:0;';
     document.body.appendChild(input);

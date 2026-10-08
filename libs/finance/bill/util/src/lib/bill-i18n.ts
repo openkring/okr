@@ -169,7 +169,6 @@ export const BILL_I18N_KEYS = {
 
   // «Rechnung hochladen» (spec 1.91)
   upload_reading:                 PFX + 'upload.reading',
-  upload_cancel:                  PFX + 'upload.cancel',
   upload_failed:                  PFX + 'upload.failed',
   upload_currency_note:           PFX + 'upload.currency_note',
   upload_duplicate:               PFX + 'upload.duplicate',

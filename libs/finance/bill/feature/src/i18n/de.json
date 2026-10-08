@@ -260,8 +260,7 @@
     "error": "Die Lieferantenrechnung konnte nicht gespeichert werden. Bitte versuche es später noch einmal."
   },
   "upload": {
-    "reading": "Rechnung wird gelesen …",
-    "cancel": "Abbrechen",
+    "reading": "Rechnung wird gelesen … Tippe daneben, um abzubrechen.",
     "failed": "Die Rechnung konnten wir nicht lesen. Fülle die Felder bitte selbst aus.",
     "currency_note": "Währung {currency} — bitte prüfen",
     "duplicate": "Eine ähnliche Rechnung gibt es schon: «{title}» vom {date}. Prüfe, ob du sie doppelt erfasst."

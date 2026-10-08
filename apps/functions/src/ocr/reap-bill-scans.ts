@@ -46,10 +46,15 @@ export const reapBillScans = onSchedule(
     let deleted = 0;
     for (const f of files) {
       if (!isReapableBillScan(f.name, f.metadata.timeCreated, now)) continue;
-      const results = await db.collection(OCR_RESULT_COLLECTION).where('storagePath', '==', f.name).get();
-      await Promise.all(results.docs.map((d) => d.ref.delete()));
-      await f.delete();
-      deleted += 1;
+      try {
+        const results = await db.collection(OCR_RESULT_COLLECTION).where('storagePath', '==', f.name).get();
+        await Promise.all(results.docs.map((d) => d.ref.delete()));
+        await f.delete();
+        deleted += 1;
+      } catch (error) {
+        // One stubborn file must not stop the sweep; it is retried on the next run.
+        logger.warn(`reapBillScans: could not reap "${f.name}"`, error);
+      }
     }
     logger.info(`reapBillScans: deleted ${deleted} abandoned bill scan(s) of ${files.length} scanned`);
   },

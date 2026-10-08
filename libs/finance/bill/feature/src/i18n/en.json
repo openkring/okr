@@ -260,8 +260,7 @@
     "error": "The supplier bill could not be saved. Please try again later."
   },
   "upload": {
-    "reading": "Reading the bill …",
-    "cancel": "Cancel",
+    "reading": "Reading the bill … Tap outside to cancel.",
     "failed": "We could not read the bill. Please fill in the fields yourself.",
     "currency_note": "Currency {currency} — please check",
     "duplicate": "A similar bill already exists: «{title}» of {date}. Check whether you are entering it twice."

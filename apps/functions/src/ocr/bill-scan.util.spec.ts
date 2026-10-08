@@ -20,12 +20,19 @@ describe('qrFieldsOf', () => {
 
 describe('pickVatCodeKey', () => {
   const codes = [
-    { okey: 'v81in', rate: 8.1, direction: 'input', validFrom: '20240101', validTo: '' },
-    { okey: 'v81out', rate: 8.1, direction: 'output', validFrom: '20240101', validTo: '' },
-    { okey: 'v77in', rate: 7.7, direction: 'input', validFrom: '20180101', validTo: '20231231' },
+    { okey: 'v81in', code: 'VST_81', rate: 8.1, direction: 'input', validFrom: '20240101', validTo: '' },
+    { okey: 'v81out', code: 'UST_81', rate: 8.1, direction: 'output', validFrom: '20240101', validTo: '' },
+    { okey: 'v77in', code: 'VST_77', rate: 7.7, direction: 'input', validFrom: '20180101', validTo: '20231231' },
+    { okey: 'scs-VST_MAT', code: 'VST_MAT', rate: 8.1, direction: 'input', validFrom: '20240101', validTo: '', isArchived: true },
   ];
-  it('prefers the rule VAT code when it exists', () => {
+  it('prefers the rule VAT code when it exists (matched by okey)', () => {
     expect(pickVatCodeKey('v77in', [{ rate: 8.1 }], codes, '20261008')).toBe('v77in');
+  });
+  it('matches the rule VAT code by its code (as the ocr-rule form stores it) and returns the okey', () => {
+    expect(pickVatCodeKey('VST_77', [{ rate: 8.1 }], codes, '20261008')).toBe('v77in');
+  });
+  it('ignores an archived rule VAT code and falls back to the rate', () => {
+    expect(pickVatCodeKey('VST_MAT', [{ rate: 8.1 }], codes, '20261008')).toBe('v81in');
   });
   it('takes the valid input code of the single rate', () => {
     expect(pickVatCodeKey('', [{ rate: 8.1 }], codes, '20261008')).toBe('v81in');

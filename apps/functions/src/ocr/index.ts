@@ -409,6 +409,18 @@ export const onOcrResultWritten = onDocumentWritten(
 
 /** Usage 'bill' (spec 1.91 §4.2): resolve account, VAT, cost centre and the QR fields — never a booking or a task. */
 async function handleBillScanResult(tenantId: string, after: OcrResultDoc, resultRef: FirebaseFirestore.DocumentReference): Promise<void> {
+  try {
+    await resolveBillScanResult(tenantId, after, resultRef);
+  } catch (error) {
+    // Stage ② failed: mark the result failed so the waiting client stops polling instead of timing out.
+    const message = error instanceof Error ? error.message : String(error);
+    logger.error(`handleBillScanResult: resolving result ${resultRef.id} failed:`, error);
+    await resultRef.set({ status: 'failed', error: message }, { merge: true });
+  }
+}
+
+/** Stage ② of a bill scan: rule, account, VAT code, cost center and the parsed QR-bill onto the result (spec 1.91). */
+async function resolveBillScanResult(tenantId: string, after: OcrResultDoc, resultRef: FirebaseFirestore.DocumentReference): Promise<void> {
   const db = getFirestore();
   const accountingTenantId = tenantId;
   const cfg = (await db.collection(ACCOUNTING_CONFIG_COLLECTION).doc(accountingTenantId).get()).data() ?? {};

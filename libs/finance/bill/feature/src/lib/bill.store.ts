@@ -44,7 +44,10 @@ interface ParsedQrInvoice {
   dueDate: string;     // always '' — a QR-bill carries no due date
 }
 
-/** The supported scan formats of «Rechnung hochladen» (the OCR pipeline reads PDFs and images). */
+/**
+ * The supported scan formats of «Rechnung hochladen» (the OCR pipeline reads PDFs and images). Mime types only:
+ * the native FilePicker takes no extensions; the web picker adds `.heic`/`.heif` itself (UploadService.pickFile).
+ */
 const BILL_SCAN_MIME_TYPES = ['application/pdf', 'image/jpeg', 'image/png', 'image/heic', 'image/heif'];
 /** How long the upload waits for the OCR result before the treasurer fills the draft by hand. */
 const BILL_SCAN_TIMEOUT_MS = 60_000;
@@ -254,7 +257,8 @@ export const BillStore = signalStore(
 
     /**
      * «Rechnung hochladen» (spec 1.91): upload → OCR stage ①/② → prefilled draft; the scan becomes the voucher on save.
-     * The draft opens even when the read fails, times out or is cancelled — the treasurer then fills it by hand.
+     * The draft opens even when the read fails, times out or is cancelled. A cut-short wait keeps the last `extracted`
+     * snapshot (Gemini's fields; account, VAT and QR fields stay empty); without one the treasurer fills the draft by hand.
      */
     async upload(): Promise<void> {
       if (store.accountingStore.isExternallyManaged()) return;
@@ -262,8 +266,8 @@ export const BillStore = signalStore(
       if (!file) return;
       const tenantId = store.appStore.tenantId();
       const scanKey = generateRandomString(20);
-      let result: OcrResultModel | undefined;
-      let seenKey = '';          // the result id once stage ① has written, even if stage ② never finishes
+      let latest: OcrResultModel | undefined;   // the last snapshot of the result, once stage ① has written
+      let outcome: 'done' | 'cancelled' | 'timeout' | 'error' = 'error';
       let uploaded = false;
       try {
         // the upload shows its own progress modal, so the loading overlay only covers the OCR wait
@@ -277,19 +281,18 @@ export const BillStore = signalStore(
         let sub: Subscription | undefined;
         let timer: ReturnType<typeof setTimeout> | undefined;
         try {
-          result = await Promise.race([
-            new Promise<OcrResultModel>((resolve) => {
+          outcome = await Promise.race([
+            new Promise<'done'>((resolve) => {
               sub = store.firestoreService.searchData<OcrResultModel>(OcrResultCollection, [
                 { key: 'tenants', operator: 'array-contains', value: tenantId },
                 { key: 'correlationKey', operator: '==', value: scanKey },
               ], 'none').subscribe((rs) => {
-                seenKey ||= rs[0]?.okey ?? '';
-                const done = rs.find((r) => r.status === 'processed' || r.status === 'failed');
-                if (done) resolve(done);
+                latest = rs.find((r) => r.status === 'processed' || r.status === 'failed') ?? rs[0] ?? latest;
+                if (latest?.status === 'processed' || latest?.status === 'failed') resolve('done');
               });
             }),
-            loading.onDidDismiss().then(() => undefined),     // the treasurer cancelled
-            new Promise<undefined>((res) => { timer = setTimeout(() => res(undefined), BILL_SCAN_TIMEOUT_MS); }),
+            loading.onDidDismiss().then(() => 'cancelled' as const),     // the treasurer tapped beside the overlay
+            new Promise<'timeout'>((res) => { timer = setTimeout(() => res('timeout'), BILL_SCAN_TIMEOUT_MS); }),
           ]);
         } catch (e) {
           console.error('BillStore.upload: waiting for the OCR result failed', e);
@@ -299,19 +302,21 @@ export const BillStore = signalStore(
           await loading.dismiss().catch(() => undefined);
         }
       }
-      // Firestore reads skip model defaults: lay the raw doc over a fresh model
-      const scan = result?.status === 'processed' ? Object.assign(new OcrResultModel(tenantId), result) : undefined;
-      if (!scan) await showToast(store.toastController, store.i18n.upload_failed());
+      // Firestore reads skip model defaults: lay the raw doc over a fresh model. 'extracted' = stage ② not done yet.
+      const usable = latest?.status === 'processed' || latest?.status === 'extracted';
+      const scan = usable ? Object.assign(new OcrResultModel(tenantId), latest) : undefined;
+      // a deliberate cancel before anything was read is not a read failure
+      if (!scan && outcome !== 'cancelled') await showToast(store.toastController, store.i18n.upload_failed());
       const bill = billFromScan(scan ?? new OcrResultModel(tenantId), {
         tenantId, accountingTenantId: store.accountingStore.accountingTenantId(), orgs: store.appStore.allOrgs(),
         defaultAccountKey: store.defaultExpenseAccountKey(), today: getTodayStr(), currencyNote: store.i18n.upload_currency_note(),
       });
-      // the voucher is attached on save even when the read failed or was cancelled — writeBill finds the result by key
-      const ocrResultKey = !uploaded ? '' : (result?.okey || seenKey || await this.ocrResultKeyOf(scanKey));
-      await this.openEdit(bill, true, ocrResultKey);
+      // The voucher is attached on save even when the read failed or was cancelled — writeBill finds the result by key.
+      // Stage ① may not have written yet; openEdit then resolves the key from scanKey right before saving.
+      await this.openEdit(bill, true, uploaded ? latest?.okey ?? '' : '', uploaded ? scanKey : '');
     },
 
-    /** The result id of a scan whose wait was cut short ('' when stage ① has not written yet or the read fails). */
+    /** The result id of an uploaded scan, read at save time ('' when stage ① has still not written or the read fails). */
     async ocrResultKeyOf(scanKey: string): Promise<string> {
       try {
         const rs = await store.firestoreService.getDataOnce<OcrResultModel>(OcrResultCollection, [
@@ -333,8 +338,10 @@ export const BillStore = signalStore(
     /**
      * Opens the edit modal and writes the result through `writeBill` (drafts only; anything else opens read-only).
      * @param ocrResultKey a new bill from «Rechnung hochladen»: the scan that becomes its voucher
+     * @param scanKey a new bill from «Rechnung hochladen»: the upload's correlationKey, to find the scan at save time
+     *   when `ocrResultKey` was still unknown (stage ① had not written when the wait was cut short)
      */
-    async openEdit(bill: BillModel, isNew: boolean, ocrResultKey = ''): Promise<void> {
+    async openEdit(bill: BillModel, isNew: boolean, ocrResultKey = '', scanKey = ''): Promise<void> {
       const dup = isNew ? billDuplicateHint(bill, store.allBillsResource.value() ?? []) : undefined;
       const duplicateNote = dup
         ? fill(store.i18n.upload_duplicate(), {
@@ -357,7 +364,8 @@ export const BillStore = signalStore(
       const { data, role } = await modal.onWillDismiss<BillEditResult>();
       if (role !== 'confirm' || !data) return;
       try {
-        await store.billService.write(isNew ? 'create' : 'update', data.bill, data.lines, store.appStore.currentUser() ?? undefined, isNew ? ocrResultKey : '');
+        const voucherKey = !isNew ? '' : (ocrResultKey || (scanKey ? await this.ocrResultKeyOf(scanKey) : ''));
+        await store.billService.write(isNew ? 'create' : 'update', data.bill, data.lines, store.appStore.currentUser() ?? undefined, voucherKey);
         await showToast(store.toastController, store.i18n.save_conf());
       } catch (e) {
         console.error('BillStore.openEdit: writeBill failed', e);
@@ -516,7 +524,7 @@ export const BillStore = signalStore(
       const bytes = Uint8Array.from(atob(result.data.content), c => c.charCodeAt(0));
       const mimeType = result.data.mimeType ?? 'application/pdf';
       const blob = new Blob([bytes], { type: mimeType });
-      const extension = ({ 'application/pdf': 'pdf', 'image/jpeg': 'jpg', 'image/png': 'png', 'image/heic': 'heic' } as Record<string, string>)[mimeType] ?? 'pdf';
+      const extension = ({ 'application/pdf': 'pdf', 'image/jpeg': 'jpg', 'image/png': 'png', 'image/heic': 'heic', 'image/heif': 'heif' } as Record<string, string>)[mimeType] ?? 'pdf';
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
