@@ -8,3 +8,4 @@ export { getInvoiceEmailDraft, sendInvoiceEmail } from './send-invoice-email';
 export { waiveReminderFee } from './waive-reminder-fee';
 export { previewInvoicePdf } from './preview-invoice';
 export { markInvoiceSent } from './mark-invoice-sent';
+export { getReminderPrintPdf } from './reminder-print-pdf';

@@ -19,7 +19,7 @@ importers:
     dependencies:
       '@analogjs/vite-plugin-angular':
         specifier: 1.20.1
-        version: 1.20.1(@angular/build@21.2.9(b37fbd7153acfd7bd4aea6f71124738a))
+        version: 1.20.1(@angular/build@21.2.9(2edd24a95884c907f2fd0250c31c3b07))
       '@angular/animations':
         specifier: 21.2.9
         version: 21.2.9(@angular/core@21.2.9(@angular/compiler@21.2.9)(rxjs@7.8.2)(zone.js@0.16.2))
@@ -272,7 +272,7 @@ importers:
         version: 21.2.9(chokidar@5.0.0)
       '@angular/build':
         specifier: 21.2.9
-        version: 21.2.9(b37fbd7153acfd7bd4aea6f71124738a)
+        version: 21.2.9(2edd24a95884c907f2fd0250c31c3b07)
       '@angular/cli':
         specifier: 21.2.13
         version: 21.2.13(@types/node@24.2.0)(chokidar@5.0.0)(supports-color@8.1.1)
@@ -296,7 +296,7 @@ importers:
         version: 17.0.0(@angular/common@21.2.9(@angular/core@21.2.9(@angular/compiler@21.2.9)(rxjs@7.8.2)(zone.js@0.16.2))(rxjs@7.8.2))(@angular/core@21.2.9(@angular/compiler@21.2.9)(rxjs@7.8.2)(zone.js@0.16.2))
       '@nx/angular':
         specifier: 22.7.5
-        version: 22.7.5(f51a4d7ee6f778d482d107fd65b70a4f)
+        version: 22.7.5(c41a1a368c426376490815e1ad2ecff1)
       '@nx/cypress':
         specifier: 21.3.11
         version: 21.3.11(@babel/traverse@7.29.7)(@swc-node/register@1.9.2(@swc/core@1.5.29(@swc/helpers@0.5.18))(@swc/types@0.1.25)(supports-color@8.1.1)(typescript@5.9.3))(@swc/core@1.5.29(@swc/helpers@0.5.18))(@zkochan/js-yaml@0.0.7)(cypress@13.17.0)(eslint@9.39.2(jiti@2.4.2)(supports-color@8.1.1))(nx@21.4.1(@swc-node/register@1.9.2(@swc/core@1.5.29(@swc/helpers@0.5.18))(@swc/types@0.1.25)(supports-color@8.1.1)(typescript@5.9.3))(@swc/core@1.5.29(@swc/helpers@0.5.18)))(typescript@5.9.3)
@@ -543,6 +543,9 @@ importers:
       nodemailer:
         specifier: 8.0.3
         version: 8.0.3
+      pdf-lib:
+        specifier: 1.17.1
+        version: 1.17.1
       pdfkit:
         specifier: 0.18.0
         version: 0.18.0
@@ -4302,6 +4305,12 @@ packages:
 
   '@paulirish/trace_engine@0.0.65':
     resolution: {integrity: sha512-Qsm6F5C8xf6ZzQXbQc2+wcpe6sggfs/gvc/ytqSurdvYg3kyW0ECHCqE0CWBKZpqgjVfPNX9c7SCS3r2nEIRGg==}
+
+  '@pdf-lib/standard-fonts@1.0.0':
+    resolution: {integrity: sha512-hU30BK9IUN/su0Mn9VdlVKsWBS6GyhVfqjwl1FjZN4TxP6cCw0jP2w7V3Hf5uX7M0AZJ16vey9yE0ny7Sa59ZA==}
+
+  '@pdf-lib/upng@1.0.1':
+    resolution: {integrity: sha512-dQK2FUMQtowVP00mtIksrlZhdFXQZPC+taih1q4CvPZ5vqdxR/LKBaFg0oAfzd1GlHZXXSPdQfzQnt+ViGvEIQ==}
 
   '@peculiar/asn1-cms@2.6.0':
     resolution: {integrity: sha512-2uZqP+ggSncESeUF/9Su8rWqGclEfEiz1SyU02WX5fUONFfkjzS2Z/F1Li0ofSmf4JqYXIOdCAZqIXAIBAT1OA==}
@@ -10225,6 +10234,9 @@ packages:
     resolution: {integrity: sha512-//nshmD55c46FuFw26xV/xFAaB5HF9Xdap7HJBBnrKdAd6/GxDBaNA1870O79+9ueg61cZLSVc+OaFlfmObYVQ==}
     engines: {node: '>= 14.16'}
 
+  pdf-lib@1.17.1:
+    resolution: {integrity: sha512-V/mpyJAoTsN4cnP31vc0wfNA1+p20evqqnap0KLoRUN0Yk/p3wN52DOEsL4oBFcLdb76hlpKPtzJIgo67j/XLw==}
+
   pdfjs-dist@4.10.38:
     resolution: {integrity: sha512-/Y3fcFrXEAsMjJXeL9J8+ZG9U01LbuWaYypvDW2ycW1jL269L3js3DVBjDJ0Up9Np1uqDXsDrRihHANhZOlwdQ==}
     engines: {node: '>=20'}
@@ -13080,12 +13092,12 @@ snapshots:
       '@jridgewell/gen-mapping': 0.3.13
       '@jridgewell/trace-mapping': 0.3.31
 
-  '@analogjs/vite-plugin-angular@1.20.1(@angular/build@21.2.9(b37fbd7153acfd7bd4aea6f71124738a))':
+  '@analogjs/vite-plugin-angular@1.20.1(@angular/build@21.2.9(2edd24a95884c907f2fd0250c31c3b07))':
     dependencies:
       ts-morph: 21.0.1
       vfile: 6.0.3
     optionalDependencies:
-      '@angular/build': 21.2.9(b37fbd7153acfd7bd4aea6f71124738a)
+      '@angular/build': 21.2.9(2edd24a95884c907f2fd0250c31c3b07)
 
   '@angular-devkit/architect@0.2102.13(chokidar@5.0.0)':
     dependencies:
@@ -13213,7 +13225,7 @@ snapshots:
       '@angular/core': 21.2.9(@angular/compiler@21.2.9)(rxjs@7.8.2)(zone.js@0.16.2)
       tslib: 2.8.1
 
-  '@angular/build@21.2.9(b37fbd7153acfd7bd4aea6f71124738a)':
+  '@angular/build@21.2.9(2edd24a95884c907f2fd0250c31c3b07)':
     dependencies:
       '@ampproject/remapping': 2.3.0
       '@angular-devkit/architect': 0.2102.9(chokidar@5.0.0)
@@ -13227,7 +13239,7 @@ snapshots:
       beasties: 0.4.1
       browserslist: 4.28.1
       esbuild: 0.27.3
-      https-proxy-agent: 7.0.6(supports-color@8.1.1)
+      https-proxy-agent: 7.0.6
       istanbul-lib-instrument: 6.0.3
       jsonc-parser: 3.3.1
       listr2: 9.0.5
@@ -16729,7 +16741,7 @@ snapshots:
     dependencies:
       agent-base: 7.1.4
       http-proxy-agent: 7.0.2
-      https-proxy-agent: 7.0.6(supports-color@8.1.1)
+      https-proxy-agent: 7.0.6
       lru-cache: 11.2.5
       socks-proxy-agent: 8.0.5
     transitivePeerDependencies:
@@ -16787,7 +16799,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@nx/angular@22.7.5(f51a4d7ee6f778d482d107fd65b70a4f)':
+  '@nx/angular@22.7.5(c41a1a368c426376490815e1ad2ecff1)':
     dependencies:
       '@angular-devkit/core': 21.2.9(chokidar@5.0.0)
       '@angular-devkit/schematics': 21.2.9(chokidar@5.0.0)
@@ -16811,7 +16823,7 @@ snapshots:
       tslib: 2.8.1
       webpack-merge: 5.10.0
     optionalDependencies:
-      '@angular/build': 21.2.9(b37fbd7153acfd7bd4aea6f71124738a)
+      '@angular/build': 21.2.9(2edd24a95884c907f2fd0250c31c3b07)
     transitivePeerDependencies:
       - '@babel/traverse'
       - '@minify-html/node'
@@ -17834,6 +17846,14 @@ snapshots:
     dependencies:
       legacy-javascript: 0.0.1
       third-party-web: 0.29.2
+
+  '@pdf-lib/standard-fonts@1.0.0':
+    dependencies:
+      pako: 1.0.11
+
+  '@pdf-lib/upng@1.0.1':
+    dependencies:
+      pako: 1.0.11
 
   '@peculiar/asn1-cms@2.6.0':
     dependencies:
@@ -22031,7 +22051,7 @@ snapshots:
   gaxios@6.7.1(encoding@0.1.13):
     dependencies:
       extend: 3.0.2
-      https-proxy-agent: 7.0.6(supports-color@8.1.1)
+      https-proxy-agent: 7.0.6
       is-stream: 2.0.1
       node-fetch: 2.7.0(encoding@0.1.13)
       uuid: 9.0.1
@@ -22042,7 +22062,7 @@ snapshots:
   gaxios@7.1.3:
     dependencies:
       extend: 3.0.2
-      https-proxy-agent: 7.0.6(supports-color@8.1.1)
+      https-proxy-agent: 7.0.6
       node-fetch: 3.3.2
       rimraf: 5.0.10
     transitivePeerDependencies:
@@ -22538,7 +22558,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  https-proxy-agent@7.0.6(supports-color@8.1.1):
+  https-proxy-agent@7.0.6:
     dependencies:
       agent-base: 7.1.4
       debug: 4.4.3(supports-color@8.1.1)
@@ -23217,7 +23237,7 @@ snapshots:
       decimal.js: 10.6.0
       html-encoding-sniffer: 4.0.0
       http-proxy-agent: 7.0.2
-      https-proxy-agent: 7.0.6(supports-color@8.1.1)
+      https-proxy-agent: 7.0.6
       is-potential-custom-element-name: 1.0.1
       nwsapi: 2.2.23
       parse5: 7.3.0
@@ -24720,7 +24740,7 @@ snapshots:
       debug: 4.4.3(supports-color@8.1.1)
       get-uri: 6.0.5(supports-color@8.1.1)
       http-proxy-agent: 7.0.2
-      https-proxy-agent: 7.0.6(supports-color@8.1.1)
+      https-proxy-agent: 7.0.6
       pac-resolver: 7.0.1
       socks-proxy-agent: 8.0.5
     transitivePeerDependencies:
@@ -24853,6 +24873,13 @@ snapshots:
   pathe@2.0.3: {}
 
   pathval@2.0.1: {}
+
+  pdf-lib@1.17.1:
+    dependencies:
+      '@pdf-lib/standard-fonts': 1.0.0
+      '@pdf-lib/upng': 1.0.1
+      pako: 1.0.11
+      tslib: 1.14.1
 
   pdfjs-dist@4.10.38:
     optionalDependencies:
@@ -25367,7 +25394,7 @@ snapshots:
       agent-base: 7.1.4
       debug: 4.4.3(supports-color@8.1.1)
       http-proxy-agent: 7.0.2
-      https-proxy-agent: 7.0.6(supports-color@8.1.1)
+      https-proxy-agent: 7.0.6
       lru-cache: 7.18.3
       pac-proxy-agent: 7.2.0(supports-color@8.1.1)
       proxy-from-env: 1.1.0

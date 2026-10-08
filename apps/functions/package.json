@@ -30,6 +30,7 @@
     "libphonenumber-js": "1.12.9",
     "mime": "4.0.7",
     "nodemailer": "8.0.3",
+    "pdf-lib": "1.17.1",
     "pdfkit": "0.18.0",
     "puppeteer-core": "25.0.4",
     "rxfire": "6.1.0",

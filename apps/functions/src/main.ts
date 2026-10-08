@@ -280,6 +280,7 @@ export const sendInvoiceEmail = Invoice.sendInvoiceEmail;
 export const getInvoiceEmailDraft = Invoice.getInvoiceEmailDraft;
 export const previewInvoicePdf = Invoice.previewInvoicePdf;
 export const markInvoiceSent = Invoice.markInvoiceSent;
+export const getReminderPrintPdf = Invoice.getReminderPrintPdf;
 export const waiveReminderFee = Invoice.waiveReminderFee;
 export const recordBillPayment = Bill.recordBillPayment;
 export const unlinkBillPayment = Bill.unlinkBillPayment;
