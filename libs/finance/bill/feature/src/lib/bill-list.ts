@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, effect, inject, input, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, effect, inject, input, untracked, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { ActionSheetController, IonAvatar, IonButton, IonButtons, IonChip, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonLabel, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
@@ -6,7 +6,7 @@ import { BillModel, RoleName } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, formatMinorAmount, ListFilter, Spinner } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@okr/shared-util-angular';
-import { DateFormat, convertDateFormatToString, getTodayStr, getYear, getYearList, hasRole } from '@okr/shared-util-core';
+import { convertDateFormatToString, DateFormat, generateRandomString, getTodayStr, getYear, getYearList, hasRole } from '@okr/shared-util-core';
 import { billDisplayState, billStateColor, billStateLabel, billVoucherKeys, isDraftBill, isOverdueBill, isPayableBill } from '@okr/finance-bill-util';
 
 import { AvatarPipe } from '@okr/avatar-ui';
@@ -126,7 +126,9 @@ export class BillList {
   protected readonly filteredCount = computed(() => this.filteredBills().length);
   protected readonly currentUser = computed(() => this.store.appStore.currentUser());
   protected readonly imgixBaseUrl = computed(() => this.store.appStore.env.services.imgixBaseUrl);
-  protected readonly popupId = computed(() => `c_bills_${this.listId()}`);
+  // Unique per instance: Ionic keeps the previous page in the DOM, so a fixed id (same for scs and gss books)
+  // binds the popover of the next page to the hidden button of the previous one.
+  protected readonly popupId = signal(`c_bills_${generateRandomString(8)}`);
   private readonly today = getTodayStr();
   protected years = computed(() => getYearList(getYear(), 8));
   protected states = computed(() => this.store.states());

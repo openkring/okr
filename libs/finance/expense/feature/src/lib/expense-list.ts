@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, effect, inject, input } from '@angular/core';
+import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import {
   ActionSheetController, ModalController, ToastController,
   IonAvatar, IonButton, IonButtons, IonCol, IonContent, IonFab, IonFabButton, IonGrid, IonHeader, IonIcon,
@@ -11,7 +11,7 @@ import { TranslatePipe } from '@okr/shared-i18n';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { AlertService, createActionSheetButton, createActionSheetDivider, createActionSheetOptions } from '@okr/shared-util-angular';
-import { convertDateFormatToString, DateFormat, getItemLabel, hasRole } from '@okr/shared-util-core';
+import { convertDateFormatToString, DateFormat, generateRandomString, getItemLabel, hasRole } from '@okr/shared-util-core';
 
 import { AvatarPipe } from '@okr/avatar-ui';
 import { Menu } from '@okr/cms-menu-feature';
@@ -192,7 +192,9 @@ export class ExpenseList {
 
   protected readonly currentUser = computed(() => this.store.currentUser());
   protected readonly canAdd = computed(() => hasRole('registered', this.currentUser()));
-  protected readonly popupId = computed(() => `c_expense_${this.listId()}`);
+  // Unique per instance: Ionic keeps the previous page in the DOM, so a fixed id (same for scs and gss books)
+  // binds the popover of the next page to the hidden button of the previous one.
+  protected readonly popupId = signal(`c_expense_${generateRandomString(8)}`);
   protected readonly title = computed(() =>
     this.listId() === 'all' ? this.store.i18n.list_title_all() : this.store.i18n.list_title_my()
   );

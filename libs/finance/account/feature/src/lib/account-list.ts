@@ -5,7 +5,7 @@ import { AccountModel, RoleName } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, Spinner } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@okr/shared-util-angular';
-import { hasRole } from '@okr/shared-util-core';
+import { generateRandomString, hasRole } from '@okr/shared-util-core';
 
 import { Menu } from '@okr/cms-menu-feature';
 
@@ -97,7 +97,10 @@ export class AccountList {
   // in view mode a group row expands/collapses and a leaf row opens the journal filtered by that account.
   protected readonly editMode = signal(false);
 
-  protected popupId = computed(() => 'c_accounts');
+  // Unique per instance: Ionic keeps the previous page (e.g. the scs Kontoplan) in the DOM, so a fixed id
+  // binds the popover of the next Kontoplan (gss) to the hidden button. AccountingStore is a root
+  // singleton, so its accountingTenantId would not separate the two instances either.
+  protected readonly popupId = signal(`c_accounts_${generateRandomString(8)}`);
   protected isLoading = computed(() => this.store.isLoading());
   protected visibleNodes = computed(() => this.store.visibleNodes());
   protected currentUser = computed(() => this.store.currentUser());

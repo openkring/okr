@@ -10,6 +10,7 @@
     "@okr/shared-models": "*",
     "@okr/shared-i18n": "*",
     "@okr/shared-util-angular": "*",
+    "@okr/shared-util-core": "*",
     "@okr/shared-feature": "*",
     "@okr/shared-pipes": "*",
     "@okr/shared-ui": "*",

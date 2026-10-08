@@ -1,4 +1,5 @@
-import { Component, computed, inject, input } from '@angular/core';
+import { Component, inject, input, signal } from '@angular/core';
+import { generateRandomString } from '@okr/shared-util-core';
 import { ActivatedRoute } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
@@ -77,7 +78,9 @@ export class BankProfileList {
 
   /** Name of the DB menu document loaded into the header context menu (route `:contextMenuName`). */
   public readonly contextMenuName = input.required<string>();
-  protected readonly popupId = computed(() => `c_bankprofiles_${this.contextMenuName()}`);
+  // Unique per instance: Ionic keeps the previous page in the DOM, so a fixed id (same for scs and gss books)
+  // binds the popover of the next page to the hidden button of the previous one.
+  protected readonly popupId = signal(`c_bankprofiles_${generateRandomString(8)}`);
 
   constructor() {
     this.route.params.pipe(takeUntilDestroyed()).subscribe(params => {

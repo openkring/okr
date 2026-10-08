@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, effect, inject, input, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, effect, inject, input, untracked, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import {
   ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonChip, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg,
@@ -11,7 +11,7 @@ import {
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, formatMinorAmount, ListFilter, Spinner } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@okr/shared-util-angular';
-import { DateFormat, convertDateFormatToString, getTodayStr, getYear, getYearList, hasRole } from '@okr/shared-util-core';
+import { convertDateFormatToString, DateFormat, generateRandomString, getTodayStr, getYear, getYearList, hasRole } from '@okr/shared-util-core';
 
 import { AvatarPipe } from '@okr/avatar-ui';
 import { Menu } from '@okr/cms-menu-feature';
@@ -144,7 +144,9 @@ export class InvoiceList {
   private openedKey = '';
 
   // computed
-  protected readonly popupId = computed(() => `c_invoices_${this.listId()}`);
+  // Unique per instance: Ionic keeps the previous page in the DOM, so a fixed id (same for scs and gss books)
+  // binds the popover of the next page to the hidden button of the previous one.
+  protected readonly popupId = signal(`c_invoices_${generateRandomString(8)}`);
   private readonly today = getTodayStr();
   protected readonly isLoading = computed(() => this.store.isLoading());
   protected readonly filteredInvoices = computed(() => this.store.filteredInvoices());

@@ -1,4 +1,4 @@
-import { Component, computed, inject, input } from '@angular/core';
+import { Component, computed, inject, input, signal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonBadge, IonButton, IonButtons, IonContent, IonHeader, IonIcon,
   IonItem, IonLabel, IonList, IonMenuButton, IonNote, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
@@ -7,7 +7,7 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, Spinner } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@okr/shared-util-angular';
 import { formatMinorAmount } from '@okr/finance-booking-util';
-import { hasRole } from '@okr/shared-util-core';
+import { generateRandomString, hasRole } from '@okr/shared-util-core';
 
 import { Menu } from '@okr/cms-menu-feature';
 
@@ -86,7 +86,9 @@ export class PeriodList {
 
   public readonly contextMenuName = input.required<string>();
 
-  protected readonly popupId = computed(() => 'c_periods');
+  // Unique per instance: Ionic keeps the previous page in the DOM, so a fixed id (same for scs and gss books)
+  // binds the popover of the next page to the hidden button of the previous one.
+  protected readonly popupId = signal(`c_periods_${generateRandomString(8)}`);
   protected readonly periods = computed(() => this.store.periods());
   protected readonly count = computed(() => this.periods().length);
   protected readonly isLoading = computed(() => this.store.isLoading());

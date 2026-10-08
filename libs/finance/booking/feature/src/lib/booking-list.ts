@@ -6,7 +6,7 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, Spinner } from '@okr/shared-ui';
 import { ListFilter } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error } from '@okr/shared-util-angular';
-import { hasRole } from '@okr/shared-util-core';
+import { generateRandomString, hasRole } from '@okr/shared-util-core';
 
 import { Menu } from '@okr/cms-menu-feature';
 import { ReadOnlyBanner } from '@okr/finance-accounting-feature';
@@ -248,7 +248,9 @@ export class BookingList {
     this.store.setSelectedMonth(Number.isInteger(month) && month >= 1 && month <= 12 ? month : 0);
   });
 
-  protected readonly popupId = computed(() => 'c_bookings');
+  // Unique per instance: Ionic keeps the previous page in the DOM, so a fixed id (same for scs and gss books)
+  // binds the popover of the next page to the hidden button of the previous one.
+  protected readonly popupId = signal(`c_bookings_${generateRandomString(8)}`);
   protected readonly isLoading = computed(() => this.store.isLoading());
   // sort state (default: newest first, as the store's journal order)
   private sortField = signal<JournalSortField>('date');

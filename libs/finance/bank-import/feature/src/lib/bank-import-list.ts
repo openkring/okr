@@ -1,4 +1,4 @@
-import { Component, computed, inject, input } from '@angular/core';
+import { Component, inject, input, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DecimalPipe } from '@angular/common';
@@ -11,7 +11,7 @@ import { BankImportRowModel } from '@okr/shared-models';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { AlertService, createActionSheetButton, createActionSheetDivider, createActionSheetOptions } from '@okr/shared-util-angular';
-import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
+import { convertDateFormatToString, DateFormat, generateRandomString } from '@okr/shared-util-core';
 
 import { Menu } from '@okr/cms-menu-feature';
 
@@ -123,7 +123,9 @@ export class BankImportList {
 
   /** Name of the DB menu document loaded into the header context menu (route `:contextMenuName`). */
   public readonly contextMenuName = input.required<string>();
-  protected readonly popupId = computed(() => `c_bankimport_${this.contextMenuName()}`);
+  // Unique per instance: Ionic keeps the previous page in the DOM, so a fixed id (same for scs and gss books)
+  // binds the popover of the next page to the hidden button of the previous one.
+  protected readonly popupId = signal(`c_bankimport_${generateRandomString(8)}`);
 
   constructor() {
     this.route.params.pipe(takeUntilDestroyed()).subscribe(params => {
