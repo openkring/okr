@@ -3,7 +3,7 @@ import { logger } from 'firebase-functions/v2';
 import { Firestore, getFirestore } from 'firebase-admin/firestore';
 
 import { checkAppCheckToken, checkAuthentication, checkRoles, getCallerTenantId, formatRejectNote, isBalanced, nextBookingNo } from '@okr/shared-util-functions';
-import { convertDateFormatToString, DateFormat, getTodayStr, isAssignableProject, projectKeyForLine } from '@okr/shared-util-core';
+import { carryOverProjectKeys, convertDateFormatToString, DateFormat, getTodayStr, isAssignableProject, projectKeyForLine } from '@okr/shared-util-core';
 
 import { assertExplicitCostCenter, costCenterKeyForLine, loadCostCenterContext } from '../cost-center/cost-center-context';
 import { assertPeriodsOpen, loadFiscalYearStart, touchedPeriodKeys } from './period-lock';
@@ -123,6 +123,8 @@ export const reviewBooking = onCall(
       ? (await db.collection(BOOKING_LINE_COLLECTION).where('bookingKey', '==', bookingKey).get()).docs
       : [];
     const oldLineRefs = oldLineDocs.map(s => s.ref);
+    // a pre-3.14 client sends no projectKey at all: keep the stored Kostenträger instead of wiping it
+    const reviewLines = newLines ? carryOverProjectKeys(newLines, oldLineDocs.map(s => s.data())) : undefined;
     // Kostenstelle per corrected line: validate before the transaction (plain reads).
     const reviewAccountingTenantId = pre['accountingTenantId'] as string;
     const reviewCtx = decision === 'approve' && newLines
@@ -133,7 +135,7 @@ export const reviewBooking = onCall(
     );
     if (decision === 'approve' && newLines && reviewCtx) {
       for (const line of newLines) assertExplicitCostCenter(reviewCtx, line.accountKey, line.costCenterKey, reviewGrandfathered);
-      await assertProjectsAssignable(db, tenantId, newLines, oldLineDocs);
+      await assertProjectsAssignable(db, tenantId, reviewLines ?? [], oldLineDocs);
     }
     const reviewer = decision === 'reject' ? await reviewerName(db, request.auth!.uid) : '';
     const fiscalYearStart = decision === 'approve' ? await loadFiscalYearStart(db, pre['accountingTenantId'] as string) : 1;
@@ -182,9 +184,9 @@ export const reviewBooking = onCall(
       if (corrections?.counterparty !== undefined) header['counterparty'] = corrections.counterparty;
       tx.set(bookingRef, header, { merge: true });
 
-      if (newLines) {
+      if (reviewLines) {
         for (const ref of oldLineRefs) tx.delete(ref);
-        for (const line of newLines) {
+        for (const line of reviewLines) {
           const explicit = (line.costCenterKey ?? '').trim();
           const costCenterKey = explicit && reviewGrandfathered.has(explicit)
             ? explicit
@@ -304,7 +306,8 @@ export const writeBooking = onCall(
       return { bookingKey, bookingNo: 0 };
     }
 
-    const lines = d.lines ?? [];
+    // a pre-3.14 client sends no projectKey at all: keep the stored Kostenträger instead of wiping it
+    const lines = carryOverProjectKeys(d.lines ?? [], oldLineDocs.map(s => s.data()));
     if (!isBalanced(lines)) throw new HttpsError('invalid-argument', 'the booking lines are not balanced');
 
     const header: Record<string, unknown> = {};
