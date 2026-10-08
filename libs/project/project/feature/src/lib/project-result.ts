@@ -24,8 +24,9 @@ import { ReportTable } from '@okr/finance-reporting-ui';
 import { PROJECT_I18N_KEYS } from '@okr/project-project-util';
 
 /**
- * Result of one project (spec 3.14 Phase 4): Einnahmen and Ausgaben from the booking lines that
- * carry the project's `projectKey` (Kostenträger), over all fiscal years, closed by the total.
+ * Result of one project (spec 3.14 Phase 4): Einnahmen, Ausgaben and übriger Erfolg (classes 7–9)
+ * from the booking lines that carry the project's `projectKey` (Kostenträger), over all fiscal
+ * years, closed by the net result.
  * Read from the tenant's own books (accounting tenant = okr tenant); lines of other books are
  * not reached from here.
  */
