@@ -11,7 +11,7 @@ import { privateBucket } from '../_storage/private-bucket';
 import { renderDocument } from '../pdf/render-document';
 import { withoutUndefined } from './invoice.logic';
 import { checkInvoiceReadAccess } from './invoice-access';
-import { loadOwnedAccountingConfig, receiverAddress, ReceiverRef, refuse } from './invoice-context';
+import { loadOwnedAccountingConfig, receiverAddress, ReceiverRef, refuse, treasurerContact } from './invoice-context';
 import {
   buildConfirmationPayload, confirmationDocumentFields, confirmationPayDate, confirmationRefusal, ConfirmationInvoice,
 } from './payment-confirmation.logic';
@@ -76,7 +76,7 @@ export const createPaymentConfirmation = onCall(
     const fullPath = `tenant/${tenantId}/private/finance/invoices/${invoiceKey}-confirmation.pdf`;
     const bucket = privateBucket();
     const rendered = await renderDocument(
-      { templateId: PAYMENT_CONFIRMATION_TEMPLATE_ID, payload, options: { outputFormat: 'pdf', filename } },
+      { templateId: PAYMENT_CONFIRMATION_TEMPLATE_ID, payload: { ...payload, contact: await treasurerContact(db, tenantId, getTodayStr(DateFormat.StoreDate)) }, options: { outputFormat: 'pdf', filename } },
       uid, tenantId, { bucket, path: fullPath },
     );
 

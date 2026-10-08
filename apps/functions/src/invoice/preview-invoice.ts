@@ -3,13 +3,13 @@ import { logger } from 'firebase-functions/v2';
 import { getFirestore } from 'firebase-admin/firestore';
 
 import { InvoiceCollection } from '@okr/shared-models';
-import { generateQrReference } from '@okr/shared-util-core';
+import { DateFormat, generateQrReference, getTodayStr } from '@okr/shared-util-core';
 import { checkAppCheckToken, checkAuthentication, checkRoles, getCallerTenantId } from '@okr/shared-util-functions';
 
 import { privateBucket } from '../_storage/private-bucket';
 import { renderDocument } from '../pdf/render-document';
 import { buildInvoicePayload } from './invoice.logic';
-import { loadOwnedAccountingConfig, receiverAddress, receiverGender, ReceiverRef, refuse } from './invoice-context';
+import { loadOwnedAccountingConfig, receiverAddress, receiverGender, ReceiverRef, refuse, treasurerContact } from './invoice-context';
 import { readPositions } from './issue-invoice';
 
 const REGION = 'europe-west6';
@@ -63,7 +63,8 @@ export const previewInvoicePdf = onCall(
     const fullPath = `tenant/${tenantId}/private/finance/invoice-previews/${invoiceKey}.pdf`;
     await renderDocument({
       templateId,
-      payload: buildInvoicePayload({
+      payload: {
+        ...buildInvoicePayload({
         invoiceId,
         title: String(invoice['title'] ?? '').trim() || 'Rechnung',
         invoiceDate: String(invoice['invoiceDate'] ?? ''),
@@ -72,7 +73,9 @@ export const previewInvoicePdf = onCall(
         positions,
         address: await receiverAddress(db, receiver, tenantId),
         gender: await receiverGender(db, receiver),
-      }),
+        }),
+        contact: await treasurerContact(db, tenantId, getTodayStr(DateFormat.StoreDate)),
+      },
       options: { outputFormat: 'pdf', filename },
     }, uid, tenantId, { bucket: privateBucket(), path: fullPath }, PREVIEW_QR_REFERENCE);
 

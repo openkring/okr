@@ -216,15 +216,15 @@
     <p class="closing">Herzlichen Dank und freundliche Grüsse</p>
 
     <div class="signature">
-      <div>Bruno Kaiser, Kassier</div>
+      {{#if contact.name}}<div>{{contact.name}}, Kassier</div>{{/if}}
       <div>{{payee.name}}</div>
     </div>
 
     <footer class="footer">
       <div class="left">{{formatIban payee.regularIban}}</div>
       <div class="right">
-        079 790 8929<br>
-        <a href="mailto:bruno@seeclub.org">bruno@seeclub.org</a>
+        {{#if contact.phone}}{{contact.phone}}<br>{{/if}}
+        {{#if contact.email}}<a href="mailto:{{contact.email}}">{{contact.email}}</a>{{/if}}
       </div>
     </footer>
 

@@ -1,10 +1,11 @@
 import { HttpsError } from 'firebase-functions/v2/https';
 import type { Firestore, Transaction } from 'firebase-admin/firestore';
 
-import { AddressCollection, AddressModel, PersonCollection } from '@okr/shared-models';
+import { AddressCollection, AddressModel, PersonCollection, ResponsibilityCollection } from '@okr/shared-models';
 import { pickFavoriteByChannel, scopeToTenant } from '@okr/shared-util-functions';
 
 import type { PostalAddress } from './invoice.logic';
+import { activeResponsible, ResponsibilityLike, TreasurerContact, treasurerContactFields, treasurerResponsibilityKey } from './treasurer-contact.logic';
 import { isBexioBackend } from '../bexio/backend-gate';
 
 const ACCOUNTING_CONFIG_COLLECTION = 'accounting-configs';
@@ -51,6 +52,20 @@ export async function assertLeafAccount(db: Firestore, accountingTenantId: strin
 }
 
 export type ReceiverRef = { key?: string; name1?: string; name2?: string; modelType?: string } | undefined;
+
+/**
+ * The contact printed in the footer and signature of finance PDFs: whoever holds the tenant's treasurer
+ * responsibility today (`{tenantId}-treasurer`, the delegate inside its period), with that person's favourite
+ * email and phone as collected by this tenant. All fields '' when the responsibility or person is missing.
+ */
+export async function treasurerContact(db: Firestore, tenantId: string, today: string): Promise<TreasurerContact> {
+  const resp = (await db.collection(ResponsibilityCollection).doc(treasurerResponsibilityKey(tenantId)).get()).data() as ResponsibilityLike | undefined;
+  const person = activeResponsible(resp, today);
+  if (!person?.key) return treasurerContactFields(undefined, []);
+  const snap = await db.collection(AddressCollection).where('parentKey', '==', `person.${person.key}`).get();
+  const addresses = scopeToTenant(snap.docs.map((d) => ({ ...d.data(), okey: d.id }) as AddressModel), tenantId);
+  return treasurerContactFields(person, addresses);
+}
 
 /** The receiving person's gender (PersonModel.gender) for the greeting; undefined for an org or an unknown person. */
 export async function receiverGender(db: Firestore, receiver: ReceiverRef): Promise<string | undefined> {

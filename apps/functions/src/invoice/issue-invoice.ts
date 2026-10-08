@@ -18,7 +18,7 @@ import {
   buildInvoicePayload, finalizeDecision, invoiceBookingIndex, invoiceBookingLines, issueBlockers, issueHeaderBlockers, issueOutcome,
   issuePeriodKeys, PositionInput, sortPositions, withoutUndefined,
 } from './invoice.logic';
-import { assertLeafAccount, loadOwnedAccountingConfig, receiverAddress, receiverGender, refuse } from './invoice-context';
+import { assertLeafAccount, loadOwnedAccountingConfig, receiverAddress, receiverGender, refuse, treasurerContact } from './invoice-context';
 import { writeFinanceHistory } from '../finance-history/finance-history';
 
 const REGION = 'europe-west6';
@@ -224,6 +224,7 @@ export const issueInvoice = onCall(
             address,
             gender,
           }),
+          contact: await treasurerContact(db, tenantId, getTodayStr(DateFormat.StoreDate)),
           invoiceKey,
         },
         options: { outputFormat: 'pdf', filename },

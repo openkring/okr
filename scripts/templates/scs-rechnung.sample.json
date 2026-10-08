@@ -65,5 +65,10 @@
     "zip": "8712",
     "city": "Stäfa",
     "country": "CH"
+  },
+  "contact": {
+    "name": "Bruno Kaiser",
+    "phone": "079 790 8929",
+    "email": "bruno@seeclub.org"
   }
 }

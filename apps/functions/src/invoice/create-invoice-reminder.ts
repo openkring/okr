@@ -11,7 +11,7 @@ import { assertPeriodsOpen } from '../booking/period-lock';
 import { costCenterKeyForLine, loadCostCenterContext } from '../cost-center/cost-center-context';
 import { privateBucket } from '../_storage/private-bucket';
 import { renderDocument } from '../pdf/render-document';
-import { assertLeafAccount, loadOwnedAccountingConfig, receiverAddress, receiverGender, ReceiverRef, refuse } from './invoice-context';
+import { assertLeafAccount, loadOwnedAccountingConfig, receiverAddress, receiverGender, ReceiverRef, refuse, treasurerContact } from './invoice-context';
 import { InvoiceLike, isValidStoreDate, openAmount } from './invoice-payment.logic';
 import { confirmationDocumentFields } from './payment-confirmation.logic';
 import {
@@ -149,7 +149,7 @@ export const createInvoiceReminder = onCall(
     const fullPath = `tenant/${tenantId}/private/finance/invoices/${invoiceKey}-reminder-${lvl}.pdf`;
     const rendered = await renderDocument(
       // invoiceKey: the slip carries the invoice's QR reference on the QR-IBAN (spec 1.2)
-      { templateId, payload: { ...payload, invoiceKey }, options: { outputFormat: 'pdf', filename } }, uid, tenantId, { bucket: privateBucket(), path: fullPath },
+      { templateId, payload: { ...payload, contact: await treasurerContact(db, tenantId, date), invoiceKey }, options: { outputFormat: 'pdf', filename } }, uid, tenantId, { bucket: privateBucket(), path: fullPath },
     );
     const today = getTodayStr(DateFormat.StoreDate);
     const documentRef = db.collection(FinanceDocumentCollection).doc(key);
