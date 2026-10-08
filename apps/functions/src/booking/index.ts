@@ -3,7 +3,7 @@ import { logger } from 'firebase-functions/v2';
 import { Firestore, getFirestore } from 'firebase-admin/firestore';
 
 import { checkAppCheckToken, checkAuthentication, checkRoles, getCallerTenantId, formatRejectNote, isBalanced, nextBookingNo } from '@okr/shared-util-functions';
-import { carryOverProjectKeys, convertDateFormatToString, DateFormat, getTodayStr, isAssignableProject, projectKeyForLine } from '@okr/shared-util-core';
+import { carryOverProjectKeys, convertDateFormatToString, DateFormat, getTodayStr, isAssignableProject, isProjectKeyShapeValid, projectKeyForLine } from '@okr/shared-util-core';
 
 import { assertExplicitCostCenter, costCenterKeyForLine, loadCostCenterContext } from '../cost-center/cost-center-context';
 import { assertPeriodsOpen, loadFiscalYearStart, touchedPeriodKeys } from './period-lock';
@@ -42,6 +42,15 @@ async function assertProjectsAssignable(
       throw new HttpsError('invalid-argument', `project-invalid: ${keys[i]}`, { reason: 'project-invalid', projectKey: keys[i] });
     }
   });
+}
+
+/** A projectKey must be absent or a string without '/' — anything else would crash in .trim() or doc(). */
+function assertProjectKeyShapes(lines: { projectKey?: unknown }[]): void {
+  for (const line of lines) {
+    if (!isProjectKeyShapeValid(line.projectKey)) {
+      throw new HttpsError('invalid-argument', 'project-invalid: malformed projectKey', { reason: 'project-invalid' });
+    }
+  }
 }
 
 interface ReviewLine {
@@ -110,6 +119,7 @@ export const reviewBooking = onCall(
 
     const corrections = decision === 'approve' ? d.corrections : undefined;
     const newLines = corrections?.lines;
+    if (newLines) assertProjectKeyShapes(newLines);
     if (newLines && !isBalanced(newLines)) {
       throw new HttpsError('invalid-argument', 'the corrected booking lines are not balanced');
     }
@@ -307,6 +317,7 @@ export const writeBooking = onCall(
     }
 
     // a pre-3.14 client sends no projectKey at all: keep the stored Kostenträger instead of wiping it
+    assertProjectKeyShapes(d.lines ?? []);
     const lines = carryOverProjectKeys(d.lines ?? [], oldLineDocs.map(s => s.data()));
     if (!isBalanced(lines)) throw new HttpsError('invalid-argument', 'the booking lines are not balanced');
 
