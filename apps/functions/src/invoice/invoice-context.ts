@@ -2,7 +2,7 @@ import { HttpsError } from 'firebase-functions/v2/https';
 import type { Firestore, Transaction } from 'firebase-admin/firestore';
 
 import { AddressCollection, AddressModel, PersonCollection, ResponsibilityCollection } from '@okr/shared-models';
-import { pickFavoriteByChannel, scopeToTenant } from '@okr/shared-util-functions';
+import { getProjectedAddresses, pickFavoriteByChannel, scopeToTenant } from '@okr/shared-util-functions';
 
 import type { PostalAddress } from './invoice.logic';
 import { activeResponsible, ResponsibilityLike, TreasurerContact, treasurerContactFields, treasurerResponsibilityKey } from './treasurer-contact.logic';
@@ -55,15 +55,18 @@ export type ReceiverRef = { key?: string; name1?: string; name2?: string; modelT
 
 /**
  * The contact printed in the footer and signature of finance PDFs: whoever holds the tenant's treasurer
- * responsibility today (`{tenantId}-treasurer`, the delegate inside its period), with that person's favourite
- * email and phone as collected by this tenant. All fields '' when the responsibility or person is missing.
+ * responsibility today (`{tenantId}-treasurer`, the delegate inside its period). Email and phone come through the
+ * shared privacy projection for a `registered` viewer — the documents go to members — so the person's `usage*`
+ * preferences and the tenant's privacy floor apply exactly as in the member directory. All fields '' when the
+ * responsibility (of this tenant) or the person is missing.
  */
 export async function treasurerContact(db: Firestore, tenantId: string, today: string): Promise<TreasurerContact> {
-  const resp = (await db.collection(ResponsibilityCollection).doc(treasurerResponsibilityKey(tenantId)).get()).data() as ResponsibilityLike | undefined;
+  const resp = (await db.collection(ResponsibilityCollection).doc(treasurerResponsibilityKey(tenantId)).get()).data() as
+    (ResponsibilityLike & { tenants?: string[] }) | undefined;
+  if (!resp || !(resp.tenants ?? []).includes(tenantId)) return treasurerContactFields(undefined, []);
   const person = activeResponsible(resp, today);
   if (!person?.key) return treasurerContactFields(undefined, []);
-  const snap = await db.collection(AddressCollection).where('parentKey', '==', `person.${person.key}`).get();
-  const addresses = scopeToTenant(snap.docs.map((d) => ({ ...d.data(), okey: d.id }) as AddressModel), tenantId);
+  const addresses = await getProjectedAddresses(db, `person.${person.key}`, 'registered', tenantId);
   return treasurerContactFields(person, addresses);
 }
 
