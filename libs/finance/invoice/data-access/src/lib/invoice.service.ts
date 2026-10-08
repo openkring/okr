@@ -86,10 +86,14 @@ export interface PaymentConfirmationResult {
 /** The `createInvoiceReminder` callable's request (apps/functions/src/invoice/create-invoice-reminder.ts). */
 export interface CreateInvoiceReminderPayload {
   invoiceKey: string;
-  level: number;
-  date: string;              // StoreDate
-  fee?: number;              // Rappen; omitted = the configured fee of the level
+  templateId: string;
+  date: string;      // StoreDate
+  fee: number;       // Rappen
+  requestId: string; // idempotency key (spec 1.90)
 }
+
+/** One reminder in a print run (`getReminderPrintPdf`); `attachInvoice` appends the invoice PDF after it. */
+export interface ReminderPrintItem { invoiceKey: string; documentKey: string; attachInvoice: boolean }
 
 /** The `createInvoiceReminder` callable's result: the stored reminder and the open amount incl. fees (Rappen). */
 export interface CreateInvoiceReminderResult {
@@ -218,18 +222,15 @@ export class InvoiceService {
   }
 
   /**
-   * Creates reminder `level` (spec 1.76 phase 3): PDF, finance-document and the optional fee booking, on
-   * the server. `feeChf` is CHF and converted to Rappen here, exactly once; leave it out to let the server
-   * take the configured fee of the level.
+   * Creates the next reminder (spec 1.90): the chosen dunning template, date and fee; the server assigns the
+   * running number, renders the PDF and books the fee. `feeChf` is converted to Rappen here, exactly once.
+   * `requestId` makes a retry return the stored reminder instead of creating a second one.
    */
-  public async createReminder(invoiceKey: string, level: number, date: string, feeChf?: number, currentUser?: UserModel): Promise<CreateInvoiceReminderResult> {
-    const payload: CreateInvoiceReminderPayload = {
-      invoiceKey, level, date,
-      ...(feeChf === undefined ? {} : { fee: Math.round(feeChf * 100) }),
-    };
+  public async createReminder(invoiceKey: string, input: { templateId: string; date: string; feeChf: number }, requestId: string, currentUser?: UserModel): Promise<CreateInvoiceReminderResult> {
+    const payload: CreateInvoiceReminderPayload = { invoiceKey, templateId: input.templateId, date: input.date, fee: Math.round(input.feeChf * 100), requestId };
     const fn = httpsCallable<CreateInvoiceReminderPayload, CreateInvoiceReminderResult>(this.functions(), 'createInvoiceReminder');
     const result = await fn(payload);
-    void this.activityService.log('invoice', 'reminder', currentUser, `${invoiceKey}: ${level} (${result.data.reminder?.fee ?? 0})`);
+    void this.activityService.log('invoice', 'reminder', currentUser, `${invoiceKey}: ${result.data.reminder?.level ?? 0} ${input.templateId} (${result.data.reminder?.fee ?? 0})`);
     return result.data;
   }
 
@@ -237,9 +238,9 @@ export class InvoiceService {
    * The suggested mail for the invoice PDF or one of its reminder PDFs: the receiver's favourite email
    * (`''` when there is none), the tenant sender, the fixed subject and body. Treasurer-only.
    */
-  public async getEmailDraft(invoiceKey: string, documentKey: string): Promise<InvoiceEmailDraft> {
-    const fn = httpsCallable<{ invoiceKey: string; documentKey: string }, InvoiceEmailDraft>(this.functions(), 'getInvoiceEmailDraft');
-    return (await fn({ invoiceKey, documentKey })).data;
+  public async getEmailDraft(invoiceKey: string, documentKey: string, attachInvoice = false): Promise<InvoiceEmailDraft> {
+    const fn = httpsCallable<{ invoiceKey: string; documentKey: string; attachInvoice: boolean }, InvoiceEmailDraft>(this.functions(), 'getInvoiceEmailDraft');
+    return (await fn({ invoiceKey, documentKey, attachInvoice })).data;
   }
 
   /**
@@ -247,9 +248,9 @@ export class InvoiceService {
    * composer) the treasurer's recipients, subject and body are used; without it (Mahnlauf) the fixed text
    * goes to the receiver's favourite email. The server attaches the PDF. Not idempotent: a second call mails again.
    */
-  public async sendEmail(invoiceKey: string, documentKey: string, currentUser?: UserModel, mail?: ComposedInvoiceMail): Promise<SendInvoiceEmailResult> {
-    const fn = httpsCallable<{ invoiceKey: string; documentKey: string; mail?: ComposedInvoiceMail }, SendInvoiceEmailResult>(this.functions(), 'sendInvoiceEmail');
-    const result = await fn(mail ? { invoiceKey, documentKey, mail } : { invoiceKey, documentKey });
+  public async sendEmail(invoiceKey: string, documentKey: string, currentUser?: UserModel, mail?: ComposedInvoiceMail, attachInvoice = false): Promise<SendInvoiceEmailResult> {
+    const fn = httpsCallable<{ invoiceKey: string; documentKey: string; mail?: ComposedInvoiceMail; attachInvoice: boolean }, SendInvoiceEmailResult>(this.functions(), 'sendInvoiceEmail');
+    const result = await fn(mail ? { invoiceKey, documentKey, mail, attachInvoice } : { invoiceKey, documentKey, attachInvoice });
     void this.activityService.log('invoice', 'email', currentUser, `${invoiceKey}: ${documentKey}`);
     return result.data;
   }
@@ -260,12 +261,18 @@ export class InvoiceService {
     return (await fn({ invoiceKey })).data;
   }
 
-  /** Records that an issued invoice was sent by post today (`sentAt`, `sentVia = 'post'`). */
-  public async markSentByPost(invoiceKey: string, currentUser?: UserModel): Promise<{ sentAt: string }> {
-    const fn = httpsCallable<{ invoiceKey: string }, { sentAt: string }>(this.functions(), 'markInvoiceSent');
-    const result = await fn({ invoiceKey });
-    void this.activityService.log('invoice', 'post', currentUser, invoiceKey);
+  /** Records that the invoice — or, with `documentKey`, one of its reminders — was sent by post today. */
+  public async markSentByPost(invoiceKey: string, currentUser?: UserModel, documentKey?: string): Promise<{ sentAt: string }> {
+    const fn = httpsCallable<{ invoiceKey: string; documentKey?: string }, { sentAt: string }>(this.functions(), 'markInvoiceSent');
+    const result = await fn(documentKey ? { invoiceKey, documentKey } : { invoiceKey });
+    void this.activityService.log('invoice', 'post', currentUser, documentKey ? `${invoiceKey}: ${documentKey}` : invoiceKey);
     return result.data;
+  }
+
+  /** One print PDF of up to 50 reminders, each optionally followed by its invoice (spec 1.90 §5.4); a short-lived link. */
+  public async getReminderPrintPdf(items: ReminderPrintItem[]): Promise<{ url: string; filename: string }> {
+    const fn = httpsCallable<{ items: ReminderPrintItem[] }, { url: string; filename: string }>(this.functions(), 'getReminderPrintPdf');
+    return (await fn({ items })).data;
   }
 
   /** Renders the payment confirmation of a paid invoice on the server; returns it as base64 PDF. */
