@@ -13,6 +13,7 @@ import { mergePdfs, printFilename, printItemRefusal, printItemsRefusal, PrintIte
 
 const REGION = 'europe-west6';
 const CF_NAME = 'getReminderPrintPdf';
+const LOAD_CHUNK = 10;
 const URL_TTL_MS = 10 * 60 * 1000;
 
 /**
@@ -33,12 +34,11 @@ export const getReminderPrintPdf = onCall(
     if (itemsRefusal) throw new HttpsError('invalid-argument', `items: ${itemsRefusal}`);
     const db = getFirestore();
     const bucket = privateBucket();
-    const parts: Uint8Array[] = [];
-    const invoiceIds: string[] = [];
     const checkedBooks = new Set<string>();
-    for (const item of items as PrintItem[]) {
+    const loadItem = async (item: PrintItem): Promise<{ parts: Uint8Array[]; invoiceId: string }> => {
       const invoice = (await db.collection(InvoiceCollection).doc(item.invoiceKey).get()).data();
-      const refusal = printItemRefusal(invoice, tenantId, item.documentKey, item.attachInvoice === true);
+      const attach = item.attachInvoice === true;
+      const refusal = printItemRefusal(invoice, tenantId, item.documentKey, attach);
       if (refusal === 'not-found') throw new HttpsError('not-found', `invoice ${item.invoiceKey} not found`);
       if (refusal) throw refuse(refusal, `${item.documentKey} of ${item.invoiceKey}: ${refusal}`);
       const books = String(invoice?.['accountingTenantId'] ?? '');
@@ -46,16 +46,27 @@ export const getReminderPrintPdf = onCall(
         await loadOwnedAccountingConfig(db, tenantId, item.invoiceKey, books, 'printed');
         checkedBooks.add(books);
       }
-      const keys = item.attachInvoice ? [item.documentKey, String(invoice?.['documentKey'])] : [item.documentKey];
-      for (const key of keys) {
+      const invoiceDocKey = typeof invoice?.['documentKey'] === 'string' ? (invoice['documentKey'] as string) : '';
+      if (attach && !invoiceDocKey) throw refuse('no-document', `invoice ${item.invoiceKey} has no document`);
+      const keys = attach ? [item.documentKey, invoiceDocKey] : [item.documentKey];
+      const itemParts = await Promise.all(keys.map(async (key) => {
         const doc = (await db.collection(FinanceDocumentCollection).doc(key).get()).data();
         const path = String(doc?.['fullPath'] ?? '');
-        if (!path) throw refuse('no-document', `finance-document ${key} not found`);
+        if (!path || !((doc?.['tenants'] as string[] | undefined) ?? []).includes(tenantId)) {
+          throw refuse('no-document', `finance-document ${key} not found`);
+        }
         const [content] = await bucket.file(path).download();
-        parts.push(new Uint8Array(content));
-      }
-      invoiceIds.push(String(invoice?.['invoiceId'] ?? item.invoiceKey));
+        return new Uint8Array(content);
+      }));
+      return { parts: itemParts, invoiceId: String(invoice?.['invoiceId'] ?? item.invoiceKey) };
+    };
+    const loaded: { parts: Uint8Array[]; invoiceId: string }[] = [];
+    const all = items as PrintItem[];
+    for (let i = 0; i < all.length; i += LOAD_CHUNK) {
+      loaded.push(...(await Promise.all(all.slice(i, i + LOAD_CHUNK).map(loadItem))));
     }
+    const parts = loaded.flatMap((l) => l.parts);
+    const invoiceIds = loaded.map((l) => l.invoiceId);
     const today = getTodayStr(DateFormat.StoreDate);
     const filename = printFilename(invoiceIds, today);
     const path = `tmp/print/${tenantId}/${randomUUID()}.pdf`;
