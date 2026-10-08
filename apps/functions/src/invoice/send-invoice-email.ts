@@ -2,7 +2,7 @@ import { onCall, CallableRequest, HttpsError } from 'firebase-functions/v2/https
 import { logger } from 'firebase-functions/v2';
 import { DocumentReference, Firestore, getFirestore } from 'firebase-admin/firestore';
 
-import { FinanceDocumentCollection, InvoiceCollection } from '@okr/shared-models';
+import { DEFAULT_REMINDER_DUE_DAYS, FinanceDocumentCollection, InvoiceCollection } from '@okr/shared-models';
 import { DateFormat, getTodayStr } from '@okr/shared-util-core';
 import { checkAppCheckToken, checkAuthentication, checkRoles, getCallerTenantId } from '@okr/shared-util-functions';
 
@@ -15,7 +15,7 @@ import { InvoiceLike, openAmount, ReminderLike } from './invoice-payment.logic';
 import { lastDueDate, markReminderSent, reminderDisplayName } from './invoice-reminder.logic';
 import { chf, viewDate, withoutUndefined } from './invoice.logic';
 import {
-  ComposedInvoiceMail, emailDocumentKind, invoiceEmailAsksPayment, invoiceEmailHtml, invoiceEmailSubject,
+  ComposedInvoiceMail, emailDocumentKind, followUpDueDate, invoiceEmailAsksPayment, isInvoiceFollowUp, invoiceEmailHtml, invoiceEmailSubject,
   normalizeComposedMail, recipientDirectoryId, reminderMailFilename, scrubEmailAddresses, sendRefusal,
 } from './send-invoice-email.logic';
 import { emailDetails, writeFinanceHistory } from '../finance-history/finance-history';
@@ -84,7 +84,7 @@ async function prepareInvoiceMail(db: Firestore, tenantId: string, data: Invoice
   if (!invoice) throw new HttpsError('not-found', `invoice ${invoiceKey} not found`);
   const tenants = (invoice['tenants'] as string[] | undefined) ?? [];
   if (!tenants.includes(tenantId)) throw new HttpsError('permission-denied', 'invoice belongs to another tenant');
-  await loadOwnedAccountingConfig(db, tenantId, invoiceKey, String(invoice['accountingTenantId'] ?? ''), 'mailed');
+  const config = await loadOwnedAccountingConfig(db, tenantId, invoiceKey, String(invoice['accountingTenantId'] ?? ''), 'mailed');
   if (String(invoice['state'] ?? '') === 'draft') throw refuse('not-issued', `invoice ${invoiceKey} is still a draft`);
 
   const reminders = invoice['reminders'] as ReminderLike[] | undefined;
@@ -130,15 +130,22 @@ async function prepareInvoiceMail(db: Firestore, tenantId: string, data: Invoice
     accountingTenantId: String(invoice['accountingTenantId'] ?? ''),
     reminders,
   };
+  const open = openAmount(likeInvoice);
+  const asksPayment = invoiceEmailAsksPayment(likeInvoice.state, open);
+  // the invoice sent again after its due date reads as an informal Zahlungserinnerung with a new pay-by date (spec 1.90)
+  const today = getTodayStr(DateFormat.StoreDate);
+  const followUp = target.kind === 'invoice' && asksPayment
+    && isInvoiceFollowUp({ state: likeInvoice.state, dueDate: String(invoice['dueDate'] ?? ''), sentAt: String(invoice['sentAt'] ?? '') }, today);
+  const dueDays = Number.isFinite(config['reminderDueDays']) ? (config['reminderDueDays'] as number) : DEFAULT_REMINDER_DUE_DAYS;
   const dueDate = target.kind === 'reminder'
     ? String(reminder?.dueDate ?? '')
-    : String(invoice['dueDate'] || lastDueDate({ dueDate: '', reminders }));
-  const open = openAmount(likeInvoice);
+    : followUp ? followUpDueDate(today, dueDays) : String(invoice['dueDate'] || lastDueDate({ dueDate: '', reminders }));
+  const text = followUp ? 'followUp' : target.kind;
   return {
     invoiceRef, target, level, favEmail,
     from: emailConfig.from,
-    subject: invoiceEmailSubject(target.kind, name, invoiceId, orgName),
-    html: invoiceEmailHtml(target.kind, name, invoiceId, chf(open), dueDate ? viewDate(dueDate) : '', orgName, invoiceEmailAsksPayment(likeInvoice.state, open)),
+    subject: invoiceEmailSubject(text, name, invoiceId, orgName),
+    html: invoiceEmailHtml(text, name, invoiceId, chf(open), dueDate ? viewDate(dueDate) : '', orgName, asksPayment),
     pdfPath,
     filename: target.kind === 'invoice' ? `${invoiceId}.pdf` : reminderMailFilename(name, invoiceId),
     invoicePdfPath, invoiceFilename: `${invoiceId}.pdf`,

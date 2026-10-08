@@ -1,6 +1,25 @@
-import { isPayableState, ReminderLike } from './invoice-payment.logic';
+import { addDuration } from '@okr/shared-util-core';
+
+import { isPayableState, isValidStoreDate, ReminderLike } from './invoice-payment.logic';
 
 export type EmailKind = 'invoice' | 'reminder';
+
+/** The wording of a mail: an invoice, a reminder PDF, or the invoice sent again as an informal Zahlungserinnerung (spec 1.90). */
+export type EmailText = EmailKind | 'followUp';
+
+/**
+ * True when mailing the invoice PDF is a follow-up (informal Zahlungserinnerung): the invoice is still
+ * payable, was sent before (`sentAt`) and its due date has passed. A late first send keeps the invoice wording.
+ */
+export function isInvoiceFollowUp(invoice: { state?: string; dueDate?: string; sentAt?: string }, today: string): boolean {
+  if (!isPayableState(invoice.state) || !invoice.sentAt) return false;
+  return isValidStoreDate(invoice.dueDate) && invoice.dueDate < today;
+}
+
+/** The pay-by date a follow-up names: today plus the reminder due days. */
+export function followUpDueDate(today: string, dueDays: number): string {
+  return addDuration(today, { days: dueDays });
+}
 
 /** Which document of the invoice a key names: the invoice PDF, a reminder PDF (with its level), or neither. */
 export function emailDocumentKind(
@@ -32,8 +51,8 @@ export function invoiceEmailAsksPayment(state: string | undefined, openAmountRap
   return isPayableState(state) && openAmountRappen > 0;
 }
 
-export function invoiceEmailSubject(kind: EmailKind, reminderName: string, invoiceId: string, orgName: string): string {
-  const what = kind === 'invoice' ? 'Rechnung' : `${reminderName} zu Rechnung`;
+export function invoiceEmailSubject(kind: EmailText, reminderName: string, invoiceId: string, orgName: string): string {
+  const what = kind === 'invoice' ? 'Rechnung' : kind === 'followUp' ? 'Zahlungserinnerung zu Rechnung' : `${reminderName} zu Rechnung`;
   return `${what} ${invoiceId} – ${orgName}`;
 }
 
@@ -51,7 +70,7 @@ const escapeHtml = (s: string): string =>
  * invoice already paid, or nothing open) the invoice body only names the attachment — no payment request.
  */
 export function invoiceEmailHtml(
-  kind: EmailKind, reminderName: string, invoiceId: string, amountDueChf: string, dueDateView: string, orgName: string, asksPayment = true,
+  kind: EmailText, reminderName: string, invoiceId: string, amountDueChf: string, dueDateView: string, orgName: string, asksPayment = true,
 ): string {
   const id = escapeHtml(invoiceId);
   const signature = `<p>Freundliche Grüsse<br>${escapeHtml(orgName)}</p>`;
@@ -61,7 +80,9 @@ export function invoiceEmailHtml(
   const until = due ? ` bis ${due}` : '';
   const sentence = kind === 'invoice'
     ? `im Anhang findest du die Rechnung ${id}. Bitte überweise CHF ${amount}${until}.`
-    : `im Anhang findest du die ${escapeHtml(reminderName)} zu Rechnung ${id}. Bitte überweise den offenen Betrag von CHF ${amount}${until}.`;
+    : kind === 'followUp'
+      ? `vielleicht ist unsere Rechnung untergegangen. Im Anhang findest du nochmals die Rechnung ${id}. Bitte überweise den offenen Betrag von CHF ${amount}${until}.`
+      : `im Anhang findest du die ${escapeHtml(reminderName)} zu Rechnung ${id}. Bitte überweise den offenen Betrag von CHF ${amount}${until}.`;
   return `<p>Hallo,</p><p>${sentence} Vielen Dank.</p>${signature}`;
 }
 

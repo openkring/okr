@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { emailDocumentKind, invoiceEmailAsksPayment, invoiceEmailHtml, invoiceEmailSubject, reminderMailFilename, MAX_INLINE_ATTACHMENT_BYTES, normalizeComposedMail, recipientDirectoryId, scrubEmailAddresses, sendRefusal } from './send-invoice-email.logic';
+import { emailDocumentKind, followUpDueDate, invoiceEmailAsksPayment, isInvoiceFollowUp, invoiceEmailHtml, invoiceEmailSubject, reminderMailFilename, MAX_INLINE_ATTACHMENT_BYTES, normalizeComposedMail, recipientDirectoryId, scrubEmailAddresses, sendRefusal } from './send-invoice-email.logic';
 
 describe('emailDocumentKind', () => {
   const invoice = { documentKey: 'invoice-a', reminders: [{ level: 1, date: '', dueDate: '', documentKey: 'invoice-a-reminder-1' }, { level: 2, date: '', dueDate: '', documentKey: 'invoice-a-reminder-2' }] };
@@ -153,5 +153,36 @@ describe('normalizeComposedMail', () => {
     expect(normalizeComposedMail({ ...base, extraAttachments: [{ storagePath: 'tenant/scs/x.pdf' }] }, 'x@y.ch')).toEqual({ ok: false, reason: 'bad-attachment' });
     const huge = 'A'.repeat(Math.ceil(MAX_INLINE_ATTACHMENT_BYTES * 4 / 3) + 8);
     expect(normalizeComposedMail({ ...base, extraAttachments: [{ filename: 'big.bin', contentBase64: huge }] }, 'x@y.ch')).toEqual({ ok: false, reason: 'bad-attachment' });
+  });
+});
+
+describe('invoice follow-up (informal Zahlungserinnerung, spec 1.90)', () => {
+  const inv = { state: 'pending', dueDate: '20261001', sentAt: '20260915' };
+  it('an overdue, already sent, payable invoice is a follow-up', () => expect(isInvoiceFollowUp(inv, '20261008')).toBe(true));
+  it('not before or on the due date', () => {
+    expect(isInvoiceFollowUp(inv, '20261001')).toBe(false);
+    expect(isInvoiceFollowUp(inv, '20260930')).toBe(false);
+  });
+  it('not when it was never sent (first send of a late invoice)', () => expect(isInvoiceFollowUp({ ...inv, sentAt: '' }, '20261008')).toBe(false));
+  it('not when paid or cancelled', () => {
+    expect(isInvoiceFollowUp({ ...inv, state: 'paid' }, '20261008')).toBe(false);
+    expect(isInvoiceFollowUp({ ...inv, state: 'cancelled' }, '20261008')).toBe(false);
+  });
+  it('not with a missing or invalid due date', () => {
+    expect(isInvoiceFollowUp({ ...inv, dueDate: '' }, '20261008')).toBe(false);
+    expect(isInvoiceFollowUp({ ...inv, dueDate: '20261399' }, '20261008')).toBe(false);
+  });
+  it('legacy invoices without sentAt are not follow-ups', () => expect(isInvoiceFollowUp({ state: 'pending', dueDate: '20261001' }, '20261008')).toBe(false));
+  it('new due date = today + reminderDueDays', () => {
+    expect(followUpDueDate('20261008', 14)).toBe('20261022');
+    expect(followUpDueDate('20261008', 0)).toBe('20261008');
+  });
+  it('follow-up subject', () =>
+    expect(invoiceEmailSubject('followUp', '', '202600001', 'Seeclub Stäfa')).toBe('Zahlungserinnerung zu Rechnung 202600001 – Seeclub Stäfa'));
+  it('follow-up body: friendly, open amount, new due date, no exclamation mark', () => {
+    const html = invoiceEmailHtml('followUp', '', '202600001', '120.00', '22.10.2026', 'SCS');
+    expect(html).toContain('nochmals die Rechnung 202600001');
+    expect(html).toContain('CHF 120.00 bis 22.10.2026');
+    expect(html).not.toContain('!');
   });
 });
