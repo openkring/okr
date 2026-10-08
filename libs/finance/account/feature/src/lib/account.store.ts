@@ -35,10 +35,15 @@ async function readTextFile(file: File): Promise<string> {
 export type AccountListState = {
   // null = the user hasn't toggled anything yet -> the default 2-tier expansion is used.
   userExpandedKeys: string[] | null;
+  // context-menu toggles: show/hide the groups and the (leaf) accounts of the tree
+  showGroups: boolean;
+  showAccounts: boolean;
 };
 
 export const initialState: AccountListState = {
   userExpandedKeys: null,
+  showGroups: true,
+  showAccounts: true,
 };
 
 export const AccountStore = signalStore(
@@ -77,7 +82,10 @@ export const AccountStore = signalStore(
 
   withComputed((state) => ({
     visibleNodes: computed(() =>
-      flattenAccountForest(state.accountsResource.value() ?? [], state.expandedKeys())
+      flattenAccountForest(state.accountsResource.value() ?? [], state.expandedKeys(), {
+        showGroups: state.showGroups(),
+        showAccounts: state.showAccounts(),
+      })
     ),
   })),
 
@@ -94,6 +102,14 @@ export const AccountStore = signalStore(
         ? current.filter(k => k !== okey)
         : [...current, okey];
       patchState(store, { userExpandedKeys: next });
+    },
+
+    toggleShowGroups(): void {
+      patchState(store, { showGroups: !store.showGroups() });
+    },
+
+    toggleShowAccounts(): void {
+      patchState(store, { showAccounts: !store.showAccounts() });
     },
 
     /*-------------------------- actions --------------------------------*/

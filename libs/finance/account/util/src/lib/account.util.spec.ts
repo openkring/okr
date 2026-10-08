@@ -254,4 +254,62 @@ describe('withCostCenterForAccountId', () => {
     expect(withCostCenterForAccountId({ id: '1020', costCenterKey: 'cc' } as AccountModel).costCenterKey).toBe('');
     expect(withCostCenterForAccountId({ id: '2000', costCenterKey: 'cc' } as AccountModel).costCenterKey).toBe('');
   });
+  describe('flattenAccountForest with visibility', () => {
+    let accounts: AccountModel[];
+    const ids = (nodes: { account: AccountModel }[]) => nodes.map(n => n.account.okey);
+
+    beforeEach(() => {
+      const make = (okey: string, parentKey: string): AccountModel => {
+        const a = new AccountModel('tenant-1');
+        a.okey = okey;
+        a.id = okey;
+        a.type = parentKey ? 'group' : 'root';
+        a.parentKey = parentKey;
+        return a;
+      };
+      // root -> 3 -> 30 -> 300 -> 3000, 3001 ; 30 -> 301 -> 3010, 3011 ; 3 -> 3900 (leaf directly under 3)
+      accounts = [
+        make('root', ''),
+        make('3', 'root'),
+        make('30', '3'),
+        make('300', '30'),
+        make('3000', '300'),
+        make('3001', '300'),
+        make('301', '30'),
+        make('3010', '301'),
+        make('3011', '301'),
+        make('3900', '3'),
+      ];
+    });
+
+    it('shows the accounts of hidden subgroups under the deepest visible group', () => {
+      const nodes = flattenAccountForest(accounts, ['root', '3'], { showGroups: true, showAccounts: true });
+      expect(ids(nodes)).toEqual(['root', '3', '30', '3000', '3001', '3010', '3011', '3900']);
+      expect(nodes.find(n => n.account.okey === '3000')?.depth).toBe(3);
+      expect(nodes.find(n => n.account.okey === '3900')?.depth).toBe(2);
+    });
+
+    it('nests accounts under their own group once it is expanded', () => {
+      const nodes = flattenAccountForest(accounts, ['root', '3', '30', '300', '301'], { showGroups: true, showAccounts: true });
+      expect(ids(nodes)).toEqual(['root', '3', '30', '300', '3000', '3001', '301', '3010', '3011', '3900']);
+    });
+
+    it('hides accounts and drops the chevron of groups without child groups', () => {
+      const nodes = flattenAccountForest(accounts, ['root', '3', '30', '300'], { showGroups: true, showAccounts: false });
+      expect(ids(nodes)).toEqual(['root', '3', '30', '300', '301']);
+      expect(nodes.find(n => n.account.okey === '300')?.hasChildren).toBe(false);
+      expect(nodes.find(n => n.account.okey === '30')?.hasChildren).toBe(true);
+    });
+
+    it('lists all accounts under the root when groups are hidden', () => {
+      const nodes = flattenAccountForest(accounts, ['root'], { showGroups: false, showAccounts: true });
+      expect(ids(nodes)).toEqual(['root', '3000', '3001', '3010', '3011', '3900']);
+      expect(nodes.slice(1).every(n => n.depth === 1)).toBe(true);
+      expect(nodes[0].hasChildren).toBe(false);
+    });
+
+    it('shows only the roots when both are hidden', () => {
+      expect(ids(flattenAccountForest(accounts, ['root', '3'], { showGroups: false, showAccounts: false }))).toEqual(['root']);
+    });
+  });
 });

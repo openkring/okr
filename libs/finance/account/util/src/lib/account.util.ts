@@ -32,22 +32,43 @@ export function leafAccounts(accounts: AccountModel[]): AccountModel[] {
 
 /*-------------------------- tree --------------------------------*/
 /**
+ * Which kinds of accounts the tree shows. Roots are always shown.
+ * - group: a non-root account with children
+ * - account: an account without children (a bookable leaf, see `leafAccounts`)
+ */
+export interface AccountTreeVisibility {
+  showGroups: boolean;
+  showAccounts: boolean;
+}
+
+/**
  * Build a flat, ordered list of visible account nodes for tree display.
- * Only children of expanded nodes are included.
+ *
+ * Without `visibility`, only children of expanded nodes are included (plain tree).
+ *
+ * With `visibility`, groups follow the expansion state (and are hidden entirely when `showGroups`
+ * is false), while accounts — if `showAccounts` — are always shown, each under its deepest visible
+ * group: a collapsed or hidden group pulls up the accounts of all its descendants. E.g. with group
+ * 30 visible but 300/301 not, the accounts 3000, 3001, 3010, 3011 are listed directly under 30.
  * @param accounts flat list of all accounts
  * @param rootKey okey of the root account to start from
  * @param expandedKeys set of okeys that are currently expanded
+ * @param visibility optional group/account filter
  */
 export function flattenAccountTree(
   accounts: AccountModel[],
   rootKey: string,
-  expandedKeys: string[]
+  expandedKeys: string[],
+  visibility?: AccountTreeVisibility
 ): FlatAccountNode[] {
   const nodes: FlatAccountNode[] = [];
   if (!rootKey) return nodes;
 
   const root = accounts.find(a => a.okey === rootKey);
   if (!root) return nodes;
+
+  const childrenOf = (okey: string): AccountModel[] => accounts.filter(a => a.parentKey === okey);
+  const isLeaf = (account: AccountModel): boolean => !accounts.some(a => a.parentKey === account.okey);
 
   function addNode(account: AccountModel, depth: number): void {
     const hasChildren = accounts.some(a => a.parentKey === account.okey);
@@ -61,7 +82,36 @@ export function flattenAccountTree(
     }
   }
 
-  addNode(root, 0);
+  // all leaves below `okey`, in tree order
+  function descendantLeaves(okey: string): AccountModel[] {
+    return childrenOf(okey).flatMap(child => isLeaf(child) ? [child] : descendantLeaves(child.okey));
+  }
+
+  function addFilteredGroup(group: AccountModel, depth: number, vis: AccountTreeVisibility): void {
+    const children = childrenOf(group.okey);
+    const hasChildGroups = vis.showGroups && children.some(c => !isLeaf(c));
+    const isExpanded = hasChildGroups && expandedKeys.includes(group.okey);
+    nodes.push({ account: group, depth, hasChildren: hasChildGroups, isExpanded });
+    if (isExpanded) {
+      for (const child of children) {
+        if (!isLeaf(child)) {
+          addFilteredGroup(child, depth + 1, vis);
+        } else if (vis.showAccounts) {
+          nodes.push({ account: child, depth: depth + 1, hasChildren: false, isExpanded: false });
+        }
+      }
+    } else if (vis.showAccounts) {
+      for (const leaf of descendantLeaves(group.okey)) {
+        nodes.push({ account: leaf, depth: depth + 1, hasChildren: false, isExpanded: false });
+      }
+    }
+  }
+
+  if (visibility) {
+    addFilteredGroup(root, 0, visibility);
+  } else {
+    addNode(root, 0);
+  }
   return nodes;
 }
 
@@ -71,14 +121,16 @@ export function flattenAccountTree(
  * the accountingTenantId in the URL are shown at the top level.
  * @param accounts flat list of all accounts
  * @param expandedKeys set of okeys that are currently expanded
+ * @param visibility optional group/account filter, see `flattenAccountTree`
  */
 export function flattenAccountForest(
   accounts: AccountModel[],
-  expandedKeys: string[]
+  expandedKeys: string[],
+  visibility?: AccountTreeVisibility
 ): FlatAccountNode[] {
   return accounts
     .filter(a => a.type === 'root')
-    .flatMap(root => flattenAccountTree(accounts, root.okey, expandedKeys));
+    .flatMap(root => flattenAccountTree(accounts, root.okey, expandedKeys, visibility));
 }
 
 /**

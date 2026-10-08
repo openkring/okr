@@ -43,7 +43,7 @@ import { AccountStore } from './account.store';
           <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
             <ng-template>
               <ion-content>
-                <okr-menu [menuName]="contextMenuName()" [toggleStates]="{ toggleEditMode: editMode() }" />
+                <okr-menu [menuName]="contextMenuName()" [toggleStates]="{ toggleEditMode: editMode(), toggleAccounts: store.showAccounts(), toggleGroups: store.showGroups() }" />
               </ion-content>
             </ng-template>
           </ion-popover>
@@ -116,6 +116,8 @@ export class AccountList {
     if (!selectedMethod) return; // dismissed without choosing an item (backdrop/escape) — not an error
     switch (selectedMethod) {
       case 'toggleEditMode': this.editMode.update(v => !v); break;
+      case 'toggleAccounts': this.store.toggleShowAccounts(); break;
+      case 'toggleGroups': this.store.toggleShowGroups(); break;
       case 'create': await this.store.addAccount(); break;
       case 'import': await this.store.importPlan(); break;
       case 'export': await this.store.exportPlan(); break;
@@ -129,8 +131,10 @@ export class AccountList {
   protected async onItemClick(node: FlatAccountNode): Promise<void> {
     if (this.editMode()) {
       await this.showActions(node);
-    } else if (node.account.type !== 'leaf') {
+    } else if (node.hasChildren) {
       this.store.toggleExpand(node.account.okey);
+    } else if (node.account.type !== 'leaf') {
+      return; // a group whose child groups are hidden: nothing to expand
     } else {
       await this.router.navigate(
         ['/accounting', this.store.accountingStore.accountingTenantId(), 'journal', 'c-journal'],
