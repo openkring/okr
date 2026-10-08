@@ -32,7 +32,7 @@ import { getPersonIndex, personValidations } from '@okr/subject-person-util';
 import { getPersonalRelIndex, personalRelValidations } from '@okr/relationship-personal-rel-util';
 import { getReservationIndex, reservationValidations } from '@okr/relationship-reservation-util';
 import { getResourceIndex, resourceValidations } from '@okr/resource-util';
-import { getTaskIndex, taskValidations } from '@okr/task-util';
+import { getTaskIndex, taskValidations } from '@okr/project-task-util';
 import { getTransferIndex, transferValidations } from '@okr/relationship-transfer-util';
 import { getWorkrelIndex, workrelValidations } from '@okr/relationship-workrel-util';
 import { getUserIndex, userValidations } from '@okr/user-util';

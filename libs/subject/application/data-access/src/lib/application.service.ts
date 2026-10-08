@@ -22,7 +22,7 @@ import { ResponsibilityService } from '@okr/relationship-responsibility-data-acc
 import { AddressService } from '@okr/subject-address-data-access';
 import { createFavoriteAddress } from '@okr/subject-address-util';
 import { PersonService } from '@okr/subject-person-data-access';
-import { TaskService } from '@okr/task-data-access';
+import { TaskService } from '@okr/project-task-data-access';
 import {
   getApplicationIndex, newParentPerson, toPersonModel
 } from '@okr/application-util';

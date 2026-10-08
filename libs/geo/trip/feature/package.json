@@ -16,7 +16,7 @@
     "@okr/shared-pipes": "*",
     "@okr/shared-util-angular": "*",
     "@okr/shared-util-core": "*",
-    "@okr/task-data-access": "*",
+    "@okr/project-task-data-access": "*",
     "@okr/relationship-reservation-data-access": "*",
     "@okr/relationship-reservation-util": "*",
     "@okr/relationship-responsibility-data-access": "*",

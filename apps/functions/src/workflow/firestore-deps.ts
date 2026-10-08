@@ -13,7 +13,7 @@ import { logger } from 'firebase-functions/v2';
 
 import { ApprovalCollection, ApprovalModel, ApprovalModelName, AvatarInfo, ContractCollection, ContractKindCollection, DeliveryChannel, EsignCollection, TaskModel, WorkflowRuleCollection } from '@okr/shared-models';
 import { DateFormat, getTodayStr, toDeliveryChannels } from '@okr/shared-util-core';
-import { getTaskIndex } from '@okr/task-util';
+import { getTaskIndex } from '@okr/project-task-util';
 
 import { fileSignedContract } from '../contract/file-contract';
 import { appBaseUrl } from '../alias/tenant-domains';

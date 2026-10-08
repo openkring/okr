@@ -60,7 +60,7 @@
     "@okr/subject-group-util": "*",
     "@okr/subject-org-util": "*",
     "@okr/subject-person-util": "*",
-    "@okr/task-util": "*",
+    "@okr/project-task-util": "*",
     "@okr/user-feature": "*",
     "@okr/user-util": "*"
   }

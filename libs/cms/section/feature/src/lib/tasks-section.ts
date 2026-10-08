@@ -10,7 +10,7 @@ import { TaskModel, TasksConfig, TasksSection } from '@okr/shared-models';
 
 import { AvatarPipe } from '@okr/avatar-ui';
 import { getReservedListHeightPx } from '@okr/cms-section-util';
-import { isTaskCompleted } from '@okr/task-util';
+import { isTaskCompleted } from '@okr/project-task-util';
 
 import { TasksStore } from './tasks-section.store';
 
@@ -147,7 +147,7 @@ export class TasksSectionComponent implements OnInit {
    * @param task 
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, task: TaskModel): void {
-    // same rules as the task list (@okr/task-util): author/assignee may complete and edit, the author may delete
+    // same rules as the task list (@okr/project-task-util): author/assignee may complete and edit, the author may delete
     const canChange = this.store.canChangeTask(task);
     if (canChange && !isTaskCompleted(task)) {
       actionSheetOptions.buttons.push(createActionSheetButton('task.complete', this.store.i18n.task_complete(), this.imgixBaseUrl, 'checkbox-circle'));

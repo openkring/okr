@@ -16,7 +16,7 @@ import { PageDispatcher, PageStore } from '@okr/cms-page-feature';
 import { getDocumentStoragePath } from '@okr/content-document-util';
 import { FolderService } from '@okr/content-folder-data-access';
 import { MembershipList } from '@okr/relationship-membership-feature';
-import { TaskList } from '@okr/task-feature';
+import { TaskList } from '@okr/project-task-feature';
 import { DocumentList } from '@okr/content-document-feature';
 import type { CalEventList } from '@okr/calevent-feature';
 

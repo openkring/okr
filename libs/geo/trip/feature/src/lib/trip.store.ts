@@ -12,7 +12,7 @@ import { fill, getAvatarInfoForCurrentUser, getFullName, getTodayStr, getYear, h
 import { yearMatches } from '@okr/shared-categories';
 import { END_FUTURE_DATE_STR } from '@okr/shared-constants';
 
-import { TaskService } from '@okr/task-data-access';
+import { TaskService } from '@okr/project-task-data-access';
 import { ResponsibilityService } from '@okr/relationship-responsibility-data-access';
 import { ReservationService } from '@okr/relationship-reservation-data-access';
 import { findActiveReservationForResource } from '@okr/relationship-reservation-util';

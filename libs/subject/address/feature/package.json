@@ -18,7 +18,7 @@
     "@okr/subject-address-data-access": "*",
     "@okr/avatar-util": "*",
     "@okr/avatar-data-access": "*",
-    "@okr/task-data-access": "*"
+    "@okr/project-task-data-access": "*"
   }
 }
 

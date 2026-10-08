@@ -75,7 +75,7 @@ export class AppConfigService {
 
   /**
    * Patch the task settings only (same single-field pattern as {@link setHiddenMenuKeys}).
-   * Typed inline with `Pick<AppConfig, …>` rather than `@okr/task-util`'s `TaskSettings` — the
+   * Typed inline with `Pick<AppConfig, …>` rather than `@okr/project-task-util`'s `TaskSettings` — the
    * two are the same shape by construction, but `shared-data-access` must not import a
    * feature-domain util lib.
    *

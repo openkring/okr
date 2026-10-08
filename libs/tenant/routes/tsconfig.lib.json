@@ -75,6 +75,7 @@
     { "path": "../../instruments/whiteboard/feature/tsconfig.lib.json" },
     { "path": "../../mobility/flighttracker/feature/tsconfig.lib.json" },
     { "path": "../../profile/feature/tsconfig.lib.json" },
+    { "path": "../../project/task/feature/tsconfig.lib.json" },
     { "path": "../../relationship/invitation/feature/tsconfig.lib.json" },
     { "path": "../../relationship/membership/feature/tsconfig.lib.json" },
     { "path": "../../relationship/ownership/feature/tsconfig.lib.json" },
@@ -93,7 +94,6 @@
     { "path": "../../subject/person/feature/tsconfig.lib.json" },
     { "path": "../../system/alias/feature/tsconfig.lib.json" },
     { "path": "../../system/workflow/feature/tsconfig.lib.json" },
-    { "path": "../../task/feature/tsconfig.lib.json" },
     { "path": "../feature/tsconfig.lib.json" },
     { "path": "../../user/feature/tsconfig.lib.json" }
   ]

@@ -63,7 +63,7 @@
     "@okr/content-folder-feature": "*",
     "@okr/forms-feature": "*",
     "@okr/activity-feature": "*",
-    "@okr/task-feature": "*",
+    "@okr/project-task-feature": "*",
     "@okr/instruments-feature": "*",
     "@okr/instruments-calculator-feature": "*",
     "@okr/instruments-whiteboard-feature": "*",

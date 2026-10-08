@@ -14,6 +14,6 @@
     "@okr/shared-util-core": "*",
     "@okr/activity-data-access": "*",
     "@okr/content-meeting-util": "*",
-    "@okr/task-util": "*"
+    "@okr/project-task-util": "*"
   }
 }

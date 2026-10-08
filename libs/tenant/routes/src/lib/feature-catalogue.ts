@@ -1117,7 +1117,7 @@ const task: BlockRoutes = {
   routes: (): Route[] => [{
     path: 'task',
     canActivate: [isAuthenticatedGuard],
-    children: [{ path: ':listId/:contextMenuName', loadComponent: () => import('@okr/task-feature').then(m => m.TaskList), data: { color: 'secondary' } }],
+    children: [{ path: ':listId/:contextMenuName', loadComponent: () => import('@okr/project-task-feature').then(m => m.TaskList), data: { color: 'secondary' } }],
   }],
 };
 

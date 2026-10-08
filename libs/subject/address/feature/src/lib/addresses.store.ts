@@ -22,7 +22,7 @@ import { DocumentService } from '@okr/content-document-data-access';
 import { FolderService } from '@okr/content-folder-data-access';
 
 import { AddressService, GeocodingService } from '@okr/subject-address-data-access';
-import { TaskService } from '@okr/task-data-access';
+import { TaskService } from '@okr/project-task-data-access';
 import { ADDRESSES_I18N_KEYS, browseUrl, copyAddress, directoryEntryToAddress, getWebUrl, isAddress, loginEmailDivergence, openExternalUrl, readsAddressVault, shouldBecomeFavorite, stringifyPostalAddress } from '@okr/subject-address-util';
 
 import { AddressEditModal } from './address-edit.modal';

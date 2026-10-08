@@ -17,7 +17,7 @@
     "@okr/shared-pipes": "*",
     "@okr/shared-ui": "*",
     "@okr/cms-menu-feature": "*",
-    "@okr/task-feature": "*",
+    "@okr/project-task-feature": "*",
     "@okr/subject-address-data-access": "*",
     "@okr/avatar-data-access": "*",
     "@okr/avatar-ui": "*",

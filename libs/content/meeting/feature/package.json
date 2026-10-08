@@ -23,7 +23,7 @@
     "@okr/shared-ui": "*",
     "@okr/shared-util-angular": "*",
     "@okr/shared-util-core": "*",
-    "@okr/task-data-access": "*",
+    "@okr/project-task-data-access": "*",
     "tslib": "^2.8.1"
   }
 }

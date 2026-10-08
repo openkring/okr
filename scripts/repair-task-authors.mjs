@@ -2,7 +2,7 @@
  * One-time / idempotent repair of task authors written as USERS instead of PERSONS (spec 1.72 §3.3).
  *
  * WHY: until 2026-09-30 the task quick entry stored `author = { key: <auth uid>, modelType: 'user' }`.
- * Every author check — the UI helpers in @okr/task-util and the Firestore rules of spec 1.72 —
+ * Every author check — the UI helpers in @okr/project-task-util and the Firestore rules of spec 1.72 —
  * compares `author.key` with the caller's personKey, so these authors cannot edit or delete their
  * own tasks, and the tasks are missing from "my tasks". Must run BEFORE the 1.72 rules deploy.
  *
@@ -12,7 +12,7 @@
  * without a personKey is reported and skipped. Only `author`, `assignee` and `index` change — none
  * of the fields `onTaskWritten` reads to decide on a push, so no notification fires.
  *
- * AUTHORITATIVE LOGIC: getTaskIndex (libs/task/util/src/lib/task.util.ts) — mirrored below.
+ * AUTHORITATIVE LOGIC: getTaskIndex (libs/project/task/util/src/lib/task.util.ts) — mirrored below.
  *
  * Run with:  node scripts/repair-task-authors.mjs --dry     (inspect first)
  *            node scripts/repair-task-authors.mjs           (execute)
@@ -37,7 +37,7 @@ function addIndexElement(index, key, value) {
   return index.length === 0 ? `${key}:${v}` : `${index} ${key}:${v}`;
 }
 
-/** mirror of getTaskIndex (@okr/task-util) */
+/** mirror of getTaskIndex (@okr/project-task-util) */
 function buildTaskIndex(t) {
   let index = '';
   index = addIndexElement(index, 'n', t.name ?? '');

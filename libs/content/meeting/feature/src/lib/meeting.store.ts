@@ -18,7 +18,7 @@ import { DocGenerationService } from '@okr/content-pdf-template-data-access';
 import { openBulkEmailFlow } from '@okr/content-pdf-template-feature';
 import { EsignService } from '@okr/content-esign-data-access';
 import { MembershipService } from '@okr/relationship-membership-data-access';
-import { TaskService } from '@okr/task-data-access';
+import { TaskService } from '@okr/project-task-data-access';
 
 export type MeetingState = {
   listId: string;        // 'all' or a groupKey

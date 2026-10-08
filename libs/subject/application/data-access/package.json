@@ -20,6 +20,6 @@
     "@okr/subject-address-util": "*",
     "@okr/subject-person-data-access": "*",
     "@okr/application-util": "*",
-    "@okr/task-data-access": "*"
+    "@okr/project-task-data-access": "*"
   }
 }

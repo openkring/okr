@@ -427,6 +427,11 @@
           },
           {
             "glob": "*.json",
+            "input": "libs/games/backgammon/feature/src/i18n",
+            "output": "./assets/i18n/games/backgammon/feature"
+          },
+          {
+            "glob": "*.json",
             "input": "libs/games/battleship/feature/src/i18n",
             "output": "./assets/i18n/games/battleship/feature"
           },
@@ -434,26 +439,6 @@
             "glob": "*.json",
             "input": "libs/games/bimaru/feature/src/i18n",
             "output": "./assets/i18n/games/bimaru/feature"
-          },
-          {
-            "glob": "*.json",
-            "input": "libs/games/sudoku/feature/src/i18n",
-            "output": "./assets/i18n/games/sudoku/feature"
-          },
-          {
-            "glob": "*.json",
-            "input": "libs/games/memory/feature/src/i18n",
-            "output": "./assets/i18n/games/memory/feature"
-          },
-          {
-            "glob": "*.json",
-            "input": "libs/games/backgammon/feature/src/i18n",
-            "output": "./assets/i18n/games/backgammon/feature"
-          },
-          {
-            "glob": "*.json",
-            "input": "libs/games/klondike/feature/src/i18n",
-            "output": "./assets/i18n/games/klondike/feature"
           },
           {
             "glob": "*.json",
@@ -477,13 +462,28 @@
           },
           {
             "glob": "*.json",
+            "input": "libs/games/klondike/feature/src/i18n",
+            "output": "./assets/i18n/games/klondike/feature"
+          },
+          {
+            "glob": "*.json",
             "input": "libs/games/mampf/feature/src/i18n",
             "output": "./assets/i18n/games/mampf/feature"
           },
           {
             "glob": "*.json",
+            "input": "libs/games/memory/feature/src/i18n",
+            "output": "./assets/i18n/games/memory/feature"
+          },
+          {
+            "glob": "*.json",
             "input": "libs/games/muehle/feature/src/i18n",
             "output": "./assets/i18n/games/muehle/feature"
+          },
+          {
+            "glob": "*.json",
+            "input": "libs/games/sudoku/feature/src/i18n",
+            "output": "./assets/i18n/games/sudoku/feature"
           },
           {
             "glob": "*.json",
@@ -584,6 +584,16 @@
             "glob": "*.json",
             "input": "libs/profile/feature/src/i18n",
             "output": "./assets/i18n/profile/feature"
+          },
+          {
+            "glob": "*.json",
+            "input": "libs/project/task/data-access/src/i18n",
+            "output": "./assets/i18n/project/task/data-access"
+          },
+          {
+            "glob": "*.json",
+            "input": "libs/project/task/feature/src/i18n",
+            "output": "./assets/i18n/project/task/feature"
           },
           {
             "glob": "*.json",
@@ -779,16 +789,6 @@
             "glob": "*.json",
             "input": "libs/system/workflow/ui/src/i18n",
             "output": "./assets/i18n/system/workflow/ui"
-          },
-          {
-            "glob": "*.json",
-            "input": "libs/task/data-access/src/i18n",
-            "output": "./assets/i18n/task/data-access"
-          },
-          {
-            "glob": "*.json",
-            "input": "libs/task/feature/src/i18n",
-            "output": "./assets/i18n/task/feature"
           },
           {
             "glob": "*.json",

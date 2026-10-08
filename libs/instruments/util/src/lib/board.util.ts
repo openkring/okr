@@ -4,7 +4,7 @@ import { GridCell, GridDefinition } from './grid.model';
 
 /**
  * The rank-ordered board utilities for the instruments primitive. Generalized from the shipped
- * Kanban board (`libs/task/util/board.util.ts`, 18 Vitest cases): a board cell is a Kanban column,
+ * Kanban board (`libs/project/task/util/board.util.ts`, 18 Vitest cases): a board cell is a Kanban column,
  * a topic is a task, `cell` is the partition `state` was, and the fractional-rank math is identical.
  */
 

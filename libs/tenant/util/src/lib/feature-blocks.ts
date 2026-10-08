@@ -240,7 +240,7 @@ const aoc: FeatureBlock = {
   // `docs` collection directly. The `aoc-doc` entry still listed in the TODO below is
   // literally the "Dokumente" admin screen over it.
   //
-  // NO `task` EDGE, although `aoc-data.store.ts:35` imports from `@okr/task-util`
+  // NO `task` EDGE, although `aoc-data.store.ts:35` imports from `@okr/project-task-util`
   // (`getTaskIndex`, `taskValidations`). That lib is PURE FUNCTIONS — the "Daten" screen
   // re-derives search indexes and validates documents for every collection in the tenant, so
   // it imports the util layer of a dozen domains the same way. No component crosses the
@@ -780,7 +780,7 @@ const geo: FeatureBlock = {
  * `dependsOn` by import evidence (`libs/geo/trip/{feature,data-access,ui,util}`):
  * `@okr/location-data-access` (`geo` — every trip starts and ends at a location),
  * `@okr/relationship-responsibility-data-access` (`relationship` — who is on duty / may
- * unlock), `@okr/task-data-access` (`task` — a damage report opens a task). Nothing depends
+ * unlock), `@okr/project-task-data-access` (`task` — a damage report opens a task). Nothing depends
  * on `trip`, so this edge set cannot close a cycle. Note `aoc`'s `AocTrip` screen ALSO loads
  * `@okr/trip-feature` — see the block comment on `aoc` in `feature-catalogue.ts`; that stays
  * an intentional inverse-gating exception and is not an edge.
@@ -879,7 +879,7 @@ const subject: FeatureBlock = {
   // independently of block selection. See the `chat` block below for the full picture.
   //
   // `task` ADDED (task 18) — a real EDGE, and the FIRST arm of the dividing line, not the
-  // menu-doc arm: `group-view.page.ts:18` imports `TaskList` from `@okr/task-feature` and
+  // menu-doc arm: `group-view.page.ts:18` imports `TaskList` from `@okr/project-task-feature` and
   // renders it as the group view's whole "Aufgaben" segment (template line 138,
   // `<okr-task-list … contextMenuName="c-tasks">`); the group toolbar hoists that wrapper key
   // (`segmentContextMenuName()`, `case 'tasks': return 'c-tasks'`) and delegates the popover
@@ -2238,7 +2238,7 @@ const activity: FeatureBlock = {
  *  - `geo`, `relationship`, `subject/application`, `aoc` — do NOT: `trip.store.ts:15`,
  *    `membership.store.ts:20` and `application.service.ts:25` inject `TaskService` (a
  *    data-access service, the settled no-edge class — they create follow-up tasks as a side
- *    effect), and `aoc-data.store.ts:35` imports pure helpers from `@okr/task-util`. No screen
+ *    effect), and `aoc-data.store.ts:35` imports pure helpers from `@okr/project-task-util`. No screen
  *    of theirs renders a task component. (`geo` is core anyway.)
  *
  * MENU TREE SHAPE — no generic parent exists, so both entries are TOP-LEVEL here, following the

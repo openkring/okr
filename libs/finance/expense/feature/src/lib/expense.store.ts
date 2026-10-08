@@ -208,7 +208,7 @@ export const ExpenseStore = signalStore(
       if (!expense.taskKey) return;
       const task = await firstValueFrom(store.expenseService.readTask(expense.taskKey));
       if (!task) return;
-      const { TaskEditModal } = await import('@okr/task-feature');
+      const { TaskEditModal } = await import('@okr/project-task-feature');
       const modal = await store.modalController.create({
         component: TaskEditModal,
         componentProps: {

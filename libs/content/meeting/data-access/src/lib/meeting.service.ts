@@ -9,7 +9,7 @@ import { MeetingCollection, MeetingModel, TaskCollection, TaskModel, UserModel }
 import { getSystemQuery } from '@okr/shared-util-core';
 
 import { getMeetingIndex, getMeetingRelatedKey, isOpenTask } from '@okr/content-meeting-util';
-import { buildTaskListQueries } from '@okr/task-util';
+import { buildTaskListQueries } from '@okr/project-task-util';
 import { PFX } from './scope';
 
 @Injectable({

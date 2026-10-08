@@ -5,7 +5,7 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { GroupCollection, MembershipCollection, TaskCollection, TaskModel, UserCollection } from '@okr/shared-models';
 import { checkAppCheckToken, checkAuthentication, checkStringField } from '@okr/shared-util-functions';
 import { DateFormat, getTodayStr } from '@okr/shared-util-core';
-import { isActiveGroupMembership, isClosedGroup, isTaskStaff } from '@okr/task-util';
+import { isActiveGroupMembership, isClosedGroup, isTaskStaff } from '@okr/project-task-util';
 
 /**
  * Spec 1.75: the tasks of a closed group (chatMode 'members'). The read rule admits them only to
