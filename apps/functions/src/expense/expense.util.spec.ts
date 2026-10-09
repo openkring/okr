@@ -37,8 +37,8 @@ describe('pickMemberIban', () => {
     expect(pickMemberIban([bank('CH11'), bank('CH22')], 'scs')).toBe('CH11'));
   it('prefers this tenant over another tenant\'s favorite', () =>
     expect(pickMemberIban([bank('CH99', { tenants: ['gss'], isFavorite: true }), bank('CH11')], 'scs')).toBe('CH11'));
-  it('falls back to other tenants\' entries when the tenant has none', () =>
-    expect(pickMemberIban([bank('CH99', { tenants: ['gss'] })], 'scs')).toBe('CH99'));
+  it('never takes another tenant\'s entry (no cross-tenant fallback)', () =>
+    expect(pickMemberIban([bank('CH99', { tenants: ['gss'] })], 'scs')).toBe(''));
   it('ignores archived, empty and non-bank entries', () =>
     expect(pickMemberIban([bank('CH11', { isArchived: true }), bank(' '), { addressChannel: 'email', iban: 'x' }], 'scs')).toBe(''));
 });

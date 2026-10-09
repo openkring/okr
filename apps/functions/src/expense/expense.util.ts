@@ -35,16 +35,15 @@ function toTransferTo(value: unknown): 'me' | 'issuer' | 'member' {
 }
 
 /**
- * The payee IBAN of a 'member' expense: the member's favorite bank account. Prefers this tenant's
- * own addresses (a person shared by two tenants may carry both tenants' entries) and falls back
- * to the unscoped set — a person's IBAN does not depend on the tenant that recorded it.
- * Whitespace-free and upper-cased, the way the client stores an IBAN on 'me' expenses.
+ * The payee IBAN of a 'member' expense: the member's favorite bank account among THIS tenant's
+ * addresses. No fallback to another tenant's entry — a person shared by two tenants may carry both
+ * tenants' bank accounts, and copying the other tenant's vault entry into this tenant's expense
+ * would leak it across tenants. Whitespace-free and upper-cased, like a 'me' expense's IBAN.
  */
 export function pickMemberIban(addresses: { addressChannel?: string; iban?: string; isFavorite?: boolean; isArchived?: boolean; tenants?: string[] }[], tenantId: string): string {
   const banks = addresses.filter(a => a.addressChannel === 'bankaccount' && !a.isArchived && (a.iban ?? '').trim() !== '');
   const own = banks.filter(a => a.tenants?.includes(tenantId));
-  const pool = own.length > 0 ? own : banks;
-  const pick = pool.find(a => a.isFavorite) ?? pool[0];
+  const pick = own.find(a => a.isFavorite) ?? own[0];
   return (pick?.iban ?? '').replace(/\s+/g, '').toUpperCase();
 }
 
