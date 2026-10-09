@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { AccountModel, BookingLineModel, BookingModel, MoneyModel } from '@okr/shared-models';
 
 import {
-  accountClass, ALL_COST_CENTERS, buildProjectResultRows, buildReportRows, effectiveCostCenterSelection, defaultExpandedKeys, fiscalYear, fiscalYearOf, filterLinesByCostCenter, filterLinesByDimension, NO_COST_CENTER, reportToCsv, signedBalance, sumLinesByAccount, totalForClasses, yearResult,
+  accountClass, ALL_COST_CENTERS, bookingsByAccount, buildProjectResultRows, buildReportRows, buildSplitProjectResult, effectiveCostCenterSelection, defaultExpandedKeys, fiscalYear, fiscalYearOf, filterLinesByCostCenter, filterLinesByDimension, NO_COST_CENTER, reportToCsv, signedBalance, sumLinesByAccount, totalForClasses, yearResult,
 } from './report.util';
 
 function account(okey: string, id: string, name: string, parentKey = '', type = 'leaf'): AccountModel {
@@ -242,5 +242,71 @@ describe('buildProjectResultRows', () => {
     expect(rows[rows.length - 1].name).toBe('Verlust');
     const withOther = buildProjectResultRows(chart, amounts, labels).rows;
     expect(withOther.some(r => r.id === '7000' && r.current === 50)).toBe(true);
+  });
+});
+
+describe('bookingsByAccount', () => {
+  const b = (okey: string, date: string, bookingNo: number, title: string, status = 'posted'): BookingModel =>
+    ({ okey, date, bookingNo, title, status }) as unknown as BookingModel;
+  const bookings = [b('b2', '20250902', 7, 'Einkauf'), b('b1', '20250901', 5, 'Einnahmen'), b('b3', '20250903', 9, 'Entwurf', 'draft')];
+  const lines = [
+    line('b1', 'a6000', 0, 1000), line('b1', 'a1020', 1000, 0),
+    line('b2', 'a6000', 300, 0), line('b2', 'a6000', 200, 0), line('b2', 'a1020', 0, 500),
+    line('b3', 'a6000', 999, 0), line('b1', 'a3000', 0, 400),
+  ];
+  const result = bookingsByAccount(lines, bookings, CHART);
+
+  it('lists posted bookings per account, oldest first, summing lines of one booking', () => {
+    expect(result.get('a6000')).toEqual([
+      { bookingKey: 'b1', date: '20250901', bookingNo: 5, title: 'Einnahmen', amount: -1000 },
+      { bookingKey: 'b2', date: '20250902', bookingNo: 7, title: 'Einkauf', amount: 500 },
+    ]);
+  });
+  it('signs like the report row: revenue credit-positive', () => {
+    expect(result.get('a3000')).toEqual([{ bookingKey: 'b1', date: '20250901', bookingNo: 5, title: 'Einnahmen', amount: 400 }]);
+  });
+  it('adds up to the report value of the account', () => {
+    const amounts = sumLinesByAccount(lines, bookings.filter(x => x.status === 'posted'), '', '');
+    const total = (result.get('a6000') ?? []).reduce((s, r) => s + r.amount, 0);
+    expect(total).toBe(signedBalance('expense', amounts.get('a6000')));
+  });
+});
+
+describe('buildSplitProjectResult', () => {
+  const b = (okey: string, date: string, bookingNo: number, title: string, status = 'posted'): BookingModel =>
+    ({ okey, date, bookingNo, title, status }) as unknown as BookingModel;
+  // slowUp: receipts and costs both on 3000; plus a plain cost on 6000 and a draft that must not count
+  const bookings = [b('in1', '20260501', 1, 'Startgelder'), b('out1', '20260502', 2, 'Zelt'), b('out2', '20260503', 3, 'Miete'),
+    b('mix', '20260504', 4, 'Umbuchung'), b('draft', '20260505', 5, 'Entwurf', 'draft')];
+  const lines = [
+    line('in1', 'a3000', 0, 5000), line('in1', 'a1020', 5000, 0),
+    line('out1', 'a3000', 1200, 0), line('out1', 'a1020', 0, 1200),
+    line('out2', 'a6000', 800, 0), line('out2', 'a1020', 0, 800),
+    line('mix', 'a3000', 300, 0), line('mix', 'a3000', 0, 100), line('mix', 'a1020', 0, 200),   // nets to a 200 debit
+    line('draft', 'a6000', 999, 0),
+  ];
+  const labels = { income: 'Einnahmen', expense: 'Ausgaben', net: 'Gewinn/Verlust' };
+  const result = buildSplitProjectResult(CHART, lines, bookings, labels);
+
+  it('shows an account booked both ways under both headings, all amounts positive', () => {
+    expect(result.rows.map(r => [r.okey, r.current])).toEqual([
+      ['total-income', 5000], ['income:a3', 5000], ['income:a3000', 5000],
+      ['total-expense', 2200], ['expense:a3', 1400], ['expense:a3000', 1400], ['expense:a6', 800], ['expense:a6000', 800],
+      ['project-result', 2800],
+    ]);
+    expect(result.rows.every(r => r.current >= 0)).toBe(true);
+  });
+  it('keeps the class-based net', () => {
+    const amounts = sumLinesByAccount(lines, bookings, '', '');
+    expect(result.net).toBe(yearResult(CHART, amounts));
+  });
+  it('nets each booking per account before choosing the side, and lists the bookings per side', () => {
+    expect(result.details.get('income:a3000')?.map(r => [r.bookingKey, r.amount])).toEqual([['in1', 5000]]);
+    expect(result.details.get('expense:a3000')?.map(r => [r.bookingKey, r.amount])).toEqual([['out1', 1200], ['mix', 200]]);
+    expect(result.details.has('expense:a1020')).toBe(false);
+  });
+  it('nests accounts below the heading and names the net', () => {
+    expect(result.rows.find(r => r.okey === 'income:a3000')?.depth).toBe(2);
+    expect(result.rows[result.rows.length - 1].name).toBe('Gewinn/Verlust');
   });
 });

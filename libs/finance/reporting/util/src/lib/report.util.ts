@@ -259,3 +259,130 @@ export function buildProjectResultRows(
   ];
   return { rows, net };
 }
+
+/** One booking behind an account row of a dimension slice: the booking's own amount on that account. */
+export interface AccountBookingRow { bookingKey: string; date: string; bookingNo: number; title: string; amount: number }
+
+/**
+ * The posted bookings behind each account of a slice (project result drill-down), keyed by account
+ * okey, oldest first. Several lines of one booking on the same account are summed; the amount is
+ * signed like the account's report row (`signedBalance` by the account number's class), so the
+ * rows of an account add up to its `current`.
+ */
+export function bookingsByAccount(lines: BookingLineModel[], bookings: BookingModel[], accounts: AccountModel[]): Map<string, AccountBookingRow[]> {
+  const posted = postedByKey(bookings);
+  const idByKey = new Map(accounts.map(a => [a.okey, a.id ?? '']));
+  const out = new Map<string, AccountBookingRow[]>();
+  for (const [accountKey, perBooking] of sumsByAccountAndBooking(lines, posted)) {
+    const cls = accountClass(idByKey.get(accountKey) ?? '');
+    const rows = [...perBooking].map(([bookingKey, dc]) => bookingRow(bookingKey, posted.get(bookingKey), signedBalance(cls, dc)));
+    out.set(accountKey, rows.sort(byDateAndNumber));
+  }
+  return out;
+}
+
+function postedByKey(bookings: BookingModel[]): Map<string, BookingModel> {
+  return new Map(bookings.filter(b => b.status === 'posted').map(b => [b.okey, b]));
+}
+
+function bookingRow(bookingKey: string, b: BookingModel | undefined, amount: number): AccountBookingRow {
+  return { bookingKey, date: b?.date ?? '', bookingNo: b?.bookingNo ?? 0, title: b?.title ?? '', amount };
+}
+
+function byDateAndNumber(a: AccountBookingRow, b: AccountBookingRow): number {
+  return a.date.localeCompare(b.date) || a.bookingNo - b.bookingNo;
+}
+
+/** account okey → booking okey → debit/credit, over the lines of posted bookings; several lines of one booking on one account are summed. */
+function sumsByAccountAndBooking(lines: BookingLineModel[], posted: Map<string, BookingModel>): Map<string, Map<string, DebitCredit>> {
+  const sums = new Map<string, Map<string, DebitCredit>>();
+  for (const line of lines) {
+    const accountKey = line.accountKey ?? '';
+    if (!accountKey || !posted.has(line.bookingKey)) continue;
+    const perBooking = sums.get(accountKey) ?? new Map<string, DebitCredit>();
+    const entry = perBooking.get(line.bookingKey) ?? { debit: 0, credit: 0 };
+    entry.debit += line.debitAmount?.amount ?? 0;
+    entry.credit += line.creditAmount?.amount ?? 0;
+    perBooking.set(line.bookingKey, entry);
+    sums.set(accountKey, perBooking);
+  }
+  return sums;
+}
+
+export interface SplitProjectResultLabels { income: string; expense: string; net: string }
+
+export interface SplitProjectResult {
+  /** Einnahmen heading + its accounts, Ausgaben heading + its accounts, then the net. Row okeys are prefixed `income:` / `expense:`. */
+  rows: ReportRow[];
+  /** prefixed account row okey → that side's bookings, oldest first, each amount positive */
+  details: Map<string, AccountBookingRow[]>;
+  income: number;
+  expense: number;
+  net: number;
+}
+
+/** Row-okey prefixes of the two sides of a split project result (an account may appear under both). */
+export const INCOME_ROW_PREFIX = 'income:';
+export const EXPENSE_ROW_PREFIX = 'expense:';
+
+/**
+ * The project result split by booking direction instead of by account class: every posted booking
+ * of the slice nets out per account, a net credit counts under Einnahmen, a net debit under
+ * Ausgaben. An account booked both ways (an event that books receipts and costs on one account)
+ * therefore appears under both headings, and every amount shown is positive. The net equals the
+ * class-based result (`yearResult`): Einnahmen − Ausgaben over all P&L accounts (classes 3–9).
+ * A reversal inflates both sides by the same amount; the net stays right.
+ * Each side keeps the chart's tree (groups open, subtotals), headed by a group row with the side's
+ * total; balance-sheet accounts (classes 1–2) are left out, as in the class-based result.
+ */
+export function buildSplitProjectResult(
+  accounts: AccountModel[], lines: BookingLineModel[], bookings: BookingModel[], labels: SplitProjectResultLabels,
+): SplitProjectResult {
+  const posted = postedByKey(bookings);
+  const incomeByAccount = new Map<string, number>();
+  const expenseByAccount = new Map<string, number>();
+  const details = new Map<string, AccountBookingRow[]>();
+  const add = (prefix: string, totals: Map<string, number>, accountKey: string, row: AccountBookingRow): void => {
+    totals.set(accountKey, (totals.get(accountKey) ?? 0) + row.amount);
+    const list = details.get(prefix + accountKey) ?? [];
+    list.push(row);
+    details.set(prefix + accountKey, list);
+  };
+  const isProfitAndLoss = new Set(accounts.filter(a => ['revenue', 'expense', 'result'].includes(accountClass(a.id))).map(a => a.okey));
+  for (const [accountKey, perBooking] of sumsByAccountAndBooking(lines, posted)) {
+    if (!isProfitAndLoss.has(accountKey)) continue;
+    for (const [bookingKey, dc] of perBooking) {
+      const netCredit = dc.credit - dc.debit;
+      if (netCredit > 0) add(INCOME_ROW_PREFIX, incomeByAccount, accountKey, bookingRow(bookingKey, posted.get(bookingKey), netCredit));
+      else if (netCredit < 0) add(EXPENSE_ROW_PREFIX, expenseByAccount, accountKey, bookingRow(bookingKey, posted.get(bookingKey), -netCredit));
+    }
+  }
+  details.forEach(list => list.sort(byDateAndNumber));
+
+  const forest = buildForest(accounts).filter(n => n.cls === 'revenue' || n.cls === 'expense' || n.cls === 'result');
+  const side = (prefix: string, okey: string, label: string, totals: Map<string, number>): { rows: ReportRow[]; total: number } => {
+    const sum = (node: Node): number => node.children.length === 0
+      ? totals.get(node.account.okey) ?? 0
+      : node.children.reduce((s, c) => s + sum(c), 0);
+    const rows: ReportRow[] = [];
+    const walk = (node: Node, depth: number): void => {
+      const current = sum(node);
+      if (current === 0) return;
+      const hasChildren = node.children.length > 0;
+      rows.push({
+        okey: prefix + node.account.okey, id: node.account.id ?? '', name: node.account.name ?? '', depth,
+        kind: hasChildren ? 'group' : 'account', hasChildren, isExpanded: hasChildren, current, previous: 0,
+      });
+      node.children.forEach(c => walk(c, depth + 1));
+    };
+    forest.forEach(n => walk(n, 1));
+    const total = forest.reduce((s, n) => s + sum(n), 0);
+    const heading: ReportRow = { okey, id: '', name: label, depth: 0, kind: 'total', hasChildren: false, isExpanded: false, current: total, previous: 0 };
+    return { rows: [heading, ...rows], total };
+  };
+  const income = side(INCOME_ROW_PREFIX, 'total-income', labels.income, incomeByAccount);
+  const expense = side(EXPENSE_ROW_PREFIX, 'total-expense', labels.expense, expenseByAccount);
+  const net = income.total - expense.total;
+  const result: ReportRow = { okey: 'project-result', id: '', name: labels.net, depth: 0, kind: 'result', hasChildren: false, isExpanded: false, current: net, previous: 0 };
+  return { rows: [...income.rows, ...expense.rows, result], details, income: income.total, expense: expense.total, net };
+}
