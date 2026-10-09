@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { askRoomAliasLocalpart, askRoomsToLeave, groupRoomAliasLocalpart, roomAdmitsTenant, useAskRoom } from './shared';
+import { askRoomAliasLocalpart, askRoomsToLeave, groupRoomAliasLocalpart, pusherAdmitsRoom, roomAdmitsTenant, useAskRoom } from './shared';
 
 describe('askRoomAliasLocalpart', () => {
   it('derives a stable localpart from group + person', () => {
@@ -105,5 +105,26 @@ describe('askRoomsToLeave', () => {
       { room_id: '!ask', canonical_alias: '#ask_notfall_x:bkchat.etke.host' },
     ];
     expect(askRoomsToLeave(mixed, 'notfall', 'kaiser')).toEqual(['!ask']);
+  });
+});
+
+describe('pusherAdmitsRoom', () => {
+  it('delivers to the apps of the tenants on the marker only', () => {
+    expect(pusherAdmitsRoom(['scs'], 'scs')).toBe(true);
+    expect(pusherAdmitsRoom(['scs', 'kring'], 'kring')).toBe(true);
+    expect(pusherAdmitsRoom(['scs'], 'kwa')).toBe(false);
+  });
+
+  it('delivers to nobody when the marker is deliberately empty', () => {
+    expect(pusherAdmitsRoom([], 'scs')).toBe(false);
+  });
+
+  it('delivers as before for an unmarked room or a failed marker read', () => {
+    expect(pusherAdmitsRoom(undefined, 'scs')).toBe(true);
+  });
+
+  it('delivers as before to a pusher registered without a tenant', () => {
+    expect(pusherAdmitsRoom(['scs'], undefined)).toBe(true);
+    expect(pusherAdmitsRoom(['scs'], '')).toBe(true);
   });
 });

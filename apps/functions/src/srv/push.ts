@@ -18,11 +18,11 @@
 // (`selectUserDocs`). A person with no account in that tenant gets nothing — never a foreign
 // app's banner about an event they cannot open there.
 //
-// ⚠️ THE BADGE IS AN ABSOLUTE VALUE, NOT AN INCREMENT. `badgeCount` overwrites whatever the
-// app icon shows. Tasks and chat already write it; a third writer would clobber their number.
-// So it is OPTIONAL here and omitted by every calendar sender — when the key is absent the
-// service worker leaves the badge untouched (`firebase-messaging-sw.js:24`). Only pass it
-// from a sender that knows the user's TOTAL pending count.
+// ⚠️ NO SENDER KNOWS THE BADGE TOTAL (chat over this tenant's rooms + open tasks + open
+// invitations), and `setAppBadge` is absolute. So a push names only ITS part (spec 1.93):
+// `badgeTasks` (absolute open-task count) or `badgeAdd` + `badgeId` (one new item, de-duplicated
+// by id). The service worker keeps the other parts in a ledger the open app writes and shows
+// the sum. Never send a total — the old `badgeCount` clobbered the parts it did not know.
 
 import { logger } from 'firebase-functions/v2';
 import { getFirestore } from 'firebase-admin/firestore';
@@ -48,8 +48,11 @@ export interface PushPayload {
    * one event give one banner, not five.
    */
   channelId?: string;
-  /** Absolute app-icon badge. Omit unless this sender knows the user's total (see file head). */
-  badgeCount?: number;
+  /** The recipient's absolute open-task count — the task part of the badge (see file head). */
+  badgeTasks?: number;
+  /** One new badge item of this kind; `badgeId` de-duplicates repeated deliveries. */
+  badgeAdd?: 'invitation';
+  badgeId?: string;
 }
 
 /** One person's delivery target: a registered device token and where it is stored. */
@@ -64,8 +67,8 @@ export interface TokenEntry {
  * browsers display the message themselves and never call the service worker's
  * `onBackgroundMessage`, which is where the badge and the collapse tag are handled.
  *
- * Pure, so the two rules that matter are testable without Firebase: `badgeCount` appears
- * ONLY when the sender passed one, and `channelId` is carried through.
+ * Pure, so the rules that matter are testable without Firebase: the badge fields appear ONLY
+ * when the sender passed them, and `channelId` is carried through.
  */
 export function buildPushData(payload: PushPayload): Record<string, string> {
   return {
@@ -75,7 +78,8 @@ export function buildPushData(payload: PushPayload): Record<string, string> {
     body: payload.body,
     url: payload.url,
     ...(payload.channelId ? { channelId: payload.channelId } : {}),
-    ...(payload.badgeCount === undefined ? {} : { badgeCount: String(payload.badgeCount) }),
+    ...(payload.badgeTasks === undefined ? {} : { badgeTasks: String(payload.badgeTasks) }),
+    ...(payload.badgeAdd && payload.badgeId ? { badgeAdd: payload.badgeAdd, badgeId: payload.badgeId } : {}),
   };
 }
 
@@ -174,7 +178,8 @@ export async function pushToPersons(
       headers: { 'apns-priority': '5', 'apns-push-type': 'background' },
       payload: {
         aps: {
-          ...(payload.badgeCount === undefined ? {} : { badge: payload.badgeCount }),
+          // native (Capacitor) badge: unchanged by spec 1.93, still the task count alone
+          ...(payload.badgeTasks === undefined ? {} : { badge: payload.badgeTasks }),
           'content-available': 1,
         },
       },

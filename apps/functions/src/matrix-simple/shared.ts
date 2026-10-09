@@ -883,6 +883,22 @@ export function roomAdmitsTenant(roomTenants: string[], callerTenants: string[])
 }
 
 /**
+ * Whether `matrixPushGateway` may deliver a room's message to a pusher registered by the app of
+ * `pusherTenant` (spec 1.93 §3). Pure, so the three marker states are unit-testable:
+ *
+ *  - no marker (`undefined`: unclassified, or the read failed) → deliver, as before;
+ *  - marker `[]` (deliberately assigned to no app)               → deliver to nobody;
+ *  - marker `[...]`                                              → only those tenants' apps.
+ *
+ * A pusher registered before the tenant was put into its `data` carries none → deliver; every
+ * app start re-registers its pusher, so this case dies out without a migration.
+ */
+export function pusherAdmitsRoom(roomMarker: string[] | undefined, pusherTenant: string | undefined): boolean {
+  if (roomMarker === undefined || !pusherTenant) return true;
+  return roomMarker.includes(pusherTenant);
+}
+
+/**
  * Throw unless the caller's tenant may act on `roomId`.
  *
  * Synapse knows nothing about tenants: its admin API is homeserver-global, and every

@@ -10,7 +10,7 @@ import { filter, switchMap, take, tap } from 'rxjs/operators';
 
 import { AppStore } from '@okr/shared-feature';
 import { MatrixChatService } from '@okr/chat-data-access';
-import { FcmService } from '@okr/shared-data-access';
+import { FcmService, writeBadgeLedgerFromPage } from '@okr/shared-data-access';
 import { isKioskOnly } from '@okr/shared-util-core';
 
 import { KioskCallWindow } from './kiosk-call-window';
@@ -216,11 +216,24 @@ export class MatrixInitializationService {
             }
           };
 
-          const badgeTotal = computed(() =>
-            this.matrixChatStore.totalUnreadCount() + this.appStore.openTaskCount() + this.appStore.openInvitationCount());
+          const badgeParts = computed(() => ({
+            chat: this.matrixChatStore.totalUnreadCount(),
+            tasks: this.appStore.openTaskCount(),
+            invitations: this.appStore.openInvitationCount(),
+          }), { equal: (a, b) => a.chat === b.chat && a.tasks === b.tasks && a.invitations === b.invitations });
+          const badgeTotal = computed(() => {
+            const parts = badgeParts();
+            return parts.chat + parts.tasks + parts.invitations;
+          });
 
           runInInjectionContext(this.injector, () =>
             toObservable(badgeTotal).subscribe(applyBadge)
+          );
+          // Hand the parts to the push service worker's badge ledger (spec 1.93): a push only
+          // knows its own part, so the worker needs the other two to write the right total
+          // while the app is closed.
+          runInInjectionContext(this.injector, () =>
+            toObservable(badgeParts).subscribe(parts => void writeBadgeLedgerFromPage(parts))
           );
 
           // Reconcile the badge whenever the PWA becomes visible again. A background push

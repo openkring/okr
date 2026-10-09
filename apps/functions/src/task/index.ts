@@ -77,11 +77,11 @@ export const onTaskWritten = onDocumentWritten(
       ? `Fällig: ${convertDateFormatToString(after.dueDate, DateFormat.StoreDate, DateFormat.ViewDate, false)}`
       : 'Neue Aufgabe zugewiesen';
 
-    // The task is the one sender that legitimately writes the badge: it knows the user's TOTAL
-    // open count. Every calendar sender omits it — see the head of `srv/push.ts`.
+    // The task part of the badge (spec 1.93): the assignee's absolute open-task count. The
+    // service worker adds the chat and invitation parts from its ledger — see `srv/push.ts`.
     const result = await pushToPersons(
       [assigneeKey],
-      { type: 'task', tenantId, title, body, url: TASK_LIST_URL, badgeCount },
+      { type: 'task', tenantId, title, body, url: TASK_LIST_URL, badgeTasks: badgeCount },
       'onTaskWritten',
     );
 

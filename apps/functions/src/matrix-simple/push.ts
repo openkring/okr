@@ -17,6 +17,8 @@ import {
   requireProvisionedUser,
   checkRateLimit,
   getUserTenants,
+  getRoomTenantMarker,
+  pusherAdmitsRoom,
 } from './shared';
 import { appNameFor, collectTokens, withAppName } from '../srv/push';
 
@@ -117,10 +119,8 @@ export const sendCallNotification = onCall(
         roomName: roomName ?? '',
         callerName: callerName ?? '',
         url: chatUrl,
-        // Badge count for the PWA Badging API in the service worker.
-        // Video calls are always urgent, so at minimum 1.
-        // Future: compute real total (unread chat + open tasks) per recipient.
-        badgeCount: '1',
+        // No badge field: a call is not a pending item. The service worker re-applies its
+        // ledger total (spec 1.93) — the old `badgeCount: '1'` overwrote it.
       },
       android: {
         priority: 'high',
@@ -216,6 +216,10 @@ export const registerMatrixPusher = onCall(
     const { access_token } = await loginResp.json() as { access_token: string };
 
     const appIdToUse = appId || PUSH_APP_ID;
+    // Echoed back by Synapse as `devices[].data` on every push, so matrixPushGateway can send a
+    // room's messages only to the apps of the room's tenants (spec 1.93 §3). Users are
+    // single-tenant, so the account's tenant is the app's.
+    const pusherTenantId = (await getUserTenants(uid))[0] ?? '';
     const deviceName = (deviceDisplayName || 'Unknown').substring(0, 100);
 
     // Prune stale pushers for THIS device before registering the new one. The FCM token
@@ -270,7 +274,7 @@ export const registerMatrixPusher = onCall(
           device_display_name: deviceName,
           pushkey,
           lang: lang || 'de',
-          data: { url },
+          data: { url, ...(pusherTenantId ? { tenantId: pusherTenantId } : {}) },
           append: false,
         }),
       }
@@ -282,6 +286,22 @@ export const registerMatrixPusher = onCall(
     return { registered: true };
   }
 );
+
+/**
+ * A room's `org.okr.tenant` marker, cached per instance: one chat message fans out to one
+ * gateway call per pusher, and the marker changes rarely. A failed read is `undefined`
+ * (unmarked) — delivered as before, never dropped on a Synapse hiccup.
+ */
+const MARKER_TTL_MS = 5 * 60_000;
+const markerCache = new Map<string, { marker: string[] | undefined; at: number }>();
+
+async function cachedRoomTenantMarker(roomId: string, adminToken: string): Promise<string[] | undefined> {
+  const hit = markerCache.get(roomId);
+  if (hit && Date.now() - hit.at < MARKER_TTL_MS) return hit.marker;
+  const marker = await getRoomTenantMarker(roomId, adminToken).catch(() => undefined);
+  markerCache.set(roomId, { marker, at: Date.now() });
+  return marker;
+}
 
 interface MatrixPushDevice {
   app_id: string;
@@ -308,7 +328,7 @@ interface MatrixPushPayload {
 }
 
 export const matrixPushGateway = onRequest(
-  { cors: false, region: 'europe-west6', secrets: [pushGatewaySecret] },
+  { cors: false, region: 'europe-west6', secrets: [pushGatewaySecret, matrixAdminToken] },
   async (req, res) => {
     if (req.method !== 'POST') {
       res.status(405).json({ error: 'Method Not Allowed' });
@@ -358,12 +378,21 @@ export const matrixPushGateway = onRequest(
       const roomId     = notification.room_id ?? '';
 
       const rejectedTokens: string[] = [];
+      // One Matrix account serves every tenant app of a person; send a room's message only to
+      // the apps of the room's tenants (spec 1.93 §3). Skipped devices are NOT `rejected` —
+      // that would make Synapse delete a healthy pusher.
+      const roomMarker = roomId ? await cachedRoomTenantMarker(roomId, matrixAdminToken.value()) : undefined;
+      let skippedForeign = 0;
 
       for (const device of notification.devices) {
         const token = device.pushkey;
         if (!token) continue;
         // Only deliver to our own app's pusher entries.
         if (device.app_id && device.app_id !== PUSH_APP_ID) continue;
+        if (!pusherAdmitsRoom(roomMarker, device.data?.['tenantId'])) {
+          skippedForeign++;
+          continue;
+        }
 
         try {
           await getMessaging().send({
@@ -373,7 +402,10 @@ export const matrixPushGateway = onRequest(
               title,
               body: msgBody,
               roomId,
-              badgeCount: String(Math.max(1, unread)),
+              // One new chat message (spec 1.93). Never Synapse's `counts.unread`: it spans every
+              // tenant's rooms and the badge's other parts are unknown here.
+              badgeAdd: 'chat',
+              badgeId: notification.event_id,
             },
             android: { priority: 'high' },
             apns: {
@@ -405,7 +437,7 @@ export const matrixPushGateway = onRequest(
         }
       }
 
-      console.log(`matrixPushGateway: room=${roomId} rejected=${rejectedTokens.length}`);
+      console.log(`matrixPushGateway: room=${roomId} rejected=${rejectedTokens.length} skippedForeign=${skippedForeign}`);
       res.status(200).json({ rejected: rejectedTokens });
     } catch (err) {
       console.error('matrixPushGateway: Unexpected error:', err);

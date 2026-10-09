@@ -41,26 +41,24 @@ messaging.onBackgroundMessage(payload => {
     }
   }
 
-  // Set the app icon badge (PWA Badging API — supported on iOS 16.4+ and Android Chrome).
-  // badgeCount is sent by the Cloud Function as the total number of pending items
-  // (unread chat messages + open tasks, etc.). A count of 0 clears the badge — do NOT
-  // floor to 1, otherwise a badge can never be driven back down to zero from a push.
-  //
-  // The badge promise MUST be part of the promise this handler returns (the SDK awaits it
-  // inside the push event's waitUntil). Fire-and-forget worked on desktop, but iOS suspends
-  // the worker as soon as waitUntil settles, so the pending setAppBadge was dropped and the
-  // Home Screen badge only appeared once the app was opened and set it from the foreground.
-  let badgeUpdate = Promise.resolve();
-  {
-    const raw = payload.data?.badgeCount;
-    if (raw !== undefined) {
-      const count = Math.max(0, parseInt(raw, 10) || 0);
-      if (count > 0 && self.navigator?.setAppBadge) {
-        badgeUpdate = self.navigator.setAppBadge(count).catch(() => {});
-      } else if (self.navigator?.clearAppBadge) {
-        badgeUpdate = self.navigator.clearAppBadge().catch(() => {});
-      }
-    }
+  // App-icon badge (spec 1.93): the push names only ITS part of the total (tasks, one new chat
+  // message, one new invitation); the ledger holds the rest, written by the open app. The
+  // badge promise MUST be part of what this handler returns — iOS suspends the worker as soon
+  // as the push event settles, and a fire-and-forget setAppBadge was silently dropped.
+  const badgeUpdate = updateBadgeLedger(payload.data || {});
+
+  // "Read elsewhere" sync (spec 1.93 §5): a push must SHOW a notification (iOS/Firefox revoke
+  // the subscription after silent ones), so show one under the room's tag — replacing that
+  // room's stale chat banner — and close it straight away.
+  if (payload.data?.type === 'badge-sync') {
+    const tag = payload.data?.tag || 'badge-sync';
+    return Promise.all([
+      badgeUpdate,
+      self.registration.showNotification('Gelesen', { tag, silent: true, data: payload.data })
+        .then(() => self.registration.getNotifications({ tag }))
+        .then(list => list.forEach(n => n.close()))
+        .catch(() => {}),
+    ]);
   }
 
   // Title and body come from data (data-only message) or fall back to notification field
@@ -101,10 +99,8 @@ self.addEventListener('notificationclick', event => {
   console.log('[firebase-messaging-sw.js] Notification click:', event);
   event.notification.close();
 
-  // Clear the app icon badge
-  if (self.navigator?.clearAppBadge) {
-    self.navigator.clearAppBadge().catch(() => {});
-  }
+  // No badge write here: a click knows no total. The app opens and its foreground writer
+  // sets the true one (spec 1.93 §2.4).
 
   if (event.action === 'open' || !event.action) {
     const urlToOpen = new URL(event.notification.data?.url || '/', self.location.origin).href;
@@ -135,5 +131,93 @@ async function focusOrOpen(url) {
     await client.navigate(url);
   } catch {
     client.postMessage({ type: 'notification-click', url });
+  }
+}
+
+// ---------------------------------------------------------------------------------------------
+// App-icon badge ledger (spec 1.93). Plain-JS twin of `applyBadgePush` in
+// libs/shared/util-core/src/lib/badge-ledger.util.ts — change both together. One IndexedDB
+// record shared with the page (same origin): { chat, tasks, invitations, seen[], fromPage }.
+// ---------------------------------------------------------------------------------------------
+const BADGE_LEDGER_DB = 'okr-badge';
+const BADGE_LEDGER_STORE = 'ledger';
+const BADGE_LEDGER_KEY = 'counts';
+const BADGE_LEDGER_SEEN_MAX = 100;
+
+function parseBadgeCount(raw) {
+  if (raw === undefined || raw === '') return undefined;
+  const value = Number.parseInt(raw, 10);
+  return Number.isFinite(value) ? Math.max(0, value) : undefined;
+}
+
+function applyBadgePush(previous, data, now) {
+  const empty = { chat: 0, tasks: 0, invitations: 0, seen: [], fromPage: false, updatedAt: now };
+  let next;
+  const tasks = parseBadgeCount(data.badgeTasks);
+  const chat = parseBadgeCount(data.badgeChat);
+  if (tasks !== undefined || chat !== undefined) {
+    next = { ...(previous || empty), updatedAt: now };
+    if (tasks !== undefined) next.tasks = tasks;
+    if (chat !== undefined) next.chat = chat;
+  }
+  const add = data.badgeAdd;
+  const id = data.badgeId || '';
+  if ((add === 'chat' || add === 'invitation') && id) {
+    const base = next || previous || empty;
+    if (!base.seen.includes(id)) {
+      const part = add === 'chat' ? 'chat' : 'invitations';
+      next = { ...base, [part]: base[part] + 1, seen: [...base.seen, id].slice(-BADGE_LEDGER_SEEN_MAX), updatedAt: now };
+    }
+  }
+  const current = next || previous;
+  return {
+    ledger: next,
+    badge: current && current.fromPage ? current.chat + current.tasks + current.invitations : undefined,
+  };
+}
+
+function openBadgeLedgerDb() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(BADGE_LEDGER_DB, 1);
+    request.onupgradeneeded = () => {
+      if (!request.result.objectStoreNames.contains(BADGE_LEDGER_STORE)) {
+        request.result.createObjectStore(BADGE_LEDGER_STORE);
+      }
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+/**
+ * Apply one push to the ledger (read-modify-write in ONE transaction) and write the badge.
+ * Never rejects: a broken ledger must not cost the notification. No ledger written by the
+ * page yet ⇒ the badge is left alone (a sum built from zeros would show "1" over a real "7").
+ */
+async function updateBadgeLedger(data) {
+  try {
+    const db = await openBadgeLedgerDb();
+    const result = await new Promise((resolve, reject) => {
+      const tx = db.transaction(BADGE_LEDGER_STORE, 'readwrite');
+      const store = tx.objectStore(BADGE_LEDGER_STORE);
+      let outcome = { ledger: undefined, badge: undefined };
+      const get = store.get(BADGE_LEDGER_KEY);
+      get.onsuccess = () => {
+        outcome = applyBadgePush(get.result, data, Date.now());
+        if (outcome.ledger) store.put(outcome.ledger, BADGE_LEDGER_KEY);
+      };
+      tx.oncomplete = () => resolve(outcome);
+      tx.onerror = () => reject(tx.error);
+      tx.onabort = () => reject(tx.error);
+    });
+    db.close();
+    if (result.badge === undefined) return;
+    if (result.badge > 0 && self.navigator?.setAppBadge) {
+      await self.navigator.setAppBadge(result.badge);
+    } else if (result.badge === 0 && self.navigator?.clearAppBadge) {
+      await self.navigator.clearAppBadge();
+    }
+  } catch (error) {
+    console.warn('[firebase-messaging-sw.js] badge ledger update failed:', error);
   }
 }

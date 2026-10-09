@@ -80,6 +80,9 @@ export const onInvitationCreated = onDocumentCreated(
         body: invitationPushBody(inviterName, when),
         url: caleventDeepLink(caleventKey),
         channelId: `invitation.${invitationKey}`,
+        // one new open invitation → +1 on the badge, de-duplicated by key (spec 1.93)
+        badgeAdd: 'invitation',
+        badgeId: invitationKey,
       },
       email: () => invitationEmail({
         ...brandOf(links),

@@ -11,16 +11,24 @@ describe('buildPushData', () => {
     });
   });
 
-  it('OMITS badgeCount when the sender passes none — the badge is absolute and has two other writers', () => {
-    expect(buildPushData(base)['badgeCount']).toBeUndefined();
+  it('OMITS every badge field when the sender passes none — no sender knows the total', () => {
+    const data = buildPushData(base);
+    expect(data['badgeTasks']).toBeUndefined();
+    expect(data['badgeAdd']).toBeUndefined();
+    expect(data['badgeId']).toBeUndefined();
+    expect(data['badgeCount']).toBeUndefined();
   });
 
-  it('writes badgeCount as a string when the sender knows the total', () => {
-    expect(buildPushData({ ...base, badgeCount: 3 })['badgeCount']).toBe('3');
+  it('writes the task part as a string, including 0', () => {
+    expect(buildPushData({ ...base, badgeTasks: 3 })['badgeTasks']).toBe('3');
+    expect(buildPushData({ ...base, badgeTasks: 0 })['badgeTasks']).toBe('0');
   });
 
-  it('keeps a badgeCount of 0 — it is what clears the badge', () => {
-    expect(buildPushData({ ...base, badgeCount: 0 })['badgeCount']).toBe('0');
+  it('writes badgeAdd only together with its de-duplication id', () => {
+    expect(buildPushData({ ...base, badgeAdd: 'invitation', badgeId: 'inv-1' })).toMatchObject({
+      badgeAdd: 'invitation', badgeId: 'inv-1',
+    });
+    expect(buildPushData({ ...base, badgeAdd: 'invitation' })['badgeAdd']).toBeUndefined();
   });
 
   it('carries channelId so several pushes about one event collapse into one banner', () => {

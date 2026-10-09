@@ -4,3 +4,4 @@ export * from './lib/fcm.service';
 export * from './lib/app-config.service';
 export * from './lib/i18n-override.service';
 export * from './lib/external-data.service';
+export * from './lib/badge-ledger';

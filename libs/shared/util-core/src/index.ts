@@ -2,6 +2,7 @@ export * from './lib/attendee.util';
 export * from './lib/auth.util';
 export * from './lib/platform.util';
 export * from './lib/base-model.util';
+export * from './lib/badge-ledger.util';
 export * from './lib/calendar.util';
 export * from './lib/category.util';
 export * from './lib/chip.util';
