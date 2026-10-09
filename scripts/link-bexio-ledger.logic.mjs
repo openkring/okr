@@ -244,3 +244,75 @@ export function manualLinkProblem({ kind, amount, bookingKeys, summaries, used, 
   }
   return sum === amount ? '' : `the bookings carry ${sum}, the ${kind} ${amount}`;
 }
+
+// ---- the documents' own bookings from the bexio journal reference
+
+const MARKER = '[bexio-ledger-link]';
+
+/**
+ * bexio's journal (GET /3.0/accounting/journal) names the document of each row: `ref_class`
+ * `KbInvoice` + `ref_id` = the bexio invoice id, which is the okey of the migrated invoice. Payments
+ * carry `KbClientAccountEntry` (a payment entry, not the invoice) and stay with {@link planLinks}.
+ * @param {object[]} journal  raw bexio journal rows
+ * @returns {Map<string, string[]>} invoice okey -> booking okeys (bexio row ids) in bexio id order
+ */
+export function journalInvoiceRefs(journal) {
+  const refs = new Map();
+  for (const row of [...journal].sort((a, b) => a.id - b.id)) {
+    if (row.ref_class !== 'KbInvoice' || row.ref_id == null) continue;
+    const key = String(row.ref_id);
+    if (!refs.has(key)) refs.set(key, []);
+    refs.get(key).push(String(row.id));
+  }
+  return refs;
+}
+
+/**
+ * Plans the links of migrated invoices to their own (issue) bookings from the journal reference.
+ * Unlike {@link planLinks} this is proof, not a match: it also corrects links an earlier run made
+ * by order or by hand. A link is refused when a referenced booking is missing in okr or the bookings'
+ * net on receivables (debits minus reversing credits) is not the invoice total.
+ * @param {object} input
+ * @param {object[]} input.invoices        invoice docs with `okey`
+ * @param {Map<string, string[]>} input.refs  from {@link journalInvoiceRefs}
+ * @param {Map<string, object>} input.summaries  booking okey -> summary ({@link summarizeBooking})
+ * @param {Set<string>} input.receivablesKeys
+ * @returns {{ links: object[], problems: object[], unreferenced: string[], linked: number }}
+ *   link = { kind: 'invoice', mode: 'new' | 'fix', docKey, index: -1, label, counterparty, bookingKeys, previous }
+ */
+export function planJournalInvoiceLinks({ invoices, refs, summaries, receivablesKeys }) {
+  const links = [];
+  const problems = [];
+  const unreferenced = [];
+  let linked = 0;
+  for (const inv of [...invoices].sort((a, b) => Number(a.okey) - Number(b.okey))) {
+    if (inv.bookingKey) continue;                       // native invoice: linked by construction
+    const bookingKeys = refs.get(inv.okey);
+    if (!bookingKeys?.length) { unreferenced.push(inv.okey); continue; }
+    const previous = inv.bookingKeys ?? [];
+    const label = `${inv.invoiceId || inv.okey} ${inv.title ?? ''}`.trim();
+    const base = { kind: 'invoice', docKey: inv.okey, index: -1, label, counterparty: inv.receiver };
+    const missing = bookingKeys.find((k) => !summaries.has(k));
+    if (missing) { problems.push({ ...base, problem: `booking ${missing} not found` }); continue; }
+    const net = bookingKeys.reduce((s, k) => s + sumOver(summaries.get(k).debit, receivablesKeys) - sumOver(summaries.get(k).credit, receivablesKeys), 0);
+    const total = inv.totalAmount?.amount ?? 0;
+    if (net !== total) { problems.push({ ...base, problem: `the bookings carry ${net}, the invoice ${total}` }); continue; }
+    if ([...previous].sort().join() === [...bookingKeys].sort().join()) { linked++; continue; }
+    links.push({ ...base, mode: previous.length ? 'fix' : 'new', bookingKeys, previous });
+  }
+  return { links, problems, unreferenced, linked };
+}
+
+/**
+ * The booking patch that gives it `counterparty`: null when it already has it, 'manual' when another
+ * one was set by hand (left alone), else counterparty + notes. A counterparty this script set (its
+ * note carries the marker) is replaced together with its note.
+ */
+export function counterpartyPatch(booking, counterparty, note) {
+  const current = booking.counterparty;
+  if (current?.key === counterparty.key) return null;
+  const lines = (booking.notes ?? '').split('\n').filter((l) => l !== '');
+  if (current?.key && !lines.some((l) => l.includes(MARKER))) return 'manual';
+  const kept = lines.filter((l) => !l.includes(MARKER));
+  return { counterparty, notes: [...kept, note].join('\n') };
+}

@@ -8,12 +8,17 @@
  * invoices are linked by construction (issueInvoice, recordInvoicePayment); this does the same for the
  * migrated history, once.
  *
- * WHAT IT DOES: matches on date, amount, accounts and title (see link-bexio-ledger.logic.mjs). Safe
- * links are always written; identical twins paired in document order only with --pair-issues /
- * --pair-payments. It writes
+ * WHAT IT DOES: an invoice's own bookings come from the bexio journal, which names the invoice of each
+ * row (ref_class KbInvoice, ref_id = invoice okey) — proof, not a match. Those links are always written,
+ * and a link an earlier run made by order (twins swapped) or by hand is corrected. Everything else —
+ * payments, bills, invoices bexio does not reference — is matched on date, amount, accounts and title
+ * (see link-bexio-ledger.logic.mjs): safe links are always written; identical twins paired in document
+ * order only with --pair-issues / --pair-payments. It writes
  *   - invoices and bills: `bookingKeys` (their bexio bookings, one per document line) and
  *     `payments[i].bookingKey`
- *   - bookings: `counterparty` = receiver / vendor, only where none is set, plus a note carrying MARKER
+ *   - bookings: `counterparty` = receiver / vendor where none is set, plus a note carrying MARKER; a
+ *     counterparty this script set is replaced when the journal moves the booking to another invoice,
+ *     one set by hand is kept (listed)
  * Booking texts, amounts, status and lines are never touched (GebüV). Ambiguous and unmatched targets
  * are listed for a manual decision. `invoice.bookingKey` stays native-only (`invoice-{key}`), so the
  * invoice Cloud Functions never mistake a linked migrated invoice for a native one, and a re-run of
@@ -26,6 +31,7 @@
  *            node scripts/link-bexio-ledger.mjs --apply [--pair-issues] [--pair-payments]
  *            node scripts/link-bexio-ledger.mjs --revert [--apply]  (removes every bexio link + marked counterparty)
  *            options: --tenant <accountingTenantId>  --all (list every target of a category, not 5 examples)
+ *                     --no-journal (skip the bexio journal: invoices are matched like before)
  *
  * Manual resolution of what stays ambiguous or unmatched:
  *            node scripts/link-bexio-ledger.mjs --report <file.csv> [--year 2026]
@@ -37,6 +43,8 @@
  *              amounts add up) and a refused row is reported, not written. The file holds personal
  *              data: keep it out of the repo.
  * Requires:  gcloud auth application-default login  (or GOOGLE_APPLICATION_CREDENTIALS)
+ *            export BEXIO_APIKEY="$(gcloud secrets versions access latest --secret=BEXIO_APIKEY --project=bkaiser-org)"
+ *              (read-only; not needed for --revert or --no-journal)
  *
  * Idempotent: linked targets and referenced bookings are left alone on a re-run.
  */
@@ -44,7 +52,8 @@ import { getApps, initializeApp } from 'firebase-admin/app';
 import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 import { readFileSync, writeFileSync } from 'node:fs';
 
-import { daysBetween, isBexioJournalKey, manualLinkProblem, planLinks, relevantAmount, summarizeBooking } from './link-bexio-ledger.logic.mjs';
+import { createBexioClient } from './bexio-archive/client.mjs';
+import { counterpartyPatch, daysBetween, isBexioJournalKey, journalInvoiceRefs, manualLinkProblem, planJournalInvoiceLinks, planLinks, relevantAmount, summarizeBooking } from './link-bexio-ledger.logic.mjs';
 
 const PROJECT_ID = 'bkaiser-org';
 const MARKER = '[bexio-ledger-link]';
@@ -60,6 +69,7 @@ const revert = args.includes('--revert');
 const listAll = args.includes('--all');
 const pairIssues = args.includes('--pair-issues');
 const pairPayments = args.includes('--pair-payments');
+const useJournal = !args.includes('--no-journal');
 const tenant = arg('--tenant') ?? 'scs';
 const year = arg('--year') ?? '';
 const reportPath = arg('--report');
@@ -175,12 +185,29 @@ async function main() {
   console.log(`${invoices.length} invoices · ${bills.length} bills · ${bookingDocs.length} bookings · ${lineSnap.size} lines`);
 
   let writes;
+  if (!revert && useJournal && !process.env.BEXIO_APIKEY) {
+    console.error('BEXIO_APIKEY is not set (see the header), or pass --no-journal');
+    process.exit(1);
+  }
   if (revert) {
     writes = await planRevert(invoices, bills, bookingDocs);
     console.log(`\n${writes.length} document(s) to unlink`);
   } else {
     const summaries = bookingDocs.map((b) => summarizeBooking(b, linesByBooking.get(b.okey)));
-    const { links, ambiguous, unmatched, linked } = planLinks({ invoices, bills, bookings: summaries, receivablesKeys, payablesKeys });
+    const summaryByKey = new Map(summaries.map((b) => [b.okey, b]));
+
+    // invoices referenced by the bexio journal: linked from the reference, out of the matching below
+    let journal = { links: [], problems: [], unreferenced: [], linked: 0 };
+    let refs = new Map();
+    if (useJournal) {
+      const rows = await createBexioClient({ token: process.env.BEXIO_APIKEY }).getAll('/3.0/accounting/journal');
+      refs = journalInvoiceRefs(rows);
+      journal = planJournalInvoiceLinks({ invoices, refs, summaries: summaryByKey, receivablesKeys });
+      console.log(`\nbexio journal: ${rows.length} rows · ${refs.size} invoices referenced`);
+      console.log(`journal links: ${journal.links.filter((l) => l.mode === 'new').length} new · ${journal.links.filter((l) => l.mode === 'fix').length} corrected · ${journal.linked} already right · ${journal.problems.length} refused · ${journal.unreferenced.length} migrated invoices without reference`);
+    }
+    const matchInvoices = invoices.map((inv) => (refs.has(inv.okey) && !inv.bookingKey ? { ...inv, bookingKeys: refs.get(inv.okey) } : inv));
+    const { links, ambiguous, unmatched, linked } = planLinks({ invoices: matchInvoices, bills, bookings: summaries, receivablesKeys, payablesKeys });
 
     const isIssue = (t) => t.index < 0;
     const safe = links.filter((l) => l.mode === 'safe');
@@ -192,7 +219,7 @@ async function main() {
       const n = (list) => String(list.filter((t) => t.kind === k).length);
       console.log(`${k.padEnd(16)} ${n(safe).padStart(5)} ${n([...inOrderIssues, ...inOrderPayments]).padStart(9)} ${n(ambiguous).padStart(10)} ${n(unmatched).padStart(10)}`);
     }
-    console.log(`already linked: ${linked}`);
+    console.log(`already linked: ${linked}${useJournal ? ' (invoices referenced by the journal counted here)' : ''}`);
     const docByKey = new Map([...invoices, ...bills].map((d) => [d.okey, d]));
     const amountOf = (t) => {
       const doc = docByKey.get(t.docKey);
@@ -205,6 +232,10 @@ async function main() {
     const who = (t) => t.counterparty?.label || [t.counterparty?.name1, t.counterparty?.name2].filter(Boolean).join(' ') || '–';
     const describe = (t) => `${t.kind.padEnd(16)} ${dateOf(t)} ${chf(amountOf(t)).padStart(12)}  ${t.label} · ${who(t)}`
       + (t.bookingKeys ? `  → ${t.bookingKeys.join(', ')}` : t.candidates ? `  → candidates ${t.candidates.join(', ')}` : '');
+    printTargets('journal, new (always written)', journal.links.filter((l) => l.mode === 'new'), describe);
+    printTargets('journal, corrected (always written)', journal.links.filter((l) => l.mode === 'fix'),
+      (t) => `${describe(t)}  (was ${t.previous.join(', ')})`);
+    printTargets('journal, refused', journal.problems, (t) => `${t.label} · ${who(t)}: ${t.problem}`);
     printTargets('safe (always written)', safe, describe);
     printTargets(`in order, documents' own bookings (${pairIssues ? 'written: --pair-issues' : 'not written without --pair-issues'})`, inOrderIssues, describe);
     printTargets(`in order, payments (${pairPayments ? 'written: --pair-payments' : 'not written without --pair-payments'})`, inOrderPayments, describe);
@@ -217,7 +248,6 @@ async function main() {
     const perYear = new Map();
     for (const t of unresolved) perYear.set(dateOf(t).slice(0, 4), (perYear.get(dateOf(t).slice(0, 4)) ?? 0) + 1);
     console.log(`\nunresolved per year: ${[...perYear.entries()].sort().map(([y, n]) => `${y} ${n}`).join(' · ')}`);
-    const summaryByKey = new Map(summaries.map((b) => [b.okey, b]));
     const used = new Set();
     for (const doc of [...invoices, ...bills]) {
       for (const k of [doc.bookingKey, ...(doc.bookingKeys ?? []), ...(doc.payments ?? []).map((p) => p.bookingKey)]) if (k) used.add(k);
@@ -263,7 +293,7 @@ async function main() {
     }
 
     // 3. the writes: one patch per document (payments as a whole array), one per booking
-    const chosen = manualPath ? manual : [...safe, ...(pairIssues ? inOrderIssues : []), ...(pairPayments ? inOrderPayments : [])];
+    const chosen = manualPath ? manual : [...journal.links, ...safe, ...(pairIssues ? inOrderIssues : []), ...(pairPayments ? inOrderPayments : [])];
     const patches = new Map();
     const patchOf = (ref) => { if (!patches.has(ref.path)) patches.set(ref.path, [ref, {}]); return patches.get(ref.path)[1]; };
     for (const l of chosen) {
@@ -277,16 +307,29 @@ async function main() {
     }
     const bookingByKey = new Map(bookingDocs.map((b) => [b.okey, b]));
     let counterparties = 0;
+    const manualCounterparties = [];
     for (const l of chosen) {
       if (!l.counterparty?.key) continue;
       for (const key of l.bookingKeys) {
         const b = bookingByKey.get(key);
-        if (b.counterparty?.key) continue;
         const note = `Gegenpartei ${today()} aus ${l.kind.startsWith('bill') ? 'Kreditor' : 'Rechnung'} ${l.label} übernommen ${MARKER}`;
-        Object.assign(patchOf(b.ref), { counterparty: l.counterparty, notes: b.notes ? `${b.notes}\n${note}` : note });
+        const patch = counterpartyPatch(b, l.counterparty, note);
+        if (patch === 'manual') { if (l.mode === 'fix') manualCounterparties.push(`${key} (${l.label}): ${b.counterparty.label ?? b.counterparty.key}`); continue; }
+        if (!patch) continue;
+        Object.assign(patchOf(b.ref), patch);
         counterparties++;
       }
     }
+    // a booking a correction released and no invoice takes over: drop the counterparty this script set
+    const relinked = new Set([...chosen.flatMap((l) => l.bookingKeys), ...[...refs.values()].flat()]);
+    for (const l of journal.links) {
+      for (const key of l.previous.filter((k) => !relinked.has(k))) {
+        const b = bookingByKey.get(key);
+        if (!b || !(b.notes ?? '').includes(MARKER)) continue;
+        Object.assign(patchOf(b.ref), { counterparty: FieldValue.delete(), notes: (b.notes ?? '').split('\n').filter((x) => !x.includes(MARKER)).join('\n') });
+      }
+    }
+    if (manualCounterparties.length) console.log(`\ncounterparty set by hand, kept although the journal names another invoice:\n  ${manualCounterparties.join('\n  ')}`);
     writes = [...patches.values()];
     console.log(`${chosen.length} link(s) chosen · ${counterparties} counterpart${counterparties === 1 ? 'y' : 'ies'} · ${writes.length} document(s) to write`);
   }

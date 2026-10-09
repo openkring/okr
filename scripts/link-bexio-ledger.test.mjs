@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { daysBetween, isBexioJournalKey, manualLinkProblem, planLinks, summarizeBooking } from './link-bexio-ledger.logic.mjs';
+import { counterpartyPatch, daysBetween, isBexioJournalKey, journalInvoiceRefs, manualLinkProblem, planJournalInvoiceLinks, planLinks, summarizeBooking } from './link-bexio-ledger.logic.mjs';
 
 const R = 'scs0093';   // 1100 Debitoren
 const P = 'scs0121';   // 2000 Kreditoren
@@ -175,4 +175,68 @@ test('manual links are validated: existence, bexio row, posted, unused, amount',
 test('daysBetween counts calendar days across months', () => {
   assert.equal(daysBetween('20260228', '20260301'), 1);
   assert.equal(daysBetween('20260914', '20260914'), 0);
+});
+
+// ---- links from the bexio journal reference (ref_class KbInvoice, ref_id = bexio invoice id = invoice okey)
+
+const journalRow = (id, refId, debit, credit, amount, refClass = 'KbInvoice') => ({ id, ref_id: refId, ref_class: refClass, debit_account_id: debit, credit_account_id: credit, amount });
+const planJournal = (invoices, refs, bookings) =>
+  planJournalInvoiceLinks({ invoices, refs, summaries: new Map(bookings.map((b) => [b.okey, b])), receivablesKeys: new Set([R]) });
+
+test('journalInvoiceRefs groups the KbInvoice rows by invoice id, in bexio id order', () => {
+  const refs = journalInvoiceRefs([journalRow(11, 7, 93, 159, 75), journalRow(10, 7, 93, 284, 600), journalRow(12, 8, 93, 159, 75),
+    journalRow(13, 7, 77, 93, 675, 'KbClientAccountEntry'), { ...journalRow(14, null, 93, 159, 1) }]);
+  assert.deepEqual([...refs.entries()], [['7', ['10', '11']], ['8', ['12']]]);
+});
+
+test('identical twins link by the journal reference, not by their order', () => {
+  // bexio booked 1778 before 1770: the order says nothing
+  const bookings = [booking('10868', '20260416', 'Jahresbeitrag 2026', [line(R, 7500, 0), line('scs0159', 0, 7500)]),
+    booking('10869', '20260416', 'Jahresbeitrag 2026', [line(R, 7500, 0), line('scs0159', 0, 7500)])];
+  const twins = [invoice('1770', { totalAmount: money(7500) }), invoice('1778', { totalAmount: money(7500) })];
+  const { links, problems, linked } = planJournal(twins, new Map([['1778', ['10868']], ['1770', ['10869']]]), bookings);
+  assert.deepEqual(links.map((l) => [l.docKey, l.bookingKeys, l.mode]), [['1770', ['10869'], 'new'], ['1778', ['10868'], 'new']]);
+  assert.equal(problems.length, 0);
+  assert.equal(linked, 0);
+});
+
+test('a wrong link is corrected, a correct one left alone', () => {
+  const bookings = [booking('6410', '20230416', 'Ruderkurs', [line(R, 30000, 0), line('x', 0, 30000)]),
+    booking('6411', '20230416', 'Ruderkurs', [line(R, 30000, 0), line('x', 0, 30000)]),
+    booking('6412', '20230416', 'Ruderkurs', [line(R, 30000, 0), line('x', 0, 30000)])];
+  const invoices = [invoice('1002', { bookingKeys: ['6410'] }), invoice('1003', { bookingKeys: ['6411'] }), invoice('1004', { bookingKeys: ['6412'] })];
+  const { links, linked } = planJournal(invoices, new Map([['1002', ['6411']], ['1003', ['6410']], ['1004', ['6412']]]), bookings);
+  assert.deepEqual(links.map((l) => [l.docKey, l.bookingKeys, l.previous, l.mode]), [['1002', ['6411'], ['6410'], 'fix'], ['1003', ['6410'], ['6411'], 'fix']]);
+  assert.equal(linked, 1);
+});
+
+test('a journal link is refused when a booking is missing in okr or the amounts do not add up', () => {
+  const bookings = [booking('1', '20260101', 'Ruderkurs', [line(R, 20000, 0), line('x', 0, 20000)])];
+  const { links, problems } = planJournal([invoice('5'), invoice('6')], new Map([['5', ['1']], ['6', ['2']]]), bookings);
+  assert.equal(links.length, 0);
+  assert.deepEqual(problems.map((p) => [p.docKey, p.problem]), [['5', 'the bookings carry 20000, the invoice 30000'], ['6', 'booking 2 not found']]);
+});
+
+test('a reversing row (credit on receivables) counts against the total', () => {
+  const bookings = [booking('1', '20260101', 'Ruderkurs', [line(R, 40000, 0), line('x', 0, 40000)]),
+    booking('2', '20260101', 'Ruderkurs', [line('x', 10000, 0), line(R, 0, 10000)])];
+  const { links } = planJournal([invoice('5')], new Map([['5', ['1', '2']]]), bookings);
+  assert.deepEqual(links.map((l) => l.bookingKeys), [['1', '2']]);
+});
+
+test('native invoices and invoices without a journal reference are not touched', () => {
+  const { links, problems, unreferenced } = planJournal([invoice('5', { bookingKey: 'invoice-5' }), invoice('6')], new Map(), []);
+  assert.equal(links.length + problems.length, 0);
+  assert.deepEqual(unreferenced, ['6']);
+});
+
+test('counterpartyPatch sets a missing counterparty, corrects one this script set, keeps one set by hand', () => {
+  const a = person('pa', 'Anna');
+  const b = person('pb', 'Beat');
+  const note = 'Gegenpartei 05.10.2026 aus Rechnung REA-1 Ruderkurs übernommen [bexio-ledger-link]';
+  const make = (counterparty, notes) => ({ counterparty, notes });
+  assert.deepEqual(counterpartyPatch(make(undefined, ''), a, 'NEW [bexio-ledger-link]'), { counterparty: a, notes: 'NEW [bexio-ledger-link]' });
+  assert.equal(counterpartyPatch(make(a, note), a, 'NEW'), null);
+  assert.deepEqual(counterpartyPatch(make(b, `Kommentar\n${note}`), a, 'NEW [bexio-ledger-link]'), { counterparty: a, notes: 'Kommentar\nNEW [bexio-ledger-link]' });
+  assert.equal(counterpartyPatch(make(b, 'von Hand'), a, 'NEW'), 'manual');
 });
