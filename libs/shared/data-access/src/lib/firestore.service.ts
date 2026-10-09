@@ -971,6 +971,25 @@ export class FirestoreService {
   }
 
   /**
+   * One consistent read of a single document — the counterpart of getDataOnce for readModel. Use it
+   * wherever the caller takes ONE value (`firstValueFrom(readModel(...))` is the trap): readModel's
+   * docData emits the local cache first, and on Chromium that is the persistent IndexedDB cache, so a
+   * document changed by a Cloud Function or the console can come back in its old state indefinitely.
+   * getDoc reads from the server when online (cache only offline). Returns undefined when absent or
+   * unreadable.
+   */
+  public async readModelOnce<T extends OkrModel>(collectionName: string, key: string): Promise<T | undefined> {
+    if (!isBrowser(this.platformId) || !isFirestoreInitializedCheck() || !collectionName || !key) return undefined;
+    try {
+      const snapshot = await getDoc(doc(this.firestore, `${collectionName}/${key}`));
+      return snapshot.exists() ? ({ ...snapshot.data(), okey: snapshot.id } as T) : undefined;
+    } catch (err) {
+      console.error(`FirestoreService.readModelOnce(${collectionName}/${key}) error:`, err);
+      return undefined;
+    }
+  }
+
+  /**
    * Like getDataOnce, but a failed read REJECTS instead of looking like an empty result. For callers
    * that act on the result (e.g. detaching every child of a record before deleting it), where
    * "0 documents" and "could not read" must not be confused. Single getDocs snapshot, server when online.

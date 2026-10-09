@@ -86,21 +86,25 @@ export class ExpenseService {
     return (result.data as { reprocessed: number }).reprocessed;
   }
 
+  // The three reads below feed a modal opened ONCE, so they are one-shot server reads: a
+  // firstValueFrom over the live streams took the local cache's first emission, and the persistent
+  // cache kept showing a booking the OCR pipeline or a repair had already changed.
+
   /** Load the review TaskModel linked from expense.taskKey. */
-  public readTask(taskKey: string): Observable<TaskModel | undefined> {
-    return this.firestoreService.readModel<TaskModel>(TaskCollection, taskKey);
+  public readTask(taskKey: string): Promise<TaskModel | undefined> {
+    return this.firestoreService.readModelOnce<TaskModel>(TaskCollection, taskKey);
   }
 
   /** Load the BookingModel linked from expense.bookingKey. */
-  public readBooking(bookingKey: string): Observable<BookingModel | undefined> {
-    return this.firestoreService.readModel<BookingModel>(BookingCollection, bookingKey);
+  public readBooking(bookingKey: string): Promise<BookingModel | undefined> {
+    return this.firestoreService.readModelOnce<BookingModel>(BookingCollection, bookingKey);
   }
 
   /** Load the booking's lines. */
-  public listBookingLines(bookingKey: string): Observable<BookingLineModel[]> {
+  public listBookingLines(bookingKey: string): Promise<BookingLineModel[]> {
     const query = getSystemQuery(this.env.tenantId);
     query.push({ key: 'bookingKey', operator: '==', value: bookingKey });
-    return this.firestoreService.searchData<BookingLineModel>(BookingLineCollection, query, 'none');
+    return this.firestoreService.getDataOnce<BookingLineModel>(BookingLineCollection, query, 'none');
   }
 
   // Order by creationDateTime (StoreDateTime, yyyyMMddHHmmss — lexicographically = chronologically

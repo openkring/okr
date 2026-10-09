@@ -217,7 +217,7 @@ export const ExpenseStore = signalStore(
 
     async openTask(expense: ExpenseModel): Promise<void> {
       if (!expense.taskKey) return;
-      const task = await firstValueFrom(store.expenseService.readTask(expense.taskKey));
+      const task = await store.expenseService.readTask(expense.taskKey);
       if (!task) return;
       const { TaskEditModal, loadTaskProjects } = await import('@okr/project-task-feature');
       const modal = await store.modalController.create({
@@ -240,8 +240,8 @@ export const ExpenseStore = signalStore(
     async openBooking(expense: ExpenseModel): Promise<void> {
       if (!expense.bookingKey) return;
       const [booking, lines] = await Promise.all([
-        firstValueFrom(store.expenseService.readBooking(expense.bookingKey)),
-        firstValueFrom(store.expenseService.listBookingLines(expense.bookingKey)),
+        store.expenseService.readBooking(expense.bookingKey),
+        store.expenseService.listBookingLines(expense.bookingKey),
       ]);
       if (!booking) return;
       const { BookingEditModal } = await import('@okr/finance-booking-feature');
