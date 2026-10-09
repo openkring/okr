@@ -14,6 +14,9 @@ import { AddressModel, ExpenseModel, PersonModelName } from '@okr/shared-models'
 import { AddressService } from '@okr/subject-address-data-access';
 import { UploadService } from '@okr/avatar-data-access';
 
+import { AccountService } from '@okr/finance-account-data-access';
+import { VatCodeService } from '@okr/finance-vat-code-data-access';
+import { ProjectService } from '@okr/project-project-data-access';
 import { ExpenseService } from '@okr/finance-expense-data-access';
 import {
   chfToCents, EXPENSE_I18N_KEYS, ExpenseFormValue, ExpenseI18n, ExpenseSortField,
@@ -58,6 +61,9 @@ export const ExpenseStore = signalStore(
     addressService:          inject(AddressService),
     uploadService:           inject(UploadService),
     expenseService:          inject(ExpenseService),
+    accountService:          inject(AccountService),
+    vatCodeService:          inject(VatCodeService),
+    projectService:          inject(ProjectService),
     i18nService:             inject(I18nService),
   })),
   withProps(store => ({
@@ -239,15 +245,24 @@ export const ExpenseStore = signalStore(
 
     async openBooking(expense: ExpenseModel): Promise<void> {
       if (!expense.bookingKey) return;
-      const [booking, lines] = await Promise.all([
+      // The modal names accounts, VAT codes and projects from its inputs: the journal passes its own
+      // lists, here they are loaded for the EXPENSE's book (we are outside the accounting shell).
+      const acct = expense.accountingTenantId ?? '';
+      const [booking, lines, accounts, vatCodes, projects] = await Promise.all([
         store.expenseService.readBooking(expense.bookingKey),
         store.expenseService.listBookingLines(expense.bookingKey),
+        acct ? store.accountService.listOnce(acct) : Promise.resolve([]),
+        acct ? store.vatCodeService.listOnce(acct) : Promise.resolve([]),
+        store.projectService.listAllOnce(),
       ]);
       if (!booking) return;
       const { BookingEditModal } = await import('@okr/finance-booking-feature');
       const modal = await store.modalController.create({
         component: BookingEditModal,
-        componentProps: { booking, lines: lines ?? [], readOnly: true },
+        componentProps: {
+          booking, lines: lines ?? [], readOnly: true, currentUser: store.appStore.currentUser(),
+          accounts, vatCodes, projects, locale: store.appStore.appConfig()?.locale || 'de-ch',
+        },
       });
       await modal.present();
     },

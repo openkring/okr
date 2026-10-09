@@ -98,4 +98,10 @@ export class ProjectService {
     return this.firestoreService.searchData<ProjectModel>(ProjectCollection, getArchiveInclusiveQuery(this.env.tenantId), 'none').pipe(
       map(projects => [...projects].sort((a, b) => (b.startDate ?? '').localeCompare(a.startDate ?? ''))));
   }
+
+  /** One consistent read of {@link listAll} (getDocs, server when online) — for a modal opened once. */
+  public async listAllOnce(): Promise<ProjectModel[]> {
+    const projects = await this.firestoreService.getDataOnce<ProjectModel>(ProjectCollection, getArchiveInclusiveQuery(this.env.tenantId), 'none');
+    return projects.sort((a, b) => (b.startDate ?? '').localeCompare(a.startDate ?? ''));
+  }
 }
