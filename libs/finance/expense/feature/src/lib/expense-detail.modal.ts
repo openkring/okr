@@ -32,6 +32,8 @@ import { injectExpenseView } from './expense-view';
         [statuses]="view.stateCategory()"
         [authorKey]="view.authorKey()"
         [authorName]="view.authorName()"
+        [payeeKey]="view.payeeKey()"
+        [payeeName]="view.payeeName()"
         [receipts]="view.receipts()"
         [qrBills]="view.qrBills()"
         [qrCode]="view.qrCode()"
