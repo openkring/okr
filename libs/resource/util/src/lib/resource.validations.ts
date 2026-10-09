@@ -1,7 +1,7 @@
 import { enforce, omitWhen, staticSuite, test } from 'vest';
 import 'vest/enforce/compounds';
 
-import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@okr/shared-constants';
+import { COMMENT_LENGTH, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@okr/shared-constants';
 import { ResourceModel } from '@okr/shared-models';
 import { baseValidations, isArrayOfBaseProperties, numberValidations, stringValidations } from '@okr/shared-util-core';
 
@@ -18,6 +18,8 @@ export const resourceValidations = staticSuite((model: ResourceModel, tenants: s
   stringValidations('index', model.index);
   //tagValidations('tags', model.tags);
   stringValidations('description', model.description, DESCRIPTION_LENGTH);
+  // legacy docs predate the field — coalesce, stringValidations rejects undefined
+  stringValidations('tripAlert', model.tripAlert ?? '', COMMENT_LENGTH);
   stringValidations('type', model.type);
   numberValidations('currentValue', model.currentValue, true, 0, 100000);
   stringValidations('load', model.load, SHORT_NAME_LENGTH);

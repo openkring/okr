@@ -35,6 +35,10 @@ export const RESOURCE_I18N_KEYS = {
   description_label:        PFX + 'description.label',
   description_placeholder:  PFX + 'description.placeholder',
 
+  tripAlert_label:          PFX + 'tripAlert.label',
+  tripAlert_placeholder:    PFX + 'tripAlert.placeholder',
+  tripAlert_helper:         PFX + 'tripAlert.helper',
+
   keyNr_label:              PFX + 'keyNr.label',
   keyNr_placeholder:        PFX + 'keyNr.placeholder',
   keyNr_helper:             PFX + 'keyNr.helper',

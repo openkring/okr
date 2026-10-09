@@ -112,6 +112,11 @@
     "label": "Descrizione",
     "placeholder": "Un testo più lungo, su più righe."
   },
+  "tripAlert": {
+    "label": "Avviso nel giornale di bordo",
+    "placeholder": "p.es. Cavo del timone difettoso, rema con prudenza",
+    "helper": "Appare come avviso non appena qualcuno sceglie questa barca per un'uscita."
+  },
   "keyNr": {
     "label": "N. chiave",
     "placeholder": "nnnnn",

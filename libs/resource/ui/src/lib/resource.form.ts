@@ -3,10 +3,10 @@ import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
 import { BaseProperty, CategoryListModel, ResourceModel, RoleName, UserModel } from '@okr/shared-models';
-import { CategorySelect, Chips, Color, ErrorNote, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, PropertyList, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { CategorySelect, Chips, Color, ErrorNote, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, PropertyList, TextareaInput, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, getYear, hasRole } from '@okr/shared-util-core';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
-import { DEFAULT_CAR_TYPE, DEFAULT_GENDER, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PET_TYPE, DEFAULT_PRICE, DEFAULT_RBOAT_TYPE, DEFAULT_RBOAT_USAGE, DEFAULT_TAGS, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
+import { DEFAULT_CAR_TYPE, DEFAULT_GENDER, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PET_TYPE, DEFAULT_PRICE, DEFAULT_RBOAT_TYPE, DEFAULT_RBOAT_USAGE, DEFAULT_TAGS, COMMENT_LENGTH, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 
 import { getUsageForYear, ResourceI18n, resourceValidations, getKeyNr, getLockerNr, setUsageFromYear } from '@okr/resource-util';
 
@@ -14,7 +14,7 @@ import { getUsageForYear, ResourceI18n, resourceValidations, getKeyNr, getLocker
   selector: 'okr-resource-form',
   standalone: true,
   imports: [
-    Chips, NotesInput, PropertyList, TextInput, NumberInput, ErrorNote, CategorySelect, Color,
+    Chips, NotesInput, PropertyList, TextInput, TextareaInput, NumberInput, ErrorNote, CategorySelect, Color,
     IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonRow, IonCol
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -63,6 +63,11 @@ import { getUsageForYear, ResourceI18n, resourceValidations, getKeyNr, getLocker
                     <ion-col size="12" size-md="6">
                       <okr-color [label]="colorLabel()" [hexColor]="hexColor()" (hexColorChange)="onFieldChange('color', $event)" [readOnly]="isReadOnly()" />
                       <okr-error-note [errors]="hexColorErrors()" />
+                    </ion-col>
+                    <ion-col size="12">
+                      <!-- shown as a warning banner in the trip edit modal whenever this boat is selected -->
+                      <okr-textarea-input [i18n]="tripAlertI18n()" [value]="tripAlert()" (valueChange)="onFieldChange('tripAlert', $event)" [maxLength]="commentLength" [rows]="2" [showHelper]="true" [readOnly]="isReadOnly()" />
+                      <okr-error-note [errors]="tripAlertErrors()" />
                     </ion-col>
                   </ion-row>
                 </ion-grid>
@@ -345,6 +350,8 @@ export class ResourceForm {
   protected readonly shortNameLength = SHORT_NAME_LENGTH;
   /** kept in step with the cap the Vest suite enforces on this field */
   protected readonly descriptionLength = DESCRIPTION_LENGTH;
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly commentLength = COMMENT_LENGTH;
   // inputs
   public readonly i18n = input.required<ResourceI18n>();
   public formData = model.required<ResourceModel>();
@@ -374,6 +381,7 @@ export class ResourceForm {
   // validation and errors
   private readonly validationResult = vestErrors(this.resourceForm);
   protected descriptionErrors = computed(() => this.validationResult().getErrors('description'));
+  protected tripAlertErrors = computed(() => this.validationResult().getErrors('tripAlert'));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
   protected loadErrors = computed(() => this.validationResult().getErrors('load'));
   protected currentValueErrors = computed(() => this.validationResult().getErrors('currentValue'));
@@ -407,6 +415,7 @@ export class ResourceForm {
   protected readonly data = computed(() => this.formData()?.data ?? []);
   protected readonly tags = computed(() => this.formData()?.tags ?? DEFAULT_TAGS);
   protected readonly description = computed(() => this.formData()?.description ?? DEFAULT_NOTES);
+  protected readonly tripAlert = computed(() => this.formData()?.tripAlert ?? '');
   protected okey = computed(() => this.formData().okey ?? DEFAULT_NAME);
 
   protected okeyI18n = computed(() => ({
@@ -461,6 +470,12 @@ export class ResourceForm {
   protected descriptionI18n = computed(() => ({
     name: 'description', label: this.i18n().description_label(), placeholder: this.i18n().description_placeholder()
   } as NotesInputI18n));
+  protected tripAlertI18n = computed(() => ({
+    name: 'tripAlert',
+    label: this.i18n().tripAlert_label(),
+    placeholder: this.i18n().tripAlert_placeholder(),
+    helper: this.i18n().tripAlert_helper()
+  } as TextInputI18n));
   protected colorLabel = computed(() => this.i18n().color_label());
 
   /******************************* actions *************************************** */

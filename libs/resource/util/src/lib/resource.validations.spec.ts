@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { COMMENT_LENGTH } from '@okr/shared-constants';
 import { ResourceModel } from '@okr/shared-models';
 
 import { resourceValidations } from './resource.validations';
@@ -21,6 +22,19 @@ describe('resourceValidations', () => {
   it('accepts a plain rowing boat', () => {
     const result = resourceValidations(makeBoat(), 'scs', '');
     expect(result.isValid()).toBe(true);
+  });
+
+  it('accepts a legacy boat without tripAlert', () => {
+    // Firestore reads skip model defaults: boats stored before the field existed carry undefined
+    const boat = makeBoat() as Partial<ResourceModel>;
+    delete boat.tripAlert;
+    expect(resourceValidations(boat as ResourceModel, 'scs', '').isValid()).toBe(true);
+  });
+
+  it('rejects a tripAlert longer than COMMENT_LENGTH', () => {
+    const boat = makeBoat();
+    boat.tripAlert = 'x'.repeat(COMMENT_LENGTH + 1);
+    expect(resourceValidations(boat, 'scs', '').getErrors('tripAlert').length).toBeGreaterThan(0);
   });
 
   it('stays valid for a multi-season usage string', () => {

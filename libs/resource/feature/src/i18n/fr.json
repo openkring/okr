@@ -112,6 +112,11 @@
     "label": "Description",
     "placeholder": "Un texte plus long, sur plusieurs lignes."
   },
+  "tripAlert": {
+    "label": "Remarque dans le journal de bord",
+    "placeholder": "p.ex. Câble de barre défectueux, rame avec prudence",
+    "helper": "S'affiche comme avertissement dès que quelqu'un choisit ce bateau pour une sortie."
+  },
   "keyNr": {
     "label": "N° de clé",
     "placeholder": "nnnnn",

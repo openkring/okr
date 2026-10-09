@@ -112,6 +112,11 @@
     "label": "Description",
     "placeholder": "A longer, multi-line text."
   },
+  "tripAlert": {
+    "label": "Logbook notice",
+    "placeholder": "e.g. Steering cable broken, row with care",
+    "helper": "Appears as a warning as soon as someone picks this boat for a trip."
+  },
   "keyNr": {
     "label": "Key no.",
     "placeholder": "nnnnn",

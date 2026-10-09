@@ -112,6 +112,11 @@
     "label": "Descripción",
     "placeholder": "Un texto más largo, de varias líneas."
   },
+  "tripAlert": {
+    "label": "Aviso en el cuaderno de bitácora",
+    "placeholder": "p.ej. Cable del timón dañado, rema con cuidado",
+    "helper": "Aparece como advertencia en cuanto alguien elige este barco para una salida."
+  },
   "keyNr": {
     "label": "N.º de llave",
     "placeholder": "nnnnn",

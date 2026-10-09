@@ -25,9 +25,17 @@ import { formatTripTime, isTrainingCrewBoat, MAX_TRIP_DISTANCE_KM, TripI18n, tri
     ion-thumbnail { width: 30px; height: 30px; }
     ion-avatar { width: 30px; height: 30px; }
     .title { font-size: 1.25rem; font-weight: 500; margin-left: 0; }
+    .boat-alert { white-space: pre-line; }
   `],
   template: `
     <form novalidate>
+      <!-- the selected boat's notice (ResourceModel.tripAlert), maintained in the boat's edit form -->
+      @if(boatAlert(); as boatAlert) {
+        <ion-item color="warning" lines="none">
+          <ion-icon slot="start" src="{{ 'alert-circle' | svgIcon }}" />
+          <ion-label class="ion-text-wrap boat-alert">{{ boatAlert }}</ion-label>
+        </ion-item>
+      }
 
       <ion-card>
         <ion-card-content class="ion-no-padding">
@@ -212,6 +220,12 @@ export class TripEditForm {
   protected endTimeErrors = computed(() => this.validationResult().getErrors('endTime'));
 
   // derived
+  /** the selected boat's tripAlert; empty for no boat, an ad-hoc boat, or a legacy doc without the field */
+  protected boatAlert = computed(() => {
+    const boatKey = this.formData().resource?.key;
+    if (!boatKey) return '';
+    return (this.boats().find(b => b.okey === boatKey)?.tripAlert ?? '').trim();
+  });
   protected duration = computed(() =>
     getDurationLabel(this.formData().startDate, this.formData().startTime, this.formData().endTime)
   );

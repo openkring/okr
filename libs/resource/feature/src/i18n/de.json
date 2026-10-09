@@ -112,6 +112,11 @@
     "label": "Beschreibung",
     "placeholder": "Ein längerer, mehrzeiliger Text."
   },
+  "tripAlert": {
+    "label": "Hinweis im Logbuch",
+    "placeholder": "z.B. Steuerseil defekt, nur mit Vorsicht rudern",
+    "helper": "Erscheint als Warnung, sobald jemand dieses Boot für eine Fahrt auswählt."
+  },
   "keyNr": {
     "label": "Schlüssel Nr.",
     "placeholder": "nnnnn",
