@@ -9,7 +9,8 @@ const MOD10_TABLE = [0, 9, 4, 6, 8, 2, 7, 1, 3, 5];
 /** A CH/LI IBAN whose institution id (chars 4–8) lies in the QR-IID range 30000–31999. */
 export function isQrIban(iban: string | undefined): boolean {
   const n = (iban ?? '').replace(/\s/g, '').toUpperCase();
-  if (!/^(CH|LI)\d{19}$/.test(n)) return false;
+  // 2 check digits + 5-digit IID + 12-character account (the account may contain letters)
+  if (!/^(CH|LI)\d{7}[A-Z0-9]{12}$/.test(n)) return false;
   const iid = Number(n.substring(4, 9));
   return iid >= 30000 && iid <= 31999;
 }

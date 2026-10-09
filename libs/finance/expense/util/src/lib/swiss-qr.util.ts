@@ -44,7 +44,8 @@ export function isQrIban(iban: string): boolean {
  */
 export function swissQrBlocker(payment: SwissQrPayment): '' | 'iban' | 'currency' | 'creditor' {
   const iban = normalizeIban(payment.iban);
-  if (!/^(CH|LI)\d{19}$/.test(iban) || isQrIban(iban)) return 'iban';
+  // CH/LI: 2 check digits + 5-digit IID + 12-character account, which may contain letters (UBS: '…2440W')
+  if (!/^(CH|LI)\d{7}[A-Z0-9]{12}$/.test(iban) || isQrIban(iban)) return 'iban';
   if (!QR_CURRENCIES.includes(payment.currency)) return 'currency';
   const c = payment.creditor;
   if (!c.name.trim() || !c.zip.trim() || !c.city.trim() || !/^[A-Z]{2}$/.test(c.country)) return 'creditor';

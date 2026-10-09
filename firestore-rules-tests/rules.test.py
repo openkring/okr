@@ -288,6 +288,12 @@ for key, okey in [("gOpen", "tkOpen"), ("gClosed", "tkClosed"), ("meeting.m1", "
                            "author": {"key": "pE", "name1": "E"}, "assignee": {"key": "pZ", "name1": "Z"},
                            "state": "planned", "completionDate": ""})
 
+# expenses: carry the payee's IBAN — treasurer/admin, author (userId) and payee (payeeKey) only.
+seed("expenses/exOwnA",    {"tenants": ["t1"], "isArchived": False, "userId": "uidA", "payeeKey": "", "iban": "CH00"})
+seed("expenses/exForE",    {"tenants": ["t1"], "isArchived": False, "userId": "uidT", "payeeKey": "pE",
+                            "transferTo": "member", "iban": "CH11"})
+seed("expenses/exForeign", {"tenants": ["t1"], "isArchived": False, "userId": "uidC", "payeeKey": "", "iban": "CH22"})
+
 A, B, C, D = jwt("uidA"), jwt("uidB"), jwt("uidC"), jwt("uidD")
 E, M, P = jwt("uidE"), jwt("uidM"), jwt("uidP")
 T = jwt("uidT")
@@ -354,6 +360,13 @@ single_cases = [
     ("userA GET persons/pA (own tenant) -> ALLOW", True, GET, "persons/pA", A, None, None),
     ("userA GET persons/pB (other tenant) -> DENY", False, GET, "persons/pB", A, None, None),
     ("userA GET memberships/mA -> ALLOW", True, GET, "memberships/mA", A, None, None),
+    ("userA GET expenses/exOwnA (own) -> ALLOW", True, GET, "expenses/exOwnA", A, None, None),
+    ("userA GET expenses/exForeign (another member's) -> DENY", False, GET, "expenses/exForeign", A, None, None),
+    ("userE GET expenses/exForE (payee of a member expense) -> ALLOW", True, GET, "expenses/exForE", E, None, None),
+    ("userA GET expenses/exForE (neither author nor payee) -> DENY", False, GET, "expenses/exForE", A, None, None),
+    ("userP(privileged) GET expenses/exForeign -> DENY", False, GET, "expenses/exForeign", P, None, None),
+    ("userT(treasurer) GET expenses/exForeign -> ALLOW", True, GET, "expenses/exForeign", T, None, None),
+    ("userD(admin) GET expenses/exForeign -> ALLOW", True, GET, "expenses/exForeign", D, None, None),
     ("userA GET invoices/iA (foreign invoice) -> DENY", False, GET, "invoices/iA", A, None, None),
     ("userA GET invoices/iOwnA (own invoice) -> ALLOW", True, GET, "invoices/iOwnA", A, None, None),
     ("userD(admin t1) GET invoices/iA -> ALLOW", True, GET, "invoices/iA", D, None, None),
@@ -804,6 +817,7 @@ parent_cases = [
 STAFF = [("isArchived", "EQUAL", False), ("tenants", "ARRAY_CONTAINS", "t1")]
 SHARED = lambda k: [("isArchived", "EQUAL", False), ("tenants", "ARRAY_CONTAINS", "t1"), ("shareKey", "EQUAL", k)]
 STAFF_NON_STRICT = STAFF + [("isStrictlyConfidential", "EQUAL", False)]
+SYSQ = [("isArchived", "EQUAL", False), ("tenants", "ARRAY_CONTAINS_ANY", ["t1", "system"])]
 MY = lambda pk: [("partyPersonKeys", "ARRAY_CONTAINS", pk), ("isArchived", "EQUAL", False)]
 field_cases = [
     ("userA LIST contracts listMine(pA) -> ALLOW", True, "contracts", MY("pA"), A),
@@ -817,6 +831,13 @@ field_cases = [
     # regression: getSystemQuery's array-contains-any [t1, system] is unprovable for the staff leg
     ("userT(treasurer) LIST contracts tenants any-of [t1, system] -> DENY (getSystemQuery shape)", False, "contracts",
      [("isArchived", "EQUAL", False), ("tenants", "ARRAY_CONTAINS_ANY", ["t1", "system"])], T),
+    # expenses: EXACTLY ExpenseService.listAll / listForUser / listForPayee (getSystemQuery + key)
+    ("userT(treasurer) LIST expenses listAll -> ALLOW", True, "expenses", SYSQ, T),
+    ("userA LIST expenses listAll (unfiltered) -> DENY", False, "expenses", SYSQ, A),
+    ("userA LIST expenses listForUser(uidA) -> ALLOW", True, "expenses", SYSQ + [("userId", "EQUAL", "uidA")], A),
+    ("userA LIST expenses listForUser(FOREIGN uidC) -> DENY", False, "expenses", SYSQ + [("userId", "EQUAL", "uidC")], A),
+    ("userE LIST expenses listForPayee(pE) -> ALLOW", True, "expenses", SYSQ + [("payeeKey", "EQUAL", "pE")], E),
+    ("userA LIST expenses listForPayee(FOREIGN pE) -> DENY", False, "expenses", SYSQ + [("payeeKey", "EQUAL", "pE")], A),
     # tasks (spec 1.75): the group-view query; a closed group is staff-only on the direct path
     ("userA LIST tasks shareKey gOpen -> ALLOW", True, "tasks", SHARED("gOpen"), A),
     ("userA LIST tasks shareKey gClosed -> DENY (closed group)", False, "tasks", SHARED("gClosed"), A),

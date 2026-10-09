@@ -1,13 +1,13 @@
 import { computed, inject, Injector } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
-import { combineLatest, firstValueFrom, map } from 'rxjs';
+import { combineLatest, firstValueFrom, map, of } from 'rxjs';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
 import { ENV } from '@okr/shared-config';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
-import { sanitizeFileName } from '@okr/shared-util-core';
+import { hasRole, sanitizeFileName } from '@okr/shared-util-core';
 import { showToast } from '@okr/shared-util-angular';
 import { AddressModel, ExpenseModel, PersonModelName } from '@okr/shared-models';
 
@@ -67,10 +67,13 @@ export const ExpenseStore = signalStore(
       // (set from the route input after construction) and to the user, so both belong here.
       params: () => ({ user: store.appStore.currentUser(), listId: store.listId() }),
       stream: ({ params }) => {
-        if (!params.user) return store.expenseService.listForUser('');
+        if (!params.user) return of<ExpenseModel[]>([]);
         // 'all' shows every expense (treasurer view); 'my' the current user's own, plus the
         // 'member' expenses a treasurer entered for them (they are the payee, not the author).
-        if (params.listId === 'all') return store.expenseService.listAll();
+        // The rules deny the unfiltered 'all' query below treasurer/admin, so anyone else
+        // reaching expense/all gets their own list instead of a permission error.
+        const isTreasurer = hasRole('treasurer', params.user) || hasRole('admin', params.user);
+        if (params.listId === 'all' && isTreasurer) return store.expenseService.listAll();
         const own = store.expenseService.listForUser(params.user.okey);
         const personKey = params.user.personKey ?? '';
         if (!personKey) return own;

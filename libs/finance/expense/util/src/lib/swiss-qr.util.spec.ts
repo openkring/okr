@@ -22,6 +22,9 @@ describe('swissQrBlocker', () => {
   it('accepts a complete Swiss reimbursement', () => {
     expect(swissQrBlocker(payment())).toBe('');
   });
+  it('accepts a Swiss IBAN whose account part contains a letter (UBS)', () => {
+    expect(swissQrBlocker(payment({ iban: 'CH78 0023 5235 4898 2440 W' }))).toBe('');
+  });
   it('refuses a foreign IBAN and a QR-IBAN', () => {
     expect(swissQrBlocker(payment({ iban: 'DE89370400440532013000' }))).toBe('iban');
     expect(swissQrBlocker(payment({ iban: 'CH4431999123000889012' }))).toBe('iban');

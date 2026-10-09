@@ -7,6 +7,7 @@ describe('isQrIban', () => {
     expect(isQrIban('CH44 3199 9123 0008 8901 2')).toBe(true);
     expect(isQrIban('ch4430000123000889012')).toBe(true);
     expect(isQrIban('LI2131000000000000000')).toBe(true);
+    expect(isQrIban('CH4430000123000889W12')).toBe(true);   // letters in the account part
   });
   it('rejects regular IBANs, other countries and empty input', () => {
     expect(isQrIban('CH9300762011623852957')).toBe(false);

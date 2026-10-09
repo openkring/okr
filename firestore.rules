@@ -667,7 +667,19 @@ service cloud.firestore {
     match /bookings/{id}          { allow read: if tenantRead(); allow write: if false; }
     match /exchange-rates/{id}    { allow read: if tenantRead(); allow write: if false; }
     match /expense-documents/{id} { allow read: if tenantRead(); allow write: if false; }
-    match /expenses/{id}          { allow read: if tenantRead(); allow write: if false; }
+    // An expense carries the payee's IBAN (for 'an Mitglied' copied from that member's profile by
+    // createExpense) — not tenant-wide reading material. Readers: treasurer/admin (the books), the
+    // author (userId = auth uid) and the payee of a 'member' expense (payeeKey = their personKey).
+    // Firestore validates a list against the QUERY: the 'my' list filters on userId resp. payeeKey
+    // (ExpenseService.listForUser / listForPayee); the unfiltered 'all' list is treasurer-only.
+    match /expenses/{id} {
+      allow read: if tenantRead()
+                   && (hasRole('treasurer') || isAdmin()
+                       || resource == null
+                       || resource.data.get('userId', '') == request.auth.uid
+                       || (callerPersonKey() != '' && resource.data.get('payeeKey', '') == callerPersonKey()));
+      allow write: if false;
+    }
     match /invoice-positions/{id} { allow read: if tenantRead(); allow write: if false; }
     // An invoice names what a member owes and for what — not tenant-wide reading
     // material. Since the member-facing `my-invoice` route exists, plain members read
