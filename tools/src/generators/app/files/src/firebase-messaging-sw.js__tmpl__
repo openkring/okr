@@ -45,14 +45,20 @@ messaging.onBackgroundMessage(payload => {
   // badgeCount is sent by the Cloud Function as the total number of pending items
   // (unread chat messages + open tasks, etc.). A count of 0 clears the badge — do NOT
   // floor to 1, otherwise a badge can never be driven back down to zero from a push.
+  //
+  // The badge promise MUST be part of the promise this handler returns (the SDK awaits it
+  // inside the push event's waitUntil). Fire-and-forget worked on desktop, but iOS suspends
+  // the worker as soon as waitUntil settles, so the pending setAppBadge was dropped and the
+  // Home Screen badge only appeared once the app was opened and set it from the foreground.
+  let badgeUpdate = Promise.resolve();
   {
     const raw = payload.data?.badgeCount;
     if (raw !== undefined) {
       const count = Math.max(0, parseInt(raw, 10) || 0);
       if (count > 0 && self.navigator?.setAppBadge) {
-        self.navigator.setAppBadge(count).catch(() => {});
+        badgeUpdate = self.navigator.setAppBadge(count).catch(() => {});
       } else if (self.navigator?.clearAppBadge) {
-        self.navigator.clearAppBadge().catch(() => {});
+        badgeUpdate = self.navigator.clearAppBadge().catch(() => {});
       }
     }
   }
@@ -84,7 +90,10 @@ messaging.onBackgroundMessage(payload => {
     }),
   };
 
-  return self.registration.showNotification(notificationTitle, notificationOptions);
+  return Promise.all([
+    badgeUpdate,
+    self.registration.showNotification(notificationTitle, notificationOptions),
+  ]);
 });
 
 // Handle notification click
