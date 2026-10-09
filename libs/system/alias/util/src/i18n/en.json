@@ -146,7 +146,8 @@
     },
     "none": {
       "label": "Identifier only"
-    }
+    },
+    "helper": "Where the short link leads: to a web address, to a record in the app, or nowhere."
   },
   "trackingSetting": {
     "inherit": {
@@ -160,7 +161,8 @@
     },
     "detailed": {
       "label": "Detailed"
-    }
+    },
+    "helper": "“Inherit from space” uses the space’s default. “Counter” counts hits without IP and without a user id."
   },
   "trackingLevel": {
     "off": {
@@ -171,7 +173,8 @@
     },
     "detailed": {
       "label": "Detailed"
-    }
+    },
+    "helper": "“Counter” counts hits without IP and without a user id."
   },
   "charset": {
     "base32-safe": {
@@ -182,7 +185,8 @@
     },
     "lower-numeric": {
       "label": "Lowercase + digits"
-    }
+    },
+    "helper": "Which characters the generated short links are made of. Base32 leaves out easily confused characters."
   },
   "kind": {
     "redirect": {
@@ -190,7 +194,8 @@
     },
     "lookup": {
       "label": "Lookup"
-    }
+    },
+    "helper": "“Redirect” resolves over HTTP, “lookup” only inside the app."
   },
   "action": {
     "view": "View",

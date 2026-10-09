@@ -146,7 +146,8 @@
     },
     "none": {
       "label": "Identifiant seul"
-    }
+    },
+    "helper": "Où mène le lien court : vers une adresse web, vers un enregistrement de l’app ou nulle part."
   },
   "trackingSetting": {
     "inherit": {
@@ -160,7 +161,8 @@
     },
     "detailed": {
       "label": "Détaillé"
-    }
+    },
+    "helper": "« Hériter de l’espace » utilise le réglage de l’espace. « Compteur » compte sans IP ni identifiant d’utilisateur."
   },
   "trackingLevel": {
     "off": {
@@ -171,7 +173,8 @@
     },
     "detailed": {
       "label": "Détaillé"
-    }
+    },
+    "helper": "« Compteur » compte sans IP ni identifiant d’utilisateur."
   },
   "charset": {
     "base32-safe": {
@@ -182,7 +185,8 @@
     },
     "lower-numeric": {
       "label": "Minuscules + chiffres"
-    }
+    },
+    "helper": "Les caractères qui composent les liens courts générés. Base32 omet les caractères faciles à confondre."
   },
   "kind": {
     "redirect": {
@@ -190,7 +194,8 @@
     },
     "lookup": {
       "label": "Recherche"
-    }
+    },
+    "helper": "« Redirection » résout via HTTP, « recherche » seulement dans l’app."
   },
   "action": {
     "view": "Consulter",

@@ -146,7 +146,8 @@
     },
     "none": {
       "label": "Solo identificador"
-    }
+    },
+    "helper": "Adónde lleva el enlace corto: a una dirección web, a un registro de la app o a ninguna parte."
   },
   "trackingSetting": {
     "inherit": {
@@ -160,7 +161,8 @@
     },
     "detailed": {
       "label": "Detallado"
-    }
+    },
+    "helper": "«Heredar del espacio» usa el ajuste del espacio. «Contador» cuenta sin IP ni identificador de usuario."
   },
   "trackingLevel": {
     "off": {
@@ -171,7 +173,8 @@
     },
     "detailed": {
       "label": "Detallado"
-    }
+    },
+    "helper": "«Contador» cuenta sin IP ni identificador de usuario."
   },
   "charset": {
     "base32-safe": {
@@ -182,7 +185,8 @@
     },
     "lower-numeric": {
       "label": "Minúsculas + dígitos"
-    }
+    },
+    "helper": "Los caracteres de los que se componen los enlaces cortos generados. Base32 omite los caracteres fáciles de confundir."
   },
   "kind": {
     "redirect": {
@@ -190,7 +194,8 @@
     },
     "lookup": {
       "label": "Búsqueda"
-    }
+    },
+    "helper": "«Redirección» resuelve por HTTP, «búsqueda» solo dentro de la app."
   },
   "action": {
     "view": "Ver",

@@ -146,7 +146,8 @@
     },
     "none": {
       "label": "Nur Kennung"
-    }
+    },
+    "helper": "Wohin der Kurzlink führt: zu einer Adresse im Web, zu einem Datensatz in der App oder nirgendwohin."
   },
   "trackingSetting": {
     "inherit": {
@@ -160,7 +161,8 @@
     },
     "detailed": {
       "label": "Detailliert"
-    }
+    },
+    "helper": "«Vom Space übernehmen» nutzt die Vorgabe des Space. «Zähler» zählt Aufrufe ohne IP und ohne Benutzerkennung."
   },
   "trackingLevel": {
     "off": {
@@ -171,7 +173,8 @@
     },
     "detailed": {
       "label": "Detailliert"
-    }
+    },
+    "helper": "«Zähler» zählt Aufrufe ohne IP und ohne Benutzerkennung."
   },
   "charset": {
     "base32-safe": {
@@ -182,7 +185,8 @@
     },
     "lower-numeric": {
       "label": "Kleinbuchstaben + Ziffern"
-    }
+    },
+    "helper": "Aus welchen Zeichen die erzeugten Kurzlinks bestehen. Base32 lässt leicht verwechselbare Zeichen weg."
   },
   "kind": {
     "redirect": {
@@ -190,7 +194,8 @@
     },
     "lookup": {
       "label": "Nachschlag"
-    }
+    },
+    "helper": "«Weiterleitung» löst über HTTP auf, «Nachschlag» nur in der App."
   },
   "action": {
     "view": "Ansehen",
