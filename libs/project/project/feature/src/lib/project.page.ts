@@ -60,7 +60,8 @@ type ProjectSegment = 'tasks' | 'result';
         @if (segment() === 'tasks') {
           <okr-task-list [listId]="parentKey()" contextMenuName="c-tasks" color="light" [showMenuButton]="false" />
         } @else {
-          <okr-project-result [projectKey]="projectKey()" [projectName]="store.project()?.name ?? ''" />
+          <okr-project-result [projectKey]="projectKey()" [projectName]="store.project()?.name ?? ''"
+            [startDate]="store.project()?.startDate ?? ''" [endDate]="store.project()?.endDate ?? ''" />
         }
       }
     </ion-content>

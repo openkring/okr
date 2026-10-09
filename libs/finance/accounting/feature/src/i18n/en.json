@@ -28,6 +28,16 @@
       "helper": "Template used to create invoice PDFs.",
       "add": "Create a new template"
     },
+    "org": {
+      "label": "Organisation",
+      "placeholder": "Choose an organisation",
+      "helper": "Who these books belong to. Its name, address and logo appear on the reports."
+    },
+    "projectReportTemplate": {
+      "label": "Project result template",
+      "placeholder": "Built-in layout",
+      "helper": "Report template used to create the project result PDF. Without one, the built-in layout is used."
+    },
     "paymentAccounts": {
       "label": "Payment accounts",
       "helper": "An invoice payment may be booked to these accounts."

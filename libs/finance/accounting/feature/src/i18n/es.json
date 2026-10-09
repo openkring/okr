@@ -28,6 +28,16 @@
       "helper": "Plantilla con la que se crean las facturas en PDF.",
       "add": "Crear una plantilla nueva"
     },
+    "org": {
+      "label": "Organización",
+      "placeholder": "Elige una organización",
+      "helper": "A quién pertenece esta contabilidad. Su nombre, dirección y logotipo aparecen en los informes."
+    },
+    "projectReportTemplate": {
+      "label": "Plantilla del resultado del proyecto",
+      "placeholder": "Diseño integrado",
+      "helper": "Plantilla de informe con la que se crea el resultado del proyecto en PDF. Sin plantilla se usa el diseño integrado."
+    },
     "paymentAccounts": {
       "label": "Cuentas de pago",
       "helper": "El pago de una factura puede contabilizarse en estas cuentas."

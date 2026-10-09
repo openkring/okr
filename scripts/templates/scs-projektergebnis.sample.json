@@ -1,0 +1,35 @@
+{
+  "_meta": {
+    "name": "Projektergebnis",
+    "description": "Projektergebnis (Einnahmen, Ausgaben, Gewinn/Verlust) mit Logo der Organisation der Buchhaltung; aufgeklappte Konten zeigen ihre Buchungen.",
+    "category": "report",
+    "language": "de",
+    "defaultOutputFormat": "pdf",
+    "defaultFormat": "A4",
+    "defaultOrientation": "portrait",
+    "tenant": "scs"
+  },
+  "title": "Projektergebnis slowUp 2026",
+  "orgName": "Seeclub Stäfa",
+  "orgAddress": "Seestrasse 1, 8712 Stäfa",
+  "logoUrl": "",
+  "created": "Erstellt",
+  "generatedOn": "09.10.2026",
+  "facts": [
+    { "label": "Adresse", "value": "Seeclub Stäfa, Seestrasse 1, 8712 Stäfa" },
+    { "label": "Periode", "value": "01.05.2026 – 30.06.2026" }
+  ],
+  "books": "Buchhaltung: scs",
+  "amounts": "Alle Beträge in CHF",
+  "columns": { "account": "Konto", "name": "Bezeichnung", "amount": "Total" },
+  "rows": [
+    { "kind": "total", "id": "", "name": "Einnahmen", "date": "", "amount": "50.00", "indent": 6 },
+    { "kind": "group", "id": "3", "name": "Ertrag", "date": "", "amount": "50.00", "indent": 18 },
+    { "kind": "account", "id": "3400", "name": "Anlässe", "date": "", "amount": "50.00", "indent": 30 },
+    { "kind": "booking", "id": "", "name": "Startgelder", "date": "01.05.2026", "amount": "50.00", "indent": 42 },
+    { "kind": "total", "id": "", "name": "Ausgaben", "date": "", "amount": "14.00", "indent": 6 },
+    { "kind": "group", "id": "3", "name": "Ertrag", "date": "", "amount": "14.00", "indent": 18 },
+    { "kind": "account", "id": "3400", "name": "Anlässe", "date": "", "amount": "14.00", "indent": 30 },
+    { "kind": "result", "id": "", "name": "Gewinn/Verlust", "date": "", "amount": "36.00", "indent": 6 }
+  ]
+}

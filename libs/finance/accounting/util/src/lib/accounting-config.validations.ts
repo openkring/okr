@@ -50,6 +50,9 @@ export const accountingConfigValidations = staticSuite(
     stringValidations('discountAccountKey', model.discountAccountKey ?? '');
     // Kostenrechnung (1.65): a cost-centre okey, '' = keine Kostenstelle; legacy docs lack the field.
     stringValidations('defaultCostCenterKey', model.defaultCostCenterKey ?? '');
+    // Reports: the owner org (logo, name, address) and the project result template — selector values, '' = fallback; legacy docs lack both.
+    stringValidations('orgId', model.orgId ?? '');
+    stringValidations('projectReportTemplateId', model.projectReportTemplateId ?? '');
     numberValidations('fiscalYearStart', model.fiscalYearStart, true, 1, 12);
     // Mahnwesen (1.76 phase 3): legacy config docs lack the fields, so validate the model defaults.
     // The template id is a selector-like value (no cap), the fee account a generated okey; '' = not configured.

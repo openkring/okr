@@ -28,6 +28,16 @@
       "helper": "Modèle utilisé pour créer les factures en PDF.",
       "add": "Créer un nouveau modèle"
     },
+    "org": {
+      "label": "Organisation",
+      "placeholder": "Choisis une organisation",
+      "helper": "À qui appartient cette comptabilité. Son nom, son adresse et son logo figurent sur les rapports."
+    },
+    "projectReportTemplate": {
+      "label": "Modèle du résultat de projet",
+      "placeholder": "Mise en page intégrée",
+      "helper": "Modèle de rapport utilisé pour créer le résultat de projet en PDF. Sans modèle, la mise en page intégrée s’applique."
+    },
     "paymentAccounts": {
       "label": "Comptes de paiement",
       "helper": "Le paiement d'une facture peut être comptabilisé sur ces comptes."

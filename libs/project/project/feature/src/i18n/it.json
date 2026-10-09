@@ -50,6 +50,7 @@
     "income": "Entrate",
     "expense": "Uscite",
     "total": "Totale",
+    "net": "Utile/perdita",
     "empty": "Per questo progetto non sono ancora state registrate scritture.",
     "pdfTitle": "Risultato del progetto {name}",
     "periodAll": "Tutti gli esercizi",

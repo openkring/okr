@@ -109,6 +109,8 @@ export class AccountingConfigModel implements OkrModel {
   public reviewAssigneePersonKey = ''; // treasurer person.okey who reviews OCR bookings; '' → first treasurer
   public incomingPaymentLabel = DEFAULT_INCOMING_PAYMENT_LABEL; // shown instead of "Zahlungseingang" in booking texts (display only); '' = unchanged
   public outgoingPaymentLabel = DEFAULT_OUTGOING_PAYMENT_LABEL; // shown instead of "Zahlungsausgang" in booking texts (display only); '' = unchanged
+  public orgId = '';                             // orgs/{id} printed as the books' owner (name, address, logo) on reports; '' = app-config ownerOrgId
+  public projectReportTemplateId = '';           // templates/{id} (category 'report') rendering the project result PDF; '' = built-in layout
 
   constructor(tenantId: string, accountingTenantId: string) {
     this.tenants = [tenantId];

@@ -1,4 +1,4 @@
-import { ReportRow } from './report.util';
+import { AccountBookingRow, ReportRow, ReportRowKind } from './report.util';
 
 /**
  * The printable Bilanz / Erfolgsrechnung — a self-contained HTML document handed to the existing
@@ -29,6 +29,8 @@ export interface ReportDocumentLabels {
   readonly period: string;
   /** e.g. «01.01.2024 bis 31.12.2024». */
   readonly periodValue: string;
+  /** Optional own line below the period, e.g. «Buchhaltung: scs». */
+  readonly books?: string;
   /** e.g. «Alle Beträge in CHF». */
   readonly amounts: string;
   /** Diagonal watermark drawn on every page of a provisional document. */
@@ -66,17 +68,80 @@ export function formatReportAmount(minor: number): string {
   return (minor / 100).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-function row(r: ReportRow, showPrevious: boolean): string {
+/**
+ * One printed line: a report row, or a booking listed below an account row the user opened on the
+ * page (`kind` 'booking', `date` pre-formatted). A ReportRow is a PrintableRow as it is.
+ */
+export interface PrintableRow {
+  readonly kind: ReportRowKind | 'booking';
+  readonly id: string;
+  readonly name: string;
+  readonly depth: number;
+  readonly current: number;
+  readonly previous: number;
+  readonly date?: string;
+}
+
+/**
+ * The rows as the page shows them: every report row, and below each account row in `openKeys` its
+ * bookings from `details` (one tier deeper). `formatDate` renders a StoreDate.
+ */
+export function printableRows(
+  rows: readonly ReportRow[], details: ReadonlyMap<string, readonly AccountBookingRow[]>, openKeys: ReadonlySet<string>,
+  formatDate: (storeDate: string) => string,
+): PrintableRow[] {
+  return rows.flatMap((r): PrintableRow[] => {
+    const bookings = r.kind === 'account' && openKeys.has(r.okey) ? details.get(r.okey) ?? [] : [];
+    return [r, ...bookings.map(b => ({
+      kind: 'booking' as const, id: '', name: b.title, depth: r.depth + 1, current: b.amount, previous: 0, date: formatDate(b.date),
+    }))];
+  });
+}
+
+/** One row of a report template's payload: everything pre-formatted, `indent` in px. */
+export interface ReportTemplateRow {
+  kind: ReportRowKind | 'booking';
+  id: string;
+  name: string;
+  date: string;
+  amount: string;
+  indent: number;
+}
+
+/** The data a `report` template renders (Handlebars: `{{title}}`, `{{#each facts}}`, `{{#each rows}}` …). */
+export interface ReportTemplatePayload {
+  title: string;
+  orgName: string;
+  orgAddress: string;
+  /** absolute raster URL of the org's logo; '' = none */
+  logoUrl: string;
+  created: string;
+  generatedOn: string;
+  facts: { label: string; value: string }[];
+  amounts: string;
+  columns: { account: string; name: string; amount: string };
+  rows: ReportTemplateRow[];
+  [key: string]: unknown;
+}
+
+export function reportTemplateRows(rows: readonly PrintableRow[]): ReportTemplateRow[] {
+  return rows.map(r => ({
+    kind: r.kind, id: r.id, name: r.name, date: r.date ?? '', amount: formatReportAmount(r.current), indent: r.depth * 12 + 6,
+  }));
+}
+
+function row(r: PrintableRow, showPrevious: boolean): string {
   const indent = r.depth * 12;
+  const date = r.date ? `<span class="date">${escapeHtml(r.date)}</span>` : '';
   return `<tr class="${r.kind}">
     <td class="account">${escapeHtml(r.id)}</td>
-    <td class="name" style="padding-left:${indent + 6}px">${escapeHtml(r.name)}</td>
+    <td class="name" style="padding-left:${indent + 6}px">${date}${escapeHtml(r.name)}</td>
     <td class="amount">${formatReportAmount(r.current)}</td>
     ${showPrevious ? `<td class="amount previous">${formatReportAmount(r.previous)}</td>` : ''}
   </tr>`;
 }
 
-export function buildReportDocument(rows: readonly ReportRow[], options: ReportDocumentOptions): string {
+export function buildReportDocument(rows: readonly PrintableRow[], options: ReportDocumentOptions): string {
   const l = options.labels;
   const showPrevious = options.showPrevious ?? true;
   const addressLine = options.orgAddress
@@ -105,6 +170,8 @@ export function buildReportDocument(rows: readonly ReportRow[], options: ReportD
   tr.group td { font-weight: 600; }
   tr.total td, tr.result td { font-weight: 700; border-top: 1px solid #000; }
   tr { break-inside: avoid; }
+  tr.booking td { font-size: 8.5pt; color: #444; padding-top: 0.6mm; padding-bottom: 0.6mm; }
+  span.date { display: inline-block; min-width: 18mm; font-variant-numeric: tabular-nums; }
   .watermark {
     position: fixed; top: 45%; left: 0; right: 0; text-align: center;
     font-size: 64pt; font-weight: 700; color: #000; opacity: 0.08;
@@ -120,6 +187,7 @@ ${watermark}
 <div class="facts">
   <p>${escapeHtml(l.address)}: ${escapeHtml(addressLine)}</p>
   <p>${escapeHtml(l.period)}: ${escapeHtml(l.periodValue)}</p>
+  ${l.books ? `<p>${escapeHtml(l.books)}</p>` : ''}
   <p>${escapeHtml(l.amounts)}</p>
 </div>
 <table>

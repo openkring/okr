@@ -5,7 +5,7 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonNote, IonRow, IonSelect, I
 import { NumberInput, NumberInputI18n, ErrorNote, TextInput, TextInputI18n } from '@okr/shared-ui';
 
 import { SHORT_NAME_LENGTH } from '@okr/shared-constants';
-import { AccountingConfigModel, AccountModel, CostCenterModel, DEFAULT_INCOMING_PAYMENT_LABEL, DEFAULT_OUTGOING_PAYMENT_LABEL, TemplateModel } from '@okr/shared-models';
+import { AccountingConfigModel, AccountModel, CostCenterModel, DEFAULT_INCOMING_PAYMENT_LABEL, DEFAULT_OUTGOING_PAYMENT_LABEL, OrgModel, TemplateModel } from '@okr/shared-models';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean } from '@okr/shared-util-core';
 
@@ -74,6 +74,38 @@ export type { AccountingI18n };
                     }
                   </ion-note>
                   <okr-error-note [errors]="invoiceTemplateIdErrors()" />
+                </ion-col>
+              </ion-row>
+              <!-- reports: whose books these are (name, address, logo) and the project result template -->
+              <ion-row>
+                <ion-col size="12" size-md="6">
+                  <ion-select [label]="i18n().org()" labelPlacement="floating"
+                    [placeholder]="i18n().org_placeholder()"
+                    [value]="orgId()" [disabled]="isReadOnly()"
+                    (ionChange)="onOrgChange($event)">
+                    @for (org of orgChoices(); track org.okey) {
+                      <ion-select-option [value]="org.okey">{{ org.name || org.okey }}</ion-select-option>
+                    }
+                  </ion-select>
+                  <ion-note>{{ i18n().org_helper() }}</ion-note>
+                  <okr-error-note [errors]="orgIdErrors()" />
+                </ion-col>
+                <ion-col size="12" size-md="6">
+                  <ion-select [label]="i18n().project_report_template()" labelPlacement="floating"
+                    [placeholder]="i18n().project_report_template_placeholder()"
+                    [value]="projectReportTemplateId()" [disabled]="isReadOnly()"
+                    (ionChange)="onProjectReportTemplateChange($event)">
+                    <ion-select-option value="">{{ i18n().project_report_template_placeholder() }}</ion-select-option>
+                    @for (template of reportTemplateChoices(); track template.okey) {
+                      <ion-select-option [value]="template.okey">{{ template.name || template.okey }}</ion-select-option>
+                    }
+                  </ion-select>
+                  <ion-note>{{ i18n().project_report_template_helper() }}
+                    @if (showTemplateLink()) {
+                      <a href="" (click)="$event.preventDefault(); addTemplate.emit()">{{ i18n().invoice_template_add() }}</a>
+                    }
+                  </ion-note>
+                  <okr-error-note [errors]="projectReportTemplateIdErrors()" />
                 </ion-col>
               </ion-row>
               <ion-row>
@@ -211,8 +243,10 @@ export class AccountingConfigForm {
   public readonly costCentersEnabled = input(false);
   public readonly tenantId = input.required<string>();
   public readonly i18n = input.required<AccountingI18n>();
-  /** the tenant's PDF templates; the invoice template is picked from those of category `invoice`, the reminder template from `dunning` */
+  /** the tenant's PDF templates; the invoice template is picked from those of category `invoice`, the reminder template from `dunning`, the project result template from `report` */
   public readonly templates = input<TemplateModel[]>([]);
+  /** the orgs the books may belong to; the selected one's name, address and logo head the reports */
+  public readonly orgs = input<OrgModel[]>([]);
   /** show the link to the template list (only for users who may open it) */
   public readonly showTemplateLink = input(false);
   public readonly readOnly = input(true);
@@ -238,6 +272,23 @@ export class AccountingConfigForm {
     const id = this.invoiceTemplateId();
     return this.templates()
       .filter(t => t.category === 'invoice' || t.okey === id)
+      .sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''));
+  });
+  // legacy config docs predate both fields: '' = app-config ownerOrgId / the built-in layout
+  protected readonly orgId = computed(() => this.formData()?.orgId ?? '');
+  protected readonly projectReportTemplateId = computed(() => this.formData()?.projectReportTemplateId ?? '');
+  // Live orgs, but never drop the stored one (same rule as the template selects).
+  protected orgChoices = computed(() => {
+    const id = this.orgId();
+    return this.orgs()
+      .filter(o => !o.isArchived || o.okey === id)
+      .sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''));
+  });
+  // Report templates only, but never drop the stored one (same rule as the invoice template).
+  protected reportTemplateChoices = computed(() => {
+    const id = this.projectReportTemplateId();
+    return this.templates()
+      .filter(t => t.category === 'report' || t.okey === id)
       .sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''));
   });
   protected readonly invoicePaymentAccountKeys = computed(() => this.formData()?.invoicePaymentAccountKeys ?? []);
@@ -341,6 +392,8 @@ export class AccountingConfigForm {
 
   protected receivablesAccountKeyErrors = computed(() => this.validationResult().getErrors('receivablesAccountKey'));
   protected invoiceTemplateIdErrors = computed(() => this.validationResult().getErrors('invoiceTemplateId'));
+  protected orgIdErrors = computed(() => this.validationResult().getErrors('orgId'));
+  protected projectReportTemplateIdErrors = computed(() => this.validationResult().getErrors('projectReportTemplateId'));
   protected defaultCostCenterKeyErrors = computed(() => this.validationResult().getErrors('defaultCostCenterKey'));
   protected reminderTemplateIdErrors = computed(() => this.validationResult().getErrors('reminderTemplateId'));
   protected reminderFeeAccountKeyErrors = computed(() => this.validationResult().getErrors('reminderFeeAccountKey'));
@@ -356,6 +409,14 @@ export class AccountingConfigForm {
 
   protected onInvoiceTemplateChange(event: CustomEvent<SelectChangeEventDetail<string>>): void {
     this.onFieldChange('invoiceTemplateId', event.detail.value ?? '');
+  }
+
+  protected onOrgChange(event: CustomEvent<SelectChangeEventDetail<string>>): void {
+    this.onFieldChange('orgId', event.detail.value ?? '');
+  }
+
+  protected onProjectReportTemplateChange(event: CustomEvent<SelectChangeEventDetail<string>>): void {
+    this.onFieldChange('projectReportTemplateId', event.detail.value ?? '');
   }
 
   protected onReminderTemplateChange(event: CustomEvent<SelectChangeEventDetail<string>>): void {

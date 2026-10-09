@@ -50,6 +50,7 @@
     "income": "Income",
     "expense": "Expenses",
     "total": "Total",
+    "net": "Profit/loss",
     "empty": "No bookings have been recorded for this project yet.",
     "pdfTitle": "Project result {name}",
     "periodAll": "All fiscal years",

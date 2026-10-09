@@ -42,7 +42,7 @@ import { ReadOnlyBanner } from './read-only-banner';
         <okr-accounting-config-form [formData]="config" (formDataChange)="formData.set($event)"
           [accounts]="accounts()" [costCenters]="costCenters()" [costCentersEnabled]="!store.isExternallyManaged()"
           [tenantId]="store.tenantId()" [i18n]="store.i18n"
-          [templates]="templates()" [showTemplateLink]="canManageTemplates()" (addTemplate)="openTemplates()"
+          [templates]="templates()" [orgs]="store.appStore.allOrgs()" [showTemplateLink]="canManageTemplates()" (addTemplate)="openTemplates()"
           [readOnly]="store.isExternallyManaged()" [showForm]="showForm()"
           (dirty)="formDirty.set($event)" (valid)="formValid.set($event)" />
         <!-- The fee schedule edits the same config object. The banner above already covers it,

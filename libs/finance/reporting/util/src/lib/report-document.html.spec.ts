@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildReportDocument, escapeHtml, formatReportAmount, ReportDocumentLabels, ReportDocumentOptions } from './report-document.html';
+import { buildReportDocument, escapeHtml, formatReportAmount, printableRows, ReportDocumentLabels, ReportDocumentOptions, reportTemplateRows } from './report-document.html';
 import { ReportRow } from './report.util';
 
 function row(partial: Partial<ReportRow>): ReportRow {
@@ -97,5 +97,37 @@ describe('buildReportDocument', () => {
     expect(html).not.toContain('<script>');
     expect(html).toContain('&lt;script&gt;');
     expect(html).toContain('A &amp; B');
+  });
+});
+
+describe('printableRows', () => {
+  const rows = [row({ okey: 'g', kind: 'group', id: '6', name: 'Aufwand', current: 700 }),
+    row({ okey: 'a', id: '6000', name: 'Miete', depth: 1, current: 500 }), row({ okey: 'b', id: '6100', name: 'Strom', depth: 1, current: 200 })];
+  const details = new Map([
+    ['a', [{ bookingKey: 'x', date: '20260501', bookingNo: 1, title: 'Mai', amount: 500 }]],
+    ['b', [{ bookingKey: 'y', date: '20260502', bookingNo: 2, title: 'Juni', amount: 200 }]],
+  ]);
+  const printed = printableRows(rows, details, new Set(['a']), d => `${d.slice(6)}.${d.slice(4, 6)}.${d.slice(0, 4)}`);
+
+  it('lists the bookings of opened accounts only, one tier deeper', () => {
+    expect(printed.map(r => [r.kind, r.name, r.depth, r.date ?? ''])).toEqual([
+      ['group', 'Aufwand', 0, ''], ['account', 'Miete', 1, ''], ['booking', 'Mai', 2, '01.05.2026'], ['account', 'Strom', 1, ''],
+    ]);
+  });
+  it('prints the booking rows with their date, escaped', () => {
+    const html = buildReportDocument(printableRows(rows, new Map([['a', [{ bookingKey: 'x', date: '20260501', bookingNo: 1, title: '<b>', amount: 5 }]]]), new Set(['a']), d => d),
+      options({ showPrevious: false }));
+    expect(html).toContain('<tr class="booking">');
+    expect(html).toContain('<span class="date">20260501</span>&lt;b&gt;');
+  });
+  it('formats the template rows', () => {
+    expect(reportTemplateRows(printed)[2]).toEqual({ kind: 'booking', id: '', name: 'Mai', date: '01.05.2026', amount: formatReportAmount(500), indent: 30 });
+  });
+});
+
+describe('books line', () => {
+  it('stands on its own line when given, and is left out otherwise', () => {
+    expect(buildReportDocument([], options({ labels: { ...LABELS, books: 'Buchhaltung: scs' } }))).toContain('<p>Buchhaltung: scs</p>');
+    expect(buildReportDocument([], options())).not.toContain('Buchhaltung');
   });
 });

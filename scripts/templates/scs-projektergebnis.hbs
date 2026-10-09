@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<title>{{title}}</title>
+<style>
+  body { font-family: Helvetica, Arial, sans-serif; font-size: 10pt; color: #000; margin: 0; }
+  .head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14mm; }
+  .logo { max-height: 22mm; max-width: 60mm; object-fit: contain; }
+  .meta { text-align: right; font-size: 9pt; margin-left: auto; }
+  h1 { font-size: 17pt; margin: 0 0 8mm 0; }
+  .facts p { margin: 0 0 2mm 0; }
+  table { width: 100%; border-collapse: collapse; margin-top: 8mm; }
+  thead { display: table-header-group; }
+  thead th { border-bottom: 1px solid #000; padding: 2mm 1mm; text-align: left; font-size: 9pt; }
+  thead th.amount { text-align: right; }
+  tbody td { padding: 1.2mm 1mm; vertical-align: top; }
+  td.account { width: 16%; white-space: nowrap; }
+  td.amount { width: 20%; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  tr.group td { font-weight: 600; }
+  tr.total td { font-weight: 700; padding-top: 4mm; }
+  tr.result td { font-weight: 700; border-top: 1px solid #000; border-bottom: 3px double #000; }
+  tr.booking td { font-size: 8.5pt; color: #444; padding-top: 0.6mm; padding-bottom: 0.6mm; }
+  span.date { display: inline-block; min-width: 18mm; font-variant-numeric: tabular-nums; }
+  tr { break-inside: avoid; }
+</style>
+</head>
+<body>
+<div class="head">
+  {{#if logoUrl}}<img class="logo" src="{{logoUrl}}" alt="" />{{/if}}
+  <div class="meta">{{orgName}} - {{created}}: {{generatedOn}}</div>
+</div>
+<h1>{{title}}</h1>
+<div class="facts">
+  {{#each facts}}<p>{{label}}: {{value}}</p>{{/each}}
+  {{#if books}}<p>{{books}}</p>{{/if}}
+  <p>{{amounts}}</p>
+</div>
+<table>
+  <thead><tr>
+    <th>{{columns.account}}</th>
+    <th>{{columns.name}}</th>
+    <th class="amount">{{columns.amount}}</th>
+  </tr></thead>
+  <tbody>
+    {{#each rows}}
+    <tr class="{{kind}}">
+      <td class="account">{{id}}</td>
+      <td class="name" style="padding-left:{{indent}}px">{{#if date}}<span class="date">{{date}}</span>{{/if}}{{name}}</td>
+      <td class="amount">{{amount}}</td>
+    </tr>
+    {{/each}}
+  </tbody>
+</table>
+</body>
+</html>

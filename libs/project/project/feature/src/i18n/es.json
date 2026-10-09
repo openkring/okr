@@ -50,6 +50,7 @@
     "income": "Ingresos",
     "expense": "Gastos",
     "total": "Total",
+    "net": "Ganancia/pérdida",
     "empty": "Todavía no se han registrado asientos para este proyecto.",
     "pdfTitle": "Resultado del proyecto {name}",
     "periodAll": "Todos los ejercicios",

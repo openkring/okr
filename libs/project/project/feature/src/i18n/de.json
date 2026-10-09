@@ -50,6 +50,7 @@
     "income": "Einnahmen",
     "expense": "Ausgaben",
     "total": "Total",
+    "net": "Gewinn/Verlust",
     "empty": "Für dieses Projekt sind noch keine Buchungen erfasst.",
     "pdfTitle": "Projektergebnis {name}",
     "periodAll": "Alle Buchungsjahre",

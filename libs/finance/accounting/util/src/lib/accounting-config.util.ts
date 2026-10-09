@@ -37,6 +37,8 @@ export function toAccountingConfigFormData(config: AccountingConfigModel): Accou
     reminderDueDays: config.reminderDueDays ?? DEFAULT_REMINDER_DUE_DAYS,
     incomingPaymentLabel: config.incomingPaymentLabel ?? DEFAULT_INCOMING_PAYMENT_LABEL,
     outgoingPaymentLabel: config.outgoingPaymentLabel ?? DEFAULT_OUTGOING_PAYMENT_LABEL,
+    orgId: config.orgId ?? '',
+    projectReportTemplateId: config.projectReportTemplateId ?? '',
   };
 }
 

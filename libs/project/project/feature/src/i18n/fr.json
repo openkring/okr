@@ -50,6 +50,7 @@
     "income": "Recettes",
     "expense": "Dépenses",
     "total": "Total",
+    "net": "Bénéfice/perte",
     "empty": "Aucune écriture n'a encore été enregistrée pour ce projet.",
     "pdfTitle": "Résultat du projet {name}",
     "periodAll": "Tous les exercices",

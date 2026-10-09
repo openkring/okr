@@ -28,6 +28,16 @@
       "helper": "Modello usato per creare le fatture in PDF.",
       "add": "Crea un nuovo modello"
     },
+    "org": {
+      "label": "Organizzazione",
+      "placeholder": "Scegli un’organizzazione",
+      "helper": "A chi appartiene questa contabilità. Nome, indirizzo e logo compaiono sui rapporti."
+    },
+    "projectReportTemplate": {
+      "label": "Modello risultato del progetto",
+      "placeholder": "Layout integrato",
+      "helper": "Modello di rapporto usato per creare il risultato del progetto in PDF. Senza modello vale il layout integrato."
+    },
     "paymentAccounts": {
       "label": "Conti di pagamento",
       "helper": "Il pagamento di una fattura può essere registrato su questi conti."

@@ -28,6 +28,16 @@
       "helper": "Vorlage, mit der Rechnungen als PDF erstellt werden.",
       "add": "Neue Vorlage erstellen"
     },
+    "org": {
+      "label": "Organisation",
+      "placeholder": "Organisation wählen",
+      "helper": "Wem diese Buchhaltung gehört. Name, Adresse und Logo erscheinen auf den Berichten."
+    },
+    "projectReportTemplate": {
+      "label": "Vorlage Projektergebnis",
+      "placeholder": "Eingebautes Layout",
+      "helper": "Berichtsvorlage, mit der das Projektergebnis als PDF erstellt wird. Ohne Vorlage gilt das eingebaute Layout."
+    },
     "paymentAccounts": {
       "label": "Zahlungskonten",
       "helper": "Auf diese Konten darf eine Rechnungszahlung gebucht werden."

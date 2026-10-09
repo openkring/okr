@@ -61,6 +61,15 @@ describe('toAccountingConfigFormData', () => {
     expect(data.billPaymentAccountKeys).toEqual([]);
   });
 
+  it('seeds the report fields of a legacy doc and keeps stored ones, so the suite accepts both', () => {
+    const seeded = toAccountingConfigFormData(legacyConfig());
+    expect([seeded.orgId, seeded.projectReportTemplateId]).toEqual(['', '']);
+    expect(accountingConfigValidations(seeded, 'scs', '').isValid()).toBe(true);
+    const stored = toAccountingConfigFormData({ ...legacyConfig(), orgId: 'scs', projectReportTemplateId: 'tpl-project' } as AccountingConfigModel);
+    expect([stored.orgId, stored.projectReportTemplateId]).toEqual(['scs', 'tpl-project']);
+    expect(accountingConfigValidations(stored, 'scs', '').isValid()).toBe(true);
+  });
+
   it('keeps and copies the bill payment fields (spec 1.85)', () => {
     const stored = { ...legacyConfig(), payablesAccountKey: 'scs0121', billPaymentAccountKeys: ['scs0077'] } as AccountingConfigModel;
     const data = toAccountingConfigFormData(stored);
