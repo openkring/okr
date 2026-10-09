@@ -266,7 +266,11 @@ export class ExpenseList {
   }
 
   protected async openNew(): Promise<void> {
-    const modal = await this.modalController.create({ component: ExpenseNewModal });
+    // 'an Mitglied' is offered only on the treasurer list (expense/all); createExpense re-checks the role.
+    const modal = await this.modalController.create({
+      component: ExpenseNewModal,
+      componentProps: { allowMember: this.listId() === 'all' },
+    });
     await modal.present();
     const { role } = await modal.onDidDismiss();
     if (role === 'confirm') this.store.expensesResource.reload();

@@ -11,8 +11,13 @@ import { OkrModel, SearchableModel, TaggedModel } from './base.model';
 // 'cancelled'  = rejected: the booking was rejected, or the treasurer cancelled it by hand.
 export type ExpenseStatus = 'draft' | 'processing' | 'done' | 'cancelled';
 
-/** Where the reimbursement is paid: 'me' = to the employee (needs an IBAN), 'issuer' = to the invoice issuer. */
-export type ExpenseTransferTo = 'me' | 'issuer';
+/**
+ * Where the reimbursement is paid: 'me' = to the employee (needs an IBAN), 'issuer' = to the invoice issuer,
+ * 'member' = to another member, entered by a treasurer on their behalf (a receipt that reached the treasurer
+ * by email or post). For 'member', `payeeKey`/`payeeName` name that member and `iban` is their favorite bank
+ * account, all stamped by createExpense; `userId`/`userName`/`personKey` stay the treasurer who entered it.
+ */
+export type ExpenseTransferTo = 'me' | 'issuer' | 'member';
 
 export class ExpenseModel implements OkrModel, SearchableModel, TaggedModel {
   public okey = DEFAULT_KEY;
@@ -28,8 +33,13 @@ export class ExpenseModel implements OkrModel, SearchableModel, TaggedModel {
   public currency = DEFAULT_CURRENCY;
   public transferTo: ExpenseTransferTo = 'me';
   public iban = '';
+  // transferTo 'member' only: the member who is reimbursed (FK → persons) and their display name,
+  // stamped by createExpense. '' for 'me'/'issuer' (the payee is then the submitter or the issuer).
+  public payeeKey = '';
+  public payeeName = '';
   public accountKey = '';        // FK → accounts; the expense account (Aufwandskonto), '' = not chosen yet
   public costCenterId = '';     // CostCenterModel okey (spec 1.65 D16; was free text)
+  public projectKey = '';       // FK → projects; Kostenträger of the expense line (spec 3.14 D8), '' = ohne Projekt
   public note = '';
   public status: ExpenseStatus = 'draft';
   public bookingKey = '';

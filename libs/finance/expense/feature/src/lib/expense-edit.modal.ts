@@ -48,6 +48,9 @@ import { injectExpenseCostCenters, injectExpenseView } from './expense-view';
           [accounts]="view.accounts()"
           [costCenters]="costCenters.costCenters()"
           [costCentersEnabled]="costCenters.costCentersEnabled()"
+          [projects]="costCenters.projects()"
+          [payeeKey]="view.payeeKey()"
+          [payeeName]="view.payeeName()"
           [receipts]="view.receipts()"
           [qrBills]="view.qrBills()"
           [qrCode]="view.qrCode()"
@@ -137,6 +140,7 @@ export class ExpenseEditModal {
       abstract:     value.abstract,
       accountKey:   value.accountKey,
       costCenterId: value.costCenterId,
+      projectKey:   value.projectKey,
       note:         value.note,
     };
     // Only send the status when the treasurer actually moved it: echoing back an untouched

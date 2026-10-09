@@ -5,14 +5,15 @@ import {
   IonNote, IonRow, IonSelect, IonSelectOption,
 } from '@ionic/angular/standalone';
 
-import { AccountModel, CategoryListModel, CostCenterModel, ExpenseModel } from '@okr/shared-models';
+import { AccountModel, CategoryListModel, CostCenterModel, ExpenseModel, PersonModelName, ProjectModel } from '@okr/shared-models';
 import { ButtonCopy, CategorySelect, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { formatIban, IbanFormat, validateVestTree, vestErrors } from '@okr/shared-util-angular';
-import { coerceBoolean, convertDateFormatToString, DateFormat, getThumbnailUrl, isProfitAndLossAccountId } from '@okr/shared-util-core';
+import { coerceBoolean, convertDateFormatToString, DateFormat, getThumbnailUrl } from '@okr/shared-util-core';
 
 import { AvatarPipe } from '@okr/avatar-ui';
 import { AccountSelect, AccountSelectI18n } from '@okr/finance-account-ui';
 import { CostCenterSelect, CostCenterSelectI18n } from '@okr/finance-cost-center-ui';
+import { ProjectSelect } from '@okr/project-project-ui';
 import {
   ALLOWED_CURRENCIES, centsToCHF, chfToCents, ExpenseEditFormValue, expenseEditValidations, ExpenseQrBill, ExpenseReceipt,
 } from '@okr/finance-expense-util';
@@ -29,6 +30,9 @@ export interface ExpenseEditFormI18n {
   transfer_label: Signal<string>;
   transfer_me: Signal<string>;
   transfer_issuer: Signal<string>;
+  transfer_member: Signal<string>;
+  transfer_to_name: Signal<string>;
+  project_label: Signal<string>;
   iban_label: Signal<string>;
   iban_copy_conf: Signal<string>;
   qr_hint: Signal<string>;
@@ -59,7 +63,7 @@ export interface ExpenseEditFormI18n {
   selector: 'okr-expense-edit-form',
   standalone: true,
   imports: [
-    TextInput, NotesInput, ErrorNote, CategorySelect, ButtonCopy, AccountSelect, CostCenterSelect, AvatarPipe,
+    TextInput, NotesInput, ErrorNote, CategorySelect, ButtonCopy, AccountSelect, CostCenterSelect, ProjectSelect, AvatarPipe,
     IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonGrid, IonRow, IonCol, IonItem, IonLabel, IonNote,
     IonSelect, IonSelectOption, IonAvatar, IonImg,
   ],
@@ -156,14 +160,27 @@ export interface ExpenseEditFormI18n {
                     [fieldStyle]="true" [label]="i18n().field_status()" [showIcons]="true" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
-                  <ion-item lines="none">
-                    <ion-select [label]="i18n().transfer_label()" labelPlacement="floating"
-                      [value]="transferTo()" [disabled]="isFieldReadOnly('transferTo')"
-                      (ionChange)="onFieldChange('transferTo', $event.detail.value)">
-                      <ion-select-option value="me">{{ i18n().transfer_me() }}</ion-select-option>
-                      <ion-select-option value="issuer">{{ i18n().transfer_issuer() }}</ion-select-option>
-                    </ion-select>
-                  </ion-item>
+                  @if (transferTo() === 'member') {
+                    <!-- set only on creation (it names the payee): shown with the member, never changeable -->
+                    <ion-item lines="none">
+                      <ion-avatar slot="start">
+                        <ion-img src="{{ payeeAvatarKey() | avatar:'person' }}" alt="Avatar" />
+                      </ion-avatar>
+                      <ion-label>
+                        <p>{{ i18n().transfer_label() }}</p>
+                        <h3>{{ payeeLabel() }}</h3>
+                      </ion-label>
+                    </ion-item>
+                  } @else {
+                    <ion-item lines="none">
+                      <ion-select [label]="i18n().transfer_label()" labelPlacement="floating"
+                        [value]="transferTo()" [disabled]="isFieldReadOnly('transferTo')"
+                        (ionChange)="onFieldChange('transferTo', $event.detail.value)">
+                        <ion-select-option value="me">{{ i18n().transfer_me() }}</ion-select-option>
+                        <ion-select-option value="issuer">{{ i18n().transfer_issuer() }}</ion-select-option>
+                      </ion-select>
+                    </ion-item>
+                  }
                 </ion-col>
               </ion-row>
 
@@ -202,6 +219,13 @@ export interface ExpenseEditFormI18n {
                     <ion-col size="12" size-md="6">
                       <okr-cost-center-select [i18n]="costCenterI18n()" [costCenters]="costCenters()" [allowEmpty]="true" [emptyIsFallback]="true"
                         [selectedKey]="costCenterId()" (selectedKeyChange)="onFieldChange('costCenterId', $event)"
+                        [readOnly]="false" />
+                    </ion-col>
+                  }
+                  @if (showProject()) {
+                    <ion-col size="12" size-md="6">
+                      <okr-project-select [projects]="projects()" [label]="i18n().project_label()"
+                        [selectedKey]="projectKey()" (selectedKeyChange)="onFieldChange('projectKey', $event)"
                         [readOnly]="false" />
                     </ion-col>
                   }
@@ -309,6 +333,11 @@ export class ExpenseEditForm {
   public readonly costCenters = input<CostCenterModel[]>([]);
   /** Kostenstellen only exist on the native ledger; a bexio ledger gets no picker */
   public readonly costCentersEnabled = input(false);
+  /** all projects incl. archived (Kostenträger); passed in, a ui lib does not load data */
+  public readonly projects = input<ProjectModel[]>([]);
+  /** transferTo 'member': the reimbursed member (person okey) and display name */
+  public readonly payeeKey = input('');
+  public readonly payeeName = input('');
   public readonly receipts = input<ExpenseReceipt[]>([]);
   /** the QR-bills found on the receipts (ocr-results.qrBill) */
   public readonly qrBills = input<ExpenseQrBill[]>([]);
@@ -357,9 +386,17 @@ export class ExpenseEditForm {
   protected readonly currency = computed(() => this.formData()?.currency ?? 'CHF');
   protected readonly transferTo = computed(() => this.formData()?.transferTo ?? 'me');
   protected readonly accountKey = computed(() => this.formData()?.accountKey ?? '');
-  protected showCostCenter = computed(() =>
-    this.costCentersEnabled() && isProfitAndLossAccountId(this.accounts().find(a => a.okey === this.accountKey())?.id));
+  /**
+   * Kostenstelle and Kostenträger are offered on every expense of a native ledger (a bexio ledger has
+   * none), whatever account is picked: the booking drops both on a non-P&L line anyway.
+   */
+  protected showCostCenter = computed(() => this.costCentersEnabled());
   protected readonly costCenterId = computed(() => this.formData()?.costCenterId ?? '');
+  protected readonly projectKey = computed(() => this.formData()?.projectKey ?? '');
+  protected showProject = computed(() => this.costCentersEnabled());
+  protected readonly payeeAvatarKey = computed(() => this.payeeKey() ? `${PersonModelName}.${this.payeeKey()}` : '');
+  /** «an Dieter Widmer» — single-brace placeholder, Transloco would blank a {{name}} (translateAll) */
+  protected readonly payeeLabel = computed(() => this.i18n().transfer_to_name().replace('{name}', this.payeeName()));
   protected readonly note = computed(() => this.formData()?.note ?? '');
   protected readonly status = computed(() => this.formData()?.status ?? 'draft');
 

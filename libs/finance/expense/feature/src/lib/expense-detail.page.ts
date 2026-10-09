@@ -176,7 +176,7 @@ export class ExpenseDetailPage {
   protected readonly meWithoutPayment = computed(() => {
     const expense = this.expense();
     return this.paymentsResource.hasValue() && !!expense && expense.status === 'done'
-      && (expense.transferTo ?? 'me') === 'me' && this.payments().length === 0;
+      && (expense.transferTo ?? 'me') !== 'issuer' && this.payments().length === 0;
   });
 
   protected openOrder(orderKey: string): void {

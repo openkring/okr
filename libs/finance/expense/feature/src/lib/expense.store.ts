@@ -1,7 +1,7 @@
 import { computed, inject, Injector } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
-import { firstValueFrom } from 'rxjs';
+import { combineLatest, firstValueFrom, map } from 'rxjs';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
 import { ENV } from '@okr/shared-config';
@@ -17,12 +17,15 @@ import { UploadService } from '@okr/avatar-data-access';
 import { ExpenseService } from '@okr/finance-expense-data-access';
 import {
   chfToCents, EXPENSE_I18N_KEYS, ExpenseFormValue, ExpenseI18n, ExpenseSortField,
-  EXPENSE_STATE_CATEGORY_NAME, filterExpenses, getExpenseTransferCategory, normalizeIban, sortExpenses,
+  EXPENSE_STATE_CATEGORY_NAME, filterExpenses, getExpenseTransferCategory, mergeExpenses, normalizeIban, sortExpenses,
 } from '@okr/finance-expense-util';
 
 export type SubmitStep = 'idle' | 'iban' | 'upload' | 'saving' | 'done' | 'error';
 
 export type ExpenseListId = 'all' | 'my';
+
+/** submitError when createExpense refused a 'member' expense because the member has no IBAN on file. */
+export const MEMBER_NO_IBAN = 'member-no-iban';
 
 export type { ExpenseI18n };
 
@@ -65,10 +68,14 @@ export const ExpenseStore = signalStore(
       params: () => ({ user: store.appStore.currentUser(), listId: store.listId() }),
       stream: ({ params }) => {
         if (!params.user) return store.expenseService.listForUser('');
-        // 'all' shows every expense (treasurer view); 'my' only the current user's.
-        return params.listId === 'all'
-          ? store.expenseService.listAll()
-          : store.expenseService.listForUser(params.user.okey);
+        // 'all' shows every expense (treasurer view); 'my' the current user's own, plus the
+        // 'member' expenses a treasurer entered for them (they are the payee, not the author).
+        if (params.listId === 'all') return store.expenseService.listAll();
+        const own = store.expenseService.listForUser(params.user.okey);
+        const personKey = params.user.personKey ?? '';
+        if (!personKey) return own;
+        return combineLatest([own, store.expenseService.listForPayee(personKey)]).pipe(
+          map(([mine, asPayee]) => mergeExpenses(mine, asPayee)));
       },
     }),
   })),
@@ -301,6 +308,8 @@ export const ExpenseStore = signalStore(
           currency:     formValue.currency,
           transferTo:   formValue.transferTo,
           iban:         formValue.transferTo === 'me' ? normalizeIban(formValue.iban) : '',
+          // 'member': createExpense stamps the member as payee and reads their favorite IBAN
+          memberKey:    formValue.transferTo === 'member' ? formValue.memberKey : '',
           accountKey:   formValue.accountKey,
           costCenterId: formValue.costCenterId,
           note:         formValue.note,
@@ -310,7 +319,8 @@ export const ExpenseStore = signalStore(
       } catch (e) {
         console.error('[expense-submit] Save step failed', e);
         if (newAddressKey) await compensateAddress(store.addressService, newAddressKey, currentUser);
-        patchState(store, { submitStep: 'error', submitError: 'Save step failed' });
+        const noIban = (e as { details?: { reason?: string } })?.details?.reason === MEMBER_NO_IBAN;
+        patchState(store, { submitStep: 'error', submitError: noIban ? MEMBER_NO_IBAN : 'Save step failed' });
         return;
       }
 

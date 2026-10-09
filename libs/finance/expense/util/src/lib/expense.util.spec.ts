@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { normalizeIban, chfToCents, centsToCHF, newExpenseModel, newExpenseDocumentModel, canDeleteExpense, canRedoOcr, canOpenTask, canOpenBooking, canViewExpense, canEditExpense, filterExpenses, sortExpenses, getExpenseEditStateCategory, getExpenseTransferCategory, EXPENSE_EDIT_STATES, expenseStatusColor, nextExpenseStateFilter } from './expense.util';
+import { normalizeIban, chfToCents, centsToCHF, newExpenseModel, newExpenseDocumentModel, canDeleteExpense, canRedoOcr, canOpenTask, canOpenBooking, canViewExpense, canEditExpense, filterExpenses, mergeExpenses, sortExpenses, getExpenseEditStateCategory, getExpenseTransferCategory, EXPENSE_EDIT_STATES, expenseStatusColor, nextExpenseStateFilter } from './expense.util';
 import { CategoryItemModel, CategoryListModel } from '@okr/shared-models';
 import { ExpenseModel, UserModel } from '@okr/shared-models';
 
@@ -66,6 +66,14 @@ describe('expense permission predicates', () => {
     expect(canDeleteExpense(expense(), author())).toBe(true);
     expect(canDeleteExpense(expense(), treasurer())).toBe(true);
     expect(canDeleteExpense(expense(), stranger())).toBe(false);
+  });
+  it('view only: the payee of a member expense', () => {
+    const payee = Object.assign(stranger(), { personKey: 'p-payee' });
+    const forMember = expense({ transferTo: 'member', payeeKey: 'p-payee' });
+    expect(canViewExpense(forMember, payee)).toBe(true);
+    expect(canDeleteExpense(forMember, payee)).toBe(false);
+    expect(canOpenBooking({ ...forMember, bookingKey: 'b1' }, payee)).toBe(false);
+    expect(canViewExpense(expense({ transferTo: 'me', payeeKey: 'p-payee' }), payee)).toBe(false);
   });
   it('redo OCR: treasurer only, and only when not yet booked', () => {
     expect(canRedoOcr(expense(), treasurer())).toBe(true);
@@ -169,8 +177,15 @@ describe('expense filter categories', () => {
     getExpenseEditStateCategory(category);
     expect(category.items).toHaveLength(4);
   });
-  it('transfer category carries the two transferTo values', () => {
-    expect(getExpenseTransferCategory('scs').items.map(i => i.name)).toEqual(['me', 'issuer']);
+  it('transfer category carries the three transferTo values', () => {
+    expect(getExpenseTransferCategory('scs').items.map(i => i.name)).toEqual(['me', 'issuer', 'member']);
+  });
+});
+
+describe('mergeExpenses', () => {
+  it('dedupes by okey and sorts newest first', () => {
+    const merged = mergeExpenses([anna, cesar], [anna, bruno]);
+    expect(merged.map(e => e.okey)).toEqual(['b', 'c', 'a']);
   });
 });
 

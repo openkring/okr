@@ -14,6 +14,7 @@ import { convertDateFormatToString, DateFormat, parseSwissQrBill } from '@okr/sh
 import { AccountService } from '@okr/finance-account-data-access';
 import { AccountingConfigService } from '@okr/finance-accounting-data-access';
 import { CostCenterService } from '@okr/finance-cost-center-data-access';
+import { ProjectService } from '@okr/project-project-data-access';
 import { ExpenseService } from '@okr/finance-expense-data-access';
 import {
   buildSwissPaymentCode, centsToCHF, EXPENSE_I18N_KEYS, EXPENSE_STATE_CATEGORY_NAME, ExpenseI18n, ExpenseQrBill, ExpenseReceipt,
@@ -46,6 +47,16 @@ export function injectExpenseView(expense: Signal<ExpenseModel>) {
   const authorName = computed(() => {
     const p = person();
     return p ? `${p.firstName} ${p.lastName}`.trim() : (expense().userName ?? '');
+  });
+
+  /**
+   * The payee of a 'member' expense (entered by a treasurer for a member); '' otherwise. The name
+   * from the person when it is loaded, else the name stamped by createExpense.
+   */
+  const payeeKey = computed(() => expense().transferTo === 'member' ? (expense().payeeKey ?? '') : '');
+  const payeeName = computed(() => {
+    const p = payeeKey() ? appStore.getPerson(payeeKey()) : undefined;
+    return p ? `${p.firstName} ${p.lastName}`.trim() : (expense().payeeName ?? '');
   });
 
   // Receipts live in Storage (tenant/{tenantId}/ocr/expense/{expenseKey}/), not in Firestore.
@@ -92,20 +103,23 @@ export function injectExpenseView(expense: Signal<ExpenseModel>) {
 
   /**
    * The Swiss QR payment code for the reimbursement, or '' when a banking app would refuse it.
-   * Only a transfer to the submitter has a known payee: name from the person, address from the
-   * address directory (the registered-visible projection — never the raw vault). An issuer
-   * transfer names nobody we know, so it shows the IBAN without a code.
+   * Only a transfer to the submitter (or to the member a treasurer entered it for) has a known
+   * payee: name from the person, address from the address directory (the registered-visible
+   * projection — never the raw vault). An issuer transfer names nobody we know, so it shows the
+   * IBAN without a code.
    */
   const qrCode = computed(() => {
     const e = expense();
-    if ((e.transferTo ?? 'me') !== 'me' || !e.iban) return '';
-    const postal = (appStore.getDirectoryEntry(authorKey())?.entries ?? [])
+    if ((e.transferTo ?? 'me') === 'issuer' || !e.iban) return '';
+    const isMember = e.transferTo === 'member';
+    const payeeDirectoryKey = isMember ? `${PersonModelName}.${payeeKey()}` : authorKey();
+    const postal = (appStore.getDirectoryEntry(payeeDirectoryKey)?.entries ?? [])
       .filter(entry => entry.addressChannel === 'postal')
       .sort((a, b) => Number(b.isFavorite) - Number(a.isFavorite))[0];
     const payment: SwissQrPayment = {
       iban: e.iban,
       creditor: {
-        name: authorName(),
+        name: isMember ? payeeName() : authorName(),
         street: postal?.streetName ?? '',
         buildingNumber: postal?.streetNumber ?? '',
         zip: postal?.zipCode ?? '',
@@ -129,6 +143,9 @@ export function injectExpenseView(expense: Signal<ExpenseModel>) {
     transfer_label:   i18n.transfer_label,
     transfer_me:      i18n.transfer_me,
     transfer_issuer:  i18n.transfer_issuer,
+    transfer_member:  i18n.transfer_member,
+    transfer_to_name: i18n.transfer_to_name,
+    project_label:    i18n.project_label,
     iban_label:       i18n.detail_iban,
     iban_copy_conf:   i18n.iban_copy_conf,
     qr_hint:          i18n.qr_hint,
@@ -193,14 +210,15 @@ export function injectExpenseView(expense: Signal<ExpenseModel>) {
   }
 
   return {
-    i18n, formI18n, imgixBaseUrl, authorKey, authorName, receipts, accounts, stateCategory, qrCode, qrBills, ocrResultKeyOf,
+    i18n, formI18n, imgixBaseUrl, authorKey, authorName, payeeKey, payeeName, receipts, accounts, stateCategory, qrCode, qrBills, ocrResultKeyOf,
     reloadReceipts: () => { receiptsResource.reload(); ocrResultsResource.reload(); },
     showReceiptActions,
   };
 }
 
 /**
- * The Kostenstellen of the EXPENSE'S own book, for the treasurer's edit modal only. Not part of
+ * The Kostenstellen of the EXPENSE'S own book (and the tenant's projects, the Kostenträger), for the
+ * treasurer's edit modal only. Not part of
  * `injectExpenseView`: the view modal and page are opened by members too, and `cost-centers` is
  * treasurer-only. Deliberately not the root `CostCenterStore`: that one follows the accounting
  * shell's book, which `/expense/...` is outside of — a cold load would show an empty picker, and a
@@ -210,8 +228,14 @@ export function injectExpenseView(expense: Signal<ExpenseModel>) {
  */
 export function injectExpenseCostCenters(expense: Signal<ExpenseModel>) {
   const costCenterService = inject(CostCenterService);
+  const projectService = inject(ProjectService);
   const configService = inject(AccountingConfigService);
   const accountingTenantId = computed(() => expense().accountingTenantId ?? '');
+
+  // all projects incl. archived (Kostenträger picker): the picker offers only active ones but still
+  // names an archived selected one. Projects belong to the okr tenant, not to the accounting tenant.
+  const projectsResource = rxResource({ stream: () => projectService.listAll() });
+  const projects = computed(() => projectsResource.value() ?? []);
 
   const costCentersResource = rxResource<CostCenterModel[], string>({
     params: () => accountingTenantId(),
@@ -225,7 +249,7 @@ export function injectExpenseCostCenters(expense: Signal<ExpenseModel>) {
   const costCenters = computed(() => costCentersResource.value() ?? []);
   const costCentersEnabled = computed(() =>
     !!accountingTenantId() && (configResource.value()?.accountingBackend ?? 'native') === 'native');
-  return { costCenters, costCentersEnabled };
+  return { costCenters, costCentersEnabled, projects };
 }
 
 function escapeHtml(value: string): string {

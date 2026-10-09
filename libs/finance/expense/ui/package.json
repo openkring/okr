@@ -18,6 +18,7 @@
     "@okr/avatar-ui": "*",
     "@okr/finance-account-ui": "*",
     "@okr/finance-cost-center-ui": "*",
-    "@angular/forms": "*"
+    "@angular/forms": "*",
+    "@okr/project-project-ui": "*"
   }
 }

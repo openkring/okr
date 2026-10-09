@@ -13,6 +13,10 @@ export interface ExpenseFormValue {
   currency: string;
   transferTo: ExpenseTransferTo;
   iban: string;
+  /** transferTo 'member' only: the person the treasurer enters the expense for ('' otherwise). */
+  memberKey: string;
+  /** Display name of that member, for the form only — createExpense re-reads it from the person. */
+  memberName: string;
   accountKey: string;
   costCenterId: string;
   note: string;
@@ -50,6 +54,14 @@ export const expenseValidations = staticSuite((model: ExpenseFormValue) => {
     });
     ibanValidations('iban', model.iban);
   });
+
+  // For 'member' the IBAN is the member's favorite bank account, resolved by createExpense
+  // (a treasurer cannot read another person's vault) — only the member itself is required here.
+  omitWhen(model.transferTo !== 'member', () => {
+    test('memberKey', '@finance/expense/feature.validation.memberRequired', () => {
+      enforce(model.memberKey).isNotBlank();
+    });
+  });
 });
 
 /**
@@ -64,6 +76,7 @@ export interface ExpenseEditFormValue {
   transferTo: ExpenseTransferTo;
   accountKey: string;
   costCenterId: string;
+  projectKey: string;
   note: string;
   status: string;
 }
@@ -117,6 +130,7 @@ export function toExpenseFormValue(expense: ExpenseModel): ExpenseEditFormValue 
     transferTo:   expense.transferTo ?? 'me',
     accountKey:   expense.accountKey ?? '',
     costCenterId: expense.costCenterId ?? '',
+    projectKey:   expense.projectKey ?? '',
     note:         expense.note ?? '',
     status:       expense.status ?? 'draft',
   };

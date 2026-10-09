@@ -15,6 +15,8 @@ const validExpense = (): ExpenseFormValue => ({
   currency: 'CHF',
   transferTo: 'me',
   iban: 'CH9800700112900069345',
+  memberKey: '',
+  memberName: '',
   accountKey: '',
   costCenterId: '',
   note: '',
@@ -65,12 +67,24 @@ describe('expenseValidations', () => {
     expect(res.getErrors('iban')).toEqual([]);
     expect(res.isValid()).toBe(true);
   });
+
+  it('requires a member when a treasurer enters an expense for a member', () => {
+    const res = expenseValidations({ ...validExpense(), transferTo: 'member', iban: '' });
+    expect(res.isValid()).toBe(false);
+    expect(res.getErrors('memberKey').length).toBeGreaterThan(0);
+  });
+
+  it('does not require an IBAN for a member transfer (createExpense resolves it)', () => {
+    const res = expenseValidations({ ...validExpense(), transferTo: 'member', iban: '', memberKey: 'p1', memberName: 'Anna Muster' });
+    expect(res.getErrors('iban')).toEqual([]);
+    expect(res.isValid()).toBe(true);
+  });
 });
 
 describe('expenseEditValidations', () => {
   const valid: ExpenseEditFormValue = {
     abstract: 'Materialkauf', amountTotal: 12500, currency: 'CHF', transferTo: 'me',
-    accountKey: '', costCenterId: '', note: '', status: 'processing',
+    accountKey: '', costCenterId: '', projectKey: '', note: '', status: 'processing',
   };
 
   it('accepts a complete edit value', () => {

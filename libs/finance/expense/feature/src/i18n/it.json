@@ -47,7 +47,9 @@
     "transfer": {
       "label": "Bonifico",
       "me": "a me",
-      "issuer": "all'emittente della fattura"
+      "issuer": "all'emittente della fattura",
+      "member": "a un socio",
+      "toName": "a {name}"
     },
     "iban": {
       "label": "IBAN",
@@ -70,14 +72,21 @@
       "title": "QR-fattura nella ricevuta",
       "creditor": "Beneficiario",
       "reference": "Riferimento"
-    }
+    },
+    "member": {
+      "label": "Socio",
+      "select": "Scegli un socio",
+      "ibanHint": "Il rimborso va all'IBAN preferito del profilo del socio."
+    },
+    "project": "Progetto"
   },
   "submit": {
     "iban": "Le coordinate bancarie vengono salvate…",
     "upload": "Le ricevute vengono caricate…",
     "saving": "L'esborso viene salvato…",
     "done": "Salvato — il cassiere verifica la ricevuta.",
-    "error": "Errore — l'operazione è stata annullata"
+    "error": "Errore — l'operazione è stata annullata",
+    "memberNoIban": "Per questo socio non è registrato alcun IBAN. Aggiungi prima un conto bancario nel suo profilo."
   },
   "validation": {
     "abstractRequired": "L'oggetto è obbligatorio.",
@@ -87,7 +96,8 @@
     "amountMax": "L'importo è troppo elevato.",
     "ibanRequired": "L'IBAN è obbligatorio.",
     "currencyRequired": "La valuta è obbligatoria.",
-    "currencyInvalid": "Valuta non valida."
+    "currencyInvalid": "Valuta non valida.",
+    "memberRequired": "Scegli un socio."
   },
   "action": {
     "title": "Seleziona azione",
@@ -140,6 +150,9 @@
     },
     "issuer": {
       "label": "all'emittente della fattura"
+    },
+    "member": {
+      "label": "a un socio"
     }
   },
   "view": {

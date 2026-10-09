@@ -447,6 +447,24 @@ async function resolveBillScanResult(tenantId: string, after: OcrResultDoc, resu
 }
 
 /**
+ * The Gegenpartei of an expense booking. A 'member' expense owes the member (a treasurer entered a
+ * receipt that reached them by email or post), so the member is named, not the shop on the receipt.
+ * Otherwise the OCR vendor, as before.
+ */
+async function expenseCounterparty(
+  db: FirebaseFirestore.Firestore, expense: FirebaseFirestore.DocumentData, vendor: string | undefined,
+): Promise<Record<string, string> | null> {
+  const payeeKey = (expense['payeeKey'] as string | undefined) ?? '';
+  if (expense['transferTo'] === 'member' && payeeKey) {
+    const person = (await db.collection('persons').doc(payeeKey).get()).data();
+    const name1 = (person?.['firstName'] as string | undefined) ?? '';
+    const name2 = (person?.['lastName'] as string | undefined) ?? ((expense['payeeName'] as string | undefined) ?? '');
+    return { key: payeeKey, name1, name2, modelType: 'person', type: (person?.['gender'] as string | undefined) ?? '', subType: '', label: '' };
+  }
+  return vendor ? { key: '', name1: '', name2: vendor, modelType: 'org', type: '', subType: '', label: vendor } : null;
+}
+
+/**
  * Expense usage: aggregate all receipts belonging to one expense into exactly ONE forReview
  * booking, keyed deterministically by the expense's own key so redelivery of any receipt's
  * OCR result is idempotent (the transaction below sees the booking already exists and skips
@@ -486,6 +504,7 @@ async function handleExpenseResult(
 
   const amountCents = expense['amountTotal'] ?? 0;
   const currency = expense['currency'] || after.currency || 'CHF';
+  const counterparty = await expenseCounterparty(db, expense, after.vendor);
 
   // Guard: booking must have a positive amount and both accounts resolved — else route to a human.
   if (amountCents <= 0 || !debitAccountKey || !creditAccountKey) {
@@ -520,9 +539,7 @@ async function handleExpenseResult(
       bookingNo: 0, // forReview bookings are unnumbered; the treasurer's approve/post step assigns the sequence.
       periodKey: '', documentKey: after.documentKey,
       status: 'forReview', accountingTenantId,
-      counterparty: after.vendor
-        ? { key: '', name1: '', name2: after.vendor, modelType: 'org', type: '', subType: '', label: after.vendor }
-        : null,
+      counterparty,
       notes: '',
     });
     tx.set(debitRef, {

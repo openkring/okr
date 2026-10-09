@@ -30,6 +30,7 @@
     "@okr/finance-expense-ui": "*",
     "@okr/finance-account-data-access": "*",
     "@okr/finance-cost-center-data-access": "*",
-    "@okr/finance-payment-data-access": "*"
+    "@okr/finance-payment-data-access": "*",
+    "@okr/project-project-data-access": "*"
   }
 }

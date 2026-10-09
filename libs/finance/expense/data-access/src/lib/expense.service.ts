@@ -8,7 +8,7 @@ import { ENV, STORAGE } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import {
   BookingCollection, BookingLineCollection, BookingLineModel, BookingModel,
-  ExpenseCollection, ExpenseModel, TaskCollection, TaskModel,
+  ExpenseCollection, ExpenseModel, ExpenseTransferTo, TaskCollection, TaskModel,
 } from '@okr/shared-models';
 import { getSystemQuery } from '@okr/shared-util-core';
 import { ExpenseReceipt } from '@okr/finance-expense-util';
@@ -18,8 +18,10 @@ export interface CreateExpensePayload {
   abstract: string;
   amountTotal: number;
   currency: string;
-  transferTo: 'me' | 'issuer';
+  transferTo: ExpenseTransferTo;
   iban: string;
+  /** transferTo 'member' only: the person the treasurer enters the expense for. */
+  memberKey: string;
   accountKey: string;
   costCenterId: string;
   note: string;
@@ -32,9 +34,10 @@ export interface UpdateExpensePayload {
   abstract?: string;
   amountTotal?: number;
   currency?: string;
-  transferTo?: 'me' | 'issuer';
+  transferTo?: ExpenseTransferTo;
   accountKey?: string;
   costCenterId?: string;
+  projectKey?: string;
   note?: string;
   status?: string;
 }
@@ -113,6 +116,13 @@ export class ExpenseService {
   public listForUser(userId: string, orderBy = 'creationDateTime', sortOrder = 'desc'): Observable<ExpenseModel[]> {
     const query = getSystemQuery(this.env.tenantId);
     query.push({ key: 'userId', operator: '==', value: userId });
+    return this.firestoreService.searchData<ExpenseModel>(ExpenseCollection, query, orderBy, sortOrder);
+  }
+
+  /** The 'member' expenses a treasurer entered for this person (transferTo 'member', payeeKey). */
+  public listForPayee(personKey: string, orderBy = 'creationDateTime', sortOrder = 'desc'): Observable<ExpenseModel[]> {
+    const query = getSystemQuery(this.env.tenantId);
+    query.push({ key: 'payeeKey', operator: '==', value: personKey });
     return this.firestoreService.searchData<ExpenseModel>(ExpenseCollection, query, orderBy, sortOrder);
   }
 

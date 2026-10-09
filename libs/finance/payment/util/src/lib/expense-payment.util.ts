@@ -5,8 +5,8 @@ import { normalizeIban, validateIban } from './iban.util';
 import { detectPaymentType } from './pain001.util';
 
 export interface ExpenseLike {
-  okey: string; transferTo?: 'me' | 'issuer'; amountTotal?: number; currency?: string;
-  iban?: string; userName?: string; abstract?: string;
+  okey: string; transferTo?: 'me' | 'issuer' | 'member'; amountTotal?: number; currency?: string;
+  iban?: string; userName?: string; payeeName?: string; abstract?: string;
 }
 
 export interface ExpensePaymentSource {
@@ -67,10 +67,11 @@ function fromGemini(src: ExpensePaymentSource): ExpensePaymentDraft | undefined 
  * expense and its ocr-results, this decides. A QR-bill always wins over Gemini-read creditor fields.
  */
 export function buildExpensePayments(expense: ExpenseLike, sources: ExpensePaymentSource[]): ExpensePaymentPlan {
-  if ((expense.transferTo ?? 'me') === 'me') {
+  // 'member' (entered by a treasurer for a member) pays like 'me', to the stamped payee
+  if ((expense.transferTo ?? 'me') !== 'issuer') {
     const iban = expense.iban ?? '';
     const amount = expense.amountTotal ?? 0;
-    const recipientName = (expense.userName ?? '').trim();
+    const recipientName = ((expense.transferTo === 'member' ? expense.payeeName : expense.userName) ?? '').trim();
     // No payee name, no payment: pain.001 needs a creditor <Nm>, so the treasurer pays by hand.
     if (!iban || !validateIban(iban) || !isPayable(amount) || !recipientName) return { drafts: [], manual: ['me'] };
     return {

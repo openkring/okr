@@ -3,15 +3,18 @@ import { logger } from 'firebase-functions/v2';
 import { onDocumentWritten } from 'firebase-functions/v2/firestore';
 import { getFirestore } from 'firebase-admin/firestore';
 import { checkAppCheckToken, checkAuthentication, lockedExpenseFields, nextStatusForCompletedTask } from '@okr/shared-util-functions';
-import { getTodayStr, DateFormat } from '@okr/shared-util-core';
+import { getTodayStr, DateFormat, isProfitAndLossAccountId } from '@okr/shared-util-core';
 
+import { assertProjectKeyShapes, assertProjectsAssignable } from '../project/project-context';
 import { emitEvent } from '../workflow/emit';
-import { CreateExpenseFields, memberExpenseFields } from './expense.util';
+import { CreateExpenseFields, memberExpenseFields, pickMemberIban } from './expense.util';
 
 const REGION = 'europe-west6';
 const CF_NAME = 'createExpense';
 const EXPENSE_COLLECTION = 'expenses';
 const USERS_COLLECTION = 'users';
+const PERSONS_COLLECTION = 'persons';
+const ADDRESSES_COLLECTION = 'addresses';
 
 interface CreateExpenseData extends CreateExpenseFields {
   tenantId: string;
@@ -42,8 +45,32 @@ export const createExpense = onCall(
       throw new HttpsError('permission-denied', 'not a member of this tenant');
     }
     const receiptCount = Number.isInteger(d.receiptCount) && d.receiptCount >= 0 ? d.receiptCount : 0;
-    const ref = db.collection(EXPENSE_COLLECTION).doc();
     const fields = memberExpenseFields(d);   // drops a member-sent costCenterId
+
+    // For 'member' a treasurer enters a receipt that reached them by email or post: the caller stays
+    // the submitter, the member becomes the payee with their favorite IBAN — read here because a
+    // treasurer cannot read another person's address vault on the client.
+    let payeeKey = '';
+    let payeeName = '';
+    if (fields.transferTo === 'member') {
+      const isTreasurer = user['roles']?.['treasurer'] === true || user['roles']?.['admin'] === true;
+      if (!isTreasurer) throw new HttpsError('permission-denied', 'only a treasurer may enter an expense for a member');
+      const memberKey = typeof d.memberKey === 'string' ? d.memberKey.trim() : '';
+      if (!memberKey) throw new HttpsError('invalid-argument', 'memberKey is required for transferTo member');
+      const personSnap = await db.collection(PERSONS_COLLECTION).doc(memberKey).get();
+      const person = personSnap.data();
+      if (!person || !(person['tenants'] as string[] | undefined)?.includes(d.tenantId)) {
+        throw new HttpsError('invalid-argument', 'unknown member');
+      }
+      const addrSnap = await db.collection(ADDRESSES_COLLECTION).where('parentKey', '==', `person.${memberKey}`).get();
+      const iban = pickMemberIban(addrSnap.docs.map(a => a.data()), d.tenantId);
+      if (!iban) throw new HttpsError('failed-precondition', 'member has no IBAN', { reason: 'member-no-iban' });
+      fields.iban = iban;
+      payeeKey = memberKey;
+      payeeName = `${person['firstName'] ?? ''} ${person['lastName'] ?? ''}`.trim();
+    }
+
+    const ref = db.collection(EXPENSE_COLLECTION).doc();
     await ref.set({
       tenants: [d.tenantId], isArchived: false, index: '', tags: '', notes: '',
       creationDateTime: getTodayStr(DateFormat.StoreDateTime),
@@ -51,6 +78,7 @@ export const createExpense = onCall(
       status: 'processing', bookingKey: '',
       userId: uid, userName: `${user['firstName'] ?? ''} ${user['lastName'] ?? ''}`.trim(),
       personKey: (user['personKey'] as string) ?? '',
+      payeeKey, payeeName, projectKey: '',
       ocrError: '', ocrErrorAt: '',
       accountingTenantId: d.tenantId,
       receiptCount,
@@ -115,15 +143,16 @@ interface UpdateExpenseData {
   abstract?: string;
   amountTotal?: number;
   currency?: string;
-  transferTo?: 'me' | 'issuer';
+  transferTo?: 'me' | 'issuer' | 'member';
   accountKey?: string;
   costCenterId?: string;
+  projectKey?: string;
   note?: string;
   status?: string;
 }
 
 const EDITABLE_FIELDS = [
-  'abstract', 'amountTotal', 'currency', 'transferTo', 'accountKey', 'costCenterId', 'note', 'status',
+  'abstract', 'amountTotal', 'currency', 'transferTo', 'accountKey', 'costCenterId', 'projectKey', 'note', 'status',
 ] as const;
 
 /**
@@ -167,6 +196,20 @@ export const updateExpense = onCall(
       throw new HttpsError('invalid-argument', `unknown status '${d.status}'`);
     }
 
+    // 'member' names the payee (personKey/userName/iban stamped at creation), so it is set only by
+    // createExpense: an expense can neither become nor stop being a member expense here.
+    if (d.transferTo !== undefined && d.transferTo !== (expense['transferTo'] ?? 'me')
+      && (d.transferTo === 'member' || expense['transferTo'] === 'member')) {
+      throw new HttpsError('failed-precondition', `'transferTo' member cannot be changed`);
+    }
+
+    // Kostenträger: an active project of the app tenant (an unchanged stored key is grandfathered)
+    assertProjectKeyShapes([{ projectKey: d.projectKey }]);
+    const projectKey = d.projectKey === undefined ? undefined : d.projectKey.trim();
+    const projectChanged = projectKey !== undefined && projectKey !== ((expense['projectKey'] as string | undefined) ?? '');
+    if (projectChanged) await assertProjectsAssignable(db, tenantId, [{ projectKey }]);
+    if (projectKey !== undefined) d.projectKey = projectKey;
+
     const locked = lockedExpenseFields({ bookingKey: expense['bookingKey'] as string | undefined });
     const patch: Record<string, unknown> = {};
     for (const field of EDITABLE_FIELDS) {
@@ -189,10 +232,33 @@ export const updateExpense = onCall(
     if (Object.keys(patch).length === 0) return { ok: true };
 
     await expSnap.ref.set(patch, { merge: true });
+    if (projectChanged) await carryProjectToReviewBooking(db, d.expenseKey, expense, projectKey ?? '');
     logger.info(`updateExpense: ${d.expenseKey} patched [${Object.keys(patch).join(', ')}]`);
     return { ok: true };
   },
 );
+
+/**
+ * The OCR pipeline books the expense right after the upload, usually before the treasurer edits it,
+ * so a Kostenträger set on the expense must also reach its booking. Only while that booking is still
+ * `forReview` (the expense line is `{expenseKey}-d`, CF-written like every booking line); a posted
+ * booking is corrected in the journal through writeBooking. Only on a P&L line, as projectKeyForLine.
+ */
+async function carryProjectToReviewBooking(
+  db: FirebaseFirestore.Firestore, expenseKey: string, expense: FirebaseFirestore.DocumentData, projectKey: string,
+): Promise<void> {
+  const bookingKey = (expense['bookingKey'] as string | undefined) ?? '';
+  if (!bookingKey) return;
+  const bookingSnap = await db.collection('bookings').doc(bookingKey).get();
+  if (bookingSnap.data()?.['status'] !== 'forReview') return;
+  const lineRef = db.collection('booking-lines').doc(`${bookingKey}-d`);
+  const line = (await lineRef.get()).data();
+  if (!line) return;
+  const accountId = (await db.collection('accounts').doc((line['accountKey'] as string) ?? '-').get()).data()?.['id'] as string | undefined;
+  if (projectKey && !isProfitAndLossAccountId(accountId)) return;
+  await lineRef.set({ projectKey }, { merge: true });
+  logger.info(`updateExpense: ${expenseKey} Kostenträger carried to booking ${bookingKey}`);
+}
 
 const TASK_COLLECTION = 'tasks';
 

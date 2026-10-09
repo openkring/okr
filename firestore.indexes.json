@@ -1473,6 +1473,33 @@
           "order": "ASCENDING"
         },
         {
+          "fieldPath": "payeeKey",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "creationDateTime",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "expenses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "tenants",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "isArchived",
+          "order": "ASCENDING"
+        },
+        {
           "fieldPath": "userId",
           "order": "ASCENDING"
         },

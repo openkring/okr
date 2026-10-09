@@ -1,13 +1,15 @@
-import { Component, Signal, computed, effect, input, model, output, signal } from '@angular/core';
+import { Component, Signal, computed, effect, inject, input, model, output, signal } from '@angular/core';
 import { form } from '@angular/forms/signals';
 import {
   IonButton, IonCol, IonGrid, IonIcon, IonItem, IonLabel,
   IonList, IonRow, IonSelect, IonSelectOption, IonTextarea,
 } from '@ionic/angular/standalone';
 
+import { AvatarSelect } from '@okr/avatar-ui';
+import { AvatarInfo } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { ErrorNote, TextInput, TextInputI18n } from '@okr/shared-ui';
-import { formatIban, IbanFormat, validateVestTree, vestErrors } from '@okr/shared-util-angular';
+import { formatIban, IbanFormat, MODEL_SELECTOR, validateVestTree, vestErrors } from '@okr/shared-util-angular';
 
 import { ALLOWED_CURRENCIES, ExpenseFormValue, expenseValidations } from '@okr/finance-expense-util';
 
@@ -18,6 +20,10 @@ export interface ExpenseFormI18n {
   transfer_label: Signal<string>;
   transfer_me: Signal<string>;
   transfer_issuer: Signal<string>;
+  transfer_member: Signal<string>;
+  member_label: Signal<string>;
+  member_select: Signal<string>;
+  member_iban_hint: Signal<string>;
   iban_label: Signal<string>;
   iban_on: Signal<string>;
   iban_profile_hint: Signal<string>;
@@ -32,7 +38,7 @@ export interface ExpenseFormI18n {
   selector: 'okr-expense-form',
   standalone: true,
   imports: [
-    TextInput, ErrorNote,
+    TextInput, ErrorNote, AvatarSelect,
     IonGrid, IonRow, IonCol, IonItem, IonLabel,
     IonSelect, IonSelectOption, IonTextarea, IonList,
     IonButton, IonIcon,
@@ -76,10 +82,25 @@ export interface ExpenseFormI18n {
               <ion-select [value]="transferTo()" (ionChange)="onFieldChange('transferTo', $event.detail.value)">
                 <ion-select-option value="me">{{ i18n().transfer_me() }}</ion-select-option>
                 <ion-select-option value="issuer">{{ i18n().transfer_issuer() }}</ion-select-option>
+                @if (allowMember()) {
+                  <ion-select-option value="member">{{ i18n().transfer_member() }}</ion-select-option>
+                }
               </ion-select>
             </ion-item>
           </ion-col>
         </ion-row>
+
+        @if (transferTo() === 'member') {
+          <ion-row>
+            <ion-col size="12">
+              <okr-avatar-select name="member" [avatar]="memberAvatar()"
+                [title]="i18n().member_label()" [note]="i18n().member_iban_hint()" [selectLabel]="i18n().member_select()"
+                [clearable]="true" [readOnly]="false"
+                (selectClicked)="selectMember()" (clearClicked)="onMemberChange(undefined)" />
+              <okr-error-note [errors]="memberErrors()" />
+            </ion-col>
+          </ion-row>
+        }
 
         @if (transferTo() === 'me') {
           <ion-row>
@@ -152,6 +173,8 @@ export class ExpenseForm {
   public readonly i18n = input.required<ExpenseFormI18n>();
   /** The current user's favorite bank-account IBAN (''=none → the user must enter a new one). */
   public readonly favoriteIban = input<string>('');
+  /** Offer 'an Mitglied' — true only when opened from the treasurer list (expense/all). */
+  public readonly allowMember = input(false);
   public formData = model.required<ExpenseFormValue>();
   public files = model<File[]>([]);
 
@@ -160,6 +183,7 @@ export class ExpenseForm {
   public pickFiles = output<void>();
   public takePhoto = output<void>();
 
+  private readonly modelSelector = inject(MODEL_SELECTOR);
   protected readonly currencies = ALLOWED_CURRENCIES;
   protected readonly formatIban = (iban: string) => formatIban(iban, IbanFormat.Friendly);
 
@@ -173,6 +197,7 @@ export class ExpenseForm {
   protected readonly amountErrors   = computed(() => this.result().getErrors('amountCHF'));
   protected readonly currencyErrors = computed(() => this.result().getErrors('currency'));
   protected readonly ibanErrors     = computed(() => this.result().getErrors('iban'));
+  protected readonly memberErrors   = computed(() => this.result().getErrors('memberKey'));
 
   protected readonly abstract = computed(() => this.formData()?.abstract);
   protected readonly amountCHF = computed(() => this.formData()?.amountCHF);
@@ -180,6 +205,12 @@ export class ExpenseForm {
   protected readonly transferTo = computed(() => this.formData()?.transferTo);
   protected readonly iban = computed(() => this.formData()?.iban);
   protected readonly note = computed(() => this.formData()?.note);
+  protected readonly memberAvatar = computed<AvatarInfo | undefined>(() => {
+    const key = this.formData()?.memberKey ?? '';
+    if (!key) return undefined;
+    // AvatarSelect renders name1 + ' ' + name2, so the full name goes into name2
+    return { key, name1: '', name2: this.formData()?.memberName ?? '', label: '', modelType: 'person', type: '', subType: '' };
+  });
 
   protected amountCHFStr  = computed(() => this.amountCHF() > 0 ? String(this.amountCHF()) : '');
   protected readonly hasFavoriteIban = computed(() => this.favoriteIban().trim().length > 0);
@@ -226,6 +257,21 @@ export class ExpenseForm {
   protected onFieldChange(field: string, value: unknown): void {
     this.dirty.emit(true);
     this.formData.update(d => ({ ...d, [field]: value }));
+  }
+
+  /** Opens the person picker (members first); the picker is a feature-layer modal behind MODEL_SELECTOR. */
+  protected async selectMember(): Promise<void> {
+    const avatar = await this.modelSelector.selectPersonAvatar(undefined, undefined, false, true);
+    if (avatar?.key) this.onMemberChange(avatar);
+  }
+
+  protected onMemberChange(avatar: AvatarInfo | undefined): void {
+    this.dirty.emit(true);
+    this.formData.update(d => ({
+      ...d,
+      memberKey: avatar?.key ?? '',
+      memberName: avatar ? `${avatar.name1} ${avatar.name2}`.trim() : '',
+    }));
   }
 
   protected removeFile(index: number): void {

@@ -71,6 +71,9 @@ export const EXPENSE_I18N_KEYS = {
   transfer_label:     PFX + 'field.transfer.label',
   transfer_me:        PFX + 'field.transfer.me',
   transfer_issuer:    PFX + 'field.transfer.issuer',
+  transfer_member:    PFX + 'field.transfer.member',
+  transfer_to_name:   PFX + 'field.transfer.toName',
+  project_label:      PFX + 'field.project',
   note_label:         PFX + 'field.note',
   // generic confirm-banner labels; reuse the create modal's strings (Abbrechen / Speichern)
   cancel:             PFX + 'new.cancel',

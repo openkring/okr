@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, model, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, model, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import {
   ModalController, ToastController,
@@ -16,7 +16,7 @@ import { AddressService } from '@okr/subject-address-data-access';
 import { ExpenseFormValue } from '@okr/finance-expense-util';
 import { ExpenseForm, ExpenseFormI18n } from '@okr/finance-expense-ui';
 import { dismissOverlay } from '@okr/shared-util-angular';
-import { ExpenseStore } from './expense.store';
+import { ExpenseStore, MEMBER_NO_IBAN } from './expense.store';
 import { PFX } from './scope';
 
 const EXPENSE_MIMETYPES = ['application/pdf', 'image/jpeg', 'image/png', 'image/heic'];
@@ -44,6 +44,7 @@ const EXPENSE_MIMETYPES = ['application/pdf', 'image/jpeg', 'image/png', 'image/
       <okr-expense-form
         [i18n]="formI18n"
         [favoriteIban]="favoriteIban()"
+        [allowMember]="allowMember()"
         [(formData)]="formValue"
         [(files)]="files"
         (pickFiles)="onPickFiles()"
@@ -74,6 +75,10 @@ export class ExpenseNewModal {
     transfer_label: PFX + 'field.transfer.label',
     transfer_me:    PFX + 'field.transfer.me',
     transfer_issuer: PFX + 'field.transfer.issuer',
+    transfer_member: PFX + 'field.transfer.member',
+    member_label:   PFX + 'field.member.label',
+    member_select:  PFX + 'field.member.select',
+    member_iban_hint: PFX + 'field.member.ibanHint',
     iban_label:     PFX + 'field.iban.label',
     iban_on:        PFX + 'field.iban.on',
     iban_profile_hint: PFX + 'field.iban.profileHint',
@@ -84,10 +89,14 @@ export class ExpenseNewModal {
     belege_photo:   PFX + 'field.belege.photo',
     toast_success:  PFX + 'submit.done',
     toast_error:    PFX + 'submit.error',
+    toast_member_no_iban: PFX + 'submit.memberNoIban',
   });
 
+  /** Offer 'an Mitglied' — set by the list only on expense/all (treasurers). */
+  public readonly allowMember = input(false);
+
   protected formValue = model<ExpenseFormValue>({
-    abstract: '', amountCHF: 0, currency: 'CHF', transferTo: 'me', iban: '', accountKey: '', costCenterId: '', note: '',
+    abstract: '', amountCHF: 0, currency: 'CHF', transferTo: 'me', iban: '', memberKey: '', memberName: '', accountKey: '', costCenterId: '', note: '',
   });
   protected files = model<File[]>([]);
   protected readonly isValid = signal(false);
@@ -123,6 +132,10 @@ export class ExpenseNewModal {
     transfer_label:   this.i18n.transfer_label,
     transfer_me:      this.i18n.transfer_me,
     transfer_issuer:  this.i18n.transfer_issuer,
+    transfer_member:  this.i18n.transfer_member,
+    member_label:     this.i18n.member_label,
+    member_select:    this.i18n.member_select,
+    member_iban_hint: this.i18n.member_iban_hint,
     iban_label:       this.i18n.iban_label,
     iban_on:          this.i18n.iban_on,
     iban_profile_hint: this.i18n.iban_profile_hint,
@@ -181,7 +194,7 @@ export class ExpenseNewModal {
       await dismissOverlay(this.modalController, null, 'confirm');
     } else if (this.store.submitStep() === 'error') {
       const toast = await this.toastController.create({
-        message: this.i18n.toast_error(),
+        message: this.store.submitError() === MEMBER_NO_IBAN ? this.i18n.toast_member_no_iban() : this.i18n.toast_error(),
         duration: 4000,
         color: 'danger',
       });

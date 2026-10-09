@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { collectingMessageId, collectingOrderId, expensePaymentId, expensePaymentTransition, memberExpenseFields } from './expense.util';
+import { collectingMessageId, collectingOrderId, expensePaymentId, expensePaymentTransition, memberExpenseFields, pickMemberIban } from './expense.util';
 
 describe('memberExpenseFields', () => {
   const data = {
@@ -20,6 +20,27 @@ describe('memberExpenseFields', () => {
     expect(memberExpenseFields({ amountTotal: 100 })).toEqual({
       abstract: '', amountTotal: 100, currency: 'CHF', transferTo: 'me', iban: '', accountKey: '', costCenterId: '', note: '',
     }));
+});
+
+describe('memberExpenseFields — transferTo', () => {
+  it('keeps member', () => expect(memberExpenseFields({ amountTotal: 1, transferTo: 'member' }).transferTo).toBe('member'));
+  it('maps an unknown value to me', () =>
+    expect(memberExpenseFields({ amountTotal: 1, transferTo: 'x' as never }).transferTo).toBe('me'));
+});
+
+describe('pickMemberIban', () => {
+  const bank = (iban: string, extra: object = {}) => ({ addressChannel: 'bankaccount', iban, tenants: ['scs'], ...extra });
+
+  it('takes the favorite bank account, normalized', () =>
+    expect(pickMemberIban([bank('CH11 1111'), bank('ch93 0076 2011', { isFavorite: true })], 'scs')).toBe('CH9300762011'));
+  it('falls back to the first bank account without a favorite', () =>
+    expect(pickMemberIban([bank('CH11'), bank('CH22')], 'scs')).toBe('CH11'));
+  it('prefers this tenant over another tenant\'s favorite', () =>
+    expect(pickMemberIban([bank('CH99', { tenants: ['gss'], isFavorite: true }), bank('CH11')], 'scs')).toBe('CH11'));
+  it('falls back to other tenants\' entries when the tenant has none', () =>
+    expect(pickMemberIban([bank('CH99', { tenants: ['gss'] })], 'scs')).toBe('CH99'));
+  it('ignores archived, empty and non-bank entries', () =>
+    expect(pickMemberIban([bank('CH11', { isArchived: true }), bank(' '), { addressChannel: 'email', iban: 'x' }], 'scs')).toBe(''));
 });
 
 describe('expensePaymentTransition', () => {

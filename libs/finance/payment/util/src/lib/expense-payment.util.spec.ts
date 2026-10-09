@@ -27,6 +27,10 @@ describe('buildExpensePayments — me', () => {
     expect(buildExpensePayments({ ...me, iban: '' }, [])).toEqual({ drafts: [], manual: ['me'] }));
   it('reports an invalid IBAN as manual', () =>
     expect(buildExpensePayments({ ...me, iban: 'CH00 1234' }, []).manual).toEqual(['me']));
+  it('pays a member expense (entered by a treasurer) to the stamped payee, not the submitter', () =>
+    expect(buildExpensePayments({ ...me, transferTo: 'member', payeeName: 'Anna Muster' }, []).drafts[0]?.recipientName).toBe('Anna Muster'));
+  it('reports a member expense without a payee name as manual', () =>
+    expect(buildExpensePayments({ ...me, transferTo: 'member' }, []).manual).toEqual(['me']));
   it('treats a missing transferTo as me (legacy documents)', () =>
     expect(buildExpensePayments({ ...me, transferTo: undefined }, []).drafts).toHaveLength(1));
   it('reports a zero amount as manual', () =>

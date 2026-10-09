@@ -3,8 +3,10 @@ export interface CreateExpenseFields {
   abstract?: string;
   amountTotal: number;   // cents
   currency?: string;
-  transferTo?: 'me' | 'issuer';
+  transferTo?: 'me' | 'issuer' | 'member';
   iban?: string;
+  /** transferTo 'member' only (treasurer): the person the expense is entered for. */
+  memberKey?: string;
   accountKey?: string;
   costCenterId?: string;
   note?: string;
@@ -20,12 +22,30 @@ export function memberExpenseFields(d: CreateExpenseFields) {
     abstract: d.abstract ?? '',
     amountTotal: d.amountTotal,
     currency: d.currency || 'CHF',
-    transferTo: d.transferTo === 'issuer' ? 'issuer' as const : 'me' as const,
+    transferTo: toTransferTo(d.transferTo),
     iban: d.iban ?? '',
     accountKey: d.accountKey ?? '',
     costCenterId: '',
     note: d.note ?? '',
   };
+}
+
+function toTransferTo(value: unknown): 'me' | 'issuer' | 'member' {
+  return value === 'issuer' || value === 'member' ? value : 'me';
+}
+
+/**
+ * The payee IBAN of a 'member' expense: the member's favorite bank account. Prefers this tenant's
+ * own addresses (a person shared by two tenants may carry both tenants' entries) and falls back
+ * to the unscoped set — a person's IBAN does not depend on the tenant that recorded it.
+ * Whitespace-free and upper-cased, the way the client stores an IBAN on 'me' expenses.
+ */
+export function pickMemberIban(addresses: { addressChannel?: string; iban?: string; isFavorite?: boolean; isArchived?: boolean; tenants?: string[] }[], tenantId: string): string {
+  const banks = addresses.filter(a => a.addressChannel === 'bankaccount' && !a.isArchived && (a.iban ?? '').trim() !== '');
+  const own = banks.filter(a => a.tenants?.includes(tenantId));
+  const pool = own.length > 0 ? own : banks;
+  const pick = pool.find(a => a.isFavorite) ?? pool[0];
+  return (pick?.iban ?? '').replace(/\s+/g, '').toUpperCase();
 }
 
 export type ExpensePaymentTransition = 'create' | 'withdraw' | 'none';

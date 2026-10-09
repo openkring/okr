@@ -47,7 +47,9 @@
     "transfer": {
       "label": "Überweisung",
       "me": "an mich",
-      "issuer": "an Rechnungssteller"
+      "issuer": "an Rechnungssteller",
+      "member": "an Mitglied",
+      "toName": "an {name}"
     },
     "iban": {
       "label": "IBAN",
@@ -70,14 +72,21 @@
       "title": "QR-Rechnung im Beleg",
       "creditor": "Empfänger",
       "reference": "Referenz"
-    }
+    },
+    "member": {
+      "label": "Mitglied",
+      "select": "Mitglied wählen",
+      "ibanHint": "Die Rückerstattung geht an die bevorzugte IBAN aus dem Profil des Mitglieds."
+    },
+    "project": "Projekt"
   },
   "submit": {
     "iban": "Bankverbindung wird gespeichert…",
     "upload": "Belege werden hochgeladen…",
     "saving": "Auslage wird gespeichert…",
     "done": "Gespeichert — der Kassier prüft den Beleg.",
-    "error": "Fehler — Vorgang wurde zurückgerollt"
+    "error": "Fehler — Vorgang wurde zurückgerollt",
+    "memberNoIban": "Für dieses Mitglied ist keine IBAN hinterlegt. Erfasse zuerst eine Bankverbindung im Profil des Mitglieds."
   },
   "validation": {
     "abstractRequired": "Betreff ist erforderlich.",
@@ -87,7 +96,8 @@
     "amountMax": "Betrag ist zu gross.",
     "ibanRequired": "IBAN ist erforderlich.",
     "currencyRequired": "Währung ist erforderlich.",
-    "currencyInvalid": "Ungültige Währung."
+    "currencyInvalid": "Ungültige Währung.",
+    "memberRequired": "Bitte wähle ein Mitglied."
   },
   "action": {
     "title": "Aktion wählen",
@@ -140,6 +150,9 @@
     },
     "issuer": {
       "label": "an Rechnungssteller"
+    },
+    "member": {
+      "label": "an Mitglied"
     }
   },
   "view": {

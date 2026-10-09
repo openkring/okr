@@ -56,7 +56,10 @@ const isAuthor    = (e: ExpenseModel, u?: UserModel): boolean => !!u && e.userId
 const isTreasurer = (u?: UserModel): boolean => hasRole('treasurer', u);
 
 /** View/edit the expense detail: author or treasurer. */
-export const canViewExpense   = (e: ExpenseModel, u?: UserModel): boolean => isAuthor(e, u) || isTreasurer(u);
+/** The member a treasurer entered a 'member' expense for — may view it, nothing more. */
+const isPayee = (e: ExpenseModel, u?: UserModel): boolean =>
+  e.transferTo === 'member' && !!e.payeeKey && !!u?.personKey && e.payeeKey === u.personKey;
+export const canViewExpense   = (e: ExpenseModel, u?: UserModel): boolean => isAuthor(e, u) || isPayee(e, u) || isTreasurer(u);
 /** Soft-delete: author or treasurer. */
 export const canDeleteExpense = (e: ExpenseModel, u?: UserModel): boolean => isAuthor(e, u) || isTreasurer(u);
 /** Redo OCR: treasurer only, and only while not yet booked. */
@@ -102,7 +105,7 @@ const EXPENSE_I18N_SCOPE = '@finance/expense/feature';
  */
 export const EXPENSE_EDIT_STATES: ExpenseStatus[] = ['processing', 'done', 'cancelled'];
 
-const EXPENSE_TRANSFERS: ExpenseTransferTo[] = ['me', 'issuer'];
+const EXPENSE_TRANSFERS: ExpenseTransferTo[] = ['me', 'issuer', 'member'];
 
 /**
  * The status picker of the treasurer edit modal: the `expense_state` category from the
@@ -115,7 +118,7 @@ export function getExpenseEditStateCategory(stateCategory: CategoryListModel): C
 
 /**
  * The transferTo filter of the expense list ('all' is prepended by okr-cat-select). Code-owned:
- * transferTo is a two-value union type in the model. `translateItems` makes okr-cat-select
+ * transferTo is a closed union type in the model. `translateItems` makes okr-cat-select
  * resolve each item through `@finance/expense/feature.expense_transfer.<item>.label`.
  */
 export function getExpenseTransferCategory(tenantId: string): CategoryListModel {
@@ -151,6 +154,16 @@ export function nextExpenseStateFilter(current: string, stateNames: string[]): s
 }
 
 /** Search matches the subject and the submitter's name; '' / 'all' disable a filter. */
+/**
+ * «Meine Spesen» = own expenses plus the 'member' expenses entered for me. One expense can be in
+ * both lists (a treasurer entering one for themself), so dedupe by okey; newest first.
+ */
+export function mergeExpenses(...lists: ExpenseModel[][]): ExpenseModel[] {
+  const byKey = new Map<string, ExpenseModel>();
+  for (const e of lists.flat()) byKey.set(e.okey, e);
+  return [...byKey.values()].sort((a, b) => (b.creationDateTime ?? '').localeCompare(a.creationDateTime ?? ''));
+}
+
 export function filterExpenses(expenses: ExpenseModel[], filter: ExpenseFilter): ExpenseModel[] {
   const term = filter.searchTerm.trim().toLowerCase();
   return expenses.filter(e => {

@@ -47,7 +47,9 @@
     "transfer": {
       "label": "Virement",
       "me": "à moi",
-      "issuer": "à l'émetteur de la facture"
+      "issuer": "à l'émetteur de la facture",
+      "member": "à un membre",
+      "toName": "à {name}"
     },
     "iban": {
       "label": "IBAN",
@@ -70,14 +72,21 @@
       "title": "QR-facture dans le justificatif",
       "creditor": "Bénéficiaire",
       "reference": "Référence"
-    }
+    },
+    "member": {
+      "label": "Membre",
+      "select": "Choisir un membre",
+      "ibanHint": "Le remboursement est versé sur l'IBAN préféré du profil du membre."
+    },
+    "project": "Projet"
   },
   "submit": {
     "iban": "La relation bancaire est en cours d'enregistrement…",
     "upload": "Les justificatifs sont en cours de téléversement…",
     "saving": "Le débours est en cours d'enregistrement…",
     "done": "Enregistré — le caissier vérifie le justificatif.",
-    "error": "Erreur — l'opération a été annulée"
+    "error": "Erreur — l'opération a été annulée",
+    "memberNoIban": "Aucun IBAN n'est enregistré pour ce membre. Ajoute d'abord un compte bancaire dans son profil."
   },
   "validation": {
     "abstractRequired": "L'objet est obligatoire.",
@@ -87,7 +96,8 @@
     "amountMax": "Le montant est trop élevé.",
     "ibanRequired": "L'IBAN est obligatoire.",
     "currencyRequired": "La devise est obligatoire.",
-    "currencyInvalid": "Devise non valide."
+    "currencyInvalid": "Devise non valide.",
+    "memberRequired": "Choisis un membre."
   },
   "action": {
     "title": "Choisir une action",
@@ -140,6 +150,9 @@
     },
     "issuer": {
       "label": "à l'émetteur de la facture"
+    },
+    "member": {
+      "label": "à un membre"
     }
   },
   "view": {
