@@ -66,7 +66,7 @@ import { getUsageForYear, ResourceI18n, resourceValidations, getKeyNr, getLocker
                     </ion-col>
                     <ion-col size="12">
                       <!-- shown as a warning banner in the trip edit modal whenever this boat is selected -->
-                      <okr-textarea-input [i18n]="tripAlertI18n()" [value]="tripAlert()" (valueChange)="onFieldChange('tripAlert', $event)" [maxLength]="commentLength" [rows]="2" [showHelper]="true" [readOnly]="isReadOnly()" />
+                      <okr-textarea-input [i18n]="tripAlertI18n()" [value]="tripAlert()" (valueChange)="onFieldChange('tripAlert', $event)" [maxLength]="commentLength" [rows]="2" [showHelper]="true" [clearable]="true" [readOnly]="isReadOnly()" />
                       <okr-error-note [errors]="tripAlertErrors()" />
                     </ion-col>
                   </ion-row>

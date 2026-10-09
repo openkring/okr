@@ -25,7 +25,7 @@ import { formatTripTime, isTrainingCrewBoat, MAX_TRIP_DISTANCE_KM, TripI18n, tri
     ion-thumbnail { width: 30px; height: 30px; }
     ion-avatar { width: 30px; height: 30px; }
     .title { font-size: 1.25rem; font-weight: 500; margin-left: 0; }
-    .boat-alert { white-space: pre-line; }
+    .boat-alert { display: block; white-space: pre-line; } /* inner span: .ion-text-wrap forces white-space: normal !important on the label */
   `],
   template: `
     <form novalidate>
@@ -33,7 +33,7 @@ import { formatTripTime, isTrainingCrewBoat, MAX_TRIP_DISTANCE_KM, TripI18n, tri
       @if(boatAlert(); as boatAlert) {
         <ion-item color="warning" lines="none">
           <ion-icon slot="start" src="{{ 'alert-circle' | svgIcon }}" />
-          <ion-label class="ion-text-wrap boat-alert">{{ boatAlert }}</ion-label>
+          <ion-label class="ion-text-wrap"><span class="boat-alert">{{ boatAlert }}</span></ion-label>
         </ion-item>
       }
 
