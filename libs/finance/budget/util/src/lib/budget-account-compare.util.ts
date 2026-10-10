@@ -1,15 +1,15 @@
 import { AccountModel } from '@okr/shared-models';
-import { CellSide, CostCenterCell, CostCenterTotals } from '@okr/finance-cost-center-util';
+import { AllocationRow, CellSide, CostCenterCell, CostCenterTotals } from '@okr/finance-cost-center-util';
 import { AccountClass, accountClass, AccountNode, accountForest } from '@okr/finance-reporting-util';
 
 import { usedPercent } from './budget-compare.util';
 import { addTotals as add, isZeroTotals as isZero, zeroTotals as zero } from './budget-rows.util';
 
-export type AccountComparisonKind = 'group' | 'account' | 'total' | 'result';
+export type AccountComparisonKind = 'group' | 'account' | 'allocation' | 'total' | 'result';
 
 /** One line of the Soll-Ist comparison by account (minor units, natural sign): A = budget, B = compare version, Ist = actual. */
 export interface AccountComparisonRow {
-  /** account okey; 'total-revenue' | 'total-expense' | 'total-other' | 'net' */
+  /** account okey; 'allocation:<okey>'; 'total-revenue' | 'total-expense' | 'total-other' | 'net' */
   key: string;
   kind: AccountComparisonKind;
   depth: number;
@@ -57,10 +57,13 @@ const sideOf = (cls: AccountClass): CellSide => (cls === 'expense' ? 'expense' :
  * Amounts the live chart cannot place on a leaf still count, so every total equals Σ of the inputs: a group's
  * own amount (a former leaf that later got children) and an account missing from the live chart (archived)
  * whose parent is live are extra rows under that parent; any other unplaced amount is a top-level row of its
- * class (by account number).
+ * class (by account number). Umlagen (D24, `applyAllocations`) are one-line rows at the end of their side's
+ * section (`revenue` → Ertrag, `expense` → Aufwand), already signed for the selection; they adjust the side total
+ * and the net.
  */
 export function buildAccountComparison(
   accounts: AccountModel[], totals: Map<string, CostCenterTotals>, expandedKeys: ReadonlySet<string>, labels: AccountComparisonLabels,
+  allocations: AllocationRow[] = [],
 ): AccountComparison {
   const forest = accountForest(accounts);
   const placed = new Map<string, AccountNode>();
@@ -122,6 +125,15 @@ export function buildAccountComparison(
     for (const e of topLevel.get(cls) ?? []) {
       rows.push(row(e.key, 'account', 0, e.id, e.name, side, false, false, e.t));
       total = add(total, e.t);
+    }
+    // Umlagen belong to Ertrag / Aufwand; the übriger-Erfolg section (class 7–9) carries none
+    if (cls !== 'result') {
+      for (const a of allocations.filter(x => x.side === side)) {
+        const t: CostCenterTotals = { actual: a.actual, budget: a.budget, compare: 0 };
+        if (isZero(t)) continue;
+        rows.push(row(a.key, 'allocation', 1, '', a.title, side, false, false, t));
+        total = add(total, t);
+      }
     }
     if (rows.length > 0) rows.push(row(totalKey, 'total', 0, '', label, side, false, false, total));
     return { rows, total };

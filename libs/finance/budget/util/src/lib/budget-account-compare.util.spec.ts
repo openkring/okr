@@ -99,3 +99,31 @@ describe('buildAccountComparison', () => {
     expect(res.rows.find(x => x.key === 'a4099')).toMatchObject({ kind: 'account', budget: 700, depth: 1 });
   });
 });
+
+describe('buildAccountComparison with Umlagen (D24)', () => {
+  const alloc = [
+    { key: 'allocation:u1', side: 'expense' as const, title: 'Umlage Clubhaus', budget: 4000, actual: 3200 },
+    { key: 'allocation:u2', side: 'revenue' as const, title: 'Anteil Spenden', budget: -1000, actual: -500 },
+  ];
+  const base = buildAccountComparison(accounts, totalsByAccount(cells), all, LABELS);
+  const r = buildAccountComparison(accounts, totalsByAccount(cells), all, LABELS, alloc);
+  const keys = r.rows.map(x => x.key);
+
+  it('places each row just before its side total', () => {
+    expect(keys.indexOf('allocation:u1')).toBe(keys.indexOf('total-expense') - 1);
+    expect(keys.indexOf('allocation:u2')).toBe(keys.indexOf('total-revenue') - 1);
+    expect(r.rows.find(x => x.key === 'allocation:u1')).toMatchObject({ kind: 'allocation', name: 'Umlage Clubhaus', depth: 1, side: 'expense' });
+  });
+  it('adjusts the side totals and the net', () => {
+    expect(r.expense.budget).toBe(base.expense.budget + 4000);
+    expect(r.revenue.actual).toBe(base.revenue.actual - 500);
+    expect(r.net.budget).toBe(base.net.budget - 1000 - 4000);
+  });
+  it('no allocations = unchanged output', () => {
+    expect(buildAccountComparison(accounts, totalsByAccount(cells), all, LABELS, [])).toEqual(base);
+  });
+  it('an allocation on an otherwise empty side still gets a section total', () => {
+    const empty = buildAccountComparison(accounts, new Map(), all, LABELS, [alloc[0]]);
+    expect(empty.rows.map(x => x.key)).toEqual(['allocation:u1', 'total-expense', 'net']);
+  });
+});
