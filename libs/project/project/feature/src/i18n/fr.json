@@ -65,7 +65,8 @@
     "add": "Ajouter un projet"
   },
   "validation": {
-    "endBeforeStart": "La fin ne peut pas précéder le début."
+    "endBeforeStart": "La fin ne peut pas précéder le début.",
+    "budgetNegative": "Le budget ne peut pas être négatif."
   },
   "project_state": {
     "planned": {
@@ -93,5 +94,20 @@
   "duplicated": "Projet dupliqué. Tâches copiées ({count})",
   "notFound": "Ce projet n'existe pas.",
   "duplicatedPartial": "Seulement {count} tâches sur {total} copiées. Vérifie le nouveau projet.",
-  "duplicateFailed": "Les tâches du projet n'ont pas pu être lues. Rien n'a été dupliqué. Vérifie ta connexion et réessaie."
+  "duplicateFailed": "Les tâches du projet n'ont pas pu être lues. Rien n'a été dupliqué. Vérifie ta connexion et réessaie.",
+  "budget": {
+    "revenue": "Budget recettes",
+    "expenses": "Budget dépenses",
+    "helper": "Valeur prévue pour ce projet – elle ne compte pas dans le budget du club.",
+    "view": "Comparaison budgétaire",
+    "col": {
+      "revenue": "Recettes",
+      "expense": "Dépenses",
+      "net": "Résultat",
+      "budget": "Budget",
+      "actual": "Réel",
+      "diff": "Écart"
+    },
+    "noBooks": "Aucune comptabilité n’est encore configurée pour la comparaison budgétaire."
+  }
 }

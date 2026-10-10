@@ -63,6 +63,18 @@ export const PROJECT_I18N_KEYS = {
   duplicateFailed:   PFX + 'duplicateFailed',
 
   validation_endBeforeStart: PFX + 'validation.endBeforeStart',
+  validation_budgetNegative: PFX + 'validation.budgetNegative',
+  budgetedRevenue:   PFX + 'budget.revenue',
+  budgetedExpenses:  PFX + 'budget.expenses',
+  budget_helper:     PFX + 'budget.helper',
+  budget_view:       PFX + 'budget.view',
+  budget_col_revenue: PFX + 'budget.col.revenue',
+  budget_col_expense: PFX + 'budget.col.expense',
+  budget_col_net:    PFX + 'budget.col.net',
+  budget_col_budget: PFX + 'budget.col.budget',
+  budget_col_actual: PFX + 'budget.col.actual',
+  budget_col_diff:   PFX + 'budget.col.diff',
+  budget_noBooks:    PFX + 'budget.noBooks',
 } satisfies Record<string, string>;
 
 export type ProjectI18n = { [K in keyof typeof PROJECT_I18N_KEYS]: Signal<string> };

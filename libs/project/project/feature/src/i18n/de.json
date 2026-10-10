@@ -65,7 +65,8 @@
     "add": "Projekt hinzufügen"
   },
   "validation": {
-    "endBeforeStart": "Das Ende darf nicht vor dem Beginn liegen."
+    "endBeforeStart": "Das Ende darf nicht vor dem Beginn liegen.",
+    "budgetNegative": "Das Budget darf nicht negativ sein."
   },
   "project_state": {
     "planned": {
@@ -93,5 +94,20 @@
   "duplicated": "Projekt dupliziert. Kopierte Aufgaben ({count})",
   "notFound": "Dieses Projekt gibt es nicht.",
   "duplicatedPartial": "Nur {count} von {total} Aufgaben kopiert. Prüfe das neue Projekt.",
-  "duplicateFailed": "Die Aufgaben des Projekts konnten nicht gelesen werden. Es wurde nichts dupliziert. Prüfe deine Verbindung und versuche es nochmals."
+  "duplicateFailed": "Die Aufgaben des Projekts konnten nicht gelesen werden. Es wurde nichts dupliziert. Prüfe deine Verbindung und versuche es nochmals.",
+  "budget": {
+    "revenue": "Budget Einnahmen",
+    "expenses": "Budget Ausgaben",
+    "helper": "Planwert für dieses Projekt – er zählt nicht zum Vereinsbudget.",
+    "view": "Budgetvergleich",
+    "col": {
+      "revenue": "Einnahmen",
+      "expense": "Ausgaben",
+      "net": "Ergebnis",
+      "budget": "Budget",
+      "actual": "Ist",
+      "diff": "Abweichung"
+    },
+    "noBooks": "Für den Budgetvergleich ist noch keine Buchhaltung eingerichtet."
+  }
 }

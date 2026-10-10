@@ -27,3 +27,15 @@ describe('projectValidations', () => {
     expect(projectValidations(form({ startDate: '', endDate: '20260601' })).getErrors('endDate')).toEqual([]);
   });
 });
+
+describe('projectValidations — budgets (1.65 D25)', () => {
+  it('budgets are optional and may be 0', () => {
+    expect(projectValidations(form()).isValid()).toBe(true);
+    expect(projectValidations(form({ budgetedRevenue: { amount: 0 }, budgetedExpenses: { amount: 120000 } })).isValid()).toBe(true);
+  });
+  it('a negative budget is rejected under its own field', () => {
+    const r = projectValidations(form({ budgetedRevenue: { amount: -1 }, budgetedExpenses: { amount: -5 } }));
+    expect(r.getErrors('budgetedRevenue')).toContain('@project/project/feature.validation.budgetNegative');
+    expect(r.getErrors('budgetedExpenses')).toContain('@project/project/feature.validation.budgetNegative');
+  });
+});

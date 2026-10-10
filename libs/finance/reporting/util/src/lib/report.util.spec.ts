@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { AccountModel, BookingLineModel, BookingModel, BudgetLineModel, MoneyModel } from '@okr/shared-models';
 
 import {
-  accountClass, accountForest, ALL_COST_CENTERS, bookingsByAccount, buildProjectResultRows, buildReportRows, buildSplitProjectResult, effectiveCostCenterSelection, defaultExpandedKeys, fiscalYear, fiscalYearOf, filterLinesByCostCenter, filterLinesByDimension, NO_COST_CENTER, reportToCsv, signedBalance, sumLinesByAccount, totalForClasses, yearResult,
+  accountClass, accountForest, ALL_COST_CENTERS, projectBudgetSummary, bookingsByAccount, buildProjectResultRows, buildReportRows, buildSplitProjectResult, effectiveCostCenterSelection, defaultExpandedKeys, fiscalYear, fiscalYearOf, filterLinesByCostCenter, filterLinesByDimension, NO_COST_CENTER, reportToCsv, signedBalance, sumLinesByAccount, totalForClasses, yearResult,
 } from './report.util';
 
 function account(okey: string, id: string, name: string, parentKey = '', type = 'leaf'): AccountModel {
@@ -332,5 +332,22 @@ describe('filterLinesByCostCenter (generic)', () => {
   it('treats a missing key as empty', () => {
     const legacy = [{ okey: 'old' } as { okey: string; costCenterKey?: string }];
     expect(filterLinesByCostCenter(legacy, NO_COST_CENTER, new Set()).map(l => l.okey)).toEqual(['old']);
+  });
+});
+
+describe('projectBudgetSummary (1.65 D25)', () => {
+  const acc = [account('a3', '3000', 'Ertrag'), account('a4', '4000', 'Aufwand')];
+  const bks = [booking('b1', '20260301'), booking('b2', '20250601'), booking('b3', '20260401', 'draft')];
+  const pl = (bk: string, a: string, d: number, c: number, projectKey: string) => ({ ...line(bk, a, d, c), projectKey });
+  const lines = [pl('b1', 'a3', 0, 50000, 'pr1'), pl('b2', 'a4', 30000, 0, 'pr1'), pl('b3', 'a4', 9999, 0, 'pr1'), pl('b1', 'a4', 1000, 0, 'pr2')];
+  it('actuals over all years (posted only) against the budgets; difference and percent per row', () => {
+    const r = projectBudgetSummary('pr1', 60000, 25000, lines, bks, acc);
+    expect(r.revenue).toEqual({ budget: 60000, actual: 50000, diff: -10000, used: 83 });
+    expect(r.expense).toEqual({ budget: 25000, actual: 30000, diff: 5000, used: 120 });
+    expect(r.net).toEqual({ budget: 35000, actual: 20000, diff: -15000, used: 57 });
+  });
+  it('no budget = percent undefined, not 0', () => {
+    const r = projectBudgetSummary('pr2', 0, 0, lines, bks, acc);
+    expect(r.expense).toEqual({ budget: 0, actual: 1000, diff: 1000, used: undefined });
   });
 });

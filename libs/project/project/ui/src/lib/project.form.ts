@@ -1,11 +1,11 @@
 import { Component, computed, effect, inject, input, model, output } from '@angular/core';
 import { form } from '@angular/forms/signals';
-import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonNote, IonRow } from '@ionic/angular/standalone';
 
 import { AvatarSelect } from '@okr/avatar-ui';
 import { DEFAULT_NOTES, DEFAULT_TAGS, DESCRIPTION_LENGTH } from '@okr/shared-constants';
-import { AvatarInfo, CategoryListModel, ProjectModel, RoleName, UserModel } from '@okr/shared-models';
-import { CategorySelect, Chips, DateInput, DateInputI18n, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { AvatarInfo, CategoryListModel, MoneyModel, ProjectModel, RoleName, UserModel } from '@okr/shared-models';
+import { AmountInput, AmountInputI18n, CategorySelect, Chips, DateInput, DateInputI18n, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { MODEL_SELECTOR, validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, hasRole, newAvatarInfo } from '@okr/shared-util-core';
 import { PROJECT_NAME_LENGTH, ProjectI18n, projectValidations } from '@okr/project-project-util';
@@ -14,8 +14,8 @@ import { PROJECT_NAME_LENGTH, ProjectI18n, projectValidations } from '@okr/proje
   selector: 'okr-project-form',
   standalone: true,
   imports: [
-    ErrorNote, TextInput, NotesInput, DateInput, CategorySelect, Chips, AvatarSelect,
-    IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonItem, IonLabel
+    ErrorNote, TextInput, NotesInput, DateInput, CategorySelect, Chips, AvatarSelect, AmountInput,
+    IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonItem, IonLabel, IonNote
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
@@ -56,6 +56,19 @@ import { PROJECT_NAME_LENGTH, ProjectI18n, projectValidations } from '@okr/proje
                       [readOnly]="isReadOnly()" [withAll]="false" />
                   </ion-item>
                   <okr-error-note [errors]="stateErrors()" />
+                </ion-col>
+              </ion-row>
+              <ion-row>
+                <ion-col size="12" size-md="6">
+                  <okr-amount-input [i18n]="budgetedRevenueI18n()" [value]="budgetedRevenue()" (valueChange)="onBudgetChange('budgetedRevenue', $event)" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="budgetedRevenueErrors()" />
+                </ion-col>
+                <ion-col size="12" size-md="6">
+                  <okr-amount-input [i18n]="budgetedExpensesI18n()" [value]="budgetedExpenses()" (valueChange)="onBudgetChange('budgetedExpenses', $event)" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="budgetedExpensesErrors()" />
+                </ion-col>
+                <ion-col size="12">
+                  <ion-note class="ion-padding-start">{{ i18n().budget_helper() }}</ion-note>
                 </ion-col>
               </ion-row>
             </ion-grid>
@@ -111,6 +124,12 @@ export class ProjectForm {
   protected readonly startDateErrors = computed(() => this.validationResult().getErrors('startDate'));
   protected readonly endDateErrors = computed(() => this.validationResult().getErrors('endDate'));
   protected readonly stateErrors = computed(() => this.validationResult().getErrors('state'));
+  protected readonly budgetedRevenueErrors = computed(() => this.validationResult().getErrors('budgetedRevenue'));
+  protected readonly budgetedExpensesErrors = computed(() => this.validationResult().getErrors('budgetedExpenses'));
+  protected readonly budgetedRevenue = computed(() => this.formData()?.budgetedRevenue?.amount ?? 0);
+  protected readonly budgetedExpenses = computed(() => this.formData()?.budgetedExpenses?.amount ?? 0);
+  protected readonly budgetedRevenueI18n = computed(() => ({ name: 'budgetedRevenue', label: this.i18n().budgetedRevenue() } as AmountInputI18n));
+  protected readonly budgetedExpensesI18n = computed(() => ({ name: 'budgetedExpenses', label: this.i18n().budgetedExpenses() } as AmountInputI18n));
 
   constructor() {
     effect(() => this.valid.emit(this.projectForm().valid()));
@@ -158,6 +177,12 @@ export class ProjectForm {
     label: this.i18n().notes(),
     placeholder: this.i18n().notes_placeholder()
   } as NotesInputI18n));
+
+  /** a budget is typed in francs and held in Rappen (`MoneyModel.amount`) — the AmountInput converts */
+  protected onBudgetChange(fieldName: 'budgetedRevenue' | 'budgetedExpenses', minor: number): void {
+    this.dirty.emit(true);
+    this.formData.update((vm) => ({ ...vm, [fieldName]: new MoneyModel(minor, vm[fieldName]?.currency ?? 'CHF') }));
+  }
 
   protected onFieldChange(fieldName: string, fieldValue: string | string[]): void {
     this.dirty.emit(true);

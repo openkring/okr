@@ -65,7 +65,8 @@
     "add": "Add project"
   },
   "validation": {
-    "endBeforeStart": "The end must not be before the start."
+    "endBeforeStart": "The end must not be before the start.",
+    "budgetNegative": "The budget must not be negative."
   },
   "project_state": {
     "planned": {
@@ -93,5 +94,20 @@
   "duplicated": "Project duplicated. Tasks copied ({count})",
   "notFound": "This project does not exist.",
   "duplicatedPartial": "Only {count} of {total} tasks copied. Please check the new project.",
-  "duplicateFailed": "The tasks of the project could not be read. Nothing was duplicated. Check your connection and try again."
+  "duplicateFailed": "The tasks of the project could not be read. Nothing was duplicated. Check your connection and try again.",
+  "budget": {
+    "revenue": "Budgeted revenue",
+    "expenses": "Budgeted expenses",
+    "helper": "Planning figure for this project – it does not count towards the club budget.",
+    "view": "Budget comparison",
+    "col": {
+      "revenue": "Revenue",
+      "expense": "Expenses",
+      "net": "Result",
+      "budget": "Budget",
+      "actual": "Actual",
+      "diff": "Difference"
+    },
+    "noBooks": "No books are set up for the budget comparison yet."
+  }
 }

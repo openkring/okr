@@ -391,3 +391,28 @@ export function buildSplitProjectResult(
   const result: ReportRow = { okey: 'project-result', id: '', name: labels.net, depth: 0, kind: 'result', hasChildren: false, isExpanded: false, current: net, previous: 0 };
   return { rows: [...income.rows, ...expense.rows, result], details, income: income.total, expense: expense.total, net };
 }
+
+/** One row of a project's budget comparison (minor units): Budget, Ist, Abweichung (Ist − Budget), % used. */
+export interface ProjectBudgetRow { budget: number; actual: number; diff: number; used: number | undefined }
+export interface ProjectBudgetSummary { revenue: ProjectBudgetRow; expense: ProjectBudgetRow; net: ProjectBudgetRow }
+
+/**
+ * A project's budget comparison (spec 1.65 D25): Einnahmen and Ausgaben of its posted lines over all years — split by
+ * booking direction exactly like the project result (`buildSplitProjectResult`) — against `budgetedRevenue` /
+ * `budgetedExpenses`; the Ergebnis is revenue − expense on both sides. A project budget is a planning figure of
+ * the Kostenträger only, never part of the club budget. `used` is undefined without a budget.
+ */
+export function projectBudgetSummary(
+  projectKey: string, budgetedRevenue: number, budgetedExpenses: number,
+  lines: BookingLineModel[], bookings: BookingModel[], accounts: AccountModel[],
+): ProjectBudgetSummary {
+  const own = filterLinesByDimension(lines, 'projectKey', new Set([projectKey]));
+  const result = buildSplitProjectResult(accounts, own, bookings, { income: '', expense: '', net: '' });
+  const row = (budget: number, actual: number): ProjectBudgetRow =>
+    ({ budget, actual, diff: actual - budget, used: budget === 0 ? undefined : Math.round((actual / budget) * 100) });
+  return {
+    revenue: row(budgetedRevenue, result.income),
+    expense: row(budgetedExpenses, result.expense),
+    net: row(budgetedRevenue - budgetedExpenses, result.income - result.expense),
+  };
+}
