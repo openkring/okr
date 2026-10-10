@@ -12,7 +12,8 @@ import { AccountBookingRow, ReportRow } from '@okr/finance-reporting-util';
  * a leaf account row opens the journal filtered by that account (as the Kontoplan does);
  * total and result rows are emphasised. Column widths mirror the page's header toolbar
  * (account number 2/12 · name 6/12 · current 2/12 · previous 2/12; the number hides on phones).
- * An account row with `details` (project result) gets a chevron and expands in place to its bookings.
+ * An account row with `details` (project result, Erfolgsrechnung) gets a chevron and expands in place to its
+ * bookings; in an interactive table a booking row then opens the journal of that account.
  */
 @Component({
   selector: 'okr-report-table',
@@ -58,7 +59,7 @@ import { AccountBookingRow, ReportRow } from '@okr/finance-reporting-util';
         </ion-item>
         @if (bookings.length > 0 && isOpen(row.okey)) {
           @for (booking of bookings; track booking.bookingKey) {
-            <ion-item class="booking" [style.padding-inline-start.px]="(row.depth + 1) * 16">
+            <ion-item class="booking" [button]="interactive()" [detail]="false" (click)="onBookingClick(row)" [style.padding-inline-start.px]="(row.depth + 1) * 16">
               <ion-grid>
                 <ion-row>
                   <ion-col size-md="2" class="ion-hide-sm-down"></ion-col>
@@ -110,6 +111,11 @@ export class ReportTable {
     if (!this.interactive()) return;
     if (row.hasChildren) this.groupToggled.emit(row.okey);
     else if (row.kind === 'account') this.accountSelected.emit(row.okey);
+  }
+
+  /** A booking row of an opened account: in an interactive table it opens the journal of that account. */
+  protected onBookingClick(row: ReportRow): void {
+    if (this.interactive()) this.accountSelected.emit(row.okey);
   }
 
   protected viewDate(storeDate: string): string {

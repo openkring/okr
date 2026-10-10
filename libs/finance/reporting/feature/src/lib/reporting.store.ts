@@ -17,7 +17,7 @@ import { CostCenterStore } from '@okr/finance-cost-center-feature';
 import { costCenterLabel, costCenterSubtreeKeys, sortCostCenterTree } from '@okr/finance-cost-center-util';
 import { ReportingService } from '@okr/finance-reporting-data-access';
 import {
-  ALL_COST_CENTERS, buildReportDocument, buildReportRows, defaultExpandedKeys, downloadCsv, downloadFromUrl, fiscalYear, fiscalYearOf, effectiveCostCenterSelection, filterLinesByCostCenter, NO_COST_CENTER, REPORTING_I18N_KEYS,
+  AccountBookingRow, ALL_COST_CENTERS, bookingsByAccount, buildReportDocument, buildReportRows, defaultExpandedKeys, downloadCsv, downloadFromUrl, fiscalYear, fiscalYearOf, effectiveCostCenterSelection, filterLinesByCostCenter, NO_COST_CENTER, printableRows, REPORTING_I18N_KEYS,
   ReportDocumentLabels, ReportingI18n, ReportRow, reportToCsv, ReportVariant, sumLinesByAccount, totalForClasses, yearResult,
 } from '@okr/finance-reporting-util';
 import { AddressService } from '@okr/subject-address-data-access';
@@ -133,6 +133,11 @@ export const ReportingStore = signalStore(
   withComputed(store => ({
     incomeCurrent: computed(() => sumLinesByAccount(store.incomeLines(), store.bookings(), store.currentFy().from, store.currentFy().to)),
     incomePrevious: computed(() => sumLinesByAccount(store.incomeLines(), store.bookings(), store.previousFy().from, store.previousFy().to)),
+    /** account okey → its posted bookings of the selected fiscal year (Kostenstelle filter applied), signed like the row */
+    incomeDetails: computed<Map<string, AccountBookingRow[]>>(() => {
+      const { from, to } = store.currentFy();
+      return bookingsByAccount(store.incomeLines(), store.bookings().filter(b => b.date >= from && b.date <= to), store.accounts());
+    }),
     balanceResultCurrent: computed(() => yearResult(store.accounts(), store.unfilteredIncomeCurrent())),
     balanceResultPrevious: computed(() => yearResult(store.accounts(), store.unfilteredIncomePrevious())),
   })),
@@ -289,8 +294,9 @@ export const ReportingStore = signalStore(
     /**
      * Renders the statement as it stands on the page into a PDF, through the existing
      * `generateDocument` Cloud Function (puppeteer HTML→PDF), and opens it in a new tab.
+     * @param openKeys Erfolgsrechnung accounts opened on the page — the PDF lists their bookings too
      */
-    async exportPdf(kind: ReportKind): Promise<void> {
+    async exportPdf(kind: ReportKind, openKeys: ReadonlySet<string> = new Set()): Promise<void> {
       const variant = await this.askVariant();
       if (!variant) return;
       try {
@@ -315,7 +321,10 @@ export const ReportingStore = signalStore(
           colCurrent: fy.label,
           colPrevious: store.previousFy().label,
         };
-        const html = buildReportDocument(store.reportRows(kind, false), {
+        const rows = kind === 'income'
+          ? printableRows(store.reportRows(kind, false), store.incomeDetails(), openKeys, view)
+          : store.reportRows(kind, false);
+        const html = buildReportDocument(rows, {
           variant,
           orgName: store.appStore.getOrg(store.reportOrgKey())?.name ?? store.accountingTenantId(),
           orgAddress: await this.orgAddressLine(),

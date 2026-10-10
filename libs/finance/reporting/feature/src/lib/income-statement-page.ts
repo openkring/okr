@@ -17,7 +17,8 @@ import { ReportingStore } from './reporting.store';
 
 /**
  * Erfolgsrechnung of the accounting tenant in the URL: Ertrag, Aufwand and übriger Erfolg of the
- * selected fiscal year, previous year alongside, closed by the Jahresergebnis.
+ * selected fiscal year, previous year alongside, closed by the Jahresergebnis. An account row opens
+ * in place to its bookings of that year (Kostenstelle filter applied); a booking row opens the journal.
  */
 @Component({
   selector: 'okr-income-statement-page',
@@ -70,8 +71,8 @@ import { ReportingStore } from './reporting.store';
       } @else if (store.bookings().length === 0) {
         <okr-empty-list [message]="store.i18n.empty()" />
       } @else {
-        <okr-report-table [rows]="store.incomeRows()" (groupToggled)="store.toggleExpand($event)"
-          (accountSelected)="store.showAccount($event)" />
+        <okr-report-table [rows]="store.incomeRows()" [details]="store.incomeDetails()" [(openKeys)]="openKeys"
+          (groupToggled)="store.toggleExpand($event)" (accountSelected)="store.showAccount($event)" />
       }
     </ion-content>
   `,
@@ -87,6 +88,8 @@ export class IncomeStatementPage {
   // Unique per instance: Ionic keeps the previous page in the DOM, so a fixed id (same for scs and gss books)
   // binds the popover of the next page to the hidden button of the previous one.
   protected readonly popupId = signal(`c_income_${generateRandomString(8)}`);
+  /** account rows opened to their bookings — the PDF prints them too */
+  protected readonly openKeys = signal<ReadonlySet<string>>(new Set());
 
   // `?year=<yyyy>` (query param): the period list opens the report for that fiscal year.
   // An invalid/absent value is ignored by the store, which then keeps the current fiscal year.
@@ -106,7 +109,7 @@ export class IncomeStatementPage {
     if (!method) return;
     switch (method) {
       case 'exportCsv': await this.store.exportCsv('income'); break;
-      case 'exportPdf': await this.store.exportPdf('income'); break;
+      case 'exportPdf': await this.store.exportPdf('income', this.openKeys()); break;
       case 'toggleZero': this.store.toggleZero(); break;
       default: this.alertService.error(`IncomeStatementPage.onPopoverDismiss: unknown method ${method}`);
     }
