@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { AccountModel, BookingLineModel, BookingModel, MoneyModel } from '@okr/shared-models';
+import { AccountModel, BookingLineModel, BookingModel, BudgetLineModel, MoneyModel } from '@okr/shared-models';
 
 import {
-  accountClass, ALL_COST_CENTERS, bookingsByAccount, buildProjectResultRows, buildReportRows, buildSplitProjectResult, effectiveCostCenterSelection, defaultExpandedKeys, fiscalYear, fiscalYearOf, filterLinesByCostCenter, filterLinesByDimension, NO_COST_CENTER, reportToCsv, signedBalance, sumLinesByAccount, totalForClasses, yearResult,
+  accountClass, accountForest, ALL_COST_CENTERS, bookingsByAccount, buildProjectResultRows, buildReportRows, buildSplitProjectResult, effectiveCostCenterSelection, defaultExpandedKeys, fiscalYear, fiscalYearOf, filterLinesByCostCenter, filterLinesByDimension, NO_COST_CENTER, reportToCsv, signedBalance, sumLinesByAccount, totalForClasses, yearResult,
 } from './report.util';
 
 function account(okey: string, id: string, name: string, parentKey = '', type = 'leaf'): AccountModel {
@@ -308,5 +308,29 @@ describe('buildSplitProjectResult', () => {
   it('nests accounts below the heading and names the net', () => {
     expect(result.rows.find(r => r.okey === 'income:a3000')?.depth).toBe(2);
     expect(result.rows[result.rows.length - 1].name).toBe('Gewinn/Verlust');
+  });
+});
+
+describe('accountForest', () => {
+  const a = (okey: string, id: string, parentKey = ''): AccountModel => ({ ...new AccountModel('scs'), okey, id, name: okey, parentKey });
+  it('returns classified top-level nodes with their class inherited down the tree', () => {
+    const forest = accountForest([a('root', ''), a('g3', '3', 'root'), a('l3400', '3400', 'g3'), a('g4', '4', 'root'), a('l4010', '4010', 'g4')]);
+    expect(forest.map(n => [n.account.okey, n.cls])).toEqual([['g3', 'revenue'], ['g4', 'expense']]);
+    expect(forest[1].children.map(c => [c.account.okey, c.cls])).toEqual([['l4010', 'expense']]);
+  });
+});
+
+describe('filterLinesByCostCenter (generic)', () => {
+  const bl = (okey: string, costCenterKey: string): BudgetLineModel =>
+    ({ ...new BudgetLineModel('scs', 'scs', 'v1'), okey, costCenterKey, accountKey: 'a', amount: new MoneyModel(100, 'CHF') });
+  const lines = [bl('x', 'k1'), bl('y', ''), bl('z', 'k2')];
+  it('filters budget lines like booking lines', () => {
+    expect(filterLinesByCostCenter(lines, '', new Set()).map(l => l.okey)).toEqual(['x', 'y', 'z']);
+    expect(filterLinesByCostCenter(lines, NO_COST_CENTER, new Set()).map(l => l.okey)).toEqual(['y']);
+    expect(filterLinesByCostCenter(lines, 'k1', new Set(['k1'])).map(l => l.okey)).toEqual(['x']);
+  });
+  it('treats a missing key as empty', () => {
+    const legacy = [{ okey: 'old' } as { okey: string; costCenterKey?: string }];
+    expect(filterLinesByCostCenter(legacy, NO_COST_CENTER, new Set()).map(l => l.okey)).toEqual(['old']);
   });
 });

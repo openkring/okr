@@ -105,7 +105,7 @@ export interface ReportRow {
   previous: number;
 }
 
-interface Node { account: AccountModel; children: Node[]; cls: AccountClass }
+export interface AccountNode { account: AccountModel; children: AccountNode[]; cls: AccountClass }
 
 function byId(a: AccountModel, b: AccountModel): number {
   return (a.id ?? '').localeCompare(b.id ?? '', 'de', { numeric: true }) || (a.name ?? '').localeCompare(b.name ?? '', 'de');
@@ -116,7 +116,7 @@ function byId(a: AccountModel, b: AccountModel): number {
  * carries no classifiable number is a top-level node; its class is inherited by the whole subtree,
  * so a leaf's sign never contradicts the section it is printed in.
  */
-function buildForest(accounts: AccountModel[]): Node[] {
+function buildForest(accounts: AccountModel[]): AccountNode[] {
   const live = accounts.filter(a => !a.isArchived);
   const byKey = new Map(live.map(a => [a.okey, a]));
   const childrenOf = new Map<string, AccountModel[]>();
@@ -125,7 +125,7 @@ function buildForest(accounts: AccountModel[]): Node[] {
     list.push(a);
     childrenOf.set(a.parentKey ?? '', list);
   }
-  const toNode = (account: AccountModel, cls: AccountClass): Node => ({
+  const toNode = (account: AccountModel, cls: AccountClass): AccountNode => ({
     account, cls,
     children: (childrenOf.get(account.okey) ?? []).sort(byId).map(c => toNode(c, cls)),
   });
@@ -137,7 +137,12 @@ function buildForest(accounts: AccountModel[]): Node[] {
   return live.filter(a => isTopLevel(a) && accountClass(a.id) !== 'other').sort(byId).map(a => toNode(a, accountClass(a.id)));
 }
 
-function value(node: Node, amounts: Map<string, DebitCredit>): number {
+/** The ER's class-level account forest (see `buildForest`) for other reports, e.g. the budget comparison. */
+export function accountForest(accounts: AccountModel[]): AccountNode[] {
+  return buildForest(accounts);
+}
+
+function value(node: AccountNode, amounts: Map<string, DebitCredit>): number {
   if (node.children.length === 0) return signedBalance(node.cls, amounts.get(node.account.okey));
   return node.children.reduce((sum, c) => sum + value(c, amounts), 0);
 }
@@ -153,7 +158,7 @@ export function buildReportRows(
 ): ReportRow[] {
   const rows: ReportRow[] = [];
   const expanded = new Set(expandedKeys);
-  const walk = (node: Node, depth: number): void => {
+  const walk = (node: AccountNode, depth: number): void => {
     const cur = value(node, current);
     const prev = value(node, previous);
     if (!showZero && cur === 0 && prev === 0) return;
@@ -172,7 +177,7 @@ export function buildReportRows(
 /** Keys to expand so the report opens `maxDepth` tiers deep (top-level groups and their children by default). */
 export function defaultExpandedKeys(accounts: AccountModel[], maxDepth = 2): string[] {
   const keys: string[] = [];
-  const walk = (node: Node, depth: number): void => {
+  const walk = (node: AccountNode, depth: number): void => {
     if (depth >= maxDepth || node.children.length === 0) return;
     keys.push(node.account.okey);
     node.children.forEach(c => walk(c, depth + 1));
@@ -211,7 +216,7 @@ export type LineDimension = 'costCenterKey' | 'projectKey';
  * Lines whose `dimension` value is in `keys`. Legacy lines lack the field and count as empty
  * (`''`), so they are kept only when `keys` contains `''`.
  */
-export function filterLinesByDimension(lines: BookingLineModel[], dimension: LineDimension, keys: Set<string>): BookingLineModel[] {
+export function filterLinesByDimension<T extends Partial<Record<LineDimension, string>>>(lines: T[], dimension: LineDimension, keys: Set<string>): T[] {
   return lines.filter(l => keys.has(l[dimension] ?? ''));
 }
 
@@ -219,10 +224,10 @@ export function filterLinesByDimension(lines: BookingLineModel[], dimension: Lin
  * Lines of one Kostenstelle subtree (spec 1.65 §1 criterion 2). `subtreeKeys` = the selected node
  * and its descendants (`costCenterSubtreeKeys`). Missing keys on legacy lines count as empty.
  */
-export function filterLinesByCostCenter(lines: BookingLineModel[], selection: string, subtreeKeys: Set<string>): BookingLineModel[] {
+export function filterLinesByCostCenter<T extends { costCenterKey?: string }>(lines: T[], selection: string, subtreeKeys: Set<string>): T[] {
   if (selection === ALL_COST_CENTERS) return lines;
   if (selection === NO_COST_CENTER) return lines.filter(l => !(l.costCenterKey ?? ''));
-  return filterLinesByDimension(lines, 'costCenterKey', subtreeKeys);
+  return lines.filter(l => subtreeKeys.has(l.costCenterKey ?? ''));
 }
 
 /**
@@ -361,11 +366,11 @@ export function buildSplitProjectResult(
 
   const forest = buildForest(accounts).filter(n => n.cls === 'revenue' || n.cls === 'expense' || n.cls === 'result');
   const side = (prefix: string, okey: string, label: string, totals: Map<string, number>): { rows: ReportRow[]; total: number } => {
-    const sum = (node: Node): number => node.children.length === 0
+    const sum = (node: AccountNode): number => node.children.length === 0
       ? totals.get(node.account.okey) ?? 0
       : node.children.reduce((s, c) => s + sum(c), 0);
     const rows: ReportRow[] = [];
-    const walk = (node: Node, depth: number): void => {
+    const walk = (node: AccountNode, depth: number): void => {
       const current = sum(node);
       if (current === 0) return;
       const hasChildren = node.children.length > 0;
