@@ -1,6 +1,6 @@
 /**
  * ONE-TIME DATA SEED — the «Meine Kostenstellen» menu row (spec 1.65 phase 3, §7.4):
- *   - `my-cost-centers`, a `navigate` row (url `/my-cost-centers`, role `registered`) in the
+ *   - `my-cost-centers`, a `navigate` row (url `/my-cost-centers/@TID@` — the tenant's own books; a second set of books such as gss needs a hand-authored row with its accountingTenantId, role `registered`) in the
  *     catalogued `finance-menu` submenu, right after `expenses`.
  *
  * RUN `--apply` ONLY AFTER THE APP RELEASE that ships the `/my-cost-centers` route — the row is
@@ -28,7 +28,7 @@ const AFTER = 'expenses';
 
 /** Copied from the catalogue specs in feature-blocks.ts — keep the two in step. */
 const SPECS = [
-  { name: ROW, action: 'navigate', url: '/my-cost-centers', roleNeeded: 'registered', icon: 'moneybag', label: '@item.my-cost-centers', menuItems: [] },
+  { name: ROW, action: 'navigate', url: '/my-cost-centers/@TID@', roleNeeded: 'registered', icon: 'moneybag', label: '@item.my-cost-centers', menuItems: [] },
 ];
 
 /** The shape `planMenuOps` creates (`libs/tenant/util/src/lib/menu-seed.util.ts`). */

@@ -315,6 +315,7 @@ Unbounded test runs have exhausted the Mac's RAM (90+ GB swap), so test runs are
 
 ### Hard Rules
 
+- **accounting: `accountingTenantId` ≠ `tenantId`.** The app tenant (`tenants[]`, `appStore.tenantId()`, `users/{uid}.tenants[0]`) is the deployment; `accountingTenantId` names the books (legal entity). Tenant `scs` keeps the books `scs` **and** `gss`. Never set or default one from the other — take the books from the route / `AccountingStore`, require them in callables, and validate `accounting-configs/{id}.tenants` contains the caller's tenant. See the `accounting` skill.
 - never install a new dependency without asking first
 - never modify the database schema (shared-models) without asking first
 - whenever you add, remove, or change a model in `shared-models` (a new collection, a renamed/added/removed `*Key` foreign key, a changed relationship or `modelType`), update the data-model reference to match: `planning/reference/DATA_MODEL.md` and its self-contained diagram `planning/reference/data-model-er.html`. These are hand-maintained snapshots — they do not auto-update.

@@ -1,4 +1,4 @@
-import { Component, computed, inject, resource, signal } from '@angular/core';
+import { Component, computed, inject, input, resource, signal } from '@angular/core';
 import {
   IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonNote, IonSelect, IonSelectOption, IonTitle, IonToolbar
 } from '@ionic/angular/standalone';
@@ -17,7 +17,8 @@ import { CostCenterModel } from '@okr/shared-models';
 import { ALL_COST_CENTERS, NO_COST_CENTER } from '@okr/finance-reporting-util';
 
 /**
- * «Meine Kostenstellen» (route `/my-cost-centers`, spec 1.65 §7.4, D21): the Soll-Ist Erfolgsrechnung of the
+ * «Meine Kostenstellen» (route `/my-cost-centers/:accountingTenantId`, spec 1.65 §7.4, D21) — for the books in the
+ * route (the legal entity; NOT the app tenant, which may keep several sets of books): the Soll-Ist Erfolgsrechnung of the
  * Kostenstellen the caller is responsible for — budget of the reference version (newest approved, D12), Ist,
  * Abweichung, % — cut by a Kostenstelle filter over the caller's own Kostenstellen. An account row opens to its
  * bookings; person-related ones are masked by the callable (D22). Authorization lives in `getMyCostCenterReport`;
@@ -121,6 +122,9 @@ export class MyCostCentersPage {
   private readonly costCenterService = inject(CostCenterService);
   protected readonly i18n = inject(I18nService).translateAll(BUDGET_I18N_KEYS) as BudgetI18n;
 
+  /** the books (route param) — never derived from the app tenant */
+  public readonly accountingTenantId = input.required<string>();
+
   /** undefined = the callable's default (the current fiscal year) */
   protected readonly year = signal<number | undefined>(undefined);
   protected readonly selection = signal(ALL_COST_CENTERS);
@@ -129,8 +133,8 @@ export class MyCostCentersPage {
   protected readonly openAccounts = signal<ReadonlySet<string>>(new Set());
 
   protected readonly reportResource = resource({
-    params: resourceParams(() => ({ year: this.year() })),
-    loader: ({ params }) => this.costCenterService.getMyReport(params.year),
+    params: resourceParams(() => ({ books: this.accountingTenantId(), year: this.year() })),
+    loader: ({ params }) => this.costCenterService.getMyReport(params.books, params.year),
   });
   protected readonly report = computed(() => this.reportResource.value());
 

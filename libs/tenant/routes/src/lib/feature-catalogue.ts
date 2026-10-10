@@ -726,7 +726,8 @@ const finance: BlockRoutes = {
     },
     {
       // «Meine Kostenstellen» (spec 1.65 §7.4, D21): any member; the callable decides what they may see.
-      path: 'my-cost-centers',
+      // The books are a route param — the app tenant keeps several sets of books (scs: scs + gss).
+      path: 'my-cost-centers/:accountingTenantId',
       canActivate: [isAuthenticatedGuard],
       loadComponent: () => import('@okr/finance-budget-feature').then(m => m.MyCostCentersPage),
     },

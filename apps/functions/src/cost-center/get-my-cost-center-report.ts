@@ -1,7 +1,8 @@
 // apps/functions/src/cost-center/get-my-cost-center-report.ts
 //
 // «Meine Kostenstellen» (spec 1.65 §7, D21–D23): the Soll-Ist data of the Kostenstellen the caller
-// may see, for one fiscal year of one set of books. Treasurer, admin and auditor see everything
+// may see, for one fiscal year of one set of books (`accountingTenantId`, required — it must belong to the
+// caller's app tenant, but is NOT the app tenant). Treasurer, admin and auditor see everything
 // unmasked; a board member sees the Kostenstellen their responsibilities name (with every
 // descendant), bookings projected and masked (D22). Nothing is stored; the client aggregates.
 
@@ -46,7 +47,10 @@ export const getMyCostCenterReport = onCall(
     const fullAccess = request.auth?.token?.['admin'] === true || FULL_ACCESS_ROLES.some(r => roles[r] === true);
     const personKey = str(user?.['personKey']);
 
-    const accountingTenantId = (request.data?.accountingTenantId ?? '').trim() || tenantId;
+    // The books are named by the caller (route param), never derived from the app tenant: tenant 'scs' keeps the
+    // books 'scs' AND 'gss' — tenantId and accountingTenantId are different things (see skill `accounting`).
+    const accountingTenantId = (request.data?.accountingTenantId ?? '').trim();
+    if (!accountingTenantId) throw new HttpsError('invalid-argument', 'accountingTenantId is required');
     const config = await db.collection('accounting-configs').doc(accountingTenantId).get();
     if (!config.exists || ((config.data()?.['tenants'] as string[] | undefined) ?? []).indexOf(tenantId) < 0) {
       throw new HttpsError('not-found', 'unknown books');

@@ -73,15 +73,12 @@ export class CostCenterService {
 
   /**
    * «Meine Kostenstellen» (spec 1.65 §7, D21): the Soll-Ist data of the Kostenstellen the caller may see —
-   * scoped and masked by the callable; the caller's own books unless `accountingTenantId` is given.
+   * scoped and masked by the callable — for the books `accountingTenantId` (the legal entity, NOT the app tenant).
    */
-  public async getMyReport(fiscalYear?: number, accountingTenantId?: string): Promise<MyCostCenterReport> {
-    const fn = httpsCallable<{ fiscalYear?: number; accountingTenantId?: string }, MyCostCenterReport>(
+  public async getMyReport(accountingTenantId: string, fiscalYear?: number): Promise<MyCostCenterReport> {
+    const fn = httpsCallable<{ accountingTenantId: string; fiscalYear?: number }, MyCostCenterReport>(
       getFunctions(getApp(), 'europe-west6'), 'getMyCostCenterReport');
-    const data: { fiscalYear?: number; accountingTenantId?: string } = {};
-    if (fiscalYear !== undefined) data.fiscalYear = fiscalYear;
-    if (accountingTenantId) data.accountingTenantId = accountingTenantId;
-    return (await fn(data)).data;
+    return (await fn(fiscalYear === undefined ? { accountingTenantId } : { accountingTenantId, fiscalYear })).data;
   }
 
   /*-------------------------- LIST / QUERY / FILTER --------------------------------*/
