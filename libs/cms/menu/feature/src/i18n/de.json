@@ -604,7 +604,7 @@
     "album-folders-toggle_alt": "Unterordner ausblenden",
     "folder-all": "Ordner",
     "brand-styleguide": "Brand Styleguide",
-    "accounting-menu": "@TID_UPPER@ Buchhaltung",
+    "accounting-menu": "@BOOKS_UPPER@ Buchhaltung",
     "accounting-accounts": "Kontoplan",
     "accounting-cost-centers": "Kostenstellen",
     "accounting-budgets": "Budgets",

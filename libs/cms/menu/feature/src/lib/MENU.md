@@ -109,6 +109,10 @@ expanded at render/select time by `expandMenuTokens(text, ctx)` (`@okr/cms-menu-
 |---|---|---|---|
 | `@VERSION@` | `v` + current app version (e.g. `v4.2.0`) | `version` | `label` |
 | `@REPO_URL@` | `https://github.com/<gitOrg>/<gitRepo>` from `app-config`, no trailing slash | `repoUrl` | `url` |
+| `@TID@` | the **app tenant** id (e.g. `scs`) — for per-tenant records such as `/album/@TID@-album/…` | `tenantId` | `url` |
+| `@TID_UPPER@` | the app tenant id upper-cased | `tenantId` | label value |
+| `@BOOKS@` | the app's **default books**, `app-config.defaultAccountingTenantId` (e.g. `scs`) — the accountingTenantId of `/accounting/@BOOKS@/…` and `/my-cost-centers/@BOOKS@` | `booksId` | `url` |
+| `@BOOKS_UPPER@` | the default books upper-cased (`«@BOOKS_UPPER@ Buchhaltung»`) | `booksId` | label value |
 
 Label expansion runs in `MenuStore.translatedMenuLabel` before the i18n-scope check, so a
 token-bearing label is never treated as a translation key. Url expansion runs in
@@ -117,3 +121,8 @@ token-bearing label is never treated as a translation key. Url expansion runs in
 survives a repository rename without a data edit. Adding a token is a one-file change in `menu-tokens.ts`
 (add a `MenuTokenContext` field if the resolver needs new data, plus a `MENU_TOKENS` entry) and is
 covered by `menu-tokens.spec.ts`.
+
+**`@TID@` is never the books.** The app tenant and the accountingTenantId are different things — tenant `scs`
+keeps the books `scs` and `gss`. An accounting url takes `@BOOKS@`; while `defaultAccountingTenantId` is empty,
+a row whose url needs `@BOOKS@` is hidden, and so is a submenu whose every child is. A second set of books
+(`gss`) never uses a token: its rows are hand-authored with the id written out (`gssf_*`).

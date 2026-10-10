@@ -604,7 +604,7 @@
     "album-folders-toggle_alt": "Ocultar subcarpetas",
     "folder-all": "Carpetas",
     "brand-styleguide": "Guía de marca",
-    "accounting-menu": "Contabilidad @TID_UPPER@",
+    "accounting-menu": "Contabilidad @BOOKS_UPPER@",
     "accounting-accounts": "Plan de cuentas",
     "accounting-cost-centers": "Centros de coste",
     "accounting-budgets": "Presupuestos",

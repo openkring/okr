@@ -604,7 +604,7 @@
     "album-folders-toggle_alt": "Masquer les sous-dossiers",
     "folder-all": "Dossiers",
     "brand-styleguide": "Charte graphique",
-    "accounting-menu": "Comptabilité @TID_UPPER@",
+    "accounting-menu": "Comptabilité @BOOKS_UPPER@",
     "accounting-accounts": "Plan comptable",
     "accounting-cost-centers": "Centres de coûts",
     "accounting-budgets": "Budgets",

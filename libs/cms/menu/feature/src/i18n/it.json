@@ -604,7 +604,7 @@
     "album-folders-toggle_alt": "Nascondi sottocartelle",
     "folder-all": "Cartelle",
     "brand-styleguide": "Guida al marchio",
-    "accounting-menu": "Contabilità @TID_UPPER@",
+    "accounting-menu": "Contabilità @BOOKS_UPPER@",
     "accounting-accounts": "Piano dei conti",
     "accounting-cost-centers": "Centri di costo",
     "accounting-budgets": "Budget",

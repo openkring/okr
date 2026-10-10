@@ -20,6 +20,12 @@ export interface MenuTokenContext {
    * label expansion never needs it.
    */
   tenantId?: string;
+  /**
+   * The app's DEFAULT BOOKS — `AppConfig.defaultAccountingTenantId`, the legal entity whose books the
+   * catalogued finance menus open. NOT the app tenant: tenant `scs` keeps the books `scs` and `gss`.
+   * Used by '@BOOKS@' / '@BOOKS_UPPER@'; '' = the app has no books (rows needing them are hidden).
+   */
+  booksId?: string;
 }
 
 /** Registry of supported tokens → resolver. Keys are the literal tokens found in labels. */
@@ -32,12 +38,19 @@ export const MENU_TOKENS: Record<string, (ctx: MenuTokenContext) => string> = {
   '@REPO_URL@': (ctx) => ctx.repoUrl ?? '',
   // Same '@TID@' spelling `pages.sections` and `feature-catalogue.ts`'s `id: 'news_@TID@'`
   // already use, so one convention covers page ids, section keys and menu urls.
+  // '@TID@' is ALWAYS the app tenant — for per-tenant records (album, news pages). Never use it for
+  // books: an accounting url takes '@BOOKS@' (the default accountingTenantId), see below.
   '@TID@': (ctx) => ctx.tenantId ?? '',
   // Upper-cased tenant id for a TRANSLATED label — e.g. the catalogued accounting sub-menu
   // whose title reads "SCS Buchhaltung" / "SCS accounting". The token sits inside the i18n
   // VALUE (`item.accounting-menu`), not in the stored label, so the label stays a plain
   // translation key and `MenuStore.translatedMenuLabel` expands the token after translating.
-  '@TID_UPPER@': (ctx) => (ctx.tenantId ?? '').toUpperCase()
+  '@TID_UPPER@': (ctx) => (ctx.tenantId ?? '').toUpperCase(),
+  // The app's default books (`AppConfig.defaultAccountingTenantId`) — the accountingTenantId of the
+  // catalogued accounting submenu and the member finance rows («Meine Kostenstellen»). A second set of
+  // books (gss) is never a token: it gets hand-authored rows with its id written out.
+  '@BOOKS@': (ctx) => ctx.booksId ?? '',
+  '@BOOKS_UPPER@': (ctx) => (ctx.booksId ?? '').toUpperCase()
   // future: '@TENANT_NAME@', '@USER_NAME@', ...
 };
 
@@ -78,6 +91,14 @@ export function resolveMenuLabelKey(label: string, ctx: MenuTokenContext): strin
 export function getRepoUrl(gitOrg?: string, gitRepo?: string): string {
   if (!gitOrg || !gitRepo) return '';
   return `https://github.com/${gitOrg}/${gitRepo}`;
+}
+
+/** The book tokens: a text carrying one is meaningless while the app has no default books. */
+const BOOK_TOKENS = ['@BOOKS@', '@BOOKS_UPPER@'];
+
+/** True when `text` (a url or label) needs the default books but none are configured — such a row is hidden. */
+export function lacksBooks(text: string, ctx: MenuTokenContext): boolean {
+  return !ctx.booksId && BOOK_TOKENS.some(t => (text ?? '').includes(t));
 }
 
 /**

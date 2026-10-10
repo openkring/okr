@@ -33,8 +33,8 @@ import { PROJECT_I18N_KEYS } from '@okr/project-project-util';
  * The PDF prints what the page shows (opened accounts with their bookings), headed by the logo,
  * name and address of the books' org (`AccountingConfig.orgId`), through the `report` template the
  * accounting settings name (`projectReportTemplateId`); without one, the built-in layout.
- * Read from the tenant's own books (accounting tenant = okr tenant); lines of other books are
- * not reached from here.
+ * Read from the app's default books (`defaultAccountingTenantId`, NOT the app tenant); lines of other
+ * books are not reached from here.
  */
 @Component({
   selector: 'okr-project-result',
@@ -87,8 +87,11 @@ export class ProjectResult {
   protected readonly i18n = this.i18nService.translateAll(PROJECT_I18N_KEYS);
   protected readonly reporting = this.i18nService.translateAll(REPORTING_I18N_KEYS) as ReportingI18n;
 
-  /** The tenant's own books (accounting tenant = okr tenant, as in the accounting menu). */
-  private readonly accountingTenantId = computed(() => this.appStore.tenantId());
+  /**
+   * The app's default books (`AppConfig.defaultAccountingTenantId`, as the accounting menu's '@BOOKS@') — never
+   * the app tenant: tenant 'scs' keeps the books 'scs' and 'gss'. '' = no books ⇒ the empty state.
+   */
+  private readonly accountingTenantId = computed(() => this.appStore.appConfig().defaultAccountingTenantId ?? '');
 
   private readonly accountsResource = rxResource({
     params: resourceParams(() => ({ id: this.accountingTenantId() })),

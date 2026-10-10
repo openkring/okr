@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { expandMenuTokens, getRepoUrl, resolveMenuLabelKey, resolveMenuUrl } from './menu-tokens';
+import { expandMenuTokens, getRepoUrl, lacksBooks, resolveMenuLabelKey, resolveMenuUrl } from './menu-tokens';
 
 const ctx = { version: '4.2.0' };
 
@@ -99,5 +99,20 @@ describe('resolveMenuUrl', () => {
     // rather than routing to the literal '@TID@'.
     expect(resolveMenuUrl('/album/@TID@-album/c-album', { version: '4.2.0' }))
       .toBe('/album/-album/c-album');
+  });
+});
+
+describe('@BOOKS@ — the default books, never the app tenant', () => {
+  it('@BOOKS@ / @BOOKS_UPPER@ expand to the configured books, independent of the tenant', () => {
+    const c = { ...ctx, tenantId: 'scs', booksId: 'gss' };
+    expect(resolveMenuUrl('/accounting/@BOOKS@/journal/c-journal', c)).toBe('/accounting/gss/journal/c-journal');
+    expect(expandMenuTokens('@BOOKS_UPPER@ Buchhaltung', c)).toBe('GSS Buchhaltung');
+    expect(resolveMenuUrl('/album/@TID@-album/c-album', c)).toBe('/album/scs-album/c-album');
+  });
+  it('lacksBooks: a text that needs books while none are configured', () => {
+    expect(lacksBooks('/accounting/@BOOKS@/journal', { ...ctx, tenantId: 'bkg', booksId: '' })).toBe(true);
+    expect(lacksBooks('@BOOKS_UPPER@ Buchhaltung', { ...ctx, tenantId: 'bkg' })).toBe(true);
+    expect(lacksBooks('/accounting/@BOOKS@/journal', { ...ctx, booksId: 'scs' })).toBe(false);
+    expect(lacksBooks('/album/@TID@-album', { ...ctx, booksId: '' })).toBe(false);
   });
 });

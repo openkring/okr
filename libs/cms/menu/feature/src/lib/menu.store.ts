@@ -14,7 +14,7 @@ import { die, fill, nameMatches, safeStructuredClone, warn } from '@okr/shared-u
 import { AlertService, AppNavigationService, dismissOverlay, isInSplitPane, lazyService, navigateByUrl, VersionCheckService, resourceParams } from '@okr/shared-util-angular';
 import { I18nService } from '@okr/shared-i18n';
 
-import { expandMenuTokens, getRepoUrl, MENU_I18N_KEYS, MenuTokenContext, resolveMenuLabelKey, resolveMenuUrl } from '@okr/cms-menu-util';
+import { expandMenuTokens, getRepoUrl, lacksBooks, MENU_I18N_KEYS, MenuTokenContext, resolveMenuLabelKey, resolveMenuUrl } from '@okr/cms-menu-util';
 
 import { MenuItemsStore } from './menu-items.store';
 
@@ -93,6 +93,16 @@ export const _MenuStore = signalStore(
     // reaches the renderer and cannot produce a «Missing:» placeholder of its own.
     isVisible: (key: string): boolean => {
       if (store.featureStore.hiddenMenuKeys().has(key)) return false;
+      // A row that opens the default books ('@BOOKS@') is hidden while the app has none — and so is a
+      // submenu whose every child does (the accounting menu of a tenant without books).
+      const booksCtx = { version: '', booksId: store.appStore.appConfig().defaultAccountingTenantId ?? '' };
+      const all = store.menuItemsStore.menuItems() ?? [];
+      const item = all.find(i => i.name === key);
+      if (item && lacksBooks(item.url ?? '', booksCtx)) return false;
+      if (item?.action === 'sub' && (item.menuItems?.length ?? 0) > 0) {
+        const kids = (item.menuItems ?? []).map(k => all.find(i => i.name === k)).filter((i): i is MenuItemModel => !!i);
+        if (kids.length > 0 && kids.every(k => lacksBooks(k.url ?? '', booksCtx))) return false;
+      }
       const owners = blockOwnersOfMenuKey(FEATURE_BLOCKS, key);
       return owners.length === 0 || owners.some(id => store.featureStore.effective().has(id));
     },
@@ -172,7 +182,10 @@ export const _MenuStore = signalStore(
         // A translation VALUE may carry a token too (`item.accounting-menu` = "@TID_UPPER@
         // Buchhaltung"), so expand once more on the translated text. Token-free text passes
         // through unchanged.
-        map(text => expandMenuTokens(text, { version: store.versionService.getCurrentVersion(), tenantId: store.appStore.tenantId() })),
+        map(text => expandMenuTokens(text, {
+          version: store.versionService.getCurrentVersion(), tenantId: store.appStore.tenantId(),
+          booksId: store.appStore.appConfig().defaultAccountingTenantId ?? '',
+        })),
       ),
       { initialValue: '' }
     ),
@@ -389,6 +402,8 @@ export const _MenuStore = signalStore(
           version: store.versionService.getCurrentVersion(),
           repoUrl: getRepoUrl(config.gitOrg, config.gitRepo),
           tenantId: store.appStore.tenantId(),
+          // the default books — never the tenant id (see MenuTokenContext.booksId)
+          booksId: config.defaultAccountingTenantId ?? '',
         };
       },
 

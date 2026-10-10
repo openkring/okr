@@ -224,6 +224,10 @@ export class AppConfig {
   // owner and default models
   public ownerUserId = ''; // user ID of the owner of the application
   public ownerOrgId = ''; // organization ID of the owner of the application
+  // The app's DEFAULT BOOKS: the accountingTenantId (legal entity) the catalogued finance menus open via the
+  // '@BOOKS@' token. NOT the app tenant — tenant 'scs' keeps the books 'scs' and 'gss'. '' = no books: rows that
+  // need them are hidden. No fallback to the tenant id, ever.
+  public defaultAccountingTenantId = '';
   public ownerLocationId = ''; // location ID of the owner of the application
   public defaultResourceId = ''; // default resource ID for the application
 
