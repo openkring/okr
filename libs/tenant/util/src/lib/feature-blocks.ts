@@ -1471,6 +1471,7 @@ const finance: FeatureBlock = {
       { key: 'editmode-toggle', name: 'editmode-toggle', url: 'toggleEditMode', action: 'toggle', roleNeeded: 'registered', icon: 'edit', label: '@item.editmode-toggle' },
       { key: 'account-toggle-accounts', name: 'account-toggle-accounts', url: 'toggleAccounts', action: 'toggle', roleNeeded: 'treasurer', icon: 'eye-on', iconAlt: 'eye-off', label: '@item.account-toggle-accounts', labelAlt: '@item.account-toggle-accounts_alt' },
       { key: 'account-toggle-groups', name: 'account-toggle-groups', url: 'toggleGroups', action: 'toggle', roleNeeded: 'treasurer', icon: 'eye-on', iconAlt: 'eye-off', label: '@item.account-toggle-groups', labelAlt: '@item.account-toggle-groups_alt' },
+      { key: 'account-toggle-cost-centers', name: 'account-toggle-cost-centers', url: 'toggleCostCenters', action: 'toggle', roleNeeded: 'treasurer', icon: 'eye-on', iconAlt: 'eye-off', label: '@item.account-toggle-cost-centers', labelAlt: '@item.account-toggle-cost-centers_alt' },
       { key: 'account-create', name: 'account-create', url: 'create', action: 'call', roleNeeded: 'treasurer', icon: 'edit', label: '@item.account-create' },
       { key: 'account-import', name: 'account-import', url: 'import', action: 'call', roleNeeded: 'treasurer', icon: 'upload', label: '@item.account-import' },
       { key: 'account-export', name: 'account-export', url: 'export', action: 'call', roleNeeded: 'treasurer', icon: 'download', label: '@item.account-export' },

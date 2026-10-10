@@ -1,6 +1,6 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonNote, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 import { AccountModel, RoleName } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, Spinner } from '@okr/shared-ui';
@@ -8,6 +8,8 @@ import { createActionSheetButton, createActionSheetOptions, error } from '@okr/s
 import { generateRandomString, hasRole } from '@okr/shared-util-core';
 
 import { Menu } from '@okr/cms-menu-feature';
+import { CostCenterStore } from '@okr/finance-cost-center-feature';
+import { costCenterLabel } from '@okr/finance-cost-center-util';
 
 import { ReadOnlyBanner } from '@okr/finance-accounting-feature';
 
@@ -22,7 +24,7 @@ import { AccountStore } from './account.store';
     Spinner, EmptyList, Menu, ReadOnlyBanner,
     IonToolbar, IonButton, IonIcon, IonLabel, IonHeader, IonButtons,
     IonTitle, IonMenuButton, IonContent, IonItem,
-    IonList, IonPopover
+    IonList, IonNote, IonPopover
   ],
   providers: [AccountStore],
   template: `
@@ -43,7 +45,7 @@ import { AccountStore } from './account.store';
           <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
             <ng-template>
               <ion-content>
-                <okr-menu [menuName]="contextMenuName()" [toggleStates]="{ toggleEditMode: editMode(), toggleAccounts: store.showAccounts(), toggleGroups: store.showGroups() }" />
+                <okr-menu [menuName]="contextMenuName()" [toggleStates]="{ toggleEditMode: editMode(), toggleAccounts: store.showAccounts(), toggleGroups: store.showGroups(), toggleCostCenters: store.showCostCenters() }" />
               </ion-content>
             </ng-template>
           </ion-popover>
@@ -56,6 +58,9 @@ import { AccountStore } from './account.store';
       <ion-item color="primary" lines="none">
         <ion-label slot="start"><strong>{{ store.i18n.id() }}</strong></ion-label>
         <ion-label><strong>{{ store.i18n.name() }}</strong></ion-label>
+        @if(store.showCostCenters()) {
+          <ion-label slot="end"><strong>{{ store.i18n.costCenter() }}</strong></ion-label>
+        }
       </ion-item>
     </ion-toolbar>
   </ion-header>
@@ -78,6 +83,9 @@ import { AccountStore } from './account.store';
             <ion-label>
               <strong>{{ node.account.id }}</strong>&nbsp;{{ node.account.name }}
             </ion-label>
+            @if(store.showCostCenters()) {
+              <ion-note slot="end">{{ costCenterLabels().get(node.account.costCenterKey ?? '') }}</ion-note>
+            }
           </ion-item>
         }
       </ion-list>
@@ -87,6 +95,7 @@ import { AccountStore } from './account.store';
 })
 export class AccountList {
   protected store = inject(AccountStore);
+  private costCenterStore = inject(CostCenterStore);
   private actionSheetController = inject(ActionSheetController);
 
   private router = inject(Router);
@@ -105,6 +114,9 @@ export class AccountList {
   protected visibleNodes = computed(() => this.store.visibleNodes());
   protected currentUser = computed(() => this.store.currentUser());
   protected readOnly = computed(() => !hasRole('contentAdmin', this.currentUser()));
+  // Only the account's own Kostenstelle: an account without one stays empty (no fallback to the book default).
+  protected costCenterLabels = computed(() =>
+    new Map(this.costCenterStore.costCenters().map(c => [c.okey, costCenterLabel(c)])));
   private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 
   /*-------------------------- tree expansion --------------------------------*/
@@ -121,6 +133,7 @@ export class AccountList {
       case 'toggleEditMode': this.editMode.update(v => !v); break;
       case 'toggleAccounts': this.store.toggleShowAccounts(); break;
       case 'toggleGroups': this.store.toggleShowGroups(); break;
+      case 'toggleCostCenters': this.store.toggleShowCostCenters(); break;
       case 'create': await this.store.addAccount(); break;
       case 'import': await this.store.importPlan(); break;
       case 'export': await this.store.exportPlan(); break;

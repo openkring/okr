@@ -20,6 +20,7 @@
     "@okr/finance-account-ui": "*",
     "@okr/finance-account-util": "*",
     "@okr/cms-menu-feature": "*",
-    "@okr/finance-cost-center-feature": "*"
+    "@okr/finance-cost-center-feature": "*",
+    "@okr/finance-cost-center-util": "*"
   }
 }

@@ -318,6 +318,8 @@
     "account-toggle-accounts_alt": "Masquer les comptes",
     "account-toggle-groups": "Afficher les groupes",
     "account-toggle-groups_alt": "Masquer les groupes",
+    "account-toggle-cost-centers": "Afficher les centres de coûts",
+    "account-toggle-cost-centers_alt": "Masquer les centres de coûts",
     "boat-info": "Statistiques des bateaux",
     "boat-maint": "tbd: Maintenance",
     "boat-menu": "Activité d’aviron et bateaux",

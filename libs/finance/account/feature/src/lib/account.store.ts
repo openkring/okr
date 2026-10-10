@@ -38,12 +38,15 @@ export type AccountListState = {
   // context-menu toggles: show/hide the groups and the (leaf) accounts of the tree
   showGroups: boolean;
   showAccounts: boolean;
+  // context-menu toggle: show the account's own default Kostenstelle at the end of each row
+  showCostCenters: boolean;
 };
 
 export const initialState: AccountListState = {
   userExpandedKeys: null,
   showGroups: true,
   showAccounts: true,
+  showCostCenters: false,
 };
 
 export const AccountStore = signalStore(
@@ -110,6 +113,10 @@ export const AccountStore = signalStore(
 
     toggleShowAccounts(): void {
       patchState(store, { showAccounts: !store.showAccounts() });
+    },
+
+    toggleShowCostCenters(): void {
+      patchState(store, { showCostCenters: !store.showCostCenters() });
     },
 
     /*-------------------------- actions --------------------------------*/
