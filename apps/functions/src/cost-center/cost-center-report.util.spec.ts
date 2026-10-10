@@ -29,6 +29,10 @@ describe('isResponsible', () => {
     expect(isResponsible(resp({ validTo: '20251231' }), 'p1', new Set(), TODAY)).toBe(false);
     expect(isResponsible(resp({ validFrom: '20270101' }), 'p1', new Set(), TODAY)).toBe(false);
   });
+  it('only a person avatar matches the person key (an org/user avatar with the same key does not)', () => {
+    expect(isResponsible(resp({ responsibleAvatar: { key: 'p1', modelType: 'org' } }), 'p1', new Set(), TODAY)).toBe(false);
+    expect(isResponsible(resp({ responsibleAvatar: { key: 'p1', modelType: 'user' } }), 'p1', new Set(), TODAY)).toBe(false);
+  });
   it('an empty person key matches nobody', () => {
     expect(isResponsible(resp({ responsibleAvatar: { key: '', modelType: 'person' } }), '', new Set(), TODAY)).toBe(false);
   });
@@ -67,6 +71,11 @@ describe('isPersonRelated', () => {
   });
   it('a counterparty without a record key (bank payee text) is person-related (D22)', () => {
     expect(isPersonRelated({ okey: 'bank-x', counterparty: { key: '', modelType: 'org' } }, none)).toBe(true);
+  });
+  it('any counterparty that is not a resolved org is person-related (user, group, resource)', () => {
+    expect(isPersonRelated({ okey: 'b', counterparty: { key: 'u1', modelType: 'user' } }, none)).toBe(true);
+    expect(isPersonRelated({ okey: 'b', counterparty: { key: 'g1', modelType: 'group' } }, none)).toBe(true);
+    expect(isPersonRelated({ okey: 'b', counterparty: { key: 'x1' } }, none)).toBe(true);
   });
   it('a resolved org and a booking without counterparty are not', () => {
     expect(isPersonRelated({ okey: 'b', counterparty: { key: 'o1', modelType: 'org' } }, none)).toBe(false);

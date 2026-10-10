@@ -21,11 +21,15 @@ export interface RespLike {
   delegateValidTo?: string;
 }
 
-/** A person avatar names that person; a group avatar names every current member of that group. */
+/**
+ * A person avatar names that person; a group avatar names every current member of that group. Any
+ * other avatar type (org, user, resource …) names nobody — its key is not a person key.
+ */
 function names(avatar: AvatarRef | undefined, personKey: string, groupKeys: Set<string>): boolean {
   const key = avatar?.key ?? '';
   if (!key) return false;
-  return avatar?.modelType === 'group' ? groupKeys.has(key) : key === personKey;
+  if (avatar?.modelType === 'group') return groupKeys.has(key);
+  return avatar?.modelType === 'person' && key === personKey;
 }
 
 /**
@@ -71,8 +75,9 @@ export function visibleCostCenterKeys(
 
 /**
  * Spec 1.65 §7.3 / D22: a booking is person-related when it originates from an expense (Spesen),
- * is anonymized, has a person counterparty, or a counterparty that is not a resolved org record
- * (empty key — the bank import stores the raw payee text that way). No counterparty = not person-related.
+ * is anonymized, or has any counterparty other than a resolved org record (an `org` with a key):
+ * persons, users, groups, untyped avatars and keyless payee text (the bank import stores the raw
+ * payee that way) are all masked. No counterparty = not person-related.
  */
 export function isPersonRelated(
   b: { okey: string; anonymizedAt?: string; counterparty?: AvatarRef }, expenseBookingKeys: Set<string>,
@@ -81,7 +86,7 @@ export function isPersonRelated(
   if (b.anonymizedAt) return true;
   const cp = b.counterparty;
   if (!cp) return false;
-  return cp.modelType === 'person' || !(cp.key ?? '');
+  return !(cp.modelType === 'org' && (cp.key ?? '') !== '');
 }
 
 /**
