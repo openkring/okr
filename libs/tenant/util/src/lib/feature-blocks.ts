@@ -2305,6 +2305,8 @@ const task: FeatureBlock = {
     { key: 'project-all', name: 'project-all', url: '/projects/all/c-projects', action: 'navigate', roleNeeded: 'privileged', icon: 'folder', label: '@item.project-all' },
     { key: 'c-projects', name: 'c-projects', url: '', action: 'context', roleNeeded: 'privileged', icon: 'help-circle', label: '', children: [
       { key: 'project-add', name: 'project-add', url: 'add', action: 'call', roleNeeded: 'privileged', icon: 'add-circle', label: '@item.project-add' },
+      // budget comparison of the project list (spec 1.65 D25)
+      { key: 'project-budget-view', name: 'project-budget-view', url: 'toggleBudget', action: 'toggle', roleNeeded: 'privileged', icon: 'moneybag', iconAlt: 'list', label: '@item.project-budget-view', labelAlt: '@item.project-budget-view_alt' },
     ] },
     // `c-tasks` — catalogued here, on the block whose `TaskList.onPopoverDismiss` dispatches all
     // three children (`add`, `export`, `toggleFilter`), exactly as `c-folder` sits on the

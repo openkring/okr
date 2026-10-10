@@ -31,6 +31,7 @@
     "@okr/finance-reporting-feature": "*",
     "@okr/subject-address-data-access": "*",
     "@okr/shared-config": "*",
-    "@okr/avatar-data-access": "*"
+    "@okr/avatar-data-access": "*",
+    "@okr/finance-booking-util": "*"
   }
 }

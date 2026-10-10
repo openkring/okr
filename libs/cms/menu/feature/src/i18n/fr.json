@@ -521,6 +521,8 @@
     "journal-import-bexio": "Importer le journal bexio",
     "journal-import-bank": "Importer un relevé bancaire",
     "project-add": "Ajouter un projet",
+    "project-budget-view": "Comparaison budgétaire",
+    "project-budget-view_alt": "Liste des projets",
     "project-all": "Projets",
     "task-add": "Créer une nouvelle tâche",
     "task-all": "Toutes les tâches",
