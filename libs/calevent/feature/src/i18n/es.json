@@ -63,7 +63,7 @@
     "banner": "La cita está bloqueada"
   },
   "cancelEvent": {
-    "label": "Aviso de cancelación",
+    "label": "Cancelar el evento",
     "placeholder": "Motivo de la cancelación, p. ej. «Cancelado por aviso de tormenta.»",
     "banner": "Cancelado",
     "conf": "El aviso de cancelación se ha guardado.",
@@ -166,7 +166,7 @@
     }
   },
   "view": {
-    "label": "Mostrar los detalles del evento",
+    "label": "Mostrar el evento",
     "album": "Ver álbum"
   },
   "invite": {

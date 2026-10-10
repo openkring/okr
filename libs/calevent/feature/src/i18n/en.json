@@ -63,7 +63,7 @@
     "banner": "Event is locked"
   },
   "cancelEvent": {
-    "label": "Cancellation notice",
+    "label": "Cancel event",
     "placeholder": "Reason for the cancellation, e.g. \"Cancelled because of the storm warning.\"",
     "banner": "Cancelled",
     "conf": "The cancellation notice has been saved.",
@@ -166,7 +166,7 @@
     }
   },
   "view": {
-    "label": "Show event details",
+    "label": "Show event",
     "album": "View album"
   },
   "invite": {

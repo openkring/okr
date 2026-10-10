@@ -63,7 +63,7 @@
     "banner": "L'appuntamento è bloccato"
   },
   "cancelEvent": {
-    "label": "Avviso di annullamento",
+    "label": "Annulla l'evento",
     "placeholder": "Motivo dell’annullamento, ad es. «Annullato per allerta temporale.»",
     "banner": "Annullato",
     "conf": "L’avviso di annullamento è stato salvato.",
@@ -166,7 +166,7 @@
     }
   },
   "view": {
-    "label": "Mostra i dettagli dell'evento",
+    "label": "Mostra l'evento",
     "album": "Visualizza album"
   },
   "invite": {

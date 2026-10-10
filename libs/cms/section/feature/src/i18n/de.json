@@ -205,14 +205,14 @@
     "label": "Kalender",
     "empty": "Keine Ereignisse gefunden.",
     "update": {
-      "label": "Ereignis ändern",
-      "conf": "Das Ereignis wurde geändert.",
-      "error": "Das Ereignis konnte nicht geändert werden."
+      "label": "Termin ändern",
+      "conf": "Der Termin wurde geändert.",
+      "error": "Der Termin konnte nicht geändert werden."
     },
     "subscribe": "Anmelden",
     "unsubscribe": "Abmelden",
-    "edit": "Ereignis bearbeiten",
-    "view": "Ereignis anzeigen",
+    "edit": "Termin ändern",
+    "view": "Termin anzeigen",
     "download": "Zum Kalender hinzufügen"
   },
   "cal": {

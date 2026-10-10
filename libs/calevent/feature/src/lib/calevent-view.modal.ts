@@ -4,7 +4,7 @@ import { IonAccordionGroup, IonCard, IonCardContent, IonContent, IonIcon, IonIte
 import { CalEventModel, CalEventModelName, CategoryListModel } from '@okr/shared-models';
 import { Header } from '@okr/shared-ui';
 import { PartPipe, SvgIconPipe } from '@okr/shared-pipes';
-import { addTime, convertDateFormatToString, DateFormat, getWeekdayI18nKey, hasRole } from '@okr/shared-util-core';
+import { addTime, convertDateFormatToString, DateFormat, getWeekdayI18nKey, getSafeLinkUrl, hasRole } from '@okr/shared-util-core';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 
@@ -125,8 +125,9 @@ function storeToView(d: string): string {
             }
 
             <!-- URL -->
-            @if(calevent().url) {
-                <ion-item lines="none" [href]="calevent().url" target="_blank" rel="noopener noreferrer">
+            <!-- only http(s): ion-item's href bypasses Angular's URL sanitizer -->
+            @if(safeUrl(); as url) {
+                <ion-item lines="none" [href]="url" target="_blank" rel="noopener noreferrer">
                 <ion-icon slot="start" src="{{'link' | svgIcon}}" />
                 <ion-label>
                     <p class="view-label">{{ i18n.url() }}</p>
@@ -173,6 +174,7 @@ export class CalEventViewModal {
   protected readonly responsiblePersons = computed(() => this.calevent().responsiblePersons.map(p => [p]));
   /** the link text: the label if set, else the raw url */
   protected readonly urlLabel = computed(() => this.calevent().urlLabel || this.calevent().url);
+  protected readonly safeUrl = computed(() => getSafeLinkUrl(this.calevent().url));
   protected readonly expertMode = computed(() => hasRole('admin', this.appStore.currentUser()));
 
   private get wdAbbr() {

@@ -207,12 +207,12 @@
     "update": {
       "label": "Modificar evento",
       "conf": "El evento se ha modificado.",
-      "error": "El evento no se ha podido modificar."
+      "error": "No se ha podido modificar el evento."
     },
     "subscribe": "Inscribirse",
     "unsubscribe": "Anular la inscripción",
-    "edit": "Editar evento",
-    "view": "Mostrar evento",
+    "edit": "Modificar evento",
+    "view": "Mostrar el evento",
     "download": "Añadir al calendario"
   },
   "cal": {

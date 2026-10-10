@@ -63,7 +63,7 @@
     "banner": "Rendez-vous verrouillé"
   },
   "cancelEvent": {
-    "label": "Avis d’annulation",
+    "label": "Annuler l'événement",
     "placeholder": "Motif de l’annulation, par ex. « Annulé en raison de l’alerte tempête. »",
     "banner": "Annulé",
     "conf": "L’avis d’annulation a été enregistré.",
@@ -166,7 +166,7 @@
     }
   },
   "view": {
-    "label": "Afficher les détails de l'événement",
+    "label": "Afficher l'événement",
     "album": "Voir l'album"
   },
   "invite": {

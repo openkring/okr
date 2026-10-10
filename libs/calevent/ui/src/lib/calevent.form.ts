@@ -222,7 +222,7 @@ const DEFAULT_RECURRING_PERIODICITY = 'weekly';
             @if(showLinkFields()) {
               <ion-row class="revealed">
                 <ion-col size="12" size-md="6">
-                  <okr-url [i18n]="urlI18n()" [value]="url()" (valueChange)="onFieldChange('url', $event)" [readOnly]="isReadOnly()" />
+                  <okr-url [i18n]="urlI18n()" [value]="url()" (valueChange)="onFieldChange('url', $event)" [readOnly]="isReadOnly()" [openable]="true" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
                   <okr-text-input [i18n]="urlLabelI18n()" [value]="urlLabel()" (valueChange)="onFieldChange('urlLabel', $event)" [readOnly]="isReadOnly()" />

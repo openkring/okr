@@ -1032,9 +1032,9 @@ export class CalEventList implements OnInit {
     actionSheetOptions.buttons.push(createActionSheetDivider());
     actionSheetOptions.buttons.push(createActionSheetButton('calevent.view', this.store.i18n.view(), this.imgixBaseUrl, 'eye-on'));
     if (canChange) {
-      actionSheetOptions.buttons.push(createActionSheetButton('calevent.cancelEvent', this.store.i18n.cancel_event(), this.imgixBaseUrl, 'cancel'));
       actionSheetOptions.buttons.push(createActionSheetButton('calevent.edit', this.store.i18n.update(), this.imgixBaseUrl, 'edit'));
       actionSheetOptions.buttons.push(createActionSheetButton('calevent.copy', this.store.i18n.copy(), this.imgixBaseUrl, 'copy'));
+      actionSheetOptions.buttons.push(createActionSheetButton('calevent.cancelEvent', this.store.i18n.cancel_event(), this.imgixBaseUrl, 'cancel'));
       actionSheetOptions.buttons.push(createActionSheetButton('calevent.delete', this.store.i18n.delete(), this.imgixBaseUrl, 'trash'));
     }
     // freezing the whole event (attendance + invitation responses) — organisers/eventAdmin only,

@@ -205,7 +205,7 @@
     "label": "Calendar",
     "empty": "No events found.",
     "update": {
-      "label": "Change event",
+      "label": "Edit event",
       "conf": "The event has been changed.",
       "error": "The event could not be changed."
     },

@@ -1,7 +1,33 @@
 import { describe, expect, it } from 'vitest';
-import { appLinkOrigins, getDeepLinkPath, getSafeEmbedUrl, getSafeReturnUrl, isWebOrigin, publicAppOrigin, resolveAppOrigin } from './url.util';
+import { appLinkOrigins, getDeepLinkPath, getSafeEmbedUrl, getSafeLinkUrl, getSafeReturnUrl, isWebOrigin, publicAppOrigin, resolveAppOrigin } from './url.util';
 
 describe('url.util', () => {
+  describe('getSafeLinkUrl', () => {
+    it('accepts http and https URLs', () => {
+      expect(getSafeLinkUrl('https://example.com/a?b=1')).toBe('https://example.com/a?b=1');
+      expect(getSafeLinkUrl('http://example.com')).toBe('http://example.com/');
+    });
+
+    it('reads a bare host as https', () => {
+      expect(getSafeLinkUrl('www.example.com/x')).toBe('https://www.example.com/x');
+      expect(getSafeLinkUrl('  example.com  ')).toBe('https://example.com/');
+    });
+
+    it('rejects javascript:, data: and other schemes', () => {
+      expect(getSafeLinkUrl('javascript:alert(1)')).toBeNull();
+      expect(getSafeLinkUrl('JavaScript:alert(1)')).toBeNull();
+      expect(getSafeLinkUrl('data:text/html,<script>alert(1)</script>')).toBeNull();
+      expect(getSafeLinkUrl('mailto:a@b.ch')).toBeNull();
+    });
+
+    it('rejects empty values', () => {
+      expect(getSafeLinkUrl('')).toBeNull();
+      expect(getSafeLinkUrl('   ')).toBeNull();
+      expect(getSafeLinkUrl(undefined)).toBeNull();
+      expect(getSafeLinkUrl(null)).toBeNull();
+    });
+  });
+
   describe('getSafeEmbedUrl', () => {
     it('accepts https URLs on allowlisted hosts', () => {
       expect(getSafeEmbedUrl('https://www.youtube.com/embed/dQw4w9WgXcQ'))

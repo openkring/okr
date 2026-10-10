@@ -63,7 +63,7 @@
     "banner": "Termin ist gesperrt"
   },
   "cancelEvent": {
-    "label": "Absagemitteilung",
+    "label": "Termin absagen",
     "placeholder": "Grund der Absage, z.B. \"Wegen Sturmwarnung abgesagt.\"",
     "banner": "Abgesagt",
     "conf": "Die Absagemitteilung wurde gespeichert.",
@@ -166,7 +166,7 @@
     }
   },
   "view": {
-    "label": "Details des Termins anzeigen",
+    "label": "Termin anzeigen",
     "album": "Album ansehen"
   },
   "invite": {

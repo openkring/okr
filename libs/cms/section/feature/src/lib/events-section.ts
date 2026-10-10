@@ -179,10 +179,9 @@ export class EventsSectionComponent implements OnInit {
       actionSheetOptions.buttons.push(createActionSheetButton('calevent.unsubscribe', this.store.i18n.calevent_unsubscribe(), this.imgixBaseUrl, 'cancel'));
     }
     actionSheetOptions.buttons.push(createActionSheetDivider());
+    actionSheetOptions.buttons.push(createActionSheetButton('calevent.view', this.store.i18n.calevent_view(), this.imgixBaseUrl, 'eye-on'));
     if (this.canChange(calevent)) {
       actionSheetOptions.buttons.push(createActionSheetButton('calevent.edit', this.store.i18n.calevent_edit(), this.imgixBaseUrl, 'edit'));
-    } else {
-      actionSheetOptions.buttons.push(createActionSheetButton('calevent.view', this.store.i18n.calevent_view(), this.imgixBaseUrl, 'eye-on'));
     }
     actionSheetOptions.buttons.push(createActionSheetButton('calevent.downloadIcs', this.store.i18n.calevent_download(), this.imgixBaseUrl, 'calendar-number'));
     actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
@@ -208,7 +207,7 @@ export class EventsSectionComponent implements OnInit {
           break;
         }
         case 'calevent.view':
-          await this.store.edit(calEvent, false, true);
+          await this.store.view(calEvent);
           break;
           /*
         case 'calevent.inviteGroup':

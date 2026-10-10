@@ -36,6 +36,27 @@ export function getSafeEmbedUrl(
 }
 
 /**
+ * Validate a user-entered link (e.g. the `url` of a calevent) before it is rendered as a clickable
+ * `href`. Ionic components (`ion-item`, `ion-button`) take `href` as a component input, so Angular's
+ * URL sanitizer never sees it — a stored `javascript:`/`data:` link would run on click.
+ * @param url the raw value; a bare host without scheme (`www.example.com`) is read as https
+ * @returns the normalized `http:`/`https:` URL, otherwise `null`
+ */
+export function getSafeLinkUrl(url: string | undefined | null): string | null {
+  const raw = String(url ?? '').trim();
+  if (!raw) return null;
+  const withScheme = /^[a-z][a-z\d+.-]*:/i.test(raw) ? raw : `https://${raw.replace(/^\/+/, '')}`;
+  let parsed: URL;
+  try {
+    parsed = new URL(withScheme);
+  } catch {
+    return null;
+  }
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null;
+  return parsed.toString();
+}
+
+/**
  * Path prefixes that must never be turned into an in-app route by a deep link.
  * `/web/*` is the embedded static marketing site and `/__/*` are the Firebase
  * Auth action handlers (password reset, email verification) — both are plain
