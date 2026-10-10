@@ -35,7 +35,7 @@
     "@okr/finance-bank-import-feature": "*",
     "@okr/subject-org-feature": "*",
     "@okr/comment-feature": "*",
-    "@okr/content-document-feature": "*",
+    "@okr/finance-accounting-data-access": "*",
     "@okr/subject-address-util": "*",
     "@okr/finance-accounting-util": "*",
     "@okr/shared-data-access": "*",

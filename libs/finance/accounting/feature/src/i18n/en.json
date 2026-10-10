@@ -213,7 +213,12 @@
   },
   "voucher": {
     "title": "Vouchers",
-    "loadError": "The vouchers could not be loaded. Please try again later."
+    "loadError": "The vouchers could not be loaded. Please try again later.",
+    "add": "Add document",
+    "drop": "Drop a file here to attach it as a document",
+    "uploading": "Uploading document …",
+    "uploadError": "The document could not be uploaded. Please try again.",
+    "typeError": "Only PDF files and photos (JPG, PNG, HEIC, WebP) can be attached."
   },
   "validation": {
     "reminderFeeDecimals": "Please enter the amount with at most two decimal places.",

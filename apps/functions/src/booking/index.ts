@@ -432,3 +432,5 @@ async function reviewerName(db: FirebaseFirestore.Firestore, uid: string): Promi
   const name = `${user?.['firstName'] ?? ''} ${user?.['lastName'] ?? ''}`.trim();
   return name.length > 0 ? name : uid;
 }
+
+export { attachBookingVoucher, prepareBookingVoucherUpload } from './booking-voucher';

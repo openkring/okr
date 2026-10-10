@@ -22,8 +22,8 @@ import { VatCodeService } from '@okr/finance-vat-code-data-access';
 import { BookingLineService, BookingService, ReviewBookingLine } from '@okr/finance-booking-data-access';
 import { fiscalYear, fiscalYearOf } from '@okr/finance-reporting-util';
 import { PeriodService } from '@okr/finance-period-data-access';
-import { invoiceBookingKeys } from '@okr/finance-invoice-util';
-import { billBookingKeys } from '@okr/finance-bill-util';
+import { invoiceBookingKeys, invoiceVoucherKeys } from '@okr/finance-invoice-util';
+import { billBookingKeys, billVoucherKeys } from '@okr/finance-bill-util';
 import {
   BOOKING_ACTIONS,
   BookingAction,
@@ -155,6 +155,22 @@ export const BookingStore = signalStore(
       }
       for (const bill of store.billsResource.value() ?? []) {
         for (const key of billBookingKeys(bill)) if (!map.has(key)) map.set(key, { kind: 'bill', key: bill.okey });
+      }
+      return map;
+    }),
+    /**
+     * The Belege a booking inherits from its invoice or bill (the invoice/reminder PDFs, the bill's
+     * vouchers), by booking okey — same first-claim rule as documentByBookingKey.
+     */
+    linkedVoucherKeysByBookingKey: computed(() => {
+      const map = new Map<string, string[]>();
+      for (const invoice of store.invoicesResource.value() ?? []) {
+        const keys = invoiceVoucherKeys(invoice);
+        if (keys.length > 0) for (const key of invoiceBookingKeys(invoice)) map.set(key, keys);
+      }
+      for (const bill of store.billsResource.value() ?? []) {
+        const keys = billVoucherKeys(bill);
+        if (keys.length > 0) for (const key of billBookingKeys(bill)) if (!map.has(key)) map.set(key, keys);
       }
       return map;
     }),
@@ -343,6 +359,8 @@ export const BookingStore = signalStore(
     modalProps(booking: BookingModel, lines: BookingLineModel[], readOnly: boolean): Record<string, unknown> {
       return {
         booking, lines, readOnly, currentUser: store.currentUser(),
+        // Belege can be added to any saved booking of native books — also a locked or bill one: a Beleg documents the booking, it does not change it
+        linkedVoucherKeys: this.linkedVoucherKeysOf(booking), canAddVouchers: !store.isReadOnly() && !!booking.okey,
         accounts: store.accountsResource.value() ?? [], projects: store.projectsResource.value() ?? [], vatCodes: store.vatCodesResource.value() ?? [], locale: store.locale(),
       };
     },
@@ -359,6 +377,11 @@ export const BookingStore = signalStore(
       if (!doc) return;
       await store.router.navigate(['/accounting', store.accountingTenantId(), doc.kind, 'all', `c-${doc.kind}`],
         { queryParams: doc.kind === 'invoice' ? { invoiceKey: doc.key } : { billKey: doc.key } });
+    },
+
+    /** the Belege of the booking's invoice or bill (not the booking's own `documentKeys`) */
+    linkedVoucherKeysOf(booking: BookingModel): string[] {
+      return store.linkedVoucherKeysByBookingKey().get(booking.okey) ?? [];
     },
 
     documentOf(booking: BookingModel): { kind: 'invoice' | 'bill'; key: string } | undefined {

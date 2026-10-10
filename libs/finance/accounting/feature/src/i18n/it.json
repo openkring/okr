@@ -213,7 +213,12 @@
   },
   "voucher": {
     "title": "Giustificativi",
-    "loadError": "Non è stato possibile caricare i giustificativi. Riprova più tardi."
+    "loadError": "Non è stato possibile caricare i giustificativi. Riprova più tardi.",
+    "add": "Aggiungi giustificativo",
+    "drop": "Trascina qui un file per allegarlo come giustificativo",
+    "uploading": "Caricamento del giustificativo …",
+    "uploadError": "Non è stato possibile caricare il giustificativo. Riprova.",
+    "typeError": "Puoi allegare solo file PDF e foto (JPG, PNG, HEIC, WebP)."
   },
   "validation": {
     "reminderFeeDecimals": "Indica l’importo con al massimo due decimali.",

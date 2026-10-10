@@ -1,29 +1,30 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
-import { ActionSheetController, IonAccordionGroup, IonCard, IonCardContent, IonContent, ModalController } from '@ionic/angular/standalone';
+import { ActionSheetController, IonAccordionGroup, IonCard, IonCardContent, IonContent, ModalController, ToastController } from '@ionic/angular/standalone';
 
 import { ModelSelectService } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { AccountModel, AvatarInfo, BookingLineModel, BookingModel, BookingModelName, ProjectModel, UserModel, VatCodeModel } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
-import { dismissOverlay } from '@okr/shared-util-angular';
+import { dismissOverlay, showToast } from '@okr/shared-util-angular';
 import { coerceBoolean, safeStructuredClone } from '@okr/shared-util-core';
 
 import { CommentsAccordion } from '@okr/comment-feature';
-import { DocumentsAccordion } from '@okr/content-document-feature';
+import { FinanceDocumentService } from '@okr/finance-accounting-data-access';
 import { AccountingStore, VoucherTiles } from '@okr/finance-accounting-feature';
+import { ACCOUNTING_I18N_KEYS, AccountingI18n, isBookingVoucherFile } from '@okr/finance-accounting-util';
 import { CostCenterStore } from '@okr/finance-cost-center-feature';
 import { BookingForm } from '@okr/finance-booking-ui';
 import { BOOKING_I18N_KEYS, BookingFormData, BookingI18n, pairsToLines, toBookingFormData, withSplitTitle } from '@okr/finance-booking-util';
 
 /**
- * Header + change-confirmation + the booking form, then the Belege (documents) and comments of a
- * saved booking. Lives in the feature lib because picking a counterparty needs ModelSelectService. Dismisses with `{ booking, lines }` on confirm: the
+ * Header + change-confirmation + the booking form, then the Belege (its own and those of its invoice or
+ * bill; new ones by button or drop) and comments of a saved booking. Lives in the feature lib because picking a counterparty needs ModelSelectService. Dismisses with `{ booking, lines }` on confirm: the
  * form's pairs are turned back into lines here, so the store's contract is unchanged.
  */
 @Component({
   selector: 'okr-booking-edit-modal',
   standalone: true,
-  imports: [Header, ChangeConfirmation, BookingForm, VoucherTiles, DocumentsAccordion, CommentsAccordion, IonContent, IonAccordionGroup, IonCard, IonCardContent],
+  imports: [Header, ChangeConfirmation, BookingForm, VoucherTiles, CommentsAccordion, IonContent, IonAccordionGroup, IonCard, IonCardContent],
   template: `
     <okr-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
     @if (showConfirmation()) {
@@ -50,14 +51,13 @@ import { BOOKING_I18N_KEYS, BookingFormData, BookingI18n, pairsToLines, toBookin
           (counterpartySelect)="selectCounterparty()"
         />
       }
-      <!-- vouchers migrated from bexio (booking.documentKeys, files in the private bucket, spec 1.74) -->
-      <okr-voucher-tiles [documentKeys]="voucherKeys()" />
-      <!-- Belege and comments hang on the booking's key, so they appear once the booking is saved -->
+      <!-- Belege: the invoice's/bill's, then the booking's own (booking.documentKeys, private bucket, spec 1.74) -->
+      <okr-voucher-tiles [documentKeys]="voucherKeys()" [canAdd]="canAddVouchers()" [uploading]="uploading()" (filesAdded)="addVouchers($event)" />
+      <!-- comments hang on the booking's key, so they appear once the booking is saved -->
       @if (booking().okey) {
         <ion-card>
           <ion-card-content class="ion-no-padding">
-            <ion-accordion-group value="documents" [multiple]="true">
-              <okr-documents-accordion [parentKey]="parentKey()" [title]="i18n.form_documents_label()" [readOnly]="isReadOnly()" />
+            <ion-accordion-group [multiple]="true">
               <okr-comments-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()" />
             </ion-accordion-group>
           </ion-card-content>
@@ -73,7 +73,10 @@ export class BookingEditModal {
   // direct inject, no store: the store opens this modal, importing it back would be circular
   protected readonly costCenterStore = inject(CostCenterStore);
   private readonly accountingStore = inject(AccountingStore);
+  private readonly financeDocumentService = inject(FinanceDocumentService);
+  private readonly toastController = inject(ToastController);
   protected readonly i18n = inject(I18nService).translateAll(BOOKING_I18N_KEYS) as BookingI18n;
+  private readonly accountingI18n = inject(I18nService).translateAll(ACCOUNTING_I18N_KEYS) as AccountingI18n;
 
   public readonly booking = input.required<BookingModel>();
   public readonly lines = input.required<BookingLineModel[]>();
@@ -84,13 +87,20 @@ export class BookingEditModal {
   /** all projects of the tenant incl. archived (Kostenträger picker) */
   public readonly projects = input<ProjectModel[]>([]);
   public readonly locale = input('de-ch');
+  /** the Belege of the booking's invoice or bill */
+  public readonly linkedVoucherKeys = input<string[]>([]);
+  public readonly canAddVouchers = input(false);
 
   protected readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   // the accounting-wide fallback Kostenstelle; legacy configs lack the field
   protected readonly bookDefaultCostCenterKey = computed(() => this.accountingStore.config()?.defaultCostCenterKey ?? '');
   protected readonly parentKey = computed(() => `${BookingModelName}.${this.booking().okey}`);
+  /** Belege added while this modal is open: `booking` is a snapshot and does not see them */
+  private readonly addedVoucherKeys = signal<string[]>([]);
   // legacy docs predate the field — coalesce
-  protected readonly voucherKeys = computed(() => this.booking().documentKeys ?? []);
+  protected readonly voucherKeys = computed(() =>
+    [...new Set([...this.linkedVoucherKeys(), ...(this.booking().documentKeys ?? []), ...this.addedVoucherKeys()])]);
+  protected readonly uploading = signal(false);
   /** like the Kostenstellen: no picker on an externally managed (bexio) ledger */
   protected readonly ledgerProjects = computed(() => this.accountingStore.isExternallyManaged() ? [] : this.projects());
   protected formDirty = signal(false);
@@ -134,6 +144,28 @@ export class BookingEditModal {
     if (avatar) {
       this.formDirty.set(true);
       this.formData.update(vm => withSplitTitle({ ...vm, counterparty: avatar }, this.i18n.split_title()));
+    }
+  }
+
+  /** Uploads the files one by one as Belege of this booking; they are stored at once, independent of «Speichern». */
+  protected async addVouchers(files: File[]): Promise<void> {
+    const booking = this.booking();
+    if (!this.canAddVouchers() || !booking.okey || this.uploading()) return;
+    const accepted = files.filter(f => isBookingVoucherFile(f));
+    if (accepted.length < files.length) await showToast(this.toastController, this.accountingI18n.voucher_type_error());
+    if (accepted.length === 0) return;
+    this.uploading.set(true);
+    try {
+      for (const file of accepted) {
+        // the booking's own books — never the app tenant
+        const key = await this.financeDocumentService.addBookingVoucher(booking.accountingTenantId, booking.okey, file);
+        this.addedVoucherKeys.update(keys => [...keys, key]);
+      }
+    } catch (error) {
+      console.error('BookingEditModal.addVouchers: upload failed', error);
+      await showToast(this.toastController, this.accountingI18n.voucher_upload_error());
+    } finally {
+      this.uploading.set(false);
     }
   }
 

@@ -213,7 +213,12 @@
   },
   "voucher": {
     "title": "Justificantes",
-    "loadError": "No se han podido cargar los justificantes. Vuelve a intentarlo más tarde."
+    "loadError": "No se han podido cargar los justificantes. Vuelve a intentarlo más tarde.",
+    "add": "Añadir comprobante",
+    "drop": "Suelta aquí un archivo para adjuntarlo como comprobante",
+    "uploading": "Subiendo el comprobante …",
+    "uploadError": "No se pudo subir el comprobante. Inténtalo de nuevo.",
+    "typeError": "Solo puedes adjuntar archivos PDF y fotos (JPG, PNG, HEIC, WebP)."
   },
   "validation": {
     "reminderFeeDecimals": "Indica el importe con dos decimales como máximo.",

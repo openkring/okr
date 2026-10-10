@@ -150,10 +150,7 @@
       "label": "Notizen",
       "placeholder": "Bemerkungen zur Buchung"
     },
-    "swap": "Soll und Haben tauschen",
-    "documents": {
-      "label": "Belege"
-    }
+    "swap": "Soll und Haben tauschen"
   },
   "validation": {
     "date": "Bitte ein gültiges Datum eingeben.",

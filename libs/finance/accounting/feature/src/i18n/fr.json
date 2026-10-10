@@ -213,7 +213,12 @@
   },
   "voucher": {
     "title": "Justificatifs",
-    "loadError": "Les justificatifs n’ont pas pu être chargés. Réessaie plus tard."
+    "loadError": "Les justificatifs n’ont pas pu être chargés. Réessaie plus tard.",
+    "add": "Ajouter une pièce justificative",
+    "drop": "Dépose un fichier ici pour l'ajouter comme pièce justificative",
+    "uploading": "Téléversement de la pièce justificative …",
+    "uploadError": "La pièce justificative n'a pas pu être téléversée. Réessaie.",
+    "typeError": "Seuls les fichiers PDF et les photos (JPG, PNG, HEIC, WebP) peuvent être ajoutés."
   },
   "validation": {
     "reminderFeeDecimals": "Indique le montant avec au maximum deux décimales.",

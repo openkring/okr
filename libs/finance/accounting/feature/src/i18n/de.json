@@ -213,7 +213,12 @@
   },
   "voucher": {
     "title": "Belege",
-    "loadError": "Die Belege konnten nicht geladen werden. Versuche es später noch einmal."
+    "loadError": "Die Belege konnten nicht geladen werden. Versuche es später noch einmal.",
+    "add": "Beleg hinzufügen",
+    "drop": "Datei hier ablegen, um sie als Beleg anzuhängen",
+    "uploading": "Beleg wird hochgeladen …",
+    "uploadError": "Der Beleg konnte nicht hochgeladen werden. Versuche es noch einmal.",
+    "typeError": "Als Beleg gehen nur PDF-Dateien und Fotos (JPG, PNG, HEIC, WebP)."
   },
   "validation": {
     "reminderFeeDecimals": "Bitte gib den Betrag mit höchstens zwei Nachkommastellen an.",

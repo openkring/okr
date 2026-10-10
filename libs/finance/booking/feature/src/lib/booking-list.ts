@@ -324,9 +324,10 @@ export class BookingList {
     return row.booking.status === 'cancelled';
   }
 
-  /** the booking has at least one Beleg (legacy bookings only carry documentKey) */
+  /** the booking has at least one Beleg — its own (legacy bookings only carry documentKey) or its invoice's/bill's */
   protected hasVoucher(row: JournalRow): boolean {
-    return (row.booking.documentKeys?.length ?? 0) > 0 || !!row.booking.documentKey;
+    return (row.booking.documentKeys?.length ?? 0) > 0 || !!row.booking.documentKey
+      || this.store.linkedVoucherKeysOf(row.booking).length > 0;
   }
 
   protected isForReview(row: JournalRow): boolean {

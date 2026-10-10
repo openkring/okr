@@ -150,10 +150,7 @@
       "label": "Notes",
       "placeholder": "Remarks on the booking"
     },
-    "swap": "Swap debit and credit",
-    "documents": {
-      "label": "Receipts"
-    }
+    "swap": "Swap debit and credit"
   },
   "validation": {
     "date": "Please enter a valid date.",

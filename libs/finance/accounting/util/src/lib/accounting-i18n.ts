@@ -13,6 +13,11 @@ export const ACCOUNTING_I18N_KEYS = {
   // voucher tiles (Belege) on bookings and bills, spec 1.74
   voucher_title:      PFX + 'voucher.title',
   voucher_load_error: PFX + 'voucher.loadError',
+  voucher_add:          PFX + 'voucher.add',
+  voucher_drop:         PFX + 'voucher.drop',
+  voucher_uploading:    PFX + 'voucher.uploading',
+  voucher_upload_error: PFX + 'voucher.uploadError',
+  voucher_type_error:   PFX + 'voucher.typeError',
 
   // ledger card: the bookings / booking accounts of an invoice or bill
   ledger_bookings:         PFX + 'ledger.bookings',

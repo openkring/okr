@@ -85,7 +85,6 @@ export const BOOKING_I18N_KEYS = {
   form_line_text_label:        PFX + 'form.line.text.label',
   form_line_add:               PFX + 'form.line.add',
   form_swap:                   PFX + 'form.swap',
-  form_documents_label:        PFX + 'form.documents.label',
   form_line_remove:            PFX + 'form.line.remove',
   split_title:                 PFX + 'split.title',
   split_expand:                PFX + 'split.expand',

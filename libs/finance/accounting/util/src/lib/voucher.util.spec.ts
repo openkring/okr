@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { voucherKind } from './voucher.util';
+import { isBookingVoucherFile, voucherKind } from './voucher.util';
 
 describe('voucherKind', () => {
   it('distinguishes images, PDFs and other files', () => {
@@ -23,5 +23,18 @@ describe('voucherTileImage', () => {
   it('falls back to the original for an inline image, else to the file logo', () => {
     expect(voucherTileImage({ ...v, mimeType: 'image/png' }, 'logo')).toEqual({ imageUrl: 'https://storage/orig', isLogo: false });
     expect(voucherTileImage(v, 'logo')).toEqual({ imageUrl: 'logo', isLogo: true });
+  });
+});
+
+describe('isBookingVoucherFile', () => {
+  it('accepts PDFs and photos by extension, whatever the browser reported', () => {
+    expect(isBookingVoucherFile({ name: 'Quittung.PDF' })).toBe(true);
+    expect(isBookingVoucherFile({ name: 'IMG_0042.heic' })).toBe(true);
+    expect(isBookingVoucherFile({ name: 'scan.jpg' })).toBe(true);
+  });
+  it('refuses everything else', () => {
+    expect(isBookingVoucherFile({ name: 'liste.xlsx' })).toBe(false);
+    expect(isBookingVoucherFile({ name: 'page.html' })).toBe(false);
+    expect(isBookingVoucherFile({ name: 'noext' })).toBe(false);
   });
 });
