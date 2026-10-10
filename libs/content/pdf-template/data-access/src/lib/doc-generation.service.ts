@@ -17,6 +17,8 @@ export interface GenerateDocumentRequest {
     filename?: string;
     storageMode?: 'persist' | 'ephemeral';
     metadata?: { entityType?: string; entityId?: string };
+    /** outline this envelope address window on page 1 (editor preview only) */
+    addressGuide?: 'left' | 'right';
   };
 }
 
@@ -57,13 +59,14 @@ export class DocGenerationService {
   public async preview(
     templateId: string,
     payload: Record<string, unknown>,
-    version?: number
+    version?: number,
+    addressGuide?: 'left' | 'right'
   ): Promise<GenerateDocumentResponse> {
     return this.generate({
       templateId,
       templateVersion: version,
       payload,
-      options: { storageMode: 'ephemeral' },
+      options: { storageMode: 'ephemeral', addressGuide },
     });
   }
 

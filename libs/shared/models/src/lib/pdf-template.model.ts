@@ -11,6 +11,8 @@ export type TemplateOutputFormat = 'pdf' | 'docx' | 'html';
 export type TemplateCategory = 'invoice' | 'expense' | 'report' | 'dunning' | 'contract' | 'confirmation' | 'other';
 export type TemplateLanguage = 'de' | 'fr' | 'it' | 'en';
 export type DocGenerationStatus = 'success' | 'failed';
+/** Which side of the window envelope shows the recipient address; 'none' = no envelope. */
+export type TemplateAddressWindow = 'none' | 'left' | 'right';
 
 export interface TemplateAssetRef {
   key: string;
@@ -39,6 +41,7 @@ export class TemplateModel implements OkrModel {
   public attachQrSlip = false;       // append a QR payment slip as a second page
   public qrSlipWithAmount = false;   // fill the slip amount from payload.amount
   public payeeOrgId = '';            // org whose IBAN/address is the payee/sender; '' = tenant's default org
+  public addressWindow: TemplateAddressWindow = 'none'; // envelope window; the editor preview outlines it on page 1
 
   public createdAt = '';
   public createdBy = '';

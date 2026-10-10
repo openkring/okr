@@ -6,7 +6,7 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
-import { TemplateModel, TemplateVersionModel } from '@okr/shared-models';
+import { TemplateAddressWindow, TemplateModel, TemplateVersionModel } from '@okr/shared-models';
 import { DocGenerationService, GenerateDocumentResponse, TemplateService } from '@okr/content-pdf-template-data-access';
 import { EmailComposerModal } from '@okr/content-pdf-template-ui';
 import { newTemplate, newTemplateVersion, TEMPLATE_I18N_KEYS, TemplateI18n } from '@okr/content-pdf-template-util';
@@ -210,7 +210,8 @@ export const TemplateStore = signalStore(
       templateKey: string,
       version: TemplateVersionModel,
       sampleData: string,
-      persist = true
+      persist = true,
+      addressWindow: TemplateAddressWindow = 'none'
     ): Promise<GenerateDocumentResponse | undefined> {
       patchState(store, { previewLoading: true, previewUrl: '', previewStoragePath: '', previewFilename: '' });
       try {
@@ -221,7 +222,9 @@ export const TemplateStore = signalStore(
         if (persist) {
           await store.templateService.saveDraftVersion(templateKey, version, store.currentUser());
         }
-        const response = await store.docGenService.preview(templateKey, payload, version.version);
+        const response = await store.docGenService.preview(
+          templateKey, payload, version.version, addressWindow === 'none' ? undefined : addressWindow
+        );
         patchState(store, {
           previewUrl: response.url,
           previewStoragePath: response.storagePath,

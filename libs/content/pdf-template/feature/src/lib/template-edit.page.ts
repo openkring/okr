@@ -15,7 +15,7 @@ import {
   IonCheckbox, IonBackButton,
 } from '@ionic/angular/standalone';
 
-import { TemplateModel, TemplateVersionModel } from '@okr/shared-models';
+import { TemplateAddressWindow, TemplateModel, TemplateVersionModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { ChangeConfirmation, ChangeConfirmationI18n } from '@okr/shared-ui';
 import { safeStructuredClone } from '@okr/shared-util-core';
@@ -172,6 +172,14 @@ type EditorTab = 'metadata' | 'html' | 'css' | 'preview';
             <ion-label position="stacked">{{ store.i18n.payee_org() }}</ion-label>
             <ion-input [ngModel]="tmpl.payeeOrgId" (ngModelChange)="onTemplateFieldChange('payeeOrgId', $event)" [disabled]="readOnly()" />
           </ion-item>
+          <ion-item>
+            <ion-label position="stacked">{{ store.i18n.address_window() }}</ion-label>
+            <ion-select [ngModel]="addressWindow()" (ngModelChange)="onTemplateFieldChange('addressWindow', $event)" [disabled]="readOnly()">
+              <ion-select-option value="none">{{ store.i18n.address_window_none() }}</ion-select-option>
+              <ion-select-option value="left">{{ store.i18n.address_window_left() }}</ion-select-option>
+              <ion-select-option value="right">{{ store.i18n.address_window_right() }}</ion-select-option>
+            </ion-select>
+          </ion-item>
         }
       }
 
@@ -306,6 +314,9 @@ export class TemplateEditPage implements OnDestroy {
     return versions.some((v: TemplateVersionModel) => v.version === draftNum);
   });
 
+  // legacy templates (read raw from Firestore) lack the field
+  protected readonly addressWindow = computed<TemplateAddressWindow>(() => this.template()?.addressWindow ?? 'none');
+
   protected readonly safePreviewUrl = computed((): SafeResourceUrl | null => {
     const url = this.store.previewUrl();
     return url ? this.sanitizer.bypassSecurityTrustResourceUrl(url) : null;
@@ -438,6 +449,7 @@ export class TemplateEditPage implements OnDestroy {
       this.editorVersion(),
       this.template()?.sampleData ?? '{}',
       false,
+      this.addressWindow(),
     );
   }
 

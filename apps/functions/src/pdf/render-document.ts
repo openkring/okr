@@ -28,6 +28,7 @@ import { resolvePayee, renderQrSlipSvg, buildQrSlipPageHtml } from './qr-slip';
 import { buildQrSlipData, selectSlipAccount, SlipAccountError } from '@okr/shared-util-functions';
 import { resolveAssetUrls } from './asset-resolver';
 import { sanitizeHtml } from './sanitize';
+import { drawAddressGuide, toAddressGuideSide } from './address-guide';
 
 // Handlebars helpers are registered lazily on first use (not at cold start) so the
 // shared bundle does not load handlebars for non-pdf functions.
@@ -61,6 +62,8 @@ export interface GenerateDocumentRequest {
     filename?: string;
     storageMode?: 'persist' | 'ephemeral';
     metadata?: { entityType?: string; entityId?: string };
+    /** outline this envelope address window on page 1 (template editor preview only) */
+    addressGuide?: 'left' | 'right';
   };
 }
 
@@ -220,6 +223,11 @@ export async function renderDocument(
           printBackground: true,
           margin: options.margin ?? { top: '15mm', bottom: '15mm', left: '15mm', right: '15mm' },
         });
+        // preview aid only: an ephemeral template render may outline the envelope window
+        const guide = toAddressGuideSide(options.addressGuide);
+        if (guide && templateId && storageMode === 'ephemeral') {
+          fs.writeFileSync(tempPath, await drawAddressGuide(fs.readFileSync(tempPath), guide));
+        }
       } finally {
         await page.close();
       }
