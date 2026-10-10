@@ -67,8 +67,8 @@ describe('budgetLineValidations', () => {
   it('accountKey: required', () => expect(run(ln({ accountKey: '' })).getErrors('accountKey')).toContain('required'));
   it('accountKey: must be budgetable', () =>
     expect(run(ln({ accountKey: 'a1020' })).getErrors('accountKey')).toContain('@finance/budget/feature.accountKey.notBudgetable'));
-  it('amount: not negative, zero ok', () => {
-    expect(run(ln({ amount: -1 })).getErrors('amount')).toContain('@finance/budget/feature.amount.negative');
+  it('amount: negative (opposite direction, e.g. a fund release) and zero are ok', () => {
+    expect(run(ln({ amount: -1 })).getErrors('amount')).toEqual([]);
     expect(run(ln({ amount: 0 })).getErrors('amount')).toEqual([]);
   });
   it('duplicate cell under another okey is an error', () =>

@@ -106,7 +106,6 @@ export const BUDGET_I18N_KEYS = {
   accountKey_duplicate: PFX + 'accountKey.duplicate',
   amount:               PFX + 'amount.label',
   amount_helper:        PFX + 'amount.helper',
-  amount_negative:      PFX + 'amount.negative',
 
   as_title:             '@actionsheet.title',
   save:                 '@save.label',

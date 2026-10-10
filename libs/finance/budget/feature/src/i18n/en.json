@@ -124,8 +124,7 @@
   },
   "amount": {
     "label": "Amount",
-    "helper": "Planned amount for the whole fiscal year, as a positive number – spending for expenses, income for revenue.",
-    "negative": "The amount must not be negative."
+    "helper": "Planned amount for the whole fiscal year – spending for expenses, income for revenue. A minus sign plans the opposite direction, for example a release from a fund."
   },
   "archiveState": {
     "active": {

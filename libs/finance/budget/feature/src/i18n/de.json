@@ -124,8 +124,7 @@
   },
   "amount": {
     "label": "Betrag",
-    "helper": "Geplanter Betrag für das ganze Geschäftsjahr, als positive Zahl – bei Aufwand die Ausgaben, bei Ertrag die Einnahmen.",
-    "negative": "Der Betrag darf nicht negativ sein."
+    "helper": "Geplanter Betrag für das ganze Geschäftsjahr – bei Aufwand die Ausgaben, bei Ertrag die Einnahmen. Mit Minus planst du die Gegenrichtung, zum Beispiel eine Entnahme aus einem Fonds."
   },
   "archiveState": {
     "active": {

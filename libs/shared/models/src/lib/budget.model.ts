@@ -34,7 +34,8 @@ export class BudgetVersionModel implements OkrModel {
 
 /**
  * One budget cell: version × leaf Kostenstelle × P&L leaf account (spec 1.65 D4), sparse.
- * `amount` is positive in the account's natural direction (expense on 4–6, revenue on 3/7–9).
+ * `amount` is positive in the account's natural direction (expense on 4–6, revenue on 3/7–9); a negative
+ * amount plans the opposite direction (e.g. a release from a fund booked on an expense account).
  */
 export class BudgetLineModel implements OkrModel {
   public okey = DEFAULT_KEY;

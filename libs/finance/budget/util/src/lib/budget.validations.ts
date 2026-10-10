@@ -55,9 +55,6 @@ export const budgetLineValidations = staticSuite(
         enforce(budgetableAccountKeys.has(model.accountKey)).isTruthy();
       });
     });
-    test('amount', '@finance/budget/feature.amount.negative', () => {
-      enforce(typeof model.amount === 'number' && model.amount >= 0).isTruthy();
-    });
     omitWhen(!model.costCenterKey || !model.accountKey, () => {
       test('accountKey', '@finance/budget/feature.accountKey.duplicate', () => {
         const cell = budgetCellKey(model.costCenterKey, model.accountKey);

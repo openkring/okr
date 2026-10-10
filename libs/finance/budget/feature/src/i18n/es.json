@@ -124,8 +124,7 @@
   },
   "amount": {
     "label": "Importe",
-    "helper": "Importe previsto para todo el ejercicio, como número positivo: los gastos en las cuentas de gastos, los ingresos en las de ingresos.",
-    "negative": "El importe no puede ser negativo."
+    "helper": "Importe previsto para todo el ejercicio: los gastos en las cuentas de gastos, los ingresos en las de ingresos. Con un signo menos planificas el sentido contrario, por ejemplo una retirada de un fondo."
   },
   "archiveState": {
     "active": {

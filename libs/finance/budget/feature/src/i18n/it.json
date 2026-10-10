@@ -124,8 +124,7 @@
   },
   "amount": {
     "label": "Importo",
-    "helper": "Importo previsto per l'intero esercizio, come numero positivo – le uscite per i costi, le entrate per i ricavi.",
-    "negative": "L'importo non può essere negativo."
+    "helper": "Importo previsto per l'intero esercizio – le uscite per i costi, le entrate per i ricavi. Con il segno meno pianifichi la direzione opposta, per esempio un prelievo da un fondo."
   },
   "archiveState": {
     "active": {

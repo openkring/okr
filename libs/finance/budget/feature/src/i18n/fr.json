@@ -124,8 +124,7 @@
   },
   "amount": {
     "label": "Montant",
-    "helper": "Montant prévu pour tout l'exercice, en nombre positif – les dépenses pour les charges, les recettes pour les produits.",
-    "negative": "Le montant ne peut pas être négatif."
+    "helper": "Montant prévu pour tout l'exercice – les dépenses pour les charges, les recettes pour les produits. Avec un signe moins, tu planifies le sens inverse, par exemple un prélèvement sur un fonds."
   },
   "archiveState": {
     "active": {
