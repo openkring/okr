@@ -8,6 +8,7 @@ export * from './lib/isMemberAdmin.guard';
 export * from './lib/isPrivileged.guard';
 export * from './lib/isTreasurer.guard';
 export * from './lib/kioskLock.guard';
+export * from './lib/rootUrl.guard';
 export * from './lib/login.modal';
 export * from './lib/login.page';
 export * from './lib/logout.page';

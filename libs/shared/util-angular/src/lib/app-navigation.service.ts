@@ -25,6 +25,7 @@ export class AppNavigationService {
     if (this.history.length > 0) {
       this.router.navigateByUrl(this.history[this.history.length - 1]);
     } else {
+      // '/' resolves to the tenant's app-config.rootUrl (rootUrlGuard in every app.routes.ts).
       this.router.navigateByUrl('/');
     }
   }

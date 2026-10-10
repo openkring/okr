@@ -63,6 +63,8 @@ describe('app generator', () => {
     expect(tree.exists('apps/acme-app/src/app/app.routes.ts')).toBe(true);
     const routes = tree.read('apps/acme-app/src/app/app.routes.ts', 'utf-8') ?? '';
     expect(routes).toContain("redirectTo: 'public/welcome_acme'");
+    // '/' must follow app-config.rootUrl, not a hard-coded landing page.
+    expect(routes).toContain("{ path: '', pathMatch: 'full', canActivate: [rootUrlGuard], children: [] }");
     expect(routes).not.toContain('<%=');
   });
 

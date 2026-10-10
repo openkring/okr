@@ -1,5 +1,5 @@
 import { Route } from '@angular/router';
-import { isAppReadyGuard } from '@okr/auth-feature';
+import { isAppReadyGuard, rootUrlGuard } from '@okr/auth-feature';
 import { composeGatedFeatureRoutes, UNGATED_ROUTES } from '@okr/tenant-routes';
 
 // The route table is composed from the feature catalogue by composeGatedFeatureRoutes
@@ -34,7 +34,9 @@ const featureRoutes: Route[] = [
 ];
 
 export const appRoutes: Route[] = [
-  { path: '', pathMatch: 'full', redirectTo: 'public/welcome_<%= tenantId %>' },
+  // '/' lands on app-config.rootUrl — the one answer to "where does the user land without
+  // choosing a route" (opening the domain, PWA start_url, back() with empty history). See rootUrlGuard.
+  { path: '', pathMatch: 'full', canActivate: [rootUrlGuard], children: [] },
   { path: 'welcome', pathMatch: 'full', redirectTo: 'public/welcome_<%= tenantId %>' },
   {
     // Componentless parent: applies the app-ready gate to every feature route without

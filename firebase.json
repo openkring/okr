@@ -87,15 +87,6 @@
           ]
         },
         {
-          "source": "/",
-          "headers": [
-            {
-              "key": "Link",
-              "value": "<https://bkaiser.imgix.net/tenant/scs/app/welcome.jpg?w=1200&auto=format,compress&fit=crop>; rel=preload; as=image; fetchpriority=high"
-            }
-          ]
-        },
-        {
           "source": "/welcome",
           "headers": [
             {

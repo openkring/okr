@@ -371,7 +371,7 @@ export const AocRolesStore = signalStore(
           const token = result.data as string;
           patchState(store, { log: logMessage(log, `AocRolesStore.impersonateUser: impersonation token <${token}>`) });
           // Now we can use the impersonation token to sign in the user
-          await store.authService.loginWithToken(token, 'public/welcome');
+          await store.authService.loginWithToken(token, store.appStore.appConfig().rootUrl);
           patchState(store, { log: logMessage(log, `AocRolesStore.impersonateUser: user <${user.okey}/${user.loginEmail}> is now impersonated`) });
         } catch (ex) {
           console.error('AocRolesStore.impersonateUser: Error calling impersonateUser function:', ex);
