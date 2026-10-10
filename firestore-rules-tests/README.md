@@ -1,7 +1,8 @@
 # Firestore + Storage security-rules tests
 
-Emulator-based tests for [`firestore.rules`](../firestore.rules) and
-[`storage.rules`](../storage.rules):
+Emulator-based tests for [`firestore.rules`](../firestore.rules),
+[`storage.rules`](../storage.rules) and
+[`storage-private.rules`](../storage-private.rules):
 
 - **`rules.test.py`** (Firestore) — tenant isolation, role-escalation blocking,
   ownership, the public-read carve-outs, and — critically — that the app's
@@ -12,6 +13,11 @@ Emulator-based tests for [`firestore.rules`](../firestore.rules) and
   public `logo/` assets, function-owned `generated-docs/` (`write:false`), the
   size-gated write path, and default-deny. The rules read the caller's user doc
   via `firestore.get`, so both emulators run together.
+- **`storage-private.test.py`** (Storage + Firestore) — the private bucket: no
+  client read, update or delete; the album-video create path with its tenant,
+  `section`/room-less `folder`, `renderings/` and extension gates; default-deny.
+  Overwrites are not testable here: the emulator evaluates every upload as a
+  create, while production evaluates an overwrite as an update.
 
 ## Run
 
@@ -19,9 +25,14 @@ Emulator-based tests for [`firestore.rules`](../firestore.rules) and
 ./firestore-rules-tests/run.sh
 ```
 
-This wraps `firebase emulators:exec --only firestore`, which loads the rules,
-starts the emulator, runs the tests, and tears everything down. Exit code is
-non-zero if any case fails.
+This wraps `firebase emulators:exec`, which loads the rules, starts the
+emulators, runs the tests, and tears everything down — one pass for Firestore
+and one per storage bucket. Exit code is non-zero if any case fails.
+
+`firebase.json` lists storage per bucket, which the Storage emulator rejects
+("Must supply 'target'") and which it could not honour anyway: it applies one
+ruleset to every bucket. `run.sh` therefore writes a temporary copy of
+`firebase.json` with storage collapsed to one rules file per pass.
 
 Requirements: the Firebase CLI (`npx firebase`), a JDK (for the emulator), and
 `python3` (standard library only — no extra packages).
