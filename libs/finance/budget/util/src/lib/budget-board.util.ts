@@ -38,7 +38,9 @@ export function buildBoardView(report: MyCostCenterReport, selection: string, ex
   }) as BudgetLineModel), selection, subtree);
 
   const cells = aggregateByCostCenter(lines, accounts, budget);
-  const comparison = buildAccountComparison(accounts, totalsByAccount(cells), expandedKeys, labels);
+  // Umlagen (D24): the callable computed the rows per filter option (the board member cannot see the sources)
+  const allocations = report.allocationsBySelection?.[selection] ?? [];
+  const comparison = buildAccountComparison(accounts, totalsByAccount(cells), expandedKeys, labels, allocations);
 
   const byKey = new Map(report.bookings.map(b => [b.okey, b]));
   const bookings = report.bookings.map(b => ({

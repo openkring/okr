@@ -13,5 +13,19 @@
   },
   "delete": {
     "error": "La cellule n'a pas pu être supprimée."
+  },
+  "allocation": {
+    "create": {
+      "conf": "La répartition a été créée.",
+      "error": "La répartition n’a pas pu être créée."
+    },
+    "update": {
+      "conf": "Les modifications ont été enregistrées.",
+      "error": "Les modifications n’ont pas pu être enregistrées."
+    },
+    "archive": {
+      "conf": "La répartition a été archivée.",
+      "error": "La répartition n’a pas pu être archivée."
+    }
   }
 }

@@ -1401,6 +1401,8 @@ export async function resolveDocs(entry: SubjectDataEntry, ctx: SubjectCtx): Pro
 //   and the approval reference. No natural person's data.
 // not personal data: budget-lines — one budget cell (1.65 phase 2): costCenterKey, accountKey and
 //   an amount under a version. No natural person's data.
+// not personal data: cost-allocations — an Umlage rule (1.65 D24): fiscalYear, side, from/to Kostenstelle keys,
+//   title, a fixed amount or a percentage. Club structure, no person.
 // not personal data: commissionEntries — a ledger line (C3 §7): partnerKey, tenantId, band,
 //   amounts. No natural person appears on it; the contact-of-record stays on the metering
 //   record it was derived from.

@@ -13,5 +13,19 @@
   },
   "delete": {
     "error": "No se ha podido eliminar la celda."
+  },
+  "allocation": {
+    "create": {
+      "conf": "Se ha creado el reparto.",
+      "error": "No se ha podido crear el reparto."
+    },
+    "update": {
+      "conf": "Se han guardado los cambios.",
+      "error": "No se han podido guardar los cambios."
+    },
+    "archive": {
+      "conf": "Se ha archivado el reparto.",
+      "error": "No se ha podido archivar el reparto."
+    }
   }
 }

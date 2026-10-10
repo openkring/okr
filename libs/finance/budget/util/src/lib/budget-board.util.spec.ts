@@ -34,6 +34,7 @@ const report: MyCostCenterReport = {
     { bookingKey: 'b2', accountKey: 'a4400', costCenterKey: 'jun', debit: 15000, credit: 0 },
     { bookingKey: 'b3', accountKey: 'a6500', costCenterKey: '', debit: 3000, credit: 0 },
   ],
+  allocationsBySelection: { jun: [{ key: 'allocation:u1', side: 'expense', title: 'Umlage Clubhaus', budget: 4000, actual: 3200 }] },
 };
 const open = new Set(['g4']);
 
@@ -57,5 +58,18 @@ describe('buildBoardView', () => {
       ['b1', 'Meldegelder', 'RC Sarnen', 82000],
       ['b2', 'Regatta — Person', '', 15000],
     ]);
+  });
+});
+
+describe('buildBoardView with Umlagen', () => {
+  it('shows the rows computed for the chosen option and adjusts the totals', () => {
+    const v = buildBoardView(report, 'jun', open, LABELS);
+    expect(v.comparison.rows.find(r => r.key === 'allocation:u1')).toMatchObject({ kind: 'allocation', budget: 4000, actual: 3200 });
+    expect(v.comparison.expense).toEqual({ actual: 97000 + 3200, budget: 100000 + 4000, compare: 0 });
+  });
+  it('an option without rows (or a legacy report without the field) shows none', () => {
+    expect(buildBoardView(report, 'sport', open, LABELS).comparison.rows.some(r => r.kind === 'allocation')).toBe(false);
+    const legacy = { ...report, allocationsBySelection: undefined } as unknown as typeof report;
+    expect(buildBoardView(legacy, 'jun', open, LABELS).comparison.rows.some(r => r.kind === 'allocation')).toBe(false);
   });
 });

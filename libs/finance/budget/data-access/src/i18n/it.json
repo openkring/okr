@@ -13,5 +13,19 @@
   },
   "delete": {
     "error": "La cella non ha potuto essere eliminata."
+  },
+  "allocation": {
+    "create": {
+      "conf": "La ripartizione è stata creata.",
+      "error": "Non è stato possibile creare la ripartizione."
+    },
+    "update": {
+      "conf": "Le modifiche sono state salvate.",
+      "error": "Non è stato possibile salvare le modifiche."
+    },
+    "archive": {
+      "conf": "La ripartizione è stata archiviata.",
+      "error": "Non è stato possibile archiviare la ripartizione."
+    }
   }
 }

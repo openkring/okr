@@ -1,3 +1,5 @@
+import type { AllocationRow } from './cost-allocation.util';
+
 /**
  * The response of the `getMyCostCenterReport` callable (spec 1.65 §7.1, D21) — shared by the Cloud
  * Function and the client. Raw, already scoped data: the client aggregates it with the treasurer's own
@@ -24,4 +26,6 @@ export interface MyCostCenterReport {
   budgetLines: ReportBudgetLine[];
   bookings: ReportBooking[];
   lines: ReportLine[];
+  /** Umlage rows (D24) per Kostenstelle filter option: '' = all the caller sees, else a Kostenstelle okey */
+  allocationsBySelection: Record<string, AllocationRow[]>;
 }

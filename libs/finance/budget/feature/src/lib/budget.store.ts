@@ -12,7 +12,7 @@ import { DateFormat, fill, getTodayStr } from '@okr/shared-util-core';
 
 import { AccountService } from '@okr/finance-account-data-access';
 import { AccountingStore } from '@okr/finance-accounting-feature';
-import { BudgetService } from '@okr/finance-budget-data-access';
+import { BudgetService, CostAllocationService } from '@okr/finance-budget-data-access';
 import { BUDGET_I18N_KEYS, BudgetApprovalFormModel, BudgetI18n, isVersionEditable, planApproval } from '@okr/finance-budget-util';
 import { CostCenterStore } from '@okr/finance-cost-center-feature';
 import { ReportingService } from '@okr/finance-reporting-data-access';
@@ -67,6 +67,7 @@ export const BudgetStore = signalStore(
   withState(initialBudgetState),
   withProps(() => ({
     budgetService: inject(BudgetService),
+    costAllocationService: inject(CostAllocationService),
     accountService: inject(AccountService),
     reportingService: inject(ReportingService),
     appStore: inject(AppStore),
@@ -101,6 +102,11 @@ export const BudgetStore = signalStore(
         ? { id: store.accountingStore.accountingTenantId() } : undefined),
       stream: ({ params }) => params.id ? store.accountService.list(params.id) : of([]),
     }),
+    // Umlagen (D24): the rules of the books, for the Soll-Ist comparison
+    allocationsResource: rxResource({
+      params: resourceParams(() => actualsActive() ? { id: store.accountingStore.accountingTenantId() } : undefined),
+      stream: ({ params }) => params.id ? store.costAllocationService.list(params.id) : of([]),
+    }),
     // archived accounts: only the pages with actuals need them, to place amounts budgeted or booked on them
     archivedAccountsResource: rxResource({
       params: resourceParams(() => actualsActive() ? { id: store.accountingStore.accountingTenantId() } : undefined),
@@ -125,6 +131,8 @@ export const BudgetStore = signalStore(
     isLoading: computed(() => state.versionsResource.isLoading() || state.linesResource.isLoading()),
     accounts: computed(() => state.accountsResource.value() ?? []),
     /** live and archived accounts — for the grid and the comparison, so an amount on an archived account still counts */
+    /** live Umlage rules of the books (all years — `applyAllocations` filters the year) */
+    allocationRules: computed(() => (state.allocationsResource.value() ?? []).filter(r => !r.isArchived)),
     reportAccounts: computed(() => [...(state.accountsResource.value() ?? []), ...(state.archivedAccountsResource.value() ?? [])]),
     bookings: computed(() => state.bookingsResource.value() ?? []),
     bookingLines: computed(() => state.bookingLinesResource.value() ?? []),

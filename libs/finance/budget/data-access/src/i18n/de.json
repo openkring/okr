@@ -13,5 +13,19 @@
   },
   "delete": {
     "error": "Die Zelle konnte nicht gelöscht werden."
+  },
+  "allocation": {
+    "create": {
+      "conf": "Die Umlage wurde erstellt.",
+      "error": "Die Umlage konnte nicht erstellt werden."
+    },
+    "update": {
+      "conf": "Die Änderungen wurden gespeichert.",
+      "error": "Die Änderungen konnten nicht gespeichert werden."
+    },
+    "archive": {
+      "conf": "Die Umlage wurde archiviert.",
+      "error": "Die Umlage konnte nicht archiviert werden."
+    }
   }
 }

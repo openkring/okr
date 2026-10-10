@@ -12,8 +12,8 @@ import { getFirestore, type Firestore } from 'firebase-admin/firestore';
 
 import { checkAppCheckToken, checkAuthentication, tenantIdOfUserData } from '@okr/shared-util-functions';
 import { getTodayStr, isProfitAndLossAccountId, isValidAt } from '@okr/shared-util-core';
-import type { BudgetVersionModel } from '@okr/shared-models';
-import type { MyCostCenterReport, ReportBooking, ReportLine } from '@okr/finance-cost-center-util';
+import { AccountModel, BookingLineModel, BudgetLineModel, BudgetVersionModel, CostAllocationModel, CostCenterModel } from '@okr/shared-models';
+import { aggregateByCostCenter, AllocationRow, applyAllocations, costCenterSubtreeKeys, MyCostCenterReport, ReportBooking, ReportLine, rollUpCostCenters } from '@okr/finance-cost-center-util';
 import { newestApprovedBudget } from '@okr/finance-budget-util';
 import { fiscalYear as fiscalYearRange } from '@okr/finance-reporting-util';
 
@@ -83,6 +83,7 @@ export const getMyCostCenterReport = onCall(
       : await visibleForCaller(db, tenantId, centers, personKey, today);
     const empty: MyCostCenterReport = {
       accountingTenantId, fiscalYear: year, fiscalYears, fullAccess, costCenters: [], accounts: [], budget: null, budgetLines: [], bookings: [], lines: [],
+      allocationsBySelection: {},
     };
     if (visible.size === 0 && !fullAccess) return empty;
     // full access sees every line — unassigned, archived or unknown Kostenstelle included — like the treasurer's comparison
@@ -94,17 +95,19 @@ export const getMyCostCenterReport = onCall(
     const pnl = new Set(accounts.filter(a => isProfitAndLossAccountId(a.id)).map(a => a.okey));
 
     const reference = newestApprovedBudget(versions, year);
-    const budgetLines = reference
+    // every budget line of the reference version: the Umlagen need the source totals, the response only the visible ones
+    const allBudgetLines = reference
       ? (await db.collection('budget-lines').where('versionKey', '==', reference.okey).where('tenants', 'array-contains', tenantId).get()).docs
         .map(d => d.data() as Data)
-        .filter(l => l['isArchived'] !== true && keyVisible(str(l['costCenterKey'])))
+        .filter(l => l['isArchived'] !== true)
         .map(l => ({ costCenterKey: str(l['costCenterKey']), accountKey: str(l['accountKey']), amount: num((l['amount'] as Data | undefined)?.['amount']) }))
       : [];
+    const budgetLines = allBudgetLines.filter(l => keyVisible(l.costCenterKey));
 
     const range = fiscalYearRange(year, fiscalYearStart);
     const bookingDocs = (await scoped('bookings').get()).docs
       .filter(b => b.data()['status'] === 'posted' && str(b.data()['date']) >= range.from && str(b.data()['date']) <= range.to);
-    const lines: ReportLine[] = [];
+    const allLines: ReportLine[] = [];
     const keys = bookingDocs.map(b => b.id);
     const chunks: string[][] = [];
     for (let i = 0; i < keys.length; i += IN_CHUNK) chunks.push(keys.slice(i, i + IN_CHUNK));
@@ -118,11 +121,17 @@ export const getMyCostCenterReport = onCall(
         if (!((l['tenants'] as string[] | undefined) ?? []).includes(tenantId) || l['accountingTenantId'] !== accountingTenantId) continue;
         const accountKey = str(l['accountKey']);
         const costCenterKey = str(l['costCenterKey']);
-        if (!pnl.has(accountKey) || !keyVisible(costCenterKey)) continue;
-        lines.push({ bookingKey: str(l['bookingKey']), accountKey, costCenterKey,
+        if (!pnl.has(accountKey)) continue;
+        allLines.push({ bookingKey: str(l['bookingKey']), accountKey, costCenterKey,
           debit: num((l['debitAmount'] as Data | undefined)?.['amount']), credit: num((l['creditAmount'] as Data | undefined)?.['amount']) });
       }
     }
+    const lines = allLines.filter(l => keyVisible(l.costCenterKey));
+
+    // Umlagen (D24): computed here for every option of the page's Kostenstelle filter — from ALL lines and the whole
+    // reference budget, which a board member never receives; the rules themselves are not sent.
+    const rules = (await scoped('cost-allocations').get()).docs.map(d => ({ ...(d.data() as CostAllocationModel), okey: d.id }));
+    const allocationsBySelection = allocationOptions(rules, centers, visible, fullAccess, allLines, allBudgetLines, accounts, year, accountingTenantId);
 
     const used = new Set(lines.map(l => l.bookingKey));
     // Spesen: the OCR pipeline books `bookings/{expenseKey}`, so an expense doc with the booking's okey marks it
@@ -138,9 +147,34 @@ export const getMyCostCenterReport = onCall(
       accountingTenantId, fiscalYear: year, fiscalYears, fullAccess,
       costCenters: centers.filter(c => visible.has(c.okey)).map(c => ({ okey: c.okey, id: c.id, name: c.name, parentKey: c.parentKey, type: c.type })),
       accounts, budget: reference ? { versionKey: reference.okey, name: reference.name ?? '' } : null, budgetLines, bookings, lines,
+      allocationsBySelection,
     };
   },
 );
+
+/**
+ * The Umlage rows per filter option of «Meine Kostenstellen»: '' (all the caller sees — for full access every rule
+ * nets to zero), each visible Kostenstelle (its subtree), and for full access the «ohne Kostenstelle» bucket (none).
+ */
+function allocationOptions(
+  rules: CostAllocationModel[], centers: { okey: string; parentKey: string }[], visible: Set<string>, fullAccess: boolean,
+  lines: ReportLine[], budgetLines: { costCenterKey: string; accountKey: string; amount: number }[],
+  accounts: { okey: string; id: string }[], year: number, accountingTenantId: string,
+): Record<string, AllocationRow[]> {
+  if (rules.length === 0) return {};
+  const models = centers.map(c => ({ ...new CostCenterModel('', accountingTenantId), okey: c.okey, parentKey: c.parentKey }) as CostCenterModel);
+  const cells = aggregateByCostCenter(
+    lines.map(l => ({ bookingKey: l.bookingKey, accountKey: l.accountKey, costCenterKey: l.costCenterKey,
+      debitAmount: { amount: l.debit, currency: 'CHF' }, creditAmount: { amount: l.credit, currency: 'CHF' } }) as unknown as BookingLineModel),
+    accounts.map(a => ({ okey: a.okey, id: a.id }) as AccountModel),
+    budgetLines.map(b => ({ costCenterKey: b.costCenterKey, accountKey: b.accountKey, amount: { amount: b.amount, currency: 'CHF' } }) as unknown as BudgetLineModel),
+  );
+  const rollUp = rollUpCostCenters(cells, models);
+  const out: Record<string, AllocationRow[]> = {};
+  out[''] = applyAllocations(rules, fullAccess ? 'all' : visible, rollUp, year, accountingTenantId);
+  for (const key of visible) out[key] = applyAllocations(rules, costCenterSubtreeKeys(models, key), rollUp, year, accountingTenantId);
+  return out;
+}
 
 /** The booking okeys (of `keys`) that originate from an expense of the tenant: same okey, or the expense's `bookingKey`. */
 async function expenseOrigins(db: Firestore, tenantId: string, keys: string[]): Promise<Set<string>> {

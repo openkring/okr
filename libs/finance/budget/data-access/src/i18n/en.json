@@ -13,5 +13,19 @@
   },
   "delete": {
     "error": "The cell could not be deleted."
+  },
+  "allocation": {
+    "create": {
+      "conf": "The allocation was created.",
+      "error": "The allocation could not be created."
+    },
+    "update": {
+      "conf": "The changes were saved.",
+      "error": "The changes could not be saved."
+    },
+    "archive": {
+      "conf": "The allocation was archived.",
+      "error": "The allocation could not be archived."
+    }
   }
 }
