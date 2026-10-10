@@ -8,12 +8,13 @@ import { AppStore, ModelSelectService } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { CostCenterModel } from '@okr/shared-models';
 import { AlertService, error } from '@okr/shared-util-angular';
-import { fill } from '@okr/shared-util-core';
+import { DateFormat, fill, getTodayStr } from '@okr/shared-util-core';
 
 import { AccountingStore } from '@okr/finance-accounting-feature';
 import { CostCenterMigrationStep, CostCenterService } from '@okr/finance-cost-center-data-access';
 import { CostCenterEditModal } from '@okr/finance-cost-center-ui';
-import { COST_CENTER_I18N_KEYS, CostCenterI18n, leafCostCenters, sortCostCenterTree } from '@okr/finance-cost-center-util';
+import { COST_CENTER_I18N_KEYS, CostCenterI18n, leafCostCenters, parseBackfillYear, sortCostCenterTree } from '@okr/finance-cost-center-util';
+import { fiscalYearOf } from '@okr/finance-reporting-util';
 import { ResponsibilityService } from '@okr/relationship-responsibility-data-access';
 
 export type { CostCenterI18n };
@@ -185,8 +186,26 @@ export const CostCenterStore = signalStore(
           : _shown;
       };
       try {
-        const _preview = await store.costCenterService.migrate(_tenant, step, true);
+        // backfill: one fiscal year, asked for (spec 1.65 D19); the current one is proposed
+        let _year: number | undefined;
+        if (step === 'backfill') {
+          const _current = fiscalYearOf(getTodayStr(DateFormat.StoreDate), store.accountingStore.config()?.fiscalYearStart ?? 1);
+          const _answer = await store.alertService.okrPrompt(fill(store.i18n.migrate_yearPrompt(), { current: _current }), String(_current), String(_current));
+          if (_answer === undefined) return;   // cancelled
+          _year = parseBackfillYear(_answer, _current);
+          if (_year === undefined) {
+            await store.alertService.showToast(fill(store.i18n.migrate_yearInvalid(), { current: _current }));
+            return;
+          }
+        }
+        const _preview = await store.costCenterService.migrate(_tenant, step, true, _year);
+        // a function deployed before D19 ignores the year and would report (and apply) the current one
+        if (_year !== undefined && _preview.fiscalYear !== _year) {
+          await store.alertService.confirm(store.i18n.migrate_yearMismatch());
+          return;
+        }
         const _lines = [fill(store.i18n.migrate_report(), { scanned: _preview.scanned, updated: _preview.updated })];
+        if (_year !== undefined) _lines.unshift(fill(store.i18n.migrate_year(), { year: _year }));
         if (_preview.unmatched.length > 0) _lines.push(fill(store.i18n.migrate_unmatched(), { list: _describe(_preview.unmatched) }));
         if (_preview.unattributed.length > 0) _lines.push(fill(store.i18n.migrate_unattributed(), { list: _describe(_preview.unattributed) }));
         const _lockedSkipped = _preview.lockedSkipped ?? 0;
@@ -198,7 +217,7 @@ export const CostCenterStore = signalStore(
         }
         _lines.push(store.i18n.migrate_apply());
         if (!await store.alertService.confirm(_lines.join('\n\n'), true)) return;
-        const _done = await store.costCenterService.migrate(_tenant, step, false);
+        const _done = await store.costCenterService.migrate(_tenant, step, false, _year);
         await store.alertService.showToast(fill(store.i18n.migrate_done(), { updated: _done.updated }));
       } catch (err) {
         error(undefined, `CostCenterStore.migrate(${step}): ${String((err as { message?: unknown })?.message ?? err)}`, true);

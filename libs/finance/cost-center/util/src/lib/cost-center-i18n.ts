@@ -67,6 +67,11 @@ export const COST_CENTER_I18N_KEYS = {
   migrate_apply:        PFX + 'migrate.apply',
   migrate_none:         PFX + 'migrate.none',
   migrate_done:         PFX + 'migrate.done',
+  /** single-brace {current} / {year}: translateAll strips {{…}} — fill() it */
+  migrate_yearPrompt:   PFX + 'migrate.yearPrompt',
+  migrate_yearInvalid:  PFX + 'migrate.yearInvalid',
+  migrate_yearMismatch: PFX + 'migrate.yearMismatch',
+  migrate_year:         PFX + 'migrate.year',
   migrate_error:        PFX + 'migrate.error',
 
   as_title:             '@actionsheet.title',

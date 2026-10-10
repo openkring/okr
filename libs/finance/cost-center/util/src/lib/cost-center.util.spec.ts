@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { CostCenterModel } from '@okr/shared-models';
 
-import { costCenterLabel, costCenterPath, costCenterSubtreeKeys, leafCostCenters, sortCostCenterTree, wouldCreateCycle } from './cost-center.util';
+import { costCenterLabel, costCenterPath, costCenterSubtreeKeys, leafCostCenters, parseBackfillYear, sortCostCenterTree, wouldCreateCycle } from './cost-center.util';
 
 const cc = (okey: string, id: string, name: string, parentKey = '', isArchived = false): CostCenterModel =>
   Object.assign(new CostCenterModel('scs', 'scs'), { okey, id, name, parentKey, isArchived });
@@ -39,4 +39,18 @@ describe('cost-center tree', () => {
   });
   it('sortCostCenterTree is depth-first by id', () =>
     expect(sortCostCenterTree(tree).map(n => `${n.depth}:${n.center.id}`)).toEqual(['0:100', '0:300', '1:310', '1:320', '1:330']));
+});
+
+describe('parseBackfillYear', () => {
+  it('accepts a past or the current year, with surrounding spaces', () => {
+    expect(parseBackfillYear(' 2025 ', 2026)).toBe(2025);
+    expect(parseBackfillYear('2026', 2026)).toBe(2026);
+  });
+  it('refuses a future year, a fraction, text, empty input and years before 2000', () => {
+    expect(parseBackfillYear('2027', 2026)).toBeUndefined();
+    expect(parseBackfillYear('2025.5', 2026)).toBeUndefined();
+    expect(parseBackfillYear('zwanzig', 2026)).toBeUndefined();
+    expect(parseBackfillYear('', 2026)).toBeUndefined();
+    expect(parseBackfillYear('1999', 2026)).toBeUndefined();
+  });
 });

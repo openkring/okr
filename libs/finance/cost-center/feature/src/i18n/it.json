@@ -71,6 +71,10 @@
     "more": "… e altri {count}",
     "refused": "L'assegnazione è possibile solo per le contabilità tenute qui.",
     "noCostCenters": "Crea prima almeno un centro di costo attivo. Altrimenti tutte le voci esistenti verrebbero svuotate.",
-    "lockedSkipped": "In anni chiusi, resta invariato: {count}"
+    "lockedSkipped": "In anni chiusi, resta invariato: {count}",
+    "yearPrompt": "Per quale esercizio le registrazioni devono ricevere il loro centro di costo? (fino al {current})",
+    "yearInvalid": "Inserisci un esercizio tra il 2000 e il {current}.",
+    "yearMismatch": "Gli esercizi precedenti si potranno assegnare solo dopo il prossimo aggiornamento. Non è stato modificato nulla.",
+    "year": "Esercizio {year}"
   }
 }

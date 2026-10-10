@@ -65,3 +65,14 @@ export function sortCostCenterTree(centers: CostCenterModel[]): { center: CostCe
   walk('', 0);
   return out;
 }
+
+/**
+ * The fiscal year typed into the backfill prompt (spec 1.65 D19): an integer from 2000 to `currentYear`,
+ * else undefined. The server applies the same bounds.
+ */
+export function parseBackfillYear(answer: string, currentYear: number): number | undefined {
+  const text = (answer ?? '').trim();
+  if (!/^\d{4}$/.test(text)) return undefined;
+  const year = Number(text);
+  return year >= 2000 && year <= currentYear ? year : undefined;
+}

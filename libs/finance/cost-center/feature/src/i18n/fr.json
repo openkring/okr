@@ -71,6 +71,10 @@
     "more": "… et {count} autres",
     "refused": "L'attribution n'est possible que pour les comptabilités tenues ici.",
     "noCostCenters": "Crée d'abord au moins un centre de coûts actif. Sinon, toutes les entrées existantes seraient vidées.",
-    "lockedSkipped": "Dans des années clôturées, reste inchangé : {count}"
+    "lockedSkipped": "Dans des années clôturées, reste inchangé : {count}",
+    "yearPrompt": "Pour quel exercice les écritures doivent-elles recevoir leur centre de coûts ? (jusqu’à {current})",
+    "yearInvalid": "Saisis un exercice entre 2000 et {current}.",
+    "yearMismatch": "Les exercices précédents ne pourront être attribués qu’après la prochaine mise à jour. Rien n’a été modifié.",
+    "year": "Exercice {year}"
   }
 }

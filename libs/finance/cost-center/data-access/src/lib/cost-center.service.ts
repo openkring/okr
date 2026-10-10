@@ -21,6 +21,8 @@ export interface CostCenterMigrationResult {
   unattributed: { collection: string; okey: string; value: string }[];
   /** backfill lines left alone because their booking lies in a locked period (absent from an older function) */
   lockedSkipped?: number;
+  /** the fiscal year a backfill processed; missing from a function deployed before spec 1.65 D19 */
+  fiscalYear?: number;
 }
 
 @Injectable({
@@ -59,11 +61,11 @@ export class CostCenterService {
     return await this.firestoreService.updateModel<CostCenterModel>(CostCenterCollection, { ...costCenter, isArchived: true }, false, this.i18n.archive_conf(), this.i18n.archive_error(), currentUser);
   }
 
-  /** One-off migration (spec 1.65 §6.4) via the treasurer callable; `dryRun` only counts and lists. */
-  public async migrate(accountingTenantId: string, step: CostCenterMigrationStep, dryRun: boolean): Promise<CostCenterMigrationResult> {
-    const fn = httpsCallable<{ accountingTenantId: string; step: CostCenterMigrationStep; dryRun: boolean }, CostCenterMigrationResult>(
+  /** One-off migration (spec 1.65 §6.4) via the treasurer callable; `dryRun` only counts and lists; `fiscalYear` only for the backfill. */
+  public async migrate(accountingTenantId: string, step: CostCenterMigrationStep, dryRun: boolean, fiscalYear?: number): Promise<CostCenterMigrationResult> {
+    const fn = httpsCallable<{ accountingTenantId: string; step: CostCenterMigrationStep; dryRun: boolean; fiscalYear?: number }, CostCenterMigrationResult>(
       getFunctions(getApp(), 'europe-west6'), 'migrateCostCenters');
-    return (await fn({ accountingTenantId, step, dryRun })).data;
+    return (await fn(fiscalYear === undefined ? { accountingTenantId, step, dryRun } : { accountingTenantId, step, dryRun, fiscalYear })).data;
   }
 
   /*-------------------------- LIST / QUERY / FILTER --------------------------------*/
