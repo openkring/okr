@@ -27,7 +27,10 @@
     "unknownCenter": "centro de coste desconocido",
     "noVersion": "Este ejercicio todavía no tiene ninguna versión.",
     "expand": "Expandir",
-    "collapse": "Contraer"
+    "collapse": "Contraer",
+    "other": "Otros resultados",
+    "costCenter": "Centro de coste",
+    "allCostCenters": "Todos los centros de coste"
   },
   "empty": "Todavía no hay presupuestos. Crea uno nuevo desde el menú arriba a la derecha.",
   "noApproved": "Todavía no se ha aprobado ningún presupuesto para este ejercicio.",

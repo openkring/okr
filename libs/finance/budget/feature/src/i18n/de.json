@@ -27,7 +27,10 @@
     "unknownCenter": "unbekannte Kostenstelle",
     "noVersion": "Für dieses Geschäftsjahr gibt es noch keine Version.",
     "expand": "Aufklappen",
-    "collapse": "Zuklappen"
+    "collapse": "Zuklappen",
+    "other": "übriger Erfolg",
+    "costCenter": "Kostenstelle",
+    "allCostCenters": "Alle Kostenstellen"
   },
   "empty": "Noch keine Budgets vorhanden. Lege über das Menü oben rechts ein neues Budget an.",
   "noApproved": "Für dieses Geschäftsjahr ist noch kein Budget freigegeben.",

@@ -27,7 +27,10 @@
     "unknownCenter": "unknown cost centre",
     "noVersion": "There is no version for this fiscal year yet.",
     "expand": "Expand",
-    "collapse": "Collapse"
+    "collapse": "Collapse",
+    "other": "Other result",
+    "costCenter": "Cost centre",
+    "allCostCenters": "All cost centres"
   },
   "empty": "No budgets yet. Create a new budget from the menu at the top right.",
   "noApproved": "No budget has been approved for this fiscal year yet.",

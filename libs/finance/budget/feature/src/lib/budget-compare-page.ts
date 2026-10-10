@@ -1,33 +1,32 @@
 import { Component, computed, DestroyRef, effect, inject, input, signal, untracked } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
-  IonBackButton, IonButtons, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonContent, IonHeader, IonIcon, IonItem, IonLabel,
-  IonList, IonSelect, IonSelectOption, IonTitle, IonToolbar
+  IonBackButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonSelect, IonSelectOption, IonTitle, IonToolbar
 } from '@ionic/angular/standalone';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { EmptyList, Spinner } from '@okr/shared-ui';
+import { EmptyList, Spinner, StringSelect, StringSelectI18n } from '@okr/shared-ui';
 
 import { ReadOnlyBanner } from '@okr/finance-accounting-feature';
 import { formatMinorAmount } from '@okr/finance-booking-util';
-import { buildComparisonRows, ComparisonRow, ComparisonSection, defaultCompareVersion, isNetOver, isOver, usedPercent } from '@okr/finance-budget-util';
-import { aggregateByCostCenter, CellSide, postedLinesInRange, rollUpCostCenters } from '@okr/finance-cost-center-util';
-import { fiscalYear } from '@okr/finance-reporting-util';
+import { AccountComparisonRow, buildAccountComparison, defaultCompareVersion, isNetOver, isOver, totalsByAccount } from '@okr/finance-budget-util';
+import { aggregateByCostCenter, costCenterLabel, costCenterSubtreeKeys, postedLinesInRange, sortCostCenterTree } from '@okr/finance-cost-center-util';
+import { ALL_COST_CENTERS, defaultExpandedKeys, effectiveCostCenterSelection, filterLinesByCostCenter, fiscalYear, NO_COST_CENTER } from '@okr/finance-reporting-util';
 
 import { BudgetStore } from './budget.store';
 
 /**
- * The Soll-Ist comparison (route `budget/compare?a=&b=`, spec 1.65 phase 2): the actuals of a fiscal year against
- * version A and, optionally, version B of the same year. Expense and revenue each list the Kostenstellen tree
- * (tap a row to open its accounts), then «ohne Kostenstelle» and, if any, «unbekannte Kostenstelle»; a net line closes.
- * The choice lives in the URL (`replaceUrl`, so the back button does not step through every pick).
+ * The Soll-Ist comparison (route `budget/compare?a=&b=`, spec 1.65 D18/D20): an Erfolgsrechnung by account —
+ * version A, optionally version B of any year, the actuals of A's fiscal year, difference and % used, groups and
+ * class totals rolled up, closed by the Jahresergebnis. The Kostenstelle filter works as on the Erfolgsrechnung
+ * (subtree + «ohne Kostenstelle») and applies to the actuals and both versions.
+ * The choice of A and B lives in the URL (`replaceUrl`, so the back button does not step through every pick).
  */
 @Component({
   selector: 'okr-budget-compare-page',
   standalone: true,
   imports: [
-    SvgIconPipe, Spinner, EmptyList, ReadOnlyBanner,
-    IonHeader, IonToolbar, IonButtons, IonBackButton, IonTitle, IonContent, IonList, IonItem, IonLabel, IonSelect, IonSelectOption,
-    IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonIcon
+    SvgIconPipe, Spinner, EmptyList, ReadOnlyBanner, StringSelect,
+    IonHeader, IonToolbar, IonButtons, IonBackButton, IonTitle, IonContent, IonList, IonItem, IonLabel, IonSelect, IonSelectOption, IonIcon
   ],
   styles: [`
     .amounts { display: flex; justify-content: flex-end; gap: 16px; font-variant-numeric: tabular-nums; flex-wrap: wrap; }
@@ -35,9 +34,9 @@ import { BudgetStore } from './budget.store';
     .head { color: var(--ion-color-medium); font-size: 0.75rem; }
     .negative { color: var(--ion-color-danger); }
     .account h3 { font-weight: 400; }
-    .center h3 { font-weight: 600; }
-    .footer { border-top: 1px solid var(--ion-color-medium); padding-top: 8px; font-weight: 600; }
-    .footer-row { display: flex; justify-content: space-between; gap: 8px; }
+    .group h3 { font-weight: 600; }
+    .total h3, .result h3 { font-weight: 700; }
+    ion-item.total, ion-item.result { --background: var(--ion-color-light); }
     .pickers { display: flex; flex-wrap: wrap; gap: 0 16px; padding: 0 16px; }
     .pickers ion-select { min-width: 160px; flex: 1 1 160px; }
     ion-icon.twisty { margin-inline-end: 8px; vertical-align: middle; }
@@ -69,73 +68,49 @@ import { BudgetStore } from './budget.store';
           <ion-select interface="popover" [label]="store.i18n.compare_versionB()" labelPlacement="stacked" [value]="bKey()" (ionChange)="onB($event.detail.value)">
             <ion-select-option value="">{{ store.i18n.compare_noneB() }}</ion-select-option>
             @for (v of versionsForB(); track v.okey) {
-              <ion-select-option [value]="v.okey">{{ v.name }}</ion-select-option>
+              <ion-select-option [value]="v.okey">{{ v.name }} ({{ store.fiscalYearLabel(v.fiscalYear) }})</ion-select-option>
             }
           </ion-select>
         </div>
+        @if (showCostCenterFilter()) {
+          <okr-string-select [i18n]="costCenterI18n()" [stringList]="costCenterOptions()" [labels]="costCenterLabels()"
+            [selectedString]="effectiveCostCenterKey()" (selectedStringChange)="costCenterKey.set($event)" [readOnly]="false" />
+        }
 
         @if (!versionA()) {
           <okr-empty-list [message]="yearVersions().length === 0 ? store.i18n.compare_noVersion() : store.i18n.compare_empty()" />
         } @else if (store.actualsLoading()) {
           <okr-spinner />
         } @else {
-          @for (block of blocks(); track block.side) {
-            <ion-card>
-              <ion-card-header><ion-card-title>{{ block.title }}</ion-card-title></ion-card-header>
-              <ion-card-content>
-                <ion-list lines="inset">
-                  <ion-item lines="none">
-                    <ion-label class="head">&nbsp;</ion-label>
-                    <div slot="end" class="amounts head ion-hide-sm-down">
-                      <span>{{ nameA() }}</span>
-                      @if (versionB()) { <span>{{ nameB() }}</span> }
-                      <span>{{ store.i18n.col_actual() }}</span><span>{{ store.i18n.col_difference() }}</span><span>{{ store.i18n.col_used() }}</span>
-                    </div>
-                  </ion-item>
-                  @for (row of block.section.rows; track row.key) {
-                    <ion-item [button]="row.expandable" [detail]="false" (click)="toggle(block.side, row)" [class]="row.kind === 'account' ? 'account' : 'center'">
-                      <ion-label class="ion-text-wrap" [style.padding-inline-start.px]="row.depth * 16">
-                        <h3>
-                          @if (row.expandable) {
-                            <ion-icon class="twisty" src="{{ (row.expanded ? 'chevron-down' : 'chevron-forward') | svgIcon }}" [attr.aria-label]="row.expanded ? store.i18n.compare_collapse() : store.i18n.compare_expand()" />
-                          }
-                          {{ rowLabel(row) }}
-                        </h3>
-                        <div class="amounts">
-                          <span><small class="head ion-hide-sm-up">{{ nameA() }}</small> {{ fmt(row.budget) }}</span>
-                          @if (versionB()) { <span><small class="head ion-hide-sm-up">{{ nameB() }}</small> {{ fmt(row.compare) }}</span> }
-                          <span><small class="head ion-hide-sm-up">{{ store.i18n.col_actual() }}</small> {{ fmt(row.actual) }}</span>
-                          <span [class.negative]="isOver(block.side, row.diff)"><small class="head ion-hide-sm-up">{{ store.i18n.col_difference() }}</small> {{ fmt(row.diff) }}</span>
-                          <span><small class="head ion-hide-sm-up">{{ store.i18n.col_used() }}</small> {{ percent(row.used) }}</span>
-                        </div>
-                      </ion-label>
-                    </ion-item>
-                  }
-                </ion-list>
-                <div class="footer">
-                  <div class="footer-row head"><span>&nbsp;</span><span class="amounts"><span>{{ nameA() }}</span>@if (versionB()) { <span>{{ nameB() }}</span> }<span>{{ store.i18n.col_actual() }}</span><span>{{ store.i18n.col_difference() }}</span><span>{{ store.i18n.col_used() }}</span></span></div>
-                  <div class="footer-row"><span>{{ store.i18n.grid_total() }}</span><span class="amounts">
-                    <span>{{ fmt(block.section.total.budget) }}</span>
-                    @if (versionB()) { <span>{{ fmt(block.section.total.compare) }}</span> }
-                    <span>{{ fmt(block.section.total.actual) }}</span>
-                    <span [class.negative]="isOver(block.side, block.section.total.actual - block.section.total.budget)">{{ fmt(block.section.total.actual - block.section.total.budget) }}</span>
-                    <span>{{ percent(usedOf(block.section.total.actual, block.section.total.budget)) }}</span></span></div>
-                </div>
-              </ion-card-content>
-            </ion-card>
-          }
-
-          <ion-card>
-            <ion-card-header><ion-card-title>{{ store.i18n.grid_net() }}</ion-card-title></ion-card-header>
-            <ion-card-content>
-              <div class="footer-row head"><span>&nbsp;</span><span class="amounts"><span>{{ nameA() }}</span>@if (versionB()) { <span>{{ nameB() }}</span> }<span>{{ store.i18n.col_actual() }}</span><span>{{ store.i18n.col_difference() }}</span></span></div>
-              <div class="footer-row footer"><span>{{ store.i18n.grid_net() }}</span><span class="amounts">
-                <span>{{ fmt(net().budget) }}</span>
-                @if (versionB()) { <span>{{ fmt(net().compare) }}</span> }
-                <span>{{ fmt(net().actual) }}</span>
-                <span [class.negative]="netOver(net().actual - net().budget)">{{ fmt(net().actual - net().budget) }}</span></span></div>
-            </ion-card-content>
-          </ion-card>
+          <ion-list lines="inset">
+            <ion-item lines="none" class="ion-hide-sm-down">
+              <ion-label class="head">&nbsp;</ion-label>
+              <div slot="end" class="amounts head">
+                <span>{{ nameA() }}</span>
+                @if (versionB()) { <span>{{ nameB() }}</span> }
+                <span>{{ store.i18n.col_actual() }}</span><span>{{ store.i18n.col_difference() }}</span><span>{{ store.i18n.col_used() }}</span>
+              </div>
+            </ion-item>
+            @for (row of comparison().rows; track row.key) {
+              <ion-item [button]="row.expandable" [detail]="false" (click)="toggle(row)" [class]="row.kind">
+                <ion-label class="ion-text-wrap" [style.padding-inline-start.px]="row.depth * 16">
+                  <h3>
+                    @if (row.expandable) {
+                      <ion-icon class="twisty" src="{{ (row.expanded ? 'chevron-down' : 'chevron-forward') | svgIcon }}" [attr.aria-label]="row.expanded ? store.i18n.compare_collapse() : store.i18n.compare_expand()" />
+                    }
+                    {{ row.id ? row.id + ' ' : '' }}{{ row.name }}
+                  </h3>
+                  <div class="amounts">
+                    <span><small class="head ion-hide-sm-up">{{ nameA() }}</small> {{ fmt(row.budget) }}</span>
+                    @if (versionB()) { <span><small class="head ion-hide-sm-up">{{ nameB() }}</small> {{ fmt(row.compare) }}</span> }
+                    <span><small class="head ion-hide-sm-up">{{ store.i18n.col_actual() }}</small> {{ fmt(row.actual) }}</span>
+                    <span [class.negative]="over(row)"><small class="head ion-hide-sm-up">{{ store.i18n.col_difference() }}</small> {{ fmt(row.diff) }}</span>
+                    <span><small class="head ion-hide-sm-up">{{ store.i18n.col_used() }}</small> {{ percent(row.used) }}</span>
+                  </div>
+                </ion-label>
+              </ion-item>
+            }
+          </ion-list>
         }
       }
     </ion-content>
@@ -153,50 +128,52 @@ export class BudgetComparePage {
   protected readonly year = signal<number | undefined>(undefined);
   protected readonly aKey = signal('');
   protected readonly bKey = signal('');
-  /** `<side>|<row key>` of the rows that are open */
-  private readonly expanded = signal<ReadonlySet<string>>(new Set());
   private readonly initialized = signal(false);
 
   protected readonly backHref = computed(() => `/accounting/${this.store.accountingTenantId()}/budget/c-budget`);
   /** the live versions of the chosen year (archived ones cannot be compared) */
   protected readonly yearVersions = computed(() =>
     this.store.allVersions().filter(v => !v.isArchived && v.fiscalYear === this.year()).sort((x, y) => (x.name ?? '').localeCompare(y.name ?? '')));
-  /** B can be any other version of the year: A itself is not offered */
-  protected readonly versionsForB = computed(() => this.yearVersions().filter(v => v.okey !== this.aKey()));
   protected readonly versionA = computed(() => this.yearVersions().find(v => v.okey === this.aKey()));
-  protected readonly versionB = computed(() => this.yearVersions().find(v => v.okey === this.bKey()));
+  /** B can be any live version of any fiscal year (D20); A itself is not offered */
+  protected readonly versionsForB = computed(() =>
+    this.store.allVersions().filter(v => !v.isArchived && v.okey !== this.aKey())
+      .sort((x, y) => (y.fiscalYear - x.fiscalYear) || (x.name ?? '').localeCompare(y.name ?? '')));
+  protected readonly versionB = computed(() => this.versionsForB().find(v => v.okey === this.bKey()));
   protected readonly nameA = computed(() => this.versionA()?.name ?? '');
   protected readonly nameB = computed(() => this.versionB()?.name ?? '');
 
-  private readonly cells = computed(() => {
+  /** Kostenstelle filter, as on the Erfolgsrechnung */
+  protected readonly costCenterKey = signal(ALL_COST_CENTERS);
+  protected readonly costCenterOptions = computed(() =>
+    [ALL_COST_CENTERS, ...sortCostCenterTree(this.store.costCenterStore.costCenters()).map(n => n.center.okey), NO_COST_CENTER]);
+  protected readonly costCenterLabels = computed(() => [
+    this.store.i18n.compare_allCostCenters(),
+    ...sortCostCenterTree(this.store.costCenterStore.costCenters()).map(n => '  '.repeat(n.depth) + costCenterLabel(n.center)),
+    this.store.i18n.noCostCenter()]);
+  protected readonly showCostCenterFilter = computed(() => this.store.costCenterStore.isEnabled() && this.store.costCenterStore.costCenters().length > 0);
+  protected readonly costCenterI18n = computed(() => ({ name: 'costCenterKey', label: this.store.i18n.compare_costCenter(), helper: '' } as StringSelectI18n));
+  protected readonly effectiveCostCenterKey = computed(() =>
+    effectiveCostCenterSelection(this.costCenterKey(), this.showCostCenterFilter(), this.costCenterOptions()));
+
+  /** null = untouched: the Erfolgsrechnung's default (two tiers open) */
+  private readonly userExpanded = signal<ReadonlySet<string> | null>(null);
+  private readonly expandedKeys = computed(() => this.userExpanded() ?? new Set(defaultExpandedKeys(this.store.accounts())));
+
+  protected readonly comparison = computed(() => {
     const a = this.versionA();
     const y = this.year();
-    if (!a || y === undefined) return [];
+    const labels = { revenue: this.store.i18n.grid_revenue(), expense: this.store.i18n.grid_expense(), other: this.store.i18n.compare_other(), net: this.store.i18n.grid_net() };
+    if (!a || y === undefined) return buildAccountComparison(this.store.accounts(), new Map(), this.expandedKeys(), labels);
+    const sel = this.effectiveCostCenterKey();
+    const subtree = costCenterSubtreeKeys(this.store.costCenterStore.costCenters(), sel);
     const range = fiscalYear(y, this.store.fiscalYearStart());
-    const lines = postedLinesInRange(this.store.bookingLines(), this.store.bookings(), range.from, range.to);
+    const lines = filterLinesByCostCenter(postedLinesInRange(this.store.bookingLines(), this.store.bookings(), range.from, range.to), sel, subtree);
     const b = this.versionB();
-    return aggregateByCostCenter(lines, this.store.accounts(), this.store.linesOf(a.okey), b ? this.store.linesOf(b.okey) : []);
-  });
-
-  protected readonly blocks = computed((): { side: CellSide; title: string; section: ComparisonSection }[] => {
-    const cells = this.cells();
-    const costCenters = this.store.costCenterStore.costCenters();
-    const rollUp = rollUpCostCenters(cells, costCenters);
-    const expanded = this.expanded();
-    return (['expense', 'revenue'] as CellSide[]).map(side => {
-      const open = new Set([...expanded].filter(k => k.startsWith(side + '|')).map(k => k.slice(side.length + 1)));
-      return {
-        side,
-        title: side === 'expense' ? this.store.i18n.grid_expense() : this.store.i18n.grid_revenue(),
-        section: buildComparisonRows(cells, rollUp, costCenters, this.store.accounts(), open, side),
-      };
-    });
-  });
-
-  /** Ergebnis = Ertrag − Aufwand per column */
-  protected readonly net = computed(() => {
-    const [expense, revenue] = [this.blocks()[0].section.total, this.blocks()[1].section.total];
-    return { actual: revenue.actual - expense.actual, budget: revenue.budget - expense.budget, compare: revenue.compare - expense.compare };
+    const cells = aggregateByCostCenter(lines, this.store.accounts(),
+      filterLinesByCostCenter(this.store.linesOf(a.okey), sel, subtree),
+      b ? filterLinesByCostCenter(this.store.linesOf(b.okey), sel, subtree) : []);
+    return buildAccountComparison(this.store.accounts(), totalsByAccount(cells), this.expandedKeys(), labels);
   });
 
   constructor() {
@@ -214,7 +191,7 @@ export class BudgetComparePage {
         const year = fromUrl?.fiscalYear ?? this.store.currentFiscalYear();
         this.year.set(year);
         this.aKey.set(fromUrl?.okey ?? defaultCompareVersion(versions, year)?.okey ?? '');
-        const bVersion = b ? versions.find(v => v.okey === b && !v.isArchived && v.fiscalYear === year && v.okey !== this.aKey()) : undefined;
+        const bVersion = b ? versions.find(v => v.okey === b && !v.isArchived && v.okey !== this.aKey()) : undefined;
         this.bKey.set(bVersion?.okey ?? '');
         this.initialized.set(true);
       });
@@ -234,7 +211,6 @@ export class BudgetComparePage {
     this.year.set(value);
     this.aKey.set(defaultCompareVersion(this.store.allVersions(), value)?.okey ?? '');
     this.bKey.set('');
-    this.expanded.set(new Set());
   }
 
   protected onA(key: string): void {
@@ -247,33 +223,17 @@ export class BudgetComparePage {
     this.bKey.set(key ?? '');
   }
 
-  protected toggle(side: CellSide, row: ComparisonRow): void {
+  protected toggle(row: AccountComparisonRow): void {
     if (!row.expandable) return;
-    const id = `${side}|${row.key}`;
-    const next = new Set(this.expanded());
-    if (!next.delete(id)) next.add(id);
-    this.expanded.set(next);
+    const next = new Set(this.expandedKeys());
+    if (!next.delete(row.key)) next.add(row.key);
+    this.userExpanded.set(next);
   }
 
-  protected rowLabel(row: ComparisonRow): string {
-    switch (row.kind) {
-      case 'none': return this.store.i18n.noCostCenter();
-      case 'unknown': return this.store.i18n.compare_unknownCenter();
-      default: return row.label;
-    }
-  }
-
-  /** more actual than budget is bad for an expense, less for a revenue */
-  protected isOver(side: CellSide, diff: number): boolean {
-    return isOver(side, diff);
-  }
-
-  protected netOver(diff: number): boolean {
-    return isNetOver(diff);
-  }
-
-  protected usedOf(actual: number, budget: number): number | undefined {
-    return usedPercent(actual, budget);
+  /** over budget: more actual than budget for an expense, less for a revenue or the net result */
+  protected over(row: AccountComparisonRow): boolean {
+    if (row.side === 'net') return isNetOver(row.diff);
+    return isOver(row.side, row.diff);
   }
 
   protected percent(used: number | undefined): string {

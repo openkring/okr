@@ -27,7 +27,10 @@
     "unknownCenter": "centre de coûts inconnu",
     "noVersion": "Cet exercice n’a pas encore de version.",
     "expand": "Développer",
-    "collapse": "Réduire"
+    "collapse": "Réduire",
+    "other": "Autres résultats",
+    "costCenter": "Centre de coûts",
+    "allCostCenters": "Tous les centres de coûts"
   },
   "empty": "Pas encore de budget. Crée un nouveau budget depuis le menu en haut à droite.",
   "noApproved": "Aucun budget n'a encore été approuvé pour cet exercice.",
