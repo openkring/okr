@@ -406,6 +406,7 @@ export { migrateDeliveryChannels } from './user/migrate-delivery-channels';
 
 // Kostenrechnung 1.65 §6.4: free-text → cost-centre key and current-year backfill (treasurer)
 export { migrateCostCenters } from './cost-center/migrate-cost-centers';
+export { getMyCostCenterReport } from './cost-center/get-my-cost-center-report';
 
 // address-directory projection rebuild/backfill (privacy 1.19 Phase 4)
 export { rebuildAddressDirectory } from './address/rebuild-address-directory';
