@@ -54,31 +54,49 @@ const sideOf = (cls: AccountClass): CellSide => (cls === 'expense' ? 'expense' :
  * along the chart of accounts, each closed by its total, then the Jahresergebnis
  * (revenue + other − expense, as `yearResult`). A group carries the sum of its subtree and lists its
  * children only when its okey is in `expandedKeys`. Rows zero in all three columns are left out.
- * Amounts on an account that is missing from the live chart (archived, unknown) are listed as an extra
- * leaf below the top node of their class, so every total still equals Σ of the inputs.
+ * Amounts the live chart cannot place on a leaf still count, so every total equals Σ of the inputs: a group's
+ * own amount (a former leaf that later got children) and an account missing from the live chart (archived)
+ * whose parent is live are extra rows under that parent; any other unplaced amount is a top-level row of its
+ * class (by account number).
  */
 export function buildAccountComparison(
   accounts: AccountModel[], totals: Map<string, CostCenterTotals>, expandedKeys: ReadonlySet<string>, labels: AccountComparisonLabels,
 ): AccountComparison {
   const forest = accountForest(accounts);
-  const placed = new Set<string>();
-  const collect = (n: AccountNode): void => { placed.add(n.account.okey); n.children.forEach(collect); };
+  const placed = new Map<string, AccountNode>();
+  const collect = (n: AccountNode): void => { placed.set(n.account.okey, n); n.children.forEach(collect); };
   forest.forEach(collect);
   const byKey = new Map(accounts.map(x => [x.okey, x]));
-  // amounts the forest cannot place (archived/unknown account): an extra leaf per class
-  const orphans = new Map<AccountClass, AccountModel[]>();
-  for (const key of totals.keys()) {
-    if (placed.has(key)) continue;
-    const account = byKey.get(key) ?? { ...new AccountModel(''), okey: key, id: '', name: key };
-    const cls = accountClass(account.id ?? '');
-    const list = orphans.get(cls) ?? [];
-    list.push(account);
-    orphans.set(cls, list);
+
+  interface Extra { key: string; id: string; name: string; t: CostCenterTotals }
+  // rows the forest has no leaf for, keyed by the live node they belong under
+  const extras = new Map<string, Extra[]>();
+  const addExtra = (parentKey: string, e: Extra): void => { const l = extras.get(parentKey) ?? []; l.push(e); extras.set(parentKey, l); };
+  // unplaced amounts without a live parent: a top-level row per class
+  const topLevel = new Map<AccountClass, Extra[]>();
+  for (const [key, t] of totals) {
+    if (isZero(t)) continue;
+    const node = placed.get(key);
+    if (node) {
+      if (node.children.length > 0) addExtra(key, { key: `own:${key}`, id: node.account.id ?? '', name: node.account.name ?? '', t });
+      continue;
+    }
+    const account = byKey.get(key);
+    const e: Extra = { key, id: account?.id ?? '', name: account?.name ?? key, t };
+    if (account?.parentKey && placed.has(account.parentKey)) addExtra(account.parentKey, e);
+    else {
+      const cls = accountClass(account?.id ?? '');
+      const l = topLevel.get(cls) ?? [];
+      l.push(e);
+      topLevel.set(cls, l);
+    }
   }
 
-  const sum = (n: AccountNode): CostCenterTotals => n.children.length === 0
-    ? totals.get(n.account.okey) ?? zero()
-    : n.children.reduce((s, c) => add(s, sum(c)), zero());
+  const extrasOf = (n: AccountNode): Extra[] => extras.get(n.account.okey) ?? [];
+  const sum = (n: AccountNode): CostCenterTotals => {
+    const base = n.children.length === 0 ? totals.get(n.account.okey) ?? zero() : n.children.reduce((s, c) => add(s, sum(c)), zero());
+    return extrasOf(n).reduce((s, e) => add(s, e.t), base);
+  };
   const row = (key: string, kind: AccountComparisonKind, depth: number, id: string, name: string, side: CellSide | 'net',
     expandable: boolean, expanded: boolean, t: CostCenterTotals): AccountComparisonRow =>
     ({ key, kind, depth, id, name, side, expandable, expanded, ...t, diff: t.actual - t.budget, used: usedPercent(t.actual, t.budget) });
@@ -90,20 +108,20 @@ export function buildAccountComparison(
     const walk = (n: AccountNode, depth: number): void => {
       const t = sum(n);
       if (isZero(t)) return;
-      const hasChildren = n.children.length > 0;
+      const hasChildren = n.children.length > 0 || extrasOf(n).length > 0;
       const expanded = hasChildren && expandedKeys.has(n.account.okey);
       rows.push(row(n.account.okey, hasChildren ? 'group' : 'account', depth, n.account.id ?? '', n.account.name ?? '', side, hasChildren, expanded, t));
-      if (expanded) n.children.forEach(c => walk(c, depth + 1));
+      if (!expanded) return;
+      n.children.forEach(c => walk(c, depth + 1));
+      for (const e of extrasOf(n)) rows.push(row(e.key, 'account', depth + 1, e.id, e.name, side, false, false, e.t));
     };
     for (const top of forest.filter(n => n.cls === cls)) {
       walk(top, 0);
       total = add(total, sum(top));
     }
-    for (const o of orphans.get(cls) ?? []) {
-      const t = totals.get(o.okey) ?? zero();
-      if (isZero(t)) continue;
-      rows.push(row(o.okey, 'account', 1, o.id ?? '', o.name ?? o.okey, side, false, false, t));
-      total = add(total, t);
+    for (const e of topLevel.get(cls) ?? []) {
+      rows.push(row(e.key, 'account', 0, e.id, e.name, side, false, false, e.t));
+      total = add(total, e.t);
     }
     if (rows.length > 0) rows.push(row(totalKey, 'total', 0, '', label, side, false, false, total));
     return { rows, total };

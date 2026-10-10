@@ -74,7 +74,7 @@
     "lockedSkipped": "In closed years, left unchanged: {count}",
     "yearPrompt": "Which fiscal year should the bookings get their cost centre for? (up to {current})",
     "yearInvalid": "Enter a fiscal year between 2000 and {current}.",
-    "yearMismatch": "Earlier fiscal years can only be assigned after the next update. Nothing was changed.",
+    "yearMismatch": "Assigning by fiscal year is not up to date yet. Nothing was changed – please try again after the next update.",
     "year": "Fiscal year {year}"
   }
 }

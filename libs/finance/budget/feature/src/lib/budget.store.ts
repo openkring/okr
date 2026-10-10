@@ -101,6 +101,11 @@ export const BudgetStore = signalStore(
         ? { id: store.accountingStore.accountingTenantId() } : undefined),
       stream: ({ params }) => params.id ? store.accountService.list(params.id) : of([]),
     }),
+    // archived accounts: only the pages with actuals need them, to place amounts budgeted or booked on them
+    archivedAccountsResource: rxResource({
+      params: resourceParams(() => actualsActive() ? { id: store.accountingStore.accountingTenantId() } : undefined),
+      stream: ({ params }) => params.id ? store.accountService.listArchived(params.id) : of([]),
+    }),
     bookingsResource: rxResource({
       params: resourceParams(() => actualsActive() ? { id: store.accountingStore.accountingTenantId() } : undefined),
       stream: ({ params }) => params.id ? store.reportingService.getJournalEntries(params.id) : of([]),
@@ -119,12 +124,14 @@ export const BudgetStore = signalStore(
     lines: computed(() => (state.linesResource.value() ?? []).filter(l => !l.isArchived)),
     isLoading: computed(() => state.versionsResource.isLoading() || state.linesResource.isLoading()),
     accounts: computed(() => state.accountsResource.value() ?? []),
+    /** live and archived accounts — for the grid and the comparison, so an amount on an archived account still counts */
+    reportAccounts: computed(() => [...(state.accountsResource.value() ?? []), ...(state.archivedAccountsResource.value() ?? [])]),
     bookings: computed(() => state.bookingsResource.value() ?? []),
     bookingLines: computed(() => state.bookingLinesResource.value() ?? []),
     /** true while a page waits for actuals: the config is not known yet (nothing streams before), or a stream is loading */
     actualsLoading: computed(() =>
       (state.actualsUsers() > 0 && !state.accountingStore.configLoaded())
-      || state.accountsResource.isLoading() || state.bookingsResource.isLoading() || state.bookingLinesResource.isLoading()),
+      || state.accountsResource.isLoading() || state.archivedAccountsResource.isLoading() || state.bookingsResource.isLoading() || state.bookingLinesResource.isLoading()),
     fiscalYearStart: computed(() => state.accountingStore.config()?.fiscalYearStart ?? 1),
     functionalCurrency: computed(() => state.accountingStore.config()?.functionalCurrency ?? 'CHF'),
     accountingTenantId: computed(() => state.accountingStore.accountingTenantId()),

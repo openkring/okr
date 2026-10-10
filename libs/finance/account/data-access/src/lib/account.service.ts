@@ -106,6 +106,19 @@ export class AccountService {
     return this.firestoreService.searchData<AccountModel>(AccountCollection, query, orderBy, sortOrder);
   }
 
+  /**
+   * The archived accounts of the books — only for reports that must still place amounts booked or budgeted on
+   * them (spec 1.65 D18). `isArchived == true` is an equality clause like the one in {@link list}, so the
+   * query runs on the same composite index.
+   */
+  public listArchived(accountingTenantId: string, orderBy = 'id', sortOrder = 'asc'): Observable<AccountModel[]> {
+    const query = [
+      ...getSystemQuery(this.tenantId).map(q => q.key === 'isArchived' ? { ...q, value: true } : q),
+      { key: 'accountingTenantId', operator: '==' as const, value: accountingTenantId },
+    ];
+    return this.firestoreService.searchData<AccountModel>(AccountCollection, query, orderBy, sortOrder);
+  }
+
   /** One-shot, consistent read (no cache-first race). Promise counterpart to {@link list}. */
   public listOnce(accountingTenantId: string, orderBy = 'id', sortOrder = 'asc'): Promise<AccountModel[]> {
     const query = [

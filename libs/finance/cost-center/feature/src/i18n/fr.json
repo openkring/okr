@@ -74,7 +74,7 @@
     "lockedSkipped": "Dans des années clôturées, reste inchangé : {count}",
     "yearPrompt": "Pour quel exercice les écritures doivent-elles recevoir leur centre de coûts ? (jusqu’à {current})",
     "yearInvalid": "Saisis un exercice entre 2000 et {current}.",
-    "yearMismatch": "Les exercices précédents ne pourront être attribués qu’après la prochaine mise à jour. Rien n’a été modifié.",
+    "yearMismatch": "L’attribution par exercice n’est pas encore à jour. Rien n’a été modifié – réessaie après la prochaine mise à jour.",
     "year": "Exercice {year}"
   }
 }

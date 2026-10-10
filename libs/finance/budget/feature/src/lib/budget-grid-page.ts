@@ -181,8 +181,8 @@ export class BudgetGridPage {
     const range = fiscalYear(v.fiscalYear, this.store.fiscalYearStart());
     const lines = postedLinesInRange(this.store.bookingLines(), this.store.bookings(), range.from, range.to);
     const versionLines = this.store.linesOf(v.okey);
-    const cells = aggregateByCostCenter(lines, this.store.accounts(), versionLines);
-    return buildBudgetGrid(cells, versionLines, costCenters, this.store.accounts(), this.canChange());
+    const cells = aggregateByCostCenter(lines, this.store.reportAccounts(), versionLines);
+    return buildBudgetGrid(cells, versionLines, costCenters, this.store.reportAccounts(), this.canChange());
   });
 
   /** why the grid cannot be changed — worded per state (superseded, archived, external books, approved) */

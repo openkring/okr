@@ -74,7 +74,7 @@
     "lockedSkipped": "In anni chiusi, resta invariato: {count}",
     "yearPrompt": "Per quale esercizio le registrazioni devono ricevere il loro centro di costo? (fino al {current})",
     "yearInvalid": "Inserisci un esercizio tra il 2000 e il {current}.",
-    "yearMismatch": "Gli esercizi precedenti si potranno assegnare solo dopo il prossimo aggiornamento. Non è stato modificato nulla.",
+    "yearMismatch": "L’assegnazione per esercizio non è ancora aggiornata. Non è stato modificato nulla: riprova dopo il prossimo aggiornamento.",
     "year": "Esercizio {year}"
   }
 }

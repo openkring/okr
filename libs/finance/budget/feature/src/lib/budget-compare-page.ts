@@ -164,16 +164,16 @@ export class BudgetComparePage {
     const a = this.versionA();
     const y = this.year();
     const labels = { revenue: this.store.i18n.grid_revenue(), expense: this.store.i18n.grid_expense(), other: this.store.i18n.compare_other(), net: this.store.i18n.grid_net() };
-    if (!a || y === undefined) return buildAccountComparison(this.store.accounts(), new Map(), this.expandedKeys(), labels);
+    if (!a || y === undefined) return buildAccountComparison(this.store.reportAccounts(), new Map(), this.expandedKeys(), labels);
     const sel = this.effectiveCostCenterKey();
     const subtree = costCenterSubtreeKeys(this.store.costCenterStore.costCenters(), sel);
     const range = fiscalYear(y, this.store.fiscalYearStart());
     const lines = filterLinesByCostCenter(postedLinesInRange(this.store.bookingLines(), this.store.bookings(), range.from, range.to), sel, subtree);
     const b = this.versionB();
-    const cells = aggregateByCostCenter(lines, this.store.accounts(),
+    const cells = aggregateByCostCenter(lines, this.store.reportAccounts(),
       filterLinesByCostCenter(this.store.linesOf(a.okey), sel, subtree),
       b ? filterLinesByCostCenter(this.store.linesOf(b.okey), sel, subtree) : []);
-    return buildAccountComparison(this.store.accounts(), totalsByAccount(cells), this.expandedKeys(), labels);
+    return buildAccountComparison(this.store.reportAccounts(), totalsByAccount(cells), this.expandedKeys(), labels);
   });
 
   constructor() {

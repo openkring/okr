@@ -62,6 +62,35 @@ describe('buildAccountComparison', () => {
     const c = aggregateByCostCenter([], accounts, budgetA, []);
     expect(buildAccountComparison(accounts, totalsByAccount(c), all, LABELS).rows.some(x => x.key === 'total-other')).toBe(false);
   });
+  it('a group\'s own budget (former leaf) counts in the group and shows as its own row when open', () => {
+    const c = aggregateByCostCenter([], accounts, [bl('g', 'k1', 'g4', 5000), bl('h', 'k1', 'a4010', 1000)], []);
+    const open = buildAccountComparison(accounts, totalsByAccount(c), all, LABELS);
+    expect(open.rows.find(x => x.key === 'g4')).toMatchObject({ budget: 6000 });
+    expect(open.rows.find(x => x.key === 'own:g4')).toMatchObject({ kind: 'account', id: '4', depth: 1, budget: 5000 });
+    expect(open.expense.budget).toBe(6000);
+    const closed = buildAccountComparison(accounts, totalsByAccount(c), new Set(), LABELS);
+    expect(closed.rows.some(x => x.key === 'own:g4')).toBe(false);
+    expect(closed.rows.find(x => x.key === 'g4')?.budget).toBe(6000);
+  });
+  it('an archived account is listed under its live parent group, hidden while the group is closed', () => {
+    const withArchived = [...accounts, a('a4099', '4099', 'g4', true)];
+    const c = aggregateByCostCenter([], withArchived, [bl('z', 'k1', 'a4099', 700), bl('y', 'k1', 'a4010', 100)], []);
+    const open = buildAccountComparison(withArchived, totalsByAccount(c), all, LABELS);
+    const keys = open.rows.map(x => x.key);
+    expect(keys.indexOf('a4099')).toBeGreaterThan(keys.indexOf('g4'));
+    expect(keys.indexOf('a4099')).toBeLessThan(keys.indexOf('total-expense'));
+    expect(open.rows.find(x => x.key === 'g4')?.budget).toBe(800);
+    const closed = buildAccountComparison(withArchived, totalsByAccount(c), new Set(), LABELS);
+    expect(closed.rows.some(x => x.key === 'a4099')).toBe(false);
+    expect(closed.expense.budget).toBe(800);
+  });
+  it('an archived account without a live parent is a top-level row of its class', () => {
+    const withArchived = [...accounts, a('gOld', '49', 'root', true), a('a4901', '4901', 'gOld', true)];
+    const c = aggregateByCostCenter([], withArchived, [bl('z', 'k1', 'a4901', 300)], []);
+    const res = buildAccountComparison(withArchived, totalsByAccount(c), all, LABELS);
+    expect(res.rows.find(x => x.key === 'a4901')).toMatchObject({ depth: 0, side: 'expense', budget: 300 });
+    expect(res.expense.budget).toBe(300);
+  });
   it('budget on an archived account still counts in the totals', () => {
     const withArchived = [...accounts, a('a4099', '4099', 'g4', true)];
     const c = aggregateByCostCenter([], withArchived, [bl('z', 'k1', 'a4099', 700)], []);
