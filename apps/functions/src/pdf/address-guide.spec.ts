@@ -7,18 +7,18 @@ const A4: [number, number] = [595.28, 841.89];
 const mm = (pt: number) => pt * 25.4 / 72;
 
 describe('addressWindowRect', () => {
-  it('places the left window 12 mm from the left and 45 mm from the top', () => {
+  it('places the left window 7 mm from the left and 37 mm from the top', () => {
     const r = addressWindowRect('left', ...A4);
-    expect(mm(r.x)).toBeCloseTo(12, 1);
-    expect(mm(A4[1] - r.y - r.height)).toBeCloseTo(45, 1);
+    expect(mm(r.x)).toBeCloseTo(7, 1);
+    expect(mm(A4[1] - r.y - r.height)).toBeCloseTo(37, 1);
     expect(mm(r.width)).toBeCloseTo(100, 1);
     expect(mm(r.height)).toBeCloseTo(45, 1);
   });
 
-  it('mirrors the right window 12 mm from the right edge', () => {
+  it('mirrors the right window 7 mm from the right edge', () => {
     const r = addressWindowRect('right', ...A4);
-    expect(mm(A4[0] - r.x - r.width)).toBeCloseTo(12, 1);
-    expect(mm(r.x)).toBeCloseTo(98, 1);
+    expect(mm(A4[0] - r.x - r.width)).toBeCloseTo(7, 1);
+    expect(mm(r.x)).toBeCloseTo(103, 1);
   });
 });
 
