@@ -725,6 +725,12 @@ const finance: BlockRoutes = {
       ],
     },
     {
+      // «Meine Kostenstellen» (spec 1.65 §7.4, D21): any member; the callable decides what they may see.
+      path: 'my-cost-centers',
+      canActivate: [isAuthenticatedGuard],
+      loadComponent: () => import('@okr/finance-budget-feature').then(m => m.MyCostCentersPage),
+    },
+    {
       // A member's OWN invoices. The whole `accounting/:accountingTenantId` subtree below is
       // `isPrivilegedGuard`, so the `invoice-my` menu item (roleNeeded: 'registered', url
       // `/accounting/scs/invoice/my/c-invoice`) dead-ended for every plain member. This is the

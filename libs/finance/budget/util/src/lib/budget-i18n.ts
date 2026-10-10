@@ -35,6 +35,13 @@ export const BUDGET_I18N_KEYS = {
   compare_other:        PFX + 'compare.other',
   compare_costCenter:   PFX + 'compare.costCenter',
   compare_allCostCenters: PFX + 'compare.allCostCenters',
+  board_title:          PFX + 'board.title',
+  board_empty:          PFX + 'board.empty',
+  board_allMine:        PFX + 'board.allMine',
+  /** single-brace {account}: translateAll strips {{…}} — fill() it */
+  board_maskedTitle:    PFX + 'board.maskedTitle',
+  board_noBudget:       PFX + 'board.noBudget',
+  board_error:          PFX + 'board.error',
   noApproved:           PFX + 'noApproved',
   noCostCenter:         PFX + 'noCostCenter',
   fiscalYear_select:    PFX + 'fiscalYear.select',

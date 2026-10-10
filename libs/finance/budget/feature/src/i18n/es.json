@@ -18,6 +18,14 @@
     "notFound": "Esta versión del presupuesto no existe.",
     "unbudgeted": "sin presupuestar"
   },
+  "board": {
+    "title": "Mis centros de coste",
+    "empty": "No eres responsable de ningún centro de coste. Si no es correcto, ponte en contacto con la tesorería.",
+    "allMine": "Todos mis centros de coste",
+    "maskedTitle": "{account} — Persona",
+    "noBudget": "Todavía no se ha aprobado ningún presupuesto para este ejercicio. Solo ves los importes contabilizados.",
+    "error": "No se han podido cargar los centros de coste. Vuelve a intentarlo más tarde."
+  },
   "compare": {
     "title": "Comparación presupuesto-real",
     "empty": "No hay nada que comparar para este ejercicio.",

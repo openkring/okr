@@ -18,6 +18,14 @@
     "notFound": "This budget version does not exist.",
     "unbudgeted": "not budgeted"
   },
+  "board": {
+    "title": "My cost centres",
+    "empty": "You are not responsible for any cost centre. If that is wrong, please contact the treasurer.",
+    "allMine": "All my cost centres",
+    "maskedTitle": "{account} — Person",
+    "noBudget": "No budget has been approved for this fiscal year yet. You only see the booked amounts.",
+    "error": "The cost centres could not be loaded. Please try again later."
+  },
   "compare": {
     "title": "Budget vs. actual",
     "empty": "There is nothing to compare for this fiscal year.",

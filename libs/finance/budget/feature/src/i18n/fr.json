@@ -18,6 +18,14 @@
     "notFound": "Cette version du budget n'existe pas.",
     "unbudgeted": "non budgété"
   },
+  "board": {
+    "title": "Mes centres de coûts",
+    "empty": "Tu n’es responsable d’aucun centre de coûts. Si ce n’est pas correct, adresse-toi au trésorier ou à la trésorière.",
+    "allMine": "Tous mes centres de coûts",
+    "maskedTitle": "{account} — Personne",
+    "noBudget": "Aucun budget n’a encore été approuvé pour cet exercice. Tu ne vois que les montants comptabilisés.",
+    "error": "Les centres de coûts n’ont pas pu être chargés. Réessaie plus tard."
+  },
   "compare": {
     "title": "Comparaison budget-réel",
     "empty": "Il n'y a rien à comparer pour cet exercice.",

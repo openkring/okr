@@ -18,6 +18,14 @@
     "notFound": "Questa versione del budget non esiste.",
     "unbudgeted": "non a budget"
   },
+  "board": {
+    "title": "I miei centri di costo",
+    "empty": "Non sei responsabile di nessun centro di costo. Se non è corretto, rivolgiti al cassiere o alla cassiera.",
+    "allMine": "Tutti i miei centri di costo",
+    "maskedTitle": "{account} — Persona",
+    "noBudget": "Per questo esercizio non è ancora stato approvato alcun budget. Vedi solo gli importi contabilizzati.",
+    "error": "Non è stato possibile caricare i centri di costo. Riprova più tardi."
+  },
   "compare": {
     "title": "Confronto budget-consuntivo",
     "empty": "Per quest'esercizio non c'è nulla da confrontare.",

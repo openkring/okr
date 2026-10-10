@@ -18,6 +18,14 @@
     "notFound": "Diese Budgetversion gibt es nicht.",
     "unbudgeted": "nicht budgetiert"
   },
+  "board": {
+    "title": "Meine Kostenstellen",
+    "empty": "Du bist für keine Kostenstelle verantwortlich. Wenn das nicht stimmt, wende dich an die Kassierin oder den Kassier.",
+    "allMine": "Alle meine Kostenstellen",
+    "maskedTitle": "{account} — Person",
+    "noBudget": "Für dieses Geschäftsjahr ist noch kein Budget freigegeben. Du siehst nur die gebuchten Beträge.",
+    "error": "Die Kostenstellen konnten nicht geladen werden. Versuche es später noch einmal."
+  },
   "compare": {
     "title": "Soll-Ist-Vergleich",
     "empty": "Für dieses Geschäftsjahr gibt es nichts zu vergleichen.",

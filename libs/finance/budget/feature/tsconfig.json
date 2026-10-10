@@ -39,6 +39,9 @@
       "path": "../../cost-center/feature/tsconfig.lib.json"
     },
     {
+      "path": "../../cost-center/data-access/tsconfig.lib.json"
+    },
+    {
       "path": "../../reporting/data-access/tsconfig.lib.json"
     },
     {
