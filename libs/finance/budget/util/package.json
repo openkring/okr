@@ -10,6 +10,7 @@
     "@okr/shared-models": "*",
     "@okr/shared-constants": "*",
     "@okr/shared-util-core": "*",
-    "@okr/finance-cost-center-util": "*"
+    "@okr/finance-cost-center-util": "*",
+    "@okr/finance-reporting-util": "*"
   }
 }
