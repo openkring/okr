@@ -23,6 +23,7 @@ import { isPersonRelated, projectBooking, RespLike, visibleCostCenterKeys } from
 const REGION = 'europe-west6';
 const CF_NAME = 'getMyCostCenterReport';
 const IN_CHUNK = 30;
+const PARALLEL = 10;
 const FULL_ACCESS_ROLES = ['treasurer', 'admin', 'auditor'];
 
 interface ReportRequest { accountingTenantId?: string; fiscalYear?: number }
@@ -65,8 +66,9 @@ export const getMyCostCenterReport = onCall(
       .where('accountingTenantId', '==', accountingTenantId).where('tenants', 'array-contains', tenantId);
 
     const [centerSnap, accountSnap, versionSnap] = await Promise.all([scoped('cost-centers').get(), scoped('accounts').get(), scoped('budget-versions').get()]);
+    // full access keeps archived Kostenstellen (their lines still count, as in the treasurer's comparison)
     const centers = centerSnap.docs.map(d => ({ okey: d.id, ...(d.data() as Data) }))
-      .filter(c => c['isArchived'] !== true)
+      .filter(c => fullAccess || c['isArchived'] !== true)
       .map(c => ({ okey: c.okey, id: str(c['id']), name: str(c['name']), parentKey: str(c['parentKey']), type: str(c['type']), responsibilityKey: str(c['responsibilityKey']) }));
     const versions = versionSnap.docs.map(d => ({ ...(d.data() as BudgetVersionModel), okey: d.id }));
     const fiscalYears = [...new Set([currentYear, ...versions.filter(v => v.status === 'approved' && !v.isArchived).map(v => v.fiscalYear)])]
@@ -78,9 +80,9 @@ export const getMyCostCenterReport = onCall(
     const empty: MyCostCenterReport = {
       accountingTenantId, fiscalYear: year, fiscalYears, fullAccess, costCenters: [], accounts: [], budget: null, budgetLines: [], bookings: [], lines: [],
     };
-    if (visible.size === 0) return empty;
-    // full access also sees what was booked without a Kostenstelle
-    const keyVisible = (key: string): boolean => (key ? visible.has(key) : fullAccess);
+    if (visible.size === 0 && !fullAccess) return empty;
+    // full access sees every line — unassigned, archived or unknown Kostenstelle included — like the treasurer's comparison
+    const keyVisible = (key: string): boolean => fullAccess || visible.has(key);
 
     const accounts = accountSnap.docs.map(d => ({ okey: d.id, ...(d.data() as Data) }))
       .filter(a => isProfitAndLossAccountId(str(a['id'])) || !str(a['id']) || hasProfitAndLossChild(a.okey, accountSnap.docs))
@@ -100,8 +102,13 @@ export const getMyCostCenterReport = onCall(
       .filter(b => b.data()['status'] === 'posted' && str(b.data()['date']) >= range.from && str(b.data()['date']) <= range.to);
     const lines: ReportLine[] = [];
     const keys = bookingDocs.map(b => b.id);
-    for (let i = 0; i < keys.length; i += IN_CHUNK) {
-      const snap = await db.collection('booking-lines').where('bookingKey', 'in', keys.slice(i, i + IN_CHUNK)).get();
+    const chunks: string[][] = [];
+    for (let i = 0; i < keys.length; i += IN_CHUNK) chunks.push(keys.slice(i, i + IN_CHUNK));
+    const snaps = [];
+    for (let i = 0; i < chunks.length; i += PARALLEL) {
+      snaps.push(...await Promise.all(chunks.slice(i, i + PARALLEL).map(c => db.collection('booking-lines').where('bookingKey', 'in', c).get())));
+    }
+    for (const snap of snaps) {
       for (const d of snap.docs) {
         const l = d.data() as Data;
         if (!((l['tenants'] as string[] | undefined) ?? []).includes(tenantId) || l['accountingTenantId'] !== accountingTenantId) continue;
@@ -114,7 +121,9 @@ export const getMyCostCenterReport = onCall(
     }
 
     const used = new Set(lines.map(l => l.bookingKey));
-    const expenseBookingKeys = fullAccess ? new Set<string>() : new Set((await scoped('expenses').get()).docs.map(d => str(d.data()['bookingKey'])).filter(Boolean));
+    // Spesen: the OCR pipeline books `bookings/{expenseKey}`, so an expense doc with the booking's okey marks it
+    // (independent of the expense's own accountingTenantId, which legacy docs may lack); bookingKey links count too.
+    const expenseBookingKeys = fullAccess ? new Set<string>() : await expenseOrigins(db, tenantId, [...used]);
     const bookings: ReportBooking[] = bookingDocs.filter(b => used.has(b.id)).map(b => {
       const data = { okey: b.id, ...(b.data() as Data) } as Parameters<typeof projectBooking>[0] & { anonymizedAt?: string };
       return projectBooking(data, !fullAccess && isPersonRelated(data, expenseBookingKeys));
@@ -128,6 +137,19 @@ export const getMyCostCenterReport = onCall(
     };
   },
 );
+
+/** The booking okeys (of `keys`) that originate from an expense of the tenant: same okey, or the expense's `bookingKey`. */
+async function expenseOrigins(db: Firestore, tenantId: string, keys: string[]): Promise<Set<string>> {
+  const out = new Set<string>();
+  for (let i = 0; i < keys.length; i += 300) {
+    const snaps = await db.getAll(...keys.slice(i, i + 300).map(k => db.collection('expenses').doc(k)));
+    for (const s of snaps) if (s.exists && ((s.data()?.['tenants'] as string[] | undefined) ?? []).includes(tenantId)) out.add(s.id);
+  }
+  const linked = await db.collection('expenses').where('tenants', 'array-contains', tenantId).get();
+  const wanted = new Set(keys);
+  for (const d of linked.docs) { const k = str(d.data()['bookingKey']); if (k && wanted.has(k)) out.add(k); }
+  return out;
+}
 
 /** A group account (no number of its own) stays in the response when a P&L account hangs below it — the client needs the tree. */
 function hasProfitAndLossChild(okey: string, docs: FirebaseFirestore.QueryDocumentSnapshot[]): boolean {

@@ -77,6 +77,14 @@ describe('isPersonRelated', () => {
     expect(isPersonRelated({ okey: 'b', counterparty: { key: 'g1', modelType: 'group' } }, none)).toBe(true);
     expect(isPersonRelated({ okey: 'b', counterparty: { key: 'x1' } }, none)).toBe(true);
   });
+  it('a bank-import booking without a resolved org is person-related, even without counterparty (raw bank text as title)', () => {
+    expect(isPersonRelated({ okey: 'bank-abc', title: 'Gutschrift CH93 Anna Muster' }, none)).toBe(true);
+    expect(isPersonRelated({ okey: 'bank-abc', counterparty: { key: 'o1', modelType: 'org' } }, none)).toBe(false);
+  });
+  it('a title that is the raw bank note is person-related', () => {
+    expect(isPersonRelated({ okey: 'b9', title: 'Gutschrift Anna Muster', notes: 'Gutschrift Anna Muster' }, none)).toBe(true);
+    expect(isPersonRelated({ okey: 'b9', title: 'Papier', notes: '' }, none)).toBe(false);
+  });
   it('a resolved org and a booking without counterparty are not', () => {
     expect(isPersonRelated({ okey: 'b', counterparty: { key: 'o1', modelType: 'org' } }, none)).toBe(false);
     expect(isPersonRelated({ okey: 'b' }, none)).toBe(false);

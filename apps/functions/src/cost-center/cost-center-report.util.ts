@@ -77,16 +77,23 @@ export function visibleCostCenterKeys(
  * Spec 1.65 §7.3 / D22: a booking is person-related when it originates from an expense (Spesen),
  * is anonymized, or has any counterparty other than a resolved org record (an `org` with a key):
  * persons, users, groups, untyped avatars and keyless payee text (the bank import stores the raw
- * payee that way) are all masked. No counterparty = not person-related.
+ * payee that way) are all masked. Without a counterparty a booking is masked only when its title may be
+ * raw bank text (a `bank-…` booking, or a title equal to its note); otherwise the title is the treasurer's.
  */
 export function isPersonRelated(
-  b: { okey: string; anonymizedAt?: string; counterparty?: AvatarRef }, expenseBookingKeys: Set<string>,
+  b: { okey: string; anonymizedAt?: string; counterparty?: AvatarRef; title?: string; notes?: string }, expenseBookingKeys: Set<string>,
 ): boolean {
   if (expenseBookingKeys.has(b.okey)) return true;
   if (b.anonymizedAt) return true;
   const cp = b.counterparty;
-  if (!cp) return false;
-  return !(cp.modelType === 'org' && (cp.key ?? '') !== '');
+  const resolvedOrg = !!cp && cp.modelType === 'org' && (cp.key ?? '') !== '';
+  if (resolvedOrg) return false;
+  if (cp) return true;
+  // no counterparty: the title is the treasurer's — unless it came from the bank text. A bank-import
+  // booking (`bank-…`) may carry the raw row text as its title («Konto zuweisen» seeds it), and so may
+  // any booking whose title equals its raw note.
+  if (b.okey.startsWith('bank-')) return true;
+  return !!b.notes && (b.title ?? '').trim() === b.notes.trim();
 }
 
 /**
