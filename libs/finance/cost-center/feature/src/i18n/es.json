@@ -72,8 +72,9 @@
     "refused": "La asignación solo es posible para contabilidades llevadas aquí.",
     "noCostCenters": "Crea primero al menos un centro de costes activo. De lo contrario, se vaciarían todas las entradas existentes.",
     "lockedSkipped": "En años cerrados, se mantiene sin cambios: {count}",
-    "yearPrompt": "¿Para qué ejercicio deben recibir los asientos su centro de coste? (hasta {current})",
-    "yearInvalid": "Introduce un ejercicio entre 2000 y {current}.",
+    "yearSelect": "¿Para qué ejercicio deben recibir los asientos su centro de coste?",
+    "yearLocked": "{year} · cerrado",
+    "inLockedPeriods": "De ellos en ejercicios cerrados: {count}. Los importes y los cierres no cambian.",
     "yearMismatch": "La asignación por ejercicio aún no está actualizada. No se ha cambiado nada: vuelve a intentarlo tras la próxima actualización.",
     "year": "Ejercicio {year}"
   }

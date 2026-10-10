@@ -20,6 +20,7 @@
     "@okr/finance-cost-center-ui": "*",
     "@okr/finance-cost-center-util": "*",
     "@okr/relationship-responsibility-data-access": "*",
-    "@okr/finance-reporting-util": "*"
+    "@okr/finance-reporting-util": "*",
+    "@okr/finance-period-data-access": "*"
   }
 }

@@ -58,6 +58,9 @@
     },
     {
       "path": "../../reporting/util/tsconfig.lib.json"
+    },
+    {
+      "path": "../../period/data-access/tsconfig.lib.json"
     }
   ]
 }

@@ -5,7 +5,9 @@
 //               and become the okey of an active leaf cost centre (or '' when nothing matches);
 //   backfill  — posted booking lines of ONE fiscal year (request.fiscalYear, default the current one)
 //               without a cost centre get the default of their account (then the book default).
-//               A future year is refused; locked periods stay untouched. The response names the year.
+//               A future year is refused. Locked periods are filled too (D19, amended 2026-10-10): the
+//               Kostenstelle is an analytic dimension — no amount, account or balance changes. The response
+//               names the year and how many of the filled lines lie in a locked period.
 // Idempotent: a second run finds nothing to change. `dryRun` counts and lists without writing.
 
 import { onCall, CallableRequest, HttpsError } from 'firebase-functions/v2/https';
@@ -28,10 +30,11 @@ const IN_CHUNK = 30;
 interface MigrateRequest { accountingTenantId?: string; step?: 'free-text' | 'backfill'; dryRun?: boolean; fiscalYear?: number }
 interface Unmatched { collection: string; okey: string; value: string }
 /**
- * `lockedSkipped`: backfill lines that would get a Kostenstelle but lie in a locked period (left alone).
+ * `lockedSkipped`: always 0 since D19 was amended (kept for clients that still read it).
+ * `inLockedPeriods`: backfill lines that get (dry run: would get) a Kostenstelle and lie in a locked period.
  * `fiscalYear`: the year a backfill processed (0 for free-text) — a client checks it against the year it asked for.
  */
-interface MigrateResponse { scanned: number; updated: number; unmatched: Unmatched[]; unattributed: Unmatched[]; lockedSkipped: number; fiscalYear: number }
+interface MigrateResponse { scanned: number; updated: number; unmatched: Unmatched[]; unattributed: Unmatched[]; lockedSkipped: number; inLockedPeriods: number; fiscalYear: number }
 
 /** [collection, field] of the free-text sources. */
 const FREE_TEXT_SOURCES: [string, string][] = [['expenses', 'costCenterId'], ['ocr-rules', 'costCenterId'], ['assets', 'costCenter']];
@@ -76,7 +79,7 @@ export const migrateCostCenters = onCall(
     const result = step === 'free-text'
       ? await migrateFreeText(db, tenantId, accountingTenantId, dryRun)
       : await backfillFiscalYear(db, tenantId, accountingTenantId, request.data?.fiscalYear, dryRun);
-    logger.info(`${CF_NAME}: ${step} ${dryRun ? 'dry run' : 'applied'} year=${result.fiscalYear} scanned=${result.scanned} updated=${result.updated} unmatched=${result.unmatched.length} lockedSkipped=${result.lockedSkipped}`);
+    logger.info(`${CF_NAME}: ${step} ${dryRun ? 'dry run' : 'applied'} year=${result.fiscalYear} scanned=${result.scanned} updated=${result.updated} unmatched=${result.unmatched.length} inLockedPeriods=${result.inLockedPeriods}`);
     return result;
   },
 );
@@ -119,7 +122,7 @@ async function migrateFreeText(db: Firestore, tenantId: string, accountingTenant
     }
   }
   await writer.flush();
-  return { scanned, updated, unmatched, unattributed, lockedSkipped: 0, fiscalYear: 0 };
+  return { scanned, updated, unmatched, unattributed, lockedSkipped: 0, inLockedPeriods: 0, fiscalYear: 0 };
 }
 
 async function backfillFiscalYear(db: Firestore, tenantId: string, accountingTenantId: string, requestedYear: unknown, dryRun: boolean): Promise<MigrateResponse> {
@@ -136,7 +139,7 @@ async function backfillFiscalYear(db: Firestore, tenantId: string, accountingTen
     .map(b => ({ okey: b.id, date: b.data()['date'] as string | undefined }))
     .filter(b => typeof b.date === 'string' && /^\d{8}$/.test(b.date) && fiscalYear(b.date, fiscalYearStart) === year);
   const bookingKeys = current.map(b => b.okey);
-  // a locked period is closed for every ledger writer — the backfill included
+  // locked periods are filled too (only an analytic dimension changes); they are counted for the report
   const periodKeys = touchedPeriodKeys(accountingTenantId, current.map(b => b.date), fiscalYearStart);
   const periodSnaps = periodKeys.length ? await db.getAll(...periodKeys.map(k => db.collection('periods').doc(k))) : [];
   const lockedPeriods = new Set(periodSnaps.filter(p => p.exists && p.data()?.['isLocked'] === true).map(p => p.id));
@@ -146,7 +149,7 @@ async function backfillFiscalYear(db: Firestore, tenantId: string, accountingTen
   const writer = new BatchWriter(db);
   let scanned = 0;
   let updated = 0;
-  let lockedSkipped = 0;
+  let inLockedPeriods = 0;
   for (let i = 0; i < bookingKeys.length; i += IN_CHUNK) {
     const lines = await db.collection('booking-lines').where('bookingKey', 'in', bookingKeys.slice(i, i + IN_CHUNK)).get();
     for (const line of lines.docs) {
@@ -156,11 +159,11 @@ async function backfillFiscalYear(db: Firestore, tenantId: string, accountingTen
       if (typeof data['costCenterKey'] === 'string' && data['costCenterKey'].trim() !== '') continue;
       const key = costCenterKeyForLine(ctx, String(data['accountKey'] ?? ''));
       if (!key) continue;
-      if (locked.has(String(data['bookingKey'] ?? ''))) { lockedSkipped++; continue; }
+      if (locked.has(String(data['bookingKey'] ?? ''))) inLockedPeriods++;
       updated++;
       if (!dryRun) await writer.update(line.ref, { costCenterKey: key });
     }
   }
   await writer.flush();
-  return { scanned, updated, unmatched: [], unattributed: [], lockedSkipped, fiscalYear: year };
+  return { scanned, updated, unmatched: [], unattributed: [], lockedSkipped: 0, inLockedPeriods, fiscalYear: year };
 }

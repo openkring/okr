@@ -67,12 +67,18 @@ export function sortCostCenterTree(centers: CostCenterModel[]): { center: CostCe
 }
 
 /**
- * The fiscal year typed into the backfill prompt (spec 1.65 D19): an integer from 2000 to `currentYear`,
- * else undefined. The server applies the same bounds.
+ * The fiscal years the backfill can be run on (spec 1.65 D19): every year that has a period, from 2000 up to
+ * `currentYear`, plus the current one, newest first. `locked` comes from the annual period (month 0); the
+ * backfill runs on locked years too (D19, amended 2026-10-10), the flag only informs.
  */
-export function parseBackfillYear(answer: string, currentYear: number): number | undefined {
-  const text = (answer ?? '').trim();
-  if (!/^\d{4}$/.test(text)) return undefined;
-  const year = Number(text);
-  return year >= 2000 && year <= currentYear ? year : undefined;
+export function backfillYearChoices(
+  periods: { year: number; month: number; isLocked?: boolean; isArchived?: boolean }[], currentYear: number,
+): { year: number; locked: boolean }[] {
+  const locked = new Map<number, boolean>([[currentYear, false]]);
+  for (const p of periods) {
+    if (p.isArchived || p.year < 2000 || p.year > currentYear) continue;
+    if (!locked.has(p.year)) locked.set(p.year, false);
+    if (p.month === 0 && p.isLocked) locked.set(p.year, true);
+  }
+  return [...locked.entries()].sort((a, b) => b[0] - a[0]).map(([year, isLocked]) => ({ year, locked: isLocked }));
 }

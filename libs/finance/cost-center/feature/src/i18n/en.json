@@ -72,8 +72,9 @@
     "refused": "The assignment is only possible for books kept here.",
     "noCostCenters": "Create at least one active cost centre first. Otherwise all existing entries would be cleared.",
     "lockedSkipped": "In closed years, left unchanged: {count}",
-    "yearPrompt": "Which fiscal year should the bookings get their cost centre for? (up to {current})",
-    "yearInvalid": "Enter a fiscal year between 2000 and {current}.",
+    "yearSelect": "Which fiscal year should the bookings get their cost centre for?",
+    "yearLocked": "{year} · closed",
+    "inLockedPeriods": "Of these in closed years: {count}. Amounts and closings stay unchanged.",
     "yearMismatch": "Assigning by fiscal year is not up to date yet. Nothing was changed – please try again after the next update.",
     "year": "Fiscal year {year}"
   }

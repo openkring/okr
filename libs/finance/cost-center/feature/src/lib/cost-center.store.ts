@@ -1,8 +1,8 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { ModalController } from '@ionic/angular/standalone';
+import { ActionSheetController, ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
-import { of } from 'rxjs';
+import { firstValueFrom, of } from 'rxjs';
 
 import { AppStore, ModelSelectService } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
@@ -13,7 +13,8 @@ import { DateFormat, fill, getTodayStr } from '@okr/shared-util-core';
 import { AccountingStore } from '@okr/finance-accounting-feature';
 import { CostCenterMigrationStep, CostCenterService } from '@okr/finance-cost-center-data-access';
 import { CostCenterEditModal } from '@okr/finance-cost-center-ui';
-import { COST_CENTER_I18N_KEYS, CostCenterI18n, leafCostCenters, parseBackfillYear, sortCostCenterTree } from '@okr/finance-cost-center-util';
+import { COST_CENTER_I18N_KEYS, CostCenterI18n, backfillYearChoices, leafCostCenters, sortCostCenterTree } from '@okr/finance-cost-center-util';
+import { PeriodService } from '@okr/finance-period-data-access';
 import { fiscalYearOf } from '@okr/finance-reporting-util';
 import { ResponsibilityService } from '@okr/relationship-responsibility-data-access';
 
@@ -54,6 +55,8 @@ export const CostCenterStore = signalStore(
     appStore: inject(AppStore),
     accountingStore: inject(AccountingStore),
     modalController: inject(ModalController),
+    actionSheetController: inject(ActionSheetController),
+    periodService: inject(PeriodService),
     alertService: inject(AlertService),
     i18nService: inject(I18nService),
   })),
@@ -176,6 +179,25 @@ export const CostCenterStore = signalStore(
      * One-off migration (spec 1.65 §6.4): a dry run first, shown as an alert with the counts and
      * the values that match no cost centre; only on *OK* the same call is repeated for real.
      */
+    /** Action sheet of the fiscal years with periods (newest first, locked ones marked); undefined = cancelled. */
+    async pickBackfillYear(accountingTenantId: string): Promise<number | undefined> {
+      const _current = fiscalYearOf(getTodayStr(DateFormat.StoreDate), store.accountingStore.config()?.fiscalYearStart ?? 1);
+      const _periods = await firstValueFrom(store.periodService.list(accountingTenantId)).catch(() => []);
+      const _sheet = await store.actionSheetController.create({
+        header: store.i18n.migrate_yearSelect(),
+        buttons: [
+          ...backfillYearChoices(_periods, _current).map(c => ({
+            text: c.locked ? fill(store.i18n.migrate_yearLocked(), { year: c.year }) : String(c.year),
+            data: { year: c.year },
+          })),
+          { text: store.i18n.cancel(), role: 'cancel' },
+        ],
+      });
+      await _sheet.present();
+      const { data } = await _sheet.onDidDismiss();
+      return (data as { year?: number } | undefined)?.year;
+    },
+
     async migrate(step: CostCenterMigrationStep): Promise<void> {
       const _tenant = store.accountingStore.accountingTenantId();
       if (!store.isEnabled() || !_tenant) return;
@@ -186,17 +208,11 @@ export const CostCenterStore = signalStore(
           : _shown;
       };
       try {
-        // backfill: one fiscal year, asked for (spec 1.65 D19); the current one is proposed
+        // backfill: one fiscal year, picked from the years that have periods (spec 1.65 D19)
         let _year: number | undefined;
         if (step === 'backfill') {
-          const _current = fiscalYearOf(getTodayStr(DateFormat.StoreDate), store.accountingStore.config()?.fiscalYearStart ?? 1);
-          const _answer = await store.alertService.okrPrompt(fill(store.i18n.migrate_yearPrompt(), { current: _current }), String(_current), String(_current));
-          if (_answer === undefined) return;   // cancelled
-          _year = parseBackfillYear(_answer, _current);
-          if (_year === undefined) {
-            await store.alertService.showToast(fill(store.i18n.migrate_yearInvalid(), { current: _current }));
-            return;
-          }
+          _year = await this.pickBackfillYear(_tenant);
+          if (_year === undefined) return;   // cancelled
         }
         const _preview = await store.costCenterService.migrate(_tenant, step, true, _year);
         // a function deployed before D19 ignores the year and would report (and apply) the current one
@@ -208,6 +224,8 @@ export const CostCenterStore = signalStore(
         if (_year !== undefined) _lines.unshift(fill(store.i18n.migrate_year(), { year: _year }));
         if (_preview.unmatched.length > 0) _lines.push(fill(store.i18n.migrate_unmatched(), { list: _describe(_preview.unmatched) }));
         if (_preview.unattributed.length > 0) _lines.push(fill(store.i18n.migrate_unattributed(), { list: _describe(_preview.unattributed) }));
+        const _inLocked = _preview.inLockedPeriods ?? 0;
+        if (_inLocked > 0) _lines.push(fill(store.i18n.migrate_inLockedPeriods(), { count: _inLocked }));
         const _lockedSkipped = _preview.lockedSkipped ?? 0;
         if (_lockedSkipped > 0) _lines.push(fill(store.i18n.migrate_lockedSkipped(), { count: _lockedSkipped }));
         if (_preview.updated === 0) {

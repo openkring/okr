@@ -21,6 +21,8 @@ export interface CostCenterMigrationResult {
   unattributed: { collection: string; okey: string; value: string }[];
   /** backfill lines left alone because their booking lies in a locked period (absent from an older function) */
   lockedSkipped?: number;
+  /** backfill lines filled (dry run: to be filled) in a locked period — they get a Kostenstelle since D19 was amended */
+  inLockedPeriods?: number;
   /** the fiscal year a backfill processed; missing from a function deployed before spec 1.65 D19 */
   fiscalYear?: number;
 }

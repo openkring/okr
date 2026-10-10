@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { CostCenterModel } from '@okr/shared-models';
 
-import { costCenterLabel, costCenterPath, costCenterSubtreeKeys, leafCostCenters, parseBackfillYear, sortCostCenterTree, wouldCreateCycle } from './cost-center.util';
+import { costCenterLabel, costCenterPath, costCenterSubtreeKeys, backfillYearChoices, leafCostCenters, sortCostCenterTree, wouldCreateCycle } from './cost-center.util';
 
 const cc = (okey: string, id: string, name: string, parentKey = '', isArchived = false): CostCenterModel =>
   Object.assign(new CostCenterModel('scs', 'scs'), { okey, id, name, parentKey, isArchived });
@@ -41,16 +41,17 @@ describe('cost-center tree', () => {
     expect(sortCostCenterTree(tree).map(n => `${n.depth}:${n.center.id}`)).toEqual(['0:100', '0:300', '1:310', '1:320', '1:330']));
 });
 
-describe('parseBackfillYear', () => {
-  it('accepts a past or the current year, with surrounding spaces', () => {
-    expect(parseBackfillYear(' 2025 ', 2026)).toBe(2025);
-    expect(parseBackfillYear('2026', 2026)).toBe(2026);
+describe('backfillYearChoices', () => {
+  const p = (year: number, month: number, isLocked = false, isArchived = false) => ({ year, month, isLocked, isArchived });
+  it('lists every fiscal year with a period up to the current one, newest first, the current one always', () => {
+    expect(backfillYearChoices([p(2024, 0, true), p(2025, 0, true), p(2027, 0)], 2026))
+      .toEqual([{ year: 2026, locked: false }, { year: 2025, locked: true }, { year: 2024, locked: true }]);
   });
-  it('refuses a future year, a fraction, text, empty input and years before 2000', () => {
-    expect(parseBackfillYear('2027', 2026)).toBeUndefined();
-    expect(parseBackfillYear('2025.5', 2026)).toBeUndefined();
-    expect(parseBackfillYear('zwanzig', 2026)).toBeUndefined();
-    expect(parseBackfillYear('', 2026)).toBeUndefined();
-    expect(parseBackfillYear('1999', 2026)).toBeUndefined();
+  it('takes the lock from the annual period; months only add the year', () => {
+    expect(backfillYearChoices([p(2025, 3, true), p(2025, 4)], 2025)).toEqual([{ year: 2025, locked: false }]);
+    expect(backfillYearChoices([p(2025, 0, true), p(2025, 4)], 2026)).toEqual([{ year: 2026, locked: false }, { year: 2025, locked: true }]);
+  });
+  it('ignores archived periods and years before 2000', () => {
+    expect(backfillYearChoices([p(2024, 0, true, true), p(1999, 0)], 2026)).toEqual([{ year: 2026, locked: false }]);
   });
 });

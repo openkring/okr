@@ -72,8 +72,9 @@
     "refused": "Die Zuordnung ist nur für Buchhaltungen möglich, die hier geführt werden.",
     "noCostCenters": "Lege zuerst mindestens eine aktive Kostenstelle an. Sonst würden alle bisherigen Einträge geleert.",
     "lockedSkipped": "In abgeschlossenen Jahren, bleibt unverändert: {count}",
-    "yearPrompt": "Für welches Geschäftsjahr sollen die Buchungen ihre Kostenstelle erhalten? (bis {current})",
-    "yearInvalid": "Gib ein Geschäftsjahr zwischen 2000 und {current} ein.",
+    "yearSelect": "Für welches Geschäftsjahr sollen die Buchungen ihre Kostenstelle erhalten?",
+    "yearLocked": "{year} · abgeschlossen",
+    "inLockedPeriods": "Davon in abgeschlossenen Jahren: {count}. Beträge und Abschlüsse bleiben unverändert.",
     "yearMismatch": "Die Zuordnung nach Geschäftsjahr ist noch nicht auf dem neuesten Stand. Es wurde nichts geändert – versuche es nach dem nächsten Update noch einmal.",
     "year": "Geschäftsjahr {year}"
   }

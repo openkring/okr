@@ -20,6 +20,7 @@
     { "path": "../data-access/tsconfig.lib.json" },
     { "path": "../ui/tsconfig.lib.json" },
     { "path": "../util/tsconfig.lib.json" },
+    { "path": "../../period/data-access/tsconfig.lib.json" },
     { "path": "../../reporting/util/tsconfig.lib.json" },
     { "path": "../../../relationship/responsibility/data-access/tsconfig.lib.json" },
     { "path": "../../../shared/feature/tsconfig.lib.json" },
