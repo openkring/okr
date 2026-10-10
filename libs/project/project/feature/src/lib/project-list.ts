@@ -11,7 +11,7 @@ import {
 import { DEFAULT_PROJECT_STATE } from '@okr/shared-constants';
 import { AvatarPipe } from '@okr/avatar-ui';
 import { Menu } from '@okr/cms-menu-feature';
-import { ProjectModel } from '@okr/shared-models';
+import { BookingLineModel, ProjectModel } from '@okr/shared-models';
 import { TranslatePipe } from '@okr/shared-i18n';
 import { PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
@@ -145,11 +145,23 @@ export class ProjectList {
   private readonly budgets = computed(() => {
     const out = new Map<string, { revenue: ProjectBudgetRow; expense: ProjectBudgetRow; net: ProjectBudgetRow }>();
     if (!this.budgetView() || !this.books()) return out;
-    const lines = this.linesResource.value() ?? [];
     const bookings = this.bookingsResource.value() ?? [];
     const accounts = this.accountsResource.value() ?? [];
+    const byProject = this.linesByProject();
     for (const p of this.store.filteredProjects()) {
-      out.set(p.okey, projectBudgetSummary(p.okey, p.budgetedRevenue?.amount ?? 0, p.budgetedExpenses?.amount ?? 0, lines, bookings, accounts));
+      out.set(p.okey, projectBudgetSummary(p.okey, p.budgetedRevenue?.amount ?? 0, p.budgetedExpenses?.amount ?? 0, byProject.get(p.okey) ?? [], bookings, accounts));
+    }
+    return out;
+  });
+  /** the lines carrying a projectKey, grouped once (not re-filtered per project and keystroke) */
+  private readonly linesByProject = computed(() => {
+    const out = new Map<string, BookingLineModel[]>();
+    for (const l of this.linesResource.value() ?? []) {
+      const k = l.projectKey ?? '';
+      if (!k) continue;
+      const list = out.get(k) ?? [];
+      list.push(l);
+      out.set(k, list);
     }
     return out;
   });

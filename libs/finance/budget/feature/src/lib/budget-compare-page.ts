@@ -9,7 +9,7 @@ import { EmptyList, Spinner, StringSelect, StringSelectI18n } from '@okr/shared-
 import { ReadOnlyBanner } from '@okr/finance-accounting-feature';
 import { formatMinorAmount } from '@okr/finance-booking-util';
 import { AccountComparisonRow, buildAccountComparison, defaultCompareVersion, isNetOver, isOver, totalsByAccount } from '@okr/finance-budget-util';
-import { aggregateByCostCenter, applyAllocations, costCenterLabel, costCenterSubtreeKeys, postedLinesInRange, rollUpCostCenters, sortCostCenterTree } from '@okr/finance-cost-center-util';
+import { aggregateByCostCenter, allocationBaseCells, applyAllocations, costCenterLabel, costCenterSubtreeKeys, postedLinesInRange, rollUpCostCenters, sortCostCenterTree } from '@okr/finance-cost-center-util';
 import { ALL_COST_CENTERS, defaultExpandedKeys, effectiveCostCenterSelection, filterLinesByCostCenter, fiscalYear, NO_COST_CENTER } from '@okr/finance-reporting-util';
 
 import { BudgetStore } from './budget.store';
@@ -176,7 +176,7 @@ export class BudgetComparePage {
     // Umlagen (D24): the source totals come from ALL lines and the whole version A, before the filter
     const allCells = aggregateByCostCenter(postedLinesInRange(this.store.bookingLines(), this.store.bookings(), range.from, range.to),
       this.store.reportAccounts(), this.store.linesOf(a.okey));
-    const rollUp = rollUpCostCenters(allCells, this.store.costCenterStore.costCenters());
+    const rollUp = rollUpCostCenters(allocationBaseCells(allCells, this.store.reportAccounts()), this.store.costCenterStore.costCenters());
     const selection = sel === ALL_COST_CENTERS ? 'all' : sel === NO_COST_CENTER ? new Set<string>() : subtree;
     const allocations = applyAllocations(this.store.allocationRules(), selection, rollUp, y, this.store.accountingTenantId());
     return buildAccountComparison(this.store.reportAccounts(), totalsByAccount(cells), this.expandedKeys(), labels, allocations);

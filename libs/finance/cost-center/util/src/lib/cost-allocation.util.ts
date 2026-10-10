@@ -1,6 +1,6 @@
-import { CostAllocationModel } from '@okr/shared-models';
+import { AccountModel, CostAllocationModel } from '@okr/shared-models';
 
-import { CellSide, CostCenterRollUp } from './cost-center-aggregate';
+import { CellSide, CostCenterCell, CostCenterRollUp } from './cost-center-aggregate';
 
 /** One Umlage as it appears in a Soll-Ist view: signed for the selection (+ at the target, − at the source). */
 export interface AllocationRow { key: string; side: CellSide; title: string; budget: number; actual: number }
@@ -37,4 +37,14 @@ export function applyAllocations(
     rows.push({ key: `allocation:${r.okey}`, side, title: r.title ?? '', budget: sign * budget, actual: sign * actual });
   }
   return rows;
+}
+
+/**
+ * The cells a percentage Umlage takes its base from (D24): Aufwand = classes 4–6, Ertrag = class 3 only.
+ * `aggregateByCostCenter` files classes 7–9 (übriger Erfolg) on the revenue side too; they are their own section in
+ * the comparison and never part of an Umlage's base. Pass the result to `rollUpCostCenters` for `applyAllocations`.
+ */
+export function allocationBaseCells(cells: CostCenterCell[], accounts: Pick<AccountModel, 'okey' | 'id'>[]): CostCenterCell[] {
+  const idByKey = new Map(accounts.map(a => [a.okey, (a.id ?? '').trim()]));
+  return cells.filter(c => c.side === 'expense' || (idByKey.get(c.accountKey) ?? '').startsWith('3'));
 }

@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import { CostAllocationModel, MoneyModel } from '@okr/shared-models';
+import { AccountModel, CostAllocationModel, MoneyModel } from '@okr/shared-models';
 
-import { applyAllocations } from './cost-allocation.util';
+import { allocationBaseCells, applyAllocations } from './cost-allocation.util';
 import { CostCenterRollUp } from './cost-center-aggregate';
 
 const rule = (okey: string, extra: Partial<CostAllocationModel>): CostAllocationModel =>
@@ -47,5 +47,17 @@ describe('applyAllocations', () => {
   });
   it('a target inside a selected group counts (selection = subtree of «sport»)', () => {
     expect(applyAllocations([pct], sel('sport', 'jun', 'reg'), rollUp, 2026, 'scs')[0]).toMatchObject({ budget: 4000 });
+  });
+});
+
+describe('allocationBaseCells — the percentage base is Aufwand (4–6) or Ertrag (3) only', () => {
+  it('drops übriger Erfolg (7–9) so a revenue rule takes class 3 only', () => {
+    const accounts = [{ okey: 'a3', id: '3400' }, { okey: 'a8', id: '8000' }, { okey: 'a4', id: '4400' }] as AccountModel[];
+    const cells = [
+      { costCenterKey: 'club', accountKey: 'a3', side: 'revenue' as const, actual: 10000, budget: 0, compare: 0 },
+      { costCenterKey: 'club', accountKey: 'a8', side: 'revenue' as const, actual: -5000, budget: 0, compare: 0 },
+      { costCenterKey: 'club', accountKey: 'a4', side: 'expense' as const, actual: 700, budget: 0, compare: 0 },
+    ];
+    expect(allocationBaseCells(cells, accounts).map(c => c.accountKey)).toEqual(['a3', 'a4']);
   });
 });

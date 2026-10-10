@@ -32,7 +32,8 @@ export class CostAllocationService {
       ...getArchiveInclusiveQuery(this.tenantId),
       { key: 'accountingTenantId', operator: '==' as const, value: accountingTenantId },
     ];
-    return this.firestoreService.searchData<CostAllocationModel>(CostAllocationCollection, query, 'fiscalYear', 'desc');
+    // no orderBy: equality + array-contains run on merged single-field indexes; an orderBy would need a composite one
+    return this.firestoreService.searchData<CostAllocationModel>(CostAllocationCollection, query, 'none');
   }
 
   public async create(rule: CostAllocationModel, currentUser?: UserModel): Promise<string | undefined> {

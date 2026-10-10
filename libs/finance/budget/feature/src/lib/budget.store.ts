@@ -136,7 +136,8 @@ export const BudgetStore = signalStore(
     accounts: computed(() => state.accountsResource.value() ?? []),
     /** live and archived accounts — for the grid and the comparison, so an amount on an archived account still counts */
     /** live Umlage rules of the books (all years — `applyAllocations` filters the year) */
-    allocationRules: computed(() => (state.allocationsResource.value() ?? []).filter(r => !r.isArchived)),
+    allocationRules: computed(() => (state.allocationsResource.value() ?? []).filter(r => !r.isArchived)
+      .sort((a, b) => (b.fiscalYear - a.fiscalYear) || (a.title ?? '').localeCompare(b.title ?? ''))),
     reportAccounts: computed(() => [...(state.accountsResource.value() ?? []), ...(state.archivedAccountsResource.value() ?? [])]),
     bookings: computed(() => state.bookingsResource.value() ?? []),
     bookingLines: computed(() => state.bookingLinesResource.value() ?? []),

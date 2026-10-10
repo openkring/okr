@@ -13,7 +13,7 @@ import { getFirestore, type Firestore } from 'firebase-admin/firestore';
 import { checkAppCheckToken, checkAuthentication, tenantIdOfUserData } from '@okr/shared-util-functions';
 import { getTodayStr, isProfitAndLossAccountId, isValidAt } from '@okr/shared-util-core';
 import { AccountModel, BookingLineModel, BudgetLineModel, BudgetVersionModel, CostAllocationModel, CostCenterModel } from '@okr/shared-models';
-import { aggregateByCostCenter, AllocationRow, applyAllocations, costCenterSubtreeKeys, MyCostCenterReport, ReportBooking, ReportLine, rollUpCostCenters } from '@okr/finance-cost-center-util';
+import { aggregateByCostCenter, allocationBaseCells, AllocationRow, applyAllocations, costCenterSubtreeKeys, MyCostCenterReport, ReportBooking, ReportLine, rollUpCostCenters } from '@okr/finance-cost-center-util';
 import { newestApprovedBudget } from '@okr/finance-budget-util';
 import { fiscalYear as fiscalYearRange } from '@okr/finance-reporting-util';
 
@@ -131,7 +131,9 @@ export const getMyCostCenterReport = onCall(
     // Umlagen (D24): computed here for every option of the page's Kostenstelle filter — from ALL lines and the whole
     // reference budget, which a board member never receives; the rules themselves are not sent.
     const rules = (await scoped('cost-allocations').get()).docs.map(d => ({ ...(d.data() as CostAllocationModel), okey: d.id }));
-    const allocationsBySelection = allocationOptions(rules, centers, visible, fullAccess, allLines, allBudgetLines, accounts, year, accountingTenantId);
+    // the source base uses EVERY Kostenstelle (archived included, as the treasurer's page); visibility only picks the options
+    const allCenters = centerSnap.docs.map(d => ({ okey: d.id, parentKey: str(d.data()['parentKey']) }));
+    const allocationsBySelection = allocationOptions(rules, allCenters, visible, fullAccess, allLines, allBudgetLines, accounts, year, accountingTenantId);
 
     const used = new Set(lines.map(l => l.bookingKey));
     // Spesen: the OCR pipeline books `bookings/{expenseKey}`, so an expense doc with the booking's okey marks it
@@ -169,7 +171,7 @@ function allocationOptions(
     accounts.map(a => ({ okey: a.okey, id: a.id }) as AccountModel),
     budgetLines.map(b => ({ costCenterKey: b.costCenterKey, accountKey: b.accountKey, amount: { amount: b.amount, currency: 'CHF' } }) as unknown as BudgetLineModel),
   );
-  const rollUp = rollUpCostCenters(cells, models);
+  const rollUp = rollUpCostCenters(allocationBaseCells(cells, accounts), models);
   const out: Record<string, AllocationRow[]> = {};
   out[''] = applyAllocations(rules, fullAccess ? 'all' : visible, rollUp, year, accountingTenantId);
   for (const key of visible) out[key] = applyAllocations(rules, costCenterSubtreeKeys(models, key), rollUp, year, accountingTenantId);
