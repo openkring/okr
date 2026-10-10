@@ -6,9 +6,9 @@ import { filter, firstValueFrom, of, timeout } from 'rxjs';
 
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
-import { AccountModel, BudgetLineModel, BudgetVersionModel, MoneyModel } from '@okr/shared-models';
+import { AccountModel, BudgetLineModel, BudgetVersionModel, CostAllocationModel, MoneyModel } from '@okr/shared-models';
 import { AlertService, error, resourceParams } from '@okr/shared-util-angular';
-import { DateFormat, fill, getTodayStr } from '@okr/shared-util-core';
+import { DateFormat, fill, getTodayStr, hasRole } from '@okr/shared-util-core';
 
 import { AccountService } from '@okr/finance-account-data-access';
 import { AccountingStore } from '@okr/finance-accounting-feature';
@@ -37,6 +37,8 @@ export type BudgetState = {
   accountsNeeded: boolean;
   /** how many live pages (grid, comparison) show actuals; > 0 streams the whole journal of the books */
   actualsUsers: number;
+  /** pages that need the Umlage rules without the journal (the Umlagen list) */
+  allocationsUsers: number;
 };
 
 export const initialBudgetState: BudgetState = {
@@ -44,6 +46,7 @@ export const initialBudgetState: BudgetState = {
   archiveFilter: 'active',
   accountsNeeded: false,
   actualsUsers: 0,
+  allocationsUsers: 0,
 };
 
 /** True for a Firestore rules rejection — the client error carries `code: 'permission-denied'`. */
@@ -104,7 +107,8 @@ export const BudgetStore = signalStore(
     }),
     // Umlagen (D24): the rules of the books, for the Soll-Ist comparison
     allocationsResource: rxResource({
-      params: resourceParams(() => actualsActive() ? { id: store.accountingStore.accountingTenantId() } : undefined),
+      params: resourceParams(() => actualsActive() || (store.allocationsUsers() > 0 && store.accountingStore.configLoaded())
+        ? { id: store.accountingStore.accountingTenantId() } : undefined),
       stream: ({ params }) => params.id ? store.costAllocationService.list(params.id) : of([]),
     }),
     // archived accounts: only the pages with actuals need them, to place amounts budgeted or booked on them
@@ -256,6 +260,42 @@ export const BudgetStore = signalStore(
        */
       loadActuals(): void {
         patchState(store, { actualsUsers: store.actualsUsers() + 1 });
+      },
+
+      /** The Umlagen list needs the rules (not the journal); pair with `releaseAllocations()`. */
+      loadAllocations(): void {
+        patchState(store, { allocationsUsers: store.allocationsUsers() + 1 });
+      },
+      releaseAllocations(): void {
+        patchState(store, { allocationsUsers: Math.max(0, store.allocationsUsers() - 1) });
+      },
+
+      /**
+       * Creates (no `allocation`) or edits an Umlage of `fiscalYear` (spec 1.65 D24) through the edit modal; the
+       * books are the AccountingStore's — never the app tenant.
+       */
+      async editAllocation(fiscalYear: number, allocation?: CostAllocationModel): Promise<void> {
+        const _readOnly = !store.isEnabled() || !hasRole('treasurer', store.currentUser());
+        if (!allocation && _readOnly) return;
+        const _rule = allocation ?? new CostAllocationModel(store.appStore.tenantId(), store.accountingTenantId(), fiscalYear);
+        if (!allocation) _rule.amount = new MoneyModel(0, store.functionalCurrency());
+        const { CostAllocationEditModal } = await import('@okr/finance-budget-ui');
+        const modal = await store.modalController.create({
+          component: CostAllocationEditModal,
+          componentProps: { allocation: _rule, costCenters: store.costCenterStore.costCenters(), currentUser: store.currentUser(), readOnly: _readOnly },
+        });
+        await modal.present();
+        const { data, role } = await modal.onDidDismiss<CostAllocationModel>();
+        if (role !== 'confirm' || !data || _readOnly) return;
+        const _toSave: CostAllocationModel = { ...data, accountingTenantId: store.accountingTenantId(), fiscalYear: _rule.fiscalYear };
+        if (_toSave.okey) await store.costAllocationService.update(_toSave, store.currentUser());
+        else await store.costAllocationService.create(_toSave, store.currentUser());
+      },
+
+      async archiveAllocation(allocation: CostAllocationModel): Promise<void> {
+        if (!store.isEnabled() || !hasRole('treasurer', store.currentUser())) return;
+        if (!await store.alertService.confirm(store.i18n.alloc_archive_conf(), true)) return;
+        await store.costAllocationService.archive(allocation, store.currentUser());
       },
 
       /** The page that called `loadActuals()` is gone; the last one out stops the journal stream. */

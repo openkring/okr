@@ -144,5 +144,51 @@
     "archived": {
       "label": "Archivadas"
     }
+  },
+  "allocation": {
+    "title": {
+      "label": "Denominación",
+      "placeholder": "p. ej. Reparto local social",
+      "helper": "Así aparece el reparto como fila en la comparación presupuestaria."
+    },
+    "side": {
+      "label": "Tipo",
+      "expense": "Gastos",
+      "revenue": "Ingresos"
+    },
+    "from": {
+      "label": "Del centro de coste",
+      "helper": "Cede el importe."
+    },
+    "to": {
+      "label": "Al centro de coste",
+      "helper": "Asume el importe.",
+      "same": "Los dos centros de coste deben ser distintos."
+    },
+    "mode": {
+      "label": "Cálculo",
+      "percent": "Porcentaje",
+      "amount": "Importe fijo"
+    },
+    "percent": {
+      "label": "Porcentaje",
+      "helper": "Parte de los gastos o ingresos del centro que cede: del presupuesto para el previsto, de los asientos para el real.",
+      "range": "Introduce un porcentaje entre 0 y 100."
+    },
+    "amount": {
+      "label": "Importe",
+      "positive": "Introduce un importe mayor que cero."
+    },
+    "costCenter": {
+      "unknown": "Elige un centro de coste de esta contabilidad."
+    },
+    "list": {
+      "title": "Repartos"
+    },
+    "empty": "Todavía no hay repartos para este ejercicio.",
+    "new": "Nuevo reparto",
+    "edit": "Editar reparto",
+    "archive": "Archivar",
+    "archiveConf": "¿Quieres archivar este reparto?"
   }
 }

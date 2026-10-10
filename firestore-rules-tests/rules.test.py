@@ -268,6 +268,8 @@ seed("users/uidT", {"tenants": ["t1"], "roles": {"treasurer": True}, "firstName"
 seed("bank-import-rows/rowOpen",   {"tenants": ["t1"], "isArchived": False, "accountingTenantId": "t1", "importKey": "rowOpen", "status": "mapped", "bookingKey": ""})
 seed("bank-import-rows/rowPosted", {"tenants": ["t1"], "isArchived": False, "accountingTenantId": "t1", "importKey": "rowPosted", "status": "posted", "bookingKey": "bank-rowPosted"})
 seed("bank-rules/ruleA",           {"tenants": ["t1"], "isArchived": False, "accountingTenantId": "t1", "term": "google", "active": True})
+# Umlagen (spec 1.65 D24): treasurer/admin only, archived never deleted
+seed("cost-allocations/allocA", {"tenants": ["t1"], "isArchived": False, "accountingTenantId": "t1", "fiscalYear": 2026, "title": "Umlage Clubhaus"})
 
 # login-id (spec 1.71): a same-tenant user WITH a Benutzername already set, so an admin
 # editing something else on the doc can be checked for leaving loginId untouched.
@@ -678,6 +680,11 @@ single_cases = [
     ("treasurer T PATCH rowOpen.bookingKey -> DENY", False, PATCH, "bank-import-rows/rowOpen", T, body({"bookingKey": "bank-x"}), ["bookingKey"]),
     ("treasurer T PATCH rowOpen.status=error -> DENY", False, PATCH, "bank-import-rows/rowOpen", T, body({"status": "error"}), ["status"]),
     ("treasurer T PATCH rowOpen.title -> ALLOW", True, PATCH, "bank-import-rows/rowOpen", T, body({"title": "X"}), ["title"]),
+    # Umlagen (spec 1.65 D24)
+    ("treasurer T GET cost-allocations/allocA -> ALLOW", True, GET, "cost-allocations/allocA", T, None, None),
+    ("member A GET cost-allocations/allocA -> DENY", False, GET, "cost-allocations/allocA", A, None, None),
+    ("treasurer T PATCH cost-allocations/allocA.title -> ALLOW", True, PATCH, "cost-allocations/allocA", T, body({"title": "Y"}), ["title"]),
+    ("treasurer T DELETE cost-allocations/allocA -> DENY", False, DELETE, "cost-allocations/allocA", T, None, None),
     ("treasurer T PATCH rowOpen.tenants -> ['t2'] -> DENY", False, PATCH, "bank-import-rows/rowOpen", T, body({"tenants": ["t2"]}), ["tenants"]),
     ("treasurer T PATCH rowPosted.title -> DENY", False, PATCH, "bank-import-rows/rowPosted", T, body({"title": "X"}), ["title"]),
     ("treasurer T DELETE rowPosted -> DENY", False, DELETE, "bank-import-rows/rowPosted", T, None, None),

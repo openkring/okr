@@ -144,5 +144,51 @@
     "archived": {
       "label": "Archiviate"
     }
+  },
+  "allocation": {
+    "title": {
+      "label": "Denominazione",
+      "placeholder": "p. es. Ripartizione clubhouse",
+      "helper": "Così la ripartizione appare come riga nel confronto di budget."
+    },
+    "side": {
+      "label": "Tipo",
+      "expense": "Costi",
+      "revenue": "Ricavi"
+    },
+    "from": {
+      "label": "Dal centro di costo",
+      "helper": "Cede l’importo."
+    },
+    "to": {
+      "label": "Al centro di costo",
+      "helper": "Riprende l’importo.",
+      "same": "I due centri di costo devono essere diversi."
+    },
+    "mode": {
+      "label": "Calcolo",
+      "percent": "Quota in percentuale",
+      "amount": "Importo fisso"
+    },
+    "percent": {
+      "label": "Percentuale",
+      "helper": "Quota dei costi o ricavi del centro che cede: dal budget per il previsto, dalle registrazioni per il consuntivo.",
+      "range": "Inserisci una quota tra 0 e 100 per cento."
+    },
+    "amount": {
+      "label": "Importo",
+      "positive": "Inserisci un importo maggiore di zero."
+    },
+    "costCenter": {
+      "unknown": "Scegli un centro di costo di questa contabilità."
+    },
+    "list": {
+      "title": "Ripartizioni"
+    },
+    "empty": "Per questo esercizio non ci sono ancora ripartizioni.",
+    "new": "Nuova ripartizione",
+    "edit": "Modifica ripartizione",
+    "archive": "Archivia",
+    "archiveConf": "Vuoi archiviare questa ripartizione?"
   }
 }

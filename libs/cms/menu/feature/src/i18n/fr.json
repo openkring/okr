@@ -608,6 +608,8 @@
     "accounting-accounts": "Plan comptable",
     "accounting-cost-centers": "Centres de coûts",
     "accounting-budgets": "Budgets",
+    "accounting-allocations": "Répartitions",
+    "allocation-add": "Nouvelle répartition",
     "accounting-journal": "Journal",
     "accounting-bills": "Créanciers",
     "accounting-invoices": "Débiteurs",

@@ -144,5 +144,51 @@
     "archived": {
       "label": "Archivierte"
     }
+  },
+  "allocation": {
+    "title": {
+      "label": "Bezeichnung",
+      "placeholder": "z.B. Umlage Clubhaus",
+      "helper": "So erscheint die Umlage als Zeile im Soll-Ist-Vergleich."
+    },
+    "side": {
+      "label": "Art",
+      "expense": "Aufwand",
+      "revenue": "Ertrag"
+    },
+    "from": {
+      "label": "Von Kostenstelle",
+      "helper": "Gibt den Betrag ab."
+    },
+    "to": {
+      "label": "An Kostenstelle",
+      "helper": "Übernimmt den Betrag.",
+      "same": "Von und An müssen verschiedene Kostenstellen sein."
+    },
+    "mode": {
+      "label": "Berechnung",
+      "percent": "Anteil in Prozent",
+      "amount": "Fester Betrag"
+    },
+    "percent": {
+      "label": "Prozent",
+      "helper": "Anteil am Aufwand bzw. Ertrag der abgebenden Kostenstelle – im Soll vom Budget, im Ist von den Buchungen.",
+      "range": "Gib einen Anteil zwischen 0 und 100 Prozent ein."
+    },
+    "amount": {
+      "label": "Betrag",
+      "positive": "Gib einen Betrag grösser als null ein."
+    },
+    "costCenter": {
+      "unknown": "Wähle eine Kostenstelle dieser Buchhaltung."
+    },
+    "list": {
+      "title": "Umlagen"
+    },
+    "empty": "Für dieses Geschäftsjahr gibt es noch keine Umlagen.",
+    "new": "Neue Umlage",
+    "edit": "Umlage bearbeiten",
+    "archive": "Archivieren",
+    "archiveConf": "Möchtest du diese Umlage archivieren?"
   }
 }

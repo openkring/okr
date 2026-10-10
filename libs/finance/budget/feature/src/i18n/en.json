@@ -144,5 +144,51 @@
     "archived": {
       "label": "Archived"
     }
+  },
+  "allocation": {
+    "title": {
+      "label": "Name",
+      "placeholder": "e.g. Clubhouse allocation",
+      "helper": "How the allocation appears as a row in the budget comparison."
+    },
+    "side": {
+      "label": "Type",
+      "expense": "Expense",
+      "revenue": "Revenue"
+    },
+    "from": {
+      "label": "From cost centre",
+      "helper": "Gives the amount."
+    },
+    "to": {
+      "label": "To cost centre",
+      "helper": "Takes the amount.",
+      "same": "From and To must be different cost centres."
+    },
+    "mode": {
+      "label": "Calculation",
+      "percent": "Share in percent",
+      "amount": "Fixed amount"
+    },
+    "percent": {
+      "label": "Percent",
+      "helper": "Share of the giving cost centre’s expense or revenue – from the budget for Soll, from the bookings for Ist.",
+      "range": "Enter a share between 0 and 100 percent."
+    },
+    "amount": {
+      "label": "Amount",
+      "positive": "Enter an amount greater than zero."
+    },
+    "costCenter": {
+      "unknown": "Choose a cost centre of these books."
+    },
+    "list": {
+      "title": "Allocations"
+    },
+    "empty": "There are no allocations for this fiscal year yet.",
+    "new": "New allocation",
+    "edit": "Edit allocation",
+    "archive": "Archive",
+    "archiveConf": "Do you want to archive this allocation?"
   }
 }

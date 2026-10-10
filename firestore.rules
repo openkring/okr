@@ -363,6 +363,13 @@ service cloud.firestore {
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])));
       allow delete: if false;
     }
+    // Umlagen (spec 1.65 D24): report-level allocation rules — treasurer/admin; archived, never deleted.
+    match /cost-allocations/{id} {
+      allow read: if tenantRead() && isTreasurerOrAdmin();
+      allow create: if isTreasurerOrAdmin() && tenantCreateOrDetach();
+      allow update: if isTreasurerOrAdmin() && tenantUpdate();
+      allow delete: if false;
+    }
     match /budget-lines/{id} {
       allow read: if tenantRead() && isTreasurerOrAdmin();
       allow create: if isTreasurerOrAdmin() && tenantCreateOrDetach()

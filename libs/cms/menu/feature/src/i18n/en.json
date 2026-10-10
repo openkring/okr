@@ -608,6 +608,8 @@
     "accounting-accounts": "Chart of accounts",
     "accounting-cost-centers": "Cost centres",
     "accounting-budgets": "Budgets",
+    "accounting-allocations": "Allocations",
+    "allocation-add": "New allocation",
     "accounting-journal": "Journal",
     "accounting-bills": "Payables",
     "accounting-invoices": "Receivables",

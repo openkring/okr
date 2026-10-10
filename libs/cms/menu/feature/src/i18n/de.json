@@ -608,6 +608,8 @@
     "accounting-accounts": "Kontoplan",
     "accounting-cost-centers": "Kostenstellen",
     "accounting-budgets": "Budgets",
+    "accounting-allocations": "Umlagen",
+    "allocation-add": "Neue Umlage",
     "accounting-journal": "Journal",
     "accounting-bills": "Kreditoren",
     "accounting-invoices": "Debitoren",

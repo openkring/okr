@@ -797,6 +797,11 @@ const finance: BlockRoutes = {
           ],
         },
         {
+          // Umlagen (spec 1.65 D24): allocation rules per fiscal year; treasurer via the shell's guard.
+          path: 'allocation',
+          children: [{ path: ':contextMenuName', loadComponent: () => import('@okr/finance-budget-feature').then(m => m.CostAllocationList) }],
+        },
+        {
           // Account links and fiscal year start of this accounting tenant (`accounting-settings` row).
           path: 'settings',
           loadComponent: () => import('@okr/finance-accounting-feature').then(m => m.AccountingSettingsPage),

@@ -144,5 +144,51 @@
     "archived": {
       "label": "Archivées"
     }
+  },
+  "allocation": {
+    "title": {
+      "label": "Désignation",
+      "placeholder": "p. ex. Répartition club-house",
+      "helper": "C’est ainsi que la répartition apparaît comme ligne dans la comparaison budgétaire."
+    },
+    "side": {
+      "label": "Type",
+      "expense": "Charges",
+      "revenue": "Produits"
+    },
+    "from": {
+      "label": "Du centre de coûts",
+      "helper": "Cède le montant."
+    },
+    "to": {
+      "label": "Au centre de coûts",
+      "helper": "Reprend le montant.",
+      "same": "Les deux centres de coûts doivent être différents."
+    },
+    "mode": {
+      "label": "Calcul",
+      "percent": "Part en pour cent",
+      "amount": "Montant fixe"
+    },
+    "percent": {
+      "label": "Pour cent",
+      "helper": "Part des charges ou des produits du centre qui cède – du budget pour le prévu, des écritures pour le réel.",
+      "range": "Saisis une part entre 0 et 100 pour cent."
+    },
+    "amount": {
+      "label": "Montant",
+      "positive": "Saisis un montant supérieur à zéro."
+    },
+    "costCenter": {
+      "unknown": "Choisis un centre de coûts de cette comptabilité."
+    },
+    "list": {
+      "title": "Répartitions"
+    },
+    "empty": "Il n’y a pas encore de répartition pour cet exercice.",
+    "new": "Nouvelle répartition",
+    "edit": "Modifier la répartition",
+    "archive": "Archiver",
+    "archiveConf": "Veux-tu archiver cette répartition ?"
   }
 }

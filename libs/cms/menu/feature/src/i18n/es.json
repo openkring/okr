@@ -608,6 +608,8 @@
     "accounting-accounts": "Plan de cuentas",
     "accounting-cost-centers": "Centros de coste",
     "accounting-budgets": "Presupuestos",
+    "accounting-allocations": "Repartos",
+    "allocation-add": "Nuevo reparto",
     "accounting-journal": "Diario",
     "accounting-bills": "Acreedores",
     "accounting-invoices": "Deudores",
