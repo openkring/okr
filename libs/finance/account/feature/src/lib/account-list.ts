@@ -84,7 +84,7 @@ import { AccountStore } from './account.store';
               <strong>{{ node.account.id }}</strong>&nbsp;{{ node.account.name }}
             </ion-label>
             @if(store.showCostCenters()) {
-              <ion-note slot="end">{{ costCenterLabels().get(node.account.costCenterKey ?? '') }}</ion-note>
+              <ion-note slot="end">{{ costCenterLabels().get(node.account.costCenterKey) }}</ion-note>
             }
           </ion-item>
         }
