@@ -13,8 +13,8 @@ export type AddressGuideSide = 'left' | 'right';
 export const ADDRESS_WINDOW_MM = {
   width: 100,
   height: 45,
-  top: 50,    // sheet top edge → window top
-  side: 20,   // sheet left (left window) or right (right window) edge → window
+  top: 45,    // sheet top edge → window top
+  side: 12,   // sheet left (left window) or right (right window) edge → window
 } as const;
 
 const PT_PER_MM = 72 / 25.4;
