@@ -64,3 +64,13 @@ export function lockedBookingKeys(bookings: { okey: string; date?: string }[], a
     .filter(b => typeof b.date === 'string' && /^\d{8}$/.test(b.date) && lockedPeriodKeys.has(periodKeyFor(accountingTenantId, b.date, fiscalYearStart)))
     .map(b => b.okey));
 }
+
+/**
+ * The fiscal year a backfill runs on (spec 1.65 D19): the requested one, or the current one when none
+ * is given. Refuses (undefined) a future year, a non-integer and anything before 2000.
+ */
+export function backfillYear(requested: unknown, currentYear: number): number | undefined {
+  if (requested === undefined || requested === null) return currentYear;
+  if (typeof requested !== 'number' || !Number.isInteger(requested)) return undefined;
+  return requested >= 2000 && requested <= currentYear ? requested : undefined;
+}

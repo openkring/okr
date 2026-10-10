@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { bookOfDoc, decideFreeText, freeTextBlocker, lockedBookingKeys, matchCostCenterText } from './cost-center-migration.util';
+import { backfillYear, bookOfDoc, decideFreeText, freeTextBlocker, lockedBookingKeys, matchCostCenterText } from './cost-center-migration.util';
 
 const centers = [
   { okey: 'k1', id: '310', name: 'Junioren', parentKey: '', accountingTenantId: 'scs' },
@@ -85,4 +85,21 @@ describe('lockedBookingKeys', () => {
   it('respects a fiscal year that does not start in January', () =>
     // fiscal year starting in July: 20260115 belongs to the year that started 2025-07
     expect([...lockedBookingKeys(bookings, 'scs', 7, new Set(['scs-2025']))].sort()).toEqual(['b1']));
+});
+
+describe('backfillYear', () => {
+  it('defaults to the current fiscal year', () => {
+    expect(backfillYear(undefined, 2026)).toBe(2026);
+    expect(backfillYear(null, 2026)).toBe(2026);
+  });
+  it('accepts a past or the current year', () => {
+    expect(backfillYear(2021, 2026)).toBe(2021);
+    expect(backfillYear(2026, 2026)).toBe(2026);
+  });
+  it('refuses a future year, a fraction, a non-number and years before 2000', () => {
+    expect(backfillYear(2027, 2026)).toBeUndefined();
+    expect(backfillYear(2025.5, 2026)).toBeUndefined();
+    expect(backfillYear('2025', 2026)).toBeUndefined();
+    expect(backfillYear(1999, 2026)).toBeUndefined();
+  });
 });
