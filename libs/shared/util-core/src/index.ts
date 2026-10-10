@@ -11,6 +11,7 @@ export * from './lib/country.util';
 export * from './lib/date.util';
 export * from './lib/debug.util';
 export * from './lib/dencrypt.util';
+export * from './lib/email.util';
 export * from './lib/delivery-channel.util';
 export * from './lib/expense-status.util';
 export * from './lib/swiss-qr-bill.util';

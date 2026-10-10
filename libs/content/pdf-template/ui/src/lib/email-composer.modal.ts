@@ -18,7 +18,7 @@ import {
   EmailInput, EmailInputI18n, Spinner, TextInput, TextInputI18n,
 } from '@okr/shared-ui';
 import type { OkrEditor } from '@okr/shared-ui-editor';
-import { getImgixUrl } from '@okr/shared-util-core';
+import { getImgixUrl, needsEmailNormalization } from '@okr/shared-util-core';
 import { dismissOverlay, isBrowser, validateVestTree } from '@okr/shared-util-angular';
 import { I18nService } from '@okr/shared-i18n';
 import {
@@ -442,6 +442,10 @@ export class EmailComposerModal {
   }
 
   protected onFieldChange(field: keyof EmailComposerFormModel, value: string): void {
+    // pasted 'Name <a@b.ch>' / 'mailto:a@b.ch' recipients are reduced to the bare address
+    if ((field === 'to' || field === 'cc' || field === 'bcc') && needsEmailNormalization(value)) {
+      value = parseEmails(value).join(', ');
+    }
     this.isDirty.set(true);
     this.formData.update((vm) => ({ ...vm, [field]: value }));
   }

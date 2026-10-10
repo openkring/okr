@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { IonInput, IonItem, IonNote } from '@ionic/angular/standalone';
 
 import { EMAIL_LENGTH } from '@okr/shared-constants';
-import { coerceBoolean } from '@okr/shared-util-core';
+import { coerceBoolean, normalizeEmail } from '@okr/shared-util-core';
 
 import { ButtonCopy } from './button-copy';
 import { SkipClearTab } from './skip-clear-tab.directive';
@@ -32,7 +32,7 @@ export interface EmailInputI18n {
       [type]="type()"
       [name]="i18n().name"
       [ngModel]="value()"
-      (ngModelChange)="value.set($event)"
+      (ngModelChange)="onValueChange($event)"
       labelPlacement="floating"
       [label]="i18n().label"
       [placeholder]="i18n().placeholder"
@@ -85,5 +85,17 @@ export class EmailInput {
         }, 500);
       }
     });
+  }
+
+  /**
+   * Pasted 'Name <name@email.com>' or 'mailto:name@email.com' is reduced to the bare address.
+   * The field is rewritten directly: if the bare address equals the current value, the signal
+   * does not change and ngModel would leave the pasted text on screen.
+   */
+  protected onValueChange(raw: string | null | undefined): void {
+    const email = normalizeEmail(raw);
+    const input = this.emailInput();
+    if (input && email !== (raw ?? '')) input.value = email;
+    this.value.set(email);
   }
 }

@@ -1,6 +1,8 @@
 // libs/content/pdf-template/util/src/lib/email-html.util.ts
 // Pure helpers for composing the outgoing document email — no Angular/DOM deps.
 
+import { parseEmailList } from '@okr/shared-util-core';
+
 /** Brand colour, matching the editor heading colour used elsewhere in the app. */
 const BRAND_COLOR = '#25265e';
 
@@ -15,9 +17,12 @@ export interface BrandedEmailOptions {
   attachmentFilename?: string;
 }
 
-/** Split a comma-separated address string into trimmed, non-empty entries. */
+/**
+ * Split a comma/semicolon-separated address string into bare, non-empty addresses
+ * (`Name <a@b.ch>` and `mailto:a@b.ch` are reduced to `a@b.ch`).
+ */
 export function parseEmails(raw: string): string[] {
-  return raw.split(',').map((e) => e.trim()).filter(Boolean);
+  return parseEmailList(raw);
 }
 
 /** Minimal HTML-escaping for text interpolated into the email markup. */
