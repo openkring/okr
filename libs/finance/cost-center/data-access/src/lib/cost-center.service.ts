@@ -8,6 +8,7 @@ import { FirestoreService } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
 import { CostCenterCollection, CostCenterModel, UserModel } from '@okr/shared-models';
 import { getArchiveInclusiveQuery } from '@okr/shared-util-core';
+import type { MyCostCenterReport } from '@okr/finance-cost-center-util';
 
 import { PFX } from './scope';
 
@@ -68,6 +69,19 @@ export class CostCenterService {
     const fn = httpsCallable<{ accountingTenantId: string; step: CostCenterMigrationStep; dryRun: boolean; fiscalYear?: number }, CostCenterMigrationResult>(
       getFunctions(getApp(), 'europe-west6'), 'migrateCostCenters');
     return (await fn(fiscalYear === undefined ? { accountingTenantId, step, dryRun } : { accountingTenantId, step, dryRun, fiscalYear })).data;
+  }
+
+  /**
+   * «Meine Kostenstellen» (spec 1.65 §7, D21): the Soll-Ist data of the Kostenstellen the caller may see —
+   * scoped and masked by the callable; the caller's own books unless `accountingTenantId` is given.
+   */
+  public async getMyReport(fiscalYear?: number, accountingTenantId?: string): Promise<MyCostCenterReport> {
+    const fn = httpsCallable<{ fiscalYear?: number; accountingTenantId?: string }, MyCostCenterReport>(
+      getFunctions(getApp(), 'europe-west6'), 'getMyCostCenterReport');
+    const data: { fiscalYear?: number; accountingTenantId?: string } = {};
+    if (fiscalYear !== undefined) data.fiscalYear = fiscalYear;
+    if (accountingTenantId) data.accountingTenantId = accountingTenantId;
+    return (await fn(data)).data;
   }
 
   /*-------------------------- LIST / QUERY / FILTER --------------------------------*/
