@@ -1423,6 +1423,8 @@ const finance: FeatureBlock = {
       roleNeeded: 'registered', icon: 'help-circle', label: '@main.finance.title', children: [
         { key: 'expenses', name: 'expenses', url: '/expense/my/c-expense', action: 'navigate', roleNeeded: 'registered', icon: 'expense', label: '@item.expenses' },
         { key: 'expenses-all', name: 'expenses-all', url: '/expense/all/c-expense', action: 'navigate', roleNeeded: 'treasurer', icon: 'expense', label: '@item.expenses-all' },
+        // «Meine Kostenstellen» (spec 1.65 §7.4): every member; the callable decides what they see.
+        { key: 'my-cost-centers', name: 'my-cost-centers', url: '/my-cost-centers', action: 'navigate', roleNeeded: 'registered', icon: 'moneybag', label: '@item.my-cost-centers' },
       ],
     },
     { key: 'c-expense', name: 'c-expense', url: '', action: 'context', roleNeeded: 'registered', icon: 'help-circle', label: '', children: [
