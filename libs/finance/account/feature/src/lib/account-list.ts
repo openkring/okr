@@ -167,11 +167,11 @@ export class AccountList {
   /*-------------------------- node action sheet --------------------------------*/
   protected async showActions(node: FlatAccountNode): Promise<void> {
     const actionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
-    this.addActionSheetButtons(actionSheetOptions, node.account);
+    this.addActionSheetButtons(actionSheetOptions);
     await this.executeActions(actionSheetOptions, node.account);
   }
 
-  private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, account: AccountModel): void {
+  private addActionSheetButtons(actionSheetOptions: ActionSheetOptions): void {
     if (hasRole('registered', this.currentUser())) {
       actionSheetOptions.buttons.push(createActionSheetButton('account.edit', this.store.i18n.update(), this.imgixBaseUrl, 'edit'));
       actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
