@@ -19,6 +19,26 @@ export interface BooksDigest {
   groups: DigestGroup[]; lines: string; links: { key: string; label: string }[];
 }
 
+const str = (v: unknown): string => (typeof v === 'string' ? v : '');
+const num = (v: unknown): number => (typeof v === 'number' && Number.isFinite(v) ? v : 0);
+const strList = (v: unknown): string[] => (Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : []);
+
+/** `name1 name2` of the vendor, else the bill's title (legacy docs lack the vendor). */
+export function vendorNameOf(b: Record<string, unknown>): string {
+  const v = (b['vendor'] ?? {}) as { name1?: unknown; name2?: unknown };
+  return `${str(v.name1)} ${str(v.name2)}`.trim() || str(b['title']);
+}
+
+/** A raw bills doc as the digest sees it; legacy docs lack fields (Firestore reads skip model defaults). */
+export function toDigestBill(okey: string, b: Record<string, unknown>): DigestBill {
+  return {
+    okey, accountingTenantId: str(b['accountingTenantId']), vendorName: vendorNameOf(b), billId: str(b['billId']),
+    amount: num((b['totalAmount'] as { amount?: unknown } | undefined)?.amount), dueDate: str(b['dueDate']),
+    state: str(b['state']), bookingKeys: strList(b['bookingKeys']), tenants: strList(b['tenants']),
+    paymentAccountKey: str(b['paymentAccountKey']),
+  };
+}
+
 export const NO_PAYMENT_ACCOUNT = 'Ohne Zahlungskonto';
 
 export function dayWindow(day: string): { from: string; to: string } {

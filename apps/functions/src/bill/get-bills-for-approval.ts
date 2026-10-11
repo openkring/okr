@@ -18,7 +18,7 @@ import { FINANCE_HISTORY_COLLECTION, zurichStoreDateTime } from '../finance-hist
 import { validVoucherKeys, VoucherView, voucherView } from '../finance-document/voucher-view';
 import { ResponsibilityDoc } from '../workflow/types';
 import { canReadBillsForApproval } from './bill-approval-access';
-import { bookedBillKeys, dayWindow, DigestBill, HistoryRow, selectDigestBills } from './bill-approver.logic';
+import { bookedBillKeys, dayWindow, HistoryRow, selectDigestBills, toDigestBill, vendorNameOf } from './bill-approver.logic';
 import { loadPayingAccounts } from './bill-approver.load';
 
 const CF_NAME = 'getBillsForApproval';
@@ -81,12 +81,12 @@ export const getBillsForApproval = onCall(
     }
 
     const snaps = billKeys.length > 0 ? await db.getAll(...billKeys.map(k => db.collection(BillCollection).doc(k))) : [];
-    let rows = snaps.filter(s => s.exists).map(s => ({ okey: s.id, data: (s.data() ?? {}) as Data }))
+    // approvers review issued Kreditoren only: the digest's own selection (still booked, no draft) in both modes
+    const candidates = snaps.filter(s => s.exists).map(s => ({ okey: s.id, data: (s.data() ?? {}) as Data }))
       .filter(r => ((r.data['tenants'] as string[] | undefined) ?? []).includes(tenantId) && str(r.data['accountingTenantId']) === books);
-    if (day) {
-      const still = new Set(selectDigestBills(rows.map(r => toDigestBill(r.okey, r.data))).map(b => b.okey));
-      rows = rows.filter(r => still.has(r.okey));
-    }
+    const booked = new Set(selectDigestBills(candidates.map(r => toDigestBill(r.okey, r.data))).map(b => b.okey));
+    const rows = candidates.filter(r => booked.has(r.okey));
+    if (billKey && rows.length === 0) throw new HttpsError('not-found', 'bill');
 
     // only the books' own paying accounts are resolved (as in the digest); any other key stays unnamed
     const allowed = (config.data()?.['billPaymentAccountKeys'] as string[] | undefined) ?? [];
@@ -99,7 +99,7 @@ export const getBillsForApproval = onCall(
       const acc = accounts.find(a => a.key === paymentAccountKey);
       const lines = Array.isArray(data['lines']) ? (data['lines'] as Data[]) : [];
       return {
-        okey, billId: str(data['billId']), title: str(data['title']), vendorName: vendorName(data),
+        okey, billId: str(data['billId']), title: str(data['title']), vendorName: vendorNameOf(data),
         billDate: str(data['billDate']), dueDate: str(data['dueDate']),
         amount: num(total.amount), currency: str(total.currency) || 'CHF', state: str(data['state']),
         creditorIban: str(data['creditorIban']), paymentReference: str(data['paymentReference']),
@@ -113,20 +113,6 @@ export const getBillsForApproval = onCall(
     return { accountingTenantId: books, date: day, bills };
   },
 );
-
-function vendorName(b: Data): string {
-  const v = (b['vendor'] ?? {}) as { name1?: string; name2?: string };
-  return `${v.name1 ?? ''} ${v.name2 ?? ''}`.trim() || str(b['title']);
-}
-
-function toDigestBill(okey: string, b: Data): DigestBill {
-  return {
-    okey, accountingTenantId: str(b['accountingTenantId']), vendorName: vendorName(b), billId: str(b['billId']),
-    amount: num((b['totalAmount'] as { amount?: unknown } | undefined)?.amount), dueDate: str(b['dueDate']),
-    state: str(b['state']), bookingKeys: (b['bookingKeys'] as string[] | undefined) ?? [],
-    tenants: (b['tenants'] as string[] | undefined) ?? [], paymentAccountKey: str(b['paymentAccountKey']),
-  };
-}
 
 /** Short-lived signed links to the bill's vouchers in the private bucket; documents of another tenant are left out. */
 async function signVouchers(db: Firestore, keys: string[], tenantId: string): Promise<{ name: string; url: string }[]> {
