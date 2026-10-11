@@ -17,7 +17,8 @@
  * ─────────────────────────────────────────────────────────────────────────────────────
  * Menu documents are deliberately CO-DECLARED by several blocks (the shared-parent
  * pattern: `cms-menu` has eight declaring blocks, `aoc-menu` five, plus `subjects-menu`,
- * `resource-menu`, `contextMenuChat`/`chat-room-add`/`chat-room-edit` and `filter-toggle`).
+ * `resource-menu`, `contextMenuChat`/`chat-room-edit` and `filter-toggle`; `chat-room-add` left
+ * the catalogue in 1.95).
  * `blockOwnersOfMenuKey` returns every owner, so possessing such a document proves only
  * that the tenant has SOME child under it — not all of them.
  *

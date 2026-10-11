@@ -1880,9 +1880,13 @@ const documentBlock: FeatureBlock = {
  *     which is why the `subject` block CO-DECLARES this same wrapper (field-identical) in its
  *     own `menu` rather than depending on `chat`. See the note there; the two copies must be
  *     kept in step.
- * The live doc is on `tenants: ['scs']` ONLY (its two children `chat-room-add`/
- * `chat-room-edit` likewise), so every other tenant's chat room menu is empty TODAY. That is
- * the exact p13 failure mode this catalogue exists to close, and cataloguing it closes it.
+ * The live doc is on `tenants: ['scs']` ONLY (its children `chat-room-add`/`chat-room-edit`
+ * likewise), so every other tenant's chat room menu is empty TODAY. That is the exact p13
+ * failure mode this catalogue exists to close, and cataloguing it closes it.
+ * `chat-room-add` is NO LONGER declared here (1.95: rooms are created via the ＋ button in the
+ * room list). The live row stays until it is removed by hand at release — the catalogue apply
+ * never deletes — and until then it has no owning block, so it renders as a tenant-authored
+ * row; `matrix-chat.ts` keeps `case 'addRoom'` so it opens the new typed modal.
  *
  * WHO REACHES INTO CHAT, AND WHO DECLARES AN EDGE. Exactly 14 files outside `libs/chat` import
  * a `@okr/chat-*` lib (re-derived, fix round 1 — the first pass said "nine", which was simply

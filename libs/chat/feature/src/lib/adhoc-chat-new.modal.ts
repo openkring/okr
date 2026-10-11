@@ -193,7 +193,12 @@ export class AdhocChatNewModal {
 
   /** Ein frisches Formular, im Bearbeitungsmodus aus `initial` (fehlende Felder mit Standardwerten). */
   private seed(initial: AdhocChatFormModel | undefined, editMode: boolean): AdhocChatFormModel {
-    if (!editMode) return initial ? { ...newAdhocChatForm(), ...structuredClone(initial) } : newAdhocChatForm();
+    if (!editMode) {
+      const vm = initial ? { ...newAdhocChatForm(), ...structuredClone(initial) } : newAdhocChatForm();
+      // Pinnwand nur fuer `privileged` — ein vorbelegter Typ darf die Auswahl nicht umgehen.
+      if (vm.roomType === 'pinboard' && !this.canCreatePinboard()) vm.roomType = 'direct';
+      return vm;
+    }
     return { ...newAdhocChatForm('pinboard'), ...(initial ? structuredClone(initial) : {}), roomType: 'pinboard' };
   }
 }

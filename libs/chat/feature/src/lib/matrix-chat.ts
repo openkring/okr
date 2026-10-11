@@ -1467,6 +1467,11 @@ export class MatrixChat implements OnDestroy {
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     if (!$event.detail.data) return; // dismissed without choosing an item (backdrop/escape) — not an error
     switch ($event.detail.data) {
+      // The live `chat-room-add` menu row (url 'addRoom') left the catalogue in 1.95 but stays in
+      // Firestore until it is removed by hand at release; until then it opens the new typed modal.
+      case 'addRoom':
+        await this.store.createAdhocChat();
+        break;
       case 'editRoom': {
         const room = this.currentRoom();
         if (room) await this.store.editRoom(room);

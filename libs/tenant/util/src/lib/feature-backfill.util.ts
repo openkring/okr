@@ -23,7 +23,8 @@ import { blockOwnersOfMenuKey } from './feature-routes.util';
  * ─────────────────────────────────────────────────────────────────────────────────────
  * `menuItems` documents are deliberately CO-DECLARED by several blocks (the "shared
  * parent" pattern: `cmsMenuParent()`, `aocMenuParent()`, `subjectsMenuParent()`,
- * `resourceMenuParent()`, plus `contextMenuChat`/`chat-room-add`/`chat-room-edit` which
+ * `resourceMenuParent()`, plus `contextMenuChat`/`chat-room-edit` (`chat-room-add` left the
+ * catalogue in 1.95; its live row, pending removal, has no owner and attributes nothing) which
  * `subject` and `chat` both declare, and `filter-toggle` which `calevent`, `task` and
  * `document` all declare). `blockOwnersOfMenuKey` returns EVERY declaring block, so the
  * policy question is: what does possessing a co-declared document actually prove?
