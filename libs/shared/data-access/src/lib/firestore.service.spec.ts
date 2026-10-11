@@ -403,6 +403,40 @@ describe('FirestoreService.readModel', () => {
   });
 });
 
+describe('FirestoreService.readTenantModel', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    TestBed.resetTestingModule();
+  });
+
+  const read = (doc: unknown, includeArchived = false) => {
+    TestBed.resetTestingModule();   // a fresh service per read: its doc cache would replay the first one
+    docDataMock.mockReturnValue(of(doc));
+    return firstValueFrom(makeService().readTenantModel('calevents', 'e1', 'scs', includeArchived));
+  };
+
+  it('emits a document of the tenant or of the system sentinel', async () => {
+    await expect(read({ okey: 'e1', tenants: ['scs'], isArchived: false })).resolves.toEqual({ okey: 'e1', tenants: ['scs'], isArchived: false });
+    await expect(read({ okey: 'e1', tenants: ['system'], isArchived: false })).resolves.toEqual({ okey: 'e1', tenants: ['system'], isArchived: false });
+  });
+
+  it('hides a document of another tenant, an archived one and a missing one', async () => {
+    await expect(read({ okey: 'e1', tenants: ['kring'], isArchived: false })).resolves.toBeUndefined();
+    await expect(read({ okey: 'e1', tenants: ['scs'], isArchived: true })).resolves.toBeUndefined();
+    await expect(read(undefined)).resolves.toBeUndefined();
+  });
+
+  it('keeps an archived document when asked to', async () => {
+    await expect(read({ okey: 'e1', tenants: ['scs'], isArchived: true }, true)).resolves.toEqual({ okey: 'e1', tenants: ['scs'], isArchived: true });
+  });
+
+  it('emits undefined for an empty key without opening a listener', async () => {
+    const svc = makeService();
+    await expect(firstValueFrom(svc.readTenantModel('calevents', '', 'scs'))).resolves.toBeUndefined();
+    expect(docDataMock).not.toHaveBeenCalled();
+  });
+});
+
 describe('FirestoreService.createModel', () => {
   beforeEach(() => {
     vi.clearAllMocks();

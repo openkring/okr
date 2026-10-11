@@ -26,11 +26,11 @@ import { ToastController } from '@ionic/angular/standalone';
 import { captureMessage } from '@sentry/angular';
 import { arrayRemove, collection, deleteDoc, doc, getDoc, getDocs, query, runTransaction, setDoc, updateDoc, WriteBatch, writeBatch } from 'firebase/firestore';
 import { collectionData, docData } from 'rxfire/firestore';
-import { catchError, concat, defer, delay, firstValueFrom, from, MonoTypeOperatorFunction, Observable, of, ReplaySubject, retry, share, switchMap, tap, timer } from 'rxjs';
+import { catchError, concat, defer, delay, firstValueFrom, from, map, MonoTypeOperatorFunction, Observable, of, ReplaySubject, retry, share, switchMap, tap, timer } from 'rxjs';
 
 import { attestAppCheck, AUTH, ENV, FIRESTORE, isAttested, isFirestoreInitializedCheck, type AppCheckOutcome } from '@okr/shared-config';
 import { OkrModel, CommentCollection, CommentModel, DbQuery, PersonCollection, PersonModel, UserModel } from "@okr/shared-models";
-import { debugData, debugMessage, generateRandomString, getDeletePatch, getFullName, getQuery, isBrowser, removeKeyFromOkrModel, removeUndefinedFields } from '@okr/shared-util-core';
+import { debugData, debugMessage, generateRandomString, getDeletePatch, getFullName, getQuery, isBrowser, removeKeyFromOkrModel, removeUndefinedFields, SYSTEM_TENANT } from '@okr/shared-util-core';
 import { TOAST_LENGTH } from '@okr/shared-constants';
 import { I18nService } from "@okr/shared-i18n";
 
@@ -629,6 +629,24 @@ export class FirestoreService {
       console.error(`FirestoreService.readModel(${collectionName}/${key}) -> ERROR: `, ex);
       return of(this.okrError(this.toastController, `Could not read model ${collectionName}/${key} from the database.`));
     }
+  }
+
+  /**
+   * Read ONE model by key with the same scope as a tenant list (`getSystemQuery`): a document
+   * listener on `collectionName/key`, not a filtered collection query (spec 1.56).
+   * Emits undefined for a missing key, a missing document, an archived document, or a document
+   * that belongs neither to `tenantId` nor to the `'system'` sentinel — exactly what
+   * `findByKey(list(), key)` returned before.
+   * @param collectionName the name of the Firestore collection
+   * @param key the key of the document; empty/undefined emits undefined without logging
+   * @param tenantId the app tenant the document must belong to
+   * @param includeArchived true keeps archived documents (the `getArchiveInclusiveQuery` scope)
+   */
+  public readTenantModel<T extends OkrModel>(collectionName: string, key: string | undefined | null, tenantId: string, includeArchived = false): Observable<T | undefined> {
+    if (!key) return of(undefined);
+    return this.readModel<T>(collectionName, key).pipe(
+      map(model => model && (includeArchived || !model.isArchived) && (model.tenants ?? []).some(t => t === tenantId || t === SYSTEM_TENANT) ? model : undefined)
+    );
   }
 
   /**
