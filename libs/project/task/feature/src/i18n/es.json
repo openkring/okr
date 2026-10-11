@@ -149,7 +149,9 @@
     "group": "Grupo",
     "user": "Usuario",
     "meeting": "Reunión",
-    "trip": "Salida"
+    "trip": "Salida",
+    "bill": "Factura de proveedor",
+    "billDigest": "Facturas del día"
   },
   "settings": {
     "title": "Ajustes",

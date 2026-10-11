@@ -12,7 +12,7 @@ import { coerceBoolean, getCategoryIcon, getItemLabel, getNextCategoryName, hasR
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { ProjectSelect } from '@okr/project-project-ui';
 import { getProjectKeyOfParent, getProjectParentKey } from '@okr/project-project-util';
-import { getRelatedIcon, getRelatedModelType, getRelatedRoute, TaskI18n, taskValidations } from '@okr/project-task-util';
+import { getRelatedIcon, getRelatedModelType, getRelatedRoute, getTaskLinkRows, TaskI18n, taskValidations } from '@okr/project-task-util';
 
 @Component({
   selector: 'okr-task-form',
@@ -86,6 +86,20 @@ import { getRelatedIcon, getRelatedModelType, getRelatedRoute, TaskI18n, taskVal
                       {{ relatedLabel() }}
                     </ion-label>
                   </ion-item>
+                </ion-col>
+              </ion-row>
+            }
+            @for(row of linkRows(); track $index) {
+              <ion-row>
+                <ion-col size="12" size-md="6">
+                  @if(row.route) {
+                    <ion-item lines="none" button (click)="relatedClicked.emit(row.route)">
+                      @if(row.icon) { <ion-icon src="{{ row.icon | svgIcon }}" slot="start" /> }
+                      <ion-label>{{ row.label }}</ion-label>
+                    </ion-item>
+                  } @else {
+                    <ion-item lines="none"><ion-label><strong>{{ row.label }}</strong></ion-label></ion-item>
+                  }
                 </ion-col>
               </ion-row>
             }
@@ -216,6 +230,9 @@ export class TaskForm {
   protected linkKey = computed(() => this.formData().linkKey || this.formData().relatedKey || '');
   protected relatedRoute = computed(() => getRelatedRoute(this.linkKey()));
   protected relatedIcon = computed(() => getRelatedIcon(this.linkKey()));
+  // further links written by Cloud Functions (spec 1.94) — read-only, never bound to a form field, so
+  // editing the task keeps them (formData carries the loaded document through)
+  protected linkRows = computed(() => getTaskLinkRows(this.formData().links));
   protected relatedLabel = computed(() => {
     const i18n = this.i18n();
     switch (getRelatedModelType(this.linkKey())) {
@@ -224,6 +241,8 @@ export class TaskForm {
       case 'user':    return i18n.related_user();
       case 'meeting': return i18n.related_meeting();
       case 'trip':    return i18n.related_trip();
+      case 'bill':    return i18n.related_bill();
+      case 'billDigest': return i18n.related_billDigest();
       default:        return '';
     }
   });

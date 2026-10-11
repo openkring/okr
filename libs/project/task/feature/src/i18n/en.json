@@ -149,7 +149,9 @@
     "group": "Group",
     "user": "User",
     "meeting": "Meeting",
-    "trip": "Trip"
+    "trip": "Trip",
+    "bill": "Bill",
+    "billDigest": "Bills of the day"
   },
   "settings": {
     "title": "Settings",

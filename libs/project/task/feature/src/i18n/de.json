@@ -149,7 +149,9 @@
     "group": "Gruppe",
     "user": "Benutzer",
     "meeting": "Sitzung",
-    "trip": "Fahrt"
+    "trip": "Fahrt",
+    "bill": "Kreditor",
+    "billDigest": "Tagesübersicht Kreditoren"
   },
   "settings": {
     "title": "Einstellungen",
