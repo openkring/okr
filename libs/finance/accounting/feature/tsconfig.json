@@ -63,6 +63,7 @@
       "path": "../../../subject/person/ui/tsconfig.lib.json"
     },
     {"path": "../../../comment/ui/tsconfig.lib.json"},
-    {"path": "../../../comment/util/tsconfig.lib.json"}
+    {"path": "../../../comment/util/tsconfig.lib.json"},
+    {"path": "../../../relationship/responsibility/data-access/tsconfig.lib.json"}
   ]
 }

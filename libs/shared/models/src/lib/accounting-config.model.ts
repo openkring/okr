@@ -99,6 +99,7 @@ export class AccountingConfigModel implements OkrModel {
   public invoicePaymentAccountKeys: string[] = []; // leaf accounts a payment may be posted to (spec 1.76 D11)
   public payablesAccountKey = '';                // Kreditoren leaf (scs: 2000) — bills post here, bill payments clear it (spec 1.85 B6)
   public billPaymentAccountKeys: string[] = [];  // leaf accounts a bill payment may be posted from (spec 1.85 B6)
+  public paymentApproverTask = false;            // daily task listing the day's booked Kreditoren for the payment_approver (spec 1.94)
   public reminderTemplateId = '';                // pre-selected dunning template (spec 1.90)
   public reminderFeeAccountKey = '';             // leaf account credited with the reminder fee (spec 1.76 D14)
   public discountAccountKey = '';                // preset for a new Rabatt position; '' = the discount reduces the revenue accounts above it (spec 1.84 K6)

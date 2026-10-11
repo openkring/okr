@@ -50,6 +50,11 @@
       "label": "Payment accounts for supplier bills",
       "helper": "A supplier bill may be paid from these accounts."
     },
+    "paymentApproverTask": {
+      "label": "Daily task for payment approval",
+      "helper": "Whoever is responsible for payment approval gets a list every evening of the supplier bills booked that day, grouped by payment account.",
+      "missing": "Nobody is responsible for payment approval yet. The task would go to the administration instead."
+    },
     "costCenter": {
       "label": "Accounting default cost centre",
       "helper": "Applies to bookings on income and expense accounts without their own default cost centre."

@@ -50,6 +50,11 @@
       "label": "Comptes de paiement des factures fournisseurs",
       "helper": "Une facture fournisseur peut être payée depuis ces comptes."
     },
+    "paymentApproverTask": {
+      "label": "Tâche quotidienne pour l'approbation des paiements",
+      "helper": "La personne responsable de l'approbation des paiements reçoit chaque soir la liste des factures fournisseurs comptabilisées ce jour-là, regroupées par compte de paiement.",
+      "missing": "Personne n'est encore responsable de l'approbation des paiements. La tâche irait donc à l'administration."
+    },
     "costCenter": {
       "label": "Centre de coûts par défaut de la comptabilité",
       "helper": "S'applique aux écritures sur les comptes de résultat sans centre de coûts par défaut propre."

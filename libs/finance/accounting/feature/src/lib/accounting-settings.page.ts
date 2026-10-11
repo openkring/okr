@@ -2,12 +2,13 @@ import { Component, computed, effect, inject, signal, untracked } from '@angular
 import { rxResource } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { IonContent } from '@ionic/angular/standalone';
-import { of } from 'rxjs';
+import { catchError, map, of } from 'rxjs';
 
 import { AccountingConfigModel, CategoryListModel } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header, HeaderI18n } from '@okr/shared-ui';
 import { hasRole } from '@okr/shared-util-core';
 
+import { ResponsibilityService } from '@okr/relationship-responsibility-data-access';
 import { TemplateService } from '@okr/content-pdf-template-data-access';
 
 import { CategoryStore } from '@okr/category-feature';
@@ -43,6 +44,7 @@ import { ReadOnlyBanner } from './read-only-banner';
           [accounts]="accounts()" [costCenters]="costCenters()" [costCentersEnabled]="!store.isExternallyManaged()"
           [tenantId]="store.tenantId()" [i18n]="store.i18n"
           [templates]="templates()" [orgs]="store.appStore.allOrgs()" [showTemplateLink]="canManageTemplates()" (addTemplate)="openTemplates()"
+          [approverMissing]="approverMissing()"
           [readOnly]="store.isExternallyManaged()" [showForm]="showForm()"
           (dirty)="formDirty.set($event)" (valid)="formValid.set($event)" />
         <!-- The fee schedule edits the same config object. The banner above already covers it,
@@ -85,6 +87,20 @@ export class AccountingSettingsPage {
       accountingTenantId ? this.vatCodeService.list(accountingTenantId) : of([]),
   });
   protected readonly vatCodes = computed(() => this.vatCodesResource.value() ?? []);
+
+  // payment_approver of these books (parentKey org.<books>, never the app tenant). The service list is
+  // already tenant-scoped and without archived ones. Unknown (loading, failed) = no warning.
+  private readonly responsibilityService = inject(ResponsibilityService);
+  private readonly approverResource = rxResource({
+    params: () => this.store.accountingTenantId(),
+    stream: ({ params: accountingTenantId }) =>
+      accountingTenantId
+        ? this.responsibilityService.listForParent('org.' + accountingTenantId).pipe(
+            map(items => items.some(r => r.name === 'payment_approver')),
+            catchError(() => of(true)))
+        : of(true),
+  });
+  protected readonly approverMissing = computed(() => this.approverResource.value() === false);
 
   private readonly templatesResource = rxResource({ stream: () => this.templateService.list() });
   protected readonly templates = computed(() => this.templatesResource.value() ?? []);

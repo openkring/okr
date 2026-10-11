@@ -1,6 +1,6 @@
 import { Component, computed, effect, input, model, output } from '@angular/core';
 import { form } from '@angular/forms/signals';
-import { IonCard, IonCardContent, IonCol, IonGrid, IonNote, IonRow, IonSelect, IonSelectOption, SelectChangeEventDetail } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent, IonCol, IonGrid, IonNote, IonRow, IonSelect, IonSelectOption, IonToggle, SelectChangeEventDetail } from '@ionic/angular/standalone';
 
 import { NumberInput, NumberInputI18n, ErrorNote, TextInput, TextInputI18n } from '@okr/shared-ui';
 
@@ -29,7 +29,7 @@ export type { AccountingI18n };
   selector: 'okr-accounting-config-form',
   standalone: true,
   imports: [
-    ErrorNote, AccountSelect, CostCenterSelect, NumberInput, TextInput, IonSelect, IonSelectOption, IonNote, IonGrid, IonRow, IonCol, IonCard, IonCardContent],
+    ErrorNote, AccountSelect, CostCenterSelect, NumberInput, TextInput, IonSelect, IonSelectOption, IonToggle, IonNote, IonGrid, IonRow, IonCol, IonCard, IonCardContent],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px; } }`],
   template: `
     @if (showForm()) {
@@ -144,6 +144,17 @@ export type { AccountingI18n };
                   <ion-note>{{ i18n().bill_payment_accounts_helper() }}</ion-note>
                 </ion-col>
               </ion-row>
+              <!-- daily task for the payment_approver (spec 1.94) -->
+              <ion-row>
+                <ion-col size="12" size-md="6">
+                  <ion-toggle [checked]="paymentApproverTask()" [disabled]="isReadOnly()"
+                    (ionChange)="onFieldChange('paymentApproverTask', $event.detail.checked)">{{ i18n().payment_approver_task() }}</ion-toggle>
+                  <ion-note>{{ i18n().payment_approver_task_helper() }}</ion-note>
+                  @if (paymentApproverTask() && approverMissing()) {
+                    <ion-note color="warning">{{ i18n().payment_approver_task_missing() }}</ion-note>
+                  }
+                </ion-col>
+              </ion-row>
               <ion-row>
                 <ion-col size="12" size-md="6">
                   <okr-number-input [i18n]="fiscalYearStartI18n()" [value]="fiscalYearStart()"
@@ -249,6 +260,8 @@ export class AccountingConfigForm {
   public readonly orgs = input<OrgModel[]>([]);
   /** show the link to the template list (only for users who may open it) */
   public readonly showTemplateLink = input(false);
+  /** true when no payment_approver responsibility exists for these books; false while unknown, so a failed lookup never warns */
+  public readonly approverMissing = input(false);
   public readonly readOnly = input(true);
   public showForm = input(true);
 
@@ -295,6 +308,8 @@ export class AccountingConfigForm {
   // spec 1.85 B6 — legacy config docs predate both fields
   protected readonly payablesAccountKey = computed(() => this.formData()?.payablesAccountKey ?? '');
   protected readonly billPaymentAccountKeys = computed(() => this.formData()?.billPaymentAccountKeys ?? []);
+  // legacy config docs predate the field (spec 1.94)
+  protected readonly paymentApproverTask = computed(() => this.formData()?.paymentApproverTask ?? false);
   /** leaf accounts of class 1 (assets): the accounts an invoice payment may be posted to */
   protected leaves = computed(() => leafAccounts(this.accounts()));
   protected paymentAccountChoices = computed(() =>
@@ -441,7 +456,7 @@ export class AccountingConfigForm {
     return { name, label, placeholder: this.i18n().reminder_fee_placeholder(), helper: this.i18n().reminder_fee_helper() } as NumberInputI18n;
   }
 
-  protected onFieldChange(fieldName: string, fieldValue: string | number | string[]): void {
+  protected onFieldChange(fieldName: string, fieldValue: string | number | boolean | string[]): void {
     this.dirty.emit(true);
     this.formData.update(vm => ({ ...vm, [fieldName]: fieldValue }));
   }

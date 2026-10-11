@@ -50,6 +50,11 @@
       "label": "Conti di pagamento per le fatture dei fornitori",
       "helper": "Una fattura di un fornitore può essere pagata da questi conti."
     },
+    "paymentApproverTask": {
+      "label": "Compito giornaliero per l'approvazione dei pagamenti",
+      "helper": "Chi è responsabile dell'approvazione dei pagamenti riceve ogni sera un elenco delle fatture fornitore registrate in quel giorno, raggruppate per conto di pagamento.",
+      "missing": "Nessuno è ancora responsabile dell'approvazione dei pagamenti. Il compito andrebbe quindi all'amministrazione."
+    },
     "costCenter": {
       "label": "Centro di costo predefinito della contabilità",
       "helper": "Si applica alle registrazioni sui conti economici senza un proprio centro di costo predefinito."

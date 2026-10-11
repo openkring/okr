@@ -25,6 +25,7 @@ export function toAccountingConfigFormData(config: AccountingConfigModel): Accou
     invoicePaymentAccountKeys: [...(config.invoicePaymentAccountKeys ?? [])],
     payablesAccountKey: config.payablesAccountKey ?? '',
     billPaymentAccountKeys: [...(config.billPaymentAccountKeys ?? [])],
+    paymentApproverTask: config.paymentApproverTask ?? false,
     defaultCostCenterKey: config.defaultCostCenterKey ?? '',
     fiscalYearStart: config.fiscalYearStart ?? 1,
     vatRates: structuredClone(config.vatRates ?? []),

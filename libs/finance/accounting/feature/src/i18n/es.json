@@ -50,6 +50,11 @@
       "label": "Cuentas de pago para facturas de proveedores",
       "helper": "Una factura de proveedor puede pagarse desde estas cuentas."
     },
+    "paymentApproverTask": {
+      "label": "Tarea diaria para la aprobación de pagos",
+      "helper": "La persona responsable de la aprobación de pagos recibe cada noche una lista de las facturas de proveedores contabilizadas ese día, agrupadas por cuenta de pago.",
+      "missing": "Todavía no hay nadie responsable de la aprobación de pagos. La tarea iría por eso a la administración."
+    },
     "costCenter": {
       "label": "Centro de costes predeterminado de la contabilidad",
       "helper": "Se aplica a los asientos en cuentas de resultados sin centro de costes predeterminado propio."
