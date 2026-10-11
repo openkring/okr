@@ -10,7 +10,7 @@ import {
   BookingCollection, BookingLineCollection, BookingLineModel, BookingModel, DbQuery, InvoiceCollection, InvoiceModel, InvoicePayment,
   InvoicePositionCollection, InvoicePositionModel, InvoiceReminder, UserModel,
 } from '@okr/shared-models';
-import { addDuration, findByKey, getQuery, getSystemQuery, getTodayStr } from '@okr/shared-util-core';
+import { addDuration, getQuery, getSystemQuery, getTodayStr } from '@okr/shared-util-core';
 import { ActivityService } from '@okr/activity-data-access';
 
 import {
@@ -155,7 +155,7 @@ export class InvoiceService {
   }
 
   public read(key: string): Observable<InvoiceModel | undefined> {
-    return findByKey<InvoiceModel>(this.list(), key);
+    return this.firestoreService.readTenantModel<InvoiceModel>(InvoiceCollection, key, this.env.tenantId);
   }
 
   /** Replaces header and positions of a draft (the server refuses anything but a draft). */
@@ -415,9 +415,5 @@ export class InvoiceService {
       ...getSystemQuery(this.env.tenantId),
       { key: 'invoiceKey', operator: '==', value: invoiceKey },
     ];
-  }
-
-  private list(): Observable<InvoiceModel[]> {
-    return this.firestoreService.searchData<InvoiceModel>(InvoiceCollection, getSystemQuery(this.env.tenantId), 'invoiceDate', 'desc');
   }
 }

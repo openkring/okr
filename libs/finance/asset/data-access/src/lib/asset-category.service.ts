@@ -1,11 +1,11 @@
 import { inject, Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { map, Observable } from 'rxjs';
 
 import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
 import { AssetCategoryCollection, AssetCategoryModel, UserModel } from '@okr/shared-models';
-import { findByKey, getSystemQuery } from '@okr/shared-util-core';
+import { getSystemQuery } from '@okr/shared-util-core';
 
 import { PFX } from './scope';
 
@@ -31,7 +31,9 @@ export class AssetCategoryService {
   }
 
   public read(key: string, accountingTenantId: string): Observable<AssetCategoryModel | undefined> {
-    return findByKey<AssetCategoryModel>(this.list(accountingTenantId), key);
+    return this.firestoreService.readTenantModel<AssetCategoryModel>(AssetCategoryCollection, key, this.tenantId).pipe(
+      map(model => model?.accountingTenantId === accountingTenantId ? model : undefined)
+    );
   }
 
   public async update(category: AssetCategoryModel, currentUser?: UserModel): Promise<void> {

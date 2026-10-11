@@ -1,12 +1,12 @@
 import { inject, Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { map, Observable } from 'rxjs';
 import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
 import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { AvatarInfo, BookingCollection, BookingLineModel, BookingModel, BookingStatus, UserModel } from '@okr/shared-models';
-import { findByKey, getSystemQuery } from '@okr/shared-util-core';
+import { getSystemQuery } from '@okr/shared-util-core';
 
 import { validateBookingBalance } from '@okr/finance-booking-util';
 
@@ -100,7 +100,9 @@ export class BookingService {
   }
 
   public read(key: string, accountingTenantId: string): Observable<BookingModel | undefined> {
-    return findByKey<BookingModel>(this.list(accountingTenantId), key);
+    return this.firestoreService.readTenantModel<BookingModel>(BookingCollection, key, this.tenantId).pipe(
+      map(model => model?.accountingTenantId === accountingTenantId ? model : undefined)
+    );
   }
 
   public async update(booking: BookingModel, lines: BookingLineModel[], currentUser?: UserModel): Promise<void> {

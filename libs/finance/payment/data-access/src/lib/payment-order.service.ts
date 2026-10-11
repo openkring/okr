@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { map, Observable } from 'rxjs';
 import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
@@ -7,7 +7,7 @@ import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
 import { PaymentOrderCollection, PaymentOrderModel, UserModel } from '@okr/shared-models';
-import { findByKey, getSystemQuery } from '@okr/shared-util-core';
+import { getSystemQuery } from '@okr/shared-util-core';
 
 import { PFX } from './scope';
 
@@ -31,7 +31,9 @@ export class PaymentOrderService {
   }
 
   public read(key: string, accountingTenantId: string): Observable<PaymentOrderModel | undefined> {
-    return findByKey<PaymentOrderModel>(this.list(accountingTenantId), key);
+    return this.firestoreService.readTenantModel<PaymentOrderModel>(PaymentOrderCollection, key, this.tenantId).pipe(
+      map(model => model?.accountingTenantId === accountingTenantId ? model : undefined)
+    );
   }
 
   public async update(order: PaymentOrderModel, currentUser?: UserModel): Promise<void> {

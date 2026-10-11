@@ -9,7 +9,7 @@ import { FirestoreService } from '@okr/shared-data-access';
 import {
   AvatarInfo, BillCollection, BillLine, BillModel, BillPayment, BookingCollection, BookingLineCollection, BookingLineModel, BookingModel, DbQuery, UserModel,
 } from '@okr/shared-models';
-import { findByKey, getQuery, getSystemQuery } from '@okr/shared-util-core';
+import { getQuery, getSystemQuery } from '@okr/shared-util-core';
 import { ActivityService } from '@okr/activity-data-access';
 
 import {
@@ -59,7 +59,7 @@ export class BillService {
   }
 
   public read(key: string): Observable<BillModel | undefined> {
-    return findByKey<BillModel>(this.list(), key);
+    return this.firestoreService.readTenantModel<BillModel>(BillCollection, key, this.env.tenantId);
   }
 
   /*-------------------------- native bills (spec 1.85 phase 3) --------------------------*/

@@ -5,7 +5,7 @@ import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
 import { OcrRuleCollection, OcrRuleModel, UserModel } from '@okr/shared-models';
-import { findByKey, getSystemQuery } from '@okr/shared-util-core';
+import { getSystemQuery } from '@okr/shared-util-core';
 
 import { PFX } from './scope';
 
@@ -31,7 +31,7 @@ export class OcrRuleService {
   }
 
   public read(key: string): Observable<OcrRuleModel | undefined> {
-    return findByKey<OcrRuleModel>(this.list(), key);
+    return this.firestoreService.readTenantModel<OcrRuleModel>(OcrRuleCollection, key, this.tenantId);
   }
 
   public async update(rule: OcrRuleModel, currentUser?: UserModel): Promise<string | undefined> {
