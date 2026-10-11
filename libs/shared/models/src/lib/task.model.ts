@@ -2,6 +2,11 @@ import { DEFAULT_DATE, DEFAULT_IMPORTANCE, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_N
 import { AvatarInfo } from './avatar-info';
 import { OkrModel, NamedModel, PersistedModel, SearchableModel, TaggedModel } from './base.model';
 
+/** One extra link of a task (spec 1.94): `key` = '<modelType>.<okey>'; `label` is stored because the
+ *  assignee may not be allowed to read the record (an approver cannot read bills). A key without a
+ *  route (e.g. 'heading.0') renders as plain text. */
+export interface TaskLink { key: string; label: string; }
+
 export class TaskModel implements OkrModel, PersistedModel, NamedModel, SearchableModel, TaggedModel {
   public okey = DEFAULT_KEY;
   public tenants = DEFAULT_TENANTS;
@@ -53,6 +58,9 @@ export class TaskModel implements OkrModel, PersistedModel, NamedModel, Searchab
   // subject ('trip.<okey>') for those. Empty = fall back to relatedKey.
   public linkModelType = '';     // 'trip' | 'meeting' | …
   public linkKey = '';           // '<modelType>.<okey>'
+  // Further links (spec 1.94), e.g. a daily digest's bills under their paying-account headings. Written by
+  // Cloud Functions only; the task form shows them read-only. Legacy documents lack the field — coalesce `?? []`.
+  public links: TaskLink[] = [];
 
   constructor(tenantId: string) {
     this.tenants = [tenantId];

@@ -232,6 +232,7 @@ export function createFirestoreDeps(): WorkflowDeps {
       task.relatedKey = t.relatedKey;
       task.linkKey = t.linkKey ?? '';
       task.linkModelType = task.linkKey.split('.')[0] ?? '';
+      task.links = t.links ?? [];
       task.notes = t.notes ?? '';
       task.index = getTaskIndex(task);
       const { okey, ...doc } = task;   // okey is the document id, never a field

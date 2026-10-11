@@ -6,7 +6,7 @@
 // Read-side document shapes are inlined subsets (same pattern as account-sync.decide.ts
 // and task/index.ts); the write side builds a real TaskModel in firestore-deps.ts.
 
-import { AvatarInfo, ContractSigner, DeliveryChannel } from '@okr/shared-models';
+import { AvatarInfo, ContractSigner, DeliveryChannel, TaskLink } from '@okr/shared-models';
 
 import { PostalAddress } from '../contract/contract-request.util';
 
@@ -81,6 +81,8 @@ export interface NewTask {
    * a damage report's 'report.<uuid>' points nowhere, its trip does.
    */
   linkKey?: string;
+  /** extra task links (spec 1.94) */
+  links?: TaskLink[];
   /**
    * Free text of the event, from `ctx.params['notes']`. The task NAME comes from the rule's
    * messageKey and is the same for every occurrence; anything the reporter actually typed

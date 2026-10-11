@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { AvatarInfo, TaskModel } from '@okr/shared-models';
 import * as coreUtils from '@okr/shared-util-core';
-import { getRelatedIcon, getRelatedModelType, getRelatedRoute, isTask } from './task.util';
+import { getRelatedIcon, getRelatedModelType, getRelatedRoute, getTaskLinkRows, isTask } from './task.util';
 
 // Mock shared utility functions
 vi.mock('@okr/shared-util-core', async importOriginal => {
@@ -99,4 +99,22 @@ describe('Task Utils', () => {
       expect(getRelatedRoute('report.abc123')).toBe('');
     });
   });
+});
+
+describe('bill routes (spec 1.94)', () => {
+  it('maps a bill to its read-only approval view', () =>
+    expect(getRelatedRoute('bill.abc')).toBe('/bill-approval/bill/abc'));
+  it('maps a digest to the day page, splitting at the LAST underscore', () =>
+    expect(getRelatedRoute('billDigest.my_books_20261010')).toBe('/bill-approval/my_books/20261010'));
+  it('gives no route for a malformed digest key', () =>
+    expect(getRelatedRoute('billDigest.nodate')).toBe(''));
+});
+
+describe('getTaskLinkRows', () => {
+  it('tolerates a legacy task without links', () => expect(getTaskLinkRows(undefined)).toEqual([]));
+  it('builds a routed row per bill link, keeping the stored label', () =>
+    expect(getTaskLinkRows([{ key: 'bill.b1', label: 'Swisscom · 89.50 CHF' }])[0])
+      .toEqual(expect.objectContaining({ route: '/bill-approval/bill/b1', label: 'Swisscom · 89.50 CHF' })));
+  it('renders a heading key as plain text', () =>
+    expect(getTaskLinkRows([{ key: 'heading.0', label: 'ZKB · CH93…' }])).toEqual([{ route: '', label: 'ZKB · CH93…', icon: '' }]));
 });

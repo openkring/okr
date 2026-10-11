@@ -1,4 +1,4 @@
-import { TaskModel } from '@okr/shared-models';
+import { TaskLink, TaskModel } from '@okr/shared-models';
 import { addIndexElement, isType } from '@okr/shared-util-core';
 
 /*-------------------------- type guard --------------------------------*/
@@ -45,6 +45,14 @@ export function getTaskIndexInfo(): string {
  * Everything else — `report.<uuid>` from a Schadenmeldung above all — has NO document behind
  * it, so it gets no link rather than a dead one.
  */
+/** 'billDigest.<books>_<yyyymmdd>' → '/bill-approval/<books>/<yyyymmdd>' — books ids may contain '_', the date never. */
+function billDigestRoute(okey: string): string {
+  const i = okey.lastIndexOf('_');
+  const books = i > 0 ? okey.slice(0, i) : '';
+  const date = i > 0 ? okey.slice(i + 1) : '';
+  return books && /^\d{8}$/.test(date) ? `/bill-approval/${books}/${date}` : '';
+}
+
 const RELATED_ROUTES: Record<string, (okey: string) => string> = {
   person:  (okey) => `/person/${okey}`,
   group:   (okey) => `/group/${okey}`,
@@ -53,6 +61,8 @@ const RELATED_ROUTES: Record<string, (okey: string) => string> = {
   trip:    () => '/trips/logbuch/c-trips',
   expense: (okey) => `/expense/${okey}`,
   approval: () => '/approval/all',
+  bill: (okey) => `/bill-approval/bill/${okey}`,
+  billDigest: billDigestRoute,
 };
 
 /** The model type of a `relatedKey` ('meeting.abc' -> 'meeting'), or '' when it is not set. */
@@ -86,9 +96,21 @@ const RELATED_ICONS: Record<string, string> = {
   trip:    'track',
   expense: 'expense',
   approval: 'checkbox-circle',
+  bill: 'invoice',
+  billDigest: 'invoice',
 };
 
 /** The icon name for a task's `relatedKey`, or '' when its model type has none. */
 export function getRelatedIcon(relatedKey: string | undefined): string {
   return RELATED_ICONS[getRelatedModelType(relatedKey)] ?? '';
+}
+
+export interface TaskLinkRow { route: string; label: string; icon: string; }
+
+/** The extra link rows of a task (spec 1.94); an unroutable key stays a plain-text row, never a dead link. */
+export function getTaskLinkRows(links: TaskLink[] | undefined): TaskLinkRow[] {
+  return (links ?? []).map(l => {
+    const route = getRelatedRoute(l.key);
+    return { route, label: l.label, icon: route ? getRelatedIcon(l.key) : '' };
+  });
 }
