@@ -112,7 +112,9 @@ export class BankImportRowService {
   }
 
   public async postViaFunction(payload: PostBankImportPayload): Promise<PostBankImportResult> {
-    const fn = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'postBankImport');
+    // ~2 s per row server-side (full-ledger read for nextBookingNo): 100 rows outlast the SDK's 70 s
+    // default, which aborted the remaining chunks with deadline-exceeded. Match the function's 540 s.
+    const fn = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'postBankImport', { timeout: 540_000 });
     const result = await fn(payload);
     return result.data as PostBankImportResult;
   }
