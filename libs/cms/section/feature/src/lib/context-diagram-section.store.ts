@@ -7,7 +7,7 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 
 import { AppStore } from '@okr/shared-feature';
 import { ContextDiagramConfig, ContextDiagramSection, GroupModelName, MembershipModel, OrgModelName, PersonalRelModel, PersonModelName, ResponsibilityModel, WorkrelModel } from '@okr/shared-models';
-import { getFullName, isPerson } from '@okr/shared-util-core';
+import { getFullName, isChatOnlyMembership, isPerson } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
 
 import { MembershipService } from '@okr/relationship-membership-data-access';
@@ -270,6 +270,7 @@ type Services = {
   workrelService: WorkrelService;
   personalRelService: PersonalRelService;
   responsibilityService: ResponsibilityService;
+  appStore: { getGroup: (key: string) => { kind?: string } | undefined };
 };
 
 function loadNodeRelations(
@@ -282,7 +283,9 @@ function loadNodeRelations(
   const memberships$ = (config.showMembers && (modelType === OrgModelName || modelType === GroupModelName))
     ? services.membershipService.listMembersOfOrg(key, modelType as 'org' | 'group')
     : (config.showMemberships && modelType === PersonModelName)
-      ? services.membershipService.listMembershipsOfMember(key, PersonModelName)
+      ? services.membershipService.listMembershipsOfMember(key, PersonModelName).pipe(
+          // Ad-hoc-Chats und Pinnwaende (spec 1.95) sind Chat-Raeume, keine Mitgliedschaften der Person.
+          map((ms: MembershipModel[]) => ms.filter((m) => !isChatOnlyMembership(m, (k) => services.appStore.getGroup(k)))))
       : of<MembershipModel[]>([]);
 
   const workrels$ = (config.showWorkRels && modelType === PersonModelName)

@@ -27,6 +27,29 @@ export function isActiveMembership(m: ActiveMembershipFields | undefined, today:
   return exit === '' || isAfterDate(exit, today);
 }
 
+/*-------------------------- chat-only groups (spec 1.95) --------------------------*/
+/** Schluessel der Ad-hoc-Chats (`<tenant>_c_<random>`) und Pinnwaende (`<tenant>_p_<random>`). */
+const CHAT_ONLY_GROUP_KEY = /_[cp]_[a-z0-9]+$/;
+
+/**
+ * Ist das eine Mitgliedschaft in einem reinen Chat-Gruppendokument (Ad-hoc-Chat `kind: 'chat'`,
+ * Pinnwand `kind: 'pinboard'`)? Solche Mitgliedschaften gehoeren nicht in personenbezogene
+ * Ansichten («Mitgliedschaften» einer Person, Kontextdiagramm).
+ *
+ * @param m         membership fields (structural, see ActiveMembershipFields)
+ * @param getGroup  resolves a group key over ALL kinds (e.g. AppStore.getGroup / groupsMap);
+ *                  `undefined` = unknown group → falls back to the key pattern
+ */
+export function isChatOnlyMembership(
+  m: { orgKey?: string; orgModelType?: string } | undefined,
+  getGroup: (key: string) => { kind?: string } | undefined,
+): boolean {
+  if (!m || m.orgModelType !== 'group' || !m.orgKey) return false;
+  const group = getGroup(m.orgKey);
+  if (group) return (group.kind ?? 'group') !== 'group';
+  return CHAT_ONLY_GROUP_KEY.test(m.orgKey);
+}
+
 /*-------------------------- pro rata (spec 1.79) --------------------------------*/
 const PRO_RATA_STORE_DATE = /^\d{8}$/;
 

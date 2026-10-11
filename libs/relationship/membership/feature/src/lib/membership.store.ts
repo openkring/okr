@@ -11,7 +11,7 @@ import { ExportFormats, memberTypeMatches, yearMatches } from '@okr/shared-categ
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore, PersonSelectModal, PersonSelectResult } from '@okr/shared-feature';
 import { AddressCollection, AddressModel, CategoryListModel, ExportFormat, GroupModel, GroupModelName, MembershipCollection, MembershipModel, OrgModel, OrgModelName, OwnershipCollection, OwnershipModel, PersonModel, PersonModelName } from '@okr/shared-models';
-import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, generateRandomString, getAvatarInfo, getBirthYear, getCatAbbreviation, getDataRow, getFullName, getSystemQuery, getTodayStr, isAfterDate, isAfterOrEqualDate, isMembership, isOngoing, isPerson, nameMatches, warn } from '@okr/shared-util-core';
+import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, generateRandomString, getAvatarInfo, getBirthYear, getCatAbbreviation, getDataRow, getFullName, getSystemQuery, getTodayStr, isAfterDate, isAfterOrEqualDate, isChatOnlyMembership, isMembership, isOngoing, isPerson, nameMatches, warn } from '@okr/shared-util-core';
 import { confirm, copyToClipboardWithConfirmation, exportCsv, getCcEmailAddresses, getMainEmailAddresses, lazyService, navigateByUrl, showToast } from '@okr/shared-util-angular';
 import { END_FUTURE_DATE_STR } from '@okr/shared-constants';
 import { I18nService } from '@okr/shared-i18n';
@@ -171,12 +171,14 @@ export const _MembershipStore = signalStore(
         ) ?? []
       }),
 
-      // memberships of the current member 
+      // memberships of the current member — without ad-hoc chats and pinboards (spec 1.95), they are chat rooms, not memberships
       memberships: computed(() => {
         if (!state.member() || !state.modelType) return [];
+        const getGroup = (key: string) => state.appStore.getGroup(key);
         return state.allMemberships()?.filter((membership: MembershipModel) => 
           membership.memberKey === state.member()?.okey && 
-          membership.memberModelType === state.modelType()) ?? []
+          membership.memberModelType === state.modelType() &&
+          !isChatOnlyMembership(membership, getGroup)) ?? []
       }),
 
       org: computed(() => state.orgType() === 'org' ? state.appStore.getOrg(state.orgId()) : undefined),
