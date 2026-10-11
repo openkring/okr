@@ -270,6 +270,7 @@ seed("bank-import-rows/rowPosted", {"tenants": ["t1"], "isArchived": False, "acc
 seed("bank-rules/ruleA",           {"tenants": ["t1"], "isArchived": False, "accountingTenantId": "t1", "term": "google", "active": True})
 # Umlagen (spec 1.65 D24): treasurer/admin only, archived never deleted
 seed("cost-allocations/allocA", {"tenants": ["t1"], "isArchived": False, "accountingTenantId": "t1", "fiscalYear": 2026, "title": "Umlage Clubhaus"})
+seed("cost-centers/ccA", {"tenants": ["t1"], "isArchived": False, "accountingTenantId": "t1", "name": "Clubhaus", "id": "4"})
 
 # login-id (spec 1.71): a same-tenant user WITH a Benutzername already set, so an admin
 # editing something else on the doc can be checked for leaving loginId untouched.
@@ -683,6 +684,13 @@ single_cases = [
     # Umlagen (spec 1.65 D24)
     ("treasurer T GET cost-allocations/allocA -> ALLOW", True, GET, "cost-allocations/allocA", T, None, None),
     ("member A GET cost-allocations/allocA -> DENY", False, GET, "cost-allocations/allocA", A, None, None),
+    ("privileged P GET cost-allocations/allocA -> ALLOW (D26, project page)", True, GET, "cost-allocations/allocA", P, None, None),
+    ("privileged P PATCH cost-allocations/allocA -> DENY", False, PATCH, "cost-allocations/allocA", P, body({"title": "Z"}), ["title"]),
+    ("privileged P GET cost-centers/ccA -> ALLOW (D26)", True, GET, "cost-centers/ccA", P, None, None),
+    ("member A GET cost-centers/ccA -> DENY", False, GET, "cost-centers/ccA", A, None, None),
+    ("privileged P PATCH cost-centers/ccA -> DENY", False, PATCH, "cost-centers/ccA", P, body({"name": "X"}), ["name"]),
+    ("member A CREATE cost-allocations -> DENY", False, POST, "cost-allocations?documentId=allocX", A, body({"tenants": ["t1"], "isArchived": False, "accountingTenantId": "t1", "fiscalYear": 2026, "title": "X"}), None),
+    ("treasurer T CREATE cost-allocations -> ALLOW", True, POST, "cost-allocations?documentId=allocY", T, body({"tenants": ["t1"], "isArchived": False, "accountingTenantId": "t1", "fiscalYear": 2026, "title": "Y"}), None),
     ("treasurer T PATCH cost-allocations/allocA.title -> ALLOW", True, PATCH, "cost-allocations/allocA", T, body({"title": "Y"}), ["title"]),
     ("treasurer T DELETE cost-allocations/allocA -> DENY", False, DELETE, "cost-allocations/allocA", T, None, None),
     ("treasurer T PATCH rowOpen.tenants -> ['t2'] -> DENY", False, PATCH, "bank-import-rows/rowOpen", T, body({"tenants": ["t2"]}), ["tenants"]),

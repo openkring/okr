@@ -347,7 +347,8 @@ service cloud.firestore {
     match /accounting-configs/{id} { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
     match /accounts/{id}           { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
     // Kostenstellen (spec 1.65 §8.3): treasurer/admin only; archive instead of delete.
-    match /cost-centers/{id} { allow read: if tenantRead() && (hasRole('treasurer') || isAdmin()); allow create, update: if (hasRole('treasurer') || isAdmin()) && tenantCreateOrDetach(); allow delete: if false; }
+    // read also for privileged (spec 1.65 D26): the project page's Umlagen need the Kostenstelle tree; no personal data
+    match /cost-centers/{id} { allow read: if tenantRead() && (hasRole('treasurer') || hasRole('privileged') || isAdmin()); allow create, update: if (hasRole('treasurer') || isAdmin()) && tenantCreateOrDetach(); allow delete: if false; }
 
     // Budgets (spec 1.65 §8.3): treasurer/admin only. approved → only superseded; superseded frozen.
     // A budget line may be written only while its version is a draft (getAfter: a copy creates the
@@ -365,7 +366,8 @@ service cloud.firestore {
     }
     // Umlagen (spec 1.65 D24): report-level allocation rules — treasurer/admin; archived, never deleted.
     match /cost-allocations/{id} {
-      allow read: if tenantRead() && isTreasurerOrAdmin();
+      // read also for privileged (D26): every viewer of the project page sees the same result; writes stay treasurer/admin
+      allow read: if tenantRead() && (isTreasurerOrAdmin() || hasRole('privileged'));
       allow create: if isTreasurerOrAdmin() && tenantCreateOrDetach();
       allow update: if isTreasurerOrAdmin() && tenantUpdate();
       allow delete: if false;
