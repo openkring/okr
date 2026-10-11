@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { isPinboardKey, pinboardKey, pinboardMembershipId, planPinboardMembership, PinboardMembershipState } from './pinboard.util';
+import { sourcePairsToReconcile, isPinboardKey, pinboardKey, pinboardMembershipId, planPinboardMembership, PinboardMembershipState } from './pinboard.util';
 
 const active: PinboardMembershipState = { active: true, isOptedOut: false };
 const ended: PinboardMembershipState = { active: false, isOptedOut: false };
@@ -64,5 +64,19 @@ describe('planPinboardMembership', () => {
   it('restricts the plan to one person when `only` is set', () => {
     const result = plan({ eligible: new Set(['anna', 'beat']), current: new Map([['carl', active]]), only: 'beat' });
     expect(result).toEqual({ add: ['beat'], end: [] });
+  });
+});
+
+describe('sourcePairsToReconcile', () => {
+  const m = (orgKey: string, memberKey: string) => ({ orgKey, memberKey, orgModelType: 'group', memberModelType: 'person' });
+  it('returns one pair for an unchanged membership', () => {
+    expect(sourcePairsToReconcile(m('g1', 'anna'), m('g1', 'anna'))).toEqual([['g1', 'anna']]);
+  });
+  it('returns both pairs when a membership moved between groups', () => {
+    expect(sourcePairsToReconcile(m('g1', 'anna'), m('g2', 'anna'))).toEqual([['g2', 'anna'], ['g1', 'anna']]);
+  });
+  it('ignores pinboard memberships and non-person members', () => {
+    expect(sourcePairsToReconcile(undefined, m('scs_p_abc', 'anna'))).toEqual([]);
+    expect(sourcePairsToReconcile(undefined, { ...m('g1', 'x'), memberModelType: 'org' })).toEqual([]);
   });
 });

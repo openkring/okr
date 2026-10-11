@@ -12,7 +12,7 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { DateFormat, getTodayStr, isActiveMembership } from '@okr/shared-util-core';
 
 import { activeGroupMemberKeys } from './shared';
-import { isPinboardKey, pinboardMembershipId, planPinboardMembership, PinboardMembershipState, PinboardPlan } from './pinboard.util';
+import { isPinboardKey, sourcePairsToReconcile, pinboardMembershipId, planPinboardMembership, PinboardMembershipState, PinboardPlan } from './pinboard.util';
 
 type GroupDoc = {
   name?: string; kind?: string; tenants?: string[]; isArchived?: boolean;
@@ -59,9 +59,11 @@ export async function reconcilePinboard(groupKey: string, only?: string): Promis
   const existing = await db.collection('memberships')
     .where('orgKey', '==', groupKey).where('orgModelType', '==', 'group').get();
   const current = new Map<string, PinboardMembershipState>();
+  const activeRefs = new Map<string, FirebaseFirestore.DocumentReference[]>(); // das tatsaechliche Dokument, egal mit welcher id
   for (const doc of existing.docs) {
     const m = doc.data() as { memberKey: string; dateOfExit?: string; isArchived?: boolean; isOptedOut?: boolean };
     const state = { active: isActiveMembership(m, today), isOptedOut: m.isOptedOut ?? false };
+    if (state.active) activeRefs.set(m.memberKey, [...(activeRefs.get(m.memberKey) ?? []), doc.ref]);
     const prev = current.get(m.memberKey);
     if (!prev || state.active) current.set(m.memberKey, state); // an active doc wins over an ended one
   }
@@ -78,8 +80,10 @@ export async function reconcilePinboard(groupKey: string, only?: string): Promis
       groupKey, name, tenant));
   }
   for (const key of plan.end) {
-    batch.set(db.collection('memberships').doc(pinboardMembershipId(groupKey, key)),
-      { dateOfExit: today, isArchived: true, isOptedOut: false }, { merge: true });
+    // Das echte Dokument beenden (Client-Anlage nutzt zufaellige ids) — nie die deterministische id anlegen.
+    for (const ref of activeRefs.get(key) ?? []) {
+      batch.update(ref, { dateOfExit: today, isArchived: true, isOptedOut: false });
+    }
   }
   await batch.commit();
   console.log(`reconcilePinboard: ${groupKey}${only ? ` (${only})` : ''} add=${plan.add.length} end=${plan.end.length}`);
@@ -97,13 +101,12 @@ export const onPinboardSourceMembershipWritten = onDocumentWritten(
     // Pinnwand-Mitgliedschaften selbst nie weiterverfolgen — sonst Rekursion.
     if (isPinboardKey(doc.orgKey) || event.params.membershipId.startsWith('pb_')) return;
     try {
-      const pinboards = await getFirestore().collection('groups')
-        .where('sourceGroupKeys', 'array-contains', doc.orgKey).get();
-      for (const pb of pinboards.docs) {
-        if ((pb.data()['kind'] ?? 'group') !== 'pinboard') continue;
-        await reconcilePinboard(pb.id, doc.memberKey);
-        if (before?.memberKey && after?.memberKey && before.memberKey !== after.memberKey) {
-          await reconcilePinboard(pb.id, before.memberKey);
+      for (const [orgKey, personKey] of sourcePairsToReconcile(before, after)) {
+        const pinboards = await getFirestore().collection('groups')
+          .where('sourceGroupKeys', 'array-contains', orgKey).get();
+        for (const pb of pinboards.docs) {
+          if ((pb.data()['kind'] ?? 'group') !== 'pinboard') continue;
+          await reconcilePinboard(pb.id, personKey);
         }
       }
     } catch (error) {
@@ -121,8 +124,10 @@ export const onPinboardWritten = onDocumentWritten(
     if (!after || (after.kind ?? 'group') !== 'pinboard' || after.isArchived) return;
     const sourcesChanged = JSON.stringify([...(before?.sourceGroupKeys ?? [])].sort()) !==
       JSON.stringify([...(after.sourceGroupKeys ?? [])].sort());
+    const adminKeys = (g?: GroupDoc) => JSON.stringify((g?.admins ?? []).map((a) => a.key).filter(Boolean).sort());
+    const adminsChanged = adminKeys(before) !== adminKeys(after);
     const modeChanged = (before?.joinMode ?? 'optOut') !== (after.joinMode ?? 'optOut');
-    if (!sourcesChanged && !modeChanged) return;
+    if (!sourcesChanged && !modeChanged && !adminsChanged) return;
     try {
       await reconcilePinboard(event.params.groupId);
     } catch (error) {

@@ -53,3 +53,19 @@ export function planPinboardMembership(input: {
   }
   return { add, end };
 }
+
+type SourceMembershipDoc = { orgKey?: string; orgModelType?: string; memberKey?: string; memberModelType?: string };
+
+/**
+ * Welche (Quellgruppe, Person)-Paare muss eine Aenderung einer Mitgliedschaft abgleichen?
+ * Vorher- und Nachher-Stand, ohne Duplikate; nur Personen-Mitgliedschaften in Gruppen.
+ */
+export function sourcePairsToReconcile(before?: SourceMembershipDoc, after?: SourceMembershipDoc): [string, string][] {
+  const pairs = new Map<string, [string, string]>();
+  for (const d of [after, before]) {
+    if (!d || d.orgModelType !== 'group' || d.memberModelType !== 'person' || !d.orgKey || !d.memberKey) continue;
+    if (isPinboardKey(d.orgKey)) continue;
+    pairs.set(`${d.orgKey}|${d.memberKey}`, [d.orgKey, d.memberKey]);
+  }
+  return [...pairs.values()];
+}
