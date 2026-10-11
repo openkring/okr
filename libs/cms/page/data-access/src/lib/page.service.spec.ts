@@ -16,7 +16,8 @@ function createFirestoreMock() {
     createModel: vi.fn().mockResolvedValue('new-id'),
     updateModel: vi.fn().mockResolvedValue('updated-id'),
     deleteModel: vi.fn().mockResolvedValue(undefined),
-    searchData: vi.fn().mockReturnValue(of([]))
+    searchData: vi.fn().mockReturnValue(of([])),
+    readTenantModel: vi.fn().mockReturnValue(of(undefined))
   };
 }
 
@@ -86,14 +87,23 @@ describe('PageService', () => {
   it('read() prefers the tenant-suffixed page over the shared one', async () => {
     const shared = { okey: 'welcome' } as PageModel;
     const mine = { okey: `welcome_${tenantId}` } as PageModel;
-    firestore.searchData.mockReturnValue(of([shared, mine]));
+    const serve = (pages: PageModel[]) => firestore.readTenantModel.mockImplementation(
+      (_collection: string, key: string) => of(pages.find(p => p.okey === key)));
+
+    serve([shared, mine]);
     await expect(firstValueFrom(service.read('welcome'))).resolves.toBe(mine);
 
-    firestore.searchData.mockReturnValue(of([shared]));
+    serve([shared]);
     await expect(firstValueFrom(service.read('welcome'))).resolves.toBe(shared);
 
-    firestore.searchData.mockReturnValue(of([]));
+    serve([]);
     await expect(firstValueFrom(service.read('welcome'))).resolves.toBeUndefined();
+  });
+
+  it('read() reads two documents, never the page collection (spec 1.56)', async () => {
+    await firstValueFrom(service.read('welcome'));
+    expect(firestore.searchData).not.toHaveBeenCalled();
+    expect(firestore.readTenantModel.mock.calls.map(c => c[1])).toEqual([`welcome_${tenantId}`, 'welcome']);
   });
 
   it('propagates errors from the underlying write', async () => {

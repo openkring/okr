@@ -45,6 +45,7 @@ export class MenuService {
    * @returns an Observable of the MenuItemModel
    */
   public read(name?: string): Observable<MenuItemModel | undefined> {
+    // Lookup by `name`, not by document id — a list search is the only way (spec 1.56 rule 3a).
     return findByKey<MenuItemModel>(this.list(), name, 'name');
   }
 

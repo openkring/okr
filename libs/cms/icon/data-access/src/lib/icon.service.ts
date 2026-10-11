@@ -5,7 +5,7 @@ import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
 import { IconCollection, IconModel, UserModel } from '@okr/shared-models';
-import { findByKey, getSystemQuery } from '@okr/shared-util-core';
+import { getSystemQuery } from '@okr/shared-util-core';
 import { getIconIndex } from '@okr/cms-icon-util';
 import { PFX } from './scope';
 
@@ -34,7 +34,7 @@ export class IconService {
   }
 
   public read(key: string | undefined): Observable<IconModel | undefined> {
-    return findByKey<IconModel>(this.list(), key);
+    return this.firestoreService.readTenantModel<IconModel>(IconCollection, key, this.env.tenantId);
   }
 
   public async update(icon: IconModel, currentUser?: UserModel): Promise<string | undefined> {

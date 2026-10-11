@@ -20,7 +20,8 @@ function createFirestoreMock() {
     createModel: vi.fn().mockResolvedValue('new-id'),
     updateModel: vi.fn().mockResolvedValue('updated-id'),
     deleteModel: vi.fn().mockResolvedValue(undefined),
-    searchData: vi.fn().mockReturnValue(of([]))
+    searchData: vi.fn().mockReturnValue(of([])),
+    readTenantModel: vi.fn().mockReturnValue(of(undefined))
   };
 }
 
@@ -83,9 +84,17 @@ describe('SectionService', () => {
 
   it('searchByKeys() caps the number of read sections to the given limit', async () => {
     const sections = ['a', 'b', 'c'].map((k) => ({ ...IFRAME_SECTION_SHAPE, okey: k }));
-    firestore.searchData.mockReturnValue(of(sections));
+    firestore.readTenantModel.mockImplementation((_collection: string, key: string) => of(sections.find(s => s.okey === key)));
     const result = await firstValueFrom(service.searchByKeys(['a', 'b', 'c'], 2));
     expect(result.map((s) => s.okey)).toEqual(['a', 'b']);
+    expect(firestore.searchData).not.toHaveBeenCalled();   // document reads, not the collection (spec 1.56)
+  });
+
+  it('read() prefers the tenant-owned fork over the shared section', async () => {
+    const shared = { ...IFRAME_SECTION_SHAPE, okey: 'a' } as SectionModel;
+    const mine = { ...IFRAME_SECTION_SHAPE, okey: `a_${tenantId}` } as SectionModel;
+    firestore.readTenantModel.mockImplementation((_collection: string, key: string) => of([shared, mine].find(s => s.okey === key)));
+    await expect(firstValueFrom(service.read('a'))).resolves.toBe(mine);
   });
 
   it('propagates errors from the underlying write', async () => {

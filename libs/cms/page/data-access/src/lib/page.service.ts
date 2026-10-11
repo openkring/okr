@@ -1,11 +1,11 @@
 import { Injectable, inject } from "@angular/core";
-import { map, Observable } from "rxjs";
+import { combineLatest, map, Observable, of } from "rxjs";
 
 import { ENV } from "@okr/shared-config";
 import { FirestoreService } from "@okr/shared-data-access";
 import { I18nService } from "@okr/shared-i18n";
 import { PageCollection, PageModel, UserModel } from "@okr/shared-models";
-import { findByKey, forkKeyFor, getSystemQuery, isOwnedBy } from "@okr/shared-util-core";
+import { forkKeyFor, getSystemQuery, isOwnedBy } from "@okr/shared-util-core";
 
 import { getPageIndex } from "@okr/cms-page-util";
 import { PFX } from "./scope";
@@ -39,7 +39,7 @@ export class PageService {
   }
 
   /**
-   * Lookup a page in the cached list by its document id and return it as an Observable.
+   * Lookup a page by its document id (two document listeners, no collection query — spec 1.56) and return it as an Observable.
    * Menu items are shared across tenants (e.g. menuItems/home -> /private/welcome), so the same
    * page id arrives for every tenant while each tenant owns its own doc named `<key>_<tenantId>`
    * (welcome_p13, welcome_kring, ...). Prefer that doc, fall back to the unsuffixed one.
@@ -47,9 +47,12 @@ export class PageService {
    * @returns an Observable of the PageModel
    */
     public read(key: string | undefined): Observable<PageModel | undefined> {
-      if (!key || key.length === 0) return findByKey<PageModel>(this.list(), key);
-      const tenantKey = forkKeyFor(key, this.env.tenantId);
-      return this.list().pipe(map(pages => pages.find(p => p.okey === tenantKey) ?? pages.find(p => p.okey === key)));
+      if (!key || key.length === 0) return of(undefined);
+      const tenantId = this.env.tenantId;
+      return combineLatest([
+        this.firestoreService.readTenantModel<PageModel>(PageCollection, forkKeyFor(key, tenantId), tenantId),
+        this.firestoreService.readTenantModel<PageModel>(PageCollection, key, tenantId),
+      ]).pipe(map(([own, shared]) => own ?? shared));
     }
 
   /**

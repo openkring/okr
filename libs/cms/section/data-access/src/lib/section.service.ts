@@ -1,11 +1,11 @@
 import { Injectable, inject } from "@angular/core";
-import { Observable, first, forkJoin, map, of } from "rxjs";
+import { Observable, combineLatest, first, forkJoin, map, of } from "rxjs";
 
 import { ENV } from "@okr/shared-config";
 import { FirestoreService } from "@okr/shared-data-access";
 import { I18nService } from "@okr/shared-i18n";
 import { DbQuery, SectionCollection, SectionModel, UserModel } from "@okr/shared-models";
-import { addSystemQueries, findByKey, forkKeyFor, getSystemQuery, isOwnedBy } from "@okr/shared-util-core";
+import { addSystemQueries, forkKeyFor, getSystemQuery, isOwnedBy } from "@okr/shared-util-core";
 
 import { getSectionIndex } from "@okr/cms-section-util";
 import { PFX } from "./scope";
@@ -49,10 +49,12 @@ export class SectionService {
    * @param key the key of the model document
    */
   public read(key: string): Observable<SectionModel | undefined> {
-    if (!key || key.length === 0) return findByKey<SectionModel>(this.list(), key);
-    const tenantKey = forkKeyFor(key, this.env.tenantId);
-    return this.list().pipe(map(sections =>
-      sections.find(s => s.okey === tenantKey) ?? sections.find(s => s.okey === key)));
+    if (!key || key.length === 0) return of(undefined);
+    const tenantId = this.env.tenantId;
+    return combineLatest([
+      this.firestoreService.readTenantModel<SectionModel>(SectionCollection, forkKeyFor(key, tenantId), tenantId),
+      this.firestoreService.readTenantModel<SectionModel>(SectionCollection, key, tenantId),
+    ]).pipe(map(([own, shared]) => own ?? shared));
   }
 
   /**
