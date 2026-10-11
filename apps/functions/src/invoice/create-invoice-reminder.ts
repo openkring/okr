@@ -4,7 +4,7 @@ import { getFirestore } from 'firebase-admin/firestore';
 
 import { DEFAULT_REMINDER_DUE_DAYS, FinanceDocumentCollection, InvoiceCollection, TemplateCollection } from '@okr/shared-models';
 import { DateFormat, getTodayStr } from '@okr/shared-util-core';
-import { checkAppCheckToken, checkAuthentication, checkRoles, getCallerTenantId, nextBookingNo } from '@okr/shared-util-functions';
+import { checkAppCheckToken, checkAuthentication, checkRoles, getCallerTenantId } from '@okr/shared-util-functions';
 
 import { periodKeyFor } from '../bank-import/bank-import.util';
 import { assertPeriodsOpen } from '../booking/period-lock';
@@ -21,6 +21,7 @@ import {
 import { invoiceBookingIndex, issuePeriodKeys, recipientFields, viewDate, withoutUndefined } from './invoice.logic';
 import { buildReminderPayload } from './reminder-payload.logic';
 import { chfText, historyDetails, writeFinanceHistory } from '../finance-history/finance-history';
+import { allocateBookingNo } from '../booking/booking-no';
 
 const REGION = 'europe-west6';
 const CF_NAME = 'createInvoiceReminder';
@@ -195,8 +196,7 @@ export const createInvoiceReminder = onCall(
         await assertPeriodsOpen(db, issuePeriodKeys(accountingTenantId, date, fiscalYearStart), tx);
         await assertLeafAccount(db, accountingTenantId, feeAccountKey, tx);
         await assertLeafAccount(db, accountingTenantId, receivablesKey, tx);
-        const ledger = await tx.get(db.collection(BOOKING_COLLECTION).where('accountingTenantId', '==', accountingTenantId));
-        bookingNo = nextBookingNo(ledger.docs.map((s) => s.data() as { date?: string; bookingNo?: number }), Number(date.substring(0, 4)));
+        bookingNo = await allocateBookingNo(db, tx, accountingTenantId, Number(date.substring(0, 4)));
       }
 
       // writes

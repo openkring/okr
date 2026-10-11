@@ -5,7 +5,7 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { INVOICE_NOTES_LENGTH } from '@okr/finance-invoice-util';
 import { InvoiceCollection } from '@okr/shared-models';
 import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
-import { checkAppCheckToken, checkAuthentication, checkRoles, getCallerTenantId, nextBookingNo } from '@okr/shared-util-functions';
+import { checkAppCheckToken, checkAuthentication, checkRoles, getCallerTenantId } from '@okr/shared-util-functions';
 
 import { periodKeyFor } from '../bank-import/bank-import.util';
 import { assertPeriodsOpen } from '../booking/period-lock';
@@ -14,6 +14,7 @@ import { appendNote, InvoiceLike, isUsableIssueBooking, openAmount, reversalLine
 import { coalesceReminder, reminderKey, ReminderLike, storedReminder, waiveBlockers, waiverKey } from './invoice-reminder.logic';
 import { invoiceBookingIndex, issuePeriodKeys, withoutUndefined } from './invoice.logic';
 import { chfText, historyDetails, writeFinanceHistory } from '../finance-history/finance-history';
+import { allocateBookingNo } from '../booking/booking-no';
 
 const REGION = 'europe-west6';
 const CF_NAME = 'waiveReminderFee';
@@ -139,8 +140,7 @@ export const waiveReminderFee = onCall(
       for (const accountKey of [...new Set(feeLines.map((l) => String(l.accountKey ?? '')))]) {
         await assertLeafAccount(db, accountingTenantId, accountKey, tx);
       }
-      const ledger = await tx.get(db.collection(BOOKING_COLLECTION).where('accountingTenantId', '==', accountingTenantId));
-      const bookingNo = nextBookingNo(ledger.docs.map((s) => s.data() as { date?: string; bookingNo?: number }), Number(dateStr.substring(0, 4)));
+      const bookingNo = await allocateBookingNo(db, tx, accountingTenantId, Number(dateStr.substring(0, 4)));
 
       // writes
       const tenants = (invoice['tenants'] as string[] | undefined) ?? [tenantId];

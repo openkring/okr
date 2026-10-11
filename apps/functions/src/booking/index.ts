@@ -2,7 +2,7 @@ import { onCall, CallableRequest, HttpsError } from 'firebase-functions/v2/https
 import { logger } from 'firebase-functions/v2';
 import { getFirestore } from 'firebase-admin/firestore';
 
-import { checkAppCheckToken, checkAuthentication, checkRoles, getCallerTenantId, formatRejectNote, isBalanced, nextBookingNo } from '@okr/shared-util-functions';
+import { checkAppCheckToken, checkAuthentication, checkRoles, getCallerTenantId, formatRejectNote, isBalanced } from '@okr/shared-util-functions';
 import { carryOverProjectKeys, convertDateFormatToString, DateFormat, getTodayStr, projectKeyForLine } from '@okr/shared-util-core';
 
 import { assertExplicitCostCenter, costCenterKeyForLine, loadCostCenterContext } from '../cost-center/cost-center-context';
@@ -11,6 +11,7 @@ import { assertPeriodsOpen, loadFiscalYearStart, touchedPeriodKeys } from './per
 import { BillCollection, InvoiceCollection } from '@okr/shared-models';
 import { billAfterPaymentRemoval, invoiceAfterPaymentRemoval, issueBookingBillKey } from '../bill/bill-payment.logic';
 import { isBexioBackend } from '../bexio/backend-gate';
+import { allocateBookingNo } from './booking-no';
 
 const REGION = 'europe-west6';
 const CF_NAME = 'reviewBooking';
@@ -159,10 +160,7 @@ export const reviewBooking = onCall(
       }
       const accountingTenantId = booking['accountingTenantId'] as string;
       await assertPeriodsOpen(db, touchedPeriodKeys(accountingTenantId, [date], fiscalYearStart), tx);
-      const ledger = await tx.get(
-        db.collection(BOOKING_COLLECTION).where('accountingTenantId', '==', accountingTenantId),
-      );
-      const bookingNo = nextBookingNo(ledger.docs.map(s => s.data() as { date?: string; bookingNo?: number }), year);
+      const bookingNo = await allocateBookingNo(db, tx, accountingTenantId, year);
 
       const header: Record<string, unknown> = { status: 'posted', bookingNo };
       if (corrections?.title !== undefined) header['title'] = corrections.title.slice(0, 200);
@@ -325,10 +323,7 @@ export const writeBooking = onCall(
       await assertPeriodsOpen(db, periodKeys, tx);
       let no = (existing?.['bookingNo'] as number) ?? 0;
       if (mode === 'create' || no === 0) {
-        const ledger = await tx.get(
-          db.collection(BOOKING_COLLECTION).where('accountingTenantId', '==', accountingTenantId),
-        );
-        no = nextBookingNo(ledger.docs.map(s => s.data() as { date?: string; bookingNo?: number }), year);
+        no = await allocateBookingNo(db, tx, accountingTenantId, year);
       }
       tx.set(bookingRef, {
         ...header,

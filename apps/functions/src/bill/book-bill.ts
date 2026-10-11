@@ -5,7 +5,7 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { BillCollection } from '@okr/shared-models';
 import { resolvePaymentAccountKey } from '@okr/finance-bill-util';
 import { projectKeyForLine } from '@okr/shared-util-core';
-import { checkAppCheckToken, checkAuthentication, checkRoles, getCallerTenantId, isBalanced, nextBookingNo } from '@okr/shared-util-functions';
+import { checkAppCheckToken, checkAuthentication, checkRoles, getCallerTenantId, isBalanced } from '@okr/shared-util-functions';
 
 import { periodKeyFor } from '../bank-import/bank-import.util';
 import { assertPeriodsOpen } from '../booking/period-lock';
@@ -17,6 +17,7 @@ import { loadBillConfig, loadOwnBill } from './bill-context';
 import { billBookingIndex, billBookingTitle } from './bill-details.logic';
 import { assertProjectKeyShapes, assertProjectsAssignable, assertProjectsOnProfitAndLoss } from '../project/project-context';
 import { writeFinanceHistory } from '../finance-history/finance-history';
+import { allocateBookingNo } from '../booking/booking-no';
 
 const REGION = 'europe-west6';
 const CF_NAME = 'bookBill';
@@ -94,8 +95,7 @@ export const bookBill = onCall(
       if (lines.some((l) => !!(l.projectKey ?? '').trim() && !checkedProjectKeys.has((l.projectKey ?? '').trim()))) {
         throw refuse('state-changed', `bill ${billKey} changed while it was booked`);
       }
-      const ledger = await tx.get(db.collection(BOOKING_COLLECTION).where('accountingTenantId', '==', accountingTenantId));
-      const bookingNo = nextBookingNo(ledger.docs.map((s) => s.data() as { date?: string; bookingNo?: number }), Number(billDate.substring(0, 4)));
+      const bookingNo = await allocateBookingNo(db, tx, accountingTenantId, Number(billDate.substring(0, 4)));
 
       const bookingLines = billBookingLines(lines, payablesKey);
       if (!isBalanced(bookingLines)) throw refuse('inconsistent-state', `booking ${bookingKey} is not balanced`);

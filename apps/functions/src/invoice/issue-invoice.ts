@@ -6,8 +6,7 @@ import { FinanceDocumentCollection, InvoiceCollection, InvoiceModel, InvoicePosi
 import { getInvoiceIndex, getNextInvoiceNo } from '@okr/finance-invoice-util';
 import { DateFormat, generateQrReference, generateRandomString, getTodayStr } from '@okr/shared-util-core';
 import {
-  checkAppCheckToken, checkAuthentication, checkRoles, getCallerTenantId, nextBookingNo,
-} from '@okr/shared-util-functions';
+  checkAppCheckToken, checkAuthentication, checkRoles, getCallerTenantId, } from '@okr/shared-util-functions';
 
 import { periodKeyFor } from '../bank-import/bank-import.util';
 import { assertPeriodsOpen } from '../booking/period-lock';
@@ -20,6 +19,7 @@ import {
 } from './invoice.logic';
 import { assertLeafAccount, loadOwnedAccountingConfig, receiverAddress, receiverGender, refuse, treasurerContact } from './invoice-context';
 import { writeFinanceHistory } from '../finance-history/finance-history';
+import { allocateBookingNo } from '../booking/booking-no';
 
 const REGION = 'europe-west6';
 const CF_NAME = 'issueInvoice';
@@ -258,9 +258,7 @@ export const issueInvoice = onCall(
         }
         let bookingNo = 0;
         if (decision === 'write') {
-          const ledger = await tx.get(db.collection(BOOKING_COLLECTION).where('accountingTenantId', '==', accountingTenantId));
-          const ledgerRows = ledger.docs.map((s) => s.data() as { date?: string; bookingNo?: number });
-          bookingNo = nextBookingNo(ledgerRows, Number(invoiceDate.substring(0, 4)));
+          bookingNo = await allocateBookingNo(db, tx, accountingTenantId, Number(invoiceDate.substring(0, 4)));
         }
 
         // writes

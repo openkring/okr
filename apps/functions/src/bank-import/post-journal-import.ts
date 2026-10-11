@@ -2,10 +2,11 @@ import { onCall, CallableRequest, HttpsError } from 'firebase-functions/v2/https
 import { logger } from 'firebase-functions/v2';
 import { getFirestore, Transaction } from 'firebase-admin/firestore';
 
-import { checkAppCheckToken, checkAuthentication, checkRoles, getCallerTenantId, nextBookingNo } from '@okr/shared-util-functions';
+import { checkAppCheckToken, checkAuthentication, checkRoles, getCallerTenantId } from '@okr/shared-util-functions';
 
 import { buildJournalBookingHeader, buildJournalBookingLines, JournalEntry, periodKeyFor } from './bank-import.util';
 import { costCenterKeyForLine, loadCostCenterContext } from '../cost-center/cost-center-context';
+import { allocateBookingNo } from '../booking/booking-no';
 
 const REGION = 'europe-west6';
 const CF_NAME = 'postJournalImport';
@@ -93,9 +94,7 @@ export const postJournalImport = onCall(
           if (bookingSnap.exists) return 'replayed';
 
           const year = Number(entry.date.substring(0, 4));
-          // same full-ledger read as postBankImport; MAX_ENTRIES=100 is the mitigation (see the note there)
-          const ledger = await tx.get(db.collection(BOOKING_COLLECTION).where('accountingTenantId', '==', accountingTenantId));
-          const bookingNo = nextBookingNo(ledger.docs.map(s => s.data() as { date?: string; bookingNo?: number }), year);
+          const bookingNo = await allocateBookingNo(db, tx, accountingTenantId, year);
 
           if (!periodSnap.exists) {
             tx.set(periodRef, { tenants: [tenantId], isArchived: false, accountingTenantId, year: Number(periodKey.slice(-4)), month: 0, isLocked: false, lockedBy: '', lockedAt: '' });

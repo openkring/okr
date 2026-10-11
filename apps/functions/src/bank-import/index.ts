@@ -2,7 +2,7 @@ import { onCall, CallableRequest, HttpsError } from 'firebase-functions/v2/https
 import { logger } from 'firebase-functions/v2';
 import { getFirestore, Transaction } from 'firebase-admin/firestore';
 
-import { checkAppCheckToken, checkAuthentication, checkRoles, getCallerTenantId, isBalanced, nextBookingNo } from '@okr/shared-util-functions';
+import { checkAppCheckToken, checkAuthentication, checkRoles, getCallerTenantId, isBalanced } from '@okr/shared-util-functions';
 import { DateFormat, getTodayStr } from '@okr/shared-util-core';
 
 import { BillCollection, InvoiceCollection } from '@okr/shared-models';
@@ -15,6 +15,7 @@ import { InvoiceLike } from '../invoice/invoice-payment.logic';
 import { BillLike } from '../bill/bill-payment.logic';
 import { isBexioBackend } from '../bexio/backend-gate';
 import { costCenterKeyForLine, loadCostCenterContext } from '../cost-center/cost-center-context';
+import { allocateBookingNo } from '../booking/booking-no';
 
 const REGION = 'europe-west6';
 const CF_NAME = 'postBankImport';
@@ -206,11 +207,7 @@ export const postBankImport = onCall(
             }
           }
           const year = Number(row.date.substring(0, 4));
-          // Follow-up: this reads the whole ledger of the accounting tenant per row to compute
-          // nextBookingNo. MAX_ROWS=100 is the mitigation for now; the real fix is a narrow read
-          // (`orderBy bookingNo desc limit 1`, backed by an index) instead of the full scan.
-          const ledger = await tx.get(db.collection(BOOKING_COLLECTION).where('accountingTenantId', '==', accountingTenantId));
-          const bookingNo = nextBookingNo(ledger.docs.map(s => s.data() as { date?: string; bookingNo?: number }), year);
+          const bookingNo = await allocateBookingNo(db, tx, accountingTenantId, year);
 
           if (!periodSnap.exists) {
             tx.set(periodRef, { tenants: [tenantId], isArchived: false, accountingTenantId, year: Number(periodKey.slice(-4)), month: 0, isLocked: false, lockedBy: '', lockedAt: '' });
