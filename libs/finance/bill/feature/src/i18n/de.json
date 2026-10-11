@@ -287,5 +287,17 @@
     "conf": "Die Änderungen sind gespeichert.",
     "error": "Die Änderungen konnten nicht gespeichert werden. Bitte versuche es später noch einmal.",
     "periodLocked": "Diese Periode ist abgeschlossen. Nur Notizen, Fälligkeit, Referenz und IBAN lassen sich noch ändern."
+  },
+  "approval": {
+    "title": "Kreditor",
+    "dayTitle": "Kreditoren vom {date}",
+    "noAccount": "Ohne Zahlungskonto",
+    "empty": "Für diesen Tag gibt es keine gebuchten Kreditoren.",
+    "error": "Die Kreditoren konnten nicht geladen werden. Vielleicht fehlt dir die Berechtigung.",
+    "vouchers": "Belege",
+    "iban": "IBAN des Kreditors",
+    "reference": "Referenz",
+    "lines": "Positionen",
+    "payFrom": "Zahlung ab"
   }
 }

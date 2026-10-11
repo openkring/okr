@@ -287,5 +287,17 @@
     "conf": "Les modifications sont enregistrées.",
     "error": "Les modifications n’ont pas pu être enregistrées. Réessaie plus tard.",
     "periodLocked": "Cette période est clôturée. Seuls les notes, l’échéance, la référence et l’IBAN peuvent encore être modifiés."
+  },
+  "approval": {
+    "title": "Facture fournisseur",
+    "dayTitle": "Factures fournisseurs du {date}",
+    "noAccount": "Sans compte de paiement",
+    "empty": "Il n'y a aucune facture fournisseur comptabilisée pour ce jour.",
+    "error": "Les factures fournisseurs n'ont pas pu être chargées. Il te manque peut-être l'autorisation.",
+    "vouchers": "Justificatifs",
+    "iban": "IBAN du fournisseur",
+    "reference": "Référence",
+    "lines": "Positions",
+    "payFrom": "Paiement depuis"
   }
 }

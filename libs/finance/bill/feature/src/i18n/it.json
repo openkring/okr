@@ -287,5 +287,17 @@
     "conf": "Le modifiche sono salvate.",
     "error": "Non è stato possibile salvare le modifiche. Riprova più tardi.",
     "periodLocked": "Questo periodo è chiuso. Si possono ancora modificare solo note, scadenza, riferimento e IBAN."
+  },
+  "approval": {
+    "title": "Fattura fornitore",
+    "dayTitle": "Fatture fornitori del {date}",
+    "noAccount": "Senza conto di pagamento",
+    "empty": "Per questo giorno non ci sono fatture fornitori registrate.",
+    "error": "Non è stato possibile caricare le fatture fornitori. Forse ti manca l'autorizzazione.",
+    "vouchers": "Giustificativi",
+    "iban": "IBAN del fornitore",
+    "reference": "Riferimento",
+    "lines": "Posizioni",
+    "payFrom": "Pagamento da"
   }
 }

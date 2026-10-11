@@ -13,7 +13,7 @@ import { findByKey, getQuery, getSystemQuery } from '@okr/shared-util-core';
 import { ActivityService } from '@okr/activity-data-access';
 
 import {
-  BILL_PAYMENT_BOOKING_PAGE, BillDetailsPayload, BILL_PAYMENT_BOOKING_PAGES, BillPaymentCandidate, BillPaymentInput, billPaymentCandidates, isPayableBill, MAX_BILL_PAYMENT_CANDIDATES,
+  BILL_PAYMENT_BOOKING_PAGE, BillApprovalResult, BillDetailsPayload, BILL_PAYMENT_BOOKING_PAGES, BillPaymentCandidate, BillPaymentInput, billPaymentCandidates, isPayableBill, MAX_BILL_PAYMENT_CANDIDATES,
   openBillAmount,
 } from '@okr/finance-bill-util';
 
@@ -195,6 +195,13 @@ export class BillService {
     const result = await fn({ billKey, bookingKey });
     void this.activityService.log('bill', 'unlink', currentUser, `${billKey}: ${bookingKey}`);
     return result.data;
+  }
+
+  /*-------------------------- payment approver (spec 1.94) --------------------------*/
+  /** The bills the payment_approver may look at (spec 1.94 §3.5): one bill, or those booked on one day for the books. */
+  public async getBillsForApproval(req: { accountingTenantId: string; date: string } | { billKey: string }): Promise<BillApprovalResult> {
+    const fn = httpsCallable<typeof req, BillApprovalResult>(this.functions(), 'getBillsForApproval');
+    return (await fn(req)).data;
   }
 
   private functions() {

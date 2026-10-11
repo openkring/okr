@@ -732,6 +732,16 @@ const finance: BlockRoutes = {
       loadComponent: () => import('@okr/finance-budget-feature').then(m => m.MyCostCentersPage),
     },
     {
+      // Payment approver's read-only view (spec 1.94 §3.5), reached from the daily task — any member;
+      // `getBillsForApproval` is the authorisation boundary, the route only needs a login.
+      path: 'bill-approval',
+      canActivate: [isAuthenticatedGuard],
+      children: [
+        { path: 'bill/:billKey', loadComponent: () => import('@okr/finance-bill-feature').then(m => m.BillApprovalPage) },
+        { path: ':accountingTenantId/:date', loadComponent: () => import('@okr/finance-bill-feature').then(m => m.BillApprovalPage) },
+      ],
+    },
+    {
       // A member's OWN invoices. The whole `accounting/:accountingTenantId` subtree below is
       // `isPrivilegedGuard`, so the `invoice-my` menu item (roleNeeded: 'registered', url
       // `/accounting/scs/invoice/my/c-invoice`) dead-ended for every plain member. This is the

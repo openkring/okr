@@ -287,5 +287,17 @@
     "conf": "Los cambios se han guardado.",
     "error": "No se pudieron guardar los cambios. Inténtalo de nuevo más tarde.",
     "periodLocked": "Este periodo está cerrado. Solo se pueden cambiar las notas, el vencimiento, la referencia y el IBAN."
+  },
+  "approval": {
+    "title": "Factura de proveedor",
+    "dayTitle": "Facturas de proveedores del {date}",
+    "noAccount": "Sin cuenta de pago",
+    "empty": "No hay facturas de proveedores contabilizadas para este día.",
+    "error": "No se pudieron cargar las facturas de proveedores. Quizás te falta el permiso.",
+    "vouchers": "Comprobantes",
+    "iban": "IBAN del proveedor",
+    "reference": "Referencia",
+    "lines": "Partidas",
+    "payFrom": "Pago desde"
   }
 }

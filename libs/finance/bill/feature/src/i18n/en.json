@@ -287,5 +287,17 @@
     "conf": "Your changes are saved.",
     "error": "The changes could not be saved. Please try again later.",
     "periodLocked": "This period is closed. Only notes, due date, reference and IBAN can still be changed."
+  },
+  "approval": {
+    "title": "Bill",
+    "dayTitle": "Bills of {date}",
+    "noAccount": "No payment account",
+    "empty": "There are no booked bills for this day.",
+    "error": "The bills could not be loaded. Perhaps you do not have permission.",
+    "vouchers": "Receipts",
+    "iban": "Vendor's IBAN",
+    "reference": "Reference",
+    "lines": "Items",
+    "payFrom": "Pay from"
   }
 }
