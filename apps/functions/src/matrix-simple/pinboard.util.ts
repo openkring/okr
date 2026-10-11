@@ -84,6 +84,8 @@ export function mergeMembershipState(prev: PinboardMembershipState | undefined, 
 
 export const PINBOARD_NAME_MAX = 50;
 export const PINBOARD_DESCRIPTION_MAX = 500;
+export const PINBOARD_MAX_SOURCES = 20;
+const SOURCE_KEY_MAX = 100;
 
 export function validatePinboardInput(
   input: { name?: unknown; description?: unknown; sourceGroupKeys?: unknown; joinMode?: unknown; allowReplyAll?: unknown },
@@ -100,6 +102,8 @@ export function validatePinboardInput(
   if (!partial || input.sourceGroupKeys !== undefined) {
     const keys = input.sourceGroupKeys;
     if (!Array.isArray(keys) || keys.length === 0 || keys.some((k) => typeof k !== 'string' || !k)) return 'at least one source group is required';
+    if (keys.length > PINBOARD_MAX_SOURCES) return `at most ${PINBOARD_MAX_SOURCES} source groups are allowed`;
+    if (keys.some((k) => (k as string).length > SOURCE_KEY_MAX || (k as string).includes('/'))) return 'a source group key is invalid';
     if (keys.some((k) => isPinboardKey(k as string) || /_c_/.test(k as string))) return 'a source group must be a real group';
   }
   if (input.joinMode !== undefined && input.joinMode !== 'optOut' && input.joinMode !== 'optIn') return 'joinMode must be optOut or optIn';

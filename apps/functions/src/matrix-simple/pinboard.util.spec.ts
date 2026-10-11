@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { mergeMembershipState, validatePinboardInput, sourcePairsToReconcile, isPinboardKey, pinboardKey, pinboardMembershipId, planPinboardMembership, PinboardMembershipState } from './pinboard.util';
+import { PINBOARD_MAX_SOURCES, mergeMembershipState, validatePinboardInput, sourcePairsToReconcile, isPinboardKey, pinboardKey, pinboardMembershipId, planPinboardMembership, PinboardMembershipState } from './pinboard.util';
 
 const active: PinboardMembershipState = { active: true, isOptedOut: false };
 const ended: PinboardMembershipState = { active: false, isOptedOut: false };
@@ -91,6 +91,9 @@ describe('validatePinboardInput', () => {
   it('rejects an unknown join mode', () => expect(validatePinboardInput({ ...ok, joinMode: 'auto' }, false)).toMatch(/joinMode/));
   it('rejects a description over 500 characters', () => expect(validatePinboardInput({ ...ok, description: 'x'.repeat(501) }, false)).toMatch(/description/));
   it('accepts a partial update with only allowReplyAll', () => expect(validatePinboardInput({ allowReplyAll: true }, true)).toBeUndefined());
+  it('rejects more than the maximum number of source groups', () => expect(validatePinboardInput({ ...ok, sourceGroupKeys: Array.from({ length: PINBOARD_MAX_SOURCES + 1 }, (_, i) => `g${i}`) }, false)).toMatch(/source/));
+  it('rejects a source key over 100 characters', () => expect(validatePinboardInput({ ...ok, sourceGroupKeys: ['x'.repeat(101)] }, false)).toMatch(/source/));
+  it('rejects a source key containing a slash', () => expect(validatePinboardInput({ ...ok, sourceGroupKeys: ['a/b'] }, false)).toMatch(/source/));
   it('rejects an empty source list on update when given', () => expect(validatePinboardInput({ sourceGroupKeys: [] }, true)).toMatch(/source/));
 });
 

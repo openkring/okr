@@ -21,7 +21,7 @@ import { setHistoryVisibility } from './adhoc-chat';
 import { isPinboardKey, sourcePairsToReconcile, pinboardMembershipId, planPinboardMembership, mergeMembershipState, validatePinboardInput, pinboardKey, PinboardMembershipState, PinboardPlan } from './pinboard.util';
 
 export type GroupDoc = {
-  name?: string; kind?: string; tenants?: string[]; isArchived?: boolean;
+  name?: string; matrixRoomId?: string; kind?: string; tenants?: string[]; isArchived?: boolean;
   sourceGroupKeys?: string[]; joinMode?: 'optOut' | 'optIn'; admins?: { key: string }[];
 };
 
@@ -52,6 +52,12 @@ export async function reconcilePinboard(groupKey: string, only?: string): Promis
   const groupSnap = await db.collection('groups').doc(groupKey).get();
   const group = groupSnap.data() as GroupDoc | undefined;
   if (!group || (group.kind ?? 'group') !== 'pinboard' || group.isArchived) return { add: [], end: [] };
+  // Erst wenn der Raum existiert: sonst loest das Schreiben der Mitgliedschaften (onMembershipWritten →
+  // resolveGroupRoom(create)) parallel zu createPinboard einen zweiten Raum-Anlauf aus (Alias-Konflikt).
+  if (!group.matrixRoomId) {
+    console.log(`reconcilePinboard: ${groupKey} has no room yet, skipped`);
+    return { add: [], end: [] };
+  }
   const tenant = (group.tenants ?? [])[0];
   if (!tenant) return { add: [], end: [] };
 
@@ -250,6 +256,7 @@ export const createPinboard = onCall(CALLABLE, async (request): Promise<{ groupK
   // Neue Mitglieder sollen die bestehenden Aushaenge sehen.
   await setHistoryVisibility(roomId, 'shared', adminToken);
 
+  // Erst jetzt abgleichen: resolveGroupRoom hat matrixRoomId bereits gespeichert (reconcilePinboard ist vorher ein No-op).
   await reconcilePinboard(groupKey);
   const creatorMatrixId = `@${creatorKey.toLowerCase()}:${hostname}`;
   await ensureMatrixUserExists(creatorMatrixId, adminToken, { personKey: creatorKey });
@@ -351,9 +358,16 @@ export const joinPinboard = onCall(CALLABLE, async (request): Promise<{ roomId: 
   if (!eligible) throw new HttpsError('permission-denied', 'Not a member of a source group.');
 
   const db = getFirestore();
+  const hostname = serverHostname();
+  const adminToken = matrixAdminToken.value();
+  const today = getTodayStr(DateFormat.StoreDate);
+  const existing = await personMembershipDocs(groupKey, personKey);
+  const roomOf = async () => (await resolveGroupRoom(groupKey, hostname, adminToken, { create: false })) ?? group.matrixRoomId ?? '';
+  // Schon aktiv (egal mit welcher id): nichts Neues schreiben, kein Duplikat.
+  if (existing.some((d) => isActiveMembership(d.data() as MembershipFlags, today))) return { roomId: await roomOf() };
+
   const person = (await db.collection('persons').doc(personKey).get()).data() ?? {};
   // Ein frueherer Austritt unter anderer id darf reconcile nicht mehr draussen halten.
-  const existing = await personMembershipDocs(groupKey, personKey);
   const batch = db.batch();
   for (const doc of existing) {
     if ((doc.data() as MembershipFlags).isOptedOut) batch.update(doc.ref, { isOptedOut: false });
@@ -363,13 +377,18 @@ export const joinPinboard = onCall(CALLABLE, async (request): Promise<{ roomId: 
     groupKey, group.name ?? '', tenant));
   await batch.commit();
 
-  const hostname = serverHostname();
-  const adminToken = matrixAdminToken.value();
-  const roomId = group.matrixRoomId || await resolveGroupRoom(groupKey, hostname, adminToken, { create: false });
-  if (!roomId) throw new HttpsError('failed-precondition', `No room for pinboard ${groupKey}`);
-  const matrixUserId = `@${personKey.toLowerCase()}:${hostname}`;
-  await ensureMatrixUserExists(matrixUserId, adminToken, { personKey });
-  await forceJoinUserToRoom(roomId, matrixUserId, adminToken);
+  // Ab hier nie mehr werfen: die Mitgliedschaft steht, onMembershipWritten holt den Beitritt notfalls nach.
+  const roomId = await roomOf();
+  if (roomId) {
+    try {
+      await ensureAdminInRoom(roomId, adminToken);
+      const matrixUserId = `@${personKey.toLowerCase()}:${hostname}`;
+      await ensureMatrixUserExists(matrixUserId, adminToken, { personKey });
+      await forceJoinUserToRoom(roomId, matrixUserId, adminToken);
+    } catch (error) {
+      console.error(`joinPinboard: direct join failed for ${groupKey}/${personKey}:`, error);
+    }
+  }
   return { roomId };
 });
 
