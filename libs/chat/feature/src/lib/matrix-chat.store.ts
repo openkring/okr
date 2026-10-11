@@ -17,7 +17,7 @@ import { I18nService } from '@okr/shared-i18n';
 import { ActivityService } from '@okr/activity-data-access';
 import { AvatarService } from '@okr/avatar-data-access';
 import { MatrixChatService, MatrixPollData } from '@okr/chat-data-access';
-import { AdhocChatFormModel, PollDef, filterRoomsOfTenant, findSupportRoom, serverNameOf, MATRIX_CHAT_I18N_KEYS, MatrixChatI18n, MentionRef, callableErrorCode, isAlbumVideoFile, isVideoLimitError, isVideoUploadError, videoAlbumFallsBackToSynapse } from '@okr/chat-util';
+import { AdhocChatFormModel, PollDef, filterRoomsOfTenant, findSupportRoom, serverNameOf, MATRIX_CHAT_I18N_KEYS, MatrixChatI18n, MentionRef, callableErrorCode, pinboardBroadcastCount, pinboardReplyDraft, isAlbumVideoFile, isVideoLimitError, isVideoUploadError, videoAlbumFallsBackToSynapse } from '@okr/chat-util';
 
 import { RoomEditModal } from './room-edit.modal';
 
@@ -251,6 +251,14 @@ export const _MatrixChatStore = signalStore(
         if (!roomId) return undefined;
         return state.appStore.allGroupsAndChats().find((g: GroupModel) =>
           (g.kind ?? 'group') === 'chat' && g.matrixRoomId === roomId);
+      }),
+
+      /** Das Pinnwand-Dokument des aktuellen Raums, sonst undefined (spec 2026-10-11). */
+      currentPinboard: computed((): GroupModel | undefined => {
+        const roomId = state.currentRoomId();
+        if (!roomId) return undefined;
+        return state.appStore.allGroupsAndChats().find((g: GroupModel) =>
+          (g.kind ?? 'group') === 'pinboard' && !g.isArchived && g.matrixRoomId === roomId);
       }),
 
       /**
@@ -879,6 +887,32 @@ export const _MatrixChatStore = signalStore(
         } catch (error) {
           console.error('MatrixChatStore.sendReply: Failed:', error);
           throw error;
+        }
+      },
+
+      /** Vor jedem Aushang: «{count} Mitglieder werden … benachrichtigt». true = senden. */
+      async confirmPinboardBroadcast(): Promise<boolean> {
+        const roomId = store.currentRoomId();
+        if (!roomId || !store.currentPinboard()) return true;
+        const count = pinboardBroadcastCount(
+          store.matrixService.getRoomMemberPersonKeys(roomId), store.appStore.currentUser()?.personKey ?? '');
+        return store.alertService.confirm(fill(store.i18n.pinboard_broadcast_confirm(), { count }), true);
+      },
+
+      /**
+       * «Privat antworten»: DM mit der Person öffnen, die den Aushang geschrieben hat, und den
+       * Entwurf vorbelegen. Der Entwurf steht in localStorage['chat-draft:<roomId>'] BEVOR der
+       * Raum gewechselt wird — die Eingabe stellt ihn beim Raumwechsel wieder her.
+       */
+      async replyPrivately(message: MatrixMessage): Promise<void> {
+        try {
+          const room = await store.matrixService.createDirectRoom(message.sender);
+          const draft = pinboardReplyDraft(message.body ?? '', store.i18n.pinboard_reply_draft());
+          try { localStorage.setItem(`chat-draft:${room.roomId}`, draft); } catch { /* private mode — open the DM without a draft */ }
+          patchState(store, { currentRoomId: room.roomId, replyToMessage: undefined });
+        } catch (error) {
+          console.error('MatrixChatStore.replyPrivately: failed:', error);
+          await store.alertService.showToast(store.i18n.room_create_error());
         }
       },
 

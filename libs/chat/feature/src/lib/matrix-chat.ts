@@ -404,7 +404,7 @@ function rejectionReasons(results: PromiseSettledResult<unknown>[]): unknown[] {
                     [currentUserId]="matrixUserId()"
                     [hasMoreHistory]="store.hasMoreHistory()"
                     [typingUsers]="typingUsers()"
-                    [threadReplyCounts]="threadReplyCounts()"
+                    [threadReplyCounts]="store.currentPinboard() ? emptyThreadCounts : threadReplyCounts()"
                     [receiptsByEventId]="receiptsByEventId()"
                     [i18n]="store.i18n"
                     (loadOlder)="onLoadOlder()"
@@ -440,6 +440,7 @@ function rejectionReasons(results: PromiseSettledResult<unknown>[]): unknown[] {
                     [isDirectRoom]="store.isCurrentRoomDirect()"
                     [typingUsers]="typingUsers()"
                     [replyToMessage]="replyToMessage()"
+                    [confirmSend]="pinboardConfirm()"
                     [pendingImages]="pendingImages()"
                     (messageSent)="onMessageSent($event)"
                     (fileSent)="onFileSent($event)"
@@ -499,7 +500,8 @@ function rejectionReasons(results: PromiseSettledResult<unknown>[]): unknown[] {
               }
             </div>
 
-            <!-- Thread Panel (always in DOM; CSS width animates it in/out) -->
+            @if (!store.currentPinboard()) {
+            <!-- Thread Panel (always in DOM; CSS width animates it in/out). Not in a pinboard: no threads. -->
             <div class="thread-panel"
               [class.collapsed]="!selectedThreadId()"
               (dragover)="onThreadDragOver($event)"
@@ -566,6 +568,7 @@ function rejectionReasons(results: PromiseSettledResult<unknown>[]): unknown[] {
                   (surveyRequested)="onSurveyRequested()"
                 />
             </div>
+            }
           </div>
         </ion-card-content>
         <!-- Video call overlay -->
@@ -737,6 +740,11 @@ export class MatrixChat implements OnDestroy {
   protected readonly threadMessages = computed(() => this.store.threadMessages());
   protected readonly threadRootMessage = computed(() => this.store.threadRootMessage());
   protected readonly threadReplyCounts = computed(() => this.store.threadReplyCounts());
+  /** In a pinboard there are no threads: the list gets no counters. */
+  protected readonly emptyThreadCounts: ReturnType<typeof this.threadReplyCounts> = new Map();
+  /** Pinboard: ask «{count} Mitglieder werden benachrichtigt» before each post; otherwise no check. */
+  protected readonly pinboardConfirm = computed(() =>
+    this.store.currentPinboard() ? () => this.store.confirmPinboardBroadcast() : undefined);
 
   // ─── album videos in messages (spec 1.82 §8) ─────────────────────────────────
   private readonly videoUrls = inject(VideoUrlService);
@@ -1092,6 +1100,7 @@ export class MatrixChat implements OnDestroy {
   async onFileSent(file: File) {
     try {
       if (!await this.ensureAskRoom()) return;
+      if (!await this.store.confirmPinboardBroadcast()) return;
       await this.store.sendFile(file);
     } catch (error) {
       if (await this.showUploadLimitToast([error])) return;
@@ -1102,6 +1111,7 @@ export class MatrixChat implements OnDestroy {
 
   async onLocationSent() {
     if (!await this.ensureAskRoom()) return;
+    if (!await this.store.confirmPinboardBroadcast()) return;
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         const { latitude, longitude } = pos.coords;
@@ -1509,6 +1519,21 @@ export class MatrixChat implements OnDestroy {
     const currentUserId = this.matrixUserId();
     const isAuthor = !!currentUserId && message.sender === currentUserId;
     const isPoll = message.type === 'org.matrix.msc3381.poll.start';
+    const pinboard = this.store.currentPinboard();
+    // Pinboard: no threads; «Antworten» becomes «Privat antworten» (non-authors only), plus
+    // «An alle antworten» when the pinboard allows it. Authors get no reply action.
+    const pushReplyButtons = (): void => {
+      if (!pinboard) {
+        actionSheetOptions.buttons.push(createActionSheetButton('chat.message.reply', this.store.i18n.msg_reply(), this.imgixBaseUrl, 'return_reply'));
+        actionSheetOptions.buttons.push(createActionSheetButton('chat.message.thread', this.store.i18n.thread_open(), this.imgixBaseUrl, 'branch'));
+        return;
+      }
+      if (isAuthor) return;
+      actionSheetOptions.buttons.push(createActionSheetButton('pinboard.reply.private', this.store.i18n.pinboard_reply_private(), this.imgixBaseUrl, 'return_reply'));
+      if (pinboard.allowReplyAll ?? false) {
+        actionSheetOptions.buttons.push(createActionSheetButton('chat.message.reply', this.store.i18n.pinboard_reply_all(), this.imgixBaseUrl, 'return_reply'));
+      }
+    };
 
     // Poll-specific actions are merged into this single message action sheet (no separate poll sheet):
     // everyone can view the results, react, reply and open a thread; the author can edit or end a running poll.
@@ -1521,8 +1546,7 @@ export class MatrixChat implements OnDestroy {
       }
       actionSheetOptions.buttons.push(createActionSheetDivider());
       actionSheetOptions.buttons.push(createActionSheetButton('chat.message.react', this.store.i18n.msg_react_header(), this.imgixBaseUrl, 'smiley'));
-      actionSheetOptions.buttons.push(createActionSheetButton('chat.message.reply', this.store.i18n.msg_reply(), this.imgixBaseUrl, 'return_reply'));
-      actionSheetOptions.buttons.push(createActionSheetButton('chat.message.thread', this.store.i18n.thread_open(), this.imgixBaseUrl, 'branch'));
+      pushReplyButtons();
       actionSheetOptions.buttons.push(createActionSheetDivider());
     }
 
@@ -1534,8 +1558,7 @@ export class MatrixChat implements OnDestroy {
       actionSheetOptions.buttons.push(createActionSheetButton('chat.message.delete', this.store.i18n.msg_delete(), this.imgixBaseUrl, 'trash'));
     } else if (!isPoll) {  // receiver of a non-poll message (poll react/reply/thread already added above)
       actionSheetOptions.buttons.push(createActionSheetButton('chat.message.react', this.store.i18n.msg_react_header(), this.imgixBaseUrl, 'smiley'));
-      actionSheetOptions.buttons.push(createActionSheetButton('chat.message.reply', this.store.i18n.msg_reply(), this.imgixBaseUrl, 'return_reply'));
-      actionSheetOptions.buttons.push(createActionSheetButton('chat.message.thread', this.store.i18n.thread_open(), this.imgixBaseUrl, 'branch'));
+      pushReplyButtons();
       actionSheetOptions.buttons.push(createActionSheetButton('chat.message.report', this.store.i18n.msg_report_header(), this.imgixBaseUrl, 'alert-circle'));
     } else {  // receiver of a poll message
       actionSheetOptions.buttons.push(createActionSheetButton('chat.message.report', this.store.i18n.msg_report_header(), this.imgixBaseUrl, 'alert-circle'));
@@ -1576,6 +1599,9 @@ export class MatrixChat implements OnDestroy {
           break;
         case 'chat.message.reply':
           this.store.setReplyToMessage(message);
+          break;
+        case 'pinboard.reply.private':
+          await this.store.replyPrivately(message);
           break;
         case 'chat.message.thread':
           await this.store.replyInThread(message);

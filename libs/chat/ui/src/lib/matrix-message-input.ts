@@ -338,7 +338,7 @@ import 'emoji-picker-element';
           <ion-icon slot="icon-only" src="{{'video' | svgIcon}}"></ion-icon>
         </ion-button>
 
-        <ion-button class="send-button" [disabled]="!canSend()" [attr.aria-label]="i18n().send()" (click)="sendMessage()">
+        <ion-button class="send-button" [disabled]="!canSend()" [attr.aria-label]="i18n().send()" (click)="void sendMessage()">
           <ion-icon slot="icon-only" src="{{'send' | svgIcon}}"></ion-icon>
         </ion-button>
       </div>
@@ -417,6 +417,8 @@ export class MatrixMessageInput {
   public i18n = input.required<MatrixChatI18n>();
   public disabled = input<boolean>(false);
   public roomId = input<string | undefined>(undefined);
+  /** Optional: wird vor dem Senden gefragt; false = nicht senden, Text bleibt stehen (Pinnwand). */
+  public confirmSend = input<(() => Promise<boolean>) | undefined>(undefined);
   public typingUsers = input<string[]>([]);
   public replyToMessage = input<any>();
   public fileAccept = input<string>('*/*');
@@ -629,13 +631,18 @@ export class MatrixMessageInput {
     return (this.messageText().trim().length > 0 || this.pendingImages().length > 0) && !this.disabled();
   });
 
-  sendMessage(): void {
+  async sendMessage(): Promise<void> {
+    const text = this.messageText().trim();
+    // Ask BEFORE anything is emitted or cleared, so cancelling keeps the text and the images.
+    if (text || this.pendingImages().length > 0) {
+      const confirmSend = this.confirmSend();
+      if (confirmSend && !(await confirmSend())) return;
+    }
     const files = this.pendingImages();
     if (files.length > 0) {
       this.filesSent.emit([...files]);
       this.revokeObjectUrls();
     }
-    const text = this.messageText().trim();
     if (text) {
       const activeMentions = filterActiveMentions(text, this.mentions());
       const mentionRoom = /(^|\s)@room(\s|$)/.test(text);
@@ -663,7 +670,7 @@ export class MatrixMessageInput {
     // Send on Enter, new line on Shift+Enter
     if (!keyboardEvent.shiftKey) {
       event.preventDefault();
-      this.sendMessage();
+      void this.sendMessage();
     }
   }
 
