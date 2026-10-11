@@ -16,6 +16,7 @@ import { isResponsibilityValid, resolveAssignee } from '../workflow/engine';
 import { createFirestoreDeps, translateMessage } from '../workflow/firestore-deps';
 import { APPROVER_DIGEST_FALLBACK, APPROVER_DIGEST_MESSAGE_KEY, bookedBillKeys, BooksConfig, buildDigests, dayWindow,
   digestRelatedKey, DigestBill, formatChf, HistoryRow } from './bill-approver.logic';
+import { loadPayingAccounts } from './bill-approver.load';
 
 const CF_NAME = 'billApproverDaily';
 const PAYMENT_APPROVER = 'payment_approver';
@@ -49,12 +50,7 @@ export const billApproverDaily = onSchedule(
           const cfg = (await db.collection('accounting-configs').doc(id).get()).data();
           if (!cfg || !((cfg['tenants'] as string[] | undefined) ?? []).includes(tenantId)) continue;
           const paymentAccountKeys = (cfg['billPaymentAccountKeys'] as string[] | undefined) ?? [];
-          const accounts = await Promise.all(paymentAccountKeys.map(async key => {
-            const acc = (await db.collection('accounts').doc(key).get()).data();
-            const prof = await db.collection('bank-profiles').where('accountKey', '==', key).where('tenants', 'array-contains', tenantId).get();
-            const active = prof.docs.find(p => p.data()['isArchived'] !== true);   // archived profiles are skipped in memory (no new index)
-            return { key, name: [str(acc?.['id']), str(acc?.['name'])].filter(Boolean).join(' '), iban: str(active?.data()['iban']) };
-          }));
+          const accounts = await loadPayingAccounts(db, tenantId, paymentAccountKeys);
           books.push({ accountingTenantId: id, enabled: cfg['paymentApproverTask'] === true, paymentAccountKeys, accounts });
         }
         for (const d of buildDigests(day, bills, books)) {

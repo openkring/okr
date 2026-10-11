@@ -291,6 +291,7 @@ export const writeBill = Bill.writeBill;
 export const bookBill = Bill.bookBill;
 export const updateBillDetails = Bill.updateBillDetails;
 export const billApproverDaily = Bill.billApproverDaily;
+export const getBillsForApproval = Bill.getBillsForApproval;
 // bank import: the only write path from bank-import-rows into the ledger (spec 1.60 §7)
 export const postBankImport = BankImport.postBankImport;
 // bexio journal import: mapped entries posted directly as bookings (spec 1.60 §12)
