@@ -23,7 +23,7 @@ export type PinboardPlan = { add: string[]; end: string[] };
 /**
  * Wer kommt dazu, wer faellt heraus.
  * - `eligible`: aktive Personen-Mitglieder aller Quellgruppen (Vereinigung).
- * - `keep`: bleiben immer drin (die Admins der Pinnwand, auch ohne Quellgruppe).
+ * - `keep`: bleiben drin, solange sie nicht selbst ausgetreten sind (die Admins der Pinnwand, auch ohne Quellgruppe).
  * - `current`: bestehende Pinnwand-Mitgliedschaften je Person.
  * - `only`: nur diese eine Person betrachten (Trigger auf eine Quell-Mitgliedschaft).
  */
@@ -43,8 +43,8 @@ export function planPinboardMembership(input: {
     if (!consider(key)) continue;
     const state = current.get(key);
     if (state?.active) continue;
-    if (keep.has(key)) { add.push(key); continue; }
     if (state?.isOptedOut) continue;
+    if (keep.has(key)) { add.push(key); continue; }
     if (joinMode === 'optOut') add.push(key);
   }
   for (const [key, state] of current) {

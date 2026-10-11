@@ -36,6 +36,9 @@ describe('planPinboardMembership', () => {
   it('keeps an already active member', () => {
     expect(plan({ eligible: new Set(['anna']), current: new Map([['anna', active]]) })).toEqual({ add: [], end: [] });
   });
+  it('never re-adds an opted-out admin', () => {
+    expect(plan({ keep: new Set(['chef']), current: new Map([['chef', optedOut]]) })).toEqual({ add: [], end: [] });
+  });
   it('never re-adds an opted-out person', () => {
     expect(plan({ eligible: new Set(['anna']), current: new Map([['anna', optedOut]]) })).toEqual({ add: [], end: [] });
   });
