@@ -7,7 +7,7 @@
 
 import { onDocumentWritten } from 'firebase-functions/v2/firestore';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
-import { onCall, HttpsError } from 'firebase-functions/v2/https';
+import { onCall, HttpsError, CallableOptions } from 'firebase-functions/v2/https';
 import { getFirestore } from 'firebase-admin/firestore';
 
 import { DateFormat, getTodayStr, isActiveMembership } from '@okr/shared-util-core';
@@ -18,7 +18,12 @@ import {
   forceJoinUserToRoom, serverHostname, activeGroupMemberKeys,
 } from './shared';
 import { setHistoryVisibility } from './adhoc-chat';
-import { isPinboardKey, sourcePairsToReconcile, pinboardMembershipId, planPinboardMembership, mergeMembershipState, validatePinboardInput, pinboardKey, PinboardMembershipState, PinboardPlan } from './pinboard.util';
+import {
+  isPinboardKey, sourcePairsToReconcile, pinboardMembershipId, planPinboardMembership, mergeMembershipState, validatePinboardInput,
+  pinboardKey, isEligibleSource, isEligibleForPinboard, PinboardMembershipState, PinboardPlan,
+} from './pinboard.util';
+
+type MembershipFlags = { dateOfExit?: string; isArchived?: boolean; isOptedOut?: boolean };
 
 export type GroupDoc = {
   name?: string; matrixRoomId?: string; kind?: string; tenants?: string[]; isArchived?: boolean;
@@ -43,6 +48,35 @@ export function pinboardMembershipDoc(
 }
 
 /**
+ * Welche der Quellgruppen duerfen Mitglieder liefern (Ruling 18: existiert, Art `group`, nicht
+ * archiviert, gehoert zum Mandanten)? Ein einziges `getAll` fuer alle Quellen.
+ */
+export async function loadEligibleSources(keys: string[], tenant: string): Promise<Set<string>> {
+  const unique = [...new Set(keys)].filter(Boolean);
+  if (unique.length === 0) return new Set();
+  const db = getFirestore();
+  const snaps = await db.getAll(...unique.map((key) => db.collection('groups').doc(key)));
+  return new Set(snaps.filter((snap) => snap.exists && isEligibleSource(snap.data(), tenant)).map((snap) => snap.id));
+}
+
+/** Alle Gruppen-Mitgliedschaften einer Person — eine Abfrage fuer Quellen und Pinnwand zugleich. */
+async function personGroupMemberships(personKey: string) {
+  const snap = await getFirestore().collection('memberships')
+    .where('memberKey', '==', personKey).where('orgModelType', '==', 'group').get();
+  return snap.docs;
+}
+
+/** Die orgKeys, in denen die Person heute aktiv Mitglied ist. */
+function activeOrgKeysOf(docs: FirebaseFirestore.QueryDocumentSnapshot[], today: string): Set<string> {
+  const keys = new Set<string>();
+  for (const doc of docs) {
+    const m = doc.data() as MembershipFlags & { orgKey?: string };
+    if (m.orgKey && isActiveMembership(m, today)) keys.add(m.orgKey);
+  }
+  return keys;
+}
+
+/**
  * Gleicht die Mitgliedschaften einer Pinnwand mit ihren Quellgruppen ab. Mit `only` nur fuer
  * eine Person (Trigger). Schreibt nur Differenzen; der Matrix-Teil folgt ueber
  * `onMembershipWritten`. Gibt den ausgefuehrten Plan zurueck (Log und Tests).
@@ -62,7 +96,8 @@ export async function reconcilePinboard(groupKey: string, only?: string): Promis
   if (!tenant) return { add: [], end: [] };
 
   const eligible = new Set<string>();
-  for (const source of group.sourceGroupKeys ?? []) {
+  // Ruling 18: nur echte, nicht archivierte Gruppen desselben Mandanten liefern Mitglieder.
+  for (const source of await loadEligibleSources(group.sourceGroupKeys ?? [], tenant)) {
     for (const key of await activeGroupMemberKeys(source)) eligible.add(key);
   }
   const keep = new Set((group.admins ?? []).map((a) => a.key).filter(Boolean));
@@ -169,7 +204,7 @@ export const sweepPinboards = onSchedule(
 // Callables
 // ---------------------------------------------------------------------------------------------
 
-const CALLABLE = { cors: true, region: 'europe-west6', enforceAppCheck: true, secrets: [matrixAdminToken] } as const;
+const CALLABLE: CallableOptions = { cors: true, region: 'europe-west6', enforceAppCheck: true, secrets: [matrixAdminToken] };
 const KEY_ALPHABET = 'abcdefghijklmnopqrstuvwxyz0123456789';
 
 type PinboardGroup = GroupDoc & { matrixRoomId?: string; notes?: string; allowReplyAll?: boolean };
@@ -209,8 +244,6 @@ async function personMembershipDocs(groupKey: string, personKey: string) {
   return snap.docs;
 }
 
-type MembershipFlags = { dateOfExit?: string; isArchived?: boolean; isOptedOut?: boolean };
-
 export const createPinboard = onCall(CALLABLE, async (request): Promise<{ groupKey: string; roomId: string; name: string }> => {
   const uid = await requireRole(request, 'createPinboard', ['privileged', 'admin']);
   checkRateLimit(uid, 'createPinboard', 5);
@@ -235,7 +268,8 @@ export const createPinboard = onCall(CALLABLE, async (request): Promise<{ groupK
   const description = (data.description ?? '').trim();
 
   // Reihenfolge wie bei createAdhocChat: Dokument → Raum → Mitgliedschaften.
-  await db.collection('groups').doc(groupKey).set({
+  const groupRef = db.collection('groups').doc(groupKey);
+  await groupRef.set({
     name, kind: 'pinboard', notes: description, tags: '', icon: 'group',
     hasContent: false, hasChat: true, hasCalendar: false, hasTasks: false, hasFiles: false, filesFolder: '', hasMembers: false,
     matrixRoomId: '',
@@ -246,24 +280,39 @@ export const createPinboard = onCall(CALLABLE, async (request): Promise<{ groupK
     tenants: [tenant], isArchived: false, index: `n:${name} k:${groupKey}`,
   });
 
-  const hostname = serverHostname();
-  const adminToken = matrixAdminToken.value();
-  const roomId = await resolveGroupRoom(groupKey, hostname, adminToken, { create: true });
-  if (!roomId) throw new HttpsError('internal', `No room for pinboard ${groupKey}`);
-  await ensureAdminInRoom(roomId, adminToken);
-  await setRoomName(roomId, name, adminToken);
-  if (description) await setRoomTopic(roomId, description, adminToken);
-  // Neue Mitglieder sollen die bestehenden Aushaenge sehen.
-  await setHistoryVisibility(roomId, 'shared', adminToken);
+  try {
+    const hostname = serverHostname();
+    const adminToken = matrixAdminToken.value();
+    const roomId = await resolveGroupRoom(groupKey, hostname, adminToken, { create: true });
+    if (!roomId) throw new HttpsError('internal', `No room for pinboard ${groupKey}`);
+    // Selbst speichern und werfen lassen: resolveGroupRoom verschluckt ein fehlgeschlagenes Zurueckschreiben,
+    // und ohne matrixRoomId bliebe reconcilePinboard fuer immer ein No-op (Ruling 8).
+    await groupRef.update({ matrixRoomId: roomId });
+    await ensureAdminInRoom(roomId, adminToken);
+    await setRoomName(roomId, name, adminToken);
+    if (description) await setRoomTopic(roomId, description, adminToken);
+    // Neue Mitglieder sollen die bestehenden Aushaenge sehen.
+    await setHistoryVisibility(roomId, 'shared', adminToken);
 
-  // Erst jetzt abgleichen: resolveGroupRoom hat matrixRoomId bereits gespeichert (reconcilePinboard ist vorher ein No-op).
-  await reconcilePinboard(groupKey);
-  const creatorMatrixId = `@${creatorKey.toLowerCase()}:${hostname}`;
-  await ensureMatrixUserExists(creatorMatrixId, adminToken, { personKey: creatorKey });
-  await forceJoinUserToRoom(roomId, creatorMatrixId, adminToken);
+    // Erst jetzt abgleichen: matrixRoomId steht (reconcilePinboard ist vorher ein No-op).
+    await reconcilePinboard(groupKey);
+    const creatorMatrixId = `@${creatorKey.toLowerCase()}:${hostname}`;
+    await ensureMatrixUserExists(creatorMatrixId, adminToken, { personKey: creatorKey });
+    await forceJoinUserToRoom(roomId, creatorMatrixId, adminToken);
 
-  console.log(`createPinboard: ${groupKey} ("${name}") sources=${sources.join(',')} room ${roomId}`);
-  return { groupKey, roomId, name };
+    console.log(`createPinboard: ${groupKey} ("${name}") sources=${sources.join(',')} room ${roomId}`);
+    return { groupKey, roomId, name };
+  } catch (error) {
+    // Keine halbfertige Pinnwand stehen lassen: archivieren, dann den Fehler melden.
+    console.error(`createPinboard: ${groupKey} failed after the group doc was written, archiving it:`, error);
+    try {
+      await groupRef.update({ isArchived: true });
+    } catch (archiveError) {
+      console.error(`createPinboard: could not archive ${groupKey}:`, archiveError);
+    }
+    if (error instanceof HttpsError) throw error;
+    throw new HttpsError('internal', `Could not create pinboard ${groupKey}.`);
+  }
 });
 
 export const updatePinboard = onCall(CALLABLE, async (request): Promise<{ updated: true }> => {
@@ -349,19 +398,20 @@ export const joinPinboard = onCall(CALLABLE, async (request): Promise<{ roomId: 
   if (group.isArchived) throw new HttpsError('failed-precondition', 'This pinboard is archived.');
   const personKey = await requireUserPersonKey(uid, 'joinPinboard');
 
-  const isAdmin = (group.admins ?? []).some((a) => a.key === personKey);
-  let eligible = isAdmin;
-  for (const source of group.sourceGroupKeys ?? []) {
-    if (eligible) break;
-    eligible = (await activeGroupMemberKeys(source)).includes(personKey);
-  }
+  const today = getTodayStr(DateFormat.StoreDate);
+  // Eine Abfrage fuer alle Gruppen-Mitgliedschaften des Aufrufers: Quell-Berechtigung und Pinnwand-Stand zugleich.
+  const mine = await personGroupMemberships(personKey);
+  const eligible = isEligibleForPinboard({
+    personKey, admins: group.admins, sourceGroupKeys: group.sourceGroupKeys,
+    eligibleSources: await loadEligibleSources(group.sourceGroupKeys ?? [], tenant),
+    activeOrgKeys: activeOrgKeysOf(mine, today),
+  });
   if (!eligible) throw new HttpsError('permission-denied', 'Not a member of a source group.');
 
   const db = getFirestore();
   const hostname = serverHostname();
   const adminToken = matrixAdminToken.value();
-  const today = getTodayStr(DateFormat.StoreDate);
-  const existing = await personMembershipDocs(groupKey, personKey);
+  const existing = mine.filter((d) => (d.data() as { orgKey?: string }).orgKey === groupKey);
   const roomOf = async () => (await resolveGroupRoom(groupKey, hostname, adminToken, { create: false })) ?? group.matrixRoomId ?? '';
   // Schon aktiv (egal mit welcher id): nichts Neues schreiben, kein Duplikat.
   if (existing.some((d) => isActiveMembership(d.data() as MembershipFlags, today))) return { roomId: await roomOf() };
@@ -400,20 +450,21 @@ export const listAvailablePinboards = onCall(CALLABLE, async (request): Promise<
   const personKey = await requireUserPersonKey(uid, 'listAvailablePinboards');
 
   const today = getTodayStr(DateFormat.StoreDate);
-  const snap = await getFirestore().collection('groups').where('kind', '==', 'pinboard').get();
-  const pinboards: { groupKey: string; name: string; description: string; roomId: string }[] = [];
-  for (const doc of snap.docs) {
-    const g = doc.data() as PinboardGroup;
-    if (g.isArchived || !(g.tenants ?? []).includes(tenant)) continue;
-    let eligible = (g.admins ?? []).some((a) => a.key === personKey);
-    for (const source of g.sourceGroupKeys ?? []) {
-      if (eligible) break;
-      eligible = (await activeGroupMemberKeys(source)).includes(personKey);
-    }
-    if (!eligible) continue;
-    const mine = await personMembershipDocs(doc.id, personKey);
-    if (mine.some((d) => isActiveMembership(d.data() as MembershipFlags & { dateOfExit?: string }, today))) continue;
-    pinboards.push({ groupKey: doc.id, name: g.name ?? '', description: g.notes ?? '', roomId: g.matrixRoomId ?? '' });
-  }
+  // Nur die Pinnwaende dieses Mandanten (== und array-contains kommen mit Einzelfeld-Indizes aus — Index-Merging).
+  const snap = await getFirestore().collection('groups')
+    .where('kind', '==', 'pinboard').where('tenants', 'array-contains', tenant).get();
+  // Ohne Raum (noch im Aufbau oder fehlgeschlagen) ist eine Pinnwand nicht beitretbar.
+  const candidates = snap.docs
+    .map((doc) => ({ key: doc.id, g: doc.data() as PinboardGroup }))
+    .filter(({ g }) => !g.isArchived && !!g.matrixRoomId);
+  if (candidates.length === 0) return { pinboards: [] };
+
+  // Eine Abfrage fuer die Mitgliedschaften des Aufrufers, ein getAll fuer alle Quellgruppen.
+  const activeOrgKeys = activeOrgKeysOf(await personGroupMemberships(personKey), today);
+  const eligibleSources = await loadEligibleSources(candidates.flatMap(({ g }) => g.sourceGroupKeys ?? []), tenant);
+  const pinboards = candidates
+    .filter(({ key }) => !activeOrgKeys.has(key))
+    .filter(({ g }) => isEligibleForPinboard({ personKey, admins: g.admins, sourceGroupKeys: g.sourceGroupKeys, eligibleSources, activeOrgKeys }))
+    .map(({ key, g }) => ({ groupKey: key, name: g.name ?? '', description: g.notes ?? '', roomId: g.matrixRoomId ?? '' }));
   return { pinboards };
 });

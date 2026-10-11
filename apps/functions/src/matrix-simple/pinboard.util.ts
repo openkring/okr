@@ -111,3 +111,34 @@ export function validatePinboardInput(
   if (input.allowReplyAll !== undefined && typeof input.allowReplyAll !== 'boolean') return 'allowReplyAll must be a boolean';
   return undefined;
 }
+
+/**
+ * Darf eine Quellgruppe Mitglieder in eine Pinnwand des Mandanten `tenant` liefern? Nur ein
+ * existierendes, nicht archiviertes Gruppendokument der Art `group`, das zu diesem Mandanten
+ * gehoert — ein archiviertes, ein Chat-/Pinnwand-Dokument oder eine fremde Gruppe zaehlt nicht.
+ */
+export function isEligibleSource(
+  doc: { kind?: unknown; isArchived?: unknown; tenants?: unknown } | undefined,
+  tenant: string,
+): boolean {
+  if (!doc || !tenant) return false;
+  if ((doc.kind ?? 'group') !== 'group') return false;
+  if (doc.isArchived === true) return false;
+  return Array.isArray(doc.tenants) && doc.tenants.includes(tenant);
+}
+
+/**
+ * Darf `personKey` der Pinnwand beitreten? Admins immer; sonst eine aktive Mitgliedschaft in
+ * einer der zulaessigen Quellgruppen (`eligibleSources`, siehe `isEligibleSource`).
+ */
+export function isEligibleForPinboard(input: {
+  personKey: string;
+  admins?: { key: string }[];
+  sourceGroupKeys?: string[];
+  eligibleSources: Set<string>;
+  activeOrgKeys: Set<string>;
+}): boolean {
+  const { personKey, admins, sourceGroupKeys, eligibleSources, activeOrgKeys } = input;
+  if ((admins ?? []).some((a) => a.key === personKey)) return true;
+  return (sourceGroupKeys ?? []).some((key) => eligibleSources.has(key) && activeOrgKeys.has(key));
+}

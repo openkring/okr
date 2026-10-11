@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { PINBOARD_MAX_SOURCES, mergeMembershipState, validatePinboardInput, sourcePairsToReconcile, isPinboardKey, pinboardKey, pinboardMembershipId, planPinboardMembership, PinboardMembershipState } from './pinboard.util';
+import { PINBOARD_MAX_SOURCES, isEligibleSource, isEligibleForPinboard, mergeMembershipState, validatePinboardInput, sourcePairsToReconcile, isPinboardKey, pinboardKey, pinboardMembershipId, planPinboardMembership, PinboardMembershipState } from './pinboard.util';
 
 const active: PinboardMembershipState = { active: true, isOptedOut: false };
 const ended: PinboardMembershipState = { active: false, isOptedOut: false };
@@ -105,4 +105,28 @@ describe('mergeMembershipState', () => {
     expect(mergeMembershipState(ended, optedOut)).toBe(optedOut);
     expect(mergeMembershipState(optedOut, ended)).toBe(optedOut);
   });
+});
+
+describe('isEligibleSource', () => {
+  const group = { kind: 'group', isArchived: false, tenants: ['scs'] };
+  it('accepts a live group of the tenant', () => expect(isEligibleSource(group, 'scs')).toBe(true));
+  it('treats a missing kind as a group', () => expect(isEligibleSource({ tenants: ['scs'] }, 'scs')).toBe(true));
+  it('rejects a missing doc', () => expect(isEligibleSource(undefined, 'scs')).toBe(false));
+  it('rejects an archived group', () => expect(isEligibleSource({ ...group, isArchived: true }, 'scs')).toBe(false));
+  it('rejects a pinboard or chat doc', () => {
+    expect(isEligibleSource({ ...group, kind: 'pinboard' }, 'scs')).toBe(false);
+    expect(isEligibleSource({ ...group, kind: 'chat' }, 'scs')).toBe(false);
+  });
+  it('rejects a group of another tenant', () => expect(isEligibleSource(group, 'kring')).toBe(false));
+  it('rejects a doc without tenants', () => expect(isEligibleSource({ kind: 'group' }, 'scs')).toBe(false));
+});
+
+describe('isEligibleForPinboard', () => {
+  const base = { personKey: 'anna', sourceGroupKeys: ['g1', 'g2'], eligibleSources: new Set(['g1', 'g2']), activeOrgKeys: new Set<string>() };
+  it('lets an admin in without any source membership', () => expect(isEligibleForPinboard({ ...base, admins: [{ key: 'anna' }] })).toBe(true));
+  it('lets a member of a source group in', () => expect(isEligibleForPinboard({ ...base, activeOrgKeys: new Set(['g2']) })).toBe(true));
+  it('ignores a membership in a source that is not eligible', () => {
+    expect(isEligibleForPinboard({ ...base, eligibleSources: new Set(['g1']), activeOrgKeys: new Set(['g2']) })).toBe(false);
+  });
+  it('ignores memberships in groups that are not sources', () => expect(isEligibleForPinboard({ ...base, activeOrgKeys: new Set(['g3']) })).toBe(false));
 });
