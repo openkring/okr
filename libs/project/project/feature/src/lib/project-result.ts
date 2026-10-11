@@ -135,8 +135,8 @@ export class ProjectResult {
   private readonly projectLines = computed(() =>
     filterLinesByDimension(this.linesResource.value() ?? [], 'projectKey', new Set([this.projectKey()])));
   private readonly amounts = computed(() => sumLinesByAccount(this.projectLines(), this.bookingsResource.value() ?? [], '', ''));
-  /** Only posted amounts count: a project with unposted bookings only shows the empty state. */
-  protected readonly hasLines = computed(() => this.amounts().size > 0);
+  /** Only posted amounts count — or Umlagen received (D26): a project with neither shows the empty state. */
+  protected readonly hasLines = computed(() => this.amounts().size > 0 || this.allocations().some(a => a.actual !== 0));
 
   /** Einnahmen and Ausgaben by booking direction, then the net (Gewinn/Verlust); the bookings behind each account row. */
   /** Umlagen of this project (D26), Ist only */

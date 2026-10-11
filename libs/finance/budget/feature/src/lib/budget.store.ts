@@ -283,7 +283,8 @@ export const BudgetStore = signalStore(
         const _rule = allocation ?? new CostAllocationModel(store.appStore.tenantId(), store.accountingTenantId(), fiscalYear);
         if (!allocation) _rule.amount = new MoneyModel(0, store.functionalCurrency());
         const { CostAllocationEditModal } = await import('@okr/finance-budget-ui');
-        const _projects = await firstValueFrom(store.projectService.list()).catch(() => []);
+        // listAll: an archived project still referenced by a whole-life rule must stay valid in the form
+        const _projects = await firstValueFrom(store.projectService.listAll()).catch(() => []);
         const modal = await store.modalController.create({
           component: CostAllocationEditModal,
           componentProps: {

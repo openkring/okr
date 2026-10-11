@@ -111,7 +111,8 @@ export class CostAllocationList {
   constructor() {
     this.store.loadAllocations();
     inject(DestroyRef).onDestroy(() => this.store.releaseAllocations());
-    this.store.projectService.list().pipe(takeUntilDestroyed()).subscribe(ps => this.projectNames.set(new Map(ps.map(p => [p.okey, p.name ?? p.okey]))));
+    // listAll: an archived project still referenced by a rule keeps its name
+    this.store.projectService.listAll().pipe(takeUntilDestroyed()).subscribe(ps => this.projectNames.set(new Map(ps.map(p => [p.okey, p.name ?? p.okey]))));
   }
 
   protected projectName(key: string): string {
@@ -153,7 +154,8 @@ export class CostAllocationList {
     const { data } = await sheet.onDidDismiss();
     switch (data?.action) {
       case 'allocation.edit':
-      case 'allocation.view': await this.store.editAllocation(rule.fiscalYear, rule); break;
+      // a Projekt → Projekt rule has year 0: a scope switch in the form then needs the list's year
+      case 'allocation.view': await this.store.editAllocation(rule.fiscalYear || this.year(), rule); break;
       case 'allocation.archive': await this.store.archiveAllocation(rule); break;
     }
   }
