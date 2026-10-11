@@ -3,7 +3,7 @@ import { generateRandomString } from '@okr/shared-util-core';
 import { ActivatedRoute } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
-  ActionSheetController, ActionSheetOptions, IonBadge, IonButton, IonButtons, IonContent, IonHeader,
+  ActionSheetController, ActionSheetOptions, IonBadge, IonButton, IonButtons, IonContent, IonHeader, IonMenuButton,
   IonIcon, IonItem, IonLabel, IonList, IonPopover, IonTitle, IonToolbar,
 } from '@ionic/angular/standalone';
 
@@ -21,13 +21,14 @@ import { BankRuleStore } from './bank-rule.store';
   standalone: true,
   imports: [
     SvgIconPipe, Menu, Spinner, EmptyList,
-    IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonIcon, IonPopover,
+    IonHeader, IonMenuButton, IonToolbar, IonButtons, IonButton, IonTitle, IonIcon, IonPopover,
     IonContent, IonList, IonItem, IonLabel, IonBadge,
   ],
   providers: [BankRuleStore],
   template: `
     <ion-header>
       <ion-toolbar color="secondary">
+        <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
         <ion-title>{{ store.rules().length }} {{ store.i18n.plural() }}</ion-title>
         <ion-buttons slot="end">
           <ion-button id="{{ popupId() }}">

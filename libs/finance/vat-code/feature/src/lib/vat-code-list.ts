@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { IonButton, IonContent, IonFab, IonFabButton, IonHeader, IonIcon,
+import { IonButton, IonContent, IonFab, IonFabButton, IonHeader, IonButtons, IonMenuButton, IonIcon,
   IonItem, IonLabel, IonList, IonNote, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
@@ -10,7 +10,7 @@ import { VatCodeStore } from './vat-code.store';
   selector: 'okr-vat-code-list',
   standalone: true,
   imports: [
-    IonHeader, IonToolbar, IonTitle, IonContent,
+    IonHeader, IonButtons, IonMenuButton, IonToolbar, IonTitle, IonContent,
     IonList, IonItem, IonLabel, IonNote, IonFab, IonFabButton, IonIcon, IonButton,
     SvgIconPipe,
   ],
@@ -18,6 +18,7 @@ import { VatCodeStore } from './vat-code.store';
   template: `
     <ion-header>
       <ion-toolbar>
+        <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
         <ion-title>{{ store.i18n.list_title() }}</ion-title>
         @if (!store.isReadOnly() && store.vatCodes().length === 0) {
           <ion-button slot="end" fill="clear" (click)="store.seedStandard()">

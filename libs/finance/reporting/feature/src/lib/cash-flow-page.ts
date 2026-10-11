@@ -1,6 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { IonContent, IonHeader, IonItem, IonLabel,
+import { IonContent, IonHeader, IonButtons, IonMenuButton, IonItem, IonLabel,
   IonList, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { BookingModel } from '@okr/shared-models';
@@ -12,10 +12,10 @@ import { REPORTING_I18N_KEYS, ReportingI18n } from '@okr/finance-reporting-util'
 @Component({
   selector: 'okr-cash-flow-page',
   standalone: true,
-  imports: [IonHeader, IonToolbar, IonTitle, IonContent, IonList, IonItem, IonLabel],
+  imports: [IonHeader, IonButtons, IonMenuButton, IonToolbar, IonTitle, IonContent, IonList, IonItem, IonLabel],
   template: `
     <ion-header>
-      <ion-toolbar><ion-title>{{ i18n.cashflow_title() }}</ion-title></ion-toolbar>
+      <ion-toolbar><ion-buttons slot="start"><ion-menu-button /></ion-buttons><ion-title>{{ i18n.cashflow_title() }}</ion-title></ion-toolbar>
     </ion-header>
     <ion-content>
       @if (journalResource.isLoading()) { <p>{{ i18n.loading() }}</p> }

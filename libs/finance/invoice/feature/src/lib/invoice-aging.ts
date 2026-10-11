@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/c
 import { rxResource } from '@angular/core/rxjs-interop';
 import { of } from 'rxjs';
 import {
-  IonBadge, IonContent, IonHeader, IonItem, IonLabel,
+  IonBadge, IonContent, IonHeader, IonButtons, IonMenuButton, IonItem, IonLabel,
   IonTitle, IonToolbar,
 } from '@ionic/angular/standalone';
 
@@ -48,12 +48,12 @@ function agingBuckets(invoices: InvoiceModel[]): AgingBucket[] {
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    IonHeader, IonToolbar, IonTitle, IonContent,
+    IonHeader, IonButtons, IonMenuButton, IonToolbar, IonTitle, IonContent,
     IonItem, IonLabel, IonBadge,
   ],
   template: `
     <ion-header>
-      <ion-toolbar><ion-title>{{ i18n.invoice_aging() }}</ion-title></ion-toolbar>
+      <ion-toolbar><ion-buttons slot="start"><ion-menu-button /></ion-buttons><ion-title>{{ i18n.invoice_aging() }}</ion-title></ion-toolbar>
     </ion-header>
     <ion-content>
       @for (bucket of buckets(); track bucket.id) {

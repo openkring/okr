@@ -3,7 +3,7 @@ import { generateRandomString } from '@okr/shared-util-core';
 import { ActivatedRoute } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActionSheetController, ActionSheetOptions, IonBadge, IonButton, IonButtons,
-  IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+  IonContent, IonHeader, IonMenuButton, IonIcon, IonItem, IonLabel, IonList, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { OcrRuleModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
@@ -19,13 +19,14 @@ import { OcrRuleStore } from './ocr-rule.store';
   standalone: true,
   imports: [
     SvgIconPipe, Menu,
-    IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonIcon, IonPopover,
+    IonHeader, IonMenuButton, IonToolbar, IonButtons, IonButton, IonTitle, IonIcon, IonPopover,
     IonContent, IonList, IonItem, IonLabel, IonBadge,
   ],
   providers: [OcrRuleStore, AccountStore],
   template: `
     <ion-header>
       <ion-toolbar color="secondary">
+        <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
         <ion-title>{{ store.rules().length }} {{ store.i18n.list_title() }}</ion-title>
         <ion-buttons slot="end">
           <ion-button id="{{ popupId() }}">

@@ -3,7 +3,7 @@ import { DecimalPipe } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { of } from 'rxjs';
-import { ActionSheetButton, ActionSheetController, ToastController, IonBadge, IonButton, IonButtons, IonContent, IonHeader, IonIcon,
+import { ActionSheetButton, ActionSheetController, ToastController, IonBackButton, IonBadge, IonButton, IonButtons, IonContent, IonHeader, IonIcon,
   IonItem, IonLabel, IonList, IonNote, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { PaymentModel, PaymentOrderModel } from '@okr/shared-models';
@@ -21,11 +21,12 @@ import { PaymentStore } from './payment.store';
   selector: 'okr-payment-order-detail-page',
   standalone: true,
   imports: [DecimalPipe, SvgIconPipe, IonHeader, IonToolbar, IonTitle, IonContent, IonList, IonItem, IonLabel, IonButton, IonButtons,
-    IonIcon, IonBadge, IonNote],
+    IonBackButton, IonIcon, IonBadge, IonNote],
   providers: [PaymentStore],
   template: `
     <ion-header>
       <ion-toolbar>
+        <ion-buttons slot="start"><ion-back-button [defaultHref]="backHref" /></ion-buttons>
         <ion-title>{{ i18n.order_title() }}</ion-title>
         @if (orderResource.value(); as headerOrder) {
           <ion-buttons slot="end">
@@ -87,6 +88,7 @@ export class PaymentOrderDetailPage {
 
   private readonly orderKey = this.route.snapshot.params['orderKey'] as string;
   private readonly accountingTenantId = this.accountingStore.accountingTenantId();
+  protected readonly backHref = `/accounting/${this.accountingTenantId}/payments`;
 
   // Gate both real-time reads on currentUser so they don't fire before auth is
   // resolved (which would hit the Firestore rules with request.auth == null).

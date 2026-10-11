@@ -4,7 +4,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DecimalPipe } from '@angular/common';
 import {
   ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonChip, IonCol, IonContent, IonGrid,
-  IonHeader, IonIcon, IonItem, IonNote, IonPopover, IonRow, IonSelect, IonSelectOption, IonTitle, IonToolbar,
+  IonHeader, IonIcon, IonItem, IonMenuButton, IonNote, IonPopover, IonRow, IonSelect, IonSelectOption, IonTitle, IonToolbar,
 } from '@ionic/angular/standalone';
 
 import { BankImportRowModel } from '@okr/shared-models';
@@ -24,7 +24,7 @@ const STATUS_FILTERS: BankImportStatusFilter[] = ['open', 'all', 'unmapped', 'ma
   standalone: true,
   imports: [
     SvgIconPipe, Menu, Spinner, EmptyList, ListFilter, DecimalPipe,
-    IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonIcon, IonPopover,
+    IonHeader, IonToolbar, IonButtons, IonButton, IonMenuButton, IonTitle, IonIcon, IonPopover,
     IonContent, IonGrid, IonRow, IonCol, IonChip, IonNote,
     IonSelect, IonSelectOption, IonItem,
   ],
@@ -33,6 +33,7 @@ const STATUS_FILTERS: BankImportStatusFilter[] = ['open', 'all', 'unmapped', 'ma
   template: `
     <ion-header>
       <ion-toolbar color="secondary">
+        <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
         <ion-title>{{ store.filtered().length }}/{{ store.rows().length }} {{ store.i18n.plural() }}</ion-title>
         <ion-buttons slot="end">
           <ion-button id="{{ popupId() }}">
