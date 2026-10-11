@@ -153,8 +153,8 @@ export class CostAllocationList {
     await sheet.present();
     const { data } = await sheet.onDidDismiss();
     switch (data?.action) {
-      case 'allocation.edit':
       // a Projekt → Projekt rule has year 0: a scope switch in the form then needs the list's year
+      case 'allocation.edit':
       case 'allocation.view': await this.store.editAllocation(rule.fiscalYear || this.year(), rule); break;
       case 'allocation.archive': await this.store.archiveAllocation(rule); break;
     }
