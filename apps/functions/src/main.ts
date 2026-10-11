@@ -137,6 +137,11 @@ export const assignMatrixRoomTenants = MatrixSimple.assignMatrixRoomTenants;
 export const createAdhocChat = MatrixSimple.createAdhocChat;
 export const leaveAdhocChat = MatrixSimple.leaveAdhocChat;
 export const addAdhocChatMembers = MatrixSimple.addAdhocChatMembers;
+
+// Pinnwand: alle schreiben an alle, Antworten privat (spec 2026-10-11, TOC 1.95)
+export const onPinboardSourceMembershipWritten = MatrixSimple.onPinboardSourceMembershipWritten;
+export const onPinboardWritten = MatrixSimple.onPinboardWritten;
+export const sweepPinboards = MatrixSimple.sweepPinboards;
 // membership → Matrix-room sync (server-side backstop; chat design review #3)
 export const onMembershipWritten = MatrixMembershipSync.onMembershipWritten;
 export const reconcileGroupRoomMembers = MatrixMembershipSync.reconcileGroupRoomMembers;
