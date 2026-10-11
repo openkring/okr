@@ -26,7 +26,7 @@ import { MATRIX_CHAT_I18N_KEYS, MatrixChatI18n } from '@okr/chat-util';
     <ion-content class="ion-no-padding">
       <div class="name">{{ name() }}</div>
       @if (description()) { <ion-note class="text">{{ description() }}</ion-note> }
-      <ion-note class="text" color="dark">{{ i18n.pinboard_info_rules() }}</ion-note>
+      <ion-note class="text" color="dark">{{ allowReplyAll() ? i18n.pinboard_info_rules_replyAll() : i18n.pinboard_info_rules() }}</ion-note>
       <ion-list lines="full">
         <ion-item><ion-label>{{ i18n.pinboard_sources_title() }}</ion-label><ion-note slot="end">{{ sourceGroupNames().join(', ') }}</ion-note></ion-item>
         <ion-item><ion-label>{{ i18n.pinboard_info_members() }}</ion-label><ion-note slot="end">{{ memberCount() }}</ion-note></ion-item>
@@ -57,6 +57,7 @@ export class PinboardInfoModal {
   public readonly sourceGroupNames = input<string[]>([]);
   public readonly memberCount = input(0);
   public readonly joinMode = input<'optOut' | 'optIn'>('optOut');
+  public readonly allowReplyAll = input(false);
   public readonly canManage = input(false);
   public async close(role: 'edit' | 'archive' | 'leave'): Promise<void> {
     await dismissOverlay(this.modalController, undefined, role);

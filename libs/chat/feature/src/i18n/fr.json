@@ -356,6 +356,7 @@
     "info": {
       "header": "Panneau d'affichage",
       "rules": "Ici, tu peux communiquer quelque chose à tous : vendre, louer ou donner un objet, chercher des personnes pour covoiturer ou signaler un objet trouvé. Tous les membres reçoivent une notification. Quand tu réponds à une annonce, ta réponse va uniquement à la personne qui l'a écrite, sous forme de message direct. Les autres ne lisent pas. Tu n'as donc pas besoin d'indiquer un numéro de téléphone ou une adresse dans une annonce.",
+      "rulesReplyAll": "Ici, tu peux communiquer quelque chose à tous : vendre, louer ou donner un objet, chercher des personnes pour covoiturer ou signaler un objet trouvé. Tous les membres reçoivent une notification. Quand tu réponds à une annonce, ta réponse va normalement uniquement à la personne qui l'a écrite, sous forme de message direct. Tu peux aussi répondre à tous ; tous les membres reçoivent alors une notification. N'indique donc pas de numéro de téléphone ou d'adresse dans une annonce.",
       "members": "Membres"
     },
     "edit": {
@@ -383,7 +384,8 @@
     },
     "join": {
       "label": "Rejoindre",
-      "error": "Impossible de rejoindre le panneau d'affichage."
+      "error": "Impossible de rejoindre le panneau d'affichage.",
+      "pending": "Tu fais partie du groupe. Le panneau d'affichage apparaîtra bientôt dans ta liste."
     }
   }
 }

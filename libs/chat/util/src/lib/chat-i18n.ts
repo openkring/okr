@@ -261,6 +261,7 @@ export const MATRIX_CHAT_I18N_KEYS = {
   pinboard_reply_draft:              PFX + 'pinboard.reply.draft',
   pinboard_info_header:              PFX + 'pinboard.info.header',
   pinboard_info_rules:               PFX + 'pinboard.info.rules',
+  pinboard_info_rules_replyAll:      PFX + 'pinboard.info.rulesReplyAll',
   pinboard_info_members:             PFX + 'pinboard.info.members',
   pinboard_edit:                     PFX + 'pinboard.edit.label',
   pinboard_edit_header:              PFX + 'pinboard.edit.header',
@@ -277,6 +278,7 @@ export const MATRIX_CHAT_I18N_KEYS = {
   pinboard_available_title:          PFX + 'pinboard.available.title',
   pinboard_join:                     PFX + 'pinboard.join.label',
   pinboard_join_error:               PFX + 'pinboard.join.error',
+  pinboard_join_pending:             PFX + 'pinboard.join.pending',
   validation_members_required: PFX + 'validation.membersRequired',
 
   validation_name_required:  PFX + 'validation.nameRequired',

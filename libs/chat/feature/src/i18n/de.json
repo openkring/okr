@@ -356,6 +356,7 @@
     "info": {
       "header": "Pinnwand",
       "rules": "Hier kannst du allen etwas mitteilen: etwas verkaufen, vermieten oder verschenken, Mitfahrende suchen oder einen Fund melden. Alle Mitglieder erhalten eine Benachrichtigung. Wenn du auf einen Aushang antwortest, geht deine Antwort nur an die Person, die ihn geschrieben hat — als Direktnachricht. Die anderen lesen nicht mit. Du musst deshalb keine Telefonnummer oder Adresse in einen Aushang schreiben.",
+      "rulesReplyAll": "Hier kannst du allen etwas mitteilen: etwas verkaufen, vermieten oder verschenken, Mitfahrende suchen oder einen Fund melden. Alle Mitglieder erhalten eine Benachrichtigung. Wenn du auf einen Aushang antwortest, geht deine Antwort normalerweise nur an die Person, die ihn geschrieben hat — als Direktnachricht. Du kannst aber auch allen antworten; dann erhalten alle Mitglieder eine Benachrichtigung. Schreib deshalb keine Telefonnummer oder Adresse in einen Aushang.",
       "members": "Mitglieder"
     },
     "edit": {
@@ -383,7 +384,8 @@
     },
     "join": {
       "label": "Beitreten",
-      "error": "Du konntest der Pinnwand nicht beitreten."
+      "error": "Du konntest der Pinnwand nicht beitreten.",
+      "pending": "Du bist dabei. Die Pinnwand erscheint gleich in deiner Liste."
     }
   }
 }

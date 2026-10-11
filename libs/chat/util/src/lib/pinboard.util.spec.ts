@@ -17,4 +17,10 @@ describe('pinboardBroadcastCount', () => {
   it('counts members without the sender', () => expect(pinboardBroadcastCount(['anna', 'beat', 'carl'], 'anna')).toBe(2));
   it('is case-insensitive on keys', () => expect(pinboardBroadcastCount(['Anna', 'beat'], 'anna')).toBe(1));
   it('never goes below zero', () => expect(pinboardBroadcastCount([], 'anna')).toBe(0));
+  it('counts only known persons when knownKeys is given (drops the admin service account)', () => {
+    expect(pinboardBroadcastCount(['anna', 'Beat', 'carl', 'matrixadmin'], 'anna', new Set(['anna', 'beat', 'carl']))).toBe(2);
+  });
+  it('counts every known member when there is no sender', () => {
+    expect(pinboardBroadcastCount(['anna', 'beat', 'matrixadmin'], '', new Set(['anna', 'beat']))).toBe(2);
+  });
 });

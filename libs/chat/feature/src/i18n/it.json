@@ -356,6 +356,7 @@
     "info": {
       "header": "Bacheca",
       "rules": "Qui puoi comunicare qualcosa a tutti: vendere, affittare o regalare qualcosa, cercare compagni di viaggio o segnalare un oggetto trovato. Tutti i membri ricevono una notifica. Quando rispondi a un annuncio, la tua risposta arriva solo a chi l'ha scritto, come messaggio diretto. Gli altri non leggono. Non serve quindi scrivere un numero di telefono o un indirizzo in un annuncio.",
+      "rulesReplyAll": "Qui puoi comunicare qualcosa a tutti: vendere, affittare o regalare qualcosa, cercare compagni di viaggio o segnalare un oggetto trovato. Tutti i membri ricevono una notifica. Quando rispondi a un annuncio, di solito la tua risposta arriva solo a chi l'ha scritto, come messaggio diretto. Puoi anche rispondere a tutti; in quel caso tutti i membri ricevono una notifica. Non scrivere quindi un numero di telefono o un indirizzo in un annuncio.",
       "members": "Membri"
     },
     "edit": {
@@ -383,7 +384,8 @@
     },
     "join": {
       "label": "Partecipa",
-      "error": "Non è stato possibile unirsi alla bacheca."
+      "error": "Non è stato possibile unirsi alla bacheca.",
+      "pending": "Ci sei. La bacheca comparirà a breve nel tuo elenco."
     }
   }
 }

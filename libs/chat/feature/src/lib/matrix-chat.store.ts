@@ -350,6 +350,9 @@ export const _MatrixChatStore = signalStore(
 
   withMethods((store) => {
 
+    /** Lower-case okeys aller bekannten Personen — Raummitglieder ohne Person (Matrix-Admin-Dienstkonto) zaehlen nicht. */
+    const knownPersonKeys = (): Set<string> => new Set(store.appStore.allPersons().map((p: PersonModel) => p.okey.toLowerCase()));
+
     /** Synchronous, TENANT-FILTERED snapshot of the rooms — bypasses the rxResource async lag. */
     const roomsSync = (): MatrixRoom[] => filterRoomsOfTenant(
       store.matrixService.roomsCurrentValue,
@@ -639,8 +642,9 @@ export const _MatrixChatStore = signalStore(
             name: pinboard.name,
             description: pinboard.notes ?? '',
             sourceGroupNames: (pinboard.sourceGroupKeys ?? []).map((k: string) => groups.find((g: GroupModel) => g.okey === k)?.name ?? k),
-            memberCount: store.matrixService.getRoomMemberPersonKeys(roomId).length,
+            memberCount: pinboardBroadcastCount(store.matrixService.getRoomMemberPersonKeys(roomId), '', knownPersonKeys()),
             joinMode: pinboard.joinMode ?? 'optOut',
+            allowReplyAll: pinboard.allowReplyAll ?? false,
             canManage: hasRole('privileged', store.appStore.currentUser()),
           },
         });
@@ -700,8 +704,10 @@ export const _MatrixChatStore = signalStore(
       async joinPinboard(groupKey: string): Promise<void> {
         try {
           const roomId = await store.matrixService.joinPinboard(groupKey);
-          patchState(store, { currentRoomId: roomId });
+          patchState(store, { currentRoomId: roomId || undefined });
           this.reloadAvailablePinboards();
+          // Ohne Raum-id holt onMembershipWritten den Beitritt nach — der Raum taucht kurz danach auf.
+          if (!roomId) await store.alertService.showToast(store.i18n.pinboard_join_pending());
         } catch (error) {
           console.error('MatrixChatStore.joinPinboard: failed:', error);
           await store.alertService.showToast(store.i18n.pinboard_join_error());
@@ -1007,7 +1013,7 @@ export const _MatrixChatStore = signalStore(
         const roomId = store.currentRoomId();
         if (!roomId || !store.currentPinboard()) return true;
         const count = pinboardBroadcastCount(
-          store.matrixService.getRoomMemberPersonKeys(roomId), store.appStore.currentUser()?.personKey ?? '');
+          store.matrixService.getRoomMemberPersonKeys(roomId), store.appStore.currentUser()?.personKey ?? '', knownPersonKeys());
         return store.alertService.confirm(fill(store.i18n.pinboard_broadcast_confirm(), { count }), true);
       },
 

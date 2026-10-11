@@ -356,6 +356,7 @@
     "info": {
       "header": "Tablón de anuncios",
       "rules": "Aquí puedes comunicar algo a todos: vender, alquilar o regalar algo, buscar a quien viaje contigo o avisar de un objeto encontrado. Todos los miembros reciben una notificación. Cuando respondes a un anuncio, tu respuesta llega solo a quien lo escribió, como mensaje directo. Los demás no lo leen. Por eso no necesitas escribir un número de teléfono ni una dirección en un anuncio.",
+      "rulesReplyAll": "Aquí puedes comunicar algo a todos: vender, alquilar o regalar algo, buscar a quien viaje contigo o avisar de un objeto encontrado. Todos los miembros reciben una notificación. Cuando respondes a un anuncio, normalmente tu respuesta llega solo a quien lo escribió, como mensaje directo. También puedes responder a todos; entonces todos los miembros reciben una notificación. Por eso no escribas un número de teléfono ni una dirección en un anuncio.",
       "members": "Miembros"
     },
     "edit": {
@@ -383,7 +384,8 @@
     },
     "join": {
       "label": "Unirse",
-      "error": "No pudiste unirte al tablón de anuncios."
+      "error": "No pudiste unirte al tablón de anuncios.",
+      "pending": "Ya formas parte. El tablón de anuncios aparecerá enseguida en tu lista."
     }
   }
 }
