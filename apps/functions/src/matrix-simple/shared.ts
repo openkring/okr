@@ -744,6 +744,23 @@ export async function setRoomName(roomId: string, name: string, adminToken: stri
   return true;
 }
 
+/** Set a room's topic (`m.room.topic`). Best-effort like {@link setRoomName}; needs power in the room. */
+export async function setRoomTopic(roomId: string, topic: string, adminToken: string): Promise<boolean> {
+  const resp = await fetch(
+    `${MATRIX_HOMESERVER}/_matrix/client/v3/rooms/${encodeURIComponent(roomId)}/state/m.room.topic`,
+    {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ topic }),
+    }
+  );
+  if (!resp.ok) {
+    console.warn(`setRoomTopic: failed for ${roomId} → ${resp.status}: ${await resp.text()}`);
+    return false;
+  }
+  return true;
+}
+
 /**
  * Custom room state event carrying the okr tenants a room belongs to: `{ tenants: string[] }`.
  * One Matrix account serves a person in EVERY tenant, so without this marker the joined-room

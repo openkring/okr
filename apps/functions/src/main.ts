@@ -142,6 +142,12 @@ export const addAdhocChatMembers = MatrixSimple.addAdhocChatMembers;
 export const onPinboardSourceMembershipWritten = MatrixSimple.onPinboardSourceMembershipWritten;
 export const onPinboardWritten = MatrixSimple.onPinboardWritten;
 export const sweepPinboards = MatrixSimple.sweepPinboards;
+export const createPinboard = MatrixSimple.createPinboard;
+export const updatePinboard = MatrixSimple.updatePinboard;
+export const archivePinboard = MatrixSimple.archivePinboard;
+export const leavePinboard = MatrixSimple.leavePinboard;
+export const joinPinboard = MatrixSimple.joinPinboard;
+export const listAvailablePinboards = MatrixSimple.listAvailablePinboards;
 // membership → Matrix-room sync (server-side backstop; chat design review #3)
 export const onMembershipWritten = MatrixMembershipSync.onMembershipWritten;
 export const reconcileGroupRoomMembers = MatrixMembershipSync.reconcileGroupRoomMembers;

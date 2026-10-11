@@ -69,3 +69,40 @@ export function sourcePairsToReconcile(before?: SourceMembershipDoc, after?: Sou
   }
   return [...pairs.values()];
 }
+
+/**
+ * Eine Person kann mehrere Pinnwand-Mitgliedschaften haben (zufaellige ids aus dem generischen
+ * Mitglieder-UI). Aktiv schlaegt beendet; unter beendeten gewinnt `isOptedOut`, damit ein
+ * aelteres beendetes Dokument ohne Flag den Austritt nicht verdeckt.
+ */
+export function mergeMembershipState(prev: PinboardMembershipState | undefined, next: PinboardMembershipState): PinboardMembershipState {
+  if (!prev) return next;
+  if (prev.active) return prev;
+  if (next.active) return next;
+  return next.isOptedOut && !prev.isOptedOut ? next : prev;
+}
+
+export const PINBOARD_NAME_MAX = 50;
+export const PINBOARD_DESCRIPTION_MAX = 500;
+
+export function validatePinboardInput(
+  input: { name?: unknown; description?: unknown; sourceGroupKeys?: unknown; joinMode?: unknown; allowReplyAll?: unknown },
+  partial: boolean,
+): string | undefined {
+  if (!partial || input.name !== undefined) {
+    if (typeof input.name !== 'string' || input.name.trim().length === 0) return 'name is required';
+    if (input.name.length > PINBOARD_NAME_MAX) return `name exceeds ${PINBOARD_NAME_MAX} characters`;
+  }
+  if (input.description !== undefined) {
+    if (typeof input.description !== 'string') return 'description must be a string';
+    if (input.description.length > PINBOARD_DESCRIPTION_MAX) return `description exceeds ${PINBOARD_DESCRIPTION_MAX} characters`;
+  }
+  if (!partial || input.sourceGroupKeys !== undefined) {
+    const keys = input.sourceGroupKeys;
+    if (!Array.isArray(keys) || keys.length === 0 || keys.some((k) => typeof k !== 'string' || !k)) return 'at least one source group is required';
+    if (keys.some((k) => isPinboardKey(k as string) || /_c_/.test(k as string))) return 'a source group must be a real group';
+  }
+  if (input.joinMode !== undefined && input.joinMode !== 'optOut' && input.joinMode !== 'optIn') return 'joinMode must be optOut or optIn';
+  if (input.allowReplyAll !== undefined && typeof input.allowReplyAll !== 'boolean') return 'allowReplyAll must be a boolean';
+  return undefined;
+}

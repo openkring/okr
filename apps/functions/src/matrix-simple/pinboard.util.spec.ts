@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { sourcePairsToReconcile, isPinboardKey, pinboardKey, pinboardMembershipId, planPinboardMembership, PinboardMembershipState } from './pinboard.util';
+import { mergeMembershipState, validatePinboardInput, sourcePairsToReconcile, isPinboardKey, pinboardKey, pinboardMembershipId, planPinboardMembership, PinboardMembershipState } from './pinboard.util';
 
 const active: PinboardMembershipState = { active: true, isOptedOut: false };
 const ended: PinboardMembershipState = { active: false, isOptedOut: false };
@@ -78,5 +78,28 @@ describe('sourcePairsToReconcile', () => {
   it('ignores pinboard memberships and non-person members', () => {
     expect(sourcePairsToReconcile(undefined, m('scs_p_abc', 'anna'))).toEqual([]);
     expect(sourcePairsToReconcile(undefined, { ...m('g1', 'x'), memberModelType: 'org' })).toEqual([]);
+  });
+});
+
+describe('validatePinboardInput', () => {
+  const ok = { name: 'Marktplatz', description: '', sourceGroupKeys: ['scs'], joinMode: 'optOut', allowReplyAll: false };
+  it('accepts a complete input', () => expect(validatePinboardInput(ok, false)).toBeUndefined());
+  it('requires a name on create', () => expect(validatePinboardInput({ ...ok, name: '  ' }, false)).toMatch(/name/));
+  it('rejects a name over 50 characters', () => expect(validatePinboardInput({ ...ok, name: 'x'.repeat(51) }, false)).toMatch(/name/));
+  it('requires at least one source group on create', () => expect(validatePinboardInput({ ...ok, sourceGroupKeys: [] }, false)).toMatch(/source/));
+  it('rejects a pinboard as source', () => expect(validatePinboardInput({ ...ok, sourceGroupKeys: ['scs_p_abc'] }, false)).toMatch(/source/));
+  it('rejects an unknown join mode', () => expect(validatePinboardInput({ ...ok, joinMode: 'auto' }, false)).toMatch(/joinMode/));
+  it('rejects a description over 500 characters', () => expect(validatePinboardInput({ ...ok, description: 'x'.repeat(501) }, false)).toMatch(/description/));
+  it('accepts a partial update with only allowReplyAll', () => expect(validatePinboardInput({ allowReplyAll: true }, true)).toBeUndefined());
+  it('rejects an empty source list on update when given', () => expect(validatePinboardInput({ sourceGroupKeys: [] }, true)).toMatch(/source/));
+});
+
+describe('mergeMembershipState', () => {
+  it('takes the first doc when there is no previous one', () => expect(mergeMembershipState(undefined, ended)).toBe(ended));
+  it('an active doc beats an ended one', () => expect(mergeMembershipState(optedOut, active)).toBe(active));
+  it('an active doc is not replaced by an ended one', () => expect(mergeMembershipState(active, optedOut)).toBe(active));
+  it('among ended docs an opted-out one wins, whatever the order', () => {
+    expect(mergeMembershipState(ended, optedOut)).toBe(optedOut);
+    expect(mergeMembershipState(optedOut, ended)).toBe(optedOut);
   });
 });

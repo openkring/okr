@@ -287,7 +287,7 @@ function adhocMembershipDoc(person: PersonRow, groupKey: string, chatName: strin
  * Setzt, wie viel des Verlaufs neue Mitglieder sehen (`m.room.history_visibility`).
  * `joined` = erst ab dem eigenen Beitritt.
  */
-async function setHistoryVisibility(roomId: string, visibility: 'joined' | 'invited' | 'shared', adminToken: string): Promise<void> {
+export async function setHistoryVisibility(roomId: string, visibility: 'joined' | 'invited' | 'shared', adminToken: string): Promise<void> {
   const resp = await fetch(
     `${MATRIX_HOMESERVER}/_matrix/client/v3/rooms/${encodeURIComponent(roomId)}/state/m.room.history_visibility`,
     {
