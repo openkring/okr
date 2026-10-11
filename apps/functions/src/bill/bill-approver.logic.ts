@@ -1,6 +1,10 @@
+// apps/functions/src/bill/bill-approver.logic.ts
 //
 // The daily payment_approver digest (spec 1.94 §3.3–§3.4), pure: which bills were booked on a day, for the
 // books with the setting on, grouped by the account of ours that will pay them.
+
+export const APPROVER_DIGEST_MESSAGE_KEY = '@workflow.bill.approverDigest';
+export const APPROVER_DIGEST_FALLBACK = 'Kreditoren prüfen: {count} gebucht am {date}, total {total} CHF';
 
 export interface HistoryRow { parentKey?: string; tags?: string; tenants?: string[]; creationDateTime?: string }
 export interface DigestBill {
@@ -97,7 +101,6 @@ export function buildDigests(day: string, bills: DigestBill[], books: BooksConfi
         lines.push(`  ${billLabel(b)}${b.billId ? ` (Beleg ${b.billId})` : ''}`);
       }
     });
-    // lines: one per heading and bill — the test counts 1 heading + 2 bills = 3
     out.push({ accountingTenantId: cfg.accountingTenantId, date: displayDate(day), count: own.length,
       total: own.reduce((s, b) => s + (b.amount || 0), 0), groups, lines: lines.join('\n'), links });
   }
