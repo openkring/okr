@@ -46,14 +46,24 @@ export class BankImportRowService {
       .pipe(map(rows => rows.map(row => withSplits(withFee(row)))));
   }
 
-  /** Which of the given import keys already exist (any status). Firestore `in` takes ≤ 30 values. */
+  /**
+   * Which of the given import keys already exist (any status). Firestore `in` takes ≤ 30 values.
+   * The query must carry the tenant filter: `tenantRead()` rejects a query it cannot prove tenant-scoped,
+   * and getDataOnce swallows that as an empty result — every row then looked new. Plain `array-contains`
+   * (not getSystemQuery): archived rows count as existing, and `array-contains-any` × `in` (30) would
+   * exceed Firestore's 30-disjunction limit.
+   */
   public async existingKeys(accountingTenantId: string, keys: string[]): Promise<Set<string>> {
     const found = new Set<string>();
     for (let i = 0; i < keys.length; i += 30) {
       const chunk = keys.slice(i, i + 30);
       const rows = await this.firestoreService.getDataOnce<BankImportRowModel>(
         BankImportRowCollection,
-        [{ key: 'accountingTenantId', operator: '==', value: accountingTenantId }, { key: 'importKey', operator: 'in', value: chunk }],
+        [
+          { key: 'tenants', operator: 'array-contains', value: this.tenantId },
+          { key: 'accountingTenantId', operator: '==', value: accountingTenantId },
+          { key: 'importKey', operator: 'in', value: chunk },
+        ],
         'none');
       rows.forEach(r => found.add(r.importKey));
     }
