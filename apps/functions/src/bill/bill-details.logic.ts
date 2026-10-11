@@ -17,6 +17,8 @@ export interface BillDetailsInput {
   dueDate?: string;
   paymentReference?: string;
   creditorIban?: string;
+  /** the account of ours that will pay it (spec 1.94) — validated against the books by the callable */
+  paymentAccountKey?: string;
   lines?: { title?: string; costCenterKey?: string; projectKey?: string }[];
 }
 
@@ -29,6 +31,7 @@ export interface BillDetailsBill {
   dueDate?: string;
   paymentReference?: string;
   creditorIban?: string;
+  paymentAccountKey?: string;
   lines?: BillLineInput[];
   [key: string]: unknown;
 }
@@ -81,10 +84,10 @@ export function planBillDetailsUpdate(bill: BillDetailsBill, input: BillDetailsI
 
   const stored = (v: string | undefined): string => v ?? '';
   const billPatch: Record<string, unknown> = {};
-  const changed = (field: 'title' | 'notes' | 'dueDate' | 'paymentReference' | 'creditorIban'): boolean =>
+  const changed = (field: 'title' | 'notes' | 'dueDate' | 'paymentReference' | 'creditorIban' | 'paymentAccountKey'): boolean =>
     input[field] !== undefined && input[field] !== stored(bill[field]);
 
-  for (const field of ['dueDate', 'paymentReference', 'creditorIban'] as const) {
+  for (const field of ['dueDate', 'paymentReference', 'creditorIban', 'paymentAccountKey'] as const) {
     if (!changed(field)) continue;
     if (bill.state === 'paid') return { refusal: 'bill-paid' };
     billPatch[field] = input[field];

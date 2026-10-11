@@ -93,10 +93,13 @@ export class BillService {
     void this.activityService.log('bill', 'delete', currentUser, `${bill.okey}: ${bill.billId}`);
   }
 
-  /** Books a draft bill (issue booking `bill-{key}`); the bill becomes `todo`. */
-  public async book(billKey: string, currentUser?: UserModel): Promise<{ bookingKey: string; bookingNo: number; state: string }> {
-    const fn = httpsCallable<{ billKey: string }, { bookingKey: string; bookingNo: number; state: string }>(this.functions(), 'bookBill');
-    const result = await fn({ billKey });
+  /**
+   * Books a draft bill (issue booking `bill-{key}`); the bill becomes `todo`.
+   * @param paymentAccountKey the account of ours that will pay it (spec 1.94); `''` = let the server default it
+   */
+  public async book(billKey: string, paymentAccountKey: string, currentUser?: UserModel): Promise<{ bookingKey: string; bookingNo: number; state: string }> {
+    const fn = httpsCallable<{ billKey: string; paymentAccountKey: string }, { bookingKey: string; bookingNo: number; state: string }>(this.functions(), 'bookBill');
+    const result = await fn({ billKey, paymentAccountKey });
     void this.activityService.log('bill', 'book', currentUser, `${billKey}: ${result.data.bookingKey}`);
     return result.data;
   }

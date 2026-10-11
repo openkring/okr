@@ -212,7 +212,9 @@
     "project-invalid": "Un des projets ne peut pas être utilisé. Choisis un projet actif ou laisse le champ vide.",
     "not-booked": "Seule une facture fournisseur comptabilisée peut être modifiée ici.",
     "bill-paid": "La facture fournisseur est déjà payée. L’échéance, la référence et l’IBAN ne peuvent plus être modifiés.",
-    "line-count": "Les lignes de la facture fournisseur ont changé. Rouvre-la et réessaie."
+    "line-count": "Les lignes de la facture fournisseur ont changé. Rouvre-la et réessaie.",
+    "payment-account-required": "Choisis le compte depuis lequel cette facture sera payée.",
+    "payment-account-invalid": "Les factures fournisseurs ne sont pas payées depuis ce compte. Choisis l'un des comptes des paramètres de comptabilité."
   },
   "line": {
     "list": {
@@ -259,11 +261,16 @@
     "placeholder": "CH..",
     "helper": "La facture est payée sur ce compte."
   },
+  "paymentAccount": {
+    "label": "Compte de paiement",
+    "helper": "Depuis quel compte cette facture sera-t-elle payée ?"
+  },
   "book": {
     "label": "Comptabiliser",
     "confirm": "Veux-tu comptabiliser la facture fournisseur maintenant ? Ensuite, le fournisseur, la date, les comptes et les montants ne pourront être modifiés que si tu supprimes son écriture dans le journal.",
     "conf": "La facture fournisseur est comptabilisée.",
-    "error": "La facture fournisseur n'a pas pu être comptabilisée. Réessaie plus tard."
+    "error": "La facture fournisseur n'a pas pu être comptabilisée. Réessaie plus tard.",
+    "chooseAccount": "Depuis quel compte cette facture sera-t-elle payée ?"
   },
   "save": {
     "conf": "La facture fournisseur est enregistrée.",

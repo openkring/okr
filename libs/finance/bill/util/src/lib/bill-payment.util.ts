@@ -90,18 +90,21 @@ export function newBillPaymentFormModel(
 ): BillPaymentFormModel {
   const open = openBillAmount(bill) / 100;
   const canPost = paymentAccountKeys.length > 0;
+  // the account the bill was booked to be paid from (spec 1.94), else the first payment account
+  const stored = (bill.paymentAccountKey ?? '').trim();
+  const bankAccountKey = !canPost ? '' : paymentAccountKeys.includes(stored) ? stored : paymentAccountKeys[0];
   if (preselect) {
     const bookingAmount = preselect.debitedAmount / 100;
     return {
       mode: 'link', date: preselect.date || today, amount: Math.min(bookingAmount, open),
-      bankAccountKey: canPost ? paymentAccountKeys[0] : '', bookingKey: preselect.bookingKey, openAmount: open, bookingAmount,
+      bankAccountKey, bookingKey: preselect.bookingKey, openAmount: open, bookingAmount,
     };
   }
   return {
     mode: canPost ? 'post' : 'link',
     date: today,
     amount: open,
-    bankAccountKey: canPost ? paymentAccountKeys[0] : '',
+    bankAccountKey,
     bookingKey: '',
     openAmount: open,
     bookingAmount: 0,

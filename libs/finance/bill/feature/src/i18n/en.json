@@ -212,7 +212,9 @@
     "project-invalid": "One of the projects cannot be used. Pick an active project or leave the field empty.",
     "not-booked": "Only a booked supplier bill can be edited here.",
     "bill-paid": "The supplier bill is already paid. Due date, reference and IBAN can no longer be changed.",
-    "line-count": "The lines of the supplier bill have changed. Open it again and try once more."
+    "line-count": "The lines of the supplier bill have changed. Open it again and try once more.",
+    "payment-account-required": "Choose the account this bill will be paid from.",
+    "payment-account-invalid": "Supplier bills are not paid from this account. Choose one of the accounts from the accounting settings."
   },
   "line": {
     "list": {
@@ -259,11 +261,16 @@
     "placeholder": "CH..",
     "helper": "The bill is paid to this account."
   },
+  "paymentAccount": {
+    "label": "Payment account",
+    "helper": "Which account will pay this bill?"
+  },
   "book": {
     "label": "Book",
     "confirm": "Should the supplier bill be booked now? Afterwards, the supplier, date, accounts and amounts can only be changed if you delete its booking in the journal.",
     "conf": "The supplier bill is booked.",
-    "error": "The supplier bill could not be booked. Please try again later."
+    "error": "The supplier bill could not be booked. Please try again later.",
+    "chooseAccount": "Which account will pay this bill?"
   },
   "save": {
     "conf": "The supplier bill is saved.",

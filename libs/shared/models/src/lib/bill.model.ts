@@ -31,6 +31,7 @@ export class BillModel implements OkrModel, SearchableModel, TaggedModel {
   public lines: BillLine[] = [];       // native bill lines (spec 1.85 Q2); [] on migrated bills
   public paymentReference = '';        // creditor reference (QRR/SCOR) from the QR-bill, normalized (spec 1.85)
   public creditorIban = '';            // the vendor's IBAN from the QR-bill (spec 1.85)
+  public paymentAccountKey = '';       // the account of ours that will pay it, one of billPaymentAccountKeys (spec 1.94); '' = unknown (legacy)
   public bookingKeys: string[] = [];  // the bexio journal bookings of the bill (one per bill line), linked by scripts/link-bexio-ledger.mjs; [] = not linked
 
   // bill sender (person or org) Rechnungssteller

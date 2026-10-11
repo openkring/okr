@@ -212,7 +212,9 @@
     "project-invalid": "Uno dei progetti non può essere usato. Scegli un progetto attivo o lascia il campo vuoto.",
     "not-booked": "Qui si può modificare solo una fattura fornitore contabilizzata.",
     "bill-paid": "La fattura fornitore è già pagata. Scadenza, riferimento e IBAN non si possono più modificare.",
-    "line-count": "Le righe della fattura fornitore sono cambiate. Riaprila e riprova."
+    "line-count": "Le righe della fattura fornitore sono cambiate. Riaprila e riprova.",
+    "payment-account-required": "Scegli il conto da cui verrà pagata questa fattura.",
+    "payment-account-invalid": "Le fatture dei fornitori non vengono pagate da questo conto. Scegli uno dei conti delle impostazioni contabili."
   },
   "line": {
     "list": {
@@ -259,11 +261,16 @@
     "placeholder": "CH..",
     "helper": "La fattura viene pagata su questo conto."
   },
+  "paymentAccount": {
+    "label": "Conto di pagamento",
+    "helper": "Da quale conto verrà pagata questa fattura?"
+  },
   "book": {
     "label": "Contabilizza",
     "confirm": "Vuoi contabilizzare ora la fattura fornitore? Dopo, fornitore, data, conti e importi si potranno modificare solo se elimini la sua registrazione nel giornale.",
     "conf": "La fattura del fornitore è contabilizzata.",
-    "error": "Non è stato possibile contabilizzare la fattura del fornitore. Riprova più tardi."
+    "error": "Non è stato possibile contabilizzare la fattura del fornitore. Riprova più tardi.",
+    "chooseAccount": "Da quale conto verrà pagata questa fattura?"
   },
   "save": {
     "conf": "La fattura del fornitore è salvata.",

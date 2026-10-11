@@ -212,7 +212,9 @@
     "project-invalid": "Eines der Projekte kann nicht verwendet werden. Wähle ein aktives Projekt oder lass das Feld leer.",
     "not-booked": "Nur eine verbuchte Lieferantenrechnung lässt sich hier bearbeiten.",
     "bill-paid": "Die Lieferantenrechnung ist schon bezahlt. Fälligkeit, Referenz und IBAN lassen sich nicht mehr ändern.",
-    "line-count": "Die Zeilen der Lieferantenrechnung haben sich verändert. Öffne sie neu und versuche es noch einmal."
+    "line-count": "Die Zeilen der Lieferantenrechnung haben sich verändert. Öffne sie neu und versuche es noch einmal.",
+    "payment-account-required": "Wähle aus, von welchem Konto diese Rechnung bezahlt wird.",
+    "payment-account-invalid": "Von diesem Konto werden keine Lieferantenrechnungen bezahlt. Wähle eines der Konten aus den Buchhaltungseinstellungen."
   },
   "line": {
     "list": {
@@ -259,11 +261,16 @@
     "placeholder": "CH..",
     "helper": "Auf dieses Konto wird die Rechnung bezahlt."
   },
+  "paymentAccount": {
+    "label": "Zahlungskonto",
+    "helper": "Von welchem Konto wird diese Rechnung bezahlt?"
+  },
   "book": {
     "label": "Verbuchen",
     "confirm": "Soll die Lieferantenrechnung jetzt verbucht werden? Lieferant, Datum, Konten und Beträge lassen sich danach nur noch ändern, wenn du ihre Buchung im Journal löschst.",
     "conf": "Die Lieferantenrechnung ist verbucht.",
-    "error": "Die Lieferantenrechnung konnte nicht verbucht werden. Bitte versuche es später noch einmal."
+    "error": "Die Lieferantenrechnung konnte nicht verbucht werden. Bitte versuche es später noch einmal.",
+    "chooseAccount": "Von welchem Konto wird diese Rechnung bezahlt?"
   },
   "save": {
     "conf": "Die Lieferantenrechnung ist gespeichert.",

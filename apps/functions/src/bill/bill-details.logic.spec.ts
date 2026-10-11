@@ -109,4 +109,18 @@ describe('planBillDetailsUpdate', () => {
     it('a resent unchanged value on a paid bill is fine', () =>
       expect(plan(bill({ state: 'paid' }), { dueDate: '20261001' })).toMatchObject({ billPatch: {} }));
   });
+
+  describe('paymentAccountKey', () => {
+    it('on a todo bill patches the bill only (no booking patch)', () => {
+      const p = plan(bill(), { paymentAccountKey: 'acc2' });
+      expect(p.billPatch).toEqual({ paymentAccountKey: 'acc2' });
+      expect(p.bookingPatch).toBeUndefined();
+      expect(p.linePatches).toEqual([]);
+      expect(p.touchesLedger).toBe(false);
+    });
+    it('refuses a change on a paid bill: bill-paid', () =>
+      expect(plan(bill({ state: 'paid' }), { paymentAccountKey: 'acc2' })).toEqual({ refusal: 'bill-paid' }));
+    it('a legacy bill without the field counts as empty', () =>
+      expect(plan(bill({ state: 'paid' }), { paymentAccountKey: '' })).toMatchObject({ billPatch: {} }));
+  });
 });

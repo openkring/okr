@@ -62,6 +62,7 @@ export interface BillEditResult {
           [costCentersEnabled]="costCenterStore.isEnabled()"
           [bookDefaultCostCenterKey]="bookDefaultCostCenterKey()"
           [projects]="ledgerProjects()"
+          [paymentAccounts]="paymentAccounts()"
           [currentUser]="currentUser()"
           [readOnly]="isReadOnly()"
           [isNew]="isNew()"
@@ -120,6 +121,11 @@ export class BillEditModal {
   private readonly projectsResource = rxResource({ stream: () => this.projectService.listAll() });
   /** like the Kostenstellen: no picker on an externally managed (bexio) ledger */
   protected readonly ledgerProjects = computed(() => this.accountingStore.isExternallyManaged() ? [] : (this.projectsResource.value() ?? []));
+  /** the books' bill payment accounts (spec 1.94) for the paying account of a booked bill; legacy config docs lack the field */
+  protected readonly paymentAccounts = computed(() => {
+    const keys = this.accountingStore.config()?.billPaymentAccountKeys ?? [];
+    return this.accounts().filter((a) => keys.includes(a.okey));
+  });
   protected readonly bookDefaultCostCenterKey = computed(() => this.accountingStore.config()?.defaultCostCenterKey ?? '');
 
   // computed

@@ -72,12 +72,12 @@ describe('bill lines', () => {
 });
 
 describe('billDetailsPayload', () => {
-  const bill = { okey: 'b1', title: 'T', notes: 'N', dueDate: '20261101', paymentReference: 'R', creditorIban: 'CH93', state: 'todo' } as BillModel;
+  const bill = { okey: 'b1', title: 'T', notes: 'N', dueDate: '20261101', paymentReference: 'R', creditorIban: 'CH93', paymentAccountKey: 'acc2', state: 'todo' } as BillModel;
   const lines = [{ ...newBillLine('a', 100, 'x'), costCenterKey: 'cc', projectKey: 'p' }];
 
   it('sends the header, the payment data and the editable line fields', () => {
     expect(billDetailsPayload(bill, lines)).toEqual({
-      billKey: 'b1', title: 'T', notes: 'N', dueDate: '20261101', paymentReference: 'R', creditorIban: 'CH93',
+      billKey: 'b1', title: 'T', notes: 'N', dueDate: '20261101', paymentReference: 'R', creditorIban: 'CH93', paymentAccountKey: 'acc2',
       lines: [{ title: 'x', costCenterKey: 'cc', projectKey: 'p' }],
     });
   });
@@ -87,7 +87,11 @@ describe('billDetailsPayload', () => {
     expect(p.dueDate).toBeUndefined();
     expect(p.paymentReference).toBeUndefined();
     expect(p.creditorIban).toBeUndefined();
+    expect(p.paymentAccountKey).toBeUndefined();
   });
+
+  it('coalesces a legacy bill without a paying account to empty', () =>
+    expect(billDetailsPayload({ okey: 'b1', state: 'todo' } as BillModel, []).paymentAccountKey).toBe(''));
 
   it('sends no lines for a bill without any and coalesces legacy gaps', () => {
     const p = billDetailsPayload({ okey: 'b1', state: 'todo' } as BillModel, []);

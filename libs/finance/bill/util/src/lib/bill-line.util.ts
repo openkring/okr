@@ -76,6 +76,7 @@ export interface BillDetailsPayload {
   dueDate?: string;
   paymentReference?: string;
   creditorIban?: string;
+  paymentAccountKey?: string;
   lines?: { title: string; costCenterKey: string; projectKey: string }[];
 }
 
@@ -85,8 +86,8 @@ export function isBillPaymentDataEditable(bill: Pick<BillModel, 'state'> | undef
 }
 
 /**
- * The details of a booked bill as the callable takes them: title and notes always; due date, reference
- * and IBAN only while not fully paid; per line the title, Kostenstelle and Kostenträger. A bill without
+ * The details of a booked bill as the callable takes them: title and notes always; due date, reference,
+ * IBAN and paying account only while not fully paid; per line the title, Kostenstelle and Kostenträger. A bill without
  * lines (migrated from bexio) sends the header fields only. The server treats unchanged values as no-ops,
  * so the whole form is sent.
  */
@@ -97,6 +98,7 @@ export function billDetailsPayload(bill: BillModel, lines: BillLine[]): BillDeta
     payload.dueDate = (bill.dueDate ?? '').trim();
     payload.paymentReference = normalizeQrReference((bill.paymentReference ?? '').trim().slice(0, 40));
     payload.creditorIban = (bill.creditorIban ?? '').trim().slice(0, 34).replace(/\s+/g, '').toUpperCase();
+    payload.paymentAccountKey = (bill.paymentAccountKey ?? '').trim();
   }
   if (lines.length > 0) {
     payload.lines = lines.map((l) => ({

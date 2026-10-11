@@ -21,8 +21,8 @@ import { BillService } from '@okr/finance-bill-data-access';
 import { BillPaymentModal } from '@okr/finance-bill-ui';
 import {
   BILL_I18N_KEYS, BillI18n, BillPaymentCandidate, BillPaymentInput, billDetailsPayload, billDisplayState, billDuplicateHint, billFromQr, billFromScan, billPaymentHintWindow, billPaymentHints,
-  billPaymentWindow, billRefusalReasons, billRefusalText, getBillExportData, isDraftBill, isPayableBill, isRetryableBillPaymentRefusal, linkedBillPaymentKeys, newBill,
-  newBillLine, newBillPaymentFormModel, openBillAmount,
+  billPaymentWindow, billRefusalReasons, billRefusalText, getBillExportData, isDraftBill, isPayableBill, isRetryableBillPaymentRefusal, linkedBillPaymentKeys, needsPaymentAccountChoice,
+  newBill, newBillLine, newBillPaymentFormModel, openBillAmount,
 } from '@okr/finance-bill-util';
 import { newPaymentId } from '@okr/finance-invoice-util';
 import { AccountService } from '@okr/finance-account-data-access';
@@ -407,19 +407,64 @@ export const BillStore = signalStore(
       patchState(store, { version: store.version() + 1 });
     },
 
-    /** «Verbuchen»: books a draft as `bill-{key}` (expense lines / payables) after a confirmation. */
+    /**
+     * «Verbuchen»: books a draft as `bill-{key}` (expense lines / payables) after a confirmation. With several
+     * payment accounts in the books the confirmation also asks which one will pay the bill (spec 1.94); with
+     * one (or none) the plain confirmation stays and the server defaults the paying account.
+     */
     async book(bill: BillModel): Promise<void> {
       if (!isDraftBill(bill) || store.accountingStore.isExternallyManaged()) return;
-      const confirmed = await confirm(store.alertController, store.i18n.book_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
-      if (!confirmed) return;
+      // legacy config docs lack the field (Firestore reads skip model defaults)
+      const paymentAccountKeys = store.accountingStore.config()?.billPaymentAccountKeys ?? [];
+      let paymentAccountKey = '';
+      if (needsPaymentAccountChoice(paymentAccountKeys)) {
+        const chosen = await this.choosePaymentAccount(bill, paymentAccountKeys);
+        if (chosen === undefined) return;
+        paymentAccountKey = chosen;
+      } else {
+        const confirmed = await confirm(store.alertController, store.i18n.book_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
+        if (!confirmed) return;
+      }
       try {
-        await store.billService.book(bill.okey, store.appStore.currentUser() ?? undefined);
+        await store.billService.book(bill.okey, paymentAccountKey, store.appStore.currentUser() ?? undefined);
         await showToast(store.toastController, store.i18n.book_conf());
       } catch (e) {
         console.error('BillStore.book: bookBill failed', e);
         await showToast(store.toastController, billRefusalText(billRefusalReasons(e), store.i18n, store.i18n.book_error()));
       }
       patchState(store, { version: store.version() + 1 });
+    },
+
+    /**
+     * The booking confirmation with a choice of the paying account (spec 1.94): one radio per payment account of
+     * the books, the first one checked. Resolves to the chosen account key, or undefined when cancelled or when
+     * the accounts could not be read (a toast says so).
+     */
+    async choosePaymentAccount(bill: BillModel, paymentAccountKeys: string[]): Promise<string | undefined> {
+      let accounts: AccountModel[] = [];
+      try {
+        accounts = (await firstValueFrom(store.accountService.list(bill.accountingTenantId).pipe(take(1))))
+          .filter((a) => paymentAccountKeys.includes(a.okey));
+      } catch (e) {
+        console.error('BillStore.choosePaymentAccount: loading the accounts failed', e);
+      }
+      if (accounts.length === 0) {
+        await showToast(store.toastController, store.i18n.book_error());
+        return undefined;
+      }
+      const alert = await store.alertController.create({
+        header: store.i18n.book_confirm(),
+        message: store.i18n.book_chooseAccount(),
+        inputs: accounts.map((a, i) => ({ type: 'radio' as const, label: `${a.id} ${a.name}`, value: a.okey, checked: i === 0 })),
+        buttons: [
+          { text: store.i18n.cancel(), role: 'cancel' },
+          { text: store.i18n.ok(), role: 'confirm' },
+        ],
+      });
+      await alert.present();
+      const { data, role } = await alert.onDidDismiss<{ values?: string }>();
+      if (role !== 'confirm') return undefined;
+      return data?.values || accounts[0].okey;
     },
 
     /**

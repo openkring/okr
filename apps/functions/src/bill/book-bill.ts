@@ -3,6 +3,7 @@ import { logger } from 'firebase-functions/v2';
 import { getFirestore } from 'firebase-admin/firestore';
 
 import { BillCollection } from '@okr/shared-models';
+import { resolvePaymentAccountKey } from '@okr/finance-bill-util';
 import { projectKeyForLine } from '@okr/shared-util-core';
 import { checkAppCheckToken, checkAuthentication, checkRoles, getCallerTenantId, isBalanced, nextBookingNo } from '@okr/shared-util-functions';
 
@@ -31,7 +32,7 @@ const BOOKING_LINE_COLLECTION = 'booking-lines';
  */
 export const bookBill = onCall(
   { region: REGION, enforceAppCheck: true, cors: true },
-  async (request: CallableRequest<{ billKey?: string }>): Promise<{ bookingKey: string; bookingNo: number; state: string }> => {
+  async (request: CallableRequest<{ billKey?: string; paymentAccountKey?: string }>): Promise<{ bookingKey: string; bookingNo: number; state: string }> => {
     checkAppCheckToken(request as never, CF_NAME);
     checkAuthentication(request as never, CF_NAME);
     await checkRoles(request as never, CF_NAME, ['treasurer']);
@@ -51,10 +52,15 @@ export const bookBill = onCall(
     const config = await loadBillConfig(db, tenantId, billKey, accountingTenantId);
     const payablesKey = String(config['payablesAccountKey'] ?? '');
     const fiscalYearStart = Number(config['fiscalYearStart'] ?? 1) || 1;
+    const requestedAccount = request.data?.paymentAccountKey;
+    if (requestedAccount !== undefined && typeof requestedAccount !== 'string') throw new HttpsError('invalid-argument', 'paymentAccountKey must be a string');
+    // the account of ours that will pay the bill (spec 1.94): defaulted when the books configure one, chosen when several
+    const pa = resolvePaymentAccountKey(requestedAccount, (config['billPaymentAccountKeys'] as string[] | undefined) ?? []);
     if (((pre['bookingKeys'] as string[] | undefined) ?? []).includes(bookingKey)) {
       const booking = (await bookingRef.get()).data();
       return { bookingKey, bookingNo: Number(booking?.['bookingNo'] ?? 0), state: String(pre['state'] ?? '') };
     }
+    if ('refusal' in pa) throw refuse(pa.refusal, `bill ${billKey}: ${pa.refusal}`);
     const preLines = (pre['lines'] as BillLineInput[] | undefined) ?? [];
     const ccCtx = await loadCostCenterContext(db, tenantId, accountingTenantId, [...preLines.map((l) => l.accountKey), payablesKey].filter((k) => !!k));
 
@@ -117,7 +123,7 @@ export const bookBill = onCall(
           ...(line.description ? { description: line.description } : {}),
         }));
       });
-      tx.update(billRef, { state: 'todo', bookingKeys: [bookingKey] });
+      tx.update(billRef, { state: 'todo', bookingKeys: [bookingKey], paymentAccountKey: pa.key });
       return { bookingKey, bookingNo, state: 'todo' };
     });
     await writeFinanceHistory(db, { tenantId, uid: request.auth?.uid, parentKey: `bill.${billKey}`, kind: 'billBooked', details: String(result.bookingNo) });

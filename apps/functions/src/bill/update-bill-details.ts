@@ -3,6 +3,7 @@ import { logger } from 'firebase-functions/v2';
 import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 
 import { BillCollection } from '@okr/shared-models';
+import { resolvePaymentAccountKey } from '@okr/finance-bill-util';
 import { normalizeQrReference, projectKeyForLine } from '@okr/shared-util-core';
 import { checkAppCheckToken, checkAuthentication, checkRoles, getCallerTenantId } from '@okr/shared-util-functions';
 
@@ -53,6 +54,7 @@ function cleanInput(d: UpdateBillDetailsData): BillDetailsInput {
   set('paymentReference', ref === undefined ? undefined : normalizeQrReference(ref));
   const iban = optString(d.creditorIban, 'creditorIban', MAX_IBAN_LENGTH);
   set('creditorIban', iban === undefined ? undefined : iban.replace(/\s+/g, '').toUpperCase());
+  set('paymentAccountKey', optString(d.paymentAccountKey, 'paymentAccountKey', 100));
   if (d.lines !== undefined) {
     if (!Array.isArray(d.lines)) throw new HttpsError('invalid-argument', 'lines must be an array');
     assertProjectKeyShapes(d.lines.filter((l) => !!l && typeof l === 'object') as { projectKey?: unknown }[]);
@@ -106,6 +108,12 @@ export const updateBillDetails = onCall(
     const hasBookingOf = (b: Record<string, unknown>): boolean => ((b['bookingKeys'] as string[] | undefined) ?? []).includes(bookingKey);
     const prePlan = planBillDetailsUpdate(pre as BillDetailsBill, input, { hasBooking: hasBookingOf(pre), bookingDate: '', bookingNo: 0 });
     if (prePlan.refusal) throw refuse(prePlan.refusal, `bill ${billKey}: ${prePlan.refusal}`);
+    // a new paying account must be one of the books' payment accounts; empty only when the books configure none (spec 1.94)
+    if (prePlan.billPatch['paymentAccountKey'] !== undefined) {
+      const pa = resolvePaymentAccountKey(input.paymentAccountKey, (config['billPaymentAccountKeys'] as string[] | undefined) ?? []);
+      if ('refusal' in pa) throw refuse(pa.refusal, `bill ${billKey}: ${pa.refusal}`);
+      if (pa.key !== input.paymentAccountKey) throw refuse('payment-account-required', `bill ${billKey}: payment-account-required`);
+    }
 
     // only the values that CHANGE are validated (a stored value is grandfathered); the transaction re-plans and compares
     const ccCtx = await loadCostCenterContext(db, tenantId, accountingTenantId, preLines.map((l) => l.accountKey));
@@ -142,6 +150,9 @@ export const updateBillDetails = onCall(
       for (const { index, patch } of plan.linePatches) {
         if (patch.costCenterKey !== undefined && !checked.has(`cc:${index}:${patch.costCenterKey}`)) throw refuse('state-changed', `bill ${billKey} changed while it was edited`);
         if (patch.projectKey !== undefined && !checked.has(`pk:${index}:${patch.projectKey}`)) throw refuse('state-changed', `bill ${billKey} changed while it was edited`);
+      }
+      if (plan.billPatch['paymentAccountKey'] !== undefined && prePlan.billPatch['paymentAccountKey'] === undefined) {
+        throw refuse('state-changed', `bill ${billKey} changed while it was edited`);
       }
 
       assertProjectsOnProfitAndLoss(ccCtx.accounts, plan.linePatches.filter((p) => !!p.patch.projectKey).map((p) => ({ accountKey: lines[p.index].accountKey, projectKey: p.patch.projectKey })));

@@ -8,8 +8,9 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { DateInput, DateInputI18n, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, getFullName } from '@okr/shared-util-core';
+import { AccountSelect, AccountSelectI18n } from '@okr/finance-account-ui';
 
-import { BILL_IBAN_LENGTH, BILL_REFERENCE_LENGTH, BILL_TITLE_MAX_LENGTH, BillI18n, billDetailsValidations, billValidations, isBillPaymentDataEditable } from '@okr/finance-bill-util';
+import { BILL_IBAN_LENGTH, BILL_REFERENCE_LENGTH, BILL_TITLE_MAX_LENGTH, BillI18n, billDetailsValidations, billValidations, isBillPaymentDataEditable, needsPaymentAccountChoice } from '@okr/finance-bill-util';
 
 import { BillLinesForm } from './bill-lines.form';
 
@@ -23,7 +24,7 @@ import { BillLinesForm } from './bill-lines.form';
   selector: 'okr-bill-edit-form',
   standalone: true,
   imports: [
-    SvgIconPipe, ErrorNote, TextInput, DateInput, NotesInput, BillLinesForm,
+    SvgIconPipe, ErrorNote, TextInput, DateInput, NotesInput, BillLinesForm, AccountSelect,
     IonCard, IonCardContent, IonGrid, IonRow, IonCol, IonItem, IonLabel, IonNote, IonButton, IonIcon,
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -82,6 +83,14 @@ import { BillLinesForm } from './bill-lines.form';
                   <okr-error-note [errors]="creditorIbanErrors()" />
                 </ion-col>
               </ion-row>
+              @if(showPaymentAccount()) {
+                <ion-row>
+                  <ion-col size="12">
+                    <okr-account-select [i18n]="paymentAccountI18n()" [accounts]="paymentAccounts()" [selectedKey]="paymentAccountKey()"
+                      (selectedKeyChange)="onFieldChange('paymentAccountKey', $event)" [allowEmpty]="false" [readOnly]="isReadOnly()" />
+                  </ion-col>
+                </ion-row>
+              }
             </ion-grid>
           </ion-card-content>
         </ion-card>
@@ -114,6 +123,8 @@ export class BillEditForm {
   public readonly costCentersEnabled = input(false);
   public readonly bookDefaultCostCenterKey = input('');
   public readonly projects = input<ProjectModel[]>([]);
+  /** the books' bill payment accounts (spec 1.94): the paying account of a booked, unpaid bill is chosen among them */
+  public readonly paymentAccounts = input<AccountModel[]>([]);
   public readonly currentUser = input<UserModel | undefined>();
   public readonly allTags = input(DEFAULT_TAGS);
   public readonly readOnly = input(true);
@@ -138,6 +149,9 @@ export class BillEditForm {
   /** vendor, bill number and bill date: draft only */
   protected readonly structureLocked = computed(() => this.isReadOnly() || this.mode() === 'details');
   /** due date, reference and IBAN: draft, or booked but not yet paid */
+  /** the paying account (spec 1.94): a booked, unpaid bill, and only when the books offer more than one */
+  protected readonly showPaymentAccount = computed(() => this.mode() === 'details' && isBillPaymentDataEditable(this.formData())
+    && needsPaymentAccountChoice(this.paymentAccounts().map((a) => a.okey)));
   protected readonly paymentDataLocked = computed(() => this.isReadOnly() || (this.mode() === 'details' && !isBillPaymentDataEditable(this.formData())));
   // The suite needs the tags, which validateVestTree does not pass — so the bridge calls it
   // through a closure that adds them.
@@ -166,6 +180,8 @@ export class BillEditForm {
   protected readonly dueDate = computed(() => this.formData()?.dueDate ?? '');
   protected readonly paymentReference = computed(() => this.formData()?.paymentReference ?? '');
   protected readonly creditorIban = computed(() => this.formData()?.creditorIban ?? '');
+  // legacy bills lack the field (Firestore reads skip model defaults)
+  protected readonly paymentAccountKey = computed(() => this.formData()?.paymentAccountKey ?? '');
   protected readonly notes = computed(() => this.formData()?.notes ?? DEFAULT_NOTES);
   protected readonly vendorName = computed(() => {
     const v = this.formData()?.vendor;
@@ -185,6 +201,9 @@ export class BillEditForm {
   protected ibanI18n = computed(() => ({
     name: 'creditorIban', label: this.i18n().iban_label(), placeholder: this.i18n().iban_placeholder(), helper: this.i18n().iban_helper()
   } as TextInputI18n));
+  protected readonly paymentAccountI18n = computed(() => ({
+    name: 'billPaymentAccountKey', label: this.i18n().paymentAccount_label(), helper: this.i18n().paymentAccount_helper(),
+  } as AccountSelectI18n));
   protected notesI18n = computed(() => ({
     name: 'notes', label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder()
   } as NotesInputI18n));

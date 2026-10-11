@@ -41,6 +41,14 @@ describe('bill payment util', () => {
     expect(newBillPaymentFormModel(bill(), '20261005', ['scs0077'], pre)).toMatchObject({ mode: 'link', bookingKey: '12040', date: '20260903', amount: 39, bookingAmount: 39 });
   });
 
+  it('pre-selects the bill\'s paying account when it is one of the payment accounts', () => {
+    const pre = { bookingKey: '12040', bookingNo: 12040, date: '20260903', title: 'BA DSL', debitedAmount: 3900 };
+    expect(newBillPaymentFormModel(bill({ paymentAccountKey: 'scs0078' }), '20261005', ['scs0077', 'scs0078']).bankAccountKey).toBe('scs0078');
+    expect(newBillPaymentFormModel(bill({ paymentAccountKey: 'scs0078' }), '20261005', ['scs0077', 'scs0078'], pre).bankAccountKey).toBe('scs0078');
+    expect(newBillPaymentFormModel(bill({ paymentAccountKey: 'gone' }), '20261005', ['scs0077', 'scs0078']).bankAccountKey).toBe('scs0077');
+    expect(newBillPaymentFormModel(bill({ paymentAccountKey: 'scs0078' }), '20261005', []).bankAccountKey).toBe('');
+  });
+
   describe('candidates', () => {
     const lines = [line('12040', 'scs0121', 3900), line('12040', 'scs0077', undefined, 3900), line('x-credit', 'scs0121', undefined, 3900),
       line('other', 'scs0238', 3900), line('old', 'scs0121', 3900), line('draft', 'scs0121', 3900), line('linked', 'scs0121', 3900),

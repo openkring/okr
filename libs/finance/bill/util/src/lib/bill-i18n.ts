@@ -120,10 +120,13 @@ export const BILL_I18N_KEYS = {
   iban_label:                     PFX + 'iban.label',
   iban_placeholder:               PFX + 'iban.placeholder',
   iban_helper:                    PFX + 'iban.helper',
+  paymentAccount_label:           PFX + 'paymentAccount.label',
+  paymentAccount_helper:          PFX + 'paymentAccount.helper',
   book:                           PFX + 'book.label',
   book_confirm:                   PFX + 'book.confirm',
   book_conf:                      PFX + 'book.conf',
   book_error:                     PFX + 'book.error',
+  book_chooseAccount:             PFX + 'book.chooseAccount',
   details_update:                 PFX + 'details.label',
   details_conf:                   PFX + 'details.conf',
   details_error:                  PFX + 'details.error',
@@ -176,6 +179,8 @@ export const BILL_I18N_KEYS = {
   refusal_not_booked:             PFX + 'refusal.not-booked',
   refusal_bill_paid:              PFX + 'refusal.bill-paid',
   refusal_line_count:             PFX + 'refusal.line-count',
+  refusal_payment_account_required: PFX + 'refusal.payment-account-required',
+  refusal_payment_account_invalid:  PFX + 'refusal.payment-account-invalid',
 
   // «Rechnung hochladen» (spec 1.91)
   upload_reading:                 PFX + 'upload.reading',
@@ -236,6 +241,8 @@ export const BILL_REFUSAL_I18N: Record<string, keyof typeof BILL_I18N_KEYS> = {
   'not-booked': 'refusal_not_booked',
   'bill-paid': 'refusal_bill_paid',
   'line-count': 'refusal_line_count',
+  'payment-account-required': 'refusal_payment_account_required',
+  'payment-account-invalid': 'refusal_payment_account_invalid',
 };
 
 /** The i18n entries for the given reasons (unknown reasons dropped, no duplicates). */
