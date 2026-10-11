@@ -5,7 +5,7 @@ import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
 import { ReservationCollection, ReservationModel, UserModel } from '@okr/shared-models';
-import { findByKey, getFullName, getSystemQuery } from '@okr/shared-util-core';
+import { getFullName, getSystemQuery } from '@okr/shared-util-core';
 
 import { getReservationIndex } from '@okr/relationship-reservation-util';
 import { ActivityService } from '@okr/activity-data-access';
@@ -51,7 +51,7 @@ export class ReservationService {
    * @returns the reservation as an Observable
    */
   public read(key: string): Observable<ReservationModel | undefined> {
-    return findByKey<ReservationModel>(this.list(), key);
+    return this.firestoreService.readTenantModel<ReservationModel>(ReservationCollection, key, this.env.tenantId);
   }
 
   /**

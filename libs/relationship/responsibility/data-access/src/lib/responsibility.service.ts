@@ -5,7 +5,7 @@ import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
 import { ResponsibilityCollection, ResponsibilityModel, UserModel } from '@okr/shared-models';
-import { findByKey, getFullName, getSystemQuery } from '@okr/shared-util-core';
+import { getFullName, getSystemQuery } from '@okr/shared-util-core';
 
 import { getResponsibilityIndex } from '@okr/relationship-responsibility-util';
 import { ActivityService } from '@okr/activity-data-access';
@@ -37,7 +37,7 @@ export class ResponsibilityService {
   }
 
   public read(key: string): Observable<ResponsibilityModel | undefined> {
-    return findByKey<ResponsibilityModel>(this.list(), key);
+    return this.firestoreService.readTenantModel<ResponsibilityModel>(ResponsibilityCollection, key, this.env.tenantId);
   }
 
   public async update(responsibility: ResponsibilityModel, currentUser?: UserModel): Promise<string | undefined> {

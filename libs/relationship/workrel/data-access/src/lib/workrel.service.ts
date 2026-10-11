@@ -5,7 +5,7 @@ import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
 import { UserModel, WorkrelCollection, WorkrelModel } from '@okr/shared-models';
-import { findByKey, getFullName, getSystemQuery } from '@okr/shared-util-core';
+import { getFullName, getSystemQuery } from '@okr/shared-util-core';
 
 import { getWorkrelIndex } from '@okr/relationship-workrel-util';
 import { ActivityService } from '@okr/activity-data-access';
@@ -51,7 +51,7 @@ export class WorkrelService {
    * @returns the workrel as an Observable or undefined if not found
    */
   public read(key: string): Observable<WorkrelModel | undefined> {
-    return findByKey<WorkrelModel>(this.list(), key);
+    return this.firestoreService.readTenantModel<WorkrelModel>(WorkrelCollection, key, this.env.tenantId);
   }
     
   /**

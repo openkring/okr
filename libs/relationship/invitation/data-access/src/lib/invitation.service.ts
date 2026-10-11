@@ -6,7 +6,7 @@ import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
 import { AvatarInfo, CalEventCollection, CalEventModel, CommentCollection, InvitationCollection, InvitationModel, InvitationModelName, InvitationState, PersonModelName, UserModel } from '@okr/shared-models';
-import { DateFormat, findByKey, getFullName, getSystemQuery, getTodayStr, removeKeyFromOkrModel } from '@okr/shared-util-core';
+import { DateFormat, getFullName, getSystemQuery, getTodayStr, removeKeyFromOkrModel } from '@okr/shared-util-core';
 
 import { applyInvitationAnswer, removeInvitedAttendee } from '@okr/calevent-util';
 import { createComment } from '@okr/comment-util';
@@ -49,7 +49,7 @@ export class InvitationService {
    * @returns the invitation as an Observable or undefined if not found
    */
   public read(key: string): Observable<InvitationModel | undefined> {
-    return findByKey<InvitationModel>(this.list(), key);    
+    return this.firestoreService.readTenantModel<InvitationModel>(InvitationCollection, key, this.env.tenantId);    
   }
 
   /**

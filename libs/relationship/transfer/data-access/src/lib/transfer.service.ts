@@ -5,7 +5,7 @@ import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
 import { TransferCollection, TransferModel, UserModel } from '@okr/shared-models';
-import { findByKey, getSystemQuery } from '@okr/shared-util-core';
+import { getSystemQuery } from '@okr/shared-util-core';
 
 import { getTransferIndex } from '@okr/relationship-transfer-util';
 import { ActivityService } from '@okr/activity-data-access';
@@ -49,7 +49,7 @@ export class TransferService  {
    * @returns the transfer as an Observable or undefined if not found
    */
   public read(key: string): Observable<TransferModel | undefined> {
-    return findByKey<TransferModel>(this.list(), key);    
+    return this.firestoreService.readTenantModel<TransferModel>(TransferCollection, key, this.env.tenantId);    
   }
 
   /**

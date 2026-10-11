@@ -7,7 +7,7 @@ import { FirestoreService } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
 import { AvatarInfo, CategoryListModel, DbQuery, MembershipCollection, MembershipModel, UserModel } from '@okr/shared-models';
 import { error } from '@okr/shared-util-angular';
-import { addDuration, addSystemQueries, DateFormat, findByKey, getAvatarInfo, getCategoryAttribute, getFullName, getSystemQuery, getTodayStr, isAfterDate } from '@okr/shared-util-core';
+import { addDuration, addSystemQueries, DateFormat, getAvatarInfo, getCategoryAttribute, getFullName, getSystemQuery, getTodayStr, isAfterDate } from '@okr/shared-util-core';
 
 import { createComment } from '@okr/comment-util';
 
@@ -56,7 +56,7 @@ export class MembershipService {
    * @returns the membership as an Observable or undefined if not found
    */
   public read(key: string): Observable<MembershipModel | undefined> {
-    return findByKey<MembershipModel>(this.list(), key);
+    return this.firestoreService.readTenantModel<MembershipModel>(MembershipCollection, key, this.env.tenantId);
   }
 
   public async update(membership: MembershipModel, currentUser?: UserModel): Promise<string | undefined> {

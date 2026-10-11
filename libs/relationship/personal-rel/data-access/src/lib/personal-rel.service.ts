@@ -5,7 +5,7 @@ import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
 import { PersonalRelCollection, PersonalRelModel, UserModel } from '@okr/shared-models';
-import { findByKey, getFullName, getSystemQuery, removeDuplicatesFromArray } from '@okr/shared-util-core';
+import { getFullName, getSystemQuery, removeDuplicatesFromArray } from '@okr/shared-util-core';
 
 import { getPersonalRelIndex } from '@okr/relationship-personal-rel-util';
 import { ActivityService } from '@okr/activity-data-access';
@@ -53,7 +53,7 @@ export class PersonalRelService {
    * @returns the personalRel as an Observable
    */
   public read(key: string): Observable<PersonalRelModel | undefined> {
-    return findByKey<PersonalRelModel>(this.list(), key);
+    return this.firestoreService.readTenantModel<PersonalRelModel>(PersonalRelCollection, key, this.tenantId);
   }
 
   /**

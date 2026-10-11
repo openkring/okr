@@ -5,7 +5,7 @@ import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
 import { OwnershipCollection, OwnershipModel, UserModel } from '@okr/shared-models';
-import { findByKey, getFullName, getSystemQuery } from '@okr/shared-util-core';
+import { getFullName, getSystemQuery } from '@okr/shared-util-core';
 
 import { getOwnershipIndex } from '@okr/relationship-ownership-util';
 import { ActivityService } from '@okr/activity-data-access';
@@ -52,7 +52,7 @@ export class OwnershipService {
    * @returns the ownership as an Observable
    */
   public read(key: string): Observable<OwnershipModel | undefined> {
-    return findByKey<OwnershipModel>(this.list(), key);
+    return this.firestoreService.readTenantModel<OwnershipModel>(OwnershipCollection, key, this.tenantId);
   }
 
   /**
