@@ -405,9 +405,11 @@ export interface ProjectBudgetSummary { revenue: ProjectBudgetRow; expense: Proj
 export function projectBudgetSummary(
   projectKey: string, budgetedRevenue: number, budgetedExpenses: number,
   lines: BookingLineModel[], bookings: BookingModel[], accounts: AccountModel[],
+  allocations: ProjectAllocationLike[] = [],
 ): ProjectBudgetSummary {
   const own = filterLinesByDimension(lines, 'projectKey', new Set([projectKey]));
-  const result = buildSplitProjectResult(accounts, own, bookings, { income: '', expense: '', net: '' });
+  // Umlagen (D26) change the Ist only — the project budget has no Kostenstelle to allocate from
+  const result = withProjectAllocations(buildSplitProjectResult(accounts, own, bookings, { income: '', expense: '', net: '' }), allocations);
   const row = (budget: number, actual: number): ProjectBudgetRow =>
     ({ budget, actual, diff: actual - budget, used: budget === 0 ? undefined : Math.round((actual / budget) * 100) });
   return {
@@ -415,4 +417,32 @@ export function projectBudgetSummary(
     expense: row(budgetedExpenses, result.expense),
     net: row(budgetedRevenue - budgetedExpenses, result.income - result.expense),
   };
+}
+
+/** A project Umlage row (structurally `ProjectAllocationRow` of the cost-center util): Ist only, signed for the project. */
+export interface ProjectAllocationLike { key: string; side: 'revenue' | 'expense'; title: string; actual: number }
+
+/**
+ * The project result with its Umlagen (spec 1.65 D26): each row goes at the end of its side (Einnahmen for `revenue`,
+ * Ausgaben for `expense`) as a one-line account row; the side heading, the totals and the net are adjusted.
+ */
+export function withProjectAllocations(result: SplitProjectResult, allocations: ProjectAllocationLike[]): SplitProjectResult {
+  const live = allocations.filter(a => a.actual !== 0);
+  if (live.length === 0) return result;
+  const sum = (side: 'revenue' | 'expense') => live.filter(a => a.side === side).reduce((t, a) => t + a.actual, 0);
+  const income = result.income + sum('revenue');
+  const expense = result.expense + sum('expense');
+  const toRow = (a: ProjectAllocationLike): ReportRow =>
+    ({ okey: a.key, id: '', name: a.title, depth: 1, kind: 'account', hasChildren: false, isExpanded: false, current: a.actual, previous: 0 });
+  const rows: ReportRow[] = [];
+  const flush = (side: 'revenue' | 'expense') => live.filter(a => a.side === side).forEach(a => rows.push(toRow(a)));
+  for (const r of result.rows) {
+    if (r.okey === 'total-expense') flush('revenue');
+    if (r.okey === 'project-result') flush('expense');
+    if (r.okey === 'total-income') rows.push({ ...r, current: income });
+    else if (r.okey === 'total-expense') rows.push({ ...r, current: expense });
+    else if (r.okey === 'project-result') rows.push({ ...r, current: income - expense });
+    else rows.push(r);
+  }
+  return { ...result, rows, income, expense, net: income - expense };
 }

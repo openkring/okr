@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { AccountModel, CostAllocationModel, MoneyModel } from '@okr/shared-models';
 
-import { allocationBaseCells, applyAllocations } from './cost-allocation.util';
+import { allocationBaseCells, applyAllocations, applyProjectAllocations } from './cost-allocation.util';
 import { CostCenterRollUp } from './cost-center-aggregate';
 
 const rule = (okey: string, extra: Partial<CostAllocationModel>): CostAllocationModel =>
@@ -59,5 +59,40 @@ describe('allocationBaseCells — the percentage base is Aufwand (4–6) or Ertr
       { costCenterKey: 'club', accountKey: 'a4', side: 'expense' as const, actual: 700, budget: 0, compare: 0 },
     ];
     expect(allocationBaseCells(cells, accounts).map(c => c.accountKey)).toEqual(['a3', 'a4']);
+  });
+});
+
+describe('applyAllocations ignores project Umlagen (D26)', () => {
+  it('a Kostenstelle → Projekt or Projekt → Projekt rule never moves a Kostenstelle amount', () => {
+    const toProject = rule('tp', { scope: 'centerToProject', fromCostCenterKey: 'club', toProjectKey: 'pr1', mode: 'percent', percent: 40 });
+    const projects = rule('pp', { scope: 'project', fromProjectKey: 'pr1', toProjectKey: 'pr2', fiscalYear: 2026, mode: 'percent', percent: 40 });
+    expect(applyAllocations([toProject, projects], sel('club'), rollUp, 2026, 'scs')).toEqual([]);
+  });
+  it('a legacy rule without scope counts as Kostenstelle → Kostenstelle', () => {
+    const legacy = { ...rule('lg', { fromCostCenterKey: 'club', toCostCenterKey: 'jun', mode: 'percent', percent: 40 }), scope: undefined } as unknown as CostAllocationModel;
+    expect(applyAllocations([legacy], sel('jun'), rollUp, 2026, 'scs')).toHaveLength(1);
+  });
+});
+
+describe('applyProjectAllocations (D26) — Ist only', () => {
+  const pp = rule('pp', { scope: 'project', fiscalYear: 0, fromProjectKey: 'pr1', toProjectKey: 'pr2', side: 'expense', mode: 'percent', percent: 25 });
+  const cp = rule('cp', { scope: 'centerToProject', fiscalYear: 2026, fromCostCenterKey: 'club', toProjectKey: 'pr2', side: 'expense', mode: 'percent', percent: 10 });
+  const fixed = rule('fx', { scope: 'project', fiscalYear: 0, fromProjectKey: 'pr1', toProjectKey: 'pr2', side: 'revenue', mode: 'amount', amount: new MoneyModel(50000, 'CHF') });
+  const projectActual = (pk: string, side: 'expense' | 'revenue') => (pk === 'pr1' ? (side === 'expense' ? 8000 : 2000) : 0);
+  const centerActual = (cc: string, year: number, side: 'expense' | 'revenue') => (cc === 'club' && year === 2026 && side === 'expense' ? 8000 : 0);
+
+  it('Projekt → Projekt: + at the target, − at the source, % of the source project (whole life)', () => {
+    expect(applyProjectAllocations([pp], 'pr2', projectActual, centerActual, 'scs')).toEqual([{ key: 'allocation:pp', side: 'expense', title: 'R pp', actual: 2000 }]);
+    expect(applyProjectAllocations([pp], 'pr1', projectActual, centerActual, 'scs')).toEqual([{ key: 'allocation:pp', side: 'expense', title: 'R pp', actual: -2000 }]);
+  });
+  it('Kostenstelle → Projekt: % of the Kostenstelle Ist of the rule year, charged to the project only', () => {
+    expect(applyProjectAllocations([cp], 'pr2', projectActual, centerActual, 'scs')[0]).toMatchObject({ actual: 800 });
+  });
+  it('a fixed amount, an uninvolved project, Kostenstelle rules, archived and foreign books', () => {
+    expect(applyProjectAllocations([fixed], 'pr2', projectActual, centerActual, 'scs')[0]).toMatchObject({ side: 'revenue', actual: 50000 });
+    expect(applyProjectAllocations([pp, cp], 'pr9', projectActual, centerActual, 'scs')).toEqual([]);
+    const center = rule('cc', { fromCostCenterKey: 'club', toCostCenterKey: 'jun', mode: 'percent', percent: 40 });
+    expect(applyProjectAllocations([center, { ...pp, isArchived: true }], 'pr2', projectActual, centerActual, 'scs')).toEqual([]);
+    expect(applyProjectAllocations([pp], 'pr2', projectActual, centerActual, 'gss')).toEqual([]);
   });
 });

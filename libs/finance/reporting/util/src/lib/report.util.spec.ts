@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { AccountModel, BookingLineModel, BookingModel, BudgetLineModel, MoneyModel } from '@okr/shared-models';
 
 import {
-  accountClass, accountForest, ALL_COST_CENTERS, projectBudgetSummary, bookingsByAccount, buildProjectResultRows, buildReportRows, buildSplitProjectResult, effectiveCostCenterSelection, defaultExpandedKeys, fiscalYear, fiscalYearOf, filterLinesByCostCenter, filterLinesByDimension, NO_COST_CENTER, reportToCsv, signedBalance, sumLinesByAccount, totalForClasses, yearResult,
+  accountClass, accountForest, ALL_COST_CENTERS, projectBudgetSummary, withProjectAllocations, bookingsByAccount, buildProjectResultRows, buildReportRows, buildSplitProjectResult, effectiveCostCenterSelection, defaultExpandedKeys, fiscalYear, fiscalYearOf, filterLinesByCostCenter, filterLinesByDimension, NO_COST_CENTER, reportToCsv, signedBalance, sumLinesByAccount, totalForClasses, yearResult,
 } from './report.util';
 
 function account(okey: string, id: string, name: string, parentKey = '', type = 'leaf'): AccountModel {
@@ -349,5 +349,31 @@ describe('projectBudgetSummary (1.65 D25)', () => {
   it('no budget = percent undefined, not 0', () => {
     const r = projectBudgetSummary('pr2', 0, 0, lines, bks, acc);
     expect(r.expense).toEqual({ budget: 0, actual: 1000, diff: 1000, used: undefined });
+  });
+});
+
+describe('withProjectAllocations (D26)', () => {
+  const acc = [account('a3', '3000', 'Ertrag'), account('a4', '4000', 'Aufwand')];
+  const bks = [booking('b1', '20260301')];
+  const lines = [line('b1', 'a3', 0, 50000), line('b1', 'a4', 30000, 0)];
+  const base = buildSplitProjectResult(acc, lines, bks, { income: 'Einnahmen', expense: 'Ausgaben', net: 'Ergebnis' });
+  const alloc = [{ key: 'allocation:u1', side: 'expense' as const, title: 'Umlage Clubhaus', actual: 4000 }];
+  const r = withProjectAllocations(base, alloc);
+  it('adds the row at the end of its side and adjusts the side heading and the net', () => {
+    const keys = r.rows.map(x => x.okey);
+    expect(keys.indexOf('allocation:u1')).toBe(keys.indexOf('project-result') - 1);
+    expect(r.rows.find(x => x.okey === 'total-expense')?.current).toBe(34000);
+    expect(r.rows.find(x => x.okey === 'project-result')?.current).toBe(16000);
+    expect([r.income, r.expense, r.net]).toEqual([50000, 34000, 16000]);
+  });
+  it('no allocations = unchanged; an allocation on an empty side still shows', () => {
+    expect(withProjectAllocations(base, [])).toEqual(base);
+    const onlyRevenue = withProjectAllocations(base, [{ key: 'allocation:u2', side: 'revenue', title: 'Anteil', actual: -1000 }]);
+    expect(onlyRevenue.income).toBe(49000);
+    expect(onlyRevenue.rows.map(x => x.okey).indexOf('allocation:u2')).toBe(onlyRevenue.rows.map(x => x.okey).indexOf('total-expense') - 1);
+  });
+  it('projectBudgetSummary includes the allocations in the Ist', () => {
+    const pl = [{ ...line('b1', 'a4', 1000, 0), projectKey: 'pr1' }];
+    expect(projectBudgetSummary('pr1', 0, 2000, pl, bks, acc, alloc).expense).toMatchObject({ actual: 5000, budget: 2000 });
   });
 });
