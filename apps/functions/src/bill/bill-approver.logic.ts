@@ -1,0 +1,105 @@
+//
+// The daily payment_approver digest (spec 1.94 §3.3–§3.4), pure: which bills were booked on a day, for the
+// books with the setting on, grouped by the account of ours that will pay them.
+
+export interface HistoryRow { parentKey?: string; tags?: string; tenants?: string[]; creationDateTime?: string }
+export interface DigestBill {
+  okey: string; accountingTenantId: string; vendorName: string; billId: string; amount: number;
+  dueDate: string; state: string; bookingKeys: string[]; tenants: string[]; paymentAccountKey: string;
+}
+export interface PayingAccount { key: string; name: string; iban: string }
+export interface BooksConfig { accountingTenantId: string; enabled: boolean; paymentAccountKeys: string[]; accounts: PayingAccount[] }
+export interface DigestGroup { heading: string; count: number; total: number; bills: DigestBill[] }
+export interface BooksDigest {
+  accountingTenantId: string; date: string; count: number; total: number;
+  groups: DigestGroup[]; lines: string; links: { key: string; label: string }[];
+}
+
+export const NO_PAYMENT_ACCOUNT = 'Ohne Zahlungskonto';
+
+export function dayWindow(day: string): { from: string; to: string } {
+  return { from: `${day}000000`, to: `${day}235959` };
+}
+
+export function digestRelatedKey(books: string, day: string): string {
+  return `billDigest.${books}_${day}`;
+}
+
+export function bookedBillKeys(rows: HistoryRow[]): Map<string, string[]> {
+  const out = new Map<string, string[]>();
+  for (const r of rows) {
+    const parentKey = r.parentKey ?? '';
+    const tenantId = (r.tenants ?? [])[0] ?? '';
+    if (!(r.tags ?? '').split(',').includes('billBooked') || !parentKey.startsWith('bill.') || !tenantId) continue;
+    const key = parentKey.slice('bill.'.length);
+    const list = out.get(tenantId) ?? [];
+    if (!list.includes(key)) list.push(key);
+    out.set(tenantId, list);
+  }
+  return out;
+}
+
+/** Still booked: its own booking is linked and it is no longer a draft (a deleted booking returns it to draft). */
+export function selectDigestBills(bills: DigestBill[]): DigestBill[] {
+  return bills.filter(b => b.state !== 'draft' && b.bookingKeys.includes(`bill-${b.okey}`));
+}
+
+export function formatChf(minor: number): string {
+  return ((minor || 0) / 100).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+export function displayDate(storeDate: string): string {
+  return /^\d{8}$/.test(storeDate) ? `${storeDate.slice(6, 8)}.${storeDate.slice(4, 6)}.${storeDate.slice(0, 4)}` : '';
+}
+
+export function formatIban(iban: string): string {
+  return (iban ?? '').replace(/\s+/g, '').replace(/(.{4})/g, '$1 ').trim();
+}
+
+function billLabel(b: DigestBill): string {
+  const due = displayDate(b.dueDate);
+  return [b.vendorName || b.billId, `${formatChf(b.amount)} CHF`, due ? `fällig ${due}` : ''].filter(Boolean).join(' · ');
+}
+
+function groupHeading(name: string, iban: string, bills: DigestBill[]): string {
+  const total = bills.reduce((s, b) => s + (b.amount || 0), 0);
+  const what = bills.length === 1 ? '1 Kreditor' : `${bills.length} Kreditoren`;
+  return `${[name, iban ? formatIban(iban) : ''].filter(Boolean).join(' · ')} — ${what}, ${formatChf(total)} CHF`;
+}
+
+/** One digest per enabled set of books with at least one bill booked that day. */
+export function buildDigests(day: string, bills: DigestBill[], books: BooksConfig[]): BooksDigest[] {
+  const out: BooksDigest[] = [];
+  for (const cfg of books) {
+    if (!cfg.enabled) continue;
+    const own = selectDigestBills(bills).filter(b => b.accountingTenantId === cfg.accountingTenantId);
+    if (own.length === 0) continue;
+    const groups: DigestGroup[] = [];
+    for (const key of cfg.paymentAccountKeys) {
+      const list = own.filter(b => b.paymentAccountKey === key);
+      if (list.length === 0) continue;
+      const acc = cfg.accounts.find(a => a.key === key);
+      groups.push({ heading: groupHeading(acc?.name || key, acc?.iban ?? '', list), count: list.length,
+        total: list.reduce((s, b) => s + (b.amount || 0), 0), bills: list });
+    }
+    const rest = own.filter(b => !cfg.paymentAccountKeys.includes(b.paymentAccountKey));
+    if (rest.length > 0) {
+      groups.push({ heading: groupHeading(NO_PAYMENT_ACCOUNT, '', rest), count: rest.length,
+        total: rest.reduce((s, b) => s + (b.amount || 0), 0), bills: rest });
+    }
+    const links: { key: string; label: string }[] = [];
+    const lines: string[] = [];
+    groups.forEach((g, i) => {
+      links.push({ key: `heading.${i}`, label: g.heading });
+      lines.push(g.heading);
+      for (const b of g.bills) {
+        links.push({ key: `bill.${b.okey}`, label: billLabel(b) });
+        lines.push(`  ${billLabel(b)}${b.billId ? ` (Beleg ${b.billId})` : ''}`);
+      }
+    });
+    // lines: one per heading and bill — the test counts 1 heading + 2 bills = 3
+    out.push({ accountingTenantId: cfg.accountingTenantId, date: displayDate(day), count: own.length,
+      total: own.reduce((s, b) => s + (b.amount || 0), 0), groups, lines: lines.join('\n'), links });
+  }
+  return out;
+}

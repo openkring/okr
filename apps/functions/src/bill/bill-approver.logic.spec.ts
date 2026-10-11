@@ -1,0 +1,65 @@
+import { describe, expect, it } from 'vitest';
+import { bookedBillKeys, BooksConfig, buildDigests, dayWindow, digestRelatedKey, displayDate, DigestBill, formatChf, formatIban,
+  NO_PAYMENT_ACCOUNT, selectDigestBills } from './bill-approver.logic';
+
+const bill = (o: Partial<DigestBill>): DigestBill => {
+  const okey = o.okey ?? 'b1';
+  return { okey, accountingTenantId: 'bka', vendorName: 'Swisscom', billId: '00991', amount: 8950, dueDate: '20261025',
+    state: 'todo', bookingKeys: [`bill-${okey}`], tenants: ['bka'], paymentAccountKey: 'zkb', ...o };
+};
+const books = (o: Partial<BooksConfig> = {}): BooksConfig => ({
+  accountingTenantId: 'bka', enabled: true, paymentAccountKeys: ['zkb', 'pf'],
+  accounts: [{ key: 'zkb', name: 'ZKB Betriebskonto', iban: 'CH9300700110001234567' }, { key: 'pf', name: 'PostFinance', iban: '' }], ...o });
+
+describe('dayWindow / keys / formatting', () => {
+  it('spans the whole Zurich day', () => expect(dayWindow('20261010')).toEqual({ from: '20261010000000', to: '20261010235959' }));
+  it('names the digest per books and day', () => expect(digestRelatedKey('bka', '20261010')).toBe('billDigest.bka_20261010'));
+  it('formats amounts Swiss style', () => expect(formatChf(128950)).toMatch(/^1.289\.50$/));
+  it('formats a StoreDate', () => expect(displayDate('20261031')).toBe('31.10.2026'));
+  it('groups an IBAN by four', () => expect(formatIban('CH9300700110001234567')).toBe('CH93 0070 0110 0012 3456 7'));
+});
+
+describe('bookedBillKeys', () => {
+  it('keeps only billBooked entries on bills, per tenant, without duplicates', () => {
+    const m = bookedBillKeys([
+      { parentKey: 'bill.b1', tags: 'system,billBooked', tenants: ['bka'] },
+      { parentKey: 'bill.b1', tags: 'system,billBooked', tenants: ['bka'] },
+      { parentKey: 'bill.b2', tags: 'system,payment', tenants: ['bka'] },
+      { parentKey: 'invoice.i1', tags: 'system,billBooked', tenants: ['bka'] },
+      { parentKey: 'bill.b3', tags: 'system,billBooked', tenants: ['scs'] },
+    ]);
+    expect(m.get('bka')).toEqual(['b1']);
+    expect(m.get('scs')).toEqual(['b3']);
+  });
+});
+
+describe('selectDigestBills', () => {
+  it('drops a bill whose booking was deleted the same day', () =>
+    expect(selectDigestBills([bill({}), bill({ okey: 'b2', state: 'draft', bookingKeys: [] })]).map(b => b.okey)).toEqual(['b1']));
+});
+
+describe('buildDigests', () => {
+  it('skips books with the setting off and books without a config', () => {
+    expect(buildDigests('20261010', [bill({})], [books({ enabled: false })])).toEqual([]);
+    expect(buildDigests('20261010', [bill({ accountingTenantId: 'gss' })], [books()])).toEqual([]);
+  });
+  it('groups by paying account in configured order, unknown/removed accounts last', () => {
+    const [d] = buildDigests('20261010', [
+      bill({ okey: 'n1', paymentAccountKey: '' }), bill({ okey: 'p1', paymentAccountKey: 'pf' }),
+      bill({ okey: 'z1' }), bill({ okey: 'x1', paymentAccountKey: 'removed' }),
+    ], [books()]);
+    expect(d.groups.map(g => g.bills.map(b => b.okey))).toEqual([['z1'], ['p1'], ['n1', 'x1']]);
+    expect(d.groups[0].heading).toContain('ZKB Betriebskonto · CH93 0070 0110 0012 3456 7');
+    expect(d.groups[1].heading).toMatch(/^PostFinance — 1 Kreditor, /);
+    expect(d.groups[2].heading).toMatch(new RegExp(`^${NO_PAYMENT_ACCOUNT}`));
+  });
+  it('interleaves heading rows and bill links, and counts and sums', () => {
+    const [d] = buildDigests('20261010', [bill({}), bill({ okey: 'b2', amount: 120000, dueDate: '20261031' })], [books()]);
+    expect(d.count).toBe(2);
+    expect(d.total).toBe(128950);
+    expect(d.links.map(l => l.key)).toEqual(['heading.0', 'bill.b1', 'bill.b2']);
+    expect(d.links[2].label).toBe(`Swisscom · ${formatChf(120000)} CHF · fällig 31.10.2026`);
+    expect(d.lines.split('\n')).toHaveLength(3);
+  });
+  it('returns nothing for a day without bills', () => expect(buildDigests('20261010', [], [books()])).toEqual([]));
+});
