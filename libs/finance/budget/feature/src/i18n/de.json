@@ -189,6 +189,22 @@
     "new": "Neue Umlage",
     "edit": "Umlage bearbeiten",
     "archive": "Archivieren",
-    "archiveConf": "Möchtest du diese Umlage archivieren?"
+    "archiveConf": "Möchtest du diese Umlage archivieren?",
+    "scope": {
+      "label": "Art der Umlage",
+      "center": "Kostenstelle → Kostenstelle",
+      "centerToProject": "Kostenstelle → Projekt",
+      "project": "Projekt → Projekt"
+    },
+    "fromProject": {
+      "label": "Von Projekt"
+    },
+    "toProject": {
+      "label": "An Projekt"
+    },
+    "project": {
+      "unknown": "Wähle ein Projekt."
+    },
+    "lifetime": "Projekt-Umlagen (ganze Laufzeit)"
   }
 }

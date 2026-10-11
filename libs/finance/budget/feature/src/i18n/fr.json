@@ -189,6 +189,22 @@
     "new": "Nouvelle répartition",
     "edit": "Modifier la répartition",
     "archive": "Archiver",
-    "archiveConf": "Veux-tu archiver cette répartition ?"
+    "archiveConf": "Veux-tu archiver cette répartition ?",
+    "scope": {
+      "label": "Type de répartition",
+      "center": "Centre de coûts → centre de coûts",
+      "centerToProject": "Centre de coûts → projet",
+      "project": "Projet → projet"
+    },
+    "fromProject": {
+      "label": "Du projet"
+    },
+    "toProject": {
+      "label": "Au projet"
+    },
+    "project": {
+      "unknown": "Choisis un projet."
+    },
+    "lifetime": "Répartitions de projets (toute la durée)"
   }
 }

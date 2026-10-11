@@ -1,7 +1,8 @@
 import { Component, computed, DestroyRef, inject, input, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList,
-  IonMenuButton, IonNote, IonPopover, IonSelect, IonSelectOption, IonTitle, IonToolbar
+  IonItemDivider, IonMenuButton, IonNote, IonPopover, IonSelect, IonSelectOption, IonTitle, IonToolbar
 } from '@ionic/angular/standalone';
 
 import { Menu } from '@okr/cms-menu-feature';
@@ -28,7 +29,7 @@ import { BudgetStore } from './budget.store';
   imports: [
     SvgIconPipe, Spinner, EmptyList, Menu, ReadOnlyBanner,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon, IonPopover,
-    IonContent, IonList, IonItem, IonLabel, IonNote, IonSelect, IonSelectOption
+    IonContent, IonList, IonItem, IonItemDivider, IonLabel, IonNote, IonSelect, IonSelectOption
   ],
   template: `
     <ion-header>
@@ -60,7 +61,7 @@ import { BudgetStore } from './budget.store';
       </ion-item>
       @if (store.isLoading()) {
         <okr-spinner />
-      } @else if (rules().length === 0) {
+      } @else if (rules().length === 0 && projectRules().length === 0) {
         <okr-empty-list [message]="store.i18n.alloc_empty()" />
       } @else {
         <ion-list lines="inset">
@@ -68,10 +69,22 @@ import { BudgetStore } from './budget.store';
             <ion-item button [detail]="false" (click)="showActions(rule)">
               <ion-label>
                 <h2>{{ rule.title }}</h2>
-                <p>{{ sideLabel(rule) }} · {{ centerName(rule.fromCostCenterKey) }} → {{ centerName(rule.toCostCenterKey) }}</p>
+                <p>{{ sideLabel(rule) }} · {{ centerName(rule.fromCostCenterKey) }} → {{ rule.scope === 'centerToProject' ? projectName(rule.toProjectKey) : centerName(rule.toCostCenterKey) }}</p>
               </ion-label>
               <ion-note slot="end">{{ valueLabel(rule) }}</ion-note>
             </ion-item>
+          }
+          @if (projectRules().length > 0) {
+            <ion-item-divider color="light"><ion-label>{{ store.i18n.alloc_lifetime() }}</ion-label></ion-item-divider>
+            @for (rule of projectRules(); track rule.okey) {
+              <ion-item button [detail]="false" (click)="showActions(rule)">
+                <ion-label>
+                  <h2>{{ rule.title }}</h2>
+                  <p>{{ sideLabel(rule) }} · {{ projectName(rule.fromProjectKey) }} → {{ projectName(rule.toProjectKey) }}</p>
+                </ion-label>
+                <ion-note slot="end">{{ valueLabel(rule) }}</ion-note>
+              </ion-item>
+            }
           }
         </ion-list>
       }
@@ -88,13 +101,21 @@ export class CostAllocationList {
   protected readonly year = signal(this.store.currentFiscalYear());
 
   protected readonly rules = computed(() =>
-    this.store.allocationRules().filter(r => r.fiscalYear === this.year()).sort((a, b) => (a.title ?? '').localeCompare(b.title ?? '')));
+    this.store.allocationRules().filter(r => (r.scope ?? 'center') !== 'project' && r.fiscalYear === this.year()));
+  /** Projekt → Projekt Umlagen run over the projects' whole life — listed in their own section, independent of the year */
+  protected readonly projectRules = computed(() => this.store.allocationRules().filter(r => r.scope === 'project'));
+  private readonly projectNames = signal(new Map<string, string>());
   protected readonly canChange = computed(() => this.store.isEnabled() && this.hasRole('treasurer'));
   private readonly centerNames = computed(() => new Map(this.store.costCenterStore.costCenters().map(c => [c.okey, costCenterLabel(c)])));
 
   constructor() {
     this.store.loadAllocations();
     inject(DestroyRef).onDestroy(() => this.store.releaseAllocations());
+    this.store.projectService.list().pipe(takeUntilDestroyed()).subscribe(ps => this.projectNames.set(new Map(ps.map(p => [p.okey, p.name ?? p.okey]))));
+  }
+
+  protected projectName(key: string): string {
+    return this.projectNames().get(key) ?? key;
   }
 
   protected centerName(key: string): string {

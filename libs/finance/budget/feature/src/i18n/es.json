@@ -189,6 +189,22 @@
     "new": "Nuevo reparto",
     "edit": "Editar reparto",
     "archive": "Archivar",
-    "archiveConf": "¿Quieres archivar este reparto?"
+    "archiveConf": "¿Quieres archivar este reparto?",
+    "scope": {
+      "label": "Tipo de reparto",
+      "center": "Centro de coste → centro de coste",
+      "centerToProject": "Centro de coste → proyecto",
+      "project": "Proyecto → proyecto"
+    },
+    "fromProject": {
+      "label": "Del proyecto"
+    },
+    "toProject": {
+      "label": "Al proyecto"
+    },
+    "project": {
+      "unknown": "Elige un proyecto."
+    },
+    "lifetime": "Repartos de proyectos (toda la duración)"
   }
 }

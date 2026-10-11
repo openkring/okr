@@ -32,6 +32,9 @@
     "@okr/subject-address-data-access": "*",
     "@okr/shared-config": "*",
     "@okr/avatar-data-access": "*",
-    "@okr/finance-booking-util": "*"
+    "@okr/finance-booking-util": "*",
+    "@okr/finance-cost-center-data-access": "*",
+    "@okr/finance-budget-util": "*",
+    "@okr/finance-budget-data-access": "*"
   }
 }

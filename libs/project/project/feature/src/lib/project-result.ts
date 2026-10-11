@@ -20,8 +20,11 @@ import { loadOrgAddressLine } from '@okr/finance-reporting-feature';
 import { ReportingService } from '@okr/finance-reporting-data-access';
 import {
   buildReportDocument, buildSplitProjectResult, downloadFromUrl, filterLinesByDimension, printableRows, REPORTING_I18N_KEYS, ReportDocumentLabels,
-  ReportingI18n, reportTemplateRows, ReportTemplatePayload, sumLinesByAccount,
+  ReportingI18n, reportTemplateRows, ReportTemplatePayload, sumLinesByAccount, withProjectAllocations,
 } from '@okr/finance-reporting-util';
+import { CostAllocationService } from '@okr/finance-budget-data-access';
+import { projectAllocationRows } from '@okr/finance-budget-util';
+import { CostCenterService } from '@okr/finance-cost-center-data-access';
 import { ReportTable } from '@okr/finance-reporting-ui';
 import { PROJECT_I18N_KEYS } from '@okr/project-project-util';
 
@@ -106,6 +109,18 @@ export class ProjectResult {
     stream: ({ params }) => params.id ? this.reportingService.getAllLines(params.id) : of([]),
   });
 
+  // Umlagen onto projects (D26): the rules and the Kostenstelle tree of the books (readable for privileged)
+  private readonly allocationService = inject(CostAllocationService);
+  private readonly costCenterService = inject(CostCenterService);
+  private readonly rulesResource = rxResource({
+    params: resourceParams(() => ({ id: this.accountingTenantId() })),
+    stream: ({ params }) => params.id ? this.allocationService.list(params.id) : of([]),
+  });
+  private readonly costCentersResource = rxResource({
+    params: resourceParams(() => ({ id: this.accountingTenantId() })),
+    stream: ({ params }) => params.id ? this.costCenterService.list(params.id) : of([]),
+  });
+
   private readonly configResource = rxResource({
     params: resourceParams(() => ({ id: this.accountingTenantId() })),
     stream: ({ params }) => params.id ? this.configService.read(params.id) : of(undefined),
@@ -124,9 +139,14 @@ export class ProjectResult {
   protected readonly hasLines = computed(() => this.amounts().size > 0);
 
   /** Einnahmen and Ausgaben by booking direction, then the net (Gewinn/Verlust); the bookings behind each account row. */
-  private readonly result = computed(() => buildSplitProjectResult(
+  /** Umlagen of this project (D26), Ist only */
+  private readonly allocations = computed(() => projectAllocationRows(
+    (this.rulesResource.value() ?? []).filter(r => !r.isArchived), this.projectKey(), this.linesResource.value() ?? [],
+    this.bookingsResource.value() ?? [], this.accountsResource.value() ?? [], this.costCentersResource.value() ?? [],
+    this.configResource.value()?.fiscalYearStart ?? 1, this.accountingTenantId()));
+  private readonly result = computed(() => withProjectAllocations(buildSplitProjectResult(
     this.accountsResource.value() ?? [], this.projectLines(), this.bookingsResource.value() ?? [],
-    { income: this.i18n.resultIncome(), expense: this.i18n.resultExpense(), net: this.i18n.resultNet() }));
+    { income: this.i18n.resultIncome(), expense: this.i18n.resultExpense(), net: this.i18n.resultNet() }), this.allocations()));
   protected readonly rows = computed(() => this.result().rows);
   protected readonly bookingDetails = computed(() => this.result().details);
   /** account rows opened on the page — the PDF lists their bookings too */

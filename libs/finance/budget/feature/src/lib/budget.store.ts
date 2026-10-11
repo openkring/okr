@@ -13,6 +13,7 @@ import { DateFormat, fill, getTodayStr, hasRole } from '@okr/shared-util-core';
 import { AccountService } from '@okr/finance-account-data-access';
 import { AccountingStore } from '@okr/finance-accounting-feature';
 import { BudgetService, CostAllocationService } from '@okr/finance-budget-data-access';
+import { ProjectService } from '@okr/project-project-data-access';
 import { BUDGET_I18N_KEYS, BudgetApprovalFormModel, BudgetI18n, isVersionEditable, planApproval } from '@okr/finance-budget-util';
 import { CostCenterStore } from '@okr/finance-cost-center-feature';
 import { ReportingService } from '@okr/finance-reporting-data-access';
@@ -71,6 +72,7 @@ export const BudgetStore = signalStore(
   withProps(() => ({
     budgetService: inject(BudgetService),
     costAllocationService: inject(CostAllocationService),
+    projectService: inject(ProjectService),
     accountService: inject(AccountService),
     reportingService: inject(ReportingService),
     appStore: inject(AppStore),
@@ -281,14 +283,20 @@ export const BudgetStore = signalStore(
         const _rule = allocation ?? new CostAllocationModel(store.appStore.tenantId(), store.accountingTenantId(), fiscalYear);
         if (!allocation) _rule.amount = new MoneyModel(0, store.functionalCurrency());
         const { CostAllocationEditModal } = await import('@okr/finance-budget-ui');
+        const _projects = await firstValueFrom(store.projectService.list()).catch(() => []);
         const modal = await store.modalController.create({
           component: CostAllocationEditModal,
-          componentProps: { allocation: _rule, costCenters: store.costCenterStore.costCenters(), currentUser: store.currentUser(), readOnly: _readOnly },
+          componentProps: {
+            allocation: _rule, costCenters: store.costCenterStore.costCenters(), projects: _projects,
+            defaultFiscalYear: fiscalYear, currentUser: store.currentUser(), readOnly: _readOnly,
+          },
         });
         await modal.present();
         const { data, role } = await modal.onDidDismiss<CostAllocationModel>();
         if (role !== 'confirm' || !data || _readOnly) return;
-        const _toSave: CostAllocationModel = { ...data, accountingTenantId: store.accountingTenantId(), fiscalYear: _rule.fiscalYear };
+        // Projekt → Projekt runs over the projects' whole life (year 0); the other scopes keep the list's year
+        const _toSave: CostAllocationModel = { ...data, accountingTenantId: store.accountingTenantId(),
+          fiscalYear: (data.scope ?? 'center') === 'project' ? 0 : (data.fiscalYear || fiscalYear) };
         if (_toSave.okey) await store.costAllocationService.update(_toSave, store.currentUser());
         else await store.costAllocationService.create(_toSave, store.currentUser());
       },

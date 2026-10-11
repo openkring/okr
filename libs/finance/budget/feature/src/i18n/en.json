@@ -189,6 +189,22 @@
     "new": "New allocation",
     "edit": "Edit allocation",
     "archive": "Archive",
-    "archiveConf": "Do you want to archive this allocation?"
+    "archiveConf": "Do you want to archive this allocation?",
+    "scope": {
+      "label": "Type of allocation",
+      "center": "Cost centre → cost centre",
+      "centerToProject": "Cost centre → project",
+      "project": "Project → project"
+    },
+    "fromProject": {
+      "label": "From project"
+    },
+    "toProject": {
+      "label": "To project"
+    },
+    "project": {
+      "unknown": "Choose a project."
+    },
+    "lifetime": "Project allocations (whole duration)"
   }
 }

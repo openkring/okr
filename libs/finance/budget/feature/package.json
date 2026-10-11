@@ -25,6 +25,7 @@
     "@okr/finance-cost-center-util": "*",
     "@okr/finance-reporting-data-access": "*",
     "@okr/finance-reporting-util": "*",
-    "@okr/finance-cost-center-data-access": "*"
+    "@okr/finance-cost-center-data-access": "*",
+    "@okr/project-project-data-access": "*"
   }
 }

@@ -17,6 +17,7 @@
     "@okr/finance-budget-util": "*",
     "@okr/finance-cost-center-ui": "*",
     "@okr/finance-cost-center-util": "*",
-    "@okr/finance-account-ui": "*"
+    "@okr/finance-account-ui": "*",
+    "@okr/project-project-ui": "*"
   }
 }

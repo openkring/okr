@@ -2,9 +2,10 @@ import { describe, expect, it } from 'vitest';
 
 import { CostAllocationFormModel, costAllocationValidations } from './cost-allocation.validations';
 
-const base: CostAllocationFormModel = { title: 'Umlage Clubhaus', fiscalYear: 2026, side: 'expense', fromCostCenterKey: 'club', toCostCenterKey: 'jun', mode: 'percent', amount: 0, percent: 40, notes: '' };
+const base: CostAllocationFormModel = { title: 'Umlage Clubhaus', fiscalYear: 2026, scope: 'center', side: 'expense', fromCostCenterKey: 'club', toCostCenterKey: 'jun', fromProjectKey: '', toProjectKey: '', mode: 'percent', amount: 0, percent: 40, notes: '' };
 const leaves = new Set(['club', 'jun']);
-const run = (m: Partial<CostAllocationFormModel>) => costAllocationValidations({ ...base, ...m }, leaves);
+const projects = new Set(['pr1', 'pr2']);
+const run = (m: Partial<CostAllocationFormModel>) => costAllocationValidations({ ...base, ...m }, leaves, projects);
 
 describe('costAllocationValidations', () => {
   it('a complete percent rule is valid', () => expect(run({}).isValid()).toBe(true));
@@ -24,4 +25,18 @@ describe('costAllocationValidations', () => {
     expect(run({ mode: 'amount', amount: 200000, percent: 0 }).isValid()).toBe(true);
   });
   it('fiscal year between 2000 and 2100', () => expect(run({ fiscalYear: 1999 }).getErrors('fiscalYear').length).toBeGreaterThan(0));
+});
+
+describe('costAllocationValidations — project scopes (D26)', () => {
+  it('Kostenstelle → Projekt: needs a Kostenstelle source and a project target; no Kostenstelle target', () => {
+    expect(run({ scope: 'centerToProject', toCostCenterKey: '', toProjectKey: 'pr1' }).isValid()).toBe(true);
+    expect(run({ scope: 'centerToProject', toCostCenterKey: '', toProjectKey: '' }).getErrors('toProjectKey')).toContain('required');
+    expect(run({ scope: 'centerToProject', toCostCenterKey: '', toProjectKey: 'gone' }).getErrors('toProjectKey')).toContain('@finance/budget/feature.allocation.project.unknown');
+  });
+  it('Projekt → Projekt: two different projects, no Kostenstellen, whole life (year 0)', () => {
+    const pp = { scope: 'project' as const, fiscalYear: 0, fromCostCenterKey: '', toCostCenterKey: '', fromProjectKey: 'pr1', toProjectKey: 'pr2' };
+    expect(run(pp).isValid()).toBe(true);
+    expect(run({ ...pp, toProjectKey: 'pr1' }).getErrors('toProjectKey')).toContain('@finance/budget/feature.allocation.to.same');
+    expect(run({ ...pp, fromProjectKey: '' }).getErrors('fromProjectKey')).toContain('required');
+  });
 });

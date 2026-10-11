@@ -3,7 +3,7 @@ import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
 import { DESCRIPTION_LENGTH } from '@okr/shared-constants';
-import { CostAllocationModel, CostCenterModel, MoneyModel, RoleName, UserModel } from '@okr/shared-models';
+import { CostAllocationModel, CostAllocationScope, CostCenterModel, MoneyModel, ProjectModel, RoleName, UserModel } from '@okr/shared-models';
 import {
   AmountInput, AmountInputI18n, ErrorNote, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n
 } from '@okr/shared-ui';
@@ -12,6 +12,7 @@ import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 
 import { ALLOCATION_TITLE_LENGTH, BudgetI18n, CostAllocationFormModel, costAllocationValidations } from '@okr/finance-budget-util';
 import { CostCenterSelect, CostCenterSelectI18n } from '@okr/finance-cost-center-ui';
+import { ProjectSelect } from '@okr/project-project-ui';
 import { leafCostCenters } from '@okr/finance-cost-center-util';
 
 /**
@@ -21,7 +22,7 @@ import { leafCostCenters } from '@okr/finance-cost-center-util';
 @Component({
   selector: 'okr-cost-allocation-form',
   standalone: true,
-  imports: [TextInput, StringSelect, CostCenterSelect, NumberInput, AmountInput, NotesInput, ErrorNote, IonGrid, IonRow, IonCol, IonCard, IonCardContent],
+  imports: [TextInput, StringSelect, CostCenterSelect, ProjectSelect, NumberInput, AmountInput, NotesInput, ErrorNote, IonGrid, IonRow, IonCol, IonCard, IonCardContent],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px; } }`],
   template: `
     @if (showForm()) {
@@ -42,15 +43,34 @@ import { leafCostCenters } from '@okr/finance-cost-center-util';
                 </ion-col>
               </ion-row>
               <ion-row>
+                <ion-col size="12">
+                  <okr-string-select [i18n]="scopeI18n()" [stringList]="scopes" [labels]="scopeLabels()"
+                    [selectedString]="scope()" (selectedStringChange)="onScopeChange($event)" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="scopeErrors()" />
+                </ion-col>
+              </ion-row>
+              <ion-row>
                 <ion-col size="12" size-md="6">
-                  <okr-cost-center-select [i18n]="fromI18n()" [costCenters]="costCenters()" [allowEmpty]="false"
-                    [selectedKey]="fromKey()" (selectedKeyChange)="onFieldChange('fromCostCenterKey', $event)" [readOnly]="isReadOnly()" />
-                  <okr-error-note [errors]="fromErrors()" />
+                  @if (scope() === 'project') {
+                    <okr-project-select [projects]="projects()" [label]="i18n().alloc_fromProject()"
+                      [selectedKey]="fromProjectKey()" (selectedKeyChange)="onFieldChange('fromProjectKey', $event)" [readOnly]="isReadOnly()" />
+                    <okr-error-note [errors]="fromProjectErrors()" />
+                  } @else {
+                    <okr-cost-center-select [i18n]="fromI18n()" [costCenters]="costCenters()" [allowEmpty]="false"
+                      [selectedKey]="fromKey()" (selectedKeyChange)="onFieldChange('fromCostCenterKey', $event)" [readOnly]="isReadOnly()" />
+                    <okr-error-note [errors]="fromErrors()" />
+                  }
                 </ion-col>
                 <ion-col size="12" size-md="6">
-                  <okr-cost-center-select [i18n]="toI18n()" [costCenters]="costCenters()" [allowEmpty]="false"
-                    [selectedKey]="toKey()" (selectedKeyChange)="onFieldChange('toCostCenterKey', $event)" [readOnly]="isReadOnly()" />
-                  <okr-error-note [errors]="toErrors()" />
+                  @if (scope() === 'center') {
+                    <okr-cost-center-select [i18n]="toI18n()" [costCenters]="costCenters()" [allowEmpty]="false"
+                      [selectedKey]="toKey()" (selectedKeyChange)="onFieldChange('toCostCenterKey', $event)" [readOnly]="isReadOnly()" />
+                    <okr-error-note [errors]="toErrors()" />
+                  } @else {
+                    <okr-project-select [projects]="projects()" [label]="i18n().alloc_toProject()"
+                      [selectedKey]="toProjectKey()" (selectedKeyChange)="onFieldChange('toProjectKey', $event)" [readOnly]="isReadOnly()" />
+                    <okr-error-note [errors]="toProjectErrors()" />
+                  }
                 </ion-col>
               </ion-row>
               <ion-row>
@@ -88,11 +108,16 @@ export class CostAllocationForm {
   protected readonly descriptionLength = DESCRIPTION_LENGTH;
   protected readonly sides = ['expense', 'revenue'];
   protected readonly modes = ['percent', 'amount'];
+  protected readonly scopes: CostAllocationScope[] = ['center', 'centerToProject', 'project'];
 
   public readonly formData = model.required<CostAllocationModel>();
   public readonly i18n = input.required<BudgetI18n>();
   /** every Kostenstelle of the books; the selects offer the live leaves */
   public readonly costCenters = input<CostCenterModel[]>([]);
+  /** the projects of the tenant (D26) */
+  public readonly projects = input<ProjectModel[]>([]);
+  /** the list's fiscal year — restored when the scope leaves Projekt → Projekt (whole life, year 0) */
+  public readonly defaultFiscalYear = input(0);
   public readonly currentUser = input<UserModel | undefined>();
   public readonly readOnly = input(true);
   public readonly showForm = input(true);
@@ -102,14 +127,16 @@ export class CostAllocationForm {
 
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   private readonly leafKeys = computed(() => new Set(leafCostCenters(this.costCenters()).map(c => c.okey)));
+  private readonly projectKeys = computed(() => new Set(this.projects().map(p => p.okey)));
 
   // The suite needs the allowed keys and a flat amount: the bridge calls it through a closure that adds them.
   private readonly suiteWithContext = (m: CostAllocationModel) => {
     const flat: CostAllocationFormModel = {
-      title: m.title, fiscalYear: m.fiscalYear, side: m.side, fromCostCenterKey: m.fromCostCenterKey, toCostCenterKey: m.toCostCenterKey,
+      title: m.title, fiscalYear: m.fiscalYear, scope: m.scope ?? 'center', side: m.side,
+      fromCostCenterKey: m.fromCostCenterKey, toCostCenterKey: m.toCostCenterKey, fromProjectKey: m.fromProjectKey ?? '', toProjectKey: m.toProjectKey ?? '',
       mode: m.mode, amount: m.amount?.amount ?? 0, percent: m.percent ?? 0, notes: m.notes,
     };
-    return costAllocationValidations(flat, this.leafKeys());
+    return costAllocationValidations(flat, this.leafKeys(), this.projectKeys());
   };
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   protected readonly allocationForm = form(this.formData, (path) => validateVestTree(path, this.suiteWithContext as any));
@@ -118,6 +145,9 @@ export class CostAllocationForm {
   protected sideErrors = computed(() => this.validationResult().getErrors('side'));
   protected fromErrors = computed(() => this.validationResult().getErrors('fromCostCenterKey'));
   protected toErrors = computed(() => this.validationResult().getErrors('toCostCenterKey'));
+  protected scopeErrors = computed(() => this.validationResult().getErrors('scope'));
+  protected fromProjectErrors = computed(() => this.validationResult().getErrors('fromProjectKey'));
+  protected toProjectErrors = computed(() => this.validationResult().getErrors('toProjectKey'));
   protected modeErrors = computed(() => this.validationResult().getErrors('mode'));
   protected percentErrors = computed(() => this.validationResult().getErrors('percent'));
   protected amountErrors = computed(() => this.validationResult().getErrors('amount'));
@@ -128,6 +158,11 @@ export class CostAllocationForm {
   protected fromKey = computed(() => this.formData().fromCostCenterKey ?? '');
   protected toKey = computed(() => this.formData().toCostCenterKey ?? '');
   protected mode = computed(() => this.formData().mode ?? 'percent');
+  protected scope = computed((): CostAllocationScope => this.formData().scope ?? 'center');
+  protected fromProjectKey = computed(() => this.formData().fromProjectKey ?? '');
+  protected toProjectKey = computed(() => this.formData().toProjectKey ?? '');
+  protected scopeI18n = computed(() => ({ name: 'scope', label: this.i18n().alloc_scope(), helper: '' } as StringSelectI18n));
+  protected scopeLabels = computed(() => [this.i18n().alloc_scope_center(), this.i18n().alloc_scope_centerToProject(), this.i18n().alloc_scope_project()]);
   protected percent = computed(() => this.formData().percent ?? 0);
   protected amountMinor = computed(() => this.formData().amount?.amount ?? 0);
   protected notes = computed(() => this.formData().notes ?? '');
@@ -147,7 +182,21 @@ export class CostAllocationForm {
     effect(() => this.valid.emit(this.allocationForm().valid()));
   }
 
-  protected onFieldChange(fieldName: 'title' | 'side' | 'fromCostCenterKey' | 'toCostCenterKey' | 'mode' | 'notes', fieldValue: string): void {
+  /** a scope change clears the ends that no longer apply; Projekt → Projekt runs over the whole life (year 0) */
+  protected onScopeChange(value: string): void {
+    const scope = (value as CostAllocationScope) || 'center';
+    this.dirty.emit(true);
+    this.formData.update((vm) => ({
+      ...vm, scope,
+      fromCostCenterKey: scope === 'project' ? '' : vm.fromCostCenterKey,
+      toCostCenterKey: scope === 'center' ? vm.toCostCenterKey : '',
+      fromProjectKey: scope === 'project' ? vm.fromProjectKey : '',
+      toProjectKey: scope === 'center' ? '' : vm.toProjectKey,
+      fiscalYear: scope === 'project' ? 0 : (vm.fiscalYear || this.defaultFiscalYear()),
+    }));
+  }
+
+  protected onFieldChange(fieldName: 'title' | 'side' | 'fromCostCenterKey' | 'toCostCenterKey' | 'fromProjectKey' | 'toProjectKey' | 'mode' | 'notes', fieldValue: string): void {
     this.dirty.emit(true);
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
   }

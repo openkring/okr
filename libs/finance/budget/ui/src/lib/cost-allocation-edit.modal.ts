@@ -2,7 +2,7 @@ import { Component, computed, inject, input, linkedSignal, signal } from '@angul
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { I18nService } from '@okr/shared-i18n';
-import { CostAllocationModel, CostCenterModel, UserModel } from '@okr/shared-models';
+import { CostAllocationModel, CostCenterModel, ProjectModel, UserModel } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
 import { dismissOverlay } from '@okr/shared-util-angular';
 import { coerceBoolean, safeStructuredClone } from '@okr/shared-util-core';
@@ -30,6 +30,8 @@ import { CostAllocationForm } from './cost-allocation.form';
           [formData]="formData" (formDataChange)="onFormDataChange($event)"
           [i18n]="i18n"
           [costCenters]="costCenters()"
+          [projects]="projects()"
+          [defaultFiscalYear]="defaultFiscalYear()"
           [currentUser]="currentUser()"
           [readOnly]="isReadOnly()"
           [showForm]="showForm()"
@@ -47,6 +49,8 @@ export class CostAllocationEditModal {
   // inputs (componentProps)
   public readonly allocation = input.required<CostAllocationModel>();
   public readonly costCenters = input<CostCenterModel[]>([]);
+  public readonly projects = input<ProjectModel[]>([]);
+  public readonly defaultFiscalYear = input(0);
   public readonly currentUser = input<UserModel | undefined>();
   public readonly readOnly = input(true);
 

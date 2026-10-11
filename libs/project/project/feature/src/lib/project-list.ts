@@ -20,6 +20,10 @@ import { AccountService } from '@okr/finance-account-data-access';
 import { formatMinorAmount } from '@okr/finance-booking-util';
 import { ReportingService } from '@okr/finance-reporting-data-access';
 import { ProjectBudgetRow, projectBudgetSummary } from '@okr/finance-reporting-util';
+import { AccountingConfigService } from '@okr/finance-accounting-data-access';
+import { CostAllocationService } from '@okr/finance-budget-data-access';
+import { projectAllocationRows } from '@okr/finance-budget-util';
+import { CostCenterService } from '@okr/finance-cost-center-data-access';
 
 import { PROJECT_I18N_SCOPE } from '@okr/project-project-util';
 import { ProjectStore } from './project.store';
@@ -141,6 +145,13 @@ export class ProjectList {
   private readonly linesResource = rxResource({ params: this.booksParam, stream: ({ params }) => params.id ? this.reportingService.getAllLines(params.id) : of([]) });
   private readonly bookingsResource = rxResource({ params: this.booksParam, stream: ({ params }) => params.id ? this.reportingService.getJournalEntries(params.id) : of([]) });
   private readonly accountsResource = rxResource({ params: this.booksParam, stream: ({ params }) => params.id ? this.accountService.list(params.id) : of([]) });
+  private readonly allocationService = inject(CostAllocationService);
+  private readonly costCenterService = inject(CostCenterService);
+  private readonly configService = inject(AccountingConfigService);
+  private readonly rulesResource = rxResource({ params: this.booksParam, stream: ({ params }) => params.id ? this.allocationService.list(params.id) : of([]) });
+  private readonly costCentersResource = rxResource({ params: this.booksParam, stream: ({ params }) => params.id ? this.costCenterService.list(params.id) : of([]) });
+  private readonly configResource = rxResource({ params: this.booksParam, stream: ({ params }) => params.id ? this.configService.read(params.id) : of(undefined) });
+  private readonly fiscalYearStart = computed(() => this.configResource.value()?.fiscalYearStart ?? 1);
   protected readonly budgetLoading = computed(() => this.linesResource.isLoading() || this.bookingsResource.isLoading() || this.accountsResource.isLoading());
   private readonly budgets = computed(() => {
     const out = new Map<string, { revenue: ProjectBudgetRow; expense: ProjectBudgetRow; net: ProjectBudgetRow }>();
@@ -148,8 +159,14 @@ export class ProjectList {
     const bookings = this.bookingsResource.value() ?? [];
     const accounts = this.accountsResource.value() ?? [];
     const byProject = this.linesByProject();
+    const lines = this.linesResource.value() ?? [];
+    const rules = (this.rulesResource.value() ?? []).filter(r => !r.isArchived);
+    const costCenters = this.costCentersResource.value() ?? [];
+    const start = this.fiscalYearStart();
     for (const p of this.store.filteredProjects()) {
-      out.set(p.okey, projectBudgetSummary(p.okey, p.budgetedRevenue?.amount ?? 0, p.budgetedExpenses?.amount ?? 0, byProject.get(p.okey) ?? [], bookings, accounts));
+      // Umlagen (D26) go into the Ist only
+      const allocations = projectAllocationRows(rules, p.okey, lines, bookings, accounts, costCenters, start, this.books());
+      out.set(p.okey, projectBudgetSummary(p.okey, p.budgetedRevenue?.amount ?? 0, p.budgetedExpenses?.amount ?? 0, byProject.get(p.okey) ?? [], bookings, accounts, allocations));
     }
     return out;
   });
