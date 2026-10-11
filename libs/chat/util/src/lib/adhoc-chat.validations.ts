@@ -3,30 +3,49 @@ import { enforce, staticSuite, test } from 'vest';
 import { SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { stringValidations } from '@okr/shared-util-core';
 
-import { ADHOC_CHAT_MAX_MEMBERS, AdhocChatFormModel } from './adhoc-chat.model';
+import { ADHOC_CHAT_MAX_MEMBERS, AdhocChatFormModel, PINBOARD_DESCRIPTION_MAX } from './adhoc-chat.model';
 
 /**
- * Mindestens eine weitere Person ist Pflicht. Was daraus entsteht, haengt an der Anzahl:
+ * Je Raumtyp (`roomType`) gelten andere Regeln:
  *
- * - **genau eine** weitere Person → eine Direktnachricht (`createDirectRoom`, find-or-create).
- *   Ein Name ist dort bedeutungslos, das Formularfeld wird ignoriert.
- * - **zwei oder mehr** → ein Ad-hoc-Chat, und der braucht einen Namen. Abgeleitet waere er
- *   eine Aufzaehlung von Vornamen, die in der Raumliste niemand wiedererkennt, und er
- *   veraltet, sobald jemand geht.
+ * - **direct** — genau eine weitere Person → eine Direktnachricht (`createDirectRoom`,
+ *   find-or-create). Ein Name ist dort bedeutungslos und wird ignoriert.
+ * - **adhoc** — zwei bis 19 weitere Personen und ein Name. Abgeleitet waere der Name eine
+ *   Aufzaehlung von Vornamen, die in der Raumliste niemand wiedererkennt.
+ * - **pinboard** — ein Name und mindestens eine Quellgruppe; keine einzeln gewaehlten Personen,
+ *   die Mitglieder ergeben sich aus den Gruppen. Die Beschreibung ist optional, aber begrenzt.
  */
 export const adhocChatValidations = staticSuite((model: AdhocChatFormModel) => {
+  const type = model.roomType ?? 'direct';
   const memberCount = model.members?.length ?? 0;
 
   stringValidations('name', model.name, SHORT_NAME_LENGTH);
-
   test('name', 'nameRequired', () => {
-    enforce(memberCount < 2 || (model.name ?? '').trim().length > 0).isTruthy();
+    enforce(type === 'direct' || (model.name ?? '').trim().length > 0).isTruthy();
   });
 
-  test('members', 'membersRequired', () => {
-    enforce(memberCount).greaterThanOrEquals(1);
-  });
-  test('members', 'membersMax', () => {
-    enforce(memberCount).lessThanOrEquals(ADHOC_CHAT_MAX_MEMBERS - 1);
-  });
+  if (type === 'direct') {
+    test('members', 'directOne', () => {
+      enforce(memberCount).equals(1);
+    });
+  }
+  if (type === 'adhoc') {
+    test('members', 'adhocTwo', () => {
+      enforce(memberCount).greaterThanOrEquals(2);
+    });
+    test('members', 'membersMax', () => {
+      enforce(memberCount).lessThanOrEquals(ADHOC_CHAT_MAX_MEMBERS - 1);
+    });
+  }
+  if (type === 'pinboard') {
+    // Die Beschreibung ist ein kurzes Raumthema (spec: 500 Zeichen), nicht Prosa bis DESCRIPTION_LENGTH —
+    // darum eine eigene Regel statt der Prosa-Obergrenze von stringValidations.
+    stringValidations('description', model.description);
+    test('description', 'descriptionMax', () => {
+      enforce((model.description ?? '').length).lessThanOrEquals(PINBOARD_DESCRIPTION_MAX);
+    });
+    test('sourceGroups', 'sourceGroupsRequired', () => {
+      enforce(model.sourceGroups?.length ?? 0).greaterThanOrEquals(1);
+    });
+  }
 });

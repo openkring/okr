@@ -277,6 +277,12 @@
   },
   "messagesLabel": "Mensajes de chat",
   "adhoc": {
+    "roomType": {
+      "label": "Tipo de sala",
+      "direct": "Chat directo",
+      "adhoc": "Chat ad hoc",
+      "pinboard": "Tablón de anuncios"
+    },
     "newHeader": "Nuevo chat",
     "newAction": "Abrir un chat nuevo",
     "createAction": "Crear",
@@ -312,5 +318,71 @@
       "hint": "Si te vas, el chat sigue para los demás. Ya no lo verás en tu lista."
     },
     "historyHint": "Quien llega más tarde lee desde su entrada, no lo que se escribió antes."
+  },
+  "pinboard": {
+    "description": {
+      "label": "Descripción",
+      "placeholder": "¿Para qué sirve este tablón de anuncios?"
+    },
+    "sources": {
+      "title": "Grupos",
+      "add": "Añadir grupo",
+      "empty": "Elige al menos un grupo."
+    },
+    "joinMode": {
+      "label": "Participación",
+      "optOut": "Todos los miembros participan y pueden salir",
+      "optIn": "Quien quiera se une por su cuenta"
+    },
+    "allowReplyAll": {
+      "label": "Permitir respuestas a todos",
+      "helper": "De lo contrario, las respuestas van en privado a quien escribió el anuncio."
+    },
+    "hint": "En un tablón de anuncios todos pueden comunicar algo a todos. Las respuestas van en privado a quien escribió el anuncio.",
+    "creating": "Se está preparando el tablón de anuncios. Esto lleva un momento.",
+    "create": {
+      "conf": "El tablón de anuncios está listo.",
+      "error": "No se pudo preparar el tablón de anuncios."
+    },
+    "broadcast": {
+      "confirm": "{count} miembros recibirán una notificación tuya. ¿Seguro que quieres hacerlo?"
+    },
+    "reply": {
+      "private": "Responder en privado",
+      "all": "Responder a todos",
+      "draft": "Sobre tu anuncio «{excerpt}»: "
+    },
+    "info": {
+      "header": "Tablón de anuncios",
+      "rules": "Aquí puedes comunicar algo a todos: vender, alquilar o regalar algo, buscar a quien viaje contigo o avisar de un objeto encontrado. Todos los miembros reciben una notificación. Cuando respondes a un anuncio, tu respuesta llega solo a quien lo escribió, como mensaje directo. Los demás no lo leen. Por eso no necesitas escribir un número de teléfono ni una dirección en un anuncio.",
+      "members": "Miembros"
+    },
+    "edit": {
+      "label": "Editar",
+      "header": "Editar tablón de anuncios"
+    },
+    "update": {
+      "conf": "El tablón de anuncios está guardado.",
+      "error": "No se pudo guardar el tablón de anuncios."
+    },
+    "archive": {
+      "label": "Archivar",
+      "confirm": "¿Quieres archivar este tablón de anuncios? Todos los miembros pierden el acceso.",
+      "conf": "El tablón de anuncios está archivado.",
+      "error": "No se pudo archivar el tablón de anuncios."
+    },
+    "leave": {
+      "label": "Salir del tablón de anuncios",
+      "confirm": "¿Quieres salir del tablón de anuncios? Ya no se te añadirá automáticamente, pero puedes volver a unirte cuando quieras.",
+      "conf": "Has salido del tablón de anuncios.",
+      "error": "No se pudo salir del tablón de anuncios."
+    },
+    "available": {
+      "title": "Tablones de anuncios disponibles"
+    },
+    "join": {
+      "label": "Unirse",
+      "error": "No se pudo unir al tablón de anuncios."
+    }
   }
 }

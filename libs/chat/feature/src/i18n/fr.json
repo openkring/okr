@@ -277,6 +277,12 @@
   },
   "messagesLabel": "Messages de discussion",
   "adhoc": {
+    "roomType": {
+      "label": "Type de salon",
+      "direct": "Chat direct",
+      "adhoc": "Chat ad hoc",
+      "pinboard": "Panneau d'affichage"
+    },
     "newHeader": "Nouvelle discussion",
     "newAction": "Ouvrir une nouvelle discussion",
     "createAction": "Créer",
@@ -312,5 +318,71 @@
       "hint": "Si tu pars, la discussion continue pour les autres. Tu ne la verras plus dans ta liste."
     },
     "historyHint": "Celui qui arrive plus tard lit à partir de son arrivée — pas ce qui a été écrit avant."
+  },
+  "pinboard": {
+    "description": {
+      "label": "Description",
+      "placeholder": "À quoi sert ce panneau d'affichage ?"
+    },
+    "sources": {
+      "title": "Groupes",
+      "add": "Ajouter un groupe",
+      "empty": "Choisis au moins un groupe."
+    },
+    "joinMode": {
+      "label": "Participation",
+      "optOut": "Tous les membres en font partie et peuvent le quitter",
+      "optIn": "Celles et ceux qui le souhaitent le rejoignent eux-mêmes"
+    },
+    "allowReplyAll": {
+      "label": "Autoriser les réponses à tous",
+      "helper": "Sinon, les réponses vont en privé à la personne qui a écrit l'annonce."
+    },
+    "hint": "Sur un panneau d'affichage, chacun peut communiquer quelque chose à tous. Les réponses vont en privé à la personne qui a écrit l'annonce.",
+    "creating": "Le panneau d'affichage est en cours de création. Cela prend un instant.",
+    "create": {
+      "conf": "Le panneau d'affichage est créé.",
+      "error": "Le panneau d'affichage n'a pas pu être créé."
+    },
+    "broadcast": {
+      "confirm": "{count} membres recevront une notification de ta part. Veux-tu vraiment continuer ?"
+    },
+    "reply": {
+      "private": "Répondre en privé",
+      "all": "Répondre à tous",
+      "draft": "À propos de ton annonce «{excerpt}» : "
+    },
+    "info": {
+      "header": "Panneau d'affichage",
+      "rules": "Ici, tu peux communiquer quelque chose à tous : vendre, louer ou donner un objet, chercher des personnes pour covoiturer ou signaler un objet trouvé. Tous les membres reçoivent une notification. Quand tu réponds à une annonce, ta réponse va uniquement à la personne qui l'a écrite, sous forme de message direct. Les autres ne lisent pas. Tu n'as donc pas besoin d'indiquer un numéro de téléphone ou une adresse dans une annonce.",
+      "members": "Membres"
+    },
+    "edit": {
+      "label": "Modifier",
+      "header": "Modifier le panneau d'affichage"
+    },
+    "update": {
+      "conf": "Le panneau d'affichage est enregistré.",
+      "error": "Le panneau d'affichage n'a pas pu être enregistré."
+    },
+    "archive": {
+      "label": "Archiver",
+      "confirm": "Souhaites-tu archiver ce panneau d'affichage ? Tous les membres perdent l'accès.",
+      "conf": "Le panneau d'affichage est archivé.",
+      "error": "Le panneau d'affichage n'a pas pu être archivé."
+    },
+    "leave": {
+      "label": "Quitter le panneau d'affichage",
+      "confirm": "Souhaites-tu quitter le panneau d'affichage ? Tu ne seras plus ajouté automatiquement, mais tu peux le rejoindre à tout moment.",
+      "conf": "Tu as quitté le panneau d'affichage.",
+      "error": "Tu n'as pas pu quitter le panneau d'affichage."
+    },
+    "available": {
+      "title": "Panneaux d'affichage disponibles"
+    },
+    "join": {
+      "label": "Rejoindre",
+      "error": "Tu n'as pas pu rejoindre le panneau d'affichage."
+    }
   }
 }

@@ -277,6 +277,12 @@
   },
   "messagesLabel": "Messaggi di chat",
   "adhoc": {
+    "roomType": {
+      "label": "Tipo di stanza",
+      "direct": "Chat diretta",
+      "adhoc": "Chat ad hoc",
+      "pinboard": "Bacheca"
+    },
     "newHeader": "Nuova chat",
     "newAction": "Aprire una nuova chat",
     "createAction": "Crea",
@@ -312,5 +318,71 @@
       "hint": "Se esci, la chat continua per gli altri. Non la vedrai più nel tuo elenco."
     },
     "historyHint": "Chi arriva dopo legge dal momento in cui entra, non quello che è stato scritto prima."
+  },
+  "pinboard": {
+    "description": {
+      "label": "Descrizione",
+      "placeholder": "A cosa serve questa bacheca?"
+    },
+    "sources": {
+      "title": "Gruppi",
+      "add": "Aggiungi gruppo",
+      "empty": "Scegli almeno un gruppo."
+    },
+    "joinMode": {
+      "label": "Partecipazione",
+      "optOut": "Tutti i membri ne fanno parte e possono uscire",
+      "optIn": "Chi vuole si unisce da solo"
+    },
+    "allowReplyAll": {
+      "label": "Consenti risposte a tutti",
+      "helper": "Altrimenti le risposte vanno in privato a chi ha scritto l'annuncio."
+    },
+    "hint": "Su una bacheca tutti possono comunicare qualcosa a tutti. Le risposte vanno in privato a chi ha scritto l'annuncio.",
+    "creating": "La bacheca viene preparata. Ci vuole un momento.",
+    "create": {
+      "conf": "La bacheca è pronta.",
+      "error": "Non è stato possibile preparare la bacheca."
+    },
+    "broadcast": {
+      "confirm": "{count} membri riceveranno una notifica da parte tua. Vuoi davvero procedere?"
+    },
+    "reply": {
+      "private": "Rispondi in privato",
+      "all": "Rispondi a tutti",
+      "draft": "Sul tuo annuncio «{excerpt}»: "
+    },
+    "info": {
+      "header": "Bacheca",
+      "rules": "Qui puoi comunicare qualcosa a tutti: vendere, affittare o regalare qualcosa, cercare compagni di viaggio o segnalare un oggetto trovato. Tutti i membri ricevono una notifica. Quando rispondi a un annuncio, la tua risposta arriva solo a chi l'ha scritto, come messaggio diretto. Gli altri non leggono. Non serve quindi scrivere un numero di telefono o un indirizzo in un annuncio.",
+      "members": "Membri"
+    },
+    "edit": {
+      "label": "Modifica",
+      "header": "Modifica bacheca"
+    },
+    "update": {
+      "conf": "La bacheca è salvata.",
+      "error": "Non è stato possibile salvare la bacheca."
+    },
+    "archive": {
+      "label": "Archivia",
+      "confirm": "Vuoi archiviare questa bacheca? Tutti i membri perdono l'accesso.",
+      "conf": "La bacheca è archiviata.",
+      "error": "Non è stato possibile archiviare la bacheca."
+    },
+    "leave": {
+      "label": "Lascia la bacheca",
+      "confirm": "Vuoi lasciare la bacheca? Non verrai più aggiunto automaticamente, ma puoi rientrare in qualsiasi momento.",
+      "conf": "Hai lasciato la bacheca.",
+      "error": "Non è stato possibile lasciare la bacheca."
+    },
+    "available": {
+      "title": "Bacheche disponibili"
+    },
+    "join": {
+      "label": "Partecipa",
+      "error": "Non è stato possibile unirsi alla bacheca."
+    }
   }
 }

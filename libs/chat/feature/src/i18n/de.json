@@ -277,6 +277,12 @@
   },
   "messagesLabel": "Chat-Nachrichten",
   "adhoc": {
+    "roomType": {
+      "label": "Raumtyp",
+      "direct": "Direkt-Chat",
+      "adhoc": "Ad-hoc-Chat",
+      "pinboard": "Pinnwand"
+    },
     "newHeader": "Neuer Chat",
     "newAction": "Neuen Chat eröffnen",
     "createAction": "Erstellen",
@@ -312,5 +318,71 @@
       "hint": "Wenn du gehst, läuft der Chat für die anderen weiter. Du siehst ihn dann nicht mehr in deiner Liste."
     },
     "historyHint": "Wer neu dazukommt, liest ab dem Beitritt mit — nicht, was vorher geschrieben wurde."
+  },
+  "pinboard": {
+    "description": {
+      "label": "Beschreibung",
+      "placeholder": "Wofür ist diese Pinnwand da?"
+    },
+    "sources": {
+      "title": "Gruppen",
+      "add": "Gruppe hinzufügen",
+      "empty": "Wähle mindestens eine Gruppe."
+    },
+    "joinMode": {
+      "label": "Teilnahme",
+      "optOut": "Alle Mitglieder sind dabei und können austreten",
+      "optIn": "Wer möchte, tritt selbst bei"
+    },
+    "allowReplyAll": {
+      "label": "Antworten an alle zulassen",
+      "helper": "Sonst gehen Antworten nur privat an die Person, die den Aushang geschrieben hat."
+    },
+    "hint": "Auf einer Pinnwand können alle allen etwas mitteilen. Antworten gehen privat an die Person, die den Aushang geschrieben hat.",
+    "creating": "Die Pinnwand wird eingerichtet. Das dauert einen Moment.",
+    "create": {
+      "conf": "Die Pinnwand ist eingerichtet.",
+      "error": "Die Pinnwand konnte nicht eingerichtet werden."
+    },
+    "broadcast": {
+      "confirm": "{count} Mitglieder werden von dir eine Benachrichtigung erhalten. Willst du das wirklich?"
+    },
+    "reply": {
+      "private": "Privat antworten",
+      "all": "An alle antworten",
+      "draft": "Zu deinem Aushang «{excerpt}»: "
+    },
+    "info": {
+      "header": "Pinnwand",
+      "rules": "Hier kannst du allen etwas mitteilen: etwas verkaufen, vermieten oder verschenken, Mitfahrende suchen oder einen Fund melden. Alle Mitglieder erhalten eine Benachrichtigung. Wenn du auf einen Aushang antwortest, geht deine Antwort nur an die Person, die ihn geschrieben hat — als Direktnachricht. Die anderen lesen nicht mit. Du musst deshalb keine Telefonnummer oder Adresse in einen Aushang schreiben.",
+      "members": "Mitglieder"
+    },
+    "edit": {
+      "label": "Bearbeiten",
+      "header": "Pinnwand bearbeiten"
+    },
+    "update": {
+      "conf": "Die Pinnwand ist gespeichert.",
+      "error": "Die Pinnwand konnte nicht gespeichert werden."
+    },
+    "archive": {
+      "label": "Archivieren",
+      "confirm": "Möchtest du diese Pinnwand archivieren? Alle Mitglieder verlieren den Zugang.",
+      "conf": "Die Pinnwand ist archiviert.",
+      "error": "Die Pinnwand konnte nicht archiviert werden."
+    },
+    "leave": {
+      "label": "Pinnwand verlassen",
+      "confirm": "Möchtest du die Pinnwand verlassen? Du wirst nicht mehr automatisch aufgenommen, kannst aber jederzeit wieder beitreten.",
+      "conf": "Du hast die Pinnwand verlassen.",
+      "error": "Die Pinnwand konnte nicht verlassen werden."
+    },
+    "available": {
+      "title": "Verfügbare Pinnwände"
+    },
+    "join": {
+      "label": "Beitreten",
+      "error": "Du konntest der Pinnwand nicht beitreten."
+    }
   }
 }

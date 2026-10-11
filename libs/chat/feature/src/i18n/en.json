@@ -277,6 +277,12 @@
   },
   "messagesLabel": "Chat messages",
   "adhoc": {
+    "roomType": {
+      "label": "Room type",
+      "direct": "Direct chat",
+      "adhoc": "Ad-hoc chat",
+      "pinboard": "Notice board"
+    },
     "newHeader": "New chat",
     "newAction": "Start a new chat",
     "createAction": "Create",
@@ -312,5 +318,71 @@
       "hint": "If you leave, the chat continues for the others. You will no longer see it in your list."
     },
     "historyHint": "Whoever joins later reads along from their arrival — not what was written before."
+  },
+  "pinboard": {
+    "description": {
+      "label": "Description",
+      "placeholder": "What is this notice board for?"
+    },
+    "sources": {
+      "title": "Groups",
+      "add": "Add group",
+      "empty": "Choose at least one group."
+    },
+    "joinMode": {
+      "label": "Participation",
+      "optOut": "All members are included and can leave",
+      "optIn": "Whoever wants to joins on their own"
+    },
+    "allowReplyAll": {
+      "label": "Allow replies to everyone",
+      "helper": "Otherwise replies go privately to the person who wrote the notice."
+    },
+    "hint": "On a notice board everyone can share something with everyone. Replies go privately to the person who wrote the notice.",
+    "creating": "The notice board is being set up. This takes a moment.",
+    "create": {
+      "conf": "The notice board is set up.",
+      "error": "The notice board could not be set up."
+    },
+    "broadcast": {
+      "confirm": "{count} members will receive a notification from you. Do you really want to do this?"
+    },
+    "reply": {
+      "private": "Reply privately",
+      "all": "Reply to everyone",
+      "draft": "About your notice «{excerpt}»: "
+    },
+    "info": {
+      "header": "Notice board",
+      "rules": "Here you can share something with everyone: sell, rent out or give away something, look for people to ride along with, or report a find. All members receive a notification. When you reply to a notice, your reply goes only to the person who wrote it, as a direct message. The others do not read along. So you do not need to put a phone number or address in a notice.",
+      "members": "Members"
+    },
+    "edit": {
+      "label": "Edit",
+      "header": "Edit notice board"
+    },
+    "update": {
+      "conf": "The notice board is saved.",
+      "error": "The notice board could not be saved."
+    },
+    "archive": {
+      "label": "Archive",
+      "confirm": "Would you like to archive this notice board? All members lose access.",
+      "conf": "The notice board is archived.",
+      "error": "The notice board could not be archived."
+    },
+    "leave": {
+      "label": "Leave notice board",
+      "confirm": "Would you like to leave the notice board? You will no longer be added automatically, but you can rejoin at any time.",
+      "conf": "You left the notice board.",
+      "error": "The notice board could not be left."
+    },
+    "available": {
+      "title": "Available notice boards"
+    },
+    "join": {
+      "label": "Join",
+      "error": "You could not join the notice board."
+    }
   }
 }
