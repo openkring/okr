@@ -12,7 +12,7 @@ import { BillCollection } from '@okr/shared-models';
 import { getTodayStr } from '@okr/shared-util-core';
 
 import { FINANCE_HISTORY_COLLECTION, zurichStoreDateTime } from '../finance-history/finance-history.logic';
-import { resolveAssignee } from '../workflow/engine';
+import { isResponsibilityValid, resolveAssignee } from '../workflow/engine';
 import { createFirestoreDeps, translateMessage } from '../workflow/firestore-deps';
 import { APPROVER_DIGEST_FALLBACK, APPROVER_DIGEST_MESSAGE_KEY, bookedBillKeys, BooksConfig, buildDigests, dayWindow,
   digestRelatedKey, DigestBill, formatChf, HistoryRow } from './bill-approver.logic';
@@ -51,8 +51,9 @@ export const billApproverDaily = onSchedule(
           const paymentAccountKeys = (cfg['billPaymentAccountKeys'] as string[] | undefined) ?? [];
           const accounts = await Promise.all(paymentAccountKeys.map(async key => {
             const acc = (await db.collection('accounts').doc(key).get()).data();
-            const prof = await db.collection('bank-profiles').where('accountKey', '==', key).where('tenants', 'array-contains', tenantId).limit(1).get();
-            return { key, name: [str(acc?.['id']), str(acc?.['name'])].filter(Boolean).join(' '), iban: str(prof.docs[0]?.data()['iban']) };
+            const prof = await db.collection('bank-profiles').where('accountKey', '==', key).where('tenants', 'array-contains', tenantId).get();
+            const active = prof.docs.find(p => p.data()['isArchived'] !== true);   // archived profiles are skipped in memory (no new index)
+            return { key, name: [str(acc?.['id']), str(acc?.['name'])].filter(Boolean).join(' '), iban: str(active?.data()['iban']) };
           }));
           books.push({ accountingTenantId: id, enabled: cfg['paymentApproverTask'] === true, paymentAccountKeys, accounts });
         }
@@ -61,8 +62,10 @@ export const billApproverDaily = onSchedule(
           const ctx = { tenantId, event: 'bill.bookedDaily', personKey: '', relatedKey, subjectName: d.accountingTenantId,
             today: getTodayStr(), params: {} as Record<string, string> };
           const resp = await db.collection('responsibilities').where('name', '==', PAYMENT_APPROVER)
-            .where('parentKey', '==', `org.${d.accountingTenantId}`).where('tenants', 'array-contains', tenantId).limit(1).get();
-          const assignee = await resolveAssignee({ okey: CF_NAME, responsibilityKey: resp.docs[0]?.id ?? '' }, ctx, deps);
+            .where('parentKey', '==', `org.${d.accountingTenantId}`).where('tenants', 'array-contains', tenantId).get();
+          // after a handover the books can hold an archived/expired approver next to the current one: pick the valid one
+          const current = resp.docs.find(r => r.data()['isArchived'] !== true && isResponsibilityValid(r.data(), ctx.today));
+          const assignee = await resolveAssignee({ okey: CF_NAME, responsibilityKey: current?.id ?? '' }, ctx, deps);
           if (!assignee?.key) { logger.warn(`${CF_NAME}: no assignee for books ${d.accountingTenantId}`); continue; }
           if (await deps.hasOpenTask(relatedKey, assignee.key, tenantId)) continue;   // a re-run opens no second task
           const params = { count: String(d.count), date: d.date, total: formatChf(d.total) };
