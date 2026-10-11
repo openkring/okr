@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { DbQuery, GroupCollection, GroupModel, OrgCollection, OrgModel, UserModel } from '@okr/shared-models';
-import { findByKey, getSystemQuery } from '@okr/shared-util-core';
+import { getSystemQuery } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
 
 import { getGroupIndex } from '@okr/subject-group-util';
@@ -51,7 +51,7 @@ export class GroupService  {
    * @returns an Observable of the group or undefined if not found
    */
   public read(key?: string): Observable<GroupModel | undefined> {
-    return findByKey<GroupModel>(this.list(), key);
+    return this.firestoreService.readTenantModel<GroupModel>(GroupCollection, key, this.env.tenantId);
   }
 
   /**

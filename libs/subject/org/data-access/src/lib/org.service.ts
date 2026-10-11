@@ -4,7 +4,7 @@ import { map, Observable, of } from 'rxjs';
 import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { OrgCollection, OrgModel, UserModel } from '@okr/shared-models';
-import { findByKey, getSystemQuery } from '@okr/shared-util-core';
+import { getSystemQuery } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
 
 import { getOrgIndex } from '@okr/subject-org-util';
@@ -51,7 +51,7 @@ export class OrgService  {
    * @returns an Observable of the org or undefined if not found
    */
   public read(key: string): Observable<OrgModel | undefined> {
-    return findByKey<OrgModel>(this.list(), key);
+    return this.firestoreService.readTenantModel<OrgModel>(OrgCollection, key, this.env.tenantId);
   }
 
  /**
