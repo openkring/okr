@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { UserCollection, UserModel } from '@okr/shared-models';
-import { findAllByField, findByField, findByKey, getFullName, getSystemQuery } from '@okr/shared-util-core';
+import { findAllByField, findByField, getFullName, getSystemQuery } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
 
 import { getUserIndex, getUserIndexInfo } from '@okr/user-util';
@@ -53,7 +53,7 @@ export class UserService  {
    * @return an Observable of the UserModel or undefined if not found
    */
   public read(key: string | undefined | null): Observable<UserModel | undefined> {
-    return findByKey<UserModel>(this.list(), key);
+    return this.firestoreService.readTenantModel<UserModel>(UserCollection, key, this.env.tenantId);
   }
 
   /**

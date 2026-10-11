@@ -5,7 +5,7 @@ import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
 import { PartnerCollection, PartnerModel, UserModel } from '@okr/shared-models';
-import { findByKey, getSystemQuery } from '@okr/shared-util-core';
+import { getSystemQuery } from '@okr/shared-util-core';
 
 import { getPartnerIndex } from '@okr/business-partner-util';
 import { PFX } from './scope';
@@ -41,7 +41,7 @@ export class PartnerService {
   }
 
   public read(key: string): Observable<PartnerModel | undefined> {
-    return findByKey<PartnerModel>(this.list(), key);
+    return this.firestoreService.readTenantModel<PartnerModel>(PartnerCollection, key, this.tenantId);
   }
 
   public async update(partner: PartnerModel, currentUser?: UserModel): Promise<string | undefined> {

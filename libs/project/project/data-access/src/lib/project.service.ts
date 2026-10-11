@@ -7,7 +7,7 @@ import { FirestoreService } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
 import { ProjectCollection, ProjectModel, UserModel } from '@okr/shared-models';
 import { AlertService } from '@okr/shared-util-angular';
-import { findByKey, getArchiveInclusiveQuery, getSystemQuery } from '@okr/shared-util-core';
+import { getArchiveInclusiveQuery, getSystemQuery } from '@okr/shared-util-core';
 import { getProjectIndex, getProjectParentKey } from '@okr/project-project-util';
 import { TaskService } from '@okr/project-task-data-access';
 
@@ -48,7 +48,7 @@ export class ProjectService {
 
   /** Returns the project with the given key, archived ones included (undefined when unknown). */
   public read(key: string): Observable<ProjectModel | undefined> {
-    return findByKey<ProjectModel>(this.listAll(), key);
+    return this.firestoreService.readTenantModel<ProjectModel>(ProjectCollection, key, this.env.tenantId, true);
   }
 
   /**

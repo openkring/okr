@@ -6,7 +6,7 @@ import { ensureAppCheckToken, ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
 import { ActivityCollection, ActivityModel, AVATAR_INFO_SHAPE, UserModel } from '@okr/shared-models';
-import { findByKey, getAvatarInfo, getSystemQuery, getTodayStr, DateFormat } from '@okr/shared-util-core';
+import { getAvatarInfo, getSystemQuery, getTodayStr, DateFormat } from '@okr/shared-util-core';
 
 import { getActivityIndex, getActivityRoleNeeded } from '@okr/activity-util';
 import { PFX } from './scope';
@@ -129,7 +129,7 @@ export class ActivityService {
    * Read a single activity by its document id.
    */
   public read(key: string | undefined): Observable<ActivityModel | undefined> {
-    return findByKey<ActivityModel>(this.list(), key);
+    return this.firestoreService.readTenantModel<ActivityModel>(ActivityCollection, key, this.env.tenantId);
   }
 
   /**

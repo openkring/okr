@@ -42,6 +42,9 @@ export class CategoryService {
    * @returns an Observable of the CategoryListModel
    */
   public read(key: string | undefined): Observable<CategoryListModel | undefined> {
+    // Deliberately the deduped list, not a document read (spec 1.56 rule 3b): the key of a shared
+    // category this tenant has forked must resolve to nothing, as it does in every select-list.
+    // Small reference data, always loaded — a document read would gain nothing here.
     return findByKey<CategoryListModel>(this.list(), key);
   }
 

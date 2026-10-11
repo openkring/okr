@@ -5,7 +5,7 @@ import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
 import { ResourceCollection, ResourceModel, UserModel } from '@okr/shared-models';
-import { findByKey, getSystemQuery } from '@okr/shared-util-core';
+import { getSystemQuery } from '@okr/shared-util-core';
 
 import { getResourceIndex } from '@okr/resource-util';
 import { ActivityService } from '@okr/activity-data-access';
@@ -61,7 +61,7 @@ export class ResourceService {
    * @returns the ResourceModel that has the given key
    */
   public read(key: string | undefined): Observable<ResourceModel | undefined> {
-    return findByKey<ResourceModel>(this.list(), key);
+    return this.firestoreService.readTenantModel<ResourceModel>(ResourceCollection, key, this.env.tenantId);
   }
 
   /**

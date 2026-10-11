@@ -9,7 +9,7 @@ import {
   CommentCollection, CommentModel, TicketClassification, TicketCollection, TicketModel,
   TicketSeverity,
 } from '@okr/shared-models';
-import { findByKey, getSystemQuery } from '@okr/shared-util-core';
+import { getSystemQuery } from '@okr/shared-util-core';
 
 /** One transition of the queue — the `action` argument of the `triageTicket` callable (C4 §4). */
 export type TriageAction = 'accept' | 'wait' | 'resume' | 'workaround' | 'fix' | 'close' | 'severity';
@@ -45,7 +45,7 @@ export class TicketService {
   }
 
   public read(ticketKey: string): Observable<TicketModel | undefined> {
-    return findByKey<TicketModel>(this.list(), ticketKey);
+    return this.firestoreService.readTenantModel<TicketModel>(TicketCollection, ticketKey, this.tenantId);
   }
 
   /**

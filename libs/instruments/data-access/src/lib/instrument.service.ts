@@ -5,7 +5,7 @@ import { map } from 'rxjs/operators';
 import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { InstrumentCollection, InstrumentModel, InstrumentType, UserModel } from '@okr/shared-models';
-import { findByKey, getSystemQuery } from '@okr/shared-util-core';
+import { getSystemQuery } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
 
 import { getInstrumentIndex } from '@okr/instruments-util';
@@ -42,7 +42,7 @@ export class InstrumentService {
   }
 
   public read(key: string | undefined): Observable<InstrumentModel | undefined> {
-    return findByKey<InstrumentModel>(this.list(), key);
+    return this.firestoreService.readTenantModel<InstrumentModel>(InstrumentCollection, key, this.env.tenantId);
   }
 
   public async update(instrument: InstrumentModel, currentUser?: UserModel): Promise<string | undefined> {

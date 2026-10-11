@@ -5,7 +5,7 @@ import { ENV } from "@okr/shared-config";
 import { FirestoreService } from "@okr/shared-data-access";
 import { I18nService } from "@okr/shared-i18n";
 import { LocationCollection, LocationModel, UserModel } from "@okr/shared-models";
-import { findByKey, getSystemQuery } from "@okr/shared-util-core";
+import { getSystemQuery } from "@okr/shared-util-core";
 
 import { getLocationIndex } from "@okr/location-util";
 import { PFX } from "./scope";
@@ -45,7 +45,7 @@ export class LocationService {
    * @returns an Observable of the LocationModel
    */
   public read(key: string): Observable<LocationModel | undefined> {
-    return findByKey<LocationModel>(this.list(), key);
+    return this.firestoreService.readTenantModel<LocationModel>(LocationCollection, key, this.tenantId);
   }
 
   /**

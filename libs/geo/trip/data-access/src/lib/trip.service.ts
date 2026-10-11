@@ -7,7 +7,7 @@ import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
 import { TripCollection, TripModel, UserModel } from '@okr/shared-models';
-import { findByKey, getSystemQuery } from '@okr/shared-util-core';
+import { getSystemQuery } from '@okr/shared-util-core';
 
 import { getTripIndex, newTripName } from '@okr/trip-util';
 import { PFX } from './scope';
@@ -58,7 +58,7 @@ export class TripService {
   }
 
   public read(key: string): Observable<TripModel | undefined> {
-    return findByKey<TripModel>(this.list(), key);
+    return this.firestoreService.readTenantModel<TripModel>(TripCollection, key, this.env.tenantId);
   }
 
   public async create(trip: TripModel, currentUser?: UserModel): Promise<string | undefined> {

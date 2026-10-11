@@ -5,7 +5,7 @@ import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
 import { FormDefinitionCollection, FormDefinitionModel, UserModel } from '@okr/shared-models';
-import { findByKey, getDeletePatch, getSystemQuery } from '@okr/shared-util-core';
+import { getDeletePatch, getSystemQuery } from '@okr/shared-util-core';
 import { generateFormKey } from '@okr/forms-util';
 
 const PFX = '@forms/feature.';
@@ -34,7 +34,7 @@ export class FormDefinitionService {
   }
 
   public read(okey: string): Observable<FormDefinitionModel | undefined> {
-    return findByKey<FormDefinitionModel>(this.list(), okey);
+    return this.firestoreService.readTenantModel<FormDefinitionModel>(FormDefinitionCollection, okey, this.env.tenantId);
   }
 
   public readByFormKey(formKey: string): Observable<FormDefinitionModel | undefined> {

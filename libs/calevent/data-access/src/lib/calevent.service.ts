@@ -6,7 +6,7 @@ import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
 import { CalEventCollection, CalEventModel, UserModel } from '@okr/shared-models';
-import { addTime, die, findByKey, getSystemQuery } from '@okr/shared-util-core';
+import { addTime, die, getSystemQuery } from '@okr/shared-util-core';
 
 import { getCaleventIndex } from '@okr/calevent-util';
 import { ActivityService } from '@okr/activity-data-access';
@@ -50,7 +50,7 @@ export class CalEventService {
    * @returns an Observable of the CalEventModel or undefined if not found
    */
   public read(key: string | undefined): Observable<CalEventModel | undefined> {
-    return findByKey<CalEventModel>(this.list(), key);
+    return this.firestoreService.readTenantModel<CalEventModel>(CalEventCollection, key, this.env.tenantId);
   }
 
   /**
