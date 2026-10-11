@@ -17,6 +17,8 @@ export class GroupModel implements OkrModel, NamedModel, SearchableModel, Tagged
    *   in Auswahllisten, mit Inhalt/Kalender/Dateien.
    * - 'chat': ein von einem Mitglied angelegter Ad-hoc-Chat. Traegt nur den Matrix-Raum,
    *   erscheint ausschliesslich in der Chatliste und in keiner Gruppenoberflaeche.
+   * - 'pinboard': eine Pinnwand (spec 2026-10-11-chat-pinnwand-spec.md) — alle schreiben an
+   *   alle, Antworten gehen privat an den Absender. Mitglieder kommen aus `sourceGroupKeys`.
    *
    * ACHTUNG beim Lesen: Firestore liefert rohe Dokumente, dieser Initialisierer laeuft dabei
    * NICHT. Jede bestehende Gruppe traegt `undefined`. Immer als `kind ?? 'group'` lesen —
@@ -108,6 +110,23 @@ export class GroupModel implements OkrModel, NamedModel, SearchableModel, Tagged
    */
   public postPolicy: 'all' | 'privileged' = 'all';
 
+  /**
+   * Nur `kind: 'pinboard'`: die Gruppen, deren Mitglieder zur Pinnwand gehoeren. Neue
+   * Mitglieder dieser Gruppen kommen dazu (bei `joinMode: 'optOut'`), wer aus allen austritt,
+   * faellt heraus. Nie eine Pinnwand oder ein Ad-hoc-Chat. Lesen als `sourceGroupKeys ?? []`.
+   */
+  public sourceGroupKeys: string[] = [];
+
+  /**
+   * Nur `kind: 'pinboard'`: 'optOut' (Vorgabe) = alle aus den Quellgruppen sind drin und
+   * koennen austreten; 'optIn' = die Pinnwand wird angeboten, man tritt selbst bei.
+   * Lesen als `joinMode ?? 'optOut'`.
+   */
+  public joinMode: PinboardJoinMode = 'optOut';
+
+  /** Nur `kind: 'pinboard'`: «Antworten an alle zulassen». Lesen als `allowReplyAll ?? false`. */
+  public allowReplyAll = false;
+
   public tenants: string[] = DEFAULT_TENANTS;
   public isArchived = false;
   public index = DEFAULT_INDEX;
@@ -117,7 +136,8 @@ export class GroupModel implements OkrModel, NamedModel, SearchableModel, Tagged
   }
 }
 
-export type GroupKind = 'group' | 'chat';
+export type GroupKind = 'group' | 'chat' | 'pinboard';
+export type PinboardJoinMode = 'optOut' | 'optIn';
 
 export const GroupCollection = 'groups';
 export const GroupModelName = 'group';

@@ -59,6 +59,13 @@ export class MembershipModel implements OkrModel, SearchableModel, TaggedModel {
   public rebate = 0;
   public rebateReason: REBATE_REASON = 'none';
 
+  /**
+   * Nur Pinnwand-Mitgliedschaften: die Person hat die Pinnwand selbst verlassen. Steht auf
+   * der BEENDETEN Mitgliedschaft und haelt den Abgleich davon ab, sie wieder aufzunehmen;
+   * `joinPinboard` setzt es zurueck. Lesen als `isOptedOut ?? false`.
+   */
+  public isOptedOut = false;
+
   constructor(tenantId: string) {
     this.tenants = [tenantId];
   }
