@@ -10,3 +10,6 @@ export function pinboardBroadcastCount(memberKeys: string[], selfKey: string): n
   const self = selfKey.toLowerCase();
   return memberKeys.filter((k) => k.toLowerCase() !== self).length;
 }
+
+export type PinboardInput = { name: string; description: string; sourceGroupKeys: string[]; joinMode: 'optOut' | 'optIn'; allowReplyAll: boolean };
+export type AvailablePinboard = { groupKey: string; name: string; description: string; roomId: string };

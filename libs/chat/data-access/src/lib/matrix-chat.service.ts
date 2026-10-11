@@ -10,7 +10,7 @@ import { MatrixConfig, MatrixMessage, MatrixReadReceipt, MatrixRoom, TypingNotif
 import { AppStore } from '@okr/shared-feature';
 import { checkVideoLimits, debugData, debugMessage } from '@okr/shared-util-core';
 import { OKR_VIDEO_FIELD, videoLink } from '@okr/content-document-util';
-import { convertHeicToJpeg, materializeFile, resolveFileMimeType, extractVideoPoster, UploadTooLargeError, initMatrixLogLevel, ensurePromiseWithResolvers, buildMentionContent, escapeHtml, MentionRef, OKR_TENANT_EVENT, resolveMatrixDisplayName, canPostWithPower, VideoLimitError, VideoUploadError, buildPollContent, PollAnswerDef, POLL_START_EVENT } from '@okr/chat-util';
+import { convertHeicToJpeg, materializeFile, resolveFileMimeType, extractVideoPoster, UploadTooLargeError, initMatrixLogLevel, ensurePromiseWithResolvers, buildMentionContent, escapeHtml, MentionRef, OKR_TENANT_EVENT, resolveMatrixDisplayName, canPostWithPower, VideoLimitError, VideoUploadError, buildPollContent, PollAnswerDef, POLL_START_EVENT, PinboardInput, AvailablePinboard } from '@okr/chat-util';
 
 import { mediaMimeHint, mxcAvatarHttpUrl } from './matrix-helpers';
 import { MatrixMediaService } from './matrix-media.service';
@@ -1458,6 +1458,35 @@ export class MatrixChatService {
   public async leaveAdhocChat(groupKey: string): Promise<void> {
     const fn = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'leaveAdhocChat');
     await fn({ groupKey });
+  }
+
+  /** Pinnwand anlegen (nur privileged; spec 2026-10-11). Dokument, Raum und Mitglieder legt die Cloud Function an. */
+  public async createPinboard(input: PinboardInput & { tenantId: string }): Promise<{ groupKey: string; roomId: string; name: string }> {
+    const fn = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'createPinboard');
+    return (await fn(input)).data as { groupKey: string; roomId: string; name: string };
+  }
+
+  public async updatePinboard(groupKey: string, patch: Partial<PinboardInput>): Promise<void> {
+    await httpsCallable(getFunctions(getApp(), 'europe-west6'), 'updatePinboard')({ groupKey, ...patch });
+  }
+
+  public async archivePinboard(groupKey: string): Promise<void> {
+    await httpsCallable(getFunctions(getApp(), 'europe-west6'), 'archivePinboard')({ groupKey });
+  }
+
+  /** Verlassen = Austritt mit Merker: der Abgleich nimmt die Person nicht wieder auf. */
+  public async leavePinboard(groupKey: string): Promise<void> {
+    await httpsCallable(getFunctions(getApp(), 'europe-west6'), 'leavePinboard')({ groupKey });
+  }
+
+  public async joinPinboard(groupKey: string): Promise<string> {
+    const result = await httpsCallable(getFunctions(getApp(), 'europe-west6'), 'joinPinboard')({ groupKey });
+    return (result.data as { roomId: string }).roomId;
+  }
+
+  public async listAvailablePinboards(tenantId: string): Promise<AvailablePinboard[]> {
+    const result = await httpsCallable(getFunctions(getApp(), 'europe-west6'), 'listAvailablePinboards')({ tenantId });
+    return (result.data as { pinboards: AvailablePinboard[] }).pinboards;
   }
 
   /**
