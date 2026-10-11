@@ -1137,6 +1137,8 @@ export class MatrixChat implements OnDestroy {
     await modal.present();
     const { data, role } = await modal.onDidDismiss<MatrixPollData>();
     if (role === 'confirm' && data) {
+      // Pinboard: ask only after the poll is composed, not before.
+      if (!await this.store.confirmPinboardBroadcast()) return;
       try {
         await this.store.sendPoll(data);
       } catch (error) {
@@ -1430,6 +1432,8 @@ export class MatrixChat implements OnDestroy {
    * (mp4/mov/avi → room album, the rest → Synapse). One toast for all failures of the batch.
    */
   private async sendNonImageFiles(files: File[], threadId?: string): Promise<void> {
+    // One prompt per batch, only for posts to the room (threads do not exist in a pinboard).
+    if (!threadId && !await this.store.confirmPinboardBroadcast()) return;
     const results = await Promise.allSettled(files.map(f => this.store.sendFile(f, threadId)));
     const errors = rejectionReasons(results);
     if (errors.length > 0 && !(await this.showUploadLimitToast(errors))) {

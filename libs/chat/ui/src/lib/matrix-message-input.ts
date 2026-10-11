@@ -628,16 +628,28 @@ export class MatrixMessageInput {
   private recordingTimer: ReturnType<typeof setInterval> | null = null;
 
   canSend = computed(() => {
-    return (this.messageText().trim().length > 0 || this.pendingImages().length > 0) && !this.disabled();
+    return (this.messageText().trim().length > 0 || this.pendingImages().length > 0) && !this.disabled() && !this.confirming();
   });
 
+  /** True while the send confirmation (pinboard) is open: blocks a second send. */
+  private readonly confirming = signal(false);
+
   async sendMessage(): Promise<void> {
-    const text = this.messageText().trim();
+    if (this.confirming()) return;
     // Ask BEFORE anything is emitted or cleared, so cancelling keeps the text and the images.
-    if (text || this.pendingImages().length > 0) {
+    if (this.messageText().trim() || this.pendingImages().length > 0) {
       const confirmSend = this.confirmSend();
-      if (confirmSend && !(await confirmSend())) return;
+      if (confirmSend) {
+        this.confirming.set(true);
+        try {
+          if (!(await confirmSend())) return;
+        } finally {
+          this.confirming.set(false);
+        }
+      }
     }
+    // Re-read: the text may have changed while the alert was open.
+    const text = this.messageText().trim();
     const files = this.pendingImages();
     if (files.length > 0) {
       this.filesSent.emit([...files]);
