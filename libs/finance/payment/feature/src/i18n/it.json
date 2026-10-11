@@ -39,7 +39,6 @@
   "blocker": {
     "not_draft": "Questo ordine è già stato approvato.",
     "unprepared": "Apri prima l'ordine, scegli il conto di addebito e la data di esecuzione e salvalo.",
-    "self": "L'approvazione deve essere fatta da una persona diversa da quella che ha preparato l'ordine.",
     "incomplete": "Scegli prima il conto di addebito e la data di esecuzione.",
     "empty": "Questo ordine non contiene ancora pagamenti.",
     "needs_review": "Controlla prima i pagamenti contrassegnati e confermali.",

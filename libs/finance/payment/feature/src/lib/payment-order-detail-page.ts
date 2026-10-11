@@ -112,13 +112,13 @@ export class PaymentOrderDetailPage {
   protected readonly blocker = computed(() => {
     const order = this.orderResource.value();
     if (!order || order.status !== 'draft') return '';
-    return approveBlocker(order, this.paymentsResource.value() ?? [], this.appStore.currentUser()?.okey ?? '');
+    return approveBlocker(order, this.paymentsResource.value() ?? []);
   });
 
   protected blockerText(blocker: string): string {
     const map: Record<string, () => string> = {
       'not-draft': this.i18n.blocker_not_draft, unprepared: this.i18n.blocker_unprepared,
-      self: this.i18n.blocker_self, incomplete: this.i18n.blocker_incomplete,
+      incomplete: this.i18n.blocker_incomplete,
       empty: this.i18n.blocker_empty, 'needs-review': this.i18n.blocker_needs_review,
       'no-debtor-iban': this.i18n.blocker_no_debtor_iban,
     };

@@ -16,7 +16,6 @@ export const PAYMENT_I18N_KEYS = {
   approve_blocked:   PFX + 'order.approve_blocked',
   blocker_not_draft: PFX + 'blocker.not_draft',
   blocker_unprepared: PFX + 'blocker.unprepared',
-  blocker_self:      PFX + 'blocker.self',
   blocker_incomplete: PFX + 'blocker.incomplete',
   blocker_empty:     PFX + 'blocker.empty',
   blocker_needs_review: PFX + 'blocker.needs_review',

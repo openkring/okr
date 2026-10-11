@@ -39,7 +39,6 @@
   "blocker": {
     "not_draft": "This order has already been approved.",
     "unprepared": "Please open the order first, choose the debit account and the execution date, and save it.",
-    "self": "Approval has to be done by a different person than the one who prepared the order.",
     "incomplete": "Please choose the debit account and the execution date first.",
     "empty": "This order does not contain any payments yet.",
     "needs_review": "Please check the flagged payments first and confirm them.",

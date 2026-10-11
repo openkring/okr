@@ -9,7 +9,8 @@ const CF = 'approvePaymentOrder';
 
 /**
  * The only way a payment order becomes `approved` (spec 1.80 §5.4) — the rules forbid it from the
- * client. Enforces the four-eyes principle server-side via approveBlocker. The approver key is the
+ * client. Checks readiness via approveBlocker; four-eyes is given in e-banking (spec 1.80 §5.5).
+ * The approver key is the
  * caller's users/{uid} okey, which is what PaymentStore writes into createdBy.
  */
 export const approvePaymentOrder = onCall(
@@ -33,7 +34,7 @@ export const approvePaymentOrder = onCall(
       }
       const payments = await tx.get(db.collection(PaymentCollection)
         .where('paymentOrderKey', '==', key).where('tenants', 'array-contains', tenantId));
-      const blocker = approveBlocker(order, payments.docs.map(d => d.data()), approverKey);
+      const blocker = approveBlocker(order, payments.docs.map(d => d.data()));
       if (blocker) throw new HttpsError('failed-precondition', blocker);
       // generatePain001 needs the debtor IBAN; refuse now rather than strand an approved order.
       const profile = await tx.get(db.collection(BankProfileCollection)
