@@ -23,8 +23,11 @@ import { TripService } from '@okr/trip-data-access';
 import { copyTrip as buildTripCopy, findOpenTripForBoat, findTrainingCrews, getTripLabel, groupTripsByDay, matchesStateFilter, newTrip, TRIP_I18N_KEYS, TripReport } from '@okr/trip-util';
 
 
-/** Name of the responsibility that owns the Logbuch — gets the bug reports and the support calls. */
-const LOGBUCH_RESPONSIBILITY = 'Logbuch2';
+/**
+ * Key (okey) of the responsibility that owns the Logbuch — gets the bug reports and the support calls.
+ * Looked up by key, not by name, so the responsibility can be renamed without breaking the call.
+ */
+const LOGBUCH_RESPONSIBILITY_KEY = 'logbuch2';
 
 const SUSPICIOUS_WINDOW_MS = 15 * 60 * 1000;
 const SUSPICIOUS_TRIP_COUNT = 3;
@@ -547,7 +550,7 @@ export const TripStore = signalStore(
      */
     async callSupport(): Promise<void> {
       const responsibilities = await store.responsibilityService.listOnce();
-      const responsible = responsibilities.find(r => r.name === LOGBUCH_RESPONSIBILITY)?.responsibleAvatar;
+      const responsible = responsibilities.find(r => r.okey === LOGBUCH_RESPONSIBILITY_KEY)?.responsibleAvatar;
       // a group is a valid responsible party for tasks, but there is nobody to ring
       if (!responsible?.key || responsible.modelType !== 'person') {
         await store.alertService.showToast(store.i18n.call_support_none());

@@ -61,7 +61,7 @@ const TRIGGERS = [
     event: 'trip.bugReported',
     icon: 'bug',
     ruleName: 'Fehlermeldung → Logbuch',
-    responsibilityName: 'Logbuch2',
+    responsibilityName: 'Logbuch',
     i18nKey: 'trip.bugReported',
     text: {
       de: 'Logbuch meldet Fehler auf Fahrt {tripName}',
