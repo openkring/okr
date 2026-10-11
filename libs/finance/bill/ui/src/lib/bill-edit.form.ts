@@ -148,10 +148,10 @@ export class BillEditForm {
   protected readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   /** vendor, bill number and bill date: draft only */
   protected readonly structureLocked = computed(() => this.isReadOnly() || this.mode() === 'details');
-  /** due date, reference and IBAN: draft, or booked but not yet paid */
   /** the paying account (spec 1.94): a booked, unpaid bill, and only when the books offer more than one */
   protected readonly showPaymentAccount = computed(() => this.mode() === 'details' && isBillPaymentDataEditable(this.formData())
     && needsPaymentAccountChoice(this.paymentAccounts().map((a) => a.okey)));
+  /** due date, reference and IBAN: draft, or booked but not yet paid */
   protected readonly paymentDataLocked = computed(() => this.isReadOnly() || (this.mode() === 'details' && !isBillPaymentDataEditable(this.formData())));
   // The suite needs the tags, which validateVestTree does not pass — so the bridge calls it
   // through a closure that adds them.

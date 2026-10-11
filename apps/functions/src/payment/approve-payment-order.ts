@@ -9,9 +9,8 @@ const CF = 'approvePaymentOrder';
 
 /**
  * The only way a payment order becomes `approved` (spec 1.80 §5.4) — the rules forbid it from the
- * client. Checks readiness via approveBlocker; four-eyes is given in e-banking (spec 1.80 §5.5).
- * The approver key is the
- * caller's users/{uid} okey, which is what PaymentStore writes into createdBy.
+ * client. Checks readiness via approveBlocker; four-eyes is given in e-banking (spec 1.80 §5.5). The approver
+ * key is the caller's users/{uid} okey, which is what PaymentStore writes into createdBy.
  */
 export const approvePaymentOrder = onCall(
   { region: 'europe-west6', enforceAppCheck: true },

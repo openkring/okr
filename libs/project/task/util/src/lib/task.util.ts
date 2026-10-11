@@ -36,6 +36,14 @@ export function getTaskIndexInfo(): string {
 }
 
 /*-------------------------- related record --------------------------------*/
+/** 'billDigest.<books>_<yyyymmdd>' → '/bill-approval/<books>/<yyyymmdd>' — books ids may contain '_', the date never. */
+function billDigestRoute(okey: string): string {
+  const i = okey.lastIndexOf('_');
+  const books = i > 0 ? okey.slice(0, i) : '';
+  const date = i > 0 ? okey.slice(i + 1) : '';
+  return books && /^\d{8}$/.test(date) ? `/bill-approval/${books}/${date}` : '';
+}
+
 /**
  * The routes a task's `relatedKey` can deep-link to, keyed by its model type.
  *
@@ -45,14 +53,6 @@ export function getTaskIndexInfo(): string {
  * Everything else — `report.<uuid>` from a Schadenmeldung above all — has NO document behind
  * it, so it gets no link rather than a dead one.
  */
-/** 'billDigest.<books>_<yyyymmdd>' → '/bill-approval/<books>/<yyyymmdd>' — books ids may contain '_', the date never. */
-function billDigestRoute(okey: string): string {
-  const i = okey.lastIndexOf('_');
-  const books = i > 0 ? okey.slice(0, i) : '';
-  const date = i > 0 ? okey.slice(i + 1) : '';
-  return books && /^\d{8}$/.test(date) ? `/bill-approval/${books}/${date}` : '';
-}
-
 const RELATED_ROUTES: Record<string, (okey: string) => string> = {
   person:  (okey) => `/person/${okey}`,
   group:   (okey) => `/group/${okey}`,
