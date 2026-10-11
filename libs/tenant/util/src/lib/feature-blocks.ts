@@ -975,10 +975,10 @@ const subject: FeatureBlock = {
     // `rootNavKeys` filters to `navigate`/`sub` so this `context` spec never reaches a root
     // nav. If you edit either copy, edit both.
     // `registered`, not `admin`: every member may pin a room (`chat-room-pin` below), so the
-    // popover itself must be reachable for them. The two room-management entries keep their own
+    // popover itself must be reachable for them. The room-management entry keeps its own
     // `admin` gate — gate 3 of the menu skill is per row, so a member sees only the pin toggle.
+    // (`chat-room-add` is gone, 1.95: rooms are created via the ＋ button in the room list.)
     { key: 'contextMenuChat', name: 'contextMenuChat', url: '', action: 'context', roleNeeded: 'registered', icon: 'help-circle', label: '', children: [
-      { key: 'chat-room-add', name: 'chat-room-add', url: 'addRoom', action: 'call', roleNeeded: 'admin', icon: 'add-circle', label: '@item.chat-room-add' },
       { key: 'chat-room-edit', name: 'chat-room-edit', url: 'editRoom', action: 'call', roleNeeded: 'admin', icon: 'edit', label: '@item.chat-room-edit' },
       { key: 'chat-room-pin', name: 'chat-room-pin', url: 'togglePin', action: 'toggle', roleNeeded: 'registered', icon: 'star-outline', iconAlt: 'star', label: '@item.chat-room-pin', labelAlt: '@item.chat-room-unpin' },
     ] },
@@ -1967,10 +1967,10 @@ const chat: FeatureBlock = {
     // `planMenuOpsForBlocks`. Keep the two copies field-identical; the cross-block identity
     // test in `feature-catalogue.completeness.spec.ts` enforces it.
     // `registered`, not `admin`: every member may pin a room (`chat-room-pin` below), so the
-    // popover itself must be reachable for them. The two room-management entries keep their own
+    // popover itself must be reachable for them. The room-management entry keeps its own
     // `admin` gate — gate 3 of the menu skill is per row, so a member sees only the pin toggle.
+    // (`chat-room-add` is gone, 1.95: rooms are created via the ＋ button in the room list.)
     { key: 'contextMenuChat', name: 'contextMenuChat', url: '', action: 'context', roleNeeded: 'registered', icon: 'help-circle', label: '', children: [
-      { key: 'chat-room-add', name: 'chat-room-add', url: 'addRoom', action: 'call', roleNeeded: 'admin', icon: 'add-circle', label: '@item.chat-room-add' },
       { key: 'chat-room-edit', name: 'chat-room-edit', url: 'editRoom', action: 'call', roleNeeded: 'admin', icon: 'edit', label: '@item.chat-room-edit' },
       { key: 'chat-room-pin', name: 'chat-room-pin', url: 'togglePin', action: 'toggle', roleNeeded: 'registered', icon: 'star-outline', iconAlt: 'star', label: '@item.chat-room-pin', labelAlt: '@item.chat-room-unpin' },
     ] },

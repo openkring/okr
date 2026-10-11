@@ -9,7 +9,7 @@ import { captureMessage } from '@sentry/angular';
 import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
 
 import { AppStore } from '@okr/shared-feature';
-import { AvatarInfo, GroupModel, MatrixMessage, MatrixReadReceipt, MatrixRoom, MatrixUser, PersonModel, ROOM_SHAPE } from '@okr/shared-models';
+import { AvatarInfo, GroupModel, MatrixMessage, MatrixReadReceipt, MatrixRoom, MatrixUser, PersonModel } from '@okr/shared-models';
 import { debugMessage, fileSizeUnit, fill, formatDuration, getAvatarInfo, warn } from '@okr/shared-util-core';
 import { AlertService, copyToClipboardWithConfirmation } from '@okr/shared-util-angular';
 import { I18nService } from '@okr/shared-i18n';
@@ -492,60 +492,23 @@ export const _MatrixChatStore = signalStore(
 
 
       /**
-       * Create a new room.
-       */
-      async createRoom(room?: MatrixRoom, roomName?: string) {
-        room = room ? room : ROOM_SHAPE;
-        const modal = await store.modalController.create({
-          component: RoomEditModal,  // Assume a new standalone component for input name/users
-          componentProps: {
-            room,
-            currentUser: store.currentUser(),
-            header: store.i18n.room_create_header()
-          }
-        });
-        await modal.present();
-        const { data, role } = await modal.onDidDismiss();
-        const roomInfo = data as MatrixRoom;
-        let roomId = '';
-        if (role === 'confirm' && data) {
-          // const invites = roomInfo.invite ? roomInfo.invite.split(',').map(s => s.trim()) : [];
-          const invites: string[] = []; // for now we skip invites, as we don't have a way to select users in the form yet  
-          try {
-            if (roomInfo.isDirect) {
-              roomId = await this.createDirectRoom(invites[0]);
-            } else {
-              const name = roomName ? roomName : roomInfo.name;
-              roomId = await this.createGroupRoom(name, invites, roomInfo.topic, Visibility.Private);
-            }
-            if (roomId && roomInfo.avatar?.startsWith('http')) {
-              await store.matrixService.setRoomAvatarFromUrl(roomId, roomInfo.avatar);
-            }
-            await store.alertService.showToast(store.i18n.room_create_conf());
-            patchState(store, { currentRoomId: roomId });
-
-          } catch (error) {
-            console.error('MatrixChatStore.createRoom: Failed to create room:', error);
-            await store.alertService.showToast(store.i18n.room_create_error());
-          }
-        }
-      },
-
-      /**
-       * Einen Chat eroeffnen. Die Anzahl der gewaehlten Personen entscheidet, WAS entsteht
-       * (planning/specs/2026-09-01-adhoc-chats-spec.md):
+       * Einen Raum anlegen — der Modal «Raum hinzufuegen» (＋ in der Raumliste). Der Typ ist
+       * eine ausdrueckliche Wahl im Modal (`roomType`), nicht mehr aus der Anzahl der Personen
+       * abgeleitet (planning/specs/2026-09-01-adhoc-chats-spec.md, Pinnwand: 1.95):
        *
-       * - **eine** Person → eine Direktnachricht. `createDirectRoom` ist find-or-create, es
-       *   entsteht also kein zweiter Raum, wenn es den DM schon gibt. Ein eingegebener Name
-       *   wird verworfen — ein DM traegt den Namen der Gegenperson.
-       * - **mehrere** Personen → ein Ad-hoc-Chat mit Pflichtnamen. Der Client schreibt nichts
-       *   nach `groups`; die Cloud Function legt Dokument, Raum und Mitgliedschaften an und
-       *   tritt alle bei. Das dauert ein paar Sekunden, deshalb der Hinweis vor dem Aufruf.
+       * - **direct** → eine Direktnachricht mit genau einer Person. `createDirectRoom` ist
+       *   find-or-create, es entsteht also kein zweiter Raum, wenn es den DM schon gibt.
+       * - **adhoc** → ein Ad-hoc-Chat mit Pflichtnamen und zwei bis 19 weiteren Personen. Der
+       *   Client schreibt nichts nach `groups`; die Cloud Function legt Dokument, Raum und
+       *   Mitgliedschaften an und tritt alle bei. Das dauert ein paar Sekunden, deshalb der
+       *   Hinweis vor dem Aufruf.
+       * - **pinboard** → eine Pinnwand (nur `privileged`; der Modal bietet den Typ sonst nicht
+       *   an, und die Cloud Function prueft die Rolle ein zweites Mal). Die Mitglieder ergeben
+       *   sich aus den Quellgruppen.
        *
-       * Die Weiche greift NUR bei der Anlage. Ein bestehender Ad-hoc-Chat bleibt ein
-       * Ad-hoc-Chat, auch wenn er auf zwei Mitglieder schrumpft — er hat ein Gruppendokument,
-       * eine Historie und einen Alias, und daraus nachtraeglich einen DM zu machen hiesse,
-       * beides zu verlieren.
+       * Ein bestehender Ad-hoc-Chat bleibt ein Ad-hoc-Chat, auch wenn er auf zwei Mitglieder
+       * schrumpft — er hat ein Gruppendokument, eine Historie und einen Alias, und daraus
+       * nachtraeglich einen DM zu machen hiesse, beides zu verlieren.
        */
       async createAdhocChat(): Promise<void> {
         const tenantId = store.appStore.tenantId();
@@ -554,31 +517,56 @@ export const _MatrixChatStore = signalStore(
         const modal = await store.modalController.create({ component: AdhocChatNewModal });
         await modal.present();
         const { data, role } = await modal.onDidDismiss<AdhocChatFormModel>();
-        if (role !== 'confirm' || !data || data.members.length === 0) return;
+        if (role !== 'confirm' || !data) return;
 
-        if (data.members.length === 1) {
-          try {
-            await this.createDirectRoom(data.members[0].key);
-            await store.alertService.showToast(store.i18n.room_create_conf());
-          } catch (error) {
-            console.error('MatrixChatStore.createAdhocChat: direct room failed:', error);
-            await store.alertService.showToast(store.i18n.room_create_error());
+        switch (data.roomType) {
+          case 'direct': {
+            if (data.members.length !== 1) return;
+            try {
+              await this.createDirectRoom(data.members[0].key);
+              await store.alertService.showToast(store.i18n.room_create_conf());
+            } catch (error) {
+              console.error('MatrixChatStore.createAdhocChat: direct room failed:', error);
+              await store.alertService.showToast(store.i18n.room_create_error());
+            }
+            return;
           }
-          return;
-        }
-
-        await store.alertService.showToast(store.i18n.adhoc_creating());
-        try {
-          const result = await store.matrixService.createAdhocChat(
-            tenantId,
-            data.members.map((m: AvatarInfo) => m.key),
-            data.name?.trim() || undefined,
-          );
-          patchState(store, { currentRoomId: result.roomId });
-          await store.alertService.showToast(store.i18n.adhoc_create_conf());
-        } catch (error) {
-          console.error('MatrixChatStore.createAdhocChat: failed:', error);
-          await store.alertService.showToast(store.i18n.adhoc_create_error());
+          case 'pinboard': {
+            await store.alertService.showToast(store.i18n.pinboard_creating());
+            try {
+              const result = await store.matrixService.createPinboard({
+                tenantId,
+                name: data.name.trim(),
+                description: data.description.trim(),
+                sourceGroupKeys: data.sourceGroups.map((g: AvatarInfo) => g.key),
+                joinMode: data.joinMode,
+                allowReplyAll: data.allowReplyAll,
+              });
+              patchState(store, { currentRoomId: result.roomId });
+              await store.alertService.showToast(store.i18n.pinboard_create_conf());
+            } catch (error) {
+              console.error('MatrixChatStore.createAdhocChat: pinboard failed:', error);
+              await store.alertService.showToast(store.i18n.pinboard_create_error());
+            }
+            return;
+          }
+          default: {
+            // 'adhoc'
+            if (data.members.length < 2) return;
+            await store.alertService.showToast(store.i18n.adhoc_creating());
+            try {
+              const result = await store.matrixService.createAdhocChat(
+                tenantId,
+                data.members.map((m: AvatarInfo) => m.key),
+                data.name?.trim() || undefined,
+              );
+              patchState(store, { currentRoomId: result.roomId });
+              await store.alertService.showToast(store.i18n.adhoc_create_conf());
+            } catch (error) {
+              console.error('MatrixChatStore.createAdhocChat: failed:', error);
+              await store.alertService.showToast(store.i18n.adhoc_create_error());
+            }
+          }
         }
       },
 

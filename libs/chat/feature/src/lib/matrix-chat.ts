@@ -492,7 +492,7 @@ function rejectionReasons(results: PromiseSettledResult<unknown>[]): unknown[] {
                     <ion-icon src="{{'chatbubbles' | svgIcon}}" size="large"></ion-icon>
                     <div>
                       <p>{{ store.i18n.noRoomsError() }}</p>
-                      <ion-button (click)="onCreateRoom()">{{ store.i18n.createTestRoom() }}</ion-button>
+                      <ion-button (click)="store.createAdhocChat()">{{ store.i18n.adhoc_new_action() }}</ion-button>
                     </div>
                   </div>
                 }
@@ -1464,16 +1464,9 @@ export class MatrixChat implements OnDestroy {
     }
   }
 
-  async onCreateRoom(): Promise<void> {
-    await this.store.createRoom();
-  }
-
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     if (!$event.detail.data) return; // dismissed without choosing an item (backdrop/escape) — not an error
     switch ($event.detail.data) {
-      case 'addRoom':
-        await this.onCreateRoom();
-        break;
       case 'editRoom': {
         const room = this.currentRoom();
         if (room) await this.store.editRoom(room);
