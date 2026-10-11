@@ -91,6 +91,7 @@ export const MATRIX_CHAT_I18N_KEYS = {
   help_chats_direct:               PFX + 'help.chats.direct',
   help_chats_adhoc:                PFX + 'help.chats.adhoc',
   help_chats_announcement:         PFX + 'help.chats.announcement',
+  help_chats_pinboard:             PFX + 'help.chats.pinboard',
 
   msg_edit:                  PFX + 'message.edit',
   msg_reply:                 PFX + 'message.reply.label',

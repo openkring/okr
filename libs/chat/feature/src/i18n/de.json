@@ -120,7 +120,8 @@
       "group": "Gruppen-Chat — gehört zu einer Gruppe und wird automatisch angelegt. Die Mitglieder der Gruppe sind dabei.",
       "direct": "Direkt-Chat — ein privates Gespräch zwischen dir und einer weiteren Person.",
       "adhoc": "Ad-hoc-Chat — ein Raum für einen Anlass, den du selbst mit mehreren Personen anlegst, zum Beispiel für Support oder einen Notfall.",
-      "announcement": "Ankündigungen — hier schreiben nur die Verantwortlichen des Vereins, alle anderen lesen mit."
+      "announcement": "Ankündigungen — hier schreiben nur die Verantwortlichen des Vereins, alle anderen lesen mit.",
+      "pinboard": "Pinnwand — alle können allen etwas mitteilen. Antworten gehen privat an die Person, die den Aushang geschrieben hat."
     }
   },
   "message": {
