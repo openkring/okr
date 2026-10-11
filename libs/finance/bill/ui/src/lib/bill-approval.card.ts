@@ -8,7 +8,7 @@ import { ApprovalBill, BillApprovalI18n } from '@okr/finance-bill-util';
 
 /**
  * One booked bill as the payment_approver sees it (spec 1.94 §3.5): vendor and amount, dates, the paying account,
- * the creditor's IBAN and reference, the lines and the vouchers. Read-only, no outputs. The voucher URLs are signed
+ * the creditor's IBAN and reference, the lines (with account and cost centre) and the vouchers. Read-only, no outputs. The voucher URLs are signed
  * and expire after 10 minutes — they are rendered as plain links, never cached.
  */
 @Component({
@@ -71,7 +71,12 @@ import { ApprovalBill, BillApprovalI18n } from '@okr/finance-bill-util';
             </ion-item>
             @for (line of b.lines; track $index) {
               <ion-item>
-                <ion-label class="ion-text-wrap">{{ line.title }}</ion-label>
+                <ion-label class="ion-text-wrap">
+                  <h3>{{ line.title }}</h3>
+                  @if (line.accountLabel || line.costCenterLabel) {
+                    <p>{{ line.accountLabel }}{{ line.accountLabel && line.costCenterLabel ? ' · ' : '' }}{{ line.costCenterLabel }}</p>
+                  }
+                </ion-label>
                 <ion-note slot="end" class="amount">{{ fmt(line.amount) }}</ion-note>
               </ion-item>
             }

@@ -9,7 +9,7 @@ import { onCall, CallableRequest, HttpsError } from 'firebase-functions/v2/https
 import { logger } from 'firebase-functions/v2';
 import { getFirestore, type Firestore } from 'firebase-admin/firestore';
 
-import { BillCollection, BillModel, FinanceDocumentCollection } from '@okr/shared-models';
+import { AccountCollection, BillCollection, BillModel, CostCenterCollection, FinanceDocumentCollection } from '@okr/shared-models';
 import { ApprovalBill, BillApprovalResult, billVoucherKeys } from '@okr/finance-bill-util';
 import { checkAppCheckToken, checkAuthentication, tenantIdOfUserData } from '@okr/shared-util-functions';
 
@@ -50,23 +50,16 @@ export const getBillsForApproval = onCall(
     let books = reqStr(request.data?.accountingTenantId);
     let day = reqStr(request.data?.date);
     const billKey = reqStr(request.data?.billKey);
-    let billKeys: string[];
     if (billKey) {
       if (!DOC_ID.test(billKey)) throw new HttpsError('invalid-argument', 'billKey is invalid');
       const b = (await db.collection(BillCollection).doc(billKey).get()).data();
       if (!b || !((b['tenants'] as string[] | undefined) ?? []).includes(tenantId)) throw new HttpsError('not-found', 'bill');
       books = str(b['accountingTenantId']);
-      billKeys = [billKey];
       day = '';
-    } else {
-      if (!books || !DOC_ID.test(books) || !/^\d{8}$/.test(day)) {
-        throw new HttpsError('invalid-argument', 'accountingTenantId and date (yyyymmdd) are required');
-      }
-      const { from, to } = dayWindow(day);
-      // single-field range (no composite index); tenant and tag are filtered in memory, as in billApproverDaily
-      const hist = await db.collection(FINANCE_HISTORY_COLLECTION).where('creationDateTime', '>=', from).where('creationDateTime', '<=', to).get();
-      billKeys = bookedBillKeys(hist.docs.map(d => d.data() as HistoryRow)).get(tenantId) ?? [];
+    } else if (!books || !DOC_ID.test(books) || !/^\d{8}$/.test(day)) {
+      throw new HttpsError('invalid-argument', 'accountingTenantId and date (yyyymmdd) are required');
     }
+    // books and permission first: the all-tenant day scan below runs only for an authorized caller
     if (!books || !DOC_ID.test(books)) throw new HttpsError('not-found', 'unknown books');
     const config = await db.collection('accounting-configs').doc(books).get();
     if (!config.exists || !((config.data()?.['tenants'] as string[] | undefined) ?? []).includes(tenantId)) {
@@ -80,6 +73,16 @@ export const getBillsForApproval = onCall(
       throw new HttpsError('permission-denied', 'not the payment approver of these books');
     }
 
+    let billKeys: string[];
+    if (billKey) {
+      billKeys = [billKey];
+    } else {
+      const { from, to } = dayWindow(day);
+      // single-field range (no composite index); tenant and tag are filtered in memory, as in billApproverDaily
+      const hist = await db.collection(FINANCE_HISTORY_COLLECTION).where('creationDateTime', '>=', from).where('creationDateTime', '<=', to).get();
+      billKeys = bookedBillKeys(hist.docs.map(d => d.data() as HistoryRow)).get(tenantId) ?? [];
+    }
+
     const snaps = billKeys.length > 0 ? await db.getAll(...billKeys.map(k => db.collection(BillCollection).doc(k))) : [];
     // approvers review issued Kreditoren only: the digest's own selection (still booked, no draft) in both modes
     const candidates = snaps.filter(s => s.exists).map(s => ({ okey: s.id, data: (s.data() ?? {}) as Data }))
@@ -88,14 +91,18 @@ export const getBillsForApproval = onCall(
     const rows = candidates.filter(r => booked.has(r.okey));
     if (billKey && rows.length === 0) throw new HttpsError('not-found', 'bill');
 
-    // only the books' own paying accounts are resolved (as in the digest); any other key stays unnamed
-    const allowed = (config.data()?.['billPaymentAccountKeys'] as string[] | undefined) ?? [];
+    // only the books' own paying accounts are resolved and grouped (as in the digest); any other key counts as none
+    const allowed = ((config.data()?.['billPaymentAccountKeys'] as string[] | undefined) ?? []).filter(k => typeof k === 'string' && k);
     const accountKeys = [...new Set(rows.map(r => str(r.data['paymentAccountKey'])))].filter(k => k && allowed.includes(k));
     const accounts = await loadPayingAccounts(db, tenantId, accountKeys);
+    const allLines = rows.flatMap(r => (Array.isArray(r.data['lines']) ? (r.data['lines'] as Data[]) : []));
+    const accountLabels = await loadLabels(db, AccountCollection, allLines.map(l => str(l['accountKey'])), tenantId, books);
+    const costCenterLabels = await loadLabels(db, CostCenterCollection, allLines.map(l => str(l['costCenterKey'])), tenantId, books);
 
     const bills: ApprovalBill[] = await Promise.all(rows.map(async ({ okey, data }) => {
       const total = (data['totalAmount'] ?? {}) as { amount?: unknown; currency?: unknown };
-      const paymentAccountKey = str(data['paymentAccountKey']);
+      const storedKey = str(data['paymentAccountKey']);
+      const paymentAccountKey = allowed.includes(storedKey) ? storedKey : '';
       const acc = accounts.find(a => a.key === paymentAccountKey);
       const lines = Array.isArray(data['lines']) ? (data['lines'] as Data[]) : [];
       return {
@@ -104,15 +111,38 @@ export const getBillsForApproval = onCall(
         amount: num(total.amount), currency: str(total.currency) || 'CHF', state: str(data['state']),
         creditorIban: str(data['creditorIban']), paymentReference: str(data['paymentReference']),
         paymentAccountKey, paymentAccountName: acc?.name ?? '', paymentAccountIban: acc?.iban ?? '',
-        lines: lines.map(l => ({ title: str(l['title']), accountKey: str(l['accountKey']), costCenterKey: str(l['costCenterKey']), amount: num(l['amount']) })),
+        lines: lines.map(l => {
+          const accountKey = str(l['accountKey']);
+          const costCenterKey = str(l['costCenterKey']);
+          return { title: str(l['title']), accountKey, costCenterKey, amount: num(l['amount']),
+            accountLabel: accountLabels.get(accountKey) ?? '', costCenterLabel: costCenterLabels.get(costCenterKey) ?? '' };
+        }),
         vouchers: await signVouchers(db, billVoucherKeys({ attachments: (data['attachments'] as string[] | undefined) ?? [] } as BillModel), tenantId),
       };
     }));
 
     logger.info(`${CF_NAME}: ${bills.length} bill(s), books=${books}`);
-    return { accountingTenantId: books, date: day, bills };
+    return { accountingTenantId: books, date: day, paymentAccountKeys: allowed, bills };
   },
 );
+
+/**
+ * `id name` labels of accounts or cost centres, keyed by okey. Only docs of the caller's tenant AND these books are
+ * read back; a key of other books, an invalid key or a missing doc stays unlabelled.
+ */
+async function loadLabels(db: Firestore, collection: string, keys: string[], tenantId: string, books: string): Promise<Map<string, string>> {
+  const valid = [...new Set(keys)].filter(k => k && DOC_ID.test(k));
+  const labels = new Map<string, string>();
+  if (valid.length === 0) return labels;
+  const snaps = await db.getAll(...valid.map(k => db.collection(collection).doc(k)));
+  for (const s of snaps) {
+    const d = s.data();
+    if (!d || !((d['tenants'] as string[] | undefined) ?? []).includes(tenantId) || str(d['accountingTenantId']) !== books) continue;
+    const label = [str(d['id']), str(d['name'])].filter(Boolean).join(' ');
+    if (label) labels.set(s.id, label);
+  }
+  return labels;
+}
 
 /** Short-lived signed links to the bill's vouchers in the private bucket; documents of another tenant are left out. */
 async function signVouchers(db: Firestore, keys: string[], tenantId: string): Promise<{ name: string; url: string }[]> {

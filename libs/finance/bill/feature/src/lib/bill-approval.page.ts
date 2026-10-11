@@ -72,7 +72,7 @@ export class BillApprovalPage {
     loader: ({ params }) => this.billService.getBillsForApproval(params.billKey
       ? { billKey: params.billKey } : { accountingTenantId: params.books, date: params.date }),
   });
-  protected readonly groups = computed(() => groupApprovalBills(this.result.value()?.bills ?? []));
+  protected readonly groups = computed(() => groupApprovalBills(this.result.value()?.bills ?? [], this.result.value()?.paymentAccountKeys ?? []));
 
   protected readonly title = computed(() => {
     if (this.billKey()) return this.i18n.approval_title();
