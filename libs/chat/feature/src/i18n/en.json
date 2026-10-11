@@ -116,9 +116,11 @@
       }
     },
     "chats": {
-      "title": "Direct vs. group chats",
-      "direct": "A direct chat is a private conversation between you and one other person.",
-      "group": "A group chat has several members as well as a room name and a topic."
+      "title": "Types of chat",
+      "group": "Group chat — belongs to a group and is created automatically. The group's members are in it.",
+      "direct": "Direct chat — a private conversation between you and one other person.",
+      "adhoc": "Ad-hoc chat — a room for a particular occasion that you set up yourself with several people, for example for support or an emergency.",
+      "announcement": "Announcements — only the club's officials write here, everyone else reads along."
     }
   },
   "message": {

@@ -116,9 +116,11 @@
       }
     },
     "chats": {
-      "title": "Discussions directes vs. de groupe",
-      "direct": "Une discussion directe est une conversation privée entre vous et une autre personne.",
-      "group": "Une discussion de groupe compte plusieurs membres ainsi qu'un nom de salon et un sujet."
+      "title": "Types de chat",
+      "group": "Chat de groupe — appartient à un groupe et est créé automatiquement. Les membres du groupe y participent.",
+      "direct": "Chat direct — une conversation privée entre toi et une autre personne.",
+      "adhoc": "Chat ad hoc — un salon pour une occasion précise, que tu crées toi-même avec plusieurs personnes, par exemple pour le support ou une urgence.",
+      "announcement": "Annonces — seuls les responsables du club y écrivent, tous les autres lisent."
     }
   },
   "message": {

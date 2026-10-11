@@ -91,8 +91,10 @@ import { MatrixChatStore } from './matrix-chat.store';
           <ion-card-title>{{ store.i18n.help_chats_title() }}</ion-card-title>
         </ion-card-header>
         <ion-card-content>
-          <ion-item lines="none"><ion-label class="ion-text-wrap">{{ store.i18n.help_chats_direct() }}</ion-label></ion-item>
           <ion-item lines="none"><ion-label class="ion-text-wrap">{{ store.i18n.help_chats_group() }}</ion-label></ion-item>
+          <ion-item lines="none"><ion-label class="ion-text-wrap">{{ store.i18n.help_chats_direct() }}</ion-label></ion-item>
+          <ion-item lines="none"><ion-label class="ion-text-wrap">{{ store.i18n.help_chats_adhoc() }}</ion-label></ion-item>
+          <ion-item lines="none"><ion-label class="ion-text-wrap">{{ store.i18n.help_chats_announcement() }}</ion-label></ion-item>
         </ion-card-content>
       </ion-card>
     </ion-content>

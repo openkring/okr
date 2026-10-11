@@ -87,8 +87,10 @@ export const MATRIX_CHAT_I18N_KEYS = {
   help_shortcut_newlineMobile_token: PFX + 'help.shortcuts.newlineMobile.token',
   help_shortcut_newlineMobile_desc:  PFX + 'help.shortcuts.newlineMobile.desc',
   help_chats_title:                PFX + 'help.chats.title',
-  help_chats_direct:               PFX + 'help.chats.direct',
   help_chats_group:                PFX + 'help.chats.group',
+  help_chats_direct:               PFX + 'help.chats.direct',
+  help_chats_adhoc:                PFX + 'help.chats.adhoc',
+  help_chats_announcement:         PFX + 'help.chats.announcement',
 
   msg_edit:                  PFX + 'message.edit',
   msg_reply:                 PFX + 'message.reply.label',

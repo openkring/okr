@@ -116,9 +116,11 @@
       }
     },
     "chats": {
-      "title": "Chats directos vs. de grupo",
-      "direct": "Un chat directo es una conversación privada entre tú y otra persona.",
-      "group": "Un chat de grupo tiene varios miembros, así como un nombre de sala y un tema."
+      "title": "Tipos de chat",
+      "group": "Chat de grupo — pertenece a un grupo y se crea automáticamente. Los miembros del grupo están en él.",
+      "direct": "Chat directo — una conversación privada entre tú y otra persona.",
+      "adhoc": "Chat ad hoc — una sala para una ocasión concreta que creas tú mismo con varias personas, por ejemplo para soporte o una emergencia.",
+      "announcement": "Anuncios — aquí solo escriben los responsables del club, todos los demás leen."
     }
   },
   "message": {
