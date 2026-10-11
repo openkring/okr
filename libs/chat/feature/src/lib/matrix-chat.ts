@@ -1,7 +1,7 @@
 import { Component, DestroyRef, ElementRef, PLATFORM_ID, computed, effect, inject, input, OnDestroy, signal, untracked, viewChild } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
-import { IonCard, IonCardContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonBadge, IonSearchbar, IonText, ActionSheetOptions, ActionSheetController, ModalController } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonBadge, IonSearchbar, IonText, IonList, IonListHeader, IonItem, IonLabel, ActionSheetOptions, ActionSheetController, ModalController } from '@ionic/angular/standalone';
 import { captureMessage } from '@sentry/angular';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
@@ -33,7 +33,7 @@ function rejectionReasons(results: PromiseSettledResult<unknown>[]): unknown[] {
   imports: [
     SvgIconPipe, RouterLink,
     Spinner, MatrixRoomList, MatrixMessageList, MatrixMessageInput,
-    IonCard, IonCardContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonBadge, IonSearchbar, IonText
+    IonCard, IonCardContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonBadge, IonSearchbar, IonText, IonList, IonListHeader, IonItem, IonLabel
   ],
   styles: [`
     :host {
@@ -341,6 +341,21 @@ function rejectionReasons(results: PromiseSettledResult<unknown>[]): unknown[] {
                   [value]="roomFilter()"
                   (ionInput)="onRoomFilterChange($event)"
                 />
+              }
+
+              @if (store.availablePinboards().length > 0) {
+                <ion-list class="available-pinboards" lines="full">
+                  <ion-list-header><ion-label>{{ store.i18n.pinboard_available_title() }}</ion-label></ion-list-header>
+                  @for (pb of store.availablePinboards(); track pb.groupKey) {
+                    <ion-item>
+                      <ion-label class="ion-text-wrap">
+                        <h3>{{ pb.name }}</h3>
+                        @if (pb.description) { <p>{{ pb.description }}</p> }
+                      </ion-label>
+                      <ion-button slot="end" fill="outline" size="small" (click)="store.joinPinboard(pb.groupKey)">{{ store.i18n.pinboard_join() }}</ion-button>
+                    </ion-item>
+                  }
+                </ion-list>
               }
 
               <okr-matrix-room-list

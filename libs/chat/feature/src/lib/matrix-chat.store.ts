@@ -3,21 +3,21 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
-import { map, of, startWith, switchMap, timer } from 'rxjs';
+import { catchError, from, map, of, startWith, switchMap, timer } from 'rxjs';
 import { Visibility, type MatrixCall } from 'matrix-js-sdk';
 import { captureMessage } from '@sentry/angular';
 import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
 
 import { AppStore } from '@okr/shared-feature';
 import { AvatarInfo, GroupModel, MatrixMessage, MatrixReadReceipt, MatrixRoom, MatrixUser, PersonModel } from '@okr/shared-models';
-import { debugMessage, fileSizeUnit, fill, formatDuration, getAvatarInfo, hasRole, warn } from '@okr/shared-util-core';
-import { AlertService, copyToClipboardWithConfirmation } from '@okr/shared-util-angular';
+import { debugMessage, fileSizeUnit, fill, formatDuration, getAvatarInfo, hasRole, isKioskOnly, warn } from '@okr/shared-util-core';
+import { AlertService, copyToClipboardWithConfirmation, resourceParams } from '@okr/shared-util-angular';
 import { I18nService } from '@okr/shared-i18n';
 
 import { ActivityService } from '@okr/activity-data-access';
 import { AvatarService } from '@okr/avatar-data-access';
 import { MatrixChatService, MatrixPollData } from '@okr/chat-data-access';
-import { AdhocChatFormModel, newAdhocChatForm, PollDef, filterRoomsOfTenant, findSupportRoom, serverNameOf, MATRIX_CHAT_I18N_KEYS, MatrixChatI18n, MentionRef, callableErrorCode, pinboardBroadcastCount, pinboardReplyDraft, isAlbumVideoFile, isVideoLimitError, isVideoUploadError, videoAlbumFallsBackToSynapse } from '@okr/chat-util';
+import { AvailablePinboard, AdhocChatFormModel, newAdhocChatForm, PollDef, filterRoomsOfTenant, findSupportRoom, serverNameOf, MATRIX_CHAT_I18N_KEYS, MatrixChatI18n, MentionRef, callableErrorCode, pinboardBroadcastCount, pinboardReplyDraft, isAlbumVideoFile, isVideoLimitError, isVideoUploadError, videoAlbumFallsBackToSynapse } from '@okr/chat-util';
 
 import { RoomEditModal } from './room-edit.modal';
 
@@ -81,6 +81,23 @@ export const _MatrixChatStore = signalStore(
       ),
     }),
     roomsResource: rxResource({ stream: () => store.matrixService.rooms }),
+    // Pinnwaende, denen man beitreten koennte (opt-in oder verlassen). Nur wenn Matrix laeuft
+    // und der Benutzer kein reiner Kiosk-Benutzer ist; Fehler -> leere Liste.
+    availablePinboardsResource: rxResource({
+      params: resourceParams(() => ({
+        tenantId: store.appStore.tenantId() ?? '',
+        ready: store.isMatrixInitialized() && !isKioskOnly(store.appStore.currentUser()),
+      })),
+      stream: ({ params }) => {
+        if (!params.tenantId || !params.ready) return of([] as AvailablePinboard[]);
+        return from(store.matrixService.listAvailablePinboards(params.tenantId)).pipe(
+          catchError(error => {
+            console.warn('MatrixChatStore.availablePinboards: load failed:', error);
+            return of([] as AvailablePinboard[]);
+          }),
+        );
+      },
+    }),
     roomStateVersionResource: rxResource({ stream: () => store.matrixService.roomStateVersion }),
     imageUrlResource: rxResource({
       params: () => ({
@@ -139,6 +156,7 @@ export const _MatrixChatStore = signalStore(
       currentUser: computed(() => state.appStore.currentUser()),
       imgixBaseUrl: computed(() => state.appStore.services.imgixBaseUrl()),
       syncState: computed(() => state.syncStateResource.value() || 'STOPPED'),
+      availablePinboards: computed(() => state.availablePinboardsResource.value() ?? []),
       // One Matrix account spans all tenants, so the raw list contains other tenants' group
       // rooms and DMs too — filtered down to this tenant (see filterRoomsOfTenant).
       // Everything derived from `rooms` (unread badges included) inherits the filter.
@@ -675,11 +693,27 @@ export const _MatrixChatStore = signalStore(
         }
       },
 
+      reloadAvailablePinboards(): void {
+        store.availablePinboardsResource.reload();
+      },
+
+      async joinPinboard(groupKey: string): Promise<void> {
+        try {
+          const roomId = await store.matrixService.joinPinboard(groupKey);
+          patchState(store, { currentRoomId: roomId });
+          this.reloadAvailablePinboards();
+        } catch (error) {
+          console.error('MatrixChatStore.joinPinboard: failed:', error);
+          await store.alertService.showToast(store.i18n.pinboard_join_error());
+        }
+      },
+
       async leavePinboard(pinboard: GroupModel): Promise<void> {
         if (!await store.alertService.confirm(store.i18n.pinboard_leave_confirm(), true)) return;
         try {
           await store.matrixService.leavePinboard(pinboard.okey);
           patchState(store, { currentRoomId: undefined });
+          this.reloadAvailablePinboards();
           await store.alertService.showToast(store.i18n.pinboard_leave_conf());
         } catch (error) {
           console.error('MatrixChatStore.leavePinboard: failed:', error);
