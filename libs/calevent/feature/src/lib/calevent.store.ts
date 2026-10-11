@@ -12,7 +12,7 @@ import { from, firstValueFrom, map, of } from 'rxjs';
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore, ModelSelectService } from '@okr/shared-feature';
 import { Attendee, AvatarInfo, CalendarCollection, CalendarModel, CalEventCollection, CalEventModel, CalEventModelName, CategoryListModel, InvitationCollection, InvitationModel } from '@okr/shared-models';
-import { addDuration, calculateRecurringDates, chipMatches, compareDate, DateFormat, debugListLoaded, extractSecondPartOfOptionalTupel, generateRandomString, getAttendee, getAvatarInfoForCurrentUser, getDayDiff, getArchiveInclusiveQuery, getFullName, getSystemQuery, getTodayStr, fill, isCalendarPublic, isAfterDate, isAfterOrEqualDate, isInRollingWindow, nameMatches, pad, prettyFormatDate, removeKeyFromOkrModel, warn, YEAR_ROLLING_WINDOW } from '@okr/shared-util-core';
+import { addDuration, calculateRecurringDates, chipMatches, compareDate, DateFormat, debugListLoaded, extractSecondPartOfOptionalTupel, generateRandomString, getAttendee, getAvatarInfoForCurrentUser, getDayDiff, getArchiveInclusiveQuery, getFullName, getSystemQuery, getTodayStr, fill, isCalendarPublic, isAfterDate, isAfterOrEqualDate, isInRollingWindow, nameMatches, pad, prettyFormatDate, publicAppOrigin, removeKeyFromOkrModel, warn, YEAR_ROLLING_WINDOW } from '@okr/shared-util-core';
 import { confirm, copyToClipboardDeferred, error, lazyService, navigateByUrl, notify, okrPrompt, showToast } from '@okr/shared-util-angular';
 import { InvitationService } from '@okr/relationship-invitation-data-access';
 import type { InvitePersonsFormData, InvitePersonsI18n } from '@okr/relationship-invitation-util';
@@ -531,7 +531,7 @@ export const CalEventStore = signalStore(
        * an invitation can never be answered (`canAttendCalevent`). Open on a group calendar means
        * open to that group — see `mayJoinOpenCalevent`.
        */
-      async createSchedulePoll(data: SchedulePollFormData, origin: string): Promise<void> {
+      async createSchedulePoll(data: SchedulePollFormData): Promise<void> {
         const currentUser = store.currentUser();
         const groupId = store.groupCalendarId();
         // throw, don't return: the caller dismisses on success, so a silent no-op would look saved
@@ -576,7 +576,7 @@ export const CalEventStore = signalStore(
         }
         await batch.commit();
 
-        await this.publishSchedulePoll(data.name, seriesId, origin);
+        await this.publishSchedulePoll(data.name, seriesId);
       },
 
       /**
@@ -588,8 +588,13 @@ export const CalEventStore = signalStore(
        * `createAlias`: the alias is the poll's IDENTITY, so re-announcing the same poll reuses the
        * same code instead of minting a second one. A tenant without a seeded `link` space simply
        * gets the long URL — a missing short link must never cost the announcement.
+       *
+       * Both links point at the tenant's public app origin, never the page's own: from a dev
+       * server the target would be `http://localhost:4200`, which `resolveAlias` rejects and which
+       * nobody reading the group chat could open anyway.
        */
-      async publishSchedulePoll(name: string, seriesId: string, origin: string): Promise<void> {
+      async publishSchedulePoll(name: string, seriesId: string): Promise<void> {
+        const origin = publicAppOrigin(store.appStore.appConfig().appDomain, store.appStore.tenantId());
         const longLink = buildSchedulePollLink(origin, store.calendarName(), seriesId);
         const result = await store.aliasMintService.resolveAlias({
           space: CALEVENT_ALIAS_SPACE,
@@ -852,8 +857,14 @@ export const CalEventStore = signalStore(
        * Aufruf prägt, jeder weitere bekommt denselben Code zurück. Deshalb wächst die
        * Alias-Liste mit der Zahl der Termine und nicht mit der Zahl der Klicks, und deshalb
        * darf die Aktion allen registrierten Nutzern offenstehen.
+       *
+       * Ziel ist immer die öffentliche App-Adresse des Mandanten (`publicAppOrigin`), nicht die
+       * Adresse der Seite: der Alias wird einmal geprägt und bleibt — ein Link vom Dev-Server
+       * (`http://localhost:4200`) wäre für alle anderen tot, und `resolveAlias` lehnt jedes
+       * Nicht-https-Ziel ohnehin mit `invalid-argument` ab.
        */
-      async copyLink(calevent: CalEventModel, origin: string): Promise<void> {
+      async copyLink(calevent: CalEventModel): Promise<void> {
+        const origin = publicAppOrigin(store.appStore.appConfig().appDomain, store.appStore.tenantId());
         // Kein `await` vor dem Clipboard-Aufruf: das Prägen dauert auf einer kalten Function
         // mehrere Sekunden, danach ist die Nutzergeste verbraucht und Chrome bräuchte eine
         // Berechtigung, die es ohne Geste nicht abfragen kann — der Kopiervorgang blieb dann

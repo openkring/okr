@@ -1073,7 +1073,7 @@ export class CalEventList implements OnInit {
           await this.calendarFeedService.addEventToCalendar(calEvent, !!this.currentUser());
         break;
         case 'calevent.copyLink':
-          await this.store.copyLink(calEvent, window.location.origin);
+          await this.store.copyLink(calEvent);
           break;
         case 'calevent.delete': {
           const isGrid = !this.isListView();

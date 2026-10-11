@@ -154,7 +154,7 @@ export class ScheduleModal implements OnDestroy {
   protected async save(): Promise<void> {
     try {
       if (this.isDraft()) {
-        await this.store.createSchedulePoll(this.formData(), window.location.origin);
+        await this.store.createSchedulePoll(this.formData());
       } else {
         await this.store.saveSchedulePollResponses(this.proposedEvents(), this.formData().rows);
       }
