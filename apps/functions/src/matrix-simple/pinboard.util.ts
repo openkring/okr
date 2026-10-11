@@ -83,7 +83,8 @@ export function mergeMembershipState(prev: PinboardMembershipState | undefined, 
 }
 
 export const PINBOARD_NAME_MAX = 50;
-export const PINBOARD_DESCRIPTION_MAX = 500;
+/** Spiegelt DESCRIPTION_LENGTH aus shared-constants (die Functions importieren diese Lib nicht). */
+export const PINBOARD_DESCRIPTION_MAX = 5000;
 export const PINBOARD_MAX_SOURCES = 20;
 const SOURCE_KEY_MAX = 100;
 

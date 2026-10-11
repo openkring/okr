@@ -373,7 +373,7 @@
     },
     "leave": {
       "label": "Lascia la bacheca",
-      "confirm": "Vuoi lasciare la bacheca? Non verrai più aggiunto automaticamente, ma puoi rientrare in qualsiasi momento.",
+      "confirm": "Vuoi lasciare la bacheca? L'aggiunta automatica non avverrà più, ma puoi rientrare quando vuoi.",
       "conf": "Hai lasciato la bacheca.",
       "error": "Non è stato possibile lasciare la bacheca."
     },

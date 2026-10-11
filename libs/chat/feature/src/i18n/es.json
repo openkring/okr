@@ -382,7 +382,7 @@
     },
     "join": {
       "label": "Unirse",
-      "error": "No se pudo unir al tablón de anuncios."
+      "error": "No pudiste unirte al tablón de anuncios."
     }
   }
 }

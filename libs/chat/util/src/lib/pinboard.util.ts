@@ -2,7 +2,7 @@
 export function pinboardReplyDraft(body: string, prefix: string): string {
   const flat = (body ?? '').replace(/\s+/g, ' ').trim();
   const excerpt = flat.length > 60 ? `${flat.slice(0, 60)}…` : flat;
-  return prefix.replace('{excerpt}', excerpt);
+  return prefix.replace('{excerpt}', () => excerpt);
 }
 
 /** Wie viele Personen ein Aushang benachrichtigt: alle Raummitglieder ausser der schreibenden. */

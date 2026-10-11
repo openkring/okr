@@ -9,6 +9,7 @@ describe('pinboardReplyDraft', () => {
     expect(pinboardReplyDraft(body, prefix)).toBe(`Zu deinem Aushang «${'a'.repeat(60)}…»: `);
   });
   it('flattens line breaks', () => expect(pinboardReplyDraft('Brille\ngefunden', prefix)).toBe('Zu deinem Aushang «Brille gefunden»: '));
+  it('does not interpret $ patterns in the body', () => expect(pinboardReplyDraft('Velo $& Helm', prefix)).toBe('Zu deinem Aushang «Velo $& Helm»: '));
   it('falls back to the prefix without quote for an empty body', () => expect(pinboardReplyDraft('  ', prefix)).toBe('Zu deinem Aushang «»: '));
 });
 

@@ -1,9 +1,9 @@
 import { enforce, staticSuite, test } from 'vest';
 
-import { SHORT_NAME_LENGTH } from '@okr/shared-constants';
+import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { stringValidations } from '@okr/shared-util-core';
 
-import { ADHOC_CHAT_MAX_MEMBERS, AdhocChatFormModel, PINBOARD_DESCRIPTION_MAX } from './adhoc-chat.model';
+import { ADHOC_CHAT_MAX_MEMBERS, AdhocChatFormModel } from './adhoc-chat.model';
 
 /**
  * Je Raumtyp (`roomType`) gelten andere Regeln:
@@ -38,12 +38,7 @@ export const adhocChatValidations = staticSuite((model: AdhocChatFormModel) => {
     });
   }
   if (type === 'pinboard') {
-    // Die Beschreibung ist ein kurzes Raumthema (spec: 500 Zeichen), nicht Prosa bis DESCRIPTION_LENGTH —
-    // darum eine eigene Regel statt der Prosa-Obergrenze von stringValidations.
-    stringValidations('description', model.description);
-    test('description', 'descriptionMax', () => {
-      enforce((model.description ?? '').length).lessThanOrEquals(PINBOARD_DESCRIPTION_MAX);
-    });
+    stringValidations('description', model.description, DESCRIPTION_LENGTH);
     test('sourceGroups', 'sourceGroupsRequired', () => {
       enforce(model.sourceGroups?.length ?? 0).greaterThanOrEquals(1);
     });

@@ -89,7 +89,7 @@ describe('validatePinboardInput', () => {
   it('requires at least one source group on create', () => expect(validatePinboardInput({ ...ok, sourceGroupKeys: [] }, false)).toMatch(/source/));
   it('rejects a pinboard as source', () => expect(validatePinboardInput({ ...ok, sourceGroupKeys: ['scs_p_abc'] }, false)).toMatch(/source/));
   it('rejects an unknown join mode', () => expect(validatePinboardInput({ ...ok, joinMode: 'auto' }, false)).toMatch(/joinMode/));
-  it('rejects a description over 500 characters', () => expect(validatePinboardInput({ ...ok, description: 'x'.repeat(501) }, false)).toMatch(/description/));
+  it('rejects a description over 5000 characters', () => expect(validatePinboardInput({ ...ok, description: 'x'.repeat(5001) }, false)).toMatch(/description/));
   it('accepts a partial update with only allowReplyAll', () => expect(validatePinboardInput({ allowReplyAll: true }, true)).toBeUndefined());
   it('rejects more than the maximum number of source groups', () => expect(validatePinboardInput({ ...ok, sourceGroupKeys: Array.from({ length: PINBOARD_MAX_SOURCES + 1 }, (_, i) => `g${i}`) }, false)).toMatch(/source/));
   it('rejects a source key over 100 characters', () => expect(validatePinboardInput({ ...ok, sourceGroupKeys: ['x'.repeat(101)] }, false)).toMatch(/source/));

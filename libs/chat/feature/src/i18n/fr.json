@@ -375,14 +375,14 @@
       "label": "Quitter le panneau d'affichage",
       "confirm": "Souhaites-tu quitter le panneau d'affichage ? Tu ne seras plus ajouté automatiquement, mais tu peux le rejoindre à tout moment.",
       "conf": "Tu as quitté le panneau d'affichage.",
-      "error": "Tu n'as pas pu quitter le panneau d'affichage."
+      "error": "Impossible de quitter le panneau d'affichage."
     },
     "available": {
       "title": "Panneaux d'affichage disponibles"
     },
     "join": {
       "label": "Rejoindre",
-      "error": "Tu n'as pas pu rejoindre le panneau d'affichage."
+      "error": "Impossible de rejoindre le panneau d'affichage."
     }
   }
 }

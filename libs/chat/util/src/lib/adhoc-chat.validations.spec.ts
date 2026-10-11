@@ -81,8 +81,8 @@ describe('adhocChatValidations — room types', () => {
     const r = adhocChatValidations(model({ roomType: 'pinboard', name: 'Marktplatz', sourceGroups: [member('scs')] }));
     expect(r.isValid()).toBe(true);
   });
-  it('rejects a pinboard description over 500 characters', () => {
-    const r = adhocChatValidations(model({ roomType: 'pinboard', name: 'M', sourceGroups: [member('scs')], description: 'x'.repeat(501) }));
+  it('rejects a pinboard description over 5000 characters', () => {
+    const r = adhocChatValidations(model({ roomType: 'pinboard', name: 'M', sourceGroups: [member('scs')], description: 'x'.repeat(5001) }));
     expect(r.getErrors('description').length).toBeGreaterThan(0);
   });
 });

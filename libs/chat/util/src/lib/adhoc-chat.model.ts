@@ -1,7 +1,9 @@
+import { DESCRIPTION_LENGTH } from '@okr/shared-constants';
 import { AvatarInfo } from '@okr/shared-models';
 
 export type ChatRoomType = 'direct' | 'adhoc' | 'pinboard';
-export const PINBOARD_DESCRIPTION_MAX = 500;
+/** Obergrenze der Pinnwand-Beschreibung; gespiegelt von PINBOARD_DESCRIPTION_MAX in der Cloud Function. */
+export const PINBOARD_DESCRIPTION_MAX = DESCRIPTION_LENGTH;
 
 /**
  * Eingabemodell des Chat-Formulars (planning/specs/2026-09-01-adhoc-chats-spec.md,
