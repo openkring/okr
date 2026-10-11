@@ -30,6 +30,18 @@ describe('parseRaisenow', () => {
     expect(parseStatement(text).format).toBe('raisenow');
   });
 
+  it('accepts a column-preset export that names the id column Transaktions-Identifikationsnummer', () => {
+    const preset = [
+      'Transaktions-Identifikationsnummer,Erstellt,UTC-Offset,Status,Betrag,Währung,Touchpoint-Name,Konto-Identifikationsnummer,Vorname,Nachname,Nettobetrag,Gebühr,Währung der Gebühr',
+      'd1fae180-4b8c-4094-9747-fb01bcf80436,11/10/2026 17:21:40,+02:00,succeeded,20.00,CHF,SCS Twint JB,0a49a1d9-7254-443e-a326-d0d36cecce8e,A,B,19.50,0.50,CHF',
+    ].join('\n');
+    expect(detectFormat(preset)).toBe('raisenow');
+    const p = parseRaisenow(preset);
+    expect(p.iban).toBe('RAISENOW-0a49a1d9-7254-443e');
+    expect(p.rows[0]).toMatchObject({ bankReference: 'd1fae180-4b8c-4094-9747-fb01bcf80436', date: '20261011' });
+    expect(p.warnings).toEqual([]);
+  });
+
   it('is a statement on the pseudo-IBAN, newest first, with the window taken from the rows', () => {
     expect(s).toMatchObject({
       format: 'raisenow', bankName: 'RaiseNow', currency: 'CHF', newestFirst: true,

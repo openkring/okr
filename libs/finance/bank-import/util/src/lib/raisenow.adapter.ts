@@ -19,8 +19,10 @@ const SEPARATOR = ',';
 const IBAN_PREFIX = 'RAISENOW-';
 const IBAN_ID_LENGTH = 18;   // prefix + 18 = 27 chars, inside the 15..34 of bankProfileValidations
 
-/** The columns that must be present for the file to be a RaiseNow export. */
-const HEADER = ['Identifikationsnummer', 'Erstellt', 'UTC-Offset', 'Status', 'Betrag'];
+/** The transaction id column: the full export says `Identifikationsnummer`, a saved column preset `Transaktions-Identifikationsnummer`. */
+const ID_COLUMNS = ['Identifikationsnummer', 'Transaktions-Identifikationsnummer'];
+/** The columns that must lead the header for the file to be a RaiseNow export (after the id column). */
+const HEADER = ['Erstellt', 'UTC-Offset', 'Status', 'Betrag'];
 
 const fields = (line: string) => parseCsvLine(stripBom(line), SEPARATOR);
 
@@ -28,7 +30,7 @@ export function matchesRaisenowHeader(lines: string[]): boolean {
   const first = lines.find(l => l.trim().length > 0);
   if (!first) return false;
   const f = fields(first);
-  return HEADER.every((h, i) => f[i] === h);
+  return ID_COLUMNS.includes(f[0]) && HEADER.every((h, i) => f[i + 1] === h);
 }
 
 /** `RAISENOW-0a49a1d9-7254-443e` from the constant account id; '' when the column is missing or empty. */
@@ -48,7 +50,7 @@ export function parseRaisenow(text: string): ParsedStatement {
   if (headerIdx < 0) throw new BankImportError('empty-file');
   const header = fields(lines[headerIdx]);
   const col = (name: string) => header.indexOf(name);
-  const cId = col('Identifikationsnummer'), cCreated = col('Erstellt'), cStatus = col('Status'),
+  const cId = header.findIndex(h => ID_COLUMNS.includes(h)), cCreated = col('Erstellt'), cStatus = col('Status'),
     cAmount = col('Betrag'), cCurrency = col('Währung'), cFee = col('Gebühr'), cFeeCurrency = col('Währung der Gebühr'),
     cNet = col('Nettobetrag'), cFxAmount = col('Umgerechneter Betrag'), cFxCurrency = col('Umgerechnete Währung'),
     cTouchpoint = col('Touchpoint-Name'), cSolutionType = col('Art der Touchpoint-Lösung'), cMethod = col('Zahlungsmethode'),
