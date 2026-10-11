@@ -655,7 +655,10 @@ service cloud.firestore {
     // contact data, so any tenant member may read it. Never client-writable.
     match /address-directory/{id}  { allow read: if tenantRead(); allow write: if false; }
     match /asset-movements/{id}    { allow read: if tenantRead(); allow write: if false; }
-    match /bills/{id}              { allow read: if tenantRead(); allow write: if false; }
+    // Kreditoren carry vendor IBANs, amounts and internal notes: treasurer/admin only (decided 2026-10-11,
+    // spec 3.36). Every client reader sits behind isTreasurerGuard or the admin console; the payment_approver
+    // reads the bills of a digest through the getBillsForApproval callable, never directly.
+    match /bills/{id}              { allow read: if tenantRead() && (hasRole('treasurer') || isAdmin()); allow write: if false; }
     // Vouchers, invoice/reminder PDFs and comments migrated from bexio (spec 1.68). Personal data
     // (members' receipts, internal notes) — treasurer/privileged only, never client-written.
     // The files themselves are under tenant/{tid}/private/**, which only Cloud Functions reach.
