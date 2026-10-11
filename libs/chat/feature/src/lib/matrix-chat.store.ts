@@ -10,14 +10,14 @@ import { AlertController, ModalController, ToastController } from '@ionic/angula
 
 import { AppStore } from '@okr/shared-feature';
 import { AvatarInfo, GroupModel, MatrixMessage, MatrixReadReceipt, MatrixRoom, MatrixUser, PersonModel } from '@okr/shared-models';
-import { debugMessage, fileSizeUnit, fill, formatDuration, getAvatarInfo, warn } from '@okr/shared-util-core';
+import { debugMessage, fileSizeUnit, fill, formatDuration, getAvatarInfo, hasRole, warn } from '@okr/shared-util-core';
 import { AlertService, copyToClipboardWithConfirmation } from '@okr/shared-util-angular';
 import { I18nService } from '@okr/shared-i18n';
 
 import { ActivityService } from '@okr/activity-data-access';
 import { AvatarService } from '@okr/avatar-data-access';
 import { MatrixChatService, MatrixPollData } from '@okr/chat-data-access';
-import { AdhocChatFormModel, PollDef, filterRoomsOfTenant, findSupportRoom, serverNameOf, MATRIX_CHAT_I18N_KEYS, MatrixChatI18n, MentionRef, callableErrorCode, pinboardBroadcastCount, pinboardReplyDraft, isAlbumVideoFile, isVideoLimitError, isVideoUploadError, videoAlbumFallsBackToSynapse } from '@okr/chat-util';
+import { AdhocChatFormModel, newAdhocChatForm, PollDef, filterRoomsOfTenant, findSupportRoom, serverNameOf, MATRIX_CHAT_I18N_KEYS, MatrixChatI18n, MentionRef, callableErrorCode, pinboardBroadcastCount, pinboardReplyDraft, isAlbumVideoFile, isVideoLimitError, isVideoUploadError, videoAlbumFallsBackToSynapse } from '@okr/chat-util';
 
 import { RoomEditModal } from './room-edit.modal';
 
@@ -607,6 +607,84 @@ export const _MatrixChatStore = signalStore(
         await modal.present();
         const { role } = await modal.onDidDismiss();
         if (role === 'leave') await this.leaveAdhocChat(chat);
+      },
+
+      async openPinboardInfo(): Promise<void> {
+        const pinboard = store.currentPinboard();
+        const roomId = store.currentRoomId();
+        if (!pinboard || !roomId) return;
+        const groups = store.appStore.allGroups();
+        const { PinboardInfoModal } = await import('./pinboard-info.modal');
+        const modal = await store.modalController.create({
+          component: PinboardInfoModal,
+          componentProps: {
+            name: pinboard.name,
+            description: pinboard.notes ?? '',
+            sourceGroupNames: (pinboard.sourceGroupKeys ?? []).map((k: string) => groups.find((g: GroupModel) => g.okey === k)?.name ?? k),
+            memberCount: store.matrixService.getRoomMemberPersonKeys(roomId).length,
+            joinMode: pinboard.joinMode ?? 'optOut',
+            canManage: hasRole('privileged', store.appStore.currentUser()),
+          },
+        });
+        await modal.present();
+        const { role } = await modal.onDidDismiss();
+        if (role === 'edit') await this.editPinboard(pinboard);
+        if (role === 'archive') await this.archivePinboard(pinboard);
+        if (role === 'leave') await this.leavePinboard(pinboard);
+      },
+
+      async editPinboard(pinboard: GroupModel): Promise<void> {
+        const groups = store.appStore.allGroups();
+        const initial: AdhocChatFormModel = {
+          ...newAdhocChatForm('pinboard'),
+          name: pinboard.name, description: pinboard.notes ?? '',
+          sourceGroups: (pinboard.sourceGroupKeys ?? [])
+            .map((k: string) => groups.find((g: GroupModel) => g.okey === k))
+            .filter((g): g is GroupModel => !!g)
+            .map((g: GroupModel) => getAvatarInfo(g, 'group'))
+            .filter((a): a is AvatarInfo => !!a),
+          joinMode: pinboard.joinMode ?? 'optOut', allowReplyAll: pinboard.allowReplyAll ?? false,
+        };
+        const { AdhocChatNewModal } = await import('./adhoc-chat-new.modal');
+        const modal = await store.modalController.create({ component: AdhocChatNewModal, componentProps: { mode: 'editPinboard', initial } });
+        await modal.present();
+        const { data, role } = await modal.onDidDismiss<AdhocChatFormModel>();
+        if (role !== 'confirm' || !data) return;
+        try {
+          await store.matrixService.updatePinboard(pinboard.okey, {
+            name: data.name.trim(), description: data.description.trim(),
+            sourceGroupKeys: data.sourceGroups.map((g: AvatarInfo) => g.key),
+            joinMode: data.joinMode, allowReplyAll: data.allowReplyAll,
+          });
+          await store.alertService.showToast(store.i18n.pinboard_update_conf());
+        } catch (error) {
+          console.error('MatrixChatStore.editPinboard: failed:', error);
+          await store.alertService.showToast(store.i18n.pinboard_update_error());
+        }
+      },
+
+      async archivePinboard(pinboard: GroupModel): Promise<void> {
+        if (!await store.alertService.confirm(store.i18n.pinboard_archive_confirm(), true)) return;
+        try {
+          await store.matrixService.archivePinboard(pinboard.okey);
+          patchState(store, { currentRoomId: undefined });
+          await store.alertService.showToast(store.i18n.pinboard_archive_conf());
+        } catch (error) {
+          console.error('MatrixChatStore.archivePinboard: failed:', error);
+          await store.alertService.showToast(store.i18n.pinboard_archive_error());
+        }
+      },
+
+      async leavePinboard(pinboard: GroupModel): Promise<void> {
+        if (!await store.alertService.confirm(store.i18n.pinboard_leave_confirm(), true)) return;
+        try {
+          await store.matrixService.leavePinboard(pinboard.okey);
+          patchState(store, { currentRoomId: undefined });
+          await store.alertService.showToast(store.i18n.pinboard_leave_conf());
+        } catch (error) {
+          console.error('MatrixChatStore.leavePinboard: failed:', error);
+          await store.alertService.showToast(store.i18n.pinboard_leave_error());
+        }
       },
 
       /**

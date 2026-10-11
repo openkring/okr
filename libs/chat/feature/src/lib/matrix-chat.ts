@@ -384,9 +384,15 @@ function rejectionReasons(results: PromiseSettledResult<unknown>[]): unknown[] {
                             <ion-icon src="{{'group' | svgIcon}}"></ion-icon>
                           </ion-button>
                         }
-                        <ion-button [attr.aria-label]="store.i18n.help_title()" (click)="openChatHelp()">
-                          <ion-icon src="{{'info-circle' | svgIcon}}"></ion-icon>
-                        </ion-button>
+                        @if (store.currentPinboard()) {
+                          <ion-button [attr.aria-label]="store.i18n.pinboard_info_header()" (click)="store.openPinboardInfo(); $event.stopPropagation()">
+                            <ion-icon src="{{'info-circle' | svgIcon}}"></ion-icon>
+                          </ion-button>
+                        } @else {
+                          <ion-button [attr.aria-label]="store.i18n.help_title()" (click)="openChatHelp()">
+                            <ion-icon src="{{'info-circle' | svgIcon}}"></ion-icon>
+                          </ion-button>
+                        }
                       </ion-buttons>
                     </ion-toolbar>
                   </ion-header>
@@ -935,6 +941,18 @@ export class MatrixChat implements OnDestroy {
       const room = this.store.currentRoom();
       if (!room || room.unreadCount === 0) return;
       untracked(() => this.store.markCurrentRoomAsRead());
+    });
+
+    // Pinnwand: Info (Regeln) beim ersten Besuch pro Geraet und Pinnwand oeffnen.
+    effect(() => {
+      const pinboard = this.store.currentPinboard();
+      if (!pinboard) return;
+      const key = `pinboard-seen:${pinboard.okey}`;
+      let seen = false;
+      try { seen = !!localStorage.getItem(key); } catch { seen = false; }
+      if (seen) return;
+      try { localStorage.setItem(key, '1'); } catch { /* storage unavailable */ }
+      untracked(() => void this.store.openPinboardInfo());
     });
 
     // Re-authenticate when the Matrix access token expires (M_UNKNOWN_TOKEN).
