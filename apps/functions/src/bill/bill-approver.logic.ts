@@ -41,6 +41,15 @@ export function toDigestBill(okey: string, b: Record<string, unknown>): DigestBi
 
 export const NO_PAYMENT_ACCOUNT = 'Ohne Zahlungskonto';
 
+/**
+ * The digest lines capped to `max` characters (the task form validates notes against DESCRIPTION_LENGTH, so an
+ * uncapped day would make the task unsavable): longer text is cut to `max - 1` characters plus «…».
+ */
+export function capNotes(text: string, max: number): string {
+  if (max <= 0) return '';
+  return text.length <= max ? text : text.slice(0, max - 1) + '…';
+}
+
 export function dayWindow(day: string): { from: string; to: string } {
   return { from: `${day}000000`, to: `${day}235959` };
 }

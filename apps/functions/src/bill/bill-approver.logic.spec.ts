@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { bookedBillKeys, BooksConfig, buildDigests, dayWindow, digestRelatedKey, displayDate, DigestBill, formatChf, formatIban,
+import { bookedBillKeys, BooksConfig, buildDigests, capNotes, dayWindow, digestRelatedKey, displayDate, DigestBill, formatChf, formatIban,
   NO_PAYMENT_ACCOUNT, selectDigestBills, toDigestBill, vendorNameOf } from './bill-approver.logic';
 
 const bill = (o: Partial<DigestBill>): DigestBill => {
@@ -74,4 +74,14 @@ describe('toDigestBill', () => {
     billId: '9', amount: 8950, dueDate: '20261025', state: 'todo', bookingKeys: ['bill-b1'], tenants: ['bka'], paymentAccountKey: 'zkb' }));
   it('falls back to the title when the vendor has no name', () => expect(vendorNameOf({ vendor: { name1: '' }, title: 'Strom' })).toBe('Strom'));
   it('ignores a non-numeric amount', () => expect(toDigestBill('b1', { totalAmount: { amount: 'x' } }).amount).toBe(0));
+});
+
+describe('capNotes', () => {
+  it('keeps text within the cap', () => expect(capNotes('abc', 3)).toBe('abc'));
+  it('cuts longer text to max - 1 plus an ellipsis', () => {
+    const out = capNotes('abcdef', 4);
+    expect(out).toBe('abc…');
+    expect(out.length).toBe(4);
+  });
+  it('returns nothing for a non-positive cap', () => expect(capNotes('abc', 0)).toBe(''));
 });

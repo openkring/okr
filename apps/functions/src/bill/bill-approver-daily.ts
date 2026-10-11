@@ -8,12 +8,13 @@ import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { logger } from 'firebase-functions/v2';
 import { getFirestore } from 'firebase-admin/firestore';
 
+import { DESCRIPTION_LENGTH } from '@okr/shared-constants';
 import { BillCollection } from '@okr/shared-models';
 
 import { FINANCE_HISTORY_COLLECTION, zurichStoreDateTime } from '../finance-history/finance-history.logic';
 import { isResponsibilityValid, resolveAssignee } from '../workflow/engine';
 import { createFirestoreDeps, translateMessage } from '../workflow/firestore-deps';
-import { APPROVER_DIGEST_FALLBACK, APPROVER_DIGEST_MESSAGE_KEY, bookedBillKeys, BooksConfig, buildDigests, dayWindow,
+import { APPROVER_DIGEST_FALLBACK, APPROVER_DIGEST_MESSAGE_KEY, bookedBillKeys, BooksConfig, buildDigests, capNotes, dayWindow,
   digestRelatedKey, DigestBill, formatChf, HistoryRow, toDigestBill } from './bill-approver.logic';
 import { loadPayingAccounts } from './bill-approver.load';
 
@@ -38,9 +39,10 @@ export const billApproverDaily = onSchedule(
         for (const id of [...new Set(bills.map(b => b.accountingTenantId).filter(Boolean))]) {
           const cfg = (await db.collection('accounting-configs').doc(id).get()).data();
           if (!cfg || !((cfg['tenants'] as string[] | undefined) ?? []).includes(tenantId)) continue;
+          if (cfg['paymentApproverTask'] !== true) continue;   // setting off: no digest, nothing to load
           const paymentAccountKeys = (cfg['billPaymentAccountKeys'] as string[] | undefined) ?? [];
           const accounts = await loadPayingAccounts(db, tenantId, paymentAccountKeys);
-          books.push({ accountingTenantId: id, enabled: cfg['paymentApproverTask'] === true, paymentAccountKeys, accounts });
+          books.push({ accountingTenantId: id, enabled: true, paymentAccountKeys, accounts });
         }
         for (const d of buildDigests(day, bills, books)) {
           const relatedKey = digestRelatedKey(d.accountingTenantId, day);
@@ -58,7 +60,7 @@ export const billApproverDaily = onSchedule(
           const name = translated && translated !== APPROVER_DIGEST_MESSAGE_KEY
             ? translated : APPROVER_DIGEST_FALLBACK.replace(/\{(\w+)\}/g, (m: string, k: string) => params[k as keyof typeof params] ?? m);
           await deps.createTask({ tenantId, name, assignee, dueInDays: 0, relatedModelType: 'billDigest', relatedKey,
-            linkKey: '', notes: d.lines, links: d.links });
+            linkKey: '', notes: capNotes(d.lines, DESCRIPTION_LENGTH), links: d.links });
         }
         logger.info(`${CF_NAME}: tenant=${tenantId} ${keys.length} booked bill(s) on ${day}`);
       } catch (e) {
