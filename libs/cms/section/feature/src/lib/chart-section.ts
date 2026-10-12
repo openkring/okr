@@ -1,6 +1,6 @@
 
 import { Component, computed, input } from '@angular/core';
-import { IonCard, IonCardContent } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent } from '@ionic/angular';
 
 import { NgxEchartsDirective, provideEchartsCore } from 'ngx-echarts';
 

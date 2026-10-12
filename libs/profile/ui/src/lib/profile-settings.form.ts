@@ -1,6 +1,6 @@
 import { Component, computed, effect, inject, input, model, output, signal } from "@angular/core";
 import { form } from "@angular/forms/signals";
-import { IonAccordion, IonButton, IonCol, IonGrid, IonItem, IonLabel, IonRow, ModalController } from "@ionic/angular/standalone";
+import { IonAccordion, IonButton, IonCol, IonGrid, IonItem, IonLabel, IonRow, ModalController } from "@ionic/angular";
 
 import { AvatarUsages, LanguageCategory, Languages, NameDisplays, PersonSortCriterias } from "@okr/shared-categories";
 import { AvatarUsage, DefaultLanguage, NameDisplay, PersonSortCriteria, RoleName, UserModel } from "@okr/shared-models";

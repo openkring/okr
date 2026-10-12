@@ -1,6 +1,6 @@
 import { Component, computed, effect, input, model, output } from '@angular/core';
 import { form } from '@angular/forms/signals';
-import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonRow } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonRow } from '@ionic/angular';
 import { DEFAULT_DATE, DEFAULT_KEY, DEFAULT_RES_REASON, DEFAULT_TIME, DESCRIPTION_LENGTH, NAME_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { CategoryListModel, ReservationApplyModel, RoleName, UserModel } from '@okr/shared-models';
 import { CategorySelect, Checkbox, CheckboxI18n, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n, TimeInput, TimeInputI18n , ErrorNote} from '@okr/shared-ui';

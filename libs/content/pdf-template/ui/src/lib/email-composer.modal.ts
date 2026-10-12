@@ -9,7 +9,7 @@ import {
   IonCard, IonCardContent, IonGrid, IonRow, IonCol, IonIcon, IonChip, IonLabel, IonNote,
   IonSegment, IonSegmentButton, IonList, IonItem,
   ModalController, ToastController,
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 
 import { AppStore } from '@okr/shared-feature';
 import { SvgIconPipe } from '@okr/shared-pipes';

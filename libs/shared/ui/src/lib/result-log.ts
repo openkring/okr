@@ -1,5 +1,5 @@
 import { Component, input } from '@angular/core';
-import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular';
 
 import { LogInfo } from '@okr/shared-models';
 

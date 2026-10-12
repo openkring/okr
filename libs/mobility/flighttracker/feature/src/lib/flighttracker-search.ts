@@ -4,7 +4,7 @@ import {
   IonBadge, IonButton, IonButtons, IonContent, IonHeader,
   IonIcon, IonInput, IonItem, IonLabel, IonMenuButton, IonNote,
   IonTitle, IonToolbar, ModalController
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 
 import { ENV } from '@okr/shared-config';
 import { isBrowser } from '@okr/shared-util-angular';

@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { AlertController, ToastController } from '@ionic/angular/standalone';
+import { AlertController, ToastController } from '@ionic/angular';
 import { TranslocoService } from '@jsverse/transloco';
 import { I18nService } from '@okr/shared-i18n';
 import { okrPrompt, confirm, error, initAlertTranslation, showToast } from './alert.util';

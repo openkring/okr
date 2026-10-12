@@ -13,7 +13,7 @@ import {
   IonContent, IonSegment, IonSegmentButton, IonLabel, IonItem,
   IonInput, IonSelect, IonSelectOption, IonTextarea, IonSpinner,
   IonCheckbox, IonBackButton,
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 
 import { TemplateAddressWindow, TemplateModel, TemplateVersionModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';

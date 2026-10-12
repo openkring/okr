@@ -1,6 +1,6 @@
 import { Component, computed, effect, inject, input, signal, Signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { AlertController, IonContent, IonNote, ModalController } from '@ionic/angular/standalone';
+import { AlertController, IonContent, IonNote, ModalController } from '@ionic/angular';
 import { from, of } from 'rxjs';
 
 import { CategoryListModel } from '@okr/shared-models';

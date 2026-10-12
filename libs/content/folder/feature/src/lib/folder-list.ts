@@ -1,5 +1,5 @@
 import { Component, computed, inject, input } from '@angular/core';
-import { ActionSheetController, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { ActionSheetController, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular';
 import { FolderModel, RoleName } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';

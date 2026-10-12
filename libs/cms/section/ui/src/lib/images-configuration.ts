@@ -4,7 +4,7 @@ import {
   IonButton, IonButtons, IonCard, IonCardContent, IonCardHeader, IonCardTitle,
   IonIcon, IonImg, IonItem, IonLabel, IonList, IonReorder, IonReorderGroup, IonThumbnail,
   ItemReorderEventDetail, ModalController
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 
 import { getDownloadURL, ref } from 'firebase/storage';
 

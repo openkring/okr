@@ -1,5 +1,5 @@
 import { Component, computed, inject, input, linkedSignal } from '@angular/core';
-import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCheckbox, IonContent, IonItem, IonLabel, IonNote, IonRadio, IonRadioGroup, ModalController } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCheckbox, IonContent, IonItem, IonLabel, IonNote, IonRadio, IonRadioGroup, ModalController } from '@ionic/angular';
 
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
 import { dismissOverlay } from '@okr/shared-util-angular';

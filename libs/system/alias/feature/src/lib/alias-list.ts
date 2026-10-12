@@ -3,8 +3,8 @@ import { Router } from '@angular/router';
 import {
   ActionSheetController, IonButton, IonButtons, IonChip, IonContent, IonHeader, IonIcon,
   IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar,
-} from '@ionic/angular/standalone';
-import type { ActionSheetOptions } from '@ionic/angular/standalone';
+} from '@ionic/angular';
+import type { ActionSheetOptions } from '@ionic/angular';
 
 import { Menu } from '@okr/cms-menu-feature';
 import { SvgIconPipe } from '@okr/shared-pipes';

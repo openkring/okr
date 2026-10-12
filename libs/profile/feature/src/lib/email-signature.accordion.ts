@@ -3,7 +3,7 @@ import { DomSanitizer } from '@angular/platform-browser';
 import {
   IonAccordion, IonButton, IonCol, IonGrid, IonItem, IonLabel, IonNote, IonRow,
   IonSegment, IonSegmentButton, IonSelect, IonSelectOption,
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 
 import { TextInput, TextInputI18n } from '@okr/shared-ui';
 import { EmailClient, ProfileI18n } from '@okr/profile-util';

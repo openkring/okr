@@ -1,6 +1,6 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { Router } from '@angular/router';
-import { IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonRow, IonToolbar, ModalController } from '@ionic/angular/standalone';
+import { IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonRow, IonToolbar, ModalController } from '@ionic/angular';
 
 import { ColorsIonic } from '@okr/shared-categories';
 

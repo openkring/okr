@@ -1,5 +1,5 @@
 import { Component, computed, effect, forwardRef, inject, input, signal } from '@angular/core';
-import { IonAccordion, IonAccordionGroup, IonItem, IonItemDivider, IonLabel, IonList } from '@ionic/angular/standalone';
+import { IonAccordion, IonAccordionGroup, IonItem, IonItemDivider, IonLabel, IonList } from '@ionic/angular';
 
 import { MenuItemModel } from '@okr/shared-models';
 import { Spinner } from '@okr/shared-ui';

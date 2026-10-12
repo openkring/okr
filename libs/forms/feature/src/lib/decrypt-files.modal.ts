@@ -1,7 +1,7 @@
 import { Component, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DecimalPipe } from '@angular/common';
-import { IonButton, IonContent, IonInput, IonItem, IonLabel, IonList, IonNote, ModalController } from '@ionic/angular/standalone';
+import { IonButton, IonContent, IonInput, IonItem, IonLabel, IonList, IonNote, ModalController } from '@ionic/angular';
 import { inject } from '@angular/core';
 
 import { Header } from '@okr/shared-ui';

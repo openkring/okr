@@ -1,6 +1,6 @@
 import { Component, computed, effect, input, model, output } from '@angular/core';
 import { form } from '@angular/forms/signals';
-import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonRow } from '@ionic/angular';
 
 import { CaseInsensitiveWordMask } from '@okr/shared-config';
 import { CategoryListModel, PageModel, RoleName, UserModel } from '@okr/shared-models';

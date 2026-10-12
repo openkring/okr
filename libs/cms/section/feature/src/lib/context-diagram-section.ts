@@ -1,5 +1,5 @@
 import { Component, computed, effect, inject, input, untracked } from '@angular/core';
-import { ActionSheetController, IonCard, IonCardContent, ModalController } from '@ionic/angular/standalone';
+import { ActionSheetController, IonCard, IonCardContent, ModalController } from '@ionic/angular';
 
 import { NgxEchartsDirective, provideEchartsCore } from 'ngx-echarts';
 

@@ -3,7 +3,7 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { of } from 'rxjs';
-import { ModalController } from '@ionic/angular/standalone';
+import { ModalController } from '@ionic/angular';
 
 import { DEFAULT_PROJECT_STATE, DEFAULT_TAGS, DEFAULT_TASK_STATE } from '@okr/shared-constants';
 import { AppStore } from '@okr/shared-feature';

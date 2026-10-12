@@ -2,7 +2,7 @@ import { Component, computed, inject, input } from '@angular/core';
 import {
   ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonChip, IonContent, IonHeader, IonIcon,
   IonItem, IonLabel, IonList, IonMenuButton, IonNote, IonPopover, IonTitle, IonToolbar
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 
 import { Menu } from '@okr/cms-menu-feature';
 import { CategoryItemModel, CategoryListModel, CostCenterModel, CostCenterType, RoleName } from '@okr/shared-models';

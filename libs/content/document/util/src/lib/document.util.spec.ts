@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Camera, CameraSource, Photo } from '@capacitor/camera';
-import { Platform } from '@ionic/angular/standalone';
+import { Platform } from '@ionic/angular';
 import { warn } from '@okr/shared-util-core';
 import { readAsFile } from '@okr/avatar-util';
 import { pickPhoto, checkMimeType, getDocumentStoragePath } from './document.util';

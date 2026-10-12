@@ -1,5 +1,5 @@
 import { Component, OnInit, computed, input, viewChild } from '@angular/core';
-import { IonSearchbar } from '@ionic/angular/standalone';
+import { IonSearchbar } from '@ionic/angular';
 
 import { coerceBoolean } from '@okr/shared-util-core';
 

@@ -1,5 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
-import { IonContent, IonNote } from '@ionic/angular/standalone';
+import { IonContent, IonNote } from '@ionic/angular';
 
 import { FirestoreService } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';

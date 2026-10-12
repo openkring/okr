@@ -1,5 +1,5 @@
 import { computed, inject } from '@angular/core';
-import { ModalController, ToastController } from '@ionic/angular/standalone';
+import { ModalController, ToastController } from '@ionic/angular';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';

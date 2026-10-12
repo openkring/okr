@@ -4,7 +4,7 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import {
   IonBackButton, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonListHeader, IonTitle, IonToolbar,
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 import { of } from 'rxjs';
 
 import { ExpenseModel, PaymentModel } from '@okr/shared-models';

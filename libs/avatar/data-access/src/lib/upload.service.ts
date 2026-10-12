@@ -3,7 +3,7 @@ import { inject, Injectable } from "@angular/core";
 import { Camera, CameraResultType, CameraSource, Photo } from "@capacitor/camera";
 import { Capacitor } from "@capacitor/core";
 import { FilePicker } from "@capawesome/capacitor-file-picker";
-import { ModalController } from "@ionic/angular/standalone";
+import { ModalController } from "@ionic/angular";
 import { firstValueFrom } from "rxjs";
 
 import { attestAppCheck, ENV, isAttested, StorageBucket } from "@okr/shared-config";

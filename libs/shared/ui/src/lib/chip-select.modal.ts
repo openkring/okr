@@ -1,6 +1,6 @@
 import { Component, effect, inject, input } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
-import { IonChip, IonContent, IonLabel, ModalController } from '@ionic/angular/standalone';
+import { IonChip, IonContent, IonLabel, ModalController } from '@ionic/angular';
 import { filter, map, switchMap } from 'rxjs/operators';
 import { patchState, signalStore, withMethods, withProps, withState } from '@ngrx/signals';
 

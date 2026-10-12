@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
-import { IonContent, IonItem, IonLabel, IonList } from '@ionic/angular/standalone';
+import { IonContent, IonItem, IonLabel, IonList } from '@ionic/angular';
 
 import { Header } from '@okr/shared-ui';
 import type { FeaturePickerI18n } from '@okr/tenant-util';

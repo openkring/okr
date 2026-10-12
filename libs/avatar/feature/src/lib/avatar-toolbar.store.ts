@@ -3,7 +3,7 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { Photo } from '@capacitor/camera';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { Observable, of } from 'rxjs';
-import { ModalController } from '@ionic/angular/standalone';
+import { ModalController } from '@ionic/angular';
 
 import { AppStore } from '@okr/shared-feature';
 import { getImageDimensionsFromMetadata, showZoomedImage, updateImageDimensions } from '@okr/shared-ui';

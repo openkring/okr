@@ -1,6 +1,6 @@
 import { Component, computed, effect, input, model, output, signal } from '@angular/core';
 import { form } from '@angular/forms/signals';
-import { IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonNote, IonRow } from '@ionic/angular/standalone';
+import { IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonNote, IonRow } from '@ionic/angular';
 
 import { DEFAULT_NOTES, DEFAULT_TAGS, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { AccountModel, InvoiceModel, UserModel } from '@okr/shared-models';

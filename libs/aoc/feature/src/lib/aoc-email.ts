@@ -4,7 +4,7 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import {
   IonBadge, IonContent, IonItem, IonLabel, IonList,
   IonNote, IonSearchbar, IonSelect, IonSelectOption, IonToolbar
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 
 import { FirestoreService } from '@okr/shared-data-access';
 import { Header } from '@okr/shared-ui';

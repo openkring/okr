@@ -1,6 +1,6 @@
 import { TranslocoService } from '@jsverse/transloco';
 import { TOAST_LENGTH } from '@okr/shared-constants';
-import { AlertController, ToastController } from '@ionic/angular';
+import { AlertController, ToastController } from '@ionic/angular/lazy';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { of } from 'rxjs';
 import { okrPrompt, confirm, error, initAlertTranslation, PromptInputType, showToast } from './alert.util';

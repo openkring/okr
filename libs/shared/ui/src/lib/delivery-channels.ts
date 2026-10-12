@@ -1,5 +1,5 @@
 import { Component, computed, input, output } from '@angular/core';
-import { IonCol, IonGrid, IonItem, IonLabel, IonNote, IonRow } from '@ionic/angular/standalone';
+import { IonCol, IonGrid, IonItem, IonLabel, IonNote, IonRow } from '@ionic/angular';
 
 import { DeliveryChannels } from '@okr/shared-categories';
 import { DeliveryChannel } from '@okr/shared-models';

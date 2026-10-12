@@ -1,5 +1,5 @@
 import { Component, computed, input, linkedSignal, model, Signal } from '@angular/core';
-import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular';
 
 import { ErrorNote, TextInput, TextInputI18n, UrlInput, UrlInputI18n } from '@okr/shared-ui';
 import { SectionErrors, getFieldErrors } from '@okr/cms-section-util';

@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, input, Signal } from '@angular/core';
-import { IonAvatar, IonContent, IonItem, IonLabel, IonList } from '@ionic/angular/standalone';
+import { IonAvatar, IonContent, IonItem, IonLabel, IonList } from '@ionic/angular';
 
 import { MatrixReadReceipt } from '@okr/shared-models';
 import { Header } from '@okr/shared-ui';

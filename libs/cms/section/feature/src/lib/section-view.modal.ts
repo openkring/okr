@@ -1,5 +1,5 @@
 import { Component, computed, inject, input } from '@angular/core';
-import { IonContent, ModalController } from '@ionic/angular/standalone';
+import { IonContent, ModalController } from '@ionic/angular';
 
 import { Header, HeaderI18n } from '@okr/shared-ui';
 import { SectionModel } from '@okr/shared-models';

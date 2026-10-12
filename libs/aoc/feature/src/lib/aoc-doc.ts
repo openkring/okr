@@ -1,5 +1,5 @@
 import { Component, computed, inject } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonContent, IonGrid, IonIcon, IonItem, IonLabel, IonList, IonNote, IonRow, IonThumbnail } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonContent, IonGrid, IonIcon, IonItem, IonLabel, IonList, IonNote, IonRow, IonThumbnail } from '@ionic/angular';
 
 import { Button, Header } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetOptions } from '@okr/shared-util-angular';

@@ -1,7 +1,7 @@
 import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
-import { IonContent } from '@ionic/angular/standalone';
+import { IonContent } from '@ionic/angular';
 import { catchError, map, of } from 'rxjs';
 
 import { AccountingConfigModel, CategoryListModel } from '@okr/shared-models';

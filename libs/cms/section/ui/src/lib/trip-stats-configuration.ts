@@ -1,5 +1,5 @@
 import { Component, computed, input, linkedSignal, model, Signal } from '@angular/core';
-import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular';
 
 import { TripStatsConfig } from '@okr/shared-models';
 import { StringSelect, StringSelectI18n } from '@okr/shared-ui';

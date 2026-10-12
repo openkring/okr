@@ -1,5 +1,5 @@
 import { Component, computed, inject, input } from '@angular/core';
-import { IonBadge, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonSegment, IonSegmentButton, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { IonBadge, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonSegment, IonSegmentButton, IonTitle, IonToolbar } from '@ionic/angular';
 
 import { ApprovalModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';

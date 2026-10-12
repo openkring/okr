@@ -1,6 +1,6 @@
 import { Component, ElementRef, computed, effect, inject, viewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { IonButton, IonIcon } from '@ionic/angular/standalone';
+import { IonButton, IonIcon } from '@ionic/angular';
 
 import { MatrixCallService } from '@okr/chat-data-access';
 import { AppStore } from '@okr/shared-feature';

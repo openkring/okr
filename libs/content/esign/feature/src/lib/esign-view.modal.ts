@@ -6,7 +6,7 @@ import {
   IonHeader, IonFooter, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon,
   IonContent, IonGrid, IonRow, IonCol, IonLabel, IonChip,
   IonList, IonItem, IonNote, ModalController, ToastController,
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 import { Browser } from '@capacitor/browser';
 
 import { EsignRecord, EsignSignee } from '@okr/shared-models';

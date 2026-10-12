@@ -1,5 +1,5 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
-import { IonContent, ModalController } from '@ionic/angular/standalone';
+import { IonContent, ModalController } from '@ionic/angular';
 
 import { ChangeConfirmation, ChangeConfirmationI18n, DateTimeSelectModal, Header } from '@okr/shared-ui';
 import { ModelSelectService } from '@okr/shared-feature';

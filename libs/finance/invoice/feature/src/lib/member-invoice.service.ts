@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { ModalController, ToastController } from '@ionic/angular/standalone';
+import { ModalController, ToastController } from '@ionic/angular';
 import { firstValueFrom } from 'rxjs';
 import { take } from 'rxjs/operators';
 

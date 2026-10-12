@@ -1,5 +1,5 @@
 import { Component, computed, inject, input } from '@angular/core';
-import { IonButton, IonCard, IonCardContent, IonContent, IonItem, IonLabel, IonNote, ModalController } from '@ionic/angular/standalone';
+import { IonButton, IonCard, IonCardContent, IonContent, IonItem, IonLabel, IonNote, ModalController } from '@ionic/angular';
 
 import { ReservationModel } from '@okr/shared-models';
 import { Header } from '@okr/shared-ui';

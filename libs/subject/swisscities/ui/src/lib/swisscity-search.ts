@@ -1,5 +1,5 @@
 import { Component, computed, inject, input, OnInit, output, signal, viewChild } from '@angular/core';
-import { IonButton, IonButtons, IonCol, IonIcon, IonItem, IonLabel, IonList, IonPopover, IonRow, IonSearchbar, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { IonButton, IonButtons, IonCol, IonIcon, IonItem, IonLabel, IonList, IonPopover, IonRow, IonSearchbar, IonTitle, IonToolbar } from '@ionic/angular';
 
 import { SwissCity } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';

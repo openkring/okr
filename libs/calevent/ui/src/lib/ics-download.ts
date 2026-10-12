@@ -1,5 +1,5 @@
 import { Component, input } from '@angular/core';
-import { IonButton, IonIcon } from '@ionic/angular/standalone';
+import { IonButton, IonIcon } from '@ionic/angular';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { Browser } from '@capacitor/browser';

@@ -3,7 +3,7 @@ import {
   ActionSheetController, ActionSheetOptions, AlertController,
   IonButton, IonButtons, IonCard, IonCardContent, IonCardHeader, IonCardTitle,
   IonIcon, IonItem, IonLabel, IonList, ModalController
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 
 import { ENV } from '@okr/shared-config';
 import { DEFAULT_INVOICE_POSITION_TYPE, DEFAULT_INVOICE_POSITION_USAGE } from '@okr/shared-constants';

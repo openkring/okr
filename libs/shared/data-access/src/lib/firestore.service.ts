@@ -22,7 +22,7 @@
  * 
  */
 import { inject, Injectable, PLATFORM_ID } from '@angular/core';
-import { ToastController } from '@ionic/angular/standalone';
+import { ToastController } from '@ionic/angular';
 import { captureMessage } from '@sentry/angular';
 import { arrayRemove, collection, deleteDoc, doc, getDoc, getDocs, query, runTransaction, setDoc, updateDoc, WriteBatch, writeBatch } from 'firebase/firestore';
 import { collectionData, docData } from 'rxfire/firestore';

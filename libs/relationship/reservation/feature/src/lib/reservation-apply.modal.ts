@@ -1,5 +1,5 @@
 import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
-import { IonContent, IonNote, ModalController } from '@ionic/angular/standalone';
+import { IonContent, IonNote, ModalController } from '@ionic/angular';
 
 import { AvatarInfo, CalEventModel, PersonModelName, ReservationApplyModel, ResourceModelName, RoleName } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';

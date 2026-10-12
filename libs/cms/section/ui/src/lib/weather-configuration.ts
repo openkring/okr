@@ -2,7 +2,7 @@ import { Component, computed, input, linkedSignal, model, Signal } from '@angula
 import {
   IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow,
   IonSelect, IonSelectOption
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 
 import { WeatherConfig, WeatherVariant } from '@okr/shared-models';
 

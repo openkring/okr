@@ -1,5 +1,5 @@
 import { Component, computed, effect, inject, input } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonAccordion, IonAvatar, IonButton, IonCol, IonGrid, IonIcon, IonImg, IonItem, IonLabel, IonList, IonRow } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonAccordion, IonAvatar, IonButton, IonCol, IonGrid, IonIcon, IonImg, IonItem, IonLabel, IonList, IonRow } from '@ionic/angular';
 import { AsyncPipe } from '@angular/common';
 
 import { RoleName, WorkrelModel } from '@okr/shared-models';

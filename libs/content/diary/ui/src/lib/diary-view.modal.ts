@@ -1,5 +1,5 @@
 import { Component, computed, inject, input } from '@angular/core';
-import { IonButton, IonChip, IonContent, IonIcon, IonItem, IonLabel, IonList, IonNote, ModalController } from '@ionic/angular/standalone';
+import { IonButton, IonChip, IonContent, IonIcon, IonItem, IonLabel, IonList, IonNote, ModalController } from '@ionic/angular';
 import { Browser } from '@capacitor/browser';
 
 import { DiaryModel } from '@okr/shared-models';

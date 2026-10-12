@@ -1,5 +1,5 @@
 import { Component, computed, inject, input } from '@angular/core';
-import { DatetimeChangeEventDetail, IonContent, IonDatetime, ModalController } from '@ionic/angular/standalone';
+import { DatetimeChangeEventDetail, IonContent, IonDatetime, ModalController } from '@ionic/angular';
 
 import { I18nService } from '@okr/shared-i18n';
 import { dismissOverlay } from '@okr/shared-util-angular';

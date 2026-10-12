@@ -2,7 +2,7 @@ import { Component, computed, effect, inject, input, output, signal, untracked }
 import {
   IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonChip, IonIcon, IonItem, IonLabel, IonList,
   IonListHeader, IonNote, IonSpinner, IonThumbnail, ModalController,
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 
 import { ContractDocumentRole, ContractDocState, ContractModel } from '@okr/shared-models';
 import { I18nService } from '@okr/shared-i18n';

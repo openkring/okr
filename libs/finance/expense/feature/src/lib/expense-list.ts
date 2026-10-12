@@ -4,7 +4,7 @@ import {
   ActionSheetController, ModalController, ToastController,
   IonAvatar, IonButton, IonButtons, IonCol, IonContent, IonFab, IonFabButton, IonGrid, IonHeader, IonIcon,
   IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar,
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 
 import { ExpenseModel, RoleName } from '@okr/shared-models';
 import { TranslatePipe } from '@okr/shared-i18n';

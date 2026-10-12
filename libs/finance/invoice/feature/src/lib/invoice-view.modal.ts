@@ -1,6 +1,6 @@
 import { Component, computed, inject, input } from '@angular/core';
-import type { ActionSheetButton } from '@ionic/angular';
-import { ActionSheetController, IonAvatar, IonButton, IonCard, IonCardContent, IonChip, IonContent, IonIcon, IonImg, IonItem, IonLabel } from '@ionic/angular/standalone';
+import type { ActionSheetButton } from '@ionic/angular/lazy';
+import { ActionSheetController, IonAvatar, IonButton, IonCard, IonCardContent, IonChip, IonContent, IonIcon, IonImg, IonItem, IonLabel } from '@ionic/angular';
 
 import { InvoiceModel, InvoiceReminder } from '@okr/shared-models';
 import { formatMinorAmount, Header } from '@okr/shared-ui';

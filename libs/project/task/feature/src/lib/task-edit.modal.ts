@@ -2,7 +2,7 @@ import { Component, computed, inject, input, linkedSignal, signal } from '@angul
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { catchError, of, switchMap } from 'rxjs';
-import { IonAccordionGroup, IonButton, IonContent, IonItem, IonLabel, ModalController } from '@ionic/angular/standalone';
+import { IonAccordionGroup, IonButton, IonContent, IonItem, IonLabel, ModalController } from '@ionic/angular';
 
 import { I18nService } from '@okr/shared-i18n';
 import { ApprovalModelName, CategoryListModel, ProjectModel, TaskModel, TaskModelName, UserModel } from '@okr/shared-models';

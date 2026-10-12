@@ -1,6 +1,6 @@
 import { Component, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { IonButton, IonCheckbox, IonContent, IonIcon, IonInput, IonItem, IonLabel, IonNote, ModalController } from '@ionic/angular/standalone';
+import { IonButton, IonCheckbox, IonContent, IonIcon, IonInput, IonItem, IonLabel, IonNote, ModalController } from '@ionic/angular';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { Header } from '@okr/shared-ui';
 import { FormDefinitionModel } from '@okr/shared-models';

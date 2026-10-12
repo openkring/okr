@@ -2,8 +2,8 @@ import { Component, computed, inject } from '@angular/core';
 import {
   ActionSheetController, IonBackButton, IonButtons, IonChip, IonContent, IonHeader, IonItem,
   IonLabel, IonList, IonTitle, IonToolbar,
-} from '@ionic/angular/standalone';
-import type { ActionSheetOptions } from '@ionic/angular/standalone';
+} from '@ionic/angular';
+import type { ActionSheetOptions } from '@ionic/angular';
 
 import { AliasSpaceModel } from '@okr/shared-models';
 import { EmptyList, Spinner } from '@okr/shared-ui';

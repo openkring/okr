@@ -1,6 +1,6 @@
 import { Component, computed, effect, input, model, output, Signal } from '@angular/core';
 import { form } from '@angular/forms/signals';
-import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular';
 
 import { CurrencyCode, MoneyModel, OwnershipModel, RoleName, UserModel } from '@okr/shared-models';
 import { DEFAULT_CURRENCY } from '@okr/shared-constants';

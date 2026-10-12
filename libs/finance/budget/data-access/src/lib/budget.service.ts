@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { ToastController } from '@ionic/angular/standalone';
+import { ToastController } from '@ionic/angular';
 import { deleteDoc, doc } from 'firebase/firestore';
 import { Observable } from 'rxjs';
 

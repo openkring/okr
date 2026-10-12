@@ -1,5 +1,5 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
-import { IonContent, ModalController } from '@ionic/angular/standalone';
+import { IonContent, ModalController } from '@ionic/angular';
 
 import { CategoryChangeForm } from '@okr/relationship-membership-ui';
 import { CategoryChangeFormModel, convertMembershipToCategoryChangeForm, MEMBERSHIP_I18N_KEYS, MembershipI18n } from '@okr/relationship-membership-util';

@@ -1,6 +1,6 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input, signal } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonAccordion, IonButton, IonIcon, IonImg, IonItem, IonLabel, IonList, IonSelect, IonSelectOption, IonThumbnail } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonAccordion, IonButton, IonIcon, IonImg, IonItem, IonLabel, IonList, IonSelect, IonSelectOption, IonThumbnail } from '@ionic/angular';
 
 import { TranslatePipe } from '@okr/shared-i18n';
 import { MembershipModel, RoleName } from '@okr/shared-models';

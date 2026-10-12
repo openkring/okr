@@ -4,7 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { of } from 'rxjs';
 import { ActionSheetButton, ActionSheetController, ToastController, IonBackButton, IonBadge, IonButton, IonButtons, IonContent, IonHeader, IonIcon,
-  IonItem, IonLabel, IonList, IonNote, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+  IonItem, IonLabel, IonList, IonNote, IonTitle, IonToolbar } from '@ionic/angular';
 
 import { PaymentModel, PaymentOrderModel } from '@okr/shared-models';
 import { AppStore } from '@okr/shared-feature';

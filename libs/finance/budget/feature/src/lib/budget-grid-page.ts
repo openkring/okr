@@ -2,7 +2,7 @@ import { Component, computed, DestroyRef, inject, input } from '@angular/core';
 import {
   ActionSheetController, ActionSheetOptions, IonBackButton, IonButton, IonButtons, IonCard, IonCardContent, IonCardHeader,
   IonCardTitle, IonChip, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonNote, IonTitle, IonToolbar
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, Spinner } from '@okr/shared-ui';

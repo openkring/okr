@@ -1,5 +1,5 @@
 import { CUSTOM_ELEMENTS_SCHEMA, Component, OnDestroy, PLATFORM_ID, computed, effect, inject, input, output, signal } from '@angular/core';
-import { IonItem, IonLabel, IonList, IonSearchbar, IonSegment, IonSegmentButton } from '@ionic/angular/standalone';
+import { IonItem, IonLabel, IonList, IonSearchbar, IonSegment, IonSegmentButton } from '@ionic/angular';
 
 import { ENV } from '@okr/shared-config';
 import { isBrowser } from '@okr/shared-util-angular';

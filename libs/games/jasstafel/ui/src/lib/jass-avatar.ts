@@ -1,5 +1,5 @@
 import { Component, computed, input } from '@angular/core';
-import { IonAvatar, IonImg } from '@ionic/angular/standalone';
+import { IonAvatar, IonImg } from '@ionic/angular';
 
 import { AvatarPipe } from '@okr/avatar-ui';
 import { AvatarInfo } from '@okr/shared-models';

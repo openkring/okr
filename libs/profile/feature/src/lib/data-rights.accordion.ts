@@ -2,7 +2,7 @@ import { Component, computed, inject, input, signal } from '@angular/core';
 import {
   IonAccordion, IonButton, IonCol, IonGrid, IonItem, IonLabel, IonNote, IonRow,
   IonSpinner, IonText, ModalController,
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 
 import { AppStore } from '@okr/shared-feature';
 import { PrivacyRightsService } from '@okr/profile-data-access';

@@ -1,6 +1,6 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular';
 
 import { GroupModel, RoleName } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';

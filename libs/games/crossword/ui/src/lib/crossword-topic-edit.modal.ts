@@ -1,5 +1,5 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
-import { IonButton, IonContent, IonItem, IonLabel, IonList, IonNote, ModalController } from '@ionic/angular/standalone';
+import { IonButton, IonContent, IonItem, IonLabel, IonList, IonNote, ModalController } from '@ionic/angular';
 
 import { I18nService } from '@okr/shared-i18n';
 import { CrosswordTopicModel } from '@okr/shared-models';

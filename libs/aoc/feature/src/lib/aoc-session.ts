@@ -1,6 +1,6 @@
 // libs/aoc/feature/src/lib/aoc-session.ts
 import { Component, computed, inject } from '@angular/core';
-import { ActionSheetController, IonBadge, IonButton, IonButtons, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonChip, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar, PopoverController } from '@ionic/angular/standalone';
+import { ActionSheetController, IonBadge, IonButton, IonButtons, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonChip, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar, PopoverController } from '@ionic/angular';
 
 import { SessionModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';

@@ -1,7 +1,7 @@
 import { Component, computed, inject, input, signal, viewChild } from '@angular/core';
 import { rxResource, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
-import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonMenuButton, IonPopover, IonTitle, IonToolbar, ToastController } from '@ionic/angular/standalone';
+import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonMenuButton, IonPopover, IonTitle, IonToolbar, ToastController } from '@ionic/angular';
 import { of } from 'rxjs';
 
 import { AppStore } from '@okr/shared-feature';

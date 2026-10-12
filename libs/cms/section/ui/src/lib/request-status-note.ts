@@ -1,6 +1,6 @@
 import { Component, computed, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { IonNote } from '@ionic/angular/standalone';
+import { IonNote } from '@ionic/angular';
 
 /**
  * The status of a request under its button (spec 1.88 §5.4). The text is rendered server-side;

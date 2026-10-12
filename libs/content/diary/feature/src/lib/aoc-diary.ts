@@ -2,7 +2,7 @@ import { Component, computed, inject } from '@angular/core';
 import {
   IonBadge, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonContent,
   IonNote, IonSpinner,
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 
 import { Header } from '@okr/shared-ui';
 

@@ -1,5 +1,5 @@
 import { Component, computed, input, model } from '@angular/core';
-import { IonItem, IonLabel, IonNote, IonSelect, IonSelectOption } from '@ionic/angular/standalone';
+import { IonItem, IonLabel, IonNote, IonSelect, IonSelectOption } from '@ionic/angular';
 
 import { compareCategories } from '@okr/shared-categories';
 import { CategoryModel } from '@okr/shared-models';

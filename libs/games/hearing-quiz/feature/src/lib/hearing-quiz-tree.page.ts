@@ -10,7 +10,7 @@ import {
   IonPopover,
   IonTitle,
   IonToolbar,
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 
 import { Menu } from '@okr/cms-menu-feature';
 import { HearingQuizNodeModel } from '@okr/shared-models';

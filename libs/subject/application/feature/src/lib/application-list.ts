@@ -4,7 +4,7 @@ import {
   ActionSheetController,
   IonButton, IonButtons, IonChip, IonContent, IonHeader,
   IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonTitle, IonToolbar
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 
 import { ApplicationModel } from '@okr/shared-models';
 import { hasRole } from '@okr/shared-util-core';

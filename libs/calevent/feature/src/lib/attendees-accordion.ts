@@ -1,6 +1,6 @@
 import { NgTemplateOutlet } from '@angular/common';
 import { Component, computed, inject, input, linkedSignal } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonAccordion, IonAvatar, IonButton, IonIcon, IonImg, IonItem, IonLabel, IonList, ModalController, ToastController } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonAccordion, IonAvatar, IonButton, IonIcon, IonImg, IonItem, IonLabel, IonList, ModalController, ToastController } from '@ionic/angular';
 
 import { Attendee, CalEventModel, MembershipModel, UserModel } from '@okr/shared-models';
 import { FullNamePipe, SvgIconPipe } from '@okr/shared-pipes';

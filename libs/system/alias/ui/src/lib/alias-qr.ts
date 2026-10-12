@@ -1,6 +1,6 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-import { IonButton, IonIcon, IonLabel } from '@ionic/angular/standalone';
+import { IonButton, IonIcon, IonLabel } from '@ionic/angular';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { renderQrSvg } from '@okr/system-alias-util';

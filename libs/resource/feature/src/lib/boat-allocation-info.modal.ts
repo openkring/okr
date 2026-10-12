@@ -1,6 +1,6 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject } from '@angular/core';
-import { IonContent, IonIcon } from '@ionic/angular/standalone';
+import { IonContent, IonIcon } from '@ionic/angular';
 
 import { AppStore } from '@okr/shared-feature';
 import { I18nService, TranslatePipe } from '@okr/shared-i18n';

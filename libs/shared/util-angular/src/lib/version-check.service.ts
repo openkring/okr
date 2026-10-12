@@ -1,6 +1,6 @@
 import { inject, Injectable, PLATFORM_ID } from '@angular/core';
 import { isBrowser } from './platform.util';
-import { AlertController } from '@ionic/angular/standalone';
+import { AlertController } from '@ionic/angular';
 import { SwUpdate } from '@angular/service-worker';
 import { doc, onSnapshot } from 'firebase/firestore';
 

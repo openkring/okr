@@ -1,6 +1,6 @@
 import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { form } from '@angular/forms/signals';
-import { IonCol, IonContent, IonDatetime, IonGrid, IonRow, ModalController } from '@ionic/angular/standalone';
+import { IonCol, IonContent, IonDatetime, IonGrid, IonRow, ModalController } from '@ionic/angular';
 
 import { dismissOverlay, validateVestTree } from '@okr/shared-util-angular';
 import { I18nService } from '@okr/shared-i18n';

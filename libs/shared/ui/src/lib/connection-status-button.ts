@@ -1,6 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { Network } from '@capacitor/network';
-import { AlertController, IonButton, IonicSafeString } from '@ionic/angular/standalone';
+import { AlertController, IonButton, IonicSafeString } from '@ionic/angular';
 
 import { I18nService } from '@okr/shared-i18n';
 import { PFX } from './scope';

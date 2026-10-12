@@ -1,5 +1,5 @@
 import { Component, computed, input, linkedSignal, model, Signal } from '@angular/core';
-import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonNote, IonRow } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonNote, IonRow } from '@ionic/angular';
 
 import { ImageActions } from '@okr/shared-categories';
 import { CategoryOld, CategoryOldI18n, Checkbox, CheckboxI18n, ErrorNote, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';

@@ -1,5 +1,5 @@
 import { Component, computed, inject, OnInit } from '@angular/core';
-import { IonAccordion, IonButton, IonIcon, IonItem, IonLabel, IonList } from '@ionic/angular/standalone';
+import { IonAccordion, IonButton, IonIcon, IonItem, IonLabel, IonList } from '@ionic/angular';
 import { InvoiceModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { DateFormat, convertDateFormatToString } from '@okr/shared-util-core';

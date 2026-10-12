@@ -1,5 +1,5 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
-import { IonContent, ModalController } from '@ionic/angular/standalone';
+import { IonContent, ModalController } from '@ionic/angular';
 
 import { I18nService } from '@okr/shared-i18n';
 import { I18nTenantOverrideModel } from '@okr/shared-models';

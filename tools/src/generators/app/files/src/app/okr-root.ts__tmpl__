@@ -3,7 +3,7 @@ import { isPlatformBrowser } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, ActivatedRouteSnapshot, NavigationEnd, Router } from '@angular/router';
 import { filter, map, startWith } from 'rxjs/operators';
-import { IonApp, IonButton, IonButtons, IonContent, IonHeader, IonItem, IonLabel, IonMenu, IonRouterOutlet, IonSplitPane, IonToolbar, ModalController } from '@ionic/angular/standalone';
+import { IonApp, IonButton, IonButtons, IonContent, IonHeader, IonItem, IonLabel, IonMenu, IonRouterOutlet, IonSplitPane, IonToolbar, ModalController } from '@ionic/angular';
 
 import { I18nService } from '@okr/shared-i18n';
 import { AppStore } from '@okr/shared-feature';

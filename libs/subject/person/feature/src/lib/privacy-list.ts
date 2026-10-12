@@ -1,5 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { IonBadge, IonButtons, IonContent, IonHeader, IonItem, IonLabel, IonList, IonMenuButton, IonSelect, IonSelectOption, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { IonBadge, IonButtons, IonContent, IonHeader, IonItem, IonLabel, IonList, IonMenuButton, IonSelect, IonSelectOption, IonTitle, IonToolbar } from '@ionic/angular';
 
 import { AppStore } from '@okr/shared-feature';
 import { NameDisplay, PersonModel, PrivacyUsage } from '@okr/shared-models';

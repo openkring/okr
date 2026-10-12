@@ -1,7 +1,7 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
-import { ActionSheetController, ActionSheetOptions, AlertController, IonButton, IonButtons, IonChip, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar, ModalController } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, AlertController, IonButton, IonButtons, IonChip, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar, ModalController } from '@ionic/angular';
 
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';

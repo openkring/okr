@@ -1,5 +1,5 @@
 import { Component, inject, input, output, signal, effect } from '@angular/core';
-import { IonBreadcrumb, IonBreadcrumbs } from '@ionic/angular/standalone';
+import { IonBreadcrumb, IonBreadcrumbs } from '@ionic/angular';
 
 import { FolderModel } from '@okr/shared-models';
 import { FolderService } from '@okr/content-folder-data-access';

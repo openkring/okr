@@ -2,7 +2,7 @@ import { NgStyle } from '@angular/common';
 import { Component, computed, inject, input, output, Signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { Browser } from '@capacitor/browser';
-import { IonButton, IonIcon, ModalController } from '@ionic/angular/standalone';
+import { IonButton, IonIcon, ModalController } from '@ionic/angular';
 
 import { ColorsIonic, getCategoryStringField } from '@okr/shared-categories';
 import { ENV } from '@okr/shared-config';

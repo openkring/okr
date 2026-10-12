@@ -1,6 +1,6 @@
 import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { Photo } from '@capacitor/camera';
-import { IonAccordionGroup, IonCard, IonCardContent, IonContent, IonItem, IonLabel, ModalController } from '@ionic/angular/standalone';
+import { IonAccordionGroup, IonCard, IonCardContent, IonContent, IonItem, IonLabel, ModalController } from '@ionic/angular';
 import { AsyncPipe } from '@angular/common';
 
 import { Languages } from '@okr/shared-categories';

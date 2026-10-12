@@ -1,6 +1,6 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { IonButton, IonCol, IonContent, IonGrid, IonImg, IonLabel, IonRow, IonText } from '@ionic/angular/standalone';
+import { IonButton, IonCol, IonContent, IonGrid, IonImg, IonLabel, IonRow, IonText } from '@ionic/angular';
 
 import { Header } from '@okr/shared-ui';
 import { getImgixUrlWithAutoParams } from '@okr/shared-util-core';

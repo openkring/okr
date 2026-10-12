@@ -4,7 +4,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   IonButton, IonButtons, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonContent, IonGrid, IonHeader, IonIcon,
   IonInput, IonItem, IonLabel, IonList, IonListHeader, IonMenuButton, IonNote, IonRow, IonText, IonTitle, IonToolbar,
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { formatMinorAmount, Spinner } from '@okr/shared-ui';

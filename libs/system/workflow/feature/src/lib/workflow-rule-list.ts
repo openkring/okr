@@ -1,6 +1,6 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
-import { ActionSheetController, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonItemDivider, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { ActionSheetController, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonItemDivider, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular';
 
 import { TranslatePipe } from '@okr/shared-i18n';
 import { RoleName, WorkflowRuleModel } from '@okr/shared-models';

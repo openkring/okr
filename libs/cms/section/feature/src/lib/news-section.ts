@@ -1,7 +1,7 @@
 
 import { Component, OnInit, PLATFORM_ID, computed, effect, inject, input } from '@angular/core';
 import { Router } from '@angular/router';
-import { ActionSheetController, ActionSheetOptions, IonCard, IonCardContent, IonItem, IonLabel, IonList, IonThumbnail } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonCard, IonCardContent, IonItem, IonLabel, IonList, IonThumbnail } from '@ionic/angular';
 
 import { EmptyList, MoreButton, OptionalCardHeader, Spinner } from '@okr/shared-ui';
 import { debugMessage, hasRole, shortenText } from '@okr/shared-util-core';

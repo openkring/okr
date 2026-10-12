@@ -1,5 +1,5 @@
 import { Component, inject, input, output } from '@angular/core';
-import { IonContent, IonItem, IonReorder, IonReorderGroup, ItemReorderEventDetail, ModalController } from '@ionic/angular/standalone';
+import { IonContent, IonItem, IonReorder, IonReorderGroup, ItemReorderEventDetail, ModalController } from '@ionic/angular';
 
 import { SectionModel } from '@okr/shared-models';
 import { Header, Spinner } from '@okr/shared-ui';

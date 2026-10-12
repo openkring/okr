@@ -2,7 +2,7 @@ import { Component, computed, inject } from '@angular/core';
 import {
   IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonLabel, IonMenuButton, IonRow,
   IonSegment, IonSegmentButton, IonSelect, IonSelectOption, IonTitle, IonToolbar,
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 
 import { CommissionEntryModel, MeteringRecordModel } from '@okr/shared-models';
 import { EmptyList, Spinner } from '@okr/shared-ui';

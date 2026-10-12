@@ -1,6 +1,6 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, input, output } from '@angular/core';
-import { IonAvatar, IonIcon, IonImg } from '@ionic/angular/standalone';
+import { IonAvatar, IonIcon, IonImg } from '@ionic/angular';
 
 import { CommentModel, DocumentModel } from '@okr/shared-models';
 import { FileLogoPipe, FileNamePipe, FileSizePipe, PrettyDateTimePipe } from '@okr/shared-pipes';

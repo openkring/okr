@@ -1,6 +1,6 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { IonContent, IonItem, IonLabel, IonList, IonToolbar } from '@ionic/angular/standalone';
+import { IonContent, IonItem, IonLabel, IonList, IonToolbar } from '@ionic/angular';
 
 import { I18nService } from '@okr/shared-i18n';
 import { TripModel } from '@okr/shared-models';

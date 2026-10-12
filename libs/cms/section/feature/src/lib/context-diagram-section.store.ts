@@ -2,7 +2,7 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { combineLatest, of } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
-import { ActionSheetController, ModalController } from '@ionic/angular/standalone';
+import { ActionSheetController, ModalController } from '@ionic/angular';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
 import { AppStore } from '@okr/shared-feature';

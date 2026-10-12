@@ -1,6 +1,6 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonBadge, IonButton, IonButtons, IonContent, IonHeader, IonIcon,
-  IonItem, IonLabel, IonList, IonMenuButton, IonNote, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+  IonItem, IonLabel, IonList, IonMenuButton, IonNote, IonPopover, IonTitle, IonToolbar } from '@ionic/angular';
 
 import { PeriodModel, RoleName } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';

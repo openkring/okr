@@ -1,6 +1,6 @@
 import { Component, computed, effect, input, model, output } from '@angular/core';
 import { form } from '@angular/forms/signals';
-import { IonChip, IonLabel } from '@ionic/angular/standalone';
+import { IonChip, IonLabel } from '@ionic/angular';
 
 import { WhiteboardItem } from '@okr/shared-models';
 import { DESCRIPTION_LENGTH } from '@okr/shared-constants';

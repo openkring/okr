@@ -1,5 +1,5 @@
 import { Component, computed, inject, input } from '@angular/core';
-import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonChip, IonContent, IonIcon, IonImg, IonItem, IonLabel, IonNote, ModalController } from '@ionic/angular/standalone';
+import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonChip, IonContent, IonIcon, IonImg, IonItem, IonLabel, IonNote, ModalController } from '@ionic/angular';
 
 import { AvatarPipe } from '@okr/avatar-ui';
 import { AvatarDetailService, FinanceHistory, LedgerBookings, VoucherTiles } from '@okr/finance-accounting-feature';

@@ -1,5 +1,5 @@
 import { Component, computed, inject, input, linkedSignal, signal, viewChild } from '@angular/core';
-import { IonButton, IonButtons, IonCheckbox, IonContent, IonDatetime, IonInput, IonItem, ModalController } from '@ionic/angular/standalone';
+import { IonButton, IonButtons, IonCheckbox, IonContent, IonDatetime, IonInput, IonItem, ModalController } from '@ionic/angular';
 
 import { DateFormat, getTodayStr } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';

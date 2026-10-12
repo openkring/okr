@@ -1,5 +1,5 @@
 import { inject, Injectable, Provider } from "@angular/core";
-import { ModalController } from "@ionic/angular/standalone";
+import { ModalController } from "@ionic/angular";
 
 import { AppStore, GroupSelectModal, OrgSelectModal, PersonSelectModal, ResourceSelectModal, ResponsibilitySelectModal } from "@okr/shared-feature";
 import { isLocation, isOrg, isPerson, isResource } from "@okr/shared-util-core";

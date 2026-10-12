@@ -1,5 +1,5 @@
 import { Component, computed, CUSTOM_ELEMENTS_SCHEMA, effect, inject, input, output, signal, untracked } from '@angular/core';
-import { AlertController, IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonRow, IonTitle, IonToolbar, ModalController } from '@ionic/angular/standalone';
+import { AlertController, IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonRow, IonTitle, IonToolbar, ModalController } from '@ionic/angular';
 import { AlbumSection, ImageConfig, ImageType } from '@okr/shared-models';
 import { SvgIconPipe, ThumbnailUrlPipe } from '@okr/shared-pipes';
 import { browse, CategorySelect, ImageGrid, Label, openImageGallery, showVideoView, Spinner } from '@okr/shared-ui';

@@ -1,6 +1,6 @@
 import { TranslocoService } from '@jsverse/transloco';
 import { firstValueFrom } from 'rxjs';
-import { AlertController, AlertOptions, ToastController } from '@ionic/angular';
+import { AlertController, AlertOptions, ToastController } from '@ionic/angular/lazy';
 import { TOAST_LENGTH } from '@okr/shared-constants';
 
 let _translocoService: TranslocoService | null = null;

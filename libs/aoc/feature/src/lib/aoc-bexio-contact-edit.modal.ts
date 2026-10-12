@@ -1,5 +1,5 @@
 import { Component, computed, inject, input } from "@angular/core";
-import { IonButton, IonCol, IonContent, IonGrid, IonLabel, IonRow, ModalController } from "@ionic/angular/standalone";
+import { IonButton, IonCol, IonContent, IonGrid, IonLabel, IonRow, ModalController } from "@ionic/angular";
 
 import { UserModel } from "@okr/shared-models";
 import { Header, Spinner } from "@okr/shared-ui";

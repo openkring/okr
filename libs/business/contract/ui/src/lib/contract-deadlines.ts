@@ -1,5 +1,5 @@
 import { Component, computed, inject, input } from '@angular/core';
-import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonItem, IonLabel, IonList, IonListHeader, IonNote } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonItem, IonLabel, IonList, IonListHeader, IonNote } from '@ionic/angular';
 
 import { ContractModel, DeadlineKind, NoticePeriod } from '@okr/shared-models';
 import { I18nService } from '@okr/shared-i18n';

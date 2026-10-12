@@ -3,7 +3,7 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { from, Observable, of } from 'rxjs';
 import { StaticSuite } from 'vest';
-import { AlertController } from '@ionic/angular/standalone';
+import { AlertController } from '@ionic/angular';
 
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';

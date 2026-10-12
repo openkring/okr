@@ -1,5 +1,5 @@
 import { Component, computed, input } from '@angular/core';
-import { IonAccordion, IonAccordionGroup, IonCard, IonCardContent, IonItem, IonLabel } from '@ionic/angular/standalone';
+import { IonAccordion, IonAccordionGroup, IonCard, IonCardContent, IonItem, IonLabel } from '@ionic/angular';
 import { AsyncPipe } from '@angular/common';
 
 import { OptionalCardHeader, Spinner } from '@okr/shared-ui';

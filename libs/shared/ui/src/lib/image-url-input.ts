@@ -1,6 +1,6 @@
 import { Component, computed, input, model, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { IonInput, IonItem, IonNote } from '@ionic/angular/standalone';
+import { IonInput, IonItem, IonNote } from '@ionic/angular';
 
 import { URL_LENGTH } from '@okr/shared-constants';
 import { coerceBoolean } from '@okr/shared-util-core';

@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import {
   IonButton, IonButtons, IonCheckbox, IonContent, IonFooter, IonItem, IonLabel, IonList, IonNote,
   IonSegment, IonSegmentButton, IonToolbar, ModalController, ToastController,
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 import { signalStore, withProps } from '@ngrx/signals';
 
 import { dismissOverlay, EmailEntry, mergeEmailList, parseEmailList } from '@okr/shared-util-angular';

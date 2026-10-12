@@ -2,7 +2,7 @@ import { Component, inject, OnInit } from '@angular/core';
 import {
   IonButton, IonButtons, IonCard, IonCardContent, IonContent, IonFooter, IonIcon, IonLabel, IonNote,
   IonSegment, IonSegmentButton, IonToolbar,
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 
 import { JassAvatar, JassGrid, JassResult, JassSettingsForm, JassSlate } from '@okr/games-jasstafel-ui';
 import { JASS_VARIANTS, JassVariant } from '@okr/games-jasstafel-util';

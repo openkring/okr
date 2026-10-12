@@ -10,7 +10,7 @@ vi.mock('@angular/core', async (importOriginal) => {
   };
 });
 
-vi.mock('@ionic/angular/standalone', () => ({
+vi.mock('@ionic/angular', () => ({
   AlertController: class AlertController {},
   ToastController: class ToastController {},
 }));
@@ -35,7 +35,7 @@ vi.mock('./alert.util', async (importOriginal) => {
 });
 
 import { inject } from '@angular/core';
-import { AlertController, ToastController } from '@ionic/angular/standalone';
+import { AlertController, ToastController } from '@ionic/angular';
 import { TranslocoService } from '@jsverse/transloco';
 import { I18nService } from '@okr/shared-i18n';
 import { initAlertTranslation, confirm, okrPrompt, showToast, error } from './alert.util';

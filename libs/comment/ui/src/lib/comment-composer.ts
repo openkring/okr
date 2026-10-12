@@ -1,6 +1,6 @@
 import { Component, CUSTOM_ELEMENTS_SCHEMA, computed, effect, ElementRef, inject, input, output, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { IonButton, IonIcon, IonTextarea } from '@ionic/angular/standalone';
+import { IonButton, IonIcon, IonTextarea } from '@ionic/angular';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { ButtonCopy, ButtonCopyI18n } from '@okr/shared-ui';
@@ -117,6 +117,7 @@ import { CommentListI18n, isImageFile } from '@okr/comment-util';
       --background: transparent;
       font-size: 1rem;
       line-height: 1.4;
+      min-height: 0; /* Ionic 9 MD sets 72px, which ignores rows="1" */
     }
 
     /* ── Action row ──────────────────────────────────────────── */

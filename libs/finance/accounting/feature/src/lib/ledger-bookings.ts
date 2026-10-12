@@ -1,7 +1,7 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
-import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonIcon, IonNote, ModalController } from '@ionic/angular/standalone';
+import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonIcon, IonNote, ModalController } from '@ionic/angular';
 import { combineLatest, of } from 'rxjs';
 
 import { formatMinorAmount } from '@okr/shared-ui';

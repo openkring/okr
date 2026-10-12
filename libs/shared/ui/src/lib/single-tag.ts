@@ -1,5 +1,5 @@
 import { Component, inject, input, model } from '@angular/core';
-import { IonButton, IonIcon, IonLabel, ModalController } from '@ionic/angular/standalone';
+import { IonButton, IonIcon, IonLabel, ModalController } from '@ionic/angular';
 import { AsyncPipe } from '@angular/common';
 
 import { SvgIconPipe } from '@okr/shared-pipes';

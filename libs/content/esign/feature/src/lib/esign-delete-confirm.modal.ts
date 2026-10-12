@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, Component, inject, input, computed } from '@an
 import {
   IonHeader, IonFooter, IonToolbar, IonTitle, IonButtons, IonButton,
   IonContent, ModalController,
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 
 import { EsignRecord } from '@okr/shared-models';
 import { I18nService } from '@okr/shared-i18n';

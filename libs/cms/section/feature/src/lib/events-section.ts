@@ -1,6 +1,6 @@
 import { AsyncPipe } from '@angular/common';
 import { CUSTOM_ELEMENTS_SCHEMA, Component, OnInit, PLATFORM_ID, computed, effect, inject, input, untracked } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonBadge, IonCard, IonCardContent, IonLabel, ModalController } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonBadge, IonCard, IonCardContent, IonLabel, ModalController } from '@ionic/angular';
 
 import { CalEventModel, EventsConfig, EventsSection } from '@okr/shared-models';
 import { MoreButton, OptionalCardHeader, Spinner } from '@okr/shared-ui';

@@ -3,7 +3,7 @@ import { form } from '@angular/forms/signals';
 import {
   IonButton, IonCol, IonGrid, IonIcon, IonItem, IonLabel,
   IonList, IonRow, IonSelect, IonSelectOption, IonTextarea,
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 
 import { AvatarSelect } from '@okr/avatar-ui';
 import { AvatarInfo } from '@okr/shared-models';

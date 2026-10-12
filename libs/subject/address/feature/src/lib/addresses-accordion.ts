@@ -1,5 +1,5 @@
 import { Component, computed, effect, inject, input } from "@angular/core";
-import { ActionSheetButton, ActionSheetController, ActionSheetOptions, IonAccordion, IonButton, IonIcon, IonItem, IonLabel, IonList } from "@ionic/angular/standalone";
+import { ActionSheetButton, ActionSheetController, ActionSheetOptions, IonAccordion, IonButton, IonIcon, IonItem, IonLabel, IonList } from "@ionic/angular";
 
 import { AddressModel, PrivacySettings } from "@okr/shared-models";
 import { SvgIconPipe } from "@okr/shared-pipes";

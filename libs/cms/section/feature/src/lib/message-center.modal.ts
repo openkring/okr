@@ -1,6 +1,6 @@
 import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { IonButton, IonButtons, IonCheckbox, IonContent, IonHeader, IonInput, IonIcon, IonItem, IonList, IonSearchbar, IonSelect, IonSelectOption, IonTitle, IonToolbar, ModalController, IonLabel } from '@ionic/angular/standalone';
+import { IonButton, IonButtons, IonCheckbox, IonContent, IonHeader, IonInput, IonIcon, IonItem, IonList, IonSearchbar, IonSelect, IonSelectOption, IonTitle, IonToolbar, ModalController, IonLabel } from '@ionic/angular';
 import { of } from 'rxjs';
 
 import { DeliveryChannels } from '@okr/shared-categories';

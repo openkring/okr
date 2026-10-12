@@ -1,5 +1,5 @@
 import { Component, computed, input } from '@angular/core';
-import { IonButton, IonIcon, IonLabel } from '@ionic/angular/standalone';
+import { IonButton, IonIcon, IonLabel } from '@ionic/angular';
 
 import { ColorsIonic } from '@okr/shared-categories';
 import { ColorIonic } from '@okr/shared-models';

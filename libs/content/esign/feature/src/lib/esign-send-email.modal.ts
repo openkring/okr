@@ -4,7 +4,7 @@ import {
   IonButton, IonButtons, IonCard, IonCardContent, IonCol, IonContent, IonGrid, IonHeader,
   IonItem, IonLabel, IonRow, IonSpinner, IonTitle, IonToolbar,
   ModalController, ToastController,
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 
 import { Checkbox, CheckboxI18n, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { EsignRecord } from '@okr/shared-models';

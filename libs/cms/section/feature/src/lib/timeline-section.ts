@@ -1,5 +1,5 @@
 import { Component, computed, effect, inject, input, untracked } from '@angular/core';
-import { IonCard, IonCardContent } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent } from '@ionic/angular';
 
 import { TimelineSection } from '@okr/shared-models';
 import { toTimelineEntries, withTimelineDefaults } from '@okr/cms-section-util';

@@ -1,7 +1,7 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { IonAvatar, IonButtons, IonContent, IonHeader, IonImg, IonItem, IonItemDivider, IonLabel, IonList, IonMenuButton, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { IonAvatar, IonButtons, IonContent, IonHeader, IonImg, IonItem, IonItemDivider, IonLabel, IonList, IonMenuButton, IonTitle, IonToolbar } from '@ionic/angular';
 import { of } from 'rxjs';
 
 import { AppStore } from '@okr/shared-feature';

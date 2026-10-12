@@ -1,6 +1,6 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { IonCard, IonCardContent, IonItem, IonLabel, IonList } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent, IonItem, IonLabel, IonList } from '@ionic/angular';
 
 import { PageModel, SectionModel, TocSection } from '@okr/shared-models';
 import { tocEntries, withTocDefaults } from '@okr/cms-section-util';

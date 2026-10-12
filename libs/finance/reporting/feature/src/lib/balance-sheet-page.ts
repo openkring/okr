@@ -4,7 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonLabel, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar,
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';

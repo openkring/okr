@@ -1,5 +1,5 @@
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
-import { Platform } from '@ionic/angular/standalone';
+import { Platform } from '@ionic/angular';
 
 import { DOCUMENT_DIR, DocumentModel, IMAGE_CONFIG_SHAPE, ImageConfig, UserModel } from '@okr/shared-models';
 import { addIndexElement, getFileHash, getFullName, getTodayStr, isPhotoCancellation, resolveMimeType, warn } from '@okr/shared-util-core';

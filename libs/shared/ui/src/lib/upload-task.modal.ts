@@ -2,7 +2,7 @@ import { DecimalPipe } from '@angular/common';
 import { Component, OnInit, inject, input, signal } from '@angular/core';
 import {
   IonContent, IonIcon, IonItem, IonLabel, IonList, IonProgressBar, ModalController
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 import { UploadTask, getDownloadURL } from 'firebase/storage';
 
 import { captureMessage } from '@sentry/angular';

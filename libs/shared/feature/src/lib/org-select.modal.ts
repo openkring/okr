@@ -1,5 +1,5 @@
 import { Component, computed, effect, inject, input, linkedSignal } from '@angular/core';
-import { IonAvatar, IonContent, IonImg, IonItem, IonLabel, IonList, ModalController } from '@ionic/angular/standalone';
+import { IonAvatar, IonContent, IonImg, IonItem, IonLabel, IonList, ModalController } from '@ionic/angular';
 
 import { OrgModel, OrgModelName, UserModel } from '@okr/shared-models';
 import { EmptyList, Header, Spinner } from '@okr/shared-ui';

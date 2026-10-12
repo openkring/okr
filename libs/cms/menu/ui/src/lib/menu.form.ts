@@ -1,6 +1,6 @@
 import { Component, ComponentRef, computed, DestroyRef, effect, inject, input, model, output, signal, untracked, viewChild, ViewContainerRef } from '@angular/core';
 import { form } from '@angular/forms/signals';
-import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonRow } from '@ionic/angular';
 
 import { DEFAULT_MENU_ACTION, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ROLE, DEFAULT_TAGS, DEFAULT_URL, DESCRIPTION_LENGTH, LONG_NAME_LENGTH, NAME_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { BaseProperty, CategoryListModel, MenuItemModel, RoleName, UserModel } from '@okr/shared-models';

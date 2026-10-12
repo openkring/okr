@@ -4,7 +4,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import {
   IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon,
   IonContent, IonFooter, ModalController,
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { I18nService } from '@okr/shared-i18n';
 import { PDF_PREVIEW_I18N_KEYS, PdfPreviewI18n } from '@okr/content-pdf-template-util';

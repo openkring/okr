@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
-import { IonButton } from '@ionic/angular/standalone';
+import { IonButton } from '@ionic/angular';
 
 import { CalculatorI18n, HistoryEntry } from '@okr/instruments-calculator-util';
 

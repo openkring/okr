@@ -2,7 +2,7 @@ import { Component, computed, effect, ElementRef, inject, input, signal, viewChi
 import { toSignal } from '@angular/core/rxjs-interop';
 import { Meta } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
-import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular';
 import { ArticleSection, BlogLayoutType, ButtonSection, RoleName, SectionModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { createActionSheetButton, createActionSheetOptions, error } from '@okr/shared-util-angular';

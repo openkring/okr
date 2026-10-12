@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 import {
   ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonChip, IonCol, IonContent, IonGrid, IonHeader,
   IonIcon, IonLabel, IonMenuButton, IonNote, IonPopover, IonRow, IonTitle, IonToolbar,
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 
 import { Menu } from '@okr/cms-menu-feature';
 import { contractStateFilterCategory, contractTypeFilterCategory } from '@okr/business-contract-util';

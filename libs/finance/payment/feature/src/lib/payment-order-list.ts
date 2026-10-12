@@ -1,7 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { IonBadge, IonContent, IonFab, IonFabButton, IonHeader, IonButtons, IonMenuButton, IonIcon,
-  IonItem, IonLabel, IonList, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+  IonItem, IonLabel, IonList, IonTitle, IonToolbar } from '@ionic/angular';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { AccountingStore } from '@okr/finance-accounting-feature';

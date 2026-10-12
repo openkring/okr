@@ -1,6 +1,6 @@
 import { DecimalPipe } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
-import { IonCol, IonContent, IonGrid, IonItem, IonLabel, IonRow, ModalController } from '@ionic/angular/standalone';
+import { IonCol, IonContent, IonGrid, IonItem, IonLabel, IonRow, ModalController } from '@ionic/angular';
 
 import { Header } from '@okr/shared-ui';
 import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';

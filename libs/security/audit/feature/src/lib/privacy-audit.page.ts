@@ -3,7 +3,7 @@ import { RouterLink } from '@angular/router';
 import {
   IonButton, IonButtons, IonCard, IonCardContent, IonChip, IonContent, IonHeader, IonIcon,
   IonItem, IonLabel, IonList, IonMenuButton, IonNote, IonSpinner, IonTitle, IonToolbar,
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 
 import { PrivacyAuditService } from '@okr/security-audit-data-access';
 import type { RebuildDirectoryResult } from '@okr/security-audit-data-access';

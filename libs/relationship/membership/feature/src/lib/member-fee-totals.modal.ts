@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
-import { IonContent, IonGrid, IonRow, IonCol, IonLabel, ModalController } from '@ionic/angular/standalone';
+import { IonContent, IonGrid, IonRow, IonCol, IonLabel, ModalController } from '@ionic/angular';
 
 import { MemberFeeModel } from '@okr/shared-models';
 import { Header } from '@okr/shared-ui';

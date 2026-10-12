@@ -4,7 +4,7 @@ import { of } from 'rxjs';
 import {
   IonBadge, IonContent, IonHeader, IonButtons, IonMenuButton, IonItem, IonLabel,
   IonTitle, IonToolbar,
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 
 import { InvoiceCollection, InvoiceModel } from '@okr/shared-models';
 import { FirestoreService } from '@okr/shared-data-access';

@@ -4,7 +4,7 @@ import {
 } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { of, switchMap } from 'rxjs';
-import { IonCard, IonCardContent } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent } from '@ionic/angular';
 
 import { LocationModel, WeatherModel, WeatherSection } from '@okr/shared-models';
 import { OptionalCardHeader, Spinner } from '@okr/shared-ui';

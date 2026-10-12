@@ -1,5 +1,5 @@
 import { getSvgIconUrl } from "@okr/shared-util-core";
-import { ActionSheetButton, ActionSheetOptions } from "@ionic/angular";
+import { ActionSheetButton, ActionSheetOptions } from "@ionic/angular/lazy";
 
 export function createActionSheetOptions(
     header: string,

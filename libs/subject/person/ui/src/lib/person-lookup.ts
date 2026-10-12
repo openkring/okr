@@ -2,7 +2,7 @@ import { Component, inject, input, output, signal } from '@angular/core';
 import {
   IonButton, IonButtons, IonIcon, IonItem, IonLabel, IonList,
   IonPopover, IonSpinner, IonText, IonTitle, IonToolbar, IonFooter, IonNote
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { PersonDirectoryService } from '@okr/subject-person-data-access';

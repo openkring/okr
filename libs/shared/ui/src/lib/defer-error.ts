@@ -1,5 +1,5 @@
 import { Component, input } from '@angular/core';
-import { IonButton, IonItem, IonLabel } from '@ionic/angular/standalone';
+import { IonButton, IonItem, IonLabel } from '@ionic/angular';
 
 /**
  * Fallback content for `@defer` `@error` blocks (NG0750): shown when a lazy

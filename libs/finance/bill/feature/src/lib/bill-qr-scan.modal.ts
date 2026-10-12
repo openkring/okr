@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { getApp } from 'firebase/app';
 import { connectFunctionsEmulator, FunctionsError, getFunctions, httpsCallable } from 'firebase/functions';
-import { IonContent, ModalController } from '@ionic/angular/standalone';
+import { IonContent, ModalController } from '@ionic/angular';
 
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';

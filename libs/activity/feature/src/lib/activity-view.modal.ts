@@ -1,5 +1,5 @@
 import { Component, inject, input } from '@angular/core';
-import { IonContent, IonItem, IonLabel, IonIcon, ModalController } from '@ionic/angular/standalone';
+import { IonContent, IonItem, IonLabel, IonIcon, ModalController } from '@ionic/angular';
 
 import { ActivityModel } from '@okr/shared-models';
 import { Header } from '@okr/shared-ui';

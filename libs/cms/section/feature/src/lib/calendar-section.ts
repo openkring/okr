@@ -1,5 +1,5 @@
 import { CUSTOM_ELEMENTS_SCHEMA, Component, ComponentRef, DestroyRef, PLATFORM_ID, ViewContainerRef, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
-import { IonCard, IonCardContent } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent } from '@ionic/angular';
 
 import type { CalendarOptions, EventInput } from '@fullcalendar/core';
 import { format } from 'date-fns';

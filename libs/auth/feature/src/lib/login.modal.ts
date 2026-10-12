@@ -1,5 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
-import { IonButton, IonContent, IonItem, ModalController } from '@ionic/angular/standalone';
+import { IonButton, IonContent, IonItem, ModalController } from '@ionic/angular';
 
 import { AuthCredentials } from '@okr/shared-models';
 import { Header } from '@okr/shared-ui';

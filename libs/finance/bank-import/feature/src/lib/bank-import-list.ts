@@ -5,7 +5,7 @@ import { DecimalPipe } from '@angular/common';
 import {
   ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonChip, IonCol, IonContent, IonGrid,
   IonHeader, IonIcon, IonItem, IonMenuButton, IonNote, IonPopover, IonRow, IonSelect, IonSelectOption, IonTitle, IonToolbar,
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 
 import { BankImportRowModel } from '@okr/shared-models';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';

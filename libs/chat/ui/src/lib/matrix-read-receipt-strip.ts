@@ -1,5 +1,5 @@
 import { Component, computed, input, signal } from '@angular/core';
-import { IonAvatar, IonItem, IonLabel, IonList, IonPopover } from '@ionic/angular/standalone';
+import { IonAvatar, IonItem, IonLabel, IonList, IonPopover } from '@ionic/angular';
 
 import { MatrixReadReceipt } from '@okr/shared-models';
 import { buildReceiptAriaLabel, buildReceiptRows, hashUserIdToColor, formatReceiptTime } from '@okr/chat-util';

@@ -10,7 +10,7 @@ import {
   IonRow,
   IonSelect,
   IonSelectOption,
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 
 import { Header } from '@okr/shared-ui';
 import {

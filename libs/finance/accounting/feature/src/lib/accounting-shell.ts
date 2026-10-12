@@ -1,7 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { IonRouterOutlet } from '@ionic/angular/standalone';
+import { IonRouterOutlet } from '@ionic/angular';
 
 import { AccountingStore } from './accounting.store';
 

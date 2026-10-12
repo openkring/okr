@@ -1,7 +1,7 @@
 import { Component, DestroyRef, ElementRef, PLATFORM_ID, computed, effect, inject, input, OnDestroy, signal, untracked, viewChild } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
-import { IonCard, IonCardContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonBadge, IonSearchbar, IonText, IonList, IonListHeader, IonItem, IonLabel, ActionSheetOptions, ActionSheetController, ModalController } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonBadge, IonSearchbar, IonText, IonList, IonListHeader, IonItem, IonLabel, ActionSheetOptions, ActionSheetController, ModalController } from '@ionic/angular';
 import { captureMessage } from '@sentry/angular';
 
 import { SvgIconPipe } from '@okr/shared-pipes';

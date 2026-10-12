@@ -1,6 +1,6 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
-import { ActionSheetController, ActionSheetOptions, InfiniteScrollCustomEvent, IonAvatar, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonImg, IonInfiniteScroll, IonInfiniteScrollContent, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, InfiniteScrollCustomEvent, IonAvatar, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonImg, IonInfiniteScroll, IonInfiniteScrollContent, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular';
 
 import { NameDisplay, PersonModel, PersonModelName, RoleName } from '@okr/shared-models';
 import { FullNamePipe, SvgIconPipe } from '@okr/shared-pipes';

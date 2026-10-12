@@ -1,7 +1,7 @@
 import { Component, computed, inject, input, output, linkedSignal, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
-import { IonButton, IonButtons, IonCol, IonGrid, IonIcon, IonRow, IonToolbar } from '@ionic/angular/standalone';
+import { IonButton, IonButtons, IonCol, IonGrid, IonIcon, IonRow, IonToolbar } from '@ionic/angular';
 import { AsyncPipe } from '@angular/common';
 
 import { CategoryListModel } from '@okr/shared-models';

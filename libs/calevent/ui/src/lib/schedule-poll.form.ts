@@ -1,7 +1,7 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, input, model, output, signal } from '@angular/core';
 import { form } from '@angular/forms/signals';
-import { IonButton, IonCard, IonCardContent, IonCheckbox, IonCol, IonDatetime, IonGrid, IonIcon, IonModal, IonRow, IonSegment, IonSegmentButton } from '@ionic/angular/standalone';
+import { IonButton, IonCard, IonCardContent, IonCheckbox, IonCol, IonDatetime, IonGrid, IonIcon, IonModal, IonRow, IonSegment, IonSegmentButton } from '@ionic/angular';
 
 import { TranslatePipe } from '@okr/shared-i18n';
 import { InvitationState } from '@okr/shared-models';

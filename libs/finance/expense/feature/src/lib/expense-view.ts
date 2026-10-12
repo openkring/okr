@@ -1,6 +1,6 @@
 import { computed, inject, Signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { ActionSheetController, AlertController, ToastController } from '@ionic/angular/standalone';
+import { ActionSheetController, AlertController, ToastController } from '@ionic/angular';
 import { from, of } from 'rxjs';
 
 import { ENV } from '@okr/shared-config';

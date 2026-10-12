@@ -4,7 +4,7 @@ import {
   IonBackButton, IonButton, IonButtons, IonCard, IonCardContent, IonCardHeader, IonCardTitle,
   IonChip, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonNote, IonTitle,
   IonToolbar,
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 
 import { I18nService } from '@okr/shared-i18n';
 import { AliasModel } from '@okr/shared-models';

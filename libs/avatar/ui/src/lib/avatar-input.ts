@@ -1,5 +1,5 @@
 import { Component, input, output, viewChild } from '@angular/core';
-import { IonButton, IonInput, IonItem } from '@ionic/angular/standalone';
+import { IonButton, IonInput, IonItem } from '@ionic/angular';
 
 import { NAME_LENGTH } from '@okr/shared-constants';
 import { AvatarInfo } from '@okr/shared-models';

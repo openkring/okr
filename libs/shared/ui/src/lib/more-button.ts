@@ -1,5 +1,5 @@
 import { Component, inject, input } from '@angular/core';
-import { IonButton, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
+import { IonButton, IonCol, IonGrid, IonRow } from '@ionic/angular';
 import { Router } from '@angular/router';
 
 import { navigateByUrl } from '@okr/shared-util-angular';

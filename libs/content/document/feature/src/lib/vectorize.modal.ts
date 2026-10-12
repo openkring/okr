@@ -2,7 +2,7 @@ import { Component, computed, inject, input, signal } from '@angular/core';
 import {
   IonButton, IonCard, IonCardContent, IonCol, IonContent, IonGrid, IonItem, IonLabel, IonNote,
   IonRange, IonRow, IonSegment, IonSegmentButton, IonSpinner, ToastController
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 
 import { ENV } from '@okr/shared-config';
 import { I18nService } from '@okr/shared-i18n';

@@ -1,6 +1,6 @@
 import { Component, computed, effect, inject, input, model, output, signal } from '@angular/core';
 import { form } from '@angular/forms/signals';
-import { IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonList, IonNote, IonRow } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonList, IonNote, IonRow } from '@ionic/angular';
 
 import { ChFutureDate, LowercaseWordMask } from '@okr/shared-config';
 import { DEFAULT_CALENDARS, DEFAULT_CALEVENT_TYPE, DEFAULT_DATE, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PERIODICITY, DEFAULT_TAGS, DEFAULT_TIME, DEFAULT_URL, MAX_DATES_PER_SERIES, NAME_LENGTH } from '@okr/shared-constants';

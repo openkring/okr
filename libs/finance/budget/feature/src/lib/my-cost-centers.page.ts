@@ -1,7 +1,7 @@
 import { Component, computed, inject, input, resource, signal } from '@angular/core';
 import {
   IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonNote, IonSelect, IonSelectOption, IonTitle, IonToolbar
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 
 import { I18nService } from '@okr/shared-i18n';
 import { SvgIconPipe } from '@okr/shared-pipes';

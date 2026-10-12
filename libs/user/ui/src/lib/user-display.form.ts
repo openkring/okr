@@ -1,6 +1,6 @@
 import { Component, computed, effect, input, model, output } from "@angular/core";
 import { form } from "@angular/forms/signals";
-import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonRow } from "@ionic/angular/standalone";
+import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonRow } from "@ionic/angular";
 
 import { AvatarUsages, Languages, NameDisplays, PersonSortCriterias } from "@okr/shared-categories";
 import { AvatarUsage, Language, NameDisplay, UserModel } from "@okr/shared-models";

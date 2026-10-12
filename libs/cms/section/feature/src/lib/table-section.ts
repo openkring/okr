@@ -1,6 +1,6 @@
 import { NgStyle } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
-import { IonCard, IonCardContent, IonItem, IonLabel } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent, IonItem, IonLabel } from '@ionic/angular';
 
 import { TableSection } from '@okr/shared-models';
 import { OptionalCardHeader, Spinner } from '@okr/shared-ui';

@@ -15,7 +15,7 @@ import {
   getSystemQuery, getTodayStr, isValidAt
 } from '@okr/shared-util-core';
 import { showToast } from '@okr/shared-util-angular';
-import { ToastController } from '@ionic/angular/standalone';
+import { ToastController } from '@ionic/angular';
 import { ActivityService } from '@okr/activity-data-access';
 import { PersonalRelService } from '@okr/relationship-personal-rel-data-access';
 import { ResponsibilityService } from '@okr/relationship-responsibility-data-access';

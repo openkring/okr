@@ -1,6 +1,6 @@
 import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActionSheetController, IonCard, IonCardContent, IonLabel, IonSegment, IonSegmentButton } from '@ionic/angular/standalone';
+import { ActionSheetController, IonCard, IonCardContent, IonLabel, IonSegment, IonSegmentButton } from '@ionic/angular';
 
 import { NgxEchartsDirective, provideEchartsCore } from 'ngx-echarts';
 

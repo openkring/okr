@@ -1,5 +1,5 @@
 import { Component, computed, effect, inject, input } from '@angular/core';
-import { AlertController, IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonRow, ModalController } from '@ionic/angular/standalone';
+import { AlertController, IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonRow, ModalController } from '@ionic/angular';
 
 import { AvatarInfo, ColorIonic, PersonModelName, ResponsibilitySection } from '@okr/shared-models';
 import { Spinner } from '@okr/shared-ui';

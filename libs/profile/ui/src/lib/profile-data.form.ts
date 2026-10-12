@@ -1,6 +1,6 @@
 import { Component, computed, effect, input, model, output } from "@angular/core";
 import { form } from "@angular/forms/signals";
-import { IonAccordion, IonCol, IonGrid, IonItem, IonLabel, IonRow } from "@ionic/angular/standalone";
+import { IonAccordion, IonCol, IonGrid, IonItem, IonLabel, IonRow } from "@ionic/angular";
 
 import { ChSsnMask } from "@okr/shared-config";
 import { CategoryListModel, UserModel } from "@okr/shared-models";

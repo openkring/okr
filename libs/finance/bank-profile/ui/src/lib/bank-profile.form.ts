@@ -1,6 +1,6 @@
 import { Component, computed, effect, input, model, output } from '@angular/core';
 import { form } from '@angular/forms/signals';
-import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular';
 
 import { DEFAULT_NOTES } from '@okr/shared-constants';
 import { AccountModel, BankFormat, BankProfileModel, RoleName, UserModel } from '@okr/shared-models';

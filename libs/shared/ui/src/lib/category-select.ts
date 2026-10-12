@@ -1,7 +1,7 @@
 import { Component, computed, inject, input, model } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
-import { IonButton, IonContent, IonIcon, IonItem, IonLabel, IonList, IonNote, IonPopover } from '@ionic/angular/standalone';
+import { IonButton, IonContent, IonIcon, IonItem, IonLabel, IonList, IonNote, IonPopover } from '@ionic/angular';
 import { switchMap } from 'rxjs/operators';
 
 import { I18nService, TranslatePipe } from '@okr/shared-i18n';

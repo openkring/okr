@@ -1,6 +1,6 @@
 import { Component, computed, effect, input, model, output, signal } from '@angular/core';
 import { form } from '@angular/forms/signals';
-import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonRow, IonToggle } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonRow, IonToggle } from '@ionic/angular';
 
 import { AvatarInfo, GroupModel, RoleName, UserModel } from '@okr/shared-models';
 import { ButtonCopy, ButtonCopyI18n, Checkbox, CheckboxI18n, Chips, IconInput, NotesInput, NotesInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n , ErrorNote} from '@okr/shared-ui';

@@ -1,5 +1,5 @@
 import { Component, model } from '@angular/core';
-import { IonCol, IonGrid, IonRow, IonToolbar } from '@ionic/angular/standalone';
+import { IonCol, IonGrid, IonRow, IonToolbar } from '@ionic/angular';
 
 import { Searchbar } from './searchbar';
 

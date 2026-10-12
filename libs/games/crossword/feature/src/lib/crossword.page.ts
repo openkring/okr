@@ -1,6 +1,6 @@
 import { Component, DestroyRef, ElementRef, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { IonButton, IonContent, IonNote, IonSpinner } from '@ionic/angular/standalone';
+import { IonButton, IonContent, IonNote, IonSpinner } from '@ionic/angular';
 
 import { Header } from '@okr/shared-ui';
 import { CrosswordPlacement } from '@okr/shared-models';

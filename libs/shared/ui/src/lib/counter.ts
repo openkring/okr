@@ -1,5 +1,5 @@
 import { Component, computed, effect, signal, untracked } from "@angular/core";
-import { IonButton, IonCol, IonGrid, IonInput, IonItem, IonLabel, IonRow } from "@ionic/angular/standalone";
+import { IonButton, IonCol, IonGrid, IonInput, IonItem, IonLabel, IonRow } from "@ionic/angular";
 import { SkipClearTab } from './skip-clear-tab.directive';
 
 const DEFAULT_COUNTER = {

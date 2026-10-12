@@ -1,5 +1,5 @@
 import { Component, computed, inject, linkedSignal, signal } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonRow, IonTitle, IonToolbar } from '@ionic/angular';
 import { RoleName, SectionModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { OkrListSkeleton, EmptyList, ErrorBanner, ListFilter } from '@okr/shared-ui';

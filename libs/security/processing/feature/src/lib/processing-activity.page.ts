@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, input } from '@an
 import {
   IonBackButton, IonButtons, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonChip,
   IonContent, IonHeader, IonItem, IonLabel, IonList, IonNote, IonTitle, IonToolbar,
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 
 import { ProcessingRegisterService } from '@okr/security-processing-data-access';
 import { PROCESSING_I18N_KEYS, type ProcessingI18n } from '@okr/security-processing-util';

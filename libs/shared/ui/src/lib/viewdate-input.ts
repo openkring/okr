@@ -1,6 +1,6 @@
 import { Component, computed, inject, input, model } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { IonInput, ModalController } from '@ionic/angular/standalone';
+import { IonInput, ModalController } from '@ionic/angular';
 
 import { MaskitoDirective } from '@maskito/angular';
 import { MaskitoElementPredicate, MaskitoOptions } from '@maskito/core';

@@ -1,6 +1,6 @@
 import { Browser } from '@capacitor/browser';
 import { Capacitor } from '@capacitor/core';
-import { ToastController } from '@ionic/angular';
+import { ToastController } from '@ionic/angular/lazy';
 
 import { AddressModel, DirectoryEntry, isSensitiveScalarChannel, UserModel } from '@okr/shared-models';
 import { copyToClipboard, formatIban, formatPhoneNumber, IbanFormat, showToast } from '@okr/shared-util-angular';

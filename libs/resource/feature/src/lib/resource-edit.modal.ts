@@ -1,5 +1,5 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
-import { IonAccordionGroup, IonCol, IonContent, IonGrid, IonRow, ModalController } from '@ionic/angular/standalone';
+import { IonAccordionGroup, IonCol, IonContent, IonGrid, IonRow, ModalController } from '@ionic/angular';
 
 import { CategoryListModel, ResourceModel, ResourceModelName, RoleName } from '@okr/shared-models';
 import { CategorySelect, ChangeConfirmation, ChangeConfirmationI18n, Header, IconToolbar } from '@okr/shared-ui';

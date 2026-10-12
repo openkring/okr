@@ -1,6 +1,6 @@
 import { Component, computed, input, linkedSignal, model, Signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonItem, IonNote, IonRow, IonTextarea, IonToggle } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonItem, IonNote, IonRow, IonTextarea, IonToggle } from '@ionic/angular';
 
 import { TocConfig } from '@okr/shared-models';
 import { parseTocKeys, stringifyTocKeys, withTocDefaults } from '@okr/cms-section-util';

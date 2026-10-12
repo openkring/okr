@@ -1,5 +1,5 @@
 import { Component, computed, input, model } from '@angular/core';
-import { IonItem, IonLabel, IonNote, IonRadio, IonRadioGroup } from '@ionic/angular/standalone';
+import { IonItem, IonLabel, IonNote, IonRadio, IonRadioGroup } from '@ionic/angular';
 
 import { coerceBoolean } from '@okr/shared-util-core';
 

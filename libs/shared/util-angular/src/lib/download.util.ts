@@ -4,7 +4,7 @@ import { Browser } from '@capacitor/browser';
 import { Capacitor } from '@capacitor/core';
 import { Directory, Filesystem } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
-import { ToastController } from '@ionic/angular';
+import { ToastController } from '@ionic/angular/lazy';
 import { saveAs } from 'file-saver';
 import { deleteObject, getDownloadURL, ref } from "firebase/storage";
 

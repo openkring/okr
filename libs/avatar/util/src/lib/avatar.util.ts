@@ -1,6 +1,6 @@
 import { Photo } from '@capacitor/camera';
 import { Filesystem } from '@capacitor/filesystem';
-import { Platform } from '@ionic/angular';
+import { Platform } from '@ionic/angular/lazy';
 
 import { AvatarDirectory, AvatarModel, OrgModelName, PersonModelName } from '@okr/shared-models';
 import { blobToFile, die, getPartsOfTupel } from '@okr/shared-util-core';

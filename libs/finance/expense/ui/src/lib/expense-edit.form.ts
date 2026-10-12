@@ -3,7 +3,7 @@ import { form } from '@angular/forms/signals';
 import {
   IonAvatar, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonImg, IonItem, IonLabel,
   IonNote, IonRow, IonSelect, IonSelectOption,
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 
 import { AccountModel, CategoryListModel, CostCenterModel, ExpenseModel, PersonModelName, ProjectModel } from '@okr/shared-models';
 import { ButtonCopy, CategorySelect, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';

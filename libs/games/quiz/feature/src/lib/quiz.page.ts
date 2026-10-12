@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { IonButton, IonCard, IonCardContent, IonCol, IonContent, IonGrid, IonRow } from '@ionic/angular/standalone';
+import { IonButton, IonCard, IonCardContent, IonCol, IonContent, IonGrid, IonRow } from '@ionic/angular';
 
 import { Header } from '@okr/shared-ui';
 

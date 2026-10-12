@@ -2,7 +2,7 @@ import { AsyncPipe } from '@angular/common';
 import { CdkDrag, CdkDragDrop, CdkDropList } from '@angular/cdk/drag-drop';
 import { Component, computed, inject, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { IonButton, IonButtons, IonCheckbox, IonContent, IonHeader, IonIcon, IonInput, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { IonButton, IonButtons, IonCheckbox, IonContent, IonHeader, IonIcon, IonInput, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular';
 
 import { Menu } from '@okr/cms-menu-feature';
 import { FirestoreService } from '@okr/shared-data-access';

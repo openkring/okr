@@ -1,6 +1,6 @@
 import { AsyncPipe } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar, IonBackdrop, IonNote } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar, IonBackdrop, IonNote } from '@ionic/angular';
 
 import { TranslatePipe } from '@okr/shared-i18n';
 import { GroupModel, MembershipModel, NameDisplay, PersonModelName, RoleName, UserModel } from '@okr/shared-models';

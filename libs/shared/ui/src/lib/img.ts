@@ -1,6 +1,6 @@
 import { IMAGE_LOADER, ImageLoaderConfig, NgOptimizedImage, NgStyle } from '@angular/common';
 import { Component, computed, ElementRef, inject, input, viewChild } from '@angular/core';
-import { IonThumbnail, ModalController } from '@ionic/angular/standalone';
+import { IonThumbnail, ModalController } from '@ionic/angular';
 import { Browser } from '@capacitor/browser';
 
 import { ENV } from '@okr/shared-config';

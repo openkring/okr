@@ -2,7 +2,7 @@ import { Component, computed, inject, input, signal } from '@angular/core';
 import {
   ActionSheetController, ActionSheetOptions, IonBadge, IonContent, IonIcon, IonItem, IonLabel,
   IonList, IonNote, IonSegment, IonSegmentButton, IonToolbar, ModalController,
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, Header } from '@okr/shared-ui';

@@ -1,7 +1,7 @@
 import { Component, computed, effect, inject, input, untracked } from '@angular/core';
 import { AppStore } from '@okr/shared-feature';
 import { DomSanitizer } from '@angular/platform-browser';
-import { IonCard, IonCardContent, ModalController } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent, ModalController } from '@ionic/angular';
 
 import { VideoSection } from '@okr/shared-models';
 import { OptionalCardHeader, showVideoView, Spinner, VideoCard } from '@okr/shared-ui';

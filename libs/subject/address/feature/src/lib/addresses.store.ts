@@ -1,7 +1,7 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
-import { ModalController, Platform, ToastController } from '@ionic/angular/standalone';
+import { ModalController, Platform, ToastController } from '@ionic/angular';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { map, of } from 'rxjs';
 import { getApp } from 'firebase/app';

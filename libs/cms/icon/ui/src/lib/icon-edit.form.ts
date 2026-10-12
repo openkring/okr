@@ -1,7 +1,7 @@
 import { Component, computed, effect, input, model, output, Signal } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { form } from '@angular/forms/signals';
-import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonRow } from '@ionic/angular';
 
 import { iconValidations } from '@okr/cms-icon-util';
 import { IconModel, RoleName, UserModel } from '@okr/shared-models';

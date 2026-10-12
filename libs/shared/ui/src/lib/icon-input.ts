@@ -1,6 +1,6 @@
 
 import { Component, computed, input, linkedSignal, output } from '@angular/core';
-import { IonIcon, IonItem } from '@ionic/angular/standalone';
+import { IonIcon, IonItem } from '@ionic/angular';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { coerceBoolean } from '@okr/shared-util-core';

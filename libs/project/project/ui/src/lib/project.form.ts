@@ -1,6 +1,6 @@
 import { Component, computed, effect, inject, input, model, output } from '@angular/core';
 import { form } from '@angular/forms/signals';
-import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonNote, IonRow } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonNote, IonRow } from '@ionic/angular';
 
 import { AvatarSelect } from '@okr/avatar-ui';
 import { DEFAULT_NOTES, DEFAULT_TAGS, DESCRIPTION_LENGTH } from '@okr/shared-constants';

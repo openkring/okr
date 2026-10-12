@@ -1,6 +1,6 @@
 import { Component, computed, input, model, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonIcon, IonInput, IonItem, IonLabel, IonList, IonNote, IonReorder, IonReorderGroup, IonSelect, IonSelectOption, IonTextarea, ItemReorderEventDetail } from '@ionic/angular/standalone';
+import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonIcon, IonInput, IonItem, IonLabel, IonList, IonNote, IonReorder, IonReorderGroup, IonSelect, IonSelectOption, IonTextarea, ItemReorderEventDetail } from '@ionic/angular';
 
 import { AgendaItem, AgendaItemKind } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';

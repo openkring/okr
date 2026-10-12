@@ -1,5 +1,5 @@
 import { Component, input, linkedSignal } from '@angular/core';
-import { IonContent } from '@ionic/angular/standalone';
+import { IonContent } from '@ionic/angular';
 
 import { ExpenseModel } from '@okr/shared-models';
 import { Header } from '@okr/shared-ui';

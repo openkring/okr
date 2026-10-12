@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import {
   IonButton, IonButtons, IonContent, IonHeader, IonLabel, IonMenuButton, IonSegment, IonSegmentButton, IonSelect,
   IonSelectOption, IonTitle, IonToggle, IonToolbar, ViewDidEnter, ViewWillLeave,
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 
 import { CalculatorBits, CalculatorDisplay, CalculatorKeypad, CalculatorTape } from '@okr/instruments-calculator-ui';
 import {

@@ -1,5 +1,5 @@
 import { Component, computed, input, linkedSignal, model, Signal } from '@angular/core';
-import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular';
 
 import { ChatConfig } from '@okr/shared-models';
 import { Checkbox, CheckboxI18n, ErrorNote, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';

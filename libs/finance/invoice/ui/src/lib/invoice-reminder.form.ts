@@ -2,7 +2,7 @@ import { Component, computed, effect, input, model, output, signal } from '@angu
 import { form } from '@angular/forms/signals';
 import {
   IonCard, IonCardContent, IonCheckbox, IonCol, IonGrid, IonItem, IonLabel, IonList, IonNote, IonRow, IonSegment, IonSegmentButton, IonToggle,
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 
 import { DateInput, DateInputI18n, ErrorNote, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n } from '@okr/shared-ui';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';

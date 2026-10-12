@@ -1,5 +1,5 @@
 import { Component, inject, input } from '@angular/core';
-import { IonButton, IonContent, IonFooter, IonItem, IonLabel, IonList, IonToolbar, ModalController } from '@ionic/angular/standalone';
+import { IonButton, IonContent, IonFooter, IonItem, IonLabel, IonList, IonToolbar, ModalController } from '@ionic/angular';
 
 import { Header } from '@okr/shared-ui';
 import { PersonDuplicateCandidate, PersonI18n } from '@okr/subject-person-util';

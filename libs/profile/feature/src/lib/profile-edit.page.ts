@@ -1,7 +1,7 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { Photo } from '@capacitor/camera';
-import { IonAccordionGroup, IonCard, IonCardContent, IonContent, IonItem, IonLabel } from '@ionic/angular/standalone';
+import { IonAccordionGroup, IonCard, IonCardContent, IonContent, IonItem, IonLabel } from '@ionic/angular';
 
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
 import { safeStructuredClone } from '@okr/shared-util-core';

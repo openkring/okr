@@ -1,6 +1,6 @@
 import { Component, computed, inject, linkedSignal, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonContent, IonGrid, IonIcon, IonInput, IonInputPasswordToggle, IonItem, IonLabel, IonNote, IonRow, IonSelect, IonSelectOption } from '@ionic/angular/standalone';
+import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonContent, IonGrid, IonIcon, IonInput, IonInputPasswordToggle, IonItem, IonLabel, IonNote, IonRow, IonSelect, IonSelectOption } from '@ionic/angular';
 
 import { EMAIL_LENGTH, PASSWORD_MAX_LENGTH } from '@okr/shared-constants';
 

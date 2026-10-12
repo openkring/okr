@@ -1,6 +1,6 @@
 import { DestroyRef, effect, inject, Injectable, PLATFORM_ID, signal } from '@angular/core';
 import { Device } from '@capacitor/device';
-import { AlertController } from '@ionic/angular/standalone';
+import { AlertController } from '@ionic/angular';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { Observable } from 'rxjs';
 

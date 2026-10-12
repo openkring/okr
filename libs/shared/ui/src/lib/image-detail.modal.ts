@@ -1,5 +1,5 @@
 import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
-import { IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonRow, IonSpinner, IonTitle, IonToolbar, ModalController } from '@ionic/angular/standalone';
+import { IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonRow, IonSpinner, IonTitle, IonToolbar, ModalController } from '@ionic/angular';
 import { getDownloadURL, getMetadata, ref } from 'firebase/storage';
 
 import { STORAGE } from '@okr/shared-config';

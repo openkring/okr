@@ -1,6 +1,6 @@
 import { Component, computed, effect, inject, input } from '@angular/core';
 import { Router } from '@angular/router';
-import { IonBadge, IonCard, IonCardContent, IonItem, IonLabel, IonList } from '@ionic/angular/standalone';
+import { IonBadge, IonCard, IonCardContent, IonItem, IonLabel, IonList } from '@ionic/angular';
 
 import { EmptyList, MoreButton, OptionalCardHeader, Spinner } from '@okr/shared-ui';
 import { debugMessage } from '@okr/shared-util-core';

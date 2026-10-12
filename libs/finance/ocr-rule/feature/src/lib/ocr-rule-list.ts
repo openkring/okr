@@ -3,7 +3,7 @@ import { generateRandomString } from '@okr/shared-util-core';
 import { ActivatedRoute } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActionSheetController, ActionSheetOptions, IonBadge, IonButton, IonButtons,
-  IonContent, IonHeader, IonMenuButton, IonIcon, IonItem, IonLabel, IonList, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+  IonContent, IonHeader, IonMenuButton, IonIcon, IonItem, IonLabel, IonList, IonPopover, IonTitle, IonToolbar } from '@ionic/angular';
 
 import { OcrRuleModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';

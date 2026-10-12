@@ -1,6 +1,6 @@
 import { Component, inject, linkedSignal, viewChild } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { IonContent, IonInfiniteScroll, IonInfiniteScrollContent, IonItem, IonList } from '@ionic/angular/standalone';
+import { IonContent, IonInfiniteScroll, IonInfiniteScrollContent, IonItem, IonList } from '@ionic/angular';
 import { tap } from 'rxjs';
 
 import { SocialPostModel } from '@okr/shared-models';

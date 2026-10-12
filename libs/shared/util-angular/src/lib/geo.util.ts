@@ -1,6 +1,6 @@
 import { GeoPosition } from "@okr/shared-models";
 import { Geolocation, Position } from "@capacitor/geolocation";
-import { AlertController, Platform } from "@ionic/angular/standalone";
+import { AlertController, Platform } from "@ionic/angular";
 /**
  * A KMZ file is essentially a ZIP archive containing one or more KML files (xml), along with optional media files such as images or models. 
  * The root KML file within the ZIP is typically named `doc.kml`.

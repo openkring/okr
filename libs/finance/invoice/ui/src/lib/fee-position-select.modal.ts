@@ -1,5 +1,5 @@
 import { Component, inject, input } from '@angular/core';
-import { IonContent, IonItem, IonLabel, IonList, IonNote, ModalController } from '@ionic/angular/standalone';
+import { IonContent, IonItem, IonLabel, IonList, IonNote, ModalController } from '@ionic/angular';
 
 import { Header } from '@okr/shared-ui';
 import { dismissOverlay } from '@okr/shared-util-angular';

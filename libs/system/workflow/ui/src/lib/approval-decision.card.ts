@@ -1,5 +1,5 @@
 import { Component, computed, input, output, signal } from '@angular/core';
-import { IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonNote, IonRow } from '@ionic/angular/standalone';
+import { IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonNote, IonRow } from '@ionic/angular';
 
 import { ApprovalModel, MAX_DECISION_NOTE_LENGTH } from '@okr/shared-models';
 import { NotesInput, NotesInputI18n } from '@okr/shared-ui';

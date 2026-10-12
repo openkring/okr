@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, ElementRef, input, output, signal, viewChild } from '@angular/core';
-import { IonButton, IonIcon } from '@ionic/angular/standalone';
+import { IonButton, IonIcon } from '@ionic/angular';
 
 import { WhiteboardItem, WhiteboardItemKind } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';

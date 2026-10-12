@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { ActionSheetController, AlertController } from '@ionic/angular/standalone';
+import { ActionSheetController, AlertController } from '@ionic/angular';
 
 import { ImageConfig, ImageType, SectionModel, UserModel } from '@okr/shared-models';
 import { IMAGE_MIMETYPES } from '@okr/shared-constants';

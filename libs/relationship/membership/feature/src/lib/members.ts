@@ -1,5 +1,5 @@
 import { Component, computed, effect, inject, input, signal } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonContent, IonImg, IonItem, IonLabel, IonList, IonThumbnail } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonContent, IonImg, IonItem, IonLabel, IonList, IonThumbnail } from '@ionic/angular';
 
 import { MembershipModel, RoleName } from '@okr/shared-models';
 import { FullNamePipe, RellogPipe } from '@okr/shared-pipes';

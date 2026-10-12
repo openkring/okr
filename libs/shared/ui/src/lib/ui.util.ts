@@ -1,5 +1,5 @@
 import { Browser } from "@capacitor/browser";
-import { ModalController } from "@ionic/angular/standalone";
+import { ModalController } from "@ionic/angular";
 import { getDownloadURL, getMetadata, getStorage, ref, updateMetadata } from "firebase/storage";
 
 import { Dimensions, ImageConfig, ImageStyle, UserModel } from "@okr/shared-models";

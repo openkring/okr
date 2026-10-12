@@ -1,5 +1,5 @@
 import { inject } from '@angular/core';
-import { ModalController } from '@ionic/angular/standalone';
+import { ModalController } from '@ionic/angular';
 import { signalStore, withMethods, withProps } from '@ngrx/signals';
 
 import { BANK_IMPORT_MIMETYPES } from '@okr/shared-constants';

@@ -4,7 +4,7 @@ import { combineLatest, from, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
-import { IonButton, IonContent, IonIcon, IonPopover } from '@ionic/angular/standalone';
+import { IonButton, IonContent, IonIcon, IonPopover } from '@ionic/angular';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { browse } from '@okr/shared-ui';

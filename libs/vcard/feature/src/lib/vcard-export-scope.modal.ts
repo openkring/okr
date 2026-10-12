@@ -1,5 +1,5 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
-import { ModalController, IonButton, IonButtons, IonContent, IonHeader, IonItem, IonLabel, IonList, IonListHeader, IonTitle, IonToggle, IonToolbar } from '@ionic/angular/standalone';
+import { ModalController, IonButton, IonButtons, IonContent, IonHeader, IonItem, IonLabel, IonList, IonListHeader, IonTitle, IonToggle, IonToolbar } from '@ionic/angular';
 
 import { I18nService } from '@okr/shared-i18n';
 import { ExportScope, ScopeAvailability, VcardChannelType, VcardI18n, VCARD_I18N_KEYS, VcardTargetKind } from '@okr/vcard-util';

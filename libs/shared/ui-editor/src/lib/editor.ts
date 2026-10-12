@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, computed, inject, input, model } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { IonButton, IonIcon, IonItem, ToastController } from '@ionic/angular/standalone';
+import { IonButton, IonIcon, IonItem, ToastController } from '@ionic/angular';
 import { Editor, NgxEditorModule } from 'ngx-editor';
 import { AsyncPipe } from '@angular/common';
 

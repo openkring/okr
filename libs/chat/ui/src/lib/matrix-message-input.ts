@@ -1,7 +1,7 @@
 import { Component, DestroyRef, afterNextRender, computed, effect, inject, input, output, signal, viewChild, ElementRef, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
-import {  IonTextarea, IonButton, IonIcon, ActionSheetController, ActionSheetOptions, ModalController, Platform } from '@ionic/angular/standalone';
+import {  IonTextarea, IonButton, IonIcon, ActionSheetController, ActionSheetOptions, ModalController, Platform } from '@ionic/angular';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { createActionSheetButton, createActionSheetOptions, QuickEntryService } from '@okr/shared-util-angular';
@@ -89,6 +89,7 @@ import 'emoji-picker-element';
       --background: transparent;
       font-size: 1rem;
       line-height: 1.4;
+      min-height: 0; /* Ionic 9 MD sets 72px, which ignores rows="1" */
     }
 
     /* ── Row 2: action buttons ───────────────────────────────── */

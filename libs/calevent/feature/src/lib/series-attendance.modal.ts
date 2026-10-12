@@ -1,5 +1,5 @@
 import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
-import { IonContent, ModalController, ToastController } from '@ionic/angular/standalone';
+import { IonContent, ModalController, ToastController } from '@ionic/angular';
 
 import { CalEventModel, InvitationModel } from '@okr/shared-models';
 import { ChangeConfirmation, Header } from '@okr/shared-ui';

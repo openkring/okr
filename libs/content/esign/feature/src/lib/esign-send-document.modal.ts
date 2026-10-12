@@ -5,7 +5,7 @@ import {
   IonButton, IonButtons, IonCard, IonCardContent, IonCol, IonContent, IonGrid, IonHeader,
   IonItem, IonLabel, IonSelect, IonSelectOption, IonSpinner, IonTitle, IonToolbar, IonRow,
   ModalController, ToastController,
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 
 import { NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { I18nService } from '@okr/shared-i18n';

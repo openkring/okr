@@ -2,7 +2,7 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { firstValueFrom, map, of } from 'rxjs';
 import { Router } from '@angular/router';
-import { ModalController, ToastController } from '@ionic/angular/standalone';
+import { ModalController, ToastController } from '@ionic/angular';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { Photo } from '@capacitor/camera';
 

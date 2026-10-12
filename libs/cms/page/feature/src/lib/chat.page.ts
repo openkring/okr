@@ -1,5 +1,5 @@
 import { Component, ComponentRef, computed, DestroyRef, effect, inject, input, PLATFORM_ID, signal, untracked, ViewContainerRef, viewChild } from '@angular/core';
-import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { I18nService } from '@okr/shared-i18n';

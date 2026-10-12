@@ -1,5 +1,5 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
-import { ActionSheetController, IonAccordionGroup, IonCard, IonCardContent, IonContent, ModalController, ToastController } from '@ionic/angular/standalone';
+import { ActionSheetController, IonAccordionGroup, IonCard, IonCardContent, IonContent, ModalController, ToastController } from '@ionic/angular';
 
 import { ModelSelectService } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';

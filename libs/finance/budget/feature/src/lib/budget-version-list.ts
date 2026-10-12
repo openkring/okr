@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 import {
   ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonChip, IonContent, IonHeader, IonIcon,
   IonItem, IonItemDivider, IonItemGroup, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 
 import { Menu } from '@okr/cms-menu-feature';
 import { BudgetStatus, BudgetVersionModel, CategoryItemModel, CategoryListModel, RoleName } from '@okr/shared-models';

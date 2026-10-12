@@ -1,6 +1,6 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { Photo } from '@capacitor/camera';
-import { IonContent, ModalController, Platform } from '@ionic/angular/standalone';
+import { IonContent, ModalController, Platform } from '@ionic/angular';
 
 import { PersonModel, UserModel, UserModelName } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Chips, Header } from '@okr/shared-ui';

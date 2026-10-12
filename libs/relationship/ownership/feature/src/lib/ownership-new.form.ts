@@ -1,6 +1,6 @@
 import { Component, computed, effect, inject, input, model, output } from '@angular/core';
 import { form } from '@angular/forms/signals';
-import { IonAvatar, IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonRow, ModalController } from '@ionic/angular/standalone';
+import { IonAvatar, IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonRow, ModalController } from '@ionic/angular';
 
 import { AvatarPipe } from '@okr/avatar-ui';
 import { AppStore, OrgSelectModal, PersonSelectModal, PersonSelectResult, ResourceSelectModal } from '@okr/shared-feature';

@@ -5,7 +5,7 @@ import { firstValueFrom, from, of } from 'rxjs';
 import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
-import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
+import { AlertController, ModalController, ToastController } from '@ionic/angular';
 
 import { AppStore } from '@okr/shared-feature';
 import { FirestoreService } from '@okr/shared-data-access';

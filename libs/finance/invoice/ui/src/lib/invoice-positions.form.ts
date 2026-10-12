@@ -3,7 +3,7 @@ import { form } from '@angular/forms/signals';
 import {
   IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonNote, IonRow,
   IonSegment, IonSegmentButton,
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 
 import { AccountModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';

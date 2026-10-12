@@ -1,6 +1,6 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
-import { IonCard, IonCardContent, IonContent, IonIcon, IonItem, IonLabel, ModalController } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent, IonContent, IonIcon, IonItem, IonLabel, ModalController } from '@ionic/angular';
 
 import { AvatarInfo, PersonModelName, TripModel } from '@okr/shared-models';
 import { AppStore } from '@okr/shared-feature';

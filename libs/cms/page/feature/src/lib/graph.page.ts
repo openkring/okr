@@ -1,5 +1,5 @@
 import { Component, computed, effect, inject, input } from '@angular/core';
-import { IonButton, IonButtons, IonCheckbox, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonMenuButton, IonPopover, IonTitle, IonToolbar, ModalController } from '@ionic/angular/standalone';
+import { IonButton, IonButtons, IonCheckbox, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonMenuButton, IonPopover, IonTitle, IonToolbar, ModalController } from '@ionic/angular';
 import { MenuItemModel, PageModel, RoleName, SectionModel } from '@okr/shared-models';
 import { Spinner } from '@okr/shared-ui';
 import { hasRole } from '@okr/shared-util-core';

@@ -1,5 +1,5 @@
 import { Component, computed, effect, inject, input, signal } from '@angular/core';
-import { IonBackButton, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonLabel, IonSegment, IonSegmentButton, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { IonBackButton, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonLabel, IonSegment, IonSegmentButton, IonTitle, IonToolbar } from '@ionic/angular';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, Spinner } from '@okr/shared-ui';

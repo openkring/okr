@@ -1,6 +1,6 @@
 import { Injectable, inject } from "@angular/core";
 import { Router } from "@angular/router";
-import { ModalController } from "@ionic/angular/standalone";
+import { ModalController } from "@ionic/angular";
 
 import { getDeepLinkPath } from "@okr/shared-util-core";
 

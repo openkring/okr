@@ -1,5 +1,5 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
-import { IonContent, ModalController, ToastController } from '@ionic/angular/standalone';
+import { IonContent, ModalController, ToastController } from '@ionic/angular';
 
 import { ExpenseModel } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';

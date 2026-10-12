@@ -119,7 +119,7 @@ When making changes to TypeScript files, always run `npx tsc --noEmit` or the pr
 
 ### Tech Stack (non-negotiable, I will mass git revert you)
 
-- Frontend: Angular v22, TypeScript strict, Ionic/Angular 8.8, Capacitor 8
+- Frontend: Angular v22, TypeScript strict, Ionic/Angular 9, Capacitor 8
 - Backend: Google Firebase using Firestore database, FCM, Auth, Storage, AppCheck
 - Auth: Firebase Authentication with email and password. Users may reset their password anytime.
 - Styling: scss
@@ -204,8 +204,7 @@ Matrix chat authentication is done via a Firebase Cloud Function (`getMatrixCred
 
 ### Ionic version & hydration status
 
-_Last verified: 2026-10-12 — Angular 22.1.8, `@ionic/angular` + `@ionic/core` 8.8.8 (Stencil 4.43.0), Capacitor 8.
-Latest upstream: Ionic 9.0.7 (Stencil ≥ 4.44.2), Stencil 4.45.2._
+_Last verified: 2026-10-12 — Angular 22.1.8, `@ionic/angular` + `@ionic/core` 9.0.7 (Stencil 4.45.2), Capacitor 8._
 
 **Hydration is off by deliberate choice, not by defect.** `provideClientHydration` stays commented
 out in every app's `app.config.ts`. Ionic's Angular integration does not support Angular client
@@ -227,13 +226,13 @@ replacing Ionic over it — Angular Material and Tailwind are a component kit an
 neither replaces the Capacitor-integrated native shell (stack navigation, platform-adaptive
 transitions, gestures, the overlay/controller system) that is the actual reason Ionic is here.
 
-**Version-support lag is resolved upstream, not yet here.** Ionic 8 caps at Angular 20.x, so our
-Angular 22 on Ionic 8.8.8 is an officially untested combination. It works: `@ionic/angular` 8.8.8
-declares `@angular/core >=18`, and the 21 → 22 upgrade (2026-10-12) needed no Ionic change.
-Ionic 9 (2026-08-19) supports Angular 18–22 and closed
-[ionic#30907](https://github.com/ionic-team/ionic-framework/issues/30907). The upgrade is spec
-`1.96` ([`2026-10-12-ionic-9-upgrade-spec.md`](planning/specs/2026-10-12-ionic-9-upgrade-spec.md)).
-Reopen the hydration / App Hosting question only on the recheck triggers listed in that spec (§7).
+**Version support is current.** Ionic 9 supports Angular 18–22, so Angular 22 on Ionic 9 is an
+officially supported combination (upgraded 2026-10-12, spec `1.96`,
+[`2026-10-12-ionic-9-upgrade-spec.md`](planning/specs/2026-10-12-ionic-9-upgrade-spec.md)). Standalone
+components import from **`@ionic/angular`**, not `@ionic/angular/standalone` (the Ionic 9 entry
+point; `/standalone` is gone). `ion-img` is deprecated and removed in Ionic 10 — use
+`<img loading="lazy" decoding="async">` in new code. Reopen the hydration / App Hosting question only
+on the recheck triggers listed in that spec (§7).
 
 ### i18n
 

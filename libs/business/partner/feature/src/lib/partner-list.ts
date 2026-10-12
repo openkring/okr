@@ -2,7 +2,7 @@ import { Component, computed, inject, input } from '@angular/core';
 import {
   ActionSheetController, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon,
   IonLabel, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar,
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 
 import { PartnerModel, RoleName } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';

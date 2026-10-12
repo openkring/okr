@@ -1,6 +1,6 @@
 import { Component, ComponentRef, DestroyRef, ViewContainerRef, computed, effect, inject, input, linkedSignal, signal, untracked, viewChild } from '@angular/core';
-import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonItemDivider, IonLabel, IonPopover, IonSpinner, IonMenuButton, IonSegment, IonSegmentButton, IonTitle, IonToolbar } from '@ionic/angular/standalone';
-import { ViewWillEnter } from '@ionic/angular';
+import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonItemDivider, IonLabel, IonPopover, IonSpinner, IonMenuButton, IonSegment, IonSegmentButton, IonTitle, IonToolbar } from '@ionic/angular';
+import { ViewWillEnter } from '@ionic/angular/lazy';
 
 import { GroupModel } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, DeferError } from '@okr/shared-ui';

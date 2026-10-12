@@ -1,5 +1,5 @@
 import { Component, computed, effect, inject, input, linkedSignal } from '@angular/core';
-import { IonAvatar, IonContent, IonIcon, IonImg, IonItem, IonItemDivider, IonLabel, IonList, ModalController } from '@ionic/angular/standalone';
+import { IonAvatar, IonContent, IonIcon, IonImg, IonItem, IonItemDivider, IonLabel, IonList, ModalController } from '@ionic/angular';
 
 import { PersonModel, PersonModelName, UserModel } from '@okr/shared-models';
 import { FullNamePipe, SvgIconPipe } from '@okr/shared-pipes';

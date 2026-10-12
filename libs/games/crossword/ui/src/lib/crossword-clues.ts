@@ -1,5 +1,5 @@
 import { Component, computed, input, output } from '@angular/core';
-import { IonItem, IonLabel, IonList, IonListHeader } from '@ionic/angular/standalone';
+import { IonItem, IonLabel, IonList, IonListHeader } from '@ionic/angular';
 
 import { CrosswordEntry, CrosswordGrid, CrosswordPlacement } from '@okr/shared-models';
 import { CrosswordI18n } from '@okr/games-crossword-util';

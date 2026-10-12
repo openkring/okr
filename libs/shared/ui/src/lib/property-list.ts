@@ -4,7 +4,7 @@ export interface PropertyListI18n {
   title: string;
   empty: string;
 }
-import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonIcon, IonInput, IonItem, IonLabel, IonList, IonNote, IonReorder, IonReorderGroup, ItemReorderEventDetail } from '@ionic/angular/standalone';
+import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonIcon, IonInput, IonItem, IonLabel, IonList, IonNote, IonReorder, IonReorderGroup, ItemReorderEventDetail } from '@ionic/angular';
 import { FormsModule } from '@angular/forms';
 
 import { MaskitoDirective } from '@maskito/angular';

@@ -1,6 +1,6 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { CdkDragDrop, CdkDropList, CdkDropListGroup, CdkDrag, moveItemInArray } from '@angular/cdk/drag-drop';
-import { IonButton, IonContent, IonIcon, IonItem, IonLabel, IonNote, IonSegment, IonSegmentButton, IonToolbar, ModalController } from '@ionic/angular/standalone';
+import { IonButton, IonContent, IonIcon, IonItem, IonLabel, IonNote, IonSegment, IonSegmentButton, IonToolbar, ModalController } from '@ionic/angular';
 
 import { AppStore } from '@okr/shared-feature';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';

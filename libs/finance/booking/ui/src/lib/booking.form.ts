@@ -1,6 +1,6 @@
 import { Component, computed, effect, input, model, output, signal } from '@angular/core';
 import { form } from '@angular/forms/signals';
-import { IonAvatar, IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonImg, IonItem, IonLabel, IonNote, IonRow } from '@ionic/angular/standalone';
+import { IonAvatar, IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonImg, IonItem, IonLabel, IonNote, IonRow } from '@ionic/angular';
 
 import { AccountModel, AvatarInfo, CostCenterModel, ProjectModel, RoleName, UserModel, VatCodeModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';

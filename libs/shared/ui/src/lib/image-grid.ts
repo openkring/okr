@@ -1,6 +1,6 @@
 import { NgStyle } from '@angular/common';
 import { Component, CUSTOM_ELEMENTS_SCHEMA, input, output } from '@angular/core';
-import { IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonList, IonRow, IonThumbnail } from '@ionic/angular/standalone';
+import { IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonList, IonRow, IonThumbnail } from '@ionic/angular';
 
 import { BackgroundStyle, ImageConfig, ImageStyle, ImageType } from '@okr/shared-models';
 import { JpgUrlPipe, PdfUrlPipe, SvgIconPipe, ThumbnailUrlPipe } from '@okr/shared-pipes';

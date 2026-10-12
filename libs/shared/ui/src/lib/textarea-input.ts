@@ -1,6 +1,6 @@
 import { Component, computed, input, model } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { IonIcon, IonItem, IonNote, IonTextarea } from '@ionic/angular/standalone';
+import { IonIcon, IonItem, IonNote, IonTextarea } from '@ionic/angular';
 
 import { COMMENT_LENGTH } from '@okr/shared-constants';
 import { SvgIconPipe } from '@okr/shared-pipes';

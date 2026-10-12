@@ -1,11 +1,11 @@
 // libs/content/esign/feature/src/lib/esign-list.ts
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { ActionSheetController, ActionSheetOptions, ModalController, ToastController } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, ModalController, ToastController } from '@ionic/angular';
 import {
   IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon,
   IonContent, IonLabel, IonGrid, IonRow, IonCol, IonChip, IonMenuButton,
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 
 import { EsignRecord } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';

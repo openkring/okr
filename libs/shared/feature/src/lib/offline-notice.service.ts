@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { ToastController } from '@ionic/angular/standalone';
+import { ToastController } from '@ionic/angular';
 import { firstValueFrom } from 'rxjs';
 
 import { I18nService } from '@okr/shared-i18n';

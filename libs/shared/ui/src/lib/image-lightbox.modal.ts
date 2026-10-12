@@ -2,7 +2,7 @@ import { Component, computed, effect, inject, input, linkedSignal, signal } from
 import {
   IonButton, IonButtons, IonContent, IonHeader,
   IonIcon, IonTitle, IonToolbar, ModalController
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 import { dismissOverlay, downloadToBrowser } from '@okr/shared-util-angular';
 import { SvgIconPipe } from '@okr/shared-pipes';
 

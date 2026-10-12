@@ -1,6 +1,6 @@
 import { Component, computed, effect, input, model, output, untracked } from '@angular/core';
 import { form } from '@angular/forms/signals';
-import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular';
 
 import { AddressModel, CategoryListModel, City, RoleName, UserModel } from '@okr/shared-models';
 import { CategorySelect, Checkbox, CheckboxI18n, Chips, CountrySelect, CountrySelectI18n, EmailInput, EmailInputI18n, ErrorNote, IbanInput, IbanInputI18n, NotesInput, NotesInputI18n, PhoneInput, PhoneInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';

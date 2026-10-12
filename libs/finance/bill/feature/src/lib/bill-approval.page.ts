@@ -1,5 +1,5 @@
 import { Component, computed, inject, input, resource } from '@angular/core';
-import { IonButtons, IonContent, IonHeader, IonLabel, IonList, IonListHeader, IonMenuButton, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { IonButtons, IonContent, IonHeader, IonLabel, IonList, IonListHeader, IonMenuButton, IonTitle, IonToolbar } from '@ionic/angular';
 
 import { I18nService } from '@okr/shared-i18n';
 import { EmptyList, Spinner } from '@okr/shared-ui';

@@ -1,5 +1,5 @@
 import { Component, input, model, output } from '@angular/core';
-import { IonCol, IonGrid, IonIcon, IonItem, IonList, IonRow } from '@ionic/angular/standalone';
+import { IonCol, IonGrid, IonIcon, IonItem, IonList, IonRow } from '@ionic/angular';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';

@@ -1,5 +1,5 @@
 import { Component, computed, inject, input } from '@angular/core';
-import { IonCard, IonCardContent, IonItem, IonLabel } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent, IonItem, IonLabel } from '@ionic/angular';
 import { signalStore, withProps } from '@ngrx/signals';
 
 import { I18nService } from '@okr/shared-i18n';

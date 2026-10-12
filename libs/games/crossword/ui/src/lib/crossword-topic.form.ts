@@ -1,7 +1,7 @@
 import { Component, computed, effect, input, model, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { form } from '@angular/forms/signals';
-import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonIcon, IonItem, IonNote, IonRow, IonTextarea } from '@ionic/angular/standalone';
+import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonIcon, IonItem, IonNote, IonRow, IonTextarea } from '@ionic/angular';
 
 import { DESCRIPTION_LENGTH } from '@okr/shared-constants';
 import { CrosswordEntry, CrosswordTopicModel } from '@okr/shared-models';

@@ -1,6 +1,6 @@
 import { Component, computed, effect, input, model, output } from '@angular/core';
 import { form } from '@angular/forms/signals';
-import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonRow } from '@ionic/angular';
 
 import { DEFAULT_DATETIME, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS, DESCRIPTION_LENGTH, NAME_LENGTH } from '@okr/shared-constants';
 import { AvatarInfo, RoleName, InvitationModel, UserModel, DEFAULT_INVITATION_STATE, DEFAULT_INVITATION_ROLE } from '@okr/shared-models';

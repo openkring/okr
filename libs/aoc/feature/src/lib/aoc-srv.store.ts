@@ -1,7 +1,7 @@
 import { computed, inject } from '@angular/core';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { Router } from '@angular/router';
-import { ModalController } from '@ionic/angular/standalone';
+import { ModalController } from '@ionic/angular';
 import { getApp } from 'firebase/app';
 import { connectFunctionsEmulator, getFunctions, httpsCallable } from 'firebase/functions';
 import { rxResource } from '@angular/core/rxjs-interop';

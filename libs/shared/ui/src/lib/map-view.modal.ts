@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, ElementRef, OnDestroy, PLATFORM_ID, computed, inject, input, signal } from '@angular/core';
-import { IonContent } from '@ionic/angular/standalone';
+import { IonContent } from '@ionic/angular';
 import type * as L from 'leaflet';
 
 import { isBrowser } from '@okr/shared-util-angular';

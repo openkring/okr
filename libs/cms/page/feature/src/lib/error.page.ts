@@ -1,5 +1,5 @@
 import { Component, computed, effect, inject, input, Signal } from '@angular/core';
-import { IonCol, IonContent, IonGrid, IonIcon, IonImg, IonLabel, IonRow } from '@ionic/angular/standalone';
+import { IonCol, IonContent, IonGrid, IonIcon, IonImg, IonLabel, IonRow } from '@ionic/angular';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { switchMap } from 'rxjs';
 

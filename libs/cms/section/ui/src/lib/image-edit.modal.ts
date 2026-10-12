@@ -1,5 +1,5 @@
 import { Component, computed, inject, input, linkedSignal, model, signal, Signal } from '@angular/core';
-import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonNote, IonRow, ModalController } from '@ionic/angular/standalone';
+import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonNote, IonRow, ModalController } from '@ionic/angular';
 
 import { UploadService } from '@okr/avatar-data-access';
 import { ImageConfig, ImageType } from '@okr/shared-models';

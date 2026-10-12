@@ -1,6 +1,6 @@
 import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
-import { ActionSheetOptions, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
-import { ActionSheetController } from '@ionic/angular';
+import { ActionSheetOptions, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular';
+import { ActionSheetController } from '@ionic/angular/lazy';
 import { Router } from '@angular/router';
 
 import { CalEventModel, RoleName } from '@okr/shared-models';

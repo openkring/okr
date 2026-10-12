@@ -1,5 +1,5 @@
 import { Component, input } from '@angular/core';
-import { IonGrid, IonRow, IonSpinner } from '@ionic/angular/standalone';
+import { IonGrid, IonRow, IonSpinner } from '@ionic/angular';
 
 import { ColorsIonic } from '@okr/shared-categories';
 import { ColorIonic } from '@okr/shared-models';

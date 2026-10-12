@@ -1,6 +1,6 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { IonItem, IonNote } from '@ionic/angular/standalone';
+import { IonItem, IonNote } from '@ionic/angular';
 import { TranslocoService } from '@jsverse/transloco';
 import { Observable, of } from 'rxjs';
 

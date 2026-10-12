@@ -1,6 +1,6 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { AlertController, ModalController } from '@ionic/angular/standalone';
+import { AlertController, ModalController } from '@ionic/angular';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
 import { AppStore, GroupSelectModal } from '@okr/shared-feature';

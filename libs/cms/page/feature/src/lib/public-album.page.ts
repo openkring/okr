@@ -1,7 +1,7 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { rxResource, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
-import { IonContent, IonHeader, IonTitle, IonToolbar, ModalController } from '@ionic/angular/standalone';
+import { IonContent, IonHeader, IonTitle, IonToolbar, ModalController } from '@ionic/angular';
 import { of } from 'rxjs';
 
 import { ENV } from '@okr/shared-config';

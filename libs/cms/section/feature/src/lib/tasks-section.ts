@@ -1,6 +1,6 @@
 
 import { CUSTOM_ELEMENTS_SCHEMA, Component, OnInit, PLATFORM_ID, computed, effect, inject, input } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonCard, IonCardContent, IonLabel } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonCard, IonCardContent, IonLabel } from '@ionic/angular';
 
 import { EmptyList, MoreButton, OptionalCardHeader, Spinner } from '@okr/shared-ui';
 import { debugMessage, hasRole } from '@okr/shared-util-core';

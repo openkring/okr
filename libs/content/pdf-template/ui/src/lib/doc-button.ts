@@ -3,7 +3,7 @@ import {
   ChangeDetectionStrategy, Component, computed, inject,
   input, output, signal,
 } from '@angular/core';
-import { IonButton, IonIcon, IonSpinner, ModalController, ToastController } from '@ionic/angular/standalone';
+import { IonButton, IonIcon, IonSpinner, ModalController, ToastController } from '@ionic/angular';
 import { firstValueFrom } from 'rxjs';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { I18nService } from '@okr/shared-i18n';

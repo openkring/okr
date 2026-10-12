@@ -1,6 +1,6 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
-import { IonCard, IonCardContent } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent } from '@ionic/angular';
 
 import { IframeSection } from '@okr/shared-models';
 import { OptionalCardHeader, Spinner } from '@okr/shared-ui';

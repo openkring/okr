@@ -1,5 +1,5 @@
 // libs/content/pdf-template/feature/src/lib/bulk-email.ts
-import { ModalController } from '@ionic/angular/standalone';
+import { ModalController } from '@ionic/angular';
 
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';

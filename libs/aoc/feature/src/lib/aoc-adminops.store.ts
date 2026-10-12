@@ -1,5 +1,5 @@
 import { computed, inject } from '@angular/core';
-import { AlertController, ToastController } from '@ionic/angular/standalone';
+import { AlertController, ToastController } from '@ionic/angular';
 import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { rxResource } from '@angular/core/rxjs-interop';

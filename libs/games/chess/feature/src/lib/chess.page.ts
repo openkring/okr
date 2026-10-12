@@ -2,7 +2,7 @@ import { Component, ElementRef, computed, effect, inject, viewChild } from '@ang
 import {
   AlertController, IonButton, IonCard, IonCardContent, IonCol, IonContent, IonGrid, IonRow,
   IonSelect, IonSelectOption, IonToggle,
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 
 import { ChessBoard, PIECE_IMAGES, PromotionPiece } from '@okr/games-chess-ui';
 import {

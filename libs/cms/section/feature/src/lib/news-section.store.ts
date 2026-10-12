@@ -3,7 +3,7 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { of, switchMap } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { ModalController } from '@ionic/angular/standalone';
+import { ModalController } from '@ionic/angular';
 
 import { SectionService } from '@okr/cms-section-data-access';
 import { AppStore } from '@okr/shared-feature';

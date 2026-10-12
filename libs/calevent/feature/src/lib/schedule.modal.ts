@@ -1,5 +1,5 @@
 import { Component, computed, effect, inject, input, OnDestroy, signal, untracked } from '@angular/core';
-import { AlertController, IonContent, ModalController, ToastController } from '@ionic/angular/standalone';
+import { AlertController, IonContent, ModalController, ToastController } from '@ionic/angular';
 
 import { ChangeConfirmation, Header } from '@okr/shared-ui';
 import { dismissOverlay, error } from '@okr/shared-util-angular';

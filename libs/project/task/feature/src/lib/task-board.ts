@@ -1,7 +1,7 @@
 import { AsyncPipe } from '@angular/common';
 import { CdkDrag, CdkDragDrop, CdkDropList, CdkDropListGroup } from '@angular/cdk/drag-drop';
 import { Component, computed, inject, output, signal } from '@angular/core';
-import { IonAvatar, IonBadge, IonChip, IonIcon, IonImg, IonLabel } from '@ionic/angular/standalone';
+import { IonAvatar, IonBadge, IonChip, IonIcon, IonImg, IonLabel } from '@ionic/angular';
 
 import { SIZE_MD } from '@okr/shared-constants';
 import { TaskModel } from '@okr/shared-models';

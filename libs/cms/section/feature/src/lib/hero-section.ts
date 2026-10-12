@@ -1,5 +1,5 @@
 import { Component, computed, input } from '@angular/core';
-import { IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
+import { IonCol, IonGrid, IonRow } from '@ionic/angular';
 
 import { HeroSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE } from '@okr/shared-models';
 import { Img, Spinner } from '@okr/shared-ui';

@@ -1,6 +1,6 @@
 import { Component, computed, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { IonButton, IonButtons, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCheckbox, IonCol, IonContent, IonGrid, IonIcon, IonItem, IonRow } from '@ionic/angular/standalone';
+import { IonButton, IonButtons, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCheckbox, IonCol, IonContent, IonGrid, IonIcon, IonItem, IonRow } from '@ionic/angular';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { Button, Header, ResultLog } from '@okr/shared-ui';

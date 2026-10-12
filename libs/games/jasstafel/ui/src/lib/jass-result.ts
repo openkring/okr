@@ -1,5 +1,5 @@
 import { Component, computed, input, output } from '@angular/core';
-import { IonButton } from '@ionic/angular/standalone';
+import { IonButton } from '@ionic/angular';
 
 import { JassGame, JassI18n, JassSideStats, formatDuration, jassTiming } from '@okr/games-jasstafel-util';
 

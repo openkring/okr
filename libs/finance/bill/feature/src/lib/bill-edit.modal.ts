@@ -1,6 +1,6 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { IonContent, IonItem, IonNote, ModalController } from '@ionic/angular/standalone';
+import { IonContent, IonItem, IonNote, ModalController } from '@ionic/angular';
 import { of } from 'rxjs';
 
 import { AppStore, MultiSelectModal } from '@okr/shared-feature';

@@ -1,5 +1,5 @@
 import { Component, computed, inject, input, output, resource, signal } from '@angular/core';
-import { IonButton, IonButtons, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonIcon, IonNote, IonProgressBar } from '@ionic/angular/standalone';
+import { IonButton, IonButtons, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonIcon, IonNote, IonProgressBar } from '@ionic/angular';
 
 import { ENV } from '@okr/shared-config';
 import { I18nService } from '@okr/shared-i18n';

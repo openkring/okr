@@ -6,7 +6,7 @@ import { concat, defer, firstValueFrom, Observable, of, throwError } from 'rxjs'
 import { AUTH, ENV, FIRESTORE } from '@okr/shared-config';
 import { DbQuery } from '@okr/shared-models';
 import { I18nService } from '@okr/shared-i18n';
-import { ToastController } from '@ionic/angular/standalone';
+import { ToastController } from '@ionic/angular';
 
 // Controllable stand-in for the rxfire real-time stream. Each test swaps the
 // implementation to emit data or to error like a Firestore Listen stream does

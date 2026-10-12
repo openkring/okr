@@ -2,7 +2,7 @@ import { Component, computed, effect, input, model, output } from '@angular/core
 import { form } from '@angular/forms/signals';
 import {
   IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonRow, IonSelect, IonSelectOption,
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 
 import { AvatarInfo, DiaryModel, DiaryScope, DiaryStatus, RoleName, TripModel, UserModel } from '@okr/shared-models';
 import {

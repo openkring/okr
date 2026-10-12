@@ -1,5 +1,5 @@
 import { Component, input } from "@angular/core";
-import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonIcon } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonIcon } from '@ionic/angular';
 
 import { SocialPostModel } from "@okr/shared-models";
 import { SvgIconPipe } from "@okr/shared-pipes";

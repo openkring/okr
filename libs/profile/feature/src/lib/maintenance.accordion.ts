@@ -1,5 +1,5 @@
 import { Component, inject, input } from '@angular/core';
-import { AlertController, IonAccordion, IonButton, IonCol, IonGrid, IonItem, IonLabel, IonNote, IonRow } from '@ionic/angular/standalone';
+import { AlertController, IonAccordion, IonButton, IonCol, IonGrid, IonItem, IonLabel, IonNote, IonRow } from '@ionic/angular';
 
 import { forceBootRecovery, VersionCheckService } from '@okr/shared-util-angular';
 import { ProfileI18n } from '@okr/profile-util';

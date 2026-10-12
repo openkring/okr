@@ -1,5 +1,5 @@
 import { Component, input } from '@angular/core';
-import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonItem, IonLabel, IonList, IonNote } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonItem, IonLabel, IonList, IonNote } from '@ionic/angular';
 
 import { PrettyDatePipe } from '@okr/shared-pipes';
 import { formatMinorAmount } from '@okr/shared-ui';

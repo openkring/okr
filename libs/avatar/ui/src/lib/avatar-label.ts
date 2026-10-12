@@ -1,5 +1,5 @@
 import { Component, computed, inject, input } from '@angular/core';
-import { IonAvatar, IonImg, IonItem, IonLabel } from '@ionic/angular/standalone';
+import { IonAvatar, IonImg, IonItem, IonLabel } from '@ionic/angular';
 
 import { ColorsIonic, getCategoryStringField } from '@okr/shared-categories';
 import { ColorIonic } from '@okr/shared-models';

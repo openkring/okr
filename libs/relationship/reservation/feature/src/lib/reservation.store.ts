@@ -1,6 +1,6 @@
 import { computed, inject, Injector } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
+import { AlertController, ModalController, ToastController } from '@ionic/angular';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { of, take } from 'rxjs';
 

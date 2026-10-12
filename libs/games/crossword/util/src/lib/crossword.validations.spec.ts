@@ -5,16 +5,15 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { CrosswordTopicModel } from '@okr/shared-models';
 
 // `@okr/shared-util-angular` is a barrel: importing `validateVestTree` from it also loads every
-// sibling file the barrel re-exports, several of which import `@ionic/angular`(`/standalone`) —
+// sibling file the barrel re-exports, several of which import `@ionic/angular` —
 // under Vitest that trips a bare-directory-import ESM resolution error in `@ionic/core/components`
 // (same class of problem `vitest.shared.ts` already documents for matrix-js-sdk). Other util-lib
 // specs that hit this (menu.util.spec.ts, expense.validations.spec.ts, membership.util.spec.ts)
 // mock the WHOLE barrel away, because "a pure util test must not load Angular + Ionic" — but that
 // would also mock away the very `validateVestTree` this test exists to exercise for real. Stubbing
-// only the two Ionic entry points lets the rest of the real barrel — including the real,
+// only the Ionic entry point lets the rest of the real barrel — including the real,
 // unmodified `vest-bridge.ts` — load and run normally.
 vi.mock('@ionic/angular', () => ({}));
-vi.mock('@ionic/angular/standalone', () => ({}));
 
 import { validateVestTree } from '@okr/shared-util-angular';
 import { crosswordTopicSuite, MAX_CLUE_LENGTH } from './crossword.validations';

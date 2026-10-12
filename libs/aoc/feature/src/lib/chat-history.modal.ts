@@ -2,7 +2,7 @@ import { Component, inject, input } from '@angular/core';
 import {
   IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList,
   IonNote, IonSpinner, IonTitle, IonToolbar, ModalController
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { AocChatStore, RoomMessageInfo } from './aoc-chat.store';

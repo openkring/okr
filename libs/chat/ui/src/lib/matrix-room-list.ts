@@ -1,6 +1,6 @@
 import { Component, computed, input, output } from '@angular/core';
 
-import { IonList, IonItem, IonItemDivider, IonLabel, IonBadge, IonNote, IonIcon, IonThumbnail } from '@ionic/angular/standalone';
+import { IonList, IonItem, IonItemDivider, IonLabel, IonBadge, IonNote, IonIcon, IonThumbnail } from '@ionic/angular';
 
 import { MatrixRoom } from '@okr/shared-models';
 import { MultiAvatarPipe, SvgIconPipe } from '@okr/shared-pipes';

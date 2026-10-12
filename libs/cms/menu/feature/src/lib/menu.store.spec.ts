@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ApplicationRef, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { MenuController, ModalController, PopoverController } from '@ionic/angular/standalone';
+import { MenuController, ModalController, PopoverController } from '@ionic/angular';
 import { Router } from '@angular/router';
 import { of } from 'rxjs';
 
@@ -26,6 +26,7 @@ function appStoreMock() {
   return {
     currentUser: signal(undefined),
     tenantId: signal(tenantId),
+    appConfig: signal({ defaultAccountingTenantId: undefined }),
     loginEmail: signal(undefined),
     env: { tenantId },
     firestoreService: { searchData: vi.fn(() => of([])) },

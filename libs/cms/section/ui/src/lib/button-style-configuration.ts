@@ -1,6 +1,6 @@
 import { Component, computed, input, linkedSignal, model, Signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular';
 
 import { ButtonStyle, ColorIonic } from '@okr/shared-models';
 import { CategoryOld, CategoryOldI18n, ErrorNote, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';

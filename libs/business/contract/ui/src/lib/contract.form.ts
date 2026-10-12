@@ -1,6 +1,6 @@
 import { Component, computed, effect, input, linkedSignal, model, output, untracked } from '@angular/core';
 import { form } from '@angular/forms/signals';
-import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonIcon, IonItem, IonNote, IonRow, IonSpinner } from '@ionic/angular/standalone';
+import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonIcon, IonItem, IonNote, IonRow, IonSpinner } from '@ionic/angular';
 
 import { DEFAULT_NOTES, DEFAULT_TAGS, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { AvatarInfo, CONTRACT_STATES, CONTRACT_TYPES, ContractModel, ContractParty, LoanTerms, MoneyModel, NoticePeriod, NoticeTerms, RoleName, UserModel } from '@okr/shared-models';

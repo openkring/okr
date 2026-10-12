@@ -1,5 +1,5 @@
 import { Component, computed, input, model, signal } from '@angular/core';
-import { IonInput } from '@ionic/angular/standalone';
+import { IonInput } from '@ionic/angular';
 
 import { coerceBoolean } from '@okr/shared-util-core';
 

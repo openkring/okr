@@ -1,12 +1,12 @@
 import { Component, computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { ModalController } from '@ionic/angular/standalone';
+import { ModalController } from '@ionic/angular';
 import { signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import {
   IonAccordion, IonAccordionGroup, IonBadge, IonButton, IonButtons,
   IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList,
   IonMenuButton, IonTitle, IonToolbar,
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';

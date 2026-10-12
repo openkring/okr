@@ -1,6 +1,6 @@
 import { computed, inject, Injector, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { ModalController } from '@ionic/angular/standalone';
+import { ModalController } from '@ionic/angular';
 import { signalStore, withComputed, withMethods, withProps } from '@ngrx/signals';
 import { firstValueFrom } from 'rxjs';
 

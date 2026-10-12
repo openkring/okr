@@ -1,5 +1,5 @@
 import { Component, input, output } from '@angular/core';
-import { IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
+import { IonCol, IonGrid, IonRow } from '@ionic/angular';
 
 import { SectionModel, UserModel } from '@okr/shared-models';
 import { SectionDispatcher } from '@okr/cms-section-feature';

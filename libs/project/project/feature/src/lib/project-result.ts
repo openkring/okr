@@ -1,6 +1,6 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { IonButton, IonCol, IonGrid, IonIcon, IonLabel, IonNote, IonRow, IonToolbar } from '@ionic/angular/standalone';
+import { IonButton, IonCol, IonGrid, IonIcon, IonLabel, IonNote, IonRow, IonToolbar } from '@ionic/angular';
 import { firstValueFrom, of } from 'rxjs';
 
 import { ENV } from '@okr/shared-config';

@@ -1,5 +1,5 @@
 import { computed, inject } from '@angular/core';
-import { ModalController } from '@ionic/angular/standalone';
+import { ModalController } from '@ionic/angular';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
 import { FirestoreService } from '@okr/shared-data-access';

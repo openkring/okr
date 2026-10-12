@@ -1,5 +1,5 @@
 import { Component, computed, inject, input } from '@angular/core';
-import { IonNote } from '@ionic/angular/standalone';
+import { IonNote } from '@ionic/angular';
 
 import { AccountingStore } from './accounting.store';
 

@@ -1,7 +1,7 @@
 import { Component, computed, inject, input, resource } from '@angular/core';
 import { AppStore } from '@okr/shared-feature';
 import { RouterLink } from '@angular/router';
-import { IonButton, IonContent, IonIcon, ToastController } from '@ionic/angular/standalone';
+import { IonButton, IonContent, IonIcon, ToastController } from '@ionic/angular';
 import { firstValueFrom } from 'rxjs';
 
 import { I18nService } from '@okr/shared-i18n';

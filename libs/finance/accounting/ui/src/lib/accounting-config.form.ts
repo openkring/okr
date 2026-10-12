@@ -1,6 +1,6 @@
 import { Component, computed, effect, input, model, output } from '@angular/core';
 import { form } from '@angular/forms/signals';
-import { IonCard, IonCardContent, IonCol, IonGrid, IonNote, IonRow, IonSelect, IonSelectOption, IonToggle, SelectChangeEventDetail } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent, IonCol, IonGrid, IonNote, IonRow, IonSelect, IonSelectOption, IonToggle, SelectChangeEventDetail } from '@ionic/angular';
 
 import { NumberInput, NumberInputI18n, ErrorNote, TextInput, TextInputI18n } from '@okr/shared-ui';
 

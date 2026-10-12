@@ -2,7 +2,7 @@ import { Component, computed, inject, input, signal } from '@angular/core';
 import {
   IonButton, IonContent, IonFooter, IonInput, IonItem, IonLabel, IonList, IonListHeader,
   IonNote, IonSpinner, IonText, IonToolbar, ModalController,
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 
 import type { DataClass, ErasurePreview } from '@okr/shared-models';
 import { Header } from '@okr/shared-ui';

@@ -1,6 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActionSheetController, ActionSheetOptions, IonBadge, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonContent, IonIcon, IonItem, IonLabel, IonList, IonNote, IonSearchbar, IonSelect, IonSelectOption, IonSpinner, IonThumbnail } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonBadge, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonContent, IonIcon, IonItem, IonLabel, IonList, IonNote, IonSearchbar, IonSelect, IonSelectOption, IonSpinner, IonThumbnail } from '@ionic/angular';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { createActionSheetButton, createActionSheetOptions } from '@okr/shared-util-angular';

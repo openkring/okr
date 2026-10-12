@@ -1,5 +1,5 @@
 import { Component, computed, inject, input, output, signal } from '@angular/core';
-import { IonChip, IonInfiniteScroll, IonInfiniteScrollContent, IonLabel, IonSearchbar, IonToolbar } from '@ionic/angular/standalone';
+import { IonChip, IonInfiniteScroll, IonInfiniteScrollContent, IonLabel, IonSearchbar, IonToolbar } from '@ionic/angular';
 
 import { SectionModel, UserModel } from '@okr/shared-models';
 

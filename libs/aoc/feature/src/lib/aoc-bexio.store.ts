@@ -12,7 +12,7 @@ import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
 import { AddressCollection, AddressModel, AvatarInfo, InvoiceCollection, MembershipCollection, MembershipModel, OrgCollection, OrgModel, PersonCollection, PersonModel } from '@okr/shared-models';
 import { getCatAbbreviation, getFullName, getSystemQuery, isMembership, isOrg, isPerson } from '@okr/shared-util-core';
-import { ModalController, ToastController } from '@ionic/angular/standalone';
+import { ModalController, ToastController } from '@ionic/angular';
 import { showToast } from '@okr/shared-util-angular';
 import { AocBexioContactEditModal } from './aoc-bexio-contact-edit.modal';
 import { createFavoriteAddress } from '@okr/subject-address-util';

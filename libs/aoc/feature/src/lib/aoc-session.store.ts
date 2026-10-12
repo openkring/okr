@@ -1,7 +1,7 @@
 // libs/aoc/feature/src/lib/aoc-session.store.ts
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { ModalController, ToastController } from '@ionic/angular/standalone';
+import { ModalController, ToastController } from '@ionic/angular';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { Observable, firstValueFrom } from 'rxjs';
 import { Router } from '@angular/router';

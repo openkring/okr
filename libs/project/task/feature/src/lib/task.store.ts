@@ -2,7 +2,7 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { of } from 'rxjs';
-import { ModalController } from '@ionic/angular/standalone';
+import { ModalController } from '@ionic/angular';
 
 import { AppConfigService } from '@okr/shared-data-access';
 import { AppStore, GroupSelectModal, PersonSelectModal, PersonSelectResult } from '@okr/shared-feature';

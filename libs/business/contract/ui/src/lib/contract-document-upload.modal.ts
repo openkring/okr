@@ -1,5 +1,5 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
-import { IonContent, ModalController } from '@ionic/angular/standalone';
+import { IonContent, ModalController } from '@ionic/angular';
 
 import { ContractDocState, ContractDocumentRef, ContractDocumentRole } from '@okr/shared-models';
 import { I18nService } from '@okr/shared-i18n';

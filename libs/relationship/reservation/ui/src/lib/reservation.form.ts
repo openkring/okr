@@ -1,6 +1,6 @@
 import { Component, computed, effect, input, model, output } from '@angular/core';
 import { form } from '@angular/forms/signals';
-import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
+import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonRow } from '@ionic/angular';
 import { DEFAULT_CURRENCY, DEFAULT_DATE, DEFAULT_KEY, DEFAULT_PERIODICITY, DEFAULT_RES_REASON, DEFAULT_RES_STATE, DEFAULT_TIME, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { CategoryListModel, MoneyModel, ReservationModel, RoleName, UserModel } from '@okr/shared-models';
 import { CategorySelect, Checkbox, CheckboxI18n, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n, TimeInput, TimeInputI18n , ErrorNote} from '@okr/shared-ui';

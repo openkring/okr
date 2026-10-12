@@ -1,5 +1,5 @@
 import { Component, computed, effect, inject, input } from '@angular/core';
-import { IonButton, IonButtons, IonContent, IonIcon, IonToolbar } from '@ionic/angular/standalone';
+import { IonButton, IonButtons, IonContent, IonIcon, IonToolbar } from '@ionic/angular';
 
 import { InstrumentTopic } from '@okr/shared-models';
 import { Header } from '@okr/shared-ui';

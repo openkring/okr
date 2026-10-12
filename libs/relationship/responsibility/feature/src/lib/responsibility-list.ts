@@ -1,5 +1,5 @@
 import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
-import { ActionSheetOptions, ActionSheetController, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonLabel, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar, IonNote } from '@ionic/angular/standalone';
+import { ActionSheetOptions, ActionSheetController, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonLabel, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar, IonNote } from '@ionic/angular';
 
 import { ResponsibilityModel, RoleName } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';

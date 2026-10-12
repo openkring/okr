@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
-import { IonContent, ModalController } from '@ionic/angular/standalone';
+import { IonContent, ModalController } from '@ionic/angular';
 
 import { CategoryListModel, MemberFeeModel, UserModel } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';

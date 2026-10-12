@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
-import { IonContent, IonItem, IonLabel, IonList, ModalController } from '@ionic/angular/standalone';
+import { IonContent, IonItem, IonLabel, IonList, ModalController } from '@ionic/angular';
 
 import type { MenuItemModel } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';

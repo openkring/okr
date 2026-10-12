@@ -1,5 +1,5 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
-import { IonContent, ModalController } from '@ionic/angular/standalone';
+import { IonContent, ModalController } from '@ionic/angular';
 
 import { CategoryListModel, UserModel, WorkflowRuleModel } from '@okr/shared-models';
 import { I18nService } from '@okr/shared-i18n';

@@ -1,5 +1,5 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
-import { IonContent, ModalController } from '@ionic/angular/standalone';
+import { IonContent, ModalController } from '@ionic/angular';
 
 import { DEFAULT_TAGS } from '@okr/shared-constants';
 import { CategoryListModel, ProjectModel, UserModel } from '@okr/shared-models';

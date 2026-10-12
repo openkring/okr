@@ -1,5 +1,5 @@
 import { Component, inject, input } from '@angular/core';
-import { IonContent, IonItem, IonLabel, IonList, ModalController } from '@ionic/angular/standalone';
+import { IonContent, IonItem, IonLabel, IonList, ModalController } from '@ionic/angular';
 
 import { DocumentModel } from '@okr/shared-models';
 import { FileNamePipe, PrettyDatePipe } from '@okr/shared-pipes';

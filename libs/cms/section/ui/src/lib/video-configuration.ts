@@ -1,5 +1,5 @@
 import { Component, computed, effect, input, linkedSignal, model, signal, untracked } from '@angular/core';
-import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonLabel, IonRow, IonSegment, IonSegmentButton } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonLabel, IonRow, IonSegment, IonSegmentButton } from '@ionic/angular';
 
 import { ErrorNote, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { VideoConfig } from '@okr/shared-models';

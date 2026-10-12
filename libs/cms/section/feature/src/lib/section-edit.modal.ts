@@ -1,6 +1,6 @@
 import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { IonContent, ModalController } from '@ionic/angular/standalone';
+import { IonContent, ModalController } from '@ionic/angular';
 
 import { CategoryListModel, LocationModel, SectionModel, UserModel } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, ErrorBanner, Header} from '@okr/shared-ui';

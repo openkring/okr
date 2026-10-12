@@ -1,6 +1,6 @@
 import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
 import { Photo } from '@capacitor/camera';
-import { IonContent, Platform } from '@ionic/angular/standalone';
+import { IonContent, Platform } from '@ionic/angular';
 
 import { ENV } from '@okr/shared-config';
 import { UserModelName } from '@okr/shared-models';

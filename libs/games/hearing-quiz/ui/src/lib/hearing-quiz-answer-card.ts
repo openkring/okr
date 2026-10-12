@@ -1,5 +1,5 @@
 import { Component, input, output } from '@angular/core';
-import { IonCard, IonCardContent, IonIcon } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent, IonIcon } from '@ionic/angular';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
 

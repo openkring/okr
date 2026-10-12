@@ -1,7 +1,7 @@
 import { Component, computed, effect, inject, input, linkedSignal, signal, untracked } from '@angular/core';
 import {
   IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonContent, IonItem, IonLabel, IonList,
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 
 import { AppStore } from '@okr/shared-feature';
 import { TicketModel } from '@okr/shared-models';

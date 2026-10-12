@@ -1,5 +1,5 @@
 import { Component, computed, input, model } from '@angular/core';
-import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonItem, IonLabel, IonList, IonNote, IonSegment, IonSegmentButton } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonItem, IonLabel, IonList, IonNote, IonSegment, IonSegmentButton } from '@ionic/angular';
 
 import { AttendeeState, MeetingAttendee } from '@okr/shared-models';
 

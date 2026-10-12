@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, effect, input, model, output } from '@angular/core';
 import { form } from '@angular/forms/signals';
-import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonNote, IonRow } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonNote, IonRow } from '@ionic/angular';
 
 import { CategoryListModel, INVOICE_STATE_VALUES, MemberFeeModel, MemberFeePosition, UserModel } from '@okr/shared-models';
 import { NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n , ErrorNote} from '@okr/shared-ui';

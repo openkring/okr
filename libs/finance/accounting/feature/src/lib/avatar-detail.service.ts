@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { Router } from '@angular/router';
-import { ModalController } from '@ionic/angular/standalone';
+import { ModalController } from '@ionic/angular';
 import { firstValueFrom } from 'rxjs';
 import { take } from 'rxjs/operators';
 

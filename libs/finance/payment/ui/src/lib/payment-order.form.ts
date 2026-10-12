@@ -1,6 +1,6 @@
 import { Component, computed, effect, input, model, output } from '@angular/core';
 import { form } from '@angular/forms/signals';
-import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular';
 
 import { AccountModel, PaymentOrderModel } from '@okr/shared-models';
 import { DateInput, DateInputI18n, ErrorNote, StringSelect, StringSelectI18n } from '@okr/shared-ui';

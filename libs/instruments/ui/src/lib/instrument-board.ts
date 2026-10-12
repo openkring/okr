@@ -1,6 +1,6 @@
 import { CdkDrag, CdkDragDrop, CdkDropList, CdkDropListGroup } from '@angular/cdk/drag-drop';
 import { Component, computed, input, output, signal } from '@angular/core';
-import { IonBadge, IonButton, IonIcon } from '@ionic/angular/standalone';
+import { IonBadge, IonButton, IonIcon } from '@ionic/angular';
 
 import { SIZE_MD } from '@okr/shared-constants';
 import { InstrumentTopic } from '@okr/shared-models';

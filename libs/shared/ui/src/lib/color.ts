@@ -1,5 +1,5 @@
 import { Component, computed, inject, input, model } from '@angular/core';
-import { IonChip, IonItem, IonLabel, ModalController } from '@ionic/angular/standalone';
+import { IonChip, IonItem, IonLabel, ModalController } from '@ionic/angular';
 
 import { error } from '@okr/shared-util-angular';
 import { coerceBoolean } from '@okr/shared-util-core';

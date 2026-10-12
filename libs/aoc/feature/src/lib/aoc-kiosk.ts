@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { IonBadge, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonContent, IonGrid, IonIcon, IonItem, IonLabel, IonList, IonRow } from '@ionic/angular/standalone';
+import { IonBadge, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonContent, IonGrid, IonIcon, IonItem, IonLabel, IonList, IonRow } from '@ionic/angular';
 
 import { SvgIconPipe, PrettyDatePipe } from '@okr/shared-pipes';
 import { EmptyList, Header, Spinner } from '@okr/shared-ui';

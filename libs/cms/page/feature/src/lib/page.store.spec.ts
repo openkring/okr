@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ApplicationRef, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { AlertController, ModalController } from '@ionic/angular/standalone';
+import { AlertController, ModalController } from '@ionic/angular';
 import { Router } from '@angular/router';
 import { of } from 'rxjs';
 

@@ -2,7 +2,7 @@ import { Component, computed, DestroyRef, effect, inject, input, signal, untrack
 import { ActivatedRoute, Router } from '@angular/router';
 import {
   IonBackButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonSelect, IonSelectOption, IonTitle, IonToolbar
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, Spinner, StringSelect, StringSelectI18n } from '@okr/shared-ui';
 

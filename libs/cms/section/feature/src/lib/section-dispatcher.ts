@@ -1,5 +1,5 @@
 import { Component, computed, inject, input, viewChild } from '@angular/core';
-import { IonItem, IonLabel } from '@ionic/angular/standalone';
+import { IonItem, IonLabel } from '@ionic/angular';
 
 import { RoleName, SectionModel, UserModel } from '@okr/shared-models';
 import { ButtonCopyI18n, DeferError, Spinner } from '@okr/shared-ui';

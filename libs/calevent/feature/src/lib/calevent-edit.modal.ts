@@ -1,5 +1,5 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
-import { IonContent, ModalController, IonCardContent, IonCard, IonAccordionGroup, IonIcon } from '@ionic/angular/standalone';
+import { IonContent, ModalController, IonCardContent, IonCard, IonAccordionGroup, IonIcon } from '@ionic/angular';
 
 import { CalEventModel, CalEventModelName, CategoryListModel, LocationModel, UserModel } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';

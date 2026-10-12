@@ -1,6 +1,6 @@
 
 import { CUSTOM_ELEMENTS_SCHEMA, Component, OnInit, PLATFORM_ID, computed, effect, inject, input } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonCard, IonCardContent, IonCol, IonGrid, IonLabel, IonRow, ModalController } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonCard, IonCardContent, IonCol, IonGrid, IonLabel, IonRow, ModalController } from '@ionic/angular';
 
 import { InvitationModel, InvitationsConfig, InvitationsSection, InvitationState } from '@okr/shared-models';
 import { getReservedListHeightPx } from '@okr/cms-section-util';

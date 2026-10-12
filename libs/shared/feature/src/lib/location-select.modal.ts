@@ -1,5 +1,5 @@
 import { Component, ElementRef, OnDestroy, computed, effect, inject, input, linkedSignal } from '@angular/core';
-import { IonContent, IonIcon, IonItem, IonLabel, IonList, IonNote, IonSegment, IonSegmentButton, IonToolbar, ModalController, ToastController } from '@ionic/angular/standalone';
+import { IonContent, IonIcon, IonItem, IonLabel, IonList, IonNote, IonSegment, IonSegmentButton, IonToolbar, ModalController, ToastController } from '@ionic/angular';
 import type * as L from 'leaflet';
 
 import { EmptyList, Header, Spinner } from '@okr/shared-ui';

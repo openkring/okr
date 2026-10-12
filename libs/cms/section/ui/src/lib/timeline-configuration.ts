@@ -1,5 +1,5 @@
 import { Component, computed, input, model, Signal } from '@angular/core';
-import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular';
 
 import { TimelineConfig } from '@okr/shared-models';
 import { Checkbox, CheckboxI18n } from '@okr/shared-ui';

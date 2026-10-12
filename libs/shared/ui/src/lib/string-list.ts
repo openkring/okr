@@ -1,5 +1,5 @@
 import { Component, computed, inject, input, model, output, viewChild } from '@angular/core';
-import { AlertController, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonIcon, IonInput, IonItem, IonLabel, IonList, IonNote, IonReorder, IonReorderGroup, ItemReorderEventDetail, ToastController } from '@ionic/angular/standalone';
+import { AlertController, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonIcon, IonInput, IonItem, IonLabel, IonList, IonNote, IonReorder, IonReorderGroup, ItemReorderEventDetail, ToastController } from '@ionic/angular';
 
 import { MaskitoDirective } from '@maskito/angular';
 import { MaskitoElementPredicate, MaskitoOptions } from '@maskito/core';

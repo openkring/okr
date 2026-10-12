@@ -11,7 +11,7 @@ vi.mock('@angular/core', async (importOriginal) => {
   };
 });
 
-vi.mock('@ionic/angular/standalone', () => ({
+vi.mock('@ionic/angular', () => ({
   AlertController: class AlertController {},
 }));
 
@@ -34,7 +34,7 @@ vi.mock('./platform.util', () => ({
 }));
 
 import { inject, PLATFORM_ID } from '@angular/core';
-import { AlertController } from '@ionic/angular/standalone';
+import { AlertController } from '@ionic/angular';
 import { SwUpdate } from '@angular/service-worker';
 import { ENV, FIRESTORE } from '@okr/shared-config';
 import { I18nService } from '@okr/shared-i18n';

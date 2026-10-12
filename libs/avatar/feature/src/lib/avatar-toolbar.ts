@@ -1,6 +1,6 @@
 import { Component, computed, effect, inject, input, output } from '@angular/core';
 import { Photo } from '@capacitor/camera';
-import { IonAvatar, IonIcon, IonImg, IonItem, IonLabel, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { IonAvatar, IonIcon, IonImg, IonItem, IonLabel, IonTitle, IonToolbar } from '@ionic/angular';
 
 import { ColorsIonic, getCategoryStringField } from '@okr/shared-categories';
 import { ColorIonic } from '@okr/shared-models';

@@ -1,6 +1,6 @@
 import { computed, effect, inject, Injectable, Injector } from '@angular/core';
 import { rxResource, toSignal, toObservable } from '@angular/core/rxjs-interop';
-import { MenuController, ModalController, PopoverController } from '@ionic/angular/standalone';
+import { MenuController, ModalController, PopoverController } from '@ionic/angular';
 import { patchState, signalStore, withComputed, withHooks, withMethods, withProps, withState } from '@ngrx/signals';
 import { Router } from '@angular/router';
 import { Browser } from '@capacitor/browser';

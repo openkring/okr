@@ -1,5 +1,5 @@
 import { Component, computed, inject, input, OnInit } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonAccordion, IonItem, IonLabel, IonList } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonAccordion, IonItem, IonLabel, IonList } from '@ionic/angular';
 import { BillModel } from '@okr/shared-models';
 import { createActionSheetButton, createActionSheetOptions } from '@okr/shared-util-angular';
 import { DateFormat, convertDateFormatToString } from '@okr/shared-util-core';

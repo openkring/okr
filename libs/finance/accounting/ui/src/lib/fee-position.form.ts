@@ -3,7 +3,7 @@ import { Component, computed, effect, input, model, output } from '@angular/core
 import { form } from '@angular/forms/signals';
 import {
   IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonList, IonListHeader, IonNote, IonRow
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 
 import { SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { AccountModel, CategoryListModel, FeeFlag, FeePositionRule, FeeRule, FeeSource, VatCodeModel } from '@okr/shared-models';

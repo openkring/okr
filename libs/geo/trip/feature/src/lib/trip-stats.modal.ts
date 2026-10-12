@@ -1,5 +1,5 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
-import { IonContent, IonLabel, IonSegment, IonSegmentButton, IonToolbar } from '@ionic/angular/standalone';
+import { IonContent, IonLabel, IonSegment, IonSegmentButton, IonToolbar } from '@ionic/angular';
 
 import { I18nService } from '@okr/shared-i18n';
 import { TripStatsSection } from '@okr/shared-models';

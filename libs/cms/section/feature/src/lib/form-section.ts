@@ -1,7 +1,7 @@
 import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { signalStore, withProps } from '@ngrx/signals';
-import { AlertController, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonNote } from '@ionic/angular/standalone';
+import { AlertController, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonNote } from '@ionic/angular';
 import { from, of } from 'rxjs';
 
 import { AppStore } from '@okr/shared-feature';

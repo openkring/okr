@@ -1,5 +1,5 @@
 import { Component, computed, input, output } from '@angular/core';
-import { IonChip, IonIcon, IonLabel } from '@ionic/angular/standalone';
+import { IonChip, IonIcon, IonLabel } from '@ionic/angular';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { coerceBoolean } from '@okr/shared-util-core';

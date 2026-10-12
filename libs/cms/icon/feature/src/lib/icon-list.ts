@@ -5,7 +5,7 @@ import {
   IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover,
   IonRow, IonThumbnail, IonTitle, IonToolbar,
   PopoverController, ToastController
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 import { IconModel, RoleName } from '@okr/shared-models';
 import { FileSizePipe, PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';

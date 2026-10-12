@@ -1,7 +1,7 @@
 import { Component, computed, CUSTOM_ELEMENTS_SCHEMA, inject, input, model } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgTemplateOutlet } from '@angular/common';
-import { AlertController, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonIcon, IonItem, IonNote, IonTextarea } from '@ionic/angular/standalone';
+import { AlertController, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonIcon, IonItem, IonNote, IonTextarea } from '@ionic/angular';
 
 import { DESCRIPTION_LENGTH } from '@okr/shared-constants';
 import { I18nService } from '@okr/shared-i18n';

@@ -1,7 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { Component, computed, effect, input, model, output } from '@angular/core';
 import { form } from '@angular/forms/signals';
-import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonRow } from '@ionic/angular';
 
 import { ChSsnMask } from '@okr/shared-config';
 import { SSN_LENGTH } from '@okr/shared-constants';

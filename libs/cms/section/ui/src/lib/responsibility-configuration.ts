@@ -1,5 +1,5 @@
 import { Component, computed, input, model } from '@angular/core';
-import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular';
 
 import { ResponsibilityConfig, UserModel } from '@okr/shared-models';
 import { Checkbox, CheckboxI18n, TextInput, TextInputI18n } from '@okr/shared-ui';

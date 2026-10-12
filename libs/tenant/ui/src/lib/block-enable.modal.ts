@@ -1,10 +1,10 @@
 import { AsyncPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, input, linkedSignal } from '@angular/core';
-import type { CheckboxCustomEvent } from '@ionic/angular/standalone';
+import type { CheckboxCustomEvent } from '@ionic/angular';
 import {
   IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCheckbox, IonContent, IonNote,
   ModalController,
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 
 import { TranslatePipe } from '@okr/shared-i18n';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';

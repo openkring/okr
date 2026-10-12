@@ -1,6 +1,6 @@
 
 import { AfterViewInit, CUSTOM_ELEMENTS_SCHEMA, Component, OnDestroy, PLATFORM_ID, computed, effect, inject, input, signal } from '@angular/core';
-import { IonCard, IonCardContent } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent } from '@ionic/angular';
 import { firstValueFrom } from 'rxjs';
 
 import { AppStore } from '@okr/shared-feature';

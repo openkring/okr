@@ -1,6 +1,6 @@
 import { Clipboard } from '@capacitor/clipboard';
 import { Capacitor } from '@capacitor/core';
-import { ToastController } from '@ionic/angular';
+import { ToastController } from '@ionic/angular/lazy';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as alertUtil from './alert.util';
 import {

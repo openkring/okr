@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { IonBackButton, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { IonBackButton, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonTitle, IonToolbar } from '@ionic/angular';
 
 import { I18nService } from '@okr/shared-i18n';
 import { SvgIconPipe } from '@okr/shared-pipes';

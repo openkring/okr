@@ -1,5 +1,5 @@
 import { Component, ComponentRef, computed, CUSTOM_ELEMENTS_SCHEMA, DestroyRef, effect, ElementRef, inject, Injector, input, linkedSignal, OnInit, PLATFORM_ID, signal, untracked, viewChild, ViewContainerRef } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, AlertController, createGesture, Gesture, IonBadge, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTextarea, IonTitle, IonToolbar, ModalController } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, AlertController, createGesture, Gesture, IonBadge, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTextarea, IonTitle, IonToolbar, ModalController } from '@ionic/angular';
 import { Router } from '@angular/router';
 import { format } from 'date-fns';
 
@@ -60,6 +60,7 @@ type CalEventSortField = 'date' | 'topic' | 'location' | 'organiser';
       ion-card { padding: 0px; margin: 0px; border: 0px; box-shadow: none !important;}
       ion-textarea {
         margin-top: 10px;
+        min-height: 56px; /* Ionic 9 MD raised the outline field to 72px; keep the one-line height */
         --background: var(--ion-color-light-tint, #f4f5f8);
         --border-color: var(--ion-color-medium);
         --border-width: 2px;

@@ -3,7 +3,7 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import {
   IonBackButton, IonButton, IonButtons, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonContent, IonGrid,
   IonHeader, IonIcon, IonItem, IonLabel, IonList, IonNote, IonRow, IonTitle, IonToolbar,
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 import { catchError, of } from 'rxjs';
 
 import { ContractDeadlines, ContractDossier } from '@okr/business-contract-ui';

@@ -1,6 +1,6 @@
 import { Component, computed, effect, input, model, output, Signal } from '@angular/core';
 import { form } from '@angular/forms/signals';
-import { IonItem, IonInput, IonList } from '@ionic/angular/standalone';
+import { IonItem, IonInput, IonList } from '@ionic/angular';
 
 import { AnyCharacterMask } from '@okr/shared-config';
 import { Checkbox, CheckboxI18n, ErrorNote, StringList } from '@okr/shared-ui';

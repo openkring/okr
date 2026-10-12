@@ -1,6 +1,6 @@
 import { provideImgixLoader } from '@angular/common';
 import { Component, HostListener, computed, inject, input, linkedSignal } from '@angular/core';
-import { IonButton, IonContent, IonIcon, ModalController } from '@ionic/angular/standalone';
+import { IonButton, IonContent, IonIcon, ModalController } from '@ionic/angular';
 
 import { IMAGE_CONFIG_SHAPE, ImageConfig, ImageStyle } from '@okr/shared-models';
 import { ENV } from '@okr/shared-config';

@@ -1,5 +1,5 @@
 import { Component, ComponentRef, computed, DestroyRef, effect, inject, input, linkedSignal, model, PLATFORM_ID, Signal, signal, untracked, viewChild, ViewContainerRef } from '@angular/core';
-import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonNote, IonRow } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonNote, IonRow } from '@ionic/angular';
 
 import { ViewPositions } from '@okr/shared-categories';
 import { EditorConfig, ViewPosition } from '@okr/shared-models';

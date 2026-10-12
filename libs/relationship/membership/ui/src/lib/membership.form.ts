@@ -1,7 +1,7 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input, model, output } from '@angular/core';
 import { form } from '@angular/forms/signals';
-import { IonAvatar, IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonNote, IonRow } from '@ionic/angular/standalone';
+import { IonAvatar, IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonNote, IonRow } from '@ionic/angular';
 
 import { BexioIdMask, ENV } from '@okr/shared-config';
 import { ABBREVIATION_LENGTH, BEXIO_ID_LENGTH, DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, DEFAULT_MSTATE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORG_TYPE, DEFAULT_TAGS, END_FUTURE_DATE_STR, SHORT_NAME_LENGTH } from '@okr/shared-constants';

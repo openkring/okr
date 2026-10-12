@@ -1,5 +1,5 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
-import { IonButton, IonContent, IonIcon, ModalController, Platform } from '@ionic/angular/standalone';
+import { IonButton, IonContent, IonIcon, ModalController, Platform } from '@ionic/angular';
 
 import { ENV } from '@okr/shared-config';
 import { IMAGE_CONFIG_SHAPE, ImageConfig, UserModel } from '@okr/shared-models';

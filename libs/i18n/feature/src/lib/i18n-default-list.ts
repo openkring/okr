@@ -6,7 +6,7 @@ import {
   IonBadge, IonButton, IonButtons, IonCard, IonCardContent, IonCardHeader,
   IonCardTitle, IonChip, IonContent, IonIcon, IonItem,
   IonLabel, IonList, IonSearchbar, IonToolbar,
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 
 import { Header } from '@okr/shared-ui';
 import { I18nDefaultModel } from '@okr/shared-models';

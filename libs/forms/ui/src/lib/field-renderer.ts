@@ -1,6 +1,6 @@
 import { Component, computed, effect, input, untracked } from '@angular/core';
 import { FormControl } from '@angular/forms';
-import { IonItem, IonLabel } from '@ionic/angular/standalone';
+import { IonItem, IonLabel } from '@ionic/angular';
 import {
   CategorySelect, Checkbox, CheckboxGroup, CheckboxGroupI18n, CheckboxI18n, FileInput, FileInputI18n, RadioGroup, RadioGroupI18n, DateInput, DateInputI18n, EmailInput, EmailInputI18n, ErrorNote,
   IbanInput, IbanInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, PasswordInput, PasswordInputI18n,

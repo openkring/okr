@@ -1,5 +1,5 @@
 import { Component, Injectable, OnInit, computed, inject, input } from '@angular/core';
-import { IonButton, IonContent, IonHeader, IonItem, IonTitle, IonToolbar, ModalController } from '@ionic/angular/standalone';
+import { IonButton, IonContent, IonHeader, IonItem, IonTitle, IonToolbar, ModalController } from '@ionic/angular';
 import { COLOR_PICKER_CONFIG, ChromePickerComponent, ColorPickerControl, ColorType, IColorPickerConfig } from '@iplab/ngx-color-picker';
 
 import { I18nService } from '@okr/shared-i18n';

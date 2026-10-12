@@ -6,7 +6,7 @@ import { Router } from '@angular/router';
 import {
   ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonChip, IonContent, IonHeader, IonIcon,
   IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonNote, IonPopover, IonTitle, IonToolbar
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 
 import { DEFAULT_PROJECT_STATE } from '@okr/shared-constants';
 import { AvatarPipe } from '@okr/avatar-ui';

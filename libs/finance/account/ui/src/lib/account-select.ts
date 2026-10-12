@@ -1,5 +1,5 @@
 import { Component, computed, inject, input, model, signal, viewChild } from '@angular/core';
-import { IonButton, IonButtons, IonIcon, IonInput, IonItem, IonLabel, IonList, IonModal, IonNote, IonSearchbar, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { IonButton, IonButtons, IonIcon, IonInput, IonItem, IonLabel, IonList, IonModal, IonNote, IonSearchbar, IonTitle, IonToolbar } from '@ionic/angular';
 
 import { AccountModel } from '@okr/shared-models';
 import { I18nService } from '@okr/shared-i18n';

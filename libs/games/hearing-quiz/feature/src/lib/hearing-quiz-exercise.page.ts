@@ -13,7 +13,7 @@ import {
   IonProgressBar,
   IonTitle,
   IonToolbar,
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { Spinner } from '@okr/shared-ui';

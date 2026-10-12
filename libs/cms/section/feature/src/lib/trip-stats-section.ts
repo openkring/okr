@@ -1,6 +1,6 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input } from '@angular/core';
-import { IonAvatar, IonCard, IonCardContent, IonCol, IonGrid, IonImg, IonRow } from '@ionic/angular/standalone';
+import { IonAvatar, IonCard, IonCardContent, IonCol, IonGrid, IonImg, IonRow } from '@ionic/angular';
 
 import { NgxEchartsDirective, provideEchartsCore } from 'ngx-echarts';
 

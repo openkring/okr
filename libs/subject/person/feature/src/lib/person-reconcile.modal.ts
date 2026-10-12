@@ -1,6 +1,6 @@
 // libs/subject/person/feature/src/lib/person-reconcile.modal.ts
 import { Component, computed, inject, input, signal } from '@angular/core';
-import { IonContent, IonItem, IonLabel, IonList, IonSegment, IonSegmentButton, ModalController } from '@ionic/angular/standalone';
+import { IonContent, IonItem, IonLabel, IonList, IonSegment, IonSegmentButton, ModalController } from '@ionic/angular';
 
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
 import {

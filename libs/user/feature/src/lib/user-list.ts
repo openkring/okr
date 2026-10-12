@@ -1,5 +1,5 @@
 import { Component, computed, inject, input, linkedSignal } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular';
 
 import { Menu } from '@okr/cms-menu-feature';
 import { RoleName, UserModel } from '@okr/shared-models';

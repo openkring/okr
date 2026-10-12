@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { IonButton, IonContent, IonIcon, ModalController } from '@ionic/angular/standalone';
+import { IonButton, IonContent, IonIcon, ModalController } from '@ionic/angular';
 
 import { I18nService } from '@okr/shared-i18n';
 import { SvgIconPipe } from '@okr/shared-pipes';

@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonContent, IonFooter, IonItem, IonLabel, IonList, IonNote, IonSegment, IonSegmentButton, IonToolbar, ModalController, ToastController } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonContent, IonFooter, IonItem, IonLabel, IonList, IonNote, IonSegment, IonSegmentButton, IonToolbar, ModalController, ToastController } from '@ionic/angular';
 import { signalStore, withProps } from '@ngrx/signals';
 
 import { ENV } from '@okr/shared-config';

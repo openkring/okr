@@ -1,5 +1,5 @@
 import { Component, computed, inject } from '@angular/core';
-import { IonContent, IonHeader, IonToolbar, IonButtons, IonTitle, IonMenuButton, IonIcon, IonItem, IonLabel, IonList } from '@ionic/angular/standalone';
+import { IonContent, IonHeader, IonToolbar, IonButtons, IonTitle, IonMenuButton, IonIcon, IonItem, IonLabel, IonList } from '@ionic/angular';
 
 import { ActivityModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';

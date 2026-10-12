@@ -1,6 +1,6 @@
 import { Component, computed, effect, inject, input, model, output } from '@angular/core';
 import { form } from '@angular/forms/signals';
-import { IonAvatar, IonButton, IonCard, IonCardContent, IonIcon, IonImg, IonItem, IonLabel, IonList } from '@ionic/angular/standalone';
+import { IonAvatar, IonButton, IonCard, IonCardContent, IonIcon, IonImg, IonItem, IonLabel, IonList } from '@ionic/angular';
 
 import { AvatarInfo, UserModel } from '@okr/shared-models';
 import { COMMENT_LENGTH } from '@okr/shared-constants';

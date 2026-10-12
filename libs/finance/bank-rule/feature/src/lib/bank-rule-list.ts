@@ -5,7 +5,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   ActionSheetController, ActionSheetOptions, IonBadge, IonButton, IonButtons, IonContent, IonHeader, IonMenuButton,
   IonIcon, IonItem, IonLabel, IonList, IonPopover, IonTitle, IonToolbar,
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 
 import { BankRuleModel } from '@okr/shared-models';
 import { EmptyList, Spinner } from '@okr/shared-ui';

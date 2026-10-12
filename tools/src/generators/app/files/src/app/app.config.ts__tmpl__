@@ -1,7 +1,7 @@
 import { provideHttpClient, withInterceptors, withXhr } from '@angular/common/http';
 import { APP_BOOTSTRAP_LISTENER, ApplicationConfig, effect, ErrorHandler, importProvidersFrom, inject, Injector, isDevMode, PLATFORM_ID, provideZonelessChangeDetection, runInInjectionContext } from '@angular/core';
 import { provideRouter, RouteReuseStrategy, withComponentInputBinding } from '@angular/router';
-import { IonicRouteStrategy, provideIonicAngular } from '@ionic/angular/standalone';
+import { IonicRouteStrategy, provideIonicAngular } from '@ionic/angular';
 import { provideServiceWorker } from '@angular/service-worker';
 
 import * as Sentry from '@sentry/angular';

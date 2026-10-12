@@ -1,5 +1,5 @@
 import { Component, computed, inject, input } from '@angular/core';
-import { IonCard, IonCardContent } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent } from '@ionic/angular';
 
 import { TestimonialSection } from '@okr/shared-models';
 import { testimonialColumns, validTestimonials, withTestimonialDefaults } from '@okr/cms-section-util';

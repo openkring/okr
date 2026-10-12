@@ -3,8 +3,8 @@ import { Router } from '@angular/router';
 import {
   ActionSheetController, IonCol, IonContent, IonGrid, IonHeader, IonLabel, IonMenuButton, IonRow,
   IonButtons, IonTitle, IonToolbar,
-} from '@ionic/angular/standalone';
-import type { ActionSheetOptions } from '@ionic/angular/standalone';
+} from '@ionic/angular';
+import type { ActionSheetOptions } from '@ionic/angular';
 
 import { TicketModel } from '@okr/shared-models';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';

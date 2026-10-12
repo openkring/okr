@@ -1,6 +1,6 @@
 import { Component, computed, effect, inject, input, linkedSignal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { IonAvatar, IonContent, IonImg, IonItem, IonLabel, IonList, IonSegment, IonSegmentButton, ModalController } from '@ionic/angular/standalone';
+import { IonAvatar, IonContent, IonImg, IonItem, IonLabel, IonList, IonSegment, IonSegmentButton, ModalController } from '@ionic/angular';
 
 import { GroupModelName, OrgModelName, PersonModelName, UserModel } from '@okr/shared-models';
 import { FullNamePipe } from '@okr/shared-pipes';

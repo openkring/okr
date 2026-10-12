@@ -1,5 +1,5 @@
 import { Component, inject, input } from '@angular/core';
-import { IonButton, IonContent, IonIcon, IonItem, IonLabel, IonList, IonListHeader, ModalController } from '@ionic/angular/standalone';
+import { IonButton, IonContent, IonIcon, IonItem, IonLabel, IonList, IonListHeader, ModalController } from '@ionic/angular';
 
 import { JassGame, JassI18n, handValues, totals } from '@okr/games-jasstafel-util';
 import { SvgIconPipe } from '@okr/shared-pipes';

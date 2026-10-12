@@ -1,7 +1,7 @@
 import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { marked } from 'marked';
-import { IonButton, IonCard, IonCardContent, IonIcon, IonInput, IonItem, IonLabel, IonList, IonNote, IonSpinner, IonText } from '@ionic/angular/standalone';
+import { IonButton, IonCard, IonCardContent, IonIcon, IonInput, IonItem, IonLabel, IonList, IonNote, IonSpinner, IonText } from '@ionic/angular';
 
 import { OptionalCardHeader, Spinner } from '@okr/shared-ui';
 import { DocumentModel, RagConfig, SectionModel } from '@okr/shared-models';

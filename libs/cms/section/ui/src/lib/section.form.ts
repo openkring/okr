@@ -7,7 +7,7 @@ import { coerceBoolean, debugFormModel, hasRole, sanitizeFileName } from '@okr/s
 import { DEFAULT_LABEL, DEFAULT_NOTES, DEFAULT_TAGS, IMAGE_MIMETYPES } from '@okr/shared-constants';
 import { UploadService } from '@okr/avatar-data-access';
 import { confirm, MODEL_SELECTOR, validateVestTree, vestErrors } from '@okr/shared-util-angular';
-import { AlertController, IonItem, IonToggle } from '@ionic/angular/standalone';
+import { AlertController, IonItem, IonToggle } from '@ionic/angular';
 import { ChartOption, getInlineErrorFields, getRemainingErrors, SectionErrors, SectionI18n, validateSection } from '@okr/cms-section-util';
 
 import { SectionConfiguration } from './section-configuration';

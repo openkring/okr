@@ -1,7 +1,7 @@
 // libs/content/pdf-template/ui/src/lib/template-publish.form.ts
 import { Component, computed, effect, input, model, output } from '@angular/core';
 import { form } from '@angular/forms/signals';
-import { IonCard, IonCardContent } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent } from '@ionic/angular';
 
 import { DESCRIPTION_LENGTH } from '@okr/shared-constants';
 import { ErrorNote, TextareaInput, TextInputI18n } from '@okr/shared-ui';

@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, input, signal } from '@angular/core';
-import { IonButton, IonButtons, IonContent, IonFooter, IonHeader, IonIcon, IonSpinner, IonTitle, IonToolbar, ModalController, ToastController } from '@ionic/angular/standalone';
+import { IonButton, IonButtons, IonContent, IonFooter, IonHeader, IonIcon, IonSpinner, IonTitle, IonToolbar, ModalController, ToastController } from '@ionic/angular';
 import { getDownloadURL, ref } from 'firebase/storage';
 import { captureException } from '@sentry/angular';
 

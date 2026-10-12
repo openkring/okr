@@ -1,6 +1,6 @@
 import { Component, computed, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActionSheetController, ActionSheetOptions, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonContent, IonGrid, IonIcon, IonItem, IonLabel, IonList, IonRow, IonThumbnail, ToastController } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonContent, IonGrid, IonIcon, IonItem, IonLabel, IonList, IonRow, IonThumbnail, ToastController } from '@ionic/angular';
 
 import { MenuItemModel, SectionModel } from '@okr/shared-models';
 import { Button, Header, ResultLog } from '@okr/shared-ui';

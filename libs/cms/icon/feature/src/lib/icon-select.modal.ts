@@ -1,5 +1,5 @@
 import { Component, inject, input, OnInit, signal } from '@angular/core';
-import { IonCol, IonContent, IonGrid, IonItem, IonLabel, IonRow, IonThumbnail, ModalController } from '@ionic/angular/standalone';
+import { IonCol, IonContent, IonGrid, IonItem, IonLabel, IonRow, IonThumbnail, ModalController } from '@ionic/angular';
 
 import { FileSizePipe, PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, Header, ListFilter, Spinner } from '@okr/shared-ui';

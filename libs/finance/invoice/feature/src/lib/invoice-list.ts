@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 import {
   ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonChip, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg,
   IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar, PopoverController,
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 import { InvoiceModel, RoleName } from '@okr/shared-models';
 import {
   canCreatePaymentConfirmation, canCreateReminder, canEmailInvoice, hasInvoiceVoucher, invoiceDisplayState, invoiceStateColor, invoiceStateLabel, isDraftInvoice, isOverdueInvoice, isPayableState, mayReadInvoiceDocuments, waivableReminder,

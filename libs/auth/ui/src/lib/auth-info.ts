@@ -1,5 +1,5 @@
 import { Component, inject, input } from '@angular/core';
-import { IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
+import { IonCol, IonGrid, IonRow } from '@ionic/angular';
 import { User } from 'firebase/auth';
 
 import { UserModel } from '@okr/shared-models';

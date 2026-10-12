@@ -1,6 +1,6 @@
 import { Component, computed, effect, input, model, output, Signal } from '@angular/core';
 import { form } from '@angular/forms/signals';
-import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular';
 
 import { MatrixRoom, UserModel } from '@okr/shared-models';
 import { Checkbox, CheckboxI18n, ErrorNote, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n, UrlInput, UrlInputI18n } from '@okr/shared-ui';

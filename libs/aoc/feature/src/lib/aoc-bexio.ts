@@ -1,6 +1,6 @@
 import { Component, computed, inject, linkedSignal, OnInit, signal } from '@angular/core';
 import { StringSelectI18n } from '@okr/shared-ui';
-import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonContent, IonGrid, IonIcon, IonInput, IonItem, IonLabel, IonRow, IonSpinner, IonCardSubtitle } from '@ionic/angular/standalone';
+import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonContent, IonGrid, IonIcon, IonInput, IonItem, IonLabel, IonRow, IonSpinner, IonCardSubtitle } from '@ionic/angular';
 
 
 import { SvgIconPipe } from '@okr/shared-pipes';

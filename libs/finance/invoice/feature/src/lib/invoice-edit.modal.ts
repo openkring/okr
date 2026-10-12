@@ -1,6 +1,6 @@
 import { Component, computed, effect, inject, input, linkedSignal, signal, untracked } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { ActionSheetController, IonContent, ModalController } from '@ionic/angular/standalone';
+import { ActionSheetController, IonContent, ModalController } from '@ionic/angular';
 import { firstValueFrom, of } from 'rxjs';
 
 import { AppStore, MultiSelectModal } from '@okr/shared-feature';

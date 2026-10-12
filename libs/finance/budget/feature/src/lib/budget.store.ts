@@ -1,6 +1,6 @@
 import { computed, inject } from '@angular/core';
 import { rxResource, toObservable } from '@angular/core/rxjs-interop';
-import { ModalController } from '@ionic/angular/standalone';
+import { ModalController } from '@ionic/angular';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { filter, firstValueFrom, of, timeout } from 'rxjs';
 

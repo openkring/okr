@@ -1,6 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { IonButton, IonCol, IonContent, IonGrid, IonImg, IonLabel, IonRow, IonSpinner } from '@ionic/angular/standalone';
+import { IonButton, IonCol, IonContent, IonGrid, IonImg, IonLabel, IonRow, IonSpinner } from '@ionic/angular';
 
 import { AuthCredentials } from '@okr/shared-models';
 import { Header } from '@okr/shared-ui';

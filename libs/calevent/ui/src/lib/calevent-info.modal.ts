@@ -1,5 +1,5 @@
 import { Component, computed, inject, input } from '@angular/core';
-import { IonContent, IonIcon, ModalController } from '@ionic/angular/standalone';
+import { IonContent, IonIcon, ModalController } from '@ionic/angular';
 
 import { I18nService } from '@okr/shared-i18n';
 import { SvgIconPipe } from '@okr/shared-pipes';

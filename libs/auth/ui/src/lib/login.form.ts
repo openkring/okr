@@ -1,6 +1,6 @@
 import { Component, computed, effect, model, output, input } from '@angular/core';
 import { form } from '@angular/forms/signals';
-import { IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
+import { IonCol, IonGrid, IonRow } from '@ionic/angular';
 
 import { AuthCredentials } from '@okr/shared-models';
 import { EmailInput, EmailInputI18n, ErrorNote, PasswordInput, PasswordInputI18n } from '@okr/shared-ui';

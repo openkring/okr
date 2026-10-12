@@ -1,6 +1,6 @@
 import { Component, computed, effect, input, model, output } from '@angular/core';
 import { form } from '@angular/forms/signals';
-import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular';
 
 import { BexioIdMask, ChSsnMask } from '@okr/shared-config';
 import { CategoryListModel, PrivacyAccessor, PrivacySettings, RoleName, UserModel } from '@okr/shared-models';

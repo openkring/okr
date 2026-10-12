@@ -1,5 +1,5 @@
 import { Component, computed, inject, input, output } from "@angular/core";
-import { IonAvatar, IonImg, IonLabel } from "@ionic/angular/standalone";
+import { IonAvatar, IonImg, IonLabel } from "@ionic/angular";
 import { rxResource } from "@angular/core/rxjs-interop";
 
 import { AvatarCollection, AvatarModel, PersonModelName, UserModel } from "@okr/shared-models";

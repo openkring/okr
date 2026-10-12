@@ -1,6 +1,6 @@
 import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { Photo } from '@capacitor/camera';
-import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ViewWillEnter } from '@ionic/angular/standalone';
+import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ViewWillEnter } from '@ionic/angular';
 
 import { PersonModel, PersonModelName, RoleName } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';

@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
+import { AlertController, ModalController, ToastController } from '@ionic/angular';
 import { captureMessage } from '@sentry/angular';
 import { disableNetwork, doc, enableNetwork, getDocFromServer } from 'firebase/firestore';
 import { firstValueFrom } from 'rxjs';

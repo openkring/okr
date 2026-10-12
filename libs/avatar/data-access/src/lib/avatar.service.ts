@@ -1,7 +1,7 @@
 import { computed, effect, inject, Injectable, Injector, signal } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { map, Observable, of, switchMap, take } from 'rxjs';
-import { Platform } from '@ionic/angular/standalone';
+import { Platform } from '@ionic/angular';
 import { Photo } from '@capacitor/camera';
 
 import { ENV } from '@okr/shared-config';

@@ -1,6 +1,6 @@
 import { Component, computed, CUSTOM_ELEMENTS_SCHEMA, input, linkedSignal, model, signal, Signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonItem, IonNote, IonRow, IonTextarea } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonItem, IonNote, IonRow, IonTextarea } from '@ionic/angular';
 
 import { StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { ChartOption, CHART_TYPES, getChartTitle, getChartType, parseChartOption, setChartTitle, setChartType, stringifyChartOption } from '@okr/cms-section-util';

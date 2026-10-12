@@ -1,5 +1,5 @@
 import { Component, computed, effect, inject, input } from '@angular/core';
-import { IonAccordion, IonIcon, IonItem, IonLabel } from '@ionic/angular/standalone';
+import { IonAccordion, IonIcon, IonItem, IonLabel } from '@ionic/angular';
 
 import { DocumentModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';

@@ -4,7 +4,7 @@ import { map } from 'rxjs/operators';
 import { FormsModule } from '@angular/forms';
 import {
   IonButton, IonItem, IonLabel, IonList, IonToggle,
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 
 import { ConsentService } from '@okr/consent-data-access';
 import { I18nService } from '@okr/shared-i18n';

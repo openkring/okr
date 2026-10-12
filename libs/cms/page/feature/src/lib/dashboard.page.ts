@@ -1,6 +1,6 @@
 import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { Meta } from '@angular/platform-browser';
-import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonLabel, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonLabel, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular';
 import { ArticleSection, ButtonSection, RoleName } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { createActionSheetButton, createActionSheetOptions, error, getColSizes } from '@okr/shared-util-angular';

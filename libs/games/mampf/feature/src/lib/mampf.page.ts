@@ -1,5 +1,5 @@
 import { Component, DestroyRef, ElementRef, afterNextRender, computed, effect, inject, viewChild } from '@angular/core';
-import { IonButton, IonContent } from '@ionic/angular/standalone';
+import { IonButton, IonContent } from '@ionic/angular';
 
 import { Header } from '@okr/shared-ui';
 import { fill } from '@okr/shared-util-core';

@@ -1,5 +1,5 @@
 import { connectFunctionsEmulator, getFunctions, httpsCallable } from 'firebase/functions';
-import { ToastController } from '@ionic/angular/standalone';
+import { ToastController } from '@ionic/angular';
 
 import { FirebaseUserModel, LogInfo, PersonModel, UserModel } from '@okr/shared-models';
 import { error, showToast } from '@okr/shared-util-angular';

@@ -1,5 +1,5 @@
 import { Component, input } from '@angular/core';
-import { IonCol, IonContent, IonGrid, IonItem, IonLabel, IonList, IonListHeader, IonRow } from '@ionic/angular/standalone';
+import { IonCol, IonContent, IonGrid, IonItem, IonLabel, IonList, IonListHeader, IonRow } from '@ionic/angular';
 
 import { Header } from '@okr/shared-ui';
 import { PageI18n } from '@okr/cms-page-util';

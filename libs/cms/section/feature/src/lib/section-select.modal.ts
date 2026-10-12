@@ -1,5 +1,5 @@
 import { Component, computed, inject, linkedSignal } from '@angular/core';
-import { IonContent, IonItem, IonLabel, IonList } from '@ionic/angular/standalone';
+import { IonContent, IonItem, IonLabel, IonList } from '@ionic/angular';
 
 import { Header, Spinner } from '@okr/shared-ui';
 import { dismissOverlay } from '@okr/shared-util-angular';

@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { IonButton } from '@ionic/angular/standalone';
+import { IonButton } from '@ionic/angular';
 
 import { forceBootRecovery, recoverFromBootFailure, reportBootFailure } from '@okr/shared-util-angular';
 

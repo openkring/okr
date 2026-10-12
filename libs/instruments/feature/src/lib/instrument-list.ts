@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 import {
   IonBadge, IonButtons, IonContent, IonFab, IonFabButton, IonIcon, IonItem,
   IonItemOption, IonItemOptions, IonItemSliding, IonLabel, IonList, IonNote, IonToolbar,
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 
 import { InstrumentModel, InstrumentType } from '@okr/shared-models';
 import { Header } from '@okr/shared-ui';

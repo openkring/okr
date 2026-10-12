@@ -1,5 +1,5 @@
 import { Component, computed, inject, input } from "@angular/core";
-import { IonAvatar, IonImg, IonItem, IonLabel } from "@ionic/angular/standalone";
+import { IonAvatar, IonImg, IonItem, IonLabel } from "@ionic/angular";
 
 import { AvatarInfo, CategoryListModel, UserModel } from "@okr/shared-models";
 import { coerceBoolean, getFullName } from "@okr/shared-util-core";

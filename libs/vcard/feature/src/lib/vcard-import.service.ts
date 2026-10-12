@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
-import { LoadingController, ModalController } from '@ionic/angular/standalone';
+import { LoadingController, ModalController } from '@ionic/angular';
 
 import { AvatarService, UploadService } from '@okr/avatar-data-access';
 import { newAvatarModel } from '@okr/avatar-util';

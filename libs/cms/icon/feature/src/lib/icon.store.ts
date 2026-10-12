@@ -1,7 +1,7 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
-import { ModalController } from '@ionic/angular/standalone';
+import { ModalController } from '@ionic/angular';
 import { I18nService } from '@okr/shared-i18n';
 import { getMetadata, listAll, ref } from 'firebase/storage';
 

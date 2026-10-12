@@ -3,7 +3,7 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import {
   ModalController, ToastController,
   IonContent,
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 
 import { PersonModelName } from '@okr/shared-models';
 import { AppStore } from '@okr/shared-feature';

@@ -1,6 +1,6 @@
 import { Component, computed, inject, linkedSignal, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonContent, IonGrid, IonIcon, IonItem, IonRow } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonContent, IonGrid, IonIcon, IonItem, IonRow } from '@ionic/angular';
 
 import { Button, CategorySelect, Header, ResultLog } from '@okr/shared-ui';
 import { hasRole } from '@okr/shared-util-core';

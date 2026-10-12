@@ -1,5 +1,5 @@
 import { Component, computed, input, output, Signal } from '@angular/core';
-import { IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
+import { IonCol, IonGrid, IonRow } from '@ionic/angular';
 
 import { AVATAR_CONFIG_SHAPE, AvatarConfig, AvatarInfo, ColorIonic, NameDisplay } from '@okr/shared-models';
 import { getFullName } from '@okr/shared-util-core';

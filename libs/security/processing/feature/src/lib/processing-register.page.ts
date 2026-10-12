@@ -4,7 +4,7 @@ import {
   IonButton, IonButtons, IonCard, IonCardContent, IonChip, IonCol, IonContent, IonGrid,
   IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonNote, IonRow,
   IonSelect, IonSelectOption, IonSpinner, IonTitle, IonToolbar,
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 
 import { ProcessingRegisterService } from '@okr/security-processing-data-access';
 import type { RegisterFilter } from '@okr/security-processing-data-access';

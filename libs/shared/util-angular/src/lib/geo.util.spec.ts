@@ -1,5 +1,5 @@
 import { Geolocation } from '@capacitor/geolocation';
-import { AlertController, Platform } from '@ionic/angular/standalone';
+import { AlertController, Platform } from '@ionic/angular';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { canShowPosition, convertToKml, DirectionFormat, getCurrentPosition, getDirectionFromAzimuth, lookupAddress, showAddress } from './geo.util';
 

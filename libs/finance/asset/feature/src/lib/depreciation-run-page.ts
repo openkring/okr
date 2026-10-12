@@ -1,6 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { IonButton, IonContent, IonHeader, IonButtons, IonMenuButton, IonInput, IonItem, IonLabel, IonList, IonNote, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { IonButton, IonContent, IonHeader, IonButtons, IonMenuButton, IonInput, IonItem, IonLabel, IonList, IonNote, IonTitle, IonToolbar } from '@ionic/angular';
 
 import { AssetStore } from './asset.store';
 

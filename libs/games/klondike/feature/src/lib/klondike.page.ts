@@ -7,7 +7,7 @@ import {
   IonContent,
   IonSelect,
   IonSelectOption,
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 
 import { Header } from '@okr/shared-ui';
 import { fill } from '@okr/shared-util-core';

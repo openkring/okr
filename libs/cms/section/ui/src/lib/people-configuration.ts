@@ -1,5 +1,5 @@
 import { Component, computed, input, linkedSignal, model, output, Signal } from '@angular/core';
-import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonIcon, IonRow } from '@ionic/angular/standalone';
+import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonIcon, IonRow } from '@ionic/angular';
 
 import { ColorsIonic, NameDisplays } from '@okr/shared-categories';
 import { AvatarInfo, ColorIonic, NameDisplay, UserModel, PeopleConfig } from '@okr/shared-models';

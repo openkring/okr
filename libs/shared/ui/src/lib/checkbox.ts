@@ -1,6 +1,6 @@
 import { Component, computed, inject, input, model } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { IonCheckbox, IonIcon, IonItem, IonLabel, IonNote, IonToggle } from '@ionic/angular/standalone';
+import { IonCheckbox, IonIcon, IonItem, IonLabel, IonNote, IonToggle } from '@ionic/angular';
 
 import { ColorsIonic, getCategoryStringField } from '@okr/shared-categories';
 import { ColorIonic } from '@okr/shared-models';

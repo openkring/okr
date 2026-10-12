@@ -1,5 +1,5 @@
 import { Component, computed, input, linkedSignal, model, viewChild } from '@angular/core';
-import { IonIcon, IonItem, IonNote } from '@ionic/angular/standalone';
+import { IonIcon, IonItem, IonNote } from '@ionic/angular';
 import { MaskitoOptions } from '@maskito/core';
 
 import { DATE_LENGTH, InputMode } from '@okr/shared-constants';

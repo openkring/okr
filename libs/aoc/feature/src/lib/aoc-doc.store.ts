@@ -2,7 +2,7 @@ import { computed, inject } from '@angular/core';
 import { deleteObject, getDownloadURL, ref } from 'firebase/storage';
 import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
-import { AlertController, ToastController } from '@ionic/angular/standalone';
+import { AlertController, ToastController } from '@ionic/angular';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
 import { STORAGE } from '@okr/shared-config';

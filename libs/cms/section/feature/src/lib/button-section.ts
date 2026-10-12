@@ -1,5 +1,5 @@
 import { Component, DestroyRef, computed, effect, inject, input, signal, untracked } from '@angular/core';
-import { IonCard, IonCardContent, IonCol, IonGrid, IonRow, ModalController } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent, IonCol, IonGrid, IonRow, ModalController } from '@ionic/angular';
 import {} from '@capacitor/google-maps';
 
 import { ButtonAction, ButtonSection, ViewPosition } from '@okr/shared-models';

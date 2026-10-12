@@ -1,6 +1,6 @@
 import { Component, computed, input, linkedSignal, model, signal, Signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonItem, IonNote, IonRow, IonTextarea } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonItem, IonNote, IonRow, IonTextarea } from '@ionic/angular';
 
 import { SpiderAxis, SpiderConfig, SpiderSeries } from '@okr/shared-models';
 import { Checkbox, CheckboxI18n, NumberInput, NumberInputI18n } from '@okr/shared-ui';

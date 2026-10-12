@@ -1,6 +1,6 @@
 import { Component, computed, input, OnInit, output } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { IonButton } from '@ionic/angular/standalone';
+import { IonButton } from '@ionic/angular';
 import { CategoryListModel, Field, FormDefinitionModel } from '@okr/shared-models';
 import { validatorsFor, defaultFor, isInputField } from '@okr/forms-util';
 import { FieldRenderer } from './field-renderer';

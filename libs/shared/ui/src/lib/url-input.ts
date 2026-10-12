@@ -1,6 +1,6 @@
 import { Component, computed, input, model } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { IonIcon, IonInput, IonItem, IonNote } from '@ionic/angular/standalone';
+import { IonIcon, IonInput, IonItem, IonNote } from '@ionic/angular';
 
 import { URL_LENGTH } from '@okr/shared-constants';
 import { coerceBoolean, getSafeLinkUrl } from '@okr/shared-util-core';

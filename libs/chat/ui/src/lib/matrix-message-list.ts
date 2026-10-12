@@ -1,6 +1,6 @@
 import { Component, computed, effect, inject, input, output, signal, viewChild, ElementRef, Signal } from '@angular/core';
 
-import { IonIcon, IonChip, IonAvatar, IonSpinner } from '@ionic/angular/standalone';
+import { IonIcon, IonChip, IonAvatar, IonSpinner } from '@ionic/angular';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { VideoCard } from '@okr/shared-ui';

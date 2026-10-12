@@ -1,6 +1,6 @@
 // libs/content/pdf-template/ui/src/lib/template-publish.modal.ts
 import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
-import { IonContent, ModalController } from '@ionic/angular/standalone';
+import { IonContent, ModalController } from '@ionic/angular';
 
 import { I18nService } from '@okr/shared-i18n';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';

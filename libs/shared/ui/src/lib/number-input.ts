@@ -1,6 +1,6 @@
 import { Component, computed, input, model, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { IonInput, IonItem, IonNote } from '@ionic/angular/standalone';
+import { IonInput, IonItem, IonNote } from '@ionic/angular';
 
 import { AutoComplete, InputMode, INT_LENGTH } from '@okr/shared-constants';
 import { coerceBoolean } from '@okr/shared-util-core';

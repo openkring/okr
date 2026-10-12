@@ -1,5 +1,5 @@
 import { Component, computed, input, model } from '@angular/core';
-import { IonLabel, IonSelect, IonSelectOption } from '@ionic/angular/standalone';
+import { IonLabel, IonSelect, IonSelectOption } from '@ionic/angular';
 import { AsyncPipe } from '@angular/common';
 
 import { coerceBoolean, getYear, YEAR_ROLLING_WINDOW } from '@okr/shared-util-core';

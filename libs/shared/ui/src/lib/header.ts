@@ -1,5 +1,5 @@
 import { Component, computed, inject, input, model, output } from '@angular/core';
-import { IonButton, IonButtons, IonHeader, IonIcon, IonMenuButton, IonTitle, IonToolbar, ModalController } from '@ionic/angular/standalone';
+import { IonButton, IonButtons, IonHeader, IonIcon, IonMenuButton, IonTitle, IonToolbar, ModalController } from '@ionic/angular';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { AppNavigationService, dismissOverlay } from '@okr/shared-util-angular';

@@ -1,5 +1,5 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
-import { IonButton, IonContent, IonIcon, ModalController } from '@ionic/angular/standalone';
+import { IonButton, IonContent, IonIcon, ModalController } from '@ionic/angular';
 
 import { InstrumentTopic } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';

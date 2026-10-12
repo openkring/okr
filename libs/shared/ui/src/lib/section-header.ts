@@ -1,5 +1,5 @@
 import { Component, input } from '@angular/core';
-import { IonItem, IonLabel, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { IonItem, IonLabel, IonTitle, IonToolbar } from '@ionic/angular';
 
 /** 
  * A section header consist of a toolbar with a title followed by a description text.

@@ -1,7 +1,7 @@
 import { Component, computed, inject, input, output } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { switchMap } from 'rxjs/operators';
-import { IonBadge, IonButton, IonIcon } from '@ionic/angular/standalone';
+import { IonBadge, IonButton, IonIcon } from '@ionic/angular';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { MenuItemModel } from '@okr/shared-models';

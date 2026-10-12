@@ -1,7 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { IonContent, IonHeader, IonButtons, IonMenuButton, IonItem, IonLabel,
-  IonList, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+  IonList, IonTitle, IonToolbar } from '@ionic/angular';
 
 import { BookingModel } from '@okr/shared-models';
 import { I18nService } from '@okr/shared-i18n';

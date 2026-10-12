@@ -1,5 +1,5 @@
 import { Component, inject, input, linkedSignal, computed, signal } from '@angular/core';
-import { IonContent } from '@ionic/angular/standalone';
+import { IonContent } from '@ionic/angular';
 import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 

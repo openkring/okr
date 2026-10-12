@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { IonContent } from '@ionic/angular/standalone';
+import { IonContent } from '@ionic/angular';
 
 import { I18nService } from '@okr/shared-i18n';
 import { Header } from '@okr/shared-ui';

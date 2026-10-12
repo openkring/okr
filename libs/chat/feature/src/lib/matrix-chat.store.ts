@@ -6,7 +6,7 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 import { catchError, from, map, of, startWith, switchMap, timer } from 'rxjs';
 import { Visibility, type MatrixCall } from 'matrix-js-sdk';
 import { captureMessage } from '@sentry/angular';
-import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
+import { AlertController, ModalController, ToastController } from '@ionic/angular';
 
 import { AppStore } from '@okr/shared-feature';
 import { AvatarInfo, GroupModel, MatrixMessage, MatrixReadReceipt, MatrixRoom, MatrixUser, PersonModel } from '@okr/shared-models';

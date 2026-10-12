@@ -1,6 +1,6 @@
 import { CdkDrag, CdkDragDrop, CdkDropList, CdkDropListGroup } from '@angular/cdk/drag-drop';
 import { Component, effect, inject, input } from '@angular/core';
-import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonIcon, IonLabel, IonNote, IonRow } from '@ionic/angular/standalone';
+import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonIcon, IonLabel, IonNote, IonRow } from '@ionic/angular';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { ResultLog } from '@okr/shared-ui';

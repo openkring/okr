@@ -1,11 +1,11 @@
 // libs/content/pdf-template/feature/src/lib/template-list.ts
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { ActionSheetController, ActionSheetOptions } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions } from '@ionic/angular';
 import {
   IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon,
   IonContent, IonLabel, IonGrid, IonRow, IonCol, IonChip, IonMenuButton,
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 
 import { TemplateModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';

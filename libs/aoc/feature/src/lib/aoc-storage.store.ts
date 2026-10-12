@@ -1,5 +1,5 @@
 import { computed, inject } from '@angular/core';
-import { ToastController } from '@ionic/angular/standalone';
+import { ToastController } from '@ionic/angular';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
 import { AppStore } from '@okr/shared-feature';

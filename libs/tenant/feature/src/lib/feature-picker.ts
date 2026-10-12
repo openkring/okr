@@ -4,7 +4,7 @@ import {
   IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonItemDivider,
   IonItemGroup, IonLabel, IonList, IonMenuButton, IonNote, IonRow, IonSegment, IonSegmentButton,
   IonTitle, IonToolbar, ModalController,
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 
 import { AppConfigService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';

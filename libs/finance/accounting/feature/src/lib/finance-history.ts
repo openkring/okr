@@ -1,6 +1,6 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { IonCard, IonCardContent, IonCardHeader, IonCardTitle } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent, IonCardHeader, IonCardTitle } from '@ionic/angular';
 
 import { CommentComposer, CommentsList } from '@okr/comment-ui';
 import { COMMENT_LIST_I18N_KEYS, CommentListI18n } from '@okr/comment-util';

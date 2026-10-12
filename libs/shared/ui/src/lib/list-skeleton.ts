@@ -1,5 +1,5 @@
 import { Component, computed, input } from '@angular/core';
-import { IonItem, IonLabel, IonList, IonSkeletonText } from '@ionic/angular/standalone';
+import { IonItem, IonLabel, IonList, IonSkeletonText } from '@ionic/angular';
 
 /**
  * Placeholder list shown while data is loading. Renders `rows` skeleton items so the

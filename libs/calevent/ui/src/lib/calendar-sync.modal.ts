@@ -2,7 +2,7 @@ import { Component, computed, inject, input, linkedSignal, OnInit, signal } from
 import {
   AlertController, IonButton, IonContent, IonInput, IonItem, IonLabel,
   IonSelect, IonSelectOption, IonSpinner, ModalController, ToastController,
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 
 import { I18nService } from '@okr/shared-i18n';
 import { ButtonCopy, Header } from '@okr/shared-ui';

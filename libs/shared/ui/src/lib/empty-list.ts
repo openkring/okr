@@ -1,5 +1,5 @@
 import { Component, input } from '@angular/core';
-import { IonItem, IonLabel } from '@ionic/angular/standalone';
+import { IonItem, IonLabel } from '@ionic/angular';
 
 /**
  * The message of an empty list: one plain list item on the page background — no toolbar,
