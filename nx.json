@@ -104,5 +104,6 @@
   },
   "release": {
     "projects": ["*"]
-  }
+  },
+  "analytics": false
 }
