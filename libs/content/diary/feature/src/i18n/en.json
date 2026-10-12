@@ -2,7 +2,10 @@
   "title": "Diary",
   "subtitle": "Check access to the archive and see what an import would find — neither action changes your entries.",
   "import": {
-    "title": "Prepare the import"
+    "title": "Prepare the import",
+    "fromLabel": "From date",
+    "fromPlaceholder": "DD.MM.YYYY",
+    "fromHelper": "Imports only entries from this day on. The suggestion is the day after the last imported entry. Leave it empty to import the whole archive — that takes a very long time."
   },
   "drive": {
     "action": "Check Drive access",

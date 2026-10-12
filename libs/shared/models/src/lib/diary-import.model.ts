@@ -28,6 +28,13 @@ export class DiaryImportModel implements OkrModel {
   public startedAt = '';
   public phase: DiaryImportPhase = 'reading';
   public isDryRun = true;
+  /**
+   * StoreDate floor: only archive files dated on or after it are part of the run. '' = the whole
+   * archive (also what every run written before this field existed means). Fixed when the run
+   * starts — a continuation never changes it, so a resumed run cannot widen to the full archive.
+   */
+  public fromDate = '';
+  /** number of archive files in the run — the whole archive, or those on/after `fromDate` */
   public total = 0;
   public processed = 0;
   /** file name the last window stopped after — where the next invocation resumes */

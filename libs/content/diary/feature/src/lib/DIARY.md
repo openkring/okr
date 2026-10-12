@@ -16,6 +16,18 @@ Two halves:
 2. **Places and people** — every location and person the archive mentions, resolved and
    unresolved side by side, with the repairs on each unresolved one.
 
+## Import from a date (`fromDate`)
+
+Both callables take an optional `fromDate` (StoreDate) when a run starts: only archive files whose
+name is dated on or after it are downloaded and parsed. The screen pre-fills it with the day after
+the newest imported final entry (`suggestImportFromDate`), so a routine catch-up reads a few dozen
+files. Empty = the whole archive, which has outgrown the dry run's time limit (>7'400 files).
+The floor is stored on the `diaryImports` run, and continuations inherit it from there — never
+from the payload — so a resumed run cannot widen to the whole archive.
+
+Every write is still a full `set` of the day's document: an entry edited in the app is overwritten
+when its day is inside the range. Keep the floor after the last day you edited in the app.
+
 ## Why the lists come from `diaries`, not from the dry run's report
 
 `DiaryImportModel.unresolvedLocations` / `unresolvedPeople` are slug→count maps. They can say

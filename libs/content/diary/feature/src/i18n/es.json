@@ -2,7 +2,10 @@
   "title": "Diario",
   "subtitle": "Comprueba el acceso al archivo y mira qué encontraría una importación: ninguna de las dos acciones cambia tus entradas.",
   "import": {
-    "title": "Preparar la importación"
+    "title": "Preparar la importación",
+    "fromLabel": "Desde",
+    "fromPlaceholder": "DD.MM.AAAA",
+    "fromHelper": "Importa solo las entradas a partir de este día. Se propone el día siguiente a la última entrada importada. Déjalo vacío para importar todo el archivo — eso tarda mucho."
   },
   "drive": {
     "action": "Comprobar el acceso a Drive",

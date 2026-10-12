@@ -2,7 +2,10 @@
   "title": "Tagebuch",
   "subtitle": "Prüfe den Zugang zum Archiv und schau dir an, was ein Import finden würde — beide Aktionen ändern nichts an deinen Einträgen.",
   "import": {
-    "title": "Import vorbereiten"
+    "title": "Import vorbereiten",
+    "fromLabel": "Ab Datum",
+    "fromPlaceholder": "TT.MM.JJJJ",
+    "fromHelper": "Importiert nur Einträge ab diesem Tag. Vorgeschlagen ist der Tag nach dem letzten importierten Eintrag. Leer lassen importiert das ganze Archiv — das dauert sehr lange."
   },
   "drive": {
     "action": "Drive-Zugang prüfen",

@@ -12,6 +12,8 @@ import { toAliasSlug } from '@okr/system-alias-util';
 import {
   DiaryFile,
   diaryKey,
+  isInImportRange,
+  isValidImportFromDate,
   normaliseLocationLabel,
   parseDiaryMarkdown,
   toDiaryModel,
@@ -85,6 +87,11 @@ export interface DiaryImportRequest {
   runId?: string;
   /** Required only when starting a new run — an existing run already carries its tenant. */
   tenantId?: string;
+  /**
+   * Only when starting a new run: limit it to archive files dated on or after this StoreDate.
+   * Omitted or '' = the whole archive. A continuation keeps the floor its run was started with.
+   */
+  fromDate?: string;
 }
 
 /**
@@ -465,6 +472,7 @@ async function processRun(
   let cursor = '';
   let processed = 0;
   let written = 0;
+  let fromDate = payload.fromDate ?? '';
   let existing: DiaryImportModel | undefined;
 
   if (runId) {
@@ -478,9 +486,15 @@ async function processRun(
     cursor = existing.lastName;
     processed = existing.processed;
     written = existing.written;
+    // The run's own floor, never the payload's: a continuation that could pass a different (or
+    // no) fromDate would silently widen a limited run to the whole archive mid-way.
+    fromDate = existing.fromDate ?? '';
   } else {
     if (!tenantId) {
       throw new HttpsError('invalid-argument', 'tenantId is required to start a new import run.');
+    }
+    if (!isValidImportFromDate(fromDate)) {
+      throw new HttpsError('invalid-argument', 'fromDate must be empty or a calendar day (yyyyMMdd).');
     }
     // Never trust the payload's `tenantId` on its own — see `isCallerTenant` above. A run may
     // only be started for a tenant the caller's own `users/{uid}` document actually lists, even
@@ -502,11 +516,14 @@ async function processRun(
   run.processed = processed;
   run.written = written;
   run.lastName = cursor;
+  run.fromDate = fromDate;
 
-  // `run.total` is always the SIZE OF THE WHOLE ARCHIVE, not of whatever this call processes —
-  // it is the denominator the caller uses to know when to stop, so it must not shrink to the
-  // window's size on a commit call.
-  const listed = await listSortedArchive(token);
+  // `run.total` is always the size of the WHOLE RUN (the archive, or its part from `fromDate`),
+  // not of whatever this call processes — it is the denominator the caller uses to know when to
+  // stop, so it must not shrink to the window's size on a commit call. The listing itself stays
+  // one cheap name-scoped Drive query; the floor only narrows what is downloaded and parsed,
+  // which is what made a full-archive dry run outgrow its own time limit.
+  const listed = (await listSortedArchive(token)).filter((e) => isInImportRange(e.name, fromDate));
   const sortedNames = listed.map((e) => e.name);
   run.total = listed.length;
 

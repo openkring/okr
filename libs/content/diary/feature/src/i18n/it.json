@@ -2,7 +2,10 @@
   "title": "Diario",
   "subtitle": "Controlla l'accesso all'archivio e guarda che cosa troverebbe un'importazione: nessuna delle due azioni modifica le tue voci.",
   "import": {
-    "title": "Preparare l'importazione"
+    "title": "Preparare l'importazione",
+    "fromLabel": "A partire dal",
+    "fromPlaceholder": "GG.MM.AAAA",
+    "fromHelper": "Importa solo le voci a partire da questo giorno. Viene proposto il giorno dopo l'ultima voce importata. Lascia il campo vuoto per importare tutto l'archivio — ci vuole molto tempo."
   },
   "drive": {
     "action": "Verificare l'accesso a Drive",

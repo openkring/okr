@@ -4,7 +4,7 @@ import {
   IonNote, IonSpinner,
 } from '@ionic/angular';
 
-import { Header } from '@okr/shared-ui';
+import { DateInput, Header } from '@okr/shared-ui';
 
 import { AocDiaryStore } from './aoc-diary.store';
 
@@ -25,7 +25,7 @@ import { AocDiaryStore } from './aoc-diary.store';
   selector: 'okr-aoc-diary',
   standalone: true,
   imports: [
-    Header,
+    Header, DateInput,
     IonContent, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonButton, IonNote,
     IonSpinner, IonBadge,
   ],
@@ -45,6 +45,13 @@ import { AocDiaryStore } from './aoc-diary.store';
         </ion-card-header>
         <ion-card-content>
           <ion-note>{{ store.i18n.subtitle() }}</ion-note>
+          <!-- Both import actions send this floor. It defaults to the day after the newest
+               imported entry, so a routine catch-up reads a few dozen files, not the archive. -->
+          <okr-date-input class="ion-margin-top"
+            [storeDate]="store.fromDate()"
+            (storeDateChange)="store.setFromDate($event)"
+            [i18n]="fromDateI18n()"
+            [readOnly]="store.isDryRunning() || store.isCommitting()" />
           <div class="ion-margin-top">
             <ion-button fill="outline" (click)="store.checkDrive()"
                         [disabled]="store.isCheckingDrive() || store.isDryRunning()">
@@ -55,7 +62,7 @@ import { AocDiaryStore } from './aoc-diary.store';
               }
             </ion-button>
             <ion-button fill="outline" (click)="store.dryRun()"
-                        [disabled]="store.isCheckingDrive() || store.isDryRunning() || store.isCommitting()">
+                        [disabled]="isImportBlocked()">
               @if (store.isDryRunning()) {
                 <ion-spinner name="dots" slot="start" /> {{ store.i18n.dryrun_running() }}
               } @else {
@@ -65,7 +72,7 @@ import { AocDiaryStore } from './aoc-diary.store';
             <!-- The only button here that WRITES. Solid rather than outline so it does not read
                  as one more harmless diagnostic, and its hint states the dry-run precondition. -->
             <ion-button (click)="store.commit()"
-                        [disabled]="store.isCheckingDrive() || store.isDryRunning() || store.isCommitting()">
+                        [disabled]="isImportBlocked()">
               @if (store.isCommitting()) {
                 <ion-spinner name="dots" slot="start" /> {{ commitProgress() }}
               } @else {
@@ -188,6 +195,20 @@ import { AocDiaryStore } from './aoc-diary.store';
 })
 export class AocDiary {
   protected readonly store = inject(AocDiaryStore);
+
+  /**
+   * Also blocked while the diaries load: the suggested floor is derived from them, and until it
+   * arrives `fromDate` is '' — a click in that moment would start a whole-archive run.
+   */
+  protected readonly isImportBlocked = computed(() =>
+    this.store.isLoading() || this.store.isCheckingDrive() || this.store.isDryRunning() || this.store.isCommitting());
+
+  protected readonly fromDateI18n = computed(() => ({
+    name: 'fromDate',
+    label: this.store.i18n.import_from_label(),
+    placeholder: this.store.i18n.import_from_placeholder(),
+    helper: this.store.i18n.import_from_helper(),
+  }));
 
   protected readonly unresolvedPeopleCount = computed(
     () => Object.keys(this.store.dryRunResult()?.unresolvedPeople ?? {}).length);

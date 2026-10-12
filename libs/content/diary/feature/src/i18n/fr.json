@@ -2,7 +2,10 @@
   "title": "Journal",
   "subtitle": "Vérifie l'accès aux archives et regarde ce qu'un import trouverait — aucune de ces actions ne modifie tes entrées.",
   "import": {
-    "title": "Préparer l'import"
+    "title": "Préparer l'import",
+    "fromLabel": "À partir du",
+    "fromPlaceholder": "JJ.MM.AAAA",
+    "fromHelper": "N'importe que les entrées à partir de ce jour. La date proposée est le lendemain de la dernière entrée importée. Laisse le champ vide pour importer toutes les archives — cela prend très longtemps."
   },
   "drive": {
     "action": "Vérifier l'accès à Drive",

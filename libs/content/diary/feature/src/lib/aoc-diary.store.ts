@@ -7,7 +7,7 @@ import { firstValueFrom, of } from 'rxjs';
 import { DiaryImportService, DiaryService, DriveAccessResult } from '@okr/content-diary-data-access';
 import {
   DIARY_I18N_KEYS, DiaryReference, DiaryReferenceKind, DiaryUsage,
-  collectLocationReferences, collectPersonReferences,
+  collectLocationReferences, collectPersonReferences, suggestImportFromDate,
 } from '@okr/content-diary-util';
 import { LocationService } from '@okr/location-data-access';
 import {
@@ -15,6 +15,7 @@ import {
 } from '@okr/shared-models';
 import { AppStore, LocationSelectModal, PersonSelectModal } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
+import { DateFormat, getTodayStr } from '@okr/shared-util-core';
 import { AlertService } from '@okr/shared-util-angular';
 import { PersonService } from '@okr/subject-person-data-access';
 import { PersonNewFormModel, convertFormToNewPerson } from '@okr/subject-person-util';
@@ -31,6 +32,8 @@ export type AocDiaryState = {
   isCommitting: boolean;
   commitResult: DiaryImportModel | undefined;
   commitError: string | undefined;
+  /** the admin's own import floor; undefined = not touched yet, use the suggestion */
+  fromDateOverride: string | undefined;
 };
 
 export const initialState: AocDiaryState = {
@@ -42,6 +45,7 @@ export const initialState: AocDiaryState = {
   isCommitting: false,
   commitResult: undefined,
   commitError: undefined,
+  fromDateOverride: undefined,
 };
 
 /**
@@ -83,6 +87,13 @@ export const AocDiaryStore = signalStore(
     diaries: computed((): DiaryModel[] => store.diariesResource.value() ?? []),
     locationReferences: computed(() => collectLocationReferences(store.diariesResource.value() ?? [])),
     personReferences: computed(() => collectPersonReferences(store.diariesResource.value() ?? [])),
+    /** the day after the newest imported entry — what a routine catch-up import starts from */
+    suggestedFromDate: computed(() =>
+      suggestImportFromDate(store.diariesResource.value() ?? [], getTodayStr(DateFormat.StoreDate))),
+  })),
+  withComputed(store => ({
+    /** StoreDate floor both import actions send; '' = the whole archive (slow, see spec 1.34) */
+    fromDate: computed(() => store.fromDateOverride() ?? store.suggestedFromDate()),
   })),
   withComputed(store => ({
     unresolvedLocationCount: computed(() => store.locationReferences().filter(r => !r.resolved).length),
@@ -305,7 +316,10 @@ export const AocDiaryStore = signalStore(
         }
       },
 
-      /** Full read/parse/resolve/weather pass that writes no diary — safe to repeat. */
+      setFromDate(fromDate: string): void {
+        patchState(store, { fromDateOverride: fromDate });
+      },
+
       /**
        * Runs the import to completion, one window of 200 at a time.
        *
@@ -323,8 +337,10 @@ export const AocDiaryStore = signalStore(
       async commit(): Promise<void> {
         patchState(store, { isCommitting: true, commitResult: undefined, commitError: undefined });
         try {
+          // The floor goes with the START call only; the function stores it on the run, and the
+          // continuations below inherit it from there.
           let run = await store.diaryImportService.commitDiaryImport(
-            { tenantId: store.appStore.tenantId() });
+            { tenantId: store.appStore.tenantId(), fromDate: store.fromDate() });
           patchState(store, { commitResult: run });
           while (run.phase !== 'done') {
             run = await store.diaryImportService.commitDiaryImport({ runId: run.okey });
@@ -340,10 +356,11 @@ export const AocDiaryStore = signalStore(
         }
       },
 
+      /** Full read/parse/resolve/weather pass that writes no diary — safe to repeat. */
       async dryRun(): Promise<void> {
         patchState(store, { isDryRunning: true, dryRunResult: undefined, dryRunError: undefined });
         try {
-          patchState(store, { dryRunResult: await store.diaryImportService.dryRunDiaryImport(store.appStore.tenantId()) });
+          patchState(store, { dryRunResult: await store.diaryImportService.dryRunDiaryImport(store.appStore.tenantId(), store.fromDate()) });
         } catch (error) {
           patchState(store, { dryRunError: `${error}` });
           store.alertService.error(`${store.i18n.dryrun_failed()} ${error}`);

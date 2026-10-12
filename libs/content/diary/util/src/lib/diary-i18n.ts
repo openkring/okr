@@ -13,6 +13,9 @@ export const DIARY_I18N_KEYS = {
 
   // ─── import prerequisites (moved off the privacy-audit screen, spec 1.34) ────
   import_title:           PFX + 'import.title',
+  import_from_label:      PFX + 'import.fromLabel',
+  import_from_placeholder: PFX + 'import.fromPlaceholder',
+  import_from_helper:     PFX + 'import.fromHelper',
   drive_action:           PFX + 'drive.action',
   drive_running:          PFX + 'drive.running',
   drive_ok:               PFX + 'drive.ok',

@@ -23,6 +23,8 @@ export interface DiaryImportRequest {
   tenantId?: string;
   /** Continues an existing run instead of starting one. */
   runId?: string;
+  /** Starting a run only: import files dated on/after this StoreDate; '' = the whole archive. */
+  fromDate?: string;
 }
 
 /**
@@ -69,14 +71,14 @@ export class DiaryImportService {
    * pass over ~7'400 files already takes 7-8 of them. The caller must keep a spinner up rather
    * than assume a fast reply.
    */
-  public async dryRunDiaryImport(tenantId: string): Promise<DiaryImportModel> {
+  public async dryRunDiaryImport(tenantId: string, fromDate = ''): Promise<DiaryImportModel> {
     // The SDK's own default is 70s (`options.timeout || 70000` in @firebase/functions), and it
     // aborts the CLIENT while the function keeps running — the caller sees a deadline-exceeded
     // for a run that is fine. Match the function's own ceiling instead, so a timeout here means
     // the run really did not finish.
     const callable = httpsCallable<DiaryImportRequest, DiaryImportModel>(
       this.functions, 'dryRunDiaryImport', { timeout: 3_600_000 });
-    const result = await callable({ tenantId });
+    const result = await callable({ tenantId, fromDate });
     return result.data;
   }
 

@@ -2,6 +2,7 @@ export * from './lib/diary-date.util';
 export * from './lib/diary-file';
 export * from './lib/diary-frontmatter';
 export * from './lib/diary-html.util';
+export * from './lib/diary-import.util';
 export * from './lib/diary-i18n';
 export * from './lib/diary-index.util';
 export * from './lib/diary-key.util';
