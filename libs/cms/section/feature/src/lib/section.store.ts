@@ -511,7 +511,7 @@ export const _SectionStore = signalStore(
           } catch (error) {
             console.warn('SectionStore: Permission query not supported or failed:', error);
           }
-          const pos: Position = await new Promise((resolve, reject) => {
+          const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
             navigator.geolocation.getCurrentPosition(resolve, reject, {
               enableHighAccuracy: true,
               timeout: 10000,
