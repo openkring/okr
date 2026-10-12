@@ -1294,7 +1294,7 @@
     }
   },
   "buttonAction": {
-    "intro": "<ul><li><strong>Download:</strong> il pulsante scarica il file indicato dall’URL. L’URL deve puntare a un file in Firebase Storage.</li><li><strong>Navigare:</strong> il pulsante naviga all’URL indicato. L’URL deve essere un percorso interno (vedere la configurazione MenuItem).</li><li><strong>Browse:</strong> il pulsante rimanda a un URL esterno (https://domain.com/path).</li><li><strong>Zoom:</strong> il file indicato dall’URL viene mostrato in un visualizzatore zoom (di norma un’immagine). L’URL deve puntare a un file in Firebase Storage.</li><li><strong>Nessuna:</strong> non viene eseguita alcuna azione. L’URL viene ignorato. È l’impostazione predefinita.</li></ul>"
+    "intro": "<ul><li><strong>Download:</strong> il pulsante scarica il file indicato dall’URL. L’URL deve puntare a un file in Firebase Storage.</li><li><strong>Navigare:</strong> il pulsante naviga all’URL indicato. L’URL deve essere un percorso interno (vedere la configurazione MenuItem).</li><li><strong>Browse:</strong> il pulsante rimanda a un URL esterno (https://domain.com/path).</li><li><strong>Zoom:</strong> il file indicato dall’URL viene mostrato in un visualizzatore zoom (di norma un’immagine). L’URL deve puntare a un file in Firebase Storage.</li><li><strong>Nessuna:</strong> non viene eseguita alcuna azione. L’URL viene ignorato. È l’impostazione predefinita.</li><li><strong>Documento del contratto:</strong> il pulsante apre il documento attuale di un contratto condiviso con i membri. Se carichi una nuova versione nel contratto, il pulsante punta automaticamente a essa.</li></ul>"
   },
   "weather": {
     "title": "Meteo",
@@ -1321,5 +1321,16 @@
   },
   "message": {
     "moreButton": "Alla panoramica delle chat"
+  },
+  "contractDocument": {
+    "pick": {
+      "label": "Contratto",
+      "helper": "Il pulsante apre il documento attuale di questo contratto condiviso con i membri."
+    },
+    "chooser": {
+      "header": "Quale documento vuoi aprire?",
+      "cancel": "Annulla"
+    },
+    "unavailable": "Questo documento al momento non è disponibile."
   }
 }

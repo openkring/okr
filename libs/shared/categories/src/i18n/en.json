@@ -79,6 +79,10 @@
     },
     "contract": {
       "label": "Request a contract"
+    },
+    "contractDocument": {
+      "label": "Open contract document",
+      "description": "Opens the current document of a contract that is shared with members."
     }
   },
   "color": {

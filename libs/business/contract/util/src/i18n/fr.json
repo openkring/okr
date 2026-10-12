@@ -40,6 +40,7 @@
     "nda": "Accord de confidentialité",
     "license": "Contrat de licence",
     "serviceAgreement": "Contrat de prestations de services",
+    "insurance": "Assurance",
     "other": "Autre contrat"
   },
   "state": {
@@ -243,6 +244,13 @@
     "pick": {
       "label": "Fichier",
       "helper": "PDF, image (JPEG, PNG, HEIC), Word, OpenDocument, texte ou e-mail, 25 Mo au maximum."
+    },
+    "shared": {
+      "chip": "Pour les membres",
+      "share": "Partager avec les membres",
+      "unshare": "Ne plus partager avec les membres",
+      "blocked": "Tu ne peux pas partager un contrat strictement confidentiel avec les membres.",
+      "error": "Le partage n’a pas pu être modifié. Réessaie, s’il te plaît."
     }
   },
   "deadline": {
@@ -298,6 +306,9 @@
     },
     "serviceAgreement": {
       "label": "Contrat de prestations de services"
+    },
+    "insurance": {
+      "label": "Assurance"
     },
     "other": {
       "label": "Autre contrat"

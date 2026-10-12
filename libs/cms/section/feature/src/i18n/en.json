@@ -1294,7 +1294,7 @@
     }
   },
   "buttonAction": {
-    "intro": "<ul><li><strong>Download:</strong> The button downloads the file referenced by the URL. The URL must point to a file in Firebase Storage.</li><li><strong>Navigate:</strong> The button navigates to the given URL. The URL must be an internal route (see the MenuItem configuration).</li><li><strong>Browse:</strong> The button links to an external URL (https://domain.com/path).</li><li><strong>Zoom:</strong> The file referenced by the URL is shown in a zoom viewer (typically an image). The URL must point to a file in Firebase Storage.</li><li><strong>None:</strong> No action is performed. The URL is ignored. This is the default setting.</li></ul>"
+    "intro": "<ul><li><strong>Download:</strong> The button downloads the file referenced by the URL. The URL must point to a file in Firebase Storage.</li><li><strong>Navigate:</strong> The button navigates to the given URL. The URL must be an internal route (see the MenuItem configuration).</li><li><strong>Browse:</strong> The button links to an external URL (https://domain.com/path).</li><li><strong>Zoom:</strong> The file referenced by the URL is shown in a zoom viewer (typically an image). The URL must point to a file in Firebase Storage.</li><li><strong>None:</strong> No action is performed. The URL is ignored. This is the default setting.</li><li><strong>Contract document:</strong> The button opens the current document of a contract that is shared with members. When you upload a new version to the contract, the button points to it automatically.</li></ul>"
   },
   "weather": {
     "title": "Weather",
@@ -1321,5 +1321,16 @@
   },
   "message": {
     "moreButton": "To the chat overview"
+  },
+  "contractDocument": {
+    "pick": {
+      "label": "Contract",
+      "helper": "The button opens the current document of this contract that is shared with members."
+    },
+    "chooser": {
+      "header": "Which document would you like to open?",
+      "cancel": "Cancel"
+    },
+    "unavailable": "This document is not available right now."
   }
 }

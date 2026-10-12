@@ -1,11 +1,13 @@
 import { Component, computed, input, linkedSignal, model, Signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular';
+import {
+  IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonNote, IonRow, IonSelect, IonSelectOption,
+} from '@ionic/angular';
 
 import { ButtonAction, ButtonActionConfig } from '@okr/shared-models';
 import { CategoryOld, CategoryOldI18n, ErrorNote, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { SectionErrors, getFieldErrors } from '@okr/cms-section-util';
-import { DEFAULT_LABEL, DEFAULT_URL } from '@okr/shared-constants';
+import { DEFAULT_LABEL, DEFAULT_URL, URL_LENGTH } from '@okr/shared-constants';
 import { ButtonActions } from '@okr/shared-categories';
 
 interface ButtonActionI18n {
@@ -19,7 +21,12 @@ interface ButtonActionI18n {
   altText_helper:                       Signal<string>;
   button_action_label:                  Signal<string>;
   button_action_intro:                  Signal<string>;
+  contract_document_label:              Signal<string>;
+  contract_document_helper:             Signal<string>;
 }
+
+/** A contract a ButtonAction.ContractDocument button can point at (spec 1.97). */
+export interface ContractOption { okey: string; name: string; }
 
 @Component({
   selector: 'okr-button-action',
@@ -27,7 +34,7 @@ interface ButtonActionI18n {
   imports: [
     FormsModule,
     TextInput, CategoryOld,
-    IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonRow, IonCol, IonCardSubtitle,
+    IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonRow, IonCol, IonCardSubtitle, IonSelect, IonSelectOption, IonNote,
     ErrorNote
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -49,9 +56,22 @@ interface ButtonActionI18n {
             <ion-col size="12" size-md="6">
               <okr-category-old [i18n]="buttonActionI18n()" [value]="type()" (valueChange)="onFieldChange('type', $event)" [categories]="buttonActions" [readOnly]="readOnly()" />
             </ion-col>
-            @if(type() !== BA.None) {
+            @if(type() === BA.ContractDocument && contracts().length > 0) {
+              <!-- spec 1.97: the contractKey is picked, never typed (it is a foreign key) -->
               <ion-col size="12" size-md="6">
-                <okr-text-input [i18n]="actionUrlI18n()" [value]="url()" (valueChange)="onFieldChange('url', $event)" [readOnly]="readOnly()" [maxLength]=400 />
+                <ion-select [label]="i18n().contract_document_label()" labelPlacement="stacked" interface="popover"
+                            [value]="url()" [disabled]="readOnly()" (ionChange)="onFieldChange('url', $event.detail.value)">
+                  @for (c of contracts(); track c.okey) {
+                    <ion-select-option [value]="c.okey">{{ c.name }}</ion-select-option>
+                  }
+                </ion-select>
+                <ion-note>{{ i18n().contract_document_helper() }}</ion-note>
+                <okr-error-note [errors]="errorsFor('action.url')" />
+              </ion-col>
+            } @else if(type() !== BA.None) {
+              <!-- also the ContractDocument fallback for an editor who may not list contracts: the key is typed -->
+              <ion-col size="12" size-md="6">
+                <okr-text-input [i18n]="actionUrlI18n()" [value]="url()" (valueChange)="onFieldChange('url', $event)" [readOnly]="readOnly()" [maxLength]="urlLength" />
                 <okr-error-note [errors]="errorsFor('action.url')" />
               </ion-col>
             }
@@ -78,6 +98,8 @@ export class ButtonActionConfiguration {
   protected readonly introHtml = computed(() => this.intro() ?? this.i18n().button_action_intro());
 
   public readonly readOnly = input(true);
+  /** contracts the editor may pick for a ContractDocument button; empty = the key is typed instead */
+  public readonly contracts = input<ContractOption[]>([]);
 
   // fields
   protected type = linkedSignal(() => this.formData().type ?? ButtonAction.Download);
@@ -86,6 +108,8 @@ export class ButtonActionConfiguration {
 
   // passing constants to template
   protected BA = ButtonAction;
+  /** kept in step with the cap the Vest suite enforces on action.url */
+  protected readonly urlLength = URL_LENGTH;
   protected buttonActions = ButtonActions;
 
 

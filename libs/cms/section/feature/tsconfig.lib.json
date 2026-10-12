@@ -22,6 +22,7 @@
     { "path": "../../../avatar/data-access/tsconfig.lib.json" },
     { "path": "../../../avatar/feature/tsconfig.lib.json" },
     { "path": "../../../avatar/ui/tsconfig.lib.json" },
+    { "path": "../../../business/contract/data-access/tsconfig.lib.json" },
     { "path": "../../../calevent/data-access/tsconfig.lib.json" },
     { "path": "../../../calevent/feature/tsconfig.lib.json" },
     { "path": "../../../calevent/ui/tsconfig.lib.json" },

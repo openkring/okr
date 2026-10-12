@@ -502,6 +502,9 @@ export const onContractWritten = Contract.onContractWritten;
 export const requestContractUpload = Contract.requestContractUpload;
 export const registerContractDocument = Contract.registerContractDocument;
 export const signContractDocuments = Contract.signContractDocuments;
+// member-shared dossier files behind a ContractDocument button (spec 1.97 §5)
+export const setContractDocumentShared = Contract.setContractDocumentShared;
+export const openSharedContractDocument = Contract.openSharedContractDocument;
 export const requestContract = Contract.requestContract;
 // request status under a contract button (spec 1.88 §5.3)
 export const getContractRequestStatus = Contract.getContractRequestStatus;

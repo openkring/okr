@@ -1,5 +1,7 @@
 import { Component, DestroyRef, computed, effect, inject, input, signal, untracked } from '@angular/core';
-import { IonCard, IonCardContent, IonCol, IonGrid, IonRow, ModalController } from '@ionic/angular';
+import { ActionSheetController, IonCard, IonCardContent, IonCol, IonGrid, IonRow, ModalController } from '@ionic/angular';
+import { Browser } from '@capacitor/browser';
+import { Capacitor } from '@capacitor/core';
 import {} from '@capacitor/google-maps';
 
 import { ButtonAction, ButtonSection, ViewPosition } from '@okr/shared-models';
@@ -58,7 +60,7 @@ type RequestStatus = { state: 'none' | 'pending' | 'approved' | 'owned' | 'notAc
               <ion-grid>
                 <ion-row>
                   <ion-col [size]="colSizeButton()">
-                    <okr-button-widget [class.ion-hide]="buttonHidden()" [section]="section" [i18n]="store.i18n" [editMode]="editMode()" (clicked)="onClick($event)" (workflow)="onWorkflow()" (contract)="onContract()" />
+                    <okr-button-widget [class.ion-hide]="buttonHidden()" [section]="section" [i18n]="store.i18n" [editMode]="editMode()" (clicked)="onClick($event)" (workflow)="onWorkflow()" (contract)="onContract()" (contractDocument)="onContractDocument($event)" />
                   </ion-col>
                   <ion-col [size]="colSizeText()">
                     <div [innerHTML]="content()"></div>
@@ -73,7 +75,7 @@ type RequestStatus = { state: 'none' | 'pending' | 'approved' | 'owned' | 'notAc
                     <div [innerHTML]="content()"></div>
                   </ion-col>
                   <ion-col [size]="colSizeButton()">
-                    <okr-button-widget [class.ion-hide]="buttonHidden()" [section]="section" [i18n]="store.i18n" [editMode]="editMode()" (clicked)="onClick($event)" (workflow)="onWorkflow()" (contract)="onContract()" />
+                    <okr-button-widget [class.ion-hide]="buttonHidden()" [section]="section" [i18n]="store.i18n" [editMode]="editMode()" (clicked)="onClick($event)" (workflow)="onWorkflow()" (contract)="onContract()" (contractDocument)="onContractDocument($event)" />
                   </ion-col>
                 </ion-row>
               </ion-grid>
@@ -82,7 +84,7 @@ type RequestStatus = { state: 'none' | 'pending' | 'approved' | 'owned' | 'notAc
               <ion-grid>
                 <ion-row>
                   <ion-col size="12">
-                    <okr-button-widget [class.ion-hide]="buttonHidden()" [section]="section" [i18n]="store.i18n" [editMode]="editMode()" (clicked)="onClick($event)" (workflow)="onWorkflow()" (contract)="onContract()" />
+                    <okr-button-widget [class.ion-hide]="buttonHidden()" [section]="section" [i18n]="store.i18n" [editMode]="editMode()" (clicked)="onClick($event)" (workflow)="onWorkflow()" (contract)="onContract()" (contractDocument)="onContractDocument($event)" />
                   </ion-col>
                 </ion-row>
                 <ion-row>
@@ -101,13 +103,13 @@ type RequestStatus = { state: 'none' | 'pending' | 'approved' | 'owned' | 'notAc
                 </ion-row>
                 <ion-row>
                   <ion-col size="12">
-                    <okr-button-widget [class.ion-hide]="buttonHidden()" [section]="section" [i18n]="store.i18n" [editMode]="editMode()" (clicked)="onClick($event)" (workflow)="onWorkflow()" (contract)="onContract()" />
+                    <okr-button-widget [class.ion-hide]="buttonHidden()" [section]="section" [i18n]="store.i18n" [editMode]="editMode()" (clicked)="onClick($event)" (workflow)="onWorkflow()" (contract)="onContract()" (contractDocument)="onContractDocument($event)" />
                   </ion-col>
                 </ion-row>
               </ion-grid>
             }
             @default {  <!-- VP.None -->
-              <okr-button-widget [class.ion-hide]="buttonHidden()" [section]="section" [i18n]="store.i18n" [editMode]="editMode()" (clicked)="onClick($event)" (workflow)="onWorkflow()" (contract)="onContract()" />
+              <okr-button-widget [class.ion-hide]="buttonHidden()" [section]="section" [i18n]="store.i18n" [editMode]="editMode()" (clicked)="onClick($event)" (workflow)="onWorkflow()" (contract)="onContract()" (contractDocument)="onContractDocument($event)" />
             }
           }
         }
@@ -126,6 +128,7 @@ type RequestStatus = { state: 'none' | 'pending' | 'approved' | 'owned' | 'notAc
 export class ButtonSectionComponent {
   protected readonly store = inject(SectionStore);
   private modalController = inject(ModalController);
+  private readonly actionSheetController = inject(ActionSheetController);
   private reservationService = inject(ReservationService);
 
   // inputs
@@ -272,6 +275,45 @@ export class ButtonSectionComponent {
     } catch (ex) {
       warn('ButtonSectionComponent.onContract: ' + ex);
       await this.toast(i18n.contract_error());
+    }
+  }
+
+  /**
+   * ButtonAction.ContractDocument (spec 1.97 §6.3): the button names a contract, the callable signs
+   * its member-shared file(s). On the web the tab is opened inside the tap — a window.open after the
+   * awaited call is blocked (Safari) — and pointed at the signed URL once it arrives.
+   */
+  protected async onContractDocument(contractKey: string): Promise<void> {
+    if (!contractKey) return;
+    const i18n = this.store.i18n;
+    const tab = Capacitor.isNativePlatform() ? null : window.open('', '_blank');
+    if (tab) tab.opener = null;
+    try {
+      const { getFunctions, httpsCallable } = await import('firebase/functions');
+      const { getApp } = await import('firebase/app');
+      const fn = httpsCallable<{ contractKey: string }, { documents: { title: string; url: string }[] }>(
+        getFunctions(getApp(), 'europe-west6'), 'openSharedContractDocument');
+      const { documents } = (await fn({ contractKey })).data;
+      if (documents.length === 1) {
+        if (tab) tab.location.href = documents[0].url;
+        else await Browser.open({ url: documents[0].url });
+        return;
+      }
+      tab?.close();
+      // several shared files (policy + AVB): each sheet button is a fresh tap, so it may open a tab itself
+      const sheet = await this.actionSheetController.create({
+        header: i18n.contract_document_chooser(),
+        buttons: [
+          ...documents.map((d) => ({ text: d.title, handler: () => void Browser.open({ url: d.url }) })),
+          { text: i18n.contract_document_cancel(), role: 'cancel' },
+        ],
+      });
+      await sheet.present();
+    } catch (ex) {
+      tab?.close();
+      // not shared, archived, another tenant … all read as not-found on purpose: one friendly text
+      warn('ButtonSectionComponent.onContractDocument: ' + ex);
+      await this.toast(i18n.contract_document_unavailable());
     }
   }
 

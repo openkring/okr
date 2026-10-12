@@ -40,6 +40,7 @@
     "nda": "Non-disclosure agreement",
     "license": "License agreement",
     "serviceAgreement": "Service agreement",
+    "insurance": "Insurance",
     "other": "Other contract"
   },
   "state": {
@@ -243,6 +244,13 @@
     "pick": {
       "label": "File",
       "helper": "PDF, image (JPEG, PNG, HEIC), Word, OpenDocument, text or email, at most 25 MB."
+    },
+    "shared": {
+      "chip": "For members",
+      "share": "Share with members",
+      "unshare": "Stop sharing with members",
+      "blocked": "You cannot share strictly confidential contracts with members.",
+      "error": "The sharing could not be changed. Please try again."
     }
   },
   "deadline": {
@@ -298,6 +306,9 @@
     },
     "serviceAgreement": {
       "label": "Service agreement"
+    },
+    "insurance": {
+      "label": "Insurance"
     },
     "other": {
       "label": "Other contract"

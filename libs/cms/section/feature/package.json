@@ -49,6 +49,7 @@
     "@okr/calevent-ui": "*",
     "@okr/weather-feature": "*",
     "@okr/location-data-access": "*",
+    "@okr/business-contract-data-access": "*",
     "@okr/content-folder-util": "*",
     "@okr/user-data-access": "*"
   }

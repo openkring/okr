@@ -14,8 +14,8 @@ import { IMGIX_PRIVATE_HOST, signImgixUrl } from '../_storage/imgix-sign';
 import { privateBucket } from '../_storage/private-bucket';
 import { planContractScan, scanEventTarget } from './contract-scan';
 import {
-  ALLOWED_CONTRACT_MIME_TYPES, buildContractDocumentStamp, canReadContractData, contractDocumentPath,
-  MAX_CONTRACT_FILE_BYTES, needsRestamp, upsertDocumentRef,
+  ALLOWED_CONTRACT_MIME_TYPES, buildContractDocumentStamp, canReadContractData, canShareContractDocument, contractDocumentPath,
+  MAX_CONTRACT_FILE_BYTES, needsRestamp, sharedDocumentRefs, upsertDocumentRef,
 } from './contract-document.util';
 import { loadViewer, loadWritableContract } from './caller';
 
@@ -205,6 +205,70 @@ export const signContractDocuments = onCall({ ...CALLABLE, secrets: [imgixPrivat
     return { key: s.id, name, mimeType, size: Number(s.get('size') ?? 0), url, thumbnailUrl };
   }));
   logger.info(`${cf}: signed ${documents.length}/${keys.length} for tenant ${viewer.tenantId}`);
+  return { documents };
+});
+
+/**
+ * Shares one dossier file with every member of the contract's tenant, or stops sharing it (spec 1.97 §5.2).
+ * `documents[]` is server-owned (rules: contractServerFieldsUnchanged), hence a callable.
+ */
+export const setContractDocumentShared = onCall(CALLABLE, async (
+  request: CallableRequest<{ contractKey?: string; docKey?: string; shared?: boolean }>,
+): Promise<{ documents: ContractDocumentRef[] }> => {
+  const cf = 'setContractDocumentShared';
+  const viewer = await loadViewer(request, cf);
+  const { contractKey = '', docKey = '', shared } = request.data ?? {};
+  if (typeof shared !== 'boolean') throw new HttpsError('invalid-argument', `${cf}: shared`);
+  const { ref: contractRef } = await loadWritableContract(viewer, contractKey, cf);
+  const documents = await getFirestore().runTransaction(async (tx) => {
+    const fresh = (await tx.get(contractRef)).data();
+    if (!fresh) throw new HttpsError('not-found', `${cf}: contract not found`);
+    if (shared && !canShareContractDocument(fresh)) throw new HttpsError('failed-precondition', `${cf}: strictly confidential`);
+    const refs = Array.isArray(fresh['documents']) ? (fresh['documents'] as ContractDocumentRef[]) : [];
+    if (!refs.some((r) => r.docKey === docKey)) throw new HttpsError('not-found', `${cf}: document not in this contract`);
+    const next = refs.map((r) => {
+      if (r.docKey !== docKey) return r;
+      const { sharedWithMembers: _drop, ...rest } = r;
+      void _drop;
+      return shared ? { ...rest, sharedWithMembers: true } : rest;
+    });
+    tx.update(contractRef, { documents: next });
+    return next;
+  });
+  logger.info(`${cf}: ${docKey} on contract ${contractKey} shared=${shared} (tenant ${viewer.tenantId})`);
+  return { documents };
+});
+
+/**
+ * Signed links to the member-shared files of one contract (spec 1.97 §5.3) — the target of a
+ * ButtonAction.ContractDocument button. Returns titles and URLs only, never contract data; every
+ * refusal reads as not-found.
+ */
+export const openSharedContractDocument = onCall(CALLABLE, async (
+  request: CallableRequest<{ contractKey?: string }>,
+): Promise<{ documents: { title: string; url: string }[] }> => {
+  const cf = 'openSharedContractDocument';
+  const viewer = await loadViewer(request, cf);
+  const contractKey = String(request.data?.contractKey ?? '');
+  if (!/^[A-Za-z0-9_-]{1,64}$/.test(contractKey)) throw new HttpsError('invalid-argument', `${cf}: contractKey`);
+  const db = getFirestore();
+  const contract = (await db.collection(ContractCollection).doc(contractKey).get()).data();
+  const refs = sharedDocumentRefs(viewer, contract);
+  if (refs.length === 0) throw new HttpsError('not-found', `${cf}: nothing shared`);
+  const snaps = await db.getAll(...refs.map((r) => db.collection(ContractDocumentCollection).doc(r.docKey)));
+  const expires = Date.now() + URL_TTL_MS;
+  const documents = (await Promise.all(refs.map(async (r, i) => {
+    const snap = snaps[i];
+    const path = String(snap.get('fullPath') ?? '');
+    if (!snap.exists || snap.get('contractKey') !== contractKey || !path) return undefined;
+    const title = r.title || String(snap.get('title') || r.docKey);
+    const [url] = await privateBucket().file(path).getSignedUrl({
+      version: 'v4', action: 'read', expires, responseDisposition: `inline; filename="${title.replace(/[^\x20-\x7e]|"/g, '_')}"`,
+    });
+    return { title, url };
+  }))).filter((d): d is { title: string; url: string } => !!d);
+  if (documents.length === 0) throw new HttpsError('not-found', `${cf}: nothing shared`);
+  logger.info(`${cf}: signed ${documents.length} for contract ${contractKey} (tenant ${viewer.tenantId})`);
   return { documents };
 });
 

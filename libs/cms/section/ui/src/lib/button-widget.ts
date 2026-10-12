@@ -63,6 +63,8 @@ export class ButtonWidget {
   public workflow = output<void>();
   /** ButtonAction.Contract (spec 1.87): the section runs the request; the kind is read server-side. */
   public contract = output<void>();
+  /** ButtonAction.ContractDocument (spec 1.97): the section signs the shared file(s); payload = contractKey. */
+  public contractDocument = output<string>();
 
   private readonly imgixBaseUrl = this.env.services.imgixBaseUrl;
 
@@ -128,6 +130,10 @@ export class ButtonWidget {
     }
     if (this.actionType() === ButtonAction.Contract) {
       this.contract.emit();
+      return;
+    }
+    if (this.actionType() === ButtonAction.ContractDocument) {
+      this.contractDocument.emit(this.url());
       return;
     }
     const url = this.url();

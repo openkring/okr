@@ -59,5 +59,12 @@ export const ButtonActions: ButtonActionCategory[] = [
     name: 'contract',
     i18nBase: '@shared/categories.buttonAction.contract',
     icon: 'contract'
+  },
+  {
+    id: ButtonAction.ContractDocument,
+    abbreviation: 'CDOC',
+    name: 'contractDocument',
+    i18nBase: '@shared/categories.buttonAction.contractDocument',
+    icon: 'contract'
   }
 ]

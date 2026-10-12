@@ -66,6 +66,9 @@ export const CONTRACT_I18N_KEYS = {
   file_title_label: PFX + 'file.title.label', file_title_placeholder: PFX + 'file.title.placeholder',
   file_title_helper: PFX + 'file.title.helper', file_prior_label: PFX + 'file.prior.label',
   file_prior_none: PFX + 'file.prior.none', file_pick_label: PFX + 'file.pick.label', file_pick_helper: PFX + 'file.pick.helper',
+  file_shared_chip: PFX + 'file.shared.chip', file_shared_share: PFX + 'file.shared.share',
+  file_shared_unshare: PFX + 'file.shared.unshare', file_shared_blocked: PFX + 'file.shared.blocked',
+  file_shared_error: PFX + 'file.shared.error',
 
   // deadline panel
   deadline_next: PFX + 'deadline.next', deadline_none: PFX + 'deadline.none', deadline_notSet: PFX + 'deadline.notSet',

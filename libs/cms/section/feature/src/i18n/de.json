@@ -1294,7 +1294,7 @@
     }
   },
   "buttonAction": {
-    "intro": "<ul><li><strong>Download:</strong> Der Button startet einen Download der mittels URL referenzierten Datei. Die URL muss auf eine Datei im Firebase Storage zeigen.</li><li><strong>Navigieren:</strong> Der Button navigiert zur angegebenen URL. Die URL muss eine interne Route sein (siehe dazu die MenuItem Konfiguration).</li><li><strong>Browse:</strong> Der Button linkt auf eine externe URL (https://domain.com/path).</li><li><strong>Zoom:</strong> Die in der URL referenzierte Datei wird in einem Zoom-Viewer angezeigt (typischerweise ein Bild). Die URL muss auf eine Datei im Firebase Storage zeigen.</li><li><strong>Keine:</strong> Keine Aktion wird ausgeführt. Die URL wird ignoriert. Dies ist die Default-Einstellung.</li></ul>"
+    "intro": "<ul><li><strong>Download:</strong> Der Button startet einen Download der mittels URL referenzierten Datei. Die URL muss auf eine Datei im Firebase Storage zeigen.</li><li><strong>Navigieren:</strong> Der Button navigiert zur angegebenen URL. Die URL muss eine interne Route sein (siehe dazu die MenuItem Konfiguration).</li><li><strong>Browse:</strong> Der Button linkt auf eine externe URL (https://domain.com/path).</li><li><strong>Zoom:</strong> Die in der URL referenzierte Datei wird in einem Zoom-Viewer angezeigt (typischerweise ein Bild). Die URL muss auf eine Datei im Firebase Storage zeigen.</li><li><strong>Keine:</strong> Keine Aktion wird ausgeführt. Die URL wird ignoriert. Dies ist die Default-Einstellung.</li><li><strong>Vertragsdokument:</strong> Der Button öffnet das aktuelle, für Mitglieder freigegebene Dokument eines Vertrags. Lädst du im Vertrag eine neue Version hoch, zeigt der Button automatisch auf sie.</li></ul>"
   },
   "weather": {
     "title": "Wetter",
@@ -1321,5 +1321,16 @@
   },
   "message": {
     "moreButton": "Zur Chat-Übersicht"
+  },
+  "contractDocument": {
+    "pick": {
+      "label": "Vertrag",
+      "helper": "Der Button öffnet das aktuelle Dokument dieses Vertrags, das für Mitglieder freigegeben ist."
+    },
+    "chooser": {
+      "header": "Welches Dokument möchtest du öffnen?",
+      "cancel": "Abbrechen"
+    },
+    "unavailable": "Dieses Dokument ist gerade nicht verfügbar."
   }
 }

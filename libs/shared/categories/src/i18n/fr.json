@@ -79,6 +79,10 @@
     },
     "contract": {
       "label": "Demander un contrat"
+    },
+    "contractDocument": {
+      "label": "Ouvrir le document du contrat",
+      "description": "Ouvre le document actuel d’un contrat partagé avec les membres."
     }
   },
   "color": {

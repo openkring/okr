@@ -158,6 +158,9 @@
       "path": "../../../geo/location/data-access/tsconfig.lib.json"
     },
     {
+      "path": "../../../business/contract/data-access/tsconfig.lib.json"
+    },
+    {
       "path": "../../../user/data-access/tsconfig.lib.json"
     }
   ]

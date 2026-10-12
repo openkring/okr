@@ -10,10 +10,10 @@ import { MoneyModel } from './money.model';
  */
 export type ContractType =
   | 'loan' | 'mortgage' | 'partnerContract' | 'mandate' | 'workContract' | 'lease'
-  | 'employment' | 'purchase' | 'nda' | 'license' | 'serviceAgreement' | 'other';
+  | 'employment' | 'purchase' | 'nda' | 'license' | 'serviceAgreement' | 'other' | 'insurance';
 export const CONTRACT_TYPES: ContractType[] = [
   'loan', 'mortgage', 'partnerContract', 'mandate', 'workContract', 'lease',
-  'employment', 'purchase', 'nda', 'license', 'serviceAgreement', 'other',
+  'employment', 'purchase', 'nda', 'license', 'serviceAgreement', 'insurance', 'other',
 ];
 
 export type ContractState = 'draft' | 'negotiating' | 'active' | 'noticeGiven' | 'ended';
@@ -62,6 +62,8 @@ export interface ContractDocumentRef {
   role: ContractDocumentRole;
   title: string;
   docState: ContractDocState;
+  /** Every member of the contract's tenant may open this file (spec 1.97); carried to the next version. Legacy refs: undefined = false. */
+  sharedWithMembers?: boolean;
 }
 
 export class ContractModel implements OkrModel, NamedModel, SearchableModel, TaggedModel {

@@ -44,11 +44,43 @@ export function upsertDocumentRef(refs: ContractDocumentRef[], ref: ContractDocu
   const own = list.findIndex((r) => r.docKey === ref.docKey);
   if (own >= 0) {
     return list
-      .map((r, j) => (j === own ? ref : r))
+      .map((r, j) => (j === own ? withShareOf(ref, r) : r))
       .filter((r, j) => j === own || (r.docKey !== ref.docKey && !(priorVersionKey && r.docKey === priorVersionKey)));
   }
   const i = priorVersionKey ? list.findIndex((r) => r.docKey === priorVersionKey) : -1;
-  return i >= 0 ? list.map((r, j) => (j === i ? ref : r)) : [...list, ref];
+  return i >= 0 ? list.map((r, j) => (j === i ? withShareOf(ref, r) : r)) : [...list, ref];
+}
+
+/**
+ * The member share (spec 1.97 §5.1) follows the file across versions and register retries. Written
+ * only when true: the admin SDK rejects `undefined`, and a legacy ref without the field reads as false.
+ */
+function withShareOf(ref: ContractDocumentRef, previous: ContractDocumentRef): ContractDocumentRef {
+  const shared = ref.sharedWithMembers ?? previous.sharedWithMembers === true;
+  const { sharedWithMembers: _drop, ...rest } = ref;
+  void _drop;
+  return shared ? { ...rest, sharedWithMembers: true } : rest;
+}
+
+/** A missing strictness flag counts as strict, as everywhere else in this file. */
+const isStrict = (d: DocData): boolean => d['isStrictlyConfidential'] !== false;
+
+/** spec 1.97 §5.2: a strictly confidential contract never shares a file with members. */
+export function canShareContractDocument(d: DocData | undefined): boolean {
+  return !!d && !isStrict(d);
+}
+
+/**
+ * spec 1.97 §5.3: the files of a contract that a member of its tenant may open. Empty for every
+ * refusal (other tenant, no member role, archived, strictly confidential, nothing shared), so the
+ * caller cannot tell the cases apart.
+ */
+export function sharedDocumentRefs(v: ContractViewer, d: DocData | undefined): ContractDocumentRef[] {
+  if (!d || d['isArchived'] === true || isStrict(d)) return [];
+  if (!arr(d['tenants']).some((t) => v.tenantIds.includes(t))) return [];
+  if (!has(v, 'registered') && !has(v, 'admin')) return [];
+  const docs = Array.isArray(d['documents']) ? (d['documents'] as ContractDocumentRef[]) : [];
+  return docs.filter((r) => r?.sharedWithMembers === true && KEY_RE.test(String(r.docKey ?? '')));
 }
 
 export function pickSummarySource(refs: ContractDocumentRef[]): ContractDocumentRef | undefined {

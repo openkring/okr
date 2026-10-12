@@ -1,12 +1,14 @@
 import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { map, of, switchMap } from 'rxjs';
 import { IonContent, ModalController } from '@ionic/angular';
 
 import { CategoryListModel, LocationModel, SectionModel, UserModel } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, ErrorBanner, Header} from '@okr/shared-ui';
-import { coerceBoolean, deepEqual, safeStructuredClone } from '@okr/shared-util-core';
+import { coerceBoolean, deepEqual, hasRole, safeStructuredClone } from '@okr/shared-util-core';
 import { SectionForm } from '@okr/cms-section-ui';
 import { LocationService } from '@okr/location-data-access';
+import { ContractService } from '@okr/business-contract-data-access';
 import { dismissOverlay } from '@okr/shared-util-angular';
 
 import { SectionStore } from './section.store';
@@ -44,6 +46,7 @@ import { SectionStore } from './section.store';
             [states]="states()"
             [albumStyles]="albumStyles()"
             [weatherLocations]="weatherLocations()"
+            [contracts]="contracts()"
             [allTags]="tags()"
             [tenantId]="tenantId()"
             [linkOrigins]="store.appStore.appLinkOrigins()"
@@ -77,6 +80,19 @@ export class SectionEditModal {
   private locations = toSignal(inject(LocationService).list(), { initialValue: [] as LocationModel[] });
   protected weatherLocations = computed(() =>
     this.locations().map((l) => ({ okey: l.okey, name: l.name })));
+
+  /**
+   * Contracts a ContractDocument button may point at (spec 1.97). Only contract staff may list
+   * them (rules), so anyone else gets [] and types the key; strictly confidential contracts are
+   * left out because they can never share a file.
+   */
+  private readonly canListContracts = computed(() =>
+    this.section().type === 'button' && (hasRole('admin', this.currentUser()) || hasRole('treasurer', this.currentUser())));
+  private readonly contractService = inject(ContractService);
+  protected contracts = toSignal(toObservable(this.canListContracts).pipe(
+    switchMap((ok) => (ok ? this.contractService.listStaff(false) : of([]))),
+    map((list) => list.map((c) => ({ okey: c.okey, name: c.name || c.okey }))),
+  ), { initialValue: [] as { okey: string; name: string }[] });
 
   // signals
   protected initialData = signal<SectionModel | undefined>(undefined);

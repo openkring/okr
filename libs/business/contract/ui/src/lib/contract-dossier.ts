@@ -62,6 +62,9 @@ const SIGNED_URL_FRESH_MS = 8 * 60 * 1000;
         @if (uploadFailed()) {
           <ion-item lines="none"><ion-note color="danger">{{ i18n.file_uploadError() }}</ion-note></ion-item>
         }
+        @if (shareFailed()) {
+          <ion-item lines="none"><ion-note color="danger">{{ i18n.file_shared_error() }}</ion-note></ion-item>
+        }
         @if (signFailed()) {
           <ion-item lines="none"><ion-note color="warning">{{ i18n.file_signError() }}</ion-note></ion-item>
         }
@@ -84,7 +87,20 @@ const SIGNED_URL_FRESH_MS = 8 * 60 * 1000;
                     }
                   </ion-thumbnail>
                   <ion-label class="ion-text-wrap">{{ doc.title || signed?.name || doc.docKey }}</ion-label>
+                  @if (doc.sharedWithMembers) {
+                    <ion-chip slot="end" color="primary">{{ i18n.file_shared_chip() }}</ion-chip>
+                  }
                   <ion-chip slot="end" [outline]="true">{{ docStateLabel(doc.docState) }}</ion-chip>
+                  @if (canEdit()) {
+                    @let shareLabel = doc.sharedWithMembers ? i18n.file_shared_unshare() : i18n.file_shared_share();
+                    <ion-button slot="end" fill="clear" size="small"
+                      [disabled]="sharing() === doc.docKey || (!doc.sharedWithMembers && isStrict())"
+                      [title]="isStrict() && !doc.sharedWithMembers ? i18n.file_shared_blocked() : shareLabel"
+                      [attr.aria-label]="shareLabel" [attr.aria-pressed]="!!doc.sharedWithMembers"
+                      (click)="toggleShared($event, doc.docKey, !doc.sharedWithMembers)">
+                      <ion-icon slot="icon-only" src="{{ (doc.sharedWithMembers ? 'people' : 'lock-closed') | svgIcon }}" />
+                    </ion-button>
+                  }
                 </ion-item>
               }
             }
@@ -101,7 +117,7 @@ export class ContractDossier {
 
   public readonly contract = input.required<ContractModel>();
   public readonly canEdit = input(false);
-  /** emitted after a successful upload, so the store reloads the contract */
+  /** emitted after a successful upload or share change, so the store reloads the contract */
   public readonly changed = output<void>();
 
   protected readonly groups = computed(() => groupDocumentsByRole(this.contract().documents));
@@ -112,6 +128,11 @@ export class ContractDossier {
   protected readonly signFailed = signal(false);
   protected readonly uploading = signal(false);
   protected readonly uploadFailed = signal(false);
+  /** docKey whose member share is being changed, '' = none */
+  protected readonly sharing = signal('');
+  protected readonly shareFailed = signal(false);
+  /** a missing flag counts as strict, like on the server (spec 1.97 §5.2) */
+  protected readonly isStrict = computed(() => this.contract().isStrictlyConfidential !== false);
   private signedAt = 0;
   private signRequest = 0;
 
@@ -176,6 +197,23 @@ export class ContractDossier {
     const url = pickFreshUrl(signedOk, this.signedByKey().get(docKey));
     if (tab && url) tab.location.href = url;
     else tab?.close();
+  }
+
+  /** spec 1.97 §5.2: the button sits inside the file's link item, so the tap must not open the file. */
+  protected async toggleShared(event: Event, docKey: string, shared: boolean): Promise<void> {
+    event.preventDefault();
+    event.stopPropagation();
+    this.sharing.set(docKey);
+    this.shareFailed.set(false);
+    try {
+      await this.documentService.setShared(this.contract().okey, docKey, shared);
+      this.changed.emit();
+    } catch (error) {
+      console.error('ContractDossier.toggleShared: could not change the member share', error);
+      this.shareFailed.set(true);
+    } finally {
+      this.sharing.set('');
+    }
   }
 
   protected async addFile(): Promise<void> {

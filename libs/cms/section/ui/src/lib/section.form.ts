@@ -16,6 +16,7 @@ import { ImageStyleConfiguration } from './image-style-configuration';
 import { AlbumConfiguration } from './album-configuration';
 import { IframeConfiguration } from './iframe-configuration';
 import { WeatherConfiguration, WeatherLocationOption } from './weather-configuration';
+import { ContractOption } from './button-action-configuration';
 import { PeopleConfiguration } from './people-configuration';
 import { ResponsibilityConfiguration } from './responsibility-configuration';
 import { VideoConfiguration } from './video-configuration';
@@ -134,6 +135,7 @@ import { TimelineConfiguration } from './timeline-configuration';
                 [readOnly]="isReadOnly()"
                 [i18n]="i18n()"
                 [errors]="errors()"
+                [contracts]="contracts()"
               />
             }
             @if(iconConfig(); as iconConfig) {
@@ -538,6 +540,8 @@ export class SectionForm {
   public readonly readOnly = input(true);
   /** Locations offered by the weather configuration. Empty for every other section type. */
   public readonly weatherLocations = input<WeatherLocationOption[]>([]);
+  /** contracts a ContractDocument button may point at (spec 1.97); loaded by the modal for contract staff only */
+  public readonly contracts = input<ContractOption[]>([]);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
   // The per-type suite is picked at runtime from formData().type (validateSection), so the

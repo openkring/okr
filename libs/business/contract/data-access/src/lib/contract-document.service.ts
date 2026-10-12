@@ -44,6 +44,15 @@ export class ContractDocumentService {
     return (await fn({ documentKeys })).data.documents;
   }
 
+  /** Shares one file with every member of the contract's tenant, or stops sharing it (spec 1.97 §5.2). */
+  public async setShared(contractKey: string, docKey: string, shared: boolean): Promise<ContractDocumentRef[]> {
+    const fn = httpsCallable<{ contractKey: string; docKey: string; shared: boolean }, { documents: ContractDocumentRef[] }>(
+      this.functions,
+      'setContractDocumentShared'
+    );
+    return (await fn({ contractKey, docKey, shared })).data.documents;
+  }
+
   public async summarize(contractKey: string): Promise<{ abstract: string; suggestedTags: string[] }> {
     const fn = httpsCallable<{ contractKey: string }, { abstract: string; suggestedTags: string[] }>(
       this.functions,

@@ -40,6 +40,7 @@
     "nda": "Geheimhaltungsvereinbarung",
     "license": "Lizenzvertrag",
     "serviceAgreement": "Dienstleistungsvertrag",
+    "insurance": "Versicherung",
     "other": "Anderer Vertrag"
   },
   "state": {
@@ -243,6 +244,13 @@
     "pick": {
       "label": "Datei",
       "helper": "PDF, Bild (JPEG, PNG, HEIC), Word, OpenDocument, Text oder E-Mail, höchstens 25 MB."
+    },
+    "shared": {
+      "chip": "Für Mitglieder",
+      "share": "Für Mitglieder freigeben",
+      "unshare": "Freigabe für Mitglieder aufheben",
+      "blocked": "Streng vertrauliche Verträge kannst du nicht für Mitglieder freigeben.",
+      "error": "Die Freigabe konnte nicht geändert werden. Versuche es bitte nochmals."
     }
   },
   "deadline": {
@@ -298,6 +306,9 @@
     },
     "serviceAgreement": {
       "label": "Dienstleistungsvertrag"
+    },
+    "insurance": {
+      "label": "Versicherung"
     },
     "other": {
       "label": "Anderer Vertrag"

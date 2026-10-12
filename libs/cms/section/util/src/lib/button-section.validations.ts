@@ -1,4 +1,4 @@
-import { staticSuite } from 'vest';
+import { omitWhen, staticSuite } from 'vest';
 
 import { ButtonAction, ButtonSection, ColorIonic } from '@okr/shared-models';
 import { categoryValidations, numberValidations, stringValidations } from '@okr/shared-util-core';
@@ -22,6 +22,13 @@ export const buttonSectionValidations = staticSuite((model: ButtonSection) => {
     categoryValidations('style.color', model.properties?.style?.color, ColorIonic);
 
     categoryValidations('action.type', model.properties?.action?.type, ButtonAction);
-    stringValidations('action.url', model.properties?.action?.url, URL_LENGTH);
+    const isContractDocument = model.properties?.action?.type === ButtonAction.ContractDocument;
+    // a URL the author types: capped; a contractKey picked from a list (spec 1.97): a foreign key, mandatory and uncapped
+    omitWhen(isContractDocument, () => {
+      stringValidations('action.url', model.properties?.action?.url, URL_LENGTH);
+    });
+    omitWhen(!isContractDocument, () => {
+      stringValidations('action.url', model.properties?.action?.url, undefined, 0, true);
+    });
     stringValidations('action.altText', model.properties?.action?.altText, COMMENT_LENGTH);
  });

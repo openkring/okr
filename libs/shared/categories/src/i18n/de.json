@@ -79,6 +79,10 @@
     },
     "contract": {
       "label": "Vertrag beantragen"
+    },
+    "contractDocument": {
+      "label": "Vertragsdokument öffnen",
+      "description": "Öffnet das aktuelle, für Mitglieder freigegebene Dokument eines Vertrags."
     }
   },
   "color": {

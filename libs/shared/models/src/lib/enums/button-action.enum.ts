@@ -10,4 +10,5 @@ export enum ButtonAction {
   // every button document already in the database.
   Workflow, // fire a workflow event (ui.buttonClicked); the consequence is configured as a rule
   Contract, // request a contract (spec 1.87): action.url carries the contract kind, e.g. 'skiffPlatz'
+  ContractDocument, // open the member-shared document(s) of a contract (spec 1.97): action.url carries the contractKey
 }

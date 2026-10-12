@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
-  buildContractDocumentStamp, canReadContractData, canWriteContracts, contractDocumentPath, needsRestamp, pickSummarySource, upsertDocumentRef,
+  buildContractDocumentStamp, canReadContractData, canShareContractDocument, canWriteContracts, contractDocumentPath, needsRestamp,
+  pickSummarySource, sharedDocumentRefs, upsertDocumentRef,
 } from './contract-document.util';
 
 const v = (roles: Record<string, boolean>, personKey = 'pX') => ({ tenantIds: ['t1'], roles, personKey });
@@ -56,6 +57,21 @@ describe('upsertDocumentRef', () => {
     const once = upsertDocumentRef([a], b, 'd1');
     expect(upsertDocumentRef(once, b, 'd1')).toEqual([b]);
   });
+  it('a new version inherits sharedWithMembers from the prior version (spec 1.97)', () => {
+    const b = { ...a, docKey: 'd2' };
+    expect(upsertDocumentRef([{ ...a, sharedWithMembers: true }], b, 'd1')).toEqual([{ ...b, sharedWithMembers: true }]);
+  });
+  it('an unshared prior version gives an unshared new version without the field', () => {
+    const out = upsertDocumentRef([a], { ...a, docKey: 'd2' }, 'd1');
+    expect(out[0]).not.toHaveProperty('sharedWithMembers');
+  });
+  it('a retried register keeps the flag already on its own entry', () => {
+    const b = { ...a, docKey: 'd2' };
+    expect(upsertDocumentRef([{ ...b, sharedWithMembers: true }], b, 'd1')).toEqual([{ ...b, sharedWithMembers: true }]);
+  });
+  it('a brand-new file starts unshared', () => {
+    expect(upsertDocumentRef([{ ...a, sharedWithMembers: true }], { ...a, docKey: 'd2' }, '')[1]).not.toHaveProperty('sharedWithMembers');
+  });
 });
 
 describe('pickSummarySource', () => {
@@ -97,4 +113,32 @@ describe('buildContractDocumentStamp', () => {
     expect(s.partyPersonKeys).toEqual([]);
     expect(s.tenants).toEqual([]);
   });
+});
+
+describe('sharedDocumentRefs (spec 1.97 §5.3)', () => {
+  const shared = { docKey: 's1', role: 'contract' as const, title: 'Police', docState: 'final' as const, sharedWithMembers: true };
+  const hidden = { docKey: 'h1', role: 'annex' as const, title: 'Prämie', docState: 'final' as const };
+  const c = (p: Record<string, unknown> = {}) => doc({ documents: [shared, hidden], ...p });
+  const member = v({ registered: true });
+  it('a member of the tenant gets only the shared refs', () => expect(sharedDocumentRefs(member, c())).toEqual([shared]));
+  it('a member of another tenant gets nothing', () =>
+    expect(sharedDocumentRefs({ tenantIds: ['t9'], roles: { registered: true }, personKey: 'pX' }, c())).toEqual([]));
+  it('a user without the registered role gets nothing', () => expect(sharedDocumentRefs(v({}), c())).toEqual([]));
+  it('an admin counts as a member', () => expect(sharedDocumentRefs(v({ admin: true }), c())).toEqual([shared]));
+  it('archived contract → nothing', () => expect(sharedDocumentRefs(member, c({ isArchived: true }))).toEqual([]));
+  it('strictly confidential → nothing', () => expect(sharedDocumentRefs(member, c({ isStrictlyConfidential: true }))).toEqual([]));
+  it('missing strictness flag counts as strict', () => {
+    const d = c();
+    delete (d as Record<string, unknown>)['isStrictlyConfidential'];
+    expect(sharedDocumentRefs(member, d)).toEqual([]);
+  });
+  it('no shared file → nothing', () => expect(sharedDocumentRefs(member, c({ documents: [hidden] }))).toEqual([]));
+  it('missing contract → nothing', () => expect(sharedDocumentRefs(member, undefined)).toEqual([]));
+  it('non-array documents → nothing', () => expect(sharedDocumentRefs(member, c({ documents: 'x' }))).toEqual([]));
+});
+
+describe('canShareContractDocument', () => {
+  it('internal contract may be shared', () => expect(canShareContractDocument(doc())).toBe(true));
+  it('strictly confidential may not', () => expect(canShareContractDocument(doc({ isStrictlyConfidential: true }))).toBe(false));
+  it('missing flag counts as strict', () => expect(canShareContractDocument({ tenants: ['t1'] })).toBe(false));
 });
