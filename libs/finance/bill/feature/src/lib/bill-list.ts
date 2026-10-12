@@ -1,10 +1,10 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, effect, inject, input, untracked, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { ActionSheetController, IonAvatar, IonButton, IonButtons, IonChip, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonLabel, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular';
+import { ActionSheetController, IonAvatar, IonButton, IonButtons, IonChip, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonLabel, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular';
 
 import { BillModel, RoleName } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { EmptyList, formatMinorAmount, ListFilter, Spinner } from '@okr/shared-ui';
+import { EmptyList, formatMinorAmount, ListFilter, Spinner, ImgDirective } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@okr/shared-util-angular';
 import { convertDateFormatToString, DateFormat, generateRandomString, getTodayStr, getYear, getYearList, hasRole } from '@okr/shared-util-core';
 import { billDisplayState, billStateColor, billStateLabel, billVoucherKeys, isDraftBill, isOverdueBill, isPayableBill } from '@okr/finance-bill-util';
@@ -21,10 +21,10 @@ import { BillStore } from './bill.store';
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [BillStore],
   imports: [
-    SvgIconPipe, AvatarPipe,
+    ImgDirective, SvgIconPipe, AvatarPipe,
     Spinner, ListFilter, EmptyList, Menu, ReadOnlyBanner,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon, IonPopover,
-    IonContent, IonLabel, IonGrid, IonRow, IonCol, IonAvatar, IonImg, IonChip
+    IonContent, IonLabel, IonGrid, IonRow, IonCol, IonAvatar, IonChip
   ],
   styles: [`
     .attach-icon { font-size: 0.9rem; vertical-align: middle; margin-left: 4px; color: var(--ion-color-medium); }
@@ -78,7 +78,7 @@ import { BillStore } from './bill.store';
               <ion-col size="1">
                 @if(bill.vendor; as v) {
                   <ion-avatar>
-                    <ion-img src="{{ v.modelType + '.' + v.key | avatar:v.modelType }}" alt="Vendor Logo" />
+                    <img okrImg src="{{ v.modelType + '.' + v.key | avatar:v.modelType }}" alt="Vendor Logo" />
                   </ion-avatar>
                 }
               </ion-col>

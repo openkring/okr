@@ -14,7 +14,6 @@ import { CategoryPlainNamePipe, SvgIconPipe } from '@okr/shared-pipes';
   ],
   styles: [`
     ion-avatar { margin: auto; height: 60px; width: 60px; padding: 10px; text-align: right; position: relative; }
-    ion-avatar img { filter: brightness(0) invert(1);}
     ion-title { margin: auto; width: 100%; text-align: center; padding: 10px; }
     small { text-align: center; display: block; margin-top: 2px; }
   `],
@@ -23,7 +22,6 @@ import { CategoryPlainNamePipe, SvgIconPipe } from '@okr/shared-pipes';
     <ion-item lines="none" class="ion-align-items-center ion-justify-content-center" [color]="color() | categoryPlainName:colorsIonic">
       <ion-avatar>
         <ion-icon [src]="icon() | svgIcon" size="large" />
-        <!-- <ion-img [src]="icon() | svgIcon" [alt]="alt()" /> -->
       </ion-avatar>
     </ion-item>
  

@@ -1,8 +1,8 @@
 import { Component, computed, effect, input, model, output } from '@angular/core';
 import { form } from '@angular/forms/signals';
-import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonRow } from '@ionic/angular';
+import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonRow } from '@ionic/angular';
 import { CategoryListModel, RoleName, UserModel, WorkrelModel } from '@okr/shared-models';
-import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n , ErrorNote} from '@okr/shared-ui';
+import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n , ErrorNote, ImgDirective } from '@okr/shared-ui';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 import { DEFAULT_CURRENCY, DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORDER, DEFAULT_ORG_TYPE, DEFAULT_PRICE, DEFAULT_TAGS, DEFAULT_WORKREL_STATE, DEFAULT_WORKREL_TYPE, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
@@ -14,10 +14,10 @@ import { workrelValidations, WorkrelI18n } from '@okr/relationship-workrel-util'
   selector: 'okr-workrel-form',
   standalone: true,
   imports: [
-    ErrorNote,
+    ImgDirective, ErrorNote,
     AvatarPipe, FullNamePipe,
     DateInput, Chips, NotesInput, CategorySelect, NumberInput,
-    IonGrid, IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonItem, IonAvatar, IonImg, IonLabel, IonButton,
+    IonGrid, IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonItem, IonAvatar, IonLabel, IonButton,
     TextInput
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -42,7 +42,7 @@ import { workrelValidations, WorkrelI18n } from '@okr/relationship-workrel-util'
               <ion-col size="9">
                 <ion-item lines="none">
                   <ion-avatar slot="start">
-                    <ion-img src="{{ 'person.' + subjectKey() | avatar }}" alt="Avatar of person" />
+                    <img okrImg src="{{ 'person.' + subjectKey() | avatar }}" alt="Avatar of person" />
                   </ion-avatar>
                   <ion-label>{{ subjectName1() | fullName:subjectName2() }}</ion-label>
                 </ion-item>
@@ -69,7 +69,7 @@ import { workrelValidations, WorkrelI18n } from '@okr/relationship-workrel-util'
               <ion-col size="9">
                 <ion-item lines="none">
                   <ion-avatar slot="start">
-                  <ion-img src="{{ 'org.' + objectKey() | avatar }}" alt="Logo of organization" />
+                  <img okrImg src="{{ 'org.' + objectKey() | avatar }}" alt="Logo of organization" />
                   </ion-avatar>
                   <ion-label>{{ objectName() }}</ion-label>
                 </ion-item>

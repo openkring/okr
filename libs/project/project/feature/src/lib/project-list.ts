@@ -5,7 +5,7 @@ import { of } from 'rxjs';
 import { Router } from '@angular/router';
 import {
   ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonChip, IonContent, IonHeader, IonIcon,
-  IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonNote, IonPopover, IonTitle, IonToolbar
+  IonItem, IonLabel, IonList, IonMenuButton, IonNote, IonPopover, IonTitle, IonToolbar
 } from '@ionic/angular';
 
 import { DEFAULT_PROJECT_STATE } from '@okr/shared-constants';
@@ -14,7 +14,7 @@ import { Menu } from '@okr/cms-menu-feature';
 import { BookingLineModel, ProjectModel } from '@okr/shared-models';
 import { TranslatePipe } from '@okr/shared-i18n';
 import { PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
-import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
+import { EmptyList, ListFilter, Spinner, ImgDirective } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error, resourceParams } from '@okr/shared-util-angular';
 import { AccountService } from '@okr/finance-account-data-access';
 import { formatMinorAmount } from '@okr/finance-booking-util';
@@ -39,10 +39,10 @@ import { ProjectStore } from './project.store';
   selector: 'okr-project-list',
   standalone: true,
   imports: [
-    AsyncPipe, TranslatePipe, SvgIconPipe, PrettyDatePipe, AvatarPipe,
+    ImgDirective, AsyncPipe, TranslatePipe, SvgIconPipe, PrettyDatePipe, AvatarPipe,
     Spinner, EmptyList, ListFilter, Menu,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
-    IonContent, IonList, IonItem, IonLabel, IonAvatar, IonImg, IonChip, IonPopover, IonNote
+    IonContent, IonList, IonItem, IonLabel, IonAvatar, IonChip, IonPopover, IonNote
   ],
   providers: [ProjectStore],
   styles: [`
@@ -91,7 +91,7 @@ import { ProjectStore } from './project.store';
             <ion-item button [detail]="false" (click)="showActions(project)">
               @if (project.projectManager) {
                 <ion-avatar slot="start">
-                  <ion-img src="{{ project.projectManager.modelType + '.' + project.projectManager.key | avatar }}" alt="" />
+                  <img okrImg src="{{ project.projectManager.modelType + '.' + project.projectManager.key | avatar }}" alt="" />
                 </ion-avatar>
               }
               <ion-label class="name ion-text-wrap">

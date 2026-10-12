@@ -1,13 +1,13 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { IonAvatar, IonButtons, IonContent, IonHeader, IonImg, IonItem, IonItemDivider, IonLabel, IonList, IonMenuButton, IonTitle, IonToolbar } from '@ionic/angular';
+import { IonAvatar, IonButtons, IonContent, IonHeader, IonItem, IonItemDivider, IonLabel, IonList, IonMenuButton, IonTitle, IonToolbar } from '@ionic/angular';
 import { of } from 'rxjs';
 
 import { AppStore } from '@okr/shared-feature';
 import { MembershipModel, NameDisplay, PersonModel, PersonModelName } from '@okr/shared-models';
 import { FullNamePipe } from '@okr/shared-pipes';
-import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
+import { EmptyList, ListFilter, Spinner, ImgDirective } from '@okr/shared-ui';
 import { addDuration, convertDateFormatToString, DateFormat, getAge, getBirthdayDiff, getStoreDateYear, getTodayStr, getWeekdayI18nKey, hasRole, isActiveMembership, nameMatches } from '@okr/shared-util-core';
 import { I18nService, TranslatePipe } from '@okr/shared-i18n';
 
@@ -64,11 +64,10 @@ interface BirthdayGroup {
   selector: 'okr-birthday-list',
   standalone: true,
   imports: [
-    FullNamePipe, AvatarPipe, TranslatePipe, AsyncPipe,
+    ImgDirective, FullNamePipe, AvatarPipe, TranslatePipe, AsyncPipe,
     Spinner, EmptyList, ListFilter,
     IonHeader, IonToolbar, IonButtons, IonMenuButton, IonTitle,
-    IonContent, IonList, IonItem, IonItemDivider, IonLabel, IonAvatar, IonImg,
-  ],
+    IonContent, IonList, IonItem, IonItemDivider, IonLabel, IonAvatar, ],
   styles: [`
     ion-avatar { width: 30px; height: 30px; background-color: var(--ion-color-light); }
     ion-item-divider.date { --background: var(--ion-color-primary); --color: var(--ion-color-primary-contrast); min-height: 26px; }
@@ -98,7 +97,7 @@ interface BirthdayGroup {
           @for (row of group.rows; track row.person.okey) {
             <ion-item>
               <ion-avatar slot="start">
-                <ion-img src="{{ personModelName + '.' + row.person.okey | avatar:personModelName }}" alt="Avatar" />
+                <img okrImg src="{{ personModelName + '.' + row.person.okey | avatar:personModelName }}" alt="Avatar" />
               </ion-avatar>
               <ion-label>{{ row.person.firstName | fullName:row.person.lastName:nameDisplay() }}</ion-label>
               <ion-label class="ion-hide-sm-down">

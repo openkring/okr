@@ -1,13 +1,13 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input, model, output } from '@angular/core';
 import { form } from '@angular/forms/signals';
-import { IonAvatar, IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonNote, IonRow } from '@ionic/angular';
+import { IonAvatar, IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonNote, IonRow } from '@ionic/angular';
 
 import { BexioIdMask, ENV } from '@okr/shared-config';
 import { ABBREVIATION_LENGTH, BEXIO_ID_LENGTH, DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, DEFAULT_MSTATE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORG_TYPE, DEFAULT_TAGS, END_FUTURE_DATE_STR, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { CategoryListModel, MembershipModel, PrivacySettings, RoleName, UserModel, REBATE_REASON_VALUES } from '@okr/shared-models';
 import { TranslatePipe } from '@okr/shared-i18n';
-import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n , ErrorNote} from '@okr/shared-ui';
+import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n , ErrorNote, ImgDirective } from '@okr/shared-ui';
 import { MODEL_SELECTOR, validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { areTagsVisible, coerceBoolean, getFullName, getItemLabel, hasRole } from '@okr/shared-util-core';
 
@@ -18,12 +18,12 @@ import { AvatarPipe } from '@okr/avatar-ui';
   selector: 'okr-membership-form',
   standalone: true,
   imports: [
-    ErrorNote,
+    ImgDirective, ErrorNote,
     AsyncPipe, TranslatePipe,
     AvatarPipe,
     TextInput, DateInput,
     Chips, NotesInput, CategorySelect, NumberInput, StringSelect,
-    IonGrid, IonRow, IonCol, IonItem, IonLabel, IonNote, IonCard, IonCardContent, IonAvatar, IonImg, IonButton
+    IonGrid, IonRow, IonCol, IonItem, IonLabel, IonNote, IonCard, IonCardContent, IonAvatar, IonButton
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
@@ -39,7 +39,7 @@ import { AvatarPipe } from '@okr/avatar-ui';
                     <ion-col size="9">
                       <ion-item lines="none">
                         <ion-avatar slot="start" [style.background-color]="'var(--ion-color-light)'">
-                          <ion-img src="{{ memberModelType() + '.' + memberKey() | avatar:'membership' }}" alt="Avatar of Member" />
+                          <img okrImg src="{{ memberModelType() + '.' + memberKey() | avatar:'membership' }}" alt="Avatar of Member" />
                         </ion-avatar>
                         <ion-label>{{ memberName() }}</ion-label>
                       </ion-item>
@@ -61,7 +61,7 @@ import { AvatarPipe } from '@okr/avatar-ui';
                     <ion-col size="9">
                       <ion-item lines="none">
                         <ion-avatar slot="start" [style.background-color]="'var(--ion-color-light)'">
-                          <ion-img src="{{ orgAvatar() | avatar:defaultIcon() }}" alt="Avatar Logo of Organization" />
+                          <img okrImg src="{{ orgAvatar() | avatar:defaultIcon() }}" alt="Avatar Logo of Organization" />
                         </ion-avatar>
                         <ion-label>{{ orgName() }}</ion-label>
                       </ion-item>

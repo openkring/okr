@@ -1,10 +1,10 @@
 import { NgTemplateOutlet } from '@angular/common';
 import { Component, computed, inject, input, linkedSignal } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonAccordion, IonAvatar, IonButton, IonIcon, IonImg, IonItem, IonLabel, IonList, ModalController, ToastController } from '@ionic/angular';
+import { ActionSheetController, ActionSheetOptions, IonAccordion, IonAvatar, IonButton, IonIcon, IonItem, IonLabel, IonList, ModalController, ToastController } from '@ionic/angular';
 
 import { Attendee, CalEventModel, MembershipModel, UserModel } from '@okr/shared-models';
 import { FullNamePipe, SvgIconPipe } from '@okr/shared-pipes';
-import { CountPill, EmptyList } from '@okr/shared-ui';
+import { CountPill, EmptyList, ImgDirective } from '@okr/shared-ui';
 import { coerceBoolean, fill, getAttendanceColor, getAttendanceIcon, isOngoing, isPerson } from '@okr/shared-util-core';
 import { createActionSheetButton, createActionSheetOptions, error } from '@okr/shared-util-angular';
 import { PersonSelectModal, PersonSelectResult } from '@okr/shared-feature';
@@ -24,10 +24,10 @@ import { AvatarPipe } from '@okr/avatar-ui';
   selector: 'okr-attendees-accordion',
   standalone: true,
   imports: [
-    NgTemplateOutlet,
+    ImgDirective, NgTemplateOutlet,
     AvatarPipe, FullNamePipe, SvgIconPipe,
     EmptyList, CountPill,
-    IonAccordion, IonItem, IonLabel, IonList, IonImg, IonAvatar, IonIcon, IonButton
+    IonAccordion, IonItem, IonLabel, IonList, IonAvatar, IonIcon, IonButton
   ],
   styles: [`
     ion-avatar { width: 30px; height: 30px; background-color: var(--ion-color-light); }
@@ -110,7 +110,7 @@ import { AvatarPipe } from '@okr/avatar-ui';
     <ion-item (click)="showActions(attendee)">
       <ion-icon slot="start" src="{{getAttendanceIcon(attendee.state) | svgIcon }}" color="{{getAttendanceColor(attendee.state)}}" />
       <ion-avatar slot="start">
-        <ion-img src="{{ 'person.' + attendee.person.key | avatar:'person' }}" alt="attendee avatar" />
+        <img okrImg src="{{ 'person.' + attendee.person.key | avatar:'person' }}" alt="attendee avatar" />
       </ion-avatar>
       <ion-label>{{ attendee.person.name1 | fullName: attendee.person.name2 }}</ion-label>
       @if(canEdit()) {

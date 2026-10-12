@@ -1,9 +1,9 @@
 import { Component, computed, effect, inject, input } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonAccordion, IonAvatar, IonButton, IonIcon, IonImg, IonItem, IonLabel, IonList } from '@ionic/angular';
+import { ActionSheetController, ActionSheetOptions, IonAccordion, IonAvatar, IonButton, IonIcon, IonItem, IonLabel, IonList } from '@ionic/angular';
 
 import { OrgModel, OwnershipModel, PersonModel, ResourceModel, RoleName } from '@okr/shared-models';
 import { DurationPipe, SvgIconPipe } from '@okr/shared-pipes';
-import { EmptyList } from '@okr/shared-ui';
+import { EmptyList, ImgDirective } from '@okr/shared-ui';
 import { getAvatarKey, getCategoryIcon, hasRole, isOngoing } from '@okr/shared-util-core';
 
 import { createActionSheetButton, createActionSheetOptions } from '@okr/shared-util-angular';
@@ -13,8 +13,8 @@ import { OwnershipStore } from './ownership.store';
   selector: 'okr-ownerships-accordion',
   standalone: true,
   imports: [
-    DurationPipe, SvgIconPipe, EmptyList,
-    IonAccordion, IonItem, IonLabel, IonList, IonButton, IonIcon, IonAvatar, IonImg
+    ImgDirective, DurationPipe, SvgIconPipe, EmptyList,
+    IonAccordion, IonItem, IonLabel, IonList, IonButton, IonIcon, IonAvatar
   ],
   providers: [OwnershipStore],
   styles: [`
@@ -38,7 +38,7 @@ import { OwnershipStore } from './ownership.store';
             @for(ownership of ownerships(); track $index) {
               <ion-item (click)="showActions(ownership)">
                 <ion-avatar slot="start">
-                  <ion-img src="{{ getIcon(ownership.resourceType) | svgIcon }}" alt="Ownership Avatar Logo" />
+                  <img okrImg src="{{ getIcon(ownership.resourceType) | svgIcon }}" alt="Ownership Avatar Logo" />
                 </ion-avatar>
                 <ion-label>{{ownership.resourceName}}</ion-label>
                 <ion-label>{{ ownership.validFrom | duration:ownership.validTo }}</ion-label>

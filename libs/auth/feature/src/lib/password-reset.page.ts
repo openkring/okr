@@ -1,8 +1,8 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { IonButton, IonCol, IonContent, IonGrid, IonImg, IonLabel, IonRow, IonSpinner } from '@ionic/angular';
+import { IonButton, IonCol, IonContent, IonGrid, IonLabel, IonRow, IonSpinner } from '@ionic/angular';
 
-import { Header } from '@okr/shared-ui';
+import { Header, ImgDirective } from '@okr/shared-ui';
 import { getImgixUrlWithAutoParams } from '@okr/shared-util-core';
 import { AuthCredentials } from '@okr/shared-models';
 
@@ -15,8 +15,8 @@ import { AuthStore } from './auth.store';
   standalone: true,
   providers: [AuthStore],
   imports: [
-    Header, LoginForm, PwdResetSent,
-    IonContent, IonImg, IonLabel, IonGrid, IonRow, IonCol, IonButton, IonSpinner
+    ImgDirective, Header, LoginForm, PwdResetSent,
+    IonContent, IonLabel, IonGrid, IonRow, IonCol, IonButton, IonSpinner
   ],
   styles: `
       .background-image { filter: blur(8px); -webkit-filter: blur(8px); position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.7; z-index: 1;}
@@ -56,7 +56,7 @@ import { AuthStore } from './auth.store';
       <div class="login-container">
         <img class="background-image" [src]="backgroundImageUrl()" [alt]="store.i18n.background_alt()" />
         <div class="login-form">
-          <ion-img class="logo" [src]="logoUrl()" alt="logo" (click)="store.gotoHome()"></ion-img>
+          <img okrImg eager class="logo" [src]="logoUrl()" alt="logo" (click)="store.gotoHome()" />
           @if (linkSent()) {
             <okr-pwdreset-sent
               [i18n]="store.i18n"

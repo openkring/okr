@@ -1,9 +1,9 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular';
+import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular';
 
 import { OrgModel, RoleName } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
+import { EmptyList, ListFilter, Spinner, ImgDirective } from '@okr/shared-ui';
 import { AlertService, createActionSheetButton, createActionSheetOptions } from '@okr/shared-util-angular';
 import { hasRole } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
@@ -21,11 +21,11 @@ type OrgSortField = 'name' | 'phone' | 'email';
   selector: 'okr-org-list',
   standalone: true,
   imports: [
-    AvatarPipe, SvgIconPipe,
+    ImgDirective, AvatarPipe, SvgIconPipe,
     Spinner, EmptyList, Menu, ListFilter,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
     IonGrid, IonRow, IonCol, IonLabel, IonContent, IonItem, IonPopover,
-    IonAvatar, IonImg, IonList
+    IonAvatar, IonList
   ],
   providers: [OrgStore],
   styles: [`
@@ -92,7 +92,7 @@ type OrgSortField = 'name' | 'phone' | 'email';
           @for(org of filteredOrgs(); track $index) {
             <ion-item (click)="showActions(org)">
               <ion-avatar slot="start">
-                <ion-img src="{{ 'org.' + org.okey | avatar:'org' }}" alt="Avatar Logo" />
+                <img okrImg src="{{ 'org.' + org.okey | avatar:'org' }}" alt="Avatar Logo" />
               </ion-avatar>
               <ion-label>{{org.name}}</ion-label>      
               <ion-label class="ion-hide-sm-down">

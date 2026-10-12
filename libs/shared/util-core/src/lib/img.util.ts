@@ -351,3 +351,21 @@ export function getPosterStyle(url: string): BackgroundStyle {
     'border': '1px'
   };
 }
+
+/**
+ * The URL of a default icon from the imgix icon set (`logo/icons/<name>.svg`), e.g. the generic
+ * avatar `other` that `<img okrImg>` falls back to.
+ */
+export function getDefaultIconUrl(imgixBaseUrl: string, icon = 'other'): string {
+  return `${imgixBaseUrl}/logo/icons/${icon}.svg`;
+}
+
+/**
+ * The source an `<img okrImg>` switches to after a load error, or `undefined` to give up.
+ * It gives up when the failed source already is the fallback, so a broken fallback never loops.
+ * Both URLs must be absolute (`HTMLImageElement.src` always is).
+ */
+export function getImgFallbackSrc(failedSrc: string, fallback: string | undefined): string | undefined {
+  if (!fallback || failedSrc === fallback) return undefined;
+  return fallback;
+}

@@ -1,9 +1,9 @@
 import { Component, computed, effect, input, model, output } from '@angular/core';
 import { form } from '@angular/forms/signals';
-import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonRow } from '@ionic/angular';
+import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonRow } from '@ionic/angular';
 import { DEFAULT_CURRENCY, DEFAULT_DATE, DEFAULT_KEY, DEFAULT_PERIODICITY, DEFAULT_RES_REASON, DEFAULT_RES_STATE, DEFAULT_TIME, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { CategoryListModel, MoneyModel, ReservationModel, RoleName, UserModel } from '@okr/shared-models';
-import { CategorySelect, Checkbox, CheckboxI18n, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n, TimeInput, TimeInputI18n , ErrorNote} from '@okr/shared-ui';
+import { CategorySelect, Checkbox, CheckboxI18n, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n, TimeInput, TimeInputI18n , ErrorNote, ImgDirective } from '@okr/shared-ui';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, getAvatarName, hasRole } from '@okr/shared-util-core';
 
@@ -14,10 +14,10 @@ import { AvatarPipe } from '@okr/avatar-ui';
   selector: 'okr-reservation-form',
   standalone: true,
   imports: [
-    ErrorNote,
+    ImgDirective, ErrorNote,
     AvatarPipe,
     TextInput, NumberInput, Chips, NotesInput, CategorySelect, DateInput, Checkbox, TimeInput,
-    IonGrid, IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonItem, IonAvatar, IonImg, IonLabel, IonButton
+    IonGrid, IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonItem, IonAvatar, IonLabel, IonButton
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
@@ -39,7 +39,7 @@ import { AvatarPipe } from '@okr/avatar-ui';
                 <ion-col size="9">
                   <ion-item lines="none">
                     <ion-avatar slot="start">
-                      <ion-img src="{{ reserverAvatarKey() | avatar }}" alt="Avatar of Reserver" />
+                      <img okrImg src="{{ reserverAvatarKey() | avatar }}" alt="Avatar of Reserver" />
                     </ion-avatar>
                     <ion-label>{{ reserverName() }}</ion-label>
                   </ion-item>
@@ -61,7 +61,7 @@ import { AvatarPipe } from '@okr/avatar-ui';
                 <ion-col size="9">
                   <ion-item lines="none">
                     <ion-avatar slot="start">
-                      <ion-img src="{{ resourceAvatarKey() | avatar }}" alt="Avatar Logo of Resource" />
+                      <img okrImg src="{{ resourceAvatarKey() | avatar }}" alt="Avatar Logo of Resource" />
                     </ion-avatar>
                     <ion-label>{{ resourceName() }}</ion-label>
                   </ion-item>

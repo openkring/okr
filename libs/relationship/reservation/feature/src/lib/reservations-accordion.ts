@@ -1,9 +1,9 @@
 import { Component, computed, effect, inject, input } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonAccordion, IonAvatar, IonButton, IonIcon, IonImg, IonItem, IonLabel, IonList } from '@ionic/angular';
+import { ActionSheetController, ActionSheetOptions, IonAccordion, IonAvatar, IonButton, IonIcon, IonItem, IonLabel, IonList } from '@ionic/angular';
 
 import { ReservationModel, RoleName } from '@okr/shared-models';
 import { DurationPipe, getSvgIconUrl, SvgIconPipe } from '@okr/shared-pipes';
-import { EmptyList } from '@okr/shared-ui';
+import { EmptyList, ImgDirective } from '@okr/shared-ui';
 import { coerceBoolean, getCategoryIcon, hasRole, isOngoing } from '@okr/shared-util-core';
 import { createActionSheetButton, createActionSheetOptions } from '@okr/shared-util-angular';
 
@@ -13,9 +13,9 @@ import { ReservationStore } from './reservation.store';
   selector: 'okr-reservations-accordion',
   standalone: true,
   imports: [
-    SvgIconPipe, DurationPipe,
+    ImgDirective, SvgIconPipe, DurationPipe,
     EmptyList,
-    IonAccordion, IonItem, IonLabel, IonButton, IonIcon, IonAvatar, IonImg, IonList
+    IonAccordion, IonItem, IonLabel, IonButton, IonIcon, IonAvatar, IonList
   ],
   providers: [ReservationStore],
   styles: [`ion-avatar { width: 30px; height: 30px; }`],
@@ -37,7 +37,7 @@ import { ReservationStore } from './reservation.store';
           @for(reservation of reservations(); track $index) {
             <ion-item (click)="showActions(reservation)">
                 <ion-avatar slot="start">
-                  <ion-img [src]="getIcon(reservation)" alt="resource avatar" />
+                  <img okrImg [src]="getIcon(reservation)" alt="resource avatar" />
                 </ion-avatar>
 
               <ion-label>{{reservation.resource?.name2}}</ion-label>  

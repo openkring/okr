@@ -1,11 +1,11 @@
 import { Component, computed, effect, inject, input, model, output } from '@angular/core';
 import { form } from '@angular/forms/signals';
-import { IonAvatar, IonButton, IonCard, IonCardContent, IonIcon, IonImg, IonItem, IonLabel, IonList } from '@ionic/angular';
+import { IonAvatar, IonButton, IonCard, IonCardContent, IonIcon, IonItem, IonLabel, IonList } from '@ionic/angular';
 
 import { AvatarInfo, UserModel } from '@okr/shared-models';
 import { COMMENT_LENGTH } from '@okr/shared-constants';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { ErrorNote, TextareaInput, TextInputI18n } from '@okr/shared-ui';
+import { ErrorNote, TextareaInput, TextInputI18n, ImgDirective } from '@okr/shared-ui';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, getAvatarName } from '@okr/shared-util-core';
 import { MODEL_SELECTOR } from '@okr/shared-util-angular';
@@ -31,8 +31,8 @@ import { InvitePersonsFormData, InvitePersonsI18n, invitePersonsValidations } fr
   selector: 'okr-invite-persons-form',
   standalone: true,
   imports: [
-    AvatarPipe, SvgIconPipe, TextareaInput, ErrorNote,
-    IonCard, IonCardContent, IonButton, IonIcon, IonList, IonItem, IonAvatar, IonImg, IonLabel,
+    ImgDirective, AvatarPipe, SvgIconPipe, TextareaInput, ErrorNote,
+    IonCard, IonCardContent, IonButton, IonIcon, IonList, IonItem, IonAvatar, IonLabel,
   ],
   styles: [`
     @media (width <= 600px) { ion-card { margin: 5px;} }
@@ -61,7 +61,7 @@ import { InvitePersonsFormData, InvitePersonsI18n, invitePersonsValidations } fr
                 @for (avatar of invitees(); track avatar.key) {
                   <ion-item>
                     <ion-avatar slot="start">
-                      <ion-img src="{{ avatar.modelType + '.' + avatar.key | avatar:defaultIcon }}" alt="Avatar" />
+                      <img okrImg src="{{ avatar.modelType + '.' + avatar.key | avatar:defaultIcon }}" alt="Avatar" />
                     </ion-avatar>
                     <ion-label>{{ avatarName(avatar) }}</ion-label>
                     @if (!isReadOnly()) {

@@ -1,10 +1,10 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonAccordion, IonAvatar, IonButton, IonCol, IonGrid, IonIcon, IonImg, IonItem, IonLabel, IonList, IonRow } from '@ionic/angular';
+import { ActionSheetController, ActionSheetOptions, IonAccordion, IonAvatar, IonButton, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonList, IonRow } from '@ionic/angular';
 
 import { PersonalRelModel, PersonModel, RoleName } from '@okr/shared-models';
 import { FullNamePipe, SvgIconPipe } from '@okr/shared-pipes';
-import { EmptyList } from '@okr/shared-ui';
+import { EmptyList, ImgDirective } from '@okr/shared-ui';
 import { coerceBoolean, hasRole, isOngoing } from '@okr/shared-util-core';
 
 import { AvatarPipe } from '@okr/avatar-ui';
@@ -16,10 +16,10 @@ import { PersonalRelStore } from './personal-rel.store';
   selector: 'okr-personal-rel-accordion',
   standalone: true,
   imports: [
-    AsyncPipe, SvgIconPipe, AvatarPipe, FullNamePipe, PersonalRelNamePipe,
+    ImgDirective, AsyncPipe, SvgIconPipe, AvatarPipe, FullNamePipe, PersonalRelNamePipe,
     EmptyList,
     IonAccordion, IonItem, IonLabel, IonIcon, IonList, IonButton,
-    IonImg, IonGrid, IonRow, IonCol, IonAvatar
+    IonGrid, IonRow, IonCol, IonAvatar
   ],
   providers: [PersonalRelStore],
   styles: [`
@@ -46,7 +46,7 @@ import { PersonalRelStore } from './personal-rel.store';
                 <ion-col size="3" size-md="4">
                   <ion-item lines="none">
                     <ion-avatar slot="start" class="list-avatar">
-                      <ion-img src="{{ 'person.' + personalRel.subjectKey | avatar:'person' }}" alt="avatar of first person" />
+                      <img okrImg src="{{ 'person.' + personalRel.subjectKey | avatar:'person' }}" alt="avatar of first person" />
                     </ion-avatar>
                     <ion-label class="ion-hide-md-down">{{personalRel.subjectFirstName | fullName:personalRel.subjectLastName}}</ion-label>
                   </ion-item>
@@ -59,7 +59,7 @@ import { PersonalRelStore } from './personal-rel.store';
                 <ion-col size="3" size-md="4">
                   <ion-item lines="none">
                     <ion-avatar slot="start" class="list-avatar">
-                      <ion-img src="{{ 'person.' + personalRel.objectKey | avatar:'person' }}" alt="avatar of second person" />
+                      <img okrImg src="{{ 'person.' + personalRel.objectKey | avatar:'person' }}" alt="avatar of second person" />
                     </ion-avatar>
                     <ion-label class="ion-hide-md-down">{{personalRel.objectFirstName | fullName:personalRel.objectLastName}}</ion-label>
                   </ion-item> 

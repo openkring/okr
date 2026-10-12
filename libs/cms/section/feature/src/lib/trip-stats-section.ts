@@ -1,11 +1,11 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input } from '@angular/core';
-import { IonAvatar, IonCard, IonCardContent, IonCol, IonGrid, IonImg, IonRow } from '@ionic/angular';
+import { IonAvatar, IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular';
 
 import { NgxEchartsDirective, provideEchartsCore } from 'ngx-echarts';
 
 import { TripStatsSection } from '@okr/shared-models';
-import { EmptyList, ListFilter, OptionalCardHeader, Spinner } from '@okr/shared-ui';
+import { EmptyList, ListFilter, OptionalCardHeader, Spinner, ImgDirective } from '@okr/shared-ui';
 import { TranslatePipe } from '@okr/shared-i18n';
 import { getCategoryIcon, getItemLabel } from '@okr/shared-util-core';
 
@@ -17,10 +17,9 @@ import { StatsRow, StatsSortField, TripStatsSectionStore } from './trip-stats-se
   selector: 'okr-trip-stats-section',
   standalone: true,
   imports: [
-    AsyncPipe, TranslatePipe, AvatarPipe,
+    ImgDirective, AsyncPipe, TranslatePipe, AvatarPipe,
     Spinner, EmptyList, OptionalCardHeader, ListFilter, NgxEchartsDirective,
-    IonCard, IonCardContent, IonGrid, IonRow, IonCol, IonAvatar, IonImg,
-  ],
+    IonCard, IonCardContent, IonGrid, IonRow, IonCol, IonAvatar, ],
   providers: [
     TripStatsSectionStore,
     provideEchartsCore({
@@ -98,7 +97,7 @@ import { StatsRow, StatsSortField, TripStatsSectionStore } from './trip-stats-se
                     <ion-row class="item-row clickable" (click)="store.showDetail(row, fallbackIcon(row) ?? '')">
                       <ion-col class="name">
                         <ion-avatar>
-                          <ion-img src="{{ row.avatarKey | avatar:fallbackIcon(row) }}" alt="Avatar" />
+                          <img okrImg src="{{ row.avatarKey | avatar:fallbackIcon(row) }}" alt="Avatar" />
                         </ion-avatar>
                         <span>{{ row.name }}</span>
                       </ion-col>

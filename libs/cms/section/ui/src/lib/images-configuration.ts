@@ -2,7 +2,7 @@ import { Component, computed, inject, input, model } from '@angular/core';
 import {
   ActionSheetController, ActionSheetOptions,
   IonButton, IonButtons, IonCard, IonCardContent, IonCardHeader, IonCardTitle,
-  IonIcon, IonImg, IonItem, IonLabel, IonList, IonReorder, IonReorderGroup, IonThumbnail,
+  IonIcon, IonItem, IonLabel, IonList, IonReorder, IonReorderGroup, IonThumbnail,
   ItemReorderEventDetail, ModalController
 } from '@ionic/angular';
 
@@ -11,7 +11,7 @@ import { getDownloadURL, ref } from 'firebase/storage';
 import { ENV, STORAGE } from '@okr/shared-config';
 import { IMAGE_MIMETYPES } from '@okr/shared-constants';
 import { ImageConfig, ImageType, UserModel } from '@okr/shared-models';
-import { ErrorNote, ImageDetailModal, UploadEntry } from '@okr/shared-ui';
+import { ErrorNote, ImageDetailModal, UploadEntry, ImgDirective } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, downloadToBrowser } from '@okr/shared-util-angular';
 import { IMGIX_THUMBNAIL_PARAMS, sanitizeFileName } from '@okr/shared-util-core';
 import { UploadService } from '@okr/avatar-data-access';
@@ -24,10 +24,10 @@ import { ImageEditModal } from './image-edit.modal';
   selector: 'okr-images-config',
   standalone: true,
   imports: [
-    SvgIconPipe,
+    ImgDirective, SvgIconPipe,
     IonCard, IonCardHeader, IonCardTitle, IonCardContent,
     IonList, IonItem, IonLabel, IonButtons, IonButton, IonIcon,
-    IonThumbnail, IonImg, IonReorderGroup, IonReorder,
+    IonThumbnail, IonReorderGroup, IonReorder,
     ErrorNote
   ],
   styles: [`
@@ -66,7 +66,7 @@ import { ImageEditModal } from './image-edit.modal';
                     <ion-reorder slot="start" />
                   }
                   <ion-thumbnail slot="start">
-                    <ion-img [src]="thumbnailUrl(img)" [alt]="img.altText || img.label" />
+                    <img okrImg [src]="thumbnailUrl(img)" [alt]="img.altText || img.label" />
                   </ion-thumbnail>
                   <ion-label>
                     <p>{{ img.label || img.url }}</p>

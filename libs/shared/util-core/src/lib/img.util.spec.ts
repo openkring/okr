@@ -4,6 +4,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as fileUtil from './file.util';
 import {
     addImgixParams,
+    getDefaultIconUrl,
+    getImgFallbackSrc,
     checkUrlType,
     fixHttpUrl,
     getImageType,
@@ -657,5 +659,32 @@ describe('getPosterStyle', () => {
     const url = 'https://bkaiser-private.imgix.net/tenant/scs/x.mov?fm=jpg&expires=1&s=abc';
     expect(getPosterStyle(url)['background-image']).toBe(`url(${url})`);
     expect(getPosterStyle(url)['background-size']).toBe('cover');
+  });
+});
+
+describe('getDefaultIconUrl', () => {
+  it('points to the generic avatar by default', () => {
+    expect(getDefaultIconUrl('https://x.imgix.net')).toBe('https://x.imgix.net/logo/icons/other.svg');
+  });
+
+  it('uses the given icon name', () => {
+    expect(getDefaultIconUrl('https://x.imgix.net', 'person')).toBe('https://x.imgix.net/logo/icons/person.svg');
+  });
+});
+
+describe('getImgFallbackSrc', () => {
+  const fallback = 'https://x.imgix.net/logo/icons/other.svg';
+
+  it('switches a failed image to the fallback', () => {
+    expect(getImgFallbackSrc('https://x.imgix.net/avatar/broken.jpg', fallback)).toBe(fallback);
+  });
+
+  it('gives up when the fallback itself failed, so it never loops', () => {
+    expect(getImgFallbackSrc(fallback, fallback)).toBeUndefined();
+  });
+
+  it('gives up without a fallback', () => {
+    expect(getImgFallbackSrc('https://x.imgix.net/a.jpg', undefined)).toBeUndefined();
+    expect(getImgFallbackSrc('https://x.imgix.net/a.jpg', '')).toBeUndefined();
   });
 });

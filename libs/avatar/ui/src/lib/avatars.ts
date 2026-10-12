@@ -1,6 +1,7 @@
 import { Component, computed, inject, input, model, output, viewChild } from '@angular/core';
-import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonIcon, IonImg, IonInput, IonItem, IonLabel, IonList, IonReorder, IonReorderGroup, IonRow, ItemReorderEventDetail, ToastController } from '@ionic/angular';
+import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonIcon, IonInput, IonItem, IonLabel, IonList, IonReorder, IonReorderGroup, IonRow, ItemReorderEventDetail, ToastController } from '@ionic/angular';
 
+import { ImgDirective } from '@okr/shared-ui';
 import { NAME_LENGTH } from '@okr/shared-constants';
 
 import { AvatarInfo, UserModel } from '@okr/shared-models';
@@ -24,10 +25,9 @@ import { AvatarPipe } from './avatar.pipe';
   selector: 'okr-avatars',
   standalone: true,
   imports: [
-    SvgIconPipe, AvatarPipe,
+    ImgDirective, SvgIconPipe, AvatarPipe,
     AvatarDisplay,
-    IonList, IonItem, IonLabel, IonIcon, IonReorderGroup, IonReorder, IonCard, IonCardHeader, IonCardContent, IonCardTitle, IonButton, IonAvatar, IonImg,
-    IonGrid, IonRow, IonCol
+    IonList, IonItem, IonLabel, IonIcon, IonReorderGroup, IonReorder, IonCard, IonCardHeader, IonCardContent, IonCardTitle, IonButton, IonAvatar, IonGrid, IonRow, IonCol
 ],
   styles: [`
     @media (width <= 600px) { ion-card { margin: 5px;} }
@@ -120,7 +120,7 @@ import { AvatarPipe } from './avatar.pipe';
                   <ion-item>
                     <ion-reorder slot="start" />
                     <ion-avatar slot="start">
-                      <ion-img src="{{ avatar.modelType + '.' + avatar.key | avatar:getDefaultIcon(avatar.modelType) }}" alt="Avatar" />
+                      <img okrImg src="{{ avatar.modelType + '.' + avatar.key | avatar:getDefaultIcon(avatar.modelType) }}" alt="Avatar" />
                     </ion-avatar>
                     <ion-label>{{ getAvatarName(avatar) }}</ion-label>
                     <ion-icon src="{{'cancel' | svgIcon }}" (click)="remove($index)" slot="end" />

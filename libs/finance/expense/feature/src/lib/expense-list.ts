@@ -3,13 +3,13 @@ import { Component, computed, effect, inject, input, signal } from '@angular/cor
 import {
   ActionSheetController, ModalController, ToastController,
   IonAvatar, IonButton, IonButtons, IonCol, IonContent, IonFab, IonFabButton, IonGrid, IonHeader, IonIcon,
-  IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar,
+  IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar,
 } from '@ionic/angular';
 
 import { ExpenseModel, RoleName } from '@okr/shared-models';
 import { TranslatePipe } from '@okr/shared-i18n';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
+import { EmptyList, ListFilter, Spinner, ImgDirective } from '@okr/shared-ui';
 import { AlertService, createActionSheetButton, createActionSheetDivider, createActionSheetOptions } from '@okr/shared-util-angular';
 import { convertDateFormatToString, DateFormat, generateRandomString, getItemLabel, hasRole } from '@okr/shared-util-core';
 
@@ -27,12 +27,11 @@ import { ExpenseListId, ExpenseStore } from './expense.store';
   selector: 'okr-expense-list',
   standalone: true,
   imports: [
-    AsyncPipe, SvgIconPipe, TranslatePipe, AvatarPipe,
+    ImgDirective, AsyncPipe, SvgIconPipe, TranslatePipe, AvatarPipe,
     Spinner, EmptyList, ListFilter, Menu,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonIcon, IonMenuButton,
     IonContent, IonList, IonItem, IonLabel, IonPopover, IonFab, IonFabButton,
-    IonGrid, IonRow, IonCol, IonAvatar, IonImg,
-  ],
+    IonGrid, IonRow, IonCol, IonAvatar, ],
   styles: [`
     .attach-icon { font-size: 0.9rem; vertical-align: middle; margin-left: 4px; color: var(--ion-color-medium); }
     ion-avatar { width: 30px; height: 30px; background-color: var(--ion-color-light); }
@@ -131,7 +130,7 @@ import { ExpenseListId, ExpenseStore } from './expense.store';
               @if (showSubmitter()) {
                 <ion-col size="3" class="name">
                   <ion-avatar>
-                    <ion-img src="{{ store.avatarKey(expense) | avatar:'person' }}" alt="Avatar" />
+                    <img okrImg src="{{ store.avatarKey(expense) | avatar:'person' }}" alt="Avatar" />
                   </ion-avatar>
                   <span>{{ expense.userName }}</span>
                 </ion-col>
@@ -150,7 +149,7 @@ import { ExpenseListId, ExpenseStore } from './expense.store';
                 [attr.aria-label]="statusLabel(expense) | translate | async" />
               @if (showSubmitter()) {
                 <ion-avatar slot="start">
-                  <ion-img src="{{ store.avatarKey(expense) | avatar:'person' }}" alt="Avatar" />
+                  <img okrImg src="{{ store.avatarKey(expense) | avatar:'person' }}" alt="Avatar" />
                 </ion-avatar>
               }
               <ion-label>

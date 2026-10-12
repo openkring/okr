@@ -1,11 +1,11 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input, signal } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonAccordion, IonButton, IonIcon, IonImg, IonItem, IonLabel, IonList, IonSelect, IonSelectOption, IonThumbnail } from '@ionic/angular';
+import { ActionSheetController, ActionSheetOptions, IonAccordion, IonButton, IonIcon, IonItem, IonLabel, IonList, IonSelect, IonSelectOption, IonThumbnail } from '@ionic/angular';
 
 import { TranslatePipe } from '@okr/shared-i18n';
 import { MembershipModel, RoleName } from '@okr/shared-models';
 import { FullNamePipe, RellogPipe, SvgIconPipe } from '@okr/shared-pipes';
-import { EmptyList } from '@okr/shared-ui';
+import { EmptyList, ImgDirective } from '@okr/shared-ui';
 import { coerceBoolean, DateFormat, getTodayStr, hasRole, isOngoing } from '@okr/shared-util-core';
 import { createActionSheetButton, createActionSheetOptions } from '@okr/shared-util-angular';
 
@@ -17,9 +17,9 @@ import { MembershipStore } from './membership.store';
   selector: 'okr-members-accordion',
   standalone: true,
   imports: [
-    TranslatePipe, RellogPipe, AsyncPipe, SvgIconPipe, AvatarPipe, FullNamePipe,
+    ImgDirective, TranslatePipe, RellogPipe, AsyncPipe, SvgIconPipe, AvatarPipe, FullNamePipe,
     EmptyList,
-    IonAccordion, IonItem, IonLabel, IonIcon, IonList, IonButton, IonImg, IonThumbnail,
+    IonAccordion, IonItem, IonLabel, IonIcon, IonList, IonButton, IonThumbnail,
     IonSelect, IonSelectOption
   ],
   providers: [MembershipStore],
@@ -56,7 +56,7 @@ import { MembershipStore } from './membership.store';
           @for(member of membersForType(); track $index) {
             <ion-item (click)="showActions(member)">
               <ion-thumbnail slot="start">
-                <ion-img src="{{ 'person.' + member.memberKey | avatar:'membership' }}" alt="membership avatar" />
+                <img okrImg src="{{ 'person.' + member.memberKey | avatar:'membership' }}" alt="membership avatar" />
               </ion-thumbnail>
               <ion-label>{{member.memberName1 | fullName:member.memberName2}}</ion-label>      
               <ion-label>{{ member.relLog | rellog }}</ion-label>

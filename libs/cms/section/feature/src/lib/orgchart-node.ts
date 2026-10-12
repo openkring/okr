@@ -1,6 +1,7 @@
 import { Component, computed, inject, input, output, signal } from '@angular/core';
-import { IonIcon, IonImg, IonItem, IonLabel, IonList } from '@ionic/angular';
+import { IonIcon, IonItem, IonLabel, IonList } from '@ionic/angular';
 
+import { ImgDirective } from '@okr/shared-ui';
 import { AvatarPipe } from '@okr/avatar-ui';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { isOrgchartBlocked, nextOrgchartVisitedKeys } from '@okr/cms-section-util';
@@ -17,9 +18,9 @@ import { OrgchartStore, OrgchartTreeNode } from './orgchart-section.store';
   selector: 'okr-orgchart-node',
   standalone: true,
   imports: [
-    OrgchartNodeComponent,
+    ImgDirective, OrgchartNodeComponent,
     AvatarPipe, SvgIconPipe,
-    IonList, IonItem, IonIcon, IonImg, IonLabel,
+    IonList, IonItem, IonIcon, IonLabel,
   ],
   styles: [`
     .node-item { --padding-start: 0; }
@@ -45,14 +46,16 @@ import { OrgchartStore, OrgchartTreeNode } from './orgchart-section.store';
 
       <!-- avatar — org uses 'org.okey | avatar' with fallback 'org'; group uses 'group.okey | avatar' with fallback group.icon -->
       @if (node().modelType === 'org') {
-        <ion-img
+        <img okrImg
           slot="start"
+          alt=""
           [src]="('org.' + node().okey) | avatar:'org'"
           (click)="onGroupClick($event)"
         />
       } @else {
-        <ion-img
+        <img okrImg
           slot="start"
+          alt=""
           [src]="('group.' + node().okey) | avatar:node().icon"
           (click)="onGroupClick($event)"
         />

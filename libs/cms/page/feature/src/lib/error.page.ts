@@ -1,10 +1,10 @@
 import { Component, computed, effect, inject, input, Signal } from '@angular/core';
-import { IonCol, IonContent, IonGrid, IonIcon, IonImg, IonLabel, IonRow } from '@ionic/angular';
+import { IonCol, IonContent, IonGrid, IonIcon, IonLabel, IonRow } from '@ionic/angular';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { switchMap } from 'rxjs';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { Header } from '@okr/shared-ui';
+import { Header, ImgDirective } from '@okr/shared-ui';
 import { DEFAULT_BANNER_URL } from '@okr/shared-constants';
 import { I18nService } from '@okr/shared-i18n';
 
@@ -30,9 +30,9 @@ const ERROR_I18N_BLOCK: Record<string, string> = {
   standalone: true,
   providers: [PageStore],
   imports: [
-    SvgIconPipe,
+    ImgDirective, SvgIconPipe,
     Header,
-    IonContent, IonGrid, IonRow, IonCol, IonLabel, IonIcon, IonImg
+    IonContent, IonGrid, IonRow, IonCol, IonLabel, IonIcon
   ],
   styles: [`
     :host {
@@ -91,7 +91,7 @@ const ERROR_I18N_BLOCK: Record<string, string> = {
           @if (logoUrl(); as logoUrl) {
             <ion-row>
               <ion-col>
-                <ion-img class="logo" [src]="logoUrl" (click)="gotoHome()" alt="{{ logoAltText() }}" />
+                <img okrImg eager class="logo" [src]="logoUrl" (click)="gotoHome()" alt="{{ logoAltText() }}" />
               </ion-col>
             </ion-row>
           }

@@ -1,10 +1,10 @@
 import { Component, computed, effect, inject, input, PLATFORM_ID, signal } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonChip, IonContent, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTextarea, IonTitle, IonToolbar, ModalController } from '@ionic/angular';
+import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonChip, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTextarea, IonTitle, IonToolbar, ModalController } from '@ionic/angular';
 
 import { PersonModel, RoleName, TaskModel } from '@okr/shared-models';
 import { ModelSelectService } from '@okr/shared-feature';
 import { PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
-import { EmptyList, ListFilter } from '@okr/shared-ui';
+import { EmptyList, ListFilter, ImgDirective } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error, isBrowser, keepDefaultTrue, QuickEntryService } from '@okr/shared-util-angular';
 import { convertDateFormatToString, DateFormat, getAvatarInfo, getAvatarInfoForCurrentUser, hasRole } from '@okr/shared-util-core';
 
@@ -28,10 +28,10 @@ import { TaskMove, TaskStore } from './task.store';
   selector: 'okr-task-list',
   standalone: true,
   imports: [
-    SvgIconPipe, PrettyDatePipe, AvatarPipe,
+    ImgDirective, SvgIconPipe, PrettyDatePipe, AvatarPipe,
     EmptyList, ListFilter, Menu, TaskBoard,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
-    IonLabel, IonContent, IonItem, IonList, IonAvatar, IonImg, IonTextarea, IonChip, IonPopover
+    IonLabel, IonContent, IonItem, IonList, IonAvatar, IonTextarea, IonChip, IonPopover
   ],
   providers: [TaskStore],
   styles: [`
@@ -132,7 +132,7 @@ import { TaskMove, TaskStore } from './task.store';
                 <ion-icon src="{{ getIcon(task) | svgIcon }}"  (click)="onCheckboxClick(task)" />
                 @if(task.assignee) {
                   <ion-avatar>
-                    <ion-img src="{{ task.assignee.modelType + '.' + task.assignee.key | avatar }}" alt="Avatar of the assigned person" />
+                    <img okrImg src="{{ task.assignee.modelType + '.' + task.assignee.key | avatar }}" alt="Avatar of the assigned person" />
                   </ion-avatar>
                 }
                 <div class="tags ion-hide-md-down">

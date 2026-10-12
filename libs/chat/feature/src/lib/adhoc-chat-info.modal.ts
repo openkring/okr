@@ -1,8 +1,8 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
-import { IonAvatar, IonButton, IonContent, IonIcon, IonImg, IonItem, IonLabel, IonList, IonNote, ModalController } from '@ionic/angular';
+import { IonAvatar, IonButton, IonContent, IonIcon, IonItem, IonLabel, IonList, IonNote, ModalController } from '@ionic/angular';
 
 import { AvatarInfo } from '@okr/shared-models';
-import { Header } from '@okr/shared-ui';
+import { Header, ImgDirective } from '@okr/shared-ui';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { AlertService, dismissOverlay } from '@okr/shared-util-angular';
 import { fill, getAvatarInfo } from '@okr/shared-util-core';
@@ -30,8 +30,8 @@ import { ADHOC_CHAT_MAX_MEMBERS, MATRIX_CHAT_I18N_KEYS, MatrixChatI18n } from '@
   selector: 'okr-adhoc-chat-info-modal',
   standalone: true,
   imports: [
-    Header, AvatarPipe, SvgIconPipe,
-    IonContent, IonList, IonItem, IonLabel, IonAvatar, IonImg, IonNote, IonButton, IonIcon
+    ImgDirective, Header, AvatarPipe, SvgIconPipe,
+    IonContent, IonList, IonItem, IonLabel, IonAvatar, IonNote, IonButton, IonIcon
   ],
   styles: [`
     .chat-name { font-size: 1.25rem; font-weight: 600; text-align: center; padding: 20px 16px 4px 16px; }
@@ -49,7 +49,7 @@ import { ADHOC_CHAT_MAX_MEMBERS, MATRIX_CHAT_I18N_KEYS, MatrixChatI18n } from '@
         @for (member of members(); track member.key) {
           <ion-item>
             <ion-avatar slot="start">
-              <ion-img src="{{ 'person.' + member.key | avatar }}" alt="Avatar" />
+              <img okrImg src="{{ 'person.' + member.key | avatar }}" alt="Avatar" />
             </ion-avatar>
             <ion-label>{{ member.name1 }} {{ member.name2 }}</ion-label>
             @if (member.key === currentPersonKey()) {

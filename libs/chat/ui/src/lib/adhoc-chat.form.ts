@@ -1,9 +1,9 @@
 import { Component, computed, effect, input, model, output } from '@angular/core';
 import { form } from '@angular/forms/signals';
-import { IonAvatar, IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonImg, IonItem, IonLabel, IonList, IonNote, IonRow } from '@ionic/angular';
+import { IonAvatar, IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonList, IonNote, IonRow } from '@ionic/angular';
 
 import { AvatarInfo, UserModel } from '@okr/shared-models';
-import { Checkbox, CheckboxI18n, ErrorNote, NotesInput, NotesInputI18n, RadioGroup, RadioGroupI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { Checkbox, CheckboxI18n, ErrorNote, NotesInput, NotesInputI18n, RadioGroup, RadioGroupI18n, TextInput, TextInputI18n, ImgDirective } from '@okr/shared-ui';
 import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { coerceBoolean } from '@okr/shared-util-core';
@@ -31,9 +31,9 @@ import { AdhocChatFormModel, adhocChatValidations, ChatRoomType, MatrixChatI18n 
   selector: 'okr-adhoc-chat-form',
   standalone: true,
   imports: [
-    TextInput, NotesInput, Checkbox, RadioGroup, ErrorNote, AvatarPipe, SvgIconPipe,
+    ImgDirective, TextInput, NotesInput, Checkbox, RadioGroup, ErrorNote, AvatarPipe, SvgIconPipe,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent,
-    IonList, IonItem, IonLabel, IonAvatar, IonImg, IonButton, IonIcon, IonNote
+    IonList, IonItem, IonLabel, IonAvatar, IonButton, IonIcon, IonNote
   ],
   styles: [`
     @media (width <= 600px) { ion-card { margin: 5px; } }
@@ -87,7 +87,7 @@ import { AdhocChatFormModel, adhocChatValidations, ChatRoomType, MatrixChatI18n 
                 @for (group of sourceGroups(); track group.key) {
                   <ion-item class="member-item" lines="full">
                     <ion-avatar slot="start">
-                      <ion-img src="{{ 'group.' + group.key | avatar }}" alt="Avatar" />
+                      <img okrImg src="{{ 'group.' + group.key | avatar }}" alt="Avatar" />
                     </ion-avatar>
                     <ion-label>{{ group.name2 }}</ion-label>
                     @if (!isReadOnly()) {
@@ -135,7 +135,7 @@ import { AdhocChatFormModel, adhocChatValidations, ChatRoomType, MatrixChatI18n 
               <ion-list lines="full">
                 <ion-item class="member-item" lines="full">
                   <ion-avatar slot="start">
-                    <ion-img src="{{ 'person.' + currentPersonKey() | avatar }}" alt="Avatar" />
+                    <img okrImg src="{{ 'person.' + currentPersonKey() | avatar }}" alt="Avatar" />
                   </ion-avatar>
                   <ion-label>{{ currentUserName() }}</ion-label>
                   <ion-note slot="end">{{ i18n().adhoc_member_you() }}</ion-note>
@@ -144,7 +144,7 @@ import { AdhocChatFormModel, adhocChatValidations, ChatRoomType, MatrixChatI18n 
                 @for (member of members(); track member.key) {
                   <ion-item class="member-item" lines="full">
                     <ion-avatar slot="start">
-                      <ion-img src="{{ 'person.' + member.key | avatar }}" alt="Avatar" />
+                      <img okrImg src="{{ 'person.' + member.key | avatar }}" alt="Avatar" />
                     </ion-avatar>
                     <ion-label>{{ member.name1 }} {{ member.name2 }}</ion-label>
                     @if (!isReadOnly()) {

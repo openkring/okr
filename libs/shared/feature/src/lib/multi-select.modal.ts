@@ -1,11 +1,11 @@
 import { Component, computed, effect, inject, input, linkedSignal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { IonAvatar, IonContent, IonImg, IonItem, IonLabel, IonList, IonSegment, IonSegmentButton, ModalController } from '@ionic/angular';
+import { IonAvatar, IonContent, IonItem, IonLabel, IonList, IonSegment, IonSegmentButton, ModalController } from '@ionic/angular';
 
 import { GroupModelName, OrgModelName, PersonModelName, UserModel } from '@okr/shared-models';
 import { FullNamePipe } from '@okr/shared-pipes';
 
-import { EmptyList, Header, Spinner } from '@okr/shared-ui';
+import { EmptyList, Header, Spinner, ImgDirective } from '@okr/shared-ui';
 import { AvatarPipe } from '@okr/avatar-ui';
 
 import { GroupSelectStore } from './group-select.store';
@@ -19,9 +19,9 @@ export type MultiSelectSegment = 'org' | 'group' | 'person';
   selector: 'okr-multi-select-modal',
   standalone: true,
   imports: [
-    FormsModule,
+    ImgDirective, FormsModule,
     Header, Spinner, FullNamePipe, AvatarPipe, EmptyList,
-    IonContent, IonItem, IonLabel, IonAvatar, IonImg, IonList,
+    IonContent, IonItem, IonLabel, IonAvatar, IonList,
     IonSegment, IonSegmentButton,
   ],
   providers: [OrgSelectStore, GroupSelectStore, PersonSelectStore],
@@ -61,7 +61,7 @@ export type MultiSelectSegment = 'org' | 'group' | 'person';
             @for(org of filteredOrgs(); track $index) {
               <ion-item class="item" (click)="select('org', org.okey)">
                 <ion-avatar slot="start">
-                  <ion-img src="{{ 'org.' + org.okey | avatar:orgDefaultIcon }}" alt="Avatar Logo" />
+                  <img okrImg src="{{ 'org.' + org.okey | avatar:orgDefaultIcon }}" alt="Avatar Logo" />
                 </ion-avatar>
                 <ion-label>{{ org.name }}</ion-label>
               </ion-item>
@@ -80,7 +80,7 @@ export type MultiSelectSegment = 'org' | 'group' | 'person';
             @for(group of filteredGroups(); track $index) {
               <ion-item class="item" (click)="select('group', group.okey)">
                 <ion-avatar slot="start">
-                  <ion-img src="{{ 'group.' + group.okey | avatar:group.icon }}" alt="Avatar Logo" />
+                  <img okrImg src="{{ 'group.' + group.okey | avatar:group.icon }}" alt="Avatar Logo" />
                 </ion-avatar>
                 <ion-label>{{ group.name }}</ion-label>
               </ion-item>
@@ -99,7 +99,7 @@ export type MultiSelectSegment = 'org' | 'group' | 'person';
             @for(person of filteredPersons(); track $index) {
               <ion-item class="item" (click)="select('person', person.okey)">
                 <ion-avatar slot="start">
-                  <ion-img src="{{ 'person.' + person.okey | avatar:personDefaultIcon }}" alt="Avatar Logo" />
+                  <img okrImg src="{{ 'person.' + person.okey | avatar:personDefaultIcon }}" alt="Avatar Logo" />
                 </ion-avatar>
                 <ion-label>{{ person.firstName | fullName:person.lastName }}</ion-label>
               </ion-item>

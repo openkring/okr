@@ -1,9 +1,9 @@
 import { Component, computed, effect, inject, input } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonAccordion, IonAvatar, IonButton, IonIcon, IonImg, IonItem, IonLabel, IonList } from '@ionic/angular';
+import { ActionSheetController, ActionSheetOptions, IonAccordion, IonAvatar, IonButton, IonIcon, IonItem, IonLabel, IonList } from '@ionic/angular';
 
 import { MembershipModel, OrgModel, PersonModel } from '@okr/shared-models';
 import { RellogPipe, SvgIconPipe } from '@okr/shared-pipes';
-import { EmptyList } from '@okr/shared-ui';
+import { EmptyList, ImgDirective } from '@okr/shared-ui';
 import { coerceBoolean, hasRole, isOngoing } from '@okr/shared-util-core';
 import { createActionSheetButton, createActionSheetOptions } from '@okr/shared-util-angular';
 
@@ -15,8 +15,8 @@ import { MembershipStore } from './membership.store';
   selector: 'okr-membership-accordion',
   standalone: true,
   imports: [
-    RellogPipe, SvgIconPipe, AvatarPipe, EmptyList,
-    IonAccordion, IonItem, IonLabel, IonButton, IonIcon, IonList, IonImg, IonAvatar
+    ImgDirective, RellogPipe, SvgIconPipe, AvatarPipe, EmptyList,
+    IonAccordion, IonItem, IonLabel, IonButton, IonIcon, IonList, IonAvatar
   ],
   providers: [MembershipStore],
   styles: [`
@@ -40,7 +40,7 @@ import { MembershipStore } from './membership.store';
           @for(membership of memberships(); track $index) {
             <ion-item (click)="showActions(membership)">
               <ion-avatar slot="start">
-                <ion-img src="{{ 'org.' + membership.orgKey | avatar:'membership' }}" alt="Membership Avatar Logo" />
+                <img okrImg src="{{ 'org.' + membership.orgKey | avatar:'membership' }}" alt="Membership Avatar Logo" />
               </ion-avatar>
               <ion-label>{{ membership.orgName }}</ion-label>
               <ion-label>{{ membership.relLog | rellog }}</ion-label>

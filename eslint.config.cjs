@@ -88,6 +88,11 @@ module.exports = [
           ],
         },
       ],
+      // ion-img is deprecated in Ionic 9 and removed in 10 (spec 1.96): use <img okrImg> (ImgDirective).
+      'no-restricted-imports': [
+        'error',
+        { paths: [{ name: '@ionic/angular', importNames: ['IonImg'], message: 'Use <img okrImg> (ImgDirective from @okr/shared-ui) instead of the deprecated ion-img.' }] },
+      ],
     },
   },
   // JS/JSX files (replaces compat for @nx/javascript)

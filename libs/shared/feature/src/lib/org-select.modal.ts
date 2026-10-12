@@ -1,8 +1,8 @@
 import { Component, computed, effect, inject, input, linkedSignal } from '@angular/core';
-import { IonAvatar, IonContent, IonImg, IonItem, IonLabel, IonList, ModalController } from '@ionic/angular';
+import { IonAvatar, IonContent, IonItem, IonLabel, IonList, ModalController } from '@ionic/angular';
 
 import { OrgModel, OrgModelName, UserModel } from '@okr/shared-models';
-import { EmptyList, Header, Spinner } from '@okr/shared-ui';
+import { EmptyList, Header, Spinner, ImgDirective } from '@okr/shared-ui';
 
 import { AvatarPipe } from '@okr/avatar-ui';
 import { dismissOverlay } from '@okr/shared-util-angular';
@@ -13,9 +13,9 @@ import { OrgSelectStore } from './org-select.store';
   selector: 'okr-org-select-modal',
   standalone: true,
   imports: [
-    Header, Spinner,
+    ImgDirective, Header, Spinner,
     AvatarPipe, EmptyList,
-    IonContent, IonItem, IonLabel, IonAvatar, IonImg, IonList,
+    IonContent, IonItem, IonLabel, IonAvatar, IonList,
   ],
   providers: [OrgSelectStore],
   styles: [`
@@ -41,7 +41,7 @@ import { OrgSelectStore } from './org-select.store';
             <ion-list lines="none">
               <ion-item class="item" (click)="select(org)">
                  <ion-avatar slot="start">
-                  <ion-img src="{{ 'org.' + org.okey | avatar:defaultIcon }}" alt="Avatar Logo" />
+                  <img okrImg src="{{ 'org.' + org.okey | avatar:defaultIcon }}" alt="Avatar Logo" />
                 </ion-avatar>
                 <ion-label>{{ org.name }}</ion-label>
               </ion-item>

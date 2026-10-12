@@ -1,6 +1,7 @@
 import { Component, computed, input } from '@angular/core';
-import { IonBadge, IonIcon, IonAvatar, IonImg, IonItem, IonLabel } from '@ionic/angular';
+import { IonBadge, IonIcon, IonAvatar, IonItem, IonLabel } from '@ionic/angular';
 
+import { ImgDirective } from '@okr/shared-ui';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { extractFirstPartOfOptionalTupel } from '@okr/shared-util-core';
 
@@ -12,8 +13,8 @@ import { MenuInfo } from './menu-info';
   selector: 'okr-multi-avatar',
   standalone: true,
   imports: [
-    SvgIconPipe, AvatarPipe, MenuInfo,
-    IonBadge, IonIcon, IonAvatar, IonImg, IonItem, IonLabel
+    ImgDirective, SvgIconPipe, AvatarPipe, MenuInfo,
+    IonBadge, IonIcon, IonAvatar, IonItem, IonLabel
   ],
   styles: [`
     ion-item::part(native) {
@@ -83,7 +84,7 @@ import { MenuInfo } from './menu-info';
           @if(icon.startsWith('//')) {
             <ion-item [button]="true">
               <ion-avatar slot="start" class="logo-avatar">
-                <ion-img src="{{ name | avatar:getModelName(name) }}" alt="Avatar Logo" />
+                <img okrImg src="{{ name | avatar:getModelName(name) }}" alt="Avatar Logo" />
               </ion-avatar>
               <ion-label>{{ label() }}</ion-label>
               @if(badge() > 0) {

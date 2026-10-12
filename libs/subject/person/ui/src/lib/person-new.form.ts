@@ -1,10 +1,10 @@
 import { Component, computed, effect, input, model, output } from '@angular/core';
 import { form } from '@angular/forms/signals';
-import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonRow } from '@ionic/angular';
+import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonRow } from '@ionic/angular';
 
 import { BexioIdMask, ChSsnMask } from '@okr/shared-config';
 import { CategoryListModel, City, RoleName, UserModel } from '@okr/shared-models';
-import { CategorySelect, Checkbox, CheckboxI18n, Chips, CountrySelect, CountrySelectI18n, DateInput, DateInputI18n, EmailInput, EmailInputI18n, ErrorNote, NotesInput, NotesInputI18n, PhoneInput, PhoneInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { CategorySelect, Checkbox, CheckboxI18n, Chips, CountrySelect, CountrySelectI18n, DateInput, DateInputI18n, EmailInput, EmailInputI18n, ErrorNote, NotesInput, NotesInputI18n, PhoneInput, PhoneInputI18n, TextInput, TextInputI18n, ImgDirective } from '@okr/shared-ui';
 import { coerceBoolean, getTodayStr, hasRole } from '@okr/shared-util-core';
 import { CITY_LENGTH, DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, DEFAULT_LOCALE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PHONE, DEFAULT_TAGS, DEFAULT_URL, DESCRIPTION_LENGTH, EMAIL_LENGTH, NUMBER_LENGTH, PHONE_LENGTH, SHORT_NAME_LENGTH, ZIP_LENGTH } from '@okr/shared-constants';
 import { AhvFormat, formatAhv, validateVestTree, vestErrors } from '@okr/shared-util-angular';
@@ -20,9 +20,9 @@ import { PersonLookup } from './person-lookup';
   selector: 'okr-person-new-form',
   standalone: true,
   imports: [
-    AvatarPipe, TextInput, DateInput, CategorySelect,
+    ImgDirective, AvatarPipe, TextInput, DateInput, CategorySelect,
     Chips, NotesInput, ErrorNote, PhoneInput, EmailInput, CategorySelect, Checkbox, CitySearch, PersonLookup, CountrySelect,
-    IonGrid, IonRow, IonCol, IonItem, IonAvatar, IonImg, IonButton, IonLabel, IonCard, IonCardHeader, IonCardTitle, IonCardContent
+    IonGrid, IonRow, IonCol, IonItem, IonAvatar, IonButton, IonLabel, IonCard, IonCardHeader, IonCardTitle, IonCardContent
   ],
   styles: [`ion-thumbnail { width: 30px; height: 30px; }`],
   template: `
@@ -244,7 +244,7 @@ import { PersonLookup } from './person-lookup';
                 <ion-col size="9">
                   <ion-item lines="none">
                     <ion-avatar slot="start">
-                      <ion-img src="{{ 'org.' + orgKey() | avatar }}" alt="Avatar Logo of Organization" />
+                      <img okrImg src="{{ 'org.' + orgKey() | avatar }}" alt="Avatar Logo of Organization" />
                     </ion-avatar>
                     <ion-label>{{ orgName() }}</ion-label>
                   </ion-item>

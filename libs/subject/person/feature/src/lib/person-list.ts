@@ -1,10 +1,10 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
-import { ActionSheetController, ActionSheetOptions, InfiniteScrollCustomEvent, IonAvatar, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonImg, IonInfiniteScroll, IonInfiniteScrollContent, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular';
+import { ActionSheetController, ActionSheetOptions, InfiniteScrollCustomEvent, IonAvatar, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonInfiniteScroll, IonInfiniteScrollContent, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular';
 
 import { NameDisplay, PersonModel, PersonModelName, RoleName } from '@okr/shared-models';
 import { FullNamePipe, SvgIconPipe } from '@okr/shared-pipes';
-import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
+import { EmptyList, ListFilter, Spinner, ImgDirective } from '@okr/shared-ui';
 import { AlertService, createActionSheetButton, createActionSheetDivider, createActionSheetOptions } from '@okr/shared-util-angular';
 import { getFullName, getPhotoUsageName, hasPhotoRestriction, hasRole, objectsToPhotos } from '@okr/shared-util-core';
 import { getPhotoUsageCategory } from '@okr/shared-categories';
@@ -23,11 +23,11 @@ type PersonSortField = 'name' | 'phone' | 'email';
   selector: 'okr-person-list',
   standalone: true,
   imports: [
-    FullNamePipe, AvatarPipe, SvgIconPipe, TranslatePipe, AsyncPipe,
+    ImgDirective, FullNamePipe, AvatarPipe, SvgIconPipe, TranslatePipe, AsyncPipe,
     Spinner, EmptyList, ListFilter, Menu,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
     IonLabel, IonContent, IonItem, IonPopover,
-    IonAvatar, IonImg, IonList,
+    IonAvatar, IonList,
     IonInfiniteScroll, IonInfiniteScrollContent
   ],
   providers: [PersonStore],
@@ -95,7 +95,7 @@ type PersonSortField = 'name' | 'phone' | 'email';
           @for(person of visiblePersons(); track person.okey) {
             <ion-item (click)="showActions(person)">
               <ion-avatar slot="start">
-                <ion-img src="{{ personModelName + '.' + person.okey | avatar:personModelName }}" alt="Avatar Logo" />
+                <img okrImg src="{{ personModelName + '.' + person.okey | avatar:personModelName }}" alt="Avatar Logo" />
               </ion-avatar>
               <ion-label>{{person.firstName | fullName:person.lastName:nameDisplay()}}</ion-label>
               @if(showsPhotoFlag(person)) {

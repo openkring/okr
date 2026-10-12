@@ -1,12 +1,12 @@
 import { Component, computed, effect, input, model, output, signal, Signal, untracked } from '@angular/core';
 import { form } from '@angular/forms/signals';
 import {
-  IonAvatar, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonImg, IonItem, IonLabel,
+  IonAvatar, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel,
   IonNote, IonRow, IonSelect, IonSelectOption,
 } from '@ionic/angular';
 
 import { AccountModel, CategoryListModel, CostCenterModel, ExpenseModel, PersonModelName, ProjectModel } from '@okr/shared-models';
-import { ButtonCopy, CategorySelect, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { ButtonCopy, CategorySelect, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n, ImgDirective } from '@okr/shared-ui';
 import { formatIban, IbanFormat, validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, convertDateFormatToString, DateFormat, getThumbnailUrl } from '@okr/shared-util-core';
 
@@ -63,10 +63,9 @@ export interface ExpenseEditFormI18n {
   selector: 'okr-expense-edit-form',
   standalone: true,
   imports: [
-    TextInput, NotesInput, ErrorNote, CategorySelect, ButtonCopy, AccountSelect, CostCenterSelect, ProjectSelect, AvatarPipe,
+    ImgDirective, TextInput, NotesInput, ErrorNote, CategorySelect, ButtonCopy, AccountSelect, CostCenterSelect, ProjectSelect, AvatarPipe,
     IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonGrid, IonRow, IonCol, IonItem, IonLabel, IonNote,
-    IonSelect, IonSelectOption, IonAvatar, IonImg,
-  ],
+    IonSelect, IonSelectOption, IonAvatar, ],
   styles: [`
     @media (width <= 600px) { ion-card { margin: 5px;} }
     ion-avatar { width: 32px; height: 32px; background-color: var(--ion-color-light); }
@@ -112,7 +111,7 @@ export interface ExpenseEditFormI18n {
                 <ion-col size="12" size-md="6">
                   <ion-item lines="none">
                     <ion-avatar slot="start">
-                      <ion-img src="{{ authorKey() | avatar:'person' }}" alt="Avatar" />
+                      <img okrImg src="{{ authorKey() | avatar:'person' }}" alt="Avatar" />
                     </ion-avatar>
                     <ion-label>
                       <p>{{ i18n().author_label() }}</p>
@@ -164,7 +163,7 @@ export interface ExpenseEditFormI18n {
                     <!-- set only on creation (it names the payee): shown with the member, never changeable -->
                     <ion-item lines="none">
                       <ion-avatar slot="start">
-                        <ion-img src="{{ payeeAvatarKey() | avatar:'person' }}" alt="Avatar" />
+                        <img okrImg src="{{ payeeAvatarKey() | avatar:'person' }}" alt="Avatar" />
                       </ion-avatar>
                       <ion-label>
                         <p>{{ i18n().transfer_label() }}</p>

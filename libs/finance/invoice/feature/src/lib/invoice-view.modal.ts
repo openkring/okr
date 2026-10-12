@@ -1,9 +1,9 @@
 import { Component, computed, inject, input } from '@angular/core';
 import type { ActionSheetButton } from '@ionic/angular/lazy';
-import { ActionSheetController, IonAvatar, IonButton, IonCard, IonCardContent, IonChip, IonContent, IonIcon, IonImg, IonItem, IonLabel } from '@ionic/angular';
+import { ActionSheetController, IonAvatar, IonButton, IonCard, IonCardContent, IonChip, IonContent, IonIcon, IonItem, IonLabel } from '@ionic/angular';
 
 import { InvoiceModel, InvoiceReminder } from '@okr/shared-models';
-import { formatMinorAmount, Header } from '@okr/shared-ui';
+import { formatMinorAmount, Header, ImgDirective } from '@okr/shared-ui';
 import { PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
 import { fill, formatQrReference, getFullName, getTodayStr, hasRole, prettyFormatDate } from '@okr/shared-util-core';
 import { AvatarPipe } from '@okr/avatar-ui';
@@ -18,9 +18,9 @@ import { InvoiceStore } from './invoice.store';
   standalone: true,
   providers: [InvoiceStore],
   imports: [
-    SvgIconPipe, PrettyDatePipe, AvatarPipe,
+    ImgDirective, SvgIconPipe, PrettyDatePipe, AvatarPipe,
     Header, LedgerBookings, VoucherTiles, FinanceHistory,
-    IonContent, IonCard, IonIcon, IonLabel, IonCardContent, IonItem, IonChip, IonAvatar, IonImg, IonButton
+    IonContent, IonCard, IonIcon, IonLabel, IonCardContent, IonItem, IonChip, IonAvatar, IonButton
   ],
   styles: [`
     @media (width <= 600px) { ion-card { margin: 5px;} }
@@ -45,7 +45,7 @@ import { InvoiceStore } from './invoice.store';
             @if(invoice.receiver; as receiver) {
               <ion-item lines="none">
                 <ion-avatar slot="start">
-                  <ion-img src="{{ receiver.modelType + '.' + receiver.key | avatar:receiver.modelType }}" alt="Receiver Logo" />
+                  <img okrImg src="{{ receiver.modelType + '.' + receiver.key | avatar:receiver.modelType }}" alt="Receiver Logo" />
                 </ion-avatar>
                 <ion-label>
                   <p class="view-label">{{ store.i18n.receiver_label() }}</p>

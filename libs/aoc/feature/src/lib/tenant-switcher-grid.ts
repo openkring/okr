@@ -1,6 +1,7 @@
 import { Component, input, output } from '@angular/core';
-import { IonIcon, IonImg } from '@ionic/angular';
+import { IonIcon } from '@ionic/angular';
 
+import { ImgDirective } from '@okr/shared-ui';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { getImgixUrlWithAutoParams } from '@okr/shared-util-core';
 import { TenantSwitcherEntry } from '@okr/aoc-util';
@@ -8,7 +9,7 @@ import { TenantSwitcherEntry } from '@okr/aoc-util';
 @Component({
   selector: 'okr-tenant-switcher-grid',
   standalone: true,
-  imports: [IonIcon, IonImg, SvgIconPipe],
+  imports: [ImgDirective, IonIcon, SvgIconPipe],
   styles: [`
     .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 12px; }
     .tile { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px 6px;
@@ -28,7 +29,7 @@ import { TenantSwitcherEntry } from '@okr/aoc-util';
         <button type="button" class="tile" [class.current]="entry.isCurrent"
                 [disabled]="entry.isCurrent" (click)="onSelect(entry)">
           @if (logoSrc(entry); as src) {
-            <ion-img class="logo" [src]="src" [alt]="entry.label" />
+            <img okrImg class="logo" [src]="src" [alt]="entry.label" />
           } @else {
             <ion-icon class="placeholder" src="{{ 'apps' | svgIcon }}" />
           }

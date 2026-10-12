@@ -231,7 +231,7 @@ officially supported combination (upgraded 2026-10-12, spec `1.96`,
 [`2026-10-12-ionic-9-upgrade-spec.md`](planning/specs/2026-10-12-ionic-9-upgrade-spec.md)). Standalone
 components import from **`@ionic/angular`**, not `@ionic/angular/standalone` (the Ionic 9 entry
 point; `/standalone` is gone). `ion-img` is deprecated and removed in Ionic 10 — use
-`<img loading="lazy" decoding="async">` in new code. Reopen the hydration / App Hosting question only
+`<img okrImg>` (`ImgDirective` from `@okr/shared-ui`, see the `images` skill); a lint rule rejects `IonImg`. Reopen the hydration / App Hosting question only
 on the recheck triggers listed in that spec (§7).
 
 ### i18n

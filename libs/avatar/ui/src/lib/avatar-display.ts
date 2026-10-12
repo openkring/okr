@@ -1,6 +1,7 @@
 import { Component, computed, input } from "@angular/core";
-import { IonAvatar, IonChip, IonImg, IonLabel, IonNote } from "@ionic/angular";
+import { IonAvatar, IonChip, IonLabel, IonNote } from "@ionic/angular";
 
+import { ImgDirective } from '@okr/shared-ui';
 import { AvatarInfo } from "@okr/shared-models";
 import { FullNamePipe } from '@okr/shared-pipes';
 import { coerceBoolean } from "@okr/shared-util-core";
@@ -12,8 +13,8 @@ import { getDefaultIcon } from "@okr/avatar-util";
   selector: 'okr-avatar-display',
   standalone: true,
   imports: [
-    AvatarPipe, FullNamePipe,
-    IonAvatar, IonLabel, IonImg, IonChip, IonNote
+    ImgDirective, AvatarPipe, FullNamePipe,
+    IonAvatar, IonLabel, IonChip, IonNote
   ],
   styles: [`
     .avatar-container { display: flex; align-items: center; }
@@ -40,13 +41,13 @@ import { getDefaultIcon } from "@okr/avatar-util";
             @if(shouldShowName()) {
               <ion-chip color="light">
                 <ion-avatar>
-                  <ion-img src="{{ avatars[0].modelType + '.' + avatars[0].key | avatar:getDefaultIcon(avatars[0].modelType) }}" alt="Avatar of person or org" />
+                  <img okrImg src="{{ avatars[0].modelType + '.' + avatars[0].key | avatar:getDefaultIcon(avatars[0].modelType) }}" alt="Avatar of person or org" />
                 </ion-avatar>
                   <ion-label><small>{{ avatars[0].name1 | fullName:avatars[0].name2 }}</small></ion-label>
               </ion-chip>   
             } @else {
               <ion-avatar>
-                <ion-img src="{{ avatars[0].modelType + '.' + avatars[0].key | avatar:getDefaultIcon(avatars[0].modelType) }}" alt="Avatar of person or org" />
+                <img okrImg src="{{ avatars[0].modelType + '.' + avatars[0].key | avatar:getDefaultIcon(avatars[0].modelType) }}" alt="Avatar of person or org" />
               </ion-avatar>
             }
           } @else {
@@ -66,7 +67,7 @@ import { getDefaultIcon } from "@okr/avatar-util";
               @for(avatar of avatars.slice(0, maxAvatarsToShow()); track $index) {
                 @if(avatar.key && avatar.key.length > 0) {
                   <ion-avatar [class.stacked-avatar]="true" [style.zIndex]="avatars.length - $index">
-                    <ion-img src="{{ avatar.modelType + '.' + avatar.key | avatar:getDefaultIcon(avatar.modelType) }}" alt="Avatar of person or org" />
+                    <img okrImg src="{{ avatar.modelType + '.' + avatar.key | avatar:getDefaultIcon(avatar.modelType) }}" alt="Avatar of person or org" />
                   </ion-avatar>
                 } @else {
                   <ion-avatar class="letter-avatar stacked-avatar" [style.zIndex]="avatars.length - $index">G</ion-avatar>

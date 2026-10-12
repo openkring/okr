@@ -1,10 +1,10 @@
 import { Component, computed, effect, inject, input } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonAccordion, IonAvatar, IonButton, IonCol, IonGrid, IonIcon, IonImg, IonItem, IonLabel, IonList, IonRow } from '@ionic/angular';
+import { ActionSheetController, ActionSheetOptions, IonAccordion, IonAvatar, IonButton, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonList, IonRow } from '@ionic/angular';
 import { AsyncPipe } from '@angular/common';
 
 import { RoleName, WorkrelModel } from '@okr/shared-models';
 import { FullNamePipe, SvgIconPipe } from '@okr/shared-pipes';
-import { EmptyList } from '@okr/shared-ui';
+import { EmptyList, ImgDirective } from '@okr/shared-ui';
 import { hasRole, isOngoing } from '@okr/shared-util-core';
 import { createActionSheetButton, createActionSheetOptions } from '@okr/shared-util-angular';
 
@@ -17,9 +17,9 @@ import { WorkrelStore } from './workrel.store';
   selector: 'okr-workrel-accordion',
   standalone: true,
   imports: [
-    AvatarPipe, FullNamePipe, SvgIconPipe, WorkrelNamePipe, AsyncPipe,
+    ImgDirective, AvatarPipe, FullNamePipe, SvgIconPipe, WorkrelNamePipe, AsyncPipe,
     EmptyList,
-    IonAccordion, IonItem, IonLabel, IonList, IonGrid, IonRow, IonCol, IonAvatar, IonImg, IonButton, IonIcon
+    IonAccordion, IonItem, IonLabel, IonList, IonGrid, IonRow, IonCol, IonAvatar, IonButton, IonIcon
   ],
   providers: [WorkrelStore],
   styles: [`
@@ -46,7 +46,7 @@ import { WorkrelStore } from './workrel.store';
                 <ion-col size="3" size-md="4">
                   <ion-item lines="none">
                     <ion-avatar slot="start" class="list-avatar">
-                      <ion-img src="{{ 'person.' + workrel.subjectKey | avatar }}" alt="avatar of person" />
+                      <img okrImg src="{{ 'person.' + workrel.subjectKey | avatar }}" alt="avatar of person" />
                     </ion-avatar>
                     <ion-label class="ion-hide-md-down">{{workrel.subjectName1 | fullName:workrel.subjectName2}}</ion-label>
                   </ion-item>
@@ -59,7 +59,7 @@ import { WorkrelStore } from './workrel.store';
                 <ion-col size="3" size-md="4">
                   <ion-item lines="none">
                     <ion-avatar slot="start" class="list-avatar">
-                      <ion-img src="{{ 'org.' + workrel.objectKey | avatar }}" alt="logo of organization" />
+                      <img okrImg src="{{ 'org.' + workrel.objectKey | avatar }}" alt="logo of organization" />
                     </ion-avatar>
                     <ion-label class="ion-hide-md-down">{{workrel.objectName }}</ion-label>
                   </ion-item> 

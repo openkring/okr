@@ -1,7 +1,8 @@
 import { Component, computed, effect, inject, input, output } from '@angular/core';
 import { Photo } from '@capacitor/camera';
-import { IonAvatar, IonIcon, IonImg, IonItem, IonLabel, IonTitle, IonToolbar } from '@ionic/angular';
+import { IonAvatar, IonIcon, IonItem, IonLabel, IonTitle, IonToolbar } from '@ionic/angular';
 
+import { ImgDirective } from '@okr/shared-ui';
 import { ColorsIonic, getCategoryStringField } from '@okr/shared-categories';
 import { ColorIonic } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
@@ -12,8 +13,8 @@ import { AvatarToolbarStore } from './avatar-toolbar.store';
   selector: 'okr-avatar-toolbar',
   standalone: true,
   imports: [
-    SvgIconPipe,
-    IonToolbar, IonAvatar, IonImg, IonTitle, IonIcon, IonItem, IonLabel
+    ImgDirective, SvgIconPipe,
+    IonToolbar, IonAvatar, IonTitle, IonIcon, IonItem, IonLabel
   ],
   providers: [AvatarToolbarStore],
   styles: [
@@ -27,7 +28,7 @@ import { AvatarToolbarStore } from './avatar-toolbar.store';
   template: `
     <ion-toolbar color="{{colorName()}}">
       <ion-avatar (click)="editImage()">
-        <ion-img [src]="avatarToolbarStore.url()" [alt]="alt()" />
+        <img okrImg [src]="avatarToolbarStore.url()" [alt]="alt()" />
         @if(readOnly() === false) {
           <ion-icon src="{{ 'camera' | svgIcon }}" />
         }

@@ -1,10 +1,10 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular';
+import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular';
 
 import { GroupModel, RoleName } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
+import { EmptyList, ListFilter, Spinner, ImgDirective } from '@okr/shared-ui';
 import { AlertService, createActionSheetButton, createActionSheetDivider, createActionSheetOptions } from '@okr/shared-util-angular';
 import { fill, generateRandomString, hasRole } from '@okr/shared-util-core';
 
@@ -19,10 +19,10 @@ import { GroupStore } from './group.store';
   selector: 'okr-group-list',
   standalone: true,
   imports: [
-    AsyncPipe, SvgIconPipe, AvatarPipe, MemberAvatarsPipe,
+    ImgDirective, AsyncPipe, SvgIconPipe, AvatarPipe, MemberAvatarsPipe,
     Spinner, EmptyList, Menu, ListFilter, AvatarDisplay,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
-    IonLabel, IonContent, IonItem, IonPopover, IonAvatar, IonImg, IonList,
+    IonLabel, IonContent, IonItem, IonPopover, IonAvatar, IonList,
 ],
   providers: [GroupStore],
   styles: [`
@@ -73,7 +73,7 @@ import { GroupStore } from './group.store';
           @for(group of filteredGroups(); track $index) {
             <ion-item (click)="showActions(group)">
               <ion-avatar slot="start">
-                <ion-img src="{{ 'group.' + group.okey | avatar:group.icon }}" alt="Group Avatar Logo" />
+                <img okrImg src="{{ 'group.' + group.okey | avatar:group.icon }}" alt="Group Avatar Logo" />
               </ion-avatar>
               <ion-label>{{group.name}}</ion-label>
               <okr-avatar-display [avatars]="(group | memberAvatars | async) ?? []" [showName]="false" />

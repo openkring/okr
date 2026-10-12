@@ -1,9 +1,9 @@
 import { Component, computed, effect, inject, input, linkedSignal } from '@angular/core';
-import { IonAvatar, IonContent, IonIcon, IonImg, IonItem, IonItemDivider, IonLabel, IonList, ModalController } from '@ionic/angular';
+import { IonAvatar, IonContent, IonIcon, IonItem, IonItemDivider, IonLabel, IonList, ModalController } from '@ionic/angular';
 
 import { PersonModel, PersonModelName, UserModel } from '@okr/shared-models';
 import { FullNamePipe, SvgIconPipe } from '@okr/shared-pipes';
-import { EmptyList, Header, Spinner } from '@okr/shared-ui';
+import { EmptyList, Header, Spinner, ImgDirective } from '@okr/shared-ui';
 
 import { AvatarPipe } from '@okr/avatar-ui';
 import { dismissOverlay } from '@okr/shared-util-angular';
@@ -18,9 +18,9 @@ export type PersonSelectResult =
   selector: 'okr-person-select-modal',
   standalone: true,
   imports: [
-    Header, Spinner,
+    ImgDirective, Header, Spinner,
     FullNamePipe, AvatarPipe, EmptyList, SvgIconPipe,
-    IonContent, IonItem, IonItemDivider, IonLabel, IonAvatar, IonImg, IonList, IonIcon,
+    IonContent, IonItem, IonItemDivider, IonLabel, IonAvatar, IonList, IonIcon,
   ],
   providers: [PersonSelectStore],
   styles: [`
@@ -58,7 +58,7 @@ export type PersonSelectResult =
             <ion-list lines="none">
               <ion-item class="item" (click)="select(person)">
                  <ion-avatar slot="start">
-                  <ion-img src="{{ 'person.' + person.okey | avatar:defaultIcon }}" alt="Avatar Logo" />
+                  <img okrImg src="{{ 'person.' + person.okey | avatar:defaultIcon }}" alt="Avatar Logo" />
                 </ion-avatar>
                 <ion-label>{{person.firstName | fullName:person.lastName}}</ion-label>
               </ion-item>
@@ -74,7 +74,7 @@ export type PersonSelectResult =
             <ion-list lines="none">
               <ion-item class="item" (click)="select(person)">
                  <ion-avatar slot="start">
-                  <ion-img src="{{ 'person.' + person.okey | avatar:defaultIcon }}" alt="Avatar Logo" />
+                  <img okrImg src="{{ 'person.' + person.okey | avatar:defaultIcon }}" alt="Avatar Logo" />
                 </ion-avatar>
                 <ion-label>{{person.firstName | fullName:person.lastName}}</ion-label>
               </ion-item>

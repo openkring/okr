@@ -1,6 +1,7 @@
 import { Component, computed, input, output } from '@angular/core';
-import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonIcon, IonImg, IonItem, IonLabel, IonNote } from '@ionic/angular';
+import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonIcon, IonItem, IonLabel, IonNote } from '@ionic/angular';
 
+import { ImgDirective } from '@okr/shared-ui';
 import { ColorsIonic } from '@okr/shared-categories';
 import { AvatarInfo, ColorIonic } from '@okr/shared-models';
 import { CategoryPlainNamePipe, SvgIconPipe } from '@okr/shared-pipes';
@@ -12,8 +13,8 @@ import { AvatarPipe } from '@okr/avatar-ui';
   selector: 'okr-avatar-select',
   standalone: true,
   imports: [
-    CategoryPlainNamePipe, AvatarPipe, SvgIconPipe,
-    IonItem, IonAvatar, IonImg, IonLabel, IonButton,
+    ImgDirective, CategoryPlainNamePipe, AvatarPipe, SvgIconPipe,
+    IonItem, IonAvatar, IonLabel, IonButton,
     IonCard, IonCardHeader, IonCardContent, IonCardTitle, IonNote, IonIcon
   ],
   template: `
@@ -28,7 +29,7 @@ import { AvatarPipe } from '@okr/avatar-ui';
         }
         @if(avatar()) {
           <ion-avatar slot="start">
-            <ion-img src="{{ avatarKey() | avatar }}" alt="Avatar icon" />
+            <img okrImg src="{{ avatarKey() | avatar }}" alt="Avatar icon" />
           </ion-avatar>
           <ion-label>{{fullName()}}</ion-label>
         }

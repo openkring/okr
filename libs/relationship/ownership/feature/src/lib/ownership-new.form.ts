@@ -1,11 +1,11 @@
 import { Component, computed, effect, inject, input, model, output } from '@angular/core';
 import { form } from '@angular/forms/signals';
-import { IonAvatar, IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonRow, ModalController } from '@ionic/angular';
+import { IonAvatar, IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonRow, ModalController } from '@ionic/angular';
 
 import { AvatarPipe } from '@okr/avatar-ui';
 import { AppStore, OrgSelectModal, PersonSelectModal, PersonSelectResult, ResourceSelectModal } from '@okr/shared-feature';
 import { OwnershipModel, OwnershipModelName, ResourceModelName, UserModel } from '@okr/shared-models';
-import { DateInput, DateInputI18n, ErrorNote } from '@okr/shared-ui';
+import { DateInput, DateInputI18n, ErrorNote, ImgDirective } from '@okr/shared-ui';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, getAvatarKey, getCategoryIcon, getFullName, getTodayStr, isOrg, isPerson, isResource } from '@okr/shared-util-core';
 
@@ -18,10 +18,10 @@ import { OwnershipStore } from './ownership.store';
   standalone: true,
   providers: [OwnershipStore],
   imports: [
-    ErrorNote,
+    ImgDirective, ErrorNote,
     AvatarPipe,
     DateInput,
-    IonGrid, IonRow, IonCol, IonItem, IonLabel, IonAvatar, IonImg, IonButton, IonCard, IonCardContent
+    IonGrid, IonRow, IonCol, IonItem, IonLabel, IonAvatar, IonButton, IonCard, IonCardContent
   ],
   template: `
   @if (showForm()) {
@@ -33,7 +33,7 @@ import { OwnershipStore } from './ownership.store';
               <ion-col size="9">
                 <ion-item lines="none">
                   <ion-avatar slot="start" [style.background-color]="'var(--ion-color-light)'">
-                    <ion-img src="{{ ownerModelType() + '.' + ownerKey() | avatar:'ownership' }}" alt="Avatar of Owner" />
+                    <img okrImg src="{{ ownerModelType() + '.' + ownerKey() | avatar:'ownership' }}" alt="Avatar of Owner" />
                   </ion-avatar>
                   <ion-label>{{ ownerName() }}</ion-label>
                 </ion-item>
@@ -55,7 +55,7 @@ import { OwnershipStore } from './ownership.store';
               <ion-col size="9">
                 <ion-item lines="none">
                   <ion-avatar slot="start" [style.background-color]="'var(--ion-color-light)'">
-                    <ion-img [src]="getAvatarKey() | avatar:getIcon(formData()) " alt="Logo of the resource" />
+                    <img okrImg [src]="getAvatarKey() | avatar:getIcon(formData()) " alt="Logo of the resource" />
                   </ion-avatar>
                   <ion-label>{{ resourceName() }}</ion-label>
                 </ion-item>

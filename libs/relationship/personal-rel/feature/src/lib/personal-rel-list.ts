@@ -1,9 +1,9 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular';
+import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular';
 import { PersonalRelModel, RoleName } from '@okr/shared-models';
 import { FullNamePipe, SvgIconPipe } from '@okr/shared-pipes';
-import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
+import { EmptyList, ListFilter, Spinner, ImgDirective } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@okr/shared-util-angular';
 import { hasRole, isOngoing } from '@okr/shared-util-core';
 
@@ -18,11 +18,11 @@ type PersonalRelSortField = 'person1' | 'type' | 'person2';
   selector: 'okr-personal-rel-list',
   standalone: true,
   imports: [
-    SvgIconPipe, AvatarPipe, FullNamePipe, PersonalRelNamePipe, AsyncPipe,
+    ImgDirective, SvgIconPipe, AvatarPipe, FullNamePipe, PersonalRelNamePipe, AsyncPipe,
     ListFilter, EmptyList, Spinner,
     Menu,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
-    IonLabel, IonContent, IonItem, IonImg, IonList, IonGrid, IonRow, IonCol, IonAvatar, IonPopover
+    IonLabel, IonContent, IonItem, IonList, IonGrid, IonRow, IonCol, IonAvatar, IonPopover
   ],
   providers: [PersonalRelStore],
   styles: [`.clickable { cursor: pointer; user-select: none; }`],
@@ -88,7 +88,7 @@ type PersonalRelSortField = 'person1' | 'type' | 'person2';
                 <ion-col size="3" size-md="4">
                   <ion-item lines="none">
                     <ion-avatar slot="start">
-                      <ion-img src="{{ 'person.' + personalRel.subjectKey | avatar }}" alt="avatar of first person" />
+                      <img okrImg src="{{ 'person.' + personalRel.subjectKey | avatar }}" alt="avatar of first person" />
                     </ion-avatar>
                     <ion-label class="ion-hide-sm-down">{{personalRel.subjectFirstName | fullName:personalRel.subjectLastName}}</ion-label>
                   </ion-item>
@@ -101,7 +101,7 @@ type PersonalRelSortField = 'person1' | 'type' | 'person2';
                 <ion-col size="3" size-md="4">
                   <ion-item lines="none">
                     <ion-avatar slot="start">
-                      <ion-img src="{{ 'person.' + personalRel.objectKey | avatar }}" alt="avatar of second person" />
+                      <img okrImg src="{{ 'person.' + personalRel.objectKey | avatar }}" alt="avatar of second person" />
                     </ion-avatar>
                     <ion-label class="ion-hide-sm-down">{{personalRel.objectFirstName | fullName:personalRel.objectLastName}}</ion-label>
                   </ion-item> 

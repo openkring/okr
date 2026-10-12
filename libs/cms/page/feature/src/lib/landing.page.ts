@@ -1,10 +1,10 @@
 import { Component, computed, inject } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { switchMap } from 'rxjs';
-import { IonButton, IonCol, IonContent, IonGrid, IonIcon, IonImg, IonLabel, IonRow } from '@ionic/angular';
+import { IonButton, IonCol, IonContent, IonGrid, IonIcon, IonLabel, IonRow } from '@ionic/angular';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { Header } from '@okr/shared-ui';
+import { Header, ImgDirective } from '@okr/shared-ui';
 import { DEFAULT_BANNER_URL } from '@okr/shared-constants';
 import { I18nService } from '@okr/shared-i18n';
 
@@ -22,8 +22,8 @@ export const LANDING_BANNER_IMGIX_PARAMS = 'w=1200&auto=format,compress&fit=crop
   selector: 'okr-landing-page',
   standalone: true,
   imports: [
-    SvgIconPipe,
-    IonContent, IonButton, IonIcon, IonImg, IonLabel,
+    ImgDirective, SvgIconPipe,
+    IonContent, IonButton, IonIcon, IonLabel,
     IonGrid, IonRow, IonCol,
     Header
   ],
@@ -92,7 +92,7 @@ export const LANDING_BANNER_IMGIX_PARAMS = 'w=1200&auto=format,compress&fit=crop
           @if(logoUrl(); as logoUrl) {
             <ion-row>
               <ion-col>
-                <ion-img class="logo" [src]="logoUrl" alt="{{ logoAltText() }}" (click)="gotoHome()" />
+                <img okrImg eager class="logo" [src]="logoUrl" alt="{{ logoAltText() }}" (click)="gotoHome()" />
               </ion-col>
             </ion-row>
           }

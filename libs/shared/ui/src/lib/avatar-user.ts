@@ -1,5 +1,6 @@
 import { Component, computed, inject, input, output } from "@angular/core";
-import { IonAvatar, IonImg, IonLabel } from "@ionic/angular";
+import { IonAvatar, IonLabel } from "@ionic/angular";
+import { ImgDirective } from './img.directive';
 import { rxResource } from "@angular/core/rxjs-interop";
 
 import { AvatarCollection, AvatarModel, PersonModelName, UserModel } from "@okr/shared-models";
@@ -13,7 +14,7 @@ import { ENV } from "@okr/shared-config";
   selector: 'okr-avatar-user',
   standalone: true,
   imports: [
-    IonAvatar, IonLabel, IonImg
+    ImgDirective, IonAvatar, IonLabel
   ],
   styles: [`
     ion-avatar { margin: auto; height: 60px; width: 60px; padding: 10px; text-align: right; position: relative; }
@@ -21,7 +22,7 @@ import { ENV } from "@okr/shared-config";
   template: `
     @if(currentUser(); as currentUser) {
         <ion-avatar (click)="showProfile()">
-          <ion-img [src]="avatarUrl()" alt="Avatar of the current user" />
+          <img okrImg [src]="avatarUrl()" alt="Avatar of the current user" />
         </ion-avatar>
         @if (shouldShowName()) {
           <ion-label><small>{{ userName() }}</small></ion-label>

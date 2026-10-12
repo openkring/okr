@@ -1,13 +1,13 @@
 import { Component, computed, effect, inject, input } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
-import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonContent, IonGrid, IonImg, IonRow, ModalController } from '@ionic/angular';
+import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonContent, IonGrid, IonRow, ModalController } from '@ionic/angular';
 import { filter, switchMap } from 'rxjs/operators';
 
 import { CategoryItemModel, CategoryListModel } from '@okr/shared-models';
 import { ENV } from '@okr/shared-config';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { I18nService, TranslatePipe } from '@okr/shared-i18n';
-import { Header } from '@okr/shared-ui';
+import { Header, ImgDirective } from '@okr/shared-ui';
 import { dismissOverlay } from '@okr/shared-util-angular';
 import { patchState, signalStore, withMethods, withProps, withState } from '@ngrx/signals';
 
@@ -43,9 +43,9 @@ const CardSelectStore = signalStore(
   standalone: true,
   providers: [CardSelectStore],
   imports: [
-    SvgIconPipe, TranslatePipe, AsyncPipe,
+    ImgDirective, SvgIconPipe, TranslatePipe, AsyncPipe,
     Header,
-    IonContent, IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCardSubtitle, IonImg
+    IonContent, IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCardSubtitle
   ],
   styles: [`
     ion-card-content { padding: 0px; }
@@ -65,7 +65,7 @@ const CardSelectStore = signalStore(
                     <ion-card-subtitle>{{ item.name }}</ion-card-subtitle>
                   </ion-card-header>
                   <ion-card-content>
-                    <ion-img src="{{ item.name | svgIcon:'section' }}" alt="{{ item.name }}" />
+                    <img okrImg src="{{ item.name | svgIcon:'section' }}" alt="{{ item.name }}" />
                   </ion-card-content>
                 </ion-card>
               </ion-col>

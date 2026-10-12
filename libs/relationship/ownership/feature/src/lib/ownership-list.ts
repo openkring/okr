@@ -1,11 +1,11 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular';
+import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular';
 
 import { TranslatePipe } from '@okr/shared-i18n';
 import { OwnershipModel, PersonModelName, RoleName } from '@okr/shared-models';
 import { DurationPipe, SvgIconPipe } from '@okr/shared-pipes';
-import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
+import { EmptyList, ListFilter, Spinner, ImgDirective } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@okr/shared-util-angular';
 import { getCategoryIcon, getItemLabel, getYearList, hasRole, isOngoing } from '@okr/shared-util-core';
 
@@ -21,10 +21,10 @@ type OwnershipSortField = 'owner' | 'name' | 'type' | 'duration';
   selector: 'okr-ownership-list',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, SvgIconPipe, DurationPipe, AvatarPipe,
+    ImgDirective, TranslatePipe, AsyncPipe, SvgIconPipe, DurationPipe, AvatarPipe,
     Spinner, ListFilter, EmptyList, Menu,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
-    IonLabel, IonContent, IonItem, IonAvatar, IonImg, IonList, IonPopover
+    IonLabel, IonContent, IonItem, IonAvatar, IonList, IonPopover
   ],
   providers: [OwnershipStore],
   styles: [`.clickable { cursor: pointer; user-select: none; }`],
@@ -101,7 +101,7 @@ type OwnershipSortField = 'owner' | 'name' | 'type' | 'duration';
             @else {
               <ion-item (click)="showActions(ownership)">
                 <ion-avatar slot="start" [style.background-color]="'var(--ion-color-light)'">
-                  <ion-img src="{{ ownership.ownerModelType + '.' + ownership.ownerKey | avatar:(ownership.ownerModelType === 'person' ? 'person' : 'org') }}" alt="Avatar Logo" />
+                  <img okrImg src="{{ ownership.ownerModelType + '.' + ownership.ownerKey | avatar:(ownership.ownerModelType === 'person' ? 'person' : 'org') }}" alt="Avatar Logo" />
                 </ion-avatar>
                 <ion-label>{{getOwnerName(ownership)}}</ion-label>      
                 <ion-label>{{ownership.resourceName}}</ion-label>      

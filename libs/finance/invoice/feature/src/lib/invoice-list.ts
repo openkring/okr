@@ -1,15 +1,14 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, effect, inject, input, untracked, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import {
-  ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonChip, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg,
-  IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar, PopoverController,
+  ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonChip, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar, PopoverController,
 } from '@ionic/angular';
 import { InvoiceModel, RoleName } from '@okr/shared-models';
 import {
   canCreatePaymentConfirmation, canCreateReminder, canEmailInvoice, hasInvoiceVoucher, invoiceDisplayState, invoiceStateColor, invoiceStateLabel, isDraftInvoice, isOverdueInvoice, isPayableState, mayReadInvoiceDocuments, waivableReminder,
 } from '@okr/finance-invoice-util';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { EmptyList, formatMinorAmount, ListFilter, Spinner } from '@okr/shared-ui';
+import { EmptyList, formatMinorAmount, ListFilter, Spinner, ImgDirective } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@okr/shared-util-angular';
 import { convertDateFormatToString, DateFormat, generateRandomString, getTodayStr, getYear, getYearList, hasRole } from '@okr/shared-util-core';
 
@@ -25,10 +24,10 @@ import { InvoiceStore } from './invoice.store';
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [InvoiceStore],
   imports: [
-    SvgIconPipe, AvatarPipe,
+    ImgDirective, SvgIconPipe, AvatarPipe,
     Spinner, ListFilter, EmptyList, Menu, ReadOnlyBanner,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon, IonPopover,
-    IonContent, IonLabel, IonGrid, IonRow, IonCol, IonAvatar, IonImg, IonChip, IonList, IonItem
+    IonContent, IonLabel, IonGrid, IonRow, IonCol, IonAvatar, IonChip, IonList, IonItem
   ],
   styles: [`
     .attach-icon { font-size: 0.9rem; vertical-align: middle; margin-left: 4px; color: var(--ion-color-medium); }
@@ -100,7 +99,7 @@ import { InvoiceStore } from './invoice.store';
               <ion-col size="1">
                 @if(invoice.receiver; as r) {
                   <ion-avatar>
-                    <ion-img src="{{ r.modelType + '.' + r.key | avatar:r.modelType }}" alt="Receiver Logo" />
+                    <img okrImg src="{{ r.modelType + '.' + r.key | avatar:r.modelType }}" alt="Receiver Logo" />
                   </ion-avatar>
                 }
               </ion-col>

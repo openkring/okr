@@ -1,8 +1,8 @@
 import { Component, computed, effect, inject, input, linkedSignal, signal, untracked } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular';
+import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular';
 import { AvatarInfo, OrgModel, PersonModel, ReservationModel, ResourceModelName, RoleName } from '@okr/shared-models';
 import { PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
-import { EmptyList, ListFilter } from '@okr/shared-ui';
+import { EmptyList, ListFilter, ImgDirective } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error } from '@okr/shared-util-angular';
 import { getAvatarKey, getAvatarName, getFullName, getYear, getYearList, hasRole, isOngoing, isPerson } from '@okr/shared-util-core';
 
@@ -21,10 +21,10 @@ type ReservationSortField = 'reserver' | 'name' | 'startdate' | 'status';
   selector: 'okr-reservation-list',
   standalone: true,
   imports: [
-    SvgIconPipe, PrettyDatePipe,
+    ImgDirective, SvgIconPipe, PrettyDatePipe,
     ListFilter, EmptyList, Menu,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
-    IonLabel, IonContent, IonItem, IonAvatar, IonImg, IonPopover,
+    IonLabel, IonContent, IonItem, IonAvatar, IonPopover,
     IonGrid, IonRow, IonCol
   ],
   providers: [ReservationStore],
@@ -154,7 +154,7 @@ type ReservationSortField = 'reserver' | 'name' | 'startdate' | 'status';
               <!-- desktop -->
               <ion-col size-md="3" class="ion-hide-md-down">
                 <ion-item lines="none">
-                  <ion-avatar slot="start" class="list-avatar"><ion-img [src]="getAvatarUrl(reservation, 'resource')" alt="Avatar Logo" /></ion-avatar>
+                  <ion-avatar slot="start" class="list-avatar"><img okrImg [src]="getAvatarUrl(reservation, 'resource')" alt="Avatar Logo" /></ion-avatar>
                   <ion-label>{{reservation.resource?.name2}}</ion-label>
                 </ion-item>
               </ion-col>
@@ -175,7 +175,7 @@ type ReservationSortField = 'reserver' | 'name' | 'startdate' | 'status';
               </ion-col>
               <!-- mobile -->
               <ion-col size="3" class="ion-hide-md-up avatar-cell">
-                <ion-avatar class="list-avatar"><ion-img [src]="getAvatarUrl(reservation, 'resource')" alt="Avatar Logo" /></ion-avatar>
+                <ion-avatar class="list-avatar"><img okrImg [src]="getAvatarUrl(reservation, 'resource')" alt="Avatar Logo" /></ion-avatar>
               </ion-col>
               <ion-col size="7" class="ion-hide-md-up">
                 <ion-label class="ion-text-wrap reservation-name">
@@ -190,7 +190,7 @@ type ReservationSortField = 'reserver' | 'name' | 'startdate' | 'status';
               <!-- desktop -->
               <ion-col size-md="3" class="ion-hide-md-down">
                 <ion-item lines="none">
-                  <ion-avatar slot="start" class="list-avatar"><ion-img [src]="getAvatarUrl(reservation, 'reserver')" alt="Avatar Logo" /></ion-avatar>
+                  <ion-avatar slot="start" class="list-avatar"><img okrImg [src]="getAvatarUrl(reservation, 'reserver')" alt="Avatar Logo" /></ion-avatar>
                   <ion-label>{{getReserverName(reservation)}}</ion-label>
                 </ion-item>
               </ion-col>
@@ -211,7 +211,7 @@ type ReservationSortField = 'reserver' | 'name' | 'startdate' | 'status';
               </ion-col>
               <!-- mobile -->
               <ion-col size="3" class="ion-hide-md-up avatar-cell">
-                <ion-avatar class="list-avatar"><ion-img [src]="getAvatarUrl(reservation, 'reserver')" alt="Avatar Logo" /></ion-avatar>
+                <ion-avatar class="list-avatar"><img okrImg [src]="getAvatarUrl(reservation, 'reserver')" alt="Avatar Logo" /></ion-avatar>
               </ion-col>
               <ion-col size="7" class="ion-hide-md-up">
                 <ion-label class="ion-text-wrap reservation-name">
@@ -226,13 +226,13 @@ type ReservationSortField = 'reserver' | 'name' | 'startdate' | 'status';
               <!-- desktop -->
               <ion-col size="3" class="ion-hide-md-down">
                 <ion-item lines="none">
-                  <ion-avatar slot="start" class="list-avatar"><ion-img [src]="getAvatarUrl(reservation, 'reserver')" alt="Reserver Avatar" /></ion-avatar>
+                  <ion-avatar slot="start" class="list-avatar"><img okrImg [src]="getAvatarUrl(reservation, 'reserver')" alt="Reserver Avatar" /></ion-avatar>
                   <ion-label>{{getReserverName(reservation)}}</ion-label>
                 </ion-item>
               </ion-col>
               <ion-col class="ion-hide-md-down">
                 <ion-item lines="none">
-                  <ion-avatar slot="start" class="list-avatar"><ion-img [src]="getAvatarUrl(reservation, 'resource')" alt="Resource Avatar" /></ion-avatar>
+                  <ion-avatar slot="start" class="list-avatar"><img okrImg [src]="getAvatarUrl(reservation, 'resource')" alt="Resource Avatar" /></ion-avatar>
                   <ion-label>{{getResourceName(reservation)}}</ion-label>
                 </ion-item>
               </ion-col>
@@ -253,10 +253,10 @@ type ReservationSortField = 'reserver' | 'name' | 'startdate' | 'status';
               </ion-col>
               <!-- mobile -->
               <ion-col size="3" class="ion-hide-md-up avatar-cell">
-                <ion-avatar class="list-avatar"><ion-img [src]="getAvatarUrl(reservation, 'reserver')" alt="Reserver Avatar" /></ion-avatar>
+                <ion-avatar class="list-avatar"><img okrImg [src]="getAvatarUrl(reservation, 'reserver')" alt="Reserver Avatar" /></ion-avatar>
               </ion-col>
               <ion-col size="3" class="ion-hide-md-up avatar-cell">
-                <ion-avatar class="list-avatar"><ion-img [src]="getAvatarUrl(reservation, 'resource')" alt="Resource Avatar" /></ion-avatar>
+                <ion-avatar class="list-avatar"><img okrImg [src]="getAvatarUrl(reservation, 'resource')" alt="Resource Avatar" /></ion-avatar>
               </ion-col>
               <ion-col size="4" class="ion-hide-md-up">
                 <ion-label class="ion-text-wrap reservation-name">

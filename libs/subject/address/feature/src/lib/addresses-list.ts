@@ -1,9 +1,9 @@
 import { Component, computed, effect, inject, input, signal } from '@angular/core';
-import { ActionSheetButton, ActionSheetController, ActionSheetOptions, IonAccordion, IonAccordionGroup, IonAvatar, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonRow, IonTitle, IonToolbar } from '@ionic/angular';
+import { ActionSheetButton, ActionSheetController, ActionSheetOptions, IonAccordion, IonAccordionGroup, IonAvatar, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonRow, IonTitle, IonToolbar } from '@ionic/angular';
 
 import { AddressModel, OrgModel, PersonModel, RoleName } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
+import { EmptyList, ListFilter, Spinner, ImgDirective } from '@okr/shared-ui';
 import { AlertService, createActionSheetButton, createActionSheetDivider, createActionSheetOptions, navigateByUrl } from '@okr/shared-util-angular';
 import { generateRandomString, getCategoryIcon, hasRole } from '@okr/shared-util-core';
 
@@ -16,10 +16,9 @@ import { AddressStore } from './addresses.store';
   selector: 'okr-addresses-list',
   standalone: true,
   imports: [
-    SvgIconPipe, FavoriteColorPipe, FormatAddressPipe, AvatarPipe,
+    ImgDirective, SvgIconPipe, FavoriteColorPipe, FormatAddressPipe, AvatarPipe,
     Spinner, EmptyList, ListFilter,
-    IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon, IonImg,
-    IonGrid, IonRow, IonCol, IonLabel, IonContent, IonItem, IonList, IonAvatar,
+    IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon, IonGrid, IonRow, IonCol, IonLabel, IonContent, IonItem, IonList, IonAvatar,
     IonAccordion, IonAccordionGroup,
 ],
   providers: [AddressStore],
@@ -85,7 +84,7 @@ import { AddressStore } from './addresses.store';
             @for(address of filteredAddresses(); track address.okey) {
               <ion-item (click)="showActions(address)">
                 <ion-avatar slot="start">
-                  <ion-img src="{{ address.parentKey | avatar }}" alt="Avatar Logo" />
+                  <img okrImg src="{{ address.parentKey | avatar }}" alt="Avatar Logo" />
                 </ion-avatar>
                 <ion-label>
                   @if(store.readsVault()) {
@@ -110,7 +109,7 @@ import { AddressStore } from './addresses.store';
               <ion-accordion [value]="parentKey" toggle-icon-slot="start">
                 <ion-item slot="header">
                   <ion-avatar>
-                    <ion-img src="{{ parentKey | avatar }}" alt="Avatar" />
+                    <img okrImg src="{{ parentKey | avatar }}" alt="Avatar" />
                   </ion-avatar>
                   <ion-label class="avatar">{{ getParentName(parentKey) }}</ion-label>
                 </ion-item>

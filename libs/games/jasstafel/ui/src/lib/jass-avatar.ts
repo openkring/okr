@@ -1,6 +1,7 @@
 import { Component, computed, input } from '@angular/core';
-import { IonAvatar, IonImg } from '@ionic/angular';
+import { IonAvatar } from '@ionic/angular';
 
+import { ImgDirective } from '@okr/shared-ui';
 import { AvatarPipe } from '@okr/avatar-ui';
 import { AvatarInfo } from '@okr/shared-models';
 import { getAvatarName } from '@okr/shared-util-core';
@@ -9,7 +10,7 @@ import { getAvatarName } from '@okr/shared-util-core';
 @Component({
   selector: 'okr-jass-avatar',
   standalone: true,
-  imports: [IonAvatar, IonImg, AvatarPipe],
+  imports: [ImgDirective, IonAvatar, AvatarPipe],
   styles: [`
     :host { display: inline-block; }
     ion-avatar { width: 44px; height: 44px; border: 2px solid transparent; }
@@ -21,7 +22,7 @@ import { getAvatarName } from '@okr/shared-util-core';
   template: `
     @if (avatar().key) {
       <ion-avatar [class.marked]="marked()" [title]="name()">
-        <ion-img src="{{ 'person.' + avatar().key | avatar:'person' }}" [alt]="name()" />
+        <img okrImg src="{{ 'person.' + avatar().key | avatar:'person' }}" [alt]="name()" />
       </ion-avatar>
     } @else {
       <div class="initials" [class.marked]="marked()" [title]="name()">{{ initials() }}</div>

@@ -1,6 +1,7 @@
 import { Component, computed, inject, input } from "@angular/core";
-import { IonAvatar, IonImg, IonItem, IonLabel } from "@ionic/angular";
+import { IonAvatar, IonItem, IonLabel } from "@ionic/angular";
 
+import { ImgDirective } from '@okr/shared-ui';
 import { AvatarInfo, CategoryListModel, UserModel } from "@okr/shared-models";
 import { coerceBoolean, getFullName } from "@okr/shared-util-core";
 import { AvatarService } from '@okr/avatar-data-access';
@@ -9,11 +10,10 @@ import { AvatarService } from '@okr/avatar-data-access';
   selector: 'okr-avatar',
   standalone: true,
   imports: [
-    IonAvatar, IonImg, IonLabel, IonItem
+    ImgDirective, IonAvatar, IonLabel, IonItem
   ],
   styles: [`
     ion-avatar { margin: auto; height: 60px; width: 60px; padding: 10px; text-align: right; position: relative; }
-    ion-avatar img { filter: brightness(0) invert(1);}
     small { text-align: center; display: block; margin-top: 2px; }
     .horizontal { width: 100%}
   `],
@@ -21,7 +21,7 @@ import { AvatarService } from '@okr/avatar-data-access';
     @if (layout() === 'vertical') {
       @if (avatarUrl(); as url) {
           <ion-avatar>
-            <ion-img [src]="url" alt="Avatar of {{ name() }}" />
+            <img okrImg [src]="url" alt="Avatar of {{ name() }}" />
           </ion-avatar>
         }
 
@@ -34,7 +34,7 @@ import { AvatarService } from '@okr/avatar-data-access';
       <ion-item lines="none" class="horizontal">
         @if (avatarUrl(); as url) {
           <ion-avatar>
-            <ion-img [src]="url" alt="Avatar of {{ name() }}" />
+            <img okrImg [src]="url" alt="Avatar of {{ name() }}" />
           </ion-avatar>
         }
 

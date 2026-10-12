@@ -1,10 +1,10 @@
 import { Component, computed, effect, input, model, output, signal } from '@angular/core';
 import { form } from '@angular/forms/signals';
-import { IonAvatar, IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonImg, IonItem, IonLabel, IonNote, IonRow } from '@ionic/angular';
+import { IonAvatar, IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonNote, IonRow } from '@ionic/angular';
 
 import { AccountModel, AvatarInfo, CostCenterModel, ProjectModel, RoleName, UserModel, VatCodeModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { AmountInput, AmountInputI18n, DateInput, DateInputI18n, ErrorNote, NotesInput, NotesInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { AmountInput, AmountInputI18n, DateInput, DateInputI18n, ErrorNote, NotesInput, NotesInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n, ImgDirective } from '@okr/shared-ui';
 import { validateVestTree } from '@okr/shared-util-angular';
 import { coerceBoolean, hasRole, isProfitAndLossAccountId } from '@okr/shared-util-core';
 
@@ -26,8 +26,8 @@ import { accountDefaultCostCenterKey, addBookingPart, BOOKING_LINE_TEXT_LENGTH, 
   selector: 'okr-booking-form',
   standalone: true,
   imports: [
-    SvgIconPipe, DateInput, TextInput, AmountInput, StringSelect, NotesInput, ErrorNote, AccountSelect, CostCenterSelect, ProjectSelect,
-    IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonButton, IonIcon, IonItem, IonLabel, IonNote, IonAvatar, IonImg, AvatarPipe,
+    ImgDirective, SvgIconPipe, DateInput, TextInput, AmountInput, StringSelect, NotesInput, ErrorNote, AccountSelect, CostCenterSelect, ProjectSelect,
+    IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonButton, IonIcon, IonItem, IonLabel, IonNote, IonAvatar, AvatarPipe,
   ],
   styles: [`
     @media (width <= 600px) { ion-card { margin: 5px;} }
@@ -69,7 +69,7 @@ import { accountDefaultCostCenterKey, addBookingPart, BOOKING_LINE_TEXT_LENGTH, 
                   <ion-item lines="none" class="counterparty">
                     <!-- the avatar shows the counterparty is linked to a person/org record, not just a name from the bank file -->
                     @if (counterpartyAvatarKey(); as avatarKey) {
-                      <ion-avatar slot="start"><ion-img src="{{ avatarKey | avatar }}" alt="" /></ion-avatar>
+                      <ion-avatar slot="start"><img okrImg src="{{ avatarKey | avatar }}" alt="" /></ion-avatar>
                     }
                     <ion-label>
                       <ion-note>{{ i18n().form_counterparty_label() }}</ion-note>

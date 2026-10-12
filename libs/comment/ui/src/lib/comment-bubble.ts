@@ -1,7 +1,8 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, input, output } from '@angular/core';
-import { IonAvatar, IonIcon, IonImg } from '@ionic/angular';
+import { IonAvatar, IonIcon } from '@ionic/angular';
 
+import { ImgDirective } from '@okr/shared-ui';
 import { CommentModel, DocumentModel } from '@okr/shared-models';
 import { FileLogoPipe, FileNamePipe, FileSizePipe, PrettyDateTimePipe } from '@okr/shared-pipes';
 
@@ -21,8 +22,8 @@ import { CommentTextPipe } from './comment-text.pipe';
   selector: 'okr-comment-bubble',
   standalone: true,
   imports: [
-    AsyncPipe, AvatarPipe, CommentTextPipe, PrettyDateTimePipe, FileLogoPipe, FileNamePipe, FileSizePipe,
-    IonAvatar, IonImg, IonIcon
+    ImgDirective, AsyncPipe, AvatarPipe, CommentTextPipe, PrettyDateTimePipe, FileLogoPipe, FileNamePipe, FileSizePipe,
+    IonAvatar, IonIcon
   ],
   styles: [`
     :host { display: block; }
@@ -117,7 +118,7 @@ import { CommentTextPipe } from './comment-text.pipe';
   template: `
     <div class="row">
       <ion-avatar>
-        <ion-img src="{{ 'person.' + comment().authorKey | avatar:'person' }}" [alt]="comment().authorName" />
+        <img okrImg src="{{ 'person.' + comment().authorKey | avatar:'person' }}" [alt]="comment().authorName" />
       </ion-avatar>
 
       <div class="content">

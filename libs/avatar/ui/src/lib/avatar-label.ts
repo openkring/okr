@@ -1,6 +1,7 @@
 import { Component, computed, inject, input } from '@angular/core';
-import { IonAvatar, IonImg, IonItem, IonLabel } from '@ionic/angular';
+import { IonAvatar, IonItem, IonLabel } from '@ionic/angular';
 
+import { ImgDirective } from '@okr/shared-ui';
 import { ColorsIonic, getCategoryStringField } from '@okr/shared-categories';
 import { ColorIonic } from '@okr/shared-models';
 
@@ -10,12 +11,12 @@ import { AvatarService } from '@okr/avatar-data-access';
   selector: 'okr-avatar-label',
   standalone: true,
   imports: [
-    IonItem, IonAvatar, IonImg, IonLabel
+    ImgDirective, IonItem, IonAvatar, IonLabel
   ],
   template: `
   <ion-item lines="none" [color]="colorName()">
     <ion-avatar slot="start">
-      <ion-img [src]="url()" [alt]="alt()" />
+      <img okrImg [src]="url()" [alt]="alt()" />
     </ion-avatar>
     <ion-label>{{label()}}</ion-label>      
   </ion-item>

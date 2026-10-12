@@ -1,8 +1,9 @@
 import { AsyncPipe } from '@angular/common';
 import { CdkDrag, CdkDragDrop, CdkDropList, CdkDropListGroup } from '@angular/cdk/drag-drop';
 import { Component, computed, inject, output, signal } from '@angular/core';
-import { IonAvatar, IonBadge, IonChip, IonIcon, IonImg, IonLabel } from '@ionic/angular';
+import { IonAvatar, IonBadge, IonChip, IonIcon, IonLabel } from '@ionic/angular';
 
+import { ImgDirective } from '@okr/shared-ui';
 import { SIZE_MD } from '@okr/shared-constants';
 import { TaskModel } from '@okr/shared-models';
 import { PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
@@ -30,10 +31,9 @@ import { TaskMove, TaskStore } from './task.store';
   selector: 'okr-task-board',
   standalone: true,
   imports: [
-    AsyncPipe, TranslatePipe, SvgIconPipe, PrettyDatePipe, AvatarPipe,
+    ImgDirective, AsyncPipe, TranslatePipe, SvgIconPipe, PrettyDatePipe, AvatarPipe,
     CdkDropListGroup, CdkDropList, CdkDrag,
-    IonIcon, IonLabel, IonBadge, IonChip, IonAvatar, IonImg,
-  ],
+    IonIcon, IonLabel, IonBadge, IonChip, IonAvatar, ],
   styles: [`
     .board { display: flex; gap: 12px; padding: 12px; overflow-x: auto; align-items: flex-start; height: 100%; }
     .column { flex: 0 0 280px; display: flex; flex-direction: column; background: var(--ion-color-light); border-radius: 8px; border-top: 3px solid var(--column-accent); }
@@ -78,7 +78,7 @@ import { TaskMove, TaskStore } from './task.store';
                     <div class="card-meta">
                       @if(task.assignee) {
                         <ion-avatar>
-                          <ion-img src="{{ task.assignee.modelType + '.' + task.assignee.key | avatar }}" alt="Avatar" />
+                          <img okrImg src="{{ task.assignee.modelType + '.' + task.assignee.key | avatar }}" alt="Avatar" />
                         </ion-avatar>
                       }
                       @for(tag of tagsOf(task); track tag) {

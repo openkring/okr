@@ -2,7 +2,7 @@
 import { CUSTOM_ELEMENTS_SCHEMA, Component, OnInit, PLATFORM_ID, computed, effect, inject, input } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonCard, IonCardContent, IonLabel } from '@ionic/angular';
 
-import { EmptyList, MoreButton, OptionalCardHeader, Spinner } from '@okr/shared-ui';
+import { EmptyList, MoreButton, OptionalCardHeader, Spinner, ImgDirective } from '@okr/shared-ui';
 import { debugMessage, hasRole } from '@okr/shared-util-core';
 import { createActionSheetButton, createActionSheetOptions, isBrowser } from '@okr/shared-util-angular';
 import { PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
@@ -35,7 +35,7 @@ import { TasksStore } from './tasks-section.store';
   ],
   providers: [TasksStore], 
   imports: [
-    SvgIconPipe, PrettyDatePipe, AvatarPipe,
+    ImgDirective, SvgIconPipe, PrettyDatePipe, AvatarPipe,
     OptionalCardHeader, Spinner, EmptyList, MoreButton,
     IonCard, IonCardContent, IonLabel
   ],
@@ -69,7 +69,7 @@ import { TasksStore } from './tasks-section.store';
                                 }
                                 @if(task.assignee !== undefined) {
                                 <ion-avatar>
-                                    <ion-img src="{{ task.assignee.modelType + '.' + task.assignee.key | avatar }}" alt="Avatar of the assigned person" />
+                                    <img okrImg src="{{ task.assignee.modelType + '.' + task.assignee.key | avatar }}" alt="Avatar of the assigned person" />
                                 </ion-avatar>
                                 }
                             </ion-item>

@@ -1,11 +1,11 @@
 import { Component, computed, inject, input } from '@angular/core';
-import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonChip, IonContent, IonIcon, IonImg, IonItem, IonLabel, IonNote, ModalController } from '@ionic/angular';
+import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonChip, IonContent, IonIcon, IonItem, IonLabel, IonNote, ModalController } from '@ionic/angular';
 
 import { AvatarPipe } from '@okr/avatar-ui';
 import { AvatarDetailService, FinanceHistory, LedgerBookings, VoucherTiles } from '@okr/finance-accounting-feature';
 import { billAccountKeys, billBookingAmounts, billBookingKeys, billDisplayState, billStateColor, billStateLabel, billVoucherKeys, isOverdueBill, isPayableBill } from '@okr/finance-bill-util';
 import { BillModel, BillPayment } from '@okr/shared-models';
-import { formatMinorAmount, Header } from '@okr/shared-ui';
+import { formatMinorAmount, Header, ImgDirective } from '@okr/shared-ui';
 import { PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
 import { convertDateFormatToString, DateFormat, fill, getFullName, getTodayStr, hasRole } from '@okr/shared-util-core';
 import { BillStore } from './bill.store';
@@ -16,10 +16,10 @@ import { BillStore } from './bill.store';
   standalone: true,
   providers: [BillStore],
   imports: [
-    VoucherTiles, LedgerBookings, FinanceHistory,
+    ImgDirective, VoucherTiles, LedgerBookings, FinanceHistory,
     SvgIconPipe, PrettyDatePipe, AvatarPipe,
     Header,
-    IonContent, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonIcon, IonItem, IonLabel, IonChip, IonAvatar, IonImg, IonButton, IonNote
+    IonContent, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonIcon, IonItem, IonLabel, IonChip, IonAvatar, IonButton, IonNote
   ],
   styles: [`
     @media (width <= 600px) { ion-card { margin: 5px; } }
@@ -44,7 +44,7 @@ import { BillStore } from './bill.store';
             @if(bill.vendor; as vendor) {
               <ion-item lines="none">
                 <ion-avatar slot="start">
-                  <ion-img src="{{ vendor.modelType + '.' + vendor.key | avatar:vendor.modelType }}" alt="Vendor Logo" />
+                  <img okrImg src="{{ vendor.modelType + '.' + vendor.key | avatar:vendor.modelType }}" alt="Vendor Logo" />
                 </ion-avatar>
                 <ion-label>
                   <p class="view-label">{{ store.i18n.vendor() }}</p>

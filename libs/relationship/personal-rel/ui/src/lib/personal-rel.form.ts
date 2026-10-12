@@ -1,9 +1,9 @@
 import { Component, computed, effect, input, model, output } from '@angular/core';
 import { form } from '@angular/forms/signals';
-import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonRow } from '@ionic/angular';
+import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonRow } from '@ionic/angular';
 import { CategoryListModel, PersonalRelModel, RoleName, UserModel } from '@okr/shared-models';
 import { FullNamePipe } from '@okr/shared-pipes';
-import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, TextInput, TextInputI18n , ErrorNote} from '@okr/shared-ui';
+import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, TextInput, TextInputI18n , ErrorNote, ImgDirective } from '@okr/shared-ui';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 import { DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PERSONAL_REL, DEFAULT_TAGS, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
@@ -15,10 +15,10 @@ import { personalRelValidations, PersonalRelI18n } from '@okr/relationship-perso
   selector: 'okr-personal-rel-form',
   standalone: true,
   imports: [
-    ErrorNote,
+    ImgDirective, ErrorNote,
     AvatarPipe, FullNamePipe,
     DateInput, Chips, NotesInput, CategorySelect,
-    IonGrid, IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonItem, IonAvatar, IonImg, IonLabel, IonButton,
+    IonGrid, IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonItem, IonAvatar, IonLabel, IonButton,
     TextInput
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -43,7 +43,7 @@ import { personalRelValidations, PersonalRelI18n } from '@okr/relationship-perso
               <ion-col size="9">
                 <ion-item lines="none" (click)="showPerson(subjectKey())">
                   <ion-avatar slot="start">
-                    <ion-img [src]="subjectAvatarKey() | avatar" alt="Avatar of first person" />
+                    <img okrImg [src]="subjectAvatarKey() | avatar" alt="Avatar of first person" />
                   </ion-avatar>
                   <ion-label>{{ subjectFirstName() | fullName:subjectLastName() }}</ion-label>
                 </ion-item>
@@ -70,7 +70,7 @@ import { personalRelValidations, PersonalRelI18n } from '@okr/relationship-perso
               <ion-col size="9">
                 <ion-item lines="none" (click)="showPerson(objectKey())">
                   <ion-avatar slot="start">
-                  <ion-img [src]="objectAvatarKey() | avatar" alt="Avatar of second person" />
+                  <img okrImg [src]="objectAvatarKey() | avatar" alt="Avatar of second person" />
                   </ion-avatar>
                   <ion-label>{{ objectFirstName() | fullName:objectLastName() }}</ion-label>
                 </ion-item>
