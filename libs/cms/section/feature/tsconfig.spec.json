@@ -10,7 +10,8 @@
     "allowJs": true,
     "moduleResolution": "bundler",
     "lib": ["dom", "es2022"],
-    "isolatedModules": true
+    "isolatedModules": true,
+    "ignoreDeprecations": "6.0"
   },
   "include": ["vite.config.ts", "src/**/*", "**/*.spec.ts", "**/*.test.ts"],
   "exclude": [],

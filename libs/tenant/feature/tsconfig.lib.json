@@ -9,7 +9,9 @@
     "moduleResolution": "bundler",
     "target": "es2020",
     "types": [],
-    "tsBuildInfoFile": "../../../dist/out-tsc/tenant-feature.tsbuildinfo"
+    "tsBuildInfoFile": "../../../dist/out-tsc/tenant-feature.tsbuildinfo",
+    "ignoreDeprecations": "6.0",
+    "rootDir": "."
   },
   "include": ["src/**/*.ts"],
   "exclude": ["**/*.spec.ts", "**/test-setup.ts", "vite.config.ts"],

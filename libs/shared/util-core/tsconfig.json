@@ -2,12 +2,11 @@
   "extends": "../../../tsconfig.base.json",
   "compilerOptions": {
     "types": ["node", "vitest"],
-    "noEmit": true
+    "noEmit": true,
+    "ignoreDeprecations": "6.0",
+    "rootDir": "src"
   },
   "include": ["src/**/*", "**/*.spec.ts", "**/*.test.ts"],
   "exclude": ["dist/**/*"],
-  "references": [
-    {"path": "../../shared/models/tsconfig.lib.json"},
-    {"path": "../../shared/constants/tsconfig.lib.json"}
-  ]
+  "references": [{ "path": "../../shared/models/tsconfig.lib.json" }, { "path": "../../shared/constants/tsconfig.lib.json" }]
 }

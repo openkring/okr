@@ -5,7 +5,8 @@
     "outDir": "../../../dist/libs/shared/models",
     "declaration": true,
     "declarationMap": false,
-    "sourceMap": false
+    "sourceMap": false,
+    "ignoreDeprecations": "6.0"
   },
   "include": ["src/**/*"],
   "exclude": ["**/*.spec.ts", "**/test-setup.ts", "vite.config.ts"]

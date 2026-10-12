@@ -6,17 +6,10 @@
     "outDir": "../../../dist/libs/shared/models",
     "declaration": true,
     "composite": true,
-    "tsBuildInfoFile": "../../../dist/out-tsc/shared-models.tsbuildinfo"
+    "tsBuildInfoFile": "../../../dist/out-tsc/shared-models.tsbuildinfo",
+    "ignoreDeprecations": "6.0"
   },
-  "include": [
-    "src/**/*"
-  ],
-  "exclude": [
-    "**/*.spec.ts",
-    "**/test-setup.ts",
-    "vite.config.ts"
-  ],
-  "references": [
-    { "path": "../constants/tsconfig.lib.json" }
-  ]
+  "include": ["src/**/*"],
+  "exclude": ["**/*.spec.ts", "**/test-setup.ts", "vite.config.ts"],
+  "references": [{ "path": "../constants/tsconfig.lib.json" }]
 }

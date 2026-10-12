@@ -3,11 +3,8 @@
   "compilerOptions": {
     "outDir": "../../dist/out-tsc/apps/<%= tenantId %>-app-server",
     "target": "ES2022",
-    "types": [
-      "node"
-    ]
+    "types": ["node"],
+    "rootDir": "../.."
   },
-  "files": [
-    "src/main.server.ts"
-  ]
+  "files": ["src/main.server.ts"]
 }

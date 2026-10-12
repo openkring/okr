@@ -6,7 +6,9 @@
     "declaration": true,
     "module": "preserve",
     "moduleResolution": "bundler",
-    "lib": ["dom", "es2022"]
+    "lib": ["dom", "es2022"],
+    "ignoreDeprecations": "6.0",
+    "rootDir": "src"
   },
   "angularCompilerOptions": {
     "strictTemplates": true,
@@ -17,16 +19,16 @@
   "include": ["src/**/*", "**/*.spec.ts", "**/*.test.ts"],
   "exclude": ["dist/**/*"],
   "references": [
-    {"path": "../../shared/models/tsconfig.lib.json"},
-    {"path": "../../shared/data-access/tsconfig.lib.json"},
-    {"path": "../../shared/i18n/tsconfig.lib.json"},
-    {"path": "../../shared/pipes/tsconfig.lib.json"},
-    {"path": "../../shared/util-angular/tsconfig.lib.json"},
-    {"path": "../../shared/feature/tsconfig.lib.json"},
-    {"path": "../../shared/ui/tsconfig.lib.json"},
-    {"path": "../../shared/util-core/tsconfig.lib.json"},
-    {"path": "../data-access/tsconfig.lib.json"},
-    {"path": "../ui/tsconfig.lib.json"},
-    {"path": "../util/tsconfig.lib.json"}
+    { "path": "../../shared/models/tsconfig.lib.json" },
+    { "path": "../../shared/data-access/tsconfig.lib.json" },
+    { "path": "../../shared/i18n/tsconfig.lib.json" },
+    { "path": "../../shared/pipes/tsconfig.lib.json" },
+    { "path": "../../shared/util-angular/tsconfig.lib.json" },
+    { "path": "../../shared/feature/tsconfig.lib.json" },
+    { "path": "../../shared/ui/tsconfig.lib.json" },
+    { "path": "../../shared/util-core/tsconfig.lib.json" },
+    { "path": "../data-access/tsconfig.lib.json" },
+    { "path": "../ui/tsconfig.lib.json" },
+    { "path": "../util/tsconfig.lib.json" }
   ]
 }

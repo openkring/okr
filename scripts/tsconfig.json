@@ -5,7 +5,9 @@
     "target": "es2020",
     "esModuleInterop": true,
     "noEmit": true,
-    "types": ["node"]
+    "types": ["node"],
+    "ignoreDeprecations": "6.0",
+    "rootDir": "."
   },
   "include": ["./**/*.ts"]
 }

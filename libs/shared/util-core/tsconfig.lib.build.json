@@ -7,7 +7,8 @@
     "declarationMap": false,
     "sourceMap": false,
     "composite": false,
-    "types": ["node"]
+    "types": ["node"],
+    "ignoreDeprecations": "6.0"
   },
   "include": ["src/**/*.ts"],
   "exclude": ["**/*.spec.ts", "**/*.spec2.ts", "vite.config.ts"]

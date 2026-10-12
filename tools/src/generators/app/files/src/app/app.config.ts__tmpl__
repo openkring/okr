@@ -1,4 +1,4 @@
-import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { provideHttpClient, withInterceptors, withXhr } from '@angular/common/http';
 import { APP_BOOTSTRAP_LISTENER, ApplicationConfig, effect, ErrorHandler, importProvidersFrom, inject, Injector, isDevMode, PLATFORM_ID, provideZonelessChangeDetection, runInInjectionContext } from '@angular/core';
 import { provideRouter, RouteReuseStrategy, withComponentInputBinding } from '@angular/router';
 import { IonicRouteStrategy, provideIonicAngular } from '@ionic/angular/standalone';
@@ -73,7 +73,7 @@ export const appConfig: ApplicationConfig = {
     }),
 
     importProvidersFrom(TranslateModule.forRoot()),
-    provideHttpClient(withInterceptors([httpBreadcrumbInterceptor])),
+    provideHttpClient(withXhr(), withInterceptors([httpBreadcrumbInterceptor])),
 
     // Sentry: route uncaught Angular errors through Sentry's ErrorHandler, wrapped so a
     // stale lazy-chunk failure (old client after a deploy) reloads once instead of

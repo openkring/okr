@@ -9,13 +9,11 @@
     "moduleResolution": "bundler",
     "target": "es2020",
     "types": [],
-    "tsBuildInfoFile": "../../../dist/out-tsc/tenant-data-access.tsbuildinfo"
+    "tsBuildInfoFile": "../../../dist/out-tsc/tenant-data-access.tsbuildinfo",
+    "ignoreDeprecations": "6.0",
+    "rootDir": "."
   },
   "include": ["src/**/*.ts"],
   "exclude": ["**/*.spec.ts", "**/test-setup.ts", "vite.config.ts"],
-  "references": [
-    { "path": "../../shared/data-access/tsconfig.lib.json" },
-    { "path": "../../shared/models/tsconfig.lib.json" },
-    { "path": "../util/tsconfig.lib.json" }
-  ]
+  "references": [{ "path": "../../shared/data-access/tsconfig.lib.json" }, { "path": "../../shared/models/tsconfig.lib.json" }, { "path": "../util/tsconfig.lib.json" }]
 }

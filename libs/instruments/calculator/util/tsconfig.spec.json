@@ -8,7 +8,8 @@
     "target": "es2020",
     "esModuleInterop": true,
     "allowJs": true,
-    "lib": ["dom", "es2022"]
+    "lib": ["dom", "es2022"],
+    "ignoreDeprecations": "6.0"
   },
   "include": ["vite.config.ts", "vite.config.mts", "vitest.config.ts", "vitest.config.mts", "src/**/*", "**/*.spec.ts", "**/*.test.ts"],
   "exclude": [],

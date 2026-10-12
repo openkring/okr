@@ -119,7 +119,7 @@ When making changes to TypeScript files, always run `npx tsc --noEmit` or the pr
 
 ### Tech Stack (non-negotiable, I will mass git revert you)
 
-- Frontend: Angular v20, TypeScript strict, Ionic/Angular 8.7, Capacitor 7.4
+- Frontend: Angular v22, TypeScript strict, Ionic/Angular 8.8, Capacitor 8
 - Backend: Google Firebase using Firestore database, FCM, Auth, Storage, AppCheck
 - Auth: Firebase Authentication with email and password. Users may reset their password anytime.
 - Styling: scss
@@ -192,7 +192,10 @@ Matrix chat authentication is done via a Firebase Cloud Function (`getMatrixCred
 
 ### Angular specifics
 
-- **Zoneless**: uses `provideZonelessChangeDetection()` (no `zone.js` in components)
+- **Zoneless**: uses `provideZonelessChangeDetection()`; `zone.js` is not a dependency at all
+- **OnPush everywhere**: OnPush is Angular 22's default and no component opts out — never add
+  `ChangeDetectionStrategy.Eager` (angular-eslint errors on it). Template state must be a signal:
+  a plain field reassigned after an `await` or in a subscription never re-renders.
 - **Standalone components** only (no NgModules for components/pipes/directives)
 - **Ionic Angular** for UI components and routing strategy, only use standalone ionic components
 - **Transloco** for i18n (default language: `de`); translation keys use `@domain.key` format
@@ -201,7 +204,7 @@ Matrix chat authentication is done via a Firebase Cloud Function (`getMatrixCred
 
 ### Ionic version & hydration status
 
-_Last verified: 2026-10-12 — Angular 21.2.9, `@ionic/angular` + `@ionic/core` 8.8.8 (Stencil 4.43.0), Capacitor 8.
+_Last verified: 2026-10-12 — Angular 22.1.8, `@ionic/angular` + `@ionic/core` 8.8.8 (Stencil 4.43.0), Capacitor 8.
 Latest upstream: Ionic 9.0.7 (Stencil ≥ 4.44.2), Stencil 4.45.2._
 
 **Hydration is off by deliberate choice, not by defect.** `provideClientHydration` stays commented
@@ -225,7 +228,8 @@ neither replaces the Capacitor-integrated native shell (stack navigation, platfo
 transitions, gestures, the overlay/controller system) that is the actual reason Ionic is here.
 
 **Version-support lag is resolved upstream, not yet here.** Ionic 8 caps at Angular 20.x, so our
-Angular 21 (and Angular 22 on `work/ng22`) on Ionic 8.8.8 is an officially untested combination.
+Angular 22 on Ionic 8.8.8 is an officially untested combination. It works: `@ionic/angular` 8.8.8
+declares `@angular/core >=18`, and the 21 → 22 upgrade (2026-10-12) needed no Ionic change.
 Ionic 9 (2026-08-19) supports Angular 18–22 and closed
 [ionic#30907](https://github.com/ionic-team/ionic-framework/issues/30907). The upgrade is spec
 `1.96` ([`2026-10-12-ionic-9-upgrade-spec.md`](planning/specs/2026-10-12-ionic-9-upgrade-spec.md)).

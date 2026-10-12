@@ -1,5 +1,5 @@
 
-import { AfterViewInit, CUSTOM_ELEMENTS_SCHEMA, Component, OnDestroy, PLATFORM_ID, computed, effect, inject, input } from '@angular/core';
+import { AfterViewInit, CUSTOM_ELEMENTS_SCHEMA, Component, OnDestroy, PLATFORM_ID, computed, effect, inject, input, signal } from '@angular/core';
 import { IonCard, IonCardContent } from '@ionic/angular/standalone';
 import { firstValueFrom } from 'rxjs';
 
@@ -69,9 +69,9 @@ if (typeof window !== 'undefined') {
     <ion-card>
       <okr-optional-card-header [title]="title()" [subTitle]="subTitle()" />
       <ion-card-content>
-        @if(locationError) {
+        @if(locationError()) {
           <div class="error-message">
-            {{ locationError }}
+            {{ locationError() }}
           </div>
         }
         @if(useCurrentLocation()) {
@@ -94,7 +94,7 @@ export class MapSectionComponent implements AfterViewInit, OnDestroy {
   public editMode = input<boolean>(false);
 
   protected mapId: string;
-  protected locationError: string | null = null;
+  protected readonly locationError = signal<string | null>(null);
 
   private readonly mapConfig = computed(() => this.section()?.properties ?? MAP_CONFIG_SHAPE);
   private readonly centerLatitude = computed(() => this.mapConfig().centerLatitude);
@@ -159,12 +159,12 @@ export class MapSectionComponent implements AfterViewInit, OnDestroy {
 
   public async triggerGeolocation(): Promise<void> {
     if (this.editMode()) return;
-    this.locationError = null;
+    this.locationError.set(null);
     try {
       const position = await this.getCurrentPosition();
       await this.updateMapCenter(position.coords.latitude, position.coords.longitude);
     } catch (error: any) {
-      this.locationError = 'Location access denied. Please enable in Safari Settings > Privacy > Location Services.';
+      this.locationError.set('Location access denied. Please enable in Safari Settings > Privacy > Location Services.');
       console.error('MapSectionComponent: Failed to get current position:', error.message);
       const defaultPosition = await this.getDefaultPosition();
       await this.updateMapCenter(defaultPosition.coords.latitude, defaultPosition.coords.longitude, defaultPosition.zoom);

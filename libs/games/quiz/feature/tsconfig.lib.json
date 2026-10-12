@@ -10,13 +10,11 @@
     "types": [],
     "tsBuildInfoFile": "../../../../dist/out-tsc/games-quiz-feature.tsbuildinfo",
     "moduleResolution": "bundler",
-    "lib": ["dom", "es2022"]
+    "lib": ["dom", "es2022"],
+    "ignoreDeprecations": "6.0",
+    "rootDir": "."
   },
   "include": ["src/**/*.ts"],
   "exclude": ["**/*.spec.ts", "**/*.spec2.ts", "**/test-setup.ts", "vite.config.ts"],
-  "references": [
-    { "path": "../../../activity/data-access/tsconfig.lib.json" },
-    { "path": "../../../shared/feature/tsconfig.lib.json" },
-    { "path": "../../../shared/ui/tsconfig.lib.json" }
-  ]
+  "references": [{ "path": "../../../activity/data-access/tsconfig.lib.json" }, { "path": "../../../shared/feature/tsconfig.lib.json" }, { "path": "../../../shared/ui/tsconfig.lib.json" }]
 }

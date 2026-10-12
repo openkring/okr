@@ -10,7 +10,9 @@
     "types": [],
     "tsBuildInfoFile": "../../../../dist/out-tsc/finance-booking-feature.tsbuildinfo",
     "moduleResolution": "bundler",
-    "lib": ["dom", "es2022"]
+    "lib": ["dom", "es2022"],
+    "ignoreDeprecations": "6.0",
+    "rootDir": "."
   },
   "include": ["src/**/*.ts"],
   "exclude": ["**/*.spec.ts", "**/*.spec2.ts", "**/test-setup.ts", "vite.config.ts"],

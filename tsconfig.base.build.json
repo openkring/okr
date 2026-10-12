@@ -20,7 +20,12 @@
       "@okr/shared-util-core": ["dist/libs/shared/util-core/src"],
       "@okr/shared-util-functions": ["dist/libs/shared/util-functions/src"],
       "@okr/*": ["dist/libs/*/src"]
-    }
+    },
+    "strict": false,
+    "noUncheckedSideEffectImports": false,
+    "types": ["*"],
+    "esModuleInterop": false,
+    "ignoreDeprecations": "6.0"
   },
   "exclude": ["node_modules", "tmp", "dist"]
 }

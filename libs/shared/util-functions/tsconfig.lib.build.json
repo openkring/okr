@@ -4,16 +4,11 @@
     "outDir": "../../../dist/out-tsc/libs/shared/util-functions",
     "declaration": true,
     "composite": true,
-    "types": ["node"]
+    "types": ["node"],
+    "ignoreDeprecations": "6.0",
+    "rootDir": "."
   },
   "include": ["src/**/*.ts"],
-  "exclude": [
-    "src/**/*.spec.ts",
-    "src/**/*.test.ts"
-  ],
-  "references": [
-    { "path": "../constants/tsconfig.lib.build.json" },
-    { "path": "../models/tsconfig.lib.build.json" },
-    { "path": "../util-core/tsconfig.lib.build.json" }
-  ]
+  "exclude": ["src/**/*.spec.ts", "src/**/*.test.ts"],
+  "references": [{ "path": "../constants/tsconfig.lib.build.json" }, { "path": "../models/tsconfig.lib.build.json" }, { "path": "../util-core/tsconfig.lib.build.json" }]
 }

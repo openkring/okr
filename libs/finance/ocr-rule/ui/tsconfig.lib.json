@@ -3,9 +3,15 @@
   "compilerOptions": {
     "noEmit": false,
     "outDir": "../../../../dist/libs/finance/ocr-rule/ui",
-    "declaration": true, "composite": true, "module": "preserve",
-    "moduleResolution": "bundler", "target": "es2020", "types": [],
-    "tsBuildInfoFile": "../../../../dist/out-tsc/finance-ocr-rule-ui.tsbuildinfo"
+    "declaration": true,
+    "composite": true,
+    "module": "preserve",
+    "moduleResolution": "bundler",
+    "target": "es2020",
+    "types": [],
+    "tsBuildInfoFile": "../../../../dist/out-tsc/finance-ocr-rule-ui.tsbuildinfo",
+    "ignoreDeprecations": "6.0",
+    "rootDir": "."
   },
   "include": ["src/**/*.ts"],
   "exclude": ["**/*.spec.ts", "**/*.spec2.ts", "**/test-setup.ts", "vite.config.ts"],

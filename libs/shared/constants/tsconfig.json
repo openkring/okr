@@ -3,7 +3,9 @@
   "compilerOptions": {
     "noEmit": true,
     "types": ["node", "vitest"],
-    "declaration": true
+    "declaration": true,
+    "ignoreDeprecations": "6.0",
+    "rootDir": "src"
   },
   "angularCompilerOptions": {
     "strictTemplates": true,

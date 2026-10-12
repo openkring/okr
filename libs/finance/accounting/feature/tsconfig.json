@@ -6,7 +6,9 @@
     "declaration": true,
     "module": "preserve",
     "moduleResolution": "bundler",
-    "lib": ["dom", "es2022"]
+    "lib": ["dom", "es2022"],
+    "ignoreDeprecations": "6.0",
+    "rootDir": "../../.."
   },
   "angularCompilerOptions": {
     "strictTemplates": true,
@@ -62,8 +64,8 @@
     {
       "path": "../../../subject/person/ui/tsconfig.lib.json"
     },
-    {"path": "../../../comment/ui/tsconfig.lib.json"},
-    {"path": "../../../comment/util/tsconfig.lib.json"},
-    {"path": "../../../relationship/responsibility/data-access/tsconfig.lib.json"}
+    { "path": "../../../comment/ui/tsconfig.lib.json" },
+    { "path": "../../../comment/util/tsconfig.lib.json" },
+    { "path": "../../../relationship/responsibility/data-access/tsconfig.lib.json" }
   ]
 }

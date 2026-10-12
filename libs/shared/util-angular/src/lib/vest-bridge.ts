@@ -1,11 +1,11 @@
 import { computed, Signal } from '@angular/core';
-import { FieldTree, SchemaPath, TreeValidationResult, validateTree } from '@angular/forms/signals';
+import { FieldTree, ReadonlyFieldTree, SchemaPath, TreeValidationResult, validateTree } from '@angular/forms/signals';
 import type { StaticSuite } from 'vest';
 
 /** prefix of the error kind the bridge files each Vest key under; vestErrors() strips it again */
 const VEST_KIND = 'vest.';
 
-function resolveFieldTree(root: FieldTree<unknown>, key: string): FieldTree<unknown> | undefined {
+function resolveFieldTree(root: ReadonlyFieldTree<unknown>, key: string): ReadonlyFieldTree<unknown> | undefined {
   if (!key) return root;
   return key
     .replace(/\[(\d+)\]/g, '.$1')
@@ -14,7 +14,7 @@ function resolveFieldTree(root: FieldTree<unknown>, key: string): FieldTree<unkn
       if (node == null) return node;
       const k = /^\d+$/.test(segment) ? parseInt(segment, 10) : segment;
       return node[k];
-    }, root) as FieldTree<unknown> | undefined;
+    }, root) as ReadonlyFieldTree<unknown> | undefined;
 }
 
 /**
@@ -30,7 +30,7 @@ export function validateVestTree<T>(
   validateTree(path, (ctx): TreeValidationResult => {
     const result = suite(ctx.value() as T);
     const fieldErrors = result.getErrors();
-    const errors: { kind: string; message: string; fieldTree: FieldTree<unknown> }[] = [];
+    const errors: { kind: string; message: string; fieldTree: ReadonlyFieldTree<unknown> }[] = [];
 
     for (const [key, messages] of Object.entries(fieldErrors)) {
       // A key without a FieldTree node (a field missing on a legacy doc, a cross-field rule name)

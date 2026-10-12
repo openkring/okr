@@ -9,17 +9,12 @@
     "moduleResolution": "bundler",
     "target": "es2020",
     "types": [],
-    "tsBuildInfoFile": "../../../../dist/out-tsc/security-audit-feature.tsbuildinfo"
+    "tsBuildInfoFile": "../../../../dist/out-tsc/security-audit-feature.tsbuildinfo",
+    "ignoreDeprecations": "6.0",
+    "rootDir": "."
   },
-  "include": [
-    "src/**/*.ts"
-  ],
-  "exclude": [
-    "**/*.spec.ts",
-    "**/*.spec2.ts",
-    "**/test-setup.ts",
-    "vite.config.ts"
-  ],
+  "include": ["src/**/*.ts"],
+  "exclude": ["**/*.spec.ts", "**/*.spec2.ts", "**/test-setup.ts", "vite.config.ts"],
   "references": [
     { "path": "../../../content/pdf-template/data-access/tsconfig.lib.json" },
     { "path": "../data-access/tsconfig.lib.json" },

@@ -115,3 +115,4 @@ planning/video-producer/**/*.mp4
 .nx/polygraph
 .claude/worktrees
 .nx/self-healing
+.nx/migrate-runs

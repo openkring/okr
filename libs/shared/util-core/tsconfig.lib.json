@@ -5,29 +5,16 @@
     "outDir": "../../../dist/libs/shared/util-core",
     "declaration": true,
     "composite": true,
-    "types": [
-      "node"
-    ],
+    "types": ["node"],
     "paths": {
-      "@okr/shared-models": [
-        "dist/libs/shared/models/src/index.d.ts"
-      ],
-      "@okr/shared-constants": [
-        "dist/libs/shared/constants/src/index.d.ts"
-      ]
+      "@okr/shared-models": ["dist/libs/shared/models/src/index.d.ts"],
+      "@okr/shared-constants": ["dist/libs/shared/constants/src/index.d.ts"]
     },
-    "tsBuildInfoFile": "../../../dist/out-tsc/shared-util-core.tsbuildinfo"
+    "tsBuildInfoFile": "../../../dist/out-tsc/shared-util-core.tsbuildinfo",
+    "ignoreDeprecations": "6.0",
+    "rootDir": "."
   },
-  "include": [
-    "src/**/*.ts"
-  ],
-  "exclude": [
-    "jest.config.ts",
-    "src/**/*.spec.ts",
-    "src/**/*.test.ts"
-  ],
-  "references": [
-    { "path": "../constants/tsconfig.lib.json" },
-    { "path": "../models/tsconfig.lib.json" }
-  ]
+  "include": ["src/**/*.ts"],
+  "exclude": ["jest.config.ts", "src/**/*.spec.ts", "src/**/*.test.ts"],
+  "references": [{ "path": "../constants/tsconfig.lib.json" }, { "path": "../models/tsconfig.lib.json" }]
 }

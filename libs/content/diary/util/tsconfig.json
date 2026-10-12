@@ -3,12 +3,11 @@
   "compilerOptions": {
     "noEmit": true,
     "types": ["node", "vitest"],
-    "declaration": true
+    "declaration": true,
+    "ignoreDeprecations": "6.0",
+    "rootDir": "src"
   },
   "include": ["src/**/*", "**/*.spec.ts", "**/*.test.ts"],
   "exclude": ["dist/**/*"],
-  "references": [
-    { "path": "../../../shared/models/tsconfig.lib.json" },
-    { "path": "../../../shared/util-core/tsconfig.lib.json" }
-  ]
+  "references": [{ "path": "../../../shared/models/tsconfig.lib.json" }, { "path": "../../../shared/util-core/tsconfig.lib.json" }]
 }

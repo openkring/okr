@@ -365,7 +365,13 @@
       "@okr/vcard-feature": ["libs/vcard/feature/src/index.ts"],
       "@okr/vcard-util": ["libs/vcard/util/src/index.ts"]
     },
-    "types": ["node", "vitest"]
+    "types": [
+      "node",
+      "vitest"
+    ],
+    "noUncheckedSideEffectImports": false,
+    "ignoreDeprecations": "6.0",
+    "rootDir": "."
   },
   "angularCompilerOptions": {
     "strictTemplates": true
