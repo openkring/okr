@@ -24,7 +24,7 @@
 import { inject, Injectable, PLATFORM_ID } from '@angular/core';
 import { ToastController } from '@ionic/angular';
 import { captureMessage } from '@sentry/angular';
-import { arrayRemove, collection, deleteDoc, doc, getDoc, getDocs, query, runTransaction, setDoc, updateDoc, WriteBatch, writeBatch } from 'firebase/firestore';
+import { arrayRemove, collection, deleteDoc, doc, getCountFromServer, getDoc, getDocs, query, runTransaction, setDoc, updateDoc, WriteBatch, writeBatch } from 'firebase/firestore';
 import { collectionData, docData } from 'rxfire/firestore';
 import { catchError, concat, defer, delay, firstValueFrom, from, map, MonoTypeOperatorFunction, Observable, of, ReplaySubject, retry, share, switchMap, tap, timer } from 'rxjs';
 
@@ -985,6 +985,23 @@ export class FirestoreService {
     } catch (err) {
       console.error('FirestoreService.getDataOnce error:', err);
       return [];
+    }
+  }
+
+  /**
+   * Server-side count of a query (aggregation, one billed read per 1000 docs) — for dashboard
+   * figures that need a number, not the documents. Returns undefined when it cannot be read
+   * (offline: aggregations never come from the cache), so the caller can show «—».
+   */
+  public async countOnce(collectionName: string, dbQuery: DbQuery[]): Promise<number | undefined> {
+    if (!isBrowser(this.platformId) || !isFirestoreInitializedCheck()) return undefined;
+    try {
+      const queryRef = query(collection(this.firestore, collectionName), ...getQuery(dbQuery, 'none'));
+      const snapshot = await getCountFromServer(queryRef);
+      return snapshot.data().count;
+    } catch (err) {
+      console.warn('FirestoreService.countOnce failed:', err);
+      return undefined;
     }
   }
 

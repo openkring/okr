@@ -9,6 +9,10 @@
     "tslib": "^2.8.1",
     "@okr/shared-models": "*",
     "@okr/shared-util-core": "*",
-    "@okr/shared-constants": "*"
+    "@okr/shared-constants": "*",
+    "@okr/finance-reporting-util": "*",
+    "@okr/finance-bill-util": "*",
+    "@okr/finance-invoice-util": "*",
+    "@okr/finance-budget-util": "*"
   }
 }
