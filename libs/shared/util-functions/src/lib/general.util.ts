@@ -91,6 +91,53 @@ export async function getCallerTenantId(request: functions.CallableRequest, name
   return tenantId;
 }
 
+/**
+ * The operator tenant: the one app (used only by the operator) that may run tools reaching
+ * across tenants — tenant allocation, the project-wide login list (spec 1.101 §6). All tenants
+ * share one Firebase project, so these tools are gated HERE, on the server; hiding their screens
+ * in the other apps is not access control.
+ */
+export const OPERATOR_TENANT_ID = 'bka';
+
+export function isOperatorTenant(tenantId: string): boolean {
+  return tenantId === OPERATOR_TENANT_ID;
+}
+
+/**
+ * May a caller of `callerTenantId` delete the Firebase Auth login `targetUserData` belongs to?
+ * The operator may delete any login (including one with no `users` doc at all). Any other tenant
+ * only the login of a user that belongs to it alone — never another tenant's, never a shared one,
+ * never one whose `users` doc is gone (that is an orphan, which only the operator handles).
+ */
+export function mayDeleteAuthUser(callerTenantId: string, targetUserData: Record<string, unknown> | undefined): boolean {
+  if (isOperatorTenant(callerTenantId)) return true;
+  if (!callerTenantId) return false;
+  const tenants = Array.isArray(targetUserData?.['tenants']) ? (targetUserData['tenants'] as unknown[]) : [];
+  return tenants.length === 1 && tenants[0] === callerTenantId;
+}
+
+/** Split `items` into consecutive slices of at most `size` (e.g. `getAuth().getUsers()` takes ≤ 100). */
+export function chunk<T>(items: readonly T[], size: number): T[][] {
+  if (!Number.isInteger(size) || size < 1) throw new Error(`chunk: size must be a positive integer, got ${size}`);
+  const slices: T[][] = [];
+  for (let i = 0; i < items.length; i += size) slices.push(items.slice(i, i + size));
+  return slices;
+}
+
+/**
+ * Authorize an operator-only callable: the caller's own tenant (server-side, see
+ * `getCallerTenantId`) must be the operator tenant. Call AFTER `checkAdminRole`.
+ * Returns the caller's tenant id.
+ */
+export async function checkOperatorTenant(request: functions.CallableRequest, nameOfCallingFunction: string): Promise<string> {
+  const tenantId = await getCallerTenantId(request, nameOfCallingFunction);
+  if (!isOperatorTenant(tenantId)) {
+    logger.error(`${nameOfCallingFunction}: tenant ${tenantId} is not the operator tenant`);
+    throw new functions.HttpsError('permission-denied', 'Diese Funktion gibt es nur in der Betreiber-App.');
+  }
+  return tenantId;
+}
+
 export function checkStringField(request: functions.CallableRequest, nameOfCallingFunction: string, fieldName: string): string {
     const data = request.data[fieldName];
   if (!data || typeof data !== 'string') {
