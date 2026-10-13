@@ -314,13 +314,12 @@ const aoc: FeatureBlock = {
       // NEW (not mirrored off a live doc, unlike its siblings above): the kiosk monitoring +
       // remote-operations screen, seeded with the block. See the `kiosk` skill.
       { key: 'aoc-kiosk',      name: 'aoc-kiosk',      url: '/aoc/kiosk',      action: 'navigate', roleNeeded: 'admin', icon: 'settings', label: '@item.aoc-kiosk' },
-      // NEW with spec 1.47 (Mandanten-Zuteilung, TOC 1.47) — seeded with the block, same as
-      // aoc-kiosk above. `group` matches the "share a person with another tenant" action;
-      // must be a name from the icons the `svgIcon` pipe actually resolves.
-      { key: 'aoc-allocation', name: 'aoc-allocation', url: '/aoc/allocation', action: 'navigate', roleNeeded: 'admin', icon: 'group', label: '@item.aoc-allocation' },
+      // `aoc-allocation` (spec 1.47) LEFT the catalogue with spec 1.101 §6: tenant allocation is an
+      // operator-only tool. Its route lives in apps/bka-app (`/operator/allocation`) and its menu
+      // row is a bka-only doc written by scripts/restrict-allocation-to-bka.mjs.
       // NEW with the AOC diary screen: the Drive check + import dry run moved off
       // `/security/privacy-audit`, plus the places/people the import could not match. Seeded
-      // with the block like `aoc-kiosk` and `aoc-allocation`, not mirrored off a live doc.
+      // with the block like `aoc-kiosk`, not mirrored off a live doc.
       { key: 'aoc-diary',      name: 'aoc-diary',      url: '/aoc/diary',      action: 'navigate', roleNeeded: 'admin', icon: 'document', label: '@item.aoc-diary' },
       // NEW with spec 1.35, seeded live for `scs` in the same change. It hangs under the AOC
       // submenu but its ROUTE is not an `/aoc/*` child and not block-gated: the rule engine is
