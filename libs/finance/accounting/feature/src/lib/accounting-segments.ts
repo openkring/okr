@@ -57,13 +57,17 @@ export class AccountingSegments {
     { initialValue: resolveAccountingArea(this.router.url) },
   );
 
-  protected readonly segments = computed(() => {
-    const effective = this.featureStore.effective();
-    return (this.current()?.area.segments ?? []).filter(s => !s.featureBlock || effective.has(s.featureBlock));
-  });
-
   /** books of the url, else the selection (books-less routes like /expense/all) */
   protected readonly books = computed(() => this.current()?.books || this.store.selectedBooks());
+
+  /** without books a books-scoped segment has no url ('/accounting//…'), so it is not offered */
+  protected readonly segments = computed(() => {
+    const effective = this.featureStore.effective();
+    const books = this.books();
+    return (this.current()?.area.segments ?? [])
+      .filter(s => !s.featureBlock || effective.has(s.featureBlock))
+      .filter(s => !s.booksScoped || !!books);
+  });
 
   protected readonly showSwitcher = computed(() =>
     this.store.availableBooks().length > 1 && this.current()?.segment.booksScoped !== false);
@@ -77,6 +81,7 @@ export class AccountingSegments {
   protected async onSegment($event: CustomEvent): Promise<void> {
     const seg = this.segments().find(s => s.id === $event.detail.value);
     if (!seg || seg.id === this.current()?.segment.id) return;
+    if (seg.booksScoped && !this.books()) return;
     await this.router.navigateByUrl(segmentUrl(seg, this.books()));
   }
 
@@ -84,6 +89,7 @@ export class AccountingSegments {
     const books = String($event.detail.value ?? '');
     const cur = this.current();
     if (!books || !cur || books === cur.books) return;
+    this.store.chooseBooks(books);
     await this.router.navigateByUrl(segmentUrl(cur.segment, books));
   }
 }

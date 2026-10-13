@@ -3,22 +3,13 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { of } from 'rxjs';
 import { patchState, signalStore, withComputed, withHooks, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { AppStore, SelectedBooks } from '@okr/shared-feature';
+import { AppStore, readStoredBooks, SelectedBooks, writeStoredBooks } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { AccountingConfigModel } from '@okr/shared-models';
 import { resourceParams } from '@okr/shared-util-angular';
 
 import { AccountingConfigService } from '@okr/finance-accounting-data-access';
 import { ACCOUNTING_I18N_KEYS, resolveSelectedBooks } from '@okr/finance-accounting-util';
-
-const BOOKS_STORAGE_PREFIX = 'okr.accounting.books.';
-
-function readStoredBooks(tenantId: string): string {
-  try { return localStorage.getItem(BOOKS_STORAGE_PREFIX + tenantId) ?? ''; } catch { return ''; }
-}
-function writeStoredBooks(tenantId: string, books: string): void {
-  try { localStorage.setItem(BOOKS_STORAGE_PREFIX + tenantId, books); } catch { /* private mode: the choice is a convenience */ }
-}
 
 export type AccountingState = { accountingTenantId: string; storedBooks: string };
 
@@ -81,9 +72,15 @@ export const AccountingStore = signalStore(
     tenantId: computed(() => store.appStore.tenantId()),
   })),
   withMethods(store => ({
+    /** the books of the visited route — wins for this visit, but is NOT remembered (spec 1.100 §4.2) */
     setTenant(id: string): void {
-      patchState(store, { accountingTenantId: id, storedBooks: id || store.storedBooks() });
-      if (id) writeStoredBooks(store.appStore.tenantId(), id);
+      patchState(store, { accountingTenantId: id });
+    },
+    /** an EXPLICIT choice (the books switcher): remembered in this browser, the menu follows it after a reload */
+    chooseBooks(id: string): void {
+      if (!id) return;
+      patchState(store, { storedBooks: id });
+      writeStoredBooks(store.appStore.tenantId(), id);
     },
     async createConfig(config: AccountingConfigModel): Promise<void> {
       await store.configService.create(config, store.currentUser());
@@ -96,8 +93,13 @@ export const AccountingStore = signalStore(
   withHooks(store => ({
     onInit(): void {
       patchState(store, { storedBooks: readStoredBooks(store.appStore.tenantId()) });
-      // hand the selection to the menu ('@BOOKS@'), see SelectedBooks
-      effect(() => store.selectedBooksSignal.set(store.selectedBooks()));
+      // hand the validated selection to the menu ('@BOOKS@'), see SelectedBooks. While the books are
+      // not loaded and no route names them, resolveSelectedBooks can only answer the default — keep the
+      // stored choice SelectedBooks was seeded with instead of overwriting it.
+      effect(() => {
+        const selected = store.selectedBooks();
+        if (store.availableBooks().length > 0 || store.accountingTenantId()) store.selectedBooksSignal.set(selected);
+      });
     },
   }))
 );
