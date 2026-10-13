@@ -21,9 +21,9 @@ export interface MenuTokenContext {
    */
   tenantId?: string;
   /**
-   * The app's DEFAULT BOOKS — `AppConfig.defaultAccountingTenantId`, the legal entity whose books the
-   * catalogued finance menus open. NOT the app tenant: tenant `scs` keeps the books `scs` and `gss`.
-   * Used by '@BOOKS@' / '@BOOKS_UPPER@'; '' = the app has no books (rows needing them are hidden).
+   * The SELECTED BOOKS — what the accounting books switcher last chose (`SelectedBooks`), else
+   * `AppConfig.defaultAccountingTenantId`. NOT the app tenant: tenant `scs` keeps the books `scs`
+   * and `gss`. Used by '@BOOKS@' / '@BOOKS_UPPER@'; '' = the app has no books (rows needing them are hidden).
    */
   booksId?: string;
 }
@@ -46,9 +46,7 @@ export const MENU_TOKENS: Record<string, (ctx: MenuTokenContext) => string> = {
   // VALUE (`item.accounting-menu`), not in the stored label, so the label stays a plain
   // translation key and `MenuStore.translatedMenuLabel` expands the token after translating.
   '@TID_UPPER@': (ctx) => (ctx.tenantId ?? '').toUpperCase(),
-  // The app's default books (`AppConfig.defaultAccountingTenantId`) — the accountingTenantId of the
-  // catalogued accounting submenu and the member finance rows («Meine Kostenstellen»). A second set of
-  // books (gss) is never a token: it gets hand-authored rows with its id written out.
+  // The selected books (default: AppConfig.defaultAccountingTenantId) — spec 1.100. Never the tenant id.
   '@BOOKS@': (ctx) => ctx.booksId ?? '',
   '@BOOKS_UPPER@': (ctx) => (ctx.booksId ?? '').toUpperCase()
   // future: '@TENANT_NAME@', '@USER_NAME@', ...

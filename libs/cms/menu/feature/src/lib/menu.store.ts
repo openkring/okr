@@ -8,7 +8,7 @@ import { from, Observable, of } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 
 import { ENV } from '@okr/shared-config';
-import { AppStore, withErrorState } from '@okr/shared-feature';
+import { AppStore, SelectedBooks, withErrorState } from '@okr/shared-feature';
 import { CategoryListModel, MenuItemModel } from '@okr/shared-models';
 import { die, fill, nameMatches, safeStructuredClone, warn } from '@okr/shared-util-core';
 import { AlertService, AppNavigationService, dismissOverlay, isInSplitPane, lazyService, navigateByUrl, VersionCheckService, resourceParams } from '@okr/shared-util-angular';
@@ -47,6 +47,7 @@ export const _MenuStore = signalStore(
   withErrorState(),
   withProps(() => ({
     appStore: inject(AppStore),
+    selectedBooks: inject(SelectedBooks),
     menuService: inject(MenuService),
     // Die Menüliste selbst ist mandantenweit identisch und liegt daher in EINEM root-Store,
     // nicht in dieser je Menüknoten neu erzeugten Instanz. Siehe menu-items.store.ts.
@@ -95,7 +96,7 @@ export const _MenuStore = signalStore(
       if (store.featureStore.hiddenMenuKeys().has(key)) return false;
       // A row that opens the default books ('@BOOKS@') is hidden while the app has none — and so is a
       // submenu whose every child does (the accounting menu of a tenant without books).
-      const booksCtx = { version: '', booksId: store.appStore.appConfig().defaultAccountingTenantId ?? '' };
+      const booksCtx = { version: '', booksId: store.selectedBooks.current() || (store.appStore.appConfig().defaultAccountingTenantId ?? '') };
       const all = store.menuItemsStore.menuItems() ?? [];
       const item = all.find(i => i.name === key);
       if (item && lacksBooks(item.url ?? '', booksCtx)) return false;
@@ -184,7 +185,7 @@ export const _MenuStore = signalStore(
         // through unchanged.
         map(text => expandMenuTokens(text, {
           version: store.versionService.getCurrentVersion(), tenantId: store.appStore.tenantId(),
-          booksId: store.appStore.appConfig().defaultAccountingTenantId ?? '',
+          booksId: store.selectedBooks.current() || (store.appStore.appConfig().defaultAccountingTenantId ?? ''),
         })),
       ),
       { initialValue: '' }
@@ -402,8 +403,8 @@ export const _MenuStore = signalStore(
           version: store.versionService.getCurrentVersion(),
           repoUrl: getRepoUrl(config.gitOrg, config.gitRepo),
           tenantId: store.appStore.tenantId(),
-          // the default books — never the tenant id (see MenuTokenContext.booksId)
-          booksId: config.defaultAccountingTenantId ?? '',
+          // the selected books (SelectedBooks), else the default books — never the tenant id
+          booksId: store.selectedBooks.current() || (config.defaultAccountingTenantId ?? ''),
         };
       },
 
