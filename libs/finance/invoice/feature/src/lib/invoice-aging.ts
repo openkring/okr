@@ -10,9 +10,10 @@ import { InvoiceCollection, InvoiceModel } from '@okr/shared-models';
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
+import { resourceParams } from '@okr/shared-util-angular';
 import { getSystemQuery } from '@okr/shared-util-core';
 import { INVOICE_I18N_KEYS, InvoiceI18n } from '@okr/finance-invoice-util';
-import { AccountingSegments } from '@okr/finance-accounting-feature';
+import { AccountingSegments, AccountingStore } from '@okr/finance-accounting-feature';
 
 /** Bucket identity is stable and language-independent; the label is resolved via i18n. */
 export type AgingBucketId = 'b0_30' | 'b31_60' | 'b61_90' | 'b90_plus';
@@ -82,17 +83,19 @@ export class InvoiceAging {
   protected readonly i18n = inject(I18nService).translateAll(INVOICE_I18N_KEYS) as InvoiceI18n;
   private readonly firestoreService = inject(FirestoreService);
   private readonly appStore = inject(AppStore);
+  private readonly accountingStore = inject(AccountingStore);
 
   private readonly invoicesResource = rxResource({
-    params: () => ({
-      currentUser: this.appStore.currentUser(),
+    params: resourceParams(() => ({
+      userKey: this.appStore.currentUser()?.okey ?? '',
       tenantId: this.appStore.tenantId(),
-    }),
+      books: this.accountingStore.accountingTenantId(),
+    })),
     stream: ({ params }) => {
-      if (!params.currentUser) return of([]);
+      if (!params.userKey || !params.books) return of([]);
       return this.firestoreService.searchData<InvoiceModel>(
         InvoiceCollection,
-        getSystemQuery(params.tenantId),
+        [...getSystemQuery(params.tenantId), { key: 'accountingTenantId', operator: '==', value: params.books }],
         'invoiceDate',
         'desc'
       );

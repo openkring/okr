@@ -1,5 +1,7 @@
+import { inject } from '@angular/core';
 import type { Route } from '@angular/router';
 import { isAdminGuard, isAuthenticatedGuard, isContentAdminGuard, isContractReaderGuard, isMemberAdminGuard, isPrivilegedGuard, isTreasurerGuard } from '@okr/auth-feature';
+import { AppStore } from '@okr/shared-feature';
 
 /**
  * A feature block's Angular ROUTE fragment — `canActivate` guards + `loadComponent`. Split
@@ -705,13 +707,14 @@ const finance: BlockRoutes = {
   id: 'finance',
   routes: (): Route[] => [
     {
-      // No live `menuItems` doc points at this screen (verified twice: no doc named
-      // `invoice-aging`, and no doc whose `url` equals `/invoice-aging` or `invoice-aging`).
-      // Reachable today only by typing the URL — same "un-menu'd admin screen" shape as
-      // `i18n` and `applications`, not a route defect.
+      // Moved into the accounting shell as `accounting/:books/aging` (spec 1.100). Kept one
+      // release for old bookmarks; remove afterwards. No canActivate: Angular rejects it together
+      // with redirectTo, and the target route is guarded already.
       path: 'invoice-aging',
-      canActivate: [isAuthenticatedGuard],
-      loadComponent: () => import('@okr/finance-invoice-feature').then(m => m.InvoiceAging),
+      redirectTo: () => {
+        const books = inject(AppStore).appConfig().defaultAccountingTenantId ?? '';
+        return books ? `/accounting/${books}/aging` : '/';
+      },
     },
     {
       path: 'expense',
@@ -774,6 +777,8 @@ const finance: BlockRoutes = {
       canActivate: [isTreasurerGuard],
       loadComponent: () => import('@okr/finance-accounting-feature').then(m => m.AccountingShell),
       children: [
+        { path: 'overview', loadComponent: () => import('@okr/finance-accounting-feature').then(m => m.AccountingOverviewPage) },
+        { path: 'aging', loadComponent: () => import('@okr/finance-invoice-feature').then(m => m.InvoiceAging) },
         {
           path: 'journal',
           children: [{ path: ':contextMenuName', loadComponent: () => import('@okr/finance-booking-feature').then(m => m.BookingList) }],
@@ -873,16 +878,9 @@ const finance: BlockRoutes = {
           loadComponent: () => import('@okr/finance-payment-feature').then(m => m.PaymentOrderDetailPage),
         },
         {
-          // Copied verbatim INCLUDING the dead target: `journal-context` is not the name of
-          // any live `menuItems` document (verified by two independent query shapes — see the
-          // `finance` block comment in `feature-blocks.ts`). Landing on bare
-          // `/accounting/<tid>` therefore renders BookingList with an empty context menu; the
-          // working live entries navigate to `journal/c-journal` instead. Reported, not
-          // "fixed" here — inventing a route or a menu doc is out of scope for a cataloguing
-          // task, and changing the redirect target is an app-routes change.
           path: '',
           pathMatch: 'full',
-          redirectTo: 'journal/journal-context',
+          redirectTo: 'overview',
         },
       ],
     },
