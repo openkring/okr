@@ -204,5 +204,11 @@
     "save": "Guardar",
     "cancel": "Cancelar",
     "delete": "Eliminar"
+  },
+  "validation": {
+    "spaceRequired": "Elige un space.",
+    "targetHttps": "El destino debe ser una dirección https.",
+    "spaceNamePattern": "Solo minúsculas, cifras y guiones; empieza con una letra.",
+    "retentionRequired": "El seguimiento detallado necesita un plazo de conservación mayor que 0."
   }
 }

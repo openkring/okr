@@ -120,7 +120,12 @@
   "duration": {
     "title": "Select period",
     "from": "From",
-    "to": "To"
+    "to": "To",
+    "validation": {
+      "fromRequired": "Select a start date.",
+      "toRequired": "Select an end date.",
+      "toBeforeFrom": "The end date is before the start date."
+    }
   },
   "image": {
     "title": "Image details",

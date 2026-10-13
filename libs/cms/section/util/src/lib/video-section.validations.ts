@@ -17,7 +17,7 @@ export const videoSectionValidations = staticSuite((model: VideoSection) => {
     omitWhen(isAlbum, () => {
       stringValidations('url', model.properties?.url, URL_LENGTH);
     });
-    test('documentKey', 'video.documentKey.invalid', () => {
+    test('documentKey', '@cms/section/feature.validation.documentKeyInvalid', () => {
       enforce(DOCUMENT_KEY_PATTERN.test(documentKey) || !isAlbum).isTruthy();
     });
     stringValidations('width', model.properties?.width, WORD_LENGTH);

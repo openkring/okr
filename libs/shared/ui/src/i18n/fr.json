@@ -120,7 +120,12 @@
   "duration": {
     "title": "Choisir la période",
     "from": "Du",
-    "to": "Au"
+    "to": "Au",
+    "validation": {
+      "fromRequired": "Choisis une date de début.",
+      "toRequired": "Choisis une date de fin.",
+      "toBeforeFrom": "La date de fin est antérieure à la date de début."
+    }
   },
   "image": {
     "title": "Détails de l’image",

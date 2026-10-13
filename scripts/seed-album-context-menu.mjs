@@ -40,6 +40,8 @@
 import { getApps, initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 
+import { assertMenuLabelsLive, menuLabelsOf } from './lib/menu-labels.mjs';
+
 const TENANTS = ['scs', 'p13', 'kring', 'bka', 'bkg', 'elab', 'okr'];
 
 /** Doc id === name === catalogue key — the equality `blockOfMenuKey` depends on. */
@@ -105,6 +107,8 @@ async function main() {
   const db = getFirestore();
 
   console.log(`${apply ? 'APPLY' : 'DRY RUN'} — ${DOCS.length} menuItems documents, tenants: ${TENANTS.join(', ')}\n`);
+
+  await assertMenuLabelsLive(menuLabelsOf(DOCS), TENANTS, { apply });
 
   let created = 0;
   let skipped = 0;

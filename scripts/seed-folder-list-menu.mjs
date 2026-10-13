@@ -39,6 +39,8 @@
 import { getApps, initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 
+import { assertMenuLabelsLive, menuLabelsOf } from './lib/menu-labels.mjs';
+
 const TENANTS = ['scs', 'p13', 'kring', 'bka', 'bkg', 'elab', 'okr'];
 
 function menuItem(name, action, url, roleNeeded, icon, label, menuItems = []) {
@@ -68,6 +70,8 @@ async function main() {
   const db = getFirestore();
 
   console.log(`${apply ? 'APPLY' : 'DRY RUN'} — tenants: ${TENANTS.join(', ')}\n`);
+
+  await assertMenuLabelsLive(menuLabelsOf(DOCS), TENANTS, { apply });
 
   for (const data of DOCS) {
     const ref = db.collection('menuItems').doc(data.name);

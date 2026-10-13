@@ -60,7 +60,7 @@ import { VcardImportReviewModal } from './vcard-import-review.modal';
 const ADDRESS_USAGE_CATEGORY = 'address_usage';
 
 /** Upload-modal title reused from AvatarService.saveAvatarPhoto. */
-const AVATAR_UPLOAD_TITLE = '@document.operation.upload.avatar.title';
+const AVATAR_UPLOAD_TITLE = '@avatar/data-access.document.upload.avatar.title';
 
 /** What one commit run produced — the input of the closing summary. */
 export interface VcardImportResult {

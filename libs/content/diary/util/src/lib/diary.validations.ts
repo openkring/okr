@@ -28,17 +28,17 @@ export const diaryValidations = staticSuite((model: DiaryModel, tenants: string,
     enforce(model.customLocationLabel).shorterThanOrEquals(LONG_NAME_LENGTH);
   });
 
-  test('authorKey', 'diaryAuthorMissing', () => {
+  test('authorKey', '@content/diary/feature.validation.authorMissing', () => {
     enforce(model.authorKey).isNotBlank();
   });
-  test('scope', 'diaryScopeInvalid', () => {
+  test('scope', '@content/diary/feature.validation.scopeInvalid', () => {
     enforce(SCOPES.has(model.scope)).isTruthy();
   });
-  test('status', 'diaryStatusInvalid', () => {
+  test('status', '@content/diary/feature.validation.statusInvalid', () => {
     enforce(STATUSES.has(model.status)).isTruthy();
   });
   // The one rule the form cannot bypass: the zero pattern of `date` must say what `scope` says.
-  test('date', 'diaryDateScopeMismatch', () => {
+  test('date', '@content/diary/feature.validation.dateScopeMismatch', () => {
     enforce(diaryDateMatchesScope(model.date, model.scope)).isTruthy();
   });
 });

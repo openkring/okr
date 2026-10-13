@@ -204,5 +204,11 @@
     "save": "Save",
     "cancel": "Cancel",
     "delete": "Delete"
+  },
+  "validation": {
+    "spaceRequired": "Select a space.",
+    "targetHttps": "The target must be an https address.",
+    "spaceNamePattern": "Only lowercase letters, digits and hyphens; start with a letter.",
+    "retentionRequired": "Detailed tracking needs a retention period greater than 0."
   }
 }

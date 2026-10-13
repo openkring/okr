@@ -38,6 +38,8 @@
 import { getApps, initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 
+import { assertMenuLabelsLive, menuLabelsOf } from './lib/menu-labels.mjs';
+
 const ANCHOR = 'task-all';
 const ROW = 'project-all';
 
@@ -81,6 +83,7 @@ async function main() {
   }
   const tenants = [...new Set(anchors.flatMap(d => d.data().tenants ?? []))].sort();
   console.log(`${apply ? 'APPLY' : 'DRY RUN'} — tenants with '${ANCHOR}': ${tenants.join(', ')}\n`);
+  await assertMenuLabelsLive(menuLabelsOf(SPECS), tenants, { apply });
 
   let writes = 0;
 

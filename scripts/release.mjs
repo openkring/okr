@@ -182,6 +182,27 @@ async function releaseApp(app) {
   try { run('node', ['scripts/check-forms.mjs']); }
   catch { abort('check-forms failed — release aborted (no version bump made). Fix the findings above.'); }
 
+  // 1a'. i18n gate: every key the code names must resolve, in all five languages. A missing key
+  //      breaks no build and no test — it renders raw in production and opens one Sentry
+  //      `i18n missing-key` ticket per key (SCS-CG: bare Vest messages nobody had translated).
+  console.log('\n[1/6] Checking i18n keys (pnpm check-i18n)…');
+  try { run('node', ['scripts/check-i18n.mjs']); }
+  catch { abort('check-i18n failed — release aborted (no version bump made). Fix the findings above.'); }
+
+  // 1a''. live menu labels: a menuItems doc created in the CMS or by the feature picker can name a
+  //       label no source file knows. Data, not code — so ask, and never block on missing creds.
+  console.log('\n[1/6] Checking live menu labels (pnpm check-menu-labels)…');
+  try {
+    run('node', ['scripts/check-menu-labels.mjs']);
+  } catch (err) {
+    if (err.status === 1) {
+      if (!(await confirm('Live menu rows use labels this release does not ship (see above). Continue anyway?', false)))
+        abort('Aborted: add the missing labels to libs/cms/menu/feature/src/i18n/*.json first.');
+    } else {
+      console.log('  (menu label check could not run — skipped; needs `gcloud auth application-default login`)');
+    }
+  }
+
   // 1b. catalogue drift gate — does `feature-blocks.ts` still agree with the live menu docs?
   //     Placed here, before the bump, for the same reason the test gate is first: it is cheap
   //     and a failure means nothing has been changed yet.

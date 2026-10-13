@@ -204,5 +204,11 @@
     "save": "Speichern",
     "cancel": "Abbrechen",
     "delete": "Löschen"
+  },
+  "validation": {
+    "spaceRequired": "Wähle einen Space aus.",
+    "targetHttps": "Das Ziel muss eine https-Adresse sein.",
+    "spaceNamePattern": "Nur Kleinbuchstaben, Ziffern und Bindestriche; Beginn mit einem Buchstaben.",
+    "retentionRequired": "Detailliertes Tracking braucht eine Aufbewahrungsfrist grösser als 0."
   }
 }

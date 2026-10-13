@@ -117,7 +117,9 @@
     "seats_mismatch": "Anzahl Teilnehmende entspricht nicht der Bootskapazität.",
     "max_participants": "In diesem Boot haben höchstens {count} Personen Platz.",
     "note": "Um Missbräuche zu vermeiden, finden im Hintergrund verschiedene Checks statt. Sollte ein Missbrauch festgestellt werden, wird der Admin notifiziert.",
-    "end_before_start": "Das Ende der Fahrt liegt vor ihrem Start."
+    "end_before_start": "Das Ende der Fahrt liegt vor ihrem Start.",
+    "boat_required": "Wähle ein Boot aus.",
+    "participants_required": "Wähle mindestens eine Person aus, die mitfährt."
   },
   "boat": "Boot",
   "distance": {

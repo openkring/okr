@@ -11,6 +11,8 @@
 import { getApps, initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 
+import { assertMenuLabelsLive, menuLabelsOf } from './lib/menu-labels.mjs';
+
 const PARENT = 'c-projects';
 const SPEC = { name: 'project-budget-view', action: 'toggle', url: 'toggleBudget', roleNeeded: 'privileged', icon: 'moneybag', iconAlt: 'list',
   label: '@item.project-budget-view', labelAlt: '@item.project-budget-view_alt', menuItems: [] };
@@ -23,6 +25,7 @@ async function main() {
   const parents = (await menuItems.where('name', '==', PARENT).get()).docs.filter(d => d.data().isArchived !== true);
   const tenants = [...new Set(parents.flatMap(d => d.data().tenants ?? []))].sort();
   console.log(`${apply ? 'APPLY' : 'DRY RUN'} — tenants with '${PARENT}': ${tenants.join(', ')}\n`);
+  await assertMenuLabelsLive(menuLabelsOf([SPEC]), tenants, { apply });
   let writes = 0;
   const existing = (await menuItems.where('name', '==', SPEC.name).get()).docs;
   if (existing.length === 0) {

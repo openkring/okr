@@ -12,16 +12,16 @@ export interface DurationPickerFormModel {
 }
 
 export const durationPickerValidations = staticSuite((model: DurationPickerFormModel) => {
-  test('from', '@validation.duration.fromRequired', () => {
+  test('from', '@shared/ui.duration.validation.fromRequired', () => {
     enforce(model.from).isNotBlank();
   });
 
-  test('to', '@validation.duration.toRequired', () => {
+  test('to', '@shared/ui.duration.validation.toRequired', () => {
     enforce(model.to).isNotBlank();
   });
 
   // the end of the range must not be before its start
-  test('to', '@validation.duration.toBeforeFrom', () => {
+  test('to', '@shared/ui.duration.validation.toBeforeFrom', () => {
     enforce(model.to >= model.from).isTruthy();
   });
 });

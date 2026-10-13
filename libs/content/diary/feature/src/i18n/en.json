@@ -196,5 +196,11 @@
     },
     "helper": "Diary transfers without their own period only apply during this time. An empty date leaves the travel period open on that side.",
     "error": "The start date is after the end date."
+  },
+  "validation": {
+    "authorMissing": "Select who is writing the entry.",
+    "scopeInvalid": "Select a valid period.",
+    "statusInvalid": "Select a valid status.",
+    "dateScopeMismatch": "The date does not match the selected period."
   }
 }

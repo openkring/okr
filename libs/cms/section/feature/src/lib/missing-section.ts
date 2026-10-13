@@ -12,7 +12,7 @@ const MissingSectionStore = signalStore(
   withProps(() => ({ i18nService: inject(I18nService) })),
   withProps((store) => ({
     i18n: store.i18nService.translateAll({
-      no_such_section: PFX + 'no_such_section',
+      no_such_section: PFX + 'noSuchSection',
     }),
   })),
 );

@@ -120,7 +120,12 @@
   "duration": {
     "title": "Zeitraum wählen",
     "from": "Von",
-    "to": "Bis"
+    "to": "Bis",
+    "validation": {
+      "fromRequired": "Wähle ein Startdatum aus.",
+      "toRequired": "Wähle ein Enddatum aus.",
+      "toBeforeFrom": "Das Enddatum liegt vor dem Startdatum."
+    }
   },
   "image": {
     "title": "Bild-Details",

@@ -16,13 +16,13 @@ describe('durationPickerValidations', () => {
   it('fails when to is before from', () => {
     const result = durationPickerValidations({ from: '2026-06-24', to: '2026-06-17' });
     expect(result.isValid()).toBe(false);
-    expect(result.getErrors('to')).toContain('@validation.duration.toBeforeFrom');
+    expect(result.getErrors('to')).toContain('@shared/ui.duration.validation.toBeforeFrom');
   });
 
   it('fails when from is blank', () => {
     const result = durationPickerValidations({ from: '', to: '2026-06-24' });
     expect(result.isValid()).toBe(false);
-    expect(result.getErrors('from')).toContain('@validation.duration.fromRequired');
+    expect(result.getErrors('from')).toContain('@shared/ui.duration.validation.fromRequired');
   });
 
   it('compares datetime values chronologically', () => {

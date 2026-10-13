@@ -28,7 +28,7 @@ export const tripValidationSuite = staticSuite((trip: TripModel) => {
   });
 
   // a boat entered ad hoc in the picker carries no key — its name is what identifies it
-  test('resource', '@trip/field.boat', () => {
+  test('resource', '@geo/trip/feature.warning.boat_required', () => {
     enforce(trip.resource?.key || trip.resource?.name2).isNotBlank();
   });
 
@@ -43,7 +43,7 @@ export const tripValidationSuite = staticSuite((trip: TripModel) => {
     enforce(trip.distance).lessThanOrEquals(MAX_TRIP_DISTANCE_KM);
   });
 
-  test('participants', '@trip/field.participants', () => {
+  test('participants', '@geo/trip/feature.warning.participants_required', () => {
     enforce((trip.participants ?? []).length).greaterThan(0);
   });
 

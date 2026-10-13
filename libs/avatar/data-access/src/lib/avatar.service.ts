@@ -112,7 +112,7 @@ export class AvatarService {
   public async saveAvatarPhoto(photo: Photo, key: string, tenantId: string, modelName: string): Promise<string | undefined> {
     const file = await readAsFile(photo, this.platform);
     const avatar = newAvatarModel([tenantId], modelName, key, file.name);
-    const downloadUrl = await this.uploadService.uploadFile(file, avatar.storagePath, '@document.operation.upload.avatar.title')
+    const downloadUrl = await this.uploadService.uploadFile(file, avatar.storagePath, '@avatar/data-access.document.upload.avatar.title')
 
     if (downloadUrl) {
       await this.updateOrCreate(avatar);

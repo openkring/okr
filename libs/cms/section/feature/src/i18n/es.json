@@ -1332,5 +1332,8 @@
       "cancel": "Cancelar"
     },
     "unavailable": "Este documento no está disponible en este momento."
+  },
+  "validation": {
+    "documentKeyInvalid": "Elige un vídeo del álbum."
   }
 }

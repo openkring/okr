@@ -234,8 +234,8 @@ export class MembershipList {
   
   protected yearLabel = computed(() => {
     switch (this.listId()) {
-      case 'entries': return '@membership.list.entries.yearLabel';
-      case 'exits': return '@membership.list.exits.yearLabel';
+      case 'entries': return PFX + 'list.entries.yearLabel';
+      case 'exits': return PFX + 'list.exits.yearLabel';
       default: return '';
     }
   });

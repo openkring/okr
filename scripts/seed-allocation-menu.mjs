@@ -17,6 +17,8 @@
 import { getApps, initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 
+import { assertMenuLabelsLive, menuLabelsOf } from './lib/menu-labels.mjs';
+
 const PARENT = 'accounting-menu';
 const ROW = 'accounting-allocations';
 const AFTER = 'accounting-budgets';
@@ -60,6 +62,7 @@ async function main() {
   }
   const tenants = [...new Set(parents.flatMap(d => d.data().tenants ?? []))].sort();
   console.log(`${apply ? 'APPLY' : 'DRY RUN'} — tenants with '${PARENT}': ${tenants.join(', ')}\n`);
+  await assertMenuLabelsLive(menuLabelsOf(SPECS), tenants, { apply });
 
   let writes = 0;
 

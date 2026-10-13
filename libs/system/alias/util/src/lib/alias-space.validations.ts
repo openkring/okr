@@ -30,14 +30,14 @@ export const aliasSpaceValidations = staticSuite(
     numberValidations('defaultValidDays', model.defaultValidDays, true, 0, 36_500);
     numberValidations('retentionDays', model.retentionDays, true, 0, 3_650);
 
-    test('name', 'Nur Kleinbuchstaben, Ziffern und Bindestriche; Beginn mit einem Buchstaben.', () => {
+    test('name', '@system/alias/util.validation.spaceNamePattern', () => {
       enforce(SPACE_NAME_PATTERN.test(model.name)).isTruthy();
     });
 
     // `detailed` schreibt eine Zeile pro Klick inklusive gehashter IP und uid. Ohne Frist wäre
     // das eine unbefristete Sammlung von Personendaten — die Spec verlangt deshalb
     // ausdrücklich retentionDays > 0, und das ist eine revDSG-Anforderung, keine Vorliebe.
-    test('retentionDays', 'Detailliertes Tracking braucht eine Aufbewahrungsfrist grösser als 0.', () => {
+    test('retentionDays', '@system/alias/util.validation.retentionRequired', () => {
       enforce(model.trackingLevel !== 'detailed' || model.retentionDays > 0).isTruthy();
     });
   },

@@ -204,5 +204,11 @@
     "save": "Enregistrer",
     "cancel": "Annuler",
     "delete": "Supprimer"
+  },
+  "validation": {
+    "spaceRequired": "Choisis un space.",
+    "targetHttps": "La cible doit être une adresse https.",
+    "spaceNamePattern": "Uniquement des minuscules, des chiffres et des tirets ; commence par une lettre.",
+    "retentionRequired": "Le suivi détaillé nécessite une durée de conservation supérieure à 0."
   }
 }

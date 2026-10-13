@@ -24,14 +24,14 @@ export const aliasValidations = staticSuite(
     stringValidations('notes', model.notes, DESCRIPTION_LENGTH);
     numberValidations('maxUses', model.maxUses, true, 0, 1_000_000);
 
-    test('space', 'Ein Space muss gewählt sein.', () => {
+    test('space', '@system/alias/util.validation.spaceRequired', () => {
       enforce(model.space).isNotBlank();
     });
 
     // Nur https. Ein öffentlicher Redirector, der 'javascript:' oder 'data:' weiterreicht, ist
     // ein Waschgang für fremde Payloads; 'http:' würde die TLS-Verbindung downgraden.
     omitWhen(model.targetType !== 'url', () => {
-      test('targetUrl', 'Das Ziel muss eine https-Adresse sein.', () => {
+      test('targetUrl', '@system/alias/util.validation.targetHttps', () => {
         enforce(isSafeTargetUrl(model.targetUrl)).isTruthy();
       });
     });

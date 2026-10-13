@@ -356,7 +356,7 @@ export function downloadFileAndStore(file: File) {
       const _storage = Inject(STORAGE);
       const _ref = ref(_storage, path);
       deleteObject(_ref);
-      showToast(toastController, '@document.operation.delete.conf');
+      showToast(toastController, '@content/document/data-access.delete.conf');
     }
     catch(ex) {
       error(toastController, 'download.util/deleteFileFromStorage(' + path + ') -> ERROR: ' + JSON.stringify(ex));
