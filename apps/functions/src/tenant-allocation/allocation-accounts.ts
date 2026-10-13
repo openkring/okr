@@ -4,7 +4,7 @@ import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
 
 import { AddressCollection, PersonCollection } from '@okr/shared-models';
-import { checkAdminRole, checkAppCheckToken, getCallerTenantId } from '@okr/shared-util-functions';
+import { checkAdminRole, checkAppCheckToken, checkOperatorTenant } from '@okr/shared-util-functions';
 
 const REGION = 'europe-west6';
 
@@ -38,7 +38,8 @@ export const getAllocationEmails = onCall(
     const CF_NAME = 'getAllocationEmails';
     checkAppCheckToken(request, CF_NAME);
     await checkAdminRole(request, CF_NAME);
-    const actorTenantId = await getCallerTenantId(request, CF_NAME);
+    // spec 1.101 §6: operator tenant only (feeds the allocation dialog).
+    const actorTenantId = await checkOperatorTenant(request, CF_NAME);
 
     const data = request.data as GetAllocationEmailsRequest;
     const okey = typeof data?.okey === 'string' ? data.okey : '';

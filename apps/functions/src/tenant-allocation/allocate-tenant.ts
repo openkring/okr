@@ -7,7 +7,7 @@ import {
   AppConfigCollection, AvatarCollection, TenantAllocationLogCollection, TenantAllocationLogModel,
 } from '@okr/shared-models';
 import {
-  checkAdminRole, checkAppCheckToken, getCallerTenantId, writeAddressDirectory,
+  checkAdminRole, checkAppCheckToken, checkOperatorTenant, writeAddressDirectory,
 } from '@okr/shared-util-functions';
 import { DateFormat, getTodayStr } from '@okr/shared-util-core';
 
@@ -86,7 +86,8 @@ export const allocateTenant = onCall(
   // belt and braces, matching the other admin callables (rebuildAddressDirectory, erasure-callables)
   checkAppCheckToken(request, 'allocateTenant');
   await checkAdminRole(request, 'allocateTenant');
-  const actorTenantId = await getCallerTenantId(request, 'allocateTenant');
+  // spec 1.101 §6: cross-tenant PII transfer — operator tenant only, whatever app the caller uses.
+  const actorTenantId = await checkOperatorTenant(request, 'allocateTenant');
   const uid = request.auth?.uid ?? '';
 
   const data = request.data as AllocateTenantRequest;
