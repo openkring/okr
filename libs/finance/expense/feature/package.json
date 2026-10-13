@@ -32,6 +32,7 @@
     "@okr/finance-cost-center-data-access": "*",
     "@okr/finance-payment-data-access": "*",
     "@okr/project-project-data-access": "*",
-    "@okr/finance-vat-code-data-access": "*"
+    "@okr/finance-vat-code-data-access": "*",
+    "@okr/finance-accounting-feature": "*"
   }
 }

@@ -14,7 +14,7 @@ import { convertDateFormatToString, DateFormat, generateRandomString, getTodaySt
 
 import { AvatarPipe } from '@okr/avatar-ui';
 import { Menu } from '@okr/cms-menu-feature';
-import { ReadOnlyBanner } from '@okr/finance-accounting-feature';
+import { AccountingSegments, ReadOnlyBanner } from '@okr/finance-accounting-feature';
 
 import { InvoiceStore } from './invoice.store';
 
@@ -24,6 +24,7 @@ import { InvoiceStore } from './invoice.store';
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [InvoiceStore],
   imports: [
+    AccountingSegments,
     ImgDirective, SvgIconPipe, AvatarPipe,
     Spinner, ListFilter, EmptyList, Menu, ReadOnlyBanner,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon, IonPopover,
@@ -78,6 +79,7 @@ import { InvoiceStore } from './invoice.store';
           </ion-buttons>
         }
       </ion-toolbar>
+      <okr-accounting-segments />
       <okr-list-filter
         (searchTermChanged)="onSearchTermChange($event)"
         (stateChanged)="onStateSelected($event)" [states]="states()"

@@ -3,11 +3,13 @@ import { FormsModule } from '@angular/forms';
 import { IonButton, IonContent, IonHeader, IonButtons, IonMenuButton, IonInput, IonItem, IonLabel, IonList, IonNote, IonTitle, IonToolbar } from '@ionic/angular';
 
 import { AssetStore } from './asset.store';
+import { AccountingSegments } from '@okr/finance-accounting-feature';
 
 @Component({
   selector: 'okr-depreciation-run-page',
   standalone: true,
   imports: [
+    AccountingSegments,
     FormsModule,
     IonHeader, IonButtons, IonMenuButton, IonToolbar, IonTitle, IonContent, IonList, IonItem, IonLabel, IonNote, IonButton, IonInput
   ],
@@ -19,6 +21,7 @@ import { AssetStore } from './asset.store';
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
         <ion-title>{{ store.i18n.deduction_run() }}</ion-title>
       </ion-toolbar>
+      <okr-accounting-segments />
     </ion-header>
     <ion-content>
       <ion-item>

@@ -4,14 +4,14 @@ import { IonBadge, IonContent, IonFab, IonFabButton, IonHeader, IonButtons, IonM
   IonItem, IonLabel, IonList, IonTitle, IonToolbar } from '@ionic/angular';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { AccountingStore } from '@okr/finance-accounting-feature';
+import { AccountingSegments, AccountingStore } from '@okr/finance-accounting-feature';
 
 import { PaymentStore } from './payment.store';
 
 @Component({
   selector: 'okr-payment-order-list',
   standalone: true,
-  imports: [IonHeader, IonButtons, IonMenuButton, IonToolbar, IonTitle, IonContent, IonList, IonItem, IonLabel, IonBadge, IonFab, IonFabButton, IonIcon, SvgIconPipe],
+  imports: [AccountingSegments, IonHeader, IonButtons, IonMenuButton, IonToolbar, IonTitle, IonContent, IonList, IonItem, IonLabel, IonBadge, IonFab, IonFabButton, IonIcon, SvgIconPipe],
   providers: [PaymentStore],
   template: `
     <ion-header>
@@ -19,6 +19,7 @@ import { PaymentStore } from './payment.store';
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
         <ion-title>{{ store.i18n.list_title() }}</ion-title>
       </ion-toolbar>
+      <okr-accounting-segments />
     </ion-header>
     <ion-content>
       @if (store.isLoading()) { <p>Loading...</p> }

@@ -9,7 +9,7 @@ import { createActionSheetButton, createActionSheetDivider, createActionSheetOpt
 import { generateRandomString, hasRole } from '@okr/shared-util-core';
 
 import { Menu } from '@okr/cms-menu-feature';
-import { ReadOnlyBanner } from '@okr/finance-accounting-feature';
+import { AccountingSegments, ReadOnlyBanner } from '@okr/finance-accounting-feature';
 
 import { BookingAction, isForReview, JournalRow, sideAccountKeys } from '@okr/finance-booking-util';
 import { BookingStore } from './booking.store';
@@ -25,6 +25,7 @@ function parseAmount(amount: string): number {
   selector: 'okr-booking-list',
   standalone: true,
   imports: [
+    AccountingSegments,
     SvgIconPipe,
     Spinner, EmptyList, Menu, ListFilter, ReadOnlyBanner,
     IonHeader, IonToolbar, IonTitle, IonContent,
@@ -69,6 +70,7 @@ function parseAmount(amount: string): number {
         </ion-buttons>
       }
     </ion-toolbar>
+    <okr-accounting-segments />
 
     <!-- filters -->
     <okr-list-filter

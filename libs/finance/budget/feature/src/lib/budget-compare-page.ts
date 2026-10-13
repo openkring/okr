@@ -6,7 +6,7 @@ import {
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, Spinner, StringSelect, StringSelectI18n } from '@okr/shared-ui';
 
-import { ReadOnlyBanner } from '@okr/finance-accounting-feature';
+import { AccountingSegments, ReadOnlyBanner } from '@okr/finance-accounting-feature';
 import { formatMinorAmount } from '@okr/finance-booking-util';
 import { AccountComparisonRow, buildAccountComparison, defaultCompareVersion, isNetOver, isOver, totalsByAccount } from '@okr/finance-budget-util';
 import { aggregateByCostCenter, allocationBaseCells, applyAllocations, costCenterLabel, costCenterSubtreeKeys, postedLinesInRange, rollUpCostCenters, sortCostCenterTree } from '@okr/finance-cost-center-util';
@@ -25,6 +25,7 @@ import { BudgetStore } from './budget.store';
   selector: 'okr-budget-compare-page',
   standalone: true,
   imports: [
+    AccountingSegments,
     SvgIconPipe, Spinner, EmptyList, ReadOnlyBanner, StringSelect,
     IonHeader, IonToolbar, IonButtons, IonBackButton, IonTitle, IonContent, IonList, IonItem, IonLabel, IonSelect, IonSelectOption, IonIcon
   ],
@@ -47,6 +48,7 @@ import { BudgetStore } from './budget.store';
         <ion-buttons slot="start"><ion-back-button [defaultHref]="backHref()" /></ion-buttons>
         <ion-title>{{ store.i18n.compare_title() }}</ion-title>
       </ion-toolbar>
+      <okr-accounting-segments />
     </ion-header>
 
     <ion-content>

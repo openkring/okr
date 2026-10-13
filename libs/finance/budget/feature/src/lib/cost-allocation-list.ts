@@ -12,7 +12,7 @@ import { EmptyList, Spinner } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@okr/shared-util-angular';
 import { hasRole } from '@okr/shared-util-core';
 
-import { ReadOnlyBanner } from '@okr/finance-accounting-feature';
+import { AccountingSegments, ReadOnlyBanner } from '@okr/finance-accounting-feature';
 import { formatMinorAmount } from '@okr/finance-booking-util';
 import { costCenterLabel } from '@okr/finance-cost-center-util';
 
@@ -27,6 +27,7 @@ import { BudgetStore } from './budget.store';
   selector: 'okr-cost-allocation-list',
   standalone: true,
   imports: [
+    AccountingSegments,
     SvgIconPipe, Spinner, EmptyList, Menu, ReadOnlyBanner,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon, IonPopover,
     IonContent, IonList, IonItem, IonItemDivider, IonLabel, IonNote, IonSelect, IonSelectOption
@@ -49,6 +50,7 @@ import { BudgetStore } from './budget.store';
           </ion-buttons>
         }
       </ion-toolbar>
+      <okr-accounting-segments />
     </ion-header>
     <ion-content>
       <okr-read-only-banner />

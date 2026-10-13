@@ -13,12 +13,14 @@ import { getFeeTotal } from '@okr/relationship-membership-util';
 import { MemberFeesStore } from './member-fee.store';
 import { MemberFeeEditModal } from './member-fee-edit.modal';
 import { Menu } from '@okr/cms-menu-feature';
+import { AccountingSegments } from '@okr/finance-accounting-feature';
 
 @Component({
   selector: 'okr-member-fees',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    AccountingSegments,
     ImgDirective, AvatarPipe, SvgIconPipe,
     Spinner, ListFilter, EmptyList, Menu,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon, IonPopover,
@@ -55,6 +57,7 @@ import { Menu } from '@okr/cms-menu-feature';
           </ion-buttons>
         }
       </ion-toolbar>
+      <okr-accounting-segments />
 
       <okr-list-filter
         (searchTermChanged)="onSearchTermChange($event)"

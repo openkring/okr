@@ -5,11 +5,13 @@ import { IonButton, IonContent, IonFab, IonFabButton, IonHeader, IonButtons, Ion
 import { SvgIconPipe } from '@okr/shared-pipes';
 
 import { VatCodeStore } from './vat-code.store';
+import { AccountingSegments } from '@okr/finance-accounting-feature';
 
 @Component({
   selector: 'okr-vat-code-list',
   standalone: true,
   imports: [
+    AccountingSegments,
     IonHeader, IonButtons, IonMenuButton, IonToolbar, IonTitle, IonContent,
     IonList, IonItem, IonLabel, IonNote, IonFab, IonFabButton, IonIcon, IonButton,
     SvgIconPipe,
@@ -26,6 +28,7 @@ import { VatCodeStore } from './vat-code.store';
           </ion-button>
         }
       </ion-toolbar>
+      <okr-accounting-segments />
     </ion-header>
     <ion-content>
       @if (store.isLoading()) {

@@ -11,7 +11,7 @@ import { billDisplayState, billStateColor, billStateLabel, billVoucherKeys, isDr
 
 import { AvatarPipe } from '@okr/avatar-ui';
 import { Menu } from '@okr/cms-menu-feature';
-import { ReadOnlyBanner } from '@okr/finance-accounting-feature';
+import { AccountingSegments, ReadOnlyBanner } from '@okr/finance-accounting-feature';
 
 import { BillStore } from './bill.store';
 
@@ -21,6 +21,7 @@ import { BillStore } from './bill.store';
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [BillStore],
   imports: [
+    AccountingSegments,
     ImgDirective, SvgIconPipe, AvatarPipe,
     Spinner, ListFilter, EmptyList, Menu, ReadOnlyBanner,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon, IonPopover,
@@ -57,6 +58,7 @@ import { BillStore } from './bill.store';
           </ion-buttons>
         }
       </ion-toolbar>
+      <okr-accounting-segments />
       <okr-list-filter
         (searchTermChanged)="onSearchTermChange($event)"
         (stateChanged)="onStateSelected($event)" [states]="states()"

@@ -10,7 +10,7 @@ import { PaymentModel, PaymentOrderModel } from '@okr/shared-models';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { AccountingStore } from '@okr/finance-accounting-feature';
+import { AccountingSegments, AccountingStore } from '@okr/finance-accounting-feature';
 import { PaymentOrderService, PaymentService } from '@okr/finance-payment-data-access';
 import { PAYMENT_I18N_KEYS, PaymentI18n, approveBlocker } from '@okr/finance-payment-util';
 
@@ -20,7 +20,7 @@ import { PaymentStore } from './payment.store';
 @Component({
   selector: 'okr-payment-order-detail-page',
   standalone: true,
-  imports: [DecimalPipe, SvgIconPipe, IonHeader, IonToolbar, IonTitle, IonContent, IonList, IonItem, IonLabel, IonButton, IonButtons,
+  imports: [AccountingSegments, DecimalPipe, SvgIconPipe, IonHeader, IonToolbar, IonTitle, IonContent, IonList, IonItem, IonLabel, IonButton, IonButtons,
     IonBackButton, IonIcon, IonBadge, IonNote],
   providers: [PaymentStore],
   template: `
@@ -45,6 +45,7 @@ import { PaymentStore } from './payment.store';
           </ion-buttons>
         }
       </ion-toolbar>
+      <okr-accounting-segments />
     </ion-header>
     <ion-content>
       @if (orderResource.value(); as order) {

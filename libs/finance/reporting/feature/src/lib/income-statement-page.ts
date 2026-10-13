@@ -14,6 +14,7 @@ import { Menu } from '@okr/cms-menu-feature';
 import { ReportTable } from '@okr/finance-reporting-ui';
 
 import { ReportingStore } from './reporting.store';
+import { AccountingSegments } from '@okr/finance-accounting-feature';
 
 /**
  * Erfolgsrechnung of the accounting tenant in the URL: Ertrag, Aufwand and übriger Erfolg of the
@@ -24,6 +25,7 @@ import { ReportingStore } from './reporting.store';
   selector: 'okr-income-statement-page',
   standalone: true,
   imports: [
+    AccountingSegments,
     SvgIconPipe, Menu, Spinner, EmptyList, ListFilter, StringSelect, ReportTable,
     IonHeader, IonToolbar, IonButtons, IonButton, IonMenuButton, IonTitle, IonIcon, IonPopover,
     IonContent, IonGrid, IonRow, IonCol, IonLabel,
@@ -46,6 +48,7 @@ import { ReportingStore } from './reporting.store';
           </ion-popover>
         </ion-buttons>
       </ion-toolbar>
+      <okr-accounting-segments />
       <okr-list-filter
         (searchTermChanged)="store.setSearchTerm($event)"
         (yearChanged)="store.setSelectedYear($event)" [years]="store.years()" [selectedYear]="store.year()"

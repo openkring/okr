@@ -22,11 +22,13 @@ import {
 
 import { ExpenseNewModal } from './expense-new.modal';
 import { ExpenseListId, ExpenseStore } from './expense.store';
+import { AccountingSegments } from '@okr/finance-accounting-feature';
 
 @Component({
   selector: 'okr-expense-list',
   standalone: true,
   imports: [
+    AccountingSegments,
     ImgDirective, AsyncPipe, SvgIconPipe, TranslatePipe, AvatarPipe,
     Spinner, EmptyList, ListFilter, Menu,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonIcon, IonMenuButton,
@@ -79,6 +81,7 @@ import { ExpenseListId, ExpenseStore } from './expense.store';
           </ion-buttons>
         }
       </ion-toolbar>
+      <okr-accounting-segments />
       <okr-list-filter
         (searchTermChanged)="store.setSearchTerm($event)"
         [types]="store.transferCategory()" [selectedType]="store.selectedTransfer()" (typeChanged)="store.setSelectedTransfer($event)"

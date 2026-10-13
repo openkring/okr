@@ -11,7 +11,7 @@ import { Menu } from '@okr/cms-menu-feature';
 import { CostCenterStore } from '@okr/finance-cost-center-feature';
 import { costCenterLabel } from '@okr/finance-cost-center-util';
 
-import { ReadOnlyBanner } from '@okr/finance-accounting-feature';
+import { AccountingSegments, ReadOnlyBanner } from '@okr/finance-accounting-feature';
 
 import { FlatAccountNode } from '@okr/finance-account-util';
 import { AccountStore } from './account.store';
@@ -20,6 +20,7 @@ import { AccountStore } from './account.store';
   selector: 'okr-account-list',
   standalone: true,
   imports: [
+    AccountingSegments,
     SvgIconPipe,
     Spinner, EmptyList, Menu, ReadOnlyBanner,
     IonToolbar, IonButton, IonIcon, IonLabel, IonHeader, IonButtons,
@@ -52,6 +53,7 @@ import { AccountStore } from './account.store';
         </ion-buttons>
       }
     </ion-toolbar>
+    <okr-accounting-segments />
 
     <!-- list header -->
     <ion-toolbar color="primary">

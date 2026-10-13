@@ -5,17 +5,18 @@ import { IonContent, IonHeader, IonButtons, IonMenuButton, IonItem, IonLabel,
 
 import { BookingModel } from '@okr/shared-models';
 import { I18nService } from '@okr/shared-i18n';
-import { AccountingStore } from '@okr/finance-accounting-feature';
+import { AccountingSegments, AccountingStore } from '@okr/finance-accounting-feature';
 import { ReportingService } from '@okr/finance-reporting-data-access';
 import { REPORTING_I18N_KEYS, ReportingI18n } from '@okr/finance-reporting-util';
 
 @Component({
   selector: 'okr-cash-flow-page',
   standalone: true,
-  imports: [IonHeader, IonButtons, IonMenuButton, IonToolbar, IonTitle, IonContent, IonList, IonItem, IonLabel],
+  imports: [AccountingSegments, IonHeader, IonButtons, IonMenuButton, IonToolbar, IonTitle, IonContent, IonList, IonItem, IonLabel],
   template: `
     <ion-header>
       <ion-toolbar><ion-buttons slot="start"><ion-menu-button /></ion-buttons><ion-title>{{ i18n.cashflow_title() }}</ion-title></ion-toolbar>
+      <okr-accounting-segments />
     </ion-header>
     <ion-content>
       @if (journalResource.isLoading()) { <p>{{ i18n.loading() }}</p> }

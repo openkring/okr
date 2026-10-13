@@ -16,6 +16,7 @@ import { convertDateFormatToString, DateFormat, generateRandomString } from '@ok
 import { Menu } from '@okr/cms-menu-feature';
 
 import { BANK_IMPORT_PROVIDERS, BankImportStatusFilter, BankImportStore } from './bank-import.store';
+import { AccountingSegments } from '@okr/finance-accounting-feature';
 
 const STATUS_FILTERS: BankImportStatusFilter[] = ['open', 'all', 'unmapped', 'mapped', 'posted', 'error'];
 
@@ -23,6 +24,7 @@ const STATUS_FILTERS: BankImportStatusFilter[] = ['open', 'all', 'unmapped', 'ma
   selector: 'okr-bank-import-list',
   standalone: true,
   imports: [
+    AccountingSegments,
     SvgIconPipe, Menu, Spinner, EmptyList, ListFilter, DecimalPipe,
     IonHeader, IonToolbar, IonButtons, IonButton, IonMenuButton, IonTitle, IonIcon, IonPopover,
     IonContent, IonGrid, IonRow, IonCol, IonChip, IonNote,
@@ -49,6 +51,7 @@ const STATUS_FILTERS: BankImportStatusFilter[] = ['open', 'all', 'unmapped', 'ma
           </ion-popover>
         </ion-buttons>
       </ion-toolbar>
+      <okr-accounting-segments />
       <ion-toolbar>
         <okr-list-filter (searchTermChanged)="store.setSearchTerm($event)" />
         <ion-item lines="none">

@@ -10,7 +10,7 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { formatMinorAmount, Spinner } from '@okr/shared-ui';
 import { convertDateFormatToString, DateFormat, fill } from '@okr/shared-util-core';
 
-import { ReadOnlyBanner } from '@okr/finance-accounting-feature';
+import { AccountingSegments, ReadOnlyBanner } from '@okr/finance-accounting-feature';
 import { OpenItemsDocumentDifference, OpenItemsResult } from '@okr/finance-reporting-util';
 
 import { OpenItemsStore } from './open-items.store';
@@ -25,6 +25,7 @@ import { OpenItemsStore } from './open-items.store';
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    AccountingSegments,
     SvgIconPipe, Spinner, ReadOnlyBanner,
     IonHeader, IonToolbar, IonButtons, IonButton, IonMenuButton, IonTitle, IonIcon, IonContent, IonInput,
     IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonRow, IonCol, IonList, IonListHeader, IonItem, IonLabel, IonNote, IonText,
@@ -41,6 +42,7 @@ import { OpenItemsStore } from './open-items.store';
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
         <ion-title>{{ store.i18n.open_items_title() }}</ion-title>
       </ion-toolbar>
+      <okr-accounting-segments />
       <ion-toolbar>
         <ion-item lines="none">
           <ion-input type="date" labelPlacement="start" [label]="store.i18n.open_items_cutoff()"

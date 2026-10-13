@@ -10,7 +10,7 @@ import { createActionSheetButton, createActionSheetDivider, createActionSheetOpt
 import { hasRole } from '@okr/shared-util-core';
 import { BudgetStatus } from '@okr/shared-models';
 
-import { ReadOnlyBanner } from '@okr/finance-accounting-feature';
+import { AccountingSegments, ReadOnlyBanner } from '@okr/finance-accounting-feature';
 import { formatMinorAmount } from '@okr/finance-booking-util';
 import { buildBudgetGrid, BudgetGridRow, BudgetGridSection, isNetOver, isOver, isVersionEditable, netOf } from '@okr/finance-budget-util';
 import { aggregateByCostCenter, CellSide, CostCenterRollUp, costCenterLabel, postedLinesInRange } from '@okr/finance-cost-center-util';
@@ -28,6 +28,7 @@ import { BudgetStore } from './budget.store';
   selector: 'okr-budget-grid-page',
   standalone: true,
   imports: [
+    AccountingSegments,
     SvgIconPipe, Spinner, EmptyList, ReadOnlyBanner,
     IonHeader, IonToolbar, IonButtons, IonBackButton, IonTitle, IonContent, IonChip, IonList, IonItem, IonLabel, IonNote,
     IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonButton, IonIcon
@@ -58,6 +59,7 @@ import { BudgetStore } from './budget.store';
           </ion-buttons>
         }
       </ion-toolbar>
+      <okr-accounting-segments />
     </ion-header>
 
     <ion-content>

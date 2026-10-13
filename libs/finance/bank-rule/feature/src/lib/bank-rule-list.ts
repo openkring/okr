@@ -15,11 +15,13 @@ import { AlertService, createActionSheetButton, createActionSheetDivider, create
 import { Menu } from '@okr/cms-menu-feature';
 
 import { BankRuleStore } from './bank-rule.store';
+import { AccountingSegments } from '@okr/finance-accounting-feature';
 
 @Component({
   selector: 'okr-bank-rule-list',
   standalone: true,
   imports: [
+    AccountingSegments,
     SvgIconPipe, Menu, Spinner, EmptyList,
     IonHeader, IonMenuButton, IonToolbar, IonButtons, IonButton, IonTitle, IonIcon, IonPopover,
     IonContent, IonList, IonItem, IonLabel, IonBadge,
@@ -44,6 +46,7 @@ import { BankRuleStore } from './bank-rule.store';
           </ion-popover>
         </ion-buttons>
       </ion-toolbar>
+      <okr-accounting-segments />
     </ion-header>
     <ion-content>
       @if (store.isLoading()) {

@@ -11,7 +11,7 @@ import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error } from '@okr/shared-util-angular';
 import { generateRandomString, hasRole } from '@okr/shared-util-core';
 
-import { ReadOnlyBanner } from '@okr/finance-accounting-feature';
+import { AccountingSegments, ReadOnlyBanner } from '@okr/finance-accounting-feature';
 import { COST_CENTER_I18N_SCOPE } from '@okr/finance-cost-center-util';
 
 import { CostCenterStore } from './cost-center.store';
@@ -26,6 +26,7 @@ import { CostCenterStore } from './cost-center.store';
   selector: 'okr-cost-center-list',
   standalone: true,
   imports: [
+    AccountingSegments,
     SvgIconPipe, Spinner, EmptyList, ListFilter, Menu, ReadOnlyBanner,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
     IonContent, IonList, IonItem, IonLabel, IonNote, IonChip, IonPopover
@@ -51,6 +52,7 @@ import { CostCenterStore } from './cost-center.store';
           </ion-buttons>
         }
       </ion-toolbar>
+      <okr-accounting-segments />
 
       <okr-list-filter
         (searchTermChanged)="store.setSearchTerm($event)"

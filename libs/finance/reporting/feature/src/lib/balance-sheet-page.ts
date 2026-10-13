@@ -14,6 +14,7 @@ import { Menu } from '@okr/cms-menu-feature';
 import { ReportTable } from '@okr/finance-reporting-ui';
 
 import { ReportingStore } from './reporting.store';
+import { AccountingSegments } from '@okr/finance-accounting-feature';
 
 /**
  * Bilanz of the accounting tenant in the URL: Aktiven and Passiven as of the selected fiscal year's
@@ -23,6 +24,7 @@ import { ReportingStore } from './reporting.store';
   selector: 'okr-balance-sheet-page',
   standalone: true,
   imports: [
+    AccountingSegments,
     SvgIconPipe, Menu, Spinner, EmptyList, ListFilter, ReportTable,
     IonHeader, IonToolbar, IonButtons, IonButton, IonMenuButton, IonTitle, IonIcon, IonPopover,
     IonContent, IonGrid, IonRow, IonCol, IonLabel,
@@ -45,6 +47,7 @@ import { ReportingStore } from './reporting.store';
           </ion-popover>
         </ion-buttons>
       </ion-toolbar>
+      <okr-accounting-segments />
       <okr-list-filter
         (searchTermChanged)="store.setSearchTerm($event)"
         (yearChanged)="store.setSelectedYear($event)" [years]="store.years()" [selectedYear]="store.year()"

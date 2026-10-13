@@ -20,6 +20,7 @@ import { toAccountingConfigFormData } from '@okr/finance-accounting-util';
 
 import { AccountingStore } from './accounting.store';
 import { ReadOnlyBanner } from './read-only-banner';
+import { AccountingSegments } from './accounting-segments';
 
 /**
  * Settings of one accounting tenant. Today this is the account-link page: it is the only place that
@@ -29,10 +30,11 @@ import { ReadOnlyBanner } from './read-only-banner';
 @Component({
   selector: 'okr-accounting-settings-page',
   standalone: true,
-  imports: [Header, ChangeConfirmation, ReadOnlyBanner, AccountingConfigForm, FeeSchedule, IonContent],
+  imports: [AccountingSegments, Header, ChangeConfirmation, ReadOnlyBanner, AccountingConfigForm, FeeSchedule, IonContent],
   providers: [CategoryStore],
   template: `
     <okr-header [i18n]="headerI18n()" [isModal]="false" />
+    <okr-accounting-segments />
     @if (showConfirmation()) {
       <okr-change-confirmation [i18n]="changeConfirmationI18n()"
         (saveClicked)="save()" (cancelClicked)="cancel()" />

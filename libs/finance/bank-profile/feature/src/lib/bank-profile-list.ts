@@ -15,6 +15,7 @@ import { AlertService, createActionSheetButton, createActionSheetDivider, create
 import { Menu } from '@okr/cms-menu-feature';
 
 import { BankProfileStore } from './bank-profile.store';
+import { AccountingSegments } from '@okr/finance-accounting-feature';
 
 /** IBAN formatted in groups of 4, e.g. 'CH93 0076 2011 6238 5295 7'. */
 function formatIban(iban: string): string {
@@ -25,6 +26,7 @@ function formatIban(iban: string): string {
   selector: 'okr-bank-profile-list',
   standalone: true,
   imports: [
+    AccountingSegments,
     SvgIconPipe, Menu, Spinner, EmptyList,
     IonHeader, IonMenuButton, IonToolbar, IonButtons, IonButton, IonTitle, IonIcon, IonPopover,
     IonContent, IonList, IonItem, IonLabel,
@@ -49,6 +51,7 @@ function formatIban(iban: string): string {
           </ion-popover>
         </ion-buttons>
       </ion-toolbar>
+      <okr-accounting-segments />
     </ion-header>
     <ion-content>
       @if (store.isLoading()) {

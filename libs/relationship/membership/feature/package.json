@@ -28,6 +28,7 @@
     "@okr/comment-feature": "*",
     "@okr/cms-menu-feature": "*",
     "@okr/vcard-feature": "*",
-    "@okr/content-pdf-template-feature": "*"
+    "@okr/content-pdf-template-feature": "*",
+    "@okr/finance-accounting-feature": "*"
   }
 }
