@@ -100,15 +100,24 @@ export async function getCallerTenantId(request: functions.CallableRequest, name
 export const OPERATOR_TENANT_ID = 'bka';
 
 /**
- * True only when the `users` doc belongs to the operator tenant alone: `tenants` is an array of
- * exactly one entry, equal to OPERATOR_TENANT_ID. Do NOT reduce this to `tenants[0]`: the Firestore
- * rules let an admin of one tenant write a users doc of their own tenant with `['bka', <own tenant>]`
- * (they only check hasAny), so the first entry is attacker-controlled and would make that admin the
- * operator. Requiring exactly ['bka'] makes that write grant nothing.
+ * True only when the `users` doc belongs to the operator tenant alone AND carries `roles.admin`
+ * in that same doc: `tenants` is an array of exactly one entry, equal to OPERATOR_TENANT_ID, and
+ * `roles` is an object whose `admin` is exactly `true`. The custom claim is never consulted here.
+ *
+ * Do NOT reduce this to `tenants[0]`: the Firestore rules let an admin of one tenant write a users
+ * doc of their own tenant with `['bka', <own tenant>]` (they only check hasAny), so the first entry
+ * is attacker-controlled and would make that admin the operator. Requiring exactly ['bka'] makes that
+ * write grant nothing.
+ *
+ * `roles.admin` closes the self-create path: a user without a users doc may create their own doc
+ * with any `tenants`, but the rules bar them from setting admin/privileged roles, so a self-created
+ * doc can never carry `roles.admin: true`. And a non-bka admin cannot write a doc of exactly ['bka'].
  */
 export function isOperatorUserData(userData: Record<string, unknown> | undefined): boolean {
   const tenants = userData?.['tenants'];
-  return Array.isArray(tenants) && tenants.length === 1 && tenants[0] === OPERATOR_TENANT_ID;
+  const roles = userData?.['roles'];
+  const isAdminRole = typeof roles === 'object' && roles !== null && !Array.isArray(roles) && (roles as Record<string, unknown>)['admin'] === true;
+  return Array.isArray(tenants) && tenants.length === 1 && tenants[0] === OPERATOR_TENANT_ID && isAdminRole;
 }
 
 /** The caller as derived server-side from `users/{uid}` in one read. */

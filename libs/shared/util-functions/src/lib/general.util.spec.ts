@@ -32,24 +32,39 @@ describe('tenantIdOfUserData', () => {
 });
 
 describe('isOperatorUserData', () => {
-  it('accepts a users doc whose tenants is exactly the operator tenant', () => {
+  const adminRoles = { admin: true };
+
+  it('accepts a users doc whose tenants is exactly the operator tenant and that carries roles.admin', () => {
     expect(OPERATOR_TENANT_ID).toBe('bka');
-    expect(isOperatorUserData({ tenants: ['bka'] })).toBe(true);
+    expect(isOperatorUserData({ tenants: ['bka'], roles: adminRoles })).toBe(true);
+  });
+
+  it('rejects a bka doc without roles (a self-created doc can never carry roles.admin)', () => {
+    expect(isOperatorUserData({ tenants: ['bka'] })).toBe(false);
+  });
+
+  it('rejects roles.admin that is not exactly true', () => {
+    expect(isOperatorUserData({ tenants: ['bka'], roles: { admin: false } })).toBe(false);
+    expect(isOperatorUserData({ tenants: ['bka'], roles: { admin: 'true' } })).toBe(false);
+  });
+
+  it('rejects roles that is not an object', () => {
+    expect(isOperatorUserData({ tenants: ['bka'], roles: 'admin' })).toBe(false);
   });
 
   it('rejects ["bka", <own tenant>] (the rules let an admin write it, tenants[0] would be wrong)', () => {
-    expect(isOperatorUserData({ tenants: ['bka', 'scs'] })).toBe(false);
+    expect(isOperatorUserData({ tenants: ['bka', 'scs'], roles: adminRoles })).toBe(false);
   });
 
   it('rejects bka when it is not the only entry', () => {
-    expect(isOperatorUserData({ tenants: ['scs', 'bka'] })).toBe(false);
+    expect(isOperatorUserData({ tenants: ['scs', 'bka'], roles: adminRoles })).toBe(false);
   });
 
   it('rejects other tenants, an empty array, a missing doc and a non-array tenants', () => {
-    expect(isOperatorUserData({ tenants: ['scs'] })).toBe(false);
-    expect(isOperatorUserData({ tenants: [] })).toBe(false);
+    expect(isOperatorUserData({ tenants: ['scs'], roles: adminRoles })).toBe(false);
+    expect(isOperatorUserData({ tenants: [], roles: adminRoles })).toBe(false);
     expect(isOperatorUserData(undefined)).toBe(false);
-    expect(isOperatorUserData({ tenants: 'bka' })).toBe(false);
+    expect(isOperatorUserData({ tenants: 'bka', roles: adminRoles })).toBe(false);
   });
 });
 
