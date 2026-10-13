@@ -7,3 +7,4 @@ export * from './lib/ledger-bookings';
 export * from './lib/avatar-detail.service';
 export * from './lib/finance-history';
 export * from './lib/accounting-segments';
+export * from './lib/accounting-overview.page';

@@ -284,5 +284,43 @@
       "ocrRules": "Règles OCR",
       "settings": "Paramètres"
     }
+  },
+  "overview": {
+    "title": "Aperçu",
+    "period": {
+      "open": "Période {period} ouverte",
+      "locked": "Période {period} verrouillée",
+      "none": "Aucune période pour l'instant"
+    },
+    "todos": "À faire",
+    "todo": {
+      "review": "Écritures à vérifier",
+      "bills": "Factures fournisseurs ouvertes",
+      "billsOverdue": "dont en retard : {n}",
+      "orders": "Ordres de paiement prêts",
+      "invoices": "Factures clients en retard",
+      "expenses": "Frais ouverts",
+      "bankRows": "Lignes bancaires non comptabilisées"
+    },
+    "figures": "Chiffres clés",
+    "year": "Exercice",
+    "fig": {
+      "liquidity": "Variation des liquidités",
+      "liquidityHint": "Caisse, poste et banque pendant cet exercice",
+      "balance": "Liquidités disponibles",
+      "computeBalance": "Calculer le solde",
+      "result": "Résultat",
+      "budget": "Budget utilisé",
+      "noBudget": "Aucun budget approuvé",
+      "openItems": "Postes ouverts",
+      "openItemsHint": "Clients / fournisseurs aujourd'hui"
+    },
+    "actions": "Actions rapides",
+    "act": {
+      "booking": "Saisir une écriture",
+      "scan": "Scanner un justificatif",
+      "bankImport": "Importer un relevé",
+      "invoice": "Créer une facture"
+    }
   }
 }

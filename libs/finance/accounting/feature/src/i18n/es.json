@@ -284,5 +284,43 @@
       "ocrRules": "Reglas OCR",
       "settings": "Ajustes"
     }
+  },
+  "overview": {
+    "title": "Resumen",
+    "period": {
+      "open": "Período {period} abierto",
+      "locked": "Período {period} bloqueado",
+      "none": "Aún no hay ningún período"
+    },
+    "todos": "Pendiente",
+    "todo": {
+      "review": "Asientos por revisar",
+      "bills": "Facturas de acreedores abiertas",
+      "billsOverdue": "vencidas: {n}",
+      "orders": "Órdenes de pago listas",
+      "invoices": "Facturas vencidas",
+      "expenses": "Gastos abiertos",
+      "bankRows": "Líneas bancarias sin contabilizar"
+    },
+    "figures": "Cifras clave",
+    "year": "Ejercicio",
+    "fig": {
+      "liquidity": "Variación de liquidez",
+      "liquidityHint": "Caja, correo y banco en este ejercicio",
+      "balance": "Liquidez disponible",
+      "computeBalance": "Calcular saldo",
+      "result": "Resultado",
+      "budget": "Presupuesto usado",
+      "noBudget": "Ningún presupuesto aprobado",
+      "openItems": "Partidas abiertas",
+      "openItemsHint": "Deudores / acreedores hoy"
+    },
+    "actions": "Acciones rápidas",
+    "act": {
+      "booking": "Registrar asiento",
+      "scan": "Escanear comprobante",
+      "bankImport": "Importar extracto",
+      "invoice": "Crear factura"
+    }
   }
 }

@@ -30,6 +30,8 @@
     "@okr/subject-person-ui": "*",
     "@okr/comment-ui": "*",
     "@okr/comment-util": "*",
-    "@okr/tenant-feature": "*"
+    "@okr/tenant-feature": "*",
+    "@okr/shared-data-access": "*",
+    "@okr/finance-reporting-util": "*"
   }
 }

@@ -284,5 +284,43 @@
       "ocrRules": "OCR-Regeln",
       "settings": "Einstellungen"
     }
+  },
+  "overview": {
+    "title": "Übersicht",
+    "period": {
+      "open": "Periode {period} offen",
+      "locked": "Periode {period} gesperrt",
+      "none": "Noch keine Periode erfasst"
+    },
+    "todos": "Zu erledigen",
+    "todo": {
+      "review": "Buchungen zu prüfen",
+      "bills": "Kreditoren offen",
+      "billsOverdue": "davon überfällig: {n}",
+      "orders": "Zahlungsaufträge bereit",
+      "invoices": "Debitoren überfällig",
+      "expenses": "Spesen offen",
+      "bankRows": "Bankzeilen nicht verbucht"
+    },
+    "figures": "Kennzahlen",
+    "year": "Geschäftsjahr",
+    "fig": {
+      "liquidity": "Veränderung flüssige Mittel",
+      "liquidityHint": "Kasse, Post und Bank in diesem Geschäftsjahr",
+      "balance": "Stand flüssige Mittel",
+      "computeBalance": "Stand berechnen",
+      "result": "Ergebnis",
+      "budget": "Budget ausgeschöpft",
+      "noBudget": "Kein genehmigtes Budget",
+      "openItems": "Offene Posten",
+      "openItemsHint": "Debitoren / Kreditoren heute"
+    },
+    "actions": "Schnellaktionen",
+    "act": {
+      "booking": "Buchung erfassen",
+      "scan": "Beleg scannen",
+      "bankImport": "Bankauszug importieren",
+      "invoice": "Rechnung erstellen"
+    }
   }
 }

@@ -284,5 +284,43 @@
       "ocrRules": "OCR rules",
       "settings": "Settings"
     }
+  },
+  "overview": {
+    "title": "Overview",
+    "period": {
+      "open": "Period {period} open",
+      "locked": "Period {period} locked",
+      "none": "No period yet"
+    },
+    "todos": "To do",
+    "todo": {
+      "review": "Bookings to check",
+      "bills": "Open bills",
+      "billsOverdue": "overdue: {n}",
+      "orders": "Payment orders ready",
+      "invoices": "Overdue invoices",
+      "expenses": "Open expenses",
+      "bankRows": "Bank lines not posted"
+    },
+    "figures": "Key figures",
+    "year": "Fiscal year",
+    "fig": {
+      "liquidity": "Change in cash",
+      "liquidityHint": "Cash, post and bank in this fiscal year",
+      "balance": "Cash on hand",
+      "computeBalance": "Compute balance",
+      "result": "Result",
+      "budget": "Budget used",
+      "noBudget": "No approved budget",
+      "openItems": "Open items",
+      "openItemsHint": "Receivables / payables today"
+    },
+    "actions": "Quick actions",
+    "act": {
+      "booking": "Add booking",
+      "scan": "Scan receipt",
+      "bankImport": "Import bank statement",
+      "invoice": "Create invoice"
+    }
   }
 }
