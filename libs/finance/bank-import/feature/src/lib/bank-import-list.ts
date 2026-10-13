@@ -1,5 +1,5 @@
-import { Component, inject, input, signal } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { Component, effect, inject, input, signal, untracked } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DecimalPipe } from '@angular/common';
 import {
@@ -119,6 +119,7 @@ const STATUS_FILTERS: BankImportStatusFilter[] = ['open', 'all', 'unmapped', 'ma
 export class BankImportList {
   protected readonly store = inject(BankImportStore);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly actionSheetController = inject(ActionSheetController);
   private readonly alertService = inject(AlertService);
   private readonly imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
@@ -127,11 +128,18 @@ export class BankImportList {
 
   /** Name of the DB menu document loaded into the header context menu (route `:contextMenuName`). */
   public readonly contextMenuName = input.required<string>();
+  /** quick action from the accounting overview (spec 1.100 §4.4), e.g. ?action=add */
+  public readonly action = input<string | undefined>();
   // Unique per instance: Ionic keeps the previous page in the DOM, so a fixed id (same for scs and gss books)
   // binds the popover of the next page to the hidden button of the previous one.
   protected readonly popupId = signal(`c_bankimport_${generateRandomString(8)}`);
 
   constructor() {
+    effect(() => {
+      const action = this.action();
+      if (!action) return;
+      untracked(() => void this.runQuickAction(action));
+    });
     this.route.params.pipe(takeUntilDestroyed()).subscribe(params => {
       const id = params['accountingTenantId'] as string;
       if (id) this.store.setAccountingTenant(id);
@@ -161,6 +169,15 @@ export class BankImportList {
       case 'posted': return this.store.i18n.status_posted();
       case 'error': return this.store.i18n.status_error();
       default: return filter;
+    }
+  }
+
+  /** runs the quick action from the accounting overview, after dropping it from the url (spec 1.100 §4.4) */
+  private async runQuickAction(action: string): Promise<void> {
+    await this.router.navigate([], { queryParams: { action: null }, queryParamsHandling: 'merge', replaceUrl: true });
+    if (this.store.accountingStore.isExternallyManaged()) return;
+    switch (action) {
+      case 'import': await this.store.importFile(); break;
     }
   }
 

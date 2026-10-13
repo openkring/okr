@@ -163,8 +163,16 @@ export class InvoiceList {
   protected readonly canRunMahnlauf = computed(() =>
     this.store.isExternallyManaged() === false && hasRole('treasurer', this.currentUser()) && this.store.mahnlaufInvoices().length > 0);
 
+  /** quick action from the accounting overview (spec 1.100 §4.4), e.g. ?action=add */
+  public readonly action = input<string | undefined>();
+
   /******************************** constructor ******************************************* */
   constructor() {
+    effect(() => {
+      const action = this.action();
+      if (!action) return;
+      untracked(() => void this.runQuickAction(action));
+    });
     effect(() => {
       const listId = this.listId();
       if (listId) this.store.setListId(listId);
@@ -229,6 +237,15 @@ export class InvoiceList {
 
   protected formatDate(storeDate: string): string {
     return convertDateFormatToString(storeDate, DateFormat.StoreDate, DateFormat.ViewDate) ?? storeDate;
+  }
+
+  /** runs the quick action from the accounting overview, after dropping it from the url (spec 1.100 §4.4) */
+  private async runQuickAction(action: string): Promise<void> {
+    await this.router.navigate([], { queryParams: { action: null }, queryParamsHandling: 'merge', replaceUrl: true });
+    if (this.store.isExternallyManaged()) return;
+    switch (action) {
+      case 'add': await this.store.add(); break;
+    }
   }
 
   /******************************* actions *************************************** */

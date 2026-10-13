@@ -134,8 +134,15 @@ export class BillList {
   private readonly today = getTodayStr();
   protected years = computed(() => getYearList(getYear(), 8));
   protected states = computed(() => this.store.states());
+  /** quick action from the accounting overview (spec 1.100 §4.4), e.g. ?action=add */
+  public readonly action = input<string | undefined>();
 
   constructor() {
+    effect(() => {
+      const action = this.action();
+      if (!action) return;
+      untracked(() => void this.runQuickAction(action));
+    });
     effect(() => {
       const listId = this.listId();
       if (listId) this.store.setListId(listId);
@@ -199,6 +206,16 @@ export class BillList {
 
   protected getStateLabel(state: string): string {
     return billStateLabel(state, this.store.i18n);
+  }
+
+  /** runs the quick action from the accounting overview, after dropping it from the url (spec 1.100 §4.4) */
+  private async runQuickAction(action: string): Promise<void> {
+    await this.router.navigate([], { queryParams: { action: null }, queryParamsHandling: 'merge', replaceUrl: true });
+    if (this.store.isExternallyManaged()) return;
+    switch (action) {
+      case 'add': await this.store.add(); break;
+      case 'scan': await this.store.scan(); break;
+    }
   }
 
   /******************************* actions *************************************** */

@@ -1,3 +1,4 @@
+import { Router } from '@angular/router';
 import { Component, computed, effect, ElementRef, inject, input, signal, untracked } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonItemDivider, IonLabel, IonList, IonMenuButton, IonNote, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular';
 
@@ -210,8 +211,11 @@ export class BookingList {
   private readonly actionSheetController = inject(ActionSheetController);
   private readonly imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly router = inject(Router);
 
   public readonly contextMenuName = input.required<string>();
+  /** quick action from the accounting overview (spec 1.100 §4.4), e.g. ?action=add */
+  public readonly action = input<string | undefined>();
   // `?accountKey=<okey>` (query param, bound by withComponentInputBinding): show only bookings with a
   // line on that account — the account list navigates here from a leaf account in view mode.
   public readonly accountKey = input<string | undefined>();
@@ -227,6 +231,11 @@ export class BookingList {
   private readonly selectedKey = signal('');
   /** The linked booking still to scroll into view once its row is rendered (rows load after the route opens). */
   private pendingScrollKey = '';
+  private readonly quickAction = effect(() => {
+    const action = this.action();
+    if (!action) return;
+    untracked(() => void this.runQuickAction(action));
+  });
   private readonly syncBookingKey = effect(() => {
     const key = this.bookingKey() ?? '';
     this.selectedKey.set(key);
@@ -344,6 +353,15 @@ export class BookingList {
   protected setSort(field: JournalSortField): void {
     this.sortAsc.set(this.sortField() === field ? !this.sortAsc() : true);
     this.sortField.set(field);
+  }
+
+  /** runs the quick action from the accounting overview, after dropping it from the url (spec 1.100 §4.4) */
+  private async runQuickAction(action: string): Promise<void> {
+    await this.router.navigate([], { queryParams: { action: null }, queryParamsHandling: 'merge', replaceUrl: true });
+    if (this.store.isReadOnly()) return;
+    switch (action) {
+      case 'add': await this.store.openCreate(); break;
+    }
   }
 
   /*-------------------------- popover context menu --------------------------------*/
