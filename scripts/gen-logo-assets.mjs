@@ -73,7 +73,9 @@ const targets = argv.filter((a) => !a.startsWith('--') && a !== OUT_DIR);
 function appDirs() {
   return fs
     .readdirSync(path.join(ROOT, 'apps'))
-    .filter((d) => d.endsWith('-app') && fs.existsSync(path.join(ROOT, 'apps', d, 'src/assets/manifest.json')));
+    // An app is detected by its index.html — NOT by `src/assets/manifest.json`, the stale
+    // unreferenced copy: once scs dropped it, every run silently skipped scs's app files.
+    .filter((d) => d.endsWith('-app') && fs.existsSync(path.join(ROOT, 'apps', d, 'src/index.html')));
 }
 /** `scs`, `scs-app` and `apps/scs-app` all mean the same tenant. */
 const toTenant = (s) => path.basename(s).replace(/-app$/, '');
@@ -498,6 +500,65 @@ function rewriteWebsitePage(file, links) {
 // ── main ────────────────────────────────────────────────────────────────────
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 1200, height: 1200 } });
+
+/**
+ * Native Android launcher icons (spec 1.10), derived from the same renditions as the PWA icons —
+ * never hand-placed (skill `logo`). Written only when the app has a Capacitor Android project.
+ *
+ *   mipmap-<d>/ic_launcher.png             48dp, from logo-maskable (legacy, pre-API-26)
+ *   mipmap-<d>/ic_launcher_round.png       48dp, from logo-round
+ *   mipmap-<d>/ic_launcher_foreground.png  108dp adaptive foreground: the maskable raster scaled
+ *                                          so its content (72% of the square) fits Android's
+ *                                          66dp safe zone, on the maskable's own backdrop colour
+ *   values/ic_launcher_background.xml      that backdrop colour, for the adaptive background
+ */
+const ANDROID_DENSITIES = { mdpi: 1, hdpi: 1.5, xhdpi: 2, xxhdpi: 3, xxxhdpi: 4 };
+const ADAPTIVE_SCALE = 66 / (108 * 0.72); // maskable content edge → 66dp safe zone
+
+async function writeAndroidIcons(appDir, maskable, round) {
+  const res = path.join(appDir, 'android/app/src/main/res');
+  if (!fs.existsSync(res) || !maskable || !round) return null;
+  const out = await page.evaluate(
+    async ({ maskable, round, densities, scale }) => {
+      const load = (s) => new Promise((ok, ko) => { const i = new Image(); i.onload = () => ok(i); i.onerror = ko; i.src = s; });
+      const [m, r] = await Promise.all([load(maskable), load(round)]);
+      const probe = document.createElement('canvas');
+      probe.width = probe.height = 1;
+      probe.getContext('2d').drawImage(m, 0, 0, 1, 1, 0, 0, 1, 1); // corner pixel = backdrop
+      const [cr, cg, cb] = probe.getContext('2d').getImageData(0, 0, 1, 1).data;
+      const backdrop = '#' + [cr, cg, cb].map((v) => v.toString(16).padStart(2, '0')).join('').toUpperCase();
+      const draw = (img, n, fit = 1, fill = null) => {
+        const c = document.createElement('canvas');
+        c.width = c.height = n;
+        const x = c.getContext('2d');
+        x.imageSmoothingQuality = 'high';
+        if (fill) { x.fillStyle = fill; x.fillRect(0, 0, n, n); }
+        const w = Math.round(n * fit);
+        x.drawImage(img, Math.round((n - w) / 2), Math.round((n - w) / 2), w, w);
+        return c.toDataURL('image/png');
+      };
+      const files = {};
+      for (const [d, f] of Object.entries(densities)) {
+        files[`mipmap-${d}/ic_launcher.png`] = draw(m, Math.round(48 * f));
+        files[`mipmap-${d}/ic_launcher_round.png`] = draw(r, Math.round(48 * f));
+        files[`mipmap-${d}/ic_launcher_foreground.png`] = draw(m, Math.round(108 * f), scale, backdrop);
+      }
+      return { files, backdrop };
+    },
+    { maskable, round, densities: ANDROID_DENSITIES, scale: ADAPTIVE_SCALE },
+  );
+  if (DRY) return `${Object.keys(out.files).length} launcher icons (dry run, not written)`;
+  for (const [rel, dataUrl] of Object.entries(out.files)) {
+    fs.mkdirSync(path.dirname(path.join(res, rel)), { recursive: true });
+    fs.writeFileSync(path.join(res, rel), Buffer.from(dataUrl.split(',')[1], 'base64'));
+  }
+  fs.writeFileSync(
+    path.join(res, 'values/ic_launcher_background.xml'),
+    `<?xml version="1.0" encoding="utf-8"?>\n<resources>\n    <color name="ic_launcher_background">${out.backdrop}</color>\n</resources>\n`,
+  );
+  return `${Object.keys(out.files).length} launcher icons + ic_launcher_background ${out.backdrop}`;
+}
+
 await page.setContent('<body style="margin:0">');
 
 let failures = 0;
@@ -516,9 +577,10 @@ for (const tenant of tenants) {
   const dir = `tenant/${tenant}/logo`;
 
   const appDir = path.join(ROOT, 'apps', `${tenant}-app`);
-  const hasApp = fs.existsSync(path.join(appDir, 'src/assets/manifest.json'));
+  const hasApp = fs.existsSync(path.join(appDir, 'src/index.html'));
   const bg =
-    (hasApp && JSON.parse(fs.readFileSync(path.join(appDir, 'src/assets/manifest.json'), 'utf8')).background_color) ||
+    (hasApp && fs.existsSync(manifestPath(appDir)) &&
+      JSON.parse(fs.readFileSync(manifestPath(appDir), 'utf8')).background_color) ||
     '#ffffff';
 
   // The master is whatever `app-config.logoUrl` points at. That field already
@@ -537,6 +599,8 @@ for (const tenant of tenants) {
   let resolvedMaster = null;
   let resolvedBytes = 0;
   let lastFavicon = null;
+  let lastMaskable = null;
+  let lastRound = null;
   let resolvedIsSvg = false;
 
   for (const variant of VARIANTS) {
@@ -599,7 +663,11 @@ for (const tenant of tenants) {
         (r.mode === 'framed' ? `  border=${r.thick}px` : ''),
     );
 
-    if (suffix === '') lastFavicon = r.favicon;
+    if (suffix === '') {
+      lastFavicon = r.favicon;
+      lastMaskable = r.maskable;
+      lastRound = r.round;
+    }
 
     const outputs = [
       [`logo-master${suffix}.png`, r.master],
@@ -640,6 +708,8 @@ for (const tenant of tenants) {
   console.log(
     `   ${path.relative(appDir, mPath)} ${m ? 'rewritten' : 'unchanged'} · index.html ${h ? 'rewritten' : 'unchanged'}`,
   );
+  const android = await writeAndroidIcons(appDir, lastMaskable, lastRound);
+  if (android) console.log(`   android: ${android}`);
 
   await doWebsite();
 
