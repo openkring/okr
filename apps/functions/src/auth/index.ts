@@ -4,7 +4,7 @@ import { logger } from 'firebase-functions/v2';
 import { getAuth, UserRecord } from 'firebase-admin/auth';
 import { getStorage } from 'firebase-admin/storage';
 import { DocumentData, getFirestore } from 'firebase-admin/firestore';
-import { checkAdminRole, checkAppCheckToken, checkAuthentication, checkStringField, chunk, getCallerContext, getCallerTenantId, mayDeleteAuthUser } from '@okr/shared-util-functions';
+import { checkAdminRole, checkAppCheckToken, checkAuthentication, checkStringField, chunk, getCallerContext, getCallerTenantId, isOperatorUserData, mayDeleteAuthUser } from '@okr/shared-util-functions';
 import { isSyntheticLoginEmail } from '@okr/user-util';
 import { getAppEmailConfig } from './email-templates';
 import { EmailAttachment, isValidProvider, sendEmailViaProvider } from './email-transport';
@@ -106,9 +106,18 @@ export const createCustomToken = functions.onCall(
     checkAuthentication(request as any, CF_NAME);
     await checkAdminRole(request as any, CF_NAME);
     checkStringField(request as any, CF_NAME, 'uid');
+    const caller = await getCallerContext(request as any, CF_NAME);
+    if (!caller.isOperator) {
+      // only logins of the caller's own tenant, and never an operator login
+      const target = await loadTenantUser(request.data.uid, caller.tenantId);
+      if (isOperatorUserData(target.data())) {
+        logger.warn(`${CF_NAME}: refused, target ${request.data.uid} is an operator login`);
+        throw new functions.HttpsError('permission-denied', 'Dieses Benutzerkonto kannst du nicht übernehmen.');
+      }
+    }
 
     try {
-      logger.info(`${CF_NAME}: user ${request.auth?.uid} wants custom token of user ${request.data.uid}`);
+      logger.info(`${CF_NAME}: user ${request.auth?.uid} (tenant ${caller.tenantId}) wants custom token of user ${request.data.uid}`);
       const _customToken = await getAuth().createCustomToken(request.data.uid);
       // Do NOT log the token itself — a custom token can be exchanged for a full
       // session of the impersonated user (H-4). Log only the target uid.
@@ -187,9 +196,18 @@ export const getUidByEmail = functions.onCall(
     checkAuthentication(request as any, CF_NAME);
     await checkAdminRole(request as any, CF_NAME);
     checkStringField(request as any, CF_NAME, 'email');
+    const caller = await getCallerContext(request as any, CF_NAME);
 
     try {
       const user = await getAuth().getUserByEmail(request.data.email);
+      if (!caller.isOperator) {
+        const doc = await getFirestore().collection('users').doc(user.uid).get();
+        const tenants = (doc.data()?.['tenants'] as string[] | undefined) ?? [];
+        if (!doc.exists || tenants.length !== 1 || tenants[0] !== caller.tenantId) {
+          // answer exactly like an unknown email (same error path as getUserByEmail not-found)
+          throw new Error('There is no user record corresponding to the provided identifier.');
+        }
+      }
       console.log('getUidByEmail: OK');
       return { uid: user.uid };
     } catch (error: any) {
@@ -221,6 +239,10 @@ export const getFirebaseUser = functions.onCall(
     checkAuthentication(request as any, CF_NAME);
     await checkAdminRole(request as any, CF_NAME);
     checkStringField(request as any, CF_NAME, 'uid');
+    const caller = await getCallerContext(request as any, CF_NAME);
+    if (!caller.isOperator) {
+      await loadTenantUser(request.data.uid, caller.tenantId);
+    }
 
     try {
       const user = await getAuth().getUser(request.data.uid);
@@ -426,7 +448,7 @@ export const listFirebaseUsers = functions.onCall(
     } else {
       const snap = await getFirestore().collection('users').where('tenants', 'array-contains', caller.tenantId).get();
       // getUsers takes at most 100 identifiers; a uid without a login is simply not returned.
-      for (const slice of chunk(snap.docs.map(d => d.id), 100)) {
+      for (const slice of chunk(snap.docs.map(d => d.id).filter(id => id.length > 0 && id.length <= 128), 100)) {
         const result = await getAuth().getUsers(slice.map(uid => ({ uid })));
         users.push(...result.users.map(toFirebaseAuthUser));
       }
