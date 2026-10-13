@@ -43,7 +43,7 @@ describe('summarizeTodos', () => {
     const expenses = ['draft', 'processing', 'done', 'cancelled'].map(status => Object.assign(new ExpenseModel('scs'), { status }));
     const t = summarizeTodos({ bills, paymentOrders: orders, invoices, expenses, today });
     expect(t.billsOverdue).toBe(1);
-    expect(t.billsOpen).toBeGreaterThanOrEqual(1);
+    expect(t.billsOpen).toBe(2);
     expect(t.paymentOrdersReady).toBe(2);
     expect(t.invoicesOverdue).toBe(1);
     expect(t.expensesOpen).toBe(2);
@@ -65,18 +65,19 @@ describe('currentPeriod', () => {
 });
 
 describe('computeKeyFigures', () => {
-  const bookings = [booking('k1', '20260210'), booking('k2', '20260315'), booking('k3', '20260320', 'forReview')];
+  const bookings = [booking('k1', '20260210'), booking('k2', '20260315'), booking('k3', '20260320', 'forReview'), booking('k4', '20260401')];
   const lines = [
     line('k1', 'a1020', 10000, 0), line('k1', 'a3000', 0, 10000),   // revenue 100.00 into the bank
     line('k2', 'a6000', 4000, 0), line('k2', 'a1020', 0, 4000),     // expense 40.00 from the bank
     line('k3', 'a6000', 9999, 0), line('k3', 'a1020', 0, 9999),     // not posted: ignored
+    line('k4', 'a1100', 500, 0), line('k4', 'a8000', 0, 500),       // class 8 result: 5.00 outside cash
   ];
   it('computes the change in cash, the result and the budget used for the period', () => {
     const version = Object.assign(new BudgetVersionModel('scs', 'scs', 2026), { okey: 'v1', status: 'approved', fiscalYear: 2026, approvedAt: '20251120' });
     const budgetLines = [Object.assign(new BudgetLineModel('scs', 'scs', 'v1'), { versionKey: 'v1', accountKey: 'a6000', amount: new MoneyModel(8000, 'CHF') })];
     const k = computeKeyFigures({ accounts, bookings, lines, from: '20260101', to: '20261231', budgetVersions: [version], budgetLines, fiscalYear: 2026 });
     expect(k.liquidityChange).toBe(6000);
-    expect(k.result).toBe(6000);
+    expect(k.result).toBe(6500);
     expect(k.expenseActual).toBe(4000);
     expect(k.budgetUsedPercent).toBe(50);
   });
@@ -95,6 +96,20 @@ describe('liquidityBalance', () => {
 });
 
 describe('openTotals', () => {
+  it('sums the open amounts of payable bills and open invoices', () => {
+    const bills = [
+      Object.assign(new BillModel('scs'), { okey: 'b1', state: 'todo', billDate: '20260901', totalAmount: new MoneyModel(1000, 'CHF') }),
+      Object.assign(new BillModel('scs'), { okey: 'b2', state: 'todo', billDate: '20260901', totalAmount: new MoneyModel(500, 'CHF') }),
+    ];
+    const invoices = [
+      Object.assign(new InvoiceModel('scs'), {
+        okey: 'i1', state: 'pending', invoiceDate: '20260901', totalAmount: new MoneyModel(2000, 'CHF'),
+        payments: [{ date: '20260920', amount: 800, bankAccountKey: '', bookingKey: '' }],
+      }),
+    ];
+    expect(openTotals(bills, invoices, '20261013')).toEqual({ payables: 1500, receivables: 1200 });
+  });
+
   it('ignores draft bills and draft/issuing/cancelled invoices', () => {
     const bills = [Object.assign(new BillModel('scs'), { okey: 'b', state: 'draft', totalAmount: new MoneyModel(999, 'CHF') })];
     const invoices = [Object.assign(new InvoiceModel('scs'), { okey: 'i', state: 'cancelled' })];
