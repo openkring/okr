@@ -1350,6 +1350,9 @@ const mobility: FeatureBlock = {
  *    A second legal entity (GSS) keeps needing a hand-authored submenu — there is exactly one
  *    `@TID@` per tenant. `scs` therefore gets `accounting-menu` NEXT TO `scsf_fibu` on the
  *    first picker save; retiring the bespoke copy is its own decision.
+ *    Since spec 1.100 the submenu has eight work-area rows (overview, journal, bills, invoices,
+ *    cost, reports, closing, master data); the second set of books is reached with the
+ *    switcher, so `scsf_fibu`/`gssf_fibu` leave `main_scs`.
  *    Still excluded: `invoice-my` (`/accounting/scs/invoice/my/c-invoice`, a child of
  *    `finance-menu`). The old scs-only `scsf_memberfees` (`/scsmemberfees/c-scsfees`) is no
  *    longer an exclusion: the generalized member-fee screen has its own `member-fee` block
@@ -1522,33 +1525,19 @@ const finance: FeatureBlock = {
       { key: 'report-export-pdf', name: 'report-export-pdf', url: 'exportPdf', action: 'call', roleNeeded: 'treasurer', icon: 'document', label: '@item.report-export-pdf' },
       { key: 'report-toggle-zero', name: 'report-toggle-zero', url: 'toggleZero', action: 'call', roleNeeded: 'treasurer', icon: 'eye-on', label: '@item.report-toggle-zero' },
     ] },
-    // The generic accounting submenu (see the block comment). Order mirrors the live
-    // `scsf_fibu`, with the three bank-import lists appended — they had no navigate row
-    // anywhere before. `@TID@` is expanded by `resolveMenuUrl` at select time.
+    // The accounting submenu (spec 1.100): eight work areas. Each row opens the area's first
+    // segment; the other screens are segments on the page (ACCOUNTING_AREAS in
+    // @okr/finance-accounting-util), so they need no menu row. The 20 former rows keep their
+    // documents (labels stay in the bundle) but are no longer children — migrate-accounting-menu.mjs.
     accountingMenuParent([
-        { key: 'accounting-accounts', name: 'accounting-accounts', url: '/accounting/@BOOKS@/account/c-account', action: 'navigate', roleNeeded: 'treasurer', icon: 'account', label: '@item.accounting-accounts' },
-        // Kostenstellen (spec 1.65) — next to the Kontoplan, its sibling master data.
-        { key: 'accounting-cost-centers', name: 'accounting-cost-centers', url: '/accounting/@BOOKS@/cost-center/c-cost-center', action: 'navigate', roleNeeded: 'treasurer', icon: 'target', label: '@item.accounting-cost-centers' },
-        // Budgets (spec 1.65 phase 2) — versions per fiscal year on Kostenstelle × Konto, right after the Kostenstellen.
-        { key: 'accounting-budgets', name: 'accounting-budgets', url: '/accounting/@BOOKS@/budget/c-budget', action: 'navigate', roleNeeded: 'treasurer', icon: 'moneybag', label: '@item.accounting-budgets' },
-        { key: 'accounting-allocations', name: 'accounting-allocations', url: '/accounting/@BOOKS@/allocation/c-allocation', action: 'navigate', roleNeeded: 'treasurer', icon: 'swap-horizontal', label: '@item.accounting-allocations' },
-        { key: 'accounting-journal', name: 'accounting-journal', url: '/accounting/@BOOKS@/journal/c-journal', action: 'navigate', roleNeeded: 'treasurer', icon: 'list', label: '@item.accounting-journal' },
-        { key: 'accounting-bills', name: 'accounting-bills', url: '/accounting/@BOOKS@/bill/all/c-bill', action: 'navigate', roleNeeded: 'treasurer', icon: 'invoice', label: '@item.accounting-bills' },
-        { key: 'accounting-invoices', name: 'accounting-invoices', url: '/accounting/@BOOKS@/invoice/all/c-invoice', action: 'navigate', roleNeeded: 'treasurer', icon: 'invoice', label: '@item.accounting-invoices' },
-        // Offene Posten (spec 1.86) — next to the two document lists it reconciles.
-        { key: 'accounting-open-items', name: 'accounting-open-items', url: '/accounting/@BOOKS@/open-items', action: 'navigate', roleNeeded: 'treasurer', icon: 'checkmark', label: '@item.accounting-open-items' },
-        { key: 'accounting-periods', name: 'accounting-periods', url: '/accounting/@BOOKS@/periods/c-period', action: 'navigate', roleNeeded: 'treasurer', icon: 'calendar', label: '@item.accounting-periods' },
-        { key: 'accounting-balance', name: 'accounting-balance', url: '/accounting/@BOOKS@/balance/c-report', action: 'navigate', roleNeeded: 'treasurer', icon: 'chart', label: '@item.accounting-balance' },
-        { key: 'accounting-income-statement', name: 'accounting-income-statement', url: '/accounting/@BOOKS@/income-statement/c-report', action: 'navigate', roleNeeded: 'treasurer', icon: 'chart', label: '@item.accounting-income-statement' },
-        { key: 'accounting-cash-flow', name: 'accounting-cash-flow', url: '/accounting/@BOOKS@/cash-flow', action: 'navigate', roleNeeded: 'treasurer', icon: 'chart', label: '@item.accounting-cash-flow' },
-        { key: 'accounting-assets', name: 'accounting-assets', url: '/accounting/@BOOKS@/assets', action: 'navigate', roleNeeded: 'treasurer', icon: 'cube', label: '@item.accounting-assets' },
-        { key: 'accounting-depreciation-run', name: 'accounting-depreciation-run', url: '/accounting/@BOOKS@/depreciation-run', action: 'navigate', roleNeeded: 'treasurer', icon: 'arrow-down-circle', label: '@item.accounting-depreciation-run' },
-        { key: 'accounting-payments', name: 'accounting-payments', url: '/accounting/@BOOKS@/payments', action: 'navigate', roleNeeded: 'treasurer', icon: 'wallet', label: '@item.accounting-payments' },
-        { key: 'accounting-ocr-rules', name: 'accounting-ocr-rules', url: '/accounting-ocr-rules/@BOOKS@/ocr-rule-context', action: 'navigate', roleNeeded: 'treasurer', icon: 'scan', label: '@item.accounting-ocr-rules' },
-        { key: 'accounting-bank-import', name: 'accounting-bank-import', url: '/accounting-bank-import/@BOOKS@/bank-import-context', action: 'navigate', roleNeeded: 'treasurer', icon: 'download', label: '@item.accounting-bank-import' },
-        { key: 'accounting-bank-rules', name: 'accounting-bank-rules', url: '/accounting-bank-rules/@BOOKS@/bank-rule-context', action: 'navigate', roleNeeded: 'treasurer', icon: 'sync', label: '@item.accounting-bank-rules' },
-        { key: 'accounting-bank-profiles', name: 'accounting-bank-profiles', url: '/accounting-bank-profiles/@BOOKS@/bank-profile-context', action: 'navigate', roleNeeded: 'treasurer', icon: 'business', label: '@item.accounting-bank-profiles' },
-        { key: 'accounting-settings', name: 'accounting-settings', url: '/accounting/@BOOKS@/settings', action: 'navigate', roleNeeded: 'treasurer', icon: 'settings', label: '@item.accounting-settings' },
+      { key: 'accounting-overview', name: 'accounting-overview', url: '/accounting/@BOOKS@/overview', action: 'navigate', roleNeeded: 'treasurer', icon: 'checkmark', label: '@item.accounting-overview' },
+      { key: 'accounting-journal', name: 'accounting-journal', url: '/accounting/@BOOKS@/journal/c-journal', action: 'navigate', roleNeeded: 'treasurer', icon: 'list', label: '@item.accounting-journal' },
+      { key: 'accounting-bills', name: 'accounting-bills', url: '/accounting/@BOOKS@/bill/all/c-bill', action: 'navigate', roleNeeded: 'treasurer', icon: 'invoice', label: '@item.accounting-bills' },
+      { key: 'accounting-invoices', name: 'accounting-invoices', url: '/accounting/@BOOKS@/invoice/all/c-invoice', action: 'navigate', roleNeeded: 'treasurer', icon: 'invoice', label: '@item.accounting-invoices' },
+      { key: 'accounting-cost', name: 'accounting-cost', url: '/accounting/@BOOKS@/cost-center/c-cost-center', action: 'navigate', roleNeeded: 'treasurer', icon: 'target', label: '@item.accounting-cost' },
+      { key: 'accounting-reports', name: 'accounting-reports', url: '/accounting/@BOOKS@/balance/c-report', action: 'navigate', roleNeeded: 'treasurer', icon: 'chart', label: '@item.accounting-reports' },
+      { key: 'accounting-closing', name: 'accounting-closing', url: '/accounting/@BOOKS@/periods/c-period', action: 'navigate', roleNeeded: 'treasurer', icon: 'calendar', label: '@item.accounting-closing' },
+      { key: 'accounting-master-data', name: 'accounting-master-data', url: '/accounting/@BOOKS@/account/c-account', action: 'navigate', roleNeeded: 'treasurer', icon: 'settings', label: '@item.accounting-master-data' },
     ]),
   ],
 };
@@ -1564,8 +1553,8 @@ const finance: FeatureBlock = {
  * block alone would be dishonest — a tenant with `relationship` but not `finance` would get a
  * menu row that cannot work — so `dependsOn: ['relationship', 'finance']` instead.
  *
- * Menu: one `navigate` row nested under the SAME shared `accounting-menu` parent `finance`
- * declares (`accountingMenuParent()` — see that helper's doc comment), plus its own
+ * Menu: no menu row — since spec 1.100 the member-fee screen is the Mitgliederbeiträge segment
+ * of Debitoren (the `accounting-invoices` area). Only its own
  * `c-memberfees` context-menu wrapper (`reload`/`totals`/`export`/`archive`), same pattern as
  * `finance`'s other `c-*` wrappers.
  */
@@ -1578,9 +1567,6 @@ const memberFee: FeatureBlock = {
   dependsOn: ['relationship', 'finance'],
   collections: ['member-fees'],
   menu: [
-    accountingMenuParent([
-      { key: 'memberfees', name: 'memberfees', url: '/memberfees/c-memberfees', action: 'navigate', roleNeeded: 'treasurer', icon: 'invoice', label: '@item.memberfees' },
-    ]),
     { key: 'c-memberfees', name: 'c-memberfees', url: '', action: 'context', roleNeeded: 'treasurer', icon: 'help-circle', label: '', children: [
       { key: 'memberfees-reload', name: 'memberfees-reload', url: 'reload', action: 'call', roleNeeded: 'treasurer', icon: 'sync', label: '@item.memberfees-reload' },
       { key: 'memberfees-totals', name: 'memberfees-totals', url: 'totals', action: 'call', roleNeeded: 'treasurer', icon: 'chart', label: '@item.memberfees-totals' },
