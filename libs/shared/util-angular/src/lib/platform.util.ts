@@ -8,6 +8,18 @@ export function isNativePlatform(): boolean {
   return Capacitor.isNativePlatform();
 }
 
+/**
+ * The native app ships its web layer inside the binary, so the ngsw cache can only ever serve a
+ * STALE copy after a store update (spec 1.10 §14 Phase 1). app.config disables registration on
+ * native; this removes workers that an earlier build already registered. No-op on web/PWA.
+ */
+export async function unregisterServiceWorkersOnNative(): Promise<number> {
+  if (!isNativePlatform() || typeof navigator === 'undefined' || !navigator.serviceWorker) return 0;
+  const registrations = await navigator.serviceWorker.getRegistrations();
+  await Promise.all(registrations.map((r) => r.unregister()));
+  return registrations.length;
+}
+
 export type BrowserName = 'safari' | 'chrome' | 'firefox' | 'opera' | 'other';
 
 /**
