@@ -171,3 +171,12 @@ export async function checkOperatorTenant(request: functions.CallableRequest, na
   }
   return OPERATOR_TENANT_ID;
 }
+
+export function checkStringField(request: functions.CallableRequest, nameOfCallingFunction: string, fieldName: string): string {
+    const data = request.data[fieldName];
+  if (!data || typeof data !== 'string') {
+    logger.error(`${nameOfCallingFunction}: invalid ${fieldName} <${data}> provided`);
+    throw new functions.HttpsError('invalid-argument', `${nameOfCallingFunction} must be called with a valid ${fieldName}.`);
+  }
+  return data;
+}
