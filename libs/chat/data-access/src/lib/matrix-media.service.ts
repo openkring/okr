@@ -44,6 +44,15 @@ function isTransportFailure(message: string): boolean {
 }
 
 /**
+ * The homeserver answered and declined THIS request for good — e.g. Synapse's 400 "Cannot find
+ * any thumbnails" for an image it cannot scale. 401 is excluded: it is about the token, not
+ * the file (see the 401 branch in fetchToBlobUrl).
+ */
+function isRefusal(status: number | undefined): boolean {
+  return status !== undefined && status >= 400 && status < 500 && status !== 401;
+}
+
+/**
  * Authenticated Matrix media resolution with a bounded LRU blob-URL cache.
  * Extracted from MatrixChatService (design review #4 / ARCH-2); the facade sets
  * the client on initialize/disconnect and delegates all media lookups here.
@@ -107,8 +116,9 @@ export class MatrixMediaService {
    *
    * An original that is already in the cache — the sender's own upload (seedMedia) or an image
    * opened in the lightbox — wins over the preview. A preview the server refuses outright
-   * (4xx: format it cannot thumbnail) falls back to the original; a transient failure returns
-   * '' so the caller can retry later.
+   * (4xx: format it cannot thumbnail) falls back to the original without a report — only a
+   * failing original is reported (SCS-CF); a transient failure returns '' so the caller can
+   * retry later.
    */
   public async resolvePreviewUrl(mxcUrl: string | undefined, mimeTypeHint?: string, sizeBytes?: number): Promise<string> {
     if (!shouldUseImagePreview(mimeTypeHint, sizeBytes)) return this.resolveMediaUrl(mxcUrl, mimeTypeHint);
@@ -123,10 +133,9 @@ export class MatrixMediaService {
     ) ?? '';
     if (!httpUrl) return this.resolveMediaUrl(mxcUrl, mimeTypeHint);
     // No MIME hint: the preview is re-encoded by the server and carries its own correct type.
-    const { url, status } = await this.fetchToBlobUrl(httpUrl, cacheKey, 'preview download failed');
+    const { url, status } = await this.fetchToBlobUrl(httpUrl, cacheKey, 'preview download failed', undefined, true);
     if (url) return url;
-    const refused = status !== undefined && status >= 400 && status < 500 && status !== 401;
-    return refused ? this.resolveMediaUrl(mxcUrl, mimeTypeHint) : '';
+    return isRefusal(status) ? this.resolveMediaUrl(mxcUrl, mimeTypeHint) : '';
   }
 
   /**
@@ -145,16 +154,20 @@ export class MatrixMediaService {
    * Download one media URL into a blob URL and cache it under `cacheKey`.
    * `url` is '' on failure; `status` is the HTTP status of a failed response (undefined when
    * the fetch threw), so a caller can tell a refusal from a transient failure.
+   * @param refusalHasFallback - the caller recovers from a refusal (see isRefusal) on its own,
+   *   so a refusal is not reported here (SCS-CF); the fallback reports if it fails as well
    */
   private async fetchToBlobUrl(
-    httpUrl: string, cacheKey: string, failureLabel: string, mimeTypeHint?: string,
+    httpUrl: string, cacheKey: string, failureLabel: string, mimeTypeHint?: string, refusalHasFallback = false,
   ): Promise<{ url: string; status?: number }> {
     try {
       const accessToken = this.client?.getAccessToken();
       const headers: Record<string, string> = accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {};
       const resp = await this.fetchOnceRetrying(httpUrl, headers);
       if (!resp.ok) {
-        this.reportSilentFailure(`${failureLabel}: HTTP ${resp.status}`);
+        if (!(refusalHasFallback && isRefusal(resp.status))) {
+          this.reportSilentFailure(`${failureLabel}: HTTP ${resp.status}`);
+        }
         // 401 is never about this one file — the token is gone. Signal once per client
         // so the facade can re-authenticate; further 401s belong to the same dead token.
         if (resp.status === 401 && !this.authFailureSignalled) {
