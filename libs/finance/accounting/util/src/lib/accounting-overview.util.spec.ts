@@ -19,10 +19,16 @@ describe('chunk', () => {
 });
 
 describe('isCashAccount', () => {
-  it('is class 10 (Flüssige Mittel)', () => {
+  it('is group 100 (Flüssige Mittel: Kasse, Post, Bank — 1000–1059)', () => {
     expect(isCashAccount(account('x', '1020'))).toBe(true);
     expect(isCashAccount(account('x', '1100'))).toBe(false);
     expect(isCashAccount(account('x', ' 1000 '))).toBe(true);
+    expect(isCashAccount(account('x', '1059'))).toBe(true);
+  });
+  it('excludes group 106 (Wertschriften) and the rest of class 10', () => {
+    expect(isCashAccount(account('x', '1060'))).toBe(false);
+    expect(isCashAccount(account('x', '1069'))).toBe(false);
+    expect(isCashAccount(account('x', '10'))).toBe(false);
   });
 });
 
@@ -47,6 +53,15 @@ describe('summarizeTodos', () => {
     expect(t.paymentOrdersReady).toBe(2);
     expect(t.invoicesOverdue).toBe(1);
     expect(t.expensesOpen).toBe(2);
+  });
+  it('leaves a count undefined when its source could not be read, the others still count', () => {
+    const expenses = ['draft', 'done'].map(status => Object.assign(new ExpenseModel('scs'), { status }));
+    const t = summarizeTodos({ bills: undefined, paymentOrders: [], invoices: undefined, expenses, today });
+    expect(t.billsOpen).toBeUndefined();
+    expect(t.billsOverdue).toBeUndefined();
+    expect(t.invoicesOverdue).toBeUndefined();
+    expect(t.paymentOrdersReady).toBe(0);
+    expect(t.expensesOpen).toBe(1);
   });
 });
 
@@ -96,6 +111,12 @@ describe('liquidityBalance', () => {
 });
 
 describe('openTotals', () => {
+  it('leaves a side undefined when its documents could not be read', () => {
+    const bills = [Object.assign(new BillModel('scs'), { okey: 'b1', state: 'todo', billDate: '20260901', totalAmount: new MoneyModel(1000, 'CHF') })];
+    expect(openTotals(bills, undefined, '20261013')).toEqual({ payables: 1000, receivables: undefined });
+    expect(openTotals(undefined, [], '20261013')).toEqual({ payables: undefined, receivables: 0 });
+  });
+
   it('sums the open amounts of payable bills and open invoices', () => {
     const bills = [
       Object.assign(new BillModel('scs'), { okey: 'b1', state: 'todo', billDate: '20260901', totalAmount: new MoneyModel(1000, 'CHF') }),

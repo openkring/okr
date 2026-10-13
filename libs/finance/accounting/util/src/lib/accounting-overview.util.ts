@@ -12,40 +12,51 @@ export function chunk<T>(items: T[], size: number): T[][] {
   return out;
 }
 
-/** Flüssige Mittel: Swiss KMU group 10 (Kasse, Post, Bank). */
+/**
+ * Flüssige Mittel: Swiss KMU group 100 = accounts 1000–1059 (Kasse, Post, Bank).
+ * Group 106 (1060–1069, Wertschriften) belongs to class 10 but is not cash.
+ */
 export function isCashAccount(account: AccountModel): boolean {
-  return (account.id ?? '').trim().startsWith('10');
+  return /^10[0-5]\d$/.test((account.id ?? '').trim());
 }
 
+/** Open Kreditoren / Debitoren; a side is undefined when its documents could not be read. */
+export interface OpenTotals {
+  payables: number | undefined;
+  receivables: number | undefined;
+}
+
+/** Every count is undefined when its source could not be read (the card shows «—»). */
 export interface OverviewTodos {
   bookingsForReview: number | undefined;
-  billsOpen: number;
-  billsOverdue: number;
-  paymentOrdersReady: number;
-  invoicesOverdue: number;
-  expensesOpen: number;
+  billsOpen: number | undefined;
+  billsOverdue: number | undefined;
+  paymentOrdersReady: number | undefined;
+  invoicesOverdue: number | undefined;
+  expensesOpen: number | undefined;
   bankRowsOpen: number | undefined;
   /** open Debitoren / Kreditoren today, from the documents (shown as a key figure) */
-  openTotals: { payables: number; receivables: number };
+  openTotals: OpenTotals;
 }
 
+/** A source is undefined when its read failed. */
 export interface TodoInput {
-  bills: BillModel[];
-  paymentOrders: PaymentOrderModel[];
-  invoices: InvoiceModel[];
-  expenses: ExpenseModel[];
+  bills: BillModel[] | undefined;
+  paymentOrders: PaymentOrderModel[] | undefined;
+  invoices: InvoiceModel[] | undefined;
+  expenses: ExpenseModel[] | undefined;
   today: string;
 }
 
 export function summarizeTodos(input: TodoInput): Omit<OverviewTodos, 'bookingsForReview' | 'bankRowsOpen' | 'openTotals'> {
   const { bills, paymentOrders, invoices, expenses, today } = input;
-  const openBills = bills.filter(b => isPayableBill(b) && billOpenAmountAt(b, today) > 0);
+  const openBills = bills?.filter(b => isPayableBill(b) && billOpenAmountAt(b, today) > 0);
   return {
-    billsOpen: openBills.length,
-    billsOverdue: openBills.filter(b => isOverdueBill(b, today)).length,
-    paymentOrdersReady: paymentOrders.filter(o => o.status === 'draft' || o.status === 'approved').length,
-    invoicesOverdue: invoices.filter(i => isOverdueInvoice(i, today)).length,
-    expensesOpen: expenses.filter(e => e.status === 'draft' || e.status === 'processing').length,
+    billsOpen: openBills?.length,
+    billsOverdue: openBills?.filter(b => isOverdueBill(b, today)).length,
+    paymentOrdersReady: paymentOrders?.filter(o => o.status === 'draft' || o.status === 'approved').length,
+    invoicesOverdue: invoices?.filter(i => isOverdueInvoice(i, today)).length,
+    expensesOpen: expenses?.filter(e => e.status === 'draft' || e.status === 'processing').length,
   };
 }
 
@@ -118,11 +129,11 @@ export function liquidityBalance(lines: BookingLineModel[], bookings: BookingMod
 
 const NOT_OPEN_INVOICE = ['draft', 'issuing', 'cancelled'];
 
-/** Open Kreditoren and Debitoren at `today`, from the documents (no ledger read). */
-export function openTotals(bills: BillModel[], invoices: InvoiceModel[], today: string): { payables: number; receivables: number } {
+/** Open Kreditoren and Debitoren at `today`, from the documents (no ledger read); undefined input → undefined side. */
+export function openTotals(bills: BillModel[] | undefined, invoices: InvoiceModel[] | undefined, today: string): OpenTotals {
   return {
-    payables: bills.filter(b => b.state !== 'draft').reduce((s, b) => s + billOpenAmountAt(b, today), 0),
-    receivables: invoices.filter(i => !NOT_OPEN_INVOICE.includes(i.state)).reduce((s, i) => s + invoiceOpenAmountAt(i, today), 0),
+    payables: bills?.filter(b => b.state !== 'draft').reduce((s, b) => s + billOpenAmountAt(b, today), 0),
+    receivables: invoices?.filter(i => !NOT_OPEN_INVOICE.includes(i.state)).reduce((s, i) => s + invoiceOpenAmountAt(i, today), 0),
   };
 }
 

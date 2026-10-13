@@ -100,7 +100,7 @@ function chf(minor: number | undefined): string {
           </div>
         </section>
 
-        @if (!accountingStore.isExternallyManaged()) {
+        @if (accountingStore.configLoaded() && !accountingStore.isExternallyManaged()) {
           <section>
             <h2>{{ i18n.overview_actions() }}</h2>
             <div class="actions">
@@ -152,7 +152,7 @@ export class AccountingOverviewPage {
 
   protected readonly openItemsText = computed(() => {
     const o = this.store.todos()?.openTotals;
-    return o ? `${chf(o.receivables)} / ${chf(o.payables)}` : '—';
+    return o && (o.receivables !== undefined || o.payables !== undefined) ? `${chf(o.receivables)} / ${chf(o.payables)}` : '—';
   });
 
   protected money(minor: number | undefined): string {

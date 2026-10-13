@@ -21,6 +21,19 @@ import { AccountingStore } from './accounting.store';
 const BOOKING_KEY_CHUNK = 15;
 const PARALLEL_READS = 10;
 
+/** One to-do source: a failed read becomes undefined, so its card shows «—» and the others still load (spec 1.100 §4.4). */
+function settle<T>(read: Promise<T>, what: string): Promise<T | undefined> {
+  return read.catch((err: unknown) => {
+    console.warn(`AccountingOverviewStore: ${what} failed:`, err);
+    return undefined;
+  });
+}
+
+/** `resource.value()` throws while the resource is in error state (Angular 22): read it only when it has one. */
+function valueOf<T>(res: { hasValue(): boolean; value(): T }): T | undefined {
+  return res.hasValue() ? res.value() : undefined;
+}
+
 /** Accounting overview (spec 1.100 §4.4): to-dos, then key figures of ONE fiscal year, cash balance on demand. */
 export const AccountingOverviewStore = signalStore(
   withState({ selectedYear: 0, balanceValue: undefined as { books: string; value: number } | undefined, balanceLoading: false }),
@@ -56,10 +69,10 @@ export const AccountingOverviewStore = signalStore(
       const q = scope(books);
       const [bookingsForReview, bills, paymentOrders, invoices, expenses, unmapped, mapped, failed] = await Promise.all([
         fs.countOnce(BookingCollection, [...q, { key: 'status', operator: '==', value: 'forReview' }]),
-        fs.getDataOnceStrict<BillModel>(BillCollection, q),
-        fs.getDataOnceStrict<PaymentOrderModel>(PaymentOrderCollection, q),
-        fs.getDataOnceStrict<InvoiceModel>(InvoiceCollection, q),
-        fs.getDataOnceStrict<ExpenseModel>(ExpenseCollection, q),
+        settle(fs.getDataOnceStrict<BillModel>(BillCollection, q), 'bills'),
+        settle(fs.getDataOnceStrict<PaymentOrderModel>(PaymentOrderCollection, q), 'payment orders'),
+        settle(fs.getDataOnceStrict<InvoiceModel>(InvoiceCollection, q), 'invoices'),
+        settle(fs.getDataOnceStrict<ExpenseModel>(ExpenseCollection, q), 'expenses'),
         fs.countOnce(BankImportRowCollection, [...q, { key: 'status', operator: '==', value: 'unmapped' }]),
         fs.countOnce(BankImportRowCollection, [...q, { key: 'status', operator: '==', value: 'mapped' }]),
         fs.countOnce(BankImportRowCollection, [...q, { key: 'status', operator: '==', value: 'error' }]),
@@ -120,10 +133,10 @@ export const AccountingOverviewStore = signalStore(
     };
   }),
   withComputed(store => ({
-    todos: computed(() => store.todosResource.value()),
+    todos: computed(() => valueOf(store.todosResource)),
     todosLoading: computed(() => store.todosResource.isLoading()),
-    period: computed(() => currentPeriod(store.periodResource.value() ?? [], store.today(), store.fiscalYearStart())),
-    figures: computed(() => store.figuresResource.value()),
+    period: computed(() => currentPeriod(valueOf(store.periodResource) ?? [], store.today(), store.fiscalYearStart())),
+    figures: computed(() => valueOf(store.figuresResource)),
     figuresLoading: computed(() => store.figuresResource.isLoading()),
     /** cash balance, shown only for the books it was computed for */
     balance: computed(() => { const b = store.balanceValue(); return b && b.books === store.books() ? b.value : undefined; }),
