@@ -245,5 +245,44 @@
       "forReview": "for review",
       "cancelled": "cancelled"
     }
+  },
+  "nav": {
+    "books": "Choose books",
+    "area": {
+      "overview": "Overview",
+      "journal": "Journal",
+      "payables": "Payables",
+      "receivables": "Receivables",
+      "cost": "Cost accounting",
+      "reports": "Reports",
+      "closing": "Closing",
+      "masterData": "Master data"
+    },
+    "seg": {
+      "bookings": "Bookings",
+      "bankImport": "Bank import",
+      "bills": "Bills",
+      "paymentOrders": "Payment orders",
+      "expenses": "Expenses",
+      "invoices": "Invoices",
+      "memberFees": "Membership fees",
+      "aging": "Ageing",
+      "costCenters": "Cost centres",
+      "budgets": "Budgets",
+      "allocations": "Allocations",
+      "balance": "Balance sheet",
+      "incomeStatement": "Income statement",
+      "cashFlow": "Cash flow",
+      "openItems": "Open items",
+      "periods": "Periods",
+      "assets": "Fixed assets",
+      "depreciation": "Depreciation",
+      "accounts": "Chart of accounts",
+      "vatCodes": "VAT codes",
+      "bankProfiles": "Bank profiles",
+      "bankRules": "Bank rules",
+      "ocrRules": "OCR rules",
+      "settings": "Settings"
+    }
   }
 }

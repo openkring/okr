@@ -245,5 +245,44 @@
       "forReview": "zur Prüfung",
       "cancelled": "storniert"
     }
+  },
+  "nav": {
+    "books": "Buchhaltung wählen",
+    "area": {
+      "overview": "Übersicht",
+      "journal": "Journal",
+      "payables": "Kreditoren",
+      "receivables": "Debitoren",
+      "cost": "Kostenrechnung",
+      "reports": "Berichte",
+      "closing": "Abschluss",
+      "masterData": "Stammdaten"
+    },
+    "seg": {
+      "bookings": "Buchungen",
+      "bankImport": "Bankimport",
+      "bills": "Rechnungen",
+      "paymentOrders": "Zahlungsaufträge",
+      "expenses": "Spesen",
+      "invoices": "Rechnungen",
+      "memberFees": "Mitgliederbeiträge",
+      "aging": "Fälligkeiten",
+      "costCenters": "Kostenstellen",
+      "budgets": "Budgets",
+      "allocations": "Umlagen",
+      "balance": "Bilanz",
+      "incomeStatement": "Erfolgsrechnung",
+      "cashFlow": "Geldfluss",
+      "openItems": "Offene Posten",
+      "periods": "Perioden",
+      "assets": "Anlagen",
+      "depreciation": "Abschreibungen",
+      "accounts": "Kontoplan",
+      "vatCodes": "MWST-Codes",
+      "bankProfiles": "Bankprofile",
+      "bankRules": "Bankregeln",
+      "ocrRules": "OCR-Regeln",
+      "settings": "Einstellungen"
+    }
   }
 }

@@ -5,3 +5,4 @@ export * from './lib/fee-position.validations';
 export * from './lib/fee-position.categories';
 export * from './lib/voucher.util';
 export * from './lib/ledger.util';
+export * from './lib/accounting-areas';

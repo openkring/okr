@@ -245,5 +245,44 @@
       "forReview": "à vérifier",
       "cancelled": "annulée"
     }
+  },
+  "nav": {
+    "books": "Choisir la comptabilité",
+    "area": {
+      "overview": "Aperçu",
+      "journal": "Journal",
+      "payables": "Fournisseurs",
+      "receivables": "Clients",
+      "cost": "Comptabilité analytique",
+      "reports": "Rapports",
+      "closing": "Clôture",
+      "masterData": "Données de base"
+    },
+    "seg": {
+      "bookings": "Écritures",
+      "bankImport": "Import bancaire",
+      "bills": "Factures",
+      "paymentOrders": "Ordres de paiement",
+      "expenses": "Frais",
+      "invoices": "Factures",
+      "memberFees": "Cotisations",
+      "aging": "Échéances",
+      "costCenters": "Centres de coûts",
+      "budgets": "Budgets",
+      "allocations": "Répartitions",
+      "balance": "Bilan",
+      "incomeStatement": "Compte de résultat",
+      "cashFlow": "Flux de trésorerie",
+      "openItems": "Postes ouverts",
+      "periods": "Périodes",
+      "assets": "Immobilisations",
+      "depreciation": "Amortissements",
+      "accounts": "Plan comptable",
+      "vatCodes": "Codes TVA",
+      "bankProfiles": "Profils bancaires",
+      "bankRules": "Règles bancaires",
+      "ocrRules": "Règles OCR",
+      "settings": "Paramètres"
+    }
   }
 }

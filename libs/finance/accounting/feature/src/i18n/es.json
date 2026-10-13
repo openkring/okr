@@ -245,5 +245,44 @@
       "forReview": "por revisar",
       "cancelled": "anulado"
     }
+  },
+  "nav": {
+    "books": "Elegir contabilidad",
+    "area": {
+      "overview": "Resumen",
+      "journal": "Diario",
+      "payables": "Acreedores",
+      "receivables": "Deudores",
+      "cost": "Contabilidad de costes",
+      "reports": "Informes",
+      "closing": "Cierre",
+      "masterData": "Datos maestros"
+    },
+    "seg": {
+      "bookings": "Asientos",
+      "bankImport": "Importación bancaria",
+      "bills": "Facturas",
+      "paymentOrders": "Órdenes de pago",
+      "expenses": "Gastos",
+      "invoices": "Facturas",
+      "memberFees": "Cuotas de socios",
+      "aging": "Vencimientos",
+      "costCenters": "Centros de coste",
+      "budgets": "Presupuestos",
+      "allocations": "Repartos",
+      "balance": "Balance",
+      "incomeStatement": "Cuenta de resultados",
+      "cashFlow": "Flujo de caja",
+      "openItems": "Partidas abiertas",
+      "periods": "Períodos",
+      "assets": "Activos fijos",
+      "depreciation": "Amortizaciones",
+      "accounts": "Plan de cuentas",
+      "vatCodes": "Códigos de IVA",
+      "bankProfiles": "Perfiles bancarios",
+      "bankRules": "Reglas bancarias",
+      "ocrRules": "Reglas OCR",
+      "settings": "Ajustes"
+    }
   }
 }
