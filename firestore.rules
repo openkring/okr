@@ -276,12 +276,17 @@ service cloud.firestore {
       }
 
       // Operator status (bka-only callables) = users doc tenants exactly ['bka'] + roles.admin
-      // (spec 1.101). Without this, a tenant admin could widen their own tenants to
-      // ['scs','bka'] (passes hasAny(callerTenants())) and then narrow to ['bka']. So a
-      // client-created users doc carries exactly one tenant, and it must be one the caller
-      // already holds; tenant moves happen server-side (Admin SDK) only.
+      // (spec 1.101). Invariant: a users doc holds exactly ONE tenant (live data: 322 of 322),
+      // and an admin only touches docs whose tenants are all their own. Escalation chains this
+      // closes: (a) widen own tenants to ['scs','bka'], then narrow to ['bka']; (b) delete a
+      // second account U, self-create U with ['bka','scs'], make it admin via the update arm,
+      // let it delete/recreate the first admin as ['bka']. Hence: self-create needs exactly one
+      // tenant, admin create needs a single-tenant caller and a single own tenant, admin
+      // update/delete need every tenant of the doc to be the caller's, and update never changes
+      // `tenants`. Tenant moves happen server-side (Admin SDK) only.
       function singleOwnTenant(data) {
-        return data.tenants.size() == 1 && callerTenants().hasAll(data.tenants);
+        return data.tenants.size() == 1 && callerTenants().size() == 1
+            && callerTenants().hasAll(data.tenants);
       }
 
       // Read your own doc; admins/privileged may read others within their tenant.
@@ -303,6 +308,7 @@ service cloud.firestore {
       // accounts through the openAccount callable, which writes loginId server-side.
       allow create: if signedIn() && request.resource.data.get('loginId', '') == '' && (
                        (request.auth.uid == userId
+                          && request.resource.data.tenants.size() == 1
                           && !request.resource.data.roles.get('admin', false)
                           && !request.resource.data.roles.get('privileged', false))
                        || (isAdmin() && canWriteTenant(request.resource.data)
@@ -317,12 +323,14 @@ service cloud.firestore {
                           && !request.resource.data.diff(resource.data).affectedKeys()
                                 .hasAny(['roles', 'tenants', 'personKey']))
                        || (isAdmin() && canWriteTenant(resource.data)
+                                     && callerTenants().hasAll(resource.data.tenants)
                                      && canWriteTenant(request.resource.data)
                                      && !request.resource.data.diff(resource.data).affectedKeys()
                                            .hasAny(['tenants']))
                     );
 
-      allow delete: if isAdmin() && canWriteTenant(resource.data);
+      allow delete: if isAdmin() && canWriteTenant(resource.data)
+                    && callerTenants().hasAll(resource.data.tenants);
 
       // FCM push tokens are owned by the user. (C-1 — previously any authed user
       // could read/write anyone's tokens via the catch-all.)
