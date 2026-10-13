@@ -94,9 +94,9 @@ export const AocUserAccountStore = signalStore(
       // the resource will reload whenever the fbUser changes (login/logout).
       params: () => store.fbUser(),
       stream: () => {
-        // We need the users of ALL tenants here (to tell "no BK account anywhere" apart from
-        // "BK account in another tenant"). A client-side cross-tenant list on /users is denied by
-        // the Firestore rules, so we read them through an admin-only Cloud Function (Admin SDK).
+        // listBkUsers returns ALL tenants' users only in the operator app (bka); every other tenant
+        // gets its own users only (spec 1.101 §6). A client-side cross-tenant list on /users is
+        // denied by the rules, hence the admin-only Cloud Function (Admin SDK).
         const fn = httpsCallable<void, { users: UserModel[] }>(getFunctions(getApp(), 'europe-west6'), 'listBkUsers');
         return from(fn().then(result => result.data.users));
       }

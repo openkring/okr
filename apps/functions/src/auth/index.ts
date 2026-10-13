@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import * as functions from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
-import { getAuth } from 'firebase-admin/auth';
+import { getAuth, UserRecord } from 'firebase-admin/auth';
 import { getStorage } from 'firebase-admin/storage';
 import { DocumentData, getFirestore } from 'firebase-admin/firestore';
-import { checkAdminRole, checkAppCheckToken, checkAuthentication, checkStringField, getCallerTenantId } from '@okr/shared-util-functions';
+import { checkAdminRole, checkAppCheckToken, checkAuthentication, checkStringField, chunk, getCallerContext, getCallerTenantId, mayDeleteAuthUser } from '@okr/shared-util-functions';
 import { isSyntheticLoginEmail } from '@okr/user-util';
 import { getAppEmailConfig } from './email-templates';
 import { EmailAttachment, isValidProvider, sendEmailViaProvider } from './email-transport';
@@ -387,6 +387,19 @@ export type FirebaseAuthUser = {
   lastSignInTime: string | undefined;
 };
 
+function toFirebaseAuthUser(u: UserRecord): FirebaseAuthUser {
+  return {
+    uid: u.uid,
+    email: u.email,
+    displayName: u.displayName,
+    disabled: u.disabled,
+    emailVerified: u.emailVerified,
+    creationTime: u.metadata.creationTime,
+    lastSignInTime: u.metadata.lastSignInTime,
+  };
+}
+
+/** Firebase Auth users — all of them for the operator tenant, the caller tenant's own otherwise (spec 1.101 §6). Admin-only. */
 export const listFirebaseUsers = functions.onCall(
   {
     region: 'europe-west6',
@@ -398,35 +411,36 @@ export const listFirebaseUsers = functions.onCall(
     checkAuthentication(request as any, CF_NAME);
     await checkAdminRole(request as any, CF_NAME);
 
+    // spec 1.101 §6: the whole project only for the operator tenant. Every other tenant gets the
+    // Auth records of ITS OWN users only — never the project-wide list (other tenants' login emails).
+    const caller = await getCallerContext(request as any, CF_NAME);
     const users: FirebaseAuthUser[] = [];
-    let pageToken: string | undefined;
 
-    do {
-      const result = await getAuth().listUsers(1000, pageToken);
-      for (const u of result.users) {
-        users.push({
-          uid: u.uid,
-          email: u.email,
-          displayName: u.displayName,
-          disabled: u.disabled,
-          emailVerified: u.emailVerified,
-          creationTime: u.metadata.creationTime,
-          lastSignInTime: u.metadata.lastSignInTime,
-        });
+    if (caller.isOperator) {
+      let pageToken: string | undefined;
+      do {
+        const result = await getAuth().listUsers(1000, pageToken);
+        users.push(...result.users.map(toFirebaseAuthUser));
+        pageToken = result.pageToken;
+      } while (pageToken);
+    } else {
+      const snap = await getFirestore().collection('users').where('tenants', 'array-contains', caller.tenantId).get();
+      // getUsers takes at most 100 identifiers; a uid without a login is simply not returned.
+      for (const slice of chunk(snap.docs.map(d => d.id), 100)) {
+        const result = await getAuth().getUsers(slice.map(uid => ({ uid })));
+        users.push(...result.users.map(toFirebaseAuthUser));
       }
-      pageToken = result.pageToken;
-    } while (pageToken);
+    }
 
-    logger.info(`${CF_NAME}: returned ${users.length} users`);
+    logger.info(`${CF_NAME}: returned ${users.length} users for tenant ${caller.tenantId}`);
     return { users };
   }
 );
 
 /**
- * List all non-archived BK user documents across ALL tenants (Admin SDK bypasses
- * Firestore rules). The AOC user-account view needs this cross-tenant set to tell
- * "no BK account anywhere" apart from "BK account in another tenant"; a client-side
- * cross-tenant `list` on /users is (correctly) denied by the rules. Admin-only.
+ * List non-archived BK user documents — of ALL tenants for the operator tenant (to tell
+ * "no BK account anywhere" apart from "BK account in another tenant"), of the caller's tenant
+ * otherwise (spec 1.101 §6). Admin SDK bypasses the rules. Admin-only.
  */
 export const listBkUsers = functions.onCall(
   {
@@ -439,13 +453,17 @@ export const listBkUsers = functions.onCall(
     checkAuthentication(request as any, CF_NAME);
     await checkAdminRole(request as any, CF_NAME);
 
-    const snap = await getFirestore()
-      .collection('users')
-      .where('isArchived', '==', false)
-      .get();
-    const users = snap.docs.map(doc => ({ okey: doc.id, ...doc.data() }));
+    const caller = await getCallerContext(request as any, CF_NAME);
+    const db = getFirestore();
+    // spec 1.101 §6: all tenants only for the operator tenant. array-contains + isArchived would
+    // need a composite index, so the archive filter runs in memory for the scoped query.
+    const docs = caller.isOperator
+      ? (await db.collection('users').where('isArchived', '==', false).get()).docs
+      : (await db.collection('users').where('tenants', 'array-contains', caller.tenantId).get()).docs
+          .filter(doc => doc.data()['isArchived'] === false);
+    const users = docs.map(doc => ({ okey: doc.id, ...doc.data() }));
 
-    logger.info(`${CF_NAME}: returned ${users.length} users`);
+    logger.info(`${CF_NAME}: returned ${users.length} users for tenant ${caller.tenantId}`);
     return { users };
   }
 );
@@ -493,6 +511,14 @@ export const deleteFirebaseAuthUser = functions.onCall(
     await checkAdminRole(request as any, CF_NAME);
     checkStringField(request as any, CF_NAME, 'uid');
     const { uid } = request.data;
+    // spec 1.101 §6: any login for the operator tenant; otherwise only a login of the caller's own,
+    // single-tenant user. Without this an admin of any tenant could delete any login in the project.
+    const caller = await getCallerContext(request as any, CF_NAME);
+    const target = await getFirestore().collection('users').doc(uid).get();
+    if (!mayDeleteAuthUser(caller, target.data())) {
+      logger.error(`${CF_NAME}: tenant ${caller.tenantId} may not delete login ${uid}`);
+      throw new functions.HttpsError('permission-denied', 'Dieses Login gehört nicht zu deiner App. Du kannst es hier nicht löschen.');
+    }
     await getAuth().deleteUser(uid);
     logger.info(`${CF_NAME}: deleted user ${uid}`);
   }
