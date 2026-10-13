@@ -83,6 +83,14 @@ The `AocDataStore` supports operations over the following collections:
 - Interfaces with the Matrix homeserver admin API (via `MatrixChatService`).
 - Provides room listing, member listing, room rename/alias/invite/delete, user provisioning, member kick/deactivate.
 
+## Mandanten-Zuteilung (operator only)
+
+Operator-only since spec 1.101 §6: route `/operator/allocation` exists only in `apps/bka-app`; `allocateTenant` and `getAllocationEmails` refuse every tenant but `bka` (`checkOperatorTenant`). `listFirebaseUsers` / `listBkUsers` return the whole project only to bka, the caller's own tenant otherwise.
+
+- Operator = the caller's `users` doc has tenants exactly `['bka']` AND `roles.admin` is true (`getCallerContext().isOperator`, `isOperatorUserData`) — never `tenants[0]`, never the custom claim.
+- Outside bka, impersonation (`createCustomToken`), `getFirebaseUser`, `getUidByEmail`, `setPassword`, `updateFirebaseUser` and `deleteFirebaseAuthUser` act only on logins whose `users` doc belongs to the caller's tenant alone (`loadTenantUser` / `isSoleTenantUserData` / `mayDeleteAuthUser`).
+- `firestore.rules` (users): a `users` doc holds exactly one tenant; admins create only docs of their own single tenant, never change `tenants`, and update/delete only docs of their own tenant.
+
 ## Library Path
 
 `@okr/aoc-feature` (`libs/aoc/feature/src/lib/`)
