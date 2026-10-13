@@ -14,3 +14,4 @@ export * from './lib/location-select.modal';
 export * from './lib/sentry-context.service';
 export * from './lib/kiosk-status.service';
 export * from './lib/boot-readiness.util';
+export * from './lib/selected-books';

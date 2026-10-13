@@ -1,29 +1,45 @@
-import { computed, inject } from '@angular/core';
+import { computed, effect, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { of } from 'rxjs';
-import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
+import { patchState, signalStore, withComputed, withHooks, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { AppStore } from '@okr/shared-feature';
+import { AppStore, SelectedBooks } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { AccountingConfigModel } from '@okr/shared-models';
 import { resourceParams } from '@okr/shared-util-angular';
 
 import { AccountingConfigService } from '@okr/finance-accounting-data-access';
-import { ACCOUNTING_I18N_KEYS } from '@okr/finance-accounting-util';
+import { ACCOUNTING_I18N_KEYS, resolveSelectedBooks } from '@okr/finance-accounting-util';
 
-export type AccountingState = { accountingTenantId: string };
+const BOOKS_STORAGE_PREFIX = 'okr.accounting.books.';
+
+function readStoredBooks(tenantId: string): string {
+  try { return localStorage.getItem(BOOKS_STORAGE_PREFIX + tenantId) ?? ''; } catch { return ''; }
+}
+function writeStoredBooks(tenantId: string, books: string): void {
+  try { localStorage.setItem(BOOKS_STORAGE_PREFIX + tenantId, books); } catch { /* private mode: the choice is a convenience */ }
+}
+
+export type AccountingState = { accountingTenantId: string; storedBooks: string };
 
 export const AccountingStore = signalStore(
   { providedIn: 'root' },
   withState<AccountingState>({
-    accountingTenantId: ''
+    accountingTenantId: '',
+    storedBooks: ''
   }),
   withProps(() => ({
     configService: inject(AccountingConfigService),
     appStore: inject(AppStore),
     i18n: inject(I18nService).translateAll(ACCOUNTING_I18N_KEYS),
+    selectedBooksSignal: inject(SelectedBooks),
   })),
   withProps(store => ({
+    availableBooksResource: rxResource({
+      params: resourceParams(() => ({ userKey: store.appStore.currentUser()?.okey ?? '' })),
+      // the app tenant's sets of books; never ordered by okey (see listForTenant)
+      stream: ({ params }) => params.userKey ? store.configService.listForTenant() : of([] as AccountingConfigModel[]),
+    }),
     configResource: rxResource({
       // The key is the USER'S IDENTITY, never the model object: `currentUser` is a live
       // Firestore stream, so a new reference arrives on every snapshot and `rxResource`
@@ -54,12 +70,20 @@ export const AccountingStore = signalStore(
     // Absent/loading config means "not known to be external" — default native, same coalesce as the
     // OCR trigger. Without the ?? every page renders read-only until the config resolves.
     isExternallyManaged: computed(() => (store.configResource.value()?.accountingBackend ?? 'native') !== 'native'),
+    availableBooks: computed(() => (store.availableBooksResource.value() ?? []).map(c => c.okey).sort()),
+    selectedBooks: computed(() => resolveSelectedBooks({
+      routeBooks: store.accountingTenantId(),
+      storedChoice: store.storedBooks(),
+      defaultBooks: store.appStore.appConfig().defaultAccountingTenantId ?? '',
+      available: (store.availableBooksResource.value() ?? []).map(c => c.okey),
+    })),
     currentUser: computed(() => store.appStore.currentUser()),
     tenantId: computed(() => store.appStore.tenantId()),
   })),
   withMethods(store => ({
     setTenant(id: string): void {
-      patchState(store, { accountingTenantId: id });
+      patchState(store, { accountingTenantId: id, storedBooks: id || store.storedBooks() });
+      if (id) writeStoredBooks(store.appStore.tenantId(), id);
     },
     async createConfig(config: AccountingConfigModel): Promise<void> {
       await store.configService.create(config, store.currentUser());
@@ -67,6 +91,13 @@ export const AccountingStore = signalStore(
     async updateConfig(config: AccountingConfigModel): Promise<void> {
       await store.configService.update(config, store.currentUser());
       store.configResource.reload();
+    },
+  })),
+  withHooks(store => ({
+    onInit(): void {
+      patchState(store, { storedBooks: readStoredBooks(store.appStore.tenantId()) });
+      // hand the selection to the menu ('@BOOKS@'), see SelectedBooks
+      effect(() => store.selectedBooksSignal.set(store.selectedBooks()));
     },
   }))
 );
