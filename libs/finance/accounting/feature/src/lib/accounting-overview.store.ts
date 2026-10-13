@@ -79,7 +79,7 @@ export const AccountingOverviewStore = signalStore(
       const [accounts, bookings, budgetVersions, budgetLines] = await Promise.all([
         fs.getDataOnceStrict<AccountModel>(AccountCollection, q),
         // index: bookings (tenants, accountingTenantId, isArchived, date desc) — exists
-        fs.getDataOnceStrict<BookingModel>(BookingCollection, [...q, { key: 'date', operator: '>=', value: fy.from }, { key: 'date', operator: '<=', value: fy.to }]),
+        fs.getDataOnceStrict<BookingModel>(BookingCollection, [...q, { key: 'date', operator: '>=', value: fy.from }, { key: 'date', operator: '<=', value: fy.to }], 'date', 'desc'),
         fs.getDataOnceStrict<BudgetVersionModel>(BudgetVersionCollection, q),
         fs.getDataOnceStrict<BudgetLineModel>(BudgetLineCollection, q),
       ]);

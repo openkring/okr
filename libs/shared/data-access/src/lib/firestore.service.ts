@@ -1027,13 +1027,14 @@ export class FirestoreService {
   /**
    * Like getDataOnce, but a failed read REJECTS instead of looking like an empty result. For callers
    * that act on the result (e.g. detaching every child of a record before deleting it), where
-   * "0 documents" and "could not read" must not be confused. Single getDocs snapshot, server when online.
+   * "0 documents" and "could not read" must not be confused. Single getDocs snapshot, server when online. Optional ordering (default none) as in getDataOnce.
    */
-  public async getDataOnceStrict<T>(collectionName: string, dbQuery: DbQuery[]): Promise<T[]> {
+  public async getDataOnceStrict<T>(collectionName: string, dbQuery: DbQuery[], orderByParam = 'none', sortOrderParam = 'asc'): Promise<T[]> {
     if (!isBrowser(this.platformId) || !isFirestoreInitializedCheck()) {
       throw new Error(`FirestoreService.getDataOnceStrict(${collectionName}): Firestore is not available.`);
     }
-    const queryRef = query(collection(this.firestore, collectionName), ...getQuery(dbQuery, 'none'));
+    const queries = orderByParam === 'none' ? getQuery(dbQuery, 'none') : getQuery(dbQuery, orderByParam, sortOrderParam);
+    const queryRef = query(collection(this.firestore, collectionName), ...queries);
     const snapshot = await getDocs(queryRef);
     return snapshot.docs.map(d => ({ ...d.data(), okey: d.id })) as T[];
   }
