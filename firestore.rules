@@ -275,6 +275,15 @@ service cloud.firestore {
             && request.resource.data.get('loginEmail', '') == resource.data.get('loginEmail', '');
       }
 
+      // Operator status (bka-only callables) = users doc tenants exactly ['bka'] + roles.admin
+      // (spec 1.101). Without this, a tenant admin could widen their own tenants to
+      // ['scs','bka'] (passes hasAny(callerTenants())) and then narrow to ['bka']. So a
+      // client-created users doc carries exactly one tenant, and it must be one the caller
+      // already holds; tenant moves happen server-side (Admin SDK) only.
+      function singleOwnTenant(data) {
+        return data.tenants.size() == 1 && callerTenants().hasAll(data.tenants);
+      }
+
       // Read your own doc; admins/privileged may read others within their tenant.
       // The `resource == null` arm is the same guard tenantRead() carries: a get() on a
       // NON-EXISTENT user doc evaluates rules with resource == null, and dereferencing
@@ -296,7 +305,8 @@ service cloud.firestore {
                        (request.auth.uid == userId
                           && !request.resource.data.roles.get('admin', false)
                           && !request.resource.data.roles.get('privileged', false))
-                       || (isAdmin() && canWriteTenant(request.resource.data))
+                       || (isAdmin() && canWriteTenant(request.resource.data)
+                                     && singleOwnTenant(request.resource.data))
                     );
 
       // Update your own doc but NOT roles / tenants / personKey / loginId / loginEmail;
@@ -307,7 +317,9 @@ service cloud.firestore {
                           && !request.resource.data.diff(resource.data).affectedKeys()
                                 .hasAny(['roles', 'tenants', 'personKey']))
                        || (isAdmin() && canWriteTenant(resource.data)
-                                     && canWriteTenant(request.resource.data))
+                                     && canWriteTenant(request.resource.data)
+                                     && !request.resource.data.diff(resource.data).affectedKeys()
+                                           .hasAny(['tenants']))
                     );
 
       allow delete: if isAdmin() && canWriteTenant(resource.data);

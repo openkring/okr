@@ -300,6 +300,9 @@ seed("expenses/exForeign", {"tenants": ["t1"], "isArchived": False, "userId": "u
 A, B, C, D = jwt("uidA"), jwt("uidB"), jwt("uidC"), jwt("uidD")
 E, M, P = jwt("uidE"), jwt("uidM"), jwt("uidP")
 T = jwt("uidT")
+seed("users/uidW", {"tenants": ["t1", "t2"], "roles": {}, "firstName": "W", "personKey": "pW"})
+seed("users/uidX", {"tenants": ["t1", "t2"], "roles": {"admin": True}, "firstName": "X", "personKey": "pX"})
+X = jwt("uidX")
 seed("users/uidU", {"tenants": ["t1"], "roles": {"auditor": True}, "firstName": "U", "personKey": "pU"})
 seed("contracts/cLoanA", {"tenants": ["t1"], "isArchived": False, "name": "Darlehen A",
      "partyPersonKeys": ["pA"], "isStrictlyConfidential": False, "confidentiality": "confidential"})
@@ -722,6 +725,21 @@ single_cases = [
     # through the openAccount callable after Task 8; Cloud Functions write loginId there).
     ("userD(admin t1) CREATE users with loginId -> DENY", False, POST, "users?documentId=uidNew", D,
      body({"tenants": ["t1"], "roles": {}, "firstName": "N", "personKey": "pN", "loginId": "sneaky"}), None),
+    # 1.101 phase 0: an admin can never widen/move a users doc's tenants (operator escalation).
+    ("userD(admin t1) PATCH own tenants ['t1','t2'] -> DENY", False, PATCH, "users/uidD", D,
+     body({"tenants": ["t1", "t2"]}), ["tenants"]),
+    ("userD(admin t1) PATCH uidA tenants ['t1','t2'] -> DENY", False, PATCH, "users/uidA", D,
+     body({"tenants": ["t1", "t2"]}), ["tenants"]),
+    ("userD(admin t1) PATCH uidA tenants ['t2'] -> DENY", False, PATCH, "users/uidA", D,
+     body({"tenants": ["t2"]}), ["tenants"]),
+    ("userX(admin t1+t2, legacy) PATCH own tenants ['t2'] -> DENY", False, PATCH, "users/uidX", X,
+     body({"tenants": ["t2"]}), ["tenants"]),
+    ("userD(admin t1) CREATE users tenants ['t1','t2'] -> DENY", False, POST, "users?documentId=newD1", D,
+     body({"tenants": ["t1", "t2"], "roles": {}, "firstName": "N", "personKey": "pN"}), None),
+    ("userD(admin t1) CREATE users tenants ['t1'] -> ALLOW", True, POST, "users?documentId=newD2", D,
+     body({"tenants": ["t1"], "roles": {}, "firstName": "N", "personKey": "pN"}), None),
+    ("userD(admin t1) PATCH uidA firstName (tenants untouched) -> ALLOW", True, PATCH, "users/uidA", D,
+     body({"firstName": "Z"}), ["firstName"]),
     # login-throttle: server-only failure counters, no client access at all.
     ("anon GET login-throttle/x -> DENY", False, GET, "login-throttle/x", None, None, None),
     ("userD(admin t1) GET login-throttle/x -> DENY", False, GET, "login-throttle/x", D, None, None),
