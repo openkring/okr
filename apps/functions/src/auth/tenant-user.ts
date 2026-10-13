@@ -13,12 +13,16 @@ import { logger } from 'firebase-functions/v2';
 import { HttpsError } from 'firebase-functions/v2/https';
 
 import { UserModel } from '@okr/shared-models';
+import { isSoleTenantUserData } from '@okr/shared-util-functions';
 import { getUserIndex } from '@okr/user-util';
 
-/** users/{uid}, when it exists AND serves `tenantId`; else not-found (the same answer for both — no oracle). */
+/**
+ * users/{uid}, when it exists AND belongs to `tenantId` ALONE; else not-found (the same answer for all
+ * cases — no oracle). A login shared by several tenants must not be taken over from one of them.
+ */
 export async function loadTenantUser(uid: string, tenantId: string) {
   const snap = await getFirestore().collection('users').doc(uid).get();
-  if (!snap.exists || !((snap.data()?.['tenants'] as string[] | undefined) ?? []).includes(tenantId)) {
+  if (!snap.exists || !isSoleTenantUserData(snap.data(), tenantId)) {
     throw new HttpsError('not-found', 'Dieses Benutzerkonto gibt es nicht.');
   }
   return snap;

@@ -147,6 +147,13 @@ export async function getCallerContext(request: functions.CallableRequest, nameO
   return { tenantId, isOperator: isOperatorUserData(userData) };
 }
 
+/** True only when `tenantId` is non-empty and the doc's `tenants` is an array of exactly that one entry. */
+export function isSoleTenantUserData(userData: Record<string, unknown> | undefined, tenantId: string): boolean {
+  if (!tenantId) return false;
+  const tenants = userData?.['tenants'];
+  return Array.isArray(tenants) && tenants.length === 1 && tenants[0] === tenantId;
+}
+
 /**
  * May the caller delete the Firebase Auth login `targetUserData` belongs to?
  * The operator may delete any login (including one with no `users` doc at all). Any other tenant
@@ -155,9 +162,7 @@ export async function getCallerContext(request: functions.CallableRequest, nameO
  */
 export function mayDeleteAuthUser(caller: CallerContext, targetUserData: Record<string, unknown> | undefined): boolean {
   if (caller.isOperator) return true;
-  if (!caller.tenantId) return false;
-  const tenants = targetUserData?.['tenants'];
-  return Array.isArray(tenants) && tenants.length === 1 && tenants[0] === caller.tenantId;
+  return isSoleTenantUserData(targetUserData, caller.tenantId);
 }
 
 /** Split `items` into consecutive slices of at most `size` (e.g. `getAuth().getUsers()` takes ≤ 100). */

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { chunk, isOperatorUserData, mayDeleteAuthUser, OPERATOR_TENANT_ID, tenantIdOfUserData, type CallerContext } from './general.util';
+import { chunk, isOperatorUserData, isSoleTenantUserData, mayDeleteAuthUser, OPERATOR_TENANT_ID, tenantIdOfUserData, type CallerContext } from './general.util';
 
 describe('tenantIdOfUserData', () => {
   it('returns the single tenant a user belongs to', () => {
@@ -122,5 +122,21 @@ describe('chunk', () => {
 
   it('rejects a non-positive size instead of looping forever', () => {
     expect(() => chunk([1], 0)).toThrow();
+  });
+});
+
+describe('isSoleTenantUserData', () => {
+  it('is true only for exactly [tenantId]', () => {
+    expect(isSoleTenantUserData({ tenants: ['scs'] }, 'scs')).toBe(true);
+  });
+  it('is false for shared, other, empty, missing or malformed tenants', () => {
+    expect(isSoleTenantUserData({ tenants: ['scs', 'p13'] }, 'scs')).toBe(false);
+    expect(isSoleTenantUserData({ tenants: ['p13'] }, 'scs')).toBe(false);
+    expect(isSoleTenantUserData({ tenants: [] }, 'scs')).toBe(false);
+    expect(isSoleTenantUserData(undefined, 'scs')).toBe(false);
+    expect(isSoleTenantUserData({ tenants: 'scs' }, 'scs')).toBe(false);
+  });
+  it('is false for an empty tenantId', () => {
+    expect(isSoleTenantUserData({ tenants: ['scs'] }, '')).toBe(false);
   });
 });
