@@ -447,7 +447,9 @@ export const listFirebaseUsers = functions.onCall(
     } else {
       const snap = await getFirestore().collection('users').where('tenants', 'array-contains', caller.tenantId).get();
       // getUsers takes at most 100 identifiers; a uid without a login is simply not returned.
-      for (const slice of chunk(snap.docs.map(d => d.id).filter(id => id.length > 0 && id.length <= 128), 100)) {
+      // Same archive rule as listBkUsers (missing isArchived = active), so every login returned has a user doc there.
+      const activeIds = snap.docs.filter(d => d.data()['isArchived'] !== true).map(d => d.id);
+      for (const slice of chunk(activeIds.filter(id => id.length > 0 && id.length <= 128), 100)) {
         const result = await getAuth().getUsers(slice.map(uid => ({ uid })));
         users.push(...result.users.map(toFirebaseAuthUser));
       }
@@ -476,12 +478,12 @@ export const listBkUsers = functions.onCall(
 
     const caller = await getCallerContext(request as any, CF_NAME);
     const db = getFirestore();
-    // spec 1.101 §6: all tenants only for the operator tenant. array-contains + isArchived would
-    // need a composite index, so the archive filter runs in memory for the scoped query.
-    const docs = caller.isOperator
-      ? (await db.collection('users').where('isArchived', '==', false).get()).docs
+    // spec 1.101 §6: all tenants only for the operator tenant. The archive filter runs in memory for
+    // both branches: a missing isArchived field means active (isArchived !== true).
+    const docs = (caller.isOperator
+      ? (await db.collection('users').get()).docs
       : (await db.collection('users').where('tenants', 'array-contains', caller.tenantId).get()).docs
-          .filter(doc => doc.data()['isArchived'] === false);
+    ).filter(doc => doc.data()['isArchived'] !== true);
     const users = docs.map(doc => ({ okey: doc.id, ...doc.data() }));
 
     logger.info(`${CF_NAME}: returned ${users.length} users for tenant ${caller.tenantId}`);

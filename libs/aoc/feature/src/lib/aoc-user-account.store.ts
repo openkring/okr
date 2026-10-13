@@ -138,7 +138,7 @@ export const AocUserAccountStore = signalStore(
             return activeMembers.filter(m => isAfterDate(m.dateOfExit, getTodayStr(DateFormat.StoreDate)))
         }),
         firebaseUsers: computed(() => state.firebaseUsersResource.value() ?? []),
-        allUsers: computed(() => state.usersResource.value() ?? []), // of all tenants
+        allUsers: computed(() => state.usersResource.value() ?? []), // of all tenants in the operator app (bka), the own tenant otherwise
     };
   }),
 
@@ -366,7 +366,7 @@ export const AocUserAccountStore = signalStore(
             await fn({ uid: account.uid });
             this.reload();
           } catch (ex) {
-            error(store.toastController, 'AocUserAccountStore.deleteFirebaseUser -> error: ' + JSON.stringify(ex));
+            error(store.toastController, (ex as { message?: string })?.message ?? JSON.stringify(ex));
           }
         }
       },
