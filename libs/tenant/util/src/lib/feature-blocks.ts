@@ -1356,7 +1356,8 @@ const mobility: FeatureBlock = {
  *    Still excluded: `invoice-my` (`/accounting/scs/invoice/my/c-invoice`, a child of
  *    `finance-menu`). The old scs-only `scsf_memberfees` (`/scsmemberfees/c-scsfees`) is no
  *    longer an exclusion: the generalized member-fee screen has its own `member-fee` block
- *    below, which ships `memberfees` (`/memberfees/c-memberfees`) under `accounting-menu`.
+ *    below, which ships only the `c-memberfees` context wrapper; the screen itself is the
+ *    «Mitgliederbeiträge» segment of the Debitoren area (spec 1.100), not a menu row.
  *  - `finance-menu`'s four remaining live children `f_fees`, `f_pay`, `f_gss`,
  *    `f_versicherung` — all `/private/<id>/c-contentpage` CMS content pages authored by
  *    `scs`, already covered generically by the core `cms` block's route; and `finance-docs`,

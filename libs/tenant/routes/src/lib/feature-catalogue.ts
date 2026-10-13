@@ -599,9 +599,9 @@ const relationship: BlockRoutes = {
       // Route ships to every tenant enabling `relationship` (copied verbatim from
       // app.routes.ts, no tenant gating in the route table itself). The menu is NOT modelled
       // here any more: since the generalization (planning/specs/2026-09-17-member-fees-generic-
-      // design.md) `memberfees` (nav, /memberfees/c-memberfees) and its context wrapper
-      // `c-memberfees` belong to the `member-fee` feature block in libs/tenant/util/src/lib/
-      // feature-blocks.ts, which ships them to every tenant that enables the block. The route
+      // design.md) the context wrapper
+      // `c-memberfees` belongs to the `member-fee` feature block in libs/tenant/util/src/lib/
+      // feature-blocks.ts, which ships it to every tenant that enables the block. The route
       // stays cheap to ship (lazy-loaded, unreachable without a menu entry or typed URL).
       path: 'memberfees',
       canActivate: [isAuthenticatedGuard],
