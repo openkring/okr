@@ -39,6 +39,7 @@
     { "path": "../../../shared/util-core/tsconfig.lib.json" },
     { "path": "../../../subject/org/data-access/tsconfig.lib.json" },
     { "path": "../../../subject/org/ui/tsconfig.lib.json" },
-    { "path": "../../../subject/person/ui/tsconfig.lib.json" }
+    { "path": "../../../subject/person/ui/tsconfig.lib.json" },
+    { "path": "../../../tenant/feature/tsconfig.lib.json" }
   ]
 }

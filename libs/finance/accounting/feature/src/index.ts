@@ -6,3 +6,4 @@ export * from './lib/voucher-tiles';
 export * from './lib/ledger-bookings';
 export * from './lib/avatar-detail.service';
 export * from './lib/finance-history';
+export * from './lib/accounting-segments';

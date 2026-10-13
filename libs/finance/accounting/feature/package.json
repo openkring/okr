@@ -29,6 +29,7 @@
     "@okr/subject-org-ui": "*",
     "@okr/subject-person-ui": "*",
     "@okr/comment-ui": "*",
-    "@okr/comment-util": "*"
+    "@okr/comment-util": "*",
+    "@okr/tenant-feature": "*"
   }
 }
