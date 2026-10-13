@@ -26,7 +26,7 @@
 
 import { logger } from 'firebase-functions/v2';
 import { getFirestore } from 'firebase-admin/firestore';
-import { getMessaging } from 'firebase-admin/messaging';
+import { getMessaging, type AndroidConfig } from 'firebase-admin/messaging';
 
 export interface PushPayload {
   /** Routing discriminator read by the service worker and the in-app handler. */
@@ -97,6 +97,17 @@ export interface UserAccount {
  * which the notification could be opened. Same rule `deliveryChannelsFor` in
  * `workflow/firestore-deps.ts` already applies to delivery preferences.
  */
+/**
+ * The `android` block of a push. The data-only shape above exists for the WEB service worker,
+ * which builds the notification itself; the native Android app (Capacitor) has no service
+ * worker and shows NOTHING for a data-only message (spec 1.10 Phase 1). FCM applies this block
+ * only to native Android app instances, so web tokens — including Chrome on Android — still
+ * receive the plain data message. `tag` collapses pushes about the same thing into one banner.
+ */
+export function androidDisplay(title: string, body: string, priority: 'high' | 'normal', tag?: string): AndroidConfig {
+  return { priority, notification: { title, body, ...(tag ? { tag } : {}) } };
+}
+
 export function selectUserDocs(accounts: UserAccount[], tenantId: string): UserAccount[] {
   return accounts.filter((account) => account.isArchived !== true && (account.tenants ?? []).includes(tenantId));
 }
@@ -173,7 +184,7 @@ export async function pushToPersons(
   const response = await getMessaging().sendEachForMulticast({
     tokens: entries.map((entry) => entry.token),
     data,
-    android: { priority: 'normal' },
+    android: androidDisplay(data['title'], data['body'], 'normal', data['channelId']),
     apns: {
       headers: { 'apns-priority': '5', 'apns-push-type': 'background' },
       payload: {

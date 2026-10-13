@@ -20,7 +20,7 @@ import {
   getRoomTenantMarker,
   pusherAdmitsRoom,
 } from './shared';
-import { appNameFor, collectTokens, withAppName } from '../srv/push';
+import { androidDisplay, appNameFor, collectTokens, withAppName } from '../srv/push';
 
 /**
  * Does the group behind `groupKey` have a `<okey>_chat` CMS page to deep-link into?
@@ -122,9 +122,7 @@ export const sendCallNotification = onCall(
         // No badge field: a call is not a pending item. The service worker re-applies its
         // ledger total (spec 1.93) — the old `badgeCount: '1'` overwrote it.
       },
-      android: {
-        priority: 'high',
-      },
+      android: androidDisplay(title, roomName ? `In ${roomName}` : 'Eingehender Video-Anruf', 'high', `call.${roomId}`),
       apns: {
         // 'alert' push type is required for iOS to show a banner when the app is closed.
         // 'background' would deliver silently and never show a banner.
@@ -407,7 +405,7 @@ export const matrixPushGateway = onRequest(
               badgeAdd: 'chat',
               badgeId: notification.event_id,
             },
-            android: { priority: 'high' },
+            android: androidDisplay(title, msgBody, 'high', `chat.${roomId}`),
             apns: {
               headers: { 'apns-priority': '10', 'apns-push-type': 'alert' },
               payload: {
