@@ -98,19 +98,29 @@ async function main() {
   // 3. scs root menu
   const root = await menuItems.doc('main_scs').get();
   if (root.exists) {
-    const items = root.data().menuItems ?? [];
-    let next = [...items];
-    const at = next.indexOf('scsf_fibu');
-    if (!next.includes(PARENT)) next = at >= 0 ? [...next.slice(0, at), PARENT, ...next.slice(at)] : [...next, PARENT];
-    next = next.filter(k => k !== 'scsf_fibu' && k !== 'gssf_fibu');
-    if (same(items, next)) console.log('  ok      menuItems/main_scs — already migrated');
-    else {
-      if (apply) await root.ref.update({ menuItems: next });
-      console.log(`  ${apply ? 'update ' : 'would update'} menuItems/main_scs: remove scsf_fibu, gssf_fibu; ${PARENT} at ${at >= 0 ? at : 'end'}`);
-      writes++;
-    }
     const parentDoc = parents.find(p => (p.data().tenants ?? []).includes('scs'));
-    if (!parentDoc) console.log(`  WARN    no '${PARENT}' document lists tenant scs — enable it via /tenant/features first`);
+    if (!parentDoc) {
+      // without an accounting-menu for scs the root would point at a row scs cannot see: leave it untouched
+      console.log(`  WARN    no '${PARENT}' document lists tenant scs — enable it via /tenant/features first; menuItems/main_scs left unchanged`);
+    } else {
+      const items = root.data().menuItems ?? [];
+      const at = items.indexOf('scsf_fibu');
+      let next = [...items];
+      let parentNote = `${PARENT} already present`;
+      if (!next.includes(PARENT)) {
+        next = at >= 0 ? [...next.slice(0, at), PARENT, ...next.slice(at)] : [...next, PARENT];
+        parentNote = at >= 0 ? `${PARENT} inserted at ${at}` : `${PARENT} appended`;
+      }
+      const removed = ['scsf_fibu', 'gssf_fibu'].filter(k => next.includes(k));
+      next = next.filter(k => !removed.includes(k));
+      if (same(items, next)) console.log('  ok      menuItems/main_scs — already migrated');
+      else {
+        if (apply) await root.ref.update({ menuItems: next });
+        const removedNote = removed.length ? `remove ${removed.join(', ')}` : 'nothing to remove';
+        console.log(`  ${apply ? 'update ' : 'would update'} menuItems/main_scs: ${removedNote}; ${parentNote}`);
+        writes++;
+      }
+    }
   }
 
   console.log(`\n${apply ? 'writes' : 'would write'}: ${writes}`);
