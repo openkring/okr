@@ -23,7 +23,7 @@ const PARALLEL_READS = 10;
 
 /** Accounting overview (spec 1.100 §4.4): to-dos, then key figures of ONE fiscal year, cash balance on demand. */
 export const AccountingOverviewStore = signalStore(
-  withState({ selectedYear: 0, balance: undefined as number | undefined, balanceLoading: false }),
+  withState({ selectedYear: 0, balanceValue: undefined as { books: string; value: number } | undefined, balanceLoading: false }),
   withProps(() => ({
     fs: inject(FirestoreService),
     tenantId: inject(ENV).tenantId,
@@ -56,10 +56,10 @@ export const AccountingOverviewStore = signalStore(
       const q = scope(books);
       const [bookingsForReview, bills, paymentOrders, invoices, expenses, unmapped, mapped, failed] = await Promise.all([
         fs.countOnce(BookingCollection, [...q, { key: 'status', operator: '==', value: 'forReview' }]),
-        fs.getDataOnce<BillModel>(BillCollection, q, 'none'),
-        fs.getDataOnce<PaymentOrderModel>(PaymentOrderCollection, q, 'none'),
-        fs.getDataOnce<InvoiceModel>(InvoiceCollection, q, 'none'),
-        fs.getDataOnce<ExpenseModel>(ExpenseCollection, q, 'none'),
+        fs.getDataOnceStrict<BillModel>(BillCollection, q),
+        fs.getDataOnceStrict<PaymentOrderModel>(PaymentOrderCollection, q),
+        fs.getDataOnceStrict<InvoiceModel>(InvoiceCollection, q),
+        fs.getDataOnceStrict<ExpenseModel>(ExpenseCollection, q),
         fs.countOnce(BankImportRowCollection, [...q, { key: 'status', operator: '==', value: 'unmapped' }]),
         fs.countOnce(BankImportRowCollection, [...q, { key: 'status', operator: '==', value: 'mapped' }]),
         fs.countOnce(BankImportRowCollection, [...q, { key: 'status', operator: '==', value: 'error' }]),
@@ -77,18 +77,18 @@ export const AccountingOverviewStore = signalStore(
       const fy = fiscalYear(year, start);
       const q = scope(books);
       const [accounts, bookings, budgetVersions, budgetLines] = await Promise.all([
-        fs.getDataOnce<AccountModel>(AccountCollection, q, 'none'),
+        fs.getDataOnceStrict<AccountModel>(AccountCollection, q),
         // index: bookings (tenants, accountingTenantId, isArchived, date desc) — exists
-        fs.getDataOnce<BookingModel>(BookingCollection, [...q, { key: 'date', operator: '>=', value: fy.from }, { key: 'date', operator: '<=', value: fy.to }], 'date', 'desc'),
-        fs.getDataOnce<BudgetVersionModel>(BudgetVersionCollection, q, 'none'),
-        fs.getDataOnce<BudgetLineModel>(BudgetLineCollection, q, 'none'),
+        fs.getDataOnceStrict<BookingModel>(BookingCollection, [...q, { key: 'date', operator: '>=', value: fy.from }, { key: 'date', operator: '<=', value: fy.to }]),
+        fs.getDataOnceStrict<BudgetVersionModel>(BudgetVersionCollection, q),
+        fs.getDataOnceStrict<BudgetLineModel>(BudgetLineCollection, q),
       ]);
       const posted = bookings.filter(b => b.status === 'posted');
       const lines: BookingLineModel[] = [];
       // lines carry no date: read only the lines of this year's posted bookings
       for (const batch of chunk(chunk(posted.map(b => b.okey), BOOKING_KEY_CHUNK), PARALLEL_READS)) {
         const parts = await Promise.all(batch.map(keys =>
-          fs.getDataOnce<BookingLineModel>(BookingLineCollection, [...q, { key: 'bookingKey', operator: 'in', value: keys }], 'none')));
+          fs.getDataOnceStrict<BookingLineModel>(BookingLineCollection, [...q, { key: 'bookingKey', operator: 'in', value: keys }])));
         lines.push(...parts.flat());
       }
       return computeKeyFigures({ accounts, bookings: posted, lines, from: fy.from, to: fy.to, budgetVersions, budgetLines, fiscalYear: year });
@@ -102,7 +102,7 @@ export const AccountingOverviewStore = signalStore(
       periodResource: rxResource({
         params: resourceParams(() => ({ userKey: store.userKey(), books: store.books() })),
         stream: ({ params }) => params.userKey && params.books
-          ? from(fs.getDataOnce<PeriodModel>(PeriodCollection, scope(params.books), 'none'))
+          ? from(fs.getDataOnceStrict<PeriodModel>(PeriodCollection, scope(params.books)))
           : of([] as PeriodModel[]),
       }),
       figuresResource: rxResource({
@@ -125,6 +125,8 @@ export const AccountingOverviewStore = signalStore(
     period: computed(() => currentPeriod(store.periodResource.value() ?? [], store.today(), store.fiscalYearStart())),
     figures: computed(() => store.figuresResource.value()),
     figuresLoading: computed(() => store.figuresResource.isLoading()),
+    /** cash balance, shown only for the books it was computed for */
+    balance: computed(() => { const b = store.balanceValue(); return b && b.books === store.books() ? b.value : undefined; }),
     fiscalYearLabel: computed(() => fiscalYear(store.year(), store.fiscalYearStart()).label),
   })),
   withMethods(store => ({
@@ -139,11 +141,13 @@ export const AccountingOverviewStore = signalStore(
       try {
         const q = store.scope(books);
         const [accounts, bookings, lines] = await Promise.all([
-          store.fs.getDataOnce<AccountModel>(AccountCollection, q, 'none'),
-          store.fs.getDataOnce<BookingModel>(BookingCollection, q, 'none'),
-          store.fs.getDataOnce<BookingLineModel>(BookingLineCollection, q, 'none'),
+          store.fs.getDataOnceStrict<AccountModel>(AccountCollection, q),
+          store.fs.getDataOnceStrict<BookingModel>(BookingCollection, q),
+          store.fs.getDataOnceStrict<BookingLineModel>(BookingLineCollection, q),
         ]);
-        patchState(store, { balance: liquidityBalance(lines, bookings, accounts) });
+        patchState(store, { balanceValue: { books, value: liquidityBalance(lines, bookings, accounts) } });
+      } catch (err) {
+        console.warn('AccountingOverviewStore.computeBalance failed:', err);
       } finally {
         patchState(store, { balanceLoading: false });
       }
