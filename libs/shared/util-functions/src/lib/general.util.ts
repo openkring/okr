@@ -99,21 +99,56 @@ export async function getCallerTenantId(request: functions.CallableRequest, name
  */
 export const OPERATOR_TENANT_ID = 'bka';
 
-export function isOperatorTenant(tenantId: string): boolean {
-  return tenantId === OPERATOR_TENANT_ID;
+/**
+ * True only when the `users` doc belongs to the operator tenant alone: `tenants` is an array of
+ * exactly one entry, equal to OPERATOR_TENANT_ID. Do NOT reduce this to `tenants[0]`: the Firestore
+ * rules let an admin of one tenant write a users doc of their own tenant with `['bka', <own tenant>]`
+ * (they only check hasAny), so the first entry is attacker-controlled and would make that admin the
+ * operator. Requiring exactly ['bka'] makes that write grant nothing.
+ */
+export function isOperatorUserData(userData: Record<string, unknown> | undefined): boolean {
+  const tenants = userData?.['tenants'];
+  return Array.isArray(tenants) && tenants.length === 1 && tenants[0] === OPERATOR_TENANT_ID;
+}
+
+/** The caller as derived server-side from `users/{uid}` in one read. */
+export interface CallerContext {
+  tenantId: string;
+  isOperator: boolean;
 }
 
 /**
- * May a caller of `callerTenantId` delete the Firebase Auth login `targetUserData` belongs to?
+ * Who is calling, read server-side from `users/{uid}` (one Firestore read). `tenantId` follows
+ * getCallerTenantId; `isOperator` follows isOperatorUserData. Use this instead of combining
+ * getCallerTenantId with a tenant comparison.
+ */
+export async function getCallerContext(request: functions.CallableRequest, nameOfCallingFunction: string): Promise<CallerContext> {
+  const uid = request.auth?.uid;
+  if (!uid) {
+    logger.error(`${nameOfCallingFunction}: user is not authenticated`);
+    throw new functions.HttpsError('unauthenticated', 'user must be authenticated.');
+  }
+  const snap = await getFirestore().collection('users').doc(uid).get();
+  const userData = snap.data();
+  const tenantId = tenantIdOfUserData(userData);
+  if (tenantId === '') {
+    logger.error(`${nameOfCallingFunction}: user ${uid} is not linked to a tenant`);
+    throw new functions.HttpsError('failed-precondition', 'User is not linked to a tenant.');
+  }
+  return { tenantId, isOperator: isOperatorUserData(userData) };
+}
+
+/**
+ * May the caller delete the Firebase Auth login `targetUserData` belongs to?
  * The operator may delete any login (including one with no `users` doc at all). Any other tenant
  * only the login of a user that belongs to it alone — never another tenant's, never a shared one,
  * never one whose `users` doc is gone (that is an orphan, which only the operator handles).
  */
-export function mayDeleteAuthUser(callerTenantId: string, targetUserData: Record<string, unknown> | undefined): boolean {
-  if (isOperatorTenant(callerTenantId)) return true;
-  if (!callerTenantId) return false;
-  const tenants = Array.isArray(targetUserData?.['tenants']) ? (targetUserData['tenants'] as unknown[]) : [];
-  return tenants.length === 1 && tenants[0] === callerTenantId;
+export function mayDeleteAuthUser(caller: CallerContext, targetUserData: Record<string, unknown> | undefined): boolean {
+  if (caller.isOperator) return true;
+  if (!caller.tenantId) return false;
+  const tenants = targetUserData?.['tenants'];
+  return Array.isArray(tenants) && tenants.length === 1 && tenants[0] === caller.tenantId;
 }
 
 /** Split `items` into consecutive slices of at most `size` (e.g. `getAuth().getUsers()` takes ≤ 100). */
@@ -125,24 +160,14 @@ export function chunk<T>(items: readonly T[], size: number): T[][] {
 }
 
 /**
- * Authorize an operator-only callable: the caller's own tenant (server-side, see
- * `getCallerTenantId`) must be the operator tenant. Call AFTER `checkAdminRole`.
- * Returns the caller's tenant id.
+ * Authorize an operator-only callable. Call AFTER `checkAdminRole`. Denies unless the caller's
+ * users doc is the operator's alone (see isOperatorUserData). Returns OPERATOR_TENANT_ID.
  */
 export async function checkOperatorTenant(request: functions.CallableRequest, nameOfCallingFunction: string): Promise<string> {
-  const tenantId = await getCallerTenantId(request, nameOfCallingFunction);
-  if (!isOperatorTenant(tenantId)) {
-    logger.error(`${nameOfCallingFunction}: tenant ${tenantId} is not the operator tenant`);
+  const caller = await getCallerContext(request, nameOfCallingFunction);
+  if (!caller.isOperator) {
+    logger.error(`${nameOfCallingFunction}: tenant ${caller.tenantId} is not the operator tenant`);
     throw new functions.HttpsError('permission-denied', 'Diese Funktion gibt es nur in der Betreiber-App.');
   }
-  return tenantId;
-}
-
-export function checkStringField(request: functions.CallableRequest, nameOfCallingFunction: string, fieldName: string): string {
-    const data = request.data[fieldName];
-  if (!data || typeof data !== 'string') {
-    logger.error(`${nameOfCallingFunction}: invalid ${fieldName} <${data}> provided`);
-    throw new functions.HttpsError('invalid-argument', `${nameOfCallingFunction} must be called with a valid ${fieldName}.`);
-  }
-  return data;
+  return OPERATOR_TENANT_ID;
 }

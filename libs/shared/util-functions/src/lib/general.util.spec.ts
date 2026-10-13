@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { chunk, isOperatorTenant, mayDeleteAuthUser, OPERATOR_TENANT_ID, tenantIdOfUserData } from './general.util';
+import { chunk, isOperatorUserData, mayDeleteAuthUser, OPERATOR_TENANT_ID, tenantIdOfUserData, type CallerContext } from './general.util';
 
 describe('tenantIdOfUserData', () => {
   it('returns the single tenant a user belongs to', () => {
@@ -31,48 +31,61 @@ describe('tenantIdOfUserData', () => {
   });
 });
 
-describe('isOperatorTenant', () => {
-  it('accepts the operator tenant', () => {
+describe('isOperatorUserData', () => {
+  it('accepts a users doc whose tenants is exactly the operator tenant', () => {
     expect(OPERATOR_TENANT_ID).toBe('bka');
-    expect(isOperatorTenant('bka')).toBe(true);
+    expect(isOperatorUserData({ tenants: ['bka'] })).toBe(true);
   });
 
-  it('rejects every other tenant and the empty string', () => {
-    expect(isOperatorTenant('scs')).toBe(false);
-    expect(isOperatorTenant('')).toBe(false);
-    expect(isOperatorTenant('BKA')).toBe(false);
+  it('rejects ["bka", <own tenant>] (the rules let an admin write it, tenants[0] would be wrong)', () => {
+    expect(isOperatorUserData({ tenants: ['bka', 'scs'] })).toBe(false);
   });
 
-  it('a legacy multi-tenant user doc with bka not first is not the operator', () => {
-    expect(isOperatorTenant(tenantIdOfUserData({ tenants: ['p13', 'bka'] }))).toBe(false);
+  it('rejects bka when it is not the only entry', () => {
+    expect(isOperatorUserData({ tenants: ['scs', 'bka'] })).toBe(false);
+  });
+
+  it('rejects other tenants, an empty array, a missing doc and a non-array tenants', () => {
+    expect(isOperatorUserData({ tenants: ['scs'] })).toBe(false);
+    expect(isOperatorUserData({ tenants: [] })).toBe(false);
+    expect(isOperatorUserData(undefined)).toBe(false);
+    expect(isOperatorUserData({ tenants: 'bka' })).toBe(false);
   });
 });
 
 describe('mayDeleteAuthUser', () => {
+  const operator: CallerContext = { tenantId: 'bka', isOperator: true };
+  const scs: CallerContext = { tenantId: 'scs', isOperator: false };
+
   it('the operator may delete any login, even one without a users doc', () => {
-    expect(mayDeleteAuthUser('bka', undefined)).toBe(true);
-    expect(mayDeleteAuthUser('bka', { tenants: ['scs'] })).toBe(true);
+    expect(mayDeleteAuthUser(operator, undefined)).toBe(true);
+    expect(mayDeleteAuthUser(operator, { tenants: ['scs'] })).toBe(true);
+  });
+
+  it('a bka-first multi-tenant admin is not the operator and may not delete another tenant\'s login', () => {
+    const adminWithBkaFirst: CallerContext = { tenantId: 'bka', isOperator: false };
+    expect(mayDeleteAuthUser(adminWithBkaFirst, { tenants: ['scs'] })).toBe(false);
   });
 
   it('a tenant may delete the login of its own single-tenant user', () => {
-    expect(mayDeleteAuthUser('scs', { tenants: ['scs'] })).toBe(true);
+    expect(mayDeleteAuthUser(scs, { tenants: ['scs'] })).toBe(true);
   });
 
   it('a tenant may not delete a login whose users doc is missing', () => {
-    expect(mayDeleteAuthUser('scs', undefined)).toBe(false);
+    expect(mayDeleteAuthUser(scs, undefined)).toBe(false);
   });
 
   it('a tenant may not delete another tenant\'s login', () => {
-    expect(mayDeleteAuthUser('scs', { tenants: ['p13'] })).toBe(false);
+    expect(mayDeleteAuthUser(scs, { tenants: ['p13'] })).toBe(false);
   });
 
   it('a tenant may not delete a login shared with another tenant', () => {
-    expect(mayDeleteAuthUser('scs', { tenants: ['scs', 'p13'] })).toBe(false);
+    expect(mayDeleteAuthUser(scs, { tenants: ['scs', 'p13'] })).toBe(false);
   });
 
   it('never trusts a malformed tenants field', () => {
-    expect(mayDeleteAuthUser('scs', { tenants: 'scs' })).toBe(false);
-    expect(mayDeleteAuthUser('', { tenants: [''] })).toBe(false);
+    expect(mayDeleteAuthUser(scs, { tenants: 'scs' })).toBe(false);
+    expect(mayDeleteAuthUser({ tenantId: '', isOperator: false }, { tenants: [''] })).toBe(false);
   });
 });
 
