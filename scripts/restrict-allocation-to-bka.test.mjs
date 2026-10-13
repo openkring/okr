@@ -23,6 +23,27 @@ test('a fork owned by another tenant is a conflict, never rewritten', () => {
   assert.equal(p.action, 'conflict');
 });
 
+test('a fork shared by bka and another tenant is a conflict, never overwritten to bka alone', () => {
+  const [p] = planRowDocs([{ id: 'f1', tenants: ['bka', 'scs'], url: '/aoc/allocation', forkedFrom: 'aoc-allocation' }]);
+  assert.equal(p.action, 'conflict');
+  assert.match(p.reason, /scs/);
+});
+
+test('a fork of exactly bka on the old url is restricted (url only)', () => {
+  const [p] = planRowDocs([{ id: 'f1', tenants: ['bka'], url: '/aoc/allocation', forkedFrom: 'aoc-allocation' }]);
+  assert.equal(p.action, 'restrict');
+});
+
+test('a fork of exactly bka on the operator url is skipped', () => {
+  const [p] = planRowDocs([{ id: 'f1', tenants: ['bka'], url: OPERATOR_URL, forkedFrom: 'aoc-allocation' }]);
+  assert.equal(p.action, 'skip');
+});
+
+test('an unforked row not shared with bka is a conflict, never handed to bka', () => {
+  const [p] = planRowDocs([{ id: 'r1', tenants: ['scs'], url: '/aoc/allocation' }]);
+  assert.equal(p.action, 'conflict');
+});
+
 test('non-bka parents drop the row, bka keeps it', () => {
   const plans = planParentDocs([
     { id: 'aoc-menu', tenants: ['kring', 'okr'], menuItems: ['aoc-admin', 'aoc-allocation'] },
@@ -38,6 +59,7 @@ test('a parent shared by bka and another tenant is a conflict', () => {
 });
 
 test('malformed fields never crash the plan', () => {
-  assert.equal(planRowDocs([{ id: 'r', tenants: undefined, url: undefined }])[0].action, 'restrict');
+  // Changed in fix round 1: an unforked row with no tenants is not shared with bka, so it is a conflict.
+  assert.equal(planRowDocs([{ id: 'r', tenants: undefined, url: undefined }])[0].action, 'conflict');
   assert.equal(planParentDocs([{ id: 'p', tenants: undefined, menuItems: undefined }])[0].action, 'skip');
 });
