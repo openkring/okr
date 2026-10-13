@@ -27,6 +27,7 @@
 import { logger } from 'firebase-functions/v2';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getMessaging, type AndroidConfig } from 'firebase-admin/messaging';
+import { NATIVE_PUSH_CHANNEL_ID } from '@okr/shared-constants';
 
 export interface PushPayload {
   /** Routing discriminator read by the service worker and the in-app handler. */
@@ -105,7 +106,7 @@ export interface UserAccount {
  * receive the plain data message. `tag` collapses pushes about the same thing into one banner.
  */
 export function androidDisplay(title: string, body: string, priority: 'high' | 'normal', tag?: string): AndroidConfig {
-  return { priority, notification: { title, body, ...(tag ? { tag } : {}) } };
+  return { priority, notification: { title, body, channelId: NATIVE_PUSH_CHANNEL_ID, ...(tag ? { tag } : {}) } };
 }
 
 export function selectUserDocs(accounts: UserAccount[], tenantId: string): UserAccount[] {

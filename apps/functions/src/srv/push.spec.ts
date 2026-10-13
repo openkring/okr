@@ -90,15 +90,15 @@ describe('androidDisplay', () => {
   it('gives native Android a visible notification with title and body', () => {
     expect(androidDisplay('Seeclub Stäfa · Training', 'Fällt aus', 'high')).toEqual({
       priority: 'high',
-      notification: { title: 'Seeclub Stäfa · Training', body: 'Fällt aus' },
+      notification: { title: 'Seeclub Stäfa · Training', body: 'Fällt aus', channelId: 'okr_default' },
     });
   });
 
   it('passes a collapse tag so several pushes about one thing replace each other', () => {
-    expect(androidDisplay('t', 'b', 'normal', 'calevent.e1').notification).toEqual({ title: 't', body: 'b', tag: 'calevent.e1' });
+    expect(androidDisplay('t', 'b', 'normal', 'calevent.e1').notification).toEqual({ title: 't', body: 'b', channelId: 'okr_default', tag: 'calevent.e1' });
   });
 
   it('omits an empty tag rather than sending a blank one', () => {
-    expect(androidDisplay('t', 'b', 'normal', '').notification).toEqual({ title: 't', body: 'b' });
+    expect(androidDisplay('t', 'b', 'normal', '').notification).toEqual({ title: 't', body: 'b', channelId: 'okr_default' });
   });
 });

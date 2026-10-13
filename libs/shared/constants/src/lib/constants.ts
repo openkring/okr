@@ -273,3 +273,12 @@ export type InputType = 'date' | 'datetime-local' | 'email' | 'month' | 'number'
  *  * see: https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/autocomplete
 ---------------------------------------------------------------------------*/
 export type AutoComplete = 'name' | 'email' | 'tel' | 'url' | 'off' | 'given-name' | 'family-name' | 'new-password' | 'current-password' | 'organization' | 'street-address' | 'country' | 'country-name' | 'postal-code' | 'bday' | 'address-level2';
+
+/**
+ * Android notification channel for every push the native (Capacitor) app shows (spec 1.10).
+ * Created by FcmService with HIGH importance — the FCM fallback channel is DEFAULT, which puts
+ * pushes into the shade without a heads-up banner. The Cloud Functions name it in
+ * `android.notification.channelId`; a device whose app predates the channel falls back to the
+ * FCM default channel, so the id must never change.
+ */
+export const NATIVE_PUSH_CHANNEL_ID = 'okr_default';

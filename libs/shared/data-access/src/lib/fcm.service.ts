@@ -1,6 +1,7 @@
 import { inject, Injectable, PLATFORM_ID } from '@angular/core';
 import { Capacitor } from '@capacitor/core';
 import { PushNotifications } from '@capacitor/push-notifications';
+import { NATIVE_PUSH_CHANNEL_ID } from '@okr/shared-constants';
 import { getApp } from 'firebase/app';
 import { getMessaging, getToken, onMessage, isSupported as isMessagingSupported, Messaging } from 'firebase/messaging';
 import { getFirestore, doc, setDoc, deleteDoc, serverTimestamp, collection, query, where, documentId, getDocs, writeBatch } from 'firebase/firestore';
@@ -81,6 +82,14 @@ export class FcmService {
       if (receive !== 'granted') {
         console.log('FcmService: Native push permission denied');
         return null;
+      }
+
+      // Android: pushes go to our HIGH-importance channel — the FCM fallback channel is DEFAULT
+      // and never shows a heads-up banner (spec 1.10 Phase 1). Idempotent; iOS has no channels.
+      if (Capacitor.getPlatform() === 'android') {
+        await PushNotifications.createChannel({
+          id: NATIVE_PUSH_CHANNEL_ID, name: 'Benachrichtigungen', importance: 4, visibility: 1,
+        });
       }
 
       // register() triggers the 'registration' event with the native FCM/APNs token
