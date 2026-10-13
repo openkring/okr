@@ -235,6 +235,10 @@
   "validation": {
     "nameRequired": "The name is required.",
     "membersRequired": "Select at least one person.",
+    "directOne": "Select exactly one person for the direct message.",
+    "adhocTwo": "Select at least two people for a group chat.",
+    "membersMax": "A group chat can have at most 19 other people.",
+    "sourceGroupsRequired": "Select at least one group.",
     "pollAnswersTooFew": "A poll needs at least two options.",
     "pollAnswersTooMany": "A poll can have at most 20 options."
   },

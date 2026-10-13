@@ -44,14 +44,14 @@ describe('adhocChatValidations', () => {
   it('fails without a single other person — there is nobody to chat with', () => {
     const result = adhocChatValidations(model({ roomType: 'direct' }));
     expect(result.isValid()).toBe(false);
-    expect(result.getErrors('members')).toContain('directOne');
+    expect(result.getErrors('members')).toContain('@chat/feature.validation.directOne');
   });
 
   it('fails beyond the member ceiling (the creator counts too)', () => {
     const members = Array.from({ length: ADHOC_CHAT_MAX_MEMBERS }, (_, i) => member(`p${i}`));
     const result = adhocChatValidations(model({ roomType: 'adhoc', name: 'Grosse Runde', members }));
     expect(result.isValid()).toBe(false);
-    expect(result.getErrors('members')).toContain('membersMax');
+    expect(result.getErrors('members')).toContain('@chat/feature.validation.membersMax');
   });
 
   it('accepts exactly the ceiling', () => {
@@ -64,17 +64,17 @@ describe('adhocChatValidations', () => {
 describe('adhocChatValidations — room types', () => {
   it('requires exactly one person for a direct chat', () => {
     const r = adhocChatValidations(model({ roomType: 'direct', members: [member('anna'), member('beat')] }));
-    expect(r.getErrors('members')).toContain('directOne');
+    expect(r.getErrors('members')).toContain('@chat/feature.validation.directOne');
   });
   it('requires a name and two people for an ad-hoc chat', () => {
     const r = adhocChatValidations(model({ roomType: 'adhoc', members: [member('anna')] }));
-    expect(r.getErrors('members')).toContain('adhocTwo');
+    expect(r.getErrors('members')).toContain('@chat/feature.validation.adhocTwo');
     expect(r.getErrors('name')).toContain('nameRequired');
   });
   it('requires a name and a source group for a pinboard, and no people', () => {
     const r = adhocChatValidations(model({ roomType: 'pinboard' }));
     expect(r.getErrors('name')).toContain('nameRequired');
-    expect(r.getErrors('sourceGroups')).toContain('sourceGroupsRequired');
+    expect(r.getErrors('sourceGroups')).toContain('@chat/feature.validation.sourceGroupsRequired');
     expect(r.getErrors('members')).toEqual([]);
   });
   it('accepts a complete pinboard', () => {

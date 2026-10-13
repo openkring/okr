@@ -235,6 +235,10 @@
   "validation": {
     "nameRequired": "Il nome è obbligatorio.",
     "membersRequired": "Scegli almeno una persona.",
+    "directOne": "Scegli esattamente una persona per il messaggio diretto.",
+    "adhocTwo": "Scegli almeno due persone per una chat di gruppo.",
+    "membersMax": "Una chat di gruppo può avere al massimo altre 19 persone.",
+    "sourceGroupsRequired": "Scegli almeno un gruppo.",
     "pollAnswersTooFew": "Un sondaggio richiede almeno due opzioni.",
     "pollAnswersTooMany": "Un sondaggio può avere al massimo 20 opzioni."
   },

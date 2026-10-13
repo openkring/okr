@@ -5,6 +5,9 @@ import { stringValidations } from '@okr/shared-util-core';
 
 import { ADHOC_CHAT_MAX_MEMBERS, AdhocChatFormModel } from './adhoc-chat.model';
 
+/** Scoped keys — `okr-error-note` resolves a bare key against the app's main bundle, which has none of these. */
+const VPFX = '@chat/feature.validation.';
+
 /**
  * Je Raumtyp (`roomType`) gelten andere Regeln:
  *
@@ -25,21 +28,21 @@ export const adhocChatValidations = staticSuite((model: AdhocChatFormModel) => {
   });
 
   if (type === 'direct') {
-    test('members', 'directOne', () => {
+    test('members', VPFX + 'directOne', () => {
       enforce(memberCount).equals(1);
     });
   }
   if (type === 'adhoc') {
-    test('members', 'adhocTwo', () => {
+    test('members', VPFX + 'adhocTwo', () => {
       enforce(memberCount).greaterThanOrEquals(2);
     });
-    test('members', 'membersMax', () => {
+    test('members', VPFX + 'membersMax', () => {
       enforce(memberCount).lessThanOrEquals(ADHOC_CHAT_MAX_MEMBERS - 1);
     });
   }
   if (type === 'pinboard') {
     stringValidations('description', model.description, DESCRIPTION_LENGTH);
-    test('sourceGroups', 'sourceGroupsRequired', () => {
+    test('sourceGroups', VPFX + 'sourceGroupsRequired', () => {
       enforce(model.sourceGroups?.length ?? 0).greaterThanOrEquals(1);
     });
   }
