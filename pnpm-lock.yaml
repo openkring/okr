@@ -214,6 +214,9 @@ importers:
       '@angular/ssr':
         specifier: 22.2.2
         version: 22.2.2(2702174657fe80804ae8803c004823c3)
+      '@capacitor-firebase/app-check':
+        specifier: ^8.5.2
+        version: 8.5.2(@capacitor/core@8.5.3)(firebase@12.16.0)
       '@capacitor/android':
         specifier: ^8.5.3
         version: 8.5.3(@capacitor/core@8.5.3)
@@ -1734,6 +1737,15 @@ packages:
 
   '@bufbuild/protobuf@2.11.0':
     resolution: {integrity: sha512-sBXGT13cpmPR5BMgHE6UEEfEaShh5Ror6rfN3yEK5si7QVrtZg8LEPQb0VVhiLRUslD2yLnXtnRzG035J/mZXQ==}
+
+  '@capacitor-firebase/app-check@8.5.2':
+    resolution: {integrity: sha512-k9QBY8zpF/sXvXsBZ+c9+hnKJLxBglIpZxRmoDJ+tMabfQYabBvhf0CJbQEGxudOGd+/XGTnb7rVB6Zg74vyfA==}
+    peerDependencies:
+      '@capacitor/core': '>=8.0.0'
+      firebase: ^12.6.0
+    peerDependenciesMeta:
+      firebase:
+        optional: true
 
   '@capacitor/android@8.5.3':
     resolution: {integrity: sha512-ilH4gSSz3DrketMkzDVAvY9JsWJ//rCQnECLTdcFRO7xXDogwAbUvQAnIAbiqefwV/D1xfjEL4Gw1MJXEcaA9g==}
@@ -13865,6 +13877,12 @@ snapshots:
   '@bcoe/v8-coverage@1.0.2': {}
 
   '@bufbuild/protobuf@2.11.0': {}
+
+  '@capacitor-firebase/app-check@8.5.2(@capacitor/core@8.5.3)(firebase@12.16.0)':
+    dependencies:
+      '@capacitor/core': 8.5.3
+    optionalDependencies:
+      firebase: 12.16.0
 
   '@capacitor/android@8.5.3(@capacitor/core@8.5.3)':
     dependencies:
