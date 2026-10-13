@@ -11,7 +11,7 @@ vi.mock('@capacitor-firebase/app-check', () => ({
 }));
 
 // Imported after the mocks so the module under test binds to the stubs.
-const { chooseAppCheckProvider, getNativeAppCheckToken, resetNativeAppCheckForTests } =
+const { chooseAppCheckProvider, getNativeAppCheckToken, requestNativeAppCheckRefresh, resetNativeAppCheckForTests } =
   await import('./app-check-provider');
 
 const OPTIONS = { recaptchaEnterpriseKey: 'site-key', debugToken: 'fixed-debug-token' };
@@ -82,6 +82,15 @@ describe('getNativeAppCheckToken', () => {
     nativeGetTokenMock.mockResolvedValue({ token: 'jwt' });
     const result = await getNativeAppCheckToken(true);
     expect(result.expireTimeMillis).toBe(Date.parse('2026-10-12T10:30:00Z'));
+  });
+
+  // The JS SDK calls the provider without a force flag; a denial recovery requests one out of band.
+  it('a requested refresh forces only the next native token request', async () => {
+    requestNativeAppCheckRefresh();
+    await getNativeAppCheckToken(true);
+    await getNativeAppCheckToken(true);
+    expect(nativeGetTokenMock).toHaveBeenNthCalledWith(1, { forceRefresh: true });
+    expect(nativeGetTokenMock).toHaveBeenNthCalledWith(2, { forceRefresh: false });
   });
 
   it('initialize failure is retried on the next call', async () => {

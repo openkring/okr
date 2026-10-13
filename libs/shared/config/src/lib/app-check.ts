@@ -1,4 +1,5 @@
 import { getToken, type AppCheck } from 'firebase/app-check';
+import { requestNativeAppCheckRefresh } from './app-check-provider';
 
 /**
  * App Check token access for code that runs OUTSIDE the app bootstrap.
@@ -131,6 +132,8 @@ export function isAttested(outcome: AppCheckOutcome): boolean {
 
 /** One bounded attestation round trip. Never throws — see the contract above. */
 async function attest(instance: AppCheck, forceRefresh: boolean, timeoutMs: number): Promise<AppCheckOutcome> {
+  // On native the JS force flag does not reach the CustomProvider; pass it on out of band.
+  if (forceRefresh) requestNativeAppCheckRefresh();
   try {
     await Promise.race([
       getToken(instance, forceRefresh),

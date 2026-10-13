@@ -48,6 +48,18 @@ export function chooseAppCheckProvider(options: AppCheckProviderOptions): AppChe
 
 let nativePlugin: Promise<typeof import('@capacitor-firebase/app-check')> | undefined;
 let nativeInit: Promise<void> | undefined;
+let nativeForceNext = false;
+
+/**
+ * Make the NEXT native token request bypass the native SDK's cache. The JS SDK calls a
+ * CustomProvider without its forceRefresh flag, so a forced JS attestation after a
+ * PERMISSION_DENIED would otherwise receive the very native token the backend just rejected.
+ * Called by attest() in app-check.ts; harmless on web, where nothing reads it. One-shot so that
+ * routine refreshes keep using the cache (Play Integrity / App Attest calls are quota-limited).
+ */
+export function requestNativeAppCheckRefresh(): void {
+  nativeForceNext = true;
+}
 
 /**
  * Token from the native App Check SDK. The plugin is imported lazily (once, shared by concurrent
@@ -63,7 +75,9 @@ export async function getNativeAppCheckToken(debug: boolean): Promise<{ token: s
       throw ex;
     });
   await nativeInit;
-  const result = await FirebaseAppCheck.getToken();
+  const forceRefresh = nativeForceNext;
+  nativeForceNext = false;
+  const result = await FirebaseAppCheck.getToken({ forceRefresh });
   return {
     token: result.token,
     expireTimeMillis: result.expireTimeMillis ?? Date.now() + FALLBACK_TOKEN_LIFETIME_MS,
@@ -74,4 +88,5 @@ export async function getNativeAppCheckToken(debug: boolean): Promise<{ token: s
 export function resetNativeAppCheckForTests(): void {
   nativePlugin = undefined;
   nativeInit = undefined;
+  nativeForceNext = false;
 }

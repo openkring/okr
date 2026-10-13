@@ -4,6 +4,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 const getTokenMock = vi.hoisted(() => vi.fn());
 vi.mock('firebase/app-check', () => ({ getToken: getTokenMock }));
 
+const requestNativeRefreshMock = vi.hoisted(() => vi.fn());
+vi.mock('./app-check-provider', () => ({ requestNativeAppCheckRefresh: requestNativeRefreshMock }));
+
 // Imported after the mock so the module under test binds to the stubbed getToken.
 const { attestAppCheck, ensureAppCheckToken, isAttested, registerAppCheck } = await import('./app-check');
 
@@ -59,6 +62,24 @@ describe('ensureAppCheckToken', () => {
     getTokenMock.mockResolvedValue({ token: 'abc' });
     await expect(ensureAppCheckToken(undefined, true)).resolves.toBe(true);
     expect(getTokenMock).toHaveBeenCalledWith(INSTANCE, true);
+  });
+
+  // On native the CustomProvider cannot see the JS forceRefresh flag, so without this the
+  // forced round trip would hand back the very native token the backend just rejected.
+  it('a forced attestation also forces the native provider', async () => {
+    registerAppCheck(INSTANCE);
+    requestNativeRefreshMock.mockClear();
+    getTokenMock.mockResolvedValue({ token: 'abc' });
+    await ensureAppCheckToken(undefined, true);
+    expect(requestNativeRefreshMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('a cached attestation leaves the native provider alone', async () => {
+    registerAppCheck(INSTANCE);
+    requestNativeRefreshMock.mockClear();
+    getTokenMock.mockResolvedValue({ token: 'abc' });
+    await ensureAppCheckToken();
+    expect(requestNativeRefreshMock).not.toHaveBeenCalled();
   });
 
   // A denial incident kills EVERY open listener at once and each one's recovery calls in here.
