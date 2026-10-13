@@ -10,6 +10,7 @@
   "fee": { "label": "Gebühr", "netLabel": "netto" },
   "import": {
     "file": "Datei importieren",
+    "choose": "Datei auswählen",
     "summary": {
       "title": "Import abgeschlossen",
       "parsed": "Zeilen in der Datei",

@@ -10,6 +10,7 @@
   "fee": { "label": "Frais", "netLabel": "net" },
   "import": {
     "file": "Importer un fichier",
+    "choose": "Choisir un fichier",
     "summary": {
       "title": "Import terminé",
       "parsed": "lignes dans le fichier",

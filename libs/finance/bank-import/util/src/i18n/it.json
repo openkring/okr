@@ -10,6 +10,7 @@
   "fee": { "label": "Commissione", "netLabel": "netto" },
   "import": {
     "file": "Importa file",
+    "choose": "Scegli file",
     "summary": {
       "title": "Importazione completata",
       "parsed": "righe nel file",

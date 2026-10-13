@@ -24,6 +24,7 @@ export const BANK_IMPORT_I18N_KEYS = {
   fee_net_label:        PFX + 'fee.netLabel',
 
   import_file:          PFX + 'import.file',
+  import_choose:        PFX + 'import.choose',
   import_summary_title: PFX + 'import.summary.title',
   import_summary_parsed: PFX + 'import.summary.parsed',
   import_summary_new:   PFX + 'import.summary.new',

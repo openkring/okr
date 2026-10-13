@@ -3,7 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DecimalPipe } from '@angular/common';
 import {
-  ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonChip, IonCol, IonContent, IonGrid,
+  ActionSheetController, ActionSheetOptions, AlertController, IonButton, IonButtons, IonChip, IonCol, IonContent, IonGrid,
   IonHeader, IonIcon, IonItem, IonMenuButton, IonNote, IonPopover, IonRow, IonSelect, IonSelectOption, IonTitle, IonToolbar,
 } from '@ionic/angular';
 
@@ -121,6 +121,7 @@ export class BankImportList {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly actionSheetController = inject(ActionSheetController);
+  private readonly alertController = inject(AlertController);
   private readonly alertService = inject(AlertService);
   private readonly imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 
@@ -177,8 +178,24 @@ export class BankImportList {
     await this.router.navigate([], { queryParams: { action: null }, queryParamsHandling: 'merge', replaceUrl: true });
     if (this.store.accountingStore.isExternallyManaged()) return;
     switch (action) {
-      case 'import': await this.store.importFile(); break;
+      case 'import': await this.offerImport(); break;
     }
+  }
+
+  /**
+   * The quick action runs long after the user's tap (navigation, lazy load), and Safari/iOS refuse a file
+   * dialog outside a gesture. So ask once: the button's tap is a fresh gesture, and its handler calls
+   * importFile() synchronously (pickFile() opens the dialog before the first await).
+   */
+  private async offerImport(): Promise<void> {
+    const alert = await this.alertController.create({
+      header: this.store.i18n.import_file(),
+      buttons: [
+        { text: this.store.i18n.cancel(), role: 'cancel' },
+        { text: this.store.i18n.import_choose(), handler: () => { void this.store.importFile(); } },
+      ],
+    });
+    await alert.present();
   }
 
   /** List-level context-menu actions (DB `okr-menu` call items whose `url` is the method name). */
