@@ -47,6 +47,11 @@ import { FEATURE_ROUTES, type BlockRoutes } from './feature-catalogue';
  * shape of a feature it is not entitled to (the guard redirects to the tenant's `rootUrl`
  * rather than 404-vs-403, for the same reason — see `isFeatureEnabledGuard`).
  *
+ * REDIRECTS ARE PASSED THROUGH UNGATED. Angular rejects `redirectTo` together with
+ * `canActivate` at bootstrap (NG04014), which takes the whole app down. A redirect runs before
+ * any guard anyway, and its target route is gated in its own right (spec 1.100's
+ * `invoice-aging` → `accounting/:books/aging`).
+ *
  * THE COLD-START GAP, CLOSED IN TASK G. `isFeatureEnabledGuard` used to read `effective()`
  * synchronously, with no notion of "not loaded yet": during the cold-start window the two
  * async inputs read as their defaults — `appConfig().enabledFeatures` `undefined` (meaning
@@ -64,7 +69,7 @@ export function composeGatedFeatureRoutes(sources: BlockRoutes[] = FEATURE_ROUTE
     // One closure per block, shared by that block's fragments: the guard is pure, and
     // re-creating it per fragment would only make identity assertions in tests harder.
     const featureGuard = isFeatureEnabledGuard(source.id);
-    return source.routes().map(fragment => ({
+    return source.routes().map(fragment => fragment.redirectTo !== undefined ? fragment : ({
       ...fragment,
       canActivate: [featureGuard, ...(fragment.canActivate ?? [])],
     }));

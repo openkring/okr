@@ -178,6 +178,11 @@ describe('composeGatedFeatureRoutes', () => {
       original.forEach((before, i) => {
         const after = gated[i].canActivate ?? [];
         const own = before.canActivate ?? [];
+        // A redirect is passed through ungated — see the next test.
+        if (before.redirectTo !== undefined) {
+          if (gated[i].canActivate !== undefined) defects.push(`${block.id}[${i}] '${before.path}': redirect got a guard`);
+          return;
+        }
         if (after.length !== own.length + 1) {
           defects.push(`${block.id}[${i}] '${before.path}': ${own.length} guard(s) → ${after.length}`);
           return;
@@ -189,6 +194,20 @@ describe('composeGatedFeatureRoutes', () => {
     });
 
     expect(defects).toEqual([]);
+  });
+
+  /**
+   * A top-level REDIRECT must stay ungated: Angular rejects `redirectTo` together with
+   * `canActivate` at bootstrap (NG04014) — the whole app fails to start. Redirects run before
+   * guards anyway, and the target route carries its own gate. Spec 1.100 added the first such
+   * fragment (`invoice-aging` → `accounting/:books/aging`).
+   */
+  it('passes a top-level redirect through without a guard', () => {
+    const redirect = { path: 'old', redirectTo: '/new' };
+    const block = { id: 'finance', routes: () => [redirect] };
+    const [composed] = composeGatedFeatureRoutes([block]);
+    expect(composed).toBe(redirect);
+    expect(composed.canActivate).toBeUndefined();
   });
 
   /**
