@@ -6,7 +6,8 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { AssetModel, BookingLineModel, BookingModel } from '@okr/shared-models';
-import { resolveCostCenterKey } from '@okr/shared-util-core';
+import { getTodayStr, resolveCostCenterKey } from '@okr/shared-util-core';
+import { exportCsv } from '@okr/shared-util-angular';
 
 import { AccountingStore } from '@okr/finance-accounting-feature';
 import { AccountService } from '@okr/finance-account-data-access';
@@ -51,6 +52,22 @@ export const AssetStore = signalStore(
     isReadOnly: computed(() => store.accountingStore.isExternallyManaged()),
   })),
   withMethods(store => ({
+    /** the category's name for the list ('' while unknown) */
+    categoryName(categoryKey: string): string {
+      return store.categories().find(c => c.okey === categoryKey)?.name ?? '';
+    },
+
+    /** «Exportieren» (c-asset): the register as CSV */
+    async export(): Promise<void> {
+      const i18n = store.i18n;
+      const rows: string[][] = [[i18n.number(), i18n.name(), i18n.category(), i18n.acquisition_date(), i18n.acquisition_value(), i18n.life()]];
+      for (const a of store.assets()) {
+        rows.push([a.assetNo, a.name, this.categoryName(a.categoryKey), a.acquisitionDate,
+          ((a.acquisitionValue?.amount ?? 0) / 100).toFixed(2), String(a.usefulLifeMonths ?? '')]);
+      }
+      await exportCsv(rows, `anlagen-${getTodayStr()}`);
+    },
+
     setPeriodEnd(end: string): void {
 
     },

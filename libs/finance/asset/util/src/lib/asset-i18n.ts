@@ -6,6 +6,8 @@ export const ASSET_I18N_KEYS = {
   asset:                PFX + 'singular',
   assets:               PFX + 'plural',
   empty:                PFX + 'empty',
+  empty_hint:           PFX + 'emptyHint',
+  acquisition_value:    PFX + 'value.acquisition.label',
 
   list_title:           PFX + 'list.title',
   deduction:            PFX + 'deduction.label',

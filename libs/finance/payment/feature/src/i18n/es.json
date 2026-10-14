@@ -46,5 +46,23 @@
   },
   "payment": {
     "needs_review": "IBAN leído del texto del justificante – por favor, revísalo"
+  },
+  "info": {
+    "title": "Cómo funcionan las órdenes de pago",
+    "intro": "Una orden de pago es una forma de preparar pagos desde la app. No tienes por qué usarla: muchas facturas se pagan más fácilmente directamente en la banca electrónica.",
+    "waysTitle": "Otras formas de pagar una factura",
+    "wayQr": "Escanear el recibo de pago QR con la app del banco.",
+    "wayEbill": "eBill: aprobar la factura directamente en la banca electrónica.",
+    "wayIban": "Transferencia en la banca electrónica con el IBAN, el importe y la referencia de la factura.",
+    "orderTitle": "Cómo funciona una orden de pago (pain.001)",
+    "order1": "La app reúne los pagos en una orden. Hoy son los reembolsos de gastos aprobados; las facturas de acreedores aún no se pueden añadir a una orden.",
+    "order2": "Eliges la cuenta de cargo y la fecha de ejecución y liberas la orden. La app comprueba que todo esté completo.",
+    "order3": "Con «Descargar pain.001» obtienes un archivo que subes a la banca electrónica. Allí confirmas los pagos; si hacen falta dos firmas, la segunda persona también los aprueba allí.",
+    "order4": "El banco ejecuta los pagos en la fecha de ejecución.",
+    "mapTitle": "Cómo se relaciona el pago con la factura del acreedor",
+    "mapBank": "Importación bancaria (recomendada): importa el extracto. La app reconoce el pago por la referencia QR, o por el importe pendiente junto con el nombre del proveedor, y marca la factura como pagada.",
+    "mapPost": "«Registrar pago» → Contabilizar: abre la factura y registra el pago. La app lo contabiliza de la cuenta de acreedores a la cuenta bancaria elegida.",
+    "mapLink": "«Registrar pago» → Vincular: si el pago ya está contabilizado en el diario, vincula ese asiento con la factura. La lista muestra «Posible pago» para ello.",
+    "mapNote": "Un pago que solo figura en el diario y no está vinculado a la factura no cuenta como pagado: la factura sigue abierta."
   }
 }

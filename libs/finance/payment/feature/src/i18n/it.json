@@ -46,5 +46,23 @@
   },
   "payment": {
     "needs_review": "IBAN letto dal testo della ricevuta – da controllare"
+  },
+  "info": {
+    "title": "Come funzionano gli ordini di pagamento",
+    "intro": "Un ordine di pagamento è un modo per preparare i pagamenti dall’app. Non sei obbligato a usarlo: molte fatture si pagano più facilmente direttamente nell’e-banking.",
+    "waysTitle": "Altri modi per pagare una fattura",
+    "wayQr": "Scansionare la polizza di versamento QR con l’app della banca.",
+    "wayEbill": "eBill: approvare la fattura direttamente nell’e-banking.",
+    "wayIban": "Bonifico nell’e-banking con IBAN, importo e riferimento della fattura.",
+    "orderTitle": "Come funziona un ordine di pagamento (pain.001)",
+    "order1": "L’app raccoglie i pagamenti in un ordine. Oggi sono i rimborsi delle spese approvate; le fatture dei fornitori non si possono ancora aggiungere a un ordine.",
+    "order2": "Scegli il conto da addebitare e la data di esecuzione e liberi l’ordine. L’app controlla che tutto sia completo.",
+    "order3": "Con «Scarica pain.001» ottieni un file da caricare nell’e-banking. Lì confermi i pagamenti; se servono due firme, anche la seconda persona li approva lì.",
+    "order4": "La banca esegue i pagamenti alla data di esecuzione.",
+    "mapTitle": "Come il pagamento arriva alla fattura del fornitore",
+    "mapBank": "Importazione bancaria (consigliata): importa l’estratto conto. L’app riconosce il pagamento dal riferimento QR, o dall’importo aperto insieme al nome del fornitore, e segna la fattura come pagata.",
+    "mapPost": "«Registra pagamento» → Contabilizza: apri la fattura e registra il pagamento. L’app lo contabilizza dal conto fornitori al conto bancario scelto.",
+    "mapLink": "«Registra pagamento» → Collega: se il pagamento è già contabilizzato nel giornale, collega quella registrazione alla fattura. La lista mostra «Pagamento possibile».",
+    "mapNote": "Un pagamento che è solo nel giornale e non è collegato alla fattura non conta come pagato: la fattura resta aperta."
   }
 }

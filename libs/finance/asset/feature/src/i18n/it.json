@@ -2,10 +2,12 @@
     "costCenter": { "label": "Centro di costo" },
     "singular": "Attivo",
     "plural": "Attivi",
-    "empty": "Nessun attivo trovato",
+    "empty": "Nessun cespite trovato.",
+    "emptyHint": "Aggiungi un cespite con il menu «…» in alto a destra.",
+    "value": { "acquisition": { "label": "Valore di acquisto" } },
 
     "list": {
-        "title": "Attivi / Valori patrimoniali / Asset"
+        "title": "Cespiti"
     },
     "deduction": {
         "label": "Ammortamento",

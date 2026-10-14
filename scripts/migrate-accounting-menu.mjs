@@ -31,6 +31,10 @@ const RETIRED = new Set([
 
 /** Copied from the catalogue (feature-blocks.ts, finance block) — keep the two in step. */
 const NEW_SPECS = [
+  // Anlagen «…» menu (the list names it itself; not a child of accounting-menu)
+  { name: 'c-asset', action: 'context', url: '', roleNeeded: 'treasurer', icon: 'help-circle', label: '', menuItems: ['asset-add', 'asset-export'] },
+  { name: 'asset-add', action: 'call', url: 'add', roleNeeded: 'treasurer', icon: 'add-circle', label: '@item.asset-add', menuItems: [] },
+  { name: 'asset-export', action: 'call', url: 'export', roleNeeded: 'treasurer', icon: 'download', label: '@item.asset-export', menuItems: [] },
   { name: 'accounting-books', action: 'books', url: '', roleNeeded: 'treasurer', icon: 'money', label: '@item.accounting-books', menuItems: [] },
   { name: 'accounting-overview', action: 'navigate', url: '/accounting/@BOOKS@/overview', roleNeeded: 'treasurer', icon: 'checkmark', label: '@item.accounting-overview', menuItems: [] },
   { name: 'accounting-cost', action: 'navigate', url: '/accounting/@BOOKS@/cost-center/c-cost-center', roleNeeded: 'treasurer', icon: 'target', label: '@item.accounting-cost', menuItems: [] },

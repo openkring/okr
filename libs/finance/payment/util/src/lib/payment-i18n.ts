@@ -4,6 +4,23 @@ const PFX = '@finance/payment/feature.';
 
 export const PAYMENT_I18N_KEYS = {
   list_title:        PFX + 'list.title',
+  // «So funktionieren Zahlungsaufträge» (the (i) button on the list)
+  info_title: PFX + 'info.title',
+  info_intro: PFX + 'info.intro',
+  info_waysTitle: PFX + 'info.waysTitle',
+  info_wayQr: PFX + 'info.wayQr',
+  info_wayEbill: PFX + 'info.wayEbill',
+  info_wayIban: PFX + 'info.wayIban',
+  info_orderTitle: PFX + 'info.orderTitle',
+  info_order1: PFX + 'info.order1',
+  info_order2: PFX + 'info.order2',
+  info_order3: PFX + 'info.order3',
+  info_order4: PFX + 'info.order4',
+  info_mapTitle: PFX + 'info.mapTitle',
+  info_mapBank: PFX + 'info.mapBank',
+  info_mapPost: PFX + 'info.mapPost',
+  info_mapLink: PFX + 'info.mapLink',
+  info_mapNote: PFX + 'info.mapNote',
   empty:             PFX + 'empty',
   approve_label:     PFX + 'approve.label',
   as_view:           PFX + 'actionsheet.view',

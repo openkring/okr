@@ -666,7 +666,9 @@
     "accounting-open-items": "Postes ouverts",
     "bill-open-items": "Rapprocher les postes ouverts",
     "invoice-open-items": "Rapprocher les postes ouverts",
-    "accounting-books": "Choisir la comptabilité"
+    "accounting-books": "Choisir la comptabilité",
+    "asset-add": "Ajouter une immobilisation",
+    "asset-export": "Exporter"
   },
   "ownership": {
     "fork_confirm": "« {name} » appartient au catalogue de fonctionnalités ({blocks}).\n\nL'enregistrement crée une copie propre au locataire « {forkKey} » et détache ce locataire de l'original partagé. Les corrections futures du catalogue (URL, action, rôle) n'atteindront plus cette entrée.\n\nEnregistrer quand même ?",

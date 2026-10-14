@@ -46,5 +46,23 @@
   },
   "payment": {
     "needs_review": "IBAN read from the receipt text – please check"
+  },
+  "info": {
+    "title": "How payment orders work",
+    "intro": "A payment order is one way to prepare payments from within the app. You don't have to use it – many bills are easier to pay directly in e-banking.",
+    "waysTitle": "Other ways to pay a bill",
+    "wayQr": "Scan the QR payment slip with your banking app.",
+    "wayEbill": "eBill: approve the bill directly in e-banking.",
+    "wayIban": "Transfer in e-banking with the IBAN, the amount and the bill's reference.",
+    "orderTitle": "How a payment order works (pain.001)",
+    "order1": "The app collects payments in an order. Today these are the refunds of approved expenses; supplier bills cannot be added to an order yet.",
+    "order2": "You choose the account to be debited and the execution date, then release the order. The app checks that everything is complete.",
+    "order3": "«Download pain.001» gives you a file to upload in e-banking. You confirm the payments there – if two signatures are needed, the second person approves them there as well.",
+    "order4": "The bank executes the payments on the execution date.",
+    "mapTitle": "How the payment gets to the supplier bill",
+    "mapBank": "Bank import (recommended): import the bank statement. The app recognises the payment by its QR reference, or by the open amount together with the supplier's name, and marks the bill as paid.",
+    "mapPost": "«Record payment» → Post: open the bill and record the payment. The app posts it from the payables account to the chosen bank account.",
+    "mapLink": "«Record payment» → Link: if the payment is already posted in the journal, link that booking to the bill. The list shows «Possible payment» for this.",
+    "mapNote": "A payment that is only in the journal and not linked to the bill does not count as paid – the bill stays open."
   }
 }

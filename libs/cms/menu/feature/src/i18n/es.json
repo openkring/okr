@@ -666,7 +666,9 @@
     "accounting-open-items": "Partidas abiertas",
     "bill-open-items": "Conciliar partidas abiertas",
     "invoice-open-items": "Conciliar partidas abiertas",
-    "accounting-books": "Elegir contabilidad"
+    "accounting-books": "Elegir contabilidad",
+    "asset-add": "Añadir activo",
+    "asset-export": "Exportar"
   },
   "ownership": {
     "fork_confirm": "«{name}» pertenece al catálogo de funciones ({blocks}).\n\nAl guardar se crea una copia propia del inquilino «{forkKey}» y se desvincula este inquilino del original compartido. Las futuras correcciones del catálogo (URL, acción, rol) ya no llegarán a esta entrada.\n\n¿Guardar de todos modos?",

@@ -46,5 +46,23 @@
   },
   "payment": {
     "needs_review": "IBAN aus dem Belegtext gelesen – bitte prüfen"
+  },
+  "info": {
+    "title": "So funktionieren Zahlungsaufträge",
+    "intro": "Ein Zahlungsauftrag ist eine Möglichkeit, Zahlungen aus der App heraus vorzubereiten. Du musst ihn nicht verwenden – viele Rechnungen bezahlst du einfacher direkt im E-Banking.",
+    "waysTitle": "Andere Wege, eine Rechnung zu bezahlen",
+    "wayQr": "QR-Einzahlungsschein mit der Banking-App scannen.",
+    "wayEbill": "eBill: die Rechnung direkt im E-Banking freigeben.",
+    "wayIban": "Überweisung im E-Banking mit IBAN, Betrag und der Referenz der Rechnung.",
+    "orderTitle": "So läuft ein Zahlungsauftrag (pain.001)",
+    "order1": "Die App sammelt Zahlungen in einem Auftrag. Heute sind das die Rückerstattungen genehmigter Spesen; Kreditoren-Rechnungen lassen sich noch nicht in einen Auftrag übernehmen.",
+    "order2": "Du wählst das Konto, das belastet wird, und das Ausführungsdatum und gibst den Auftrag frei. Die App prüft dabei, ob alles vollständig ist.",
+    "order3": "Mit «pain.001 herunterladen» erhältst du eine Datei, die du im E-Banking hochlädst. Dort bestätigst du die Zahlungen – braucht es zwei Unterschriften, gibt die zweite Person sie ebenfalls dort frei.",
+    "order4": "Die Bank führt die Zahlungen am Ausführungsdatum aus.",
+    "mapTitle": "Wie die Zahlung zur Kreditoren-Rechnung kommt",
+    "mapBank": "Bankimport (empfohlen): Importiere den Kontoauszug. Die App erkennt die Zahlung an der QR-Referenz oder am offenen Betrag zusammen mit dem Namen des Lieferanten und setzt die Rechnung auf «bezahlt».",
+    "mapPost": "«Zahlung erfassen» → Buchen: Öffne die Rechnung und erfasse die Zahlung. Die App bucht sie vom Kreditorenkonto auf das gewählte Bankkonto.",
+    "mapLink": "«Zahlung erfassen» → Verknüpfen: Ist die Zahlung schon im Journal gebucht, verknüpfst du diese Buchung mit der Rechnung. Die Liste zeigt dafür «Mögliche Zahlung» an.",
+    "mapNote": "Eine Zahlung, die nur im Journal steht und nicht mit der Rechnung verknüpft ist, gilt nicht als bezahlt – die Rechnung bleibt offen."
   }
 }

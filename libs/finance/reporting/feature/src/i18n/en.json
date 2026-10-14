@@ -6,7 +6,18 @@
     "title": "Income statement"
   },
   "cashflow": {
-    "title": "Cash flow statement"
+    "title": "Cash flow statement",
+    "year": "Fiscal year",
+    "opening": "Opening cash balance",
+    "inflows": "Cash inflow",
+    "outflows": "Cash outflow",
+    "totalIn": "Total inflow",
+    "totalOut": "Total outflow",
+    "net": "Change in cash",
+    "closing": "Closing cash balance",
+    "internal": "Transfers between cash, post and bank (not counted)",
+    "empty": "There are no movements on cash, post or bank in this fiscal year.",
+    "explain": "Shows where the money on cash, post and bank accounts (1000–1059) came from and what it was spent on – per counter account of the bookings. Opening balance plus change gives the closing balance."
   },
   "export": {
     "csv": "Export CSV",

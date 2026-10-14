@@ -46,5 +46,23 @@
   },
   "payment": {
     "needs_review": "IBAN lu dans le texte du justificatif – à vérifier"
+  },
+  "info": {
+    "title": "Comment fonctionnent les ordres de paiement",
+    "intro": "Un ordre de paiement est une façon de préparer des paiements depuis l’app. Tu n’es pas obligé·e de l’utiliser – beaucoup de factures se paient plus simplement directement dans l’e-banking.",
+    "waysTitle": "Autres façons de payer une facture",
+    "wayQr": "Scanner le bulletin de versement QR avec l’app bancaire.",
+    "wayEbill": "eBill : valider la facture directement dans l’e-banking.",
+    "wayIban": "Virement dans l’e-banking avec l’IBAN, le montant et la référence de la facture.",
+    "orderTitle": "Déroulement d’un ordre de paiement (pain.001)",
+    "order1": "L’app rassemble les paiements dans un ordre. Aujourd’hui, ce sont les remboursements de frais approuvés ; les factures fournisseurs ne peuvent pas encore y être ajoutées.",
+    "order2": "Tu choisis le compte débité et la date d’exécution, puis tu libères l’ordre. L’app vérifie que tout est complet.",
+    "order3": "« Télécharger pain.001 » te donne un fichier à charger dans l’e-banking. Tu y confirmes les paiements – si deux signatures sont nécessaires, la deuxième personne les valide aussi là-bas.",
+    "order4": "La banque exécute les paiements à la date d’exécution.",
+    "mapTitle": "Comment le paiement est relié à la facture fournisseur",
+    "mapBank": "Import bancaire (recommandé) : importe le relevé. L’app reconnaît le paiement grâce à la référence QR, ou au montant ouvert avec le nom du fournisseur, et marque la facture comme payée.",
+    "mapPost": "« Saisir le paiement » → Comptabiliser : ouvre la facture et saisis le paiement. L’app le comptabilise du compte fournisseurs vers le compte bancaire choisi.",
+    "mapLink": "« Saisir le paiement » → Relier : si le paiement est déjà comptabilisé dans le journal, relie cette écriture à la facture. La liste affiche « Paiement possible » pour cela.",
+    "mapNote": "Un paiement qui figure seulement dans le journal sans être relié à la facture ne compte pas comme payé – la facture reste ouverte."
   }
 }

@@ -2,10 +2,12 @@
     "costCenter": { "label": "Centro de costes" },
     "singular": "Activo",
     "plural": "Activos",
-    "empty": "No se han encontrado activos",
+    "empty": "No se han encontrado activos fijos.",
+    "emptyHint": "Añade un activo con el menú «…» arriba a la derecha.",
+    "value": { "acquisition": { "label": "Valor de adquisición" } },
 
     "list": {
-        "title": "Activos / Valores patrimoniales / Asset"
+        "title": "Activos fijos"
     },
     "deduction": {
         "label": "Amortización",

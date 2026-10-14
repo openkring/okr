@@ -6,7 +6,18 @@
     "title": "Erfolgsrechnung"
   },
   "cashflow": {
-    "title": "Geldflussrechnung"
+    "title": "Geldflussrechnung",
+    "year": "Geschäftsjahr",
+    "opening": "Anfangsbestand flüssige Mittel",
+    "inflows": "Mittelzufluss",
+    "outflows": "Mittelabfluss",
+    "totalIn": "Total Zufluss",
+    "totalOut": "Total Abfluss",
+    "net": "Veränderung flüssige Mittel",
+    "closing": "Endbestand flüssige Mittel",
+    "internal": "Umbuchungen zwischen Kasse, Post und Bank (nicht mitgezählt)",
+    "empty": "In diesem Geschäftsjahr gibt es keine Bewegungen auf Kasse, Post oder Bank.",
+    "explain": "Zeigt, woher das Geld auf Kasse, Post und Bank (Konten 1000–1059) kam und wofür es ausgegeben wurde – je Gegenkonto der Buchungen. Anfangsbestand plus Veränderung ergibt den Endbestand."
   },
   "export": {
     "csv": "CSV exportieren",

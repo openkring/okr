@@ -1498,6 +1498,11 @@ const finance: FeatureBlock = {
     { key: 'c-allocation', name: 'c-allocation', url: '', action: 'context', roleNeeded: 'treasurer', icon: 'help-circle', label: '', children: [
       { key: 'allocation-add', name: 'allocation-add', url: 'add', action: 'call', roleNeeded: 'treasurer', icon: 'add-circle', label: '@item.allocation-add' },
     ] },
+    // Anlagen (spec 1.100): the register's «…» menu; the route keeps its url, the list names the menu itself
+    { key: 'c-asset', name: 'c-asset', url: '', action: 'context', roleNeeded: 'treasurer', icon: 'help-circle', label: '', children: [
+      { key: 'asset-add', name: 'asset-add', url: 'add', action: 'call', roleNeeded: 'treasurer', icon: 'add-circle', label: '@item.asset-add' },
+      { key: 'asset-export', name: 'asset-export', url: 'export', action: 'call', roleNeeded: 'treasurer', icon: 'download', label: '@item.asset-export' },
+    ] },
     { key: 'c-period', name: 'c-period', url: '', action: 'context', roleNeeded: 'treasurer', icon: 'help-circle', label: '', children: [
       { key: 'period-create', name: 'period-create', url: 'create', action: 'call', roleNeeded: 'treasurer', icon: 'add', label: '@item.period-create' },
     ] },

@@ -2,10 +2,12 @@
     "costCenter": { "label": "Cost centre" },
     "singular": "Asset",
     "plural": "Assets",
-    "empty": "No assets found",
+    "empty": "No fixed assets found.",
+    "emptyHint": "Add an asset with the «…» menu at the top right.",
+    "value": { "acquisition": { "label": "Acquisition value" } },
 
     "list": {
-        "title": "Assets / Asset values / Asset"
+        "title": "Fixed assets"
     },
     "deduction": {
         "label": "Depreciation",

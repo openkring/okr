@@ -6,7 +6,18 @@
     "title": "Compte de résultat"
   },
   "cashflow": {
-    "title": "Tableau des flux de trésorerie"
+    "title": "Tableau des flux de trésorerie",
+    "year": "Exercice",
+    "opening": "Liquidités au début",
+    "inflows": "Entrées de liquidités",
+    "outflows": "Sorties de liquidités",
+    "totalIn": "Total des entrées",
+    "totalOut": "Total des sorties",
+    "net": "Variation des liquidités",
+    "closing": "Liquidités à la fin",
+    "internal": "Virements entre caisse, poste et banque (non comptés)",
+    "empty": "Aucun mouvement sur la caisse, la poste ou la banque durant cet exercice.",
+    "explain": "Montre d’où vient l’argent de la caisse, de la poste et de la banque (comptes 1000–1059) et à quoi il a été dépensé – par contrepartie des écritures. Le solde initial plus la variation donne le solde final."
   },
   "export": {
     "csv": "Exporter en CSV",

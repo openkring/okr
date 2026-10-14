@@ -2,10 +2,12 @@
     "costCenter": { "label": "Kostenstelle" },
     "singular": "Aktivum",
     "plural": "Aktiven",
-    "empty": "Keine Aktiven gefunden",
+    "empty": "Keine Anlagen gefunden.",
+    "emptyHint": "Erfasse eine Anlage über das Menü «…» oben rechts.",
+    "value": { "acquisition": { "label": "Anschaffungswert" } },
 
     "list": {
-        "title": "Aktiven / Vermögenswerte / Asset"
+        "title": "Anlagen"
     },
     "deduction": {
         "label": "Abschreibung",

@@ -6,7 +6,18 @@
     "title": "Conto economico"
   },
   "cashflow": {
-    "title": "Rendiconto finanziario"
+    "title": "Rendiconto finanziario",
+    "year": "Esercizio",
+    "opening": "Liquidità iniziale",
+    "inflows": "Entrate di liquidità",
+    "outflows": "Uscite di liquidità",
+    "totalIn": "Totale entrate",
+    "totalOut": "Totale uscite",
+    "net": "Variazione della liquidità",
+    "closing": "Liquidità finale",
+    "internal": "Giroconti tra cassa, posta e banca (non conteggiati)",
+    "empty": "In questo esercizio non ci sono movimenti su cassa, posta o banca.",
+    "explain": "Mostra da dove proviene il denaro di cassa, posta e banca (conti 1000–1059) e per cosa è stato speso, per contropartita delle registrazioni. Il saldo iniziale più la variazione dà il saldo finale."
   },
   "export": {
     "csv": "Esporta CSV",

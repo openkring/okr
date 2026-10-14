@@ -2,10 +2,12 @@
     "costCenter": { "label": "Centre de coûts" },
     "singular": "Actif",
     "plural": "Actifs",
-    "empty": "Aucun actif trouvé",
+    "empty": "Aucune immobilisation trouvée.",
+    "emptyHint": "Ajoute une immobilisation via le menu «…» en haut à droite.",
+    "value": { "acquisition": { "label": "Valeur d’acquisition" } },
 
     "list": {
-        "title": "Actifs / Valeurs patrimoniales / Asset"
+        "title": "Immobilisations"
     },
     "deduction": {
         "label": "Amortissement",

@@ -6,7 +6,18 @@
     "title": "Cuenta de resultados"
   },
   "cashflow": {
-    "title": "Estado de flujos de efectivo"
+    "title": "Estado de flujos de efectivo",
+    "year": "Ejercicio",
+    "opening": "Liquidez inicial",
+    "inflows": "Entradas de efectivo",
+    "outflows": "Salidas de efectivo",
+    "totalIn": "Total entradas",
+    "totalOut": "Total salidas",
+    "net": "Variación de liquidez",
+    "closing": "Liquidez final",
+    "internal": "Traspasos entre caja, correo y banco (no contados)",
+    "empty": "No hay movimientos en caja, correo o banco en este ejercicio.",
+    "explain": "Muestra de dónde vino el dinero de caja, correo y banco (cuentas 1000–1059) y en qué se gastó, por contrapartida de los asientos. El saldo inicial más la variación da el saldo final."
   },
   "export": {
     "csv": "Exportar CSV",

@@ -17,6 +17,12 @@ import { injectAccountingRoute } from './accounting-route';
  * Each button navigates on its own click rather than on the segment's ionChange: ionChange fires
  * only when Ionic thinks the value changed, and a cached page's segment can already hold the tapped
  * value — the tap then did nothing and had to be repeated.
+ *
+ * The segment is re-created whenever the active screen changes instead of being given a new value:
+ * Ionic keeps the previous page alive but hidden, and an ion-segment that changes value while hidden
+ * animates its indicator from the old button by measuring zero-width buttons — the marker line stayed
+ * on the old segment (Bankimport, Zahlungsaufträge, Spesen) while the page showed another screen.
+ * A fresh segment draws its marker from the value, without measuring.
  */
 @Component({
   selector: 'okr-accounting-segments',
@@ -24,13 +30,15 @@ import { injectAccountingRoute } from './accounting-route';
   template: `
     @if (segments().length > 1) {
       <ion-toolbar>
-        <ion-segment [scrollable]="true" color="secondary" [value]="current()?.segment?.id">
-          @for (seg of segments(); track seg.id) {
-            <ion-segment-button [value]="seg.id" (click)="go(seg)">
-              <ion-label>{{ label(seg) }}</ion-label>
-            </ion-segment-button>
-          }
-        </ion-segment>
+        @for (activeId of [activeId()]; track activeId) {
+          <ion-segment [scrollable]="true" color="secondary" [value]="activeId">
+            @for (seg of segments(); track seg.id) {
+              <ion-segment-button [value]="seg.id" (click)="go(seg)">
+                <ion-label>{{ label(seg) }}</ion-label>
+              </ion-segment-button>
+            }
+          </ion-segment>
+        }
       </ion-toolbar>
     }
   `,
@@ -41,6 +49,8 @@ export class AccountingSegments {
   private readonly featureStore = inject(FeatureStore);
 
   protected readonly current = injectAccountingRoute();
+  /** the screen shown; the segment is re-created when it changes (see the class comment) */
+  protected readonly activeId = computed(() => this.current()?.segment.id ?? '');
 
   /** books of the url, else the selection (books-less routes like /expense/all) */
   private readonly books = computed(() => this.current()?.books || this.store.selectedBooks());
