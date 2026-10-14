@@ -1,12 +1,13 @@
 import { inject, Injectable } from '@angular/core';
 import { map, Observable } from 'rxjs';
 import { getApp } from 'firebase/app';
+import { collection, getDocs, limit, query, QueryDocumentSnapshot, startAfter } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
 import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
-import { AvatarInfo, BookingCollection, BookingLineModel, BookingModel, BookingStatus, UserModel } from '@okr/shared-models';
-import { getSystemQuery } from '@okr/shared-util-core';
+import { AvatarInfo, BookingCollection, BookingLineModel, BookingModel, BookingStatus, DbQuery, UserModel } from '@okr/shared-models';
+import { getQuery, getSystemQuery } from '@okr/shared-util-core';
 
 import { validateBookingBalance } from '@okr/finance-booking-util';
 
@@ -75,6 +76,15 @@ function toWriteLine(line: BookingLineModel): Record<string, unknown> {
   };
 }
 
+/** Bookings per journal page (spec 1.102). */
+export const JOURNAL_PAGE_SIZE = 100;
+
+/** One page of a period's bookings, newest first; `cursor` is set while more pages may follow. */
+export interface BookingPage {
+  bookings: BookingModel[];
+  cursor?: QueryDocumentSnapshot;
+}
+
 @Injectable({ providedIn: 'root' })
 export class BookingService {
   private readonly env = inject(ENV);
@@ -137,6 +147,46 @@ export class BookingService {
       { key: 'accountingTenantId', operator: '==' as const, value: accountingTenantId },
     ];
     return this.firestoreService.getDataOnce<BookingModel>(BookingCollection, query, orderBy, sortOrder);
+  }
+
+  /** tenant + books filter, plus an optional date range ('' = open end) */
+  private periodQuery(accountingTenantId: string, from: string, to: string, toExclusive = false): DbQuery[] {
+    return [
+      ...getSystemQuery(this.tenantId),
+      { key: 'accountingTenantId', operator: '==', value: accountingTenantId },
+      ...(from ? [{ key: 'date', operator: '>=', value: from }] : []),
+      ...(to ? [{ key: 'date', operator: toExclusive ? '<' : '<=', value: to }] : []),
+    ];
+  }
+
+  /**
+   * One page of the books' bookings dated in [from, to] ('' = open end), newest first — the journal
+   * loads its period page by page (spec 1.102). One-shot `getDocs`, no listener. Uses the index
+   * (tenants, accountingTenantId, isArchived, date desc). Rejects on a failed read.
+   */
+  public async listPage(accountingTenantId: string, from: string, to: string, cursor?: QueryDocumentSnapshot, size = JOURNAL_PAGE_SIZE): Promise<BookingPage> {
+    const pageQuery = query(collection(this.firestoreService.firestore, BookingCollection),
+      ...getQuery(this.periodQuery(accountingTenantId, from, to), 'date', 'desc'),
+      ...(cursor ? [startAfter(cursor)] : []), limit(size));
+    const snapshot = await getDocs(pageQuery);
+    return {
+      bookings: snapshot.docs.map(d => ({ ...d.data(), okey: d.id }) as BookingModel),
+      cursor: snapshot.docs.length === size ? snapshot.docs[snapshot.docs.length - 1] : undefined,
+    };
+  }
+
+  /** All bookings dated in [from, before) — the headers an opening balance joins its lines to. Rejects on failure. */
+  public listBefore(accountingTenantId: string, from: string, before: string): Promise<BookingModel[]> {
+    return this.firestoreService.getDataOnceStrict<BookingModel>(BookingCollection,
+      this.periodQuery(accountingTenantId, from, before, true), 'date', 'desc');
+  }
+
+  /** Bookings awaiting a treasurer decision, all years (the journal's badge); undefined when unreadable. */
+  public countForReview(accountingTenantId: string): Promise<number | undefined> {
+    return this.firestoreService.countOnce(BookingCollection, [
+      ...this.periodQuery(accountingTenantId, '', ''),
+      { key: 'status', operator: '==', value: 'forReview' },
+    ]);
   }
 
   /**

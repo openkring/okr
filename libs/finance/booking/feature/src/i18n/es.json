@@ -1,6 +1,9 @@
 {
   "list": {
-    "title": "Diario"
+    "title": "Diario",
+    "loadingMore": "Cargando más asientos …",
+    "stillLoading": "Los asientos aún se están cargando. Vuelve a intentarlo en un momento.",
+    "loadFailed": "No se pudieron cargar todos los asientos. Desliza la lista hacia abajo para intentarlo de nuevo."
   },
   "empty": "No se encontraron asientos.",
   "as": {

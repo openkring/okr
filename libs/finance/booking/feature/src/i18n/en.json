@@ -1,6 +1,9 @@
 {
   "list": {
-    "title": "Journal"
+    "title": "Journal",
+    "loadingMore": "Loading more bookings …",
+    "stillLoading": "The bookings are still loading. Please try again in a moment.",
+    "loadFailed": "The bookings could not be loaded completely. Pull the list down to try again."
   },
   "empty": "No bookings found.",
   "as": {

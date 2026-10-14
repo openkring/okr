@@ -1,6 +1,6 @@
 import { Router } from '@angular/router';
 import { Component, computed, effect, ElementRef, inject, input, signal, untracked } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonItemDivider, IonLabel, IonList, IonMenuButton, IonNote, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular';
+import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonItemDivider, IonLabel, IonList, IonMenuButton, IonNote, IonPopover, IonRefresher, IonRefresherContent, IonRow, IonSpinner, IonTitle, IonToolbar } from '@ionic/angular';
 
 import { BookingLineModel, BookingModel, RoleName } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
@@ -31,7 +31,7 @@ function parseAmount(amount: string): number {
     Spinner, EmptyList, Menu, ListFilter, ReadOnlyBanner,
     IonHeader, IonToolbar, IonTitle, IonContent,
     IonList, IonItem, IonItemDivider, IonLabel, IonIcon, IonButton, IonButtons, IonMenuButton,
-    IonPopover, IonGrid, IonRow, IonCol, IonNote,
+    IonPopover, IonGrid, IonRow, IonCol, IonNote, IonRefresher, IonRefresherContent, IonSpinner,
   ],
   providers: [BookingStore],
   template: `
@@ -98,10 +98,12 @@ function parseAmount(amount: string): number {
   </ion-header>
 
   <ion-content>
+    <!-- the journal holds one period, read page by page (spec 1.102) and not live: pull down to re-read it -->
+    <ion-refresher slot="fixed" (ionRefresh)="onRefresh($event)"><ion-refresher-content /></ion-refresher>
     <okr-read-only-banner [message]="store.i18n.read_only_banner()" />
     @if(isLoading()) {
       <okr-spinner />
-    } @else if(filteredCount() === 0) {
+    } @else if(filteredCount() === 0 && !store.isLoadingMore()) {
       <okr-empty-list [message]="store.i18n.empty()" />
     } @else {
       <ion-list lines="inset">
@@ -175,9 +177,18 @@ function parseAmount(amount: string): number {
         }
       </ion-list>
     }
+    <!-- later pages are still coming in: search and filters see only part of the period so far -->
+    @if(store.isLoadingMore()) {
+      <div class="loading-more"><ion-spinner name="dots" /><span>{{ store.i18n.list_loadingMore() }}</span></div>
+    }
+    @if(store.periodFailed()) {
+      <ion-note class="load-failed">{{ store.i18n.list_loadFailed() }}</ion-note>
+    }
   </ion-content>
   `,
   styles: [`
+    .loading-more { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; color: var(--ion-color-medium); }
+    .load-failed { display: block; padding: 12px 16px; color: var(--ion-color-danger); }
     .attach-icon { font-size: 0.9rem; vertical-align: middle; margin-left: 4px; color: var(--ion-color-medium); }
     .clickable { cursor: pointer; user-select: none; }
     .account-badge {
@@ -263,6 +274,12 @@ export class BookingList {
   // binds the popover of the next page to the hidden button of the previous one.
   protected readonly popupId = signal(`c_bookings_${generateRandomString(8)}`);
   protected readonly isLoading = computed(() => this.store.isLoading());
+
+  /** pull-to-refresh: re-read the period (the journal is not a live listener, spec 1.102) */
+  protected async onRefresh(event: Event): Promise<void> {
+    await this.store.reload();
+    await (event.target as HTMLIonRefresherElement | null)?.complete();
+  }
   // sort state (default: newest first, as the store's journal order)
   private sortField = signal<JournalSortField>('date');
   private sortAsc   = signal(false);

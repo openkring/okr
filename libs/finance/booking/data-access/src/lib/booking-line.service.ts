@@ -3,8 +3,12 @@ import { Observable } from 'rxjs';
 
 import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
-import { BookingLineCollection, BookingLineModel } from '@okr/shared-models';
+import { BookingLineCollection, BookingLineModel, DbQuery } from '@okr/shared-models';
 import { getSystemQuery } from '@okr/shared-util-core';
+
+/** `bookingKey in [...]`: 15 keys × the 2-value tenant filter = Firestore's 30 disjunctions. */
+const BOOKING_KEY_CHUNK = 15;
+const PARALLEL_READS = 10;
 
 @Injectable({ providedIn: 'root' })
 export class BookingLineService {
@@ -18,6 +22,41 @@ export class BookingLineService {
       { key: 'accountingTenantId', operator: '==' as const, value: accountingTenantId },
     ];
     return this.firestoreService.searchData<BookingLineModel>(BookingLineCollection, query, 'none');
+  }
+
+  /**
+   * The lines of the given bookings (spec 1.102): `bookingKey in [...]`, 15 keys per read (Firestore
+   * allows 30 disjunctions; the tenant filter doubles them), up to 10 reads in parallel. One-shot;
+   * rejects on a failed read.
+   */
+  public async listForBookings(accountingTenantId: string, bookingKeys: string[]): Promise<BookingLineModel[]> {
+    const chunks: string[][] = [];
+    for (let i = 0; i < bookingKeys.length; i += BOOKING_KEY_CHUNK) chunks.push(bookingKeys.slice(i, i + BOOKING_KEY_CHUNK));
+    const lines: BookingLineModel[] = [];
+    for (let i = 0; i < chunks.length; i += PARALLEL_READS) {
+      const parts = await Promise.all(chunks.slice(i, i + PARALLEL_READS).map(keys =>
+        this.firestoreService.getDataOnceStrict<BookingLineModel>(BookingLineCollection, [
+          ...this.booksQuery(accountingTenantId),
+          { key: 'bookingKey', operator: 'in', value: keys },
+        ])));
+      lines.push(...parts.flat());
+    }
+    return lines;
+  }
+
+  /** Every line on one account, all years — the base of a running saldo's opening balance. Rejects on failure. */
+  public listForAccount(accountingTenantId: string, accountKey: string): Promise<BookingLineModel[]> {
+    return this.firestoreService.getDataOnceStrict<BookingLineModel>(BookingLineCollection, [
+      ...this.booksQuery(accountingTenantId),
+      { key: 'accountKey', operator: '==', value: accountKey },
+    ]);
+  }
+
+  private booksQuery(accountingTenantId: string): DbQuery[] {
+    return [
+      ...getSystemQuery(this.tenantId),
+      { key: 'accountingTenantId', operator: '==', value: accountingTenantId },
+    ];
   }
 
   /**

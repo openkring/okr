@@ -3,6 +3,7 @@ import { BookingLineModel, BookingModel } from '@okr/shared-models';
 import { accountClass, signedBalance } from '@okr/finance-reporting-util';
 
 import { bookingMonth, bookingYear } from './booking.util';
+import { saldoStart } from './journal-period.util';
 
 /**
  * Running account balance shown next to each journal row ("Saldo anzeigen"), plus the month
@@ -23,6 +24,9 @@ import { bookingMonth, bookingYear } from './booking.util';
  * JournalRow okey of a line row), carrying the saldo after that line. A not-posted row has NO
  * entry in the returned map (the list shows a dash), rather than the misleading balance of the
  * row above it.
+ *
+ * `opening` is the saldo before the first booking passed in — the journal loads one period
+ * (spec 1.102), so a balance-sheet account's history before it comes in as one number.
  */
 export function runningSaldoByBooking(
   bookings: BookingModel[],
@@ -30,18 +34,19 @@ export function runningSaldoByBooking(
   accountKey: string,
   accountId: string,
   periodFrom: string,
+  opening = 0,
 ): Map<string, number> {
   const saldi = new Map<string, number>();
   if (!accountKey) return saldi;
   const cls = accountClass(accountId);
   // balance-sheet accounts carry forward; P&L accounts restart with the period
-  const from = cls === 'assets' || cls === 'liabilities' ? '' : periodFrom;
+  const from = saldoStart(accountId, periodFrom);
 
   const chronological = bookings
     .filter(b => b.status === 'posted' && (b.date ?? '') >= from)
     .sort((a, b) => (a.date ?? '').localeCompare(b.date ?? '') || (a.bookingNo ?? 0) - (b.bookingNo ?? 0));
 
-  let saldo = 0;
+  let saldo = opening;
   for (const booking of chronological) {
     for (const line of linesByBooking.get(booking.okey) ?? []) {
       if (line.accountKey !== accountKey) continue;

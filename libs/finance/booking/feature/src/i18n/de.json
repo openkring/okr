@@ -1,6 +1,9 @@
 {
   "list": {
-    "title": "Journal"
+    "title": "Journal",
+    "loadingMore": "Weitere Buchungen werden geladen …",
+    "stillLoading": "Die Buchungen werden noch geladen. Versuch es gleich nochmals.",
+    "loadFailed": "Die Buchungen konnten nicht vollständig geladen werden. Zieh die Liste nach unten, um es nochmals zu versuchen."
   },
   "empty": "Keine Buchungen gefunden.",
   "as": {

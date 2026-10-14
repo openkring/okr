@@ -1,6 +1,9 @@
 {
   "list": {
-    "title": "Giornale"
+    "title": "Giornale",
+    "loadingMore": "Caricamento di altre registrazioni …",
+    "stillLoading": "Le registrazioni sono ancora in caricamento. Riprova tra un attimo.",
+    "loadFailed": "Non è stato possibile caricare tutte le registrazioni. Trascina la lista verso il basso per riprovare."
   },
   "empty": "Nessuna registrazione trovata.",
   "as": {

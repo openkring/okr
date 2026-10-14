@@ -1,6 +1,9 @@
 {
   "list": {
-    "title": "Journal"
+    "title": "Journal",
+    "loadingMore": "Chargement d’autres écritures …",
+    "stillLoading": "Les écritures sont encore en cours de chargement. Réessaie dans un instant.",
+    "loadFailed": "Les écritures n’ont pas pu être chargées entièrement. Tire la liste vers le bas pour réessayer."
   },
   "empty": "Aucune écriture trouvée.",
   "as": {
