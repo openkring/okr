@@ -616,37 +616,10 @@ export const AOC_I18N_KEYS = {
   statistics_content:                       PFX + 'statistics.content',
   statistics_title:                         PFX + 'statistics.title',
 
-  statistics_cl_title:                      PFX + 'statistics.competitionLevels.title',
-  statistics_cl_label:                      PFX + 'statistics.competitionLevels.label',
-  statistics_cl_conf:                       PFX + 'statistics.competitionLevels.conf',
-  statistics_cl_button:                     PFX + 'statistics.competitionLevels.button',
-  statistics_cl_description:                PFX + 'statistics.competitionLevels.description',
-
-  statistics_cl_stats_title:                PFX + 'statistics.clStats.title',
-  statistics_cl_stats_subtitle:             PFX + 'statistics.clStats.subTitle',
-  statistics_cl_stats_label:                PFX + 'statistics.clStats.label',
-  statistics_cl_stats_conf:                 PFX + 'statistics.clStats.conf',
-  statistics_cl_stats_button:               PFX + 'statistics.clStats.button',
-
-  statistics_age_by_gender_title:           PFX + 'statistics.ageByGender.title',
-  statistics_age_by_gender_subtitle:        PFX + 'statistics.ageByGender.subTitle',
   statistics_age_by_gender_label:           PFX + 'statistics.ageByGender.label',
   statistics_age_by_gender_conf:            PFX + 'statistics.ageByGender.conf',
   statistics_age_by_gender_error:           PFX + 'statistics.ageByGender.error',
   statistics_age_by_gender_button:          PFX + 'statistics.ageByGender.button',
-
-  statistics_cat_by_gender_title:           PFX + 'statistics.categoryByGender.title',
-  statistics_cat_by_gender_subtitle:        PFX + 'statistics.categoryByGender.subTitle',
-  statistics_cat_by_gender_label:           PFX + 'statistics.categoryByGender.label',
-  statistics_cat_by_gender_conf:            PFX + 'statistics.categoryByGender.conf',
-  statistics_cat_by_gender_button:          PFX + 'statistics.categoryByGender.button',
-
-  statistics_member_location_title:         PFX + 'statistics.memberLocation.title',
-  statistics_member_location_subtitle:      PFX + 'statistics.memberLocation.subTitle',
-  statistics_member_location_label:         PFX + 'statistics.memberLocation.label',
-  statistics_member_location_conf:          PFX + 'statistics.memberLocation.conf',
-  statistics_member_location_button:        PFX + 'statistics.memberLocation.button',
-
 
   // tag
   tag_title:                                PFX + 'tag.title',

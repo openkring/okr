@@ -7,7 +7,7 @@ The AOC (Admin Operations Console) is a restricted administrative dashboard for 
 - **Data** — Bulk-fix Firestore documents, validate model integrity, and regenerate search indexes across all collections.
 - **Content** — CMS health checks: find orphaned sections/menu items, detect dangling page-to-section or menu-to-sub-item references, and repair them interactively.
 - **Roles** — Manage Firebase Auth accounts and application user roles: create accounts, reset/set passwords, update Firebase user profiles, impersonate users, and manage role assignments.
-- **Statistics** — Trigger batch-update operations for derived statistics (competition levels, age/gender distribution, category-by-gender, member locations).
+- **Statistics** — Recompute the age-by-gender statistics («Altersstatistik nach Geschlecht») from the active memberships; the other statistics actions were removed (spec 1.101).
 - **Chat** — Admin view of the Matrix homeserver: browse rooms, inspect members, rename rooms, add aliases, invite users, provision Matrix accounts, kick members, deactivate users.
 - **Tag** — Manage the `tags` Firestore collection: browse, create, edit, and delete tag documents and their comma-separated tag strings per model type.
 - **User Accounts** — Cross-reference view of Firebase Auth accounts, application `UserModel` records, and `MembershipModel` entries; supports editing/deleting each tier independently.

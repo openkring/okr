@@ -775,40 +775,12 @@
     "header": "AOC Statistics",
     "content": "Certain statistics can be recalculated here from the current data. This calculation should only be performed when the database is in a stable state. The calculation may take some time. The statistics should then be reviewed and corrected manually if necessary.",
     "title": "Update statistics",
-    "competitionLevels": {
-      "title": "Competition categories",
-      "label": "Update competition categories",
-      "conf": "The competition categories were recalculated.",
-      "button": "Run",
-      "description": "The competitionLevels collection caches data from the collections subjects, memberships, ownerships. This data is needed to display the competition categories."
-    },
-    "clStats": {
-      "title": "Overview statistics",
-      "subTitle": "Statistics of the competition categories",
-      "label": "Update statistics of the competition categories",
-      "conf": "The statistics were recalculated.",
-      "button": "Run"
-    },
     "ageByGender": {
       "title": "Age structure",
       "subTitle": "Members by age and gender",
       "label": "Recalculate age statistics",
       "conf": "Age statistics were recalculated.",
       "error": "The age statistics could not be recalculated.",
-      "button": "Run"
-    },
-    "categoryByGender": {
-      "title": "Member structure",
-      "subTitle": "Members by category and gender",
-      "label": "Recalculate member structure",
-      "conf": "Member structure was recalculated.",
-      "button": "Run"
-    },
-    "memberLocation": {
-      "title": "Origin of active members",
-      "subTitle": "Active members by place of residence (postal code)",
-      "label": "Recalculate place-of-residence statistics",
-      "conf": "Place-of-residence statistics were recalculated.",
       "button": "Run"
     }
   },

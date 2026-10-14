@@ -31,39 +31,11 @@ import { AocStatisticsStore } from './aoc-statistics.store';
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
-            <!-- Update Competition Levels -->
-            <ion-row>
-              <ion-col size="6">{{ aocStatisticsStore.i18n.statistics_cl_label() }}</ion-col>
-              <ion-col size="6">
-                <okr-button [label]="aocStatisticsStore.i18n.statistics_cl_button()" iconName="checkbox-circle" (click)="updateCompetitionLevels()" />
-              </ion-col>
-            </ion-row>
-            <!-- Update Competition Levels statistics -->
-            <ion-row>
-              <ion-col size="6">{{ aocStatisticsStore.i18n.statistics_cl_stats_label() }}</ion-col>
-              <ion-col size="6">
-                <okr-button [label]="aocStatisticsStore.i18n.statistics_cl_stats_button()" iconName="checkbox-circle" (click)="updateCLStatistics()" />
-              </ion-col>
-            </ion-row>
             <!-- Update Age by Gender -->
             <ion-row>
               <ion-col size="6">{{ aocStatisticsStore.i18n.statistics_age_by_gender_label() }}</ion-col>
               <ion-col size="6">
                 <okr-button [label]="aocStatisticsStore.i18n.statistics_age_by_gender_button()" iconName="checkbox-circle" (click)="updateAgeByGender()" />
-              </ion-col>
-            </ion-row>
-            <!-- Update Category by Gender -->
-            <ion-row>
-              <ion-col size="6">{{ aocStatisticsStore.i18n.statistics_cat_by_gender_label() }}</ion-col>
-              <ion-col size="6">
-                <okr-button [label]="aocStatisticsStore.i18n.statistics_cat_by_gender_button()" iconName="checkbox-circle" (click)="updateCategoryByGender()" />
-              </ion-col>
-            </ion-row>
-            <!-- Update Member Location -->
-            <ion-row>
-              <ion-col size="6">{{ aocStatisticsStore.i18n.statistics_member_location_label() }}</ion-col>
-              <ion-col size="6">
-                <okr-button [label]="aocStatisticsStore.i18n.statistics_member_location_button()" iconName="checkbox-circle" (click)="updateMemberLocation()" />
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -79,25 +51,8 @@ export class AocStatistics {
 
   protected readonly logTitle = computed(() => this.aocStatisticsStore.logTitle());
   protected readonly logInfo = computed(() => this.aocStatisticsStore.log());
-  protected readonly isLoading = computed(() => this.aocStatisticsStore.isLoading());
-
-  public async updateCompetitionLevels(): Promise<void> {
-    this.aocStatisticsStore.updateCompetitionLevels();
-  }
-
-  public async updateCLStatistics(): Promise<void> {
-    this.aocStatisticsStore.updateCLStatistics();
-  }
 
   public async updateAgeByGender(): Promise<void> {
     this.aocStatisticsStore.updateAgeByGender('nyi');
-  }
-
-  public async updateCategoryByGender(): Promise<void> {
-    this.aocStatisticsStore.updateCategoryByGender('nyi');
-  }
-
-  public async updateMemberLocation(): Promise<void> {
-    this.aocStatisticsStore.updateMemberLocation();
   }
 }

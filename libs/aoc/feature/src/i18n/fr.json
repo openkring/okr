@@ -775,40 +775,12 @@
     "header": "Statistiques AOC",
     "content": "Certaines statistiques peuvent être recalculées ici à partir des données actuelles. Ce calcul ne devrait être effectué que lorsque la base de données est dans un état stable. Le calcul peut prendre un certain temps. Les statistiques devraient ensuite être vérifiées et, le cas échéant, corrigées manuellement.",
     "title": "Mettre à jour les statistiques",
-    "competitionLevels": {
-      "title": "Catégories de compétition",
-      "label": "Mettre à jour les catégories de compétition",
-      "conf": "Les catégories de compétition ont été recalculées.",
-      "button": "Exécuter",
-      "description": "La collection competitionLevels met en cache les données des collections subjects, memberships, ownerships. Ces données sont nécessaires à l'affichage des catégories de compétition."
-    },
-    "clStats": {
-      "title": "Statistiques de synthèse",
-      "subTitle": "Statistiques des catégories de compétition",
-      "label": "Mettre à jour les statistiques des catégories de compétition",
-      "conf": "Les statistiques ont été recalculées.",
-      "button": "Exécuter"
-    },
     "ageByGender": {
       "title": "Structure d'âge",
       "subTitle": "Membres par âge et par sexe",
       "label": "Recalculer les statistiques d'âge",
       "conf": "Les statistiques d'âge ont été recalculées.",
       "error": "Les statistiques d'âge n'ont pas pu être recalculées.",
-      "button": "Exécuter"
-    },
-    "categoryByGender": {
-      "title": "Structure des membres",
-      "subTitle": "Membres par catégorie et par sexe",
-      "label": "Recalculer la structure des membres",
-      "conf": "La structure des membres a été recalculée.",
-      "button": "Exécuter"
-    },
-    "memberLocation": {
-      "title": "Origine des membres actifs",
-      "subTitle": "Membres actifs par lieu de résidence (NPA)",
-      "label": "Recalculer les statistiques de lieu de résidence",
-      "conf": "Les statistiques de lieu de résidence ont été recalculées.",
       "button": "Exécuter"
     }
   },

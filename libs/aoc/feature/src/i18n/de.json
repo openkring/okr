@@ -775,40 +775,12 @@
     "header": "AOC Statistiken",
     "content": "Gewisse Statistiken können hier aus den aktuellen Daten neu berechnet werden. Diese Berechnung sollte nur durchgeführt werden, wenn die Datenbank in einem stabilen Zustand ist. Die Berechnung kann einige Zeit in Anspruch nehmen. Die Statistiken sollten anschliessend überprüft werden und allenfalls manuell korrigiert werden.",
     "title": "Statistiken aktualisieren",
-    "competitionLevels": {
-      "title": "Wettkampf-Kategorien",
-      "label": "Wettkampf-Kategorien aktualisieren",
-      "conf": "Die Wettkampf-Kategorien wurden neu berechnet.",
-      "button": "Ausführen",
-      "description": "Die Collection competitionLevels cached Daten aus den Collections subjects, memberships, ownerships. Diese Daten werden zur Darstellung der Wettkampf-Kategorien benötigt."
-    },
-    "clStats": {
-      "title": "Übersichts-Statistik",
-      "subTitle": "Statistik der Wettkampf-Kategorien",
-      "label": "Statistik der Wettkampf-Kategorien aktualisieren",
-      "conf": "Die Statistik wurde neu berechnet.",
-      "button": "Ausführen"
-    },
     "ageByGender": {
       "title": "Alters-Struktur",
       "subTitle": "Mitglieder nach Alter und Geschlecht",
       "label": "Alters-Statistik neu berechnen",
       "conf": "Alters-Statisik wurde neu berechnet.",
       "error": "Die Alters-Statistik konnte nicht neu berechnet werden.",
-      "button": "Ausführen"
-    },
-    "categoryByGender": {
-      "title": "Mitglieder-Struktur",
-      "subTitle": "Mitglieder nach Kategorie und Geschlecht",
-      "label": "Mitglieder-Struktur neu berechnen",
-      "conf": "Mitglieder-Struktur wurde neu berechnet.",
-      "button": "Ausführen"
-    },
-    "memberLocation": {
-      "title": "Herkunft der Aktivmitglieder",
-      "subTitle": "Aktivmitglieder nach Wohnort (PLZ)",
-      "label": "Wohnort-Statistik neu berechnen",
-      "conf": "Wohnort-Statistik wurde neu berechnet.",
       "button": "Ausführen"
     }
   },

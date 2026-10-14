@@ -775,40 +775,12 @@
     "header": "Statistiche AOC",
     "content": "Alcune statistiche possono essere ricalcolate qui a partire dai dati attuali. Questo calcolo dovrebbe essere eseguito solo quando il database è in uno stato stabile. Il calcolo può richiedere un po' di tempo. Le statistiche dovrebbero poi essere verificate e, se necessario, corrette manualmente.",
     "title": "Aggiornare le statistiche",
-    "competitionLevels": {
-      "title": "Categorie di gara",
-      "label": "Aggiornare le categorie di gara",
-      "conf": "Le categorie di gara sono state ricalcolate.",
-      "button": "Eseguire",
-      "description": "La collezione competitionLevels memorizza nella cache i dati delle collezioni subjects, memberships, ownerships. Questi dati sono necessari per la visualizzazione delle categorie di gara."
-    },
-    "clStats": {
-      "title": "Statistiche di riepilogo",
-      "subTitle": "Statistiche delle categorie di gara",
-      "label": "Aggiornare le statistiche delle categorie di gara",
-      "conf": "Le statistiche sono state ricalcolate.",
-      "button": "Eseguire"
-    },
     "ageByGender": {
       "title": "Struttura per età",
       "subTitle": "Soci per età e sesso",
       "label": "Ricalcolare le statistiche per età",
       "conf": "Le statistiche per età sono state ricalcolate.",
       "error": "Impossibile ricalcolare le statistiche per età.",
-      "button": "Eseguire"
-    },
-    "categoryByGender": {
-      "title": "Struttura dei soci",
-      "subTitle": "Soci per categoria e sesso",
-      "label": "Ricalcolare la struttura dei soci",
-      "conf": "La struttura dei soci è stata ricalcolata.",
-      "button": "Eseguire"
-    },
-    "memberLocation": {
-      "title": "Provenienza dei soci attivi",
-      "subTitle": "Soci attivi per luogo di residenza (NPA)",
-      "label": "Ricalcolare le statistiche per luogo di residenza",
-      "conf": "Le statistiche per luogo di residenza sono state ricalcolate.",
       "button": "Eseguire"
     }
   },
