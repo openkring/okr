@@ -7,7 +7,7 @@ import {
 } from '@ionic/angular';
 
 import { ENV } from '@okr/shared-config';
-import { isBrowser } from '@okr/shared-util-angular';
+import { ensureNativeMapTransparency, isBrowser } from '@okr/shared-util-angular';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { Spinner } from '@okr/shared-ui';
 
@@ -203,6 +203,7 @@ export class FlightTrackerSearch implements AfterViewInit, OnDestroy {
     if (!mapRef) return;
     await this.waitForMapDimensions(mapRef);
     const { GoogleMap, MapType } = await import('@capacitor/google-maps');
+    ensureNativeMapTransparency(); // Android draws the map beneath the WebView
     this.map = await GoogleMap.create({
       id: this.mapId,
       element: mapRef,

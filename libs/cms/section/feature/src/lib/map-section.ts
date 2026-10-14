@@ -6,7 +6,7 @@ import { firstValueFrom } from 'rxjs';
 import { AppStore } from '@okr/shared-feature';
 import { LocationCollection, LocationModel, MAP_CONFIG_SHAPE, MapSection } from '@okr/shared-models';
 import { debugMessage, die } from '@okr/shared-util-core';
-import { isBrowser } from '@okr/shared-util-angular';
+import { ensureNativeMapTransparency, isBrowser } from '@okr/shared-util-angular';
 import { FirestoreService } from '@okr/shared-data-access';
 import { OptionalCardHeader } from '@okr/shared-ui';
 
@@ -202,6 +202,7 @@ export class MapSectionComponent implements AfterViewInit, OnDestroy {
     }
 
     try {
+      ensureNativeMapTransparency(); // Android draws the map beneath the WebView
       this.map = await GoogleMap.create({
         id: this.mapId,
         element: mapRef,

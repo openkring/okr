@@ -2,7 +2,7 @@ import { CUSTOM_ELEMENTS_SCHEMA, Component, OnDestroy, PLATFORM_ID, computed, ef
 import { IonItem, IonLabel, IonList, IonSearchbar, IonSegment, IonSegmentButton } from '@ionic/angular';
 
 import { ENV } from '@okr/shared-config';
-import { isBrowser } from '@okr/shared-util-angular';
+import { ensureNativeMapTransparency, isBrowser } from '@okr/shared-util-angular';
 import { LocationModel } from '@okr/shared-models';
 import { TripI18n } from '@okr/trip-util';
 
@@ -101,6 +101,7 @@ export class LocationSelect implements OnDestroy {
     const mapEl = document.getElementById('location-select-map');
     if (!mapEl) return;
 
+    ensureNativeMapTransparency(); // Android draws the map beneath the WebView
     this.map = await GoogleMap.create({
       id: 'location-select-map',
       element: mapEl,

@@ -13,6 +13,25 @@ export function isNativePlatform(): boolean {
  * STALE copy after a store update (spec 1.10 §14 Phase 1). app.config disables registration on
  * native; this removes workers that an earlier build already registered. No-op on web/PWA.
  */
+/**
+ * On Android, @capacitor/google-maps draws the native map BENEATH the WebView, so every element
+ * above it must be transparent or the map shows white (plugin README). This adds one global style
+ * that clears the background of exactly the ANCESTORS of a map (`:has(capacitor-google-map)`), so
+ * cards next to the map and other pages keep theirs. Call before `GoogleMap.create`. No-op on web
+ * and iOS, which render the map inside the WebView.
+ */
+export function ensureNativeMapTransparency(): void {
+  const id = 'okr-native-map-transparency';
+  if (Capacitor.getPlatform() !== 'android' || typeof document === 'undefined' || document.getElementById(id)) return;
+  const style = document.createElement('style');
+  style.id = id;
+  style.textContent =
+    'html:has(capacitor-google-map), :is(body, ion-app, ion-router-outlet, ion-nav, ion-tabs, .ion-page, ion-content, ' +
+    'ion-card, ion-card-content, ion-grid, ion-row, ion-col, div, section):has(capacitor-google-map) ' +
+    '{ background: transparent !important; --background: transparent !important; }';
+  document.head.appendChild(style);
+}
+
 export async function unregisterServiceWorkersOnNative(): Promise<number> {
   if (!isNativePlatform() || typeof navigator === 'undefined' || !navigator.serviceWorker) return 0;
   const registrations = await navigator.serviceWorker.getRegistrations();
