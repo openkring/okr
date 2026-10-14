@@ -63,7 +63,7 @@ const EVENT_TYPES = ['delivery', 'open', 'click', 'bounce', 'spam', 'reject', 'u
         <ion-select [value]="selectedType()"
           (ionChange)="selectedType.set($any($event).detail.value)"
           style="padding: 0 16px;">
-          <ion-select-option value="all">Alle Event-Typen</ion-select-option>
+          <ion-select-option value="all">{{ i18n.email_all_event_types() }}</ion-select-option>
           @for (type of eventTypes; track type) {
             <ion-select-option [value]="type">{{ type }}</ion-select-option>
           }
@@ -90,7 +90,7 @@ const EVENT_TYPES = ['delivery', 'open', 'click', 'bounce', 'spam', 'reject', 'u
           </ion-item>
         } @empty {
           <ion-item>
-            <ion-label color="medium">Keine Events gefunden.</ion-label>
+            <ion-label color="medium">{{ i18n.email_empty() }}</ion-label>
           </ion-item>
         }
       </ion-list>

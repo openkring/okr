@@ -971,6 +971,8 @@
   },
   "email": {
     "title": "Email events",
-    "searchPlaceholder": "Email, subject, sender …"
+    "searchPlaceholder": "Email, subject, sender …",
+    "allEventTypes": "All event types",
+    "empty": "No events found."
   }
 }

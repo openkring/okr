@@ -971,6 +971,8 @@
   },
   "email": {
     "title": "E-Mail-Ereignisse",
-    "searchPlaceholder": "E-Mail, Betreff, Absender …"
+    "searchPlaceholder": "E-Mail, Betreff, Absender …",
+    "allEventTypes": "Alle Ereignisarten",
+    "empty": "Keine Ereignisse gefunden."
   }
 }

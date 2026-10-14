@@ -84,10 +84,10 @@ export function fixTypes(doc, fieldsToFix) {
  * returns an extra patch (applied last). `okey` is never part of the patch.
  */
 export function planFix(doc, { defaults = [], typeSpec = [], custom } = {}) {
-  const work = structuredClone(doc);
+  const work = { ...doc };
   if (defaults.length > 0) fixUndefinedFields(work, defaults);
   if (typeSpec.length > 0) fixTypes(work, typeSpec);
-  if (custom) Object.assign(work, custom(structuredClone(work)) ?? {});
+  if (custom) Object.assign(work, custom({ ...work }) ?? {});
   const patch = {};
   for (const key of Object.keys(work)) {
     if (key === 'okey') continue;

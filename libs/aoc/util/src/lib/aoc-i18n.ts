@@ -717,6 +717,8 @@ export const TENANT_SWITCHER_I18N_KEYS = {
 export const AOC_EMAIL_I18N_KEYS = {
   email_title:              PFX + 'email.title',
   email_search_placeholder: PFX + 'email.searchPlaceholder',
+  email_all_event_types:    PFX + 'email.allEventTypes',
+  email_empty:              PFX + 'email.empty',
 };
 
 export type AocI18n = { [K in keyof typeof AOC_I18N_KEYS]: Signal<string> };

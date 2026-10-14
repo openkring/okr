@@ -271,7 +271,7 @@ const aoc: FeatureBlock = {
   // aoc-content, aoc-data, aoc-statistics, user-all, aoc-sessions, aoc-chat,
   // aoc-account, aoc-doc, aoc-bexio, aoc-srv, activity-all, flighttracker, priv-register,
   // priv-audit, divider_empty`):
-  //  - the twelve `aoc-*` entries are this block's own, all twelve declared below (task 18
+  //  - the thirteen `aoc-*` entries are this block's own, all thirteen declared below (task 18
   //    added the last six: sessions/chat/account/doc/bexio/srv, whose routes were also missing
   //    from `FEATURE_ROUTES` until now);
   //  - `user-all` → `user`; `priv-register`/`priv-audit` → `security`; `flighttracker` →
@@ -285,13 +285,13 @@ const aoc: FeatureBlock = {
   //    stay excluded on their own, unrelated grounds (tenant-bespoke "tbd:" placeholders for
   //    unbuilt screens, `tenants: ['scs']`), not for the action type any more.
   //
-  // `/aoc/email` (`AocEmail`) has the `aoc-email` row declared below (spec 1.101 phase 1; the live
-  // doc is created by the Task 6 migration script). ONE AOC SCREEN IS STILL ROUTED BUT UN-MENU'D,
-  // stated so the omission is not read as an oversight: `/aoc/trip` (`AocTrip`) has NO live
-  // `menuItems` doc; the verification below also found none for `aoc-email` at the time. Verified with two query shapes, per the `c-yearlyevents` lesson: a name-equality `IN`
+  // `/aoc/email` (`AocEmail`) has the `aoc-email` row declared below; its live doc is created by
+  // `scripts/aoc-phase1-menu.mjs` (spec 1.101 phase 1). ONE AOC SCREEN IS STILL ROUTED BUT
+  // UN-MENU'D, stated so the omission is not read as an oversight: `/aoc/trip` (`AocTrip`) has NO
+  // live `menuItems` doc; the earlier verification also found none for `aoc-email`. Verified with two query shapes, per the `c-yearlyevents` lesson: a name-equality `IN`
   // query over [aoc-trip, aoc-website, aoc-tag, aoc-email, …] returned `aoc-website` only, and
   // an ordered range scan of every doc whose `name` sorts in ['a','b') returned 21 documents
-  // whose `aoc-*` members are EXACTLY the twelve leaves declared below plus the `aoc-menu`
+  // whose `aoc-*` members are EXACTLY the twelve leaves declared below (before `aoc-email`) plus the `aoc-menu`
   // parent and `aoc-website` — no `aoc-email`, no `aoc-trip`, under any spelling. Both screens
   // are reachable only by typing the URL, the same "un-menu'd admin screen" shape as `i18n` and
   // `subject`'s `/applications`. (`/aoc/tag`'s doc is named `tag-all`, not `aoc-tag` — see

@@ -48,7 +48,7 @@ test('an unchanged doc yields changed false and an empty patch', () => {
 
 test('planFix never patches okey and does not mutate the input', () => {
   const doc = { okey: 'a', n: '2' };
-  const r = planFix(doc, { typeSpec: ['n:n'], custom: (d) => ({ okey: 'zzz', ...d && {} }) });
+  const r = planFix(doc, { typeSpec: ['n:n'], custom: () => ({ okey: 'zzz' }) });
   assert.equal('okey' in r.patch, false);
   assert.equal(doc.n, '2');
 });
