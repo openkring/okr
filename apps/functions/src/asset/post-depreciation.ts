@@ -71,6 +71,22 @@ export const postDepreciation = onCall(
         { reason: 'asset-accounts-missing', assets: missing.map(r => `${r.assetNo} ${r.name}`.trim()) });
     }
 
+    // Assets are writable by privileged users, not only treasurers: never post onto an account just
+    // because an asset names it. Every account must exist and belong to the caller's tenant AND these books.
+    const accountKeys = [...new Set(rows.flatMap(r => [r.expenseAccountKey, r.balanceAccountKey]))];
+    const accountDocs = await db.getAll(...accountKeys.map(k => db.collection('accounts').doc(k)));
+    const foreign = accountDocs.filter(snap => {
+      const data = snap.data();
+      return !data || data['isArchived'] === true || data['accountingTenantId'] !== accountingTenantId
+        || !((data['tenants'] as string[] | undefined) ?? []).includes(tenantId);
+    }).map(snap => snap.id);
+    if (foreign.length > 0) {
+      const names = rows.filter(r => foreign.includes(r.expenseAccountKey) || foreign.includes(r.balanceAccountKey))
+        .map(r => `${r.assetNo} ${r.name}`.trim());
+      throw new HttpsError('failed-precondition', `assets with accounts outside books ${accountingTenantId}: ${foreign.join(', ')}`,
+        { reason: 'asset-accounts-missing', assets: names });
+    }
+
     const ctx = await loadCostCenterContext(db, tenantId, accountingTenantId, rows.map(r => r.expenseAccountKey));
     const periodKeys = touchedPeriodKeys(accountingTenantId, [fy.to], fiscalYearStart);
     const title = `Abschreibungen ${fy.label}`;
