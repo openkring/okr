@@ -59,5 +59,25 @@
     },
     "view": {
         "label": "View asset"
+    },
+    "run": {
+        "explain": "Depreciation is booked once per fiscal year – linearly over the useful life, from the month of commissioning. Past years show what was booked.",
+        "year": "Fiscal year",
+        "asset": "Asset",
+        "bookValueStart": "Book value at start",
+        "amount": "Depreciation",
+        "bookValueEnd": "Book value at end",
+        "booked": "booked",
+        "open": "open",
+        "post": "Book depreciation {year}",
+        "total": "Total",
+        "empty": "There is nothing to depreciate in this fiscal year.",
+        "bookedInfo": "Booked with one booking at the end of the fiscal year.",
+        "showBooking": "Show booking in the journal",
+        "booked_toast": "Depreciation booked (booking no. {n}).",
+        "periodLocked": "The fiscal year is locked – unlock the period to book the depreciation.",
+        "accountsMissing": "An asset has no depreciation or balance sheet account. Add it to the asset.",
+        "alreadyBooked": "The depreciation of this fiscal year is already booked.",
+        "failed": "The depreciation could not be booked."
     }
 }

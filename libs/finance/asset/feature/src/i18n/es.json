@@ -59,5 +59,25 @@
     },
     "view": {
         "label": "Ver activo"
+    },
+    "run": {
+        "explain": "La amortización se contabiliza una vez por ejercicio, de forma lineal durante la vida útil, desde el mes de puesta en servicio. Los años pasados muestran lo contabilizado.",
+        "year": "Ejercicio",
+        "asset": "Activo",
+        "bookValueStart": "Valor contable inicial",
+        "amount": "Amortización",
+        "bookValueEnd": "Valor contable final",
+        "booked": "contabilizado",
+        "open": "abierto",
+        "post": "Contabilizar amortizaciones {year}",
+        "total": "Total",
+        "empty": "No hay nada que amortizar en este ejercicio.",
+        "bookedInfo": "Contabilizado con un asiento al final del ejercicio.",
+        "showBooking": "Ver el asiento en el diario",
+        "booked_toast": "Amortizaciones contabilizadas (asiento n.º {n}).",
+        "periodLocked": "El ejercicio está bloqueado: desbloquea el período para contabilizar las amortizaciones.",
+        "accountsMissing": "A un activo le falta la cuenta de amortización o de balance. Complétala en el activo.",
+        "alreadyBooked": "Las amortizaciones de este ejercicio ya están contabilizadas.",
+        "failed": "No se pudieron contabilizar las amortizaciones."
     }
 }

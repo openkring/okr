@@ -281,6 +281,8 @@ export const onExpenseDone = Expense.onExpenseDone;
 export const reviewBooking = Booking.reviewBooking;
 // manual journal entries (create/update/delete) — same reason: bookings are CF-write-only
 export const writeBooking = Booking.writeBooking;
+// yearly depreciation run: one booking per books and fiscal year + one asset movement per asset (spec 1.103)
+export { postDepreciation } from './asset/post-depreciation';
 // add a Beleg to a booking: signed upload into the private bucket, then the finance-document + documentKeys
 export const prepareBookingVoucherUpload = Booking.prepareBookingVoucherUpload;
 export const attachBookingVoucher = Booking.attachBookingVoucher;

@@ -59,5 +59,25 @@
     },
     "view": {
         "label": "Afficher l'actif"
+    },
+    "run": {
+        "explain": "L’amortissement est comptabilisé une fois par exercice – linéairement sur la durée d’utilisation, à partir du mois de mise en service. Les années passées montrent ce qui a été comptabilisé.",
+        "year": "Exercice",
+        "asset": "Immobilisation",
+        "bookValueStart": "Valeur comptable au début",
+        "amount": "Amortissement",
+        "bookValueEnd": "Valeur comptable à la fin",
+        "booked": "comptabilisé",
+        "open": "ouvert",
+        "post": "Comptabiliser les amortissements {year}",
+        "total": "Total",
+        "empty": "Rien à amortir durant cet exercice.",
+        "bookedInfo": "Comptabilisé avec une écriture à la fin de l’exercice.",
+        "showBooking": "Afficher l’écriture dans le journal",
+        "booked_toast": "Amortissements comptabilisés (écriture n° {n}).",
+        "periodLocked": "L’exercice est verrouillé – déverrouille la période pour comptabiliser les amortissements.",
+        "accountsMissing": "Il manque le compte d’amortissement ou de bilan d’une immobilisation. Complète-le dans l’immobilisation.",
+        "alreadyBooked": "Les amortissements de cet exercice sont déjà comptabilisés.",
+        "failed": "Les amortissements n’ont pas pu être comptabilisés."
     }
 }

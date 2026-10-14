@@ -59,5 +59,25 @@
     },
     "view": {
         "label": "Visualizza attivo"
+    },
+    "run": {
+        "explain": "L’ammortamento si registra una volta per esercizio, in modo lineare sulla durata di utilizzo, dal mese di messa in servizio. Gli anni passati mostrano cosa è stato registrato.",
+        "year": "Esercizio",
+        "asset": "Cespite",
+        "bookValueStart": "Valore contabile iniziale",
+        "amount": "Ammortamento",
+        "bookValueEnd": "Valore contabile finale",
+        "booked": "registrato",
+        "open": "aperto",
+        "post": "Registra ammortamenti {year}",
+        "total": "Totale",
+        "empty": "In questo esercizio non c’è nulla da ammortizzare.",
+        "bookedInfo": "Registrato con una registrazione alla fine dell’esercizio.",
+        "showBooking": "Mostra la registrazione nel giornale",
+        "booked_toast": "Ammortamenti registrati (registrazione n. {n}).",
+        "periodLocked": "L’esercizio è bloccato: sblocca il periodo per registrare gli ammortamenti.",
+        "accountsMissing": "A un cespite manca il conto di ammortamento o di bilancio. Completalo nel cespite.",
+        "alreadyBooked": "Gli ammortamenti di questo esercizio sono già registrati.",
+        "failed": "Non è stato possibile registrare gli ammortamenti."
     }
 }

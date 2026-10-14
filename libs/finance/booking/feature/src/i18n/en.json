@@ -173,6 +173,7 @@
     "costCenterInvalid": "The selected cost centre is no longer active — please choose another one.",
     "projectInvalid": "The selected project is no longer active — please choose another one.",
     "billBooking": "This booking belongs to a supplier bill and is not edited here. Delete it if the bill should become a draft again.",
+    "depreciationBooking": "This booking belongs to the depreciation run and is not edited here. Delete it and book the year’s depreciation again.",
     "billHasPayments": "The supplier bill of this booking already has payments. Remove the payments first, then you can delete the booking."
   }
 }

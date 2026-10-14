@@ -665,6 +665,7 @@ export const BookingStore = signalStore(
         case 'cost-center-invalid': return store.i18n.write_costCenterInvalid();
         case 'project-invalid':     return store.i18n.write_projectInvalid();
         case 'bill-booking':        return store.i18n.write_billBooking();
+        case 'depreciation-booking': return store.i18n.write_depreciationBooking();
         case 'bill-has-payments':   return store.i18n.write_billHasPayments();
         default:                    return undefined;
       }

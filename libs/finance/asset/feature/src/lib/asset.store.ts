@@ -1,34 +1,32 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { ModalController } from '@ionic/angular';
+import { ModalController, ToastController } from '@ionic/angular';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
-import { AssetModel, BookingLineModel, BookingModel } from '@okr/shared-models';
-import { getTodayStr, resolveCostCenterKey } from '@okr/shared-util-core';
+import { AssetModel } from '@okr/shared-models';
+import { getTodayStr } from '@okr/shared-util-core';
 import { exportCsv } from '@okr/shared-util-angular';
 
 import { AccountingStore } from '@okr/finance-accounting-feature';
-import { AccountService } from '@okr/finance-account-data-access';
 import { CostCenterStore } from '@okr/finance-cost-center-feature';
-import { AssetCategoryService, AssetService } from '@okr/finance-asset-data-access';
-import { ASSET_I18N_KEYS, AssetI18n, linearDepreciationMonthly, proRataMonths } from '@okr/finance-asset-util';
-import { BookingService } from '@okr/finance-booking-data-access';
+import { AssetCategoryService, AssetMovementService, AssetService } from '@okr/finance-asset-data-access';
+import { ASSET_I18N_KEYS, AssetI18n, depreciationBookingKey, depreciationPlan } from '@okr/finance-asset-util';
+import { fiscalYearOptions } from '@okr/finance-accounting-util';
+import { fiscalYear, fiscalYearOf } from '@okr/finance-reporting-util';
 
 export type { AssetI18n };
 
 export const AssetStore = signalStore(
-  withState({
-    previewLines: [] as BookingLineModel[],
-    pendingBooking: null as { booking: BookingModel; lines: BookingLineModel[] } | null,
-  }),
+  // the depreciation run's fiscal year (0 = the current one) and whether a run is being booked (spec 1.103)
+  withState({ selectedYear: 0, posting: false }),
   withProps(() => ({
     assetService: inject(AssetService),
     assetCategoryService: inject(AssetCategoryService),
     accountingStore: inject(AccountingStore),
-    bookingService: inject(BookingService),
-    accountService: inject(AccountService),
+    movementService: inject(AssetMovementService),
+    toastController: inject(ToastController),
     costCenterStore: inject(CostCenterStore),
     appStore: inject(AppStore),
     modalController: inject(ModalController),
@@ -37,6 +35,9 @@ export const AssetStore = signalStore(
   withProps(store => ({
     assetsResource: rxResource({
       stream: () => store.assetService.list(store.accountingStore.accountingTenantId()),
+    }),
+    movementsResource: rxResource({
+      stream: () => store.movementService.list(store.accountingStore.accountingTenantId()),
     }),
     categoriesResource: rxResource({
       stream: () => store.assetCategoryService.list(store.accountingStore.accountingTenantId()),
@@ -50,6 +51,31 @@ export const AssetStore = signalStore(
     tenantId: computed(() => store.appStore.tenantId()),
     accountingTenantId: computed(() => store.accountingStore.accountingTenantId()),
     isReadOnly: computed(() => store.accountingStore.isExternallyManaged()),
+    fiscalYearStart: computed(() => store.accountingStore.config()?.fiscalYearStart ?? 1),
+  })),
+  withComputed(store => ({
+    currentYear: computed(() => fiscalYearOf(getTodayStr(), store.fiscalYearStart())),
+  })),
+  withComputed(store => ({
+    year: computed(() => store.selectedYear() || store.currentYear()),
+    yearOptions: computed(() => fiscalYearOptions(store.currentYear(), 10)),
+  })),
+  withComputed(store => ({
+    fiscalRange: computed(() => fiscalYear(store.year(), store.fiscalYearStart())),
+  })),
+  withComputed(store => ({
+    /** the selected year's run: per asset book value, depreciation and whether it is booked */
+    plan: computed(() => depreciationPlan(store.assets(), store.movementsResource.value() ?? [], store.fiscalRange())),
+    /** the run's booking key, once the year is booked */
+    bookedKey: computed(() => {
+      const key = depreciationBookingKey(store.accountingTenantId(), store.year());
+      return (store.movementsResource.value() ?? []).some(m => m.bookingKey === key) ? key : '';
+    }),
+  })),
+  withComputed(store => ({
+    planTotal: computed(() => store.plan().reduce((s, r) => s + r.amount, 0)),
+    /** something left to book in the selected year */
+    canPost: computed(() => !store.isReadOnly() && !store.bookedKey() && store.plan().some(r => r.booked === undefined && r.amount > 0)),
   })),
   withMethods(store => ({
     /** the category's name for the list ('' while unknown) */
@@ -68,9 +94,6 @@ export const AssetStore = signalStore(
       await exportCsv(rows, `anlagen-${getTodayStr()}`);
     },
 
-    setPeriodEnd(end: string): void {
-
-    },
     async openEdit(asset: AssetModel, readOnly = true): Promise<void> {
       const { AssetEditModal } = await import('@okr/finance-asset-ui');
       const modal = await store.modalController.create({
@@ -109,60 +132,35 @@ export const AssetStore = signalStore(
       store.assetsResource.reload();
     },
 
-    async preview(periodEnd: string): Promise<void> {
-      const lines: BookingLineModel[] = [];
-      // the depreciation expense line is booked on the asset's Kostenstelle; an archived one falls
-      // through to the account default (then the book default) here instead of being rejected by writeBooking
-      const resolveKeys = store.costCenterStore.isEnabled();
-      const accounts = resolveKeys ? await store.accountService.listOnce(store.accountingTenantId()) : [];
-      // do not resolve against a cost-centre list that is still loading (it would look empty)
-      for (let i = 0; resolveKeys && store.costCenterStore.isLoading() && i < 50; i++) await new Promise(r => setTimeout(r, 100));
-
-      for (const asset of store.assets()) {
-        const months = proRataMonths(asset.commissioningDate ?? asset.acquisitionDate, periodEnd);
-        if (months <= 0) continue;
-        const acquisitionCents = asset.acquisitionValue?.amount ?? 0;
-        const monthly = linearDepreciationMonthly(acquisitionCents, asset.usefulLifeMonths ?? 1);
-        const periodDepreciation = monthly * months;
-        if (periodDepreciation <= 0) continue;
-
-        const drLine = new BookingLineModel(store.tenantId(), store.accountingTenantId());
-        drLine.accountKey = asset.expenseAccountKey;
-        if (resolveKeys) drLine.costCenterKey = resolveCostCenterKey({
-          source: asset.costCenter, account: accounts.find(a => a.okey === drLine.accountKey),
-          costCenters: store.costCenterStore.costCenters(),
-          bookDefault: store.accountingStore.config()?.defaultCostCenterKey ?? '',
-        });
-        drLine.debitAmount = { amount: periodDepreciation, currency: 'CHF', periodicity: 'one-time' };
-        lines.push(drLine);
-
-        const crLine = new BookingLineModel(store.tenantId(), store.accountingTenantId());
-        crLine.accountKey = asset.balanceAccountKey;
-        crLine.creditAmount = { amount: periodDepreciation, currency: 'CHF', periodicity: 'one-time' };
-        lines.push(crLine);
-      }
-
-      if (lines.length === 0) {
-        patchState(store, { previewLines: [], pendingBooking: null });
-        return;
-      }
-
-      const year = parseInt(periodEnd.substring(0, 4), 10);
-      const seq = await store.bookingService.nextSequence(year, store.accountingTenantId());
-      const booking = new BookingModel(store.tenantId(), store.accountingTenantId());
-      booking.bookingNo = seq;
-      booking.date = periodEnd;
-      booking.title = `${store.i18n.deduction()} ${periodEnd}`;
-      booking.status = 'draft';
-
-      patchState(store, { previewLines: lines, pendingBooking: { booking, lines } });
+    selectYear(year: number): void {
+      patchState(store, { selectedYear: year });
     },
 
-    async post(): Promise<void> {
-      const pending = store.pendingBooking();
-      if (!pending) return;
-      await store.bookingService.create(pending.booking, pending.lines, store.currentUser() ?? undefined);
-      patchState(store, { previewLines: [], pendingBooking: null });
-    }
+    /**
+     * «Abschreibungen {year} buchen»: the server computes and books the run (spec 1.103) — one booking
+     * per books and year, one movement per asset; the movements stream then shows the year as booked.
+     */
+    async postDepreciation(): Promise<void> {
+      if (!store.canPost() || store.posting()) return;
+      patchState(store, { posting: true });
+      try {
+        const result = await store.movementService.postDepreciation(store.accountingTenantId(), store.year());
+        await this.toast(store.i18n.run_booked().replace('{n}', String(result.bookingNo)));
+      } catch (error) {
+        const reason = (error as { details?: { reason?: string } })?.details?.reason;
+        await this.toast(
+          reason === 'period-locked' ? store.i18n.run_periodLocked()
+          : reason === 'asset-accounts-missing' ? store.i18n.run_accountsMissing()
+          : reason === 'already-booked' ? store.i18n.run_alreadyBooked()
+          : store.i18n.run_failed());
+      } finally {
+        patchState(store, { posting: false });
+      }
+    },
+
+    async toast(message: string): Promise<void> {
+      const t = await store.toastController.create({ message, duration: 3000 });
+      await t.present();
+    },
   }))
 );

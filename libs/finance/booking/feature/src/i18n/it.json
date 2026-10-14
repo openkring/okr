@@ -173,6 +173,7 @@
     "costCenterInvalid": "Il centro di costo scelto non è più attivo — scegline un altro.",
     "projectInvalid": "Il progetto scelto non è più attivo — scegline un altro.",
     "billBooking": "Questa registrazione appartiene a una fattura del fornitore e non si modifica qui. Eliminala se la fattura deve tornare una bozza.",
+    "depreciationBooking": "Questa registrazione fa parte degli ammortamenti e non si modifica qui. Eliminala e registra di nuovo gli ammortamenti dell’anno.",
     "billHasPayments": "La fattura del fornitore di questa registrazione ha già dei pagamenti. Rimuovi prima i pagamenti, poi puoi eliminare la registrazione."
   }
 }

@@ -173,6 +173,7 @@
     "costCenterInvalid": "Die gewählte Kostenstelle ist nicht mehr aktiv — bitte wähle eine andere.",
     "projectInvalid": "Das gewählte Projekt ist nicht mehr aktiv — bitte wähle ein anderes.",
     "billBooking": "Diese Buchung gehört zu einer Lieferantenrechnung und wird nicht hier bearbeitet. Lösche sie, wenn die Rechnung wieder ein Entwurf werden soll.",
+    "depreciationBooking": "Diese Buchung gehört zum Abschreibungslauf und wird nicht hier bearbeitet. Lösche sie und buche die Abschreibungen des Jahres neu.",
     "billHasPayments": "Die Lieferantenrechnung dieser Buchung hat schon Zahlungen. Entferne zuerst die Zahlungen, dann kannst du die Buchung löschen."
   }
 }

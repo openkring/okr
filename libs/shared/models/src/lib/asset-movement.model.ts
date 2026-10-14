@@ -5,6 +5,7 @@ import { OkrModel } from './base.model';
 
 export type AssetMovementType =
   | 'addition'           // initial capitalisation or component addition
+  | 'depreciation'       // the asset's share of a yearly depreciation run (spec 1.103; bookingKey = the run's booking)
   | 'appreciation'       // write-up to max. acquisition value
   | 'extra_depreciation' // impairment / extraordinary write-down
   | 'partial_disposal'   // disposal of a component

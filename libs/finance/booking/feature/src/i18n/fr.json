@@ -173,6 +173,7 @@
     "costCenterInvalid": "Le centre de coûts choisi n'est plus actif — choisis-en un autre.",
     "projectInvalid": "Le projet choisi n'est plus actif — choisis-en un autre.",
     "billBooking": "Cette écriture appartient à une facture fournisseur et ne se modifie pas ici. Supprime-la si la facture doit redevenir un brouillon.",
+    "depreciationBooking": "Cette écriture fait partie des amortissements et ne se modifie pas ici. Supprime-la et comptabilise à nouveau les amortissements de l’année.",
     "billHasPayments": "La facture fournisseur de cette écriture a déjà des paiements. Retire d'abord les paiements, puis tu peux supprimer l'écriture."
   }
 }

@@ -267,6 +267,10 @@ export const writeBooking = onCall(
       if (mode === 'update' && d.bookingKey.startsWith('bill-')) {
         throw new HttpsError('failed-precondition', `booking ${d.bookingKey} belongs to a bill — delete it instead`, { reason: 'bill-booking' });
       }
+      // a depreciation run's booking mirrors its asset movements (spec 1.103): delete and book the year again
+      if (mode === 'update' && d.bookingKey.startsWith('depreciation-')) {
+        throw new HttpsError('failed-precondition', `booking ${d.bookingKey} is a depreciation run — delete it and book the year again`, { reason: 'depreciation-booking' });
+      }
     }
 
     const bookingKey = mode === 'create' ? db.collection(BOOKING_COLLECTION).doc().id : d.bookingKey!;
@@ -278,9 +282,15 @@ export const writeBooking = onCall(
       const acct = existing?.['accountingTenantId'] as string;
       await assertPeriodsOpen(db, touchedPeriodKeys(acct, [existing?.['date'] as string], await loadFiscalYearStart(db, acct)));
       const bexioBooks = isBexioBackend((await db.collection('accounting-configs').doc(acct).get()).data() as { accountingBackend?: string } | undefined);
+      // a depreciation run's asset movements go with its booking, so the year can be booked again (spec 1.103)
+      const movementRefs = bookingKey.startsWith('depreciation-')
+        ? (await db.collection('asset-movements').where('bookingKey', '==', bookingKey).get()).docs
+          .filter(s => ((s.data()['tenants'] as string[] | undefined) ?? []).includes(tenantId)).map(s => s.ref)
+        : [];
       // one transaction: the bills/invoices read for the clean-up cannot be overwritten by a payment recorded meanwhile
       const cleaned = await db.runTransaction(async (tx) => {
         const cleanup = bexioBooks ? [] : await paymentCleanup(db, tx, bookingKey, acct);
+        for (const ref of movementRefs) tx.delete(ref);
         for (const ref of oldLineRefs) tx.delete(ref);
         tx.delete(bookingRef);
         for (const { ref, patch } of cleanup) tx.update(ref, patch);

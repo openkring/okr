@@ -59,5 +59,25 @@
     },
     "view": {
         "label": "Aktivum anzeigen"
+    },
+    "run": {
+        "explain": "Die Abschreibung wird je Geschäftsjahr einmal gebucht – linear über die Nutzungsdauer, ab dem Monat der Inbetriebnahme. Vergangene Jahre zeigen, was gebucht wurde.",
+        "year": "Geschäftsjahr",
+        "asset": "Anlage",
+        "bookValueStart": "Buchwert Anfang",
+        "amount": "Abschreibung",
+        "bookValueEnd": "Buchwert Ende",
+        "booked": "gebucht",
+        "open": "offen",
+        "post": "Abschreibungen {year} buchen",
+        "total": "Total",
+        "empty": "In diesem Geschäftsjahr gibt es nichts abzuschreiben.",
+        "bookedInfo": "Gebucht mit einer Buchung am Ende des Geschäftsjahrs.",
+        "showBooking": "Buchung im Journal anzeigen",
+        "booked_toast": "Abschreibungen gebucht (Buchung Nr. {n}).",
+        "periodLocked": "Das Geschäftsjahr ist gesperrt – entsperre die Periode, um die Abschreibungen zu buchen.",
+        "accountsMissing": "Bei einer Anlage fehlt das Abschreibungs- oder das Bilanzkonto. Ergänze es in der Anlage.",
+        "alreadyBooked": "Die Abschreibungen dieses Geschäftsjahrs sind bereits gebucht.",
+        "failed": "Die Abschreibungen konnten nicht gebucht werden."
     }
 }
