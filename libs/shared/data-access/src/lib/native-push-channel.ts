@@ -7,9 +7,11 @@ import { NATIVE_PUSH_CHANNEL_ID } from '@okr/shared-constants';
  *
  * - importance 4 (HIGH): FCM's fallback channel is DEFAULT, which puts pushes into the shade
  *   without a heads-up banner.
- * - visibility 0 (PRIVATE): chat bodies must not appear on a locked phone. Leaving the field out
- *   does not help — the plugin then defaults to PUBLIC — and a channel's visibility cannot be
- *   changed once the channel exists.
+ * - visibility 0 (PRIVATE) states the intent only: Android ignores a lock-screen visibility set
+ *   by an app on a channel (only the system and the notification ranker may set it; the channel
+ *   keeps NO_OVERRIDE). What protects chat bodies on a locked phone is the per-NOTIFICATION
+ *   visibility, which FCM sets to PRIVATE by default — the member's "hide sensitive content"
+ *   setting then redacts it (verified on a POCO X3 Pro, 2026-10-14).
  *
  * Never throws: `createChannel` rejects below API 26 (minSdk is 24), where channels do not exist
  * and FCM shows pushes without one. Push registration must go on regardless.
