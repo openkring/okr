@@ -498,14 +498,6 @@
   "data": {
     "title": "Données",
     "content": "Valider et corriger les données",
-    "check": {
-      "console": "Veuillez vérifier et confirmer la configuration dans la console du navigateur."
-    },
-    "fix": {
-      "title": "Correction de données",
-      "content": "Opération groupée (adminops/fixModels) avec des opérations de correction sur une collection. ATTENTION : Les opérations de correction ne peuvent pas être annulées. Faire une sauvegarde, tester l'implémentation dans l'opération fix et d'abord effectuer un dry run sans mise à jour.",
-      "button": "Corriger les données"
-    },
     "validate": {
       "title": "Validation de données",
       "content": "Opération groupée (adminops/validateModels) avec des opérations de validation sur une collection.",

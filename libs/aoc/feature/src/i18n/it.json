@@ -498,14 +498,6 @@
   "data": {
     "title": "Dati",
     "content": "Convalidare e correggere i dati",
-    "check": {
-      "console": "Verificare e confermare la configurazione nella console del browser."
-    },
-    "fix": {
-      "title": "Correzione dei dati",
-      "content": "Operazione di massa (adminops/fixModels) con operazioni di correzione su una collezione. ATTENZIONE: Le operazioni di correzione non possono essere annullate. Effettuare un backup, testare l'implementazione nell'operazione fix e prima eseguire un dry run senza update.",
-      "button": "Correggere i dati"
-    },
     "validate": {
       "title": "Convalida dei dati",
       "content": "Operazione di massa (adminops/validateModels) con operazioni di convalida su una collezione.",

@@ -498,14 +498,6 @@
   "data": {
     "title": "Data",
     "content": "Validate and correct data",
-    "check": {
-      "console": "Please check and confirm the configuration in the browser console."
-    },
-    "fix": {
-      "title": "Data correction",
-      "content": "Bulk operation (adminops/fixModels) with correction operations on a collection. PLEASE BE CAREFUL: The correction operations cannot be undone. Make a backup, test the implementation in the fix operation and first do a dry run without update.",
-      "button": "Correct data"
-    },
     "validate": {
       "title": "Data validation",
       "content": "Bulk operation (adminops/validateModels) with validation operations on a collection.",

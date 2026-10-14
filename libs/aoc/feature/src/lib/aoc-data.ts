@@ -68,22 +68,6 @@ import { AocDataStore, FavMismatch } from './aoc-data.store';
 
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ store.i18n.data_fix_title() }}</ion-card-title>
-        </ion-card-header>
-        <ion-card-content>
-          <ion-grid>
-            <ion-row>
-              <ion-col>{{ store.i18n.data_fix_content() }}</ion-col>
-              <ion-col>
-                <okr-button label=" {{ store.i18n.data_fix_button() }}" iconName="warning" (click)="fixModels()" />
-              </ion-col>
-            </ion-row>
-          </ion-grid>
-        </ion-card-content>
-      </ion-card>
-
-      <ion-card>
-        <ion-card-header>
           <ion-card-title>{{ store.i18n.data_validate_title() }}</ion-card-title>
         </ion-card-header>
         <ion-card-content>
@@ -198,14 +182,6 @@ export class AocData {
   /** Reports duplicate groups and unsafe group keys. Read-only — writes nothing. */
   public async findGroupHygieneIssues(): Promise<void> {
     await this.store.findGroupHygieneIssues();
-  }
-
-  /**
-   * Fix models of a given type. THIS CHANGES MANY DATA IN THE DATABASE.
-   */
-  public async fixModels(): Promise<void> {
-    console.log('Starting to fix models. This may take some time...');
-    await this.store.fixModels();
   }
 
   /**

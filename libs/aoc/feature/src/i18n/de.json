@@ -498,14 +498,6 @@
   "data": {
     "title": "Daten",
     "content": "Daten validieren und korrigieren",
-    "check": {
-      "console": "Bitte Konfiguration in der Browser Console prüfen und bestätigen."
-    },
-    "fix": {
-      "title": "Daten-Korrektur",
-      "content": "Bulk-Operation (adminops/fixModels) mit Korrektur-Operationen auf eine Collection. BITTE AUFPASSEN: Die Korrektur-Operationen können nicht rückgängig gemacht werden. Backup machen, Implementierung in fix-Operation testen und zuerst ein dry run ohne update machen.",
-      "button": "Daten korrigieren"
-    },
     "validate": {
       "title": "Daten-Validierung",
       "content": "Bulk-Operation (adminops/validateModels) mit Validierungs-Operationen auf eine Collection.",

@@ -372,12 +372,6 @@ export const AOC_I18N_KEYS = {
   data_title:                               PFX + 'data.title',
   data_content:                             PFX + 'data.content',
 
-  data_check_console:                       PFX + 'data.check.console',
-
-  data_fix_title:                           PFX + 'data.fix.title',
-  data_fix_content:                         PFX + 'data.fix.content',
-  data_fix_button:                          PFX + 'data.fix.button',
-
   data_validate_title:                      PFX + 'data.validate.title',
   data_validate_content:                    PFX + 'data.validate.content',
   data_validate_button:                     PFX + 'data.validate.button',

@@ -58,10 +58,9 @@ The `AocDataStore` supports operations over the following collections:
 
 ### AocDataStore
 
-- `fixModels()` — Bulk-patch documents in any collection (dry-run mode supported). Developer configures collection name and field corrections directly in the method.
 - `validateModels()` — Run vest validation suites over all documents in a collection and log validation errors.
 - `createIndexesOnCollection()` — Regenerate the `index` field on every document in a collection using domain-specific index functions.
-- `fixUndefinedFields<T>()` / `fixTypes<T>()` — Utility methods for coercing field types during fix operations.
+- Bulk fixes (types, missing fields, one-off migrations) are no longer in the UI: use the local script `node scripts/fix-models.mjs --collection <name> [--max <n>] [--apply]` (dry run by default; configure `DEFAULTS`/`TYPE_SPEC`/`CUSTOM` at its top).
 
 ### AocContentStore
 

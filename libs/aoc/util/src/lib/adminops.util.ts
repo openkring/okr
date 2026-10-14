@@ -243,7 +243,6 @@ export function createUserFromPerson(person: PersonModel, tenantId: string, emai
 
 /******************************************************************************************************************* */
 // THIS fix function is adapted for each run !!!
-// do not forget to adapt the modelValidationType in the calling function adminops.fixModels()
 /* export const fixFunction = async (sig: OpSignature): Promise<void> => {
   if (!sig.dataService) return Promise.resolve()
   const membership = sig.model;

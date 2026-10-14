@@ -498,14 +498,6 @@
   "data": {
     "title": "Datos",
     "content": "Validar y corregir datos",
-    "check": {
-      "console": "Compruebe y confirme la configuración en la consola del navegador."
-    },
-    "fix": {
-      "title": "Corrección de datos",
-      "content": "Operación masiva (adminops/fixModels) con operaciones de corrección sobre una colección. ATENCIÓN: Las operaciones de corrección no se pueden deshacer. Haga una copia de seguridad, pruebe la implementación en la operación fix y primero realice un dry run sin actualización.",
-      "button": "Corregir datos"
-    },
     "validate": {
       "title": "Validación de datos",
       "content": "Operación masiva (adminops/validateModels) con operaciones de validación sobre una colección.",

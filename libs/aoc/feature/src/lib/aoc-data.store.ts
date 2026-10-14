@@ -3,7 +3,6 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { from, Observable, of } from 'rxjs';
 import { StaticSuite } from 'vest';
-import { AlertController } from '@ionic/angular';
 
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
@@ -12,9 +11,8 @@ import { AddressCollection, AddressModel, OkrModel, CalEventCollection, CalEvent
   MenuItemModel, OrgCollection, OrgModel, OwnershipCollection, OwnershipModel, PageCollection, PageModel, PersonalRelCollection, PersonalRelModel, PersonCollection,
   PersonModel, ReservationCollection, ReservationModel, SessionCollection, SessionModel, TaskCollection, TransferCollection, UserCollection,
   WorkrelCollection, TaskModel, ResourceModel, ResourceCollection, TransferModel, UserModel, WorkrelModel, GroupModel, CategoryModel,
-  AvatarInfo, AVATAR_INFO_SHAPE, CategoryListModel, DbQuery, ResponsibilityModel, ResponsibilityCollection } from '@okr/shared-models';
-import { getCategoryIndex, getFullName, getSystemQuery, prettyFormatDate, removeProperty } from '@okr/shared-util-core';
-import { confirm } from '@okr/shared-util-angular';
+  CategoryListModel, DbQuery, ResponsibilityModel, ResponsibilityCollection } from '@okr/shared-models';
+import { getCategoryIndex, getFullName, getSystemQuery, prettyFormatDate } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
 import { AOC_I18N_KEYS } from '@okr/aoc-util';
 
@@ -37,7 +35,7 @@ import { getTransferIndex, transferValidations } from '@okr/relationship-transfe
 import { getWorkrelIndex, workrelValidations } from '@okr/relationship-workrel-util';
 import { getUserIndex, userValidations } from '@okr/user-util';
 import { categoryListValidations } from '@okr/category-util';
-import { findDuplicateGroups, findGroupKeyIssues, getGroupIndex, groupValidations, isAdminMember } from '@okr/subject-group-util';
+import { findDuplicateGroups, findGroupKeyIssues, getGroupIndex, groupValidations } from '@okr/subject-group-util';
 import { getResponsibilityIndex } from '@okr/relationship-responsibility-util';
 import { getSessionIndex } from '@okr/session-util';
 
@@ -69,7 +67,6 @@ export const AocDataStore = signalStore(
   withProps(() => ({
     appStore: inject(AppStore),
     firestoreService: inject(FirestoreService),
-    alertController: inject(AlertController),
     i18nService: inject(I18nService)
   })),
   withProps(store => ({
@@ -108,263 +105,6 @@ export const AocDataStore = signalStore(
       /******************************** setters (filter) ******************************************* */
       setModelType(modelType: string | undefined): void {
         patchState(store, { modelType, log: [], logTitle: '' });
-      },
-
-      /**
-       * Fix models of a given type. THIS CHANGES MANY DATA IN THE DATABASE.
-       * The purpose of this function is to apply corrections as a bulk operation over all models of a given type.
-       * The function is normally called once and then new logic is implemented for the next correction.
-       * That's why we only keep one single function that is used for all models.
-       * To test your fix function, disable the update call.
-       */
-      async fixModels(): Promise<void> {
-        // configuration: adapt these value to your needs
-        const isDryRun = true; // if true, no changes are written to the database;   TEST IT BEFORE SETTING TO FALSE !
-        const maxDocs = 10; // for testing, you can restrict the amount of documents to process. 
-        // set it to undefined to process all documents.
-        
-        const collectionName = 'groups';
-
-        // fixing fields (types and undefined)
-        // use s:string, n:number, b:boolean m:map {} a:array [] including =value for default values
-        const fieldsToCheckForUndefined: string[] = []; 
-        const fieldsToFixTypes: string[] = [];
-
-        // change the field names in the database directly
-        // move the corrected data to a new collection in the database directly
-
-        // CHECK THE IMPLEMENTATION OF FIXCUSTOMISSUES !
-
-        console.log('AocDataStore.fixModels has the following configuration:');
-        console.log(`  - isDryRun: ${isDryRun}`);
-        console.log(`  - maxDocs: ${maxDocs}`);
-        console.log(`  - collectionName: ${collectionName}`);
-        console.log(`  - fieldsToCheckForUndefined: ${fieldsToCheckForUndefined}`);
-        console.log(`  - fieldsToFixTypes: ${fieldsToFixTypes}`);
-        // end of configuration -> you will also need to adapt the applied fixes below
-
-        const ok = await confirm(store.alertController, store.i18n.data_check_console(), store.i18n.ok(), store.i18n.cancel(), true);
-        if (!ok) return;
-
-        // reading the collection and iterating over all documents
-        console.log(`AocDataStore.fixModels: fixing all documents of collection ${collectionName}...`);
-        from(store.appStore.firestoreService.getDataOnce<any>(collectionName, [], 'none'))
-          .subscribe(async (documents) => {
-            let processed = 0;
-            for (const doc of documents) {
-              const originalDoc = JSON.stringify(doc);
-              let changed = false;
-
-              if (fieldsToCheckForUndefined.length > 0) {
-                this.fixUndefinedFields<any>(doc, fieldsToCheckForUndefined);
-              }
-              if (fieldsToFixTypes.length > 0) {
-                this.fixTypes<any>(doc, fieldsToFixTypes);
-              }
-              this.fixCustomIssues<any>(doc);
-
-              changed = JSON.stringify(doc) !== originalDoc;
-              if (changed) {
-                await this.saveDoc<any>(collectionName, doc, isDryRun);
-              }
-              processed++;
-              if (maxDocs !== undefined && processed >= maxDocs) break;
-            }
-            console.log(`AocDataStore.fixModels: finished processing ${processed} documents (out of ${documents.length}).`);
-        });
-      },
-
-      /**
-       * This is the place where you can implement your custom fixes.
-       * This implementation is for OkrModels where we know the model.
-       */
-      async fixCustomIssues<T>(doc: T): Promise<T> {
-        console.log(`  - custom fixes of document ${(doc as any).okey} ...`);
-        const d = doc as any;
-        if (!Array.isArray(d.admins)) d.admins = [];
-        if (d.mainContact?.key && !isAdminMember(d, d.mainContact.key)) {
-          d.mainContact.label = d.mainContact.name1 + ' ' + d.mainContact.name2;
-          d.admins = [d.mainContact, ...d.admins];
-        }
-        if (!isAdminMember(d, d.admin?.key)) {
-          d.admin.label = d.admin.name1 + ' ' + d.admin.name2;
-          d.admins.push(d.admin);
-        }
-        delete d.admin;
-        delete d.mainContact;
-
-        d.tags = '';
-
-        // create the index here directly without using the getXXindex function, just with string operations.
-        //d.index = 'ak:' + d.authorKey + ' d:' + d.creationDateTime.substring(0, 8) + ' pk:' + d.parentKey;
-        //d.index = `ak:${d.authorKey}, d:${d.creationDateTime.substring(0, 8)}, pk:${d.parentKey}`;
-        
-        return d;
-      },
-
-      convertChannel(channelType: number): string {
-        switch(channelType) {
-          case 0: return 'phone';
-          case 1: return 'email';
-          case 2: return 'web';
-          case 3: return 'twitter';
-          case 4: return 'linkedin';
-          case 5: return 'facebook';
-          case 6: return 'xing';
-          case 7: return 'skype';
-          case 8: return 'custom';
-          case 9: return 'postal';
-          case 10: return 'instagram';
-          case 11: return 'signal';
-          case 12: return 'wire';
-          case 13: return 'github';
-          case 14: return 'threema';
-          case 15: return 'telegram';
-          case 16: return 'whatsapp';
-          case 17: return 'bankaccount';
-        }
-        return '';
-      },
-
-      convertUsage(usageType: number): string {
-        switch(usageType) {
-          case 0: return 'home';
-          case 1: return 'work';
-          case 2: return 'mobile';
-          case 3: return 'custom';
-        }
-        return '';
-      },
-
-      /**
-       * Fixes undefined fields in one single document of type T. The document type is not changed.
-       * @param doc
-       * @param fieldsToCheck format: s:string, n:number, b:boolean m:map {} a:array []
-       */
-      fixUndefinedFields<T>(doc: T, fieldsToCheck: string[]): T {
-        console.log(`  - fixing undefined fields of document ${(doc as any).okey} ...`);
-        for (const field of fieldsToCheck) {
-          // Support syntax: n:priority=1, s:name=foo, etc.
-          let type = '', attr = '', defaultValue: any = undefined;
-          const colonIdx = field.indexOf(':');
-          if (colonIdx === -1) continue;
-          type = field.substring(0, colonIdx);
-          const rest = field.substring(colonIdx + 1);
-          const eqIdx = rest.indexOf('=');
-          if (eqIdx !== -1) {
-            attr = rest.substring(0, eqIdx);
-            defaultValue = rest.substring(eqIdx + 1);
-          } else {
-            attr = rest;
-          }
-          if (!attr) continue;
-          const value = doc[attr as keyof T];
-          if (value === undefined || value === null) {
-            switch (type) {
-              case 's':
-                (doc as any)[attr] = defaultValue !== undefined ? String(defaultValue) : '';
-                break;
-              case 'n':
-                (doc as any)[attr] = defaultValue !== undefined ? Number(defaultValue) : 0;
-                break;
-              case 'b':
-                if (defaultValue !== undefined) {
-                  (doc as any)[attr] = defaultValue === 'true' || defaultValue === true;
-                } else {
-                  (doc as any)[attr] = false;
-                }
-                break;
-              case 'm':
-                (doc as any)[attr] = {};
-                break;
-              case 'a':
-                (doc as any)[attr] = [];
-                break;
-            }
-          }
-        }
-        return doc;
-      },
-
-      /**
-       * Converts the value of each field to the specified type.
-       * @param doc The document to fix types in.
-       * @param fieldsToFix Array of field definitions, e.g. s:fieldName, n:amount
-       */
-      fixTypes<T>(doc: T, fieldsToFix: string[]): T {
-        console.log(`  - fixing types of document ${(doc as any).okey} ...`);
-        for (const field of fieldsToFix) {
-          const [type, attr] = field.split(':');
-          if (!attr) continue;
-          const value = doc[attr as keyof T];
-          switch (type) {
-            case 's':
-              (doc as any)[attr] = value !== undefined && value !== null ? String(value) : '';
-              break;
-            case 'n':
-              (doc as any)[attr] = value !== undefined && value !== null && value !== '' ? Number(value) : 0;
-              break;
-            case 'b':
-              (doc as any)[attr] = value === 'true' || value === true;
-              break;
-            case 'm':
-              if (typeof value === 'string') {
-                try {
-                  const myArray: string[] = [];
-                  myArray.push(value as string);
-                  (doc as any)[attr] = myArray;
-                } catch {
-                  (doc as any)[attr] = {};
-                }
-              } else if (typeof value !== 'object' || value === null) {
-                (doc as any)[attr] = {};
-              }
-              break;
-            case 'a':
-              if (typeof value === 'string') {
-                (doc as any)[attr] = [value];
-              } else if (!Array.isArray(value)) {
-                (doc as any)[attr] = [];
-              }
-              break;
-          }
-        }
-        return doc;
-      },
-
-      /**
-       * Convert a set of fields into an AvatarInfo object.
-       * The mapping rules are provided as an array of strings. Each entry defines how to map a field from the source object to the AvatarInfo.
-       * oldFieldName:avatarFieldname
-       * @param doc 
-       * @param mappingRules 
-       */
-      convertToAvatar(doc: any, mappingRules: string[]): AvatarInfo {
-        console.log(`  - converting document ${(doc as any).okey} to avatar...`);
-        const avatarInfo = AVATAR_INFO_SHAPE;
-        for (const rule of mappingRules) {
-          const [sourceField, avatarField] = rule.split(':');
-          if (sourceField && avatarField && (doc as any)[sourceField] !== undefined) { 
-            avatarInfo[avatarField as keyof AvatarInfo] = (doc as any)[sourceField];
-          }
-        } 
-        return avatarInfo;
-      },
-
-      /**
-       * Save a document to the database. The document is created (if not yet existing) or updated (if existing).
-       * No okey/id check is performed here.
-       */
-      async saveDoc<T>(collectionName: string, doc: T, isDryRun = true): Promise<void> {
-        console.log(`  - saving document ${collectionName}/${(doc as any).okey ?? ''} ...`);
-        if (isDryRun) {
-          console.log(doc);
-        } else {
-          const key = (doc as any)['okey'];
-          // updateObject does not remove the okey property from the stored object. So we need to remove it here.
-          const storedModel = removeProperty(doc as any, 'okey');
-          await store.appStore.firestoreService.updateObject<T>(collectionName, key, storedModel as any, true);
-        }
       },
 
       /**
