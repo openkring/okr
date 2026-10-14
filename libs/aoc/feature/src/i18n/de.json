@@ -812,20 +812,6 @@
       "button": "Ausführen"
     }
   },
-  "storage": {
-    "title": "Firebase Storage",
-    "content": "Operationen, um die Dateien und Bilder im Firebase Storage zu verwalten.",
-    "info": {
-      "title": "Firebase Storage Info",
-      "content": "Zeigt Informationen über ein Dokument im Firebase Storage an. Dazu muss die relative URL zu diesem Dokument eingegeben werden.",
-      "buttonLabel": "Informationen anzeigen"
-    },
-    "sizes": {
-      "title": "Benutzter Speicherplatz",
-      "content": "Berechnet den Speicherplatz, den alle Dokument in einem Firebase Storage Folder belelegen. Dazu muss der relative Pfad zum Folder eingegeben werden.",
-      "buttonLabel": "Grösse berechnen"
-    }
-  },
   "tag": {
     "title": "Tag-Verwaltung",
     "add": {

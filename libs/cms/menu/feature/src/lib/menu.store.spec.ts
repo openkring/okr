@@ -150,7 +150,7 @@ describe('MenuStore', () => {
     expect(menuService.read).not.toHaveBeenCalled();
   });
 
-  // `aoc-storage` is a real key from FEATURE_BLOCKS (@okr/tenant-util) — nested under the
+  // `aoc-data` is a real key from FEATURE_BLOCKS (@okr/tenant-util) — nested under the
   // `aoc` block's menu, owned by block id 'aoc'. `my-custom-link` is not declared by any
   // block, so it is a stand-in for a tenant-authored menu entry.
   describe("selectMenuItem: the 'workflow' action (spec 2026-08-29 §3, decision O3)", () => {
@@ -189,17 +189,17 @@ describe('MenuStore', () => {
   describe('feature-block visibility filter (D-BB-8)', () => {
     it('renders a child menu item whose owning block is effective', async () => {
       store = makeStore(
-        menuServiceMock([], { okey: 'aoc-menu', name: 'aoc-menu', menuItems: ['aoc-storage', 'my-custom-link'] }),
+        menuServiceMock([], { okey: 'aoc-menu', name: 'aoc-menu', menuItems: ['aoc-data', 'my-custom-link'] }),
         featureStoreMock(['aoc'])
       );
       store.setMenuName('aoc-menu');
       await TestBed.inject(ApplicationRef).whenStable();
-      expect(store.menu()?.menuItems).toEqual(['aoc-storage', 'my-custom-link']);
+      expect(store.menu()?.menuItems).toEqual(['aoc-data', 'my-custom-link']);
     });
 
     it('drops a child menu item whose owning block is not effective, without dropping the node itself', async () => {
       store = makeStore(
-        menuServiceMock([], { okey: 'aoc-menu', name: 'aoc-menu', menuItems: ['aoc-storage', 'my-custom-link'] }),
+        menuServiceMock([], { okey: 'aoc-menu', name: 'aoc-menu', menuItems: ['aoc-data', 'my-custom-link'] }),
         featureStoreMock([]) // 'aoc' not effective
       );
       store.setMenuName('aoc-menu');
@@ -225,8 +225,8 @@ describe('MenuStore', () => {
     // so it can never surface as a yellow «Missing:» placeholder either.
     it('drops a child listed in hiddenMenuKeys even though its owning block is effective', async () => {
       store = makeStore(
-        menuServiceMock([], { okey: 'aoc-menu', name: 'aoc-menu', menuItems: ['aoc-storage', 'my-custom-link'] }),
-        featureStoreMock(['aoc'], ['aoc-storage'])
+        menuServiceMock([], { okey: 'aoc-menu', name: 'aoc-menu', menuItems: ['aoc-data', 'my-custom-link'] }),
+        featureStoreMock(['aoc'], ['aoc-data'])
       );
       store.setMenuName('aoc-menu');
       await TestBed.inject(ApplicationRef).whenStable();

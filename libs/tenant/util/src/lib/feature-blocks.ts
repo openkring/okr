@@ -268,7 +268,7 @@ const aoc: FeatureBlock = {
   collections: ['tags', 'websiteContent'],
   // The task-12 TODO that stood here is fully RESOLVED — every live child of `aoc-menu` now
   // has a home. For the record, in the live doc's own child order (`aoc-admin, aoc-auth,
-  // aoc-content, aoc-data, aoc-statistics, aoc-storage, user-all, aoc-sessions, aoc-chat,
+  // aoc-content, aoc-data, aoc-statistics, user-all, aoc-sessions, aoc-chat,
   // aoc-account, aoc-doc, aoc-bexio, aoc-srv, activity-all, flighttracker, priv-register,
   // priv-audit, divider_empty`):
   //  - the twelve `aoc-*` entries are this block's own, all twelve declared below (task 18
@@ -302,7 +302,6 @@ const aoc: FeatureBlock = {
       { key: 'aoc-content',    name: 'aoc-content',    url: '/aoc/content',    action: 'navigate', roleNeeded: 'admin', icon: 'page',     label: '@item.aoc-content' },
       { key: 'aoc-data',       name: 'aoc-data',       url: '/aoc/data',       action: 'navigate', roleNeeded: 'admin', icon: 'database', label: '@item.aoc-data' },
       { key: 'aoc-statistics', name: 'aoc-statistics', url: '/aoc/statistics', action: 'navigate', roleNeeded: 'admin', icon: 'chart',    label: '@item.aoc-statistics' },
-      { key: 'aoc-storage',    name: 'aoc-storage',    url: '/aoc/storage',    action: 'navigate', roleNeeded: 'admin', icon: 'documents', label: '@item.aoc-storage' },
       // Added task 18, verbatim off the live docs (all six `tenants: ['scs']` only — i.e.
       // every other tenant's AOC submenu is missing them today, which is exactly what
       // cataloguing them fixes).

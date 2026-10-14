@@ -162,7 +162,6 @@ const aoc: BlockRoutes = {
       { path: 'chat',       canActivate: [isAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocChat) },
       { path: 'account',    canActivate: [isAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocUserAccounts) },
       { path: 'statistics', canActivate: [isAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocStatistics) },
-      { path: 'storage',    canActivate: [isAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocStorage) },
       { path: 'doc',        canActivate: [isAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocDoc) },
       { path: 'kiosk',      canActivate: [isAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocKiosk) },
       // SOFTENED by owner ruling R-5, 2026-08-05, to match the live `tag-all` menu doc's

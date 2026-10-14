@@ -9,7 +9,6 @@ The AOC (Admin Operations Console) is a restricted administrative dashboard for 
 - **Roles** — Manage Firebase Auth accounts and application user roles: create accounts, reset/set passwords, update Firebase user profiles, impersonate users, and manage role assignments.
 - **Statistics** — Trigger batch-update operations for derived statistics (competition levels, age/gender distribution, category-by-gender, member locations).
 - **Chat** — Admin view of the Matrix homeserver: browse rooms, inspect members, rename rooms, add aliases, invite users, provision Matrix accounts, kick members, deactivate users.
-- **Storage** — Inspect Firebase Storage: fetch metadata for a specific file path, calculate storage consumption for a directory (optionally recursive).
 - **Tag** — Manage the `tags` Firestore collection: browse, create, edit, and delete tag documents and their comma-separated tag strings per model type.
 - **User Accounts** — Cross-reference view of Firebase Auth accounts, application `UserModel` records, and `MembershipModel` entries; supports editing/deleting each tier independently.
 - **Admin Ops** — Miscellaneous administrative queries: list IBANs, list over-age juniors, show membership-category changes by club/year, and toggle focus-event debug logging.
@@ -26,7 +25,7 @@ All AOC pages require the `admin` or `privileged` role, enforced via `hasRole(..
 
 ## Store Pattern
 
-Each AOC tab has its own `signalStore` (`AocDataStore`, `AocContentStore`, `AocRolesStore`, `AocStatisticsStore`, `AocChatStore`, `AocStorageStore`, `AocTagStore`, `AocUserAccountStore`, `AocAdminOpsStore`) provided at the component level (not root). All stores inject `AppStore` and `FirestoreService`.
+Each AOC tab has its own `signalStore` (`AocDataStore`, `AocContentStore`, `AocRolesStore`, `AocStatisticsStore`, `AocChatStore`, `AocTagStore`, `AocUserAccountStore`, `AocAdminOpsStore`) provided at the component level (not root). All stores inject `AppStore` and `FirestoreService`.
 
 ## Supported Model Types (Data / Validate / Index operations)
 

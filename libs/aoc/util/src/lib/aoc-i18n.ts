@@ -647,17 +647,6 @@ export const AOC_I18N_KEYS = {
   statistics_member_location_conf:          PFX + 'statistics.memberLocation.conf',
   statistics_member_location_button:        PFX + 'statistics.memberLocation.button',
 
-  // storage
-  storage_title:                            PFX + 'storage.title',
-  storage_content:                          PFX + 'storage.content',
-
-  storage_info_title:                       PFX + 'storage.info.title',
-  storage_info_content:                     PFX + 'storage.info.content',
-  storage_info_button_label:                PFX + 'storage.info.buttonLabel',
-
-  storage_sizes_title:                      PFX + 'storage.sizes.title',
-  storage_sizes_content:                    PFX + 'storage.sizes.content',
-  storage_sizes_button_label:               PFX + 'storage.sizes.buttonLabel',
 
   // tag
   tag_title:                                PFX + 'tag.title',

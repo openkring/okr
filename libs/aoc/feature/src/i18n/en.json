@@ -812,20 +812,6 @@
       "button": "Run"
     }
   },
-  "storage": {
-    "title": "Firebase Storage",
-    "content": "Operations to manage the files and images in Firebase Storage.",
-    "info": {
-      "title": "Firebase Storage Info",
-      "content": "Shows information about a document in Firebase Storage. For this, the relative URL to this document must be entered.",
-      "buttonLabel": "Show information"
-    },
-    "sizes": {
-      "title": "Used storage space",
-      "content": "Calculates the storage space that all documents in a Firebase Storage folder occupy. For this, the relative path to the folder must be entered.",
-      "buttonLabel": "Calculate size"
-    }
-  },
   "tag": {
     "title": "Tag management",
     "add": {
