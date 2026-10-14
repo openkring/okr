@@ -16,9 +16,9 @@
  * Requires: gcloud auth application-default login (or GOOGLE_APPLICATION_CREDENTIALS).
  */
 import { getApps, initializeApp } from 'firebase-admin/app';
-import { getFirestore } from 'firebase-admin/firestore';
+import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 
-import { EMAIL, planAocParent, planEmailRow, planRootDoc, planStorageRow, STORAGE } from './aoc-phase1-menu.logic.mjs';
+import { APPLY_ORDER, EMAIL, planAocParent, planEmailRow, planRootDoc, planStorageRow, STORAGE } from './aoc-phase1-menu.logic.mjs';
 
 const args = process.argv.slice(2);
 if (args.some((a) => a !== '--apply' && a !== '--dry-run')) {
@@ -88,36 +88,52 @@ const emailDoc = {
 };
 delete emailDoc.okey;
 
-if (emailPlan.action === 'create') {
-  await col.doc(EMAIL).set(emailDoc);
-  console.log(`wrote menuItems/${EMAIL}`);
-} else if (emailPlan.action === 'extend') {
-  await col.doc(emailPlan.id).update({ tenants: emailPlan.tenants });
-  console.log(`wrote menuItems/${emailPlan.id}`);
-}
-
-for (const p of parentPlans.filter((x) => x.action === 'update')) {
-  const ref = col.doc(p.id);
-  await db.runTransaction(async (tx) => {
+// Re-read inside a transaction, re-plan, write only if still needed. Returns true when it wrote.
+async function updateMenuItems(id, replan) {
+  const ref = col.doc(id);
+  return db.runTransaction(async (tx) => {
     const snap = await tx.get(ref);
-    const re = planAocParent({ id: snap.id, ...snap.data() });
-    if (re.action === 'update') tx.update(ref, { menuItems: re.menuItems });
+    if (!snap.exists) {
+      console.log(`[GONE] menuItems/${id}`);
+      return false;
+    }
+    const re = replan({ id: snap.id, ...snap.data() });
+    if (re.action !== 'update' && re.action !== 'append') return false;
+    tx.update(ref, { menuItems: re.menuItems });
+    return true;
   });
-  console.log(`wrote menuItems/${p.id}`);
 }
 
-for (const p of rootPlans.filter((x) => x.action === 'append')) {
-  const ref = col.doc(p.id);
-  await db.runTransaction(async (tx) => {
-    const snap = await tx.get(ref);
-    const re = planRootDoc({ id: snap.id, ...snap.data() }, flightTenants);
-    if (re.action === 'append') tx.update(ref, { menuItems: re.menuItems });
-  });
-  console.log(`wrote menuItems/${p.id}`);
-}
-
-for (const p of storagePlans.filter((x) => x.action === 'archive')) {
-  await col.doc(p.id).update({ isArchived: true });
-  console.log(`wrote menuItems/${p.id}`);
-}
+const steps = {
+  email: async () => {
+    if (emailPlan.action === 'create') {
+      await col.doc(EMAIL).create(emailDoc);
+      console.log(`wrote menuItems/${EMAIL}`);
+    } else if (emailPlan.action === 'extend') {
+      const have = Array.isArray(emailSnap.data().tenants) ? emailSnap.data().tenants : [];
+      await col.doc(emailPlan.id).update({ tenants: FieldValue.arrayUnion(...emailPlan.tenants.filter((t) => !have.includes(t))) });
+      console.log(`wrote menuItems/${emailPlan.id}`);
+    }
+  },
+  // Roots BEFORE parents: flightTenants is derived from the parents' current `flighttracker` entries.
+  // If parents were rewritten first and the run died, a re-run would see no flight tracker and skip the roots,
+  // losing it for kring/okr/bka. Roots first keeps an interrupted run recoverable.
+  roots: async () => {
+    for (const p of rootPlans.filter((x) => x.action === 'append')) {
+      if (await updateMenuItems(p.id, (d) => planRootDoc(d, flightTenants))) console.log(`wrote menuItems/${p.id}`);
+    }
+  },
+  parents: async () => {
+    for (const p of parentPlans.filter((x) => x.action === 'update')) {
+      if (await updateMenuItems(p.id, planAocParent)) console.log(`wrote menuItems/${p.id}`);
+    }
+  },
+  storage: async () => {
+    for (const p of storagePlans.filter((x) => x.action === 'archive')) {
+      await col.doc(p.id).update({ isArchived: true });
+      console.log(`wrote menuItems/${p.id}`);
+    }
+  },
+};
+for (const name of APPLY_ORDER) await steps[name]();
 console.log('\nDone. Re-run without --apply: every line must read SKIP.');

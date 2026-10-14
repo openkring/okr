@@ -3,6 +3,9 @@ export const FLIGHT = 'flighttracker';
 export const EMAIL = 'aoc-email';
 export const EMAIL_ANCHORS = ['aoc-doc', 'aoc-account', 'aoc-sessions'];
 
+/** --apply write order. Roots precede parents: flightTenants is derived from the parents, so an interrupted run must not lose it. */
+export const APPLY_ORDER = ['email', 'roots', 'parents', 'storage'];
+
 const arr = (v) => (Array.isArray(v) ? v : []);
 
 /** Insert `item` after the first anchor present, else before 'divider_empty', else at the end. Idempotent. */

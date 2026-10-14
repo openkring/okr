@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { insertAfter, planAocParent, planEmailRow, planRootDoc, planStorageRow } from './aoc-phase1-menu.logic.mjs';
+import { APPLY_ORDER, insertAfter, planAocParent, planEmailRow, planRootDoc, planStorageRow } from './aoc-phase1-menu.logic.mjs';
 
 const LIVE = ['aoc-data', 'aoc-doc', 'aoc-storage', 'aoc-account', 'flighttracker', 'divider_empty', 'aoc-sessions'];
 
@@ -57,4 +57,8 @@ test('planEmailRow: create, skip, extend', () => {
   const e = planEmailRow({ id: 'aoc-email', tenants: ['bka'] }, ['scs', 'bka']);
   assert.equal(e.action, 'extend');
   assert.deepEqual(e.tenants, ['bka', 'scs']);
+});
+
+test('apply order: roots before parents', () => {
+  assert.ok(APPLY_ORDER.indexOf('roots') < APPLY_ORDER.indexOf('parents'));
 });
