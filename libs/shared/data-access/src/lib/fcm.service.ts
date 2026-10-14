@@ -1,7 +1,6 @@
 import { inject, Injectable, PLATFORM_ID } from '@angular/core';
 import { Capacitor } from '@capacitor/core';
 import { PushNotifications } from '@capacitor/push-notifications';
-import { NATIVE_PUSH_CHANNEL_ID } from '@okr/shared-constants';
 import { getApp } from 'firebase/app';
 import { getMessaging, getToken, onMessage, isSupported as isMessagingSupported, Messaging } from 'firebase/messaging';
 import { getFirestore, doc, setDoc, deleteDoc, serverTimestamp, collection, query, where, documentId, getDocs, writeBatch } from 'firebase/firestore';
@@ -10,6 +9,7 @@ import { catchError, filter, map } from 'rxjs/operators';
 
 import { ENV } from '@okr/shared-config';
 import { isBrowser } from '@okr/shared-util-core';
+import { ensureNativePushChannel } from './native-push-channel';
 
 /** Where the Firebase Messaging SDK registers firebase-messaging-sw.js (its DEFAULT_SW_SCOPE). */
 const FCM_SW_SCOPE = '/firebase-cloud-messaging-push-scope';
@@ -84,13 +84,9 @@ export class FcmService {
         return null;
       }
 
-      // Android: pushes go to our HIGH-importance channel — the FCM fallback channel is DEFAULT
-      // and never shows a heads-up banner (spec 1.10 Phase 1). Idempotent; iOS has no channels.
-      if (Capacitor.getPlatform() === 'android') {
-        await PushNotifications.createChannel({
-          id: NATIVE_PUSH_CHANNEL_ID, name: 'Benachrichtigungen', importance: 4, visibility: 1,
-        });
-      }
+      // Android: our HIGH-importance, lock-screen-private channel (see ensureNativePushChannel).
+      // Never throws, so a device without channels (API < 26) still registers its token.
+      await ensureNativePushChannel();
 
       // register() triggers the 'registration' event with the native FCM/APNs token
       await PushNotifications.register();
