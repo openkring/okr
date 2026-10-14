@@ -11,7 +11,8 @@
   "aging_due": "Due",
   "empty": "No invoices found",
   "list": {
-    "title": "Invoice overview"
+    "title": "Invoice overview",
+    "titleReceivables": "Accounts receivable invoices"
   },
   "id": {
     "label": "ID",

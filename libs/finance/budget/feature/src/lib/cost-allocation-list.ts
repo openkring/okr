@@ -12,7 +12,7 @@ import { EmptyList, Spinner } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@okr/shared-util-angular';
 import { hasRole } from '@okr/shared-util-core';
 
-import { AccountingSegments, ReadOnlyBanner } from '@okr/finance-accounting-feature';
+import { AccountingBooks, AccountingSegments, ReadOnlyBanner } from '@okr/finance-accounting-feature';
 import { formatMinorAmount } from '@okr/finance-booking-util';
 import { costCenterLabel } from '@okr/finance-cost-center-util';
 
@@ -27,7 +27,7 @@ import { BudgetStore } from './budget.store';
   selector: 'okr-cost-allocation-list',
   standalone: true,
   imports: [
-    AccountingSegments,
+    AccountingSegments, AccountingBooks,
     SvgIconPipe, Spinner, EmptyList, Menu, ReadOnlyBanner,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon, IonPopover,
     IonContent, IonList, IonItem, IonItemDivider, IonLabel, IonNote, IonSelect, IonSelectOption
@@ -38,6 +38,7 @@ import { BudgetStore } from './budget.store';
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
         <ion-title>{{ rules().length }} {{ store.i18n.alloc_list_title() }}</ion-title>
         @if (canChange()) {
+          <okr-accounting-books slot="end" />
           <ion-buttons slot="end">
             <ion-button id="{{ popupId }}">
               <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />

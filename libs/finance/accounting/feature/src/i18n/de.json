@@ -96,6 +96,10 @@
       "label": "Bezeichnung Zahlungsausgang",
       "placeholder": "BA",
       "helper": "Wird in Buchungstexten anstelle von «Zahlungsausgang» angezeigt. Der gespeicherte Text bleibt unverändert. Leer lassen, um das Wort zu zeigen."
+    },
+    "vatLiable": {
+      "label": "Mehrwertsteuerpflichtig",
+      "helper": "Schalte das ein, wenn die Organisation Mehrwertsteuer abrechnen muss. Nur dann erscheinen die MWST-Codes unter Stammdaten."
     }
   },
   "feeSchedule": {

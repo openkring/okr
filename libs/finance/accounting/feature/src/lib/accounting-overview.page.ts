@@ -6,6 +6,7 @@ import { ACCOUNTING_AREAS, segmentUrl } from '@okr/finance-accounting-util';
 
 import { AccountingOverviewStore } from './accounting-overview.store';
 import { AccountingSegments } from './accounting-segments';
+import { AccountingBooks } from './accounting-books';
 import { AccountingStore } from './accounting.store';
 
 function fill(template: string, values: Record<string, string>): string {
@@ -19,7 +20,7 @@ function chf(minor: number | undefined): string {
 
 @Component({
   selector: 'okr-accounting-overview-page',
-  imports: [IonHeader, IonToolbar, IonButtons, IonMenuButton, IonTitle, IonContent, IonButton, IonSelect, IonSelectOption, IonSpinner, AccountingSegments],
+  imports: [IonHeader, IonToolbar, IonButtons, IonMenuButton, IonTitle, IonContent, IonButton, IonSelect, IonSelectOption, IonSpinner, AccountingSegments, AccountingBooks],
   providers: [AccountingOverviewStore],
   styles: [`
     .wrap { max-width: 1200px; margin: 0 auto; padding: 16px; display: flex; flex-direction: column; gap: 28px; }
@@ -39,7 +40,8 @@ function chf(minor: number | undefined): string {
     <ion-header>
       <ion-toolbar color="secondary">
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-        <ion-title>{{ i18n.overview_title() }} · {{ books().toUpperCase() }}</ion-title>
+        <ion-title>{{ i18n.overview_title() }}</ion-title>
+        <okr-accounting-books slot="end" />
       </ion-toolbar>
       <okr-accounting-segments />
     </ion-header>

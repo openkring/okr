@@ -11,7 +11,8 @@
   "aging_due": "Vencimiento",
   "empty": "No se encontraron facturas",
   "list": {
-    "title": "Resumen de facturas"
+    "title": "Resumen de facturas",
+    "titleReceivables": "Facturas de deudores"
   },
   "id": {
     "label": "ID",

@@ -15,6 +15,7 @@ export const INVOICE_I18N_KEYS = {
   empty:                      PFX + 'empty',
 
   list_title:               PFX + 'list.title',
+  list_title_receivables:   PFX + 'list.titleReceivables',
 
   id_label:                 PFX + 'id.label',
   id_placeholder:           PFX + 'id.placeholder',

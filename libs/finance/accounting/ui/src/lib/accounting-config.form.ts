@@ -144,6 +144,14 @@ export type { AccountingI18n };
                   <ion-note>{{ i18n().bill_payment_accounts_helper() }}</ion-note>
                 </ion-col>
               </ion-row>
+              <!-- VAT liability: off = vatMethod 'exempt', which also hides the MWST codes (spec 1.100) -->
+              <ion-row>
+                <ion-col size="12" size-md="6">
+                  <ion-toggle [checked]="vatLiable()" [disabled]="isReadOnly()"
+                    (ionChange)="onVatLiableChange($event.detail.checked)">{{ i18n().vat_liable() }}</ion-toggle>
+                  <ion-note>{{ i18n().vat_liable_helper() }}</ion-note>
+                </ion-col>
+              </ion-row>
               <!-- daily task for the payment_approver (spec 1.94) -->
               <ion-row>
                 <ion-col size="12" size-md="6">
@@ -310,6 +318,13 @@ export class AccountingConfigForm {
   protected readonly billPaymentAccountKeys = computed(() => this.formData()?.billPaymentAccountKeys ?? []);
   // legacy config docs predate the field (spec 1.94)
   protected readonly paymentApproverTask = computed(() => this.formData()?.paymentApproverTask ?? false);
+  protected readonly vatLiable = computed(() => (this.formData()?.vatMethod ?? 'effective') !== 'exempt');
+
+  /** off = 'exempt'; on = the method it had, or 'effective' when it was exempt */
+  protected onVatLiableChange(liable: boolean): void {
+    const current = this.formData()?.vatMethod ?? 'effective';
+    this.onFieldChange('vatMethod', liable ? (current === 'exempt' ? 'effective' : current) : 'exempt');
+  }
   /** leaf accounts of class 1 (assets): the accounts an invoice payment may be posted to */
   protected leaves = computed(() => leafAccounts(this.accounts()));
   protected paymentAccountChoices = computed(() =>

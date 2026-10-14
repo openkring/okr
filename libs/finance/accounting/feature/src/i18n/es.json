@@ -96,6 +96,10 @@
       "label": "Etiqueta de pago emitido",
       "placeholder": "BA",
       "helper": "Se muestra en los textos de los asientos en lugar de «Zahlungsausgang». El texto guardado no cambia. Déjalo vacío para mostrar la palabra."
+    },
+    "vatLiable": {
+      "label": "Sujeto a IVA",
+      "helper": "Actívalo si la organización tiene que liquidar el IVA. Solo entonces aparecen los códigos de IVA en Datos maestros."
     }
   },
   "feeSchedule": {

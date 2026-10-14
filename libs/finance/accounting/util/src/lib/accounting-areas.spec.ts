@@ -66,6 +66,13 @@ describe('segmentUrl', () => {
   });
 });
 
+describe('requiresVat', () => {
+  it('marks only the VAT codes', () => {
+    const marked = ACCOUNTING_AREAS.flatMap(a => a.segments).filter(s => s.requiresVat).map(s => s.id);
+    expect(marked).toEqual(['masterData.vatCodes']);
+  });
+});
+
 describe('ACCOUNTING_AREAS', () => {
   it('has eight areas with unique segment ids', () => {
     expect(ACCOUNTING_AREAS.map(a => a.id)).toEqual(['overview', 'journal', 'payables', 'receivables', 'cost', 'reports', 'closing', 'masterData']);

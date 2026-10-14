@@ -57,6 +57,9 @@ export const AccountingStore = signalStore(
     // Absent/loading config means "not known to be external" — default native, same coalesce as the
     // OCR trigger. Without the ?? every page renders read-only until the config resolves.
     isExternallyManaged: computed(() => (store.configResource.value()?.accountingBackend ?? 'native') !== 'native'),
+    // VAT-liable unless the settings say «nicht mehrwertsteuerpflichtig» (vatMethod 'exempt'); an
+    // absent config counts as liable, so the MWST codes are not hidden while it loads
+    vatLiable: computed(() => (store.configResource.value()?.vatMethod ?? 'effective') !== 'exempt'),
     // the books selection lives in SelectedBooks (shared), the switcher in the «Buchhaltung» menu (spec 1.100 §4.2)
     availableBooks: computed(() => store.selectedBooksSignal.available()),
     selectedBooks: computed(() => store.selectedBooksSignal.current()),

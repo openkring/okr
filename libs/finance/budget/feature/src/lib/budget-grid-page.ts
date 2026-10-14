@@ -10,7 +10,7 @@ import { createActionSheetButton, createActionSheetDivider, createActionSheetOpt
 import { hasRole } from '@okr/shared-util-core';
 import { BudgetStatus } from '@okr/shared-models';
 
-import { AccountingSegments, ReadOnlyBanner } from '@okr/finance-accounting-feature';
+import { AccountingBooks, AccountingSegments, ReadOnlyBanner } from '@okr/finance-accounting-feature';
 import { formatMinorAmount } from '@okr/finance-booking-util';
 import { buildBudgetGrid, BudgetGridRow, BudgetGridSection, isNetOver, isOver, isVersionEditable, netOf } from '@okr/finance-budget-util';
 import { aggregateByCostCenter, CellSide, CostCenterRollUp, costCenterLabel, postedLinesInRange } from '@okr/finance-cost-center-util';
@@ -28,7 +28,7 @@ import { BudgetStore } from './budget.store';
   selector: 'okr-budget-grid-page',
   standalone: true,
   imports: [
-    AccountingSegments,
+    AccountingSegments, AccountingBooks,
     SvgIconPipe, Spinner, EmptyList, ReadOnlyBanner,
     IonHeader, IonToolbar, IonButtons, IonBackButton, IonTitle, IonContent, IonChip, IonList, IonItem, IonLabel, IonNote,
     IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonButton, IonIcon
@@ -52,6 +52,7 @@ import { BudgetStore } from './budget.store';
         <ion-buttons slot="start"><ion-back-button [defaultHref]="backHref()" /></ion-buttons>
         <ion-title>{{ version()?.name ?? store.i18n.grid_title() }}</ion-title>
         @if (version(); as v) {
+          <okr-accounting-books slot="end" />
           <ion-buttons slot="end">
             <ion-chip color="light">{{ yearLabel() }}</ion-chip>
             <ion-chip color="light">{{ kindLabel() }}</ion-chip>

@@ -96,6 +96,10 @@
       "label": "Etichetta pagamento in uscita",
       "placeholder": "BA",
       "helper": "Mostrata nei testi delle registrazioni al posto di «Zahlungsausgang». Il testo salvato resta invariato. Lascia vuoto per mostrare la parola."
+    },
+    "vatLiable": {
+      "label": "Soggetto IVA",
+      "helper": "Attivalo se l’organizzazione deve conteggiare l’IVA. Solo allora i codici IVA compaiono in Dati di base."
     }
   },
   "feeSchedule": {

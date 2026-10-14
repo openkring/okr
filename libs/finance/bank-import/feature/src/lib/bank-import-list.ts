@@ -16,7 +16,7 @@ import { convertDateFormatToString, DateFormat, generateRandomString } from '@ok
 import { Menu } from '@okr/cms-menu-feature';
 
 import { BANK_IMPORT_PROVIDERS, BankImportStatusFilter, BankImportStore } from './bank-import.store';
-import { AccountingSegments } from '@okr/finance-accounting-feature';
+import { AccountingBooks, AccountingSegments } from '@okr/finance-accounting-feature';
 
 const STATUS_FILTERS: BankImportStatusFilter[] = ['open', 'all', 'unmapped', 'mapped', 'posted', 'error'];
 
@@ -24,7 +24,7 @@ const STATUS_FILTERS: BankImportStatusFilter[] = ['open', 'all', 'unmapped', 'ma
   selector: 'okr-bank-import-list',
   standalone: true,
   imports: [
-    AccountingSegments,
+    AccountingSegments, AccountingBooks,
     SvgIconPipe, Menu, Spinner, EmptyList, ListFilter, DecimalPipe,
     IonHeader, IonToolbar, IonButtons, IonButton, IonMenuButton, IonTitle, IonIcon, IonPopover,
     IonContent, IonGrid, IonRow, IonCol, IonChip, IonNote,
@@ -37,6 +37,7 @@ const STATUS_FILTERS: BankImportStatusFilter[] = ['open', 'all', 'unmapped', 'ma
       <ion-toolbar color="secondary">
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
         <ion-title>{{ store.filtered().length }}/{{ store.rows().length }} {{ store.i18n.plural() }}</ion-title>
+        <okr-accounting-books slot="end" />
         <ion-buttons slot="end">
           <ion-button id="{{ popupId() }}">
             <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />

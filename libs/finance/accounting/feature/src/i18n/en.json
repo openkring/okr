@@ -96,6 +96,10 @@
       "label": "Label for outgoing payment",
       "placeholder": "BA",
       "helper": "Shown in booking texts instead of «Zahlungsausgang». The stored text stays unchanged. Leave empty to show the word."
+    },
+    "vatLiable": {
+      "label": "Subject to VAT",
+      "helper": "Switch this on if the organisation has to account for VAT. Only then do the VAT codes appear under master data."
     }
   },
   "feeSchedule": {

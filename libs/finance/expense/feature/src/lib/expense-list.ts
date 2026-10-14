@@ -22,13 +22,13 @@ import {
 
 import { ExpenseNewModal } from './expense-new.modal';
 import { ExpenseListId, ExpenseStore } from './expense.store';
-import { AccountingSegments } from '@okr/finance-accounting-feature';
+import { AccountingBooks, AccountingSegments } from '@okr/finance-accounting-feature';
 
 @Component({
   selector: 'okr-expense-list',
   standalone: true,
   imports: [
-    AccountingSegments,
+    AccountingSegments, AccountingBooks,
     ImgDirective, AsyncPipe, SvgIconPipe, TranslatePipe, AvatarPipe,
     Spinner, EmptyList, ListFilter, Menu,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonIcon, IonMenuButton,
@@ -66,6 +66,7 @@ import { AccountingSegments } from '@okr/finance-accounting-feature';
         </ion-buttons>
         <ion-title>{{ title() }}</ion-title>
         @if (canAdd()) {
+          <okr-accounting-books slot="end" />
           <ion-buttons slot="end">
             <ion-button id="{{ popupId() }}">
               <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />

@@ -11,7 +11,8 @@
   "aging_due": "Échéance",
   "empty": "Aucune facture trouvée",
   "list": {
-    "title": "Aperçu des factures"
+    "title": "Aperçu des factures",
+    "titleReceivables": "Factures débiteurs"
   },
   "id": {
     "label": "ID",

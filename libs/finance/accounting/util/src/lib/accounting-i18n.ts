@@ -59,6 +59,8 @@ export const ACCOUNTING_I18N_KEYS = {
   bill_payables_account_helper:   PFX + 'settings.billPayablesAccount.helper',
   bill_payment_accounts:          PFX + 'settings.billPaymentAccounts.label',
   bill_payment_accounts_helper:   PFX + 'settings.billPaymentAccounts.helper',
+  vat_liable:                     PFX + 'settings.vatLiable.label',
+  vat_liable_helper:              PFX + 'settings.vatLiable.helper',
   payment_approver_task:          PFX + 'settings.paymentApproverTask.label',
   payment_approver_task_helper:   PFX + 'settings.paymentApproverTask.helper',
   payment_approver_task_missing:  PFX + 'settings.paymentApproverTask.missing',

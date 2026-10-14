@@ -20,6 +20,7 @@ import { toAccountingConfigFormData } from '@okr/finance-accounting-util';
 
 import { AccountingStore } from './accounting.store';
 import { ReadOnlyBanner } from './read-only-banner';
+import { AccountingBooks } from './accounting-books';
 import { AccountingSegments } from './accounting-segments';
 
 /**
@@ -30,10 +31,12 @@ import { AccountingSegments } from './accounting-segments';
 @Component({
   selector: 'okr-accounting-settings-page',
   standalone: true,
-  imports: [AccountingSegments, Header, ChangeConfirmation, ReadOnlyBanner, AccountingConfigForm, FeeSchedule, IonContent],
+  imports: [AccountingSegments, AccountingBooks, Header, ChangeConfirmation, ReadOnlyBanner, AccountingConfigForm, FeeSchedule, IonContent],
   providers: [CategoryStore],
   template: `
-    <okr-header [i18n]="headerI18n()" [isModal]="false" />
+    <okr-header [i18n]="headerI18n()" [isModal]="false">
+      <okr-accounting-books okrHeaderEnd slot="end" />
+    </okr-header>
     <okr-accounting-segments />
     @if (showConfirmation()) {
       <okr-change-confirmation [i18n]="changeConfirmationI18n()"

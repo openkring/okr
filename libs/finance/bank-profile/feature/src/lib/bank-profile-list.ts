@@ -15,7 +15,7 @@ import { AlertService, createActionSheetButton, createActionSheetDivider, create
 import { Menu } from '@okr/cms-menu-feature';
 
 import { BankProfileStore } from './bank-profile.store';
-import { AccountingSegments } from '@okr/finance-accounting-feature';
+import { AccountingBooks, AccountingSegments } from '@okr/finance-accounting-feature';
 
 /** IBAN formatted in groups of 4, e.g. 'CH93 0076 2011 6238 5295 7'. */
 function formatIban(iban: string): string {
@@ -26,7 +26,7 @@ function formatIban(iban: string): string {
   selector: 'okr-bank-profile-list',
   standalone: true,
   imports: [
-    AccountingSegments,
+    AccountingSegments, AccountingBooks,
     SvgIconPipe, Menu, Spinner, EmptyList,
     IonHeader, IonMenuButton, IonToolbar, IonButtons, IonButton, IonTitle, IonIcon, IonPopover,
     IonContent, IonList, IonItem, IonLabel,
@@ -37,6 +37,7 @@ function formatIban(iban: string): string {
       <ion-toolbar color="secondary">
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
         <ion-title>{{ store.profiles().length }} {{ store.i18n.plural() }}</ion-title>
+        <okr-accounting-books slot="end" />
         <ion-buttons slot="end">
           <ion-button id="{{ popupId() }}">
             <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />

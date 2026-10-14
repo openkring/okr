@@ -4,21 +4,21 @@ import { IonBadge, IonContent, IonFab, IonFabButton, IonHeader, IonButtons, IonM
   IonItem, IonLabel, IonList, IonTitle, IonToolbar } from '@ionic/angular';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { AccountingSegments, AccountingStore } from '@okr/finance-accounting-feature';
+import { AccountingBooks, AccountingSegments, AccountingStore } from '@okr/finance-accounting-feature';
 
 import { PaymentStore } from './payment.store';
 
 @Component({
   selector: 'okr-payment-order-list',
   standalone: true,
-  imports: [AccountingSegments, IonHeader, IonButtons, IonMenuButton, IonToolbar, IonTitle, IonContent, IonList, IonItem, IonLabel, IonBadge, IonFab, IonFabButton, IonIcon, SvgIconPipe],
+  imports: [AccountingSegments, AccountingBooks, IonHeader, IonButtons, IonMenuButton, IonToolbar, IonTitle, IonContent, IonList, IonItem, IonLabel, IonBadge, IonFab, IonFabButton, IonIcon, SvgIconPipe],
   providers: [PaymentStore],
   template: `
     <ion-header>
-      <ion-toolbar>
+      <ion-toolbar color="secondary">
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
         <ion-title>{{ store.i18n.list_title() }}</ion-title>
-      </ion-toolbar>
+      <okr-accounting-books slot="end" /></ion-toolbar>
       <okr-accounting-segments />
     </ion-header>
     <ion-content>

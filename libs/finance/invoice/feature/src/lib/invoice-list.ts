@@ -14,7 +14,7 @@ import { convertDateFormatToString, DateFormat, generateRandomString, getTodaySt
 
 import { AvatarPipe } from '@okr/avatar-ui';
 import { Menu } from '@okr/cms-menu-feature';
-import { AccountingSegments, ReadOnlyBanner } from '@okr/finance-accounting-feature';
+import { AccountingBooks, AccountingSegments, ReadOnlyBanner } from '@okr/finance-accounting-feature';
 
 import { InvoiceStore } from './invoice.store';
 
@@ -24,7 +24,7 @@ import { InvoiceStore } from './invoice.store';
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [InvoiceStore],
   imports: [
-    AccountingSegments,
+    AccountingSegments, AccountingBooks,
     ImgDirective, SvgIconPipe, AvatarPipe,
     Spinner, ListFilter, EmptyList, Menu, ReadOnlyBanner,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon, IonPopover,
@@ -44,8 +44,9 @@ import { InvoiceStore } from './invoice.store';
     <ion-header>
       <ion-toolbar color="secondary">
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-        <ion-title>{{ filteredCount() }} {{ store.i18n.list_title() }}</ion-title>
+        <ion-title>{{ filteredCount() }} {{ listId() === 'all' ? store.i18n.list_title_receivables() : store.i18n.list_title() }}</ion-title>
         @if(canWriteDrafts()) {
+          <okr-accounting-books slot="end" />
           <ion-buttons slot="end">
             <ion-button id="{{ popupId() }}">
               <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />

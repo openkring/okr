@@ -13,14 +13,14 @@ import { getFeeTotal } from '@okr/relationship-membership-util';
 import { MemberFeesStore } from './member-fee.store';
 import { MemberFeeEditModal } from './member-fee-edit.modal';
 import { Menu } from '@okr/cms-menu-feature';
-import { AccountingSegments } from '@okr/finance-accounting-feature';
+import { AccountingBooks, AccountingSegments } from '@okr/finance-accounting-feature';
 
 @Component({
   selector: 'okr-member-fees',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    AccountingSegments,
+    AccountingSegments, AccountingBooks,
     ImgDirective, AvatarPipe, SvgIconPipe,
     Spinner, ListFilter, EmptyList, Menu,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon, IonPopover,
@@ -43,6 +43,7 @@ import { AccountingSegments } from '@okr/finance-accounting-feature';
           {{ store.i18n.memberFee_list_title() }}
         </ion-title>
         @if(hasRole('treasurer')) {
+          <okr-accounting-books slot="end" />
           <ion-buttons slot="end">
             <ion-button [id]="popupId">
               <ion-icon slot="icon-only" [src]="'ellipsis-vertical' | svgIcon" />

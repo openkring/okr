@@ -11,7 +11,8 @@
   "aging_due": "Scadenza",
   "empty": "Nessuna fattura trovata",
   "list": {
-    "title": "Panoramica fatture"
+    "title": "Panoramica fatture",
+    "titleReceivables": "Fatture debitori"
   },
   "id": {
     "label": "ID",

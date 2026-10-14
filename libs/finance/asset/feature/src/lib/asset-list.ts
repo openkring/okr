@@ -5,19 +5,19 @@ import { IonContent, IonFab, IonFabButton, IonHeader, IonButtons, IonMenuButton,
 import { SvgIconPipe } from '@okr/shared-pipes';
 
 import { AssetStore } from './asset.store';
-import { AccountingSegments } from '@okr/finance-accounting-feature';
+import { AccountingBooks, AccountingSegments } from '@okr/finance-accounting-feature';
 
 @Component({
   selector: 'okr-asset-list',
   standalone: true,
-  imports: [AccountingSegments, IonHeader, IonButtons, IonMenuButton, IonToolbar, IonTitle, IonContent, IonList, IonItem, IonLabel, IonFab, IonFabButton, IonIcon, SvgIconPipe],
+  imports: [AccountingSegments, AccountingBooks, IonHeader, IonButtons, IonMenuButton, IonToolbar, IonTitle, IonContent, IonList, IonItem, IonLabel, IonFab, IonFabButton, IonIcon, SvgIconPipe],
   providers: [AssetStore],
   template: `
     <ion-header>
-      <ion-toolbar>
+      <ion-toolbar color="secondary">
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
         <ion-title>{{ store.i18n.list_title() }}</ion-title>
-      </ion-toolbar>
+      <okr-accounting-books slot="end" /></ion-toolbar>
       <okr-accounting-segments />
     </ion-header>
     <ion-content>

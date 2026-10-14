@@ -11,7 +11,8 @@
   "aging_due": "Fällig",
   "empty": "Keine Rechnungen gefunden",
   "list": {
-    "title": "Rechnungsübersicht"
+    "title": "Rechnungsübersicht",
+    "titleReceivables": "Debitoren-Rechnungen"
   },
   "id": {
     "label": "ID",

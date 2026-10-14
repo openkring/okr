@@ -15,13 +15,13 @@ import { AlertService, createActionSheetButton, createActionSheetDivider, create
 import { Menu } from '@okr/cms-menu-feature';
 
 import { BankRuleStore } from './bank-rule.store';
-import { AccountingSegments } from '@okr/finance-accounting-feature';
+import { AccountingBooks, AccountingSegments } from '@okr/finance-accounting-feature';
 
 @Component({
   selector: 'okr-bank-rule-list',
   standalone: true,
   imports: [
-    AccountingSegments,
+    AccountingSegments, AccountingBooks,
     SvgIconPipe, Menu, Spinner, EmptyList,
     IonHeader, IonMenuButton, IonToolbar, IonButtons, IonButton, IonTitle, IonIcon, IonPopover,
     IonContent, IonList, IonItem, IonLabel, IonBadge,
@@ -32,6 +32,7 @@ import { AccountingSegments } from '@okr/finance-accounting-feature';
       <ion-toolbar color="secondary">
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
         <ion-title>{{ store.rules().length }} {{ store.i18n.plural() }}</ion-title>
+        <okr-accounting-books slot="end" />
         <ion-buttons slot="end">
           <ion-button id="{{ popupId() }}">
             <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />

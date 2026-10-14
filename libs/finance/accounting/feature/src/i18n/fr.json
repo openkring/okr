@@ -96,6 +96,10 @@
       "label": "Libellé paiement émis",
       "placeholder": "BA",
       "helper": "Affiché dans les textes d’écriture à la place de « Zahlungsausgang ». Le texte enregistré reste inchangé. Laisse vide pour afficher le mot."
+    },
+    "vatLiable": {
+      "label": "Assujetti à la TVA",
+      "helper": "Active-le si l’organisation doit décompter la TVA. Ce n’est qu’alors que les codes TVA apparaissent sous Données de base."
     }
   },
   "feeSchedule": {

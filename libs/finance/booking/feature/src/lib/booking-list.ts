@@ -10,7 +10,7 @@ import { createActionSheetButton, createActionSheetDivider, createActionSheetOpt
 import { generateRandomString, hasRole } from '@okr/shared-util-core';
 
 import { Menu } from '@okr/cms-menu-feature';
-import { AccountingSegments, ReadOnlyBanner } from '@okr/finance-accounting-feature';
+import { AccountingBooks, AccountingSegments, ReadOnlyBanner } from '@okr/finance-accounting-feature';
 
 import { BookingAction, isForReview, JournalRow, sideAccountKeys } from '@okr/finance-booking-util';
 import { BookingStore } from './booking.store';
@@ -26,7 +26,7 @@ function parseAmount(amount: string): number {
   selector: 'okr-booking-list',
   standalone: true,
   imports: [
-    AccountingSegments,
+    AccountingSegments, AccountingBooks,
     SvgIconPipe,
     Spinner, EmptyList, Menu, ListFilter, ReadOnlyBanner,
     IonHeader, IonToolbar, IonTitle, IonContent,
@@ -57,6 +57,7 @@ function parseAmount(amount: string): number {
         }
       </ion-title>
       @if(hasRole('privileged') || hasRole('admin')) {
+        <okr-accounting-books slot="end" />
         <ion-buttons slot="end">
           <ion-button id="{{ popupId() }}">
             <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />

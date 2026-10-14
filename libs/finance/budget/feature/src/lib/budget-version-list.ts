@@ -12,7 +12,7 @@ import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error } from '@okr/shared-util-angular';
 import { hasRole } from '@okr/shared-util-core';
 
-import { AccountingSegments, ReadOnlyBanner } from '@okr/finance-accounting-feature';
+import { AccountingBooks, AccountingSegments, ReadOnlyBanner } from '@okr/finance-accounting-feature';
 import { BUDGET_I18N_SCOPE, isVersionEditable } from '@okr/finance-budget-util';
 
 import { BudgetStore } from './budget.store';
@@ -28,7 +28,7 @@ import { BudgetStore } from './budget.store';
   selector: 'okr-budget-version-list',
   standalone: true,
   imports: [
-    AccountingSegments,
+    AccountingSegments, AccountingBooks,
     SvgIconPipe, PrettyDatePipe, Spinner, EmptyList, ListFilter, Menu, ReadOnlyBanner,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
     IonContent, IonList, IonItemGroup, IonItemDivider, IonItem, IonLabel, IonChip, IonPopover
@@ -42,6 +42,7 @@ import { BudgetStore } from './budget.store';
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
         <ion-title>{{ filteredCount() }}/{{ store.activeCount() }} {{ store.i18n.budgets() }}</ion-title>
         @if (canChange()) {
+          <okr-accounting-books slot="end" />
           <ion-buttons slot="end">
             <ion-button id="{{ popupId }}">
               <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />

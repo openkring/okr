@@ -11,7 +11,7 @@ import { billDisplayState, billStateColor, billStateLabel, billVoucherKeys, isDr
 
 import { AvatarPipe } from '@okr/avatar-ui';
 import { Menu } from '@okr/cms-menu-feature';
-import { AccountingSegments, ReadOnlyBanner } from '@okr/finance-accounting-feature';
+import { AccountingBooks, AccountingSegments, ReadOnlyBanner } from '@okr/finance-accounting-feature';
 
 import { BillStore } from './bill.store';
 
@@ -21,7 +21,7 @@ import { BillStore } from './bill.store';
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [BillStore],
   imports: [
-    AccountingSegments,
+    AccountingSegments, AccountingBooks,
     ImgDirective, SvgIconPipe, AvatarPipe,
     Spinner, ListFilter, EmptyList, Menu, ReadOnlyBanner,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon, IonPopover,
@@ -43,6 +43,7 @@ import { BillStore } from './bill.store';
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
         <ion-title>{{ filteredCount() }} {{ store.i18n.list_title() }}</ion-title>
         @if(canChange()) {
+          <okr-accounting-books slot="end" />
           <ion-buttons slot="end">
             <ion-button id="{{ popupId() }}">
               <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />

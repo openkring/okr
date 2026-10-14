@@ -40,6 +40,9 @@ export interface HeaderI18n {
         } @else {
           <ion-title>{{ i18n().title }}</ion-title>
         }
+        <!-- page content for the title bar's end, LEFT of the buttons (e.g. the accounting books marker):
+             <okr-header …><x okrHeaderEnd slot="end" /></okr-header> -->
+        <ng-content select="[okrHeaderEnd]" />
         @if(isRootPage() === false) {
           <ion-buttons slot="end">
             <!-- optional page/modal action, rendered LEFT of the close button; the task modal

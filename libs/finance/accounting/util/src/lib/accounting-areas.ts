@@ -18,6 +18,8 @@ export interface AccountingSegment {
   booksScoped: boolean;
   /** hide unless this feature block is effective for the tenant */
   featureBlock?: string;
+  /** hide while the books are not VAT-liable (`AccountingConfigModel.vatMethod === 'exempt'`) */
+  requiresVat?: boolean;
 }
 
 export interface AccountingArea {
@@ -83,7 +85,7 @@ export const ACCOUNTING_AREAS: readonly AccountingArea[] = [
   ] },
   { id: 'masterData', i18nKey: 'nav_area_masterData', segments: [
     seg('masterData.accounts', 'nav_seg_accounts', '/accounting/{books}/account/c-account', [acc('account')]),
-    seg('masterData.vatCodes', 'nav_seg_vatCodes', '/accounting/{books}/vat-codes', [acc('vat-codes')]),
+    seg('masterData.vatCodes', 'nav_seg_vatCodes', '/accounting/{books}/vat-codes', [acc('vat-codes')], { requiresVat: true }),
     seg('masterData.bankProfiles', 'nav_seg_bankProfiles', '/accounting-bank-profiles/{books}/bank-profile-context', [top('accounting-bank-profiles')]),
     seg('masterData.bankRules', 'nav_seg_bankRules', '/accounting-bank-rules/{books}/bank-rule-context', [top('accounting-bank-rules')]),
     seg('masterData.ocrRules', 'nav_seg_ocrRules', '/accounting-ocr-rules/{books}/ocr-rule-context', [top('accounting-ocr-rules')]),

@@ -13,7 +13,7 @@ import { I18nService } from '@okr/shared-i18n';
 import { resourceParams } from '@okr/shared-util-angular';
 import { getSystemQuery } from '@okr/shared-util-core';
 import { INVOICE_I18N_KEYS, InvoiceI18n } from '@okr/finance-invoice-util';
-import { AccountingSegments, AccountingStore } from '@okr/finance-accounting-feature';
+import { AccountingBooks, AccountingSegments, AccountingStore } from '@okr/finance-accounting-feature';
 
 /** Bucket identity is stable and language-independent; the label is resolved via i18n. */
 export type AgingBucketId = 'b0_30' | 'b31_60' | 'b61_90' | 'b90_plus';
@@ -50,13 +50,13 @@ function agingBuckets(invoices: InvoiceModel[]): AgingBucket[] {
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    AccountingSegments,
+    AccountingSegments, AccountingBooks,
     IonHeader, IonButtons, IonMenuButton, IonToolbar, IonTitle, IonContent,
     IonItem, IonLabel, IonBadge,
   ],
   template: `
     <ion-header>
-      <ion-toolbar><ion-buttons slot="start"><ion-menu-button /></ion-buttons><ion-title>{{ i18n.invoice_aging() }}</ion-title></ion-toolbar>
+      <ion-toolbar color="secondary"><ion-buttons slot="start"><ion-menu-button /></ion-buttons><ion-title>{{ i18n.invoice_aging() }}</ion-title><okr-accounting-books slot="end" /></ion-toolbar>
       <okr-accounting-segments />
     </ion-header>
     <ion-content>

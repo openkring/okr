@@ -11,7 +11,7 @@ import { Menu } from '@okr/cms-menu-feature';
 import { CostCenterStore } from '@okr/finance-cost-center-feature';
 import { costCenterLabel } from '@okr/finance-cost-center-util';
 
-import { AccountingSegments, ReadOnlyBanner } from '@okr/finance-accounting-feature';
+import { AccountingBooks, AccountingSegments, ReadOnlyBanner } from '@okr/finance-accounting-feature';
 
 import { FlatAccountNode } from '@okr/finance-account-util';
 import { AccountStore } from './account.store';
@@ -20,7 +20,7 @@ import { AccountStore } from './account.store';
   selector: 'okr-account-list',
   standalone: true,
   imports: [
-    AccountingSegments,
+    AccountingSegments, AccountingBooks,
     SvgIconPipe,
     Spinner, EmptyList, Menu, ReadOnlyBanner,
     IonToolbar, IonButton, IonIcon, IonLabel, IonHeader, IonButtons,
@@ -34,6 +34,7 @@ import { AccountStore } from './account.store';
       <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
       <ion-title>{{ store.i18n.accounts() }}</ion-title>
       @if(!store.isReadOnly() && !readOnly() && visibleNodes().length === 0) {
+        <okr-accounting-books slot="end" />
         <ion-buttons slot="end">
           <ion-button fill="clear" (click)="store.seedStandard()">{{ store.i18n.seed() }}</ion-button>
         </ion-buttons>

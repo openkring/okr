@@ -11,7 +11,7 @@ import { generateRandomString, hasRole } from '@okr/shared-util-core';
 
 import { Menu } from '@okr/cms-menu-feature';
 
-import { AccountingSegments, ReadOnlyBanner } from '@okr/finance-accounting-feature';
+import { AccountingBooks, AccountingSegments, ReadOnlyBanner } from '@okr/finance-accounting-feature';
 
 import { PeriodStore } from './period.store';
 
@@ -19,7 +19,7 @@ import { PeriodStore } from './period.store';
   selector: 'okr-period-list',
   standalone: true,
   imports: [
-    AccountingSegments,
+    AccountingSegments, AccountingBooks,
     SvgIconPipe, Spinner, EmptyList, Menu, ReadOnlyBanner,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
     IonContent, IonList, IonItem, IonLabel, IonBadge, IonNote, IonPopover,
@@ -31,6 +31,7 @@ import { PeriodStore } from './period.store';
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
         <ion-title>{{ count() }} {{ store.i18n.list_title() }}</ion-title>
         @if (canChange()) {
+          <okr-accounting-books slot="end" />
           <ion-buttons slot="end">
             <ion-button id="{{ popupId() }}">
               <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />
