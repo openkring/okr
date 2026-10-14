@@ -301,19 +301,17 @@ service cloud.firestore {
       allow read: if signedIn() && (request.auth.uid == userId
                     || (isPrivileged() && (resource == null || belongsToTenant(resource.data))));
 
-      // Self-service create of your own doc is allowed only without elevated roles;
-      // admins may create within their tenant. (User provisioning normally happens
-      // via the Admin SDK, which bypasses rules.)
+      // Only admins create users docs from the client, and only within their own single tenant.
+      // There is NO self-service create (spec 1.101 phase 1): Firebase Auth issues a valid ID token
+      // for a login that has no users doc, and the app's guards don't apply to direct SDK calls, so
+      // a self-create arm let such a login make itself a member of any tenant. Accounts are
+      // provisioned by admins or server-side (Admin SDK: openAccount / syncPersonAccount,
+      // allocateTenant), which bypasses rules.
       // A client-created user doc may never carry a Benutzername — admins provision
       // accounts through the openAccount callable, which writes loginId server-side.
-      allow create: if signedIn() && request.resource.data.get('loginId', '') == '' && (
-                       (request.auth.uid == userId
-                          && request.resource.data.tenants.size() == 1
-                          && !request.resource.data.roles.get('admin', false)
-                          && !request.resource.data.roles.get('privileged', false))
-                       || (isAdmin() && canWriteTenant(request.resource.data)
-                                     && singleOwnTenant(request.resource.data))
-                    );
+      allow create: if signedIn() && request.resource.data.get('loginId', '') == ''
+                    && isAdmin() && canWriteTenant(request.resource.data)
+                    && singleOwnTenant(request.resource.data);
 
       // Update your own doc but NOT roles / tenants / personKey / loginId / loginEmail;
       // admins may update users of their own tenant only (both before and after the

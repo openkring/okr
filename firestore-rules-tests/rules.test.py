@@ -742,7 +742,10 @@ single_cases = [
      body({"firstName": "Z"}), ["firstName"]),
     ("fresh uid self-CREATE users/newS1 tenants ['t1','t2'] -> DENY", False, POST, "users?documentId=newS1", jwt("newS1"),
      body({"tenants": ["t1", "t2"], "roles": {}, "firstName": "S", "personKey": "pS"}), None),
-    ("fresh uid self-CREATE users/newS2 tenants ['t1'] -> ALLOW", True, POST, "users?documentId=newS2", jwt("newS2"),
+    # No self-service create: a login without a users doc must not join any tenant by itself.
+    ("fresh uid self-CREATE users/newS2 tenants ['t1'] -> DENY", False, POST, "users?documentId=newS2", jwt("newS2"),
+     body({"tenants": ["t1"], "roles": {}, "firstName": "S", "personKey": "pS"}), None),
+    ("userA (no admin) CREATE users/newA tenants ['t1'] -> DENY", False, POST, "users?documentId=newA", A,
      body({"tenants": ["t1"], "roles": {}, "firstName": "S", "personKey": "pS"}), None),
     ("userD(admin t1) PATCH uidW (multi-tenant) roles.admin=true -> DENY", False, PATCH, "users/uidW", D,
      body({"roles": {"admin": True}}), ["roles"]),
