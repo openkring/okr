@@ -275,8 +275,9 @@ describe('deriveEnabledFeatures — against the real catalogue', () => {
     expect(gated.gatedOut.map(g => g.id)).toContain('calevent');
   });
 
-  it("does not attribute `mobility` or `activity` to a tenant whose only AOC doc is the shared parent", () => {
-    // The exact p13-shaped case: the AOC submenu exists, but flighttracker/activity-all do not.
+  it("does not attribute `activity` to a tenant whose only AOC doc is the shared parent; `mobility` no longer co-declares `aoc-menu`", () => {
+    // The exact p13-shaped case: the AOC submenu exists, but activity-all does not. `mobility`
+    // left `aoc-menu` (spec 1.101 phase 1), so it is never attributed from the shared parent.
     const docs = realDocs(['aoc-menu', 'aoc-admin'], 'p13');
     const exclusive = deriveEnabledFeatures({
       catalogue: FEATURE_BLOCKS, rollouts: [], menuDocs: docs, tenantId: 'p13', policy: 'exclusive',
@@ -288,7 +289,7 @@ describe('deriveEnabledFeatures — against the real catalogue', () => {
     const all = deriveEnabledFeatures({
       catalogue: FEATURE_BLOCKS, rollouts: [], menuDocs: docs, tenantId: 'p13', policy: 'all',
     });
-    expect(all.enabled).toContain('mobility');
+    expect(all.enabled).not.toContain('mobility');
     expect(all.enabled).toContain('activity');
   });
 

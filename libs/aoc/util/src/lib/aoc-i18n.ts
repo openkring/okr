@@ -713,6 +713,12 @@ export const TENANT_SWITCHER_I18N_KEYS = {
   switcher_current: PFX + 'switcher.current',
 };
 
+// ─── AocEmail ────────────────────────────────────────────────────────────────
+export const AOC_EMAIL_I18N_KEYS = {
+  email_title:              PFX + 'email.title',
+  email_search_placeholder: PFX + 'email.searchPlaceholder',
+};
+
 export type AocI18n = { [K in keyof typeof AOC_I18N_KEYS]: Signal<string> };
 
 // `fill` now lives in @okr/shared-util-core so every domain can use it; re-exported

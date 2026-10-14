@@ -968,5 +968,9 @@
       "button": "Comprobar grupos",
       "clean": "No se han encontrado grupos duplicados ni identificadores problemáticos."
     }
+  },
+  "email": {
+    "title": "Eventos de correo",
+    "searchPlaceholder": "Correo, asunto, remitente …"
   }
 }

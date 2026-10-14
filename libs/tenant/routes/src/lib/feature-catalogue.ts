@@ -86,7 +86,7 @@ const calevent: BlockRoutes = {
  * before this the seeded submenu could point at routes this table did not have. The other
  * four (`tag`, `email`, `trip`, `website`) were simply unrouted here: `tag` and `website` do
  * have live docs, but under `cms-menu` rather than `aoc-menu` (see the `aoc` block in
- * `feature-blocks.ts`), and `email`/`trip` have no menu doc at all.
+ * `feature-blocks.ts`), `email` now has an `aoc-email` menu spec (spec 1.101 phase 1), `trip` has no menu doc at all.
  *
  * GUARD: `app.routes.ts:389` has `canActivate: [isAdminGuard]` — the factory UNCALLED, i.e.
  * the whole `/aoc/*` admin console is open to any authenticated user in the live app today.

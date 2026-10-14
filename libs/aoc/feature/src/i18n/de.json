@@ -968,5 +968,9 @@
       "button": "Gruppen pruefen",
       "clean": "Keine doppelten Gruppen und keine problematischen Gruppen-IDs gefunden."
     }
+  },
+  "email": {
+    "title": "E-Mail-Ereignisse",
+    "searchPlaceholder": "E-Mail, Betreff, Absender …"
   }
 }

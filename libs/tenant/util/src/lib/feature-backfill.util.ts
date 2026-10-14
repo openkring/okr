@@ -35,12 +35,12 @@ import { blockOwnersOfMenuKey } from './feature-routes.util';
  *                  REJECTED. A shared parent owned by five blocks does not prove the
  *                  tenant has all five — it proves only that the tenant has SOME child
  *                  under it. Concretely: `aoc-menu` is co-declared by `aoc`, `activity`,
- *                  `user`, `security` and `mobility`. Eight tenants own an `aoc-menu`
+ *                  `user`, `security` and `business`. Eight tenants own an `aoc-menu`
  *                  document because they have the `aoc-*` admin screens; under 'all' they
- *                  would each be granted `activity` (the activity-log admin screen) and
- *                  `mobility` (the SCS flight tracker) despite owning neither
- *                  `activity-all` nor `flighttracker`. That is a silent grant of two
- *                  blocks to eight tenants that demonstrably do not run them.
+ *                  would each be granted `activity` (the activity-log admin screen) despite
+ *                  owning no `activity-all`. That is a silent grant of a block to
+ *                  eight tenants that demonstrably do not run it. (`mobility` used to be
+ *                  a co-declarer too; its flighttracker row left `aoc-menu` in 1.101.)
  *
  *   'exclusive'    CHOSEN (the default). Attribute a document only when exactly one block
  *                  declares it. A co-declared document is treated as evidence of nothing.

@@ -968,5 +968,9 @@
       "button": "Check groups",
       "clean": "No duplicate groups and no problematic group ids found."
     }
+  },
+  "email": {
+    "title": "Email events",
+    "searchPlaceholder": "Email, subject, sender …"
   }
 }

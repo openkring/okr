@@ -7,6 +7,8 @@ import {
 } from '@ionic/angular';
 
 import { FirestoreService } from '@okr/shared-data-access';
+import { AOC_EMAIL_I18N_KEYS } from '@okr/aoc-util';
+import { I18nService } from '@okr/shared-i18n';
 import { Header } from '@okr/shared-ui';
 
 export interface EmailEvent {
@@ -50,12 +52,12 @@ const EVENT_TYPES = ['delivery', 'open', 'click', 'bounce', 'spam', 'reject', 'u
     IonList, IonItem, IonLabel, IonNote, IonBadge,
   ],
   template: `
-    <okr-header [i18n]="{ title: 'Email Events' }" />
+    <okr-header [i18n]="{ title: i18n.email_title() }" />
     <ion-content>
       <ion-toolbar>
         <ion-searchbar [value]="searchTerm()"
           (ionInput)="searchTerm.set($any($event).detail.value ?? '')"
-          placeholder="E-Mail, Betreff, Absender..." />
+          [placeholder]="i18n.email_search_placeholder()" />
       </ion-toolbar>
       <ion-toolbar>
         <ion-select [value]="selectedType()"
@@ -97,6 +99,7 @@ const EVENT_TYPES = ['delivery', 'open', 'click', 'bounce', 'spam', 'reject', 'u
 })
 export class AocEmail {
   private readonly firestoreService = inject(FirestoreService);
+  protected readonly i18n = inject(I18nService).translateAll(AOC_EMAIL_I18N_KEYS);
 
   protected searchTerm = signal('');
   protected selectedType = signal('all');

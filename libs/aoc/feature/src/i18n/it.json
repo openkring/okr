@@ -968,5 +968,9 @@
       "button": "Controllare i gruppi",
       "clean": "Nessun gruppo doppio e nessun identificatore problematico."
     }
+  },
+  "email": {
+    "title": "Eventi e-mail",
+    "searchPlaceholder": "E-mail, oggetto, mittente …"
   }
 }

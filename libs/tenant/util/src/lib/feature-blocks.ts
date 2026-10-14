@@ -275,7 +275,7 @@ const aoc: FeatureBlock = {
   //    added the last six: sessions/chat/account/doc/bexio/srv, whose routes were also missing
   //    from `FEATURE_ROUTES` until now);
   //  - `user-all` → `user`; `priv-register`/`priv-audit` → `security`; `flighttracker` →
-  //    `mobility` (task 14); `activity-all` → `activity` (task 18) — each via `aocMenuParent`;
+  //    `mobility` (task 14; since spec 1.101 phase 1 a main-menu row, no longer under `aoc-menu`); `activity-all` → `activity` (task 18) — each via `aocMenuParent`;
   //  - `divider_empty` IS catalogued now (declared last below, mirroring its position as the
   //    live doc's last child). It used to be excluded for a hard reason — its live `action` is
   //    `divider`, which was not a member of `MenuSpec['action']` — and that reason is gone:
@@ -285,9 +285,10 @@ const aoc: FeatureBlock = {
   //    stay excluded on their own, unrelated grounds (tenant-bespoke "tbd:" placeholders for
   //    unbuilt screens, `tenants: ['scs']`), not for the action type any more.
   //
-  // TWO AOC SCREENS ARE ROUTED BUT UN-MENU'D, stated so the omission is not read as an
-  // oversight: `/aoc/email` (`AocEmail`) and `/aoc/trip` (`AocTrip`) have NO live `menuItems`
-  // doc. Verified with two query shapes, per the `c-yearlyevents` lesson: a name-equality `IN`
+  // `/aoc/email` (`AocEmail`) has the `aoc-email` row declared below (spec 1.101 phase 1; the live
+  // doc is created by the Task 6 migration script). ONE AOC SCREEN IS STILL ROUTED BUT UN-MENU'D,
+  // stated so the omission is not read as an oversight: `/aoc/trip` (`AocTrip`) has NO live
+  // `menuItems` doc; the verification below also found none for `aoc-email` at the time. Verified with two query shapes, per the `c-yearlyevents` lesson: a name-equality `IN`
   // query over [aoc-trip, aoc-website, aoc-tag, aoc-email, …] returned `aoc-website` only, and
   // an ordered range scan of every doc whose `name` sorts in ['a','b') returned 21 documents
   // whose `aoc-*` members are EXACTLY the twelve leaves declared below plus the `aoc-menu`
@@ -309,6 +310,7 @@ const aoc: FeatureBlock = {
       { key: 'aoc-chat',       name: 'aoc-chat',       url: '/aoc/chat',       action: 'navigate', roleNeeded: 'admin', icon: 'chatbubbles', label: '@item.aoc-chat' },
       { key: 'aoc-account',    name: 'aoc-account',    url: '/aoc/account',    action: 'navigate', roleNeeded: 'admin', icon: 'person',   label: '@item.aoc-account' },
       { key: 'aoc-doc',        name: 'aoc-doc',        url: '/aoc/doc',        action: 'navigate', roleNeeded: 'admin', icon: 'documents', label: '@item.aoc-doc' },
+      { key: 'aoc-email',      name: 'aoc-email',      url: '/aoc/email',      action: 'navigate', roleNeeded: 'admin', icon: 'email',    label: '@item.aoc-email' },
       { key: 'aoc-bexio',      name: 'aoc-bexio',      url: '/aoc/bexio',      action: 'navigate', roleNeeded: 'admin', icon: 'bank',     label: '@item.aoc-bexio' },
       // NEW (not mirrored off a live doc, unlike its siblings above): the kiosk monitoring +
       // remote-operations screen, seeded with the block. See the `kiosk` skill.
@@ -369,8 +371,8 @@ const aoc: FeatureBlock = {
     // Declared through `cmsMenuParent()` accordingly (rule 2: mirror the live TREE SHAPE), so
     // the `aoc` block is the EIGHTH to co-declare that shared parent — counted, not estimated:
     // `cmsMenuParent()` is invoked by `aoc`, `cms`, `category`, `geo`, `esign`, `pdf-template`,
-    // `document` and `forms`. (`aocMenuParent()` has five callers: `aoc`, `user`, `security`,
-    // `mobility`, `activity`, `business`.)
+    // `document` and `forms`. (`aocMenuParent()` has callers `aoc`, `user`, `security`,
+    // `activity`, `business`; `mobility` is no longer one.)
     //
     // Neither name carries an `aoc-`/`tag-` prefix consistently: the doc for `/aoc/tag` is
     // named `tag-all` and the one for `aoc/website` is named `aoc-website`. Both copied as
@@ -1277,13 +1279,11 @@ const mobility: FeatureBlock = {
   defaultAvailability: 'ga',
   dependsOn: [],
   collections: [],
-  // Live child of `aoc-menu` (task 12 review round 2 TODO on the `aoc` block, resolved
-  // here, task 14) — nested under `aocMenuParent`, not top-level, mirroring its live tree
-  // position.
+  // No longer a child of `aoc-menu` (spec 1.101 phase 1): a top-level spec, so
+  // `rootNavKeys()` appends it to the tenant's main menu (`main_<tid>`), like the trip block's
+  // `logbuch`. The live rows move via the Task 6 migration script.
   menu: [
-    aocMenuParent([
-      { key: 'flighttracker', name: 'flighttracker', url: '/flighttracker', action: 'navigate', roleNeeded: 'contentAdmin', icon: 'airplane', label: '@item.flighttracker' },
-    ]),
+    { key: 'flighttracker', name: 'flighttracker', url: '/flighttracker', action: 'navigate', roleNeeded: 'contentAdmin', icon: 'airplane', label: '@item.flighttracker' },
   ],
 };
 
