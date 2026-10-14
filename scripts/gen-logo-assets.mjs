@@ -511,17 +511,25 @@ const page = await browser.newPage({ viewport: { width: 1200, height: 1200 } });
  *                                          so its content (72% of the square) fits Android's
  *                                          66dp safe zone, on the maskable's own backdrop colour
  *   values/ic_launcher_background.xml      that backdrop colour, for the adaptive background
+ *   drawable-<d>/ic_stat_notify.png        24dp status-bar icon from the `-mono` master, when one
+ *                                          exists: Android draws only its ALPHA, in white. A mono
+ *                                          master that is a filled tile with the mark cut out
+ *                                          (ink covers > 50% of its box, e.g. scs) is inverted
+ *                                          inside the box, so the MARK becomes the silhouette;
+ *                                          white specks < 1% of the area (ragged artwork edges)
+ *                                          are dropped. Content spans 20dp (2dp padding).
  */
 const ANDROID_DENSITIES = { mdpi: 1, hdpi: 1.5, xhdpi: 2, xxhdpi: 3, xxxhdpi: 4 };
 const ADAPTIVE_SCALE = 66 / (108 * 0.72); // maskable content edge → 66dp safe zone
 
-async function writeAndroidIcons(appDir, maskable, round) {
+async function writeAndroidIcons(appDir, maskable, round, mono) {
   const res = path.join(appDir, 'android/app/src/main/res');
   if (!fs.existsSync(res) || !maskable || !round) return null;
   const out = await page.evaluate(
-    async ({ maskable, round, densities, scale }) => {
+    async ({ maskable, round, mono, densities, scale }) => {
       const load = (s) => new Promise((ok, ko) => { const i = new Image(); i.onload = () => ok(i); i.onerror = ko; i.src = s; });
       const [m, r] = await Promise.all([load(maskable), load(round)]);
+      const silhouette = mono ? statusSilhouette(await load(mono)) : null;
       const probe = document.createElement('canvas');
       probe.width = probe.height = 1;
       probe.getContext('2d').drawImage(m, 0, 0, 1, 1, 0, 0, 1, 1); // corner pixel = backdrop
@@ -542,10 +550,77 @@ async function writeAndroidIcons(appDir, maskable, round) {
         files[`mipmap-${d}/ic_launcher.png`] = draw(m, Math.round(48 * f));
         files[`mipmap-${d}/ic_launcher_round.png`] = draw(r, Math.round(48 * f));
         files[`mipmap-${d}/ic_launcher_foreground.png`] = draw(m, Math.round(108 * f), scale, backdrop);
+        if (silhouette) files[`drawable-${d}/ic_stat_notify.png`] = draw(silhouette, Math.round(24 * f), 20 / 24);
       }
-      return { files, backdrop };
+      return { files, backdrop, inverted: silhouette?.inverted ?? null };
+
+      /** White-on-transparent alpha mask of the mono master, cropped to its ink (see header). */
+      function statusSilhouette(img) {
+        const N = 512;
+        const c = document.createElement('canvas');
+        c.width = c.height = N;
+        const cx = c.getContext('2d');
+        cx.drawImage(img, 0, 0, N, N);
+        const px = cx.getImageData(0, 0, N, N).data;
+        const ink = new Uint8Array(N * N);
+        let x0 = N, y0 = N, x1 = -1, y1 = -1, inked = 0;
+        for (let i = 0; i < N * N; i++) {
+          const lum = (px[i * 4] + px[i * 4 + 1] + px[i * 4 + 2]) / 3;
+          ink[i] = px[i * 4 + 3] > 0 && lum < 200 ? px[i * 4 + 3] : 0; // light details count as holes
+          if (ink[i] > 127) {
+            const x = i % N, y = (i - x) / N;
+            x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y);
+            inked++;
+          }
+        }
+        const w = x1 - x0 + 1, h = y1 - y0 + 1;
+        const inverted = inked > 0.5 * w * h;
+        const al = new Uint8Array(N * N);
+        for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+          const i = y * N + x;
+          al[i] = inverted ? 255 - ink[i] : ink[i];
+        }
+        // drop specks: connected components below 1% of the silhouette's area
+        const lab = new Int32Array(N * N).fill(-1);
+        const sizes = [];
+        let total = 0;
+        for (let i = 0; i < N * N; i++) {
+          if (al[i] < 128 || lab[i] >= 0) continue;
+          const id = sizes.length;
+          let n = 0;
+          const st = [i];
+          lab[i] = id;
+          while (st.length) {
+            const j = st.pop();
+            n++;
+            const jx = j % N, jy = (j - jx) / N;
+            for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+              const nx = jx + dx, ny = jy + dy;
+              if (nx < 0 || ny < 0 || nx >= N || ny >= N) continue;
+              const k = ny * N + nx;
+              if (al[k] >= 128 && lab[k] < 0) { lab[k] = id; st.push(k); }
+            }
+          }
+          sizes.push(n);
+          total += n;
+        }
+        // square canvas around the ink box, so draw() can scale it like the other renditions
+        const side = Math.max(w, h);
+        const out = document.createElement('canvas');
+        out.width = out.height = side;
+        const od = out.getContext('2d').createImageData(side, side);
+        const ox = Math.floor((side - w) / 2), oy = Math.floor((side - h) / 2);
+        for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+          const i = y * N + x;
+          const keep = lab[i] < 0 ? al[i] : sizes[lab[i]] >= total * 0.01 ? al[i] : 0;
+          od.data.set([255, 255, 255, keep], ((y - y0 + oy) * side + (x - x0 + ox)) * 4);
+        }
+        out.getContext('2d').putImageData(od, 0, 0);
+        out.inverted = inverted;
+        return out;
+      }
     },
-    { maskable, round, densities: ANDROID_DENSITIES, scale: ADAPTIVE_SCALE },
+    { maskable, round, mono, densities: ANDROID_DENSITIES, scale: ADAPTIVE_SCALE },
   );
   if (DRY) return `${Object.keys(out.files).length} launcher icons (dry run, not written)`;
   for (const [rel, dataUrl] of Object.entries(out.files)) {
@@ -556,7 +631,8 @@ async function writeAndroidIcons(appDir, maskable, round) {
     path.join(res, 'values/ic_launcher_background.xml'),
     `<?xml version="1.0" encoding="utf-8"?>\n<resources>\n    <color name="ic_launcher_background">${out.backdrop}</color>\n</resources>\n`,
   );
-  return `${Object.keys(out.files).length} launcher icons + ic_launcher_background ${out.backdrop}`;
+  const stat = out.inverted === null ? 'no -mono master, no status-bar icon' : `status-bar icon${out.inverted ? ' (inverted tile)' : ''}`;
+  return `${Object.keys(out.files).length} files · ic_launcher_background ${out.backdrop} · ${stat}`;
 }
 
 await page.setContent('<body style="margin:0">');
@@ -601,6 +677,7 @@ for (const tenant of tenants) {
   let lastFavicon = null;
   let lastMaskable = null;
   let lastRound = null;
+  let lastMono = null;
   let resolvedIsSvg = false;
 
   for (const variant of VARIANTS) {
@@ -668,6 +745,7 @@ for (const tenant of tenants) {
       lastMaskable = r.maskable;
       lastRound = r.round;
     }
+    if (suffix === '-mono') lastMono = r.master;
 
     const outputs = [
       [`logo-master${suffix}.png`, r.master],
@@ -708,7 +786,7 @@ for (const tenant of tenants) {
   console.log(
     `   ${path.relative(appDir, mPath)} ${m ? 'rewritten' : 'unchanged'} · index.html ${h ? 'rewritten' : 'unchanged'}`,
   );
-  const android = await writeAndroidIcons(appDir, lastMaskable, lastRound);
+  const android = await writeAndroidIcons(appDir, lastMaskable, lastRound, lastMono);
   if (android) console.log(`   android: ${android}`);
 
   await doWebsite();
