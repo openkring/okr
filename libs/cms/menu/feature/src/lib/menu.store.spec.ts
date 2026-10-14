@@ -7,7 +7,7 @@ import { of } from 'rxjs';
 
 import { ENV } from '@okr/shared-config';
 import { MenuItemModel } from '@okr/shared-models';
-import { AppStore } from '@okr/shared-feature';
+import { AppStore, SelectedBooks } from '@okr/shared-feature';
 import { mockCollection, mockError } from '@okr/shared-feature/testing';
 import { I18nService } from '@okr/shared-i18n';
 import { AlertService, AppNavigationService, VersionCheckService } from '@okr/shared-util-angular';
@@ -72,6 +72,8 @@ function makeStore(
     providers: [
       MenuStore,
       { provide: AppStore, useValue: appStoreMock() },
+      // the real one reads accounting-configs; the menu only needs the current books
+      { provide: SelectedBooks, useValue: { current: signal(''), available: signal([]) } },
       { provide: MenuService, useValue: menuService },
       { provide: FeatureStore, useValue: featureStore },
       { provide: ENV, useValue: { tenantId } },

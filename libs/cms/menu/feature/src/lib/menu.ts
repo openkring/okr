@@ -1,6 +1,7 @@
 import { Component, computed, effect, forwardRef, inject, input, signal } from '@angular/core';
-import { IonAccordion, IonAccordionGroup, IonItem, IonItemDivider, IonLabel, IonList } from '@ionic/angular';
+import { IonAccordion, IonAccordionGroup, IonItem, IonItemDivider, IonLabel, IonList, IonSegment, IonSegmentButton } from '@ionic/angular';
 
+import { SelectedBooks } from '@okr/shared-feature';
 import { MenuItemModel } from '@okr/shared-models';
 import { Spinner } from '@okr/shared-ui';
 import { debugData, hasRole } from '@okr/shared-util-core';
@@ -16,7 +17,7 @@ import { MenuStore } from './menu.store';
   standalone: true,
   imports: [
     forwardRef(() => Menu), Spinner, MultiAvatar, MenuInfo,
-    IonList, IonItem, IonLabel, IonAccordionGroup, IonAccordion, IonItemDivider
+    IonList, IonItem, IonLabel, IonAccordionGroup, IonAccordion, IonItemDivider, IonSegment, IonSegmentButton
   ],
   styles: [`
     /* the info-circle on a sub-menu header sits on the primary colour */
@@ -121,6 +122,19 @@ import { MenuStore } from './menu.store';
                    go missing, on top of the three gates in the menu skill. -->
               <okr-multi-avatar [icon]="icon()" [label]="menuStore.translatedMenuLabel()" [info]="menuStore.translatedMenuInfo()" [badge]="notificationCount()" (click)="select(menuItem)" [safariWorkaround]="safariWorkaround()"/>
             }
+            @case('books') {
+              <!-- the books switcher inside «Buchhaltung» (spec 1.100 §4.2): only with several sets of
+                   books; switching re-points every '@BOOKS@' row and moves an open accounting screen -->
+              @if (selectedBooks.available().length > 1) {
+                <ion-item lines="none">
+                  <ion-segment [value]="selectedBooks.current()" [attr.aria-label]="menuStore.translatedMenuLabel()" (ionChange)="onBooks($event)">
+                    @for (books of selectedBooks.available(); track books) {
+                      <ion-segment-button [value]="books"><ion-label>{{ books.toUpperCase() }}</ion-label></ion-segment-button>
+                    }
+                  </ion-segment>
+                </ion-item>
+              }
+            }
             @case('toggle') {
               <!-- icon/label reflect the current toggle state (from toggleStates); selecting flips it via the host feature -->
               <okr-multi-avatar [icon]="effectiveIcon()" [label]="menuStore.translatedMenuLabel()" [info]="menuStore.translatedMenuInfo()" [badge]="notificationCount()" (click)="select(menuItem)" />
@@ -137,6 +151,7 @@ import { MenuStore } from './menu.store';
 })
 export class Menu {
   protected readonly menuStore = inject(MenuStore);
+  protected readonly selectedBooks = inject(SelectedBooks);
 
   // inputs
   public menuName = input.required<string>();
@@ -210,6 +225,12 @@ export class Menu {
   protected onAccordionChange(event: Event): void {
     const value = (event as CustomEvent<{ value?: string | string[] | null }>).detail?.value;
     if (value != null && value !== '') this.expanded.set(true);
+  }
+
+  /** The books switcher row. ionChange bubbles — keep it away from the enclosing accordion group. */
+  protected onBooks(event: Event): void {
+    event.stopPropagation();
+    this.selectedBooks.switchTo(String((event as CustomEvent<{ value?: string }>).detail?.value ?? ''));
   }
 
   protected async select(menuItem: MenuItemModel) {

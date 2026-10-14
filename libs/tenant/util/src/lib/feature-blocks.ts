@@ -1530,6 +1530,8 @@ const finance: FeatureBlock = {
     // @okr/finance-accounting-util), so they need no menu row. The 20 former rows keep their
     // documents (labels stay in the bundle) but are no longer children — migrate-accounting-menu.mjs.
     accountingMenuParent([
+      // the books switcher (SCS | GSS), first in the accordion; renders only with several sets of books
+      { key: 'accounting-books', name: 'accounting-books', url: '', action: 'books', roleNeeded: 'treasurer', icon: 'money', label: '@item.accounting-books' },
       { key: 'accounting-overview', name: 'accounting-overview', url: '/accounting/@BOOKS@/overview', action: 'navigate', roleNeeded: 'treasurer', icon: 'checkmark', label: '@item.accounting-overview' },
       { key: 'accounting-journal', name: 'accounting-journal', url: '/accounting/@BOOKS@/journal/c-journal', action: 'navigate', roleNeeded: 'treasurer', icon: 'list', label: '@item.accounting-journal' },
       { key: 'accounting-bills', name: 'accounting-bills', url: '/accounting/@BOOKS@/bill/all/c-bill', action: 'navigate', roleNeeded: 'treasurer', icon: 'invoice', label: '@item.accounting-bills' },

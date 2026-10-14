@@ -1,7 +1,7 @@
 /**
  * ONE-TIME MIGRATION (spec 1.100) — the accounting submenu becomes eight work areas.
  *
- *  1. creates the five new area rows (or extends their tenants[] / unarchives them);
+ *  1. creates the five new area rows and the books switcher row (or extends their tenants[] / unarchives them);
  *  2. sets every `accounting-menu` document's children to the eight area keys, KEEPING any child
  *     that is not a retired accounting row (e.g. `contract-all-treasurer`, tenant additions) after them;
  *  3. scs: replaces `scsf_fibu` in `main_scs` by `accounting-menu` and removes `gssf_fibu`.
@@ -21,7 +21,7 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { assertMenuLabelsLive, menuLabelsOf } from './lib/menu-labels.mjs';
 
 const PARENT = 'accounting-menu';
-const AREA_KEYS = ['accounting-overview', 'accounting-journal', 'accounting-bills', 'accounting-invoices', 'accounting-cost', 'accounting-reports', 'accounting-closing', 'accounting-master-data'];
+const AREA_KEYS = ['accounting-books', 'accounting-overview', 'accounting-journal', 'accounting-bills', 'accounting-invoices', 'accounting-cost', 'accounting-reports', 'accounting-closing', 'accounting-master-data'];
 const RETIRED = new Set([
   'accounting-accounts', 'accounting-cost-centers', 'accounting-budgets', 'accounting-allocations', 'accounting-open-items',
   'accounting-periods', 'accounting-balance', 'accounting-income-statement', 'accounting-cash-flow', 'accounting-assets',
@@ -31,6 +31,7 @@ const RETIRED = new Set([
 
 /** Copied from the catalogue (feature-blocks.ts, finance block) — keep the two in step. */
 const NEW_SPECS = [
+  { name: 'accounting-books', action: 'books', url: '', roleNeeded: 'treasurer', icon: 'money', label: '@item.accounting-books', menuItems: [] },
   { name: 'accounting-overview', action: 'navigate', url: '/accounting/@BOOKS@/overview', roleNeeded: 'treasurer', icon: 'checkmark', label: '@item.accounting-overview', menuItems: [] },
   { name: 'accounting-cost', action: 'navigate', url: '/accounting/@BOOKS@/cost-center/c-cost-center', roleNeeded: 'treasurer', icon: 'target', label: '@item.accounting-cost', menuItems: [] },
   { name: 'accounting-reports', action: 'navigate', url: '/accounting/@BOOKS@/balance/c-report', roleNeeded: 'treasurer', icon: 'chart', label: '@item.accounting-reports', menuItems: [] },

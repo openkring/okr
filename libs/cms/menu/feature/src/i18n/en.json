@@ -665,7 +665,8 @@
     "contract-reload": "Reload",
     "accounting-open-items": "Open items",
     "bill-open-items": "Reconcile open items",
-    "invoice-open-items": "Reconcile open items"
+    "invoice-open-items": "Reconcile open items",
+    "accounting-books": "Choose books"
   },
   "ownership": {
     "fork_confirm": "«{name}» belongs to the feature catalogue ({blocks}).\n\nSaving creates a tenant-private copy «{forkKey}» and detaches this tenant from the shared original. Future catalogue corrections (url, action, role) will no longer reach this entry.\n\nSave anyway?",

@@ -1,9 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { TestBed } from '@angular/core/testing';
 
-import { ENV } from '@okr/shared-config';
-
-import { readStoredBooks, SELECTED_BOOKS_STORAGE_PREFIX, SelectedBooks, writeStoredBooks } from './selected-books';
+import { readStoredBooks, resolveCurrentBooks, SELECTED_BOOKS_STORAGE_PREFIX, writeStoredBooks } from './selected-books';
 
 describe('stored books choice', () => {
   afterEach(() => {
@@ -33,17 +30,20 @@ describe('stored books choice', () => {
   });
 });
 
-describe('SelectedBooks', () => {
-  afterEach(() => localStorage.clear());
-
-  it('starts with the stored explicit choice, so the menu follows it right after a reload', () => {
-    writeStoredBooks('scs', 'gss');
-    TestBed.configureTestingModule({ providers: [{ provide: ENV, useValue: { tenantId: 'scs' } }] });
-    expect(TestBed.inject(SelectedBooks).current()).toBe('gss');
+describe('resolveCurrentBooks', () => {
+  it('takes the choice while it is available', () => {
+    expect(resolveCurrentBooks('gss', ['gss', 'scs'], 'scs')).toBe('gss');
   });
-
-  it('starts empty without a stored choice', () => {
-    TestBed.configureTestingModule({ providers: [{ provide: ENV, useValue: { tenantId: 'scs' } }] });
-    expect(TestBed.inject(SelectedBooks).current()).toBe('');
+  it('trusts the choice while the list is unknown (not loaded, or not a treasurer)', () => {
+    expect(resolveCurrentBooks('gss', [], 'scs')).toBe('gss');
+  });
+  it('falls back to the default books when the choice no longer exists', () => {
+    expect(resolveCurrentBooks('old', ['gss', 'scs'], 'scs')).toBe('scs');
+  });
+  it('falls back to the default books without a choice', () => {
+    expect(resolveCurrentBooks('', ['gss', 'scs'], 'scs')).toBe('scs');
+  });
+  it('is empty when there are no books at all', () => {
+    expect(resolveCurrentBooks('', [], '')).toBe('');
   });
 });

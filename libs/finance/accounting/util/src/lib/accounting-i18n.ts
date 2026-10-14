@@ -151,7 +151,6 @@ export const ACCOUNTING_I18N_KEYS = {
   feeSchedule_position_vatCodeKey_placeholder: PFX + 'feeSchedule.position.vatCodeKey.placeholder',
   feeSchedule_position_vatCodeKey_helper:      PFX + 'feeSchedule.position.vatCodeKey.helper',
   // navigation: work areas and their segments (spec 1.100)
-  nav_books:                 PFX + 'nav.books',
   nav_area_overview:         PFX + 'nav.area.overview',
   nav_area_journal:          PFX + 'nav.area.journal',
   nav_area_payables:         PFX + 'nav.area.payables',

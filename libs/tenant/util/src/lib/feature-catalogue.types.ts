@@ -33,9 +33,11 @@ export interface MenuSpec {
    * `ion-item-divider` when `label` is set and a hairline separator when it is not. It is here
    * so purely presentational live docs (`divider_empty`) can be catalogued like any other row
    * instead of staying invisible to `/tenant/features`; `feature-routes.util.ts` ignores it, as
-   * it does every non-`navigate` action.
+   * it does every non-`navigate` action. `'books'` is the books switcher inside «Buchhaltung»
+   * (spec 1.100 §4.2): `Menu` renders it as a segment over `SelectedBooks.available()`, only when
+   * the tenant keeps several sets of books; it has no url.
    */
-  action: 'navigate' | 'sub' | 'context' | 'call' | 'toggle' | 'divider' | 'browse';
+  action: 'navigate' | 'sub' | 'context' | 'call' | 'toggle' | 'divider' | 'browse' | 'books';
   roleNeeded: RoleName;
   /** Presentational defaults — used on create, never rewritten on an existing doc (D-BB-7). */
   icon: string;

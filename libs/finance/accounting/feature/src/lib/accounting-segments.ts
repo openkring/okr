@@ -1,7 +1,7 @@
 import { Component, computed, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router } from '@angular/router';
-import { IonLabel, IonSegment, IonSegmentButton, IonSelect, IonSelectOption, IonToolbar } from '@ionic/angular';
+import { IonLabel, IonSegment, IonSegmentButton, IonToolbar } from '@ionic/angular';
 import { filter, map } from 'rxjs';
 
 import { AccountingSegment, resolveAccountingArea, segmentUrl } from '@okr/finance-accounting-util';
@@ -14,12 +14,15 @@ import { AccountingStore } from './accounting.store';
  * <ion-header>. Reads the area from the router on every NavigationEnd — Ionic keeps the previous
  * page alive, so a value captured once would be stale when that page is shown again.
  * Renders nothing outside the accounting screens (e.g. /expense/my, /memberfees in other contexts).
+ * The books are switched in the «Buchhaltung» menu (SelectedBooks); with several sets of books the
+ * bar only names them, read-only, so the books stay visible with the sidebar closed (phone, iPad portrait).
  */
 @Component({
   selector: 'okr-accounting-segments',
-  imports: [IonToolbar, IonSegment, IonSegmentButton, IonLabel, IonSelect, IonSelectOption],
+  imports: [IonToolbar, IonSegment, IonSegmentButton, IonLabel],
   styles: [`
-    ion-select { min-width: 96px; font-weight: 600; }
+    .books { margin-inline: 12px; padding: 2px 10px; border-radius: 12px; font-size: .85rem; font-weight: 600;
+      background: var(--ion-color-light); color: var(--ion-color-light-contrast); }
   `],
   template: `
     @if (showBar()) {
@@ -33,12 +36,8 @@ import { AccountingStore } from './accounting.store';
             }
           </ion-segment>
         }
-        @if (showSwitcher()) {
-          <ion-select slot="end" interface="popover" [value]="books()" [aria-label]="store.i18n.nav_books()" (ionChange)="onBooks($event)">
-            @for (b of store.availableBooks(); track b) {
-              <ion-select-option [value]="b">{{ b.toUpperCase() }}</ion-select-option>
-            }
-          </ion-select>
+        @if (showBooks()) {
+          <span slot="end" class="books">{{ books().toUpperCase() }}</span>
         }
       </ion-toolbar>
     }
@@ -69,10 +68,10 @@ export class AccountingSegments {
       .filter(s => !s.booksScoped || !!books);
   });
 
-  protected readonly showSwitcher = computed(() =>
+  protected readonly showBooks = computed(() =>
     this.store.availableBooks().length > 1 && this.current()?.segment.booksScoped !== false);
 
-  protected readonly showBar = computed(() => !!this.current() && (this.segments().length > 1 || this.showSwitcher()));
+  protected readonly showBar = computed(() => !!this.current() && (this.segments().length > 1 || this.showBooks()));
 
   protected label(seg: AccountingSegment): string {
     return this.store.i18n[seg.i18nKey]();
@@ -83,13 +82,5 @@ export class AccountingSegments {
     if (!seg || seg.id === this.current()?.segment.id) return;
     if (seg.booksScoped && !this.books()) return;
     await this.router.navigateByUrl(segmentUrl(seg, this.books()));
-  }
-
-  protected async onBooks($event: CustomEvent): Promise<void> {
-    const books = String($event.detail.value ?? '');
-    const cur = this.current();
-    if (!books || !cur || books === cur.books) return;
-    this.store.chooseBooks(books);
-    await this.router.navigateByUrl(segmentUrl(cur.segment, books));
   }
 }

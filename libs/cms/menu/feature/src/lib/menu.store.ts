@@ -96,7 +96,7 @@ export const _MenuStore = signalStore(
       if (store.featureStore.hiddenMenuKeys().has(key)) return false;
       // A row that opens the default books ('@BOOKS@') is hidden while the app has none — and so is a
       // submenu whose every child does (the accounting menu of a tenant without books).
-      const booksCtx = { version: '', booksId: store.selectedBooks.current() || (store.appStore.appConfig().defaultAccountingTenantId ?? '') };
+      const booksCtx = { version: '', booksId: store.selectedBooks.current() };
       const all = store.menuItemsStore.menuItems() ?? [];
       const item = all.find(i => i.name === key);
       if (item && lacksBooks(item.url ?? '', booksCtx)) return false;
@@ -185,7 +185,7 @@ export const _MenuStore = signalStore(
         // through unchanged.
         map(text => expandMenuTokens(text, {
           version: store.versionService.getCurrentVersion(), tenantId: store.appStore.tenantId(),
-          booksId: store.selectedBooks.current() || (store.appStore.appConfig().defaultAccountingTenantId ?? ''),
+          booksId: store.selectedBooks.current(),
         })),
       ),
       { initialValue: '' }
@@ -404,7 +404,7 @@ export const _MenuStore = signalStore(
           repoUrl: getRepoUrl(config.gitOrg, config.gitRepo),
           tenantId: store.appStore.tenantId(),
           // the selected books (SelectedBooks), else the default books — never the tenant id
-          booksId: store.selectedBooks.current() || (config.defaultAccountingTenantId ?? ''),
+          booksId: store.selectedBooks.current(),
         };
       },
 

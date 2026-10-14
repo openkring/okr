@@ -1,36 +1,32 @@
-import { computed, effect, inject } from '@angular/core';
-import { rxResource } from '@angular/core/rxjs-interop';
+import { computed, inject } from '@angular/core';
+import { rxResource, takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Router } from '@angular/router';
 import { of } from 'rxjs';
 import { patchState, signalStore, withComputed, withHooks, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { AppStore, readStoredBooks, SelectedBooks, writeStoredBooks } from '@okr/shared-feature';
+import { AppStore, SelectedBooks } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { AccountingConfigModel } from '@okr/shared-models';
 import { resourceParams } from '@okr/shared-util-angular';
 
 import { AccountingConfigService } from '@okr/finance-accounting-data-access';
-import { ACCOUNTING_I18N_KEYS, resolveSelectedBooks } from '@okr/finance-accounting-util';
+import { ACCOUNTING_I18N_KEYS, resolveAccountingArea, segmentUrl } from '@okr/finance-accounting-util';
 
-export type AccountingState = { accountingTenantId: string; storedBooks: string };
+export type AccountingState = { accountingTenantId: string };
 
 export const AccountingStore = signalStore(
   { providedIn: 'root' },
   withState<AccountingState>({
     accountingTenantId: '',
-    storedBooks: ''
   }),
   withProps(() => ({
     configService: inject(AccountingConfigService),
     appStore: inject(AppStore),
     i18n: inject(I18nService).translateAll(ACCOUNTING_I18N_KEYS),
     selectedBooksSignal: inject(SelectedBooks),
+    router: inject(Router),
   })),
   withProps(store => ({
-    availableBooksResource: rxResource({
-      params: resourceParams(() => ({ userKey: store.appStore.currentUser()?.okey ?? '' })),
-      // the app tenant's sets of books; never ordered by okey (see listForTenant)
-      stream: ({ params }) => params.userKey ? store.configService.listForTenant() : of([] as AccountingConfigModel[]),
-    }),
     configResource: rxResource({
       // The key is the USER'S IDENTITY, never the model object: `currentUser` is a live
       // Firestore stream, so a new reference arrives on every snapshot and `rxResource`
@@ -61,26 +57,17 @@ export const AccountingStore = signalStore(
     // Absent/loading config means "not known to be external" — default native, same coalesce as the
     // OCR trigger. Without the ?? every page renders read-only until the config resolves.
     isExternallyManaged: computed(() => (store.configResource.value()?.accountingBackend ?? 'native') !== 'native'),
-    availableBooks: computed(() => (store.availableBooksResource.value() ?? []).map(c => c.okey).sort()),
-    selectedBooks: computed(() => resolveSelectedBooks({
-      routeBooks: store.accountingTenantId(),
-      storedChoice: store.storedBooks(),
-      defaultBooks: store.appStore.appConfig().defaultAccountingTenantId ?? '',
-      available: (store.availableBooksResource.value() ?? []).map(c => c.okey),
-    })),
+    // the books selection lives in SelectedBooks (shared), the switcher in the «Buchhaltung» menu (spec 1.100 §4.2)
+    availableBooks: computed(() => store.selectedBooksSignal.available()),
+    selectedBooks: computed(() => store.selectedBooksSignal.current()),
     currentUser: computed(() => store.appStore.currentUser()),
     tenantId: computed(() => store.appStore.tenantId()),
   })),
   withMethods(store => ({
-    /** the books of the visited route — wins for this visit, but is NOT remembered (spec 1.100 §4.2) */
+    /** the books of the visited route; they become the choice, so the menu matches the page (spec 1.100 §4.2) */
     setTenant(id: string): void {
       patchState(store, { accountingTenantId: id });
-    },
-    /** an EXPLICIT choice (the books switcher): remembered in this browser, the menu follows it after a reload */
-    chooseBooks(id: string): void {
-      if (!id) return;
-      patchState(store, { storedBooks: id });
-      writeStoredBooks(store.appStore.tenantId(), id);
+      if (id) store.selectedBooksSignal.choose(id);
     },
     async createConfig(config: AccountingConfigModel): Promise<void> {
       await store.configService.create(config, store.currentUser());
@@ -92,13 +79,11 @@ export const AccountingStore = signalStore(
   })),
   withHooks(store => ({
     onInit(): void {
-      patchState(store, { storedBooks: readStoredBooks(store.appStore.tenantId()) });
-      // hand the validated selection to the menu ('@BOOKS@'), see SelectedBooks. While the books are
-      // not loaded and no route names them, resolveSelectedBooks can only answer the default — keep the
-      // stored choice SelectedBooks was seeded with instead of overwriting it.
-      effect(() => {
-        const selected = store.selectedBooks();
-        if (store.availableBooks().length > 0 || store.accountingTenantId()) store.selectedBooksSignal.set(selected);
+      // a switch in the «Buchhaltung» menu while an accounting screen is open: show the same screen
+      // in the other books. Books-less screens (/expense/all, /memberfees) stay where they are.
+      store.selectedBooksSignal.switched$.pipe(takeUntilDestroyed()).subscribe(books => {
+        const cur = resolveAccountingArea(store.router.url);
+        if (cur?.segment.booksScoped && cur.books !== books) void store.router.navigateByUrl(segmentUrl(cur.segment, books));
       });
     },
   }))
