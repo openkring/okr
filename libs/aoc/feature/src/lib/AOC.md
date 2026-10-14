@@ -4,18 +4,20 @@
 
 The AOC (Admin Operations Console) is a restricted administrative dashboard for privileged users and admins. It provides a collection of operational tools grouped into dedicated tabs/pages:
 
-- **Data** — Bulk-fix Firestore documents, validate model integrity, and regenerate search indexes across all collections.
+- **Data** — Validate model integrity and regenerate search indexes across all collections. There is no Daten-Korrektur page any more; bulk fixes run as a local script (see below).
 - **Content** — CMS health checks: find orphaned sections/menu items, detect dangling page-to-section or menu-to-sub-item references, and repair them interactively.
 - **Roles** — Manage Firebase Auth accounts and application user roles: create accounts, reset/set passwords, update Firebase user profiles, impersonate users, and manage role assignments.
 - **Statistics** — Recompute the age-by-gender statistics («Altersstatistik nach Geschlecht») from the active memberships; the other statistics actions were removed (spec 1.101).
 - **Chat** — Admin view of the Matrix homeserver: browse rooms, inspect members, rename rooms, add aliases, invite users, provision Matrix accounts, kick members, deactivate users.
 - **Tag** — Manage the `tags` Firestore collection: browse, create, edit, and delete tag documents and their comma-separated tag strings per model type.
 - **User Accounts** — Cross-reference view of Firebase Auth accounts, application `UserModel` records, and `MembershipModel` entries; supports editing/deleting each tier independently.
-- **Admin Ops** — Miscellaneous administrative queries: list IBANs, list over-age juniors, show membership-category changes by club/year.
+- **Admin Ops** — Miscellaneous administrative queries: list IBANs, list over-age juniors, show membership-category changes by club/year. No Debug Tools (removed, spec 1.101).
 - **Kiosk** — Monitor and remote-control the tenant's kiosk tablets: heartbeat/online state, battery, running app version, today's trips, and the remote operations (reload, message, lock, video call) written as fields on `kiosk-status/{uid}`. See the `kiosk` skill.
 - **Doc** — Document-level admin operations (separate store `aoc-doc.store.ts`).
-- **Email** — Email-related admin utilities (`aoc-email.ts`).
+- **Email** — «E-Mail-Ereignisse» (`aoc-email.ts`): the delivery/bounce events of outgoing mail, with its own menu row (`aoc-email` → `/aoc/email`).
 - **Diary** — Prepare and repair the diary import: the Drive health check, the import dry run, and the places/people the import could not match. Lives in `@okr/content-diary-feature`, not here — same owner-vs-target split as `aoc/trip`. See [DIARY.md](../../../content/diary/feature/src/lib/DIARY.md).
+
+There is no Storage page (removed, spec 1.101). Flight Tracker is not an AOC tool: it is a main-menu entry (block `mobility`).
 
 The AOC has no Firestore collection of its own — it operates on all other domain collections via `FirestoreService` and domain-specific services.
 
