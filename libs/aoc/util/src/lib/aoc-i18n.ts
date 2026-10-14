@@ -65,19 +65,11 @@ export const AOC_I18N_KEYS = {
 
   // adminops
   adminops_title:                         PFX + 'adminops.title',
-  adminops_debug_tools:                   PFX + 'adminops.debug.tools',
-  adminops_focus_event_logging:           PFX + 'adminops.debug.focus_event_logging',
-
-  adminops_iban_title:                    PFX + 'adminops.iban.title',
   adminops_iban_label:                    PFX + 'adminops.iban.label',
   adminops_iban_button:                   PFX + 'adminops.iban.button',
 
   adminops_mcatchange_title:              PFX + 'adminops.mcatchange.title',
   adminops_mcatchange_button:              PFX + 'adminops.mcatchange.button',
-
-  adminops_doubleMembers_title:           PFX + 'adminops.doubleMembers.title',
-  adminops_doubleMembers_label:           PFX + 'adminops.doubleMembers.label',
-  adminops_doubleMembers_button:          PFX + 'adminops.doubleMembers.button',
 
   adminops_hasaccount_title:              PFX + 'adminops.hasAccount.title',
   adminops_hasaccount_label:              PFX + 'adminops.hasAccount.label',
@@ -89,24 +81,9 @@ export const AOC_I18N_KEYS = {
   adminops_oldJuniors_label:              PFX + 'adminops.oldJuniors.label',
   adminops_oldJuniors_button:             PFX + 'adminops.oldJuniors.button',
   adminops_oldjuniors_nodob:              PFX + 'adminops.oldJuniors.nodob',
-  adminops_oldjuniors_description:        PFX + 'adminops.oldJuniors.description',
 
   adminops_club_label:                    PFX + 'adminops.club.label',
   adminops_year_label:                    PFX + 'adminops.year.label',
-  adminops_membership_prices_title:       PFX + 'adminops.membership.prices.title',
-  adminops_membership_prices_label:       PFX + 'adminops.membership.prices.label',
-  adminops_membership_prices_button:      PFX + 'adminops.membership.prices.button',
-  adminops_membership_prices_description: PFX + 'adminops.membership.prices.description',
-
-  adminops_membership_attributes_title:    PFX + 'adminops.membership.attributes.title',
-  adminops_membership_attributes_label:    PFX + 'adminops.membership.attributes.label',
-  adminops_membership_attributes_button:   PFX + 'adminops.membership.attributes.button',
-  adminops_membership_attributes_description:  PFX + 'adminops.membership.attributes.description',
-
-  adminops_checkJuniorEntry_title:         PFX + 'adminops.checkJuniorEntry.title',
-  adminops_checkJuniorEntry_label:         PFX + 'adminops.checkJuniorEntry.label',
-  adminops_checkJuniorEntry_button:        PFX + 'adminops.checkJuniorEntry.button',
-  adminops_checkJuniorEntry_description:   PFX + 'adminops.checkJuniorEntry.description',
 
   // bexio
   bexio_title:                              PFX + 'bexio.title',

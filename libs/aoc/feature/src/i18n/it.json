@@ -81,12 +81,7 @@
   },
   "adminops": {
     "title": "Operazioni admin",
-    "debug": {
-      "tools": "Strumenti di debug",
-      "focus_event_logging": "Attivare la registrazione degli eventi di focus"
-    },
     "iban": {
-      "title": "Soggetti con numeri IBAN:",
       "label": "Elencare i numeri IBAN",
       "button": "Mostrare"
     },
@@ -94,43 +89,17 @@
       "title": "Modifiche della categoria di socio",
       "button": "Mostrare"
     },
-    "doubleMembers": {
-      "title": "Soci doppi",
-      "label": "Elencare i soci doppi",
-      "button": "Mostrare"
-    },
     "oldJuniors": {
       "title": "Giovani da riassegnare (troppo grandi) (>18)",
       "label": "Elencare i giovani da riassegnare (troppo grandi)",
       "button": "Mostrare",
-      "nodob": "Nessuna data di nascita",
-      "description": "I soci elencati di seguito sono attualmente ancora registrati come giovani nel database e devono essere riassegnati ai soci attivi, perché sono nati prima del {{ refYear }}."
+      "nodob": "Nessuna data di nascita"
     },
     "club": {
       "label": "Club"
     },
     "year": {
       "label": "Anno"
-    },
-    "membership": {
-      "prices": {
-        "title": "Aggiornare le quote annuali",
-        "label": "Aggiornare le quote annuali",
-        "button": "Aggiornare",
-        "description": "Le quote annuali vengono calcolate dalle categorie di iscrizione. La quota annuale standard viene salvata su ogni iscrizione nel campo price."
-      },
-      "attributes": {
-        "title": "Aggiornare gli attributi dei soci",
-        "label": "Aggiornare gli attributi dei soci",
-        "button": "Aggiornare",
-        "description": "Per ogni persona gli attributi priority, relIsLast e relLog vengono ricalcolati e salvati in Membership. Questo è il presupposto affinché analisi come Exit/Entry/Alumni/OldJuniors ecc. funzionino correttamente."
-      }
-    },
-    "checkJuniorEntry": {
-      "title": "Verificare le entrate dei giovani",
-      "label": "Verificare le entrate dei giovani",
-      "button": "Verificare",
-      "description": "I soci elencati di seguito sono registrati nel database con entrata come socio attivo; inizialmente dovrebbero essere riassegnati ai giovani."
     },
     "hasAccount": {
       "title": "Riporta gli accessi sulle persone",

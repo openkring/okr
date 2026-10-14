@@ -81,12 +81,7 @@
   },
   "adminops": {
     "title": "Admin Operations",
-    "debug": {
-      "tools": "Debug Tools",
-      "focus_event_logging": "Enable focus event logging"
-    },
     "iban": {
-      "title": "Subjects with IBAN numbers:",
       "label": "List IBAN numbers",
       "button": "Show"
     },
@@ -94,43 +89,17 @@
       "title": "Changes to the member category",
       "button": "Show"
     },
-    "doubleMembers": {
-      "title": "Duplicate members",
-      "label": "List duplicate members",
-      "button": "Show"
-    },
     "oldJuniors": {
       "title": "Juniors to be reassigned (too old) (>18)",
       "label": "List juniors to be reassigned (too old)",
       "button": "Show",
-      "nodob": "No date of birth",
-      "description": "The members listed below are currently still listed as juniors in the database and must be reassigned to active members because they were born before {{ refYear }}."
+      "nodob": "No date of birth"
     },
     "club": {
       "label": "Club"
     },
     "year": {
       "label": "Year"
-    },
-    "membership": {
-      "prices": {
-        "title": "Update annual fees",
-        "label": "Update annual fees",
-        "button": "Update",
-        "description": "The annual fees are calculated from the membership categories. The standard annual fee is stored on each membership in the price field."
-      },
-      "attributes": {
-        "title": "Update member attributes",
-        "label": "Update member attributes",
-        "button": "Update",
-        "description": "For each person, the attributes priority, relIsLast and relLog are recalculated and stored in Membership. This is the prerequisite for evaluations such as Exit/Entry/Alumni/OldJuniors etc. to work correctly."
-      }
-    },
-    "checkJuniorEntry": {
-      "title": "Check junior entries",
-      "label": "Check junior entries",
-      "button": "Check",
-      "description": "The members listed below are recorded in the database with entry as an active member; they should initially be reassigned to juniors."
     },
     "hasAccount": {
       "title": "Mirror app access onto the persons",

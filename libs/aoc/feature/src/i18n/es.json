@@ -81,12 +81,7 @@
   },
   "adminops": {
     "title": "Operaciones de administración",
-    "debug": {
-      "tools": "Herramientas de depuración",
-      "focus_event_logging": "Activar el registro de eventos de foco"
-    },
     "iban": {
-      "title": "Sujetos con números IBAN:",
       "label": "Listar números IBAN",
       "button": "Mostrar"
     },
@@ -94,43 +89,17 @@
       "title": "Cambios en la categoría de miembro",
       "button": "Mostrar"
     },
-    "doubleMembers": {
-      "title": "Miembros duplicados",
-      "label": "Listar miembros duplicados",
-      "button": "Mostrar"
-    },
     "oldJuniors": {
       "title": "Juveniles a reasignar (demasiado mayores) (>18)",
       "label": "Listar juveniles a reasignar (demasiado mayores)",
       "button": "Mostrar",
-      "nodob": "Sin fecha de nacimiento",
-      "description": "Los miembros listados a continuación están actualmente aún registrados como juveniles en la base de datos y deben reasignarse a miembros activos, porque nacieron antes de {{ refYear }}."
+      "nodob": "Sin fecha de nacimiento"
     },
     "club": {
       "label": "Club"
     },
     "year": {
       "label": "Año"
-    },
-    "membership": {
-      "prices": {
-        "title": "Actualizar cuotas anuales",
-        "label": "Actualizar cuotas anuales",
-        "button": "Actualizar",
-        "description": "Las cuotas anuales se calculan a partir de las categorías de membresía. La cuota anual estándar se guarda en cada membresía en el campo price."
-      },
-      "attributes": {
-        "title": "Actualizar atributos de miembros",
-        "label": "Actualizar atributos de miembros",
-        "button": "Actualizar",
-        "description": "Para cada persona se recalculan los atributos priority, relIsLast y relLog y se guardan en Membership. Este es el requisito previo para que los análisis como Exit/Entry/Alumni/OldJuniors etc. funcionen correctamente."
-      }
-    },
-    "checkJuniorEntry": {
-      "title": "Comprobar entradas de juveniles",
-      "label": "Comprobar entradas de juveniles",
-      "button": "Comprobar",
-      "description": "Los miembros listados a continuación están registrados en la base de datos con entrada como miembro activo; inicialmente deberían reasignarse a juveniles."
     },
     "hasAccount": {
       "title": "Reflejar los accesos en las personas",

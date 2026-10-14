@@ -81,12 +81,7 @@
   },
   "adminops": {
     "title": "Opérations admin",
-    "debug": {
-      "tools": "Outils de débogage",
-      "focus_event_logging": "Activer la journalisation des événements de focus"
-    },
     "iban": {
-      "title": "Sujets avec des numéros IBAN :",
       "label": "Lister les numéros IBAN",
       "button": "Afficher"
     },
@@ -94,43 +89,17 @@
       "title": "Modifications de la catégorie de membre",
       "button": "Afficher"
     },
-    "doubleMembers": {
-      "title": "Membres en double",
-      "label": "Lister les membres en double",
-      "button": "Afficher"
-    },
     "oldJuniors": {
       "title": "Juniors à réaffecter (trop âgés) (>18)",
       "label": "Lister les juniors à réaffecter (trop âgés)",
       "button": "Afficher",
-      "nodob": "Aucune date de naissance",
-      "description": "Les membres listés ci-dessous sont actuellement encore enregistrés comme juniors dans la base de données et doivent être réaffectés aux membres actifs, car ils sont nés avant {{ refYear }}."
+      "nodob": "Aucune date de naissance"
     },
     "club": {
       "label": "Club"
     },
     "year": {
       "label": "Année"
-    },
-    "membership": {
-      "prices": {
-        "title": "Mettre à jour les cotisations annuelles",
-        "label": "Mettre à jour les cotisations annuelles",
-        "button": "Mettre à jour",
-        "description": "Les cotisations annuelles sont calculées à partir des catégories d'adhésion. La cotisation annuelle standard est enregistrée sur chaque adhésion dans le champ price."
-      },
-      "attributes": {
-        "title": "Mettre à jour les attributs des membres",
-        "label": "Mettre à jour les attributs des membres",
-        "button": "Mettre à jour",
-        "description": "Pour chaque personne, les attributs priority, relIsLast et relLog sont recalculés et enregistrés dans Membership. C'est la condition préalable pour que les analyses telles que Exit/Entry/Alumni/OldJuniors etc. fonctionnent correctement."
-      }
-    },
-    "checkJuniorEntry": {
-      "title": "Vérifier les entrées de juniors",
-      "label": "Vérifier les entrées de juniors",
-      "button": "Vérifier",
-      "description": "Les membres listés ci-dessous sont enregistrés dans la base de données avec une entrée en tant que membre actif ; ils devraient initialement être réaffectés aux juniors."
     },
     "hasAccount": {
       "title": "Reporter les accès sur les personnes",

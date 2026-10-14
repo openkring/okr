@@ -81,12 +81,7 @@
   },
   "adminops": {
     "title": "Admin Operationen",
-    "debug": {
-      "tools": "Debug Tools",
-      "focus_event_logging": "Focus Event Logging einschalten"
-    },
     "iban": {
-      "title": "Subjects mit IBAN Nummern:",
       "label": "IBAN Nummern auflisten",
       "button": "Anzeigen"
     },
@@ -94,43 +89,17 @@
       "title": "Änderungen der Mitgliederkategorie",
       "button": "Anzeigen"
     },
-    "doubleMembers": {
-      "title": "Doppel-Mitglieder",
-      "label": "Doppel-Mitglieder auflisten",
-      "button": "Anzeigen"
-    },
     "oldJuniors": {
       "title": "Umzuteilende (zu alte) Jugendliche (>18)",
       "label": "Umzuteilende (zu alte) Jugendliche auflisten",
       "button": "Anzeigen",
-      "nodob": "Kein Geburtsdatum",
-      "description": "Die unten aufgelisteten Mitglieder sind in der Datenbank aktull noch als Junioren geführt und müssen auf Aktive umgeteilt werden, weil sie vor {{ refYear }} geboren sind."
+      "nodob": "Kein Geburtsdatum"
     },
     "club": {
       "label": "Verein"
     },
     "year": {
       "label": "Jahr"
-    },
-    "membership": {
-      "prices": {
-        "title": "Jahresbeiträge aktualisieren",
-        "label": "Jahresbeiträge aktualisieren",
-        "button": "Aktualisieren",
-        "description": "Die Jahresbeiträge werden aus den Mitgliedschafts-Kategorien berechnet. Der Standard-Jahresbeitrag wird auf jeder Mitgliedschaft im Feld price gespeichert."
-      },
-      "attributes": {
-        "title": "Mitglieder Attribute aktualisieren",
-        "label": "Mitglieder Attribute aktualisieren",
-        "button": "Aktualisieren",
-        "description": "Für jede Person weden die Attribute priority, relIsLast und relLog neu berechnet und in Membership gespeichert. Dies ist die Voraussetzung, dass Auswertungen wie z.B. Exit/Entry/Alumni/OldJuniors etc. korrekt funktionieren."
-      }
-    },
-    "checkJuniorEntry": {
-      "title": "Junioren-Eintritte prüfen",
-      "label": "Junioren-Eintritte prüfen",
-      "button": "Prüfen",
-      "description": "Die unten aufgelisteten Mitglieder sind in der Datenbank mit Eintritt als Aktivmitglied geführt, sie sollten anfänglich auf Jugendliche umgeteilt werden."
     },
     "hasAccount": {
       "title": "Zugänge auf die Personen spiegeln",

@@ -1,6 +1,6 @@
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonContent, IonGrid, IonLabel, IonRow, IonToggle } from '@ionic/angular';
+import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonContent, IonGrid, IonLabel, IonRow } from '@ionic/angular';
 
 import { Button, Header, ResultLog, StringSelect, StringSelectI18n } from '@okr/shared-ui';
 
@@ -11,32 +11,13 @@ import { AocAdminOpsStore } from './aoc-adminops.store';
   standalone: true,
   imports: [
     Header, Button, ResultLog, StringSelect,
-    IonContent, IonCardHeader, IonCardTitle, IonCardContent, IonCard, IonGrid, IonRow, IonCol, IonLabel, IonToggle,
+    IonContent, IonCardHeader, IonCardTitle, IonCardContent, IonCard, IonGrid, IonRow, IonCol, IonLabel,
     FormsModule
   ],
   providers: [AocAdminOpsStore],
   template: `
     <okr-header [i18n]="{ title: adminOpsTitle() }" />
     <ion-content>
-      <!-- Debug Card -->
-      <ion-card>
-        <ion-card-header>
-          <ion-card-title>{{ store.i18n.adminops_debug_tools() }}</ion-card-title>
-        </ion-card-header>
-        <ion-card-content>
-          <ion-grid>
-            <ion-row>
-              <ion-col size="8">
-                <ion-label>{{ store.i18n.adminops_focus_event_logging() }}</ion-label>
-              </ion-col>
-              <ion-col size="4">
-                <ion-toggle [checked]="enableFocusLogging()" (ionChange)="onToggleChange($event)" />
-              </ion-col>
-            </ion-row>
-          </ion-grid>
-        </ion-card-content>
-      </ion-card>
-
       <ion-card>
         <ion-card-header>
           <ion-card-title>{{ store.i18n.adminops_title() }}</ion-card-title>
@@ -107,36 +88,6 @@ export class AocAdminOps {
   // signals
   protected club = signal('scs');
   protected year = signal('2025');
-  protected enableFocusLogging = signal(false);
-
-  constructor() {
-    // Setup focus event listener based on toggle
-    effect((onCleanup) => {
-      if (typeof document === 'undefined') return;
-
-      const enabled = this.enableFocusLogging();
-      
-      if (enabled) {
-        const focusListener = (e: FocusEvent) => {
-          console.log('🔍 Focus on:', e.target, {
-            tagName: (e.target as HTMLElement).tagName,
-            className: (e.target as HTMLElement).className,
-            id: (e.target as HTMLElement).id,
-            tabIndex: (e.target as HTMLElement).tabIndex,
-            name: (e.target as HTMLInputElement).name
-          });
-        };
-        
-        document.addEventListener('focusin', focusListener);
-        console.log('✅ Focus logging enabled');
-        
-        onCleanup(() => {
-          document.removeEventListener('focusin', focusListener);
-          console.log('❌ Focus logging disabled');
-        });
-      }
-    });
-  }
 
   public listIban(): void {
     this.store.listIban();
@@ -161,9 +112,5 @@ export class AocAdminOps {
     } else if (fieldName === 'year') {
       this.year.set($event);
     }
-  }
-
-  protected onToggleChange(event: any): void {
-    this.enableFocusLogging.set(event.detail.checked);
   }
 }
