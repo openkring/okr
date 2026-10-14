@@ -982,5 +982,9 @@
       "empty": "Keine Boote für die Bootsstrategie markiert.",
       "past": "Vergangene Jahre anzeigen"
     }
+  },
+  "archive": {
+    "conf": "Der Eintrag wurde archiviert.",
+    "error": "Der Eintrag konnte nicht archiviert werden."
   }
 }

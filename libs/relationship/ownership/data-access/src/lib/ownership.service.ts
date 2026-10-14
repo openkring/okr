@@ -28,6 +28,8 @@ export class OwnershipService {
     delete_error: PFX + 'delete.error',
     end_conf:     PFX + 'end.conf',
     end_error:    PFX + 'end.error',
+    archive_conf:  PFX + 'archive.conf',
+    archive_error: PFX + 'archive.error',
   });
   private readonly tenantId = this.env.tenantId;
 
@@ -73,6 +75,28 @@ export class OwnershipService {
     const payload = `${ownership.okey}: ${getFullName(ownership.ownerName1, ownership.ownerName2)} of ${ownership.resourceName}`;
     await this.firestoreService.deleteModel<OwnershipModel>(OwnershipCollection, ownership, this.i18n.delete_conf(), this.i18n.delete_error(), currentUser);
     void this.activityService.log('ownership', 'delete', currentUser, payload);
+  }
+
+  /**
+   * Archive an ownership (isArchived = true, or detach the current tenant from a shared one — see getDeletePatch).
+   * @param ownership the ownership to archive
+   * @param currentUser the current user performing the operation
+   */
+  public async archive(ownership: OwnershipModel, currentUser?: UserModel): Promise<void> {
+    const payload = `${ownership.okey}: ${getFullName(ownership.ownerName1, ownership.ownerName2)} of ${ownership.resourceName}`;
+    await this.firestoreService.deleteModel<OwnershipModel>(OwnershipCollection, ownership, this.i18n.archive_conf(), this.i18n.archive_error(), currentUser);
+    void this.activityService.log('ownership', 'archive', currentUser, payload);
+  }
+
+  /**
+   * Delete an ownership physically in the database. It can not be restored afterwards.
+   * @param ownership the ownership to delete; its okey must be valid
+   * @param currentUser the current user performing the operation
+   */
+  public async purge(ownership: OwnershipModel, currentUser?: UserModel): Promise<void> {
+    const payload = `${ownership.okey}: ${getFullName(ownership.ownerName1, ownership.ownerName2)} of ${ownership.resourceName}`;
+    const key = await this.firestoreService.deleteObject(OwnershipCollection, ownership.okey, this.i18n.delete_conf());
+    if (key) void this.activityService.log('ownership', 'purge', currentUser, payload);
   }
 
   /**

@@ -39,6 +39,8 @@ export class OwnershipModel implements OkrModel, SearchableModel, TaggedModel {
   public resourceSubType = DEFAULT_RBOAT_TYPE; 
 
   // ownership
+  // Start of the ownership. Empty is valid: older ownerships were never recorded in the club's
+  // records, and an unknown start is kept empty rather than invented. New ownerships default to today.
   public validFrom = DEFAULT_DATE; // membership: entryDate
   public validTo = DEFAULT_DATE; // membership: exitDate
   public type = DEFAULT_OCAT;

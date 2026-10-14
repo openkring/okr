@@ -23,5 +23,9 @@
   "end": {
     "conf": "Uso finalizado",
     "error": "No se pudo finalizar el uso."
+  },
+  "archive": {
+    "conf": "El uso se ha archivado.",
+    "error": "No se pudo archivar el uso."
   }
 }

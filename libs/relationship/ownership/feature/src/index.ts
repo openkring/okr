@@ -2,4 +2,4 @@ export * from './lib/ownership-edit.modal';
 export * from './lib/ownership-list';
 export * from './lib/ownership-new.modal';
 export * from './lib/ownership.store';
-export * from './lib/ownerships-accordion';
+export * from './lib/ownerships-accordion';export * from './lib/resource-owners-accordion';

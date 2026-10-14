@@ -81,6 +81,7 @@
     "@okr/games-wordle-feature": "*",
     "@okr/games-chess-feature": "*",
     "@okr/games-quiz-feature": "*",
-    "@okr/games-zip-feature": "*"
+    "@okr/games-zip-feature": "*",
+    "@okr/resource-ui": "*"
   }
 }

@@ -23,5 +23,9 @@
   "end": {
     "conf": "Usage ended",
     "error": "The usage could not be ended."
+  },
+  "archive": {
+    "conf": "The usage was archived.",
+    "error": "The usage could not be archived."
   }
 }

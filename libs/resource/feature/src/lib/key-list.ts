@@ -1,14 +1,17 @@
 import { Component, computed, inject, input, linkedSignal } from '@angular/core';
-import { ActionSheetOptions, ActionSheetController, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular';
+import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular';
 import { ResourceModel, RoleName } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
-import { createActionSheetButton, createActionSheetOptions, error } from '@okr/shared-util-angular';
+import { error } from '@okr/shared-util-angular';
 import { hasRole } from '@okr/shared-util-core';
 import { DEFAULT_TAGS } from '@okr/shared-constants';
 
 import { Menu } from '@okr/cms-menu-feature';
 
+import { OwnershipStore } from '@okr/relationship-ownership-feature';
+
+import { RESOURCE_EDIT_MODAL_PROVIDER } from './resource-edit-modal.provider';
 import { ResourceStore } from './resource.store';
 
 @Component({
@@ -20,7 +23,7 @@ import { ResourceStore } from './resource.store';
     IonHeader, IonToolbar, IonButtons, IonTitle, IonButton, IonMenuButton, IonList,
     IonIcon, IonItem, IonLabel, IonContent, IonPopover
   ],
-  providers: [ResourceStore],
+  providers: [ResourceStore, OwnershipStore, RESOURCE_EDIT_MODAL_PROVIDER],
   template: `
   <ion-header>
     <!-- title and actions -->
@@ -82,7 +85,7 @@ import { ResourceStore } from './resource.store';
 })
 export class KeyList {
   protected readonly store = inject(ResourceStore);
-  private actionSheetController = inject(ActionSheetController);
+  protected readonly ownershipStore = inject(OwnershipStore);
 
   // inputs
   public listId = input.required<string>();
@@ -97,7 +100,6 @@ export class KeyList {
   protected selectedKeysCount = computed(() => this.filteredKeys().length);
   protected isLoading = computed(() => this.store.isLoading());
   protected tags = computed(() => this.store.getTags('key') ?? DEFAULT_TAGS);
-  private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
   protected currentUser = computed(() => this.store.currentUser());
   protected readOnly = computed(() => !hasRole('resourceAdmin', this.currentUser()));
 
@@ -122,59 +124,13 @@ export class KeyList {
   }
 
   /**
-   * Displays an ActionSheet with all possible actions on a key. Only actions are shown, that the user has permission for.
-   * After user selected an action this action is executed.
-   * @param key 
+   * Displays the two-level ActionSheet of a key: the key itself, its current user (Nutzer/in) and
+   * its current ownership (Nutzung). Only the actions the user has permission for are offered.
+   * @param key
    */
   protected async showActions(key: ResourceModel): Promise<void> {
-    const actionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
-    this.addActionSheetButtons(actionSheetOptions, key);
-    await this.executeActions(actionSheetOptions, key);
-  }
-
-  /**
-   * Fills the ActionSheet with all possible actions, considering the user permissions.
-   * @param key 
-   */
-  private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, key: ResourceModel): void {
-    if (hasRole('registered', this.store.appStore.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('key.view', this.store.i18n.key_view(), this.imgixBaseUrl, 'eye-on'));
-      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
-    }
-    if (!this.readOnly()) {
-      actionSheetOptions.buttons.push(createActionSheetButton('key.edit', this.store.i18n.key_update(), this.imgixBaseUrl, 'edit'));
-    }
-    if (hasRole('admin', this.store.appStore.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('key.delete', this.store.i18n.key_delete(), this.imgixBaseUrl, 'trash'));
-    }
-    if (actionSheetOptions.buttons.length === 1) { // only cancel button
-      actionSheetOptions.buttons = [];
-    }
-  }
-
-  /**
-   * Displays the ActionSheet, waits for the user to select an action and executes the selected action.
-   * @param actionSheetOptions 
-   * @param key 
-   */
-  private async executeActions(actionSheetOptions: ActionSheetOptions, key: ResourceModel): Promise<void> {
-    if (actionSheetOptions.buttons.length > 0) {
-      const actionSheet = await this.actionSheetController.create(actionSheetOptions);
-      await actionSheet.present();
-      const { data } = await actionSheet.onDidDismiss();
-      if (!data) return;
-      switch (data.action) {
-        case 'key.delete':
-          await this.store.delete(key, this.readOnly());
-          break;
-        case 'key.view':
-          await this.store.edit(key, false, true);
-          break;
-        case 'key.edit':
-          await this.store.edit(key, false, this.readOnly());
-          break;
-      }
-    }
+    const action = await this.ownershipStore.showResourceActions(key, this.ownershipStore.currentOwnershipOf(key.okey));
+    if (action) this.store.reload();
   }
 
   /******************************** helpers ******************************************* */

@@ -982,5 +982,9 @@
       "empty": "No boats flagged for the boat strategy.",
       "past": "Show past years"
     }
+  },
+  "archive": {
+    "conf": "The entry was archived.",
+    "error": "The entry could not be archived."
   }
 }

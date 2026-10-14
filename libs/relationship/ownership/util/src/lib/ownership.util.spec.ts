@@ -75,9 +75,8 @@ describe('Ownership Utils', () => {
 
   describe('newOwnership', () => {
     it('should create a new ownership for a Person and a Resource', () => {
-      mockIsPerson.mockReturnValue(true);
       mockIsResource.mockReturnValue(true);
-      const result = newOwnership(person, resource, tenantId);
+      const result = newOwnership(person, resource, tenantId, 'person');
       expect(result.ownerKey).toBe('person-1');
       expect(result.ownerModelType).toBe('person');
       expect(result.ownerName1).toBe('Jane');
@@ -87,9 +86,8 @@ describe('Ownership Utils', () => {
     });
 
     it('should create a new ownership for an Org and an Account', () => {
-      mockIsPerson.mockReturnValue(false);
       mockIsResource.mockReturnValue(false);
-      const result = newOwnership(org, account, tenantId);
+      const result = newOwnership(org, account, tenantId, 'org');
       expect(result.ownerKey).toBe('org-1');
       expect(result.ownerModelType).toBe('org');
       expect(result.ownerName2).toBe('Rowing Club');
@@ -98,9 +96,20 @@ describe('Ownership Utils', () => {
       expect(result.resourceType).toBe('asset');
     });
 
+    it('should store an org as org even though isPerson() accepts it (it only checks the tenant)', () => {
+      mockIsPerson.mockReturnValue(true);
+      mockIsResource.mockReturnValue(true);
+      const result = newOwnership(org, resource, tenantId, 'org');
+      expect(result.ownerModelType).toBe('org');
+      expect(result.ownerName1).toBe('');
+      expect(result.ownerName2).toBe('Rowing Club');
+      expect(result.ownerType).toBe('association');
+      expect(result.validFrom).toBe('20250904');
+    });
+
     it('should call die if owner okey is missing', () => {
       person.okey = '';
-      newOwnership(person, resource, tenantId);
+      newOwnership(person, resource, tenantId, 'person');
       expect(mockDie).toHaveBeenCalledWith('ownership.util.newOwnership(): owner.okey is mandatory.');
     });
   });

@@ -288,5 +288,27 @@
       "label": "Annulée",
       "description": "L'utilisation a été annulée."
     }
+  },
+  "action": {
+    "add": "ajouter",
+    "view": "afficher",
+    "edit": "modifier",
+    "end": "terminer",
+    "archive": "archiver",
+    "delete": "supprimer",
+    "ownerView": "Afficher l'utilisateur/trice",
+    "combine": "{action} {group}"
+  },
+  "archive": {
+    "confirm": "Normalement, une utilisation est terminée. Veux-tu vraiment archiver cette utilisation ?"
+  },
+  "purge": {
+    "confirm": "L'utilisation sera supprimée définitivement et ne pourra pas être restaurée. Veux-tu vraiment la supprimer ?",
+    "shared": "Cette entrée est aussi utilisée dans une autre application. Tu peux seulement l’archiver."
+  },
+  "resourceAction": {
+    "archiveConfirm": "Veux-tu vraiment archiver {name} ?",
+    "purgeConfirm": "{name} sera supprimé définitivement et ne pourra pas être restauré. Veux-tu continuer ?",
+    "purgeInUse": "{name} a encore des utilisations et ne peut donc pas être supprimé. Supprime d'abord les utilisations ou archive {name}."
   }
 }

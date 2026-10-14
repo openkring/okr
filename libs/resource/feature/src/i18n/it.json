@@ -982,5 +982,9 @@
       "empty": "Nessuna barca contrassegnata per la strategia delle barche.",
       "past": "Mostra gli anni passati"
     }
+  },
+  "archive": {
+    "conf": "La voce è stata archiviata.",
+    "error": "Non è stato possibile archiviare la voce."
   }
 }

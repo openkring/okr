@@ -8,6 +8,7 @@ import { DEFAULT_RESOURCE_TYPE } from '@okr/shared-constants';
 
 import { CommentsAccordion } from '@okr/comment-feature';
 import { ReservationsAccordion } from '@okr/relationship-reservation-feature';
+import { ResourceOwnersAccordion } from '@okr/relationship-ownership-feature';
 
 import { ResourceForm } from '@okr/resource-ui';
 import { getCategoryNameForResourceType, getUsageNameForResourceType, isReservable } from '@okr/resource-util';
@@ -18,7 +19,7 @@ import { ResourceStore } from './resource.store';
   selector: 'okr-resource-edit-modal',
   standalone: true,
   imports: [
-    Header, ChangeConfirmation, ReservationsAccordion,
+    Header, ChangeConfirmation, ReservationsAccordion, ResourceOwnersAccordion,
     ResourceForm, IconToolbar, CommentsAccordion, CategorySelect,
     IonContent, IonAccordionGroup, IonGrid, IonRow, IonCol
   ],
@@ -57,6 +58,9 @@ import { ResourceStore } from './resource.store';
 
       @if(resource(); as resource) {
         <ion-accordion-group [multiple]="true">
+          @if(resource.okey) {
+            <okr-resource-owners-accordion [resource]="resource" [readOnly]="!hasRole('resourceAdmin')" />
+          }
           @if (isReservable(resource.type)) {
             <okr-reservations-accordion [listId]="listId()" [readOnly]="isReadOnly()" />
           }

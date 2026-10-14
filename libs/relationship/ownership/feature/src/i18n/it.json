@@ -288,5 +288,27 @@
       "label": "Annullata",
       "description": "L'utilizzo è stato annullato."
     }
+  },
+  "action": {
+    "add": "aggiungi",
+    "view": "visualizza",
+    "edit": "modifica",
+    "end": "termina",
+    "archive": "archivia",
+    "delete": "elimina",
+    "ownerView": "Visualizza utente",
+    "combine": "{action} {group}"
+  },
+  "archive": {
+    "confirm": "Normalmente un utilizzo viene terminato. Vuoi davvero archiviare questo utilizzo?"
+  },
+  "purge": {
+    "confirm": "L'utilizzo verrà eliminato definitivamente e non potrà essere ripristinato. Vuoi davvero eliminarlo?",
+    "shared": "Questa voce è usata anche in un'altra app. Puoi solo archiviarla."
+  },
+  "resourceAction": {
+    "archiveConfirm": "Vuoi davvero archiviare {name}?",
+    "purgeConfirm": "{name} verrà eliminato definitivamente e non potrà essere ripristinato. Vuoi continuare?",
+    "purgeInUse": "{name} ha ancora degli utilizzi e quindi non può essere eliminato. Elimina prima gli utilizzi o archivia {name}."
   }
 }

@@ -46,10 +46,11 @@ export class OwnershipNewModal {
   public currentUser = input<UserModel | undefined>();
 
    // signals
-  protected formDirty = signal(false);
-  protected formValid = signal(true);   // default to true as the form is prefilled
+  // a new ownership arrives complete (owner, resource, validFrom = today): it is an unsaved
+  // change from the start, so the banner shows immediately and one tap saves it
+  protected formDirty = signal(true);
+  protected formValid = signal(true);
   protected formData = linkedSignal(() => safeStructuredClone(this.ownership()));
-  protected showForm = signal(true);
 
   // derived signals
   protected readOnly = computed(() => !hasRole('resourceAdmin', this.currentUser()));
@@ -61,12 +62,9 @@ export class OwnershipNewModal {
     await dismissOverlay(this.modalController, this.formData(), 'confirm');
   }
 
+  /** Reverting a new record would only restore the same prefilled data — cancel discards it. */
   public async cancel(): Promise<void> {
-    this.formDirty.set(false);
-    this.formData.set(safeStructuredClone(this.ownership()));  // reset the form
-    // re-mount the form so its field state (touched, error notes) starts fresh
-    this.showForm.set(false);
-    setTimeout(() => this.showForm.set(true), 0);
+    await dismissOverlay(this.modalController, undefined, 'cancel');
   }
 
   protected onFormDataChange(formData: OwnershipModel): void {

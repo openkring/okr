@@ -1,6 +1,6 @@
 import { END_FUTURE_DATE_STR } from '@okr/shared-constants';
 import { AccountModel, OrgModel, OwnershipModel, PersonModel, ResourceModel } from '@okr/shared-models';
-import { addIndexElement, die, getTodayStr, isPerson, isResource, isType } from '@okr/shared-util-core';
+import { addIndexElement, die, getTodayStr, isResource, isType } from '@okr/shared-util-core';
 
 /**
  * Creates a new ownership between a person or org and a resource or account for the current tenant.
@@ -11,7 +11,12 @@ import { addIndexElement, die, getTodayStr, isPerson, isResource, isType } from 
  * @param validFrom
  * @returns
  */
-export function newOwnership(owner: PersonModel | OrgModel, resource: ResourceModel | AccountModel, tenantId: string, validFrom = getTodayStr()): OwnershipModel {
+/**
+ * Creates a new ownership of a resource (or account) by a person or an org.
+ * The owner type is explicit: isPerson() only checks the tenant, so it also accepts an org — which
+ * stored orgs as persons without a name (and the org's avatar never showed).
+ */
+export function newOwnership(owner: PersonModel | OrgModel, resource: ResourceModel | AccountModel, tenantId: string, ownerModelType: 'person' | 'org', validFrom = getTodayStr()): OwnershipModel {
   if (!owner.okey) die('ownership.util.newOwnership(): owner.okey is mandatory.');
   const ownership = new OwnershipModel(tenantId);
 
@@ -19,7 +24,7 @@ export function newOwnership(owner: PersonModel | OrgModel, resource: ResourceMo
   ownership.validTo = END_FUTURE_DATE_STR;
 
   ownership.ownerKey = owner.okey;
-  if (isPerson(owner, tenantId)) {
+  if (ownerModelType === 'person') {
     const person = owner as PersonModel;
     ownership.ownerModelType = 'person';
     ownership.ownerName1 = person.firstName;

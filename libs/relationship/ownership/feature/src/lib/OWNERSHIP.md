@@ -28,7 +28,7 @@ Collection name: `ownerships`
 | `resourceModelType` | `'resource' \| 'account'` | Discriminator for the resource entity type |
 | `resourceType` | string | Category key for the resource type (e.g. `rboat`, `locker`, `key`) |
 | `resourceSubType` | string | Sub-type of the resource (e.g. rowing boat sub-type) |
-| `validFrom` | StoreDate | Start of the ownership period |
+| `validFrom` | StoreDate | Start of the ownership period. Empty on old ownerships the club never recorded — keep it empty, never invent a date. New ones default to today |
 | `validTo` | StoreDate | End of the ownership period |
 | `type` | string | Ownership category key (possession, usage, rent, lease) |
 | `state` | string | Ownership state key (e.g. `active`, `applied`, `cancelled`) |
@@ -86,7 +86,15 @@ An NgRx Signal Store that manages all ownership state for a tenant.
 | `add(owner?, ownerModelType, resource?, readOnly)` | Opens `OwnershipNewModal` pre-filled with owner/resource |
 | `edit(ownership, readOnly)` | Opens `OwnershipEditModal` |
 | `end(ownership, readOnly)` | Picks a date and sets `validTo`, effectively ending the ownership |
-| `delete(ownership?, readOnly)` | Confirms and hard-deletes an ownership |
+| `delete(ownership?, readOnly)` | Confirms and archives an ownership (`getDeletePatch`; used by the accordion) |
+| `archive(ownership)` / `purge(ownership)` | admin only: archive (`isArchived`) / physically delete an ownership |
+| `archiveResource(resource)` / `purgeResource(resource)` | admin only: archive / physically delete a resource; purge is refused while ownerships point to it or when it is shared with another tenant |
+| `currentOwnershipOf(resourceKey)` | The current (not ended) ownership of a resource, the most recent one if there are several |
+| `showResourceActions(resource?, ownership?)` | The two-level ActionSheet of all resource and ownership lists (see below) |
+| `openResource(resource, readOnly)` | Opens the resource edit modal via the `RESOURCE_EDIT_MODAL` loader token |
+| `openOwner(ownership, readOnly)` | Opens the person/org edit modal via the `PERSON_EDIT_MODAL` / `ORG_EDIT_MODAL` tokens (no navigation) |
+| `addOwnershipFor(resource, readOnly)` | «Nutzung hinzufügen»: opens `OwnershipNewModal` pre-filled with the resource, today and the tenant's default org; the owner picker there is `MultiSelectModal` (segments person, org). The modal starts dirty, so the save banner shows at once |
+| `resourceOwnerships` / `setResourceKey(key)` | All ownerships of one resource, most recent first (`ResourceOwnersAccordion`) |
 | `setOwner(ownerKey, ownerModelType)` | Sets the accordion scope and reloads |
 
 ## Components
@@ -94,6 +102,31 @@ An NgRx Signal Store that manages all ownership state for a tenant.
 ### `OwnershipList`
 
 A standalone list view showing all ownerships with filters for resource type, owner type, gender, org type, and rowing boat sub-type.
+
+### Resource ActionSheet (two levels)
+
+All resource lists (`resource/all`, `rboat/all`, `locker`, `key`) and all ownership lists (`privateBoats`,
+`scsBoats`, `lockers`, `keys`, `all`) share one ActionSheet, built by `getResourceActionEntries`
+(`@okr/relationship-ownership-util`) and shown by `selectNestedAction` (`@okr/shared-util-angular`):
+
+| Level 1 | Level 2 |
+| --- | --- |
+| «resource type…» (label of the `resource_type` category item) | anzeigen · ändern · archivieren · löschen |
+| «Nutzer/in anzeigen» | – |
+| «Nutzung…» | hinzufügen · anzeigen · ändern · beenden · archivieren · löschen |
+
+`registered` reads, `resourceAdmin` writes (ändern, hinzufügen, beenden), `admin` archives (`isArchived`) and
+deletes physically. A group with only one action is shown on level 1 directly (e.g. «Nutzung anzeigen»).
+
+`@okr/resource-feature` depends on this lib, not the other way round. The resource edit modal is therefore
+resolved through the `RESOURCE_EDIT_MODAL` token (`@okr/resource-ui`): the resource lists provide it at
+component level, the `ownership` route in `@okr/tenant-routes` provides it at route level.
+
+### `ResourceOwnersAccordion`
+
+The users of one resource in the resource detail view (`ResourceEditModal`), current and past. The
+add button («Nutzung hinzufügen») shows for resourceAdmins; a row opens the ownership ActionSheet
+without the resource group.
 
 ### `OwnershipEditModal`
 

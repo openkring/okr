@@ -1,13 +1,13 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular';
+import { IonAvatar, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular';
 
 import { TranslatePipe } from '@okr/shared-i18n';
 import { OwnershipModel, PersonModelName, RoleName } from '@okr/shared-models';
 import { DurationPipe, SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner, ImgDirective } from '@okr/shared-ui';
-import { createActionSheetButton, createActionSheetOptions, error } from '@okr/shared-util-angular';
-import { getCategoryIcon, getItemLabel, getYearList, hasRole, isOngoing } from '@okr/shared-util-core';
+import { error } from '@okr/shared-util-angular';
+import { getCategoryIcon, getItemLabel, getYearList, hasRole } from '@okr/shared-util-core';
 
 import { AvatarPipe } from '@okr/avatar-ui';
 import { Menu } from '@okr/cms-menu-feature';
@@ -117,7 +117,6 @@ type OwnershipSortField = 'owner' | 'name' | 'type' | 'duration';
 })
 export class OwnershipList {
   protected store = inject(OwnershipStore);
-  private actionSheetController = inject(ActionSheetController);
 
   // inputs
   public listId = input.required<string>();
@@ -202,7 +201,6 @@ export class OwnershipList {
   protected tags = computed(() => this.store.getTags());
   protected popupId = computed(() => 'c_ownerships_' + this.listId());
 
-  private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
   private rboatTypes = computed(() => this.store.appStore.tryGetCategory('rboat_type'));
   private resourceTypes = computed(() => this.store.appStore.tryGetCategory('resource_type'));
 
@@ -261,89 +259,12 @@ export class OwnershipList {
   }
 
   /**
-   * Displays an ActionSheet with all possible actions on a Ownership. Only actions are shown, that the user has permission for.
-   * After user selected an action this action is executed.
-   * @param ownership 
+   * Displays the two-level ActionSheet of an ownership row: its resource, its user (Nutzer/in) and the
+   * ownership (Nutzung) itself. Only the actions the user has permission for are offered.
+   * @param ownership
    */
   protected async showActions(ownership: OwnershipModel): Promise<void> {
-    const actionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
-    this.addActionSheetButtons(actionSheetOptions, ownership);
-    await this.executeActions(actionSheetOptions, ownership);
-  }
-
-  /**
-   * Fills the ActionSheet with all possible actions, considering the user permissions.
-   * @param ownership 
-   */
-  private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, ownership: OwnershipModel): void {
-    if (hasRole('resourceAdmin', this.store.appStore.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('ownership.edit', this.store.i18n.update(), this.imgixBaseUrl, 'edit'));
-      if (isOngoing(ownership.validTo)) {
-        actionSheetOptions.buttons.push(createActionSheetButton('ownership.end', this.store.i18n.end(), this.imgixBaseUrl, 'stop-circle'));
-      }
-    }
-    if (hasRole('admin', this.store.appStore.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('ownership.delete', this.store.i18n.delete(), this.imgixBaseUrl, 'trash'));
-    }
-    actionSheetOptions.buttons.push(createActionSheetButton('ownership.view', this.store.i18n.view(), this.imgixBaseUrl, 'eye-on'));
-
-    // shortcut to open the owned rowing boat (rboat) directly
-    if (ownership.resourceType === 'rboat') {
-      if (this.hasRole('resourceAdmin')) {
-        actionSheetOptions.buttons.push(createActionSheetButton('rboat.edit', this.store.i18n.boat_edit(), this.imgixBaseUrl, 'boat'));
-      } else {
-        actionSheetOptions.buttons.push(createActionSheetButton('rboat.view', this.store.i18n.boat_view(), this.imgixBaseUrl, 'boat'));
-      }
-    }
-
-    // shortcut to open the owner (person or org) directly
-    if (this.hasRole('resourceAdmin')) {
-      actionSheetOptions.buttons.push(createActionSheetButton('owner.edit', this.store.i18n.owner_edit(), this.imgixBaseUrl, 'person'));
-    } else {
-      actionSheetOptions.buttons.push(createActionSheetButton('owner.view', this.store.i18n.owner_view(), this.imgixBaseUrl, 'person'));
-    }
-
-    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
-  }
-
-  /**
-   * Displays the ActionSheet, waits for the user to select an action and executes the selected action.
-   * @param actionSheetOptions 
-   * @param ownership 
-   */
-  private async executeActions(actionSheetOptions: ActionSheetOptions, ownership: OwnershipModel): Promise<void> {
-    if (actionSheetOptions.buttons.length > 0) {
-      const actionSheet = await this.actionSheetController.create(actionSheetOptions);
-      await actionSheet.present();
-      const { data } = await actionSheet.onDidDismiss();
-      if (!data) return;
-      switch (data.action) {
-        case 'ownership.delete':
-          await this.store.delete(ownership, this.readOnly());
-          break;
-        case 'ownership.edit':
-          await this.store.edit(ownership, this.readOnly());
-          break;
-        case 'ownership.view':
-          await this.store.edit(ownership, true);
-          break;
-        case 'ownership.end':
-          await this.store.end(ownership, this.readOnly());
-          break;
-        case 'rboat.edit':
-          await this.store.openResource(ownership, false);
-          break;
-        case 'rboat.view':
-          await this.store.openResource(ownership, true);
-          break;
-        case 'owner.edit':
-          await this.store.openOwner(ownership, false);
-          break;
-        case 'owner.view':
-          await this.store.openOwner(ownership, true);
-          break;
-      }
-    }
+    await this.store.showResourceActions(undefined, ownership);
   }
 
   /******************************* helpers *************************************** */

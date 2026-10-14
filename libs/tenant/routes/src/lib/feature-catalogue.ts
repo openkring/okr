@@ -2,6 +2,7 @@ import { inject } from '@angular/core';
 import type { Route } from '@angular/router';
 import { isAdminGuard, isAuthenticatedGuard, isContentAdminGuard, isContractReaderGuard, isMemberAdminGuard, isPrivilegedGuard, isTreasurerGuard } from '@okr/auth-feature';
 import { AppStore } from '@okr/shared-feature';
+import { RESOURCE_EDIT_MODAL } from '@okr/resource-ui';
 
 /**
  * A feature block's Angular ROUTE fragment — `canActivate` guards + `loadComponent`. Split
@@ -612,6 +613,8 @@ const relationship: BlockRoutes = {
     {
       path: 'ownership',
       canActivate: [isAuthenticatedGuard],
+      // the ownership ActionSheet opens the resource modal; resource-feature depends on ownership-feature, hence the loader
+      providers: [{ provide: RESOURCE_EDIT_MODAL, useValue: () => import('@okr/resource-feature').then(m => m.ResourceEditModal) }],
       children: [{ path: ':listId/:contextMenuName', loadComponent: () => import('@okr/relationship-ownership-feature').then(m => m.OwnershipList) }],
     },
     {

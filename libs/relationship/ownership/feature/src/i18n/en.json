@@ -288,5 +288,27 @@
       "label": "Cancelled",
       "description": "The usage was cancelled."
     }
+  },
+  "action": {
+    "add": "add",
+    "view": "view",
+    "edit": "edit",
+    "end": "end",
+    "archive": "archive",
+    "delete": "delete",
+    "ownerView": "View user",
+    "combine": "{action} {group}"
+  },
+  "archive": {
+    "confirm": "Normally a usage is ended. Do you really want to archive this usage?"
+  },
+  "purge": {
+    "confirm": "The usage will be deleted permanently and cannot be restored. Do you really want to delete it?",
+    "shared": "This entry is also used in another app. You can only archive it."
+  },
+  "resourceAction": {
+    "archiveConfirm": "Do you really want to archive {name}?",
+    "purgeConfirm": "{name} will be deleted permanently and cannot be restored. Do you want to continue?",
+    "purgeInUse": "{name} still has usages and therefore cannot be deleted. Delete the usages first or archive {name}."
   }
 }

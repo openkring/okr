@@ -33,6 +33,10 @@ export class ResourceService {
       ])
     ) as Record<string, string>
   );
+  private readonly archiveI18n = this.i18nService.translateAll({
+    conf:  PFX + 'archive.conf',
+    error: PFX + 'archive.error',
+  });
 
   private getI18n(op: 'create' | 'update' | 'delete', kind: 'conf' | 'error', type: string): string {
     const key = `${op}_${kind}_${type}` as keyof typeof this.i18n;
@@ -89,6 +93,31 @@ export class ResourceService {
     await this.firestoreService.deleteModel<ResourceModel>(ResourceCollection, resource,
       this.getI18n('delete', 'conf', resource.type), this.getI18n('delete', 'error', resource.type), currentUser);
     void this.activityService.log('resource', 'delete', currentUser, payload);
+  }
+
+  /**
+   * Archive a ResourceModel (isArchived = true, or detach the current tenant from a shared one — see getDeletePatch).
+   * @param resource the ResourceModel to archive. Its okey must be valid so that we can find it in the database.
+   * @param currentUser the user who is archiving the resource
+   */
+  public async archive(resource: ResourceModel, currentUser?: UserModel): Promise<void> {
+    const payload = `${resource.okey}: ${resource.name}/${resource.type}/${resource.subType}`;
+    await this.firestoreService.deleteModel<ResourceModel>(ResourceCollection, resource,
+      this.archiveI18n.conf(), this.archiveI18n.error(), currentUser);
+    void this.activityService.log('resource', 'archive', currentUser, payload);
+  }
+
+  /**
+   * Delete a ResourceModel physically in the database. It can not be restored afterwards.
+   * The caller is responsible for making sure that nothing refers to it anymore (ownerships)
+   * and that it is not shared with other tenants.
+   * @param resource the ResourceModel to delete. Its okey must be valid.
+   * @param currentUser the user who is deleting the resource
+   */
+  public async purge(resource: ResourceModel, currentUser?: UserModel): Promise<void> {
+    const payload = `${resource.okey}: ${resource.name}/${resource.type}/${resource.subType}`;
+    const key = await this.firestoreService.deleteObject(ResourceCollection, resource.okey, this.getI18n('delete', 'conf', resource.type));
+    if (key) void this.activityService.log('resource', 'purge', currentUser, payload);
   }
 
   /*-------------------------- LIST / QUERY --------------------------------*/

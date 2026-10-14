@@ -982,5 +982,9 @@
       "empty": "Ningún barco marcado para la estrategia de barcos.",
       "past": "Mostrar años anteriores"
     }
+  },
+  "archive": {
+    "conf": "La entrada se ha archivado.",
+    "error": "No se pudo archivar la entrada."
   }
 }

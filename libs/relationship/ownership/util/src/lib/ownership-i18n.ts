@@ -44,6 +44,22 @@ export const OWNERSHIP_I18N_KEYS = {
   owner_edit:                       PFX + 'ownerAction.edit',
   owner_view:                       PFX + 'ownerAction.view',
 
+  // two-level ActionSheet of the resource and ownership lists (see resource-actions.ts)
+  action_add:                       PFX + 'action.add',
+  action_view:                      PFX + 'action.view',
+  action_edit:                      PFX + 'action.edit',
+  action_end:                       PFX + 'action.end',
+  action_archive:                   PFX + 'action.archive',
+  action_delete:                    PFX + 'action.delete',
+  action_ownerView:                 PFX + 'action.ownerView',
+  action_combine:                   PFX + 'action.combine',           // {group} {action}
+  archive_confirm:                  PFX + 'archive.confirm',
+  purge_confirm:                    PFX + 'purge.confirm',
+  resource_archive_confirm:         PFX + 'resourceAction.archiveConfirm',   // {name}
+  resource_purge_confirm:           PFX + 'resourceAction.purgeConfirm',     // {name}
+  resource_purge_inUse:             PFX + 'resourceAction.purgeInUse',       // {name}
+  purge_shared:                     PFX + 'purge.shared',
+
   list_empty:                       PFX + 'list.empty',
   list_header_ownerName:            PFX + 'list.header.ownerName',
   list_header_resourceName:         PFX + 'list.header.resourceName',

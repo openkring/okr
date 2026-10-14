@@ -3,11 +3,11 @@ import { form } from '@angular/forms/signals';
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonRow, ModalController } from '@ionic/angular';
 
 import { AvatarPipe } from '@okr/avatar-ui';
-import { AppStore, OrgSelectModal, PersonSelectModal, PersonSelectResult, ResourceSelectModal } from '@okr/shared-feature';
+import { AppStore, MultiSelectModal, ResourceSelectModal } from '@okr/shared-feature';
 import { OwnershipModel, OwnershipModelName, ResourceModelName, UserModel } from '@okr/shared-models';
 import { DateInput, DateInputI18n, ErrorNote, ImgDirective } from '@okr/shared-ui';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
-import { coerceBoolean, getAvatarKey, getCategoryIcon, getFullName, getTodayStr, isOrg, isPerson, isResource } from '@okr/shared-util-core';
+import { coerceBoolean, getAvatarKey, getCategoryIcon, getFullName, getTodayStr, isResource } from '@okr/shared-util-core';
 
 import { ownershipValidations } from '@okr/relationship-ownership-util';
 import { OwnershipStore } from './ownership.store';
@@ -33,7 +33,7 @@ import { OwnershipStore } from './ownership.store';
               <ion-col size="9">
                 <ion-item lines="none">
                   <ion-avatar slot="start" [style.background-color]="'var(--ion-color-light)'">
-                    <img okrImg src="{{ ownerModelType() + '.' + ownerKey() | avatar:'ownership' }}" alt="Avatar of Owner" />
+                    <img okrImg src="{{ ownerModelType() + '.' + ownerKey() | avatar:(ownerModelType() === 'org' ? 'org' : 'person') }}" alt="Avatar of Owner" />
                   </ion-avatar>
                   <ion-label>{{ ownerName() }}</ion-label>
                 </ion-item>
@@ -132,62 +132,27 @@ export class OwnershipNewForm {
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
   }
 
+  /** one picker with a segment each for persons and orgs; it answers `modelType.okey` */
   protected async selectOwner(): Promise<void> {
-    if (this.ownerModelType() === 'person') {
-      this.selectPerson();
+    const modal = await this.modalController.create({
+      component: MultiSelectModal,
+      cssClass: 'list-modal',
+      componentProps: { contents: 'person,org', selectedTag: '', currentUser: this.currentUser(), title: this.store.i18n.owner() },
+    });
+    await modal.present();
+    const { data, role } = await modal.onWillDismiss<string>();
+    if (role !== 'confirm' || !data) return;
+    const [modelType, key] = data.split('.');
+    if (modelType === 'org') {
+      const org = this.appStore.getOrg(key);
+      if (!org) return;
+      this.dirty.emit(true);
+      this.formData.update((vm) => ({ ...vm, ownerKey: org.okey, ownerName1: '', ownerName2: org.name, ownerModelType: 'org', ownerType: org.type }));
     } else {
-      this.selectOrg();
-    }
-  }
-
-  protected async selectPerson(): Promise<void> {
-    const modal = await this.modalController.create({
-      component: PersonSelectModal,
-      cssClass: 'list-modal',
-      componentProps: {
-        selectedTag: '',
-        currentUser: this.currentUser()
-      }
-    });
-    await modal.present();
-    const { data: result, role } = await modal.onWillDismiss<PersonSelectResult>();
-    const data = result?.kind === 'predefined' ? result.person : undefined;
-    if (role === 'confirm') {
-      if (isPerson(data, this.appStore.tenantId())) {
-        this.formData.update((vm) => ({
-          ...vm,
-          ownerKey: data.okey,
-          ownerName1: data.firstName,
-          ownerName2: data.lastName,
-          ownerModelType: 'person',
-          ownerType: data.gender,
-        }));
-      }
-    }
-  }
-
-  protected async selectOrg(): Promise<void> {
-    const modal = await this.modalController.create({
-      component: OrgSelectModal,
-      cssClass: 'list-modal',
-      componentProps: {
-        selectedTag: 'selectable',
-        currentUser: this.currentUser()
-      }
-    });
-    await modal.present();
-    const { data, role } = await modal.onWillDismiss();
-    if (role === 'confirm') {
-      if (isOrg(data, this.appStore.tenantId())) {
-        this.formData.update((vm) => ({
-          ...vm,
-          ownerKey: data.okey,
-          ownerName1: '',
-          ownerName2: data.name,
-          ownerModelType: 'org',
-          ownerType: data.type,
-        }));
-      }
+      const person = this.appStore.getPerson(key);
+      if (!person) return;
+      this.dirty.emit(true);
+      this.formData.update((vm) => ({ ...vm, ownerKey: person.okey, ownerName1: person.firstName, ownerName2: person.lastName, ownerModelType: 'person', ownerType: person.gender }));
     }
   }
 

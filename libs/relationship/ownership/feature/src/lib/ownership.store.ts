@@ -1,22 +1,24 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { Router } from '@angular/router';
-import { AlertController, ModalController, ToastController } from '@ionic/angular';
+import { ActionSheetController, AlertController, ModalController, ToastController } from '@ionic/angular';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { firstValueFrom } from 'rxjs';
 
 import { ownerTypeMatches } from '@okr/shared-categories';
 import { AppStore } from '@okr/shared-feature';
-import { OrgModel, OwnershipModel, PersonModel, ResourceModel } from '@okr/shared-models';
+import { OrgModel, OwnershipModel, PersonModel, PersonModelName, ResourceModel } from '@okr/shared-models';
 import { selectDate } from '@okr/shared-ui';
-import { confirm, exportCsv, getExportFileName, navigateByUrl, showToast } from '@okr/shared-util-angular';
-import { buildExportTable, chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, die, getTodayStr, isAfterDate, isOwnership, isResource, nameMatches } from '@okr/shared-util-core';
+import { confirm, exportCsv, getExportFileName, selectNestedAction, showToast } from '@okr/shared-util-angular';
+import { buildExportTable, chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, die, fill, getItemLabel, getTodayStr, hasRole, isAfterDate, isOngoing, isOwnership, isResource, nameMatches } from '@okr/shared-util-core';
 import { DEFAULT_RBOAT_TYPE, DEFAULT_RESOURCE_TYPE } from '@okr/shared-constants';
 import { I18nService } from '@okr/shared-i18n';
 
 import { OwnershipService } from '@okr/relationship-ownership-data-access';
 import { ResourceService } from '@okr/resource-data-access';
-import { getOwnershipExportColumns, getOwnershipExportFileName, newOwnership, OWNERSHIP_I18N_KEYS } from '@okr/relationship-ownership-util';
+import { RESOURCE_EDIT_MODAL } from '@okr/resource-ui';
+import { ORG_EDIT_MODAL } from '@okr/subject-org-ui';
+import { PERSON_EDIT_MODAL } from '@okr/subject-person-ui';
+import { getOwnershipExportColumns, getOwnershipExportFileName, getResourceActionEntries, newOwnership, OWNERSHIP_I18N_KEYS, RESOURCE_ACTION } from '@okr/relationship-ownership-util';
 
 export type OwnershipState = {
   // accordion state
@@ -64,11 +66,16 @@ export const OwnershipStore = signalStore(
     ownershipService: inject(OwnershipService),
     resourceService: inject(ResourceService),
     appStore: inject(AppStore),
-    router: inject(Router),
     modalController: inject(ModalController),
     alertController: inject(AlertController),
     toastController: inject(ToastController),
-    i18nService: inject(I18nService)
+    actionSheetController: inject(ActionSheetController),
+    i18nService: inject(I18nService),
+    // optional: only needed by the resource actions; provided by the route/list that offers them
+    resourceEditModal: inject(RESOURCE_EDIT_MODAL, { optional: true }),
+    // provided by every app (app.config.ts)
+    personEditModal: inject(PERSON_EDIT_MODAL, { optional: true }),
+    orgEditModal: inject(ORG_EDIT_MODAL, { optional: true }),
   })),
 
   withProps((store) => ({
@@ -105,6 +112,14 @@ export const OwnershipStore = signalStore(
         if (!state.ownerModelType()) return [];
         return state.allOwnershipsResource.value()?.filter((ownership: OwnershipModel) =>
         ownership.ownerKey === state.ownerKey()) ?? []
+      }),
+
+      // all ownerships of the resource in state.resourceKey (resource owners accordion), most recent first
+      resourceOwnerships: computed(() => {
+        if (!state.resourceKey()) return [];
+        return (state.allOwnershipsResource.value() ?? [])
+          .filter((ownership: OwnershipModel) => ownership.resourceKey === state.resourceKey())
+          .sort((a, b) => (b.validFrom ?? '').localeCompare(a.validFrom ?? ''));
       }),
 
       // all owners of a given resource
@@ -213,6 +228,10 @@ export const OwnershipStore = signalStore(
       /******************************** setters (filter) ******************************************* */
       setOwnerKey(ownerKey: string) {
         patchState(store, { ownerKey });
+      },
+
+      setResourceKey(resourceKey: string) {
+        patchState(store, { resourceKey });
       },
 
       setShowMode(showOnlyCurrent: boolean) {
@@ -377,37 +396,217 @@ export const OwnershipStore = signalStore(
       },   
 
       /**
-       * Show a modal to edit/view the owned resource (e.g. a rowing boat).
-       * There is no resource detail route, so we open the resource edit modal directly.
-       * @param ownership the Ownership whose resource should be opened
+       * Show a modal to edit/view a resource (e.g. a rowing boat).
+       * There is no resource detail route, so we open the resource edit modal directly. The modal lives in
+       * @okr/resource-feature and is resolved through RESOURCE_EDIT_MODAL (resource-feature depends on us).
+       * @param resource the resource to open
        * @param readOnly whether the modal opens in read-only (view) mode
        */
-      async openResource(ownership: OwnershipModel, readOnly = true): Promise<void> {
-        if (!ownership.resourceKey) return;
-        const resource = await firstValueFrom(store.resourceService.read(ownership.resourceKey));
-        if (!resource) return;
-        const { ResourceEditModal } = await import('@okr/resource-feature');
+      async openResource(resource: ResourceModel, readOnly = true): Promise<void> {
+        if (!store.resourceEditModal) {
+          console.error('OwnershipStore.openResource: RESOURCE_EDIT_MODAL is not provided.');
+          return;
+        }
+        const component = await store.resourceEditModal();
         const modal = await store.modalController.create({
-          component: ResourceEditModal,
+          component,
           componentProps: { resource, isTypeEditable: false, readOnly }
         });
         modal.present();
         const { data, role } = await modal.onDidDismiss();
         if (role === 'confirm' && data && !readOnly && isResource(data, store.tenantId())) {
           await store.resourceService.update(data, store.currentUser());
+          store.appStore.reloadResources();
         }
         this.reload();
       },
 
       /**
-       * Navigate to the detail page of the owner (person or org).
+       * Open the owner (person or org) of an ownership in its edit modal, on top of the current page.
+       * The modals live in the subject feature libs and come through the loader tokens the apps provide.
        * @param ownership the Ownership whose owner should be opened
-       * @param readOnly whether the owner page opens in read-only (view) mode
+       * @param readOnly whether the modal opens in read-only (view) mode
        */
       async openOwner(ownership: OwnershipModel, readOnly = true): Promise<void> {
         if (!ownership.ownerKey) return;
-        const path = ownership.ownerModelType === 'org' ? 'org' : 'person';
-        await navigateByUrl(store.router, `/${path}/${ownership.ownerKey}`, { readOnly });
+        let component, componentProps;
+        if (ownership.ownerModelType === 'org') {
+          const org = store.appStore.getOrg(ownership.ownerKey);
+          if (!org || !store.orgEditModal) { console.warn(`OwnershipStore.openOwner: org ${ownership.ownerKey} or ORG_EDIT_MODAL not available`); return; }
+          component = await store.orgEditModal();
+          componentProps = { org, currentUser: store.currentUser(), tags: '', readOnly };
+        } else {
+          const person = store.appStore.getPerson(ownership.ownerKey);
+          if (!person || !store.personEditModal) { console.warn(`OwnershipStore.openOwner: person ${ownership.ownerKey} or PERSON_EDIT_MODAL not available`); return; }
+          component = await store.personEditModal();
+          componentProps = {
+            person,
+            currentUser: store.currentUser(),
+            tags: store.appStore.getTags(PersonModelName),
+            tenantId: store.tenantId(),
+            genders: store.appStore.getCategory('gender'),
+            readOnly
+          };
+        }
+        const modal = await store.modalController.create({ component, componentProps });
+        await modal.present();
+        await modal.onDidDismiss();
+      },
+
+      /**
+       * «Nutzung hinzufügen» for a given resource: opens OwnershipNewModal pre-filled with the resource,
+       * today as start date and the tenant's default org as user. The user can be changed there
+       * (persons and orgs, one segment each).
+       * @param resource the resource that gets a new ownership
+       * @param readOnly
+       */
+      async addOwnershipFor(resource: ResourceModel, readOnly = true): Promise<void> {
+        if (readOnly) return;
+        const org = store.appStore.defaultOrg();
+        if (org) {
+          await this.add(org, 'org', resource, readOnly);
+        } else {
+          await this.add(store.appStore.currentPerson(), 'person', resource, readOnly);
+        }
+      },
+
+      /******************************* resource action sheet *************************************** */
+      /**
+       * The current (not yet ended) Nutzung of a resource; the most recent one if there are several.
+       */
+      currentOwnershipOf(resourceKey: string): OwnershipModel | undefined {
+        return (store.allOwnershipsResource.value() ?? [])
+          .filter(o => o.resourceKey === resourceKey && isAfterDate(o.validTo, getTodayStr(DateFormat.StoreDate)))
+          .sort((a, b) => (b.validFrom ?? '').localeCompare(a.validFrom ?? ''))[0];
+      },
+
+      /**
+       * The two-level ActionSheet of the resource lists and the ownership lists (see getResourceActionEntries):
+       * «<resource type>…», «Nutzer/in anzeigen», «Nutzung…». Only the actions the user may use are offered.
+       * @param resource the row's resource (resource lists); loaded on demand for an ownership row
+       * @param ownership the row's ownership (ownership lists) or the resource's current one
+       * @param withResource false inside the resource's own modal: no «<resource type>…» group, no «hinzufügen»
+       * @returns the executed action, so that the caller can refresh its own store
+       */
+      async showResourceActions(resource: ResourceModel | undefined, ownership: OwnershipModel | undefined, withResource = true): Promise<string | undefined> {
+        const resourceKey = resource?.okey || ownership?.resourceKey || '';
+        const resourceType = resource?.type ?? ownership?.resourceType ?? '';
+        const user = store.currentUser();
+        const writable = hasRole('resourceAdmin', user);
+        const i18n = store.i18n;
+        const resourceTypes = store.appStore.tryGetCategory('resource_type');
+        const typeLabel = resourceTypes ? getItemLabel(resourceTypes, resourceType) : resourceType;
+        const entries = getResourceActionEntries(
+          { canRead: hasRole('registered', user), canWrite: writable, isAdmin: hasRole('admin', user) },
+          { hasResource: withResource && resourceKey.length > 0, hasOwnership: !!ownership, isOngoing: !!ownership && isOngoing(ownership.validTo) },
+          {
+            resource: typeLabel.startsWith('@') ? await store.i18nService.translateOnce(typeLabel) : typeLabel,
+            resourceIcon: store.appStore.getCategoryItem('resource_type', resourceType)?.icon,
+            ownership: i18n.ownership(), ownerView: i18n.action_ownerView(),
+            add: i18n.action_add(), view: i18n.action_view(), edit: i18n.action_edit(), end: i18n.action_end(),
+            archive: i18n.action_archive(), delete: i18n.action_delete()
+          });
+        const combine = (group: string, action: string): string => {
+          const text = fill(i18n.action_combine() || '{group} {action}', { group, action });
+          return text.charAt(0).toUpperCase() + text.slice(1);
+        };
+        const action = await selectNestedAction(store.actionSheetController, i18n.as_title(), entries, i18n.cancel(),
+          store.appStore.env.services.imgixBaseUrl, combine);
+        if (!action) return undefined;
+
+        const loadResource = async () => resource ?? await firstValueFrom(store.resourceService.read(resourceKey));
+        switch (action) {
+          case RESOURCE_ACTION.resourceView:
+          case RESOURCE_ACTION.resourceEdit: {
+            const res = await loadResource();
+            if (res) await this.openResource(res, action === RESOURCE_ACTION.resourceView || !writable);
+            break;
+          }
+          case RESOURCE_ACTION.resourceArchive: {
+            const res = await loadResource();
+            if (res) await this.archiveResource(res);
+            break;
+          }
+          case RESOURCE_ACTION.resourceDelete: {
+            const res = await loadResource();
+            if (res) await this.purgeResource(res);
+            break;
+          }
+          case RESOURCE_ACTION.ownerView:
+            if (ownership) await this.openOwner(ownership, true);
+            break;
+          case RESOURCE_ACTION.ownershipAdd: {
+            const res = await loadResource();
+            if (res) await this.addOwnershipFor(res, !writable);
+            break;
+          }
+          case RESOURCE_ACTION.ownershipView:
+            if (ownership) await this.edit(ownership, true);
+            break;
+          case RESOURCE_ACTION.ownershipEdit:
+            if (ownership) await this.edit(ownership, !writable);
+            break;
+          case RESOURCE_ACTION.ownershipEnd:
+            if (ownership) await this.end(ownership, !writable);
+            break;
+          case RESOURCE_ACTION.ownershipArchive:
+            if (ownership) await this.archive(ownership);
+            break;
+          case RESOURCE_ACTION.ownershipDelete:
+            if (ownership) await this.purge(ownership);
+            break;
+        }
+        return action;
+      },
+
+      /** Archive a resource (isArchived = true). admin only. */
+      async archiveResource(resource: ResourceModel): Promise<void> {
+        if (!hasRole('admin', store.currentUser())) return;
+        const message = fill(store.i18n.resource_archive_confirm(), { name: resource.name });
+        if (!await confirm(store.alertController, message, store.i18n.ok(), store.i18n.cancel(), true)) return;
+        await store.resourceService.archive(resource, store.currentUser());
+        store.appStore.reloadResources();
+      },
+
+      /**
+       * Delete a resource physically in the database. admin only.
+       * Refused while ownerships still point to it (they would dangle) and for a resource that is
+       * shared with another tenant (deleting it would remove it there too; see the deleting-models skill).
+       */
+      async purgeResource(resource: ResourceModel): Promise<void> {
+        if (!hasRole('admin', store.currentUser())) return;
+        if ((resource.tenants ?? []).length > 1) {
+          showToast(store.toastController, store.i18n.purge_shared());
+          return;
+        }
+        if ((store.allOwnershipsResource.value() ?? []).some(o => o.resourceKey === resource.okey)) {
+          showToast(store.toastController, fill(store.i18n.resource_purge_inUse(), { name: resource.name }));
+          return;
+        }
+        const message = fill(store.i18n.resource_purge_confirm(), { name: resource.name });
+        if (!await confirm(store.alertController, message, store.i18n.ok(), store.i18n.cancel(), true)) return;
+        await store.resourceService.purge(resource, store.currentUser());
+        store.appStore.reloadResources();
+      },
+
+      /** Archive an ownership (isArchived = true). admin only. */
+      async archive(ownership: OwnershipModel): Promise<void> {
+        if (!hasRole('admin', store.currentUser())) return;
+        if (!await confirm(store.alertController, store.i18n.archive_confirm(), store.i18n.ok(), store.i18n.cancel(), true)) return;
+        await store.ownershipService.archive(ownership, store.currentUser());
+        this.reload();
+      },
+
+      /** Delete an ownership physically in the database. admin only. */
+      async purge(ownership: OwnershipModel): Promise<void> {
+        if (!hasRole('admin', store.currentUser())) return;
+        if ((ownership.tenants ?? []).length > 1) {
+          showToast(store.toastController, store.i18n.purge_shared());
+          return;
+        }
+        if (!await confirm(store.alertController, store.i18n.purge_confirm(), store.i18n.ok(), store.i18n.cancel(), true)) return;
+        await store.ownershipService.purge(ownership, store.currentUser());
+        this.reload();
       },
 
       /**

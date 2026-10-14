@@ -20,7 +20,7 @@
     "@okr/comment-feature": "*",
     "@okr/resource-ui": "*",
     "@okr/resource-util": "*",
-    "@okr/resource-data-access": "*"
+    "@okr/resource-data-access": "*",
+    "@okr/relationship-ownership-feature": "*"
   }
 }
-

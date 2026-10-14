@@ -70,7 +70,9 @@ Computed per-type filtered lists (e.g. `filteredBoats`, `filteredRboats`, `filte
 Key actions:
 
 - `add(isTypeEditable, readOnly)` / `edit(resource, isTypeEditable, readOnly)` — open `ResourceEditModal`.
-- `delete(resource, readOnly)` — call `ResourceService.delete`.
+- `delete(resource, readOnly)` — call `ResourceService.delete` (archive).
+
+The per-row ActionSheet of all four list components is the shared two-level sheet of `OwnershipStore.showResourceActions` (see `OWNERSHIP.md`); each list provides `OwnershipStore` and `RESOURCE_EDIT_MODAL_PROVIDER`.
 - `export(type)` — not yet implemented.
 
 ## ResourceEditStore

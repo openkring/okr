@@ -1,17 +1,20 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input, signal } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular';
+import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular';
 import { ResourceModel, RoleName } from '@okr/shared-models';
 import { TranslatePipe } from '@okr/shared-i18n';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
-import { createActionSheetButton, createActionSheetOptions, error } from '@okr/shared-util-angular';
+import { error } from '@okr/shared-util-angular';
 import { getCategoryIcon, getItemLabel, hasRole } from '@okr/shared-util-core';
 
 type BoatSortField = 'name' | 'type' | 'load';
 
 import { Menu } from '@okr/cms-menu-feature';
 
+import { OwnershipStore } from '@okr/relationship-ownership-feature';
+
+import { RESOURCE_EDIT_MODAL_PROVIDER } from './resource-edit-modal.provider';
 import { ResourceStore } from './resource.store';
 
 @Component({
@@ -22,7 +25,7 @@ import { ResourceStore } from './resource.store';
     Menu, ListFilter, Spinner, EmptyList,
     IonHeader, IonToolbar, IonButtons, IonTitle, IonButton, IonMenuButton, IonList, IonPopover, IonIcon, IonItem, IonLabel, IonContent
   ],
-  providers: [ResourceStore],
+  providers: [ResourceStore, OwnershipStore, RESOURCE_EDIT_MODAL_PROVIDER],
   styles: [`.clickable { cursor: pointer; user-select: none; }`],
   template: `
   <ion-header>
@@ -92,7 +95,7 @@ import { ResourceStore } from './resource.store';
 })
 export class RowingBoatList {
   protected readonly store = inject(ResourceStore);
-  private actionSheetController = inject(ActionSheetController);
+  protected readonly ownershipStore = inject(OwnershipStore);
 
   // inputs
   public listId = input.required<string>();
@@ -120,7 +123,6 @@ export class RowingBoatList {
   protected currentUser = computed(() => this.store.currentUser());
   protected readOnly = computed(() => !hasRole('resourceAdmin', this.currentUser()));
 
-  private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 
   /******************************** getters ******************************************* */
   protected getIcon(resource: ResourceModel): string | undefined {
@@ -168,59 +170,13 @@ export class RowingBoatList {
   }
 
   /**
-   * Displays an ActionSheet with all possible actions on a rowing boat. Only actions are shown, that the user has permission for.
-   * After user selected an action this action is executed.
-   * @param boat 
+   * Displays the two-level ActionSheet of a rowing boat: the rowing boat itself, its current user (Nutzer/in) and
+   * its current ownership (Nutzung). Only the actions the user has permission for are offered.
+   * @param boat
    */
   protected async showActions(boat: ResourceModel): Promise<void> {
-    const actionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
-    this.addActionSheetButtons(actionSheetOptions, boat);
-    await this.executeActions(actionSheetOptions, boat);
-  }
-
-  /**
-   * Fills the ActionSheet with all possible actions, considering the user permissions.
-   * @param boat 
-   */
-  private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, boat: ResourceModel): void {
-    if (hasRole('registered', this.store.appStore.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('rboat.view', this.store.i18n.rboat_view(), this.imgixBaseUrl, 'eye-on'));
-      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
-    }
-    if (hasRole('resourceAdmin', this.store.appStore.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('rboat.edit', this.store.i18n.rboat_update(), this.imgixBaseUrl, 'edit'));
-    }
-    if (hasRole('admin', this.store.appStore.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('rboat.delete', this.store.i18n.rboat_delete(), this.imgixBaseUrl, 'trash'));
-    }
-    if (actionSheetOptions.buttons.length === 1) { // only cancel button
-      actionSheetOptions.buttons = [];
-    }
-  }
-
-  /**
-   * Displays the ActionSheet, waits for the user to select an action and executes the selected action.
-   * @param actionSheetOptions 
-   * @param boat 
-   */
-  private async executeActions(actionSheetOptions: ActionSheetOptions, boat: ResourceModel): Promise<void> {
-    if (actionSheetOptions.buttons.length > 0) {
-      const actionSheet = await this.actionSheetController.create(actionSheetOptions);
-      await actionSheet.present();
-      const { data } = await actionSheet.onDidDismiss();
-      if (!data) return;
-      switch (data.action) {
-        case 'rboat.delete':
-          await this.store.delete(boat, this.readOnly());
-          break;
-        case 'rboat.edit':
-          await this.store.edit(boat, false, this.readOnly());
-          break;
-        case 'rboat.view':
-          await this.store.edit(boat, false, true);
-          break;
-      }
-    }
+    const action = await this.ownershipStore.showResourceActions(boat, this.ownershipStore.currentOwnershipOf(boat.okey));
+    if (action) this.store.reload();
   }
 
   /******************************** helpers ******************************************* */

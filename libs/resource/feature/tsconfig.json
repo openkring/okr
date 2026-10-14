@@ -66,6 +66,9 @@
     },
     {
       "path": "../../relationship/reservation/feature/tsconfig.lib.json"
+    },
+    {
+      "path": "../../relationship/ownership/feature/tsconfig.lib.json"
     }
   ]
 }

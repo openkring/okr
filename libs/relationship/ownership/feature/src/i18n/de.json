@@ -288,5 +288,27 @@
       "label": "Storniert",
       "description": "Die Nutzung wurde storniert."
     }
+  },
+  "action": {
+    "add": "hinzufügen",
+    "view": "anzeigen",
+    "edit": "ändern",
+    "end": "beenden",
+    "archive": "archivieren",
+    "delete": "löschen",
+    "ownerView": "Nutzer/in anzeigen",
+    "combine": "{group} {action}"
+  },
+  "archive": {
+    "confirm": "Normalerweise wird eine Nutzung beendet. Möchtest du diese Nutzung wirklich archivieren?"
+  },
+  "purge": {
+    "confirm": "Die Nutzung wird endgültig gelöscht und kann nicht wiederhergestellt werden. Möchtest du sie wirklich löschen?",
+    "shared": "Dieser Eintrag wird auch in einer anderen App verwendet. Du kannst ihn darum nur archivieren."
+  },
+  "resourceAction": {
+    "archiveConfirm": "Möchtest du {name} wirklich archivieren?",
+    "purgeConfirm": "{name} wird endgültig gelöscht und kann nicht wiederhergestellt werden. Möchtest du fortfahren?",
+    "purgeInUse": "{name} hat noch Nutzungen und kann darum nicht gelöscht werden. Lösche zuerst die Nutzungen oder archiviere {name}."
   }
 }

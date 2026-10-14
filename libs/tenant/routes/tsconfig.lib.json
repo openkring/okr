@@ -89,6 +89,7 @@
     { "path": "../../relationship/transfer/feature/tsconfig.lib.json" },
     { "path": "../../relationship/workrel/feature/tsconfig.lib.json" },
     { "path": "../../resource/feature/tsconfig.lib.json" },
+    { "path": "../../resource/ui/tsconfig.lib.json" },
     { "path": "../../security/audit/feature/tsconfig.lib.json" },
     { "path": "../../security/processing/feature/tsconfig.lib.json" },
     { "path": "../../shared/feature/tsconfig.lib.json" },

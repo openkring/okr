@@ -288,5 +288,27 @@
       "label": "Anulado",
       "description": "El uso fue anulado."
     }
+  },
+  "action": {
+    "add": "añadir",
+    "view": "ver",
+    "edit": "editar",
+    "end": "finalizar",
+    "archive": "archivar",
+    "delete": "eliminar",
+    "ownerView": "Ver usuario/a",
+    "combine": "{action} {group}"
+  },
+  "archive": {
+    "confirm": "Normalmente un uso se finaliza. ¿De verdad quieres archivar este uso?"
+  },
+  "purge": {
+    "confirm": "El uso se eliminará definitivamente y no se podrá restaurar. ¿De verdad quieres eliminarlo?",
+    "shared": "Esta entrada también se usa en otra aplicación. Solo puedes archivarla."
+  },
+  "resourceAction": {
+    "archiveConfirm": "¿De verdad quieres archivar {name}?",
+    "purgeConfirm": "{name} se eliminará definitivamente y no se podrá restaurar. ¿Quieres continuar?",
+    "purgeInUse": "{name} todavía tiene usos y por eso no se puede eliminar. Elimina primero los usos o archiva {name}."
   }
 }

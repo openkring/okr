@@ -22,7 +22,9 @@
     "@okr/avatar-ui": "*",
     "@okr/cms-menu-feature": "*",
     "@okr/resource-data-access": "*",
-    "@okr/resource-feature": "*",
-    "@angular/forms": "*"
+    "@angular/forms": "*",
+    "@okr/resource-ui": "*",
+    "@okr/subject-person-ui": "*",
+    "@okr/subject-org-ui": "*"
   }
 }

@@ -25,7 +25,7 @@
     { "path": "../ui/tsconfig.lib.json" },
     { "path": "../util/tsconfig.lib.json" },
     { "path": "../../../resource/data-access/tsconfig.lib.json" },
-    { "path": "../../../resource/feature/tsconfig.lib.json" },
+    { "path": "../../../resource/ui/tsconfig.lib.json" },
     { "path": "../../../shared/categories/tsconfig.lib.json" },
     { "path": "../../../shared/constants/tsconfig.lib.json" },
     { "path": "../../../shared/feature/tsconfig.lib.json" },
@@ -34,6 +34,8 @@
     { "path": "../../../shared/pipes/tsconfig.lib.json" },
     { "path": "../../../shared/ui/tsconfig.lib.json" },
     { "path": "../../../shared/util-angular/tsconfig.lib.json" },
-    { "path": "../../../shared/util-core/tsconfig.lib.json" }
+    { "path": "../../../shared/util-core/tsconfig.lib.json" },
+    { "path": "../../../subject/org/ui/tsconfig.lib.json" },
+    { "path": "../../../subject/person/ui/tsconfig.lib.json" }
   ]
 }
