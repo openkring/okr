@@ -267,13 +267,14 @@ const aoc: FeatureBlock = {
   // double-count it in the retention pass.
   collections: ['tags', 'websiteContent'],
   // The task-12 TODO that stood here is fully RESOLVED — every live child of `aoc-menu` now
-  // has a home. For the record, in the live doc's own child order (`aoc-admin, aoc-auth,
+  // has a home. For the record, in the live doc's own child order as of BEFORE spec 1.101
+  // phase 1 (pre-1.101 snapshot; `flighttracker` has since moved to the main menu) (`aoc-admin, aoc-auth,
   // aoc-content, aoc-data, aoc-statistics, user-all, aoc-sessions, aoc-chat,
   // aoc-account, aoc-doc, aoc-bexio, aoc-srv, activity-all, flighttracker, priv-register,
   // priv-audit, divider_empty`):
-  //  - the thirteen `aoc-*` entries are this block's own, all thirteen declared below (task 18
-  //    added the last six: sessions/chat/account/doc/bexio/srv, whose routes were also missing
-  //    from `FEATURE_ROUTES` until now);
+  //  - the `aoc-*` entries are this block's own, all declared below (task 18 added
+  //    sessions/chat/account/doc/bexio/srv, whose routes were also missing from
+  //    `FEATURE_ROUTES` until now);
   //  - `user-all` → `user`; `priv-register`/`priv-audit` → `security`; `flighttracker` →
   //    `mobility` (task 14; since spec 1.101 phase 1 a main-menu row, no longer under `aoc-menu`); `activity-all` → `activity` (task 18) — each via `aocMenuParent`;
   //  - `divider_empty` IS catalogued now (declared last below, mirroring its position as the
@@ -288,12 +289,12 @@ const aoc: FeatureBlock = {
   // `/aoc/email` (`AocEmail`) has the `aoc-email` row declared below; its live doc is created by
   // `scripts/aoc-phase1-menu.mjs` (spec 1.101 phase 1). ONE AOC SCREEN IS STILL ROUTED BUT
   // UN-MENU'D, stated so the omission is not read as an oversight: `/aoc/trip` (`AocTrip`) has NO
-  // live `menuItems` doc; the earlier verification also found none for `aoc-email`. Verified with two query shapes, per the `c-yearlyevents` lesson: a name-equality `IN`
+  // live `menuItems` doc and no catalogue row. The pre-1.101 verification (which also found none for `aoc-email`, since created) ran as follows:  with two query shapes, per the `c-yearlyevents` lesson: a name-equality `IN`
   // query over [aoc-trip, aoc-website, aoc-tag, aoc-email, …] returned `aoc-website` only, and
   // an ordered range scan of every doc whose `name` sorts in ['a','b') returned 21 documents
-  // whose `aoc-*` members are EXACTLY the twelve leaves declared below (before `aoc-email`) plus the `aoc-menu`
-  // parent and `aoc-website` — no `aoc-email`, no `aoc-trip`, under any spelling. Both screens
-  // are reachable only by typing the URL, the same "un-menu'd admin screen" shape as `i18n` and
+  // whose `aoc-*` members were EXACTLY the leaves then declared (those before `aoc-email`) plus the
+  // `aoc-menu` parent and `aoc-website` — no `aoc-email`, no `aoc-trip`, under any spelling. `/aoc/trip`
+  // is therefore reachable only by typing the URL, the same "un-menu'd admin screen" shape as `i18n` and
   // `subject`'s `/applications`. (`/aoc/tag`'s doc is named `tag-all`, not `aoc-tag` — see
   // below.)
   menu: [

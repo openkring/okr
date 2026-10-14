@@ -28,7 +28,7 @@
  *   `menu-all`/`page-all`/`category-all`/`location-all` each have exactly one owner). A
  *   unit test pins that premise.
  *
- *   REJECTED: 'all'. On live data it grants `activity` and `mobility` to eight tenants
+ *   REJECTED: 'all'. On live data it grants `activity` (and, before 1.101 phase 1 moved `mobility` out from under `aoc-menu`, `mobility`) to eight tenants
  *   whose only AOC document is the shared `aoc-menu` parent — they own neither
  *   `activity-all` nor `flighttracker`. It also "adds" `security` to those eight, which is
  *   a no-op only because `security` is `core: true`.

@@ -78,20 +78,46 @@ export function fixTypes(doc, fieldsToFix) {
   return doc;
 }
 
+function deepCopy(obj) {
+  const out = {};
+  for (const [k, v] of Object.entries(obj)) {
+    try {
+      out[k] = structuredClone(v);
+    } catch {
+      out[k] = v;
+    }
+  }
+  return out;
+}
+
 /**
  * Plans the fix of one document without mutating it. Returns the top-level fields that differ
  * (compared by JSON) — exactly what update() should write. `custom(doc)` is an optional hook that
  * returns an extra patch (applied last). `okey` is never part of the patch.
  */
 export function planFix(doc, { defaults = [], typeSpec = [], custom } = {}) {
-  const work = { ...doc };
+  // Deep-copy per field so helpers and the hook cannot mutate the caller's doc in place; fields
+  // structuredClone cannot copy (Firestore refs, functions) keep their reference (never patched).
+  const work = {};
+  for (const [k, v] of Object.entries(doc)) {
+    try {
+      work[k] = structuredClone(v);
+    } catch {
+      work[k] = v;
+    }
+  }
   if (defaults.length > 0) fixUndefinedFields(work, defaults);
   if (typeSpec.length > 0) fixTypes(work, typeSpec);
-  if (custom) Object.assign(work, custom({ ...work }) ?? {});
+  if (custom) Object.assign(work, custom(deepCopy(work)) ?? {});
   const patch = {};
   for (const key of Object.keys(work)) {
     if (key === 'okey') continue;
-    if (JSON.stringify(work[key]) !== JSON.stringify(doc[key])) patch[key] = work[key];
+    if (work[key] === doc[key]) continue;
+    try {
+      if (JSON.stringify(work[key]) !== JSON.stringify(doc[key])) patch[key] = work[key];
+    } catch {
+      // unserialisable: treat as unchanged
+    }
   }
   return { changed: Object.keys(patch).length > 0, patch };
 }

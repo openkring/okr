@@ -52,3 +52,19 @@ test('planFix never patches okey and does not mutate the input', () => {
   assert.equal('okey' in r.patch, false);
   assert.equal(doc.n, '2');
 });
+
+test('planFix: an in-place nested hook mutation is detected and the input doc stays untouched', () => {
+  const doc = { okey: 'a', admin: 'x', admins: ['y'] };
+  const snapshot = structuredClone(doc);
+  const res = planFix(doc, { custom: (d) => { d.admins.push(d.admin); return { admins: d.admins }; } });
+  assert.equal(res.changed, true);
+  assert.deepEqual(res.patch, { admins: ['y', 'x'] });
+  assert.deepEqual(doc, snapshot);
+});
+
+test('planFix: a field structuredClone cannot copy does not throw and stays out of the patch', () => {
+  const doc = { okey: 'a', ref: { fn() {} }, n: '3' };
+  const res = planFix(doc, { typeSpec: ['n:n'] });
+  assert.deepEqual(res.patch, { n: 3 });
+  assert.equal(res.changed, true);
+});
