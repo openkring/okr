@@ -1,0 +1,119 @@
+# Store publishing for the tenant apps (spec 1.10 §8, skill `android-release`).
+#
+#   fastlane android internal app:scs-app            build, gate, sign, upload to Internal testing
+#   fastlane android promote  app:scs-app to:alpha   promote the newest internal release
+#
+# Every lane takes `app:<app>`: paths, package name and secrets derive from it, so a second
+# tenant is configuration, not new code. Secrets live outside the repo in ~/.okr-secrets/android/.
+
+default_platform(:android)
+
+ROOT = File.expand_path('..', __dir__)
+SECRETS = File.expand_path('~/.okr-secrets/android')
+PLAY_JSON_KEY = File.join(SECRETS, 'play-service-account.json')
+TRACKS = %w[production beta alpha internal].freeze
+
+# Gradle 8.14.3 runs on Java <= 24 and Capacitor 8 compiles at Java 21 (skill android-release).
+ENV['JAVA_HOME'] ||= '/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home'
+ENV['ANDROID_HOME'] ||= File.expand_path('~/Library/Android/sdk')
+
+platform :android do
+  desc 'Build, gate, sign and upload a new versionCode to Internal testing'
+  lane :internal do |options|
+    app = app_param(options)
+    package = package_name(app)
+    version_code = next_version_code(package)
+    UI.message("#{app} (#{package}) → versionCode #{version_code}")
+
+    begin
+      # --skip-nx-cache: environment.ts is generated and git-ignored, so it is NOT in the Nx cache
+      # hash — a cached "production" build once shipped the DEV bundle (versionCode 1).
+      sh_root("pnpm nx build #{app} --configuration production --skip-nx-cache")
+      gate_production!(Dir[File.join(ROOT, "dist/apps/#{app}/browser/main-*.js")].max_by { |f| File.mtime(f) }, 'dist')
+      sh_root("cd apps/#{app} && pnpm exec cap sync android")
+      sh_root("cd apps/#{app}/android && ./gradlew bundleRelease -PversionCode=#{version_code} --console=plain -q")
+
+      aab = File.join(ROOT, "apps/#{app}/android/app/build/outputs/bundle/release/app-release.aab")
+      gate_production!(aab, 'aab')
+
+      upload_to_play_store(
+        package_name: package,
+        json_key: PLAY_JSON_KEY,
+        track: 'internal',
+        aab: aab,
+        release_status: 'completed',
+        skip_upload_metadata: true,
+        skip_upload_images: true,
+        skip_upload_screenshots: true,
+        skip_upload_changelogs: true,
+      )
+      UI.success("#{package} versionCode #{version_code} is on Internal testing")
+    ensure
+      # Give local `nx serve` its development environment back (production: false).
+      sh_root("pnpm nx build #{app} --skip-nx-cache", log: false)
+    end
+  end
+
+  desc 'Promote the newest Internal release to another track (to: alpha | beta | production)'
+  lane :promote do |options|
+    app = app_param(options)
+    to = options[:to] || UI.user_error!('Missing to:<alpha|beta|production>')
+    UI.user_error!("Unknown track #{to}") unless TRACKS.include?(to)
+    upload_to_play_store(
+      package_name: package_name(app),
+      json_key: PLAY_JSON_KEY,
+      track: 'internal',
+      track_promote_to: to,
+      skip_upload_aab: true,
+      skip_upload_apk: true,
+      skip_upload_metadata: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true,
+      skip_upload_changelogs: true,
+    )
+  end
+end
+
+# ── helpers ───────────────────────────────────────────────────────────────────
+
+def app_param(options)
+  app = options[:app] || UI.user_error!('Missing app:<app>, e.g. app:scs-app')
+  UI.user_error!("No Android project at apps/#{app}/android") unless Dir.exist?(File.join(ROOT, "apps/#{app}/android"))
+  UI.user_error!("Missing #{PLAY_JSON_KEY} (skill android-release, bootstrap step 7)") unless File.exist?(PLAY_JSON_KEY)
+  app
+end
+
+# The package is `appId` in capacitor.config.ts — one source of truth for every platform.
+def package_name(app)
+  cfg = File.read(File.join(ROOT, "apps/#{app}/capacitor.config.ts"))
+  cfg[/appId:\s*'([^']+)'/, 1] || UI.user_error!("No appId in apps/#{app}/capacitor.config.ts")
+end
+
+# versionCode = highest on ANY track + 1 (spec 1.10 §7). A track without releases raises; skip it.
+def next_version_code(package)
+  codes = TRACKS.flat_map do |track|
+    google_play_track_version_codes(package_name: package, json_key: PLAY_JSON_KEY, track: track)
+  rescue StandardError
+    []
+  end
+  UI.user_error!("No versionCode found on any track for #{package} — the first upload is manual") if codes.empty?
+  codes.max + 1
+end
+
+# Release gate: the bundled environment must be production (`production:!0` after minification).
+def gate_production!(path, where)
+  UI.user_error!("Gate (#{where}): nothing to check at #{path.inspect}") if path.nil? || !File.exist?(path)
+  js = if path.end_with?('.aab')
+         entry = sh("unzip -l #{path.shellescape} | awk '{print $4}' | grep -E 'assets/public/main-[^/]*\\.js$'", log: false).strip
+         sh("unzip -p #{path.shellescape} #{entry.shellescape}", log: false)
+       else
+         File.read(path)
+       end
+  flags = js.scan(/production:!([01])/).flatten.uniq
+  UI.user_error!("Gate (#{where}): bundle is not production (found #{flags.inspect}) — refusing to ship") unless flags == ['0']
+  UI.success("Gate (#{where}): production:!0")
+end
+
+def sh_root(cmd, log: true)
+  sh("cd #{ROOT.shellescape} && #{cmd}", log: log)
+end
