@@ -120,8 +120,8 @@ platform :ios do
           "CURRENT_PROJECT_VERSION=#{build_number}",
           "MARKETING_VERSION=#{version}",
         ].join(' '),
-        export_xcargs: "-allowProvisioningUpdates -authenticationKeyPath #{p8.shellescape} " \
-                       "-authenticationKeyID #{key['key_id']} -authenticationKeyIssuerID #{key['issuer_id']}",
+        # No export_xcargs: gym copies the -allowProvisioningUpdates/-authenticationKey* flags from
+        # xcargs into the export itself; passing them again fails ("may only be provided once").
       )
       gate_production!(ipa, 'ipa')
 
