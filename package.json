@@ -8,6 +8,7 @@
     "build": "nx run scs-app:build:production",
     "build:affected": "nx affected -t build",
     "build:functions": "nx build functions",
+    "build:p13-css": "tailwindcss -c apps/p13-website/tailwind.config.js -i apps/p13-website/tailwind.input.css -o apps/p13-website/assets/tailwind.css --minify",
     "build:web-css": "tailwindcss -c apps/scs-website/tailwind.config.js -i apps/scs-website/tailwind.input.css -o apps/scs-website/assets/tailwind.css --minify",
     "deploy:functions": "node scripts/deploy-functions.mjs",
     "serve": "nx serve",
