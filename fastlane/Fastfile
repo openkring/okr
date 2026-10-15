@@ -100,8 +100,6 @@ platform :ios do
       # then resolves its gems there and dies with "Could not find 'drb'". Run it without them.
       sh_root("cd apps/#{app} && env -u GEM_HOME -u GEM_PATH pnpm exec cap sync ios")
 
-      key = JSON.parse(File.read(ASC_API_KEY))
-      p8 = File.join(IOS_SECRETS, "AuthKey_#{key['key_id']}.p8")
       ipa = build_app(
         workspace: File.join(ios_dir, 'App.xcworkspace'),
         scheme: 'App',
@@ -110,18 +108,16 @@ platform :ios do
         output_directory: File.join(ROOT, "dist/ios/#{app}"),
         output_name: 'App.ipa',
         clean: true,
-        # Automatic signing in the local Keychain (spec §15.3): Xcode creates/renews the distribution
-        # certificate and profiles itself, authenticated with the App Store Connect API key.
+        # Automatic signing in the local Keychain (spec §15.3) with the Apple ID signed in to Xcode
+        # (Admin of team 7X4J6XQJV3): it creates the App Store profile. The App Store Connect API
+        # key (App-Manager) is refused for that ("Cloud signing permission error"), so it is used
+        # only for build numbers and the TestFlight upload. The "Apple Distribution" certificate
+        # lives in the Keychain (created once in Xcode → Settings → Apple Accounts).
         xcargs: [
           '-allowProvisioningUpdates',
-          "-authenticationKeyPath #{p8.shellescape}",
-          "-authenticationKeyID #{key['key_id']}",
-          "-authenticationKeyIssuerID #{key['issuer_id']}",
           "CURRENT_PROJECT_VERSION=#{build_number}",
           "MARKETING_VERSION=#{version}",
         ].join(' '),
-        # No export_xcargs: gym copies the -allowProvisioningUpdates/-authenticationKey* flags from
-        # xcargs into the export itself; passing them again fails ("may only be provided once").
       )
       gate_production!(ipa, 'ipa')
 
