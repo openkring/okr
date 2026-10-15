@@ -96,7 +96,9 @@ platform :ios do
     begin
       sh_root("pnpm nx build #{app} --configuration production --skip-nx-cache")
       gate_production!(Dir[File.join(ROOT, "dist/apps/#{app}/browser/main-*.js")].max_by { |f| File.mtime(f) }, 'dist')
-      sh_root("cd apps/#{app} && pnpm exec cap sync ios")
+      # Homebrew's fastlane wrapper exports its own GEM_HOME/GEM_PATH; CocoaPods (run by cap sync)
+      # then resolves its gems there and dies with "Could not find 'drb'". Run it without them.
+      sh_root("cd apps/#{app} && env -u GEM_HOME -u GEM_PATH pnpm exec cap sync ios")
 
       key = JSON.parse(File.read(ASC_API_KEY))
       p8 = File.join(IOS_SECRETS, "AuthKey_#{key['key_id']}.p8")
