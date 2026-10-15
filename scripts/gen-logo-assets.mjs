@@ -44,6 +44,8 @@ import { getStorage } from 'firebase-admin/storage';
 import { chromium } from 'playwright';
 import fs from 'node:fs';
 import path from 'node:path';
+import os from 'node:os';
+import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -519,6 +521,30 @@ const page = await browser.newPage({ viewport: { width: 1200, height: 1200 } });
  *                                          white specks < 1% of the area (ragged artwork edges)
  *                                          are dropped. Content spans 20dp (2dp padding).
  */
+/**
+ * Native iOS app icon (spec 1.10 Phase 3): the single 1024² universal icon in
+ * `ios/App/App/Assets.xcassets/AppIcon.appiconset`, from logo-maskable — square and opaque, like
+ * apple-touch-icon; iOS applies its own rounded mask. Apple rejects an icon that merely HAS an alpha
+ * channel (ITMS-90717), and a canvas PNG always has one, so `sips` drops it via a max-quality JPEG
+ * round trip. The file name stays the one Contents.json references.
+ */
+function writeIosIcon(appDir, maskable) {
+  const set = path.join(appDir, 'ios/App/App/Assets.xcassets/AppIcon.appiconset');
+  if (!fs.existsSync(set) || !maskable) return null;
+  const contents = JSON.parse(fs.readFileSync(path.join(set, 'Contents.json'), 'utf8'));
+  const entry = contents.images.find((i) => i.size === '1024x1024' && i.filename);
+  if (!entry) return 'no 1024x1024 entry in AppIcon Contents.json — skipped';
+  if (DRY) return `${entry.filename} (dry run, not written)`;
+  const target = path.join(set, entry.filename);
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'okr-ios-icon-'));
+  fs.writeFileSync(path.join(tmp, 'icon.png'), Buffer.from(maskable.split(',')[1], 'base64'));
+  execFileSync('sips', ['-z', '1024', '1024', '-s', 'format', 'jpeg', '-s', 'formatOptions', '100',
+    path.join(tmp, 'icon.png'), '--out', path.join(tmp, 'icon.jpg')], { stdio: 'ignore' });
+  execFileSync('sips', ['-s', 'format', 'png', path.join(tmp, 'icon.jpg'), '--out', target], { stdio: 'ignore' });
+  fs.rmSync(tmp, { recursive: true, force: true });
+  return `${entry.filename} (1024², no alpha)`;
+}
+
 const ANDROID_DENSITIES = { mdpi: 1, hdpi: 1.5, xhdpi: 2, xxhdpi: 3, xxxhdpi: 4 };
 const ADAPTIVE_SCALE = 66 / (108 * 0.72); // maskable content edge → 66dp safe zone
 
@@ -788,6 +814,8 @@ for (const tenant of tenants) {
   );
   const android = await writeAndroidIcons(appDir, lastMaskable, lastRound, lastMono);
   if (android) console.log(`   android: ${android}`);
+  const ios = writeIosIcon(appDir, lastMaskable);
+  if (ios) console.log(`   ios: ${ios}`);
 
   await doWebsite();
 
