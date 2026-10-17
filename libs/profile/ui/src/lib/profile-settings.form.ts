@@ -243,7 +243,8 @@ export class ProfileSettingsAccordion {
   protected async enableNotifications(): Promise<void> {
     const uid = this.currentUser()?.okey;
     if (!uid) return;
-    await this.fcmService.registerAndSave(uid, true); // user gesture → allowed to prompt
+    // user gesture → allowed to prompt; enablePush also registers the Matrix pusher right away
+    await this.fcmService.enablePush(uid, true);
     if (typeof Notification !== 'undefined') {
       this.notificationPermission.set(Notification.permission);
     }

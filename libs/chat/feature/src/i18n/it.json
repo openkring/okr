@@ -391,5 +391,11 @@
       "error": "Non è stato possibile unirsi alla bacheca.",
       "pending": "Ci sei. La bacheca comparirà a breve nel tuo elenco."
     }
+  },
+  "pushPrompt": {
+    "header": "Notifiche",
+    "message": "Vuoi ricevere notifiche per i nuovi messaggi in chat, le attività e gli eventi? Puoi cambiarlo in qualsiasi momento nel tuo profilo.",
+    "allow": "Consenti",
+    "later": "Più tardi"
   }
 }

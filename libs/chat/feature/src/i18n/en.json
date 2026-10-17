@@ -391,5 +391,11 @@
       "error": "You could not join the notice board.",
       "pending": "You are in. The notice board will appear in your list shortly."
     }
+  },
+  "pushPrompt": {
+    "header": "Notifications",
+    "message": "Would you like to be notified about new chat messages, tasks and events? You can change this any time in your profile.",
+    "allow": "Allow",
+    "later": "Later"
   }
 }

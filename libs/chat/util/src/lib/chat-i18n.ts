@@ -290,3 +290,13 @@ export const MATRIX_CHAT_I18N_KEYS = {
 } satisfies Record<string, string>;
 
 export type MatrixChatI18n = { [K in keyof typeof MATRIX_CHAT_I18N_KEYS]: Signal<string> };
+
+/** The in-app question before the system push prompt (MatrixInitializationService, spec 1.10). */
+export const PUSH_PROMPT_I18N_KEYS = {
+  header:  PFX + 'pushPrompt.header',
+  message: PFX + 'pushPrompt.message',
+  allow:   PFX + 'pushPrompt.allow',
+  later:   PFX + 'pushPrompt.later',
+} satisfies Record<string, string>;
+
+export type PushPromptI18n = { [K in keyof typeof PUSH_PROMPT_I18N_KEYS]: Signal<string> };

@@ -391,5 +391,11 @@
       "error": "No pudiste unirte al tablón de anuncios.",
       "pending": "Ya formas parte. El tablón de anuncios aparecerá enseguida en tu lista."
     }
+  },
+  "pushPrompt": {
+    "header": "Notificaciones",
+    "message": "¿Quieres recibir avisos de nuevos mensajes del chat, tareas y eventos? Puedes cambiarlo en cualquier momento en tu perfil.",
+    "allow": "Permitir",
+    "later": "Más tarde"
   }
 }

@@ -5,13 +5,15 @@ import { Capacitor } from '@capacitor/core';
 import { PushNotifications } from '@capacitor/push-notifications';
 import { getApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { getFunctions, httpsCallable } from 'firebase/functions';
 import { filter, switchMap, take, tap } from 'rxjs/operators';
 
 import { AppStore } from '@okr/shared-feature';
 import { MatrixChatService } from '@okr/chat-data-access';
 import { FcmService, writeBadgeLedgerFromPage } from '@okr/shared-data-access';
-import { isKioskOnly } from '@okr/shared-util-core';
+import { isKioskOnly, PUSH_PROMPT_SNOOZE_MS, shouldAskForPush } from '@okr/shared-util-core';
+import { I18nService } from '@okr/shared-i18n';
+import { PUSH_PROMPT_I18N_KEYS, PushPromptI18n } from '@okr/chat-util';
+import { AlertController } from '@ionic/angular';
 
 import { KioskCallWindow } from './kiosk-call-window';
 import { MatrixChatStore } from './matrix-chat.store';
@@ -28,6 +30,8 @@ export class MatrixInitializationService {
   private readonly matrixService = inject(MatrixChatService);
   private readonly matrixChatStore = inject(MatrixChatStore);
   private readonly fcmService = inject(FcmService);
+  private readonly alertController = inject(AlertController);
+  private readonly pushPromptI18n = inject(I18nService).translateAll(PUSH_PROMPT_I18N_KEYS) as PushPromptI18n;
   private readonly router = inject(Router);
   private readonly injector = inject(Injector);
   private readonly environmentInjector = inject(EnvironmentInjector);
@@ -66,6 +70,39 @@ export class MatrixInitializationService {
    * auto-answered admin call is visible on top of the Logbuch without taking it over.
    * Non-kiosk users never get it — they answer calls in the chat view as before.
    */
+  /**
+   * After login: if push is undecided on this device (native app or installed PWA), ask in-app
+   * before the system prompt — iOS shows that one only once. «Erlauben» is the user gesture the
+   * system prompt needs; «Später» snoozes for PUSH_PROMPT_SNOOZE_MS on this device.
+   */
+  private async askForPushIfUndecided(uid: string): Promise<void> {
+    const snoozeKey = 'okr.pushPrompt.snoozedUntil';
+    let snoozedUntil: number | undefined;
+    try { snoozedUntil = Number(localStorage.getItem(snoozeKey)) || undefined; } catch { /* storage blocked: ask again */ }
+    const isStandalone = typeof window !== 'undefined' &&
+      (window.matchMedia?.('(display-mode: standalone)').matches || (navigator as { standalone?: boolean }).standalone === true);
+    const state = await this.fcmService.getPermissionState();
+    if (!shouldAskForPush({ state, isNative: Capacitor.isNativePlatform(), isStandalone, snoozedUntil, now: Date.now() })) return;
+
+    const i18n = this.pushPromptI18n;
+    const alert = await this.alertController.create({
+      header: i18n.header(),
+      message: i18n.message(),
+      buttons: [
+        { text: i18n.later(), role: 'cancel' },
+        { text: i18n.allow(), role: 'confirm' },
+      ],
+    });
+    await alert.present();
+    const { role } = await alert.onWillDismiss();
+    if (role === 'confirm') {
+      await this.fcmService.enablePush(uid, true).catch(err =>
+        console.warn('MatrixInitializationService: push registration after prompt failed:', err));
+    } else {
+      try { localStorage.setItem(snoozeKey, String(Date.now() + PUSH_PROMPT_SNOOZE_MS)); } catch { /* best effort */ }
+    }
+  }
+
   private mountKioskCallWindow(): void {
     if (this.kioskCallWindowMounted || !isKioskOnly(this.appStore.currentUser())) return;
     this.kioskCallWindowMounted = true;
@@ -88,32 +125,16 @@ export class MatrixInitializationService {
 
       this.mountKioskCallWindow();
 
-      // Register for FCM push notifications and wire up the Matrix push gateway.
-      // Awaited so the token is available for pusher registration below.
+      // Register for push (FCM token + Matrix pusher, see FcmService.enablePush). Without a decided
+      // permission nothing registers here — iOS and Android 13+ need a user gesture — so ask once,
+      // in-app first (spec 1.10 Phase 3 follow-up).
       const uid = getAuth(getApp()).currentUser?.uid;
       if (uid && this.fcmService.isSupported()) {
-        const fcmToken = await this.fcmService.registerAndSave(uid).catch(err => {
-          console.warn('MatrixInitializationService: FCM registration failed (non-critical):', err);
+        const fcmToken = await this.fcmService.enablePush(uid).catch(err => {
+          console.warn('MatrixInitializationService: push registration failed (non-critical):', err);
           return null;
         });
-
-        // Register an HTTP pusher with Synapse so background messages reach this device
-        // even when the app is not running. Done via a Cloud Function (registerMatrixPusher)
-        // so the push-gateway shared secret and the /_matrix/push/v1/notify URL are built
-        // server-side and never ship in the client bundle (S3 + SEC-2).
-        if (fcmToken) {
-          try {
-            const registerPusher = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'registerMatrixPusher');
-            await registerPusher({
-              pushkey: fcmToken,
-              deviceDisplayName: (navigator.userAgent ?? 'Unknown').substring(0, 100),
-              lang: navigator.language || 'de',
-            });
-            console.log('MatrixInitializationService: Matrix HTTP pusher registered');
-          } catch (err) {
-            console.warn('MatrixInitializationService: Failed to register Matrix pusher (non-critical):', err);
-          }
-        }
+        if (!fcmToken) await this.askForPushIfUndecided(uid);
       }
 
       if (Capacitor.isNativePlatform()) {

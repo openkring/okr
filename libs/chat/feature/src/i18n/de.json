@@ -391,5 +391,11 @@
       "error": "Du konntest der Pinnwand nicht beitreten.",
       "pending": "Du bist dabei. Die Pinnwand erscheint gleich in deiner Liste."
     }
+  },
+  "pushPrompt": {
+    "header": "Benachrichtigungen",
+    "message": "Möchtest du über neue Chat-Nachrichten, Aufgaben und Anlässe informiert werden? Du kannst das jederzeit in deinem Profil ändern.",
+    "allow": "Erlauben",
+    "later": "Später"
   }
 }

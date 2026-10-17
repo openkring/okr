@@ -8,7 +8,8 @@ import { EMPTY, Observable, from, fromEvent, of } from 'rxjs';
 import { catchError, filter, map } from 'rxjs/operators';
 
 import { ENV } from '@okr/shared-config';
-import { isBrowser } from '@okr/shared-util-core';
+import { isBrowser, type PushPermissionState } from '@okr/shared-util-core';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import { ensureNativePushChannel } from './native-push-channel';
 
 /** Where the Firebase Messaging SDK registers firebase-messaging-sw.js (its DEFAULT_SW_SCOPE). */
@@ -58,6 +59,47 @@ export class FcmService {
    *   from a user gesture" if `Notification.requestPermission()` is called outside a user
    *   activation. Pass `true` ONLY from a user-gesture handler (e.g. a button click).
    */
+  /**
+   * Notification permission on this device, without asking. Native: the Capacitor plugin's
+   * state; web: `Notification.permission` (`default` → `prompt`).
+   */
+  async getPermissionState(): Promise<PushPermissionState> {
+    if (!isBrowser(this.platformId)) return 'unsupported';
+    if (Capacitor.isNativePlatform()) {
+      const { receive } = await PushNotifications.checkPermissions();
+      return receive === 'granted' ? 'granted' : receive === 'denied' ? 'denied' : 'prompt';
+    }
+    if (typeof Notification === 'undefined' || !this.isSupported()) return 'unsupported';
+    return Notification.permission === 'default' ? 'prompt' : Notification.permission;
+  }
+
+  /**
+   * Register this device for push — the FCM token in Firestore AND the Matrix HTTP pusher, so chat
+   * messages reach it as well as tasks and calendar pushes. One path for the automatic start-up
+   * registration, the post-login prompt and the profile button: before, only the start-up path
+   * registered the pusher, so a member who enabled push in the profile got chat pushes only after
+   * the next app start.
+   *
+   * @param allowPrompt see {@link registerAndSave}; `true` only from a user gesture
+   * @return the token, or null when push is not (yet) allowed or registration failed
+   */
+  async enablePush(uid: string, allowPrompt = false): Promise<string | null> {
+    const token = await this.registerAndSave(uid, allowPrompt);
+    if (!token) return null;
+    try {
+      // Via a Cloud Function so the push-gateway secret and URL never ship in the bundle (S3, SEC-2).
+      const registerPusher = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'registerMatrixPusher');
+      await registerPusher({
+        pushkey: token,
+        deviceDisplayName: (navigator.userAgent ?? 'Unknown').substring(0, 100),
+        lang: navigator.language || 'de',
+      });
+    } catch (err) {
+      console.warn('FcmService.enablePush: Matrix pusher registration failed (non-critical):', err);
+    }
+    return token;
+  }
+
   async registerAndSave(uid: string, allowPrompt = false): Promise<string | null> {
     if (!isBrowser(this.platformId)) return null;
 

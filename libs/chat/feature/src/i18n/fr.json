@@ -391,5 +391,11 @@
       "error": "Impossible de rejoindre le panneau d'affichage.",
       "pending": "Tu fais partie du groupe. Le panneau d'affichage apparaîtra bientôt dans ta liste."
     }
+  },
+  "pushPrompt": {
+    "header": "Notifications",
+    "message": "Veux-tu recevoir une notification pour les nouveaux messages du chat, les tâches et les événements ? Tu peux changer cela à tout moment dans ton profil.",
+    "allow": "Autoriser",
+    "later": "Plus tard"
   }
 }
