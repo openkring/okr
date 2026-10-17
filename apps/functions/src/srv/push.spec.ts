@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { androidDisplay, buildPushData, selectUserDocs, withAppName } from './push';
+import { androidDisplay, appleDisplay, buildPushData, selectUserDocs, withAppName } from './push';
 
 describe('buildPushData', () => {
   const base = { type: 'calevent', title: 'Training', body: 'Faellt aus', url: '/calevent/e1', tenantId: 'scs' };
@@ -100,5 +100,27 @@ describe('androidDisplay', () => {
 
   it('omits an empty tag rather than sending a blank one', () => {
     expect(androidDisplay('t', 'b', 'normal', '').notification).toEqual({ title: 't', body: 'b', channelId: 'okr_default' });
+  });
+});
+
+// Native iOS shows NOTHING for a background push (apns-push-type background, content-available) —
+// TestFlight build 4: only an alert push produced a banner and the icon badge (spec 1.10 Phase 3).
+describe('appleDisplay', () => {
+  it('sends a visible alert with title, body and sound', () => {
+    expect(appleDisplay('Seeclub Stäfa · Training', 'Fällt aus')).toEqual({
+      headers: { 'apns-priority': '10', 'apns-push-type': 'alert' },
+      payload: { aps: { alert: { title: 'Seeclub Stäfa · Training', body: 'Fällt aus' }, sound: 'default' } },
+    });
+  });
+
+  it('adds the badge only when the sender knows its part', () => {
+    expect(appleDisplay('t', 'b', 3).payload?.aps).toMatchObject({ badge: 3 });
+    expect(appleDisplay('t', 'b', 0).payload?.aps).toMatchObject({ badge: 0 });
+    expect(appleDisplay('t', 'b').payload?.aps).not.toHaveProperty('badge');
+  });
+
+  // An alert combined with content-available is undefined per Apple (see the chat push).
+  it('never marks the alert as a background push', () => {
+    expect(appleDisplay('t', 'b', 1).payload?.aps).not.toHaveProperty('content-available');
   });
 });

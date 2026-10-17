@@ -26,7 +26,7 @@
 
 import { logger } from 'firebase-functions/v2';
 import { getFirestore } from 'firebase-admin/firestore';
-import { getMessaging, type AndroidConfig } from 'firebase-admin/messaging';
+import { getMessaging, type AndroidConfig, type ApnsConfig } from 'firebase-admin/messaging';
 import { NATIVE_PUSH_CHANNEL_ID } from '@okr/shared-constants';
 
 export interface PushPayload {
@@ -105,6 +105,22 @@ export interface UserAccount {
  * only to native Android app instances, so web tokens — including Chrome on Android — still
  * receive the plain data message. `tag` collapses pushes about the same thing into one banner.
  */
+/**
+ * The `apns` block of a push for the native iOS app. iOS shows NOTHING for a background push
+ * (`apns-push-type: background` + `content-available`), so every sender needs a visible alert —
+ * TestFlight build 4 showed a banner and the icon badge only for this shape (spec 1.10 Phase 3).
+ * FCM applies `apns` only to native iOS instances; web push (incl. Safari) is untouched. No
+ * `content-available` next to an alert: Apple leaves that combination undefined.
+ *
+ * @param badge the absolute badge value, only when the sender knows it (see the file head)
+ */
+export function appleDisplay(title: string, body: string, badge?: number): ApnsConfig {
+  return {
+    headers: { 'apns-priority': '10', 'apns-push-type': 'alert' },
+    payload: { aps: { alert: { title, body }, sound: 'default', ...(badge === undefined ? {} : { badge }) } },
+  };
+}
+
 export function androidDisplay(title: string, body: string, priority: 'high' | 'normal', tag?: string): AndroidConfig {
   return { priority, notification: { title, body, channelId: NATIVE_PUSH_CHANNEL_ID, ...(tag ? { tag } : {}) } };
 }
@@ -186,16 +202,8 @@ export async function pushToPersons(
     tokens: entries.map((entry) => entry.token),
     data,
     android: androidDisplay(data['title'], data['body'], 'normal', data['channelId']),
-    apns: {
-      headers: { 'apns-priority': '5', 'apns-push-type': 'background' },
-      payload: {
-        aps: {
-          // native (Capacitor) badge: unchanged by spec 1.93, still the task count alone
-          ...(payload.badgeTasks === undefined ? {} : { badge: payload.badgeTasks }),
-          'content-available': 1,
-        },
-      },
-    },
+    // native (Capacitor) badge: unchanged by spec 1.93, still the task count alone
+    apns: appleDisplay(data['title'], data['body'], payload.badgeTasks),
   });
 
   // A token Firebase reports as unregistered is dead for good — dropping it keeps the next
