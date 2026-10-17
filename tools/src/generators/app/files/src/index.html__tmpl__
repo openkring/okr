@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <title><%= appName %></title>
     <base href="/" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="viewport-fit=cover, width=device-width, initial-scale=1" />
     <meta name="description" content="<%= appName %>" />
     <meta name="theme-color" content="#ffffff" />
     <link rel="manifest" href="assets/manifest.json" />

@@ -29,7 +29,7 @@ import { hasRole } from '@okr/shared-util-core';
       /* bottom-LEFT on purpose: the kiosk "new trip" FAB and the toolbar buttons
          both live on the right, so this corner is the one that stays free */
       left: 16px;
-      bottom: 16px;
+      bottom: calc(16px + env(safe-area-inset-bottom, 0px)); /* clear of the iPhone/iPad home indicator */
       /* above Ionic overlays (modals ~20000) so an open trip-edit modal cannot bury the call */
       z-index: 30000;
       width: 280px;

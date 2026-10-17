@@ -25,6 +25,8 @@ import { CONSENT_I18N_KEYS, ConsentI18n } from './consent-i18n';
       background: var(--ion-background-color, #fff);
       border-top: 2px solid var(--ion-color-medium, #92949c);
       padding: 16px;
+      /* above the iPhone home indicator (viewport-fit=cover, spec 1.10 Phase 3) */
+      padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
       box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.18);
     }
     .banner-text {
