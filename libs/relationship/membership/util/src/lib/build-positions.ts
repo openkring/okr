@@ -29,10 +29,18 @@ const RULES: Record<string, (m: MembershipModel, ctx: FeeContext) => boolean> = 
   },
 };
 
+/** The price of `category` in the rule's price list (the org's own list when the rule names none); 0 when unknown. */
+export function categoryPrice(
+  rule: Pick<FeePositionRule, 'categoryList'>, category: string,
+  categoryLists: Record<string, Record<string, number>>, defaultCategoryList?: string,
+): number {
+  return categoryLists[rule.categoryList || defaultCategoryList || '']?.[category] ?? 0;
+}
+
 function amountOf(rule: FeePositionRule, membership: MembershipModel, ctx: FeeContext): number {
   switch (rule.source) {
     case 'category':
-      return ctx.categoryLists[rule.categoryList || ctx.defaultCategoryList || '']?.[membership.category] ?? 0;
+      return categoryPrice(rule, membership.category, ctx.categoryLists, ctx.defaultCategoryList);
     case 'flag':
       return FLAGS[rule.flag ?? '']?.(membership, ctx) ? (rule.amount ?? 0) : 0;
     case 'rule':
