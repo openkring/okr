@@ -3,6 +3,8 @@
 #   fastlane android internal app:scs-app            build, gate, sign, upload to Internal testing
 #   fastlane android promote  app:scs-app to:alpha   promote the newest internal release
 #   fastlane ios     beta     app:scs-app            build, gate, sign, upload to TestFlight
+#   fastlane android metadata app:scs-app            store texts + graphics + screenshots → Play listing
+#   fastlane ios     metadata app:scs-app            store texts + screenshots → App Store (no review)
 #
 # Every lane takes `app:<app>`: paths, package name and secrets derive from it, so a second
 # tenant is configuration, not new code. Secrets live outside the repo in ~/.okr-secrets/android/.
@@ -56,6 +58,21 @@ platform :android do
       # Give local `nx serve` its development environment back (production: false).
       sh_root("pnpm nx build #{app} --skip-nx-cache", log: false)
     end
+  end
+
+  desc 'Upload the store listing (texts, icon, feature graphic, screenshots) from apps/<app>/store/android'
+  lane :metadata do |options|
+    app = app_param(options)
+    store = File.join(ROOT, "apps/#{app}/store/android")
+    check_store_texts!(store, STORE_LIMITS_ANDROID)
+    upload_to_play_store(
+      package_name: package_name(app),
+      json_key: PLAY_JSON_KEY,
+      metadata_path: store,
+      skip_upload_apk: true,
+      skip_upload_aab: true,
+      skip_upload_changelogs: true,
+    )
   end
 
   desc 'Promote the newest Internal release to another track (to: alpha | beta | production)'
@@ -137,7 +154,51 @@ platform :ios do
   end
 end
 
+platform :ios do
+  desc 'Upload the store texts and screenshots from apps/<app>/store/ios — never submits for review'
+  lane :metadata do |options|
+    app = options[:app] || UI.user_error!('Missing app:<app>, e.g. app:scs-app')
+    store = File.join(ROOT, "apps/#{app}/store/ios")
+    UI.user_error!("No #{store}") unless Dir.exist?(store)
+    check_store_texts!(store, STORE_LIMITS_IOS)
+    deliver(
+      api_key_path: ASC_API_KEY,
+      app_identifier: package_name(app),
+      app_version: JSON.parse(File.read(File.join(ROOT, 'package.json')))['version'],
+      metadata_path: store,
+      screenshots_path: File.join(store, 'screenshots'),
+      overwrite_screenshots: true,
+      skip_binary_upload: true,
+      skip_app_version_update: false,
+      submit_for_review: false,
+      automatic_release: false,
+      force: true, # no HTML preview prompt
+      precheck_include_in_app_purchases: false,
+    )
+  end
+end
+
+# Store text limits in characters (spec 1.10 Phase 3b). A text over its limit fails the lane
+# before anything is uploaded.
+STORE_LIMITS_ANDROID = { 'title.txt' => 30, 'short_description.txt' => 80, 'full_description.txt' => 4000 }.freeze
+STORE_LIMITS_IOS = {
+  'name.txt' => 30, 'subtitle.txt' => 30, 'promotional_text.txt' => 170,
+  'description.txt' => 4000, 'keywords.txt' => 100,
+}.freeze
+
 # ── helpers ───────────────────────────────────────────────────────────────────
+
+def check_store_texts!(store, limits)
+  Dir[File.join(store, '*/')].each do |lang_dir|
+    limits.each do |file, max|
+      path = File.join(lang_dir, file)
+      next unless File.exist?(path)
+      n = File.read(path).strip.length
+      UI.user_error!("#{path}: #{n} characters, limit #{max}") if n > max
+    end
+  end
+  UI.success("Store texts within limits (#{store})")
+end
 
 def app_param(options)
   app = options[:app] || UI.user_error!('Missing app:<app>, e.g. app:scs-app')
