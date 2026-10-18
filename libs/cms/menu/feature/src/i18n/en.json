@@ -668,7 +668,9 @@
     "invoice-open-items": "Reconcile open items",
     "accounting-books": "Choose books",
     "asset-add": "Add asset",
-    "asset-export": "Export"
+    "asset-export": "Export",
+    "diary-month-groups": "Group by month",
+    "diary-month-groups-off": "Without month groups"
   },
   "ownership": {
     "fork_confirm": "«{name}» belongs to the feature catalogue ({blocks}).\n\nSaving creates a tenant-private copy «{forkKey}» and detaches this tenant from the shared original. Future catalogue corrections (url, action, role) will no longer reach this entry.\n\nSave anyway?",

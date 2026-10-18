@@ -668,7 +668,9 @@
     "invoice-open-items": "Offene Posten abstimmen",
     "accounting-books": "Buchhaltung wählen",
     "asset-add": "Anlage erfassen",
-    "asset-export": "Exportieren"
+    "asset-export": "Exportieren",
+    "diary-month-groups": "Nach Monat gruppieren",
+    "diary-month-groups-off": "Ohne Monatsgruppen"
   },
   "ownership": {
     "fork_confirm": "«{name}» gehört zum Feature-Katalog ({blocks}).\n\nBeim Speichern wird eine eigene Kopie «{forkKey}» für diesen Mandanten angelegt und der Mandant vom gemeinsamen Original abgehängt. Künftige Katalog-Korrekturen (URL, Aktion, Berechtigung) erreichen diesen Eintrag dann nicht mehr.\n\nTrotzdem speichern?",

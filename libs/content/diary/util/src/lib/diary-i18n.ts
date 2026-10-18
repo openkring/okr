@@ -72,6 +72,8 @@ export const DIARY_I18N_KEYS = {
   singular:               PFX + 'singular',
   list_empty:             PFX + 'list.empty',
   list_all_years_hint:    PFX + 'list.allYearsHint',
+  list_period:            PFX + 'list.period',
+  list_all_years:         PFX + 'list.allYears',
   as_title:               PFX + 'actions.title',
   add:                    PFX + 'actions.add',
   view:                   PFX + 'actions.view',

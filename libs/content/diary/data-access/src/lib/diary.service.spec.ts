@@ -5,10 +5,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { FirestoreService } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
 import { DiaryModel } from '@okr/shared-models';
+import { buildDiaryRangeTree, diaryRangeOfYear } from '@okr/content-diary-util';
 
 import { DiaryService } from './diary.service';
 
-describe('DiaryService.listByYear', () => {
+describe('DiaryService.listByRange', () => {
   const searchData = vi.fn().mockReturnValue(of([] as DiaryModel[]));
 
   beforeEach(() => {
@@ -23,7 +24,7 @@ describe('DiaryService.listByYear', () => {
   });
 
   it('mirrors the read rule: authorKey AND tenants, plus the year bounds', () => {
-    TestBed.inject(DiaryService).listByYear('u1', 'bka', 1990).subscribe();
+    TestBed.inject(DiaryService).listByRange('u1', 'bka', diaryRangeOfYear(1990)).subscribe();
     const [, query] = searchData.mock.calls[0];
     expect(query).toEqual(expect.arrayContaining([
       { key: 'authorKey', operator: '==', value: 'u1' },
@@ -33,14 +34,24 @@ describe('DiaryService.listByYear', () => {
     ]));
   });
 
-  it('without a year keeps exactly the two rule constraints', () => {
-    TestBed.inject(DiaryService).listByYear('u1', 'bka').subscribe();
+  it('spans a whole decade', () => {
+    const decade = buildDiaryRangeTree(1930, 2026)[1].children.find(n => n.range.label === '198x')!.range;
+    TestBed.inject(DiaryService).listByRange('u1', 'bka', decade).subscribe();
+    const [, query] = searchData.mock.calls[0];
+    expect(query).toEqual(expect.arrayContaining([
+      { key: 'date', operator: '>=', value: '19800000' },
+      { key: 'date', operator: '<=', value: '19891231' },
+    ]));
+  });
+
+  it('without a range keeps exactly the two rule constraints', () => {
+    TestBed.inject(DiaryService).listByRange('u1', 'bka').subscribe();
     const [, query] = searchData.mock.calls[0];
     expect(query).toHaveLength(2);
   });
 
   it('returns an empty stream for an empty uid without querying', () => {
-    TestBed.inject(DiaryService).listByYear('', 'bka', 2026).subscribe();
+    TestBed.inject(DiaryService).listByRange('', 'bka', diaryRangeOfYear(2026)).subscribe();
     expect(searchData).not.toHaveBeenCalled();
   });
 });

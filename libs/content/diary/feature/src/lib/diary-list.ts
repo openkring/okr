@@ -1,7 +1,8 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
 import {
-  ActionSheetController, ActionSheetOptions, IonBadge, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList,
-  IonMenuButton, IonNote, IonPopover, IonTitle, IonToolbar,
+  ActionSheetController, ActionSheetOptions, IonAccordion, IonAccordionGroup, IonBadge, IonButton, IonButtons, IonContent, IonHeader,
+  IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonNote, IonPopover, IonTitle, IonToolbar,
 } from '@ionic/angular';
 
 import { Menu } from '@okr/cms-menu-feature';
@@ -11,7 +12,10 @@ import { CategoryItemModel, CategoryListModel, DiaryModel } from '@okr/shared-mo
 import { AlertService, createActionSheetButton, createActionSheetDivider, createActionSheetOptions } from '@okr/shared-util-angular';
 import { weatherCodeToIcon, WEATHER_ICON_SET } from '@okr/weather-util';
 
-import { diaryStateOf, diaryWeatherLine, formatDiaryDate, hasDiaryWeather, DiaryStateFilter } from '@okr/content-diary-util';
+import {
+  diaryStateOf, diaryWeatherLine, formatDiaryDateShort, formatDiaryMonthHeader, hasDiaryWeather, isWideDiaryRange, DiaryStateFilter,
+} from '@okr/content-diary-util';
+import { DiaryRangeSelect } from './diary-range-select';
 import { DiaryStore } from './diary.store';
 
 /** The i18n scope carrying the diaryState category labels (see the 'diaryState' block in the five bundles). */
@@ -26,9 +30,9 @@ const DIARY_STATE_I18N_SCOPE = '@content/diary/feature';
   selector: 'okr-diary-list',
   standalone: true,
   imports: [
-    SvgIconPipe, Spinner, EmptyList, ListFilter, Menu,
+    NgTemplateOutlet, SvgIconPipe, Spinner, EmptyList, ListFilter, Menu, DiaryRangeSelect,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon, IonPopover,
-    IonContent, IonList, IonItem, IonLabel, IonNote, IonBadge,
+    IonContent, IonList, IonItem, IonLabel, IonNote, IonBadge, IonAccordionGroup, IonAccordion,
   ],
   providers: [DiaryStore],
   styles: [`
@@ -48,19 +52,23 @@ const DIARY_STATE_I18N_SCOPE = '@content/diary/feature';
             <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"
               (ionPopoverDidDismiss)="onPopoverDismiss($event)">
               <ng-template>
-                <ion-content><okr-menu [menuName]="contextMenuName()" /></ion-content>
+                <ion-content><okr-menu [menuName]="contextMenuName()" [toggleStates]="{ toggleMonthGroups: store.groupByMonth() }" /></ion-content>
               </ng-template>
             </ion-popover>
           </ion-buttons>
         }
       </ion-toolbar>
       <ion-toolbar>
+        <ion-buttons slot="start">
+          <okr-diary-range-select [tree]="store.rangeTree()" [selected]="store.selectedRange()"
+            [allLabel]="store.i18n.list_all_years()" [label]="store.i18n.list_period()"
+            (selectedChange)="store.setSelectedRange($event)" />
+        </ion-buttons>
         <okr-list-filter
           (searchTermChanged)="store.setSearchTerm($event)"
-          (yearChanged)="store.setSelectedYear($event)" [years]="store.years()" [showAllYears]="true"
           (stateChanged)="onStateChange($event)" [states]="states()" />
       </ion-toolbar>
-      @if (store.selectedYear() === undefined) {
+      @if (isWide()) {
         <ion-toolbar color="light"><ion-note class="ion-padding-start">{{ store.i18n.list_all_years_hint() }}</ion-note></ion-toolbar>
       }
     </ion-header>
@@ -71,34 +79,66 @@ const DIARY_STATE_I18N_SCOPE = '@content/diary/feature';
       } @else if (filteredCount() === 0) {
         <okr-empty-list [message]="store.i18n.list_empty()" />
       } @else {
-        <ion-list lines="inset">
-          @for (diary of store.filteredDiaries(); track diary.okey) {
-            <ion-item button [detail]="false" (click)="showActions(diary)" [class.placeholder]="stateOf(diary) === 'placeholder'">
-              @if (diary.scope === 'day' && hasWeather(diary)) {
-                <ion-icon slot="start" src="{{ weatherIcon(diary) | svgIcon: weatherIconSet }}" />
-              } @else if (stateOf(diary) === 'placeholder') {
-                <ion-icon slot="start" src="{{ 'image' | svgIcon }}" />
-              } @else {
-                <ion-icon slot="start" src="{{ 'document' | svgIcon }}" />
-              }
-              <ion-label>
-                <h2>{{ formatDiaryDate(diary.date) }} {{ diary.title }}</h2>
-                @if (stateOf(diary) !== 'placeholder') {
-                  <p class="preview">{{ preview(diary) }}</p>
+        @if (store.groupByMonth()) {
+          @for (group of store.groupedDiaries(); track group.key) {
+            @if (group.isYear) {
+              <ion-list lines="inset">
+                @for (diary of group.items; track diary.okey) {
+                  <ng-container *ngTemplateOutlet="row; context: { $implicit: diary }" />
                 }
-              </ion-label>
-              @if (diary.scope !== 'day') {
-                <ion-badge slot="end" color="medium">{{ diary.scope === 'month' ? store.i18n.scope_month() : store.i18n.scope_year() }}</ion-badge>
-              }
-              @if (stateOf(diary) === 'draft') {
-                <ion-badge slot="end" color="warning">{{ store.i18n.state_draft() }}</ion-badge>
-              }
-              <ion-note slot="end" class="ion-hide-sm-down">{{ diary.location?.label || diary.location?.name1 || diary.customLocationLabel }}</ion-note>
-            </ion-item>
+              </ion-list>
+            }
           }
-        </ion-list>
+          <ion-accordion-group [multiple]="true" [value]="monthKeys()">
+            @for (group of store.groupedDiaries(); track group.key) {
+              @if (!group.isYear) {
+                <ion-accordion [value]="group.key">
+                  <ion-item slot="header" color="light">
+                    <ion-label>{{ monthHeader(group.key) }} ({{ group.items.length }})</ion-label>
+                  </ion-item>
+                  <ion-list slot="content" lines="inset">
+                    @for (diary of group.items; track diary.okey) {
+                      <ng-container *ngTemplateOutlet="row; context: { $implicit: diary }" />
+                    }
+                  </ion-list>
+                </ion-accordion>
+              }
+            }
+          </ion-accordion-group>
+        } @else {
+          <ion-list lines="inset">
+            @for (diary of store.filteredDiaries(); track diary.okey) {
+              <ng-container *ngTemplateOutlet="row; context: { $implicit: diary }" />
+            }
+          </ion-list>
+        }
       }
     </ion-content>
+
+    <ng-template #row let-diary>
+      <ion-item button [detail]="false" (click)="showActions(diary)" [class.placeholder]="stateOf(diary) === 'placeholder'">
+        @if (diary.scope === 'day' && hasWeather(diary)) {
+          <ion-icon slot="start" src="{{ weatherIcon(diary) | svgIcon: weatherIconSet }}" />
+        } @else if (stateOf(diary) === 'placeholder') {
+          <ion-icon slot="start" src="{{ 'image' | svgIcon }}" />
+        } @else {
+          <ion-icon slot="start" src="{{ 'document' | svgIcon }}" />
+        }
+        <ion-label>
+          <h2>{{ formatDate(diary.date) }} {{ diary.title }}</h2>
+          @if (stateOf(diary) !== 'placeholder') {
+            <p class="preview">{{ preview(diary) }}</p>
+          }
+        </ion-label>
+        @if (diary.scope !== 'day') {
+          <ion-badge slot="end" color="medium">{{ diary.scope === 'month' ? store.i18n.scope_month() : store.i18n.scope_year() }}</ion-badge>
+        }
+        @if (stateOf(diary) === 'draft') {
+          <ion-badge slot="end" color="warning">{{ store.i18n.state_draft() }}</ion-badge>
+        }
+        <ion-note slot="end" class="ion-hide-sm-down">{{ diary.location?.label || diary.location?.name1 || diary.customLocationLabel }}</ion-note>
+      </ion-item>
+    </ng-template>
   `,
 })
 export class DiaryList {
@@ -113,7 +153,9 @@ export class DiaryList {
   protected readonly count = computed(() => this.store.diaries().length);
   protected readonly filteredCount = computed(() => this.store.filteredDiaries().length);
   protected readonly popupId = computed(() => `c_diaries_${this.listId()}`);
-  protected readonly formatDiaryDate = formatDiaryDate;
+  protected readonly isWide = computed(() => isWideDiaryRange(this.store.selectedRange()));
+  /** every month open — the accordions are for scanning and collapsing, not for hiding by default */
+  protected readonly monthKeys = computed(() => this.store.groupedDiaries().filter(g => !g.isYear).map(g => g.key));
   protected readonly stateOf = diaryStateOf;
   protected readonly hasWeather = (d: DiaryModel) => hasDiaryWeather(d.weather);
   protected readonly weatherIcon = (d: DiaryModel) => weatherCodeToIcon(d.weather.code);
@@ -136,6 +178,14 @@ export class DiaryList {
     return category;
   });
 
+  protected formatDate(date: string): string {
+    return formatDiaryDateShort(date, this.store.lang());
+  }
+
+  protected monthHeader(key: string): string {
+    return formatDiaryMonthHeader(key, this.store.lang());
+  }
+
   protected preview(diary: DiaryModel): string {
     const line = (diary.text ?? '').replace(/<[^>]+>/g, '').replace(/[#*_>`]/g, '').trim().split('\n').find(l => l.trim())?.trim() ?? '';
     const weather = diary.scope === 'day' ? diaryWeatherLine(diary.weather) : '';
@@ -150,6 +200,7 @@ export class DiaryList {
     switch ($event.detail.data) {
       case 'add': await this.store.add(); break;
       case 'period': await this.store.editPeriod(); break;
+      case 'toggleMonthGroups': this.store.toggleGroupByMonth(); break;
       case undefined: case null: break;
       default: this.alertService.error(`DiaryList.onPopoverDismiss: unknown method ${$event.detail.data}`);
     }

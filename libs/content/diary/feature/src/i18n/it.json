@@ -75,8 +75,10 @@
   "plural": "Diario",
   "singular": "Voce",
   "list": {
-    "empty": "Nessuna voce in questo anno.",
-    "allYearsHint": "Caricare tutti gli anni richiede un momento — ci sono oltre 7'000 voci."
+    "empty": "Nessuna voce in questo periodo.",
+    "allYearsHint": "Caricare molti anni insieme richiede un momento.",
+    "period": "Periodo",
+    "allYears": "Tutti gli anni"
   },
   "actions": {
     "title": "Voce",

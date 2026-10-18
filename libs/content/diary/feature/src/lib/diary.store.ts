@@ -9,8 +9,8 @@ import type { DiaryLocationPick } from '@okr/content-diary-ui';
 import { DiaryService, DiaryWeatherService } from '@okr/content-diary-data-access';
 import { AppConfigService } from '@okr/shared-data-access';
 import {
-  DIARY_I18N_KEYS, DiaryStateFilter, diaryStateMatches, diaryYearList, driveFolderUrl, getDiaryIndex,
-  hasDiaryWeather, newDiary,
+  DIARY_FIRST_YEAR, DIARY_I18N_KEYS, DiaryRange, DiaryStateFilter, buildDiaryRangeTree, diaryRangeOfYear,
+  diaryStateMatches, driveFolderUrl, getDiaryIndex, groupDiariesByMonth, hasDiaryWeather, newDiary,
 } from '@okr/content-diary-util';
 import { LocationService } from '@okr/location-data-access';
 import { AvatarInfo, DiaryModel, DiaryPeriod, TripModel } from '@okr/shared-models';
@@ -21,22 +21,29 @@ import { hasRole, nameMatches } from '@okr/shared-util-core';
 
 export type DiaryStoreState = {
   searchTerm: string;
-  /** undefined = every year (deliberately expensive, see DiaryService.listByYear) */
-  selectedYear: number | undefined;
+  /** a year, decade or century (spec 1.106 §1.2); undefined = every year (deliberately expensive) */
+  selectedRange: DiaryRange | undefined;
   selectedState: DiaryStateFilter;
+  /** month accordions on/off — remembered per device (spec 1.106 §1.1) */
+  groupByMonth: boolean;
 };
+
+const GROUP_BY_MONTH_KEY = 'okr.diary.groupByMonth';
+
+function readGroupByMonth(): boolean {
+  try { return localStorage.getItem(GROUP_BY_MONTH_KEY) === 'true'; } catch { return false; }
+}
+
+function writeGroupByMonth(value: boolean): void {
+  try { localStorage.setItem(GROUP_BY_MONTH_KEY, String(value)); } catch { /* private mode: not remembered */ }
+}
 
 const initialState: DiaryStoreState = {
   searchTerm: '',
-  selectedYear: new Date().getFullYear(),
+  selectedRange: diaryRangeOfYear(new Date().getFullYear()),
   selectedState: 'all',
+  groupByMonth: readGroupByMonth(),
 };
-
-/**
- * The year-select sentinel for "all years" is 99 (see YearSelect in @okr/shared-ui); any value
- * below this threshold is treated as "all years" so a plain <1000 comparison stays robust.
- */
-const ALL_YEARS = 1000;
 
 export const DiaryStore = signalStore(
   withState(initialState),
@@ -57,10 +64,10 @@ export const DiaryStore = signalStore(
       params: () => ({
         authorKey: store.appStore.fbUser()?.uid ?? '',
         tenantId: store.appStore.tenantId(),
-        year: store.selectedYear(),
+        range: store.selectedRange(),
       }),
       stream: ({ params }) => params.authorKey && params.tenantId
-        ? store.diaryService.listByYear(params.authorKey, params.tenantId, params.year)
+        ? store.diaryService.listByRange(params.authorKey, params.tenantId, params.range)
         : of([] as DiaryModel[]),
     }),
     tripsResource: rxResource({
@@ -75,7 +82,12 @@ export const DiaryStore = signalStore(
     isLoading: computed(() => store.diariesResource.isLoading()),
     diaries: computed((): DiaryModel[] => store.diariesResource.value() ?? []),
     travelTrips: computed((): TripModel[] => store.tripsResource.value() ?? []),
-    years: computed(() => diaryYearList()),
+    rangeTree: computed(() => buildDiaryRangeTree(DIARY_FIRST_YEAR, new Date().getFullYear())),
+    /**
+     * The active UI language, for weekday and month names. Transloco's language is not a signal;
+     * reading a translated label first makes this re-evaluate when the language switches.
+     */
+    lang: computed(() => { store.i18n.title(); return store.i18nService.getActiveLang(); }),
     // the rule decides, not the role: whoever is signed in writes their own diary
     canWrite: computed(() => !!store.appStore.fbUser()?.uid),
   })),
@@ -83,6 +95,9 @@ export const DiaryStore = signalStore(
     filteredDiaries: computed(() => store.diaries().filter(diary =>
       diaryStateMatches(diary, store.selectedState())
       && nameMatches(diary.index || getDiaryIndex(diary), store.searchTerm()))),
+  })),
+  withComputed(store => ({
+    groupedDiaries: computed(() => groupDiariesByMonth(store.filteredDiaries())),
   })),
   withMethods(store => {
     /**
@@ -166,7 +181,12 @@ export const DiaryStore = signalStore(
 
     return {
       setSearchTerm(searchTerm: string) { patchState(store, { searchTerm }); },
-      setSelectedYear(year: number) { patchState(store, { selectedYear: year < ALL_YEARS ? undefined : year }); },
+      setSelectedRange(selectedRange: DiaryRange | undefined) { patchState(store, { selectedRange }); },
+      toggleGroupByMonth() {
+        const groupByMonth = !store.groupByMonth();
+        writeGroupByMonth(groupByMonth);
+        patchState(store, { groupByMonth });
+      },
       setSelectedState(selectedState: DiaryStateFilter) { patchState(store, { selectedState }); },
 
       /**

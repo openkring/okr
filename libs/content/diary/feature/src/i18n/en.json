@@ -75,8 +75,10 @@
   "plural": "Diary",
   "singular": "Entry",
   "list": {
-    "empty": "No entry in this year.",
-    "allYearsHint": "Loading all years takes a moment — there are more than 7,000 entries."
+    "empty": "No entry in this period.",
+    "allYearsHint": "Loading many years at once takes a moment.",
+    "period": "Period",
+    "allYears": "All years"
   },
   "actions": {
     "title": "Entry",

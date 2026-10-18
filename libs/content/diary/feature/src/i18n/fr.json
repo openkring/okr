@@ -75,8 +75,10 @@
   "plural": "Journal",
   "singular": "Entrée",
   "list": {
-    "empty": "Aucune entrée pour cette année.",
-    "allYearsHint": "Charger toutes les années prend un moment — il y a plus de 7 000 entrées."
+    "empty": "Aucune entrée pour cette période.",
+    "allYearsHint": "Charger beaucoup d'années à la fois prend un moment.",
+    "period": "Période",
+    "allYears": "Toutes les années"
   },
   "actions": {
     "title": "Entrée",

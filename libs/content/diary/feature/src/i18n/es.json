@@ -75,8 +75,10 @@
   "plural": "Diario",
   "singular": "Entrada",
   "list": {
-    "empty": "No hay ninguna entrada este año.",
-    "allYearsHint": "Cargar todos los años tarda un momento: hay más de 7000 entradas."
+    "empty": "No hay ninguna entrada en este periodo.",
+    "allYearsHint": "Cargar muchos años a la vez tarda un momento.",
+    "period": "Periodo",
+    "allYears": "Todos los años"
   },
   "actions": {
     "title": "Entrada",

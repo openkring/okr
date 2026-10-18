@@ -7,7 +7,7 @@ import { I18nService } from '@okr/shared-i18n';
 import { DbQuery, DiaryCollection, DiaryModel, TripCollection, TripModel, UserModel } from '@okr/shared-models';
 import { getQuery, getSystemQuery } from '@okr/shared-util-core';
 
-import { DIARY_I18N_KEYS, DiaryRange, diaryHeadlineSortKey, diaryKey, diaryRangeBounds, diaryRangeOfYear } from '@okr/content-diary-util';
+import { DIARY_I18N_KEYS, DiaryRange, diaryHeadlineSortKey, diaryKey, diaryRangeBounds } from '@okr/content-diary-util';
 
 /** Neighbour search pages: small, because the nearest hit is almost always in the first page. */
 const NEIGHBOUR_PAGE = 5;
@@ -87,11 +87,6 @@ export class DiaryService {
         .filter(diary => !diary.isArchived)
         .sort((a, b) => diaryHeadlineSortKey(b.date).localeCompare(diaryHeadlineSortKey(a.date)))),
     );
-  }
-
-  /** @deprecated use listByRange — kept until DiaryStore switches over (spec 1.106 Task 6). */
-  public listByYear(authorKey: string, tenantId: string, year?: number): Observable<DiaryModel[]> {
-    return this.listByRange(authorKey, tenantId, year === undefined ? undefined : diaryRangeOfYear(year));
   }
 
   /**

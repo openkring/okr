@@ -75,8 +75,10 @@
   "plural": "Tagebuch",
   "singular": "Eintrag",
   "list": {
-    "empty": "Kein Eintrag in diesem Jahr.",
-    "allYearsHint": "Alle Jahre laden dauert einen Moment — es sind über 7'000 Einträge."
+    "empty": "Kein Eintrag in diesem Zeitraum.",
+    "allYearsHint": "Viele Jahre auf einmal zu laden dauert einen Moment.",
+    "period": "Zeitraum",
+    "allYears": "Alle Jahre"
   },
   "actions": {
     "title": "Eintrag",
