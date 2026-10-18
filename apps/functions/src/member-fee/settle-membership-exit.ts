@@ -34,11 +34,11 @@ import { pickMemberIban } from '../expense/expense.util';
 import { cancelInvoiceCore } from '../invoice/cancel-invoice';
 import { totalRappen, withoutUndefined } from '../invoice/invoice.logic';
 import { writeFinanceHistory } from '../finance-history/finance-history';
-import { ExitContext, loadExitContext, toInvoiceFacts } from './exit-settlement.context';
+import { doneTaskDecision, ExitContext, loadExitContext, toInvoiceFacts } from './exit-settlement.context';
 import {
   appendInvoiceNote, appendTaskNote, choiceRefusal, claimedChoices, claimedInvoiceKey, claimPatch, claimRefusal, decisionNote,
-  emptySettlement, extendedRelLog, isLiveRefund, isValidClaim, membershipKeyOf, postalAddressText, refundDecision, refundMessageId, refundOrderId,
-  refundPaymentId, refundReference, replacementInvoiceId, replacementPositions, storedDecision, stornoReason, withInvoice,
+  emptySettlement, extendedRelLog, isLiveRefund, isValidClaim, membershipKeyOf, postalAddressText, refundDecision, refundInvoiceRefusal, refundMessageId, refundOrderId,
+  refundPaymentId, refundReference, replacementInvoiceId, replacementPositions, stornoReason, withInvoice,
 } from './settle-membership-exit.logic';
 
 const REGION = 'europe-west6';
@@ -93,7 +93,7 @@ export const settleMembershipExit = onCall(
     if (isDone(task)) {
       const done = await loadExitContext(db, membershipKey, today).catch(() => undefined);
       const settlement = done && done.tenantId === tenantId ? computeExitSettlement(done.input) : emptySettlement();
-      return { settlement, done: true, decision: storedDecision(str(task['notes'])) };
+      return { settlement, done: true, decision: doneTaskDecision(task) };
     }
 
     // ---- membership and books ----
@@ -132,7 +132,7 @@ export const settleMembershipExit = onCall(
         result = { settlement, done: true, decision: note };
       }
     } catch (err) {
-      if (err instanceof TaskAlreadyDone) return { settlement, done: true, decision: storedDecision(err.notes) };
+      if (err instanceof TaskAlreadyDone) return { settlement, done: true, decision: doneTaskDecision({ state: 'done', notes: err.notes }) };
       throw err;
     }
 
@@ -237,7 +237,8 @@ async function refund(
     const refunds = await tx.get(db.collection(PaymentCollection).where('invoiceKey', '==', invoice.okey));
     if (refunds.docs.some(d => tenantsOf(d.data()).includes(tenantId) && isLiveRefund(d.data()))) throw refusal('already-refunded');
     const inv = (await tx.get(invoiceRef)).data();
-    if (!inv || !tenantsOf(inv).includes(tenantId) || str(inv['accountingTenantId']) !== books) throw refusal('state-changed');
+    const invRefused = refundInvoiceRefusal(inv, tenantId, books);
+    if (invRefused || !inv) throw refusal(invRefused ?? 'state-changed');
 
     let orderId = '';
     let newOrder: { id: string; n: number } | undefined;

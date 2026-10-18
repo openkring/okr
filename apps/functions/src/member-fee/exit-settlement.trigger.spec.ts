@@ -2,14 +2,17 @@ import { describe, expect, it } from 'vitest';
 import type { ExitSettlement, SettlementCase } from '@okr/relationship-membership-util';
 
 import { claimedInvoiceKey, claimPatch } from './settle-membership-exit.logic';
-import { exitChanged, isSettlementWriter, mergeTaskNotes, NOTES_MARKER, siblingsToSettle, upsertDecision, writerCheck } from './exit-settlement.trigger';
 import {
-  CLOSE_NOTE, flattenCategoryLists, isAutoClosed, needsPositions, overlappingCount, resolveSettlementTenant, toAvatarInfo, toInvoiceFacts,
+  exitChanged, exitSettlementFor, isSettlementWriter, mergeTaskNotes, NOTES_MARKER, siblingsToSettle, upsertDecision, writerCheck,
+} from './exit-settlement.trigger';
+import {
+  CLOSE_NOTE, doneTaskDecision, flattenCategoryLists, isAutoClosed, needsPositions, overlappingCount, resolveSettlementTenant, toAvatarInfo,
+  toInvoiceFacts,
 } from './exit-settlement.context';
 
 const settlement = (c: SettlementCase): ExitSettlement => ({
   case: c, exitYear: 2026, months: 6, yearlyFr: 600, dueFr: 300, billedFr: 600, overpaidRappen: 30000,
-  refundRappen: c === 'paid' ? 30000 : 0, choices: [], manualReason: c === 'manual' ? 'no-invoice' : '',
+  refundRappen: c === 'paid' ? 30000 : 0, choices: [], manualReason: c === 'manual' ? 'no-invoice' : '', accountKey: '',
 });
 
 describe('exitChanged', () => {
@@ -45,6 +48,31 @@ describe('exitChanged', () => {
 
   it('ignores a deleted membership', () => {
     expect(exitChanged({ dateOfExit: '20261031' }, undefined)).toBe(false);
+  });
+
+  it('fires when the membership is archived (its task must close)', () => {
+    expect(exitChanged({ dateOfExit: '20261031', isArchived: false }, { dateOfExit: '20261031', isArchived: true })).toBe(true);
+    expect(exitChanged({ dateOfExit: '20261031' }, { dateOfExit: '20261031', isArchived: true })).toBe(true);
+  });
+
+  it('fires when the membership is restored from the archive', () => {
+    expect(exitChanged({ dateOfExit: '20261031', isArchived: true }, { dateOfExit: '20261031', isArchived: false })).toBe(true);
+  });
+
+  it('ignores an archived membership whose exit and archive flag stay the same', () => {
+    expect(exitChanged({ dateOfExit: '20261031', isArchived: true }, { dateOfExit: '20261031', isArchived: true, notes: 'x' })).toBe(false);
+  });
+});
+
+describe('exitSettlementFor', () => {
+  it('settles nothing for an archived membership, so the open task closes', () => {
+    const s = settlement('paid');
+    expect(exitSettlementFor({ isArchived: true }, () => s).case).toBe('none');
+    expect(upsertDecision(exitSettlementFor({ isArchived: true }, () => s), 'open')).toBe('close');
+  });
+  it('computes the settlement of a live membership', () => {
+    const s = settlement('paid');
+    expect(exitSettlementFor({ isArchived: false }, () => s)).toBe(s);
   });
 });
 
@@ -82,6 +110,18 @@ describe('upsertDecision', () => {
 
   it('does nothing when nothing is due and the task is done', () => {
     expect(upsertDecision(settlement('none'), 'done')).toBe('noop');
+  });
+
+  it.each(due)('reopens an auto-closed task when %s is due again', (c) => {
+    expect(upsertDecision(settlement(c), 'auto-closed')).toBe('reopen');
+  });
+
+  it('leaves an auto-closed task closed when nothing is due', () => {
+    expect(upsertDecision(settlement('none'), 'auto-closed')).toBe('noop');
+  });
+
+  it.each([...due, 'none' as SettlementCase])('never touches a task of another tenant (%s)', (c) => {
+    expect(upsertDecision(settlement(c), 'foreign')).toBe('noop');
   });
 });
 
@@ -159,6 +199,16 @@ describe('isAutoClosed', () => {
   });
 });
 
+describe('doneTaskDecision', () => {
+  it('shows the close note for an auto-closed task instead of an empty decision', () => {
+    expect(doneTaskDecision({ state: 'done', notes: `figures\n${CLOSE_NOTE}` })).toBe(CLOSE_NOTE);
+  });
+  it('returns the stored decision line of a treasurer-decided task', () => {
+    expect(doneTaskDecision({ state: 'done', notes: 'figures\nEntschieden von Anna am 01.10.2026: Rückerstattung CHF 100.00' }))
+      .toBe('Entschieden von Anna am 01.10.2026: Rückerstattung CHF 100.00');
+  });
+});
+
 describe('resolveSettlementTenant', () => {
   it('takes the membership tenant the books and the org also belong to', () => {
     expect(resolveSettlementTenant(['scs'], ['scs'], ['scs', 'kring'])).toBe('scs');
@@ -184,8 +234,12 @@ describe('needsPositions', () => {
     expect(needsPositions(facts(1, '20270115'), 2026)).toBe(true);
   });
 
+  it('loads positions for a native invoice issued in December for the exit year', () => {
+    expect(needsPositions(facts(1, '20251215'), 2026)).toBe(true);
+  });
+
   it('skips older or later native invoices and every bexio invoice', () => {
-    expect(needsPositions(facts(1, '20250301'), 2026)).toBe(false);
+    expect(needsPositions(facts(1, '20240301'), 2026)).toBe(false);
     expect(needsPositions(facts(1, '20280301'), 2026)).toBe(false);
     expect(needsPositions(facts(0, '20260301'), 2026)).toBe(false);
   });

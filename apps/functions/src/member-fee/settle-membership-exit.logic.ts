@@ -4,7 +4,7 @@
  * payment. Everything here is free of Firestore so it can be tested directly.
  */
 import type { ExitSettlement, InvoiceFacts, SettlementChoice } from '@okr/relationship-membership-util';
-import { getRelLogEntry, invoiceShape, pickFeeInvoice } from '@okr/relationship-membership-util';
+import { getRelLogEntry, invoiceShape, noExitSettlement, pickFeeInvoice } from '@okr/relationship-membership-util';
 import type { InvoicePositionModel } from '@okr/shared-models';
 import { applyDiscounts, toPositionInputs } from '@okr/finance-invoice-util';
 import { proRataDescription } from '@okr/shared-util-core';
@@ -203,8 +203,18 @@ export function withInvoice(invoices: InvoiceFacts[], extra: InvoiceFacts): Invo
 
 /** A settlement with nothing to settle, for a done task whose membership can no longer be read. */
 export function emptySettlement(): ExitSettlement {
-  return {
-    case: 'none', exitYear: 0, months: 0, yearlyFr: 0, dueFr: 0, billedFr: 0, overpaidRappen: 0, refundRappen: 0,
-    choices: [], manualReason: '',
-  };
+  return noExitSettlement();
+}
+
+/**
+ * The invoice as re-read inside the refund transaction: it must still exist in the tenant and the
+ * books and must not have been cancelled since the computation (a refund of a cancelled invoice would
+ * pay back money the books no longer hold as revenue).
+ */
+export function refundInvoiceRefusal(
+  inv: { tenants?: unknown; accountingTenantId?: unknown; state?: unknown } | undefined, tenantId: string, books: string,
+): 'state-changed' | undefined {
+  if (!inv || !(Array.isArray(inv.tenants) && (inv.tenants as string[]).includes(tenantId))) return 'state-changed';
+  if (inv.accountingTenantId !== books || inv.state === 'cancelled') return 'state-changed';
+  return undefined;
 }

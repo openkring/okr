@@ -3,16 +3,17 @@
  * `computeExitSettlement` needs from Firestore, finds the settlement task and the treasurer.
  * The mapping helpers are pure and exported for the tests.
  */
-import type { DocumentData, DocumentReference, Firestore } from 'firebase-admin/firestore';
+import type { DocumentData, Firestore } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/v2';
 import {
   AccountingConfigCollection, AvatarInfo, AvatarModelTypes, CategoryCollection, FeeScheduleEntry, InvoiceCollection,
   InvoicePositionCollection, MembershipCollection, MembershipModel, OrgCollection, ResponsibilityCollection, TaskCollection,
 } from '@okr/shared-models';
 import { getFullName } from '@okr/shared-util-core';
-import { EXIT_SETTLEMENT_TAG, ExitSettlementInput, InvoiceFacts, invoiceShape } from '@okr/relationship-membership-util';
+import { ExitSettlementInput, InvoiceFacts, invoiceShape } from '@okr/relationship-membership-util';
 
 import { activeResponsible, AvatarRef, ResponsibilityLike, treasurerResponsibilityKey } from '../invoice/treasurer-contact.logic';
+import { storedDecision } from './settle-membership-exit.logic';
 
 /** Appended to the notes when the trigger closes a task because nothing is due any more (§4.5). */
 export const CLOSE_NOTE = 'Nicht mehr nötig: Austritt geändert.';
@@ -28,7 +29,6 @@ export interface ExitContext {
 const str = (v: unknown): string => (typeof v === 'string' ? v : '');
 const num = (v: unknown): number => (typeof v === 'number' && Number.isFinite(v) ? v : 0);
 const tenantsOf = (d: DocumentData): string[] => (Array.isArray(d['tenants']) ? (d['tenants'] as string[]) : []);
-const tagsOf = (d: DocumentData): string[] => str(d['tags']).split(',').map(t => t.trim());
 
 /** Every category list as `listName -> category -> price`, exactly as the member-fee store flattens it. */
 export function flattenCategoryLists(lists: { name?: string; items?: { name?: string; price?: number }[] }[]): Record<string, Record<string, number>> {
@@ -82,9 +82,19 @@ export function toAvatarInfo(ref: AvatarRef | undefined): AvatarInfo | undefined
   };
 }
 
-/** A task the trigger closed itself (§4.5) is not a treasurer decision: a later exit opens a fresh task. */
+/** A task the trigger closed itself (§4.5) is not a treasurer decision: a later exit reopens it. */
 export function isAutoClosed(task: DocumentData): boolean {
   return str(task['state']) === 'done' && str(task['notes']).includes(CLOSE_NOTE);
+}
+
+/** The decision line the card shows for a done task: the close note when the trigger closed it itself. */
+export function doneTaskDecision(task: DocumentData): string {
+  return isAutoClosed(task) ? CLOSE_NOTE : storedDecision(str(task['notes']));
+}
+
+/** The one settlement task of a membership lives at this id (one exit per membership). */
+export function settlementTaskId(membershipKey: string): string {
+  return `exit-${membershipKey}`;
 }
 
 /** The exit year of a StoreDate exit, or 0 when there is none. */
@@ -101,22 +111,29 @@ export function resolveSettlementTenant(membershipTenants: string[], configTenan
   return membershipTenants.find(t => !!t && configTenants.includes(t) && orgTenants.includes(t));
 }
 
-/** Positions are only needed for a native invoice dated in the exit year or the year after. */
+/**
+ * Positions are only needed for a native invoice dated around the exit year: the year before (a fee
+ * invoice issued in December for the next year), the exit year, or the year after.
+ */
 export function needsPositions(facts: InvoiceFacts, exitYear: number): boolean {
   if (invoiceShape(facts) === 'bexio') return false;
   const year = Number(facts.invoiceDate.substring(0, 4));
-  return year === exitYear || year === exitYear + 1;
+  return year >= exitYear - 1 && year <= exitYear + 1;
 }
 
 /**
  * Load the membership and everything its exit settlement depends on. The books are
- * `accounting-configs/{orgKey}` (never the app tenant, §4.2). Undefined when the membership is gone
- * or no tenant is shared by the membership, the books and the org.
+ * `accounting-configs/{orgKey}` (never the app tenant, §4.2). Undefined when the membership is gone,
+ * archived (nothing to settle) or no tenant is shared by the membership, the books and the org.
+ * `includeArchived` is only for the trigger, which loads an archived membership to close its task.
  */
-export async function loadExitContext(db: Firestore, membershipKey: string, today: string): Promise<ExitContext | undefined> {
+export async function loadExitContext(
+  db: Firestore, membershipKey: string, today: string, opts: { includeArchived?: boolean } = {},
+): Promise<ExitContext | undefined> {
   const snap = await db.collection(MembershipCollection).doc(membershipKey).get();
   const data = snap.data();
   if (!snap.exists || !data) return undefined;
+  if (data['isArchived'] === true && opts.includeArchived !== true) return undefined;
   const membership = { ...(data as MembershipModel), okey: membershipKey };
   const orgKey = str(membership.orgKey);
   if (!orgKey) return undefined;
@@ -187,24 +204,9 @@ export async function loadExitContext(db: Firestore, membershipKey: string, toda
   };
 }
 
-/**
- * The newest (latest due date) non-archived settlement task of the membership (tag + relatedKey),
- * auto-closed tasks left out. A membership has a single exit, so its task is the same whatever
- * year the exit moves to.
- */
-export async function findSettlementTask(
-  db: Firestore, tenantId: string, membershipKey: string,
-): Promise<{ ref: DocumentReference; data: DocumentData; done: boolean } | undefined> {
-  const snap = await db.collection(TaskCollection).where('relatedKey', '==', `membership.${membershipKey}`).get();
-  const hit = snap.docs
-    .filter(d => {
-      const t = d.data();
-      return t['isArchived'] !== true && tenantsOf(t).includes(tenantId) && tagsOf(t).includes(EXIT_SETTLEMENT_TAG) && !isAutoClosed(t);
-    })
-    .sort((a, b) => str(b.data()['dueDate']).localeCompare(str(a.data()['dueDate'])))[0];
-  if (!hit) return undefined;
-  const data = hit.data();
-  return { ref: hit.ref, data, done: str(data['state']) === 'done' || str(data['completionDate']) !== '' };
+/** The membership's settlement task (read by its deterministic id), undefined when there is none. */
+export async function readSettlementTask(db: Firestore, membershipKey: string): Promise<DocumentData | undefined> {
+  return (await db.collection(TaskCollection).doc(settlementTaskId(membershipKey)).get()).data();
 }
 
 /** Who holds the tenant's treasurer responsibility today (delegate aware); undefined = unassigned. */

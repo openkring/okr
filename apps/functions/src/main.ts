@@ -417,8 +417,8 @@ export { onUserWritten, backfillAccountTenants } from './person/account-mirror';
 // columns + rebate/rebateReason into positions[]
 export { migrateMemberFees } from './member-fee/migrate-member-fees';
 
-// exit fee settlement (spec 1.105): a changed membership exit opens/updates/closes the
-// treasurer's pro-rata settlement task and refreshes a not-yet-invoiced fee row
+// exit fee settlement (spec 1.105): a changed membership exit (or archiving) opens, updates, closes or
+// reopens the treasurer's pro-rata settlement task; fee rows are NOT touched («Neu laden» in the fee run)
 export { onMembershipExitWritten } from './member-fee/exit-settlement.trigger';
 // the treasurer's decision on that task: refund, adjust the invoice or exit on 31.12.
 export { settleMembershipExit } from './member-fee/settle-membership-exit';

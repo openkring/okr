@@ -4,12 +4,12 @@ import type { ExitSettlement, SettlementCase, SettlementChoice } from '@okr/rela
 import {
   appendInvoiceNote, appendTaskNote, choiceRefusal, claimedChoices, claimedInvoiceKey, claimPatch, claimRefusal, decisionNote,
   emptySettlement, extendedRelLog, isLiveRefund, isValidClaim, membershipKeyOf, NO_IBAN_NOTE, postalAddressText, refundDecision, refundMessageId,
-  refundOrderId, refundPaymentId, refundReference, replacementPositions, storedDecision, stornoReason, withInvoice,
+  refundInvoiceRefusal, refundOrderId, refundPaymentId, refundReference, replacementPositions, storedDecision, stornoReason, withInvoice,
 } from './settle-membership-exit.logic';
 
 const settlement = (c: SettlementCase, choices: SettlementChoice[], extra: Partial<ExitSettlement> = {}): ExitSettlement => ({
   case: c, exitYear: 2026, months: 10, yearlyFr: 120, dueFr: 100, billedFr: 120, overpaidRappen: 2000,
-  refundRappen: c === 'paid' ? 10000 : 0, choices, manualReason: c === 'manual' ? 'no-invoice' : '', shape: 'native',
+  refundRappen: c === 'paid' ? 10000 : 0, choices, manualReason: c === 'manual' ? 'no-invoice' : '', accountKey: '', shape: 'native',
   invoice: { okey: 'i1', invoiceId: '2026-17' } as ExitSettlement['invoice'], ...extra,
 });
 
@@ -292,5 +292,20 @@ describe('isValidClaim (linkKey is client-writable, so a claim is checked)', () 
     expect(isValidClaim(claim({ facts: facts({ state: 'paid' }) }), expected)).toBe(false);
     expect(isValidClaim(claim({ facts: facts({ state: 'draft' }) }), expected)).toBe(false);
     expect(isValidClaim(claim({ replaced: true }), expected)).toBe(false);
+  });
+});
+
+describe('refundInvoiceRefusal', () => {
+  const inv = (over: Record<string, unknown> = {}) => ({ tenants: ['scs'], accountingTenantId: 'scs', state: 'paid', ...over });
+  it('accepts the invoice of the tenant and the books', () => {
+    expect(refundInvoiceRefusal(inv(), 'scs', 'scs')).toBeUndefined();
+  });
+  it('refuses a cancelled invoice re-read in the transaction', () => {
+    expect(refundInvoiceRefusal(inv({ state: 'cancelled' }), 'scs', 'scs')).toBe('state-changed');
+  });
+  it('refuses a missing invoice, another tenant or other books', () => {
+    expect(refundInvoiceRefusal(undefined, 'scs', 'scs')).toBe('state-changed');
+    expect(refundInvoiceRefusal(inv({ tenants: ['gss'] }), 'scs', 'scs')).toBe('state-changed');
+    expect(refundInvoiceRefusal(inv({ accountingTenantId: 'gss' }), 'scs', 'scs')).toBe('state-changed');
   });
 });
