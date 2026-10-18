@@ -218,7 +218,8 @@
     "billBooked": "Factura de proveedor contabilizada, asiento n.º",
     "billPayment": "Pago registrado",
     "billPaymentUnlinked": "Vínculo de pago eliminado",
-    "billDetailsUpdated": "Detalles de la factura de proveedor modificados"
+    "billDetailsUpdated": "Detalles de la factura de proveedor modificados",
+    "exitSettled": "Baja liquidada:"
   },
   "voucher": {
     "title": "Justificantes",

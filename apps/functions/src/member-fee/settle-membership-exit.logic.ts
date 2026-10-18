@@ -3,8 +3,10 @@
  * deterministic ids that make a retry idempotent, and the texts written into task, invoice and
  * payment. Everything here is free of Firestore so it can be tested directly.
  */
-import type { ExitSettlement, SettlementChoice } from '@okr/relationship-membership-util';
+import type { ExitSettlement, InvoiceFacts, SettlementChoice } from '@okr/relationship-membership-util';
 import { getRelLogEntry } from '@okr/relationship-membership-util';
+import type { InvoicePositionModel } from '@okr/shared-models';
+import { applyDiscounts, toPositionInputs } from '@okr/finance-invoice-util';
 import { proRataDescription } from '@okr/shared-util-core';
 
 export type SettleRefusal = 'task-done' | 'choice-not-offered' | 'already-refunded';
@@ -64,6 +66,11 @@ export function decisionNote(choice: SettlementChoice, deciderName: string, view
 /** Appended to the decision note when the member has no IBAN on file (§5.1). */
 export const NO_IBAN_NOTE = ' (keine IBAN hinterlegt: bitte in der Zahlung ergänzen, bevor der Zahlungsauftrag freigegeben wird)';
 
+/** The refund decision line, with the missing-IBAN hint when the payment needs review. */
+export function refundDecision(note: string, needsReview: boolean): string {
+  return needsReview ? `${note}${NO_IBAN_NOTE}` : note;
+}
+
 /** The last decision line of the task notes; '' when none was stored. */
 export function storedDecision(notes: string | undefined): string {
   const lines = (notes ?? '').split('\n').filter(l => l.startsWith(DECISION_PREFIX));
@@ -100,8 +107,10 @@ export function stornoReason(exitViewDate: string): string {
 
 /** Invoice notes + «Rückerstattung CHF X pro rata, Austritt dd.MM.yyyy», never longer than `maxLength`. */
 export function appendInvoiceNote(notes: string, refundRappen: number, exitViewDate: string, maxLength: number): string {
-  const line = `Rückerstattung ${chf(refundRappen)} pro rata, Austritt ${exitViewDate}`;
-  return appendTaskNote(notes, line).substring(0, maxLength);
+  const line = `Rückerstattung ${chf(refundRappen)} pro rata, Austritt ${exitViewDate}`.substring(0, maxLength);
+  if (!notes) return line;
+  // the new line is kept whole; the old text gives way
+  return `${notes.substring(0, Math.max(0, maxLength - line.length - 1))}\n${line}`;
 }
 
 /** A postal address as the free-text lines `parseRecipientAddress` (pain.001) reads back. */
@@ -123,7 +132,8 @@ const num = (v: unknown): number => (typeof v === 'number' && Number.isFinite(v)
 /**
  * The positions of the replacement invoice (§5.2): all positions of the original in their order, the
  * fee positions of the exit year (`usage` + `year`) replaced by one position of `dueFr` at the place
- * of the first one, keeping its name, account and VAT code.
+ * of the first one, keeping its name, account and VAT code. `sortOrder` is renumbered and every percent
+ * discount is recomputed from the reduced amounts (`applyDiscounts`, spec 1.84 K5).
  */
 export function replacementPositions(positions: PositionDoc[], usage: string, year: number, dueFr: number, months: number, yearlyFr: number): PositionDoc[] {
   const ordered = positions
@@ -139,18 +149,46 @@ export function replacementPositions(positions: PositionDoc[], usage: string, ye
     replaced = true;
     out.push({ ...p, amount: dueFr, description: proRataDescription(months, yearlyFr) });
   }
-  return out;
+  const renumbered: PositionDoc[] = out.map((p, i) => ({ ...p, sortOrder: i }));
+  const recomputed = applyDiscounts(toPositionInputs(renumbered as unknown as InvoicePositionModel[]));
+  return renumbered.map((p, i) => (p['amount'] === recomputed[i].amount ? p : { ...p, amount: recomputed[i].amount }));
 }
 
+export type ClaimRefusal = 'adjust-in-progress';
+
 /**
- * Invoices this settlement already cancelled («Austritt per …, pro rata») whose replacement was never
- * written (a crash between the storno and the draft). They are fed back into the computation so the
- * retry can finish instead of seeing «no invoice».
+ * The original invoice an adjust-invoice run has claimed the task for (`linkModelType 'invoice'`,
+ * `linkKey 'invoice.<okey>'`, set before the storno); '' when the task is not claimed.
  */
-export function resumableCancelled(docs: { okey: string; data: Record<string, unknown> }[], books: string, tenantId: string, reason: string): string[] {
-  return docs.filter(({ data }) =>
-    data['state'] === 'cancelled' && data['accountingTenantId'] === books && data['isArchived'] !== true &&
-    Array.isArray(data['tenants']) && (data['tenants'] as string[]).includes(tenantId) &&
-    typeof data['notes'] === 'string' && (data['notes'] as string).includes(`] ${reason}`),
-  ).map(d => d.okey);
+export function claimedInvoiceKey(task: { linkKey?: unknown; linkModelType?: unknown }): string {
+  if (task.linkModelType !== 'invoice' || typeof task.linkKey !== 'string' || !task.linkKey.startsWith('invoice.')) return '';
+  return task.linkKey.substring('invoice.'.length);
+}
+
+/** The task fields that claim it for the adjustment of `invoiceKey`. */
+export function claimPatch(invoiceKey: string): { linkKey: string; linkModelType: string } {
+  return { linkKey: `invoice.${invoiceKey}`, linkModelType: 'invoice' };
+}
+
+/** While an adjustment is in progress (storno possibly written), only finishing it is allowed. */
+export function claimRefusal(claimedKey: string, choice: SettlementChoice): ClaimRefusal | undefined {
+  return claimedKey && choice !== 'adjust-invoice' ? 'adjust-in-progress' : undefined;
+}
+
+/** The settlement of a claimed task: the only way forward is to finish the adjustment. */
+export function claimedChoices(s: ExitSettlement): ExitSettlement {
+  return { ...s, choices: ['adjust-invoice'] };
+}
+
+/** `invoices` plus `extra`, unless an invoice with its okey is already there. */
+export function withInvoice(invoices: InvoiceFacts[], extra: InvoiceFacts): InvoiceFacts[] {
+  return invoices.some(i => i.okey === extra.okey) ? invoices : [...invoices, extra];
+}
+
+/** A settlement with nothing to settle, for a done task whose membership can no longer be read. */
+export function emptySettlement(): ExitSettlement {
+  return {
+    case: 'none', exitYear: 0, months: 0, yearlyFr: 0, dueFr: 0, billedFr: 0, overpaidRappen: 0, refundRappen: 0,
+    choices: [], manualReason: '',
+  };
 }

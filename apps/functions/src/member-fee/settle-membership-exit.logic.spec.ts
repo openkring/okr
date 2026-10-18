@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vitest';
 import type { ExitSettlement, SettlementCase, SettlementChoice } from '@okr/relationship-membership-util';
 
 import {
-  appendInvoiceNote, appendTaskNote, choiceRefusal, decisionNote, extendedRelLog, isLiveRefund, membershipKeyOf,
-  postalAddressText, refundMessageId, refundOrderId, refundPaymentId, refundReference, replacementPositions,
-  resumableCancelled, storedDecision, stornoReason,
+  appendInvoiceNote, appendTaskNote, choiceRefusal, claimedChoices, claimedInvoiceKey, claimPatch, claimRefusal, decisionNote,
+  emptySettlement, extendedRelLog, isLiveRefund, membershipKeyOf, NO_IBAN_NOTE, postalAddressText, refundDecision, refundMessageId,
+  refundOrderId, refundPaymentId, refundReference, replacementPositions, storedDecision, stornoReason, withInvoice,
 } from './settle-membership-exit.logic';
 
 const settlement = (c: SettlementCase, choices: SettlementChoice[], extra: Partial<ExitSettlement> = {}): ExitSettlement => ({
@@ -142,7 +142,10 @@ describe('texts', () => {
   it('appendInvoiceNote appends a line and keeps the limit', () => {
     expect(appendInvoiceNote('', 10000, '31.10.2026', 2000)).toBe('Rückerstattung CHF 100.00 pro rata, Austritt 31.10.2026');
     expect(appendInvoiceNote('old', 10000, '31.10.2026', 2000)).toBe('old\nRückerstattung CHF 100.00 pro rata, Austritt 31.10.2026');
-    expect(appendInvoiceNote('x'.repeat(1990), 10000, '31.10.2026', 2000).length).toBe(2000);
+    const long = appendInvoiceNote('x'.repeat(1990), 10000, '31.10.2026', 2000);
+    expect(long.length).toBe(2000);
+    expect(long.endsWith('\nRückerstattung CHF 100.00 pro rata, Austritt 31.10.2026')).toBe(true);
+    expect(long.startsWith('xxx')).toBe(true);
   });
 
   it('postalAddressText formats lines pain.001 can parse', () => {
@@ -174,7 +177,7 @@ describe('replacementPositions', () => {
     expect(out.map(p => p['okey'])).toEqual(['p1', 'p2', 'p4']);
     expect(out[0]).toMatchObject({ amount: 100, description: 'pro rata verrechnet für 10 von 12 Monaten (voller Jahresbetrag CHF 120.00)', invoicePositionUsage: 'JB' });
     expect(out[1]).toEqual(positions[1]);
-    expect(out[2]).toEqual(positions[3]);
+    expect(out[2]).toEqual({ ...positions[3], sortOrder: 2 });
   });
 
   it('orders by sortOrder', () => {
@@ -183,20 +186,68 @@ describe('replacementPositions', () => {
   });
 
   it('leaves the list unchanged when nothing matches', () => {
-    expect(replacementPositions([positions[1]], 'JB', 2026, 100, 10, 120)).toEqual([positions[1]]);
+    expect(replacementPositions([positions[1]], 'JB', 2026, 100, 10, 120)).toEqual([{ ...positions[1], sortOrder: 0 }]);
   });
 });
 
-describe('resumableCancelled', () => {
-  const reason = 'Austritt per 31.10.2026, pro rata';
-  it('finds an invoice this settlement cancelled without a replacement yet', () => {
-    const docs = [
-      { okey: 'a', data: { state: 'cancelled', accountingTenantId: 'scs', tenants: ['scs'], notes: `x\n[Storniert 18.10.2026] ${reason}` } },
-      { okey: 'b', data: { state: 'cancelled', accountingTenantId: 'scs', tenants: ['scs'], notes: '[Storniert 18.10.2026] Fehler' } },
-      { okey: 'c', data: { state: 'paid', accountingTenantId: 'scs', tenants: ['scs'], notes: reason } },
-      { okey: 'd', data: { state: 'cancelled', accountingTenantId: 'gss', tenants: ['scs'], notes: `] ${reason}` } },
-      { okey: 'e', data: { state: 'cancelled', accountingTenantId: 'scs', tenants: ['other'], notes: `] ${reason}` } },
-    ];
-    expect(resumableCancelled(docs, 'scs', 'scs', reason)).toEqual(['a']);
+describe('claim (adjust-invoice in progress)', () => {
+  it('detects a claimed task from its invoice link', () => {
+    expect(claimedInvoiceKey({ linkModelType: 'invoice', linkKey: 'invoice.i1' })).toBe('i1');
+    expect(claimedInvoiceKey({ linkModelType: '', linkKey: '' })).toBe('');
+    expect(claimedInvoiceKey({})).toBe('');
+    expect(claimedInvoiceKey({ linkModelType: 'trip', linkKey: 'trip.t1' })).toBe('');
+    expect(claimedInvoiceKey({ linkModelType: 'invoice', linkKey: 'invoice.' })).toBe('');
+  });
+
+  it('claimPatch writes the link the detection reads back', () => {
+    expect(claimPatch('i1')).toEqual({ linkKey: 'invoice.i1', linkModelType: 'invoice' });
+    expect(claimedInvoiceKey(claimPatch('i1'))).toBe('i1');
+  });
+
+  it('refuses every other choice while an adjustment is in progress', () => {
+    expect(claimRefusal('i1', 'refund')).toBe('adjust-in-progress');
+    expect(claimRefusal('i1', 'extend')).toBe('adjust-in-progress');
+    expect(claimRefusal('i1', 'adjust-invoice')).toBeUndefined();
+    expect(claimRefusal('', 'refund')).toBeUndefined();
+  });
+
+  it('a claimed task only offers finishing the adjustment', () => {
+    const s = claimedChoices(settlement('manual', ['extend']));
+    expect(s.choices).toEqual(['adjust-invoice']);
+    expect(choiceRefusal(s, 'adjust-invoice', false, false)).toBeUndefined();
+  });
+
+  it('withInvoice adds the claimed (cancelled) invoice once', () => {
+    const a = { okey: 'a' } as NonNullable<ExitSettlement['invoice']>;
+    const b = { okey: 'b' } as NonNullable<ExitSettlement['invoice']>;
+    expect(withInvoice([a], b).map(i => i.okey)).toEqual(['a', 'b']);
+    expect(withInvoice([a, b], { ...b, title: 'x' }).map(i => i.okey)).toEqual(['a', 'b']);
+  });
+});
+
+describe('refundDecision (member without IBAN)', () => {
+  it('adds the missing-IBAN hint only when the payment needs review', () => {
+    expect(refundDecision('Entschieden von A am 1.1.2026: Rückerstattung CHF 100.00', true))
+      .toBe(`Entschieden von A am 1.1.2026: Rückerstattung CHF 100.00${NO_IBAN_NOTE}`);
+    expect(NO_IBAN_NOTE).toContain('keine IBAN');
+    expect(refundDecision('note', false)).toBe('note');
+  });
+});
+
+describe('replacementPositions discounts', () => {
+  it('recomputes a percent discount from the reduced fee and keeps a fixed one', () => {
+    const out = replacementPositions([
+      { okey: 'p1', name: 'Jahresbeitrag', invoicePositionType: 'fix', invoicePositionUsage: 'JB', year: 2026, amount: 120, sortOrder: 0 },
+      { okey: 'p2', name: 'Rabatt', invoicePositionType: 'rebate', amount: -12, discountPercent: 10, sortOrder: 1 },
+      { okey: 'p3', name: 'Gutschrift', invoicePositionType: 'rebate', amount: -5, discountPercent: 0, sortOrder: 2 },
+    ], 'JB', 2026, 100, 10, 120);
+    expect(out.map(p => p['amount'])).toEqual([100, -10, -5]);
+    expect(out.map(p => p['sortOrder'])).toEqual([0, 1, 2]);
+  });
+});
+
+describe('emptySettlement', () => {
+  it('has no choices and no figures', () => {
+    expect(emptySettlement()).toMatchObject({ case: 'none', choices: [], refundRappen: 0 });
   });
 });

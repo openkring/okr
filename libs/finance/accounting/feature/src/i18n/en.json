@@ -218,7 +218,8 @@
     "billBooked": "Bill booked, booking no.",
     "billPayment": "Payment recorded",
     "billPaymentUnlinked": "Payment link removed",
-    "billDetailsUpdated": "Bill details edited"
+    "billDetailsUpdated": "Bill details edited",
+    "exitSettled": "Exit settled:"
   },
   "voucher": {
     "title": "Vouchers",

@@ -13,7 +13,8 @@ const HISTORY_KEY_PREFIX = '@finance/accounting/feature.history.';
 
 export type FinanceHistoryKind =
   | 'issued' | 'email' | 'post' | 'reminder' | 'reminderWaived' | 'payment' | 'paymentConfirmation' | 'cancelled'
-  | 'billCreated' | 'billBooked' | 'billPayment' | 'billPaymentUnlinked' | 'billDetailsUpdated';
+  | 'billCreated' | 'billBooked' | 'billPayment' | 'billPaymentUnlinked' | 'billDetailsUpdated'
+  | 'exitSettled';
 
 export interface FinanceHistoryEntry {
   index: string;

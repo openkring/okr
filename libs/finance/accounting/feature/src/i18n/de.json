@@ -218,7 +218,8 @@
     "billBooked": "Kreditor gebucht, Buchung Nr.",
     "billPayment": "Zahlung erfasst",
     "billPaymentUnlinked": "Zahlungsverknüpfung aufgehoben",
-    "billDetailsUpdated": "Kreditor-Details bearbeitet"
+    "billDetailsUpdated": "Kreditor-Details bearbeitet",
+    "exitSettled": "Austritt abgerechnet:"
   },
   "voucher": {
     "title": "Belege",

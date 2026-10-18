@@ -7,6 +7,11 @@
  * write that decides the case (payment, replacement draft, membership) commits in ONE transaction with
  * the task being set done, so a second click or a second treasurer finds the done task and gets the
  * stored decision back; nothing is paid or sent here.
+ *
+ * `adjust-invoice` has a step outside that transaction (the storno, `cancelInvoiceCore`). It therefore
+ * first CLAIMS the open task (`linkModelType 'invoice'`, `linkKey 'invoice.<original>'`); a claimed task
+ * refuses every other choice ('adjust-in-progress') and offers only finishing the adjustment, which
+ * also resumes a run that crashed after the storno.
  */
 import { randomUUID } from 'node:crypto';
 import { onCall, CallableRequest, HttpsError } from 'firebase-functions/v2/https';
@@ -31,9 +36,9 @@ import { totalRappen, withoutUndefined } from '../invoice/invoice.logic';
 import { writeFinanceHistory } from '../finance-history/finance-history';
 import { ExitContext, loadExitContext, toInvoiceFacts } from './exit-settlement.context';
 import {
-  appendInvoiceNote, appendTaskNote, choiceRefusal, decisionNote, extendedRelLog, isLiveRefund, membershipKeyOf, NO_IBAN_NOTE,
-  postalAddressText, refundMessageId, refundOrderId, refundPaymentId, refundReference, replacementInvoiceId, replacementPositions,
-  resumableCancelled, storedDecision, stornoReason,
+  appendInvoiceNote, appendTaskNote, choiceRefusal, claimedChoices, claimedInvoiceKey, claimPatch, claimRefusal, decisionNote,
+  emptySettlement, extendedRelLog, isLiveRefund, membershipKeyOf, postalAddressText, refundDecision, refundMessageId, refundOrderId,
+  refundPaymentId, refundReference, replacementInvoiceId, replacementPositions, storedDecision, stornoReason, withInvoice,
 } from './settle-membership-exit.logic';
 
 const REGION = 'europe-west6';
@@ -75,7 +80,7 @@ export const settleMembershipExit = onCall(
     const db = getFirestore();
     const today = getTodayStr(DateFormat.StoreDate);
 
-    // ---- the task, its membership and the books ----
+    // ---- the task ----
     const taskRef = db.collection(TaskCollection).doc(taskKey);
     const task = (await taskRef.get()).data();
     if (!task) throw new HttpsError('not-found', `task ${taskKey} not found`);
@@ -84,6 +89,14 @@ export const settleMembershipExit = onCall(
     const membershipKey = membershipKeyOf(str(task['relatedKey']));
     if (!membershipKey) throw refusal('not-a-settlement-task', `task ${taskKey} is not about a membership`);
 
+    // a done task always answers with its stored decision, even when the membership is gone
+    if (isDone(task)) {
+      const done = await loadExitContext(db, membershipKey, today).catch(() => undefined);
+      const settlement = done && done.tenantId === tenantId ? computeExitSettlement(done.input) : emptySettlement();
+      return { settlement, done: true, decision: storedDecision(str(task['notes'])) };
+    }
+
+    // ---- membership and books ----
     const ctx = await loadExitContext(db, membershipKey, today);
     if (!ctx) throw refusal('no-membership', `membership ${membershipKey} cannot be settled`);
     if (ctx.tenantId !== tenantId) throw new HttpsError('permission-denied', 'membership belongs to another tenant');
@@ -91,13 +104,12 @@ export const settleMembershipExit = onCall(
     const config = (await db.collection(AccountingConfigCollection).doc(books).get()).data();
     if (!tenantsOf(config).includes(tenantId)) throw new HttpsError('permission-denied', `${books} does not belong to this tenant`);
 
-    let settlement = computeExitSettlement(ctx.input);
-    if (isDone(task)) return { settlement, done: true, decision: storedDecision(str(task['notes'])) };
+    const claimed = claimedInvoiceKey(task);
+    const settlement = claimed ? await claimedSettlement(db, ctx, claimed) : computeExitSettlement(ctx.input);
     if (choice === 'preview') return { settlement, done: false };
 
-    if (choice === 'adjust-invoice' && !settlement.choices.includes('adjust-invoice')) {
-      settlement = await resumeAdjust(db, ctx, settlement) ?? settlement;
-    }
+    const claimRefused = claimRefusal(claimed, choice);
+    if (claimRefused) throw refusal(claimRefused, `${choice} refused for task ${taskKey}: an invoice adjustment is in progress`);
     const existingRefund = choice === 'refund' && settlement.invoice ? await hasLiveRefund(db, tenantId, settlement.invoice.okey) : false;
     const refused = choiceRefusal(settlement, choice, false, existingRefund);
     if (refused) throw refusal(refused, `${choice} refused for task ${taskKey}: ${refused}`);
@@ -124,11 +136,7 @@ export const settleMembershipExit = onCall(
       throw err;
     }
 
-    await writeFinanceHistory(db, {
-      tenantId, uid, parentKey: `membership.${membershipKey}`,
-      // FinanceHistoryKind is a closed union without a settlement kind; the details carry the decision
-      kind: choice === 'adjust-invoice' ? 'cancelled' : 'payment', details: result.decision,
-    });
+    await writeFinanceHistory(db, { tenantId, uid, parentKey: `membership.${membershipKey}`, kind: 'exitSettled', details: result.decision });
     logger.info(`${CF_NAME}: ${choice} for membership ${membershipKey} (task ${taskKey}, tenant ${tenantId}, books ${books})`);
     return result;
   },
@@ -145,17 +153,42 @@ async function hasLiveRefund(db: Firestore, tenantId: string, invoiceKey: string
   return snap.docs.some(d => tenantsOf(d.data()).includes(tenantId) && isLiveRefund(d.data()));
 }
 
+/**
+ * The settlement of a claimed task. The claimed invoice may already be cancelled (the storno ran,
+ * the replacement did not), and `loadExitContext` leaves cancelled invoices out: add it back so the
+ * figures are those of the adjustment being finished. Only finishing is offered.
+ */
+async function claimedSettlement(db: Firestore, ctx: ExitContext, invoiceKey: string): Promise<ExitSettlement> {
+  let invoices = ctx.input.invoices;
+  if (!invoices.some(i => i.okey === invoiceKey)) {
+    const inv = (await db.collection(InvoiceCollection).doc(invoiceKey).get()).data();
+    if (inv && tenantsOf(inv).includes(ctx.tenantId) && str(inv['accountingTenantId']) === ctx.input.booksId && inv['isArchived'] !== true) {
+      const pos = await db.collection(InvoicePositionCollection).where('invoiceKey', '==', invoiceKey).get();
+      invoices = withInvoice(invoices, toInvoiceFacts(invoiceKey, inv,
+        pos.docs.map(p => p.data()).filter(p => p['isArchived'] !== true && tenantsOf(p).includes(ctx.tenantId))));
+    }
+  }
+  return claimedChoices(computeExitSettlement({ ...ctx.input, invoices }));
+}
+
 interface CloseTask { taskRef: DocumentReference; today: string }
 
 /** Reads the task inside the transaction (a read, so call it before any write); throws when it is already done. */
-async function readOpenTask(tx: Transaction, c: CloseTask): Promise<string> {
+async function readOpenTask(tx: Transaction, c: CloseTask): Promise<DocumentData> {
   const t = (await tx.get(c.taskRef)).data();
-  if (isDone(t)) throw new TaskAlreadyDone(str(t?.['notes']));
-  return str(t?.['notes']);
+  if (!t || isDone(t)) throw new TaskAlreadyDone(str(t?.['notes']));
+  return t;
 }
 
-function writeTaskDone(tx: Transaction, c: CloseTask, notes: string, line: string): void {
-  tx.update(c.taskRef, { state: 'done', completionDate: c.today, notes: appendTaskNote(notes, line) });
+/** Like readOpenTask, and refuses a task claimed by an invoice adjustment. */
+async function readUnclaimedTask(tx: Transaction, c: CloseTask): Promise<DocumentData> {
+  const t = await readOpenTask(tx, c);
+  if (claimedInvoiceKey(t)) throw refusal('adjust-in-progress');
+  return t;
+}
+
+function writeTaskDone(tx: Transaction, c: CloseTask, task: DocumentData, line: string, extra: Record<string, unknown> = {}): void {
+  tx.update(c.taskRef, { state: 'done', completionDate: c.today, notes: appendTaskNote(str(task['notes']), line), ...extra });
 }
 
 /** §5.1: a draft refund payment in the books' collecting order, the invoice note and the task in one transaction. */
@@ -172,7 +205,7 @@ async function refund(
   const iban = pickMemberIban(addresses, tenantId);
   const needsReview = iban === '';
   const recipientAddress = postalAddressText(pickFavoriteByChannel(scopeToTenant(addresses, tenantId), 'postal'));
-  const decision = needsReview ? `${note}${NO_IBAN_NOTE}` : note;
+  const decision = refundDecision(note, needsReview);
 
   // The oldest open collecting order of these books wins; only when none exists does today's id decide.
   const open = await db.collection(PaymentOrderCollection).where('purpose', '==', PURPOSE).get();
@@ -186,7 +219,7 @@ async function refund(
 
   await db.runTransaction(async (tx) => {
     // ---- reads (all before the first write) ----
-    const taskNotes = await readOpenTask(tx, c);
+    const task = await readUnclaimedTask(tx, c);
     if ((await tx.get(paymentRef)).exists) throw refusal('already-refunded');
     const refunds = await tx.get(db.collection(PaymentCollection).where('invoiceKey', '==', invoice.okey));
     if (refunds.docs.some(d => tenantsOf(d.data()).includes(tenantId) && isLiveRefund(d.data()))) throw refusal('already-refunded');
@@ -225,14 +258,16 @@ async function refund(
       expenseKey: '', ocrResultKey: '', invoiceKey: invoice.okey, needsReview,
     });
     tx.update(invoiceRef, { notes: appendInvoiceNote(str(inv['notes']), s.refundRappen, exitViewDate, INVOICE_NOTES_LENGTH) });
-    writeTaskDone(tx, c, taskNotes, decision);
+    writeTaskDone(tx, c, task, decision);
   });
   return { paymentKey, needsReview, decision };
 }
 
 /**
- * §5.2: cancel the native fee invoice, then write the pro-rata replacement draft and close the task in
- * one transaction. A failed cancel throws before anything else is written.
+ * §5.2 in three steps: (1) claim the open task for the original invoice, (2) cancel the invoice,
+ * (3) write the pro-rata replacement draft and close the task in one transaction that requires the
+ * claim to still be ours. A failed storno that left the invoice uncancelled releases the claim and
+ * rethrows; nothing else is written.
  */
 async function adjustInvoice(
   db: Firestore, ctx: ExitContext, s: ExitSettlement, tenantId: string, uid: string | undefined, note: string, exitViewDate: string, c: CloseTask,
@@ -240,6 +275,15 @@ async function adjustInvoice(
   const original = s.invoice;
   const usage = ctx.input.schedule?.positions.find(p => p.proRata)?.usage;
   if (!original || s.shape !== 'native' || !usage) throw refusal('choice-not-offered');
+  const claim = claimPatch(original.okey);
+
+  // (1) claim
+  await db.runTransaction(async (tx) => {
+    const t = await readOpenTask(tx, c);
+    const current = claimedInvoiceKey(t);
+    if (current && current !== original.okey) throw refusal('state-changed', `task is claimed for invoice ${current}`);
+    if (!current) tx.update(c.taskRef, claim);
+  });
 
   const invoiceRef = db.collection(InvoiceCollection).doc(original.okey);
   const inv = (await invoiceRef.get()).data();
@@ -250,9 +294,15 @@ async function adjustInvoice(
     usage, s.exitYear, s.dueFr, s.months, s.yearlyFr,
   );
 
-  // rethrows on failure: no replacement, task stays open
-  await cancelInvoiceCore(db, { tenantId, uid, invoiceKey: original.okey, reason: stornoReason(exitViewDate), date: c.today });
+  // (2) storno — idempotent: a resumed run finds the storno booking and gets the stored result
+  try {
+    await cancelInvoiceCore(db, { tenantId, uid, invoiceKey: original.okey, reason: stornoReason(exitViewDate), date: c.today });
+  } catch (err) {
+    await releaseClaimIfNotCancelled(db, c, invoiceRef, claim.linkKey);
+    throw err;
+  }
 
+  // (3) replacement + task done
   const replKey = replacementInvoiceId(original.okey);
   const replRef = db.collection(InvoiceCollection).doc(replKey);
   const invoice = new InvoiceModel(tenantId);
@@ -276,7 +326,8 @@ async function adjustInvoice(
   invoice.index = getInvoiceIndex(invoice);
 
   await db.runTransaction(async (tx) => {
-    const taskNotes = await readOpenTask(tx, c);
+    const t = await readOpenTask(tx, c);
+    if (claimedInvoiceKey(t) !== original.okey) throw refusal('state-changed', `task lost its claim for invoice ${original.okey}`);
     const exists = (await tx.get(replRef)).exists;
     if (!exists) {
       tx.create(replRef, withoutUndefined(removeKeyFromOkrModel(invoice)));
@@ -288,35 +339,24 @@ async function adjustInvoice(
         tx.set(db.collection(InvoicePositionCollection).doc(`${replKey}-${index}`), withoutUndefined(removeKeyFromOkrModel(position)));
       });
     }
-    writeTaskDone(tx, c, taskNotes, note);
+    // the done task links to the draft the treasurer reviews next
+    writeTaskDone(tx, c, t, note, claimPatch(replKey));
   });
   return replKey;
 }
 
-/**
- * A retry after a crash between the storno and the replacement: the cancelled invoice is no longer a
- * candidate of `loadExitContext`. Feed it back in (positions included) and recompute; undefined when
- * there is nothing to resume.
- */
-async function resumeAdjust(db: Firestore, ctx: ExitContext, s: ExitSettlement): Promise<ExitSettlement | undefined> {
-  const memberKey = str(ctx.membership.memberKey);
-  if (!memberKey) return undefined;
-  const exitViewDate = convertDateFormatToString(ctx.membership.dateOfExit, DateFormat.StoreDate, DateFormat.ViewDate, false);
-  const snap = await db.collection(InvoiceCollection).where('receiver.key', '==', memberKey).get();
-  const docs = snap.docs.map(d => ({ okey: d.id, data: d.data() }));
-  const keys = resumableCancelled(docs, ctx.input.booksId, ctx.tenantId, stornoReason(exitViewDate));
-  const fresh: ReturnType<typeof toInvoiceFacts>[] = [];
-  for (const key of keys) {
-    if ((await db.collection(InvoiceCollection).doc(replacementInvoiceId(key)).get()).exists) continue;
-    const pos = await db.collection(InvoicePositionCollection).where('invoiceKey', '==', key).get();
-    const data = docs.find(d => d.okey === key)?.data ?? {};
-    fresh.push(toInvoiceFacts(key, data, pos.docs.map(p => p.data()).filter(p => p['isArchived'] !== true && tenantsOf(p).includes(ctx.tenantId))));
+/** After a failed storno: drop our claim, but only when the invoice is verifiably not cancelled. */
+async function releaseClaimIfNotCancelled(db: Firestore, c: CloseTask, invoiceRef: DocumentReference, linkKey: string): Promise<void> {
+  try {
+    await db.runTransaction(async (tx) => {
+      const inv = (await tx.get(invoiceRef)).data();
+      const t = (await tx.get(c.taskRef)).data();
+      if (!inv || str(inv['state']) === 'cancelled' || !t || isDone(t) || str(t['linkKey']) !== linkKey) return;
+      tx.update(c.taskRef, { linkKey: '', linkModelType: '' });
+    });
+  } catch (e) {
+    logger.error(`${CF_NAME}: claim on task ${c.taskRef.id} not released`, e);
   }
-  if (fresh.length === 0) return undefined;
-  const resumed = computeExitSettlement({ ...ctx.input, invoices: [...ctx.input.invoices, ...fresh] });
-  const hit = resumed.invoice && keys.includes(resumed.invoice.okey) && resumed.choices.includes('adjust-invoice');
-  if (hit) logger.warn(`${CF_NAME}: resuming adjust-invoice for membership ${ctx.membershipKey} on cancelled invoice ${resumed.invoice?.okey}`);
-  return hit ? resumed : s;
 }
 
 /**
@@ -326,10 +366,10 @@ async function resumeAdjust(db: Firestore, ctx: ExitContext, s: ExitSettlement):
 async function extend(db: Firestore, ctx: ExitContext, s: ExitSettlement, note: string, c: CloseTask): Promise<void> {
   const membershipRef = db.collection(MembershipCollection).doc(ctx.membershipKey);
   await db.runTransaction(async (tx) => {
-    const taskNotes = await readOpenTask(tx, c);
+    const task = await readUnclaimedTask(tx, c);
     const m = (await tx.get(membershipRef)).data();
     if (!m || str(m['dateOfExit']) !== str(ctx.membership.dateOfExit)) throw refusal('state-changed', `membership ${ctx.membershipKey} changed meanwhile`);
-    writeTaskDone(tx, c, taskNotes, note);
+    writeTaskDone(tx, c, task, note);
     tx.update(membershipRef, { dateOfExit: `${s.exitYear}1231`, relLog: extendedRelLog(str(m['relLog']), s.exitYear) });
   });
 }

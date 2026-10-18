@@ -218,7 +218,8 @@
     "billBooked": "Facture fournisseur comptabilisée, écriture n°",
     "billPayment": "Paiement saisi",
     "billPaymentUnlinked": "Lien de paiement supprimé",
-    "billDetailsUpdated": "Détails de la facture fournisseur modifiés"
+    "billDetailsUpdated": "Détails de la facture fournisseur modifiés",
+    "exitSettled": "Départ réglé :"
   },
   "voucher": {
     "title": "Justificatifs",
