@@ -9,15 +9,15 @@ import { captureMessage } from '@sentry/angular';
 import { AlertController, ModalController, ToastController } from '@ionic/angular';
 
 import { AppStore } from '@okr/shared-feature';
-import { AvatarInfo, GroupModel, MatrixMessage, MatrixReadReceipt, MatrixRoom, MatrixUser, PersonModel } from '@okr/shared-models';
+import { AvatarInfo, ChatReminderModel, GroupModel, MatrixMessage, MatrixReadReceipt, MatrixRoom, MatrixUser, PersonModel } from '@okr/shared-models';
 import { debugMessage, fileSizeUnit, fill, formatDuration, getAvatarInfo, hasRole, isKioskOnly, warn } from '@okr/shared-util-core';
 import { AlertService, copyToClipboardWithConfirmation, resourceParams } from '@okr/shared-util-angular';
 import { I18nService } from '@okr/shared-i18n';
 
 import { ActivityService } from '@okr/activity-data-access';
 import { AvatarService } from '@okr/avatar-data-access';
-import { MatrixChatService, MatrixJumpResult, MatrixPollData } from '@okr/chat-data-access';
-import { AvailablePinboard, AdhocChatFormModel, newAdhocChatForm, PollDef, filterRoomsOfTenant, findSupportRoom, serverNameOf, MATRIX_CHAT_I18N_KEYS, MatrixChatI18n, MentionRef, callableErrorCode, pinboardBroadcastCount, pinboardReplyDraft, isAlbumVideoFile, isVideoLimitError, isVideoUploadError, isOwnNotesRoom, NotesRoomOwner, buildBookmarkContent, videoAlbumFallsBackToSynapse } from '@okr/chat-util';
+import { ChatReminderService, MatrixChatService, MatrixJumpResult, MatrixPollData } from '@okr/chat-data-access';
+import { AvailablePinboard, AdhocChatFormModel, newAdhocChatForm, PollDef, filterRoomsOfTenant, findSupportRoom, serverNameOf, MATRIX_CHAT_I18N_KEYS, MatrixChatI18n, MentionRef, callableErrorCode, pinboardBroadcastCount, pinboardReplyDraft, isAlbumVideoFile, isVideoLimitError, isVideoUploadError, isOwnNotesRoom, NotesRoomOwner, buildBookmarkContent, videoAlbumFallsBackToSynapse, readBookmark, reminderTitle } from '@okr/chat-util';
 
 import { RoomEditModal } from './room-edit.modal';
 
@@ -56,6 +56,7 @@ export const _MatrixChatStore = signalStore(
     appStore: inject(AppStore),
     activityService: inject(ActivityService),
     matrixService: inject(MatrixChatService),
+    reminderService: inject(ChatReminderService),
     avatarService: inject(AvatarService),
     modalController: inject(ModalController),
     alertController: inject(AlertController),
@@ -404,6 +405,28 @@ export const _MatrixChatStore = signalStore(
       && state.notesRoomRequestedFor() !== `${state.appStore.tenantId()}:${state.appStore.currentUser()?.personKey}`
       && (state.syncState() === 'PREPARED' || state.syncState() === 'SYNCING')
       && !isKioskOnly(state.appStore.currentUser())),
+  })),
+
+  // Pending reminders (spec 1.104 §5): only subscribed while the notes room is open, so the
+  // listener (and its read cost) exists exactly where the bell is shown. The query mirrors the
+  // rules: own person, own tenant, pending.
+  withProps((store) => ({
+    pendingReminders: rxResource({
+      params: resourceParams(() => ({
+        active: store.isCurrentRoomNotes(),
+        tenantId: store.appStore.tenantId() ?? '',
+        personKey: store.appStore.currentUser()?.personKey ?? '',
+      })),
+      stream: ({ params }) => params.active && params.tenantId && params.personKey
+        ? store.reminderService.listPending(params.personKey, params.tenantId)
+        : of([] as ChatReminderModel[]),
+    }),
+  })),
+
+  withComputed((state) => ({
+    /** Pending reminders by the bookmark entry they belong to (`bookmarkEventId`). */
+    remindersByEntry: computed((): Map<string, ChatReminderModel> =>
+      new Map((state.pendingReminders.value() ?? []).map(r => [r.bookmarkEventId, r] as const))),
   })),
 
   withMethods((store) => {
@@ -1334,6 +1357,10 @@ export const _MatrixChatStore = signalStore(
         if (!roomId) return;
         const ok = await store.alertService.confirm(store.i18n.msg_delete_confirm(), true);
         if (!ok) return;
+        // A bookmark card with a pending reminder: cancel the reminder BEFORE redacting the entry
+        // (spec 1.104 §5.2), else the sweep would reply to a deleted entry. A failed cancel keeps the card.
+        const pending = store.isCurrentRoomNotes() ? store.remindersByEntry().get(message.eventId) : undefined;
+        if (pending && !(await store.reminderService.cancel(pending, store.i18n.reminder_error()))) return;
         try {
           await store.matrixService.deleteMessage(roomId, message.eventId);
           await store.alertService.showToast(store.i18n.msg_delete_conf());
@@ -1367,6 +1394,63 @@ export const _MatrixChatStore = signalStore(
           await store.alertService.showToast(store.i18n.bookmark_error());
           return '';
         }
+      },
+
+      /**
+       * «Merken mit Erinnerung»: post the bookmark entry first, then create the reminder that
+       * points at it (spec 1.104 §5.2). If the reminder cannot be saved the bookmark stays —
+       * the user keeps the note and is told the reminder failed.
+       */
+      async bookmarkWithReminder(message: MatrixMessage, dueAt: number): Promise<void> {
+        const entryId = await this.bookmarkMessage(message);
+        if (!entryId) return;
+        try {
+          const tenantId = store.appStore.tenantId();
+          const personKey = store.appStore.currentUser()?.personKey;
+          if (!tenantId || !personKey) throw new Error('MatrixChatStore.bookmarkWithReminder: no tenant or user');
+          const roomId = message.roomId || store.currentRoomId() || '';
+          const roomName = (store.rooms().find(r => r.roomId === roomId))?.name ?? '';
+          const reminder = new ChatReminderModel(tenantId);
+          reminder.personKey = personKey;
+          reminder.dueAt = dueAt;
+          reminder.notesRoomId = await this.ensureNotesRoomId();
+          reminder.bookmarkEventId = entryId;
+          reminder.roomId = roomId;
+          reminder.eventId = message.eventId;
+          reminder.title = reminderTitle(message.senderName, roomName);
+          await store.reminderService.create(reminder, store.i18n.reminder_error());
+        } catch (error) {
+          console.error('MatrixChatStore.bookmarkWithReminder: Failed:', error);
+          await store.alertService.showToast(store.i18n.reminder_error());
+        }
+      },
+
+      /**
+       * Change (`dueAt` set) or remove (`undefined`) the reminder of a bookmark card. A card
+       * without a reminder gets a new one, built from the entry's own bookmark data.
+       */
+      async setReminder(entry: MatrixMessage, dueAt: number | undefined): Promise<void> {
+        const existing = store.remindersByEntry().get(entry.eventId);
+        const errorMessage = store.i18n.reminder_error();
+        if (existing) {
+          if (dueAt === undefined) await store.reminderService.cancel(existing, errorMessage);
+          else await store.reminderService.reschedule(existing, dueAt, errorMessage);
+          return;
+        }
+        if (dueAt === undefined) return;
+        const bookmark = readBookmark(entry.content);
+        const tenantId = store.appStore.tenantId();
+        const personKey = store.appStore.currentUser()?.personKey;
+        if (!bookmark || !tenantId || !personKey) return;
+        const reminder = new ChatReminderModel(tenantId);
+        reminder.personKey = personKey;
+        reminder.dueAt = dueAt;
+        reminder.notesRoomId = entry.roomId || store.currentRoomId() || '';
+        reminder.bookmarkEventId = entry.eventId;
+        reminder.roomId = bookmark.roomId;
+        reminder.eventId = bookmark.eventId;
+        reminder.title = reminderTitle(bookmark.senderName, bookmark.roomName);
+        await store.reminderService.create(reminder, errorMessage);
       },
 
       /**

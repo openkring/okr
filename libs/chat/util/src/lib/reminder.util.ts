@@ -31,3 +31,20 @@ export function availablePresets(now: Date): ReminderPreset[] {
   const tonightCutoff = new Date(now.getFullYear(), now.getMonth(), now.getDate(), TONIGHT_HOUR - 1, 0, 0, 0).getTime();
   return REMINDER_PRESETS.filter((p) => p !== 'tonight' || now.getTime() < tonightCutoff);
 }
+
+const TITLE_MAX = 200;
+
+/**
+ * The label a reminder carries (spec 1.104 §5.1): «<sender> in «<room>»», cut to 200 code points
+ * (the rules cap `title` at 200). The sweep posts it as «Erinnerung: <title>». No message text.
+ */
+export function reminderTitle(senderName: string, roomName: string): string {
+  return Array.from(`${senderName} in «${roomName}»`.replace(/\s+/g, ' ').trim()).slice(0, TITLE_MAX).join('');
+}
+
+/** Local wall-clock ISO string without zone (`2026-10-18T14:05:00`), the form `ion-datetime` takes. */
+export function toLocalIso(ms: number): string {
+  const d = new Date(ms);
+  const p = (n: number): string => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}:00`;
+}

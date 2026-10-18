@@ -136,7 +136,8 @@
       "saved": "Guardado — en «Notas para mí»",
       "open": "Abrir",
       "savedPrefix": "Guardado:",
-      "error": "No ha funcionado. Inténtalo de nuevo."
+      "error": "No ha funcionado. Inténtalo de nuevo.",
+      "remindAction": "Guardar con recordatorio"
     },
     "jump": {
       "gone": "Este mensaje ya no está disponible",
@@ -178,6 +179,18 @@
       "confirm": "¿Desea realmente eliminar el mensaje ?",
       "conf": "El mensaje se ha eliminado.",
       "error": "No se ha podido eliminar el mensaje."
+    },
+    "reminder": {
+      "inOneHour": "En 1 hora",
+      "tonight": "Esta noche (18:00)",
+      "tomorrow": "Mañana por la mañana (08:00)",
+      "nextMonday": "El próximo lunes (08:00)",
+      "pick": "Elegir fecha y hora…",
+      "remove": "Quitar el recordatorio",
+      "action": "Recordatorio…",
+      "header": "Recuérdamelo",
+      "confirm": "OK",
+      "error": "No se pudo guardar el recordatorio. Inténtalo de nuevo."
     }
   },
   "thread": {

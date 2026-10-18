@@ -281,6 +281,15 @@ const MENTION_AVATAR_SIZE = 36;
       -webkit-box-orient: vertical;
     }
 
+    .bookmark-card-reminder {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 4px;
+      font-size: 0.75rem;
+      color: var(--ion-color-primary);
+    }
+
     .message-video {
       max-width: 100%;
       /* Cap the height so a portrait phone clip cannot fill the whole timeline. */
@@ -600,6 +609,13 @@ const MENTION_AVATAR_SIZE = 36;
                                 <div class="bookmark-card-header">{{ bookmark.roomName }} · {{ formatDate(bookmark.originTs) }}</div>
                                 <div class="bookmark-card-sender">{{ bookmark.senderName }}</div>
                                 <p class="bookmark-card-snippet">{{ bookmark.snippet }}</p>
+                                @let due = reminders()?.get(item.eventId);
+                                @if (due) {
+                                  <div class="bookmark-card-reminder">
+                                    <ion-icon src="{{ 'alarm' | svgIcon }}" />
+                                    {{ formatDate(due) }} {{ formatTime(due) }}
+                                  </div>
+                                }
                               </div>
                             } @else if (videoKey) {
                               <!-- An album video (spec 1.82 §8): a poster card instead of the bare link.
@@ -808,6 +824,8 @@ export class MatrixMessageList {
   public readonly serverName = input<string>('');
   /** True in the user's own notes room: only there are bookmark entries rendered as cards. */
   public readonly isNotesRoom = input(false);
+  /** Pending reminders in the notes room: entry event id → due time (epoch ms); shown as a bell on the card. */
+  public readonly reminders = input<Map<string, number>>();
   /** The message a jump landed on: scrolled to the centre and highlighted for two seconds. */
   public readonly highlightEventId = input<string>();
   /** True while the list shows a jumped (non-live) timeline: no follow-to-bottom, «Zum neusten» shown. */

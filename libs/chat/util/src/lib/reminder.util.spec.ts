@@ -1,7 +1,7 @@
 process.env.TZ = 'Europe/Zurich';
 
 import { describe, expect, it } from 'vitest';
-import { availablePresets, reminderDueAt } from './reminder.util';
+import { availablePresets, reminderDueAt, reminderTitle, toLocalIso } from './reminder.util';
 
 describe('reminderDueAt', () => {
   it('inOneHour adds one hour', () => {
@@ -50,5 +50,20 @@ describe('availablePresets', () => {
 
   it('always offers the other presets', () => {
     expect(availablePresets(new Date(2026, 9, 19, 23, 0))).toEqual(['inOneHour', 'tomorrowMorning', 'nextMonday']);
+  });
+});
+
+describe('reminderTitle', () => {
+  it('formats sender and room', () => {
+    expect(reminderTitle('Anna', 'Vorstand')).toBe('Anna in «Vorstand»');
+  });
+  it('cuts to 200 code points', () => {
+    expect(Array.from(reminderTitle('A', '😀'.repeat(300))).length).toBe(200);
+  });
+});
+
+describe('toLocalIso', () => {
+  it('formats local wall clock without zone', () => {
+    expect(toLocalIso(new Date(2026, 9, 18, 7, 5).getTime())).toBe('2026-10-18T07:05:00');
   });
 });

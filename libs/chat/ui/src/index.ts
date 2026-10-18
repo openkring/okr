@@ -9,3 +9,4 @@ export * from './lib/poll-detail.modal';
 export * from './lib/image-lightbox.modal';
 export * from './lib/matrix-read-receipt-strip';
 export * from './lib/mention-autocomplete';
+export * from './lib/reminder-picker';

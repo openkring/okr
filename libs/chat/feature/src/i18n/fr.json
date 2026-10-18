@@ -136,7 +136,8 @@
       "saved": "Gardé — dans «Notes pour moi»",
       "open": "Ouvrir",
       "savedPrefix": "Gardé :",
-      "error": "Ça n'a pas marché. Essaie encore une fois."
+      "error": "Ça n'a pas marché. Essaie encore une fois.",
+      "remindAction": "Garder avec un rappel"
     },
     "jump": {
       "gone": "Ce message n'est plus disponible",
@@ -178,6 +179,18 @@
       "confirm": "Voulez-vous vraiment supprimer le message ?",
       "conf": "Le message a été supprimé.",
       "error": "Le message n'a pas pu être supprimé."
+    },
+    "reminder": {
+      "inOneHour": "Dans 1 heure",
+      "tonight": "Ce soir (18:00)",
+      "tomorrow": "Demain matin (08:00)",
+      "nextMonday": "Lundi prochain (08:00)",
+      "pick": "Choisir la date et l'heure…",
+      "remove": "Supprimer le rappel",
+      "action": "Rappel…",
+      "header": "Me le rappeler",
+      "confirm": "OK",
+      "error": "Le rappel n'a pas pu être enregistré. Essaie encore une fois."
     }
   },
   "thread": {

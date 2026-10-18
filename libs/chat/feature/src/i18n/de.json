@@ -136,7 +136,8 @@
       "saved": "Gemerkt — in «Notizen an mich»",
       "open": "Öffnen",
       "savedPrefix": "Gemerkt:",
-      "error": "Das hat nicht geklappt. Versuche es bitte noch einmal."
+      "error": "Das hat nicht geklappt. Versuche es bitte noch einmal.",
+      "remindAction": "Merken mit Erinnerung"
     },
     "jump": {
       "gone": "Diese Nachricht ist nicht mehr verfügbar",
@@ -178,6 +179,18 @@
       "confirm": "Soll die Nachricht wirklich gelöscht werden ?",
       "conf": "Die Nachricht wurde gelöscht.",
       "error": "Die Nachricht konnte nicht gelöscht werden."
+    },
+    "reminder": {
+      "inOneHour": "In 1 Stunde",
+      "tonight": "Heute Abend (18:00)",
+      "tomorrow": "Morgen früh (08:00)",
+      "nextMonday": "Nächsten Montag (08:00)",
+      "pick": "Datum und Zeit wählen…",
+      "remove": "Erinnerung entfernen",
+      "action": "Erinnerung…",
+      "header": "Erinnern",
+      "confirm": "OK",
+      "error": "Die Erinnerung konnte nicht gespeichert werden. Versuche es bitte noch einmal."
     }
   },
   "thread": {

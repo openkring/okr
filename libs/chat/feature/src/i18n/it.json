@@ -136,7 +136,8 @@
       "saved": "Salvato — in «Note per me»",
       "open": "Apri",
       "savedPrefix": "Salvato:",
-      "error": "Non ha funzionato. Riprova."
+      "error": "Non ha funzionato. Riprova.",
+      "remindAction": "Salva con promemoria"
     },
     "jump": {
       "gone": "Questo messaggio non è più disponibile",
@@ -178,6 +179,18 @@
       "confirm": "Eliminare davvero il messaggio ?",
       "conf": "Il messaggio è stato eliminato.",
       "error": "Non è stato possibile eliminare il messaggio."
+    },
+    "reminder": {
+      "inOneHour": "Tra 1 ora",
+      "tonight": "Stasera (18:00)",
+      "tomorrow": "Domani mattina (08:00)",
+      "nextMonday": "Lunedì prossimo (08:00)",
+      "pick": "Scegli data e ora…",
+      "remove": "Rimuovi il promemoria",
+      "action": "Promemoria…",
+      "header": "Ricordamelo",
+      "confirm": "OK",
+      "error": "Non è stato possibile salvare il promemoria. Riprova."
     }
   },
   "thread": {

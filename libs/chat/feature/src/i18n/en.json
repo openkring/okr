@@ -136,7 +136,8 @@
       "saved": "Saved — in «Notes to self»",
       "open": "Open",
       "savedPrefix": "Saved:",
-      "error": "That did not work. Please try again."
+      "error": "That did not work. Please try again.",
+      "remindAction": "Save with reminder"
     },
     "jump": {
       "gone": "This message is no longer available",
@@ -178,6 +179,18 @@
       "confirm": "Do you really want to delete the message ?",
       "conf": "The message was deleted.",
       "error": "The message could not be deleted."
+    },
+    "reminder": {
+      "inOneHour": "In 1 hour",
+      "tonight": "This evening (18:00)",
+      "tomorrow": "Tomorrow morning (08:00)",
+      "nextMonday": "Next Monday (08:00)",
+      "pick": "Pick date and time…",
+      "remove": "Remove reminder",
+      "action": "Reminder…",
+      "header": "Remind me",
+      "confirm": "OK",
+      "error": "The reminder could not be saved. Please try again."
     }
   },
   "thread": {

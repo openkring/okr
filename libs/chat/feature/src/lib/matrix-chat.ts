@@ -14,9 +14,9 @@ import { MenuService } from '@okr/cms-menu-data-access';
 import { VideoUrlService } from '@okr/content-document-data-access';
 import { videoDocKeyOf, videoLink } from '@okr/content-document-util';
 
-import { MatrixMessageInput, MatrixMessageList, MatrixRoomList, PollDetailModal } from '@okr/chat-ui';
+import { MatrixMessageInput, MatrixMessageList, MatrixRoomList, PollDetailModal, ReminderPicker } from '@okr/chat-ui';
 import { MatrixPollData } from '@okr/chat-data-access';
-import { buildEditedPollAnswers, canEditPoll, parsePollContent, convertHeicToJpeg, groupRoomAliasLocalpart, shouldDeferAskRoom, isSupportedImageFile, isUploadTooLargeError, filterRoomsByName, resolveInitialRoomId, readBookmark, isTrustedBookmarkEntry, ChatBookmark, resolvePermalinkTarget, shouldSendReceipt, MessageDraft, UploadTooLargeError } from '@okr/chat-util';
+import { buildEditedPollAnswers, canEditPoll, parsePollContent, convertHeicToJpeg, groupRoomAliasLocalpart, shouldDeferAskRoom, isSupportedImageFile, isUploadTooLargeError, filterRoomsByName, resolveInitialRoomId, readBookmark, isTrustedBookmarkEntry, ChatBookmark, resolvePermalinkTarget, shouldSendReceipt, MessageDraft, UploadTooLargeError, availablePresets, reminderDueAt, ReminderPreset } from '@okr/chat-util';
 
 import { MatrixChatStore } from './matrix-chat.store';
 import { PollCreateModal } from './poll-create.modal';
@@ -446,6 +446,7 @@ function rejectionReasons(results: PromiseSettledResult<unknown>[]): unknown[] {
                     (permalinkClicked)="openPermalink($event)"
                     [serverName]="store.homeServer()"
                     [isNotesRoom]="store.isCurrentRoomNotes()"
+                    [reminders]="reminderTimes()"
                     [failedMediaIds]="store.failedMediaIds()"
                     (imageClicked)="onImageClicked($event)"
                     (mediaRetry)="store.retryMedia($event)"
@@ -587,6 +588,7 @@ function rejectionReasons(results: PromiseSettledResult<unknown>[]): unknown[] {
                     (permalinkClicked)="openPermalink($event)"
                     [serverName]="store.homeServer()"
                     [isNotesRoom]="store.isCurrentRoomNotes()"
+                    [reminders]="reminderTimes()"
                     [failedMediaIds]="store.failedMediaIds()"
                     (imageClicked)="onImageClicked($event)"
                     (mediaRetry)="store.retryMedia($event)"
@@ -1662,6 +1664,61 @@ export class MatrixChat implements OnDestroy {
     await this.store.answerCall();
   }
 
+  /** Pending reminders as entry event id → due time, for the bell on the bookmark cards. */
+  protected readonly reminderTimes = computed(() =>
+    new Map([...this.store.remindersByEntry()].map(([entryId, r]) => [entryId, r.dueAt] as const)));
+
+  /**
+   * Ask when to be reminded: a sheet with the presets that still lie in the future (never a
+   * past instant), «Datum und Zeit wählen…» (opens the picker) and, on a card that already has
+   * a reminder, «Erinnerung entfernen».
+   * @returns epoch ms; `null` = remove the reminder; `undefined` = cancelled
+   */
+  private async chooseReminder(hasReminder: boolean): Promise<number | null | undefined> {
+    const now = new Date();
+    const i18n = this.store.i18n;
+    const labels: Record<ReminderPreset, string> = {
+      inOneHour: i18n.reminder_in_one_hour(),
+      tonight: i18n.reminder_tonight(),
+      tomorrowMorning: i18n.reminder_tomorrow(),
+      nextMonday: i18n.reminder_next_monday(),
+    };
+    const options = createActionSheetOptions(i18n.reminder_header());
+    for (const preset of availablePresets(now)) {
+      options.buttons.push(createActionSheetButton(`reminder.${preset}`, labels[preset], this.imgixBaseUrl, 'alarm'));
+    }
+    options.buttons.push(createActionSheetButton('reminder.pick', i18n.reminder_pick(), this.imgixBaseUrl, 'calendar'));
+    if (hasReminder) options.buttons.push(createActionSheetButton('reminder.remove', i18n.reminder_remove(), this.imgixBaseUrl, 'trash'));
+    options.buttons.push(createActionSheetButton('cancel', i18n.cancel(), this.imgixBaseUrl, 'cancel'));
+    const sheet = await this.actionSheetController.create(options);
+    await sheet.present();
+    const { data } = await sheet.onDidDismiss();
+    const action: string | undefined = data?.action;
+    if (!action || action === 'cancel') return undefined;
+    if (action === 'reminder.remove') return null;
+    if (action === 'reminder.pick') return this.pickReminderTime();
+    const preset = action.slice('reminder.'.length) as ReminderPreset;
+    return reminderDueAt(preset, new Date());
+  }
+
+  /** Programmatically opened picker, so there is no trigger element that could be missing. */
+  private async pickReminderTime(): Promise<number | undefined> {
+    const i18n = this.store.i18n;
+    const modal = await this.modalController.create({
+      component: ReminderPicker,
+      componentProps: {
+        title: i18n.reminder_header(),
+        confirmLabel: i18n.reminder_confirm(),
+        cancelLabel: i18n.cancel(),
+        earliest: Date.now(),
+        initial: Date.now() + 3_600_000,
+      },
+    });
+    await modal.present();
+    const { data, role } = await modal.onDidDismiss<number>();
+    return role === 'confirm' && typeof data === 'number' ? data : undefined;
+  }
+
   /**
    * Fills the ActionSheet with all possible actions, considering the user permissions.
    * @param message the Matrix message data
@@ -1675,6 +1732,9 @@ export class MatrixChat implements OnDestroy {
     const bookmark = isTrustedBookmarkEntry(inNotes, message.sender, currentUserId) ? readBookmark(message.content) : undefined;
     if (bookmark) { // bookmark card: open the original or delete the entry
       actionSheetOptions.buttons.push(createActionSheetButton('chat.message.bookmarkOpen', this.store.i18n.bookmark_open(), this.imgixBaseUrl, 'link'));
+      if (!isKioskOnly(this.currentUser())) {
+        actionSheetOptions.buttons.push(createActionSheetButton('chat.message.reminder', this.store.i18n.reminder_action(), this.imgixBaseUrl, 'alarm'));
+      }
       actionSheetOptions.buttons.push(createActionSheetButton('chat.message.delete', this.store.i18n.msg_delete(), this.imgixBaseUrl, 'trash'));
       actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
       return;
@@ -1714,6 +1774,7 @@ export class MatrixChat implements OnDestroy {
 
     if (canBookmark) {
       actionSheetOptions.buttons.push(createActionSheetButton('chat.message.bookmark', this.store.i18n.bookmark_action(), this.imgixBaseUrl, 'note'));
+      actionSheetOptions.buttons.push(createActionSheetButton('chat.message.bookmarkRemind', this.store.i18n.bookmark_remind_action(), this.imgixBaseUrl, 'alarm'));
     }
 
     if (isAuthor) { // author of message
@@ -1765,6 +1826,18 @@ export class MatrixChat implements OnDestroy {
         case 'chat.message.bookmark':
           await this.store.bookmarkMessage(message);
           break;
+        case 'chat.message.bookmarkRemind': {
+          const dueAt = await this.chooseReminder(false);
+          if (typeof dueAt === 'number') await this.store.bookmarkWithReminder(message, dueAt);
+          break;
+        }
+        case 'chat.message.reminder': {
+          if (!isTrustedBookmarkEntry(this.store.isCurrentRoomNotes(), message.sender, this.matrixUserId())) break;
+          const dueAt = await this.chooseReminder(this.store.remindersByEntry().has(message.eventId));
+          if (dueAt === undefined) break; // cancelled
+          await this.store.setReminder(message, dueAt ?? undefined);
+          break;
+        }
         case 'chat.message.bookmarkOpen': {
           const bm = isTrustedBookmarkEntry(this.store.isCurrentRoomNotes(), message.sender, this.matrixUserId()) ? readBookmark(message.content) : undefined;
           if (bm) this.onBookmarkClicked(bm);
