@@ -35,6 +35,7 @@ export class InvoiceModel implements OkrModel, SearchableModel, TaggedModel {
   public bookingKey = '';           // the issue booking (BookingModel okey `invoice-{key}`); '' = bexio/migrated
   public bookingKeys: string[] = [];  // bexio/migrated only: the bexio journal bookings of the invoice (one per invoice line), linked by scripts/link-bexio-ledger.mjs
   public documentKey = '';          // the invoice PDF (finance-documents okey, spec 1.68)
+  public replacesInvoiceKey = '';   // ref to InvoiceModel; the cancelled invoice this one replaces; '' = none (spec 1.105)
   public payments: InvoicePayment[] = [];   // received payments, oldest first
   public reminders: InvoiceReminder[] = []; // Mahnungen, oldest first
   public sentAt = '';               // StoreDate (yyyyMMdd) of the last send of the invoice PDF (email or post, see sentVia); '' = never (spec 1.76 D13)

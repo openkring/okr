@@ -26,6 +26,7 @@ export class PaymentModel implements OkrModel {
   public reference = '';                          // QR-ref / ISO11649 / free text
   public referenceType: PaymentReferenceType = '';
   public expenseKey = '';                         // ref to ExpenseModel; '' = not created from an expense (spec 1.80)
+  public invoiceKey = '';                         // ref to InvoiceModel; the debtor invoice this payment refunds; '' = none (spec 1.105)
   public ocrResultKey = '';                       // ref to OcrResultModel; the receipt an issuer payment was built from
   public needsReview = false;                     // true = creditor IBAN read from OCR text, blocks approval until confirmed
   public status: PaymentStatus = 'draft';

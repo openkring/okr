@@ -9,7 +9,7 @@ export type PaymentOrderStatus = 'draft' | 'approved' | 'transmitted' | 'accepte
 export type PaymentDeliveryMethod = 'pain001_download' | 'bexio_api' | 'ebics';
 
 /** 'expense-reimbursement' marks the collecting order that onExpenseDone appends to (spec 1.80 §4.1). */
-export type PaymentOrderPurpose = '' | 'expense-reimbursement';
+export type PaymentOrderPurpose = '' | 'expense-reimbursement' | 'membership-refund';
 
 // Groups one or more PaymentModel entries into a single bank submission.
 // One PaymentOrderModel = one pain.001 file (or equivalent for other delivery methods).
