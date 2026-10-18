@@ -11,6 +11,8 @@ export interface ChatBookmark {
   roomId: string;
   eventId: string;
   senderId: string;
+  /** Display name of the sender at save time (the original room may not be resolvable later). */
+  senderName: string;
   originTs: number;
   roomName: string;
   snippet: string;
@@ -87,11 +89,21 @@ export function buildBookmarkContent(
       roomId: message.roomId,
       eventId: message.eventId,
       senderId: message.sender,
+      senderName: message.senderName,
       originTs: message.timestamp,
       roomName,
       snippet,
     },
   };
+}
+
+/**
+ * Whether a message carrying the bookmark field may be rendered as a trusted card: only in the
+ * user's own notes room and only when the user posted it (any Matrix user can forge the field
+ * in a group room, with a fake room name and sender).
+ */
+export function isTrustedBookmarkEntry(isNotesRoom: boolean, sender: string | undefined, currentUserId: string | undefined): boolean {
+  return isNotesRoom && !!sender && !!currentUserId && sender === currentUserId;
 }
 
 /** The bookmark field of an event content, or undefined if absent or incomplete. */
@@ -102,6 +114,9 @@ export function readBookmark(content: unknown): ChatBookmark | undefined {
     roomId: raw.roomId,
     eventId: raw.eventId,
     senderId: typeof raw.senderId === 'string' ? raw.senderId : '',
+    senderName: typeof raw.senderName === 'string' && raw.senderName
+      ? raw.senderName
+      : (typeof raw.senderId === 'string' ? raw.senderId.replace(/^@/, '').split(':')[0] : ''),
     originTs: typeof raw.originTs === 'number' ? raw.originTs : 0,
     roomName: typeof raw.roomName === 'string' ? raw.roomName : '',
     snippet: typeof raw.snippet === 'string' ? raw.snippet : '',

@@ -9,7 +9,7 @@ import { MatrixMessage, MatrixReadReceipt, PersonModelName } from '@okr/shared-m
 import { AvatarService } from '@okr/avatar-data-access';
 import { MatrixReadReceiptStrip } from './matrix-read-receipt-strip';
 import { PollMessage } from './poll-message';
-import { decorateMentionPills, extractMentionLocalpart, formatMatrixDate, formatMatrixTime, groupMessages, ImageBatchGroup, isVideoMessage, linkifyText, readBookmark, ChatBookmark, MatrixChatI18n, MessageOrBatch } from '@okr/chat-util';
+import { decorateMentionPills, extractMentionLocalpart, formatMatrixDate, formatMatrixTime, groupMessages, ImageBatchGroup, isVideoMessage, linkifyText, readBookmark, isTrustedBookmarkEntry, ChatBookmark, MatrixChatI18n, MessageOrBatch } from '@okr/chat-util';
 
 /** imgix thumbnail size for a mention pill's avatar — 2x the 18px CSS box, for retina. */
 const MENTION_AVATAR_SIZE = 36;
@@ -558,7 +558,7 @@ const MENTION_AVATAR_SIZE = 36;
                                 (click)="onBookmarkCardClick($event, bookmark)"
                                 (keydown.enter)="onBookmarkCardClick($event, bookmark)">
                                 <div class="bookmark-card-header">{{ bookmark.roomName }} · {{ formatDate(bookmark.originTs) }}</div>
-                                <div class="bookmark-card-sender">{{ bookmarkSender(bookmark) }}</div>
+                                <div class="bookmark-card-sender">{{ bookmark.senderName }}</div>
                                 <p class="bookmark-card-snippet">{{ bookmark.snippet }}</p>
                               </div>
                             } @else if (videoKey) {
@@ -753,6 +753,8 @@ export class MatrixMessageList {
   /** A tap on an album video card: the docKey to play. */
   public readonly videoCardClicked = output<string>();
   public readonly bookmarkClicked = output<ChatBookmark>();
+  /** True in the user's own notes room: only there are bookmark entries rendered as cards. */
+  public readonly isNotesRoom = input(false);
 
   messagesContainer = viewChild<ElementRef>('messagesContainer');
 
@@ -943,12 +945,7 @@ export class MatrixMessageList {
   }
 
   protected bookmarkOf(item: MatrixMessage): ChatBookmark | undefined {
-    return readBookmark(item.content);
-  }
-
-  /** Display name of the bookmarked sender: the localpart of the Matrix id. */
-  protected bookmarkSender(bookmark: ChatBookmark): string {
-    return bookmark.senderId.replace(/^@/, '').split(':')[0];
+    return isTrustedBookmarkEntry(this.isNotesRoom(), item.sender, this.currentUserId()) ? readBookmark(item.content) : undefined;
   }
 
   protected onBookmarkCardClick(event: Event, bookmark: ChatBookmark): void {

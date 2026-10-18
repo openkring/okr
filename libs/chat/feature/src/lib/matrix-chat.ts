@@ -16,7 +16,7 @@ import { videoDocKeyOf, videoLink } from '@okr/content-document-util';
 
 import { MatrixMessageInput, MatrixMessageList, MatrixRoomList, PollDetailModal } from '@okr/chat-ui';
 import { MatrixPollData } from '@okr/chat-data-access';
-import { buildEditedPollAnswers, canEditPoll, parsePollContent, convertHeicToJpeg, groupRoomAliasLocalpart, shouldDeferAskRoom, isSupportedImageFile, isUploadTooLargeError, filterRoomsByName, resolveInitialRoomId, readBookmark, ChatBookmark, MessageDraft, UploadTooLargeError } from '@okr/chat-util';
+import { buildEditedPollAnswers, canEditPoll, parsePollContent, convertHeicToJpeg, groupRoomAliasLocalpart, shouldDeferAskRoom, isSupportedImageFile, isUploadTooLargeError, filterRoomsByName, resolveInitialRoomId, readBookmark, isTrustedBookmarkEntry, ChatBookmark, MessageDraft, UploadTooLargeError } from '@okr/chat-util';
 
 import { MatrixChatStore } from './matrix-chat.store';
 import { PollCreateModal } from './poll-create.modal';
@@ -438,6 +438,7 @@ function rejectionReasons(results: PromiseSettledResult<unknown>[]): unknown[] {
                     (loadOlder)="onLoadOlder()"
                     (messageClicked)="onMessageClicked($event)"
                     (bookmarkClicked)="onBookmarkClicked($event)"
+                    [isNotesRoom]="store.isCurrentRoomNotes()"
                     [failedMediaIds]="store.failedMediaIds()"
                     (imageClicked)="onImageClicked($event)"
                     (mediaRetry)="store.retryMedia($event)"
@@ -575,6 +576,7 @@ function rejectionReasons(results: PromiseSettledResult<unknown>[]): unknown[] {
                     (videoCardClicked)="onVideoCardClicked($event)"
                     (messageClicked)="onMessageClicked($event)"
                     (bookmarkClicked)="onBookmarkClicked($event)"
+                    [isNotesRoom]="store.isCurrentRoomNotes()"
                     [failedMediaIds]="store.failedMediaIds()"
                     (imageClicked)="onImageClicked($event)"
                     (mediaRetry)="store.retryMedia($event)"
@@ -1241,6 +1243,8 @@ export class MatrixChat implements OnDestroy {
    * Single entry point; Task 5/6 rewire this through the permalink jump to the exact message.
    */
   protected onBookmarkClicked(bookmark: ChatBookmark): void {
+    // The target must be a room this client knows; a forged or stale roomId does nothing.
+    if (!this.store.rooms().some(r => r.roomId === bookmark.roomId)) return;
     this.store.setCurrentRoom(bookmark.roomId);
   }
 
@@ -1592,7 +1596,7 @@ export class MatrixChat implements OnDestroy {
     const isPoll = message.type === 'org.matrix.msc3381.poll.start';
     const pinboard = this.store.currentPinboard();
     const inNotes = this.store.isCurrentRoomNotes();
-    const bookmark = inNotes ? readBookmark(message.content) : undefined;
+    const bookmark = isTrustedBookmarkEntry(inNotes, message.sender, currentUserId) ? readBookmark(message.content) : undefined;
     if (bookmark) { // bookmark card: open the original or delete the entry
       actionSheetOptions.buttons.push(createActionSheetButton('chat.message.bookmarkOpen', this.store.i18n.bookmark_open(), this.imgixBaseUrl, 'link'));
       actionSheetOptions.buttons.push(createActionSheetButton('chat.message.delete', this.store.i18n.msg_delete(), this.imgixBaseUrl, 'trash'));
@@ -1633,7 +1637,7 @@ export class MatrixChat implements OnDestroy {
     }
 
     if (canBookmark) {
-      actionSheetOptions.buttons.push(createActionSheetButton('chat.message.bookmark', this.store.i18n.bookmark_action(), this.imgixBaseUrl, 'bookmark'));
+      actionSheetOptions.buttons.push(createActionSheetButton('chat.message.bookmark', this.store.i18n.bookmark_action(), this.imgixBaseUrl, 'note'));
     }
 
     if (isAuthor) { // author of message
@@ -1686,7 +1690,7 @@ export class MatrixChat implements OnDestroy {
           await this.store.bookmarkMessage(message);
           break;
         case 'chat.message.bookmarkOpen': {
-          const bm = readBookmark(message.content);
+          const bm = isTrustedBookmarkEntry(this.store.isCurrentRoomNotes(), message.sender, this.matrixUserId()) ? readBookmark(message.content) : undefined;
           if (bm) this.onBookmarkClicked(bm);
           break;
         }

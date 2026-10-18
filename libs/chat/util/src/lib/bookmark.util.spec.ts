@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { MatrixMessage } from '@okr/shared-models';
-import { OKR_BOOKMARK_FIELD, notesRoomAliasLocalpart, isNotesRoomAlias, bookmarkSnippet, buildBookmarkContent, readBookmark, matrixPermalink, parseMatrixPermalink, isOwnNotesRoom } from './bookmark.util';
+import { OKR_BOOKMARK_FIELD, notesRoomAliasLocalpart, isNotesRoomAlias, bookmarkSnippet, buildBookmarkContent, readBookmark, isTrustedBookmarkEntry, matrixPermalink, parseMatrixPermalink, isOwnNotesRoom } from './bookmark.util';
 
 const SERVER = 'bkchat.etke.host';
 
@@ -86,9 +86,13 @@ describe('buildBookmarkContent / readBookmark', () => {
     expect(c.body).toContain('Hallo Welt');
     expect(c.body).toContain(matrixPermalink(m.roomId, m.eventId));
     expect(readBookmark(c)).toEqual({
-      roomId: m.roomId, eventId: m.eventId, senderId: m.sender, originTs: m.timestamp, roomName: 'Vorstand', snippet: 'Hallo Welt',
+      roomId: m.roomId, eventId: m.eventId, senderId: m.sender, senderName: m.senderName, originTs: m.timestamp, roomName: 'Vorstand', snippet: 'Hallo Welt',
     });
     expect(c[OKR_BOOKMARK_FIELD].eventId).toBe('$ev1');
+  });
+  it('falls back to the senderId localpart for legacy entries without senderName', () => {
+    const r = readBookmark({ [OKR_BOOKMARK_FIELD]: { roomId: '!a:b', eventId: '$e', senderId: '@kaiser:srv', originTs: 1, roomName: 'r', snippet: 's' } });
+    expect(r?.senderName).toBe('kaiser');
   });
   it('returns undefined without the field', () => {
     expect(readBookmark({ body: 'x' })).toBeUndefined();
@@ -141,5 +145,15 @@ describe('isOwnNotesRoom', () => {
   });
   it('rejects without an owner', () => {
     expect(isOwnNotesRoom({ topic: alias, creator: bot }, undefined)).toBe(false);
+  });
+});
+
+describe('isTrustedBookmarkEntry', () => {
+  it('trusts only the own message in the notes room', () => {
+    expect(isTrustedBookmarkEntry(true, '@me:s', '@me:s')).toBe(true);
+    expect(isTrustedBookmarkEntry(false, '@me:s', '@me:s')).toBe(false);
+    expect(isTrustedBookmarkEntry(true, '@evil:s', '@me:s')).toBe(false);
+    expect(isTrustedBookmarkEntry(true, '@me:s', undefined)).toBe(false);
+    expect(isTrustedBookmarkEntry(true, undefined, undefined)).toBe(false);
   });
 });
