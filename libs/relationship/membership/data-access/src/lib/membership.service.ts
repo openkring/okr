@@ -1,5 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { map, Observable, of } from 'rxjs';
+import { getApp } from 'firebase/app';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 
 import { ENV } from '@okr/shared-config';
 import { END_FUTURE_DATE_STR } from '@okr/shared-constants';
@@ -11,7 +13,7 @@ import { addDuration, addSystemQueries, DateFormat, getAvatarInfo, getCategoryAt
 
 import { createComment } from '@okr/comment-util';
 
-import { CategoryChangeFormModel, getMembershipCategoryChangeComment, getMembershipIndex, getRelLogEntry } from '@okr/relationship-membership-util';
+import { CategoryChangeFormModel, SettleResult, SettlementChoice, getMembershipCategoryChangeComment, getMembershipIndex, getRelLogEntry } from '@okr/relationship-membership-util';
 import { ActivityService } from '@okr/activity-data-access';
 
 const PFX = '@relationship/membership/data-access.';
@@ -34,6 +36,20 @@ export class MembershipService {
     end_conf:     PFX + 'end.conf',
     end_error:    PFX + 'end.error',
   });
+
+  private readonly settleExitFn = httpsCallable<{ taskKey: string; choice: SettlementChoice | 'preview' }, SettleResult>(
+    getFunctions(getApp(), 'europe-west6'),
+    'settleMembershipExit'
+  );
+
+  /**
+   * Exit fee settlement (spec 1.105): 'preview' returns the figures of the settlement task, a choice
+   * runs it. Refusals arrive as HttpsError 'failed-precondition' with `details.reason`; the caller
+   * shows them, nothing is swallowed here.
+   */
+  public async settleExit(taskKey: string, choice: SettlementChoice | 'preview'): Promise<SettleResult> {
+    return (await this.settleExitFn({ taskKey, choice })).data;
+  }
 
   /*-------------------------- CRUD operations --------------------------------*/
   /**

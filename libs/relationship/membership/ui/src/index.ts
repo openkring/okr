@@ -4,3 +4,4 @@ export * from './lib/membership.form';
 export * from './lib/member-new.form';
 export * from './lib/member-fee-upload.form';
 export * from './lib/member-fee-upload.modal';
+export * from './lib/exit-settlement.card';

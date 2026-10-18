@@ -1,0 +1,42 @@
+{
+  "exitSettlement": {
+    "title": "Exit during the year",
+    "months": "Member in the exit year: {months} of 12 months",
+    "yearly": "Annual fee",
+    "due": "Owed until the exit",
+    "billed": "Billed",
+    "assumption": "Assumption: full annual fee billed",
+    "paid": "Already paid",
+    "refund": "Refund CHF {amount}",
+    "adjust": "Adjust invoice",
+    "extend": "Exit on 31.12.{year}",
+    "confirm": {
+      "refund": "Refund CHF {amount}? A payment is prepared for approval.",
+      "adjust": "Adjust the invoice to the pro-rata amount? The current invoice is cancelled and replaced by a new one.",
+      "extend": "Move the exit to 31.12.{year}? The member then pays the full annual fee."
+    },
+    "done": "Decided",
+    "noAction": "Nothing to do here.",
+    "manual": {
+      "no-invoice": "No matching invoice found. Please check by hand.",
+      "ambiguous-invoice": "Several invoices match. Please check by hand.",
+      "books-mismatch": "The invoice is in a different set of books than the membership. Please check by hand.",
+      "bexio-entry-year": "Entry and exit in the same year on an invoice from Bexio: the billed amount is not known. Please check by hand.",
+      "category-change": "The member had several memberships in the exit year. Please settle by hand.",
+      "no-price": "No annual fee is set for the category.",
+      "billed-exceeds-invoice": "The assumed annual fee is higher than the invoice amount. Please check by hand."
+    },
+    "partialShort": "The part payment does not cover the pro-rata amount. Please settle the rest by hand.",
+    "error": {
+      "generic": "That did not work. Please try again later.",
+      "task-done": "This task is already done.",
+      "choice-not-offered": "This option is not available for this case.",
+      "already-refunded": "A refund has already been started for this invoice.",
+      "adjust-in-progress": "The invoice is being adjusted right now. Please finish that first.",
+      "invalid-claim": "The linked invoice does not fit this exit. Please check it by hand.",
+      "state-changed": "The case has changed in the meantime. Please reopen the task.",
+      "no-membership": "The membership was not found."
+    },
+    "doneToast": "The exit has been settled."
+  }
+}

@@ -71,6 +71,15 @@
       "path": "../ui/tsconfig.lib.json"
     },
     {
+      "path": "../../../relationship/membership/data-access/tsconfig.lib.json"
+    },
+    {
+      "path": "../../../relationship/membership/ui/tsconfig.lib.json"
+    },
+    {
+      "path": "../../../relationship/membership/util/tsconfig.lib.json"
+    },
+    {
       "path": "../../project/data-access/tsconfig.lib.json"
     }
   ]

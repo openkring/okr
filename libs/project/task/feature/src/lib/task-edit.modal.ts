@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal, resource, signal } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { catchError, of, switchMap } from 'rxjs';
@@ -12,10 +12,16 @@ import { coerceBoolean, hasRole, newAvatarInfo, safeStructuredClone, warn } from
 import { CommentsAccordion } from '@okr/comment-feature';
 import { TaskForm } from '@okr/project-task-ui';
 import { AvatarSelect } from '@okr/avatar-ui';
-import { AlertService, dismissOverlay, navigateByUrl } from '@okr/shared-util-angular';
+import { AlertService, dismissOverlay, navigateByUrl, resourceParams } from '@okr/shared-util-angular';
 import { ApprovalService } from '@okr/system-workflow-data-access';
 import { ApprovalDecisionCard } from '@okr/system-workflow-ui';
 import { WORKFLOW_I18N_KEYS, WorkflowI18n, canDecideApproval, canWithdrawApproval } from '@okr/system-workflow-util';
+
+import { MembershipService } from '@okr/relationship-membership-data-access';
+import { ExitSettlementCard } from '@okr/relationship-membership-ui';
+import {
+  chfRappen, choiceConfirmText, EXIT_SETTLEMENT_I18N_KEYS, EXIT_SETTLEMENT_TAG, ExitSettlementI18n, fillExitText, SettlementChoice, settleErrorText,
+} from '@okr/relationship-membership-util';
 
 import { TaskStore } from './task.store';
 
@@ -24,7 +30,7 @@ import { TaskStore } from './task.store';
   standalone: true,
   imports: [
     Header, ChangeConfirmation, TaskForm, CommentsAccordion,
-    AvatarSelect, ApprovalDecisionCard,
+    AvatarSelect, ApprovalDecisionCard, ExitSettlementCard,
     IonContent, IonAccordionGroup, IonButton, IonItem, IonLabel
   ],
   providers: [TaskStore],
@@ -40,6 +46,12 @@ import { TaskStore } from './task.store';
       @if(approval(); as approval) {
         <okr-approval-decision-card [approval]="approval" [i18n]="workflowI18n"
           [canDecide]="canDecide()" [canWithdraw]="canWithdraw()" (decided)="onDecided($event)" />
+      }
+      @if(showSettlement()) {
+        @if(settlementPreview(); as preview) {
+          <okr-exit-settlement-card [settlement]="preview.settlement" [i18n]="exitI18n" [done]="preview.done"
+            [decision]="preview.decision ?? ''" [busy]="settleBusy()" (chosen)="onChosen($event)" />
+        }
       }
       @if(formData(); as formData) {
         <okr-task-form
@@ -115,6 +127,8 @@ export class TaskEditModal {
   protected readonly store = inject(TaskStore);
   private readonly approvalService = inject(ApprovalService);
   private readonly alertService = inject(AlertService);
+  private readonly membershipService = inject(MembershipService);
+  protected readonly exitI18n = inject(I18nService).translateAll(EXIT_SETTLEMENT_I18N_KEYS) as ExitSettlementI18n;
   protected readonly workflowI18n = inject(I18nService).translateAll(WORKFLOW_I18N_KEYS) as WorkflowI18n;
 
   // inputs
@@ -165,6 +179,25 @@ export class TaskEditModal {
   protected readonly approval = toSignal(
     toObservable(this.approvalKey).pipe(switchMap((key) => (key ? this.approvalService.read(key).pipe(catchError(() => of(undefined))) : of(undefined)))),
   );
+  /** spec 1.105 — the treasurer task of an exit settlement; the card is for treasurers only (admin passes) */
+  protected readonly isExitSettlement = computed(() =>
+    (this.task().relatedKey ?? '').startsWith('membership.') && (this.task().tags ?? '').split(',').map((t) => t.trim()).includes(EXIT_SETTLEMENT_TAG));
+  protected readonly showSettlement = computed(() => this.isExitSettlement() && !this.isNew() && hasRole('treasurer', this.currentUser()));
+  protected readonly settleBusy = signal(false);
+  protected readonly settlementPreview = resource({
+    params: resourceParams(() => (this.showSettlement() ? this.task().okey : '')),
+    loader: async ({ params }) => {
+      if (!params) return undefined;
+      try {
+        return await this.membershipService.settleExit(params, 'preview');
+      } catch (error) {
+        // never swallow: without the figures the treasurer would decide blind
+        warn('TaskEditModal.settlementPreview: ' + error);
+        this.alertService.error(this.settleError(error));
+        return undefined;
+      }
+    },
+  }).value;
   private readonly myPersonKey = computed(() => this.currentUser()?.personKey ?? '');
   private readonly isAdmin = computed(() => hasRole('admin', this.currentUser()));
   protected readonly canDecide = computed(() => {
@@ -200,6 +233,32 @@ export class TaskEditModal {
       warn('TaskEditModal.onDecided: ' + error);
       this.alertService.error(`${this.workflowI18n.approval_decided_error()} ${error instanceof Error ? error.message : ''}`);
     }
+  }
+
+  /** Confirm, run the chosen settlement on the server (it closes the task) and leave the modal. */
+  protected async onChosen(choice: SettlementChoice): Promise<void> {
+    const key = this.task().okey;
+    const settlement = this.settlementPreview()?.settlement;
+    if (!key || !settlement || this.settleBusy()) return;
+    const text = fillExitText(choiceConfirmText(this.exitI18n, choice), { amount: chfRappen(settlement.refundRappen), year: settlement.exitYear });
+    if (!(await this.alertService.confirm(text, true))) return;
+    this.settleBusy.set(true);
+    try {
+      const result = await this.membershipService.settleExit(key, choice);
+      await this.alertService.showToast(result.decision || this.exitI18n.done_toast());
+      await dismissOverlay(this.modalController);
+    } catch (error) {
+      // never swallow: a failed settlement would look like a successful one
+      warn('TaskEditModal.onChosen: ' + error);
+      this.alertService.error(this.settleError(error));
+    } finally {
+      this.settleBusy.set(false);
+    }
+  }
+
+  private settleError(error: unknown): string {
+    const reason = (error as { details?: { reason?: string } })?.details?.reason;
+    return settleErrorText(this.exitI18n, reason);
   }
 
   public async cancel(): Promise<void> {
