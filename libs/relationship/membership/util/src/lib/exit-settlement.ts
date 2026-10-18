@@ -14,7 +14,7 @@ export interface InvoiceFacts {
 export type InvoiceShape = 'native' | 'bexio';
 export type SettlementCase = 'none' | 'paid' | 'unpaid' | 'partial-enough' | 'partial-short' | 'manual';
 export type SettlementChoice = 'refund' | 'adjust-invoice' | 'extend';
-export type ManualReason = '' | 'no-invoice' | 'ambiguous-invoice' | 'books-mismatch' | 'bexio-entry-year' | 'category-change' | 'no-price';
+export type ManualReason = '' | 'no-invoice' | 'ambiguous-invoice' | 'books-mismatch' | 'bexio-entry-year' | 'category-change' | 'no-price' | 'billed-exceeds-invoice';
 
 export interface ExitSettlementInput {
   membership: Pick<MembershipModel, 'dateOfEntry' | 'dateOfExit' | 'category' | 'orgKey'>;
@@ -84,6 +84,7 @@ export function computeExitSettlement(input: ExitSettlementInput): ExitSettlemen
   const exitYear = Number(exit.substring(0, 4));
   const thisYear = Number(today.substring(0, 4));
   if (exitYear !== thisYear && exitYear !== thisYear - 1) return NONE(exitYear);
+  // only the first pro-rata rule is settled (find)
   const rule = input.schedule?.positions.find(p => p.proRata);
   if (!rule) return NONE(exitYear);
 
@@ -109,6 +110,7 @@ export function computeExitSettlement(input: ExitSettlementInput): ExitSettlemen
   const billedFr = shape === 'native'
     ? invoice.positions.filter(p => p.usage === rule.usage && p.year === exitYear).reduce((s, p) => s + p.amount, 0)
     : yearlyFr;
+  if (billedFr * 100 > invoice.totalRappen) return manual('billed-exceeds-invoice', { invoice, shape });
   const overpaidRappen = Math.round((billedFr - dueFr) * 100);
   const found: ExitSettlement = { ...base, billedFr, overpaidRappen, invoice, shape };
   if (overpaidRappen <= 0) return { ...found, case: 'none', overpaidRappen: 0 };
@@ -118,11 +120,11 @@ export function computeExitSettlement(input: ExitSettlementInput): ExitSettlemen
     return { ...found, case: 'unpaid', choices: shape === 'native' ? ['adjust-invoice', 'extend'] : ['extend'] };
   }
   if (paidRappen >= totalRappen) {
-    return { ...found, case: 'paid', refundRappen: overpaidRappen, choices: ['refund', 'extend'] };
+    return { ...found, case: 'paid', refundRappen: Math.min(overpaidRappen, paidRappen), choices: ['refund', 'extend'] };
   }
   const owed = totalRappen - overpaidRappen;
   if (paidRappen >= owed) {
-    return { ...found, case: 'partial-enough', refundRappen: paidRappen - owed, choices: ['refund', 'extend'] };
+    return { ...found, case: 'partial-enough', refundRappen: Math.min(paidRappen - owed, paidRappen), choices: ['refund', 'extend'] };
   }
   return { ...found, case: 'partial-short', choices: ['extend'] };
 }
@@ -147,6 +149,7 @@ const MANUAL_TEXT: Record<Exclude<ManualReason, ''>, string> = {
   'books-mismatch': 'Die Rechnung liegt in einer anderen Buchhaltung als die Mitgliedschaft.',
   'bexio-entry-year': 'Eintritt und Austritt im selben Jahr bei einer Bexio-Rechnung: der verrechnete Betrag ist nicht bekannt.',
   'category-change': 'Mehrere Mitgliedschaften im Austrittsjahr (Kategoriewechsel): bitte von Hand abrechnen.',
+  'billed-exceeds-invoice': 'Der angenommene Jahresbeitrag ist höher als der Rechnungsbetrag. Bitte von Hand prüfen.',
   'no-price': 'Für die Kategorie ist kein Jahresbeitrag hinterlegt.',
 };
 
@@ -158,11 +161,13 @@ export function exitSettlementTaskNotes(s: ExitSettlement, exitViewDate: string)
     `Geschuldet pro rata: ${chfFr(s.dueFr)}`,
   ];
   if (s.invoice) {
-    lines.push(`Verrechnet: ${chfFr(s.billedFr)}${s.shape === 'bexio' ? ' (Annahme: voller Jahresbeitrag verrechnet)' : ''}`);
+    if (s.case !== 'manual') lines.push(`Verrechnet: ${chfFr(s.billedFr)}${s.shape === 'bexio' ? ' (Annahme: voller Jahresbeitrag verrechnet)' : ''}`);
     lines.push(`Rechnung ${s.invoice.invoiceId}: Total ${chf(s.invoice.totalRappen)}, bezahlt ${chf(s.invoice.paidRappen)}`);
-    lines.push(`Differenz: ${chf(s.overpaidRappen)}`);
+    if (s.case !== 'manual') lines.push(`Differenz: ${chf(s.overpaidRappen)}`);
     if (s.refundRappen > 0) lines.push(`Rückerstattung: ${chf(s.refundRappen)}`);
   }
+  if (s.case === 'partial-short') lines.push('Die bezahlte Teilzahlung deckt den pro rata geschuldeten Betrag nicht: den Rest bitte von Hand abrechnen.');
+  if (s.case === 'unpaid' && s.shape === 'bexio') lines.push('Eine Bexio-Rechnung muss in Bexio storniert und neu ausgestellt werden.');
   if (s.case === 'manual' && s.manualReason) lines.push(MANUAL_TEXT[s.manualReason]);
   return lines.join('\n');
 }

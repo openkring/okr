@@ -96,6 +96,20 @@ describe('computeExitSettlement', () => {
   it('partial 600.00 of 675.00, overpaid 100 -> partial-enough, refund 2500', () => {
     expect(computeExitSettlement(input({ invoices: [{ ...bexioPaid675, paidRappen: 60000 }] }))).toMatchObject({ case: 'partial-enough', refundRappen: 2500, choices: ['refund', 'extend'] });
   });
+  it('bexio invoice total below assumed yearly -> manual billed-exceeds-invoice', () => {
+    for (const o of [{ exit: '20260131', invoices: [{ ...bexioPaid675, totalRappen: 30000, paidRappen: 30000 }] },
+      { exit: '20260131', invoices: [{ ...bexioPaid675, totalRappen: 30000, paidRappen: 10000 }] }]) {
+      expect(computeExitSettlement(input(o))).toMatchObject({ case: 'manual', manualReason: 'billed-exceeds-invoice', refundRappen: 0, choices: ['extend'] });
+    }
+  });
+  it('flag source on the pro-rata rule -> manual no-price', () => {
+    const sch = { year: 2026, positions: [{ ...schedule.positions[0], source: 'flag' as const }] };
+    expect(computeExitSettlement(input({ schedule: sch }))).toMatchObject({ case: 'manual', manualReason: 'no-price' });
+  });
+  it('refund never exceeds what was paid', () => {
+    const s = computeExitSettlement(input());
+    expect(s.refundRappen).toBeLessThanOrEqual(s.invoice?.paidRappen ?? 0);
+  });
   it('manual cases always offer extend', () => {
     for (const o of [{ invoices: [] }, { overlappingMemberships: 2 }, { category: 'ghost' }, { entry: '20260601' }]) {
       expect(computeExitSettlement(input(o)).choices).toEqual(['extend']);
@@ -137,6 +151,14 @@ describe('task text', () => {
     for (const part of ['31.10.2026', '10 von 12', 'CHF 600.00', 'CHF 500.00', 'Annahme: voller Jahresbeitrag verrechnet', 'REA-01911', 'CHF 675.00', 'CHF 100.00']) {
       expect(n).toContain(part);
     }
+  });
+  it('manual notes omit Verrechnet/Differenz but keep the invoice line', () => {
+    const n = exitSettlementTaskNotes(computeExitSettlement(input({ entry: '20260601' })), '31.10.2026');
+    expect(n).not.toContain('Verrechnet'); expect(n).not.toContain('Differenz'); expect(n).toContain('REA-01911');
+  });
+  it('partial-short and bexio-unpaid notes carry a hint', () => {
+    expect(exitSettlementTaskNotes(computeExitSettlement(input({ invoices: [{ ...bexioPaid675, paidRappen: 40000 }] })), 'x')).toContain('von Hand abrechnen');
+    expect(exitSettlementTaskNotes(computeExitSettlement(input({ invoices: [{ ...bexioPaid675, paidRappen: 0 }] })), 'x')).toContain('in Bexio storniert');
   });
   it('manual notes carry a reason line', () => {
     const n = exitSettlementTaskNotes(computeExitSettlement(input({ invoices: [] })), '31.10.2026');
