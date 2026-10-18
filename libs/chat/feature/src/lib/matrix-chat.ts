@@ -577,6 +577,7 @@ function rejectionReasons(results: PromiseSettledResult<unknown>[]): unknown[] {
                   <okr-matrix-message-list
                     [linkOrigins]="store.appStore.appLinkOrigins()"
                     [highlightEventId]="store.threadJumpTarget()"
+                    [unreadDividerEventId]="store.unreadDividerEventId()"
                     [messages]="threadMessages()"
                     [currentUserId]="matrixUserId()"
                     [typingUsers]="[]"
@@ -1022,9 +1023,12 @@ export class MatrixChat implements OnDestroy {
     // whole room read. A jumped timeline that reaches the live end is switched back to live
     // (MatrixMessageService.paginateForwards), so a jumped one is never at the live end; the
     // effect re-runs on that switch (and after «Zum neusten») and sends the receipt then.
+    //
+    // Gated on the SERVER count: `unreadCount` also carries the «Ab hier ungelesen» flag, which
+    // a receipt cannot clear — gating on it would re-send a receipt on every room-list update.
     effect(() => {
       const room = this.store.currentRoom();
-      if (!room || room.unreadCount === 0) return;
+      if (!room || (room.serverUnreadCount ?? room.unreadCount) === 0) return;
       const isJumped = this.store.isJumped() || this.store.jumpPending();
       if (!shouldSendReceipt(isJumped, false)) return;
       untracked(() => this.store.markCurrentRoomAsRead());

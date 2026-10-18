@@ -110,6 +110,12 @@ export interface MatrixRoom {
    * Undefined when the room is not flagged. When set, `unreadCount` is at least 1.
    */
   unreadFromEventId?: string;
+  /**
+   * The homeserver's notification count alone (`getUnreadNotificationCount('total')`), without the
+   * «Ab hier ungelesen» flag that `unreadCount` adds. Read receipts can only lower this one, so the
+   * auto-receipt gate reads it. Client view model only — never persisted.
+   */
+  serverUnreadCount?: number;
 }
 
 export const ROOM_SHAPE: MatrixRoom = {

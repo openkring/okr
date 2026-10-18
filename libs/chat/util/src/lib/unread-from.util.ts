@@ -26,3 +26,13 @@ export function unreadFromEventIdOf(content: Record<string, unknown> | undefined
   const eventId = content?.['eventId'];
   return typeof eventId === 'string' && eventId ? eventId : undefined;
 }
+
+/**
+ * The event a room is flagged unread from, given both account data contents. `m.marked_unread`
+ * must still be `{ unread: true }`: another client (Element) that marks the room read clears only
+ * that entry, and its «read» wins over a leftover `org.okr.unread_from`.
+ */
+export function flaggedUnreadFrom(unreadFromContent: Record<string, unknown> | undefined, markedUnreadContent: Record<string, unknown> | undefined): string | undefined {
+  if (markedUnreadContent?.['unread'] !== true) return undefined;
+  return unreadFromEventIdOf(unreadFromContent);
+}

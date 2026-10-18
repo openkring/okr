@@ -586,17 +586,12 @@ export const _MatrixChatStore = signalStore(
           // Leaving a jumped room returns it to live; the next visit opens it as usual.
           if (previous && store.matrixService.isJumped(previous)) store.matrixService.returnToLive(previous);
         }
-        // «Ab hier ungelesen» (spec 1.104 §6): a flagged room opens at the flagged message with
-        // the divider above it, and the flag is cleared. jumpToEvent switches the room itself
-        // (with markRead false, so this branch never recurses) and gates the read receipt.
+        // «Ab hier ungelesen» (spec 1.104 §6): a flagged room opens at the flagged message.
+        // jumpToEvent switches the room itself (with markRead false, so this branch never
+        // recurses), draws the divider, clears the flag and gates the read receipt.
         const unreadFrom = roomId && markRead ? store.matrixService.getUnreadFromEventId(roomId) : undefined;
         if (roomId && unreadFrom) {
           void this.jumpToEvent(roomId, unreadFrom);
-          // jumpToEvent switched the room synchronously (which reset the divider): set it now.
-          patchState(store, { unreadDividerEventId: unreadFrom });
-          store.matrixService.clearUnreadFrom(roomId).catch(err =>
-            console.warn('MatrixChatStore.setCurrentRoom: clearUnreadFrom failed (non-critical):', err)
-          );
           return;
         }
         patchState(store, { currentRoomId: roomId, hasMoreHistory: true });
@@ -615,7 +610,12 @@ export const _MatrixChatStore = signalStore(
        * and leaves the room open on its live timeline.
        */
       async jumpToEvent(roomId: string, eventId: string): Promise<void> {
+        // Every open path ends here or in setCurrentRoom (bookmark «Öffnen», matrix.to link,
+        // eventId deep link, the flag itself): a flagged room is cleared on any of them.
+        const flagged = store.matrixService.getUnreadFromEventId(roomId);
         this.setCurrentRoom(roomId, false);
+        // After the room switch (which resets the divider): the divider marks the flagged message.
+        if (flagged && flagged === eventId) patchState(store, { unreadDividerEventId: eventId });
         const seq = ++store.jumpSeq.value;
         patchState(store, { jumpPending: true, jumpTarget: undefined, threadJumpTarget: undefined });
         const load = async (id: string): Promise<MatrixJumpResult> => {
@@ -635,6 +635,13 @@ export const _MatrixChatStore = signalStore(
         };
 
         const result = await load(eventId);
+        // Clear the flag once the jump settled — but keep it after a transient error, so the
+        // marker is not lost to a failed load ('gone': the message is deleted, nothing to keep).
+        if (flagged && result !== 'error') {
+          store.matrixService.clearUnreadFrom(roomId).catch(err =>
+            console.warn('MatrixChatStore.jumpToEvent: clearUnreadFrom failed (non-critical):', err)
+          );
+        }
         if (superseded()) return;
         if (typeof result === 'object') {
           // A thread reply is not in the main list: show its root there and open the thread

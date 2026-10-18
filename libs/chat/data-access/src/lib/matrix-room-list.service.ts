@@ -6,7 +6,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { MatrixMessage, MatrixRoom, TypingNotification } from '@okr/shared-models';
 import { AppStore } from '@okr/shared-feature';
 import { debugMessage } from '@okr/shared-util-core';
-import { effectiveUnreadCount, isRoomClassifiable, MATRIX_FAVOURITE_TAG, OKR_TENANT_EVENT, UNREAD_FROM_EVENT, unreadFromEventIdOf } from '@okr/chat-util';
+import { effectiveUnreadCount, flaggedUnreadFrom, isRoomClassifiable, MATRIX_FAVOURITE_TAG, MARKED_UNREAD_EVENT, OKR_TENANT_EVENT, UNREAD_FROM_EVENT } from '@okr/chat-util';
 import { AvatarService } from '@okr/avatar-data-access';
 
 import { isServiceAccount, mxcAvatarHttpUrl, personAvatarUrl } from './matrix-helpers';
@@ -108,6 +108,7 @@ export class MatrixRoomListService {
           room.creator === o.creator &&
           room.stateLoaded === o.stateLoaded &&
           room.unreadFromEventId === o.unreadFromEventId &&
+          room.serverUnreadCount === o.serverUnreadCount &&
           room.lastMessage?.eventId === o.lastMessage?.eventId &&
           room.lastMessage?.timestamp === o.lastMessage?.timestamp &&
           room.lastMessage?.body === o.lastMessage?.body &&
@@ -255,7 +256,7 @@ export class MatrixRoomListService {
         // flagged event to the end of the loaded timeline while the server count is 0, so the
         // chat total, the main-menu badge and the in-app app badge all count it as unread.
         const serverUnread = (room as any).getUnreadNotificationCount?.('total') || 0;
-        const unreadFromEventId = unreadFromEventIdOf(room.getAccountData(UNREAD_FROM_EVENT)?.getContent());
+        const unreadFromEventId = flaggedUnreadFrom(room.getAccountData(UNREAD_FROM_EVENT)?.getContent(), room.getAccountData(MARKED_UNREAD_EVENT)?.getContent());
         const unreadCount = effectiveUnreadCount(serverUnread, unreadFromEventId,
           unreadFromEventId && serverUnread === 0
             ? events.filter(e => e.getType() === EventType.RoomMessage || e.getId() === unreadFromEventId).map(e => e.getId() ?? '')
@@ -309,6 +310,7 @@ export class MatrixRoomListService {
           topic: room.getCanonicalAlias() || undefined,
           isDirect,
           unreadCount,
+          serverUnreadCount: serverUnread,
           lastMessage,
           // P-2: the room-list entry no longer carries the full member array. It was
           // rebuilt for every room on every debounced event (O(rooms × members)) but is

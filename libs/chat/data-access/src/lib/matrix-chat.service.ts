@@ -10,7 +10,7 @@ import { MatrixConfig, MatrixMessage, MatrixReadReceipt, MatrixRoom, TypingNotif
 import { AppStore } from '@okr/shared-feature';
 import { checkVideoLimits, debugData, debugMessage } from '@okr/shared-util-core';
 import { OKR_VIDEO_FIELD, videoLink } from '@okr/content-document-util';
-import { convertHeicToJpeg, materializeFile, resolveFileMimeType, extractVideoPoster, UploadTooLargeError, initMatrixLogLevel, ensurePromiseWithResolvers, buildMentionContent, escapeHtml, MentionRef, OKR_TENANT_EVENT, resolveMatrixDisplayName, canPostWithPower, VideoLimitError, VideoUploadError, buildPollContent, PollAnswerDef, POLL_START_EVENT, PinboardInput, AvailablePinboard, UNREAD_FROM_EVENT, unreadFromEventIdOf } from '@okr/chat-util';
+import { convertHeicToJpeg, materializeFile, resolveFileMimeType, extractVideoPoster, UploadTooLargeError, initMatrixLogLevel, ensurePromiseWithResolvers, buildMentionContent, escapeHtml, MentionRef, OKR_TENANT_EVENT, resolveMatrixDisplayName, canPostWithPower, VideoLimitError, VideoUploadError, buildPollContent, PollAnswerDef, POLL_START_EVENT, PinboardInput, AvailablePinboard, UNREAD_FROM_EVENT, MARKED_UNREAD_EVENT, flaggedUnreadFrom } from '@okr/chat-util';
 
 import { mediaMimeHint, mxcAvatarHttpUrl } from './matrix-helpers';
 import { MatrixMediaService } from './matrix-media.service';
@@ -726,8 +726,10 @@ export class MatrixChatService {
    */
   public async markUnreadFrom(roomId: string, eventId: string): Promise<void> {
     if (!this.client) throw new Error('Matrix client not initialized');
-    await this.setOkrUnreadFrom(roomId, { eventId, ts: Date.now() });
-    await this.client.setRoomAccountData(roomId, EventType.MarkedUnread, { unread: true });
+    await Promise.all([
+      this.setOkrUnreadFrom(roomId, { eventId, ts: Date.now() }),
+      this.client.setRoomAccountData(roomId, EventType.MarkedUnread, { unread: true }),
+    ]);
   }
 
   /**
@@ -735,14 +737,17 @@ export class MatrixChatService {
    * the debounced room list caught up with a flag set a moment ago.
    */
   public getUnreadFromEventId(roomId: string): string | undefined {
-    return unreadFromEventIdOf(this.client?.getRoom(roomId)?.getAccountData(UNREAD_FROM_EVENT)?.getContent());
+    const room = this.client?.getRoom(roomId);
+    return flaggedUnreadFrom(room?.getAccountData(UNREAD_FROM_EVENT)?.getContent(), room?.getAccountData(MARKED_UNREAD_EVENT)?.getContent());
   }
 
   /** Clear the «Ab hier ungelesen» flag of a room (both account data entries). */
   public async clearUnreadFrom(roomId: string): Promise<void> {
     if (!this.client) return;
-    await this.setOkrUnreadFrom(roomId, {});
-    await this.client.setRoomAccountData(roomId, EventType.MarkedUnread, { unread: false });
+    await Promise.all([
+      this.setOkrUnreadFrom(roomId, {}),
+      this.client.setRoomAccountData(roomId, EventType.MarkedUnread, { unread: false }),
+    ]);
   }
 
   // `org.okr.unread_from` is our own type, unknown to the SDK's typed RoomAccountDataEvents map.
