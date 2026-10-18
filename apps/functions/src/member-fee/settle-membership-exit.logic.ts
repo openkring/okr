@@ -4,7 +4,7 @@
  * payment. Everything here is free of Firestore so it can be tested directly.
  */
 import type { ExitSettlement, InvoiceFacts, SettlementChoice } from '@okr/relationship-membership-util';
-import { getRelLogEntry } from '@okr/relationship-membership-util';
+import { getRelLogEntry, invoiceShape, pickFeeInvoice } from '@okr/relationship-membership-util';
 import type { InvoicePositionModel } from '@okr/shared-models';
 import { applyDiscounts, toPositionInputs } from '@okr/finance-invoice-util';
 import { proRataDescription } from '@okr/shared-util-core';
@@ -173,6 +173,22 @@ export function claimPatch(invoiceKey: string): { linkKey: string; linkModelType
 /** While an adjustment is in progress (storno possibly written), only finishing it is allowed. */
 export function claimRefusal(claimedKey: string, choice: SettlementChoice): ClaimRefusal | undefined {
   return claimedKey && choice !== 'adjust-invoice' ? 'adjust-in-progress' : undefined;
+}
+
+/**
+ * Whether a claimed invoice may be acted on. Task documents are client-writable, so `linkKey` is
+ * untrusted: the invoice must be this settlement's fee invoice — the member's, in the tenant and the
+ * books, not archived, native, billing the fee (`usage`) of the exit year (same matching as the
+ * computation) — still `pending` (before the storno) or `cancelled` (after it), and not replaced yet.
+ */
+export function isValidClaim(
+  c: { facts: InvoiceFacts; receiverKey: string; tenants: string[]; isArchived?: boolean; replaced: boolean },
+  e: { memberKey: string; tenantId: string; books: string; usage: string; exitYear: number },
+): boolean {
+  return !!e.memberKey && c.receiverKey === e.memberKey && c.tenants.includes(e.tenantId) &&
+    c.facts.accountingTenantId === e.books && c.isArchived !== true && invoiceShape(c.facts) === 'native' &&
+    pickFeeInvoice([c.facts], e.exitYear, e.usage).invoice !== undefined &&
+    (c.facts.state === 'pending' || c.facts.state === 'cancelled') && !c.replaced;
 }
 
 /** The settlement of a claimed task: the only way forward is to finish the adjustment. */

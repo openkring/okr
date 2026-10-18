@@ -37,7 +37,7 @@ import { writeFinanceHistory } from '../finance-history/finance-history';
 import { ExitContext, loadExitContext, toInvoiceFacts } from './exit-settlement.context';
 import {
   appendInvoiceNote, appendTaskNote, choiceRefusal, claimedChoices, claimedInvoiceKey, claimPatch, claimRefusal, decisionNote,
-  emptySettlement, extendedRelLog, isLiveRefund, membershipKeyOf, postalAddressText, refundDecision, refundMessageId, refundOrderId,
+  emptySettlement, extendedRelLog, isLiveRefund, isValidClaim, membershipKeyOf, postalAddressText, refundDecision, refundMessageId, refundOrderId,
   refundPaymentId, refundReference, replacementInvoiceId, replacementPositions, storedDecision, stornoReason, withInvoice,
 } from './settle-membership-exit.logic';
 
@@ -154,21 +154,34 @@ async function hasLiveRefund(db: Firestore, tenantId: string, invoiceKey: string
 }
 
 /**
- * The settlement of a claimed task. The claimed invoice may already be cancelled (the storno ran,
- * the replacement did not), and `loadExitContext` leaves cancelled invoices out: add it back so the
- * figures are those of the adjustment being finished. Only finishing is offered.
+ * The settlement of a claimed task. `linkKey` is client-writable, so the claimed invoice must pass
+ * `isValidClaim` (this settlement's fee invoice, pending or cancelled, not replaced) and must be the
+ * invoice the recomputation picks; otherwise 'invalid-claim' and nothing is done. A cancelled invoice
+ * (storno ran, replacement did not) is left out by `loadExitContext`, so it is added back here. Only
+ * finishing the adjustment is offered.
  */
 async function claimedSettlement(db: Firestore, ctx: ExitContext, invoiceKey: string): Promise<ExitSettlement> {
-  let invoices = ctx.input.invoices;
-  if (!invoices.some(i => i.okey === invoiceKey)) {
-    const inv = (await db.collection(InvoiceCollection).doc(invoiceKey).get()).data();
-    if (inv && tenantsOf(inv).includes(ctx.tenantId) && str(inv['accountingTenantId']) === ctx.input.booksId && inv['isArchived'] !== true) {
-      const pos = await db.collection(InvoicePositionCollection).where('invoiceKey', '==', invoiceKey).get();
-      invoices = withInvoice(invoices, toInvoiceFacts(invoiceKey, inv,
-        pos.docs.map(p => p.data()).filter(p => p['isArchived'] !== true && tenantsOf(p).includes(ctx.tenantId))));
-    }
-  }
-  return claimedChoices(computeExitSettlement({ ...ctx.input, invoices }));
+  const invalid = (why: string): HttpsError => refusal('invalid-claim', `task claim for invoice ${invoiceKey} rejected: ${why}`);
+  const usage = ctx.input.schedule?.positions.find(p => p.proRata)?.usage ?? '';
+  const exitYear = Number(str(ctx.membership.dateOfExit).substring(0, 4)) || 0;
+  const [invSnap, posSnap, replSnap] = await Promise.all([
+    db.collection(InvoiceCollection).doc(invoiceKey).get(),
+    db.collection(InvoicePositionCollection).where('invoiceKey', '==', invoiceKey).get(),
+    db.collection(InvoiceCollection).where('replacesInvoiceKey', '==', invoiceKey).get(),
+  ]);
+  const inv = invSnap.data();
+  if (!inv) throw invalid('invoice not found');
+  const facts = toInvoiceFacts(invoiceKey, inv,
+    posSnap.docs.map(p => p.data()).filter(p => p['isArchived'] !== true && tenantsOf(p).includes(ctx.tenantId)));
+  const replaced = !replSnap.empty || (await db.collection(InvoiceCollection).doc(replacementInvoiceId(invoiceKey)).get()).exists;
+  const ok = isValidClaim(
+    { facts, receiverKey: str((inv['receiver'] as { key?: unknown } | undefined)?.key), tenants: tenantsOf(inv), isArchived: inv['isArchived'] === true, replaced },
+    { memberKey: str(ctx.membership.memberKey), tenantId: ctx.tenantId, books: ctx.input.booksId, usage, exitYear },
+  );
+  if (!ok) throw invalid('not this settlement\'s open fee invoice');
+  const resumed = computeExitSettlement({ ...ctx.input, invoices: withInvoice(ctx.input.invoices.filter(i => i.okey !== invoiceKey), facts) });
+  if (resumed.invoice?.okey !== invoiceKey) throw invalid('the settlement picks another invoice');
+  return claimedChoices(resumed);
 }
 
 interface CloseTask { taskRef: DocumentReference; today: string }

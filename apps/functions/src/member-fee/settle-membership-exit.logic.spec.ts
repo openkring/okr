@@ -3,7 +3,7 @@ import type { ExitSettlement, SettlementCase, SettlementChoice } from '@okr/rela
 
 import {
   appendInvoiceNote, appendTaskNote, choiceRefusal, claimedChoices, claimedInvoiceKey, claimPatch, claimRefusal, decisionNote,
-  emptySettlement, extendedRelLog, isLiveRefund, membershipKeyOf, NO_IBAN_NOTE, postalAddressText, refundDecision, refundMessageId,
+  emptySettlement, extendedRelLog, isLiveRefund, isValidClaim, membershipKeyOf, NO_IBAN_NOTE, postalAddressText, refundDecision, refundMessageId,
   refundOrderId, refundPaymentId, refundReference, replacementPositions, storedDecision, stornoReason, withInvoice,
 } from './settle-membership-exit.logic';
 
@@ -249,5 +249,48 @@ describe('replacementPositions discounts', () => {
 describe('emptySettlement', () => {
   it('has no choices and no figures', () => {
     expect(emptySettlement()).toMatchObject({ case: 'none', choices: [], refundRappen: 0 });
+  });
+});
+
+describe('isValidClaim (linkKey is client-writable, so a claim is checked)', () => {
+  const facts = (over: Partial<NonNullable<ExitSettlement['invoice']>> = {}): NonNullable<ExitSettlement['invoice']> => ({
+    okey: 'i1', invoiceId: '2026-17', accountingTenantId: 'scs', state: 'pending', invoiceNo: 17, bookingKey: 'invoice-i1',
+    invoiceDate: '20260301', title: 'Jahresbeitrag', totalRappen: 12000, paidRappen: 0,
+    positions: [{ usage: 'JB', year: 2026, amount: 120 }], ...over,
+  });
+  const claim = (over: Partial<Parameters<typeof isValidClaim>[0]> = {}): Parameters<typeof isValidClaim>[0] => ({
+    facts: facts(), receiverKey: 'p1', tenants: ['scs'], isArchived: false, replaced: false, ...over,
+  });
+  const expected = { memberKey: 'p1', tenantId: 'scs', books: 'scs', usage: 'JB', exitYear: 2026 };
+
+  it('accepts this settlement\'s pending or cancelled native fee invoice', () => {
+    expect(isValidClaim(claim(), expected)).toBe(true);
+    expect(isValidClaim(claim({ facts: facts({ state: 'cancelled' }) }), expected)).toBe(true);
+  });
+
+  it('refuses another member\'s invoice', () => {
+    expect(isValidClaim(claim({ receiverKey: 'p2' }), expected)).toBe(false);
+    expect(isValidClaim(claim({ receiverKey: '' }), { ...expected, memberKey: '' })).toBe(false);
+  });
+
+  it('refuses another tenant, other books or an archived invoice', () => {
+    expect(isValidClaim(claim({ tenants: ['other'] }), expected)).toBe(false);
+    expect(isValidClaim(claim({ facts: facts({ accountingTenantId: 'gss' }) }), expected)).toBe(false);
+    expect(isValidClaim(claim({ isArchived: true }), expected)).toBe(false);
+  });
+
+  it('refuses a bexio invoice', () => {
+    expect(isValidClaim(claim({ facts: facts({ invoiceNo: 0, bookingKey: '' }) }), expected)).toBe(false);
+  });
+
+  it('refuses an invoice that did not bill the fee of the exit year', () => {
+    expect(isValidClaim(claim({ facts: facts({ positions: [{ usage: 'BP', year: 2026, amount: 50 }] }) }), expected)).toBe(false);
+    expect(isValidClaim(claim({ facts: facts({ positions: [{ usage: 'JB', year: 2025, amount: 120 }] }) }), expected)).toBe(false);
+  });
+
+  it('refuses a paid or draft invoice and one that already has a replacement', () => {
+    expect(isValidClaim(claim({ facts: facts({ state: 'paid' }) }), expected)).toBe(false);
+    expect(isValidClaim(claim({ facts: facts({ state: 'draft' }) }), expected)).toBe(false);
+    expect(isValidClaim(claim({ replaced: true }), expected)).toBe(false);
   });
 });
