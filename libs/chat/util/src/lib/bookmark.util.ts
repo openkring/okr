@@ -142,3 +142,23 @@ export function parseMatrixPermalink(url: string, serverName: string): { roomIdO
   if (!roomIdOrAlias.endsWith(`:${serverName}`)) return undefined;
   return eventId ? { roomIdOrAlias, eventId } : { roomIdOrAlias };
 }
+
+export type PermalinkResolution =
+  | { kind: 'room'; roomId: string }
+  | { kind: 'group'; groupKey: string }
+  | { kind: 'none' };
+
+/**
+ * Where a permalink target leads: a joined room (matched by id, or by canonical alias in the room
+ * topic), a not-joined group alias (open through the `selectedRoom` deep link with the group key),
+ * or nowhere (unknown id, ask/notes aliases that are not joined).
+ */
+export function resolvePermalinkTarget(roomIdOrAlias: string, rooms: ReadonlyArray<{ roomId: string; topic?: string }>): PermalinkResolution {
+  const alias = roomIdOrAlias.startsWith('#') ? roomIdOrAlias.toLowerCase() : undefined;
+  const room = alias
+    ? rooms.find(r => r.topic?.split(':').slice(0, 2).join(':').toLowerCase() === alias)
+    : rooms.find(r => r.roomId === roomIdOrAlias);
+  if (room) return { kind: 'room', roomId: room.roomId };
+  const groupKey = alias ? /^#group_([^:]+):/.exec(alias)?.[1] : undefined;
+  return groupKey ? { kind: 'group', groupKey } : { kind: 'none' };
+}

@@ -16,7 +16,7 @@ import { videoDocKeyOf, videoLink } from '@okr/content-document-util';
 
 import { MatrixMessageInput, MatrixMessageList, MatrixRoomList, PollDetailModal } from '@okr/chat-ui';
 import { MatrixPollData } from '@okr/chat-data-access';
-import { buildEditedPollAnswers, canEditPoll, parsePollContent, convertHeicToJpeg, groupRoomAliasLocalpart, shouldDeferAskRoom, isSupportedImageFile, isUploadTooLargeError, filterRoomsByName, resolveInitialRoomId, readBookmark, isTrustedBookmarkEntry, ChatBookmark, MessageDraft, UploadTooLargeError } from '@okr/chat-util';
+import { buildEditedPollAnswers, canEditPoll, parsePollContent, convertHeicToJpeg, groupRoomAliasLocalpart, shouldDeferAskRoom, isSupportedImageFile, isUploadTooLargeError, filterRoomsByName, resolveInitialRoomId, readBookmark, isTrustedBookmarkEntry, ChatBookmark, resolvePermalinkTarget, MessageDraft, UploadTooLargeError } from '@okr/chat-util';
 
 import { MatrixChatStore } from './matrix-chat.store';
 import { PollCreateModal } from './poll-create.modal';
@@ -661,6 +661,7 @@ export class MatrixChat implements OnDestroy {
   private isRequestingRoomAccess = false;
   private readonly lastRoomAccessAttempt = new Map<string, number>(); // groupId → timestamp of last CF call
   private jumpedKey?: string;                                       // (room|event) deep-link jump already applied
+  private resolvedRoomId?: string;                                    // room the deep-link alias resolved to
   private resolvedRoomAlias?: string;                                 // deep-link alias already applied once
 
   // inputs
@@ -868,7 +869,7 @@ export class MatrixChat implements OnDestroy {
       if (this.resolvedRoomAlias === roomAlias) {
         // same room, but the eventId may have arrived or changed since
         const current = untracked(() => this.store.currentRoomId());
-        if (current) this.applyDeepLinkEvent(current);
+        if (current && current === this.resolvedRoomId) this.applyDeepLinkEvent(current);
         return;
       }
       // rooms() is a reactive dep: when rooms load after sync, this re-runs and resolves the alias.
@@ -887,6 +888,7 @@ export class MatrixChat implements OnDestroy {
         ?? syncRooms.find(r => r.topic?.split(':')[0]?.toLowerCase() === wantedAlias);
       if (match) {
         this.resolvedRoomAlias = roomAlias;
+        this.resolvedRoomId = match.roomId;
         this.roomAccessDenied.set(undefined);
         this.store.setCurrentRoom(match.roomId);
         this.applyDeepLinkEvent(match.roomId);
@@ -902,6 +904,7 @@ export class MatrixChat implements OnDestroy {
       // Never send a Matrix room ID through requestGroupRoomAccess (it would create a spurious room).
       if (roomAlias.startsWith('!')) {
         this.resolvedRoomAlias = roomAlias;
+        this.resolvedRoomId = roomAlias;
         this.roomAccessDenied.set(undefined);
         this.store.setCurrentRoom(roomAlias);
         this.applyDeepLinkEvent(roomAlias);
@@ -1020,6 +1023,8 @@ export class MatrixChat implements OnDestroy {
         if (this.store.currentRoomId() !== roomId) return;
         console.warn(`MatrixChat: current room ${roomId} was evicted — re-resolving ${this.selectedRoom() ?? 'no deep link'}`);
         this.resolvedRoomAlias = undefined;
+        this.resolvedRoomId = undefined;
+        this.jumpedKey = undefined;
         this.store.setCurrentRoom(undefined);
       });
 
@@ -1058,7 +1063,9 @@ export class MatrixChat implements OnDestroy {
       // Only on success: a failed request must stay retryable after the cooldown.
       this.resolvedRoomAlias = groupId;
       this.roomAccessDenied.set(undefined);
+      this.resolvedRoomId = result.roomId;
       this.store.setCurrentRoom(result.roomId);
+      this.applyDeepLinkEvent(result.roomId);
     } catch (error) {
       console.error('MatrixChat: Failed to request room access:', error);
       // Remember the refusal: the toast is gone in seconds, but the pane must keep saying
@@ -1266,21 +1273,14 @@ export class MatrixChat implements OnDestroy {
    * room id does nothing.
    */
   protected openPermalink(target: { roomIdOrAlias: string; eventId?: string }): void {
-    const { roomIdOrAlias, eventId } = target;
-    const rooms = this.store.rooms();
-    const alias = roomIdOrAlias.startsWith('#') ? roomIdOrAlias.toLowerCase() : undefined;
-    const room = alias
-      ? rooms.find(r => r.topic?.split(':').slice(0, 2).join(':').toLowerCase() === alias)
-      : rooms.find(r => r.roomId === roomIdOrAlias);
-    if (room) {
-      if (eventId) void this.store.jumpToEvent(room.roomId, eventId);
-      else this.store.setCurrentRoom(room.roomId);
-      return;
+    const { eventId } = target;
+    const res = resolvePermalinkTarget(target.roomIdOrAlias, this.store.rooms());
+    if (res.kind === 'room') {
+      if (eventId) void this.store.jumpToEvent(res.roomId, eventId);
+      else this.store.setCurrentRoom(res.roomId);
+    } else if (res.kind === 'group') {
+      void navigateByUrl(this.router, '/private/chat/c-contentpage', eventId ? { selectedRoom: res.groupKey, eventId } : { selectedRoom: res.groupKey });
     }
-    // Not joined: only a group alias can be requested; its key is what `selectedRoom` expects.
-    const groupKey = alias ? /^#group_([^:]+):/.exec(alias)?.[1] : undefined;
-    if (!groupKey) return;
-    void navigateByUrl(this.router, '/private/chat/c-contentpage', eventId ? { selectedRoom: groupKey, eventId } : { selectedRoom: groupKey });
   }
 
   /** Jump to the deep-link message once per distinct (room, event) pair. */

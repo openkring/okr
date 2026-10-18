@@ -157,3 +157,17 @@ describe('isTrustedBookmarkEntry', () => {
     expect(isTrustedBookmarkEntry(true, undefined, undefined)).toBe(false);
   });
 });
+
+import { resolvePermalinkTarget } from './bookmark.util';
+
+describe('resolvePermalinkTarget', () => {
+  const rooms = [{ roomId: '!a:s', topic: '#group_x:s' }, { roomId: '!b:s' }];
+  it('joined room id', () => expect(resolvePermalinkTarget('!b:s', rooms)).toEqual({ kind: 'room', roomId: '!b:s' }));
+  it('alias matching a joined topic', () => expect(resolvePermalinkTarget('#Group_X:s', rooms)).toEqual({ kind: 'room', roomId: '!a:s' }));
+  it('not-joined group alias navigates', () => expect(resolvePermalinkTarget('#group_y:s', rooms)).toEqual({ kind: 'group', groupKey: 'y' }));
+  it('unknown id', () => expect(resolvePermalinkTarget('!zz:s', rooms)).toEqual({ kind: 'none' }));
+  it('ask/notes not joined', () => {
+    expect(resolvePermalinkTarget('#ask_g_p:s', rooms)).toEqual({ kind: 'none' });
+    expect(resolvePermalinkTarget('#notes_t_p:s', rooms)).toEqual({ kind: 'none' });
+  });
+});
