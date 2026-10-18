@@ -179,7 +179,8 @@
     "untitled": "sin título",
     "navPrev": "Día anterior",
     "navNext": "Día siguiente",
-    "navUp": "Resumen"
+    "navUp": "Resumen",
+    "mediaLoadFailed": "No se han podido cargar las fotos y los documentos de Drive."
   },
   "diaryState": {
     "all": {

@@ -2,16 +2,19 @@ import { Component, computed, effect, inject, input, linkedSignal, signal } from
 import { IonButton, IonButtons, IonChip, IonContent, IonIcon, IonItem, IonLabel, IonList, IonNote, IonToolbar, ModalController } from '@ionic/angular';
 import { Browser } from '@capacitor/browser';
 
-import { AvatarInfo, DiaryModel } from '@okr/shared-models';
-import { Header } from '@okr/shared-ui';
+import { AvatarInfo, DiaryModel, ImageConfig, ImageType, IMAGE_STYLE_SHAPE } from '@okr/shared-models';
+import { Header, showImageSlider } from '@okr/shared-ui';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { AvatarDisplay } from '@okr/avatar-ui';
 import { weatherCodeToIcon, WEATHER_ICON_SET } from '@okr/weather-util';
 import { dismissOverlay } from '@okr/shared-util-angular';
 
 import {
-  DiaryI18n, diaryWeatherLine, driveFolderUrl, formatDiaryDateLong, hasDiaryWeather, renderDiaryHtml,
+  DiaryI18n, DiaryMediaResult, diaryWeatherLine, driveFolderUrl, driveThumbnailAtSize, formatDiaryDateLong, hasDiaryWeather,
+  renderDiaryHtml,
 } from '@okr/content-diary-util';
+
+import { DiaryMediaRow } from './diary-media-row';
 
 /** The entries one step away from the shown one (spec 1.106 §2.1); undefined = no such entry. */
 export interface DiaryNeighbours {
@@ -29,7 +32,7 @@ export interface DiaryNeighbours {
 @Component({
   selector: 'okr-diary-view-modal',
   standalone: true,
-  imports: [Header, AvatarDisplay, SvgIconPipe, IonContent, IonItem, IonLabel, IonList, IonNote, IonChip, IonIcon, IonButton, IonButtons, IonToolbar],
+  imports: [Header, AvatarDisplay, DiaryMediaRow, SvgIconPipe, IonContent, IonItem, IonLabel, IonList, IonNote, IonChip, IonIcon, IonButton, IonButtons, IonToolbar],
   styles: [`
     .body { padding: 16px; line-height: 1.5; }
     .meta ion-chip { margin-right: 4px; }
@@ -98,14 +101,23 @@ export interface DiaryNeighbours {
         }
       </ion-list>
 
+      @if (driveUrl()) {
+        @if (mediaFailed()) {
+          <ion-note class="ion-padding-start">{{ i18n().media_load_failed() }}</ion-note>
+        } @else if (!media() || media()?.images?.length) {
+          <okr-diary-media-row kind="image" [files]="media()?.images" (opened)="openImage($event)" />
+        }
+        <ion-item lines="none" button [detail]="false" (click)="openDrive()">
+          <ion-icon slot="start" src="{{ 'image' | svgIcon }}" />
+          <ion-label>{{ i18n().open_drive() }}</ion-label>
+        </ion-item>
+      }
+
       <!-- markdown, sanitized by Angular; images are stripped (they live in Drive, decision 6) -->
       <div class="body" [innerHTML]="html().html"></div>
 
-      @if (html().imageCount > 0 && driveUrl()) {
-        <ion-item lines="none" button (click)="openDrive()">
-          <ion-icon slot="start" src="{{ 'image' | svgIcon }}" />
-          <ion-label>{{ html().imageCount }} {{ i18n().images_in_drive() }}</ion-label>
-        </ion-item>
+      @if (driveUrl() && media()?.documents?.length) {
+        <okr-diary-media-row kind="document" [files]="media()?.documents" (opened)="openDocument($event)" />
       }
 
       @if (current().done.length) {
@@ -133,10 +145,15 @@ export class DiaryViewModal {
   public readonly neighbours = input.required<(d: DiaryModel) => Promise<DiaryNeighbours>>();
   public readonly openPerson = input.required<(a: AvatarInfo) => Promise<void>>();
   public readonly openLocation = input.required<(a: AvatarInfo) => Promise<void>>();
+  /** the day folder's Drive files (spec 1.106 §2.3) — the store caches per entry */
+  public readonly loadMedia = input.required<(d: DiaryModel) => Promise<DiaryMediaResult>>();
 
   /** the entry on screen — starts at `diary`, swapped by prev/next/up */
   protected readonly current = linkedSignal(() => this.diary());
   protected readonly nav = signal<DiaryNeighbours>({});
+  /** undefined while loading */
+  protected readonly media = signal<DiaryMediaResult | undefined>(undefined);
+  protected readonly mediaFailed = signal(false);
 
   protected readonly title = computed(() => this.current().title || this.i18n().view_untitled());
   protected readonly dateLabel = computed(() => formatDiaryDateLong(this.current().date, this.lang()));
@@ -166,6 +183,31 @@ export class DiaryViewModal {
         .then(nav => { if (this.current().okey === shown.okey) this.nav.set(nav); })
         .catch(() => { /* no navigation is a usable fallback */ });
     });
+    // The day's Drive files, same stale-answer guard as above.
+    effect(() => {
+      const shown = this.current();
+      const load = this.loadMedia();
+      this.media.set(undefined);
+      this.mediaFailed.set(false);
+      if (!shown.driveFolderId) return;
+      load(shown)
+        .then(media => { if (this.current().okey === shown.okey) this.media.set(media); })
+        .catch(() => { if (this.current().okey === shown.okey) this.mediaFailed.set(true); });
+    });
+  }
+
+  /** Full-size slider over all images of the day, starting at the tapped one. */
+  protected async openImage(index: number): Promise<void> {
+    const images: ImageConfig[] = (this.media()?.images ?? []).map(f => ({
+      label: f.name, type: ImageType.Image, url: driveThumbnailAtSize(f.thumbnailLink, 2400),
+      actionUrl: '', altText: f.name, overlay: '',
+    }));
+    if (images.length) await showImageSlider(this.modalController, images, { ...IMAGE_STYLE_SHAPE }, index);
+  }
+
+  protected async openDocument(index: number): Promise<void> {
+    const file = this.media()?.documents[index];
+    if (file?.webViewLink) await Browser.open({ url: file.webViewLink });
   }
 
   protected go(target: DiaryModel | undefined): void {

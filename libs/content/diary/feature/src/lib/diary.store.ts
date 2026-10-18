@@ -6,10 +6,10 @@ import { Browser } from '@capacitor/browser';
 import { firstValueFrom, of, timeout } from 'rxjs';
 
 import type { DiaryLocationPick, DiaryNeighbours } from '@okr/content-diary-ui';
-import { DiaryService, DiaryWeatherService } from '@okr/content-diary-data-access';
+import { DiaryMediaService, DiaryService, DiaryWeatherService } from '@okr/content-diary-data-access';
 import { AppConfigService } from '@okr/shared-data-access';
 import {
-  DIARY_FIRST_YEAR, DIARY_I18N_KEYS, DiaryRange, DiaryStateFilter, buildDiaryRangeTree, diaryRangeOfYear,
+  DIARY_FIRST_YEAR, DIARY_I18N_KEYS, DiaryMediaResult, DiaryRange, DiaryStateFilter, buildDiaryRangeTree, diaryRangeOfYear,
   diaryStateMatches, driveFolderUrl, formatDiaryDate, getDiaryIndex, groupDiariesByMonth, hasDiaryWeather, newDiary,
 } from '@okr/content-diary-util';
 import { LocationService } from '@okr/location-data-access';
@@ -53,6 +53,7 @@ export const DiaryStore = signalStore(
     diaryService: inject(DiaryService),
     appConfigService: inject(AppConfigService),
     weatherService: inject(DiaryWeatherService),
+    mediaService: inject(DiaryMediaService),
     locationService: inject(LocationService),
     modelSelectService: inject(ModelSelectService),
     modalController: inject(ModalController),
@@ -185,6 +186,22 @@ export const DiaryStore = signalStore(
       return role === 'confirm';
     };
 
+    /**
+     * Drive files per entry, cached for the store's lifetime so paging back and forth does not
+     * call Drive again (spec 1.106 §2.3). A failed call is evicted, so the next visit retries.
+     * Thumbnail links expire after hours — the cache never outlives the list page.
+     */
+    const mediaCache = new Map<string, Promise<DiaryMediaResult>>();
+    const loadMedia = (diary: DiaryModel): Promise<DiaryMediaResult> => {
+      let pending = mediaCache.get(diary.okey);
+      if (!pending) {
+        pending = store.mediaService.list(diary.okey);
+        pending.catch(() => mediaCache.delete(diary.okey));
+        mediaCache.set(diary.okey, pending);
+      }
+      return pending;
+    };
+
     /** prev/next/up of the shown entry (spec 1.106 §2.1) — queried, not taken from the loaded list. */
     const neighboursOf = async (diary: DiaryModel): Promise<DiaryNeighbours> => {
       const [prev, next, up] = await Promise.all([
@@ -314,7 +331,7 @@ export const DiaryStore = signalStore(
           cssClass: 'wide-modal',
           componentProps: {
             diary, i18n: store.i18n, lang: store.lang(),
-            neighbours: neighboursOf, openPerson: openPersonView, openLocation: openLocationView,
+            neighbours: neighboursOf, openPerson: openPersonView, openLocation: openLocationView, loadMedia,
           },
         });
         await modal.present();

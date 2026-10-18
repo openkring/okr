@@ -179,7 +179,8 @@
     "untitled": "senza titolo",
     "navPrev": "Giorno precedente",
     "navNext": "Giorno successivo",
-    "navUp": "Panoramica"
+    "navUp": "Panoramica",
+    "mediaLoadFailed": "Non è stato possibile caricare foto e documenti da Drive."
   },
   "diaryState": {
     "all": {

@@ -179,7 +179,8 @@
     "untitled": "untitled",
     "navPrev": "Previous day",
     "navNext": "Next day",
-    "navUp": "Overview"
+    "navUp": "Overview",
+    "mediaLoadFailed": "Photos and documents from Drive could not be loaded."
   },
   "diaryState": {
     "all": {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { driveThumbnailAtSize } from './diary-media.util';
+import { diaryFileIconName, driveThumbnailAtSize } from './diary-media.util';
 
 describe('driveThumbnailAtSize', () => {
   it('replaces the size suffix', () => {
@@ -12,4 +12,9 @@ describe('driveThumbnailAtSize', () => {
   it('keeps an empty link empty', () => {
     expect(driveThumbnailAtSize('', 400)).toBe('');
   });
+});
+
+describe('diaryFileIconName', () => {
+  it('names the file type of a pdf', () => expect(diaryFileIconName('application/pdf')).toBe('pdf'));
+  it('falls back to a generic file', () => expect(diaryFileIconName('')).toBe('file'));
 });
