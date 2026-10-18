@@ -117,20 +117,29 @@ describe('parseMatrixPermalink', () => {
 });
 
 describe('isOwnNotesRoom', () => {
+  const owner = { tenantId: 'scs', personKey: 'Kaiser', serverName: 'bkchat.etke.host' };
+  const alias = '#notes_scs_kaiser:bkchat.etke.host';
   const bot = '@bk2-bot:bkchat.etke.host';
-  it('accepts a notes alias of the tenant created by the bot', () => {
-    expect(isOwnNotesRoom({ topic: '#notes_scs_kaiser:bkchat.etke.host', creator: bot }, 'scs')).toBe(true);
+  it('accepts the exact own alias created by the full bot MXID', () => {
+    expect(isOwnNotesRoom({ topic: alias, creator: bot }, owner)).toBe(true);
   });
-  it('rejects a squatted alias created by someone else', () => {
-    expect(isOwnNotesRoom({ topic: '#notes_scs_kaiser:bkchat.etke.host', creator: '@mallory:bkchat.etke.host' }, 'scs')).toBe(false);
-    expect(isOwnNotesRoom({ topic: '#notes_scs_kaiser:bkchat.etke.host' }, 'scs')).toBe(false);
+  it('rejects a bot of a foreign server', () => {
+    expect(isOwnNotesRoom({ topic: alias, creator: '@bk2-bot:other.server' }, owner)).toBe(false);
   });
-  it('rejects another tenant or a non-notes alias', () => {
-    expect(isOwnNotesRoom({ topic: '#notes_gss_kaiser:bkchat.etke.host', creator: bot }, 'scs')).toBe(false);
-    expect(isOwnNotesRoom({ topic: '#group_x:bkchat.etke.host', creator: bot }, 'scs')).toBe(false);
-    expect(isOwnNotesRoom({ creator: bot }, 'scs')).toBe(false);
+  it('rejects a squatted alias created by someone else, or without creator', () => {
+    expect(isOwnNotesRoom({ topic: alias, creator: '@mallory:bkchat.etke.host' }, owner)).toBe(false);
+    expect(isOwnNotesRoom({ topic: alias }, owner)).toBe(false);
   });
-  it('rejects without a tenant', () => {
-    expect(isOwnNotesRoom({ topic: '#notes_scs_kaiser:x', creator: bot }, undefined)).toBe(false);
+  it("rejects another person's notes alias in the same tenant", () => {
+    expect(isOwnNotesRoom({ topic: '#notes_scs_meier:bkchat.etke.host', creator: bot }, owner)).toBe(false);
+  });
+  it('rejects another tenant, a foreign-server alias or a non-notes alias', () => {
+    expect(isOwnNotesRoom({ topic: '#notes_gss_kaiser:bkchat.etke.host', creator: bot }, owner)).toBe(false);
+    expect(isOwnNotesRoom({ topic: '#notes_scs_kaiser:other.server', creator: bot }, owner)).toBe(false);
+    expect(isOwnNotesRoom({ topic: '#group_x:bkchat.etke.host', creator: bot }, owner)).toBe(false);
+    expect(isOwnNotesRoom({ creator: bot }, owner)).toBe(false);
+  });
+  it('rejects without an owner', () => {
+    expect(isOwnNotesRoom({ topic: alias, creator: bot }, undefined)).toBe(false);
   });
 });

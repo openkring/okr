@@ -104,6 +104,9 @@ export class MatrixRoomListService {
           room.isDirect === o.isDirect &&
           room.unreadCount === o.unreadCount &&
           room.isFavourite === o.isFavourite &&
+          room.topic === o.topic &&
+          room.creator === o.creator &&
+          room.stateLoaded === o.stateLoaded &&
           room.lastMessage?.eventId === o.lastMessage?.eventId &&
           room.lastMessage?.timestamp === o.lastMessage?.timestamp &&
           room.lastMessage?.body === o.lastMessage?.body &&

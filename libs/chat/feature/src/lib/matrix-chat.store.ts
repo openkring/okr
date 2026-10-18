@@ -1,4 +1,4 @@
-import { computed, inject, Injectable } from '@angular/core';
+import { computed, inject, Injectable, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { getApp } from 'firebase/app';
@@ -17,7 +17,7 @@ import { I18nService } from '@okr/shared-i18n';
 import { ActivityService } from '@okr/activity-data-access';
 import { AvatarService } from '@okr/avatar-data-access';
 import { MatrixChatService, MatrixPollData } from '@okr/chat-data-access';
-import { AvailablePinboard, AdhocChatFormModel, newAdhocChatForm, PollDef, filterRoomsOfTenant, findSupportRoom, serverNameOf, MATRIX_CHAT_I18N_KEYS, MatrixChatI18n, MentionRef, callableErrorCode, pinboardBroadcastCount, pinboardReplyDraft, isAlbumVideoFile, isVideoLimitError, isVideoUploadError, isOwnNotesRoom, videoAlbumFallsBackToSynapse } from '@okr/chat-util';
+import { AvailablePinboard, AdhocChatFormModel, newAdhocChatForm, PollDef, filterRoomsOfTenant, findSupportRoom, serverNameOf, MATRIX_CHAT_I18N_KEYS, MatrixChatI18n, MentionRef, callableErrorCode, pinboardBroadcastCount, pinboardReplyDraft, isAlbumVideoFile, isVideoLimitError, isVideoUploadError, isOwnNotesRoom, NotesRoomOwner, videoAlbumFallsBackToSynapse } from '@okr/chat-util';
 
 import { RoomEditModal } from './room-edit.modal';
 
@@ -53,6 +53,8 @@ export const _MatrixChatStore = signalStore(
     toastController: inject(ToastController),
     alertService: inject(AlertService),
     i18nService: inject(I18nService),
+    /** `tenant:person` for which a notes room is being resolved or was resolved; '' when none. */
+    notesRoomRequestedFor: signal(''),
   })),
   // C-9: derive isMatrixInitialized from the service's single `initialized` observable.
   // Defined before the resource block below so receipts/messages resources can depend on it.
@@ -294,13 +296,22 @@ export const _MatrixChatStore = signalStore(
   }),
 
   withComputed((state) => {
+    const notesOwner = (): NotesRoomOwner | undefined => {
+      const tenantId = state.appStore.tenantId();
+      const personKey = state.appStore.currentUser()?.personKey;
+      return tenantId && personKey ? { tenantId, personKey, serverName: state.homeServer() } : undefined;
+    };
     return {
+      /** Who the notes room must belong to (also handed to the room list). */
+      notesOwner: computed(() => notesOwner()),
       /**
        * The user's personal notes room of this tenant, once it has arrived via sync. Recognised
        * by its canonical alias AND the bot as creator (a squatted alias is not trusted).
        */
-      notesRoom: computed((): MatrixRoom | undefined =>
-        state.rooms().find(r => isOwnNotesRoom(r, state.appStore.tenantId()))),
+      notesRoom: computed((): MatrixRoom | undefined => {
+        const owner = notesOwner();
+        return owner ? state.rooms().find(r => isOwnNotesRoom(r, owner)) : undefined;
+      }),
       matrixUser: computed((): MatrixUser | undefined => {
         const user = state.currentUser();
         if (!user) return undefined;
@@ -361,13 +372,15 @@ export const _MatrixChatStore = signalStore(
      */
     showNotesPlaceholder: computed(() =>
       !state.notesRoom()
+      // Hidden while resolving and once resolved: the pending stub already shows the room.
+      && state.notesRoomRequestedFor() !== `${state.appStore.tenantId()}:${state.appStore.currentUser()?.personKey}`
       && (state.syncState() === 'PREPARED' || state.syncState() === 'SYNCING')
       && !isKioskOnly(state.appStore.currentUser())),
   })),
 
   withMethods((store) => {
-    /** In-flight / settled `resolveNotesRoom` of this session, so a double tap creates one room. */
-    let notesRoomIdPromise: Promise<string> | undefined;
+    /** In-flight / settled `resolveNotesRoom`, keyed by `tenant:person` so a new login never reuses it. */
+    let notesRoomCache: { key: string; promise: Promise<string> } | undefined;
 
     /** Lower-case okeys aller bekannten Personen — Raummitglieder ohne Person (Matrix-Admin-Dienstkonto) zaehlen nicht. */
     const knownPersonKeys = (): Set<string> => new Set(store.appStore.allPersons().map((p: PersonModel) => p.okey.toLowerCase()));
@@ -455,11 +468,25 @@ export const _MatrixChatStore = signalStore(
         const existing = store.notesRoom();
         if (existing) return existing.roomId;
         const tenantId = store.appStore.tenantId();
-        if (!tenantId) throw new Error('MatrixChatStore.ensureNotesRoomId: no tenant');
-        if (isKioskOnly(store.appStore.currentUser())) throw new Error('MatrixChatStore.ensureNotesRoomId: kiosk user');
-        notesRoomIdPromise ??= store.matrixService.resolveNotesRoom(tenantId, store.i18n.notes_room_name())
-          .catch(error => { notesRoomIdPromise = undefined; throw error; });
-        return notesRoomIdPromise;
+        const user = store.appStore.currentUser();
+        if (!tenantId || !user) throw new Error('MatrixChatStore.ensureNotesRoomId: no tenant or user');
+        if (isKioskOnly(user)) throw new Error('MatrixChatStore.ensureNotesRoomId: kiosk user');
+        const key = `${tenantId}:${user.personKey}`;
+        if (notesRoomCache?.key === key) {
+          const cachedId = await notesRoomCache.promise.catch(() => undefined);
+          // Still the same request and the room is still known to the client: reuse it.
+          if (cachedId && notesRoomCache?.key === key && store.matrixService.getRoom(cachedId)) return cachedId;
+        }
+        const promise = store.matrixService.resolveNotesRoom(tenantId, store.i18n.notes_room_name());
+        notesRoomCache = { key, promise };
+        store.notesRoomRequestedFor.set(key);
+        try {
+          return await promise;
+        } catch (error) {
+          if (notesRoomCache?.promise === promise) notesRoomCache = undefined;
+          store.notesRoomRequestedFor.set('');
+          throw error;
+        }
       },
 
       /** Open the notes room, creating it first if it does not exist yet. */

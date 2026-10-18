@@ -35,14 +35,24 @@ export function isNotesRoomAlias(alias: string | undefined, tenantId?: string): 
 /** Localpart of the Matrix service account that creates every notes room (`MATRIX_ADMIN_TOKEN`). */
 export const NOTES_ROOM_BOT_LOCALPART = 'bk2-bot';
 
+/** Who the notes room must belong to: the signed-in person, in this tenant, on our homeserver. */
+export interface NotesRoomOwner {
+  tenantId: string;
+  personKey: string;
+  /** Matrix server name (`bkchat.etke.host`), as in the user's own MXID. */
+  serverName: string;
+}
+
 /**
- * Whether a room is this tenant's genuine notes room: its canonical alias (carried in `topic`)
- * is a notes alias of the tenant AND the bot created it. The creator check is defence in depth
- * against somebody squatting a `#notes_...` alias on a room of their own.
+ * Whether a room is the caller's own notes room: its canonical alias (carried in `topic`) is
+ * exactly `#notes_<tenant>_<personKey>:<server>` AND the bot of OUR homeserver created it
+ * (`@bk2-bot:<server>`). Exact comparison, not a prefix: a squatted alias, another person's
+ * notes room or a bot of a foreign server never matches.
  */
-export function isOwnNotesRoom(room: { topic?: string; creator?: string }, tenantId: string | undefined): boolean {
-  if (!tenantId || !isNotesRoomAlias(room.topic, tenantId)) return false;
-  return room.creator?.split(':')[0]?.replace(/^@/, '') === NOTES_ROOM_BOT_LOCALPART;
+export function isOwnNotesRoom(room: { topic?: string; creator?: string }, owner: NotesRoomOwner | undefined): boolean {
+  if (!owner?.tenantId || !owner.personKey || !owner.serverName) return false;
+  const alias = `#${notesRoomAliasLocalpart(owner.tenantId, owner.personKey)}:${owner.serverName}`;
+  return room.topic === alias && room.creator === `@${NOTES_ROOM_BOT_LOCALPART}:${owner.serverName}`;
 }
 
 /** First 200 chars (code points, whitespace collapsed) of the plain body; a file, image, video or audio shows its name, a poll its question. */

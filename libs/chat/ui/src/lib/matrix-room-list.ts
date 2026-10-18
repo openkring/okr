@@ -5,7 +5,7 @@ import { IonList, IonItem, IonItemDivider, IonLabel, IonBadge, IonNote, IonIcon,
 import { MatrixRoom } from '@okr/shared-models';
 import { MultiAvatarPipe, SvgIconPipe } from '@okr/shared-pipes';
 
-import { formatMatrixTimestamp, isMatrixPhotoUrl, isOwnNotesRoom, MatrixChatI18n, splitFavouriteRooms } from '@okr/chat-util';
+import { formatMatrixTimestamp, isMatrixPhotoUrl, isOwnNotesRoom, MatrixChatI18n, NotesRoomOwner, splitFavouriteRooms } from '@okr/chat-util';
 
 @Component({
   selector: 'okr-matrix-room-list',
@@ -148,8 +148,8 @@ export class MatrixRoomList {
   rooms = input.required<MatrixRoom[]>();
   selectedRoomId = input<string>();
 
-  /** Tenant of the app; identifies the notes room together with its creator. */
-  tenantId = input<string>();
+  /** Who the notes room must belong to; undefined until the user is known. */
+  notesOwner = input<NotesRoomOwner>();
   /** Show the «Notizen an mich» placeholder row (room not created yet, not a kiosk user). */
   showNotesPlaceholder = input(false);
 
@@ -159,7 +159,7 @@ export class MatrixRoomList {
   /** Icon of the notes room row. */
   protected readonly notesIcon = 'note';
 
-  protected readonly isNotes = (room: MatrixRoom): boolean => isOwnNotesRoom(room, this.tenantId());
+  protected readonly isNotes = (room: MatrixRoom): boolean => isOwnNotesRoom(room, this.notesOwner());
 
   isPhotoUrl = isMatrixPhotoUrl;
 

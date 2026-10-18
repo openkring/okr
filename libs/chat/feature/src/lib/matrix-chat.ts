@@ -362,7 +362,7 @@ function rejectionReasons(results: PromiseSettledResult<unknown>[]): unknown[] {
                 [rooms]="filteredRooms()"
                 [selectedRoomId]="currentRoomId()"
                 [i18n]="store.i18n"
-                [tenantId]="tenantId()"
+                [notesOwner]="store.notesOwner()"
                 [showNotesPlaceholder]="store.showNotesPlaceholder()"
                 (roomSelected)="onRoomSelected($event)"
                 (notesPlaceholderSelected)="onNotesPlaceholderSelected()"
@@ -684,7 +684,6 @@ export class MatrixChat implements OnDestroy {
   protected readonly syncState = this.store.syncState;
   protected readonly rooms = this.store.rooms;
   protected readonly currentRoom = this.store.currentRoom;
-  protected readonly tenantId = computed(() => this.store.appStore.tenantId());
   /** The open room is the personal «Notizen an mich» room. */
   protected readonly isNotesRoomOpen = computed(() => {
     const id = this.store.currentRoomId();
