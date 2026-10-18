@@ -143,6 +143,7 @@ export const resolveNotesRoom = MatrixSimple.resolveNotesRoom;
 export const onPinboardSourceMembershipWritten = MatrixSimple.onPinboardSourceMembershipWritten;
 export const onPinboardWritten = MatrixSimple.onPinboardWritten;
 export const sweepPinboards = MatrixSimple.sweepPinboards;
+export const sendChatReminders = MatrixSimple.sendChatReminders;
 export const createPinboard = MatrixSimple.createPinboard;
 export const updatePinboard = MatrixSimple.updatePinboard;
 export const archivePinboard = MatrixSimple.archivePinboard;

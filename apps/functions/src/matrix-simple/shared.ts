@@ -1155,3 +1155,37 @@ export async function kickUserFromRoom(roomId: string, matrixUserId: string, adm
   }
   return true;
 }
+
+/**
+ * Posts an `m.text` rich reply into a room as the admin-token account (@bk2-bot). `txnId` makes
+ * the PUT idempotent: a retry after a crash does not post twice. Throws on any non-2xx.
+ */
+export async function sendBotReply(
+  roomId: string, inReplyToEventId: string, body: string, txnId: string, adminToken: string,
+): Promise<void> {
+  const resp = await fetch(
+    `${MATRIX_HOMESERVER}/_matrix/client/v3/rooms/${encodeURIComponent(roomId)}/send/m.room.message/${encodeURIComponent(txnId)}`,
+    {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ msgtype: 'm.text', body, 'm.relates_to': { 'm.in_reply_to': { event_id: inReplyToEventId } } }),
+    },
+  );
+  if (!resp.ok) throw new Error(`sendBotReply ${roomId} → ${resp.status}: ${await resp.text()}`);
+}
+
+/**
+ * Does the event still exist (not 404, not redacted)? Any other failure throws — a 5xx must not be
+ * read as «gone», or a transient outage would cancel the reminder.
+ */
+export async function roomEventExists(roomId: string, eventId: string, adminToken: string): Promise<boolean> {
+  const resp = await fetch(
+    `${MATRIX_HOMESERVER}/_matrix/client/v3/rooms/${encodeURIComponent(roomId)}/event/${encodeURIComponent(eventId)}`,
+    { headers: { Authorization: `Bearer ${adminToken}` } },
+  );
+  if (resp.status === 404) return false;
+  if (!resp.ok) throw new Error(`roomEventExists ${roomId} ${eventId} → ${resp.status}`);
+  const ev = (await resp.json()) as { content?: Record<string, unknown>; unsigned?: { redacted_because?: unknown } };
+  if (ev.unsigned?.redacted_because) return false;
+  return !!ev.content && Object.keys(ev.content).length > 0;
+}

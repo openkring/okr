@@ -16,6 +16,7 @@
  *  - membership-sync.ts Firestore trigger + reconcile (membership → room sync)
  *  - adhoc-chat.ts      ad-hoc chats (a group document with kind: 'chat')
  *  - notes-room.ts      «Notizen an mich» room per (person, tenant), chat bookmarks (1.104)
+ *  - chat-reminders.ts  sendChatReminders: 5-minute sweep, bot reply for due chat reminders (1.104)
  *  - pinboard.ts        Pinnwand (a group document with kind: 'pinboard')
  *  - room-assignment.ts manual tenant assignment of a room the backfill cannot derive
  */
@@ -27,5 +28,6 @@ export * from './push';
 export * from './tenant-backfill';
 export * from './adhoc-chat';
 export * from './notes-room';
+export * from './chat-reminders';
 export * from './pinboard';
 export * from './room-assignment';
