@@ -13,7 +13,8 @@ import { AlertService, createActionSheetButton, createActionSheetDivider, create
 import { weatherCodeToIcon, WEATHER_ICON_SET } from '@okr/weather-util';
 
 import {
-  diaryStateOf, diaryWeatherLine, formatDiaryDateShort, formatDiaryMonthHeader, hasDiaryWeather, isWideDiaryRange, DiaryStateFilter,
+  diaryStateOf, diaryWeatherLine, formatDiaryDateShort, formatDiaryMonthHeader, hasDiaryWeather, isWideDiaryRange, segmentDiaryGroupsByYear,
+  DiaryStateFilter,
 } from '@okr/content-diary-util';
 import { DiaryRangeSelect } from './diary-range-select';
 import { DiaryStore } from './diary.store';
@@ -80,31 +81,31 @@ const DIARY_STATE_I18N_SCOPE = '@content/diary/feature';
         <okr-empty-list [message]="store.i18n.list_empty()" />
       } @else {
         @if (store.groupByMonth()) {
-          @for (group of store.groupedDiaries(); track group.key) {
-            @if (group.isYear) {
+          @for (segment of yearSegments(); track segment.year) {
+            @if (segment.yearGroup; as yearGroup) {
               <ion-list lines="inset">
-                @for (diary of group.items; track diary.okey) {
+                @for (diary of yearGroup.items; track diary.okey) {
                   <ng-container *ngTemplateOutlet="row; context: { $implicit: diary }" />
                 }
               </ion-list>
             }
-          }
-          <ion-accordion-group [multiple]="true" [value]="monthKeys()">
-            @for (group of store.groupedDiaries(); track group.key) {
-              @if (!group.isYear) {
-                <ion-accordion [value]="group.key">
-                  <ion-item slot="header" color="light">
-                    <ion-label>{{ monthHeader(group.key) }} ({{ group.items.length }})</ion-label>
-                  </ion-item>
-                  <ion-list slot="content" lines="inset">
-                    @for (diary of group.items; track diary.okey) {
-                      <ng-container *ngTemplateOutlet="row; context: { $implicit: diary }" />
-                    }
-                  </ion-list>
-                </ion-accordion>
-              }
+            @if (segment.months.length) {
+              <ion-accordion-group [multiple]="true" [value]="segment.monthKeys">
+                @for (group of segment.months; track group.key) {
+                  <ion-accordion [value]="group.key">
+                    <ion-item slot="header" color="light">
+                      <ion-label>{{ monthHeader(group.key) }} ({{ group.items.length }})</ion-label>
+                    </ion-item>
+                    <ion-list slot="content" lines="inset">
+                      @for (diary of group.items; track diary.okey) {
+                        <ng-container *ngTemplateOutlet="row; context: { $implicit: diary }" />
+                      }
+                    </ion-list>
+                  </ion-accordion>
+                }
+              </ion-accordion-group>
             }
-          </ion-accordion-group>
+          }
         } @else {
           <ion-list lines="inset">
             @for (diary of store.filteredDiaries(); track diary.okey) {
@@ -154,8 +155,12 @@ export class DiaryList {
   protected readonly filteredCount = computed(() => this.store.filteredDiaries().length);
   protected readonly popupId = computed(() => `c_diaries_${this.listId()}`);
   protected readonly isWide = computed(() => isWideDiaryRange(this.store.selectedRange()));
-  /** every month open — the accordions are for scanning and collapsing, not for hiding by default */
-  protected readonly monthKeys = computed(() => this.store.groupedDiaries().filter(g => !g.isYear).map(g => g.key));
+  /**
+   * One block per year: its aggregate above its own month accordions. `monthKeys` opens every
+   * month; it is computed here, not in the template, so `[value]` only changes with the data.
+   */
+  protected readonly yearSegments = computed(() => segmentDiaryGroupsByYear(this.store.groupedDiaries())
+    .map(segment => ({ ...segment, monthKeys: segment.months.map(g => g.key) })));
   protected readonly stateOf = diaryStateOf;
   protected readonly hasWeather = (d: DiaryModel) => hasDiaryWeather(d.weather);
   protected readonly weatherIcon = (d: DiaryModel) => weatherCodeToIcon(d.weather.code);

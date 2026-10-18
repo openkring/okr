@@ -2,7 +2,7 @@ import { Component, computed, effect, inject, input, linkedSignal, signal } from
 import { IonButton, IonButtons, IonChip, IonContent, IonIcon, IonItem, IonLabel, IonList, IonNote, IonToolbar, ModalController } from '@ionic/angular';
 import { Browser } from '@capacitor/browser';
 
-import { AvatarInfo, DiaryModel, ImageConfig, ImageType, IMAGE_STYLE_SHAPE } from '@okr/shared-models';
+import { AvatarInfo, DiaryModel, IMAGE_STYLE_SHAPE } from '@okr/shared-models';
 import { Header, showImageSlider } from '@okr/shared-ui';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { AvatarDisplay } from '@okr/avatar-ui';
@@ -10,7 +10,7 @@ import { weatherCodeToIcon, WEATHER_ICON_SET } from '@okr/weather-util';
 import { dismissOverlay } from '@okr/shared-util-angular';
 
 import {
-  DiaryI18n, DiaryMediaResult, diaryWeatherLine, driveFolderUrl, driveThumbnailAtSize, formatDiaryDateLong, hasDiaryWeather,
+  DiaryI18n, DiaryMediaResult, diarySliderImages, diaryWeatherLine, driveFolderUrl, formatDiaryDateLong, hasDiaryWeather,
   renderDiaryHtml,
 } from '@okr/content-diary-util';
 
@@ -198,11 +198,8 @@ export class DiaryViewModal {
 
   /** Full-size slider over all images of the day, starting at the tapped one. */
   protected async openImage(index: number): Promise<void> {
-    const images: ImageConfig[] = (this.media()?.images ?? []).map(f => ({
-      label: f.name, type: ImageType.Image, url: driveThumbnailAtSize(f.thumbnailLink, 2400),
-      actionUrl: '', altText: f.name, overlay: '',
-    }));
-    if (images.length) await showImageSlider(this.modalController, images, { ...IMAGE_STYLE_SHAPE }, index);
+    const { images, startIndex } = diarySliderImages(this.media()?.images ?? [], index);
+    if (images.length) await showImageSlider(this.modalController, images, { ...IMAGE_STYLE_SHAPE }, startIndex);
   }
 
   protected async openDocument(index: number): Promise<void> {

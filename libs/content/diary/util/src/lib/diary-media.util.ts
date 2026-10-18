@@ -1,3 +1,4 @@
+import { ImageConfig, ImageType } from '@okr/shared-models';
 import { getExtensionFromMimeType, reduceLogoName } from '@okr/shared-util-core';
 
 /**
@@ -29,4 +30,18 @@ export function diaryFileIconName(mimeType: string): string {
   if (!mimeType) return 'file';
   if (mimeType.startsWith('image/')) return 'image';
   return reduceLogoName(getExtensionFromMimeType(mimeType).toLowerCase());
+}
+
+/**
+ * The full-size slider over a day's images. An image without a Drive thumbnail has no URL to
+ * show and is left out — the tapped index is re-mapped so the slider still opens on it.
+ */
+export function diarySliderImages(files: DiaryMediaFile[], tappedIndex: number): { images: ImageConfig[]; startIndex: number } {
+  const tapped = files[tappedIndex];
+  const shown = files.filter(f => !!f.thumbnailLink);
+  const images = shown.map(f => ({
+    label: f.name, type: ImageType.Image, url: driveThumbnailAtSize(f.thumbnailLink, 2400),
+    actionUrl: '', altText: f.name, overlay: '',
+  }));
+  return { images, startIndex: Math.max(0, shown.indexOf(tapped)) };
 }

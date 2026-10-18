@@ -26,3 +26,29 @@ export function groupDiariesByMonth(diaries: DiaryModel[]): DiaryGroup[] {
   }
   return groups;
 }
+
+/** One year of the grouped list: its aggregate (if any) above its month accordions. */
+export interface DiaryYearSegment {
+  year: string;
+  yearGroup?: DiaryGroup;
+  months: DiaryGroup[];
+}
+
+/**
+ * Cuts the month groups into years so that a year aggregate renders above ITS months and not
+ * above every month of a decade (spec 1.106 §1.1). Keeps the input order.
+ */
+export function segmentDiaryGroupsByYear(groups: DiaryGroup[]): DiaryYearSegment[] {
+  const segments: DiaryYearSegment[] = [];
+  for (const group of groups) {
+    const year = group.key.slice(0, 4);
+    let segment = segments[segments.length - 1];
+    if (!segment || segment.year !== year) {
+      segment = { year, months: [] };
+      segments.push(segment);
+    }
+    if (group.isYear) segment.yearGroup = group;
+    else segment.months.push(group);
+  }
+  return segments;
+}

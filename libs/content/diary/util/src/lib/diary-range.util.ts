@@ -1,3 +1,5 @@
+import { DbQuery, DiaryModel, DiaryScope } from '@okr/shared-models';
+
 /**
  * The diary's period selector mirrors the Drive archive's folder tree (spec 1.106 §1.2):
  * Jahrhundert (`19xx`) → Jahrzehnt (`198x`) → Jahr (`1984`). Any node can be selected; its
@@ -52,4 +54,26 @@ export function diaryRangeBounds(range: DiaryRange): { from: string; to: string 
 /** All years (undefined) and whole centuries load enough entries to warrant the hint. */
 export function isWideDiaryRange(range: DiaryRange | undefined): boolean {
   return range === undefined || range.level === 'century';
+}
+/** Legacy documents may lack `scope` (Firestore reads skip model defaults) — they are days. */
+export function diaryNeighbourScope(diary: DiaryModel): DiaryScope {
+  return diary.scope ?? 'day';
+}
+
+/**
+ * The query for the nearest older (`prev`) or newer (`next`) entry of the same scope (spec 1.106
+ * §2.1). The two equality constraints are the read rule and must stay. Days filter scope in
+ * memory (a legacy day without `scope` would fail `scope == 'day'`), and the next day is at most a
+ * few aggregates away. Aggregates pin `scope ==`: without it, the next year aggregate lies behind
+ * ~370 day entries. That costs the indexes `authorKey`, `tenants`, `scope`, `date` ASC and DESC.
+ */
+export function diaryNeighbourQuery(authorKey: string, tenantId: string, current: DiaryModel, direction: 'prev' | 'next'): DbQuery[] {
+  const query: DbQuery[] = [
+    { key: 'authorKey', operator: '==', value: authorKey },
+    { key: 'tenants', operator: 'array-contains', value: tenantId },
+  ];
+  const scope = diaryNeighbourScope(current);
+  if (scope !== 'day') query.push({ key: 'scope', operator: '==', value: scope });
+  query.push({ key: 'date', operator: direction === 'prev' ? '<' : '>', value: current.date });
+  return query;
 }

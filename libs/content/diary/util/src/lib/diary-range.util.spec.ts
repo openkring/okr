@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildDiaryRangeTree, diaryRangeBounds, diaryRangeOfYear, isWideDiaryRange } from './diary-range.util';
+import { DiaryModel } from '@okr/shared-models';
+
+import { buildDiaryRangeTree, diaryNeighbourQuery, diaryNeighbourScope, diaryRangeBounds, diaryRangeOfYear, isWideDiaryRange } from './diary-range.util';
 
 describe('buildDiaryRangeTree', () => {
   it('builds newest-first centuries → decades → years, clipped to the range', () => {
@@ -34,5 +36,23 @@ describe('isWideDiaryRange', () => {
     expect(isWideDiaryRange(tree[1].range)).toBe(true);
     expect(isWideDiaryRange(tree[1].children[0].range)).toBe(false);
     expect(isWideDiaryRange(diaryRangeOfYear(2026))).toBe(false);
+  });
+});
+
+describe('diaryNeighbourQuery', () => {
+  const day = { date: '20261011', scope: 'day' } as DiaryModel;
+  it('keeps the read rule and a strict date bound', () => {
+    expect(diaryNeighbourQuery('u1', 'bka', day, 'prev')).toEqual([
+      { key: 'authorKey', operator: '==', value: 'u1' },
+      { key: 'tenants', operator: 'array-contains', value: 'bka' },
+      { key: 'date', operator: '<', value: '20261011' },
+    ]);
+  });
+  it('pins the scope for an aggregate, so the next year is one hit away instead of 370', () => {
+    expect(diaryNeighbourQuery('u1', 'bka', { date: '19840000', scope: 'year' } as DiaryModel, 'next'))
+      .toContainEqual({ key: 'scope', operator: '==', value: 'year' });
+  });
+  it('treats a legacy entry without scope as a day', () => {
+    expect(diaryNeighbourScope({ date: '20261011' } as DiaryModel)).toBe('day');
   });
 });

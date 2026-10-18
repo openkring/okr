@@ -7,7 +7,9 @@ import { I18nService } from '@okr/shared-i18n';
 import { DbQuery, DiaryCollection, DiaryModel, TripCollection, TripModel, UserModel } from '@okr/shared-models';
 import { getQuery, getSystemQuery } from '@okr/shared-util-core';
 
-import { DIARY_I18N_KEYS, DiaryRange, diaryHeadlineSortKey, diaryKey, diaryRangeBounds } from '@okr/content-diary-util';
+import {
+  DIARY_I18N_KEYS, DiaryRange, diaryHeadlineSortKey, diaryKey, diaryNeighbourQuery, diaryNeighbourScope, diaryRangeBounds,
+} from '@okr/content-diary-util';
 
 /** Neighbour search pages: small, because the nearest hit is almost always in the first page. */
 const NEIGHBOUR_PAGE = 5;
@@ -98,9 +100,8 @@ export class DiaryService {
    */
   public async findNeighbour(authorKey: string, tenantId: string, current: DiaryModel, direction: 'prev' | 'next'): Promise<DiaryModel | undefined> {
     if (!authorKey || !tenantId) return undefined;
-    const dbQuery = this.ownerQuery(authorKey, tenantId);
-    dbQuery.push({ key: 'date', operator: direction === 'prev' ? '<' : '>', value: current.date });
-    const constraints = getQuery(dbQuery, 'date', direction === 'prev' ? 'desc' : 'asc');
+    const scope = diaryNeighbourScope(current);
+    const constraints = getQuery(diaryNeighbourQuery(authorKey, tenantId, current, direction), 'date', direction === 'prev' ? 'desc' : 'asc');
     let last: QueryDocumentSnapshot | undefined;
     for (let page = 0; page < NEIGHBOUR_MAX_PAGES; page++) {
       const pageQuery = query(collection(this.firestoreService.firestore, DiaryCollection), ...constraints,
@@ -108,7 +109,7 @@ export class DiaryService {
       const snapshot = await getDocs(pageQuery);
       const hit = snapshot.docs
         .map(d => ({ ...d.data(), okey: d.id }) as DiaryModel)
-        .find(d => !d.isArchived && (d.scope ?? 'day') === current.scope);
+        .find(d => !d.isArchived && diaryNeighbourScope(d) === scope);
       if (hit) return hit;
       if (snapshot.docs.length < NEIGHBOUR_PAGE) return undefined;
       last = snapshot.docs[snapshot.docs.length - 1];
@@ -122,8 +123,9 @@ export class DiaryService {
    */
   public async findUp(authorKey: string, tenantId: string, current: DiaryModel): Promise<DiaryModel | undefined> {
     const year = current.date.slice(0, 4);
-    const candidates = current.scope === 'day' ? [`${current.date.slice(0, 6)}00`, `${year}0000`]
-      : current.scope === 'month' ? [`${year}0000`] : [];
+    const scope = diaryNeighbourScope(current);
+    const candidates = scope === 'day' ? [`${current.date.slice(0, 6)}00`, `${year}0000`]
+      : scope === 'month' ? [`${year}0000`] : [];
     for (const date of candidates) {
       const found = await this.readOnce(diaryKey(tenantId, authorKey, date));
       if (found && !found.isArchived) return found;
