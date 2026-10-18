@@ -131,6 +131,13 @@
     }
   },
   "message": {
+    "bookmark": {
+      "action": "Merken",
+      "saved": "Gemerkt — in «Notizen an mich»",
+      "open": "Öffnen",
+      "savedPrefix": "Gemerkt:",
+      "error": "Das hat nicht geklappt. Versuche es bitte noch einmal."
+    },
     "edit": "Nachricht bearbeiten",
     "reply": {
       "label": "Antworten",

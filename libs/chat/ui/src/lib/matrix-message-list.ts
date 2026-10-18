@@ -9,7 +9,7 @@ import { MatrixMessage, MatrixReadReceipt, PersonModelName } from '@okr/shared-m
 import { AvatarService } from '@okr/avatar-data-access';
 import { MatrixReadReceiptStrip } from './matrix-read-receipt-strip';
 import { PollMessage } from './poll-message';
-import { decorateMentionPills, extractMentionLocalpart, formatMatrixDate, formatMatrixTime, groupMessages, ImageBatchGroup, isVideoMessage, linkifyText, MatrixChatI18n, MessageOrBatch } from '@okr/chat-util';
+import { decorateMentionPills, extractMentionLocalpart, formatMatrixDate, formatMatrixTime, groupMessages, ImageBatchGroup, isVideoMessage, linkifyText, readBookmark, ChatBookmark, MatrixChatI18n, MessageOrBatch } from '@okr/chat-util';
 
 /** imgix thumbnail size for a mention pill's avatar — 2x the 18px CSS box, for retina. */
 const MENTION_AVATAR_SIZE = 36;
@@ -247,6 +247,37 @@ const MENTION_AVATAR_SIZE = 36;
     .chat-video-card {
       width: 240px;
       max-width: 100%;
+    }
+
+    /* Bookmark entry in the notes room: header (room · date), sender, 2-line snippet. */
+    .bookmark-card {
+      display: block;
+      width: 260px;
+      max-width: 100%;
+      box-sizing: border-box;
+      padding: 8px 10px;
+      border-radius: 8px;
+      border-left: 3px solid var(--ion-color-primary);
+      background: var(--ion-color-light);
+      color: var(--ion-color-dark);
+      cursor: pointer;
+    }
+    .bookmark-card-header {
+      font-size: 0.75rem;
+      color: var(--ion-color-medium);
+    }
+    .bookmark-card-sender {
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-top: 2px;
+    }
+    .bookmark-card-snippet {
+      margin: 2px 0 0;
+      font-size: 0.9rem;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
     }
 
     .message-video {
@@ -520,7 +551,17 @@ const MENTION_AVATAR_SIZE = 36;
                         @switch (item.type) {
                           @case ('m.text') {
                             @let videoKey = videoKeyOf(item);
-                            @if (videoKey) {
+                            @let bookmark = bookmarkOf(item);
+                            @if (bookmark) {
+                              <!-- Bookmark entry (spec 1.104): a tap opens the original, not the action sheet. -->
+                              <div class="bookmark-card" role="button" tabindex="0"
+                                (click)="onBookmarkCardClick($event, bookmark)"
+                                (keydown.enter)="onBookmarkCardClick($event, bookmark)">
+                                <div class="bookmark-card-header">{{ bookmark.roomName }} · {{ formatDate(bookmark.originTs) }}</div>
+                                <div class="bookmark-card-sender">{{ bookmarkSender(bookmark) }}</div>
+                                <p class="bookmark-card-snippet">{{ bookmark.snippet }}</p>
+                              </div>
+                            } @else if (videoKey) {
                               <!-- An album video (spec 1.82 §8): a poster card instead of the bare link.
                                    VideoCard stops only the poster tap; the title, a loading or an
                                    unavailable card let the tap through to the bubble's action sheet. -->
@@ -711,6 +752,7 @@ export class MatrixMessageList {
   loadOlder = output<void>();
   /** A tap on an album video card: the docKey to play. */
   public readonly videoCardClicked = output<string>();
+  public readonly bookmarkClicked = output<ChatBookmark>();
 
   messagesContainer = viewChild<ElementRef>('messagesContainer');
 
@@ -898,6 +940,20 @@ export class MatrixMessageList {
     return this.avatarService.getCachedStoragePath(key)
       ? this.avatarService.getAvatarUrl(key, PersonModelName, MENTION_AVATAR_SIZE)
       : undefined;
+  }
+
+  protected bookmarkOf(item: MatrixMessage): ChatBookmark | undefined {
+    return readBookmark(item.content);
+  }
+
+  /** Display name of the bookmarked sender: the localpart of the Matrix id. */
+  protected bookmarkSender(bookmark: ChatBookmark): string {
+    return bookmark.senderId.replace(/^@/, '').split(':')[0];
+  }
+
+  protected onBookmarkCardClick(event: Event, bookmark: ChatBookmark): void {
+    event.stopPropagation();
+    this.bookmarkClicked.emit(bookmark);
   }
 
   protected onBubbleClick(event: MouseEvent, item: MatrixMessage): void {

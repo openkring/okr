@@ -784,6 +784,13 @@ export class MatrixChatService {
     return this.client.sendEvent(roomId, EventType.RoomMessage, content as any);
   }
 
+  /** Send an `m.room.message` with caller-built content (e.g. a bookmark entry); returns the new event id. */
+  async sendCustomMessage(roomId: string, content: Record<string, unknown>): Promise<string> {
+    if (!this.client) throw new Error('Client not initialized');
+    const res = await this.client.sendEvent(roomId, EventType.RoomMessage, content as any);
+    return res.event_id;
+  }
+
   async sendHtmlMessage(roomId: string, plainText: string, html: string): Promise<ISendEventResponse> {
     if (!this.client) throw new Error('Client not initialized');
     return this.client.sendEvent(roomId, EventType.RoomMessage, {

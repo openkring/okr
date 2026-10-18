@@ -131,6 +131,13 @@
     }
   },
   "message": {
+    "bookmark": {
+      "action": "Salva",
+      "saved": "Salvato — in «Note per me»",
+      "open": "Apri",
+      "savedPrefix": "Salvato:",
+      "error": "Non ha funzionato. Riprova."
+    },
     "edit": "Modifica messaggio",
     "reply": {
       "label": "Rispondi",

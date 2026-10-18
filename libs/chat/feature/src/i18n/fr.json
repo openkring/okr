@@ -131,6 +131,13 @@
     }
   },
   "message": {
+    "bookmark": {
+      "action": "Garder",
+      "saved": "Gardé — dans «Notes pour moi»",
+      "open": "Ouvrir",
+      "savedPrefix": "Gardé :",
+      "error": "Ça n'a pas marché. Essaie encore une fois."
+    },
     "edit": "Modifier le message",
     "reply": {
       "label": "Répondre",

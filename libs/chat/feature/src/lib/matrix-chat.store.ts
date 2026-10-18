@@ -17,7 +17,7 @@ import { I18nService } from '@okr/shared-i18n';
 import { ActivityService } from '@okr/activity-data-access';
 import { AvatarService } from '@okr/avatar-data-access';
 import { MatrixChatService, MatrixPollData } from '@okr/chat-data-access';
-import { AvailablePinboard, AdhocChatFormModel, newAdhocChatForm, PollDef, filterRoomsOfTenant, findSupportRoom, serverNameOf, MATRIX_CHAT_I18N_KEYS, MatrixChatI18n, MentionRef, callableErrorCode, pinboardBroadcastCount, pinboardReplyDraft, isAlbumVideoFile, isVideoLimitError, isVideoUploadError, isOwnNotesRoom, NotesRoomOwner, videoAlbumFallsBackToSynapse } from '@okr/chat-util';
+import { AvailablePinboard, AdhocChatFormModel, newAdhocChatForm, PollDef, filterRoomsOfTenant, findSupportRoom, serverNameOf, MATRIX_CHAT_I18N_KEYS, MatrixChatI18n, MentionRef, callableErrorCode, pinboardBroadcastCount, pinboardReplyDraft, isAlbumVideoFile, isVideoLimitError, isVideoUploadError, isOwnNotesRoom, NotesRoomOwner, buildBookmarkContent, videoAlbumFallsBackToSynapse } from '@okr/chat-util';
 
 import { RoomEditModal } from './room-edit.modal';
 
@@ -311,6 +311,12 @@ export const _MatrixChatStore = signalStore(
       notesRoom: computed((): MatrixRoom | undefined => {
         const owner = notesOwner();
         return owner ? state.rooms().find(r => isOwnNotesRoom(r, owner)) : undefined;
+      }),
+      /** Whether the open room is the user's own «Notizen an mich» room. */
+      isCurrentRoomNotes: computed((): boolean => {
+        const roomId = state.currentRoomId();
+        const owner = notesOwner();
+        return !!roomId && !!owner && state.rooms().some(r => r.roomId === roomId && isOwnNotesRoom(r, owner));
       }),
       matrixUser: computed((): MatrixUser | undefined => {
         const user = state.currentUser();
@@ -1226,6 +1232,32 @@ export const _MatrixChatStore = signalStore(
         } catch (error) {
           console.error('MatrixChatStore.deleteMessage: Failed:', error);
           await store.alertService.showToast(store.i18n.msg_delete_error());
+        }
+      },
+
+      /**
+       * «Merken»: post a bookmark entry for the message into the user's notes room.
+       * Returns the entry's event id; the toast offers to open the notes room.
+       */
+      async bookmarkMessage(message: MatrixMessage): Promise<string> {
+        try {
+          const notesRoomId = await this.ensureNotesRoomId();
+          const roomId = message.roomId || store.currentRoomId() || '';
+          const roomName = (store.rooms().find(r => r.roomId === roomId))?.name ?? '';
+          const content = buildBookmarkContent(message, roomName, { saved: store.i18n.bookmark_saved_prefix() });
+          const entryId = await store.matrixService.sendCustomMessage(notesRoomId, content);
+          const toast = await store.toastController.create({
+            message: store.i18n.bookmark_saved(),
+            duration: 4000,
+            position: 'bottom',
+            buttons: [{ text: store.i18n.bookmark_open(), role: 'open', handler: () => { void this.openNotesRoom(); } }],
+          });
+          await toast.present();
+          return entryId;
+        } catch (error) {
+          console.error('MatrixChatStore.bookmarkMessage: Failed:', error);
+          await store.alertService.showToast(store.i18n.bookmark_error());
+          return '';
         }
       },
 

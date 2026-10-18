@@ -6,7 +6,7 @@ import { captureMessage } from '@sentry/angular';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { ImageLightboxModal, LightboxImage, showVideoView, Spinner } from '@okr/shared-ui';
-import { debugMessage, fileSizeUnit, fill, hasRole, warn } from '@okr/shared-util-core';
+import { debugMessage, fileSizeUnit, fill, hasRole, isKioskOnly, warn } from '@okr/shared-util-core';
 import { AlertService, createActionSheetButton, createActionSheetDivider, createActionSheetOptions, downloadFile, isBrowser, isNativePlatform, saveFile } from '@okr/shared-util-angular';
 import { MatrixMessage, PersonModelName, RoleName } from '@okr/shared-models';
 
@@ -16,7 +16,7 @@ import { videoDocKeyOf, videoLink } from '@okr/content-document-util';
 
 import { MatrixMessageInput, MatrixMessageList, MatrixRoomList, PollDetailModal } from '@okr/chat-ui';
 import { MatrixPollData } from '@okr/chat-data-access';
-import { buildEditedPollAnswers, canEditPoll, parsePollContent, convertHeicToJpeg, groupRoomAliasLocalpart, shouldDeferAskRoom, isSupportedImageFile, isUploadTooLargeError, filterRoomsByName, resolveInitialRoomId, MessageDraft, UploadTooLargeError } from '@okr/chat-util';
+import { buildEditedPollAnswers, canEditPoll, parsePollContent, convertHeicToJpeg, groupRoomAliasLocalpart, shouldDeferAskRoom, isSupportedImageFile, isUploadTooLargeError, filterRoomsByName, resolveInitialRoomId, readBookmark, ChatBookmark, MessageDraft, UploadTooLargeError } from '@okr/chat-util';
 
 import { MatrixChatStore } from './matrix-chat.store';
 import { PollCreateModal } from './poll-create.modal';
@@ -437,6 +437,7 @@ function rejectionReasons(results: PromiseSettledResult<unknown>[]): unknown[] {
                     [i18n]="store.i18n"
                     (loadOlder)="onLoadOlder()"
                     (messageClicked)="onMessageClicked($event)"
+                    (bookmarkClicked)="onBookmarkClicked($event)"
                     [failedMediaIds]="store.failedMediaIds()"
                     (imageClicked)="onImageClicked($event)"
                     (mediaRetry)="store.retryMedia($event)"
@@ -573,6 +574,7 @@ function rejectionReasons(results: PromiseSettledResult<unknown>[]): unknown[] {
                     [videoUnavailableLabel]="store.i18n.video_unavailable()"
                     (videoCardClicked)="onVideoCardClicked($event)"
                     (messageClicked)="onMessageClicked($event)"
+                    (bookmarkClicked)="onBookmarkClicked($event)"
                     [failedMediaIds]="store.failedMediaIds()"
                     (imageClicked)="onImageClicked($event)"
                     (mediaRetry)="store.retryMedia($event)"
@@ -1234,6 +1236,14 @@ export class MatrixChat implements OnDestroy {
     await this.executeActions(actionSheetOptions, message);
   }
 
+  /**
+   * A bookmark card (or its «Öffnen») was chosen: go to the original room.
+   * Single entry point; Task 5/6 rewire this through the permalink jump to the exact message.
+   */
+  protected onBookmarkClicked(bookmark: ChatBookmark): void {
+    this.store.setCurrentRoom(bookmark.roomId);
+  }
+
   protected async onImageClicked(event: { message: MatrixMessage; group: MatrixMessage[] }): Promise<void> {
     // The list shows a scaled preview of large photos; the lightbox opens on that preview at
     // once and swaps in the original (also what "download" saves) as soon as it has arrived.
@@ -1581,6 +1591,15 @@ export class MatrixChat implements OnDestroy {
     const isAuthor = !!currentUserId && message.sender === currentUserId;
     const isPoll = message.type === 'org.matrix.msc3381.poll.start';
     const pinboard = this.store.currentPinboard();
+    const inNotes = this.store.isCurrentRoomNotes();
+    const bookmark = inNotes ? readBookmark(message.content) : undefined;
+    if (bookmark) { // bookmark card: open the original or delete the entry
+      actionSheetOptions.buttons.push(createActionSheetButton('chat.message.bookmarkOpen', this.store.i18n.bookmark_open(), this.imgixBaseUrl, 'link'));
+      actionSheetOptions.buttons.push(createActionSheetButton('chat.message.delete', this.store.i18n.msg_delete(), this.imgixBaseUrl, 'trash'));
+      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
+      return;
+    }
+    const canBookmark = !inNotes && !isKioskOnly(this.currentUser());
     // Pinboard: no threads; «Antworten» becomes «Privat antworten» (non-authors only), plus
     // «An alle antworten» when the pinboard allows it. Authors get no reply action.
     const pushReplyButtons = (): void => {
@@ -1606,9 +1625,15 @@ export class MatrixChat implements OnDestroy {
         actionSheetOptions.buttons.push(createActionSheetButton('poll.end', this.store.i18n.survey_end(), this.imgixBaseUrl, 'cancel-circle'));
       }
       actionSheetOptions.buttons.push(createActionSheetDivider());
-      actionSheetOptions.buttons.push(createActionSheetButton('chat.message.react', this.store.i18n.msg_react_header(), this.imgixBaseUrl, 'smiley'));
-      pushReplyButtons();
+      if (!inNotes) {
+        actionSheetOptions.buttons.push(createActionSheetButton('chat.message.react', this.store.i18n.msg_react_header(), this.imgixBaseUrl, 'smiley'));
+        pushReplyButtons();
+      }
       actionSheetOptions.buttons.push(createActionSheetDivider());
+    }
+
+    if (canBookmark) {
+      actionSheetOptions.buttons.push(createActionSheetButton('chat.message.bookmark', this.store.i18n.bookmark_action(), this.imgixBaseUrl, 'bookmark'));
     }
 
     if (isAuthor) { // author of message
@@ -1617,6 +1642,8 @@ export class MatrixChat implements OnDestroy {
         actionSheetOptions.buttons.push(createActionSheetButton('chat.message.edit', this.store.i18n.msg_edit(), this.imgixBaseUrl, 'edit'));
       }
       actionSheetOptions.buttons.push(createActionSheetButton('chat.message.delete', this.store.i18n.msg_delete(), this.imgixBaseUrl, 'trash'));
+    } else if (inNotes) {
+      // notes room: only the user lives here, nothing to react to, reply to or report
     } else if (!isPoll) {  // receiver of a non-poll message (poll react/reply/thread already added above)
       actionSheetOptions.buttons.push(createActionSheetButton('chat.message.react', this.store.i18n.msg_react_header(), this.imgixBaseUrl, 'smiley'));
       pushReplyButtons();
@@ -1655,6 +1682,14 @@ export class MatrixChat implements OnDestroy {
       const { data } = await actionSheet.onDidDismiss();
       if (!data) return;
       switch (data.action) {
+        case 'chat.message.bookmark':
+          await this.store.bookmarkMessage(message);
+          break;
+        case 'chat.message.bookmarkOpen': {
+          const bm = readBookmark(message.content);
+          if (bm) this.onBookmarkClicked(bm);
+          break;
+        }
         case 'chat.message.react':
           await this.store.reactToMessage(message);
           break;
