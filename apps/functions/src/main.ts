@@ -420,6 +420,8 @@ export { migrateMemberFees } from './member-fee/migrate-member-fees';
 // exit fee settlement (spec 1.105): a changed membership exit opens/updates/closes the
 // treasurer's pro-rata settlement task and refreshes a not-yet-invoiced fee row
 export { onMembershipExitWritten } from './member-fee/exit-settlement.trigger';
+// the treasurer's decision on that task: refund, adjust the invoice or exit on 31.12.
+export { settleMembershipExit } from './member-fee/settle-membership-exit';
 
 // member-fees generic positions (2026-09-17): 'native' accountingBackend counterpart to
 // uploadToBexio/createBexioInvoice — posts 'ready' member-fees as real InvoiceModel +
