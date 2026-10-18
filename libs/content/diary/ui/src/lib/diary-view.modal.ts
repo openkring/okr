@@ -1,8 +1,8 @@
-import { Component, computed, inject, input } from '@angular/core';
-import { IonButton, IonChip, IonContent, IonIcon, IonItem, IonLabel, IonList, IonNote, ModalController } from '@ionic/angular';
+import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
+import { IonButton, IonButtons, IonChip, IonContent, IonIcon, IonItem, IonLabel, IonList, IonNote, IonToolbar, ModalController } from '@ionic/angular';
 import { Browser } from '@capacitor/browser';
 
-import { DiaryModel } from '@okr/shared-models';
+import { AvatarInfo, DiaryModel } from '@okr/shared-models';
 import { Header } from '@okr/shared-ui';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { AvatarDisplay } from '@okr/avatar-ui';
@@ -10,41 +10,90 @@ import { weatherCodeToIcon, WEATHER_ICON_SET } from '@okr/weather-util';
 import { dismissOverlay } from '@okr/shared-util-angular';
 
 import {
-  DiaryI18n, diaryWeatherLine, driveFolderUrl, formatDiaryDate, hasDiaryWeather, renderDiaryHtml,
+  DiaryI18n, diaryWeatherLine, driveFolderUrl, formatDiaryDateLong, hasDiaryWeather, renderDiaryHtml,
 } from '@okr/content-diary-util';
 
+/** The entries one step away from the shown one (spec 1.106 §2.1); undefined = no such entry. */
+export interface DiaryNeighbours {
+  prev?: DiaryModel;
+  next?: DiaryModel;
+  up?: DiaryModel;
+}
+
+/**
+ * Read view of one diary entry. Pages in place through prev/next/up: `current` starts at the
+ * `diary` input and is swapped by the nav buttons, so no modal is stacked per step. Everything
+ * that needs the store or a feature lib (neighbour queries, person/location modals) comes IN as
+ * a callback — this ui-lib modal must not inject the store back (store-modal-dynamic-import).
+ */
 @Component({
   selector: 'okr-diary-view-modal',
   standalone: true,
-  imports: [Header, AvatarDisplay, SvgIconPipe, IonContent, IonItem, IonLabel, IonList, IonNote, IonChip, IonIcon, IonButton],
+  imports: [Header, AvatarDisplay, SvgIconPipe, IonContent, IonItem, IonLabel, IonList, IonNote, IonChip, IonIcon, IonButton, IonButtons, IonToolbar],
   styles: [`
     .body { padding: 16px; line-height: 1.5; }
     .meta ion-chip { margin-right: 4px; }
+    .people { display: flex; flex-wrap: wrap; gap: 8px; }
+    .person, .location { cursor: pointer; }
   `],
   template: `
     <okr-header [i18n]="{ title: title() }" [isModal]="true" />
     <ion-content>
+      <ion-toolbar>
+        <ion-buttons slot="start">
+          @if (nav().prev) {
+            <ion-button (click)="go(nav().prev)">
+              <ion-icon slot="start" src="{{ 'chevron-back' | svgIcon }}" />{{ i18n().nav_prev() }}
+            </ion-button>
+          }
+        </ion-buttons>
+        @if (nav().up) {
+          <ion-buttons class="ion-justify-content-center">
+            <ion-button (click)="go(nav().up)">
+              <ion-icon slot="start" src="{{ 'chevron-up' | svgIcon }}" />{{ i18n().nav_up() }}
+            </ion-button>
+          </ion-buttons>
+        }
+        <ion-buttons slot="end">
+          @if (nav().next) {
+            <ion-button (click)="go(nav().next)">
+              {{ i18n().nav_next() }}<ion-icon slot="end" src="{{ 'chevron-forward' | svgIcon }}" />
+            </ion-button>
+          }
+        </ion-buttons>
+      </ion-toolbar>
+
       <ion-list lines="none" class="meta">
         <ion-item>
           <ion-label>
-            <h2>{{ formatDiaryDate(diary().date) }}</h2>
-            <p>{{ diary().location?.label || diary().location?.name1 || diary().customLocationLabel }}</p>
+            <h2>{{ dateLabel() }}</h2>
+            @if (location(); as loc) {
+              <p class="location" (click)="openLocation()(loc)">{{ locationLabel() }}</p>
+            } @else {
+              <p>{{ locationLabel() }}</p>
+            }
           </ion-label>
-          @if (diary().scope === 'day' && hasWeather()) {
+          @if (current().scope === 'day' && hasWeather()) {
             <ion-icon slot="end" src="{{ weatherIcon() | svgIcon: weatherIconSet }}" />
             <ion-note slot="end">{{ weatherLine() }}</ion-note>
           }
         </ion-item>
-        @if (diary().people.length || diary().customPeopleLabels.length) {
+        @if (current().people.length || current().customPeopleLabels.length) {
           <ion-item>
-            <okr-avatar-display [avatars]="diary().people" [showName]="true" />
-            @for (label of diary().customPeopleLabels; track label) { <ion-chip color="medium">{{ label }}</ion-chip> }
+            <div class="people">
+              @for (person of people(); track person[0].key) {
+                <div class="person" (click)="openPerson()(person[0])">
+                  <okr-avatar-display [avatars]="person" [showName]="true" />
+                </div>
+              }
+              @for (label of current().customPeopleLabels; track label) { <ion-chip color="medium">{{ label }}</ion-chip> }
+            </div>
           </ion-item>
         }
-        @if (diary().events.length || diary().places.length) {
+        @if (current().events.length || current().places.length) {
           <ion-item>
-            @for (e of diary().events; track e) { <ion-chip color="tertiary">{{ e }}</ion-chip> }
-            @for (p of diary().places; track p) { <ion-chip>{{ p }}</ion-chip> }
+            @for (e of current().events; track e) { <ion-chip color="tertiary">{{ e }}</ion-chip> }
+            @for (p of current().places; track p) { <ion-chip>{{ p }}</ion-chip> }
           </ion-item>
         }
       </ion-list>
@@ -59,10 +108,10 @@ import {
         </ion-item>
       }
 
-      @if (diary().done.length) {
+      @if (current().done.length) {
         <ion-list>
           <ion-item lines="none"><ion-label><strong>{{ i18n().view_done_title() }}</strong></ion-label></ion-item>
-          @for (item of diary().done; track $index) {
+          @for (item of current().done; track $index) {
             <ion-item lines="none"><ion-icon slot="start" src="{{ 'checkmark' | svgIcon }}" /><ion-label class="ion-text-wrap">{{ item }}</ion-label></ion-item>
           }
         </ion-list>
@@ -79,22 +128,56 @@ export class DiaryViewModal {
 
   public readonly diary = input.required<DiaryModel>();
   public readonly i18n = input.required<DiaryI18n>();
+  /** the active UI language — weekday names */
+  public readonly lang = input.required<string>();
+  public readonly neighbours = input.required<(d: DiaryModel) => Promise<DiaryNeighbours>>();
+  public readonly openPerson = input.required<(a: AvatarInfo) => Promise<void>>();
+  public readonly openLocation = input.required<(a: AvatarInfo) => Promise<void>>();
 
-  protected readonly formatDiaryDate = formatDiaryDate;
-  protected readonly title = computed(() => this.diary().title || this.i18n().view_untitled());
-  protected readonly html = computed(() => renderDiaryHtml(this.diary().text));
-  protected readonly driveUrl = computed(() => driveFolderUrl(this.diary().driveFolderId));
-  protected readonly hasWeather = computed(() => hasDiaryWeather(this.diary().weather));
-  protected readonly weatherLine = computed(() => diaryWeatherLine(this.diary().weather));
-  protected readonly weatherIcon = computed(() => weatherCodeToIcon(this.diary().weather.code));
+  /** the entry on screen — starts at `diary`, swapped by prev/next/up */
+  protected readonly current = linkedSignal(() => this.diary());
+  protected readonly nav = signal<DiaryNeighbours>({});
+
+  protected readonly title = computed(() => this.current().title || this.i18n().view_untitled());
+  protected readonly dateLabel = computed(() => formatDiaryDateLong(this.current().date, this.lang()));
+  /** the resolved location — tappable; a free-text location is not */
+  protected readonly location = computed(() => this.current().location?.key ? this.current().location : undefined);
+  protected readonly locationLabel = computed(() => {
+    const d = this.current();
+    return d.location?.label || d.location?.name1 || d.customLocationLabel;
+  });
+  /** one single-element array per person, so each avatar is its own tap target */
+  protected readonly people = computed(() => this.current().people.filter(p => !!p.key).map(p => [p]));
+  protected readonly html = computed(() => renderDiaryHtml(this.current().text));
+  protected readonly driveUrl = computed(() => driveFolderUrl(this.current().driveFolderId));
+  protected readonly hasWeather = computed(() => hasDiaryWeather(this.current().weather));
+  protected readonly weatherLine = computed(() => diaryWeatherLine(this.current().weather));
+  protected readonly weatherIcon = computed(() => weatherCodeToIcon(this.current().weather.code));
   protected readonly weatherIconSet = WEATHER_ICON_SET;
+
+  constructor() {
+    // Neighbours of whatever is on screen. A slow answer for an entry the user already paged
+    // away from is dropped (okey check), so the buttons never point from the wrong day.
+    effect(() => {
+      const shown = this.current();
+      const load = this.neighbours();
+      this.nav.set({});
+      load(shown)
+        .then(nav => { if (this.current().okey === shown.okey) this.nav.set(nav); })
+        .catch(() => { /* no navigation is a usable fallback */ });
+    });
+  }
+
+  protected go(target: DiaryModel | undefined): void {
+    if (target) this.current.set(target);
+  }
 
   protected async openDrive(): Promise<void> {
     await Browser.open({ url: this.driveUrl() });
   }
 
-  /** Hands over to the editor: the store re-opens this entry in DiaryEditModal on role 'edit'. */
+  /** Hands over to the editor: the store re-opens the SHOWN entry in DiaryEditModal on role 'edit'. */
   protected async edit(): Promise<void> {
-    await dismissOverlay(this.modalController, undefined, 'edit');
+    await dismissOverlay(this.modalController, this.current(), 'edit');
   }
 }

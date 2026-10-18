@@ -132,6 +132,9 @@ export const DIARY_I18N_KEYS = {
   images_in_drive:        PFX + 'view.imagesInDrive',
   view_done_title:        PFX + 'view.doneTitle',
   view_untitled:          PFX + 'view.untitled',
+  nav_prev:               PFX + 'view.navPrev',
+  nav_next:               PFX + 'view.navNext',
+  nav_up:                 PFX + 'view.navUp',
 
   // ─── travel period of a diary app, admin-only (spec 1.77 D7) ───────────────
   period_title:           PFX + 'period.title',

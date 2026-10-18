@@ -176,7 +176,10 @@
   "view": {
     "imagesInDrive": "Imágenes — abrir en la carpeta de Drive",
     "doneTitle": "Hecho",
-    "untitled": "sin título"
+    "untitled": "sin título",
+    "navPrev": "Día anterior",
+    "navNext": "Día siguiente",
+    "navUp": "Resumen"
   },
   "diaryState": {
     "all": {

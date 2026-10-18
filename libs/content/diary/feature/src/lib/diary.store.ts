@@ -5,7 +5,7 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { Browser } from '@capacitor/browser';
 import { firstValueFrom, of, timeout } from 'rxjs';
 
-import type { DiaryLocationPick } from '@okr/content-diary-ui';
+import type { DiaryLocationPick, DiaryNeighbours } from '@okr/content-diary-ui';
 import { DiaryService, DiaryWeatherService } from '@okr/content-diary-data-access';
 import { AppConfigService } from '@okr/shared-data-access';
 import {
@@ -13,7 +13,7 @@ import {
   diaryStateMatches, driveFolderUrl, formatDiaryDate, getDiaryIndex, groupDiariesByMonth, hasDiaryWeather, newDiary,
 } from '@okr/content-diary-util';
 import { LocationService } from '@okr/location-data-access';
-import { AvatarInfo, DiaryModel, DiaryPeriod, TripModel } from '@okr/shared-models';
+import { AvatarInfo, DiaryModel, DiaryPeriod, PersonModelName, TripModel } from '@okr/shared-models';
 import { AppStore, ModelSelectService } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { AlertService } from '@okr/shared-util-angular';
@@ -185,6 +185,51 @@ export const DiaryStore = signalStore(
       return role === 'confirm';
     };
 
+    /** prev/next/up of the shown entry (spec 1.106 §2.1) — queried, not taken from the loaded list. */
+    const neighboursOf = async (diary: DiaryModel): Promise<DiaryNeighbours> => {
+      const [prev, next, up] = await Promise.all([
+        store.diaryService.findNeighbour(store.authorKey(), store.tenantId(), diary, 'prev'),
+        store.diaryService.findNeighbour(store.authorKey(), store.tenantId(), diary, 'next'),
+        store.diaryService.findUp(store.authorKey(), store.tenantId(), diary),
+      ]);
+      return { prev, next, up };
+    };
+
+    /** Read-only person modal from a diary avatar (pattern: TripViewModal.openPerson). */
+    const openPersonView = async (avatar: AvatarInfo): Promise<void> => {
+      if (avatar.modelType !== PersonModelName || !avatar.key) return;
+      const person = store.appStore.getPerson(avatar.key);
+      if (!person) return;
+      const { PersonEditModal } = await import('@okr/subject-person-feature');
+      const modal = await store.modalController.create({
+        component: PersonEditModal,
+        componentProps: {
+          person,
+          currentUser: store.appStore.currentUser(),
+          tags: store.appStore.getTags(PersonModelName),
+          tenantId: store.appStore.tenantId(),
+          genders: store.appStore.getCategory('gender'),
+          readOnly: true,
+        },
+      });
+      await modal.present();
+      await modal.onDidDismiss();
+    };
+
+    /** Read-only location modal from the diary's resolved location. */
+    const openLocationView = async (avatar: AvatarInfo): Promise<void> => {
+      if (!avatar.key) return;
+      const location = await firstValueFrom(store.locationService.read(avatar.key).pipe(timeout(5000))).catch(() => undefined);
+      if (!location) return;
+      const { LocationEditModal } = await import('@okr/location-feature');
+      const modal = await store.modalController.create({
+        component: LocationEditModal,
+        componentProps: { location, currentUser: store.appStore.currentUser(), readOnly: true },
+      });
+      await modal.present();
+      await modal.onDidDismiss();
+    };
+
     const editEntry = async (diary: DiaryModel): Promise<void> => {
       const edited = await openEditor(diary, true);
       if (!edited) return;
@@ -267,11 +312,15 @@ export const DiaryStore = signalStore(
         const modal = await store.modalController.create({
           component: DiaryViewModal,
           cssClass: 'wide-modal',
-          componentProps: { diary, i18n: store.i18n },
+          componentProps: {
+            diary, i18n: store.i18n, lang: store.lang(),
+            neighbours: neighboursOf, openPerson: openPersonView, openLocation: openLocationView,
+          },
         });
         await modal.present();
-        const { role } = await modal.onWillDismiss();
-        if (role === 'edit') await editEntry(diary);
+        // the modal pages in place — 'edit' carries the entry that was on screen
+        const { data, role } = await modal.onWillDismiss<DiaryModel>();
+        if (role === 'edit') await editEntry(data ?? diary);
       },
 
       async delete(diary: DiaryModel): Promise<void> {

@@ -176,7 +176,10 @@
   "view": {
     "imagesInDrive": "Images — open in the Drive folder",
     "doneTitle": "Done",
-    "untitled": "untitled"
+    "untitled": "untitled",
+    "navPrev": "Previous day",
+    "navNext": "Next day",
+    "navUp": "Overview"
   },
   "diaryState": {
     "all": {
