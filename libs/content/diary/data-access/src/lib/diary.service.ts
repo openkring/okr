@@ -1,12 +1,17 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable, firstValueFrom, map, of } from 'rxjs';
+import { QueryDocumentSnapshot, collection, getDocs, limit, query, startAfter } from 'firebase/firestore';
 
 import { FirestoreService } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
 import { DbQuery, DiaryCollection, DiaryModel, TripCollection, TripModel, UserModel } from '@okr/shared-models';
-import { getSystemQuery } from '@okr/shared-util-core';
+import { getQuery, getSystemQuery } from '@okr/shared-util-core';
 
-import { DIARY_I18N_KEYS, diaryHeadlineSortKey, diaryYearBounds } from '@okr/content-diary-util';
+import { DIARY_I18N_KEYS, DiaryRange, diaryHeadlineSortKey, diaryKey, diaryRangeBounds, diaryRangeOfYear } from '@okr/content-diary-util';
+
+/** Neighbour search pages: small, because the nearest hit is almost always in the first page. */
+const NEIGHBOUR_PAGE = 5;
+const NEIGHBOUR_MAX_PAGES = 10;
 
 /**
  * Reads and writes the author's own diary entries.
@@ -61,7 +66,8 @@ export class DiaryService {
   }
 
   /**
-   * One year of the author's entries, newest first — or every year when `year` is undefined.
+   * One period of the author's entries (a year, a decade, a century — spec 1.106 §1.2), newest
+   * first — or every year when `range` is undefined.
    *
    * The two equality constraints are the read rule (see the class comment) and stay in EVERY
    * variant; the date range is what keeps a 7'433-document collection from being streamed to a
@@ -69,21 +75,73 @@ export class DiaryService {
    * aggregate — 'yyyy0000' sorts first and is inside the bounds). Range on a third field costs
    * the composite index `authorKey ASC, tenants CONTAINS, date ASC` (firestore.indexes.json).
    */
-  public listByYear(authorKey: string, tenantId: string, year?: number): Observable<DiaryModel[]> {
+  public listByRange(authorKey: string, tenantId: string, range?: DiaryRange): Observable<DiaryModel[]> {
     if (!authorKey || !tenantId) return of([]);
-    const query: DbQuery[] = [
-      { key: 'authorKey', operator: '==', value: authorKey },
-      { key: 'tenants', operator: 'array-contains', value: tenantId },
-    ];
-    if (year !== undefined) {
-      const { from, to } = diaryYearBounds(year);
-      query.push({ key: 'date', operator: '>=', value: from }, { key: 'date', operator: '<=', value: to });
+    const dbQuery = this.ownerQuery(authorKey, tenantId);
+    if (range !== undefined) {
+      const { from, to } = diaryRangeBounds(range);
+      dbQuery.push({ key: 'date', operator: '>=', value: from }, { key: 'date', operator: '<=', value: to });
     }
-    return this.firestoreService.searchData<DiaryModel>(DiaryCollection, query, 'none').pipe(
+    return this.firestoreService.searchData<DiaryModel>(DiaryCollection, dbQuery, 'none').pipe(
       map(diaries => diaries
         .filter(diary => !diary.isArchived)
         .sort((a, b) => diaryHeadlineSortKey(b.date).localeCompare(diaryHeadlineSortKey(a.date)))),
     );
+  }
+
+  /** @deprecated use listByRange — kept until DiaryStore switches over (spec 1.106 Task 6). */
+  public listByYear(authorKey: string, tenantId: string, year?: number): Observable<DiaryModel[]> {
+    return this.listByRange(authorKey, tenantId, year === undefined ? undefined : diaryRangeOfYear(year));
+  }
+
+  /**
+   * The nearest older (`prev`) or newer (`next`) entry of the same scope as `current` — for a day
+   * the previous/next day that HAS an entry, skipping aggregates and archived entries. Queried,
+   * not taken from the loaded list: the list may be filtered to one year, and the neighbour of
+   * its oldest day lies in the year before. `prev` orders `date DESC`, which needs its own
+   * composite index (`authorKey`, `tenants`, `date DESC`).
+   */
+  public async findNeighbour(authorKey: string, tenantId: string, current: DiaryModel, direction: 'prev' | 'next'): Promise<DiaryModel | undefined> {
+    if (!authorKey || !tenantId) return undefined;
+    const dbQuery = this.ownerQuery(authorKey, tenantId);
+    dbQuery.push({ key: 'date', operator: direction === 'prev' ? '<' : '>', value: current.date });
+    const constraints = getQuery(dbQuery, 'date', direction === 'prev' ? 'desc' : 'asc');
+    let last: QueryDocumentSnapshot | undefined;
+    for (let page = 0; page < NEIGHBOUR_MAX_PAGES; page++) {
+      const pageQuery = query(collection(this.firestoreService.firestore, DiaryCollection), ...constraints,
+        ...(last ? [startAfter(last)] : []), limit(NEIGHBOUR_PAGE));
+      const snapshot = await getDocs(pageQuery);
+      const hit = snapshot.docs
+        .map(d => ({ ...d.data(), okey: d.id }) as DiaryModel)
+        .find(d => !d.isArchived && (d.scope ?? 'day') === current.scope);
+      if (hit) return hit;
+      if (snapshot.docs.length < NEIGHBOUR_PAGE) return undefined;
+      last = snapshot.docs[snapshot.docs.length - 1];
+    }
+    return undefined;
+  }
+
+  /**
+   * The overview one level up (spec 1.106 §2.1): a day → its month aggregate, else its year
+   * aggregate; a month aggregate → its year aggregate; a year → nothing. Archived counts as absent.
+   */
+  public async findUp(authorKey: string, tenantId: string, current: DiaryModel): Promise<DiaryModel | undefined> {
+    const year = current.date.slice(0, 4);
+    const candidates = current.scope === 'day' ? [`${current.date.slice(0, 6)}00`, `${year}0000`]
+      : current.scope === 'month' ? [`${year}0000`] : [];
+    for (const date of candidates) {
+      const found = await this.readOnce(diaryKey(tenantId, authorKey, date));
+      if (found && !found.isArchived) return found;
+    }
+    return undefined;
+  }
+
+  /** The two equality constraints the read rule demands (see the class comment). */
+  private ownerQuery(authorKey: string, tenantId: string): DbQuery[] {
+    return [
+      { key: 'authorKey', operator: '==', value: authorKey },
+      { key: 'tenants', operator: 'array-contains', value: tenantId },
+    ];
   }
 
   public read(key: string): Observable<DiaryModel | undefined> {
