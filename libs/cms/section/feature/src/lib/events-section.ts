@@ -9,7 +9,7 @@ import { createActionSheetButton, createActionSheetDivider, createActionSheetOpt
 import { PrettyDatePipe, SvgIconPipe, WeekdayPipe } from '@okr/shared-pipes';
 import { I18nService, TranslatePipe } from '@okr/shared-i18n';
 
-import { CALEVENT_I18N_KEYS } from '@okr/calevent-util';
+import { CALEVENT_I18N_KEYS, isAttendanceClosed } from '@okr/calevent-util';
 import { showCalEventInfo } from '@okr/calevent-ui';
 import { CalendarFeedService } from '@okr/calevent-data-access';
 import { isAdminMember } from '@okr/subject-group-util';
@@ -171,14 +171,17 @@ export class EventsSectionComponent implements OnInit {
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, calevent: CalEventModel): void {
     // eine Regel statt zweier Zweige: der Zustand steht in attendees, fuer Mitglieder wie fuer
     // Eingeladene. Das Dashboard-Widget bleibt bewusst schmal — die volle Bedienung ist in der Liste.
-    const state = getAttendanceState(calevent, this.currentUser()?.personKey ?? '');
-    if (state !== 'accepted') {
-      actionSheetOptions.buttons.push(createActionSheetButton('calevent.subscribe', this.store.i18n.calevent_subscribe(), this.imgixBaseUrl, 'checkbox-circle'));
+    // Vergangene, gesperrte oder abgesagte Anlaesse nehmen keine An-/Abmeldung mehr entgegen.
+    if (!isAttendanceClosed(calevent)) {
+      const state = getAttendanceState(calevent, this.currentUser()?.personKey ?? '');
+      if (state !== 'accepted') {
+        actionSheetOptions.buttons.push(createActionSheetButton('calevent.subscribe', this.store.i18n.calevent_subscribe(), this.imgixBaseUrl, 'checkbox-circle'));
+      }
+      if (state !== 'declined') {
+        actionSheetOptions.buttons.push(createActionSheetButton('calevent.unsubscribe', this.store.i18n.calevent_unsubscribe(), this.imgixBaseUrl, 'cancel'));
+      }
+      actionSheetOptions.buttons.push(createActionSheetDivider());
     }
-    if (state !== 'declined') {
-      actionSheetOptions.buttons.push(createActionSheetButton('calevent.unsubscribe', this.store.i18n.calevent_unsubscribe(), this.imgixBaseUrl, 'cancel'));
-    }
-    actionSheetOptions.buttons.push(createActionSheetDivider());
     actionSheetOptions.buttons.push(createActionSheetButton('calevent.view', this.store.i18n.calevent_view(), this.imgixBaseUrl, 'eye-on'));
     if (this.canChange(calevent)) {
       actionSheetOptions.buttons.push(createActionSheetButton('calevent.edit', this.store.i18n.calevent_edit(), this.imgixBaseUrl, 'edit'));

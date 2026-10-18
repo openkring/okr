@@ -8,7 +8,7 @@ import { LabelPipe, SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error, navigateByUrl } from '@okr/shared-util-angular';
 import { extractSecondPartOfOptionalTupel, getAttendanceColor, getAttendanceIcon, getAttendanceState, getYearFromDate, hasRole } from '@okr/shared-util-core';
-import { canAttendCalevent, isPastCalevent, mayJoinOpenCalevent } from '@okr/calevent-util';
+import { canAttendCalevent, isAttendanceClosed, mayJoinOpenCalevent } from '@okr/calevent-util';
 
 import { Menu } from '@okr/cms-menu-feature';
 import { AvatarDisplay } from '@okr/avatar-ui';
@@ -242,9 +242,9 @@ export class YearlyEvents {
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, calevent: CalEventModel): void {
     // Anwesenheit: dieselbe Regel wie in CalEventList — wer antworten darf, entscheidet die
-    // Reichweite des Kalenders bzw. eine Einladung (canAttendCalevent). Vergangene oder
-    // gesperrte Anlaesse nehmen keine Antwort mehr entgegen.
-    const showAttendance = !isPastCalevent(calevent) && !calevent.isLocked;
+    // Reichweite des Kalenders bzw. eine Einladung (canAttendCalevent). Vergangene,
+    // gesperrte oder abgesagte Anlaesse nehmen keine Antwort mehr entgegen.
+    const showAttendance = !isAttendanceClosed(calevent);
     const hasInvitation = this.store.invitations().some(inv => inv.caleventKey === calevent.okey);
     if (showAttendance && canAttendCalevent(calevent, hasInvitation, this.mayJoinOpen(calevent))) {
       const state = getAttendanceState(calevent, this.currentUser()?.personKey ?? '');
@@ -352,7 +352,7 @@ export class YearlyEvents {
    */
   protected attendanceState(event: CalEventModel): AttendanceState | undefined {
     const hasInvitation = this.store.invitations().some(inv => inv.caleventKey === event.okey);
-    if (isPastCalevent(event) || event.isLocked) return undefined;
+    if (isAttendanceClosed(event)) return undefined;
     const state = getAttendanceState(event, this.currentUser()?.personKey ?? '');
     if (!state) return canAttendCalevent(event, hasInvitation, this.mayJoinOpen(event)) ? 'invited' : undefined;
     return state === 'accepted' || state === 'declined' ? state : 'invited';

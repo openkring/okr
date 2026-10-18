@@ -11,7 +11,7 @@ import { getAttendanceStates, getAttendee, getAvatarInfoForCurrentUser, getInvit
 import { notify, resourceParams } from '@okr/shared-util-angular';
 
 import { CalEventService } from '@okr/calevent-data-access';
-import { seenKeyFor, toSeenCounts, unseenActivity } from '@okr/calevent-util';
+import { isAttendanceClosed, seenKeyFor, toSeenCounts, unseenActivity } from '@okr/calevent-util';
 import { SeenService } from '@okr/user-data-access';
 import { getVisibleGroupKeys } from '@okr/subject-group-util';
 
@@ -328,6 +328,7 @@ export const CalendarStore = signalStore(
        * `InvitationService.respond` dabei selbst.
        */
       async changeOwnAttendance(calEvent: CalEventModel, newState: 'accepted' | 'declined'): Promise<void> {
+        if (isAttendanceClosed(calEvent)) return;   // past, locked or cancelled: no An-/Abmeldung
         const inv = store.invitations().find(inv => inv.caleventKey === calEvent.okey);
         if (inv) {
           await this.changeInvitationState(inv, newState);

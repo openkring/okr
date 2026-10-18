@@ -1,4 +1,4 @@
-import { vi } from 'vitest';
+import { Mock, vi } from 'vitest';
 import { Observable, of, throwError } from 'rxjs';
 
 /**
@@ -24,11 +24,20 @@ export function mockError(message = 'mock-firestore-error'): Observable<never> {
   return throwError(() => new Error(message));
 }
 
+export interface FirestoreServiceMock {
+  createModel: Mock;
+  updateModel: Mock;
+  deleteModel: Mock;
+  readModel: Mock;
+  searchData: Mock;
+}
+
 /**
  * A vitest mock of `FirestoreService` exposing the CRUD/query surface that the
  * CMS services use. Override individual methods per test as needed.
+ * The explicit return type keeps vitest's internal `Procedure` type out of the inferred signature (TS2883).
  */
-export function createFirestoreServiceMock() {
+export function createFirestoreServiceMock(): FirestoreServiceMock {
   return {
     createModel: vi.fn().mockResolvedValue('new-id'),
     updateModel: vi.fn().mockResolvedValue('updated-id'),

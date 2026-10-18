@@ -179,19 +179,21 @@ export class InvitationsSectionComponent implements OnInit {
     // attendance can no longer be changed for past events
     if (this.editMode() || isPastDate(inv.date)) return;
     const actionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
-    this.addActionSheetButtons(actionSheetOptions, inv);
+    this.addActionSheetButtons(actionSheetOptions, inv, await this.store.isAnswerable(inv));
     await this.executeActions(actionSheetOptions, inv);
   }
 
   /**
    * Fills the ActionSheet with all possible actions, considering the user permissions.
    * @param inv 
+   * @param answerable from store.isAnswerable: false hides An-/Abmeldung
    */
-  private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, inv: InvitationModel): void {
+  private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, inv: InvitationModel, answerable: boolean): void {
     if (hasRole('registered', this.currentUser())) {
       // only the invitee may answer; on the 'all' scope the rows of other people are read-only,
-      // and a locked invitation is nobody's to answer any more
-      if (inv.inviteeKey === this.currentUser()?.personKey && !inv.isLocked) {
+      // and a locked invitation (or one whose event was cancelled, locked or is over) is nobody's
+      // to answer any more
+      if (inv.inviteeKey === this.currentUser()?.personKey && answerable) {
         if (inv.state !== 'accepted') {
           actionSheetOptions.buttons.push(createActionSheetButton('invitation.subscribe', this.store.i18n.invitation_subscribe(), this.imgixBaseUrl, 'checkbox-circle'));
         }

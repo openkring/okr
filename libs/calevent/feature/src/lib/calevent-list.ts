@@ -17,7 +17,7 @@ import { Menu } from '@okr/cms-menu-feature';
 import { AvatarDisplay } from '@okr/avatar-ui';
 import { isAdminMember } from '@okr/subject-group-util';
 
-import { CalEventDurationPipe, canAttendCalevent, countPollAcceptances, countPollResponses, formatDateTimeLabel, getCalEventCssClass, isPastCalevent, isPersonalCalendarName, isPersonalCalevent, mayJoinOpenCalevent, resetActivity, resolveCalendars, upcomingOccurrences } from '@okr/calevent-util';
+import { CalEventDurationPipe, canAttendCalevent, countPollAcceptances, countPollResponses, formatDateTimeLabel, getCalEventCssClass, isAttendanceClosed, isPastCalevent, isPersonalCalendarName, isPersonalCalevent, mayJoinOpenCalevent, resetActivity, resolveCalendars, upcomingOccurrences } from '@okr/calevent-util';
 import { showCalendarSync } from '@okr/calevent-ui';
 import { CalendarFeedService } from '@okr/calevent-data-access';
 import type { OrganiserContactAction, OrganiserContactResult } from '@okr/calevent-ui';
@@ -966,9 +966,9 @@ export class CalEventList implements OnInit {
    * @param calEvent 
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, calevent: CalEventModel): void {
-    // attendance actions (subscribe/unsubscribe) make no sense for past events, nor while the
-    // event itself is locked
-    const showAttendance = !isPastCalevent(calevent) && !calevent.isLocked;
+    // attendance actions (subscribe/unsubscribe) make no sense for past or cancelled events, nor
+    // while the event itself is locked
+    const showAttendance = !isAttendanceClosed(calevent);
     const canChange = this.canChange(calevent);
 
     // Anwesenheit: eine Regel statt zweier Zweige. Wer antworten darf, entscheidet die Reichweite

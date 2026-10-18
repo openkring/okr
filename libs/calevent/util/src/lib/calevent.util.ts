@@ -29,6 +29,17 @@ export function isPastCalevent(calevent: CalEventModel): boolean {
 }
 
 /**
+ * Whether An-/Abmeldung is closed on this event, regardless of who asks: it is over, locked by the
+ * organiser, or called off (state 'cancelled'). The one rule every attendance action and write
+ * path checks — the calendar list, the yearly view, the attendees accordion and the dashboard
+ * widgets alike.
+ * @param calevent
+ */
+export function isAttendanceClosed(calevent: CalEventModel): boolean {
+  return isPastCalevent(calevent) || !!calevent.isLocked || calevent.state === 'cancelled';
+}
+
+/**
  * A personal CalEvent belongs to no calendar: it is created by a plain registered user, shown only
  * to its organiser (responsiblePersons) and its invitees, and never appears in a shared calendar.
  * Personal events support a reduced feature set (no series, no fullDay, no location,
@@ -53,7 +64,7 @@ export function isPersonalCalevent(calevent: CalEventModel): boolean {
  *                     reaches someone the calendar does not;
  * - a personal event — its organiser is neither of the two.
  *
- * Never for a past event.
+ * Never for a past, locked or cancelled event ({@link isAttendanceClosed}).
  *
  * @param calevent
  * @param hasInvitation true if an invitation for the current user exists on this event
@@ -62,7 +73,7 @@ export function isPersonalCalevent(calevent: CalEventModel): boolean {
  *                      nothing to do with group calendars keeps the old behaviour.
  */
 export function canAttendCalevent(calevent: CalEventModel, hasInvitation: boolean, canJoinOpen = true): boolean {
-  if (isPastCalevent(calevent)) return false;
+  if (isAttendanceClosed(calevent)) return false;
   return canJoinOpen || hasInvitation || isPersonalCalevent(calevent);
 }
 

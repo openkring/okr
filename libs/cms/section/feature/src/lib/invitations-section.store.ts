@@ -13,6 +13,7 @@ import { I18nService } from '@okr/shared-i18n';
 
 import { CalEventService } from '@okr/calevent-data-access';
 import { CalEventViewModal } from '@okr/calevent-feature';
+import { isAttendanceClosed } from '@okr/calevent-util';
 import { SECTION_I18N_KEYS } from '@okr/cms-section-util';
 import { InvitationService } from '@okr/relationship-invitation-data-access';
 
@@ -160,6 +161,18 @@ export const InvitationSectionStore = signalStore(
       },
 
       /******************************** actions ******************************************* */
+      /**
+       * Whether the invitation can still be answered: not locked, and its event is neither past,
+       * locked nor cancelled. The invitation does not carry the event's state, so the event is read.
+       * A missing event does not block the answer (respond skips the attendee mirror then).
+       */
+      async isAnswerable(invitation: InvitationModel): Promise<boolean> {
+        if (invitation.isLocked) return false;
+        if (!invitation.caleventKey) return true;
+        const calevent = await firstValueFrom(store.calEventService.read(invitation.caleventKey));
+        return !calevent || !isAttendanceClosed(calevent);
+      },
+
       /** Opens the read-only view of the calevent the invitation belongs to. */
       async openCalevent(invitation: InvitationModel): Promise<void> {
         const calevent = await firstValueFrom(store.calEventService.read(invitation.caleventKey));
@@ -186,6 +199,7 @@ export const InvitationSectionStore = signalStore(
           await notify(store.alertController, store.i18n.invitation_locked_title(), store.i18n.invitation_locked_hint(), store.i18n.ok());
           return;
         }
+        if (!await this.isAnswerable(invitation)) return;   // the event was cancelled, locked or is over
         await store.invitationService.respond(invitation, newState, store.currentUser());
         this.reload();
       },

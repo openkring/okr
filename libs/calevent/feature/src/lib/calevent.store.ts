@@ -26,7 +26,7 @@ import { LocationService } from '@okr/location-data-access';
 import { CalEventService } from '@okr/calevent-data-access';
 import { AliasMintService } from '@okr/system-alias-data-access';
 import { SeenService } from '@okr/user-data-access';
-import { addInvitedAttendee, applyInvitationAnswer, toAttendeeState, CALEVENT_I18N_KEYS, resetActivity, seenKeyFor, toSeenCounts, unseenActivity, findConflictingCalEvents, buildCalEventLink, buildSchedulePollLink, formatSchedulePollInviteMessage, formatScheduleCloseMessage, getCaleventIndex, getSeriesUpdateFields, isCalEvent, isCaleventFull, isCaleventInView, isPersonalCalendarName, mergeAttendee, planSeriesReconcile, resolveCalendars, SchedulePollFormData, SchedulePollRow } from '@okr/calevent-util';
+import { addInvitedAttendee, applyInvitationAnswer, toAttendeeState, CALEVENT_I18N_KEYS, resetActivity, seenKeyFor, toSeenCounts, unseenActivity, findConflictingCalEvents, buildCalEventLink, buildSchedulePollLink, formatSchedulePollInviteMessage, formatScheduleCloseMessage, getCaleventIndex, isAttendanceClosed, getSeriesUpdateFields, isCalEvent, isCaleventFull, isCaleventInView, isPersonalCalendarName, mergeAttendee, planSeriesReconcile, resolveCalendars, SchedulePollFormData, SchedulePollRow } from '@okr/calevent-util';
 import { RegressionSelectionModal, showCalEventInfo } from '@okr/calevent-ui';
 import { createComment } from '@okr/comment-util';
 
@@ -1282,6 +1282,7 @@ export const CalEventStore = signalStore(
           await notify(store.alertController, store.i18n.locked_title(), store.i18n.locked_hint(), store.i18n.ok());
           return;
         }
+        if (isAttendanceClosed(calEvent)) return;   // past or cancelled: the ActionSheet offers nothing
         const inv = store.invitations().find(inv => inv.caleventKey === calEvent.okey);
         if (inv) {
           await this.changeInvitationState(inv, newState);   // stamps the invitation AND the attendee

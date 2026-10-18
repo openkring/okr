@@ -1,7 +1,7 @@
 import { Attendee, AvatarInfo, CalEventModel, InvitationState } from '@okr/shared-models';
 import * as coreUtils from '@okr/shared-util-core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { addInvitedAttendee, removeInvitedAttendee, bestScheduleColumn, buildCalEventLink, canAttendCalevent, buildSchedulePollLink, convertCalEventToFullCalendar, formatDurationLabel, formatScheduleCloseMessage, formatSchedulePollInviteMessage, getCalEventCssClass, getSeriesUpdateFields, isCaleventInView, isCalEvent, isFullDayEvent, isPastCalevent, isPersonalCalendarName, isPersonalCalevent, isCaleventFull, isSchedulePoll, resolveCalendars, mayJoinOpenCalevent, mergeAttendee, nextInvitationState, planSeriesReconcile, splitAttendees, toInvitationState } from './calevent.util';
+import { addInvitedAttendee, removeInvitedAttendee, bestScheduleColumn, buildCalEventLink, canAttendCalevent, buildSchedulePollLink, convertCalEventToFullCalendar, formatDurationLabel, formatScheduleCloseMessage, formatSchedulePollInviteMessage, getCalEventCssClass, getSeriesUpdateFields, isCaleventInView, isCalEvent, isFullDayEvent, isAttendanceClosed, isPastCalevent, isPersonalCalendarName, isPersonalCalevent, isCaleventFull, isSchedulePoll, resolveCalendars, mayJoinOpenCalevent, mergeAttendee, nextInvitationState, planSeriesReconcile, splitAttendees, toInvitationState } from './calevent.util';
 
 // Mock shared utility functions
 vi.mock('@okr/shared-util-core', async importOriginal => {
@@ -255,12 +255,37 @@ describe('isPastCalevent', () => {
   });
 });
 
+describe('isAttendanceClosed', () => {
+  const event = (over: Partial<CalEventModel> = {}): CalEventModel =>
+    ({ ...new CalEventModel('t1'), startDate: '20990101', ...over });
+
+  it('is open on an upcoming, unlocked, definitive event', () => {
+    expect(isAttendanceClosed(event())).toBe(false);
+  });
+
+  it('is closed on a past event', () => {
+    expect(isAttendanceClosed(event({ startDate: '20200101' }))).toBe(true);
+  });
+
+  it('is closed on a locked event', () => {
+    expect(isAttendanceClosed(event({ isLocked: true }))).toBe(true);
+  });
+
+  it('is closed on a cancelled event', () => {
+    expect(isAttendanceClosed(event({ state: 'cancelled' }))).toBe(true);
+  });
+});
+
 describe('canAttendCalevent', () => {
   const event = (over: Partial<CalEventModel> = {}): CalEventModel =>
     ({ ...new CalEventModel('t1'), startDate: '20990101', calendars: ['scs'], ...over });
 
   it('is never possible on a past event', () => {
     expect(canAttendCalevent(event({ startDate: '20200101' }), true)).toBe(false);
+  });
+
+  it('is never possible on a cancelled event, not even with an invitation', () => {
+    expect(canAttendCalevent(event({ state: 'cancelled' }), true, true)).toBe(false);
   });
 
   it('is possible for everybody within the reach of the calendar', () => {

@@ -11,7 +11,7 @@ import { PersonSelectModal, PersonSelectResult } from '@okr/shared-feature';
 import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
-import { CALEVENT_I18N_KEYS, CaleventI18n, isPastCalevent, splitAttendees } from '@okr/calevent-util';
+import { CALEVENT_I18N_KEYS, CaleventI18n, isAttendanceClosed, splitAttendees } from '@okr/calevent-util';
 
 import { AvatarPipe } from '@okr/avatar-ui';
 
@@ -170,8 +170,8 @@ export class AttendeesAccordion {
    * @param attendee 
    */
   protected async showActions(attendee: Attendee): Promise<void> {
-    // attendance can no longer be changed for past or locked events
-    if (this.isReadOnly() || isPastCalevent(this.calevent()) || this.calevent().isLocked) return;
+    // attendance can no longer be changed for past, locked or cancelled events
+    if (this.isReadOnly() || isAttendanceClosed(this.calevent())) return;
     const actionSheetOptions = createActionSheetOptions(this.i18n.as_title());
     this.addActionSheetButtons(actionSheetOptions, attendee);
     await this.executeActions(actionSheetOptions, attendee);
