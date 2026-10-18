@@ -18,7 +18,8 @@ export interface ChatBookmark {
 
 /** Alias localpart of a person's notes room: one per (person, tenant). */
 export function notesRoomAliasLocalpart(tenantId: string, personKey: string): string {
-  return `notes_${tenantId}_${personKey}`;
+  const clean = (s: string) => s.toLowerCase().replace(/[^a-z0-9._=-]/g, '_');
+  return `notes_${clean(tenantId)}_${clean(personKey)}`;
 }
 
 /**

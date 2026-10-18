@@ -372,7 +372,8 @@ export function askRoomAliasLocalpart(groupId: string, personKey: string): strin
  * functions cannot import libs/chat, so the two must stay identical.
  */
 export function notesRoomAliasLocalpart(tenantId: string, personKey: string): string {
-  return `notes_${tenantId}_${personKey}`;
+  const clean = (s: string) => s.toLowerCase().replace(/[^a-z0-9._=-]/g, '_');
+  return `notes_${clean(tenantId)}_${clean(personKey)}`;
 }
 
 /**

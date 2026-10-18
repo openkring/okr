@@ -14,6 +14,9 @@ describe('notesRoomAliasLocalpart', () => {
   it('matches the client twin', () => {
     expect(notesRoomAliasLocalpart('scs', 'kaiser')).toBe('notes_scs_kaiser');
   });
+  it('lowercases and replaces unsafe characters like the client twin', () => {
+    expect(notesRoomAliasLocalpart('SCS', 'Ka:ise/r Ü')).toBe('notes_scs_ka_ise_r__');
+  });
 });
 
 describe('assertCallerTenant', () => {
@@ -52,10 +55,37 @@ describe('ensureNotesRoom', () => {
   });
   const calls = () => fetchMock.mock.calls.map(([url, init]) => ({ url: String(url), init: init as RequestInit | undefined }));
 
-  it('returns the existing room without creating one', async () => {
-    fetchMock.mockResolvedValueOnce(json({ room_id: '!old:hs' }));
+  /** Mock Synapse for an existing alias whose room has the given creator/marker. */
+  const mockExisting = (creator: string, marker: string[] | undefined) =>
+    fetchMock.mockImplementation(async (url: string, init?: RequestInit) => {
+      if (url.includes('/directory/room/') && init?.method === 'DELETE') return json({});
+      if (url.includes('/directory/room/')) return json({ room_id: '!old:hs' });
+      if (url.includes('/account/whoami')) return json({ user_id: '@bk2-bot:hs' });
+      if (url.includes('/_synapse/admin/v1/rooms/')) return json({ creator });
+      if (url.includes('/state/org.okr.tenant/')) return marker ? json({ tenants: marker }) : json({}, false);
+      if (url.endsWith('/createRoom')) return json({ room_id: '!new:hs' });
+      return json({ user_id: '@bk2-bot:hs' });
+    });
+  const joinedIds = () =>
+    calls().filter((c) => c.url.includes('/admin/v1/join/')).map((c) => JSON.parse(c.init!.body as string).user_id);
+
+  it('reuses an own room, without creating one, and re-joins the person', async () => {
+    mockExisting('@bk2-bot:hs', ['scs']);
     expect(await ensureNotesRoom('scs', 'kaiser', HOST, 'tok')).toBe('!old:hs');
     expect(calls().some((c) => c.url.endsWith('/createRoom'))).toBe(false);
+    expect(joinedIds()).toContain(`@kaiser:${HOST}`);
+  });
+
+  it('deletes a squatted alias and creates a fresh room', async () => {
+    mockExisting('@mallory:hs', ['scs']);
+    expect(await ensureNotesRoom('scs', 'kaiser', HOST, 'tok')).toBe('!new:hs');
+    expect(calls().some((c) => c.init?.method === 'DELETE' && c.url.includes('/directory/room/'))).toBe(true);
+    expect(calls().some((c) => c.url.endsWith('/createRoom'))).toBe(true);
+  });
+
+  it('treats a bot-created room with a wrong tenant marker as squatted', async () => {
+    mockExisting('@bk2-bot:hs', ['other']);
+    expect(await ensureNotesRoom('scs', 'kaiser', HOST, 'tok')).toBe('!new:hs');
   });
 
   it('creates a private, joined-history, tenant-marked room and joins the person', async () => {
@@ -85,6 +115,9 @@ describe('ensureNotesRoom', () => {
     fetchMock.mockImplementation(async (url: string) => {
       if (url.includes('/directory/room/')) return ++lookups === 1 ? json({}, false) : json({ room_id: '!race:hs' });
       if (url.endsWith('/createRoom')) return json({ errcode: 'M_ROOM_IN_USE' }, false);
+      if (url.includes('/account/whoami')) return json({ user_id: '@bk2-bot:hs' });
+      if (url.includes('/_synapse/admin/v1/rooms/')) return json({ creator: '@bk2-bot:hs' });
+      if (url.includes('/state/org.okr.tenant/')) return json({ tenants: ['scs'] });
       return json({});
     });
     expect(await ensureNotesRoom('scs', 'kaiser', HOST, 'tok')).toBe('!race:hs');

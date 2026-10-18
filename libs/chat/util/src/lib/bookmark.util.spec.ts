@@ -16,6 +16,10 @@ describe('notesRoomAliasLocalpart', () => {
   it('joins tenant and person', () => {
     expect(notesRoomAliasLocalpart('scs', 'kaiser')).toBe('notes_scs_kaiser');
   });
+
+  it('lowercases and replaces unsafe characters', () => {
+    expect(notesRoomAliasLocalpart('SCS', 'Ka:ise/r Ü')).toBe('notes_scs_ka_ise_r__');
+  });
 });
 
 describe('isNotesRoomAlias', () => {
