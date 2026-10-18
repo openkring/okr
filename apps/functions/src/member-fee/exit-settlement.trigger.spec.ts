@@ -232,10 +232,15 @@ describe('isSettlementWriter', () => {
 });
 
 describe('writerCheck', () => {
-  it('lets admin SDK and system writes through and checks app users', () => {
-    expect(writerCheck('service_account')).toBe('allow');
-    expect(writerCheck('system')).toBe('allow');
-    expect(writerCheck('app_user')).toBe('check-user');
-    expect(writerCheck('unauthenticated')).toBe('deny');
+  it.each([
+    ['service_account', 'allow'],
+    ['system', 'allow'],
+    ['api_key', 'check-user'],
+    ['unauthenticated', 'check-user'],
+    ['unknown', 'check-user'],
+    ['app_user', 'check-user'],
+    ['something-new', 'check-user'],
+  ])('%s -> %s (fail closed)', (authType, expected) => {
+    expect(writerCheck(authType)).toBe(expected);
   });
 });

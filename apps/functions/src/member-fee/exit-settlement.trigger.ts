@@ -52,13 +52,13 @@ export function isSettlementWriter(user: DocumentData | undefined, tenantId: str
 }
 
 /**
- * How to treat the writer of the event. The SDK's AuthType union lacks 'app_user' (a Firebase Auth
- * user), which Firestore does send; hence the plain string. Admin SDK and system writes pass.
+ * How to treat the writer of the event — fail closed. Only Admin SDK (service account) and system
+ * writes pass unchecked; every other value ('unknown', 'api_key', 'app_user', 'unauthenticated',
+ * anything new) needs a user doc with a settlement role in the tenant. The docs do not say which
+ * authType a signed-in client write carries, so none is trusted.
  */
-export function writerCheck(authType: string): 'allow' | 'check-user' | 'deny' {
-  if (authType === 'app_user') return 'check-user';
-  if (authType === 'unauthenticated') return 'deny';
-  return 'allow';
+export function writerCheck(authType: string): 'allow' | 'check-user' {
+  return authType === 'service_account' || authType === 'system' ? 'allow' : 'check-user';
 }
 
 const isSettleableExit = (exit: string, thisYear: number): boolean => {
@@ -150,15 +150,10 @@ export async function openOrUpdateSettlementTask(db: Firestore, ctx: ExitContext
 async function settleMembership(db: Firestore, membershipKey: string, writer: { authType: string; authId?: string }, today: string): Promise<void> {
   const ctx = await loadExitContext(db, membershipKey, today);
   if (!ctx) return;
-  const check = writerCheck(writer.authType);
-  if (check === 'deny') {
-    logger.warn(`${CF_NAME}: membership ${membershipKey} written ${writer.authType}, skipped`);
-    return;
-  }
-  if (check === 'check-user') {
+  if (writerCheck(writer.authType) === 'check-user') {
     const user = writer.authId ? (await db.collection(UserCollection).doc(writer.authId).get()).data() : undefined;
     if (!isSettlementWriter(user, ctx.tenantId)) {
-      logger.warn(`${CF_NAME}: writer ${writer.authId ?? '?'} may not settle membership ${membershipKey} in tenant ${ctx.tenantId}, skipped`);
+      logger.warn(`${CF_NAME}: writer ${writer.authType}/${writer.authId ?? '-'} may not settle membership ${membershipKey} in tenant ${ctx.tenantId}, skipped`);
       return;
     }
   }
