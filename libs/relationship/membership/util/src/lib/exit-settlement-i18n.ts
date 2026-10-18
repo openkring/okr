@@ -2,8 +2,8 @@ import { Signal } from '@angular/core';
 
 import type { ManualReason, SettlementChoice } from './exit-settlement';
 
-/** Scope of the lazily loaded strings: libs/relationship/membership/ui/src/i18n. */
-const PFX = '@relationship/membership/ui.';
+/** Scope of the lazily loaded strings: libs/relationship/membership/feature/src/i18n. */
+const PFX = '@relationship/membership/feature.';
 
 /** Texts of the exit settlement card (spec 1.105). `{amount}` / `{date}` / `{months}` are filled by the caller. */
 export const EXIT_SETTLEMENT_I18N_KEYS = {

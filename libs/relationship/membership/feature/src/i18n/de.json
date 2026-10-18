@@ -531,5 +531,45 @@
   },
   "count": {
     "label": "Anzahl"
+  },
+  "exitSettlement": {
+    "title": "Austritt unter dem Jahr",
+    "months": "Mitglied im Austrittsjahr: {months} von 12 Monaten",
+    "yearly": "Jahresbeitrag",
+    "due": "Geschuldet bis zum Austritt",
+    "billed": "Verrechnet",
+    "assumption": "Annahme: voller Jahresbeitrag verrechnet",
+    "paid": "Bereits bezahlt",
+    "refund": "Rückerstattung CHF {amount}",
+    "adjust": "Rechnung anpassen",
+    "extend": "Austritt auf 31.12.{year}",
+    "confirm": {
+      "refund": "Soll CHF {amount} zurückerstattet werden? Es wird eine Zahlung zur Freigabe vorbereitet.",
+      "adjust": "Soll die Rechnung auf den anteiligen Betrag angepasst werden? Die bisherige Rechnung wird storniert und durch eine neue ersetzt.",
+      "extend": "Soll der Austritt auf den 31.12.{year} verschoben werden? Das Mitglied bezahlt dann den vollen Jahresbeitrag."
+    },
+    "done": "Entschieden",
+    "noAction": "Hier ist nichts zu tun.",
+    "manual": {
+      "no-invoice": "Keine passende Rechnung gefunden. Bitte von Hand prüfen.",
+      "ambiguous-invoice": "Es gibt mehrere passende Rechnungen. Bitte von Hand prüfen.",
+      "books-mismatch": "Die Rechnung liegt in einer anderen Buchhaltung als die Mitgliedschaft. Bitte von Hand prüfen.",
+      "bexio-entry-year": "Eintritt und Austritt im selben Jahr bei einer Rechnung aus Bexio: der verrechnete Betrag ist nicht bekannt. Bitte von Hand prüfen.",
+      "category-change": "Das Mitglied hatte im Austrittsjahr mehrere Mitgliedschaften. Bitte von Hand abrechnen.",
+      "no-price": "Für die Kategorie ist kein Jahresbeitrag hinterlegt.",
+      "billed-exceeds-invoice": "Der angenommene Jahresbeitrag ist höher als der Rechnungsbetrag. Bitte von Hand prüfen."
+    },
+    "partialShort": "Die Teilzahlung deckt den anteiligen Betrag nicht. Bitte den Rest von Hand abrechnen.",
+    "error": {
+      "generic": "Das hat nicht geklappt. Bitte versuche es später noch einmal.",
+      "task-done": "Diese Aufgabe ist bereits erledigt.",
+      "choice-not-offered": "Diese Möglichkeit steht für diesen Fall nicht zur Verfügung.",
+      "already-refunded": "Für diese Rechnung wurde schon eine Rückerstattung ausgelöst.",
+      "adjust-in-progress": "Die Rechnung wird gerade angepasst. Bitte schliesse das zuerst ab.",
+      "invalid-claim": "Die zugehörige Rechnung passt nicht zu diesem Austritt. Bitte prüfe sie von Hand.",
+      "state-changed": "Der Fall hat sich inzwischen geändert. Bitte öffne die Aufgabe neu.",
+      "no-membership": "Die Mitgliedschaft wurde nicht gefunden."
+    },
+    "doneToast": "Der Austritt ist abgerechnet."
   }
 }

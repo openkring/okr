@@ -531,5 +531,45 @@
   },
   "count": {
     "label": "Cantidad"
+  },
+  "exitSettlement": {
+    "title": "Baja durante el año",
+    "months": "Socio en el año de la baja: {months} de 12 meses",
+    "yearly": "Cuota anual",
+    "due": "Adeudado hasta la baja",
+    "billed": "Facturado",
+    "assumption": "Supuesto: cuota anual completa facturada",
+    "paid": "Ya pagado",
+    "refund": "Reembolso CHF {amount}",
+    "adjust": "Ajustar la factura",
+    "extend": "Baja el 31.12.{year}",
+    "confirm": {
+      "refund": "¿Reembolsar CHF {amount}? Se prepara un pago para su aprobación.",
+      "adjust": "¿Ajustar la factura al importe proporcional? La factura actual se anula y se sustituye por una nueva.",
+      "extend": "¿Aplazar la baja al 31.12.{year}? Entonces el socio paga la cuota anual completa."
+    },
+    "done": "Decidido",
+    "noAction": "Aquí no hay nada que hacer.",
+    "manual": {
+      "no-invoice": "No se encontró ninguna factura adecuada. Compruébalo a mano.",
+      "ambiguous-invoice": "Hay varias facturas posibles. Compruébalo a mano.",
+      "books-mismatch": "La factura está en otra contabilidad distinta a la de la afiliación. Compruébalo a mano.",
+      "bexio-entry-year": "Alta y baja en el mismo año con una factura de Bexio: se desconoce el importe facturado. Compruébalo a mano.",
+      "category-change": "El socio tenía varias afiliaciones en el año de la baja. Líquidalo a mano.",
+      "no-price": "No hay cuota anual definida para la categoría.",
+      "billed-exceeds-invoice": "La cuota anual supuesta supera el importe de la factura. Compruébalo a mano."
+    },
+    "partialShort": "El pago parcial no cubre el importe proporcional. Liquida el resto a mano.",
+    "error": {
+      "generic": "No ha funcionado. Inténtalo de nuevo más tarde.",
+      "task-done": "Esta tarea ya está terminada.",
+      "choice-not-offered": "Esta opción no está disponible para este caso.",
+      "already-refunded": "Ya se ha iniciado un reembolso para esta factura.",
+      "adjust-in-progress": "La factura se está ajustando ahora. Termina eso primero.",
+      "invalid-claim": "La factura vinculada no corresponde a esta baja. Compruébala a mano.",
+      "state-changed": "El caso ha cambiado entretanto. Vuelve a abrir la tarea.",
+      "no-membership": "No se encontró la afiliación."
+    },
+    "doneToast": "La baja está liquidada."
   }
 }

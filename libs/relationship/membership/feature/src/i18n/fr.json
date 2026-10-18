@@ -531,5 +531,45 @@
   },
   "count": {
     "label": "Nombre"
+  },
+  "exitSettlement": {
+    "title": "Départ en cours d'année",
+    "months": "Membre l'année du départ : {months} mois sur 12",
+    "yearly": "Cotisation annuelle",
+    "due": "Dû jusqu'au départ",
+    "billed": "Facturé",
+    "assumption": "Hypothèse : cotisation annuelle complète facturée",
+    "paid": "Déjà payé",
+    "refund": "Remboursement CHF {amount}",
+    "adjust": "Adapter la facture",
+    "extend": "Départ au 31.12.{year}",
+    "confirm": {
+      "refund": "Rembourser CHF {amount} ? Un paiement est préparé pour validation.",
+      "adjust": "Adapter la facture au montant au prorata ? La facture actuelle est annulée et remplacée par une nouvelle.",
+      "extend": "Reporter le départ au 31.12.{year} ? Le membre paie alors la cotisation annuelle complète."
+    },
+    "done": "Décidé",
+    "noAction": "Rien à faire ici.",
+    "manual": {
+      "no-invoice": "Aucune facture correspondante trouvée. Merci de vérifier à la main.",
+      "ambiguous-invoice": "Plusieurs factures correspondent. Merci de vérifier à la main.",
+      "books-mismatch": "La facture se trouve dans une autre comptabilité que l'adhésion. Merci de vérifier à la main.",
+      "bexio-entry-year": "Entrée et départ la même année avec une facture de Bexio : le montant facturé est inconnu. Merci de vérifier à la main.",
+      "category-change": "Le membre avait plusieurs adhésions l'année du départ. Merci de décompter à la main.",
+      "no-price": "Aucune cotisation annuelle n'est définie pour la catégorie.",
+      "billed-exceeds-invoice": "La cotisation annuelle supposée dépasse le montant de la facture. Merci de vérifier à la main."
+    },
+    "partialShort": "Le paiement partiel ne couvre pas le montant au prorata. Merci de décompter le reste à la main.",
+    "error": {
+      "generic": "Cela n'a pas fonctionné. Réessaie plus tard.",
+      "task-done": "Cette tâche est déjà terminée.",
+      "choice-not-offered": "Cette option n'est pas disponible pour ce cas.",
+      "already-refunded": "Un remboursement a déjà été lancé pour cette facture.",
+      "adjust-in-progress": "La facture est en cours d'adaptation. Termine d'abord cette étape.",
+      "invalid-claim": "La facture liée ne correspond pas à ce départ. Vérifie-la à la main.",
+      "state-changed": "Le cas a changé entre-temps. Rouvre la tâche.",
+      "no-membership": "L'adhésion est introuvable."
+    },
+    "doneToast": "Le départ est décompté."
   }
 }
