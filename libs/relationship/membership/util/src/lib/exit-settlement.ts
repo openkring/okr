@@ -44,6 +44,8 @@ export interface ExitSettlement {
   invoice?: InvoiceFacts; shape?: InvoiceShape;
   choices: SettlementChoice[];
   manualReason: ManualReason;
+  /** revenue account of the pro-rata rule ('' when none): the counter account of a refund booking (§5.1) */
+  accountKey: string;
 }
 
 /** Result of the settle callable, shared by the function and the client card. */
@@ -74,8 +76,13 @@ export function pickFeeInvoice(invoices: InvoiceFacts[], year: number, usage: st
 
 const NONE = (exitYear = 0): ExitSettlement => ({
   case: 'none', exitYear, months: 0, yearlyFr: 0, dueFr: 0, billedFr: 0, overpaidRappen: 0, refundRappen: 0,
-  choices: [], manualReason: '',
+  choices: [], manualReason: '', accountKey: '',
 });
+
+/** A settlement with nothing to settle. */
+export function noExitSettlement(exitYear = 0): ExitSettlement {
+  return NONE(exitYear);
+}
 
 export function computeExitSettlement(input: ExitSettlementInput): ExitSettlement {
   const { membership: m, today } = input;
@@ -93,9 +100,10 @@ export function computeExitSettlement(input: ExitSettlementInput): ExitSettlemen
     : rule.source === 'manual' ? (rule.amount ?? 0) : 0;
   const months = proRataMonths(m.dateOfEntry, exit, exitYear);
   const dueFr = Math.round(yearlyFr * months / 12);
-  const base: ExitSettlement = { ...NONE(exitYear), months, yearlyFr, dueFr };
+  const base: ExitSettlement = { ...NONE(exitYear), months, yearlyFr, dueFr, accountKey: rule.accountKey ?? '' };
+  // a category change has a follow-up membership: extending the old one to 31.12. would overlap it
   const manual = (manualReason: ManualReason, extra: Partial<ExitSettlement> = {}): ExitSettlement =>
-    ({ ...base, ...extra, case: 'manual', manualReason, choices: ['extend'] });
+    ({ ...base, ...extra, case: 'manual', manualReason, choices: manualReason === 'category-change' ? [] : ['extend'] });
 
   if (!yearlyFr) return manual('no-price');
   if (input.overlappingMemberships > 1) return manual('category-change');
@@ -110,14 +118,15 @@ export function computeExitSettlement(input: ExitSettlementInput): ExitSettlemen
   const billedFr = shape === 'native'
     ? invoice.positions.filter(p => p.usage === rule.usage && p.year === exitYear).reduce((s, p) => s + p.amount, 0)
     : yearlyFr;
-  if (billedFr * 100 > invoice.totalRappen) return manual('billed-exceeds-invoice', { invoice, shape });
+  if (Math.round(billedFr * 100) > invoice.totalRappen) return manual('billed-exceeds-invoice', { invoice, shape });
   const overpaidRappen = Math.round((billedFr - dueFr) * 100);
   const found: ExitSettlement = { ...base, billedFr, overpaidRappen, invoice, shape };
   if (overpaidRappen <= 0) return { ...found, case: 'none', overpaidRappen: 0 };
 
   const { paidRappen, totalRappen } = invoice;
   if (paidRappen === 0) {
-    return { ...found, case: 'unpaid', choices: shape === 'native' ? ['adjust-invoice', 'extend'] : ['extend'] };
+    // only a pending native invoice can be cancelled and replaced (cancelBlockers)
+    return { ...found, case: 'unpaid', choices: shape === 'native' && invoice.state === 'pending' ? ['adjust-invoice', 'extend'] : ['extend'] };
   }
   if (paidRappen >= totalRappen) {
     return { ...found, case: 'paid', refundRappen: Math.min(overpaidRappen, paidRappen), choices: ['refund', 'extend'] };
@@ -165,6 +174,7 @@ export function exitSettlementTaskNotes(s: ExitSettlement, exitViewDate: string)
     lines.push(`Rechnung ${s.invoice.invoiceId}: Total ${chf(s.invoice.totalRappen)}, bezahlt ${chf(s.invoice.paidRappen)}`);
     if (s.case !== 'manual') lines.push(`Differenz: ${chf(s.overpaidRappen)}`);
     if (s.refundRappen > 0) lines.push(`Rückerstattung: ${chf(s.refundRappen)}`);
+    if (s.refundRappen > 0 && s.accountKey) lines.push(`Gegenkonto bei der Verbuchung: ${s.accountKey}`);
   }
   if (s.case === 'partial-short') lines.push('Die bezahlte Teilzahlung deckt den pro rata geschuldeten Betrag nicht: den Rest bitte von Hand abrechnen.');
   if (s.case === 'unpaid' && s.shape === 'bexio') lines.push('Eine Bexio-Rechnung muss in Bexio storniert und neu ausgestellt werden.');

@@ -61,8 +61,8 @@ describe('computeExitSettlement', () => {
   it('category without price -> manual no-price', () => {
     expect(computeExitSettlement(input({ category: 'ghost' }))).toMatchObject({ case: 'manual', manualReason: 'no-price', choices: ['extend'] });
   });
-  it('two memberships overlapping the year -> manual category-change', () => {
-    expect(computeExitSettlement(input({ overlappingMemberships: 2 }))).toMatchObject({ case: 'manual', manualReason: 'category-change' });
+  it('two memberships overlapping the year -> manual category-change, no choice (extending would overlap)', () => {
+    expect(computeExitSettlement(input({ overlappingMemberships: 2 }))).toMatchObject({ case: 'manual', manualReason: 'category-change', choices: [] });
   });
   it('no invoice -> manual no-invoice', () => {
     expect(computeExitSettlement(input({ invoices: [] }))).toMatchObject({ case: 'manual', manualReason: 'no-invoice', choices: ['extend'] });
@@ -84,8 +84,27 @@ describe('computeExitSettlement', () => {
     expect(computeExitSettlement(input({ entry: '20260601', invoices: [nativeInv({ positions: [{ usage: 'membershipFee', year: 2026, amount: 250 }] })] })).case).toBe('none');
   });
   it('unpaid native -> unpaid, adjust-invoice + extend', () => {
-    const s = computeExitSettlement(input({ invoices: [nativeInv({ positions: [{ usage: 'membershipFee', year: 2026, amount: 600 }], totalRappen: 60000, paidRappen: 0 })] }));
+    const s = computeExitSettlement(input({ invoices: [nativeInv({ state: 'pending', positions: [{ usage: 'membershipFee', year: 2026, amount: 600 }], totalRappen: 60000, paidRappen: 0 })] }));
     expect(s).toMatchObject({ case: 'unpaid', choices: ['adjust-invoice', 'extend'], refundRappen: 0 });
+  });
+  it('unpaid native invoice that is not pending (draft) -> extend only', () => {
+    const s = computeExitSettlement(input({ invoices: [nativeInv({ state: 'draft', positions: [{ usage: 'membershipFee', year: 2026, amount: 600 }], totalRappen: 60000, paidRappen: 0 })] }));
+    expect(s).toMatchObject({ case: 'unpaid', choices: ['extend'] });
+  });
+  it('unpaid native invoice in state overdue -> extend only', () => {
+    const s = computeExitSettlement(input({ invoices: [nativeInv({ state: 'overdue', positions: [{ usage: 'membershipFee', year: 2026, amount: 600 }], totalRappen: 60000, paidRappen: 0 })] }));
+    expect(s.choices).toEqual(['extend']);
+  });
+  it('non-integer price whose Rappen equal the invoice total is not billed-exceeds-invoice (float artefact)', () => {
+    // 0.1 + 0.2 = 0.30000000000000004; *100 = 30.000000000000004 > 30
+    const inv = nativeInv({ state: 'pending', positions: [{ usage: 'membershipFee', year: 2026, amount: 0.1 }, { usage: 'membershipFee', year: 2026, amount: 0.2 }], totalRappen: 30, paidRappen: 0 });
+    const sch = { year: 2026, positions: [{ ...schedule.positions[0], source: 'manual' as const, amount: 0.3 }] };
+    expect(computeExitSettlement(input({ schedule: sch, exit: '20260131', invoices: [inv] })).manualReason).not.toBe('billed-exceeds-invoice');
+  });
+  it('carries the revenue account of the pro-rata rule', () => {
+    const sch = { year: 2026, positions: [{ ...schedule.positions[0], accountKey: '3000' }] };
+    expect(computeExitSettlement(input({ schedule: sch })).accountKey).toBe('3000');
+    expect(computeExitSettlement(input()).accountKey).toBe('');
   });
   it('unpaid bexio -> unpaid, extend only', () => {
     expect(computeExitSettlement(input({ invoices: [{ ...bexioPaid675, paidRappen: 0 }] }))).toMatchObject({ case: 'unpaid', choices: ['extend'] });
@@ -110,8 +129,8 @@ describe('computeExitSettlement', () => {
     const s = computeExitSettlement(input());
     expect(s.refundRappen).toBeLessThanOrEqual(s.invoice?.paidRappen ?? 0);
   });
-  it('manual cases always offer extend', () => {
-    for (const o of [{ invoices: [] }, { overlappingMemberships: 2 }, { category: 'ghost' }, { entry: '20260601' }]) {
+  it('manual cases other than category-change offer extend', () => {
+    for (const o of [{ invoices: [] }, { category: 'ghost' }, { entry: '20260601' }]) {
       expect(computeExitSettlement(input(o)).choices).toEqual(['extend']);
     }
   });
@@ -159,6 +178,15 @@ describe('task text', () => {
   it('partial-short and bexio-unpaid notes carry a hint', () => {
     expect(exitSettlementTaskNotes(computeExitSettlement(input({ invoices: [{ ...bexioPaid675, paidRappen: 40000 }] })), 'x')).toContain('von Hand abrechnen');
     expect(exitSettlementTaskNotes(computeExitSettlement(input({ invoices: [{ ...bexioPaid675, paidRappen: 0 }] })), 'x')).toContain('in Bexio storniert');
+  });
+  it('refund notes name the revenue account of the rule as counter account', () => {
+    const sch = { year: 2026, positions: [{ ...schedule.positions[0], accountKey: '3000' }] };
+    expect(exitSettlementTaskNotes(computeExitSettlement(input({ schedule: sch })), 'x')).toContain('Gegenkonto bei der Verbuchung: 3000');
+  });
+  it('no counter account line without a refund or without an account', () => {
+    const sch = { year: 2026, positions: [{ ...schedule.positions[0], accountKey: '3000' }] };
+    expect(exitSettlementTaskNotes(computeExitSettlement(input({ schedule: sch, invoices: [{ ...bexioPaid675, paidRappen: 0 }] })), 'x')).not.toContain('Gegenkonto');
+    expect(exitSettlementTaskNotes(computeExitSettlement(input()), 'x')).not.toContain('Gegenkonto');
   });
   it('manual notes carry a reason line', () => {
     const n = exitSettlementTaskNotes(computeExitSettlement(input({ invoices: [] })), '31.10.2026');

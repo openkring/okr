@@ -2,7 +2,7 @@ import { Component, computed, input, output } from '@angular/core';
 import { IonButton, IonCard, IonCardContent, IonItem, IonLabel, IonNote } from '@ionic/angular';
 
 import {
-  chfFrancs, chfRappen, ExitSettlement, ExitSettlementI18n, fillExitText, manualReasonText, SettlementChoice,
+  chfFrancs, chfRappen, ExitSettlement, ExitSettlementI18n, fillExitText, SettlementChoice, settlementHintText,
 } from '@okr/relationship-membership-util';
 
 /**
@@ -106,10 +106,7 @@ export class ExitSettlementCard {
   protected readonly paid = computed(() => chfRappen(this.settlement().invoice?.paidRappen ?? 0));
   protected readonly total = computed(() => chfRappen(this.settlement().invoice?.totalRappen ?? 0));
   protected readonly monthsText = computed(() => fillExitText(this.i18n().months(), { months: this.settlement().months }));
-  protected readonly hint = computed(() => {
-    const s = this.settlement();
-    return s.case === 'partial-short' ? this.i18n().partial_short() : manualReasonText(this.i18n(), s.manualReason);
-  });
+  protected readonly hint = computed(() => settlementHintText(this.i18n(), this.settlement()));
 
   protected label(choice: SettlementChoice): string {
     const s = this.settlement();

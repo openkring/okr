@@ -1,6 +1,6 @@
 import { Signal } from '@angular/core';
 
-import type { ManualReason, SettlementChoice } from './exit-settlement';
+import type { ExitSettlement, ManualReason, SettlementChoice } from './exit-settlement';
 
 /** Scope of the lazily loaded strings: libs/relationship/membership/feature/src/i18n. */
 const PFX = '@relationship/membership/feature.';
@@ -30,6 +30,7 @@ export const EXIT_SETTLEMENT_I18N_KEYS = {
   manual_no_price:                 PFX + 'exitSettlement.manual.no-price',
   manual_billed_exceeds_invoice:   PFX + 'exitSettlement.manual.billed-exceeds-invoice',
   partial_short:         PFX + 'exitSettlement.partialShort',
+  bexio_unpaid:          PFX + 'exitSettlement.bexioUnpaid',
   error:                 PFX + 'exitSettlement.error.generic',
   error_task_done:           PFX + 'exitSettlement.error.task-done',
   error_choice_not_offered:  PFX + 'exitSettlement.error.choice-not-offered',
@@ -67,6 +68,14 @@ export function manualReasonText(i18n: ExitSettlementI18n, reason: ManualReason)
     case 'billed-exceeds-invoice': return i18n.manual_billed_exceeds_invoice();
     default: return '';
   }
+}
+
+/** The warning line of the card: why there is no (or a limited) way forward; '' when none. */
+export function settlementHintText(i18n: ExitSettlementI18n, s: ExitSettlement): string {
+  if (s.case === 'partial-short') return i18n.partial_short();
+  // §5.2: a bexio invoice cannot be adjusted here, so «Rechnung anpassen» is missing
+  if (s.case === 'unpaid' && s.shape === 'bexio') return i18n.bexio_unpaid();
+  return manualReasonText(i18n, s.manualReason);
 }
 
 /** i18n text for a refusal reason of the settle callable; unknown reasons fall back to the generic error. */

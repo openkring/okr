@@ -560,6 +560,7 @@
       "billed-exceeds-invoice": "The assumed annual fee is higher than the invoice amount. Please check by hand."
     },
     "partialShort": "The part payment does not cover the pro-rata amount. Please settle the rest by hand.",
+    "bexioUnpaid": "This invoice comes from bexio. Cancel it there and issue it again.",
     "error": {
       "generic": "That did not work. Please try again later.",
       "task-done": "This task is already done.",

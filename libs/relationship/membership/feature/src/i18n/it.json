@@ -560,6 +560,7 @@
       "billed-exceeds-invoice": "La quota annuale ipotizzata supera l'importo della fattura. Controlla a mano."
     },
     "partialShort": "Il pagamento parziale non copre l'importo proporzionale. Calcola il resto a mano.",
+    "bexioUnpaid": "Questa fattura proviene da bexio. Annullala lì ed emettila di nuovo.",
     "error": {
       "generic": "Non ha funzionato. Riprova più tardi.",
       "task-done": "Questo compito è già concluso.",

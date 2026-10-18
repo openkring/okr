@@ -560,6 +560,7 @@
       "billed-exceeds-invoice": "Der angenommene Jahresbeitrag ist höher als der Rechnungsbetrag. Bitte von Hand prüfen."
     },
     "partialShort": "Die Teilzahlung deckt den anteiligen Betrag nicht. Bitte den Rest von Hand abrechnen.",
+    "bexioUnpaid": "Diese Rechnung stammt aus bexio. Storniere sie dort und stelle sie neu aus.",
     "error": {
       "generic": "Das hat nicht geklappt. Bitte versuche es später noch einmal.",
       "task-done": "Diese Aufgabe ist bereits erledigt.",

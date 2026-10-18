@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import type { Signal } from '@angular/core';
 import {
-  choiceConfirmText, chfFrancs, chfRappen, EXIT_SETTLEMENT_I18N_KEYS, fillExitText, manualReasonText, settleErrorText,
+  choiceConfirmText, chfFrancs, chfRappen, EXIT_SETTLEMENT_I18N_KEYS, fillExitText, manualReasonText, settleErrorText, settlementHintText,
   type ExitSettlementI18n,
 } from './exit-settlement-i18n';
-import type { ManualReason } from './exit-settlement';
+import type { ExitSettlement, ManualReason } from './exit-settlement';
 
 // every signal returns its own key, so a test sees which key a helper picked
 const i18n = Object.fromEntries(
@@ -60,5 +60,22 @@ describe('choiceConfirmText', () => {
     expect(choiceConfirmText(i18n, 'refund')).toBe(key('confirm_refund'));
     expect(choiceConfirmText(i18n, 'adjust-invoice')).toBe(key('confirm_adjust'));
     expect(choiceConfirmText(i18n, 'extend')).toBe(key('confirm_extend'));
+  });
+});
+
+describe('settlementHintText', () => {
+  const s = (over: Partial<ExitSettlement>): ExitSettlement => ({
+    case: 'none', exitYear: 2026, months: 10, yearlyFr: 600, dueFr: 500, billedFr: 600, overpaidRappen: 0, refundRappen: 0,
+    choices: [], manualReason: '', accountKey: '', ...over,
+  });
+  it('explains the missing «Rechnung anpassen» on an unpaid bexio invoice', () => {
+    expect(settlementHintText(i18n, s({ case: 'unpaid', shape: 'bexio', choices: ['extend'] }))).toBe(key('bexio_unpaid'));
+  });
+  it('no hint for an unpaid native invoice', () => {
+    expect(settlementHintText(i18n, s({ case: 'unpaid', shape: 'native', choices: ['adjust-invoice', 'extend'] }))).toBe('');
+  });
+  it('partial-short and manual reasons', () => {
+    expect(settlementHintText(i18n, s({ case: 'partial-short' }))).toBe(key('partial_short'));
+    expect(settlementHintText(i18n, s({ case: 'manual', manualReason: 'category-change' }))).toBe(key('manual_category_change'));
   });
 });

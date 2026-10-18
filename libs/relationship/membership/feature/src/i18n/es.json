@@ -560,6 +560,7 @@
       "billed-exceeds-invoice": "La cuota anual supuesta supera el importe de la factura. Compruébalo a mano."
     },
     "partialShort": "El pago parcial no cubre el importe proporcional. Liquida el resto a mano.",
+    "bexioUnpaid": "Esta factura viene de bexio. Anúlala allí y vuelve a emitirla.",
     "error": {
       "generic": "No ha funcionado. Inténtalo de nuevo más tarde.",
       "task-done": "Esta tarea ya está terminada.",

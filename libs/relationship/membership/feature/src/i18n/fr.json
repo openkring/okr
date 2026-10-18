@@ -560,6 +560,7 @@
       "billed-exceeds-invoice": "La cotisation annuelle supposée dépasse le montant de la facture. Merci de vérifier à la main."
     },
     "partialShort": "Le paiement partiel ne couvre pas le montant au prorata. Merci de décompter le reste à la main.",
+    "bexioUnpaid": "Cette facture provient de bexio. Annule-la là-bas et émets-la à nouveau.",
     "error": {
       "generic": "Cela n'a pas fonctionné. Réessaie plus tard.",
       "task-done": "Cette tâche est déjà terminée.",
