@@ -545,6 +545,50 @@ function writeIosIcon(appDir, maskable) {
   return `${entry.filename} (1024², no alpha)`;
 }
 
+/**
+ * Google Play listing graphics (spec 1.10 Phase 3b), written only when the app keeps its store
+ * texts in `store/android/de-DE/` (fastlane `supply` layout):
+ *
+ *   images/icon.png            512² — the maskable rendition (Play applies its own mask)
+ *   images/featureGraphic.png  1024×500 — the mark on its own backdrop colour, plus the app name
+ *                              from `store/android/de-DE/title.txt`
+ */
+async function writeStoreGraphics(appDir, maskable) {
+  const lang = path.join(appDir, 'store/android/de-DE');
+  if (!fs.existsSync(lang) || !maskable) return null;
+  const titleFile = path.join(lang, 'title.txt');
+  const title = fs.existsSync(titleFile) ? fs.readFileSync(titleFile, 'utf8').trim() : '';
+  const out = await page.evaluate(async ({ maskable, title }) => {
+    const img = await new Promise((ok, ko) => { const i = new Image(); i.onload = () => ok(i); i.onerror = ko; i.src = maskable; });
+    const probe = document.createElement('canvas');
+    probe.width = probe.height = 1;
+    probe.getContext('2d').drawImage(img, 0, 0, 1, 1, 0, 0, 1, 1);
+    const [r, g, b] = probe.getContext('2d').getImageData(0, 0, 1, 1).data;
+    const backdrop = `rgb(${r},${g},${b})`;
+    const icon = document.createElement('canvas');
+    icon.width = icon.height = 512;
+    icon.getContext('2d').drawImage(img, 0, 0, 512, 512);
+    const fg = document.createElement('canvas');
+    fg.width = 1024; fg.height = 500;
+    const x = fg.getContext('2d');
+    x.fillStyle = backdrop; x.fillRect(0, 0, 1024, 500);
+    x.drawImage(img, 30, 0, 500, 500); // same backdrop, so the square edge is invisible
+    x.fillStyle = '#ffffff';
+    x.textBaseline = 'middle';
+    let size = 76;
+    x.font = `700 ${size}px -apple-system, "Helvetica Neue", Arial, sans-serif`;
+    while (x.measureText(title).width > 450 && size > 40) { size -= 2; x.font = `700 ${size}px -apple-system, "Helvetica Neue", Arial, sans-serif`; }
+    x.fillText(title, 540, 250);
+    return { icon: icon.toDataURL('image/png'), feature: fg.toDataURL('image/png') };
+  }, { maskable, title });
+  if (DRY) return 'icon.png + featureGraphic.png (dry run, not written)';
+  const images = path.join(lang, 'images');
+  fs.mkdirSync(images, { recursive: true });
+  fs.writeFileSync(path.join(images, 'icon.png'), Buffer.from(out.icon.split(',')[1], 'base64'));
+  fs.writeFileSync(path.join(images, 'featureGraphic.png'), Buffer.from(out.feature.split(',')[1], 'base64'));
+  return 'images/icon.png 512² + images/featureGraphic.png 1024×500';
+}
+
 const ANDROID_DENSITIES = { mdpi: 1, hdpi: 1.5, xhdpi: 2, xxhdpi: 3, xxxhdpi: 4 };
 const ADAPTIVE_SCALE = 66 / (108 * 0.72); // maskable content edge → 66dp safe zone
 
@@ -816,6 +860,8 @@ for (const tenant of tenants) {
   if (android) console.log(`   android: ${android}`);
   const ios = writeIosIcon(appDir, lastMaskable);
   if (ios) console.log(`   ios: ${ios}`);
+  const storeGfx = await writeStoreGraphics(appDir, lastMaskable);
+  if (storeGfx) console.log(`   store: ${storeGfx}`);
 
   await doWebsite();
 
