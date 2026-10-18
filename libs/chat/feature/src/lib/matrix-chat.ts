@@ -574,6 +574,7 @@ function rejectionReasons(results: PromiseSettledResult<unknown>[]): unknown[] {
                 } @else {
                   <okr-matrix-message-list
                     [linkOrigins]="store.appStore.appLinkOrigins()"
+                    [highlightEventId]="store.threadJumpTarget()"
                     [messages]="threadMessages()"
                     [currentUserId]="matrixUserId()"
                     [typingUsers]="[]"

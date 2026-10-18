@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input, output, signal, viewChild, ElementRef, Signal } from '@angular/core';
+import { Component, computed, DestroyRef, effect, inject, input, output, signal, viewChild, ElementRef, Signal } from '@angular/core';
 
 import { IonIcon, IonChip, IonAvatar, IonSpinner } from '@ionic/angular';
 
@@ -920,6 +920,12 @@ export class MatrixMessageList {
           }
           this.lastTailEventId = tail;
           this.autoLoadOlderWhenNotScrollable(container);
+          if (this.isJumped()) {
+            // Any emission ends a forward page — also a short one that left the tail alone.
+            // Re-check right away so a page too short to scroll cannot stall the way down.
+            this.setLoadingNewer(false);
+            this.autoLoadNewerWhenNeeded(container);
+          }
         }, 50);
       }
     });
@@ -936,6 +942,11 @@ export class MatrixMessageList {
       }, 50);
     });
 
+    inject(DestroyRef).onDestroy(() => {
+      clearTimeout(this.highlightTimer);
+      clearTimeout(this.loadingNewerTimer);
+    });
+
     // If the room start was reached (or the room changed) while a load was pending,
     // no new messages may arrive to clear the spinner — clear it here.
     effect(() => {
@@ -950,12 +961,7 @@ export class MatrixMessageList {
   protected onContainerScroll(): void {
     const container = this.messagesContainer()?.nativeElement;
     if (!container) return;
-    if (this.isJumped() && !this.loadingNewer && !this.loadingOlder()
-        && container.scrollTop + container.clientHeight >= container.scrollHeight - 80) {
-      this.setLoadingNewer(true);
-      this.loadNewer.emit();
-      return;
-    }
+    if (this.autoLoadNewerWhenNeeded(container)) return;
     if (!this.hasMoreHistory() || this.loadingOlder()) return;
     if (container.scrollTop > 80) return;
     this.requestOlder(container);
@@ -975,7 +981,26 @@ export class MatrixMessageList {
   private setLoadingNewer(on: boolean): void {
     this.loadingNewer = on;
     clearTimeout(this.loadingNewerTimer);
-    if (on) this.loadingNewerTimer = setTimeout(() => { this.loadingNewer = false; }, 5000);
+    if (on) this.loadingNewerTimer = setTimeout(() => {
+      this.loadingNewer = false;
+      const container = this.messagesContainer()?.nativeElement;
+      if (container) this.autoLoadNewerWhenNeeded(container);
+    }, 5000);
+  }
+
+  /**
+   * In a jumped timeline: ask for newer messages when the viewport is at (or near) the bottom,
+   * or does not scroll at all — the mirror of autoLoadOlderWhenNotScrollable. Returns true
+   * when it asked.
+   */
+  private autoLoadNewerWhenNeeded(container: HTMLElement): boolean {
+    if (!this.isJumped() || this.loadingNewer || this.loadingOlder()) return false;
+    const notScrollable = container.scrollHeight <= container.clientHeight + 80;
+    const nearBottom = container.scrollTop + container.clientHeight >= container.scrollHeight - 80;
+    if (!notScrollable && !nearBottom) return false;
+    this.setLoadingNewer(true);
+    this.loadNewer.emit();
+    return true;
   }
 
   /**

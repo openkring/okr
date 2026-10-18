@@ -1,14 +1,14 @@
 import { DestroyRef, inject, Injectable, PLATFORM_ID } from '@angular/core';
 import { DOCUMENT, isPlatformBrowser } from '@angular/common';
 import { captureMessage } from '@sentry/angular';
-import { EventTimeline, EventType, MatrixClient, MatrixError, MatrixEvent, RelationType, Room } from 'matrix-js-sdk';
+import { ClientEvent, EventTimeline, EventType, MatrixClient, MatrixError, MatrixEvent, RelationType, Room } from 'matrix-js-sdk';
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
 
 import { MatrixMessage, MatrixReadReceipt } from '@okr/shared-models';
 import { AppStore } from '@okr/shared-feature';
 import { debugData, debugMessage } from '@okr/shared-util-core';
 import {
-  EvictedRooms, evictedRoomsStorageKey, evictionAction, isRenderableChatEvent, isRoomGoneError,
+  EvictedRooms, evictedRoomsStorageKey, evictionAction, isMessageGoneError, isRenderableChatEvent, isRoomGoneError, threadRootOf,
   mediaRetryDelayMs, parseEvictedRooms, parsePollContent, recordEvictedRoom,
 } from '@okr/chat-util';
 import { AvatarService } from '@okr/avatar-data-access';
@@ -22,6 +22,16 @@ export interface MatrixJumpState {
   roomId: string;
   newCount: number;
 }
+
+/**
+ * Outcome of a jump (spec 1.104 §4.4): shown ('ok'), deleted or unreadable ('gone'), a
+ * transient failure worth a retry ('error'), or a thread reply — those are not in the main
+ * list, so the caller opens the thread of `rootId` instead.
+ */
+export type MatrixJumpResult = 'ok' | 'gone' | 'error' | { kind: 'thread'; rootId: string };
+
+/** How long a jump waits for a room the client does not know yet (just joined via the function). */
+const JUMP_ROOM_WAIT_MS = 10_000;
 
 /** Events fetched on each side of a jump target, so it does not land alone on the screen. */
 const JUMP_CONTEXT_LIMIT = 25;
@@ -628,14 +638,17 @@ export class MatrixMessageService {
    * An event the live list already holds needs no jump: the room simply stays live.
    *
    * @returns 'gone' when the event was deleted, cannot be read (no longer in the room, unknown
-   * id) or the room is unknown; the room then stays on its live timeline. 'ok' otherwise —
-   * also when a newer request superseded this one while it loaded.
+   * id) or the room stays unknown; 'error' for a transient failure; a thread result for a
+   * thread reply. The room then stays on its live timeline. 'ok' otherwise — also when a
+   * newer request superseded this one while it loaded.
    */
-  public async loadEventContext(roomId: string, eventId: string): Promise<'ok' | 'gone'> {
+  public async loadEventContext(roomId: string, eventId: string): Promise<MatrixJumpResult> {
     const client = this.client;
-    const room = client?.getRoom(roomId);
-    if (!client || !room) return 'gone';
+    if (!client) return 'error';
     const seq = ++this.jumpRequestSeq;
+    const room = await this.waitForRoom(client, roomId);
+    if (seq !== this.jumpRequestSeq) return 'ok';
+    if (!room) return 'gone';
 
     let timeline: EventTimeline | null;
     try {
@@ -645,11 +658,17 @@ export class MatrixMessageService {
       timeline = await client.getEventTimeline(room.getUnfilteredTimelineSet(), eventId);
     } catch (error) {
       console.warn('MatrixMessageService.loadEventContext: event context not available:', error);
-      return 'gone';
+      return isMessageGoneError(error) ? 'gone' : 'error';
     }
     if (seq !== this.jumpRequestSeq) return 'ok';
     const event = timeline?.getEvents().find(e => e.getId() === eventId);
-    if (!timeline || !event || event.isRedacted()) return 'gone';
+    if (event?.isRedacted()) return 'gone';
+    // A thread reply: the main list filters it out, so open its thread. With threads off in
+    // the client a reply sits in the main timeline (found above); getEventTimeline refuses one
+    // it has to fetch (null), so ask for the bare event then.
+    const rootId = event ? threadRootOf(event.getContent()) : undefined;
+    if (rootId) return { kind: 'thread', rootId };
+    if (!timeline || !event) return this.classifyMissingEvent(client, roomId, eventId);
 
     // Already on the live list (recent message, or a window that an earlier jump linked to
     // the live timeline): no jump. Leave a jumped window of any room first.
@@ -689,6 +708,41 @@ export class MatrixMessageService {
     debugMessage(`MatrixMessageService: jumped to an event in room ${roomId}`, this.appStore.currentUser());
     await this.emitMessagesFromTimeline(room);
     return 'ok';
+  }
+
+  /** The room, waiting up to JUMP_ROOM_WAIT_MS for it to arrive (a room the function just joined). */
+  private waitForRoom(client: MatrixClient, roomId: string): Promise<Room | null> {
+    const known = client.getRoom(roomId);
+    if (known) return Promise.resolve(known);
+    return new Promise(resolve => {
+      const onRoom = (room: Room) => {
+        if (room.roomId !== roomId) return;
+        done(room);
+      };
+      const timer = setTimeout(() => done(client.getRoom(roomId)), JUMP_ROOM_WAIT_MS);
+      const done = (room: Room | null) => {
+        clearTimeout(timer);
+        client.off(ClientEvent.Room, onRoom);
+        resolve(room);
+      };
+      client.on(ClientEvent.Room, onRoom);
+    });
+  }
+
+  /**
+   * The event did not come back as part of a timeline: fetch it alone to tell a thread reply
+   * (open the thread) from a deleted one ('gone') and from a transient failure ('error').
+   */
+  private async classifyMissingEvent(client: MatrixClient, roomId: string, eventId: string): Promise<MatrixJumpResult> {
+    try {
+      const raw = await client.fetchRoomEvent(roomId, eventId);
+      if (raw.unsigned?.redacted_because) return 'gone';
+      const rootId = threadRootOf(raw.content as Record<string, unknown> | undefined);
+      return rootId ? { kind: 'thread', rootId } : 'gone';
+    } catch (error) {
+      console.warn('MatrixMessageService.loadEventContext: event not available:', error);
+      return isMessageGoneError(error) ? 'gone' : 'error';
+    }
   }
 
   /**
@@ -734,9 +788,15 @@ export class MatrixMessageService {
    * reached the live end). Reloads the live list through the regular load, which also
    * catches up with a timeline reset that happened meanwhile.
    */
-  public returnToLive(roomId: string): void {
+  public returnToLive(roomId: string, reload = true): void {
     if (this.jump?.roomId !== roomId) return;
     this.endJump();
+    if (!reload) {
+      // A room being left: no reload against a room we are leaving, but forget the jumped
+      // list, so a later open (after a rejoin) loads the live timeline afresh.
+      this.messages$.get(roomId)?.next(null);
+      return;
+    }
     if (this.loadingRooms.has(roomId)) this.pendingReload.add(roomId);
     else void this.loadMessagesForRoom(roomId);
   }

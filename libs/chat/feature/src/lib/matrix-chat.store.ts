@@ -16,7 +16,7 @@ import { I18nService } from '@okr/shared-i18n';
 
 import { ActivityService } from '@okr/activity-data-access';
 import { AvatarService } from '@okr/avatar-data-access';
-import { MatrixChatService, MatrixPollData } from '@okr/chat-data-access';
+import { MatrixChatService, MatrixJumpResult, MatrixPollData } from '@okr/chat-data-access';
 import { AvailablePinboard, AdhocChatFormModel, newAdhocChatForm, PollDef, filterRoomsOfTenant, findSupportRoom, serverNameOf, MATRIX_CHAT_I18N_KEYS, MatrixChatI18n, MentionRef, callableErrorCode, pinboardBroadcastCount, pinboardReplyDraft, isAlbumVideoFile, isVideoLimitError, isVideoUploadError, isOwnNotesRoom, NotesRoomOwner, buildBookmarkContent, videoAlbumFallsBackToSynapse } from '@okr/chat-util';
 
 import { RoomEditModal } from './room-edit.modal';
@@ -32,6 +32,8 @@ export type MatrixChatState = {
   jumpTarget: string | undefined;
   /** True from the start of a jump until it settled — no read receipt in between. */
   jumpPending: boolean;
+  /** A jumped-to thread reply, highlighted in the thread list. */
+  threadJumpTarget: string | undefined;
 }
 
 /** How long the sync loop must stay in ERROR before the chat shows a connection error. */
@@ -48,6 +50,7 @@ export const _MatrixChatStore = signalStore(
     hasMoreHistory: true,
     jumpTarget: undefined,
     jumpPending: false,
+    threadJumpTarget: undefined,
   })),
   withProps(() => ({
     appStore: inject(AppStore),
@@ -549,7 +552,7 @@ export const _MatrixChatStore = signalStore(
         // the current room does not nuke an in-progress reply.
         const previous = store.currentRoomId();
         if (roomId !== previous) {
-          patchState(store, { replyToMessage: undefined, selectedThreadId: undefined, jumpTarget: undefined, jumpPending: false });
+          patchState(store, { replyToMessage: undefined, selectedThreadId: undefined, jumpTarget: undefined, jumpPending: false, threadJumpTarget: undefined });
           store.jumpSeq.value++;
           // Leaving a jumped room returns it to live; the next visit opens it as usual.
           if (previous && store.matrixService.isJumped(previous)) store.matrixService.returnToLive(previous);
@@ -572,21 +575,41 @@ export const _MatrixChatStore = signalStore(
       async jumpToEvent(roomId: string, eventId: string): Promise<void> {
         this.setCurrentRoom(roomId, false);
         const seq = ++store.jumpSeq.value;
-        patchState(store, { jumpPending: true, jumpTarget: undefined });
-        let result: 'ok' | 'gone' = 'gone';
-        try {
-          result = await store.matrixService.loadEventContext(roomId, eventId);
-        } catch (error) {
-          console.warn('MatrixChatStore.jumpToEvent: failed:', error);
-        }
-        if (seq !== store.jumpSeq.value) {
+        patchState(store, { jumpPending: true, jumpTarget: undefined, threadJumpTarget: undefined });
+        const load = async (id: string): Promise<MatrixJumpResult> => {
+          try {
+            return await store.matrixService.loadEventContext(roomId, id);
+          } catch (error) {
+            console.warn('MatrixChatStore.jumpToEvent: failed:', error);
+            return 'error';
+          }
+        };
+        const superseded = (): boolean => {
+          if (seq === store.jumpSeq.value) return false;
           // Superseded (another jump, another room, «Zum neusten»): a jump that still landed
           // must not stay on screen behind the user's back.
           if (store.currentRoomId() !== roomId && store.matrixService.isJumped(roomId)) store.matrixService.returnToLive(roomId);
+          return true;
+        };
+
+        const result = await load(eventId);
+        if (superseded()) return;
+        if (typeof result === 'object') {
+          // A thread reply is not in the main list: show its root there and open the thread
+          // on it (as a tap on the root's thread indicator does), with the reply highlighted.
+          const rootResult = await load(result.rootId);
+          if (superseded()) return;
+          patchState(store, {
+            jumpPending: false, hasMoreHistory: true,
+            jumpTarget: rootResult === 'ok' ? result.rootId : undefined,
+            selectedThreadId: result.rootId,
+            threadJumpTarget: eventId,
+          });
           return;
         }
         patchState(store, { jumpPending: false, hasMoreHistory: true, jumpTarget: result === 'ok' ? eventId : undefined });
         if (result === 'gone') await store.alertService.showToast(store.i18n.message_gone());
+        else if (result === 'error') await store.alertService.showToast(store.i18n.bookmark_error());
       },
 
       /** «Zum neusten»: leave the jumped timeline and show the live end of the room. */
@@ -633,6 +656,7 @@ export const _MatrixChatStore = signalStore(
       },
 
       setSelectedThread(threadId: string | undefined): void {
+        if (threadId !== store.selectedThreadId()) patchState(store, { threadJumpTarget: undefined });
         patchState(store, { selectedThreadId: threadId });
       },
 
@@ -1422,7 +1446,10 @@ export const _MatrixChatStore = signalStore(
         try {
           await store.matrixService.leaveRoom(roomId);
           void store.activityService.log('chat', 'leave', store.currentUser(), 'SUCCESS rid:' + roomId);
-          patchState(store, { currentRoomId: undefined });
+          // A jumped window of the left room must not survive it (no reload against a left room).
+          store.jumpSeq.value++;
+          if (store.matrixService.isJumped(roomId)) store.matrixService.returnToLive(roomId, false);
+          patchState(store, { currentRoomId: undefined, jumpTarget: undefined, jumpPending: false, threadJumpTarget: undefined });
         } catch (error) {
           void store.activityService.log('chat', 'leave', store.currentUser(), 'ERROR rid:' + roomId);
           console.error('MatrixChatStore.leaveRoom: Failed to leave:', error);

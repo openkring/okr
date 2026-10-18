@@ -17,7 +17,7 @@ import { MatrixMediaService } from './matrix-media.service';
 import { MatrixCallService } from './matrix-call.service';
 import { MatrixDirectRoomService } from './matrix-direct-room.service';
 import { MatrixRoomListService } from './matrix-room-list.service';
-import { MatrixJumpState, MatrixMessageService } from './matrix-message.service';
+import { MatrixJumpResult, MatrixJumpState, MatrixMessageService } from './matrix-message.service';
 
 /**
  * SCS-92: refresh a Matrix access token this long before it lapses, so a session that
@@ -730,9 +730,10 @@ export class MatrixChatService {
 
   /**
    * Show a room at one message, however old (spec 1.104 §4.4). Waits for the first sync so a
-   * cold deep link finds its room. 'gone' when the message was deleted or cannot be read.
+   * cold deep link finds its room. 'gone' when the message was deleted or cannot be read; a
+   * thread result for a thread reply (see MatrixJumpResult).
    */
-  public async loadEventContext(roomId: string, eventId: string): Promise<'ok' | 'gone'> {
+  public async loadEventContext(roomId: string, eventId: string): Promise<MatrixJumpResult> {
     await this.waitForSync();
     return this.messages.loadEventContext(roomId, eventId);
   }
@@ -743,8 +744,8 @@ export class MatrixChatService {
   }
 
   /** Leave a jumped window and show the live timeline again. */
-  public returnToLive(roomId: string): void {
-    this.messages.returnToLive(roomId);
+  public returnToLive(roomId: string, reload = true): void {
+    this.messages.returnToLive(roomId, reload);
   }
 
   /** Whether the room shows a jumped window instead of its live timeline. */
