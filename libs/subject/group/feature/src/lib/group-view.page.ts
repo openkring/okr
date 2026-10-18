@@ -284,6 +284,7 @@ export class GroupViewPage implements ViewWillEnter {
   // instantiated lazily via ViewContainerRef.createComponent, see the constructor below.
   private caleventHost = viewChild('caleventHost', { read: ViewContainerRef });
   protected caleventRef = signal<ComponentRef<CalEventList> | undefined>(undefined);
+  private readonly creatingCalevent = signal(false);
   private readonly caleventList = computed(() => this.caleventRef()?.instance);
   private readonly taskList = viewChild(TaskList);
   private readonly documentList = viewChild(DocumentList);
@@ -413,18 +414,39 @@ export class GroupViewPage implements ViewWillEnter {
     // container appears. Never a static import — see the comment above caleventHost.
     effect(() => {
       const host = this.caleventHost();
-      if (!host || untracked(() => this.caleventRef())) return;
+      const existing = untracked(() => this.caleventRef());
+      // The host lives inside `@case ('calendar')`. Switching to another segment destroys the
+      // host container AND the component created in it — the ref we hold is dead. Drop it,
+      // otherwise the next host is never filled (white calendar after switching segments).
+      if (!host) {
+        if (existing) {
+          existing.destroy();
+          this.caleventRef.set(undefined);
+        }
+        return;
+      }
+      // `creatingCalevent` closes the window between starting the import and setting the ref,
+      // in which a second run would pass the ref guard and mount a second component.
+      if (existing || this.creatingCalevent()) return;
+      this.creatingCalevent.set(true);
       void (async () => {
-        const { CalEventList } = await import('@okr/calevent-feature');
-        const ref = host.createComponent(CalEventList);
-        ref.setInput('listId', this.id());
-        ref.setInput('contextMenuName', 'disable');
-        ref.setInput('color', 'light');
-        ref.setInput('view', 'grid');
-        ref.setInput('showMenuButton', false);
-        ref.setInput('showViewToggle', false);
-        ref.setInput('groupAdmin', this.isGroupAdmin());
-        this.caleventRef.set(ref);
+        try {
+          const { CalEventList } = await import('@okr/calevent-feature');
+          // The host may have left the DOM while the chunk was in flight: a component created in
+          // a detached container would never be visible, yet the ref would block a remount.
+          if (untracked(() => this.caleventHost()) !== host) return;
+          const ref = host.createComponent(CalEventList);
+          ref.setInput('listId', untracked(() => this.id()));
+          ref.setInput('contextMenuName', 'disable');
+          ref.setInput('color', 'light');
+          ref.setInput('view', 'grid');
+          ref.setInput('showMenuButton', false);
+          ref.setInput('showViewToggle', false);
+          ref.setInput('groupAdmin', untracked(() => this.isGroupAdmin()));
+          this.caleventRef.set(ref);
+        } finally {
+          this.creatingCalevent.set(false);
+        }
       })();
     });
 

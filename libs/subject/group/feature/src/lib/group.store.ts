@@ -465,7 +465,8 @@ export const GroupStore = signalStore(
       const cal = new CalendarModel(store.tenantId());
       cal.okey = group.okey;
       cal.name = group.name;
-      cal.description = `${store.i18n.calendar_name()} ${group.name}`;
+      // trim(): the translations carry a trailing space ('Kalender für Gruppe ')
+      cal.description = `${store.i18n.calendar_name().trim()} ${group.name}`;
       cal.owner = `${GroupModelName}.${group.okey}`;
       await store.firestoreService.createModel<CalendarModel>(CalendarCollection, cal, 
         store.i18n.calendar_create_conf(), store.i18n.calendar_create_error(), store.currentUser());
