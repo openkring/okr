@@ -55,7 +55,7 @@ async function joinPerson(roomId: string, matrixUserId: string, personKey: strin
 }
 
 /** A notes room is ours when @bk2-bot (the admin token's account) created it and it carries exactly [tenantId]. */
-async function isOwnNotesRoom(roomId: string, tenantId: string, adminToken: string): Promise<boolean> {
+export async function isOwnNotesRoom(roomId: string, tenantId: string, adminToken: string): Promise<boolean> {
   const headers = { Authorization: `Bearer ${adminToken}` };
   try {
     const who = await fetch(`${MATRIX_HOMESERVER}/_matrix/client/v3/account/whoami`, { headers });

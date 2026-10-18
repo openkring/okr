@@ -1156,9 +1156,17 @@ export async function kickUserFromRoom(roomId: string, matrixUserId: string, adm
   return true;
 }
 
+/** A Matrix failure that will never succeed on retry (bot left the room, event too large). */
+export class MatrixTerminalError extends Error {}
+
+function isTerminalMatrix(status: number, text: string): boolean {
+  return status === 403 || text.includes('M_FORBIDDEN') || text.includes('M_TOO_LARGE');
+}
+
 /**
  * Posts an `m.text` rich reply into a room as the admin-token account (@bk2-bot). `txnId` makes
- * the PUT idempotent: a retry after a crash does not post twice. Throws on any non-2xx.
+ * the PUT idempotent: a retry after a crash does not post twice. Throws on any non-2xx
+ * (`MatrixTerminalError` for 403/M_FORBIDDEN/M_TOO_LARGE, which retrying cannot fix).
  */
 export async function sendBotReply(
   roomId: string, inReplyToEventId: string, body: string, txnId: string, adminToken: string,
@@ -1171,21 +1179,36 @@ export async function sendBotReply(
       body: JSON.stringify({ msgtype: 'm.text', body, 'm.relates_to': { 'm.in_reply_to': { event_id: inReplyToEventId } } }),
     },
   );
-  if (!resp.ok) throw new Error(`sendBotReply ${roomId} → ${resp.status}: ${await resp.text()}`);
+  if (resp.ok) return;
+  const text = await resp.text();
+  const msg = `sendBotReply ${roomId} → ${resp.status}: ${text}`;
+  throw isTerminalMatrix(resp.status, text) ? new MatrixTerminalError(msg) : new Error(msg);
 }
 
 /**
- * Does the event still exist (not 404, not redacted)? Any other failure throws — a 5xx must not be
- * read as «gone», or a transient outage would cancel the reminder.
+ * Fetches a live (not 404, not redacted) event; undefined when it is gone. Other failures throw —
+ * a 5xx must not be read as «gone», or a transient outage would cancel the reminder.
  */
-export async function roomEventExists(roomId: string, eventId: string, adminToken: string): Promise<boolean> {
+export async function getRoomEvent(
+  roomId: string, eventId: string, adminToken: string,
+): Promise<{ sender?: string; content: Record<string, unknown> } | undefined> {
   const resp = await fetch(
     `${MATRIX_HOMESERVER}/_matrix/client/v3/rooms/${encodeURIComponent(roomId)}/event/${encodeURIComponent(eventId)}`,
     { headers: { Authorization: `Bearer ${adminToken}` } },
   );
-  if (resp.status === 404) return false;
-  if (!resp.ok) throw new Error(`roomEventExists ${roomId} ${eventId} → ${resp.status}`);
-  const ev = (await resp.json()) as { content?: Record<string, unknown>; unsigned?: { redacted_because?: unknown } };
-  if (ev.unsigned?.redacted_because) return false;
-  return !!ev.content && Object.keys(ev.content).length > 0;
+  if (resp.status === 404) return undefined;
+  if (!resp.ok) {
+    const text = typeof resp.text === 'function' ? await resp.text() : '';
+    const msg = `getRoomEvent ${roomId} ${eventId} → ${resp.status}`;
+    throw isTerminalMatrix(resp.status, text) ? new MatrixTerminalError(msg) : new Error(msg);
+  }
+  const ev = (await resp.json()) as { sender?: string; content?: Record<string, unknown>; unsigned?: { redacted_because?: unknown } };
+  if (ev.unsigned?.redacted_because) return undefined;
+  if (!ev.content || Object.keys(ev.content).length === 0) return undefined;
+  return { sender: ev.sender, content: ev.content };
+}
+
+/** Does the event still exist (not 404, not redacted)? See `getRoomEvent`. */
+export async function roomEventExists(roomId: string, eventId: string, adminToken: string): Promise<boolean> {
+  return (await getRoomEvent(roomId, eventId, adminToken)) !== undefined;
 }
