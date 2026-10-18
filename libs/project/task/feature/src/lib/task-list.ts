@@ -4,7 +4,7 @@ import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonBut
 import { PersonModel, RoleName, TaskModel } from '@okr/shared-models';
 import { ModelSelectService } from '@okr/shared-feature';
 import { PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
-import { EmptyList, ListFilter, ImgDirective } from '@okr/shared-ui';
+import { DateTimeSelectModal, EmptyList, ListFilter, ImgDirective } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error, isBrowser, keepDefaultTrue, QuickEntryService } from '@okr/shared-util-angular';
 import { convertDateFormatToString, DateFormat, getAvatarInfo, getAvatarInfoForCurrentUser, hasRole } from '@okr/shared-util-core';
 
@@ -301,7 +301,6 @@ export class TaskList {
           textarea.value = value.slice(0, -1);
         }
       } else if (trigger === 'date') {
-        const { DateTimeSelectModal: DateTimeSelectModal } = await import('@okr/shared-ui');
         const modal = await this.modalController.create({
           component: DateTimeSelectModal,
         });

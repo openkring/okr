@@ -6,9 +6,9 @@ import { EmptyList, MoreButton, OptionalCardHeader, Spinner } from '@okr/shared-
 import { debugMessage } from '@okr/shared-util-core';
 import { navigateByUrl } from '@okr/shared-util-angular';
 import { MatrixRoom, MessagesConfig, MessagesSection } from '@okr/shared-models';
-import { getReservedListHeightPx } from '@okr/cms-section-util';
 
 import { MessagesStore } from './messages-section.store';
+import { reservedListHeight } from './list-reservation';
 
 @Component({
   selector: 'okr-messages-section',
@@ -77,7 +77,7 @@ export class MessagesSectionComponent {
   protected readonly rooms = computed(() => this.store.rooms());
   protected readonly isLoading = computed(() => this.store.isLoading());
   protected readonly hasError = computed(() => this.store.hasError());
-  protected readonly reservedHeight = computed(() => getReservedListHeightPx(this.maxItems()));
+  protected readonly reservedHeight = reservedListHeight(computed(() => this.section()?.okey), this.maxItems, this.isLoading, computed(() => this.rooms().length));
 
   constructor() {
     effect(() => {

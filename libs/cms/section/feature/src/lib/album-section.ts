@@ -73,7 +73,7 @@ import { AlbumStore } from './album-section.store';
       <ion-toolbar>
         <ion-grid>
           <ion-row>
-            <ion-col size="6" size-md="8">
+            <ion-col size="12" size-lg="8">
               <ion-item lines="none">
                 @if(isTopFolder() === false) {
                   <ion-icon src="{{ 'arrow-up-circle' | svgIcon}}" (click)="goUp()" slot="start" />
@@ -85,13 +85,13 @@ import { AlbumStore } from './album-section.store';
                 }
               </ion-item>
             </ion-col>
-            <ion-col size="6" size-md="4">
-              <!-- the category is empty until the reference data has loaded — okr-cat-select needs at least one item -->
-              @if(showStyleSelect() && albumStyles().items.length > 0) {
+            <!-- the category is empty until the reference data has loaded — okr-cat-select needs at least one item -->
+            @if(showStyleSelect() && albumStyles().items.length > 0) {
+              <ion-col size="12" size-lg="4">
                 <okr-cat-select [category]="albumStyles()" [selectedItemName]="albumStyle()"
                   (selectedItemNameChange)="onAlbumStyleChange($event)" [withAll]="false" [readOnly]="false" />
-              }
-            </ion-col>
+              </ion-col>
+            }
           </ion-row>
         </ion-grid>
       </ion-toolbar>

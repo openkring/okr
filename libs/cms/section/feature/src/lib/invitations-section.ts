@@ -3,7 +3,6 @@ import { CUSTOM_ELEMENTS_SCHEMA, Component, OnInit, PLATFORM_ID, computed, effec
 import { ActionSheetController, ActionSheetOptions, IonCard, IonCardContent, IonCol, IonGrid, IonLabel, IonRow, ModalController } from '@ionic/angular';
 
 import { InvitationModel, InvitationsConfig, InvitationsSection, InvitationState } from '@okr/shared-models';
-import { getReservedListHeightPx } from '@okr/cms-section-util';
 import { MoreButton, OptionalCardHeader, Spinner } from '@okr/shared-ui';
 import { getAttendanceColor, getAttendanceIcon, hasRole, isPastDate } from '@okr/shared-util-core';
 import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, isBrowser } from '@okr/shared-util-angular';
@@ -12,6 +11,7 @@ import { I18nService } from '@okr/shared-i18n';
 import { CALEVENT_I18N_KEYS } from '@okr/calevent-util';
 import { showCalEventInfo } from '@okr/calevent-ui';
 import { InvitationSectionStore } from './invitations-section.store';
+import { reservedListHeight } from './list-reservation';
 
 @Component({
   selector: 'okr-invitations-section',
@@ -125,7 +125,7 @@ export class InvitationsSectionComponent implements OnInit {
    * The dashboard collapses the whole grid column via the okr-section-hidden host class.
    */
   protected readonly isVisible = computed(() => this.editMode() || (!this.isLoading() && this.invitations().length > 0));
-  protected readonly reservedHeight = computed(() => getReservedListHeightPx(this.maxItems()));
+  protected readonly reservedHeight = reservedListHeight(computed(() => this.section()?.okey), this.maxItems, this.isLoading, computed(() => this.invitations().length));
 
   // passing constants to the template
   private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;

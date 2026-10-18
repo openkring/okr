@@ -9,7 +9,7 @@ import { DEFAULT_DATE } from '@okr/shared-constants';
 import { AvatarInfo, CalEventModel, LocationModel, PersonModel, RoleName } from '@okr/shared-models';
 import { ModelSelectService } from '@okr/shared-feature';
 import { PartPipe, SvgIconPipe } from '@okr/shared-pipes';
-import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
+import { DateTimeSelectModal, EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { AppNavigationService, confirm, createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error, isBrowser, keepDefaultTrue, lazyService, navigateByUrl, okrPrompt, QuickEntryService } from '@okr/shared-util-angular';
 import { convertDateFormatToString, DateFormat, addTime, debugData, extractFirstPartOfOptionalTupel, getAttendanceColor, getAttendanceIcon, getAttendanceState, getAvatarInfo, getIsoDateTime, isCalendarPublic, fill, getYear, getYearList, hasRole, parseEventString, warn, YEAR_ROLLING_WINDOW } from '@okr/shared-util-core';
 
@@ -18,7 +18,7 @@ import { AvatarDisplay } from '@okr/avatar-ui';
 import { isAdminMember } from '@okr/subject-group-util';
 
 import { CalEventDurationPipe, canAttendCalevent, countPollAcceptances, countPollResponses, formatDateTimeLabel, getCalEventCssClass, isAttendanceClosed, isPastCalevent, isPersonalCalendarName, isPersonalCalevent, mayJoinOpenCalevent, resetActivity, resolveCalendars, upcomingOccurrences } from '@okr/calevent-util';
-import { showCalendarSync } from '@okr/calevent-ui';
+import { OrganiserContactModal, showCalendarSync } from '@okr/calevent-ui';
 import { CalendarFeedService } from '@okr/calevent-data-access';
 import type { OrganiserContactAction, OrganiserContactResult } from '@okr/calevent-ui';
 import { browseUrl } from '@okr/subject-address-util';
@@ -880,7 +880,6 @@ export class CalEventList implements OnInit {
           textarea.value = value.slice(0, -1); // remove stray '@'
         }
       } else if (trigger === 'date') {
-        const { DateTimeSelectModal: DateTimeSelectModal } = await import('@okr/shared-ui');
         const modal = await this.modalController.create({
           component: DateTimeSelectModal,
         });
@@ -1210,7 +1209,6 @@ export class CalEventList implements OnInit {
       phones[o.key] = this.organiserPhone(o.key);
       emails[o.key] = this.organiserEmail(o.key);
     }
-    const { OrganiserContactModal } = await import('@okr/calevent-ui');
     const modal = await this.modalController.create({
       component: OrganiserContactModal,
       // shrink-to-content: the body is one optional dropdown plus 2-4 action rows, and

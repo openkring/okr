@@ -6,7 +6,7 @@ import {  IonTextarea, IonButton, IonIcon, ActionSheetController, ActionSheetOpt
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { createActionSheetButton, createActionSheetOptions, QuickEntryService } from '@okr/shared-util-angular';
 import { AppStore, ModelSelectService } from '@okr/shared-feature';
-import { ButtonCopy } from '@okr/shared-ui';
+import { ButtonCopy, DateTimeSelectModal } from '@okr/shared-ui';
 import { convertDateFormatToString, DateFormat, MAX_VIDEO_BYTES } from '@okr/shared-util-core';
 import { PersonModel } from '@okr/shared-models';
 
@@ -821,7 +821,6 @@ export class MatrixMessageInput {
     this.isSettingQuickEntryValue = true;
     try {
       if (trigger === 'date') {
-        const { DateTimeSelectModal } = await import('@okr/shared-ui');
         const modal = await this.modalController.create({ component: DateTimeSelectModal });
         await modal.present();
         const { data, role } = await modal.onWillDismiss<string>();

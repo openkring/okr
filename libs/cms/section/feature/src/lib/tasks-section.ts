@@ -9,10 +9,10 @@ import { PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
 import { TaskModel, TasksConfig, TasksSection } from '@okr/shared-models';
 
 import { AvatarPipe } from '@okr/avatar-ui';
-import { getReservedListHeightPx } from '@okr/cms-section-util';
 import { isTaskCompleted } from '@okr/project-task-util';
 
 import { TasksStore } from './tasks-section.store';
+import { reservedListHeight } from './list-reservation';
 
 
 @Component({
@@ -106,7 +106,7 @@ export class TasksSectionComponent implements OnInit {
   // The store's loading state, not a constant: while the query runs the section must show a
   // spinner, not claim 'no open tasks' and then jump when the rows arrive (CLS 0.136).
   protected readonly isLoading = computed(() => this.store.isLoading());
-  protected readonly reservedHeight = computed(() => getReservedListHeightPx(this.maxItems()));
+  protected readonly reservedHeight = reservedListHeight(computed(() => this.section()?.okey), this.maxItems, this.isLoading, computed(() => this.tasks().length));
 
   private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 

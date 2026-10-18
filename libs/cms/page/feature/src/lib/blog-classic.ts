@@ -8,7 +8,7 @@ import { SectionDispatcher } from '@okr/cms-section-feature';
  * Classic Blog + Sidebar layout.
  * Main content column (≈70%) + right sidebar (≈30%).
  * Sections whose colSize starts with "4" or "3" are placed in the sidebar;
- * all others go into the main column.
+ * all others go into the main column. Without sidebar sections the main column takes the full width.
  */
 @Component({
   selector: 'okr-blog-classic',
@@ -31,7 +31,7 @@ import { SectionDispatcher } from '@okr/cms-section-feature';
     <ion-grid>
       <ion-row>
         <!-- Main content column -->
-        <ion-col size="12" size-md="8">
+        <ion-col size="12" [attr.size-md]="hasSidebar() ? 8 : 12">
           @for (section of mainSections(); track section.okey) {
             <div [id]="section.okey" (click)="sectionClick.emit(section.okey)">
               @if (editMode()) {
@@ -45,19 +45,21 @@ import { SectionDispatcher } from '@okr/cms-section-feature';
           }
         </ion-col>
         <!-- Sidebar column -->
-        <ion-col size="12" size-md="4">
-          @for (section of sidebarSections(); track section.okey) {
-            <div [id]="section.okey" (click)="sectionClick.emit(section.okey)">
-              @if (editMode()) {
-                <div class="section-wrapper editable">
+        @if (hasSidebar()) {
+          <ion-col size="12" size-md="4">
+            @for (section of sidebarSections(); track section.okey) {
+              <div [id]="section.okey" (click)="sectionClick.emit(section.okey)">
+                @if (editMode()) {
+                  <div class="section-wrapper editable">
+                    <okr-section-dispatcher [section]="section" [currentUser]="currentUser()" [editMode]="editMode()" />
+                  </div>
+                } @else {
                   <okr-section-dispatcher [section]="section" [currentUser]="currentUser()" [editMode]="editMode()" />
-                </div>
-              } @else {
-                <okr-section-dispatcher [section]="section" [currentUser]="currentUser()" [editMode]="editMode()" />
-              }
-            </div>
-          }
-        </ion-col>
+                }
+              </div>
+            }
+          </ion-col>
+        }
       </ion-row>
     </ion-grid>
   `
@@ -72,6 +74,7 @@ export class BlogClassic {
   protected sidebarSections = computed(() =>
     this.sections().filter(s => s.colSize?.startsWith('3') || s.colSize?.startsWith('4'))
   );
+  protected hasSidebar = computed(() => this.sidebarSections().length > 0);
   protected mainSections = computed(() =>
     this.sections().filter(s => !s.colSize?.startsWith('3') && !s.colSize?.startsWith('4'))
   );

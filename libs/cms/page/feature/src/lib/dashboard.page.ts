@@ -1,7 +1,8 @@
 import { Component, computed, effect, inject, input, signal } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { Meta } from '@angular/platform-browser';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonLabel, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular';
-import { ArticleSection, ButtonSection, RoleName } from '@okr/shared-models';
+import { ArticleSection, ButtonSection, RoleName, SectionModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { createActionSheetButton, createActionSheetOptions, error, getColSizes } from '@okr/shared-util-angular';
 import { hasRole, replaceSubstring } from '@okr/shared-util-core';
@@ -11,11 +12,17 @@ import { SectionDispatcher, SectionStore } from '@okr/cms-section-feature';
 
 import { PageStore } from './page.store';
 
+/** Section types that form the right-hand column of the two-column (lg) dashboard. */
+const SIDE_SECTION_TYPES = ['news'];
+
+/** A section plus its position in the page, so the one-column layout keeps the page order. */
+interface DashboardItem { section: SectionModel; order: number; }
+
 @Component({
   selector: 'okr-dashboard-page',
   standalone: true,
   imports: [
-    SectionDispatcher, Menu,
+    SectionDispatcher, Menu, NgTemplateOutlet,
     SvgIconPipe,
     IonHeader, IonToolbar, IonButtons, IonButton, IonIcon, IonTitle, IonMenuButton, IonContent,
     IonGrid, IonRow, IonCol, IonLabel, IonPopover
@@ -42,6 +49,25 @@ import { PageStore } from './page.store';
 
     .section-item {
       padding: 8px;
+    }
+
+    /* Two columns from lg on (iPad landscape, desktop): the activity cards (invitations, chat,
+       events, tasks) stack on the left, news on the right — each column packs its own cards, so a
+       short card no longer leaves a gap beside a tall one. Below lg (and when one column would be
+       empty) the columns dissolve into the row and the sections follow the page order again. */
+    .dashboard-column {
+      display: contents;
+    }
+    @media (min-width: 992px) {
+      ion-row.split {
+        flex-wrap: nowrap;
+        column-gap: 16px;
+      }
+      ion-row.split > .dashboard-column {
+        display: block;
+        flex: 1 1 0;
+        min-width: 0;
+      }
     }
 
     /* A section that decided to render nothing (e.g. invitations without open invitations) must not
@@ -255,8 +281,8 @@ import { PageStore } from './page.store';
       </ion-header>
     }
     <ion-content class="ion-no-padding">
-      @if(hasRole('contentAdmin')) {
-        @if(isEmptyPage()) {
+      @if(isEmptyPage()) {
+        @if(hasRole('contentAdmin')) {
           <div class="empty-state">
             <ion-icon src="{{'grid' | svgIcon }}"></ion-icon>
             <ion-label class="ion-text-wrap">{{ store.i18n.empty() }}</ion-label>
@@ -265,51 +291,43 @@ import { PageStore } from './page.store';
               {{ store.i18n.add_label() }}
             </ion-button>
           </div>
-        } @else {     <!-- page contains sections -->
-          <ion-grid>
-            <ion-row>
-              @for(section of sections(); track section.okey) {
-                @if(getColSizes(section.colSize); as colSizes) {
-                  <ion-col size="{{colSizes.size}}" 
-                    class="section-item" (click)="showActions(section.okey)"
-                    [class.edit-mode]="editMode()"
-                    [attr.size-md]="colSizes.sizeMd" [attr.size-lg]="colSizes.sizeLg"
-                  >
-                    <div class="section-wrapper state-{{ section.state }}" [class.editable]="editMode()">
-                      <okr-section-dispatcher [section]="section" [currentUser]="store.currentUser()" [editMode]="editMode()" [pageLocationKey]="page()?.locationKey ?? ''" />
-                    </div>
-                  </ion-col>
-                }
-              }
-            </ion-row>
-          </ion-grid>
-        }
-      } @else { <!-- not contentAdmin; also: not logged-in for public content -->
-        @if(isEmptyPage()) {
+        } @else { <!-- not contentAdmin; also: not logged-in for public content -->
           <div class="empty-state">
             <ion-icon src="{{'document' | svgIcon }}"></ion-icon>
             <ion-label class="ion-text-wrap">{{ store.i18n.empty_readonly() }}</ion-label>
           </div>
-        } @else {
-          <ion-grid>
-            <ion-row>
-              @for(section of sections(); track section.okey) {
-                @if(getColSizes(section.colSize); as colSizes) {
-                  <ion-col size="{{colSizes.size}}" 
-                    class="section-item"
-                    [attr.size-md]="colSizes.sizeMd" [attr.size-lg]="colSizes.sizeLg"
-                  >
-                    <div class="section-wrapper">
-                      <okr-section-dispatcher [section]="section" [currentUser]="store.currentUser()" [editMode]="editMode()" [pageLocationKey]="page()?.locationKey ?? ''" />
-                    </div>
-                  </ion-col>
-                }
-              }
-            </ion-row>
-          </ion-grid>
         }
+      } @else {     <!-- page contains sections -->
+        <ion-grid>
+          <ion-row [class.split]="isSplit()">
+            <div class="dashboard-column">
+              @for(item of mainSections(); track item.section.okey) {
+                <ng-container *ngTemplateOutlet="sectionCol; context: { $implicit: item }" />
+              }
+            </div>
+            <div class="dashboard-column">
+              @for(item of sideSections(); track item.section.okey) {
+                <ng-container *ngTemplateOutlet="sectionCol; context: { $implicit: item }" />
+              }
+            </div>
+          </ion-row>
+        </ion-grid>
       }
     </ion-content>
+
+    <ng-template #sectionCol let-item>
+      @if(getColSizes(item.section.colSize); as colSizes) {
+        <ion-col size="{{colSizes.size}}"
+          class="section-item" (click)="showActions(item.section.okey)"
+          [class.edit-mode]="editMode()" [style.order]="item.order"
+          [attr.size-md]="colSizes.sizeMd" [attr.size-lg]="isSplit() ? 12 : colSizes.sizeLg"
+        >
+          <div class="section-wrapper state-{{ item.section.state }}" [class.editable]="editMode()">
+            <okr-section-dispatcher [section]="item.section" [currentUser]="store.currentUser()" [editMode]="editMode()" [pageLocationKey]="page()?.locationKey ?? ''" />
+          </div>
+        </ion-col>
+      }
+    </ng-template>
   `
 })
 export class DashboardPage {
@@ -331,6 +349,10 @@ export class DashboardPage {
   // Accordion sections are not supported in Dashboard pages. Makes the implementation easier.
   protected sections = computed(() => this.store.pageSections());
   protected isEmptyPage = computed(() => this.sections().length === 0);
+  private items = computed((): DashboardItem[] => this.sections().map((section, order) => ({ section, order })));
+  protected mainSections = computed(() => this.items().filter(item => !SIDE_SECTION_TYPES.includes(item.section.type)));
+  protected sideSections = computed(() => this.items().filter(item => SIDE_SECTION_TYPES.includes(item.section.type)));
+  protected isSplit = computed(() => this.mainSections().length > 0 && this.sideSections().length > 0);
 
   constructor() {
     effect(() => {
@@ -347,12 +369,13 @@ export class DashboardPage {
     if (!selectedMethod) return; // dismissed without choosing an item (backdrop/escape) — not an error
     switch(selectedMethod) {
       case 'toggleEditMode':  this.editMode.update(value => !value); break;
-      case 'editPage': 
+      case 'editPage': {
         const page = this.store.page();
         if (page) {
           await this.store.edit(page, false);
         }
         break;
+      }
       case 'sortSections':  await this.store.sortSections(); break;
       case 'selectSection': await this.store.selectSection(); break;
       case 'addSection':    await this.addSection(); break;

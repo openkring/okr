@@ -13,9 +13,9 @@ import { CALEVENT_I18N_KEYS, isAttendanceClosed } from '@okr/calevent-util';
 import { showCalEventInfo } from '@okr/calevent-ui';
 import { CalendarFeedService } from '@okr/calevent-data-access';
 import { isAdminMember } from '@okr/subject-group-util';
-import { getReservedListHeightPx } from '@okr/cms-section-util';
 
 import { CalendarStore } from './calendar-section.store';
+import { reservedListHeight } from './list-reservation';
 
 @Component({
   selector: 'okr-events-section',
@@ -110,7 +110,7 @@ export class EventsSectionComponent implements OnInit {
 
   // The store's loading state, not a constant — see tasks-section for why.
   protected readonly isLoading = computed(() => this.store.isLoading());
-  protected readonly reservedHeight = computed(() => getReservedListHeightPx(this.maxEvents()));
+  protected readonly reservedHeight = reservedListHeight(computed(() => this.section()?.okey), this.maxEvents, this.isLoading, computed(() => this.calevents().length));
   //protected filteredEvents = computed(() => this.eventsStore.filteredEvents());
 
   // passing constants to the template
