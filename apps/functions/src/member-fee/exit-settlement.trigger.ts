@@ -21,6 +21,7 @@ import {
 import { SYSTEM_AUTHOR } from '../workflow/activity';
 import { withoutUndefined } from '../invoice/invoice.logic';
 import { CLOSE_NOTE, ExitContext, findSettlementTask, loadExitContext, treasurerAssignee } from './exit-settlement.context';
+import { claimedInvoiceKey } from './settle-membership-exit.logic';
 
 const REGION = 'europe-west6';
 const CF_NAME = 'onMembershipExitWritten';
@@ -98,10 +99,11 @@ export function exitChanged(before: DocumentData | undefined, after: DocumentDat
 
 /**
  * What to do with the settlement task (§4.5). A done task is a decision already taken: never
- * reopened, never duplicated.
+ * reopened, never duplicated. A claimed task (an invoice adjustment in progress, the storno possibly
+ * written) is left alone too: closing or rewriting it would strand a cancelled invoice.
  */
-export function upsertDecision(s: ExitSettlement, task: 'missing' | 'open' | 'done'): UpsertDecision {
-  if (task === 'done') return 'noop';
+export function upsertDecision(s: ExitSettlement, task: 'missing' | 'open' | 'claimed' | 'done'): UpsertDecision {
+  if (task === 'done' || task === 'claimed') return 'noop';
   if (s.case === 'none') return task === 'open' ? 'close' : 'noop';
   return task === 'open' ? 'update' : 'create';
 }
@@ -110,7 +112,9 @@ export function upsertDecision(s: ExitSettlement, task: 'missing' | 'open' | 'do
 export async function openOrUpdateSettlementTask(db: Firestore, ctx: ExitContext, settlement: ExitSettlement): Promise<UpsertDecision> {
   const today = getTodayStr(DateFormat.StoreDate);
   const found = await findSettlementTask(db, ctx.tenantId, ctx.membershipKey);
-  const decision = upsertDecision(settlement, found ? (found.done ? 'done' : 'open') : 'missing');
+  const claimed = !!found && !found.done && claimedInvoiceKey(found.data) !== '';
+  const decision = upsertDecision(settlement, found ? (found.done ? 'done' : claimed ? 'claimed' : 'open') : 'missing');
+  if (claimed) logger.info(`${CF_NAME}: task of membership ${ctx.membershipKey} is claimed by an invoice adjustment, left alone`);
   if (decision === 'noop') return decision;
 
   if (decision === 'close' && found) {

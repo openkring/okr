@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { ExitSettlement, SettlementCase } from '@okr/relationship-membership-util';
 
+import { claimedInvoiceKey, claimPatch } from './settle-membership-exit.logic';
 import { exitChanged, isSettlementWriter, mergeTaskNotes, NOTES_MARKER, siblingsToSettle, upsertDecision, writerCheck } from './exit-settlement.trigger';
 import {
   CLOSE_NOTE, flattenCategoryLists, isAutoClosed, needsPositions, overlappingCount, resolveSettlementTenant, toAvatarInfo, toInvoiceFacts,
@@ -60,6 +61,15 @@ describe('upsertDecision', () => {
 
   it.each(due)('never reopens or duplicates a done task, even when %s is due', (c) => {
     expect(upsertDecision(settlement(c), 'done')).toBe('noop');
+  });
+
+  it.each([...due, 'none' as SettlementCase])('leaves a task claimed by an invoice adjustment alone when %s', (c) => {
+    expect(upsertDecision(settlement(c), 'claimed')).toBe('noop');
+  });
+
+  it('detects the claim with the callable\'s helper', () => {
+    expect(claimedInvoiceKey(claimPatch('i1'))).toBe('i1');
+    expect(claimedInvoiceKey({ linkKey: '', linkModelType: '' })).toBe('');
   });
 
   it('closes the open task when nothing is due any more', () => {
