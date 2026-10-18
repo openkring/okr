@@ -1406,6 +1406,10 @@ export async function resolveDocs(entry: SubjectDataEntry, ctx: SubjectCtx): Pro
 // not personal data: commissionEntries — a ledger line (C3 §7): partnerKey, tenantId, band,
 //   amounts. No natural person appears on it; the contact-of-record stays on the metering
 //   record it was derived from.
+// gap: chatReminders — a pending «remind me» (spec 1.104 §5.1): ownerKey `personKey` plus
+//   pointers (room/event ids) and a short title; no message text. Pointer-level data of a
+//   natural person, not yet reachable from the member's erasure (the sweep marks it sent/cancelled,
+//   rules forbid delete). Decide row-vs-accept when the erasure cascade is next extended.
 // gap: meteringRecords — carries ONE business-role contact per reported tenant (C2 §7:
 //   `contact.name/role/email`, never member data). It is personal data of a natural person and
 //   bkaiser is its INDEPENDENT CONTROLLER, not a processor — so it is deliberately not reachable
