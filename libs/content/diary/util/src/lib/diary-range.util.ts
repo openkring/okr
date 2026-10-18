@@ -37,9 +37,9 @@ export function buildDiaryRangeTree(firstYear: number, currentYear: number): Dia
       for (let y = Math.min(d * 10 + 9, currentYear); y >= Math.max(d * 10, firstYear); y--) {
         years.push({ range: diaryRangeOfYear(y), children: [] });
       }
-      decades.push({ range: { level: 'decade', from: years.at(-1)!.range.from, to: years[0].range.to, label: `${d}x` }, children: years });
+      decades.push({ range: { level: 'decade', from: years[years.length - 1].range.from, to: years[0].range.to, label: `${d}x` }, children: years });
     }
-    centuries.push({ range: { level: 'century', from: decades.at(-1)!.range.from, to: decades[0].range.to, label: `${c}xx` }, children: decades });
+    centuries.push({ range: { level: 'century', from: decades[decades.length - 1].range.from, to: decades[0].range.to, label: `${c}xx` }, children: decades });
   }
   return centuries;
 }

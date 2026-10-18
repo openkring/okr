@@ -8,7 +8,7 @@ describe('buildDiaryRangeTree', () => {
     expect(tree.map(n => n.range.label)).toEqual(['20xx', '19xx']);
     expect(tree[0].children.map(n => n.range.label)).toEqual(['202x', '201x', '200x']);
     expect(tree[0].children[0].children.map(n => n.range.label)).toEqual(['2026', '2025', '2024', '2023', '2022', '2021', '2020']);
-    expect(tree[1].children.at(-1)!.range).toEqual({ level: 'decade', from: 1930, to: 1939, label: '193x' });
+    expect(tree[1].children[tree[1].children.length - 1].range).toEqual({ level: 'decade', from: 1930, to: 1939, label: '193x' });
   });
 
   it('clips a century to the first and current year', () => {
