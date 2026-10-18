@@ -751,6 +751,37 @@ export class FirestoreService {
   }
 
   /**
+   * Partial update: writes ONLY `fields` (updateDoc), never the rest of a cached model. For docs
+   * whose other fields a Cloud Function may change concurrently, where re-sending a stale copy
+   * would revert them (and a rule that whitelists the changed keys would deny the write).
+   * Same App Check recovery and error toast as updateModel.
+   * @param errorMessage an already RESOLVED message (never an i18n key)
+   * @returns the key, or undefined if the write failed
+   */
+  public async updateFields(
+    collectionName: string,
+    key: string,
+    fields: Record<string, unknown>,
+    errorMessage?: string,
+  ): Promise<string | undefined> {
+    if (!isBrowser(this.platformId)) {
+      return this.okrError(undefined, 'FirestoreService.updateFields: This method can only be called in the browser context.', true);
+    }
+    if (!collectionName || !key) {
+      return this.okrError(undefined, 'FirestoreService.updateFields: collectionName and key are mandatory.', true);
+    }
+    try {
+      await this.writeWithTokenDenialRetry(`updateFields(${collectionName}/${key})`, () =>
+        updateDoc(doc(this.firestore, `${collectionName}/${key}`), { ...fields }));
+      return key;
+    }
+    catch (ex) {
+      console.error(`FirestoreService.updateFields(${collectionName}/${key}) -> ERROR: `, ex);
+      return this.okrError(this.toastController, errorMessage ?? `Could not update ${collectionName}/${key} in the database.`);
+    }
+  }
+
+  /**
    * Update an object in the Firestore database.
    * Update is for non-destructive updates, ie. it updates the current value
    * within the database with the new value specified as the parameter.

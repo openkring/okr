@@ -85,6 +85,14 @@ function cancel(doc: ChatReminderDoc, reason: string): 'cancelled' {
   return 'cancelled';
 }
 
+/**
+ * The stored retry counter, sanitised: rules keep clients from writing it, but never trust it —
+ * a negative or non-numeric value would keep a broken doc in the sweep forever.
+ */
+export function storedFailures(value: unknown): number {
+  return typeof value === 'number' && Number.isFinite(value) ? Math.max(0, Math.trunc(value)) : 0;
+}
+
 /** Minimal slice of a Firestore QueryDocumentSnapshot, so the per-doc step is unit-testable. */
 export type DueReminderSnap = { id: string; data: () => unknown; ref: { update: (patch: Record<string, unknown>) => Promise<unknown> } };
 
@@ -99,7 +107,7 @@ export async function handleDueReminder(d: DueReminderSnap, deps: ReminderDeps):
     await d.ref.update({ state });
     return state;
   } catch (error) {
-    const failures = (typeof data.failures === 'number' ? data.failures : 0) + 1;
+    const failures = storedFailures(data.failures) + 1;
     console.error(`sendChatReminders: failed for ${d.id} (${failures}/${MAX_FAILURES}):`, error);
     await d.ref.update(failures >= MAX_FAILURES ? { failures, state: 'cancelled' } : { failures });
     return failures >= MAX_FAILURES ? 'cancelled' : 'failed';
@@ -114,7 +122,7 @@ export const sendChatReminders = onSchedule(
   async () => {
     const token = matrixAdminToken.value();
     const snap = await getFirestore().collection('chatReminders')
-      .where('state', '==', 'pending').where('dueAt', '<=', Date.now()).limit(200).get();
+      .where('state', '==', 'pending').where('dueAt', '<=', Date.now()).orderBy('dueAt').limit(200).get();
     if (snap.empty) return;
     // whoami once per run, not per doc. If it fails, nothing is touched; the next run retries.
     const botUserId = await fetchBotUserId(token);

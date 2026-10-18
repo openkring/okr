@@ -507,7 +507,11 @@ service cloud.firestore {
     match /chatReminders/{id} {
       allow read: if userExists() && (resource == null || (belongsToTenant(resource.data)
                       && resource.data.personKey == callerPersonKey()));
+      // Exact keys (createModel strips okey): in particular no `failures`, the sweep's retry
+      // counter — a client-seeded negative count would keep a broken doc in the sweep forever.
       allow create: if canWriteTenant(request.resource.data)
+                      && request.resource.data.keys().hasOnly(['tenants', 'personKey', 'dueAt', 'state',
+                           'notesRoomId', 'bookmarkEventId', 'roomId', 'eventId', 'title'])
                       && callerPersonKey() != ''
                       && request.resource.data.personKey == callerPersonKey()
                       && request.resource.data.state == 'pending'

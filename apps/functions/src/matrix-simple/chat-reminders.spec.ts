@@ -4,7 +4,7 @@ vi.mock('firebase-admin/auth', () => ({ getAuth: vi.fn() }));
 vi.mock('firebase-admin/firestore', () => ({ getFirestore: vi.fn() }));
 vi.mock('firebase-functions/params', () => ({ defineSecret: () => ({ value: () => 'tok' }) }));
 
-import { ChatReminderDoc, handleDueReminder, MAX_FAILURES, processReminder, REMINDER_PREFIX } from './chat-reminders';
+import { ChatReminderDoc, handleDueReminder, MAX_FAILURES, processReminder, REMINDER_PREFIX, storedFailures } from './chat-reminders';
 import { MatrixTerminalError, resolveRoomAlias, roomEventExists, sendBotReply } from './shared';
 import { isOwnNotesRoom } from './notes-room';
 
@@ -109,6 +109,23 @@ describe('handleDueReminder', () => {
     const { snap: s, update } = snap({});
     await handleDueReminder(s, mkDeps({ sendBotReply: vi.fn().mockRejectedValue(new Error('boom')) }));
     expect(update).toHaveBeenCalledWith({ failures: 1 });
+  });
+  it('treats a negative stored counter as 0', async () => {
+    const { snap: s, update } = snap({ failures: -1_000_000 });
+    await handleDueReminder(s, mkDeps({ sendBotReply: vi.fn().mockRejectedValue(new Error('boom')) }));
+    expect(update).toHaveBeenCalledWith({ failures: 1 });
+  });
+  it('treats a non-number stored counter as 0', async () => {
+    const { snap: s, update } = snap({ failures: '-5' as unknown as number });
+    await handleDueReminder(s, mkDeps({ sendBotReply: vi.fn().mockRejectedValue(new Error('boom')) }));
+    expect(update).toHaveBeenCalledWith({ failures: 1 });
+  });
+  it('storedFailures sanitises', () => {
+    expect(storedFailures(3.9)).toBe(3);
+    expect(storedFailures(-2)).toBe(0);
+    expect(storedFailures(Number.NaN)).toBe(0);
+    expect(storedFailures(Number.POSITIVE_INFINITY)).toBe(0);
+    expect(storedFailures(undefined)).toBe(0);
   });
   it('cancels on the 12th failure', async () => {
     expect(MAX_FAILURES).toBe(12);

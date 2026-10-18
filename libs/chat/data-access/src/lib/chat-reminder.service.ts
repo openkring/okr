@@ -36,17 +36,17 @@ export class ChatReminderService {
     return this.firestoreService.createModel<StoredReminder>(ChatReminderCollection, reminder as StoredReminder, undefined, errorMessage);
   }
 
-  /** Move a pending reminder to a new time. Rules allow `dueAt` only while pending. */
+  /**
+   * Move a pending reminder to a new time. Rules allow `dueAt` only while pending. Partial write:
+   * the sweep may have bumped `failures` since this copy was read, and re-sending the whole cached
+   * doc would put `failures` into the diff, which the rules deny.
+   */
   public async reschedule(reminder: ChatReminderModel, dueAt: number, errorMessage?: string): Promise<boolean> {
-    const key = await this.firestoreService.updateModel<StoredReminder>(
-      ChatReminderCollection, { ...reminder, dueAt } as StoredReminder, false, undefined, errorMessage);
-    return !!key;
+    return !!(await this.firestoreService.updateFields(ChatReminderCollection, reminder.okey, { dueAt }, errorMessage));
   }
 
-  /** Cancel a pending reminder (state → cancelled; documents are never deleted). */
+  /** Cancel a pending reminder (state → cancelled; documents are never deleted). Partial write, see reschedule. */
   public async cancel(reminder: ChatReminderModel, errorMessage?: string): Promise<boolean> {
-    const key = await this.firestoreService.updateModel<StoredReminder>(
-      ChatReminderCollection, { ...reminder, state: 'cancelled' } as StoredReminder, false, undefined, errorMessage);
-    return !!key;
+    return !!(await this.firestoreService.updateFields(ChatReminderCollection, reminder.okey, { state: 'cancelled' }, errorMessage));
   }
 }
