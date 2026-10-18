@@ -70,6 +70,11 @@
     },
     "unpin": {
       "conf": "Le salon n'est plus épinglé."
+    },
+    "notes": {
+      "name": "Notes pour moi",
+      "info": "Les messages que tu gardes arrivent ici. Tu peux aussi écrire tes propres notes. Toi seul vois ce salon.",
+      "error": "Cela n'a pas fonctionné. Essaie encore une fois."
     }
   },
   "help": {
@@ -121,7 +126,8 @@
       "direct": "Chat direct — une conversation privée entre toi et une autre personne.",
       "adhoc": "Chat ad hoc — un salon pour une occasion précise, que tu crées toi-même avec plusieurs personnes, par exemple pour le support ou une urgence.",
       "announcement": "Annonces — seuls les responsables du club y écrivent, tous les autres lisent.",
-      "pinboard": "Panneau d'affichage — chacun peut communiquer quelque chose à tous. Les réponses vont en privé à la personne qui a écrit l'annonce."
+      "pinboard": "Panneau d'affichage — chacun peut communiquer quelque chose à tous. Les réponses vont en privé à la personne qui a écrit l'annonce.",
+      "personal": "Chat personnel — toi seul vois «Notes pour moi». Les messages que tu gardes avec «Garder» arrivent ici, avec un rappel si tu le souhaites. Tu peux aussi écrire tes propres notes."
     }
   },
   "message": {

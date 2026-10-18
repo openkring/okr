@@ -70,6 +70,11 @@
     },
     "unpin": {
       "conf": "La sala ya no está fijada."
+    },
+    "notes": {
+      "name": "Notas para mí",
+      "info": "Aquí llegan los mensajes que guardas. También puedes escribir tus propias notas. Solo tú ves esta sala.",
+      "error": "No ha funcionado. Inténtalo de nuevo, por favor."
     }
   },
   "help": {
@@ -121,7 +126,8 @@
       "direct": "Chat directo — una conversación privada entre tú y otra persona.",
       "adhoc": "Chat ad hoc — una sala para una ocasión concreta que creas tú mismo con varias personas, por ejemplo para soporte o una emergencia.",
       "announcement": "Anuncios — aquí solo escriben los responsables del club, todos los demás leen.",
-      "pinboard": "Tablón de anuncios — todos pueden comunicar algo a todos. Las respuestas van en privado a la persona que escribió el anuncio."
+      "pinboard": "Tablón de anuncios — todos pueden comunicar algo a todos. Las respuestas van en privado a la persona que escribió el anuncio.",
+      "personal": "Chat personal — «Notas para mí» solo lo ves tú. Aquí llegan los mensajes que guardas con «Guardar», si quieres con un recordatorio. También puedes escribir tus propias notas."
     }
   },
   "message": {

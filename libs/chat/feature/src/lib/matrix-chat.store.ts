@@ -17,7 +17,7 @@ import { I18nService } from '@okr/shared-i18n';
 import { ActivityService } from '@okr/activity-data-access';
 import { AvatarService } from '@okr/avatar-data-access';
 import { MatrixChatService, MatrixPollData } from '@okr/chat-data-access';
-import { AvailablePinboard, AdhocChatFormModel, newAdhocChatForm, PollDef, filterRoomsOfTenant, findSupportRoom, serverNameOf, MATRIX_CHAT_I18N_KEYS, MatrixChatI18n, MentionRef, callableErrorCode, pinboardBroadcastCount, pinboardReplyDraft, isAlbumVideoFile, isVideoLimitError, isVideoUploadError, videoAlbumFallsBackToSynapse } from '@okr/chat-util';
+import { AvailablePinboard, AdhocChatFormModel, newAdhocChatForm, PollDef, filterRoomsOfTenant, findSupportRoom, serverNameOf, MATRIX_CHAT_I18N_KEYS, MatrixChatI18n, MentionRef, callableErrorCode, pinboardBroadcastCount, pinboardReplyDraft, isAlbumVideoFile, isVideoLimitError, isVideoUploadError, isOwnNotesRoom, videoAlbumFallsBackToSynapse } from '@okr/chat-util';
 
 import { RoomEditModal } from './room-edit.modal';
 
@@ -295,6 +295,12 @@ export const _MatrixChatStore = signalStore(
 
   withComputed((state) => {
     return {
+      /**
+       * The user's personal notes room of this tenant, once it has arrived via sync. Recognised
+       * by its canonical alias AND the bot as creator (a squatted alias is not trusted).
+       */
+      notesRoom: computed((): MatrixRoom | undefined =>
+        state.rooms().find(r => isOwnNotesRoom(r, state.appStore.tenantId()))),
       matrixUser: computed((): MatrixUser | undefined => {
         const user = state.currentUser();
         if (!user) return undefined;
@@ -348,7 +354,20 @@ export const _MatrixChatStore = signalStore(
     };
   }),
 
+  withComputed((state) => ({
+    /**
+     * Whether the room list shows the «Notizen an mich» placeholder row: the room does not exist
+     * yet (or has not synced), Matrix is up and the user is not a kiosk device.
+     */
+    showNotesPlaceholder: computed(() =>
+      !state.notesRoom()
+      && (state.syncState() === 'PREPARED' || state.syncState() === 'SYNCING')
+      && !isKioskOnly(state.appStore.currentUser())),
+  })),
+
   withMethods((store) => {
+    /** In-flight / settled `resolveNotesRoom` of this session, so a double tap creates one room. */
+    let notesRoomIdPromise: Promise<string> | undefined;
 
     /** Lower-case okeys aller bekannten Personen — Raummitglieder ohne Person (Matrix-Admin-Dienstkonto) zaehlen nicht. */
     const knownPersonKeys = (): Set<string> => new Set(store.appStore.allPersons().map((p: PersonModel) => p.okey.toLowerCase()));
@@ -426,6 +445,32 @@ export const _MatrixChatStore = signalStore(
        */
       getRoomsSync(): MatrixRoom[] {
         return roomsSync();
+      },
+
+      /**
+       * Room id of the personal notes room, creating it on first use. Cached per session: the
+       * function is called at most once, later calls get the same id.
+       */
+      async ensureNotesRoomId(): Promise<string> {
+        const existing = store.notesRoom();
+        if (existing) return existing.roomId;
+        const tenantId = store.appStore.tenantId();
+        if (!tenantId) throw new Error('MatrixChatStore.ensureNotesRoomId: no tenant');
+        if (isKioskOnly(store.appStore.currentUser())) throw new Error('MatrixChatStore.ensureNotesRoomId: kiosk user');
+        notesRoomIdPromise ??= store.matrixService.resolveNotesRoom(tenantId, store.i18n.notes_room_name())
+          .catch(error => { notesRoomIdPromise = undefined; throw error; });
+        return notesRoomIdPromise;
+      },
+
+      /** Open the notes room, creating it first if it does not exist yet. */
+      async openNotesRoom(): Promise<void> {
+        try {
+          const roomId = await this.ensureNotesRoomId();
+          this.setCurrentRoom(roomId);
+        } catch (error) {
+          console.error('MatrixChatStore.openNotesRoom: failed', error);
+          await store.alertService.showToast(store.i18n.notes_room_error());
+        }
       },
 
       setCurrentRoom(roomId: string | undefined): void {

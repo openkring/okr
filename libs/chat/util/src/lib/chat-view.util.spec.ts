@@ -74,4 +74,18 @@ describe('splitFavouriteRooms', () => {
     const rooms = [{ ...room('!a', 'A'), isFavourite: undefined }];
     expect(splitFavouriteRooms(rooms).others).toHaveLength(1);
   });
+
+  it('puts the notes room first in the pinned section even when it is not pinned itself', () => {
+    const notes = room('!n', 'Notizen');
+    const rooms = [room('!a', 'A'), pinned('!b', 'B'), notes];
+    const { favourites, others } = splitFavouriteRooms(rooms, r => r.roomId === '!n');
+    expect(favourites.map(r => r.roomId)).toEqual(['!n', '!b']);
+    expect(others.map(r => r.roomId)).toEqual(['!a']);
+  });
+
+  it('does not list a pinned notes room twice', () => {
+    const notes = pinned('!n', 'Notizen');
+    const { favourites } = splitFavouriteRooms([pinned('!b', 'B'), notes], r => r.roomId === '!n');
+    expect(favourites.map(r => r.roomId)).toEqual(['!n', '!b']);
+  });
 });

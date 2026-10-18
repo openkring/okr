@@ -59,6 +59,9 @@ export const MATRIX_CHAT_I18N_KEYS = {
 
   room_pinned_section:       PFX + 'room.pinnedSection',
   room_all_section:          PFX + 'room.allSection',
+  notes_room_name:           PFX + 'room.notes.name',
+  notes_room_info:           PFX + 'room.notes.info',
+  notes_room_error:          PFX + 'room.notes.error',
   room_pin_conf:             PFX + 'room.pin.conf',
   room_unpin_conf:           PFX + 'room.unpin.conf',
   room_pin_error:            PFX + 'room.pin.error',
@@ -92,6 +95,7 @@ export const MATRIX_CHAT_I18N_KEYS = {
   help_chats_adhoc:                PFX + 'help.chats.adhoc',
   help_chats_announcement:         PFX + 'help.chats.announcement',
   help_chats_pinboard:             PFX + 'help.chats.pinboard',
+  help_chats_personal:             PFX + 'help.chats.personal',
 
   msg_edit:                  PFX + 'message.edit',
   msg_reply:                 PFX + 'message.reply.label',

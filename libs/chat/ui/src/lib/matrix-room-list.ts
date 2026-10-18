@@ -5,7 +5,7 @@ import { IonList, IonItem, IonItemDivider, IonLabel, IonBadge, IonNote, IonIcon,
 import { MatrixRoom } from '@okr/shared-models';
 import { MultiAvatarPipe, SvgIconPipe } from '@okr/shared-pipes';
 
-import { formatMatrixTimestamp, isMatrixPhotoUrl, MatrixChatI18n, splitFavouriteRooms } from '@okr/chat-util';
+import { formatMatrixTimestamp, isMatrixPhotoUrl, isOwnNotesRoom, MatrixChatI18n, splitFavouriteRooms } from '@okr/chat-util';
 
 @Component({
   selector: 'okr-matrix-room-list',
@@ -94,6 +94,12 @@ import { formatMatrixTimestamp, isMatrixPhotoUrl, MatrixChatI18n, splitFavourite
             <ion-label>{{ section.label }}</ion-label>
           </ion-item-divider>
         }
+        @if (section.key === 'pinned' && showNotesPlaceholder()) {
+          <ion-item button class="room-item" (click)="notesPlaceholderSelected.emit()">
+            <ion-icon slot="start" src="{{ notesIcon | svgIcon }}" />
+            <ion-label>{{ i18n().notes_room_name() }}</ion-label>
+          </ion-item>
+        }
         @for (room of section.rooms; track room.roomId) {
           <ion-item
             button
@@ -102,7 +108,9 @@ import { formatMatrixTimestamp, isMatrixPhotoUrl, MatrixChatI18n, splitFavourite
             class="room-item"
             (click)="roomSelected.emit(room.roomId)"
           >
-            @if (room.avatar && isPhotoUrl(room.avatar)) {
+            @if (isNotes(room)) {
+              <ion-icon slot="start" src="{{ notesIcon | svgIcon }}" />
+            } @else if (room.avatar && isPhotoUrl(room.avatar)) {
               <ion-thumbnail slot="start">
                 <img [src]="room.avatar" [alt]="room.name" />
               </ion-thumbnail>
@@ -111,7 +119,7 @@ import { formatMatrixTimestamp, isMatrixPhotoUrl, MatrixChatI18n, splitFavourite
             }
             <ion-label>
               <div style="display: flex; align-items: center;">
-                <span>{{ room.name }}</span>
+                <span>{{ isNotes(room) ? i18n().notes_room_name() : room.name }}</span>
               </div>
               <ion-note color="medium">{{ formatTimestamp(room.lastMessage?.timestamp || 0) }}</ion-note>
             </ion-label>
@@ -140,7 +148,18 @@ export class MatrixRoomList {
   rooms = input.required<MatrixRoom[]>();
   selectedRoomId = input<string>();
 
+  /** Tenant of the app; identifies the notes room together with its creator. */
+  tenantId = input<string>();
+  /** Show the «Notizen an mich» placeholder row (room not created yet, not a kiosk user). */
+  showNotesPlaceholder = input(false);
+
   roomSelected = output<string>();
+  notesPlaceholderSelected = output<void>();
+
+  /** Icon of the notes room row. */
+  protected readonly notesIcon = 'note';
+
+  protected readonly isNotes = (room: MatrixRoom): boolean => isOwnNotesRoom(room, this.tenantId());
 
   isPhotoUrl = isMatrixPhotoUrl;
 
@@ -158,8 +177,8 @@ export class MatrixRoomList {
    * looks exactly as it did before the pinning feature.
    */
   protected readonly sections = computed(() => {
-    const { favourites, others } = splitFavouriteRooms(this.visibleRooms());
-    if (favourites.length === 0) return [{ key: 'all', label: '', icon: '', rooms: others }];
+    const { favourites, others } = splitFavouriteRooms(this.visibleRooms(), this.isNotes);
+    if (favourites.length === 0 && !this.showNotesPlaceholder()) return [{ key: 'all', label: '', icon: '', rooms: others }];
     return [
       { key: 'pinned', label: this.i18n().room_pinned_section(), icon: 'star', rooms: favourites },
       { key: 'all', label: this.i18n().room_all_section(), icon: '', rooms: others },

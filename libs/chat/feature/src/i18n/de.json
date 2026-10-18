@@ -70,6 +70,11 @@
     },
     "unpin": {
       "conf": "Der Raum ist nicht mehr angeheftet."
+    },
+    "notes": {
+      "name": "Notizen an mich",
+      "info": "Hier landen Nachrichten, die du dir merkst. Du kannst auch eigene Notizen schreiben. Nur du siehst diesen Raum.",
+      "error": "Das hat nicht geklappt. Versuche es bitte noch einmal."
     }
   },
   "help": {
@@ -121,7 +126,8 @@
       "direct": "Direkt-Chat — ein privates Gespräch zwischen dir und einer weiteren Person.",
       "adhoc": "Ad-hoc-Chat — ein Raum für einen Anlass, den du selbst mit mehreren Personen anlegst, zum Beispiel für Support oder einen Notfall.",
       "announcement": "Ankündigungen — hier schreiben nur die Verantwortlichen des Vereins, alle anderen lesen mit.",
-      "pinboard": "Pinnwand — alle können allen etwas mitteilen. Antworten gehen privat an die Person, die den Aushang geschrieben hat."
+      "pinboard": "Pinnwand — alle können allen etwas mitteilen. Antworten gehen privat an die Person, die den Aushang geschrieben hat.",
+      "personal": "Persönlicher Chat — «Notizen an mich» siehst nur du. Hier landen Nachrichten, die du dir mit «Merken» aufhebst, auf Wunsch mit Erinnerung. Du kannst auch eigene Notizen schreiben."
     }
   },
   "message": {

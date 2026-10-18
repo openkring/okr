@@ -70,6 +70,11 @@
     },
     "unpin": {
       "conf": "The room is no longer pinned."
+    },
+    "notes": {
+      "name": "Notes to self",
+      "info": "Messages you save end up here. You can also write your own notes. Only you can see this room.",
+      "error": "That did not work. Please try again."
     }
   },
   "help": {
@@ -121,7 +126,8 @@
       "direct": "Direct chat — a private conversation between you and one other person.",
       "adhoc": "Ad-hoc chat — a room for a particular occasion that you set up yourself with several people, for example for support or an emergency.",
       "announcement": "Announcements — only the club's officials write here, everyone else reads along.",
-      "pinboard": "Notice board — everyone can post something for all. Replies go privately to the person who wrote the notice."
+      "pinboard": "Notice board — everyone can post something for all. Replies go privately to the person who wrote the notice.",
+      "personal": "Personal chat — only you can see «Notes to self». Messages you keep with «Save» land here, with a reminder if you like. You can also write your own notes."
     }
   },
   "message": {

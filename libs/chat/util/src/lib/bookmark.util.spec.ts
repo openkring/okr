@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { MatrixMessage } from '@okr/shared-models';
-import { OKR_BOOKMARK_FIELD, notesRoomAliasLocalpart, isNotesRoomAlias, bookmarkSnippet, buildBookmarkContent, readBookmark, matrixPermalink, parseMatrixPermalink } from './bookmark.util';
+import { OKR_BOOKMARK_FIELD, notesRoomAliasLocalpart, isNotesRoomAlias, bookmarkSnippet, buildBookmarkContent, readBookmark, matrixPermalink, parseMatrixPermalink, isOwnNotesRoom } from './bookmark.util';
 
 const SERVER = 'bkchat.etke.host';
 
@@ -113,5 +113,24 @@ describe('parseMatrixPermalink', () => {
   it('rejects user links and non matrix.to urls', () => {
     expect(parseMatrixPermalink('https://matrix.to/#/@kaiser:bkchat.etke.host', SERVER)).toBeUndefined();
     expect(parseMatrixPermalink('https://example.com/#/!abc:bkchat.etke.host', SERVER)).toBeUndefined();
+  });
+});
+
+describe('isOwnNotesRoom', () => {
+  const bot = '@bk2-bot:bkchat.etke.host';
+  it('accepts a notes alias of the tenant created by the bot', () => {
+    expect(isOwnNotesRoom({ topic: '#notes_scs_kaiser:bkchat.etke.host', creator: bot }, 'scs')).toBe(true);
+  });
+  it('rejects a squatted alias created by someone else', () => {
+    expect(isOwnNotesRoom({ topic: '#notes_scs_kaiser:bkchat.etke.host', creator: '@mallory:bkchat.etke.host' }, 'scs')).toBe(false);
+    expect(isOwnNotesRoom({ topic: '#notes_scs_kaiser:bkchat.etke.host' }, 'scs')).toBe(false);
+  });
+  it('rejects another tenant or a non-notes alias', () => {
+    expect(isOwnNotesRoom({ topic: '#notes_gss_kaiser:bkchat.etke.host', creator: bot }, 'scs')).toBe(false);
+    expect(isOwnNotesRoom({ topic: '#group_x:bkchat.etke.host', creator: bot }, 'scs')).toBe(false);
+    expect(isOwnNotesRoom({ creator: bot }, 'scs')).toBe(false);
+  });
+  it('rejects without a tenant', () => {
+    expect(isOwnNotesRoom({ topic: '#notes_scs_kaiser:x', creator: bot }, undefined)).toBe(false);
   });
 });

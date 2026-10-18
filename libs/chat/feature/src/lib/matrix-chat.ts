@@ -362,7 +362,10 @@ function rejectionReasons(results: PromiseSettledResult<unknown>[]): unknown[] {
                 [rooms]="filteredRooms()"
                 [selectedRoomId]="currentRoomId()"
                 [i18n]="store.i18n"
+                [tenantId]="tenantId()"
+                [showNotesPlaceholder]="store.showNotesPlaceholder()"
                 (roomSelected)="onRoomSelected($event)"
+                (notesPlaceholderSelected)="onNotesPlaceholderSelected()"
               />
             </div>
 
@@ -392,14 +395,18 @@ function rejectionReasons(results: PromiseSettledResult<unknown>[]): unknown[] {
                         </ion-buttons>
                       }
 
-                      <ion-title>{{ currentRoom()?.name }}</ion-title>
+                      <ion-title>{{ isNotesRoomOpen() ? store.i18n.notes_room_name() : currentRoom()?.name }}</ion-title>
                       <ion-buttons slot="end">
                         @if (store.currentAdhocChat()) {
                           <ion-button [attr.aria-label]="store.i18n.adhoc_info_header()" (click)="store.openAdhocChatInfo(); $event.stopPropagation()">
                             <ion-icon src="{{'group' | svgIcon}}"></ion-icon>
                           </ion-button>
                         }
-                        @if (store.currentPinboard()) {
+                        @if (isNotesRoomOpen()) {
+                          <ion-button [attr.aria-label]="store.i18n.notes_room_name()" (click)="openNotesInfo(); $event.stopPropagation()">
+                            <ion-icon src="{{'info-circle' | svgIcon}}"></ion-icon>
+                          </ion-button>
+                        } @else if (store.currentPinboard()) {
                           <ion-button [attr.aria-label]="store.i18n.pinboard_info_header()" (click)="store.openPinboardInfo(); $event.stopPropagation()">
                             <ion-icon src="{{'info-circle' | svgIcon}}"></ion-icon>
                           </ion-button>
@@ -677,6 +684,12 @@ export class MatrixChat implements OnDestroy {
   protected readonly syncState = this.store.syncState;
   protected readonly rooms = this.store.rooms;
   protected readonly currentRoom = this.store.currentRoom;
+  protected readonly tenantId = computed(() => this.store.appStore.tenantId());
+  /** The open room is the personal «Notizen an mich» room. */
+  protected readonly isNotesRoomOpen = computed(() => {
+    const id = this.store.currentRoomId();
+    return !!id && this.store.notesRoom()?.roomId === id;
+  });
   protected readonly currentRoomId = computed(() => this.store.currentRoomId());
 
   /**
@@ -1111,6 +1124,16 @@ export class MatrixChat implements OnDestroy {
 
   protected onRoomFilterChange(event: CustomEvent): void {
     this.roomFilter.set(((event.detail as { value?: string }).value ?? ''));
+  }
+
+  /** The (i) hint in the notes room header. */
+  protected async openNotesInfo(): Promise<void> {
+    await this.alertService.confirm(this.store.i18n.notes_room_info(), false);
+  }
+
+  async onNotesPlaceholderSelected(): Promise<void> {
+    await this.store.openNotesRoom();
+    if (isBrowser(this.platformId) && window.innerWidth < 768) this.showRoomList.set(false);
   }
 
   onRoomSelected(roomId: string) {

@@ -32,6 +32,19 @@ export function isNotesRoomAlias(alias: string | undefined, tenantId?: string): 
   return tenantId ? localpart.startsWith(`notes_${tenantId}_`) : true;
 }
 
+/** Localpart of the Matrix service account that creates every notes room (`MATRIX_ADMIN_TOKEN`). */
+export const NOTES_ROOM_BOT_LOCALPART = 'bk2-bot';
+
+/**
+ * Whether a room is this tenant's genuine notes room: its canonical alias (carried in `topic`)
+ * is a notes alias of the tenant AND the bot created it. The creator check is defence in depth
+ * against somebody squatting a `#notes_...` alias on a room of their own.
+ */
+export function isOwnNotesRoom(room: { topic?: string; creator?: string }, tenantId: string | undefined): boolean {
+  if (!tenantId || !isNotesRoomAlias(room.topic, tenantId)) return false;
+  return room.creator?.split(':')[0]?.replace(/^@/, '') === NOTES_ROOM_BOT_LOCALPART;
+}
+
 /** First 200 chars (code points, whitespace collapsed) of the plain body; a file, image, video or audio shows its name, a poll its question. */
 export function bookmarkSnippet(message: MatrixMessage): string {
   if (message.type === POLL_START_EVENT) {

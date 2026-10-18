@@ -27,12 +27,20 @@ export function resolveInitialRoomId(
  * Splits a room list into the pinned rooms and the rest, each keeping the order it came in.
  * The room list arrives sorted by last message; this only lifts the pinned ones out, so a pinned
  * room stays put when traffic arrives elsewhere.
+ *
+ * The personal notes room (`isNotes`) is always pinned and always comes first, pinned or not.
  */
-export function splitFavouriteRooms(rooms: MatrixRoom[]): { favourites: MatrixRoom[]; others: MatrixRoom[] } {
+export function splitFavouriteRooms(
+  rooms: MatrixRoom[],
+  isNotes: (room: MatrixRoom) => boolean = () => false,
+): { favourites: MatrixRoom[]; others: MatrixRoom[] } {
+  const notes: MatrixRoom[] = [];
   const favourites: MatrixRoom[] = [];
   const others: MatrixRoom[] = [];
   for (const room of rooms) {
-    if (room.isFavourite) favourites.push(room); else others.push(room);
+    if (isNotes(room)) notes.push(room);
+    else if (room.isFavourite) favourites.push(room);
+    else others.push(room);
   }
-  return { favourites, others };
+  return { favourites: [...notes, ...favourites], others };
 }

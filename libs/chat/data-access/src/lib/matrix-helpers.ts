@@ -1,14 +1,14 @@
 import type { MatrixClient, User } from 'matrix-js-sdk';
 
 import { MatrixMessage, PersonModelName } from '@okr/shared-models';
-import { imageMimeTypeForName, videoMimeTypeForName } from '@okr/chat-util';
+import { imageMimeTypeForName, NOTES_ROOM_BOT_LOCALPART, videoMimeTypeForName } from '@okr/chat-util';
 import { AvatarService } from '@okr/avatar-data-access';
 
 /**
  * Hidden Matrix service/bot accounts (S1): never shown as members, never counted
  * for read receipts or DM labelling, never rung for calls.
  */
-export const SERVICE_ACCOUNT_LOCALPARTS = new Set(['bk2-bot', 'bruno']);
+export const SERVICE_ACCOUNT_LOCALPARTS = new Set([NOTES_ROOM_BOT_LOCALPART, 'bruno']);
 
 /** True if the Matrix user ID belongs to a hidden service/bot account (S1). */
 export function isServiceAccount(userId: string | undefined): boolean {

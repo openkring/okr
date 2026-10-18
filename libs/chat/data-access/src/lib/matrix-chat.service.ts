@@ -453,6 +453,22 @@ export class MatrixChatService {
   }
 
   /**
+   * Find-or-create the caller's personal notes room for a tenant (callable `resolveNotesRoom`).
+   * The function joins the user through the Synapse admin API, so the room is registered as a
+   * pending stub until the next sync delivers it. Returns the room id.
+   *
+   * @param roomName localized name for the stub shown until the real room arrives via sync
+   */
+  public async resolveNotesRoom(tenantId: string, roomName = ''): Promise<string> {
+    const fn = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'resolveNotesRoom');
+    const result = await fn({ tenantId });
+    const { roomId } = result.data as { roomId: string };
+    if (!roomId) throw new Error('resolveNotesRoom: no roomId returned');
+    this.registerPendingRoom(roomId, roomName);
+    return roomId;
+  }
+
+  /**
    * Disconnect and cleanup the Matrix client.
    *
    * @param clearCache - only true on logout. clearStores() runs indexedDB.deleteDatabase('okr-matrix'),
