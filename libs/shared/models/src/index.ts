@@ -55,6 +55,7 @@ export * from './lib/feature-rollout.model';
 export * from './lib/partner.model';
 export * from './lib/contract.model';
 export * from './lib/contract-kind.model';
+export * from './lib/chat-reminder.model';
 export * from './lib/metering.model';
 export * from './lib/prospect.model';
 export * from './lib/ticket.model';

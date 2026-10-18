@@ -501,6 +501,23 @@ service cloud.firestore {
                       && belongsToTenant(resource.data) && canWriteTenant(request.resource.data);
       allow delete: if isResultOwner(resource.data) && canWriteTenant(resource.data);
     }
+    // chatReminders (spec 1.104): one doc per «remind me» on a bookmarked chat message. Owner-only.
+    // Created pending by the client; the owner may only snooze (dueAt, while pending) or cancel.
+    // The 5-minute sweep sets `sent` via the Admin SDK, which bypasses these rules. No delete.
+    match /chatReminders/{id} {
+      allow read: if userExists() && (resource == null || (belongsToTenant(resource.data)
+                      && resource.data.personKey == callerPersonKey()));
+      allow create: if canWriteTenant(request.resource.data)
+                      && callerPersonKey() != ''
+                      && request.resource.data.personKey == callerPersonKey()
+                      && request.resource.data.state == 'pending';
+      allow update: if belongsToTenant(resource.data)
+                      && resource.data.personKey == callerPersonKey()
+                      && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['dueAt', 'state'])
+                      && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['dueAt']) || resource.data.state == 'pending')
+                      && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['state']) || request.resource.data.state == 'cancelled');
+      allow delete: if false;
+    }
     match /diaryImports/{id} {
       allow read: if userExists() && (resource == null || (isDiaryOwner(resource.data) && belongsToTenant(resource.data)));
       // Written only by dryRunDiaryImport/commitDiaryImport via the Admin SDK, which bypasses
