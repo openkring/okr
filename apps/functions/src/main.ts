@@ -393,6 +393,8 @@ export { checkDriveAccess } from './diary/check-drive-access';
 export { dryRunDiaryImport, commitDiaryImport } from './diary/import-diary';
 // diary UI (Teilprojekt 3): weather for an entry written in the app
 export { fetchDiaryWeather } from './diary/fetch-diary-weather';
+// spec 1.106: the photos and documents of one diary day, read live from its Drive folder
+export { listDiaryMedia } from './diary/list-diary-media';
 // Jasstafel (spec 1.67): a finished game's result into the caller's diary in every tenant of their `diaryTargets`
 export { recordDiaryLine } from './diary/record-diary-line';
 export { listMyDiaryTenants } from './diary/list-my-diary-tenants';
