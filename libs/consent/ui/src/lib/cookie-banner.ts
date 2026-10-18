@@ -70,33 +70,28 @@ import { CONSENT_I18N_KEYS, ConsentI18n } from './consent-i18n';
           <div class="preferences-section">
             <ion-list lines="none">
               <ion-item>
-                <ion-label>
-                  <h3>{{ i18n.necessary_title() }}</h3>
-                  <p>{{ i18n.necessary_description() }}</p>
-                </ion-label>
-                <ion-toggle [checked]="true" [disabled]="true" slot="end" />
+                <ion-toggle [checked]="true" [disabled]="true" justify="space-between">
+                  <ion-label class="ion-text-wrap">
+                    <h3>{{ i18n.necessary_title() }}</h3>
+                    <p>{{ i18n.necessary_description() }}</p>
+                  </ion-label>
+                </ion-toggle>
               </ion-item>
               <ion-item>
-                <ion-label>
-                  <h3>{{ i18n.analytics_title() }}</h3>
-                  <p>{{ i18n.analytics_description() }}</p>
-                </ion-label>
-                <ion-toggle
-                  [checked]="analyticsToggle()"
-                  (ionChange)="analyticsToggle.set($event.detail.checked)"
-                  slot="end"
-                />
+                <ion-toggle [checked]="analyticsToggle()" (ionChange)="analyticsToggle.set($event.detail.checked)" justify="space-between">
+                  <ion-label class="ion-text-wrap">
+                    <h3>{{ i18n.analytics_title() }}</h3>
+                    <p>{{ i18n.analytics_description() }}</p>
+                  </ion-label>
+                </ion-toggle>
               </ion-item>
               <ion-item>
-                <ion-label>
-                  <h3>{{ i18n.marketing_title() }}</h3>
-                  <p>{{ i18n.marketing_description() }}</p>
-                </ion-label>
-                <ion-toggle
-                  [checked]="marketingToggle()"
-                  (ionChange)="marketingToggle.set($event.detail.checked)"
-                  slot="end"
-                />
+                <ion-toggle [checked]="marketingToggle()" (ionChange)="marketingToggle.set($event.detail.checked)" justify="space-between">
+                  <ion-label class="ion-text-wrap">
+                    <h3>{{ i18n.marketing_title() }}</h3>
+                    <p>{{ i18n.marketing_description() }}</p>
+                  </ion-label>
+                </ion-toggle>
               </ion-item>
             </ion-list>
             <ion-button expand="block" color="primary" (click)="saveCustom()">

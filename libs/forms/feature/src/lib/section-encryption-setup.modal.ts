@@ -39,10 +39,9 @@ import { dismissOverlay } from '@okr/shared-util-angular';
       }
 
       <ion-item style="margin-top: 16px;">
-        <ion-checkbox [(ngModel)]="confirmed" slot="start" />
-        <ion-label class="ion-text-wrap" style="margin-left:12px;">
-          {{ i18n.enc_confirm() }}
-        </ion-label>
+        <ion-checkbox [(ngModel)]="confirmed" labelPlacement="end" justify="start">
+          <span class="ion-text-wrap">{{ i18n.enc_confirm() }}</span>
+        </ion-checkbox>
       </ion-item>
 
       <ion-button

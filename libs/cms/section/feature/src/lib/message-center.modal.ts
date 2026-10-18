@@ -80,10 +80,11 @@ const EMAIL_PROVIDERS = ['mailgun_smtp', 'mailtrap_api', 'netzone_smtp', 'mailtr
 
         <ion-toolbar color="secondary">
           <ion-item lines="none" color="secondary">
-            <ion-checkbox slot="start" style="margin-right: 12px;"
+            <ion-checkbox labelPlacement="end" justify="start"
               [checked]="hideReceiverAddresses()"
-              (ionChange)="hideReceiverAddresses.set($any($event).detail.checked)" />
-            <ion-label>{{ i18n.mc_hide_receivers() }}</ion-label>
+              (ionChange)="hideReceiverAddresses.set($any($event).detail.checked)">
+              <span class="ion-text-wrap">{{ i18n.mc_hide_receivers() }}</span>
+            </ion-checkbox>
           </ion-item>
         </ion-toolbar>
 

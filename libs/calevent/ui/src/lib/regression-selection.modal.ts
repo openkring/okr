@@ -20,22 +20,19 @@ import { dismissOverlay } from '@okr/shared-util-angular';
       <ion-list>
         <ion-radio-group [value]="selectedOption()" (ionChange)="selectedOption.set($event.detail.value)">
           <ion-item>
-            <ion-label class="ion-text-wrap">
-              {{ i18n().current }}
-            </ion-label>
-            <ion-radio slot="start" value="current" />
+            <ion-radio value="current" labelPlacement="end" justify="start">
+              <span class="ion-text-wrap">{{ i18n().current }}</span>
+            </ion-radio>
           </ion-item>
           <ion-item>
-            <ion-label class="ion-text-wrap">
-              {{ i18n().future }}
-            </ion-label>
-            <ion-radio slot="start" value="future" />
+            <ion-radio value="future" labelPlacement="end" justify="start">
+              <span class="ion-text-wrap">{{ i18n().future }}</span>
+            </ion-radio>
           </ion-item>
           <ion-item>
-            <ion-label class="ion-text-wrap">
-              {{ i18n().all }}
-            </ion-label>
-            <ion-radio slot="start" value="all" />
+            <ion-radio value="all" labelPlacement="end" justify="start">
+              <span class="ion-text-wrap">{{ i18n().all }}</span>
+            </ion-radio>
           </ion-item>
         </ion-radio-group>
       </ion-list>
