@@ -551,11 +551,11 @@
     "done": "Decidido",
     "noAction": "Aquí no hay nada que hacer.",
     "manual": {
-      "no-invoice": "No se encontró ninguna factura adecuada. Compruébalo a mano.",
+      "no-invoice": "No se encontró ninguna factura adecuada. Compruébalo a mano. Aún no facturado: actualiza la línea de cuota en la ejecución de cuotas con «Recargar».",
       "ambiguous-invoice": "Hay varias facturas posibles. Compruébalo a mano.",
       "books-mismatch": "La factura está en otra contabilidad distinta a la de la afiliación. Compruébalo a mano.",
       "bexio-entry-year": "Alta y baja en el mismo año con una factura de Bexio: se desconoce el importe facturado. Compruébalo a mano.",
-      "category-change": "El socio tenía varias afiliaciones en el año de la baja. Líquidalo a mano.",
+      "category-change": "El socio tenía varias afiliaciones en el año de la baja. Liquídalo a mano.",
       "no-price": "No hay cuota anual definida para la categoría.",
       "billed-exceeds-invoice": "La cuota anual supuesta supera el importe de la factura. Compruébalo a mano."
     },

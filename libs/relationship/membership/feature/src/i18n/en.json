@@ -551,7 +551,7 @@
     "done": "Decided",
     "noAction": "Nothing to do here.",
     "manual": {
-      "no-invoice": "No matching invoice found. Please check by hand.",
+      "no-invoice": "No matching invoice found. Please check by hand. Not billed yet: refresh the fee line in the fee run with «Reload».",
       "ambiguous-invoice": "Several invoices match. Please check by hand.",
       "books-mismatch": "The invoice is in a different set of books than the membership. Please check by hand.",
       "bexio-entry-year": "Entry and exit in the same year on an invoice from Bexio: the billed amount is not known. Please check by hand.",

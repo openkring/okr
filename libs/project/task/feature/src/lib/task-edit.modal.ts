@@ -258,7 +258,8 @@ export class TaskEditModal {
 
   private settleError(error: unknown): string {
     const reason = (error as { details?: { reason?: string } })?.details?.reason;
-    return settleErrorText(this.exitI18n, reason);
+    // never an empty toast: the scoped bundle may not be loaded yet
+    return settleErrorText(this.exitI18n, reason) || 'Das hat nicht geklappt. Bitte versuche es später noch einmal.';
   }
 
   public async cancel(): Promise<void> {

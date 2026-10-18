@@ -551,7 +551,7 @@
     "done": "Deciso",
     "noAction": "Qui non c'è nulla da fare.",
     "manual": {
-      "no-invoice": "Nessuna fattura corrispondente trovata. Controlla a mano.",
+      "no-invoice": "Nessuna fattura corrispondente trovata. Controlla a mano. Non ancora fatturato: aggiorna la riga della quota nell'esecuzione delle quote con «Ricarica».",
       "ambiguous-invoice": "Più fatture corrispondono. Controlla a mano.",
       "books-mismatch": "La fattura si trova in una contabilità diversa da quella dell'iscrizione. Controlla a mano.",
       "bexio-entry-year": "Entrata e uscita nello stesso anno con una fattura di Bexio: l'importo fatturato non è noto. Controlla a mano.",

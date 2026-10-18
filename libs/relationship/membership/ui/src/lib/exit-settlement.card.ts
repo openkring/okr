@@ -70,21 +70,21 @@ import {
             </ion-label>
           </ion-item>
         }
+        @if (!done()) {
+          @if (settlement().choices.length === 0) {
+            <ion-item lines="none"><ion-label class="ion-text-wrap"><ion-note>{{ i18n().no_action() }}</ion-note></ion-label></ion-item>
+          } @else {
+            <div class="decisions">
+              @for (choice of settlement().choices; track choice) {
+                <ion-button [color]="choice === 'refund' ? 'success' : 'primary'" [fill]="choice === 'extend' ? 'outline' : 'solid'"
+                  [disabled]="busy()" (click)="chosen.emit(choice)">{{ label(choice) }}</ion-button>
+              }
+            </div>
+          }
+        }
       </ion-card-content>
     </ion-card>
 
-    @if (!done()) {
-      @if (settlement().choices.length === 0) {
-        <ion-item lines="none"><ion-label class="ion-text-wrap"><ion-note>{{ i18n().no_action() }}</ion-note></ion-label></ion-item>
-      } @else {
-        <div class="decisions">
-          @for (choice of settlement().choices; track choice) {
-            <ion-button [color]="choice === 'refund' ? 'success' : 'primary'" [fill]="choice === 'extend' ? 'outline' : 'solid'"
-              [disabled]="busy()" (click)="chosen.emit(choice)">{{ label(choice) }}</ion-button>
-          }
-        </div>
-      }
-    }
   `
 })
 export class ExitSettlementCard {

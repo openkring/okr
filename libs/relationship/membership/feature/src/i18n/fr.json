@@ -551,7 +551,7 @@
     "done": "Décidé",
     "noAction": "Rien à faire ici.",
     "manual": {
-      "no-invoice": "Aucune facture correspondante trouvée. Merci de vérifier à la main.",
+      "no-invoice": "Aucune facture correspondante trouvée. Merci de vérifier à la main. Pas encore facturé : actualise la ligne de cotisation dans l'exécution des cotisations avec «Recharger».",
       "ambiguous-invoice": "Plusieurs factures correspondent. Merci de vérifier à la main.",
       "books-mismatch": "La facture se trouve dans une autre comptabilité que l'adhésion. Merci de vérifier à la main.",
       "bexio-entry-year": "Entrée et départ la même année avec une facture de Bexio : le montant facturé est inconnu. Merci de vérifier à la main.",

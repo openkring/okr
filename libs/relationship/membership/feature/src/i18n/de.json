@@ -551,7 +551,7 @@
     "done": "Entschieden",
     "noAction": "Hier ist nichts zu tun.",
     "manual": {
-      "no-invoice": "Keine passende Rechnung gefunden. Bitte von Hand prüfen.",
+      "no-invoice": "Keine passende Rechnung gefunden. Bitte von Hand prüfen. Noch nicht verrechnet: Beitragszeile im Beitragslauf mit «Neu laden» aktualisieren.",
       "ambiguous-invoice": "Es gibt mehrere passende Rechnungen. Bitte von Hand prüfen.",
       "books-mismatch": "Die Rechnung liegt in einer anderen Buchhaltung als die Mitgliedschaft. Bitte von Hand prüfen.",
       "bexio-entry-year": "Eintritt und Austritt im selben Jahr bei einer Rechnung aus Bexio: der verrechnete Betrag ist nicht bekannt. Bitte von Hand prüfen.",
