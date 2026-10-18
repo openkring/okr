@@ -417,6 +417,10 @@ export { onUserWritten, backfillAccountTenants } from './person/account-mirror';
 // columns + rebate/rebateReason into positions[]
 export { migrateMemberFees } from './member-fee/migrate-member-fees';
 
+// exit fee settlement (spec 1.105): a changed membership exit opens/updates/closes the
+// treasurer's pro-rata settlement task and refreshes a not-yet-invoiced fee row
+export { onMembershipExitWritten } from './member-fee/exit-settlement.trigger';
+
 // member-fees generic positions (2026-09-17): 'native' accountingBackend counterpart to
 // uploadToBexio/createBexioInvoice — posts 'ready' member-fees as real InvoiceModel +
 // InvoicePositionModel documents
