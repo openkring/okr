@@ -138,6 +138,10 @@
       "savedPrefix": "Gemerkt:",
       "error": "Das hat nicht geklappt. Versuche es bitte noch einmal."
     },
+    "jump": {
+      "gone": "Diese Nachricht ist nicht mehr verfügbar",
+      "latest": "Zum neusten"
+    },
     "edit": "Nachricht bearbeiten",
     "reply": {
       "label": "Antworten",

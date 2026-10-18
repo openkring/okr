@@ -1,5 +1,5 @@
 import { effect, inject, Injectable } from '@angular/core';
-import { createClient, IndexedDBStore, MatrixClient, MatrixEvent, Room, RoomMember, EventType, EventTimeline, MsgType, RelationType, IContent, ISendEventResponse, MatrixError, RoomStateEvent, RoomEvent, ClientEvent, ICreateRoomOpts, Visibility, Preset, User, ReceiptType, type MatrixCall, type Store } from 'matrix-js-sdk';
+import { createClient, IndexedDBStore, MatrixClient, MatrixEvent, Room, RoomMember, EventType, EventTimeline, MsgType, RelationType, IContent, ISendEventResponse, MatrixError, RoomStateEvent, RoomEvent, ClientEvent, ICreateRoomOpts, Visibility, Preset, User, ReceiptType, type MatrixCall, type Store, type IRoomTimelineData } from 'matrix-js-sdk';
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
 import { distinctUntilChanged } from 'rxjs/operators';
 
@@ -17,7 +17,7 @@ import { MatrixMediaService } from './matrix-media.service';
 import { MatrixCallService } from './matrix-call.service';
 import { MatrixDirectRoomService } from './matrix-direct-room.service';
 import { MatrixRoomListService } from './matrix-room-list.service';
-import { MatrixMessageService } from './matrix-message.service';
+import { MatrixJumpState, MatrixMessageService } from './matrix-message.service';
 
 /**
  * SCS-92: refresh a Matrix access token this long before it lapses, so a session that
@@ -578,9 +578,15 @@ export class MatrixChatService {
     });
 
     // Room events — live timeline only (toStartOfTimeline=true means historical/pagination events)
-    this.client.on(RoomEvent.Timeline, (event: MatrixEvent, room: Room | undefined, toStartOfTimeline: boolean | undefined) => {
+    this.client.on(RoomEvent.Timeline, (event: MatrixEvent, room: Room | undefined, toStartOfTimeline: boolean | undefined, _removed: boolean, data: IRoomTimelineData) => {
       if (toStartOfTimeline) return;
       if (!room) return;
+      // Forward pagination of a jumped window (spec 1.104 §4.4) adds OLD events with
+      // toStartOfTimeline=false to a non-live timeline of the room's main timeline set — they
+      // are history, not new messages. `liveEvent` cannot be used instead: it is false for
+      // events replayed from the sync cache too, which must still be handled.
+      if (data?.timeline && data.timeline.getTimelineSet() === room.getUnfilteredTimelineSet()
+          && data.timeline !== room.getLiveTimeline()) return;
       this.messages.handleTimelineEvent(event, room);
     });
 
@@ -715,6 +721,35 @@ export class MatrixChatService {
   /** Read receipts of a room, keyed by the event they point at. */
   public getReadReceiptsForRoom(roomId: string): Observable<Map<string, MatrixReadReceipt[]>> {
     return this.messages.getReadReceiptsForRoom(roomId);
+  }
+
+  /** The room that shows a jumped timeline (spec 1.104 §4.4), undefined while every room is live. */
+  public get jumpState(): Observable<MatrixJumpState | undefined> {
+    return this.messages.jumpState;
+  }
+
+  /**
+   * Show a room at one message, however old (spec 1.104 §4.4). Waits for the first sync so a
+   * cold deep link finds its room. 'gone' when the message was deleted or cannot be read.
+   */
+  public async loadEventContext(roomId: string, eventId: string): Promise<'ok' | 'gone'> {
+    await this.waitForSync();
+    return this.messages.loadEventContext(roomId, eventId);
+  }
+
+  /** Load newer messages into a jumped window; false once the room is live again. */
+  public paginateForwards(roomId: string): Promise<boolean> {
+    return this.messages.paginateForwards(roomId);
+  }
+
+  /** Leave a jumped window and show the live timeline again. */
+  public returnToLive(roomId: string): void {
+    this.messages.returnToLive(roomId);
+  }
+
+  /** Whether the room shows a jumped window instead of its live timeline. */
+  public isJumped(roomId: string): boolean {
+    return this.messages.isJumped(roomId);
   }
 
   /**
@@ -1143,6 +1178,9 @@ export class MatrixChatService {
    */
   async markRoomAsRead(roomId: string): Promise<void> {
     if (!this.client) return;
+    // Never while a jumped (non-live) timeline is on screen (spec 1.104 §4.4): the user has
+    // not seen the newer messages. The auto-receipt effect sends it once the room is live again.
+    if (this.messages.isJumped(roomId)) return;
     const room = this.client.getRoom(roomId);
     if (!room) return;
     const events = room.getLiveTimeline().getEvents();

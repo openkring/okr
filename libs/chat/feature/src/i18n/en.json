@@ -138,6 +138,10 @@
       "savedPrefix": "Saved:",
       "error": "That did not work. Please try again."
     },
+    "jump": {
+      "gone": "This message is no longer available",
+      "latest": "Jump to latest"
+    },
     "edit": "Edit message",
     "reply": {
       "label": "Reply",

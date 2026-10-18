@@ -28,6 +28,10 @@ export type MatrixChatState = {
   selectedThreadId: string | undefined;
   replyToMessage: MatrixMessage | undefined;
   hasMoreHistory: boolean;
+  /** The message a jump landed on, to scroll to and highlight (spec 1.104 §4.4). */
+  jumpTarget: string | undefined;
+  /** True from the start of a jump until it settled — no read receipt in between. */
+  jumpPending: boolean;
 }
 
 /** How long the sync loop must stay in ERROR before the chat shows a connection error. */
@@ -42,6 +46,8 @@ export const _MatrixChatStore = signalStore(
     selectedThreadId: undefined,
     replyToMessage: undefined,
     hasMoreHistory: true,
+    jumpTarget: undefined,
+    jumpPending: false,
   })),
   withProps(() => ({
     appStore: inject(AppStore),
@@ -121,6 +127,9 @@ export const _MatrixChatStore = signalStore(
     callFeedsResource: rxResource({ stream: () => store.matrixService.callFeeds }),
     typingResource: rxResource({ stream: () => store.matrixService.typing }),
     failedMediaResource: rxResource({ stream: () => store.matrixService.failedMediaIds }),
+    jumpStateResource: rxResource({ stream: () => store.matrixService.jumpState }),
+    /** Bumped on every jump start, room change and «Zum neusten»: a jump still loading is then stale. */
+    jumpSeq: { value: 0 },
 
     receiptsResource: rxResource({
       params: () => ({
@@ -186,6 +195,16 @@ export const _MatrixChatStore = signalStore(
           m => m.relatesTo?.relationType !== 'm.thread'
         )
       ),
+      /** Whether the open room shows a jumped (non-live) timeline (spec 1.104 §4.4). */
+      isJumped: computed(() => {
+        const roomId = state.currentRoomId();
+        return !!roomId && state.jumpStateResource.value()?.roomId === roomId;
+      }),
+      /** New messages that arrived while the jumped timeline is shown — the «Zum neusten» count. */
+      jumpNewCount: computed(() => {
+        const jump = state.jumpStateResource.value();
+        return jump && jump.roomId === state.currentRoomId() ? jump.newCount : 0;
+      }),
       /** Attachments whose download failed — their tile shows the error, the rest show "loading". */
       failedMediaIds: computed((): ReadonlySet<string> => state.failedMediaResource.value() ?? new Set<string>()),
       typingUsers: computed(() => {
@@ -449,6 +468,18 @@ export const _MatrixChatStore = signalStore(
       }
     };
 
+    /**
+     * Leave the jumped timeline of a room and show its live end («Zum neusten»). Also before
+     * sending from a jumped timeline: the sent message would otherwise land in a timeline that
+     * is not on screen (spec 1.104 §4.4).
+     */
+    const leaveJump = (roomId: string): void => {
+      if (!store.matrixService.isJumped(roomId)) return;
+      store.jumpSeq.value++;
+      patchState(store, { jumpTarget: undefined, jumpPending: false, hasMoreHistory: true });
+      store.matrixService.returnToLive(roomId);
+    };
+
     return {
       /******************************* Setters *************************** */
 
@@ -506,17 +537,25 @@ export const _MatrixChatStore = signalStore(
         }
       },
 
-      setCurrentRoom(roomId: string | undefined): void {
+      /**
+       * @param markRead false when a jump follows (jumpToEvent): the receipt is then left to the
+       * auto-receipt effect, which waits until the jump settled and the live end is on screen.
+       */
+      setCurrentRoom(roomId: string | undefined, markRead = true): void {
         // A pending reply and an open thread both point at a message in a *specific* room.
         // When the user switches rooms, that context no longer applies (and a reply would
         // even target an event that does not exist in the new room), so discard it — matching
         // every mainstream chat client. Only reset on an actual room change, so re-selecting
         // the current room does not nuke an in-progress reply.
-        if (roomId !== store.currentRoomId()) {
-          patchState(store, { replyToMessage: undefined, selectedThreadId: undefined });
+        const previous = store.currentRoomId();
+        if (roomId !== previous) {
+          patchState(store, { replyToMessage: undefined, selectedThreadId: undefined, jumpTarget: undefined, jumpPending: false });
+          store.jumpSeq.value++;
+          // Leaving a jumped room returns it to live; the next visit opens it as usual.
+          if (previous && store.matrixService.isJumped(previous)) store.matrixService.returnToLive(previous);
         }
         patchState(store, { currentRoomId: roomId, hasMoreHistory: true });
-        if (roomId) {
+        if (roomId && markRead) {
           store.matrixService.markRoomAsRead(roomId).catch(err =>
             console.warn('MatrixChatStore.setCurrentRoom: markRoomAsRead failed (non-critical):', err)
           );
@@ -524,12 +563,43 @@ export const _MatrixChatStore = signalStore(
       },
 
       /**
-       * Open a room at one message. Minimal version: only selects the room. Task 6 / spec §4.4
-       * replaces the body with the timeline jump to `eventId`.
+       * Open a room at one message, however old (spec 1.104 §4.4): the list shows that
+       * message's context instead of the live timeline, scrolled to it and highlighted. No read
+       * receipt is sent for the jump — not here, and not by the auto-receipt effect while the
+       * jumped timeline is shown. A deleted or unreadable message shows the `message_gone` toast
+       * and leaves the room open on its live timeline.
        */
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       async jumpToEvent(roomId: string, eventId: string): Promise<void> {
-        this.setCurrentRoom(roomId);
+        this.setCurrentRoom(roomId, false);
+        const seq = ++store.jumpSeq.value;
+        patchState(store, { jumpPending: true, jumpTarget: undefined });
+        let result: 'ok' | 'gone' = 'gone';
+        try {
+          result = await store.matrixService.loadEventContext(roomId, eventId);
+        } catch (error) {
+          console.warn('MatrixChatStore.jumpToEvent: failed:', error);
+        }
+        if (seq !== store.jumpSeq.value) {
+          // Superseded (another jump, another room, «Zum neusten»): a jump that still landed
+          // must not stay on screen behind the user's back.
+          if (store.currentRoomId() !== roomId && store.matrixService.isJumped(roomId)) store.matrixService.returnToLive(roomId);
+          return;
+        }
+        patchState(store, { jumpPending: false, hasMoreHistory: true, jumpTarget: result === 'ok' ? eventId : undefined });
+        if (result === 'gone') await store.alertService.showToast(store.i18n.message_gone());
+      },
+
+      /** «Zum neusten»: leave the jumped timeline and show the live end of the room. */
+      returnToLive(): void {
+        const roomId = store.currentRoomId();
+        if (roomId) leaveJump(roomId);
+      },
+
+      /** Scrolling down in a jumped timeline: load newer messages, back to live at the end. */
+      async loadNewerMessages(): Promise<void> {
+        const roomId = store.currentRoomId();
+        if (!roomId || !store.matrixService.isJumped(roomId)) return;
+        await store.matrixService.paginateForwards(roomId);
       },
 
       /**
@@ -915,6 +985,7 @@ export const _MatrixChatStore = signalStore(
           console.warn('MatrixChatStore.sendMessage: No room selected');
           return;
         }
+        leaveJump(roomId);
 
         try {
           await store.matrixService.sendMessage(roomId, text, threadId, mentions, mentionRoom);
@@ -934,6 +1005,7 @@ export const _MatrixChatStore = signalStore(
           console.warn('MatrixChatStore.sendFile: No room selected');
           return;
         }
+        leaveJump(roomId);
 
         // Videos the room album accepts go there (spec 1.82 §8). Every send path — single,
         // batch, drop, thread — funnels through here, so they all take the same branch.
@@ -957,6 +1029,7 @@ export const _MatrixChatStore = signalStore(
           console.warn('MatrixChatStore.sendLocation: No room selected');
           return;
         }
+        leaveJump(roomId);
 
         try {
           await store.matrixService.sendLocation(roomId, text, latitude, longitude, threadId);
@@ -976,6 +1049,7 @@ export const _MatrixChatStore = signalStore(
           console.warn('MatrixChatStore.sendPoll: No room selected');
           return;
         }
+        leaveJump(roomId);
         try {
           await store.matrixService.sendPoll(roomId, data);
           debugMessage(`MatrixChatStore.sendPoll: Sent poll "${data.question}" to room ${roomId}`, store.currentUser());
@@ -1082,6 +1156,7 @@ export const _MatrixChatStore = signalStore(
         const roomId = store.currentRoomId();
         const replyTo = store.replyToMessage();
         if (!roomId) return;
+        leaveJump(roomId);
         try {
           if (replyTo) {
             await store.matrixService.sendReply(roomId, text, replyTo.eventId, replyTo.body, replyTo.sender, replyTo.senderName, undefined, mentions, mentionRoom);

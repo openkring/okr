@@ -138,6 +138,10 @@
       "savedPrefix": "Gardé :",
       "error": "Ça n'a pas marché. Essaie encore une fois."
     },
+    "jump": {
+      "gone": "Ce message n'est plus disponible",
+      "latest": "Aller au plus récent"
+    },
     "edit": "Modifier le message",
     "reply": {
       "label": "Répondre",

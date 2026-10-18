@@ -34,6 +34,7 @@ const MENTION_AVATAR_SIZE = 36;
       flex: 1;
       min-height: 0;      /* required so flex child can shrink below content size */
       overflow: hidden;
+      position: relative; /* anchors the «Zum neusten» button */
       background: var(--ion-background-color, #fff);
     }
 
@@ -450,6 +451,41 @@ const MENTION_AVATAR_SIZE = 36;
       padding: 4px 0;
       flex-shrink: 0;
     }
+
+    /* Jump target (spec 1.104 §4.4): briefly outlined after the list scrolled to it. */
+    .message-bubble.jump-highlight {
+      box-shadow: 0 0 0 3px var(--ion-color-warning, #ffc409);
+      transition: box-shadow 0.3s ease-in;
+    }
+
+    .latest-button {
+      position: absolute;
+      right: 16px;
+      bottom: 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border: none;
+      border-radius: 16px;
+      background: var(--ion-color-primary, #3880ff);
+      color: var(--ion-color-primary-contrast, #fff);
+      font-size: 0.85rem;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+      cursor: pointer;
+    }
+
+    .latest-count {
+      min-width: 18px;
+      padding: 0 5px;
+      border-radius: 9px;
+      background: var(--ion-color-primary-contrast, #fff);
+      color: var(--ion-color-primary, #3880ff);
+      font-weight: 600;
+      font-size: 0.75rem;
+      line-height: 18px;
+      text-align: center;
+    }
   `],
   template: `
     <div class="messages-container" #messagesContainer role="log" [attr.aria-label]="i18n().messages_label()" (scroll)="onContainerScroll()">
@@ -483,7 +519,9 @@ const MENTION_AVATAR_SIZE = 36;
                   @if (item.sender !== currentUserId() && shouldShowSenderForItem(item, i, dayGroup.messages)) {
                     <div class="message-sender">{{ item.senderName }}</div>
                   }
-                  <div class="message-bubble">
+                  <div class="message-bubble"
+                       [attr.data-event-ids]="batchEventIds(item)"
+                       [class.jump-highlight]="isBatchHighlighted(item)">
                     <div class="image-batch-grid">
                       @for (msg of item.messages; track msg.eventId) {
                         @if (msg.mediaUrl && !brokenImages().has(msg.eventId)) {
@@ -521,7 +559,7 @@ const MENTION_AVATAR_SIZE = 36;
             } @else {
               @if (item.type === 'm.notice') {
                 <div class="notice-row">
-                  <div class="notice-bubble">{{ item.body }} · {{ formatTime(item.timestamp) }}</div>
+                  <div class="notice-bubble" [attr.data-event-ids]="item.eventId">{{ item.body }} · {{ formatTime(item.timestamp) }}</div>
                 </div>
               } @else {
                 <div class="message-row" [class.own-message]="isOwnMessage(item)">
@@ -541,6 +579,8 @@ const MENTION_AVATAR_SIZE = 36;
                     }
                     <div
                       class="message-bubble"
+                      [attr.data-event-ids]="item.eventId"
+                      [class.jump-highlight]="highlighted() === item.eventId"
                       [class.edited]="item.isEdited"
                       [class.redacted]="item.isRedacted"
                       (click)="onBubbleClick($event, item)"
@@ -701,6 +741,15 @@ const MENTION_AVATAR_SIZE = 36;
         </div>
       }
     </div>
+    @if (isJumped()) {
+      <button type="button" class="latest-button" (click)="onLatestClick()">
+        <ion-icon src="{{ 'arrow-down' | svgIcon }}" aria-hidden="true" />
+        <span>{{ i18n().jump_latest() }}</span>
+        @if (newMessagesCount() > 0) {
+          <span class="latest-count">{{ newMessagesCount() }}</span>
+        }
+      </button>
+    }
   `
 })
 export class MatrixMessageList {
@@ -759,6 +808,16 @@ export class MatrixMessageList {
   public readonly serverName = input<string>('');
   /** True in the user's own notes room: only there are bookmark entries rendered as cards. */
   public readonly isNotesRoom = input(false);
+  /** The message a jump landed on: scrolled to the centre and highlighted for two seconds. */
+  public readonly highlightEventId = input<string>();
+  /** True while the list shows a jumped (non-live) timeline: no follow-to-bottom, «Zum neusten» shown. */
+  public readonly isJumped = input<boolean>(false);
+  /** New messages that arrived while jumped — the count on «Zum neusten». */
+  public readonly newMessagesCount = input<number>(0);
+  /** Scrolled near the bottom of a jumped timeline: ask for newer messages. */
+  public readonly loadNewer = output<void>();
+  /** «Zum neusten» was tapped: return to the live end of the room. */
+  public readonly latestClicked = output<void>();
 
   messagesContainer = viewChild<ElementRef>('messagesContainer');
 
@@ -767,6 +826,20 @@ export class MatrixMessageList {
 
   /** True while a scroll-up history load is in flight (shows the top spinner). */
   protected readonly loadingOlder = signal(false);
+  /** The bubble currently outlined as jump target. */
+  protected readonly highlighted = signal<string | undefined>(undefined);
+  /** A jump target still to scroll to — it may only render with a later emission of the list. */
+  private pendingHighlight: string | undefined;
+  private highlightTimer: ReturnType<typeof setTimeout> | undefined;
+  /**
+   * True from a `loadNewer` until the list grew at the end. Newer messages land BELOW the
+   * viewport and must not move it — also not when the jumped timeline reached the live end and
+   * the list switched to live, which is the same list continued.
+   */
+  private loadingNewer = false;
+  private loadingNewerTimer: ReturnType<typeof setTimeout> | undefined;
+  /** «Zum neusten» was tapped: the next list (the live one) goes to the bottom. */
+  private followLatest = false;
   /**
    * Event ids of attachments the browser could not decode, so the tile can fall back to a
    * placeholder. A `mediaUrl` is no guarantee of a usable image: MatrixMediaService returns
@@ -834,14 +907,33 @@ export class MatrixMessageList {
             // message the user was looking at instead of jumping to the bottom.
             container.scrollTop += container.scrollHeight - this.prevScrollHeight;
             this.loadingOlder.set(false);
+          } else if (this.pendingHighlight && this.scrollToHighlight(container, this.pendingHighlight)) {
+            // A jump landed (spec 1.104 §4.4): the target is centred instead of the newest message.
           } else if (tail !== this.lastTailEventId) {
-            // A genuinely new message at the end — follow it down, as before.
-            container.scrollTop = container.scrollHeight;
+            if (this.followLatest || (!this.isJumped() && !this.loadingNewer)) {
+              // A genuinely new message at the end — follow it down, as before.
+              container.scrollTop = container.scrollHeight;
+            }
+            // else: newer history of a jumped timeline was appended below — stay put.
+            this.followLatest = false;
+            this.setLoadingNewer(false);
           }
           this.lastTailEventId = tail;
           this.autoLoadOlderWhenNotScrollable(container);
         }, 50);
       }
+    });
+
+    // A new jump target: scroll to it as soon as its bubble is rendered (now, or with the
+    // emission of the jumped timeline that is still on its way).
+    effect(() => {
+      const target = this.highlightEventId();
+      this.pendingHighlight = target;
+      if (!target) return;
+      setTimeout(() => {
+        const container = this.messagesContainer()?.nativeElement;
+        if (container && this.pendingHighlight === target) this.scrollToHighlight(container, target);
+      }, 50);
     });
 
     // If the room start was reached (or the room changed) while a load was pending,
@@ -851,12 +943,65 @@ export class MatrixMessageList {
     });
   }
 
-  /** Near the top edge → ask the parent for older history (C-5 scroll-up pagination). */
+  /**
+   * Near the top edge → ask the parent for older history (C-5 scroll-up pagination).
+   * Near the bottom of a jumped timeline → ask for newer messages (spec 1.104 §4.4).
+   */
   protected onContainerScroll(): void {
-    if (!this.hasMoreHistory() || this.loadingOlder()) return;
     const container = this.messagesContainer()?.nativeElement;
-    if (!container || container.scrollTop > 80) return;
+    if (!container) return;
+    if (this.isJumped() && !this.loadingNewer && !this.loadingOlder()
+        && container.scrollTop + container.clientHeight >= container.scrollHeight - 80) {
+      this.setLoadingNewer(true);
+      this.loadNewer.emit();
+      return;
+    }
+    if (!this.hasMoreHistory() || this.loadingOlder()) return;
+    if (container.scrollTop > 80) return;
     this.requestOlder(container);
+  }
+
+  protected onLatestClick(): void {
+    this.followLatest = true;
+    this.pendingHighlight = undefined;
+    this.setLoadingNewer(false);
+    this.latestClicked.emit();
+  }
+
+  /**
+   * Set the loadNewer guard. It is released when the list grows at the end; a pagination that
+   * brings nothing new emits no list, so the guard also releases itself after a few seconds.
+   */
+  private setLoadingNewer(on: boolean): void {
+    this.loadingNewer = on;
+    clearTimeout(this.loadingNewerTimer);
+    if (on) this.loadingNewerTimer = setTimeout(() => { this.loadingNewer = false; }, 5000);
+  }
+
+  /**
+   * Centre the jump target's bubble and outline it for two seconds. False while the bubble is
+   * not rendered yet (the jumped timeline has not arrived), so the next emission tries again.
+   */
+  private scrollToHighlight(container: HTMLElement, eventId: string): boolean {
+    const bubble = Array.from(container.querySelectorAll<HTMLElement>('[data-event-ids]'))
+      .find(el => (el.dataset['eventIds'] ?? '').split(' ').includes(eventId));
+    if (!bubble) return false;
+    this.pendingHighlight = undefined;
+    bubble.scrollIntoView({ block: 'center' });
+    this.highlighted.set(eventId);
+    clearTimeout(this.highlightTimer);
+    this.highlightTimer = setTimeout(() => this.highlighted.set(undefined), 2000);
+    return true;
+  }
+
+  /** Event ids of an image batch, space-separated, for the jump target lookup. */
+  protected batchEventIds(item: ImageBatchGroup): string {
+    return item.messages.map(m => m.eventId).join(' ');
+  }
+
+  protected isBatchHighlighted(item: ImageBatchGroup): boolean {
+    const id = this.highlighted();
+    return !!id && item.messages.some(m => m.eventId === id);
   }
 
   /**

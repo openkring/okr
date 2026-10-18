@@ -67,6 +67,8 @@ export const MATRIX_CHAT_I18N_KEYS = {
   bookmark_open:             PFX + 'message.bookmark.open',
   bookmark_saved_prefix:     PFX + 'message.bookmark.savedPrefix',
   bookmark_error:            PFX + 'message.bookmark.error',
+  message_gone:              PFX + 'message.jump.gone',
+  jump_latest:               PFX + 'message.jump.latest',
   room_pin_conf:             PFX + 'room.pin.conf',
   room_unpin_conf:           PFX + 'room.unpin.conf',
   room_pin_error:            PFX + 'room.pin.error',

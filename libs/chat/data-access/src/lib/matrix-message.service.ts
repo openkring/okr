@@ -17,6 +17,17 @@ import { hasResolvableMedia, isServiceAccount, mediaMimeHint, personAvatarUrl } 
 import { MatrixMediaService } from './matrix-media.service';
 import { MatrixRoomListService } from './matrix-room-list.service';
 
+/** A room that shows a jumped (non-live) timeline, and how many new messages arrived meanwhile. */
+export interface MatrixJumpState {
+  roomId: string;
+  newCount: number;
+}
+
+/** Events fetched on each side of a jump target, so it does not land alone on the screen. */
+const JUMP_CONTEXT_LIMIT = 25;
+/** Safety cap when walking linked timelines — real chains are a handful long. */
+const MAX_LINKED_TIMELINES = 100;
+
 /**
  * Everything that lives inside ONE room's timeline: the message list per room, its
  * back-fill and scroll-up pagination, edits, reactions, polls and read receipts.
@@ -58,6 +69,21 @@ export class MatrixMessageService {
   // evictGoneRoom). Emits the roomId so the chat view can re-resolve a deep link that landed
   // on the dead room.
   private readonly roomGone$ = new Subject<string>();
+
+  /**
+   * The one room that shows a jumped timeline instead of its live one (spec 1.104 §4.4), or
+   * undefined. `head` is the newest timeline of the jumped window; the window is `head` plus
+   * every timeline linked behind it (see linkedChain). `newEventIds` are the live messages
+   * that arrived meanwhile — they are counted, not shown.
+   */
+  private jump: { roomId: string; head: EventTimeline; newEventIds: Set<string> } | undefined;
+  private readonly jumpState$ = new BehaviorSubject<MatrixJumpState | undefined>(undefined);
+  /** Bumped on every jump start and end: an emit computed for the other view is stale. */
+  private viewSeq = 0;
+  /** Bumped on every loadEventContext: only the newest request may still jump. */
+  private jumpRequestSeq = 0;
+  /** True while a forward pagination of the jumped window is in flight. */
+  private paginatingForwards = false;
 
   /**
    * Attachments whose download failed, eventId → roomId. A failed download used to be
@@ -106,6 +132,7 @@ export class MatrixMessageService {
     this.loadingRooms.clear();
     this.pendingReload.clear();
     this.pendingEdits.clear();
+    this.endJump();
     this.mediaRetryTimers.forEach(t => clearTimeout(t));
     this.mediaRetryTimers.clear();
     this.mediaRetryAttempts.clear();
@@ -130,6 +157,11 @@ export class MatrixMessageService {
   /** Retry every attachment that is still missing (foreground, back online). */
   private retryAllFailedMedia(): void {
     for (const [eventId, roomId] of [...this.failedMedia]) this.retryMedia(roomId, eventId);
+  }
+
+  /** The room that shows a jumped timeline (spec 1.104 §4.4), undefined while every room is live. */
+  get jumpState(): Observable<MatrixJumpState | undefined> {
+    return this.jumpState$.asObservable();
   }
 
   /** Emits the id of a room that was evicted because the server no longer knows it. */
@@ -216,6 +248,9 @@ export class MatrixMessageService {
 
     const subject = this.messages$.get(room.roomId);
     if (!subject) return;
+    // A jumped window shows old messages only; the confirmed message is in the live timeline
+    // and appears with it on «Zum neusten».
+    if (this.isJumped(room.roomId)) return;
     const msgs = subject.value ?? [];
     const oldIdx = oldEventId ? msgs.findIndex(m => m.eventId === oldEventId) : -1;
     const baseMsg = this.mapEventToMessage(event, room);
@@ -318,8 +353,8 @@ export class MatrixMessageService {
    */
   private hasUnloadedHistory(roomId: string, cached: MatrixMessage[] | null): boolean {
     if (cached === null || cached.length > 0) return false;
-    const timeline = this.client?.getRoom(roomId)?.getLiveTimeline();
-    return !!timeline?.getPaginationToken(EventTimeline.BACKWARDS);
+    const room = this.client?.getRoom(roomId);
+    return !!room && !!this.linkedChain(room.getLiveTimeline())[0].getPaginationToken(EventTimeline.BACKWARDS);
   }
 
   /** Number of timeline events that actually render as a message bubble. */
@@ -370,8 +405,14 @@ export class MatrixMessageService {
         // that list is non-empty it is never re-loaded (getMessagesForRoom) and never
         // scrollable (a viewport that does not overflow fires no scroll event), so the room
         // stays that way until the app restarts.
-        timeline = room.getLiveTimeline();
-        const visible = this.countRenderableEvents(timeline.getEvents());
+        //
+        // After a jump that paginated forwards into the live timeline, the jumped window is
+        // linked BEHIND the live timeline and is part of the live list; back-fill from the
+        // oldest linked timeline then (see linkedChain). Without a jump the chain is just
+        // the live timeline.
+        const chain = this.linkedChain(room.getLiveTimeline());
+        timeline = chain[0];
+        const visible = this.countRenderableEvents(chain.flatMap(t => t.getEvents()));
         if (visible >= MatrixMessageService.MIN_VISIBLE_MESSAGES) break;
         if (!timeline.getPaginationToken(EventTimeline.BACKWARDS)) break; // start of room reached
         debugMessage(`MatrixMessageService: Only ${visible} renderable events, paginating back (round ${round + 1})`, this.appStore.currentUser());
@@ -438,6 +479,7 @@ export class MatrixMessageService {
         tags: { chatTimeline: 'stale-room' },
       });
     }
+    if (this.isJumped(roomId)) this.endJump();
     // Drop the message subject first so a re-subscription does not re-load the dead room.
     this.messages$.get(roomId)?.complete();
     this.messages$.delete(roomId);
@@ -540,8 +582,10 @@ export class MatrixMessageService {
   }
 
   /**
-   * Load older messages for a room by paginating the live timeline backwards (C-5,
-   * scroll-up history). Re-emits the rebuilt message list so all subscribers update.
+   * Load older messages for a room by paginating the shown timeline backwards (C-5,
+   * scroll-up history): the oldest timeline linked behind the live one, or behind the
+   * jumped window while one is shown. Re-emits the rebuilt message list so all subscribers
+   * update.
    * @returns true if more history may be available, false once the start of the room
    * is reached (no backwards pagination token left).
    */
@@ -549,7 +593,7 @@ export class MatrixMessageService {
     if (!this.client) return false;
     const room = this.client.getRoom(roomId);
     if (!room) return false;
-    const timeline = room.getLiveTimeline();
+    const timeline = this.linkedChain(this.shownHead(room))[0];
     if (!timeline.getPaginationToken(EventTimeline.BACKWARDS)) return false;
     // C-3 guard: a load for this room is already in flight — report "maybe more"
     // so the caller can simply retry on the next scroll.
@@ -568,16 +612,220 @@ export class MatrixMessageService {
     }
   }
 
+  // ---- jump to a message (spec 1.104 §4.4) ----
+
+  /** Whether the room shows a jumped window instead of its live timeline. */
+  public isJumped(roomId: string): boolean {
+    return this.jump?.roomId === roomId;
+  }
+
   /**
-   * Rebuild the message list from the room's live timeline (resolving media and
-   * avatars) and emit it on the room's messages subject.
+   * Show the room at one message, however old: load the event's context with
+   * `getEventTimeline` (one /context request) instead of paginating the live timeline back in
+   * steps of 50, fill a screenful on both sides, and emit that window on the room's messages
+   * subject. Live messages arriving meanwhile are counted, not shown (handleNewMessage).
+   *
+   * An event the live list already holds needs no jump: the room simply stays live.
+   *
+   * @returns 'gone' when the event was deleted, cannot be read (no longer in the room, unknown
+   * id) or the room is unknown; the room then stays on its live timeline. 'ok' otherwise —
+   * also when a newer request superseded this one while it loaded.
+   */
+  public async loadEventContext(roomId: string, eventId: string): Promise<'ok' | 'gone'> {
+    const client = this.client;
+    const room = client?.getRoom(roomId);
+    if (!client || !room) return 'gone';
+    const seq = ++this.jumpRequestSeq;
+
+    let timeline: EventTimeline | null;
+    try {
+      // Returns the timeline already holding the event, else builds a new one from /context.
+      // Throws on M_NOT_FOUND / M_FORBIDDEN (deleted for good, or we left the room); null for
+      // an event inside a thread.
+      timeline = await client.getEventTimeline(room.getUnfilteredTimelineSet(), eventId);
+    } catch (error) {
+      console.warn('MatrixMessageService.loadEventContext: event context not available:', error);
+      return 'gone';
+    }
+    if (seq !== this.jumpRequestSeq) return 'ok';
+    const event = timeline?.getEvents().find(e => e.getId() === eventId);
+    if (!timeline || !event || event.isRedacted()) return 'gone';
+
+    // Already on the live list (recent message, or a window that an earlier jump linked to
+    // the live timeline): no jump. Leave a jumped window of any room first.
+    if (this.linkedChain(room.getLiveTimeline()).includes(timeline)) {
+      if (this.jump) this.returnToLive(this.jump.roomId);
+      return 'ok';
+    }
+    // Already inside the jumped window of this room: just scroll there.
+    if (this.jump?.roomId === roomId && this.linkedChain(this.jump.head).includes(timeline)) return 'ok';
+
+    // A context request returns the target alone: fetch some history on both sides. A failure
+    // here still leaves the target itself to show.
+    try {
+      await Promise.all([
+        client.paginateEventTimeline(timeline, { backwards: true, limit: JUMP_CONTEXT_LIMIT }),
+        client.paginateEventTimeline(timeline, { backwards: false, limit: JUMP_CONTEXT_LIMIT }),
+      ]);
+    } catch (error) {
+      console.warn('MatrixMessageService.loadEventContext: filling the context failed:', error);
+    }
+    if (seq !== this.jumpRequestSeq) return 'ok';
+
+    // Only one room is jumped at a time: leaving another jumped room returns it to live.
+    if (this.jump && this.jump.roomId !== roomId) this.returnToLive(this.jump.roomId);
+    const head = this.advanceHead(room, timeline);
+    if (head === 'live') {
+      // The forward fill already reached the live timeline: the window is part of the live list.
+      if (this.jump) this.returnToLive(roomId);
+      else void this.emitMessagesFromTimeline(room);
+      return 'ok';
+    }
+
+    if (!this.messages$.has(roomId)) this.messages$.set(roomId, new BehaviorSubject<MatrixMessage[] | null>(null));
+    this.jump = { roomId, head, newEventIds: new Set() };
+    this.viewSeq++;
+    this.publishJumpState();
+    debugMessage(`MatrixMessageService: jumped to an event in room ${roomId}`, this.appStore.currentUser());
+    await this.emitMessagesFromTimeline(room);
+    return 'ok';
+  }
+
+  /**
+   * Load newer messages into the jumped window (scrolling down). Once the window reaches the
+   * live timeline the room switches back to live: the SDK links the window behind the live
+   * timeline, so the live list then simply continues the window and the viewport stays put.
+   * @returns true while the jumped window may still grow, false once the room is live again.
+   */
+  public async paginateForwards(roomId: string): Promise<boolean> {
+    const client = this.client;
+    const jump = this.jump;
+    const room = client?.getRoom(roomId);
+    if (!client || !room || jump?.roomId !== roomId) return false;
+    if (this.paginatingForwards) return true;
+    this.paginatingForwards = true;
+    try {
+      let more = true;
+      let head = this.advanceHead(room, jump.head);
+      if (head !== 'live') {
+        more = await client.paginateEventTimeline(head, { backwards: false, limit: 50 });
+        if (this.jump !== jump) return false;
+        head = this.advanceHead(room, head);
+      }
+      // `more` false without a link: the window reached the present without ever overlapping
+      // the live timeline (a quiet room). The live list is the right view then too.
+      if (head === 'live' || !more) {
+        this.returnToLive(roomId);
+        return false;
+      }
+      jump.head = head;
+      await this.emitMessagesFromTimeline(room);
+      return true;
+    } catch (error) {
+      console.warn('MatrixMessageService.paginateForwards: failed:', error);
+      return true; // transient — the next scroll retries
+    } finally {
+      this.paginatingForwards = false;
+    }
+  }
+
+  /**
+   * Leave the jumped window and show the live timeline again («Zum neusten», or the window
+   * reached the live end). Reloads the live list through the regular load, which also
+   * catches up with a timeline reset that happened meanwhile.
+   */
+  public returnToLive(roomId: string): void {
+    if (this.jump?.roomId !== roomId) return;
+    this.endJump();
+    if (this.loadingRooms.has(roomId)) this.pendingReload.add(roomId);
+    else void this.loadMessagesForRoom(roomId);
+  }
+
+  private endJump(): void {
+    if (!this.jump) return;
+    this.jump = undefined;
+    this.viewSeq++;
+    this.paginatingForwards = false;
+    this.publishJumpState();
+  }
+
+  private publishJumpState(): void {
+    const jump = this.jump;
+    this.jumpState$.next(jump ? { roomId: jump.roomId, newCount: jump.newEventIds.size } : undefined);
+  }
+
+  /** The newest timeline the room shows: the jumped window's head, else the live timeline. */
+  private shownHead(room: Room): EventTimeline {
+    return this.jump?.roomId === room.roomId ? this.jump.head : room.getLiveTimeline();
+  }
+
+  /**
+   * `head` and every timeline linked behind it, oldest first. The SDK links two timelines
+   * when a pagination of one runs into events of the other. Without a jump the live
+   * timeline has no backwards neighbour, so this is `[live]` and rooms that never jumped
+   * behave exactly as before.
+   */
+  private linkedChain(head: EventTimeline): EventTimeline[] {
+    const chain = [head];
+    let t = head.getNeighbouringTimeline(EventTimeline.BACKWARDS);
+    while (t && chain.length < MAX_LINKED_TIMELINES && !chain.includes(t)) {
+      chain.unshift(t);
+      t = t.getNeighbouringTimeline(EventTimeline.BACKWARDS);
+    }
+    return chain;
+  }
+
+  /**
+   * Follow the forward links from `timeline`: 'live' when they lead into the live timeline,
+   * otherwise the newest non-live timeline reached.
+   */
+  private advanceHead(room: Room, timeline: EventTimeline): EventTimeline | 'live' {
+    const live = room.getLiveTimeline();
+    let head = timeline;
+    for (let i = 0; i < MAX_LINKED_TIMELINES; i++) {
+      if (head === live) return 'live';
+      const next = head.getNeighbouringTimeline(EventTimeline.FORWARDS);
+      if (!next) return head;
+      head = next;
+    }
+    return head;
+  }
+
+  /**
+   * Rebuild the message list from the timeline the room shows — the live timeline, or the
+   * jumped window while one is shown — resolving media and avatars, and emit it on the
+   * room's messages subject. Both include the timelines linked behind them (linkedChain).
    */
   private async emitMessagesFromTimeline(room: Room, keepNullWhenEmpty = false): Promise<void> {
     const roomId = room.roomId;
-    const timeline = room.getLiveTimeline();
-    // Get all events from timeline and convert to messages, resolving media URLs
-    const allEvents = timeline.getEvents();
-    const messages = await Promise.all(
+    const seq = this.viewSeq;
+    const allEvents = this.linkedChain(this.shownHead(room)).flatMap(t => t.getEvents());
+    const messages = await this.buildMessages(room, allEvents);
+
+    // A jump started or ended while media resolved: this list belongs to the other view,
+    // and the switch emits its own.
+    if (seq !== this.viewSeq) return;
+
+    debugMessage(`MatrixMessageService: Loaded ${messages.length} messages for room ${roomId}`, this.appStore.currentUser());
+
+    // Blank-room guard: the back-fill failed AND produced nothing — that is a failed load, not an empty
+    // room. Emitting `[]` would cache the failure for the rest of the session (the retry in
+    // getMessagesForRoom and the spinner in MatrixChatStore both key off `null`), leaving a
+    // room with months of history permanently blank and without any sign that something went
+    // wrong. Leave the subject untouched instead: the spinner stays up and the next open of
+    // the room loads again.
+    if (keepNullWhenEmpty && messages.length === 0) {
+      debugMessage(`MatrixMessageService: back-fill for room ${roomId} failed and yielded no messages — keeping the list unresolved for a retry`, this.appStore.currentUser());
+      return;
+    }
+
+    this.messages$.get(roomId)?.next(messages);
+  }
+
+  /** Map timeline events to the renderable messages, with media, avatars and poll tallies resolved. */
+  private async buildMessages(room: Room, allEvents: MatrixEvent[]): Promise<MatrixMessage[]> {
+    const roomId = room.roomId;
+    return Promise.all(
       allEvents
         .filter(e => isRenderableChatEvent(e.getType(), e.getContent()?.['m.relates_to']))
         .map(async e => {
@@ -608,21 +856,6 @@ export class MatrixMessageService {
           return { ...msg, senderAvatar: senderAvatar || undefined };
         })
     );
-
-    debugMessage(`MatrixMessageService: Loaded ${messages.length} messages for room ${roomId}`, this.appStore.currentUser());
-
-    // Blank-room guard: the back-fill failed AND produced nothing — that is a failed load, not an empty
-    // room. Emitting `[]` would cache the failure for the rest of the session (the retry in
-    // getMessagesForRoom and the spinner in MatrixChatStore both key off `null`), leaving a
-    // room with months of history permanently blank and without any sign that something went
-    // wrong. Leave the subject untouched instead: the spinner stays up and the next open of
-    // the room loads again.
-    if (keepNullWhenEmpty && messages.length === 0) {
-      debugMessage(`MatrixMessageService: back-fill for room ${roomId} failed and yielded no messages — keeping the list unresolved for a retry`, this.appStore.currentUser());
-      return;
-    }
-
-    this.messages$.get(roomId)?.next(messages);
   }
 
   /**
@@ -639,7 +872,14 @@ export class MatrixMessageService {
     const message = this.mapEventToMessage(event, room);
     const subject = this.messages$.get(room.roomId);
 
-    if (subject) {
+    if (this.jump?.roomId === room.roomId) {
+      // A jumped window is on screen: the new message is not shown, only counted on
+      // «Zum neusten». The live timeline holds it; returnToLive rebuilds the list from there.
+      if (!this.jump.newEventIds.has(message.eventId)) {
+        this.jump.newEventIds.add(message.eventId);
+        this.publishJumpState();
+      }
+    } else if (subject) {
       // Deduplicate: the SDK can fire RoomEvent.Timeline more than once for the same event
       // (e.g. soft-failed → retried, or timeline rebuild). Replace if already present.
       const currentMsgs = subject.value ?? [];

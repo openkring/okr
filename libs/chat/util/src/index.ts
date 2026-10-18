@@ -20,3 +20,4 @@ export * from './lib/media-preview.util';
 export * from './lib/poll.util';
 export * from './lib/pinboard.util';
 export * from './lib/bookmark.util';
+export * from './lib/jump.util';

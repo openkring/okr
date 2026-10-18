@@ -16,7 +16,7 @@ import { videoDocKeyOf, videoLink } from '@okr/content-document-util';
 
 import { MatrixMessageInput, MatrixMessageList, MatrixRoomList, PollDetailModal } from '@okr/chat-ui';
 import { MatrixPollData } from '@okr/chat-data-access';
-import { buildEditedPollAnswers, canEditPoll, parsePollContent, convertHeicToJpeg, groupRoomAliasLocalpart, shouldDeferAskRoom, isSupportedImageFile, isUploadTooLargeError, filterRoomsByName, resolveInitialRoomId, readBookmark, isTrustedBookmarkEntry, ChatBookmark, resolvePermalinkTarget, MessageDraft, UploadTooLargeError } from '@okr/chat-util';
+import { buildEditedPollAnswers, canEditPoll, parsePollContent, convertHeicToJpeg, groupRoomAliasLocalpart, shouldDeferAskRoom, isSupportedImageFile, isUploadTooLargeError, filterRoomsByName, resolveInitialRoomId, readBookmark, isTrustedBookmarkEntry, ChatBookmark, resolvePermalinkTarget, shouldSendReceipt, MessageDraft, UploadTooLargeError } from '@okr/chat-util';
 
 import { MatrixChatStore } from './matrix-chat.store';
 import { PollCreateModal } from './poll-create.modal';
@@ -436,6 +436,11 @@ function rejectionReasons(results: PromiseSettledResult<unknown>[]): unknown[] {
                     [receiptsByEventId]="receiptsByEventId()"
                     [i18n]="store.i18n"
                     (loadOlder)="onLoadOlder()"
+                    [highlightEventId]="store.jumpTarget()"
+                    [isJumped]="store.isJumped()"
+                    [newMessagesCount]="store.jumpNewCount()"
+                    (loadNewer)="onLoadNewer()"
+                    (latestClicked)="store.returnToLive()"
                     (messageClicked)="onMessageClicked($event)"
                     (bookmarkClicked)="onBookmarkClicked($event)"
                     (permalinkClicked)="openPermalink($event)"
@@ -890,8 +895,7 @@ export class MatrixChat implements OnDestroy {
         this.resolvedRoomAlias = roomAlias;
         this.resolvedRoomId = match.roomId;
         this.roomAccessDenied.set(undefined);
-        this.store.setCurrentRoom(match.roomId);
-        this.applyDeepLinkEvent(match.roomId);
+        this.openDeepLinkRoom(match.roomId);
         return;
       }
       // Room not in joined-rooms list. Request access via Cloud Function.
@@ -906,8 +910,7 @@ export class MatrixChat implements OnDestroy {
         this.resolvedRoomAlias = roomAlias;
         this.resolvedRoomId = roomAlias;
         this.roomAccessDenied.set(undefined);
-        this.store.setCurrentRoom(roomAlias);
-        this.applyDeepLinkEvent(roomAlias);
+        this.openDeepLinkRoom(roomAlias);
         return;
       }
       // The wanted room is demonstrably NOT in this user's room list, so whatever
@@ -985,9 +988,17 @@ export class MatrixChat implements OnDestroy {
     // client may not have the room yet (join via CF, room arrives in the next sync cycle).
     // When rooms() updates and the current room appears with unreadCount > 0, this re-sends
     // the receipt so the badge resets without requiring the user to re-select the room.
+    //
+    // Timeline-mode gate (spec 1.104 §4.4): no receipt while a jump is loading or a jumped
+    // (non-live) timeline is on screen — landing on an old message would otherwise mark the
+    // whole room read. A jumped timeline that reaches the live end is switched back to live
+    // (MatrixMessageService.paginateForwards), so a jumped one is never at the live end; the
+    // effect re-runs on that switch (and after «Zum neusten») and sends the receipt then.
     effect(() => {
       const room = this.store.currentRoom();
       if (!room || room.unreadCount === 0) return;
+      const isJumped = this.store.isJumped() || this.store.jumpPending();
+      if (!shouldSendReceipt(isJumped, false)) return;
       untracked(() => this.store.markCurrentRoomAsRead());
     });
 
@@ -1064,8 +1075,7 @@ export class MatrixChat implements OnDestroy {
       this.resolvedRoomAlias = groupId;
       this.roomAccessDenied.set(undefined);
       this.resolvedRoomId = result.roomId;
-      this.store.setCurrentRoom(result.roomId);
-      this.applyDeepLinkEvent(result.roomId);
+      this.openDeepLinkRoom(result.roomId);
     } catch (error) {
       console.error('MatrixChat: Failed to request room access:', error);
       // Remember the refusal: the toast is gone in seconds, but the pane must keep saying
@@ -1143,6 +1153,12 @@ export class MatrixChat implements OnDestroy {
   onLoadOlder() {
     this.store.loadOlderMessages().catch(err =>
       console.warn('MatrixChat: loading older messages failed (non-critical):', err)
+    );
+  }
+
+  protected onLoadNewer(): void {
+    this.store.loadNewerMessages().catch(err =>
+      console.warn('MatrixChat: loading newer messages failed (non-critical):', err)
     );
   }
 
@@ -1280,7 +1296,21 @@ export class MatrixChat implements OnDestroy {
       else this.store.setCurrentRoom(res.roomId);
     } else if (res.kind === 'group') {
       void navigateByUrl(this.router, '/private/chat/c-contentpage', eventId ? { selectedRoom: res.groupKey, eventId } : { selectedRoom: res.groupKey });
+    } else {
+      // A room we are not (or no longer) in, or an alias we cannot resolve: say so instead of
+      // a tap that does nothing. A bookmark entry stays.
+      void this.alertService.showToast(this.store.i18n.message_gone());
     }
+  }
+
+  /**
+   * Open the room a deep link resolved to. With a not yet applied `eventId` the jump opens it,
+   * so that opening sends no read receipt of its own (spec 1.104 §4.4).
+   */
+  private openDeepLinkRoom(roomId: string): void {
+    const eventId = this.eventId();
+    if (eventId && this.jumpedKey !== `${roomId}|${eventId}`) this.applyDeepLinkEvent(roomId);
+    else this.store.setCurrentRoom(roomId);
   }
 
   /** Jump to the deep-link message once per distinct (room, event) pair. */
