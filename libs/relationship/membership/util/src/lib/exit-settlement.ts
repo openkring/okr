@@ -144,7 +144,7 @@ export function exitSettlementTaskName(memberLabel: string, s: ExitSettlement): 
 }
 
 const MANUAL_TEXT: Record<Exclude<ManualReason, ''>, string> = {
-  'no-invoice': 'Keine Beitragsrechnung für das Austrittsjahr gefunden.',
+  'no-invoice': 'Keine Beitragsrechnung für das Austrittsjahr gefunden. Noch nicht verrechnet: Beitragszeile im Beitragslauf mit «Neu laden» aktualisieren.',
   'ambiguous-invoice': 'Mehrere Beitragsrechnungen für das Austrittsjahr gefunden, keine eindeutige Zuordnung.',
   'books-mismatch': 'Die Rechnung liegt in einer anderen Buchhaltung als die Mitgliedschaft.',
   'bexio-entry-year': 'Eintritt und Austritt im selben Jahr bei einer Bexio-Rechnung: der verrechnete Betrag ist nicht bekannt.',

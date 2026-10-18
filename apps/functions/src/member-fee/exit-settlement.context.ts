@@ -4,6 +4,7 @@
  * The mapping helpers are pure and exported for the tests.
  */
 import type { DocumentData, DocumentReference, Firestore } from 'firebase-admin/firestore';
+import { logger } from 'firebase-functions/v2';
 import {
   AccountingConfigCollection, AvatarInfo, AvatarModelTypes, CategoryCollection, FeeScheduleEntry, InvoiceCollection,
   InvoicePositionCollection, MembershipCollection, MembershipModel, OrgCollection, ResponsibilityCollection, TaskCollection,
@@ -92,26 +93,49 @@ function exitYearOf(exit: string): number {
 }
 
 /**
+ * The tenant the settlement runs in: the first tenant of the membership that the books
+ * (`accounting-configs/{orgKey}`) and the org also belong to. Membership `tenants` alone is not
+ * trusted — the rules let a user write a membership that merely contains one of their tenants.
+ */
+export function resolveSettlementTenant(membershipTenants: string[], configTenants: string[], orgTenants: string[]): string | undefined {
+  return membershipTenants.find(t => !!t && configTenants.includes(t) && orgTenants.includes(t));
+}
+
+/** Positions are only needed for a native invoice dated in the exit year or the year after. */
+export function needsPositions(facts: InvoiceFacts, exitYear: number): boolean {
+  if (invoiceShape(facts) === 'bexio') return false;
+  const year = Number(facts.invoiceDate.substring(0, 4));
+  return year === exitYear || year === exitYear + 1;
+}
+
+/**
  * Load the membership and everything its exit settlement depends on. The books are
  * `accounting-configs/{orgKey}` (never the app tenant, §4.2). Undefined when the membership is gone
- * or carries no tenant.
+ * or no tenant is shared by the membership, the books and the org.
  */
 export async function loadExitContext(db: Firestore, membershipKey: string, today: string): Promise<ExitContext | undefined> {
   const snap = await db.collection(MembershipCollection).doc(membershipKey).get();
   const data = snap.data();
   if (!snap.exists || !data) return undefined;
   const membership = { ...(data as MembershipModel), okey: membershipKey };
-  const tenantId = tenantsOf(data)[0] ?? '';
   const orgKey = str(membership.orgKey);
-  if (!tenantId || !orgKey) return undefined;
-
+  if (!orgKey) return undefined;
   const booksId = orgKey;
+
+  const [configSnap, orgSnap] = await Promise.all([
+    db.collection(AccountingConfigCollection).doc(booksId).get(),
+    db.collection(OrgCollection).doc(orgKey).get(),
+  ]);
+  const tenantId = resolveSettlementTenant(tenantsOf(data), tenantsOf(configSnap.data() ?? {}), tenantsOf(orgSnap.data() ?? {}));
+  if (!tenantId) {
+    logger.warn(`loadExitContext: membership ${membershipKey} shares no tenant with books/org ${orgKey}, skipped`);
+    return undefined;
+  }
+
   const exitYear = exitYearOf(str(membership.dateOfExit)) || Number(today.substring(0, 4));
   const memberKey = str(membership.memberKey);
 
-  const [configSnap, orgSnap, categorySnap, membershipSnap, invoiceSnap] = await Promise.all([
-    db.collection(AccountingConfigCollection).doc(booksId).get(),
-    db.collection(OrgCollection).doc(orgKey).get(),
+  const [categorySnap, membershipSnap, invoiceSnap] = await Promise.all([
     db.collection(CategoryCollection).where('tenants', 'array-contains', tenantId).get(),
     memberKey ? db.collection(MembershipCollection).where('memberKey', '==', memberKey).get() : undefined,
     memberKey ? db.collection(InvoiceCollection).where('receiver.key', '==', memberKey).get() : undefined,
@@ -131,13 +155,15 @@ export async function loadExitContext(db: Firestore, membershipKey: string, toda
   // replacement would otherwise read as two matches (ambiguous).
   const candidates = (invoiceSnap?.docs ?? []).filter(d => {
     const inv = d.data();
-    return str(inv['accountingTenantId']) === booksId && str(inv['state']) !== 'cancelled' && inv['isArchived'] !== true;
+    return tenantsOf(inv).includes(tenantId) && str(inv['accountingTenantId']) === booksId &&
+      str(inv['state']) !== 'cancelled' && inv['isArchived'] !== true;
   });
   const invoices = await Promise.all(candidates.map(async d => {
     const facts = toInvoiceFacts(d.id, d.data(), []);
-    if (invoiceShape(facts) === 'bexio') return facts;
+    if (!needsPositions(facts, exitYear)) return facts;
     const posSnap = await db.collection(InvoicePositionCollection).where('invoiceKey', '==', d.id).get();
-    return toInvoiceFacts(d.id, d.data(), posSnap.docs.map(p => p.data()).filter(p => p['isArchived'] !== true));
+    return toInvoiceFacts(d.id, d.data(), posSnap.docs.map(p => p.data())
+      .filter(p => p['isArchived'] !== true && tenantsOf(p).includes(tenantId)));
   }));
 
   return {
@@ -162,14 +188,13 @@ export async function loadExitContext(db: Firestore, membershipKey: string, toda
 }
 
 /**
- * The newest non-archived settlement task of the membership (tag + relatedKey), auto-closed tasks
- * left out. `exitYear` is not a filter: a membership has a single exit, so its task is the same
- * whatever year the exit moves to; the parameter is kept for the callers' log context.
+ * The newest (latest due date) non-archived settlement task of the membership (tag + relatedKey),
+ * auto-closed tasks left out. A membership has a single exit, so its task is the same whatever
+ * year the exit moves to.
  */
 export async function findSettlementTask(
-  db: Firestore, tenantId: string, membershipKey: string, exitYear: number,
+  db: Firestore, tenantId: string, membershipKey: string,
 ): Promise<{ ref: DocumentReference; data: DocumentData; done: boolean } | undefined> {
-  void exitYear;
   const snap = await db.collection(TaskCollection).where('relatedKey', '==', `membership.${membershipKey}`).get();
   const hit = snap.docs
     .filter(d => {

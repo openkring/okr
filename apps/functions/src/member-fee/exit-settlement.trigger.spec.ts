@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import type { ExitSettlement, SettlementCase } from '@okr/relationship-membership-util';
 
-import { exitChanged, upsertDecision } from './exit-settlement.trigger';
-import { CLOSE_NOTE, flattenCategoryLists, isAutoClosed, overlappingCount, toAvatarInfo, toInvoiceFacts } from './exit-settlement.context';
+import { exitChanged, isSettlementWriter, mergeTaskNotes, NOTES_MARKER, siblingsToSettle, upsertDecision, writerCheck } from './exit-settlement.trigger';
+import {
+  CLOSE_NOTE, flattenCategoryLists, isAutoClosed, needsPositions, overlappingCount, resolveSettlementTenant, toAvatarInfo, toInvoiceFacts,
+} from './exit-settlement.context';
 
 const settlement = (c: SettlementCase): ExitSettlement => ({
   case: c, exitYear: 2026, months: 6, yearlyFr: 600, dueFr: 300, billedFr: 600, overpaidRappen: 30000,
@@ -144,5 +146,96 @@ describe('isAutoClosed', () => {
 
   it('keeps a task the treasurer completed as a decision', () => {
     expect(isAutoClosed({ state: 'done', notes: 'Austrittsdatum: 31.10.2026' })).toBe(false);
+  });
+});
+
+describe('resolveSettlementTenant', () => {
+  it('takes the membership tenant the books and the org also belong to', () => {
+    expect(resolveSettlementTenant(['scs'], ['scs'], ['scs', 'kring'])).toBe('scs');
+  });
+
+  it('ignores a foreign tenant smuggled into the membership', () => {
+    expect(resolveSettlementTenant(['evil', 'scs'], ['scs'], ['scs'])).toBe('scs');
+  });
+
+  it('skips when no tenant is shared by all three', () => {
+    expect(resolveSettlementTenant(['evil', 'scs'], ['gss'], ['scs'])).toBeUndefined();
+    expect(resolveSettlementTenant(['evil'], ['scs'], ['scs'])).toBeUndefined();
+    expect(resolveSettlementTenant([], [], [])).toBeUndefined();
+  });
+});
+
+describe('needsPositions', () => {
+  const facts = (invoiceNo: number, invoiceDate: string) =>
+    toInvoiceFacts('i', { invoiceNo, bookingKey: invoiceNo ? 'b' : '', invoiceDate }, []);
+
+  it('loads positions for a native invoice of the exit year or the year after', () => {
+    expect(needsPositions(facts(1, '20260301'), 2026)).toBe(true);
+    expect(needsPositions(facts(1, '20270115'), 2026)).toBe(true);
+  });
+
+  it('skips older or later native invoices and every bexio invoice', () => {
+    expect(needsPositions(facts(1, '20250301'), 2026)).toBe(false);
+    expect(needsPositions(facts(1, '20280301'), 2026)).toBe(false);
+    expect(needsPositions(facts(0, '20260301'), 2026)).toBe(false);
+  });
+});
+
+describe('siblingsToSettle', () => {
+  const created = { okey: 'new', memberKey: 'p1', orgKey: 'scs' };
+  const sib = (okey: string, dateOfExit: string, extra: Record<string, unknown> = {}) =>
+    ({ okey, memberKey: 'p1', orgKey: 'scs', dateOfExit, isArchived: false, ...extra });
+
+  it('returns the ended memberships of the same member and org in this or last year', () => {
+    expect(siblingsToSettle(created, [
+      sib('new', ''),                        // the created one itself
+      sib('j2026', '20260331'),              // category change this year
+      sib('j2025', '20250630'),              // last year
+      sib('old', '20240331'),                // too old
+      sib('full', '20261231'),               // a full year, nothing to settle
+      sib('open', '99991231'),               // no exit
+      sib('none', ''),                       // no exit
+      sib('gss', '20260331', { orgKey: 'gss' }),
+      sib('other', '20260331', { memberKey: 'p2' }),
+      sib('arch', '20260331', { isArchived: true }),
+    ], '20261018')).toEqual(['j2026', 'j2025']);
+  });
+});
+
+describe('mergeTaskNotes', () => {
+  it('puts the generated block above the marker on create', () => {
+    expect(mergeTaskNotes(undefined, 'A\nB')).toBe(`A\nB\n${NOTES_MARKER}\n`);
+  });
+
+  it('replaces only the generated block and keeps the treasurer notes below the marker', () => {
+    const existing = `old figures\n${NOTES_MARKER}\nMitglied angerufen, ist einverstanden.`;
+    expect(mergeTaskNotes(existing, 'new figures')).toBe(`new figures\n${NOTES_MARKER}\nMitglied angerufen, ist einverstanden.`);
+  });
+
+  it('keeps everything of an unmarked note below the marker, nothing is lost', () => {
+    expect(mergeTaskNotes('handwritten', 'new')).toBe(`new\n${NOTES_MARKER}\nhandwritten`);
+  });
+});
+
+describe('isSettlementWriter', () => {
+  const user = (roles: Record<string, boolean>, tenants = ['scs']) => ({ tenants, roles });
+
+  it('accepts a member admin, privileged, treasurer or admin of the tenant', () => {
+    for (const r of ['memberAdmin', 'privileged', 'treasurer', 'admin']) expect(isSettlementWriter(user({ [r]: true }), 'scs')).toBe(true);
+  });
+
+  it('rejects a plain member, a user of another tenant and a missing user', () => {
+    expect(isSettlementWriter(user({ registered: true }), 'scs')).toBe(false);
+    expect(isSettlementWriter(user({ admin: true }, ['evil']), 'scs')).toBe(false);
+    expect(isSettlementWriter(undefined, 'scs')).toBe(false);
+  });
+});
+
+describe('writerCheck', () => {
+  it('lets admin SDK and system writes through and checks app users', () => {
+    expect(writerCheck('service_account')).toBe('allow');
+    expect(writerCheck('system')).toBe('allow');
+    expect(writerCheck('app_user')).toBe('check-user');
+    expect(writerCheck('unauthenticated')).toBe('deny');
   });
 });

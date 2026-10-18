@@ -164,4 +164,8 @@ describe('task text', () => {
     const n = exitSettlementTaskNotes(computeExitSettlement(input({ invoices: [] })), '31.10.2026');
     expect(n).toContain('Keine Beitragsrechnung');
   });
+  it('no-invoice notes tell the treasurer to reload the fee row in the fee run', () => {
+    const n = exitSettlementTaskNotes(computeExitSettlement(input({ invoices: [] })), '31.10.2026');
+    expect(n).toContain('Noch nicht verrechnet: Beitragszeile im Beitragslauf mit «Neu laden» aktualisieren.');
+  });
 });
