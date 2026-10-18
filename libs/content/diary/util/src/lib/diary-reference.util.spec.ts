@@ -4,6 +4,7 @@ import { AvatarInfo, DiaryModel } from '@okr/shared-models';
 
 import {
   collectLocationReferences, collectPersonReferences, filterDiaryReferences, formatDiaryDate,
+  formatDiaryDateLong, formatDiaryDateShort, formatDiaryMonthHeader,
 } from './diary-reference.util';
 
 const TENANT = 'scs';
@@ -151,4 +152,21 @@ describe('formatDiaryDate', () => {
     expect(formatDiaryDate('')).toBe('');
     expect(formatDiaryDate('2022-03-06')).toBe('2022-03-06');
   });
+});
+
+describe('formatDiaryDateShort', () => {
+  it('prefixes the short weekday, upper-cased', () => expect(formatDiaryDateShort('20261011', 'de')).toBe('SO 11.10.2026'));
+  it('uses the given language', () => expect(formatDiaryDateShort('20261011', 'en')).toBe('SUN 11.10.2026'));
+  it('leaves a month aggregate alone', () => expect(formatDiaryDateShort('20261000', 'de')).toBe('10.2026'));
+  it('leaves a year aggregate alone', () => expect(formatDiaryDateShort('20260000', 'de')).toBe('2026'));
+  it('passes garbage through', () => expect(formatDiaryDateShort('abc', 'de')).toBe('abc'));
+});
+
+describe('formatDiaryDateLong', () => {
+  it('spells the weekday out', () => expect(formatDiaryDateLong('20261011', 'de')).toBe('Sonntag, 11.10.2026'));
+  it('leaves an aggregate alone', () => expect(formatDiaryDateLong('20261000', 'de')).toBe('10.2026'));
+});
+
+describe('formatDiaryMonthHeader', () => {
+  it('names the month', () => expect(formatDiaryMonthHeader('202610', 'de')).toBe('Oktober 2026'));
 });

@@ -150,3 +150,33 @@ export function formatDiaryDate(date: string): string {
   if (month !== '00') return `${month}.${year}`;
   return year;
 }
+
+/** UTC midnight of a `yyyyMMdd` day, or undefined for an aggregate or a malformed date. */
+function diaryDayAsUtc(date: string): Date | undefined {
+  if (!/^\d{8}$/.test(date) || date.endsWith('00')) return undefined;
+  return new Date(Date.UTC(+date.slice(0, 4), +date.slice(4, 6) - 1, +date.slice(6, 8)));
+}
+
+function diaryWeekday(day: Date, lang: string, weekday: 'short' | 'long'): string {
+  return new Intl.DateTimeFormat(lang, { weekday, timeZone: 'UTC' }).format(day);
+}
+
+/** `SO 11.10.2026` for a day entry, in `lang`; aggregates and malformed dates as `formatDiaryDate`. */
+export function formatDiaryDateShort(date: string, lang: string): string {
+  const day = diaryDayAsUtc(date);
+  if (!day) return formatDiaryDate(date);
+  return `${diaryWeekday(day, lang, 'short').replace(/\.$/, '').toUpperCase()} ${formatDiaryDate(date)}`;
+}
+
+/** `Sonntag, 11.10.2026` for a day entry, in `lang`; aggregates and malformed dates as `formatDiaryDate`. */
+export function formatDiaryDateLong(date: string, lang: string): string {
+  const day = diaryDayAsUtc(date);
+  if (!day) return formatDiaryDate(date);
+  return `${diaryWeekday(day, lang, 'long')}, ${formatDiaryDate(date)}`;
+}
+
+/** `'202610'` → `Oktober 2026`, in `lang` — the header of a month group in the list. */
+export function formatDiaryMonthHeader(yyyymm: string, lang: string): string {
+  const month = new Date(Date.UTC(+yyyymm.slice(0, 4), +yyyymm.slice(4, 6) - 1, 1));
+  return new Intl.DateTimeFormat(lang, { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(month);
+}
