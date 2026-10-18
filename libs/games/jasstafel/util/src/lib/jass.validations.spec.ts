@@ -5,7 +5,7 @@ import { jassConfigValidations, jassHandValidations } from './jass.validations';
 
 const base: JassHandFormModel = {
   variant: 'schieber', sideIds: ['a', 'b'], trumpOptions: [], phase: 'full', multiplier: 1,
-  trump: '', sideId: '', points: [100, 57], weis: [0, 0], match: '', announced: [],
+  trump: '', sideId: '', points: [100, 57], weis: [0, 0], match: '', announced: [], focusSideId: '',
 };
 
 describe('jassHandValidations', () => {

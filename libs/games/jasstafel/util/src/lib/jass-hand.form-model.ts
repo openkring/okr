@@ -20,9 +20,14 @@ export interface JassHandFormModel {
   /** '' or a side id */
   match: string;
   announced: number[];
+  /**
+   * Schieber/Büter: the side whose «+» opened the form — only its points are entered, the other
+   * side follows as 157 − x. '' shows every side (editing a hand from the history).
+   */
+  focusSideId: string;
 }
 
-export function newHandForm(game: JassGame, phase: JassHandFormModel['phase'], base?: JassHand, excludeIndex?: number): JassHandFormModel {
+export function newHandForm(game: JassGame, phase: JassHandFormModel['phase'], base?: JassHand, excludeIndex?: number, focusSideId = ''): JassHandFormModel {
   const sideIds = game.sides.map(s => s.id);
   const maker = base?.trumpMakerIdx ?? nextTrumpMaker(game);
   const sideId = game.variant === 'coiffeur' ? (base?.sideId ?? sideOfPlayer(game, maker)) : '';
@@ -42,6 +47,7 @@ export function newHandForm(game: JassGame, phase: JassHandFormModel['phase'], b
     weis: sideIds.map(id => base?.weis[id] ?? 0),
     match: base?.matchSideId ?? '',
     announced: sideIds.map(id => base?.announced?.[id] ?? 0),
+    focusSideId: (game.variant === 'schieber' || game.variant === 'bueter') && sideIds.includes(focusSideId) ? focusSideId : '',
   };
 }
 

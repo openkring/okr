@@ -22,6 +22,13 @@ describe('hand form model', () => {
     expect(withCounterPoints(newHandForm(g, 'full'), 1, 200).points).toEqual([0, 200]);
   });
 
+  it('focuses one side only for Schieber and Büter', () => {
+    expect(newHandForm(g, 'full', undefined, undefined, 'b').focusSideId).toBe('b');
+    expect(newHandForm(g, 'full', undefined, undefined, 'x').focusSideId).toBe('');
+    const c = createGame('coiffeur', [p(0), p(1), p(2), p(3)], DEFAULT_JASS_CONFIG, { id: 'c', now: 't' });
+    expect(newHandForm(c, 'full', undefined, undefined, 'a').focusSideId).toBe('');
+  });
+
   it('round-trips a hand', () => {
     const h = { trumpMakerIdx: 2, trump: '', multiplier: 3, cardPoints: { a: 100, b: 57 }, weis: {} };
     expect(handFromForm(newHandForm(g, 'full', h), 2)).toEqual(h);

@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, DestroyRef, effect, inject, untracked } from '@angular/core';
 import {
   IonButton, IonButtons, IonCard, IonCardContent, IonContent, IonFooter, IonIcon, IonLabel, IonNote,
   IonSegment, IonSegmentButton, IonToolbar,
@@ -10,11 +10,17 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { Header } from '@okr/shared-ui';
 
 import { JasstafelStore } from './jasstafel.store';
+import { ScreenWakeLock } from './screen-wake-lock';
 
 /**
  * The Jasstafel: a start screen (variant + seats) while no game runs, then the slate — Z strokes
  * for Schieber and Büter, a chalk grid for Coiffeur and Differenzler — with the hand entry in the
- * footer, and the result card once the game is decided.
+ * footer, and the result card once the game is decided. The slate carries its own controls
+ * (a «+» per side, history and undo on the middle line) and takes the whole screen; the grid and
+ * the result keep the footer.
+ *
+ * While a game runs the screen is kept awake (Screen Wake Lock), so the slate does not go dark
+ * between hands.
  */
 @Component({
   selector: 'okr-jasstafel-page',
@@ -29,6 +35,10 @@ import { JasstafelStore } from './jasstafel.store';
     /* everything below the header fills the height; the slate, grid or card takes what is left */
     .fill { display: flex; flex-direction: column; height: 100%; gap: 8px; }
     .fill > okr-jass-slate, .fill > okr-jass-grid, .fill > okr-jass-result { flex: 1; min-height: 0; }
+    /* no footer under the slate: keep its corner buttons clear of the iPhone/iPad home indicator,
+       and of the notch and rounded corners in landscape */
+    .fill.edge { box-sizing: border-box;
+      padding: 0 env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px); }
     .setup { flex: 1; min-height: 0; margin: 0; display: flex; flex-direction: column; }
     .setup ion-card-content { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; }
     /* «Rückgängig»: the reload arrow turned backwards */
@@ -54,7 +64,7 @@ import { JasstafelStore } from './jasstafel.store';
   template: `
     <okr-header [i18n]="{ title: store.i18n.title() }" />
     <ion-content class="ion-padding">
-      <div class="fill">
+      <div class="fill" [class.edge]="!showFooter()">
       @if (!store.storageOk()) {
         <ion-note color="warning">{{ store.i18n.storage_note() }}</ion-note>
       }
@@ -66,7 +76,8 @@ import { JasstafelStore } from './jasstafel.store';
             (newGame)="store.newGame()" (done)="store.endGame()" (toDiary)="store.toDiary()" />
         } @else if (game.variant === 'schieber' || game.variant === 'bueter') {
           <okr-jass-slate [game]="game" [totals]="store.totals()" [i18n]="store.i18n"
-            (chalk)="store.addChalk($event.sideId, $event.unit)" />
+            (chalk)="store.addChalk($event.sideId, $event.unit)" (enter)="store.enterHand($event)"
+            (undo)="store.undo()" (history)="store.openHistory()" (endGame)="store.endGame()" />
         } @else {
           <okr-jass-grid [game]="game" [i18n]="store.i18n" [pendingAnnounced]="store.pendingAnnounced()" />
         }
@@ -123,8 +134,9 @@ import { JasstafelStore } from './jasstafel.store';
       </div>
     </ion-content>
 
-    <!-- stays after the game is decided: a mistyped last hand must still be undoable or editable -->
-    @if (store.game()) {
+    <!-- grid and result only (the slate has its own controls); stays after the game is decided:
+         a mistyped last hand must still be undoable or editable -->
+    @if (showFooter()) {
       <ion-footer>
         <ion-toolbar>
           <ion-buttons slot="start">
@@ -150,13 +162,35 @@ import { JasstafelStore } from './jasstafel.store';
     }
   `,
 })
-export class JasstafelPage implements OnInit {
+export class JasstafelPage {
   protected readonly store = inject(JasstafelStore);
   protected readonly variants = JASS_VARIANTS;
   protected readonly bueterSeats = [0, 1, 2];
+  private readonly wakeLock = new ScreenWakeLock();
 
-  public ngOnInit(): void {
-    this.store.load();
+  constructor() {
+    // the slate belongs to the signed-in user (the route requires one); a switch of user reloads it
+    effect(() => {
+      const uid = this.store.appStore.fbUser()?.uid;
+      if (uid) untracked(() => this.store.load(uid));
+    });
+    effect(() => this.wakeLock.setWanted(!!this.store.game() && !this.store.outcome()));
+    inject(DestroyRef).onDestroy(() => this.wakeLock.setWanted(false));
+  }
+
+  /** Ionic keeps the page alive under a pushed one: let the screen sleep there, resume on return. */
+  public ionViewWillLeave(): void {
+    this.wakeLock.setWanted(false);
+  }
+
+  public ionViewDidEnter(): void {
+    this.wakeLock.setWanted(!!this.store.game() && !this.store.outcome());
+  }
+
+  protected showFooter(): boolean {
+    const game = this.store.game();
+    if (!game) return false;
+    return !!this.store.outcome() || (game.variant !== 'schieber' && game.variant !== 'bueter');
   }
 
   protected onVariant(value: unknown): void {

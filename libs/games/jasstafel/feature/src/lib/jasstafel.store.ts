@@ -20,9 +20,15 @@ const CONFIG_KEY = 'jasstafel.config';
 const ARCHIVE_KEY = 'jasstafel.archive';
 const PENDING_KEY = 'jasstafel.pending';
 const ARCHIVE_MAX = 20;
+/** the keys before they were scoped to the user: shared by everyone who used the browser */
+const LEGACY_KEYS = [GAME_KEY, CONFIG_KEY, ARCHIVE_KEY, PENDING_KEY];
+const EMPTY_SEATS = (n = 4): (AvatarInfo | null)[] => Array.from({ length: n }, () => null);
 
 type StorageFlag = { ok: boolean };
 type HistoryResult = { action: 'edit' | 'delete' | 'clear'; index?: number };
+
+/** `jasstafel.game` → `jasstafel.game.<uid>`: every signed-in user has their own slate on a shared device. */
+const userKey = (key: string, uid: string) => `${key}.${uid}`;
 
 function read<T>(key: string, flag: StorageFlag): T | null {
   try {
@@ -61,7 +67,9 @@ export type JasstafelState = {
 };
 
 /**
- * One Jasstafel on one device. Everything lives in `localStorage`: the running game is written
+ * One Jasstafel per user on one device. Everything lives in `localStorage`, under keys scoped to
+ * the signed-in user's uid (`jasstafel.game.<uid>`), so on a shared tablet nobody sees or
+ * continues somebody else's game or history. The running game is written
  * after every change, so a reload resumes it; finished games go into a 20-entry archive. Storage
  * that throws (private mode, blocked site data) leaves the game running in memory and sets
  * `storageOk = false` for the page's note.
@@ -71,7 +79,7 @@ export type JasstafelState = {
 export const JasstafelStore = signalStore(
   withState<JasstafelState>(() => ({
     variant: 'schieber',
-    seats: [null, null, null, null],
+    seats: EMPTY_SEATS(),
     bueterIdx: 0,
     config: DEFAULT_JASS_CONFIG,
     game: null,
@@ -89,6 +97,8 @@ export const JasstafelStore = signalStore(
     appStore: inject(AppStore),
     diaryLineService: inject(DiaryLineService),
     _storage: { ok: true } as StorageFlag,
+    /** the user whose slate is loaded; '' = none yet, nothing is written */
+    _uid: { value: '' },
     _activityService: inject(ActivityService),
     /** The game whose finish was last logged, so an undo and a re-decided result is not a second finish. */
     _finishLogged: { id: undefined as string | undefined },
@@ -123,11 +133,26 @@ export const JasstafelStore = signalStore(
     }
 
     function persist(): void {
-      write(GAME_KEY, store.game(), store._storage);
-      write(CONFIG_KEY, store.config(), store._storage);
-      write(ARCHIVE_KEY, store.archive(), store._storage);
-      write(PENDING_KEY, store.pendingAnnounced(), store._storage);
+      const uid = store._uid.value;
+      if (!uid) return;
+      write(userKey(GAME_KEY, uid), store.game(), store._storage);
+      write(userKey(CONFIG_KEY, uid), store.config(), store._storage);
+      write(userKey(ARCHIVE_KEY, uid), store.archive(), store._storage);
+      write(userKey(PENDING_KEY, uid), store.pendingAnnounced(), store._storage);
       patchState(store, { storageOk: store._storage.ok });
+    }
+
+    /**
+     * The unscoped keys of the first version belonged to whoever used the browser last, so a game
+     * or archive in them cannot be handed to this user. Only the settings carry over (they name
+     * nobody); then the old keys go.
+     */
+    function dropLegacyKeys(uid: string): void {
+      const legacyConfig = read<unknown>(CONFIG_KEY, store._storage);
+      if (legacyConfig && read<unknown>(userKey(CONFIG_KEY, uid), store._storage) === null) {
+        write(userKey(CONFIG_KEY, uid), legacyConfig, store._storage);
+      }
+      for (const key of LEGACY_KEYS) write(key, null, store._storage);
     }
 
     /** Sets or clears finishedAt from the recomputed outcome and keeps the archive in step. */
@@ -191,18 +216,23 @@ export const JasstafelStore = signalStore(
     }
 
     return {
-      load(): void {
-        const config = normalizeConfig(read(CONFIG_KEY, store._storage));
-        const game = parseStoredGame(read(GAME_KEY, store._storage));
-        const pendingAnnounced = parsePending(read(PENDING_KEY, store._storage), game);
-        const rawArchive = read<unknown[]>(ARCHIVE_KEY, store._storage);
+      /** Loads the slate of `uid` (the signed-in user); a different user replaces everything shown. */
+      load(uid: string): void {
+        if (!uid || uid === store._uid.value) return;
+        store._uid.value = uid;
+        store._finishLogged.id = undefined;
+        dropLegacyKeys(uid);
+        const config = normalizeConfig(read(userKey(CONFIG_KEY, uid), store._storage));
+        const game = parseStoredGame(read(userKey(GAME_KEY, uid), store._storage));
+        const pendingAnnounced = parsePending(read(userKey(PENDING_KEY, uid), store._storage), game);
+        const rawArchive = read<unknown[]>(userKey(ARCHIVE_KEY, uid), store._storage);
         const archive = (Array.isArray(rawArchive) ? rawArchive : []).map(parseStoredGame).filter((g): g is JassGame => !!g);
-        const seats = game ? game.players.map(p => p.avatar) : [null, null, null, null];
+        const seats = game ? game.players.map(p => p.avatar) : EMPTY_SEATS();
         // a resumed game was logged when it was started; one restored already decided is not finished again
         if (game?.finishedAt) store._finishLogged.id = game.id;
         patchState(store, {
           config, game, archive, seats, pendingAnnounced, variant: game?.variant ?? 'schieber', bueterIdx: game?.bueterIdx ?? 0,
-          storageOk: store._storage.ok,
+          storageOk: store._storage.ok, diaryBusy: false,
         });
       },
 
@@ -232,13 +262,16 @@ export const JasstafelStore = signalStore(
 
       start,
 
-      /** Differenzler: step 1 before the hand, step 2 after it; every other variant: one step. */
-      async enterHand(): Promise<void> {
+      /**
+       * Differenzler: step 1 before the hand, step 2 after it; every other variant: one step.
+       * `sideId` (the «+» of a slate half): the form asks only that side's points.
+       */
+      async enterHand(sideId = ''): Promise<void> {
         const game = store.game();
         if (!game || store.outcome() !== undefined) return;
         const pending = store.pendingAnnounced();
         const phase: JassHandFormModel['phase'] = game.variant !== 'differenzler' ? 'full' : (pending ? 'points' : 'announce');
-        const model = newHandForm(game, phase);
+        const model = newHandForm(game, phase, undefined, undefined, sideId);
         if (phase === 'points' && pending) model.announced = [...pending];
         const maker = nextTrumpMaker(game);
         const result = await openHandModal(game, model, maker);
@@ -339,7 +372,9 @@ export const JasstafelStore = signalStore(
         if (store.game() && store.outcome() === undefined) {
           if (!(await store.alertService.confirm(store.i18n.end_confirm(), true))) return;
         }
-        patchState(store, { pendingAnnounced: null });
+        // the start screen begins empty: the seats are picked again for the next round of players
+        const n = Math.max(...PLAYER_COUNTS[store.variant()]);
+        patchState(store, { pendingAnnounced: null, seats: EMPTY_SEATS(n), bueterIdx: 0 });
         setGame(null);
       },
 

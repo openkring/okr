@@ -37,7 +37,7 @@ function tally(count: number, lineY: number, rowDir: 1 | -1): Line[] {
 /**
  * One side's score chalked on a Jasstafel Z: 100s on the top line, 50s as diagonal strokes in the
  * middle (two make a cross = 100), 20s on the bottom line, and the remainder below 20 as a number
- * right of the Z. Tapping the top, middle or bottom band adds one 100, 50 or 20 (`tapped`).
+ * right of the Z, at the height of the diagonal. Tapping the top, middle or bottom band adds one 100, 50 or 20 (`tapped`).
  *
  * The drawing fills its box: the viewBox keeps a fixed width and takes its height from the box's
  * aspect ratio (ResizeObserver), so strokes keep their size on a tall phone half or a wide tablet.
@@ -50,6 +50,8 @@ function tally(count: number, lineY: number, rowDir: 1 | -1): Line[] {
     svg { width: 100%; height: 100%; display: block; }
     .tap { fill: transparent; cursor: pointer; }
     .tap:active { fill: rgba(242, 240, 230, 0.08); }
+    /* the Z itself is ruled, not chalked: one sharp hairline, the same width at every board size */
+    .z-line { stroke: var(--jass-chalk); stroke-width: 1px; vector-effect: non-scaling-stroke; fill: none; opacity: 0.85; }
     .rest { fill: var(--jass-chalk); font-size: 24px; text-anchor: middle; dominant-baseline: middle; }
   `],
   template: `
@@ -60,12 +62,12 @@ function tally(count: number, lineY: number, rowDir: 1 | -1): Line[] {
         <filter id="jass-rough" filterUnits="userSpaceOnUse" x="-20" y="-20" [attr.width]="w + 40" [attr.height]="h() + 40"><feTurbulence baseFrequency="0.9" numOctaves="1" result="n" />
           <feDisplacementMap in="SourceGraphic" in2="n" scale="1.6" /></filter>
       </defs>
-      <path class="jass-chalk" [attr.d]="zPath()" opacity="0.5" />
+      <path class="z-line" [attr.d]="zPath()" />
       @for (l of strokeLines(); track $index) {
         <line class="jass-chalk" [attr.x1]="l.x1" [attr.y1]="l.y1" [attr.x2]="l.x2" [attr.y2]="l.y2" />
       }
       @if (strokes().rest) {
-        <text class="rest" [attr.x]="(x1 + w) / 2" [attr.y]="bottomY()">{{ strokes().rest }}</text>
+        <text class="rest" [attr.x]="(x1 + w) / 2" [attr.y]="midY()">{{ strokes().rest }}</text>
       }
       <!-- tap bands: top line = 100, diagonal = 50, bottom line = 20 -->
       <rect class="tap" x="0" y="0" [attr.width]="w" [attr.height]="band1()" role="button"

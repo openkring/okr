@@ -9,13 +9,15 @@ import { getAvatarName } from '@okr/shared-util-core';
 /** A player's round photo, or the initials of a typed guest (key ''). Names are never shown. */
 @Component({
   selector: 'okr-jass-avatar',
+  host: { '[class.large]': 'large()' },
   standalone: true,
   imports: [ImgDirective, IonAvatar, AvatarPipe],
   styles: [`
-    :host { display: inline-block; }
-    ion-avatar { width: 44px; height: 44px; border: 2px solid transparent; }
+    :host { display: inline-block; --jass-avatar-size: 44px; }
+    :host(.large) { --jass-avatar-size: 72px; font-size: 1.5rem; }
+    ion-avatar { width: var(--jass-avatar-size); height: var(--jass-avatar-size); border: 2px solid transparent; }
     ion-avatar.marked { border-color: #f2d56b; }
-    .initials { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center;
+    .initials { width: var(--jass-avatar-size); height: var(--jass-avatar-size); border-radius: 50%; display: grid; place-items: center;
       border: 2px dashed rgba(242, 240, 230, 0.7); font-weight: 600; }
     .initials.marked { border-style: solid; border-color: #f2d56b; }
   `],
@@ -32,6 +34,8 @@ import { getAvatarName } from '@okr/shared-util-core';
 export class JassAvatar {
   public readonly avatar = input.required<AvatarInfo>();
   public readonly marked = input(false);
+  /** 72px instead of 44px, e.g. in the hand modal */
+  public readonly large = input(false);
 
   protected readonly name = computed(() => getAvatarName(this.avatar()));
   protected readonly initials = computed(() =>

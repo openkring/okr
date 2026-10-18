@@ -20,13 +20,20 @@ import { JassAvatar } from './jass-avatar';
   selector: 'okr-jass-hand-form',
   standalone: true,
   imports: [IonCard, IonCardContent, IonGrid, IonRow, IonCol, NumberInput, StringSelect, Checkbox, ErrorNote, JassAvatar],
-  styles: [`@media (width <= 600px) { ion-card { margin: 5px; } } .heads { display: flex; gap: 4px; }`],
+  styles: [`@media (width <= 600px) { ion-card { margin: 5px; } } .heads { display: flex; gap: 4px; }
+    /* opened from a team's «+»: one team, read from across the table */
+    .focused { font-size: 1.6rem; }
+    .focused .heads { gap: 8px; padding: 8px 0; }
+    .focused .preview { font-size: 2rem; font-weight: 600; }
+    /* ion-input / ion-checkbox live inside the shared primitives; emulated encapsulation cannot reach them */
+    .focused ::ng-deep ion-input { font-size: 2.2rem; --min-height: 72px; }
+    .focused ::ng-deep ion-checkbox, .focused ::ng-deep ion-select { font-size: 1.4rem; }`],
   template: `
     @if (showForm()) {
       <form novalidate>
         <ion-card>
           <ion-card-content class="ion-no-padding">
-            <ion-grid>
+            <ion-grid [class.focused]="!!formData().focusSideId">
               @if (formData().variant === 'coiffeur') {
                 <ion-row>
                   <ion-col size="12" size-md="6">
@@ -54,9 +61,13 @@ import { JassAvatar } from './jass-avatar';
                 </ion-row>
               }
               @for (id of formData().sideIds; track id; let i = $index) {
+                <!-- focused: only that team's row; the other side follows as 157 − x -->
+                @if (!formData().focusSideId || formData().focusSideId === id) {
                 <ion-row>
                   <ion-col size="12"><div class="heads">
-                    @for (p of playersOf(id); track p) { <okr-jass-avatar [avatar]="game().players[p].avatar" /> }
+                    @for (p of playersOf(id); track p) {
+                      <okr-jass-avatar [avatar]="game().players[p].avatar" [large]="!!formData().focusSideId" />
+                    }
                   </div></ion-col>
                   @if (formData().variant === 'differenzler' && formData().phase !== 'points') {
                     <ion-col size="12" size-md="6">
@@ -83,6 +94,7 @@ import { JassAvatar } from './jass-avatar';
                     }
                   }
                 </ion-row>
+                }
               }
               <ion-row>
                 <ion-col size="12">
@@ -93,7 +105,7 @@ import { JassAvatar } from './jass-avatar';
               </ion-row>
               @if (formData().phase !== 'announce') {
                 @if (preview(); as p) {
-                  <ion-row><ion-col size="12">{{ i18n().preview() }}: {{ p }}</ion-col></ion-row>
+                  <ion-row><ion-col size="12" class="preview">{{ i18n().preview() }}: {{ p }}</ion-col></ion-row>
                 }
               }
             </ion-grid>
@@ -153,7 +165,10 @@ export class JassHandForm {
   protected readonly preview = computed(() => {
     if (this.formData().phase === 'announce' || !this.result().isValid()) return '';
     const v = handValues(this.game(), handFromForm(this.formData(), this.trumpMakerIdx()));
-    return this.formData().sideIds.map(id => v[id]).join(' : ');
+    // focused: the team that opened the form first
+    const focus = this.formData().focusSideId;
+    const ids = focus ? [focus, ...this.formData().sideIds.filter(id => id !== focus)] : this.formData().sideIds;
+    return ids.map(id => v[id]).join(' : ');
   });
 
   protected playersOf(sideId: string): number[] {
