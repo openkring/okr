@@ -45,9 +45,9 @@ export async function processReminder(doc: ChatReminderDoc, deps: ReminderDeps):
   const tenant = doc.tenants[0];
   try {
     const alias = `#${notesRoomAliasLocalpart(tenant, doc.personKey)}:${deps.host}`;
-    const aliased = await deps.resolveRoomAlias(alias, deps.token);
+    const aliased = await deps.resolveRoomAlias(alias, deps.token, { strict: true });
     if (!aliased || aliased !== doc.notesRoomId) return cancel(doc, 'notesRoomId is not the owner alias target');
-    if (!(await deps.isOwnNotesRoom(doc.notesRoomId, tenant, deps.token))) return cancel(doc, 'not an own notes room');
+    if (!(await deps.isOwnNotesRoom(doc.notesRoomId, tenant, deps.token, { strict: true }))) return cancel(doc, 'not an own notes room');
 
     const entry = await deps.getRoomEvent(doc.notesRoomId, doc.bookmarkEventId, deps.token);
     if (!entry) return 'cancelled';

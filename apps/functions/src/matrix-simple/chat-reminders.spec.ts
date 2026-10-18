@@ -5,7 +5,8 @@ vi.mock('firebase-admin/firestore', () => ({ getFirestore: vi.fn() }));
 vi.mock('firebase-functions/params', () => ({ defineSecret: () => ({ value: () => 'tok' }) }));
 
 import { ChatReminderDoc, processReminder, REMINDER_PREFIX } from './chat-reminders';
-import { MatrixTerminalError, roomEventExists, sendBotReply } from './shared';
+import { MatrixTerminalError, resolveRoomAlias, roomEventExists, sendBotReply } from './shared';
+import { isOwnNotesRoom } from './notes-room';
 
 const doc: ChatReminderDoc = {
   okey: 'r1', tenants: ['scs'], personKey: 'p1', dueAt: 1000, state: 'pending',
@@ -27,8 +28,8 @@ describe('processReminder', () => {
   it('replies to the bookmark when room and entry are the owner\'s', async () => {
     const deps = mkDeps();
     expect(await processReminder(doc, deps)).toBe('sent');
-    expect(deps.resolveRoomAlias).toHaveBeenCalledWith(`#notes_scs_p1:${HOST}`, 't');
-    expect(deps.isOwnNotesRoom).toHaveBeenCalledWith('!notes:h', 'scs', 't');
+    expect(deps.resolveRoomAlias).toHaveBeenCalledWith(`#notes_scs_p1:${HOST}`, 't', { strict: true });
+    expect(deps.isOwnNotesRoom).toHaveBeenCalledWith('!notes:h', 'scs', 't', { strict: true });
     expect(deps.sendBotReply).toHaveBeenCalledWith('!notes:h', '$bm', `${REMINDER_PREFIX}: Anna Muster in «Vorstand»`, 'reminder_r1', 't');
     expect(REMINDER_PREFIX).toBe('Erinnerung');
   });
@@ -69,6 +70,33 @@ describe('processReminder', () => {
   it('propagates a retryable send failure so the reminder stays pending', async () => {
     const deps = mkDeps({ sendBotReply: vi.fn().mockRejectedValue(new Error('boom')) });
     await expect(processReminder(doc, deps)).rejects.toThrow('boom');
+  });
+});
+
+describe('strict ownership reads', () => {
+  const res = (status: number, body: unknown = {}) => ({ ok: status < 300, status, json: async () => body, text: async () => '' });
+  it('alias 404 resolves undefined; 503 throws', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(res(404)));
+    expect(await resolveRoomAlias('#a:h', 't', { strict: true })).toBeUndefined();
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(res(503)));
+    await expect(resolveRoomAlias('#a:h', 't', { strict: true })).rejects.toThrow();
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(res(503)));
+    expect(await resolveRoomAlias('#a:h', 't')).toBeUndefined();
+  });
+  it('room details 500 throws in strict mode, false otherwise', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValueOnce(res(200, { user_id: '@bot:h' })).mockResolvedValueOnce(res(500)));
+    await expect(isOwnNotesRoom('!n:h', 'scs', 't', { strict: true })).rejects.toThrow();
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValueOnce(res(200, { user_id: '@bot:h' })).mockResolvedValueOnce(res(500)));
+    expect(await isOwnNotesRoom('!n:h', 'scs', 't')).toBe(false);
+  });
+  it('foreign creator is a definite false in strict mode', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValueOnce(res(200, { user_id: '@bot:h' })).mockResolvedValueOnce(res(200, { creator: '@x:h' })));
+    expect(await isOwnNotesRoom('!n:h', 'scs', 't', { strict: true })).toBe(false);
+  });
+  it('processReminder: lookup failures propagate, alias 404 cancels', async () => {
+    await expect(processReminder(doc, mkDeps({ resolveRoomAlias: vi.fn().mockRejectedValue(new Error('503')) }))).rejects.toThrow('503');
+    expect(await processReminder(doc, mkDeps({ resolveRoomAlias: vi.fn().mockResolvedValue(undefined) }))).toBe('cancelled');
+    await expect(processReminder(doc, mkDeps({ isOwnNotesRoom: vi.fn().mockRejectedValue(new Error('500')) }))).rejects.toThrow('500');
   });
 });
 

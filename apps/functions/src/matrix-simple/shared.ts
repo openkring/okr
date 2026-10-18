@@ -380,14 +380,21 @@ export function notesRoomAliasLocalpart(tenantId: string, personKey: string): st
  * Look up a room by its full alias (`#local:host`) via the directory API.
  * Returns the room id, or undefined when the alias is unclaimed or the lookup fails.
  */
-export async function resolveRoomAlias(alias: string, adminToken: string): Promise<string | undefined> {
+export async function resolveRoomAlias(
+  alias: string, adminToken: string, opts: { strict?: boolean } = {},
+): Promise<string | undefined> {
   try {
     const resp = await fetch(
       `${MATRIX_HOMESERVER}/_matrix/client/v3/directory/room/${encodeURIComponent(alias)}`,
       { headers: { Authorization: `Bearer ${adminToken}` } },
     );
     if (resp.ok) return ((await resp.json()) as { room_id: string }).room_id;
-  } catch { /* treat as not found */ }
+    // strict: only a definite «no such alias» is an answer; anything else is a failure to retry.
+    if (opts.strict && resp.status !== 404) throw new Error(`resolveRoomAlias ${alias} → ${resp.status}`);
+  } catch (error) {
+    if (opts.strict) throw error;
+    /* treat as not found */
+  }
   return undefined;
 }
 
@@ -846,12 +853,18 @@ export async function setRoomTenants(roomId: string, tenants: string[], adminTok
  * Callers that must not touch an already-decided room need this distinction; `getRoomTenants`
  * flattens both empty cases to `[]` and is the right choice only for admission checks.
  */
-export async function getRoomTenantMarker(roomId: string, adminToken: string): Promise<string[] | undefined> {
+export async function getRoomTenantMarker(
+  roomId: string, adminToken: string, opts: { strict?: boolean } = {},
+): Promise<string[] | undefined> {
   const resp = await fetch(
     `${MATRIX_HOMESERVER}/_matrix/client/v3/rooms/${encodeURIComponent(roomId)}/state/${OKR_TENANT_EVENT}/`,
     { headers: { Authorization: `Bearer ${adminToken}` } }
   );
-  if (!resp.ok) return undefined;
+  // strict: 404 = no marker (a definite answer); any other failure throws instead of reading as «unmarked».
+  if (!resp.ok) {
+    if (opts.strict && resp.status !== 404) throw new Error(`getRoomTenantMarker ${roomId} → ${resp.status}`);
+    return undefined;
+  }
   const content = await resp.json() as { tenants?: string[] };
   return Array.isArray(content.tenants) ? content.tenants : undefined;
 }

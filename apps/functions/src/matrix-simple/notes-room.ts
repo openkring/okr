@@ -55,19 +55,29 @@ async function joinPerson(roomId: string, matrixUserId: string, personKey: strin
 }
 
 /** A notes room is ours when @bk2-bot (the admin token's account) created it and it carries exactly [tenantId]. */
-export async function isOwnNotesRoom(roomId: string, tenantId: string, adminToken: string): Promise<boolean> {
+export async function isOwnNotesRoom(
+  roomId: string, tenantId: string, adminToken: string, opts: { strict?: boolean } = {},
+): Promise<boolean> {
   const headers = { Authorization: `Bearer ${adminToken}` };
+  // strict (reminder sweep): a failed read throws so the caller retries; only a successful read
+  // showing a foreign creator / wrong marker (or a 404 room) is a «no». Non-strict fails closed.
+  const fail = (what: string, status: number): false => {
+    if (opts.strict) throw new Error(`isOwnNotesRoom ${what} ${roomId} → ${status}`);
+    return false;
+  };
   try {
     const who = await fetch(`${MATRIX_HOMESERVER}/_matrix/client/v3/account/whoami`, { headers });
-    if (!who.ok) return false;
+    if (!who.ok) return fail('whoami', who.status);
     const botId = ((await who.json()) as { user_id?: string }).user_id;
     const details = await fetch(`${MATRIX_HOMESERVER}/_synapse/admin/v1/rooms/${encodeURIComponent(roomId)}`, { headers });
-    if (!details.ok) return false;
+    if (details.status === 404) return false;
+    if (!details.ok) return fail('details', details.status);
     const creator = ((await details.json()) as { creator?: string }).creator;
     if (!botId || creator !== botId) return false;
-    const marker = await getRoomTenantMarker(roomId, adminToken);
+    const marker = await getRoomTenantMarker(roomId, adminToken, opts);
     return marker?.length === 1 && marker[0] === tenantId;
-  } catch {
+  } catch (error) {
+    if (opts.strict) throw error;
     return false;
   }
 }
