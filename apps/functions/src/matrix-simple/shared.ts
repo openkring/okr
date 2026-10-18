@@ -366,6 +366,30 @@ export function askRoomAliasLocalpart(groupId: string, personKey: string): strin
   return `ask_${clean(groupId)}_${clean(personKey)}`;
 }
 
+/**
+ * Alias localpart of a person's notes room («Notizen an mich»): one per (person, tenant).
+ * Client twin: `notesRoomAliasLocalpart` in libs/chat/util/src/lib/bookmark.util.ts —
+ * functions cannot import libs/chat, so the two must stay identical.
+ */
+export function notesRoomAliasLocalpart(tenantId: string, personKey: string): string {
+  return `notes_${tenantId}_${personKey}`;
+}
+
+/**
+ * Look up a room by its full alias (`#local:host`) via the directory API.
+ * Returns the room id, or undefined when the alias is unclaimed or the lookup fails.
+ */
+export async function resolveRoomAlias(alias: string, adminToken: string): Promise<string | undefined> {
+  try {
+    const resp = await fetch(
+      `${MATRIX_HOMESERVER}/_matrix/client/v3/directory/room/${encodeURIComponent(alias)}`,
+      { headers: { Authorization: `Bearer ${adminToken}` } },
+    );
+    if (resp.ok) return ((await resp.json()) as { room_id: string }).room_id;
+  } catch { /* treat as not found */ }
+  return undefined;
+}
+
 /** personKeys with an active (not archived, not expired) membership in the given group. */
 export async function activeGroupMemberKeys(groupId: string): Promise<string[]> {
   const snap = await getFirestore()
@@ -405,13 +429,8 @@ export async function resolveAskRoom(
   const localpart = askRoomAliasLocalpart(groupId, personKey);
   const alias = `#${localpart}:${hostname}`;
 
-  try {
-    const aliasResp = await fetch(
-      `${MATRIX_HOMESERVER}/_matrix/client/v3/directory/room/${encodeURIComponent(alias)}`,
-      { headers: authHeader }
-    );
-    if (aliasResp.ok) return (await aliasResp.json() as { room_id: string }).room_id;
-  } catch { /* fall through to create */ }
+  const existing = await resolveRoomAlias(alias, adminToken);
+  if (existing) return existing;
 
   if (!opts.create) return undefined;
 

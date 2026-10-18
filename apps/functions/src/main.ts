@@ -137,6 +137,7 @@ export const assignMatrixRoomTenants = MatrixSimple.assignMatrixRoomTenants;
 export const createAdhocChat = MatrixSimple.createAdhocChat;
 export const leaveAdhocChat = MatrixSimple.leaveAdhocChat;
 export const addAdhocChatMembers = MatrixSimple.addAdhocChatMembers;
+export const resolveNotesRoom = MatrixSimple.resolveNotesRoom;
 
 // Pinnwand: alle schreiben an alle, Antworten privat (spec 2026-10-11, TOC 1.95)
 export const onPinboardSourceMembershipWritten = MatrixSimple.onPinboardSourceMembershipWritten;
