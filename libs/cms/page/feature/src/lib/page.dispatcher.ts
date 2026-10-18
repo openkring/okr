@@ -52,7 +52,7 @@ import { GraphPage } from "./graph.page";
                 }
                 @case ('chat') {
                     @defer (on idle) {
-                        <okr-chat-page [color]="color()" [selectedRoom]="effectiveRoomId()" [isGroupView]="isGroupView()" [contextMenuName]="contextMenuName() ?? 'contextMenuChat'" />
+                        <okr-chat-page [color]="color()" [selectedRoom]="effectiveRoomId()" [eventId]="eventId()" [isGroupView]="isGroupView()" [contextMenuName]="contextMenuName() ?? 'contextMenuChat'" />
                     } @placeholder {
                         <okr-spinner />
                     } @error {
@@ -137,6 +137,8 @@ export class PageDispatcher implements ViewWillEnter {
   public color = input('secondary');
   public isGroupView = input(false);
   public selectedRoom = input<string | undefined>();
+  /** Query-param deep link to one message of the selected room; undefined = no jump. */
+  public eventId = input<string | undefined>();
   public groupAdmin = input(false);
 
   // ?showMenu=false hides the toolbar and main menu (for embedding in external sites)

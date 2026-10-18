@@ -76,6 +76,7 @@ export class ChatPage {
   public color = input('secondary');
   public isGroupView = input(false);
   public selectedRoom = input<string | undefined>();
+  public eventId = input<string | undefined>();
   public contextMenuName = input<string>('contextMenuChat');
 
   // Lazy: a static import of @okr/chat-feature drags matrix-js-sdk into every page that reaches
@@ -109,6 +110,7 @@ export class ChatPage {
           const ref = host.createComponent(MatrixChat);
           ref.setInput('isGroupView', untracked(() => this.isGroupView()));
           ref.setInput('selectedRoom', untracked(() => this.selectedRoom()));
+          ref.setInput('eventId', untracked(() => this.eventId()));
           ref.setInput('contextMenuName', untracked(() => this.contextMenuName()));
           this.chatRef.set(ref);
         } finally {
@@ -120,10 +122,12 @@ export class ChatPage {
       const ref = this.chatRef();
       const isGroupView = this.isGroupView();
       const selectedRoom = this.selectedRoom();
+      const eventId = this.eventId();
       const contextMenuName = this.contextMenuName();
       if (!ref) return;
       ref.setInput('isGroupView', isGroupView);
       ref.setInput('selectedRoom', selectedRoom);
+      ref.setInput('eventId', eventId);
       ref.setInput('contextMenuName', contextMenuName);
     });
     this.destroyRef.onDestroy(() => this.chatRef()?.destroy());

@@ -7,7 +7,7 @@ import { captureMessage } from '@sentry/angular';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { ImageLightboxModal, LightboxImage, showVideoView, Spinner } from '@okr/shared-ui';
 import { debugMessage, fileSizeUnit, fill, hasRole, isKioskOnly, warn } from '@okr/shared-util-core';
-import { AlertService, createActionSheetButton, createActionSheetDivider, createActionSheetOptions, downloadFile, isBrowser, isNativePlatform, saveFile } from '@okr/shared-util-angular';
+import { AlertService, createActionSheetButton, createActionSheetDivider, createActionSheetOptions, downloadFile, isBrowser, isNativePlatform, navigateByUrl, saveFile } from '@okr/shared-util-angular';
 import { MatrixMessage, PersonModelName, RoleName } from '@okr/shared-models';
 
 import { MenuService } from '@okr/cms-menu-data-access';
@@ -438,6 +438,8 @@ function rejectionReasons(results: PromiseSettledResult<unknown>[]): unknown[] {
                     (loadOlder)="onLoadOlder()"
                     (messageClicked)="onMessageClicked($event)"
                     (bookmarkClicked)="onBookmarkClicked($event)"
+                    (permalinkClicked)="openPermalink($event)"
+                    [serverName]="store.homeServer()"
                     [isNotesRoom]="store.isCurrentRoomNotes()"
                     [failedMediaIds]="store.failedMediaIds()"
                     (imageClicked)="onImageClicked($event)"
@@ -576,6 +578,8 @@ function rejectionReasons(results: PromiseSettledResult<unknown>[]): unknown[] {
                     (videoCardClicked)="onVideoCardClicked($event)"
                     (messageClicked)="onMessageClicked($event)"
                     (bookmarkClicked)="onBookmarkClicked($event)"
+                    (permalinkClicked)="openPermalink($event)"
+                    [serverName]="store.homeServer()"
                     [isNotesRoom]="store.isCurrentRoomNotes()"
                     [failedMediaIds]="store.failedMediaIds()"
                     (imageClicked)="onImageClicked($event)"
@@ -656,6 +660,7 @@ export class MatrixChat implements OnDestroy {
   private isInitializing = false; // Guard flag to prevent multiple initializations
   private isRequestingRoomAccess = false;
   private readonly lastRoomAccessAttempt = new Map<string, number>(); // groupId → timestamp of last CF call
+  private jumpedKey?: string;                                       // (room|event) deep-link jump already applied
   private resolvedRoomAlias?: string;                                 // deep-link alias already applied once
 
   // inputs
@@ -665,6 +670,8 @@ export class MatrixChat implements OnDestroy {
    * else a personkey was given and a direct chat to this person requested
    */
   public selectedRoom = input<string | undefined>();
+  /** Deep link to one message of `selectedRoom`. The router sets unbound inputs to undefined = no jump. */
+  public eventId = input<string | undefined>();
   public contextMenuName = input<string>('contextMenuChat');
 
   // Whether the current user may manage rooms (add/edit) — read by the parent ChatPage,
@@ -858,7 +865,12 @@ export class MatrixChat implements OnDestroy {
       // Resolve each alias exactly once. rooms() is a reactive dep and re-emits on every
       // sync (unread counts, new messages) — without this guard every re-emission would
       // re-apply the deep link and snap the user back off a room they just clicked.
-      if (this.resolvedRoomAlias === roomAlias) return;
+      if (this.resolvedRoomAlias === roomAlias) {
+        // same room, but the eventId may have arrived or changed since
+        const current = untracked(() => this.store.currentRoomId());
+        if (current) this.applyDeepLinkEvent(current);
+        return;
+      }
       // rooms() is a reactive dep: when rooms load after sync, this re-runs and resolves the alias.
       // Also check the BehaviorSubject's current value synchronously — the rxResource may not have
       // processed the initial BehaviorSubject emission yet (it's async), which would cause a
@@ -877,6 +889,7 @@ export class MatrixChat implements OnDestroy {
         this.resolvedRoomAlias = roomAlias;
         this.roomAccessDenied.set(undefined);
         this.store.setCurrentRoom(match.roomId);
+        this.applyDeepLinkEvent(match.roomId);
         return;
       }
       // Room not in joined-rooms list. Request access via Cloud Function.
@@ -891,6 +904,7 @@ export class MatrixChat implements OnDestroy {
         this.resolvedRoomAlias = roomAlias;
         this.roomAccessDenied.set(undefined);
         this.store.setCurrentRoom(roomAlias);
+        this.applyDeepLinkEvent(roomAlias);
         return;
       }
       // The wanted room is demonstrably NOT in this user's room list, so whatever
@@ -1239,13 +1253,44 @@ export class MatrixChat implements OnDestroy {
   }
 
   /**
-   * A bookmark card (or its «Öffnen») was chosen: go to the original room.
-   * Single entry point; Task 5/6 rewire this through the permalink jump to the exact message.
+   * A bookmark card (or its «Öffnen») was chosen: open the original message.
    */
   protected onBookmarkClicked(bookmark: ChatBookmark): void {
-    // The target must be a room this client knows; a forged or stale roomId does nothing.
-    if (!this.store.rooms().some(r => r.roomId === bookmark.roomId)) return;
-    this.store.setCurrentRoom(bookmark.roomId);
+    this.openPermalink({ roomIdOrAlias: bookmark.roomId, eventId: bookmark.eventId });
+  }
+
+  /**
+   * Open a room or message given by a permalink target (matrix.to tap or bookmark). A room this
+   * client has joined is opened in place; an alias that is not joined yet goes through the
+   * `selectedRoom` deep link so the alias/access resolution there is reused. A forged or unknown
+   * room id does nothing.
+   */
+  protected openPermalink(target: { roomIdOrAlias: string; eventId?: string }): void {
+    const { roomIdOrAlias, eventId } = target;
+    const rooms = this.store.rooms();
+    const alias = roomIdOrAlias.startsWith('#') ? roomIdOrAlias.toLowerCase() : undefined;
+    const room = alias
+      ? rooms.find(r => r.topic?.split(':').slice(0, 2).join(':').toLowerCase() === alias)
+      : rooms.find(r => r.roomId === roomIdOrAlias);
+    if (room) {
+      if (eventId) void this.store.jumpToEvent(room.roomId, eventId);
+      else this.store.setCurrentRoom(room.roomId);
+      return;
+    }
+    // Not joined: only a group alias can be requested; its key is what `selectedRoom` expects.
+    const groupKey = alias ? /^#group_([^:]+):/.exec(alias)?.[1] : undefined;
+    if (!groupKey) return;
+    void navigateByUrl(this.router, '/private/chat/c-contentpage', eventId ? { selectedRoom: groupKey, eventId } : { selectedRoom: groupKey });
+  }
+
+  /** Jump to the deep-link message once per distinct (room, event) pair. */
+  private applyDeepLinkEvent(roomId: string): void {
+    const eventId = this.eventId();
+    if (!eventId) return;
+    const key = `${roomId}|${eventId}`;
+    if (this.jumpedKey === key) return;
+    this.jumpedKey = key;
+    void this.store.jumpToEvent(roomId, eventId);
   }
 
   protected async onImageClicked(event: { message: MatrixMessage; group: MatrixMessage[] }): Promise<void> {

@@ -9,7 +9,7 @@ import { MatrixMessage, MatrixReadReceipt, PersonModelName } from '@okr/shared-m
 import { AvatarService } from '@okr/avatar-data-access';
 import { MatrixReadReceiptStrip } from './matrix-read-receipt-strip';
 import { PollMessage } from './poll-message';
-import { decorateMentionPills, extractMentionLocalpart, formatMatrixDate, formatMatrixTime, groupMessages, ImageBatchGroup, isVideoMessage, linkifyText, readBookmark, isTrustedBookmarkEntry, ChatBookmark, MatrixChatI18n, MessageOrBatch } from '@okr/chat-util';
+import { decorateMentionPills, extractMentionLocalpart, formatMatrixDate, formatMatrixTime, groupMessages, ImageBatchGroup, isVideoMessage, linkifyText, readBookmark, isTrustedBookmarkEntry, ChatBookmark, parseMatrixPermalink, MatrixChatI18n, MessageOrBatch } from '@okr/chat-util';
 
 /** imgix thumbnail size for a mention pill's avatar — 2x the 18px CSS box, for retina. */
 const MENTION_AVATAR_SIZE = 36;
@@ -753,6 +753,10 @@ export class MatrixMessageList {
   /** A tap on an album video card: the docKey to play. */
   public readonly videoCardClicked = output<string>();
   public readonly bookmarkClicked = output<ChatBookmark>();
+  /** A matrix.to link to a room or message on our homeserver was tapped. */
+  public readonly permalinkClicked = output<{ roomIdOrAlias: string; eventId?: string }>();
+  /** Our homeserver name; matrix.to links are only opened in-app when they point here. */
+  public readonly serverName = input<string>('');
   /** True in the user's own notes room: only there are bookmark entries rendered as cards. */
   public readonly isNotesRoom = input(false);
 
@@ -960,6 +964,12 @@ export class MatrixMessageList {
     if (personKey) {
       event.preventDefault();
       this.personSelected.emit({ localpart: personKey, message: item });
+      return;
+    }
+    const permalink = href && this.serverName() ? parseMatrixPermalink(href, this.serverName()) : undefined;
+    if (permalink) {
+      event.preventDefault();
+      this.permalinkClicked.emit(permalink);
       return;
     }
     // a tapped link opens the link — not the action sheet on top of it

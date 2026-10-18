@@ -524,6 +524,15 @@ export const _MatrixChatStore = signalStore(
       },
 
       /**
+       * Open a room at one message. Minimal version: only selects the room. Task 6 / spec §4.4
+       * replaces the body with the timeline jump to `eventId`.
+       */
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      async jumpToEvent(roomId: string, eventId: string): Promise<void> {
+        this.setCurrentRoom(roomId);
+      },
+
+      /**
        * Load older messages for the current room (C-5 scroll-up pagination).
        * Updates hasMoreHistory so the UI can stop asking once the room start is reached.
        */
