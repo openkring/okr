@@ -191,6 +191,11 @@
       "header": "Me le rappeler",
       "confirm": "OK",
       "error": "Le rappel n'a pas pu être enregistré. Essaie encore une fois."
+    },
+    "unreadFrom": {
+      "action": "Non lu à partir d'ici",
+      "divider": "Non lu à partir d'ici",
+      "error": "Ça n'a pas marché. Essaie encore une fois."
     }
   },
   "thread": {

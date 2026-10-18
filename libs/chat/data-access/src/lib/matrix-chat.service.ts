@@ -10,7 +10,7 @@ import { MatrixConfig, MatrixMessage, MatrixReadReceipt, MatrixRoom, TypingNotif
 import { AppStore } from '@okr/shared-feature';
 import { checkVideoLimits, debugData, debugMessage } from '@okr/shared-util-core';
 import { OKR_VIDEO_FIELD, videoLink } from '@okr/content-document-util';
-import { convertHeicToJpeg, materializeFile, resolveFileMimeType, extractVideoPoster, UploadTooLargeError, initMatrixLogLevel, ensurePromiseWithResolvers, buildMentionContent, escapeHtml, MentionRef, OKR_TENANT_EVENT, resolveMatrixDisplayName, canPostWithPower, VideoLimitError, VideoUploadError, buildPollContent, PollAnswerDef, POLL_START_EVENT, PinboardInput, AvailablePinboard } from '@okr/chat-util';
+import { convertHeicToJpeg, materializeFile, resolveFileMimeType, extractVideoPoster, UploadTooLargeError, initMatrixLogLevel, ensurePromiseWithResolvers, buildMentionContent, escapeHtml, MentionRef, OKR_TENANT_EVENT, resolveMatrixDisplayName, canPostWithPower, VideoLimitError, VideoUploadError, buildPollContent, PollAnswerDef, POLL_START_EVENT, PinboardInput, AvailablePinboard, UNREAD_FROM_EVENT, unreadFromEventIdOf } from '@okr/chat-util';
 
 import { mediaMimeHint, mxcAvatarHttpUrl } from './matrix-helpers';
 import { MatrixMediaService } from './matrix-media.service';
@@ -631,6 +631,12 @@ export class MatrixChatService {
       this.roomList.triggerUpdate();
     });
 
+    // Room account data — «Ab hier ungelesen» (spec 1.104 §6) lives in `org.okr.unread_from`,
+    // so the room list rebuilds when the flag is set or cleared, here or on another device.
+    this.client.on(RoomEvent.AccountData, () => {
+      this.roomList.triggerUpdate();
+    });
+
     // Read receipts — update room list so unread counts reflect the new read position
     this.client.on(RoomEvent.Receipt, (_event: MatrixEvent, room: Room) => {
       this.roomList.triggerUpdate();
@@ -709,6 +715,41 @@ export class MatrixChatService {
    */
   public setRoomFavourite(roomId: string, favourite: boolean): Promise<void> {
     return this.roomList.setRoomFavourite(roomId, favourite);
+  }
+
+  /**
+   * «Ab hier ungelesen» (spec 1.104 §6): flag a room unread from one message. Read receipts
+   * only move forward, so this is room account data — the okr flag with the event, and the
+   * Matrix spec v1.12 `m.marked_unread` so other clients (Element) show the room as unread too.
+   * The room list rebuilds via RoomEvent.AccountData once the homeserver echoes the change.
+   * `EventType.MarkedUnread` is the SDK's typed name for MARKED_UNREAD_EVENT (`m.marked_unread`).
+   */
+  public async markUnreadFrom(roomId: string, eventId: string): Promise<void> {
+    if (!this.client) throw new Error('Matrix client not initialized');
+    await this.setOkrUnreadFrom(roomId, { eventId, ts: Date.now() });
+    await this.client.setRoomAccountData(roomId, EventType.MarkedUnread, { unread: true });
+  }
+
+  /**
+   * The event a room is flagged unread from, read straight from the SDK — current even before
+   * the debounced room list caught up with a flag set a moment ago.
+   */
+  public getUnreadFromEventId(roomId: string): string | undefined {
+    return unreadFromEventIdOf(this.client?.getRoom(roomId)?.getAccountData(UNREAD_FROM_EVENT)?.getContent());
+  }
+
+  /** Clear the «Ab hier ungelesen» flag of a room (both account data entries). */
+  public async clearUnreadFrom(roomId: string): Promise<void> {
+    if (!this.client) return;
+    await this.setOkrUnreadFrom(roomId, {});
+    await this.client.setRoomAccountData(roomId, EventType.MarkedUnread, { unread: false });
+  }
+
+  // `org.okr.unread_from` is our own type, unknown to the SDK's typed RoomAccountDataEvents map.
+  private setOkrUnreadFrom(roomId: string, content: { eventId: string; ts: number } | Record<string, never>): Promise<unknown> {
+    const setRoomAccountData = this.client!.setRoomAccountData.bind(this.client!) as
+      (roomId: string, type: string, content: Record<string, unknown>) => Promise<unknown>;
+    return setRoomAccountData(roomId, UNREAD_FROM_EVENT, content);
   }
 
   // ─── Timeline reads — delegated to MatrixMessageService (ARCH-2, design review #4) ──

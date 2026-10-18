@@ -437,6 +437,7 @@ function rejectionReasons(results: PromiseSettledResult<unknown>[]): unknown[] {
                     [i18n]="store.i18n"
                     (loadOlder)="onLoadOlder()"
                     [highlightEventId]="store.jumpTarget()"
+                    [unreadDividerEventId]="store.unreadDividerEventId()"
                     [isJumped]="store.isJumped()"
                     [newMessagesCount]="store.jumpNewCount()"
                     (loadNewer)="onLoadNewer()"
@@ -776,6 +777,8 @@ export class MatrixChat implements OnDestroy {
   // opens straight to the conversation. The user reveals the room list via the chevron / chat-menu
   // toggle. In group view it stays hidden (the reopen button is suppressed there).
   protected showRoomList = signal(false);
+  // «Ab hier ungelesen» left the room for the list: open no room by itself until the user picks one.
+  private readonly holdRoomList = signal(false);
   protected isDragOver = signal(false);
   protected isThreadDragOver = signal(false);
   protected pendingImages = signal<File[]>([]);
@@ -965,14 +968,36 @@ export class MatrixChat implements OnDestroy {
     effect(() => {
       if (this.isGroupView() || this.selectedRoom()) return;
       if (this.store.currentRoomId()) return;                 // respect an existing selection
+      if (this.holdRoomList() || this.store.roomListRequested()) return; // «Ab hier ungelesen» left for the list
       const rooms = this.store.rooms();
       const syncRooms = rooms.length > 0 ? rooms : this.store.getRoomsSync();
       if (syncRooms.length === 0) return;                     // truly no rooms → keep empty state
       const persisted = isBrowser(this.platformId)
         ? (localStorage.getItem('chat:lastRoomId') ?? undefined)
         : undefined;
-      const initial = resolveInitialRoomId(persisted, syncRooms);
+      // Never open a room flagged «Ab hier ungelesen» by itself: opening clears the flag, so only
+      // the user's own tap may do that (spec 1.104 §6.2). Only flagged rooms → show the list.
+      const candidates = syncRooms.filter(r => !r.unreadFromEventId);
+      if (candidates.length === 0) {
+        untracked(() => this.showRoomList.set(true));
+        return;
+      }
+      const initial = resolveInitialRoomId(persisted, candidates);
       if (initial) untracked(() => this.store.setCurrentRoom(initial));
+    });
+
+    // «Ab hier ungelesen» left the room (spec 1.104 §6.2): show the room list and hold it until
+    // the user picks a room. The group view has no list; it navigates to the chat page instead.
+    effect(() => {
+      if (this.isGroupView() || !this.store.roomListRequested()) return;
+      untracked(() => {
+        this.holdRoomList.set(true);
+        this.showRoomList.set(true);
+        this.store.consumeRoomListRequest();
+      });
+    });
+    effect(() => {
+      if (this.store.currentRoomId()) untracked(() => this.holdRoomList.set(false));
     });
 
     // Attach MediaStreams to <video> elements whenever feeds change
@@ -1775,6 +1800,10 @@ export class MatrixChat implements OnDestroy {
     if (canBookmark) {
       actionSheetOptions.buttons.push(createActionSheetButton('chat.message.bookmark', this.store.i18n.bookmark_action(), this.imgixBaseUrl, 'note'));
       actionSheetOptions.buttons.push(createActionSheetButton('chat.message.bookmarkRemind', this.store.i18n.bookmark_remind_action(), this.imgixBaseUrl, 'alarm'));
+      // «Ab hier ungelesen» (spec 1.104 §6.2): not on own messages, not in the notes room, not for kiosks.
+      if (!isAuthor) {
+        actionSheetOptions.buttons.push(createActionSheetButton('chat.message.unreadFromHere', this.store.i18n.unread_from_here_action(), this.imgixBaseUrl, 'mail'));
+      }
     }
 
     if (isAuthor) { // author of message
@@ -1825,6 +1854,12 @@ export class MatrixChat implements OnDestroy {
       switch (data.action) {
         case 'chat.message.bookmark':
           await this.store.bookmarkMessage(message);
+          break;
+        case 'chat.message.unreadFromHere':
+          // The group view has no room list: go to the chat page, which shows it (roomListRequested).
+          if (await this.store.markUnreadFromHere(message) && this.isGroupView()) {
+            void navigateByUrl(this.router, '/private/chat/c-contentpage');
+          }
           break;
         case 'chat.message.bookmarkRemind': {
           const dueAt = await this.chooseReminder(false);

@@ -22,3 +22,4 @@ export * from './lib/pinboard.util';
 export * from './lib/bookmark.util';
 export * from './lib/jump.util';
 export * from './lib/reminder.util';
+export * from './lib/unread-from.util';

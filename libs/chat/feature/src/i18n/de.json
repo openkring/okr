@@ -191,6 +191,11 @@
       "header": "Erinnern",
       "confirm": "OK",
       "error": "Die Erinnerung konnte nicht gespeichert werden. Versuche es bitte noch einmal."
+    },
+    "unreadFrom": {
+      "action": "Ab hier ungelesen",
+      "divider": "Ab hier ungelesen",
+      "error": "Das hat nicht geklappt. Versuche es bitte noch einmal."
     }
   },
   "thread": {

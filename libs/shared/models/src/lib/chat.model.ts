@@ -103,6 +103,13 @@ export interface MatrixRoom {
    * the next rebuild classifies it properly. Undefined means "unknown" and is treated as loaded.
    */
   stateLoaded?: boolean;
+  /**
+   * «Ab hier ungelesen» (spec 1.104 §6): the event the user marked the room unread from, read
+   * from the room account data `org.okr.unread_from` (UNREAD_FROM_EVENT in `@okr/chat-util`).
+   * NOT a Firestore field — it lives in the user's Matrix account data and syncs across devices.
+   * Undefined when the room is not flagged. When set, `unreadCount` is at least 1.
+   */
+  unreadFromEventId?: string;
 }
 
 export const ROOM_SHAPE: MatrixRoom = {

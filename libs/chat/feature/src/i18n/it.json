@@ -191,6 +191,11 @@
       "header": "Ricordamelo",
       "confirm": "OK",
       "error": "Non è stato possibile salvare il promemoria. Riprova."
+    },
+    "unreadFrom": {
+      "action": "Non letto da qui",
+      "divider": "Non letto da qui",
+      "error": "Non ha funzionato. Riprova."
     }
   },
   "thread": {

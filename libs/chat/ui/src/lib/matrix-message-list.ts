@@ -393,6 +393,23 @@ const MENTION_AVATAR_SIZE = 36;
       font-weight: 500;
     }
 
+    .unread-divider {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 12px 0;
+      color: var(--ion-color-danger);
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .unread-divider::before,
+    .unread-divider::after {
+      content: '';
+      flex: 1;
+      border-top: 1px solid var(--ion-color-danger);
+    }
+
     .notice-row {
       display: flex;
       justify-content: center;
@@ -512,6 +529,9 @@ const MENTION_AVATAR_SIZE = 36;
           <div class="day-divider">{{ dayGroup.date }}</div>
           
           @for (item of dayGroup.messages; track trackItem(item); let i = $index) {
+            @if (hasUnreadDivider(item)) {
+              <div class="unread-divider" role="separator"><span>{{ i18n().unread_divider() }}</span></div>
+            }
             @if (isBatch(item)) {
               <div class="message-row" [class.own-message]="item.sender === currentUserId()">
                 <ion-avatar
@@ -828,6 +848,8 @@ export class MatrixMessageList {
   public readonly reminders = input<Map<string, number>>();
   /** The message a jump landed on: scrolled to the centre and highlighted for two seconds. */
   public readonly highlightEventId = input<string>();
+  /** «Ab hier ungelesen» (spec 1.104 §6.2): the divider is drawn above this message. */
+  public readonly unreadDividerEventId = input<string>();
   /** True while the list shows a jumped (non-live) timeline: no follow-to-bottom, «Zum neusten» shown. */
   public readonly isJumped = input<boolean>(false);
   /** New messages that arrived while jumped — the count on «Zum neusten». */
@@ -1163,6 +1185,13 @@ export class MatrixMessageList {
     // a tapped link opens the link — not the action sheet on top of it
     if (href) return;
     this.messageClicked.emit(item);
+  }
+
+  /** Whether the «Ab hier ungelesen» divider goes above this item (a message, or a batch holding it). */
+  protected hasUnreadDivider(item: MessageOrBatch): boolean {
+    const id = this.unreadDividerEventId();
+    if (!id) return false;
+    return this.isBatch(item) ? item.messages.some(m => m.eventId === id) : item.eventId === id;
   }
 
   protected isBatch(item: MessageOrBatch): item is ImageBatchGroup {

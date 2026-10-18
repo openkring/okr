@@ -34,6 +34,10 @@ export type MatrixChatState = {
   jumpPending: boolean;
   /** A jumped-to thread reply, highlighted in the thread list. */
   threadJumpTarget: string | undefined;
+  /** «Ab hier ungelesen» (spec 1.104 §6): the divider sits above this message until the room changes. */
+  unreadDividerEventId: string | undefined;
+  /** Set when «Ab hier ungelesen» left a room: the chat page shows the room list and opens no room by itself. */
+  roomListRequested: boolean;
 }
 
 /** How long the sync loop must stay in ERROR before the chat shows a connection error. */
@@ -51,6 +55,8 @@ export const _MatrixChatStore = signalStore(
     jumpTarget: undefined,
     jumpPending: false,
     threadJumpTarget: undefined,
+    unreadDividerEventId: undefined,
+    roomListRequested: false,
   })),
   withProps(() => ({
     appStore: inject(AppStore),
@@ -575,10 +581,23 @@ export const _MatrixChatStore = signalStore(
         // the current room does not nuke an in-progress reply.
         const previous = store.currentRoomId();
         if (roomId !== previous) {
-          patchState(store, { replyToMessage: undefined, selectedThreadId: undefined, jumpTarget: undefined, jumpPending: false, threadJumpTarget: undefined });
+          patchState(store, { replyToMessage: undefined, selectedThreadId: undefined, jumpTarget: undefined, jumpPending: false, threadJumpTarget: undefined, unreadDividerEventId: undefined });
           store.jumpSeq.value++;
           // Leaving a jumped room returns it to live; the next visit opens it as usual.
           if (previous && store.matrixService.isJumped(previous)) store.matrixService.returnToLive(previous);
+        }
+        // «Ab hier ungelesen» (spec 1.104 §6): a flagged room opens at the flagged message with
+        // the divider above it, and the flag is cleared. jumpToEvent switches the room itself
+        // (with markRead false, so this branch never recurses) and gates the read receipt.
+        const unreadFrom = roomId && markRead ? store.matrixService.getUnreadFromEventId(roomId) : undefined;
+        if (roomId && unreadFrom) {
+          void this.jumpToEvent(roomId, unreadFrom);
+          // jumpToEvent switched the room synchronously (which reset the divider): set it now.
+          patchState(store, { unreadDividerEventId: unreadFrom });
+          store.matrixService.clearUnreadFrom(roomId).catch(err =>
+            console.warn('MatrixChatStore.setCurrentRoom: clearUnreadFrom failed (non-critical):', err)
+          );
+          return;
         }
         patchState(store, { currentRoomId: roomId, hasMoreHistory: true });
         if (roomId && markRead) {
@@ -1368,6 +1387,31 @@ export const _MatrixChatStore = signalStore(
           console.error('MatrixChatStore.deleteMessage: Failed:', error);
           await store.alertService.showToast(store.i18n.msg_delete_error());
         }
+      },
+
+      /**
+       * «Ab hier ungelesen» (spec 1.104 §6): flag the room unread from this message, then leave
+       * it back to the room list. Leaving is what keeps the auto-receipt effect from undoing the
+       * flag. Returns false (with a toast) when the flag could not be written; the room stays open.
+       */
+      async markUnreadFromHere(message: MatrixMessage): Promise<boolean> {
+        const roomId = message.roomId || store.currentRoomId();
+        if (!roomId || isKioskOnly(store.appStore.currentUser())) return false;
+        try {
+          await store.matrixService.markUnreadFrom(roomId, message.eventId);
+        } catch (error) {
+          console.error('MatrixChatStore.markUnreadFromHere: Failed:', error);
+          await store.alertService.showToast(store.i18n.unread_from_error());
+          return false;
+        }
+        patchState(store, { roomListRequested: true });
+        if (store.currentRoomId() === roomId) this.setCurrentRoom(undefined);
+        return true;
+      },
+
+      /** The chat page has shown the room list that «Ab hier ungelesen» asked for. */
+      consumeRoomListRequest(): void {
+        patchState(store, { roomListRequested: false });
       },
 
       /**

@@ -191,6 +191,11 @@
       "header": "Recuérdamelo",
       "confirm": "OK",
       "error": "No se pudo guardar el recordatorio. Inténtalo de nuevo."
+    },
+    "unreadFrom": {
+      "action": "No leído desde aquí",
+      "divider": "No leído desde aquí",
+      "error": "No ha funcionado. Inténtalo de nuevo."
     }
   },
   "thread": {

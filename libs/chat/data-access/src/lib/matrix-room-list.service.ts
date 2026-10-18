@@ -6,7 +6,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { MatrixMessage, MatrixRoom, TypingNotification } from '@okr/shared-models';
 import { AppStore } from '@okr/shared-feature';
 import { debugMessage } from '@okr/shared-util-core';
-import { isRoomClassifiable, MATRIX_FAVOURITE_TAG, OKR_TENANT_EVENT } from '@okr/chat-util';
+import { effectiveUnreadCount, isRoomClassifiable, MATRIX_FAVOURITE_TAG, OKR_TENANT_EVENT, UNREAD_FROM_EVENT, unreadFromEventIdOf } from '@okr/chat-util';
 import { AvatarService } from '@okr/avatar-data-access';
 
 import { isServiceAccount, mxcAvatarHttpUrl, personAvatarUrl } from './matrix-helpers';
@@ -107,6 +107,7 @@ export class MatrixRoomListService {
           room.topic === o.topic &&
           room.creator === o.creator &&
           room.stateLoaded === o.stateLoaded &&
+          room.unreadFromEventId === o.unreadFromEventId &&
           room.lastMessage?.eventId === o.lastMessage?.eventId &&
           room.lastMessage?.timestamp === o.lastMessage?.timestamp &&
           room.lastMessage?.body === o.lastMessage?.body &&
@@ -250,7 +251,15 @@ export class MatrixRoomListService {
         }
 
         // Calculate unread count. 'total' already includes highlights — do NOT add them again.
-        const unreadCount = (room as any).getUnreadNotificationCount?.('total') || 0;
+        // «Ab hier ungelesen» (spec 1.104 §6): a flagged room counts the messages from the
+        // flagged event to the end of the loaded timeline while the server count is 0, so the
+        // chat total, the main-menu badge and the in-app app badge all count it as unread.
+        const serverUnread = (room as any).getUnreadNotificationCount?.('total') || 0;
+        const unreadFromEventId = unreadFromEventIdOf(room.getAccountData(UNREAD_FROM_EVENT)?.getContent());
+        const unreadCount = effectiveUnreadCount(serverUnread, unreadFromEventId,
+          unreadFromEventId && serverUnread === 0
+            ? events.filter(e => e.getType() === EventType.RoomMessage || e.getId() === unreadFromEventId).map(e => e.getId() ?? '')
+            : []);
 
         const isDirect = this.dm.isDirectRoom(room);
 
@@ -313,6 +322,7 @@ export class MatrixRoomListService {
           directUserId,
           isFavourite: this.isFavouriteRoom(room),
           stateLoaded: this.isRoomStateLoaded(room, directUserId),
+          unreadFromEventId,
         };
       })
       .sort((a, b) => {
