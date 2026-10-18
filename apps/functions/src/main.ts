@@ -422,6 +422,8 @@ export { migrateMemberFees } from './member-fee/migrate-member-fees';
 export { onMembershipExitWritten } from './member-fee/exit-settlement.trigger';
 // the treasurer's decision on that task: refund, adjust the invoice or exit on 31.12.
 export { settleMembershipExit } from './member-fee/settle-membership-exit';
+// one-off admin backfill of settlement tasks for exits saved before the trigger existed.
+export { backfillExitSettlements } from './member-fee/backfill-exit-settlements';
 
 // member-fees generic positions (2026-09-17): 'native' accountingBackend counterpart to
 // uploadToBexio/createBexioInvoice — posts 'ready' member-fees as real InvoiceModel +
