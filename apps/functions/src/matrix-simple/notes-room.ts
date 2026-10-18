@@ -25,8 +25,41 @@ import {
   serverHostname,
 } from './shared';
 
-/** Power level of the room's owner: may post and redact, but cannot reshape the room. */
+/**
+ * Power level of the room's owner. 50 may post (events_default 0) and redact (redact 50), but
+ * every reshaping action — invite/kick/ban and all state, incl. the room name, the canonical
+ * alias and the org.okr.tenant marker — needs 100, which only @bk2-bot holds (see
+ * notesRoomPowerLevels). The private_chat preset alone would let 50 do all of that.
+ */
 const NOTES_PERSON_POWER_LEVEL = 50;
+const NOTES_BOT_POWER_LEVEL = 100;
+
+/** `power_level_content_override` of a notes room: the owner may write and redact, nothing else. */
+export function notesRoomPowerLevels(botUserId: string, ownerUserId: string): Record<string, unknown> {
+  const admin = NOTES_BOT_POWER_LEVEL;
+  return {
+    users: { [botUserId]: NOTES_BOT_POWER_LEVEL, [ownerUserId]: NOTES_PERSON_POWER_LEVEL },
+    invite: admin,
+    kick: admin,
+    ban: admin,
+    redact: 50,
+    state_default: admin,
+    events_default: 0,
+    events: {
+      'm.room.name': admin,
+      'm.room.canonical_alias': admin,
+      'm.room.avatar': admin,
+      'm.room.topic': admin,
+      'm.room.power_levels': admin,
+      'm.room.history_visibility': admin,
+      'm.room.join_rules': admin,
+      'm.room.encryption': admin,
+      'm.room.tombstone': admin,
+      'm.room.server_acl': admin,
+      [OKR_TENANT_EVENT]: admin,
+    },
+  };
+}
 
 /** The tenant the client names must be one of the caller's own (never `tenants[0]`). */
 export function assertCallerTenant(tenantId: unknown, callerTenants: string[]): string {
@@ -48,6 +81,16 @@ export function assertNotKioskOnly(roles: Record<string, unknown> | undefined): 
   }
 }
 
+/** The Matrix id of the admin-token account (@bk2-bot). Throws when whoami fails. */
+export async function fetchBotUserId(adminToken: string): Promise<string> {
+  const who = await fetch(`${MATRIX_HOMESERVER}/_matrix/client/v3/account/whoami`, {
+    headers: { Authorization: `Bearer ${adminToken}` },
+  });
+  const userId = who.ok ? ((await who.json()) as { user_id?: string }).user_id : undefined;
+  if (!userId) throw new Error(`whoami → ${who.status}`);
+  return userId;
+}
+
 /** Idempotent: provision the person's account and force-join them (repairs a half-created or left room). */
 async function joinPerson(roomId: string, matrixUserId: string, personKey: string, adminToken: string): Promise<void> {
   await ensureMatrixUserExists(matrixUserId, adminToken, { personKey });
@@ -56,7 +99,7 @@ async function joinPerson(roomId: string, matrixUserId: string, personKey: strin
 
 /** A notes room is ours when @bk2-bot (the admin token's account) created it and it carries exactly [tenantId]. */
 export async function isOwnNotesRoom(
-  roomId: string, tenantId: string, adminToken: string, opts: { strict?: boolean } = {},
+  roomId: string, tenantId: string, adminToken: string, opts: { strict?: boolean; botUserId?: string } = {},
 ): Promise<boolean> {
   const headers = { Authorization: `Bearer ${adminToken}` };
   // strict (reminder sweep): a failed read throws so the caller retries; only a successful read
@@ -66,15 +109,18 @@ export async function isOwnNotesRoom(
     return false;
   };
   try {
-    const who = await fetch(`${MATRIX_HOMESERVER}/_matrix/client/v3/account/whoami`, { headers });
-    if (!who.ok) return fail('whoami', who.status);
-    const botId = ((await who.json()) as { user_id?: string }).user_id;
+    let botId = opts.botUserId;
+    if (!botId) {
+      const who = await fetch(`${MATRIX_HOMESERVER}/_matrix/client/v3/account/whoami`, { headers });
+      if (!who.ok) return fail('whoami', who.status);
+      botId = ((await who.json()) as { user_id?: string }).user_id;
+    }
     const details = await fetch(`${MATRIX_HOMESERVER}/_synapse/admin/v1/rooms/${encodeURIComponent(roomId)}`, { headers });
     if (details.status === 404) return false;
     if (!details.ok) return fail('details', details.status);
     const creator = ((await details.json()) as { creator?: string }).creator;
     if (!botId || creator !== botId) return false;
-    const marker = await getRoomTenantMarker(roomId, adminToken, opts);
+    const marker = await getRoomTenantMarker(roomId, adminToken, { strict: opts.strict });
     return marker?.length === 1 && marker[0] === tenantId;
   } catch (error) {
     if (opts.strict) throw error;
@@ -113,11 +159,13 @@ export async function ensureNotesRoom(
     });
   }
 
+  const botUserId = await fetchBotUserId(adminToken);
   const createResp = await fetch(`${MATRIX_HOMESERVER}/_matrix/client/v3/createRoom`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      name: 'Notizen an mich',
+      // The stored name is the alias localpart (spec §3.1); the app shows a localised name.
+      name: localpart,
       room_alias_name: localpart,
       preset: 'private_chat',
       visibility: 'private',
@@ -126,7 +174,7 @@ export async function ensureNotesRoom(
         { type: OKR_TENANT_EVENT, state_key: '', content: { tenants: [tenantId] } },
         { type: 'm.room.history_visibility', state_key: '', content: { history_visibility: 'joined' } },
       ],
-      power_level_content_override: { users: { [matrixUserId]: NOTES_PERSON_POWER_LEVEL } },
+      power_level_content_override: notesRoomPowerLevels(botUserId, matrixUserId),
     }),
   });
   if (!createResp.ok) {

@@ -248,7 +248,9 @@ describe('SUBJECT_DATA_MAP — tiers and tenant-exit disposition', () => {
     // author-locked, voluntary shape as `diaries` — it mirrors that row on purpose.
     // `hearingQuizResults` joined 2026-09-28 (1.64): a user's own Hörtraining results — the
     // same owner-locked, voluntary shape as `diaries`, and health data on top.
-    expect(SUBJECT_DATA_MAP.filter((e) => e.tier === 'T2').map((e) => e.collection)).toEqual(['avatars', 'prospects', 'diaries', 'diaryImports', 'hearingQuizResults']);
+    // `chatReminders` joined 2026-10-18 (1.104): a person's own «remind me» on a chat bookmark —
+    // owner-locked (`personKey`), voluntary, no club record; it leaves with its owner.
+    expect(SUBJECT_DATA_MAP.filter((e) => e.tier === 'T2').map((e) => e.collection)).toEqual(['avatars', 'prospects', 'diaries', 'diaryImports', 'hearingQuizResults', 'chatReminders']);
   });
 
   // Regression guard on the strictest-tier rule. `addresses` holds both the favorite

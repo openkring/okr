@@ -943,6 +943,23 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     retention: { months: 'indefinite', legalBasis: 'Freiwilliges Training — bleibt, bis die Person es löscht' },
   },
   {
+    collection: 'chatReminders',
+    dataClass: 'content',
+    tier: 'T2',              // a voluntary «remind me» — nothing may block its erasure
+    onTenantExit: 'delete',  // a personal note, not a club record: it leaves with its owner
+    // Spec 1.104 §5.1: one pending reminder on a chat bookmark. The subject is the owner, by
+    // `personKey` (the field the collection's rule compares against). The doc holds pointers
+    // (notes room, bookmark entry, source room/event ids), a due time and a short title — never
+    // the message text, which stays in Matrix.
+    find: (c: SubjectCtx) => db().collection('chatReminders').where('personKey', '==', c.personKey),
+    tenantScope: 'tenantsArray',
+    // 'full', not 'index': a hard-deleted row must hand over its substance before it goes (the
+    // map's invariant). The substance is small — title, dueAt, state and the Matrix pointers.
+    onExport: 'full',
+    onErasure: 'delete',     // Admin SDK; the client rules forbid deletes, the erasure does not need them
+    retention: { months: 'indefinite', legalBasis: 'Persönliche Aufzeichnung — bleibt, bis die Person sie löscht' },
+  },
+  {
     collection: 'stats_members',
     dataClass: 'content',
     tier: 'T4',
@@ -1406,10 +1423,6 @@ export async function resolveDocs(entry: SubjectDataEntry, ctx: SubjectCtx): Pro
 // not personal data: commissionEntries — a ledger line (C3 §7): partnerKey, tenantId, band,
 //   amounts. No natural person appears on it; the contact-of-record stays on the metering
 //   record it was derived from.
-// gap: chatReminders — a pending «remind me» (spec 1.104 §5.1): ownerKey `personKey` plus
-//   pointers (room/event ids) and a short title; no message text. Pointer-level data of a
-//   natural person, not yet reachable from the member's erasure (the sweep marks it sent/cancelled,
-//   rules forbid delete). Decide row-vs-accept when the erasure cascade is next extended.
 // gap: meteringRecords — carries ONE business-role contact per reported tenant (C2 §7:
 //   `contact.name/role/email`, never member data). It is personal data of a natural person and
 //   bkaiser is its INDEPENDENT CONTROLLER, not a processor — so it is deliberately not reachable

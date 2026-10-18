@@ -530,8 +530,10 @@ export const _MatrixChatStore = signalStore(
       },
 
       /**
-       * Room id of the personal notes room, creating it on first use. Cached per session: the
-       * function is called at most once, later calls get the same id.
+       * Room id of the personal notes room, creating it on first use. The open request is shared
+       * per (tenant, person): concurrent and later calls reuse its id while the client still knows
+       * the room. A failed request, a tenant/person change or a room the client has lost asks the
+       * function again.
        */
       async ensureNotesRoomId(): Promise<string> {
         const existing = store.notesRoom();

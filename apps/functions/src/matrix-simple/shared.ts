@@ -906,6 +906,27 @@ export async function getRoomSummary(
   }
 }
 
+/**
+ * Whether a canonical alias names a «Notizen an mich» room (`#notes_<tenant>_<personKey>:…`,
+ * spec 1.104). Notes rooms are personal: the tenant-admin room tools never list, read or delete them.
+ */
+export function isNotesRoomAlias(canonicalAlias: string | null | undefined): boolean {
+  return typeof canonicalAlias === 'string' && canonicalAlias.startsWith('#notes_');
+}
+
+/**
+ * Throw unless `roomId` is not a notes room. Fails closed: when the room details cannot be read,
+ * the admin tool refuses rather than risk exposing a person's notes.
+ */
+export async function requireNotNotesRoom(roomId: string, fnName: string, adminToken: string): Promise<void> {
+  const summary = await getRoomSummary(roomId, adminToken);
+  if (!summary) throw new HttpsError('unavailable', 'Room details are not available right now.');
+  if (isNotesRoomAlias(summary.canonicalAlias)) {
+    console.warn(`${fnName}: refused on personal notes room ${roomId}`);
+    throw new HttpsError('permission-denied', 'This room cannot be managed here.');
+  }
+}
+
 /** Read the tenants marker of a room; empty array when the room is unmarked OR assigned to none. */
 export async function getRoomTenants(roomId: string, adminToken: string): Promise<string[]> {
   return (await getRoomTenantMarker(roomId, adminToken)) ?? [];

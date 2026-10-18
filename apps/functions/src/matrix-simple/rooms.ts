@@ -26,6 +26,8 @@ import {
   getRoomTenantsBatch,
   getUserTenants,
   roomAdmitsTenant,
+  isNotesRoomAlias,
+  requireNotNotesRoom,
 } from './shared';
 
 /**
@@ -314,7 +316,9 @@ export const listMatrixRooms = onCall(
      * Unmarked rooms are kept and flagged (see roomAdmitsTenant): they are already visible in
      * every tenant, and this listing is where an admin finds them to run the backfill.
      */
-    const scopeToTenant = async (rooms: AdminRoom[]): Promise<AdminRoom[]> => {
+    const scopeToTenant = async (allRooms: AdminRoom[]): Promise<AdminRoom[]> => {
+      // Personal «Notizen an mich» rooms carry the tenant marker but are nobody's admin business.
+      const rooms = allRooms.filter(r => !isNotesRoomAlias(r.canonicalAlias));
       const markers = await getRoomTenantsBatch(rooms.map(r => r.roomId), adminToken);
       const kept = rooms.filter(r => roomAdmitsTenant(markers.get(r.roomId) ?? [], callerTenants));
       const unmarked = kept.filter(r => (markers.get(r.roomId) ?? []).length === 0).length;
@@ -702,6 +706,7 @@ export const getRoomMessages = onCall(
 
     const adminToken = matrixAdminToken.value();
     await requireRoomInTenant(roomId, uid, 'getRoomMessages', adminToken);
+    await requireNotNotesRoom(roomId, 'getRoomMessages', adminToken);
 
     // Synapse caps this server-side too; bound it here so one call cannot pull a whole room.
     const pageSize = Math.min(Math.max(limit ?? 50, 1), 200);
@@ -793,6 +798,7 @@ export const deleteMatrixRoom = onCall(
     // Synapse admin API is homeserver-global. Without this, an admin of one tenant could
     // destroy another tenant's chat history.
     await requireRoomInTenant(roomId, uid, 'deleteMatrixRoom', adminToken);
+    await requireNotNotesRoom(roomId, 'deleteMatrixRoom', adminToken);
 
     console.log(`deleteMatrixRoom: deleting room ${roomId}`);
 

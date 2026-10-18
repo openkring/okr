@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { MatrixMessage } from '@okr/shared-models';
-import { OKR_BOOKMARK_FIELD, notesRoomAliasLocalpart, isNotesRoomAlias, bookmarkSnippet, buildBookmarkContent, readBookmark, isTrustedBookmarkEntry, matrixPermalink, parseMatrixPermalink, isOwnNotesRoom } from './bookmark.util';
+import { OKR_BOOKMARK_FIELD, notesRoomAliasLocalpart, bookmarkSnippet, buildBookmarkContent, readBookmark, isTrustedBookmarkEntry, matrixPermalink, parseMatrixPermalink, isOwnNotesRoom, resolvePermalinkTarget } from './bookmark.util';
 
 const SERVER = 'bkchat.etke.host';
 
@@ -19,22 +19,6 @@ describe('notesRoomAliasLocalpart', () => {
 
   it('lowercases and replaces unsafe characters', () => {
     expect(notesRoomAliasLocalpart('SCS', 'Ka:ise/r Ü')).toBe('notes_scs_ka_ise_r__');
-  });
-});
-
-describe('isNotesRoomAlias', () => {
-  it('matches a notes alias of the tenant', () => {
-    expect(isNotesRoomAlias('#notes_scs_kaiser:bkchat.etke.host', 'scs')).toBe(true);
-  });
-  it('rejects another tenant', () => {
-    expect(isNotesRoomAlias('#notes_scs_kaiser:bkchat.etke.host', 'p13')).toBe(false);
-  });
-  it('matches any tenant without a tenantId', () => {
-    expect(isNotesRoomAlias('#notes_scs_kaiser:bkchat.etke.host')).toBe(true);
-  });
-  it('rejects non-notes aliases and undefined', () => {
-    expect(isNotesRoomAlias('#group_x:bkchat.etke.host', 'scs')).toBe(false);
-    expect(isNotesRoomAlias(undefined)).toBe(false);
   });
 });
 
@@ -158,13 +142,15 @@ describe('isTrustedBookmarkEntry', () => {
   });
 });
 
-import { resolvePermalinkTarget } from './bookmark.util';
-
 describe('resolvePermalinkTarget', () => {
   const rooms = [{ roomId: '!a:s', topic: '#group_x:s' }, { roomId: '!b:s' }];
   it('joined room id', () => expect(resolvePermalinkTarget('!b:s', rooms)).toEqual({ kind: 'room', roomId: '!b:s' }));
   it('alias matching a joined topic', () => expect(resolvePermalinkTarget('#Group_X:s', rooms)).toEqual({ kind: 'room', roomId: '!a:s' }));
   it('not-joined group alias navigates', () => expect(resolvePermalinkTarget('#group_y:s', rooms)).toEqual({ kind: 'group', groupKey: 'y' }));
+  it('maps the alias key onto a known mixed-case group okey', () =>
+    expect(resolvePermalinkTarget('#group_abc:s', rooms, [{ okey: 'other' }, { okey: 'AbC' }])).toEqual({ kind: 'group', groupKey: 'AbC' }));
+  it('maps a sanitised alias key back to its group okey', () =>
+    expect(resolvePermalinkTarget('#group_4er_dienstag:s', rooms, [{ okey: '4er Dienstag' }])).toEqual({ kind: 'group', groupKey: '4er Dienstag' }));
   it('unknown id', () => expect(resolvePermalinkTarget('!zz:s', rooms)).toEqual({ kind: 'none' }));
   it('ask/notes not joined', () => {
     expect(resolvePermalinkTarget('#ask_g_p:s', rooms)).toEqual({ kind: 'none' });

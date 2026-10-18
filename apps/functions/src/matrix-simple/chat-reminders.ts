@@ -10,16 +10,21 @@ import { getFirestore } from 'firebase-admin/firestore';
 
 import {
   matrixAdminToken, getRoomEvent, sendBotReply, resolveRoomAlias, serverHostname, notesRoomAliasLocalpart,
-  MatrixTerminalError,
+  getJoinedMemberIds, MatrixTerminalError,
 } from './shared';
-import { isOwnNotesRoom } from './notes-room';
+import { fetchBotUserId, isOwnNotesRoom } from './notes-room';
 
 /** Local twin of ChatReminderModel (@okr/shared-models) — functions cannot import libs. */
 export type ChatReminderDoc = {
   okey: string; tenants: string[]; personKey: string; dueAt: number;
   state: 'pending' | 'sent' | 'cancelled';
   notesRoomId: string; bookmarkEventId: string; roomId: string; eventId: string; title: string;
+  /** Retryable failures so far (Admin SDK only); MAX_FAILURES cancels. */
+  failures?: number;
 };
+
+/** 12 sweeps × 5 minutes = one hour of retryable failures, then the reminder is cancelled. */
+export const MAX_FAILURES = 12;
 
 // No functions-side tenant i18n exists for matrix-simple (only workflow/engine.ts has one), so the German literal.
 export const REMINDER_PREFIX = 'Erinnerung';
@@ -30,8 +35,11 @@ export type ReminderDeps = {
   sendBotReply: typeof sendBotReply;
   resolveRoomAlias: typeof resolveRoomAlias;
   isOwnNotesRoom: typeof isOwnNotesRoom;
+  getJoinedMemberIds: typeof getJoinedMemberIds;
   host: string;
   token: string;
+  /** @bk2-bot's Matrix id, fetched once per sweep run. */
+  botUserId: string;
 };
 
 /**
@@ -47,11 +55,19 @@ export async function processReminder(doc: ChatReminderDoc, deps: ReminderDeps):
     const alias = `#${notesRoomAliasLocalpart(tenant, doc.personKey)}:${deps.host}`;
     const aliased = await deps.resolveRoomAlias(alias, deps.token, { strict: true });
     if (!aliased || aliased !== doc.notesRoomId) return cancel(doc, 'notesRoomId is not the owner alias target');
-    if (!(await deps.isOwnNotesRoom(doc.notesRoomId, tenant, deps.token, { strict: true }))) return cancel(doc, 'not an own notes room');
+    if (!(await deps.isOwnNotesRoom(doc.notesRoomId, tenant, deps.token, { strict: true, botUserId: deps.botUserId }))) {
+      return cancel(doc, 'not an own notes room');
+    }
+    // Defence in depth: a notes room holds exactly the bot and its owner. A failed read throws (retry).
+    const owner = `@${doc.personKey.toLowerCase()}:${deps.host}`;
+    const members = await deps.getJoinedMemberIds(doc.notesRoomId, deps.token);
+    if (members.size !== 2 || !members.has(deps.botUserId) || !members.has(owner)) {
+      return cancel(doc, `unexpected members (${members.size})`);
+    }
 
     const entry = await deps.getRoomEvent(doc.notesRoomId, doc.bookmarkEventId, deps.token);
     if (!entry) return 'cancelled';
-    if (entry.sender !== `@${doc.personKey.toLowerCase()}:${deps.host}`) return cancel(doc, 'entry not sent by the owner');
+    if (entry.sender !== owner) return cancel(doc, 'entry not sent by the owner');
 
     const title = Array.from(doc.title ?? '').slice(0, MAX_TITLE_CHARS).join('');
     await deps.sendBotReply(
@@ -69,21 +85,51 @@ function cancel(doc: ChatReminderDoc, reason: string): 'cancelled' {
   return 'cancelled';
 }
 
+/** Minimal slice of a Firestore QueryDocumentSnapshot, so the per-doc step is unit-testable. */
+export type DueReminderSnap = { id: string; data: () => unknown; ref: { update: (patch: Record<string, unknown>) => Promise<unknown> } };
+
+/**
+ * Process one due reminder and write its outcome. A retryable failure bumps `failures`; the
+ * MAX_FAILURES-th one cancels the reminder so a permanently broken doc stops being retried.
+ */
+export async function handleDueReminder(d: DueReminderSnap, deps: ReminderDeps): Promise<'sent' | 'cancelled' | 'failed'> {
+  const data = d.data() as ChatReminderDoc;
+  try {
+    const state = await processReminder({ ...data, okey: d.id }, deps);
+    await d.ref.update({ state });
+    return state;
+  } catch (error) {
+    const failures = (typeof data.failures === 'number' ? data.failures : 0) + 1;
+    console.error(`sendChatReminders: failed for ${d.id} (${failures}/${MAX_FAILURES}):`, error);
+    await d.ref.update(failures >= MAX_FAILURES ? { failures, state: 'cancelled' } : { failures });
+    return failures >= MAX_FAILURES ? 'cancelled' : 'failed';
+  }
+}
+
 export const sendChatReminders = onSchedule(
-  { schedule: 'every 5 minutes', timeZone: 'Europe/Zurich', region: 'europe-west6', secrets: [matrixAdminToken] },
+  {
+    schedule: 'every 5 minutes', timeZone: 'Europe/Zurich', region: 'europe-west6', timeoutSeconds: 300,
+    secrets: [matrixAdminToken],
+  },
   async () => {
     const token = matrixAdminToken.value();
     const snap = await getFirestore().collection('chatReminders')
       .where('state', '==', 'pending').where('dueAt', '<=', Date.now()).limit(200).get();
+    if (snap.empty) return;
+    // whoami once per run, not per doc. If it fails, nothing is touched; the next run retries.
+    const botUserId = await fetchBotUserId(token);
+    const deps: ReminderDeps = {
+      getRoomEvent, sendBotReply, resolveRoomAlias, isOwnNotesRoom, getJoinedMemberIds,
+      host: serverHostname(), token, botUserId,
+    };
     let sent = 0, cancelled = 0, failed = 0;
     for (const d of snap.docs) {
       try {
-        const state = await processReminder({ ...(d.data() as ChatReminderDoc), okey: d.id }, { getRoomEvent, sendBotReply, resolveRoomAlias, isOwnNotesRoom, host: serverHostname(), token });
-        await d.ref.update({ state });
-        if (state === 'sent') sent++; else cancelled++;
+        const outcome = await handleDueReminder(d, deps);
+        if (outcome === 'sent') sent++; else if (outcome === 'cancelled') cancelled++; else failed++;
       } catch (error) {
         failed++;
-        console.error(`sendChatReminders: failed for ${d.id}:`, error);
+        console.error(`sendChatReminders: could not record the outcome for ${d.id}:`, error);
       }
     }
     console.log(`sendChatReminders: due=${snap.size} sent=${sent} cancelled=${cancelled} failed=${failed}`);

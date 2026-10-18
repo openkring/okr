@@ -1,5 +1,6 @@
 import type { MatrixMessage } from '@okr/shared-models';
 import { POLL_START_EVENT, parsePollContent } from './poll.util';
+import { groupKeyFromRoomAlias, groupRoomAliasLocalpart } from './chat.util';
 
 /** Custom field on the content of a bookmark entry in the personal notes room. */
 export const OKR_BOOKMARK_FIELD = 'org.okr.bookmark';
@@ -22,16 +23,6 @@ export interface ChatBookmark {
 export function notesRoomAliasLocalpart(tenantId: string, personKey: string): string {
   const clean = (s: string) => s.toLowerCase().replace(/[^a-z0-9._=-]/g, '_');
   return `notes_${clean(tenantId)}_${clean(personKey)}`;
-}
-
-/**
- * Whether an alias (`#notes_scs_kaiser:bkchat.etke.host`) is a notes room alias,
- * optionally of one tenant. Tenant ids may contain `_`, so the tenant is matched as a prefix.
- */
-export function isNotesRoomAlias(alias: string | undefined, tenantId?: string): boolean {
-  const localpart = alias?.split(':')[0]?.replace(/^#/, '');
-  if (!localpart?.startsWith('notes_')) return false;
-  return tenantId ? localpart.startsWith(`notes_${tenantId}_`) : true;
 }
 
 /** Localpart of the Matrix service account that creates every notes room (`MATRIX_ADMIN_TOKEN`). */
@@ -152,13 +143,23 @@ export type PermalinkResolution =
  * Where a permalink target leads: a joined room (matched by id, or by canonical alias in the room
  * topic), a not-joined group alias (open through the `selectedRoom` deep link with the group key),
  * or nowhere (unknown id, ask/notes aliases that are not joined).
+ *
+ * A group alias localpart is the LOWERCASED okey (groupRoomAliasLocalpart), so the key read back
+ * from it is mapped onto the real okey of a known group — legacy mixed-case okeys (`groups/AbC`)
+ * would otherwise never resolve. Without a match the alias key is used as is.
  */
-export function resolvePermalinkTarget(roomIdOrAlias: string, rooms: ReadonlyArray<{ roomId: string; topic?: string }>): PermalinkResolution {
+export function resolvePermalinkTarget(
+  roomIdOrAlias: string,
+  rooms: ReadonlyArray<{ roomId: string; topic?: string }>,
+  groups: ReadonlyArray<{ okey: string }> = [],
+): PermalinkResolution {
   const alias = roomIdOrAlias.startsWith('#') ? roomIdOrAlias.toLowerCase() : undefined;
   const room = alias
     ? rooms.find(r => r.topic?.split(':').slice(0, 2).join(':').toLowerCase() === alias)
     : rooms.find(r => r.roomId === roomIdOrAlias);
   if (room) return { kind: 'room', roomId: room.roomId };
-  const groupKey = alias ? /^#group_([^:]+):/.exec(alias)?.[1] : undefined;
-  return groupKey ? { kind: 'group', groupKey } : { kind: 'none' };
+  const aliasKey = groupKeyFromRoomAlias(alias);
+  if (!aliasKey) return { kind: 'none' };
+  const group = groups.find(g => groupRoomAliasLocalpart(g.okey) === `group_${aliasKey}`);
+  return { kind: 'group', groupKey: group?.okey ?? aliasKey };
 }

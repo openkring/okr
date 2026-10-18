@@ -1322,7 +1322,7 @@ export class MatrixChat implements OnDestroy {
    */
   protected openPermalink(target: { roomIdOrAlias: string; eventId?: string }): void {
     const { eventId } = target;
-    const res = resolvePermalinkTarget(target.roomIdOrAlias, this.store.rooms());
+    const res = resolvePermalinkTarget(target.roomIdOrAlias, this.store.rooms(), this.store.appStore.allGroupsAndChats());
     if (res.kind === 'room') {
       if (eventId) void this.store.jumpToEvent(res.roomId, eventId);
       else this.store.setCurrentRoom(res.roomId);
@@ -1701,9 +1701,11 @@ export class MatrixChat implements OnDestroy {
    * Ask when to be reminded: a sheet with the presets that still lie in the future (never a
    * past instant), «Datum und Zeit wählen…» (opens the picker) and, on a card that already has
    * a reminder, «Erinnerung entfernen».
+   * @param existingDueAt due time of the card's current reminder, if it has one
    * @returns epoch ms; `null` = remove the reminder; `undefined` = cancelled
    */
-  private async chooseReminder(hasReminder: boolean): Promise<number | null | undefined> {
+  private async chooseReminder(existingDueAt?: number): Promise<number | null | undefined> {
+    const hasReminder = existingDueAt !== undefined;
     const now = new Date();
     const i18n = this.store.i18n;
     const labels: Record<ReminderPreset, string> = {
@@ -1725,22 +1727,26 @@ export class MatrixChat implements OnDestroy {
     const action: string | undefined = data?.action;
     if (!action || action === 'cancel') return undefined;
     if (action === 'reminder.remove') return null;
-    if (action === 'reminder.pick') return this.pickReminderTime();
+    if (action === 'reminder.pick') return this.pickReminderTime(existingDueAt);
     const preset = action.slice('reminder.'.length) as ReminderPreset;
     return reminderDueAt(preset, new Date());
   }
 
-  /** Programmatically opened picker, so there is no trigger element that could be missing. */
-  private async pickReminderTime(): Promise<number | undefined> {
+  /**
+   * Programmatically opened picker, so there is no trigger element that could be missing.
+   * Changing a reminder starts at its current due time (unless that already lies in the past).
+   */
+  private async pickReminderTime(existingDueAt?: number): Promise<number | undefined> {
     const i18n = this.store.i18n;
+    const now = Date.now();
     const modal = await this.modalController.create({
       component: ReminderPicker,
       componentProps: {
         title: i18n.reminder_header(),
         confirmLabel: i18n.reminder_confirm(),
         cancelLabel: i18n.cancel(),
-        earliest: Date.now(),
-        initial: Date.now() + 3_600_000,
+        earliest: now,
+        initial: existingDueAt !== undefined && existingDueAt > now ? existingDueAt : now + 3_600_000,
       },
     });
     await modal.present();
@@ -1866,13 +1872,13 @@ export class MatrixChat implements OnDestroy {
           }
           break;
         case 'chat.message.bookmarkRemind': {
-          const dueAt = await this.chooseReminder(false);
+          const dueAt = await this.chooseReminder();
           if (typeof dueAt === 'number') await this.store.bookmarkWithReminder(message, dueAt);
           break;
         }
         case 'chat.message.reminder': {
           if (!isTrustedBookmarkEntry(this.store.isCurrentRoomNotes(), message.sender, this.matrixUserId())) break;
-          const dueAt = await this.chooseReminder(this.store.remindersByEntry().has(message.eventId));
+          const dueAt = await this.chooseReminder(this.store.remindersByEntry().get(message.eventId)?.dueAt);
           if (dueAt === undefined) break; // cancelled
           await this.store.setReminder(message, dueAt ?? undefined);
           break;

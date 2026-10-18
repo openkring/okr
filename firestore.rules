@@ -511,12 +511,14 @@ service cloud.firestore {
                       && callerPersonKey() != ''
                       && request.resource.data.personKey == callerPersonKey()
                       && request.resource.data.state == 'pending'
+                      && request.resource.data.dueAt is int
                       && request.resource.data.title is string
                       && request.resource.data.title.size() <= 200;
       allow update: if belongsToTenant(resource.data)
                       && resource.data.personKey == callerPersonKey()
                       && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['dueAt', 'state'])
-                      && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['dueAt']) || resource.data.state == 'pending')
+                      && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['dueAt'])
+                          || (resource.data.state == 'pending' && request.resource.data.dueAt is int))
                       && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['state']) || request.resource.data.state == 'cancelled');
       allow delete: if false;
     }
