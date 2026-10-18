@@ -46,6 +46,19 @@ describe('bookmarkSnippet', () => {
   it('prefixes files with a paperclip', () => {
     expect(bookmarkSnippet(msg({ type: 'm.file', body: 'offerte.pdf' }))).toBe('📎 offerte.pdf');
   });
+  it('prefixes images, videos and audio with a paperclip', () => {
+    expect(bookmarkSnippet(msg({ type: 'm.image', body: 'foto.jpg' }))).toBe('📎 foto.jpg');
+    expect(bookmarkSnippet(msg({ type: 'm.video', body: 'clip.mp4' }))).toBe('📎 clip.mp4');
+    expect(bookmarkSnippet(msg({ type: 'm.audio', body: 'memo.m4a' }))).toBe('📎 memo.m4a');
+  });
+  it('collapses whitespace and newlines', () => {
+    expect(bookmarkSnippet(msg({ body: 'a\n\n  b\t c' }))).toBe('a b c');
+  });
+  it('does not split an emoji at the truncation boundary', () => {
+    const s = bookmarkSnippet(msg({ body: 'a'.repeat(198) + '😀😀😀' }));
+    expect(Array.from(s).length).toBe(200);
+    expect(s).toBe('a'.repeat(198) + '😀…');
+  });
   it('uses the question of a poll', () => {
     const content = { 'org.matrix.msc3381.poll': { question: { body: 'Wann treffen wir uns?' }, answers: [] } };
     expect(bookmarkSnippet(msg({ type: 'org.matrix.msc3381.poll.start', body: 'x', content }))).toBe('Wann treffen wir uns?');

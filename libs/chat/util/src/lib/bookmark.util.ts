@@ -5,6 +5,7 @@ import { POLL_START_EVENT, parsePollContent } from './poll.util';
 export const OKR_BOOKMARK_FIELD = 'org.okr.bookmark';
 
 const SNIPPET_MAX = 200;
+const MEDIA_TYPES = ['m.file', 'm.image', 'm.video', 'm.audio'];
 
 export interface ChatBookmark {
   roomId: string;
@@ -30,17 +31,18 @@ export function isNotesRoomAlias(alias: string | undefined, tenantId?: string): 
   return tenantId ? localpart.startsWith(`notes_${tenantId}_`) : true;
 }
 
-/** First 200 chars of the plain body; a file shows its name, a poll its question. */
+/** First 200 chars (code points, whitespace collapsed) of the plain body; a file, image, video or audio shows its name, a poll its question. */
 export function bookmarkSnippet(message: MatrixMessage): string {
   if (message.type === POLL_START_EVENT) {
     return truncate(parsePollContent(message.content).question || message.body || '');
   }
-  if (message.type === 'm.file') return truncate(`📎 ${message.body ?? ''}`);
+  if (MEDIA_TYPES.includes(message.type)) return truncate(`📎 ${message.body ?? ''}`);
   return truncate(message.body ?? '');
 }
 
-function truncate(text: string): string {
-  return text.length > SNIPPET_MAX ? `${text.slice(0, SNIPPET_MAX - 1)}…` : text;
+function truncate(raw: string): string {
+  const chars = Array.from(raw.replace(/\s+/g, ' ').trim());
+  return chars.length > SNIPPET_MAX ? `${chars.slice(0, SNIPPET_MAX - 1).join('')}…` : chars.join('');
 }
 
 export function matrixPermalink(roomId: string, eventId: string): string {
