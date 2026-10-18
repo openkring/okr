@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { splitDiaryMedia } from './list-diary-media';
+import { isDriveId, splitDiaryMedia } from './list-diary-media';
 
 const f = (name: string, mimeType: string, thumbnailLink = '') => ({ id: name, name, mimeType, thumbnailLink, webViewLink: 'w' });
 
@@ -22,4 +22,14 @@ describe('splitDiaryMedia', () => {
   it('keeps a document without thumbnail', () => {
     expect(splitDiaryMedia([f('x.zip', 'application/zip')]).documents[0].thumbnailLink).toBe('');
   });
+});
+
+describe('isDriveId', () => {
+  it('accepts a Drive file id', () => expect(isDriveId('1AbC-d_EfGh2345678901234567890xyz')).toBe(true));
+  it('rejects a quote that would break out of the Drive query', () => expect(isDriveId("x' or name contains '")).toBe(false));
+  it('rejects a backslash and whitespace', () => {
+    expect(isDriveId('a\\b')).toBe(false);
+    expect(isDriveId('a b')).toBe(false);
+  });
+  it('rejects empty', () => expect(isDriveId('')).toBe(false));
 });
